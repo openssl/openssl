@@ -43,7 +43,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
           pkey_meth_test uitest cipherbytes_test asn1_encode_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
-          recordlentest drbgtest \
+          recordlentest drbgtest sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test
 
   SOURCE[aborttest]=aborttest.c
@@ -437,6 +437,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     INCLUDE[tls13secretstest]=.. ../include
     DEPEND[tls13secretstest]=../libcrypto ../libssl libtestutil.a
   ENDIF
+
+  SOURCE[sslbuffertest]=sslbuffertest.c ssltestlib.c
+  INCLUDE[sslbuffertest]=../include
+  DEPEND[sslbuffertest]=../libcrypto ../libssl libtestutil.a
 ENDIF
 
 {-

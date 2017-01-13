@@ -442,8 +442,7 @@ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 # define SSL_MODE_NO_AUTO_CHAIN 0x00000008U
 /*
  * Save RAM by releasing read and write buffers when they're empty. (SSL3 and
- * TLS only.) "Released" buffers are put onto a free-list in the context or
- * just freed (depending on the context's setting for freelist_max_len).
+ * TLS only.) Released buffers are freed.
  */
 # define SSL_MODE_RELEASE_BUFFERS 0x00000010U
 /*
@@ -2237,6 +2236,9 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
 # ifndef OPENSSL_NO_UNIT_TEST
 __owur const struct openssl_ssl_test_functions *SSL_test_functions(void);
 # endif
+
+__owur int SSL_free_buffers(SSL *ssl);
+__owur int SSL_alloc_buffers(SSL *ssl);
 
 extern const char SSL_version_str[];
 
