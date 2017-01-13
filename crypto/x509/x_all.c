@@ -18,6 +18,7 @@
 #include <openssl/ocsp.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+#include <openssl/x509v3.h>
 
 int X509_verify(X509 *a, EVP_PKEY *r)
 {
