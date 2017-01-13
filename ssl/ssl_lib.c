@@ -4778,6 +4778,22 @@ int SSL_early_get0_ext(SSL *s, unsigned int type, const unsigned char **out,
     return 0;
 }
 
+int SSL_free_buffers(SSL *ssl)
+{
+    RECORD_LAYER *rl = &ssl->rlayer;
+
+    if (RECORD_LAYER_read_pending(rl) || RECORD_LAYER_write_pending(rl))
+        return 0;
+
+    RECORD_LAYER_release(rl);
+    return 1;
+}
+
+int SSL_alloc_buffers(SSL *ssl)
+{
+    return ssl3_setup_buffers(ssl);
+}
+
 void SSL_CTX_set_keylog_callback(SSL_CTX *ctx, SSL_CTX_keylog_cb_func cb)
 {
     ctx->keylog_callback = cb;
