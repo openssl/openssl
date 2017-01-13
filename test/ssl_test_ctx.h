@@ -163,8 +163,12 @@ typedef struct {
     int expected_tmp_key_type;
     /* Expected server certificate key type */
     int expected_server_cert_type;
+    /* Expected server signing hash */
+    int expected_server_sign_hash;
     /* Expected client certificate key type */
     int expected_client_cert_type;
+    /* Expected client signing hash */
+    int expected_client_sign_hash;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);

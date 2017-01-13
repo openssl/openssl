@@ -187,36 +187,48 @@ static int check_resumption(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
     return 1;
 }
 
-static int check_key_type(const char *name, int expected_key_type, int key_type)
+static int check_nid(const char *name, int expected_nid, int nid)
 {
-    if (expected_key_type == 0 || expected_key_type == key_type)
+    if (expected_nid == 0 || expected_nid == nid)
         return 1;
     fprintf(stderr, "%s type mismatch, %s vs %s\n",
-            name, OBJ_nid2ln(expected_key_type),
-            key_type == NID_undef ? "absent" : OBJ_nid2ln(key_type));
+            name, OBJ_nid2ln(expected_nid),
+            nid == NID_undef ? "absent" : OBJ_nid2ln(nid));
     return 0;
 }
 
 static int check_tmp_key(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
-    return check_key_type("Tmp key", test_ctx->expected_tmp_key_type,
-                          result->tmp_key_type);
+    return check_nid("Tmp key", test_ctx->expected_tmp_key_type,
+                     result->tmp_key_type);
 }
 
 static int check_server_cert_type(HANDSHAKE_RESULT *result,
                                   SSL_TEST_CTX *test_ctx)
 {
-    return check_key_type("Server certificate",
-                          test_ctx->expected_server_cert_type,
-                          result->server_cert_type);
+    return check_nid("Server certificate", test_ctx->expected_server_cert_type,
+                     result->server_cert_type);
+}
+
+static int check_server_sign_hash(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Server signing hash", test_ctx->expected_server_sign_hash,
+                     result->server_sign_hash);
 }
 
 static int check_client_cert_type(HANDSHAKE_RESULT *result,
                                   SSL_TEST_CTX *test_ctx)
 {
-    return check_key_type("Client certificate",
-                          test_ctx->expected_client_cert_type,
-                          result->client_cert_type);
+    return check_nid("Client certificate", test_ctx->expected_client_cert_type,
+                     result->client_cert_type);
+}
+
+static int check_client_sign_hash(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Client signing hash", test_ctx->expected_client_sign_hash,
+                     result->client_sign_hash);
 }
 
 /*
@@ -241,7 +253,9 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         ret &= check_resumption(result, test_ctx);
         ret &= check_tmp_key(result, test_ctx);
         ret &= check_server_cert_type(result, test_ctx);
+        ret &= check_server_sign_hash(result, test_ctx);
         ret &= check_client_cert_type(result, test_ctx);
+        ret &= check_client_sign_hash(result, test_ctx);
     }
     return ret;
 }
