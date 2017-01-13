@@ -510,6 +510,11 @@ struct ssl_session_st {
     int ssl_version;            /* what ssl version session info is being kept
                                  * in here? */
     size_t master_key_length;
+
+    /*
+     * For <=TLS1.2 this is the master_key. For TLS1.3 this is the resumption
+     * master secret
+     */
     unsigned char master_key[SSL_MAX_MASTER_KEY_LENGTH];
     /* session_id - valid? */
     size_t session_id_length;
@@ -569,6 +574,7 @@ struct ssl_session_st {
         size_t ticklen;      /* Session ticket length */
         /* Session lifetime hint in seconds */
         unsigned long tick_lifetime_hint;
+        int tick_identity;
     } ext;
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
@@ -950,11 +956,12 @@ struct ssl_st {
      */
     uint32_t mac_flags;
     /*
-     * The TLS1.3 early_secret and handshake_secret. The master_secret is stored
-     * in the session.
+     * The TLS1.3 secrets. The resumption master secret is stored in the
+     * session.
      */
     unsigned char early_secret[EVP_MAX_MD_SIZE];
     unsigned char handshake_secret[EVP_MAX_MD_SIZE];
+    unsigned char master_secret[EVP_MAX_MD_SIZE];
     unsigned char client_finished_secret[EVP_MAX_MD_SIZE];
     unsigned char server_finished_secret[EVP_MAX_MD_SIZE];
     unsigned char server_finished_hash[EVP_MAX_MD_SIZE];
@@ -1680,7 +1687,8 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_psk_kex_modes,
     TLSEXT_IDX_key_share,
     TLSEXT_IDX_cryptopro_bug,
-    TLSEXT_IDX_padding
+    TLSEXT_IDX_padding,
+    TLSEXT_IDX_psk
 } TLSEXT_INDEX;
 
 /*
@@ -1719,6 +1727,9 @@ typedef enum tlsext_index_en {
 #define TLSEXT_KEX_MODE_FLAG_NONE                               0
 #define TLSEXT_KEX_MODE_FLAG_KE                                 1
 #define TLSEXT_KEX_MODE_FLAG_KE_DHE                             2
+
+/* An invalid index into the TLSv1.3 PSK identities */
+#define TLSEXT_PSK_BAD_IDENTITY                                 -1
 
 #define SIGID_IS_PSS(sigid) ((sigid) == TLSEXT_SIGALG_rsa_pss_sha256 \
                              || (sigid) == TLSEXT_SIGALG_rsa_pss_sha384 \
@@ -1980,6 +1991,7 @@ __owur int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey,
                       int genmaster);
 __owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);
 
+__owur const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 __owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt,
                                    size_t *len);
@@ -2104,7 +2116,8 @@ __owur int tls13_setup_key_block(SSL *s);
 __owur size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
                                      unsigned char *p);
 __owur int tls13_change_cipher_state(SSL *s, int which);
-__owur int tls13_hkdf_expand(SSL *s, const unsigned char *secret,
+__owur int tls13_hkdf_expand(SSL *s, const EVP_MD *md,
+                             const unsigned char *secret,
                              const unsigned char *label, size_t labellen,
                              const unsigned char *hash,
                              unsigned char *out, size_t outlen);
@@ -2112,8 +2125,14 @@ __owur int tls13_derive_key(SSL *s, const unsigned char *secret,
                             unsigned char *key, size_t keylen);
 __owur int tls13_derive_iv(SSL *s, const unsigned char *secret,
                            unsigned char *iv, size_t ivlen);
-__owur int tls13_generate_early_secret(SSL *s, const unsigned char *insecret,
-                                       size_t insecretlen);
+__owur int tls13_derive_finishedkey(SSL *s, const EVP_MD *md,
+                                    const unsigned char *secret,
+                                    unsigned char *fin, size_t finlen);
+int tls13_generate_secret(SSL *s, const EVP_MD *md,
+                          const unsigned char *prevsecret,
+                          const unsigned char *insecret,
+                          size_t insecretlen,
+                          unsigned char *outsecret);
 __owur int tls13_generate_handshake_secret(SSL *s,
                                            const unsigned char *insecret,
                                            size_t insecretlen);

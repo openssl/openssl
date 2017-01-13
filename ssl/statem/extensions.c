@@ -264,12 +264,20 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL, NULL, NULL, tls_construct_stoc_cryptopro_bug, NULL, NULL
     },
     {
-        /* Last in the list because it must be added as the last extension */
+        /* Must be immediately before pre_shared_key */
+        /* TODO(TLS1.3): Fix me */
         TLSEXT_TYPE_padding,
         EXT_CLIENT_HELLO,
         NULL,
         /* We send this, but don't read it */
         NULL, NULL, NULL, tls_construct_ctos_padding, NULL
+    },
+    {
+        /* Required by the TLSv1.3 spec to always be the last extension */
+        TLSEXT_TYPE_psk,
+        EXT_CLIENT_HELLO | EXT_TLS1_3_SERVER_HELLO | EXT_TLS_IMPLEMENTATION_ONLY
+        | EXT_TLS1_3_ONLY,
+        NULL, NULL, NULL, NULL, tls_construct_ctos_psk, NULL
     }
 };
 

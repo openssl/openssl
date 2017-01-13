@@ -76,7 +76,7 @@ extern "C" {
 
 # define SSL_MIN_RSA_MODULUS_LENGTH_IN_BYTES     (512/8)
 # define SSL_MAX_KEY_ARG_LENGTH                  8
-# define SSL_MAX_MASTER_KEY_LENGTH               48
+# define SSL_MAX_MASTER_KEY_LENGTH               64
 
 /* The maximum number of encrypt/decrypt pipelines we can support */
 # define SSL_MAX_PIPELINES  32
@@ -2259,6 +2259,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE               470
 # define SSL_F_TLS_CONSTRUCT_CTOS_NPN                     471
 # define SSL_F_TLS_CONSTRUCT_CTOS_PADDING                 472
+# define SSL_F_TLS_CONSTRUCT_CTOS_PSK                     501
 # define SSL_F_TLS_CONSTRUCT_CTOS_PSK_KEX_MODES           500
 # define SSL_F_TLS_CONSTRUCT_CTOS_RENEGOTIATE             473
 # define SSL_F_TLS_CONSTRUCT_CTOS_SCT                     474
@@ -2360,6 +2361,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_BAD_LENGTH                                 271
 # define SSL_R_BAD_PACKET_LENGTH                          115
 # define SSL_R_BAD_PROTOCOL_VERSION_NUMBER                116
+# define SSL_R_BAD_PSK_IDENTITY                           114
 # define SSL_R_BAD_RECORD_TYPE                            443
 # define SSL_R_BAD_RSA_ENCRYPT                            119
 # define SSL_R_BAD_SIGNATURE                              123

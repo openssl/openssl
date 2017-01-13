@@ -196,13 +196,14 @@ static int test_secret(SSL *s, unsigned char *prk,
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned char key[KEYLEN];
     unsigned char iv[IVLEN];
+    const EVP_MD *md = ssl_handshake_md(s);
 
     if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashsize)) {
         fprintf(stderr, "Failed to get hash\n");
         return 0;
     }
 
-    if (!tls13_hkdf_expand(s, prk, label, labellen, hash, gensecret,
+    if (!tls13_hkdf_expand(s, md, prk, label, labellen, hash, gensecret,
                            hashsize)) {
         fprintf(stderr, "Secret generation failed\n");
         return 0;
@@ -253,7 +254,12 @@ static int test_handshake_secrets(void)
     if (s == NULL)
         goto err;
 
-    if (!tls13_generate_early_secret(s, NULL, 0)) {
+    s->session = SSL_SESSION_new();
+    if (s->session == NULL)
+        goto err;
+
+    if (!tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL, 0,
+                               (unsigned char *)&s->early_secret)) {
         fprintf(stderr, "Early secret generation failed\n");
         goto err;
     }
