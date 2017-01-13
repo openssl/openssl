@@ -290,6 +290,8 @@ int tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt, X509 *x,
                                      size_t chainidx, int *al);
 int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                                int *al);
+int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
+                           int *al);
 int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                                int *al);
 int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,

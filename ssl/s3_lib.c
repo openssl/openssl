@@ -3545,20 +3545,23 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
     return (1);
 }
 
+const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
+{
+    SSL_CIPHER c;
+
+    c.id = id;
+    return OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
+}
+
 /*
  * This function needs to check if the ciphers required are actually
  * available
  */
 const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 {
-    SSL_CIPHER c;
-    const SSL_CIPHER *cp;
-    uint32_t id;
-
-    id = 0x03000000 | ((uint32_t)p[0] << 8L) | (uint32_t)p[1];
-    c.id = id;
-    cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
-    return cp;
+    return ssl3_get_cipher_by_id(0x03000000
+                                 | ((uint32_t)p[0] << 8L)
+                                 | (uint32_t)p[1]);
 }
 
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt, size_t *len)
@@ -4103,13 +4106,14 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
     if (gensecret) {
         if (SSL_IS_TLS13(s)) {
             /*
-             * TODO(TLS1.3): For now we just use the default early_secret, this
-             * will need to change later when other early_secrets will be
-             * possible.
+             * If we are resuming then we already generated the early secret
+             * when we created the ClientHello, so don't recreate it.
              */
-            rv = tls13_generate_early_secret(s, NULL, 0)
-                 && tls13_generate_handshake_secret(s, pms, pmslen);
-            OPENSSL_free(pms);
+            if (!s->hit)
+                rv = tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL,
+                                           0,
+                                           (unsigned char *)&s->early_secret);
+            rv = rv && tls13_generate_handshake_secret(s, pms, pmslen);
         } else {
             /* Generate master secret and discard premaster */
             rv = ssl_generate_master_secret(s, pms, pmslen, 1);

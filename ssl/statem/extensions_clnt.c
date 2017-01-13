@@ -657,6 +657,170 @@ int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
 }
 
 /*
+ * Construct the pre_shared_key extension
+ */
+int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
+                           int *al)
+{
+#ifndef OPENSSL_NO_TLS1_3
+    const SSL_CIPHER *cipher;
+    uint32_t now, ages, agems;
+    size_t hashsize, bindersize, binderoffset, msglen;
+    unsigned char *binder = NULL, *msgstart = NULL;
+    EVP_PKEY *mackey = NULL;
+    const EVP_MD *md;
+    EVP_MD_CTX *mctx = NULL;
+    unsigned char hash[EVP_MAX_MD_SIZE], binderkey[EVP_MAX_MD_SIZE];
+    unsigned char finishedkey[EVP_MAX_MD_SIZE];
+    const char resumption_label[] = "resumption psk binder key";
+    int ret = 0;
+
+    s->session->ext.tick_identity = TLSEXT_PSK_BAD_IDENTITY;
+
+    /*
+     * If this is a new session then we have nothing to resume so don't add
+     * this extension.
+     */
+    if (s->session->ext.ticklen == 0)
+        return 1;
+
+    /*
+     * Technically the C standard just says time() returns a time_t and says
+     * nothing about the encoding of that type. In practice most implementations
+     * follow POSIX which holds it as an integral type in seconds since epoch.
+     * We've already made the assumption that we can do this in multiple places
+     * in the code, so portability shouldn't be an issue.
+     */
+    now = (uint32_t)time(NULL);
+    ages = now - (uint32_t)s->session->time;
+
+    /*
+     * Calculate age in ms. We're just doing it to nearest second. Should be
+     * good enough.
+     */
+    agems = ages * (uint32_t)1000;
+
+    if (ages != 0 && agems / (uint32_t)1000 != ages) {
+        /*
+         * Overflow. Shouldn't happen unless this is a *really* old session. If
+         * so we just ignore it.
+         */
+        return 1;
+    }
+
+    /* TODO(TLS1.3): Obfuscate the age here */
+
+    cipher = ssl3_get_cipher_by_id(s->session->cipher_id);
+    if (cipher == NULL) {
+        /* Don't recognise this cipher so we can't use the session. Ignore it */
+        return 1;
+    }
+    md = ssl_md(cipher->algorithm2);
+    if (md == NULL) {
+        /* Shouldn't happen!! */
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    hashsize = EVP_MD_size(md);
+
+    /* Create the extension, but skip over the binder for now */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u16(pkt, s->session->ext.tick,
+                                       s->session->ext.ticklen)
+            || !WPACKET_put_bytes_u32(pkt, agems)
+            || !WPACKET_close(pkt)
+            || !WPACKET_get_total_written(pkt, &binderoffset)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_allocate_bytes_u8(pkt, hashsize, &binder)
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)
+            || !WPACKET_get_total_written(pkt, &msglen)
+               /*
+                * We need to fill in all the sub-packet lengths now so we can
+                * calculate the HMAC of the message up to the binders
+                */
+            || !WPACKET_fill_lengths(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    msgstart = WPACKET_get_curr(pkt) - msglen;
+
+    /* Generate the early_secret */
+    if (!tls13_generate_secret(s, md, NULL, s->session->master_key,
+                               s->session->master_key_length,
+                               (unsigned char *)&s->early_secret)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /*
+     * Create the handshake hash for the binder key...the messages so far are
+     * empty!
+     */
+    mctx = EVP_MD_CTX_new();
+    if (mctx == NULL
+            || EVP_DigestInit_ex(mctx, md, NULL) <= 0
+            || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /* Generate the binder key */
+    if (!tls13_hkdf_expand(s, md, s->early_secret,
+                           (unsigned char *)resumption_label,
+                           sizeof(resumption_label) - 1, hash, binderkey,
+                           hashsize)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /* Generate the finished key */
+    if (!tls13_derive_finishedkey(s, md, binderkey, finishedkey, hashsize)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /*
+     * Get a hash of the ClientHello up to the start of the binders.
+     * TODO(TLS1.3): This will need to be tweaked when we implement
+     * HelloRetryRequest to include the digest of the previous messages here.
+     */
+    if (EVP_DigestInit_ex(mctx, md, NULL) <= 0
+            || EVP_DigestUpdate(mctx, msgstart, binderoffset) <= 0
+            || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    mackey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, finishedkey, hashsize);
+    bindersize = hashsize;
+    if (binderkey == NULL
+            || EVP_DigestSignInit(mctx, NULL, md, NULL, mackey) <= 0
+            || EVP_DigestSignUpdate(mctx, hash, hashsize) <= 0
+            || EVP_DigestSignFinal(mctx, binder, &bindersize) <= 0
+            || bindersize != hashsize) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    s->session->ext.tick_identity = 0;
+
+    ret = 1;
+ err:
+    OPENSSL_cleanse(binderkey, sizeof(binderkey));
+    EVP_PKEY_free(mackey);
+    EVP_MD_CTX_free(mctx);
+
+    return ret;
+#else
+    return 1;
+#endif
+}
+
+/*
  * Parse the server's renegotiation binding and abort if it's not right
  */
 int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
