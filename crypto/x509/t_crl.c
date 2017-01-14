@@ -44,7 +44,10 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
 
     BIO_printf(out, "Certificate Revocation List (CRL):\n");
     l = X509_CRL_get_version(x);
-    BIO_printf(out, "%8sVersion %lu (0x%lx)\n", "", l + 1, l);
+    if (l >= 0 && l <= 1)
+        BIO_printf(out, "%8sVersion %ld (0x%lx)\n", "", l + 1, (unsigned long)l);
+    else
+        BIO_printf(out, "%8sVersion unknown (%ld)\n", "", l);
     X509_CRL_get0_signature(x, &sig, &sig_alg);
     X509_signature_print(out, sig_alg, NULL);
     p = X509_NAME_oneline(X509_CRL_get_issuer(x), NULL, 0);
