@@ -244,9 +244,10 @@ int OCSP_SINGLERESP_add_ext(OCSP_SINGLERESP *x, X509_EXTENSION *ex, int loc)
 static int ocsp_add1_nonce(STACK_OF(X509_EXTENSION) **exts,
                            unsigned char *val, int len)
 {
-    unsigned char *tmpval;
-    ASN1_OCTET_STRING os;
+    unsigned char *tmpval = NULL;
+    ASN1_OCTET_STRING os = { 0 };
     int ret = 0;
+
     if (len <= 0)
         len = OCSP_DEFAULT_NONCE_LENGTH;
     /*
