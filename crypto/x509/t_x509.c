@@ -97,9 +97,10 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
             if (bs->type == V_ASN1_NEG_INTEGER) {
                 ul = 0 - (unsigned long)l;
                 neg = "-";
-            } else
+            } else {
                 ul = l;
                 neg = "";
+            }
             if (BIO_printf(bp, " %s%lu (%s0x%lx)\n", neg, ul, neg, ul) <= 0)
                 goto err;
         } else {
