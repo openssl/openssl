@@ -76,7 +76,7 @@ static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
      * set.
      */
     if (ltmp < 0)
-        utmp = -(unsigned long)ltmp - 1;
+        utmp = 0 - (unsigned long)ltmp - 1;
     else
         utmp = ltmp;
     clen = BN_num_bits_word(utmp);
