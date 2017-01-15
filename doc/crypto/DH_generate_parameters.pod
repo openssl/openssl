@@ -3,7 +3,8 @@
 =head1 NAME
 
 DH_generate_parameters_ex, DH_generate_parameters,
-DH_check - generate and check Diffie-Hellman parameters
+DH_check, DH_check_params - generate and check Diffie-Hellman
+parameters
 
 =head1 SYNOPSIS
 
@@ -12,6 +13,7 @@ DH_check - generate and check Diffie-Hellman parameters
  int DH_generate_parameters_ex(DH *dh, int prime_len, int generator, BN_GENCB *cb);
 
  int DH_check(DH *dh, int *codes);
+ int DH_check_params(DH *dh, int *codes);
 
 Deprecated:
 
@@ -36,6 +38,30 @@ called as described in L<BN_generate_prime(3)> while a random prime
 number is generated, and when a prime has been found, B<BN_GENCB_call(cb, 3, 0)>
 is called. See L<BN_generate_prime(3)> for information on
 the BN_GENCB_call() function.
+
+DH_check_params() confirms that the B<p> and B<g> are likely enough to
+be valid.
+This is a lightweight check, if a more thorough check is needed, use
+DH_check().
+The value of B<*codes> is updated with any problems found.
+If B<*codes> is zero then no problems were found, otherwise the
+following bits may be set:
+
+=over 4
+
+=item DH_CHECK_P_NOT_PRIME
+
+The parameter B<p> has been determined to not being an odd prime.
+Note that the lack of this bit doesn't guarantee that B<p> is a
+prime.
+
+=item DH_NOT_SUITABLE_GENERATOR
+
+The generator B<g> is not suitable.
+Note that the lack of this bit doesn't guarantee that B<g> is
+suitable, unless B<p> is known to be a strong prime.
+
+=back
 
 DH_check() confirms that the Diffie-Hellman parameters B<dh> are valid. The
 value of B<*codes> is updated with any problems found. If B<*codes> is zero then
@@ -75,8 +101,8 @@ The parameter B<j> is invalid.
 
 =head1 RETURN VALUES
 
-DH_generate_parameters_ex() and DH_check() return 1 if the check could be
-performed, 0 otherwise.
+DH_generate_parameters_ex(), DH_check() and DH_check_params() return 1
+if the check could be performed, 0 otherwise.
 
 DH_generate_parameters() (deprecated) returns a pointer to the DH structure, or
 NULL if the parameter generation fails.
@@ -93,7 +119,7 @@ are not to be used in signature schemes.
 
 =head1 SEE ALSO
 
-L<dh(3)>, L<ERR_get_error(3)>, L<rand(3)>,
+L<DH_new(3)>, L<ERR_get_error(3)>, L<RAND_bytes(3)>,
 L<DH_free(3)>
 
 =head1 COPYRIGHT
