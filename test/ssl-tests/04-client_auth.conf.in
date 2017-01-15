@@ -33,6 +33,13 @@ sub generate_tests() {
             } else {
                 $caalert = "UnknownCA";
             }
+            my $clihash;
+            my $clisigalgs;
+            # TODO add TLSv1.3 versions
+            if ($protocol_name eq "TLSv1.2") {
+                $clihash = "SHA256";
+                $clisigalgs = "SHA256+RSA";
+            }
             # Sanity-check simple handshake.
             push @tests, {
                 name => "server-auth-${protocol_name}",
@@ -87,6 +94,7 @@ sub generate_tests() {
                 server => {
                     "MinProtocol" => $protocol,
                     "MaxProtocol" => $protocol,
+                    "ClientSignatureAlgorithms" => $clisigalgs,
                     "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
                     "VerifyMode" => "Request",
                 },
@@ -98,6 +106,7 @@ sub generate_tests() {
                 },
                 test   => { "ExpectedResult" => "Success",
                             "ExpectedClientCertType" => "RSA",
+                            "ExpectedClientSignHash" => $clihash,
                 },
             };
 
