@@ -59,7 +59,8 @@ our @tests = (
             "SignatureAlgorithms" => "ECDSA+SHA256",
         },
         test   => {
-            "ExpectedServerCertType" =>, "P-256",
+            "ExpectedServerCertType" => "P-256",
+            "ExpectedServerSignHash" => "SHA256",
             "ExpectedResult" => "Success"
         },
     },
@@ -80,7 +81,8 @@ our @tests = (
             "SignatureAlgorithms" => "RSA+SHA256",
         },
         test   => {
-            "ExpectedServerCertType" =>, "RSA",
+            "ExpectedServerCertType" => "RSA",
+            "ExpectedServerSignHash" => "SHA256",
             "ExpectedResult" => "Success"
         },
     }
