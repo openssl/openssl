@@ -476,6 +476,7 @@ int ERR_load_RSA_strings(void);
 # define RSA_F_ENCODE_PKCS1                               146
 # define RSA_F_INT_RSA_VERIFY                             145
 # define RSA_F_OLD_RSA_PRIV_DECODE                        147
+# define RSA_F_PKEY_PSS_INIT                              165
 # define RSA_F_PKEY_RSA_CTRL                              143
 # define RSA_F_PKEY_RSA_CTRL_STR                          144
 # define RSA_F_PKEY_RSA_SIGN                              142

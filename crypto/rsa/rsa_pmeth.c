@@ -432,9 +432,16 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         } else {
             if (p1 < -2)
                 return -2;
-            if (rsa_pss_restricted(rctx) && p1 < rctx->min_saltlen) {
-                RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_PSS_SALTLEN_TOO_SMALL);
-                return 0;
+            if (rsa_pss_restricted(rctx)) {
+                if (p1 == -2 && ctx->operation == EVP_PKEY_OP_VERIFY) {
+                    RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PSS_SALTLEN);
+                    return -2;
+                }
+                if ((p1 == -1 && rctx->min_saltlen > EVP_MD_size(rctx->md))
+                    || (p1 >= 0 && p1 < rctx->min_saltlen)) {
+                    RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_PSS_SALTLEN_TOO_SMALL);
+                    return 0;
+                }
             }
             rctx->saltlen = p1;
         }
@@ -752,7 +759,7 @@ static int pkey_pss_init(EVP_PKEY_CTX *ctx)
     RSA_PKEY_CTX *rctx = ctx->data;
     const EVP_MD *md;
     const EVP_MD *mgf1md;
-    int min_saltlen;
+    int min_saltlen, max_saltlen;
 
     /* Should never happen */
     if (!pkey_ctx_is_pss(ctx))
@@ -764,6 +771,15 @@ static int pkey_pss_init(EVP_PKEY_CTX *ctx)
     /* Get and check parameters */
     if (!rsa_pss_get_param(rsa->pss, &md, &mgf1md, &min_saltlen))
         return 0;
+
+    /* See if minumum salt length exceeds maximum possible */
+    max_saltlen = RSA_size(rsa) - EVP_MD_size(md);
+    if ((RSA_bits(rsa) & 0x7) == 1)
+        max_saltlen--;
+    if (min_saltlen > max_saltlen) {
+        RSAerr(RSA_F_PKEY_PSS_INIT, RSA_R_INVALID_SALT_LENGTH);
+        return 0;
+    }
 
     rctx->min_saltlen = min_saltlen;
 
