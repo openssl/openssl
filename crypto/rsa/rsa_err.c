@@ -23,6 +23,7 @@ static ERR_STRING_DATA RSA_str_functs[] = {
     {ERR_FUNC(RSA_F_ENCODE_PKCS1), "encode_pkcs1"},
     {ERR_FUNC(RSA_F_INT_RSA_VERIFY), "int_rsa_verify"},
     {ERR_FUNC(RSA_F_OLD_RSA_PRIV_DECODE), "old_rsa_priv_decode"},
+    {ERR_FUNC(RSA_F_PKEY_PSS_INIT), "pkey_pss_init"},
     {ERR_FUNC(RSA_F_PKEY_RSA_CTRL), "pkey_rsa_ctrl"},
     {ERR_FUNC(RSA_F_PKEY_RSA_CTRL_STR), "pkey_rsa_ctrl_str"},
     {ERR_FUNC(RSA_F_PKEY_RSA_SIGN), "pkey_rsa_sign"},
