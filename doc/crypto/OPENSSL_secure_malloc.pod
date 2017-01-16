@@ -6,7 +6,7 @@ CRYPTO_secure_malloc_init, CRYPTO_secure_malloc_initialized,
 CRYPTO_secure_malloc_done, OPENSSL_secure_malloc, CRYPTO_secure_malloc,
 OPENSSL_secure_zalloc, CRYPTO_secure_zalloc, OPENSSL_secure_free,
 CRYPTO_secure_free, OPENSSL_secure_actual_size, OPENSSL_secure_allocated,
-CYRPTO_secure_used - secure heap storage
+CRYPTO_secure_used - secure heap storage
 
 =head1 SYNOPSIS
 
@@ -30,7 +30,7 @@ CYRPTO_secure_used - secure heap storage
  size_t OPENSSL_secure_actual_size(const void *ptr);
  int OPENSSL_secure_allocated(const void *ptr);
 
- size_t CYRPTO_secure_used();
+ size_t CRYPTO_secure_used();
 
 =head1 DESCRIPTION
 
@@ -109,8 +109,7 @@ OPENSSL_secure_free() returns no values.
 =head1 SEE ALSO
 
 L<OPENSSL_malloc(3)>,
-L<BN_new(3)>,
-L<bn_internal(3)>.
+L<BN_new(3)>
 
 =head1 COPYRIGHT
 
