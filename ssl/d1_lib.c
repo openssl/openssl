@@ -944,16 +944,6 @@ size_t dtls1_min_mtu(SSL *s)
     return dtls1_link_min_mtu() - BIO_dgram_get_mtu_overhead(SSL_get_wbio(s));
 }
 
-
-void DTLS_set_timer_cb(SSL *s, unsigned (*cb)(SSL *s, unsigned timeout_ms))
-{
-    if (!s || !s->d1)
-        return;
-
-    s->d1->timer_cb = cb;
-}
-
-
 size_t DTLS_get_data_mtu(const SSL *s)
 {
     size_t mac_overhead, int_overhead, blocksize, ext_overhead;
@@ -988,4 +978,12 @@ size_t DTLS_get_data_mtu(const SSL *s)
     mtu -= int_overhead;
 
     return mtu;
+}
+
+void DTLS_set_timer_cb(SSL *s, unsigned (*cb)(SSL *s, unsigned timeout_ms))
+{
+    if (!s || !s->d1)
+        return;
+
+    s->d1->timer_cb = cb;
 }

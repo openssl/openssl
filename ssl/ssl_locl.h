@@ -1423,7 +1423,7 @@ typedef struct dtls1_state_st {
     unsigned int retransmitting;
 # ifndef OPENSSL_NO_SCTP
     int shutdown_received;
-#  endif
+# endif
 
     dtls_timer_cb *timer_cb;
 
