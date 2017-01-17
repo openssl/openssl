@@ -82,12 +82,13 @@ if this control is called. If it is not called then the first byte of the plaint
 buffer is expected to be the algorithm identifier byte.
 
 The EVP_PKEY_CTX_set_rsa_pss_saltlen() macro sets the RSA PSS salt length to
-B<len> as its name implies it is only supported for PSS padding.  Two special
-values are supported: -1 sets the salt length to the digest length. When
-signing -2 sets the salt length to the maximum permissible value. When
-verifying -2 causes the salt length to be automatically determined based on the
-B<PSS> block structure. If this macro is not called a salt length value of -2
-is used by default.
+B<len> as its name implies it is only supported for PSS padding.  Three special
+values are supported: RSA_PSS_SALTLEN_DIGEST sets the salt length to the
+digest length, RSA_PSS_SALTLEN_MAX sets the salt length to the maximum
+permissible value. When verifying RSA_PSS_SALTLEN_AUTO causes the salt length
+to be automatically determined based on the B<PSS> block structure. If this
+macro is not called maximum salt length is used when signing and auto detection
+when verifying is used by default.
 
 The EVP_PKEY_CTX_set_rsa_rsa_keygen_bits() macro sets the RSA key length for
 RSA key generation to B<bits>. If not specified 1024 bits is used.

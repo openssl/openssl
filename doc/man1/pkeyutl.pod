@@ -215,11 +215,11 @@ specified.
 
 =item B<rsa_pss_saltlen:len>
 
-For B<pss> mode only this option specifies the salt length. Two special values
-are supported: -1 sets the salt length to the digest length. When signing -2
-sets the salt length to the maximum permissible value. When verifying -2 causes
-the salt length to be automatically determined based on the B<PSS> block
-structure.
+For B<pss> mode only this option specifies the salt length. Three special
+values are supported: "digest" sets the salt length to the digest length,
+"max" sets the salt length to the maximum permissible value. When verifying
+"auto" causes the salt length to be automatically determined based on the
+B<PSS> block structure.
 
 =item B<rsa_mgf1_md:digest>
 

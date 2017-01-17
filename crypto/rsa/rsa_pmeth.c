@@ -58,7 +58,8 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
         rctx->pad_mode = RSA_PKCS1_PSS_PADDING;
     else
         rctx->pad_mode = RSA_PKCS1_PADDING;
-    rctx->saltlen = -2;
+    /* Maximum for sign, auto for verify */
+    rctx->saltlen = RSA_PSS_SALTLEN_AUTO;
     rctx->min_saltlen = -1;
     ctx->data = rctx;
     ctx->keygen_info = rctx->gentmp;
@@ -430,14 +431,16 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         if (type == EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN) {
             *(int *)p2 = rctx->saltlen;
         } else {
-            if (p1 < -2)
+            if (p1 < RSA_PSS_SALTLEN_MAX)
                 return -2;
             if (rsa_pss_restricted(rctx)) {
-                if (p1 == -2 && ctx->operation == EVP_PKEY_OP_VERIFY) {
+                if (p1 == RSA_PSS_SALTLEN_AUTO
+                    && ctx->operation == EVP_PKEY_OP_VERIFY) {
                     RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PSS_SALTLEN);
                     return -2;
                 }
-                if ((p1 == -1 && rctx->min_saltlen > EVP_MD_size(rctx->md))
+                if ((p1 == RSA_PSS_SALTLEN_DIGEST
+                     && rctx->min_saltlen > EVP_MD_size(rctx->md))
                     || (p1 >= 0 && p1 < rctx->min_saltlen)) {
                     RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_PSS_SALTLEN_TOO_SMALL);
                     return 0;
@@ -596,7 +599,14 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 
     if (strcmp(type, "rsa_pss_saltlen") == 0) {
         int saltlen;
-        saltlen = atoi(value);
+        if (!strcmp(value, "digest"))
+            saltlen = RSA_PSS_SALTLEN_DIGEST;
+        else if (!strcmp(value, "max"))
+            saltlen = RSA_PSS_SALTLEN_MAX;
+        else if (!strcmp(value, "auto"))
+            saltlen = RSA_PSS_SALTLEN_AUTO;
+        else
+            saltlen = atoi(value);
         return EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, saltlen);
     }
 
