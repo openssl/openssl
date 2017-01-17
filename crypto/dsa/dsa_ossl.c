@@ -41,6 +41,18 @@ static DSA_METHOD openssl_dsa_meth = {
     NULL
 };
 
+static const DSA_METHOD *default_DSA_method = &openssl_dsa_meth;
+
+void DSA_set_default_method(const DSA_METHOD *meth)
+{
+    default_DSA_method = meth;
+}
+
+const DSA_METHOD *DSA_get_default_method(void)
+{
+    return default_DSA_method;
+}
+
 const DSA_METHOD *DSA_OpenSSL(void)
 {
     return &openssl_dsa_meth;

@@ -36,16 +36,6 @@ int FuzzerInitialize(int *argc, char ***argv)
     idx = SSL_get_ex_data_X509_STORE_CTX_idx();
     RAND_add("", 1, ENTROPY_NEEDED);
     RAND_status();
-    RSA_get_default_method();
-#ifndef OPENSSL_NO_DSA
-    DSA_get_default_method();
-#endif
-#ifndef OPENSSL_NO_EC
-    EC_KEY_get_default_method();
-#endif
-#ifndef OPENSSL_NO_DH
-    DH_get_default_method();
-#endif
     comp_methods = SSL_COMP_get_compression_methods();
     OPENSSL_sk_sort((OPENSSL_STACK *)comp_methods);
 

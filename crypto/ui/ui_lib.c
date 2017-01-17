@@ -15,8 +15,6 @@
 #include <openssl/err.h>
 #include "ui_locl.h"
 
-static const UI_METHOD *default_UI_meth = NULL;
-
 UI *UI_new(void)
 {
     return (UI_new_method(NULL));
@@ -533,19 +531,6 @@ int UI_set_ex_data(UI *r, int idx, void *arg)
 void *UI_get_ex_data(UI *r, int idx)
 {
     return (CRYPTO_get_ex_data(&r->ex_data, idx));
-}
-
-void UI_set_default_method(const UI_METHOD *meth)
-{
-    default_UI_meth = meth;
-}
-
-const UI_METHOD *UI_get_default_method(void)
-{
-    if (default_UI_meth == NULL) {
-        default_UI_meth = UI_OpenSSL();
-    }
-    return default_UI_meth;
 }
 
 const UI_METHOD *UI_get_method(UI *ui)

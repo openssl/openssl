@@ -30,7 +30,9 @@ static int RSA_null_private_decrypt(int flen, const unsigned char *from,
                                     unsigned char *to, RSA *rsa, int padding);
 static int RSA_null_init(RSA *rsa);
 static int RSA_null_finish(RSA *rsa);
-static RSA_METHOD rsa_null_meth = {
+
+extern RSA_METHOD RSA_null_meth;
+RSA_METHOD RSA_null_meth = {
     "Null RSA",
     RSA_null_public_encrypt,
     RSA_null_public_decrypt,
@@ -49,7 +51,7 @@ static RSA_METHOD rsa_null_meth = {
 
 const RSA_METHOD *RSA_null_method(void)
 {
-    return (&rsa_null_meth);
+    return (&RSA_null_meth);
 }
 
 static int RSA_null_public_encrypt(int flen, const unsigned char *from,
