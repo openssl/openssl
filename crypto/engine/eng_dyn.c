@@ -349,11 +349,15 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         }
         {
             char *tmp_str = OPENSSL_strdup(p);
-            if (!tmp_str) {
+            if (tmp_str == NULL) {
                 ENGINEerr(ENGINE_F_DYNAMIC_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
-            sk_OPENSSL_STRING_insert(ctx->dirs, tmp_str, -1);
+            if (!sk_OPENSSL_STRING_push(ctx->dirs, tmp_str)) {
+                OPENSSL_free(tmp_str);
+                ENGINEerr(ENGINE_F_DYNAMIC_CTRL, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
         }
         return 1;
     default:

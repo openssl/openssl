@@ -85,9 +85,11 @@
 # VIA Nano	9.32		7.15/+30%
 # Atom		10.3		9.17/+12%
 # Silvermont	13.1(*)		9.37/+40%
+# Goldmont	8.13		6.42/+27%	1.70/+380%(**)
 #
 # (*)	obviously suboptimal result, nothing was done about it,
 #	because SSSE3 code is compiled unconditionally;
+# (**)	SHAEXT result
 
 $flavour = shift;
 $output  = shift;
@@ -262,7 +264,7 @@ sha1_block_data_order:
 	jz	.Lialu
 ___
 $code.=<<___ if ($shaext);
-	test	\$`1<<29`,%r10d		# check SHA bit	
+	test	\$`1<<29`,%r10d		# check SHA bit
 	jnz	_shaext_shortcut
 ___
 $code.=<<___ if ($avx>1);
@@ -380,9 +382,9 @@ $code.=<<___;
 .align	16
 .Loop_shaext:
 	dec		$num
-	lea		0x40($inp),%rax		# next input block
+	lea		0x40($inp),%r8		# next input block
 	paddd		@MSG[0],$E
-	cmovne		%rax,$inp
+	cmovne		%r8,$inp
 	movdqa		$ABCD,$ABCD_SAVE	# offload $ABCD
 ___
 for($i=0;$i<20-4;$i+=2) {

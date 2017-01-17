@@ -107,9 +107,12 @@ static int update_index(CA_DB *db, char **row)
     return 1;
 }
 
-static void lookup_fail(const char *name, const char *tag)
+static char *lookup_conf(const CONF *conf, const char *section, const char *tag)
 {
-    BIO_printf(bio_err, "variable lookup failed for %s::%s\n", name, tag);
+    char *entry = NCONF_get_string(conf, section, tag);
+    if (entry == NULL)
+        BIO_printf(bio_err, "variable lookup failed for %s::%s\n", section, tag);
+    return entry;
 }
 
 static char *srp_verify_user(const char *user, const char *srp_verifier,
@@ -124,7 +127,7 @@ static char *srp_verify_user(const char *user, const char *srp_verifier,
     cb_tmp.prompt_info = user;
     cb_tmp.password = passin;
 
-    if (password_callback(password, 1024, 0, &cb_tmp) > 0) {
+    if (password_callback(password, sizeof(password), 0, &cb_tmp) > 0) {
         if (verbose)
             BIO_printf(bio_err,
                        "Validating\n   user=\"%s\"\n srp_verifier=\"%s\"\n srp_usersalt=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
@@ -157,7 +160,7 @@ static char *srp_create_user(char *user, char **srp_verifier,
     cb_tmp.prompt_info = user;
     cb_tmp.password = passout;
 
-    if (password_callback(password, 1024, 1, &cb_tmp) > 0) {
+    if (password_callback(password, sizeof(password), 1, &cb_tmp) > 0) {
         if (verbose)
             BIO_printf(bio_err, "Creating\n user=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
                        user, g, N);
@@ -183,7 +186,7 @@ typedef enum OPTION_choice {
     OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE
 } OPTION_CHOICE;
 
-OPTIONS srp_options[] = {
+const OPTIONS srp_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"verbose", OPT_VERBOSE, '-', "Talk a lot while doing things"},
     {"config", OPT_CONFIG, '<', "A config file"},
@@ -206,6 +209,7 @@ OPTIONS srp_options[] = {
 
 int srp_main(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     CA_DB *db = NULL;
     CONF *conf = NULL;
     int gNindex = -1, maxgN = -1, ret = 1, errors = 0, verbose = 0, i;
@@ -266,7 +270,7 @@ int srp_main(int argc, char **argv)
             passoutarg = opt_arg();
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         }
     }
@@ -320,14 +324,12 @@ int srp_main(int argc, char **argv)
                            "trying to read " ENV_DEFAULT_SRP
                            " in " BASE_SECTION "\n");
 
-            section = NCONF_get_string(conf, BASE_SECTION, ENV_DEFAULT_SRP);
-            if (section == NULL) {
-                lookup_fail(BASE_SECTION, ENV_DEFAULT_SRP);
+            section = lookup_conf(conf, BASE_SECTION, ENV_DEFAULT_SRP);
+            if (section == NULL)
                 goto end;
-            }
         }
 
-        if (randfile == NULL && conf)
+        if (randfile == NULL)
             randfile = NCONF_get_string(conf, BASE_SECTION, "RANDFILE");
 
         if (verbose)
@@ -335,12 +337,9 @@ int srp_main(int argc, char **argv)
                        "trying to read " ENV_DATABASE " in section \"%s\"\n",
                        section);
 
-        if ((srpvfile = NCONF_get_string(conf, section, ENV_DATABASE))
-                == NULL) {
-            lookup_fail(section, ENV_DATABASE);
+        srpvfile = lookup_conf(conf, section, ENV_DATABASE);
+        if (srpvfile == NULL)
             goto end;
-        }
-
     }
     if (randfile == NULL)
         ERR_clear_error();
@@ -391,12 +390,11 @@ int srp_main(int argc, char **argv)
 
     while (mode == OPT_LIST || user) {
         int userindex = -1;
-        if (user)
-            if (verbose > 1)
-                BIO_printf(bio_err, "Processing user \"%s\"\n", user);
+
+        if (user != NULL && verbose > 1)
+            BIO_printf(bio_err, "Processing user \"%s\"\n", user);
         if ((userindex = get_index(db, user, 'U')) >= 0) {
-            print_user(db, userindex, (verbose > 0)
-                       || mode == OPT_LIST);
+            print_user(db, userindex, (verbose > 0) || mode == OPT_LIST);
         }
 
         if (mode == OPT_LIST) {
@@ -605,6 +603,7 @@ int srp_main(int argc, char **argv)
         app_RAND_write_file(randfile);
     NCONF_free(conf);
     free_index(db);
+    release_engine(e);
     return (ret);
 }
 #endif

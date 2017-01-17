@@ -14,7 +14,7 @@
 -i4
 -il1
 -ip0
--l78
+-l80
 -lp
 -nbad
 -nbc
@@ -107,6 +107,7 @@
 -T BIGNUM
 -T BIO
 -T BIO_ACCEPT
+-T BIO_ADDR
 -T BIO_ASN1_BUF_CTX
 -T BIO_ASN1_EX_FUNCS
 -T BIO_B64_CTX
@@ -282,7 +283,6 @@
 -T HASH_CTX
 -T HEAPENTRY32
 -T HEAPLIST32
--T HEARTBEAT_TEST_FIXTURE
 -T HMAC_CTX
 -T ICA_KEY_RSA_CRT
 -T ICA_KEY_RSA_CRT_REC
@@ -362,6 +362,7 @@
 -T OPENSSL_PSTRING
 -T OPENSSL_STRING
 -T OPENSSL_STRING
+-T OSSL_ASYNC_FD
 -T OTHERNAME
 -T P256_POINT
 -T P256_POINT_AFFINE
@@ -442,6 +443,7 @@
 -T SSL_COMP
 -T SSL_CONF_CTX
 -T SSL_CTX
+-T SSL_DANE
 -T SSL_EXCERT
 -T SSL_METHOD
 -T SSL_SESSION
@@ -571,6 +573,7 @@
 -T asn1_ps_func
 -T bio_dgram_data
 -T bio_info_cb
+-T BIO_callack_fn
 -T char_io
 -T conf_finish_func
 -T conf_init_func
@@ -724,3 +727,15 @@
 -T ASYNC_FIBRE
 -T ASYNC_CTX
 -T ASYNC_JOB
+-T intmax_t
+-T uintmax_t
+-T pqueue
+-T danetls_record
+-T CTLOG_STORE
+-T OPENSSL_INIT_SETTINGS
+-T OSSL_HANDSHAKE_STATE
+-T OSSL_STATEM
+-T ossl_intmax_t
+-T ossl_intmax_t
+-T ossl_uintmax_t
+-T ossl_uintmax_t

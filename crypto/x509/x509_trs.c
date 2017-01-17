@@ -120,7 +120,7 @@ int X509_TRUST_set(int *t, int trust)
 }
 
 int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
-                   char *name, int arg1, void *arg2)
+                   const char *name, int arg1, void *arg2)
 {
     int idx;
     X509_TRUST *trtmp;
@@ -194,24 +194,21 @@ static void trtable_free(X509_TRUST *p)
 
 void X509_TRUST_cleanup(void)
 {
-    unsigned int i;
-    for (i = 0; i < X509_TRUST_COUNT; i++)
-        trtable_free(trstandard + i);
     sk_X509_TRUST_pop_free(trtable, trtable_free);
     trtable = NULL;
 }
 
-int X509_TRUST_get_flags(X509_TRUST *xp)
+int X509_TRUST_get_flags(const X509_TRUST *xp)
 {
     return xp->flags;
 }
 
-char *X509_TRUST_get0_name(X509_TRUST *xp)
+char *X509_TRUST_get0_name(const X509_TRUST *xp)
 {
     return xp->name;
 }
 
-int X509_TRUST_get_trust(X509_TRUST *xp)
+int X509_TRUST_get_trust(const X509_TRUST *xp)
 {
     return xp->trust;
 }

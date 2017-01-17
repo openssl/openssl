@@ -329,6 +329,7 @@ static int test_tlsafile(SSL_CTX *ctx, const char *basename,
         STACK_OF(X509) *chain;
         int ntlsa;
         int ncert;
+        int noncheck;
         int want;
         int want_depth;
         int off;
@@ -341,7 +342,8 @@ static int test_tlsafile(SSL_CTX *ctx, const char *basename,
             continue;
 
         ++testno;
-        if (sscanf(line, "%d %d %d %d%n", &ntlsa, &ncert, &want, &want_depth, &off) != 4
+        if (sscanf(line, "%d %d %d %d %d%n",
+                   &ntlsa, &ncert, &noncheck, &want, &want_depth, &off) != 5
             || !allws(line + off)) {
             fprintf(stderr, "Expected tlsa count, cert count and result"
                     " at test %d of %s\n", testno, path);
@@ -355,6 +357,8 @@ static int test_tlsafile(SSL_CTX *ctx, const char *basename,
             SSL_free(ssl);
             return -1;
         }
+        if (noncheck)
+            SSL_dane_set_flags(ssl, DANE_FLAG_NO_DANE_EE_NAMECHECKS);
 
         for (i = 0; i < ntlsa; ++i) {
             if ((line = read_to_eol(f)) == NULL || !tlsa_import_rr(ssl, line)) {

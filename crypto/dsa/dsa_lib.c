@@ -120,7 +120,7 @@ void DSA_free(DSA *r)
     if (r == NULL)
         return;
 
-    CRYPTO_atomic_add(&r->references, -1, &i, r->lock);
+    CRYPTO_DOWN_REF(&r->references, &i, r->lock);
     REF_PRINT_COUNT("DSA", r);
     if (i > 0)
         return;
@@ -148,7 +148,7 @@ int DSA_up_ref(DSA *r)
 {
     int i;
 
-    if (CRYPTO_atomic_add(&r->references, 1, &i, r->lock) <= 0)
+    if (CRYPTO_UP_REF(&r->references, &i, r->lock) <= 0)
         return 0;
 
     REF_PRINT_COUNT("DSA", r);
@@ -253,7 +253,8 @@ DH *DSA_dup_DH(const DSA *r)
 }
 #endif
 
-void DSA_get0_pqg(const DSA *d, BIGNUM **p, BIGNUM **q, BIGNUM **g)
+void DSA_get0_pqg(const DSA *d,
+                  const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 {
     if (p != NULL)
         *p = d->p;
@@ -265,13 +266,12 @@ void DSA_get0_pqg(const DSA *d, BIGNUM **p, BIGNUM **q, BIGNUM **g)
 
 int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 {
-    /* If the fields in d are NULL, the corresponding input
+    /* If the fields p, q and g in d are NULL, the corresponding input
      * parameters MUST be non-NULL.
-     *
-     * It is an error to give the results from get0 on d
-     * as input parameters.
      */
-    if (p == d->p || q == d->q || g == d->g)
+    if ((d->p == NULL && p == NULL)
+        || (d->q == NULL && q == NULL)
+        || (d->g == NULL && g == NULL))
         return 0;
 
     if (p != NULL) {
@@ -290,7 +290,8 @@ int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
     return 1;
 }
 
-void DSA_get0_key(const DSA *d, BIGNUM **pub_key, BIGNUM **priv_key)
+void DSA_get0_key(const DSA *d,
+                  const BIGNUM **pub_key, const BIGNUM **priv_key)
 {
     if (pub_key != NULL)
         *pub_key = d->pub_key;
@@ -300,15 +301,11 @@ void DSA_get0_key(const DSA *d, BIGNUM **pub_key, BIGNUM **priv_key)
 
 int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
 {
-    /* If the pub_key in d is NULL, the corresponding input
+    /* If the field pub_key in d is NULL, the corresponding input
      * parameters MUST be non-NULL.  The priv_key field may
      * be left NULL.
-     *
-     * It is an error to give the results from get0 on d
-     * as input parameters.
      */
-    if (d->pub_key == pub_key
-        || (d->priv_key != NULL && priv_key == d->priv_key))
+    if (d->pub_key == NULL && pub_key == NULL)
         return 0;
 
     if (pub_key != NULL) {
@@ -341,4 +338,9 @@ void DSA_set_flags(DSA *d, int flags)
 ENGINE *DSA_get0_engine(DSA *d)
 {
     return d->engine;
+}
+
+int DSA_bits(const DSA *dsa)
+{
+    return BN_num_bits(dsa->p);
 }

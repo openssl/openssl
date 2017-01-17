@@ -46,6 +46,11 @@ static int hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     }
 }
 
+static int hmac_pkey_public_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
+{
+    return ASN1_OCTET_STRING_cmp(EVP_PKEY_get0(a), EVP_PKEY_get0(b));
+}
+
 #ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
 /*
  * A bogus private key format for test purposes. This is simply the HMAC key
@@ -101,7 +106,7 @@ const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
     "HMAC",
     "OpenSSL HMAC method",
 
-    0, 0, 0, 0,
+    0, 0, hmac_pkey_public_cmp, 0,
 
     0, 0, 0,
 

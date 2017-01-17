@@ -97,7 +97,7 @@ Options:
                 Default: keep previously assigned numbers. (You are warned
                          when collisions are detected.)
 
-  -nostatic     Generates a different source code, where these additional 
+  -nostatic     Generates a different source code, where these additional
                 functions are generated for each library specified in the
                 config file:
                   void ERR_load_<LIB>_strings(void);
@@ -105,7 +105,7 @@ Options:
                   void ERR_<LIB>_error(int f, int r, char *fn, int ln);
                   #define <LIB>err(f,r) ERR_<LIB>_error(f,r,OPENSSL_FILE,OPENSSL_LINE)
                 while the code facilitates the use of these in an environment
-                where the error support routines are dynamically loaded at 
+                where the error support routines are dynamically loaded at
                 runtime.
                 Default: 'static' code generation.
 
@@ -114,8 +114,8 @@ Options:
 
   -unref        Print out unreferenced function and reason codes.
 
-  -write        Actually (over)write the generated code to the header and C 
-                source files as assigned to each library through the config 
+  -write        Actually (over)write the generated code to the header and C
+                source files as assigned to each library through the config
                 file.
                 Default: don't write.
 
@@ -196,7 +196,7 @@ while (($hdr, $lib) = each %libinc)
 		if(/\/\*/) {
 		    if (not /\*\//) {		# multiline comment...
 			$line = $_;		# ... just accumulate
-			next; 
+			next;
 		    } else {
 			s/\/\*.*?\*\///gs;	# wipe it
 		    }
@@ -370,7 +370,7 @@ foreach $file (@source) {
                 print STDERR "ERROR: mismatch $file:$linenr $func:$3\n";
                 $errcount++;
             }
-			print STDERR "Function: $1\t= $fcodes{$1} (lib: $2, name: $3)\n" if $debug; 
+			print STDERR "Function: $1\t= $fcodes{$1} (lib: $2, name: $3)\n" if $debug;
 		}
 		if(/(([A-Z0-9]+)_R_[A-Z0-9_]+)/) {
 			next unless exists $csrc{$2};
@@ -379,8 +379,8 @@ foreach $file (@source) {
 				$rcodes{$1} = "X";
 				$rnew{$2}++;
 			}
-			print STDERR "Reason: $1\t= $rcodes{$1} (lib: $2)\n" if $debug; 
-		} 
+			print STDERR "Reason: $1\t= $rcodes{$1} (lib: $2)\n" if $debug;
+		}
 	}
 	close IN;
 }
@@ -457,12 +457,12 @@ foreach $lib (keys %csrc)
 EOF
 	if($static) {
 		print OUT <<"EOF";
-${staticloader}void ERR_load_${lib}_strings(void);
+${staticloader}int ERR_load_${lib}_strings(void);
 
 EOF
 	} else {
 		print OUT <<"EOF";
-${staticloader}void ERR_load_${lib}_strings(void);
+${staticloader}int ERR_load_${lib}_strings(void);
 ${staticloader}void ERR_unload_${lib}_strings(void);
 ${staticloader}void ERR_${lib}_error(int function, int reason, char *file, int line);
 # define ${lib}err(f,r) ERR_${lib}_error((f),(r),OPENSSL_FILE,OPENSSL_LINE)
@@ -652,7 +652,7 @@ if($static) {
 
 #endif
 
-${staticloader}void ERR_load_${lib}_strings(void)
+${staticloader}int ERR_load_${lib}_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -661,6 +661,7 @@ ${staticloader}void ERR_load_${lib}_strings(void)
         ERR_load_strings($load_errcode, ${lib}_str_reasons);
     }
 #endif
+    return 1;
 }
 EOF
 } else {
@@ -680,7 +681,7 @@ static ERR_STRING_DATA ${lib}_lib_name[] = {
 static int ${lib}_lib_error_code = 0;
 static int ${lib}_error_init = 1;
 
-${staticloader}void ERR_load_${lib}_strings(void)
+${staticloader}int ERR_load_${lib}_strings(void)
 {
     if (${lib}_lib_error_code == 0)
         ${lib}_lib_error_code = ERR_get_next_error_library();
@@ -697,6 +698,7 @@ ${staticloader}void ERR_load_${lib}_strings(void)
         ERR_load_strings(0, ${lib}_lib_name);
 #endif
     }
+    return 1;
 }
 
 ${staticloader}void ERR_unload_${lib}_strings(void)

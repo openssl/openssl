@@ -95,7 +95,7 @@ $K="%xmm15";
 
 if (1) {
     # Atom-specific optimization aiming to eliminate pshufb with high
-    # registers [and thus get rid of 48 cycles accumulated penalty] 
+    # registers [and thus get rid of 48 cycles accumulated penalty]
     @Xi=map("%xmm$_",(0..4));
     ($tx,$t0,$t1,$t2,$t3)=map("%xmm$_",(5..9));
     @V=($A,$B,$C,$D,$E)=map("%xmm$_",(10..14));
@@ -126,7 +126,7 @@ my $k=$i+2;
 # ...
 # $i==13:	14,15,15,15,
 # $i==14:	15
-# 
+#
 # Then at $i==15 Xupdate is applied one iteration in advance...
 $code.=<<___ if ($i==0);
 	movd		(@ptr[0]),@Xi[0]

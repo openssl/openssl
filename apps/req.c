@@ -46,11 +46,11 @@
 
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *dn, int mutlirdn,
                     int attribs, unsigned long chtype);
-static int build_subject(X509_REQ *req, char *subj, unsigned long chtype,
+static int build_subject(X509_REQ *req, const char *subj, unsigned long chtype,
                          int multirdn);
 static int prompt_info(X509_REQ *req,
-                       STACK_OF(CONF_VALUE) *dn_sk, char *dn_sect,
-                       STACK_OF(CONF_VALUE) *attr_sk, char *attr_sect,
+                       STACK_OF(CONF_VALUE) *dn_sk, const char *dn_sect,
+                       STACK_OF(CONF_VALUE) *attr_sk, const char *attr_sect,
                        int attribs, unsigned long chtype);
 static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *sk,
                      STACK_OF(CONF_VALUE) *attr, int attribs,
@@ -82,7 +82,7 @@ typedef enum OPTION_choice {
     OPT_REQEXTS, OPT_MD
 } OPTION_CHOICE;
 
-OPTIONS req_options[] = {
+const OPTIONS req_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
     {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
@@ -289,11 +289,16 @@ int req_main(int argc, char **argv)
             break;
         case OPT_X509:
             x509 = 1;
+            newreq = 1;
             break;
         case OPT_DAYS:
             days = atoi(opt_arg());
             break;
         case OPT_SET_SERIAL:
+            if (serial != NULL) {
+                BIO_printf(bio_err, "Serial number supplied twice\n");
+                goto opthelp;
+            }
             serial = s2i_ASN1_INTEGER(NULL, opt_arg());
             if (serial == NULL)
                 goto opthelp;
@@ -327,7 +332,7 @@ int req_main(int argc, char **argv)
     if (!nmflag_set)
         nmflag = XN_FLAG_ONELINE;
 
-    /* TODO: simplify this as pkey is still always NULL here */ 
+    /* TODO: simplify this as pkey is still always NULL here */
     private = newreq && (pkey == NULL) ? 1 : 0;
 
     if (!app_passwd(passargin, passargout, &passin, &passout)) {
@@ -578,7 +583,7 @@ int req_main(int argc, char **argv)
         }
     }
 
-    if (newreq || x509) {
+    if (newreq) {
         if (pkey == NULL) {
             BIO_printf(bio_err, "you need to specify a private key\n");
             goto end;
@@ -616,9 +621,7 @@ int req_main(int argc, char **argv)
 
             if (!X509_set_issuer_name(x509ss, X509_REQ_get_subject_name(req)))
                 goto end;
-            if (!X509_gmtime_adj(X509_get_notBefore(x509ss), 0))
-                goto end;
-            if (!X509_time_adj_ex(X509_get_notAfter(x509ss), days, 0, NULL))
+            if (!set_cert_times(x509ss, NULL, NULL, days))
                 goto end;
             if (!X509_set_subject_name
                 (x509ss, X509_REQ_get_subject_name(req)))
@@ -727,15 +730,14 @@ int req_main(int argc, char **argv)
         goto end;
 
     if (pubkey) {
-        EVP_PKEY *tpubkey;
-        tpubkey = X509_REQ_get_pubkey(req);
+        EVP_PKEY *tpubkey = X509_REQ_get0_pubkey(req);
+
         if (tpubkey == NULL) {
             BIO_printf(bio_err, "Error getting public key\n");
             ERR_print_errors(bio_err);
             goto end;
         }
         PEM_write_bio_PUBKEY(out, tpubkey);
-        EVP_PKEY_free(tpubkey);
     }
 
     if (text) {
@@ -758,9 +760,9 @@ int req_main(int argc, char **argv)
         EVP_PKEY *tpubkey;
 
         if (x509)
-            tpubkey = X509_get_pubkey(x509ss);
+            tpubkey = X509_get0_pubkey(x509ss);
         else
-            tpubkey = X509_REQ_get_pubkey(req);
+            tpubkey = X509_REQ_get0_pubkey(req);
         if (tpubkey == NULL) {
             fprintf(stdout, "Modulus=unavailable\n");
             goto end;
@@ -768,13 +770,12 @@ int req_main(int argc, char **argv)
         fprintf(stdout, "Modulus=");
 #ifndef OPENSSL_NO_RSA
         if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA) {
-            BIGNUM *n;
+            const BIGNUM *n;
             RSA_get0_key(EVP_PKEY_get0_RSA(tpubkey), &n, NULL, NULL);
             BN_print(out, n);
         } else
 #endif
             fprintf(stdout, "Wrong Algorithm type");
-        EVP_PKEY_free(tpubkey);
         fprintf(stdout, "\n");
     }
 
@@ -819,6 +820,7 @@ int req_main(int argc, char **argv)
     X509_REQ_free(req);
     X509_free(x509ss);
     ASN1_INTEGER_free(serial);
+    release_engine(e);
     if (passin != nofree_passin)
         OPENSSL_free(passin);
     if (passout != nofree_passout)
@@ -890,7 +892,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
  * subject is expected to be in the format /type0=value0/type1=value1/type2=...
  * where characters may be escaped by \
  */
-static int build_subject(X509_REQ *req, char *subject, unsigned long chtype,
+static int build_subject(X509_REQ *req, const char *subject, unsigned long chtype,
                          int multirdn)
 {
     X509_NAME *n;
@@ -907,8 +909,8 @@ static int build_subject(X509_REQ *req, char *subject, unsigned long chtype,
 }
 
 static int prompt_info(X509_REQ *req,
-                       STACK_OF(CONF_VALUE) *dn_sk, char *dn_sect,
-                       STACK_OF(CONF_VALUE) *attr_sk, char *attr_sect,
+                       STACK_OF(CONF_VALUE) *dn_sk, const char *dn_sect,
+                       STACK_OF(CONF_VALUE) *attr_sk, const char *attr_sect,
                        int attribs, unsigned long chtype)
 {
     int i;
@@ -1109,12 +1111,12 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
             }
         }
 #ifndef CHARSET_EBCDIC
-        plus_char = (*p == '+');
+        plus_char = (*type == '+');
 #else
-        plus_char = (*p == os_toascii['+']);
+        plus_char = (*type == os_toascii['+']);
 #endif
         if (plus_char) {
-            p++;
+            type++;
             mval = -1;
         } else
             mval = 0;

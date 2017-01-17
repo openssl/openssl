@@ -98,6 +98,8 @@ struct sct_ctx_st {
     /* pre-certificate encoding */
     unsigned char *preder;
     size_t prederlen;
+    /* milliseconds since epoch (to check that the SCT isn't from the future) */
+    uint64_t epoch_time_in_ms;
 };
 
 /* Context when evaluating whether a Certificate Transparency policy is met */
@@ -105,6 +107,8 @@ struct ct_policy_eval_ctx_st {
     X509 *cert;
     X509 *issuer;
     CTLOG_STORE *log_store;
+    /* milliseconds since epoch (to check that SCTs aren't from the future) */
+    uint64_t epoch_time_in_ms;
 };
 
 /*
@@ -151,6 +155,22 @@ __owur int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
 __owur int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
 
 /*
+ * Sets the time to evaluate the SCT against, in milliseconds since the Unix
+ * epoch. If the SCT's timestamp is after this time, it will be interpreted as
+ * having been issued in the future. RFC6962 states that "TLS clients MUST
+ * reject SCTs whose timestamp is in the future", so an SCT will not validate
+ * in this case.
+ */
+void SCT_CTX_set_time(SCT_CTX *sctx, uint64_t time_in_ms);
+
+/*
+ * Verifies an SCT with the given context.
+ * Returns 1 if the SCT verifies successfully; any other value indicates
+ * failure. See EVP_DigestVerifyFinal() for the meaning of those values.
+ */
+__owur int SCT_CTX_verify(const SCT_CTX *sctx, const SCT *sct);
+
+/*
  * Does this SCT have the minimum fields populated to be usable?
  * Returns 1 if so, 0 otherwise.
  */
@@ -164,8 +184,33 @@ __owur int SCT_is_complete(const SCT *sct);
  */
 __owur int SCT_signature_is_complete(const SCT *sct);
 
+/*
+ * TODO(RJPercival): Create an SCT_signature struct and make i2o_SCT_signature
+ * and o2i_SCT_signature conform to the i2d/d2i conventions.
+ */
+
+/*
+* Serialize (to TLS format) an |sct| signature and write it to |out|.
+* If |out| is null, no signature will be output but the length will be returned.
+* If |out| points to a null pointer, a string will be allocated to hold the
+* TLS-format signature. It is the responsibility of the caller to free it.
+* If |out| points to an allocated string, the signature will be written to it.
+* The length of the signature in TLS format will be returned.
+*/
+__owur int i2o_SCT_signature(const SCT *sct, unsigned char **out);
+
+/*
+* Parses an SCT signature in TLS format and populates the |sct| with it.
+* |in| should be a pointer to a string containing the TLS-format signature.
+* |in| will be advanced to the end of the signature if parsing succeeds.
+* |len| should be the length of the signature in |in|.
+* Returns the number of bytes parsed, or a negative integer if an error occurs.
+* If an error occurs, the SCT's signature NID may be updated whilst the
+* signature field itself remains unset.
+*/
+__owur int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
 
 /*
  * Handlers for Certificate Transparency X509v3/OCSP extensions
  */
-extern const X509V3_EXT_METHOD v3_ct_scts[];
+extern const X509V3_EXT_METHOD v3_ct_scts[3];

@@ -325,6 +325,8 @@ extern FILE *_imp___iob;
 #   define NO_SYS_PARAM_H
 #   define NO_SYS_UN_H
 
+#   define DEFAULT_HOME "SYS$LOGIN:"
+
 #  else
      /* !defined VMS */
 #   ifdef OPENSSL_UNISTD

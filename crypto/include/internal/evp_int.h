@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/refcount.h"
+
 struct evp_pkey_ctx_st {
     /* Method associated with this operation */
     const EVP_PKEY_METHOD *pmeth;
@@ -79,8 +81,10 @@ extern const EVP_PKEY_METHOD dh_pkey_meth;
 extern const EVP_PKEY_METHOD dhx_pkey_meth;
 extern const EVP_PKEY_METHOD dsa_pkey_meth;
 extern const EVP_PKEY_METHOD ec_pkey_meth;
+extern const EVP_PKEY_METHOD ecx25519_pkey_meth;
 extern const EVP_PKEY_METHOD hmac_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
+extern const EVP_PKEY_METHOD rsa_pss_pkey_meth;
 extern const EVP_PKEY_METHOD tls1_prf_pkey_meth;
 extern const EVP_PKEY_METHOD hkdf_pkey_meth;
 
@@ -138,9 +142,9 @@ struct evp_cipher_st {
 #define BLOCK_CIPHER_ecb_loop() \
         size_t i, bl; \
         bl = EVP_CIPHER_CTX_cipher(ctx)->block_size;    \
-        if(inl < bl) return 1;\
+        if (inl < bl) return 1;\
         inl -= bl; \
-        for(i=0; i <= inl; i+=bl)
+        for (i=0; i <= inl; i+=bl)
 
 #define BLOCK_CIPHER_func_ecb(cname, cprefix, kstruct, ksched) \
 static int cname##_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl) \
@@ -189,20 +193,25 @@ static int cname##_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const uns
 #define BLOCK_CIPHER_func_cfb(cname, cprefix, cbits, kstruct, ksched)  \
 static int cname##_cfb##cbits##_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl) \
 {\
-        size_t chunk=EVP_MAXCHUNK;\
-        if (cbits==1)  chunk>>=3;\
-        if (inl<chunk) chunk=inl;\
-        while(inl && inl>=chunk)\
-            {\
-            int num = EVP_CIPHER_CTX_num(ctx);\
-            cprefix##_cfb##cbits##_encrypt(in, out, (long)((cbits==1) && !EVP_CIPHER_CTX_test_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS) ?inl*8:inl), &EVP_C_DATA(kstruct,ctx)->ksched, EVP_CIPHER_CTX_iv_noconst(ctx), &num, EVP_CIPHER_CTX_encrypting(ctx)); \
-            EVP_CIPHER_CTX_set_num(ctx, num);\
-            inl-=chunk;\
-            in +=chunk;\
-            out+=chunk;\
-            if(inl<chunk) chunk=inl;\
-            }\
-        return 1;\
+    size_t chunk = EVP_MAXCHUNK;\
+    if (cbits == 1)  chunk >>= 3;\
+    if (inl < chunk) chunk = inl;\
+    while (inl && inl >= chunk)\
+    {\
+        int num = EVP_CIPHER_CTX_num(ctx);\
+        cprefix##_cfb##cbits##_encrypt(in, out, (long) \
+            ((cbits == 1) \
+                && !EVP_CIPHER_CTX_test_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS) \
+                ? inl*8 : inl), \
+            &EVP_C_DATA(kstruct, ctx)->ksched, EVP_CIPHER_CTX_iv_noconst(ctx),\
+            &num, EVP_CIPHER_CTX_encrypting(ctx));\
+        EVP_CIPHER_CTX_set_num(ctx, num);\
+        inl -= chunk;\
+        in += chunk;\
+        out += chunk;\
+        if (inl < chunk) chunk = inl;\
+    }\
+    return 1;\
 }
 
 #define BLOCK_CIPHER_all_funcs(cname, cprefix, cbits, kstruct, ksched) \
@@ -347,11 +356,11 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 struct evp_pkey_st {
     int type;
     int save_type;
-    int references;
+    CRYPTO_REF_COUNT references;
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE *engine;
     union {
-        char *ptr;
+        void *ptr;
 # ifndef OPENSSL_NO_RSA
         struct rsa_st *rsa;     /* RSA */
 # endif

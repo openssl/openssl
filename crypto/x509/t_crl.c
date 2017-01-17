@@ -36,25 +36,28 @@ int X509_CRL_print(BIO *out, X509_CRL *x)
 {
     STACK_OF(X509_REVOKED) *rev;
     X509_REVOKED *r;
-    X509_ALGOR *sig_alg;
-    ASN1_BIT_STRING *sig;
+    const X509_ALGOR *sig_alg;
+    const ASN1_BIT_STRING *sig;
     long l;
     int i;
     char *p;
 
     BIO_printf(out, "Certificate Revocation List (CRL):\n");
     l = X509_CRL_get_version(x);
-    BIO_printf(out, "%8sVersion %lu (0x%lx)\n", "", l + 1, l);
-    X509_CRL_get0_signature(&sig, &sig_alg, x);
+    if (l >= 0 && l <= 1)
+        BIO_printf(out, "%8sVersion %ld (0x%lx)\n", "", l + 1, (unsigned long)l);
+    else
+        BIO_printf(out, "%8sVersion unknown (%ld)\n", "", l);
+    X509_CRL_get0_signature(x, &sig, &sig_alg);
     X509_signature_print(out, sig_alg, NULL);
     p = X509_NAME_oneline(X509_CRL_get_issuer(x), NULL, 0);
     BIO_printf(out, "%8sIssuer: %s\n", "", p);
     OPENSSL_free(p);
     BIO_printf(out, "%8sLast Update: ", "");
-    ASN1_TIME_print(out, X509_CRL_get_lastUpdate(x));
+    ASN1_TIME_print(out, X509_CRL_get0_lastUpdate(x));
     BIO_printf(out, "\n%8sNext Update: ", "");
-    if (X509_CRL_get_nextUpdate(x))
-        ASN1_TIME_print(out, X509_CRL_get_nextUpdate(x));
+    if (X509_CRL_get0_nextUpdate(x))
+        ASN1_TIME_print(out, X509_CRL_get0_nextUpdate(x));
     else
         BIO_printf(out, "NONE");
     BIO_printf(out, "\n");

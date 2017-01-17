@@ -80,7 +80,7 @@ int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
     return memcmp(a->sha1_hash, b->sha1_hash, 20);
 }
 
-X509_NAME *X509_get_issuer_name(X509 *a)
+X509_NAME *X509_get_issuer_name(const X509 *a)
 {
     return (a->cert_info.issuer);
 }
@@ -97,12 +97,17 @@ unsigned long X509_issuer_name_hash_old(X509 *x)
 }
 #endif
 
-X509_NAME *X509_get_subject_name(X509 *a)
+X509_NAME *X509_get_subject_name(const X509 *a)
 {
     return (a->cert_info.subject);
 }
 
 ASN1_INTEGER *X509_get_serialNumber(X509 *a)
+{
+    return &a->cert_info.serialNumber;
+}
+
+const ASN1_INTEGER *X509_get0_serialNumber(const X509 *a)
 {
     return &a->cert_info.serialNumber;
 }
@@ -257,7 +262,7 @@ X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name)
     return (NULL);
 }
 
-EVP_PKEY *X509_get0_pubkey(X509 *x)
+EVP_PKEY *X509_get0_pubkey(const X509 *x)
 {
     if (x == NULL)
         return NULL;
@@ -271,9 +276,9 @@ EVP_PKEY *X509_get_pubkey(X509 *x)
     return X509_PUBKEY_get(x->cert_info.key);
 }
 
-int X509_check_private_key(X509 *x, EVP_PKEY *k)
+int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
 {
-    EVP_PKEY *xk;
+    const EVP_PKEY *xk;
     int ret;
 
     xk = X509_get0_pubkey(x);

@@ -86,8 +86,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
     dump_indent = 6;            /* Because we know BIO_dump_indent() */
     p = *pp;
     tot = p + length;
-    op = p - 1;
-    while ((p < tot) && (op < p)) {
+    while (length > 0) {
         op = p;
         j = ASN1_get_object(&p, &len, &tag, &xclass, length);
         if (j & 0x80) {
@@ -117,7 +116,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
             goto end;
         if (j & V_ASN1_CONSTRUCTED) {
             const unsigned char *sp = p;
-                
+
             ep = p + len;
             if (BIO_write(bp, "\n", 1) <= 0)
                 goto end;

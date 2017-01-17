@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/refcount.h"
+
 /* Internal X509 structures and functions: not for application use */
 
 /* Note: unless otherwise stated a field pointer is mandatory and should
@@ -54,7 +56,7 @@ struct X509_req_st {
     X509_REQ_INFO req_info;     /* signed certificate request data */
     X509_ALGOR sig_alg;         /* signature algorithm */
     ASN1_BIT_STRING *signature; /* signature */
-    int references;
+    CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
 };
 
@@ -64,16 +66,16 @@ struct X509_crl_info_st {
     X509_NAME *issuer;          /* CRL issuer name */
     ASN1_TIME *lastUpdate;      /* lastUpdate field */
     ASN1_TIME *nextUpdate;      /* nextUpdate field: optional */
-    STACK_OF(X509_REVOKED) *revoked; /* revoked entries: optional */
+    STACK_OF(X509_REVOKED) *revoked;        /* revoked entries: optional */
     STACK_OF(X509_EXTENSION) *extensions;   /* extensions: optional */
-    ASN1_ENCODING enc;          /* encoding of signed portion of CRL */
+    ASN1_ENCODING enc;                      /* encoding of signed portion of CRL */
 };
 
 struct X509_crl_st {
     X509_CRL_INFO crl;          /* signed CRL data */
     X509_ALGOR sig_alg;         /* CRL signature algorithm */
-    ASN1_BIT_STRING signature; /* CRL signature */
-    int references;
+    ASN1_BIT_STRING signature;  /* CRL signature */
+    CRYPTO_REF_COUNT references;
     int flags;
     /*
      * Cached copies of decoded extension values, since extensions
@@ -144,7 +146,7 @@ struct x509_st {
     X509_CINF cert_info;
     X509_ALGOR sig_alg;
     ASN1_BIT_STRING signature;
-    int references;
+    CRYPTO_REF_COUNT references;
     CRYPTO_EX_DATA ex_data;
     /* These contain copies of various extension values */
     long ex_pathlen;
@@ -175,8 +177,6 @@ struct x509_st {
  */
 struct x509_store_ctx_st {      /* X509_STORE_CTX */
     X509_STORE *ctx;
-    /* used when looking up certs */
-    int current_method;
     /* The following are set by the caller */
     /* The cert to check */
     X509 *cert;
@@ -204,6 +204,7 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     int (*check_crl) (X509_STORE_CTX *ctx, X509_CRL *crl);
     /* Check certificate against CRL */
     int (*cert_crl) (X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x);
+    /* Check policy status of the chain */
     int (*check_policy) (X509_STORE_CTX *ctx);
     STACK_OF(X509) *(*lookup_certs) (X509_STORE_CTX *ctx, X509_NAME *nm);
     STACK_OF(X509_CRL) *(*lookup_crls) (X509_STORE_CTX *ctx, X509_NAME *nm);
@@ -263,3 +264,6 @@ struct x509_object_st {
         EVP_PKEY *pkey;
     } data;
 };
+
+int a2i_ipadd(unsigned char *ipout, const char *ipasc);
+int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm);

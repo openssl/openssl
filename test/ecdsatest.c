@@ -145,7 +145,7 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
     ECDSA_SIG *signature = NULL;
     BIGNUM *r = NULL, *s = NULL;
     BIGNUM *kinv = NULL, *rp = NULL;
-    BIGNUM *sig_r, *sig_s;
+    const BIGNUM *sig_r, *sig_s;
 
     if (md_ctx == NULL)
         goto x962_int_err;
@@ -180,7 +180,7 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
         goto x962_int_err;
     if (!BN_dec2bn(&r, r_in) || !BN_dec2bn(&s, s_in))
         goto x962_int_err;
-    ECDSA_SIG_get0(&sig_r, &sig_s, signature);
+    ECDSA_SIG_get0(signature, &sig_r, &sig_s);
     if (BN_cmp(sig_r, r) || BN_cmp(sig_s, s))
         goto x962_int_err;
     BIO_printf(out, ".");
@@ -251,13 +251,15 @@ int test_builtin(BIO *out)
     size_t crv_len = 0, n = 0;
     EC_KEY *eckey = NULL, *wrong_eckey = NULL;
     EC_GROUP *group;
-    ECDSA_SIG *ecdsa_sig = NULL;
+    ECDSA_SIG *ecdsa_sig = NULL, *modified_sig = NULL;
     unsigned char digest[20], wrong_digest[20];
     unsigned char *signature = NULL;
     const unsigned char *sig_ptr;
     unsigned char *sig_ptr2;
     unsigned char *raw_buf = NULL;
-    BIGNUM *sig_r, *sig_s;
+    const BIGNUM *sig_r, *sig_s;
+    BIGNUM *modified_r = NULL, *modified_s = NULL;
+    BIGNUM *unmodified_r = NULL, *unmodified_s = NULL;
     unsigned int sig_len, degree, r_len, s_len, bn_len, buf_len;
     int nid, ret = 0;
 
@@ -268,7 +270,7 @@ int test_builtin(BIO *out)
     }
 
     /*
-     * create and verify a ecdsa signature with every availble curve (with )
+     * create and verify a ecdsa signature with every available curve (with )
      */
     BIO_printf(out, "\ntesting ECDSA_sign() and ECDSA_verify() "
                "with some internal curves:\n");
@@ -388,7 +390,7 @@ int test_builtin(BIO *out)
             goto builtin_err;
         }
 
-        ECDSA_SIG_get0(&sig_r, &sig_s, ecdsa_sig);
+        ECDSA_SIG_get0(ecdsa_sig, &sig_r, &sig_s);
 
         /* Store the two BIGNUMs in raw_buf. */
         r_len = BN_num_bytes(sig_r);
@@ -409,12 +411,18 @@ int test_builtin(BIO *out)
         dirt = raw_buf[11] ? raw_buf[11] : 1;
         raw_buf[offset] ^= dirt;
         /* Now read the BIGNUMs back in from raw_buf. */
-        if ((BN_bin2bn(raw_buf, bn_len, sig_r) == NULL) ||
-            (BN_bin2bn(raw_buf + bn_len, bn_len, sig_s) == NULL))
+        modified_sig = ECDSA_SIG_new();
+        if (modified_sig == NULL)
             goto builtin_err;
-
+        if (((modified_r = BN_bin2bn(raw_buf, bn_len, NULL)) == NULL)
+            || ((modified_s = BN_bin2bn(raw_buf + bn_len, bn_len, NULL)) == NULL)
+            || !ECDSA_SIG_set0(modified_sig, modified_r, modified_s)) {
+            BN_free(modified_r);
+            BN_free(modified_s);
+            goto builtin_err;
+        }
         sig_ptr2 = signature;
-        sig_len = i2d_ECDSA_SIG(ecdsa_sig, &sig_ptr2);
+        sig_len = i2d_ECDSA_SIG(modified_sig, &sig_ptr2);
         if (ECDSA_verify(0, digest, 20, signature, sig_len, eckey) == 1) {
             BIO_printf(out, " failed\n");
             goto builtin_err;
@@ -423,12 +431,16 @@ int test_builtin(BIO *out)
          * Sanity check: undo the modification and verify signature.
          */
         raw_buf[offset] ^= dirt;
-        if ((BN_bin2bn(raw_buf, bn_len, sig_r) == NULL) ||
-            (BN_bin2bn(raw_buf + bn_len, bn_len, sig_s) == NULL))
+        if (((unmodified_r = BN_bin2bn(raw_buf, bn_len, NULL)) == NULL)
+            || ((unmodified_s = BN_bin2bn(raw_buf + bn_len, bn_len, NULL)) == NULL)
+            || !ECDSA_SIG_set0(modified_sig, unmodified_r, unmodified_s)) {
+            BN_free(unmodified_r);
+            BN_free(unmodified_s);
             goto builtin_err;
+        }
 
         sig_ptr2 = signature;
-        sig_len = i2d_ECDSA_SIG(ecdsa_sig, &sig_ptr2);
+        sig_len = i2d_ECDSA_SIG(modified_sig, &sig_ptr2);
         if (ECDSA_verify(0, digest, 20, signature, sig_len, eckey) != 1) {
             BIO_printf(out, " failed\n");
             goto builtin_err;
@@ -448,6 +460,8 @@ int test_builtin(BIO *out)
         wrong_eckey = NULL;
         ECDSA_SIG_free(ecdsa_sig);
         ecdsa_sig = NULL;
+        ECDSA_SIG_free(modified_sig);
+        modified_sig = NULL;
         OPENSSL_free(raw_buf);
         raw_buf = NULL;
     }
@@ -457,6 +471,7 @@ int test_builtin(BIO *out)
     EC_KEY_free(eckey);
     EC_KEY_free(wrong_eckey);
     ECDSA_SIG_free(ecdsa_sig);
+    ECDSA_SIG_free(modified_sig);
     OPENSSL_free(signature);
     OPENSSL_free(raw_buf);
     OPENSSL_free(curves);

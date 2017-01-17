@@ -71,8 +71,8 @@ static struct test_st {
         (unsigned char *)"bab53058ae861a7f191abe2d0145cbb123776a6369ee3f9d79ce455667e411dd"
     },
     {
-        "12345", 5, "My test data again", 12,
-        (unsigned char *)"7dbe8c764c068e3bcd6e6b0fbcd5e6fc197b15bb"
+        "12345", 5, "My test data again", 18,
+        (unsigned char *)"a12396ceddd2a85f4c656bc1e0aa50c78cffde3e"
     }
 };
 # endif
@@ -123,6 +123,11 @@ int main(int argc, char *argv[])
         err++;
         goto end;
     }
+    if (HMAC_CTX_get_md(ctx) != NULL) {
+        printf("Message digest not NULL for HMAC (test 4)\n");
+        err++;
+        goto test5;
+    }
     if (HMAC_Init_ex(ctx, NULL, 0, NULL, NULL)) {
         printf("Should fail to initialise HMAC with empty MD and key (test 4)\n");
         err++;
@@ -155,6 +160,11 @@ test5:
     }
 
     HMAC_CTX_reset(ctx);
+    if (HMAC_CTX_get_md(ctx) != NULL) {
+        printf("Message digest not NULL for HMAC (test 5)\n");
+        err++;
+        goto test6;
+    }
     if (HMAC_Init_ex(ctx, test[4].key, test[4].key_len, NULL, NULL)) {
         printf("Should fail to initialise HMAC with empty MD (test 5)\n");
         err++;
@@ -199,6 +209,11 @@ test5:
     }
     if (!HMAC_Init_ex(ctx, test[5].key, test[5].key_len, EVP_sha256(), NULL)) {
         printf("Failed to reinitialise HMAC (test 5)\n");
+        err++;
+        goto test6;
+    }
+    if (HMAC_CTX_get_md(ctx) != EVP_sha256()) {
+        printf("Unexpected message digest for HMAC (test 5)\n");
         err++;
         goto test6;
     }

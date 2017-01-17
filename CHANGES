@@ -2,7 +2,200 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.2h and 1.1.0  [xx XXX 2016]
+ Changes between 1.1.0a and 1.1.1 [xx XXX xxxx]
+
+  *) OpenSSL now fails if it receives an unrecognised record type in TLS1.0
+     or TLS1.1. Previously this only happened in SSLv3 and TLS1.2. This is to
+     prevent issues where no progress is being made and the peer continually
+     sends unrecognised record types, using up resources processing them.
+     [Matt Caswell]
+
+  *) 'openssl passwd' can now produce SHA256 and SHA512 based output,
+     using the algorithm defined in
+     https://www.akkadia.org/drepper/SHA-crypt.txt
+     [Richard Levitte]
+
+  *) Heartbeat support has been removed; the ABI is changed for now.
+     [Richard Levitte, Rich Salz]
+
+  *) Support for SSL_OP_NO_ENCRYPT_THEN_MAC in SSL_CONF_cmd.
+     [Emilia Käsper]
+
+ Changes between 1.1.0b and 1.1.0c [xx XXX xxxx]
+
+  *) ChaCha20/Poly1305 heap-buffer-overflow
+
+     TLS connections using *-CHACHA20-POLY1305 ciphersuites are susceptible to
+     a DoS attack by corrupting larger payloads. This can result in an OpenSSL
+     crash. This issue is not considered to be exploitable beyond a DoS.
+
+     This issue was reported to OpenSSL by Robert Święcki (Google Security Team)
+     (CVE-2016-7054)
+     [Richard Levitte]
+
+  *) CMS Null dereference
+
+     Applications parsing invalid CMS structures can crash with a NULL pointer
+     dereference. This is caused by a bug in the handling of the ASN.1 CHOICE
+     type in OpenSSL 1.1.0 which can result in a NULL value being passed to the
+     structure callback if an attempt is made to free certain invalid encodings.
+     Only CHOICE structures using a callback which do not handle NULL value are
+     affected.
+
+     This issue was reported to OpenSSL by Tyler Nighswander of ForAllSecure.
+     (CVE-2016-7053)
+     [Stephen Henson]
+
+  *) Montgomery multiplication may produce incorrect results
+
+     There is a carry propagating bug in the Broadwell-specific Montgomery
+     multiplication procedure that handles input lengths divisible by, but
+     longer than 256 bits. Analysis suggests that attacks against RSA, DSA
+     and DH private keys are impossible. This is because the subroutine in
+     question is not used in operations with the private key itself and an input
+     of the attacker's direct choice. Otherwise the bug can manifest itself as
+     transient authentication and key negotiation failures or reproducible
+     erroneous outcome of public-key operations with specially crafted input.
+     Among EC algorithms only Brainpool P-512 curves are affected and one
+     presumably can attack ECDH key negotiation. Impact was not analyzed in
+     detail, because pre-requisites for attack are considered unlikely. Namely
+     multiple clients have to choose the curve in question and the server has to
+     share the private key among them, neither of which is default behaviour.
+     Even then only clients that chose the curve will be affected.
+
+     This issue was publicly reported as transient failures and was not
+     initially recognized as a security issue. Thanks to Richard Morgan for
+     providing reproducible case.
+     (CVE-2016-7055)
+     [Andy Polyakov]
+
+  *) Removed automatic addition of RPATH in shared libraries and executables,
+     as this was a remainder from OpenSSL 1.0.x and isn't needed any more.
+     [Richard Levitte]
+
+ Changes between 1.1.0a and 1.1.0b [26 Sep 2016]
+
+  *) Fix Use After Free for large message sizes
+
+     The patch applied to address CVE-2016-6307 resulted in an issue where if a
+     message larger than approx 16k is received then the underlying buffer to
+     store the incoming message is reallocated and moved. Unfortunately a
+     dangling pointer to the old location is left which results in an attempt to
+     write to the previously freed location. This is likely to result in a
+     crash, however it could potentially lead to execution of arbitrary code.
+
+     This issue only affects OpenSSL 1.1.0a.
+
+     This issue was reported to OpenSSL by Robert Święcki.
+     (CVE-2016-6309)
+     [Matt Caswell]
+
+ Changes between 1.1.0 and 1.1.0a [22 Sep 2016]
+
+  *) OCSP Status Request extension unbounded memory growth
+
+     A malicious client can send an excessively large OCSP Status Request
+     extension. If that client continually requests renegotiation, sending a
+     large OCSP Status Request extension each time, then there will be unbounded
+     memory growth on the server. This will eventually lead to a Denial Of
+     Service attack through memory exhaustion. Servers with a default
+     configuration are vulnerable even if they do not support OCSP. Builds using
+     the "no-ocsp" build time option are not affected.
+
+     This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
+     (CVE-2016-6304)
+     [Matt Caswell]
+
+  *) SSL_peek() hang on empty record
+
+     OpenSSL 1.1.0 SSL/TLS will hang during a call to SSL_peek() if the peer
+     sends an empty record. This could be exploited by a malicious peer in a
+     Denial Of Service attack.
+
+     This issue was reported to OpenSSL by Alex Gaynor.
+     (CVE-2016-6305)
+     [Matt Caswell]
+
+  *) Excessive allocation of memory in tls_get_message_header() and
+     dtls1_preprocess_fragment()
+
+     A (D)TLS message includes 3 bytes for its length in the header for the
+     message. This would allow for messages up to 16Mb in length. Messages of
+     this length are excessive and OpenSSL includes a check to ensure that a
+     peer is sending reasonably sized messages in order to avoid too much memory
+     being consumed to service a connection. A flaw in the logic of version
+     1.1.0 means that memory for the message is allocated too early, prior to
+     the excessive message length check. Due to way memory is allocated in
+     OpenSSL this could mean an attacker could force up to 21Mb to be allocated
+     to service a connection. This could lead to a Denial of Service through
+     memory exhaustion. However, the excessive message length check still takes
+     place, and this would cause the connection to immediately fail. Assuming
+     that the application calls SSL_free() on the failed conneciton in a timely
+     manner then the 21Mb of allocated memory will then be immediately freed
+     again. Therefore the excessive memory allocation will be transitory in
+     nature. This then means that there is only a security impact if:
+
+     1) The application does not call SSL_free() in a timely manner in the event
+     that the connection fails
+     or
+     2) The application is working in a constrained environment where there is
+     very little free memory
+     or
+     3) The attacker initiates multiple connection attempts such that there are
+     multiple connections in a state where memory has been allocated for the
+     connection; SSL_free() has not yet been called; and there is insufficient
+     memory to service the multiple requests.
+
+     Except in the instance of (1) above any Denial Of Service is likely to be
+     transitory because as soon as the connection fails the memory is
+     subsequently freed again in the SSL_free() call. However there is an
+     increased risk during this period of application crashes due to the lack of
+     memory - which would then mean a more serious Denial of Service.
+
+     This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
+     (CVE-2016-6307 and CVE-2016-6308)
+     [Matt Caswell]
+
+  *) solaris-x86-cc, i.e. 32-bit configuration with vendor compiler,
+     had to be removed. Primary reason is that vendor assembler can't
+     assemble our modules with -KPIC flag. As result it, assembly
+     support, was not even available as option. But its lack means
+     lack of side-channel resistant code, which is incompatible with
+     security by todays standards. Fortunately gcc is readily available
+     prepackaged option, which we firmly point at...
+     [Andy Polyakov]
+
+ Changes between 1.0.2h and 1.1.0  [25 Aug 2016]
+
+  *) Windows command-line tool supports UTF-8 opt-in option for arguments
+     and console input. Setting OPENSSL_WIN32_UTF8 environment variable
+     (to any value) allows Windows user to access PKCS#12 file generated
+     with Windows CryptoAPI and protected with non-ASCII password, as well
+     as files generated under UTF-8 locale on Linux also protected with
+     non-ASCII password.
+     [Andy Polyakov]
+
+  *) To mitigate the SWEET32 attack (CVE-2016-2183), 3DES cipher suites
+     have been disabled by default and removed from DEFAULT, just like RC4.
+     See the RC4 item below to re-enable both.
+     [Rich Salz]
+
+  *) The method for finding the storage location for the Windows RAND seed file
+     has changed. First we check %RANDFILE%. If that is not set then we check
+     the directories %HOME%, %USERPROFILE% and %SYSTEMROOT% in that order. If
+     all else fails we fall back to C:\.
+     [Matt Caswell]
+
+  *) The EVP_EncryptUpdate() function has had its return type changed from void
+     to int. A return of 0 indicates and error while a return of 1 indicates
+     success.
+     [Matt Caswell]
+
+  *) The flags RSA_FLAG_NO_CONSTTIME, DSA_FLAG_NO_EXP_CONSTTIME and
+     DH_FLAG_NO_EXP_CONSTTIME which previously provided the ability to switch
+     off the constant time implementation for RSA, DSA and DH have been made
+     no-ops and deprecated.
+     [Matt Caswell]
 
   *) Windows RAND implementation was simplified to only get entropy by
      calling CryptGenRandom(). Various other RAND-related tickets
@@ -183,19 +376,13 @@
      [Emilia Käsper]
 
   *) Add X25519 support.
-     Integrate support for X25519 into EC library. This includes support
+     Add ASN.1 and EVP_PKEY methods for X25519. This includes support
      for public and private key encoding using the format documented in
-     draft-josefsson-pkix-newcurves-01: specifically X25519 uses the
-     OID from that draft, encodes public keys using little endian
-     format in the ECPoint structure and private keys using
-     little endian form in the privateKey field of the ECPrivateKey
-     structure. TLS support complies with draft-ietf-tls-rfc4492bis-06
-     and uses X25519(29).
+     draft-ietf-curdle-pkix-02. The coresponding EVP_PKEY method supports
+     key generation and key derivation.
 
-     Note: the current version supports key generation, public and
-     private key encoding and ECDH key agreement using the EC API.
-     Low level point operations such as EC_POINT_add(), EC_POINT_mul()
-     are NOT supported.
+     TLS support complies with draft-ietf-tls-rfc4492bis-08 and uses
+     X25519(29).
      [Steve Henson]
 
   *) Deprecate SRP_VBASE_get_by_user.
@@ -274,6 +461,12 @@
      information for each directory with source to compile, and a
      template in Configurations, like unix-Makefile.tmpl or
      descrip.mms.tmpl.
+
+     With this change, the library names were also renamed on Windows
+     and on VMS.  They now have names that are closer to the standard
+     on Unix, and include the major version number, and in certain
+     cases, the architecture they are built for.  See "Notes on shared
+     libraries" in INSTALL.
 
      We rely heavily on the perl module Text::Template.
      [Richard Levitte]
@@ -848,10 +1041,6 @@
   *) More extensive health check for DRBG checking many more failure modes.
      New function FIPS_selftest_drbg_all() to handle every possible DRBG
      combination: call this in fips_test_suite.
-     [Steve Henson]
-
-  *) Add support for Dual EC DRBG from SP800-90. Update DRBG algorithm test
-     and POST to handle Dual EC cases.
      [Steve Henson]
 
   *) Add support for canonical generation of DSA parameter 'g'. See 
@@ -1805,7 +1994,7 @@
      possible to have different stores per SSL structure or one store in
      the parent SSL_CTX. Include distinct stores for certificate chain
      verification and chain building. New ctrl SSL_CTRL_BUILD_CERT_CHAIN
-     to build and store a certificate chain in CERT structure: returing
+     to build and store a certificate chain in CERT structure: returning
      an error if the chain cannot be built: this will allow applications
      to test if a chain is correctly configured.
 
@@ -2048,7 +2237,7 @@
 
      3. Check DSA/ECDSA signatures use DER.
 
-     Reencode DSA/ECDSA signatures and compare with the original received
+     Re-encode DSA/ECDSA signatures and compare with the original received
      signature. Return an error if there is a mismatch.
 
      This will reject various cases including garbage after signature
@@ -2138,7 +2327,7 @@
 
   *) Add additional DigestInfo checks.
  
-     Reencode DigestInto in DER and check against the original when
+     Re-encode DigestInto in DER and check against the original when
      verifying RSA signature: this will reject any improperly encoded
      DigestInfo structures.
 
@@ -2735,7 +2924,7 @@
      in CMS and PKCS7 code. When RSA decryption fails use a random key for
      content decryption and always return the same error. Note: this attack
      needs on average 2^20 messages so it only affects automated senders. The
-     old behaviour can be reenabled in the CMS code by setting the
+     old behaviour can be re-enabled in the CMS code by setting the
      CMS_DEBUG_DECRYPT flag: this is useful for debugging and testing where
      an MMA defence is not necessary.
      Thanks to Ivan Nestlerode <inestlerode@us.ibm.com> for discovering
@@ -3031,7 +3220,7 @@
      as part of the CRL checking and indicate a new error "CRL path validation
      error" in this case. Applications wanting additional details can use
      the verify callback and check the new "parent" field. If this is not
-     NULL CRL path validation is taking place. Existing applications wont
+     NULL CRL path validation is taking place. Existing applications won't
      see this because it requires extended CRL support which is off by
      default.
 
@@ -4044,9 +4233,9 @@
      This work was sponsored by Logica.
      [Steve Henson]
 
-  *) Fix bug in X509_ATTRIBUTE creation: dont set attribute using
+  *) Fix bug in X509_ATTRIBUTE creation: don't set attribute using
      ASN1_TYPE_set1 if MBSTRING flag set. This bug would crash certain
-     attribute creation routines such as certifcate requests and PKCS#12
+     attribute creation routines such as certificate requests and PKCS#12
      files.
      [Steve Henson]
 
@@ -4121,7 +4310,7 @@
      [Ian Lister (tweaked by Geoff Thorpe)]
 
   *) Backport of CMS code to OpenSSL 0.9.8. This differs from the 0.9.9
-     implemention in the following ways:
+     implementation in the following ways:
 
      Lack of EVP_PKEY_ASN1_METHOD means algorithm parameters have to be
      hard coded.
@@ -4319,7 +4508,7 @@
      implementation in BN_mod_exp_mont_consttime().)  The old name
      remains as a deprecated alias.
 
-     Similary, RSA_FLAG_NO_EXP_CONSTTIME is replaced by a more general
+     Similarly, RSA_FLAG_NO_EXP_CONSTTIME is replaced by a more general
      RSA_FLAG_NO_CONSTTIME flag since the RSA implementation now uses
      constant-time implementations for more than just exponentiation.
      Here too the old name is kept as a deprecated alias.
@@ -5023,7 +5212,7 @@
   *) Key-generation can now be implemented in RSA_METHOD, DSA_METHOD
      and DH_METHOD (eg. by ENGINE implementations) to override the normal
      software implementations. For DSA and DH, parameter generation can
-     also be overriden by providing the appropriate method callbacks.
+     also be overridden by providing the appropriate method callbacks.
      [Geoff Thorpe]
 
   *) Change the "progress" mechanism used in key-generation and
@@ -5106,7 +5295,7 @@
      the "shared" options was given to ./Configure or ./config.
      Otherwise, they are inserted in libcrypto.a.
      /usr/local/ssl/engines is the default directory for dynamic
-     engines, but that can be overriden at configure time through
+     engines, but that can be overridden at configure time through
      the usual use of --prefix and/or --openssldir, and at run
      time with the environment variable OPENSSL_ENGINES.
      [Geoff Thorpe and Richard Levitte]
@@ -5641,8 +5830,8 @@
      [Steve Henson]
 
   *) Perform some character comparisons of different types in X509_NAME_cmp:
-     this is needed for some certificates that reencode DNs into UTF8Strings
-     (in violation of RFC3280) and can't or wont issue name rollover
+     this is needed for some certificates that re-encode DNs into UTF8Strings
+     (in violation of RFC3280) and can't or won't issue name rollover
      certificates.
      [Steve Henson]
 
@@ -6700,7 +6889,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
         const ASN1_ITEM *it = &ASN1_INTEGER_it;
 
-     wont compile. This is used by the any applications that need to
+     won't compile. This is used by the any applications that need to
      declare their own ASN1 modules. This was fixed by adding the option
      EXPORT_VAR_AS_FN to all Win32 platforms, although this isn't strictly
      needed for static libraries under Win32.
@@ -7301,7 +7490,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      entropy, EGD style sockets (served by EGD or PRNGD) will automatically
      be queried.
      The locations /var/run/egd-pool, /dev/egd-pool, /etc/egd-pool, and
-     /etc/entropy will be queried once each in this sequence, quering stops
+     /etc/entropy will be queried once each in this sequence, querying stops
      when enough entropy was collected without querying more sockets.
      [Lutz Jaenicke]
 
@@ -7329,7 +7518,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      information from an OCSP_CERTID structure (which will be created
      when the request structure is built). These are built from lower
      level functions which work on OCSP_SINGLERESP structures but
-     wont normally be used unless the application wishes to examine
+     won't normally be used unless the application wishes to examine
      extensions in the OCSP response for example.
 
      Replace nonce routines with a pair of functions.
@@ -7405,7 +7594,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) New function X509V3_add1_i2d(). This automatically encodes and
      adds an extension. Its behaviour can be customised with various
      flags to append, replace or delete. Various wrappers added for
-     certifcates and CRLs.
+     certificates and CRLs.
      [Steve Henson]
 
   *) Fix to avoid calling the underlying ASN1 print routine when
@@ -7950,7 +8139,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Nils Larsch <nla@trustcenter.de>]
 
   *) Fix BASE64 decode (EVP_DecodeUpdate) for data with CR/LF ended lines:
-     an end-of-file condition would erronously be flagged, when the CRLF
+     an end-of-file condition would erroneously be flagged, when the CRLF
      was just at the end of a processed block. The bug was discovered when
      processing data through a buffering memory BIO handing the data to a
      BASE64-decoding BIO. Bug fund and patch submitted by Pavel Tsekov
@@ -8880,7 +9069,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Steve Henson]
 
   *) When a certificate request is read in keep a copy of the
-     original encoding of the signed data and use it when outputing
+     original encoding of the signed data and use it when outputting
      again. Signatures then use the original encoding rather than
      a decoded, encoded version which may cause problems if the
      request is improperly encoded.

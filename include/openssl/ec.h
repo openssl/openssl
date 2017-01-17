@@ -80,7 +80,6 @@ const EC_METHOD *EC_GFp_mont_method(void);
 const EC_METHOD *EC_GFp_nist_method(void);
 
 # ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
-#  ifndef OPENSSL_SYS_WIN32
 /** Returns 64-bit optimized methods for nistp224
  *  \return  EC_METHOD object
  */
@@ -95,7 +94,6 @@ const EC_METHOD *EC_GFp_nistp256_method(void);
  *  \return  EC_METHOD object
  */
 const EC_METHOD *EC_GFp_nistp521_method(void);
-#  endif
 # endif
 
 # ifndef OPENSSL_NO_EC2M
@@ -175,7 +173,7 @@ const EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group);
 
 /** Returns the montgomery data for order(Generator)
  *  \param  group  EC_GROUP object
- *  \return the currently used generator (possibly NULL).
+ *  \return the currently used montgomery data (possibly NULL).
 */
 BN_MONT_CTX *EC_GROUP_get_mont_data(const EC_GROUP *group);
 
@@ -191,14 +189,12 @@ int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
  *  \param  group  EC_GROUP object
  *  \return the group order
  */
-
 const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group);
 
 /** Gets the number of bits of the order of an EC_GROUP
  *  \param  group  EC_GROUP object
  *  \return number of bits of group order.
  */
-
 int EC_GROUP_order_bits(const EC_GROUP *group);
 
 /** Gets the cofactor of a EC_GROUP
@@ -214,7 +210,6 @@ int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
  *  \param  group  EC_GROUP object
  *  \return the group cofactor
  */
-
 const BIGNUM *EC_GROUP_get0_cofactor(const EC_GROUP *group);
 
 /** Sets the name of a EC_GROUP object
@@ -309,7 +304,7 @@ int EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx);
  *  \param  a    first EC_GROUP object
  *  \param  b    second EC_GROUP object
  *  \param  ctx  BN_CTX object (optional)
- *  \return 0 if both groups are equal and 1 otherwise
+ *  \return 0 if the groups are equal, 1 if not, or -1 on error
  */
 int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx);
 
@@ -641,7 +636,7 @@ int EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *p);
  *  \param  group  underlying EC_GROUP object
  *  \param  point  EC_POINT object to check
  *  \param  ctx    BN_CTX object (optional)
- *  \return 1 if point if on the curve and 0 otherwise
+ *  \return 1 if the point is on the curve, 0 if not, or -1 on error
  */
 int EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
                          BN_CTX *ctx);
@@ -651,7 +646,7 @@ int EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
  *  \param  a      first EC_POINT object
  *  \param  b      second EC_POINT object
  *  \param  ctx    BN_CTX object (optional)
- *  \return 0 if both points are equal and a value != 0 otherwise
+ *  \return 1 if the points are not equal, 0 if they are, or -1 on error
  */
 int EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
                  BN_CTX *ctx);
@@ -660,7 +655,7 @@ int EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx);
 int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
                           EC_POINT *points[], BN_CTX *ctx);
 
-/** Computes r = generator * n sum_{i=0}^{num-1} p[i] * m[i]
+/** Computes r = generator * n + sum_{i=0}^{num-1} p[i] * m[i]
  *  \param  group  underlying EC_GROUP object
  *  \param  r      EC_POINT object for the result
  *  \param  n      BIGNUM with the multiplier for the group generator (optional)
@@ -704,7 +699,9 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
 /********************************************************************/
 
 DECLARE_ASN1_ITEM(ECPKPARAMETERS)
+DECLARE_ASN1_ALLOC_FUNCTIONS(ECPKPARAMETERS)
 DECLARE_ASN1_ITEM(ECPARAMETERS)
+DECLARE_ASN1_ALLOC_FUNCTIONS(ECPARAMETERS)
 
 /*
  * EC_GROUP_get_basis_type() returns the NID of the basis type used to
@@ -776,13 +773,13 @@ void EC_KEY_free(EC_KEY *key);
  *  \param  src  src EC_KEY object
  *  \return dst or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_copy(EC_KEY *dst, EC_KEY *src);
+EC_KEY *EC_KEY_copy(EC_KEY *dst, const EC_KEY *src);
 
 /** Creates a new EC_KEY object and copies the content from src to it.
  *  \param  src  the source EC_KEY object
  *  \return newly created EC_KEY object or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_dup(EC_KEY *src);
+EC_KEY *EC_KEY_dup(const EC_KEY *src);
 
 /** Increases the internal reference count of a EC_KEY object.
  *  \param  key  EC_KEY object
@@ -911,7 +908,7 @@ int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
  *  \return 1 on success and 0 if an error occurred
  */
 
-int EC_KEY_oct2priv(EC_KEY *key, unsigned char *buf, size_t len);
+int EC_KEY_oct2priv(EC_KEY *key, const unsigned char *buf, size_t len);
 
 /** Encodes a EC_KEY private key to an octet string
  *  \param  key    key to encode
@@ -992,7 +989,7 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **key, const unsigned char **in, long len);
  *               of bytes needed).
  *  \return 1 on success and 0 if an error occurred
  */
-int i2o_ECPublicKey(EC_KEY *key, unsigned char **out);
+int i2o_ECPublicKey(const EC_KEY *key, unsigned char **out);
 
 /** Prints out the ec parameters on human readable form.
  *  \param  bp   BIO object to which the information is printed
@@ -1078,7 +1075,14 @@ ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
  *  \param  pr   pointer to BIGNUM pointer for r (may be NULL)
  *  \param  ps   pointer to BIGNUM pointer for s (may be NULL)
  */
-void ECDSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const ECDSA_SIG *sig);
+void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
+
+/** Setter for r and s fields of ECDSA_SIG
+ *  \param  sig  pointer to ECDSA_SIG pointer
+ *  \param  r    pointer to BIGNUM for r (may be NULL)
+ *  \param  s    pointer to BIGNUM for s (may be NULL)
+ */
+int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
 
 /** Computes the ECDSA signature of the given hash value using
  *  the supplied private key and returns the created signature.
@@ -1358,7 +1362,7 @@ void EC_KEY_METHOD_get_verify(EC_KEY_METHOD *meth,
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_EC_strings(void);
+int ERR_load_EC_strings(void);
 
 /* Error codes for the EC functions. */
 
@@ -1376,6 +1380,7 @@ void ERR_load_EC_strings(void);
 # define EC_F_ECDSA_DO_VERIFY                             252
 # define EC_F_ECDSA_SIGN_EX                               254
 # define EC_F_ECDSA_SIGN_SETUP                            248
+# define EC_F_ECDSA_SIG_NEW                               265
 # define EC_F_ECDSA_VERIFY                                253
 # define EC_F_ECKEY_PARAM2TYPE                            223
 # define EC_F_ECKEY_PARAM_DECODE                          212
@@ -1393,6 +1398,9 @@ void ERR_load_EC_strings(void);
 # define EC_F_ECP_NISTZ256_POINTS_MUL                     241
 # define EC_F_ECP_NISTZ256_PRE_COMP_NEW                   244
 # define EC_F_ECP_NISTZ256_WINDOWED_MUL                   242
+# define EC_F_ECX_KEY_OP                                  266
+# define EC_F_ECX_PRIV_ENCODE                             267
+# define EC_F_ECX_PUB_ENCODE                              268
 # define EC_F_EC_ASN1_GROUP2CURVE                         153
 # define EC_F_EC_ASN1_GROUP2FIELDID                       154
 # define EC_F_EC_GF2M_MONTGOMERY_POINT_MULTIPLY           208
@@ -1497,6 +1505,7 @@ void ERR_load_EC_strings(void);
 # define EC_F_OSSL_ECDH_COMPUTE_KEY                       247
 # define EC_F_OSSL_ECDSA_SIGN_SIG                         249
 # define EC_F_OSSL_ECDSA_VERIFY_SIG                       250
+# define EC_F_PKEY_ECX_DERIVE                             269
 # define EC_F_PKEY_EC_CTRL                                197
 # define EC_F_PKEY_EC_CTRL_STR                            198
 # define EC_F_PKEY_EC_DERIVE                              217
@@ -1531,7 +1540,9 @@ void ERR_load_EC_strings(void);
 # define EC_R_INVALID_FIELD                               103
 # define EC_R_INVALID_FORM                                104
 # define EC_R_INVALID_GROUP_ORDER                         122
+# define EC_R_INVALID_KEY                                 116
 # define EC_R_INVALID_OUTPUT_LENGTH                       161
+# define EC_R_INVALID_PEER_KEY                            133
 # define EC_R_INVALID_PENTANOMIAL_BASIS                   132
 # define EC_R_INVALID_PRIVATE_KEY                         123
 # define EC_R_INVALID_TRINOMIAL_BASIS                     137

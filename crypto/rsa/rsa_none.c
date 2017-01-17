@@ -10,7 +10,6 @@
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
-#include <openssl/rand.h>
 
 int RSA_padding_add_none(unsigned char *to, int tlen,
                          const unsigned char *from, int flen)

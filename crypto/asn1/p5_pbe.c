@@ -29,7 +29,7 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
 {
     PBEPARAM *pbe = NULL;
     ASN1_STRING *pbe_str = NULL;
-    unsigned char *sstr;
+    unsigned char *sstr = NULL;
 
     pbe = PBEPARAM_new();
     if (pbe == NULL) {
@@ -44,15 +44,19 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
     }
     if (!saltlen)
         saltlen = PKCS5_SALT_LEN;
-    if (!ASN1_STRING_set(pbe->salt, NULL, saltlen)) {
+
+    sstr = OPENSSL_malloc(saltlen);
+    if (sstr == NULL) {
         ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    sstr = ASN1_STRING_data(pbe->salt);
     if (salt)
         memcpy(sstr, salt, saltlen);
     else if (RAND_bytes(sstr, saltlen) <= 0)
         goto err;
+
+    ASN1_STRING_set0(pbe->salt, sstr, saltlen);
+    sstr = NULL;
 
     if (!ASN1_item_pack(pbe, ASN1_ITEM_rptr(PBEPARAM), &pbe_str)) {
         ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR, ERR_R_MALLOC_FAILURE);
@@ -66,6 +70,7 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
         return 1;
 
  err:
+    OPENSSL_free(sstr);
     PBEPARAM_free(pbe);
     ASN1_STRING_free(pbe_str);
     return 0;

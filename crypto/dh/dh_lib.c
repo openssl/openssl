@@ -111,7 +111,7 @@ void DH_free(DH *r)
     if (r == NULL)
         return;
 
-    CRYPTO_atomic_add(&r->references, -1, &i, r->lock);
+    CRYPTO_DOWN_REF(&r->references, &i, r->lock);
     REF_PRINT_COUNT("DH", r);
     if (i > 0)
         return;
@@ -142,7 +142,7 @@ int DH_up_ref(DH *r)
 {
     int i;
 
-    if (CRYPTO_atomic_add(&r->references, 1, &i, r->lock) <= 0)
+    if (CRYPTO_UP_REF(&r->references, &i, r->lock) <= 0)
         return 0;
 
     REF_PRINT_COUNT("DH", r);
@@ -183,7 +183,8 @@ int DH_security_bits(const DH *dh)
 }
 
 
-void DH_get0_pqg(const DH *dh, BIGNUM **p, BIGNUM **q, BIGNUM **g)
+void DH_get0_pqg(const DH *dh,
+                 const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 {
     if (p != NULL)
         *p = dh->p;
@@ -197,11 +198,9 @@ int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 {
     /* If the fields p and g in d are NULL, the corresponding input
      * parameters MUST be non-NULL.  q may remain NULL.
-     *
-     * It is an error to give the results from get0 on d
-     * as input parameters.
      */
-    if (p == dh->p || (dh->q != NULL && q == dh->q) || g == dh->g)
+    if ((dh->p == NULL && p == NULL)
+        || (dh->g == NULL && g == NULL))
         return 0;
 
     if (p != NULL) {
@@ -235,7 +234,7 @@ int DH_set_length(DH *dh, long length)
     return 1;
 }
 
-void DH_get0_key(const DH *dh, BIGNUM **pub_key, BIGNUM **priv_key)
+void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
 {
     if (pub_key != NULL)
         *pub_key = dh->pub_key;
@@ -245,15 +244,11 @@ void DH_get0_key(const DH *dh, BIGNUM **pub_key, BIGNUM **priv_key)
 
 int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
 {
-    /* If the pub_key in dh is NULL, the corresponding input
+    /* If the field pub_key in dh is NULL, the corresponding input
      * parameters MUST be non-NULL.  The priv_key field may
      * be left NULL.
-     *
-     * It is an error to give the results from get0 on dh
-     * as input parameters.
      */
-    if (dh->pub_key == pub_key
-        || (dh->priv_key != NULL && priv_key == dh->priv_key))
+    if (dh->pub_key == NULL && pub_key == NULL)
         return 0;
 
     if (pub_key != NULL) {

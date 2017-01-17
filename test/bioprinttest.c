@@ -197,12 +197,12 @@ int main(int argc, char **argv)
         dofptest(test++, 66.0 + frac, width, prec, &fail);
         dofptest(test++, 666.0 + frac, width, prec, &fail);
         dofptest(test++, 6666.0 + frac, width, prec, &fail);
-        dofptest(test++, 66666.0 + frac, width, prec, &fail); 
+        dofptest(test++, 66666.0 + frac, width, prec, &fail);
     }
 
     /* Test excessively big number. Should fail */
     if (BIO_snprintf(buf, sizeof(buf), "%f\n", 2 * (double)ULONG_MAX) != -1) {
-        printf("Test %d failed. Unexecpted success return from "
+        printf("Test %d failed. Unexpected success return from "
                "BIO_snprintf()\n", test);
         fail = 1;
     }

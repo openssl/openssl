@@ -26,10 +26,8 @@
 
 #define COOKIE_SECRET_LENGTH    16
 
-int verify_depth = 0;
-int verify_quiet = 0;
-int verify_error = X509_V_OK;
-int verify_return_error = 0;
+VERIFY_CB_ARGS verify_args = { 0, 0, X509_V_OK, 0 };
+
 #ifndef OPENSSL_NO_SOCK
 static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 static int cookie_initialized = 0;
@@ -52,7 +50,7 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     err = X509_STORE_CTX_get_error(ctx);
     depth = X509_STORE_CTX_get_error_depth(ctx);
 
-    if (!verify_quiet || !ok) {
+    if (!verify_args.quiet || !ok) {
         BIO_printf(bio_err, "depth=%d ", depth);
         if (err_cert) {
             X509_NAME_print_ex(bio_err,
@@ -65,13 +63,13 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     if (!ok) {
         BIO_printf(bio_err, "verify error:num=%d:%s\n", err,
                    X509_verify_cert_error_string(err));
-        if (verify_depth >= depth) {
-            if (!verify_return_error)
+        if (verify_args.depth >= depth) {
+            if (!verify_args.return_error)
                 ok = 1;
-            verify_error = err;
+            verify_args.error = err;
         } else {
             ok = 0;
-            verify_error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
+            verify_args.error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
         }
     }
     switch (err) {
@@ -84,23 +82,23 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     case X509_V_ERR_CERT_NOT_YET_VALID:
     case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
         BIO_printf(bio_err, "notBefore=");
-        ASN1_TIME_print(bio_err, X509_get_notBefore(err_cert));
+        ASN1_TIME_print(bio_err, X509_get0_notBefore(err_cert));
         BIO_printf(bio_err, "\n");
         break;
     case X509_V_ERR_CERT_HAS_EXPIRED:
     case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
         BIO_printf(bio_err, "notAfter=");
-        ASN1_TIME_print(bio_err, X509_get_notAfter(err_cert));
+        ASN1_TIME_print(bio_err, X509_get0_notAfter(err_cert));
         BIO_printf(bio_err, "\n");
         break;
     case X509_V_ERR_NO_EXPLICIT_POLICY:
-        if (!verify_quiet)
+        if (!verify_args.quiet)
             policies_print(ctx);
         break;
     }
-    if (err == X509_V_OK && ok == 2 && !verify_quiet)
+    if (err == X509_V_OK && ok == 2 && !verify_args.quiet)
         policies_print(ctx);
-    if (ok && !verify_quiet)
+    if (ok && !verify_args.quiet)
         BIO_printf(bio_err, "verify return:%d\n", ok);
     return (ok);
 }
@@ -309,50 +307,52 @@ int ssl_print_point_formats(BIO *out, SSL *s)
     return 1;
 }
 
-int ssl_print_curves(BIO *out, SSL *s, int noshared)
+int ssl_print_groups(BIO *out, SSL *s, int noshared)
 {
-    int i, ncurves, *curves, nid;
-    const char *cname;
+    int i, ngroups, *groups, nid;
+    const char *gname;
 
-    ncurves = SSL_get1_curves(s, NULL);
-    if (ncurves <= 0)
+    ngroups = SSL_get1_groups(s, NULL);
+    if (ngroups <= 0)
         return 1;
-    curves = app_malloc(ncurves * sizeof(int), "curves to print");
-    SSL_get1_curves(s, curves);
+    groups = app_malloc(ngroups * sizeof(int), "groups to print");
+    SSL_get1_groups(s, groups);
 
-    BIO_puts(out, "Supported Elliptic Curves: ");
-    for (i = 0; i < ncurves; i++) {
+    BIO_puts(out, "Supported Elliptic Groups: ");
+    for (i = 0; i < ngroups; i++) {
         if (i)
             BIO_puts(out, ":");
-        nid = curves[i];
+        nid = groups[i];
         /* If unrecognised print out hex version */
         if (nid & TLSEXT_nid_unknown)
             BIO_printf(out, "0x%04X", nid & 0xFFFF);
         else {
+            /* TODO(TLS1.3): Get group name here */
             /* Use NIST name for curve if it exists */
-            cname = EC_curve_nid2nist(nid);
-            if (!cname)
-                cname = OBJ_nid2sn(nid);
-            BIO_printf(out, "%s", cname);
+            gname = EC_curve_nid2nist(nid);
+            if (!gname)
+                gname = OBJ_nid2sn(nid);
+            BIO_printf(out, "%s", gname);
         }
     }
-    OPENSSL_free(curves);
+    OPENSSL_free(groups);
     if (noshared) {
         BIO_puts(out, "\n");
         return 1;
     }
-    BIO_puts(out, "\nShared Elliptic curves: ");
-    ncurves = SSL_get_shared_curve(s, -1);
-    for (i = 0; i < ncurves; i++) {
+    BIO_puts(out, "\nShared Elliptic groups: ");
+    ngroups = SSL_get_shared_group(s, -1);
+    for (i = 0; i < ngroups; i++) {
         if (i)
             BIO_puts(out, ":");
-        nid = SSL_get_shared_curve(s, i);
-        cname = EC_curve_nid2nist(nid);
-        if (!cname)
-            cname = OBJ_nid2sn(nid);
-        BIO_printf(out, "%s", cname);
+        nid = SSL_get_shared_group(s, i);
+        /* TODO(TLS1.3): Convert for DH groups */
+        gname = EC_curve_nid2nist(nid);
+        if (!gname)
+            gname = OBJ_nid2sn(nid);
+        BIO_printf(out, "%s", gname);
     }
-    if (ncurves == 0)
+    if (ngroups == 0)
         BIO_puts(out, "NONE");
     BIO_puts(out, "\n");
     return 1;
@@ -385,7 +385,11 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
                 cname = OBJ_nid2sn(nid);
             BIO_printf(out, "ECDH, %s, %d bits\n", cname, EVP_PKEY_bits(key));
         }
+    break;
 #endif
+    default:
+        BIO_printf(out, "%s, %d bits\n", OBJ_nid2sn(EVP_PKEY_id(key)),
+                   EVP_PKEY_bits(key));
     }
     EVP_PKEY_free(key);
     return 1;
@@ -451,6 +455,7 @@ static STRINT_PAIR ssl_versions[] = {
     {"TLS 1.0", TLS1_VERSION},
     {"TLS 1.1", TLS1_1_VERSION},
     {"TLS 1.2", TLS1_2_VERSION},
+    {"TLS 1.3", TLS1_3_VERSION},
     {"DTLS 1.0", DTLS1_VERSION},
     {"DTLS 1.0 (bad)", DTLS1_BAD_VER},
     {NULL}
@@ -520,6 +525,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
         version == TLS1_VERSION ||
         version == TLS1_1_VERSION ||
         version == TLS1_2_VERSION ||
+        version == TLS1_3_VERSION ||
         version == DTLS1_VERSION || version == DTLS1_BAD_VER) {
         switch (content_type) {
         case 20:
@@ -600,7 +606,7 @@ static STRINT_PAIR tlsext_types[] = {
     {"client authz", TLSEXT_TYPE_client_authz},
     {"server authz", TLSEXT_TYPE_server_authz},
     {"cert type", TLSEXT_TYPE_cert_type},
-    {"elliptic curves", TLSEXT_TYPE_elliptic_curves},
+    {"supported_groups", TLSEXT_TYPE_supported_groups},
     {"EC point formats", TLSEXT_TYPE_ec_point_formats},
     {"SRP", TLSEXT_TYPE_srp},
     {"signature algorithms", TLSEXT_TYPE_signature_algorithms},
@@ -1089,7 +1095,7 @@ void print_ssl_summary(SSL *s)
 #ifndef OPENSSL_NO_EC
     ssl_print_point_formats(bio_err, s);
     if (SSL_is_server(s))
-        ssl_print_curves(bio_err, s, 1);
+        ssl_print_groups(bio_err, s, 1);
     else
         ssl_print_tmp_key(bio_err, s);
 #else

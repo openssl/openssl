@@ -44,7 +44,7 @@ if ($flavour =~ /64/) {
 	$PUSH	="stw";
 } else { die "nonsense $flavour"; }
 
-# Define endianess based on flavour
+# Define endianness based on flavour
 # i.e.: linux64le
 $LITTLE_ENDIAN = ($flavour=~/le$/) ? $SIZE_T : 0;
 

@@ -71,6 +71,6 @@ emailAddress		= optional
 [ v3_ca ]
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid:always,issuer:always
-basicConstraints = CA:true,pathlen:1
+basicConstraints = critical,CA:true,pathlen:1
 keyUsage = cRLSign, keyCertSign
 issuerAltName=issuer:copy

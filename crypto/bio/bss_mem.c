@@ -26,7 +26,11 @@ static int mem_buf_sync(BIO *h);
 static const BIO_METHOD mem_method = {
     BIO_TYPE_MEM,
     "memory buffer",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     mem_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     mem_read,
     mem_puts,
     mem_gets,
@@ -39,7 +43,11 @@ static const BIO_METHOD mem_method = {
 static const BIO_METHOD secmem_method = {
     BIO_TYPE_MEM,
     "secure memory buffer",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     mem_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     mem_read,
     mem_puts,
     mem_gets,
@@ -92,7 +100,7 @@ BIO *BIO_new_mem_buf(const void *buf, int len)
     b->max = sz;
     *bb->readp = *bb->buf;
     ret->flags |= BIO_FLAGS_MEM_RDONLY;
-    /* Since this is static data retrying wont help */
+    /* Since this is static data retrying won't help */
     ret->num = 0;
     return ret;
 }
@@ -144,12 +152,12 @@ static int mem_buf_free(BIO *a, int free_all)
             BUF_MEM *b;
             BIO_BUF_MEM *bb = (BIO_BUF_MEM *)a->ptr;
 
-            if(bb != NULL) {
+            if (bb != NULL) {
                 b = bb->buf;
                 if (a->flags & BIO_FLAGS_MEM_RDONLY)
                     b->data = NULL;
                 BUF_MEM_free(b);
-                if(free_all) {
+                if (free_all) {
                     OPENSSL_free(bb->readp);
                     OPENSSL_free(bb);
                 }
@@ -165,10 +173,10 @@ static int mem_buf_free(BIO *a, int free_all)
  */
 static int mem_buf_sync(BIO *b)
 {
-    if((b != NULL) && (b->init) && (b->ptr != NULL)) {
+    if (b != NULL && b->init != 0 && b->ptr != NULL) {
         BIO_BUF_MEM *bbm = (BIO_BUF_MEM *)b->ptr;
 
-        if(bbm->readp->data != bbm->buf->data) {
+        if (bbm->readp->data != bbm->buf->data) {
             memmove(bbm->buf->data, bbm->readp->data, bbm->readp->length);
             bbm->buf->length = bbm->readp->length;
             bbm->readp->data = bbm->buf->data;

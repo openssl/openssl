@@ -12,7 +12,6 @@
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
-#include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/pkcs12.h>
 #include <openssl/pem.h>

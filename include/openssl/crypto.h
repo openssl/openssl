@@ -110,7 +110,8 @@ DEFINE_STACK_OF(void)
 # define CRYPTO_EX_INDEX_UI              11
 # define CRYPTO_EX_INDEX_BIO             12
 # define CRYPTO_EX_INDEX_APP             13
-# define CRYPTO_EX_INDEX__COUNT          14
+# define CRYPTO_EX_INDEX_UI_METHOD       14
+# define CRYPTO_EX_INDEX__COUNT          15
 
 /*
  * This is the default callbacks, but we can have others as well: this is
@@ -173,7 +174,7 @@ typedef void CRYPTO_EX_new (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                            int idx, long argl, void *argp);
 typedef void CRYPTO_EX_free (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                              int idx, long argl, void *argp);
-typedef int CRYPTO_EX_dup (CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from,
+typedef int CRYPTO_EX_dup (CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                            void *srcp, int idx, long argl, void *argp);
 __owur int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
                             CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
@@ -187,7 +188,7 @@ int CRYPTO_free_ex_index(int class_index, int idx);
  */
 int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
-                       CRYPTO_EX_DATA *from);
+                       const CRYPTO_EX_DATA *from);
 
 void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 
@@ -215,11 +216,21 @@ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
  * On the other hand, the locking callbacks are no longer used.  Consequently,
  * the callback management functions can be safely replaced with no-op macros.
  */
-#  define CRYPTO_num_locks()            (0)
+#  define CRYPTO_num_locks()            (1)
 #  define CRYPTO_set_locking_callback(func)
 #  define CRYPTO_get_locking_callback()         (NULL)
 #  define CRYPTO_set_add_lock_callback(func)
 #  define CRYPTO_get_add_lock_callback()        (NULL)
+
+/*
+ * These defines where used in combination with the old locking callbacks,
+ * they are not called anymore, but old code that's not called might still
+ * use them.
+ */
+#  define CRYPTO_LOCK             1
+#  define CRYPTO_UNLOCK           2
+#  define CRYPTO_READ             4
+#  define CRYPTO_WRITE            8
 
 /* This structure is no longer used */
 typedef struct crypto_threadid_st {
@@ -317,8 +328,6 @@ ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line
 # define OPENSSL_assert(e) \
     (void)((e) ? 0 : (OPENSSL_die("assertion failed: " #e, OPENSSL_FILE, OPENSSL_LINE), 1))
 
-unsigned int *OPENSSL_ia32cap_loc(void);
-# define OPENSSL_ia32cap ((OPENSSL_ia32cap_loc())[0])
 int OPENSSL_isservice(void);
 
 int FIPS_mode(void);
@@ -358,9 +367,8 @@ int CRYPTO_memcmp(const volatile void * volatile in_a,
 # define OPENSSL_INIT_ENGINE_CRYPTODEV       0x00001000L
 # define OPENSSL_INIT_ENGINE_CAPI            0x00002000L
 # define OPENSSL_INIT_ENGINE_PADLOCK         0x00004000L
-# define OPENSSL_INIT_ENGINE_DASYNC          0x00008000L
+# define OPENSSL_INIT_ENGINE_AFALG           0x00008000L
 /* OPENSSL_INIT flag 0x00010000 reserved for internal use */
-# define OPENSSL_INIT_ENGINE_AFALG           0x00020000L
 /* OPENSSL_INIT flag range 0xfff00000 reserved for OPENSSL_init_ssl() */
 /* Max OPENSSL_INIT flag value is 0x80000000 */
 
@@ -379,33 +387,37 @@ void OPENSSL_thread_stop(void);
 
 /* Low-level control of initialization */
 OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
-#ifndef OPENSSL_NO_STDIO
-int OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
-                                     const char *config_file);
-#endif
+# ifndef OPENSSL_NO_STDIO
+int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *settings,
+                                    const char *config_file);
+# endif
 void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *settings);
 
-# if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)
-typedef unsigned int CRYPTO_ONCE;
-typedef unsigned int CRYPTO_THREAD_LOCAL;
-typedef unsigned int CRYPTO_THREAD_ID;
-
-#  define CRYPTO_ONCE_STATIC_INIT 0
-# elif defined(OPENSSL_SYS_WINDOWS)
-#  include <windows.h>
+# if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+#  if defined(_WIN32)
+#   if defined(BASETYPES) || defined(_WINDEF_H)
+/* application has to include <windows.h> in order to use this */
 typedef DWORD CRYPTO_THREAD_LOCAL;
 typedef DWORD CRYPTO_THREAD_ID;
 
 typedef LONG CRYPTO_ONCE;
-#  define CRYPTO_ONCE_STATIC_INIT 0
-
-# else
-#  include <pthread.h>
+#    define CRYPTO_ONCE_STATIC_INIT 0
+#   endif
+#  else
+#   include <pthread.h>
 typedef pthread_once_t CRYPTO_ONCE;
 typedef pthread_key_t CRYPTO_THREAD_LOCAL;
 typedef pthread_t CRYPTO_THREAD_ID;
 
-#  define CRYPTO_ONCE_STATIC_INIT PTHREAD_ONCE_INIT
+#   define CRYPTO_ONCE_STATIC_INIT PTHREAD_ONCE_INIT
+#  endif
+# endif
+
+# if !defined(CRYPTO_ONCE_STATIC_INIT)
+typedef unsigned int CRYPTO_ONCE;
+typedef unsigned int CRYPTO_THREAD_LOCAL;
+typedef unsigned int CRYPTO_THREAD_ID;
+#  define CRYPTO_ONCE_STATIC_INIT 0
 # endif
 
 int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void));
@@ -424,7 +436,7 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_CRYPTO_strings(void);
+int ERR_load_CRYPTO_strings(void);
 
 /* Error codes for the CRYPTO functions. */
 

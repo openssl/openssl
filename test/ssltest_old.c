@@ -40,8 +40,12 @@
  */
 
 /* Or gethostname won't be declared properly on Linux and GNU platforms. */
-#define _BSD_SOURCE 1
-#define _DEFAULT_SOURCE 1
+#ifndef _BSD_SOURCE
+# define _BSD_SOURCE 1
+#endif
+#ifndef _DEFAULT_SOURCE
+# define _DEFAULT_SOURCE 1
+#endif
 
 #include <assert.h>
 #include <errno.h>
@@ -69,9 +73,6 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/ssl.h>
-#ifndef OPENSSL_NO_ENGINE
-# include <openssl/engine.h>
-#endif
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #ifndef OPENSSL_NO_RSA
@@ -90,8 +91,6 @@
 #ifndef OPENSSL_NO_CT
 # include <openssl/ct.h>
 #endif
-
-#include "../ssl/ssl_locl.h"
 
 /*
  * Or gethostname won't be declared properly
@@ -851,11 +850,11 @@ static void print_details(SSL *c_ssl, const char *prefix)
                SSL_CIPHER_get_version(ciph), SSL_CIPHER_get_name(ciph));
     cert = SSL_get_peer_certificate(c_ssl);
     if (cert != NULL) {
-        pkey = X509_get_pubkey(cert);
-        if (pkey != NULL) {
+        EVP_PKEY* pubkey = X509_get0_pubkey(cert);
+
+        if (pubkey != NULL) {
             BIO_puts(bio_stdout, ", ");
-            print_key_details(bio_stdout, pkey);
-            EVP_PKEY_free(pkey);
+            print_key_details(bio_stdout, pubkey);
         }
         X509_free(cert);
     }
@@ -885,6 +884,7 @@ static int protocol_from_string(const char *value)
         {"tls1", TLS1_VERSION},
         {"tls1.1", TLS1_1_VERSION},
         {"tls1.2", TLS1_2_VERSION},
+        {"tls1.3", TLS1_3_VERSION},
         {"dtls1", DTLS1_VERSION},
         {"dtls1.2", DTLS1_2_VERSION}};
     size_t i;
@@ -953,11 +953,11 @@ static int set_protocol_version(const char *version, SSL *ssl, int setting)
 
 int main(int argc, char *argv[])
 {
-    char *CApath = NULL, *CAfile = NULL;
+    const char *CApath = NULL, *CAfile = NULL;
     int badop = 0;
     enum { BIO_MEM, BIO_PAIR, BIO_IPV4, BIO_IPV6 } bio_type = BIO_MEM;
     int force = 0;
-    int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, ssl3 = 0, ret = 1;
+    int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, tls1_2 = 0, ssl3 = 0, ret = 1;
     int client_auth = 0;
     int server_auth = 0, i;
     struct app_verify_arg app_verify_arg =
@@ -1122,7 +1122,9 @@ int main(int argc, char *argv[])
             min_version = TLS1_VERSION;
         }
 #endif
-        else if (strcmp(*argv, "-tls1") == 0) {
+        else if (strcmp(*argv, "-tls1_2") == 0) {
+            tls1_2 = 1;
+        } else if (strcmp(*argv, "-tls1") == 0) {
             tls1 = 1;
         } else if (strcmp(*argv, "-ssl3") == 0) {
             ssl3 = 1;
@@ -1328,8 +1330,8 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (ssl3 + tls1 + dtls + dtls1 + dtls12 > 1) {
-        fprintf(stderr, "At most one of -ssl3, -tls1, -dtls, -dtls1 or -dtls12 should "
+    if (ssl3 + tls1 + tls1_2 + dtls + dtls1 + dtls12 > 1) {
+        fprintf(stderr, "At most one of -ssl3, -tls1, -tls1_2, -dtls, -dtls1 or -dtls12 should "
                 "be requested.\n");
         EXIT(1);
     }
@@ -1341,6 +1343,11 @@ int main(int argc, char *argv[])
 #endif
 #ifdef OPENSSL_NO_TLS1
     if (tls1)
+        no_protocol = 1;
+    else
+#endif
+#ifdef OPENSSL_NO_TLS1_2
+    if (tls1_2)
         no_protocol = 1;
     else
 #endif
@@ -1368,10 +1375,11 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (!ssl3 && !tls1 && !dtls && !dtls1 && !dtls12 && number > 1 && !reuse && !force) {
+    if (!ssl3 && !tls1 && !tls1_2 && !dtls && !dtls1 && !dtls12 && number > 1
+            && !reuse && !force) {
         fprintf(stderr, "This case cannot work.  Use -f to perform "
                 "the test anyway (and\n-d to see what happens), "
-                "or add one of -ssl3, -tls1, -dtls, -dtls1, -dtls12, -reuse\n"
+                "or add one of -ssl3, -tls1, -tls1_2, -dtls, -dtls1, -dtls12, -reuse\n"
                 "to avoid protocol mismatch.\n");
         EXIT(1);
     }
@@ -1420,7 +1428,7 @@ int main(int argc, char *argv[])
         printf("Available compression methods:");
         for (j = 0; j < n; j++) {
             SSL_COMP *c = sk_SSL_COMP_value(ssl_comp_methods, j);
-            printf("  %s:%d", c->name, c->id);
+            printf("  %s:%d", SSL_COMP_get0_name(c), SSL_COMP_get_id(c));
         }
         printf("\n");
     }
@@ -1434,6 +1442,9 @@ int main(int argc, char *argv[])
     } else if (tls1) {
         min_version = TLS1_VERSION;
         max_version = TLS1_VERSION;
+    } else if (tls1_2) {
+        min_version = TLS1_2_VERSION;
+        max_version = TLS1_2_VERSION;
     }
 #endif
 #ifndef OPENSSL_NO_DTLS
@@ -1651,14 +1662,12 @@ int main(int argc, char *argv[])
                        "Can't have both -npn_server and -npn_server_reject\n");
             goto end;
         }
-        SSL_CTX_set_next_protos_advertised_cb(s_ctx, cb_server_npn, NULL);
-        SSL_CTX_set_next_protos_advertised_cb(s_ctx2, cb_server_npn, NULL);
+        SSL_CTX_set_npn_advertised_cb(s_ctx, cb_server_npn, NULL);
+        SSL_CTX_set_npn_advertised_cb(s_ctx2, cb_server_npn, NULL);
     }
     if (npn_server_reject) {
-        SSL_CTX_set_next_protos_advertised_cb(s_ctx, cb_server_rejects_npn,
-                                              NULL);
-        SSL_CTX_set_next_protos_advertised_cb(s_ctx2, cb_server_rejects_npn,
-                                              NULL);
+        SSL_CTX_set_npn_advertised_cb(s_ctx, cb_server_rejects_npn, NULL);
+        SSL_CTX_set_npn_advertised_cb(s_ctx2, cb_server_rejects_npn, NULL);
     }
 #endif
 
@@ -2663,8 +2672,29 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
     SSL_set_max_send_fragment(c_ssl, max_frag);
     BIO_set_ssl(c_bio, c_ssl, BIO_NOCLOSE);
 
+    /*
+     * We've just given our ref to these BIOs to c_ssl. We need another one to
+     * give to s_ssl
+     */
+    if (!BIO_up_ref(c_to_s)) {
+        /* c_to_s and s_to_c will get freed when we free c_ssl */
+        c_to_s = NULL;
+        s_to_c = NULL;
+        goto err;
+    }
+    if (!BIO_up_ref(s_to_c)) {
+        /* s_to_c will get freed when we free c_ssl */
+        s_to_c = NULL;
+        goto err;
+    }
+
     SSL_set_accept_state(s_ssl);
     SSL_set_bio(s_ssl, c_to_s, s_to_c);
+
+    /* We've used up all our refs to these now */
+    c_to_s = NULL;
+    s_to_c = NULL;
+
     SSL_set_max_send_fragment(s_ssl, max_frag);
     BIO_set_ssl(s_bio, s_ssl, BIO_NOCLOSE);
 
@@ -2877,23 +2907,6 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
     }
     ret = 0;
  err:
-    /*
-     * We have to set the BIO's to NULL otherwise they will be
-     * OPENSSL_free()ed twice.  Once when th s_ssl is SSL_free()ed and again
-     * when c_ssl is SSL_free()ed. This is a hack required because s_ssl and
-     * c_ssl are sharing the same BIO structure and SSL_set_bio() and
-     * SSL_free() automatically BIO_free non NULL entries. You should not
-     * normally do this or be required to do this
-     */
-    if (s_ssl != NULL) {
-        s_ssl->rbio = NULL;
-        s_ssl->wbio = NULL;
-    }
-    if (c_ssl != NULL) {
-        c_ssl->rbio = NULL;
-        c_ssl->wbio = NULL;
-    }
-
     BIO_free(c_to_s);
     BIO_free(s_to_c);
     BIO_free_all(c_bio);

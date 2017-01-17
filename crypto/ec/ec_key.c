@@ -49,7 +49,7 @@ void EC_KEY_free(EC_KEY *r)
     if (r == NULL)
         return;
 
-    CRYPTO_atomic_add(&r->references, -1, &i, r->lock);
+    CRYPTO_DOWN_REF(&r->references, &i, r->lock);
     REF_PRINT_COUNT("EC_KEY", r);
     if (i > 0)
         return;
@@ -74,7 +74,7 @@ void EC_KEY_free(EC_KEY *r)
     OPENSSL_clear_free((void *)r, sizeof(EC_KEY));
 }
 
-EC_KEY *EC_KEY_copy(EC_KEY *dest, EC_KEY *src)
+EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 {
     if (dest == NULL || src == NULL) {
         ECerr(EC_F_EC_KEY_COPY, ERR_R_PASSED_NULL_PARAMETER);
@@ -151,7 +151,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, EC_KEY *src)
     return dest;
 }
 
-EC_KEY *EC_KEY_dup(EC_KEY *ec_key)
+EC_KEY *EC_KEY_dup(const EC_KEY *ec_key)
 {
     EC_KEY *ret = EC_KEY_new_method(ec_key->engine);
 
@@ -169,7 +169,7 @@ int EC_KEY_up_ref(EC_KEY *r)
 {
     int i;
 
-    if (CRYPTO_atomic_add(&r->references, 1, &i, r->lock) <= 0)
+    if (CRYPTO_UP_REF(&r->references, &i, r->lock) <= 0)
         return 0;
 
     REF_PRINT_COUNT("EC_KEY", r);
@@ -546,7 +546,8 @@ int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
     return 1;
 }
 
-size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len)
+size_t EC_KEY_priv2oct(const EC_KEY *eckey,
+                       unsigned char *buf, size_t len)
 {
     if (eckey->group == NULL || eckey->group->meth == NULL)
         return 0;
@@ -581,7 +582,7 @@ size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
     return buf_len;
 }
 
-int EC_KEY_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
+int EC_KEY_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
 {
     if (eckey->group == NULL || eckey->group->meth == NULL)
         return 0;
@@ -592,7 +593,7 @@ int EC_KEY_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
     return eckey->group->meth->oct2priv(eckey, buf, len);
 }
 
-int ec_key_simple_oct2priv(EC_KEY *eckey, unsigned char *buf, size_t len)
+int ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
 {
     if (eckey->priv_key == NULL)
         eckey->priv_key = BN_secure_new();

@@ -8,6 +8,7 @@
  */
 
 #include <openssl/e_os2.h>
+#include <openssl/err.h>
 
 /*
  * need for #define _POSIX_C_SOURCE arises whenever you pass -ansi to gcc
@@ -68,8 +69,8 @@
 #endif
 
 /*
- * There are 5 types of terminal interface supported, TERMIO, TERMIOS, VMS,
- * MSDOS and SGTTY.
+ * There are 6 types of terminal interface supported, TERMIO, TERMIOS, VMS,
+ * MSDOS, WIN32 Console and SGTTY.
  *
  * If someone defines one of the macros TERMIO, TERMIOS or SGTTY, it will
  * remain respected.  Otherwise, we default to TERMIOS except for a few
@@ -87,11 +88,9 @@
 #  undef  SGTTY
 /*
  * We know that VMS, MSDOS, VXWORKS, use entirely other mechanisms.
- * MAC_OS_GUSI_SOURCE should probably go away, but that needs to be confirmed.
  */
 # elif !defined(OPENSSL_SYS_VMS) \
 	&& !defined(OPENSSL_SYS_MSDOS) \
-	&& !defined(MAC_OS_GUSI_SOURCE) \
 	&& !defined(OPENSSL_SYS_VXWORKS)
 #  define TERMIOS
 #  undef  TERMIO
@@ -144,15 +143,6 @@ struct IOSB {
 };
 #endif
 
-#if defined(MAC_OS_GUSI_SOURCE)
-/*
- * This one needs work. As a matter of fact the code is unoperational
- * and this is only a trick to get it compiled.
- *                                      <appro@fy.chalmers.se>
- */
-# define TTY_STRUCT int
-#endif
-
 #ifndef NX509_SIG
 # define NX509_SIG 32
 #endif
@@ -172,6 +162,8 @@ static long tty_orig[3], tty_new[3]; /* XXX Is there any guarantee that this
                                       * structures? */
 static long status;
 static unsigned short channel = 0;
+#elif defined(_WIN32) && !defined(_WIN32_WCE)
+static DWORD tty_orig, tty_new;
 #else
 # if !defined(OPENSSL_SYS_MSDOS) || defined(__DJGPP__)
 static TTY_STRUCT tty_orig, tty_new;
@@ -187,7 +179,7 @@ static void recsig(int);
 static void pushsig(void);
 static void popsig(void);
 #endif
-#if defined(OPENSSL_SYS_MSDOS)
+#if defined(OPENSSL_SYS_MSDOS) && !defined(_WIN32)
 static int noecho_fgets(char *buf, int size, FILE *tty);
 #endif
 static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl);
@@ -228,7 +220,10 @@ static int write_string(UI *ui, UI_STRING *uis)
         fputs(UI_get0_output_string(uis), tty_out);
         fflush(tty_out);
         break;
-    default:
+    case UIT_NONE:
+    case UIT_PROMPT:
+    case UIT_VERIFY:
+    case UIT_BOOLEAN:
         break;
     }
     return 1;
@@ -265,7 +260,9 @@ static int read_string(UI *ui, UI_STRING *uis)
             return 0;
         }
         break;
-    default:
+    case UIT_NONE:
+    case UIT_INFO:
+    case UIT_ERROR:
         break;
     }
     return 1;
@@ -295,7 +292,8 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
     char result[BUFSIZ];
     int maxsize = BUFSIZ - 1;
 #if !defined(OPENSSL_SYS_WINCE)
-    char *p;
+    char *p = NULL;
+    int echo_eol = !echo;
 
     intr_signal = 0;
     ok = 0;
@@ -309,16 +307,49 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
     ps = 2;
 
     result[0] = '\0';
-# ifdef OPENSSL_SYS_MSDOS
+# if defined(_WIN32)
+    if (is_a_tty) {
+        DWORD numread;
+#  if defined(CP_UTF8)
+        if (GetEnvironmentVariableW(L"OPENSSL_WIN32_UTF8", NULL, 0) != 0) {
+            WCHAR wresult[BUFSIZ];
+
+            if (ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE),
+                         wresult, maxsize, &numread, NULL)) {
+                if (numread >= 2 &&
+                    wresult[numread-2] == L'\r' &&
+                    wresult[numread-1] == L'\n') {
+                    wresult[numread-2] = L'\n';
+                    numread--;
+                }
+                wresult[numread] = '\0';
+                if (WideCharToMultiByte(CP_UTF8, 0, wresult, -1,
+                                        result, sizeof(result), NULL, 0) > 0)
+                    p = result;
+
+                OPENSSL_cleanse(wresult, sizeof(wresult));
+            }
+        } else
+#  endif
+        if (ReadConsoleA(GetStdHandle(STD_INPUT_HANDLE),
+                         result, maxsize, &numread, NULL)) {
+            if (numread >= 2 &&
+                result[numread-2] == '\r' && result[numread-1] == '\n') {
+                result[numread-2] = '\n';
+                numread--;
+            }
+            result[numread] = '\0';
+            p = result;
+        }
+    } else
+# elif defined(OPENSSL_SYS_MSDOS)
     if (!echo) {
         noecho_fgets(result, maxsize, tty_in);
         p = result;             /* FIXME: noecho_fgets doesn't return errors */
     } else
-        p = fgets(result, maxsize, tty_in);
-# else
-    p = fgets(result, maxsize, tty_in);
 # endif
-    if (!p)
+    p = fgets(result, maxsize, tty_in);
+    if (p == NULL)
         goto error;
     if (feof(tty_in))
         goto error;
@@ -335,7 +366,7 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
  error:
     if (intr_signal == SIGINT)
         ok = -1;
-    if (!echo)
+    if (echo_eol)
         fprintf(tty_out, "\n");
     if (ps >= 2 && !echo && !echo_console(ui))
         ok = 0;
@@ -359,6 +390,17 @@ static int open_console(UI *ui)
 #if defined(OPENSSL_SYS_VXWORKS)
     tty_in = stdin;
     tty_out = stderr;
+#elif defined(_WIN32) && !defined(_WIN32_WCE)
+    if ((tty_out = fopen("conout$", "w")) == NULL)
+        tty_out = stderr;
+
+    if (GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &tty_orig)) {
+        tty_in = stdin;
+    } else {
+        is_a_tty = 0;
+        if ((tty_in = fopen("conin$", "r")) == NULL)
+            tty_in = stdin;
+    }
 #else
 # ifdef OPENSSL_SYS_MSDOS
 #  define DEV_TTY "con"
@@ -387,18 +429,44 @@ static int open_console(UI *ui)
             is_a_tty = 0;
         else
 # endif
-            return 0;
+# ifdef ENODEV
+            /*
+             * MacOS X returns ENODEV (Operation not supported by device),
+             * which seems appropriate.
+             */
+        if (errno == ENODEV)
+            is_a_tty = 0;
+        else
+# endif
+            {
+                char tmp_num[10];
+                BIO_snprintf(tmp_num, sizeof(tmp_num) - 1, "%d", errno);
+                UIerr(UI_F_OPEN_CONSOLE, UI_R_UNKNOWN_TTYGET_ERRNO_VALUE);
+                ERR_add_error_data(2, "errno=", tmp_num);
+
+                return 0;
+            }
     }
 #endif
 #ifdef OPENSSL_SYS_VMS
     status = sys$assign(&terminal, &channel, 0, 0);
-    if (status != SS$_NORMAL)
+
+    /* if there isn't a TT device, something is very wrong */
+    if (status != SS$_NORMAL) {
+        char tmp_num[12];
+
+        BIO_snprintf(tmp_num, sizeof(tmp_num) - 1, "%%X%08X", status);
+        UIerr(UI_F_OPEN_CONSOLE, UI_R_SYSASSIGN_ERROR);
+        ERR_add_error_data(2, "status=", tmp_num);
         return 0;
-    status =
-        sys$qiow(0, channel, IO$_SENSEMODE, &iosb, 0, 0, tty_orig, 12, 0, 0,
-                 0, 0);
+    }
+
+    status = sys$qiow(0, channel, IO$_SENSEMODE, &iosb, 0, 0, tty_orig, 12,
+                      0, 0, 0, 0);
+
+    /* If IO$_SENSEMODE doesn't work, this is not a terminal device */
     if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
-        return 0;
+        is_a_tty = 0;
 #endif
     return 1;
 }
@@ -415,14 +483,32 @@ static int noecho_console(UI *ui)
         return 0;
 #endif
 #ifdef OPENSSL_SYS_VMS
-    tty_new[0] = tty_orig[0];
-    tty_new[1] = tty_orig[1] | TT$M_NOECHO;
-    tty_new[2] = tty_orig[2];
-    status =
-        sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12, 0, 0, 0,
-                 0);
-    if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
-        return 0;
+    if (is_a_tty) {
+        tty_new[0] = tty_orig[0];
+        tty_new[1] = tty_orig[1] | TT$M_NOECHO;
+        tty_new[2] = tty_orig[2];
+        status = sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12,
+                          0, 0, 0, 0);
+        if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL)) {
+            char tmp_num[2][12];
+
+            BIO_snprintf(tmp_num[0], sizeof(tmp_num[0]) - 1, "%%X%08X",
+                         status);
+            BIO_snprintf(tmp_num[1], sizeof(tmp_num[1]) - 1, "%%X%08X",
+                         iosb.iosb$w_value);
+            UIerr(UI_F_NOECHO_CONSOLE, UI_R_SYSQIOW_ERROR);
+            ERR_add_error_data(5, "status=", tmp_num[0],
+                               ",", "iosb.iosb$w_value=", tmp_num[1]);
+            return 0;
+        }
+    }
+#endif
+#if defined(_WIN32) && !defined(_WIN32_WCE)
+    if (is_a_tty) {
+        tty_new = tty_orig;
+        tty_new &= ~ENABLE_ECHO_INPUT;
+        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), tty_new);
+    }
 #endif
     return 1;
 }
@@ -439,14 +525,32 @@ static int echo_console(UI *ui)
         return 0;
 #endif
 #ifdef OPENSSL_SYS_VMS
-    tty_new[0] = tty_orig[0];
-    tty_new[1] = tty_orig[1] & ~TT$M_NOECHO;
-    tty_new[2] = tty_orig[2];
-    status =
-        sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12, 0, 0, 0,
-                 0);
-    if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL))
-        return 0;
+    if (is_a_tty) {
+        tty_new[0] = tty_orig[0];
+        tty_new[1] = tty_orig[1] & ~TT$M_NOECHO;
+        tty_new[2] = tty_orig[2];
+        status = sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12,
+                          0, 0, 0, 0);
+        if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL)) {
+            char tmp_num[2][12];
+
+            BIO_snprintf(tmp_num[0], sizeof(tmp_num[0]) - 1, "%%X%08X",
+                         status);
+            BIO_snprintf(tmp_num[1], sizeof(tmp_num[1]) - 1, "%%X%08X",
+                         iosb.iosb$w_value);
+            UIerr(UI_F_ECHO_CONSOLE, UI_R_SYSQIOW_ERROR);
+            ERR_add_error_data(5, "status=", tmp_num[0],
+                               ",", "iosb.iosb$w_value=", tmp_num[1]);
+            return 0;
+        }
+    }
+#endif
+#if defined(_WIN32) && !defined(_WIN32_WCE)
+    if (is_a_tty) {
+        tty_new = tty_orig;
+        tty_new |= ENABLE_ECHO_INPUT;
+        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), tty_new);
+    }
 #endif
     return 1;
 }
@@ -459,6 +563,14 @@ static int close_console(UI *ui)
         fclose(tty_out);
 #ifdef OPENSSL_SYS_VMS
     status = sys$dassgn(channel);
+    if (status != SS$_NORMAL) {
+        char tmp_num[12];
+
+        BIO_snprintf(tmp_num, sizeof(tmp_num) - 1, "%%X%08X", status);
+        UIerr(UI_F_CLOSE_CONSOLE, UI_R_SYSDASSGN_ERROR);
+        ERR_add_error_data(2, "status=", tmp_num);
+        return 0;
+    }
 #endif
     CRYPTO_THREAD_unlock(ui->lock);
 
@@ -549,7 +661,7 @@ static void recsig(int i)
 #endif
 
 /* Internal functions specific for Windows */
-#if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WINCE)
+#if defined(OPENSSL_SYS_MSDOS) && !defined(_WIN32)
 static int noecho_fgets(char *buf, int size, FILE *tty)
 {
     int i;

@@ -43,6 +43,14 @@ const char *SSL_state_string_long(const SSL *s)
         return "error";
 
     switch (SSL_get_state(s)) {
+    case TLS_ST_CR_CERT_STATUS:
+        return "SSLv3/TLS read certificate status";
+    case TLS_ST_CW_NEXT_PROTO:
+        return "SSLv3/TLS write next proto";
+    case TLS_ST_SR_NEXT_PROTO:
+        return "SSLv3/TLS write next proto";
+    case TLS_ST_SW_CERT_STATUS:
+        return "SSLv3/TLS write next proto";
     case TLS_ST_BEFORE:
         return "before SSL initialization";
     case TLS_ST_OK:
@@ -110,13 +118,24 @@ const char *SSL_state_string_long(const SSL *s)
     }
 }
 
-
 const char *SSL_state_string(const SSL *s)
 {
     if (ossl_statem_in_error(s))
         return "SSLERR";
 
     switch (SSL_get_state(s)) {
+    case TLS_ST_SR_NEXT_PROTO:
+        return "TRNP";
+    case TLS_ST_SW_SESSION_TICKET:
+        return "TWST";
+    case TLS_ST_SW_CERT_STATUS:
+        return "TWCS";
+    case TLS_ST_CR_CERT_STATUS:
+        return "TRCS";
+    case TLS_ST_CR_SESSION_TICKET:
+        return "TRST";
+    case TLS_ST_CW_NEXT_PROTO:
+        return "TWNP";
     case TLS_ST_BEFORE:
         return "PINIT ";
     case TLS_ST_OK:
@@ -335,6 +354,8 @@ const char *SSL_alert_desc_string_long(int value)
         return "bad certificate hash value";
     case TLS1_AD_UNKNOWN_PSK_IDENTITY:
         return "unknown PSK identity";
+    case TLS1_AD_NO_APPLICATION_PROTOCOL:
+        return "no application protocol";
     default:
         return "unknown";
     }

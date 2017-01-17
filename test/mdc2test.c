@@ -43,7 +43,7 @@ static unsigned char pad2[16] = {
 
 int main(int argc, char *argv[])
 {
-    int ret = 0;
+    int ret = 1;
     unsigned char md[MDC2_DIGEST_LENGTH];
     int i;
     EVP_MD_CTX *c;
@@ -54,9 +54,11 @@ int main(int argc, char *argv[])
 # endif
 
     c = EVP_MD_CTX_new();
-    EVP_DigestInit_ex(c, EVP_mdc2(), NULL);
-    EVP_DigestUpdate(c, (unsigned char *)text, strlen(text));
-    EVP_DigestFinal_ex(c, &(md[0]), NULL);
+    if (c == NULL
+        || !EVP_DigestInit_ex(c, EVP_mdc2(), NULL)
+        || !EVP_DigestUpdate(c, (unsigned char *)text, strlen(text))
+        || !EVP_DigestFinal_ex(c, &(md[0]), NULL))
+        goto err;
 
     if (memcmp(md, pad1, MDC2_DIGEST_LENGTH) != 0) {
         for (i = 0; i < MDC2_DIGEST_LENGTH; i++)
@@ -65,15 +67,18 @@ int main(int argc, char *argv[])
         for (i = 0; i < MDC2_DIGEST_LENGTH; i++)
             printf("%02X", pad1[i]);
         printf(" <- correct\n");
-        ret = 1;
-    } else
+        goto err;
+    } else {
         printf("pad1 - ok\n");
+    }
 
-    EVP_DigestInit_ex(c, EVP_mdc2(), NULL);
+    if (!EVP_DigestInit_ex(c, EVP_mdc2(), NULL))
+        goto err;
     /* FIXME: use a ctl function? */
     ((MDC2_CTX *)EVP_MD_CTX_md_data(c))->pad_type = 2;
-    EVP_DigestUpdate(c, (unsigned char *)text, strlen(text));
-    EVP_DigestFinal_ex(c, &(md[0]), NULL);
+    if (!EVP_DigestUpdate(c, (unsigned char *)text, strlen(text))
+        || !EVP_DigestFinal_ex(c, &(md[0]), NULL))
+        goto err;
 
     if (memcmp(md, pad2, MDC2_DIGEST_LENGTH) != 0) {
         for (i = 0; i < MDC2_DIGEST_LENGTH; i++)
@@ -82,10 +87,12 @@ int main(int argc, char *argv[])
         for (i = 0; i < MDC2_DIGEST_LENGTH; i++)
             printf("%02X", pad2[i]);
         printf(" <- correct\n");
-        ret = 1;
-    } else
+    } else {
         printf("pad2 - ok\n");
+        ret = 0;
+    }
 
+ err:
     EVP_MD_CTX_free(c);
     EXIT(ret);
 }

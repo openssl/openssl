@@ -48,6 +48,7 @@ ${alg}${bits}_t4_cbc_encrypt:
 	save		%sp, -$::frame, %sp
 	cmp		$len, 0
 	be,pn		$::size_t_cc, .L${bits}_cbc_enc_abort
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 	sub		$inp, $out, $blk_init	! $inp!=$out
 ___
 $::code.=<<___ if (!$::evp);
@@ -116,7 +117,7 @@ $::code.=<<___;
 
 	brnz,pn		$ooff, 2f
 	sub		$len, 1, $len
-		
+
 	std		%f0, [$out + 0]
 	std		%f2, [$out + 8]
 	brnz,pt		$len, .L${bits}_cbc_enc_loop
@@ -223,7 +224,7 @@ $::code.=<<___;
 	call		_${alg}${bits}_encrypt_1x
 	add		$inp, 16, $inp
 	sub		$len, 1, $len
-		
+
 	stda		%f0, [$out]0xe2		! ASI_BLK_INIT, T4-specific
 	add		$out, 8, $out
 	stda		%f2, [$out]0xe2		! ASI_BLK_INIT, T4-specific
@@ -265,6 +266,7 @@ ${alg}${bits}_t4_cbc_decrypt:
 	save		%sp, -$::frame, %sp
 	cmp		$len, 0
 	be,pn		$::size_t_cc, .L${bits}_cbc_dec_abort
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 	sub		$inp, $out, $blk_init	! $inp!=$out
 ___
 $::code.=<<___ if (!$::evp);
@@ -337,7 +339,7 @@ $::code.=<<___;
 
 	brnz,pn		$ooff, 2f
 	sub		$len, 1, $len
-		
+
 	std		%f0, [$out + 0]
 	std		%f2, [$out + 8]
 	brnz,pt		$len, .L${bits}_cbc_dec_loop2x
@@ -443,7 +445,7 @@ $::code.=<<___;
 
 	brnz,pn		$ooff, 2f
 	sub		$len, 2, $len
-		
+
 	std		%f0, [$out + 0]
 	std		%f2, [$out + 8]
 	std		%f4, [$out + 16]
@@ -624,6 +626,7 @@ $::code.=<<___;
 .align	32
 ${alg}${bits}_t4_ctr32_encrypt:
 	save		%sp, -$::frame, %sp
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 
 	prefetch	[$inp], 20
 	prefetch	[$inp + 63], 20
@@ -699,7 +702,7 @@ $::code.=<<___;
 
 	brnz,pn		$ooff, 2f
 	sub		$len, 1, $len
-		
+
 	std		%f0, [$out + 0]
 	std		%f2, [$out + 8]
 	brnz,pt		$len, .L${bits}_ctr32_loop2x
@@ -788,7 +791,7 @@ $::code.=<<___;
 
 	brnz,pn		$ooff, 2f
 	sub		$len, 2, $len
-		
+
 	std		%f0, [$out + 0]
 	std		%f2, [$out + 8]
 	std		%f4, [$out + 16]
@@ -927,6 +930,7 @@ $::code.=<<___;
 .align	32
 ${alg}${bits}_t4_xts_${dir}crypt:
 	save		%sp, -$::frame-16, %sp
+	srln		$len, 0, $len		! needed on v8+, "nop" on v9
 
 	mov		$ivec, %o0
 	add		%fp, $::bias-16, %o1
@@ -1020,7 +1024,7 @@ $code.=<<___;
 
 	brnz,pn		$ooff, 2f
 	sub		$len, 1, $len
-		
+
 	std		%f0, [$out + 0]
 	std		%f2, [$out + 8]
 	brnz,pt		$len, .L${bits}_xts_${dir}loop2x
@@ -1131,7 +1135,7 @@ $code.=<<___;
 
 	brnz,pn		$ooff, 2f
 	sub		$len, 2, $len
-		
+
 	std		%f0, [$out + 0]
 	std		%f2, [$out + 8]
 	std		%f4, [$out + 16]

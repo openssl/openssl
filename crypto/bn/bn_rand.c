@@ -20,15 +20,14 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
     int ret = 0, bit, bytes, mask;
     time_t tim;
 
-    if (bits < 0 || (bits == 1 && top > 0)) {
-        BNerr(BN_F_BNRAND, BN_R_BITS_TOO_SMALL);
-        return 0;
-    }
-
     if (bits == 0) {
+        if (top != BN_RAND_TOP_ANY || bottom != BN_RAND_BOTTOM_ANY)
+            goto toosmall;
         BN_zero(rnd);
         return 1;
     }
+    if (bits < 0 || (bits == 1 && top > 0))
+        goto toosmall;
 
     bytes = (bits + 7) / 8;
     bit = (bits - 1) % 8;
@@ -88,6 +87,10 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
     OPENSSL_clear_free(buf, bytes);
     bn_check_top(rnd);
     return (ret);
+
+toosmall:
+    BNerr(BN_F_BNRAND, BN_R_BITS_TOO_SMALL);
+    return 0;
 }
 
 int BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
@@ -130,7 +133,7 @@ static int bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
          * than range
          */
         do {
-            if (!bn_rand(r, n + 1, -1, 0))
+            if (!bn_rand(r, n + 1, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
                 return 0;
             /*
              * If r < 3*range, use r := r MOD range (which is either r, r -
@@ -156,7 +159,7 @@ static int bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
     } else {
         do {
             /* range = 11..._2  or  range = 101..._2 */
-            if (!bn_rand(r, n, -1, 0))
+            if (!bn_rand(r, n, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
                 return 0;
 
             if (!--count) {
@@ -250,5 +253,6 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
 
  err:
     OPENSSL_free(k_bytes);
+    OPENSSL_cleanse(private_bytes, sizeof(private_bytes));
     return ret;
 }

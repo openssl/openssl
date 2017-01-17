@@ -172,6 +172,11 @@ sub ::vprotd
     {	&::generic("vprotd",@_);	}
 }
 
+sub ::endbranch
+{
+    &::data_byte(0xf3,0x0f,0x1e,0xfb);
+}
+
 # label management
 $lbdecor="L";		# local label decoration, set by package
 $label="000";

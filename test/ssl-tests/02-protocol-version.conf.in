@@ -7,116 +7,13 @@
 # https://www.openssl.org/source/license.html
 
 
-## Test version negotiation
+## Test TLS version negotiation
 
 package ssltests;
 
-use List::Util qw/max min/;
+use strict;
+use warnings;
 
-use OpenSSL::Test;
-use OpenSSL::Test::Utils qw/anydisabled alldisabled/;
-setup("no_test_here");
+use protocol_version;
 
-my @protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2");
-# undef stands for "no limit".
-my @min_protocols = (undef, "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2");
-my @max_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", undef);
-
-my @is_disabled = anydisabled("ssl3", "tls1", "tls1_1", "tls1_2");
-
-my $min_enabled; my $max_enabled;
-
-# Protocol configuration works in cascades, i.e.,
-# $no_tls1_1 disables TLSv1.1 and below.
-#
-# $min_enabled and $max_enabled will be correct if there is at least one
-# protocol enabled.
-foreach my $i (0..$#protocols) {
-    if (!$is_disabled[$i]) {
-        $min_enabled = $i;
-        last;
-    }
-}
-
-foreach my $i (0..$#protocols) {
-    if (!$is_disabled[$i]) {
-        $max_enabled = $i;
-    }
-}
-
-our @tests = ();
-
-sub generate_tests() {
-    foreach my $c_min (0..$#min_protocols) {
-        my $c_max_min = $c_min == 0 ? 0 : $c_min - 1;
-        foreach my $c_max ($c_max_min..$#max_protocols) {
-            foreach my $s_min (0..$#min_protocols) {
-                my $s_max_min = $s_min == 0 ? 0 : $s_min - 1;
-                foreach my $s_max ($s_max_min..$#max_protocols) {
-                    my ($result, $protocol) =
-                        expected_result($c_min, $c_max, $s_min, $s_max);
-                    push @tests, {
-                        "name" => "version-negotiation",
-                        "client" => {
-                            "MinProtocol" => $min_protocols[$c_min],
-                            "MaxProtocol" => $max_protocols[$c_max],
-                        },
-                        "server" => {
-                            "MinProtocol" => $min_protocols[$s_min],
-                            "MaxProtocol" => $max_protocols[$s_max],
-                        },
-                        "test" => {
-                            "ExpectedResult" => $result,
-                            "Protocol" => $protocol
-                        }
-                    };
-                }
-            }
-        }
-    }
-}
-
-sub expected_result {
-    my $no_tls = alldisabled("ssl3", "tls1", "tls1_1", "tls1_2");
-    if ($no_tls) {
-        return ("InternalError", undef);
-    }
-
-    my ($c_min, $c_max, $s_min, $s_max) = @_;
-
-    # Adjust for "undef" (no limit).
-    $c_min = $c_min == 0 ? 0 : $c_min - 1;
-    $c_max = $c_max == scalar(@max_protocols) - 1 ? $c_max - 1 : $c_max;
-    $s_min = $s_min == 0 ? 0 : $s_min - 1;
-    $s_max = $s_max == scalar(@max_protocols) - 1 ? $s_max - 1 : $s_max;
-
-    # We now have at least one protocol enabled, so $min_enabled and
-    # $max_enabled are well-defined.
-    $c_min = max $c_min, $min_enabled;
-    $s_min = max $s_min, $min_enabled;
-    $c_max = min $c_max, $max_enabled;
-    $s_max = min $s_max, $max_enabled;
-
-    if ($c_min > $c_max) {
-        # Client should fail to even send a hello.
-        # This results in an internal error since the server will be
-        # waiting for input that never arrives.
-        return ("InternalError", undef);
-    } elsif ($s_min > $s_max) {
-        # Server has no protocols, should always fail.
-        return ("ServerFail", undef);
-    } elsif ($s_min > $c_max) {
-        # Server doesn't support the client range.
-        return ("ServerFail", undef);
-    } elsif ($c_min > $s_max) {
-        # Server will try with a version that is lower than the lowest
-        # supported client version.
-        return ("ClientFail", undef);
-    } else {
-        # Server and client ranges overlap.
-        my $max_common = $s_max < $c_max ? $s_max : $c_max;
-        return ("Success", $protocols[$max_common]);
-    }
-}
-
-generate_tests();
+our @tests = generate_version_tests("TLS");

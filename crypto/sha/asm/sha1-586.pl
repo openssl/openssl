@@ -104,10 +104,12 @@
 # Sandy Bridge	8.8		6.2/+40%	5.1(**)/+73%
 # Ivy Bridge	7.2		4.8/+51%	4.7(**)/+53%
 # Haswell	6.5		4.3/+51%	4.1(**)/+58%
+# Skylake	6.4		4.1/+55%	4.1(**)/+55%
 # Bulldozer	11.6		6.0/+92%
 # VIA Nano	10.6		7.5/+41%
 # Atom		12.5		9.3(*)/+35%
 # Silvermont	14.5		9.9(*)/+46%
+# Goldmont	8.8		6.7/+30%	1.7(***)/+415%
 #
 # (*)	Loop is 1056 instructions long and expected result is ~8.25.
 #	The discrepancy is because of front-end limitations, so
@@ -115,6 +117,8 @@
 #	limited parallelism.
 #
 # (**)	As per above comment, the result is for AVX *plus* sh[rl]d.
+#
+# (***)	SHAEXT result
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
@@ -133,7 +137,7 @@ $ymm=1 if ($xmm &&
 			=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
 		$1>=2.19);	# first version supporting AVX
 
-$ymm=1 if ($xmm && !$ymm && $ARGV[0] eq "win32n" && 
+$ymm=1 if ($xmm && !$ymm && $ARGV[0] eq "win32n" &&
 		`nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/ &&
 		$1>=2.03);	# first version supporting AVX
 

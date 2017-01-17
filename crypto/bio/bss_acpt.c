@@ -54,7 +54,11 @@ static void BIO_ACCEPT_free(BIO_ACCEPT *a);
 static const BIO_METHOD methods_acceptp = {
     BIO_TYPE_ACCEPT,
     "socket accept",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     acpt_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     acpt_read,
     acpt_puts,
     NULL,                       /* connect_gets, */
@@ -548,7 +552,7 @@ BIO *BIO_new_accept(const char *str)
     ret = BIO_new(BIO_s_accept());
     if (ret == NULL)
         return (NULL);
-    if (BIO_set_accept_port(ret, str))
+    if (BIO_set_accept_name(ret, str))
         return (ret);
     BIO_free(ret);
     return (NULL);

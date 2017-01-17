@@ -109,7 +109,11 @@ typedef struct ok_struct {
 
 static const BIO_METHOD methods_ok = {
     BIO_TYPE_CIPHER, "reliable",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     ok_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     ok_read,
     NULL,                       /* ok_puts, */
     NULL,                       /* ok_gets, */
@@ -402,7 +406,7 @@ static long ok_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 {
     long ret = 1;
     BIO *next;
-    
+
     next = BIO_next(b);
 
     if (next == NULL)

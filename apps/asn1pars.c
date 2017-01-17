@@ -20,15 +20,17 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/asn1t.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_IN, OPT_OUT, OPT_INDENT, OPT_NOOUT,
     OPT_OID, OPT_OFFSET, OPT_LENGTH, OPT_DUMP, OPT_DLIMIT,
-    OPT_STRPARSE, OPT_GENSTR, OPT_GENCONF, OPT_STRICTPEM
+    OPT_STRPARSE, OPT_GENSTR, OPT_GENCONF, OPT_STRICTPEM,
+    OPT_ITEM
 } OPTION_CHOICE;
 
-OPTIONS asn1parse_options[] = {
+const OPTIONS asn1parse_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "input format - one of DER PEM"},
     {"in", OPT_IN, '<', "input file"},
@@ -49,10 +51,11 @@ OPTIONS asn1parse_options[] = {
     {OPT_MORE_STR, 0, 0, "(-inform  will be ignored)"},
     {"strictpem", OPT_STRICTPEM, 0,
      "do not attempt base64 decode outside PEM markers"},
+    {"item", OPT_ITEM, 's', "item to parse and print"},
     {NULL}
 };
 
-static int do_generate(char *genstr, char *genconf, BUF_MEM *buf);
+static int do_generate(char *genstr, const char *genconf, BUF_MEM *buf);
 
 int asn1parse_main(int argc, char **argv)
 {
@@ -61,7 +64,8 @@ int asn1parse_main(int argc, char **argv)
     BUF_MEM *buf = NULL;
     STACK_OF(OPENSSL_STRING) *osk = NULL;
     char *genstr = NULL, *genconf = NULL;
-    char *infile = NULL, *str = NULL, *oidfile = NULL, *derfile = NULL;
+    char *infile = NULL, *oidfile = NULL, *derfile = NULL;
+    unsigned char *str = NULL;
     char *name = NULL, *header = NULL, *prog;
     const unsigned char *ctmpbuf;
     int indent = 0, noout = 0, dump = 0, strictpem = 0, informat = FORMAT_PEM;
@@ -70,6 +74,7 @@ int asn1parse_main(int argc, char **argv)
     unsigned char *tmpbuf;
     unsigned int length = 0;
     OPTION_CHOICE o;
+    const ASN1_ITEM *it = NULL;
 
     prog = opt_init(argc, argv, asn1parse_options);
 
@@ -133,6 +138,22 @@ int asn1parse_main(int argc, char **argv)
             strictpem = 1;
             informat = FORMAT_PEM;
             break;
+        case OPT_ITEM:
+            it = ASN1_ITEM_lookup(opt_arg());
+            if (it == NULL) {
+                size_t tmp;
+
+                BIO_printf(bio_err, "Unknown item name %s\n", opt_arg());
+                BIO_puts(bio_err, "Supported types:\n");
+                for (tmp = 0;; tmp++) {
+                    it = ASN1_ITEM_get(tmp);
+                    if (it == NULL)
+                        break;
+                    BIO_printf(bio_err, "    %s\n", it->sname);
+                }
+                goto end;
+            }
+            break;
         }
     }
     argc = opt_num_rest();
@@ -154,7 +175,7 @@ int asn1parse_main(int argc, char **argv)
         goto end;
 
     if (strictpem) {
-        if (PEM_read_bio(in, &name, &header, (unsigned char **)&str, &num) !=
+        if (PEM_read_bio(in, &name, &header, &str, &num) !=
             1) {
             BIO_printf(bio_err, "Error reading PEM file\n");
             ERR_print_errors(bio_err);
@@ -198,14 +219,14 @@ int asn1parse_main(int argc, char **argv)
                 num += i;
             }
         }
-        str = buf->data;
+        str = (unsigned char *)buf->data;
 
     }
 
     /* If any structs to parse go through in sequence */
 
     if (sk_OPENSSL_STRING_num(osk)) {
-        tmpbuf = (unsigned char *)str;
+        tmpbuf = str;
         tmplen = num;
         for (i = 0; i < sk_OPENSSL_STRING_num(osk); i++) {
             ASN1_TYPE *atmp;
@@ -239,7 +260,7 @@ int asn1parse_main(int argc, char **argv)
             tmpbuf = at->value.asn1_string->data;
             tmplen = at->value.asn1_string->length;
         }
-        str = (char *)tmpbuf;
+        str = tmpbuf;
         num = tmplen;
     }
 
@@ -259,11 +280,24 @@ int asn1parse_main(int argc, char **argv)
             goto end;
         }
     }
-    if (!noout &&
-        !ASN1_parse_dump(bio_out, (unsigned char *)&(str[offset]), length,
-                         indent, dump)) {
-        ERR_print_errors(bio_err);
-        goto end;
+    if (!noout) {
+        const unsigned char *p = str + offset;
+
+        if (it != NULL) {
+            ASN1_VALUE *value = ASN1_item_d2i(NULL, &p, length, it);
+            if (value == NULL) {
+                BIO_printf(bio_err, "Error parsing item %s\n", it->sname);
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+            ASN1_item_print(bio_out, value, 0, it, NULL);
+            ASN1_item_free(value, it);
+        } else {
+            if (!ASN1_parse_dump(bio_out, p, length, indent, dump)) {
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+        }
     }
     ret = 0;
  end:
@@ -282,7 +316,7 @@ int asn1parse_main(int argc, char **argv)
     return (ret);
 }
 
-static int do_generate(char *genstr, char *genconf, BUF_MEM *buf)
+static int do_generate(char *genstr, const char *genconf, BUF_MEM *buf)
 {
     CONF *cnf = NULL;
     int len;

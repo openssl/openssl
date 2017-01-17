@@ -51,7 +51,11 @@ static int file_free(BIO *data);
 static const BIO_METHOD methods_filep = {
     BIO_TYPE_FILE,
     "FILE pointer",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     file_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     file_read,
     file_puts,
     file_gets,
@@ -61,91 +65,10 @@ static const BIO_METHOD methods_filep = {
     NULL,
 };
 
-static FILE *file_fopen(const char *filename, const char *mode)
-{
-    FILE *file = NULL;
-
-#  if defined(_WIN32) && defined(CP_UTF8)
-    int sz, len_0 = (int)strlen(filename) + 1;
-    DWORD flags;
-
-    /*
-     * Basically there are three cases to cover: a) filename is
-     * pure ASCII string; b) actual UTF-8 encoded string and
-     * c) locale-ized string, i.e. one containing 8-bit
-     * characters that are meaningful in current system locale.
-     * If filename is pure ASCII or real UTF-8 encoded string,
-     * MultiByteToWideChar succeeds and _wfopen works. If
-     * filename is locale-ized string, chances are that
-     * MultiByteToWideChar fails reporting
-     * ERROR_NO_UNICODE_TRANSLATION, in which case we fall
-     * back to fopen...
-     */
-    if ((sz = MultiByteToWideChar(CP_UTF8, (flags = MB_ERR_INVALID_CHARS),
-                                  filename, len_0, NULL, 0)) > 0 ||
-        (GetLastError() == ERROR_INVALID_FLAGS &&
-         (sz = MultiByteToWideChar(CP_UTF8, (flags = 0),
-                                   filename, len_0, NULL, 0)) > 0)
-        ) {
-        WCHAR wmode[8];
-        WCHAR *wfilename = _alloca(sz * sizeof(WCHAR));
-
-        if (MultiByteToWideChar(CP_UTF8, flags,
-                                filename, len_0, wfilename, sz) &&
-            MultiByteToWideChar(CP_UTF8, 0, mode, strlen(mode) + 1,
-                                wmode, OSSL_NELEM(wmode)) &&
-            (file = _wfopen(wfilename, wmode)) == NULL &&
-            (errno == ENOENT || errno == EBADF)
-            ) {
-            /*
-             * UTF-8 decode succeeded, but no file, filename
-             * could still have been locale-ized...
-             */
-            file = fopen(filename, mode);
-        }
-    } else if (GetLastError() == ERROR_NO_UNICODE_TRANSLATION) {
-        file = fopen(filename, mode);
-    }
-#  elif defined(__DJGPP__)
-    {
-        char *newname = NULL;
-
-        if (!HAS_LFN_SUPPORT(filename)) {
-            char *iterator;
-            char lastchar;
-
-            newname = OPENSSL_malloc(strlen(filename) + 1);
-            if (newname == NULL)
-                return NULL;
-
-            for(iterator = newname, lastchar = '\0';
-                *filename; filename++, iterator++) {
-                if (lastchar == '/' && filename[0] == '.'
-                    && filename[1] != '.' && filename[1] != '/') {
-                    /* Leading dots are not permitted in plain DOS. */
-                    *iterator = '_';
-                } else {
-                    *iterator = *filename;
-                }
-                lastchar = *filename;
-            }
-            *iterator = '\0';
-            filename = newname;
-        }
-        file = fopen(filename, mode);
-
-        OPENSSL_free(newname);
-    }
-#  else
-    file = fopen(filename, mode);
-#  endif
-    return (file);
-}
-
 BIO *BIO_new_file(const char *filename, const char *mode)
 {
     BIO  *ret;
-    FILE *file = file_fopen(filename, mode);
+    FILE *file = openssl_fopen(filename, mode);
     int fp_flags = BIO_CLOSE;
 
     if (strchr(mode, 'b') == NULL)
@@ -154,7 +77,11 @@ BIO *BIO_new_file(const char *filename, const char *mode)
     if (file == NULL) {
         SYSerr(SYS_F_FOPEN, get_last_sys_error());
         ERR_add_error_data(5, "fopen('", filename, "','", mode, "')");
-        if (errno == ENOENT)
+        if (errno == ENOENT
+# ifdef ENXIO
+            || errno == ENXIO
+# endif
+            )
             BIOerr(BIO_F_BIO_NEW_FILE, BIO_R_NO_SUCH_FILE);
         else
             BIOerr(BIO_F_BIO_NEW_FILE, ERR_R_SYS_LIB);
@@ -363,7 +290,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         else
             strcat(p, "t");
 #  endif
-        fp = file_fopen(ptr, p);
+        fp = openssl_fopen(ptr, p);
         if (fp == NULL) {
             SYSerr(SYS_F_FOPEN, get_last_sys_error());
             ERR_add_error_data(5, "fopen('", ptr, "','", p, "')");
@@ -471,7 +398,11 @@ static int file_free(BIO *a)
 static const BIO_METHOD methods_filep = {
     BIO_TYPE_FILE,
     "FILE pointer",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     file_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     file_read,
     file_puts,
     file_gets,

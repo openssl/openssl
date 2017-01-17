@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -252,12 +253,55 @@ int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     return EVP_CipherInit_ex(ctx, cipher, impl, key, iv, 0);
 }
 
+/*
+ * According to the letter of standard difference between pointers
+ * is specified to be valid only within same object. This makes
+ * it formally challenging to determine if input and output buffers
+ * are not partially overlapping with standard pointer arithmetic.
+ */
+#ifdef PTRDIFF_T
+# undef PTRDIFF_T
+#endif
+#if defined(OPENSSL_SYS_VMS) && __INITIAL_POINTER_SIZE==64
+/*
+ * Then we have VMS that distinguishes itself by adhering to
+ * sizeof(size_t)==4 even in 64-bit builds, which means that
+ * difference between two pointers might be truncated to 32 bits.
+ * In the context one can even wonder how comparison for
+ * equality is implemented. To be on the safe side we adhere to
+ * PTRDIFF_T even for comparison for equality.
+ */
+# define PTRDIFF_T uint64_t
+#else
+# define PTRDIFF_T size_t
+#endif
+
+static int is_partially_overlapping(const void *ptr1, const void *ptr2,
+                                    int len)
+{
+    PTRDIFF_T diff = (PTRDIFF_T)ptr1-(PTRDIFF_T)ptr2;
+    /*
+     * Check for partially overlapping buffers. [Binary logical
+     * operations are used instead of boolean to minimize number
+     * of conditional branches.]
+     */
+    int overlapped = (len > 0) & (diff != 0) & ((diff < (PTRDIFF_T)len) |
+                                                (diff > (0 - (PTRDIFF_T)len)));
+    assert(!overlapped);
+    return overlapped;
+}
+
 int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
                       const unsigned char *in, int inl)
 {
     int i, j, bl;
 
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
+        if (is_partially_overlapping(out, in, inl)) {
+            EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
+            return 0;
+        }
+
         i = ctx->cipher->do_cipher(ctx, out, in, inl);
         if (i < 0)
             return 0;
@@ -269,6 +313,10 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     if (inl <= 0) {
         *outl = 0;
         return inl == 0;
+    }
+    if (is_partially_overlapping(out, in, inl)) {
+        EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
+        return 0;
     }
 
     if (ctx->buf_len == 0 && (inl & (ctx->block_mask)) == 0) {
@@ -292,10 +340,14 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         } else {
             j = bl - i;
             memcpy(&(ctx->buf[i]), in, j);
-            if (!ctx->cipher->do_cipher(ctx, out, ctx->buf, bl))
-                return 0;
             inl -= j;
             in += j;
+            if (is_partially_overlapping(out, in, bl)) {
+	        EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
+                return 0;
+            }
+            if (!ctx->cipher->do_cipher(ctx, out, ctx->buf, bl))
+                return 0;
             out += bl;
             *outl = bl;
         }
@@ -371,6 +423,11 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     unsigned int b;
 
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
+        if (is_partially_overlapping(out, in, inl)) {
+            EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
+            return 0;
+        }
+
         fix_len = ctx->cipher->do_cipher(ctx, out, in, inl);
         if (fix_len < 0) {
             *outl = 0;
@@ -392,6 +449,12 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     OPENSSL_assert(b <= sizeof ctx->final);
 
     if (ctx->final_used) {
+        /* see comment about PTRDIFF_T comparison above */
+        if (((PTRDIFF_T)out == (PTRDIFF_T)in)
+            || is_partially_overlapping(out, in, b)) {
+            EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_PARTIALLY_OVERLAPPING);
+            return 0;
+        }
         memcpy(out, ctx->final, b);
         out += b;
         fix_len = 1;

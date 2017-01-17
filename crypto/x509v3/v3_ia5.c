@@ -14,7 +14,7 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-const X509V3_EXT_METHOD v3_ns_ia5_list[] = {
+const X509V3_EXT_METHOD v3_ns_ia5_list[8] = {
     EXT_IA5STRING(NID_netscape_base_url),
     EXT_IA5STRING(NID_netscape_revocation_url),
     EXT_IA5STRING(NID_netscape_ca_revocation_url),
@@ -41,7 +41,7 @@ char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5)
 }
 
 ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
-                                   X509V3_CTX *ctx, char *str)
+                                   X509V3_CTX *ctx, const char *str)
 {
     ASN1_IA5STRING *ia5;
     if (!str) {
@@ -51,10 +51,9 @@ ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
     }
     if ((ia5 = ASN1_IA5STRING_new()) == NULL)
         goto err;
-    if (!ASN1_STRING_set((ASN1_STRING *)ia5, (unsigned char *)str,
-                         strlen(str))) {
+    if (!ASN1_STRING_set((ASN1_STRING *)ia5, str, strlen(str))) {
         ASN1_IA5STRING_free(ia5);
-        goto err;
+        return NULL;
     }
 #ifdef CHARSET_EBCDIC
     ebcdic2ascii(ia5->data, ia5->data, ia5->length);

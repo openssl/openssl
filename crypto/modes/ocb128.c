@@ -230,7 +230,7 @@ int CRYPTO_ocb128_setiv(OCB128_CONTEXT *ctx, const unsigned char *iv,
 
     /*
      * Spec says IV is 120 bits or fewer - it allows non byte aligned lengths.
-     * We don't support  this at this stage
+     * We don't support this at this stage
      */
     if ((len > 15) || (len < 1) || (taglen > 16) || (taglen < 1)) {
         return -1;

@@ -8,6 +8,30 @@
  */
 
 #include "bio_lcl.h"
+#include <internal/thread_once.h>
+
+CRYPTO_RWLOCK *bio_type_lock = NULL;
+static CRYPTO_ONCE bio_type_init = CRYPTO_ONCE_STATIC_INIT;
+
+DEFINE_RUN_ONCE_STATIC(do_bio_type_init)
+{
+    bio_type_lock = CRYPTO_THREAD_lock_new();
+    return bio_type_lock != NULL;
+}
+
+int BIO_get_new_index()
+{
+    static CRYPTO_REF_COUNT bio_count = BIO_TYPE_START;
+    int newval;
+
+    if (!RUN_ONCE(&bio_type_init, do_bio_type_init)) {
+        BIOerr(BIO_F_BIO_GET_NEW_INDEX, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+    if (!CRYPTO_UP_REF(&bio_count, &newval, bio_type_lock))
+        return -1;
+    return newval;
+}
 
 BIO_METHOD *BIO_meth_new(int type, const char *name)
 {
@@ -27,24 +51,93 @@ void BIO_meth_free(BIO_METHOD *biom)
 
 int (*BIO_meth_get_write(BIO_METHOD *biom)) (BIO *, const char *, int)
 {
+    return biom->bwrite_old;
+}
+
+int (*BIO_meth_get_write_ex(BIO_METHOD *biom)) (BIO *, const char *, size_t,
+                                                size_t *)
+{
     return biom->bwrite;
+}
+
+/* Conversion for old style bwrite to new style */
+int bwrite_conv(BIO *bio, const char *data, size_t datal, size_t *written)
+{
+    int ret;
+
+    if (datal > INT_MAX)
+        datal = INT_MAX;
+
+    ret = bio->method->bwrite_old(bio, data, (int)datal);
+
+    if (ret <= 0) {
+        *written = 0;
+        return ret;
+    }
+
+    *written = (size_t)ret;
+
+    return 1;
 }
 
 int BIO_meth_set_write(BIO_METHOD *biom,
                        int (*bwrite) (BIO *, const char *, int))
 {
+    biom->bwrite_old = bwrite;
+    biom->bwrite = bwrite_conv;
+    return 1;
+}
+
+int BIO_meth_set_write_ex(BIO_METHOD *biom,
+                       int (*bwrite) (BIO *, const char *, size_t, size_t *))
+{
+    biom->bwrite_old = NULL;
     biom->bwrite = bwrite;
     return 1;
 }
 
 int (*BIO_meth_get_read(BIO_METHOD *biom)) (BIO *, char *, int)
 {
+    return biom->bread_old;
+}
+
+int (*BIO_meth_get_read_ex(BIO_METHOD *biom)) (BIO *, char *, size_t, size_t *)
+{
     return biom->bread;
+}
+
+/* Conversion for old style bread to new style */
+int bread_conv(BIO *bio, char *data, size_t datal, size_t *readbytes)
+{
+    int ret;
+
+    if (datal > INT_MAX)
+        datal = INT_MAX;
+
+    ret = bio->method->bread_old(bio, data, (int)datal);
+
+    if (ret <= 0) {
+        *readbytes = 0;
+        return ret;
+    }
+
+    *readbytes = (size_t)ret;
+
+    return 1;
 }
 
 int BIO_meth_set_read(BIO_METHOD *biom,
                       int (*bread) (BIO *, char *, int))
 {
+    biom->bread_old = bread;
+    biom->bread = bread_conv;
+    return 1;
+}
+
+int BIO_meth_set_read_ex(BIO_METHOD *biom,
+                         int (*bread) (BIO *, char *, size_t, size_t *))
+{
+    biom->bread_old = NULL;
     biom->bread = bread;
     return 1;
 }

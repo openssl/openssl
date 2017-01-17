@@ -50,7 +50,7 @@ const BIO_METHOD *BIO_f_zlib(void);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_COMP_strings(void);
+int ERR_load_COMP_strings(void);
 
 /* Error codes for the COMP functions. */
 

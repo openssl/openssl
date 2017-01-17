@@ -582,7 +582,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     BIO_free_all(btmp);
     BIO_free_all(etmp);
     BIO_free_all(bio);
-    return  NULL;
+    return NULL;
 }
 
 static BIO *PKCS7_find_digest(EVP_MD_CTX **pmd, BIO *bio, int nid)
@@ -775,7 +775,8 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
             goto err;
         if (!EVP_DigestFinal_ex(mdc, md_data, &md_len))
             goto err;
-        ASN1_OCTET_STRING_set(p7->d.digest->digest, md_data, md_len);
+        if (!ASN1_OCTET_STRING_set(p7->d.digest->digest, md_data, md_len))
+            goto err;
     }
 
     if (!PKCS7_is_detached(p7)) {

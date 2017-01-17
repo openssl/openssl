@@ -105,7 +105,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
         ({  asm volatile (                      \
                 "divl   %4"                     \
                 : "=a"(q), "=d"(rem)            \
-                : "a"(n1), "d"(n0), "g"(d0)     \
+                : "a"(n1), "d"(n0), "r"(d0)     \
                 : "cc");                        \
             q;                                  \
         })
@@ -120,7 +120,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
         ({  asm volatile (                      \
                 "divq   %4"                     \
                 : "=a"(q), "=d"(rem)            \
-                : "a"(n1), "d"(n0), "g"(d0)     \
+                : "a"(n1), "d"(n0), "r"(d0)     \
                 : "cc");                        \
             q;                                  \
         })
@@ -130,7 +130,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 # endif                         /* OPENSSL_NO_ASM */
 
 /*-
- * BN_div computes  dv := num / divisor,  rounding towards
+ * BN_div computes  dv := num / divisor, rounding towards
  * zero, and sets up rm  such that  dv*divisor + rm = num  holds.
  * Thus:
  *     dv->neg == num->neg ^ divisor->neg  (unless the result is zero)

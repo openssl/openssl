@@ -21,6 +21,10 @@ for F in `cat $X1` ; do
     git grep -l --full-name -F $F >$X2
     NUM=`wc -l <$X2`
     test $NUM -gt 2 && continue
+    if grep -q $F crypto/err/openssl.ec ; then
+        echo Possibly unused $F found in openssl.ec
+        continue
+    fi
     echo $F
     for FILE in `cat $X2` ; do
         grep -v -w $F <$FILE >$FILE.new

@@ -22,6 +22,10 @@ my $PSTRING_CHAR = 0x10;	# Valid PrintableString character
 my $RFC2253_FIRST_ESC = 0x20; # Escaped with \ if first character
 my $RFC2253_LAST_ESC = 0x40;  # Escaped with \ if last character
 my $RFC2254_ESC = 0x400;	# Character escaped \XX
+my $HOST_ANY = 0x1000;      # Valid hostname character anywhere in label
+my $HOST_DOT = 0x2000;  # Dot: hostname label separator
+my $HOST_HYPHEN = 0x4000; # Hyphen: not valid at start or end.
+my $HOST_WILD = 0x8000; # Wildcard character
 
 for($i = 0; $i < 128; $i++) {
 	# Set the RFC2253 escape characters (control)
@@ -34,7 +38,7 @@ for($i = 0; $i < 128; $i++) {
 	if(		   ( ( $i >= ord("a")) && ( $i <= ord("z")) )
 			|| (  ( $i >= ord("A")) && ( $i <= ord("Z")) )
 			|| (  ( $i >= ord("0")) && ( $i <= ord("9")) )  ) {
-		$arr[$i] |= $PSTRING_CHAR;
+		$arr[$i] |= $PSTRING_CHAR | $HOST_ANY;
 	}
 }
 
@@ -58,7 +62,7 @@ $arr[ord(";")] |= $NOESC_QUOTE | $RFC2253_ESC;
 $arr[0] |= $RFC2254_ESC;
 $arr[ord("(")] |= $RFC2254_ESC;
 $arr[ord(")")] |= $RFC2254_ESC;
-$arr[ord("*")] |= $RFC2254_ESC;
+$arr[ord("*")] |= $RFC2254_ESC | $HOST_WILD;
 $arr[ord("\\")] |= $RFC2254_ESC;
 
 # Remaining PrintableString characters
@@ -69,8 +73,8 @@ $arr[ord("(")] |= $PSTRING_CHAR;
 $arr[ord(")")] |= $PSTRING_CHAR;
 $arr[ord("+")] |= $PSTRING_CHAR;
 $arr[ord(",")] |= $PSTRING_CHAR;
-$arr[ord("-")] |= $PSTRING_CHAR;
-$arr[ord(".")] |= $PSTRING_CHAR;
+$arr[ord("-")] |= $PSTRING_CHAR | $HOST_HYPHEN;
+$arr[ord(".")] |= $PSTRING_CHAR | $HOST_DOT;
 $arr[ord("/")] |= $PSTRING_CHAR;
 $arr[ord(":")] |= $PSTRING_CHAR;
 $arr[ord("=")] |= $PSTRING_CHAR;
@@ -91,6 +95,11 @@ print <<EOF;
  * https://www.openssl.org/source/license.html
  */
 
+#define CHARTYPE_HOST_ANY $HOST_ANY
+#define CHARTYPE_HOST_DOT $HOST_DOT
+#define CHARTYPE_HOST_HYPHEN $HOST_HYPHEN
+#define CHARTYPE_HOST_WILD $HOST_WILD
+
 /*
  * Mask of various character properties
  */
@@ -100,8 +109,8 @@ EOF
 
 print "   ";
 for($i = 0; $i < 128; $i++) {
-	print("\n   ") if($i && (($i % 16) == 0));
-	printf(" %2d", $arr[$i]);
+	print("\n   ") if($i && (($i % 12) == 0));
+	printf(" %4d", $arr[$i]);
 	print(",") if ($i != 127);
 }
 print("\n};\n");

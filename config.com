@@ -14,9 +14,10 @@ $	! -d		sets debugging
 $	! -h		prints a usage and exits
 $	! -t		test mode, doesn't run Configure
 $
-$	arch == f$edit( f$getsyi( "arch_name"), "lowercase")
+$	arch = f$edit( f$getsyi( "arch_name"), "lowercase")
 $	pointer_size = ""
-$	test = 0
+$	dryrun = 0
+$	verbose = 0
 $	here = F$PARSE("A.;",F$ENVIRONMENT("PROCEDURE"),,,"SYNTAX_ONLY") - "A.;"
 $
 $	collected_args = ""
@@ -27,7 +28,7 @@ $	    IF P_index .GT. 8 THEN GOTO ENDLOOP1
 $	    P = F$EDIT(P1,"TRIM,LOWERCASE")
 $	    IF P .EQS. "-h"
 $           THEN
-$               TEST = 1
+$               dryrun = 1
 $               P = ""
 $               TYPE SYS$INPUT
 $               DECK
@@ -37,6 +38,7 @@ Usage: @config [options]
   -64 or 64	Build with 64-bit pointer size.
   -d		Build with debugging.
   -t            Test mode, do not run the Configure perl script.
+  -v            Verbose mode, show the exact Configure call that is being made.
   -h		This help.
 
 Any other text will be passed to the Configure perl script.
@@ -46,7 +48,13 @@ $               EOD
 $           ENDIF
 $	    IF P .EQS. "-t"
 $	    THEN
-$		test = 1
+$		dryrun = 1
+$		verbose = 1
+$		P = ""
+$	    ENDIF
+$	    IF P .EQS. "-v"
+$	    THEN
+$		verbose = 1
 $		P = ""
 $	    ENDIF
 $	    IF P .EQS. "-32" .OR. P .EQS. "32"
@@ -78,12 +86,8 @@ $	    GOTO LOOP1
 $	ENDLOOP1:
 $
 $	target = "vms-''arch'''pointer_size'"
-$       IF test
-$       THEN
-$           WRITE SYS$OUTPUT "PERL ''here'Configure ""''target'""''collected_args'"
-$       ELSE
-$           PERL 'here'Configure "''target'" 'debug' 'collected_args'
-$       ENDIF
+$       IF verbose THEN -
+           WRITE SYS$OUTPUT "PERL ''here'Configure ""''target'""''collected_args'"
+$       IF .not. dryrun THEN -
+           PERL 'here'Configure "''target'" 'debug' 'collected_args'
 $       EXIT $STATUS
-$
-$ USAGE:

@@ -27,6 +27,7 @@ static ERR_STRING_DATA PKCS12_str_functs[] = {
     {ERR_FUNC(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG), "PKCS12_item_pack_safebag"},
     {ERR_FUNC(PKCS12_F_PKCS12_KEY_GEN_ASC), "PKCS12_key_gen_asc"},
     {ERR_FUNC(PKCS12_F_PKCS12_KEY_GEN_UNI), "PKCS12_key_gen_uni"},
+    {ERR_FUNC(PKCS12_F_PKCS12_KEY_GEN_UTF8), "PKCS12_key_gen_utf8"},
     {ERR_FUNC(PKCS12_F_PKCS12_NEWPASS), "PKCS12_newpass"},
     {ERR_FUNC(PKCS12_F_PKCS12_PACK_P7DATA), "PKCS12_pack_p7data"},
     {ERR_FUNC(PKCS12_F_PKCS12_PACK_P7ENCDATA), "PKCS12_pack_p7encdata"},
@@ -81,7 +82,7 @@ static ERR_STRING_DATA PKCS12_str_reasons[] = {
 
 #endif
 
-void ERR_load_PKCS12_strings(void)
+int ERR_load_PKCS12_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -90,4 +91,5 @@ void ERR_load_PKCS12_strings(void)
         ERR_load_strings(0, PKCS12_str_reasons);
     }
 #endif
+    return 1;
 }

@@ -61,30 +61,57 @@ DEFINE_STACK_OF(CTLOG)
  * CT policy evaluation context functions *
  ******************************************/
 
-/* Creates a new, empty policy evaluation context */
+/*
+ * Creates a new, empty policy evaluation context.
+ * The caller is responsible for calling CT_POLICY_EVAL_CTX_free when finished
+ * with the CT_POLICY_EVAL_CTX.
+ */
 CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
 
-/* Deletes a policy evaluation context */
+/* Deletes a policy evaluation context and anything it owns. */
 void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx);
 
 /* Gets the peer certificate that the SCTs are for */
 X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx);
 
-/* Sets the certificate associated with the received SCTs */
-void CT_POLICY_EVAL_CTX_set0_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
+/*
+ * Sets the certificate associated with the received SCTs.
+ * Increments the reference count of cert.
+ * Returns 1 on success, 0 otherwise.
+ */
+int CT_POLICY_EVAL_CTX_set1_cert(CT_POLICY_EVAL_CTX *ctx, X509 *cert);
 
 /* Gets the issuer of the aforementioned certificate */
 X509* CT_POLICY_EVAL_CTX_get0_issuer(const CT_POLICY_EVAL_CTX *ctx);
 
-/* Sets the issuer of the certificate associated with the received SCTs */
-void CT_POLICY_EVAL_CTX_set0_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
+/*
+ * Sets the issuer of the certificate associated with the received SCTs.
+ * Increments the reference count of issuer.
+ * Returns 1 on success, 0 otherwise.
+ */
+int CT_POLICY_EVAL_CTX_set1_issuer(CT_POLICY_EVAL_CTX *ctx, X509 *issuer);
 
 /* Gets the CT logs that are trusted sources of SCTs */
 const CTLOG_STORE *CT_POLICY_EVAL_CTX_get0_log_store(const CT_POLICY_EVAL_CTX *ctx);
 
-/* Sets the log store that is in use */
-void CT_POLICY_EVAL_CTX_set0_log_store(CT_POLICY_EVAL_CTX *ctx,
-                                       CTLOG_STORE *log_store);
+/* Sets the log store that is in use. It must outlive the CT_POLICY_EVAL_CTX. */
+void CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(CT_POLICY_EVAL_CTX *ctx,
+                                               CTLOG_STORE *log_store);
+
+/*
+ * Gets the time, in milliseconds since the Unix epoch, that will be used as the
+ * current time when checking whether an SCT was issued in the future.
+ * Such SCTs will fail validation, as required by RFC6962.
+ */
+uint64_t CT_POLICY_EVAL_CTX_get_time(const CT_POLICY_EVAL_CTX *ctx);
+
+/*
+ * Sets the time to evaluate SCTs against, in milliseconds since the Unix epoch.
+ * If an SCT's timestamp is after this time, it will be interpreted as having
+ * been issued in the future. RFC6962 states that "TLS clients MUST reject SCTs
+ * whose timestamp is in the future", so an SCT will not validate in this case.
+ */
+void CT_POLICY_EVAL_CTX_set_time(CT_POLICY_EVAL_CTX *ctx, uint64_t time_in_ms);
 
 /*****************
  * SCT functions *
@@ -263,19 +290,6 @@ void SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
                     const char *separator, const CTLOG_STORE *logs);
 
 /*
- * Verifies an SCT with the given context.
- * Returns 1 if the SCT verifies successfully, 0 otherwise.
- */
-__owur int SCT_verify(const SCT_CTX *sctx, const SCT *sct);
-
-/*
- * Verifies an SCT against the provided data.
- * Returns 1 if the SCT verifies successfully, 0 otherwise.
- */
-__owur int SCT_verify_v1(SCT *sct, X509 *cert, X509 *preissuer,
-                  X509_PUBKEY *log_pubkey, X509 *issuer_cert);
-
-/*
  * Gets the last result of validating this SCT.
  * If it has not been validated yet, returns SCT_VALIDATION_STATUS_NOT_SET.
  */
@@ -292,7 +306,7 @@ __owur int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx);
 
 /*
  * Validates the given list of SCTs with the provided context.
- * Populates the "good_scts" and "bad_scts" of the evaluation context.
+ * Sets the "validation_status" field of each SCT.
  * Returns 1 if there are no invalid SCTs and all signatures verify.
  * Returns 0 if at least one SCT is invalid or could not be verified.
  * Returns a negative integer if an error occurs.
@@ -383,46 +397,26 @@ __owur int i2o_SCT(const SCT *sct, unsigned char **out);
  */
 SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len);
 
-/*
-* Serialize (to TLS format) an |sct| signature and write it to |out|.
-* If |out| is null, no signature will be output but the length will be returned.
-* If |out| points to a null pointer, a string will be allocated to hold the
-* TLS-format signature. It is the responsibility of the caller to free it.
-* If |out| points to an allocated string, the signature will be written to it.
-* The length of the signature in TLS format will be returned.
-*/
-__owur int i2o_SCT_signature(const SCT *sct, unsigned char **out);
-
-/*
-* Parses an SCT signature in TLS format and populates the |sct| with it.
-* |in| should be a pointer to a string containing the TLS-format signature.
-* |in| will be advanced to the end of the signature if parsing succeeds.
-* |len| should be the length of the signature in |in|.
-* Returns the number of bytes parsed, or a negative integer if an error occurs.
-*/
-__owur int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
-
 /********************
  * CT log functions *
  ********************/
 
 /*
  * Creates a new CT log instance with the given |public_key| and |name|.
+ * Takes ownership of |public_key| but copies |name|.
+ * Returns NULL if malloc fails or if |public_key| cannot be converted to DER.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
 CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
 
 /*
- * Creates a new, blank CT log instance.
+ * Creates a new CTLOG instance with the base64-encoded SubjectPublicKeyInfo DER
+ * in |pkey_base64|. The |name| is a string to help users identify this log.
+ * Returns 1 on success, 0 on failure.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
-CTLOG *CTLOG_new_null(void);
-
-/*
- * Creates a new CT log instance with the given base64 public_key and |name|.
- * Should be deleted by the caller using CTLOG_free when no longer needed.
- */
-CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name);
+int CTLOG_new_from_base64(CTLOG ** ct_log,
+                          const char *pkey_base64, const char *name);
 
 /*
  * Deletes a CT log instance and its fields.
@@ -480,7 +474,7 @@ __owur int CTLOG_STORE_load_default_file(CTLOG_STORE *store);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_CT_strings(void);
+int ERR_load_CT_strings(void);
 
 /* Error codes for the CT functions. */
 
@@ -488,9 +482,10 @@ void ERR_load_CT_strings(void);
 # define CT_F_CTLOG_NEW                                   117
 # define CT_F_CTLOG_NEW_FROM_BASE64                       118
 # define CT_F_CTLOG_NEW_FROM_CONF                         119
-# define CT_F_CTLOG_NEW_NULL                              120
 # define CT_F_CTLOG_STORE_LOAD_CTX_NEW                    122
 # define CT_F_CTLOG_STORE_LOAD_FILE                       123
+# define CT_F_CTLOG_STORE_LOAD_LOG                        130
+# define CT_F_CTLOG_STORE_NEW                             131
 # define CT_F_CT_BASE64_DECODE                            124
 # define CT_F_CT_POLICY_EVAL_CTX_NEW                      133
 # define CT_F_CT_V1_LOG_ID_FROM_PKEY                      125
@@ -501,6 +496,7 @@ void ERR_load_CT_strings(void);
 # define CT_F_O2I_SCT_LIST                                111
 # define CT_F_O2I_SCT_SIGNATURE                           112
 # define CT_F_SCT_CTX_NEW                                 126
+# define CT_F_SCT_CTX_VERIFY                              128
 # define CT_F_SCT_NEW                                     100
 # define CT_F_SCT_NEW_FROM_BASE64                         127
 # define CT_F_SCT_SET0_LOG_ID                             101
@@ -510,8 +506,6 @@ void ERR_load_CT_strings(void);
 # define CT_F_SCT_SET_LOG_ENTRY_TYPE                      102
 # define CT_F_SCT_SET_SIGNATURE_NID                       103
 # define CT_F_SCT_SET_VERSION                             104
-# define CT_F_SCT_VERIFY                                  128
-# define CT_F_SCT_VERIFY_V1                               129
 
 /* Reason codes. */
 # define CT_R_BASE64_DECODE_ERROR                         108
@@ -521,6 +515,7 @@ void ERR_load_CT_strings(void);
 # define CT_R_LOG_CONF_MISSING_DESCRIPTION                111
 # define CT_R_LOG_CONF_MISSING_KEY                        112
 # define CT_R_LOG_KEY_INVALID                             113
+# define CT_R_SCT_FUTURE_TIMESTAMP                        116
 # define CT_R_SCT_INVALID                                 104
 # define CT_R_SCT_INVALID_SIGNATURE                       107
 # define CT_R_SCT_LIST_INVALID                            105

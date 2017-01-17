@@ -16,8 +16,8 @@
 #include <openssl/err.h>
 #include "ssl_locl.h"
 
-static int ssl_write(BIO *h, const char *buf, int num);
-static int ssl_read(BIO *h, char *buf, int size);
+static int ssl_write(BIO *h, const char *buf, size_t size, size_t *written);
+static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes);
 static int ssl_puts(BIO *h, const char *str);
 static long ssl_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int ssl_new(BIO *h);
@@ -28,7 +28,7 @@ typedef struct bio_ssl_st {
     /* re-negotiate every time the total number of bytes is this size */
     int num_renegotiates;
     unsigned long renegotiate_count;
-    unsigned long byte_count;
+    size_t byte_count;
     unsigned long renegotiate_timeout;
     unsigned long last_time;
 } BIO_SSL;
@@ -36,7 +36,9 @@ typedef struct bio_ssl_st {
 static const BIO_METHOD methods_sslp = {
     BIO_TYPE_SSL, "ssl",
     ssl_write,
+    NULL,
     ssl_read,
+    NULL,
     ssl_puts,
     NULL,                       /* ssl_gets, */
     ssl_ctrl,
@@ -86,7 +88,7 @@ static int ssl_free(BIO *a)
     return 1;
 }
 
-static int ssl_read(BIO *b, char *out, int outl)
+static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
 {
     int ret = 1;
     BIO_SSL *sb;
@@ -94,21 +96,19 @@ static int ssl_read(BIO *b, char *out, int outl)
     int retry_reason = 0;
     int r = 0;
 
-    if (out == NULL)
-        return (0);
+    if (buf == NULL)
+        return 0;
     sb = BIO_get_data(b);
     ssl = sb->ssl;
 
     BIO_clear_retry_flags(b);
 
-    ret = SSL_read(ssl, out, outl);
+    ret = SSL_read_ex(ssl, buf, size, readbytes);
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
-        if (ret <= 0)
-            break;
         if (sb->renegotiate_count > 0) {
-            sb->byte_count += ret;
+            sb->byte_count += *readbytes;
             if (sb->byte_count > sb->renegotiate_count) {
                 sb->byte_count = 0;
                 sb->num_renegotiates++;
@@ -154,34 +154,30 @@ static int ssl_read(BIO *b, char *out, int outl)
     }
 
     BIO_set_retry_reason(b, retry_reason);
-    return (ret);
+
+    return ret;
 }
 
-static int ssl_write(BIO *b, const char *out, int outl)
+static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
 {
     int ret, r = 0;
     int retry_reason = 0;
     SSL *ssl;
     BIO_SSL *bs;
 
-    if (out == NULL)
-        return (0);
+    if (buf == NULL)
+        return 0;
     bs = BIO_get_data(b);
     ssl = bs->ssl;
 
     BIO_clear_retry_flags(b);
 
-    /*
-     * ret=SSL_do_handshake(ssl); if (ret > 0)
-     */
-    ret = SSL_write(ssl, out, outl);
+    ret = SSL_write_ex(ssl, buf, size, written);
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
-        if (ret <= 0)
-            break;
         if (bs->renegotiate_count > 0) {
-            bs->byte_count += ret;
+            bs->byte_count += *written;
             if (bs->byte_count > bs->renegotiate_count) {
                 bs->byte_count = 0;
                 bs->num_renegotiates++;
@@ -220,6 +216,7 @@ static int ssl_write(BIO *b, const char *out, int outl)
     }
 
     BIO_set_retry_reason(b, retry_reason);
+
     return ret;
 }
 
@@ -327,23 +324,19 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_PUSH:
         if ((next != NULL) && (next != ssl->rbio)) {
+            /*
+             * We are going to pass ownership of next to the SSL object...but
+             * we don't own a reference to pass yet - so up ref
+             */
+            BIO_up_ref(next);
             SSL_set_bio(ssl, next, next);
-            BIO_up_ref(b);
         }
         break;
     case BIO_CTRL_POP:
         /* Only detach if we are the BIO explicitly being popped */
         if (b == ptr) {
-            /*
-             * Shouldn't happen in practice because the rbio and wbio are the
-             * same when pushed.
-             */
-            if (ssl->rbio != ssl->wbio)
-                BIO_free_all(ssl->wbio);
-            if (next != NULL)
-                BIO_free(next);
-            ssl->wbio = NULL;
-            ssl->rbio = NULL;
+            /* This will clear the reference we obtained during push */
+            SSL_set_bio(ssl, NULL, NULL);
         }
         break;
     case BIO_C_DO_STATE_MACHINE:

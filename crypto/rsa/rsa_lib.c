@@ -12,8 +12,9 @@
 #include "internal/cryptlib.h"
 #include <openssl/lhash.h>
 #include "internal/bn_int.h"
-#include <openssl/rand.h>
 #include <openssl/engine.h>
+#include <openssl/evp.h>
+#include "internal/evp_int.h"
 #include "rsa_locl.h"
 
 static const RSA_METHOD *default_RSA_meth = NULL;
@@ -129,7 +130,7 @@ void RSA_free(RSA *r)
     if (r == NULL)
         return;
 
-    CRYPTO_atomic_add(&r->references, -1, &i, r->lock);
+    CRYPTO_DOWN_REF(&r->references, &i, r->lock);
     REF_PRINT_COUNT("RSA", r);
     if (i > 0)
         return;
@@ -153,6 +154,7 @@ void RSA_free(RSA *r)
     BN_clear_free(r->dmp1);
     BN_clear_free(r->dmq1);
     BN_clear_free(r->iqmp);
+    RSA_PSS_PARAMS_free(r->pss);
     BN_BLINDING_free(r->blinding);
     BN_BLINDING_free(r->mt_blinding);
     OPENSSL_free(r->bignum_data);
@@ -163,7 +165,7 @@ int RSA_up_ref(RSA *r)
 {
     int i;
 
-    if (CRYPTO_atomic_add(&r->references, 1, &i, r->lock) <= 0)
+    if (CRYPTO_UP_REF(&r->references, &i, r->lock) <= 0)
         return 0;
 
     REF_PRINT_COUNT("RSA", r);
@@ -181,50 +183,6 @@ void *RSA_get_ex_data(const RSA *r, int idx)
     return (CRYPTO_get_ex_data(&r->ex_data, idx));
 }
 
-int RSA_memory_lock(RSA *r)
-{
-    int i, j, k, off;
-    char *p;
-    BIGNUM *bn, **t[6], *b;
-    BN_ULONG *ul;
-
-    if (r->d == NULL)
-        return (1);
-    t[0] = &r->d;
-    t[1] = &r->p;
-    t[2] = &r->q;
-    t[3] = &r->dmp1;
-    t[4] = &r->dmq1;
-    t[5] = &r->iqmp;
-    k = bn_sizeof_BIGNUM() * 6;
-    off = k / sizeof(BN_ULONG) + 1;
-    j = 1;
-    for (i = 0; i < 6; i++)
-        j += bn_get_top(*t[i]);
-    if ((p = OPENSSL_malloc((off + j) * sizeof(*p))) == NULL) {
-        RSAerr(RSA_F_RSA_MEMORY_LOCK, ERR_R_MALLOC_FAILURE);
-        return (0);
-    }
-    memset(p, 0, sizeof(*p) * (off + j));
-    bn = (BIGNUM *)p;
-    ul = (BN_ULONG *)&(p[off]);
-    for (i = 0; i < 6; i++) {
-        b = *(t[i]);
-        *(t[i]) = bn_array_el(bn, i);
-        memcpy(bn_array_el(bn, i), b, bn_sizeof_BIGNUM());
-        memcpy(ul, bn_get_words(b), sizeof(*ul) * bn_get_top(b));
-        bn_set_static_words(bn_array_el(bn, i), ul, bn_get_top(b));
-        ul += bn_get_top(b);
-        BN_clear_free(b);
-    }
-
-    /* I should fix this so it can still be done */
-    r->flags &= ~(RSA_FLAG_CACHE_PRIVATE | RSA_FLAG_CACHE_PUBLIC);
-
-    r->bignum_data = p;
-    return (1);
-}
-
 int RSA_security_bits(const RSA *rsa)
 {
     return BN_security_bits(BN_num_bits(rsa->n), -1);
@@ -232,15 +190,12 @@ int RSA_security_bits(const RSA *rsa)
 
 int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
 {
-    /* If the fields in r are NULL, the corresponding input
+    /* If the fields n and e in r are NULL, the corresponding input
      * parameters MUST be non-NULL for n and e.  d may be
      * left NULL (in case only the public key is used).
-     *
-     * It is an error to give the results from get0 on r
-     * as input parameters.
      */
-    if (n == r->n || e == r->e
-        || (r->d != NULL && d == r->d))
+    if ((r->n == NULL && n == NULL)
+        || (r->e == NULL && e == NULL))
         return 0;
 
     if (n != NULL) {
@@ -261,13 +216,11 @@ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
 
 int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
 {
-    /* If the fields in r are NULL, the corresponding input
+    /* If the fields p and q in r are NULL, the corresponding input
      * parameters MUST be non-NULL.
-     *
-     * It is an error to give the results from get0 on r
-     * as input parameters.
      */
-    if (p == r->p || q == r->q)
+    if ((r->p == NULL && p == NULL)
+        || (r->q == NULL && q == NULL))
         return 0;
 
     if (p != NULL) {
@@ -284,13 +237,12 @@ int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
 
 int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
 {
-    /* If the fields in r are NULL, the corresponding input
+    /* If the fields dmp1, dmq1 and iqmp in r are NULL, the corresponding input
      * parameters MUST be non-NULL.
-     *
-     * It is an error to give the results from get0 on r
-     * as input parameters.
      */
-    if (dmp1 == r->dmp1 || dmq1 == r->dmq1 || iqmp == r->iqmp)
+    if ((r->dmp1 == NULL && dmp1 == NULL)
+        || (r->dmq1 == NULL && dmq1 == NULL)
+        || (r->iqmp == NULL && iqmp == NULL))
         return 0;
 
     if (dmp1 != NULL) {
@@ -309,7 +261,8 @@ int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
     return 1;
 }
 
-void RSA_get0_key(const RSA *r, BIGNUM **n, BIGNUM **e, BIGNUM **d)
+void RSA_get0_key(const RSA *r,
+                  const BIGNUM **n, const BIGNUM **e, const BIGNUM **d)
 {
     if (n != NULL)
         *n = r->n;
@@ -319,7 +272,7 @@ void RSA_get0_key(const RSA *r, BIGNUM **n, BIGNUM **e, BIGNUM **d)
         *d = r->d;
 }
 
-void RSA_get0_factors(const RSA *r, BIGNUM **p, BIGNUM **q)
+void RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q)
 {
     if (p != NULL)
         *p = r->p;
@@ -328,7 +281,8 @@ void RSA_get0_factors(const RSA *r, BIGNUM **p, BIGNUM **q)
 }
 
 void RSA_get0_crt_params(const RSA *r,
-                         BIGNUM **dmp1, BIGNUM **dmq1, BIGNUM **iqmp)
+                         const BIGNUM **dmp1, const BIGNUM **dmq1,
+                         const BIGNUM **iqmp)
 {
     if (dmp1 != NULL)
         *dmp1 = r->dmp1;
@@ -353,7 +307,17 @@ void RSA_set_flags(RSA *r, int flags)
     r->flags |= flags;
 }
 
-ENGINE *RSA_get0_engine(RSA *r)
+ENGINE *RSA_get0_engine(const RSA *r)
 {
     return r->engine;
+}
+
+int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2)
+{
+    /* If key type not RSA or RSA-PSS return error */
+    if (ctx != NULL && ctx->pmeth != NULL
+        && ctx->pmeth->pkey_id != EVP_PKEY_RSA
+        && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+        return -1;
+     return EVP_PKEY_CTX_ctrl(ctx, -1, optype, cmd, p1, p2);
 }

@@ -38,11 +38,6 @@
  * #define TEST_CERT "client.pem"
  */
 
-#undef BUFSIZZ
-#define BUFSIZZ 1024*10
-
-#define MYBUFSIZ 1024*8
-
 #undef min
 #undef max
 #define min(a,b) (((a) < (b)) ? (a) : (b))
@@ -52,10 +47,9 @@
 #define SECONDS 30
 #define SECONDSSTR "30"
 
-extern int verify_depth;
-extern int verify_error;
-
 static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx);
+
+static const char fmt_http_get_cmd[] = "GET %s HTTP/1.0\r\n\r\n";
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -65,7 +59,7 @@ typedef enum OPTION_choice {
     OPT_WWW
 } OPTION_CHOICE;
 
-OPTIONS s_time_options[] = {
+const OPTIONS s_time_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"connect", OPT_CONNECT, 's',
      "Where to connect as post:port (default is " SSL_CONNECT_NAME ")"},
@@ -109,15 +103,13 @@ int s_time_main(int argc, char **argv)
     char *host = SSL_CONNECT_NAME, *certfile = NULL, *keyfile = NULL, *prog;
     double totalTime = 0.0;
     int noCApath = 0, noCAfile = 0;
-    int maxtime = SECONDS, nConn = 0, perform = 3, ret = 1, i, st_bugs =
-        0, ver;
+    int maxtime = SECONDS, nConn = 0, perform = 3, ret = 1, i, st_bugs = 0;
     long bytes_read = 0, finishtime = 0;
     OPTION_CHOICE o;
-    int max_version = 0;
+    int max_version = 0, ver, buf_len;
+    size_t buf_size;
 
     meth = TLS_client_method();
-    verify_depth = 0;
-    verify_error = X509_V_OK;
 
     prog = opt_init(argc, argv, s_time_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -141,10 +133,10 @@ int s_time_main(int argc, char **argv)
             perform = 1;
             break;
         case OPT_VERIFY:
-            if (!opt_int(opt_arg(), &verify_depth))
+            if (!opt_int(opt_arg(), &verify_args.depth))
                 goto opthelp;
             BIO_printf(bio_err, "%s: verify depth is %d\n",
-                       prog, verify_depth);
+                       prog, verify_args.depth);
             break;
         case OPT_CERT:
             certfile = opt_arg();
@@ -176,8 +168,9 @@ int s_time_main(int argc, char **argv)
             break;
         case OPT_WWW:
             www_path = opt_arg();
-            if (strlen(www_path) > MYBUFSIZ - 100) {
-                BIO_printf(bio_err, "%s: -www option too long\n", prog);
+            buf_size = strlen(www_path) + sizeof(fmt_http_get_cmd) - 2;  /* 2 is for %s */
+            if (buf_size > sizeof(buf)) {
+                BIO_printf(bio_err, "%s: -www option is too long\n", prog);
                 goto end;
             }
             break;
@@ -232,9 +225,9 @@ int s_time_main(int argc, char **argv)
             goto end;
 
         if (www_path != NULL) {
-            BIO_snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n",
-                         www_path);
-            if (SSL_write(scon, buf, strlen(buf)) <= 0)
+            buf_len = BIO_snprintf(buf, sizeof buf,
+                                   fmt_http_get_cmd, www_path);
+            if (SSL_write(scon, buf, buf_len) <= 0)
                 goto end;
             while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
                 bytes_read += i;
@@ -290,8 +283,9 @@ int s_time_main(int argc, char **argv)
     }
 
     if (www_path != NULL) {
-        BIO_snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n", www_path);
-        if (SSL_write(scon, buf, strlen(buf)) <= 0)
+        buf_len = BIO_snprintf(buf, sizeof buf,
+                               fmt_http_get_cmd, www_path);
+        if (SSL_write(scon, buf, buf_len) <= 0)
             goto end;
         while (SSL_read(scon, buf, sizeof(buf)) > 0)
             continue;
@@ -413,9 +407,9 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
     }
     if (i <= 0) {
         BIO_printf(bio_err, "ERROR\n");
-        if (verify_error != X509_V_OK)
+        if (verify_args.error != X509_V_OK)
             BIO_printf(bio_err, "verify error:%s\n",
-                       X509_verify_cert_error_string(verify_error));
+                       X509_verify_cert_error_string(verify_args.error));
         else
             ERR_print_errors(bio_err);
         if (scon == NULL)

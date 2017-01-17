@@ -254,11 +254,6 @@ err:
     return -1;
 }
 
-void SCT_LIST_free(STACK_OF(SCT) *a)
-{
-    sk_SCT_pop_free(a, SCT_free);
-}
-
 STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
                             size_t len)
 {
@@ -365,9 +360,9 @@ int i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp)
     if (pp != NULL) {
         p = *pp;
         s2n(len2 - 2, p);
+        if (!is_pp_new)
+            *pp += len2;
     }
-    if (!is_pp_new)
-        *pp += len2;
     return len2;
 
  err:

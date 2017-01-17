@@ -219,7 +219,11 @@ extern "C" {
 
 # ifndef ossl_ssize_t
 #  define ossl_ssize_t ssize_t
-#  define OSSL_SSIZE_MAX SSIZE_MAX
+#  if defined(SSIZE_MAX)
+#   define OSSL_SSIZE_MAX SSIZE_MAX
+#  elif defined(_POSIX_SSIZE_MAX)
+#   define OSSL_SSIZE_MAX _POSIX_SSIZE_MAX
+#  endif
 # endif
 
 # ifdef DEBUG_UNUSED
@@ -241,7 +245,7 @@ typedef UINT64 uint64_t;
 #  define PRIu64 "%Lu"
 # elif (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
      defined(__osf__) || defined(__sgi) || defined(__hpux) || \
-     defined(OPENSSL_SYS_VMS)
+     defined(OPENSSL_SYS_VMS) || defined (__OpenBSD__)
 #  include <inttypes.h>
 # elif defined(_MSC_VER) && _MSC_VER<=1500
 /*
@@ -269,6 +273,17 @@ typedef unsigned __int64 uint64_t;
 #   define PRIu64 "lu"
 #  else
 #   define PRIu64 "llu"
+#  endif
+# endif
+
+/* Format specifier for printing size_t */
+# if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+#  define OSSLzu  "zu"
+# else
+#  ifdef THIRTY_TWO_BIT
+#   define OSSLzu "u"
+#  else
+#   define OSSLzu PRIu64
 #  endif
 # endif
 

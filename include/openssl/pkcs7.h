@@ -21,12 +21,6 @@
 extern "C" {
 #endif
 
-# ifdef OPENSSL_SYS_WIN32
-/* Under Win32 thes are defined in wincrypt.h */
-#  undef PKCS7_ISSUER_AND_SERIAL
-#  undef PKCS7_SIGNER_INFO
-# endif
-
 /*-
 Encryption_ID           DES-CBC
 Digest_ID               MD5
@@ -324,7 +318,7 @@ BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_PKCS7_strings(void);
+int ERR_load_PKCS7_strings(void);
 
 /* Error codes for the PKCS7 functions. */
 

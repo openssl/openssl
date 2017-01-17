@@ -686,7 +686,7 @@ int X509v3_addr_is_canonical(IPAddrBlocks *addr)
     int i, j, k;
 
     /*
-     * Empty extension is cannonical.
+     * Empty extension is canonical.
      */
     if (addr == NULL)
         return 1;

@@ -157,7 +157,7 @@ if ($alt=0) {
 	&movd	($i>0?"mm1":"mm2",&DWP(0,$dat,$ty,4));
 
 	# (*)	This is the key to Core2 and Westmere performance.
-	#	Whithout movz out-of-order execution logic confuses
+	#	Without movz out-of-order execution logic confuses
 	#	itself and fails to reorder loads and stores. Problem
 	#	appears to be fixed in Sandy Bridge...
   }

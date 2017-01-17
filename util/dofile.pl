@@ -159,7 +159,11 @@ my @autowarntext = ("WARNING: do not edit!",
 my $prev_linecount = 0;
 my $text =
     @ARGV
-    ? join("", map { my $x = "{- output_reset_on() -}".Text::Template::_load_text($_);
+    ? join("", map { my $x = Text::Template::_load_text($_);
+                     if (!defined($x)) {
+                         die $Text::Template::ERROR, "\n";
+                     }
+                     $x = "{- output_reset_on() -}" . $x;
                      my $linecount = $x =~ tr/\n//;
                      $prev_linecount = ($linecount += $prev_linecount);
                      $lines{$linecount} = $_;

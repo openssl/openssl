@@ -11,8 +11,8 @@ use TLSProxy::Proxy;
 
 package TLSProxy::Record;
 
-my $server_ccs_seen = 0;
-my $client_ccs_seen = 0;
+my $server_encrypting = 0;
+my $client_encrypting = 0;
 my $etm = 0;
 
 use constant TLS_RECORD_HEADER_LENGTH => 5;
@@ -22,17 +22,21 @@ use constant {
     RT_APPLICATION_DATA => 23,
     RT_HANDSHAKE => 22,
     RT_ALERT => 21,
-    RT_CCS => 20
+    RT_CCS => 20,
+    RT_UNKNOWN => 100
 };
 
 my %record_type = (
     RT_APPLICATION_DATA, "APPLICATION DATA",
     RT_HANDSHAKE, "HANDSHAKE",
     RT_ALERT, "ALERT",
-    RT_CCS, "CCS"
+    RT_CCS, "CCS",
+    RT_UNKNOWN, "UNKNOWN"
 );
 
 use constant {
+    VERS_TLS_1_4 => 773,
+    VERS_TLS_1_3_DRAFT => 32530,
     VERS_TLS_1_3 => 772,
     VERS_TLS_1_2 => 771,
     VERS_TLS_1_1 => 770,
@@ -98,19 +102,26 @@ sub get_records
                 $content_type,
                 $version,
                 $len,
+                0,
                 $len_real,
                 $decrypt_len,
                 substr($packet, TLS_RECORD_HEADER_LENGTH, $len_real),
                 substr($packet, TLS_RECORD_HEADER_LENGTH, $len_real)
             );
 
-            if (($server && $server_ccs_seen)
-                     || (!$server && $client_ccs_seen)) {
-                if ($etm) {
+            if (($server && $server_encrypting)
+                     || (!$server && $client_encrypting)) {
+                if (!TLSProxy::Proxy->is_tls13() && $etm) {
                     $record->decryptETM();
                 } else {
                     $record->decrypt();
                 }
+                $record->encrypted(1);
+            }
+
+            if (TLSProxy::Proxy->is_tls13()) {
+                print "  Inner content type: "
+                      .$record_type{$record->content_type()}."\n";
             }
 
             push @record_list, $record;
@@ -129,26 +140,26 @@ sub get_records
 
 sub clear
 {
-    $server_ccs_seen = 0;
-    $client_ccs_seen = 0;
+    $server_encrypting = 0;
+    $client_encrypting = 0;
 }
 
 #Class level accessors
-sub server_ccs_seen
+sub server_encrypting
 {
     my $class = shift;
     if (@_) {
-      $server_ccs_seen = shift;
+      $server_encrypting = shift;
     }
-    return $server_ccs_seen;
+    return $server_encrypting;
 }
-sub client_ccs_seen
+sub client_encrypting
 {
     my $class = shift;
     if (@_) {
-      $client_ccs_seen = shift;
+      $client_encrypting= shift;
     }
-    return $client_ccs_seen;
+    return $client_encrypting;
 }
 #Enable/Disable Encrypt-then-MAC
 sub etm
@@ -167,6 +178,7 @@ sub new
         $content_type,
         $version,
         $len,
+        $sslv2,
         $len_real,
         $decrypt_len,
         $data,
@@ -177,11 +189,14 @@ sub new
         content_type => $content_type,
         version => $version,
         len => $len,
+        sslv2 => $sslv2,
         len_real => $len_real,
         decrypt_len => $decrypt_len,
         data => $data,
         decrypt_data => $decrypt_data,
-        orig_decrypt_data => $decrypt_data
+        orig_decrypt_data => $decrypt_data,
+        encrypted => 0,
+        outer_content_type => RT_APPLICATION_DATA
     };
 
     return bless $self, $class;
@@ -218,22 +233,44 @@ sub decryptETM
 sub decrypt()
 {
     my ($self) = shift;
-
+    my $mactaglen = 20;
     my $data = $self->data;
 
-    if($self->version >= VERS_TLS_1_1()) {
-        #TLS1.1+ has an explicit IV. Throw it away
+    #Throw away any IVs
+    if (TLSProxy::Proxy->is_tls13()) {
+        #A TLS1.3 client, when processing the server's initial flight, could
+        #respond with either an encrypted or an unencrypted alert.
+        if ($self->content_type() == RT_ALERT) {
+            #TODO(TLS1.3): Eventually it is sufficient just to check the record
+            #content type. If an alert is encrypted it will have a record
+            #content type of application data. However we haven't done the
+            #record layer changes yet, so it's a bit more complicated. For now
+            #we will additionally check if the data length is 2 (1 byte for
+            #alert level, 1 byte for alert description). If it is, then this is
+            #an unecrypted alert, so don't try to decrypt
+            return $data if (length($data) == 2);
+        }
+        $mactaglen = 16;
+    } elsif ($self->version >= VERS_TLS_1_1()) {
+        #16 bytes for a standard IV
         $data = substr($data, 16);
+
+        #Find out what the padding byte is
+        my $padval = unpack("C", substr($data, length($data) - 1));
+
+        #Throw away the padding
+        $data = substr($data, 0, length($data) - ($padval + 1));
     }
 
-    #Find out what the padding byte is
-    my $padval = unpack("C", substr($data, length($data) - 1));
+    #Throw away the MAC or TAG
+    $data = substr($data, 0, length($data) - $mactaglen);
 
-    #Throw away the padding
-    $data = substr($data, 0, length($data) - ($padval + 1));
-
-    #Throw away the MAC (assumes MAC is 20 bytes for now. FIXME)
-    $data = substr($data, 0, length($data) - 20);
+    if (TLSProxy::Proxy->is_tls13()) {
+        #Get the content type
+        my $content_type = unpack("C", substr($data, length($data) - 1));
+        $self->content_type($content_type);
+        $data = substr($data, 0, length($data) - 1);
+    }
 
     $self->decrypt_data($data);
     $self->decrypt_len(length($data));
@@ -245,10 +282,28 @@ sub decrypt()
 sub reconstruct_record
 {
     my $self = shift;
+    my $server = shift;
     my $data;
+    my $tls13_enc = 0;
 
-    $data = pack('Cnn', $self->content_type, $self->version, $self->len);
+    if ($self->sslv2) {
+        $data = pack('n', $self->len | 0x8000);
+    } else {
+        if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
+            $data = pack('Cnn', $self->outer_content_type, $self->version,
+                         $self->len + 1);
+            $tls13_enc = 1;
+        } else {
+            $data = pack('Cnn', $self->content_type, $self->version,
+                         $self->len);
+        }
+
+    }
     $data .= $self->data;
+
+    if ($tls13_enc) {
+        $data .= pack('C', $self->content_type);
+    }
 
     return $data;
 }
@@ -259,15 +314,10 @@ sub flight
     my $self = shift;
     return $self->{flight};
 }
-sub content_type
+sub sslv2
 {
     my $self = shift;
-    return $self->{content_type};
-}
-sub version
-{
-    my $self = shift;
-    return $self->{version};
+    return $self->{sslv2};
 }
 sub len_real
 {
@@ -312,5 +362,37 @@ sub len
       $self->{len} = shift;
     }
     return $self->{len};
+}
+sub version
+{
+    my $self = shift;
+    if (@_) {
+      $self->{version} = shift;
+    }
+    return $self->{version};
+}
+sub content_type
+{
+    my $self = shift;
+    if (@_) {
+      $self->{content_type} = shift;
+    }
+    return $self->{content_type};
+}
+sub encrypted
+{
+    my $self = shift;
+    if (@_) {
+      $self->{encrypted} = shift;
+    }
+    return $self->{encrypted};
+}
+sub outer_content_type
+{
+    my $self = shift;
+    if (@_) {
+      $self->{outer_content_type} = shift;
+    }
+    return $self->{outer_content_type};
 }
 1;

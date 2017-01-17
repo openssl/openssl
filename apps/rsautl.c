@@ -35,7 +35,7 @@ typedef enum OPTION_choice {
     OPT_PUBIN, OPT_CERTIN, OPT_INKEY, OPT_PASSIN, OPT_KEYFORM
 } OPTION_CHOICE;
 
-OPTIONS rsautl_options[] = {
+const OPTIONS rsautl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
@@ -267,6 +267,7 @@ int rsautl_main(int argc, char **argv)
         BIO_write(out, rsa_out, rsa_outlen);
  end:
     RSA_free(rsa);
+    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     OPENSSL_free(rsa_in);

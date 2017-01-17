@@ -800,9 +800,21 @@
 #define NID_id_smime_ct_compressedData          786
 #define OBJ_id_smime_ct_compressedData          OBJ_id_smime_ct,9L
 
+#define SN_id_smime_ct_contentCollection                "id-smime-ct-contentCollection"
+#define NID_id_smime_ct_contentCollection               1058
+#define OBJ_id_smime_ct_contentCollection               OBJ_id_smime_ct,19L
+
+#define SN_id_smime_ct_authEnvelopedData                "id-smime-ct-authEnvelopedData"
+#define NID_id_smime_ct_authEnvelopedData               1059
+#define OBJ_id_smime_ct_authEnvelopedData               OBJ_id_smime_ct,23L
+
 #define SN_id_ct_asciiTextWithCRLF              "id-ct-asciiTextWithCRLF"
 #define NID_id_ct_asciiTextWithCRLF             787
 #define OBJ_id_ct_asciiTextWithCRLF             OBJ_id_smime_ct,27L
+
+#define SN_id_ct_xml            "id-ct-xml"
+#define NID_id_ct_xml           1060
+#define OBJ_id_ct_xml           OBJ_id_smime_ct,28L
 
 #define SN_id_smime_aa_receiptRequest           "id-smime-aa-receiptRequest"
 #define NID_id_smime_aa_receiptRequest          212
@@ -4490,11 +4502,11 @@
 
 #define SN_X25519               "X25519"
 #define NID_X25519              1034
-#define OBJ_X25519              1L,3L,6L,1L,4L,1L,11591L,15L,1L
+#define OBJ_X25519              1L,3L,101L,110L
 
 #define SN_X448         "X448"
 #define NID_X448                1035
-#define OBJ_X448                1L,3L,6L,1L,4L,1L,11591L,15L,2L
+#define OBJ_X448                1L,3L,101L,111L
 
 #define SN_kx_rsa               "KxRSA"
 #define LN_kx_rsa               "kx-rsa"

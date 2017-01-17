@@ -52,17 +52,17 @@ typedef struct SRP_VBASE_st {
     STACK_OF(SRP_gN_cache) *gN_cache;
 /* to simulate a user */
     char *seed_key;
-    BIGNUM *default_g;
-    BIGNUM *default_N;
+    const BIGNUM *default_g;
+    const BIGNUM *default_N;
 } SRP_VBASE;
 
 /*
- * Internal structure storing N and g pair 
+ * Internal structure storing N and g pair
  */
 typedef struct SRP_gN_st {
     char *id;
-    BIGNUM *g;
-    BIGNUM *N;
+    const BIGNUM *g;
+    const BIGNUM *N;
 } SRP_gN;
 
 DEFINE_STACK_OF(SRP_gN)
@@ -103,22 +103,23 @@ int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
 # define DB_SRP_MODIF    'v'
 
 /* see srp.c */
-char *SRP_check_known_gN_param(BIGNUM *g, BIGNUM *N);
+char *SRP_check_known_gN_param(const BIGNUM *g, const BIGNUM *N);
 SRP_gN *SRP_get_default_gN(const char *id);
 
 /* server side .... */
-BIGNUM *SRP_Calc_server_key(BIGNUM *A, BIGNUM *v, BIGNUM *u, BIGNUM *b,
-                            BIGNUM *N);
-BIGNUM *SRP_Calc_B(BIGNUM *b, BIGNUM *N, BIGNUM *g, BIGNUM *v);
-int SRP_Verify_A_mod_N(BIGNUM *A, BIGNUM *N);
-BIGNUM *SRP_Calc_u(BIGNUM *A, BIGNUM *B, BIGNUM *N);
+BIGNUM *SRP_Calc_server_key(const BIGNUM *A, const BIGNUM *v, const BIGNUM *u,
+                            const BIGNUM *b, const BIGNUM *N);
+BIGNUM *SRP_Calc_B(const BIGNUM *b, const BIGNUM *N, const BIGNUM *g,
+                   const BIGNUM *v);
+int SRP_Verify_A_mod_N(const BIGNUM *A, const BIGNUM *N);
+BIGNUM *SRP_Calc_u(const BIGNUM *A, const BIGNUM *B, const BIGNUM *N);
 
 /* client side .... */
-BIGNUM *SRP_Calc_x(BIGNUM *s, const char *user, const char *pass);
-BIGNUM *SRP_Calc_A(BIGNUM *a, BIGNUM *N, BIGNUM *g);
-BIGNUM *SRP_Calc_client_key(BIGNUM *N, BIGNUM *B, BIGNUM *g, BIGNUM *x,
-                            BIGNUM *a, BIGNUM *u);
-int SRP_Verify_B_mod_N(BIGNUM *B, BIGNUM *N);
+BIGNUM *SRP_Calc_x(const BIGNUM *s, const char *user, const char *pass);
+BIGNUM *SRP_Calc_A(const BIGNUM *a, const BIGNUM *N, const BIGNUM *g);
+BIGNUM *SRP_Calc_client_key(const BIGNUM *N, const BIGNUM *B, const BIGNUM *g,
+                            const BIGNUM *x, const BIGNUM *a, const BIGNUM *u);
+int SRP_Verify_B_mod_N(const BIGNUM *B, const BIGNUM *N);
 
 # define SRP_MINIMAL_N 1024
 

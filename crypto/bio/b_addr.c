@@ -15,7 +15,32 @@
 #ifndef OPENSSL_NO_SOCK
 #include <openssl/err.h>
 #include <openssl/buffer.h>
+#include <internal/thread_once.h>
 #include <ctype.h>
+
+#ifdef _HPUX_SOURCE
+static const char *ossl_hstrerror(int herr)
+{
+    switch (herr) {
+    case -1:
+        return strerror(errno);
+    case 0:
+        return "No error";
+    case HOST_NOT_FOUND:
+        return "Host not found";
+    case NO_DATA:                /* NO_ADDRESS is a synonym */
+        return "No data";
+    case NO_RECOVERY:
+        return "Non recoverable error";
+    case TRY_AGAIN:
+        return "Try again";
+    default:
+        break;
+    }
+    return "unknown error";
+}
+# define hstrerror(e) ossl_hstrerror(e)
+#endif
 
 CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
@@ -601,9 +626,11 @@ static int addrinfo_wrap(int family, int socktype,
     return 1;
 }
 
-static void do_bio_lookup_init(void)
+DEFINE_RUN_ONCE_STATIC(do_bio_lookup_init)
 {
+    OPENSSL_init_crypto(0, NULL);
     bio_lookup_lock = CRYPTO_THREAD_lock_new();
+    return bio_lookup_lock != NULL;
 }
 
 /*-
@@ -666,9 +693,6 @@ int BIO_lookup(const char *host, const char *service,
         struct addrinfo hints;
         memset(&hints, 0, sizeof hints);
 
-# ifdef AI_ADDRCONFIG
-        hints.ai_flags = AI_ADDRCONFIG;
-# endif
         hints.ai_family = family;
         hints.ai_socktype = socktype;
 
@@ -708,12 +732,12 @@ int BIO_lookup(const char *host, const char *service,
         /* Windows doesn't seem to have in_addr_t */
 #ifdef OPENSSL_SYS_WINDOWS
         static uint32_t he_fallback_address;
-        static const uint32_t *he_fallback_addresses[] =
-            { &he_fallback_address, NULL };
+        static const char *he_fallback_addresses[] =
+            { (char *)&he_fallback_address, NULL };
 #else
         static in_addr_t he_fallback_address;
-        static const in_addr_t *he_fallback_addresses[] =
-            { &he_fallback_address, NULL };
+        static const char *he_fallback_addresses[] =
+            { (char *)&he_fallback_address, NULL };
 #endif
         static const struct hostent he_fallback =
             { NULL, NULL, AF_INET, sizeof(he_fallback_address),
@@ -730,7 +754,11 @@ int BIO_lookup(const char *host, const char *service,
         struct servent se_fallback = { NULL, NULL, 0, NULL };
 #endif
 
-        CRYPTO_THREAD_run_once(&bio_lookup_init, do_bio_lookup_init);
+        if (!RUN_ONCE(&bio_lookup_init, do_bio_lookup_init)) {
+            BIOerr(BIO_F_BIO_LOOKUP, ERR_R_MALLOC_FAILURE);
+            ret = 0;
+            goto err;
+        }
 
         CRYPTO_THREAD_write_lock(bio_lookup_lock);
         he_fallback_address = INADDR_ANY;

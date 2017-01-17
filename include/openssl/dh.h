@@ -32,7 +32,13 @@ extern "C" {
 # define OPENSSL_DH_FIPS_MIN_MODULUS_BITS 1024
 
 # define DH_FLAG_CACHE_MONT_P     0x01
-# define DH_FLAG_NO_EXP_CONSTTIME 0x02
+
+# if OPENSSL_API_COMPAT < 0x10100000L
+/*
+ * Does nothing. Previously this switched off constant time behaviour.
+ */
+#  define DH_FLAG_NO_EXP_CONSTTIME 0x00
+# endif
 
 /*
  * If this flag is set the DH method is FIPS compliant and can be used in
@@ -145,9 +151,11 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
                  const unsigned char *ukm, size_t ukmlen, const EVP_MD *md);
 # endif
 
-void DH_get0_pqg(const DH *dh, BIGNUM **p, BIGNUM **q, BIGNUM **g);
+void DH_get0_pqg(const DH *dh,
+                 const BIGNUM **p, const BIGNUM **q, const BIGNUM **g);
 int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
-void DH_get0_key(const DH *dh, BIGNUM **pub_key, BIGNUM **priv_key);
+void DH_get0_key(const DH *dh,
+                 const BIGNUM **pub_key, const BIGNUM **priv_key);
 int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
 void DH_clear_flags(DH *dh, int flags);
 int DH_test_flags(const DH *dh, int flags);
@@ -288,7 +296,7 @@ int DH_meth_set_generate_params(DH_METHOD *dhm,
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_DH_strings(void);
+int ERR_load_DH_strings(void);
 
 /* Error codes for the DH functions. */
 

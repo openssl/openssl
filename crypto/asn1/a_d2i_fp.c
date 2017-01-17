@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include "internal/cryptlib.h"
+#include "internal/numbers.h"
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
 
@@ -97,7 +98,7 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
     unsigned char *p;
     int i;
     size_t want = HEADER_SIZE;
-    int eos = 0;
+    uint32_t eos = 0;
     size_t off = 0;
     size_t len = 0;
 
@@ -152,16 +153,16 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 
         if (inf & 1) {
             /* no data body so go round again */
-            eos++;
-            if (eos < 0) {
+            if (eos == UINT32_MAX) {
                 ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_HEADER_TOO_LONG);
                 goto err;
             }
+            eos++;
             want = HEADER_SIZE;
         } else if (eos && (slen == 0) && (tag == V_ASN1_EOC)) {
             /* eos value, so go back and read another header */
             eos--;
-            if (eos <= 0)
+            if (eos == 0)
                 break;
             else
                 want = HEADER_SIZE;
@@ -214,7 +215,7 @@ static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                 goto err;
             }
             off += slen;
-            if (eos <= 0) {
+            if (eos == 0) {
                 break;
             } else
                 want = HEADER_SIZE;

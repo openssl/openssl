@@ -26,11 +26,14 @@ our @tests = (
     {
         name => "verify-custom-reject",
         server => { },
-        client => { },
+        client => {
+            extra => {
+                "VerifyCallback" => "RejectAll",
+            },
+        },
         test   => {
-            "ClientVerifyCallback" => "RejectAll",
             "ExpectedResult" => "ClientFail",
-            "ClientAlert" => "HandshakeFailure",
+            "ExpectedClientAlert" => "HandshakeFailure",
         },
     },
 
@@ -38,9 +41,12 @@ our @tests = (
     {
         name => "verify-custom-allow",
         server => { },
-        client => { },
+        client => {
+            extra => {
+                "VerifyCallback" => "AcceptAll",
+            },
+        },
         test   => {
-            "ClientVerifyCallback" => "AcceptAll",
             "ExpectedResult" => "Success",
         },
     },
@@ -65,9 +71,11 @@ our @tests = (
         client => {
             "VerifyMode" => undef,
             "VerifyCAFile" => undef,
+            extra => {
+                "VerifyCallback" => "RejectAll",
+            },
         },
         test   => {
-            "ClientVerifyCallback" => "RejectAll",
             "ExpectedResult" => "Success",
         },
     },
@@ -80,9 +88,11 @@ our @tests = (
         client => {
             "VerifyMode" => undef,
             "VerifyCAFile" => undef,
+            extra => {
+                "VerifyCallback" => "AcceptAll",
+            },
         },
         test   => {
-            "ClientVerifyCallback" => "AcceptAll",
             "ExpectedResult" => "Success",
         },
     },
@@ -98,7 +108,7 @@ our @tests = (
         },
         test   => {
           "ExpectedResult" => "ClientFail",
-          "ClientAlert" => "UnknownCA",
+          "ExpectedClientAlert" => "UnknownCA",
         },
     },
 
@@ -108,9 +118,11 @@ our @tests = (
         server => { },
         client => {
             "VerifyCAFile" => undef,
+            extra => {
+                "VerifyCallback" => "AcceptAll",
+            },
         },
         test   => {
-            "ClientVerifyCallback" => "AcceptAll",
             "ExpectedResult" => "Success"
         },
     },
@@ -121,14 +133,13 @@ our @tests = (
         server => { },
         client => {
             "VerifyCAFile" => undef,
+            extra => {
+                "VerifyCallback" => "RejectAll",
+            },
         },
         test   => {
-            "ClientVerifyCallback" => "RejectAll",
             "ExpectedResult" => "ClientFail",
-            "ClientAlert" => "HandshakeFailure",
+            "ExpectedClientAlert" => "HandshakeFailure",
         },
     },
-
-
-
 );

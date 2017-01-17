@@ -30,7 +30,7 @@ static ERR_STRING_DATA RAND_str_reasons[] = {
 
 #endif
 
-void ERR_load_RAND_strings(void)
+int ERR_load_RAND_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -39,4 +39,5 @@ void ERR_load_RAND_strings(void)
         ERR_load_strings(0, RAND_str_reasons);
     }
 #endif
+    return 1;
 }

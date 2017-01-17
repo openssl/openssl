@@ -76,11 +76,20 @@ extern "C" {
 # if OPENSSL_API_COMPAT < 0x00908000L
 /* deprecated name for the flag */
 #  define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME
-#  define BN_FLG_FREE            0x8000 /* used for debuging */
+#  define BN_FLG_FREE            0x8000 /* used for debugging */
 # endif
 
 void BN_set_flags(BIGNUM *b, int n);
 int BN_get_flags(const BIGNUM *b, int n);
+
+/* Values for |top| in BN_rand() */
+#define BN_RAND_TOP_ANY    -1
+#define BN_RAND_TOP_ONE     0
+#define BN_RAND_TOP_TWO     1
+
+/* Values for |bottom| in BN_rand() */
+#define BN_RAND_BOTTOM_ANY  0
+#define BN_RAND_BOTTOM_ODD  1
 
 /*
  * get a clone of a BIGNUM with changed flags, for *temporary* use only (the
@@ -90,7 +99,7 @@ int BN_get_flags(const BIGNUM *b, int n);
  */
 void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int flags);
 
-/* Wrapper function to make using BN_GENCB easier,  */
+/* Wrapper function to make using BN_GENCB easier */
 int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 
 BN_GENCB *BN_GENCB_new(void);
@@ -469,7 +478,7 @@ BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
 
-# if OPENSSL_API_COMPAT < 0x00101000L
+# if OPENSSL_API_COMPAT < 0x10100000L
 #  define get_rfc2409_prime_768 BN_get_rfc2409_prime_768
 #  define get_rfc2409_prime_1024 BN_get_rfc2409_prime_1024
 #  define get_rfc3526_prime_1536 BN_get_rfc3526_prime_1536
@@ -488,7 +497,7 @@ int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_BN_strings(void);
+int ERR_load_BN_strings(void);
 
 /* Error codes for the BN functions. */
 

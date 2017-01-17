@@ -27,7 +27,7 @@ typedef enum OPTION_choice {
     OPT_TRADITIONAL
 } OPTION_CHOICE;
 
-OPTIONS pkcs8_options[] = {
+const OPTIONS pkcs8_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format (DER or PEM)"},
     {"outform", OPT_OUTFORM, 'F', "Output format (DER or PEM)"},
@@ -38,7 +38,7 @@ OPTIONS pkcs8_options[] = {
     {"nocrypt", OPT_NOCRYPT, '-', "Use or expect unencrypted private key"},
     {"v2", OPT_V2, 's', "Use PKCS#5 v2.0 and cipher"},
     {"v1", OPT_V1, 's', "Use PKCS#5 v1.5 and cipher"},
-    {"v2prf", OPT_V2PRF, 's'},
+    {"v2prf", OPT_V2PRF, 's', "Set the PRF algorithm to use with PKCS#5 v2.0"},
     {"iter", OPT_ITER, 'p', "Specify the iteration count"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
@@ -343,6 +343,7 @@ int pkcs8_main(int argc, char **argv)
     X509_SIG_free(p8);
     PKCS8_PRIV_KEY_INFO_free(p8inf);
     EVP_PKEY_free(pkey);
+    release_engine(e);
     BIO_free_all(out);
     BIO_free(in);
     OPENSSL_free(passin);

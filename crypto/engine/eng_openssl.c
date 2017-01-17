@@ -264,7 +264,7 @@ static void test_r4_40_cipher_destroy(void)
 }
 static int test_cipher_nids(const int **nids)
 {
-    static int cipher_nids[4] = { 0, 0, 0 };
+    static int cipher_nids[4] = { 0, 0, 0, 0 };
     static int pos = 0;
     static int init = 0;
 

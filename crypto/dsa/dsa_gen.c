@@ -74,8 +74,10 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
     bits = (bits + 63) / 64 * 64;
 
     if (seed_in != NULL) {
-        if (seed_len < (size_t)qsize)
+        if (seed_len < (size_t)qsize) {
+            DSAerr(DSA_F_DSA_BUILTIN_PARAMGEN, DSA_R_SEED_LEN_SMALL);
             return 0;
+        }
         if (seed_len > (size_t)qsize) {
             /* Only consume as much seed as is expected. */
             seed_len = qsize;
@@ -99,6 +101,9 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
     c = BN_CTX_get(ctx);
     p = BN_CTX_get(ctx);
     test = BN_CTX_get(ctx);
+
+    if (test == NULL)
+        goto err;
 
     if (!BN_lshift(test, BN_value_one(), bits - 1))
         goto err;

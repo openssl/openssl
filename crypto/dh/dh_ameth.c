@@ -47,8 +47,8 @@ static int dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     const unsigned char *p, *pm;
     int pklen, pmlen;
     int ptype;
-    void *pval;
-    ASN1_STRING *pstr;
+    const void *pval;
+    const ASN1_STRING *pstr;
     X509_ALGOR *palg;
     ASN1_INTEGER *public_key = NULL;
 
@@ -147,14 +147,14 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
  * explicitly included and the pubkey must be recalculated.
  */
 
-static int dh_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
+static int dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
     const unsigned char *p, *pm;
     int pklen, pmlen;
     int ptype;
-    void *pval;
-    ASN1_STRING *pstr;
-    X509_ALGOR *palg;
+    const void *pval;
+    const ASN1_STRING *pstr;
+    const X509_ALGOR *palg;
     ASN1_INTEGER *privkey = NULL;
 
     DH *dh = NULL;
@@ -574,9 +574,9 @@ const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {
 static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
                               X509_ALGOR *alg, ASN1_BIT_STRING *pubkey)
 {
-    ASN1_OBJECT *aoid;
+    const ASN1_OBJECT *aoid;
     int atype;
-    void *aval;
+    const void *aval;
     ASN1_INTEGER *public_key = NULL;
     int rv = 0;
     EVP_PKEY *pkpeer = NULL, *pk = NULL;
@@ -600,7 +600,7 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     dhpeer = DHparams_dup(pk->pkey.dh);
     /* We have parameters now set public key */
     plen = ASN1_STRING_length(pubkey);
-    p = ASN1_STRING_data(pubkey);
+    p = ASN1_STRING_get0_data(pubkey);
     if (!p || !plen)
         goto err;
 
@@ -690,7 +690,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 
     if (ukm) {
         dukmlen = ASN1_STRING_length(ukm);
-        dukm = OPENSSL_memdup(ASN1_STRING_data(ukm), dukmlen);
+        dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
         if (!dukm)
             goto err;
     }
@@ -741,7 +741,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
     EVP_CIPHER_CTX *ctx;
     int keylen;
     X509_ALGOR *talg, *wrap_alg = NULL;
-    ASN1_OBJECT *aoid;
+    const ASN1_OBJECT *aoid;
     ASN1_BIT_STRING *pubkey;
     ASN1_STRING *wrap_str;
     ASN1_OCTET_STRING *ukm;
@@ -834,7 +834,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
 
     if (ukm) {
         dukmlen = ASN1_STRING_length(ukm);
-        dukm = OPENSSL_memdup(ASN1_STRING_data(ukm), dukmlen);
+        dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
         if (!dukm)
             goto err;
     }

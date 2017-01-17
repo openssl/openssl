@@ -14,6 +14,7 @@
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+#include "internal/numbers.h"
 #include "asn1_locl.h"
 
 static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
@@ -224,16 +225,14 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             /* If field not present, try the next one */
             if (ret == -1)
                 continue;
-            /*
-             * Set the choice selector here to ensure that the value is
-             * correctly freed upon error. It may be partially initialized
-             * even if parsing failed.
-             */
-            asn1_set_choice_selector(pval, i, it);
             /* If positive return, read OK, break loop */
             if (ret > 0)
                 break;
-            /* Otherwise must be an ASN1 parsing error */
+            /*
+             * Must be an ASN1 parsing error.
+             * Free up any partial choice value
+             */
+            asn1_template_free(pchptr, tt);
             errtt = tt;
             ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ERR_R_NESTED_ASN1_ERROR);
             goto err;
@@ -250,6 +249,8 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ASN1_R_NO_MATCHING_CHOICE_TYPE);
             goto err;
         }
+
+        asn1_set_choice_selector(pval, i, it);
 
         if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
             goto auxerr;
@@ -299,7 +300,9 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             if (tt->flags & ASN1_TFLG_ADB_MASK) {
                 const ASN1_TEMPLATE *seqtt;
                 ASN1_VALUE **pseqval;
-                seqtt = asn1_do_adb(pval, tt, 1);
+                seqtt = asn1_do_adb(pval, tt, 0);
+                if (seqtt == NULL)
+                    continue;
                 pseqval = asn1_get_field_ptr(pval, seqtt);
                 asn1_template_free(pseqval, seqtt);
             }
@@ -310,7 +313,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             const ASN1_TEMPLATE *seqtt;
             ASN1_VALUE **pseqval;
             seqtt = asn1_do_adb(pval, tt, 1);
-            if (!seqtt)
+            if (seqtt == NULL)
                 goto err;
             pseqval = asn1_get_field_ptr(pval, seqtt);
             /* Have we ran out of data? */
@@ -375,7 +378,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
         for (; i < it->tcount; tt++, i++) {
             const ASN1_TEMPLATE *seqtt;
             seqtt = asn1_do_adb(pval, tt, 1);
-            if (!seqtt)
+            if (seqtt == NULL)
                 goto err;
             if (seqtt->flags & ASN1_TFLG_OPTIONAL) {
                 ASN1_VALUE **pseqval;
@@ -680,7 +683,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
         || (utype == V_ASN1_SET) || (utype == V_ASN1_OTHER)) {
         /*
          * Clear context cache for type OTHER because the auto clear when we
-         * have a exact match wont work
+         * have a exact match won't work
          */
         if (utype == V_ASN1_OTHER) {
             asn1_tlc_clear(ctx);
@@ -895,7 +898,7 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 
 static int asn1_find_end(const unsigned char **in, long len, char inf)
 {
-    int expected_eoc;
+    uint32_t expected_eoc;
     long plen;
     const unsigned char *p = *in, *q;
     /* If not indefinite length constructed just add length */
@@ -925,10 +928,15 @@ static int asn1_find_end(const unsigned char **in, long len, char inf)
             ASN1err(ASN1_F_ASN1_FIND_END, ERR_R_NESTED_ASN1_ERROR);
             return 0;
         }
-        if (inf)
+        if (inf) {
+            if (expected_eoc == UINT32_MAX) {
+                ASN1err(ASN1_F_ASN1_FIND_END, ERR_R_NESTED_ASN1_ERROR);
+                return 0;
+            }
             expected_eoc++;
-        else
+        } else {
             p += plen;
+        }
         len -= p - q;
     }
     if (expected_eoc) {

@@ -13,7 +13,7 @@
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
 
-int i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a)
+int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
 {
     int i, n = 0;
     static const char *h = "0123456789ABCDEF";
@@ -112,6 +112,7 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
         i -= again;
         if (i % 2 != 0) {
             ASN1err(ASN1_F_A2I_ASN1_INTEGER, ASN1_R_ODD_NUMBER_OF_CHARS);
+            OPENSSL_free(s);
             return 0;
         }
         i /= 2;
@@ -152,7 +153,7 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
     return 0;
 }
 
-int i2a_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *a)
+int i2a_ASN1_ENUMERATED(BIO *bp, const ASN1_ENUMERATED *a)
 {
     return i2a_ASN1_INTEGER(bp, a);
 }

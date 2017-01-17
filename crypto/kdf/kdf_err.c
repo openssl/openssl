@@ -33,7 +33,7 @@ static ERR_STRING_DATA KDF_str_reasons[] = {
 
 #endif
 
-void ERR_load_KDF_strings(void)
+int ERR_load_KDF_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -42,4 +42,5 @@ void ERR_load_KDF_strings(void)
         ERR_load_strings(0, KDF_str_reasons);
     }
 #endif
+    return 1;
 }

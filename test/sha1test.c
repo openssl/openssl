@@ -48,7 +48,12 @@ int main(int argc, char *argv[])
 # ifdef CHARSET_EBCDIC
         ebcdic2ascii(test[i], test[i], strlen(test[i]));
 # endif
-        EVP_Digest(test[i], strlen(test[i]), md, NULL, EVP_sha1(), NULL);
+        if (!EVP_Digest(test[i], strlen(test[i]), md, NULL, EVP_sha1(),
+            NULL)) {
+            printf("EVP_Digest() error\n");
+            err++;
+            goto err;
+        }
         p = pt(md);
         if (strcmp(p, (char *)*R) != 0) {
             printf("error calculating SHA1 on '%s'\n", test[i]);
@@ -63,10 +68,23 @@ int main(int argc, char *argv[])
 #ifdef CHARSET_EBCDIC
     ebcdic2ascii(buf, buf, 1000);
 #endif                         /* CHARSET_EBCDIC */
-    EVP_DigestInit_ex(c, EVP_sha1(), NULL);
-    for (i = 0; i < 1000; i++)
-        EVP_DigestUpdate(c, buf, 1000);
-    EVP_DigestFinal_ex(c, md, NULL);
+    if (!EVP_DigestInit_ex(c, EVP_sha1(), NULL)) {
+        printf("EVP_DigestInit_ex() error\n");
+        err++;
+        goto err;
+    }
+    for (i = 0; i < 1000; i++) {
+        if (!EVP_DigestUpdate(c, buf, 1000)) {
+            printf("EVP_DigestUpdate() error\n");
+            err++;
+            goto err;
+        }
+    }
+    if (!EVP_DigestFinal_ex(c, md, NULL)) {
+            printf("EVP_DigestFinal() error\n");
+            err++;
+            goto err;
+    }
     p = pt(md);
 
     r = bigret;
@@ -76,7 +94,7 @@ int main(int argc, char *argv[])
         err++;
     } else
         printf("test 3 ok\n");
-
+ err:
     EVP_MD_CTX_free(c);
     EXIT(err);
     return (0);

@@ -8,6 +8,7 @@
  */
 
 #include <openssl/rsa.h>
+#include "internal/refcount.h"
 
 struct rsa_st {
     /*
@@ -27,9 +28,11 @@ struct rsa_st {
     BIGNUM *dmp1;
     BIGNUM *dmq1;
     BIGNUM *iqmp;
+    /* If a PSS only key this contains the parameter restrictions */
+    RSA_PSS_PARAMS *pss;
     /* be careful using this if the RSA structure is shared */
     CRYPTO_EX_DATA ex_data;
-    int references;
+    CRYPTO_REF_COUNT references;
     int flags;
     /* Used to cache montgomery values */
     BN_MONT_CTX *_method_mod_n;
@@ -94,3 +97,11 @@ extern int int_rsa_verify(int dtype, const unsigned char *m,
                           unsigned int m_len, unsigned char *rm,
                           size_t *prm_len, const unsigned char *sigbuf,
                           size_t siglen, RSA *rsa);
+/* Macros to test if a pkey or ctx is for a PSS key */
+#define pkey_is_pss(pkey) (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
+#define pkey_ctx_is_pss(ctx) (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)
+
+RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd,
+                                      const EVP_MD *mgf1md, int saltlen);
+int rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
+                      const EVP_MD **pmgf1md, int *psaltlen);

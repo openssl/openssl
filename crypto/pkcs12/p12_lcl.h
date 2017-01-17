@@ -41,4 +41,3 @@ struct pkcs12_bag_st {
         ASN1_TYPE *other;       /* Secret or other bag */
     } value;
 };
-

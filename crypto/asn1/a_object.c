@@ -17,7 +17,7 @@
 #include "internal/asn1_int.h"
 #include "asn1_locl.h"
 
-int i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp)
+int i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 {
     unsigned char *p;
     int objsize;
@@ -26,7 +26,7 @@ int i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp)
         return (0);
 
     objsize = ASN1_object_size(0, a->length, V_ASN1_OBJECT);
-    if (pp == NULL)
+    if (pp == NULL || objsize == -1)
         return objsize;
 
     p = *pp;
@@ -127,8 +127,12 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
                 if (tmp == NULL)
                     goto err;
             }
-            while (blsize--)
-                tmp[i++] = (unsigned char)BN_div_word(bl, 0x80L);
+            while (blsize--) {
+                BN_ULONG t = BN_div_word(bl, 0x80L);
+                if (t == (BN_ULONG)-1)
+                    goto err;
+                tmp[i++] = (unsigned char)t;
+            }
         } else {
 
             for (;;) {
@@ -161,12 +165,12 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
     return (0);
 }
 
-int i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a)
+int i2t_ASN1_OBJECT(char *buf, int buf_len, const ASN1_OBJECT *a)
 {
     return OBJ_obj2txt(buf, buf_len, a, 0);
 }
 
-int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
+int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a)
 {
     char buf[80], *p = buf;
     int i;

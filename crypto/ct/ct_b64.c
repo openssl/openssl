@@ -45,6 +45,11 @@ static int ct_base64_decode(const char *in, unsigned char **out)
         goto err;
     }
 
+    /* Subtract padding bytes from |outlen| */
+    while (in[--inlen] == '=') {
+        --outlen;
+    }
+
     *out = outbuf;
     return outlen;
 err:
@@ -59,6 +64,7 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
 {
     SCT *sct = SCT_new();
     unsigned char *dec = NULL;
+    const unsigned char* p = NULL;
     int declen;
 
     if (sct == NULL) {
@@ -97,7 +103,9 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
         CTerr(CT_F_SCT_NEW_FROM_BASE64, X509_R_BASE64_DECODE_ERROR);
         goto err;
     }
-    if (o2i_SCT_signature(sct, (const unsigned char **)&dec, declen) <= 0)
+
+    p = dec;
+    if (o2i_SCT_signature(sct, &p, declen) <= 0)
         goto err;
     OPENSSL_free(dec);
     dec = NULL;
@@ -115,17 +123,27 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
     return NULL;
 }
 
-CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name)
+/*
+ * Allocate, build and returns a new |ct_log| from input |pkey_base64|
+ * It returns 1 on success,
+ * 0 on decoding failure, or invalid parameter if any
+ * -1 on internal (malloc) failure
+ */
+int CTLOG_new_from_base64(CTLOG **ct_log, const char *pkey_base64, const char *name)
 {
     unsigned char *pkey_der = NULL;
     int pkey_der_len = ct_base64_decode(pkey_base64, &pkey_der);
     const unsigned char *p;
     EVP_PKEY *pkey = NULL;
-    CTLOG *log = NULL;
+
+    if (ct_log == NULL) {
+        CTerr(CT_F_CTLOG_NEW_FROM_BASE64, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
 
     if (pkey_der_len <= 0) {
         CTerr(CT_F_CTLOG_NEW_FROM_BASE64, CT_R_LOG_CONF_INVALID_KEY);
-        return NULL;
+        return 0;
     }
 
     p = pkey_der;
@@ -133,14 +151,14 @@ CTLOG *CTLOG_new_from_base64(const char *pkey_base64, const char *name)
     OPENSSL_free(pkey_der);
     if (pkey == NULL) {
         CTerr(CT_F_CTLOG_NEW_FROM_BASE64, CT_R_LOG_CONF_INVALID_KEY);
-        return NULL;
+        return 0;
     }
 
-    log = CTLOG_new(pkey, name);
-    if (log == NULL) {
+    *ct_log = CTLOG_new(pkey, name);
+    if (*ct_log == NULL) {
         EVP_PKEY_free(pkey);
-        return NULL;
+        return 0;
     }
 
-    return log;
+    return 1;
 }

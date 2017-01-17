@@ -25,16 +25,15 @@ int X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x)
 int X509at_get_attr_by_NID(const STACK_OF(X509_ATTRIBUTE) *x, int nid,
                            int lastpos)
 {
-    ASN1_OBJECT *obj;
+    const ASN1_OBJECT *obj = OBJ_nid2obj(nid);
 
-    obj = OBJ_nid2obj(nid);
     if (obj == NULL)
         return (-2);
     return (X509at_get_attr_by_OBJ(x, obj, lastpos));
 }
 
 int X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk,
-                           ASN1_OBJECT *obj, int lastpos)
+                           const ASN1_OBJECT *obj, int lastpos)
 {
     int n;
     X509_ATTRIBUTE *ex;
@@ -151,7 +150,7 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE)
 }
 
 void *X509at_get0_data_by_OBJ(STACK_OF(X509_ATTRIBUTE) *x,
-                              ASN1_OBJECT *obj, int lastpos, int type)
+                              const ASN1_OBJECT *obj, int lastpos, int type)
 {
     int i;
     X509_ATTRIBUTE *at;
@@ -246,7 +245,7 @@ int X509_ATTRIBUTE_set1_object(X509_ATTRIBUTE *attr, const ASN1_OBJECT *obj)
 int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
                              const void *data, int len)
 {
-    ASN1_TYPE *ttmp;
+    ASN1_TYPE *ttmp = NULL;
     ASN1_STRING *stmp = NULL;
     int atype = 0;
     if (!attr)
@@ -271,24 +270,30 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
      * least one value but some types use and zero length SET and require
      * this.
      */
-    if (attrtype == 0)
+    if (attrtype == 0) {
+        ASN1_STRING_free(stmp);
         return 1;
+    }
     if ((ttmp = ASN1_TYPE_new()) == NULL)
         goto err;
     if ((len == -1) && !(attrtype & MBSTRING_FLAG)) {
         if (!ASN1_TYPE_set1(ttmp, attrtype, data))
             goto err;
-    } else
+    } else {
         ASN1_TYPE_set(ttmp, atype, stmp);
+        stmp = NULL;
+    }
     if (!sk_ASN1_TYPE_push(attr->set, ttmp))
         goto err;
     return 1;
  err:
     X509err(X509_F_X509_ATTRIBUTE_SET1_DATA, ERR_R_MALLOC_FAILURE);
+    ASN1_TYPE_free(ttmp);
+    ASN1_STRING_free(stmp);
     return 0;
 }
 
-int X509_ATTRIBUTE_count(X509_ATTRIBUTE *attr)
+int X509_ATTRIBUTE_count(const X509_ATTRIBUTE *attr)
 {
     if (attr == NULL)
         return 0;

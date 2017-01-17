@@ -12,10 +12,11 @@ use warnings;
 
 use File::Spec;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_d2i");
 
-plan tests => 13;
+plan tests => 14;
 
 ok(run(test(["d2i_test", "X509", "decode",
              srctop_file('test','d2i-tests','bad_cert.der')])),
@@ -38,7 +39,7 @@ ok(run(test(["d2i_test", "ASN1_ANY", "OK",
              srctop_file('test','d2i-tests','high_tag.der')])),
    "Running d2i_test high_tag.der");
 
-# Above test data but interpeted as ASN.1 INTEGER: this will be rejected
+# Above test data but interpreted as ASN.1 INTEGER: this will be rejected
 # because the tag is invalid.
 ok(run(test(["d2i_test", "ASN1_INTEGER", "decode",
              srctop_file('test','d2i-tests','high_tag.der')])),
@@ -79,3 +80,14 @@ ok(run(test(["d2i_test", "ASN1_INTEGER", "decode",
 ok(run(test(["d2i_test", "ASN1_INTEGER", "decode",
              srctop_file('test','d2i-tests','bad-int-padminus1.der')])),
    "Running d2i_test bad-int-padminus1.der INTEGER");
+
+SKIP: {
+  skip "No CMS support in this configuration", 1 if disabled("cms");
+
+  # Invalid CMS structure with decode error in CHOICE value.
+  # Test for CVE-2016-7053
+
+  ok(run(test(["d2i_test", "CMS_ContentInfo", "decode",
+               srctop_file('test','d2i-tests','bad-cms.der')])),
+     "Running d2i_test bad-cms.der CMS ContentInfo");
+}

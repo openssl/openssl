@@ -25,12 +25,13 @@ static int int_ts_RESP_verify_token(TS_VERIFY_CTX *ctx,
                                     PKCS7 *token, TS_TST_INFO *tst_info);
 static int ts_check_status_info(TS_RESP *response);
 static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text);
-static int ts_check_policy(ASN1_OBJECT *req_oid, TS_TST_INFO *tst_info);
+static int ts_check_policy(const ASN1_OBJECT *req_oid,
+                           const TS_TST_INFO *tst_info);
 static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
                               X509_ALGOR **md_alg,
                               unsigned char **imprint, unsigned *imprint_len);
 static int ts_check_imprints(X509_ALGOR *algor_a,
-                             unsigned char *imprint_a, unsigned len_a,
+                             const unsigned char *imprint_a, unsigned len_a,
                              TS_TST_INFO *tst_info);
 static int ts_check_nonces(const ASN1_INTEGER *a, TS_TST_INFO *tst_info);
 static int ts_check_signer_name(GENERAL_NAME *tsa_name, X509 *signer);
@@ -347,36 +348,43 @@ static int int_ts_RESP_verify_token(TS_VERIFY_CTX *ctx,
     unsigned char *imprint = NULL;
     unsigned imprint_len = 0;
     int ret = 0;
+    int flags = ctx->flags;
 
-    if ((ctx->flags & TS_VFY_SIGNATURE)
+    /* Some options require us to also check the signature */
+    if (((flags & TS_VFY_SIGNER) && tsa_name != NULL)
+            || (flags & TS_VFY_TSA_NAME)) {
+        flags |= TS_VFY_SIGNATURE;
+    }
+
+    if ((flags & TS_VFY_SIGNATURE)
         && !TS_RESP_verify_signature(token, ctx->certs, ctx->store, &signer))
         goto err;
-    if ((ctx->flags & TS_VFY_VERSION)
+    if ((flags & TS_VFY_VERSION)
         && TS_TST_INFO_get_version(tst_info) != 1) {
         TSerr(TS_F_INT_TS_RESP_VERIFY_TOKEN, TS_R_UNSUPPORTED_VERSION);
         goto err;
     }
-    if ((ctx->flags & TS_VFY_POLICY)
+    if ((flags & TS_VFY_POLICY)
         && !ts_check_policy(ctx->policy, tst_info))
         goto err;
-    if ((ctx->flags & TS_VFY_IMPRINT)
+    if ((flags & TS_VFY_IMPRINT)
         && !ts_check_imprints(ctx->md_alg, ctx->imprint, ctx->imprint_len,
                               tst_info))
         goto err;
-    if ((ctx->flags & TS_VFY_DATA)
+    if ((flags & TS_VFY_DATA)
         && (!ts_compute_imprint(ctx->data, tst_info,
                                 &md_alg, &imprint, &imprint_len)
             || !ts_check_imprints(md_alg, imprint, imprint_len, tst_info)))
         goto err;
-    if ((ctx->flags & TS_VFY_NONCE)
+    if ((flags & TS_VFY_NONCE)
         && !ts_check_nonces(ctx->nonce, tst_info))
         goto err;
-    if ((ctx->flags & TS_VFY_SIGNER)
+    if ((flags & TS_VFY_SIGNER)
         && tsa_name && !ts_check_signer_name(tsa_name, signer)) {
         TSerr(TS_F_INT_TS_RESP_VERIFY_TOKEN, TS_R_TSA_NAME_MISMATCH);
         goto err;
     }
-    if ((ctx->flags & TS_VFY_TSA_NAME)
+    if ((flags & TS_VFY_TSA_NAME)
         && !ts_check_signer_name(ctx->tsa_name, signer)) {
         TSerr(TS_F_INT_TS_RESP_VERIFY_TOKEN, TS_R_TSA_UNTRUSTED);
         goto err;
@@ -443,12 +451,14 @@ static int ts_check_status_info(TS_RESP *response)
 static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
 {
     int i;
-    unsigned int length = 0;
+    int length = 0;
     char *result = NULL;
     char *p;
 
     for (i = 0; i < sk_ASN1_UTF8STRING_num(text); ++i) {
         ASN1_UTF8STRING *current = sk_ASN1_UTF8STRING_value(text, i);
+        if (ASN1_STRING_length(current) > TS_MAX_STATUS_LENGTH - length - 1)
+            return NULL;
         length += ASN1_STRING_length(current);
         length += 1;            /* separator character */
     }
@@ -456,13 +466,13 @@ static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
         TSerr(TS_F_TS_GET_STATUS_TEXT, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    
+
     for (i = 0, p = result; i < sk_ASN1_UTF8STRING_num(text); ++i) {
         ASN1_UTF8STRING *current = sk_ASN1_UTF8STRING_value(text, i);
         length = ASN1_STRING_length(current);
         if (i > 0)
             *p++ = '/';
-        strncpy(p, (const char *)ASN1_STRING_data(current), length);
+        strncpy(p, (const char *)ASN1_STRING_get0_data(current), length);
         p += length;
     }
     *p = '\0';
@@ -470,9 +480,10 @@ static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
     return result;
 }
 
-static int ts_check_policy(ASN1_OBJECT *req_oid, TS_TST_INFO *tst_info)
+static int ts_check_policy(const ASN1_OBJECT *req_oid,
+                           const TS_TST_INFO *tst_info)
 {
-    ASN1_OBJECT *resp_oid = tst_info->policy_id;
+    const ASN1_OBJECT *resp_oid = tst_info->policy_id;
 
     if (OBJ_cmp(req_oid, resp_oid) != 0) {
         TSerr(TS_F_TS_CHECK_POLICY, TS_R_POLICY_MISMATCH);
@@ -537,7 +548,7 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
 }
 
 static int ts_check_imprints(X509_ALGOR *algor_a,
-                             unsigned char *imprint_a, unsigned len_a,
+                             const unsigned char *imprint_a, unsigned len_a,
                              TS_TST_INFO *tst_info)
 {
     TS_MSG_IMPRINT *b = tst_info->msg_imprint;
@@ -557,7 +568,7 @@ static int ts_check_imprints(X509_ALGOR *algor_a,
     }
 
     ret = len_a == (unsigned)ASN1_STRING_length(b->hashed_msg) &&
-        memcmp(imprint_a, ASN1_STRING_data(b->hashed_msg), len_a) == 0;
+        memcmp(imprint_a, ASN1_STRING_get0_data(b->hashed_msg), len_a) == 0;
  err:
     if (!ret)
         TSerr(TS_F_TS_CHECK_IMPRINTS, TS_R_MESSAGE_IMPRINT_MISMATCH);

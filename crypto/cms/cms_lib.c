@@ -19,7 +19,7 @@
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ContentInfo)
 IMPLEMENT_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 
-const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms)
+const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms)
 {
     return cms->contentType;
 }
@@ -286,7 +286,7 @@ int CMS_set_detached(CMS_ContentInfo *cms, int detached)
 BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm)
 {
     BIO *mdbio = NULL;
-    ASN1_OBJECT *digestoid;
+    const ASN1_OBJECT *digestoid;
     const EVP_MD *digest;
     X509_ALGOR_get0(&digestoid, NULL, NULL, digestAlgorithm);
     digest = EVP_get_digestbyobj(digestoid);
@@ -312,7 +312,7 @@ int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
                                  X509_ALGOR *mdalg)
 {
     int nid;
-    ASN1_OBJECT *mdoid;
+    const ASN1_OBJECT *mdoid;
     X509_ALGOR_get0(&mdoid, NULL, NULL, mdalg);
     nid = OBJ_obj2nid(mdoid);
     /* Look for digest type to match signature */
@@ -345,6 +345,8 @@ static STACK_OF(CMS_CertificateChoices)
         return &cms->d.signedData->certificates;
 
     case NID_pkcs7_enveloped:
+        if (cms->d.envelopedData->originatorInfo == NULL)
+            return NULL;
         return &cms->d.envelopedData->originatorInfo->certificates;
 
     default:
@@ -420,6 +422,8 @@ static STACK_OF(CMS_RevocationInfoChoice)
         return &cms->d.signedData->crls;
 
     case NID_pkcs7_enveloped:
+        if (cms->d.envelopedData->originatorInfo == NULL)
+            return NULL;
         return &cms->d.envelopedData->originatorInfo->crls;
 
     default:

@@ -119,7 +119,7 @@ X509_PURPOSE *X509_PURPOSE_get0(int idx)
     return sk_X509_PURPOSE_value(xptable, idx - X509_PURPOSE_COUNT);
 }
 
-int X509_PURPOSE_get_by_sname(char *sname)
+int X509_PURPOSE_get_by_sname(const char *sname)
 {
     int i;
     X509_PURPOSE *xptmp;
@@ -148,7 +148,7 @@ int X509_PURPOSE_get_by_id(int purpose)
 
 int X509_PURPOSE_add(int id, int trust, int flags,
                      int (*ck) (const X509_PURPOSE *, const X509 *, int),
-                     char *name, char *sname, void *arg)
+                     const char *name, const char *sname, void *arg)
 {
     int idx;
     X509_PURPOSE *ptmp;
@@ -229,29 +229,26 @@ static void xptable_free(X509_PURPOSE *p)
 
 void X509_PURPOSE_cleanup(void)
 {
-    unsigned int i;
     sk_X509_PURPOSE_pop_free(xptable, xptable_free);
-    for (i = 0; i < X509_PURPOSE_COUNT; i++)
-        xptable_free(xstandard + i);
     xptable = NULL;
 }
 
-int X509_PURPOSE_get_id(X509_PURPOSE *xp)
+int X509_PURPOSE_get_id(const X509_PURPOSE *xp)
 {
     return xp->purpose;
 }
 
-char *X509_PURPOSE_get0_name(X509_PURPOSE *xp)
+char *X509_PURPOSE_get0_name(const X509_PURPOSE *xp)
 {
     return xp->name;
 }
 
-char *X509_PURPOSE_get0_sname(X509_PURPOSE *xp)
+char *X509_PURPOSE_get0_sname(const X509_PURPOSE *xp)
 {
     return xp->sname;
 }
 
-int X509_PURPOSE_get_trust(X509_PURPOSE *xp)
+int X509_PURPOSE_get_trust(const X509_PURPOSE *xp)
 {
     return xp->trust;
 }
@@ -531,6 +528,16 @@ static int check_ca(const X509 *x)
     }
 }
 
+void X509_set_proxy_flag(X509 *x)
+{
+    x->ex_flags |= EXFLAG_PROXY;
+}
+
+void X509_set_proxy_pathlen(X509 *x, long l)
+{
+    x->ex_pcpathlen = l;
+}
+
 int X509_check_ca(X509 *x)
 {
     if (!(x->ex_flags & EXFLAG_SET)) {
@@ -718,7 +725,7 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
         return 0;
 
     /* Extended Key Usage MUST be critical */
-    i_ext = X509_get_ext_by_NID((X509 *)x, NID_ext_key_usage, -1);
+    i_ext = X509_get_ext_by_NID(x, NID_ext_key_usage, -1);
     if (i_ext >= 0) {
         X509_EXTENSION *ext = X509_get_ext((X509 *)x, i_ext);
         if (!X509_EXTENSION_get_critical(ext))
@@ -837,4 +844,22 @@ const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x)
     /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(x, -1, -1);
     return x->skid;
+}
+
+long X509_get_pathlen(X509 *x)
+{
+    /* Called for side effect of caching extensions */
+    if (X509_check_purpose(x, -1, -1) != 1
+            || (x->ex_flags & EXFLAG_BCONS) == 0)
+        return -1;
+    return x->ex_pathlen;
+}
+
+long X509_get_proxy_pathlen(X509 *x)
+{
+    /* Called for side effect of caching extensions */
+    if (X509_check_purpose(x, -1, -1) != 1
+            || (x->ex_flags & EXFLAG_PROXY) == 0)
+        return -1;
+    return x->ex_pcpathlen;
 }

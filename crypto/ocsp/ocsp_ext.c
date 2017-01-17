@@ -31,7 +31,7 @@ int OCSP_REQUEST_get_ext_by_NID(OCSP_REQUEST *x, int nid, int lastpos)
             (x->tbsRequest.requestExtensions, nid, lastpos));
 }
 
-int OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, ASN1_OBJECT *obj,
+int OCSP_REQUEST_get_ext_by_OBJ(OCSP_REQUEST *x, const ASN1_OBJECT *obj,
                                 int lastpos)
 {
     return (X509v3_get_ext_by_OBJ
@@ -84,7 +84,8 @@ int OCSP_ONEREQ_get_ext_by_NID(OCSP_ONEREQ *x, int nid, int lastpos)
     return (X509v3_get_ext_by_NID(x->singleRequestExtensions, nid, lastpos));
 }
 
-int OCSP_ONEREQ_get_ext_by_OBJ(OCSP_ONEREQ *x, ASN1_OBJECT *obj, int lastpos)
+int OCSP_ONEREQ_get_ext_by_OBJ(OCSP_ONEREQ *x, const ASN1_OBJECT *obj,
+                               int lastpos)
 {
     return (X509v3_get_ext_by_OBJ(x->singleRequestExtensions, obj, lastpos));
 }
@@ -135,7 +136,7 @@ int OCSP_BASICRESP_get_ext_by_NID(OCSP_BASICRESP *x, int nid, int lastpos)
             (x->tbsResponseData.responseExtensions, nid, lastpos));
 }
 
-int OCSP_BASICRESP_get_ext_by_OBJ(OCSP_BASICRESP *x, ASN1_OBJECT *obj,
+int OCSP_BASICRESP_get_ext_by_OBJ(OCSP_BASICRESP *x, const ASN1_OBJECT *obj,
                                   int lastpos)
 {
     return (X509v3_get_ext_by_OBJ
@@ -191,7 +192,7 @@ int OCSP_SINGLERESP_get_ext_by_NID(OCSP_SINGLERESP *x, int nid, int lastpos)
     return (X509v3_get_ext_by_NID(x->singleExtensions, nid, lastpos));
 }
 
-int OCSP_SINGLERESP_get_ext_by_OBJ(OCSP_SINGLERESP *x, ASN1_OBJECT *obj,
+int OCSP_SINGLERESP_get_ext_by_OBJ(OCSP_SINGLERESP *x, const ASN1_OBJECT *obj,
                                    int lastpos)
 {
     return (X509v3_get_ext_by_OBJ(x->singleExtensions, obj, lastpos));
@@ -255,6 +256,9 @@ static int ocsp_add1_nonce(STACK_OF(X509_EXTENSION) **exts,
      * relies on library internals.
      */
     os.length = ASN1_object_size(0, len, V_ASN1_OCTET_STRING);
+    if (os.length < 0)
+        return 0;
+
     os.data = OPENSSL_malloc(os.length);
     if (os.data == NULL)
         goto err;
@@ -353,7 +357,7 @@ int OCSP_copy_nonce(OCSP_BASICRESP *resp, OCSP_REQUEST *req)
     return OCSP_BASICRESP_add_ext(resp, req_ext, -1);
 }
 
-X509_EXTENSION *OCSP_crlID_new(char *url, long *n, char *tim)
+X509_EXTENSION *OCSP_crlID_new(const char *url, long *n, char *tim)
 {
     X509_EXTENSION *x = NULL;
     OCSP_CRLID *cid = NULL;
@@ -426,7 +430,7 @@ X509_EXTENSION *OCSP_archive_cutoff_new(char *tim)
  * two--NID_ad_ocsp, NID_id_ad_caIssuers--and GeneralName value.  This method
  * forces NID_ad_ocsp and uniformResourceLocator [6] IA5String.
  */
-X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME *issuer, char **urls)
+X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME *issuer, const char **urls)
 {
     X509_EXTENSION *x = NULL;
     ASN1_IA5STRING *ia5 = NULL;

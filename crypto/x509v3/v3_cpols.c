@@ -22,7 +22,7 @@
 static int i2r_certpol(X509V3_EXT_METHOD *method, STACK_OF(POLICYINFO) *pol,
                        BIO *out, int indent);
 static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
-                                         X509V3_CTX *ctx, char *value);
+                                         X509V3_CTX *ctx, const char *value);
 static void print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals,
                              int indent);
 static void print_notice(BIO *out, USERNOTICE *notice, int indent);
@@ -84,7 +84,7 @@ ASN1_SEQUENCE(NOTICEREF) = {
 IMPLEMENT_ASN1_FUNCTIONS(NOTICEREF)
 
 static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
-                                         X509V3_CTX *ctx, char *value)
+                                         X509V3_CTX *ctx, const char *value)
 {
     STACK_OF(POLICYINFO) *pols = NULL;
     char *pstr;

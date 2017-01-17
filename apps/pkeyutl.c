@@ -28,7 +28,7 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
-                    unsigned char *in, size_t inlen);
+                    const unsigned char *in, size_t inlen);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -39,7 +39,7 @@ typedef enum OPTION_choice {
     OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_KDF, OPT_KDFLEN
 } OPTION_CHOICE;
 
-OPTIONS pkeyutl_options[] = {
+const OPTIONS pkeyutl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
@@ -323,6 +323,7 @@ int pkeyutl_main(int argc, char **argv)
 
  end:
     EVP_PKEY_CTX_free(ctx);
+    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     OPENSSL_free(buf_in);
@@ -459,7 +460,7 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
-                    unsigned char *in, size_t inlen)
+                    const unsigned char *in, size_t inlen)
 {
     int rv = 0;
     switch (pkey_op) {

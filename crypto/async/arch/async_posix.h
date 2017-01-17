@@ -34,7 +34,7 @@ typedef struct async_fibre_st {
     int env_init;
 } async_fibre;
 
-static inline int async_fibre_swapcontext(async_fibre *o, async_fibre *n, int r)
+static ossl_inline int async_fibre_swapcontext(async_fibre *o, async_fibre *n, int r)
 {
     o->env_init = 1;
 

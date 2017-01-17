@@ -99,22 +99,23 @@ typedef enum OPTION_choice {
     OPT_MD
 } OPTION_CHOICE;
 
-OPTIONS ocsp_options[] = {
+const OPTIONS ocsp_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"out", OPT_OUTFILE, '>', "Output filename"},
     {"timeout", OPT_TIMEOUT, 'p',
      "Connection timeout (in seconds) to the OCSP responder"},
     {"url", OPT_URL, 's', "Responder URL"},
-    {"host", OPT_HOST, 's', "host:prot top to connect to"},
+    {"host", OPT_HOST, 's', "TCP/IP hostname:port to connect to"},
     {"port", OPT_PORT, 'p', "Port to run responder on"},
-    {"ignore_err", OPT_IGNORE_ERR, '-'},
+    {"ignore_err", OPT_IGNORE_ERR, '-',
+     "Ignore Error response from OCSP responder, and retry "},
     {"noverify", OPT_NOVERIFY, '-', "Don't verify response at all"},
     {"nonce", OPT_NONCE, '-', "Add OCSP nonce to request"},
     {"no_nonce", OPT_NO_NONCE, '-', "Don't add OCSP nonce to request"},
     {"resp_no_certs", OPT_RESP_NO_CERTS, '-',
      "Don't include any certificates in response"},
     {"resp_key_id", OPT_RESP_KEY_ID, '-',
-     "Identify reponse by signing certificate key ID"},
+     "Identify response by signing certificate key ID"},
     {"no_certs", OPT_NO_CERTS, '-',
      "Don't include any certificates in signed request"},
     {"no_signature_verify", OPT_NO_SIGNATURE_VERIFY, '-',
@@ -124,7 +125,8 @@ OPTIONS ocsp_options[] = {
     {"no_chain", OPT_NO_CHAIN, '-', "Don't chain verify response"},
     {"no_cert_checks", OPT_NO_CERT_CHECKS, '-',
      "Don't do additional checks on signing certificate"},
-    {"no_explicit", OPT_NO_EXPLICIT, '-'},
+    {"no_explicit", OPT_NO_EXPLICIT, '-',
+     "Do not explicitly check the chain, just verify the root"},
     {"trust_other", OPT_TRUST_OTHER, '-',
      "Don't verify additional certificates"},
     {"no_intern", OPT_NO_INTERN, '-',
@@ -165,7 +167,7 @@ OPTIONS ocsp_options[] = {
      "Number of requests to accept (default unlimited)"},
     {"ndays", OPT_NDAYS, 'p', "Number of days before next update"},
     {"rsigner", OPT_RSIGNER, '<',
-     "Sesponder certificate to sign responses with"},
+     "Responder certificate to sign responses with"},
     {"rkey", OPT_RKEY, '<', "Responder key to sign responses with"},
     {"rother", OPT_ROTHER, '<', "Other certificates to include in response"},
     {"rmd", OPT_RMD, 's', "Digest Algorithm to use in signature of OCSP response"},
@@ -194,7 +196,8 @@ int ocsp_main(int argc, char **argv)
     X509 *signer = NULL, *rsigner = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
-    char *CAfile = NULL, *CApath = NULL, *header, *value;
+    const char *CAfile = NULL, *CApath = NULL;
+    char *header, *value;
     char *host = NULL, *port = NULL, *path = "/", *outfile = NULL;
     char *rca_filename = NULL, *reqin = NULL, *respin = NULL;
     char *reqout = NULL, *respout = NULL, *ridx_filename = NULL;
@@ -809,7 +812,7 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
                               long maxage)
 {
     OCSP_CERTID *id;
-    char *name;
+    const char *name;
     int i, status, reason;
     ASN1_GENERALIZEDTIME *rev, *thisupd, *nextupd;
 
@@ -950,9 +953,8 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
     OCSP_basic_sign(bs, rcert, rkey, rmd, rother, flags);
 
     if (badsig) {
-        ASN1_OCTET_STRING *sig = OCSP_resp_get0_signature(bs);
-        unsigned char *sigptr = ASN1_STRING_data(sig);
-        sigptr[ASN1_STRING_length(sig) - 1] ^= 0x1;
+        const ASN1_OCTET_STRING *sig = OCSP_resp_get0_signature(bs);
+        corrupt_signature(sig);
     }
 
     *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, bs);

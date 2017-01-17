@@ -16,6 +16,10 @@
 # pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
+#if defined(_WIN32)
+# include <windows.h>
+#endif
+
 #include <internal/async.h>
 #include <openssl/crypto.h>
 

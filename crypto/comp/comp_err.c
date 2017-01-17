@@ -35,7 +35,7 @@ static ERR_STRING_DATA COMP_str_reasons[] = {
 
 #endif
 
-void ERR_load_COMP_strings(void)
+int ERR_load_COMP_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -44,4 +44,5 @@ void ERR_load_COMP_strings(void)
         ERR_load_strings(0, COMP_str_reasons);
     }
 #endif
+    return 1;
 }

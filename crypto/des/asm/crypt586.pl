@@ -111,7 +111,7 @@ sub D_ENCRYPT
 	&and(	$u,		"0xfcfcfcfc"	);		# 2
 	&xor(	$tmp1,		$tmp1);				# 1
 	&and(	$t,		"0xcfcfcfcf"	);		# 2
-	&xor(	$tmp2,		$tmp2);	
+	&xor(	$tmp2,		$tmp2);
 	&movb(	&LB($tmp1),	&LB($u)	);
 	&movb(	&LB($tmp2),	&HB($u)	);
 	&rotr(	$t,		4		);
@@ -175,7 +175,7 @@ sub IP_new
 	&R_PERM_OP($l,$tt,$r,14,"0x33333333",$r);
 	&R_PERM_OP($tt,$r,$l,22,"0x03fc03fc",$r);
 	&R_PERM_OP($l,$r,$tt, 9,"0xaaaaaaaa",$r);
-	
+
 	if ($lr != 3)
 		{
 		if (($lr-3) < 0)

@@ -340,19 +340,19 @@ OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void)
 
 
 #ifndef OPENSSL_NO_STDIO
-int OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
-                                     const char *config_file)
+int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *settings,
+                                    const char *appname)
 {
-    char *new_config_file = NULL;
+    char *newappname = NULL;
 
-    if (config_file != NULL) {
-        new_config_file = strdup(config_file);
-        if (new_config_file == NULL)
+    if (appname != NULL) {
+        newappname = strdup(appname);
+        if (newappname == NULL)
             return 0;
     }
 
-    free(settings->config_name);
-    settings->config_name = new_config_file;
+    free(settings->appname);
+    settings->appname = newappname;
 
     return 1;
 }
@@ -360,6 +360,6 @@ int OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
 
 void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *settings)
 {
-    free(settings->config_name);
+    free(settings->appname);
     free(settings);
 }

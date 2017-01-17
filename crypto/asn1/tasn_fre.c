@@ -52,11 +52,11 @@ static void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (it->templates)
             asn1_template_free(pval, it->templates);
         else
-            asn1_primitive_free(pval, it);
+            asn1_primitive_free(pval, it, embed);
         break;
 
     case ASN1_ITYPE_MSTRING:
-        asn1_primitive_free(pval, it);
+        asn1_primitive_free(pval, it, embed);
         break;
 
     case ASN1_ITYPE_CHOICE:
@@ -89,7 +89,7 @@ static void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case ASN1_ITYPE_NDEF_SEQUENCE:
     case ASN1_ITYPE_SEQUENCE:
-        if (asn1_do_lock(pval, -1, it) > 0)
+        if (asn1_do_lock(pval, -1, it) != 0) /* if error or ref-counter > 0 */
             return;
         if (asn1_cb) {
             i = asn1_cb(ASN1_OP_FREE_PRE, pval, it, NULL);
@@ -99,7 +99,7 @@ static void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
         asn1_enc_free(pval, it);
         /*
          * If we free up as normal we will invalidate any ANY DEFINED BY
-         * field and we wont be able to determine the type of the field it
+         * field and we won't be able to determine the type of the field it
          * defines. So free up in reverse order.
          */
         tt = it->templates + it->tcount;
@@ -147,7 +147,7 @@ void asn1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
     }
 }
 
-void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
 {
     int utype;
 
@@ -195,12 +195,12 @@ void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
         break;
 
     case V_ASN1_ANY:
-        asn1_primitive_free(pval, NULL);
+        asn1_primitive_free(pval, NULL, 0);
         OPENSSL_free(*pval);
         break;
 
     default:
-        ASN1_STRING_free((ASN1_STRING *)*pval);
+        asn1_string_embed_free((ASN1_STRING *)*pval, embed);
         break;
     }
     *pval = NULL;

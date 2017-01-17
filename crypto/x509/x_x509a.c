@@ -47,7 +47,7 @@ static X509_CERT_AUX *aux_get(X509 *x)
     return x->aux;
 }
 
-int X509_alias_set1(X509 *x, unsigned char *name, int len)
+int X509_alias_set1(X509 *x, const unsigned char *name, int len)
 {
     X509_CERT_AUX *aux;
     if (!name) {
@@ -64,7 +64,7 @@ int X509_alias_set1(X509 *x, unsigned char *name, int len)
     return ASN1_STRING_set(aux->alias, name, len);
 }
 
-int X509_keyid_set1(X509 *x, unsigned char *id, int len)
+int X509_keyid_set1(X509 *x, const unsigned char *id, int len)
 {
     X509_CERT_AUX *aux;
     if (!id) {
@@ -76,7 +76,7 @@ int X509_keyid_set1(X509 *x, unsigned char *id, int len)
     }
     if ((aux = aux_get(x)) == NULL)
         return 0;
-    if (aux->keyid ==NULL
+    if (aux->keyid == NULL
         && (aux->keyid = ASN1_OCTET_STRING_new()) == NULL)
         return 0;
     return ASN1_STRING_set(aux->keyid, id, len);
@@ -100,7 +100,7 @@ unsigned char *X509_keyid_get0(X509 *x, int *len)
     return x->aux->keyid->data;
 }
 
-int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj)
+int X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj)
 {
     X509_CERT_AUX *aux;
     ASN1_OBJECT *objtmp = NULL;
@@ -121,7 +121,7 @@ int X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj)
     return 0;
 }
 
-int X509_add1_reject_object(X509 *x, ASN1_OBJECT *obj)
+int X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj)
 {
     X509_CERT_AUX *aux;
     ASN1_OBJECT *objtmp;

@@ -49,7 +49,7 @@ void ASN1_PCTX_free(ASN1_PCTX *p)
     OPENSSL_free(p);
 }
 
-unsigned long ASN1_PCTX_get_flags(ASN1_PCTX *p)
+unsigned long ASN1_PCTX_get_flags(const ASN1_PCTX *p)
 {
     return p->flags;
 }
@@ -59,7 +59,7 @@ void ASN1_PCTX_set_flags(ASN1_PCTX *p, unsigned long flags)
     p->flags = flags;
 }
 
-unsigned long ASN1_PCTX_get_nm_flags(ASN1_PCTX *p)
+unsigned long ASN1_PCTX_get_nm_flags(const ASN1_PCTX *p)
 {
     return p->nm_flags;
 }
@@ -69,7 +69,7 @@ void ASN1_PCTX_set_nm_flags(ASN1_PCTX *p, unsigned long flags)
     p->nm_flags = flags;
 }
 
-unsigned long ASN1_PCTX_get_cert_flags(ASN1_PCTX *p)
+unsigned long ASN1_PCTX_get_cert_flags(const ASN1_PCTX *p)
 {
     return p->cert_flags;
 }
@@ -79,7 +79,7 @@ void ASN1_PCTX_set_cert_flags(ASN1_PCTX *p, unsigned long flags)
     p->cert_flags = flags;
 }
 
-unsigned long ASN1_PCTX_get_oid_flags(ASN1_PCTX *p)
+unsigned long ASN1_PCTX_get_oid_flags(const ASN1_PCTX *p)
 {
     return p->oid_flags;
 }
@@ -89,7 +89,7 @@ void ASN1_PCTX_set_oid_flags(ASN1_PCTX *p, unsigned long flags)
     p->oid_flags = flags;
 }
 
-unsigned long ASN1_PCTX_get_str_flags(ASN1_PCTX *p)
+unsigned long ASN1_PCTX_get_str_flags(const ASN1_PCTX *p)
 {
     return p->str_flags;
 }
@@ -106,7 +106,7 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
                                const char *fname, const char *sname,
                                int nohdr, const ASN1_PCTX *pctx);
 
-int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
+static int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
                             const ASN1_TEMPLATE *tt, const ASN1_PCTX *pctx);
 
 static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
@@ -151,7 +151,8 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
     } else
         asn1_cb = 0;
 
-    if (*fld == NULL) {
+   if (((it->itype != ASN1_ITYPE_PRIMITIVE)
+       || (it->utype != V_ASN1_BOOLEAN)) && *fld == NULL) {
         if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_ABSENT) {
             if (!nohdr && !asn1_print_fsname(out, indent, fname, sname, pctx))
                 return 0;
@@ -169,7 +170,7 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
                 return 0;
             break;
         }
-        /* fall thru */
+        /* fall through */
     case ASN1_ITYPE_MSTRING:
         if (!asn1_primitive_print(out, fld, it, indent, fname, sname, pctx))
             return 0;
@@ -260,7 +261,7 @@ static int asn1_item_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
     return 1;
 }
 
-int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
+static int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
                             const ASN1_TEMPLATE *tt, const ASN1_PCTX *pctx)
 {
     int i, flags;
@@ -314,7 +315,8 @@ int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
                                      pctx))
                 return 0;
         }
-        if (!i && BIO_printf(out, "%*s<EMPTY>\n", indent + 2, "") <= 0)
+        if (i == 0 && BIO_printf(out, "%*s<%s>\n", indent + 2, "",
+                                 stack == NULL ? "ABSENT" : "EMPTY") <= 0)
             return 0;
         if (pctx->flags & ASN1_PCTX_FLAGS_SHOW_SEQUENCE) {
             if (BIO_printf(out, "%*s}\n", indent, "") <= 0)
@@ -388,11 +390,13 @@ static int asn1_print_boolean(BIO *out, int boolval)
 
 }
 
-static int asn1_print_integer(BIO *out, ASN1_INTEGER *str)
+static int asn1_print_integer(BIO *out, const ASN1_INTEGER *str)
 {
     char *s;
     int ret = 1;
     s = i2s_ASN1_INTEGER(NULL, str);
+    if (s == NULL)
+        return 0;
     if (BIO_puts(out, s) <= 0)
         ret = 0;
     OPENSSL_free(s);
@@ -412,7 +416,7 @@ static int asn1_print_oid(BIO *out, const ASN1_OBJECT *oid)
     return 1;
 }
 
-static int asn1_print_obstring(BIO *out, ASN1_STRING *str, int indent)
+static int asn1_print_obstring(BIO *out, const ASN1_STRING *str, int indent)
 {
     if (str->type == V_ASN1_BIT_STRING) {
         if (BIO_printf(out, " (%ld unused bits)\n", str->flags & 0x7) <= 0)
@@ -420,7 +424,7 @@ static int asn1_print_obstring(BIO *out, ASN1_STRING *str, int indent)
     } else if (BIO_puts(out, "\n") <= 0)
         return 0;
     if ((str->length > 0)
-        && BIO_dump_indent(out, (char *)str->data, str->length,
+        && BIO_dump_indent(out, (const char *)str->data, str->length,
                            indent + 2) <= 0)
         return 0;
     return 1;
@@ -441,11 +445,16 @@ static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
         return 0;
     if (pf && pf->prim_print)
         return pf->prim_print(out, fld, it, indent, pctx);
-    str = (ASN1_STRING *)*fld;
-    if (it->itype == ASN1_ITYPE_MSTRING)
+    if (it->itype == ASN1_ITYPE_MSTRING) {
+        str = (ASN1_STRING *)*fld;
         utype = str->type & ~V_ASN1_NEG;
-    else
+    } else {
         utype = it->utype;
+        if (utype == V_ASN1_BOOLEAN)
+            str = NULL;
+        else
+            str = (ASN1_STRING *)*fld;
+    }
     if (utype == V_ASN1_ANY) {
         ASN1_TYPE *atype = (ASN1_TYPE *)*fld;
         utype = atype->type;

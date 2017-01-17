@@ -18,7 +18,7 @@
 #include <openssl/pem.h>
 
 static int cb(int ok, X509_STORE_CTX *ctx);
-static int check(X509_STORE *ctx, char *file,
+static int check(X509_STORE *ctx, const char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
                  STACK_OF(X509_CRL) *crls, int show_chain);
 static int v_verbose = 0, vflags = 0;
@@ -31,7 +31,7 @@ typedef enum OPTION_choice {
     OPT_VERBOSE
 } OPTION_CHOICE;
 
-OPTIONS verify_options[] = {
+const OPTIONS verify_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -60,11 +60,12 @@ OPTIONS verify_options[] = {
 
 int verify_main(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
-    char *prog, *CApath = NULL, *CAfile = NULL;
+    const char *prog, *CApath = NULL, *CAfile = NULL;
     int noCApath = 0, noCAfile = 0;
     int vpmtouched = 0, crl_download = 0, show_chain = 0, i = 0, ret = 1;
     OPTION_CHOICE o;
@@ -140,7 +141,7 @@ int verify_main(int argc, char **argv)
             crl_download = 1;
             break;
         case OPT_ENGINE:
-            if (setup_engine(opt_arg(), 0) == NULL) {
+            if ((e = setup_engine(opt_arg(), 0)) == NULL) {
                 /* Failure message already displayed */
                 goto end;
             }
@@ -191,10 +192,11 @@ int verify_main(int argc, char **argv)
     sk_X509_pop_free(untrusted, X509_free);
     sk_X509_pop_free(trusted, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
+    release_engine(e);
     return (ret < 0 ? 2 : ret);
 }
 
-static int check(X509_STORE *ctx, char *file,
+static int check(X509_STORE *ctx, const char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
                  STACK_OF(X509_CRL) *crls, int show_chain)
 {
@@ -214,6 +216,7 @@ static int check(X509_STORE *ctx, char *file,
                (file == NULL) ? "stdin" : file);
         goto end;
     }
+
     X509_STORE_set_flags(ctx, vflags);
     if (!X509_STORE_CTX_init(csc, ctx, x, uchain)) {
         printf("error %s: X.509 store context initialization failed\n",

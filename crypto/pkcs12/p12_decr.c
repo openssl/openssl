@@ -20,9 +20,9 @@
  * Encrypt/Decrypt a buffer based on password and algor, result in a
  * OPENSSL_malloc'ed buffer
  */
-
-unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
-                                int passlen, unsigned char *in, int inlen,
+unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
+                                const char *pass, int passlen,
+                                const unsigned char *in, int inlen,
                                 unsigned char **data, int *datalen, int en_de)
 {
     unsigned char *out = NULL;
@@ -79,9 +79,9 @@ unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
  * after use.
  */
 
-void *PKCS12_item_decrypt_d2i(X509_ALGOR *algor, const ASN1_ITEM *it,
+void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
                               const char *pass, int passlen,
-                              ASN1_OCTET_STRING *oct, int zbuf)
+                              const ASN1_OCTET_STRING *oct, int zbuf)
 {
     unsigned char *out;
     const unsigned char *p;

@@ -39,7 +39,11 @@ static void bio_destroy_pair(BIO *bio);
 static const BIO_METHOD methods_biop = {
     BIO_TYPE_BIO,
     "BIO pair",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     bio_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     bio_read,
     bio_puts,
     NULL /* no bio_gets */ ,

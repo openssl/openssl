@@ -72,7 +72,7 @@ typedef enum OPTION_choice {
     OPT_ASCIICRLF, OPT_NOINTERN, OPT_NOVERIFY, OPT_NOCERTS,
     OPT_NOATTR, OPT_NODETACH, OPT_NOSMIMECAP, OPT_BINARY, OPT_KEYID,
     OPT_NOSIGS, OPT_NO_CONTENT_VERIFY, OPT_NO_ATTR_VERIFY, OPT_INDEF,
-    OPT_NOINDEF, OPT_NOOLDMIME, OPT_CRLFEOL, OPT_NOOUT, OPT_RR_PRINT,
+    OPT_NOINDEF, OPT_CRLFEOL, OPT_NOOUT, OPT_RR_PRINT,
     OPT_RR_ALL, OPT_RR_FIRST, OPT_RCTFORM, OPT_CERTFILE, OPT_CAFILE,
     OPT_CAPATH, OPT_NOCAPATH, OPT_NOCAFILE,OPT_CONTENT, OPT_PRINT,
     OPT_SECRETKEY, OPT_SECRETKEYID, OPT_PWRI_PASSWORD, OPT_ECONTENT_TYPE,
@@ -84,7 +84,7 @@ typedef enum OPTION_choice {
     OPT_CIPHER
 } OPTION_CHOICE;
 
-OPTIONS cms_options[] = {
+const OPTIONS cms_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
     {OPT_HELP_STR, 1, '-',
         "  cert.pem... recipient certs for encryption\n"},
@@ -99,7 +99,7 @@ OPTIONS cms_options[] = {
     {"decrypt", OPT_DECRYPT, '-', "Decrypt encrypted message"},
     {"sign", OPT_SIGN, '-', "Sign message"},
     {"sign_receipt", OPT_SIGN_RECEIPT, '-', "Generate a signed receipt for the message"},
-    {"resign", OPT_RESIGN, '-'},
+    {"resign", OPT_RESIGN, '-', "Resign a signed message"},
     {"verify", OPT_VERIFY, '-', "Verify signed message"},
     {"verify_retcode", OPT_VERIFY_RETCODE, '-'},
     {"verify_receipt", OPT_VERIFY_RECEIPT, '<'},
@@ -122,22 +122,21 @@ OPTIONS cms_options[] = {
      "Don't include signers certificate when signing"},
     {"noattr", OPT_NOATTR, '-', "Don't include any signed attributes"},
     {"nodetach", OPT_NODETACH, '-', "Use opaque signing"},
-    {"nosmimecap", OPT_NOSMIMECAP, '-'},
+    {"nosmimecap", OPT_NOSMIMECAP, '-', "Omit the SMIMECapabilities attribute"},
     {"binary", OPT_BINARY, '-', "Don't translate message to text"},
     {"keyid", OPT_KEYID, '-', "Use subject key identifier"},
     {"nosigs", OPT_NOSIGS, '-', "Don't verify message signature"},
     {"no_content_verify", OPT_NO_CONTENT_VERIFY, '-'},
     {"no_attr_verify", OPT_NO_ATTR_VERIFY, '-'},
-    {"stream", OPT_INDEF, '-'},
-    {"indef", OPT_INDEF, '-'},
-    {"noindef", OPT_NOINDEF, '-'},
-    {"nooldmime", OPT_NOOLDMIME, '-'},
-    {"crlfeol", OPT_CRLFEOL, '-'},
+    {"stream", OPT_INDEF, '-', "Enable CMS streaming"},
+    {"indef", OPT_INDEF, '-', "Same as -stream"},
+    {"noindef", OPT_NOINDEF, '-', "Disable CMS streaming"},
+    {"crlfeol", OPT_CRLFEOL, '-', "Use CRLF as EOL termination instead of CR only" },
     {"noout", OPT_NOOUT, '-', "For the -cmsout operation do not output the parsed CMS structure"},
-    {"receipt_request_print", OPT_RR_PRINT, '-'},
+    {"receipt_request_print", OPT_RR_PRINT, '-', "Print CMS Receipt Request" },
     {"receipt_request_all", OPT_RR_ALL, '-'},
     {"receipt_request_first", OPT_RR_FIRST, '-'},
-    {"rctform", OPT_RCTFORM, 'F'},
+    {"rctform", OPT_RCTFORM, 'F', "Receipt file format"},
     {"certfile", OPT_CERTFILE, '<', "Other certificates file"},
     {"CAfile", OPT_CAFILE, '<', "Trusted certificates file"},
     {"CApath", OPT_CAPATH, '/', "trusted certificates directory"},
@@ -147,7 +146,8 @@ OPTIONS cms_options[] = {
      "Do not load certificates from the default certificates directory"},
     {"content", OPT_CONTENT, '<',
      "Supply or override content for detached signature"},
-    {"print", OPT_PRINT, '-', "For the -cmsout operation print out all fields of the CMS structure"},
+    {"print", OPT_PRINT, '-',
+     "For the -cmsout operation print out all fields of the CMS structure"},
     {"secretkey", OPT_SECRETKEY, 's'},
     {"secretkeyid", OPT_SECRETKEYID, 's'},
     {"pwri_password", OPT_PWRI_PASSWORD, 's'},
@@ -199,7 +199,8 @@ int cms_main(int argc, char **argv)
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
-    char *CAfile = NULL, *CApath = NULL, *certsoutfile = NULL;
+    const char *CAfile = NULL, *CApath = NULL;
+    char *certsoutfile = NULL;
     int noCAfile = 0, noCApath = 0;
     char *infile = NULL, *outfile = NULL, *rctfile = NULL, *inrand = NULL;
     char *passinarg = NULL, *passin = NULL, *signerfile = NULL, *recipfile =
@@ -345,9 +346,6 @@ int cms_main(int argc, char **argv)
         case OPT_NOINDEF:
             flags &= ~CMS_STREAM;
             break;
-        case OPT_NOOLDMIME:
-            flags |= CMS_NOOLDMIMETYPE;
-            break;
         case OPT_CRLFEOL:
             mime_eol = "\r\n";
             flags |= CMS_CRLFEOL;
@@ -411,6 +409,11 @@ int cms_main(int argc, char **argv)
             noout = print = 1;
             break;
         case OPT_SECRETKEY:
+            if (secret_key != NULL) {
+                BIO_printf(bio_err, "Invalid key (supplied twice) %s\n",
+                           opt_arg());
+                goto opthelp;
+            }
             secret_key = OPENSSL_hexstr2buf(opt_arg(), &ltmp);
             if (secret_key == NULL) {
                 BIO_printf(bio_err, "Invalid key %s\n", opt_arg());
@@ -419,6 +422,11 @@ int cms_main(int argc, char **argv)
             secret_keylen = (size_t)ltmp;
             break;
         case OPT_SECRETKEYID:
+            if (secret_keyid != NULL) {
+                BIO_printf(bio_err, "Invalid id (supplied twice) %s\n",
+                           opt_arg());
+                goto opthelp;
+            }
             secret_keyid = OPENSSL_hexstr2buf(opt_arg(), &ltmp);
             if (secret_keyid == NULL) {
                 BIO_printf(bio_err, "Invalid id %s\n", opt_arg());
@@ -430,6 +438,11 @@ int cms_main(int argc, char **argv)
             pwri_pass = (unsigned char *)opt_arg();
             break;
         case OPT_ECONTENT_TYPE:
+            if (econtent_type != NULL) {
+                BIO_printf(bio_err, "Invalid OID (supplied twice) %s\n",
+                           opt_arg());
+                goto opthelp;
+            }
             econtent_type = OBJ_txt2obj(opt_arg(), 0);
             if (econtent_type == NULL) {
                 BIO_printf(bio_err, "Invalid OID %s\n", opt_arg());
@@ -480,7 +493,7 @@ int cms_main(int argc, char **argv)
             signerfile = opt_arg();
             break;
         case OPT_INKEY:
-            /* If previous -inkey arument add signer to list */
+            /* If previous -inkey argument add signer to list */
             if (keyfile) {
                 if (signerfile == NULL) {
                     BIO_puts(bio_err, "Illegal -inkey without -signer\n");
@@ -1096,6 +1109,7 @@ int cms_main(int argc, char **argv)
     EVP_PKEY_free(key);
     CMS_ContentInfo_free(cms);
     CMS_ContentInfo_free(rcms);
+    release_engine(e);
     BIO_free(rctin);
     BIO_free(in);
     BIO_free(indata);
@@ -1177,13 +1191,13 @@ static void receipt_request_print(CMS_ContentInfo *cms)
             BIO_puts(bio_err, "  Receipt Request Parse Error\n");
             ERR_print_errors(bio_err);
         } else {
-            char *id;
+            const char *id;
             int idlen;
             CMS_ReceiptRequest_get0_values(rr, &scid, &allorfirst,
                                            &rlist, &rto);
             BIO_puts(bio_err, "  Signed Content ID:\n");
             idlen = ASN1_STRING_length(scid);
-            id = (char *)ASN1_STRING_data(scid);
+            id = (const char *)ASN1_STRING_get0_data(scid);
             BIO_dump_indent(bio_err, id, idlen, 4);
             BIO_puts(bio_err, "  Receipts From");
             if (rlist) {

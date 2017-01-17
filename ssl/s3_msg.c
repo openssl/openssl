@@ -13,8 +13,9 @@
 int ssl3_do_change_cipher_spec(SSL *s)
 {
     int i;
+    size_t finish_md_len;
     const char *sender;
-    int slen;
+    size_t slen;
 
     if (s->server)
         i = SSL3_CHANGE_CIPHER_SERVER_READ;
@@ -24,8 +25,7 @@ int ssl3_do_change_cipher_spec(SSL *s)
     if (s->s3->tmp.key_block == NULL) {
         if (s->session == NULL || s->session->master_key_length == 0) {
             /* might happen if dtls1_read_bytes() calls this */
-            SSLerr(SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC,
-                   SSL_R_CCS_RECEIVED_EARLY);
+            SSLerr(SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC, SSL_R_CCS_RECEIVED_EARLY);
             return (0);
         }
 
@@ -49,14 +49,13 @@ int ssl3_do_change_cipher_spec(SSL *s)
         slen = s->method->ssl3_enc->client_finished_label_len;
     }
 
-    i = s->method->ssl3_enc->final_finish_mac(s,
-                                              sender, slen,
-                                              s->s3->tmp.peer_finish_md);
-    if (i == 0) {
+    finish_md_len = s->method->ssl3_enc->final_finish_mac(s, sender, slen,
+                                            s->s3->tmp.peer_finish_md);
+    if (finish_md_len == 0) {
         SSLerr(SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    s->s3->tmp.peer_finish_md_len = i;
+    s->s3->tmp.peer_finish_md_len = finish_md_len;
 
     return (1);
 }
@@ -72,7 +71,7 @@ int ssl3_send_alert(SSL *s, int level, int desc)
         return -1;
     /* If a fatal one, remove from cache */
     if ((level == SSL3_AL_FATAL) && (s->session != NULL))
-        SSL_CTX_remove_session(s->ctx, s->session);
+        SSL_CTX_remove_session(s->session_ctx, s->session);
 
     s->s3->alert_dispatch = 1;
     s->s3->send_alert[0] = level;
@@ -91,12 +90,14 @@ int ssl3_send_alert(SSL *s, int level, int desc)
 int ssl3_dispatch_alert(SSL *s)
 {
     int i, j;
-    unsigned int alertlen;
+    size_t alertlen;
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
+    size_t written;
 
     s->s3->alert_dispatch = 0;
     alertlen = 2;
-    i = do_ssl3_write(s, SSL3_RT_ALERT, &s->s3->send_alert[0], &alertlen, 1, 0);
+    i = do_ssl3_write(s, SSL3_RT_ALERT, &s->s3->send_alert[0], &alertlen, 1, 0,
+                      &written);
     if (i <= 0) {
         s->s3->alert_dispatch = 1;
     } else {
@@ -122,5 +123,5 @@ int ssl3_dispatch_alert(SSL *s)
             cb(s, SSL_CB_WRITE_ALERT, j);
         }
     }
-    return (i);
+    return i;
 }

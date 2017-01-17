@@ -48,7 +48,11 @@ typedef struct b64_struct {
 
 static const BIO_METHOD methods_b64 = {
     BIO_TYPE_BASE64, "base64 encoding",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     b64_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     b64_read,
     b64_puts,
     NULL,                       /* b64_gets, */
@@ -403,9 +407,10 @@ static int b64_write(BIO *b, const char *in, int inl)
                 ret += n;
             }
         } else {
-            EVP_EncodeUpdate(ctx->base64,
-                             (unsigned char *)ctx->buf, &ctx->buf_len,
-                             (unsigned char *)in, n);
+            if (!EVP_EncodeUpdate(ctx->base64,
+                                 (unsigned char *)ctx->buf, &ctx->buf_len,
+                                 (unsigned char *)in, n))
+                return ((ret == 0) ? -1 : ret);
             OPENSSL_assert(ctx->buf_len <= (int)sizeof(ctx->buf));
             OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
             ret += n;

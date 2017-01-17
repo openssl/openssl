@@ -118,7 +118,7 @@ static ERR_STRING_DATA PKCS7_str_reasons[] = {
 
 #endif
 
-void ERR_load_PKCS7_strings(void)
+int ERR_load_PKCS7_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -127,4 +127,5 @@ void ERR_load_PKCS7_strings(void)
         ERR_load_strings(0, PKCS7_str_reasons);
     }
 #endif
+    return 1;
 }

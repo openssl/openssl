@@ -41,7 +41,7 @@ static void timestamp_print(uint64_t timestamp, BIO *out)
      * characters long with a final Z. Update it with fractional seconds.
      */
     BIO_snprintf(genstr, sizeof(genstr), "%.14s.%03dZ",
-                 ASN1_STRING_data(gen), (unsigned int)(timestamp % 1000));
+                 ASN1_STRING_get0_data(gen), (unsigned int)(timestamp % 1000));
     if (ASN1_GENERALIZEDTIME_set_string(gen, genstr))
         ASN1_GENERALIZEDTIME_print(out, gen);
     ASN1_GENERALIZEDTIME_free(gen);

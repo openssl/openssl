@@ -672,7 +672,7 @@ int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert)
 
 int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
                          unsigned char *key, size_t keylen,
-                         unsigned char *id, size_t idlen)
+                         const unsigned char *id, size_t idlen)
 {
     STACK_OF(CMS_RecipientInfo) *ris;
     CMS_RecipientInfo *ri;

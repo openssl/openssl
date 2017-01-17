@@ -56,15 +56,16 @@ static STACK_OF(CONF_IMODULE) *initialized_modules = NULL;
 
 static void module_free(CONF_MODULE *md);
 static void module_finish(CONF_IMODULE *imod);
-static int module_run(const CONF *cnf, char *name, char *value,
+static int module_run(const CONF *cnf, const char *name, const char *value,
                       unsigned long flags);
 static CONF_MODULE *module_add(DSO *dso, const char *name,
                                conf_init_func *ifunc,
                                conf_finish_func *ffunc);
-static CONF_MODULE *module_find(char *name);
-static int module_init(CONF_MODULE *pmod, char *name, char *value,
+static CONF_MODULE *module_find(const char *name);
+static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
                        const CONF *cnf);
-static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value);
+static CONF_MODULE *module_load_dso(const CONF *cnf, const char *name,
+                                    const char *value);
 
 /* Main function: load modules from a CONF structure */
 
@@ -144,7 +145,7 @@ int CONF_modules_load_file(const char *filename, const char *appname,
     return ret;
 }
 
-static int module_run(const CONF *cnf, char *name, char *value,
+static int module_run(const CONF *cnf, const char *name, const char *value,
                       unsigned long flags)
 {
     CONF_MODULE *md;
@@ -180,12 +181,13 @@ static int module_run(const CONF *cnf, char *name, char *value,
 }
 
 /* Load a module from a DSO */
-static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value)
+static CONF_MODULE *module_load_dso(const CONF *cnf,
+                                    const char *name, const char *value)
 {
     DSO *dso = NULL;
     conf_init_func *ifunc;
     conf_finish_func *ffunc;
-    char *path = NULL;
+    const char *path = NULL;
     int errcode = 0;
     CONF_MODULE *md;
     /* Look for alternative path in module section */
@@ -257,7 +259,7 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
  * initialized more than once.
  */
 
-static CONF_MODULE *module_find(char *name)
+static CONF_MODULE *module_find(const char *name)
 {
     CONF_MODULE *tmod;
     int i, nchar;
@@ -280,7 +282,7 @@ static CONF_MODULE *module_find(char *name)
 }
 
 /* initialize a module */
-static int module_init(CONF_MODULE *pmod, char *name, char *value,
+static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
                        const CONF *cnf)
 {
     int ret = 1;

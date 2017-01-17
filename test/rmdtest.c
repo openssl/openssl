@@ -63,8 +63,11 @@ int main(int argc, char *argv[])
 # ifdef CHARSET_EBCDIC
         ebcdic2ascii(test[i], test[i], strlen(test[i]));
 # endif
-        EVP_Digest(test[i], strlen(test[i]), md, NULL, EVP_ripemd160(),
-                   NULL);
+        if (!EVP_Digest(test[i], strlen(test[i]), md, NULL, EVP_ripemd160(),
+                        NULL)) {
+            printf("EVP Digest error.\n");
+            EXIT(1);
+        }
         p = pt(md);
         if (strcmp(p, (char *)*R) != 0) {
             printf("error calculating RIPEMD160 on '%s'\n", test[i]);

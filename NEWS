@@ -5,7 +5,27 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.0.2h and OpenSSL 1.1.0 [in pre-release]
+  Major changes between OpenSSL 1.1.0a and OpenSSL 1.1.1 [under development]
+
+      o
+
+  Major changes between OpenSSL 1.1.0a and OpenSSL 1.1.0b [26 Sep 2016]
+
+      o ChaCha20/Poly1305 heap-buffer-overflow (CVE-2016-7054)
+      o CMS Null dereference (CVE-2016-7053)
+      o Montgomery multiplication may produce incorrect results (CVE-2016-7055)
+      o Fix Use After Free for large message sizes (CVE-2016-6309)
+
+  Major changes between OpenSSL 1.1.0 and OpenSSL 1.1.0a [22 Sep 2016]
+
+      o OCSP Status Request extension unbounded memory growth (CVE-2016-6304)
+      o SSL_peek() hang on empty record (CVE-2016-6305)
+      o Excessive allocation of memory in tls_get_message_header()
+       (CVE-2016-6307)
+      o Excessive allocation of memory in dtls1_preprocess_fragment()
+       (CVE-2016-6308)
+
+  Major changes between OpenSSL 1.0.2h and OpenSSL 1.1.0 [25 Aug 2016]
 
       o Copyright text was shrunk to a boilerplate that points to the license
       o "shared" builds are now the default when possible
@@ -16,8 +36,14 @@
       o Support for extended master secret
       o CCM ciphersuites
       o Reworked test suite, now based on perl, Test::Harness and Test::More
-      o *Most* libcrypto and libssl structures were made opaque including:
-        <TBA>
+      o *Most* libcrypto and libssl public structures were made opaque,
+        including:
+        BIGNUM and associated types, EC_KEY and EC_KEY_METHOD,
+        DH and DH_METHOD, DSA and DSA_METHOD, RSA and RSA_METHOD,
+        BIO and BIO_METHOD, EVP_MD_CTX, EVP_MD, EVP_CIPHER_CTX,
+        EVP_CIPHER, EVP_PKEY and associated types, HMAC_CTX,
+        X509, X509_CRL, X509_OBJECT, X509_STORE_CTX, X509_STORE,
+        X509_LOOKUP, X509_LOOKUP_METHOD
       o libssl internal structures made opaque
       o SSLv2 support removed
       o Kerberos ciphersuite support removed
@@ -430,8 +456,8 @@
       o New STORE structure and library to provide an interface to all
         sorts of data repositories.  Supports storage of public and
         private keys, certificates, CRLs, numbers and arbitrary blobs.
-	This library is unfortunately unfinished and unused withing
-	OpenSSL.
+        This library is unfortunately unfinished and unused within
+        OpenSSL.
       o New control functions for the error stack.
       o Changed the PKCS#7 library to support one-pass S/MIME
         processing.
@@ -447,7 +473,7 @@
       o Major overhaul of RC4 performance on Intel P4, IA-64 and
         AMD64.
       o Changed the Configure script to have some algorithms disabled
-        by default.  Those can be explicitely enabled with the new
+        by default.  Those can be explicitly enabled with the new
         argument form 'enable-xxx'.
       o Change the default digest in 'openssl' commands from MD5 to
         SHA-1.

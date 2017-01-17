@@ -62,7 +62,7 @@ typedef struct {
     int exp_count;
 } tag_exp_arg;
 
-static ASN1_TYPE *generate_v3(char *str, X509V3_CTX *cnf, int depth,
+static ASN1_TYPE *generate_v3(const char *str, X509V3_CTX *cnf, int depth,
                               int *perr);
 static int bitstr_cb(const char *elem, int len, void *bitstr);
 static int asn1_cb(const char *elem, int len, void *bitstr);
@@ -75,7 +75,7 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf,
 static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype);
 static int asn1_str2tag(const char *tagstr, int len);
 
-ASN1_TYPE *ASN1_generate_nconf(char *str, CONF *nconf)
+ASN1_TYPE *ASN1_generate_nconf(const char *str, CONF *nconf)
 {
     X509V3_CTX cnf;
 
@@ -86,7 +86,7 @@ ASN1_TYPE *ASN1_generate_nconf(char *str, CONF *nconf)
     return ASN1_generate_v3(str, &cnf);
 }
 
-ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
+ASN1_TYPE *ASN1_generate_v3(const char *str, X509V3_CTX *cnf)
 {
     int err = 0;
     ASN1_TYPE *ret = generate_v3(str, cnf, 0, &err);
@@ -95,7 +95,7 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
     return ret;
 }
 
-static ASN1_TYPE *generate_v3(char *str, X509V3_CTX *cnf, int depth,
+static ASN1_TYPE *generate_v3(const char *str, X509V3_CTX *cnf, int depth,
                               int *perr)
 {
     ASN1_TYPE *ret;
@@ -621,7 +621,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
             goto bad_form;
         }
         if ((atmp->value.integer
-                    = s2i_ASN1_INTEGER(NULL, (char *)str)) == NULL) {
+                    = s2i_ASN1_INTEGER(NULL, str)) == NULL) {
             ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_INTEGER);
             goto bad_str;
         }
@@ -694,7 +694,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
         }
 
         if (format == ASN1_GEN_FORMAT_HEX) {
-            if ((rdata = OPENSSL_hexstr2buf((char *)str, &rdlen)) == NULL) {
+            if ((rdata = OPENSSL_hexstr2buf(str, &rdlen)) == NULL) {
                 ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_ILLEGAL_HEX);
                 goto bad_str;
             }

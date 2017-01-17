@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "internal/cryptlib.h"
+#include "internal/asn1_int.h"
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
@@ -237,7 +238,7 @@ static int do_hex_dump(char_io *io_ch, void *arg, unsigned char *buf,
  */
 
 static int do_dump(unsigned long lflags, char_io *io_ch, void *arg,
-                   ASN1_STRING *str)
+                   const ASN1_STRING *str)
 {
     /*
      * Placing the ASN1_STRING in a temp ASN1_TYPE allows the DER encoding to
@@ -282,7 +283,7 @@ static const signed char tag2nbyte[] = {
     -1, -1, -1, -1, -1,         /* 5-9 */
     -1, -1, 0, -1,              /* 10-13 */
     -1, -1, -1, -1,             /* 15-17 */
-    -1, 1, 1,                   /* 18-20 */
+    1, 1, 1,                    /* 18-20 */
     -1, 1, 1, 1,                /* 21-24 */
     -1, 1, -1,                  /* 25-27 */
     4, -1, 2                    /* 28-30 */
@@ -295,7 +296,7 @@ static const signed char tag2nbyte[] = {
  */
 
 static int do_print_ex(char_io *io_ch, void *arg, unsigned long lflags,
-                       ASN1_STRING *str)
+                       const ASN1_STRING *str)
 {
     int outlen, len;
     int type;
@@ -387,14 +388,14 @@ static int do_indent(char_io *io_ch, void *arg, int indent)
 #define FN_WIDTH_LN     25
 #define FN_WIDTH_SN     10
 
-static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
+static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
                       int indent, unsigned long flags)
 {
     int i, prev = -1, orflags, cnt;
     int fn_opt, fn_nid;
     ASN1_OBJECT *fn;
-    ASN1_STRING *val;
-    X509_NAME_ENTRY *ent;
+    const ASN1_STRING *val;
+    const X509_NAME_ENTRY *ent;
     char objtmp[80];
     const char *objbuf;
     int outlen, len;
@@ -525,7 +526,7 @@ static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
 
 /* Wrappers round the main functions */
 
-int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent,
+int X509_NAME_print_ex(BIO *out, const X509_NAME *nm, int indent,
                        unsigned long flags)
 {
     if (flags == XN_FLAG_COMPAT)
@@ -534,7 +535,7 @@ int X509_NAME_print_ex(BIO *out, X509_NAME *nm, int indent,
 }
 
 #ifndef OPENSSL_NO_STDIO
-int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent,
+int X509_NAME_print_ex_fp(FILE *fp, const X509_NAME *nm, int indent,
                           unsigned long flags)
 {
     if (flags == XN_FLAG_COMPAT) {
@@ -551,13 +552,13 @@ int X509_NAME_print_ex_fp(FILE *fp, X509_NAME *nm, int indent,
 }
 #endif
 
-int ASN1_STRING_print_ex(BIO *out, ASN1_STRING *str, unsigned long flags)
+int ASN1_STRING_print_ex(BIO *out, const ASN1_STRING *str, unsigned long flags)
 {
     return do_print_ex(send_bio_chars, out, flags, str);
 }
 
 #ifndef OPENSSL_NO_STDIO
-int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags)
+int ASN1_STRING_print_ex_fp(FILE *fp, const ASN1_STRING *str, unsigned long flags)
 {
     return do_print_ex(send_fp_chars, fp, flags, str);
 }
@@ -568,7 +569,7 @@ int ASN1_STRING_print_ex_fp(FILE *fp, ASN1_STRING *str, unsigned long flags)
  * in output string or a negative error code
  */
 
-int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in)
+int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
 {
     ASN1_STRING stmp, *str = &stmp;
     int mbflag, type, ret;
@@ -591,4 +592,54 @@ int ASN1_STRING_to_UTF8(unsigned char **out, ASN1_STRING *in)
         return ret;
     *out = stmp.data;
     return stmp.length;
+}
+
+/* Return 1 if host is a valid hostname and 0 otherwise */
+int asn1_valid_host(const ASN1_STRING *host)
+{
+    int hostlen = host->length;
+    const unsigned char *hostptr = host->data;
+    int type = host->type;
+    int i;
+    signed char width = -1;
+    unsigned short chflags = 0, prevchflags;
+
+    if (type > 0 && type < 31)
+        width = tag2nbyte[type];
+    if (width == -1 || hostlen == 0)
+        return 0;
+    /* Treat UTF8String as width 1 as any MSB set is invalid */
+    if (width == 0)
+        width = 1;
+    for (i = 0 ; i < hostlen; i+= width) {
+        prevchflags = chflags;
+        /* Value must be <= 0x7F: check upper bytes are all zeroes */
+        if (width == 4) {
+            if (*hostptr++ != 0 || *hostptr++ != 0 || *hostptr++ != 0)
+                return 0;
+        } else if (width == 2) {
+            if (*hostptr++ != 0)
+                return 0;
+        }
+        if (*hostptr > 0x7f)
+            return 0;
+        chflags = char_type[*hostptr++];
+        if (!(chflags & (CHARTYPE_HOST_ANY | CHARTYPE_HOST_WILD))) {
+            /* Nothing else allowed at start or end of string */
+            if (i == 0 || i == hostlen - 1)
+                return 0;
+            /* Otherwise invalid if not dot or hyphen */
+            if (!(chflags & (CHARTYPE_HOST_DOT | CHARTYPE_HOST_HYPHEN)))
+                return 0;
+            /*
+             * If previous is dot or hyphen then illegal unless both
+             * are hyphens: as .- -. .. are all illegal
+             */
+            if (prevchflags & (CHARTYPE_HOST_DOT | CHARTYPE_HOST_HYPHEN)
+                && ((prevchflags & CHARTYPE_HOST_DOT)
+                    || (chflags & CHARTYPE_HOST_DOT)))
+                return 0;
+        }
+    }
+    return 1;
 }

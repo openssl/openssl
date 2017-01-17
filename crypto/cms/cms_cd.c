@@ -63,7 +63,7 @@ CMS_ContentInfo *cms_CompressedData_create(int comp_nid)
 BIO *cms_CompressedData_init_bio(CMS_ContentInfo *cms)
 {
     CMS_CompressedData *cd;
-    ASN1_OBJECT *compoid;
+    const ASN1_OBJECT *compoid;
     if (OBJ_obj2nid(cms->contentType) != NID_id_smime_ct_compressedData) {
         CMSerr(CMS_F_CMS_COMPRESSEDDATA_INIT_BIO,
                CMS_R_CONTENT_TYPE_NOT_COMPRESSED_DATA);

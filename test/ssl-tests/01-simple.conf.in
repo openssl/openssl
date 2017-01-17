@@ -28,7 +28,7 @@ our @tests = (
         },
         test   => {
           "ExpectedResult" => "ClientFail",
-          "ClientAlert" => "UnknownCA",
+          "ExpectedClientAlert" => "UnknownCA",
         },
     },
 );

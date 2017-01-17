@@ -14,6 +14,7 @@
 #include <openssl/evp.h>
 #include <assert.h>
 #include "ssl_locl.h"
+#include "internal/thread_once.h"
 
 static int stopped;
 
@@ -21,11 +22,11 @@ static void ssl_library_stop(void);
 
 static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_base_inited = 0;
-static void ossl_init_ssl_base(void)
+DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
 {
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_ssl_base: "
-                    "Adding SSL ciphers and digests\n");
+            "Adding SSL ciphers and digests\n");
 #endif
 #ifndef OPENSSL_NO_DES
     EVP_add_cipher(EVP_des_cbc());
@@ -84,10 +85,10 @@ static void ossl_init_ssl_base(void)
     EVP_add_digest(EVP_sha384());
     EVP_add_digest(EVP_sha512());
 #ifndef OPENSSL_NO_COMP
-#ifdef OPENSSL_INIT_DEBUG
+# ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_ssl_base: "
-                    "SSL_COMP_get_compression_methods()\n");
-#endif
+            "SSL_COMP_get_compression_methods()\n");
+# endif
     /*
      * This will initialise the built-in compression algorithms. The value
      * returned is a STACK_OF(SSL_COMP), but that can be discarded safely
@@ -99,7 +100,7 @@ static void ossl_init_ssl_base(void)
 
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_ssl_base: "
-                    "SSL_add_ssl_module()\n");
+            "SSL_add_ssl_module()\n");
 #endif
     SSL_add_ssl_module();
     /*
@@ -108,11 +109,12 @@ static void ossl_init_ssl_base(void)
      */
     OPENSSL_atexit(ssl_library_stop);
     ssl_base_inited = 1;
+    return 1;
 }
 
 static CRYPTO_ONCE ssl_strings = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_strings_inited = 0;
-static void ossl_init_load_ssl_strings(void)
+DEFINE_RUN_ONCE_STATIC(ossl_init_load_ssl_strings)
 {
     /*
      * OPENSSL_NO_AUTOERRINIT is provided here to prevent at compile time
@@ -120,18 +122,19 @@ static void ossl_init_load_ssl_strings(void)
      */
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
 # ifdef OPENSSL_INIT_DEBUG
-        fprintf(stderr, "OPENSSL_INIT: ossl_init_load_ssl_strings: "
-                        "ERR_load_SSL_strings()\n");
+    fprintf(stderr, "OPENSSL_INIT: ossl_init_load_ssl_strings: "
+            "ERR_load_SSL_strings()\n");
 # endif
     ERR_load_SSL_strings();
 #endif
     ssl_strings_inited = 1;
+    return 1;
 }
 
-static void ossl_init_no_load_ssl_strings(void)
+DEFINE_RUN_ONCE_STATIC(ossl_init_no_load_ssl_strings)
 {
     /* Do nothing in this case */
-    return;
+    return 1;
 }
 
 static void ssl_library_stop(void)
@@ -143,10 +146,10 @@ static void ssl_library_stop(void)
 
     if (ssl_base_inited) {
 #ifndef OPENSSL_NO_COMP
-#ifdef OPENSSL_INIT_DEBUG
+# ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ssl_library_stop: "
-                        "ssl_comp_free_compression_methods_int()\n");
-#endif
+                "ssl_comp_free_compression_methods_int()\n");
+# endif
         ssl_comp_free_compression_methods_int();
 #endif
     }
@@ -154,7 +157,7 @@ static void ssl_library_stop(void)
     if (ssl_strings_inited) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ssl_library_stop: "
-                        "err_free_strings_int()\n");
+                "err_free_strings_int()\n");
 #endif
         /*
          * If both crypto and ssl error strings are inited we will end up
@@ -166,13 +169,12 @@ static void ssl_library_stop(void)
     }
 }
 
-
 /*
  * If this function is called with a non NULL settings value then it must be
  * called prior to any threads making calls to any OpenSSL functions,
  * i.e. passing a non-null settings value is assumed to be single-threaded.
  */
-int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
+int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS * settings)
 {
     static int stoperrset = 0;
 
@@ -193,19 +195,16 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
                              | OPENSSL_INIT_ADD_ALL_DIGESTS, settings))
         return 0;
 
-    if (!CRYPTO_THREAD_run_once(&ssl_base, ossl_init_ssl_base))
+    if (!RUN_ONCE(&ssl_base, ossl_init_ssl_base))
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_SSL_STRINGS)
-            && !CRYPTO_THREAD_run_once(&ssl_strings,
-                                       ossl_init_no_load_ssl_strings))
+        && !RUN_ONCE(&ssl_strings, ossl_init_no_load_ssl_strings))
         return 0;
 
     if ((opts & OPENSSL_INIT_LOAD_SSL_STRINGS)
-            && !CRYPTO_THREAD_run_once(&ssl_strings,
-                                       ossl_init_load_ssl_strings))
+        && !RUN_ONCE(&ssl_strings, ossl_init_load_ssl_strings))
         return 0;
 
     return 1;
 }
-

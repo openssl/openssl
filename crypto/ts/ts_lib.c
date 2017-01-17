@@ -40,9 +40,8 @@ int TS_OBJ_print_bio(BIO *bio, const ASN1_OBJECT *obj)
 {
     char obj_txt[128];
 
-    int len = OBJ_obj2txt(obj_txt, sizeof(obj_txt), obj, 0);
-    BIO_write(bio, obj_txt, len);
-    BIO_write(bio, "\n", 1);
+    OBJ_obj2txt(obj_txt, sizeof(obj_txt), obj, 0);
+    BIO_printf(bio, "%s\n", obj_txt);
 
     return 1;
 }
@@ -58,9 +57,10 @@ int TS_ext_print_bio(BIO *bio, const STACK_OF(X509_EXTENSION) *extensions)
     for (i = 0; i < n; i++) {
         ex = X509v3_get_ext(extensions, i);
         obj = X509_EXTENSION_get_object(ex);
-        i2a_ASN1_OBJECT(bio, obj);
+        if (i2a_ASN1_OBJECT(bio, obj) < 0)
+            return 0;
         critical = X509_EXTENSION_get_critical(ex);
-        BIO_printf(bio, ": %s\n", critical ? "critical" : "");
+        BIO_printf(bio, ":%s\n", critical ? " critical" : "");
         if (!X509V3_EXT_print(bio, ex, 0, 4)) {
             BIO_printf(bio, "%4s", "");
             ASN1_STRING_print(bio, X509_EXTENSION_get_data(ex));
@@ -86,7 +86,7 @@ int TS_MSG_IMPRINT_print_bio(BIO *bio, TS_MSG_IMPRINT *a)
 
     BIO_printf(bio, "Message data:\n");
     msg = a->hashed_msg;
-    BIO_dump_indent(bio, (const char *)ASN1_STRING_data(msg),
+    BIO_dump_indent(bio, (const char *)ASN1_STRING_get0_data(msg),
                     ASN1_STRING_length(msg), 4);
 
     return 1;

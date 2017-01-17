@@ -34,14 +34,16 @@ static void show_ciphers(const OBJ_NAME *name, void *bio_);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_LIST,
     OPT_E, OPT_IN, OPT_OUT, OPT_PASS, OPT_ENGINE, OPT_D, OPT_P, OPT_V,
     OPT_NOPAD, OPT_SALT, OPT_NOSALT, OPT_DEBUG, OPT_UPPER_P, OPT_UPPER_A,
     OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
     OPT_UPPER_S, OPT_IV, OPT_MD, OPT_CIPHER
 } OPTION_CHOICE;
 
-OPTIONS enc_options[] = {
+const OPTIONS enc_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"ciphers", OPT_LIST, '-', "List ciphers"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
     {"pass", OPT_PASS, 's', "Passphrase source"},
@@ -80,6 +82,7 @@ int enc_main(int argc, char **argv)
 {
     static char buf[128];
     static const char magic[] = "Salted__";
+    ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL, *b64 = NULL, *benc = NULL, *rbio =
         NULL, *wbio = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
@@ -129,7 +132,9 @@ int enc_main(int argc, char **argv)
         case OPT_HELP:
             opt_help(enc_options);
             ret = 0;
-            BIO_printf(bio_err, "Cipher Types\n");
+            goto end;
+        case OPT_LIST:
+            BIO_printf(bio_err, "Supported ciphers:\n");
             OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH,
                                    show_ciphers, bio_err);
             BIO_printf(bio_err, "\n");
@@ -147,7 +152,7 @@ int enc_main(int argc, char **argv)
             passarg = opt_arg();
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_D:
             enc = 0;
@@ -378,6 +383,8 @@ int enc_main(int argc, char **argv)
              * output BIO. If decrypting read salt from input BIO.
              */
             unsigned char *sptr;
+            size_t str_len = strlen(str);
+
             if (nosalt)
                 sptr = NULL;
             else {
@@ -417,7 +424,7 @@ int enc_main(int argc, char **argv)
 
             if (!EVP_BytesToKey(cipher, dgst, sptr,
                                 (unsigned char *)str,
-                                strlen(str), 1, key, iv)) {
+                                str_len, 1, key, iv)) {
                 BIO_printf(bio_err, "EVP_BytesToKey failed\n");
                 goto end;
             }
@@ -428,7 +435,7 @@ int enc_main(int argc, char **argv)
             if (str == strbuf)
                 OPENSSL_cleanse(str, SIZE);
             else
-                OPENSSL_cleanse(str, strlen(str));
+                OPENSSL_cleanse(str, str_len);
         }
         if (hiv != NULL) {
             int siz = EVP_CIPHER_iv_length(cipher);
@@ -546,6 +553,7 @@ int enc_main(int argc, char **argv)
 #ifdef ZLIB
     BIO_free(bzl);
 #endif
+    release_engine(e);
     OPENSSL_free(pass);
     return (ret);
 }

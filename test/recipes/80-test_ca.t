@@ -32,7 +32,7 @@ plan tests => 4;
      $ENV{OPENSSL_CONFIG} = '-config "'.srctop_file("test", "Uss.cnf").'"';
      skip "failed creating new certificate request", 2
 	 if !ok(run(perlapp(["CA.pl","-newreq"])),
-		'creating CA structure');
+		'creating certificate request');
 
      $ENV{OPENSSL_CONFIG} = '-config "'.$std_openssl_cnf.'"';
      skip "failed to sign certificate request", 1
@@ -40,12 +40,12 @@ plan tests => 4;
 		'signing certificate request');
 
      ok(run(perlapp(["CA.pl", "-verify", "newcert.pem"])),
-	'verifying new certificate');
+        'verifying new certificate');
 }
 
 
 rmtree("demoCA", { safe => 0 });
-unlink "newcert.pem", "newreq.pem";
+unlink "newcert.pem", "newreq.pem", "newkey.pem";
 
 
 sub yes {

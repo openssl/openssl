@@ -18,6 +18,8 @@
 
 # include "internal/cryptlib.h"
 # include <internal/engine.h>
+# include <internal/thread_once.h>
+# include "internal/refcount.h"
 
 #ifdef  __cplusplus
 extern "C" {
@@ -102,7 +104,7 @@ void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb,
  */
 int engine_unlocked_init(ENGINE *e);
 int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers);
-int engine_free_util(ENGINE *e, int locked);
+int engine_free_util(ENGINE *e, int not_locked);
 
 /*
  * This function will reset all "set"able values in an ENGINE to NULL. This
@@ -123,7 +125,7 @@ void engine_pkey_asn1_meths_free(ENGINE *e);
 
 /* Once initialisation function */
 extern CRYPTO_ONCE engine_lock_init;
-void do_engine_lock_init(void);
+DECLARE_RUN_ONCE(do_engine_lock_init)
 
 /*
  * This is a structure for storing implementations of various crypto
@@ -155,7 +157,7 @@ struct engine_st {
     const ENGINE_CMD_DEFN *cmd_defns;
     int flags;
     /* reference count on the structure itself */
-    int struct_ref;
+    CRYPTO_REF_COUNT struct_ref;
     /*
      * reference count on usability of the engine type. NB: This controls the
      * loading and initialisation of any functionality required by this

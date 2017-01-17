@@ -11,6 +11,7 @@
 #include <limits.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
+#include "asn1_locl.h"
 
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
                            long max);
@@ -206,26 +207,30 @@ static void asn1_put_length(unsigned char **pp, int length)
 
 int ASN1_object_size(int constructed, int length, int tag)
 {
-    int ret;
-
-    ret = length;
-    ret++;
+    int ret = 1;
+    if (length < 0)
+        return -1;
     if (tag >= 31) {
         while (tag > 0) {
             tag >>= 7;
             ret++;
         }
     }
-    if (constructed == 2)
-        return ret + 3;
-    ret++;
-    if (length > 127) {
-        while (length > 0) {
-            length >>= 8;
-            ret++;
+    if (constructed == 2) {
+        ret += 3;
+    } else {
+        ret++;
+        if (length > 127) {
+            int tmplen = length;
+            while (tmplen > 0) {
+                tmplen >>= 8;
+                ret++;
+            }
         }
     }
-    return (ret);
+    if (ret >= INT_MAX - length)
+        return -1;
+    return ret + length;
 }
 
 int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
@@ -267,7 +272,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
         else
             len = strlen(data);
     }
-    if ((str->length < len) || (str->data == NULL)) {
+    if ((str->length <= len) || (str->data == NULL)) {
         c = str->data;
         str->data = OPENSSL_realloc(c, len + 1);
         if (str->data == NULL) {
@@ -310,14 +315,21 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
     return (ret);
 }
 
-void ASN1_STRING_free(ASN1_STRING *a)
+void asn1_string_embed_free(ASN1_STRING *a, int embed)
 {
     if (a == NULL)
         return;
     if (!(a->flags & ASN1_STRING_FLAG_NDEF))
         OPENSSL_free(a->data);
-    if (!(a->flags & ASN1_STRING_FLAG_EMBED))
+    if (embed == 0)
         OPENSSL_free(a);
+}
+
+void ASN1_STRING_free(ASN1_STRING *a)
+{
+    if (a == NULL)
+        return;
+    asn1_string_embed_free(a, a->flags & ASN1_STRING_FLAG_EMBED);
 }
 
 void ASN1_STRING_clear_free(ASN1_STRING *a)
@@ -354,12 +366,19 @@ void ASN1_STRING_length_set(ASN1_STRING *x, int len)
     x->length = len;
 }
 
-int ASN1_STRING_type(ASN1_STRING *x)
+int ASN1_STRING_type(const ASN1_STRING *x)
 {
     return x->type;
 }
 
+const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x)
+{
+    return x->data;
+}
+
+# if OPENSSL_API_COMPAT < 0x10100000L
 unsigned char *ASN1_STRING_data(ASN1_STRING *x)
 {
     return x->data;
 }
+#endif

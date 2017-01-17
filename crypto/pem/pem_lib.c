@@ -151,7 +151,7 @@ static int check_pem(const char *nm, const char *name)
         slen = pem_check_suffix(nm, "PRIVATE KEY");
         if (slen > 0) {
             /*
-             * NB: ENGINE implementations wont contain a deprecated old
+             * NB: ENGINE implementations won't contain a deprecated old
              * private key decode function so don't look for them.
              */
             ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
@@ -618,7 +618,8 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
     i = j = 0;
     while (len > 0) {
         n = (int)((len > (PEM_BUFSIZE * 5)) ? (PEM_BUFSIZE * 5) : len);
-        EVP_EncodeUpdate(ctx, buf, &outl, &(data[j]), n);
+        if (!EVP_EncodeUpdate(ctx, buf, &outl, &(data[j]), n))
+            goto err;
         if ((outl) && (BIO_write(bp, (char *)buf, outl) != outl))
             goto err;
         i += outl;

@@ -1298,7 +1298,7 @@ $code.=<<___;
 AES_set_encrypt_key:
 	push	%rbx
 	push	%rbp
-	push	%r12			# redundant, but allows to share 
+	push	%r12			# redundant, but allows to share
 	push	%r13			# exception handler...
 	push	%r14
 	push	%r15
@@ -1424,7 +1424,7 @@ $code.=<<___;
 	xor	%rax,%rax
 	jmp	.Lexit
 
-.L14rounds:		
+.L14rounds:
 	mov	0(%rsi),%rax			# copy first 8 dwords
 	mov	8(%rsi),%rbx
 	mov	16(%rsi),%rcx

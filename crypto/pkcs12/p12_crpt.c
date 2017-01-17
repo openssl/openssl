@@ -25,6 +25,13 @@ int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     int saltlen, iter, ret;
     unsigned char *salt;
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
+    int (*pkcs12_key_gen)(const char *pass, int passlen,
+                          unsigned char *salt, int slen,
+                          int id, int iter, int n,
+                          unsigned char *out,
+                          const EVP_MD *md_type);
+
+    pkcs12_key_gen = PKCS12_key_gen_utf8;
 
     if (cipher == NULL)
         return 0;
@@ -43,14 +50,14 @@ int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
         iter = ASN1_INTEGER_get(pbe->iter);
     salt = pbe->salt->data;
     saltlen = pbe->salt->length;
-    if (!PKCS12_key_gen(pass, passlen, salt, saltlen, PKCS12_KEY_ID,
-                        iter, EVP_CIPHER_key_length(cipher), key, md)) {
+    if (!(*pkcs12_key_gen)(pass, passlen, salt, saltlen, PKCS12_KEY_ID,
+                           iter, EVP_CIPHER_key_length(cipher), key, md)) {
         PKCS12err(PKCS12_F_PKCS12_PBE_KEYIVGEN, PKCS12_R_KEY_GEN_ERROR);
         PBEPARAM_free(pbe);
         return 0;
     }
-    if (!PKCS12_key_gen(pass, passlen, salt, saltlen, PKCS12_IV_ID,
-                        iter, EVP_CIPHER_iv_length(cipher), iv, md)) {
+    if (!(*pkcs12_key_gen)(pass, passlen, salt, saltlen, PKCS12_IV_ID,
+                           iter, EVP_CIPHER_iv_length(cipher), iv, md)) {
         PKCS12err(PKCS12_F_PKCS12_PBE_KEYIVGEN, PKCS12_R_IV_GEN_ERROR);
         PBEPARAM_free(pbe);
         return 0;

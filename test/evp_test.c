@@ -197,6 +197,8 @@ static int test_uint64(const char *value, uint64_t *pr)
 struct evp_test {
     /* file being read */
     BIO *in;
+    /* temp memory BIO for reading in keys */
+    BIO *key;
     /* List of public and private keys */
     struct key_list *private;
     struct key_list *public;
@@ -210,6 +212,10 @@ struct evp_test {
     const char *err, *aux_err;
     /* Expected error value of test */
     char *expected_err;
+    /* Expected error function string */
+    char *func;
+    /* Expected error reason string */
+    char *reason;
     /* Number of tests */
     int ntests;
     /* Error count */
@@ -296,6 +302,10 @@ static void free_expected(struct evp_test *t)
 {
     OPENSSL_free(t->expected_err);
     t->expected_err = NULL;
+    OPENSSL_free(t->func);
+    t->func = NULL;
+    OPENSSL_free(t->reason);
+    t->reason = NULL;
     OPENSSL_free(t->out_expected);
     OPENSSL_free(t->out_received);
     t->out_expected = NULL;
@@ -317,6 +327,9 @@ static void print_expected(struct evp_test *t)
 
 static int check_test_error(struct evp_test *t)
 {
+    unsigned long err;
+    const char *func;
+    const char *reason;
     if (!t->err && !t->expected_err)
         return 1;
     if (t->err && !t->expected_err) {
@@ -335,11 +348,44 @@ static int check_test_error(struct evp_test *t)
                 t->start_line, t->expected_err);
         return 0;
     }
-    if (strcmp(t->err, t->expected_err) == 0)
+
+    if (strcmp(t->err, t->expected_err) != 0) {
+        fprintf(stderr, "Test line %d: expecting %s got %s\n",
+                t->start_line, t->expected_err, t->err);
+        return 0;
+    }
+
+    if (t->func == NULL && t->reason == NULL)
         return 1;
 
-    fprintf(stderr, "Test line %d: expecting %s got %s\n",
-            t->start_line, t->expected_err, t->err);
+    if (t->func == NULL || t->reason == NULL) {
+        fprintf(stderr, "Test line %d: missing function or reason code\n",
+                t->start_line);
+        return 0;
+    }
+
+    err = ERR_peek_error();
+    if (err == 0) {
+        fprintf(stderr, "Test line %d, expected error \"%s:%s\" not set\n",
+                t->start_line, t->func, t->reason);
+        return 0;
+    }
+
+    func = ERR_func_error_string(err);
+    reason = ERR_reason_error_string(err);
+
+    if (func == NULL && reason == NULL) {
+        fprintf(stderr, "Test line %d: expected error \"%s:%s\", no strings available.  Skipping...\n",
+                t->start_line, t->func, t->reason);
+        return 1;
+    }
+
+    if (strcmp(func, t->func) == 0 && strcmp(reason, t->reason) == 0)
+        return 1;
+
+    fprintf(stderr, "Test line %d: expected error \"%s:%s\", got \"%s:%s\"\n",
+            t->start_line, t->func, t->reason, func, reason);
+
     return 0;
 }
 
@@ -351,25 +397,27 @@ static int setup_test(struct evp_test *t, const struct evp_test_method *tmeth)
     if (t->meth) {
         t->ntests++;
         if (t->skip) {
-            t->meth = tmeth;
             t->nskip++;
-            return 1;
+        } else {
+            /* run the test */
+            if (t->err == NULL && t->meth->run_test(t) != 1) {
+                fprintf(stderr, "%s test error line %d\n",
+                        t->meth->name, t->start_line);
+                return 0;
+            }
+            if (!check_test_error(t)) {
+                if (t->err)
+                    ERR_print_errors_fp(stderr);
+                t->errors++;
+            }
         }
-        t->err = NULL;
-        if (t->meth->run_test(t) != 1) {
-            fprintf(stderr, "%s test error line %d\n",
-                    t->meth->name, t->start_line);
-            return 0;
-        }
-        if (!check_test_error(t)) {
-            if (t->err)
-                ERR_print_errors_fp(stderr);
-            t->errors++;
-        }
+        /* clean it up */
         ERR_clear_error();
-        t->meth->cleanup(t);
-        OPENSSL_free(t->data);
-        t->data = NULL;
+        if (t->data != NULL) {
+            t->meth->cleanup(t);
+            OPENSSL_free(t->data);
+            t->data = NULL;
+        }
         OPENSSL_free(t->expected_err);
         t->expected_err = NULL;
         free_expected(t);
@@ -413,11 +461,36 @@ static int check_unsupported()
     return 0;
 }
 
+
+static int read_key(struct evp_test *t)
+{
+    char tmpbuf[80];
+    if (t->key == NULL)
+        t->key = BIO_new(BIO_s_mem());
+    else if (BIO_reset(t->key) <= 0)
+        return 0;
+    if (t->key == NULL) {
+        fprintf(stderr, "Error allocating key memory BIO\n");
+        return 0;
+    }
+    /* Read to PEM end line and place content in memory BIO */
+    while (BIO_gets(t->in, tmpbuf, sizeof(tmpbuf))) {
+        t->line++;
+        if (BIO_puts(t->key, tmpbuf) <= 0) {
+            fprintf(stderr, "Error writing to key memory BIO\n");
+            return 0;
+        }
+        if (strncmp(tmpbuf, "-----END", 8) == 0)
+            return 1;
+    }
+    fprintf(stderr, "Can't find key end\n");
+    return 0;
+}
+
 static int process_test(struct evp_test *t, char *buf, int verbose)
 {
     char *keyword = NULL, *value = NULL;
     int rv = 0, add_key = 0;
-    long save_pos = 0;
     struct key_list **lst = NULL, *key = NULL;
     EVP_PKEY *pk = NULL;
     const struct evp_test_method *tmeth = NULL;
@@ -426,8 +499,9 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
     if (!parse_line(&keyword, &value, buf))
         return 1;
     if (strcmp(keyword, "PrivateKey") == 0) {
-        save_pos = BIO_tell(t->in);
-        pk = PEM_read_bio_PrivateKey(t->in, NULL, 0, NULL);
+        if (!read_key(t))
+            return 0;
+        pk = PEM_read_bio_PrivateKey(t->key, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading private key %s\n", value);
             ERR_print_errors_fp(stderr);
@@ -437,8 +511,9 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         add_key = 1;
     }
     if (strcmp(keyword, "PublicKey") == 0) {
-        save_pos = BIO_tell(t->in);
-        pk = PEM_read_bio_PUBKEY(t->in, NULL, 0, NULL);
+        if (!read_key(t))
+            return 0;
+        pk = PEM_read_bio_PUBKEY(t->key, NULL, 0, NULL);
         if (pk == NULL && !check_unsupported()) {
             fprintf(stderr, "Error reading public key %s\n", value);
             ERR_print_errors_fp(stderr);
@@ -449,7 +524,6 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
     }
     /* If we have a key add to list */
     if (add_key) {
-        char tmpbuf[80];
         if (find_key(NULL, value, *lst)) {
             fprintf(stderr, "Duplicate key %s\n", value);
             return 0;
@@ -461,15 +535,7 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
         key->key = pk;
         key->next = *lst;
         *lst = key;
-        /* Rewind input, read to end and update line numbers */
-        (void)BIO_seek(t->in, save_pos);
-        while (BIO_gets(t->in,tmpbuf, sizeof(tmpbuf))) {
-            t->line++;
-            if (strncmp(tmpbuf, "-----END", 8) == 0)
-                return 1;
-        }
-        fprintf(stderr, "Can't find key end\n");
-        return 0;
+        return 1;
     }
 
     /* See if keyword corresponds to a test start */
@@ -492,7 +558,23 @@ static int process_test(struct evp_test *t, char *buf, int verbose)
             return 0;
         }
         t->expected_err = OPENSSL_strdup(value);
-        if (!t->expected_err)
+        if (t->expected_err == NULL)
+            return 0;
+    } else if (strcmp(keyword, "Function") == 0) {
+        if (t->func != NULL) {
+            fprintf(stderr, "Line %d: multiple function lines\n", t->line);
+            return 0;
+        }
+        t->func = OPENSSL_strdup(value);
+        if (t->func == NULL)
+            return 0;
+    } else if (strcmp(keyword, "Reason") == 0) {
+        if (t->reason != NULL) {
+            fprintf(stderr, "Line %d: multiple reason lines\n", t->line);
+            return 0;
+        }
+        t->reason = OPENSSL_strdup(value);
+        if (t->reason == NULL)
             return 0;
     } else {
         /* Must be test specific line: try to parse it */
@@ -559,7 +641,12 @@ int main(int argc, char **argv)
     memset(&t, 0, sizeof(t));
     t.start_line = -1;
     in = BIO_new_file(argv[1], "r");
+    if (in == NULL) {
+        fprintf(stderr, "Can't open %s for reading\n", argv[1]);
+        return 1;
+    }
     t.in = in;
+    t.err = NULL;
     while (BIO_gets(in, buf, sizeof(buf))) {
         t.line++;
         if (!process_test(&t, buf, 0))
@@ -572,6 +659,7 @@ int main(int argc, char **argv)
             t.ntests, t.errors, t.nskip);
     free_key_list(t.public);
     free_key_list(t.private);
+    BIO_free(t.key);
     BIO_free(in);
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
@@ -1208,9 +1296,7 @@ static int pkey_test_init(struct evp_test *t, const char *name,
         rv = find_key(&pkey, name, t->public);
     if (!rv)
         rv = find_key(&pkey, name, t->private);
-    if (!rv)
-        return 0;
-    if (!pkey) {
+    if (!rv || pkey == NULL) {
         t->skip = 1;
         return 1;
     }
@@ -1229,7 +1315,7 @@ static int pkey_test_init(struct evp_test *t, const char *name,
     if (!kdata->ctx)
         return 0;
     if (keyopinit(kdata->ctx) <= 0)
-        return 0;
+        t->err = "KEYOP_INIT_ERROR";
     return 1;
 }
 
@@ -1242,7 +1328,8 @@ static void pkey_test_cleanup(struct evp_test *t)
     EVP_PKEY_CTX_free(kdata->ctx);
 }
 
-static int pkey_test_ctrl(EVP_PKEY_CTX *pctx, const char *value)
+static int pkey_test_ctrl(struct evp_test *t, EVP_PKEY_CTX *pctx,
+                          const char *value)
 {
     int rv;
     char *p, *tmpval;
@@ -1254,6 +1341,23 @@ static int pkey_test_ctrl(EVP_PKEY_CTX *pctx, const char *value)
     if (p != NULL)
         *p++ = 0;
     rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
+    if (rv == -2) {
+        t->err = "PKEY_CTRL_INVALID";
+        rv = 1;
+    } else if (p != NULL && rv <= 0) {
+        /* If p has an OID and lookup fails assume disabled algorithm */
+        int nid = OBJ_sn2nid(p);
+        if (nid == NID_undef)
+             nid = OBJ_ln2nid(p);
+        if ((nid != NID_undef) && EVP_get_digestbynid(nid) == NULL &&
+            EVP_get_cipherbynid(nid) == NULL) {
+            t->skip = 1;
+            rv = 1;
+        } else {
+            t->err = "PKEY_CTRL_ERROR";
+            rv = 1;
+        }
+    }
     OPENSSL_free(tmpval);
     return rv > 0;
 }
@@ -1267,7 +1371,7 @@ static int pkey_test_parse(struct evp_test *t,
     if (strcmp(keyword, "Output") == 0)
         return test_bin(value, &kdata->output, &kdata->output_len);
     if (strcmp(keyword, "Ctrl") == 0)
-        return pkey_test_ctrl(kdata->ctx, value);
+        return pkey_test_ctrl(t, kdata->ctx, value);
     return 0;
 }
 
@@ -1387,7 +1491,7 @@ static int pderive_test_parse(struct evp_test *t,
     if (strcmp(keyword, "SharedSecret") == 0)
         return test_bin(value, &kdata->output, &kdata->output_len);
     if (strcmp(keyword, "Ctrl") == 0)
-        return pkey_test_ctrl(kdata->ctx, value);
+        return pkey_test_ctrl(t, kdata->ctx, value);
     return 0;
 }
 
@@ -1808,7 +1912,7 @@ static int kdf_test_parse(struct evp_test *t,
     if (strcmp(keyword, "Output") == 0)
         return test_bin(value, &kdata->output, &kdata->output_len);
     if (strncmp(keyword, "Ctrl", 4) == 0)
-        return pkey_test_ctrl(kdata->ctx, value);
+        return pkey_test_ctrl(t, kdata->ctx, value);
     return 0;
 }
 

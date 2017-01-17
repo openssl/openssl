@@ -16,6 +16,7 @@
 # include "e_os.h"
 
 # ifdef OPENSSL_USE_APPLINK
+#  undef BIO_FLAGS_UPLINK
 #  define BIO_FLAGS_UPLINK 0x8000
 #  include "ms/uplink.h"
 # endif
@@ -24,7 +25,6 @@
 # include <openssl/buffer.h>
 # include <openssl/bio.h>
 # include <openssl/err.h>
-# include <openssl/opensslconf.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -35,7 +35,7 @@ typedef struct ex_callback_st EX_CALLBACK;
 DEFINE_STACK_OF(EX_CALLBACK)
 
 typedef struct app_mem_info_st APP_INFO;
-DEFINE_LHASH_OF(APP_INFO);
+
 typedef struct mem_st MEM;
 DEFINE_LHASH_OF(MEM);
 
@@ -46,11 +46,11 @@ DEFINE_LHASH_OF(MEM);
 #  define X509_PRIVATE_DIR        OPENSSLDIR "/private"
 #  define CTLOG_FILE              OPENSSLDIR "/ct_log_list.cnf"
 # else
-#  define X509_CERT_AREA          "SSLROOT:[000000]"
-#  define X509_CERT_DIR           "SSLCERTS:"
-#  define X509_CERT_FILE          "SSLCERTS:cert.pem"
-#  define X509_PRIVATE_DIR        "SSLPRIVATE:"
-#  define CTLOG_FILE              "SSLROOT:ct_log_list.cnf"
+#  define X509_CERT_AREA          "OSSL$DATAROOT:[000000]"
+#  define X509_CERT_DIR           "OSSL$DATAROOT:[CERTS]"
+#  define X509_CERT_FILE          "OSSL$DATAROOT:[000000]cert.pem"
+#  define X509_PRIVATE_DIR        "OSSL$DATAROOT:[PRIVATE]"
+#  define CTLOG_FILE              "OSSL$DATAROOT:[000000]ct_log_list.cnf"
 # endif
 
 # define X509_CERT_DIR_EVP        "SSL_CERT_DIR"
@@ -68,6 +68,11 @@ extern int OPENSSL_NONPIC_relocated;
 void crypto_cleanup_all_ex_data_int(void);
 
 int openssl_strerror_r(int errnum, char *buf, size_t buflen);
+# if !defined(OPENSSL_NO_STDIO)
+FILE *openssl_fopen(const char *filename, const char *mode);
+# else
+void *openssl_fopen(const char *filename, const char *mode);
+# endif
 
 #ifdef  __cplusplus
 }

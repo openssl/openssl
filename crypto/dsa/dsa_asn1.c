@@ -14,22 +14,47 @@
 #include <openssl/asn1t.h>
 #include <openssl/rand.h>
 
-struct DSA_SIG_st {
-    BIGNUM *r;
-    BIGNUM *s;
-};
-
 ASN1_SEQUENCE(DSA_SIG) = {
         ASN1_SIMPLE(DSA_SIG, r, CBIGNUM),
         ASN1_SIMPLE(DSA_SIG, s, CBIGNUM)
 } static_ASN1_SEQUENCE_END(DSA_SIG)
 
-IMPLEMENT_ASN1_FUNCTIONS_const(DSA_SIG)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA_SIG, DSA_SIG, DSA_SIG)
 
-void DSA_SIG_get0(BIGNUM **pr, BIGNUM **ps, const DSA_SIG *sig)
+DSA_SIG *DSA_SIG_new(void)
 {
-    *pr = sig->r;
-    *ps = sig->s;
+    DSA_SIG *sig = OPENSSL_zalloc(sizeof(*sig));
+    if (sig == NULL)
+        DSAerr(DSA_F_DSA_SIG_NEW, ERR_R_MALLOC_FAILURE);
+    return sig;
+}
+
+void DSA_SIG_free(DSA_SIG *sig)
+{
+    if (sig == NULL)
+        return;
+    BN_clear_free(sig->r);
+    BN_clear_free(sig->s);
+    OPENSSL_free(sig);
+}
+
+void DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
+{
+    if (pr != NULL)
+        *pr = sig->r;
+    if (ps != NULL)
+        *ps = sig->s;
+}
+
+int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
+{
+    if (r == NULL || s == NULL)
+        return 0;
+    BN_clear_free(sig->r);
+    BN_clear_free(sig->s);
+    sig->r = r;
+    sig->s = s;
+    return 1;
 }
 
 /* Override the default free and new methods */

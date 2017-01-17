@@ -22,7 +22,7 @@ typedef enum OPTION_choice {
     OPT_OUT, OPT_ENGINE, OPT_RAND, OPT_BASE64, OPT_HEX
 } OPTION_CHOICE;
 
-OPTIONS rand_options[] = {
+const OPTIONS rand_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [flags] num\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -39,6 +39,7 @@ OPTIONS rand_options[] = {
 
 int rand_main(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     BIO *out = NULL;
     char *inrand = NULL, *outfile = NULL, *prog;
     OPTION_CHOICE o;
@@ -60,7 +61,7 @@ int rand_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_RAND:
             inrand = opt_arg();
@@ -125,6 +126,7 @@ int rand_main(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
+    release_engine(e);
     BIO_free_all(out);
     return (ret);
 }

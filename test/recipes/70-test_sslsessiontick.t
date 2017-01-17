@@ -24,8 +24,8 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
-plan skip_all => "$test_name needs TLS enabled"
-    if alldisabled(available_protocols("tls"));
+plan skip_all => "$test_name needs SSLv3, TLSv1, TLSv1.1 or TLSv1.2 enabled"
+    if alldisabled(("ssl3", "tls1", "tls1_1", "tls1_2"));
 
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
@@ -45,12 +45,12 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 10;
-
 #Test 1: By default with no existing session we should get a session ticket
 #Expected result: ClientHello extension seen; ServerHello extension seen
 #                 NewSessionTicket message seen; Full handshake
-$proxy->start();
+$proxy->clientflags("-no_tls1_3");
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 10;
 checkmessages(1, "Default session ticket test", 1, 1, 1, 1);
 
 #Test 2: If the server does not accept tickets we should get a normal handshake
@@ -58,6 +58,7 @@ checkmessages(1, "Default session ticket test", 1, 1, 1, 1);
 #Expected result: ClientHello extension seen; ServerHello extension not seen
 #                 NewSessionTicket message not seen; Full handshake
 clearall();
+$proxy->clientflags("-no_tls1_3");
 $proxy->serverflags("-no_ticket");
 $proxy->start();
 checkmessages(2, "No server support session ticket test", 1, 0, 0, 1);
@@ -67,7 +68,7 @@ checkmessages(2, "No server support session ticket test", 1, 0, 0, 1);
 #Expected result: ClientHello extension not seen; ServerHello extension not seen
 #                 NewSessionTicket message not seen; Full handshake
 clearall();
-$proxy->clientflags("-no_ticket");
+$proxy->clientflags("-no_tls1_3 -no_ticket");
 $proxy->start();
 checkmessages(3, "No client support session ticket test", 0, 0, 0, 1);
 
@@ -75,63 +76,68 @@ checkmessages(3, "No client support session ticket test", 0, 0, 0, 1);
 #Expected result: ClientHello extension seen; ServerHello extension not seen
 #                 NewSessionTicket message not seen; Abbreviated handshake
 clearall();
-(my $fh, my $session) = tempfile();
+(undef, my $session) = tempfile();
 $proxy->serverconnects(2);
-$proxy->clientflags("-sess_out ".$session);
+$proxy->clientflags("-no_tls1_3 -sess_out ".$session);
 $proxy->start();
 $proxy->clearClient();
-$proxy->clientflags("-sess_in ".$session);
+$proxy->clientflags("-no_tls1_3 -sess_in ".$session);
 $proxy->clientstart();
 checkmessages(4, "Session resumption session ticket test", 1, 0, 0, 0);
+unlink $session;
 
 #Test 5: Test session resumption with ticket capable client without a ticket
 #Expected result: ClientHello extension seen; ServerHello extension seen
 #                 NewSessionTicket message seen; Abbreviated handshake
 clearall();
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(2);
-$proxy->clientflags("-sess_out ".$session." -no_ticket");
+$proxy->clientflags("-no_tls1_3 -sess_out ".$session." -no_ticket");
 $proxy->start();
 $proxy->clearClient();
-$proxy->clientflags("-sess_in ".$session);
+$proxy->clientflags("-no_tls1_3 -sess_in ".$session);
 $proxy->clientstart();
 checkmessages(5, "Session resumption with ticket capable client without a "
                  ."ticket", 1, 1, 1, 0);
+unlink $session;
 
 #Test 6: Client accepts empty ticket.
 #Expected result: ClientHello extension seen; ServerHello extension seen;
 #                 NewSessionTicket message seen; Full handshake.
 clearall();
 $proxy->filter(\&ticket_filter);
+$proxy->clientflags("-no_tls1_3");
 $proxy->start();
 checkmessages(6, "Empty ticket test",  1, 1, 1, 1);
 
 #Test 7-8: Client keeps existing ticket on empty ticket.
 clearall();
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(3);
 $proxy->filter(undef);
-$proxy->clientflags("-sess_out ".$session);
+$proxy->clientflags("-no_tls1_3 -sess_out ".$session);
 $proxy->start();
 $proxy->clearClient();
-$proxy->clientflags("-sess_in ".$session." -sess_out ".$session);
+$proxy->clientflags("-no_tls1_3 -sess_in ".$session." -sess_out ".$session);
 $proxy->filter(\&inject_empty_ticket_filter);
 $proxy->clientstart();
 #Expected result: ClientHello extension seen; ServerHello extension seen;
 #                 NewSessionTicket message seen; Abbreviated handshake.
 checkmessages(7, "Empty ticket resumption test",  1, 1, 1, 0);
 clearclient();
-$proxy->clientflags("-sess_in ".$session);
+$proxy->clientflags("-no_tls1_3 -sess_in ".$session);
 $proxy->filter(undef);
 $proxy->clientstart();
 #Expected result: ClientHello extension seen; ServerHello extension not seen;
 #                 NewSessionTicket message not seen; Abbreviated handshake.
 checkmessages(8, "Empty ticket resumption test",  1, 0, 0, 0);
+unlink $session;
 
 #Test 9: Bad server sends the ServerHello extension but does not send a
 #NewSessionTicket
 #Expected result: Connection failure
 clearall();
+$proxy->clientflags("-no_tls1_3");
 $proxy->serverflags("-no_ticket");
 $proxy->filter(\&inject_ticket_extension_filter);
 $proxy->start();
@@ -141,6 +147,7 @@ ok(TLSProxy::Message->fail, "Server sends ticket extension but no ticket test");
 #NewSessionTicket
 #Expected result: Connection failure
 clearall();
+$proxy->clientflags("-no_tls1_3");
 $proxy->serverflags("-no_ticket");
 $proxy->filter(\&inject_empty_ticket_filter);
 $proxy->start();
@@ -227,7 +234,7 @@ sub checkmessages($$$$$$)
 			$shellotickext = 1;
 		    }
 		}
-	    } elsif ($message->mt == TLSProxy::Message::MT_CLIENT_KEY_EXCHANGE) {
+	    } elsif ($message->mt == TLSProxy::Message::MT_CERTIFICATE) {
 		#Must be doing a full handshake
 		$fullhand = 1;
 	    } elsif ($message->mt == TLSProxy::Message::MT_NEW_SESSION_TICKET) {

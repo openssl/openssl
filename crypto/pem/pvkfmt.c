@@ -66,6 +66,9 @@ static int read_lebn(const unsigned char **in, unsigned int nbyte, BIGNUM **r)
 # define MS_KEYTYPE_KEYX         0x1
 # define MS_KEYTYPE_SIGN         0x2
 
+/* Maximum length of a blob after header */
+# define BLOB_MAX_LENGTH          102400
+
 /* The PVK file magic number: seems to spell out "bobsfile", who is Bob? */
 # define MS_PVKMAGIC             0xb0b5f11eL
 /* Salt length for PVK files */
@@ -211,6 +214,10 @@ static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
         return NULL;
 
     length = blob_length(bitlen, isdss, ispub);
+    if (length > BLOB_MAX_LENGTH) {
+        PEMerr(PEM_F_DO_B2I_BIO, PEM_R_HEADER_TOO_LONG);
+        return NULL;
+    }
     buf = OPENSSL_malloc(length);
     if (buf == NULL) {
         PEMerr(PEM_F_DO_B2I_BIO, ERR_R_MALLOC_FAILURE);
@@ -467,7 +474,8 @@ static int do_i2b_bio(BIO *out, EVP_PKEY *pk, int ispub)
 static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
 {
     int bitlen;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
+    const BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    const BIGNUM *pub_key = NULL, *priv_key = NULL;
 
     DSA_get0_pqg(dsa, &p, &q, &g);
     DSA_get0_key(dsa, &pub_key, &priv_key);
@@ -494,9 +502,9 @@ static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
 static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
 {
     int nbyte, hnbyte, bitlen;
-    BIGNUM *e;
+    const BIGNUM *e;
 
-    RSA_get0_key(rsa, &e, NULL, NULL);
+    RSA_get0_key(rsa, NULL, &e, NULL);
     if (BN_num_bits(e) > 32)
         goto badkey;
     bitlen = RSA_bits(rsa);
@@ -506,7 +514,7 @@ static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
         *pmagic = MS_RSA1MAGIC;
         return bitlen;
     } else {
-        BIGNUM *d, *p, *q, *iqmp, *dmp1, *dmq1;
+        const BIGNUM *d, *p, *q, *iqmp, *dmp1, *dmq1;
 
         *pmagic = MS_RSA2MAGIC;
 
@@ -534,13 +542,13 @@ static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
 static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
 {
     int nbyte, hnbyte;
-    BIGNUM *n, *d, *e, *p, *q, *iqmp, *dmp1, *dmq1;
+    const BIGNUM *n, *d, *e, *p, *q, *iqmp, *dmp1, *dmq1;
 
     nbyte = RSA_size(rsa);
     hnbyte = (RSA_bits(rsa) + 15) >> 4;
-    RSA_get0_key(rsa, &e, &n, &d);
+    RSA_get0_key(rsa, &n, &e, &d);
     write_lebn(out, e, 4);
-    write_lebn(out, n, -1);
+    write_lebn(out, n, nbyte);
     if (ispub)
         return;
     RSA_get0_factors(rsa, &p, &q);
@@ -556,7 +564,8 @@ static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
 static void write_dsa(unsigned char **out, DSA *dsa, int ispub)
 {
     int nbyte;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
+    const BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    const BIGNUM *pub_key = NULL, *priv_key = NULL;
 
     DSA_get0_pqg(dsa, &p, &q, &g);
     DSA_get0_key(dsa, &pub_key, &priv_key);
@@ -757,7 +766,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
                    pem_password_cb *cb, void *u)
 {
     int outlen = 24, pklen;
-    unsigned char *p = NULL, *salt = NULL;
+    unsigned char *p = NULL, *start = NULL, *salt = NULL;
     EVP_CIPHER_CTX *cctx = NULL;
     if (enclevel)
         outlen += PVK_SALTLEN;
@@ -770,7 +779,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
     if (*out != NULL) {
         p = *out;
     } else {
-        p = OPENSSL_malloc(outlen);
+        start = p = OPENSSL_malloc(outlen);
         if (p == NULL) {
             PEMerr(PEM_F_I2B_PVK, ERR_R_MALLOC_FAILURE);
             return -1;
@@ -827,14 +836,14 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
     EVP_CIPHER_CTX_free(cctx);
 
     if (*out == NULL)
-        *out = p;
+        *out = start;
 
     return outlen;
 
  error:
     EVP_CIPHER_CTX_free(cctx);
     if (*out == NULL)
-        OPENSSL_free(p);
+        OPENSSL_free(start);
     return -1;
 }
 

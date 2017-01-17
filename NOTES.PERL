@@ -35,7 +35,8 @@
  MinGW and Cygwin. The key recommendation is to use "matching" Perl,
  one that matches build environment. For example, if you will build
  on Cygwin be sure to use the Cygwin package manager to install Perl.
- For VC-* builds we recommend ActiveState Perl, available from
+ For MSYS builds use the MSYS provided Perl. For VC-* builds we
+ recommend ActiveState Perl, available from
  http://www.activestate.com/ActivePerl.
 
  Notes on Perl on VMS
@@ -43,7 +44,7 @@
 
  You will need to install Perl separately.  One way to do so is to
  download the source from http://perl.org/, unpacking it, reading
- README.vms and follow instructions.  Another way is to download a
+ README.vms and follow the instructions.  Another way is to download a
  .PCSI file from http://www.vmsperl.com/ and install it using the
  POLYCENTER install tool.
 
@@ -99,9 +100,9 @@
 
         $ cpan -i Text::Template
 
-    Note that this runs all the tests that the module to be install
+    Note that this runs all the tests that the module to be installed
     comes with.  This is usually a smooth operation, but there are
-    platforms where a failure is indicate even though the actual tests
+    platforms where a failure is indicated even though the actual tests
     were successful.  Should that happen, you can force an
     installation regardless (that should be safe since you've already
     seen the tests succeed!):

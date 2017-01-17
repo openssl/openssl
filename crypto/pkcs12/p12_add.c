@@ -138,7 +138,7 @@ STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass,
                                    p7->d.encrypted->enc_data->enc_data, 1);
 }
 
-PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(PKCS12_SAFEBAG *bag,
+PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(const PKCS12_SAFEBAG *bag,
                                          const char *pass, int passlen)
 {
     return PKCS8_decrypt(bag->value.shkeybag, pass, passlen);
@@ -152,7 +152,7 @@ int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes)
     return 0;
 }
 
-STACK_OF(PKCS7) *PKCS12_unpack_authsafes(PKCS12 *p12)
+STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12)
 {
     if (!PKCS7_type_is_data(p12->authsafes)) {
         PKCS12err(PKCS12_F_PKCS12_UNPACK_AUTHSAFES,

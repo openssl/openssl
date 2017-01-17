@@ -15,35 +15,47 @@
 
 #include <stdio.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
 #include "fuzzer.h"
 
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
-    int success = 0;
-    static BN_CTX *ctx;
-    static BIGNUM *b1;
-    static BIGNUM *b2;
-    static BIGNUM *b3;
-    static BIGNUM *b4;
-    static BIGNUM *b5;
+static BN_CTX *ctx;
+static BIGNUM *b1;
+static BIGNUM *b2;
+static BIGNUM *b3;
+static BIGNUM *b4;
+static BIGNUM *b5;
 
-    if (ctx == NULL) {
-        b1 = BN_new();
-        b2 = BN_new();
-        b3 = BN_new();
-        b4 = BN_new();
-        b5 = BN_new();
-        ctx = BN_CTX_new();
-    }
-    // We are going to split the buffer in two, sizes l1 and l2, giving b1 and
-    // b2.
+int FuzzerInitialize(int *argc, char ***argv)
+{
+    b1 = BN_new();
+    b2 = BN_new();
+    b3 = BN_new();
+    b4 = BN_new();
+    b5 = BN_new();
+    ctx = BN_CTX_new();
+
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+    ERR_get_state();
+
+    return 1;
+}
+
+int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+{
+    int success = 0;
     size_t l1 = 0, l2 = 0;
-    // s1 and s2 will be the signs for b1 and b2.
+    /* s1 and s2 will be the signs for b1 and b2. */
     int s1 = 0, s2 = 0;
+
+    /* We are going to split the buffer in two, sizes l1 and l2, giving b1 and
+     * b2.
+     */
     if (len > 0) {
         --len;
-        // Use first byte to divide the remaining buffer into 3Fths. I admit
-        // this disallows some number sizes. If it matters, better ideas are
-        // welcome (Ben).
+        /* Use first byte to divide the remaining buffer into 3Fths. I admit
+         * this disallows some number sizes. If it matters, better ideas are
+         * welcome (Ben).
+         */
         l1 = ((buf[0] & 0x3f) * len) / 0x3f;
         s1 = buf[0] & 0x40;
         s2 = buf[0] & 0x80;
@@ -55,7 +67,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
     OPENSSL_assert(BN_bin2bn(buf + l1, l2, b2) == b2);
     BN_set_negative(b2, s2);
 
-    // divide by 0 is an error
+    /* divide by 0 is an error */
     if (BN_is_zero(b2)) {
         success = 1;
         goto done;
@@ -96,6 +108,17 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
 
  done:
     OPENSSL_assert(success);
+    ERR_clear_error();
 
     return 0;
+}
+
+void FuzzerCleanup(void)
+{
+    BN_free(b1);
+    BN_free(b2);
+    BN_free(b3);
+    BN_free(b4);
+    BN_free(b5);
+    BN_CTX_free(ctx);
 }

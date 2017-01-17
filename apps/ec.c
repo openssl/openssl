@@ -42,7 +42,7 @@ typedef enum OPTION_choice {
     OPT_NO_PUBLIC, OPT_CHECK
 } OPTION_CHOICE;
 
-OPTIONS ec_options[] = {
+const OPTIONS ec_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, 's', "Input file"},
     {"inform", OPT_INFORM, 'f', "Input format - DER or PEM"},
@@ -273,6 +273,7 @@ int ec_main(int argc, char **argv)
     BIO_free(in);
     BIO_free_all(out);
     EC_KEY_free(eckey);
+    release_engine(e);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
     return (ret);

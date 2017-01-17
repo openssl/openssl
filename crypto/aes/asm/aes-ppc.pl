@@ -26,7 +26,7 @@
 # February 2010
 #
 # Rescheduling instructions to favour Power6 pipeline gave 10%
-# performance improvement on the platfrom in question (and marginal
+# performance improvement on the platform in question (and marginal
 # improvement even on others). It should be noted that Power6 fails
 # to process byte in 18 cycles, only in 23, because it fails to issue
 # 4 load instructions in two cycles, only in 3. As result non-compact
@@ -1433,10 +1433,10 @@ $code.=<<___;
 	xor	$s1,$s1,$acc05
 	xor	$s2,$s2,$acc06
 	xor	$s3,$s3,$acc07
-	xor	$s0,$s0,$acc08		# ^= ROTATE(r8,8)	
-	xor	$s1,$s1,$acc09	
-	xor	$s2,$s2,$acc10	
-	xor	$s3,$s3,$acc11	
+	xor	$s0,$s0,$acc08		# ^= ROTATE(r8,8)
+	xor	$s1,$s1,$acc09
+	xor	$s2,$s2,$acc10
+	xor	$s3,$s3,$acc11
 
 	b	Ldec_compact_loop
 .align	4

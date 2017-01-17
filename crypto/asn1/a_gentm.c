@@ -148,8 +148,7 @@ int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str)
     t.data = (unsigned char *)str;
     if (ASN1_GENERALIZEDTIME_check(&t)) {
         if (s != NULL) {
-            if (!ASN1_STRING_set((ASN1_STRING *)s,
-                                 (unsigned char *)str, t.length))
+            if (!ASN1_STRING_set((ASN1_STRING *)s, str, t.length))
                 return 0;
             s->type = V_ASN1_GENERALIZEDTIME;
         }

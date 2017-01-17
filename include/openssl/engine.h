@@ -334,8 +334,6 @@ ENGINE *ENGINE_by_id(const char *id);
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_PADLOCK, NULL)
 #  define ENGINE_load_capi() \
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_CAPI, NULL)
-#  define ENGINE_load_dasync() \
-    OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_DASYNC, NULL)
 #  define ENGINE_load_afalg() \
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_AFALG, NULL)
 # endif
@@ -672,7 +670,7 @@ typedef struct st_dynamic_MEM_fns {
 } dynamic_MEM_fns;
 /*
  * FIXME: Perhaps the memory and locking code (crypto.h) should declare and
- * use these types so we (and any other dependant code) can simplify a bit??
+ * use these types so we (and any other dependent code) can simplify a bit??
  */
 /* The top-level structure */
 typedef struct st_dynamic_fns {
@@ -696,7 +694,7 @@ typedef unsigned long (*dynamic_v_check_fn) (unsigned long ossl_version);
 # define IMPLEMENT_DYNAMIC_CHECK_FN() \
         OPENSSL_EXPORT unsigned long v_check(unsigned long v); \
         OPENSSL_EXPORT unsigned long v_check(unsigned long v) { \
-                if(v >= OSSL_DYNAMIC_OLDEST) return OSSL_DYNAMIC_VERSION; \
+                if (v >= OSSL_DYNAMIC_OLDEST) return OSSL_DYNAMIC_VERSION; \
                 return 0; }
 
 /*
@@ -724,13 +722,13 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
         int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns); \
         OPENSSL_EXPORT \
         int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { \
-                if(ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
-                CRYPTO_set_mem_functions(fns->mem_fns.malloc_fn, \
-                                         fns->mem_fns.realloc_fn, \
-                                         fns->mem_fns.free_fn); \
+            if (ENGINE_get_static_state() == fns->static_state) goto skip_cbs; \
+            CRYPTO_set_mem_functions(fns->mem_fns.malloc_fn, \
+                                     fns->mem_fns.realloc_fn, \
+                                     fns->mem_fns.free_fn); \
         skip_cbs: \
-                if(!fn(e,id)) return 0; \
-                return 1; }
+            if (!fn(e, id)) return 0; \
+            return 1; }
 
 /*
  * If the loading application (or library) and the loaded ENGINE library
@@ -745,8 +743,8 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
  */
 void *ENGINE_get_static_state(void);
 
-# if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
-void ENGINE_setup_bsd_cryptodev(void);
+# if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(HAVE_CRYPTODEV)
+DEPRECATEDIN_1_1_0(void ENGINE_setup_bsd_cryptodev(void))
 # endif
 
 /* BEGIN ERROR CODES */
@@ -755,7 +753,7 @@ void ENGINE_setup_bsd_cryptodev(void);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_ENGINE_strings(void);
+int ERR_load_ENGINE_strings(void);
 
 /* Error codes for the ENGINE functions. */
 
@@ -773,6 +771,8 @@ void ERR_load_ENGINE_strings(void);
 # define ENGINE_F_ENGINE_FINISH                           107
 # define ENGINE_F_ENGINE_GET_CIPHER                       185
 # define ENGINE_F_ENGINE_GET_DIGEST                       186
+# define ENGINE_F_ENGINE_GET_FIRST                        195
+# define ENGINE_F_ENGINE_GET_LAST                         196
 # define ENGINE_F_ENGINE_GET_NEXT                         115
 # define ENGINE_F_ENGINE_GET_PKEY_ASN1_METH               193
 # define ENGINE_F_ENGINE_GET_PKEY_METH                    192
@@ -784,6 +784,7 @@ void ERR_load_ENGINE_strings(void);
 # define ENGINE_F_ENGINE_LOAD_PUBLIC_KEY                  151
 # define ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT             194
 # define ENGINE_F_ENGINE_NEW                              122
+# define ENGINE_F_ENGINE_PKEY_ASN1_FIND_STR               197
 # define ENGINE_F_ENGINE_REMOVE                           123
 # define ENGINE_F_ENGINE_SET_DEFAULT_STRING               189
 # define ENGINE_F_ENGINE_SET_ID                           129

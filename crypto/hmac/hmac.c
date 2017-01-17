@@ -118,7 +118,9 @@ int HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len)
 
 size_t HMAC_size(const HMAC_CTX *ctx)
 {
-    return EVP_MD_size((ctx)->md);
+    int size = EVP_MD_size((ctx)->md);
+
+    return (size < 0) ? 0 : size;
 }
 
 HMAC_CTX *HMAC_CTX_new(void)
@@ -141,7 +143,7 @@ static void hmac_ctx_cleanup(HMAC_CTX *ctx)
     EVP_MD_CTX_reset(ctx->md_ctx);
     ctx->md = NULL;
     ctx->key_length = 0;
-    memset(ctx->key, 0, sizeof(HMAC_MAX_MD_CBLOCK));
+    OPENSSL_cleanse(ctx->key, sizeof(ctx->key));
 }
 
 void HMAC_CTX_free(HMAC_CTX *ctx)
@@ -232,4 +234,9 @@ void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags)
     EVP_MD_CTX_set_flags(ctx->i_ctx, flags);
     EVP_MD_CTX_set_flags(ctx->o_ctx, flags);
     EVP_MD_CTX_set_flags(ctx->md_ctx, flags);
+}
+
+const EVP_MD *HMAC_CTX_get_md(const HMAC_CTX *ctx)
+{
+    return ctx->md;
 }

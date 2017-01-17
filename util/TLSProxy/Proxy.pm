@@ -17,11 +17,17 @@ use TLSProxy::Record;
 use TLSProxy::Message;
 use TLSProxy::ClientHello;
 use TLSProxy::ServerHello;
+use TLSProxy::EncryptedExtensions;
+use TLSProxy::Certificate;
+use TLSProxy::CertificateVerify;
 use TLSProxy::ServerKeyExchange;
 use TLSProxy::NewSessionTicket;
 
 my $have_IPv6 = 0;
 my $IP_factory;
+
+my $is_tls13 = 0;
+my $ciphersuite = undef;
 
 sub new
 {
@@ -42,13 +48,14 @@ sub new
         clientflags => "",
         serverconnects => 1,
         serverpid => 0,
+        reneg => 0,
 
         #Public read
         execute => $execute,
         cert => $cert,
         debug => $debug,
         cipherc => "",
-        ciphers => "AES128-SHA",
+        ciphers => "AES128-SHA:TLS13-AES-128-GCM-SHA256",
         flight => 0,
         record_list => [],
         message_list => [],
@@ -103,6 +110,8 @@ sub clearClient
     $self->{record_list} = [];
     $self->{message_list} = [];
     $self->{clientflags} = "";
+    $is_tls13 = 0;
+    $ciphersuite = undef;
 
     TLSProxy::Message->clear();
     TLSProxy::Record->clear();
@@ -113,10 +122,11 @@ sub clear
     my $self = shift;
 
     $self->clearClient;
-    $self->{ciphers} = "AES128-SHA";
+    $self->{ciphers} = "AES128-SHA:TLS13-AES-128-GCM-SHA256";
     $self->{serverflags} = "";
     $self->{serverconnects} = 1;
     $self->{serverpid} = 0;
+    $self->{reneg} = 0;
 }
 
 sub restart
@@ -150,7 +160,8 @@ sub start
         my $execcmd = $self->execute
             ." s_server -no_comp -rev -engine ossltest -accept "
             .($self->server_port)
-            ." -cert ".$self->cert." -naccept ".$self->serverconnects;
+            ." -cert ".$self->cert." -cert2 ".$self->cert
+            ." -naccept ".$self->serverconnects;
         if ($self->ciphers ne "") {
             $execcmd .= " -cipher ".$self->ciphers;
         }
@@ -161,7 +172,7 @@ sub start
     }
     $self->serverpid($pid);
 
-    $self->clientstart;
+    return $self->clientstart;
 }
 
 sub clientstart
@@ -188,7 +199,8 @@ sub clientstart
     if ($proxy_sock) {
         print "Proxy started on port ".$self->proxy_port."\n";
     } else {
-        die "Failed creating proxy socket (".$proxaddr.",".$self->proxy_port."): $!\n";
+        warn "Failed creating proxy socket (".$proxaddr.",".$self->proxy_port."): $!\n";
+        return 0;
     }
 
     if ($self->execute) {
@@ -199,7 +211,13 @@ sub clientstart
                     or die "Failed to redirect stdout: $!";
                 open(STDERR, ">&STDOUT");
             }
-            my $execcmd = "echo test | ".$self->execute
+            my $echostr;
+            if ($self->reneg()) {
+                $echostr = "R";
+            } else {
+                $echostr = "test";
+            }
+            my $execcmd = "echo ".$echostr." | ".$self->execute
                  ." s_client -engine ossltest -connect "
                  .($self->proxy_addr).":".($self->proxy_port);
             if ($self->cipherc ne "") {
@@ -213,8 +231,11 @@ sub clientstart
     }
 
     # Wait for incoming connection from client
-    my $client_sock = $proxy_sock->accept()
-        or die "Failed accepting incoming connection: $!\n";
+    my $client_sock;
+    if(!($client_sock = $proxy_sock->accept())) {
+        warn "Failed accepting incoming connection: $!\n";
+        return 0;
+    }
 
     print "Connection opened\n";
 
@@ -245,7 +266,8 @@ sub clientstart
                 #Sleep for a short while
                 select(undef, undef, undef, 0.1);
             } else {
-                die "Failed to start up server (".$servaddr.",".$self->server_port."): $!\n";
+                warn "Failed to start up server (".$servaddr.",".$self->server_port."): $!\n";
+                return 0;
             }
         }
     } while (!$server_sock);
@@ -295,6 +317,7 @@ sub clientstart
               .$self->serverpid."\n";
         waitpid( $self->serverpid, 0);
     }
+    return 1;
 }
 
 sub process_packet
@@ -334,7 +357,7 @@ sub process_packet
         if ($record->flight != $self->flight) {
             next;
         }
-        $packet .= $record->reconstruct_record();
+        $packet .= $record->reconstruct_record($server);
     }
 
     $self->{flight} = $self->{flight} + 1;
@@ -391,7 +414,7 @@ sub proxy_addr
 {
     my $self = shift;
     if (@_) {
-      $self->{proxy_addr} = shift;
+        $self->{proxy_addr} = shift;
     }
     return $self->{proxy_addr};
 }
@@ -399,7 +422,7 @@ sub proxy_port
 {
     my $self = shift;
     if (@_) {
-      $self->{proxy_port} = shift;
+        $self->{proxy_port} = shift;
     }
     return $self->{proxy_port};
 }
@@ -407,7 +430,7 @@ sub server_addr
 {
     my $self = shift;
     if (@_) {
-      $self->{server_addr} = shift;
+        $self->{server_addr} = shift;
     }
     return $self->{server_addr};
 }
@@ -415,7 +438,7 @@ sub server_port
 {
     my $self = shift;
     if (@_) {
-      $self->{server_port} = shift;
+        $self->{server_port} = shift;
     }
     return $self->{server_port};
 }
@@ -423,7 +446,7 @@ sub filter
 {
     my $self = shift;
     if (@_) {
-      $self->{filter} = shift;
+        $self->{filter} = shift;
     }
     return $self->{filter};
 }
@@ -431,7 +454,7 @@ sub cipherc
 {
     my $self = shift;
     if (@_) {
-      $self->{cipherc} = shift;
+        $self->{cipherc} = shift;
     }
     return $self->{cipherc};
 }
@@ -439,7 +462,7 @@ sub ciphers
 {
     my $self = shift;
     if (@_) {
-      $self->{ciphers} = shift;
+        $self->{ciphers} = shift;
     }
     return $self->{ciphers};
 }
@@ -447,7 +470,7 @@ sub serverflags
 {
     my $self = shift;
     if (@_) {
-      $self->{serverflags} = shift;
+        $self->{serverflags} = shift;
     }
     return $self->{serverflags};
 }
@@ -455,7 +478,7 @@ sub clientflags
 {
     my $self = shift;
     if (@_) {
-      $self->{clientflags} = shift;
+        $self->{clientflags} = shift;
     }
     return $self->{clientflags};
 }
@@ -463,7 +486,7 @@ sub serverconnects
 {
     my $self = shift;
     if (@_) {
-      $self->{serverconnects} = shift;
+        $self->{serverconnects} = shift;
     }
     return $self->{serverconnects};
 }
@@ -483,8 +506,46 @@ sub serverpid
 {
     my $self = shift;
     if (@_) {
-      $self->{serverpid} = shift;
+        $self->{serverpid} = shift;
     }
     return $self->{serverpid};
 }
+
+sub fill_known_data
+{
+    my $length = shift;
+    my $ret = "";
+    for (my $i = 0; $i < $length; $i++) {
+        $ret .= chr($i);
+    }
+    return $ret;
+}
+
+sub is_tls13
+{
+    my $class = shift;
+    if (@_) {
+        $is_tls13 = shift;
+    }
+    return $is_tls13;
+}
+
+sub reneg
+{
+    my $self = shift;
+    if (@_) {
+        $self->{reneg} = shift;
+    }
+    return $self->{reneg};
+}
+
+sub ciphersuite
+{
+    my $class = shift;
+    if (@_) {
+        $ciphersuite = shift;
+    }
+    return $ciphersuite;
+}
+
 1;

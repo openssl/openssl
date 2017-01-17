@@ -8,6 +8,7 @@
  */
 
 #include <openssl/dsa.h>
+#include "internal/refcount.h"
 
 struct dsa_st {
     /*
@@ -24,12 +25,17 @@ struct dsa_st {
     int flags;
     /* Normally used to cache montgomery values */
     BN_MONT_CTX *method_mont_p;
-    int references;
+    CRYPTO_REF_COUNT references;
     CRYPTO_EX_DATA ex_data;
     const DSA_METHOD *meth;
     /* functional reference if 'meth' is ENGINE-provided */
     ENGINE *engine;
     CRYPTO_RWLOCK *lock;
+};
+
+struct DSA_SIG_st {
+    BIGNUM *r;
+    BIGNUM *s;
 };
 
 struct dsa_method {
@@ -39,11 +45,11 @@ struct dsa_method {
                            BIGNUM **rp);
     int (*dsa_do_verify) (const unsigned char *dgst, int dgst_len,
                           DSA_SIG *sig, DSA *dsa);
-    int (*dsa_mod_exp) (DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
-                        BIGNUM *a2, BIGNUM *p2, BIGNUM *m, BN_CTX *ctx,
-                        BN_MONT_CTX *in_mont);
+    int (*dsa_mod_exp) (DSA *dsa, BIGNUM *rr, const BIGNUM *a1,
+                        const BIGNUM *p1, const BIGNUM *a2, const BIGNUM *p2,
+                        const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont);
     /* Can be null */
-    int (*bn_mod_exp) (DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+    int (*bn_mod_exp) (DSA *dsa, BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
                        const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
     int (*init) (DSA *dsa);
     int (*finish) (DSA *dsa);

@@ -36,7 +36,7 @@ extern "C" {
 # define BUF_strlcpy(dst, src, size)  OPENSSL_strlcpy(dst, src, size)
 # define BUF_strlcat(dst, src, size) OPENSSL_strlcat(dst, src, size)
 # define BUF_strnlen(str, maxlen) OPENSSL_strnlen(str, maxlen)
- 
+
 struct buf_mem_st {
     size_t length;              /* current number of bytes */
     char *data;
@@ -59,7 +59,7 @@ void BUF_reverse(unsigned char *out, const unsigned char *in, size_t siz);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_BUF_strings(void);
+int ERR_load_BUF_strings(void);
 
 /* Error codes for the BUF functions. */
 

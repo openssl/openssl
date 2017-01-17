@@ -73,7 +73,7 @@ DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 # define CMS_KEY_PARAM                   0x40000
 # define CMS_ASCIICRLF                   0x80000
 
-const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms);
+const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms);
 
 BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont);
 int CMS_dataFinal(CMS_ContentInfo *cms, BIO *bio);
@@ -144,7 +144,7 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert,
 int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert);
 int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
                          unsigned char *key, size_t keylen,
-                         unsigned char *id, size_t idlen);
+                         const unsigned char *id, size_t idlen);
 int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
                               unsigned char *pass, ossl_ssize_t passlen);
 
@@ -246,7 +246,7 @@ int CMS_add_standard_smimecap(STACK_OF(X509_ALGOR) **smcap);
 int CMS_signed_get_attr_count(const CMS_SignerInfo *si);
 int CMS_signed_get_attr_by_NID(const CMS_SignerInfo *si, int nid,
                                int lastpos);
-int CMS_signed_get_attr_by_OBJ(const CMS_SignerInfo *si, ASN1_OBJECT *obj,
+int CMS_signed_get_attr_by_OBJ(const CMS_SignerInfo *si, const ASN1_OBJECT *obj,
                                int lastpos);
 X509_ATTRIBUTE *CMS_signed_get_attr(const CMS_SignerInfo *si, int loc);
 X509_ATTRIBUTE *CMS_signed_delete_attr(CMS_SignerInfo *si, int loc);
@@ -260,14 +260,14 @@ int CMS_signed_add1_attr_by_NID(CMS_SignerInfo *si,
 int CMS_signed_add1_attr_by_txt(CMS_SignerInfo *si,
                                 const char *attrname, int type,
                                 const void *bytes, int len);
-void *CMS_signed_get0_data_by_OBJ(CMS_SignerInfo *si, ASN1_OBJECT *oid,
+void *CMS_signed_get0_data_by_OBJ(CMS_SignerInfo *si, const ASN1_OBJECT *oid,
                                   int lastpos, int type);
 
 int CMS_unsigned_get_attr_count(const CMS_SignerInfo *si);
 int CMS_unsigned_get_attr_by_NID(const CMS_SignerInfo *si, int nid,
                                  int lastpos);
-int CMS_unsigned_get_attr_by_OBJ(const CMS_SignerInfo *si, ASN1_OBJECT *obj,
-                                 int lastpos);
+int CMS_unsigned_get_attr_by_OBJ(const CMS_SignerInfo *si,
+                                 const ASN1_OBJECT *obj, int lastpos);
 X509_ATTRIBUTE *CMS_unsigned_get_attr(const CMS_SignerInfo *si, int loc);
 X509_ATTRIBUTE *CMS_unsigned_delete_attr(CMS_SignerInfo *si, int loc);
 int CMS_unsigned_add1_attr(CMS_SignerInfo *si, X509_ATTRIBUTE *attr);
@@ -335,7 +335,7 @@ int CMS_SharedInfo_encode(unsigned char **pder, X509_ALGOR *kekalg,
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_CMS_strings(void);
+int ERR_load_CMS_strings(void);
 
 /* Error codes for the CMS functions. */
 

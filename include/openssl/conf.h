@@ -168,7 +168,7 @@ void OPENSSL_load_builtin_modules(void);
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_CONF_strings(void);
+int ERR_load_CONF_strings(void);
 
 /* Error codes for the CONF functions. */
 

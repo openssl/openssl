@@ -114,8 +114,8 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
     for (ep = bp->first_entry; ep; ep = ep->next) {
         if (digest && memcmp(digest, ep->digest, evpmdsize) == 0) {
             BIO_printf(bio_err,
-                       "%s: skipping duplicate certificate in %s\n",
-                       opt_getprog(), filename);
+                       "%s: skipping duplicate %s in %s\n", opt_getprog(),
+                       type == TYPE_CERT ? "certificate" : "CRL", filename);
             return 1;
         }
         if (strcmp(filename, ep->filename) == 0) {
@@ -174,9 +174,11 @@ static int handle_symlink(const char *filename, const char *fullpath)
     }
     if (filename[i++] != '.')
         return -1;
-    for (type = OSSL_NELEM(suffixes) - 1; type > 0; type--)
-        if (strcasecmp(suffixes[type], &filename[i]) == 0)
+    for (type = OSSL_NELEM(suffixes) - 1; type > 0; type--) {
+        const char *suffix = suffixes[type];
+        if (strncasecmp(suffix, &filename[i], strlen(suffix)) == 0)
             break;
+    }
     i += strlen(suffixes[type]);
 
     id = strtoul(&filename[i], &endptr, 10);
@@ -364,6 +366,7 @@ static int do_dir(const char *dirname, enum Hash h)
                                    strerror(errno));
                         errs++;
                     }
+                    bit_set(idmask, nextid);
                 } else if (remove_links) {
                     /* Link to be deleted */
                     snprintf(buf, buflen, "%s%s%n%08x.%s%d",
@@ -396,10 +399,11 @@ typedef enum OPTION_choice {
     OPT_COMPAT, OPT_OLD, OPT_N, OPT_VERBOSE
 } OPTION_CHOICE;
 
-OPTIONS rehash_options[] = {
+const OPTIONS rehash_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [cert-directory...]\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"h", OPT_HELP, '-', "Display this summary"},
     {"compat", OPT_COMPAT, '-', "Create both new- and old-style hash links"},
     {"old", OPT_OLD, '-', "Use old-style hash to generate links"},
     {"n", OPT_N, '-', "Do not remove existing links"},
@@ -463,7 +467,7 @@ int rehash_main(int argc, char **argv)
 }
 
 #else
-OPTIONS rehash_options[] = {
+const OPTIONS rehash_options[] = {
     {NULL}
 };
 

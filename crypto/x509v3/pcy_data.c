@@ -28,9 +28,9 @@ void policy_data_free(X509_POLICY_DATA *data)
 }
 
 /*
- * Create a data based on an existing policy. If 'id' is NULL use the oid in
+ * Create a data based on an existing policy. If 'id' is NULL use the OID in
  * the policy, otherwise use 'id'. This behaviour covers the two types of
- * data in RFC3280: data with from a CertificatePolcies extension and
+ * data in RFC3280: data with from a CertificatePolicies extension and
  * additional data with just the qualifiers of anyPolicy and ID from another
  * source.
  */

@@ -203,14 +203,13 @@ int ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name,
 {
     int num;
 
-    if ((e == NULL) || (cmd_name == NULL)) {
+    if (e == NULL || cmd_name == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if ((e->ctrl == NULL) || ((num = ENGINE_ctrl(e,
-                                                 ENGINE_CTRL_GET_CMD_FROM_NAME,
-                                                 0, (void *)cmd_name,
-                                                 NULL)) <= 0)) {
+    if (e->ctrl == NULL
+        || (num = ENGINE_ctrl(e, ENGINE_CTRL_GET_CMD_FROM_NAME,
+                              0, (void *)cmd_name, NULL)) <= 0) {
         /*
          * If the command didn't *have* to be supported, we fake success.
          * This allows certain settings to be specified for multiple ENGINEs
@@ -241,15 +240,14 @@ int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
     int num, flags;
     long l;
     char *ptr;
-    if ((e == NULL) || (cmd_name == NULL)) {
-        ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD_STRING,
-                  ERR_R_PASSED_NULL_PARAMETER);
+
+    if (e == NULL || cmd_name == NULL) {
+        ENGINEerr(ENGINE_F_ENGINE_CTRL_CMD_STRING, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if ((e->ctrl == NULL) || ((num = ENGINE_ctrl(e,
-                                                 ENGINE_CTRL_GET_CMD_FROM_NAME,
-                                                 0, (void *)cmd_name,
-                                                 NULL)) <= 0)) {
+    if (e->ctrl == NULL
+        || (num = ENGINE_ctrl(e, ENGINE_CTRL_GET_CMD_FROM_NAME,
+                              0, (void *)cmd_name, NULL)) <= 0) {
         /*
          * If the command didn't *have* to be supported, we fake success.
          * This allows certain settings to be specified for multiple ENGINEs
@@ -270,8 +268,9 @@ int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
                   ENGINE_R_CMD_NOT_EXECUTABLE);
         return 0;
     }
-    if ((flags =
-         ENGINE_ctrl(e, ENGINE_CTRL_GET_CMD_FLAGS, num, NULL, NULL)) < 0) {
+
+    flags = ENGINE_ctrl(e, ENGINE_CTRL_GET_CMD_FLAGS, num, NULL, NULL);
+    if (flags < 0) {
         /*
          * Shouldn't happen, given that ENGINE_cmd_is_executable() returned
          * success.

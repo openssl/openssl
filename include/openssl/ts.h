@@ -27,11 +27,6 @@
 extern "C" {
 # endif
 
-# ifdef WIN32
-/* Under Win32 this is defined in wincrypt.h */
-#  undef X509_NAME
-# endif
-
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
 
@@ -161,17 +156,17 @@ ESS_SIGNING_CERT *d2i_ESS_SIGNING_CERT(ESS_SIGNING_CERT **a,
                                        const unsigned char **pp, long length);
 ESS_SIGNING_CERT *ESS_SIGNING_CERT_dup(ESS_SIGNING_CERT *a);
 
-void ERR_load_TS_strings(void);
-
 int TS_REQ_set_version(TS_REQ *a, long version);
 long TS_REQ_get_version(const TS_REQ *a);
 
 int TS_STATUS_INFO_set_status(TS_STATUS_INFO *a, int i);
-ASN1_INTEGER *TS_STATUS_INFO_get0_status(TS_STATUS_INFO *a);
+const ASN1_INTEGER *TS_STATUS_INFO_get0_status(const TS_STATUS_INFO *a);
 
-STACK_OF(ASN1_UTF8STRING) *TS_STATUS_INFO_get0_text(TS_STATUS_INFO *a);
+const STACK_OF(ASN1_UTF8STRING) *
+TS_STATUS_INFO_get0_text(const TS_STATUS_INFO *a);
 
-ASN1_BIT_STRING *TS_STATUS_INFO_get0_failure_info(TS_STATUS_INFO *a);
+const ASN1_BIT_STRING *
+TS_STATUS_INFO_get0_failure_info(const TS_STATUS_INFO *a);
 
 int TS_REQ_set_msg_imprint(TS_REQ *a, TS_MSG_IMPRINT *msg_imprint);
 TS_MSG_IMPRINT *TS_REQ_get_msg_imprint(TS_REQ *a);
@@ -182,7 +177,7 @@ X509_ALGOR *TS_MSG_IMPRINT_get_algo(TS_MSG_IMPRINT *a);
 int TS_MSG_IMPRINT_set_msg(TS_MSG_IMPRINT *a, unsigned char *d, int len);
 ASN1_OCTET_STRING *TS_MSG_IMPRINT_get_msg(TS_MSG_IMPRINT *a);
 
-int TS_REQ_set_policy_id(TS_REQ *a, ASN1_OBJECT *policy);
+int TS_REQ_set_policy_id(TS_REQ *a, const ASN1_OBJECT *policy);
 ASN1_OBJECT *TS_REQ_get_policy_id(TS_REQ *a);
 
 int TS_REQ_set_nonce(TS_REQ *a, const ASN1_INTEGER *nonce);
@@ -195,7 +190,7 @@ STACK_OF(X509_EXTENSION) *TS_REQ_get_exts(TS_REQ *a);
 void TS_REQ_ext_free(TS_REQ *a);
 int TS_REQ_get_ext_count(TS_REQ *a);
 int TS_REQ_get_ext_by_NID(TS_REQ *a, int nid, int lastpos);
-int TS_REQ_get_ext_by_OBJ(TS_REQ *a, ASN1_OBJECT *obj, int lastpos);
+int TS_REQ_get_ext_by_OBJ(TS_REQ *a, const ASN1_OBJECT *obj, int lastpos);
 int TS_REQ_get_ext_by_critical(TS_REQ *a, int crit, int lastpos);
 X509_EXTENSION *TS_REQ_get_ext(TS_REQ *a, int loc);
 X509_EXTENSION *TS_REQ_delete_ext(TS_REQ *a, int loc);
@@ -256,7 +251,8 @@ STACK_OF(X509_EXTENSION) *TS_TST_INFO_get_exts(TS_TST_INFO *a);
 void TS_TST_INFO_ext_free(TS_TST_INFO *a);
 int TS_TST_INFO_get_ext_count(TS_TST_INFO *a);
 int TS_TST_INFO_get_ext_by_NID(TS_TST_INFO *a, int nid, int lastpos);
-int TS_TST_INFO_get_ext_by_OBJ(TS_TST_INFO *a, ASN1_OBJECT *obj, int lastpos);
+int TS_TST_INFO_get_ext_by_OBJ(TS_TST_INFO *a, const ASN1_OBJECT *obj,
+                               int lastpos);
 int TS_TST_INFO_get_ext_by_critical(TS_TST_INFO *a, int crit, int lastpos);
 X509_EXTENSION *TS_TST_INFO_get_ext(TS_TST_INFO *a, int loc);
 X509_EXTENSION *TS_TST_INFO_delete_ext(TS_TST_INFO *a, int loc);
@@ -306,7 +302,7 @@ typedef int (*TS_extension_cb) (struct TS_resp_ctx *, X509_EXTENSION *,
 
 typedef struct TS_resp_ctx TS_RESP_CTX;
 
-DEFINE_STACK_OF(EVP_MD)
+DEFINE_STACK_OF_CONST(EVP_MD)
 
 /* Creates a response context that can be used for generating responses. */
 TS_RESP_CTX *TS_RESP_CTX_new(void);
@@ -322,7 +318,7 @@ int TS_RESP_CTX_set_signer_digest(TS_RESP_CTX *ctx,
                                   const EVP_MD *signer_digest);
 
 /* This parameter must be set. */
-int TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, ASN1_OBJECT *def_policy);
+int TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *def_policy);
 
 /* No additional certs are included in the response by default. */
 int TS_RESP_CTX_set_certs(TS_RESP_CTX *ctx, STACK_OF(X509) *certs);
@@ -331,7 +327,7 @@ int TS_RESP_CTX_set_certs(TS_RESP_CTX *ctx, STACK_OF(X509) *certs);
  * Adds a new acceptable policy, only the default policy is accepted by
  * default.
  */
-int TS_RESP_CTX_add_policy(TS_RESP_CTX *ctx, ASN1_OBJECT *policy);
+int TS_RESP_CTX_add_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *policy);
 
 /*
  * Adds a new acceptable message digest. Note that no message digests are
@@ -351,6 +347,9 @@ int TS_RESP_CTX_set_clock_precision_digits(TS_RESP_CTX *ctx,
                                            unsigned clock_precision_digits);
 /* At most we accept usec precision. */
 # define TS_MAX_CLOCK_PRECISION_DIGITS   6
+
+/* Maximum status message length */
+# define TS_MAX_STATUS_LENGTH   (1024 * 1024)
 
 /* No flags are set by default. */
 void TS_RESP_CTX_add_flags(TS_RESP_CTX *ctx, int flags);
@@ -537,7 +536,7 @@ int TS_CONF_set_ess_cert_id_chain(CONF *conf, const char *section,
  * made after this point may be overwritten when the script is next run.
  */
 
-void ERR_load_TS_strings(void);
+int ERR_load_TS_strings(void);
 
 /* Error codes for the TS functions. */
 

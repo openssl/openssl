@@ -102,8 +102,13 @@ int main(int argc, char **argv)
 
     e = ENGINE_by_id("afalg");
     if (e == NULL) {
-        fprintf(stderr, "AFALG Test: Failed to load AFALG Engine\n");
-        return 1;
+        /*
+         * A failure to load is probably a platform environment problem so we
+         * don't treat this as an OpenSSL test failure, i.e. we return 0
+         */
+        fprintf(stderr,
+                "AFALG Test: Failed to load AFALG Engine - skipping test\n");
+        return 0;
     }
 
     if (test_afalg_aes_128_cbc(e) == 0) {

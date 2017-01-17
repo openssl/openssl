@@ -221,6 +221,12 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
         ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+    ret->r = BN_new();
+    ret->s = BN_new();
+    if (ret->r == NULL || ret->s == NULL) {
+        ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
     s = ret->s;
 
     if ((ctx = BN_CTX_new()) == NULL ||

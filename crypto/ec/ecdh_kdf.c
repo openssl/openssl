@@ -34,7 +34,8 @@ int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
     mdlen = EVP_MD_size(md);
     for (i = 1;; i++) {
         unsigned char mtmp[EVP_MAX_MD_SIZE];
-        EVP_DigestInit_ex(mctx, md, NULL);
+        if (!EVP_DigestInit_ex(mctx, md, NULL))
+            goto err;
         ctr[3] = i & 0xFF;
         ctr[2] = (i >> 8) & 0xFF;
         ctr[1] = (i >> 16) & 0xFF;

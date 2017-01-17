@@ -71,7 +71,6 @@ typedef enum {
     WRITE_STATE_POST_WORK
 } WRITE_STATE;
 
-
 /*****************************************************************************
  *                                                                           *
  * This structure should be considered "opaque" to anything outside of the   *
@@ -89,20 +88,16 @@ struct ossl_statem_st {
     OSSL_HANDSHAKE_STATE hand_state;
     int in_init;
     int read_state_first_init;
-
     /* true when we are actually in SSL_accept() or SSL_connect() */
     int in_handshake;
-
     /* Should we skip the CertificateVerify message? */
     unsigned int no_cert_verify;
-
     int use_timer;
 #ifndef OPENSSL_NO_SCTP
     int in_sctp_read_sock;
 #endif
 };
 typedef struct ossl_statem_st OSSL_STATEM;
-
 
 /*****************************************************************************
  *                                                                           *
@@ -126,5 +121,3 @@ __owur int ossl_statem_app_data_allowed(SSL *s);
 void ossl_statem_set_sctp_read_sock(SSL *s, int read_sock);
 __owur int ossl_statem_in_sctp_read_sock(SSL *s);
 #endif
-
-

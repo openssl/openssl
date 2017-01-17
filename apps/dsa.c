@@ -27,16 +27,17 @@ NON_EMPTY_TRANSLATION_UNIT
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
-    OPT_ENGINE, OPT_PVK_STRONG, OPT_PVK_WEAK,
-    OPT_PVK_NONE, OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_PUBIN,
+    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_ENGINE,
+    /* Do not change the order here; see case statements below */
+    OPT_PVK_NONE, OPT_PVK_WEAK, OPT_PVK_STRONG,
+    OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_PUBIN,
     OPT_PUBOUT, OPT_CIPHER, OPT_PASSIN, OPT_PASSOUT
 } OPTION_CHOICE;
 
-OPTIONS dsa_options[] = {
+const OPTIONS dsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'f', "Input format, DER PEM PVK"},
-    {"outform", OPT_OUTFORM, 'F', "Output format, DER PEM PVK"},
+    {"outform", OPT_OUTFORM, 'f', "Output format, DER PEM PVK"},
     {"in", OPT_IN, 's', "Input key"},
     {"out", OPT_OUT, '>', "Output file"},
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
@@ -48,9 +49,9 @@ OPTIONS dsa_options[] = {
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 # ifndef OPENSSL_NO_RC4
-    {"pvk-strong", OPT_PVK_STRONG, '-'},
-    {"pvk-weak", OPT_PVK_WEAK, '-'},
-    {"pvk-none", OPT_PVK_NONE, '-'},
+    {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
+    {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
+    {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
 # endif
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
@@ -95,8 +96,7 @@ int dsa_main(int argc, char **argv)
             infile = opt_arg();
             break;
         case OPT_OUTFORM:
-            if (!opt_format
-                (opt_arg(), OPT_FMT_PEMDER | OPT_FMT_PVK, &outformat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &outformat))
                 goto opthelp;
             break;
         case OPT_OUT:
@@ -111,22 +111,13 @@ int dsa_main(int argc, char **argv)
         case OPT_PASSOUT:
             passoutarg = opt_arg();
             break;
+        case OPT_PVK_STRONG:    /* pvk_encr:= 2 */
+        case OPT_PVK_WEAK:      /* pvk_encr:= 1 */
+        case OPT_PVK_NONE:      /* pvk_encr:= 0 */
 #ifndef OPENSSL_NO_RC4
-        case OPT_PVK_STRONG:
-            pvk_encr = 2;
-            break;
-        case OPT_PVK_WEAK:
-            pvk_encr = 1;
-            break;
-        case OPT_PVK_NONE:
-            pvk_encr = 0;
-            break;
-#else
-        case OPT_PVK_STRONG:
-        case OPT_PVK_WEAK:
-        case OPT_PVK_NONE:
-            break;
+            pvk_encr = (o - OPT_PVK_NONE);
 #endif
+            break;
         case OPT_NOOUT:
             noout = 1;
             break;
@@ -195,7 +186,7 @@ int dsa_main(int argc, char **argv)
     }
 
     if (modulus) {
-        BIGNUM *pub_key = NULL;
+        const BIGNUM *pub_key = NULL;
         DSA_get0_key(dsa, &pub_key, NULL);
         BIO_printf(out, "Public Key=");
         BN_print(out, pub_key);
@@ -222,7 +213,7 @@ int dsa_main(int argc, char **argv)
             i = PEM_write_bio_DSAPrivateKey(out, dsa, enc,
                                             NULL, 0, NULL, passout);
         }
-# if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_RC4)
+# ifndef OPENSSL_NO_RSA
     } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
         EVP_PKEY *pk;
         pk = EVP_PKEY_new();
@@ -234,7 +225,13 @@ int dsa_main(int argc, char **argv)
                 goto end;
             }
             assert(private);
+#  ifdef OPENSSL_NO_RC4
+            BIO_printf(bio_err, "PVK format not supported\n");
+            EVP_PKEY_free(pk);
+            goto end;
+#  else
             i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
+#  endif
         }
         else if (pubin || pubout)
             i = i2b_PublicKey_bio(out, pk);
@@ -257,6 +254,7 @@ int dsa_main(int argc, char **argv)
  end:
     BIO_free_all(out);
     DSA_free(dsa);
+    release_engine(e);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
     return (ret);

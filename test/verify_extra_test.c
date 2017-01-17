@@ -122,7 +122,7 @@ static int test_alt_chains_cert_forgery(const char *roots_f,
 
     i = X509_verify_cert(sctx);
 
-    if(i == 0 && X509_STORE_CTX_get_error(sctx) == X509_V_ERR_INVALID_CA) {
+    if (i == 0 && X509_STORE_CTX_get_error(sctx) == X509_V_ERR_INVALID_CA) {
         /* This is the result we were expecting: Test passed */
         ret = 1;
     }

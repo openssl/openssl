@@ -31,7 +31,7 @@ static ERR_STRING_DATA BUF_str_reasons[] = {
 
 #endif
 
-void ERR_load_BUF_strings(void)
+int ERR_load_BUF_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -40,4 +40,5 @@ void ERR_load_BUF_strings(void)
         ERR_load_strings(0, BUF_str_reasons);
     }
 #endif
+    return 1;
 }

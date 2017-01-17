@@ -11,7 +11,8 @@
 #
 # Do "config -h" for usage information.
 SUFFIX=""
-TEST="false"
+DRYRUN="false"
+VERBOSE="false"
 EXE=""
 THERE=`dirname $0`
 
@@ -20,11 +21,13 @@ for i
 do
 case "$i" in 
 -d*) options=$options" --debug";;
--t*) TEST="true";;
--h*) TEST="true"; cat <<EOF
+-t*) DRYRUN="true" VERBOSE="true";;
+-v*) VERBOSE="true";;
+-h*) DRYRUN="true"; cat <<EOF
 Usage: config [options]
  -d	Build with debugging when possible.
  -t	Test mode, do not run the Configure perl script.
+ -v	Verbose mode, show the exact Configure call that is being made.
  -h	This help.
 
 Any other text will be passed to the Configure perl script.
@@ -183,6 +186,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
         esac
         echo "${MACH}-${ARCH}-freebsd${VERS}"; exit 0
         ;;
+
+    DragonFly:*)
+	echo "${MACHINE}-whatever-dragonfly"; exit 0
+	;;
 
     FreeBSD:*)
 	echo "${MACHINE}-whatever-freebsd"; exit 0
@@ -416,19 +423,6 @@ if [ "$SYSTEM" = "SunOS" ]; then
   fi
 fi
 
-if [ "${SYSTEM}-${MACHINE}" = "Linux-alpha" ]; then
-  # check for Compaq C, expected output is "blah-blah C Vx.x"
-  CCCVER=`(ccc -V 2>&1) 2>/dev/null | \
-	egrep -e '.* C V[0-9]\.[0-9]' | \
-	sed 's/.* C V\([0-9]\)\.\([0-9]\).*/\1\2/'`
-  CCCVER=${CCCVER:-0}
-  if [ $CCCVER -gt 60 ]; then
-    CC=ccc	# overrides gcc!!! well, ccc outperforms inoticeably
-		# only on hash routines and des, otherwise gcc (2.95)
-		# keeps along rather tight...
-  fi
-fi
-
 if [ "${SYSTEM}" = "AIX" ]; then	# favor vendor cc over gcc
     (cc) 2>&1 | grep -iv "not found" > /dev/null && CC=cc
 fi
@@ -463,7 +457,7 @@ case "$GUESSOS" in
   mips4-sgi-irix64)
 	echo "WARNING! If you wish to build 64-bit library, then you have to"
 	echo "         invoke '$THERE/Configure irix64-mips4-$CC' *manually*."
-	if [ "$TEST" = "false" -a -t 1 ]; then
+	if [ "$DRYRUN" = "false" -a -t 1 ]; then
 	  echo "         You have about 5 seconds to press Ctrl-C to abort."
 	  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	fi
@@ -482,7 +476,7 @@ case "$GUESSOS" in
 	if [ "$ISA64" = "1" -a -z "$KERNEL_BITS" ]; then
 	    echo "WARNING! If you wish to build 64-bit library, then you have to"
 	    echo "         invoke '$THERE/Configure darwin64-ppc-cc' *manually*."
-	    if [ "$TEST" = "false" -a -t 1 ]; then
+	    if [ "$DRYRUN" = "false" -a -t 1 ]; then
 	      echo "         You have about 5 seconds to press Ctrl-C to abort."
 	      (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	    fi
@@ -497,7 +491,7 @@ case "$GUESSOS" in
 	if [ "$ISA64" = "1" -a -z "$KERNEL_BITS" ]; then
 	    echo "WARNING! If you wish to build 64-bit library, then you have to"
 	    echo "         invoke 'KERNEL_BITS=64 $THERE/config $options'."
-	    if [ "$TEST" = "false" -a -t 1 ]; then
+	    if [ "$DRYRUN" = "false" -a -t 1 ]; then
 	      echo "         You have about 5 seconds to press Ctrl-C to abort."
 	      # The stty technique used elsewhere doesn't work on
 	      # MacOS. At least, right now on this Mac.
@@ -513,7 +507,7 @@ case "$GUESSOS" in
 	if [ -z "$KERNEL_BITS" ]; then
 	    echo "WARNING! If you wish to build 32-bit library, then you have to"
 	    echo "         invoke 'KERNEL_BITS=32 $THERE/config $options'."
-	    if [ "$TEST" = "false" -a -t 1 ]; then
+	    if [ "$DRYRUN" = "false" -a -t 1 ]; then
 	      echo "         You have about 5 seconds to press Ctrl-C to abort."
 	      # The stty technique used elsewhere doesn't work on
 	      # MacOS. At least, right now on this Mac.
@@ -551,7 +545,7 @@ case "$GUESSOS" in
 	if [ -z "$KERNEL_BITS" ]; then
 	    echo "WARNING! If you wish to build 64-bit library, then you have to"
 	    echo "         invoke '$THERE/Configure linux-ppc64' *manually*."
-	    if [ "$TEST" = "false" -a -t 1 ]; then
+	    if [ "$DRYRUN" = "false" -a -t 1 ]; then
 		echo "         You have about 5 seconds to press Ctrl-C to abort."
 		(trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	    fi
@@ -568,7 +562,7 @@ case "$GUESSOS" in
   mips64*-*-linux2)
 	echo "WARNING! If you wish to build 64-bit library, then you have to"
 	echo "         invoke '$THERE/Configure linux64-mips64' *manually*."
-	if [ "$TEST" = "false" -a -t 1 ]; then
+	if [ "$DRYRUN" = "false" -a -t 1 ]; then
 	    echo "         You have about 5 seconds to press Ctrl-C to abort."
 	    (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	fi
@@ -585,7 +579,7 @@ case "$GUESSOS" in
 	echo "WARNING! If you *know* that your GNU C supports 64-bit/V9 ABI"
 	echo "         and wish to build 64-bit library, then you have to"
 	echo "         invoke '$THERE/Configure linux64-sparcv9' *manually*."
-	if [ "$TEST" = "false" -a -t 1 ]; then
+	if [ "$DRYRUN" = "false" -a -t 1 ]; then
 	  echo "          You have about 5 seconds to press Ctrl-C to abort."
 	  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	fi
@@ -633,28 +627,29 @@ case "$GUESSOS" in
 	#if egrep -e '^features.* highgprs' /proc/cpuinfo >/dev/null ; then
 	#  echo "WARNING! If you wish to build \"highgprs\" 32-bit library, then you"
 	#  echo "         have to invoke './Configure linux32-s390x' *manually*."
-	#  if [ "$TEST" = "false" -a -t -1 ]; then
+	#  if [ "$DRYRUN" = "false" -a -t -1 ]; then
 	#    echo "         You have about 5 seconds to press Ctrl-C to abort."
 	#    (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	#  fi
 	#fi
 	OUT="linux64-s390x"
 	;;
-  x86_64-*-linux?) OUT="linux-x86_64" ;;
-  *86-*-linux2) OUT="linux-elf"
-	if [ "$GCCVER" -gt 28 ]; then
-          if grep '^model.*Pentium' /proc/cpuinfo >/dev/null ; then
-	    options="$options -march=pentium"
-          fi
-          if grep '^model.*Pentium Pro' /proc/cpuinfo >/dev/null ; then
-	    options="$options -march=pentiumpro"
-          fi
-          if grep '^model.*K6' /proc/cpuinfo >/dev/null ; then
-	    options="$options -march=k6"
-          fi
+  x86_64-*-linux?)
+	if $CC -dM -E -x c /dev/null 2>&1 | grep -q ILP32 > /dev/null; then
+	    OUT="linux-x32"
+	else
+	    OUT="linux-x86_64"
+	fi ;;
+  *86-*-linux2)
+        # On machines where the compiler understands -m32, prefer a
+        # config target that uses it
+        if $CC -m32 -E -x c /dev/null > /dev/null 2>&1; then
+            OUT="linux-x86"
+        else
+            OUT="linux-elf"
         fi ;;
-  *-*-linux1) OUT="linux-aout" ;;
-  *-*-linux2) OUT="linux-generic32" ;;
+  *86-*-linux1) OUT="linux-aout" ;;
+  *-*-linux?) OUT="linux-generic32" ;;
   sun4[uv]*-*-solaris2)
 	OUT="solaris-sparcv9-$CC"
 	ISA64=`(isainfo) 2>/dev/null | grep sparcv9`
@@ -662,7 +657,7 @@ case "$GUESSOS" in
 	    if [ "$CC" = "cc" -a $CCVER -ge 50 ]; then
 		echo "WARNING! If you wish to build 64-bit library, then you have to"
 		echo "         invoke '$THERE/Configure solaris64-sparcv9-cc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
+		if [ "$DRYRUN" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
 		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
@@ -674,7 +669,7 @@ case "$GUESSOS" in
 		OUT="solaris64-sparcv9-gcc"
 		echo "WARNING! If you wish to build 32-bit library, then you have to"
 		echo "         invoke '$THERE/Configure solaris-sparcv9-gcc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
+		if [ "$DRYRUN" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
 		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
@@ -682,7 +677,7 @@ case "$GUESSOS" in
 		echo "NOTICE! If you *know* that your GNU C supports 64-bit/V9 ABI"
 		echo "        and wish to build 64-bit library, then you have to"
 		echo "        invoke '$THERE/Configure solaris64-sparcv9-gcc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
+		if [ "$DRYRUN" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
 		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
@@ -713,6 +708,7 @@ case "$GUESSOS" in
   powerpc64-*-*bsd*)	OUT="BSD-generic64"; options="$options -DB_ENDIAN" ;;
   sparc64-*-*bsd*)	OUT="BSD-sparc64" ;;
   ia64-*-*bsd*)		OUT="BSD-ia64" ;;
+  x86_64-*-dragonfly*)  OUT="BSD-x86_64" ;;
   amd64-*-*bsd*)	OUT="BSD-x86_64" ;;
   *86*-*-*bsd*)		# mimic ld behaviour when it's looking for libc...
 			if [ -L /usr/lib/libc.so ]; then	# [Free|Net]BSD
@@ -725,9 +721,10 @@ case "$GUESSOS" in
 			*ELF*)	OUT="BSD-x86-elf" ;;
 			*)	OUT="BSD-x86"; options="$options no-sse2" ;;
 			esac ;;
+  *-*-*bsd*)		OUT="BSD-generic32" ;;
+
   x86_64-*-haiku)	OUT="haiku-x86_64" ;;
   *-*-haiku)		OUT="haiku-x86" ;;
-  *-*-*bsd*)		OUT="BSD-generic32" ;;
 
   *-*-osf)		OUT="osf1-alpha-cc" ;;
   *-*-tru64)		OUT="tru64-alpha-cc" ;;
@@ -765,7 +762,7 @@ case "$GUESSOS" in
 	     if [ $KERNEL_BITS -eq 64 -a "$CC" = "cc" ]; then
 		echo "WARNING! If you wish to build 64-bit library then you have to"
 		echo "         invoke '$THERE/Configure hpux64-parisc2-cc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
+		if [ "$DRYRUN" = "false" -a -t 1 ]; then
 		  echo "         You have about 5 seconds to press Ctrl-C to abort."
 		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
@@ -802,7 +799,7 @@ case "$GUESSOS" in
 	    if [ $KERNEL_BITS -eq 64 ]; then
 		echo "WARNING! If you wish to build 64-bit kit, then you have to"
 		echo "         invoke '$THERE/Configure aix64-cc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
+		if [ "$DRYRUN" = "false" -a -t 1 ]; then
 		    echo "         You have ~5 seconds to press Ctrl-C to abort."
 		    (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
@@ -918,14 +915,14 @@ OUT="$OUT"
 
 $PERL $THERE/Configure LIST | grep "$OUT" > /dev/null
 if [ $? = "0" ]; then
-  echo Configuring for $OUT
-
-  if [ "$TEST" = "true" ]; then
+  if [ "$VERBOSE" = "true" ]; then
     echo $PERL $THERE/Configure $OUT $options
-  else
+  fi  
+  if [ "$DRYRUN" = "false" ]; then
     $PERL $THERE/Configure $OUT $options
   fi
 else
   echo "This system ($OUT) is not supported. See file INSTALL for details."
+  exit 1
 fi
 )

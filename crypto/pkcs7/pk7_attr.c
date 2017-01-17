@@ -49,6 +49,7 @@ STACK_OF(X509_ALGOR) *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si)
 /* Basic smime-capabilities OID and optional integer arg */
 int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
 {
+    ASN1_INTEGER *nbit = NULL;
     X509_ALGOR *alg;
 
     if ((alg = X509_ALGOR_new()) == NULL) {
@@ -58,24 +59,28 @@ int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
     ASN1_OBJECT_free(alg->algorithm);
     alg->algorithm = OBJ_nid2obj(nid);
     if (arg > 0) {
-        ASN1_INTEGER *nbit;
         if ((alg->parameter = ASN1_TYPE_new()) == NULL) {
-            PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP, ERR_R_MALLOC_FAILURE);
-            return 0;
+            goto err;
         }
         if ((nbit = ASN1_INTEGER_new()) == NULL) {
-            PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP, ERR_R_MALLOC_FAILURE);
-            return 0;
+            goto err;
         }
         if (!ASN1_INTEGER_set(nbit, arg)) {
-            PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP, ERR_R_MALLOC_FAILURE);
-            return 0;
+            goto err;
         }
         alg->parameter->value.integer = nbit;
         alg->parameter->type = V_ASN1_INTEGER;
+        nbit = NULL;
     }
-    sk_X509_ALGOR_push(sk, alg);
+    if (!sk_X509_ALGOR_push(sk, alg)) {
+        goto err;
+    }
     return 1;
+err:
+    PKCS7err(PKCS7_F_PKCS7_SIMPLE_SMIMECAP, ERR_R_MALLOC_FAILURE);
+    ASN1_INTEGER_free(nbit);
+    X509_ALGOR_free(alg);
+    return 0;
 }
 
 int PKCS7_add_attrib_content_type(PKCS7_SIGNER_INFO *si, ASN1_OBJECT *coid)

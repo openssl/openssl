@@ -22,7 +22,7 @@ struct evp_pkey_asn1_method_st {
     int (*pub_cmp) (const EVP_PKEY *a, const EVP_PKEY *b);
     int (*pub_print) (BIO *out, const EVP_PKEY *pkey, int indent,
                       ASN1_PCTX *pctx);
-    int (*priv_decode) (EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf);
+    int (*priv_decode) (EVP_PKEY *pk, const PKCS8_PRIV_KEY_INFO *p8inf);
     int (*priv_encode) (PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pk);
     int (*priv_print) (BIO *out, const EVP_PKEY *pkey, int indent,
                        ASN1_PCTX *pctx);
@@ -59,10 +59,12 @@ DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)
 extern const EVP_PKEY_ASN1_METHOD cmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dhx_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[5];
 extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2];
+extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
 
 /*
  * These are used internally in the ASN1_OBJECT to keep track of whether the
@@ -89,3 +91,5 @@ struct asn1_pctx_st {
     unsigned long oid_flags;
     unsigned long str_flags;
 } /* ASN1_PCTX */ ;
+
+int asn1_valid_host(const ASN1_STRING *host);

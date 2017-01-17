@@ -41,7 +41,7 @@
 # level parallelism, on a given CPU implementation in this case.
 #
 # Special note on Intel EM64T. While Opteron CPU exhibits perfect
-# perfromance ratio of 1.5 between 64- and 32-bit flavors [see above],
+# performance ratio of 1.5 between 64- and 32-bit flavors [see above],
 # [currently available] EM64T CPUs apparently are far from it. On the
 # contrary, 64-bit version, sha512_block, is ~30% *slower* than 32-bit
 # sha256_block:-( This is presumably because 64-bit shifts/rotates
@@ -98,8 +98,9 @@
 # VIA Nano	23.0	16.5(+39%)  -		    14.7    -
 # Atom		23.0	18.9(+22%)  -		    14.7    -
 # Silvermont	27.4	20.6(+33%)  -               17.5    -
+# Goldmont	18.9	14.3(+32%)  4.16(+350%)     12.0    -
 #
-# (*)	whichever best applicable;
+# (*)	whichever best applicable, including SHAEXT;
 # (**)	switch from ror to shrd stands for fair share of improvement;
 # (***)	execution time is fully determined by remaining integer-only
 #	part, body_00_15; reducing the amount of SIMD instructions
@@ -1782,7 +1783,7 @@ if ($avx>1) {{
 ######################################################################
 # AVX2+BMI code path
 #
-my $a5=$SZ==4?"%esi":"%rsi";	# zap $inp 
+my $a5=$SZ==4?"%esi":"%rsi";	# zap $inp
 my $PUSH8=8*2*$SZ;
 use integer;
 

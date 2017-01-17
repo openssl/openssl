@@ -93,6 +93,7 @@ void _sparcv9_vis2_probe(void);
 void _sparcv9_fmadd_probe(void);
 unsigned long _sparcv9_rdcfr(void);
 void _sparcv9_vis3_probe(void);
+void _sparcv9_fjaesx_probe(void);
 unsigned long _sparcv9_random(void);
 size_t _sparcv9_vis1_instrument_bus(unsigned int *, size_t);
 size_t _sparcv9_vis1_instrument_bus2(unsigned int *, size_t, size_t);
@@ -164,9 +165,9 @@ void OPENSSL_cpuid_setup(void)
 
 #if defined(__sun) && defined(__SVR4)
     if (getisax != NULL) {
-        unsigned int vec[1];
+        unsigned int vec[2] = { 0, 0 };
 
-        if (getisax (vec,1)) {
+        if (getisax (vec,2)) {
             if (vec[0]&0x00020) OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS1;
             if (vec[0]&0x00040) OPENSSL_sparcv9cap_P[0] |= SPARCV9_VIS2;
             if (vec[0]&0x00080) OPENSSL_sparcv9cap_P[0] |= SPARCV9_BLK;

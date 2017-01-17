@@ -13,7 +13,6 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
-#include <openssl/rand.h>
 #include <openssl/aes.h>
 #include "cms_lcl.h"
 #include "internal/asn1_int.h"
@@ -833,10 +832,10 @@ static void cms_env_set_version(CMS_EnvelopedData *env)
             env->version = 2;
         }
     }
-    if (env->version == 2)
-        return;
     if (env->originatorInfo || env->unprotectedAttrs)
         env->version = 2;
+    if (env->version == 2)
+        return;
     env->version = 0;
 }
 

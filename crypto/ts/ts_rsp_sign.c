@@ -173,7 +173,7 @@ int TS_RESP_CTX_set_signer_digest(TS_RESP_CTX *ctx, const EVP_MD *md)
     return 1;
 }
 
-int TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, ASN1_OBJECT *def_policy)
+int TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *def_policy)
 {
     ASN1_OBJECT_free(ctx->default_policy);
     if ((ctx->default_policy = OBJ_dup(def_policy)) == NULL)
@@ -199,7 +199,7 @@ int TS_RESP_CTX_set_certs(TS_RESP_CTX *ctx, STACK_OF(X509) *certs)
     return 1;
 }
 
-int TS_RESP_CTX_add_policy(TS_RESP_CTX *ctx, ASN1_OBJECT *policy)
+int TS_RESP_CTX_add_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *policy)
 {
     ASN1_OBJECT *copy = NULL;
 
@@ -223,7 +223,7 @@ int TS_RESP_CTX_add_md(TS_RESP_CTX *ctx, const EVP_MD *md)
     if (ctx->mds == NULL
         && (ctx->mds = sk_EVP_MD_new_null()) == NULL)
         goto err;
-    if (!sk_EVP_MD_push(ctx->mds, (EVP_MD *)md))
+    if (!sk_EVP_MD_push(ctx->mds, md))
         goto err;
 
     return 1;
@@ -446,7 +446,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
     X509_ALGOR *md_alg;
     int md_alg_id;
     const ASN1_OCTET_STRING *digest;
-    EVP_MD *md = NULL;
+    const EVP_MD *md = NULL;
     int i;
 
     if (TS_REQ_get_version(request) != 1) {
@@ -460,7 +460,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
     md_alg = msg_imprint->hash_algo;
     md_alg_id = OBJ_obj2nid(md_alg->algorithm);
     for (i = 0; !md && i < sk_EVP_MD_num(ctx->mds); ++i) {
-        EVP_MD *current_md = sk_EVP_MD_value(ctx->mds, i);
+        const EVP_MD *current_md = sk_EVP_MD_value(ctx->mds, i);
         if (md_alg_id == EVP_MD_type(current_md))
             md = current_md;
     }

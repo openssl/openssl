@@ -26,15 +26,23 @@ sub generate_tests() {
     foreach (0..$#protocols) {
         my $protocol = $protocols[$_];
         my $protocol_name = $protocol || "flex";
+        my $caalert;
         if (!$is_disabled[$_]) {
+            if ($protocol_name eq "SSLv3") {
+                $caalert = "BadCertificate";
+            } else {
+                $caalert = "UnknownCA";
+            }
             # Sanity-check simple handshake.
             push @tests, {
                 name => "server-auth-${protocol_name}",
                 server => {
-                    "Protocol" => $protocol
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol
                 },
                 client => {
-                    "Protocol" => $protocol
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol
                 },
                 test   => { "ExpectedResult" => "Success" },
             };
@@ -43,11 +51,13 @@ sub generate_tests() {
             push @tests, {
                 name => "client-auth-${protocol_name}-request",
                 server => {
-                    "Protocol" => $protocol,
-                    "VerifyMode" => "Request",
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
+                    "VerifyMode" => "Request"
                 },
                 client => {
-                    "Protocol" => $protocol
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol
                 },
                 test   => { "ExpectedResult" => "Success" },
             };
@@ -56,16 +66,18 @@ sub generate_tests() {
             push @tests, {
                 name => "client-auth-${protocol_name}-require-fail",
                 server => {
-                    "Protocol" => $protocol,
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
                     "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
                     "VerifyMode" => "Require",
                 },
                 client => {
-                    "Protocol" => $protocol,
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol
                 },
                 test   => {
                     "ExpectedResult" => "ServerFail",
-                    "ServerAlert" => "HandshakeFailure",
+                    "ExpectedServerAlert" => "HandshakeFailure",
                 },
             };
 
@@ -73,33 +85,39 @@ sub generate_tests() {
             push @tests, {
                 name => "client-auth-${protocol_name}-require",
                 server => {
-                    "Protocol" => $protocol,
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
                     "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
                     "VerifyMode" => "Request",
                 },
                 client => {
-                    "Protocol" => $protocol,
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
                     "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
                     "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem",
                 },
-                test   => { "ExpectedResult" => "Success" },
+                test   => { "ExpectedResult" => "Success",
+                            "ExpectedClientCertType" => "RSA",
+                },
             };
 
             # Handshake with client authentication but without the root certificate.
             push @tests, {
                 name => "client-auth-${protocol_name}-noroot",
                 server => {
-                    "Protocol" => $protocol,
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
                     "VerifyMode" => "Require",
                 },
                 client => {
-                    "Protocol" => $protocol,
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
                     "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
                     "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem",
                 },
                 test   => {
                     "ExpectedResult" => "ServerFail",
-                    "ServerAlert" => "UnknownCA",
+                    "ExpectedServerAlert" => $caalert,
                 },
             };
         }

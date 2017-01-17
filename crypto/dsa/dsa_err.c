@@ -21,7 +21,7 @@
 static ERR_STRING_DATA DSA_str_functs[] = {
     {ERR_FUNC(DSA_F_DSAPARAMS_PRINT), "DSAparams_print"},
     {ERR_FUNC(DSA_F_DSAPARAMS_PRINT_FP), "DSAparams_print_fp"},
-    {ERR_FUNC(DSA_F_DSA_BUILTIN_PARAMGEN), "DSA_BUILTIN_PARAMGEN"},
+    {ERR_FUNC(DSA_F_DSA_BUILTIN_PARAMGEN), "dsa_builtin_paramgen"},
     {ERR_FUNC(DSA_F_DSA_BUILTIN_PARAMGEN2), "dsa_builtin_paramgen2"},
     {ERR_FUNC(DSA_F_DSA_DO_SIGN), "DSA_do_sign"},
     {ERR_FUNC(DSA_F_DSA_DO_VERIFY), "DSA_do_verify"},
@@ -37,6 +37,7 @@ static ERR_STRING_DATA DSA_str_functs[] = {
     {ERR_FUNC(DSA_F_DSA_PUB_ENCODE), "dsa_pub_encode"},
     {ERR_FUNC(DSA_F_DSA_SIGN), "DSA_sign"},
     {ERR_FUNC(DSA_F_DSA_SIGN_SETUP), "DSA_sign_setup"},
+    {ERR_FUNC(DSA_F_DSA_SIG_NEW), "DSA_SIG_new"},
     {ERR_FUNC(DSA_F_OLD_DSA_PRIV_DECODE), "old_dsa_priv_decode"},
     {ERR_FUNC(DSA_F_PKEY_DSA_CTRL), "pkey_dsa_ctrl"},
     {ERR_FUNC(DSA_F_PKEY_DSA_KEYGEN), "pkey_dsa_keygen"},
@@ -55,12 +56,14 @@ static ERR_STRING_DATA DSA_str_reasons[] = {
     {ERR_REASON(DSA_R_NO_PARAMETERS_SET), "no parameters set"},
     {ERR_REASON(DSA_R_PARAMETER_ENCODING_ERROR), "parameter encoding error"},
     {ERR_REASON(DSA_R_Q_NOT_PRIME), "q not prime"},
+    {ERR_REASON(DSA_R_SEED_LEN_SMALL),
+     "seed_len is less than the length of q"},
     {0, NULL}
 };
 
 #endif
 
-void ERR_load_DSA_strings(void)
+int ERR_load_DSA_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -69,4 +72,5 @@ void ERR_load_DSA_strings(void)
         ERR_load_strings(0, DSA_str_reasons);
     }
 #endif
+    return 1;
 }

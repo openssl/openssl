@@ -136,7 +136,11 @@ ENGINE *ENGINE_get_first(void)
 {
     ENGINE *ret;
 
-    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
+    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
+        ENGINEerr(ENGINE_F_ENGINE_GET_FIRST, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
     CRYPTO_THREAD_write_lock(global_engine_lock);
     ret = engine_list_head;
     if (ret) {
@@ -151,7 +155,11 @@ ENGINE *ENGINE_get_last(void)
 {
     ENGINE *ret;
 
-    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
+    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
+        ENGINEerr(ENGINE_F_ENGINE_GET_LAST, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
     CRYPTO_THREAD_write_lock(global_engine_lock);
     ret = engine_list_tail;
     if (ret) {
@@ -279,7 +287,11 @@ ENGINE *ENGINE_by_id(const char *id)
         ENGINEerr(ENGINE_F_ENGINE_BY_ID, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
+    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
+        ENGINEerr(ENGINE_F_ENGINE_BY_ID, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
     CRYPTO_THREAD_write_lock(global_engine_lock);
     iterator = engine_list_head;
     while (iterator && (strcmp(id, iterator->id) != 0))
@@ -337,6 +349,6 @@ int ENGINE_up_ref(ENGINE *e)
         ENGINEerr(ENGINE_F_ENGINE_UP_REF, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_atomic_add(&e->struct_ref, 1, &i, global_engine_lock);
+    CRYPTO_UP_REF(&e->struct_ref, &i, global_engine_lock);
     return 1;
 }

@@ -130,7 +130,7 @@ extern "C" {
                 sizeof(tname##_seq_tt) / sizeof(ASN1_TEMPLATE),\
                 NULL,\
                 sizeof(stname),\
-                #stname \
+                #tname \
         ASN1_ITEM_end(tname)
 
 # define static_ASN1_SEQUENCE_END_name(stname, tname) \
@@ -208,7 +208,7 @@ extern "C" {
                 sizeof(tname##_seq_tt) / sizeof(ASN1_TEMPLATE),\
                 &tname##_aux,\
                 sizeof(stname),\
-                #stname \
+                #tname \
         ASN1_ITEM_end(tname)
 # define static_ASN1_SEQUENCE_END_ref(stname, tname) \
         ;\
@@ -652,13 +652,6 @@ struct ASN1_TLC_st {
 };
 
 /* Typedefs for ASN1 function pointers */
-
-typedef ASN1_VALUE *ASN1_new_func(void);
-typedef void ASN1_free_func(ASN1_VALUE *a);
-typedef ASN1_VALUE *ASN1_d2i_func(ASN1_VALUE **a, const unsigned char **in,
-                                  long length);
-typedef int ASN1_i2d_func(ASN1_VALUE *a, unsigned char **in);
-
 typedef int ASN1_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                         const ASN1_ITEM *it, int tag, int aclass, char opt,
                         ASN1_TLC *ctx);

@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "internal/cryptlib.h"
+#include "internal/thread_once.h"
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include "internal/bio.h"
@@ -87,11 +88,19 @@ static unsigned int num_disable = 0;
  */
 static CRYPTO_THREAD_ID disabling_threadid;
 
-static void do_memdbg_init(void)
+DEFINE_RUN_ONCE_STATIC(do_memdbg_init)
 {
     malloc_lock = CRYPTO_THREAD_lock_new();
     long_malloc_lock = CRYPTO_THREAD_lock_new();
-    CRYPTO_THREAD_init_local(&appinfokey, NULL);
+    if (malloc_lock == NULL || long_malloc_lock == NULL
+        || !CRYPTO_THREAD_init_local(&appinfokey, NULL)) {
+        CRYPTO_THREAD_lock_free(malloc_lock);
+        malloc_lock = NULL;
+        CRYPTO_THREAD_lock_free(long_malloc_lock);
+        long_malloc_lock = NULL;
+        return 0;
+    }
+    return 1;
 }
 
 static void app_info_free(APP_INFO *inf)
@@ -112,7 +121,8 @@ int CRYPTO_mem_ctrl(int mode)
 #else
     int ret = mh_mode;
 
-    CRYPTO_THREAD_run_once(&memdbg_init, do_memdbg_init);
+    if (!RUN_ONCE(&memdbg_init, do_memdbg_init))
+        return -1;
 
     CRYPTO_THREAD_write_lock(malloc_lock);
     switch (mode) {
@@ -185,7 +195,8 @@ static int mem_check_on(void)
     CRYPTO_THREAD_ID cur;
 
     if (mh_mode & CRYPTO_MEM_CHECK_ON) {
-        CRYPTO_THREAD_run_once(&memdbg_init, do_memdbg_init);
+        if (!RUN_ONCE(&memdbg_init, do_memdbg_init))
+            return 0;
 
         cur = CRYPTO_THREAD_get_current_id();
         CRYPTO_THREAD_read_lock(malloc_lock);
@@ -228,7 +239,9 @@ static int pop_info(void)
 {
     APP_INFO *current = NULL;
 
-    CRYPTO_THREAD_run_once(&memdbg_init, do_memdbg_init);
+    if (!RUN_ONCE(&memdbg_init, do_memdbg_init))
+        return 0;
+
     current = (APP_INFO *)CRYPTO_THREAD_get_local(&appinfokey);
     if (current != NULL) {
         APP_INFO *next = current->next;
@@ -258,9 +271,8 @@ int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
     if (mem_check_on()) {
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
 
-        CRYPTO_THREAD_run_once(&memdbg_init, do_memdbg_init);
-
-        if ((ami = OPENSSL_malloc(sizeof(*ami))) == NULL)
+        if (!RUN_ONCE(&memdbg_init, do_memdbg_init)
+            || (ami = OPENSSL_malloc(sizeof(*ami))) == NULL)
             goto err;
 
         ami->threadid = CRYPTO_THREAD_get_current_id();
@@ -313,9 +325,8 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
         if (mem_check_on()) {
             CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
 
-            CRYPTO_THREAD_run_once(&memdbg_init, do_memdbg_init);
-
-            if ((m = OPENSSL_malloc(sizeof(*m))) == NULL) {
+            if (!RUN_ONCE(&memdbg_init, do_memdbg_init)
+                || (m = OPENSSL_malloc(sizeof(*m))) == NULL) {
                 OPENSSL_free(addr);
                 CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
                 return;
@@ -543,7 +554,8 @@ int CRYPTO_mem_leaks(BIO *b)
     /* Ensure all resources are released */
     OPENSSL_cleanup();
 
-    CRYPTO_THREAD_run_once(&memdbg_init, do_memdbg_init);
+    if (!RUN_ONCE(&memdbg_init, do_memdbg_init))
+        return -1;
 
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
 

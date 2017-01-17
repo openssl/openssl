@@ -16,11 +16,13 @@ use OpenSSL::Test::Utils;
 
 setup("test_rsa");
 
-plan tests => 5;
+plan tests => 6;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 ok(run(test(["rsa_test"])), "running rsatest");
+
+ok(run(app([ 'openssl', 'rsa', '-check', '-in', srctop_file('test', 'testrsa.pem'), '-noout'])), "rsa -check");
 
  SKIP: {
      skip "Skipping rsa conversion test", 3
@@ -32,8 +34,14 @@ ok(run(test(["rsa_test"])), "running rsatest");
      subtest 'rsa conversions -- private key PKCS#8' => sub {
 	 tconversion("rsa", srctop_file("test","testrsa.pem"), "pkey");
      };
+}
+
+ SKIP: {
+     skip "Skipping msblob conversion test", 1
+	 if disabled("rsa") || disabled("dsa");
+
      subtest 'rsa conversions -- public key' => sub {
-	 tconversion("rsa", srctop_file("test","testrsapub.pem"), "rsa",
+	 tconversion("msb", srctop_file("test","testrsapub.pem"), "rsa",
 		     "-pubin", "-pubout");
      };
 }

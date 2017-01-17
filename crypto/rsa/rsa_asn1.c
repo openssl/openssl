@@ -49,20 +49,42 @@ ASN1_SEQUENCE_cb(RSAPublicKey, rsa_cb) = {
         ASN1_SIMPLE(RSA, e, BIGNUM),
 } ASN1_SEQUENCE_END_cb(RSA, RSAPublicKey)
 
-ASN1_SEQUENCE(RSA_PSS_PARAMS) = {
+/* Free up maskHash */
+static int rsa_pss_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+                      void *exarg)
+{
+    if (operation == ASN1_OP_FREE_PRE) {
+        RSA_PSS_PARAMS *pss = (RSA_PSS_PARAMS *)*pval;
+        X509_ALGOR_free(pss->maskHash);
+    }
+    return 1;
+}
+
+ASN1_SEQUENCE_cb(RSA_PSS_PARAMS, rsa_pss_cb) = {
         ASN1_EXP_OPT(RSA_PSS_PARAMS, hashAlgorithm, X509_ALGOR,0),
         ASN1_EXP_OPT(RSA_PSS_PARAMS, maskGenAlgorithm, X509_ALGOR,1),
         ASN1_EXP_OPT(RSA_PSS_PARAMS, saltLength, ASN1_INTEGER,2),
         ASN1_EXP_OPT(RSA_PSS_PARAMS, trailerField, ASN1_INTEGER,3)
-} ASN1_SEQUENCE_END(RSA_PSS_PARAMS)
+} ASN1_SEQUENCE_END_cb(RSA_PSS_PARAMS, RSA_PSS_PARAMS)
 
 IMPLEMENT_ASN1_FUNCTIONS(RSA_PSS_PARAMS)
 
-ASN1_SEQUENCE(RSA_OAEP_PARAMS) = {
+/* Free up maskHash */
+static int rsa_oaep_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+                       void *exarg)
+{
+    if (operation == ASN1_OP_FREE_PRE) {
+        RSA_OAEP_PARAMS *oaep = (RSA_OAEP_PARAMS *)*pval;
+        X509_ALGOR_free(oaep->maskHash);
+    }
+    return 1;
+}
+
+ASN1_SEQUENCE_cb(RSA_OAEP_PARAMS, rsa_oaep_cb) = {
         ASN1_EXP_OPT(RSA_OAEP_PARAMS, hashFunc, X509_ALGOR, 0),
         ASN1_EXP_OPT(RSA_OAEP_PARAMS, maskGenFunc, X509_ALGOR, 1),
         ASN1_EXP_OPT(RSA_OAEP_PARAMS, pSourceFunc, X509_ALGOR, 2),
-} ASN1_SEQUENCE_END(RSA_OAEP_PARAMS)
+} ASN1_SEQUENCE_END_cb(RSA_OAEP_PARAMS, RSA_OAEP_PARAMS)
 
 IMPLEMENT_ASN1_FUNCTIONS(RSA_OAEP_PARAMS)
 

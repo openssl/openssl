@@ -23,7 +23,7 @@ my $testcount = scalar @libnames;
 plan tests => $testcount * 2;
 
 note
-    "NOTE: developper test!  It's possible that it won't run on your\n",
+    "NOTE: developer test!  It's possible that it won't run on your\n",
     "platform, and that's perfectly fine.  This is mainly for developers\n",
     "on Unix to check that our shared libraries are consistent with the\n",
     "ordinals (util/*.num in the source tree), something that should be\n",
@@ -69,6 +69,7 @@ foreach my $libname (@libnames) {
             map { s|;||; s|\s+||g; $_ }
             grep { $in_global = 1 if m|global:|;
                    $in_global = 0 if m|local:|;
+                   $in_global = 0 if m|\}|;
                    $in_global && m|;|; } @def_lines;
 
         note "Number of lines in \@nm_lines after massaging: ", scalar @nm_lines;

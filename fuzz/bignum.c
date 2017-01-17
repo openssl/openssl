@@ -15,32 +15,41 @@
 
 #include <stdio.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
 #include "fuzzer.h"
 
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
-    int success = 0;
-    static BN_CTX *ctx;
-    static BN_MONT_CTX *mont;
-    static BIGNUM *b1;
-    static BIGNUM *b2;
-    static BIGNUM *b3;
-    static BIGNUM *b4;
-    static BIGNUM *b5;
 
-    if (ctx == NULL) {
-        b1 = BN_new();
-        b2 = BN_new();
-        b3 = BN_new();
-        b4 = BN_new();
-        b5 = BN_new();
-        ctx = BN_CTX_new();
-        mont = BN_MONT_CTX_new();
-    }
-    // Divide the input into three parts, using the values of the first two
-    // bytes to choose lengths, which generate b1, b2 and b3. Use three bits
-    // of the third byte to choose signs for the three numbers.
+int FuzzerInitialize(int *argc, char ***argv)
+{
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+    ERR_get_state();
+
+    return 1;
+}
+
+int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+{
+    int success = 0;
     size_t l1 = 0, l2 = 0, l3 = 0;
     int s1 = 0, s2 = 0, s3 = 0;
+    BN_CTX *ctx;
+    BIGNUM *b1;
+    BIGNUM *b2;
+    BIGNUM *b3;
+    BIGNUM *b4;
+    BIGNUM *b5;
+
+    b1 = BN_new();
+    b2 = BN_new();
+    b3 = BN_new();
+    b4 = BN_new();
+    b5 = BN_new();
+    ctx = BN_CTX_new();
+
+    /* Divide the input into three parts, using the values of the first two
+     * bytes to choose lengths, which generate b1, b2 and b3. Use three bits
+     * of the third byte to choose signs for the three numbers.
+     */
     if (len > 2) {
         len -= 3;
         l1 = (buf[0] * len) / 255;
@@ -61,7 +70,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
     OPENSSL_assert(BN_bin2bn(buf + l1 + l2, l3, b3) == b3);
     BN_set_negative(b3, s3);
 
-    // mod 0 is undefined
+    /* mod 0 is undefined */
     if (BN_is_zero(b3)) {
         success = 1;
         goto done;
@@ -86,6 +95,17 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
 
  done:
     OPENSSL_assert(success);
+    BN_free(b1);
+    BN_free(b2);
+    BN_free(b3);
+    BN_free(b4);
+    BN_free(b5);
+    BN_CTX_free(ctx);
+    ERR_clear_error();
 
     return 0;
+}
+
+void FuzzerCleanup(void)
+{
 }

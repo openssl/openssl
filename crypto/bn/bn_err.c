@@ -94,7 +94,7 @@ static ERR_STRING_DATA BN_str_reasons[] = {
 
 #endif
 
-void ERR_load_BN_strings(void)
+int ERR_load_BN_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -103,4 +103,5 @@ void ERR_load_BN_strings(void)
         ERR_load_strings(0, BN_str_reasons);
     }
 #endif
+    return 1;
 }

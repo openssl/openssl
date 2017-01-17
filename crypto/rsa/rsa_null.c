@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/rand.h>
 #include "rsa_locl.h"
 
 /*

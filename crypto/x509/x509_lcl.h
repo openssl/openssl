@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/refcount.h"
+
 /*
  * This structure holds all parameters associated with a verify operation by
  * including an X509_VERIFY_PARAM structure in related structures the
@@ -16,7 +18,7 @@
 struct X509_VERIFY_PARAM_st {
     char *name;
     time_t check_time;          /* Time to use */
-    unsigned long inh_flags;    /* Inheritance flags */
+    uint32_t inh_flags;         /* Inheritance flags */
     unsigned long flags;        /* Various verify flags */
     int purpose;                /* purpose to check untrusted certificates */
     int trust;                  /* trust setting to check */
@@ -74,15 +76,16 @@ struct x509_lookup_method_st {
     int (*shutdown) (X509_LOOKUP *ctx);
     int (*ctrl) (X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
                  char **ret);
-    int (*get_by_subject) (X509_LOOKUP *ctx, int type, X509_NAME *name,
-                           X509_OBJECT *ret);
-    int (*get_by_issuer_serial) (X509_LOOKUP *ctx, int type, X509_NAME *name,
-                                 ASN1_INTEGER *serial, X509_OBJECT *ret);
-    int (*get_by_fingerprint) (X509_LOOKUP *ctx, int type,
-                               unsigned char *bytes, int len,
+    int (*get_by_subject) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                           X509_NAME *name, X509_OBJECT *ret);
+    int (*get_by_issuer_serial) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                                 X509_NAME *name, ASN1_INTEGER *serial,
+                                 X509_OBJECT *ret);
+    int (*get_by_fingerprint) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                               const unsigned char *bytes, int len,
                                X509_OBJECT *ret);
-    int (*get_by_alias) (X509_LOOKUP *ctx, int type, char *str, int len,
-                         X509_OBJECT *ret);
+    int (*get_by_alias) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                         const char *str, int len, X509_OBJECT *ret);
 };
 
 /* This is the functions plus an instance of the local variables. */
@@ -123,11 +126,13 @@ struct x509_store_st {
     int (*check_crl) (X509_STORE_CTX *ctx, X509_CRL *crl);
     /* Check certificate against CRL */
     int (*cert_crl) (X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x);
+    /* Check policy status of the chain */
+    int (*check_policy) (X509_STORE_CTX *ctx);
     STACK_OF(X509) *(*lookup_certs) (X509_STORE_CTX *ctx, X509_NAME *nm);
     STACK_OF(X509_CRL) *(*lookup_crls) (X509_STORE_CTX *ctx, X509_NAME *nm);
     int (*cleanup) (X509_STORE_CTX *ctx);
     CRYPTO_EX_DATA ex_data;
-    int references;
+    CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
 };
 

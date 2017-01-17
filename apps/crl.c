@@ -26,7 +26,7 @@ typedef enum OPTION_choice {
     OPT_NOOUT, OPT_NAMEOPT, OPT_MD
 } OPTION_CHOICE;
 
-OPTIONS crl_options[] = {
+const OPTIONS crl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format; default PEM"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
@@ -41,7 +41,7 @@ OPTIONS crl_options[] = {
     {"fingerprint", OPT_FINGERPRINT, '-', "Print the crl fingerprint"},
     {"crlnumber", OPT_CRLNUMBER, '-', "Print CRL number"},
     {"badsig", OPT_BADSIG, '-', "Corrupt last byte of loaded CRL signature (for test)" },
-    {"gendelta", OPT_GENDELTA, '<'},
+    {"gendelta", OPT_GENDELTA, '<', "Other CRL to compare/diff to the Input one"},
     {"CApath", OPT_CAPATH, '/', "Verify CRL using certificates in dir"},
     {"CAfile", OPT_CAFILE, '<', "Verify CRL using certificates in file name"},
     {"no-CAfile", OPT_NOCAFILE, '-',
@@ -72,7 +72,7 @@ int crl_main(int argc, char **argv)
     unsigned long nmflag = 0;
     char nmflag_set = 0;
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
-    char *CAfile = NULL, *CApath = NULL, *prog;
+    const char *CAfile = NULL, *CApath = NULL, *prog;
     OPTION_CHOICE o;
     int hash = 0, issuer = 0, lastupdate = 0, nextupdate = 0, noout = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyformat = FORMAT_PEM;
@@ -249,6 +249,13 @@ int crl_main(int argc, char **argv)
         }
     }
 
+    if (badsig) {
+        const ASN1_BIT_STRING *sig;
+
+        X509_CRL_get0_signature(x, &sig, NULL);
+        corrupt_signature(sig);
+    }
+
     if (num) {
         for (i = 1; i <= num; i++) {
             if (issuer == i) {
@@ -278,13 +285,13 @@ int crl_main(int argc, char **argv)
 #endif
             if (lastupdate == i) {
                 BIO_printf(bio_out, "lastUpdate=");
-                ASN1_TIME_print(bio_out, X509_CRL_get_lastUpdate(x));
+                ASN1_TIME_print(bio_out, X509_CRL_get0_lastUpdate(x));
                 BIO_printf(bio_out, "\n");
             }
             if (nextupdate == i) {
                 BIO_printf(bio_out, "nextUpdate=");
-                if (X509_CRL_get_nextUpdate(x))
-                    ASN1_TIME_print(bio_out, X509_CRL_get_nextUpdate(x));
+                if (X509_CRL_get0_nextUpdate(x))
+                    ASN1_TIME_print(bio_out, X509_CRL_get0_nextUpdate(x));
                 else
                     BIO_printf(bio_out, "NONE");
                 BIO_printf(bio_out, "\n");
@@ -317,14 +324,6 @@ int crl_main(int argc, char **argv)
     if (noout) {
         ret = 0;
         goto end;
-    }
-
-    if (badsig) {
-        ASN1_BIT_STRING *sig;
-        unsigned char *psig;
-        X509_CRL_get0_signature(&sig, NULL, x);
-        psig = ASN1_STRING_data(sig);
-        psig[ASN1_STRING_length(sig) - 1] ^= 0x1;
     }
 
     if (outformat == FORMAT_ASN1)

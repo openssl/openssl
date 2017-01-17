@@ -29,25 +29,28 @@
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include "ssl_locl.h"
+#include "internal/thread_once.h"
 
-static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx, int op,
-                                         int bits, int nid, void *other,
+static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
+                                         int op, int bits, int nid, void *other,
                                          void *ex);
 
 static CRYPTO_ONCE ssl_x509_store_ctx_once = CRYPTO_ONCE_STATIC_INIT;
 static volatile int ssl_x509_store_ctx_idx = -1;
 
-static void ssl_x509_store_ctx_init(void)
+DEFINE_RUN_ONCE_STATIC(ssl_x509_store_ctx_init)
 {
     ssl_x509_store_ctx_idx = X509_STORE_CTX_get_ex_new_index(0,
-                                                "SSL for verify callback",
-                                                NULL, NULL, NULL);
+                                                             "SSL for verify callback",
+                                                             NULL, NULL, NULL);
+    return ssl_x509_store_ctx_idx >= 0;
 }
 
 int SSL_get_ex_data_X509_STORE_CTX_idx(void)
 {
 
-    CRYPTO_THREAD_run_once(&ssl_x509_store_ctx_once, ssl_x509_store_ctx_init);
+    if (!RUN_ONCE(&ssl_x509_store_ctx_once, ssl_x509_store_ctx_init))
+        return -1;
     return ssl_x509_store_ctx_idx;
 }
 
@@ -93,7 +96,6 @@ CERT *ssl_cert_dup(CERT *cert)
         OPENSSL_free(ret);
         return NULL;
     }
-
 #ifndef OPENSSL_NO_DH
     if (cert->dh_tmp != NULL) {
         ret->dh_tmp = cert->dh_tmp;
@@ -131,30 +133,31 @@ CERT *ssl_cert_dup(CERT *cert)
                 SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
-            ret->pkeys[i].serverinfo_length =
-                cert->pkeys[i].serverinfo_length;
+            ret->pkeys[i].serverinfo_length = cert->pkeys[i].serverinfo_length;
             memcpy(ret->pkeys[i].serverinfo,
-                   cert->pkeys[i].serverinfo,
-                   cert->pkeys[i].serverinfo_length);
+                   cert->pkeys[i].serverinfo, cert->pkeys[i].serverinfo_length);
         }
     }
 
     /* Configured sigalgs copied across */
     if (cert->conf_sigalgs) {
-        ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen);
+        ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen
+                                           * sizeof(*cert->conf_sigalgs));
         if (ret->conf_sigalgs == NULL)
             goto err;
-        memcpy(ret->conf_sigalgs, cert->conf_sigalgs, cert->conf_sigalgslen);
+        memcpy(ret->conf_sigalgs, cert->conf_sigalgs,
+               cert->conf_sigalgslen * sizeof(*cert->conf_sigalgs));
         ret->conf_sigalgslen = cert->conf_sigalgslen;
     } else
         ret->conf_sigalgs = NULL;
 
     if (cert->client_sigalgs) {
-        ret->client_sigalgs = OPENSSL_malloc(cert->client_sigalgslen);
+        ret->client_sigalgs = OPENSSL_malloc(cert->client_sigalgslen
+                                             * sizeof(*cert->client_sigalgs));
         if (ret->client_sigalgs == NULL)
             goto err;
         memcpy(ret->client_sigalgs, cert->client_sigalgs,
-               cert->client_sigalgslen);
+               cert->client_sigalgslen * sizeof(*cert->client_sigalgs));
         ret->client_sigalgslen = cert->client_sigalgslen;
     } else
         ret->client_sigalgs = NULL;
@@ -235,7 +238,7 @@ void ssl_cert_free(CERT *c)
     if (c == NULL)
         return;
 
-    CRYPTO_atomic_add(&c->references, -1, &i, c->lock);
+    CRYPTO_DOWN_REF(&c->references, &i, c->lock);
     REF_PRINT_COUNT("CERT", c);
     if (i > 0)
         return;
@@ -409,7 +412,8 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 
     /* Set suite B flags if needed */
     X509_STORE_CTX_set_flags(ctx, tls1_suiteb(s));
-    if (!X509_STORE_CTX_set_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s)) {
+    if (!X509_STORE_CTX_set_ex_data
+        (ctx, SSL_get_ex_data_X509_STORE_CTX_idx(), s)) {
         goto end;
     }
 
@@ -451,7 +455,7 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
     /* Move peername from the store context params to the SSL handle's */
     X509_VERIFY_PARAM_move_peername(s->param, param);
 
-end:
+ end:
     X509_STORE_CTX_free(ctx);
     return i;
 }
@@ -470,11 +474,16 @@ STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk)
     X509_NAME *name;
 
     ret = sk_X509_NAME_new_null();
+    if (ret == NULL) {
+        SSLerr(SSL_F_SSL_DUP_CA_LIST, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
     for (i = 0; i < sk_X509_NAME_num(sk); i++) {
         name = X509_NAME_dup(sk_X509_NAME_value(sk, i));
-        if ((name == NULL) || !sk_X509_NAME_push(ret, name)) {
+        if (name == NULL || !sk_X509_NAME_push(ret, name)) {
             sk_X509_NAME_pop_free(ret, X509_NAME_free);
-            return (NULL);
+            X509_NAME_free(name);
+            return NULL;
         }
     }
     return (ret);
@@ -497,7 +506,7 @@ STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
 
 STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s)
 {
-    if (!s->server) { /* we are in the client */
+    if (!s->server) {           /* we are in the client */
         if (((s->version >> 8) == SSL3_VERSION_MAJOR) && (s->s3 != NULL))
             return (s->s3->tmp.ca_names);
         else
@@ -568,8 +577,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
     X509 *x = NULL;
     X509_NAME *xn = NULL;
     STACK_OF(X509_NAME) *ret = NULL;
-    LHASH_OF(X509_NAME) *name_hash =
-        lh_X509_NAME_new(xname_hash, xname_cmp);
+    LHASH_OF(X509_NAME) *name_hash = lh_X509_NAME_new(xname_hash, xname_cmp);
 
     if ((name_hash == NULL) || (in == NULL)) {
         SSLerr(SSL_F_SSL_LOAD_CLIENT_CA_FILE, ERR_R_MALLOC_FAILURE);
@@ -598,14 +606,17 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
         if (lh_X509_NAME_retrieve(name_hash, xn) != NULL) {
             /* Duplicate. */
             X509_NAME_free(xn);
+            xn = NULL;
         } else {
             lh_X509_NAME_insert(name_hash, xn);
-            sk_X509_NAME_push(ret, xn);
+            if (!sk_X509_NAME_push(ret, xn))
+                goto err;
         }
     }
     goto done;
 
  err:
+    X509_NAME_free(xn);
     sk_X509_NAME_pop_free(ret, X509_NAME_free);
     ret = NULL;
  done:
@@ -640,8 +651,7 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     in = BIO_new(BIO_s_file());
 
     if (in == NULL) {
-        SSLerr(SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK,
-               ERR_R_MALLOC_FAILURE);
+        SSLerr(SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -656,17 +666,20 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
         xn = X509_NAME_dup(xn);
         if (xn == NULL)
             goto err;
-        if (sk_X509_NAME_find(stack, xn) >= 0)
+        if (sk_X509_NAME_find(stack, xn) >= 0) {
+            /* Duplicate. */
             X509_NAME_free(xn);
-        else
-            sk_X509_NAME_push(stack, xn);
+        } else if (!sk_X509_NAME_push(stack, xn)) {
+            X509_NAME_free(xn);
+            goto err;
+        }
     }
 
     ERR_clear_error();
     goto done;
 
  err:
-        ret = 0;
+    ret = 0;
  done:
     BIO_free(in);
     X509_free(x);
@@ -730,128 +743,6 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     return ret;
 }
 
-/* Add a certificate to a BUF_MEM structure */
-
-static int ssl_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
-{
-    int n;
-    unsigned char *p;
-
-    n = i2d_X509(x, NULL);
-    if (n < 0 || !BUF_MEM_grow_clean(buf, (int)(n + (*l) + 3))) {
-        SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
-        return 0;
-    }
-    p = (unsigned char *)&(buf->data[*l]);
-    l2n3(n, p);
-    n = i2d_X509(x, &p);
-    if (n < 0) {
-        /* Shouldn't happen */
-        SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
-        return 0;
-    }
-    *l += n + 3;
-
-    return 1;
-}
-
-/* Add certificate chain to internal SSL BUF_MEM structure */
-int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
-{
-    BUF_MEM *buf = s->init_buf;
-    int i, chain_count;
-    X509 *x;
-    STACK_OF(X509) *extra_certs;
-    STACK_OF(X509) *chain = NULL;
-    X509_STORE *chain_store;
-
-    /* TLSv1 sends a chain with nothing in it, instead of an alert */
-    if (!BUF_MEM_grow_clean(buf, 10)) {
-        SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_BUF_LIB);
-        return 0;
-    }
-
-    if (!cpk || !cpk->x509)
-        return 1;
-
-    x = cpk->x509;
-
-    /*
-     * If we have a certificate specific chain use it, else use parent ctx.
-     */
-    if (cpk->chain)
-        extra_certs = cpk->chain;
-    else
-        extra_certs = s->ctx->extra_certs;
-
-    if ((s->mode & SSL_MODE_NO_AUTO_CHAIN) || extra_certs)
-        chain_store = NULL;
-    else if (s->cert->chain_store)
-        chain_store = s->cert->chain_store;
-    else
-        chain_store = s->ctx->cert_store;
-
-    if (chain_store) {
-        X509_STORE_CTX* xs_ctx = X509_STORE_CTX_new();
-
-        if (xs_ctx == NULL) {
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_MALLOC_FAILURE);
-            return (0);
-        }
-        if (!X509_STORE_CTX_init(xs_ctx, chain_store, x, NULL)) {
-            X509_STORE_CTX_free(xs_ctx);
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_X509_LIB);
-            return (0);
-        }
-        /*
-         * It is valid for the chain not to be complete (because normally we
-         * don't include the root cert in the chain). Therefore we deliberately
-         * ignore the error return from this call. We're not actually verifying
-         * the cert - we're just building as much of the chain as we can
-         */
-        (void) X509_verify_cert(xs_ctx);
-        /* Don't leave errors in the queue */
-        ERR_clear_error();
-        chain =  X509_STORE_CTX_get0_chain(xs_ctx);
-        i = ssl_security_cert_chain(s, chain, NULL, 0);
-        if (i != 1) {
-#if 0
-            /* Dummy error calls so mkerr generates them */
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_EE_KEY_TOO_SMALL);
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_CA_KEY_TOO_SMALL);
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_CA_MD_TOO_WEAK);
-#endif
-            X509_STORE_CTX_free(xs_ctx);
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, i);
-            return 0;
-        }
-        chain_count = sk_X509_num(chain);
-        for (i = 0; i < chain_count; i++) {
-            x = sk_X509_value(chain, i);
-
-            if (!ssl_add_cert_to_buf(buf, l, x)) {
-                X509_STORE_CTX_free(xs_ctx);
-                return 0;
-            }
-        }
-        X509_STORE_CTX_free(xs_ctx);
-    } else {
-        i = ssl_security_cert_chain(s, extra_certs, x, 0);
-        if (i != 1) {
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, i);
-            return 0;
-        }
-        if (!ssl_add_cert_to_buf(buf, l, x))
-            return 0;
-        for (i = 0; i < sk_X509_num(extra_certs); i++) {
-            x = sk_X509_value(extra_certs, i);
-            if (!ssl_add_cert_to_buf(buf, l, x))
-                return 0;
-        }
-    }
-    return 1;
-}
-
 /* Build a certificate chain for current certificate */
 int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
 {
@@ -878,8 +769,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
             if (!X509_STORE_add_cert(chain_store, x)) {
                 error = ERR_peek_last_error();
                 if (ERR_GET_LIB(error) != ERR_LIB_X509 ||
-                    ERR_GET_REASON(error) !=
-                    X509_R_CERT_ALREADY_IN_HASH_TABLE)
+                    ERR_GET_REASON(error) != X509_R_CERT_ALREADY_IN_HASH_TABLE)
                     goto err;
                 ERR_clear_error();
             }
@@ -987,8 +877,8 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
     return 1;
 }
 
-static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx, int op,
-                                         int bits, int nid, void *other,
+static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
+                                         int op, int bits, int nid, void *other,
                                          void *ex)
 {
     int level, minbits;

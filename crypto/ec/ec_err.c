@@ -32,6 +32,7 @@ static ERR_STRING_DATA EC_str_functs[] = {
     {ERR_FUNC(EC_F_ECDSA_DO_VERIFY), "ECDSA_do_verify"},
     {ERR_FUNC(EC_F_ECDSA_SIGN_EX), "ECDSA_sign_ex"},
     {ERR_FUNC(EC_F_ECDSA_SIGN_SETUP), "ECDSA_sign_setup"},
+    {ERR_FUNC(EC_F_ECDSA_SIG_NEW), "ECDSA_SIG_new"},
     {ERR_FUNC(EC_F_ECDSA_VERIFY), "ECDSA_verify"},
     {ERR_FUNC(EC_F_ECKEY_PARAM2TYPE), "eckey_param2type"},
     {ERR_FUNC(EC_F_ECKEY_PARAM_DECODE), "eckey_param_decode"},
@@ -50,6 +51,9 @@ static ERR_STRING_DATA EC_str_functs[] = {
     {ERR_FUNC(EC_F_ECP_NISTZ256_POINTS_MUL), "ecp_nistz256_points_mul"},
     {ERR_FUNC(EC_F_ECP_NISTZ256_PRE_COMP_NEW), "ecp_nistz256_pre_comp_new"},
     {ERR_FUNC(EC_F_ECP_NISTZ256_WINDOWED_MUL), "ecp_nistz256_windowed_mul"},
+    {ERR_FUNC(EC_F_ECX_KEY_OP), "ecx_key_op"},
+    {ERR_FUNC(EC_F_ECX_PRIV_ENCODE), "ecx_priv_encode"},
+    {ERR_FUNC(EC_F_ECX_PUB_ENCODE), "ecx_pub_encode"},
     {ERR_FUNC(EC_F_EC_ASN1_GROUP2CURVE), "ec_asn1_group2curve"},
     {ERR_FUNC(EC_F_EC_ASN1_GROUP2FIELDID), "ec_asn1_group2fieldid"},
     {ERR_FUNC(EC_F_EC_GF2M_MONTGOMERY_POINT_MULTIPLY),
@@ -190,6 +194,7 @@ static ERR_STRING_DATA EC_str_functs[] = {
     {ERR_FUNC(EC_F_OSSL_ECDH_COMPUTE_KEY), "ossl_ecdh_compute_key"},
     {ERR_FUNC(EC_F_OSSL_ECDSA_SIGN_SIG), "ossl_ecdsa_sign_sig"},
     {ERR_FUNC(EC_F_OSSL_ECDSA_VERIFY_SIG), "ossl_ecdsa_verify_sig"},
+    {ERR_FUNC(EC_F_PKEY_ECX_DERIVE), "pkey_ecx_derive"},
     {ERR_FUNC(EC_F_PKEY_EC_CTRL), "pkey_ec_ctrl"},
     {ERR_FUNC(EC_F_PKEY_EC_CTRL_STR), "pkey_ec_ctrl_str"},
     {ERR_FUNC(EC_F_PKEY_EC_DERIVE), "pkey_ec_derive"},
@@ -232,7 +237,9 @@ static ERR_STRING_DATA EC_str_reasons[] = {
     {ERR_REASON(EC_R_INVALID_FIELD), "invalid field"},
     {ERR_REASON(EC_R_INVALID_FORM), "invalid form"},
     {ERR_REASON(EC_R_INVALID_GROUP_ORDER), "invalid group order"},
+    {ERR_REASON(EC_R_INVALID_KEY), "invalid key"},
     {ERR_REASON(EC_R_INVALID_OUTPUT_LENGTH), "invalid output length"},
+    {ERR_REASON(EC_R_INVALID_PEER_KEY), "invalid peer key"},
     {ERR_REASON(EC_R_INVALID_PENTANOMIAL_BASIS), "invalid pentanomial basis"},
     {ERR_REASON(EC_R_INVALID_PRIVATE_KEY), "invalid private key"},
     {ERR_REASON(EC_R_INVALID_TRINOMIAL_BASIS), "invalid trinomial basis"},
@@ -270,7 +277,7 @@ static ERR_STRING_DATA EC_str_reasons[] = {
 
 #endif
 
-void ERR_load_EC_strings(void)
+int ERR_load_EC_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
 
@@ -279,4 +286,5 @@ void ERR_load_EC_strings(void)
         ERR_load_strings(0, EC_str_reasons);
     }
 #endif
+    return 1;
 }

@@ -188,7 +188,11 @@ static int ui_read(UI *ui, UI_STRING *uis)
                     return 1;
                 }
             }
-        default:
+            break;
+        case UIT_NONE:
+        case UIT_BOOLEAN:
+        case UIT_INFO:
+        case UIT_ERROR:
             break;
         }
     }
@@ -208,7 +212,11 @@ static int ui_write(UI *ui, UI_STRING *uis)
                 if (password && password[0] != '\0')
                     return 1;
             }
-        default:
+            break;
+        case UIT_NONE:
+        case UIT_BOOLEAN:
+        case UIT_INFO:
+        case UIT_ERROR:
             break;
         }
     }
@@ -237,6 +245,11 @@ void destroy_ui_method(void)
         ui_method = NULL;
     }
 }
+
+const UI_METHOD *get_ui_method(void)
+{
+    return ui_method;
+}
 #endif
 
 int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
@@ -244,36 +257,27 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
     int res = 0;
 #ifndef OPENSSL_NO_UI
     UI *ui = NULL;
-    const char *prompt_info = NULL;
 #endif
-    const char *password = NULL;
     PW_CB_DATA *cb_data = (PW_CB_DATA *)cb_tmp;
 
-    if (cb_data) {
-        if (cb_data->password)
-            password = cb_data->password;
-#ifndef OPENSSL_NO_UI
-        if (cb_data->prompt_info)
-            prompt_info = cb_data->prompt_info;
-#endif
-    }
-
-    if (password) {
-        res = strlen(password);
+#ifdef OPENSSL_NO_UI
+    if (cb_data != NULL && cb_data->password != NULL) {
+        res = strlen(cb_data->password);
         if (res > bufsiz)
             res = bufsiz;
-        memcpy(buf, password, res);
-        return res;
+        memcpy(buf, cb_data->password, res);
     }
-
-#ifndef OPENSSL_NO_UI
+#else
     ui = UI_new_method(ui_method);
     if (ui) {
         int ok = 0;
         char *buff = NULL;
         int ui_flags = 0;
+        const char *prompt_info = NULL;
         char *prompt;
 
+        if (cb_data != NULL && cb_data->prompt_info != NULL)
+            prompt_info = cb_data->prompt_info;
         prompt = UI_construct_prompt(ui, "pass phrase", prompt_info);
         if (!prompt) {
             BIO_printf(bio_err, "Out of memory\n");
@@ -283,6 +287,9 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
 
         ui_flags |= UI_INPUT_FLAG_DEFAULT_PWD;
         UI_ctrl(ui, UI_CTRL_PRINT_ERRORS, 1, 0, 0);
+
+        /* We know that there is no previous user data to return to us */
+        (void)UI_add_user_data(ui, cb_data);
 
         if (ok >= 0)
             ok = UI_add_input_string(ui, prompt, ui_flags, buf,
@@ -320,9 +327,9 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
     return res;
 }
 
-static char *app_get_pass(char *arg, int keepbio);
+static char *app_get_pass(const char *arg, int keepbio);
 
-int app_passwd(char *arg1, char *arg2, char **pass1, char **pass2)
+int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2)
 {
     int same;
     if (!arg2 || !arg1 || strcmp(arg1, arg2))
@@ -344,7 +351,7 @@ int app_passwd(char *arg1, char *arg2, char **pass1, char **pass2)
     return 1;
 }
 
-static char *app_get_pass(char *arg, int keepbio)
+static char *app_get_pass(const char *arg, int keepbio)
 {
     char *tmp, tpass[APP_PASS_LEN];
     static BIO *pwdbio = NULL;
@@ -692,7 +699,10 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
             BIO_printf(bio_err, "no engine specified\n");
         else {
 #ifndef OPENSSL_NO_ENGINE
-            pkey = ENGINE_load_private_key(e, file, ui_method, &cb_data);
+            if (ENGINE_init(e)) {
+                pkey = ENGINE_load_private_key(e, file, ui_method, &cb_data);
+                ENGINE_finish(e);
+            }
             if (pkey == NULL) {
                 BIO_printf(bio_err, "cannot load %s from engine\n", key_descrip);
                 ERR_print_errors(bio_err);
@@ -926,7 +936,7 @@ void* app_malloc(int sz, const char *what)
 }
 
 /*
- * Initialize or extend, if *certs != NULL,  a certificate stack.
+ * Initialize or extend, if *certs != NULL, a certificate stack.
  */
 int load_certs(const char *file, STACK_OF(X509) **certs, int format,
                const char *pass, const char *desc)
@@ -935,7 +945,7 @@ int load_certs(const char *file, STACK_OF(X509) **certs, int format,
 }
 
 /*
- * Initialize or extend, if *crls != NULL,  a certificate stack.
+ * Initialize or extend, if *crls != NULL, a certificate stack.
  */
 int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
               const char *pass, const char *desc)
@@ -1148,7 +1158,7 @@ void print_name(BIO *out, const char *title, X509_NAME *nm,
     }
 }
 
-void print_bignum_var(BIO *out, BIGNUM *in, const char *var,
+void print_bignum_var(BIO *out, const BIGNUM *in, const char *var,
                       int len, unsigned char *buffer)
 {
     BIO_printf(out, "    static unsigned char %s_%d[] = {", var, len);
@@ -1185,7 +1195,7 @@ void print_array(BIO *out, const char* title, int len, const unsigned char* d)
     BIO_printf(out, "\n};\n");
 }
 
-X509_STORE *setup_verify(char *CAfile, char *CApath, int noCAfile, int noCApath)
+X509_STORE *setup_verify(const char *CAfile, const char *CApath, int noCAfile, int noCApath)
 {
     X509_STORE *store = X509_STORE_new();
     X509_LOOKUP *lookup;
@@ -1193,7 +1203,7 @@ X509_STORE *setup_verify(char *CAfile, char *CApath, int noCAfile, int noCApath)
     if (store == NULL)
         goto end;
 
-    if(CAfile != NULL || !noCAfile) {
+    if (CAfile != NULL || !noCAfile) {
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
         if (lookup == NULL)
             goto end;
@@ -1206,7 +1216,7 @@ X509_STORE *setup_verify(char *CAfile, char *CApath, int noCAfile, int noCApath)
             X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
     }
 
-    if(CApath != NULL || !noCApath) {
+    if (CApath != NULL || !noCApath) {
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_hash_dir());
         if (lookup == NULL)
             goto end;
@@ -1240,11 +1250,13 @@ static ENGINE *try_load_engine(const char *engine)
     }
     return e;
 }
+#endif
 
 ENGINE *setup_engine(const char *engine, int debug)
 {
     ENGINE *e = NULL;
 
+#ifndef OPENSSL_NO_ENGINE
     if (engine) {
         if (strcmp(engine, "auto") == 0) {
             BIO_printf(bio_err, "enabling auto ENGINE support\n");
@@ -1269,13 +1281,19 @@ ENGINE *setup_engine(const char *engine, int debug)
         }
 
         BIO_printf(bio_err, "engine \"%s\" set.\n", ENGINE_get_id(e));
-
-        /* Free our "structural" reference. */
-        ENGINE_free(e);
     }
+#endif
     return e;
 }
+
+void release_engine(ENGINE *e)
+{
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        /* Free our "structural" reference. */
+        ENGINE_free(e);
 #endif
+}
 
 static unsigned long index_serial_hash(const OPENSSL_CSTRING *a)
 {
@@ -1318,7 +1336,7 @@ static IMPLEMENT_LHASH_HASH_FN(index_name, OPENSSL_CSTRING)
 static IMPLEMENT_LHASH_COMP_FN(index_name, OPENSSL_CSTRING)
 #undef BSIZE
 #define BSIZE 256
-BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
+BIGNUM *load_serial(const char *serialfile, int create, ASN1_INTEGER **retai)
 {
     BIO *in = NULL;
     BIGNUM *ret = NULL;
@@ -1363,7 +1381,7 @@ BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
     return (ret);
 }
 
-int save_serial(char *serialfile, char *suffix, BIGNUM *serial,
+int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial,
                 ASN1_INTEGER **retai)
 {
     char buf[1][BSIZE];
@@ -1413,7 +1431,8 @@ int save_serial(char *serialfile, char *suffix, BIGNUM *serial,
     return (ret);
 }
 
-int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
+int rotate_serial(const char *serialfile, const char *new_suffix,
+                  const char *old_suffix)
 {
     char buf[2][BSIZE];
     int i, j;
@@ -1483,7 +1502,7 @@ int rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
     return ret;
 }
 
-CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
+CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
 {
     CA_DB *retdb = NULL;
     TXT_DB *tmpdb = NULL;
@@ -1938,7 +1957,7 @@ static const char *get_dp_url(DIST_POINT *dp)
         gen = sk_GENERAL_NAME_value(gens, i);
         uri = GENERAL_NAME_get0_value(gen, &gtype);
         if (gtype == GEN_URI && ASN1_STRING_length(uri) > 6) {
-            char *uptr = (char *)ASN1_STRING_data(uri);
+            const char *uptr = (const char *)ASN1_STRING_get0_data(uri);
             if (strncmp(uptr, "http://", 7) == 0)
                 return uptr;
         }
@@ -2299,6 +2318,36 @@ int app_isdir(const char *name)
 #endif
 
 /* raw_read|write section */
+#if defined(__VMS)
+# include "vms_term_sock.h"
+static int stdin_sock = -1;
+
+static void close_stdin_sock(void)
+{
+    TerminalSocket (TERM_SOCK_DELETE, &stdin_sock);
+}
+
+int fileno_stdin(void)
+{
+    if (stdin_sock == -1) {
+        TerminalSocket(TERM_SOCK_CREATE, &stdin_sock);
+        atexit(close_stdin_sock);
+    }
+
+    return stdin_sock;
+}
+#else
+int fileno_stdin(void)
+{
+    return fileno(stdin);
+}
+#endif
+
+int fileno_stdout(void)
+{
+    return fileno(stdout);
+}
+
 #if defined(_WIN32) && defined(STD_INPUT_HANDLE)
 int raw_read_stdin(void *buf, int siz)
 {
@@ -2308,10 +2357,17 @@ int raw_read_stdin(void *buf, int siz)
     else
         return (-1);
 }
+#elif defined(__VMS)
+#include <sys/socket.h>
+
+int raw_read_stdin(void *buf, int siz)
+{
+    return recv(fileno_stdin(), buf, siz, 0);
+}
 #else
 int raw_read_stdin(void *buf, int siz)
 {
-    return read(fileno(stdin), buf, siz);
+    return read(fileno_stdin(), buf, siz);
 }
 #endif
 
@@ -2327,7 +2383,7 @@ int raw_write_stdout(const void *buf, int siz)
 #else
 int raw_write_stdout(const void *buf, int siz)
 {
-    return write(fileno(stdout), buf, siz);
+    return write(fileno_stdout(), buf, siz);
 }
 #endif
 
@@ -2581,3 +2637,30 @@ int has_stdin_waiting(void)
     return _kbhit();
 }
 #endif
+
+/* Corrupt a signature by modifying final byte */
+void corrupt_signature(const ASN1_STRING *signature)
+{
+        unsigned char *s = signature->data;
+        s[signature->length - 1] ^= 0x1;
+}
+
+int set_cert_times(X509 *x, const char *startdate, const char *enddate,
+                   int days)
+{
+    if (startdate == NULL || strcmp(startdate, "today") == 0) {
+        if (X509_gmtime_adj(X509_getm_notBefore(x), 0) == NULL)
+            return 0;
+    } else {
+        if (!ASN1_TIME_set_string(X509_getm_notBefore(x), startdate))
+            return 0;
+    }
+    if (enddate == NULL) {
+        if (X509_time_adj_ex(X509_getm_notAfter(x), days, 0, NULL)
+            == NULL)
+            return 0;
+    } else if (!ASN1_TIME_set_string(X509_getm_notAfter(x), enddate)) {
+        return 0;
+    }
+    return 1;
+}

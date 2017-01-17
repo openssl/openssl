@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if defined(_WIN32)
+# include <windows.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
 
@@ -28,7 +32,6 @@
 #elif defined(_WIN32)
 # undef ASYNC_WIN
 # define ASYNC_WIN
-# include <windows.h>
 #endif
 
 #define DASYNC_LIB_NAME "DASYNC"

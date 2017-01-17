@@ -17,7 +17,7 @@
 // 'and' which in turn can be assigned to M-port [there're double as
 // much M-ports as there're I-ports on Itanium 2]. By sacrificing few
 // registers for small constants (255, 24 and 16) to be used with
-// 'shr' and 'and' instructions I can achieve better ILP, Intruction
+// 'shr' and 'and' instructions I can achieve better ILP, Instruction
 // Level Parallelism, and performance. This code outperforms GCC 3.3
 // generated code by over factor of 2 (two), GCC 3.4 - by 70% and
 // HP C - by 40%. Measured best-case scenario, i.e. aligned

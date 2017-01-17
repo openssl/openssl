@@ -18,6 +18,7 @@
 #include <openssl/tls1.h>
 
 #include "e_os.h"
+#include "test_main.h"
 #include "testutil.h"
 
 typedef struct cipherlist_test_fixture {
@@ -104,28 +105,19 @@ static const uint32_t default_ciphers_in_order[] = {
     TLS1_CK_DHE_RSA_WITH_AES_128_SHA,
 #endif
 
-#ifndef OPENSSL_NO_DES
-# ifndef OPENSSL_NO_EC
-    TLS1_CK_ECDHE_ECDSA_WITH_DES_192_CBC3_SHA,
-    TLS1_CK_ECDHE_RSA_WITH_DES_192_CBC3_SHA,
-# endif
-# ifndef OPENSSL_NO_DH
-    SSL3_CK_DHE_RSA_DES_192_CBC3_SHA,
-# endif
-#endif  /* !OPENSSL_NO_DES */
-
 #ifndef OPENSSL_NO_TLS1_2
     TLS1_CK_RSA_WITH_AES_256_GCM_SHA384,
     TLS1_CK_RSA_WITH_AES_128_GCM_SHA256,
+#endif
+#ifndef OPENSSL_NO_TLS1_3
+    TLS1_3_CK_AES_128_GCM_SHA256,
+#endif
+#ifndef OPENSSL_NO_TLS1_2
     TLS1_CK_RSA_WITH_AES_256_SHA256,
     TLS1_CK_RSA_WITH_AES_128_SHA256,
 #endif
-
     TLS1_CK_RSA_WITH_AES_256_SHA,
     TLS1_CK_RSA_WITH_AES_128_SHA,
-#ifndef OPENSSL_NO_DES
-    SSL3_CK_RSA_DES_192_CBC3_SHA,
-#endif
 };
 
 static int test_default_cipherlist(SSL_CTX *ctx)
@@ -176,7 +168,6 @@ static void tear_down(CIPHERLIST_TEST_FIXTURE fixture)
 {
     SSL_CTX_free(fixture.server);
     SSL_CTX_free(fixture.client);
-    ERR_print_errors_fp(stderr);
 }
 
 #define SETUP_CIPHERLIST_TEST_FIXTURE() \
@@ -199,14 +190,8 @@ static int test_default_cipherlist_explicit()
     EXECUTE_CIPHERLIST_TEST();
 }
 
-int main(int argc, char **argv)
+void register_tests()
 {
-    int result = 0;
-
     ADD_TEST(test_default_cipherlist_implicit);
     ADD_TEST(test_default_cipherlist_explicit);
-
-    result = run_tests(argv[0]);
-
-    return result;
 }

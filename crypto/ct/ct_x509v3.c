@@ -31,7 +31,7 @@ static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
 }
 
 /* Handlers for X509v3/OCSP Certificate Transparency extensions */
-const X509V3_EXT_METHOD v3_ct_scts[] = {
+const X509V3_EXT_METHOD v3_ct_scts[3] = {
     /* X509v3 extension in certificates that contains SCTs */
     { NID_ct_precert_scts, 0, NULL,
     NULL, (X509V3_EXT_FREE)SCT_LIST_free,

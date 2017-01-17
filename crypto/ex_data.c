@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib_int.h"
+#include "internal/thread_once.h"
 #include <openssl/lhash.h>
 
 /*
@@ -35,9 +36,11 @@ static EX_CALLBACKS ex_data[CRYPTO_EX_INDEX__COUNT];
 static CRYPTO_RWLOCK *ex_data_lock = NULL;
 static CRYPTO_ONCE ex_data_init = CRYPTO_ONCE_STATIC_INIT;
 
-static void do_ex_data_init(void)
+DEFINE_RUN_ONCE_STATIC(do_ex_data_init)
 {
+    OPENSSL_init_crypto(0, NULL);
     ex_data_lock = CRYPTO_THREAD_lock_new();
+    return ex_data_lock != NULL;
 }
 
 /*
@@ -53,7 +56,10 @@ static EX_CALLBACKS *get_and_lock(int class_index)
         return NULL;
     }
 
-    CRYPTO_THREAD_run_once(&ex_data_init, do_ex_data_init);
+    if (!RUN_ONCE(&ex_data_init, do_ex_data_init)) {
+        CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
 
     if (ex_data_lock == NULL) {
         /*
@@ -114,7 +120,7 @@ static void dummy_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad, int idx,
 {
 }
 
-static int dummy_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from,
+static int dummy_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                      void *from_d, int idx,
                      long argl, void *argp)
 {
@@ -245,7 +251,7 @@ int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
  * for each index in the class used by this variable
  */
 int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
-                       CRYPTO_EX_DATA *from)
+                       const CRYPTO_EX_DATA *from)
 {
     int mx, j, i;
     char *ptr;

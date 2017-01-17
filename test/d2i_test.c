@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include "testutil.h"
+#include "test_main_custom.h"
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
@@ -41,18 +42,7 @@ typedef struct {
 
 static expected_error_t expected_error = ASN1_UNKNOWN;
 
-typedef struct d2i_test_fixture {
-    const char *test_case_name;
-} D2I_TEST_FIXTURE;
-
-static D2I_TEST_FIXTURE set_up(const char *const test_case_name)
-{
-    D2I_TEST_FIXTURE fixture;
-    fixture.test_case_name = test_case_name;
-    return fixture;
-}
-
-static int execute_test(D2I_TEST_FIXTURE fixture)
+static int test_bad_asn1()
 {
     BIO *bio = NULL;
     ASN1_VALUE *value = NULL;
@@ -116,40 +106,16 @@ static int execute_test(D2I_TEST_FIXTURE fixture)
     return ret;
 }
 
-static void tear_down(D2I_TEST_FIXTURE fixture)
-{
-    ERR_print_errors_fp(stderr);
-}
-
-#define SETUP_D2I_TEST_FIXTURE() \
-    SETUP_TEST_FIXTURE(D2I_TEST_FIXTURE, set_up)
-
-#define EXECUTE_D2I_TEST() \
-    EXECUTE_TEST(execute_test, tear_down)
-
-static int test_bad_asn1()
-{
-    SETUP_D2I_TEST_FIXTURE();
-    EXECUTE_D2I_TEST();
-}
-
 /*
  * Usage: d2i_test <type> <file>, e.g.
  * d2i_test generalname bad_generalname.der
  */
-int main(int argc, char **argv)
+int test_main(int argc, char *argv[])
 {
-    int result = 0;
     const char *test_type_name;
     const char *expected_error_string;
 
     size_t i;
-    static ASN1_ITEM_EXP *items[] = {
-        ASN1_ITEM_ref(ASN1_ANY),
-        ASN1_ITEM_ref(X509),
-        ASN1_ITEM_ref(GENERAL_NAME),
-        ASN1_ITEM_ref(ASN1_INTEGER)
-    };
 
     static error_enum expected_errors[] = {
         {"OK", ASN1_OK},
@@ -169,18 +135,16 @@ int main(int argc, char **argv)
     expected_error_string = argv[2];
     test_file = argv[3];
 
-    for (i = 0; i < OSSL_NELEM(items); i++) {
-        const ASN1_ITEM *it = ASN1_ITEM_ptr(items[i]);
-        if (strcmp(test_type_name, it->sname) == 0) {
-            item_type = it;
-            break;
-        }
-    }
+    item_type = ASN1_ITEM_lookup(test_type_name);
+
     if (item_type == NULL) {
         fprintf(stderr, "Unknown type %s\n", test_type_name);
         fprintf(stderr, "Supported types:\n");
-        for (i = 0; i < OSSL_NELEM(items); i++) {
-            const ASN1_ITEM *it = ASN1_ITEM_ptr(items[i]);
+        for (i = 0;; i++) {
+            const ASN1_ITEM *it = ASN1_ITEM_get(i);
+
+            if (it == NULL)
+                break;
             fprintf(stderr, "\t%s\n", it->sname);
         }
         return 1;
@@ -200,7 +164,5 @@ int main(int argc, char **argv)
 
     ADD_TEST(test_bad_asn1);
 
-    result = run_tests(argv[0]);
-
-    return result;
+    return run_tests(argv[0]);
 }

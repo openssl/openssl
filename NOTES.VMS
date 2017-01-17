@@ -27,6 +27,24 @@
  running the tests, as they affect the Perl interpreter.
 
 
+ About ODS-5 directory names and Perl
+ ------------------------------------
+
+ It seems that the perl function canonpath() in the File::Spec module
+ doesn't treat file specifications where the last directory name
+ contains periods very well.  Unfortunately, some versions of VMS tar
+ will keep the periods in the OpenSSL source directory instead of
+ converting them to underscore, thereby leaving your source in
+ something like [.openssl-1^.1^.0].  This will lead to issues when
+ configuring and building OpenSSL.
+
+ We have no replacement for Perl's canonpath(), so the best workaround
+ for now is to rename the OpenSSL source directory, as follows (please
+ adjust for the actual source directory name you have):
+
+    $ rename openssl-1^.1^.0.DIR openssl-1_1_0.DIR 
+
+
  About MMS and DCL
  -----------------
 

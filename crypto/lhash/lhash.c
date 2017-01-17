@@ -20,7 +20,7 @@
 #define UP_LOAD         (2*LH_LOAD_MULT) /* load times 256 (default 2) */
 #define DOWN_LOAD       (LH_LOAD_MULT) /* load times 256 (default 1) */
 
-static void expand(OPENSSL_LHASH *lh);
+static int expand(OPENSSL_LHASH *lh);
 static void contract(OPENSSL_LHASH *lh);
 static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh, const void *data, unsigned long *rhash);
 
@@ -74,8 +74,8 @@ void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data)
     void *ret;
 
     lh->error = 0;
-    if (lh->up_load <= (lh->num_items * LH_LOAD_MULT / lh->num_nodes))
-        expand(lh);
+    if ((lh->up_load <= (lh->num_items * LH_LOAD_MULT / lh->num_nodes)) && !expand(lh))
+        return NULL;        /* 'lh->error++' already done in 'expand' */
 
     rn = getrn(lh, data, &hash);
 
@@ -184,7 +184,7 @@ void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNCARG func, void
     doall_util_fn(lh, 1, (OPENSSL_LH_DOALL_FUNC)0, func, arg);
 }
 
-static void expand(OPENSSL_LHASH *lh)
+static int expand(OPENSSL_LHASH *lh)
 {
     OPENSSL_LH_NODE **n, **n1, **n2, *np;
     unsigned int p, i, j;
@@ -213,10 +213,10 @@ static void expand(OPENSSL_LHASH *lh)
         j = (int)lh->num_alloc_nodes * 2;
         n = OPENSSL_realloc(lh->b, (int)(sizeof(OPENSSL_LH_NODE *) * j));
         if (n == NULL) {
-            /* fputs("realloc error in lhash",stderr); */
             lh->error++;
+            lh->num_nodes--;
             lh->p = 0;
-            return;
+            return 0;
         }
         for (i = (int)lh->num_alloc_nodes; i < j; i++) /* 26/02/92 eay */
             n[i] = NULL;        /* 02/03/92 eay */
@@ -226,6 +226,7 @@ static void expand(OPENSSL_LHASH *lh)
         lh->p = 0;
         lh->b = n;
     }
+    return 1;
 }
 
 static void contract(OPENSSL_LHASH *lh)

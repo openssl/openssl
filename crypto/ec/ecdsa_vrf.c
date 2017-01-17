@@ -9,8 +9,6 @@
 
 #include <openssl/ec.h>
 #include "ec_lcl.h"
-#include <string.h>
-#include <openssl/engine.h>
 #include <openssl/err.h>
 
 /*-

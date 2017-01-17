@@ -10,7 +10,7 @@
 #ifndef INTERNAL_ERR_INT_H
 # define INTERNAL_ERR_INT_H
 
-void err_load_crypto_strings_int(void);
+int err_load_crypto_strings_int(void);
 void err_cleanup(void);
 void err_delete_thread_state(void);
 

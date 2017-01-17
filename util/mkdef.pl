@@ -24,7 +24,7 @@
 #	existence:platform:kind:algorithms
 #
 # - "existence" can be "EXIST" or "NOEXIST" depending on if the symbol is
-#   found somewhere in the source, 
+#   found somewhere in the source,
 # - "platforms" is empty if it exists on all platforms, otherwise it contains
 #   comma-separated list of the platform, just as they are if the symbol exists
 #   for those platforms, or prepended with a "!" if not.  This helps resolve
@@ -73,7 +73,7 @@ my $linux=0;
 my $safe_stack_def = 0;
 
 my @known_platforms = ( "__FreeBSD__", "PERL5",
-			"EXPORT_VAR_AS_FUNCTION", "ZLIB"
+			"EXPORT_VAR_AS_FUNCTION", "ZLIB", "_WIN32"
 			);
 my @known_ossl_platforms = ( "VMS", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
@@ -172,7 +172,7 @@ foreach (@ARGV, split(/ /, $config{options}))
 
 	$do_ssl=1 if $_ eq "libssl";
 	if ($_ eq "ssl") {
-		$do_ssl=1; 
+		$do_ssl=1;
 		$libname=$_
 	}
 	$do_crypto=1 if $_ eq "libcrypto";
@@ -211,7 +211,7 @@ foreach (@ARGV, split(/ /, $config{options}))
 
 	}
 
-if (!$libname) { 
+if (!$libname) {
 	if ($do_ssl) {
 		$libname="LIBSSL";
 	}
@@ -339,7 +339,7 @@ if($do_crypto == 1) {
 	}
 	&update_numbers(*OUT,"LIBCRYPTO",*crypto_list,$max_crypto,@crypto_symbols);
 	close OUT;
-} 
+}
 
 } elsif ($do_checkexist) {
 	&check_existing(*ssl_list, @ssl_symbols)
@@ -815,7 +815,7 @@ sub do_defs
 					$def .=
 					    "#INFO:"
 						.join(',',@current_platforms).":"
-						    .join(',',@current_algorithms).";";
+						    .join(',',"STDIO",@current_algorithms).";";
 					$def .= "int PEM_read_$1(void);";
 					$def .= "int PEM_write_$1(void);";
 					$def .=
@@ -832,7 +832,7 @@ sub do_defs
 					$def .=
 					    "#INFO:"
 						.join(',',@current_platforms).":"
-						    .join(',',@current_algorithms).";";
+						    .join(',',"STDIO",@current_algorithms).";";
 					$def .= "int PEM_write_$1(void);";
 					$def .=
 					    "#INFO:"
@@ -846,12 +846,12 @@ sub do_defs
 					$def .=
 					    "#INFO:"
 						.join(',',@current_platforms).":"
-						    .join(',',@current_algorithms).";";
+						    .join(',',"STDIO",@current_algorithms).";";
 					$def .= "int PEM_read_$1(void);";
 					$def .=
 					    "#INFO:"
 						.join(',',@current_platforms).":"
-						    .join(',',@current_algorithms).";";
+						    .join(',',"STDIO",@current_algorithms).";";
 					# Things that are everywhere
 					$def .= "int PEM_read_bio_$1(void);";
 					next;
@@ -1121,6 +1121,7 @@ sub is_valid
 			if ($keyword eq "VMSNonVAX" && $VMSNonVAX) { return 1; }
 			if ($keyword eq "VMS" && $VMS) { return 1; }
 			if ($keyword eq "WIN32" && $W32) { return 1; }
+			if ($keyword eq "_WIN32" && $W32) { return 1; }
 			if ($keyword eq "WINNT" && $NT) { return 1; }
 			# Special platforms:
 			# EXPORT_VAR_AS_FUNCTION means that global variables
@@ -1629,8 +1630,7 @@ sub check_version_lte()
 	if ($cvnums ne $tvnums) {
 		die "Invalid version number: $testversion "
 			."for current version $currversion\n"
-			if (substr($cvnums, -1) < substr($tvnums, -1)
-				|| substr($cvnums, 0, 4) ne substr($tvnums, 0, 4));
+			if (substr($cvnums, 0, 4) ne substr($tvnums, 0, 4));
 		return;
 	}
 	#If we get here then the base version (i.e. the numbers) are the same - they

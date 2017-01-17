@@ -170,7 +170,7 @@ int BN_num_bits(const BIGNUM *a)
 
 static void bn_free_d(BIGNUM *a)
 {
-    if (BN_get_flags(a,BN_FLG_SECURE))
+    if (BN_get_flags(a, BN_FLG_SECURE))
         OPENSSL_secure_free(a->d);
     else
         OPENSSL_free(a->d);
@@ -259,7 +259,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         BNerr(BN_F_BN_EXPAND_INTERNAL, BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
         return (NULL);
     }
-    if (BN_get_flags(b,BN_FLG_SECURE))
+    if (BN_get_flags(b, BN_FLG_SECURE))
         a = A = OPENSSL_secure_zalloc(words * sizeof(*a));
     else
         a = A = OPENSSL_zalloc(words * sizeof(*a));
@@ -445,7 +445,7 @@ void BN_clear(BIGNUM *a)
 {
     bn_check_top(a);
     if (a->d != NULL)
-        memset(a->d, 0, sizeof(*a->d) * a->dmax);
+        OPENSSL_cleanse(a->d, sizeof(*a->d) * a->dmax);
     a->top = 0;
     a->neg = 0;
 }
@@ -565,9 +565,9 @@ BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
     if (ret == NULL)
         return (NULL);
     bn_check_top(ret);
-    s += len - 1;
+    s += len;
     /* Skip trailing zeroes. */
-    for ( ; len > 0 && *s == 0; s--, len--)
+    for ( ; len > 0 && s[-1] == 0; s--, len--)
         continue;
     n = len;
     if (n == 0) {
@@ -584,7 +584,8 @@ BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
     ret->neg = 0;
     l = 0;
     while (n--) {
-        l = (l << 8L) | *(s--);
+        s--;
+        l = (l << 8L) | *s;
         if (m-- == 0) {
             ret->d[--i] = l;
             l = 0;
@@ -610,10 +611,11 @@ int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
     /* Add trailing zeroes if necessary */
     if (tolen > i)
         memset(to + i, 0, tolen - i);
-    to += i - 1;
+    to += i;
     while (i--) {
         l = a->d[i / BN_BYTES];
-        *(to--) = (unsigned char)(l >> (8 * (i % BN_BYTES))) & 0xff;
+        to--;
+        *to = (unsigned char)(l >> (8 * (i % BN_BYTES))) & 0xff;
     }
     return tolen;
 }
@@ -1029,5 +1031,7 @@ void bn_correct_top(BIGNUM *a)
         }
         a->top = tmp_top;
     }
+    if (a->top == 0)
+        a->neg = 0;
     bn_pollute(a);
 }

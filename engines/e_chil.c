@@ -641,7 +641,7 @@ static int hwcrhk_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             CRYPTO_THREAD_write_lock(chil_lock);
             BIO_free(logstream);
             logstream = NULL;
-            if (BIO_up_ref(bio)
+            if (BIO_up_ref(bio))
                 logstream = bio;
             else
                 HWCRHKerr(HWCRHK_F_HWCRHK_CTRL, HWCRHK_R_BIO_WAS_FREED);

@@ -9,6 +9,7 @@
 
 #include "eng_int.h"
 #include <openssl/rand.h>
+#include "internal/refcount.h"
 
 CRYPTO_RWLOCK *global_engine_lock;
 
@@ -16,19 +17,19 @@ CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
 
 /* The "new"/"free" stuff first */
 
-void do_engine_lock_init(void)
+DEFINE_RUN_ONCE(do_engine_lock_init)
 {
+    OPENSSL_init_crypto(0, NULL);
     global_engine_lock = CRYPTO_THREAD_lock_new();
+    return global_engine_lock != NULL;
 }
 
 ENGINE *ENGINE_new(void)
 {
     ENGINE *ret;
 
-    CRYPTO_THREAD_run_once(&engine_lock_init, do_engine_lock_init);
-
-    ret = OPENSSL_zalloc(sizeof(*ret));
-    if (ret == NULL) {
+    if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)
+        || (ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -66,16 +67,20 @@ void engine_set_all_null(ENGINE *e)
     e->flags = 0;
 }
 
-int engine_free_util(ENGINE *e, int locked)
+int engine_free_util(ENGINE *e, int not_locked)
 {
     int i;
 
     if (e == NULL)
         return 1;
-    if (locked)
+#ifdef HAVE_ATOMICS
+    CRYPTO_DOWN_REF(&e->struct_ref, &i, global_engine_lock);
+#else
+    if (not_locked)
         CRYPTO_atomic_add(&e->struct_ref, -1, &i, global_engine_lock);
     else
         i = --e->struct_ref;
+#endif
     engine_ref_debug(e, 0, -1)
     if (i > 0)
         return 1;

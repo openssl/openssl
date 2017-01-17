@@ -66,25 +66,30 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 void EC_pre_comp_free(EC_GROUP *group)
 {
     switch (group->pre_comp_type) {
-    default:
+    case PCT_none:
         break;
-#ifdef ECP_NISTZ256_REFERENCE_IMPLEMENTATION
-    case pct_nistz256:
+    case PCT_nistz256:
+#ifdef ECP_NISTZ256_ASM
         EC_nistz256_pre_comp_free(group->pre_comp.nistz256);
-        break;
 #endif
+        break;
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
-    case pct_nistp224:
+    case PCT_nistp224:
         EC_nistp224_pre_comp_free(group->pre_comp.nistp224);
         break;
-    case pct_nistp256:
+    case PCT_nistp256:
         EC_nistp256_pre_comp_free(group->pre_comp.nistp256);
         break;
-    case pct_nistp521:
+    case PCT_nistp521:
         EC_nistp521_pre_comp_free(group->pre_comp.nistp521);
         break;
+#else
+    case PCT_nistp224:
+    case PCT_nistp256:
+    case PCT_nistp521:
+        break;
 #endif
-    case pct_ec:
+    case PCT_ec:
         EC_ec_pre_comp_free(group->pre_comp.ec);
         break;
     }
@@ -143,26 +148,31 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
     /* Copy precomputed */
     dest->pre_comp_type = src->pre_comp_type;
     switch (src->pre_comp_type) {
-    default:
+    case PCT_none:
         dest->pre_comp.ec = NULL;
         break;
-#ifdef ECP_NISTZ256_REFERENCE_IMPLEMENTATION
-    case pct_nistz256:
+    case PCT_nistz256:
+#ifdef ECP_NISTZ256_ASM
         dest->pre_comp.nistz256 = EC_nistz256_pre_comp_dup(src->pre_comp.nistz256);
-        break;
 #endif
+        break;
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
-    case pct_nistp224:
+    case PCT_nistp224:
         dest->pre_comp.nistp224 = EC_nistp224_pre_comp_dup(src->pre_comp.nistp224);
         break;
-    case pct_nistp256:
+    case PCT_nistp256:
         dest->pre_comp.nistp256 = EC_nistp256_pre_comp_dup(src->pre_comp.nistp256);
         break;
-    case pct_nistp521:
+    case PCT_nistp521:
         dest->pre_comp.nistp521 = EC_nistp521_pre_comp_dup(src->pre_comp.nistp521);
         break;
+#else
+    case PCT_nistp224:
+    case PCT_nistp256:
+    case PCT_nistp521:
+        break;
 #endif
-    case pct_ec:
+    case PCT_ec:
         dest->pre_comp.ec = EC_ec_pre_comp_dup(src->pre_comp.ec);
         break;
     }
@@ -284,7 +294,6 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
     } else
         BN_zero(group->cofactor);
 
- 
     /*
      * Some groups have an order with
      * factors of two, which makes the Montgomery setup fail.
@@ -700,7 +709,15 @@ int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group,
               EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
-    return group->meth->point_set_affine_coordinates(group, point, x, y, ctx);
+    if (!group->meth->point_set_affine_coordinates(group, point, x, y, ctx))
+        return 0;
+
+    if (EC_POINT_is_on_curve(group, point, ctx) <= 0) {
+        ECerr(EC_F_EC_POINT_SET_AFFINE_COORDINATES_GFP,
+              EC_R_POINT_IS_NOT_ON_CURVE);
+        return 0;
+    }
+    return 1;
 }
 
 #ifndef OPENSSL_NO_EC2M
@@ -718,7 +735,15 @@ int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group,
               EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
-    return group->meth->point_set_affine_coordinates(group, point, x, y, ctx);
+    if (!group->meth->point_set_affine_coordinates(group, point, x, y, ctx))
+        return 0;
+
+    if (EC_POINT_is_on_curve(group, point, ctx) <= 0) {
+        ECerr(EC_F_EC_POINT_SET_AFFINE_COORDINATES_GF2M,
+              EC_R_POINT_IS_NOT_ON_CURVE);
+        return 0;
+    }
+    return 1;
 }
 #endif
 

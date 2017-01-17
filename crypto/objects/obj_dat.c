@@ -199,7 +199,7 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
             ao[i]->type = i;
             ao[i]->obj = o;
             aop = lh_ADDED_OBJ_insert(added, ao[i]);
-            /* memory leak, buit should not normally matter */
+            /* memory leak, but should not normally matter */
             OPENSSL_free(aop);
         }
     }
@@ -373,6 +373,8 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
     }
     /* Work out total size */
     j = ASN1_object_size(0, i, V_ASN1_OBJECT);
+    if (j < 0)
+        return NULL;
 
     if ((buf = OPENSSL_malloc(j)) == NULL)
         return NULL;

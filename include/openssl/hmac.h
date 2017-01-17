@@ -40,6 +40,7 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
 __owur int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx);
 
 void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags);
+const EVP_MD *HMAC_CTX_get_md(const HMAC_CTX *ctx);
 
 #ifdef  __cplusplus
 }
