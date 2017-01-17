@@ -48,6 +48,7 @@
  */
 
 #include <stdio.h>
+#include <time.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 #include <openssl/buffer.h>
@@ -2195,12 +2196,12 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
 {
     int al;
     unsigned int ticklen;
-    unsigned long ticket_lifetime_hint, add_age;
+    unsigned long ticket_lifetime_hint, age_add;
     unsigned int sess_len;
     RAW_EXTENSION *exts = NULL;
 
     if (!PACKET_get_net_4(pkt, &ticket_lifetime_hint)
-        || (SSL_IS_TLS13(s) && !PACKET_get_net_4(pkt, &add_age))
+        || (SSL_IS_TLS13(s) && !PACKET_get_net_4(pkt, &age_add))
         || !PACKET_get_net_2(pkt, &ticklen)
         || (!SSL_IS_TLS13(s) && PACKET_remaining(pkt) != ticklen)
         || (SSL_IS_TLS13(s) && (ticklen == 0
@@ -2243,6 +2244,12 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         s->session = new_sess;
     }
 
+    /*
+     * Technically the cast to long here is not guaranteed by the C standard -
+     * but we use it elsewhere, so this should be ok.
+     */
+    s->session->time = (long)time(NULL);
+
     OPENSSL_free(s->session->ext.tick);
     s->session->ext.tick = NULL;
     s->session->ext.ticklen = 0;
@@ -2259,6 +2266,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     }
 
     s->session->ext.tick_lifetime_hint = ticket_lifetime_hint;
+    s->session->ext.tick_age_add = age_add;
     s->session->ext.ticklen = ticklen;
 
     if (SSL_IS_TLS13(s)) {

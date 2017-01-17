@@ -3250,6 +3250,12 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         uint32_t age_add;
     } age_add_u;
 
+    if (SSL_IS_TLS13(s)) {
+        if (RAND_bytes(age_add_u.age_add_c, sizeof(age_add_u)) <= 0)
+            goto err;
+        s->session->ext.tick_age_add = age_add_u.age_add;
+    }
+
     /* get session encoding length */
     slen_full = i2d_SSL_SESSION(s->session, NULL);
     /*
@@ -3340,10 +3346,6 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         memcpy(key_name, tctx->ext.tick_key_name,
                sizeof(tctx->ext.tick_key_name));
     }
-
-    if (SSL_IS_TLS13(s) && RAND_bytes(age_add_u.age_add_c,
-                                      sizeof(age_add_u)) <= 0)
-        goto err;
 
     /*
      * Ticket lifetime hint (advisory only): We leave this unspecified

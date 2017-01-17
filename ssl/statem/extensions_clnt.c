@@ -694,6 +694,11 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
     now = (uint32_t)time(NULL);
     ages = now - (uint32_t)s->session->time;
 
+    if (s->session->ext.tick_lifetime_hint < ages) {
+        /* Ticket is too old. Ignore it. */
+        return 1;
+    }
+
     /*
      * Calculate age in ms. We're just doing it to nearest second. Should be
      * good enough.
@@ -708,7 +713,11 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
         return 1;
     }
 
-    /* TODO(TLS1.3): Obfuscate the age here */
+    /*
+     * Obfuscate the age. Overflow here is fine, this addition is supposed to
+     * be mod 2^32.
+     */
+    agems += s->session->ext.tick_age_add;
 
     cipher = ssl3_get_cipher_by_id(s->session->cipher_id);
     if (cipher == NULL) {
