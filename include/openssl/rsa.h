@@ -94,6 +94,14 @@ extern "C" {
 # define EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, len) \
         RSA_pkey_ctx_ctrl(ctx, (EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
                           EVP_PKEY_CTRL_RSA_PSS_SALTLEN, len, NULL)
+/* Salt length matches digest */
+# define RSA_PSS_SALTLEN_DIGEST -1
+/* Verify only: auto detect salt length */
+# define RSA_PSS_SALTLEN_AUTO   -2
+/* Set salt length to maximum possible */
+# define RSA_PSS_SALTLEN_MAX    -3
+/* Old compatible max salt length for sign only */
+# define RSA_PSS_SALTLEN_MAX_SIGN    -2
 
 # define EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(ctx, len) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN, \
