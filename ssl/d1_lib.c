@@ -243,8 +243,6 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 void dtls1_start_timer(SSL *s)
 {
-    struct timeval diff;
-
 #ifndef OPENSSL_NO_SCTP
     /* Disable timer for SCTP */
     if (BIO_dgram_is_sctp(SSL_get_wbio(s))) {
@@ -267,9 +265,11 @@ void dtls1_start_timer(SSL *s)
     get_current_time(&(s->d1->next_timeout));
 
     /* Add duration to current time */
-    diff.tv_sec  = s->d1->timeout_duration_ms / 1000;
-    diff.tv_usec = (s->d1->timeout_duration_ms % 1000) * 1000;
-    timeradd(&s->d1->next_timeout, &diff, &s->d1->next_timeout);
+    s->d1->next_timeout.tv_usec += s->d1->timeout_duration_ms * 1000;
+    if (s->d1->next_timeout.tv_usec >= 1000000) {
+        s->d1->next_timeout.tv_sec++;
+        s->d1->next_timeout.tv_usec -= 1000000;
+    }
 
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
              &(s->d1->next_timeout));
