@@ -1,5 +1,6 @@
 language: c
 cache: ccache
+dist: trusty
 
 before_install:
     - pip install --user cpp-coveralls
@@ -13,8 +14,9 @@ addons:
             - binutils-mingw-w64
             - gcc-mingw-w64
             - wine
+            - wine1.6
         sources:
-            - llvm-toolchain-precise-3.6
+            - llvm-toolchain-trust-3.6
             - ubuntu-toolchain-r-test
 
 os:
@@ -43,9 +45,9 @@ matrix:
         - os: linux
           compiler: clang-3.6
           env: CONFIG_OPTS="enable-asan"
-#        - os: linux
-#          compiler: clang-3.6
-#          env: CONFIG_OPTS="enable-msan"
+        - os: linux
+          compiler: clang-3.6
+          env: CONFIG_OPTS="enable-msan"
         - os: linux
           compiler: clang-3.6
           env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method -fno-sanitize=alignment"
