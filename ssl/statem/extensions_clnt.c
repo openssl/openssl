@@ -820,6 +820,7 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
     ret = 1;
  err:
     OPENSSL_cleanse(binderkey, sizeof(binderkey));
+    OPENSSL_cleanse(finishedkey, sizeof(finishedkey));
     EVP_PKEY_free(mackey);
     EVP_MD_CTX_free(mctx);
 
