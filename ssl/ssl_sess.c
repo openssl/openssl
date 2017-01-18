@@ -80,18 +80,24 @@ SSL_SESSION *SSL_SESSION_new(void)
     ss->timeout = 60 * 5 + 4;   /* 5 minute timeout by default */
     ss->time = (unsigned long)time(NULL);
     ss->lock = CRYPTO_THREAD_lock_new();
-    if (ss->lock == NULL) {
+    ss->peer_chain = sk_X509_new_null();
+    if (ss->lock == NULL || ss->peer_chain == NULL) {
         SSLerr(SSL_F_SSL_SESSION_NEW, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ss);
-        return NULL;
+        goto err;
     }
 
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data)) {
-        CRYPTO_THREAD_lock_free(ss->lock);
-        OPENSSL_free(ss);
-        return NULL;
+        goto err;
     }
     return ss;
+ err:
+    if (ss) {
+        CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
+        sk_X509_free(ss->peer_chain);
+        CRYPTO_THREAD_lock_free(ss->lock);
+    }
+    OPENSSL_free(ss);
+    return NULL;
 }
 
 SSL_SESSION *SSL_SESSION_dup(const SSL_SESSION *src)
