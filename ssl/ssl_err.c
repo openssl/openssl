@@ -351,6 +351,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "tls_construct_stoc_key_share"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_STOC_NEXT_PROTO_NEG),
      "tls_construct_stoc_next_proto_neg"},
+    {ERR_FUNC(SSL_F_TLS_CONSTRUCT_STOC_PSK), "tls_construct_stoc_psk"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_STOC_RENEGOTIATE),
      "tls_construct_stoc_renegotiate"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_STOC_SERVER_NAME),
