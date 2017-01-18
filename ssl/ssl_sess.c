@@ -39,6 +39,7 @@
 #include <openssl/rand.h>
 #include <openssl/engine.h>
 #include "ssl_locl.h"
+#include "statem/statem_locl.h"
 
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s);
@@ -444,8 +445,9 @@ int ssl_get_new_session(SSL *s, int session)
  *   hello: The parsed ClientHello data
  *
  * Returns:
- *   -1: error
- *    0: a session may have been found.
+ *   -1: fatal error
+ *    0: no session found
+ *    1: a session may have been found.
  *
  * Side effects:
  *   - If a session is found then s->session is pointed at it (after freeing an
@@ -459,27 +461,34 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
 
     SSL_SESSION *ret = NULL;
     int fatal = 0;
-    int try_session_cache = 1;
+    int try_session_cache = 0;
     int r;
 
-    if (hello->session_id_len == 0)
-        try_session_cache = 0;
+    if (SSL_IS_TLS13(s)) {
+        int al;
 
-    /* sets s->ext.ticket_expected */
-    r = tls_get_ticket_from_client(s, hello, &ret);
-    switch (r) {
-    case -1:                   /* Error during processing */
-        fatal = 1;
-        goto err;
-    case 0:                    /* No ticket found */
-    case 1:                    /* Zero length ticket found */
-        break;                  /* Ok to carry on processing session id. */
-    case 2:                    /* Ticket found but not decrypted. */
-    case 3:                    /* Ticket decrypted, *ret has been set. */
-        try_session_cache = 0;
-        break;
-    default:
-        abort();
+        if (!tls_parse_extension(s, TLSEXT_IDX_psk, EXT_CLIENT_HELLO,
+                                 hello->pre_proc_exts, NULL, 0, &al))
+            return -1;
+
+        ret = s->session;
+    } else {
+        /* sets s->ext.ticket_expected */
+        r = tls_get_ticket_from_client(s, hello, &ret);
+        switch (r) {
+        case -1:                   /* Error during processing */
+            fatal = 1;
+            goto err;
+        case 0:                    /* No ticket found */
+        case 1:                    /* Zero length ticket found */
+            try_session_cache = 1;
+            break;                  /* Ok to carry on processing session id. */
+        case 2:                    /* Ticket found but not decrypted. */
+        case 3:                    /* Ticket decrypted, *ret has been set. */
+            break;
+        default:
+            abort();
+        }
     }
 
     if (try_session_cache &&
@@ -628,11 +637,15 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
         goto err;
     }
 
-    s->session_ctx->stats.sess_hit++;
+    if (!SSL_IS_TLS13(s)) {
+        /* We already did this for TLS1.3 */
+        SSL_SESSION_free(s->session);
+        s->session = ret;
+    }
 
-    SSL_SESSION_free(s->session);
-    s->session = ret;
+    s->session_ctx->stats.sess_hit++;
     s->verify_result = s->session->verify_result;
+
     return 1;
 
  err:

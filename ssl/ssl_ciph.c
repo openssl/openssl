@@ -2018,3 +2018,14 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
 
     return 1;
 }
+
+const EVP_MD *ssl_cipher_get_handshake_md(int cipher_id)
+{
+    const SSL_CIPHER *cipher = ssl3_get_cipher_by_id(cipher_id);
+    if (cipher == NULL) {
+        /* Don't recognise this cipher */
+        return NULL;
+    }
+
+    return ssl_md(cipher->algorithm2);
+}

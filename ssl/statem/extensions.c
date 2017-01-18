@@ -279,7 +279,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_psk,
         EXT_CLIENT_HELLO | EXT_TLS1_3_SERVER_HELLO | EXT_TLS_IMPLEMENTATION_ONLY
         | EXT_TLS1_3_ONLY,
-        NULL, NULL, tls_parse_stoc_psk, NULL, tls_construct_ctos_psk, NULL
+        NULL, tls_parse_ctos_psk, tls_parse_stoc_psk, NULL,
+        tls_construct_ctos_psk, NULL
     }
 };
 
@@ -1001,4 +1002,98 @@ static int init_psk_kex_modes(SSL *s, unsigned int context)
     s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_NONE;
 
     return 1;
+}
+
+int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
+                      size_t binderoffset, const unsigned char *binderin,
+                      unsigned char *binderout,
+                      SSL_SESSION *sess, int sign)
+{
+    EVP_PKEY *mackey = NULL;
+    EVP_MD_CTX *mctx = NULL;
+    unsigned char hash[EVP_MAX_MD_SIZE], binderkey[EVP_MAX_MD_SIZE];
+    unsigned char finishedkey[EVP_MAX_MD_SIZE], tmpbinder[EVP_MAX_MD_SIZE];
+    const char resumption_label[] = "resumption psk binder key";
+    size_t hashsize = EVP_MD_size(md), bindersize;
+    int ret = -1;
+
+    /* Generate the early_secret */
+    if (!tls13_generate_secret(s, md, NULL, sess->master_key,
+                               sess->master_key_length,
+                               (unsigned char *)&s->early_secret)) {
+        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /*
+     * Create the handshake hash for the binder key...the messages so far are
+     * empty!
+     */
+    mctx = EVP_MD_CTX_new();
+    if (mctx == NULL
+            || EVP_DigestInit_ex(mctx, md, NULL) <= 0
+            || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
+        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /* Generate the binder key */
+    if (!tls13_hkdf_expand(s, md, s->early_secret,
+                           (unsigned char *)resumption_label,
+                           sizeof(resumption_label) - 1, hash, binderkey,
+                           hashsize)) {
+        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /* Generate the finished key */
+    if (!tls13_derive_finishedkey(s, md, binderkey, finishedkey, hashsize)) {
+        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /*
+     * Get a hash of the ClientHello up to the start of the binders.
+     * TODO(TLS1.3): This will need to be tweaked when we implement
+     * HelloRetryRequest to include the digest of the previous messages here.
+     */
+    if (EVP_DigestInit_ex(mctx, md, NULL) <= 0
+            || EVP_DigestUpdate(mctx, msgstart, binderoffset) <= 0
+            || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
+        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    mackey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, finishedkey, hashsize);
+    if (mackey == NULL) {
+        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (!sign)
+        binderout = tmpbinder;
+
+    bindersize = hashsize;
+    if (EVP_DigestSignInit(mctx, NULL, md, NULL, mackey) <= 0
+            || EVP_DigestSignUpdate(mctx, hash, hashsize) <= 0
+            || EVP_DigestSignFinal(mctx, binderout, &bindersize) <= 0
+            || bindersize != hashsize) {
+        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (sign) {
+        ret = 1;
+    } else {
+        /* HMAC keys can't do EVP_DigestVerify* - use CRYPTO_memcmp instead */
+        ret = (CRYPTO_memcmp(binderin, binderout, hashsize) == 0);
+    }
+
+ err:
+    OPENSSL_cleanse(binderkey, sizeof(binderkey));
+    OPENSSL_cleanse(finishedkey, sizeof(finishedkey));
+    EVP_PKEY_free(mackey);
+    EVP_MD_CTX_free(mctx);
+
+    return ret;
 }

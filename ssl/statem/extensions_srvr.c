@@ -655,8 +655,7 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, X509 *x,
         return 0;
     }
 
-    if (!s->hit
-            && !PACKET_memdup(&supported_groups_list,
+    if (!PACKET_memdup(&supported_groups_list,
                               &s->session->ext.supportedgroups,
                               &s->session->ext.supportedgroups_len)) {
         *al = SSL_AD_DECODE_ERROR;
@@ -678,6 +677,96 @@ int tls_parse_ctos_ems(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
     s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
 
     return 1;
+}
+
+int tls_parse_ctos_psk(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
+{
+    PACKET identities, binders, binder;
+    size_t binderoffset, hashsize;
+    SSL_SESSION *sess = NULL;
+    unsigned int id, i;
+    const EVP_MD *md = NULL;
+
+    if (!PACKET_get_length_prefixed_2(pkt, &identities)) {
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
+
+    for (id = 0; PACKET_remaining(&identities) != 0; id++) {
+        PACKET identity;
+        unsigned long ticket_age;
+        int ret;
+
+        if (!PACKET_get_length_prefixed_2(&identities, &identity)
+                || !PACKET_get_net_4(&identities, &ticket_age)) {
+            *al = SSL_AD_DECODE_ERROR;
+            return 0;
+        }
+
+        ret = tls_decrypt_ticket(s, PACKET_data(&identity),
+                                 PACKET_remaining(&identity), NULL, 0, &sess);
+        if (ret == TICKET_FATAL_ERR_MALLOC || ret == TICKET_FATAL_ERR_OTHER) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            return 0;
+        }
+        if (ret == TICKET_NO_DECRYPT)
+            continue;
+
+        md = ssl_cipher_get_handshake_md(sess->cipher_id);
+        if (md == NULL) {
+            /*
+             * Don't recognise this cipher so we can't use the session.
+             * Ignore it
+             */
+            SSL_SESSION_free(sess);
+            sess = NULL;
+            continue;
+        }
+
+        /*
+         * TODO(TLS1.3): Somehow we need to handle the case of a ticket renewal.
+         * Ignored for now
+         */
+
+        break;
+    }
+
+    if (sess == NULL)
+        return 1;
+
+    binderoffset = PACKET_data(pkt) - (const unsigned char *)s->init_buf->data;
+
+    hashsize = EVP_MD_size(md);
+
+    if (!PACKET_get_length_prefixed_2(pkt, &binders)) {
+        *al = SSL_AD_DECODE_ERROR;
+        goto err;
+    }
+
+    for (i = 0; i <= id; i++) {
+        if (!PACKET_get_length_prefixed_1(&binders, &binder)) {
+            *al = SSL_AD_DECODE_ERROR;
+            goto err;
+        }
+    }
+
+    if (PACKET_remaining(&binder) != hashsize
+            || tls_psk_do_binder(s, md,
+                                 (const unsigned char *)s->init_buf->data,
+                                 binderoffset, PACKET_data(&binder), NULL,
+                                 sess, 0) != 1) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PARSE_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    sess->ext.tick_identity = id;
+    SSL_SESSION_free(s->session);
+    s->session = sess;
+
+    return 1;
+err:
+    return 0;
 }
 
 /*

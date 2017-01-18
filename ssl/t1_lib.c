@@ -20,10 +20,6 @@
 #include "ssl_locl.h"
 #include <openssl/ct.h>
 
-static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, size_t ticklen,
-                              const unsigned char *sess_id, size_t sesslen,
-                              SSL_SESSION **psess);
-
 SSL3_ENC_METHOD const TLSv1_enc_data = {
     tls1_enc,
     tls1_mac,
@@ -1094,14 +1090,14 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
     retv = tls_decrypt_ticket(s, PACKET_data(&ticketext->data), size,
                               hello->session_id, hello->session_id_len, ret);
     switch (retv) {
-    case 2:            /* ticket couldn't be decrypted */
+    case TICKET_NO_DECRYPT: /* ticket couldn't be decrypted */
         s->ext.ticket_expected = 1;
         return 2;
 
-    case 3:            /* ticket was decrypted */
+    case TICKET_SUCCESS: /* ticket was decrypted */
         return 3;
 
-    case 4:            /* ticket decrypted but need to renew */
+    case TICKET_SUCCESS_RENEW: /* ticket decrypted but need to renew */
         s->ext.ticket_expected = 1;
         return 3;
 
@@ -1121,20 +1117,27 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
  *       point to the resulting session.
  *
  * Returns:
- *   -2: fatal error, malloc failure.
- *   -1: fatal error, either from parsing or decrypting the ticket.
- *    2: the ticket couldn't be decrypted.
- *    3: a ticket was successfully decrypted and *psess was set.
- *    4: same as 3, but the ticket needs to be renewed.
+ *   TICKET_FATAL_ERR_MALLOC: fatal error, malloc failure.
+ *   TICKET_FATAL_ERR_OTHER:  fatal error, either from parsing or decrypting the
+ *                            ticket.
+ *   TICKET_NO_DECRYPT:       the ticket couldn't be decrypted.
+ *   TICKET_SUCCESS:          a ticket was successfully decrypted and *psess was
+ *                            set.
+ *   TICKET_SUCCESS_RENEW:    same as 3, but the ticket needs to be renewed
  */
-static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
-                              size_t eticklen, const unsigned char *sess_id,
-                              size_t sesslen, SSL_SESSION **psess)
+#define TICKET_FATAL_ERR_MALLOC     -2
+#define TICKET_FATAL_ERR_OTHER      -1
+#define TICKET_NO_DECRYPT            2
+#define TICKET_SUCCESS               3
+#define TICKET_SUCCESS_RENEW         4
+int tls_decrypt_ticket(SSL *s, const unsigned char *etick, size_t eticklen,
+                       const unsigned char *sess_id, size_t sesslen,
+                       SSL_SESSION **psess)
 {
     SSL_SESSION *sess;
     unsigned char *sdec;
     const unsigned char *p;
-    int slen, renew_ticket = 0, ret = -1, declen;
+    int slen, renew_ticket = 0, ret = TICKET_FATAL_ERR_OTHER, declen;
     size_t mlen;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
     HMAC_CTX *hctx = NULL;
@@ -1144,10 +1147,10 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     /* Initialize session ticket encryption and HMAC contexts */
     hctx = HMAC_CTX_new();
     if (hctx == NULL)
-        return -2;
+        return TICKET_FATAL_ERR_MALLOC;
     ctx = EVP_CIPHER_CTX_new();
     if (ctx == NULL) {
-        ret = -2;
+        ret = TICKET_FATAL_ERR_MALLOC;
         goto err;
     }
     if (tctx->ext.ticket_key_cb) {
@@ -1157,7 +1160,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         if (rv < 0)
             goto err;
         if (rv == 0) {
-            ret = 2;
+            ret = TICKET_NO_DECRYPT;
             goto err;
         }
         if (rv == 2)
@@ -1166,7 +1169,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         /* Check key name matches */
         if (memcmp(etick, tctx->ext.tick_key_name,
                    sizeof(tctx->ext.tick_key_name)) != 0) {
-            ret = 2;
+            ret = TICKET_NO_DECRYPT;
             goto err;
         }
         if (HMAC_Init_ex(hctx, tctx->ext.tick_hmac_key,
@@ -1174,8 +1177,8 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
                          EVP_sha256(), NULL) <= 0
             || EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
                                   tctx->ext.tick_aes_key,
-                                  etick + sizeof(tctx->ext.tick_key_name)) <=
-            0) {
+                                  etick
+                                  + sizeof(tctx->ext.tick_key_name)) <= 0) {
             goto err;
         }
     }
@@ -1190,7 +1193,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     /* Sanity check ticket length: must exceed keyname + IV + HMAC */
     if (eticklen <=
         TLSEXT_KEYNAME_LENGTH + EVP_CIPHER_CTX_iv_length(ctx) + mlen) {
-        ret = 2;
+        ret = TICKET_NO_DECRYPT;
         goto err;
     }
     eticklen -= mlen;
@@ -1202,7 +1205,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     HMAC_CTX_free(hctx);
     if (CRYPTO_memcmp(tick_hmac, etick + eticklen, mlen)) {
         EVP_CIPHER_CTX_free(ctx);
-        return 2;
+        return TICKET_NO_DECRYPT;
     }
     /* Attempt to decrypt session data */
     /* Move p after IV to start of encrypted ticket, update length */
@@ -1213,12 +1216,12 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
                                           (int)eticklen) <= 0) {
         EVP_CIPHER_CTX_free(ctx);
         OPENSSL_free(sdec);
-        return -1;
+        return TICKET_FATAL_ERR_OTHER;
     }
     if (EVP_DecryptFinal(ctx, sdec + slen, &declen) <= 0) {
         EVP_CIPHER_CTX_free(ctx);
         OPENSSL_free(sdec);
-        return 2;
+        return TICKET_NO_DECRYPT;
     }
     slen += declen;
     EVP_CIPHER_CTX_free(ctx);
@@ -1239,15 +1242,15 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         sess->session_id_length = sesslen;
         *psess = sess;
         if (renew_ticket)
-            return 4;
+            return TICKET_SUCCESS_RENEW;
         else
-            return 3;
+            return TICKET_SUCCESS;
     }
     ERR_clear_error();
     /*
      * For session parse failure, indicate that we need to send a new ticket.
      */
-    return 2;
+    return TICKET_NO_DECRYPT;
  err:
     EVP_CIPHER_CTX_free(ctx);
     HMAC_CTX_free(hctx);
