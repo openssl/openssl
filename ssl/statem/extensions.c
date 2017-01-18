@@ -277,7 +277,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_psk,
         EXT_CLIENT_HELLO | EXT_TLS1_3_SERVER_HELLO | EXT_TLS_IMPLEMENTATION_ONLY
         | EXT_TLS1_3_ONLY,
-        NULL, NULL, NULL, NULL, tls_construct_ctos_psk, NULL
+        NULL, NULL, tls_parse_stoc_psk, NULL, tls_construct_ctos_psk, NULL
     }
 };
 

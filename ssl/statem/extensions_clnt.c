@@ -1279,3 +1279,26 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
 
     return 1;
 }
+
+int tls_parse_stoc_psk(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
+{
+#ifndef OPENSSL_NO_TLS1_3
+    unsigned int identity;
+
+    if (!PACKET_get_net_2(pkt, &identity) || PACKET_remaining(pkt) != 0) {
+        *al = SSL_AD_HANDSHAKE_FAILURE;
+        SSLerr(SSL_F_TLS_PARSE_STOC_PSK, SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+
+    if (s->session->ext.tick_identity != (int)identity) {
+        *al = SSL_AD_HANDSHAKE_FAILURE;
+        SSLerr(SSL_F_TLS_PARSE_STOC_PSK, SSL_R_BAD_PSK_IDENTITY);
+        return 0;
+    }
+
+    s->hit = 1;
+#endif
+
+    return 1;
+}
