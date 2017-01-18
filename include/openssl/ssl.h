@@ -2324,6 +2324,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_GET_MESSAGE_HEADER                     387
 # define SSL_F_TLS_PARSE_CLIENTHELLO_TLSEXT               449
 # define SSL_F_TLS_PARSE_CTOS_KEY_SHARE                   463
+# define SSL_F_TLS_PARSE_CTOS_PSK                         505
 # define SSL_F_TLS_PARSE_CTOS_RENEGOTIATE                 464
 # define SSL_F_TLS_PARSE_CTOS_USE_SRTP                    465
 # define SSL_F_TLS_PARSE_STOC_KEY_SHARE                   445
@@ -2361,6 +2362,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_SKE_ECDHE                      420
 # define SSL_F_TLS_PROCESS_SKE_PSK_PREAMBLE               421
 # define SSL_F_TLS_PROCESS_SKE_SRP                        422
+# define SSL_F_TLS_PSK_DO_BINDER                          506
 # define SSL_F_TLS_SCAN_CLIENTHELLO_TLSEXT                450
 # define SSL_F_TLS_SETUP_HANDSHAKE                        508
 # define SSL_F_USE_CERTIFICATE_CHAIN_FILE                 220
