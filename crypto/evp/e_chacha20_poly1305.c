@@ -398,6 +398,8 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             len = aad[EVP_AEAD_TLS1_AAD_LEN - 2] << 8 |
                   aad[EVP_AEAD_TLS1_AAD_LEN - 1];
             if (!ctx->encrypt) {
+                if (len < POLY1305_BLOCK_SIZE)
+                    return 0;
                 len -= POLY1305_BLOCK_SIZE;     /* discount attached tag */
                 memcpy(temp, aad, EVP_AEAD_TLS1_AAD_LEN - 2);
                 aad = temp;
@@ -407,8 +409,7 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             actx->tls_payload_length = len;
 
             /*
-             * merge record sequence number as per
-             * draft-ietf-tls-chacha20-poly1305-03
+             * merge record sequence number as per RFC7905
              */
             actx->key.counter[1] = actx->nonce[0];
             actx->key.counter[2] = actx->nonce[1] ^ CHACHA_U8TOU32(aad);

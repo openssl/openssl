@@ -1388,10 +1388,15 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                 EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] << 8
                 | EVP_CIPHER_CTX_buf_noconst(c)[arg - 1];
             /* Correct length for explicit IV */
+            if (len < EVP_GCM_TLS_EXPLICIT_IV_LEN)
+                return 0;
             len -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
             /* If decrypting correct for tag too */
-            if (!EVP_CIPHER_CTX_encrypting(c))
+            if (!EVP_CIPHER_CTX_encrypting(c)) {
+                if (len < EVP_GCM_TLS_TAG_LEN)
+                    return 0;
                 len -= EVP_GCM_TLS_TAG_LEN;
+            }
             EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] = len >> 8;
             EVP_CIPHER_CTX_buf_noconst(c)[arg - 1] = len & 0xff;
         }
@@ -1946,10 +1951,15 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                 EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] << 8
                 | EVP_CIPHER_CTX_buf_noconst(c)[arg - 1];
             /* Correct length for explicit IV */
+            if (len < EVP_CCM_TLS_EXPLICIT_IV_LEN)
+                return 0;
             len -= EVP_CCM_TLS_EXPLICIT_IV_LEN;
             /* If decrypting correct for tag too */
-            if (!EVP_CIPHER_CTX_encrypting(c))
+            if (!EVP_CIPHER_CTX_encrypting(c)) {
+                if (len < cctx->M)
+                    return 0;
                 len -= cctx->M;
+            }
             EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] = len >> 8;
             EVP_CIPHER_CTX_buf_noconst(c)[arg - 1] = len & 0xff;
         }
