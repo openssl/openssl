@@ -2315,6 +2315,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_STOC_KEY_EXCHANGE            377
 # define SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE               456
 # define SSL_F_TLS_CONSTRUCT_STOC_NEXT_PROTO_NEG          457
+# define SSL_F_TLS_CONSTRUCT_STOC_PSK                     504
 # define SSL_F_TLS_CONSTRUCT_STOC_RENEGOTIATE             458
 # define SSL_F_TLS_CONSTRUCT_STOC_SERVER_NAME             459
 # define SSL_F_TLS_CONSTRUCT_STOC_SESSION_TICKET          460

@@ -4113,6 +4113,9 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
                 rv = tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL,
                                            0,
                                            (unsigned char *)&s->early_secret);
+            else
+                rv = 1;
+
             rv = rv && tls13_generate_handshake_secret(s, pms, pmslen);
         } else {
             /* Generate master secret and discard premaster */

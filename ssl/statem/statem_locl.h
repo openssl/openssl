@@ -247,6 +247,8 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
 #define TLSEXT_TYPE_cryptopro_bug      0xfde8
 int tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt, X509 *x,
                                      size_t chainidx, int *al);
+int tls_construct_stoc_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
+                           int *al);
 
 /* Client Extension processing */
 int tls_construct_ctos_renegotiate(SSL *s, WPACKET *pkt, X509 *x,
