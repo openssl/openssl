@@ -76,7 +76,7 @@ created with the private EC key B<eckey>.
 
 ECDSA_sign() computes a digital signature of the B<dgstlen> bytes hash value
 B<dgst> using the private EC key B<eckey>. The DER encoded signatures is
-stored in B<sig> and it's length is returned in B<sig_len>. Note: B<sig> must
+stored in B<sig> and its length is returned in B<sig_len>. Note: B<sig> must
 point to ECDSA_size(eckey) bytes of memory. The parameter B<type> is currently
 ignored. ECDSA_sign() is wrapper function for ECDSA_sign_ex() with B<kinv>
 and B<rp> set to NULL.
@@ -105,7 +105,7 @@ used in a later call to ECDSA_sign_ex() or ECDSA_do_sign_ex().
 
 ECDSA_sign_ex() computes a digital signature of the B<dgstlen> bytes hash value
 B<dgst> using the private EC key B<eckey> and the optional pre-computed values
-B<kinv> and B<rp>. The DER encoded signatures is stored in B<sig> and it's
+B<kinv> and B<rp>. The DER encoded signature is stored in B<sig> and its
 length is returned in B<sig_len>. Note: B<sig> must point to ECDSA_size(eckey)
 bytes of memory. The parameter B<type> is ignored.
 
@@ -191,7 +191,7 @@ ANSI X9.62, US Federal Information Processing Standard FIPS 186-2
 
 =head1 SEE ALSO
 
-L<dsa(3)>,
+L<DSA_new(3)>,
 L<EVP_DigestSignInit(3)>,
 L<EVP_DigestVerifyInit(3)>
 
