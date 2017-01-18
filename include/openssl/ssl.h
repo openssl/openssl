@@ -2097,6 +2097,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_DTLS_PROCESS_HELLO_VERIFY                  386
 # define SSL_F_FINAL_EC_PT_FORMATS                        485
 # define SSL_F_FINAL_EMS                                  486
+# define SSL_F_FINAL_KEY_SHARE                            503
 # define SSL_F_FINAL_RENEGOTIATE                          483
 # define SSL_F_FINAL_SIG_ALGS                             497
 # define SSL_F_NSS_KEYLOG_INT                             500
