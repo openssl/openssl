@@ -166,6 +166,12 @@ __owur int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts,
 __owur int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
                                     X509 *x, size_t chainidx, int *al);
 
+__owur int tls_psk_do_binder(SSL *s, const EVP_MD *md,
+                             const unsigned char *msgstart,
+                             size_t binderoffset, const unsigned char *binderin,
+                             unsigned char *binderout,
+                             SSL_SESSION *sess, int sign);
+
 /* Server Extension processing */
 int tls_parse_ctos_renegotiate(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                                int *al);
@@ -202,6 +208,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
 int tls_parse_ctos_ems(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
 int tls_parse_ctos_psk_kex_modes(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                                  int *al);
+int tls_parse_ctos_psk(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
 
 int tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt, X509 *x,
                                    size_t chainidx, int *al);

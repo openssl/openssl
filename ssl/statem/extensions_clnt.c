@@ -663,16 +663,10 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                            int *al)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    const SSL_CIPHER *cipher;
     uint32_t now, ages, agems;
-    size_t hashsize, bindersize, binderoffset, msglen;
+    size_t hashsize, binderoffset, msglen;
     unsigned char *binder = NULL, *msgstart = NULL;
-    EVP_PKEY *mackey = NULL;
     const EVP_MD *md;
-    EVP_MD_CTX *mctx = NULL;
-    unsigned char hash[EVP_MAX_MD_SIZE], binderkey[EVP_MAX_MD_SIZE];
-    unsigned char finishedkey[EVP_MAX_MD_SIZE];
-    const char resumption_label[] = "resumption psk binder key";
     int ret = 0;
 
     s->session->ext.tick_identity = TLSEXT_PSK_BAD_IDENTITY;
@@ -719,17 +713,12 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
      */
     agems += s->session->ext.tick_age_add;
 
-    cipher = ssl3_get_cipher_by_id(s->session->cipher_id);
-    if (cipher == NULL) {
+    md = ssl_cipher_get_handshake_md(s->session->cipher_id);
+    if (md == NULL) {
         /* Don't recognise this cipher so we can't use the session. Ignore it */
         return 1;
     }
-    md = ssl_md(cipher->algorithm2);
-    if (md == NULL) {
-        /* Shouldn't happen!! */
-        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
+
     hashsize = EVP_MD_size(md);
 
     /* Create the extension, but skip over the binder for now */
@@ -757,60 +746,8 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
 
     msgstart = WPACKET_get_curr(pkt) - msglen;
 
-    /* Generate the early_secret */
-    if (!tls13_generate_secret(s, md, NULL, s->session->master_key,
-                               s->session->master_key_length,
-                               (unsigned char *)&s->early_secret)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /*
-     * Create the handshake hash for the binder key...the messages so far are
-     * empty!
-     */
-    mctx = EVP_MD_CTX_new();
-    if (mctx == NULL
-            || EVP_DigestInit_ex(mctx, md, NULL) <= 0
-            || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /* Generate the binder key */
-    if (!tls13_hkdf_expand(s, md, s->early_secret,
-                           (unsigned char *)resumption_label,
-                           sizeof(resumption_label) - 1, hash, binderkey,
-                           hashsize)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /* Generate the finished key */
-    if (!tls13_derive_finishedkey(s, md, binderkey, finishedkey, hashsize)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    /*
-     * Get a hash of the ClientHello up to the start of the binders.
-     * TODO(TLS1.3): This will need to be tweaked when we implement
-     * HelloRetryRequest to include the digest of the previous messages here.
-     */
-    if (EVP_DigestInit_ex(mctx, md, NULL) <= 0
-            || EVP_DigestUpdate(mctx, msgstart, binderoffset) <= 0
-            || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
-    mackey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, finishedkey, hashsize);
-    bindersize = hashsize;
-    if (binderkey == NULL
-            || EVP_DigestSignInit(mctx, NULL, md, NULL, mackey) <= 0
-            || EVP_DigestSignUpdate(mctx, hash, hashsize) <= 0
-            || EVP_DigestSignFinal(mctx, binder, &bindersize) <= 0
-            || bindersize != hashsize) {
+    if (tls_psk_do_binder(s, md, msgstart, binderoffset, NULL, binder,
+                          s->session, 1) != 1) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -819,11 +756,6 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
 
     ret = 1;
  err:
-    OPENSSL_cleanse(binderkey, sizeof(binderkey));
-    OPENSSL_cleanse(finishedkey, sizeof(finishedkey));
-    EVP_PKEY_free(mackey);
-    EVP_MD_CTX_free(mctx);
-
     return ret;
 #else
     return 1;
