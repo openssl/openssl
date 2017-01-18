@@ -51,6 +51,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_DTLS_PROCESS_HELLO_VERIFY), "dtls_process_hello_verify"},
     {ERR_FUNC(SSL_F_FINAL_EC_PT_FORMATS), "final_ec_pt_formats"},
     {ERR_FUNC(SSL_F_FINAL_EMS), "final_ems"},
+    {ERR_FUNC(SSL_F_FINAL_KEY_SHARE), "final_key_share"},
     {ERR_FUNC(SSL_F_FINAL_RENEGOTIATE), "final_renegotiate"},
     {ERR_FUNC(SSL_F_FINAL_SIG_ALGS), "final_sig_algs"},
     {ERR_FUNC(SSL_F_OPENSSL_INIT_SSL), "OPENSSL_init_ssl"},

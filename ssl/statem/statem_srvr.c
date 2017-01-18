@@ -1557,15 +1557,6 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    /* Check we've got a key_share for TLSv1.3 */
-    if (SSL_IS_TLS13(s) && s->s3->peer_tmp == NULL && !s->hit) {
-        /* No suitable share */
-        /* TODO(TLS1.3): Send a HelloRetryRequest */
-        al = SSL_AD_HANDSHAKE_FAILURE;
-        SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_NO_SUITABLE_KEY_SHARE);
-        goto f_err;
-    }
-
     /*
      * Check if we want to use external pre-shared secret for this handshake
      * for not reused session only. We need to generate server_random before

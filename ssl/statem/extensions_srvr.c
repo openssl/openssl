@@ -523,7 +523,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
     int group_nid, found = 0;
     unsigned int curve_flags;
 
-    if (s->hit)
+    if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
         return 1;
 
     /* Sanity check */

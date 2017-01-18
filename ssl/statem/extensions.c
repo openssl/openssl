@@ -36,6 +36,7 @@ static int init_etm(SSL *s, unsigned int context);
 static int init_ems(SSL *s, unsigned int context);
 static int final_ems(SSL *s, unsigned int context, int sent, int *al);
 static int init_psk_kex_modes(SSL *s, unsigned int context);
+static int final_key_share(SSL *s, unsigned int context, int sent, int *al);
 #ifndef OPENSSL_NO_SRTP
 static int init_srtp(SSL *s, unsigned int context);
 #endif
@@ -252,7 +253,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         | EXT_TLS1_3_HELLO_RETRY_REQUEST | EXT_TLS_IMPLEMENTATION_ONLY
         | EXT_TLS1_3_ONLY,
         NULL, tls_parse_ctos_key_share, tls_parse_stoc_key_share,
-        tls_construct_stoc_key_share, tls_construct_ctos_key_share, NULL
+        tls_construct_stoc_key_share, tls_construct_ctos_key_share,
+        final_key_share
     },
     {
         /*
@@ -949,6 +951,45 @@ static int final_sig_algs(SSL *s, unsigned int context, int sent, int *al)
     if (!sent && SSL_IS_TLS13(s)) {
         *al = TLS13_AD_MISSING_EXTENSION;
         SSLerr(SSL_F_FINAL_SIG_ALGS, SSL_R_MISSING_SIGALGS_EXTENSION);
+        return 0;
+    }
+
+    return 1;
+}
+
+
+static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
+{
+    if (!SSL_IS_TLS13(s))
+        return 1;
+
+    /*
+     * If
+     *     we have no key_share
+     *     AND
+     *     (we are not resuming
+     *      OR the kex_mode doesn't allow non key_share resumes)
+     * THEN
+     *     fail
+     */
+    if (((s->server && s->s3->peer_tmp == NULL) || (!s->server && !sent))
+            && (!s->hit
+                || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0)) {
+        /* No suitable share */
+        /* TODO(TLS1.3): Send a HelloRetryRequest */
+        *al = SSL_AD_HANDSHAKE_FAILURE;
+        SSLerr(SSL_F_FINAL_KEY_SHARE, SSL_R_NO_SUITABLE_KEY_SHARE);
+        return 0;
+    }
+
+    /*
+     * For a client side resumption with no key_share we need to generate
+     * the handshake secret (otherwise this is done during key_share
+     * processing).
+     */
+    if (!sent && !s->server && !tls13_generate_handshake_secret(s, NULL, 0)) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_FINAL_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
