@@ -1418,7 +1418,7 @@ typedef struct dtls1_state_st {
      */
     struct timeval next_timeout;
     /* Timeout duration */
-    unsigned short timeout_duration_ms;
+    unsigned timeout_duration_ms;
 
     unsigned int retransmitting;
 # ifndef OPENSSL_NO_SCTP
