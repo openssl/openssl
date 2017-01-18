@@ -1130,6 +1130,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
+    /* We do this immediately so we know what format the ServerHello is in */
     protverr = ssl_choose_client_version(s, sversion);
     if (protverr != 0) {
         al = SSL_AD_PROTOCOL_VERSION;
@@ -1144,8 +1145,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
-
-    s->hit = 0;
 
     /* Get the session-id. */
     if (!SSL_IS_TLS13(s)) {
@@ -1173,63 +1172,103 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    /*
-     * Check if we can resume the session based on external pre-shared secret.
-     * EAP-FAST (RFC 4851) supports two types of session resumption.
-     * Resumption based on server-side state works with session IDs.
-     * Resumption based on pre-shared Protected Access Credentials (PACs)
-     * works by overriding the SessionTicket extension at the application
-     * layer, and does not send a session ID. (We do not know whether EAP-FAST
-     * servers would honour the session ID.) Therefore, the session ID alone
-     * is not a reliable indicator of session resumption, so we first check if
-     * we can resume, and later peek at the next handshake message to see if the
-     * server wants to resume.
-     */
-    if (s->version >= TLS1_VERSION && !SSL_IS_TLS13(s)
-            && s->ext.session_secret_cb != NULL && s->session->ext.tick) {
-        const SSL_CIPHER *pref_cipher = NULL;
-        /*
-         * s->session->master_key_length is a size_t, but this is an int for
-         * backwards compat reasons
-         */
-        int master_key_length;
-        master_key_length = sizeof(s->session->master_key);
-        if (s->ext.session_secret_cb(s, s->session->master_key,
-                                     &master_key_length,
-                                     NULL, &pref_cipher,
-                                     s->ext.session_secret_cb_arg)
-                 && master_key_length > 0) {
-            s->session->master_key_length = master_key_length;
-            s->session->cipher = pref_cipher ?
-                pref_cipher : ssl_get_cipher_by_char(s, cipherchars);
-        } else {
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
-            al = SSL_AD_INTERNAL_ERROR;
+    if (!SSL_IS_TLS13(s)) {
+        if (!PACKET_get_1(pkt, &compression)) {
+            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+            al = SSL_AD_DECODE_ERROR;
             goto f_err;
         }
+    } else {
+        compression = 0;
     }
 
-    if (session_id_len != 0 && session_id_len == s->session->session_id_length
-        && memcmp(PACKET_data(&session_id), s->session->session_id,
-                  session_id_len) == 0) {
+    /* TLS extensions */
+    if (PACKET_remaining(pkt) == 0) {
+        PACKET_null_init(&extpkt);
+    } else if (!PACKET_as_length_prefixed_2(pkt, &extpkt)) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_BAD_LENGTH);
+        goto f_err;
+    }
+
+    context = SSL_IS_TLS13(s) ? EXT_TLS1_3_SERVER_HELLO
+                              : EXT_TLS1_2_SERVER_HELLO;
+    if (!tls_collect_extensions(s, &extpkt, context, &extensions, &al))
+        goto f_err;
+
+    s->hit = 0;
+
+    if (SSL_IS_TLS13(s)) {
+        /* This will set s->hit if we are resuming */
+        if (!tls_parse_extension(s, TLSEXT_IDX_psk,
+                                 EXT_TLS1_3_SERVER_HELLO,
+                                 extensions, NULL, 0, &al))
+            goto f_err;
+    } else {
+        /*
+         * Check if we can resume the session based on external pre-shared
+         * secret. EAP-FAST (RFC 4851) supports two types of session resumption.
+         * Resumption based on server-side state works with session IDs.
+         * Resumption based on pre-shared Protected Access Credentials (PACs)
+         * works by overriding the SessionTicket extension at the application
+         * layer, and does not send a session ID. (We do not know whether
+         * EAP-FAST servers would honour the session ID.) Therefore, the session
+         * ID alone is not a reliable indicator of session resumption, so we
+         * first check if we can resume, and later peek at the next handshake
+         * message to see if the server wants to resume.
+         */
+        if (s->version >= TLS1_VERSION
+                && s->ext.session_secret_cb != NULL && s->session->ext.tick) {
+            const SSL_CIPHER *pref_cipher = NULL;
+            /*
+             * s->session->master_key_length is a size_t, but this is an int for
+             * backwards compat reasons
+             */
+            int master_key_length;
+            master_key_length = sizeof(s->session->master_key);
+            if (s->ext.session_secret_cb(s, s->session->master_key,
+                                         &master_key_length,
+                                         NULL, &pref_cipher,
+                                         s->ext.session_secret_cb_arg)
+                     && master_key_length > 0) {
+                s->session->master_key_length = master_key_length;
+                s->session->cipher = pref_cipher ?
+                    pref_cipher : ssl_get_cipher_by_char(s, cipherchars);
+            } else {
+                SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
+                al = SSL_AD_INTERNAL_ERROR;
+                goto f_err;
+            }
+        }
+
+        if (session_id_len != 0
+                && session_id_len == s->session->session_id_length
+                && memcmp(PACKET_data(&session_id), s->session->session_id,
+                          session_id_len) == 0)
+            s->hit = 1;
+    }
+
+    if (s->hit) {
         if (s->sid_ctx_length != s->session->sid_ctx_length
-            || memcmp(s->session->sid_ctx, s->sid_ctx, s->sid_ctx_length)) {
+                || memcmp(s->session->sid_ctx, s->sid_ctx, s->sid_ctx_length)) {
             /* actually a client application bug */
             al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO,
                    SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT);
             goto f_err;
         }
-        s->hit = 1;
     } else {
         /*
          * If we were trying for session-id reuse but the server
-         * didn't echo the ID, make a new SSL_SESSION.
+         * didn't resume, make a new SSL_SESSION.
          * In the case of EAP-FAST and PAC, we do not send a session ID,
          * so the PAC-based session secret is always preserved. It'll be
          * overwritten if the server refuses resumption.
          */
-        if (s->session->session_id_length > 0) {
+        if (s->session->session_id_length > 0
+                || (SSL_IS_TLS13(s)
+                    && s->session->ext.tick_identity
+                       != TLSEXT_PSK_BAD_IDENTITY)) {
             s->ctx->stats.sess_miss++;
             if (!ssl_get_new_session(s, 0)) {
                 goto f_err;
@@ -1299,17 +1338,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto f_err;
     }
     s->s3->tmp.new_cipher = c;
-    /* lets get the compression algorithm */
-    /* COMPRESSION */
-    if (!SSL_IS_TLS13(s)) {
-        if (!PACKET_get_1(pkt, &compression)) {
-            SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
-            al = SSL_AD_DECODE_ERROR;
-            goto f_err;
-        }
-    } else {
-        compression = 0;
-    }
 
 #ifdef OPENSSL_NO_COMP
     if (compression != 0) {
@@ -1353,19 +1381,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     }
 #endif
 
-    /* TLS extensions */
-    if (PACKET_remaining(pkt) == 0) {
-        PACKET_null_init(&extpkt);
-    } else if (!PACKET_as_length_prefixed_2(pkt, &extpkt)) {
-        al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_BAD_LENGTH);
-        goto f_err;
-    }
-
-    context = SSL_IS_TLS13(s) ? EXT_TLS1_3_SERVER_HELLO
-                              : EXT_TLS1_2_SERVER_HELLO;
-    if (!tls_collect_extensions(s, &extpkt, context, &extensions, &al)
-            || !tls_parse_all_extensions(s, context, extensions, NULL, 0, &al))
+    if (!tls_parse_all_extensions(s, context, extensions, NULL, 0, &al))
         goto f_err;
 
 #ifndef OPENSSL_NO_SCTP
