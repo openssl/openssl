@@ -1394,6 +1394,8 @@ pitem *pqueue_iterator(pqueue *pq);
 pitem *pqueue_next(piterator *iter);
 size_t pqueue_size(pqueue *pq);
 
+typedef unsigned (dtls_timer_cb)(SSL *s, unsigned timer);
+
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     size_t cookie_len;
@@ -1416,11 +1418,15 @@ typedef struct dtls1_state_st {
      */
     struct timeval next_timeout;
     /* Timeout duration */
-    unsigned short timeout_duration;
+    unsigned timeout_duration_ms;
+
     unsigned int retransmitting;
 # ifndef OPENSSL_NO_SCTP
     int shutdown_received;
 # endif
+
+    dtls_timer_cb *timer_cb;
+
 } DTLS1_STATE;
 
 # ifndef OPENSSL_NO_EC
