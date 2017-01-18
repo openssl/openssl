@@ -21,7 +21,7 @@ side, the peer's certificate must be obtained separately using
 L<SSL_get_peer_certificate(3)>.
 If the peer did not present a certificate, NULL is returned.
 
-NB: SSL_get_peer_chain() returns the peer chain as sent by the peer: it
+NB: SSL_get_peer_cert_chain() returns the peer chain as sent by the peer: it
 only consists of certificates the peer has sent (in the order the peer
 has sent them) it is B<not> a verified chain.
 
