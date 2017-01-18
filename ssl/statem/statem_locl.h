@@ -321,3 +321,4 @@ int tls_parse_stoc_etm(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
 int tls_parse_stoc_ems(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
 int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                              int *al);
+int tls_parse_stoc_psk(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
