@@ -385,11 +385,10 @@ int dtls1_handle_timeout(SSL *s)
     }
 
     if (s->d1->timer_cb != NULL) {
-        const unsigned ms = s->d1->timer_cb(s, s->d1->timeout_duration_ms);
-        s->d1->timeout_duration_ms = ms;
-    }
-    else
+        s->d1->timeout_duration_ms = s->d1->timer_cb(s, s->d1->timeout_duration_ms);
+    } else {
         dtls1_double_timeout(s);
+    }
 
     if (dtls1_check_timeout_num(s) < 0)
         return -1;
@@ -982,8 +981,5 @@ size_t DTLS_get_data_mtu(const SSL *s)
 
 void DTLS_set_timer_cb(SSL *s, unsigned (*cb)(SSL *s, unsigned timeout_ms))
 {
-    if (!s || !s->d1)
-        return;
-
     s->d1->timer_cb = cb;
 }
