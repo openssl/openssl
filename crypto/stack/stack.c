@@ -41,7 +41,7 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
 {
     OPENSSL_STACK *ret;
 
-    if (sk->num < 0)
+    if (sk == NULL || sk->num < 0)
         return NULL;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
@@ -66,7 +66,7 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
     OPENSSL_STACK *ret;
     int i;
 
-    if (sk->num < 0)
+    if (sk == NULL || sk->num < 0)
         return NULL;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
