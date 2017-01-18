@@ -41,12 +41,7 @@ static RSA_METHOD rsa_pkcs1_ossl_meth = {
     NULL                        /* rsa_keygen */
 };
 
-#ifdef RSA_NULL
-extern RSA_METHOD *RSA_null_meth;
-static const RSA_METHOD *default_RSA_meth = &RSA_null_meth;
-#else
 static const RSA_METHOD *default_RSA_meth = &rsa_pkcs1_ossl_meth;
-#endif
 
 void RSA_set_default_method(const RSA_METHOD *meth)
 {
@@ -61,6 +56,11 @@ const RSA_METHOD *RSA_get_default_method(void)
 const RSA_METHOD *RSA_PKCS1_OpenSSL(void)
 {
     return &rsa_pkcs1_ossl_meth;
+}
+
+const RSA_METHOD *RSA_null_method(void)
+{
+    return NULL;
 }
 
 static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
