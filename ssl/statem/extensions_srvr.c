@@ -1006,12 +1006,14 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
     size_t encoded_pt_len = 0;
     EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL;
 
-    if (s->hit)
-        return 1;
-
     if (ckey == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-        return 0;
+        /* No key_share received from client, must be resuming. */
+        if (!s->hit || !tls13_generate_handshake_secret(s, NULL, 0)) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        return 1;
     }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
@@ -1074,6 +1076,23 @@ int tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt, X509 *x,
 
     if (!WPACKET_memcpy(pkt, cryptopro_ext, sizeof(cryptopro_ext))) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_CRYPTOPRO_BUG, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_construct_stoc_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
+                           int *al)
+{
+    if (!s->hit)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u16(pkt, s->session->ext.tick_identity)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_PSK, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
