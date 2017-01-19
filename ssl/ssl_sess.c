@@ -91,6 +91,9 @@ SSL_SESSION *SSL_SESSION_new(void)
 {
     SSL_SESSION *ss;
 
+    if (!OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL))
+        return NULL;
+
     ss = OPENSSL_zalloc(sizeof(*ss));
     if (ss == NULL) {
         SSLerr(SSL_F_SSL_SESSION_NEW, ERR_R_MALLOC_FAILURE);
@@ -584,21 +587,6 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
                SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED);
         fatal = 1;
         goto err;
-    }
-
-    if (ret->cipher == NULL) {
-        unsigned char buf[5], *p;
-        unsigned long l;
-
-        p = buf;
-        l = ret->cipher_id;
-        l2n(l, p);
-        if ((ret->ssl_version >> 8) >= SSL3_VERSION_MAJOR)
-            ret->cipher = ssl_get_cipher_by_char(s, &(buf[2]));
-        else
-            ret->cipher = ssl_get_cipher_by_char(s, &(buf[1]));
-        if (ret->cipher == NULL)
-            goto err;
     }
 
     if (ret->timeout < (long)(time(NULL) - ret->time)) { /* timeout */
