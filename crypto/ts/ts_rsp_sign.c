@@ -44,7 +44,7 @@ static ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
 static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
                                                X509 *cert, int issuer_needed);
 static int ESS_add_signing_cert_v2(PKCS7_SIGNER_INFO *si,
-                                   ESS_SIGNING_CERT_V2 * sc);
+                                   ESS_SIGNING_CERT_V2 *sc);
 
 static ASN1_GENERALIZEDTIME
 *TS_RESP_set_genTime_with_precision(ASN1_GENERALIZEDTIME *, long, long,
@@ -861,8 +861,7 @@ static int ESS_add_signing_cert(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
 
 static ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
                                                          X509 *signcert,
-                                                         STACK_OF(X509)
-                                                         *certs)
+                                                         STACK_OF(X509) *certs)
 {
     ESS_CERT_ID_V2 *cid = NULL;
     ESS_SIGNING_CERT_V2 *sc = NULL;
@@ -956,13 +955,13 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
 }
 
 static int ESS_add_signing_cert_v2(PKCS7_SIGNER_INFO *si,
-                                   ESS_SIGNING_CERT_V2 * sc)
+                                   ESS_SIGNING_CERT_V2 *sc)
 {
     ASN1_STRING *seq = NULL;
     unsigned char *p, *pp = NULL;
     int len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
 
-    if ((pp = (unsigned char *)OPENSSL_malloc(len)) == NULL) {
+    if ((pp = OPENSSL_malloc(len)) == NULL) {
         TSerr(TS_F_ESS_ADD_SIGNING_CERT_V2, ERR_R_MALLOC_FAILURE);
         goto err;
     }

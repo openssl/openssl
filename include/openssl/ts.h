@@ -162,20 +162,19 @@ ESS_SIGNING_CERT *d2i_ESS_SIGNING_CERT(ESS_SIGNING_CERT **a,
 ESS_SIGNING_CERT *ESS_SIGNING_CERT_dup(ESS_SIGNING_CERT *a);
 
 ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new(void);
-void ESS_CERT_ID_V2_free(ESS_CERT_ID_V2 * a);
-int i2d_ESS_CERT_ID_V2(const ESS_CERT_ID_V2 * a, unsigned char **pp);
-ESS_CERT_ID_V2 *d2i_ESS_CERT_ID_V2(ESS_CERT_ID_V2 ** a,
+void ESS_CERT_ID_V2_free(ESS_CERT_ID_V2 *a);
+int i2d_ESS_CERT_ID_V2(const ESS_CERT_ID_V2 *a, unsigned char **pp);
+ESS_CERT_ID_V2 *d2i_ESS_CERT_ID_V2(ESS_CERT_ID_V2 **a,
                                    const unsigned char **pp, long length);
-ESS_CERT_ID_V2 *ESS_CERT_ID_V2_dup(ESS_CERT_ID_V2 * a);
+ESS_CERT_ID_V2 *ESS_CERT_ID_V2_dup(ESS_CERT_ID_V2 *a);
 
 ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new(void);
-void ESS_SIGNING_CERT_V2_free(ESS_SIGNING_CERT_V2 * a);
-int i2d_ESS_SIGNING_CERT_V2(const ESS_SIGNING_CERT_V2 * a,
-                            unsigned char **pp);
-ESS_SIGNING_CERT_V2 *d2i_ESS_SIGNING_CERT_V2(ESS_SIGNING_CERT_V2 ** a,
+void ESS_SIGNING_CERT_V2_free(ESS_SIGNING_CERT_V2 *a);
+int i2d_ESS_SIGNING_CERT_V2(const ESS_SIGNING_CERT_V2 *a, unsigned char **pp);
+ESS_SIGNING_CERT_V2 *d2i_ESS_SIGNING_CERT_V2(ESS_SIGNING_CERT_V2 **a,
                                              const unsigned char **pp,
                                              long length);
-ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_dup(ESS_SIGNING_CERT_V2 * a);
+ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_dup(ESS_SIGNING_CERT_V2 *a);
 
 int TS_REQ_set_version(TS_REQ *a, long version);
 long TS_REQ_get_version(const TS_REQ *a);
