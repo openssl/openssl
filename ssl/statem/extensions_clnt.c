@@ -191,7 +191,8 @@ int tls_construct_ctos_session_ticket(SSL *s, WPACKET *pkt, X509 *x,
         return 1;
 
     if (!s->new_session && s->session != NULL
-            && s->session->ext.tick != NULL) {
+            && s->session->ext.tick != NULL
+            && s->session->ssl_version != TLS1_3_VERSION) {
         ticklen = s->session->ext.ticklen;
     } else if (s->session && s->ext.session_ticket != NULL
                && s->ext.session_ticket->data != NULL) {
@@ -674,10 +675,11 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
     s->session->ext.tick_identity = TLSEXT_PSK_BAD_IDENTITY;
 
     /*
-     * If this is a new session then we have nothing to resume so don't add
-     * this extension.
+     * If this is an incompatible or new session then we have nothing to resume
+     * so don't add this extension.
      */
-    if (s->session->ext.ticklen == 0)
+    if (s->session->ssl_version != TLS1_3_VERSION
+            || s->session->ext.ticklen == 0)
         return 1;
 
     /*
