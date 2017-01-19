@@ -1476,16 +1476,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             goto err;
     } else {
         i = ssl_get_prev_session(s, &clienthello);
-        /*
-         * Only resume if the session's version matches the negotiated
-         * version.
-         * RFC 5246 does not provide much useful advice on resumption
-         * with a different protocol version. It doesn't forbid it but
-         * the sanity of such behaviour would be questionable.
-         * In practice, clients do not accept a version mismatch and
-         * will abort the handshake with an error.
-         */
-        if (i == 1 && s->version == s->session->ssl_version) {
+        if (i == 1) {
             /* previous session */
             s->hit = 1;
         } else if (i == -1) {
