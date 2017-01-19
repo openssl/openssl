@@ -516,6 +516,8 @@ int tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt, X509 *x,
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK_KEX_MODES, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+
+    s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_KE | TLSEXT_KEX_MODE_FLAG_KE_DHE;
 #endif
 
     return 1;
