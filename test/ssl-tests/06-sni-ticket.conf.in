@@ -19,7 +19,6 @@ our @tests = ();
 
 #Note: MaxProtocol is set to TLSv1.2 as session tickets work differently in
 #TLSv1.3.
-#TODO(TLS1.3): Implement TLSv1.3 style session tickets
 sub generate_tests() {
     foreach my $c ("SessionTicket", "-SessionTicket") {
         foreach my $s1 ("SessionTicket", "-SessionTicket") {
