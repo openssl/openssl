@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ERR_put_error, ERR_add_error_data - record an error
+ERR_put_error, ERR_add_error_data, ERR_add_error_vdata - record an error
 
 =head1 SYNOPSIS
 
@@ -12,7 +12,7 @@ ERR_put_error, ERR_add_error_data - record an error
          int line);
 
  void ERR_add_error_data(int num, ...);
- void ERR_add_error_data(int num, va_list arg);
+ void ERR_add_error_vdata(int num, va_list arg);
 
 =head1 DESCRIPTION
 
