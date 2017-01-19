@@ -204,8 +204,6 @@ our @tests = (
             },
         },
         client => {
-            #TODO(TLS1.3): Temporary until we support TLSv1.3 resumption
-            MaxProtocol => "TLSv1.2",
             extra => {
                 "ALPNProtocols" => "foo",
             },
@@ -229,8 +227,6 @@ our @tests = (
             },
         },
         client => {
-            #TODO(TLS1.3): Temporary until we support TLSv1.3 resumption
-            MaxProtocol => "TLSv1.2",
             extra => {
                 "ALPNProtocols" => "foo,bar,baz",
             },
@@ -249,15 +245,11 @@ our @tests = (
             },
         },
         client => {
-            #TODO(TLS1.3): Temporary until we support TLSv1.3 resumption
-            MaxProtocol => "TLSv1.2",
             extra => {
                 "ALPNProtocols" => "foo,baz",
             },
         },
         resume_client => {
-            #TODO(TLS1.3): Temporary until we support TLSv1.3 resumption
-            MaxProtocol => "TLSv1.2",
             extra => {
                 "ALPNProtocols" => "bar,baz",
             },
@@ -281,8 +273,6 @@ our @tests = (
             },
         },
         client => {
-            #TODO(TLS1.3): Temporary until we support TLSv1.3 resumption
-            MaxProtocol => "TLSv1.2",
             extra => {
                 "ALPNProtocols" => "foo,bar",
             },
@@ -302,8 +292,6 @@ our @tests = (
         },
         resume_server => { },
         client => {
-            #TODO(TLS1.3): Temporary until we support TLSv1.3 resumption
-            MaxProtocol => "TLSv1.2",
             extra => {
                 "ALPNProtocols" => "foo",
             },
@@ -322,15 +310,11 @@ our @tests = (
             },
         },
         client => {
-            #TODO(TLS1.3): Temporary until we support TLSv1.3 resumption
-            MaxProtocol => "TLSv1.2",
             extra => {
                 "ALPNProtocols" => "foo",
             },
         },
         resume_client => {
-            #TODO(TLS1.3): Temporary until we support TLSv1.3 resumption
-            MaxProtocol => "TLSv1.2"
         },
         test => {
             "HandshakeMode" => "Resume",
