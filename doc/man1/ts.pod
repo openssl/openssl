@@ -610,10 +610,7 @@ You could also look at the 'test' directory for more examples.
 
 =for comment foreign manuals: procmail(1), perl(1)
 
-If you find any bugs or you have suggestions please write to
-Zoltan Glozik <zglozik@opentsa.org>. Known issues:
-
-=over 2
+=over 4
 
 =item *
 
