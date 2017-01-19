@@ -556,6 +556,10 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
 
     /* Now ret is non-NULL and we own one of its reference counts. */
 
+    /* Check TLS version consistency */
+    if (ret->ssl_version != s->version)
+        goto err;
+
     if (ret->sid_ctx_length != s->sid_ctx_length
         || memcmp(ret->sid_ctx, s->sid_ctx, ret->sid_ctx_length)) {
         /*
@@ -606,23 +610,6 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
         goto err;
     }
 
-    /*
-     * TODO(TLS1.3): This is temporary, because TLSv1.3 resumption is completely
-     * different. For now though we're still using the old resumption logic, so
-     * to avoid test failures we need this. Remove this code!
-     * 
-     * Check TLS version consistency. We can't resume <=TLSv1.2 session if we
-     * have negotiated TLSv1.3, and vice versa.
-     */
-    if (!SSL_IS_DTLS(s)
-            && ((ret->ssl_version <= TLS1_2_VERSION
-                 && s->version >=TLS1_3_VERSION)
-                || (ret->ssl_version >= TLS1_3_VERSION
-                    && s->version <= TLS1_2_VERSION))) {
-        /* Continue but do not resume */
-        goto err;
-    }
-
     /* Check extended master secret extension consistency */
     if (ret->flags & SSL_SESS_FLAG_EXTMS) {
         /* If old session includes extms, but new does not: abort handshake */
@@ -651,6 +638,9 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
  err:
     if (ret != NULL) {
         SSL_SESSION_free(ret);
+        /* In TLSv1.3 we already set s->session, so better NULL it out */
+        if (SSL_IS_TLS13(s))
+            s->session = NULL;
 
         if (!try_session_cache) {
             /*
