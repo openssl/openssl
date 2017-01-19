@@ -717,7 +717,11 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
      */
     agems += s->session->ext.tick_age_add;
 
-    md = ssl_cipher_get_handshake_md(s->session->cipher_id);
+    if (s->session->cipher == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    md = ssl_md(s->session->cipher->algorithm2);
     if (md == NULL) {
         /* Don't recognise this cipher so we can't use the session. Ignore it */
         return 1;
