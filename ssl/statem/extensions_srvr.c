@@ -712,7 +712,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
         if (ret == TICKET_NO_DECRYPT)
             continue;
 
-        md = ssl_cipher_get_handshake_md(sess->cipher_id);
+        md = ssl_md(sess->cipher->algorithm2);
         if (md == NULL) {
             /*
              * Don't recognise this cipher so we can't use the session.

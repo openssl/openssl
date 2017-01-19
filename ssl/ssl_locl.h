@@ -1956,7 +1956,6 @@ __owur int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
 __owur int ssl_cipher_get_cert_index(const SSL_CIPHER *c);
 __owur const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl,
                                                 const unsigned char *ptr);
-__owur const EVP_MD *ssl_cipher_get_handshake_md(int cipher_id);
 __owur int ssl_cert_set0_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain);
 __owur int ssl_cert_set1_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain);
 __owur int ssl_cert_add0_chain_cert(SSL *s, SSL_CTX *ctx, X509 *x);

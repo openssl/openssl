@@ -284,8 +284,10 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     p = as->cipher->data;
     id = 0x03000000L | ((unsigned long)p[0] << 8L) | (unsigned long)p[1];
 
-    ret->cipher = NULL;
     ret->cipher_id = id;
+    ret->cipher = ssl3_get_cipher_by_id(id);
+    if (ret->cipher == NULL)
+        goto err;
 
     if (!ssl_session_memcpy(ret->session_id, &ret->session_id_length,
                             as->session_id, SSL3_MAX_SSL_SESSION_ID_LENGTH))
