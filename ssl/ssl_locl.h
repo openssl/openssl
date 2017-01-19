@@ -1114,7 +1114,7 @@ struct ssl_st {
         unsigned char *npn;
         size_t npn_len;
 
-        /* The selected PSK key exchange mode */
+        /* The available PSK key exchange modes */
         int psk_kex_mode;
     } ext;
 
