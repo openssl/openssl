@@ -10,8 +10,8 @@ EVP_PKEY_decrypt_init, EVP_PKEY_decrypt - decrypt using a public key algorithm
 
  int EVP_PKEY_decrypt_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
-                        unsigned char *out, size_t *outlen,
-                        const unsigned char *in, size_t inlen);
+                      unsigned char *out, size_t *outlen,
+                      const unsigned char *in, size_t inlen);
 
 =head1 DESCRIPTION
 
@@ -52,6 +52,7 @@ Decrypt data using OAEP (for RSA keys):
  unsigned char *out, *in;
  size_t outlen, inlen;
  EVP_PKEY *key;
+
  /*
   * NB: assumes key in, inlen are already set up
   * and that key is an RSA private key

@@ -8,7 +8,8 @@ PKCS7_sign - create a PKCS#7 signedData structure
 
  #include <openssl/pkcs7.h>
 
- PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs, BIO *data, int flags);
+ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
+                   BIO *data, int flags);
 
 =head1 DESCRIPTION
 
@@ -64,7 +65,6 @@ way data can be signed in a single pass.
 
 If the B<PKCS7_PARTIAL> flag is set a partial B<PKCS7> structure is output to
 which additional signers and capabilities can be added before finalization.
-
 
 =head1 NOTES
 

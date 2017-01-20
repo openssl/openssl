@@ -122,6 +122,7 @@ expired just one specific case:
  {
      int err = X509_STORE_CTX_get_error(ctx);
      X509 *err_cert = X509_STORE_CTX_get_current_cert(ctx);
+
      if (err == X509_V_ERR_CERT_HAS_EXPIRED) {
          if (check_is_acceptable_expired_cert(err_cert)
              return 1;

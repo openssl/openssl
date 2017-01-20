@@ -115,9 +115,9 @@ ENGINE_unregister_digests
  int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
  int ENGINE_cmd_is_executable(ENGINE *e, int cmd);
  int ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name,
-         long i, void *p, void (*f)(void), int cmd_optional);
+                     long i, void *p, void (*f)(void), int cmd_optional);
  int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
-         int cmd_optional);
+                            int cmd_optional);
 
  ENGINE *ENGINE_new(void);
  int ENGINE_free(ENGINE *e);
@@ -164,9 +164,9 @@ ENGINE_unregister_digests
  const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e);
 
  EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
-     UI_METHOD *ui_method, void *callback_data);
+                                   UI_METHOD *ui_method, void *callback_data);
  EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
-     UI_METHOD *ui_method, void *callback_data);
+                                  UI_METHOD *ui_method, void *callback_data);
 
 Deprecated:
 
@@ -550,7 +550,7 @@ If an ENGINE specifies the ENGINE_FLAGS_MANUAL_CMD_CTRL flag, then it will
 simply pass all these "core" control commands directly to the ENGINE's ctrl()
 handler (and thus, it must have supplied one), so it is up to the ENGINE to
 reply to these "discovery" commands itself. If that flag is not set, then the
-OpenSSL framework code will work with the following rules;
+OpenSSL framework code will work with the following rules:
 
  if no ctrl() handler supplied;
      ENGINE_HAS_CTRL_FUNCTION returns FALSE (zero),

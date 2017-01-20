@@ -9,9 +9,9 @@ CONF_modules_load_file, CONF_modules_load - OpenSSL configuration functions
  #include <openssl/conf.h>
 
  int CONF_modules_load_file(const char *filename, const char *appname,
-                                        unsigned long flags);
+                            unsigned long flags);
  int CONF_modules_load(const CONF *cnf, const char *appname,
-                               unsigned long flags);
+                       unsigned long flags);
 
 =head1 DESCRIPTION
 
@@ -94,6 +94,7 @@ Load and parse configuration file manually, custom error handling:
  FILE *fp;
  CONF *cnf = NULL;
  long eline;
+
  fp = fopen("/somepath/app.cnf", "r");
  if (fp == NULL) {
      fprintf(stderr, "Error opening configuration file\n");

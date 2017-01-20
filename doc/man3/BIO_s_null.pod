@@ -8,7 +8,7 @@ BIO_s_null - null data sink
 
  #include <openssl/bio.h>
 
- const BIO_METHOD *     BIO_s_null(void);
+ const BIO_METHOD *BIO_s_null(void);
 
 =head1 DESCRIPTION
 

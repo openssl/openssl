@@ -21,14 +21,14 @@ HMAC_size
  #include <openssl/hmac.h>
 
  unsigned char *HMAC(const EVP_MD *evp_md, const void *key,
-               int key_len, const unsigned char *d, int n,
-               unsigned char *md, unsigned int *md_len);
+                     int key_len, const unsigned char *d, int n,
+                     unsigned char *md, unsigned int *md_len);
 
  HMAC_CTX *HMAC_CTX_new(void);
  int HMAC_CTX_reset(HMAC_CTX *ctx);
 
  int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int key_len,
-                   const EVP_MD *md, ENGINE *impl);
+                  const EVP_MD *md, ENGINE *impl);
  int HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, int len);
  int HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);
 

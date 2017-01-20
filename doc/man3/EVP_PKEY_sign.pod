@@ -10,8 +10,8 @@ EVP_PKEY_sign_init, EVP_PKEY_sign - sign using a public key algorithm
 
  int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
-                        unsigned char *sig, size_t *siglen,
-                        const unsigned char *tbs, size_t tbslen);
+                   unsigned char *sig, size_t *siglen,
+                   const unsigned char *tbs, size_t tbslen);
 
 =head1 DESCRIPTION
 

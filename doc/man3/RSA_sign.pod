@@ -9,10 +9,10 @@ RSA_sign, RSA_verify - RSA signatures
  #include <openssl/rsa.h>
 
  int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
-    unsigned char *sigret, unsigned int *siglen, RSA *rsa);
+              unsigned char *sigret, unsigned int *siglen, RSA *rsa);
 
  int RSA_verify(int type, const unsigned char *m, unsigned int m_len,
-    unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
+                unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
 
 =head1 DESCRIPTION
 

@@ -37,15 +37,15 @@ X509_VERIFY_PARAM_set1_ip_asc
  time_t X509_VERIFY_PARAM_get_time(const X509_VERIFY_PARAM *param);
 
  int X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param,
-                                        ASN1_OBJECT *policy);
+                                   ASN1_OBJECT *policy);
  int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param,
-                                        STACK_OF(ASN1_OBJECT) *policies);
+                                     STACK_OF(ASN1_OBJECT) *policies);
 
  void X509_VERIFY_PARAM_set_depth(X509_VERIFY_PARAM *param, int depth);
  int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param);
 
  void X509_VERIFY_PARAM_set_auth_level(X509_VERIFY_PARAM *param,
-                                        int auth_level);
+                                       int auth_level);
  int X509_VERIFY_PARAM_get_auth_level(const X509_VERIFY_PARAM *param);
 
  int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
@@ -56,7 +56,7 @@ X509_VERIFY_PARAM_set1_ip_asc
                                       unsigned int flags);
  char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
-                                 const char *email, size_t emaillen);
+                                  const char *email, size_t emaillen);
  int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
                                const unsigned char *ip, size_t iplen);
  int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc);
@@ -311,6 +311,7 @@ Enable CRL checking when performing certificate verification during SSL
 connections associated with an B<SSL_CTX> structure B<ctx>:
 
  X509_VERIFY_PARAM *param;
+
  param = X509_VERIFY_PARAM_new();
  X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);
  SSL_CTX_set1_param(ctx, param);

@@ -11,7 +11,6 @@ SSL_get_psk_identity, SSL_get_psk_identity_hint - get PSK client identity and hi
  const char *SSL_get_psk_identity_hint(const SSL *ssl);
  const char *SSL_get_psk_identity(const SSL *ssl);
 
-
 =head1 DESCRIPTION
 
 SSL_get_psk_identity_hint() is used to retrieve the PSK identity hint

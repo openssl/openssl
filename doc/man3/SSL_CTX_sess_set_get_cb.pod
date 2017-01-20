@@ -11,18 +11,20 @@ SSL_CTX_sess_set_new_cb, SSL_CTX_sess_set_remove_cb, SSL_CTX_sess_set_get_cb, SS
  void SSL_CTX_sess_set_new_cb(SSL_CTX *ctx,
                               int (*new_session_cb)(SSL *, SSL_SESSION *));
  void SSL_CTX_sess_set_remove_cb(SSL_CTX *ctx,
-           void (*remove_session_cb)(SSL_CTX *ctx, SSL_SESSION *));
+                                 void (*remove_session_cb)(SSL_CTX *ctx,
+                                                           SSL_SESSION *));
  void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx,
-           SSL_SESSION (*get_session_cb)(SSL *, const unsigned char *, int, int *));
+                              SSL_SESSION (*get_session_cb)(SSL *,
+                                                            const unsigned char *,
+                                                            int, int *));
 
- int (*SSL_CTX_sess_get_new_cb(SSL_CTX *ctx))(struct ssl_st *ssl, SSL_SESSION *sess);
- void (*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx))(struct ssl_ctx_st *ctx, SSL_SESSION *sess);
- SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(struct ssl_st *ssl, const unsigned char *data, int len, int *copy);
-
- int (*new_session_cb)(struct ssl_st *ssl, SSL_SESSION *sess);
- void (*remove_session_cb)(struct ssl_ctx_st *ctx, SSL_SESSION *sess);
- SSL_SESSION *(*get_session_cb)(struct ssl_st *ssl, unsigned char *data,
-               int len, int *copy);
+ int (*SSL_CTX_sess_get_new_cb(SSL_CTX *ctx))(struct ssl_st *ssl,
+                                              SSL_SESSION *sess);
+ void (*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx))(struct ssl_ctx_st *ctx,
+                                                  SSL_SESSION *sess);
+ SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(struct ssl_st *ssl,
+                                                       const unsigned char *data,
+                                                       int len, int *copy);
 
 =head1 DESCRIPTION
 

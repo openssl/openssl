@@ -17,13 +17,13 @@ BN_from_montgomery, BN_to_montgomery - Montgomery multiplication
  BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from);
 
  int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b,
-         BN_MONT_CTX *mont, BN_CTX *ctx);
+                           BN_MONT_CTX *mont, BN_CTX *ctx);
 
  int BN_from_montgomery(BIGNUM *r, BIGNUM *a, BN_MONT_CTX *mont,
-         BN_CTX *ctx);
+                        BN_CTX *ctx);
 
  int BN_to_montgomery(BIGNUM *r, BIGNUM *a, BN_MONT_CTX *mont,
-         BN_CTX *ctx);
+                      BN_CTX *ctx);
 
 =head1 DESCRIPTION
 

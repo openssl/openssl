@@ -10,7 +10,7 @@ BIO_rw_filename - FILE bio
 
  #include <openssl/bio.h>
 
- const BIO_METHOD *     BIO_s_file(void);
+ const BIO_METHOD *BIO_s_file(void);
  BIO *BIO_new_file(const char *filename, const char *mode);
  BIO *BIO_new_fp(FILE *stream, int flags);
 
@@ -85,12 +85,14 @@ lingual environment, encode file names in UTF-8.
 File BIO "hello world":
 
  BIO *bio_out;
+
  bio_out = BIO_new_fp(stdout, BIO_NOCLOSE);
  BIO_printf(bio_out, "Hello World\n");
 
 Alternative technique:
 
  BIO *bio_out;
+
  bio_out = BIO_new(BIO_s_file());
  if (bio_out == NULL)
      /* Error */
@@ -101,6 +103,7 @@ Alternative technique:
 Write to a file:
 
  BIO *out;
+
  out = BIO_new_file("filename.txt", "w");
  if (!out)
      /* Error */
@@ -110,6 +113,7 @@ Write to a file:
 Alternative technique:
 
  BIO *out;
+
  out = BIO_new(BIO_s_file());
  if (out == NULL)
      /* Error */

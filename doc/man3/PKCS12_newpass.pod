@@ -49,6 +49,7 @@ the result to a new file.
  {
      FILE *fp;
      PKCS12 *p12;
+
      if (argc != 5) {
          fprintf(stderr, "Usage: pkread p12file password newpass opfile\n");
          return 1;

@@ -10,11 +10,10 @@ RIPEMD-160 hash function
  #include <openssl/ripemd.h>
 
  unsigned char *RIPEMD160(const unsigned char *d, unsigned long n,
-                  unsigned char *md);
+                          unsigned char *md);
 
  int RIPEMD160_Init(RIPEMD160_CTX *c);
- int RIPEMD160_Update(RIPEMD_CTX *c, const void *data,
-                  unsigned long len);
+ int RIPEMD160_Update(RIPEMD_CTX *c, const void *data, unsigned long len);
  int RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c);
 
 =head1 DESCRIPTION

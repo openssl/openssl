@@ -12,12 +12,12 @@ for primality
  #include <openssl/bn.h>
 
  int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
-     const BIGNUM *rem, BN_GENCB *cb);
+                          const BIGNUM *rem, BN_GENCB *cb);
 
  int BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb);
 
  int BN_is_prime_fasttest_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx,
-     int do_trial_division, BN_GENCB *cb);
+                             int do_trial_division, BN_GENCB *cb);
 
  int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 
@@ -26,10 +26,10 @@ for primality
  void BN_GENCB_free(BN_GENCB *cb);
 
  void BN_GENCB_set_old(BN_GENCB *gencb,
-     void (*callback)(int, int, void *), void *cb_arg);
+                       void (*callback)(int, int, void *), void *cb_arg);
 
  void BN_GENCB_set(BN_GENCB *gencb,
-     int (*callback)(int, int, BN_GENCB *), void *cb_arg);
+                   int (*callback)(int, int, BN_GENCB *), void *cb_arg);
 
  void *BN_GENCB_get_arg(BN_GENCB *cb);
 
@@ -37,14 +37,15 @@ Deprecated:
 
  #if OPENSSL_API_COMPAT < 0x00908000L
  BIGNUM *BN_generate_prime(BIGNUM *ret, int num, int safe, BIGNUM *add,
-     BIGNUM *rem, void (*callback)(int, int, void *), void *cb_arg);
+                           BIGNUM *rem, void (*callback)(int, int, void *),
+                           void *cb_arg);
 
- int BN_is_prime(const BIGNUM *a, int checks, void (*callback)(int, int,
-     void *), BN_CTX *ctx, void *cb_arg);
+ int BN_is_prime(const BIGNUM *a, int checks,
+                 void (*callback)(int, int, void *), BN_CTX *ctx, void *cb_arg);
 
  int BN_is_prime_fasttest(const BIGNUM *a, int checks,
-     void (*callback)(int, int, void *), BN_CTX *ctx, void *cb_arg,
-     int do_trial_division);
+                          void (*callback)(int, int, void *), BN_CTX *ctx,
+                          void *cb_arg, int do_trial_division);
  #endif
 
 =head1 DESCRIPTION

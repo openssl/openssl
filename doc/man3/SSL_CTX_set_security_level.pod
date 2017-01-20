@@ -15,15 +15,20 @@ SSL_CTX_set_security_level, SSL_set_security_level, SSL_CTX_get_security_level, 
  int SSL_get_security_level(const SSL *s);
 
  void SSL_CTX_set_security_callback(SSL_CTX *ctx,
-                int (*cb)(SSL *s, SSL_CTX *ctx, int op, int bits, int nid,
-                                                        void *other, void *ex));
+                                    int (*cb)(SSL *s, SSL_CTX *ctx, int op,
+                                              int bits, int nid,
+                                              void *other, void *ex));
 
- void SSL_set_security_callback(SSL *s,
-                int (*cb)(SSL *s, SSL_CTX *ctx, int op, int bits, int nid,
-                                                        void *other, void *ex));
+ void SSL_set_security_callback(SSL *s, int (*cb)(SSL *s, SSL_CTX *ctx, int op,
+                                                  int bits, int nid,
+                                                  void *other, void *ex));
 
- int (*SSL_CTX_get_security_callback(const SSL_CTX *ctx))(SSL *s, SSL_CTX *ctx, int op, int bits, int nid, void *other, void *ex);
- int (*SSL_get_security_callback(const SSL *s))(SSL *s, SSL_CTX *ctx, int op, int bits, int nid, void *other, void *ex);
+ int (*SSL_CTX_get_security_callback(const SSL_CTX *ctx))(SSL *s, SSL_CTX *ctx, int op,
+                                                          int bits, int nid, void *other,
+                                                          void *ex);
+ int (*SSL_get_security_callback(const SSL *s))(SSL *s, SSL_CTX *ctx, int op,
+                                                int bits, int nid, void *other,
+                                                void *ex);
 
  void SSL_CTX_set0_security_ex_data(SSL_CTX *ctx, void *ex);
  void SSL_set0_security_ex_data(SSL *s, void *ex);

@@ -10,8 +10,8 @@ BIO_get_mem_ptr, BIO_new_mem_buf - memory BIO
 
  #include <openssl/bio.h>
 
- const BIO_METHOD *     BIO_s_mem(void);
- const BIO_METHOD *     BIO_s_secmem(void);
+ const BIO_METHOD *BIO_s_mem(void);
+ const BIO_METHOD *BIO_s_secmem(void);
 
  BIO_set_mem_eof_return(BIO *b, int v)
  long BIO_get_mem_data(BIO *b, char **pp)
@@ -97,17 +97,18 @@ There should be an option to set the maximum size of a memory BIO.
 Create a memory BIO and write some data to it:
 
  BIO *mem = BIO_new(BIO_s_mem());
+
  BIO_puts(mem, "Hello World\n");
 
 Create a read only memory BIO:
 
  char data[] = "Hello World";
- BIO *mem;
- mem = BIO_new_mem_buf(data, -1);
+ BIO *mem = BIO_new_mem_buf(data, -1);
 
 Extract the BUF_MEM structure from a memory BIO and then free up the BIO:
 
  BUF_MEM *bptr;
+
  BIO_get_mem_ptr(mem, &bptr);
  BIO_set_close(mem, BIO_NOCLOSE); /* So BIO_free() leaves BUF_MEM alone */
  BIO_free(mem);

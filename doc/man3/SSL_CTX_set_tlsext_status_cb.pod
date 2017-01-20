@@ -18,10 +18,8 @@ SSL_set_tlsext_status_ocsp_resp
 
  #include <openssl/tls1.h>
 
- long SSL_CTX_set_tlsext_status_cb(SSL_CTX *ctx,
-                                   int (*callback)(SSL *, void *));
- long SSL_CTX_get_tlsext_status_cb(SSL_CTX *ctx,
-                                   int (**callback)(SSL *, void *));
+ long SSL_CTX_set_tlsext_status_cb(SSL_CTX *ctx, int (*callback)(SSL *, void *));
+ long SSL_CTX_get_tlsext_status_cb(SSL_CTX *ctx, int (**callback)(SSL *, void *));
 
  long SSL_CTX_set_tlsext_status_arg(SSL_CTX *ctx, void *arg);
  long SSL_CTX_get_tlsext_status_arg(SSL_CTX *ctx, void **arg);

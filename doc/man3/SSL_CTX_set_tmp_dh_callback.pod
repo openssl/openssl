@@ -9,11 +9,13 @@ SSL_CTX_set_tmp_dh_callback, SSL_CTX_set_tmp_dh, SSL_set_tmp_dh_callback, SSL_se
  #include <openssl/ssl.h>
 
  void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
-            DH *(*tmp_dh_callback)(SSL *ssl, int is_export, int keylength));
+                                  DH *(*tmp_dh_callback)(SSL *ssl, int is_export,
+                                                         int keylength));
  long SSL_CTX_set_tmp_dh(SSL_CTX *ctx, DH *dh);
 
  void SSL_set_tmp_dh_callback(SSL *ctx,
-            DH *(*tmp_dh_callback)(SSL *ssl, int is_export, int keylength));
+                              DH *(*tmp_dh_callback)(SSL *ssl, int is_export,
+                                                     int keylength));
  long SSL_set_tmp_dh(SSL *ssl, DH *dh)
 
 =head1 DESCRIPTION
@@ -91,10 +93,9 @@ Command-line parameter generation:
 Code for setting up parameters during server initialization:
 
  SSL_CTX ctx = SSL_CTX_new();
-
  DH *dh_2048 = NULL;
- FILE *paramfile;
- paramfile = fopen("dh_param_2048.pem", "r");
+ FILE *paramfile = fopen("dh_param_2048.pem", "r");
+
  if (paramfile) {
      dh_2048 = PEM_read_DHparams(paramfile, NULL, NULL, NULL);
      fclose(paramfile);
