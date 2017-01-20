@@ -72,7 +72,8 @@ int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype)
     return 1;
 }
 
-int tls_setup_handshake(SSL *s) {
+int tls_setup_handshake(SSL *s)
+{
     if (!ssl3_init_finished_mac(s))
         return 0;
 
@@ -107,9 +108,8 @@ int tls_setup_handshake(SSL *s) {
 
         s->s3->tmp.cert_req = 0;
 
-        if (SSL_IS_DTLS(s)) {
+        if (SSL_IS_DTLS(s))
             s->statem.use_timer = 1;
-        }
     }
 
     return 1;

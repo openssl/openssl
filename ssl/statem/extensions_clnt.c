@@ -682,6 +682,12 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
             || s->session->ext.ticklen == 0)
         return 1;
 
+    md = ssl_md(s->session->cipher->algorithm2);
+    if (md == NULL) {
+        /* Don't recognise this cipher so we can't use the session. Ignore it */
+        return 1;
+    }
+
     /*
      * Technically the C standard just says time() returns a time_t and says
      * nothing about the encoding of that type. In practice most implementations
@@ -720,11 +726,6 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
     if (s->session->cipher == NULL) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
         goto err;
-    }
-    md = ssl_md(s->session->cipher->algorithm2);
-    if (md == NULL) {
-        /* Don't recognise this cipher so we can't use the session. Ignore it */
-        return 1;
     }
 
     hashsize = EVP_MD_size(md);
