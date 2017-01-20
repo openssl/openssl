@@ -2210,7 +2210,7 @@ static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
 
 MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
 {
-    int al;
+    int al = SSL_AD_DECODE_ERROR;
     unsigned int ticklen;
     unsigned long ticket_lifetime_hint, age_add = 0;
     unsigned int sess_len;
@@ -2222,7 +2222,6 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         || (!SSL_IS_TLS13(s) && PACKET_remaining(pkt) != ticklen)
         || (SSL_IS_TLS13(s) && (ticklen == 0
                                 || PACKET_remaining(pkt) < ticklen))) {
-        al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
