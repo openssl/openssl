@@ -1049,8 +1049,8 @@ int tls1_set_server_sigalgs(SSL *s)
  *   s->ctx->ext.ticket_key_cb asked to renew the client's ticket.
  *   Otherwise, s->ext.ticket_expected is set to 0.
  */
-int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
-                               SSL_SESSION **ret)
+TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
+                                         SSL_SESSION **ret)
 {
     int retv;
     size_t size;
@@ -1065,11 +1065,11 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
      * resumption.
      */
     if (s->version <= SSL3_VERSION || !tls_use_ticket(s))
-        return 0;
+        return TICKET_NONE;
 
     ticketext = &hello->pre_proc_exts[TLSEXT_IDX_session_ticket];
     if (!ticketext->present)
-        return 0;
+        return TICKET_NONE;
 
     size = PACKET_remaining(&ticketext->data);
     if (size == 0) {
@@ -1078,7 +1078,7 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
          * one.
          */
         s->ext.ticket_expected = 1;
-        return 1;
+        return TICKET_EMPTY;
     }
     if (s->ext.session_secret_cb) {
         /*
@@ -1087,7 +1087,7 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
          * abbreviated handshake based on external mechanism to
          * calculate the master secret later.
          */
-        return 2;
+        return TICKET_NO_DECRYPT;
     }
 
     retv = tls_decrypt_ticket(s, PACKET_data(&ticketext->data), size,
@@ -1095,17 +1095,17 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
     switch (retv) {
     case TICKET_NO_DECRYPT: /* ticket couldn't be decrypted */
         s->ext.ticket_expected = 1;
-        return 2;
+        return TICKET_NO_DECRYPT;
 
     case TICKET_SUCCESS: /* ticket was decrypted */
-        return 3;
+        return TICKET_SUCCESS;
 
     case TICKET_SUCCESS_RENEW: /* ticket decrypted but need to renew */
         s->ext.ticket_expected = 1;
-        return 3;
+        return TICKET_SUCCESS;
 
     default:           /* fatal error */
-        return -1;
+        return TICKET_FATAL_ERR_OTHER;
     }
 }
 
@@ -1128,19 +1128,15 @@ int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
  *                            set.
  *   TICKET_SUCCESS_RENEW:    same as 3, but the ticket needs to be renewed
  */
-#define TICKET_FATAL_ERR_MALLOC     -2
-#define TICKET_FATAL_ERR_OTHER      -1
-#define TICKET_NO_DECRYPT            2
-#define TICKET_SUCCESS               3
-#define TICKET_SUCCESS_RENEW         4
-int tls_decrypt_ticket(SSL *s, const unsigned char *etick, size_t eticklen,
-                       const unsigned char *sess_id, size_t sesslen,
-                       SSL_SESSION **psess)
+TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
+                                 size_t eticklen, const unsigned char *sess_id,
+                                 size_t sesslen, SSL_SESSION **psess)
 {
     SSL_SESSION *sess;
     unsigned char *sdec;
     const unsigned char *p;
-    int slen, renew_ticket = 0, ret = TICKET_FATAL_ERR_OTHER, declen;
+    int slen, renew_ticket = 0, declen;
+    TICKET_RETURN ret = TICKET_FATAL_ERR_OTHER;
     size_t mlen;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
     HMAC_CTX *hctx = NULL;
