@@ -2191,18 +2191,24 @@ __owur  int tls1_get_curvelist(SSL *s, int sess, const unsigned char **pcurves,
 
 void ssl_set_default_md(SSL *s);
 __owur int tls1_set_server_sigalgs(SSL *s);
-__owur int tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
-                                      SSL_SESSION **ret);
 
-/* Return codes for tls_decrypt_ticket */
-#define TICKET_FATAL_ERR_MALLOC     -2
-#define TICKET_FATAL_ERR_OTHER      -1
-#define TICKET_NO_DECRYPT            2
-#define TICKET_SUCCESS               3
-#define TICKET_SUCCESS_RENEW         4
-__owur int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
-                              size_t eticklen, const unsigned char *sess_id,
-                              size_t sesslen, SSL_SESSION **psess);
+/* Return codes for tls_get_ticket_from_client() and tls_decrypt_ticket() */
+typedef enum ticket_en {
+    TICKET_FATAL_ERR_MALLOC,
+    TICKET_FATAL_ERR_OTHER,
+    TICKET_NONE,
+    TICKET_EMPTY,
+    TICKET_NO_DECRYPT,
+    TICKET_SUCCESS,
+    TICKET_SUCCESS_RENEW
+} TICKET_RETURN;
+
+__owur TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
+                                                SSL_SESSION **ret);
+__owur TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
+                                        size_t eticklen,
+                                        const unsigned char *sess_id,
+                                        size_t sesslen, SSL_SESSION **psess);
 
 __owur int tls_use_ticket(SSL *s);
 

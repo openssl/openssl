@@ -465,7 +465,7 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
     SSL_SESSION *ret = NULL;
     int fatal = 0;
     int try_session_cache = 0;
-    int r;
+    TICKET_RETURN r;
 
     if (SSL_IS_TLS13(s)) {
         int al;
@@ -479,18 +479,18 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
         /* sets s->ext.ticket_expected */
         r = tls_get_ticket_from_client(s, hello, &ret);
         switch (r) {
-        case -1:                   /* Error during processing */
+        case TICKET_FATAL_ERR_MALLOC:
+        case TICKET_FATAL_ERR_OTHER: /* Error during processing */
             fatal = 1;
             goto err;
-        case 0:                    /* No ticket found */
-        case 1:                    /* Zero length ticket found */
+        case TICKET_NONE:            /* No ticket found */
+        case TICKET_EMPTY:           /* Zero length ticket found */
             try_session_cache = 1;
-            break;                  /* Ok to carry on processing session id. */
-        case 2:                    /* Ticket found but not decrypted. */
-        case 3:                    /* Ticket decrypted, *ret has been set. */
+            break;                   /* Ok to carry on processing session id. */
+        case TICKET_NO_DECRYPT:      /* Ticket found but not decrypted. */
+        case TICKET_SUCCESS:         /* Ticket decrypted, *ret has been set. */
+        case TICKET_SUCCESS_RENEW:
             break;
-        default:
-            abort();
         }
     }
 
