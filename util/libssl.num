@@ -410,3 +410,5 @@ SSL_peek_ex                             410	1_1_1	EXIST::FUNCTION:
 SSL_write_ex                            411	1_1_1	EXIST::FUNCTION:
 SSL_COMP_get_id                         412	1_1_0d	EXIST::FUNCTION:
 SSL_COMP_get0_name                      413	1_1_0d	EXIST::FUNCTION:
+SSL_CTX_set_keylog_callback             414	1_1_1	EXIST::FUNCTION:
+SSL_CTX_get_keylog_callback             415	1_1_1	EXIST::FUNCTION:
