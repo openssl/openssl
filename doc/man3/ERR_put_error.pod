@@ -8,8 +8,7 @@ ERR_put_error, ERR_add_error_data, ERR_add_error_vdata - record an error
 
  #include <openssl/err.h>
 
- void ERR_put_error(int lib, int func, int reason, const char *file,
-         int line);
+ void ERR_put_error(int lib, int func, int reason, const char *file, int line);
 
  void ERR_add_error_data(int num, ...);
  void ERR_add_error_vdata(int num, va_list arg);

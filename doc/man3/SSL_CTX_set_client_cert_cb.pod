@@ -8,8 +8,11 @@ SSL_CTX_set_client_cert_cb, SSL_CTX_get_client_cert_cb - handle client certifica
 
  #include <openssl/ssl.h>
 
- void SSL_CTX_set_client_cert_cb(SSL_CTX *ctx, int (*client_cert_cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey));
- int (*SSL_CTX_get_client_cert_cb(SSL_CTX *ctx))(SSL *ssl, X509 **x509, EVP_PKEY **pkey);
+ void SSL_CTX_set_client_cert_cb(SSL_CTX *ctx,
+                                 int (*client_cert_cb)(SSL *ssl, X509 **x509,
+                                                       EVP_PKEY **pkey));
+ int (*SSL_CTX_get_client_cert_cb(SSL_CTX *ctx))(SSL *ssl, X509 **x509,
+                                                 EVP_PKEY **pkey);
  int (*client_cert_cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey);
 
 =head1 DESCRIPTION

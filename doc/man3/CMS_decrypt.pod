@@ -8,7 +8,8 @@ CMS_decrypt - decrypt content from a CMS envelopedData structure
 
  #include <openssl/cms.h>
 
- int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert, BIO *dcont, BIO *out, unsigned int flags);
+ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert,
+                 BIO *dcont, BIO *out, unsigned int flags);
 
 =head1 DESCRIPTION
 

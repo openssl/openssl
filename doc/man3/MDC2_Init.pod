@@ -9,11 +9,11 @@ MDC2, MDC2_Init, MDC2_Update, MDC2_Final - MDC2 hash function
  #include <openssl/mdc2.h>
 
  unsigned char *MDC2(const unsigned char *d, unsigned long n,
-                  unsigned char *md);
+                     unsigned char *md);
 
  int MDC2_Init(MDC2_CTX *c);
  int MDC2_Update(MDC2_CTX *c, const unsigned char *data,
-                  unsigned long len);
+                 unsigned long len);
  int MDC2_Final(unsigned char *md, MDC2_CTX *c);
 
 =head1 DESCRIPTION

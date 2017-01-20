@@ -11,7 +11,7 @@ DSA_do_sign, DSA_do_verify - raw DSA signature operations
  DSA_SIG *DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 
  int DSA_do_verify(const unsigned char *dgst, int dgst_len,
-             DSA_SIG *sig, DSA *dsa);
+                   DSA_SIG *sig, DSA *dsa);
 
 =head1 DESCRIPTION
 

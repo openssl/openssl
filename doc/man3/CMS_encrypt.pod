@@ -8,7 +8,8 @@ CMS_encrypt - create a CMS envelopedData structure
 
  #include <openssl/cms.h>
 
- CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher, unsigned int flags);
+ CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *in,
+                              const EVP_CIPHER *cipher, unsigned int flags);
 
 =head1 DESCRIPTION
 

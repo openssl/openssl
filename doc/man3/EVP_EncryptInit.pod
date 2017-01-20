@@ -45,40 +45,34 @@ EVP_chacha20, EVP_chacha20_poly1305 - EVP cipher routines
  void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx);
 
  int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-         ENGINE *impl, unsigned char *key, unsigned char *iv);
+                        ENGINE *impl, unsigned char *key, unsigned char *iv);
  int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl, unsigned char *in, int inl);
- int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl);
+                       int *outl, unsigned char *in, int inl);
+ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
  int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-         ENGINE *impl, unsigned char *key, unsigned char *iv);
+                        ENGINE *impl, unsigned char *key, unsigned char *iv);
  int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl, unsigned char *in, int inl);
- int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm,
-         int *outl);
+                       int *outl, unsigned char *in, int inl);
+ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
  int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-         ENGINE *impl, unsigned char *key, unsigned char *iv, int enc);
+                       ENGINE *impl, unsigned char *key, unsigned char *iv, int enc);
  int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl, unsigned char *in, int inl);
- int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm,
-         int *outl);
+                      int *outl, unsigned char *in, int inl);
+ int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
  int EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-         unsigned char *key, unsigned char *iv);
- int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl);
+                     unsigned char *key, unsigned char *iv);
+ int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
  int EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-         unsigned char *key, unsigned char *iv);
- int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm,
-         int *outl);
+                     unsigned char *key, unsigned char *iv);
+ int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
  int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-         unsigned char *key, unsigned char *iv, int enc);
- int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm,
-         int *outl);
+                    unsigned char *key, unsigned char *iv, int enc);
+ int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
  int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *x, int padding);
  int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);

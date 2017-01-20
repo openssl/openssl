@@ -9,15 +9,16 @@ DSA_generate_parameters_ex, DSA_generate_parameters - generate DSA parameters
  #include <openssl/dsa.h>
 
  int DSA_generate_parameters_ex(DSA *dsa, int bits,
-                const unsigned char *seed, int seed_len,
-                int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
+                                const unsigned char *seed, int seed_len,
+                                int *counter_ret, unsigned long *h_ret,
+                                BN_GENCB *cb);
 
 Deprecated:
 
  #if OPENSSL_API_COMPAT < 0x00908000L
- DSA *DSA_generate_parameters(int bits, unsigned char *seed,
-                int seed_len, int *counter_ret, unsigned long *h_ret,
-                void (*callback)(int, int, void *), void *cb_arg);
+ DSA *DSA_generate_parameters(int bits, unsigned char *seed, int seed_len,
+                              int *counter_ret, unsigned long *h_ret,
+                              void (*callback)(int, int, void *), void *cb_arg);
  #endif
 
 =head1 DESCRIPTION

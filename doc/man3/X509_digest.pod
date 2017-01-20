@@ -17,7 +17,7 @@ PKCS7_ISSUER_AND_SERIAL_digest
                  unsigned int *len);
 
  int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type, unsigned char *md,
-                 unsigned int *len);
+                     unsigned int *len);
 
  int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
                         unsigned char *md, unsigned int *len);

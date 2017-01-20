@@ -8,7 +8,8 @@ PKCS7_sign_add_signer - add a signer PKCS7 signed data structure
 
  #include <openssl/pkcs7.h>
 
- PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert, EVP_PKEY *pkey, const EVP_MD *md, int flags);
+ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
+                                          EVP_PKEY *pkey, const EVP_MD *md, int flags);
 
 
 =head1 DESCRIPTION

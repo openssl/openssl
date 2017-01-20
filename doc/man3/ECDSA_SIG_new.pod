@@ -139,6 +139,7 @@ specific)
  int ret;
  ECDSA_SIG *sig;
  EC_KEY *eckey;
+
  eckey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
  if (eckey == NULL)
      /* error */
@@ -156,6 +157,7 @@ or using ECDSA_sign():
 
  unsigned char *buffer, *pp;
  int buf_len;
+
  buf_len = ECDSA_size(eckey);
  buffer = OPENSSL_malloc(buf_len);
  pp = buffer;

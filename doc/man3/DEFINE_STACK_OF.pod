@@ -56,7 +56,8 @@ stack container
  STACK_OF(TYPE) *sk_TYPE_deep_copy(const STACK_OF(TYPE) *sk,
                                    sk_TYPE_copyfunc copyfunc,
                                    sk_TYPE_freefunc freefunc);
- sk_TYPE_compfunc (*sk_TYPE_set_cmp_func(STACK_OF(TYPE) *sk, sk_TYPE_compfunc compare);
+ sk_TYPE_compfunc (*sk_TYPE_set_cmp_func(STACK_OF(TYPE) *sk,
+                                         sk_TYPE_compfunc compare));
 
 =head1 DESCRIPTION
 

@@ -10,8 +10,8 @@ EVP_PKEY_verify_recover_init, EVP_PKEY_verify_recover - recover signature using 
 
  int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
-                        unsigned char *rout, size_t *routlen,
-                        const unsigned char *sig, size_t siglen);
+                             unsigned char *rout, size_t *routlen,
+                             const unsigned char *sig, size_t siglen);
 
 =head1 DESCRIPTION
 
@@ -60,6 +60,7 @@ Recover digest originally signed using PKCS#1 and SHA256 digest:
  unsigned char *rout, *sig;
  size_t routlen, siglen;
  EVP_PKEY *verify_key;
+
  /*
   * NB: assumes verify_key, sig and siglen are already set up
   * and that verify_key is an RSA public key

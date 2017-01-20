@@ -11,8 +11,7 @@ ERR_print_errors, ERR_print_errors_fp, ERR_print_errors_cb
 
  void ERR_print_errors(BIO *bp);
  void ERR_print_errors_fp(FILE *fp);
- void ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u),
-                          void *u)
+ void ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u), void *u)
 
 
 =head1 DESCRIPTION

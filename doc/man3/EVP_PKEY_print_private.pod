@@ -9,11 +9,11 @@ EVP_PKEY_print_public, EVP_PKEY_print_private, EVP_PKEY_print_params - public ke
  #include <openssl/evp.h>
 
  int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
-                                int indent, ASN1_PCTX *pctx);
+                           int indent, ASN1_PCTX *pctx);
  int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey,
-                                int indent, ASN1_PCTX *pctx);
+                            int indent, ASN1_PCTX *pctx);
  int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
-                                int indent, ASN1_PCTX *pctx);
+                           int indent, ASN1_PCTX *pctx);
 
 =head1 DESCRIPTION
 

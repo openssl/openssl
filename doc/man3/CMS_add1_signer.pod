@@ -8,10 +8,11 @@ CMS_add1_signer, CMS_SignerInfo_sign - add a signer to a CMS_ContentInfo signed 
 
  #include <openssl/cms.h>
 
- CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms, X509 *signcert, EVP_PKEY *pkey, const EVP_MD *md, unsigned int flags);
+ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms, X509 *signcert,
+                                 EVP_PKEY *pkey, const EVP_MD *md,
+                                 unsigned int flags);
 
  int CMS_SignerInfo_sign(CMS_SignerInfo *si);
-
 
 =head1 DESCRIPTION
 

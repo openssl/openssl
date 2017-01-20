@@ -22,9 +22,9 @@ RSA_get_ex_new_index, RSA_set_ex_data, RSA_get_ex_data
  #include <openssl/x509.h>
 
  int TYPE_get_ex_new_index(long argl, void *argp,
-                CRYPTO_EX_new *new_func,
-                CRYPTO_EX_dup *dup_func,
-                CRYPTO_EX_free *free_func);
+                           CRYPTO_EX_new *new_func,
+                           CRYPTO_EX_dup *dup_func,
+                           CRYPTO_EX_free *free_func);
 
  int TYPE_set_ex_data(TYPE *d, int idx, void *arg);
 

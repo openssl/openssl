@@ -187,6 +187,7 @@ The following example demonstrates how to use most of the core async APIs:
  void cleanup(ASYNC_WAIT_CTX *ctx, const void *key, OSSL_ASYNC_FD r, void *vw)
  {
      OSSL_ASYNC_FD *w = (OSSL_ASYNC_FD *)vw;
+
      close(r);
      close(*w);
      OPENSSL_free(w);

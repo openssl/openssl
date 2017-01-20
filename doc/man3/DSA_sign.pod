@@ -8,13 +8,12 @@ DSA_sign, DSA_sign_setup, DSA_verify - DSA signatures
 
  #include <openssl/dsa.h>
 
- int    DSA_sign(int type, const unsigned char *dgst, int len,
-                unsigned char *sigret, unsigned int *siglen, DSA *dsa);
+ int DSA_sign(int type, const unsigned char *dgst, int len,
+              unsigned char *sigret, unsigned int *siglen, DSA *dsa);
 
- int    DSA_sign_setup(DSA *dsa, BN_CTX *ctx, BIGNUM **kinvp,
-                BIGNUM **rp);
+ int DSA_sign_setup(DSA *dsa, BN_CTX *ctx, BIGNUM **kinvp, BIGNUM **rp);
 
- int    DSA_verify(int type, const unsigned char *dgst, int len,
+ int DSA_verify(int type, const unsigned char *dgst, int len,
                 unsigned char *sigbuf, int siglen, DSA *dsa);
 
 =head1 DESCRIPTION

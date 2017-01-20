@@ -12,7 +12,8 @@ EVP_VerifyInit, EVP_VerifyUpdate, EVP_VerifyFinal
 
  int EVP_VerifyInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
  int EVP_VerifyUpdate(EVP_MD_CTX *ctx, const void *d, unsigned int cnt);
- int EVP_VerifyFinal(EVP_MD_CTX *ctx, unsigned char *sigbuf, unsigned int siglen, EVP_PKEY *pkey);
+ int EVP_VerifyFinal(EVP_MD_CTX *ctx, unsigned char *sigbuf, unsigned int siglen,
+                     EVP_PKEY *pkey);
 
  int EVP_VerifyInit(EVP_MD_CTX *ctx, const EVP_MD *type);
 

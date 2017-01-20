@@ -9,7 +9,7 @@ BN_mod_inverse - compute inverse modulo n
  #include <openssl/bn.h>
 
  BIGNUM *BN_mod_inverse(BIGNUM *r, BIGNUM *a, const BIGNUM *n,
-           BN_CTX *ctx);
+                        BN_CTX *ctx);
 
 =head1 DESCRIPTION
 

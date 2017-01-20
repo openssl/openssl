@@ -19,27 +19,27 @@ arithmetic operations on BIGNUMs
  int BN_sqr(BIGNUM *r, BIGNUM *a, BN_CTX *ctx);
 
  int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *a, const BIGNUM *d,
-         BN_CTX *ctx);
+            BN_CTX *ctx);
 
  int BN_mod(BIGNUM *rem, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
 
  int BN_nnmod(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
 
  int BN_mod_add(BIGNUM *r, BIGNUM *a, BIGNUM *b, const BIGNUM *m,
-         BN_CTX *ctx);
+                BN_CTX *ctx);
 
  int BN_mod_sub(BIGNUM *r, BIGNUM *a, BIGNUM *b, const BIGNUM *m,
-         BN_CTX *ctx);
+                BN_CTX *ctx);
 
  int BN_mod_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, const BIGNUM *m,
-         BN_CTX *ctx);
+                BN_CTX *ctx);
 
  int BN_mod_sqr(BIGNUM *r, BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
 
  int BN_exp(BIGNUM *r, BIGNUM *a, BIGNUM *p, BN_CTX *ctx);
 
  int BN_mod_exp(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
-         const BIGNUM *m, BN_CTX *ctx);
+                const BIGNUM *m, BN_CTX *ctx);
 
  int BN_gcd(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
 
