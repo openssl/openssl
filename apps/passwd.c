@@ -53,7 +53,8 @@ typedef enum {
     passwd_md5,
     passwd_apr1,
     passwd_sha256,
-    passwd_sha512
+    passwd_sha512,
+    passwd_aixmd5
 } passwd_modes;
 
 static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
@@ -64,7 +65,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_IN,
     OPT_NOVERIFY, OPT_QUIET, OPT_TABLE, OPT_REVERSE, OPT_APR1,
-    OPT_1, OPT_5, OPT_6, OPT_CRYPT, OPT_SALT, OPT_STDIN
+    OPT_1, OPT_5, OPT_6, OPT_CRYPT, OPT_AIXMD5, OPT_SALT, OPT_STDIN
 } OPTION_CHOICE;
 
 const OPTIONS passwd_options[] = {
@@ -84,6 +85,7 @@ const OPTIONS passwd_options[] = {
 # ifndef NO_MD5CRYPT_1
     {"apr1", OPT_APR1, '-', "MD5-based password algorithm, Apache variant"},
     {"1", OPT_1, '-', "MD5-based password algorithm"},
+    {"aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm"},
 # endif
 # ifndef OPENSSL_NO_DES
     {"crypt", OPT_CRYPT, '-', "Standard Unix password algorithm (default)"},
@@ -160,6 +162,11 @@ int passwd_main(int argc, char **argv)
                 goto opthelp;
             mode = passwd_apr1;
             break;
+        case OPT_AIXMD5:
+            if (mode != passwd_unset)
+                goto opthelp;
+            mode = passwd_aixmd5;
+            break;
         case OPT_CRYPT:
             if (mode != passwd_unset)
                 goto opthelp;
@@ -197,7 +204,7 @@ int passwd_main(int argc, char **argv)
         goto opthelp;
 # endif
 # ifdef NO_MD5CRYPT_1
-    if (mode == passwd_md5 || mode == passwd_apr1)
+    if (mode == passwd_md5 || mode == passwd_apr1 || mode == passwd_aixmd5)
         goto opthelp;
 # endif
 # ifdef NO_SHACRYPT
@@ -325,21 +332,29 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
     size_t passwd_len, salt_len, magic_len;
 
     passwd_len = strlen(passwd);
-    out_buf[0] = '$';
-    out_buf[1] = 0;
+
+    out_buf[0] = 0;
     magic_len = strlen(magic);
 
-    if (magic_len > 4)    /* assert it's  "1" or "apr1" */
-        return NULL;
+    if (magic_len > 0) {
+        out_buf[0] = '$';
+        out_buf[1] = 0;
 
-    OPENSSL_strlcat(out_buf, magic, sizeof out_buf);
-    OPENSSL_strlcat(out_buf, "$", sizeof out_buf);
+        if (magic_len > 4)    /* assert it's  "1" or "apr1" */
+            return NULL;
+
+        OPENSSL_strlcat(out_buf, magic, sizeof out_buf);
+        OPENSSL_strlcat(out_buf, "$", sizeof out_buf);
+    }
+
     OPENSSL_strlcat(out_buf, salt, sizeof out_buf);
 
     if (strlen(out_buf) > 6 + 8) /* assert "$apr1$..salt.." */
         return NULL;
 
-    salt_out = out_buf + 2 + magic_len;
+    salt_out = out_buf;
+    if (magic_len > 0)
+        salt_out += 2 + magic_len;
     salt_len = strlen(salt_out);
 
     if (salt_len > 8)
@@ -348,11 +363,16 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
     md = EVP_MD_CTX_new();
     if (md == NULL
         || !EVP_DigestInit_ex(md, EVP_md5(), NULL)
-        || !EVP_DigestUpdate(md, passwd, passwd_len)
-        || !EVP_DigestUpdate(md, "$", 1)
-        || !EVP_DigestUpdate(md, magic, magic_len)
-        || !EVP_DigestUpdate(md, "$", 1)
-        || !EVP_DigestUpdate(md, salt_out, salt_len))
+        || !EVP_DigestUpdate(md, passwd, passwd_len))
+        goto err;
+
+    if (magic_len > 0)
+        if (!EVP_DigestUpdate(md, "$", 1)
+            || !EVP_DigestUpdate(md, magic, magic_len)
+            || !EVP_DigestUpdate(md, "$", 1))
+          goto err;
+
+    if (!EVP_DigestUpdate(md, salt_out, salt_len))
         goto err;
 
     md2 = EVP_MD_CTX_new();
@@ -742,7 +762,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 # endif                         /* !OPENSSL_NO_DES */
 
 # ifndef NO_MD5CRYPT_1
-        if (mode == passwd_md5 || mode == passwd_apr1) {
+        if (mode == passwd_md5 || mode == passwd_apr1 || mode == passwd_aixmd5) {
             int i;
 
             if (*salt_malloc_p == NULL) {
@@ -797,6 +817,8 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 # ifndef NO_MD5CRYPT_1
     if (mode == passwd_md5 || mode == passwd_apr1)
         hash = md5crypt(passwd, (mode == passwd_md5 ? "1" : "apr1"), *salt_p);
+    if (mode == passwd_aixmd5)
+        hash = md5crypt(passwd, "", *salt_p);
 # endif
 # ifndef NO_SHACRYPT
     if (mode == passwd_sha256 || mode == passwd_sha512)
