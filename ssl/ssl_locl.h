@@ -875,6 +875,12 @@ struct ssl_ctx_st {
     int (*not_resumable_session_cb) (SSL *ssl, int is_forward_secure);
 
     CRYPTO_RWLOCK *lock;
+
+    /*
+     * Callback for logging key material for use with debugging tools like
+     * Wireshark. The callback should log `line` followed by a newline.
+     */
+    SSL_CTX_keylog_cb_func keylog_callback;
 };
 
 struct ssl_st {
@@ -2193,6 +2199,26 @@ __owur int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
 __owur const EVP_MD *ssl_md(int idx);
 __owur const EVP_MD *ssl_handshake_md(SSL *s);
 __owur const EVP_MD *ssl_prf_md(SSL *s);
+
+/*
+ * ssl_log_rsa_client_key_exchange logs |premaster| to the SSL_CTX associated
+ * with |ssl|, if logging is enabled. It returns one on success and zero on
+ * failure. The entry is identified by the first 8 bytes of
+ * |encrypted_premaster|.
+ */
+__owur int ssl_log_rsa_client_key_exchange(SSL *ssl,
+                                           const uint8_t *encrypted_premaster,
+                                           size_t encrypted_premaster_len,
+                                           const uint8_t *premaster,
+                                           size_t premaster_len);
+
+/* ssl_log_master_secret logs |master| to the SSL_CTX associated with |ssl|, if
+ * logging is enabled. It returns one on success and zero on failure. The entry
+ * is identified by |client_random|.
+ */
+__owur int ssl_log_master_secret(SSL *ssl, const uint8_t *client_random,
+                                 size_t client_random_len,
+                                 const uint8_t *master, size_t master_len);
 
 /* s3_cbc.c */
 __owur char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);

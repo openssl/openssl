@@ -2258,7 +2258,7 @@ int tls_process_cert_status_body(SSL *s, PACKET *pkt, int *al)
 
     return 1;
 }
-    
+
 
 MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
 {
@@ -2521,6 +2521,10 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt, int *al)
 
     s->s3->tmp.pms = pms;
     s->s3->tmp.pmslen = pmslen;
+
+    /* Log the premaster secret, if logging is enabled. */
+    if (!ssl_log_rsa_client_key_exchange(s, encdata, enclen, pms, pmslen))
+        goto err;
 
     return 1;
  err:
