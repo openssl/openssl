@@ -2212,7 +2212,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
 {
     int al;
     unsigned int ticklen;
-    unsigned long ticket_lifetime_hint, age_add;
+    unsigned long ticket_lifetime_hint, age_add = 0;
     unsigned int sess_len;
     RAW_EXTENSION *exts = NULL;
 
