@@ -3559,7 +3559,7 @@ const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
  */
 const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 {
-    return ssl3_get_cipher_by_id(0x03000000
+    return ssl3_get_cipher_by_id(SSL3_CK_CIPHERSUITE_FLAG
                                  | ((uint32_t)p[0] << 8L)
                                  | (uint32_t)p[1]);
 }

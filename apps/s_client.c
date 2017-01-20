@@ -784,11 +784,11 @@ static int new_session_cb(SSL *S, SSL_SESSION *sess)
 {
     BIO *stmp = BIO_new_file(sess_out, "w");
 
-    if (stmp != NULL) {
+    if (stmp == NULL) {
+        BIO_printf(bio_err, "Error writing session file %s\n", sess_out);
+    } else {
         PEM_write_bio_SSL_SESSION(stmp, sess);
         BIO_free(stmp);
-    } else {
-        BIO_printf(bio_err, "Error writing session file %s\n", sess_out);
     }
 
     /*

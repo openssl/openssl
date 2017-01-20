@@ -735,7 +735,6 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
         return 1;
 
     binderoffset = PACKET_data(pkt) - (const unsigned char *)s->init_buf->data;
-
     hashsize = EVP_MD_size(md);
 
     if (!PACKET_get_length_prefixed_2(pkt, &binders)) {
@@ -763,7 +762,6 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
     sess->ext.tick_identity = id;
     SSL_SESSION_free(s->session);
     s->session = sess;
-
     return 1;
 err:
     return 0;
@@ -1007,7 +1005,7 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
     EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL;
 
     if (ckey == NULL) {
-        /* No key_share received from client, must be resuming. */
+        /* No key_share received from client; must be resuming. */
         if (!s->hit || !tls13_generate_handshake_secret(s, NULL, 0)) {
             *al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
