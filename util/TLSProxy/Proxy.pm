@@ -49,6 +49,7 @@ sub new
         serverconnects => 1,
         serverpid => 0,
         reneg => 0,
+        sessionfile => undef,
 
         #Public read
         execute => $execute,
@@ -110,6 +111,7 @@ sub clearClient
     $self->{record_list} = [];
     $self->{message_list} = [];
     $self->{clientflags} = "";
+    $self->{sessionfile} = undef;
     $is_tls13 = 0;
     $ciphersuite = undef;
 
@@ -226,6 +228,9 @@ sub clientstart
             if ($self->clientflags ne "") {
                 $execcmd .= " ".$self->clientflags;
             }
+            if (defined $self->sessionfile) {
+                $execcmd .= " -ign_eof";
+            }
             exec($execcmd);
         }
     }
@@ -294,6 +299,16 @@ sub clientstart
             }
         }
     }
+
+    for (my $ctr = 0;
+         defined $self->sessionfile()
+            && (!(-f $self->sessionfile()) || $ctr == 3);
+         $ctr++) {
+        sleep 1;
+    }
+
+    die "Session file not created"
+        if (defined $self->sessionfile() && !(-f $self->sessionfile()));
 
     END:
     print "Connection closed\n";
@@ -538,6 +553,22 @@ sub reneg
         $self->{reneg} = shift;
     }
     return $self->{reneg};
+}
+
+#Setting a sessionfile means that the client will not close until the given
+#file exists. This is useful in TLSv1.3 where otherwise s_client will close
+#immediately at the end of the handshake, but before the session has been
+#received from the server. A side effect of this is that s_client never sends
+#a close_notify, so instead we consider success to be when it sends application
+#data over the connection.
+sub sessionfile
+{
+    my $self = shift;
+    if (@_) {
+        $self->{sessionfile} = shift;
+        TLSProxy::Message->successondata(1);
+    }
+    return $self->{sessionfile};
 }
 
 sub ciphersuite
