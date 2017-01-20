@@ -11,6 +11,7 @@ B<openssl passwd>
 [B<-crypt>]
 [B<-1>]
 [B<-apr1>]
+[B<-aixmd5>]
 [B<-5>]
 [B<-6>]
 [B<-salt> I<string>]
@@ -28,7 +29,7 @@ run-time or the hash of each password in a list.  The password list is
 taken from the named file for option B<-in file>, from stdin for
 option B<-stdin>, or from the command line, or from the terminal otherwise.
 The Unix standard algorithm B<crypt> and the MD5-based BSD password
-algorithm B<1> and its Apache variant B<apr1> are available.
+algorithm B<1>, its Apache variant B<apr1>, and its AIX variant are available.
 
 =head1 OPTIONS
 
@@ -49,6 +50,10 @@ Use the MD5 based BSD password algorithm B<1>.
 =item B<-apr1>
 
 Use the B<apr1> algorithm (Apache variant of the BSD algorithm).
+
+=item B<-aixmd5>
+
+Use the B<AIX MD5> algorithm (AIX variant of the BSD algorithm).
 
 =item B<-5>
 
@@ -92,6 +97,8 @@ B<openssl passwd -crypt -salt xx password> prints B<xxj31ZMTZzkVA>.
 B<openssl passwd -1 -salt xxxxxxxx password> prints B<$1$xxxxxxxx$UYCIxa628.9qXjpQCjM4a.>.
 
 B<openssl passwd -apr1 -salt xxxxxxxx password> prints B<$apr1$xxxxxxxx$dxHfLAsjHkDRmG83UXe8K0>.
+
+B<openssl passwd -aixmd5 -salt xxxxxxxx password> prints B<xxxxxxxx$8Oaipk/GPKhC64w/YVeFD/>.
 
 =head1 COPYRIGHT
 
