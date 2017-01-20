@@ -78,6 +78,7 @@ and seed value "seed":
  EVP_PKEY_CTX *pctx;
  unsigned char out[10];
  size_t outlen = sizeof(out);
+
  pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_TLS1_PRF, NULL);
  if (EVP_PKEY_derive_init(pctx) <= 0)
      /* Error */

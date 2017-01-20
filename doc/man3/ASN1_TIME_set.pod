@@ -85,9 +85,11 @@ Set a time structure to one hour after the current time and print it out:
 
  #include <time.h>
  #include <openssl/asn1.h>
+
  ASN1_TIME *tm;
  time_t t;
  BIO *b;
+
  t = time(NULL);
  tm = ASN1_TIME_adj(NULL, t, 0, 60 * 60);
  b = BIO_new_fp(stdout, BIO_NOCLOSE);
@@ -101,7 +103,6 @@ Determine if one time is later or sooner than the current time:
 
  if (!ASN1_TIME_diff(&day, &sec, NULL, to))
      /* Invalid time format */
-
  if (day > 0 || sec > 0)
      printf("Later\n");
  else if (day < 0 || sec < 0)

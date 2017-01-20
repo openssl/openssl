@@ -94,6 +94,7 @@ server id given, and will fill the rest with pseudo random bytes:
                                 unsigned int *id_len)
  {
      unsigned int count = 0;
+
      do {
          RAND_pseudo_bytes(id, *id_len);
          /*

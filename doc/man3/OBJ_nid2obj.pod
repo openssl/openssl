@@ -137,8 +137,7 @@ The latter cannot be constant because it needs to be freed after use.
 
 Create an object for B<commonName>:
 
- ASN1_OBJECT *o;
- o = OBJ_nid2obj(NID_commonName);
+ ASN1_OBJECT *o = OBJ_nid2obj(NID_commonName);
 
 Check if an object is B<commonName>
 
@@ -147,12 +146,8 @@ Check if an object is B<commonName>
 
 Create a new NID and initialize an object from it:
 
- int new_nid;
- ASN1_OBJECT *obj;
-
- new_nid = OBJ_create("1.2.3.4", "NewOID", "New Object Identifier");
-
- obj = OBJ_nid2obj(new_nid);
+ int new_nid = OBJ_create("1.2.3.4", "NewOID", "New Object Identifier");
+ ASN1_OBJECT *obj = OBJ_nid2obj(new_nid);
 
 Create a new object directly:
 

@@ -9,9 +9,9 @@ SSL_CTX_set_tlsext_ticket_key_cb - set a callback for session ticket processing
  #include <openssl/tls1.h>
 
  long SSL_CTX_set_tlsext_ticket_key_cb(SSL_CTX sslctx,
-        int (*cb)(SSL *s, unsigned char key_name[16],
-                  unsigned char iv[EVP_MAX_IV_LENGTH],
-                  EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc));
+     int (*cb)(SSL *s, unsigned char key_name[16],
+               unsigned char iv[EVP_MAX_IV_LENGTH],
+               EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc));
 
 =head1 DESCRIPTION
 

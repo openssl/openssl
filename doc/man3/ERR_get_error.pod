@@ -20,11 +20,11 @@ ERR_peek_last_error_line_data - obtain error code and data
  unsigned long ERR_peek_last_error_line(const char **file, int *line);
 
  unsigned long ERR_get_error_line_data(const char **file, int *line,
-         const char **data, int *flags);
+                                       const char **data, int *flags);
  unsigned long ERR_peek_error_line_data(const char **file, int *line,
-         const char **data, int *flags);
+                                        const char **data, int *flags);
  unsigned long ERR_peek_last_error_line_data(const char **file, int *line,
-         const char **data, int *flags);
+                                             const char **data, int *flags);
 
 =head1 DESCRIPTION
 

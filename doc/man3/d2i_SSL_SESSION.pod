@@ -8,7 +8,8 @@ d2i_SSL_SESSION, i2d_SSL_SESSION - convert SSL_SESSION object from/to ASN1 repre
 
  #include <openssl/ssl.h>
 
- SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length);
+ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
+                              long length);
  int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp);
 
 =head1 DESCRIPTION

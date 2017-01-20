@@ -10,8 +10,8 @@ EVP_PKEY_verify_init, EVP_PKEY_verify - signature verification using a public ke
 
  int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
-                        const unsigned char *sig, size_t siglen,
-                        const unsigned char *tbs, size_t tbslen);
+                     const unsigned char *sig, size_t siglen,
+                     const unsigned char *tbs, size_t tbslen);
 
 =head1 DESCRIPTION
 
@@ -55,6 +55,7 @@ Verify signature using PKCS#1 and SHA256 digest:
  unsigned char *md, *sig;
  size_t mdlen, siglen;
  EVP_PKEY *verify_key;
+
  /*
   * NB: assumes verify_key, sig, siglen md and mdlen are already set up
   * and that verify_key is an RSA public key

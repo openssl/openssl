@@ -16,13 +16,22 @@ CMS_RecipientInfo_decrypt, CMS_RecipientInfo_encrypt
  STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms);
  int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
 
- int CMS_RecipientInfo_ktri_get0_signer_id(CMS_RecipientInfo *ri, ASN1_OCTET_STRING **keyid, X509_NAME **issuer, ASN1_INTEGER **sno);
+ int CMS_RecipientInfo_ktri_get0_signer_id(CMS_RecipientInfo *ri,
+                                           ASN1_OCTET_STRING **keyid,
+                                           X509_NAME **issuer,
+                                           ASN1_INTEGER **sno);
  int CMS_RecipientInfo_ktri_cert_cmp(CMS_RecipientInfo *ri, X509 *cert);
  int CMS_RecipientInfo_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pkey);
 
- int CMS_RecipientInfo_kekri_get0_id(CMS_RecipientInfo *ri, X509_ALGOR **palg, ASN1_OCTET_STRING **pid, ASN1_GENERALIZEDTIME **pdate, ASN1_OBJECT **potherid, ASN1_TYPE **pothertype);
- int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri, const unsigned char *id, size_t idlen);
- int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri, unsigned char *key, size_t keylen);
+ int CMS_RecipientInfo_kekri_get0_id(CMS_RecipientInfo *ri, X509_ALGOR **palg,
+                                     ASN1_OCTET_STRING **pid,
+                                     ASN1_GENERALIZEDTIME **pdate,
+                                     ASN1_OBJECT **potherid,
+                                     ASN1_TYPE **pothertype);
+ int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri,
+                                    const unsigned char *id, size_t idlen);
+ int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri,
+                                unsigned char *key, size_t keylen);
 
  int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
  int CMS_RecipientInfo_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);

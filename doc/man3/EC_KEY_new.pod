@@ -41,13 +41,11 @@ EC_KEY objects
  int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx);
  int EC_KEY_generate_key(EC_KEY *key);
  int EC_KEY_check_key(const EC_KEY *key);
- int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key,
-                                              BIGNUM *x, BIGNUM *y);
+ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y);
  const EC_KEY_METHOD *EC_KEY_get_method(const EC_KEY *key);
  int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth);
 
- int EC_KEY_oct2key(EC_KEY *eckey, const unsigned char *buf, size_t len,
-                    BN_CTX *ctx);
+ int EC_KEY_oct2key(EC_KEY *eckey, const unsigned char *buf, size_t len, BN_CTX *ctx);
  size_t EC_KEY_key2buf(const EC_KEY *eckey, point_conversion_form_t form,
                        unsigned char **pbuf, BN_CTX *ctx);
 

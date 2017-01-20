@@ -50,7 +50,7 @@ X509_REVOKED_add_ext - extension stack utility functions
  X509_EXTENSION *X509_REVOKED_get_ext(const X509_REVOKED *x, int loc);
  int X509_REVOKED_get_ext_by_NID(const X509_REVOKED *x, int nid, int lastpos);
  int X509_REVOKED_get_ext_by_OBJ(const X509_REVOKED *x, const ASN1_OBJECT *obj,
-                                int lastpos);
+                                 int lastpos);
  int X509_REVOKED_get_ext_by_critical(const X509_REVOKED *x, int crit, int lastpos);
  X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc);
  int X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc);

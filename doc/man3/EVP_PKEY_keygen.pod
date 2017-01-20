@@ -98,6 +98,7 @@ Generate a 2048 bit RSA key:
 
  EVP_PKEY_CTX *ctx;
  EVP_PKEY *pkey = NULL;
+
  ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
  if (!ctx)
      /* Error occurred */
@@ -117,6 +118,7 @@ Generate a key from a set of parameters:
 
  EVP_PKEY_CTX *ctx;
  EVP_PKEY *pkey = NULL, *param;
+
  /* Assumed param is set up already */
  ctx = EVP_PKEY_CTX_new(param);
  if (!ctx)
@@ -139,6 +141,7 @@ Example of generation callback for OpenSSL public key implementations:
      char c = '*';
      BIO *b = EVP_PKEY_CTX_get_app_data(ctx);
      int p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
+
      if (p == 0)
          c = '.';
      if (p == 1)

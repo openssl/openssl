@@ -17,50 +17,72 @@ DSA_meth_set_keygen - Routines to build up DSA methods
  #include <openssl/dsa.h>
 
  DSA_METHOD *DSA_meth_new(const char *name, int flags);
+
  void DSA_meth_free(DSA_METHOD *dsam);
+
  DSA_METHOD *DSA_meth_dup(const DSA_METHOD *meth);
+
  const char *DSA_meth_get0_name(const DSA_METHOD *dsam);
  int DSA_meth_set1_name(DSA_METHOD *dsam, const char *name);
+
  int DSA_meth_get_flags(DSA_METHOD *dsam);
  int DSA_meth_set_flags(DSA_METHOD *dsam, int flags);
+
  void *DSA_meth_get0_app_data(const DSA_METHOD *dsam);
  int DSA_meth_set0_app_data(DSA_METHOD *dsam, void *app_data);
- DSA_SIG *(*DSA_meth_get_sign(const DSA_METHOD *dsam))
-         (const unsigned char *, int, DSA *);
- int DSA_meth_set_sign(DSA_METHOD *dsam,
-                       DSA_SIG *(*sign) (const unsigned char *, int, DSA *));
- int (*DSA_meth_get_sign_setup(const DSA_METHOD *dsam))
-         (DSA *, BN_CTX *, BIGNUM **, BIGNUM **);
- int DSA_meth_set_sign_setup(DSA_METHOD *dsam,
-         int (*sign_setup) (DSA *, BN_CTX *, BIGNUM **, BIGNUM **));
- int (*DSA_meth_get_verify(const DSA_METHOD *dsam))
-         (const unsigned char *, int , DSA_SIG *, DSA *);
- int DSA_meth_set_verify(DSA_METHOD *dsam,
-     int (*verify) (const unsigned char *, int, DSA_SIG *, DSA *));
- int (*DSA_meth_get_mod_exp(const DSA_METHOD *dsam))
-        (DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1, BIGNUM *a2, BIGNUM *p2,
-         BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont);
- int DSA_meth_set_mod_exp(DSA_METHOD *dsam,
-     int (*mod_exp) (DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1, BIGNUM *a2,
-                     BIGNUM *p2, BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *mont));
- int (*DSA_meth_get_bn_mod_exp(const DSA_METHOD *dsam))
-     (DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
-      BN_CTX *ctx, BN_MONT_CTX *mont);
- int DSA_meth_set_bn_mod_exp(DSA_METHOD *dsam,
-     int (*bn_mod_exp) (DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
-                        const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *mont));
+
+ DSA_SIG *(*DSA_meth_get_sign(const DSA_METHOD *dsam))(const unsigned char *,
+                                                       int, DSA *);
+ int DSA_meth_set_sign(DSA_METHOD *dsam, DSA_SIG *(*sign)(const unsigned char *,
+                                                          int, DSA *));
+
+ int (*DSA_meth_get_sign_setup(const DSA_METHOD *dsam))(DSA *, BN_CTX *,$
+                                                        BIGNUM **, BIGNUM **);
+ int DSA_meth_set_sign_setup(DSA_METHOD *dsam, int (*sign_setup)(DSA *, BN_CTX *,
+                                                                 BIGNUM **, BIGNUM **));
+
+ int (*DSA_meth_get_verify(const DSA_METHOD *dsam))(const unsigned char *,
+                                                    int, DSA_SIG *, DSA *);
+ int DSA_meth_set_verify(DSA_METHOD *dsam, int (*verify)(const unsigned char *,
+                                                         int, DSA_SIG *, DSA *));
+
+ int (*DSA_meth_get_mod_exp(const DSA_METHOD *dsam))(DSA *dsa, BIGNUM *rr, BIGNUM *a1,
+                                                     BIGNUM *p1, BIGNUM *a2, BIGNUM *p2,
+                                                     BIGNUM *m, BN_CTX *ctx,
+                                                     BN_MONT_CTX *in_mont);
+ int DSA_meth_set_mod_exp(DSA_METHOD *dsam, int (*mod_exp)(DSA *dsa, BIGNUM *rr,
+                                                           BIGNUM *a1, BIGNUM *p1,
+                                                           BIGNUM *a2, BIGNUM *p2,
+                                                           BIGNUM *m, BN_CTX *ctx,
+                                                           BN_MONT_CTX *mont));
+
+ int (*DSA_meth_get_bn_mod_exp(const DSA_METHOD *dsam))(DSA *dsa, BIGNUM *r, BIGNUM *a,
+                                                        const BIGNUM *p, const BIGNUM *m,
+                                                        BN_CTX *ctx, BN_MONT_CTX *mont);
+ int DSA_meth_set_bn_mod_exp(DSA_METHOD *dsam, int (*bn_mod_exp)(DSA *dsa,
+                                                                 BIGNUM *r,
+                                                                 BIGNUM *a,
+                                                                 const BIGNUM *p,
+                                                                 const BIGNUM *m,
+                                                                 BN_CTX *ctx,
+                                                                 BN_MONT_CTX *mont));
+
  int (*DSA_meth_get_init(const DSA_METHOD *dsam))(DSA *);
  int DSA_meth_set_init(DSA_METHOD *dsam, int (*init)(DSA *));
- int (*DSA_meth_get_finish(const DSA_METHOD *dsam)) (DSA *);
- int DSA_meth_set_finish(DSA_METHOD *dsam, int (*finish) (DSA *));
- int (*DSA_meth_get_paramgen(const DSA_METHOD *dsam))
-         (DSA *, int, const unsigned char *, int, int *, unsigned long *,
-          BN_GENCB *);
+
+ int (*DSA_meth_get_finish(const DSA_METHOD *dsam))(DSA *);
+ int DSA_meth_set_finish(DSA_METHOD *dsam, int (*finish)(DSA *));
+
+ int (*DSA_meth_get_paramgen(const DSA_METHOD *dsam))(DSA *, int,
+                                                      const unsigned char *,
+                                                      int, int *, unsigned long *,
+                                                      BN_GENCB *);
  int DSA_meth_set_paramgen(DSA_METHOD *dsam,
-         int (*paramgen) (DSA *, int, const unsigned char *, int, int *,
-                          unsigned long *, BN_GENCB *));
- int (*DSA_meth_get_keygen(const DSA_METHOD *dsam)) (DSA *);
- int DSA_meth_set_keygen(DSA_METHOD *dsam, int (*keygen) (DSA *));
+                           int (*paramgen)(DSA *, int, const unsigned char *,
+                                           int, int *, unsigned long *, BN_GENCB *));
+
+ int (*DSA_meth_get_keygen(const DSA_METHOD *dsam))(DSA *);
+ int DSA_meth_set_keygen(DSA_METHOD *dsam, int (*keygen)(DSA *));
 
 =head1 DESCRIPTION
 

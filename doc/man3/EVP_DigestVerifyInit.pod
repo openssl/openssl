@@ -10,7 +10,7 @@ EVP_DigestVerify - EVP signature verification functions
  #include <openssl/evp.h>
 
  int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                        const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
+                          const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
  int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
  int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
                            size_t siglen);

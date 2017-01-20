@@ -23,7 +23,8 @@ EC_GROUP_get_pentanomial_basis
 
  const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *group);
 
- int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor);
+ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
+                            const BIGNUM *order, const BIGNUM *cofactor);
  const EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group);
 
  int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
@@ -56,7 +57,7 @@ EC_GROUP_get_pentanomial_basis
  int EC_GROUP_get_basis_type(const EC_GROUP *);
  int EC_GROUP_get_trinomial_basis(const EC_GROUP *, unsigned int *k);
  int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1,
-        unsigned int *k2, unsigned int *k3);
+                                    unsigned int *k2, unsigned int *k3);
 
 =head1 DESCRIPTION
 

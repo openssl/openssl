@@ -13,7 +13,8 @@ CMS_SignerInfo_get0_signature, CMS_SignerInfo_cert_cmp
 
  STACK_OF(CMS_SignerInfo) *CMS_get0_SignerInfos(CMS_ContentInfo *cms);
 
- int CMS_SignerInfo_get0_signer_id(CMS_SignerInfo *si, ASN1_OCTET_STRING **keyid, X509_NAME **issuer, ASN1_INTEGER **sno);
+ int CMS_SignerInfo_get0_signer_id(CMS_SignerInfo *si, ASN1_OCTET_STRING **keyid,
+                                   X509_NAME **issuer, ASN1_INTEGER **sno);
  ASN1_OCTET_STRING *CMS_SignerInfo_get0_signature(CMS_SignerInfo *si);
  int CMS_SignerInfo_cert_cmp(CMS_SignerInfo *si, X509 *cert);
  void CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer);

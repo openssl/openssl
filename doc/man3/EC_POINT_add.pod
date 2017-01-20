@@ -8,16 +8,20 @@ EC_POINT_add, EC_POINT_dbl, EC_POINT_invert, EC_POINT_is_at_infinity, EC_POINT_i
 
  #include <openssl/ec.h>
 
- int EC_POINT_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx);
+ int EC_POINT_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
+                  const EC_POINT *b, BN_CTX *ctx);
  int EC_POINT_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx);
  int EC_POINT_invert(const EC_GROUP *group, EC_POINT *a, BN_CTX *ctx);
  int EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *p);
  int EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx);
  int EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx);
  int EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx);
- int EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[], BN_CTX *ctx);
- int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n, size_t num, const EC_POINT *p[], const BIGNUM *m[], BN_CTX *ctx);
- int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n, const EC_POINT *q, const BIGNUM *m, BN_CTX *ctx);
+ int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
+                           EC_POINT *points[], BN_CTX *ctx);
+ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n, size_t num,
+                   const EC_POINT *p[], const BIGNUM *m[], BN_CTX *ctx);
+ int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n,
+                  const EC_POINT *q, const BIGNUM *m, BN_CTX *ctx);
  int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
  int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
 

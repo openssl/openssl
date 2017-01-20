@@ -11,7 +11,7 @@ X509_NAME_oneline - X509_NAME printing routines
 
  int X509_NAME_print_ex(BIO *out, const X509_NAME *nm, int indent, unsigned long flags);
  int X509_NAME_print_ex_fp(FILE *fp, const X509_NAME *nm, int indent, unsigned long flags);
- char * X509_NAME_oneline(const X509_NAME *a, char *buf, int size);
+ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int size);
  int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase);
 
 =head1 DESCRIPTION

@@ -22,19 +22,21 @@ UI_get_method, UI_set_method, UI_OpenSSL, UI_null - user interface
  void UI_free(UI *ui);
 
  int UI_add_input_string(UI *ui, const char *prompt, int flags,
-        char *result_buf, int minsize, int maxsize);
+                         char *result_buf, int minsize, int maxsize);
  int UI_dup_input_string(UI *ui, const char *prompt, int flags,
-        char *result_buf, int minsize, int maxsize);
+                         char *result_buf, int minsize, int maxsize);
  int UI_add_verify_string(UI *ui, const char *prompt, int flags,
-        char *result_buf, int minsize, int maxsize, const char *test_buf);
+                          char *result_buf, int minsize, int maxsize,
+                          const char *test_buf);
  int UI_dup_verify_string(UI *ui, const char *prompt, int flags,
-        char *result_buf, int minsize, int maxsize, const char *test_buf);
+                          char *result_buf, int minsize, int maxsize,
+                          const char *test_buf);
  int UI_add_input_boolean(UI *ui, const char *prompt, const char *action_desc,
-        const char *ok_chars, const char *cancel_chars,
-        int flags, char *result_buf);
+                          const char *ok_chars, const char *cancel_chars,
+                          int flags, char *result_buf);
  int UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
-        const char *ok_chars, const char *cancel_chars,
-        int flags, char *result_buf);
+                          const char *ok_chars, const char *cancel_chars,
+                          int flags, char *result_buf);
  int UI_add_info_string(UI *ui, const char *text);
  int UI_dup_info_string(UI *ui, const char *text);
  int UI_add_error_string(UI *ui, const char *text);
