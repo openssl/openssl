@@ -46,6 +46,8 @@ use constant {
     SRP_CLI_EXTENSION => 0x00002000,
     #Client side for ec point formats is a default extension
     EC_POINT_FORMAT_SRV_EXTENSION => 0x00004000,
+    PSK_CLI_EXTENSION => 0x00008000,
+    PSK_SRV_EXTENSION => 0x00010000
 };
 
 our @handmessages = ();
@@ -81,6 +83,10 @@ sub checkhandshake($$$$)
         #one extension gets checked twice (once in each Certificate message)
         $numtests += 2 if ($proxy->is_tls13()
                           && ($handtype & CLIENT_AUTH_HANDSHAKE) != 0);
+        #And in a resumption handshake we don't get Certificate at all and the
+        #Certificate extension doesn't get checked at all
+        $numtests -= 2 if ($proxy->is_tls13()
+                          && ($handtype & RESUME_HANDSHAKE) != 0);
 
         plan tests => $numtests;
 
