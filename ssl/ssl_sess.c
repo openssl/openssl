@@ -620,13 +620,12 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
 
     s->session_ctx->stats.sess_hit++;
     s->verify_result = s->session->verify_result;
-
     return 1;
 
  err:
     if (ret != NULL) {
         SSL_SESSION_free(ret);
-        /* In TLSv1.3 we already set s->session, so better NULL it out */
+        /* In TLSv1.3 s->session was already set to ret, so we NULL it out */
         if (SSL_IS_TLS13(s))
             s->session = NULL;
 

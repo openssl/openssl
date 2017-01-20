@@ -2220,8 +2220,8 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         || (SSL_IS_TLS13(s) && !PACKET_get_net_4(pkt, &age_add))
         || !PACKET_get_net_2(pkt, &ticklen)
         || (!SSL_IS_TLS13(s) && PACKET_remaining(pkt) != ticklen)
-        || (SSL_IS_TLS13(s) && (ticklen == 0
-                                || PACKET_remaining(pkt) < ticklen))) {
+        || (SSL_IS_TLS13(s)
+            && (ticklen == 0 || PACKET_remaining(pkt) < ticklen))) {
         SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }

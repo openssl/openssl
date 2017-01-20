@@ -788,7 +788,8 @@ static int dtls_get_reassembled_message(SSL *s, int *errtype, size_t *len)
         return 0;
     }
 
-    if (!s->server && s->d1->r_msg_hdr.frag_off == 0
+    if (!s->server
+            && s->d1->r_msg_hdr.frag_off == 0
             && s->statem.hand_state != TLS_ST_OK
             && wire[0] == SSL3_MT_HELLO_REQUEST) {
         /*

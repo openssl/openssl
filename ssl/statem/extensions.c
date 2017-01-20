@@ -1000,7 +1000,6 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
 static int init_psk_kex_modes(SSL *s, unsigned int context)
 {
     s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_NONE;
-
     return 1;
 }
 
@@ -1014,7 +1013,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     unsigned char hash[EVP_MAX_MD_SIZE], binderkey[EVP_MAX_MD_SIZE];
     unsigned char finishedkey[EVP_MAX_MD_SIZE], tmpbinder[EVP_MAX_MD_SIZE];
     const char resumption_label[] = "resumption psk binder key";
-    size_t hashsize = EVP_MD_size(md), bindersize;
+    size_t bindersize, hashsize = EVP_MD_size(md);
     int ret = -1;
 
     /* Generate the early_secret */
