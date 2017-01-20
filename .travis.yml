@@ -16,7 +16,7 @@ addons:
             - wine
             - wine1.6
         sources:
-            - llvm-toolchain-trust-3.6
+            - llvm-toolchain-trusty-3.6
             - ubuntu-toolchain-r-test
 
 os:
