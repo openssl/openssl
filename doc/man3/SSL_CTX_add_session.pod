@@ -54,13 +54,13 @@ The following values are returned by all functions:
 
 =item Z<>0
 
- The operation failed. In case of the add operation, it was tried to add
- the same (identical) session twice. In case of the remove operation, the
- session was not found in the cache.
+The operation failed. In case of the add operation, it was tried to add
+the same (identical) session twice. In case of the remove operation, the
+session was not found in the cache.
 
 =item Z<>1
 
- The operation succeeded.
+The operation succeeded.
 
 =back
 
