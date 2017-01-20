@@ -12,15 +12,14 @@ SSL_verify_cb
 
  #include <openssl/ssl.h>
 
+ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
+
  void SSL_CTX_set_verify(SSL_CTX *ctx, int mode, SSL_verify_cb verify_callback);
  void SSL_set_verify(SSL *s, int mode, SSL_verify_cb verify_callback);
  SSL_get_ex_data_X509_STORE_CTX_idx(void);
 
  void SSL_CTX_set_verify_depth(SSL_CTX *ctx, int depth);
  void SSL_set_verify_depth(SSL *s, int depth);
-
-
- typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 
 =head1 DESCRIPTION
 
