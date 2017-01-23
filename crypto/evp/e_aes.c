@@ -2587,6 +2587,8 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             }
             written_len = AES_BLOCK_SIZE;
             *buf_len = 0;
+            if (out != NULL)
+                out += AES_BLOCK_SIZE;
         }
 
         /* Do we have a partial block to handle at the end? */
