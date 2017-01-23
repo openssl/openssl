@@ -1801,6 +1801,7 @@ typedef struct {
     size_t compressions_len;
     unsigned char compressions[MAX_COMPRESSIONS_SIZE];
     PACKET extensions;
+    size_t pre_proc_exts_len;
     RAW_EXTENSION *pre_proc_exts;
 } CLIENTHELLO_MSG;
 
