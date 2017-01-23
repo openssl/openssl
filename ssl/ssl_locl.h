@@ -622,11 +622,40 @@ typedef struct srp_ctx_st {
 
 # endif
 
+#define MAX_COMPRESSIONS_SIZE   255
+
 struct ssl_comp_st {
     int id;
     const char *name;
     COMP_METHOD *method;
 };
+
+typedef struct raw_extension_st {
+    /* Raw packet data for the extension */
+    PACKET data;
+    /* Set to 1 if the extension is present or 0 otherwise */
+    int present;
+    /* Set to 1 if we have already parsed the extension or 0 otherwise */
+    int parsed;
+    /* The type of this extension, i.e. a TLSEXT_TYPE_* value */
+    unsigned int type;
+} RAW_EXTENSION;
+
+typedef struct {
+    unsigned int isv2;
+    unsigned int legacy_version;
+    unsigned char random[SSL3_RANDOM_SIZE];
+    size_t session_id_len;
+    unsigned char session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
+    size_t dtls_cookie_len;
+    unsigned char dtls_cookie[DTLS1_COOKIE_LENGTH];
+    PACKET ciphersuites;
+    size_t compressions_len;
+    unsigned char compressions[MAX_COMPRESSIONS_SIZE];
+    PACKET extensions;
+    size_t pre_proc_exts_len;
+    RAW_EXTENSION *pre_proc_exts;
+} CLIENTHELLO_MSG;
 
 DEFINE_LHASH_OF(SSL_SESSION);
 /* Needed in ssl_cert.c */
@@ -1702,17 +1731,6 @@ typedef struct ssl3_comp_st {
 } SSL3_COMP;
 # endif
 
-typedef struct raw_extension_st {
-    /* Raw packet data for the extension */
-    PACKET data;
-    /* Set to 1 if the extension is present or 0 otherwise */
-    int present;
-    /* Set to 1 if we have already parsed the extension or 0 otherwise */
-    int parsed;
-    /* The type of this extension, i.e. a TLSEXT_TYPE_* value */
-    unsigned int type;
-} RAW_EXTENSION;
-
 /*
  * Extension index values NOTE: Any updates to these defines should be mirrored
  * with equivalent updates to ext_defs in extensions.c
@@ -1786,24 +1804,6 @@ typedef enum tlsext_index_en {
 /* A dummy signature value not valid for TLSv1.2 signature algs */
 #define TLSEXT_signature_rsa_pss                                0x0101
 
-
-#define MAX_COMPRESSIONS_SIZE   255
-
-typedef struct {
-    unsigned int isv2;
-    unsigned int legacy_version;
-    unsigned char random[SSL3_RANDOM_SIZE];
-    size_t session_id_len;
-    unsigned char session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
-    size_t dtls_cookie_len;
-    unsigned char dtls_cookie[DTLS1_COOKIE_LENGTH];
-    PACKET ciphersuites;
-    size_t compressions_len;
-    unsigned char compressions[MAX_COMPRESSIONS_SIZE];
-    PACKET extensions;
-    size_t pre_proc_exts_len;
-    RAW_EXTENSION *pre_proc_exts;
-} CLIENTHELLO_MSG;
 
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 
