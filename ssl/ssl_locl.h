@@ -515,7 +515,7 @@ struct ssl_session_st {
      * For <=TLS1.2 this is the master_key. For TLS1.3 this is the resumption
      * master secret
      */
-    unsigned char master_key[SSL_MAX_MASTER_KEY_LENGTH];
+    unsigned char master_key[TLS13_MAX_RESUMPTION_MASTER_LENGTH];
     /* session_id - valid? */
     size_t session_id_length;
     unsigned char session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
