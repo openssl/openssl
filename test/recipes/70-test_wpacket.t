@@ -12,8 +12,8 @@ use OpenSSL::Test::Utils;
 
 setup("test_wpacket");
 
-plan skip_all => "Only supported in no-shared builds"
-    if !disabled("shared");
+plan skip_all => "Test disabled in this configuration"
+    if $^O eq 'MSWin32' && !disabled("shared");
 
 plan tests => 1;
 
