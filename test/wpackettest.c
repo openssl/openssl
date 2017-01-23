@@ -254,6 +254,27 @@ static int test_WPACKET_start_sub_packet(void)
         return 0;
     }
 
+    /* Nested sub-packets with lengths filled before finish */
+    if (!WPACKET_init(&pkt, buf)
+            || !WPACKET_start_sub_packet_u8(&pkt)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
+            || !WPACKET_start_sub_packet_u8(&pkt)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
+            || !WPACKET_get_length(&pkt, &len)
+            || len != 1
+            || !WPACKET_close(&pkt)
+            || !WPACKET_get_length(&pkt, &len)
+            || len != 3
+            || !WPACKET_close(&pkt)
+            || !WPACKET_fill_lengths(&pkt)
+            || !WPACKET_get_total_written(&pkt, &written)
+            ||  written != sizeof(nestedsub)
+            ||  memcmp(buf->data, &nestedsub, written) != 0
+            || !WPACKET_finish(&pkt)) {
+        testfail("test_WPACKET_start_sub_packet():5 failed\n", &pkt);
+        return 0;
+    }
+
     return 1;
 }
 
