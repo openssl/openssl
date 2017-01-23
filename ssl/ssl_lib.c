@@ -1014,6 +1014,7 @@ void SSL_free(SSL *s)
 #endif
     OPENSSL_free(s->ext.ocsp.resp);
     OPENSSL_free(s->ext.alpn);
+    OPENSSL_free(s->clienthello);
 
     sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);
 
@@ -3012,15 +3013,14 @@ int SSL_get_error(const SSL *s, int i)
                 return (SSL_ERROR_SYSCALL);
         }
     }
-    if (SSL_want_x509_lookup(s)) {
+    if (SSL_want_x509_lookup(s))
         return (SSL_ERROR_WANT_X509_LOOKUP);
-    }
-    if (SSL_want_async(s)) {
+    if (SSL_want_async(s))
         return SSL_ERROR_WANT_ASYNC;
-    }
-    if (SSL_want_async_job(s)) {
+    if (SSL_want_async_job(s))
         return SSL_ERROR_WANT_ASYNC_JOB;
-    }
+    if (SSL_want_early(s))
+        return SSL_ERROR_WANT_EARLY;
 
     if ((s->shutdown & SSL_RECEIVED_SHUTDOWN) &&
         (s->s3->warn_alert == SSL_AD_CLOSE_NOTIFY))
@@ -4305,7 +4305,84 @@ const CTLOG_STORE *SSL_CTX_get0_ctlog_store(const SSL_CTX *ctx)
     return ctx->ctlog_store;
 }
 
-#endif
+#endif  /* OPENSSL_NO_CT */
+
+void SSL_CTX_set_early_cb(SSL_CTX *c, SSL_early_cb_fn cb, void *arg)
+{
+    c->early_cb = cb;
+    c->early_cb_arg = arg;
+}
+
+int SSL_early_isv2(SSL *s)
+{
+    if (s->clienthello == NULL)
+        return 0;
+    return s->clienthello->isv2;
+}
+
+unsigned int SSL_early_get0_legacy_version(SSL *s)
+{
+    if (s->clienthello == NULL)
+        return 0;
+    return s->clienthello->legacy_version;
+}
+
+size_t SSL_early_get0_random(SSL *s, const unsigned char **out)
+{
+    if (s->clienthello == NULL)
+        return 0;
+    if (out != NULL)
+        *out = s->clienthello->random;
+    return SSL3_RANDOM_SIZE;
+}
+
+size_t SSL_early_get0_session_id(SSL *s, const unsigned char **out)
+{
+    if (s->clienthello == NULL)
+        return 0;
+    if (out != NULL)
+        *out = s->clienthello->session_id;
+    return s->clienthello->session_id_len;
+}
+
+size_t SSL_early_get0_ciphers(SSL *s, const unsigned char **out)
+{
+    if (s->clienthello == NULL)
+        return 0;
+    if (out != NULL)
+        *out = PACKET_data(&s->clienthello->ciphersuites);
+    return PACKET_remaining(&s->clienthello->ciphersuites);
+}
+
+size_t SSL_early_get0_compression_methods(SSL *s, const unsigned char **out)
+{
+    if (s->clienthello == NULL)
+        return 0;
+    if (out != NULL)
+        *out = s->clienthello->compressions;
+    return s->clienthello->compressions_len;
+}
+
+int SSL_early_get0_ext(SSL *s, unsigned int type, const unsigned char **out,
+                       size_t *outlen)
+{
+    size_t i;
+    RAW_EXTENSION *r;
+
+    if (s->clienthello == NULL)
+        return 0;
+    for (i = 0; i < s->clienthello->pre_proc_exts_len; ++i) {
+        r = s->clienthello->pre_proc_exts + i;
+        if (r->present && r->type == type) {
+            if (out != NULL)
+                *out = PACKET_data(&r->data);
+            if (outlen != NULL)
+                *outlen = PACKET_remaining(&r->data);
+            return 1;
+        }
+    }
+    return 0;
+}
 
 void SSL_CTX_set_keylog_callback(SSL_CTX *ctx, SSL_CTX_keylog_cb_func cb)
 {

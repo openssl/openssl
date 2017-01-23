@@ -416,3 +416,11 @@ SSL_get_peer_signature_type_nid         416	1_1_1	EXIST::FUNCTION:
 SSL_key_update                          417	1_1_1	EXIST::FUNCTION:
 SSL_get_key_update_type                 418	1_1_1	EXIST::FUNCTION:
 SSL_bytes_to_cipher_list                419	1_1_1	EXIST::FUNCTION:
+SSL_early_get0_compression_methods      420	1_1_1	EXIST::FUNCTION:
+SSL_early_get0_ciphers                  421	1_1_1	EXIST::FUNCTION:
+SSL_early_get0_ext                      422	1_1_1	EXIST::FUNCTION:
+SSL_early_get0_session_id               423	1_1_1	EXIST::FUNCTION:
+SSL_early_get0_random                   424	1_1_1	EXIST::FUNCTION:
+SSL_CTX_set_early_cb                    425	1_1_1	EXIST::FUNCTION:
+SSL_early_get0_legacy_version           426	1_1_1	EXIST::FUNCTION:
+SSL_early_isv2                          427	1_1_1	EXIST::FUNCTION:
