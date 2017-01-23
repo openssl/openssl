@@ -1254,7 +1254,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
 
     context = SSL_IS_TLS13(s) ? EXT_TLS1_3_SERVER_HELLO
                               : EXT_TLS1_2_SERVER_HELLO;
-    if (!tls_collect_extensions(s, &extpkt, context, &extensions, &al))
+    if (!tls_collect_extensions(s, &extpkt, context, &extensions, &al, NULL))
         goto f_err;
 
     s->hit = 0;
@@ -1524,7 +1524,7 @@ static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
     }
 
     if (!tls_collect_extensions(s, &extpkt, EXT_TLS1_3_HELLO_RETRY_REQUEST,
-                                &extensions, &al)
+                                &extensions, &al, NULL)
             || !tls_parse_all_extensions(s, EXT_TLS1_3_HELLO_RETRY_REQUEST,
                                          extensions, NULL, 0, &al))
         goto f_err;
@@ -1596,7 +1596,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
                 goto f_err;
             }
             if (!tls_collect_extensions(s, &extensions, EXT_TLS1_3_CERTIFICATE,
-                                        &rawexts, &al)
+                                        &rawexts, &al, NULL)
                     || !tls_parse_all_extensions(s, EXT_TLS1_3_CERTIFICATE,
                                                  rawexts, x, chainidx, &al)) {
                 OPENSSL_free(rawexts);
@@ -2399,7 +2399,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         if (!PACKET_as_length_prefixed_2(pkt, &extpkt)
                 || !tls_collect_extensions(s, &extpkt,
                                            EXT_TLS1_3_NEW_SESSION_TICKET,
-                                           &exts, &al)
+                                           &exts, &al, NULL)
                 || !tls_parse_all_extensions(s, EXT_TLS1_3_NEW_SESSION_TICKET,
                                              exts, NULL, 0, &al)) {
             SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, SSL_R_BAD_EXTENSION);
@@ -3362,7 +3362,7 @@ static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt)
     }
 
     if (!tls_collect_extensions(s, &extensions, EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
-                                &rawexts, &al)
+                                &rawexts, &al, NULL)
             || !tls_parse_all_extensions(s, EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
                                          rawexts, NULL, 0, &al))
         goto err;
