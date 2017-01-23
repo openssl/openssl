@@ -830,6 +830,10 @@ struct ssl_ctx_st {
     ENGINE *client_cert_engine;
 # endif
 
+    /* Early callback.  Mostly for extensions, but not entirely. */
+    SSL_early_cb_fn early_cb;
+    void *early_cb_arg;
+
     /* TLS extensions. */
     struct {
         /* TLS extensions servername callback */
@@ -1170,6 +1174,9 @@ struct ssl_st {
         /* Set to one if we have negotiated ETM */
         int use_etm;
     } ext;
+
+    /* Parsed form of the ClientHello, kept around across early_cb calls. */
+    CLIENTHELLO_MSG *clienthello;
 
     /*-
      * no further mod of servername
