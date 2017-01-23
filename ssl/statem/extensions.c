@@ -382,10 +382,11 @@ static int extension_is_relevant(SSL *s, unsigned int extctx,
  * extensions that we know about. We ignore others.
  */
 int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
-                           RAW_EXTENSION **res, int *al)
+                           RAW_EXTENSION **res, int *al, size_t *len)
 {
     PACKET extensions = *packet;
     size_t i = 0;
+    size_t num_exts;
     custom_ext_methods *exts = NULL;
     RAW_EXTENSION *raw_extensions = NULL;
     const EXTENSION_DEFINITION *thisexd;
@@ -403,9 +404,8 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
         exts = &s->cert->cli_ext;
     }
 
-    raw_extensions = OPENSSL_zalloc((OSSL_NELEM(ext_defs)
-                                     + (exts != NULL ? exts->meths_count : 0))
-                                     * sizeof(*raw_extensions));
+    num_exts = OSSL_NELEM(ext_defs) + (exts != NULL ? exts->meths_count : 0);
+    raw_extensions = OPENSSL_zalloc(num_exts * sizeof(*raw_extensions));
     if (raw_extensions == NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, ERR_R_MALLOC_FAILURE);
@@ -454,6 +454,8 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
     }
 
     *res = raw_extensions;
+    if (len != NULL)
+        *len = num_exts;
     return 1;
 
  err:

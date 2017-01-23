@@ -1423,7 +1423,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     /* Preserve the raw extensions PACKET for later use */
     extensions = clienthello.extensions;
     if (!tls_collect_extensions(s, &extensions, EXT_CLIENT_HELLO,
-                                &clienthello.pre_proc_exts, &al)) {
+                                &clienthello.pre_proc_exts, &al, NULL)) {
         /* SSLerr already been called */
         goto f_err;
     }
@@ -3128,7 +3128,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
                 goto f_err;
             }
             if (!tls_collect_extensions(s, &extensions, EXT_TLS1_3_CERTIFICATE,
-                                        &rawexts, &al)
+                                        &rawexts, &al, NULL)
                     || !tls_parse_all_extensions(s, EXT_TLS1_3_CERTIFICATE,
                                                  rawexts, x, chainidx, &al)) {
                 OPENSSL_free(rawexts);
