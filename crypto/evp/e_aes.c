@@ -2536,7 +2536,7 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (!octx->key_set)
         return -1;
 
-    if (in) {
+    if (in != NULL) {
         /*
          * Need to ensure we are only passing full blocks to low level OCB
          * routines. We do it here rather than in EVP_EncryptUpdate/
@@ -2557,10 +2557,10 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
          * If we've got a partially filled buffer from a previous call then
          * use that data first
          */
-        if (*buf_len) {
+        if (*buf_len > 0) {
             unsigned int remaining;
 
-            remaining = 16 - (*buf_len);
+            remaining = AES_BLOCK_SIZE - (*buf_len);
             if (remaining > len) {
                 memcpy(buf + (*buf_len), in, len);
                 *(buf_len) += len;
@@ -2574,21 +2574,23 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             len -= remaining;
             in += remaining;
             if (out == NULL) {
-                if (!CRYPTO_ocb128_aad(&octx->ocb, buf, 16))
+                if (!CRYPTO_ocb128_aad(&octx->ocb, buf, AES_BLOCK_SIZE))
                     return -1;
             } else if (EVP_CIPHER_CTX_encrypting(ctx)) {
-                if (!CRYPTO_ocb128_encrypt(&octx->ocb, buf, out, 16))
+                if (!CRYPTO_ocb128_encrypt(&octx->ocb, buf, out,
+                                           AES_BLOCK_SIZE))
                     return -1;
             } else {
-                if (!CRYPTO_ocb128_decrypt(&octx->ocb, buf, out, 16))
+                if (!CRYPTO_ocb128_decrypt(&octx->ocb, buf, out,
+                                           AES_BLOCK_SIZE))
                     return -1;
             }
-            written_len = 16;
+            written_len = AES_BLOCK_SIZE;
             *buf_len = 0;
         }
 
         /* Do we have a partial block to handle at the end? */
-        trailing_len = len % 16;
+        trailing_len = len % AES_BLOCK_SIZE;
 
         /*
          * If we've got some full blocks to handle, then process these first
@@ -2611,7 +2613,7 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         }
 
         /* Handle any trailing partial block */
-        if (trailing_len) {
+        if (trailing_len > 0) {
             memcpy(buf, in, trailing_len);
             *buf_len = trailing_len;
         }
@@ -2622,7 +2624,7 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
          * First of all empty the buffer of any partial block that we might
          * have been provided - both for data and AAD
          */
-        if (octx->data_buf_len) {
+        if (octx->data_buf_len > 0) {
             if (EVP_CIPHER_CTX_encrypting(ctx)) {
                 if (!CRYPTO_ocb128_encrypt(&octx->ocb, octx->data_buf, out,
                                            octx->data_buf_len))
@@ -2635,7 +2637,7 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             written_len = octx->data_buf_len;
             octx->data_buf_len = 0;
         }
-        if (octx->aad_buf_len) {
+        if (octx->aad_buf_len > 0) {
             if (!CRYPTO_ocb128_aad
                 (&octx->ocb, octx->aad_buf, octx->aad_buf_len))
                 return -1;
