@@ -3276,7 +3276,8 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
          * slightly over allocate because we won't store those. But that isn't a
          * problem.
          */
-        raw = s->s3->tmp.ciphers_raw = OPENSSL_malloc(numciphers * n);
+        raw = OPENSSL_malloc(numciphers * TLS_CIPHER_LEN);
+        s->s3->tmp.ciphers_raw = raw;
         if (raw == NULL) {
             *al = SSL_AD_INTERNAL_ERROR;
             goto err;
