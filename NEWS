@@ -7,7 +7,9 @@
 
   Major changes between OpenSSL 1.1.0c and OpenSSL 1.1.0d [under development]
 
-      o
+      o Truncated packet could crash via OOB read (CVE-2017-3731)
+      o Bad (EC)DHE parameters cause a client crash (CVE-2017-3730)
+      o BN_mod_exp may produce incorrect results on x86_64 (CVE-2017-3732)
 
   Major changes between OpenSSL 1.1.0b and OpenSSL 1.1.0c [10 Nov 2016]
 
