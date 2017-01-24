@@ -9,11 +9,20 @@
 
       o
 
-  Major changes between OpenSSL 1.1.0a and OpenSSL 1.1.0b [26 Sep 2016]
+  Major changes between OpenSSL 1.1.0c and OpenSSL 1.1.0d [26 Jan 2017]
+
+      o Truncated packet could crash via OOB read (CVE-2017-3731)
+      o Bad (EC)DHE parameters cause a client crash (CVE-2017-3730)
+      o BN_mod_exp may produce incorrect results on x86_64 (CVE-2017-3732)
+
+  Major changes between OpenSSL 1.1.0b and OpenSSL 1.1.0c [10 Nov 2016]
 
       o ChaCha20/Poly1305 heap-buffer-overflow (CVE-2016-7054)
       o CMS Null dereference (CVE-2016-7053)
       o Montgomery multiplication may produce incorrect results (CVE-2016-7055)
+
+  Major changes between OpenSSL 1.1.0a and OpenSSL 1.1.0b [26 Sep 2016]
+
       o Fix Use After Free for large message sizes (CVE-2016-6309)
 
   Major changes between OpenSSL 1.1.0 and OpenSSL 1.1.0a [22 Sep 2016]
