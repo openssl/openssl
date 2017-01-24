@@ -2026,21 +2026,34 @@ int s_client_main(int argc, char **argv)
             BIO_push(fbio, sbio);
             BIO_printf(fbio, "CONNECT %s HTTP/1.0\r\n\r\n", connectstr);
             (void)BIO_flush(fbio);
-            /* wait for multi-line response to end CONNECT response */
-            do {
-                const char *tmp_search = NULL;
-                mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
-                if (strchr(mbuf, ':') == NULL /* Not looking for headers */
-                    && (tmp_search = strchr(mbuf, ' ')) != NULL
-                    && tmp_search[1] == '2' /* Status code 2xx */
-                    )
-                    foundit++;
-            } while (mbuf_len > 2 && foundit == 0);
+            /*
+             * The first line is the HTTP response.  According to RFC 7230,
+             * it's formated exactly like this:
+             *
+             * HTTP/d.d ddd Reason text\r\n
+             */
+            mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+            if (mbuf[8] != ' ') {
+                BIO_printf(bio_err,
+                           "%s: HTTP CONNECT failed, incorrect response "
+                           "from proxy\n", prog);
+                foundit = -1;
+            } else if (mbuf[9] != '2') {
+                BIO_printf(bio_err, "%s: HTTP CONNECT failed: %s ", prog,
+                           &mbuf[9]);
+            } else {
+                foundit = 1;
+            }
+            if (foundit >= 0) {
+                /* Read past all following headers */
+                do {
+                    mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+                } while (mbuf_len > 2);
+            }
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);
-            if (!foundit) {
-                BIO_printf(bio_err, "%s: HTTP CONNECT failed\n", prog);
+            if (foundit < 1) {
                 goto shut;
             }
         }
