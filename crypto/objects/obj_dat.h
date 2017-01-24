@@ -2271,6 +2271,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      162,    /* "PBMAC1" */
      127,    /* "PKIX" */
      935,    /* "PSPECIFIED" */
+    1061,    /* "Poly1305" */
       98,    /* "RC2-40-CBC" */
      166,    /* "RC2-64-CBC" */
       37,    /* "RC2-CBC" */
@@ -2711,7 +2712,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      213,    /* "id-smime-aa-securityLabel" */
      239,    /* "id-smime-aa-signatureType" */
      223,    /* "id-smime-aa-signingCertificate" */
-    1061,    /* "id-smime-aa-signingCertificateV2" */
+    1062,    /* "id-smime-aa-signingCertificateV2" */
      224,    /* "id-smime-aa-smimeEncryptCerts" */
      225,    /* "id-smime-aa-timeStampToken" */
      192,    /* "id-smime-alg" */
@@ -3786,7 +3787,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      213,    /* "id-smime-aa-securityLabel" */
      239,    /* "id-smime-aa-signatureType" */
      223,    /* "id-smime-aa-signingCertificate" */
-    1061,    /* "id-smime-aa-signingCertificateV2" */
+    1062,    /* "id-smime-aa-signingCertificateV2" */
      224,    /* "id-smime-aa-smimeEncryptCerts" */
      225,    /* "id-smime-aa-timeStampToken" */
      192,    /* "id-smime-alg" */
@@ -3955,6 +3956,7 @@ static const unsigned int ln_objs[NUM_LN] = {
       22,    /* "pkcs7-signedData" */
      151,    /* "pkcs8ShroudedKeyBag" */
       47,    /* "pkcs9" */
+    1061,    /* "poly1305" */
      862,    /* "postOfficeBox" */
      861,    /* "postalAddress" */
      661,    /* "postalCode" */
@@ -5173,7 +5175,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      238,    /* OBJ_id_smime_aa_ets_archiveTimeStamp 1 2 840 113549 1 9 16 2 27 */
      239,    /* OBJ_id_smime_aa_signatureType    1 2 840 113549 1 9 16 2 28 */
      240,    /* OBJ_id_smime_aa_dvcs_dvc         1 2 840 113549 1 9 16 2 29 */
-    1061,    /* OBJ_id_smime_aa_signingCertificateV2 1 2 840 113549 1 9 16 2 30 */
+    1062,    /* OBJ_id_smime_aa_signingCertificateV2 1 2 840 113549 1 9 16 2 30 */
      241,    /* OBJ_id_smime_alg_ESDHwith3DES    1 2 840 113549 1 9 16 3 1 */
      242,    /* OBJ_id_smime_alg_ESDHwithRC2     1 2 840 113549 1 9 16 3 2 */
      243,    /* OBJ_id_smime_alg_3DESwrap        1 2 840 113549 1 9 16 3 3 */

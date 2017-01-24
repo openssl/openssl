@@ -905,15 +905,13 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
     if ((cid = ESS_CERT_ID_V2_new()) == NULL)
         goto err;
 
-    alg = X509_ALGOR_new();
-    if (alg == NULL)
-        goto err;
-
-    X509_ALGOR_set_md(alg, hash_alg);
-    if (alg->algorithm == NULL)
-        goto err;
-
     if (hash_alg != EVP_sha256()) {
+        alg = X509_ALGOR_new();
+        if (alg == NULL)
+            goto err;
+        X509_ALGOR_set_md(alg, hash_alg);
+        if (alg->algorithm == NULL)
+            goto err;
         cid->hash_alg = alg;
         alg = NULL;
     } else {

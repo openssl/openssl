@@ -483,6 +483,7 @@ int TS_CONF_set_ess_cert_id_digest(CONF *conf, const char *section,
         ts_CONF_invalid(section, ENV_ESS_CERT_ID_ALG);
         goto err;
     }
+
     if (!TS_RESP_CTX_set_ess_cert_id_digest(ctx, cert_md))
         goto err;
 
