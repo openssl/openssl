@@ -16,16 +16,22 @@
 
 static int init(EVP_MD_CTX *ctx)
 {
+    (void)ctx;
     return 1;
 }
 
 static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
+    (void)ctx;
+    (void)data;
+    (void)count;
     return 1;
 }
 
 static int final(EVP_MD_CTX *ctx, unsigned char *md)
 {
+    (void)ctx;
+    (void)md;
     return 1;
 }
 

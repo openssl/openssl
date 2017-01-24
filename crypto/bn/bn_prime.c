@@ -310,6 +310,7 @@ int bn_probable_prime_dh_retry(BIGNUM *rnd, int bits, BN_CTX *ctx)
     int i;
     int ret = 0;
 
+    (void)ctx;
  loop:
     if (!BN_rand(rnd, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
         goto err;

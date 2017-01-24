@@ -26,6 +26,8 @@ static unsigned int clnt_psk_callback(SSL *ssl, const char *hint,
                                       unsigned char *psk,
                                       unsigned int max_psk_len)
 {
+    (void)ssl;
+    (void)hint;
     BIO_snprintf(ident, max_ident_len, "psk");
 
     if (max_psk_len > 20)
@@ -39,6 +41,8 @@ static unsigned int srvr_psk_callback(SSL *ssl, const char *identity,
                                       unsigned char *psk,
                                       unsigned int max_psk_len)
 {
+    (void)ssl;
+    (void)identity;
     if (max_psk_len > 20)
         max_psk_len = 20;
     memset(psk, 0x5a, max_psk_len);

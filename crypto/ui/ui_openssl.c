@@ -214,6 +214,7 @@ UI_METHOD *UI_OpenSSL(void)
  */
 static int write_string(UI *ui, UI_STRING *uis)
 {
+    (void)ui;
     switch (UI_get_string_type(uis)) {
     case UIT_ERROR:
     case UIT_INFO:
@@ -473,6 +474,7 @@ static int open_console(UI *ui)
 
 static int noecho_console(UI *ui)
 {
+    (void)ui;
 #ifdef TTY_FLAGS
     memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
     tty_new.TTY_FLAGS &= ~ECHO;
@@ -515,6 +517,7 @@ static int noecho_console(UI *ui)
 
 static int echo_console(UI *ui)
 {
+    (void)ui;
 #if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
     memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
     tty_new.TTY_FLAGS |= ECHO;

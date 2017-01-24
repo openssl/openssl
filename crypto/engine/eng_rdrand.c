@@ -60,6 +60,7 @@ static RAND_METHOD rdrand_meth = {
 
 static int rdrand_init(ENGINE *e)
 {
+    (void)e;
     return 1;
 }
 

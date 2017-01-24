@@ -18,7 +18,7 @@
 #endif
 
 #ifdef OPENSSL_NO_MDC2
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No MDC2 support\n");
     return (0);
@@ -41,7 +41,7 @@ static unsigned char pad2[16] = {
     0x35, 0xD8, 0x7A, 0xFE, 0xAB, 0x33, 0xBE, 0xE2
 };
 
-int main(int argc, char *argv[])
+int main(void)
 {
     int ret = 1;
     unsigned char md[MDC2_DIGEST_LENGTH];

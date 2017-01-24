@@ -38,7 +38,7 @@
 #include <openssl/err.h>
 
 #ifdef OPENSSL_NO_EC
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No ECDH support\n");
     return (0);
@@ -542,7 +542,7 @@ static int ecdh_cavs_kat(BIO *out, const ecdh_cavs_kat_t *kat)
     return rv;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
     BN_CTX *ctx = NULL;
     int nid, ret = 1;

@@ -248,8 +248,9 @@ static int traverse_string(const unsigned char *p, int len, int inform,
 
 static int in_utf8(unsigned long value, void *arg)
 {
-    int *nchar;
-    nchar = arg;
+    int *nchar = arg;
+
+    (void)value;
     (*nchar)++;
     return 1;
 }

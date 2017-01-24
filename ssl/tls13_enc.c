@@ -178,6 +178,7 @@ int tls13_generate_master_secret(SSL *s, unsigned char *out,
 {
     const EVP_MD *md = ssl_handshake_md(s);
 
+    (void)prevlen;
     *secret_size = EVP_MD_size(md);
     return tls13_generate_secret(s, md, prev, NULL, 0, out);
 }
@@ -195,6 +196,7 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
     EVP_PKEY *key = NULL;
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 
+    (void)slen;
     if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen))
         goto err;
 

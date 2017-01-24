@@ -177,6 +177,7 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
     const unsigned char *iv;
     const unsigned char *iv2;
 
+    (void)key2;
     OPENSSL_assert(in && out && key && ivec);
     OPENSSL_assert((AES_ENCRYPT == enc) || (AES_DECRYPT == enc));
     OPENSSL_assert((length % AES_BLOCK_SIZE) == 0);

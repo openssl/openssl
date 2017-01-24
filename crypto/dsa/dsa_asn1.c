@@ -61,6 +61,8 @@ int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
 {
+    (void)it;
+    (void)exarg;
     if (operation == ASN1_OP_NEW_PRE) {
         *pval = (ASN1_VALUE *)DSA_new();
         if (*pval != NULL)
@@ -111,6 +113,8 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen,
              unsigned char *sig, unsigned int *siglen, DSA *dsa)
 {
     DSA_SIG *s;
+
+    (void)type; /* FIXME(API) */
     RAND_seed(dgst, dlen);
     s = DSA_do_sign(dgst, dlen, dsa);
     if (s == NULL) {
@@ -138,6 +142,7 @@ int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
     int derlen = -1;
     int ret = -1;
 
+    (void)type;
     s = DSA_SIG_new();
     if (s == NULL)
         return (ret);

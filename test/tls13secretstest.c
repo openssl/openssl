@@ -134,6 +134,8 @@ static unsigned char server_ats_iv[] = {
 /* Mocked out implementations of various functions */
 int ssl3_digest_cached_records(SSL *s, int keep)
 {
+    (void)s;
+    (void)keep;
     return 1;
 }
 
@@ -143,6 +145,7 @@ static int full_hash = 0;
 int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
                        size_t *hashlen)
 {
+    (void)s;
     if (sizeof(hs_start_hash) > outlen
             || sizeof(hs_full_hash) != sizeof(hs_start_hash))
         return 0;
@@ -160,15 +163,18 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
 
 const EVP_MD *ssl_handshake_md(SSL *s)
 {
+    (void)s;
     return EVP_sha256();
 }
 
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl)
 {
+    (void)rl;
 }
 
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
 {
+    (void)rl;
 }
 
 int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
@@ -176,6 +182,13 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
                        size_t *mac_secret_size, SSL_COMP **comp, int use_etm)
 
 {
+    (void)s;
+    (void)enc;
+    (void)md;
+    (void)mac_pkey_type;
+    (void)mac_secret_size;
+    (void)comp;
+    (void)use_etm;
     return 0;
 }
 

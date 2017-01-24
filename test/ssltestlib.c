@@ -221,6 +221,9 @@ static long tls_dump_ctrl(BIO *bio, int cmd, long num, void *ptr)
 
 static int tls_dump_gets(BIO *bio, char *buf, int size)
 {
+    (void)bio;
+    (void)buf;
+    (void)size;
     /* We don't support this - not needed anyway */
     return -1;
 }
@@ -477,6 +480,7 @@ static long mempacket_test_ctrl(BIO *bio, int cmd, long num, void *ptr)
     MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
     MEMPACKET *thispkt;
 
+    (void)ptr;
     switch (cmd) {
     case BIO_CTRL_EOF:
         ret = (long)(sk_MEMPACKET_num(ctx->pkts) == 0);
@@ -513,6 +517,9 @@ static long mempacket_test_ctrl(BIO *bio, int cmd, long num, void *ptr)
 
 static int mempacket_test_gets(BIO *bio, char *buf, int size)
 {
+    (void)bio;
+    (void)buf;
+    (void)size;
     /* We don't support this - not needed anyway */
     return -1;
 }

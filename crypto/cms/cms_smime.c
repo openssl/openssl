@@ -810,6 +810,7 @@ int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
 CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags)
 {
     CMS_ContentInfo *cms;
+
     if (comp_nid <= 0)
         comp_nid = NID_zlib_compression;
     cms = cms_CompressedData_create(comp_nid);
@@ -831,12 +832,19 @@ CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags)
 int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
                    unsigned int flags)
 {
+    (void)cms;
+    (void)dcont;
+    (void)out;
+    (void)flags;
     CMSerr(CMS_F_CMS_UNCOMPRESS, CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
     return 0;
 }
 
 CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags)
 {
+    (void)in;
+    (void)comp_nid;
+    (void)flags;
     CMSerr(CMS_F_CMS_COMPRESS, CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
     return NULL;
 }

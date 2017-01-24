@@ -46,6 +46,7 @@ static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *ctx, void *data)
 {
     ASN1_INTEGER *serial = ASN1_INTEGER_new();
 
+    (void)data;
     if (serial == NULL)
         goto err;
     if (!ASN1_INTEGER_set(serial, 1))
@@ -65,6 +66,8 @@ static int def_time_cb(struct TS_resp_ctx *ctx, void *data,
                        long *sec, long *usec)
 {
     struct timeval tv;
+
+    (void)data;
     if (gettimeofday(&tv, NULL) != 0) {
         TSerr(TS_F_DEF_TIME_CB, TS_R_TIME_SYSCALL_ERROR);
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
@@ -102,6 +105,8 @@ static int def_time_cb(struct TS_resp_ctx *ctx, void *data,
 static int def_extension_cb(struct TS_resp_ctx *ctx, X509_EXTENSION *ext,
                             void *data)
 {
+    (void)ext;
+    (void)data;
     TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                 "Unsupported extension.");
     TS_RESP_CTX_add_failure_info(ctx, TS_INFO_UNACCEPTED_EXTENSION);

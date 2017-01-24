@@ -64,6 +64,7 @@ static int int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 
 static int cmac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
 {
+    (void)ctx;
     EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
     EVP_MD_CTX_set_update_fn(mctx, int_update);
     return 1;
@@ -72,6 +73,7 @@ static int cmac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
 static int cmac_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
                         EVP_MD_CTX *mctx)
 {
+    (void)mctx;
     return CMAC_Final(ctx->data, sig, siglen);
 }
 

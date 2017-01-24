@@ -31,7 +31,7 @@ int RSA_padding_add_none(unsigned char *to, int tlen,
 int RSA_padding_check_none(unsigned char *to, int tlen,
                            const unsigned char *from, int flen, int num)
 {
-
+    (void)num;
     if (flen > tlen) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_NONE, RSA_R_DATA_TOO_LARGE);
         return (-1);

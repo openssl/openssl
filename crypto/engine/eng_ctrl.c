@@ -63,6 +63,8 @@ static int int_ctrl_helper(ENGINE *e, int cmd, long i, void *p,
 {
     int idx;
     char *s = (char *)p;
+
+    (void)f;
     /* Take care of the easy one first (eg. it requires no searches) */
     if (cmd == ENGINE_CTRL_GET_FIRST_CMD_TYPE) {
         if ((e->cmd_defns == NULL) || int_ctrl_cmd_is_null(e->cmd_defns))

@@ -235,6 +235,7 @@ int main(int argc, char *argv[])
 {
     int ret;
 
+    (void)argv;
     if (argc > 1)
         ret = print_test_data();
     else

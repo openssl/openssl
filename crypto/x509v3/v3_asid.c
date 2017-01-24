@@ -109,6 +109,8 @@ static int i2r_ASIdentifiers(const X509V3_EXT_METHOD *method,
                              void *ext, BIO *out, int indent)
 {
     ASIdentifiers *asid = ext;
+
+    (void)method;
     return (i2r_ASIdentifierChoice(out, asid->asnum, indent,
                                    "Autonomous System Numbers") &&
             i2r_ASIdentifierChoice(out, asid->rdi, indent,
@@ -501,6 +503,8 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
     ASIdentifiers *asid = NULL;
     int i;
 
+    (void)method;
+    (void)ctx;
     if ((asid = ASIdentifiers_new()) == NULL) {
         X509V3err(X509V3_F_V2I_ASIDENTIFIERS, ERR_R_MALLOC_FAILURE);
         return NULL;

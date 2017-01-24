@@ -229,6 +229,8 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     int rv = 0;
     SCRYPT_PARAMS *sparam = NULL;
 
+    (void)c;
+    (void)md;
     if (EVP_CIPHER_CTX_cipher(ctx) == NULL) {
         EVPerr(EVP_F_PKCS5_V2_SCRYPT_KEYIVGEN, EVP_R_NO_CIPHER_SET);
         goto err;

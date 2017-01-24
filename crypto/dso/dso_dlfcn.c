@@ -187,6 +187,7 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
 {
     char *merged;
 
+    (void)dso;
     if (!filespec1 && !filespec2) {
         DSOerr(DSO_F_DLFCN_MERGER, ERR_R_PASSED_NULL_PARAMETER);
         return (NULL);

@@ -695,6 +695,7 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
+    (void)wst;
     s->init_num = 0;
 
     switch (st->hand_state) {
@@ -844,6 +845,7 @@ int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt,
 {
     OSSL_STATEM *st = &s->statem;
 
+    (void)pkt;
     switch (st->hand_state) {
     default:
         /* Shouldn't happen */
@@ -1982,6 +1984,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
 
 int tls_construct_server_done(SSL *s, WPACKET *pkt)
 {
+    (void)pkt;
     if (!s->s3->tmp.cert_request) {
         if (!ssl3_digest_cached_records(s, 0)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
@@ -3020,6 +3023,8 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
     } else {
         ossl_statem_set_sctp_read_sock(s, 0);
     }
+#else
+    (void)wst;
 #endif
 
     if (s->statem.no_cert_verify || !s->session->peer) {

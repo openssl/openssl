@@ -14,7 +14,7 @@
 #include "../e_os.h"
 
 #ifdef OPENSSL_NO_IDEA
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No IDEA support\n");
     return (0);
@@ -60,14 +60,14 @@ static const unsigned char cfb_cipher64[CFB_TEST_SIZE] = {
 
 static int cfb64_test(const unsigned char *cfb_cipher);
 static char *pt(unsigned char *p);
-int main(int argc, char *argv[])
+int main(void)
 {
     int i, err = 0;
     IDEA_KEY_SCHEDULE key, dkey;
     unsigned char iv[8];
-
     IDEA_set_encrypt_key(k, &key);
     IDEA_ecb_encrypt(in, out, &key);
+
     if (memcmp(out, c, 8) != 0) {
         printf("ecb idea error encrypting\n");
         printf("got     :");

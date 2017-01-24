@@ -14,7 +14,7 @@
 #include "../e_os.h"
 
 #ifdef OPENSSL_NO_MD2
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No MD2 support\n");
     return (0);
@@ -49,7 +49,7 @@ static char *ret[] = {
 };
 
 static char *pt(unsigned char *md);
-int main(int argc, char *argv[])
+int main(void)
 {
     int i, err = 0;
     char **P, **R;

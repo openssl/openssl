@@ -54,6 +54,8 @@ static int desx_cbc_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
     DES_cblock *deskey = (DES_cblock *)key;
 
+    (void)iv;
+    (void)enc;
     DES_set_key_unchecked(deskey, &data(ctx)->ks);
     memcpy(&data(ctx)->inw[0], &key[8], 8);
     memcpy(&data(ctx)->outw[0], &key[16], 8);

@@ -740,7 +740,10 @@ static int serverinfo_srv_parse_cb(SSL *s, unsigned int ext_type,
                                    const unsigned char *in,
                                    size_t inlen, int *al, void *arg)
 {
-
+    (void)s;
+    (void)ext_type;
+    (void)in;
+    (void)arg;
     if (inlen != 0) {
         *al = SSL_AD_DECODE_ERROR;
         return 0;
@@ -756,6 +759,7 @@ static int serverinfo_srv_add_cb(SSL *s, unsigned int ext_type,
     const unsigned char *serverinfo = NULL;
     size_t serverinfo_length = 0;
 
+    (void)arg;
     /* Is there serverinfo data for the chosen server cert? */
     if ((ssl_get_server_cert_serverinfo(s, &serverinfo,
                                         &serverinfo_length)) != 0) {

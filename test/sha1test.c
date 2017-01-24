@@ -32,7 +32,7 @@ static char *ret[] = {
 static char *bigret = "34aa973cd4c4daa4f61eeb2bdbad27316534016f";
 
 static char *pt(unsigned char *md);
-int main(int argc, char *argv[])
+int main(void)
 {
     unsigned int i;
     int err = 0;

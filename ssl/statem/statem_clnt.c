@@ -737,6 +737,7 @@ int ossl_statem_client_construct_message(SSL *s, WPACKET *pkt,
 {
     OSSL_STATEM *st = &s->statem;
 
+    (void)pkt;
     switch (st->hand_state) {
     default:
         /* Shouldn't happen */
@@ -2785,6 +2786,7 @@ static int tls_construct_cke_ecdhe(SSL *s, WPACKET *pkt, int *al)
     EVP_PKEY *ckey = NULL, *skey = NULL;
     int ret = 0;
 
+    (void)al;
     skey = s->s3->peer_tmp;
     if (skey == NULL) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_ECDHE, ERR_R_INTERNAL_ERROR);
@@ -2950,6 +2952,7 @@ static int tls_construct_cke_srp(SSL *s, WPACKET *pkt, int *al)
 #ifndef OPENSSL_NO_SRP
     unsigned char *abytes = NULL;
 
+    (void)al;
     if (s->srp_ctx.A == NULL
             || !WPACKET_sub_allocate_bytes_u16(pkt, BN_num_bytes(s->srp_ctx.A),
                                                &abytes)) {

@@ -20,7 +20,7 @@
 #include <openssl/err.h>
 
 #ifdef OPENSSL_NO_DH
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No DH support\n");
     return (0);
@@ -35,7 +35,7 @@ static const char rnd_seed[] =
 
 static int run_rfc5114_tests(void);
 
-int main(int argc, char *argv[])
+int main(void)
 {
     BN_GENCB *_cb = NULL;
     DH *a = NULL;
@@ -173,6 +173,7 @@ static int cb(int p, int n, BN_GENCB *arg)
 {
     char c = '*';
 
+    (void)n;
     if (p == 0)
         c = '.';
     if (p == 1)

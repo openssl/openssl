@@ -20,6 +20,8 @@ int tls_parse_ctos_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
     unsigned int ilen;
     const unsigned char *data;
 
+    (void)x;
+    (void)chainidx;
     /* Parse the length byte */
     if (!PACKET_get_1(pkt, &ilen)
         || !PACKET_get_bytes(pkt, &data, ilen)) {
@@ -79,6 +81,8 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
     unsigned int servname_type;
     PACKET sni, hostname;
 
+    (void)x;
+    (void)chainidx;
     if (!PACKET_as_length_prefixed_2(pkt, &sni)
         /* ServerNameList must be at least 1 byte long. */
         || PACKET_remaining(&sni) == 0) {
@@ -143,6 +147,8 @@ int tls_parse_ctos_srp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 {
     PACKET srp_I;
 
+    (void)x;
+    (void)chainidx;
     if (!PACKET_as_length_prefixed_1(pkt, &srp_I)
             || PACKET_contains_zero_byte(&srp_I)) {
         *al = SSL_AD_DECODE_ERROR;
@@ -168,6 +174,8 @@ int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
 {
     PACKET ec_point_format_list;
 
+    (void)x;
+    (void)chainidx;
     if (!PACKET_as_length_prefixed_1(pkt, &ec_point_format_list)
         || PACKET_remaining(&ec_point_format_list) == 0) {
         *al = SSL_AD_DECODE_ERROR;
@@ -190,6 +198,8 @@ int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_ctos_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx, int *al)
 {
+    (void)x;
+    (void)chainidx;
     if (s->ext.session_ticket_cb &&
             !s->ext.session_ticket_cb(s, PACKET_data(pkt),
                                   PACKET_remaining(pkt),
@@ -206,6 +216,8 @@ int tls_parse_ctos_sig_algs(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 {
     PACKET supported_sig_algs;
 
+    (void)x;
+    (void)chainidx;
     if (!PACKET_as_length_prefixed_2(pkt, &supported_sig_algs)
             || PACKET_remaining(&supported_sig_algs) == 0) {
         *al = SSL_AD_DECODE_ERROR;
@@ -226,6 +238,7 @@ int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, unsigned int context,
 {
     PACKET responder_id_list, exts;
 
+    (void)chainidx;
     /* Not defined if we get one of these in a client Certificate */
     if (x != NULL)
         return 1;
@@ -323,6 +336,10 @@ int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_ctos_npn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx, int *al)
 {
+    (void)pkt;
+    (void)x;
+    (void)chainidx;
+    (void)al;
     /*
      * We shouldn't accept this extension on a
      * renegotiation.
@@ -344,6 +361,8 @@ int tls_parse_ctos_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 {
     PACKET protocol_list, save_protocol_list, protocol;
 
+    (void)x;
+    (void)chainidx;
     if (!SSL_IS_FIRST_HANDSHAKE(s))
         return 1;
 
@@ -384,6 +403,8 @@ int tls_parse_ctos_use_srtp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     int i, srtp_pref;
     PACKET subpkt;
 
+    (void)x;
+    (void)chainidx;
     /* Ignore this if we have no SRTP profiles */
     if (SSL_get_srtp_profiles(s) == NULL)
         return 1;
@@ -450,6 +471,10 @@ int tls_parse_ctos_use_srtp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 int tls_parse_ctos_etm(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx, int *al)
 {
+    (void)pkt;
+    (void)x;
+    (void)chainidx;
+    (void)al;
     if (!(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC))
         s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
 
@@ -614,6 +639,12 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
         found = 1;
     }
+#else
+    (void)s;
+    (void)pkt;
+    (void)x;
+    (void)chainidx;
+    (void)al;
 #endif
 
     return 1;
@@ -625,6 +656,8 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
 {
     PACKET supported_groups_list;
 
+    (void)x;
+    (void)chainidx;
     /* Each group is 2 bytes and we must have at least 1. */
     if (!PACKET_as_length_prefixed_2(pkt, &supported_groups_list)
             || PACKET_remaining(&supported_groups_list) == 0
@@ -650,6 +683,8 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_ctos_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx, int *al)
 {
+    (void)x;
+    (void)chainidx;
     /* The extension must always be empty */
     if (PACKET_remaining(pkt) != 0) {
         *al = SSL_AD_DECODE_ERROR;
@@ -766,6 +801,9 @@ err:
 int tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt, unsigned int context,
                                    X509 *x, size_t chainidx, int *al)
 {
+    (void)x;
+    (void)chainidx;
+    (void)al;
     if (!s->s3->send_connection_binding)
         return 1;
 
@@ -788,6 +826,9 @@ int tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt, unsigned int context,
 int tls_construct_stoc_server_name(SSL *s, WPACKET *pkt, unsigned int context,
                                    X509 *x, size_t chainidx, int *al)
 {
+    (void)x;
+    (void)chainidx;
+    (void)al;
     if (s->hit || s->servername_done != 1
             || s->session->ext.hostname == NULL)
         return 1;
@@ -812,6 +853,9 @@ int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
     const unsigned char *plist;
     size_t plistlen;
 
+    (void)x;
+    (void)chainidx;
+    (void)al;
     if (!using_ecc)
         return 1;
 
@@ -832,6 +876,9 @@ int tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt,
                                       unsigned int context, X509 *x,
                                       size_t chainidx, int *al)
 {
+    (void)x;
+    (void)chainidx;
+    (void)al;
     if (!s->ext.ticket_expected || !tls_use_ticket(s)) {
         s->ext.ticket_expected = 0;
         return 1;
@@ -851,6 +898,8 @@ int tls_construct_stoc_status_request(SSL *s, WPACKET *pkt,
                                       unsigned int context, X509 *x,
                                       size_t chainidx, int *al)
 {
+    (void)x;
+    (void)al;
     if (!s->ext.status_expected)
         return 1;
 
@@ -888,6 +937,9 @@ int tls_construct_stoc_next_proto_neg(SSL *s, WPACKET *pkt,
     int ret;
     int npn_seen = s->s3->npn_seen;
 
+    (void)x;
+    (void)chainidx;
+    (void)al;
     s->s3->npn_seen = 0;
     if (!npn_seen || s->ctx->ext.npn_advertised_cb == NULL)
         return 1;
@@ -911,6 +963,9 @@ int tls_construct_stoc_next_proto_neg(SSL *s, WPACKET *pkt,
 int tls_construct_stoc_alpn(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
                             size_t chainidx, int *al)
 {
+    (void)x;
+    (void)chainidx;
+    (void)al;
     if (s->s3->alpn_selected == NULL)
         return 1;
 
@@ -933,6 +988,9 @@ int tls_construct_stoc_alpn(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
 int tls_construct_stoc_use_srtp(SSL *s, WPACKET *pkt, unsigned int context,
                                 X509 *x, size_t chainidx, int *al)
 {
+    (void)x;
+    (void)chainidx;
+    (void)al;
     if (s->srtp_profile == NULL)
         return 1;
 
@@ -953,6 +1011,9 @@ int tls_construct_stoc_use_srtp(SSL *s, WPACKET *pkt, unsigned int context,
 int tls_construct_stoc_etm(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
                            size_t chainidx, int *al)
 {
+    (void)x;
+    (void)chainidx;
+    (void)al;
     if ((s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC) == 0)
         return 1;
 
@@ -980,6 +1041,9 @@ int tls_construct_stoc_etm(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
 int tls_construct_stoc_ems(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
                            size_t chainidx, int *al)
 {
+    (void)x;
+    (void)chainidx;
+    (void)al;
     if ((s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS) == 0)
         return 1;
 
@@ -1060,6 +1124,12 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, unsigned int context,
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+#else
+    (void)s;
+    (void)pkt;
+    (void)x;
+    (void)chainidx;
+    (void)al;
 #endif
 
     return 1;
@@ -1077,6 +1147,9 @@ int tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt, unsigned int context,
         0x06, 0x06, 0x2a, 0x85, 0x03, 0x02, 0x02, 0x17
     };
 
+    (void)x;
+    (void)chainidx;
+    (void)al;
     if (((s->s3->tmp.new_cipher->id & 0xFFFF) != 0x80
          && (s->s3->tmp.new_cipher->id & 0xFFFF) != 0x81)
             || (SSL_get_options(s) & SSL_OP_CRYPTOPRO_TLSEXT_BUG) == 0)

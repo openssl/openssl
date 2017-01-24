@@ -43,6 +43,7 @@ BIO *bio_err = NULL;
 /* Old style PEM password callback */
 static int test_pem_password_cb(char *buf, int size, int rwflag, void *userdata)
 {
+    (void)rwflag;
     OPENSSL_strlcpy(buf, (char *)userdata, (size_t)size);
     return 1;
 }
@@ -125,6 +126,7 @@ int test_main(int argc, char *argv[])
 {
     int ret;
 
+    (void)argc;
     bio_err = dup_bio_err(FORMAT_TEXT);
 
 #ifndef OPENSSL_NO_UI

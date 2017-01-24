@@ -27,7 +27,7 @@
 #include <string.h>
 
 #ifdef OPENSSL_NO_DES
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No DES support\n");
     return (0);
@@ -302,7 +302,8 @@ static char *pt(unsigned char *p);
 static int cfb_test(int bits, unsigned char *cfb_cipher);
 static int cfb64_test(unsigned char *cfb_cipher);
 static int ede_cfb64_test(unsigned char *cfb_cipher);
-int main(int argc, char *argv[])
+
+int main(void)
 {
     int j, err = 0;
     unsigned int i;

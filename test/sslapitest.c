@@ -54,9 +54,11 @@ struct sslapitest_log_counts {
     unsigned int server_application_secret_count;
 };
 
-static void client_keylog_callback(const SSL *ssl, const char *line) {
+static void client_keylog_callback(const SSL *ssl, const char *line)
+{
     int line_length = strlen(line);
 
+    (void)ssl;
     /* If the log doesn't fit, error out. */
     if ((client_log_buffer_index + line_length) > LOG_BUFFER_SIZE) {
         printf("No room in client log\n");
@@ -72,9 +74,11 @@ static void client_keylog_callback(const SSL *ssl, const char *line) {
     return;
 }
 
-static void server_keylog_callback(const SSL *ssl, const char *line) {
+static void server_keylog_callback(const SSL *ssl, const char *line)
+{
     int line_length = strlen(line);
 
+    (void)ssl;
     /* If the log doesn't fit, error out. */
     if ((server_log_buffer_index + line_length) > LOG_BUFFER_SIZE) {
         printf("No room in server log\n");
@@ -850,10 +854,13 @@ ssl_session_set_up(const char *const test_case_name)
 
 static void ssl_session_tear_down(SSL_SESSION_TEST_FIXTURE fixture)
 {
+    (void)fixture;
 }
 
 static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
 {
+    (void)ssl;
+    (void)sess;
     new_called++;
 
     return 1;
@@ -861,6 +868,8 @@ static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
 
 static void remove_session_cb(SSL_CTX *ctx, SSL_SESSION *sess)
 {
+    (void)ctx;
+    (void)sess;
     remove_called++;
 }
 
@@ -1221,6 +1230,7 @@ static SSL_BIO_TEST_FIXTURE ssl_bio_set_up(const char *const test_case_name)
 
 static void ssl_bio_tear_down(SSL_BIO_TEST_FIXTURE fixture)
 {
+    (void)fixture;
 }
 
 static int execute_test_ssl_bio(SSL_BIO_TEST_FIXTURE fix)

@@ -44,6 +44,7 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp,
     int ok = 0;
     char *file;
 
+    (void)ret;
     switch (cmd) {
     case X509_L_FILE_LOAD:
         if (argl == X509_FILETYPE_DEFAULT) {

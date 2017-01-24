@@ -122,7 +122,7 @@ static const unsigned char iso_test_9[WHIRLPOOL_DIGEST_LENGTH] = {
     0x69, 0x53, 0xB2, 0x26, 0xE4, 0xED, 0x8B, 0x01
 };
 
-int main(int argc, char *argv[])
+int main(void)
 {
     unsigned char md[WHIRLPOOL_DIGEST_LENGTH];
     int i;

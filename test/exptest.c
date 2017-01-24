@@ -134,7 +134,7 @@ static int test_exp_mod_zero()
     return ret;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
     BN_CTX *ctx;
     BIO *out = NULL;

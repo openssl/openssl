@@ -987,6 +987,7 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
 
 static int verify_cb(int ok, X509_STORE_CTX *ctx)
 {
+    (void)ctx;
     return ok;
 }
 #endif  /* ndef OPENSSL_NO_TS */

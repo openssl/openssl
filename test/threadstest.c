@@ -230,7 +230,7 @@ static int test_thread_local(void)
     return 1;
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
     if (!test_lock())
       return 1;

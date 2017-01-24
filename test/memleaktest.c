@@ -19,6 +19,7 @@ int main(int argc, char **argv)
     char *lost;
     int noleak;
 
+    (void)argc;
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)
         CRYPTO_set_mem_debug(1);

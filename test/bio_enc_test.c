@@ -12,7 +12,7 @@
 #include <openssl/bio.h>
 #include <openssl/rand.h>
 
-int main()
+int main(void)
 {
     BIO *b;
     static const unsigned char key[16] = { 0 };

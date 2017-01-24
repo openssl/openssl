@@ -63,6 +63,7 @@ const X509V3_EXT_METHOD v3_pci =
 static int i2r_pci(X509V3_EXT_METHOD *method, PROXY_CERT_INFO_EXTENSION *pci,
                    BIO *out, int indent)
 {
+    (void)method;
     BIO_printf(out, "%*sPath Length Constraint: ", indent, "");
     if (pci->pcPathLengthConstraint)
         i2a_ASN1_INTEGER(out, pci->pcPathLengthConstraint);
@@ -246,6 +247,7 @@ static PROXY_CERT_INFO_EXTENSION *r2i_pci(X509V3_EXT_METHOD *method,
     ASN1_OCTET_STRING *policy = NULL;
     int i, j;
 
+    (void)method;
     vals = X509V3_parse_list(value);
     for (i = 0; i < sk_CONF_VALUE_num(vals); i++) {
         CONF_VALUE *cnf = sk_CONF_VALUE_value(vals, i);

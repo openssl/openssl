@@ -40,6 +40,8 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
                                                  *extlist)
 {
     char *tmp;
+
+    (void)method;
     if (akeyid->keyid) {
         tmp = OPENSSL_buf2hexstr(akeyid->keyid->data, akeyid->keyid->length);
         X509V3_add_value("keyid", tmp, &extlist);
@@ -80,6 +82,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     X509 *cert;
     AUTHORITY_KEYID *akeyid;
 
+    (void)method;
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         cnf = sk_CONF_VALUE_value(values, i);
         if (strcmp(cnf->name, "keyid") == 0) {

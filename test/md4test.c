@@ -14,7 +14,7 @@
 #include "../e_os.h"
 
 #ifdef OPENSSL_NO_MD4
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No MD4 support\n");
     return (0);
@@ -45,7 +45,7 @@ static char *ret[] = {
 };
 
 static char *pt(unsigned char *md);
-int main(int argc, char *argv[])
+int main(void)
 {
     int i, err = 0;
     char **P, **R;

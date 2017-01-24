@@ -132,7 +132,7 @@ test_p5_pbkdf2(int i, char *digestname, testdata *test, const char *hex)
     OPENSSL_free(out);
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
     int i;
     testdata *test = test_cases;

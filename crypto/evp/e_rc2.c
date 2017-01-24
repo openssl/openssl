@@ -83,6 +83,8 @@ const EVP_CIPHER *EVP_rc2_40_cbc(void)
 static int rc2_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc)
 {
+    (void)iv;
+    (void)enc;
     RC2_set_key(&data(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx),
                 key, data(ctx)->key_bits);
     return 1;

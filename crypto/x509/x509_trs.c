@@ -238,6 +238,7 @@ static int trust_1oid(X509_TRUST *trust, X509 *x, int flags)
 
 static int trust_compat(X509_TRUST *trust, X509 *x, int flags)
 {
+    (void)trust;
     /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(x, -1, 0);
     if ((flags & X509_TRUST_NO_SS_COMPAT) == 0 && x->ex_flags & EXFLAG_SS)

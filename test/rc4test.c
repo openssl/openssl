@@ -64,7 +64,7 @@ static unsigned char output[7][30] = {
     {0},
 };
 
-int main(int argc, char *argv[])
+int main(void)
 {
     int i, err = 0;
     int j;

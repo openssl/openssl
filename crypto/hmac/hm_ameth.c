@@ -21,6 +21,7 @@
 
 static int hmac_size(const EVP_PKEY *pkey)
 {
+    (void)pkey;
     return EVP_MAX_MD_SIZE;
 }
 
@@ -36,6 +37,8 @@ static void hmac_key_free(EVP_PKEY *pkey)
 
 static int hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
+    (void)pkey;
+    (void)arg1;
     switch (op) {
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
         *(int *)arg2 = NID_sha256;

@@ -231,6 +231,7 @@ int ec_GFp_mont_field_decode(const EC_GROUP *group, BIGNUM *r,
 int ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r,
                                  BN_CTX *ctx)
 {
+    (void)ctx;
     if (group->field_data2 == NULL) {
         ECerr(EC_F_EC_GFP_MONT_FIELD_SET_TO_ONE, EC_R_NOT_INITIALIZED);
         return 0;

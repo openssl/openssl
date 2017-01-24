@@ -29,6 +29,7 @@ char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5)
 {
     char *tmp;
 
+    (void)method;
     if (!ia5 || !ia5->length)
         return NULL;
     if ((tmp = OPENSSL_malloc(ia5->length + 1)) == NULL) {
@@ -44,6 +45,9 @@ ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
                                    X509V3_CTX *ctx, const char *str)
 {
     ASN1_IA5STRING *ia5;
+
+    (void)method;
+    (void)ctx;
     if (!str) {
         X509V3err(X509V3_F_S2I_ASN1_IA5STRING,
                   X509V3_R_INVALID_NULL_ARGUMENT);

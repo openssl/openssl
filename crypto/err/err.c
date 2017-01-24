@@ -626,12 +626,14 @@ void err_delete_thread_state(void)
 #if OPENSSL_API_COMPAT < 0x10100000L
 void ERR_remove_thread_state(void *dummy)
 {
+    (void)dummy;
 }
 #endif
 
 #if OPENSSL_API_COMPAT < 0x10000000L
 void ERR_remove_state(unsigned long pid)
 {
+    (void)pid;
 }
 #endif
 

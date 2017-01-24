@@ -274,7 +274,7 @@ static int run_srp_kat(void)
     return ret;
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
     BIO *bio_err;
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);

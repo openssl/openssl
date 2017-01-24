@@ -65,6 +65,7 @@ static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
     /* this exists to bypass broken gcc optimization */
     char *cp = (char *)pval;
 
+    (void)putype;
     /* use memcpy, because we may not be long aligned */
     memcpy(&ltmp, cp, sizeof(long));
 
@@ -109,6 +110,9 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     long ltmp;
     unsigned long utmp = 0;
     char *cp = (char *)pval;
+
+    (void)utype;
+    (void)free_cont;
     if (len > (int)sizeof(long)) {
         ASN1err(ASN1_F_LONG_C2I, ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
         return 0;
@@ -142,5 +146,8 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 static int long_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
                       int indent, const ASN1_PCTX *pctx)
 {
+    (void)it;
+    (void)indent;
+    (void)pctx;
     return BIO_printf(out, "%ld\n", *(long *)pval);
 }

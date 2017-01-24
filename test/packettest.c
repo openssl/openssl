@@ -497,7 +497,7 @@ static int test_PACKET_as_length_prefixed_2()
     return 1;
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
     unsigned char buf[BUF_LEN];
     unsigned int i;

@@ -178,6 +178,7 @@ void CRYPTO_cfb128_1_encrypt(const unsigned char *in, unsigned char *out,
     size_t n;
     unsigned char c[1], d[1];
 
+    (void)num;
     for (n = 0; n < bits; ++n) {
         c[0] = (in[n / 8] & (1 << (7 - n % 8))) ? 0x80 : 0;
         cfbr_encrypt_block(c, d, 1, key, ivec, enc, block);
@@ -193,6 +194,7 @@ void CRYPTO_cfb128_8_encrypt(const unsigned char *in, unsigned char *out,
 {
     size_t n;
 
+    (void)num;
     for (n = 0; n < length; ++n)
         cfbr_encrypt_block(&in[n], &out[n], 8, key, ivec, enc, block);
 }

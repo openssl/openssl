@@ -33,7 +33,12 @@
  */
 #define bn_expand2 dummy_bn_expand2
 BIGNUM *bn_expand2(BIGNUM *b, int words);
-BIGNUM *bn_expand2(BIGNUM *b, int words) { return NULL; }
+BIGNUM *bn_expand2(BIGNUM *b, int words)
+{
+    (void)b;
+    (void)words;
+    return NULL;
+}
 #include "../crypto/bn/bn_lcl.h"
 
 #define MAXPAIRS        20

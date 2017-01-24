@@ -224,6 +224,7 @@ static void util_do_cmds(ENGINE *e, STACK_OF(OPENSSL_STRING) *cmds,
 {
     int loop, res, num = sk_OPENSSL_STRING_num(cmds);
 
+    (void)indent;
     if (num < 0) {
         BIO_printf(out, "[Error]: internal stack error\n");
         return;

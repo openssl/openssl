@@ -64,6 +64,7 @@ static int aesni_cbc_hmac_sha256_init_key(EVP_CIPHER_CTX *ctx,
     EVP_AES_HMAC_SHA256 *key = data(ctx);
     int ret;
 
+    (void)iv;
     if (enc)
         ret = aesni_set_encrypt_key(inkey,
                                     EVP_CIPHER_CTX_key_length(ctx) * 8,

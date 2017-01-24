@@ -57,7 +57,7 @@ static int check_time(long offset)
     return 1;
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
     long offset;
     int fails;

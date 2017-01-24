@@ -24,6 +24,8 @@ long BIO_debug_callback(BIO *bio, int cmd, const char *argp,
     int len;
     size_t p_maxlen;
 
+    (void)argp;
+    (void)argl;
     if (BIO_CB_RETURN & cmd)
         r = ret;
 

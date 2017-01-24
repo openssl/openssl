@@ -29,6 +29,8 @@ static int x509_pubkey_decode(EVP_PKEY **pk, X509_PUBKEY *key);
 static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                      void *exarg)
 {
+    (void)it;
+    (void)exarg;
     if (operation == ASN1_OP_FREE_POST) {
         X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
         EVP_PKEY_free(pubkey->pkey);

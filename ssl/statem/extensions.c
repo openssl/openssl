@@ -349,6 +349,7 @@ static int verify_extension(SSL *s, unsigned int context, unsigned int type,
 static int extension_is_relevant(SSL *s, unsigned int extctx,
                                  unsigned int thisctx)
 {
+    (void)thisctx;
     if ((SSL_IS_DTLS(s)
                 && (extctx & EXT_TLS_IMPLEMENTATION_ONLY) != 0)
             || (s->version == SSL3_VERSION
@@ -691,6 +692,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
 static int final_renegotiate(SSL *s, unsigned int context, int sent,
                                      int *al)
 {
+    (void)context;
     if (!s->server) {
         /*
          * Check if we can connect to a server that doesn't support safe
@@ -724,6 +726,7 @@ static int final_renegotiate(SSL *s, unsigned int context, int sent,
 
 static int init_server_name(SSL *s, unsigned int context)
 {
+    (void)context;
     if (s->server)
         s->servername_done = 0;
 
@@ -736,6 +739,8 @@ static int final_server_name(SSL *s, unsigned int context, int sent,
     int ret = SSL_TLSEXT_ERR_NOACK;
     int altmp = SSL_AD_UNRECOGNIZED_NAME;
 
+    (void)context;
+    (void)sent;
     if (s->ctx != NULL && s->ctx->ext.servername_cb != 0)
         ret = s->ctx->ext.servername_cb(s, &altmp,
                                         s->ctx->ext.servername_arg);
@@ -768,6 +773,9 @@ static int final_ec_pt_formats(SSL *s, unsigned int context, int sent,
 {
     unsigned long alg_k, alg_a;
 
+    (void)context;
+    (void)sent;
+    (void)al;
     if (s->server)
         return 1;
 
@@ -805,6 +813,7 @@ static int final_ec_pt_formats(SSL *s, unsigned int context, int sent,
 
 static int init_session_ticket(SSL *s, unsigned int context)
 {
+    (void)context;
     if (!s->server)
         s->ext.ticket_expected = 0;
 
@@ -814,6 +823,7 @@ static int init_session_ticket(SSL *s, unsigned int context)
 #ifndef OPENSSL_NO_OCSP
 static int init_status_request(SSL *s, unsigned int context)
 {
+    (void)context;
     if (s->server) {
         s->ext.status_type = TLSEXT_STATUSTYPE_nothing;
     } else {
@@ -833,6 +843,7 @@ static int init_status_request(SSL *s, unsigned int context)
 #ifndef OPENSSL_NO_NEXTPROTONEG
 static int init_npn(SSL *s, unsigned int context)
 {
+    (void)context;
     s->s3->npn_seen = 0;
 
     return 1;
@@ -841,6 +852,7 @@ static int init_npn(SSL *s, unsigned int context)
 
 static int init_alpn(SSL *s, unsigned int context)
 {
+    (void)context;
     OPENSSL_free(s->s3->alpn_selected);
     s->s3->alpn_selected = NULL;
     if (s->server) {
@@ -857,6 +869,8 @@ static int final_alpn(SSL *s, unsigned int context, int sent, int *al)
     const unsigned char *selected = NULL;
     unsigned char selected_len = 0;
 
+    (void)context;
+    (void)sent;
     if (!s->server)
         return 1;
 
@@ -889,6 +903,7 @@ static int final_alpn(SSL *s, unsigned int context, int sent, int *al)
 
 static int init_sig_algs(SSL *s, unsigned int context)
 {
+    (void)context;
     /* Clear any signature algorithms extension received */
     OPENSSL_free(s->s3->tmp.peer_sigalgs);
     s->s3->tmp.peer_sigalgs = NULL;
@@ -899,6 +914,7 @@ static int init_sig_algs(SSL *s, unsigned int context)
 #ifndef OPENSSL_NO_SRP
 static int init_srp(SSL *s, unsigned int context)
 {
+    (void)context;
     OPENSSL_free(s->srp_ctx.login);
     s->srp_ctx.login = NULL;
 
@@ -908,6 +924,7 @@ static int init_srp(SSL *s, unsigned int context)
 
 static int init_etm(SSL *s, unsigned int context)
 {
+    (void)context;
     s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
 
     return 1;
@@ -915,6 +932,7 @@ static int init_etm(SSL *s, unsigned int context)
 
 static int init_ems(SSL *s, unsigned int context)
 {
+    (void)context;
     if (!s->server)
         s->s3->flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
 
@@ -923,6 +941,8 @@ static int init_ems(SSL *s, unsigned int context)
 
 static int final_ems(SSL *s, unsigned int context, int sent, int *al)
 {
+    (void)context;
+    (void)sent;
     if (!s->server && s->hit) {
         /*
          * Check extended master secret extension is consistent with
@@ -942,6 +962,7 @@ static int final_ems(SSL *s, unsigned int context, int sent, int *al)
 #ifndef OPENSSL_NO_SRTP
 static int init_srtp(SSL *s, unsigned int context)
 {
+    (void)context;
     if (s->server)
         s->srtp_profile = NULL;
 
@@ -951,6 +972,7 @@ static int init_srtp(SSL *s, unsigned int context)
 
 static int final_sig_algs(SSL *s, unsigned int context, int sent, int *al)
 {
+    (void)context;
     if (!sent && SSL_IS_TLS13(s)) {
         *al = TLS13_AD_MISSING_EXTENSION;
         SSLerr(SSL_F_FINAL_SIG_ALGS, SSL_R_MISSING_SIGALGS_EXTENSION);

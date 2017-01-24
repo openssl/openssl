@@ -15,6 +15,7 @@ static DSO *DSO_new_method(DSO_METHOD *meth)
 {
     DSO *ret;
 
+    (void)meth;
     if (default_DSO_meth == NULL) {
         /*
          * We default to DSO_METH_openssl() which in turn defaults to

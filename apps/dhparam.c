@@ -365,6 +365,7 @@ static int dh_cb(int p, int n, BN_GENCB *cb)
 {
     char c = '*';
 
+    (void)n;
     if (p == 0)
         c = '.';
     if (p == 1)

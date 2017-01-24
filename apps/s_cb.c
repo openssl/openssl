@@ -416,9 +416,9 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
 long bio_dump_callback(BIO *bio, int cmd, const char *argp,
                        int argi, long argl, long ret)
 {
-    BIO *out;
+    BIO *out = (BIO *)BIO_get_callback_arg(bio);
 
-    out = (BIO *)BIO_get_callback_arg(bio);
+    (void)argl;
     if (out == NULL)
         return (ret);
 
@@ -539,6 +539,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
     const char *str_content_type = "", *str_details1 = "", *str_details2 = "";
     const unsigned char* bp = buf;
 
+    (void)ssl;
     if (version == SSL3_VERSION ||
         version == TLS1_VERSION ||
         version == TLS1_1_VERSION ||
@@ -656,6 +657,7 @@ void tlsext_cb(SSL *s, int client_server, int type,
     BIO *bio = arg;
     const char *extname = lookup(type, tlsext_types, "unknown");
 
+    (void)s;
     BIO_printf(bio, "TLS %s extension \"%s\" (id=%d), len=%d\n",
                client_server ? "server" : "client", extname, type, len);
     BIO_dump(bio, (const char *)data, len);
