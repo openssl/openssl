@@ -1101,9 +1101,6 @@ static int cipher_test_run(struct evp_test *t)
         static char aux_err[64];
         t->aux_err = aux_err;
         for (inp_misalign = (size_t)-1; inp_misalign != 2; inp_misalign++) {
-            if (frag && inp_misalign == (size_t)-1)
-                 continue;
-
             if (inp_misalign == (size_t)-1) {
                 /* kludge: inp_misalign == -1 means "exercise in-place" */
                 BIO_snprintf(aux_err, sizeof(aux_err),
