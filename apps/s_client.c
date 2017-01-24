@@ -2020,7 +2020,11 @@ int s_client_main(int argc, char **argv)
         break;
     case PROTO_CONNECT:
         {
-            int foundit = 0;
+            enum {
+                error_proto,     /* Wrong protocol, not even HTTP */
+                error_connect,   /* CONNECT failed */
+                success
+            } foundit = error_connect;
             BIO *fbio = BIO_new(BIO_f_buffer());
 
             BIO_push(fbio, sbio);
@@ -2037,14 +2041,14 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_err,
                            "%s: HTTP CONNECT failed, incorrect response "
                            "from proxy\n", prog);
-                foundit = -1;
+                foundit = error_proto;
             } else if (mbuf[9] != '2') {
                 BIO_printf(bio_err, "%s: HTTP CONNECT failed: %s ", prog,
                            &mbuf[9]);
             } else {
-                foundit = 1;
+                foundit = success;
             }
-            if (foundit >= 0) {
+            if (foundit != error_proto) {
                 /* Read past all following headers */
                 do {
                     mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
@@ -2053,7 +2057,7 @@ int s_client_main(int argc, char **argv)
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);
-            if (foundit < 1) {
+            if (foundit != success) {
                 goto shut;
             }
         }
