@@ -1458,11 +1458,14 @@ int ERR_load_EVP_strings(void);
 /* Function codes. */
 # define EVP_F_AESNI_INIT_KEY                             165
 # define EVP_F_AES_INIT_KEY                               133
+# define EVP_F_AES_OCB_CIPHER                             169
 # define EVP_F_AES_T4_INIT_KEY                            178
+# define EVP_F_AES_WRAP_CIPHER                            170
 # define EVP_F_ALG_MODULE_INIT                            177
 # define EVP_F_CAMELLIA_INIT_KEY                          159
 # define EVP_F_CHACHA20_POLY1305_CTRL                     182
 # define EVP_F_CMLL_T4_INIT_KEY                           179
+# define EVP_F_DES_EDE3_WRAP_CIPHER                       171
 # define EVP_F_DO_SIGVER_INIT                             161
 # define EVP_F_EVP_CIPHERINIT_EX                          123
 # define EVP_F_EVP_CIPHER_CTX_COPY                        163
