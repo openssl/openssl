@@ -7,6 +7,8 @@
 
   Major changes between OpenSSL 1.0.2j and OpenSSL 1.0.2k [under development]
 
+      o Truncated packet could crash via OOB read (CVE-2017-3731)
+      o BN_mod_exp may produce incorrect results on x86_64 (CVE-2017-3732)
       o Montgomery multiplication may produce incorrect results (CVE-2016-7055)
 
   Major changes between OpenSSL 1.0.2i and OpenSSL 1.0.2j [26 Sep 2016]
