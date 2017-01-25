@@ -809,22 +809,22 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
  * algorithms and if so set relevant digest and signature scheme in
  * s.
  */
-int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s, unsigned int sig,
-                            EVP_PKEY *pkey)
+int tls12_check_peer_sigalg(SSL *s, unsigned int sig, EVP_PKEY *pkey)
 {
     const uint16_t *sent_sigs;
+    const EVP_MD *md = NULL;
     char sigalgstr[2];
     size_t sent_sigslen, i;
     int pkeyid = EVP_PKEY_id(pkey);
-    int peer_pkeyid;
+    int peer_sigtype;
     /* Should never happen */
     if (pkeyid == -1)
         return -1;
     /* Check key type is consistent with signature */
-    peer_pkeyid = tls_sigalg_get_sig(sig);
+    peer_sigtype = tls_sigalg_get_sig(sig);
     /* RSA keys can be used for RSA-PSS */
-    if (pkeyid != peer_pkeyid
-        && (peer_pkeyid != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA)) {
+    if (pkeyid != peer_sigtype
+        && (peer_sigtype != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA)) {
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
@@ -874,8 +874,8 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s, unsigned int sig,
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
-    *pmd = tls12_get_hash(tls_sigalg_get_hash(sig));
-    if (*pmd == NULL) {
+    md = tls12_get_hash(tls_sigalg_get_hash(sig));
+    if (md == NULL) {
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_UNKNOWN_DIGEST);
         return 0;
     }
@@ -886,7 +886,7 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s, unsigned int sig,
     sigalgstr[0] = (sig >> 8) & 0xff;
     sigalgstr[1] = sig & 0xff;
     if (!ssl_security(s, SSL_SECOP_SIGALG_CHECK,
-                      EVP_MD_size(*pmd) * 4, EVP_MD_type(*pmd),
+                      EVP_MD_size(md) * 4, EVP_MD_type(md),
                       (void *)sigalgstr)) {
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
@@ -894,7 +894,8 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s, unsigned int sig,
     /*
      * Store the digest used so applications can retrieve it if they wish.
      */
-    s->s3->tmp.peer_md = *pmd;
+    s->s3->tmp.peer_md = md;
+    s->s3->tmp.peer_sigtype = peer_sigtype;
     return 1;
 }
 

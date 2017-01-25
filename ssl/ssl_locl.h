@@ -1271,6 +1271,8 @@ typedef struct ssl3_state_st {
         size_t peer_sigalgslen;
         /* Digest peer uses for signing */
         const EVP_MD *peer_md;
+        /* Signature type: public key type or EVP_PKEY_RSA_PSS for PSS */
+        int peer_sigtype;
         /* Array of digests used for signing */
         const EVP_MD *md[SSL_PKEY_NUM];
         /*
@@ -1741,10 +1743,7 @@ typedef enum tlsext_index_en {
 /* An invalid index into the TLSv1.3 PSK identities */
 #define TLSEXT_PSK_BAD_IDENTITY                                 -1
 
-#define SIGID_IS_PSS(sigid) ((sigid) == TLSEXT_SIGALG_rsa_pss_sha256 \
-                             || (sigid) == TLSEXT_SIGALG_rsa_pss_sha384 \
-                             || (sigid) == TLSEXT_SIGALG_rsa_pss_sha512)
-
+#define SSL_USE_PSS(s) (s->s3->tmp.peer_sigtype == EVP_PKEY_RSA_PSS)
 
 /* A dummy signature value not valid for TLSv1.2 signature algs */
 #define TLSEXT_signature_rsa_pss                                0x0101
@@ -2254,8 +2253,7 @@ __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
 __owur int tls1_save_sigalgs(SSL *s, PACKET *pkt);
 __owur int tls1_process_sigalgs(SSL *s);
 __owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs);
-__owur int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s, unsigned int sig,
-                                   EVP_PKEY *pkey);
+__owur int tls12_check_peer_sigalg(SSL *s, unsigned int sig, EVP_PKEY *pkey);
 void ssl_set_client_disabled(SSL *s);
 __owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op);
 
