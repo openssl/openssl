@@ -243,6 +243,8 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
             BIO_puts(out, ":");
         if (sign_nid == EVP_PKEY_RSA)
             sstr = "RSA";
+        else if (sign_nid == EVP_PKEY_RSA_PSS)
+            sstr = "RSA-PSS";
         else if (sign_nid == EVP_PKEY_DSA)
             sstr = "DSA";
         else if (sign_nid == EVP_PKEY_EC)

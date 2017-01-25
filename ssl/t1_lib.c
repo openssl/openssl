@@ -718,13 +718,9 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {TLSEXT_SIGALG_ecdsa_secp521r1_sha512, NID_sha512, EVP_PKEY_EC},
     {TLSEXT_SIGALG_ecdsa_sha1, NID_sha1, EVP_PKEY_EC},
 #endif
-    /*
-     * PSS must appear before PKCS1 so that we prefer that when signing where
-     * possible
-     */
-    {TLSEXT_SIGALG_rsa_pss_sha256, NID_sha256, EVP_PKEY_RSA},
-    {TLSEXT_SIGALG_rsa_pss_sha384, NID_sha384, EVP_PKEY_RSA},
-    {TLSEXT_SIGALG_rsa_pss_sha512, NID_sha512, EVP_PKEY_RSA},
+    {TLSEXT_SIGALG_rsa_pss_sha256, NID_sha256, EVP_PKEY_RSA_PSS},
+    {TLSEXT_SIGALG_rsa_pss_sha384, NID_sha384, EVP_PKEY_RSA_PSS},
+    {TLSEXT_SIGALG_rsa_pss_sha512, NID_sha512, EVP_PKEY_RSA_PSS},
     {TLSEXT_SIGALG_rsa_pkcs1_sha256, NID_sha256, EVP_PKEY_RSA},
     {TLSEXT_SIGALG_rsa_pkcs1_sha384, NID_sha384, EVP_PKEY_RSA},
     {TLSEXT_SIGALG_rsa_pkcs1_sha512, NID_sha512, EVP_PKEY_RSA},
@@ -810,7 +806,8 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
 
 /*
  * Check signature algorithm is consistent with sent supported signature
- * algorithms and if so return relevant digest.
+ * algorithms and if so set relevant digest and signature scheme in
+ * s.
  */
 int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s, unsigned int sig,
                             EVP_PKEY *pkey)
@@ -819,11 +816,15 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s, unsigned int sig,
     char sigalgstr[2];
     size_t sent_sigslen, i;
     int pkeyid = EVP_PKEY_id(pkey);
+    int peer_pkeyid;
     /* Should never happen */
     if (pkeyid == -1)
         return -1;
     /* Check key type is consistent with signature */
-    if (pkeyid != tls_sigalg_get_sig(sig)) {
+    peer_pkeyid = tls_sigalg_get_sig(sig);
+    /* RSA keys can be used for RSA-PSS */
+    if (pkeyid != peer_pkeyid
+        && (peer_pkeyid != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA)) {
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
@@ -1251,7 +1252,7 @@ TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
 int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
                          const EVP_MD *md, int *ispss)
 {
-    int md_id, sig_id, tmpispss = 0;
+    int md_id, sig_id;
     size_t i;
     const SIGALG_LOOKUP *curr;
 
@@ -1261,30 +1262,18 @@ int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
     sig_id = EVP_PKEY_id(pk);
     if (md_id == NID_undef)
         return 0;
+    /* For TLS 1.3 only allow RSA-PSS */
+    if (SSL_IS_TLS13(s) && sig_id == EVP_PKEY_RSA)
+        sig_id = EVP_PKEY_RSA_PSS;
 
     for (i = 0, curr = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
          i++, curr++) {
-        if (curr->hash == md_id && curr->sig == sig_id) {
-            if (sig_id == EVP_PKEY_RSA) {
-                tmpispss = SIGID_IS_PSS(curr->sigalg);
-                if (!SSL_IS_TLS13(s) && tmpispss) {
-                    size_t j;
-
-                    /*
-                     * Check peer actually sent a PSS sig id - it could have
-                     * been a PKCS1 sig id instead.
-                     */
-                    for (j = 0; j < s->cert->shared_sigalgslen; j++)
-                        if (s->cert->shared_sigalgs[j].rsigalg == curr->sigalg)
-                            break;
-
-                    if (j == s->cert->shared_sigalgslen)
-                        continue;
-                }
-            }
+        /* If key type is RSA also match PSS signature type */
+        if (curr->hash == md_id && (curr->sig == sig_id
+            || (sig_id == EVP_PKEY_RSA && curr->sig == EVP_PKEY_RSA_PSS))) {
             if (!WPACKET_put_bytes_u16(pkt, curr->sigalg))
                 return 0;
-            *ispss = tmpispss;
+            *ispss = curr->sig == EVP_PKEY_RSA_PSS;
             return 1;
         }
     }
@@ -1340,6 +1329,12 @@ static int tls12_get_pkey_idx(int sig_nid)
     switch (sig_nid) {
 #ifndef OPENSSL_NO_RSA
     case EVP_PKEY_RSA:
+        return SSL_PKEY_RSA_SIGN;
+    /*
+     * For now return RSA key for PSS. When we support PSS only keys
+     * this will need to be updated.
+     */
+    case EVP_PKEY_RSA_PSS:
         return SSL_PKEY_RSA_SIGN;
 #endif
 #ifndef OPENSSL_NO_DSA
@@ -1427,6 +1422,8 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
     for (i = 0; i < sigalgslen; i ++, sigalgs++) {
         switch (tls_sigalg_get_sig(*sigalgs)) {
 #ifndef OPENSSL_NO_RSA
+        /* Any RSA-PSS signature algorithms also mean we allow RSA */
+        case EVP_PKEY_RSA_PSS:
         case EVP_PKEY_RSA:
             if (!have_rsa && tls12_sigalg_allowed(s, op, *sigalgs))
                 have_rsa = 1;
@@ -1596,11 +1593,7 @@ int tls1_process_sigalgs(SSL *s)
     for (i = 0, sigptr = c->shared_sigalgs;
          i < c->shared_sigalgslen; i++, sigptr++) {
         /* Ignore PKCS1 based sig algs in TLSv1.3 */
-        if (SSL_IS_TLS13(s)
-                && (sigptr->rsigalg == TLSEXT_SIGALG_rsa_pkcs1_sha1
-                    || sigptr->rsigalg == TLSEXT_SIGALG_rsa_pkcs1_sha256
-                    || sigptr->rsigalg == TLSEXT_SIGALG_rsa_pkcs1_sha384
-                    || sigptr->rsigalg == TLSEXT_SIGALG_rsa_pkcs1_sha512))
+        if (SSL_IS_TLS13(s) && sigptr->sign_nid == EVP_PKEY_RSA)
             continue;
         idx = tls12_get_pkey_idx(sigptr->sign_nid);
         if (idx > 0 && pmd[idx] == NULL) {
@@ -1706,6 +1699,8 @@ static void get_sigorhash(int *psig, int *phash, const char *str)
 {
     if (strcmp(str, "RSA") == 0) {
         *psig = EVP_PKEY_RSA;
+    } else if (strcmp(str, "RSA-PSS") == 0 || strcmp(str, "PSS") == 0) {
+        *psig = EVP_PKEY_RSA_PSS;
     } else if (strcmp(str, "DSA") == 0) {
         *psig = EVP_PKEY_DSA;
     } else if (strcmp(str, "ECDSA") == 0) {
@@ -1769,7 +1764,6 @@ int tls1_set_sigalgs_list(CERT *c, const char *str, int client)
     return tls1_set_sigalgs(c, sig.sigalgs, sig.sigalgcnt, client);
 }
 
-/* TODO(TLS1.3): Needs updating to allow setting of TLS1.3 sig algs */
 int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
 {
     uint16_t *sigalgs, *sptr;
@@ -1780,10 +1774,6 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
     sigalgs = OPENSSL_malloc((salglen / 2) * sizeof(*sigalgs));
     if (sigalgs == NULL)
         return 0;
-    /*
-     * TODO(TLS1.3): Somehow we need to be able to set RSA-PSS as well as
-     * RSA-PKCS1. For now we only allow setting of RSA-PKCS1
-     */
     for (i = 0, sptr = sigalgs; i < salglen; i += 2) {
         size_t j;
         const SIGALG_LOOKUP *curr;
@@ -1792,9 +1782,6 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
 
         for (j = 0, curr = sigalg_lookup_tbl; j < OSSL_NELEM(sigalg_lookup_tbl);
              j++, curr++) {
-            /* Skip setting PSS so we get PKCS1 by default */
-            if (SIGID_IS_PSS(curr->sigalg))
-                continue;
             if (curr->hash == md_id && curr->sig == sig_id) {
                 *sptr++ = curr->sigalg;
                 break;
