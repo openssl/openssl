@@ -1475,12 +1475,12 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         if (!ssl_get_new_session(s, 1))
             goto err;
     } else {
-        i = ssl_get_prev_session(s, &clienthello);
+        i = ssl_get_prev_session(s, &clienthello, &al);
         if (i == 1) {
             /* previous session */
             s->hit = 1;
         } else if (i == -1) {
-            goto err;
+            goto f_err;
         } else {
             /* i == 0 */
             if (!ssl_get_new_session(s, 1))
