@@ -4418,10 +4418,11 @@ int ssl_log_rsa_client_key_exchange(SSL *ssl,
         return 0;
     }
 
+    /* We only want the first 8 bytes of the encrypted premaster as a tag. */
     return nss_keylog_int("RSA",
                           ssl,
                           encrypted_premaster,
-                          encrypted_premaster_len,
+                          8,
                           premaster,
                           premaster_len);
 }

@@ -198,6 +198,7 @@ static int test_keylog(void) {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
+    int rc;
 
     /* Clean up logging space */
     memset(client_log_buffer, 0, LOG_BUFFER_SIZE + 1);
@@ -215,6 +216,13 @@ static int test_keylog(void) {
     /* We cannot log the master secret for TLSv1.3, so we should forbid it. */
     SSL_CTX_set_options(cctx, SSL_OP_NO_TLSv1_3);
     SSL_CTX_set_options(sctx, SSL_OP_NO_TLSv1_3);
+
+    /* We also want to ensure that we use RSA-based key exchange. */
+    rc = SSL_CTX_set_cipher_list(cctx, "RSA");
+    if (rc == 0) {
+        printf("Unable to restrict to RSA key exchange.\n");
+        goto end;
+    }
 
     if (SSL_CTX_get_keylog_callback(cctx)) {
         printf("Unexpected initial value for client "
