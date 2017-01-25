@@ -3061,8 +3061,11 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
             if (!tls_collect_extensions(s, &extensions, EXT_TLS1_3_CERTIFICATE,
                                         &rawexts, &al)
                     || !tls_parse_all_extensions(s, EXT_TLS1_3_CERTIFICATE,
-                                                 rawexts, x, chainidx, &al))
+                                                 rawexts, x, chainidx, &al)) {
+                OPENSSL_free(rawexts);
                 goto f_err;
+            }
+            OPENSSL_free(rawexts);
         }
 
         if (!sk_X509_push(sk, x)) {
