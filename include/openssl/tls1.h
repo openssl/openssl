@@ -250,6 +250,8 @@ __owur int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                const unsigned char *p, size_t plen,
                                int use_context);
 
+int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid);
+
 int SSL_get_sigalgs(SSL *s, int idx,
                     int *psign, int *phash, int *psignandhash,
                     unsigned char *rsig, unsigned char *rhash);

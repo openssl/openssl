@@ -213,6 +213,26 @@ static void ssl_print_client_cert_types(BIO *bio, SSL *s)
     BIO_puts(bio, "\n");
 }
 
+static const char *get_sigtype(int nid)
+{
+    switch (nid) {
+    case EVP_PKEY_RSA:
+        return "RSA";
+
+    case EVP_PKEY_RSA_PSS:
+        return "RSA-PSS";
+
+    case EVP_PKEY_DSA:
+        return "DSA";
+
+     case EVP_PKEY_EC:
+        return "ECDSA";
+
+    default:
+        return NULL;
+    }
+}
+
 static int do_print_sigalgs(BIO *out, SSL *s, int shared)
 {
     int i, nsig, client;
@@ -241,14 +261,7 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
             SSL_get_sigalgs(s, i, &sign_nid, &hash_nid, NULL, &rsign, &rhash);
         if (i)
             BIO_puts(out, ":");
-        if (sign_nid == EVP_PKEY_RSA)
-            sstr = "RSA";
-        else if (sign_nid == EVP_PKEY_RSA_PSS)
-            sstr = "RSA-PSS";
-        else if (sign_nid == EVP_PKEY_DSA)
-            sstr = "DSA";
-        else if (sign_nid == EVP_PKEY_EC)
-            sstr = "ECDSA";
+        sstr= get_sigtype(sign_nid);
         if (sstr)
             BIO_printf(out, "%s+", sstr);
         else
@@ -264,13 +277,15 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
 
 int ssl_print_sigalgs(BIO *out, SSL *s)
 {
-    int mdnid;
+    int nid;
     if (!SSL_is_server(s))
         ssl_print_client_cert_types(out, s);
     do_print_sigalgs(out, s, 0);
     do_print_sigalgs(out, s, 1);
-    if (SSL_get_peer_signature_nid(s, &mdnid))
-        BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(mdnid));
+    if (SSL_get_peer_signature_nid(s, &nid))
+        BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(nid));
+    if (SSL_get_peer_signature_type_nid(s, &nid))
+        BIO_printf(bio_err, "Peer signature type: %s\n", get_sigtype(nid));
     return 1;
 }
 
@@ -1090,6 +1105,8 @@ void print_ssl_summary(SSL *s)
         BIO_puts(bio_err, "\n");
         if (SSL_get_peer_signature_nid(s, &nid))
             BIO_printf(bio_err, "Hash used: %s\n", OBJ_nid2sn(nid));
+        if (SSL_get_peer_signature_type_nid(s, &nid))
+            BIO_printf(bio_err, "Signature type: %s\n", get_sigtype(nid));
         print_verify_detail(s, bio_err);
     } else
         BIO_puts(bio_err, "No peer certificate\n");
