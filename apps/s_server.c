@@ -147,14 +147,14 @@ static int dtlslisten = 0;
 static char *psk_identity = "Client_identity";
 char *psk_key = NULL;           /* by default PSK is not used */
 
-static unsigned int psk_server_cb(SSL *s, const char *identity,
+static unsigned int psk_server_cb(SSL *ssl, const char *identity,
                                   unsigned char *psk,
                                   unsigned int max_psk_len)
 {
     long key_len = 0;
     unsigned char *key;
 
-    (void)s;
+    (void)ssl;
     if (s_debug)
         BIO_printf(bio_s_out, "psk_server_cb\n");
     if (!identity) {

@@ -416,9 +416,10 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
 long bio_dump_callback(BIO *bio, int cmd, const char *argp,
                        int argi, long argl, long ret)
 {
-    BIO *out = (BIO *)BIO_get_callback_arg(bio);
+    BIO *out;
 
     (void)argl;
+    out = (BIO *)BIO_get_callback_arg(bio);
     if (out == NULL)
         return (ret);
 

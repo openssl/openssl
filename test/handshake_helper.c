@@ -211,7 +211,7 @@ static int do_not_call_session_ticket_cb(SSL *s, unsigned char *key_name,
                                          HMAC_CTX *hctx, int enc)
 {
     HANDSHAKE_EX_DATA *ex_data =
-        (HANDSHAKE_EX_DATA*)SSL_get_ex_data(s, ex_data_idx);
+        (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
 
     (void)key_name;
     (void)iv;

@@ -57,12 +57,13 @@ IMPLEMENT_ASN1_FUNCTIONS(SXNET)
 static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
                      int indent)
 {
-    long v = ASN1_INTEGER_get(sx->version);
+    long v;
     char *tmp;
     SXNETID *id;
     int i;
 
     (void)method;
+    v = ASN1_INTEGER_get(sx->version);
     BIO_printf(out, "%*sVersion: %ld (0x%lX)", indent, "", v + 1, v);
     for (i = 0; i < sk_SXNETID_num(sx->ids); i++) {
         id = sk_SXNETID_value(sx->ids, i);

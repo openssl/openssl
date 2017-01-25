@@ -42,6 +42,8 @@ int main(int argc, char **argv)
         return 1;
     return ((lost != NULL) ^ (noleak == 0));
 #else
+    (void)argc;
+    (void)argv;
     return 0;
 #endif
 }

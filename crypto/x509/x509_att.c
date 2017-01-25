@@ -310,9 +310,11 @@ ASN1_OBJECT *X509_ATTRIBUTE_get0_object(X509_ATTRIBUTE *attr)
 void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,
                                int atrtype, void *data)
 {
-    ASN1_TYPE *ttmp = X509_ATTRIBUTE_get0_type(attr, idx);
+    ASN1_TYPE *ttmp;
 
     (void)data;
+    ttmp = X509_ATTRIBUTE_get0_type(attr, idx);
+
     if (!ttmp)
         return NULL;
     if (atrtype != ASN1_TYPE_get(ttmp)) {

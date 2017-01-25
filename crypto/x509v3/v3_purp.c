@@ -649,9 +649,10 @@ static int purpose_smime(const X509 *x, int ca)
 static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
                                     int ca)
 {
-    int ret = purpose_smime(x, ca);
+    int ret;
 
     (void)xp;
+    ret = purpose_smime(x, ca);
     if (!ret || ca)
         return ret;
     if (ku_reject(x, KU_DIGITAL_SIGNATURE | KU_NON_REPUDIATION))
@@ -662,9 +663,10 @@ static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
 static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
                                        int ca)
 {
-    int ret = purpose_smime(x, ca);
+    int ret;
 
     (void)xp;
+    ret = purpose_smime(x, ca);
     if (!ret || ca)
         return ret;
     if (ku_reject(x, KU_KEY_ENCIPHERMENT))
