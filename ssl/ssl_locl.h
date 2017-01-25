@@ -1266,7 +1266,7 @@ typedef struct ssl3_state_st {
          * algorithms extension for server or as part of a certificate
          * request for client.
          */
-        unsigned int *peer_sigalgs;
+        uint16_t *peer_sigalgs;
         /* Size of above array */
         size_t peer_sigalgslen;
         /* Digest peer uses for signing */
@@ -1535,7 +1535,7 @@ typedef struct cert_st {
      * the client hello as the supported signature algorithms extension. For
      * servers it represents the signature algorithms we are willing to use.
      */
-    unsigned int *conf_sigalgs;
+    uint16_t *conf_sigalgs;
     /* Size of above array */
     size_t conf_sigalgslen;
     /*
@@ -1545,7 +1545,7 @@ typedef struct cert_st {
      * represents the signature algorithms we are willing to use for client
      * authentication.
      */
-    unsigned int *client_sigalgs;
+    uint16_t *client_sigalgs;
     /* Size of above array */
     size_t client_sigalgslen;
     /*
@@ -1595,7 +1595,7 @@ struct tls_sigalgs_st {
     /* Combined hash and signature NID */
     int signandhash_nid;
     /* Raw value used in extension */
-    unsigned int rsigalg;
+    uint16_t rsigalg;
 };
 
 # define FP_ICC  (int (*)(const void *,const void *))
@@ -2250,10 +2250,10 @@ __owur EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
 __owur long ssl_get_algorithm2(SSL *s);
 __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
-                              const unsigned int *psig, size_t psiglen);
+                              const uint16_t *psig, size_t psiglen);
 __owur int tls1_save_sigalgs(SSL *s, PACKET *pkt);
 __owur int tls1_process_sigalgs(SSL *s);
-__owur size_t tls12_get_psigalgs(SSL *s, int sent, const unsigned int **psigs);
+__owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs);
 __owur int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s, unsigned int sig,
                                    EVP_PKEY *pkey);
 void ssl_set_client_disabled(SSL *s);
