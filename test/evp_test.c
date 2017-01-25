@@ -1012,7 +1012,6 @@ static int cipher_test_enc(struct evp_test *t, int enc,
     EVP_CIPHER_CTX_set_padding(ctx, 0);
     err = "CIPHERUPDATE_ERROR";
     tmplen = 0;
-    donelen = 0;
     if (!frag) {
         /* We supply the data all in one go */
         if (!EVP_CipherUpdate(ctx, tmp + out_misalign, &tmplen, in, in_len))
@@ -1023,18 +1022,20 @@ static int cipher_test_enc(struct evp_test *t, int enc,
             if (!EVP_CipherUpdate(ctx, tmp + out_misalign, &chunklen, in, 1))
                 goto err;
             tmplen += chunklen;
-            donelen = 1;
+            in++;
+            in_len--;
         }
-        if (in_len > 2) {
+        if (in_len > 1) {
             if (!EVP_CipherUpdate(ctx, tmp + out_misalign + tmplen, &chunklen,
-                                  in + donelen, in_len - 2))
+                                  in, in_len - 1))
                 goto err;
             tmplen += chunklen;
-            donelen += in_len - 2;
+            in += in_len - 1;
+            in_len = 1;
         }
-        if (in_len > 1 ) {
+        if (in_len > 0 ) {
             if (!EVP_CipherUpdate(ctx, tmp + out_misalign + tmplen, &chunklen,
-                                  in + donelen, 1))
+                                  in, 1))
                 goto err;
             tmplen += chunklen;
         }
