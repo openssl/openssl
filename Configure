@@ -130,7 +130,6 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
 # TODO(openssl-team): fix problems and investigate if (at least) the
 # following warnings can also be enabled:
 #       -Wcast-align
-#       -Wunreachable-code
 #       -Wlanguage-extension-token -- no, we use asm()
 #       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
@@ -139,6 +138,7 @@ my $clang_devteam_warn = ""
         . " -Wextra"
         . " -Wswitch -Wswitch-default"
         . " -Wno-unused-parameter"
+        . " -Wunreachable-code"
         . " -Wno-missing-field-initializers"
         . " -Wno-language-extension-token"
         . " -Wno-extended-offsetof"

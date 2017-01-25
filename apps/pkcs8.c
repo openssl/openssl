@@ -234,7 +234,7 @@ int pkcs8_main(int argc, char **argv)
             }
             if (passout)
                 p8pass = passout;
-            else if (1) {
+            else if (ALWAYS) {
 #ifndef OPENSSL_NO_UI
                 p8pass = pass;
                 if (EVP_read_pw_string
@@ -297,7 +297,7 @@ int pkcs8_main(int argc, char **argv)
         }
         if (passin)
             p8pass = passin;
-        else if (1) {
+        else if (ALWAYS) {
 #ifndef OPENSSL_NO_UI
             p8pass = pass;
             if (EVP_read_pw_string(pass, sizeof pass, "Enter Password:", 0)) {

@@ -392,7 +392,7 @@ static int sh_init(size_t size, int minsize)
     pgsize = PAGE_SIZE;
 #endif
     sh.map_size = pgsize + sh.arena_size + pgsize;
-    if (1) {
+    if (ALWAYS) {
 #ifdef MAP_ANON
         sh.map_result = mmap(NULL, sh.map_size,
                              PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);

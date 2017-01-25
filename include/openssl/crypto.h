@@ -326,7 +326,7 @@ ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line
 #  define OpenSSLDie(f,l,a) OPENSSL_die((a),(f),(l))
 # endif
 # define OPENSSL_assert(e) \
-    (void)((e) ? 0 : (OPENSSL_die("assertion failed: " #e, OPENSSL_FILE, OPENSSL_LINE), 1))
+    ((e) ? (void)0 : OPENSSL_die("assertion failed: " #e, OPENSSL_FILE, OPENSSL_LINE))
 
 int OPENSSL_isservice(void);
 

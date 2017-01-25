@@ -17,7 +17,9 @@
 
 # ifdef OPENSSL_USE_APPLINK
 #  undef BIO_FLAGS_UPLINK
+#  undef BIO_UPLINK_SET
 #  define BIO_FLAGS_UPLINK 0x8000
+#  define BIO_UPLINK_SET(b)     (((b)->flags & BIO_FLAGS_UPLINK) != 0)
 #  include "ms/uplink.h"
 # endif
 

@@ -1044,7 +1044,7 @@ int s_server_main(int argc, char *argv[])
             socket_family = AF_INET;
             break;
         case OPT_6:
-            if (1) {
+            if (ALWAYS) {
 #ifdef AF_INET6
 #ifdef AF_UNIX
                 if (socket_family == AF_UNIX) {
