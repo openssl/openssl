@@ -237,7 +237,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL, NULL, NULL, tls_construct_ctos_supported_versions, NULL
     },
     {
-        /* Must be before key_share */
         TLSEXT_TYPE_psk_kex_modes,
         EXT_CLIENT_HELLO | EXT_TLS_IMPLEMENTATION_ONLY | EXT_TLS1_3_ONLY,
         init_psk_kex_modes, tls_parse_ctos_psk_kex_modes, NULL, NULL,

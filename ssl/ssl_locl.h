@@ -1927,7 +1927,7 @@ __owur CERT *ssl_cert_dup(CERT *cert);
 void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
 __owur int ssl_get_new_session(SSL *s, int session);
-__owur int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello);
+__owur int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al);
 __owur SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket);
 __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);

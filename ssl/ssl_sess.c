@@ -458,7 +458,7 @@ int ssl_get_new_session(SSL *s, int session)
  *   - Both for new and resumed sessions, s->ext.ticket_expected is set to 1
  *     if the server should issue a new session ticket (to 0 otherwise).
  */
-int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
+int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
 {
     /* This is used only by servers. */
 
@@ -468,10 +468,10 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
     TICKET_RETURN r;
 
     if (SSL_IS_TLS13(s)) {
-        int al;
-
-        if (!tls_parse_extension(s, TLSEXT_IDX_psk, EXT_CLIENT_HELLO,
-                                 hello->pre_proc_exts, NULL, 0, &al))
+        if (!tls_parse_extension(s, TLSEXT_IDX_psk_kex_modes, EXT_CLIENT_HELLO,
+                                 hello->pre_proc_exts, NULL, 0, al)
+                || !tls_parse_extension(s, TLSEXT_IDX_psk, EXT_CLIENT_HELLO,
+                                        hello->pre_proc_exts, NULL, 0, al))
             return -1;
 
         ret = s->session;
@@ -637,10 +637,12 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
             s->ext.ticket_expected = 1;
         }
     }
-    if (fatal)
+    if (fatal) {
+        *al = SSL_AD_INTERNAL_ERROR;
         return -1;
-    else
+    } else {
         return 0;
+    }
 }
 
 int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)

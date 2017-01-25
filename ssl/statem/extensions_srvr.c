@@ -687,6 +687,14 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
     unsigned int id, i;
     const EVP_MD *md = NULL;
 
+    /*
+     * If we have no PSK kex mode that we recognise then we can't resume so
+     * ignore this extension
+     */
+    if ((s->ext.psk_kex_mode
+            & (TLSEXT_KEX_MODE_FLAG_KE | TLSEXT_KEX_MODE_FLAG_KE_DHE)) == 0)
+        return 1;
+
     if (!PACKET_get_length_prefixed_2(pkt, &identities)) {
         *al = SSL_AD_DECODE_ERROR;
         return 0;
