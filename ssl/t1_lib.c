@@ -773,8 +773,7 @@ static int tls_sigalg_get_sig(unsigned int sigalg)
 
     return 0;
 }
-
-size_t tls12_get_psigalgs(SSL *s, const unsigned int **psigs)
+size_t tls12_get_psigalgs(SSL *s, int sent, const unsigned int **psigs)
 {
     /*
      * If Suite B mode use Suite B sigalgs only, ignore any other
@@ -795,8 +794,12 @@ size_t tls12_get_psigalgs(SSL *s, const unsigned int **psigs)
         return 1;
     }
 #endif
-    /* If server use client authentication sigalgs if not NULL */
-    if (s->server && s->cert->client_sigalgs) {
+    /*
+     *  We use client_sigalgs (if not NULL) if we're a server
+     *  and sending a certificate request or if we're a client and
+     *  determining which shared algorithm to use.
+     */
+    if ((s->server == sent) && s->cert->client_sigalgs != NULL) {
         *psigs = s->cert->client_sigalgs;
         return s->cert->client_sigalgslen;
     } else if (s->cert->conf_sigalgs) {
@@ -861,7 +864,7 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s, unsigned int sig,
 #endif
 
     /* Check signature matches a type we sent */
-    sent_sigslen = tls12_get_psigalgs(s, &sent_sigs);
+    sent_sigslen = tls12_get_psigalgs(s, 1, &sent_sigs);
     for (i = 0; i < sent_sigslen; i++, sent_sigs++) {
         if (sig == *sent_sigs)
             break;
@@ -1429,7 +1432,7 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
      * RSA, DSA, ECDSA. Do this for all versions not just TLS 1.2. To keep
      * down calls to security callback only check if we have to.
      */
-    sigalgslen = tls12_get_psigalgs(s, &sigalgs);
+    sigalgslen = tls12_get_psigalgs(s, 1, &sigalgs);
     for (i = 0; i < sigalgslen; i ++, sigalgs++) {
         switch (tls_sigalg_get_sig(*sigalgs)) {
 #ifndef OPENSSL_NO_RSA
@@ -1523,7 +1526,7 @@ static int tls1_set_shared_sigalgs(SSL *s)
         conf = c->conf_sigalgs;
         conflen = c->conf_sigalgslen;
     } else
-        conflen = tls12_get_psigalgs(s, &conf);
+        conflen = tls12_get_psigalgs(s, 0, &conf);
     if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE || is_suiteb) {
         pref = conf;
         preflen = conflen;
