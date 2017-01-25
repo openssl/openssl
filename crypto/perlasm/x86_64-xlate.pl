@@ -78,6 +78,9 @@ open STDOUT,">$output" || die "can't open $output: $!"
 my $gas=1;	$gas=0 if ($output =~ /\.asm$/);
 my $elf=1;	$elf=0 if (!$gas);
 my $win64=0;
+# cfi_ok controls whether Call Frame Information directives will be passed
+# though to the output (cfi_ok=1) or filtered (cfi_ok=0).
+my $cfi_ok=0;
 my $prefix="";
 my $decor=".L";
 
@@ -95,6 +98,7 @@ if    ($flavour eq "mingw64")	{ $gas=1; $elf=0; $win64=1;
 elsif ($flavour eq "macosx")	{ $gas=1; $elf=0; $prefix="_"; $decor="L\$"; }
 elsif ($flavour eq "masm")	{ $gas=0; $elf=0; $masm=$masmref; $win64=1; $decor="\$L\$"; }
 elsif ($flavour eq "nasm")	{ $gas=0; $elf=0; $nasm=$nasmref; $win64=1; $decor="\$L\$"; $PTR=""; }
+elsif ($flavour eq "linux64")	{ $cfi_ok=1; }
 elsif (!$gas)
 {   if ($ENV{ASM} =~ m/nasm/ && `nasm -v` =~ m/version ([0-9]+)\.([0-9]+)/i)
     {	$nasm = $1 + $2*0.01; $PTR="";  }
@@ -529,6 +533,7 @@ my %globals;
 				    $$line =~ s/\.L/$decor/g;
 				    last;
 				  };
+		/\.cfi_/ && do { if (!$cfi_ok) { $dir = ""; $$line = ""; } last; }
 	    }
 
 	    if ($gas) {
