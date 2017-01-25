@@ -674,7 +674,7 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
 #endif                          /* OPENSSL_NO_EC */
 
 /* Default sigalg schemes */
-static const unsigned int tls12_sigalgs[] = {
+static const uint16_t tls12_sigalgs[] = {
 #ifndef OPENSSL_NO_EC
     TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
     TLSEXT_SIGALG_ecdsa_secp384r1_sha384,
@@ -703,14 +703,14 @@ static const unsigned int tls12_sigalgs[] = {
 };
 
 #ifndef OPENSSL_NO_EC
-static const unsigned int suiteb_sigalgs[] = {
+static const uint16_t suiteb_sigalgs[] = {
     TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
     TLSEXT_SIGALG_ecdsa_secp384r1_sha384
 };
 #endif
 
 typedef struct sigalg_lookup_st {
-    unsigned int sigalg;
+    uint16_t sigalg;
     int hash;
     int sig;
 } SIGALG_LOOKUP;
@@ -746,7 +746,7 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
 #endif
 };
 
-static int tls_sigalg_get_hash(unsigned int sigalg)
+static int tls_sigalg_get_hash(uint16_t sigalg)
 {
     size_t i;
     const SIGALG_LOOKUP *curr;
@@ -760,7 +760,7 @@ static int tls_sigalg_get_hash(unsigned int sigalg)
     return 0;
 }
 
-static int tls_sigalg_get_sig(unsigned int sigalg)
+static int tls_sigalg_get_sig(uint16_t sigalg)
 {
     size_t i;
     const SIGALG_LOOKUP *curr;
@@ -773,7 +773,8 @@ static int tls_sigalg_get_sig(unsigned int sigalg)
 
     return 0;
 }
-size_t tls12_get_psigalgs(SSL *s, int sent, const unsigned int **psigs)
+
+size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
 {
     /*
      * If Suite B mode use Suite B sigalgs only, ignore any other
@@ -818,7 +819,7 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const unsigned int **psigs)
 int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s, unsigned int sig,
                             EVP_PKEY *pkey)
 {
-    const unsigned int *sent_sigs;
+    const uint16_t *sent_sigs;
     char sigalgstr[2];
     size_t sent_sigslen, i;
     int pkeyid = EVP_PKEY_id(pkey);
@@ -1375,7 +1376,7 @@ static int tls12_get_pkey_idx(int sig_nid)
 
 /* Convert TLS 1.2 signature algorithm extension values into NIDs */
 static void tls1_lookup_sigalg(int *phash_nid, int *psign_nid,
-                               int *psignhash_nid, unsigned int data)
+                               int *psignhash_nid, uint16_t data)
 {
     int sign_nid = NID_undef, hash_nid = NID_undef;
     if (!phash_nid && !psign_nid && !psignhash_nid)
@@ -1424,7 +1425,7 @@ static int tls12_sigalg_allowed(SSL *s, int op, unsigned int ptmp)
 
 void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
 {
-    const unsigned int *sigalgs;
+    const uint16_t *sigalgs;
     size_t i, sigalgslen;
     int have_rsa = 0, have_dsa = 0, have_ecdsa = 0;
     /*
@@ -1464,7 +1465,7 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
 }
 
 int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
-                       const unsigned int *psig, size_t psiglen)
+                       const uint16_t *psig, size_t psiglen)
 {
     size_t i;
 
@@ -1479,10 +1480,10 @@ int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
 
 /* Given preference and allowed sigalgs set shared sigalgs */
 static size_t tls12_shared_sigalgs(SSL *s, TLS_SIGALGS *shsig,
-                                   const unsigned int *pref, size_t preflen,
-                                   const unsigned int *allow, size_t allowlen)
+                                   const uint16_t *pref, size_t preflen,
+                                   const uint16_t *allow, size_t allowlen)
 {
-    const unsigned int *ptmp, *atmp;
+    const uint16_t *ptmp, *atmp;
     size_t i, j, nmatch = 0;
     for (i = 0, ptmp = pref; i < preflen; i++, ptmp++) {
         /* Skip disabled hashes or signature algorithms */
@@ -1508,7 +1509,7 @@ static size_t tls12_shared_sigalgs(SSL *s, TLS_SIGALGS *shsig,
 /* Set shared signature algorithms for SSL structures */
 static int tls1_set_shared_sigalgs(SSL *s)
 {
-    const unsigned int *pref, *allow, *conf;
+    const uint16_t *pref, *allow, *conf;
     size_t preflen, allowlen, conflen;
     size_t nmatch;
     TLS_SIGALGS *salgs = NULL;
@@ -1557,6 +1558,7 @@ static int tls1_set_shared_sigalgs(SSL *s)
 int tls1_save_sigalgs(SSL *s, PACKET *pkt)
 {
     CERT *c = s->cert;
+    unsigned int stmp;
     size_t size, i;
 
     /* Extension ignored for inappropriate versions */
@@ -1580,9 +1582,8 @@ int tls1_save_sigalgs(SSL *s, PACKET *pkt)
     if (s->s3->tmp.peer_sigalgs == NULL)
         return 0;
     s->s3->tmp.peer_sigalgslen = size;
-    for (i = 0; i < size && PACKET_get_net_2(pkt, &s->s3->tmp.peer_sigalgs[i]);
-         i++)
-        continue;
+    for (i = 0; i < size && PACKET_get_net_2(pkt, &stmp); i++)
+        s->s3->tmp.peer_sigalgs[i] = stmp;
 
     if (i != size)
         return 0;
@@ -1665,7 +1666,7 @@ int SSL_get_sigalgs(SSL *s, int idx,
                     int *psign, int *phash, int *psignhash,
                     unsigned char *rsig, unsigned char *rhash)
 {
-    unsigned int *psig = s->s3->tmp.peer_sigalgs;
+    uint16_t *psig = s->s3->tmp.peer_sigalgs;
     size_t numsigalgs = s->s3->tmp.peer_sigalgslen;
     if (psig == NULL || numsigalgs > INT_MAX)
         return 0;
@@ -1781,7 +1782,7 @@ int tls1_set_sigalgs_list(CERT *c, const char *str, int client)
 /* TODO(TLS1.3): Needs updating to allow setting of TLS1.3 sig algs */
 int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
 {
-    unsigned int *sigalgs, *sptr;
+    uint16_t *sigalgs, *sptr;
     size_t i;
 
     if (salglen & 1)
@@ -1981,7 +1982,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
          */
         if (default_nid > 0 && c->conf_sigalgs) {
             size_t j;
-            const unsigned int *p = c->conf_sigalgs;
+            const uint16_t *p = c->conf_sigalgs;
             for (j = 0; j < c->conf_sigalgslen; j++, p++) {
                 if (tls_sigalg_get_hash(*p) == NID_sha1
                         && tls_sigalg_get_sig(*p) == rsign)

@@ -2308,7 +2308,7 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
     }
 
     if (SSL_USE_SIGALGS(s)) {
-        const unsigned int *psigs;
+        const uint16_t *psigs;
         size_t nl = tls12_get_psigalgs(s, 1, &psigs);
 
         if (!WPACKET_start_sub_packet_u16(pkt)
