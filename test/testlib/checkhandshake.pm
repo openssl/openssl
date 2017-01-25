@@ -47,7 +47,9 @@ use constant {
     #Client side for ec point formats is a default extension
     EC_POINT_FORMAT_SRV_EXTENSION => 0x00004000,
     PSK_CLI_EXTENSION => 0x00008000,
-    PSK_SRV_EXTENSION => 0x00010000
+    PSK_SRV_EXTENSION => 0x00010000,
+    KEY_SHARE_SRV_EXTENSION => 0x00020000,
+    PSK_KEX_MODES_EXTENSION => 0x00040000
 };
 
 our @handmessages = ();
