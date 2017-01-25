@@ -28,6 +28,10 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLS enabled"
     if alldisabled(available_protocols("tls"));
 
+#We assume the EC extensions are sent
+plan skip_all => "$test_name needs EC enabled"
+    if disabled("ec");
+
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 
