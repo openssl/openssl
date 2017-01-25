@@ -899,6 +899,14 @@ int tls12_check_peer_sigalg(SSL *s, unsigned int sig, EVP_PKEY *pkey)
     return 1;
 }
 
+int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid)
+{
+    if (s->s3->tmp.peer_sigtype == NID_undef)
+        return 0;
+    *pnid = s->s3->tmp.peer_sigtype;
+    return 1;
+}
+
 /*
  * Set a mask of disabled algorithms: an algorithm is disabled if it isn't
  * supported, doesn't appear in supported signature algorithms, isn't supported
