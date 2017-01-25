@@ -1836,7 +1836,7 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
 
 MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 {
-    int al = -1, ispss = 0;
+    int al = -1;
     long alg_k;
     EVP_PKEY *pkey = NULL;
     EVP_MD_CTX *md_ctx = NULL;
@@ -1901,7 +1901,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                 SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
                 goto err;
             }
-            rv = tls12_check_peer_sigalg(&md, s, sigalg, pkey);
+            rv = tls12_check_peer_sigalg(s, sigalg, pkey);
             if (rv == -1) {
                 al = SSL_AD_INTERNAL_ERROR;
                 goto err;
@@ -1909,7 +1909,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                 al = SSL_AD_DECODE_ERROR;
                 goto err;
             }
-            ispss = SIGID_IS_PSS(sigalg);
+            md = s->s3->tmp.peer_md;
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
@@ -1955,7 +1955,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
             goto err;
         }
-        if (ispss) {
+        if (SSL_USE_PSS(s)) {
             if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
                        /* -1 here means set saltlen to the digest len */
                     || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx,
