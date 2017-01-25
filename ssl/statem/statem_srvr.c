@@ -2274,8 +2274,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
             if (ispss) {
                 if (EVP_PKEY_CTX_set_rsa_padding(pctx,
                                                  RSA_PKCS1_PSS_PADDING) <= 0
-                           /* -1 here means set saltlen to the digest len */
-                        || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0) {
+                    || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, RSA_PSS_SALTLEN_DIGEST) <= 0) {
                     SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                            ERR_R_EVP_LIB);
                     goto f_err;
