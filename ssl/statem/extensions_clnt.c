@@ -231,7 +231,7 @@ int tls_construct_ctos_sig_algs(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
     if (!SSL_CLIENT_USE_SIGALGS(s))
         return 1;
 
-    salglen = tls12_get_psigalgs(s, &salg);
+    salglen = tls12_get_psigalgs(s, 1, &salg);
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_signature_algorithms)
                /* Sub-packet for sig-algs extension */
             || !WPACKET_start_sub_packet_u16(pkt)
