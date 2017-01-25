@@ -985,6 +985,7 @@ static int final_sig_algs(SSL *s, unsigned int context, int sent, int *al)
 
 static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
 {
+    (void)context;
     if (!SSL_IS_TLS13(s))
         return 1;
 
@@ -1103,6 +1104,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
 
 static int init_psk_kex_modes(SSL *s, unsigned int context)
 {
+    (void)context;
     s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_NONE;
     return 1;
 }

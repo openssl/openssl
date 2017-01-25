@@ -56,6 +56,10 @@ DH *DH_new_method(ENGINE *engine)
 {
     DH *ret = OPENSSL_zalloc(sizeof(*ret));
 
+#ifdef OPENSSL_NO_ENGINE
+    (void)engine;
+#endif
+
     if (ret == NULL) {
         DHerr(DH_F_DH_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return NULL;

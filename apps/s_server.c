@@ -2093,6 +2093,9 @@ static int sv_body(int s, int stype, unsigned char *context)
     struct timeval *timeoutp;
 #endif
 
+#ifdef OPENSSL_NO_DTLS
+    (void)stype;
+#endif
     buf = app_malloc(bufsize, "server buffer");
     if (s_nbio) {
         if (!BIO_socket_nbio(s, 1))
@@ -3276,12 +3279,12 @@ typedef struct simple_ssl_session_st {
 
 static simple_ssl_session *first = NULL;
 
-static int add_session(SSL *s, SSL_SESSION *session)
+static int add_session(SSL *ssl, SSL_SESSION *session)
 {
     simple_ssl_session *sess = app_malloc(sizeof(*sess), "get session");
     unsigned char *p;
 
-    (void)s;
+    (void)ssl;
     SSL_SESSION_get_id(session, &sess->idlen);
     sess->derlen = i2d_SSL_SESSION(session, NULL);
     if (sess->derlen < 0) {
@@ -3316,12 +3319,12 @@ static int add_session(SSL *s, SSL_SESSION *session)
     return 0;
 }
 
-static SSL_SESSION *get_session(SSL *s, const unsigned char *id, int idlen,
+static SSL_SESSION *get_session(SSL *ssl, const unsigned char *id, int idlen,
                                 int *do_copy)
 {
     simple_ssl_session *sess;
 
-    (void)s;
+    (void)ssl;
     *do_copy = 0;
     for (sess = first; sess; sess = sess->next) {
         if (idlen == (int)sess->idlen && !memcmp(sess->id, id, idlen)) {

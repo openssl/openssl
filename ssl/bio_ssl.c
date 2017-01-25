@@ -454,6 +454,8 @@ BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
  err:
     BIO_free(buf);
     BIO_free(ssl);
+#else
+    (void)ctx;
 #endif
     return (NULL);
 }
@@ -472,6 +474,8 @@ BIO *BIO_new_ssl_connect(SSL_CTX *ctx)
     return (ret);
  err:
     BIO_free(con);
+#else
+    (void)ctx;
 #endif
     return (NULL);
 }

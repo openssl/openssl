@@ -32,6 +32,8 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
 {
 #if defined(OPENSSL_NO_STDIO) || defined(OPENSSL_NO_UI)
     int i;
+
+    (void)w;
 #else
     int i, j;
     const char *prompt;

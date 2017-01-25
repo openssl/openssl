@@ -487,6 +487,10 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri);
 static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     (void)pkey;
+#ifdef OPENSSL_NO_CMS
+    (void)arg1;
+    (void)arg2;
+#endif
     switch (op) {
 #ifndef OPENSSL_NO_CMS
 

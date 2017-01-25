@@ -338,6 +338,9 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     unsigned char *ticket_keys;
     size_t ticket_key_len;
 
+#ifdef OPENSSL_NO_NEXTPROTONEG
+    (void)client_ctx_data;
+#endif
     TEST_check(SSL_CTX_set_max_send_fragment(server_ctx,
                                              test->max_fragment_size) == 1);
     if (server2_ctx != NULL) {

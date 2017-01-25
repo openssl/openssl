@@ -683,6 +683,10 @@ static TS_RESP *create_response(CONF *conf, const char *section, const char *eng
     BIO *query_bio = NULL;
     TS_RESP_CTX *resp_ctx = NULL;
 
+#ifdef OPENSSL_NO_ENGINE
+    (void)engine;
+#endif
+
     if ((query_bio = BIO_new_file(queryfile, "rb")) == NULL)
         goto end;
     if ((section = TS_CONF_get_tsa_section(conf, section)) == NULL)

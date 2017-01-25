@@ -2474,6 +2474,8 @@ static int tls_process_cke_psk_preamble(SSL *s, PACKET *pkt, int *al)
     return 1;
 #else
     /* Should never happen */
+    (void)s;
+    (void)pkt;
     *al = SSL_AD_INTERNAL_ERROR;
     SSLerr(SSL_F_TLS_PROCESS_CKE_PSK_PREAMBLE, ERR_R_INTERNAL_ERROR);
     return 0;
@@ -2708,6 +2710,8 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt, int *al)
     EVP_PKEY_free(ckey);
     return ret;
 #else
+    (void)s;
+    (void)pkt;
     /* Should never happen */
     *al = SSL_AD_INTERNAL_ERROR;
     SSLerr(SSL_F_TLS_PROCESS_CKE_DHE, ERR_R_INTERNAL_ERROR);
@@ -2770,6 +2774,8 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt, int *al)
     return ret;
 #else
     /* Should never happen */
+    (void)s;
+    (void)pkt;
     *al = SSL_AD_INTERNAL_ERROR;
     SSLerr(SSL_F_TLS_PROCESS_CKE_ECDHE, ERR_R_INTERNAL_ERROR);
     return 0;
@@ -2812,6 +2818,8 @@ static int tls_process_cke_srp(SSL *s, PACKET *pkt, int *al)
     return 1;
 #else
     /* Should never happen */
+    (void)s;
+    (void)pkt;
     *al = SSL_AD_INTERNAL_ERROR;
     SSLerr(SSL_F_TLS_PROCESS_CKE_SRP, ERR_R_INTERNAL_ERROR);
     return 0;
@@ -2913,6 +2921,8 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt, int *al)
     return ret;
 #else
     /* Should never happen */
+    (void)s;
+    (void)pkt;
     *al = SSL_AD_INTERNAL_ERROR;
     SSLerr(SSL_F_TLS_PROCESS_CKE_GOST, ERR_R_INTERNAL_ERROR);
     return 0;

@@ -1725,6 +1725,8 @@ static int tls_process_ske_psk_preamble(SSL *s, PACKET *pkt, int *al)
 
     return 1;
 #else
+    (void)s;
+    (void)pkt;
     SSLerr(SSL_F_TLS_PROCESS_SKE_PSK_PREAMBLE, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
@@ -1775,6 +1777,9 @@ static int tls_process_ske_srp(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
 
     return 1;
 #else
+    (void)s;
+    (void)pkt;
+    (void)pkey;
     SSLerr(SSL_F_TLS_PROCESS_SKE_SRP, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
@@ -1881,6 +1886,10 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
 
     return 0;
 #else
+    (void)s;
+    (void)pkt;
+    (void)pkey;
+    (void)al;
     SSLerr(SSL_F_TLS_PROCESS_SKE_DHE, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
@@ -1978,6 +1987,9 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
 
     return 1;
 #else
+    (void)s;
+    (void)pkt;
+    (void)pkey;
     SSLerr(SSL_F_TLS_PROCESS_SKE_ECDHE, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
@@ -2644,6 +2656,8 @@ static int tls_construct_cke_psk_preamble(SSL *s, WPACKET *pkt, int *al)
 
     return ret;
 #else
+    (void)s;
+    (void)pkt;
     SSLerr(SSL_F_TLS_CONSTRUCT_CKE_PSK_PREAMBLE, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
@@ -2734,6 +2748,7 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt, int *al)
 
     return 0;
 #else
+    (void)pkt;
     SSLerr(SSL_F_TLS_CONSTRUCT_CKE_RSA, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
@@ -2772,6 +2787,10 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt, int *al)
     return 1;
  err:
     EVP_PKEY_free(ckey);
+#else
+    (void)s;
+    (void)pkt;
+    (void)al;
 #endif
     SSLerr(SSL_F_TLS_CONSTRUCT_CKE_DHE, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
@@ -2823,6 +2842,8 @@ static int tls_construct_cke_ecdhe(SSL *s, WPACKET *pkt, int *al)
     EVP_PKEY_free(ckey);
     return ret;
 #else
+    (void)s;
+    (void)pkt;
     SSLerr(SSL_F_TLS_CONSTRUCT_CKE_ECDHE, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
@@ -2941,6 +2962,8 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt, int *al)
     EVP_MD_CTX_free(ukm_hash);
     return 0;
 #else
+    (void)s;
+    (void)pkt;
     SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;
@@ -2970,6 +2993,8 @@ static int tls_construct_cke_srp(SSL *s, WPACKET *pkt, int *al)
 
     return 1;
 #else
+    (void)s;
+    (void)pkt;
     SSLerr(SSL_F_TLS_CONSTRUCT_CKE_SRP, ERR_R_INTERNAL_ERROR);
     *al = SSL_AD_INTERNAL_ERROR;
     return 0;

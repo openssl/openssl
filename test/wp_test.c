@@ -15,7 +15,7 @@
 #include <openssl/crypto.h>
 
 #if defined(OPENSSL_NO_WHIRLPOOL)
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No Whirlpool support\n");
     return (0);

@@ -550,6 +550,7 @@ int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
 int tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt, unsigned int context,
                                      X509 *x, size_t chainidx, int *al)
 {
+    (void)s;
 #ifndef OPENSSL_NO_TLS1_3
     /*
      * TODO(TLS1.3): Do we want this list to be configurable? For now we always
@@ -567,6 +568,11 @@ int tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt, unsigned int context,
     }
 
     s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_KE | TLSEXT_KEX_MODE_FLAG_KE_DHE;
+#else
+    (void)pkt;
+    (void)x;
+    (void)chainidx;
+    (void)al;
 #endif
 
     return 1;
@@ -844,6 +850,11 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
  err:
     return ret;
 #else
+    (void)s;
+    (void)pkt;
+    (void)x;
+    (void)chainidx;
+    (void)al;
     return 1;
 #endif
 }
@@ -1398,6 +1409,12 @@ int tls_parse_stoc_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     s->hit = 1;
+#else
+    (void)s;
+    (void)pkt;
+    (void)x;
+    (void)chainidx;
+    (void)al;
 #endif
 
     return 1;

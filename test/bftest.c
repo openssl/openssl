@@ -20,7 +20,7 @@
 #include "../e_os.h"
 
 #ifdef OPENSSL_NO_BF
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No BF support\n");
     return (0);

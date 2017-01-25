@@ -42,6 +42,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
                             + EVP_MAX_MD_SIZE];
     WPACKET pkt;
 
+    (void)s;
     if (pctx == NULL)
         return 0;
 
@@ -124,6 +125,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     int ret;
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
 
+    (void)s;
     if (pctx == NULL)
         return 0;
 

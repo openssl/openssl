@@ -74,6 +74,10 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
 {
     EC_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
+#ifdef OPENSSL_NO_ENGINE
+    (void)engine;
+#endif
+
     if (ret == NULL) {
         ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return NULL;

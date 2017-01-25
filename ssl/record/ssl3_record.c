@@ -608,6 +608,9 @@ int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr)
     else
         rr->length = i;
     rr->data = rr->comp;
+#else
+    (void)ssl;
+    (void)rr;
 #endif
     return 1;
 }
@@ -627,6 +630,9 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
         wr->length = i;
 
     wr->input = wr->data;
+#else
+    (void)ssl;
+    (void)wr;
 #endif
     return (1);
 }

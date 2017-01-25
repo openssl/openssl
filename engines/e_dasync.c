@@ -399,6 +399,9 @@ static void wait_cleanup(ASYNC_WAIT_CTX *ctx, const void *key,
 
     (void)ctx;
     (void)key;
+#ifndef OPENSSL_THREADS
+    (void)readfd;
+#endif
 #if defined(ASYNC_WIN)
     CloseHandle(readfd);
     CloseHandle(*pwritefd);

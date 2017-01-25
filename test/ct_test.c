@@ -591,6 +591,8 @@ int test_main(int argc, char *argv[])
 #else
 int test_main(int argc, char *argv[])
 {
+    (void)argc;
+    (void)argv;
     printf("No CT support\n");
     return 0;
 }

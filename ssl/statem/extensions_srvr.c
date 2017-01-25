@@ -505,6 +505,12 @@ int tls_parse_ctos_psk_kex_modes(SSL *s, PACKET *pkt, unsigned int context,
         else if (mode == TLSEXT_KEX_MODE_KE)
             s->ext.psk_kex_mode |= TLSEXT_KEX_MODE_FLAG_KE;
     }
+#else
+    (void)s;
+    (void)pkt;
+    (void)x;
+    (void)chainidx;
+    (void)al;
 #endif
 
     return 1;
@@ -705,6 +711,8 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     unsigned int id, i;
     const EVP_MD *md = NULL;
 
+    (void)x;
+    (void)chainidx;
     /*
      * If we have no PSK kex mode that we recognise then we can't resume so
      * ignore this extension
@@ -1166,6 +1174,9 @@ int tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt, unsigned int context,
 int tls_construct_stoc_psk(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
                            size_t chainidx, int *al)
 {
+    (void)x;
+    (void)chainidx;
+    (void)al;
     if (!s->hit)
         return 1;
 

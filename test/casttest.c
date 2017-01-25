@@ -15,7 +15,7 @@
 #include "../e_os.h"
 
 #ifdef OPENSSL_NO_CAST
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No CAST support\n");
     return (0);

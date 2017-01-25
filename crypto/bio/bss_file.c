@@ -368,30 +368,47 @@ static int file_puts(BIO *bp, const char *str)
 
 static int file_write(BIO *b, const char *in, int inl)
 {
+    (void)b;
+    (void)in;
+    (void)inl;
     return -1;
 }
 static int file_read(BIO *b, char *out, int outl)
 {
+    (void)b;
+    (void)out;
+    (void)outl;
     return -1;
 }
 static int file_puts(BIO *bp, const char *str)
 {
+    (void)bp;
+    (void)str;
     return -1;
 }
 static int file_gets(BIO *bp, char *buf, int size)
 {
+    (void)bp;
+    (void)buf;
+    (void)size;
     return 0;
 }
 static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
+    (void)b;
+    (void)cmd;
+    (void)num;
+    (void)ptr;
     return 0;
 }
 static int file_new(BIO *bi)
 {
+    (void)bi;
     return 0;
 }
 static int file_free(BIO *a)
 {
+    (void)a;
     return 0;
 }
 
@@ -419,6 +436,8 @@ const BIO_METHOD *BIO_s_file(void)
 
 BIO *BIO_new_file(const char *filename, const char *mode)
 {
+    (void)filename;
+    (void)mode;
     return NULL;
 }
 

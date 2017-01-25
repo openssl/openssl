@@ -3395,6 +3395,7 @@ const COMP_METHOD *SSL_get_current_compression(SSL *s)
 #ifndef OPENSSL_NO_COMP
     return s->compress ? COMP_CTX_get_method(s->compress) : NULL;
 #else
+    (void)s;
     return NULL;
 #endif
 }
@@ -3404,6 +3405,7 @@ const COMP_METHOD *SSL_get_current_expansion(SSL *s)
 #ifndef OPENSSL_NO_COMP
     return s->expand ? COMP_CTX_get_method(s->expand) : NULL;
 #else
+    (void)s;
     return NULL;
 #endif
 }
@@ -4094,6 +4096,7 @@ static int ct_extract_ocsp_response_scts(SSL *s)
     OCSP_RESPONSE_free(rsp);
     return scts_extracted;
 # else
+    (void)s;
     /* Behave as if no OCSP response exists */
     return 0;
 # endif

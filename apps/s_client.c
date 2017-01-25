@@ -796,6 +796,7 @@ static int new_session_cb(SSL *S, SSL_SESSION *sess)
 {
     BIO *stmp = BIO_new_file(sess_out, "w");
 
+    (void)S;
     if (stmp == NULL) {
         BIO_printf(bio_err, "Error writing session file %s\n", sess_out);
     } else {

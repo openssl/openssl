@@ -96,6 +96,10 @@ static void ERR_unload_DASYNC_strings(void)
 
 static void ERR_DASYNC_error(int function, int reason, char *file, int line)
 {
+#ifdef OPENSSL_NO_ERR
+    (void)file;
+    (void)line;
+#endif
     if (DASYNC_lib_error_code == 0)
         DASYNC_lib_error_code = ERR_get_next_error_library();
     ERR_PUT_error(DASYNC_lib_error_code, function, reason, file, line);

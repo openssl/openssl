@@ -28,7 +28,7 @@
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
 
 #ifdef OPENSSL_NO_EC
-int main(int argc, char *argv[])
+int main(void)
 {
     puts("Elliptic curves are disabled.");
     return 0;

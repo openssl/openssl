@@ -21,12 +21,14 @@ typedef unsigned int thread_t;
 
 static int run_thread(thread_t *t, void (*f)(void))
 {
+    (void)t;
     f();
     return 1;
 }
 
 static int wait_for_thread(thread_t thread)
 {
+    (void)thread;
     return 1;
 }
 
