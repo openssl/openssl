@@ -509,7 +509,7 @@ __owur static int parse_expected_server_sign_hash(SSL_TEST_CTX *test_ctx,
 __owur static int parse_expected_client_sign_hash(SSL_TEST_CTX *test_ctx,
                                                   const char *value)
 {
-    return parse_expected_sign_hash(&test_ctx->expected_server_sign_hash,
+    return parse_expected_sign_hash(&test_ctx->expected_client_sign_hash,
                                     value);
 }
 
