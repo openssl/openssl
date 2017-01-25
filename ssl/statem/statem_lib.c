@@ -286,7 +286,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     unsigned char *gost_data = NULL;
 #endif
     int al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
-    int type = 0, j, pktype, ispss = 0;
+    int type = 0, j, pktype;
     unsigned int len;
     X509 *peer;
     const EVP_MD *md = NULL;
@@ -333,14 +333,14 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
                 al = SSL_AD_DECODE_ERROR;
                 goto f_err;
             }
-            rv = tls12_check_peer_sigalg(&md, s, sigalg, pkey);
+            rv = tls12_check_peer_sigalg(s, sigalg, pkey);
             if (rv == -1) {
                 goto f_err;
             } else if (rv == 0) {
                 al = SSL_AD_DECODE_ERROR;
                 goto f_err;
             }
-            ispss = SIGID_IS_PSS(sigalg);
+            md = s->s3->tmp.peer_md;
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
@@ -402,7 +402,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
 #endif
 
-    if (ispss) {
+    if (SSL_USE_PSS(s)) {
         if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
             || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx,
                                                 RSA_PSS_SALTLEN_DIGEST) <= 0) {
