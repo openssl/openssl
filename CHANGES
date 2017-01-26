@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.2j and 1.0.2k [xx XXX xxxx]
+ Changes between 1.0.2j and 1.0.2k [26 Jan 2017]
 
   *) Truncated packet could crash via OOB read
 
