@@ -1,5 +1,6 @@
 language: c
 cache: ccache
+dist: trusty
 
 before_install:
     - pip install --user cpp-coveralls
@@ -13,8 +14,9 @@ addons:
             - binutils-mingw-w64
             - gcc-mingw-w64
             - wine
+            - wine1.6
         sources:
-            - llvm-toolchain-precise-3.6
+            - llvm-toolchain-trusty-3.6
             - ubuntu-toolchain-r-test
 
 os:
