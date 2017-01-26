@@ -2,7 +2,9 @@ language: c
 cache: ccache
 
 before_install:
-    - pip install --user cpp-coveralls
+    - if [ -n "$COVERALLS" ]; then
+          pip install --user cpp-coveralls;
+      fi;
 
 addons:
     apt:
@@ -10,9 +12,10 @@ addons:
             - ccache
             - clang-3.6
             - gcc-5
+            - g++-5
+            - golang
             - binutils-mingw-w64
             - gcc-mingw-w64
-            - wine
         sources:
             - llvm-toolchain-precise-3.6
             - ubuntu-toolchain-r-test
@@ -38,38 +41,29 @@ matrix:
           compiler: clang-3.6
           env: CONFIG_OPTS="--strict-warnings no-deprecated" BUILDONLY="yes"
         - os: linux
-          compiler: gcc
-          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers" COVERALLS="yes"
-        - os: linux
-          compiler: clang-3.6
-          env: CONFIG_OPTS="enable-asan"
+          compiler: gcc-5
+          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers enable-external-tests no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" CXX="g++-5"
         - os: linux
           compiler: clang-3.6
           env: CONFIG_OPTS="enable-msan"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method -fno-sanitize=alignment"
+          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2"
-        - os: linux
-          compiler: clang-3.6
-          env: CONFIG_OPTS="no-stdio"
+          env: CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
           compiler: gcc-5
           env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC"
         - os: linux
           compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-pic"
+          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
         - os: linux
           compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-stdio"
-        - os: linux
-          compiler: x86_64-w64-mingw32-gcc
           env: CONFIG_OPTS="no-pic"
         - os: linux
           compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-stdio"
+          env: CONFIG_OPTS="no-pic"
     exclude:
         - os: linux
           compiler: clang
@@ -108,16 +102,15 @@ script:
       else
           make="make";
       fi
+    - top=${PWD}
     - if [ -n "$DESTDIR" ]; then
           cd _build;
-          top=..;
-      else
-          top=.;
       fi
     - $make update
     - $make
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
+              sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install wine;
               export EXE_SHELL="wine" WINEPREFIX=`pwd`;
           fi;
           HARNESS_VERBOSE=yes make test;
@@ -125,14 +118,14 @@ script:
           $make build_tests;
       fi
     - if [ -n "$DESTDIR" ]; then
-          mkdir "../$DESTDIR";
-          $make install install_docs DESTDIR="../$DESTDIR";
+          mkdir "$top/$DESTDIR";
+          $make install install_docs DESTDIR="$top/$DESTDIR";
       fi
     - cd $top
 
 after_success:
     - if [ -n "$COVERALLS" ]; then
-          coveralls -b . --gcov-options '\-lp';
+          coveralls -b . --gcov gcov-5 --gcov-options '\-lp';
       fi;
 
 notifications:
