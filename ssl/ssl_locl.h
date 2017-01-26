@@ -2062,7 +2062,7 @@ __owur size_t tls12_copy_sigalgs(SSL *s, unsigned char *out,
                                  const unsigned char *psig, size_t psiglen);
 __owur int tls1_save_sigalgs(SSL *s, const unsigned char *data, int dsize);
 __owur int tls1_process_sigalgs(SSL *s);
-__owur size_t tls12_get_psigalgs(SSL *s, const unsigned char **psigs);
+__owur size_t tls12_get_psigalgs(SSL *s, int sent, const unsigned char **psigs);
 __owur int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
                                    const unsigned char *sig, EVP_PKEY *pkey);
 void ssl_set_client_disabled(SSL *s);

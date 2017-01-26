@@ -2002,7 +2002,7 @@ int tls_construct_certificate_request(SSL *s)
     if (SSL_USE_SIGALGS(s)) {
         const unsigned char *psigs;
         unsigned char *etmp = p;
-        nl = tls12_get_psigalgs(s, &psigs);
+        nl = tls12_get_psigalgs(s, 1, &psigs);
         /* Skip over length for now */
         p += 2;
         nl = tls12_copy_sigalgs(s, p, psigs, nl);
