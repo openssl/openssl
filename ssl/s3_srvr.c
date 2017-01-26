@@ -2084,7 +2084,7 @@ int ssl3_send_certificate_request(SSL *s)
 
         if (SSL_USE_SIGALGS(s)) {
             const unsigned char *psigs;
-            nl = tls12_get_psigalgs(s, &psigs);
+            nl = tls12_get_psigalgs(s, 1, &psigs);
             s2n(nl, p);
             memcpy(p, psigs, nl);
             p += nl;
