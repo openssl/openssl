@@ -706,35 +706,58 @@ static const uint16_t suiteb_sigalgs[] = {
 #endif
 
 typedef struct sigalg_lookup_st {
+    const char *name;
     uint16_t sigalg;
     int hash;
     int sig;
+    int sigandhash;
+    int curve;
 } SIGALG_LOOKUP;
 
 static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
 #ifndef OPENSSL_NO_EC
-    {TLSEXT_SIGALG_ecdsa_secp256r1_sha256, NID_sha256, EVP_PKEY_EC},
-    {TLSEXT_SIGALG_ecdsa_secp384r1_sha384, NID_sha384, EVP_PKEY_EC},
-    {TLSEXT_SIGALG_ecdsa_secp521r1_sha512, NID_sha512, EVP_PKEY_EC},
-    {TLSEXT_SIGALG_ecdsa_sha1, NID_sha1, EVP_PKEY_EC},
+    {"ecdsa_secp256r1_sha256", TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
+     NID_sha256, EVP_PKEY_EC, NID_ecdsa_with_SHA256, NID_X9_62_prime256v1},
+    {"ecdsa_secp384r1_sha384", TLSEXT_SIGALG_ecdsa_secp384r1_sha384,
+     NID_sha384, EVP_PKEY_EC, NID_ecdsa_with_SHA384, NID_secp384r1},
+    {"ecdsa_secp521r1_sha512", TLSEXT_SIGALG_ecdsa_secp521r1_sha512,
+     NID_sha512, EVP_PKEY_EC, NID_ecdsa_with_SHA512, NID_secp521r1},
+    {NULL, TLSEXT_SIGALG_ecdsa_sha1,
+     NID_sha1, EVP_PKEY_EC, NID_ecdsa_with_SHA1, NID_undef},
 #endif
-    {TLSEXT_SIGALG_rsa_pss_sha256, NID_sha256, EVP_PKEY_RSA_PSS},
-    {TLSEXT_SIGALG_rsa_pss_sha384, NID_sha384, EVP_PKEY_RSA_PSS},
-    {TLSEXT_SIGALG_rsa_pss_sha512, NID_sha512, EVP_PKEY_RSA_PSS},
-    {TLSEXT_SIGALG_rsa_pkcs1_sha256, NID_sha256, EVP_PKEY_RSA},
-    {TLSEXT_SIGALG_rsa_pkcs1_sha384, NID_sha384, EVP_PKEY_RSA},
-    {TLSEXT_SIGALG_rsa_pkcs1_sha512, NID_sha512, EVP_PKEY_RSA},
-    {TLSEXT_SIGALG_rsa_pkcs1_sha1, NID_sha1, EVP_PKEY_RSA},
+    {"rsa_pss_sha256", TLSEXT_SIGALG_rsa_pss_sha256,
+     NID_sha256, EVP_PKEY_RSA_PSS, NID_undef, NID_undef},
+    {"rsa_pss_sha384", TLSEXT_SIGALG_rsa_pss_sha384,
+     NID_sha384, EVP_PKEY_RSA_PSS, NID_undef, NID_undef},
+    {"rsa_pss_sha512", TLSEXT_SIGALG_rsa_pss_sha512,
+     NID_sha512, EVP_PKEY_RSA_PSS, NID_undef, NID_undef},
+    {"rsa_pkcs1_sha256", TLSEXT_SIGALG_rsa_pkcs1_sha256,
+     NID_sha256, EVP_PKEY_RSA, NID_sha256WithRSAEncryption, NID_undef},
+    {"rsa_pkcs1_sha384", TLSEXT_SIGALG_rsa_pkcs1_sha384,
+     NID_sha384, EVP_PKEY_RSA, NID_sha384WithRSAEncryption, NID_undef},
+    {"rsa_pkcs1_sha512", TLSEXT_SIGALG_rsa_pkcs1_sha512,
+     NID_sha512, EVP_PKEY_RSA, NID_sha512WithRSAEncryption, NID_undef},
+    {"rsa_pkcs1_sha1", TLSEXT_SIGALG_rsa_pkcs1_sha1,
+     NID_sha1, EVP_PKEY_RSA, NID_sha1WithRSAEncryption, NID_undef},
 #ifndef OPENSSL_NO_DSA
-    {TLSEXT_SIGALG_dsa_sha256, NID_sha256, EVP_PKEY_DSA},
-    {TLSEXT_SIGALG_dsa_sha384, NID_sha384, EVP_PKEY_DSA},
-    {TLSEXT_SIGALG_dsa_sha512, NID_sha512, EVP_PKEY_DSA},
-    {TLSEXT_SIGALG_dsa_sha1, NID_sha1, EVP_PKEY_DSA},
+    {NULL, TLSEXT_SIGALG_dsa_sha256,
+     NID_sha256, EVP_PKEY_DSA, NID_dsa_with_SHA256, NID_undef},
+    {NULL, TLSEXT_SIGALG_dsa_sha384,
+     NID_sha384, EVP_PKEY_DSA, NID_undef, NID_undef},
+    {NULL, TLSEXT_SIGALG_dsa_sha512,
+     NID_sha512, EVP_PKEY_DSA, NID_undef, NID_undef},
+    {NULL, TLSEXT_SIGALG_dsa_sha1,
+     NID_sha1, EVP_PKEY_DSA, NID_dsaWithSHA1, NID_undef},
 #endif
 #ifndef OPENSSL_NO_GOST
-    {TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, NID_id_GostR3411_2012_256, NID_id_GostR3410_2012_256},
-    {TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, NID_id_GostR3411_2012_512, NID_id_GostR3410_2012_512},
-    {TLSEXT_SIGALG_gostr34102001_gostr3411, NID_id_GostR3411_94, NID_id_GostR3410_2001}
+    {NULL, TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256,
+     NID_id_GostR3411_2012_256, NID_id_GostR3410_2012_256, NID_undef,
+     NID_undef},
+    {NULL, TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512,
+     NID_id_GostR3411_2012_512, NID_id_GostR3410_2012_512, NID_undef,
+     NID_undef},
+    {NULL, TLSEXT_SIGALG_gostr34102001_gostr3411,
+     NID_id_GostR3411_94, NID_id_GostR3410_2001, NID_undef, NID_undef}
 #endif
 };
 
