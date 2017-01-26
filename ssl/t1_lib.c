@@ -1273,7 +1273,7 @@ int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
 {
     int md_id, sig_id;
     size_t i;
-    const SIGALG_LOOKUP *curr;
+    const TLS_SIGALGS *curr;
 
     if (md == NULL)
         return 0;
@@ -1285,18 +1285,20 @@ int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
     if (SSL_IS_TLS13(s) && sig_id == EVP_PKEY_RSA)
         sig_id = EVP_PKEY_RSA_PSS;
 
-    for (i = 0, curr = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
+    for (i = 0, curr = s->cert->shared_sigalgs; i < s->cert->shared_sigalgslen;
          i++, curr++) {
-        /* If key type is RSA also match PSS signature type */
-        if (curr->hash == md_id && (curr->sig == sig_id
-            || (sig_id == EVP_PKEY_RSA && curr->sig == EVP_PKEY_RSA_PSS))) {
-            if (!WPACKET_put_bytes_u16(pkt, curr->sigalg))
+        /*
+         * Look for matching key and hash. If key type is RSA also match PSS
+         * signature type.
+         */
+        if (curr->hash_nid == md_nid && (curr->sign_nid == sig_id
+            || (sig_id == EVP_PKEY_RSA && curr->sign_nid == EVP_PKEY_RSA_PSS))){
+            if (!WPACKET_put_bytes_u16(pkt, curr->rsigalg))
                 return 0;
-            *ispss = curr->sig == EVP_PKEY_RSA_PSS;
+            *ispss = curr->sign_nid == EVP_PKEY_RSA_PSS;
             return 1;
         }
     }
-
     return 0;
 }
 
