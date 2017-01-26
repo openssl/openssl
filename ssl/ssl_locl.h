@@ -1509,6 +1509,25 @@ typedef struct {
     size_t meths_count;
 } custom_ext_methods;
 
+/*
+ * Structure containing table entry of values associated with the signature
+ * algorithms (signature scheme) extension
+*/
+typedef struct sigalg_lookup_st {
+    /* TLS 1.3 signature scheme name */
+    const char *name;
+    /* Raw value used in extension */
+    uint16_t sigalg;
+    /* NID of hash algorithm */
+    int hash;
+    /* NID of signature algorithm */
+    int sig;
+    /* Combined hash and signature NID, if any */
+    int sigandhash;
+    /* Required public key curve (ECDSA only) */
+    int curve;
+} SIGALG_LOOKUP;
+
 typedef struct cert_st {
     /* Current active set */
     /*
@@ -1554,7 +1573,7 @@ typedef struct cert_st {
      * Signature algorithms shared by client and server: cached because these
      * are used most often.
      */
-    TLS_SIGALGS *shared_sigalgs;
+    const SIGALG_LOOKUP **shared_sigalgs;
     size_t shared_sigalgslen;
     /*
      * Certificate setup callback: if set is called whenever a certificate
@@ -1587,18 +1606,6 @@ typedef struct cert_st {
     CRYPTO_REF_COUNT references;             /* >1 only if SSL_copy_session_id is used */
     CRYPTO_RWLOCK *lock;
 } CERT;
-
-/* Structure containing decoded values of signature algorithms extension */
-struct tls_sigalgs_st {
-    /* NID of hash algorithm */
-    int hash_nid;
-    /* NID of signature algorithm */
-    int sign_nid;
-    /* Combined hash and signature NID */
-    int signandhash_nid;
-    /* Raw value used in extension */
-    uint16_t rsigalg;
-};
 
 # define FP_ICC  (int (*)(const void *,const void *))
 
