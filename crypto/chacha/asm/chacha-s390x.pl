@@ -20,12 +20,22 @@
 #
 # 3 times faster than compiler-generated code.
 
+#
+# February 2017
+#
+# Add vx code path.
+#
+# Copyright IBM Corp. 2017
+# Author: Patrick Steuer <patrick.steuer@de.ibm.com>
+
+use strict;
 use FindBin qw($Bin);
 use lib "$Bin/../..";
-use perlasm::s390x qw(:DEFAULT AUTOLOAD LABEL);
+use perlasm::s390x qw(:DEFAULT :VX AUTOLOAD LABEL);
 
-$flavour = shift;
+my $flavour = shift;
 
+my ($z,$SIZE_T);
 if ($flavour =~ /3[12]/) {
 	$z=0;	# S/390 ABI
 	$SIZE_T=4;
@@ -34,17 +44,17 @@ if ($flavour =~ /3[12]/) {
 	$SIZE_T=8;
 }
 
+my $output;
 while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
 
+my $vxsingle=0;	# novx code path is faster for single block
+
 my $sp="%r15";
-
 my $stdframe=16*$SIZE_T+4*8;
-my $frame=$stdframe+4*20;
-
-my ($out,$inp,$len,$key,$counter)=map("%r$_",(2..6));
 
 my @x=map("%r$_",(0..7,"x","x","x","x",(10..13)));
 my @t=map("%r$_",(8,9));
+my @v=map("%v$_",(16..31));
 
 sub ROUND {
 my ($a0,$b0,$c0,$d0)=@_;
@@ -135,14 +145,265 @@ my ($xc,$xc_)=map("$_",@t);
 	 rll	(@x[$b3],@x[$b3],7);
 }
 
+sub VX_ROUND {
+my ($a0,$b0,$c0,$d0)=@_;
+my ($a1,$b1,$c1,$d1)=map(($_&~3)+(($_+1)&3),($a0,$b0,$c0,$d0));
+my ($a2,$b2,$c2,$d2)=map(($_&~3)+(($_+1)&3),($a1,$b1,$c1,$d1));
+my ($a3,$b3,$c3,$d3)=map(($_&~3)+(($_+1)&3),($a2,$b2,$c2,$d2));
+
+	vaf	(@v[$a0],@v[$a0],@v[$b0]);
+	vaf	(@v[$a1],@v[$a1],@v[$b1]);
+	vaf	(@v[$a2],@v[$a2],@v[$b2]);
+	vaf	(@v[$a3],@v[$a3],@v[$b3]);
+	vx	(@v[$d0],@v[$d0],@v[$a0]);
+	vx	(@v[$d1],@v[$d1],@v[$a1]);
+	vx	(@v[$d2],@v[$d2],@v[$a2]);
+	vx	(@v[$d3],@v[$d3],@v[$a3]);
+	verllf	(@v[$d0],@v[$d0],16);
+	verllf	(@v[$d1],@v[$d1],16);
+	verllf	(@v[$d2],@v[$d2],16);
+	verllf	(@v[$d3],@v[$d3],16);
+
+	vaf	(@v[$c0],@v[$c0],@v[$d0]);
+	vaf	(@v[$c1],@v[$c1],@v[$d1]);
+	vaf	(@v[$c2],@v[$c2],@v[$d2]);
+	vaf	(@v[$c3],@v[$c3],@v[$d3]);
+	vx	(@v[$b0],@v[$b0],@v[$c0]);
+	vx	(@v[$b1],@v[$b1],@v[$c1]);
+	vx	(@v[$b2],@v[$b2],@v[$c2]);
+	vx	(@v[$b3],@v[$b3],@v[$c3]);
+	verllf	(@v[$b0],@v[$b0],12);
+	verllf	(@v[$b1],@v[$b1],12);
+	verllf	(@v[$b2],@v[$b2],12);
+	verllf	(@v[$b3],@v[$b3],12);
+
+	vaf	(@v[$a0],@v[$a0],@v[$b0]);
+	vaf	(@v[$a1],@v[$a1],@v[$b1]);
+	vaf	(@v[$a2],@v[$a2],@v[$b2]);
+	vaf	(@v[$a3],@v[$a3],@v[$b3]);
+	vx	(@v[$d0],@v[$d0],@v[$a0]);
+	vx	(@v[$d1],@v[$d1],@v[$a1]);
+	vx	(@v[$d2],@v[$d2],@v[$a2]);
+	vx	(@v[$d3],@v[$d3],@v[$a3]);
+	verllf	(@v[$d0],@v[$d0],8);
+	verllf	(@v[$d1],@v[$d1],8);
+	verllf	(@v[$d2],@v[$d2],8);
+	verllf	(@v[$d3],@v[$d3],8);
+
+	vaf	(@v[$c0],@v[$c0],@v[$d0]);
+	vaf	(@v[$c1],@v[$c1],@v[$d1]);
+	vaf	(@v[$c2],@v[$c2],@v[$d2]);
+	vaf	(@v[$c3],@v[$c3],@v[$d3]);
+	vx	(@v[$b0],@v[$b0],@v[$c0]);
+	vx	(@v[$b1],@v[$b1],@v[$c1]);
+	vx	(@v[$b2],@v[$b2],@v[$c2]);
+	vx	(@v[$b3],@v[$b3],@v[$c3]);
+	verllf	(@v[$b0],@v[$b0],7);
+	verllf	(@v[$b1],@v[$b1],7);
+	verllf	(@v[$b2],@v[$b2],7);
+	verllf	(@v[$b3],@v[$b3],7);
+}
+
 PERLASM_BEGIN($output);
 
 TEXT	();
+
+################
+# void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp, size_t len,
+#                     const unsigned int key[8], const unsigned int counter[4])
+{
+my ($out,$inp,$len,$key,$counter)=map("%r$_",(2..6));
+
+# VX CODE PATH
+{
+my $off=$z*8*16+16;	# offset(initial state)
+my $frame=4*16+$off;
 
 GLOBL	("ChaCha20_ctr32");
 TYPE	("ChaCha20_ctr32","\@function");
 ALIGN	(32);
 LABEL	("ChaCha20_ctr32");
+	larl	("%r1","OPENSSL_s390xcap_P");
+	lg	("%r0","16(%r1)");
+	tmhh	("%r0",0x4000);	# check for vector facility
+	jz	("_s390x_chacha_novx");
+
+if (!$z) {
+	llgfr	($len,$len);
+	std	("%f4","16*$SIZE_T+2*8($sp)");
+	std	("%f6","16*$SIZE_T+3*8($sp)");
+}
+&{$z?	\&stg:\&st}	("%r7","7*$SIZE_T($sp)");
+
+	lghi	("%r1",-$frame);
+	lgr	("%r0",$sp);
+	la	($sp,"0(%r1,$sp)");	# allocate stack frame
+&{$z?	\&stg:\&st}	("%r0","0($sp)");	# backchain
+
+	larl	("%r7",".Lsigma");
+	l	("%r0","0($counter)");	# load counter
+
+	vstm	("%v8","%v15","16($sp)") if ($z);
+
+	vlm	("%v1","%v2","0($key)");	# load key
+	vl	("%v0","0(%r7)");	# load sigma constant
+	vl	("%v3","0($counter)");	# load iv (counter||nonce)
+	vstm	("%v0","%v3","$off($sp)");	# copy initial state to stack
+
+	srlg	("%r1",$len,8);
+	ltgr	("%r1","%r1");
+	jz	(".Lvx_4x_done");
+
+ALIGN	(16);	# process 4 64-byte blocks
+LABEL	(".Lvx_4x");
+	vlrepf	("%v$_",($_*4)."+$off($sp)") for (0..15);	# load initial
+								#  state
+	vl	("%v31","16(%r7)");
+	vaf	("%v12","%v12","%v31");	# increment counter
+
+	vlr	(@v[$_],"%v$_") for (0..15);	# copy initial state
+
+	lhi	("%r6",10);
+	j	(".Loop_vx_4x");
+
+ALIGN	(16);
+LABEL	(".Loop_vx_4x");
+	VX_ROUND( 0, 4, 8,12);	# column round
+	VX_ROUND( 0, 5,10,15);	# diagonal round
+	brct	("%r6",".Loop_vx_4x");
+
+	vaf	(@v[$_],@v[$_],"%v$_") for (0..15);	# state += initial
+							#  state (mod 32)
+	vlm	("%v6","%v7","32(%r7)");	# load vperm operands
+
+for (0..3) {	# blocks 1,2
+	vmrhf	("%v0",@v[$_*4+0],@v[$_*4+1]);	# ks = serialize(state)
+	vmrhf	("%v1",@v[$_*4+2],@v[$_*4+3]);
+	vperm	("%v".($_+ 8),"%v0","%v1","%v6");
+	vperm	("%v".($_+12),"%v0","%v1","%v7");
+}
+	vlm	("%v0","%v7","0($inp)");	# load in
+	vx	("%v$_","%v$_","%v".($_+8)) for (0..7);	# out = in ^ ks
+	vstm	("%v0","%v7","0($out)");	# store out
+
+	vlm	("%v6","%v7","32(%r7)");	# restore vperm operands
+
+for (0..3) {	# blocks 2,3
+	vmrlf	("%v0",@v[$_*4+0],@v[$_*4+1]);	# ks = serialize(state)
+	vmrlf	("%v1",@v[$_*4+2],@v[$_*4+3]);
+	vperm	("%v".($_+ 8),"%v0","%v1","%v6");
+	vperm	("%v".($_+12),"%v0","%v1","%v7");
+}
+	vlm	("%v0","%v7","128($inp)");	# load in
+	vx	("%v$_","%v$_","%v".($_+8)) for (0..7);	# out = in ^ ks
+	vstm	("%v0","%v7","128($out)");	# store out
+
+	ahi	("%r0",4);
+	st	("%r0","48+$off($sp)");	# update initial state
+
+	la	($inp,"256($inp)");
+	la	($out,"256($out)");
+	brctg	("%r1",".Lvx_4x");
+
+ALIGN	(16);
+LABEL	(".Lvx_4x_done");
+	tml	($len,128|64);
+	jz	(".Lvx_done");
+
+if (!$vxsingle) {
+	brc	(3,".Lvx_rem");	# cc==2 || cc==3?
+
+	lgr	("%r7",$counter);
+&{$z?	\&stmg:\&stm}	("%r14",$sp,"$off($sp)");
+
+	lghi	($len,64);	# 1 block
+	la	($key,"16+$off($sp)");	# load key
+	la	($counter,"48+$off($sp)");	# load updated iv
+	aghi	($sp,-$stdframe);
+	bras	("%r14","_s390x_chacha_novx");
+
+&{$z?	\&lmg:\&lm}	("%r14",$sp,"$stdframe+$off($sp)");
+	lgr	($counter,"%r7");
+	j	(".Lvx_done");
+
+ALIGN	(16);
+LABEL	(".Lvx_rem");
+}
+	vlrepf	("%v$_",($_*4)."+$off($sp)") for (0..15);	# load initial
+								#  state
+	vl	("%v31","16(%r7)");
+	vaf	("%v12","%v12","%v31");	# increment counter
+
+	vlr	(@v[$_],"%v$_") for (0..15);	# state = initial state
+
+	lhi	("%r6",10);
+	j	(".Loop_vx_rem");
+
+ALIGN	(16);
+LABEL	(".Loop_vx_rem");
+	VX_ROUND( 0, 4, 8,12);	# column round
+	VX_ROUND( 0, 5,10,15);	# diagonal round
+	brct	("%r6",".Loop_vx_rem");
+
+	vaf	(@v[$_],@v[$_],"%v$_") for (0..15);	# state += initial
+							#  state (mod 32)
+	vlm	("%v6","%v7","32(%r7)");	# load vperm operands
+
+for (0..3) {	# blocks 1,2
+	vmrhf	("%v0",@v[$_*4+0],@v[$_*4+1]);	# ks = serialize(state)
+	vmrhf	("%v1",@v[$_*4+2],@v[$_*4+3]);
+	vperm	("%v".($_+ 8),"%v0","%v1","%v6");
+	vperm	("%v".($_+12),"%v0","%v1","%v7");
+}
+	vlm	("%v0","%v3","0($inp)");	# load in
+	vx	("%v$_","%v$_","%v".($_+8)) for (0..3);	# out = in ^ ks
+	vstm	("%v0","%v3","0($out)");	# store out
+
+if ($vxsingle) {
+	tml	($len,128);
+	jz	(".Lvx_done");
+}
+	vlm	("%v0","%v3","64($inp)");	# load in
+	vx	("%v$_","%v$_","%v".($_+12)) for (0..3);	# out = in ^ ks
+	vstm	("%v0","%v3","64($out)");	# store out
+
+	tml	($len,64);
+	jz	(".Lvx_done");
+
+for (0..3) {	# block 3
+	vmrlf	("%v0",@v[$_*4+0],@v[$_*4+1]);	# ks = serialize(state)
+	vmrlf	("%v1",@v[$_*4+2],@v[$_*4+3]);
+	vperm	("%v".($_+ 8),"%v0","%v1","%v6");
+}
+	vlm	("%v0","%v3","128($inp)");	# load in
+	vx	("%v$_","%v$_","%v".($_+8)) for (0..3);	# out=in^ks
+	vstm	("%v0","%v3","128($out)");	# store out
+
+ALIGN	(16);
+LABEL	(".Lvx_done");
+	vzero	("%v$_") for (16..31);	# wipe ks and key copy
+	vstm	("%v16","%v17","16+$off($sp)");
+	vlm	("%v8","%v15","16($sp)") if ($z);
+
+&{$z?	\&lg:\&l}	($sp,"0($sp)");
+&{$z?	\&lg:\&l}	("%r7","7*$SIZE_T($sp)");
+
+if (!$z) {
+	ld	("%f4","16*$SIZE_T+2*8($sp)");
+	ld	("%f6","16*$SIZE_T+3*8($sp)");
+	vzero	("%v$_") for (8..15);
+}
+	br	("%r14");
+SIZE	("ChaCha20_ctr32",".-ChaCha20_ctr32");
+}
+
+# NOVX CODE PATH
+{
+my $frame=$stdframe+4*20;
+
+TYPE	("_s390x_chacha_novx","\@function");
+ALIGN	(32);
+LABEL	("_s390x_chacha_novx");
 &{$z?	\&ltgr:\&ltr}	($len,$len);	# $len==0?
 	bzr	("%r14");
 &{$z?	\&aghi:\&ahi}	($len,-64);
@@ -303,12 +564,20 @@ LABEL	(".Loop_tail");
 	brct	(@t[1],".Loop_tail");
 
 	j	(".Ldone");
-SIZE	("ChaCha20_ctr32",".-ChaCha20_ctr32");
+SIZE	("_s390x_chacha_novx",".-_s390x_chacha_novx");
+}
+}
+################
 
-ALIGN	(32);
+ALIGN	(64);
 LABEL	(".Lsigma");
-LONG	(0x61707865,0x3320646e,0x79622d32,0x6b206574);	# endian-neutral
+LONG	(0x61707865,0x3320646e,0x79622d32,0x6b206574);	# endian-neutral sigma
+LONG	(0x00000000,0x00000001,0x00000002,0x00000003);	# vaf counter increment
+LONG	(0x03020100,0x07060504,0x13121110,0x17161514);	# vperm serialization
+LONG	(0x0b0a0908,0x0f0e0d0c,0x1b1a1918,0x1f1e1d1c);	# vperm serialization
 ASCIZ	("\"ChaCha20 for s390x, CRYPTOGAMS by <appro\@openssl.org>\"");
 ALIGN	(4);
+
+COMM	("OPENSSL_s390xcap_P",152,8);
 
 PERLASM_END();
