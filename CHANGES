@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.1.0c and 1.1.0d [xx XXX xxxx]
+ Changes between 1.1.0c and 1.1.0d [26 Jan 2017]
 
   *) Truncated packet could crash via OOB read
 
