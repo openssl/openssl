@@ -49,17 +49,29 @@ static int waitfd(void *args)
 {
     ASYNC_JOB *job;
     ASYNC_WAIT_CTX *waitctx;
-    ASYNC_pause_job();
     job = ASYNC_get_current_job();
     if (job == NULL)
         return 0;
     waitctx = ASYNC_get_wait_ctx(job);
     if (waitctx == NULL)
         return 0;
+
+    /* First case: no fd added or removed */
+    ASYNC_pause_job();
+
+    /* Second case: one fd added */
     if (!ASYNC_WAIT_CTX_set_wait_fd(waitctx, waitctx, MAGIC_WAIT_FD, NULL, NULL))
         return 0;
     ASYNC_pause_job();
 
+    /* Third case: all fd removed */
+    if (!ASYNC_WAIT_CTX_clear_fd(waitctx, waitctx))
+        return 0;
+    ASYNC_pause_job();
+
+    /* Last case: fd added and immediately removed */
+    if (!ASYNC_WAIT_CTX_set_wait_fd(waitctx, waitctx, MAGIC_WAIT_FD, NULL, NULL))
+        return 0;
     if (!ASYNC_WAIT_CTX_clear_fd(waitctx, waitctx))
         return 0;
 
@@ -195,15 +207,15 @@ static int test_ASYNC_WAIT_CTX_get_all_fds()
             || fd != MAGIC_WAIT_FD
             || (fd = OSSL_BAD_ASYNC_FD, 0) /* Assign to something else */
             || !ASYNC_WAIT_CTX_get_changed_fds(waitctx, NULL, &numfds, NULL,
-                                              &numdelfds)
+                                               &numdelfds)
             || numfds != 1
             || numdelfds != 0
             || !ASYNC_WAIT_CTX_get_changed_fds(waitctx, &fd, &numfds, NULL,
                                                &numdelfds)
             || fd != MAGIC_WAIT_FD
-               /* On final run we expect one deleted fd */
+               /* On third run we expect one deleted fd */
             || ASYNC_start_job(&job, waitctx, &funcret, waitfd, NULL, 0)
-                != ASYNC_FINISH
+                != ASYNC_PAUSE
             || !ASYNC_WAIT_CTX_get_all_fds(waitctx, NULL, &numfds)
             || numfds != 0
             || !ASYNC_WAIT_CTX_get_changed_fds(waitctx, NULL, &numfds, NULL,
@@ -213,6 +225,15 @@ static int test_ASYNC_WAIT_CTX_get_all_fds()
             || !ASYNC_WAIT_CTX_get_changed_fds(waitctx, NULL, &numfds, &delfd,
                                                &numdelfds)
             || delfd != MAGIC_WAIT_FD
+            /* On last run we are not expecting any wait fd */
+            || ASYNC_start_job(&job, waitctx, &funcret, waitfd, NULL, 0)
+                != ASYNC_FINISH
+            || !ASYNC_WAIT_CTX_get_all_fds(waitctx, NULL, &numfds)
+            || numfds != 0
+            || !ASYNC_WAIT_CTX_get_changed_fds(waitctx, NULL, &numfds, NULL,
+                                               &numdelfds)
+            || numfds != 0
+            || numdelfds != 0
             || funcret != 1) {
         fprintf(stderr, "test_ASYNC_get_wait_fd() failed\n");
         ASYNC_WAIT_CTX_free(waitctx);
