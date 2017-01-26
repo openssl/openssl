@@ -1760,7 +1760,7 @@ static int sig_cb(const char *elem, int len, void *arg)
 {
     sig_cb_st *sarg = arg;
     size_t i;
-    char etmp[20], *p;
+    char etmp[40], *p;
     int sig_alg = NID_undef, hash_alg = NID_undef;
     if (elem == NULL)
         return 0;
@@ -1771,15 +1771,26 @@ static int sig_cb(const char *elem, int len, void *arg)
     memcpy(etmp, elem, len);
     etmp[len] = 0;
     p = strchr(etmp, '+');
-    if (!p)
-        return 0;
-    *p = 0;
-    p++;
-    if (!*p)
-        return 0;
+    /* See if we have a match for TLS 1.3 names */
+    if (p == NULL) {
+        const SIGALG_LOOKUP *s;
 
-    get_sigorhash(&sig_alg, &hash_alg, etmp);
-    get_sigorhash(&sig_alg, &hash_alg, p);
+        for (i = 0, s = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
+             i++, s++) {
+            if (s->name != NULL && strcmp(etmp, s->name) == 0) {
+                sig_alg = s->sig;
+                hash_alg = s->hash;
+                break;
+            }
+        }
+    } else {
+        *p = 0;
+        p++;
+        if (*p == 0)
+            return 0;
+        get_sigorhash(&sig_alg, &hash_alg, etmp);
+        get_sigorhash(&sig_alg, &hash_alg, p);
+    }
 
     if (sig_alg == NID_undef || hash_alg == NID_undef)
         return 0;
