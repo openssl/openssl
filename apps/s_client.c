@@ -746,7 +746,8 @@ typedef enum PROTOCOL_choice {
     PROTO_CONNECT,
     PROTO_IRC,
     PROTO_POSTGRES,
-    PROTO_LMTP
+    PROTO_LMTP,
+    PROTO_NNTP
 } PROTOCOL_CHOICE;
 
 static const OPT_PAIR services[] = {
@@ -760,6 +761,7 @@ static const OPT_PAIR services[] = {
     {"irc", PROTO_IRC},
     {"postgres", PROTO_POSTGRES},
     {"lmtp", PROTO_LMTP},
+    {"nntp", PROTO_NNTP},
     {NULL, 0}
 };
 
@@ -2170,6 +2172,33 @@ int s_client_main(int argc, char **argv)
             bytes = BIO_read(sbio, sbuf, BUFSIZZ);
             if (bytes != 1 || sbuf[0] != 'S')
                 goto shut;
+        }
+        break;
+    case PROTO_NNTP:
+        {
+            int foundit = 0;
+            BIO *fbio = BIO_new(BIO_f_buffer());
+
+            BIO_push(fbio, sbio);
+            BIO_gets(fbio, mbuf, BUFSIZZ);
+            /* STARTTLS command requires CAPABILITIES... */
+            BIO_printf(fbio, "CAPABILITIES\r\n");
+            (void)BIO_flush(fbio);
+            /* wait for multi-line CAPABILITIES response */
+            do {
+                mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+                if (strstr(mbuf, "STARTTLS"))
+                    foundit = 1;
+            } while (mbuf_len > 1 && mbuf[0] != '.');
+            (void)BIO_flush(fbio);
+            BIO_pop(fbio);
+            BIO_free(fbio);
+            if (!foundit)
+                BIO_printf(bio_err,
+                           "Didn't find STARTTLS in server response,"
+                           " trying anyway...\n");
+            BIO_printf(sbio, "STARTTLS\r\n");
+            BIO_read(sbio, sbuf, BUFSIZZ);
         }
         break;
     }
