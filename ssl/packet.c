@@ -232,12 +232,10 @@ int WPACKET_fill_lengths(WPACKET *pkt)
     if (pkt->subs == NULL)
         return 0;
 
-    sub = pkt->subs;
-    do {
+    for (sub = pkt->subs; sub != NULL; sub = sub->parent) {
         if (!wpacket_intern_close(pkt, sub, 0))
             return 0;
-        sub = sub->parent;
-    } while (sub != NULL);
+    }
 
     return 1;
 }
