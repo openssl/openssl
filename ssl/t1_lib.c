@@ -1090,18 +1090,18 @@ TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
     retv = tls_decrypt_ticket(s, PACKET_data(&ticketext->data), size,
                               hello->session_id, hello->session_id_len, ret);
     switch (retv) {
-    case TICKET_NO_DECRYPT: /* ticket couldn't be decrypted */
+    case TICKET_NO_DECRYPT:
         s->ext.ticket_expected = 1;
         return TICKET_NO_DECRYPT;
 
-    case TICKET_SUCCESS: /* ticket was decrypted */
+    case TICKET_SUCCESS:
         return TICKET_SUCCESS;
 
-    case TICKET_SUCCESS_RENEW: /* ticket decrypted but need to renew */
+    case TICKET_SUCCESS_RENEW:
         s->ext.ticket_expected = 1;
         return TICKET_SUCCESS;
 
-    default:           /* fatal error */
+    default:
         return TICKET_FATAL_ERR_OTHER;
     }
 }
