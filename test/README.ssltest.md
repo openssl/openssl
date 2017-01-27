@@ -92,8 +92,11 @@ handshake.
 * ExpectedServerCertType, ExpectedClientCertType - the expected algorithm or
   curve of server or client certificate
 
-* ExpectedServerSignatureHash, ExpectedClientSignatureHash - the expected
+* ExpectedServerSignHash, ExpectedClientSignHash - the expected
   signing hash used by server or client certificate
+
+* ExpectedServerSignType, ExpectedClientSignType - the expected
+  signature type used by server or client when signing messages
 
 ## Configuring the client and server
 
