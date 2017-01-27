@@ -711,6 +711,8 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
             return 0;
         }
 
+        /* TODO(TLS1.3): Should we validate the ticket age? */
+
         ret = tls_decrypt_ticket(s, PACKET_data(&identity),
                                  PACKET_remaining(&identity), NULL, 0, &sess);
         if (ret == TICKET_FATAL_ERR_MALLOC || ret == TICKET_FATAL_ERR_OTHER) {
