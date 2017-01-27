@@ -3566,7 +3566,7 @@ const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt, size_t *len)
 {
-    if ((c->id & 0xff000000) != 0x03000000) {
+    if ((c->id & 0xff000000) != SSL3_CK_CIPHERSUITE_FLAG) {
         *len = 0;
         return 1;
     }
