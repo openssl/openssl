@@ -640,9 +640,9 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
     if (fatal) {
         *al = SSL_AD_INTERNAL_ERROR;
         return -1;
-    } else {
-        return 0;
     }
+
+    return 0;
 }
 
 int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)

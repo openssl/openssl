@@ -1118,15 +1118,6 @@ TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
  *   sesslen: the length of the session ID.
  *   psess: (output) on return, if a ticket was decrypted, then this is set to
  *       point to the resulting session.
- *
- * Returns:
- *   TICKET_FATAL_ERR_MALLOC: fatal error, malloc failure.
- *   TICKET_FATAL_ERR_OTHER:  fatal error, either from parsing or decrypting the
- *                            ticket.
- *   TICKET_NO_DECRYPT:       the ticket couldn't be decrypted.
- *   TICKET_SUCCESS:          a ticket was successfully decrypted and *psess was
- *                            set.
- *   TICKET_SUCCESS_RENEW:    same as 3, but the ticket needs to be renewed
  */
 TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
                                  size_t eticklen, const unsigned char *sess_id,

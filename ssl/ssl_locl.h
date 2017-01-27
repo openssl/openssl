@@ -2197,12 +2197,19 @@ __owur int tls1_set_server_sigalgs(SSL *s);
 
 /* Return codes for tls_get_ticket_from_client() and tls_decrypt_ticket() */
 typedef enum ticket_en {
+    /* fatal error, malloc failure */
     TICKET_FATAL_ERR_MALLOC,
+    /* fatal error, either from parsing or decrypting the ticket */
     TICKET_FATAL_ERR_OTHER,
+    /* No ticket present */
     TICKET_NONE,
+    /* Empty ticket present */
     TICKET_EMPTY,
+    /* the ticket couldn't be decrypted */
     TICKET_NO_DECRYPT,
+    /* a ticket was successfully decrypted */
     TICKET_SUCCESS,
+    /* same as above but the ticket needs to be reneewed */
     TICKET_SUCCESS_RENEW
 } TICKET_RETURN;
 
