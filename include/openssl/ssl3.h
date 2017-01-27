@@ -25,9 +25,6 @@
 extern "C" {
 #endif
 
-/* Flag used on OpenSSL ciphersuite ids to indicate they are for SSLv3+ */
-# define SSL3_CK_CIPHERSUITE_FLAG                0x03000000
-
 /*
  * Signalling cipher suite value from RFC 5746
  * (TLS_EMPTY_RENEGOTIATION_INFO_SCSV)

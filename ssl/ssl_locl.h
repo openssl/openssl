@@ -348,6 +348,9 @@
 
 /* we have used 0000003f - 26 bits left to go */
 
+/* Flag used on OpenSSL ciphersuite ids to indicate they are for SSLv3+ */
+# define SSL3_CK_CIPHERSUITE_FLAG                0x03000000
+
 /* Check if an SSL structure is using DTLS */
 # define SSL_IS_DTLS(s)  (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
 
