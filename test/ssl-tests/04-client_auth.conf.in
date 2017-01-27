@@ -34,10 +34,12 @@ sub generate_tests() {
                 $caalert = "UnknownCA";
             }
             my $clihash;
+            my $clisigtype;
             my $clisigalgs;
-            # TODO add TLSv1.3 versions
+            # TODO(TLS1.3) add TLSv1.3 versions
             if ($protocol_name eq "TLSv1.2") {
                 $clihash = "SHA256";
+                $clisigtype = "RSA";
                 $clisigalgs = "SHA256+RSA";
             }
             # Sanity-check simple handshake.
@@ -106,6 +108,7 @@ sub generate_tests() {
                 },
                 test   => { "ExpectedResult" => "Success",
                             "ExpectedClientCertType" => "RSA",
+                            "ExpectedClientSignType" => $clisigtype,
                             "ExpectedClientSignHash" => $clihash,
                 },
             };
