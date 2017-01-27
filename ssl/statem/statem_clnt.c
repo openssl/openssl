@@ -3210,10 +3210,11 @@ MSG_PROCESS_RETURN tls_process_hello_req(SSL *s, PACKET *pkt)
     }
 
     /*
-     * This is a historical discrepancy maintained for compatibility
-     * reasons. If a TLS client receives a HelloRequest it will attempt
-     * an abbreviated handshake. However if a DTLS client receives a
-     * HelloRequest it will do a full handshake.
+     * This is a historical discrepancy (not in the RFC) maintained for
+     * compatibility reasons. If a TLS client receives a HelloRequest it will
+     * attempt an abbreviated handshake. However if a DTLS client receives a
+     * HelloRequest it will do a full handshake. Either behaviour is reasonable
+     * but doing one for TLS and another for DTLS is odd.
      */
     if (SSL_IS_DTLS(s))
         SSL_renegotiate(s);
