@@ -666,7 +666,7 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                            int *al)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    uint32_t now, ages, agems;
+    uint32_t now, agesec, agems;
     size_t hashsize, binderoffset, msglen;
     unsigned char *binder = NULL, *msgstart = NULL;
     const EVP_MD *md;
@@ -682,6 +682,11 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
             || s->session->ext.ticklen == 0)
         return 1;
 
+    if (s->session->cipher == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
     md = ssl_md(s->session->cipher->algorithm2);
     if (md == NULL) {
         /* Don't recognise this cipher so we can't use the session. Ignore it */
@@ -696,9 +701,9 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
      * in the code, so portability shouldn't be an issue.
      */
     now = (uint32_t)time(NULL);
-    ages = now - (uint32_t)s->session->time;
+    agesec = now - (uint32_t)s->session->time;
 
-    if (s->session->ext.tick_lifetime_hint < ages) {
+    if (s->session->ext.tick_lifetime_hint < agesec) {
         /* Ticket is too old. Ignore it. */
         return 1;
     }
@@ -707,9 +712,9 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
      * Calculate age in ms. We're just doing it to nearest second. Should be
      * good enough.
      */
-    agems = ages * (uint32_t)1000;
+    agems = agesec * (uint32_t)1000;
 
-    if (ages != 0 && agems / (uint32_t)1000 != ages) {
+    if (agesec != 0 && agems / (uint32_t)1000 != agesec) {
         /*
          * Overflow. Shouldn't happen unless this is a *really* old session. If
          * so we just ignore it.
@@ -722,11 +727,6 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
      * be mod 2^32.
      */
     agems += s->session->ext.tick_age_add;
-
-    if (s->session->cipher == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
 
     hashsize = EVP_MD_size(md);
 
