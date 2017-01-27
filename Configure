@@ -1464,6 +1464,7 @@ if ($builder eq "unified") {
         my %sources = ();
         my %shared_sources = ();
         my %includes = ();
+        my %prerequisites = ();
         my %depends = ();
         my %renames = ();
         my %sharednames = ();
@@ -1575,6 +1576,9 @@ if ($builder eq "unified") {
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*DEPEND\[((?:\\.|[^\\\]])*)\]\s*=\s*(.*)\s*$/
             => sub { push @{$depends{$1}}, tokenize($2)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*PREREQUISITE\[((?:\\.|[^\\\]])*)\]\s*=\s*(.*)\s*$/
+            => sub { push @{$prerequisites{$1}}, tokenize($2)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*GENERATE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
             => sub { push @{$generate{$1}}, $2
@@ -1831,6 +1835,26 @@ EOF
             $unified_info{generate}->{$ddest} = [ @generator ];
         }
 
+        foreach (keys %prerequisites) {
+            my $dest = $_;
+            my $ddest = cleanfile($buildd, $_, $blddir);
+
+            # We generally assume that a glob is used, but just in case
+            # it's not, let's make sure the rename rules apply
+            if ($unified_info{rename}->{$ddest}) {
+                $ddest = $unified_info{rename}->{$ddest};
+            }
+            my $gdest = glob_to_regexp($ddest);
+
+            foreach (@{$prerequisites{$dest}}) {
+                # Prerequisites only makes sense on generated files, so
+                # we assume they will be in the bild directory
+                $d = cleanfile($buildd, $_, $blddir);
+
+                $unified_info{prerequisites}->{$gdest}->{$d} = 1;
+            }
+        }
+
         foreach (keys %depends) {
             my $dest = $_;
             my $ddest = $dest eq "" ? "" : cleanfile($sourced, $_, $blddir);
@@ -1908,7 +1932,7 @@ EOF
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
-    foreach my $l1 (("install", "sources", "shared_sources", "ldadd", "depends")) {
+    foreach my $l1 (("install", "sources", "shared_sources", "ldadd", "depends", "prerequisites")) {
         foreach my $l2 (sort keys %{$unified_info{$l1}}) {
             $unified_info{$l1}->{$l2} =
                 [ sort keys %{$unified_info{$l1}->{$l2}} ];
@@ -2763,4 +2787,34 @@ sub tokenize {
 	print STDERR "DEBUG[tokenize]: ('", join("', '", @result), "')\n";
     }
     return @result;
+}
+
+# glob_to_regexp($glob)
+# $glob is a glob, such as '*.o'
+# returns the corresponding regular expression, such as '[^/]*\.o'
+#
+# Arguably, there is Text::Glob.  However, that one isn't a core perl
+# module, so we roll our own.
+#
+# For the moment, we support only a very small subset of existing glob
+# patterns: **, * and ?
+sub glob_to_regexp {
+    my $glob = shift;
+    my $regexp = $glob;
+
+    # Protect regexp characters
+    $regexp =~ s|([\{\}\.\+\(\)\[\]\^\$])|\\$1|g;
+    # Transform * into [^/]* and ** into .*
+    $regexp =~ s|\*\*?|$& eq "*" ? "[^/]*" : ".*"|ge;
+    # Transform ? into .
+    $regexp =~ s|\?|.|g;
+    # delimit the regexp
+    $regexp = '^' . $regexp . '$';
+
+    print STDERR "DEBUG[glot_to_regexp]: $glob => |$regexp|\n";
+    return $regexp;
+}
+
+sub is_glob {
+    return $_[0] =~ m|[\*\?]|;
 }

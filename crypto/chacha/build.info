@@ -13,5 +13,6 @@ BEGINRAW[Makefile(unix)]
 ##### CHACHA assembler implementations
 
 {- $builddir -}/chacha-%.S:	{- $sourcedir -}/asm/chacha-%.pl
+	$(MAKE) include/openssl/opensslconf.h
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 ENDRAW[Makefile(unix)]

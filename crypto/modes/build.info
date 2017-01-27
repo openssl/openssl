@@ -23,5 +23,6 @@ INCLUDE[ghashv8-armx.o]=..
 BEGINRAW[Makefile]
 # GNU make "catch all"
 {- $builddir -}/ghash-%.S:	{- $sourcedir -}/asm/ghash-%.pl
+	$(MAKE) include/openssl/opensslconf.h
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 ENDRAW[Makefile]

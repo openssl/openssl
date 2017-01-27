@@ -177,23 +177,20 @@ PROCESSOR= {- $config{processor} -}
 
 # The main targets ###################################################
 
-all: build_generated \
-     build_libs_nodep build_engines_nodep build_programs_nodep depend
+all: build_libs_nodep build_engines_nodep build_programs_nodep depend
 
-build_libs: build_generated build_libs_nodep depend
+build_libs: build_libs_nodep depend
 build_libs_nodep: $(LIBS) {- join(" ",map { shlib_import($_) } @{$unified_info{libraries}}) -}
-build_engines: build_generated build_engines_nodep depend
+build_engines: build_engines_nodep depend
 build_engines_nodep: $(ENGINES)
-build_programs: build_generated build_programs_nodep depend
+build_programs: build_programs_nodep depend
 build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
-
-build_generated: $(GENERATED_MANDATORY)
 
 # Kept around for backward compatibility
 build_apps build_tests: build_programs
 
 test: tests
-tests: build_generated build_programs_nodep build_engines_nodep depend
+tests: build_programs_nodep build_engines_nodep depend
 	@rem {- output_off() if $disabled{tests}; "" -}
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
@@ -362,6 +359,9 @@ configdata.pm: "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{b
       my $incs = join("", map { " /I \"$_\"" } @{$args{incs}});
       my $deps = @{$args{deps}} ?
           '"'.join('" "', @{$args{generator_deps}}, @{$args{deps}}).'"' : '';
+      my $prerequisites = join(" ", @{$args{prerequisites}});
+      $prerequisites =
+          $prerequisites eq "" ? "rem Nothing to generate" : "\$(MAKE) $prerequisites";
 
       if ($target !~ /\.asm$/) {
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
@@ -370,12 +370,14 @@ configdata.pm: "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{b
                                    rel2abs($config{builddir}));
               return <<"EOF";
 $target: "$args{generator}->[0]" $deps
+	\@ $prerequisites
 	"\$(PERL)" "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
 	    "-o$target{build_file}" $generator > \$@
 EOF
 	  } else {
               return <<"EOF";
 $target: "$args{generator}->[0]" $deps
+	\@ $prerequisites
 	"\$(PERL)"$generator_incs $generator > \$@
 EOF
 	  }
@@ -394,6 +396,7 @@ EOF
               if ($args{src} =~ /\.S$/) {
                    return <<"EOF";
 $target: "$args{generator}->[0]" $deps
+	\@ $prerequisites
 	set ASM=\$(AS)
 	$generator \$@.S
 	\$(CC) $incs \$(CFLAGS) /EP /C \$@.S > \$@.i && move /Y \$@.i \$@
@@ -403,12 +406,14 @@ EOF
               # Otherwise....
               return <<"EOF";
 $target: "$args{generator}->[0]" $deps
+	\@ $prerequisites
 	set ASM=\$(AS)
 	$generator \$@
 EOF
           }
           return <<"EOF";
 $target: "$args{generator}->[0]" $deps
+	\@ $prerequisites
 	\$(CC) $incs \$(CFLAGS) /EP /C "$args{generator}->[0]" > \$@.i && move /Y \$@.i \$@
 EOF
       }
@@ -421,6 +426,9 @@ EOF
                     } ( @{$args{srcs}} );
      my $srcs = '"'.join('" "',  @srcs).'"';
      my $deps = '"'.join('" "', @srcs, @{$args{deps}}).'"';
+     my $prerequisites = join(" ", @{$args{prerequisites}});
+     $prerequisites =
+         $prerequisites eq "" ? "rem Nothing to generate" : "\$(MAKE) $prerequisites";
      my $incs = join("", map { ' /I "'.$_.'"' } @{$args{incs}});
      unless ($disabled{zlib}) {
          if ($withargs{zlib_include}) {
@@ -434,6 +442,7 @@ EOF
      if ($srcs[0] =~ /\.asm$/) {
          return <<"EOF";
 $obj$objext: $deps
+	\@ $prerequisites
 	\$(AS) \$(ASFLAGS) \$(ASOUTFLAG)\$\@ $srcs
 EOF
      }
@@ -447,12 +456,14 @@ s/^Note: including file: *//;
 END { print '$obj$objext: ',join(" ", sort keys \%collect),"\\n" }
 <<
 $obj$objext: $obj$depext
+	\@ $prerequisites
 	\$(CC) $incs \$(CFLAGS) $ecflags -c \$(COUTFLAG)\$\@ @<<
 $srcs
 <<
 EOF
     return <<"EOF"	if ($disabled{makedepend});
 $obj$objext: $deps
+	\@ $prerequisites
 	\$(CC) $incs \$(CFLAGS) $ecflags -c \$(COUTFLAG)\$\@ $srcs
 EOF
  }

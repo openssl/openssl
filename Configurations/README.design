@@ -46,6 +46,10 @@ produced file, and their values are the source used to produce that
 particular produced file, extra dependencies, include directories
 needed, and ordinal files (explained further below.
 
+The variable PREREQUISITE is indexed by a produced file or a wildcard
+for produced files, and its values are generated files (i.e. indexes
+for the GENERATE variable).
+
 All their values in all the build.info throughout the source tree are
 collected together and form a set of programs, libraries, engines and
 scripts to be produced, source files, dependencies, etc etc etc.
@@ -62,13 +66,15 @@ dependencies.
     INCLUDE[libcrypto]=include
     INCLUDE[libssl]=include
     DEPEND[libssl]=libcrypto
+    GENERATE[config.h]=config.h.in
 
 This is the top directory build.info file, and it tells us that two
 libraries are to be built, there are some ordinals to be used to
 declare what symbols in those libraries are seen as public, the
 include directory 'include/' shall be used throughout when building
-anything that will end up in each library, and that the library
-'libssl' depend on the library 'libcrypto' to function properly.
+anything that will end up in each library, that the library 'libssl'
+depend on the library 'libcrypto' to function properly, and the file
+'config.h' will be generated using 'config.h.in' as a template.
 
     # apps/build.info
     PROGRAMS=openssl
@@ -95,6 +101,8 @@ depends on the library 'libssl' to function properly.
     DEPEND[buildinf.h]=../Makefile
     DEPEND[../util/mkbuildinf.pl]=../util/Foo.pm
 
+    PREREQUISITE[*.o]=../config.h
+
 This is the build.info file in 'crypto', and it tells us a little more
 about what's needed to produce 'libcrypto'.  LIBS is used again to
 declare that 'libcrypto' is to be produced.  This declaration is
@@ -105,10 +113,12 @@ show that duplicate information isn't an issue.
 This build.info file informs us that 'libcrypto' is built from a few
 source files, 'crypto/aes.c', 'crypto/evp.c' and 'crypto/cversion.c'.
 It also shows us that building the object file inferred from
-'crypto/cversion.c' depends on 'crypto/buildinf.h'.  Finally, it 
-also shows the possibility to declare how some files are generated
-using some script, in this case a perl script, and how such scripts
-can be declared to depend on other files, in this case a perl module.
+'crypto/cversion.c' depends on 'crypto/buildinf.h'.  It also shows the
+possibility to declare how some files are generated using some script,
+in this case a perl script, and how such scripts can be declared to
+depend on other files, in this case a perl module.  Finally, is
+specifies that prior to building the object files in this directory,
+'../config.h' must be built first.
 
 Two things are worth an extra note:
 
@@ -153,6 +163,7 @@ information comes down to this:
     ORDINALS[libcrypto]=crypto
     SOURCE[libcrypto]=crypto/aes.c crypto/evp.c crypto/cversion.c
     DEPEND[crypto/cversion.o]=crypto/buildinf.h
+    PREREQUISITE[crypto/*.o]=../config.h
     INCLUDE[libcrypto]=include
     ORDINALS[libssl]=ssl
     SOURCE[libssl]=ssl/tls.c
@@ -241,6 +252,12 @@ indexes:
                the ORDINALS variables in build.info files, while the
                file 'ofile' comes from internal knowledge in
                Configure.
+
+  prerequisites =>
+               a hash table containing 'regexp' => [ 'file' ...]
+               pairs.  The regexp is whatever regexp was generated
+               from the PREREQUISITE index, and the array of files is
+               the accumulated list of files for each such index.
 
   programs  => a list of programs.  These are directly inferred from
                the PROGRAMS variable in build.info files.
@@ -372,6 +389,13 @@ section above would be digested into a %unified_info table:
                         "util/libssl.num",
                     ],
             },
+        "prerequisites" =>
+            {
+                "\^[^/]*\\.o" =>
+                    [
+                        "config.h",
+                    ],
+            },
         "programs" =>
             [
                 "apps/openssl",
@@ -463,9 +487,10 @@ etc.
                   It's called like this:
 
                         generatesrc(src => "PATH/TO/tobegenerated",
-                                    generator => [ "generatingfile", ... ]
-                                    generator_incs => [ "INCL/PATH", ... ]
-                                    generator_deps => [ "dep1", ... ]
+                                    generator => [ "generatingfile", ... ],
+                                    generator_incs => [ "INCL/PATH", ... ],
+                                    generator_deps => [ "dep1", ... ],
+                                    prerequisites => [ "file", ... ],
                                     incs => [ "INCL/PATH", ... ],
                                     deps => [ "dep1", ... ],
                                     intent => one of "libs", "dso", "bin" );
@@ -491,6 +516,7 @@ etc.
                   It's called like this:
 
                         src2obj(obj => "PATH/TO/objectfile",
+                                prerequisites => [ "file", ... ],
                                 srcs => [ "PATH/TO/sourcefile", ... ],
                                 deps => [ "dep1", ... ],
                                 incs => [ "INCL/PATH", ... ]
@@ -623,19 +649,22 @@ following calls:
     obj2lib(lib => "libcrypto"
             objs => [ "crypto/aes", "crypto/evp", "crypto/cversion" ]);
 
-    src2obj(obj => "crypto/aes"
+    src2obj(obj => "crypto/aes",
+            prerequisites => [ "config.h" ],
             srcs => [ "crypto/aes.c" ],
             deps => [ ],
             incs => [ "include" ],
             intent => "lib");
 
     src2obj(obj => "crypto/evp"
+            prerequisites => [ "config.h" ],
             srcs => [ "crypto/evp.c" ],
             deps => [ ],
             incs => [ "include" ],
             intent => "lib");
 
     src2obj(obj => "crypto/cversion"
+            prerequisites => [ "config.h" ],
             srcs => [ "crypto/cversion.c" ],
             deps => [ "crypto/buildinf.h" ],
             incs => [ "include" ],
@@ -646,6 +675,7 @@ following calls:
                                "$(CFLAGS)\"", "\"$(PLATFORM)\"" ],
                 generator_incs => [ "util" ],
                 generator_deps => [ "util/Foo.pm" ],
+                prerequisites => [ ],
                 incs => [ ],
                 deps => [ ],
                 intent => "lib");

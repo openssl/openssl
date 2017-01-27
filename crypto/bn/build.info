@@ -10,6 +10,12 @@ INCLUDE[../../libcrypto]=../../crypto/include
 
 INCLUDE[bn_exp.o]=..
 
+PREREQUISITE[**.o]=../include/internal/bn_conf.h
+PREREQUISITE[**.s]=../include/internal/bn_conf.h
+
+DEPEND[../include/internal/bn_conf.h]=../../configdata.pm
+GENERATE[../include/internal/bn_conf.h]=../include/internal/bn_conf.h.in
+
 GENERATE[bn-586.s]=asm/bn-586.pl \
 	$(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
 DEPEND[bn-586.s]=../perlasm/x86asm.pl
@@ -71,8 +77,10 @@ BEGINRAW[Makefile]
 # GNU assembler fails to compile PA-RISC2 modules, insist on calling
 # vendor assembler...
 {- $builddir -}/pa-risc2W.o: {- $sourcedir -}/asm/pa-risc2W.s
+	$(MAKE) crypto/include/internal/bn_conf.h include/openssl/opensslconf.h
 	CC="$(CC)" $(PERL) $(SRCDIR)/util/fipsas.pl $(SRCDIR) $< /usr/ccs/bin/as -o pa-risc2W.o {- $sourcedir -}/asm/pa-risc2W.s
 {- $builddir -}/pa-risc2.o: {- $sourcedir -}/asm/pa-risc2.s
+	$(MAKE) crypto/include/internal/bn_conf.h include/openssl/opensslconf.h
 	CC="$(CC)" $(PERL) $(SRCDIR)/util/fipsas.pl $(SRCDIR) $< /usr/ccs/bin/as -o pa-risc2.o {- $sourcedir -}/asm/pa-risc2.s
 
 ENDRAW[Makefile]

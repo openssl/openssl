@@ -350,6 +350,19 @@ support build static libraries and DLLs at the same time, so using
 static libraries on Windows can only be done when configured
 'no-shared'.
 
+In some cases where some files need to be generated before building
+others, but you can't for sure say exactly which others and you can't
+be sure the target dependencies have been set up yet, you may want to
+make absolutely sure the files to be generated actually are.  This
+can be specified for unique files as well as a selection through wild
+cards:
+
+    PREREQUISITE[foo.o]=include/foo_conf.h
+    PREREQUISITE[fuzz/*.o]=include/config.h
+
+The wildcards that are understood are *, ** and ?.  The correspond to
+regular expressions '[^/]*', '.*' and '.'.
+
 For some libraries, we maintain files with public symbols and their
 slot in a transfer vector (important on some platforms).  It can be
 declared like this:

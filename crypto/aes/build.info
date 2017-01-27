@@ -51,8 +51,10 @@ BEGINRAW[Makefile]
 
 # GNU make "catch all"
 {- $builddir -}/aes-%.S:	{- $sourcedir -}/asm/aes-%.pl
+	$(MAKE) include/openssl/opensslconf.h
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 {- $builddir -}/bsaes-%.S:	{- $sourcedir -}/asm/bsaes-%.pl
+	$(MAKE) include/openssl/opensslconf.h
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 
 ENDRAW[Makefile]
