@@ -1439,7 +1439,7 @@ $code.=<<___ if (!$softonly);
 
 .Lctr32_hw_switch:
 ___
-$code.=<<___ if (0);	######### kmctr code was measured to be ~12% slower
+$code.=<<___ if (!$softonly && 0);# kmctr code was measured to be ~12% slower
 	larl	$s0,OPENSSL_s390xcap_P
 	lg	$s0,8($s0)
 	tmhh	$s0,0x0004	# check for message_security-assist-4
@@ -1488,7 +1488,7 @@ $code.=<<___ if (0);	######### kmctr code was measured to be ~12% slower
 	br	$ra
 .align	16
 ___
-$code.=<<___;
+$code.=<<___ if (!$softonly);
 .Lctr32_km_loop:
 	la	$s2,16($sp)
 	lgr	$s3,$fp
