@@ -1073,6 +1073,9 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     SSL_get_peer_signature_nid(client.ssl, &ret->server_sign_hash);
     SSL_get_peer_signature_nid(server.ssl, &ret->client_sign_hash);
 
+    SSL_get_peer_signature_type_nid(client.ssl, &ret->server_sign_type);
+    SSL_get_peer_signature_type_nid(server.ssl, &ret->client_sign_type);
+
     ret->server_cert_type = peer_pkey_type(client.ssl);
     ret->client_cert_type = peer_pkey_type(server.ssl);
 
