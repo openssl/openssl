@@ -15,7 +15,7 @@ my $dir_sep = $^O ne "VMS" ? "/" : "";
 my $server = {
     "ECDSA.Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}server-ecdsa-cert.pem",
     "ECDSA.PrivateKey" => "\${ENV::TEST_CERTS_DIR}${dir_sep}server-ecdsa-key.pem",
-    # TODO: add test cases for TLSv1.3
+    # TODO(TLS1.3): add test cases for TLSv1.3
     "MaxProtocol" => "TLSv1.2"
 };
 
@@ -28,6 +28,7 @@ our @tests = (
         },
         test   => {
             "ExpectedServerCertType" =>, "P-256",
+            "ExpectedServerSignType" =>, "EC",
             "ExpectedResult" => "Success"
         },
     },
@@ -39,6 +40,7 @@ our @tests = (
         },
         test   => {
             "ExpectedServerCertType" =>, "RSA",
+            "ExpectedServerSignType" =>, "RSA-PSS",
             "ExpectedResult" => "Success"
         },
     },
@@ -61,6 +63,7 @@ our @tests = (
         test   => {
             "ExpectedServerCertType" => "P-256",
             "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "EC",
             "ExpectedResult" => "Success"
         },
     },
@@ -83,6 +86,20 @@ our @tests = (
         test   => {
             "ExpectedServerCertType" => "RSA",
             "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "RSA",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "RSA-PSS Signature Algorithm Selection",
+        server => $server,
+        client => {
+            "SignatureAlgorithms" => "RSA-PSS+SHA256",
+        },
+        test   => {
+            "ExpectedServerCertType" => "RSA",
+            "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "RSA-PSS",
             "ExpectedResult" => "Success"
         },
     }
