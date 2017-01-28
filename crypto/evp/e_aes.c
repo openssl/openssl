@@ -17,6 +17,7 @@
 #include "internal/evp_int.h"
 #include "modes_lcl.h"
 #include <openssl/rand.h>
+#include "evp_locl.h"
 
 typedef struct {
     union {
@@ -1387,10 +1388,15 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                 EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] << 8
                 | EVP_CIPHER_CTX_buf_noconst(c)[arg - 1];
             /* Correct length for explicit IV */
+            if (len < EVP_GCM_TLS_EXPLICIT_IV_LEN)
+                return 0;
             len -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
             /* If decrypting correct for tag too */
-            if (!EVP_CIPHER_CTX_encrypting(c))
+            if (!EVP_CIPHER_CTX_encrypting(c)) {
+                if (len < EVP_GCM_TLS_TAG_LEN)
+                    return 0;
                 len -= EVP_GCM_TLS_TAG_LEN;
+            }
             EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] = len >> 8;
             EVP_CIPHER_CTX_buf_noconst(c)[arg - 1] = len & 0xff;
         }
@@ -1945,10 +1951,15 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                 EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] << 8
                 | EVP_CIPHER_CTX_buf_noconst(c)[arg - 1];
             /* Correct length for explicit IV */
+            if (len < EVP_CCM_TLS_EXPLICIT_IV_LEN)
+                return 0;
             len -= EVP_CCM_TLS_EXPLICIT_IV_LEN;
             /* If decrypting correct for tag too */
-            if (!EVP_CIPHER_CTX_encrypting(c))
+            if (!EVP_CIPHER_CTX_encrypting(c)) {
+                if (len < cctx->M)
+                    return 0;
                 len -= cctx->M;
+            }
             EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] = len >> 8;
             EVP_CIPHER_CTX_buf_noconst(c)[arg - 1] = len & 0xff;
         }
@@ -2233,6 +2244,10 @@ static int aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     /* If not padding input must be multiple of 8 */
     if (!pad && inlen & 0x7)
         return -1;
+    if (is_partially_overlapping(out, in, inlen)) {
+        EVPerr(EVP_F_AES_WRAP_CIPHER, EVP_R_PARTIALLY_OVERLAPPING);
+        return 0;
+    }
     if (!out) {
         if (EVP_CIPHER_CTX_encrypting(ctx)) {
             /* If padding round up to multiple of 8 */
@@ -2536,7 +2551,7 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (!octx->key_set)
         return -1;
 
-    if (in) {
+    if (in != NULL) {
         /*
          * Need to ensure we are only passing full blocks to low level OCB
          * routines. We do it here rather than in EVP_EncryptUpdate/
@@ -2551,16 +2566,21 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         } else {
             buf = octx->data_buf;
             buf_len = &(octx->data_buf_len);
+
+            if (is_partially_overlapping(out + *buf_len, in, len)) {
+                EVPerr(EVP_F_AES_OCB_CIPHER, EVP_R_PARTIALLY_OVERLAPPING);
+                return 0;
+            }
         }
 
         /*
          * If we've got a partially filled buffer from a previous call then
          * use that data first
          */
-        if (*buf_len) {
+        if (*buf_len > 0) {
             unsigned int remaining;
 
-            remaining = 16 - (*buf_len);
+            remaining = AES_BLOCK_SIZE - (*buf_len);
             if (remaining > len) {
                 memcpy(buf + (*buf_len), in, len);
                 *(buf_len) += len;
@@ -2574,21 +2594,25 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             len -= remaining;
             in += remaining;
             if (out == NULL) {
-                if (!CRYPTO_ocb128_aad(&octx->ocb, buf, 16))
+                if (!CRYPTO_ocb128_aad(&octx->ocb, buf, AES_BLOCK_SIZE))
                     return -1;
             } else if (EVP_CIPHER_CTX_encrypting(ctx)) {
-                if (!CRYPTO_ocb128_encrypt(&octx->ocb, buf, out, 16))
+                if (!CRYPTO_ocb128_encrypt(&octx->ocb, buf, out,
+                                           AES_BLOCK_SIZE))
                     return -1;
             } else {
-                if (!CRYPTO_ocb128_decrypt(&octx->ocb, buf, out, 16))
+                if (!CRYPTO_ocb128_decrypt(&octx->ocb, buf, out,
+                                           AES_BLOCK_SIZE))
                     return -1;
             }
-            written_len = 16;
+            written_len = AES_BLOCK_SIZE;
             *buf_len = 0;
+            if (out != NULL)
+                out += AES_BLOCK_SIZE;
         }
 
         /* Do we have a partial block to handle at the end? */
-        trailing_len = len % 16;
+        trailing_len = len % AES_BLOCK_SIZE;
 
         /*
          * If we've got some full blocks to handle, then process these first
@@ -2611,7 +2635,7 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         }
 
         /* Handle any trailing partial block */
-        if (trailing_len) {
+        if (trailing_len > 0) {
             memcpy(buf, in, trailing_len);
             *buf_len = trailing_len;
         }
@@ -2622,7 +2646,7 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
          * First of all empty the buffer of any partial block that we might
          * have been provided - both for data and AAD
          */
-        if (octx->data_buf_len) {
+        if (octx->data_buf_len > 0) {
             if (EVP_CIPHER_CTX_encrypting(ctx)) {
                 if (!CRYPTO_ocb128_encrypt(&octx->ocb, octx->data_buf, out,
                                            octx->data_buf_len))
@@ -2635,7 +2659,7 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             written_len = octx->data_buf_len;
             octx->data_buf_len = 0;
         }
-        if (octx->aad_buf_len) {
+        if (octx->aad_buf_len > 0) {
             if (!CRYPTO_ocb128_aad
                 (&octx->ocb, octx->aad_buf, octx->aad_buf_len))
                 return -1;

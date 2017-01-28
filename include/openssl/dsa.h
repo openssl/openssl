@@ -199,7 +199,7 @@ int (*DSA_meth_get_sign_setup(const DSA_METHOD *dsam))
 int DSA_meth_set_sign_setup(DSA_METHOD *dsam,
         int (*sign_setup) (DSA *, BN_CTX *, BIGNUM **, BIGNUM **));
 int (*DSA_meth_get_verify(const DSA_METHOD *dsam))
-        (const unsigned char *, int , DSA_SIG *, DSA *);
+        (const unsigned char *, int, DSA_SIG *, DSA *);
 int DSA_meth_set_verify(DSA_METHOD *dsam,
     int (*verify) (const unsigned char *, int, DSA_SIG *, DSA *));
 int (*DSA_meth_get_mod_exp(const DSA_METHOD *dsam))

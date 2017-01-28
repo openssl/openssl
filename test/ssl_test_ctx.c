@@ -480,6 +480,39 @@ __owur static int parse_expected_client_cert_type(SSL_TEST_CTX *test_ctx,
                                    value);
 }
 
+/*************************/
+/* Expected signing hash */
+/*************************/
+
+__owur static int parse_expected_sign_hash(int *ptype, const char *value)
+{
+    int nid;
+
+    if (value == NULL)
+        return 0;
+    nid = OBJ_sn2nid(value);
+    if (nid == NID_undef)
+        nid = OBJ_ln2nid(value);
+    if (nid == NID_undef)
+        return 0;
+    *ptype = nid;
+    return 1;
+}
+
+__owur static int parse_expected_server_sign_hash(SSL_TEST_CTX *test_ctx,
+                                                  const char *value)
+{
+    return parse_expected_sign_hash(&test_ctx->expected_server_sign_hash,
+                                    value);
+}
+
+__owur static int parse_expected_client_sign_hash(SSL_TEST_CTX *test_ctx,
+                                                  const char *value)
+{
+    return parse_expected_sign_hash(&test_ctx->expected_client_sign_hash,
+                                    value);
+}
+
 /*************************************************************/
 /* Known test options and their corresponding parse methods. */
 /*************************************************************/
@@ -506,7 +539,9 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "MaxFragmentSize", &parse_test_max_fragment_size },
     { "ExpectedTmpKeyType", &parse_expected_tmp_key_type },
     { "ExpectedServerCertType", &parse_expected_server_cert_type },
+    { "ExpectedServerSignHash", &parse_expected_server_sign_hash },
     { "ExpectedClientCertType", &parse_expected_client_cert_type },
+    { "ExpectedClientSignHash", &parse_expected_client_sign_hash },
 };
 
 /* Nested client options. */

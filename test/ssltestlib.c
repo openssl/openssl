@@ -155,7 +155,7 @@ static void dump_data(const char *data, int len)
                 printf("*** Message Fragment len: %d\n", fraglen);
                 if (fragoff + fraglen > msglen)
                     printf("***---- HANDSHAKE MESSAGE FRAGMENT INVALID ----\n");
-                else if(reclen < fraglen)
+                else if (reclen < fraglen)
                     printf("**---- HANDSHAKE MESSAGE FRAGMENT TRUNCATED ----\n");
                 else
                     printf("**---- END OF HANDSHAKE MESSAGE FRAGMENT ----\n");
@@ -442,7 +442,7 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
                 else
                     return inl;
             } while(1);
-        } else if(looppkt->num == thispkt->num) {
+        } else if (looppkt->num == thispkt->num) {
             if (!ctx->noinject) {
                 /* We injected two packets with the same packet number! */
                 return -1;

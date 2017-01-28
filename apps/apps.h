@@ -294,7 +294,7 @@ typedef struct options_st {
     /*
      * value type: - no value (also the value zero), n number, p positive
      * number, u unsigned, l long, s string, < input file, > output file,
-     * f any format, F der/pem format , E der/pem/engine format identifier.
+     * f any format, F der/pem format, E der/pem/engine format identifier.
      * l, n and u include zero; p does not.
      */
     int valtype;

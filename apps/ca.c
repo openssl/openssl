@@ -987,11 +987,10 @@ end_of_options:
             BIO_printf(bio_err, "writing new certificates\n");
         for (i = 0; i < sk_X509_num(cert_sk); i++) {
             BIO *Cout = NULL;
-            ASN1_INTEGER *serialNumber = X509_get_serialNumber(x);
+            X509 *xi = sk_X509_value(cert_sk, i);
+            ASN1_INTEGER *serialNumber = X509_get_serialNumber(xi);
             int k;
             char *n;
-
-            x = sk_X509_value(cert_sk, i);
 
             j = ASN1_STRING_length(serialNumber);
             p = (const char *)ASN1_STRING_get0_data(serialNumber);
@@ -1033,8 +1032,8 @@ end_of_options:
                 perror(new_cert);
                 goto end;
             }
-            write_new_certificate(Cout, x, 0, notext);
-            write_new_certificate(Sout, x, output_der, notext);
+            write_new_certificate(Cout, xi, 0, notext);
+            write_new_certificate(Sout, xi, output_der, notext);
             BIO_free_all(Cout);
         }
 
@@ -1386,8 +1385,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     ASN1_STRING *str, *str2;
     ASN1_OBJECT *obj;
     X509 *ret = NULL;
-    X509_NAME_ENTRY *ne;
-    X509_NAME_ENTRY *tne, *push;
+    X509_NAME_ENTRY *ne, *tne;
     EVP_PKEY *pktmp;
     int ok = -1, i, j, last, nid;
     const char *p;
@@ -1420,41 +1418,37 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         ne = X509_NAME_get_entry(name, i);
         str = X509_NAME_ENTRY_get_data(ne);
         obj = X509_NAME_ENTRY_get_object(ne);
+        nid = OBJ_obj2nid(obj);
 
         if (msie_hack) {
             /* assume all type should be strings */
-            nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(ne));
 
             if (str->type == V_ASN1_UNIVERSALSTRING)
                 ASN1_UNIVERSALSTRING_to_string(str);
 
-            if ((str->type == V_ASN1_IA5STRING) &&
-                (nid != NID_pkcs9_emailAddress))
+            if (str->type == V_ASN1_IA5STRING && nid != NID_pkcs9_emailAddress)
                 str->type = V_ASN1_T61STRING;
 
-            if ((nid == NID_pkcs9_emailAddress) &&
-                (str->type == V_ASN1_PRINTABLESTRING))
+            if (nid == NID_pkcs9_emailAddress
+                && str->type == V_ASN1_PRINTABLESTRING)
                 str->type = V_ASN1_IA5STRING;
         }
 
         /* If no EMAIL is wanted in the subject */
-        if ((OBJ_obj2nid(obj) == NID_pkcs9_emailAddress) && (!email_dn))
+        if (nid == NID_pkcs9_emailAddress && !email_dn)
             continue;
 
         /* check some things */
-        if ((OBJ_obj2nid(obj) == NID_pkcs9_emailAddress) &&
-            (str->type != V_ASN1_IA5STRING)) {
+        if (nid == NID_pkcs9_emailAddress && str->type != V_ASN1_IA5STRING) {
             BIO_printf(bio_err,
                        "\nemailAddress type needs to be of type IA5STRING\n");
             goto end;
         }
-        if ((str->type != V_ASN1_BMPSTRING)
-            && (str->type != V_ASN1_UTF8STRING)) {
+        if (str->type != V_ASN1_BMPSTRING && str->type != V_ASN1_UTF8STRING) {
             j = ASN1_PRINTABLE_type(str->data, str->length);
-            if (((j == V_ASN1_T61STRING) &&
-                 (str->type != V_ASN1_T61STRING)) ||
-                ((j == V_ASN1_IA5STRING) &&
-                 (str->type == V_ASN1_PRINTABLESTRING))) {
+            if ((j == V_ASN1_T61STRING && str->type != V_ASN1_T61STRING) ||
+                (j == V_ASN1_IA5STRING && str->type == V_ASN1_PRINTABLESTRING))
+            {
                 BIO_printf(bio_err,
                            "\nThe string contains characters that are illegal for the ASN.1 type\n");
                 goto end;
@@ -1492,6 +1486,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
         last = -1;
         for (;;) {
+            X509_NAME_ENTRY *push = NULL;
+
             /* lookup the object in the supplied name list */
             j = X509_NAME_get_index_by_OBJ(name, obj, last);
             if (j < 0) {
@@ -1504,7 +1500,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
             last = j;
 
             /* depending on the 'policy', decide what to do. */
-            push = NULL;
             if (strcmp(cv->value, "optional") == 0) {
                 if (tne != NULL)
                     push = tne;
@@ -1585,10 +1580,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         BIO_printf(bio_err,
                    "The subject name appears to be ok, checking data base for clashes\n");
 
-    /* Build the correct Subject if no e-mail is wanted in the subject */
-    /*
-     * and add it later on because of the method extensions are added
-     * (altName)
+    /* 
+     * Build the correct Subject if no e-mail is wanted in the subject.
+     * And add it later on because of the method extensions are added (altName)
      */
 
     if (email_dn)

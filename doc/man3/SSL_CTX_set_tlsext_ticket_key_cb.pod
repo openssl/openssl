@@ -130,20 +130,18 @@ Reference Implementation:
   static int ssl_tlsext_ticket_key_cb(SSL *s, unsigned char key_name[16], unsigned char *iv, EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc)
   {
       if (enc) { /* create new session */
-          if (RAND_bytes(iv, EVP_MAX_IV_LENGTH) ) {
+          if (RAND_bytes(iv, EVP_MAX_IV_LENGTH) )
               return -1; /* insufficient random */
-          }
 
           key = currentkey(); /* something that you need to implement */
-          if ( !key ) {
+          if ( key == NULL ) {
               /* current key doesn't exist or isn't valid */
-              key = createkey(); /* something that you need to implement.
+              key = createkey();  /* something that you need to implement.
                                    * createkey needs to initialise, a name,
                                    * an aes_key, a hmac_key and optionally
                                    * an expire time. */
-              if ( !key ) { /* key couldn't be created */
+              if ( key == NULL )  /* key couldn't be created */
                   return 0;
-              }
           }
           memcpy(key_name, key->name, 16);
 
@@ -155,17 +153,16 @@ Reference Implementation:
       } else { /* retrieve session */
           key = findkey(name);
 
-          if  (!key || key->expire < now() ) {
+          if (key == NULL || key->expire < now() )
               return 0;
-          }
 
           HMAC_Init_ex(&hctx, key->hmac_key, 16, EVP_sha256(), NULL);
           EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL, key->aes_key, iv );
 
-          if (key->expire < ( now() - RENEW_TIME ) ) {
+          if (key->expire < ( now() - RENEW_TIME ) )
               /* return 2 - this session will get a new ticket even though the current is still valid */
               return 2;
-          }
+
           return 1;
 
       }

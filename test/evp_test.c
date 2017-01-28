@@ -880,12 +880,12 @@ static int cipher_test_parse(struct evp_test *t, const char *keyword,
 }
 
 static int cipher_test_enc(struct evp_test *t, int enc,
-                           size_t out_misalign, size_t inp_misalign)
+                           size_t out_misalign, size_t inp_misalign, int frag)
 {
     struct cipher_data *cdat = t->data;
     unsigned char *in, *out, *tmp = NULL;
-    size_t in_len, out_len;
-    int tmplen, tmpflen;
+    size_t in_len, out_len, donelen = 0;
+    int tmplen, chunklen, tmpflen;
     EVP_CIPHER_CTX *ctx = NULL;
     const char *err;
     err = "INTERNAL_ERROR";
@@ -983,15 +983,63 @@ static int cipher_test_enc(struct evp_test *t, int enc,
         }
     }
     if (cdat->aad) {
-        if (!EVP_CipherUpdate(ctx, NULL, &tmplen, cdat->aad, cdat->aad_len)) {
-            err = "AAD_SET_ERROR";
-            goto err;
+        err = "AAD_SET_ERROR";
+        if (!frag) {
+            if (!EVP_CipherUpdate(ctx, NULL, &chunklen, cdat->aad,
+                                  cdat->aad_len))
+                goto err;
+        } else {
+            /*
+             * Supply the AAD in chunks less than the block size where possible
+             */
+            if (cdat->aad_len > 0) {
+                if (!EVP_CipherUpdate(ctx, NULL, &chunklen, cdat->aad, 1))
+                    goto err;
+                donelen++;
+            }
+            if (cdat->aad_len > 2) {
+                if (!EVP_CipherUpdate(ctx, NULL, &chunklen, cdat->aad + donelen,
+                                      cdat->aad_len - 2))
+                    goto err;
+                donelen += cdat->aad_len - 2;
+            }
+            if (cdat->aad_len > 1
+                    && !EVP_CipherUpdate(ctx, NULL, &chunklen,
+                                         cdat->aad + donelen, 1))
+                goto err;
         }
     }
     EVP_CIPHER_CTX_set_padding(ctx, 0);
     err = "CIPHERUPDATE_ERROR";
-    if (!EVP_CipherUpdate(ctx, tmp + out_misalign, &tmplen, in, in_len))
-        goto err;
+    tmplen = 0;
+    if (!frag) {
+        /* We supply the data all in one go */
+        if (!EVP_CipherUpdate(ctx, tmp + out_misalign, &tmplen, in, in_len))
+            goto err;
+    } else {
+        /* Supply the data in chunks less than the block size where possible */
+        if (in_len > 0) {
+            if (!EVP_CipherUpdate(ctx, tmp + out_misalign, &chunklen, in, 1))
+                goto err;
+            tmplen += chunklen;
+            in++;
+            in_len--;
+        }
+        if (in_len > 1) {
+            if (!EVP_CipherUpdate(ctx, tmp + out_misalign + tmplen, &chunklen,
+                                  in, in_len - 1))
+                goto err;
+            tmplen += chunklen;
+            in += in_len - 1;
+            in_len = 1;
+        }
+        if (in_len > 0 ) {
+            if (!EVP_CipherUpdate(ctx, tmp + out_misalign + tmplen, &chunklen,
+                                  in, 1))
+                goto err;
+            tmplen += chunklen;
+        }
+    }
     if (cdat->aead == EVP_CIPH_CCM_MODE)
         tmpflen = 0;
     else {
@@ -1032,7 +1080,7 @@ static int cipher_test_enc(struct evp_test *t, int enc,
 static int cipher_test_run(struct evp_test *t)
 {
     struct cipher_data *cdat = t->data;
-    int rv;
+    int rv, frag = 0;
     size_t out_misalign, inp_misalign;
 
     if (!cdat->key) {
@@ -1050,21 +1098,25 @@ static int cipher_test_run(struct evp_test *t)
         t->err = "NO_TAG";
         return 0;
     }
-    for (out_misalign = 0; out_misalign <= 1; out_misalign++) {
+    for (out_misalign = 0; out_misalign <= 1;) {
         static char aux_err[64];
         t->aux_err = aux_err;
         for (inp_misalign = (size_t)-1; inp_misalign != 2; inp_misalign++) {
             if (inp_misalign == (size_t)-1) {
                 /* kludge: inp_misalign == -1 means "exercise in-place" */
-                BIO_snprintf(aux_err, sizeof(aux_err), "%s in-place",
-                             out_misalign ? "misaligned" : "aligned");
-            } else {
-                BIO_snprintf(aux_err, sizeof(aux_err), "%s output and %s input",
+                BIO_snprintf(aux_err, sizeof(aux_err),
+                             "%s in-place, %sfragmented",
                              out_misalign ? "misaligned" : "aligned",
-                             inp_misalign ? "misaligned" : "aligned");
+                             frag ? "" : "not ");
+            } else {
+                BIO_snprintf(aux_err, sizeof(aux_err),
+                             "%s output and %s input, %sfragmented",
+                             out_misalign ? "misaligned" : "aligned",
+                             inp_misalign ? "misaligned" : "aligned",
+                             frag ? "" : "not ");
             }
             if (cdat->enc) {
-                rv = cipher_test_enc(t, 1, out_misalign, inp_misalign);
+                rv = cipher_test_enc(t, 1, out_misalign, inp_misalign, frag);
                 /* Not fatal errors: return */
                 if (rv != 1) {
                     if (rv < 0)
@@ -1073,7 +1125,7 @@ static int cipher_test_run(struct evp_test *t)
                 }
             }
             if (cdat->enc != 1) {
-                rv = cipher_test_enc(t, 0, out_misalign, inp_misalign);
+                rv = cipher_test_enc(t, 0, out_misalign, inp_misalign, frag);
                 /* Not fatal errors: return */
                 if (rv != 1) {
                     if (rv < 0)
@@ -1081,6 +1133,21 @@ static int cipher_test_run(struct evp_test *t)
                     return 1;
                 }
             }
+        }
+
+        if (out_misalign == 1 && frag == 0) {
+            /*
+             * XTS, CCM and Wrap modes have special requirements about input
+             * lengths so we don't fragment for those
+             */
+            if (cdat->aead == EVP_CIPH_CCM_MODE
+                    || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
+                     || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE)
+                break;
+            out_misalign = 0;
+            frag++;
+        } else {
+            out_misalign++;
         }
     }
     t->aux_err = NULL;
@@ -1121,6 +1188,13 @@ static int mac_test_init(struct evp_test *t, const char *alg)
     } else if (strcmp(alg, "CMAC") == 0) {
 #ifndef OPENSSL_NO_CMAC
         type = EVP_PKEY_CMAC;
+#else
+        t->skip = 1;
+        return 1;
+#endif
+    } else if (strcmp(alg, "Poly1305") == 0) {
+#ifndef OPENSSL_NO_POLY1305
+        type = EVP_PKEY_POLY1305;
 #else
         t->skip = 1;
         return 1;

@@ -23,6 +23,13 @@
 static char *cert = NULL;
 static char *privkey = NULL;
 
+#define LOG_BUFFER_SIZE 1024
+static char server_log_buffer[LOG_BUFFER_SIZE + 1] = {0};
+static int server_log_buffer_index = 0;
+static char client_log_buffer[LOG_BUFFER_SIZE + 1] = {0};
+static int client_log_buffer_index = 0;
+static int error_writing_log = 0;
+
 #ifndef OPENSSL_NO_OCSP
 static const unsigned char orespder[] = "Dummy OCSP Response";
 static int ocsp_server_called = 0;
@@ -33,6 +40,345 @@ static X509 *ocspcert = NULL;
 #endif
 
 #define NUM_EXTRA_CERTS 40
+
+static void client_keylog_callback(const SSL *ssl, const char *line) {
+    int line_length = strlen(line);
+
+    /* If the log doesn't fit, error out. */
+    if ((client_log_buffer_index + line_length) > LOG_BUFFER_SIZE) {
+        printf("No room in client log\n");
+        error_writing_log = 1;
+        return;
+    }
+
+    strcat(client_log_buffer, line);
+    client_log_buffer_index += line_length;
+    client_log_buffer[client_log_buffer_index] = '\n';
+    client_log_buffer_index += 1;
+
+    return;
+}
+
+static void server_keylog_callback(const SSL *ssl, const char *line) {
+    int line_length = strlen(line);
+
+    /* If the log doesn't fit, error out. */
+    if ((server_log_buffer_index + line_length) > LOG_BUFFER_SIZE) {
+        printf("No room in server log\n");
+        error_writing_log = 1;
+        return;
+    }
+
+    strcat(server_log_buffer, line);
+    server_log_buffer_index += line_length;
+    server_log_buffer[server_log_buffer_index] = '\n';
+    server_log_buffer_index += 1;
+
+    return;
+}
+
+static int compare_hex_encoded_buffer(const char *hex_encoded,
+                                      size_t hex_length,
+                                      const uint8_t *raw,
+                                      size_t raw_length) {
+    size_t i;
+    size_t j;
+
+    /* One byte too big, just to be safe. */
+    char hexed[3] = {0};
+
+    if ((raw_length * 2) != hex_length) {
+        printf("Inconsistent hex encoded lengths.\n");
+        return 1;
+    }
+
+    for (i = j = 0; (i < raw_length) && ((j + 1) < hex_length); i++) {
+        sprintf(hexed, "%02x", raw[i]);
+        if ((hexed[0] != hex_encoded[j]) || (hexed[1] != hex_encoded[j + 1])) {
+            printf("Hex output does not match.\n");
+            return 1;
+        }
+        j += 2;
+    }
+
+    return 0;
+}
+
+static int test_keylog_output(char *buffer, const SSL *ssl,
+                              const SSL_SESSION *session) {
+    int saw_client_random = 0;
+    char *token = NULL;
+    unsigned char actual_client_random[SSL3_RANDOM_SIZE] = {0};
+    size_t client_random_size = SSL3_RANDOM_SIZE;
+    unsigned char actual_master_key[SSL_MAX_MASTER_KEY_LENGTH] = {0};
+    size_t master_key_size = SSL_MAX_MASTER_KEY_LENGTH;
+
+    token = strtok(buffer, " \n");
+    while (token) {
+        if (strcmp(token, "RSA") == 0) {
+            /* Premaster secret. Tokens should be: 16 ASCII bytes of
+             * hex-encoded encrypted secret, then the hex-encoded pre-master
+             * secret.
+             */
+            token = strtok(NULL, " \n");
+            if (!token) {
+                printf("Unexpectedly short premaster secret log.\n");
+                return -1;
+            }
+            if (strlen(token) != 16) {
+                printf("Bad value for encrypted secret: %s\n", token);
+                return -1;
+            }
+            token = strtok(NULL, " \n");
+            if (!token) {
+                printf("Unexpectedly short premaster secret log.\n");
+                return -1;
+            }
+            /* TODO: Can I check this sensibly? */
+        } else if (strcmp(token, "CLIENT_RANDOM") == 0) {
+            /* Master secret. Tokens should be: 64 ASCII bytes of hex-encoded
+             * client random, then the hex-encoded master secret.
+             */
+            client_random_size = SSL_get_client_random(ssl,
+                                                       actual_client_random,
+                                                       SSL3_RANDOM_SIZE);
+            if (client_random_size != SSL3_RANDOM_SIZE) {
+                printf("Unexpected short client random.\n");
+                return -1;
+            }
+
+            token = strtok(NULL, " \n");
+            if (!token) {
+                printf("Unexpected short master secret log.\n");
+                return -1;
+            }
+            if (strlen(token) != 64) {
+                printf("Bad value for client random: %s\n", token);
+                return -1;
+            }
+            if (compare_hex_encoded_buffer(token, 64, actual_client_random,
+                                           client_random_size)) {
+                printf("Bad value for client random: %s\n", token);
+                return -1;
+            }
+
+            token = strtok(NULL, " \n");
+            if (!token) {
+                printf("Unexpectedly short master secret log.\n");
+                return -1;
+            }
+
+            master_key_size = SSL_SESSION_get_master_key(session,
+                                                         actual_master_key,
+                                                         master_key_size);
+            if (!master_key_size) {
+                printf("Error getting master key to compare.\n");
+                return -1;
+            }
+            if (compare_hex_encoded_buffer(token, strlen(token),
+                                           actual_master_key,
+                                           master_key_size)) {
+                printf("Bad value for master key: %s\n", token);
+                return -1;
+            }
+
+            saw_client_random = 1;
+        } else {
+            printf("Unexpected token in buffer: %s\n", token);
+            return -1;
+        }
+
+        token = strtok(NULL, " \n");
+    }
+
+    return saw_client_random;
+}
+
+static int test_keylog(void) {
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    int rc;
+
+    /* Clean up logging space */
+    memset(client_log_buffer, 0, LOG_BUFFER_SIZE + 1);
+    memset(server_log_buffer, 0, LOG_BUFFER_SIZE + 1);
+    client_log_buffer_index = 0;
+    server_log_buffer_index = 0;
+    error_writing_log = 0;
+
+    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(), &sctx,
+                             &cctx, cert, privkey)) {
+        printf("Unable to create SSL_CTX pair\n");
+        return 0;
+    }
+
+    /* We cannot log the master secret for TLSv1.3, so we should forbid it. */
+    SSL_CTX_set_options(cctx, SSL_OP_NO_TLSv1_3);
+    SSL_CTX_set_options(sctx, SSL_OP_NO_TLSv1_3);
+
+    /* We also want to ensure that we use RSA-based key exchange. */
+    rc = SSL_CTX_set_cipher_list(cctx, "RSA");
+    if (rc == 0) {
+        printf("Unable to restrict to RSA key exchange.\n");
+        goto end;
+    }
+
+    if (SSL_CTX_get_keylog_callback(cctx)) {
+        printf("Unexpected initial value for client "
+               "SSL_CTX_get_keylog_callback()\n");
+        goto end;
+    }
+    if (SSL_CTX_get_keylog_callback(sctx)) {
+        printf("Unexpected initial value for server "
+               "SSL_CTX_get_keylog_callback()\n");
+        goto end;
+    }
+
+    SSL_CTX_set_keylog_callback(cctx, client_keylog_callback);
+    SSL_CTX_set_keylog_callback(sctx, server_keylog_callback);
+
+    if (SSL_CTX_get_keylog_callback(cctx) != client_keylog_callback) {
+        printf("Unexpected set value for client "
+               "SSL_CTX_get_keylog_callback()\n");
+    }
+
+    if (SSL_CTX_get_keylog_callback(sctx) != server_keylog_callback) {
+        printf("Unexpected set value for server "
+               "SSL_CTX_get_keylog_callback()\n");
+    }
+
+    /* Now do a handshake and check that the logs have been written to. */
+    if (!create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL)) {
+        printf("Unable to create SSL objects\n");
+        goto end;
+    }
+
+    if (!create_ssl_connection(serverssl, clientssl)) {
+        printf("Unable to create SSL connection\n");
+        goto end;
+    }
+
+    if (error_writing_log) {
+        printf("Error encountered while logging\n");
+        goto end;
+    }
+
+    if ((client_log_buffer_index == 0) || (server_log_buffer_index == 0)) {
+        printf("No logs written\n");
+        goto end;
+    }
+
+    /* Now we want to test that our output data was vaguely sensible. We
+     * do that by using strtok and confirming that we have more or less the
+     * data we expect.
+     */
+    if (test_keylog_output(client_log_buffer, clientssl,
+                           SSL_get_session(clientssl)) != 1) {
+        printf("Error encountered in client log buffer\n");
+        goto end;
+    }
+    if (test_keylog_output(server_log_buffer, serverssl,
+                           SSL_get_session(serverssl)) != 1) {
+        printf("Error encountered in server log buffer\n");
+        goto end;
+    }
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+#ifndef OPENSSL_NO_TLS1_3
+static int test_keylog_no_master_key(void) {
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+    /* Clean up logging space */
+    memset(client_log_buffer, 0, LOG_BUFFER_SIZE + 1);
+    memset(server_log_buffer, 0, LOG_BUFFER_SIZE + 1);
+    client_log_buffer_index = 0;
+    server_log_buffer_index = 0;
+    error_writing_log = 0;
+
+    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(), &sctx,
+                             &cctx, cert, privkey)) {
+        printf("Unable to create SSL_CTX pair\n");
+        return 0;
+    }
+
+    if (SSL_CTX_get_keylog_callback(cctx)) {
+        printf("Unexpected initial value for client "
+               "SSL_CTX_get_keylog_callback()\n");
+        goto end;
+    }
+    if (SSL_CTX_get_keylog_callback(sctx)) {
+        printf("Unexpected initial value for server "
+               "SSL_CTX_get_keylog_callback()\n");
+        goto end;
+    }
+
+    SSL_CTX_set_keylog_callback(cctx, client_keylog_callback);
+    SSL_CTX_set_keylog_callback(sctx, server_keylog_callback);
+
+    if (SSL_CTX_get_keylog_callback(cctx) != client_keylog_callback) {
+        printf("Unexpected set value for client "
+               "SSL_CTX_get_keylog_callback()\n");
+    }
+
+    if (SSL_CTX_get_keylog_callback(sctx) != server_keylog_callback) {
+        printf("Unexpected set value for server "
+               "SSL_CTX_get_keylog_callback()\n");
+    }
+
+    /* Now do a handshake and check that the logs have been written to. */
+    if (!create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL)) {
+        printf("Unable to create SSL objects\n");
+        goto end;
+    }
+
+    if (!create_ssl_connection(serverssl, clientssl)) {
+        printf("Unable to create SSL connection\n");
+        goto end;
+    }
+
+    if (error_writing_log) {
+        printf("Error encountered while logging\n");
+        goto end;
+    }
+
+    /* Now we want to test that our output data was vaguely sensible. For this
+     * test, we expect no CLIENT_RANDOM entry.
+     */
+    if (test_keylog_output(client_log_buffer, clientssl,
+                           SSL_get_session(clientssl)) != 0) {
+        printf("Error encountered in client log buffer\n");
+        goto end;
+    }
+    if (test_keylog_output(server_log_buffer, serverssl,
+                           SSL_get_session(serverssl)) != 0) {
+        printf("Error encountered in server log buffer\n");
+        goto end;
+    }
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif
 
 static int execute_test_large_message(const SSL_METHOD *smeth,
                                       const SSL_METHOD *cmeth, int read_ahead)
@@ -1044,6 +1390,10 @@ int test_main(int argc, char *argv[])
     ADD_TEST(test_ssl_bio_change_rbio);
     ADD_TEST(test_ssl_bio_change_wbio);
     ADD_ALL_TESTS(test_set_sigalgs, OSSL_NELEM(testsigalgs) * 2);
+    ADD_TEST(test_keylog);
+#ifndef OPENSSL_NO_TLS1_3
+    ADD_TEST(test_keylog_no_master_key);
+#endif
 
     testresult = run_tests(argv[0]);
 

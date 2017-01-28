@@ -837,7 +837,7 @@ static char *dup_str(const unsigned char *in, size_t len)
 {
     char *ret;
 
-    if(len == 0)
+    if (len == 0)
         return NULL;
 
     /* Assert that the string does not contain NUL-bytes. */
@@ -1069,6 +1069,9 @@ static HANDSHAKE_RESULT *do_handshake_internal(
         ret->tmp_key_type = pkey_type(tmp_key);
         EVP_PKEY_free(tmp_key);
     }
+
+    SSL_get_peer_signature_nid(client.ssl, &ret->server_sign_hash);
+    SSL_get_peer_signature_nid(server.ssl, &ret->client_sign_hash);
 
     ret->server_cert_type = peer_pkey_type(client.ssl);
     ret->client_cert_type = peer_pkey_type(server.ssl);

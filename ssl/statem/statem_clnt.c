@@ -1425,8 +1425,11 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
             if (!tls_collect_extensions(s, &extensions, EXT_TLS1_3_CERTIFICATE,
                                         &rawexts, &al)
                     || !tls_parse_all_extensions(s, EXT_TLS1_3_CERTIFICATE,
-                                                 rawexts, x, chainidx, &al))
+                                                 rawexts, x, chainidx, &al)) {
+                OPENSSL_free(rawexts);
                 goto f_err;
+            }
+            OPENSSL_free(rawexts);
         }
 
         if (!sk_X509_push(sk, x)) {
@@ -1637,6 +1640,8 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
     DH *dh = NULL;
     BIGNUM *p = NULL, *g = NULL, *bnpub_key = NULL;
 
+    int check_bits = 0;
+
     if (!PACKET_get_length_prefixed_2(pkt, &prime)
         || !PACKET_get_length_prefixed_2(pkt, &generator)
         || !PACKET_get_length_prefixed_2(pkt, &pub_key)) {
@@ -1666,7 +1671,8 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
         goto err;
     }
 
-    if (BN_is_zero(p) || BN_is_zero(g) || BN_is_zero(bnpub_key)) {
+    /* test non-zero pupkey */
+    if (BN_is_zero(bnpub_key)) {
         *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_SKE_DHE, SSL_R_BAD_DH_VALUE);
         goto err;
@@ -1678,6 +1684,12 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
         goto err;
     }
     p = g = NULL;
+
+    if (DH_check_params(dh, &check_bits) == 0 || check_bits != 0) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_SKE_DHE, SSL_R_BAD_DH_VALUE);
+        goto err;
+    }
 
     if (!DH_set0_key(dh, bnpub_key, NULL)) {
         *al = SSL_AD_INTERNAL_ERROR;
@@ -2258,7 +2270,7 @@ int tls_process_cert_status_body(SSL *s, PACKET *pkt, int *al)
 
     return 1;
 }
-    
+
 
 MSG_PROCESS_RETURN tls_process_cert_status(SSL *s, PACKET *pkt)
 {
@@ -2521,6 +2533,10 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt, int *al)
 
     s->s3->tmp.pms = pms;
     s->s3->tmp.pmslen = pmslen;
+
+    /* Log the premaster secret, if logging is enabled. */
+    if (!ssl_log_rsa_client_key_exchange(s, encdata, enclen, pms, pmslen))
+        goto err;
 
     return 1;
  err:

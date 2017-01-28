@@ -4228,3 +4228,5 @@ UI_method_set_ex_data                   4178	1_1_1	EXIST::FUNCTION:UI
 UI_method_get_ex_data                   4179	1_1_1	EXIST::FUNCTION:UI
 UI_UTIL_wrap_read_pem_callback          4180	1_1_1	EXIST::FUNCTION:UI
 X509_VERIFY_PARAM_get_time              4181	1_1_0d	EXIST::FUNCTION:
+EVP_PKEY_get0_poly1305                  4182	1_1_1	EXIST::FUNCTION:POLY1305
+DH_check_params                         4183	1_1_0d	EXIST::FUNCTION:DH

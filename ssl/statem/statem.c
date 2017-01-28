@@ -347,6 +347,8 @@ static int state_machine(SSL *s, int server)
                  */
                 s->ctx->stats.sess_accept_renegotiate++;
             }
+
+            s->s3->tmp.cert_request = 0;
         } else {
             s->ctx->stats.sess_connect++;
 
@@ -354,7 +356,7 @@ static int state_machine(SSL *s, int server)
             memset(s->s3->client_random, 0, sizeof(s->s3->client_random));
             s->hit = 0;
 
-            s->s3->tmp.cert_request = 0;
+            s->s3->tmp.cert_req = 0;
 
             if (SSL_IS_DTLS(s)) {
                 st->use_timer = 1;

@@ -117,8 +117,8 @@ void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
 
         /* "lazy" reduction step */
         h0 = (u64)d0 & 0x0fffffffffff;
-        h1 = (u64)(d1 += d0 >> 44) & 0x0fffffffffff;
-        h2 = (u64)(d2 += d1 >> 44) & 0x03ffffffffff; /* last digit is 42 bits */
+        h1 = (u64)(d1 += (u64)(d0 >> 44)) & 0x0fffffffffff;
+        h2 = (u64)(d2 += (u64)(d1 >> 44)) & 0x03ffffffffff; /* last 42 bits */
 
         c = (d2 >> 42);
         h0 += c + (c << 2);

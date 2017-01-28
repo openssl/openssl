@@ -102,7 +102,7 @@ static int test_alt_chains_cert_forgery(const char *roots_f,
     lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
     if (lookup == NULL)
         goto err;
-    if(!X509_LOOKUP_load_file(lookup, roots_f, X509_FILETYPE_PEM))
+    if (!X509_LOOKUP_load_file(lookup, roots_f, X509_FILETYPE_PEM))
         goto err;
 
     untrusted = load_certs_from_file(untrusted_f);
@@ -110,7 +110,7 @@ static int test_alt_chains_cert_forgery(const char *roots_f,
     if ((bio = BIO_new_file(bad_f, "r")) == NULL)
         goto err;
 
-    if((x = PEM_read_bio_X509(bio, NULL, 0, NULL)) == NULL)
+    if ((x = PEM_read_bio_X509(bio, NULL, 0, NULL)) == NULL)
         goto err;
 
     sctx = X509_STORE_CTX_new();

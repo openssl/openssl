@@ -353,7 +353,7 @@ static int send_certificate_request(SSL *s)
             * if SSL_VERIFY_CLIENT_ONCE is set, don't request cert
             * during re-negotiation:
             */
-           && ((s->session->peer == NULL) ||
+           && (s->s3->tmp.finish_md_len == 0 ||
                !(s->verify_mode & SSL_VERIFY_CLIENT_ONCE))
            /*
             * never request cert in anonymous ciphersuites (see
@@ -2310,7 +2310,7 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
 
     if (SSL_USE_SIGALGS(s)) {
         const unsigned int *psigs;
-        size_t nl = tls12_get_psigalgs(s, &psigs);
+        size_t nl = tls12_get_psigalgs(s, 1, &psigs);
 
         if (!WPACKET_start_sub_packet_u16(pkt)
                 || !tls12_copy_sigalgs(s, pkt, psigs, nl)
@@ -2944,7 +2944,7 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
                                            sizeof(labelbuffer), NULL, 0,
                                            0) <= 0) {
                 ossl_statem_set_error(s);
-                return WORK_ERROR;;
+                return WORK_ERROR;
             }
 
             BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
@@ -3061,8 +3061,11 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
             if (!tls_collect_extensions(s, &extensions, EXT_TLS1_3_CERTIFICATE,
                                         &rawexts, &al)
                     || !tls_parse_all_extensions(s, EXT_TLS1_3_CERTIFICATE,
-                                                 rawexts, x, chainidx, &al))
+                                                 rawexts, x, chainidx, &al)) {
+                OPENSSL_free(rawexts);
                 goto f_err;
+            }
+            OPENSSL_free(rawexts);
         }
 
         if (!sk_X509_push(sk, x)) {
@@ -3450,20 +3453,52 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
         return NULL;
     }
 
-    if ((skp == NULL) || (*skp == NULL)) {
-        sk = sk_SSL_CIPHER_new_null(); /* change perhaps later */
-        if (sk == NULL) {
-            SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
-            *al = SSL_AD_INTERNAL_ERROR;
-            return NULL;
-        }
-    } else {
-        sk = *skp;
-        sk_SSL_CIPHER_zero(sk);
+    sk = sk_SSL_CIPHER_new_null();
+    if (sk == NULL) {
+        SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
+        *al = SSL_AD_INTERNAL_ERROR;
+        return NULL;
     }
 
-    if (!PACKET_memdup(cipher_suites, &s->s3->tmp.ciphers_raw,
-                       &s->s3->tmp.ciphers_rawlen)) {
+    if (sslv2format) {
+        size_t numciphers = PACKET_remaining(cipher_suites) / n;
+        PACKET sslv2ciphers = *cipher_suites;
+        unsigned int leadbyte;
+        unsigned char *raw;
+
+        /*
+         * We store the raw ciphers list in SSLv3+ format so we need to do some
+         * preprocessing to convert the list first. If there are any SSLv2 only
+         * ciphersuites with a non-zero leading byte then we are going to
+         * slightly over allocate because we won't store those. But that isn't a
+         * problem.
+         */
+        raw = OPENSSL_malloc(numciphers * TLS_CIPHER_LEN);
+        s->s3->tmp.ciphers_raw = raw;
+        if (raw == NULL) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            goto err;
+        }
+        for (s->s3->tmp.ciphers_rawlen = 0;
+             PACKET_remaining(&sslv2ciphers) > 0;
+             raw += TLS_CIPHER_LEN) {
+            if (!PACKET_get_1(&sslv2ciphers, &leadbyte)
+                    || (leadbyte == 0
+                        && !PACKET_copy_bytes(&sslv2ciphers, raw,
+                                              TLS_CIPHER_LEN))
+                    || (leadbyte != 0
+                        && !PACKET_forward(&sslv2ciphers, TLS_CIPHER_LEN))) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                OPENSSL_free(raw);
+                s->s3->tmp.ciphers_raw = NULL;
+                s->s3->tmp.ciphers_rawlen = 0;
+                goto err;
+            }
+            if (leadbyte == 0)
+                s->s3->tmp.ciphers_rawlen += TLS_CIPHER_LEN;
+        }
+    } else if (!PACKET_memdup(cipher_suites, &s->s3->tmp.ciphers_raw,
+                           &s->s3->tmp.ciphers_rawlen)) {
         *al = SSL_AD_INTERNAL_ERROR;
         goto err;
     }
@@ -3524,11 +3559,9 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
         goto err;
     }
 
-    if (skp != NULL)
-        *skp = sk;
-    return (sk);
+    *skp = sk;
+    return sk;
  err:
-    if ((skp == NULL) || (*skp == NULL))
-        sk_SSL_CIPHER_free(sk);
+    sk_SSL_CIPHER_free(sk);
     return NULL;
 }
