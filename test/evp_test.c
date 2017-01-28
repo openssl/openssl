@@ -1245,7 +1245,7 @@ static int mac_test_run(struct evp_test *t)
     size_t mac_len;
 
 #ifdef OPENSSL_NO_DES
-    if (strstr(mdata->alg, "DES") != NULL) {
+    if (mdata->alg != NULL && strstr(mdata->alg, "DES") != NULL) {
         /* Skip DES */
         err = NULL;
         goto err;
