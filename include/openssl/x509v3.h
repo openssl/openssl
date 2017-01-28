@@ -355,6 +355,7 @@ struct ISSUING_DIST_POINT_st {
 # define EXFLAG_SI               0x20
 # define EXFLAG_V1               0x40
 # define EXFLAG_INVALID          0x80
+/* EXFLAG_SET is set to indicate that some values have been precomputed */
 # define EXFLAG_SET              0x100
 # define EXFLAG_CRITICAL         0x200
 # define EXFLAG_PROXY            0x400
