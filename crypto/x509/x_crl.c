@@ -226,6 +226,8 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             if (crl->meth->crl_init(crl) == 0)
                 return 0;
         }
+
+        crl->flags |= EXFLAG_SET;
         break;
 
     case ASN1_OP_FREE_POST:
