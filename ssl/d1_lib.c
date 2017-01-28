@@ -243,6 +243,8 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 void dtls1_start_timer(SSL *s)
 {
+    struct timeval duration;
+
 #ifndef OPENSSL_NO_SCTP
     /* Disable timer for SCTP */
     if (BIO_dgram_is_sctp(SSL_get_wbio(s))) {
@@ -251,8 +253,10 @@ void dtls1_start_timer(SSL *s)
     }
 #endif
 
-    /* If timer is not set, initialize duration with 1 second or
-     * a user-specified value if the timer callback is installed. */
+    /*
+     * If timer is not set, initialize duration with 1 second or
+     * a user-specified value if the timer callback is installed.
+     */
     if (s->d1->next_timeout.tv_sec == 0 && s->d1->next_timeout.tv_usec == 0) {
 
         if (s->d1->timer_cb != NULL)
@@ -265,7 +269,13 @@ void dtls1_start_timer(SSL *s)
     get_current_time(&(s->d1->next_timeout));
 
     /* Add duration to current time */
-    s->d1->next_timeout.tv_usec += s->d1->timeout_duration_ms * 1000;
+
+    duration.tv_sec  =  s->d1->timeout_duration_ms / 1000;
+    duration.tv_usec = (s->d1->timeout_duration_ms % 1000) * 1000;
+
+    s->d1->next_timeout.tv_sec  += duration.tv_sec;
+    s->d1->next_timeout.tv_usec += duration.tv_usec;
+
     if (s->d1->next_timeout.tv_usec >= 1000000) {
         s->d1->next_timeout.tv_sec++;
         s->d1->next_timeout.tv_usec -= 1000000;

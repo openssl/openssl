@@ -2039,9 +2039,7 @@ __owur const struct openssl_ssl_test_functions *SSL_test_functions(void);
 
 extern const char SSL_version_str[];
 
-
 void DTLS_set_timer_cb(SSL *s, unsigned (*cb)(SSL *s, unsigned timer));
-
 
 /* BEGIN ERROR CODES */
 /*
@@ -2601,7 +2599,6 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_WRONG_VERSION_NUMBER                       267
 # define SSL_R_X509_LIB                                   268
 # define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS           269
-
 
 # ifdef  __cplusplus
 }
