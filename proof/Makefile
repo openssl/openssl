@@ -76,19 +76,19 @@ sha/sha256.aig: sha/sha256.bc
 chacha/chacha.aig: chacha/chacha.bc
 	time $(SAW)/bin/lss chacha/chacha.bc
 
-aes/aes128enc.proof: aes/aes128enc.aig aes/aes128enc.saw AES/AESTBox.cry
+aes/aes128enc.proof: aes/aes128enc.aig aes/aes128enc.saw aes/AESTBox.cry
 	PATH=$(PATH):$(Z3) $(SAW)/bin/saw aes/aes128enc.saw
 	touch aes/aes128enc.proof
 
-aes/aes256enc.proof: aes/aes256enc.aig aes/aes256enc.saw AES/AESTBox.cry
+aes/aes256enc.proof: aes/aes256enc.aig aes/aes256enc.saw aes/AESTBox.cry
 	PATH=$(PATH):$(Z3) $(SAW)/bin/saw aes/aes256enc.saw
 	touch aes/aes256enc.proof
 
-aes/aes128dec.proof: aes/aes128dec.aig aes/aes128dec.saw AES/AESTBox.cry
+aes/aes128dec.proof: aes/aes128dec.aig aes/aes128dec.saw aes/AESTBox.cry
 	PATH=$(PATH):$(Z3) $(SAW)/bin/saw aes/aes128dec.saw
 	touch aes/aes128dec.proof
 
-aes/aes256dec.proof: aes/aes256dec.aig aes/aes256dec.saw AES/AESTBox.cry
+aes/aes256dec.proof: aes/aes256dec.aig aes/aes256dec.saw aes/AESTBox.cry
 	PATH=$(PATH):$(Z3) $(SAW)/bin/saw aes/aes256dec.saw
 	touch aes/aes256dec.proof
 
