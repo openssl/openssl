@@ -1,6 +1,11 @@
-all: aes.proof aes128enc.proof aes128dec.proof aes256enc.proof aes256dec.proof
+all: openssl nobuild
+
+nobuild: aes.proof aes128enc.proof aes128dec.proof aes256enc.proof aes256dec.proof
 
 broken: sha1.proof sha256.aig chacha.aig
+
+openssl:
+	cd .. && make clean && make build_generated crypto/aes/aes_core.o
 
 clean:
 	rm -f *.bc *.aig *.proof
