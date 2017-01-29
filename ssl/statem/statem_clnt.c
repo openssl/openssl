@@ -1957,8 +1957,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         }
         if (SSL_USE_PSS(s)) {
             if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
-                       /* -1 here means set saltlen to the digest len */
-                    || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx,
+                || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx,
                                                 RSA_PSS_SALTLEN_DIGEST) <= 0) {
                 al = SSL_AD_INTERNAL_ERROR;
                 SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);

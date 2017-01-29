@@ -261,7 +261,7 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
             SSL_get_sigalgs(s, i, &sign_nid, &hash_nid, NULL, &rsign, &rhash);
         if (i)
             BIO_puts(out, ":");
-        sstr= get_sigtype(sign_nid);
+        sstr = get_sigtype(sign_nid);
         if (sstr)
             BIO_printf(out, "%s+", sstr);
         else
