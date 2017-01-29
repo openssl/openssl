@@ -1,6 +1,6 @@
 all: aes/aes.proof aes/aes128enc.proof aes/aes128dec.proof aes/aes256enc.proof aes/aes256dec.proof
 
-broken: sha1.proof sha256.aig chacha.aig
+broken: sha/sha1.proof sha/sha256.aig chacha.aig
 
 openssl:
 	cd .. && make clean && make build_generated && make -j 40 crypto/aes/aes_core.o crypto/sha/sha1_one.o crypto/sha/sha1dgst.o crypto/sha/sha256.o crypto/chacha/chacha_enc.o
@@ -24,10 +24,10 @@ aes/aes128dec-wrap.bc: aes/aes128dec-wrap.c
 aes/aes256dec-wrap.bc: aes/aes256dec-wrap.c
 	$(CLANG) -c -emit-llvm -I../include -I$(SAW)/include -o $@ $^
 
-sha1-wrap.bc: sha1-wrap.c
+sha/sha1-wrap.bc: sha/sha1-wrap.c
 	$(CLANG) -c -emit-llvm -I../include -I$(SAW)/include -o $@ $^
 
-sha256-wrap.bc: sha256-wrap.c
+sha/sha256-wrap.bc: sha/sha256-wrap.c
 	$(CLANG) -c -emit-llvm -I../include -I$(SAW)/include -o $@ $^
 
 chacha-wrap.bc: chacha-wrap.c
@@ -46,11 +46,11 @@ aes/aes128dec.bc: aes/aes128dec-wrap.bc ../crypto/aes/aes_core.o
 aes/aes256dec.bc: aes/aes256dec-wrap.bc ../crypto/aes/aes_core.o
 	$(LINK) -o aes/aes256dec.bc aes/aes256dec-wrap.bc ../crypto/aes/aes_core.o
 
-sha1.bc: sha1-wrap.bc ../crypto/sha/sha1_one.o ../crypto/sha/sha1dgst.o
-	$(LINK) -o sha1.bc $^
+sha/sha1.bc: sha/sha1-wrap.bc ../crypto/sha/sha1_one.o ../crypto/sha/sha1dgst.o
+	$(LINK) -o sha/sha1.bc $^
 
-sha256.bc: sha256-wrap.bc ../crypto/sha/sha256.o
-	$(LINK) -o sha256.bc $^
+sha/sha256.bc: sha/sha256-wrap.bc ../crypto/sha/sha256.o
+	$(LINK) -o sha/sha256.bc $^
 
 chacha.bc: chacha-wrap.bc ../crypto/chacha/chacha_enc.o
 	$(LINK) -o chacha.bc $^
@@ -67,11 +67,11 @@ aes/aes128dec.aig: aes/aes128dec.bc
 aes/aes256dec.aig: aes/aes256dec.bc
 	time $(SAW)/bin/lss aes/aes256dec.bc
 
-sha1.aig: sha1.bc
-	time $(SAW)/bin/lss sha1.bc
+sha/sha1.aig: sha/sha1.bc
+	time $(SAW)/bin/lss sha/sha1.bc
 
-sha256.aig: sha256.bc
-	time $(SAW)/bin/lss sha256.bc
+sha/sha256.aig: sha/sha256.bc
+	time $(SAW)/bin/lss sha/sha256.bc
 
 chacha.aig: chacha.bc
 	time $(SAW)/bin/lss chacha.bc
@@ -92,6 +92,6 @@ aes/aes256dec.proof: aes/aes256dec.aig aes/aes256dec.saw AES/AESTBox.cry
 	PATH=$(PATH):$(Z3) $(SAW)/bin/saw aes/aes256dec.saw
 	touch aes/aes256dec.proof
 
-sha1.proof: sha1.aig sha1.saw sha1.cry
-	PATH=$(PATH):$(Z3) $(SAW)/bin/saw sha1.saw
-	touch sha1.proof
+sha/sha1.proof: sha/sha1.aig sha/sha1.saw sha/sha1.cry
+	PATH=$(PATH):$(Z3) $(SAW)/bin/saw sha/sha1.saw
+	touch sha/sha1.proof
