@@ -21,4 +21,4 @@ to manage the next steps, so this may not work on all platforms
 (patches welcome):
 
     $ cd proof
-    $ SAW=<path to SAW binaries> Z3=<path to Z3 binaries> LLVM=<path to clang 3.x binaries> LINK=<path to llvm-link> make
+    $ SAW=<path to SAW binaries> Z3=<path to Z3 binaries> CLANG=<path to clang> LINK=<path to llvm-link> make
