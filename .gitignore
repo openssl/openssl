@@ -84,9 +84,9 @@ Makefile
 /TAGS
 /crypto.map
 /ssl.map
-/proof/*.bc
-/proof/*.aig
-/proof/*.proof
+/proof/*/*.bc
+/proof/*/*.aig
+/proof/*/*.proof
 
 # Windows (legacy)
 /tmp32

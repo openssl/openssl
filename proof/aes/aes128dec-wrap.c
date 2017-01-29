@@ -27,5 +27,5 @@ int main() {
 
   // Write the symbolic representation of the result into an
   // And-Inverter Graph.
-  lss_write_aiger_array_uint8(out, 16, "aes128dec.aig");
+  lss_write_aiger_array_uint8(out, 16, "aes/aes128dec.aig");
 }
