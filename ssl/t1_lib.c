@@ -1725,11 +1725,12 @@ int SSL_get_shared_sigalgs(SSL *s, int idx,
     return (int)s->cert->shared_sigalgslen;
 }
 
-#define MAX_SIGALGLEN   (TLSEXT_hash_num * TLSEXT_signature_num * 2)
+/* Maximum possible number of unique entries in sigalgs array */
+#define TLS_MAX_SIGALGCNT (OSSL_NELEM(sigalg_lookup_tbl) * 2)
 
 typedef struct {
     size_t sigalgcnt;
-    int sigalgs[MAX_SIGALGLEN];
+    int sigalgs[TLS_MAX_SIGALGCNT];
 } sig_cb_st;
 
 static void get_sigorhash(int *psig, int *phash, const char *str)
@@ -1748,16 +1749,18 @@ static void get_sigorhash(int *psig, int *phash, const char *str)
             *phash = OBJ_ln2nid(str);
     }
 }
+/* Maximum length of a signature algorithm string component */
+#define TLS_MAX_SIGSTRING_LEN   40
 
 static int sig_cb(const char *elem, int len, void *arg)
 {
     sig_cb_st *sarg = arg;
     size_t i;
-    char etmp[40], *p;
+    char etmp[TLS_MAX_SIGSTRING_LEN], *p;
     int sig_alg = NID_undef, hash_alg = NID_undef;
     if (elem == NULL)
         return 0;
-    if (sarg->sigalgcnt == MAX_SIGALGLEN)
+    if (sarg->sigalgcnt == TLS_MAX_SIGALGCNT)
         return 0;
     if (len > (int)(sizeof(etmp) - 1))
         return 0;
