@@ -14,13 +14,11 @@ Then you need [SAW](http://saw.galois.com/builds/nightly/) (I used the
 Now, configure and build OpenSSL in a form useful to SAW:
 
     $ CC=<path to clang> ./config enable-saw
-    $ make build_libs
-
-It may end with the error ```clang: error: -emit-llvm cannot be used when linking```. Don't worry about it.
+    $ cd proof
+    $ make openssl
 
 Unfortunately, OpenSSL's build system is not currently flexible enough
 to manage the next steps, so this may not work on all platforms
 (patches welcome):
 
-    $ cd proof
     $ SAW=<path to SAW binaries> Z3=<path to Z3 binaries> CLANG=<path to clang> LINK=<path to llvm-link> make

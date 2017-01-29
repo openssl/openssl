@@ -1,11 +1,9 @@
-all: openssl nobuild
-
-nobuild: aes.proof aes128enc.proof aes128dec.proof aes256enc.proof aes256dec.proof
+all: aes.proof aes128enc.proof aes128dec.proof aes256enc.proof aes256dec.proof
 
 broken: sha1.proof sha256.aig chacha.aig
 
 openssl:
-	cd .. && make clean && make build_generated crypto/aes/aes_core.o
+	cd .. && make clean && make build_generated && make -j 40 crypto/aes/aes_core.o crypto/sha/sha1_one.o crypto/sha/sha1dgst.o crypto/sha/sha256.o crypto/chacha/chacha_enc.o
 
 clean:
 	rm -f *.bc *.aig *.proof
