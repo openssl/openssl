@@ -8,5 +8,5 @@ int main() {
   uint32_t *ctr = lss_fresh_array_uint32(4, 0, NULL);
   unsigned char *out = malloc(s);
   ChaCha20_ctr32(out, in, s, key, ctr);
-  lss_write_aiger_array_uint8(out, s, "chacha.aig");
+  lss_write_aiger_array_uint8(out, s, "chacha/chacha.aig");
 }
