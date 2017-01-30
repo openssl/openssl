@@ -785,13 +785,6 @@ static const SIGALG_LOOKUP *tls1_lookup_sigalg(uint16_t sigalg)
     return NULL;
 }
 
-static int tls_sigalg_get_hash(uint16_t sigalg)
-{
-    const SIGALG_LOOKUP *r = tls1_lookup_sigalg(sigalg);
-
-    return r != NULL ? r->hash : 0;
-}
-
 static int tls_sigalg_get_sig(uint16_t sigalg)
 {
     const SIGALG_LOOKUP *r = tls1_lookup_sigalg(sigalg);
@@ -870,15 +863,18 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
 #ifndef OPENSSL_NO_EC
     if (pkeyid == EVP_PKEY_EC) {
         EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+
         if (SSL_IS_TLS13(s)) {
             /* For TLS 1.3 check curve matches signature algorithm */
             int curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+
             if (curve != lu->curve) {
                 SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
                 return 0;
             }
         } else {
             unsigned char curve_id[2], comp_id;
+
             /* Check compression and curve matches extensions */
             if (!tls1_set_ec_id(curve_id, &comp_id, ec))
                 return 0;
@@ -891,13 +887,13 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
                 if (curve_id[0])
                     return 0;
                 if (curve_id[1] == TLSEXT_curve_P_256) {
-                    if (tls_sigalg_get_hash(sig) != NID_sha256) {
+                    if (lu->hash != NID_sha256) {
                         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
                                SSL_R_ILLEGAL_SUITEB_DIGEST);
                         return 0;
                     }
                 } else if (curve_id[1] == TLSEXT_curve_P_384) {
-                    if (tls_sigalg_get_hash(sig) != NID_sha384) {
+                    if (lu->hash != NID_sha384) {
                         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
                                SSL_R_ILLEGAL_SUITEB_DIGEST);
                         return 0;
@@ -924,7 +920,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
-    md = tls12_get_hash(lu->hash);
+    md = ssl_md(lu->hash_idx);
     if (md == NULL) {
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_UNKNOWN_DIGEST);
         return 0;
@@ -1360,49 +1356,6 @@ int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
     return 0;
 }
 
-typedef struct {
-    int nid;
-    int secbits;
-    int md_idx;
-} tls12_hash_info;
-
-static const tls12_hash_info tls12_md_info[] = {
-    {NID_md5, 64, SSL_MD_MD5_IDX},
-    {NID_sha1, 80, SSL_MD_SHA1_IDX},
-    {NID_sha224, 112, SSL_MD_SHA224_IDX},
-    {NID_sha256, 128, SSL_MD_SHA256_IDX},
-    {NID_sha384, 192, SSL_MD_SHA384_IDX},
-    {NID_sha512, 256, SSL_MD_SHA512_IDX},
-    {NID_id_GostR3411_94, 128, SSL_MD_GOST94_IDX},
-    {NID_id_GostR3411_2012_256, 128, SSL_MD_GOST12_256_IDX},
-    {NID_id_GostR3411_2012_512, 256, SSL_MD_GOST12_512_IDX},
-};
-
-static const tls12_hash_info *tls12_get_hash_info(int hash_nid)
-{
-    unsigned int i;
-    if (hash_nid == NID_undef)
-        return NULL;
-
-    for (i = 0; i < OSSL_NELEM(tls12_md_info); i++) {
-        if (tls12_md_info[i].nid == hash_nid)
-            return tls12_md_info + i;
-    }
-
-    return NULL;
-}
-
-const EVP_MD *tls12_get_hash(int hash_nid)
-{
-    const tls12_hash_info *inf;
-    if (hash_nid == NID_md5 && FIPS_mode())
-        return NULL;
-    inf = tls12_get_hash_info(hash_nid);
-    if (!inf)
-        return NULL;
-    return ssl_md(inf->md_idx);
-}
-
 static int tls12_get_pkey_idx(int sig_nid)
 {
     switch (sig_nid) {
@@ -1439,22 +1392,24 @@ static int tls12_get_pkey_idx(int sig_nid)
 }
 
 /* Check to see if a signature algorithm is allowed */
-static int tls12_sigalg_allowed(SSL *s, int op, unsigned int ptmp)
+static int tls12_sigalg_allowed(SSL *s, int op, uint16_t ptmp)
 {
-    /* See if we have an entry in the hash table and it is enabled */
-    const tls12_hash_info *hinf
-        = tls12_get_hash_info(tls_sigalg_get_hash(ptmp));
+    const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(ptmp);
     unsigned char sigalgstr[2];
+    int secbits;
 
-    if (hinf == NULL || ssl_md(hinf->md_idx) == NULL)
+    /* See if sigalgs is recognised and if hash is enabled */
+    if (lu == NULL || ssl_md(lu->hash_idx) == NULL)
         return 0;
     /* See if public key algorithm allowed */
-    if (tls12_get_pkey_idx(tls_sigalg_get_sig(ptmp)) == -1)
+    if (tls12_get_pkey_idx(lu->sig) == -1)
         return 0;
+    /* Security bits: half digest bits */
+    secbits = EVP_MD_size(ssl_md(lu->hash_idx)) * 4;
     /* Finally see if security callback allows it */
     sigalgstr[0] = (ptmp >> 8) & 0xff;
     sigalgstr[1] = ptmp & 0xff;
-    return ssl_security(s, op, hinf->secbits, hinf->nid, (void *)sigalgstr);
+    return ssl_security(s, op, secbits, lu->hash, (void *)sigalgstr);
 }
 
 /*
@@ -1650,7 +1605,7 @@ int tls1_process_sigalgs(SSL *s)
             continue;
         idx = tls12_get_pkey_idx(sigptr->sig);
         if (idx > 0 && pmd[idx] == NULL) {
-            md = tls12_get_hash(sigptr->hash);
+            md = ssl_md(sigptr->hash_idx);
             pmd[idx] = md;
             pvalid[idx] = CERT_PKEY_EXPLICIT_SIGN;
             if (idx == SSL_PKEY_RSA_SIGN) {
@@ -1658,7 +1613,6 @@ int tls1_process_sigalgs(SSL *s)
                 pmd[SSL_PKEY_RSA_ENC] = md;
             }
         }
-
     }
     /*
      * In strict mode or TLS1.3 leave unset digests as NULL to indicate we can't
@@ -2037,8 +1991,9 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
             size_t j;
             const uint16_t *p = c->conf_sigalgs;
             for (j = 0; j < c->conf_sigalgslen; j++, p++) {
-                if (tls_sigalg_get_hash(*p) == NID_sha1
-                        && tls_sigalg_get_sig(*p) == rsign)
+                const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(*p);
+
+                if (lu != NULL && lu->hash == NID_sha1 && lu->sig == rsign)
                     break;
             }
             if (j == c->conf_sigalgslen) {

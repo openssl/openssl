@@ -2241,7 +2241,6 @@ __owur int tls_use_ticket(SSL *s);
 
 __owur int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
                                 const EVP_MD *md, int *ispss);
-__owur const EVP_MD *tls12_get_hash(int hash_nid);
 void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op);
 
 __owur int tls1_set_sigalgs_list(CERT *c, const char *str, int client);
