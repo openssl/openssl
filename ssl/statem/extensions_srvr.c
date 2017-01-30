@@ -116,6 +116,8 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
             return 0;
         }
 
+        OPENSSL_free(s->session->ext.hostname);
+        s->session->ext.hostname = NULL;
         if (!PACKET_strndup(&hostname, &s->session->ext.hostname)) {
             *al = TLS1_AD_INTERNAL_ERROR;
             return 0;
@@ -361,6 +363,9 @@ int tls_parse_ctos_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         }
     } while (PACKET_remaining(&protocol_list) != 0);
 
+    OPENSSL_free(s->s3->alpn_proposed);
+    s->s3->alpn_proposed = NULL;
+    s->s3->alpn_proposed_len = 0;
     if (!PACKET_memdup(&save_protocol_list,
                        &s->s3->alpn_proposed, &s->s3->alpn_proposed_len)) {
         *al = TLS1_AD_INTERNAL_ERROR;
@@ -659,6 +664,9 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
+    OPENSSL_free(s->session->ext.supportedgroups);
+    s->session->ext.supportedgroups = NULL;
+    s->session->ext.supportedgroups_len = 0;
     if (!PACKET_memdup(&supported_groups_list,
                        &s->session->ext.supportedgroups,
                        &s->session->ext.supportedgroups_len)) {
@@ -1024,7 +1032,65 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, unsigned int context,
     EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL;
 
     if (ckey == NULL) {
-        /* No key_share received from client; must be resuming. */
+        /* No key_share received from client */
+        if (s->hello_retry_request) {
+            const unsigned char *pcurves, *pcurvestmp, *clntcurves;
+            size_t num_curves, clnt_num_curves, i;
+
+            /* Get the clients list of supported groups. */
+            if (!tls1_get_curvelist(s, 1, &clntcurves, &clnt_num_curves)) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
+                       ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+
+            /* Get our list of available groups */
+            if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
+                SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
+                       ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+
+            if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
+                    || !WPACKET_start_sub_packet_u16(pkt)) {
+                SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
+                       ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+
+            /* Find first group we allow that is also in client's list */
+            for (i = 0, pcurvestmp = pcurves; i < num_curves;
+                 i++, pcurvestmp += 2) {
+                unsigned int group_id = pcurvestmp[0] << 8 | pcurvestmp[1];
+
+                if (check_in_list(s, group_id, clntcurves, clnt_num_curves,
+                                  1)) {
+                    if (!WPACKET_put_bytes_u16(pkt, group_id)) {
+                        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
+                               ERR_R_INTERNAL_ERROR);
+                        return 0;
+                    }
+                    break;
+                }
+            }
+            if (i == num_curves) {
+                /* No common groups */
+                *al = SSL_AD_HANDSHAKE_FAILURE;
+                SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
+                       SSL_R_NO_SHARED_GROUPS);
+                return 0;
+            }
+            if (!WPACKET_close(pkt)) {
+                SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
+                       ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+
+            return 1;
+        }
+
+        /* Must be resuming. */
         if (!s->hit || !tls13_generate_handshake_secret(s, NULL, 0)) {
             *al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
