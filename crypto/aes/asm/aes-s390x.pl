@@ -813,7 +813,7 @@ _s390x_AES_set_encrypt_key:
 .Lproceed:
 ___
 $code.=<<___ if (!$softonly);
-	# convert bits to km code, [128,192,256]->[18,19,20]
+	# convert bits to km(c) code, [128,192,256]->[18,19,20]
 	lhi	%r5,-128
 	lhi	%r0,18
 	ar	%r5,$bits
@@ -821,13 +821,10 @@ $code.=<<___ if (!$softonly);
 	ar	%r5,%r0
 
 	larl	%r1,OPENSSL_s390xcap_P
-	lg	%r0,0(%r1)
-	tmhl	%r0,0x4000	# check for message-security assist
-	jz	.Lekey_internal
-
 	llihh	%r0,0x8000
 	srlg	%r0,%r0,0(%r5)
-	ng	%r0,48(%r1)	# check kmc capability vector
+	ng	%r0,32(%r1)	# check availability of both km...
+	ng	%r0,48(%r1)	# ...and kmc support for given key length
 	jz	.Lekey_internal
 
 	lmg	%r0,%r1,0($inp)	# just copy 128 bits...
@@ -842,7 +839,7 @@ $code.=<<___ if (!$softonly);
 	stg	%r1,24($key)
 1:	st	$bits,236($key)	# save bits [for debugging purposes]
 	lgr	$t0,%r5
-	st	%r5,240($key)	# save km code
+	st	%r5,240($key)	# save km(c) code
 	lghi	%r2,0
 	br	%r14
 ___
@@ -1440,11 +1437,6 @@ $code.=<<___ if (!$softonly);
 .Lctr32_hw_switch:
 ___
 $code.=<<___ if (!$softonly && 0);# kmctr code was measured to be ~12% slower
-	larl	$s0,OPENSSL_s390xcap_P
-	lg	$s0,8($s0)
-	tmhh	$s0,0x0004	# check for message_security-assist-4
-	jz	.Lctr32_km_loop
-
 	llgfr	$s0,%r0
 	lgr	$s1,%r1
 	larl	%r1,OPENSSL_s390xcap_P
