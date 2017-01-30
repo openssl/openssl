@@ -2323,6 +2323,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
 
     /* This is a standalone message in TLSv1.3, so there is no more to read */
     if (SSL_IS_TLS13(s)) {
+        OPENSSL_free(exts);
         ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
         return MSG_PROCESS_FINISHED_READING;
     }
@@ -2332,6 +2333,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
     ossl_statem_set_error(s);
+    OPENSSL_free(exts);
     return MSG_PROCESS_ERROR;
 }
 
