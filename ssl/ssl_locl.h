@@ -407,6 +407,12 @@
  */
 # define SSL_PKEY_GOST_EC SSL_PKEY_NUM+1
 
+/*
+ * TODO(TLS1.3) for now use RSA_SIGN keys for PSS
+ */
+
+#define SSL_PKEY_RSA_PSS_SIGN SSL_PKEY_RSA_SIGN
+
 /*-
  * SSL_kRSA <- RSA_ENC
  * SSL_kDH  <- DH_ENC & (RSA_ENC | RSA_SIGN | DSA_SIGN)
@@ -1191,8 +1197,12 @@ typedef struct sigalg_lookup_st {
     uint16_t sigalg;
     /* NID of hash algorithm */
     int hash;
+    /* Index of hash algorithm */
+    int hash_idx;
     /* NID of signature algorithm */
     int sig;
+    /* Index of signature algorithm */
+    int sig_idx;
     /* Combined hash and signature NID, if any */
     int sigandhash;
     /* Required public key curve (ECDSA only) */
