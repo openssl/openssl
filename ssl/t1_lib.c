@@ -863,10 +863,10 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
 #ifndef OPENSSL_NO_EC
     if (pkeyid == EVP_PKEY_EC) {
         EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+        int curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
 
         if (SSL_IS_TLS13(s)) {
             /* For TLS 1.3 check curve matches signature algorithm */
-            int curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
 
             if (curve != lu->curve) {
                 SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
@@ -882,23 +882,23 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
                 SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
                 return 0;
             }
-            /* If Suite B only P-384+SHA384 or P-256+SHA-256 allowed */
             if (tls1_suiteb(s)) {
-                if (curve_id[0])
+                /* Check sigalg matches a permissible Suite B value */
+                if (sig != TLSEXT_SIGALG_ecdsa_secp256r1_sha256
+                    && sig != TLSEXT_SIGALG_ecdsa_secp384r1_sha384) {
+                    SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
+                           SSL_R_WRONG_SIGNATURE_TYPE);
                     return 0;
-                if (curve_id[1] == TLSEXT_curve_P_256) {
-                    if (lu->hash != NID_sha256) {
-                        SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
-                               SSL_R_ILLEGAL_SUITEB_DIGEST);
-                        return 0;
-                    }
-                } else if (curve_id[1] == TLSEXT_curve_P_384) {
-                    if (lu->hash != NID_sha384) {
-                        SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
-                               SSL_R_ILLEGAL_SUITEB_DIGEST);
-                        return 0;
-                    }
-                } else {
+                }
+                /*
+                 * Suite B also requires P-256+SHA256 and P-384+SHA384:
+                 * this matches the TLS 1.3 requirements so we can just
+                 * check the curve is the expected TLS 1.3 value.
+                 * If this fails an inappropriate digest is being used.
+                 */
+                if (curve != lu->curve) {
+                    SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
+                           SSL_R_ILLEGAL_SUITEB_DIGEST);
                     return 0;
                 }
             }
