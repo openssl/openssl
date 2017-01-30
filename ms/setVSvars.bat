@@ -3,7 +3,7 @@ call:set_%1
 exit /b
 :set_universal10.0Win32
 	call:setVar _VS14VC VisualStudio14VC
-	call "%_VS14VC%vcvarsall" x86
+	call "%_VS14VC%vcvarsall" x86 store
 	set _VCPlatform=x86
 	set _VCLibPlat=
 	call:setEnv
@@ -11,7 +11,7 @@ exit /b
 
 :set_universal10.0x64
 	call:setVar _VS14VC VisualStudio14VC
-	call "%_VS14VC%vcvarsall" x64
+	call "%_VS14VC%vcvarsall" x64 store
 	set _VCPlatform=x64
 	set _VCLibPlat=amd64
 	call:setEnv
@@ -19,7 +19,7 @@ exit /b
 
 :set_universal10.0arm
 	call:setVar _VS14VC VisualStudio14VC
-	call "%_VS14VC%vcvarsall" x86_arm
+	call "%_VS14VC%vcvarsall" x86_arm store
 	set _VCPlatform=ARM
 	set _VCLibPlat=ARM
 	call:setEnv
@@ -27,7 +27,7 @@ exit /b
 
 :set_universal10.0arm64
 	call:setVar _VS14VC VisualStudio14VC
-	call "%_VS14VC%vcvarsall" x86_arm64
+	call "%_VS14VC%vcvarsall" x86_arm64 store
 	set _VCPlatform=ARM64
 	set _VCLibPlat=ARM64
 	call:setEnv
