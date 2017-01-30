@@ -90,8 +90,10 @@ SHLIB_INFO={- join(" ", map { "\"".shlib($_).";".shlib_simple($_)."\"" } @{$unif
 ENGINES={- join(" ", map { dso($_) } @{$unified_info{engines}}) -}
 PROGRAMS={- join(" ", map { $_.$exeext } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
+PROOF_FORMULAS={- join(" ", map { "$_.aig" } @{$unified_info{proof_formulas}}); -}
 {- output_off() if $disabled{makedepend}; "" -}
 DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
+                  grep { $_ !~ /\.bc$/ }
                   grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                   keys %{$unified_info{sources}}); -}
 {- output_on() if $disabled{makedepend}; "" -}
@@ -188,7 +190,10 @@ BIN_CFLAGS={- $target{bin_cflags} -}
 BIN_CXXFLAGS={- $target{bin_cxxflag} || "" -}
 
 PERL={- $config{perl} -}
-
+{- output_off() unless @{$unified_info{proof_formulas}}; "" -}
+LLVMLINK={- $target{"llvm-link"} || "llvm-link" -}
+LSS={- $target{lss} || "lss" -}
+{- output_on() unless @{$unified_info{proof_formulas}}; "" -}
 ARFLAGS= {- $target{arflags} -}
 AR=$(CROSS_COMPILE){- $target{ar} || "ar" -} $(ARFLAGS) r
 RANLIB= {- $target{ranlib} -}
@@ -229,7 +234,7 @@ LANG=C
 
 # The main targets ###################################################
 
-{- dependmagic('all'); -}: build_libs_nodep build_engines_nodep build_programs_nodep link-utils
+{- dependmagic('all'); -}: build_libs_nodep build_engines_nodep build_programs_nodep build_proof_formulas link-utils
 {- dependmagic('build_libs'); -}: build_libs_nodep
 {- dependmagic('build_engines'); -}: build_engines_nodep
 {- dependmagic('build_programs'); -}: build_programs_nodep
@@ -238,6 +243,7 @@ build_generated: $(GENERATED_MANDATORY)
 build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
 build_engines_nodep: $(ENGINES)
 build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
+build_proof_formulas: $(PROOF_FORMULAS)
 
 # Kept around for backward compatibility
 build_apps build_tests: build_programs
@@ -985,6 +991,26 @@ EOF
       }
       return $recipe;
   }
+  sub src2bc {
+      my %args = @_;
+      my $bc = $args{bc};
+      my $srcs = join(" ",  @{$args{srcs}});
+      my $deps = join(" ", $srcs, @{$args{deps}});
+      my $incs = join("", map { " -I".$_ } @{$args{incs}});
+      my $cc = '$(CC)';
+      my $cflags = '$(CFLAGS)';
+      if (grep /\.(cc|cpp)$/, @srcs) {
+          $cc = '$(CXX)';
+          $cflags = '$(CXXFLAGS) $(AIG_CXXFLAGS)';
+      } else {
+          $cflags .= ' $(AIG_CFLAGS)',
+      }
+      my $recipe = <<"EOF";
+$bc.bc: $deps
+	$cc $incs $cflags -emit-llvm -c -o \$\@ $srcs
+EOF
+      return $recipe;
+  }
   # On Unix, we build shlibs from static libs, so we're ignoring the
   # object file array.  We *know* this routine is only called when we've
   # configure 'shared'.
@@ -1104,6 +1130,18 @@ $bin$exeext: $objs $deps
 		CC='$cc' CFLAGS='$cflags' \\
 		LDFLAGS='\$(LDFLAGS)' \\
 		link_app.$shlib_target
+EOF
+  }
+  sub bc2aig {
+      my %args = @_;
+      my $aig = $args{aig};
+      my $aigd = dirname($aig);
+      my $aign = basename($aig);
+      my $bcs = join(" ", map { "$_.bc" } @{$args{bcs}});
+      return <<"EOF";
+$aig.aig: $bcs
+	trap "rm -f \$@.*" INT 0; \\
+	\$(LLVMLINK) -o \$@.bc $bcs && \$(LSS) \$@.bc
 EOF
   }
   sub in2script {

@@ -1455,6 +1455,7 @@ if ($builder eq "unified") {
         my @engines_install = ();
         my @scripts = ();
         my @scripts_install = ();
+        my @proof_formulas = ();        # Note: never installed
         my @extra = ();
         my @overrides = ();
         my @intermediates = ();
@@ -1552,6 +1553,13 @@ if ($builder eq "unified") {
                     my @x = tokenize($2);
                     push @scripts, @x;
                     push @scripts_install, @x unless $install;
+                }
+            },
+            qr/^\s*PROOF_FORMULAS\s*=\s*(.*)\s*$/
+            => sub {
+                if (!@skip || $skip[$#skip] > 0) {
+                    my @x = tokenize($1);
+                    push @proof_formulas, @x;
                 }
             },
             qr/^\s*EXTRA\s*=\s*(.*)\s*$/
@@ -1699,6 +1707,14 @@ EOF
             $unified_info{install}->{scripts}->{$script} = 1;
         }
 
+        foreach (@proof_formulas) {
+            my $proof_formula = cleanfile($buildd, $_, $blddir);
+            if ($unified_info{rename}->{$proof_formula}) {
+                $proof_formula = $unified_info{rename}->{$proof_formula};
+            }
+            $unified_info{proof_formulas}->{$proof_formula} = 1;
+        }
+
         foreach (@extra) {
             my $extra = cleanfile($buildd, $_, $blddir);
             $unified_info{extra}->{$extra} = 1;
@@ -1775,8 +1791,17 @@ EOF
                 if (! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
-                # We recognise C++, C and asm files
-                if ($s =~ /\.(cc|cpp|c|s|S)$/) {
+                # We recognise C++, C for proof formulas, and additionally
+                # asm files for the rest
+                if ((grep { $_ eq $ddest} keys %{$unified_info{proof_formulas}})
+                    && $s =~ /\.(cc|cpp|c)$/) {
+                    my $bc = $_;
+                    $bc =~ s/\.c$/.bc/; # C and assembler
+                    $bc =~ s/\.(cc|cpp)$/_cc.bc/; # C++
+                    $bc = cleanfile($buildd, $bc, $blddir);
+                    $unified_info{sources}->{$ddest}->{$bc} = 1;
+                    $unified_info{sources}->{$bc}->{$s} = 1;
+                } elsif ($s =~ /\.(cc|cpp|c|s|S)$/) {
                     my $o = $_;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
@@ -1803,8 +1828,17 @@ EOF
                 if (! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
-                # We recognise C++, C and asm files
-                if ($s =~ /\.(cc|cpp|c|s|S)$/) {
+                # We recognise C++, C for proof formulas, and additionally
+                # asm files for the rest
+                if ((grep { $_ eq $ddest} keys %{$unified_info{proof_formulas}})
+                    && $s =~ /\.(cc|cpp|c)$/) {
+                    my $bc = $_;
+                    $bc =~ s/\.c$/.bc/; # C and assembler
+                    $bc =~ s/\.(cc|cpp)$/_cc.bc/; # C++
+                    $bc = cleanfile($buildd, $bc, $blddir);
+                    $unified_info{shared_sources}->{$ddest}->{$bc} = 1;
+                    $unified_info{sources}->{$bc}->{$s} = 1;
+                } elsif ($s =~ /\.(cc|cpp|c|s|S)$/) {
                     my $o = $_;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
@@ -1904,7 +1938,8 @@ EOF
 
     ### Make unified_info a bit more efficient
     # One level structures
-    foreach (("programs", "libraries", "engines", "scripts", "extra", "overrides")) {
+    foreach (("programs", "libraries", "engines", "scripts", "proof_formulas",
+              "extra", "overrides")) {
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures

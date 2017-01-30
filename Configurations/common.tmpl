@@ -106,6 +106,30 @@
      $cache{$obj} = 1;
  }
 
+ # dobc is responsible for producing all the recipes that build
+ # LLVM format output files.
+ sub dobc {
+     my $bc = shift;
+     return "" if $cache{$bc};
+     (my $bc_no_bc = $bc) =~ s|\.bc$||;
+     my $aig = shift;
+     my %opts = @_;
+     if (@{$unified_info{sources}->{$bc}}) {
+         $OUT .= src2bc(bc => $bc_no_bc,
+                        product => $aig,
+                        srcs => $unified_info{sources}->{$bc},
+                        deps => $unified_info{depends}->{$bc},
+                        incs => [ @{$unified_info{includes}->{$aig}},
+                                  @{$unified_info{includes}->{$bc}} ],
+                        %opts);
+         foreach ((@{$unified_info{sources}->{$bc}},
+                   @{$unified_info{depends}->{$bc}})) {
+             dogenerate($_, $bc, $aig, %opts);
+         }
+     }
+     $cache{$bc} = 1;
+ }
+
  # dolib is responsible for building libraries.  It will call
  # libobj2shlib is shared libraries are produced, and obj2lib in all
  # cases.  It also makes sure all object files for the library are
@@ -172,6 +196,20 @@
          doobj($_, $bin, intent => "bin", installed => is_installed($bin));
      }
      $cache{$bin} = 1;
+ }
+
+ # doaig is responsible for building proof formulas.  It will call bc2aig,
+ # and also makes sure all LLVM output files are built.
+ sub doaig {
+     my $aig = shift;
+     return "" if $cache{$aig};
+     $OUT .= bc2aig(aig => $aig,
+                    bcs => [ map { (my $x = $_) =~ s|\.bc$||; $x }
+                             @{$unified_info{sources}->{$aig}} ]);
+     foreach (@{$unified_info{sources}->{$aig}}) {
+         dobc($_, $aig);
+     }
+     $cache{$aig} = 1;
  }
 
  # dobin is responsible for building scripts from templates.  It will
@@ -243,10 +281,11 @@
 
  # Build all known libraries, engines, programs and scripts.
  # Everything else will be handled as a consequence.
- foreach (@{$unified_info{libraries}}) { dolib($_);    }
- foreach (@{$unified_info{engines}})   { doengine($_); }
- foreach (@{$unified_info{programs}})  { dobin($_);    }
- foreach (@{$unified_info{scripts}})   { doscript($_); }
+ foreach (@{$unified_info{libraries}})          { dolib($_);    }
+ foreach (@{$unified_info{engines}})            { doengine($_); }
+ foreach (@{$unified_info{programs}})           { dobin($_);    }
+ foreach (@{$unified_info{scripts}})            { doscript($_); }
+ foreach (@{$unified_info{proof_formulas}})     { doaig($_); }
 
  foreach (sort keys %{$unified_info{dirinfo}})  { dodir($_); }
 
