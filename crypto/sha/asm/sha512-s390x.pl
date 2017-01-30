@@ -244,9 +244,6 @@ $Func:
 ___
 $code.=<<___ if ($kimdfunc);
 	larl	%r1,OPENSSL_s390xcap_P
-	lg	%r0,0(%r1)
-	tmhl	%r0,0x4000	# check for message-security assist
-	jz	.Lsoftware
 	lg	%r0,16(%r1)	# check kimd capabilities
 	tmhh	%r0,`0x8000>>$kimdfunc`
 	jz	.Lsoftware

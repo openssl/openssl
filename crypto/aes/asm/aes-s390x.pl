@@ -821,12 +821,9 @@ $code.=<<___ if (!$softonly);
 	ar	%r5,%r0
 
 	larl	%r1,OPENSSL_s390xcap_P
-	lg	%r0,0(%r1)
-	tmhl	%r0,0x4000	# check for message-security assist
-	jz	.Lekey_internal
-
 	llihh	%r0,0x8000
 	srlg	%r0,%r0,0(%r5)
+	ng	%r0,32(%r1)	# check km capability vector
 	ng	%r0,48(%r1)	# check kmc capability vector
 	jz	.Lekey_internal
 
@@ -1440,11 +1437,6 @@ $code.=<<___ if (!$softonly);
 .Lctr32_hw_switch:
 ___
 $code.=<<___ if (!$softonly && 0);# kmctr code was measured to be ~12% slower
-	larl	$s0,OPENSSL_s390xcap_P
-	lg	$s0,8($s0)
-	tmhh	$s0,0x0004	# check for message_security-assist-4
-	jz	.Lctr32_km_loop
-
 	llgfr	$s0,%r0
 	lgr	$s1,%r1
 	larl	%r1,OPENSSL_s390xcap_P
