@@ -77,6 +77,7 @@ extern "C" {
 # define SSL_MIN_RSA_MODULUS_LENGTH_IN_BYTES     (512/8)
 # define SSL_MAX_KEY_ARG_LENGTH                  8
 # define SSL_MAX_MASTER_KEY_LENGTH               48
+# define TLS13_MAX_RESUMPTION_MASTER_LENGTH      64
 
 /* The maximum number of encrypt/decrypt pipelines we can support */
 # define SSL_MAX_PIPELINES  32
@@ -878,7 +879,8 @@ typedef enum {
     TLS_ST_SW_ENCRYPTED_EXTENSIONS,
     TLS_ST_CR_ENCRYPTED_EXTENSIONS,
     TLS_ST_CR_CERT_VRFY,
-    TLS_ST_SW_CERT_VRFY
+    TLS_ST_SW_CERT_VRFY,
+    TLS_ST_CR_HELLO_REQ
 } OSSL_HANDSHAKE_STATE;
 
 /*
@@ -1647,7 +1649,7 @@ __owur STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s);
 
 __owur int SSL_do_handshake(SSL *s);
 int SSL_renegotiate(SSL *s);
-__owur int SSL_renegotiate_abbreviated(SSL *s);
+int SSL_renegotiate_abbreviated(SSL *s);
 __owur int SSL_renegotiate_pending(SSL *s);
 int SSL_shutdown(SSL *s);
 
@@ -2096,6 +2098,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_DTLS_PROCESS_HELLO_VERIFY                  386
 # define SSL_F_FINAL_EC_PT_FORMATS                        485
 # define SSL_F_FINAL_EMS                                  486
+# define SSL_F_FINAL_KEY_SHARE                            503
 # define SSL_F_FINAL_RENEGOTIATE                          483
 # define SSL_F_FINAL_SIG_ALGS                             497
 # define SSL_F_NSS_KEYLOG_INT                             500
@@ -2280,6 +2283,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE               470
 # define SSL_F_TLS_CONSTRUCT_CTOS_NPN                     471
 # define SSL_F_TLS_CONSTRUCT_CTOS_PADDING                 472
+# define SSL_F_TLS_CONSTRUCT_CTOS_PSK                     501
+# define SSL_F_TLS_CONSTRUCT_CTOS_PSK_KEX_MODES           500
 # define SSL_F_TLS_CONSTRUCT_CTOS_RENEGOTIATE             473
 # define SSL_F_TLS_CONSTRUCT_CTOS_SCT                     474
 # define SSL_F_TLS_CONSTRUCT_CTOS_SERVER_NAME             475
@@ -2311,6 +2316,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_STOC_KEY_EXCHANGE            377
 # define SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE               456
 # define SSL_F_TLS_CONSTRUCT_STOC_NEXT_PROTO_NEG          457
+# define SSL_F_TLS_CONSTRUCT_STOC_PSK                     504
 # define SSL_F_TLS_CONSTRUCT_STOC_RENEGOTIATE             458
 # define SSL_F_TLS_CONSTRUCT_STOC_SERVER_NAME             459
 # define SSL_F_TLS_CONSTRUCT_STOC_SESSION_TICKET          460
@@ -2320,9 +2326,11 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_GET_MESSAGE_HEADER                     387
 # define SSL_F_TLS_PARSE_CLIENTHELLO_TLSEXT               449
 # define SSL_F_TLS_PARSE_CTOS_KEY_SHARE                   463
+# define SSL_F_TLS_PARSE_CTOS_PSK                         505
 # define SSL_F_TLS_PARSE_CTOS_RENEGOTIATE                 464
 # define SSL_F_TLS_PARSE_CTOS_USE_SRTP                    465
 # define SSL_F_TLS_PARSE_STOC_KEY_SHARE                   445
+# define SSL_F_TLS_PARSE_STOC_PSK                         502
 # define SSL_F_TLS_PARSE_STOC_RENEGOTIATE                 448
 # define SSL_F_TLS_PARSE_STOC_USE_SRTP                    446
 # define SSL_F_TLS_POST_PROCESS_CLIENT_HELLO              378
@@ -2344,6 +2352,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE            382
 # define SSL_F_TLS_PROCESS_ENCRYPTED_EXTENSIONS           444
 # define SSL_F_TLS_PROCESS_FINISHED                       364
+# define SSL_F_TLS_PROCESS_HELLO_REQ                      498
 # define SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT          442
 # define SSL_F_TLS_PROCESS_KEY_EXCHANGE                   365
 # define SSL_F_TLS_PROCESS_NEW_SESSION_TICKET             366
@@ -2355,7 +2364,9 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_SKE_ECDHE                      420
 # define SSL_F_TLS_PROCESS_SKE_PSK_PREAMBLE               421
 # define SSL_F_TLS_PROCESS_SKE_SRP                        422
+# define SSL_F_TLS_PSK_DO_BINDER                          506
 # define SSL_F_TLS_SCAN_CLIENTHELLO_TLSEXT                450
+# define SSL_F_TLS_SETUP_HANDSHAKE                        499
 # define SSL_F_USE_CERTIFICATE_CHAIN_FILE                 220
 
 /* Reason codes. */
@@ -2378,6 +2389,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_BAD_LENGTH                                 271
 # define SSL_R_BAD_PACKET_LENGTH                          115
 # define SSL_R_BAD_PROTOCOL_VERSION_NUMBER                116
+# define SSL_R_BAD_PSK_IDENTITY                           114
 # define SSL_R_BAD_RECORD_TYPE                            443
 # define SSL_R_BAD_RSA_ENCRYPT                            119
 # define SSL_R_BAD_SIGNATURE                              123

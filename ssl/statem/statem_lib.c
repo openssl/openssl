@@ -72,6 +72,49 @@ int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype)
     return 1;
 }
 
+int tls_setup_handshake(SSL *s)
+{
+    if (!ssl3_init_finished_mac(s))
+        return 0;
+
+    if (s->server) {
+        if (SSL_IS_FIRST_HANDSHAKE(s)) {
+            s->ctx->stats.sess_accept++;
+        } else if (!s->s3->send_connection_binding &&
+                   !(s->options &
+                     SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)) {
+            /*
+             * Server attempting to renegotiate with client that doesn't
+             * support secure renegotiation.
+             */
+            SSLerr(SSL_F_TLS_SETUP_HANDSHAKE,
+                   SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+            return 0;
+        } else {
+            s->ctx->stats.sess_accept_renegotiate++;
+
+            s->s3->tmp.cert_request = 0;
+        }
+    } else {
+        if (SSL_IS_FIRST_HANDSHAKE(s))
+            s->ctx->stats.sess_connect++;
+        else
+            s->ctx->stats.sess_connect_renegotiate++;
+
+        /* mark client_random uninitialized */
+        memset(s->s3->client_random, 0, sizeof(s->s3->client_random));
+        s->hit = 0;
+
+        s->s3->tmp.cert_req = 0;
+
+        if (SSL_IS_DTLS(s))
+            s->statem.use_timer = 1;
+    }
+
+    return 1;
+}
+
 /*
  * Size of the to-be-signed TLS13 data, without the hash size itself:
  * 64 bytes of value 32, 33 context bytes, 1 byte separator
@@ -607,7 +650,7 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
             }
         } else {
             if (!s->method->ssl3_enc->generate_master_secret(s,
-                    s->session->master_key, s->handshake_secret, 0,
+                    s->master_secret, s->handshake_secret, 0,
                     &s->session->master_key_length)) {
                 SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_CANNOT_CHANGE_CIPHER);
                 goto f_err;
@@ -778,7 +821,12 @@ unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk,
     return 1;
 }
 
-WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
+/*
+ * Tidy up after the end of a handshake. In the case of SCTP this may result
+ * in NBIO events. If |clearbufs| is set then init_buf and the wbio buffer is
+ * freed up as well.
+ */
+WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
 {
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
@@ -791,26 +839,26 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
     }
 #endif
 
-    /* clean a few things up */
-    ssl3_cleanup_key_block(s);
-
-    if (!SSL_IS_DTLS(s)) {
-        /*
-         * We don't do this in DTLS because we may still need the init_buf
-         * in case there are any unexpected retransmits
-         */
-        BUF_MEM_free(s->init_buf);
-        s->init_buf = NULL;
+    if (clearbufs) {
+        if (!SSL_IS_DTLS(s)) {
+            /*
+             * We don't do this in DTLS because we may still need the init_buf
+             * in case there are any unexpected retransmits
+             */
+            BUF_MEM_free(s->init_buf);
+            s->init_buf = NULL;
+        }
+        ssl_free_wbio_buffer(s);
+        s->init_num = 0;
     }
 
-    ssl_free_wbio_buffer(s);
-
-    s->init_num = 0;
-
-    if (!s->server || s->renegotiate == 2) {
+    if (s->statem.cleanuphand) {
         /* skipped if we just sent a HelloRequest */
         s->renegotiate = 0;
         s->new_session = 0;
+        s->statem.cleanuphand = 0;
+
+        ssl3_cleanup_key_block(s);
 
         if (s->server) {
             ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
@@ -842,6 +890,13 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
             dtls1_clear_received_buffer(s);
         }
     }
+
+    /*
+     * If we've not cleared the buffers its because we've got more work to do,
+     * so continue.
+     */
+    if (!clearbufs)
+        return WORK_FINISHED_CONTINUE;
 
     return WORK_FINISHED_STOP;
 }
@@ -891,7 +946,8 @@ int tls_get_message_header(SSL *s, int *mt)
 
         skip_message = 0;
         if (!s->server)
-            if (p[0] == SSL3_MT_HELLO_REQUEST)
+            if (s->statem.hand_state != TLS_ST_OK
+                    && p[0] == SSL3_MT_HELLO_REQUEST)
                 /*
                  * The server may always send 'Hello Request' messages --
                  * we are doing a handshake anyway now, so ignore them if

@@ -191,7 +191,8 @@ int tls_construct_ctos_session_ticket(SSL *s, WPACKET *pkt, X509 *x,
         return 1;
 
     if (!s->new_session && s->session != NULL
-            && s->session->ext.tick != NULL) {
+            && s->session->ext.tick != NULL
+            && s->session->ssl_version != TLS1_3_VERSION) {
         ticklen = s->session->ext.ticklen;
     } else if (s->session && s->ext.session_ticket != NULL
                && s->ext.session_ticket->data != NULL) {
@@ -318,7 +319,7 @@ int tls_construct_ctos_status_request(SSL *s, WPACKET *pkt, X509 *x,
 int tls_construct_ctos_npn(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                            int *al)
 {
-    if (s->ctx->ext.npn_select_cb == NULL || s->s3->tmp.finish_md_len != 0)
+    if (s->ctx->ext.npn_select_cb == NULL || !SSL_IS_FIRST_HANDSHAKE(s))
         return 1;
 
     /*
@@ -340,11 +341,7 @@ int tls_construct_ctos_alpn(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
 {
     s->s3->alpn_sent = 0;
 
-    /*
-     * finish_md_len is non-zero during a renegotiation, so
-     * this avoids sending ALPN during the renegotiation
-     */
-    if (s->ext.alpn == NULL || s->s3->tmp.finish_md_len != 0)
+    if (s->ext.alpn == NULL || !SSL_IS_FIRST_HANDSHAKE(s))
         return 1;
 
     if (!WPACKET_put_bytes_u16(pkt,
@@ -498,6 +495,35 @@ int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt, X509 *x,
     return 1;
 }
 
+/*
+ * Construct a psk_kex_modes extension. We only have two modes we know about
+ * at this stage, so we send both.
+ */
+int tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt, X509 *x,
+                                     size_t chainidx, int *al)
+{
+#ifndef OPENSSL_NO_TLS1_3
+    /*
+     * TODO(TLS1.3): Do we want this list to be configurable? For now we always
+     * just send both supported modes
+     */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk_kex_modes)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_start_sub_packet_u8(pkt)
+            || !WPACKET_put_bytes_u8(pkt, TLSEXT_KEX_MODE_KE_DHE)
+            || !WPACKET_put_bytes_u8(pkt, TLSEXT_KEX_MODE_KE)
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK_KEX_MODES, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_KE | TLSEXT_KEX_MODE_FLAG_KE_DHE;
+#endif
+
+    return 1;
+}
+
 int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                                  int *al)
 {
@@ -631,6 +657,118 @@ int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
     }
 
     return 1;
+}
+
+/*
+ * Construct the pre_shared_key extension
+ */
+int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
+                           int *al)
+{
+#ifndef OPENSSL_NO_TLS1_3
+    uint32_t now, agesec, agems;
+    size_t hashsize, binderoffset, msglen;
+    unsigned char *binder = NULL, *msgstart = NULL;
+    const EVP_MD *md;
+    int ret = 0;
+
+    s->session->ext.tick_identity = TLSEXT_PSK_BAD_IDENTITY;
+
+    /*
+     * If this is an incompatible or new session then we have nothing to resume
+     * so don't add this extension.
+     */
+    if (s->session->ssl_version != TLS1_3_VERSION
+            || s->session->ext.ticklen == 0)
+        return 1;
+
+    if (s->session->cipher == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    md = ssl_md(s->session->cipher->algorithm2);
+    if (md == NULL) {
+        /* Don't recognise this cipher so we can't use the session. Ignore it */
+        return 1;
+    }
+
+    /*
+     * Technically the C standard just says time() returns a time_t and says
+     * nothing about the encoding of that type. In practice most implementations
+     * follow POSIX which holds it as an integral type in seconds since epoch.
+     * We've already made the assumption that we can do this in multiple places
+     * in the code, so portability shouldn't be an issue.
+     */
+    now = (uint32_t)time(NULL);
+    agesec = now - (uint32_t)s->session->time;
+
+    if (s->session->ext.tick_lifetime_hint < agesec) {
+        /* Ticket is too old. Ignore it. */
+        return 1;
+    }
+
+    /*
+     * Calculate age in ms. We're just doing it to nearest second. Should be
+     * good enough.
+     */
+    agems = agesec * (uint32_t)1000;
+
+    if (agesec != 0 && agems / (uint32_t)1000 != agesec) {
+        /*
+         * Overflow. Shouldn't happen unless this is a *really* old session. If
+         * so we just ignore it.
+         */
+        return 1;
+    }
+
+    /*
+     * Obfuscate the age. Overflow here is fine, this addition is supposed to
+     * be mod 2^32.
+     */
+    agems += s->session->ext.tick_age_add;
+
+    hashsize = EVP_MD_size(md);
+
+    /* Create the extension, but skip over the binder for now */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u16(pkt, s->session->ext.tick,
+                                       s->session->ext.ticklen)
+            || !WPACKET_put_bytes_u32(pkt, agems)
+            || !WPACKET_close(pkt)
+            || !WPACKET_get_total_written(pkt, &binderoffset)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_allocate_bytes_u8(pkt, hashsize, &binder)
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)
+            || !WPACKET_get_total_written(pkt, &msglen)
+               /*
+                * We need to fill in all the sub-packet lengths now so we can
+                * calculate the HMAC of the message up to the binders
+                */
+            || !WPACKET_fill_lengths(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    msgstart = WPACKET_get_curr(pkt) - msglen;
+
+    if (tls_psk_do_binder(s, md, msgstart, binderoffset, NULL, binder,
+                          s->session, 1) != 1) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    s->session->ext.tick_identity = 0;
+
+    ret = 1;
+ err:
+    return ret;
+#else
+    return 1;
+#endif
 }
 
 /*
@@ -866,7 +1004,7 @@ int tls_parse_stoc_npn(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
     PACKET tmppkt;
 
     /* Check if we are in a renegotiation. If so ignore this extension */
-    if (s->s3->tmp.finish_md_len != 0)
+    if (!SSL_IS_FIRST_HANDSHAKE(s))
         return 1;
 
     /* We must have requested it. */
@@ -1079,6 +1217,29 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
         return 0;
     }
     EVP_PKEY_free(skey);
+#endif
+
+    return 1;
+}
+
+int tls_parse_stoc_psk(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
+{
+#ifndef OPENSSL_NO_TLS1_3
+    unsigned int identity;
+
+    if (!PACKET_get_net_2(pkt, &identity) || PACKET_remaining(pkt) != 0) {
+        *al = SSL_AD_HANDSHAKE_FAILURE;
+        SSLerr(SSL_F_TLS_PARSE_STOC_PSK, SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+
+    if (s->session->ext.tick_identity != (int)identity) {
+        *al = SSL_AD_HANDSHAKE_FAILURE;
+        SSLerr(SSL_F_TLS_PARSE_STOC_PSK, SSL_R_BAD_PSK_IDENTITY);
+        return 0;
+    }
+
+    s->hit = 1;
 #endif
 
     return 1;

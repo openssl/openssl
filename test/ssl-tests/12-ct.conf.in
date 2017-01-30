@@ -46,9 +46,6 @@ our @tests = (
         name => "ct-permissive-resumption",
         server => { },
         client => {
-            #TODO(TLS1.3): Temporarily set to TLSv1.2 until we implement TLS1.3
-            #              resumption
-            MaxProtocol => "TLSv1.2",
             extra => {
                 "CTValidation" => "Permissive",
             },
@@ -63,9 +60,6 @@ our @tests = (
         name => "ct-strict-resumption",
         server => { },
         client => {
-            #TODO(TLS1.3): Temporarily set to TLSv1.2 until we implement TLS1.3
-            #              resumption
-            MaxProtocol => "TLSv1.2",
             extra => {
                 "CTValidation" => "Permissive",
             },
@@ -73,9 +67,6 @@ our @tests = (
         # SCTs are not present during resumption, so the resumption
         # should succeed.
         resume_client => {
-            #TODO(TLS1.3): Temporarily set to TLSv1.2 until we implement TLS1.3
-            #              resumption
-            MaxProtocol => "TLSv1.2",
             extra => {
                 "CTValidation" => "Strict",
             },

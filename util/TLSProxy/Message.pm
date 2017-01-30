@@ -74,7 +74,9 @@ use constant {
     EXT_EXTENDED_MASTER_SECRET => 23,
     EXT_SESSION_TICKET => 35,
     EXT_KEY_SHARE => 40,
+    EXT_PSK => 41,
     EXT_SUPPORTED_VERSIONS => 43,
+    EXT_PSK_KEX_MODES => 45,
     EXT_RENEGOTIATE => 65281,
     EXT_NPN => 13172,
     # This extension is an unofficial extension only ever written by OpenSSL
@@ -98,6 +100,7 @@ my $end = 0;
 my @message_rec_list = ();
 my @message_frag_lens = ();
 my $ciphersuite = 0;
+my $successondata = 0;
 
 sub clear
 {
@@ -107,6 +110,7 @@ sub clear
     $server = 0;
     $success = 0;
     $end = 0;
+    $successondata = 0;
     @message_rec_list = ();
     @message_frag_lens = ();
 }
@@ -218,6 +222,11 @@ sub get_messages
     } elsif ($record->content_type == TLSProxy::Record::RT_APPLICATION_DATA) {
         print "  [ENCRYPTED APPLICATION DATA]\n";
         print "  [".$record->decrypt_data."]\n";
+
+        if ($successondata) {
+            $success = 1;
+            $end = 1;
+        }
     } elsif ($record->content_type == TLSProxy::Record::RT_ALERT) {
         my ($alertlev, $alertdesc) = unpack('CC', $record->decrypt_data);
         #A CloseNotify from the client indicates we have finished successfully
@@ -506,5 +515,12 @@ sub encoded_length
     my $self = shift;
     return TLS_MESSAGE_HEADER_LENGTH + length($self->data);
 }
-
+sub successondata
+{
+    my $class = shift;
+    if (@_) {
+        $successondata = shift;
+    }
+    return $successondata;
+}
 1;

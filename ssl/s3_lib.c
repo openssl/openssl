@@ -3545,25 +3545,28 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
     return (1);
 }
 
+const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
+{
+    SSL_CIPHER c;
+
+    c.id = id;
+    return OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
+}
+
 /*
  * This function needs to check if the ciphers required are actually
  * available
  */
 const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 {
-    SSL_CIPHER c;
-    const SSL_CIPHER *cp;
-    uint32_t id;
-
-    id = 0x03000000 | ((uint32_t)p[0] << 8L) | (uint32_t)p[1];
-    c.id = id;
-    cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
-    return cp;
+    return ssl3_get_cipher_by_id(SSL3_CK_CIPHERSUITE_FLAG
+                                 | ((uint32_t)p[0] << 8L)
+                                 | (uint32_t)p[1]);
 }
 
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt, size_t *len)
 {
-    if ((c->id & 0xff000000) != 0x03000000) {
+    if ((c->id & 0xff000000) != SSL3_CK_CIPHERSUITE_FLAG) {
         *len = 0;
         return 1;
     }
@@ -3822,7 +3825,7 @@ int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written)
 {
     clear_sys_error();
     if (s->s3->renegotiate)
-        ssl3_renegotiate_check(s);
+        ssl3_renegotiate_check(s, 0);
 
     return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len,
                                       written);
@@ -3835,7 +3838,7 @@ static int ssl3_read_internal(SSL *s, void *buf, size_t len, int peek,
 
     clear_sys_error();
     if (s->s3->renegotiate)
-        ssl3_renegotiate_check(s);
+        ssl3_renegotiate_check(s, 0);
     s->s3->in_read_app_data = 1;
     ret =
         s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, NULL, buf, len,
@@ -3874,21 +3877,26 @@ int ssl3_renegotiate(SSL *s)
     if (s->handshake_func == NULL)
         return (1);
 
-    if (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)
-        return (0);
-
     s->s3->renegotiate = 1;
     return (1);
 }
 
-int ssl3_renegotiate_check(SSL *s)
+/*
+ * Check if we are waiting to do a renegotiation and if so whether now is a
+ * good time to do it. If |initok| is true then we are being called from inside
+ * the state machine so ignore the result of SSL_in_init(s). Otherwise we
+ * should not do a renegotiation if SSL_in_init(s) is true. Returns 1 if we
+ * should do a renegotiation now and sets up the state machine for it. Otherwise
+ * returns 0.
+ */
+int ssl3_renegotiate_check(SSL *s, int initok)
 {
     int ret = 0;
 
     if (s->s3->renegotiate) {
         if (!RECORD_LAYER_read_pending(&s->rlayer)
             && !RECORD_LAYER_write_pending(&s->rlayer)
-            && !SSL_in_init(s)) {
+            && (initok || !SSL_in_init(s))) {
             /*
              * if we are the server, and we have sent a 'RENEGOTIATE'
              * message, we need to set the state machine into the renegotiate
@@ -3901,7 +3909,7 @@ int ssl3_renegotiate_check(SSL *s)
             ret = 1;
         }
     }
-    return (ret);
+    return ret;
 }
 
 /*
@@ -4098,13 +4106,17 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
     if (gensecret) {
         if (SSL_IS_TLS13(s)) {
             /*
-             * TODO(TLS1.3): For now we just use the default early_secret, this
-             * will need to change later when other early_secrets will be
-             * possible.
+             * If we are resuming then we already generated the early secret
+             * when we created the ClientHello, so don't recreate it.
              */
-            rv = tls13_generate_early_secret(s, NULL, 0)
-                 && tls13_generate_handshake_secret(s, pms, pmslen);
-            OPENSSL_free(pms);
+            if (!s->hit)
+                rv = tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL,
+                                           0,
+                                           (unsigned char *)&s->early_secret);
+            else
+                rv = 1;
+
+            rv = rv && tls13_generate_handshake_secret(s, pms, pmslen);
         } else {
             /* Generate master secret and discard premaster */
             rv = ssl_generate_master_secret(s, pms, pmslen, 1);

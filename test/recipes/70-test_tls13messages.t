@@ -81,9 +81,15 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
         checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
         checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK_KEX_MODES,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
+        checkhandshake::PSK_CLI_EXTENSION],
 
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
         checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_PSK,
+        checkhandshake::PSK_SRV_EXTENSION],
 
     [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_SERVER_NAME,
         checkhandshake::SERVER_NAME_SRV_EXTENSION],
@@ -105,20 +111,24 @@ my $proxy = TLSProxy::Proxy->new(
 
 #Test 1: Check we get all the right messages for a default handshake
 (undef, my $session) = tempfile();
-#$proxy->serverconnects(2);
+$proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
+$proxy->sessionfile($session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 12;
+plan tests => 13;
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
                "Default handshake test");
 
-#TODO(TLS1.3): Test temporarily disabled until we implement TLS1.3 resumption
 #Test 2: Resumption handshake
-#$proxy->clearClient();
-#$proxy->clientflags("-sess_in ".$session);
-#$proxy->clientstart();
-#checkmessages(RESUME_HANDSHAKE, "Resumption handshake test");
+$proxy->clearClient();
+$proxy->clientflags("-sess_in ".$session);
+$proxy->clientstart();
+checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::PSK_CLI_EXTENSION
+               | checkhandshake::PSK_SRV_EXTENSION,
+               "Resumption handshake test");
 unlink $session;
 
 #Test 3: A status_request handshake (client request only)

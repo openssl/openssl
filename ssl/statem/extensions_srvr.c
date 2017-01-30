@@ -322,21 +322,8 @@ int tls_parse_ctos_npn(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
     /*
      * We shouldn't accept this extension on a
      * renegotiation.
-     *
-     * s->new_session will be set on renegotiation, but we
-     * probably shouldn't rely that it couldn't be set on
-     * the initial renegotiation too in certain cases (when
-     * there's some other reason to disallow resuming an
-     * earlier session -- the current code won't be doing
-     * anything like that, but this might change).
-     *
-     * A valid sign that there's been a previous handshake
-     * in this connection is if s->s3->tmp.finish_md_len >
-     * 0.  (We are talking about a check that will happen
-     * in the Hello protocol round, well before a new
-     * Finished message could have been computed.)
      */
-    if (s->s3->tmp.finish_md_len == 0)
+    if (SSL_IS_FIRST_HANDSHAKE(s))
         s->s3->npn_seen = 1;
 
     return 1;
@@ -352,7 +339,7 @@ int tls_parse_ctos_alpn(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
 {
     PACKET protocol_list, save_protocol_list, protocol;
 
-    if (s->s3->tmp.finish_md_len != 0)
+    if (!SSL_IS_FIRST_HANDSHAKE(s))
         return 1;
 
     if (!PACKET_as_length_prefixed_2(pkt, &protocol_list)
@@ -492,6 +479,35 @@ static int check_in_list(SSL *s, unsigned int group_id,
 #endif
 
 /*
+ * Process a psk_kex_modes extension received in the ClientHello. |pkt| contains
+ * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
+ * If a failure occurs then |*al| is set to an appropriate alert value.
+ */
+int tls_parse_ctos_psk_kex_modes(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
+                                 int *al)
+{
+#ifndef OPENSSL_NO_TLS1_3
+    PACKET psk_kex_modes;
+    unsigned int mode;
+
+    if (!PACKET_as_length_prefixed_1(pkt, &psk_kex_modes)
+            || PACKET_remaining(&psk_kex_modes) == 0) {
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
+
+    while (PACKET_get_1(&psk_kex_modes, &mode)) {
+        if (mode == TLSEXT_KEX_MODE_KE_DHE)
+            s->ext.psk_kex_mode |= TLSEXT_KEX_MODE_FLAG_KE_DHE;
+        else if (mode == TLSEXT_KEX_MODE_KE)
+            s->ext.psk_kex_mode |= TLSEXT_KEX_MODE_FLAG_KE;
+    }
+#endif
+
+    return 1;
+}
+
+/*
  * Process a key_share extension received in the ClientHello. |pkt| contains
  * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
  * If a failure occurs then |*al| is set to an appropriate alert value.
@@ -507,7 +523,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
     int group_nid, found = 0;
     unsigned int curve_flags;
 
-    if (s->hit)
+    if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
         return 1;
 
     /* Sanity check */
@@ -639,8 +655,7 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, X509 *x,
         return 0;
     }
 
-    if (!s->hit
-            && !PACKET_memdup(&supported_groups_list,
+    if (!PACKET_memdup(&supported_groups_list,
                               &s->session->ext.supportedgroups,
                               &s->session->ext.supportedgroups_len)) {
         *al = SSL_AD_DECODE_ERROR;
@@ -662,6 +677,104 @@ int tls_parse_ctos_ems(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
     s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
 
     return 1;
+}
+
+int tls_parse_ctos_psk(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al)
+{
+    PACKET identities, binders, binder;
+    size_t binderoffset, hashsize;
+    SSL_SESSION *sess = NULL;
+    unsigned int id, i;
+    const EVP_MD *md = NULL;
+
+    /*
+     * If we have no PSK kex mode that we recognise then we can't resume so
+     * ignore this extension
+     */
+    if ((s->ext.psk_kex_mode
+            & (TLSEXT_KEX_MODE_FLAG_KE | TLSEXT_KEX_MODE_FLAG_KE_DHE)) == 0)
+        return 1;
+
+    if (!PACKET_get_length_prefixed_2(pkt, &identities)) {
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
+
+    for (id = 0; PACKET_remaining(&identities) != 0; id++) {
+        PACKET identity;
+        unsigned long ticket_age;
+        int ret;
+
+        if (!PACKET_get_length_prefixed_2(&identities, &identity)
+                || !PACKET_get_net_4(&identities, &ticket_age)) {
+            *al = SSL_AD_DECODE_ERROR;
+            return 0;
+        }
+
+        /* TODO(TLS1.3): Should we validate the ticket age? */
+
+        ret = tls_decrypt_ticket(s, PACKET_data(&identity),
+                                 PACKET_remaining(&identity), NULL, 0, &sess);
+        if (ret == TICKET_FATAL_ERR_MALLOC || ret == TICKET_FATAL_ERR_OTHER) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            return 0;
+        }
+        if (ret == TICKET_NO_DECRYPT)
+            continue;
+
+        md = ssl_md(sess->cipher->algorithm2);
+        if (md == NULL) {
+            /*
+             * Don't recognise this cipher so we can't use the session.
+             * Ignore it
+             */
+            SSL_SESSION_free(sess);
+            sess = NULL;
+            continue;
+        }
+
+        /*
+         * TODO(TLS1.3): Somehow we need to handle the case of a ticket renewal.
+         * Ignored for now
+         */
+
+        break;
+    }
+
+    if (sess == NULL)
+        return 1;
+
+    binderoffset = PACKET_data(pkt) - (const unsigned char *)s->init_buf->data;
+    hashsize = EVP_MD_size(md);
+
+    if (!PACKET_get_length_prefixed_2(pkt, &binders)) {
+        *al = SSL_AD_DECODE_ERROR;
+        goto err;
+    }
+
+    for (i = 0; i <= id; i++) {
+        if (!PACKET_get_length_prefixed_1(&binders, &binder)) {
+            *al = SSL_AD_DECODE_ERROR;
+            goto err;
+        }
+    }
+
+    if (PACKET_remaining(&binder) != hashsize
+            || tls_psk_do_binder(s, md,
+                                 (const unsigned char *)s->init_buf->data,
+                                 binderoffset, PACKET_data(&binder), NULL,
+                                 sess, 0) != 1) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PARSE_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    sess->ext.tick_identity = id;
+    SSL_SESSION_free(s->session);
+    s->session = sess;
+    return 1;
+err:
+    return 0;
 }
 
 /*
@@ -901,12 +1014,14 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
     size_t encoded_pt_len = 0;
     EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL;
 
-    if (s->hit)
-        return 1;
-
     if (ckey == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-        return 0;
+        /* No key_share received from client; must be resuming. */
+        if (!s->hit || !tls13_generate_handshake_secret(s, NULL, 0)) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        return 1;
     }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
@@ -969,6 +1084,23 @@ int tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt, X509 *x,
 
     if (!WPACKET_memcpy(pkt, cryptopro_ext, sizeof(cryptopro_ext))) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_CRYPTOPRO_BUG, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_construct_stoc_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
+                           int *al)
+{
+    if (!s->hit)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u16(pkt, s->session->ext.tick_identity)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_PSK, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
