@@ -1180,6 +1180,25 @@ struct ssl_st {
     CRYPTO_RWLOCK *lock;
 };
 
+/*
+ * Structure containing table entry of values associated with the signature
+ * algorithms (signature scheme) extension
+*/
+typedef struct sigalg_lookup_st {
+    /* TLS 1.3 signature scheme name */
+    const char *name;
+    /* Raw value used in extension */
+    uint16_t sigalg;
+    /* NID of hash algorithm */
+    int hash;
+    /* NID of signature algorithm */
+    int sig;
+    /* Combined hash and signature NID, if any */
+    int sigandhash;
+    /* Required public key curve (ECDSA only) */
+    int curve;
+} SIGALG_LOOKUP;
+
 typedef struct ssl3_state_st {
     long flags;
     size_t read_mac_secret_size;
@@ -1269,10 +1288,10 @@ typedef struct ssl3_state_st {
         uint16_t *peer_sigalgs;
         /* Size of above array */
         size_t peer_sigalgslen;
+        /* Sigalg peer actualy uses */
+        const SIGALG_LOOKUP *peer_sigalg;
         /* Digest peer uses for signing */
         const EVP_MD *peer_md;
-        /* Signature type: public key type or EVP_PKEY_RSA_PSS for PSS */
-        int peer_sigtype;
         /* Array of digests used for signing */
         const EVP_MD *md[SSL_PKEY_NUM];
         /*
@@ -1509,25 +1528,6 @@ typedef struct {
     size_t meths_count;
 } custom_ext_methods;
 
-/*
- * Structure containing table entry of values associated with the signature
- * algorithms (signature scheme) extension
-*/
-typedef struct sigalg_lookup_st {
-    /* TLS 1.3 signature scheme name */
-    const char *name;
-    /* Raw value used in extension */
-    uint16_t sigalg;
-    /* NID of hash algorithm */
-    int hash;
-    /* NID of signature algorithm */
-    int sig;
-    /* Combined hash and signature NID, if any */
-    int sigandhash;
-    /* Required public key curve (ECDSA only) */
-    int curve;
-} SIGALG_LOOKUP;
-
 typedef struct cert_st {
     /* Current active set */
     /*
@@ -1750,7 +1750,8 @@ typedef enum tlsext_index_en {
 /* An invalid index into the TLSv1.3 PSK identities */
 #define TLSEXT_PSK_BAD_IDENTITY                                 -1
 
-#define SSL_USE_PSS(s) (s->s3->tmp.peer_sigtype == EVP_PKEY_RSA_PSS)
+#define SSL_USE_PSS(s) (s->s3->tmp.peer_sigalg != NULL && \
+                        s->s3->tmp.peer_sigalg->sig == EVP_PKEY_RSA_PSS)
 
 /* A dummy signature value not valid for TLSv1.2 signature algs */
 #define TLSEXT_signature_rsa_pss                                0x0101
@@ -2260,7 +2261,7 @@ __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
 __owur int tls1_save_sigalgs(SSL *s, PACKET *pkt);
 __owur int tls1_process_sigalgs(SSL *s);
 __owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs);
-__owur int tls12_check_peer_sigalg(SSL *s, unsigned int sig, EVP_PKEY *pkey);
+__owur int tls12_check_peer_sigalg(SSL *s, uint16_t, EVP_PKEY *pkey);
 void ssl_set_client_disabled(SSL *s);
 __owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op);
 

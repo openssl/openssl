@@ -823,23 +823,25 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
  * algorithms and if so set relevant digest and signature scheme in
  * s.
  */
-int tls12_check_peer_sigalg(SSL *s, unsigned int sig, EVP_PKEY *pkey)
+int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
 {
     const uint16_t *sent_sigs;
     const EVP_MD *md = NULL;
     char sigalgstr[2];
     size_t sent_sigslen, i;
     int pkeyid = EVP_PKEY_id(pkey);
-    int peer_sigtype;
+    const SIGALG_LOOKUP *lu;
 
     /* Should never happen */
     if (pkeyid == -1)
         return -1;
-    /* Check key type is consistent with signature */
-    peer_sigtype = tls_sigalg_get_sig(sig);
-    /* RSA keys can be used for RSA-PSS */
-    if (pkeyid != peer_sigtype
-        && (peer_sigtype != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA)) {
+    lu = tls1_lookup_sigalg(sig);
+    /*
+     * Check sigalgs is known and key type is consistent with signature:
+     * RSA keys can be used for RSA-PSS
+     */
+    if (lu == NULL || (pkeyid != lu->sig
+        && (lu->sig != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA))) {
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
@@ -883,13 +885,12 @@ int tls12_check_peer_sigalg(SSL *s, unsigned int sig, EVP_PKEY *pkey)
             break;
     }
     /* Allow fallback to SHA1 if not strict mode */
-    if (i == sent_sigslen
-        && (tls_sigalg_get_hash(sig) != NID_sha1
-            || s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)) {
+    if (i == sent_sigslen && (lu->hash != NID_sha1
+        || s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)) {
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
-    md = tls12_get_hash(tls_sigalg_get_hash(sig));
+    md = tls12_get_hash(lu->hash);
     if (md == NULL) {
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_UNKNOWN_DIGEST);
         return 0;
@@ -910,15 +911,15 @@ int tls12_check_peer_sigalg(SSL *s, unsigned int sig, EVP_PKEY *pkey)
      * Store the digest used so applications can retrieve it if they wish.
      */
     s->s3->tmp.peer_md = md;
-    s->s3->tmp.peer_sigtype = peer_sigtype;
+    s->s3->tmp.peer_sigalg = lu;
     return 1;
 }
 
 int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid)
 {
-    if (s->s3->tmp.peer_sigtype == NID_undef)
+    if (s->s3->tmp.peer_sigalg == NULL)
         return 0;
-    *pnid = s->s3->tmp.peer_sigtype;
+    *pnid = s->s3->tmp.peer_sigalg->sig;
     return 1;
 }
 

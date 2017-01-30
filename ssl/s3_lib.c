@@ -3177,20 +3177,10 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         return ssl_cert_set_cert_store(s->cert, parg, 1, larg);
 
     case SSL_CTRL_GET_PEER_SIGNATURE_NID:
-        if (SSL_USE_SIGALGS(s)) {
-            if (s->session) {
-                const EVP_MD *sig;
-                sig = s->s3->tmp.peer_md;
-                if (sig) {
-                    *(int *)parg = EVP_MD_type(sig);
-                    return 1;
-                }
-            }
+        if (s->s3->tmp.peer_sigalg == NULL)
             return 0;
-        }
-        /* Might want to do something here for other versions */
-        else
-            return 0;
+        *(int *)parg = s->s3->tmp.peer_sigalg->hash;
+        return 1;
 
     case SSL_CTRL_GET_SERVER_TMP_KEY:
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
