@@ -1981,7 +1981,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                 al = SSL_AD_DECODE_ERROR;
                 goto err;
             }
-            md = s->s3->tmp.peer_md;
+            md = ssl_md(s->s3->tmp.peer_sigalg->hash_idx);
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
