@@ -292,4 +292,10 @@ if [ -z "$extra" -a `uname -m` = "x86_64" ]; then
   $ssltest -cipher AES128-SHA256 -bytes 8m	|| exit 1
 fi
 
+#############################################################################
+# Downgrade on reuse
+
+echo test downgrading to tls1 on session reuse
+$ssltest -reuse -tls1_reuse -num 2 || exit 1
+
 exit 0

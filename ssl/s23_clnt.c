@@ -121,22 +121,10 @@ static int ssl23_client_hello(SSL *s);
 static int ssl23_get_server_hello(SSL *s);
 static const SSL_METHOD *ssl23_get_client_method(int ver)
 {
-#ifndef OPENSSL_NO_SSL2
-    if (ver == SSL2_VERSION)
-        return (SSLv2_client_method());
-#endif
-#ifndef OPENSSL_NO_SSL3
-    if (ver == SSL3_VERSION)
-        return (SSLv3_client_method());
-#endif
-    if (ver == TLS1_VERSION)
-        return (TLSv1_client_method());
-    else if (ver == TLS1_1_VERSION)
-        return (TLSv1_1_client_method());
-    else if (ver == TLS1_2_VERSION)
-        return (TLSv1_2_client_method());
-    else
-        return (NULL);
+    /* When SSL_set_session is called, do NOT switch to the version-specific
+     * method table. The server may still negotiate a different version when
+     * rejecting the session. */
+    return SSLv23_client_method();
 }
 
 IMPLEMENT_ssl23_meth_func(SSLv23_client_method,
@@ -173,12 +161,6 @@ int ssl23_connect(SSL *s)
         case SSL_ST_BEFORE | SSL_ST_CONNECT:
         case SSL_ST_OK | SSL_ST_CONNECT:
 
-            if (s->session != NULL) {
-                SSLerr(SSL_F_SSL23_CONNECT,
-                       SSL_R_SSL23_DOING_SESSION_ID_REUSE);
-                ret = -1;
-                goto end;
-            }
             s->server = 0;
             if (cb != NULL)
                 cb(s, SSL_CB_HANDSHAKE_START, 1);
@@ -375,12 +357,13 @@ static int ssl23_client_hello(SSL *s)
 
     buf = (unsigned char *)s->init_buf->data;
     if (s->state == SSL23_ST_CW_CLNT_HELLO_A) {
-        /*
-         * Since we're sending s23 client hello, we're not reusing a session, as
-         * we'd be using the method from the saved session instead
-         */
-        if (!ssl_get_new_session(s, 0)) {
-            return -1;
+      /* Check if the session is resumable. If not, drop it. */
+        if (s->session == NULL ||
+            s->session->ssl_version > version ||
+            s->session->session_id_length == 0 ||
+            s->session->not_resumable) {
+            if (!ssl_get_new_session(s, 0))
+                return -1;
         }
 
         p = s->s3->client_random;
@@ -498,8 +481,21 @@ static int ssl23_client_hello(SSL *s)
             memcpy(p, s->s3->client_random, SSL3_RANDOM_SIZE);
             p += SSL3_RANDOM_SIZE;
 
-            /* Session ID (zero since there is no reuse) */
-            *(p++) = 0;
+            /* Session ID */
+            if (s->new_session || s->session == NULL)
+                i = 0;
+            else
+                i = s->session->session_id_length;
+            *(p++) = i;
+            if (i != 0) {
+                if (i > (int) sizeof(s->session->session_id)) {
+                    SSLerr(SSL_F_SSL23_CONNECT,
+                           SSL_R_SSL23_DOING_SESSION_ID_REUSE);
+                    return -1;
+                }
+                memcpy(p, s->session->session_id, i);
+                p += i;
+            }
 
             /* Ciphers supported (using SSL 3.0/TLS 1.0 format) */
             i = ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), &(p[2]),

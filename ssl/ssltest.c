@@ -743,6 +743,8 @@ static void sv_usage(void)
     fprintf(stderr, " -v            - more output\n");
     fprintf(stderr, " -d            - debug output\n");
     fprintf(stderr, " -reuse        - use session-id reuse\n");
+    fprintf(stderr, " -tls1_reuse   - downgrade to TLSv1 on session reuse\n");
+    fprintf(stderr, " -no_ticket    - do not issue TLS session ticket");
     fprintf(stderr, " -num <val>    - number of connections to perform\n");
     fprintf(stderr,
             " -bytes <val>  - number of bytes to swap between client/server\n");
@@ -961,7 +963,7 @@ int main(int argc, char *argv[])
     SSL_CTX *c_ctx = NULL;
     const SSL_METHOD *meth = NULL;
     SSL *c_ssl, *s_ssl;
-    int number = 1, reuse = 0;
+    int number = 1, reuse = 0, tls1_reuse = 0, no_ticket = 0;
     long bytes = 256L;
 #ifndef OPENSSL_NO_DH
     DH *dh;
@@ -1045,6 +1047,10 @@ int main(int argc, char *argv[])
             debug = 1;
         else if (strcmp(*argv, "-reuse") == 0)
             reuse = 1;
+        else if (strcmp(*argv, "-tls1_reuse") == 0)
+            tls1_reuse = 1;
+        else if (strcmp(*argv, "-no_ticket") == 0)
+            no_ticket = 1;
         else if (strcmp(*argv, "-dhe512") == 0) {
 #ifndef OPENSSL_NO_DH
             dhe512 = 1;
@@ -1296,6 +1302,13 @@ int main(int argc, char *argv[])
                 "to avoid protocol mismatch.\n");
         EXIT(1);
     }
+    if ((ssl2 || ssl3 || tls1 || dtls1 || dtls12 || !reuse || number <= 1) &&
+        tls1_reuse) {
+        fprintf(stderr, "Can\'t downgrade to TLSv1 on reuse without reuse, or\n"
+                        "from already low protocol version, or when number of\n"
+                        "tests is equal to 1\n");
+        EXIT(1);
+    }
 #ifdef OPENSSL_FIPS
     if (fips_mode) {
         if (!FIPS_mode_set(1)) {
@@ -1531,6 +1544,11 @@ int main(int argc, char *argv[])
                                        sizeof session_id_context);
     }
 
+    if (no_ticket) {
+        SSL_CTX_set_options(c_ctx, SSL_OP_NO_TICKET);
+        SSL_CTX_set_options(s_ctx, SSL_OP_NO_TICKET);
+    }
+
     /* Use PSK only if PSK key is given */
     if (psk_key != NULL) {
         /*
@@ -1703,6 +1721,10 @@ int main(int argc, char *argv[])
     for (i = 0; i < number; i++) {
         if (!reuse)
             SSL_set_session(c_ssl, NULL);
+        if ((i != 0) && tls1_reuse) {
+            SSL_set_ssl_method(c_ssl, SSLv23_method());
+            SSL_set_ssl_method(s_ssl, TLSv1_method());
+        }
         if (bio_pair)
             ret = doit_biopair(s_ssl, c_ssl, bytes, &s_time, &c_time);
         else
