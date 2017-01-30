@@ -873,20 +873,26 @@ static ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
             (sc->cert_ids = sk_ESS_CERT_ID_V2_new_null()) == NULL)
         goto err;
 
-    if ((cid = ESS_CERT_ID_V2_new_init(hash_alg, signcert, 0)) == NULL
-        || !sk_ESS_CERT_ID_V2_push(sc->cert_ids, cid))
+    if ((cid = ESS_CERT_ID_V2_new_init(hash_alg, signcert, 0)) == NULL)
         goto err;
+    if (!sk_ESS_CERT_ID_V2_push(sc->cert_ids, cid))
+        goto err;
+    cid = NULL;
+
     for (i = 0; i < sk_X509_num(certs); ++i) {
         X509 *cert = sk_X509_value(certs, i);
 
-        if ((cid = ESS_CERT_ID_V2_new_init(hash_alg, cert, 1)) == NULL
-            || !sk_ESS_CERT_ID_V2_push(sc->cert_ids, cid))
+        if ((cid = ESS_CERT_ID_V2_new_init(hash_alg, cert, 1)) == NULL)
             goto err;
+        if (!sk_ESS_CERT_ID_V2_push(sc->cert_ids, cid))
+            goto err;
+        cid = NULL;
     }
 
     return sc;
  err:
     ESS_SIGNING_CERT_V2_free(sc);
+    ESS_CERT_ID_V2_free(cid);
     TSerr(TS_F_ESS_SIGNING_CERT_V2_NEW_INIT, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
