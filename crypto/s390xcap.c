@@ -13,8 +13,7 @@
 #include <setjmp.h>
 #include <signal.h>
 #include "internal/cryptlib.h"
-
-extern unsigned long OPENSSL_s390xcap_P[];
+#include "s390x_arch.h"
 
 static sigjmp_buf ill_jmp;
 static void ill_handler(int sig)
@@ -22,17 +21,21 @@ static void ill_handler(int sig)
     siglongjmp(ill_jmp, sig);
 }
 
-unsigned long OPENSSL_s390x_facilities(void);
+void OPENSSL_s390x_facilities(void);
 
 void OPENSSL_cpuid_setup(void)
 {
     sigset_t oset;
     struct sigaction ill_act, oact;
+    uint64_t vec;
+    char *env;
+    int off;
+    int i;
 
     if (OPENSSL_s390xcap_P[0])
         return;
 
-    OPENSSL_s390xcap_P[0] = 1UL << (8 * sizeof(unsigned long) - 1);
+    OPENSSL_s390xcap_P[0] = 1ULL << (8 * sizeof(uint64_t) - 1);
 
     memset(&ill_act, 0, sizeof(ill_act));
     ill_act.sa_handler = ill_handler;
@@ -48,4 +51,26 @@ void OPENSSL_cpuid_setup(void)
 
     sigaction(SIGILL, &oact, NULL);
     sigprocmask(SIG_SETMASK, &oset, NULL);
+
+    if ((env = getenv("OPENSSL_s390xcap")) != NULL) {
+        for (i = 0; i < S390X_CAP_DWORDS; i++) {
+            off = (env[0] == '~') ? 1 : 0;
+
+            if (sscanf(env + off, "%llx", (unsigned long long *)&vec) == 1)
+                OPENSSL_s390xcap_P[i] &= off ? ~vec : vec;
+
+            if (i == S390X_STFLE_DWORDS - 1)
+                env = strchr(env, '.');
+            else
+                env = strpbrk(env, ":.");
+
+            if (env == NULL)
+                break;
+
+            if (env[0] == '.')
+                i = S390X_STFLE_DWORDS - 1;
+
+            env++;
+        }
+    }
 }
