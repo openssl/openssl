@@ -4118,10 +4118,8 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
 
             rv = rv && tls13_generate_handshake_secret(s, pms, pmslen);
         } else {
-            /* Generate master secret and discard premaster */
-            rv = ssl_generate_master_secret(s, pms, pmslen, 1);
+            rv = ssl_generate_master_secret(s, pms, pmslen, 0);
         }
-        pms = NULL;
     } else {
         /* Save premaster secret */
         s->s3->tmp.pms = pms;
