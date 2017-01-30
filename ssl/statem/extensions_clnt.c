@@ -164,7 +164,7 @@ int tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
     }
     /* Copy curve ID if supported */
     for (i = 0; i < num_curves; i++, pcurvestmp += 2) {
-        if (tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED)) {
+        if (tls_curve_allowed(s, pcurvestmp, SSL_SECOP_CURVE_SUPPORTED)) {
             if (!WPACKET_put_bytes_u8(pkt, pcurvestmp[0])
                 || !WPACKET_put_bytes_u8(pkt, pcurvestmp[1])) {
                     SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
