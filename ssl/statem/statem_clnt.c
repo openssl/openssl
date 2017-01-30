@@ -1562,17 +1562,23 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
                SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         goto f_err;
     }
-
-    exp_idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
-    if (exp_idx >= 0 && i != exp_idx
-        && (exp_idx != SSL_PKEY_GOST_EC ||
-            (i != SSL_PKEY_GOST12_512 && i != SSL_PKEY_GOST12_256
-             && i != SSL_PKEY_GOST01))) {
-        x = NULL;
-        al = SSL_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
-               SSL_R_WRONG_CERTIFICATE_TYPE);
-        goto f_err;
+    /*
+     * Check certificate type is consistent with ciphersuite. For TLS 1.3
+     * skip check since TLS 1.3 ciphersuites can be used with any certificate
+     * type.
+     */
+    if (!SSL_IS_TLS13(s)) {
+        exp_idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
+        if (exp_idx >= 0 && i != exp_idx
+            && (exp_idx != SSL_PKEY_GOST_EC ||
+                (i != SSL_PKEY_GOST12_512 && i != SSL_PKEY_GOST12_256
+                 && i != SSL_PKEY_GOST01))) {
+            x = NULL;
+            al = SSL_AD_ILLEGAL_PARAMETER;
+            SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
+                   SSL_R_WRONG_CERTIFICATE_TYPE);
+            goto f_err;
+        }
     }
     s->session->peer_type = i;
 
