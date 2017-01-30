@@ -850,35 +850,47 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     }
 #ifndef OPENSSL_NO_EC
     if (pkeyid == EVP_PKEY_EC) {
-        unsigned char curve_id[2], comp_id;
-        /* Check compression and curve matches extensions */
-        if (!tls1_set_ec_id(curve_id, &comp_id, EVP_PKEY_get0_EC_KEY(pkey)))
-            return 0;
-        if (!s->server && !tls1_check_ec_key(s, curve_id, &comp_id)) {
-            SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
-            return 0;
-        }
-        /* If Suite B only P-384+SHA384 or P-256+SHA-256 allowed */
-        if (tls1_suiteb(s)) {
-            if (curve_id[0])
+        EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+        if (SSL_IS_TLS13(s)) {
+            /* For TLS 1.3 check curve matches signature algorithm */
+            int curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+            if (curve != lu->curve) {
+                SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
                 return 0;
-            if (curve_id[1] == TLSEXT_curve_P_256) {
-                if (tls_sigalg_get_hash(sig) != NID_sha256) {
-                    SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
-                           SSL_R_ILLEGAL_SUITEB_DIGEST);
+            }
+        } else {
+            unsigned char curve_id[2], comp_id;
+            /* Check compression and curve matches extensions */
+            if (!tls1_set_ec_id(curve_id, &comp_id, ec))
+                return 0;
+            if (!s->server && !tls1_check_ec_key(s, curve_id, &comp_id)) {
+                SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
+                return 0;
+            }
+            /* If Suite B only P-384+SHA384 or P-256+SHA-256 allowed */
+            if (tls1_suiteb(s)) {
+                if (curve_id[0])
+                    return 0;
+                if (curve_id[1] == TLSEXT_curve_P_256) {
+                    if (tls_sigalg_get_hash(sig) != NID_sha256) {
+                        SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
+                               SSL_R_ILLEGAL_SUITEB_DIGEST);
+                        return 0;
+                    }
+                } else if (curve_id[1] == TLSEXT_curve_P_384) {
+                    if (tls_sigalg_get_hash(sig) != NID_sha384) {
+                        SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
+                               SSL_R_ILLEGAL_SUITEB_DIGEST);
+                        return 0;
+                    }
+                } else {
                     return 0;
                 }
-            } else if (curve_id[1] == TLSEXT_curve_P_384) {
-                if (tls_sigalg_get_hash(sig) != NID_sha384) {
-                    SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
-                           SSL_R_ILLEGAL_SUITEB_DIGEST);
-                    return 0;
-                }
-            } else
-                return 0;
+            }
         }
-    } else if (tls1_suiteb(s))
+    } else if (tls1_suiteb(s)) {
         return 0;
+    }
 #endif
 
     /* Check signature matches a type we sent */
