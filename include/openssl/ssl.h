@@ -880,7 +880,8 @@ typedef enum {
     TLS_ST_CR_ENCRYPTED_EXTENSIONS,
     TLS_ST_CR_CERT_VRFY,
     TLS_ST_SW_CERT_VRFY,
-    TLS_ST_CR_HELLO_REQ
+    TLS_ST_CR_HELLO_REQ,
+    TLS_ST_SW_HELLO_RETRY_REQUEST
 } OSSL_HANDSHAKE_STATE;
 
 /*
@@ -2300,6 +2301,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_EXTENSIONS                   447
 # define SSL_F_TLS_CONSTRUCT_FINISHED                     359
 # define SSL_F_TLS_CONSTRUCT_HELLO_REQUEST                373
+# define SSL_F_TLS_CONSTRUCT_HELLO_RETRY_REQUEST          510
 # define SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET           428
 # define SSL_F_TLS_CONSTRUCT_NEXT_PROTO                   426
 # define SSL_F_TLS_CONSTRUCT_SERVER_CERTIFICATE           490
@@ -2502,6 +2504,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_NO_RENEGOTIATION                           339
 # define SSL_R_NO_REQUIRED_DIGEST                         324
 # define SSL_R_NO_SHARED_CIPHER                           193
+# define SSL_R_NO_SHARED_GROUPS                           410
 # define SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS             376
 # define SSL_R_NO_SRTP_PROFILES                           359
 # define SSL_R_NO_SUITABLE_KEY_SHARE                      101

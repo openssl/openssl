@@ -979,12 +979,18 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
             && (!s->hit
                 || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0)) {
         /* No suitable share */
-        /* TODO(TLS1.3): Send a HelloRetryRequest */
+        if (s->server && s->hello_retry_request == 0 && sent) {
+            s->hello_retry_request = 1;
+            return 1;
+        }
+
+        /* Nothing left we can do - just fail */
         *al = SSL_AD_HANDSHAKE_FAILURE;
         SSLerr(SSL_F_FINAL_KEY_SHARE, SSL_R_NO_SUITABLE_KEY_SHARE);
         return 0;
     }
 
+    s->hello_retry_request = 0;
     /*
      * For a client side resumption with no key_share we need to generate
      * the handshake secret (otherwise this is done during key_share

@@ -1434,21 +1434,22 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
 
     switch (server_version) {
     default:
+        if (!SSL_IS_TLS13(s)) {
+            if (version_cmp(s, client_version, s->version) < 0)
+                return SSL_R_WRONG_SSL_VERSION;
+            /*
+             * If this SSL handle is not from a version flexible method we don't
+             * (and never did) check min/max FIPS or Suite B constraints.  Hope
+             * that's OK.  It is up to the caller to not choose fixed protocol
+             * versions they don't want.  If not, then easy to fix, just return
+             * ssl_method_error(s, s->method)
+             */
+            return 0;
+        }
         /*
-         * TODO(TLS1.3): This check will fail if someone attempts to do
-         * renegotiation in TLS1.3 at the moment. We need to ensure we disable
-         * renegotiation for TLS1.3
+         * Fall through if we are TLSv1.3 already (this means we must be after
+         * a HelloRetryRequest
          */
-        if (version_cmp(s, client_version, s->version) < 0)
-            return SSL_R_WRONG_SSL_VERSION;
-        /*
-         * If this SSL handle is not from a version flexible method we don't
-         * (and never did) check min/max FIPS or Suite B constraints.  Hope
-         * that's OK.  It is up to the caller to not choose fixed protocol
-         * versions they don't want.  If not, then easy to fix, just return
-         * ssl_method_error(s, s->method)
-         */
-        return 0;
     case TLS_ANY_VERSION:
         table = tls_version_table;
         break;
@@ -1503,6 +1504,15 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
         }
 
         if (best_vers > 0) {
+            if (SSL_IS_TLS13(s)) {
+                /*
+                 * We get here if this is after a HelloRetryRequest. In this
+                 * case we just check that we still negotiated TLSv1.3
+                 */
+                if (best_vers != TLS1_3_VERSION)
+                    return SSL_R_UNSUPPORTED_PROTOCOL;
+                return 0;
+            }
             s->version = best_vers;
             s->method = best_method;
             return 0;

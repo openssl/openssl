@@ -62,6 +62,7 @@
 #include <openssl/md5.h>
 
 static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt);
+static int tls_construct_hello_retry_request(SSL *s, WPACKET *pkt);
 static STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
                                                       PACKET *cipher_suites,
                                                       STACK_OF(SSL_CIPHER)
@@ -82,17 +83,19 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
     OSSL_STATEM *st = &s->statem;
 
     /*
-     * TODO(TLS1.3): This is still based on the TLSv1.2 state machine. Over time
-     * we will update this to look more like real TLSv1.3
-     */
-
-    /*
      * Note: There is no case for TLS_ST_BEFORE because at that stage we have
      * not negotiated TLSv1.3 yet, so that case is handled by
      * ossl_statem_server_read_transition()
      */
     switch (st->hand_state) {
     default:
+        break;
+
+    case TLS_ST_SW_HELLO_RETRY_REQUEST:
+        if (mt == SSL3_MT_CLIENT_HELLO) {
+            st->hand_state = TLS_ST_SR_CLNT_HELLO;
+            return 1;
+        }
         break;
 
     case TLS_ST_SW_FINISHED:
@@ -406,8 +409,14 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_ERROR;
 
     case TLS_ST_SR_CLNT_HELLO:
-        st->hand_state = TLS_ST_SW_SRVR_HELLO;
+        if (s->hello_retry_request)
+            st->hand_state = TLS_ST_SW_HELLO_RETRY_REQUEST;
+        else
+            st->hand_state = TLS_ST_SW_SRVR_HELLO;
         return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_HELLO_RETRY_REQUEST:
+        return WRITE_TRAN_FINISHED;
 
     case TLS_ST_SW_SRVR_HELLO:
         st->hand_state = TLS_ST_SW_ENCRYPTED_EXTENSIONS;
@@ -693,6 +702,11 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
         /* No post work to be done */
         break;
 
+    case TLS_ST_SW_HELLO_RETRY_REQUEST:
+        if (statem_flush(s) != 1)
+            return WORK_MORE_A;
+        break;
+
     case TLS_ST_SW_HELLO_REQ:
         if (statem_flush(s) != 1)
             return WORK_MORE_A;
@@ -903,6 +917,11 @@ int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt,
     case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
         *confunc = tls_construct_encrypted_extensions;
         *mt = SSL3_MT_ENCRYPTED_EXTENSIONS;
+        break;
+
+    case TLS_ST_SW_HELLO_RETRY_REQUEST:
+        *confunc = tls_construct_hello_retry_request;
+        *mt = SSL3_MT_HELLO_RETRY_REQUEST;
         break;
     }
 
@@ -1200,6 +1219,12 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     if (clienthello.isv2) {
         unsigned int mt;
 
+        if (!SSL_IS_FIRST_HANDSHAKE(s) || s->hello_retry_request) {
+            al = SSL_AD_HANDSHAKE_FAILURE;
+            SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_UNEXPECTED_MESSAGE);
+            goto f_err;
+        }
+
         /*-
          * An SSLv3/TLSv1 backwards-compatible CLIENT-HELLO in an SSLv2
          * header is sent directly on the wire, not wrapped as a TLS
@@ -1402,7 +1427,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 
     if (protverr) {
         SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, protverr);
-        if ((!s->enc_write_ctx && !s->write_hash)) {
+        if (SSL_IS_FIRST_HANDSHAKE(s)) {
             /* like ssl3_get_record, send alert using remote version number */
             s->version = s->client_version = clienthello.legacy_version;
         }
@@ -3502,6 +3527,10 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
         return NULL;
     }
 
+    OPENSSL_free(s->s3->tmp.ciphers_raw);
+    s->s3->tmp.ciphers_raw = NULL;
+    s->s3->tmp.ciphers_rawlen = 0;
+
     if (sslv2format) {
         size_t numciphers = PACKET_remaining(cipher_suites) / n;
         PACKET sslv2ciphers = *cipher_suites;
@@ -3606,4 +3635,29 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
  err:
     sk_SSL_CIPHER_free(sk);
     return NULL;
+}
+
+static int tls_construct_hello_retry_request(SSL *s, WPACKET *pkt)
+{
+    int al;
+
+    /*
+     * TODO(TLS1.3): Remove the DRAFT version before release
+     * (should be s->version)
+     */
+    if (!WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)
+            || !tls_construct_extensions(s, pkt, EXT_TLS1_3_HELLO_RETRY_REQUEST,
+                                         NULL, 0, &al)) {
+        ssl3_send_alert(s, SSL3_AL_FATAL, al);
+        SSLerr(SSL_F_TLS_CONSTRUCT_HELLO_RETRY_REQUEST, ERR_R_INTERNAL_ERROR);
+        ssl3_send_alert(s, SSL3_AL_FATAL, al);
+        return 0;
+    }
+
+    /* Ditch the session. We'll create a new one next time around */
+    SSL_SESSION_free(s->session);
+    s->session = NULL;
+    s->hit = 0;
+
+    return 1;
 }

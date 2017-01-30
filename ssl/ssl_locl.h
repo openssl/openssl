@@ -1006,6 +1006,9 @@ struct ssl_st {
     unsigned char cert_verify_hash[EVP_MAX_MD_SIZE];
     size_t cert_verify_hash_len;
 
+    /* Flag to indicate whether we should send a HelloRetryRequest or not */
+    int hello_retry_request;
+
     /*
      * the session_id_context is used to ensure sessions are only reused in
      * the appropriate context
