@@ -1300,8 +1300,6 @@ typedef struct ssl3_state_st {
         size_t peer_sigalgslen;
         /* Sigalg peer actualy uses */
         const SIGALG_LOOKUP *peer_sigalg;
-        /* Digest peer uses for signing */
-        const EVP_MD *peer_md;
         /* Array of digests used for signing */
         const EVP_MD *md[SSL_PKEY_NUM];
         /*

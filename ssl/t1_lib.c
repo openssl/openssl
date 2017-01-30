@@ -937,10 +937,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
-    /*
-     * Store the digest used so applications can retrieve it if they wish.
-     */
-    s->s3->tmp.peer_md = md;
+    /* Store the sigalg the peer uses */
     s->s3->tmp.peer_sigalg = lu;
     return 1;
 }
