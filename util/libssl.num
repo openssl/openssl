@@ -415,3 +415,4 @@ SSL_CTX_get_keylog_callback             415	1_1_1	EXIST::FUNCTION:
 SSL_get_peer_signature_type_nid         416	1_1_1	EXIST::FUNCTION:
 SSL_key_update                          417	1_1_1	EXIST::FUNCTION:
 SSL_get_key_update_type                 418	1_1_1	EXIST::FUNCTION:
+SSL_bytes_to_cipher_list                419	1_1_1	EXIST::FUNCTION:

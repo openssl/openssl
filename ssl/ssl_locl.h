@@ -1991,6 +1991,11 @@ __owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
                                                     **sorted,
                                                     const char *rule_str,
                                                     CERT *c);
+__owur STACK_OF(SSL_CIPHER) *bytes_to_cipher_list(SSL *s,
+                                                  PACKET *cipher_suites,
+                                                  STACK_OF(SSL_CIPHER)
+                                                  **skp, int sslv2format,
+                                                  int *al);
 void ssl_update_cache(SSL *s, int mode);
 __owur int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
                               const EVP_MD **md, int *mac_pkey_type,
