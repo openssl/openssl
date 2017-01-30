@@ -835,6 +835,9 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     /* Should never happen */
     if (pkeyid == -1)
         return -1;
+    /* Only allow PSS for TLS 1.3 */
+    if (SSL_IS_TLS13(s) && pkeyid == EVP_PKEY_RSA)
+        pkeyid = EVP_PKEY_RSA_PSS;
     lu = tls1_lookup_sigalg(sig);
     /*
      * Check sigalgs is known and key type is consistent with signature:
