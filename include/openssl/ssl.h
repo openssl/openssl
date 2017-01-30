@@ -1820,6 +1820,9 @@ __owur int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
 const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr);
 int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);
 int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c);
+STACK_OF(SSL_CIPHER) *SSL_bytes_to_cipher_list(SSL *s,
+                                               const unsigned char *bytes,
+                                               size_t len, int isv2format);
 
 /* TLS extensions functions */
 __owur int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len);
@@ -2087,6 +2090,7 @@ int ERR_load_SSL_strings(void);
 /* Function codes. */
 # define SSL_F_ADD_CLIENT_KEY_SHARE_EXT                   438
 # define SSL_F_ADD_KEY_SHARE                              512
+# define SSL_F_BYTES_TO_CIPHER_LIST                       519
 # define SSL_F_CHECK_SUITEB_CIPHER_LIST                   331
 # define SSL_F_CT_MOVE_SCTS                               345
 # define SSL_F_CT_STRICT                                  349

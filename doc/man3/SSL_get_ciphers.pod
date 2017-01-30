@@ -14,6 +14,9 @@ SSL_get_ciphers, SSL_CTX_get_ciphers, SSL_get_cipher_list
  STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx);
  STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s);
  STACK_OF(SSL_CIPHER) *SSL_get_client_ciphers(const SSL *ssl);
+ STACK_OF(SSL_CIPHER) *SSL_bytes_to_cipher_list(SSL *s,
+                                                const unsigned char *bytes,
+                                                size_t len, int isv2format)
  const char *SSL_get_cipher_list(const SSL *ssl, int priority);
 
 =head1 DESCRIPTION
@@ -41,6 +44,13 @@ SSL_get_client_ciphers() returns the stack of available SSL_CIPHERs matching the
 list received from the client on B<ssl>. If B<ssl> is NULL, no ciphers are
 available, or B<ssl> is not operating in server mode, NULL is returned.
 
+SSL_bytes_to_cipher_list() treats the supplied B<len> octets in B<bytes>
+as a wire-protocol cipher suite specification (in the three-octet-per-cipher
+SSLv2 wire format if B<isv2format> is nonzero; otherwise the two-octet
+SSLv3/TLS wire format), and parses the cipher suites supported by the library
+into the returned stack of SSL_CIPHER objects.  Unsupported cipher suites
+are ignored, and NULL is returned on error.
+
 SSL_get_cipher_list() returns a pointer to the name of the SSL_CIPHER
 listed for B<ssl> with B<priority>. If B<ssl> is NULL, no ciphers are
 available, or there are less ciphers than B<priority> available, NULL
@@ -63,9 +73,18 @@ free the return value itself.
 The stack returned by SSL_get1_supported_ciphers() should be freed using
 sk_SSL_CIPHER_free().
 
+The stack returned by SSL_bytes_to_cipher_list() should be freed using
+sk_SSL_CIPHER_free().
+
 =head1 RETURN VALUES
 
 See DESCRIPTION
+
+=head1 BUGS
+
+The implementation of SSL_bytes_to_cipher_list() mutates state in the
+supplied SSL object B<s>; SSL_bytes_to_cipher_list() should not be called
+on a server SSL object after that server has processed the received ClientHello.
 
 =head1 SEE ALSO
 

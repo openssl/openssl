@@ -21,6 +21,7 @@
 static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_ADD_CLIENT_KEY_SHARE_EXT), "add_client_key_share_ext"},
     {ERR_FUNC(SSL_F_ADD_KEY_SHARE), "add_key_share"},
+    {ERR_FUNC(SSL_F_BYTES_TO_CIPHER_LIST), "bytes_to_cipher_list"},
     {ERR_FUNC(SSL_F_CHECK_SUITEB_CIPHER_LIST), "check_suiteb_cipher_list"},
     {ERR_FUNC(SSL_F_CT_MOVE_SCTS), "ct_move_scts"},
     {ERR_FUNC(SSL_F_CT_STRICT), "ct_strict"},
@@ -116,7 +117,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "ssl_add_serverhello_use_srtp_ext"},
     {ERR_FUNC(SSL_F_SSL_BAD_METHOD), "ssl_bad_method"},
     {ERR_FUNC(SSL_F_SSL_BUILD_CERT_CHAIN), "ssl_build_cert_chain"},
-    {ERR_FUNC(SSL_F_SSL_BYTES_TO_CIPHER_LIST), "ssl_bytes_to_cipher_list"},
+    {ERR_FUNC(SSL_F_SSL_BYTES_TO_CIPHER_LIST), "SSL_bytes_to_cipher_list"},
     {ERR_FUNC(SSL_F_SSL_CERT_ADD0_CHAIN_CERT), "ssl_cert_add0_chain_cert"},
     {ERR_FUNC(SSL_F_SSL_CERT_DUP), "ssl_cert_dup"},
     {ERR_FUNC(SSL_F_SSL_CERT_NEW), "ssl_cert_new"},
