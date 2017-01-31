@@ -2270,3 +2270,60 @@ int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *x, int vfy)
     }
     return 1;
 }
+
+/*
+ * Choose an appropriate signature algorithm based on available certificates
+ * Set current certificate and digest to match chosen algorithm.
+ */
+int tls_choose_sigalg(SSL *s)
+{
+    if (SSL_IS_TLS13(s)) {
+        size_t i;
+        int curve = -1;
+
+        /* Look for a certificate matching shared sigaglgs */
+        for (i = 0; i < s->cert->shared_sigalgslen; i++) {
+            const SIGALG_LOOKUP *lu = s->cert->shared_sigalgs[i];
+            int idx;
+            const EVP_MD *md;
+            CERT_PKEY *c;
+
+            /* Skip RSA if not PSS */
+            if (lu->sig == EVP_PKEY_RSA)
+                continue;
+            md = ssl_md(lu->hash_idx);
+            if (md == NULL)
+                continue;
+            idx = lu->sig_idx;
+            c = &s->cert->pkeys[idx];
+            if (c->x509 == NULL || c->privatekey == NULL) {
+                if (idx != SSL_PKEY_RSA_SIGN)
+                    continue;
+                idx = SSL_PKEY_RSA_ENC;
+                c = s->cert->pkeys + idx;
+                if (c->x509 == NULL || c->privatekey == NULL)
+                    continue;
+            }
+            if (lu->sig == EVP_PKEY_EC) {
+                if (curve == -1) {
+                    EC_KEY *ec = EVP_PKEY_get0_EC_KEY(c->privatekey);
+
+                    curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+                }
+                if (curve != lu->curve)
+                    continue;
+            }
+            s->s3->tmp.sigalg = lu;
+            s->s3->tmp.cert_idx = idx;
+            s->s3->tmp.md[idx] = md;
+            s->cert->key = s->cert->pkeys + idx;
+            return 1;
+        }
+        return 0;
+    }
+    /*
+     * FIXME: could handle previous TLS versions in an appropriate way
+     * and tidy up certificate and signature algorithm handling.
+     */
+    return 1;
+}
