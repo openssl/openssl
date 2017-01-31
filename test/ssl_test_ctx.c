@@ -237,6 +237,9 @@ static const test_enum ssl_servername_callbacks[] = {
     {"None", SSL_TEST_SERVERNAME_CB_NONE},
     {"IgnoreMismatch", SSL_TEST_SERVERNAME_IGNORE_MISMATCH},
     {"RejectMismatch", SSL_TEST_SERVERNAME_REJECT_MISMATCH},
+    {"EarlyIgnoreMismatch", SSL_TEST_SERVERNAME_EARLY_IGNORE_MISMATCH},
+    {"EarlyRejectMismatch", SSL_TEST_SERVERNAME_EARLY_REJECT_MISMATCH},
+    {"EarlyNoV12", SSL_TEST_SERVERNAME_EARLY_NO_V12},
 };
 
 __owur static int parse_servername_callback(SSL_TEST_SERVER_CONF *server_conf,
