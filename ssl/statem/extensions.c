@@ -736,10 +736,10 @@ static int final_server_name(SSL *s, unsigned int context, int sent,
     if (s->ctx != NULL && s->ctx->ext.servername_cb != 0)
         ret = s->ctx->ext.servername_cb(s, &altmp,
                                         s->ctx->ext.servername_arg);
-    else if (s->initial_ctx != NULL
-             && s->initial_ctx->ext.servername_cb != 0)
-        ret = s->initial_ctx->ext.servername_cb(s, &altmp,
-                                       s->initial_ctx->ext.servername_arg);
+    else if (s->session_ctx != NULL
+             && s->session_ctx->ext.servername_cb != 0)
+        ret = s->session_ctx->ext.servername_cb(s, &altmp,
+                                       s->session_ctx->ext.servername_arg);
 
     switch (ret) {
     case SSL_TLSEXT_ERR_ALERT_FATAL:
