@@ -3633,42 +3633,47 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
             (DTLS_VERSION_LT(s->version, c->min_dtls) ||
              DTLS_VERSION_GT(s->version, c->max_dtls)))
             continue;
-
-        mask_k = s->s3->tmp.mask_k;
-        mask_a = s->s3->tmp.mask_a;
+        /*
+         * Since TLS 1.3 ciphersuites can be used with any auth or
+         * key exchange scheme skip tests.
+         */
+        if (!SSL_IS_TLS13(s)) {
+            mask_k = s->s3->tmp.mask_k;
+            mask_a = s->s3->tmp.mask_a;
 #ifndef OPENSSL_NO_SRP
-        if (s->srp_ctx.srp_Mask & SSL_kSRP) {
-            mask_k |= SSL_kSRP;
-            mask_a |= SSL_aSRP;
-        }
+            if (s->srp_ctx.srp_Mask & SSL_kSRP) {
+                mask_k |= SSL_kSRP;
+                mask_a |= SSL_aSRP;
+            }
 #endif
 
-        alg_k = c->algorithm_mkey;
-        alg_a = c->algorithm_auth;
+            alg_k = c->algorithm_mkey;
+            alg_a = c->algorithm_auth;
 
 #ifndef OPENSSL_NO_PSK
-        /* with PSK there must be server callback set */
-        if ((alg_k & SSL_PSK) && s->psk_server_callback == NULL)
-            continue;
+            /* with PSK there must be server callback set */
+            if ((alg_k & SSL_PSK) && s->psk_server_callback == NULL)
+                continue;
 #endif                          /* OPENSSL_NO_PSK */
 
-        ok = (alg_k & mask_k) && (alg_a & mask_a);
+            ok = (alg_k & mask_k) && (alg_a & mask_a);
 #ifdef CIPHER_DEBUG
-        fprintf(stderr, "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n", ok, alg_k,
-                alg_a, mask_k, mask_a, (void *)c, c->name);
+            fprintf(stderr, "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n", ok, alg_k,
+                    alg_a, mask_k, mask_a, (void *)c, c->name);
 #endif
 
 #ifndef OPENSSL_NO_EC
-        /*
-         * if we are considering an ECC cipher suite that uses an ephemeral
-         * EC key check it
-         */
-        if (alg_k & SSL_kECDHE)
-            ok = ok && tls1_check_ec_tmp_key(s, c->id);
+            /*
+             * if we are considering an ECC cipher suite that uses an ephemeral
+             * EC key check it
+             */
+            if (alg_k & SSL_kECDHE)
+                ok = ok && tls1_check_ec_tmp_key(s, c->id);
 #endif                          /* OPENSSL_NO_EC */
 
-        if (!ok)
-            continue;
+            if (!ok)
+                continue;
+        }
         ii = sk_SSL_CIPHER_find(allow, c);
         if (ii >= 0) {
             /* Check security callback permits this cipher */
