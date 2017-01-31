@@ -2838,11 +2838,14 @@ static int ssl_get_server_cert_index(const SSL *s)
 {
     int idx;
 
-    /*
-     * TODO(TLS1.3): In TLS1.3 the selected certificate is not based on the
-     * ciphersuite. For now though it still is. Our only TLS1.3 ciphersuite
-     * forces the use of an RSA cert. This will need to change.
-     */
+    if (SSL_IS_TLS13(s)) {
+        if (s->s3->tmp.sigalg == NULL) {
+            SSLerr(SSL_F_SSL_GET_SERVER_CERT_INDEX, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
+        return s->s3->tmp.cert_idx;
+    }
+
     idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
     if (idx == SSL_PKEY_RSA_ENC && !s->cert->pkeys[SSL_PKEY_RSA_ENC].x509)
         idx = SSL_PKEY_RSA_SIGN;
