@@ -118,6 +118,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_SSL_BAD_METHOD), "ssl_bad_method"},
     {ERR_FUNC(SSL_F_SSL_BUILD_CERT_CHAIN), "ssl_build_cert_chain"},
     {ERR_FUNC(SSL_F_SSL_BYTES_TO_CIPHER_LIST), "SSL_bytes_to_cipher_list"},
+    {ERR_FUNC(SSL_F_SSL_CACHE_CIPHERLIST), "ssl_cache_cipherlist"},
     {ERR_FUNC(SSL_F_SSL_CERT_ADD0_CHAIN_CERT), "ssl_cert_add0_chain_cert"},
     {ERR_FUNC(SSL_F_SSL_CERT_DUP), "ssl_cert_dup"},
     {ERR_FUNC(SSL_F_SSL_CERT_NEW), "ssl_cert_new"},

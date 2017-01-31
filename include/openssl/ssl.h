@@ -1820,9 +1820,9 @@ __owur int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
 const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr);
 int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);
 int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c);
-STACK_OF(SSL_CIPHER) *SSL_bytes_to_cipher_list(SSL *s,
-                                               const unsigned char *bytes,
-                                               size_t len, int isv2format);
+int SSL_bytes_to_cipher_list(SSL *s, const unsigned char *bytes, size_t len,
+                             int isv2format, STACK_OF(SSL_CIPHER) **sk,
+                             STACK_OF(SSL_CIPHER) **scsvs);
 
 /* TLS extensions functions */
 __owur int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len);
@@ -2168,6 +2168,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_BAD_METHOD                             160
 # define SSL_F_SSL_BUILD_CERT_CHAIN                       332
 # define SSL_F_SSL_BYTES_TO_CIPHER_LIST                   161
+# define SSL_F_SSL_CACHE_CIPHERLIST                       520
 # define SSL_F_SSL_CERT_ADD0_CHAIN_CERT                   346
 # define SSL_F_SSL_CERT_DUP                               221
 # define SSL_F_SSL_CERT_NEW                               162
