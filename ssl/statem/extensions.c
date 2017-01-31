@@ -57,15 +57,17 @@ typedef struct extensions_definition_st {
      */
     int (*init)(SSL *s, unsigned int context);
     /* Parse extension sent from client to server */
-    int (*parse_ctos)(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
+    int (*parse_ctos)(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
+                      size_t chainidx, int *al);
     /* Parse extension send from server to client */
-    int (*parse_stoc)(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
+    int (*parse_stoc)(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
+                      size_t chainidx, int *al);
     /* Construct extension sent from server to client */
-    int (*construct_stoc)(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
-                          int *al);
+    int (*construct_stoc)(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
+                          size_t chainidx, int *al);
     /* Construct extension sent from client to server */
-    int (*construct_ctos)(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
-                          int *al);
+    int (*construct_ctos)(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
+                          size_t chainidx, int *al);
     /*
      * Finalise extension after parsing. Always called where an extensions was
      * initialised even if the extension was not present. |sent| is set to 1 if
@@ -470,7 +472,8 @@ int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
                         RAW_EXTENSION *exts, X509 *x, size_t chainidx, int *al)
 {
     RAW_EXTENSION *currext = &exts[idx];
-    int (*parser)(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al) = NULL;
+    int (*parser)(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
+                  size_t chainidx, int *al) = NULL;
 
     /* Skip if the extension is not present */
     if (!currext->present)
@@ -499,7 +502,7 @@ int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
         parser = s->server ? extdef->parse_ctos : extdef->parse_stoc;
 
         if (parser != NULL)
-            return parser(s, &currext->data, x, chainidx, al);
+            return parser(s, &currext->data, context, x, chainidx, al);
 
         /*
          * If the parser is NULL we fall through to the custom extension
@@ -633,8 +636,8 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
     }
 
     for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
-        int (*construct)(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
-                         int *al);
+        int (*construct)(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
+                         size_t chainidx, int *al);
 
         /* Skip if not relevant for our context */
         if ((thisexd->context & context) == 0)
@@ -661,7 +664,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
                 || construct == NULL)
             continue;
 
-        if (!construct(s, pkt, x, chainidx, &tmpal))
+        if (!construct(s, pkt, context, x, chainidx, &tmpal))
             goto err;
     }
 
