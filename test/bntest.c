@@ -1155,21 +1155,28 @@ static int file_rshift(STANZA *s)
     BIGNUM *rshift = getBN(s, "RShift");
     BIGNUM *ret = BN_new();
     int n = 0;
-    int st = 0;
+    int errcnt = 1;
 
     if (a == NULL || rshift == NULL || ret == NULL || !getint(s, &n, "N"))
         goto err;
 
+    errcnt = 0;
     if (!BN_rshift(ret, a, n)
             || !equalBN("A >> N", rshift, ret))
-        goto err;
+        errcnt++;
 
-    st = 1;
+    /* If N == 1, try with rshift1 as well */
+    if (n == 1) {
+        if (!BN_rshift1(ret, a)
+                || !equalBN("A >> 1 (rshift1)", rshift, ret))
+            errcnt++;
+    }
+
 err:
     BN_free(a);
     BN_free(rshift);
     BN_free(ret);
-    return st;
+    return errcnt == 0;
 }
 
 static int file_square(STANZA *s)
