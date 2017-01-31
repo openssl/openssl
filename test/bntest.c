@@ -146,8 +146,14 @@ static int equalBN(const char *op, const BIGNUM *expected, const BIGNUM *actual)
     if (BN_cmp(expected, actual) == 0)
         return 1;
 
-    exstr = BN_bn2hex(expected);
-    actstr = BN_bn2hex(actual);
+    if (BN_is_zero(expected) && BN_is_negative(expected))
+        exstr = OPENSSL_strdup("-0");
+    else
+        exstr = BN_bn2hex(expected);
+    if (BN_is_zero(actual) && BN_is_negative(actual))
+        actstr = OPENSSL_strdup("-0");
+    else
+        actstr = BN_bn2hex(actual);
     if (exstr == NULL || actstr == NULL)
         goto err;
 
