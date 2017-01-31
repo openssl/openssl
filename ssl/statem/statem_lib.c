@@ -171,8 +171,8 @@ static int get_cert_verify_tbs_data(SSL *s, unsigned char *tls13tbs,
 
 int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
 {
-    EVP_PKEY *pkey;
-    const EVP_MD *md;
+    EVP_PKEY *pkey = s->cert->key->privatekey;
+    const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
     EVP_MD_CTX *mctx = NULL;
     EVP_PKEY_CTX *pctx = NULL;
     size_t hdatalen = 0, siglen = 0;
@@ -181,20 +181,6 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
     unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
     int pktype, ispss = 0;
 
-    if (s->server) {
-        /* Only happens in TLSv1.3 */
-        /*
-         * TODO(TLS1.3): This needs to change. We should not get this from the
-         * cipher. However, for now, we have not done the work to separate the
-         * certificate type from the ciphersuite
-         */
-        pkey = ssl_get_sign_pkey(s, s->s3->tmp.new_cipher, &md);
-        if (pkey == NULL)
-            goto err;
-    } else {
-        md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
-        pkey = s->cert->key->privatekey;
-    }
     pktype = EVP_PKEY_id(pkey);
 
     mctx = EVP_MD_CTX_new();
