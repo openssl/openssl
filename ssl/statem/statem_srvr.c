@@ -3221,7 +3221,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     int len, slen_full, slen, lenfinal;
     SSL_SESSION *sess;
     unsigned int hlen;
-    SSL_CTX *tctx = s->initial_ctx;
+    SSL_CTX *tctx = s->session_ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char key_name[TLSEXT_KEYNAME_LENGTH];
     int iv_len, al = SSL_AD_INTERNAL_ERROR;

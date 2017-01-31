@@ -1150,10 +1150,7 @@ struct ssl_st {
     /* Have we attempted to find/parse SCTs yet? */
     int scts_parsed;
 # endif
-    SSL_CTX *initial_ctx;       /* initial ctx, used to store sessions */
-# ifndef OPENSSL_NO_NEXTPROTONEG
-# endif
-# define session_ctx initial_ctx
+    SSL_CTX *session_ctx;       /* initial ctx, used to store sessions */
     /* What we'll do */
     STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
     /* What's been chosen */

@@ -1186,7 +1186,7 @@ TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
     HMAC_CTX *hctx = NULL;
     EVP_CIPHER_CTX *ctx;
-    SSL_CTX *tctx = s->initial_ctx;
+    SSL_CTX *tctx = s->session_ctx;
 
     /* Initialize session ticket encryption and HMAC contexts */
     hctx = HMAC_CTX_new();
