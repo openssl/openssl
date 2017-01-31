@@ -607,6 +607,8 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
      "no shared signature algorithms"},
     {ERR_REASON(SSL_R_NO_SRTP_PROFILES), "no srtp profiles"},
     {ERR_REASON(SSL_R_NO_SUITABLE_KEY_SHARE), "no suitable key share"},
+    {ERR_REASON(SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM),
+     "no suitable signature algorithm"},
     {ERR_REASON(SSL_R_NO_VALID_SCTS), "no valid scts"},
     {ERR_REASON(SSL_R_NO_VERIFY_COOKIE_CALLBACK),
      "no verify cookie callback"},
