@@ -184,6 +184,14 @@ int tls1_alert_code(int code)
     return code;
 }
 
+int ssl_log_secret(SSL *ssl,
+                   const char *label,
+                   const uint8_t *secret,
+                   size_t secret_len)
+{
+    return 1;
+}
+
 /* End of mocked out code */
 
 static int test_secret(SSL *s, unsigned char *prk,
