@@ -470,10 +470,13 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    /* Log the master secret, if logging is enabled. */
-    if (!ssl_log_master_secret(s, s->s3->client_random, SSL3_RANDOM_SIZE,
-                               s->session->master_key,
-                               s->session->master_key_length))
+    /*
+     * Log the master secret, if logging is enabled. We don't log it for
+     * TLSv1.3: there's a different key schedule for that.
+     */
+    if (!SSL_IS_TLS13(s) && !ssl_log_secret(s, MASTER_SECRET_LABEL,
+                                            s->session->master_key,
+                                            s->session->master_key_length))
         return 0;
 
     /*

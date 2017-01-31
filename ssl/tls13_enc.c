@@ -261,6 +261,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     unsigned char *hash = hashval;
     unsigned char *insecret;
     unsigned char *finsecret = NULL;
+    const char *log_label = NULL;
     EVP_CIPHER_CTX *ciph_ctx;
     const EVP_CIPHER *ciph = s->s3->tmp.new_sym_enc;
     size_t ivlen, keylen, finsecretlen = 0;
@@ -306,10 +307,12 @@ int tls13_change_cipher_state(SSL *s, int which)
             finsecretlen = EVP_MD_size(ssl_handshake_md(s));
             label = client_handshake_traffic;
             labellen = sizeof(client_handshake_traffic) - 1;
+            log_label = CLIENT_HANDSHAKE_LABEL;
         } else {
             insecret = s->master_secret;
             label = client_application_traffic;
             labellen = sizeof(client_application_traffic) - 1;
+            log_label = CLIENT_APPLICATION_LABEL;
             /*
              * For this we only use the handshake hashes up until the server
              * Finished hash. We do not include the client's Finished, which is
@@ -325,10 +328,12 @@ int tls13_change_cipher_state(SSL *s, int which)
             finsecretlen = EVP_MD_size(ssl_handshake_md(s));
             label = server_handshake_traffic;
             labellen = sizeof(server_handshake_traffic) - 1;
+            log_label = SERVER_HANDSHAKE_LABEL;
         } else {
             insecret = s->master_secret;
             label = server_application_traffic;
             labellen = sizeof(server_application_traffic) - 1;
+            log_label = SERVER_APPLICATION_LABEL;
         }
     }
 
@@ -369,6 +374,11 @@ int tls13_change_cipher_state(SSL *s, int which)
     /* TODO(size_t): convert me */
     keylen = EVP_CIPHER_key_length(ciph);
     ivlen = EVP_CIPHER_iv_length(ciph);
+
+    if (!ssl_log_secret(s, log_label, secret, hashlen)) {
+        SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     if (!tls13_derive_key(s, secret, key, keylen)
             || !tls13_derive_iv(s, secret, iv, ivlen)
