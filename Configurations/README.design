@@ -36,10 +36,11 @@ in build.info.  Their file name extensions will be inferred by the
 build-file templates, adapted for the platform they are meant for (see
 sections on %unified_info and build-file templates further down).
 
-The variables PROGRAMS, LIBS, ENGINES and SCRIPTS are used to declare
-end products.  There are variants for them with '_NO_INST' as suffix
-(PROGRAM_NO_INST etc) to specify end products that shouldn't get
-installed.
+The variables PROGRAMS, LIBS, ENGINES, PROOF_FORMULAS and SCRIPTS are
+used to declare end products.  There are variants for them with
+'_NO_INST' as suffix (PROGRAM_NO_INST etc) to specify end products
+that shouldn't get installed, with the exception of PROOF_FORMULAS,
+which are *never* installed.
 
 The variables SOURCE, DEPEND, INCLUDE and ORDINALS are indexed by a
 produced file, and their values are the source used to produce that
@@ -242,6 +243,10 @@ indexes:
                file 'ofile' comes from internal knowledge in
                Configure.
 
+  proof_formulas
+            => a list of proof formulas.  These are directly inferred
+               from the PROOF_FORMULAS variable in build.info files.
+
   programs  => a list of programs.  These are directly inferred from
                the PROGRAMS variable in build.info files.
 
@@ -376,6 +381,9 @@ section above would be digested into a %unified_info table:
             [
                 "apps/openssl",
             ],
+        "proof_formulas" =>
+            [
+            ],
         "rawlines" =>
             [
             ],
@@ -506,6 +514,24 @@ etc.
                   'intent' indicates what this object file is going
                   to be used for.
 
+    src2bc      - function that produces build file lines to build a
+                  LLVM output file from source files.
+
+                  It's called like this:
+
+                        src2bc(bc => "PATH/TO/outputfile",
+                               srcs => [ "PATH/TO/sourcefile", ... ],
+                               deps => [ "dep1", ... ],
+                               incs => [ "INCL/PATH", ... ]);
+
+                  'bc' has the intended output file *without*
+                  extension, src2bc() is expected to add that.  'srcs'
+                  has the list of source files to build the object
+                  file, with the first item being the source file that
+                  directly corresponds to the object file.  'deps' is
+                  a list of explicit dependencies.  'incs' is a list
+                  of include file directories.
+
     obj2lib     - function that produces build file lines to build a
                   static library file ("libfoo.a" in Unix terms) from
                   object files.
@@ -584,6 +610,19 @@ etc.
                   has the list of library files (also *without*
                   extension) that the programs needs to be linked
                   with.
+
+    bc2aig      - function that produces build file lines to build an
+                  proof formula file from LLVM output files.
+
+                  called like this:
+
+                        bc2aig(aig => "PATH/TO/aigfile",
+                               bcs => [ "PATH/TO/outputfile", ... ]);
+
+                  'aig' has the intended proof formula file name
+                  *without* extension, bc2aig is expected to add that.
+                  'bcs' has the list of LLVM output files (also
+                  *without* extension) to build this aig file.
 
     in2script   - function that produces build file lines to build a
                   script file from some input.

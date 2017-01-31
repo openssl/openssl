@@ -317,10 +317,12 @@ variables:
     LIBS=libsomething
     ENGINES=libeng
     SCRIPTS=myhack
+    PROOF_FORMULAS=myproof
     EXTRA=file1 file2
 
-Note that the files mentioned for PROGRAMS, LIBS and ENGINES *must* be
-without extensions.  The build file templates will figure them out.
+Note that the files mentioned for PROGRAMS, LIBS, ENGINES and
+PROOF_FORMULAS *must* be without extensions.  The build file templates
+will figure them out.
 
 For each thing to be built, it is then possible to say what sources
 they are built from:
@@ -572,6 +574,24 @@ They are all expected to return a string with the lines they produce.
                   'intent' indicates what this object file is going
                   to be used for.
 
+    src2bc      - function that produces build file lines to build a
+                  LLVM output file from source files.
+
+                  It's called like this:
+
+                        src2bc(bc => "PATH/TO/outputfile",
+                               srcs => [ "PATH/TO/sourcefile", ... ],
+                               deps => [ "dep1", ... ],
+                               incs => [ "INCL/PATH", ... ]);
+
+                  'bc' has the intended output file *without*
+                  extension, src2bc() is expected to add that.  'srcs'
+                  has the list of source files to build the object
+                  file, with the first item being the source file that
+                  directly corresponds to the object file.  'deps' is
+                  a list of explicit dependencies.  'incs' is a list
+                  of include file directories.
+
     obj2lib     - function that produces build file lines to build a
                   static library file ("libfoo.a" in Unix terms) from
                   object files.
@@ -649,6 +669,19 @@ They are all expected to return a string with the lines they produce.
                   has the list of library files (also *without*
                   extension) that the programs needs to be linked
                   with.
+
+    bc2aig      - function that produces build file lines to build an
+                  proof formula file from LLVM output files.
+
+                  called like this:
+
+                        bc2aig(aig => "PATH/TO/aigfile",
+                               bcs => [ "PATH/TO/outputfile", ... ]);
+
+                  'aig' has the intended proof formula file name
+                  *without* extension, bc2aig is expected to add that.
+                  'bcs' has the list of LLVM output files (also
+                  *without* extension) to build this aig file.
 
     in2script   - function that produces build file lines to build a
                   script file from some input.
