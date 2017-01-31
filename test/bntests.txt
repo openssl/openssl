@@ -4643,6 +4643,10 @@ N = 64
 #
 # These test vectors satisfy A / 2^N = RShift, rounding towards zero.
 
+Rshift = 0
+A = -1
+N = 1
+
 RShift = 6ce746ffa7979ce10b751cd2308402a95d00d596cd97b36380
 A = d9ce8dff4f2f39c216ea39a461080552ba01ab2d9b2f66c701
 N = 1
@@ -5966,6 +5970,11 @@ B = -542fb814f45924aa09a16f2a6
 #
 # These test vectors satisfy Quotient = A / B, rounded towards zero, and
 # Remainder = A - B * Quotient.
+
+Quotient = 0
+Remainder = -1
+A = -1
+B = 2
 
 Quotient = 1
 Remainder = 0
