@@ -1,0 +1,94 @@
+=pod
+
+=head1 NAME
+
+OPENSSL_s390xcap - the z processor capabilities vector
+
+=head1 SYNOPSIS
+
+ env OPENSSL_s390xcap=... <application>
+
+=head1 DESCRIPTION
+
+libcrypto supports z architecture instruction set extensions. These
+extensions are denoted by individual bits in the capability vector.
+When libcrypto is initialized, the bits returned by the STFLE instruction
+and by the QUERY functions are stored in the vector.
+
+The OPENSSL_s390xcap environment variable can be set before starting an
+application to affect capability detection. It is specified by a
+colon-separated list of 64-bit values in hexadecimal notation, the 0x
+prefix being optional. The ~ prefix means bitwise NOT and a point
+indicates the end of the STFLE bits respectively the beginning of the
+QUERY bits.
+
+After initialization, the capability vector is ANDed bitwise with the
+corresponding parts of the environment variable.
+
+The following bits are significant:
+
+.
+
+=over
+
+=item #60 KIMD-SHA-512
+
+=item #61 KIMD-SHA-256
+
+=item #62 KIMD-SHA-1
+
+=back
+
+:
+
+=over
+
+=item #62 KIMD-GHASH
+
+=back
+
+:
+
+=over
+
+=item #11 KM-XTS-AES-256
+
+=item #13 KM-XTS-AES-128
+
+=item #43 KM-AES-256
+
+=item #44 KM-AES-192
+
+=item #45 KM-AES-128
+
+=back
+
+:
+:
+
+=over
+
+=item #43 KMC-AES-256
+
+=item #44 KMC-AES-192
+
+=item #45 KMC-AES-128
+
+=back
+
+=head1 EXAMPLES
+
+OPENSSL_s390xcap=.0:0 disables KIMD.
+
+OPENSSL_s390xcap=.::~0x2800 disables KM-XTS-AES.
+
+=head1 COPYRIGHT
+
+Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
