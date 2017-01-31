@@ -4441,32 +4441,16 @@ int ssl_log_rsa_client_key_exchange(SSL *ssl,
                           premaster_len);
 }
 
-int ssl_log_master_secret(SSL *ssl,
-                          const uint8_t *client_random,
-                          size_t client_random_len,
-                          const uint8_t *master,
-                          size_t master_len)
+int ssl_log_secret(SSL *ssl,
+                   const char *label,
+                   const uint8_t *secret,
+                   size_t secret_len)
 {
-    /*
-     * TLSv1.3 changes the derivation of the master secret compared to earlier
-     * TLS versions, meaning that logging it out is less useful. Instead we
-     * want to log out other secrets: specifically, the handshake and
-     * application traffic secrets. For this reason, if this function is called
-     * for TLSv1.3 we don't bother logging, and just return success
-     * immediately.
-     */
-    if (SSL_IS_TLS13(ssl)) return 1;
-
-    if (client_random_len != 32) {
-        SSLerr(SSL_F_SSL_LOG_MASTER_SECRET, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
-    return nss_keylog_int("CLIENT_RANDOM",
+    return nss_keylog_int(label,
                           ssl,
-                          client_random,
-                          client_random_len,
-                          master,
-                          master_len);
+                          ssl->s3->client_random,
+                          SSL3_RANDOM_SIZE,
+                          secret,
+                          secret_len);
 }
 
