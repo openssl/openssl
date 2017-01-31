@@ -2287,13 +2287,19 @@ __owur int ssl_log_rsa_client_key_exchange(SSL *ssl,
                                            const uint8_t *premaster,
                                            size_t premaster_len);
 
-/* ssl_log_master_secret logs |master| to the SSL_CTX associated with |ssl|, if
- * logging is enabled. It returns one on success and zero on failure. The entry
- * is identified by |client_random|.
+/*
+ * ssl_log_secret logs |secret| to the SSL_CTX associated with |ssl|, if
+ * logging is available. It returns one on success and zero on failure. It tags
+ * the entry with |label|.
  */
-__owur int ssl_log_master_secret(SSL *ssl, const uint8_t *client_random,
-                                 size_t client_random_len,
-                                 const uint8_t *master, size_t master_len);
+__owur int ssl_log_secret(SSL *ssl, const char *label,
+                          const uint8_t *secret, size_t secret_len);
+
+#define MASTER_SECRET_LABEL "CLIENT_RANDOM"
+#define CLIENT_HANDSHAKE_LABEL "CLIENT_HANDSHAKE_TRAFFIC_SECRET"
+#define SERVER_HANDSHAKE_LABEL "SERVER_HANDSHAKE_TRAFFIC_SECRET"
+#define CLIENT_APPLICATION_LABEL "CLIENT_TRAFFIC_SECRET_0"
+#define SERVER_APPLICATION_LABEL "SERVER_TRAFFIC_SECRET_0"
 
 /* s3_cbc.c */
 __owur char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
