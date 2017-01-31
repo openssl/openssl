@@ -2195,7 +2195,7 @@ static int file_test_run(STANZA *s)
 static int file_tests()
 {
     STANZA s;
-    int linesread = 0, result = 0;
+    int linesread = 0, errcnt = 0;
 
     /* Read test file. */
     memset(&s, 0, sizeof(s));
@@ -2203,17 +2203,14 @@ static int file_tests()
         if (s.numpairs == 0)
             continue;
         if (!file_test_run(&s)) {
-            if (result == 0)
-                fprintf(stderr, "Test at %d failed\n", s.start);
-            goto err;
+            fprintf(stderr, "Test at %d failed\n", s.start);
+            errcnt++;
         }
         clearstanza(&s);
         s.start = linesread;
     }
-    result = 1;
 
-err:
-    return result;
+    return errcnt == 0;
 }
 
 int test_main(int argc, char *argv[])
