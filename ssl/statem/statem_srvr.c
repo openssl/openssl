@@ -1226,6 +1226,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     SSL_COMP *comp = NULL;
 #endif
     STACK_OF(SSL_CIPHER) *ciphers = NULL;
+    STACK_OF(SSL_CIPHER) *scsvs = NULL;
     int protverr;
     /* |cookie| will only be initialized for DTLS. */
     PACKET session_id, compression, extensions, cookie;
@@ -1546,9 +1547,42 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         }
     }
 
-    if (bytes_to_cipher_list(s, &clienthello.ciphersuites, &ciphers,
-                             clienthello.isv2, &al) == NULL) {
+    if (!ssl_cache_cipherlist(s, &clienthello.ciphersuites,
+                              clienthello.isv2, &al) ||
+        !bytes_to_cipher_list(s, &clienthello.ciphersuites, &ciphers, &scsvs,
+                             clienthello.isv2, &al)) {
         goto f_err;
+    }
+
+    s->s3->send_connection_binding = 0;
+    /* Check what signalling cipher-suite values were received. */
+    if (scsvs != NULL) {
+        for(i = 0; i < sk_SSL_CIPHER_num(scsvs); i++) {
+            c = sk_SSL_CIPHER_value(scsvs, i);
+            if (SSL_CIPHER_get_id(c) == SSL3_CK_SCSV) {
+                if (s->renegotiate) {
+                    /* SCSV is fatal if renegotiating */
+                    SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
+                           SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING);
+                    al = SSL_AD_HANDSHAKE_FAILURE;
+                    goto f_err;
+                }
+                s->s3->send_connection_binding = 1;
+            } else if (SSL_CIPHER_get_id(c) == SSL3_CK_FALLBACK_SCSV &&
+                       !ssl_check_version_downgrade(s)) {
+                /*
+                 * This SCSV indicates that the client previously tried
+                 * a higher version.  We should fail if the current version
+                 * is an unexpected downgrade, as that indicates that the first
+                 * connection may have been tampered with in order to trigger
+                 * an insecure downgrade.
+                 */
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO,
+                       SSL_R_INAPPROPRIATE_FALLBACK);
+                al = SSL_AD_INAPPROPRIATE_FALLBACK;
+                goto f_err;
+            }
+        }
     }
 
     /* If it is a hit, check that the cipher is in the list */

@@ -4402,54 +4402,26 @@ int ssl_log_secret(SSL *ssl,
                           secret_len);
 }
 
-
-STACK_OF(SSL_CIPHER) *SSL_bytes_to_cipher_list(SSL *s,
-                                               const unsigned char *bytes,
-                                               size_t len, int isv2format)
-{
-    int alert;
-    PACKET pkt;
-
-    if (!PACKET_buf_init(&pkt, bytes, len))
-        return 0;
-    return bytes_to_cipher_list(s, &pkt, NULL, isv2format, &alert);
-}
-
 #define SSLV2_CIPHER_LEN    3
 
-STACK_OF(SSL_CIPHER) *bytes_to_cipher_list(SSL *s,
-                                           PACKET *cipher_suites,
-                                           STACK_OF(SSL_CIPHER) **skp,
-                                           int sslv2format, int *al)
+int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format,
+                         int *al)
 {
-    const SSL_CIPHER *c;
-    STACK_OF(SSL_CIPHER) *sk;
     int n;
-    /* 3 = SSLV2_CIPHER_LEN > TLS_CIPHER_LEN = 2. */
-    unsigned char cipher[SSLV2_CIPHER_LEN];
-
-    s->s3->send_connection_binding = 0;
 
     n = sslv2format ? SSLV2_CIPHER_LEN : TLS_CIPHER_LEN;
 
     if (PACKET_remaining(cipher_suites) == 0) {
-        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, SSL_R_NO_CIPHERS_SPECIFIED);
+        SSLerr(SSL_F_SSL_CACHE_CIPHERLIST, SSL_R_NO_CIPHERS_SPECIFIED);
         *al = SSL_AD_ILLEGAL_PARAMETER;
-        return NULL;
+        return 0;
     }
 
     if (PACKET_remaining(cipher_suites) % n != 0) {
-        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST,
+        SSLerr(SSL_F_SSL_CACHE_CIPHERLIST,
                SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
         *al = SSL_AD_DECODE_ERROR;
-        return NULL;
-    }
-
-    sk = sk_SSL_CIPHER_new_null();
-    if (sk == NULL) {
-        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
-        *al = SSL_AD_INTERNAL_ERROR;
-        return NULL;
+        return 0;
     }
 
     OPENSSL_free(s->s3->tmp.ciphers_raw);
@@ -4498,6 +4470,57 @@ STACK_OF(SSL_CIPHER) *bytes_to_cipher_list(SSL *s,
         *al = SSL_AD_INTERNAL_ERROR;
         goto err;
     }
+    return 1;
+ err:
+    return 0;
+}
+
+int SSL_bytes_to_cipher_list(SSL *s, const unsigned char *bytes, size_t len,
+                             int isv2format, STACK_OF(SSL_CIPHER) **sk,
+                             STACK_OF(SSL_CIPHER) **scsvs)
+{
+    int alert;
+    PACKET pkt;
+
+    if (!PACKET_buf_init(&pkt, bytes, len))
+        return 0;
+    return bytes_to_cipher_list(s, &pkt, sk, scsvs, isv2format, &alert);
+}
+
+int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
+                         STACK_OF(SSL_CIPHER) **skp,
+                         STACK_OF(SSL_CIPHER) **scsvs_out,
+                         int sslv2format, int *al)
+{
+    const SSL_CIPHER *c;
+    STACK_OF(SSL_CIPHER) *sk = NULL;
+    STACK_OF(SSL_CIPHER) *scsvs = NULL;
+    int n;
+    /* 3 = SSLV2_CIPHER_LEN > TLS_CIPHER_LEN = 2. */
+    unsigned char cipher[SSLV2_CIPHER_LEN];
+
+    n = sslv2format ? SSLV2_CIPHER_LEN : TLS_CIPHER_LEN;
+
+    if (PACKET_remaining(cipher_suites) == 0) {
+        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, SSL_R_NO_CIPHERS_SPECIFIED);
+        *al = SSL_AD_ILLEGAL_PARAMETER;
+        return 0;
+    }
+
+    if (PACKET_remaining(cipher_suites) % n != 0) {
+        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST,
+               SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
+
+    sk = sk_SSL_CIPHER_new_null();
+    scsvs = sk_SSL_CIPHER_new_null();
+    if (sk == NULL || scsvs == NULL) {
+        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
+        *al = SSL_AD_INTERNAL_ERROR;
+        goto err;
+    }
 
     while (PACKET_copy_bytes(cipher_suites, cipher, n)) {
         /*
@@ -4508,41 +4531,11 @@ STACK_OF(SSL_CIPHER) *bytes_to_cipher_list(SSL *s,
         if (sslv2format && cipher[0] != '\0')
             continue;
 
-        /* Check for TLS_EMPTY_RENEGOTIATION_INFO_SCSV */
-        if ((cipher[n - 2] == ((SSL3_CK_SCSV >> 8) & 0xff)) &&
-            (cipher[n - 1] == (SSL3_CK_SCSV & 0xff))) {
-            /* SCSV fatal if renegotiating */
-            if (s->renegotiate) {
-                SSLerr(SSL_F_BYTES_TO_CIPHER_LIST,
-                       SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING);
-                *al = SSL_AD_HANDSHAKE_FAILURE;
-                goto err;
-            }
-            s->s3->send_connection_binding = 1;
-            continue;
-        }
-
-        /* Check for TLS_FALLBACK_SCSV */
-        if ((cipher[n - 2] == ((SSL3_CK_FALLBACK_SCSV >> 8) & 0xff)) &&
-            (cipher[n - 1] == (SSL3_CK_FALLBACK_SCSV & 0xff))) {
-            /*
-             * The SCSV indicates that the client previously tried a higher
-             * version. Fail if the current version is an unexpected
-             * downgrade.
-             */
-            if (!ssl_check_version_downgrade(s)) {
-                SSLerr(SSL_F_BYTES_TO_CIPHER_LIST,
-                       SSL_R_INAPPROPRIATE_FALLBACK);
-                *al = SSL_AD_INAPPROPRIATE_FALLBACK;
-                goto err;
-            }
-            continue;
-        }
-
         /* For SSLv2-compat, ignore leading 0-byte. */
         c = ssl_get_cipher_by_char(s, sslv2format ? &cipher[1] : cipher, 1);
         if (c != NULL) {
-            if (!sk_SSL_CIPHER_push(sk, c)) {
+            if ((c->valid && !sk_SSL_CIPHER_push(sk, c)) ||
+                (!c->valid && !sk_SSL_CIPHER_push(scsvs, c))) {
                 SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
                 *al = SSL_AD_INTERNAL_ERROR;
                 goto err;
@@ -4555,9 +4548,17 @@ STACK_OF(SSL_CIPHER) *bytes_to_cipher_list(SSL *s,
         goto err;
     }
 
-    *skp = sk;
-    return sk;
+    if (skp != NULL)
+        *skp = sk;
+    else
+        sk_SSL_CIPHER_free(sk);
+    if (scsvs_out != NULL)
+        *scsvs_out = scsvs;
+    else
+        sk_SSL_CIPHER_free(scsvs);
+    return 1;
  err:
     sk_SSL_CIPHER_free(sk);
-    return NULL;
+    sk_SSL_CIPHER_free(scsvs);
+    return 0;
 }
