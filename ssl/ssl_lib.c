@@ -600,7 +600,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->tlsext_ocsp_resp = NULL;
     s->tlsext_ocsp_resplen = -1;
     SSL_CTX_up_ref(ctx);
-    s->initial_ctx = ctx;
+    s->session_ctx = ctx;
 #ifndef OPENSSL_NO_EC
     if (ctx->tlsext_ecpointformatlist) {
         s->tlsext_ecpointformatlist =
@@ -999,7 +999,7 @@ void SSL_free(SSL *s)
     /* Free up if allocated */
 
     OPENSSL_free(s->tlsext_hostname);
-    SSL_CTX_free(s->initial_ctx);
+    SSL_CTX_free(s->session_ctx);
 #ifndef OPENSSL_NO_EC
     OPENSSL_free(s->tlsext_ecpointformatlist);
     OPENSSL_free(s->tlsext_ellipticcurvelist);
@@ -3380,7 +3380,7 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
     if (ssl->ctx == ctx)
         return ssl->ctx;
     if (ctx == NULL)
-        ctx = ssl->initial_ctx;
+        ctx = ssl->session_ctx;
     new_cert = ssl_cert_dup(ctx->cert);
     if (new_cert == NULL) {
         return NULL;
