@@ -2283,8 +2283,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE               470
 # define SSL_F_TLS_CONSTRUCT_CTOS_NPN                     471
 # define SSL_F_TLS_CONSTRUCT_CTOS_PADDING                 472
-# define SSL_F_TLS_CONSTRUCT_CTOS_PSK_KEX_MODES           509
 # define SSL_F_TLS_CONSTRUCT_CTOS_PSK                     501
+# define SSL_F_TLS_CONSTRUCT_CTOS_PSK_KEX_MODES           509
 # define SSL_F_TLS_CONSTRUCT_CTOS_RENEGOTIATE             473
 # define SSL_F_TLS_CONSTRUCT_CTOS_SCT                     474
 # define SSL_F_TLS_CONSTRUCT_CTOS_SERVER_NAME             475
@@ -2505,6 +2505,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS             376
 # define SSL_R_NO_SRTP_PROFILES                           359
 # define SSL_R_NO_SUITABLE_KEY_SHARE                      101
+# define SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM            118
 # define SSL_R_NO_VALID_SCTS                              216
 # define SSL_R_NO_VERIFY_COOKIE_CALLBACK                  403
 # define SSL_R_NULL_SSL_CTX                               195
