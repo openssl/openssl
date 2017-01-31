@@ -123,6 +123,67 @@ static int select_server_ctx(SSL *s, void *arg, int ignore)
     }
 }
 
+static int early_select_server_ctx(SSL *s, void *arg, int ignore)
+{
+    const char *servername;
+    const unsigned char *p;
+    size_t len, remaining;
+    HANDSHAKE_EX_DATA *ex_data =
+        (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
+
+    /*
+     * The server_name extension was given too much extensibility when it
+     * was written, so parsing the normal case is a bit complex.
+     */
+    if (!SSL_early_get0_ext(s, TLSEXT_TYPE_server_name, &p, &remaining) ||
+        remaining <= 2)
+        return 0;
+    /* Extract the length of the supplied list of names. */
+    len = (*(p++) << 1);
+    len += *(p++);
+    if (len + 2 != remaining)
+        return 0;
+    remaining = len;
+    /*
+     * The list in practice only has a single element, so we only consider
+     * the first one.
+     */
+    if (remaining == 0 || *p++ != TLSEXT_NAMETYPE_host_name)
+        return 0;
+    remaining--;
+    /* Now we can finally pull out the byte array with the actual hostname. */
+    if (remaining <= 2)
+        return 0;
+    len = (*(p++) << 1);
+    len += *(p++);
+    if (len + 2 > remaining)
+        return 0;
+    remaining = len;
+    servername = (const char *)p;
+
+    if (len == strlen("server2") && strncmp(servername, "server2", len) == 0) {
+        SSL_CTX *new_ctx = arg;
+        SSL_set_SSL_CTX(s, new_ctx);
+        /*
+         * Copy over all the SSL_CTX options - reasonable behavior
+         * allows testing of cases where the options between two
+         * contexts differ/conflict
+         */
+        SSL_clear_options(s, 0xFFFFFFFFL);
+        SSL_set_options(s, SSL_CTX_get_options(new_ctx));
+
+        ex_data->servername = SSL_TEST_SERVERNAME_SERVER2;
+        return 1;
+    } else if (len == strlen("server1") &&
+               strncmp(servername, "server1", len) == 0) {
+        ex_data->servername = SSL_TEST_SERVERNAME_SERVER1;
+        return 1;
+    } else if (ignore) {
+        ex_data->servername = SSL_TEST_SERVERNAME_SERVER1;
+        return 1;
+    }
+    return 0;
+}
 /*
  * (RFC 6066):
  *  If the server understood the ClientHello extension but
@@ -142,6 +203,50 @@ static int servername_ignore_cb(SSL *s, int *ad, void *arg)
 static int servername_reject_cb(SSL *s, int *ad, void *arg)
 {
     return select_server_ctx(s, arg, 0);
+}
+
+static int early_ignore_cb(SSL *s, int *al, void *arg)
+{
+    if (!early_select_server_ctx(s, arg, 1)) {
+        *al = SSL_AD_UNRECOGNIZED_NAME;
+        return 0;
+    }
+    return 1;
+}
+
+static int early_reject_cb(SSL *s, int *al, void *arg)
+{
+    if (!early_select_server_ctx(s, arg, 0)) {
+        *al = SSL_AD_UNRECOGNIZED_NAME;
+        return 0;
+    }
+    return 1;
+}
+
+static int early_nov12_cb(SSL *s, int *al, void *arg)
+{
+    int ret;
+    unsigned int v;
+    const unsigned char *p;
+
+    v = SSL_early_get0_legacy_version(s);
+    if (v > TLS1_2_VERSION || v < SSL3_VERSION) {
+        *al = SSL_AD_PROTOCOL_VERSION;
+        return 0;
+    }
+    (void)SSL_early_get0_session_id(s, &p);
+    if (p == NULL ||
+        SSL_early_get0_random(s, &p) == 0 ||
+        SSL_early_get0_ciphers(s, &p) == 0 ||
+        SSL_early_get0_compression_methods(s, &p) == 0) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        return 0;
+    }
+    ret = early_select_server_ctx(s, arg, 0);
+    SSL_set_max_proto_version(s, TLS1_1_VERSION);
+    if (!ret)
+        *al = SSL_AD_UNRECOGNIZED_NAME;
+    return ret;
 }
 
 static unsigned char dummy_ocsp_resp_good_val = 0xff;
@@ -337,7 +442,10 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         break;
     }
 
-    /* link the two contexts for SNI purposes */
+    /*
+     * Link the two contexts for SNI purposes.
+     * Also do early callbacks here, as setting both early and SNI is bad.
+     */
     switch (extra->server.servername_callback) {
     case SSL_TEST_SERVERNAME_IGNORE_MISMATCH:
         SSL_CTX_set_tlsext_servername_callback(server_ctx, servername_ignore_cb);
@@ -349,6 +457,14 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         break;
     case SSL_TEST_SERVERNAME_CB_NONE:
         break;
+    case SSL_TEST_SERVERNAME_EARLY_IGNORE_MISMATCH:
+        SSL_CTX_set_early_cb(server_ctx, early_ignore_cb, server2_ctx);
+        break;
+    case SSL_TEST_SERVERNAME_EARLY_REJECT_MISMATCH:
+        SSL_CTX_set_early_cb(server_ctx, early_reject_cb, server2_ctx);
+        break;
+    case SSL_TEST_SERVERNAME_EARLY_NO_V12:
+        SSL_CTX_set_early_cb(server_ctx, early_nov12_cb, server2_ctx);
     }
 
     if (extra->server.cert_status != SSL_TEST_CERT_STATUS_NONE) {
