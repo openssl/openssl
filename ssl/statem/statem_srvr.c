@@ -2992,7 +2992,7 @@ int tls_construct_new_session_ticket(SSL *s)
     int len, slen_full, slen;
     SSL_SESSION *sess;
     unsigned int hlen;
-    SSL_CTX *tctx = s->initial_ctx;
+    SSL_CTX *tctx = s->session_ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char key_name[TLSEXT_KEYNAME_LENGTH];
     int iv_len;

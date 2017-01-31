@@ -1077,7 +1077,7 @@ struct ssl_st {
     /* TLS pre-shared secret session resumption */
     tls_session_secret_cb_fn tls_session_secret_cb;
     void *tls_session_secret_cb_arg;
-    SSL_CTX *initial_ctx;       /* initial ctx, used to store sessions */
+    SSL_CTX *session_ctx;       /* initial ctx, used to store sessions */
 # ifndef OPENSSL_NO_NEXTPROTONEG
     /*
      * Next protocol negotiation. For the client, this is the protocol that
@@ -1089,7 +1089,6 @@ struct ssl_st {
     unsigned char *next_proto_negotiated;
     unsigned char next_proto_negotiated_len;
 # endif
-# define session_ctx initial_ctx
     /* What we'll do */
     STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
     /* What's been chosen */

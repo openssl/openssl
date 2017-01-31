@@ -2684,12 +2684,12 @@ static int ssl_check_clienthello_tlsext_early(SSL *s)
         ret =
             s->ctx->tlsext_servername_callback(s, &al,
                                                s->ctx->tlsext_servername_arg);
-    else if (s->initial_ctx != NULL
-             && s->initial_ctx->tlsext_servername_callback != 0)
+    else if (s->session_ctx != NULL
+             && s->session_ctx->tlsext_servername_callback != 0)
         ret =
-            s->initial_ctx->tlsext_servername_callback(s, &al,
+            s->session_ctx->tlsext_servername_callback(s, &al,
                                                        s->
-                                                       initial_ctx->tlsext_servername_arg);
+                                                       session_ctx->tlsext_servername_arg);
 
     switch (ret) {
     case SSL_TLSEXT_ERR_ALERT_FATAL:
@@ -2863,12 +2863,12 @@ int ssl_check_serverhello_tlsext(SSL *s)
         ret =
             s->ctx->tlsext_servername_callback(s, &al,
                                                s->ctx->tlsext_servername_arg);
-    else if (s->initial_ctx != NULL
-             && s->initial_ctx->tlsext_servername_callback != 0)
+    else if (s->session_ctx != NULL
+             && s->session_ctx->tlsext_servername_callback != 0)
         ret =
-            s->initial_ctx->tlsext_servername_callback(s, &al,
+            s->session_ctx->tlsext_servername_callback(s, &al,
                                                        s->
-                                                       initial_ctx->tlsext_servername_arg);
+                                                       session_ctx->tlsext_servername_arg);
 
     /*
      * Ensure we get sensible values passed to tlsext_status_cb in the event
@@ -3084,7 +3084,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
     HMAC_CTX *hctx = NULL;
     EVP_CIPHER_CTX *ctx;
-    SSL_CTX *tctx = s->initial_ctx;
+    SSL_CTX *tctx = s->session_ctx;
 
     /* Initialize session ticket encryption and HMAC contexts */
     hctx = HMAC_CTX_new();
