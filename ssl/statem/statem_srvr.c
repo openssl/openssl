@@ -1584,12 +1584,9 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             ciphers = NULL;
 
             /* check if some cipher was preferred by call back */
-            pref_cipher =
-                pref_cipher ? pref_cipher : ssl3_choose_cipher(s,
-                                                               s->
-                                                               session->ciphers,
-                                                               SSL_get_ciphers
-                                                               (s));
+            if (pref_cipher == NULL)
+                pref_cipher = ssl3_choose_cipher(s, s->session->ciphers,
+                                                 SSL_get_ciphers(s));
             if (pref_cipher == NULL) {
                 al = SSL_AD_HANDSHAKE_FAILURE;
                 SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_NO_SHARED_CIPHER);
