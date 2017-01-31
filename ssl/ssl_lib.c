@@ -599,7 +599,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->ext.ocsp.resp = NULL;
     s->ext.ocsp.resp_len = 0;
     SSL_CTX_up_ref(ctx);
-    s->initial_ctx = ctx;
+    s->session_ctx = ctx;
 #ifndef OPENSSL_NO_EC
     if (ctx->ext.ecpointformats) {
         s->ext.ecpointformats =
@@ -995,7 +995,7 @@ void SSL_free(SSL *s)
     /* Free up if allocated */
 
     OPENSSL_free(s->ext.hostname);
-    SSL_CTX_free(s->initial_ctx);
+    SSL_CTX_free(s->session_ctx);
 #ifndef OPENSSL_NO_EC
     OPENSSL_free(s->ext.ecpointformats);
     OPENSSL_free(s->ext.supportedgroups);
@@ -3483,7 +3483,7 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
     if (ssl->ctx == ctx)
         return ssl->ctx;
     if (ctx == NULL)
-        ctx = ssl->initial_ctx;
+        ctx = ssl->session_ctx;
     new_cert = ssl_cert_dup(ctx->cert);
     if (new_cert == NULL) {
         return NULL;
