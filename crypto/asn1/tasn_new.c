@@ -100,7 +100,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         }
         asn1_set_choice_selector(pval, -1, it);
         if (asn1_cb && !asn1_cb(ASN1_OP_NEW_POST, pval, it, NULL))
-            goto auxerr;
+            goto auxerr2;
         break;
 
     case ASN1_ITYPE_NDEF_SEQUENCE:
@@ -125,15 +125,15 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         }
         /* 0 : init. lock */
         if (asn1_do_lock(pval, 0, it) < 0)
-            goto memerr;
+            goto memerr2;
         asn1_enc_init(pval, it);
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
             pseqval = asn1_get_field_ptr(pval, tt);
             if (!asn1_template_new(pseqval, tt))
-                goto memerr;
+                goto memerr2;
         }
         if (asn1_cb && !asn1_cb(ASN1_OP_NEW_POST, pval, it, NULL))
-            goto auxerr;
+            goto auxerr2;
         break;
     }
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
@@ -141,6 +141,8 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
 #endif
     return 1;
 
+ memerr2:
+    ASN1_item_ex_free(pval, it);
  memerr:
     ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ERR_R_MALLOC_FAILURE);
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
@@ -148,9 +150,10 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
 #endif
     return 0;
 
+ auxerr2:
+    ASN1_item_ex_free(pval, it);
  auxerr:
     ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ASN1_R_AUX_ERROR);
-    ASN1_item_ex_free(pval, it);
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     OPENSSL_mem_debug_pop();
 #endif
