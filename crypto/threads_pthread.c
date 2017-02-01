@@ -28,7 +28,6 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
     }
 # else
     pthread_mutexattr_t attr;
-
     CRYPTO_RWLOCK *lock = OPENSSL_zalloc(sizeof(pthread_mutex_t));
     if (lock == NULL)
         return NULL;
