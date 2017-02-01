@@ -557,6 +557,11 @@ cause the client to disconnect due to a protocol violation.
 
 print out some session cache status information.
 
+=item B<-keylogfile path>
+
+Appends TLS secrets to the specified keylog file such that external programs
+(like Wireshark) can decrypt TLS connections.
+
 =back
 
 =head1 NOTES
