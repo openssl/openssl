@@ -1738,3 +1738,31 @@ int ssl_set_client_hello_version(SSL *s)
     s->client_version = ver_max;
     return 0;
 }
+
+/*
+ * Checks a list of |groups| to determine if the |group_id| is in it. If it is
+ * and |checkallow| is 1 then additionally check if the group is allowed to be
+ * used. Returns 1 if the group is in the list (and allowed if |checkallow| is
+ * 1) or 0 otherwise.
+ */
+int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
+                  size_t num_groups, int checkallow)
+{
+    size_t i;
+
+    if (groups == NULL || num_groups == 0)
+        return 0;
+
+    for (i = 0; i < num_groups; i++, groups += 2) {
+        unsigned int share_id = (groups[0] << 8) | (groups[1]);
+
+        if (group_id == share_id
+                && (!checkallow
+                    || tls_curve_allowed(s, groups, SSL_SECOP_CURVE_CHECK))) {
+            break;
+        }
+    }
+
+    /* If i == num_groups then not in the list */
+    return i < num_groups;
+}
