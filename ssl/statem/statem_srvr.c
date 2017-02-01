@@ -1842,13 +1842,6 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
             s->s3->tmp.new_cipher = s->session->cipher;
         }
 
-        if (!(s->verify_mode & SSL_VERIFY_PEER)) {
-            if (!ssl3_digest_cached_records(s, 0)) {
-                al = SSL_AD_INTERNAL_ERROR;
-                goto f_err;
-            }
-        }
-
         /*-
          * we now have the following setup.
          * client_random
@@ -1972,6 +1965,12 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
                                             : EXT_TLS1_2_SERVER_HELLO,
                                          NULL, 0, &al)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (!(s->verify_mode & SSL_VERIFY_PEER)
+            && !ssl3_digest_cached_records(s, 0)) {
+        al = SSL_AD_INTERNAL_ERROR;
         goto err;
     }
 

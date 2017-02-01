@@ -457,37 +457,6 @@ int tls_parse_ctos_etm(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 }
 
 /*
- * Checks a list of |groups| to determine if the |group_id| is in it. If it is
- * and |checkallow| is 1 then additionally check if the group is allowed to be
- * used. Returns 1 if the group is in the list (and allowed if |checkallow| is
- * 1) or 0 otherwise.
- */
-#ifndef OPENSSL_NO_TLS1_3
-static int check_in_list(SSL *s, unsigned int group_id,
-                         const unsigned char *groups, size_t num_groups,
-                         int checkallow)
-{
-    size_t i;
-
-    if (groups == NULL || num_groups == 0)
-        return 0;
-
-    for (i = 0; i < num_groups; i++, groups += 2) {
-        unsigned int share_id = (groups[0] << 8) | (groups[1]);
-
-        if (group_id == share_id
-                && (!checkallow
-                    || tls_curve_allowed(s, groups, SSL_SECOP_CURVE_CHECK))) {
-            break;
-        }
-    }
-
-    /* If i == num_groups then not in the list */
-    return i < num_groups;
-}
-#endif
-
-/*
  * Process a psk_kex_modes extension received in the ClientHello. |pkt| contains
  * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
  * If a failure occurs then |*al| is set to an appropriate alert value.
@@ -1034,54 +1003,10 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, unsigned int context,
     if (ckey == NULL) {
         /* No key_share received from client */
         if (s->hello_retry_request) {
-            const unsigned char *pcurves, *pcurvestmp, *clntcurves;
-            size_t num_curves, clnt_num_curves, i;
-
-            /* Get the clients list of supported groups. */
-            if (!tls1_get_curvelist(s, 1, &clntcurves, &clnt_num_curves)) {
-                *al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
-                       ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
-
-            /* Get our list of available groups */
-            if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
-                       ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
-
             if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
-                    || !WPACKET_start_sub_packet_u16(pkt)) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
-                       ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
-
-            /* Find first group we allow that is also in client's list */
-            for (i = 0, pcurvestmp = pcurves; i < num_curves;
-                 i++, pcurvestmp += 2) {
-                unsigned int group_id = pcurvestmp[0] << 8 | pcurvestmp[1];
-
-                if (check_in_list(s, group_id, clntcurves, clnt_num_curves,
-                                  1)) {
-                    if (!WPACKET_put_bytes_u16(pkt, group_id)) {
-                        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
-                               ERR_R_INTERNAL_ERROR);
-                        return 0;
-                    }
-                    break;
-                }
-            }
-            if (i == num_curves) {
-                /* No common groups */
-                *al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
-                       SSL_R_NO_SHARED_GROUPS);
-                return 0;
-            }
-            if (!WPACKET_close(pkt)) {
+                    || !WPACKET_start_sub_packet_u16(pkt)
+                    || !WPACKET_put_bytes_u16(pkt, s->s3->group_id)
+                    || !WPACKET_close(pkt)) {
                 SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
                        ERR_R_INTERNAL_ERROR);
                 return 0;
