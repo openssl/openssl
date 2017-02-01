@@ -2,20 +2,18 @@
 
 ## SSL test configurations
 
-package ssltests;
 
 use strict;
 use warnings;
 
-use OpenSSL::Test;
-use OpenSSL::Test::Utils qw(anydisabled);
+package ssltests;
+use OpenSSL::Test::Utils;
 
 my $dir_sep = $^O ne "VMS" ? "/" : "";
 
 my $server = {
     "ECDSA.Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}server-ecdsa-cert.pem",
     "ECDSA.PrivateKey" => "\${ENV::TEST_CERTS_DIR}${dir_sep}server-ecdsa-key.pem",
-    # TODO(TLS1.3): add test cases for TLSv1.3
     "MaxProtocol" => "TLSv1.2"
 };
 
@@ -68,6 +66,19 @@ our @tests = (
         },
     },
     {
+        name => "ECDSA Signature Algorithm Selection SHA384",
+        server => $server,
+        client => {
+            "SignatureAlgorithms" => "ECDSA+SHA384",
+        },
+        test   => {
+            "ExpectedServerCertType" => "P-256",
+            "ExpectedServerSignHash" => "SHA384",
+            "ExpectedServerSignType" => "EC",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
         name => "ECDSA Signature Algorithm Selection, no ECDSA certificate",
         server => { },
         client => {
@@ -104,3 +115,88 @@ our @tests = (
         },
     }
 );
+
+
+my $server_tls_1_3 = {
+    "ECDSA.Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}server-ecdsa-cert.pem",
+    "ECDSA.PrivateKey" => "\${ENV::TEST_CERTS_DIR}${dir_sep}server-ecdsa-key.pem",
+    "MinProtocol" => "TLSv1.3",
+    "MaxProtocol" => "TLSv1.3"
+};
+
+my @tests_tls_1_3 = (
+    {
+        name => "TLS 1.3 ECDSA Signature Algorithm Selection",
+        server => $server_tls_1_3,
+        client => {
+            "SignatureAlgorithms" => "ECDSA+SHA256",
+        },
+        test   => {
+            "ExpectedServerCertType" => "P-256",
+            "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "EC",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "TLS 1.3 ECDSA Signature Algorithm Selection with PSS",
+        server => $server_tls_1_3,
+        client => {
+            "SignatureAlgorithms" => "ECDSA+SHA256:RSA-PSS+SHA256",
+        },
+        test   => {
+            "ExpectedServerCertType" => "P-256",
+            "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "EC",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "TLS 1.3 RSA Signature Algorithm Selection SHA384 with PSS",
+        server => $server_tls_1_3,
+        client => {
+            "SignatureAlgorithms" => "ECDSA+SHA384:RSA-PSS+SHA384",
+        },
+        test   => {
+            "ExpectedServerCertType" => "RSA",
+            "ExpectedServerSignHash" => "SHA384",
+            "ExpectedServerSignType" => "RSA-PSS",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "TLS 1.3 ECDSA Signature Algorithm Selection, no ECDSA certificate",
+        server => { },
+        client => {
+            "SignatureAlgorithms" => "ECDSA+SHA256",
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail"
+        },
+    },
+    {
+        name => "TLS 1.3 RSA Signature Algorithm Selection, no PSS",
+        server => $server_tls_1_3,
+        client => {
+            "SignatureAlgorithms" => "RSA+SHA256",
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail"
+        },
+    },
+    {
+        name => "TLS 1.3 RSA-PSS Signature Algorithm Selection",
+        server => $server_tls_1_3,
+        client => {
+            "SignatureAlgorithms" => "RSA-PSS+SHA256",
+        },
+        test   => {
+            "ExpectedServerCertType" => "RSA",
+            "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "RSA-PSS",
+            "ExpectedResult" => "Success"
+        },
+    }
+);
+
+push @tests, @tests_tls_1_3 unless disabled("tls1_3");
