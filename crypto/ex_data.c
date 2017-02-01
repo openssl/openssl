@@ -307,11 +307,12 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
     int mx, i;
     EX_CALLBACKS *ip;
     void *ptr;
+    EX_CALLBACK *f;
     EX_CALLBACK *stack[10];
     EX_CALLBACK **storage = NULL;
 
     if ((ip = get_and_lock(class_index)) == NULL)
-        return;
+        goto err;
 
     mx = sk_EX_CALLBACK_num(ip->meth);
     if (mx > 0) {
@@ -325,20 +326,23 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
     }
     CRYPTO_THREAD_unlock(ex_data_lock);
 
-    if (mx > 0 && storage == NULL) {
-        CRYPTOerr(CRYPTO_F_CRYPTO_FREE_EX_DATA, ERR_R_MALLOC_FAILURE);
-        return;
-    }
     for (i = 0; i < mx; i++) {
-        if (storage[i] && storage[i]->free_func) {
+        if (storage != NULL)
+            f = storage[i];
+        else {
+            CRYPTO_THREAD_write_lock(ex_data_lock);
+            f = sk_EX_CALLBACK_value(ip->meth, i);
+            CRYPTO_THREAD_unlock(ex_data_lock);
+        }
+        if (f != NULL && f->free_func != NULL) {
             ptr = CRYPTO_get_ex_data(ad, i);
-            storage[i]->free_func(obj, ptr, ad, i,
-                                  storage[i]->argl, storage[i]->argp);
+            f->free_func(obj, ptr, ad, i, f->argl, f->argp);
         }
     }
 
     if (storage != stack)
         OPENSSL_free(storage);
+ err:
     sk_void_free(ad->sk);
     ad->sk = NULL;
 }
