@@ -1363,6 +1363,41 @@ camellia 50		: CAMELLIA-256-CMAC		: camellia-256-cmac
 			: CAMELLIA-192-CFB8		: camellia-192-cfb8
 			: CAMELLIA-256-CFB8		: camellia-256-cfb8
 
+# Definitions for ARIA cipher
+
+!Alias aria 1 2 410 200046 1 1
+aria 1                  : ARIA-128-ECB                  : aria-128-ecb
+aria 2                  : ARIA-128-CBC                  : aria-128-cbc
+!Cname aria-128-cfb128
+aria 3                  : ARIA-128-CFB                  : aria-128-cfb
+!Cname aria-128-ofb128
+aria 4                  : ARIA-128-OFB                  : aria-128-ofb
+aria 5			: ARIA-128-CTR                  : aria-128-ctr
+
+aria 6                  : ARIA-192-ECB                  : aria-192-ecb
+aria 7                  : ARIA-192-CBC                  : aria-192-cbc
+!Cname aria-192-cfb128
+aria 8                  : ARIA-192-CFB                  : aria-192-cfb
+!Cname aria-192-ofb128
+aria 9                  : ARIA-192-OFB                  : aria-192-ofb
+aria 10                 : ARIA-192-CTR                  : aria-192-ctr
+
+aria 11                 : ARIA-256-ECB                  : aria-256-ecb
+aria 12                 : ARIA-256-CBC                  : aria-256-cbc
+!Cname aria-256-cfb128
+aria 13                 : ARIA-256-CFB                  : aria-256-cfb
+!Cname aria-256-ofb128
+aria 14                 : ARIA-256-OFB                  : aria-256-ofb
+aria 15                 : ARIA-256-CTR                  : aria-256-ctr
+
+# There are no OIDs for these ARIA modes...
+                        : ARIA-128-CFB1                 : aria-128-cfb1
+                        : ARIA-192-CFB1                 : aria-192-cfb1
+                        : ARIA-256-CFB1                 : aria-256-cfb1
+                        : ARIA-128-CFB8                 : aria-128-cfb8
+                        : ARIA-192-CFB8                 : aria-192-cfb8
+                        : ARIA-256-CFB8                 : aria-256-cfb8
+
 # Definitions for SEED cipher - ECB, CBC, OFB mode
 
 member-body 410 200004  : KISA          : kisa
