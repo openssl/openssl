@@ -99,4 +99,5 @@ int ssl_load_stores(SSL_CTX *ctx, const char *vfyCApath,
                     const char *chCAfile, STACK_OF(X509_CRL) *crls,
                     int crl_download);
 void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose);
+int set_keylog_file(SSL_CTX *ctx, const char *keylog_file);
 #endif

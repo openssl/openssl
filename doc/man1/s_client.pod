@@ -520,6 +520,11 @@ for SCTs.
 A file containing a list of known Certificate Transparency logs. See
 L<SSL_CTX_set_ctlog_list_file(3)> for the expected file format.
 
+=item B<-keylogfile path>
+
+Appends TLS secrets to the specified keylog file such that external programs
+(like Wireshark) can decrypt TLS connections.
+
 =back
 
 =head1 CONNECTED COMMANDS
