@@ -60,6 +60,7 @@
 #include <openssl/bn.h>
 #include <openssl/engine.h>
 
+static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt);
 static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt);
 
 static ossl_inline int cert_req_allowed(SSL *s);
@@ -137,6 +138,17 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
     default:
         break;
 
+    case TLS_ST_CW_CLNT_HELLO:
+        /*
+         * This must a ClientHello following a HelloRetryRequest, so the only
+         * thing we can get now is a ServerHello.
+         */
+        if (mt == SSL3_MT_SERVER_HELLO) {
+            st->hand_state = TLS_ST_CR_SRVR_HELLO;
+            return 1;
+        }
+        break;
+
     case TLS_ST_CR_SRVR_HELLO:
         if (mt == SSL3_MT_ENCRYPTED_EXTENSIONS) {
             st->hand_state = TLS_ST_CR_ENCRYPTED_EXTENSIONS;
@@ -210,8 +222,8 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
     int ske_expected;
 
     /*
-     * Note that after a ClientHello we don't know what version we are going
-     * to negotiate yet, so we don't take this branch until later
+     * Note that after writing the first ClientHello we don't know what version
+     * we are going to negotiate yet, so we don't take this branch until later.
      */
     if (SSL_IS_TLS13(s)) {
         if (!ossl_statem_client13_read_transition(s, mt))
@@ -232,6 +244,11 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
         if (SSL_IS_DTLS(s)) {
             if (mt == DTLS1_MT_HELLO_VERIFY_REQUEST) {
                 st->hand_state = DTLS_ST_CR_HELLO_VERIFY_REQUEST;
+                return 1;
+            }
+        } else {
+            if (mt == SSL3_MT_HELLO_RETRY_REQUEST) {
+                st->hand_state = TLS_ST_CR_HELLO_RETRY_REQUEST;
                 return 1;
             }
         }
@@ -390,14 +407,22 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
      */
 
     /*
-     * Note: There are no cases for TLS_ST_BEFORE or TLS_ST_CW_CLNT_HELLO,
-     * because we haven't negotiated TLSv1.3 yet at that point. They are
-     * handled by ossl_statem_client_write_transition().
+     * Note: There are no cases for TLS_ST_BEFORE because we haven't negotiated
+     * TLSv1.3 yet at that point. They are handled by
+     * ossl_statem_client_write_transition().
      */
     switch (st->hand_state) {
     default:
         /* Shouldn't happen */
         return WRITE_TRAN_ERROR;
+
+    case TLS_ST_CW_CLNT_HELLO:
+        /* We only hit this in the case of HelloRetryRequest */
+        return WRITE_TRAN_FINISHED;
+
+    case TLS_ST_CR_HELLO_RETRY_REQUEST:
+        st->hand_state = TLS_ST_CW_CLNT_HELLO;
+        return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CR_FINISHED:
         st->hand_state = (s->s3->tmp.cert_req != 0) ? TLS_ST_CW_CERT
@@ -779,6 +804,9 @@ size_t ossl_statem_client_max_message_size(SSL *s)
     case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
         return HELLO_VERIFY_REQUEST_MAX_LENGTH;
 
+    case TLS_ST_CR_HELLO_RETRY_REQUEST:
+        return HELLO_RETRY_REQUEST_MAX_LENGTH;
+
     case TLS_ST_CR_CERT:
         return s->max_cert_list;
 
@@ -835,6 +863,9 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
 
     case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
         return dtls_process_hello_verify(s, pkt);
+
+    case TLS_ST_CR_HELLO_RETRY_REQUEST:
+        return tls_process_hello_retry_request(s, pkt);
 
     case TLS_ST_CR_CERT:
         return tls_process_server_certificate(s, pkt);
@@ -1425,6 +1456,52 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
 
     OPENSSL_free(extensions);
     return MSG_PROCESS_CONTINUE_READING;
+ f_err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    ossl_statem_set_error(s);
+    OPENSSL_free(extensions);
+    return MSG_PROCESS_ERROR;
+}
+
+static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
+{
+    unsigned int sversion;
+    int protverr;
+    RAW_EXTENSION *extensions = NULL;
+    int al;
+    PACKET extpkt;
+
+    if (!PACKET_get_net_2(pkt, &sversion)) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST, SSL_R_LENGTH_MISMATCH);
+        goto f_err;
+    }
+
+    s->hello_retry_request = 1;
+
+    /* This will fail if it doesn't choose TLSv1.3+ */
+    protverr = ssl_choose_client_version(s, sversion);
+    if (protverr != 0) {
+        al = SSL_AD_PROTOCOL_VERSION;
+        SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST, protverr);
+        goto f_err;
+    }
+
+    if (!PACKET_as_length_prefixed_2(pkt, &extpkt)) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST, SSL_R_BAD_LENGTH);
+        goto f_err;
+    }
+
+    if (!tls_collect_extensions(s, &extpkt, EXT_TLS1_3_HELLO_RETRY_REQUEST,
+                                &extensions, &al)
+            || !tls_parse_all_extensions(s, EXT_TLS1_3_HELLO_RETRY_REQUEST,
+                                         extensions, NULL, 0, &al))
+        goto f_err;
+
+    OPENSSL_free(extensions);
+
+    return MSG_PROCESS_FINISHED_READING;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
     ossl_statem_set_error(s);
