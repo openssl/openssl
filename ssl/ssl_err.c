@@ -20,6 +20,7 @@
 
 static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_ADD_CLIENT_KEY_SHARE_EXT), "add_client_key_share_ext"},
+    {ERR_FUNC(SSL_F_ADD_KEY_SHARE), "add_key_share"},
     {ERR_FUNC(SSL_F_CHECK_SUITEB_CIPHER_LIST), "check_suiteb_cipher_list"},
     {ERR_FUNC(SSL_F_CT_MOVE_SCTS), "ct_move_scts"},
     {ERR_FUNC(SSL_F_CT_STRICT), "ct_strict"},
@@ -412,6 +413,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "tls_process_encrypted_extensions"},
     {ERR_FUNC(SSL_F_TLS_PROCESS_FINISHED), "tls_process_finished"},
     {ERR_FUNC(SSL_F_TLS_PROCESS_HELLO_REQ), "tls_process_hello_req"},
+    {ERR_FUNC(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST),
+     "tls_process_hello_retry_request"},
     {ERR_FUNC(SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT),
      "tls_process_initial_server_flight"},
     {ERR_FUNC(SSL_F_TLS_PROCESS_KEY_EXCHANGE), "tls_process_key_exchange"},

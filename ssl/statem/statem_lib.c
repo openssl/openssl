@@ -1595,6 +1595,9 @@ int ssl_choose_client_version(SSL *s, int version)
             continue;
         if (vent->cmeth == NULL)
             break;
+        if (s->hello_retry_request && version != TLS1_3_VERSION)
+            return SSL_R_WRONG_SSL_VERSION;
+
         method = vent->cmeth();
         err = ssl_method_error(s, method);
         if (err != 0)
