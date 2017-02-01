@@ -74,6 +74,8 @@ int BN_rshift1(BIGNUM *r, const BIGNUM *a)
         c = (t & 1) ? BN_TBIT : 0;
     }
     r->top = j;
+    if (!r->top)
+        r->neg = 0; /* don't allow negative zero */
     bn_check_top(r);
     return (1);
 }
