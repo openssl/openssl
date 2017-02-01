@@ -58,6 +58,7 @@ my %conf_dependent_tests = (
   "10-resumption.conf" => !$is_default_tls,
   "11-dtls_resumption.conf" => !$is_default_dtls,
   "19-mac-then-encrypt.conf" => !$is_default_tls,
+  "20-cert-select.conf" => !$is_default_tls,
 );
 
 # Add your test here if it should be skipped for some compile-time
