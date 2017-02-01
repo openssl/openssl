@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -63,7 +63,7 @@
  *      EC
  *      PSK
  *      SRP (within that: RSA EC PSK)
- *      Cipher families: Chacha/poly, Camellila, Gost, IDEA, SEED
+ *      Cipher families: Chacha/poly, Camellia, Gost, IDEA, SEED
  *      Weak ciphers
  */
 static SSL_CIPHER ssl3_ciphers[] = {
