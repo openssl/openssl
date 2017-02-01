@@ -881,7 +881,8 @@ typedef enum {
     TLS_ST_CR_CERT_VRFY,
     TLS_ST_SW_CERT_VRFY,
     TLS_ST_CR_HELLO_REQ,
-    TLS_ST_SW_HELLO_RETRY_REQUEST
+    TLS_ST_SW_HELLO_RETRY_REQUEST,
+    TLS_ST_CR_HELLO_RETRY_REQUEST
 } OSSL_HANDSHAKE_STATE;
 
 /*
@@ -2073,6 +2074,7 @@ int ERR_load_SSL_strings(void);
 
 /* Function codes. */
 # define SSL_F_ADD_CLIENT_KEY_SHARE_EXT                   438
+# define SSL_F_ADD_KEY_SHARE                              512
 # define SSL_F_CHECK_SUITEB_CIPHER_LIST                   331
 # define SSL_F_CT_MOVE_SCTS                               345
 # define SSL_F_CT_STRICT                                  349
@@ -2355,6 +2357,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_ENCRYPTED_EXTENSIONS           444
 # define SSL_F_TLS_PROCESS_FINISHED                       364
 # define SSL_F_TLS_PROCESS_HELLO_REQ                      507
+# define SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST            511
 # define SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT          442
 # define SSL_F_TLS_PROCESS_KEY_EXCHANGE                   365
 # define SSL_F_TLS_PROCESS_NEW_SESSION_TICKET             366
