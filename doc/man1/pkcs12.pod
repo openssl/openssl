@@ -23,7 +23,7 @@ B<openssl> B<pkcs12>
 [B<-cacerts>]
 [B<-nokeys>]
 [B<-info>]
-[B<-des | -des3 | -idea | -aes128 | -aes192 | -aes256 | -camellia128 | -camellia192 | -camellia256 | -nodes>]
+[B<-des | -des3 | -idea | -aes128 | -aes192 | -aes256 | -aria128 | -aria192 | -aria256 | -camellia128 | -camellia192 | -camellia256 | -nodes>]
 [B<-noiter>]
 [B<-maciter | -nomaciter | -nomac>]
 [B<-twopass>]
@@ -131,6 +131,10 @@ use IDEA to encrypt private keys before outputting.
 =item B<-aes128>, B<-aes192>, B<-aes256>
 
 use AES to encrypt private keys before outputting.
+
+=item B<-aria128>, B<-aria192>, B<-aria256>
+
+use ARIA to encrypt private keys before outputting.
 
 =item B<-camellia128>, B<-camellia192>, B<-camellia256>
 
@@ -368,7 +372,7 @@ L<pkcs8(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
