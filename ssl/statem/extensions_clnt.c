@@ -528,12 +528,57 @@ int tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt, unsigned int context,
     return 1;
 }
 
+#ifndef OPENSSL_NO_TLS1_3
+static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
+{
+    unsigned char *encodedPoint = NULL;
+    EVP_PKEY *key_share_key = NULL;
+    size_t encodedlen;
+
+    key_share_key = ssl_generate_pkey_curve(curve_id);
+    if (key_share_key == NULL) {
+        SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_EVP_LIB);
+        return 0;
+    }
+
+    /* Encode the public key. */
+    encodedlen = EVP_PKEY_get1_tls_encodedpoint(key_share_key,
+                                                &encodedPoint);
+    if (encodedlen == 0) {
+        SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_EC_LIB);
+        EVP_PKEY_free(key_share_key);
+        return 0;
+    }
+
+    /* Create KeyShareEntry */
+    if (!WPACKET_put_bytes_u16(pkt, curve_id)
+            || !WPACKET_sub_memcpy_u16(pkt, encodedPoint, encodedlen)) {
+        SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        EVP_PKEY_free(key_share_key);
+        OPENSSL_free(encodedPoint);
+        return 0;
+    }
+
+    /*
+     * TODO(TLS1.3): When changing to send more than one key_share we're
+     * going to need to be able to save more than one EVP_PKEY. For now
+     * we reuse the existing tmp.pkey
+     */
+    s->s3->tmp.pkey = key_share_key;
+    s->s3->group_id = curve_id;
+    OPENSSL_free(encodedPoint);
+
+    return 1;
+}
+#endif
+
 int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx, int *al)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    size_t i, sharessent = 0, num_curves = 0;
+    size_t i, num_curves = 0;
     const unsigned char *pcurves = NULL;
+    unsigned int curve_id = 0;
 
     /* key_share extension */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
@@ -551,61 +596,36 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, unsigned int context,
         return 0;
     }
 
+    if (s->s3->tmp.pkey != NULL) {
+        /* Shouldn't happen! */
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
     /*
      * TODO(TLS1.3): Make the number of key_shares sent configurable. For
      * now, just send one
      */
-    for (i = 0; i < num_curves && sharessent < 1; i++, pcurves += 2) {
-        unsigned char *encodedPoint = NULL;
-        unsigned int curve_id = 0;
-        EVP_PKEY *key_share_key = NULL;
-        size_t encodedlen;
+    if (s->s3->group_id != 0) {
+        curve_id = s->s3->group_id;
+    } else {
+        for (i = 0; i < num_curves; i++, pcurves += 2) {
 
-        if (!tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED))
-            continue;
+            if (!tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED))
+                continue;
 
-        if (s->s3->tmp.pkey != NULL) {
-            /* Shouldn't happen! */
-            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-            return 0;
+            curve_id = (pcurves[0] << 8) | pcurves[1];
+            break;
         }
-
-        /* Generate a key for this key_share */
-        curve_id = (pcurves[0] << 8) | pcurves[1];
-        key_share_key = ssl_generate_pkey_curve(curve_id);
-        if (key_share_key == NULL) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_EVP_LIB);
-            return 0;
-        }
-
-        /* Encode the public key. */
-        encodedlen = EVP_PKEY_get1_tls_encodedpoint(key_share_key,
-                                                    &encodedPoint);
-        if (encodedlen == 0) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_EC_LIB);
-            EVP_PKEY_free(key_share_key);
-            return 0;
-        }
-
-        /* Create KeyShareEntry */
-        if (!WPACKET_put_bytes_u16(pkt, curve_id)
-                || !WPACKET_sub_memcpy_u16(pkt, encodedPoint, encodedlen)) {
-            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-            EVP_PKEY_free(key_share_key);
-            OPENSSL_free(encodedPoint);
-            return 0;
-        }
-
-        /*
-         * TODO(TLS1.3): When changing to send more than one key_share we're
-         * going to need to be able to save more than one EVP_PKEY. For now
-         * we reuse the existing tmp.pkey
-         */
-        s->s3->group_id = curve_id;
-        s->s3->tmp.pkey = key_share_key;
-        sharessent++;
-        OPENSSL_free(encodedPoint);
     }
+
+    if (curve_id == 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, SSL_R_NO_SUITABLE_KEY_SHARE);
+        return 0;
+    }
+
+    if (!add_key_share(s, pkt, curve_id))
+        return 0;
 
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
@@ -1186,6 +1206,49 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         *al = SSL_AD_HANDSHAKE_FAILURE;
         SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
         return 0;
+    }
+
+    if ((context & EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
+        unsigned const char *pcurves = NULL;
+        size_t i, num_curves;
+
+        if (PACKET_remaining(pkt) != 0) {
+            *al = SSL_AD_HANDSHAKE_FAILURE;
+            SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
+            return 0;
+        }
+
+        /*
+         * It is an error if the HelloRetryRequest wants a key_share that we
+         * already sent in the first ClientHello
+         */
+        if (group_id == s->s3->group_id) {
+            *al = SSL_AD_ILLEGAL_PARAMETER;
+            SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
+            return 0;
+        }
+
+        /* Validate the selected group is one we support */
+        pcurves = s->ext.supportedgroups;
+        if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
+            SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        for (i = 0; i < num_curves; i++, pcurves += 2) {
+            if (group_id == (unsigned int)((pcurves[0] << 8) | pcurves[1]))
+                break;
+        }
+        if (i >= num_curves
+                || !tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED)) {
+            *al = SSL_AD_ILLEGAL_PARAMETER;
+            SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
+            return 0;
+        }
+
+        s->s3->group_id = group_id;
+        EVP_PKEY_free(s->s3->tmp.pkey);
+        s->s3->tmp.pkey = NULL;
+        return 1;
     }
 
     if (group_id != s->s3->group_id) {
