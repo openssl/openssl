@@ -25,6 +25,7 @@ static ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_FUNC(EVP_F_AES_T4_INIT_KEY), "aes_t4_init_key"},
     {ERR_FUNC(EVP_F_AES_WRAP_CIPHER), "aes_wrap_cipher"},
     {ERR_FUNC(EVP_F_ALG_MODULE_INIT), "alg_module_init"},
+    {ERR_FUNC(EVP_F_ARIA_INIT_KEY), "aria_init_key"},
     {ERR_FUNC(EVP_F_CAMELLIA_INIT_KEY), "camellia_init_key"},
     {ERR_FUNC(EVP_F_CHACHA20_POLY1305_CTRL), "chacha20_poly1305_ctrl"},
     {ERR_FUNC(EVP_F_CMLL_T4_INIT_KEY), "cmll_t4_init_key"},
@@ -97,6 +98,7 @@ static ERR_STRING_DATA EVP_str_functs[] = {
 
 static ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_REASON(EVP_R_AES_KEY_SETUP_FAILED), "aes key setup failed"},
+    {ERR_REASON(EVP_R_ARIA_KEY_SETUP_FAILED), "aria key setup failed"},
     {ERR_REASON(EVP_R_BAD_DECRYPT), "bad decrypt"},
     {ERR_REASON(EVP_R_BUFFER_TOO_SMALL), "buffer too small"},
     {ERR_REASON(EVP_R_CAMELLIA_KEY_SETUP_FAILED),
