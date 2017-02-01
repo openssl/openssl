@@ -968,29 +968,103 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
 
     /*
      * If
+     *     we are a client
+     *     AND
      *     we have no key_share
      *     AND
      *     (we are not resuming
      *      OR the kex_mode doesn't allow non key_share resumes)
      * THEN
-     *     fail
+     *     fail;
      */
-    if (((s->server && s->s3->peer_tmp == NULL) || (!s->server && !sent))
+    if (!s->server
+            && !sent
             && (!s->hit
                 || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0)) {
-        /* No suitable share */
-        if (s->server && s->hello_retry_request == 0 && sent) {
-            s->hello_retry_request = 1;
-            return 1;
-        }
-
         /* Nothing left we can do - just fail */
         *al = SSL_AD_HANDSHAKE_FAILURE;
         SSLerr(SSL_F_FINAL_KEY_SHARE, SSL_R_NO_SUITABLE_KEY_SHARE);
         return 0;
     }
+    /*
+     * If
+     *     we are a server
+     *     AND
+     *     we have no key_share
+     * THEN
+     *     If
+     *         we didn't already send a HelloRetryRequest
+     *         AND
+     *         the client sent a key_share extension
+     *         AND
+     *         (we are not resuming
+     *          OR the kex_mode allows key_share resumes)
+     *         AND
+     *         a shared group exists
+     *     THEN
+     *         send a HelloRetryRequest
+     *     ELSE If
+     *         we are not resuming
+     *         OR
+     *         the kex_mode doesn't allow non key_share resumes
+     *     THEN
+     *         fail;
+     */
+    if (s->server && s->s3->peer_tmp == NULL) {
+        /* No suitable share */
+        if (s->hello_retry_request == 0 && sent
+                && (!s->hit
+                    || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE)
+                       != 0)) {
+            const unsigned char *pcurves, *pcurvestmp, *clntcurves;
+            size_t num_curves, clnt_num_curves, i;
+            unsigned int group_id;
 
-    s->hello_retry_request = 0;
+            /* Check a shared group exists */
+
+            /* Get the clients list of supported groups. */
+            if (!tls1_get_curvelist(s, 1, &clntcurves, &clnt_num_curves)) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_FINAL_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+
+            /* Get our list of available groups */
+            if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_FINAL_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+
+            /* Find the first group we allow that is also in client's list */
+            for (i = 0, pcurvestmp = pcurves; i < num_curves;
+                 i++, pcurvestmp += 2) {
+                group_id = pcurvestmp[0] << 8 | pcurvestmp[1];
+
+                if (check_in_list(s, group_id, clntcurves, clnt_num_curves, 1))
+                    break;
+            }
+
+            if (i < num_curves) {
+                /* A shared group exists so send a HelloRetryRequest */
+                s->s3->group_id = group_id;
+                s->hello_retry_request = 1;
+                return 1;
+            }
+        }
+        if (!s->hit
+                || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0) {
+            /* Nothing left we can do - just fail */
+            *al = SSL_AD_HANDSHAKE_FAILURE;
+            SSLerr(SSL_F_FINAL_KEY_SHARE, SSL_R_NO_SUITABLE_KEY_SHARE);
+            return 0;
+        }
+    }
+
+    /* We have a key_share so don't send any more HelloRetryRequest messages */
+    if (s->server)
+        s->hello_retry_request = 0;
+
     /*
      * For a client side resumption with no key_share we need to generate
      * the handshake secret (otherwise this is done during key_share
@@ -1059,13 +1133,45 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         goto err;
     }
 
+    if (EVP_DigestInit_ex(mctx, md, NULL) <= 0) {
+        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
     /*
-     * Get a hash of the ClientHello up to the start of the binders.
-     * TODO(TLS1.3): This will need to be tweaked when we implement
-     * HelloRetryRequest to include the digest of the previous messages here.
+     * Get a hash of the ClientHello up to the start of the binders. If we are
+     * following a HelloRetryRequest then this includes the hash of the first
+     * ClientHello and the HelloRetryRequest itself.
      */
-    if (EVP_DigestInit_ex(mctx, md, NULL) <= 0
-            || EVP_DigestUpdate(mctx, msgstart, binderoffset) <= 0
+    if (s->hello_retry_request) {
+        size_t hdatalen;
+        void *hdata;
+
+        hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+        if (hdatalen <= 0) {
+            SSLerr(SSL_F_TLS_PSK_DO_BINDER, SSL_R_BAD_HANDSHAKE_LENGTH);
+            goto err;
+        }
+
+        /*
+         * For servers the handshake buffer data will include the second
+         * ClientHello - which we don't want - so we need to take that bit off.
+         */
+        if (s->server) {
+            if (hdatalen < s->init_num + SSL3_HM_HEADER_LENGTH) {
+                SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            hdatalen -= s->init_num + SSL3_HM_HEADER_LENGTH;
+        }
+
+        if (EVP_DigestUpdate(mctx, hdata, hdatalen) <= 0) {
+            SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    }
+
+    if (EVP_DigestUpdate(mctx, msgstart, binderoffset) <= 0
             || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
         SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
         goto err;
