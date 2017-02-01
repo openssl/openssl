@@ -719,6 +719,7 @@ typedef enum OPTION_choice {
     OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
+    OPT_KEYLOG_FILE,
     OPT_S_ENUM,
     OPT_V_ENUM,
     OPT_X_ENUM
@@ -913,6 +914,7 @@ const OPTIONS s_server_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
     {NULL, OPT_EOF, 0, NULL}
 };
 
@@ -988,6 +990,7 @@ int s_server_main(int argc, char *argv[])
     int no_resume_ephemeral = 0;
     unsigned int split_send_fragment = 0, max_pipelines = 0;
     const char *s_serverinfo_file = NULL;
+    const char *keylog_file = NULL;
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1489,6 +1492,9 @@ int s_server_main(int argc, char *argv[])
         case OPT_READ_BUF:
             read_buf_len = atoi(opt_arg());
             break;
+        case OPT_KEYLOG_FILE:
+            keylog_file = opt_arg();
+            break;
 
         }
     }
@@ -1977,6 +1983,8 @@ int s_server_main(int argc, char *argv[])
         }
     }
 #endif
+    if (set_keylog_file(ctx, keylog_file))
+        goto end;
 
     BIO_printf(bio_s_out, "ACCEPT\n");
     (void)BIO_flush(bio_s_out);
@@ -1997,6 +2005,7 @@ int s_server_main(int argc, char *argv[])
     ret = 0;
  end:
     SSL_CTX_free(ctx);
+    set_keylog_file(NULL, NULL);
     X509_free(s_cert);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
     X509_free(s_dcert);

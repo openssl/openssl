@@ -549,6 +549,7 @@ typedef enum OPTION_choice {
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
     OPT_ASYNC, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
+    OPT_KEYLOG_FILE,
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
@@ -731,6 +732,7 @@ const OPTIONS s_client_options[] = {
     {"noct", OPT_NOCT, '-', "Do not request or parse SCTs (default)"},
     {"ctlogfile", OPT_CTLOG_FILE, '<', "CT log list CONF file"},
 #endif
+    {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
     {NULL, OPT_EOF, 0x00, NULL}
 };
 
@@ -890,6 +892,7 @@ int s_client_main(int argc, char **argv)
     int c_status_req = 0;
 #endif
     BIO *bio_c_msg = NULL;
+    const char *keylog_file = NULL;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1358,6 +1361,9 @@ int s_client_main(int argc, char **argv)
         case OPT_READ_BUF:
             read_buf_len = atoi(opt_arg());
             break;
+        case OPT_KEYLOG_FILE:
+            keylog_file = opt_arg();
+            break;
         }
     }
     if (count4or6 >= 2) {
@@ -1705,6 +1711,9 @@ int s_client_main(int argc, char **argv)
                                             | SSL_SESS_CACHE_NO_INTERNAL_STORE);
         SSL_CTX_sess_set_new_cb(ctx, new_session_cb);
     }
+
+    if (set_keylog_file(ctx, keylog_file))
+        goto end;
 
     con = SSL_new(ctx);
     if (sess_in) {
@@ -2574,6 +2583,7 @@ int s_client_main(int argc, char **argv)
     OPENSSL_free(next_proto.data);
 #endif
     SSL_CTX_free(ctx);
+    set_keylog_file(NULL, NULL);
     X509_free(cert);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
     EVP_PKEY_free(key);
