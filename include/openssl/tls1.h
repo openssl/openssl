@@ -622,6 +622,10 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 
 /* TLS v1.3 ciphersuites */
 # define TLS1_3_CK_AES_128_GCM_SHA256                     0x03001301
+# define TLS1_3_CK_AES_256_GCM_SHA384                     0x03001302
+# define TLS1_3_CK_CHACHA20_POLY1305_SHA256               0x03001303
+# define TLS1_3_CK_AES_128_CCM_SHA256                     0x03001304
+# define TLS1_3_CK_AES_128_CCM_8_SHA256                   0x03001305
 
 /*
  * XXX Backward compatibility alert: Older versions of OpenSSL gave some DHE
@@ -898,6 +902,10 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
  * cipherstring selection process for these ciphers
  */
 # define TLS1_3_TXT_AES_128_GCM_SHA256                     "TLS13-AES-128-GCM-SHA256"
+# define TLS1_3_TXT_AES_256_GCM_SHA384                     "TLS13-AES-256-GCM-SHA384"
+# define TLS1_3_TXT_CHACHA20_POLY1305_SHA256               "TLS13-CHACHA20-POLY1305-SHA256"
+# define TLS1_3_TXT_AES_128_CCM_SHA256                     "TLS13-AES-128-CCM-SHA256"
+# define TLS1_3_TXT_AES_128_CCM_8_SHA256                   "TLS13-AES-128-CCM-8-SHA256"
 
 # define TLS_CT_RSA_SIGN                 1
 # define TLS_CT_DSS_SIGN                 2
