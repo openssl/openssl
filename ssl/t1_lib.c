@@ -1349,11 +1349,11 @@ SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
             ret = SSL_TICKET_NO_DECRYPT;
             goto err;
         }
-        if (HMAC_Init_ex(hctx, tctx->ext.tick_hmac_key,
-                         sizeof(tctx->ext.tick_hmac_key),
+        if (HMAC_Init_ex(hctx, tctx->ext.secure->tick_hmac_key,
+                         sizeof(tctx->ext.secure->tick_hmac_key),
                          EVP_sha256(), NULL) <= 0
             || EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
-                                  tctx->ext.tick_aes_key,
+                                  tctx->ext.secure->tick_aes_key,
                                   etick + TLSEXT_KEYNAME_LENGTH) <= 0) {
             goto err;
         }
