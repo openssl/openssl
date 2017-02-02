@@ -66,34 +66,41 @@ sub checkhandshake($$$$)
         my $clienthelloseen = 0;
 
         #First count the number of tests
+        my $nextmess = 0;
+        my $message = undef;
         for ($numtests = 0; $handmessages[$loop][1] != 0; $loop++) {
-            $numtests++ if (($handmessages[$loop][1] & $handtype) != 0);
-        }
+            next if (($handmessages[$loop][1] & $handtype) == 0);
+            if (scalar @{$proxy->message_list} > $nextmess) {
+                $message = ${$proxy->message_list}[$nextmess];
+                $nextmess++;
+            } else {
+                $message = undef;
+            }
+            $numtests++;
 
-        #Add number of extensions we check plus 2 for the number of messages
-        #that contain extensions
-        $numtests += $#extensions + 2;
-        #In a renegotiation we will have double the number of extension tests
-        if (($handtype & RENEG_HANDSHAKE) != 0) {
-            $numtests += $#extensions + 2;
+            next if (!defined $message);
+            next if ($message->mt() != TLSProxy::Message::MT_CLIENT_HELLO
+                    && $message->mt() != TLSProxy::Message::MT_SERVER_HELLO
+                    && $message->mt() !=
+                       TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS
+                    && $message->mt() != TLSProxy::Message::MT_CERTIFICATE);
+
+            next if $message->mt() == TLSProxy::Message::MT_CERTIFICATE
+                    && !TLSProxy::Proxy::is_tls13();
+
+            for (my $extloop = 0;
+                    $extensions[$extloop][2] != 0;
+                    $extloop++) {
+                next if ($message->mt() != $extensions[$extloop][0]);
+                $numtests++;
+            }
+            $numtests++;
         }
-        #In TLS1.3 there are 4 messages with extensions (i.e. 2 extra) and no
-        #renegotiations: 1 ClientHello, 1 ServerHello, 1 EncryptedExtensions,
-        #1 Certificate
-        $numtests += 2 if ($proxy->is_tls13());
-        #Except in Client auth where we have an extra Certificate message, and
-        #one extension gets checked twice (once in each Certificate message)
-        $numtests += 2 if ($proxy->is_tls13()
-                          && ($handtype & CLIENT_AUTH_HANDSHAKE) != 0);
-        #And in a resumption handshake we don't get Certificate at all and the
-        #Certificate extension doesn't get checked at all
-        $numtests -= 2 if ($proxy->is_tls13()
-                          && ($handtype & RESUME_HANDSHAKE) != 0);
 
         plan tests => $numtests;
 
-        my $nextmess = 0;
-        my $message = undef;
+        $nextmess = 0;
+        $message = undef;
         for ($loop = 0; $handmessages[$loop][1] != 0; $loop++) {
             next if (($handmessages[$loop][1] & $handtype) == 0);
             if (scalar @{$proxy->message_list} > $nextmess) {
@@ -123,7 +130,8 @@ sub checkhandshake($$$$)
 
             if ($message->mt() == TLSProxy::Message::MT_CLIENT_HELLO) {
                 #Add renegotiate extension we will expect if renegotiating
-                $exttype |= RENEGOTIATE_CLI_EXTENSION if ($clienthelloseen);
+                $exttype |= RENEGOTIATE_CLI_EXTENSION
+                    if ($clienthelloseen && !TLSProxy::Proxy::is_tls13());
                 $clienthelloseen = 1;
             }
             #Now check that we saw the extensions we expected
@@ -138,7 +146,7 @@ sub checkhandshake($$$$)
                     ." Extension: ".($extensions[$extloop][2] & $exttype).", "
                     .$extloop.")");
                 $extcount++ if (($extensions[$extloop][2] & $exttype) != 0);
-             }
+            }
             ok($extcount == keys %$msgexts, "Extensions count mismatch ("
                                             .$extcount.", ".(keys %$msgexts)
                                             .")");
