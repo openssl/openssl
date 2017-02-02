@@ -3581,7 +3581,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     const SSL_CIPHER *c, *ret = NULL;
     STACK_OF(SSL_CIPHER) *prio, *allow;
     int i, ii, ok;
-    unsigned long alg_k, alg_a, mask_k, mask_a;
+    unsigned long alg_k = 0, alg_a = 0, mask_k, mask_a;
 
     /* Let's see which ciphers we can support */
 
