@@ -35,6 +35,10 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 @handmessages = (
     [TLSProxy::Message::MT_CLIENT_HELLO,
         checkhandshake::ALL_HANDSHAKES],
+    [TLSProxy::Message::MT_HELLO_RETRY_REQUEST,
+        checkhandshake::HRR_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE],
+    [TLSProxy::Message::MT_CLIENT_HELLO,
+        checkhandshake::HRR_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE],
     [TLSProxy::Message::MT_SERVER_HELLO,
         checkhandshake::ALL_HANDSHAKES],
     [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS,
@@ -42,9 +46,9 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
     [TLSProxy::Message::MT_CERTIFICATE_REQUEST,
         checkhandshake::CLIENT_AUTH_HANDSHAKE],
     [TLSProxy::Message::MT_CERTIFICATE,
-        checkhandshake::ALL_HANDSHAKES & ~checkhandshake::RESUME_HANDSHAKE],
+        checkhandshake::ALL_HANDSHAKES & ~(checkhandshake::RESUME_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE)],
     [TLSProxy::Message::MT_CERTIFICATE_VERIFY,
-        checkhandshake::ALL_HANDSHAKES & ~checkhandshake::RESUME_HANDSHAKE],
+        checkhandshake::ALL_HANDSHAKES & ~(checkhandshake::RESUME_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE)],
     [TLSProxy::Message::MT_FINISHED,
         checkhandshake::ALL_HANDSHAKES],
     [TLSProxy::Message::MT_CERTIFICATE,
@@ -86,6 +90,30 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
         checkhandshake::PSK_CLI_EXTENSION],
 
+    [TLSProxy::Message::MT_HELLO_RETRY_REQUEST, TLSProxy::Message::EXT_KEY_SHARE,
+        checkhandshake::KEY_SHARE_HRR_EXTENSION],
+
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
+        checkhandshake::SERVER_NAME_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_STATUS_REQUEST,
+        checkhandshake::STATUS_REQUEST_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ALPN,
+        checkhandshake::ALPN_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SCT,
+        checkhandshake::SCT_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK_KEX_MODES,
+        checkhandshake::PSK_KEX_MODES_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
+        checkhandshake::PSK_CLI_EXTENSION],
+
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
         checkhandshake::KEY_SHARE_SRV_EXTENSION],
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_PSK,
@@ -117,7 +145,7 @@ my $proxy = TLSProxy::Proxy->new(
 $proxy->clientflags("-sess_out ".$session);
 $proxy->sessionfile($session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 7;
+plan tests => 11;
 ok(TLSProxy::Message->success(), "Initial connection");
 
 #Test 2: Attempt a resume with no kex modes extension. Should not resume
@@ -191,6 +219,62 @@ checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
                | checkhandshake::PSK_CLI_EXTENSION
                | checkhandshake::PSK_SRV_EXTENSION,
                "Resume with non-dhe kex mode");
+
+#Test 8: Attempt a resume with both non-dhe and dhe kex mode, but unacceptable
+#        initial key_share. Should resume with a key_share following an HRR
+$proxy->clear();
+$proxy->clientflags("-sess_in ".$session);
+$proxy->serverflags("-curves P-256");
+$testtype = BOTH_KEX_MODES;
+$proxy->start();
+checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::PSK_KEX_MODES_EXTENSION
+               | checkhandshake::KEY_SHARE_SRV_EXTENSION
+               | checkhandshake::KEY_SHARE_HRR_EXTENSION
+               | checkhandshake::PSK_CLI_EXTENSION
+               | checkhandshake::PSK_SRV_EXTENSION,
+               "Resume with both kex modes and HRR");
+
+#Test 9: Attempt a resume with dhe kex mode only and an unnacceptable initial
+#        key_share. Should resume with a key_share following an HRR
+$proxy->clear();
+$proxy->clientflags("-sess_in ".$session);
+$proxy->serverflags("-curves P-256");
+$testtype = DHE_KEX_MODE_ONLY;
+$proxy->start();
+checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::PSK_KEX_MODES_EXTENSION
+               | checkhandshake::KEY_SHARE_SRV_EXTENSION
+               | checkhandshake::KEY_SHARE_HRR_EXTENSION
+               | checkhandshake::PSK_CLI_EXTENSION
+               | checkhandshake::PSK_SRV_EXTENSION,
+               "Resume with dhe kex mode and HRR");
+
+#Test 10: Attempt a resume with both non-dhe and dhe kex mode, unacceptable
+#         initial key_share and no overlapping groups. Should resume without a
+#         key_share
+$proxy->clear();
+$proxy->clientflags("-curves P-384 -sess_in ".$session);
+$proxy->serverflags("-curves P-256");
+$testtype = BOTH_KEX_MODES;
+$proxy->start();
+checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::PSK_KEX_MODES_EXTENSION
+               | checkhandshake::PSK_CLI_EXTENSION
+               | checkhandshake::PSK_SRV_EXTENSION,
+               "Resume with both kex modes, no overlapping groups");
+
+#Test 11: Attempt a resume with dhe kex mode only, unacceptable
+#         initial key_share and no overlapping groups. Should fail
+$proxy->clear();
+$proxy->clientflags("-curves P-384 -sess_in ".$session);
+$proxy->serverflags("-curves P-256");
+$testtype = DHE_KEX_MODE_ONLY;
+$proxy->start();
+ok(TLSProxy::Message->fail(), "Resume with dhe kex mode, no overlapping groups");
 
 unlink $session;
 
