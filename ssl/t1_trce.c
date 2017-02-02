@@ -83,16 +83,17 @@ static ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_SERVER_HELLO, "ServerHello"},
     {DTLS1_MT_HELLO_VERIFY_REQUEST, "HelloVerifyRequest"},
     {SSL3_MT_NEWSESSION_TICKET, "NewSessionTicket"},
+    {SSL3_MT_HELLO_RETRY_REQUEST, "HelloRetryRequest"},
+    {SSL3_MT_ENCRYPTED_EXTENSIONS, "EncryptedExtensions"},
     {SSL3_MT_CERTIFICATE, "Certificate"},
     {SSL3_MT_SERVER_KEY_EXCHANGE, "ServerKeyExchange"},
     {SSL3_MT_CERTIFICATE_REQUEST, "CertificateRequest"},
-    {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
-    {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
     {SSL3_MT_SERVER_DONE, "ServerHelloDone"},
     {SSL3_MT_CERTIFICATE_VERIFY, "CertificateVerify"},
     {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
+    {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
+    {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
     {SSL3_MT_FINISHED, "Finished"},
-    {SSL3_MT_ENCRYPTED_EXTENSIONS, "EncryptedExtensions"},
     {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"}
 };
 
@@ -650,7 +651,8 @@ static int ssl_print_signature(BIO *bio, int indent, SSL *s,
     return ssl_print_hexbuf(bio, indent, "Signature", 2, pmsg, pmsglen);
 }
 
-static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
+static int ssl_print_extension(BIO *bio, int indent, int server,
+                               unsigned char mt, int extype,
                                const unsigned char *ext, size_t extlen)
 {
     size_t xlen, share_len;
@@ -729,6 +731,17 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
         break;
 
     case TLSEXT_TYPE_key_share:
+        if (mt == SSL3_MT_HELLO_RETRY_REQUEST) {
+            int group_id;
+
+            if (extlen != 2)
+                return 0;
+            group_id = (ext[0] << 8) | ext[1];
+            BIO_indent(bio, indent + 4, 80);
+            BIO_printf(bio, "NamedGroup: %s\n",
+                       ssl_trace_str(group_id, ssl_groups_tbl));
+            break;
+        }
         if (extlen < 2)
             return 0;
         if (server) {
@@ -782,7 +795,8 @@ static int ssl_print_extension(BIO *bio, int indent, int server, int extype,
 }
 
 static int ssl_print_extensions(BIO *bio, int indent, int server,
-                                const unsigned char **msgin, size_t *msginlen)
+                                unsigned char mt, const unsigned char **msgin,
+                                size_t *msginlen)
 {
     size_t extslen, msglen = *msginlen;
     const unsigned char *msg = *msgin;
@@ -808,7 +822,8 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
         if (msglen < extlen + 4)
             return 0;
         msg += 4;
-        if (!ssl_print_extension(bio, indent + 2, server, extype, msg, extlen))
+        if (!ssl_print_extension(bio, indent + 2, server, mt, extype, msg,
+                                 extlen))
             return 0;
         msg += extlen;
         msglen -= extlen + 4;
@@ -869,7 +884,8 @@ static int ssl_print_client_hello(BIO *bio, SSL *ssl, int indent,
         msglen--;
         len--;
     }
-    if (!ssl_print_extensions(bio, indent, 0, &msg, &msglen))
+    if (!ssl_print_extensions(bio, indent, 0, SSL3_MT_CLIENT_HELLO, &msg,
+                              &msglen))
         return 0;
     return 1;
 }
@@ -914,7 +930,8 @@ static int ssl_print_server_hello(BIO *bio, int indent,
         msg++;
         msglen--;
     }
-    if (!ssl_print_extensions(bio, indent, 1, &msg, &msglen))
+    if (!ssl_print_extensions(bio, indent, 1, SSL3_MT_SERVER_HELLO, &msg,
+                              &msglen))
         return 0;
     return 1;
 }
@@ -1130,7 +1147,8 @@ static int ssl_print_certificates(BIO *bio, SSL *s, int server, int indent,
     while (clen > 0) {
         if (!ssl_print_certificate(bio, indent + 2, &msg, &clen))
             return 0;
-        if (!ssl_print_extensions(bio, indent + 2, server, &msg, &clen))
+        if (!ssl_print_extensions(bio, indent + 2, server, SSL3_MT_CERTIFICATE,
+                                  &msg, &clen))
             return 0;
 
     }
@@ -1318,8 +1336,18 @@ static int ssl_print_handshake(BIO *bio, SSL *ssl, int server,
             return 0;
         break;
 
+    case SSL3_MT_HELLO_RETRY_REQUEST:
+        if (!ssl_print_version(bio, indent + 2, "server_version", &msg, &msglen,
+                               NULL)
+                || !ssl_print_extensions(bio, indent + 2, 1,
+                                         SSL3_MT_HELLO_RETRY_REQUEST, &msg,
+                                         &msglen))
+            return 0;
+        break;
+
     case SSL3_MT_ENCRYPTED_EXTENSIONS:
-        if (!ssl_print_extensions(bio, indent + 2, 1, &msg, &msglen))
+        if (!ssl_print_extensions(bio, indent + 2, 1,
+                                  SSL3_MT_ENCRYPTED_EXTENSIONS, &msg, &msglen))
             return 0;
         break;
 
