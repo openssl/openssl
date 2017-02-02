@@ -69,79 +69,89 @@ my $proxy = TLSProxy::Proxy->new(
 #We assume that test_ssl_new and friends will test the happy path for this,
 #so we concentrate on the less common scenarios
 
-#Test 1: An empty key_shares extension should not succeed
+#Test 1: An empty key_shares extension should succeed after a HelloRetryRequest
 $testtype = EMPTY_EXTENSION;
 $direction = CLIENT_TO_SERVER;
 $proxy->filter(\&modify_key_shares_filter);
+$proxy->serverflags("-curves P-256");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 19;
-#TODO(TLS1.3): Actually this should succeed after a HelloRetryRequest - but
-#we've not implemented that yet, so for now we look for a fail
-ok(TLSProxy::Message->fail(), "Empty key_shares");
+plan tests => 21;
+ok(TLSProxy::Message->success(), "Success after HRR");
 
-#Test 2: A missing key_shares extension should not succeed
+#Test 2: The server sending an HRR requesting a group the client already sent
+#        should fail
+$proxy->clear();
+$proxy->start();
+ok(TLSProxy::Message->fail(), "Server asks for group already provided");
+
+#Test 3: A missing key_shares extension should not succeed
 $proxy->clear();
 $testtype = MISSING_EXTENSION;
 $proxy->start();
-#TODO(TLS1.3): As above this should really succeed after a HelloRetryRequest,
-#but we look for fail for now
 ok(TLSProxy::Message->fail(), "Missing key_shares extension");
 
-#Test 3: No acceptable key_shares should fail
-$proxy->clear();
-$testtype = NO_ACCEPTABLE_KEY_SHARES;
-$proxy->start();
-#TODO(TLS1.3): Again this should go around the loop of a HelloRetryRequest but
-#we fail for now
-ok(TLSProxy::Message->fail(), "No acceptable key_shares");
-
-#Test 4: A non preferred but acceptable key_share should succeed
+#Test 4: No initial acceptable key_shares should succeed after a
+#        HelloRetryRequest
 $proxy->clear();
 $proxy->filter(undef);
+$proxy->serverflags("-curves P-256");
+$proxy->start();
+ok(TLSProxy::Message->success(), "No initial acceptable key_shares");
+
+#Test 5: No acceptable key_shares and no shared groups should fail
+$proxy->clear();
+$proxy->filter(undef);
+$proxy->serverflags("-curves P-256");
+$proxy->clientflags("-curves P-384");
+$proxy->start();
+ok(TLSProxy::Message->fail(), "No acceptable key_shares");
+
+#Test 6: A non preferred but acceptable key_share should succeed
+$proxy->clear();
 $proxy->clientflags("-curves P-256");
 $proxy->start();
 ok(TLSProxy::Message->success(), "Non preferred key_share");
 $proxy->filter(\&modify_key_shares_filter);
 
-#Test 5: An acceptable key_share after a list of non-acceptable ones should
+#Test 7: An acceptable key_share after a list of non-acceptable ones should
 #succeed
 $proxy->clear();
 $testtype = ACCEPTABLE_AT_END;
 $proxy->start();
 ok(TLSProxy::Message->success(), "Acceptable key_share at end of list");
 
-#Test 6: An acceptable key_share but for a group not in supported_groups should
+#Test 8: An acceptable key_share but for a group not in supported_groups should
 #fail
 $proxy->clear();
 $testtype = NOT_IN_SUPPORTED_GROUPS;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Acceptable key_share not in supported_groups");
 
-#Test 7: Too short group_id should fail
+#Test 9: Too short group_id should fail
 $proxy->clear();
 $testtype = GROUP_ID_TOO_SHORT;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Group id too short");
 
-#Test 8: key_exchange length mismatch should fail
+#Test 10: key_exchange length mismatch should fail
 $proxy->clear();
 $testtype = KEX_LEN_MISMATCH;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "key_exchange length mismatch");
 
-#Test 9: Zero length key_exchange should fail
+#Test 11: Zero length key_exchange should fail
 $proxy->clear();
 $testtype = ZERO_LEN_KEX_DATA;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "zero length key_exchange data");
 
-#Test 10: Trailing data on key_share list should fail
+#Test 12: Trailing data on key_share list should fail
 $proxy->clear();
 $testtype = TRAILING_DATA;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "key_share list trailing data");
 
-#Test 11: Multiple acceptable key_shares - we choose the first one
+#Test 13: Multiple acceptable key_shares - we choose the first one
 $proxy->clear();
 $direction = SERVER_TO_CLIENT;
 $testtype = LOOK_ONLY;
@@ -150,45 +160,45 @@ $proxy->start();
 ok(TLSProxy::Message->success() && ($selectedgroupid == P_256),
    "Multiple acceptable key_shares");
 
-#Test 12: Multiple acceptable key_shares - we choose the first one (part 2)
+#Test 14: Multiple acceptable key_shares - we choose the first one (part 2)
 $proxy->clear();
 $proxy->clientflags("-curves X25519:P-256");
 $proxy->start();
 ok(TLSProxy::Message->success() && ($selectedgroupid == X25519),
    "Multiple acceptable key_shares (part 2)");
 
-#Test 13: Server sends key_share that wasn't offerred should fail
+#Test 15: Server sends key_share that wasn't offerred should fail
 $proxy->clear();
 $testtype = SELECT_X25519;
 $proxy->clientflags("-curves P-256");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Non offered key_share");
 
-#Test 14: Too short group_id in ServerHello should fail
+#Test 16: Too short group_id in ServerHello should fail
 $proxy->clear();
 $testtype = GROUP_ID_TOO_SHORT;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Group id too short in ServerHello");
 
-#Test 15: key_exchange length mismatch in ServerHello should fail
+#Test 17: key_exchange length mismatch in ServerHello should fail
 $proxy->clear();
 $testtype = KEX_LEN_MISMATCH;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "key_exchange length mismatch in ServerHello");
 
-#Test 16: Zero length key_exchange in ServerHello should fail
+#Test 18: Zero length key_exchange in ServerHello should fail
 $proxy->clear();
 $testtype = ZERO_LEN_KEX_DATA;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "zero length key_exchange data in ServerHello");
 
-#Test 17: Trailing data on key_share in ServerHello should fail
+#Test 19: Trailing data on key_share in ServerHello should fail
 $proxy->clear();
 $testtype = TRAILING_DATA;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "key_share trailing data in ServerHello");
 
-#Test 18: key_share should not be sent if the client is not capable of
+#Test 20: key_share should not be sent if the client is not capable of
 #         negotiating TLSv1.3
 $proxy->clear();
 $proxy->filter(undef);
@@ -200,7 +210,7 @@ ok(TLSProxy::Message->success()
    "No key_share for TLS<=1.2 client");
 $proxy->filter(\&modify_key_shares_filter);
 
-#Test 19: A server not capable of negotiating TLSv1.3 should not attempt to
+#Test 21: A server not capable of negotiating TLSv1.3 should not attempt to
 #         process a key_share
 $proxy->clear();
 $direction = CLIENT_TO_SERVER;
@@ -288,8 +298,10 @@ sub modify_key_shares_filter
                     0x00; #Trailing garbage
             }
 
-            $message->set_extension(
-                TLSProxy::Message::EXT_SUPPORTED_GROUPS, $suppgroups);
+            if ($testtype != EMPTY_EXTENSION) {
+                $message->set_extension(
+                    TLSProxy::Message::EXT_SUPPORTED_GROUPS, $suppgroups);
+            }
 
             if ($testtype == MISSING_EXTENSION) {
                 $message->delete_extension(
