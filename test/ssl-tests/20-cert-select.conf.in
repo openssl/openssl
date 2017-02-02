@@ -44,7 +44,9 @@ our @tests = (
     },
     {
         name => "ECDSA CipherString Selection, no ECDSA certificate",
-        server => { },
+        server => {
+            "MaxProtocol" => "TLSv1.2"
+        },
         client => {
             "CipherString" => "aECDSA"
         },
@@ -80,7 +82,9 @@ our @tests = (
     },
     {
         name => "ECDSA Signature Algorithm Selection, no ECDSA certificate",
-        server => { },
+        server => {
+             "MaxProtocol" => "TLSv1.2"
+        },
         client => {
             "SignatureAlgorithms" => "ECDSA+SHA256",
         },
@@ -166,7 +170,10 @@ my @tests_tls_1_3 = (
     },
     {
         name => "TLS 1.3 ECDSA Signature Algorithm Selection, no ECDSA certificate",
-        server => { },
+        server => {
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3"
+        },
         client => {
             "SignatureAlgorithms" => "ECDSA+SHA256",
         },
