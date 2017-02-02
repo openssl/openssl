@@ -1684,6 +1684,7 @@ int SSL_get_shared_sigalgs(SSL *s, int idx,
 {
     const SIGALG_LOOKUP *shsigalgs;
     if (s->cert->shared_sigalgs == NULL
+        || idx < 0
         || idx >= (int)s->cert->shared_sigalgslen
         || s->cert->shared_sigalgslen > INT_MAX)
         return 0;
