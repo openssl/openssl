@@ -345,10 +345,10 @@ static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos)
     return 1;
 
  merr:
+    ASN1_INTEGER_free(aint);
     X509V3err(X509V3_F_NREF_NOS, ERR_R_MALLOC_FAILURE);
 
  err:
-    sk_ASN1_INTEGER_pop_free(nnums, ASN1_STRING_free);
     return 0;
 }
 
