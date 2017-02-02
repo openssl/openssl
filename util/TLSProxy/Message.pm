@@ -262,6 +262,15 @@ sub create_message
             [@message_frag_lens]
         );
         $message->parse();
+    } elsif ($mt == MT_HELLO_RETRY_REQUEST) {
+        $message = TLSProxy::HelloRetryRequest->new(
+            $server,
+            $data,
+            [@message_rec_list],
+            $startoffset,
+            [@message_frag_lens]
+        );
+        $message->parse();
     } elsif ($mt == MT_SERVER_HELLO) {
         $message = TLSProxy::ServerHello->new(
             $server,
