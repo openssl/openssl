@@ -239,7 +239,7 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
     int i, nsig, client;
     client = SSL_is_server(s) ? 0 : 1;
     if (shared)
-        nsig = SSL_get_shared_sigalgs(s, -1, NULL, NULL, NULL, NULL, NULL);
+        nsig = SSL_get_shared_sigalgs(s, 0, NULL, NULL, NULL, NULL, NULL);
     else
         nsig = SSL_get_sigalgs(s, -1, NULL, NULL, NULL, NULL, NULL);
     if (nsig == 0)
