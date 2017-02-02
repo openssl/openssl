@@ -35,6 +35,10 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 @handmessages = (
     [TLSProxy::Message::MT_CLIENT_HELLO,
         checkhandshake::ALL_HANDSHAKES],
+    [TLSProxy::Message::MT_HELLO_RETRY_REQUEST,
+        checkhandshake::HRR_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE],
+    [TLSProxy::Message::MT_CLIENT_HELLO,
+        checkhandshake::HRR_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE],
     [TLSProxy::Message::MT_SERVER_HELLO,
         checkhandshake::ALL_HANDSHAKES],
     [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS,
@@ -42,9 +46,9 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
     [TLSProxy::Message::MT_CERTIFICATE_REQUEST,
         checkhandshake::CLIENT_AUTH_HANDSHAKE],
     [TLSProxy::Message::MT_CERTIFICATE,
-        checkhandshake::ALL_HANDSHAKES & ~checkhandshake::RESUME_HANDSHAKE],
+        checkhandshake::ALL_HANDSHAKES & ~(checkhandshake::RESUME_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE)],
     [TLSProxy::Message::MT_CERTIFICATE_VERIFY,
-        checkhandshake::ALL_HANDSHAKES & ~checkhandshake::RESUME_HANDSHAKE],
+        checkhandshake::ALL_HANDSHAKES & ~(checkhandshake::RESUME_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE)],
     [TLSProxy::Message::MT_FINISHED,
         checkhandshake::ALL_HANDSHAKES],
     [TLSProxy::Message::MT_CERTIFICATE,
@@ -86,6 +90,30 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
         checkhandshake::PSK_CLI_EXTENSION],
 
+    [TLSProxy::Message::MT_HELLO_RETRY_REQUEST, TLSProxy::Message::EXT_KEY_SHARE,
+        checkhandshake::KEY_SHARE_HRR_EXTENSION],
+
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
+        checkhandshake::SERVER_NAME_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_STATUS_REQUEST,
+        checkhandshake::STATUS_REQUEST_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ALPN,
+        checkhandshake::ALPN_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SCT,
+        checkhandshake::SCT_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK_KEX_MODES,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
+        checkhandshake::PSK_CLI_EXTENSION],
+
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
         checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_PSK,
@@ -115,7 +143,7 @@ $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->sessionfile($session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 13;
+plan tests => 15;
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
                "Default handshake test");
@@ -129,7 +157,6 @@ checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
                | checkhandshake::PSK_CLI_EXTENSION
                | checkhandshake::PSK_SRV_EXTENSION,
                "Resumption handshake test");
-unlink $session;
 
 #Test 3: A status_request handshake (client request only)
 $proxy->clear();
@@ -248,3 +275,25 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
                | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
                "SCT handshake test");
+
+#Test 14: HRR Handshake
+$proxy->clear();
+$proxy->serverflags("-curves P-256");
+$proxy->start();
+checkhandshake($proxy, checkhandshake::HRR_HANDSHAKE,
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::KEY_SHARE_HRR_EXTENSION,
+               "HRR handshake test");
+
+#Test 15: Resumption handshake with HRR
+$proxy->clear();
+$proxy->clientflags("-sess_in ".$session);
+$proxy->serverflags("-curves P-256");
+$proxy->start();
+checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::KEY_SHARE_HRR_EXTENSION
+               | checkhandshake::PSK_CLI_EXTENSION
+               | checkhandshake::PSK_SRV_EXTENSION,
+               "Resumption handshake with HRR test");
+unlink $session;
