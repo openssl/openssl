@@ -66,6 +66,7 @@ $code=<<___;
 .type	$func,\@function,3
 .align	16
 $func:
+	mov	%rsp,%rax
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -73,7 +74,6 @@ $func:
 	push	%r14
 	push	%r15
 
-	mov	%rsp,%r11
 	sub	\$128+40,%rsp
 	and	\$-64,%rsp
 
@@ -81,7 +81,7 @@ $func:
 	mov	%rdi,0(%r10)		# save parameter block
 	mov	%rsi,8(%r10)
 	mov	%rdx,16(%r10)
-	mov	%r11,32(%r10)		# saved stack pointer
+	mov	%rax,32(%r10)		# saved stack pointer
 .Lprologue:
 
 	mov	%r10,%rbx
@@ -205,13 +205,13 @@ $code.=<<___;
 	jmp	.Louterloop
 .Lalldone:
 	mov	32(%rbx),%rsi		# restore saved pointer
-	mov	(%rsi),%r15
-	mov	8(%rsi),%r14
-	mov	16(%rsi),%r13
-	mov	24(%rsi),%r12
-	mov	32(%rsi),%rbp
-	mov	40(%rsi),%rbx
-	lea	48(%rsi),%rsp
+	mov	-48(%rsi),%r15
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lepilogue:
 	ret
 .size	$func,.-$func
@@ -526,7 +526,6 @@ se_handler:
 	jae	.Lin_prologue
 
 	mov	128+32(%rax),%rax	# pull saved stack pointer
-	lea	48(%rax),%rax
 
 	mov	-8(%rax),%rbx
 	mov	-16(%rax),%rbp

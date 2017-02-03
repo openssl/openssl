@@ -599,6 +599,7 @@ $code.=<<___;
 .hidden	asm_AES_encrypt
 asm_AES_encrypt:
 AES_encrypt:
+	mov	%rsp,%rax
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -607,7 +608,6 @@ AES_encrypt:
 	push	%r15
 
 	# allocate frame "above" key schedule
-	mov	%rsp,%r10
 	lea	-63(%rdx),%rcx	# %rdx is key argument
 	and	\$-64,%rsp
 	sub	%rsp,%rcx
@@ -617,7 +617,7 @@ AES_encrypt:
 	sub	\$32,%rsp
 
 	mov	%rsi,16(%rsp)	# save out
-	mov	%r10,24(%rsp)	# save real stack pointer
+	mov	%rax,24(%rsp)	# save original stack pointer
 .Lenc_prologue:
 
 	mov	%rdx,$key
@@ -649,13 +649,13 @@ AES_encrypt:
 	mov	$s2,8($out)
 	mov	$s3,12($out)
 
-	mov	(%rsi),%r15
-	mov	8(%rsi),%r14
-	mov	16(%rsi),%r13
-	mov	24(%rsi),%r12
-	mov	32(%rsi),%rbp
-	mov	40(%rsi),%rbx
-	lea	48(%rsi),%rsp
+	mov	-48(%rsi),%r15
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lenc_epilogue:
 	ret
 .size	AES_encrypt,.-AES_encrypt
@@ -1197,6 +1197,7 @@ $code.=<<___;
 .hidden	asm_AES_decrypt
 asm_AES_decrypt:
 AES_decrypt:
+	mov	%rsp,%rax
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -1205,7 +1206,6 @@ AES_decrypt:
 	push	%r15
 
 	# allocate frame "above" key schedule
-	mov	%rsp,%r10
 	lea	-63(%rdx),%rcx	# %rdx is key argument
 	and	\$-64,%rsp
 	sub	%rsp,%rcx
@@ -1215,7 +1215,7 @@ AES_decrypt:
 	sub	\$32,%rsp
 
 	mov	%rsi,16(%rsp)	# save out
-	mov	%r10,24(%rsp)	# save real stack pointer
+	mov	%rax,24(%rsp)	# save original stack pointer
 .Ldec_prologue:
 
 	mov	%rdx,$key
@@ -1249,13 +1249,13 @@ AES_decrypt:
 	mov	$s2,8($out)
 	mov	$s3,12($out)
 
-	mov	(%rsi),%r15
-	mov	8(%rsi),%r14
-	mov	16(%rsi),%r13
-	mov	24(%rsi),%r12
-	mov	32(%rsi),%rbp
-	mov	40(%rsi),%rbx
-	lea	48(%rsi),%rsp
+	mov	-48(%rsi),%r15
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Ldec_epilogue:
 	ret
 .size	AES_decrypt,.-AES_decrypt
@@ -1675,10 +1675,9 @@ AES_cbc_encrypt:
 	mov	%r9d,%r9d	# clear upper half of enc
 
 	lea	.LAES_Te(%rip),$sbox
+	lea	.LAES_Td(%rip),%r10
 	cmp	\$0,%r9
-	jne	.Lcbc_picked_te
-	lea	.LAES_Td(%rip),$sbox
-.Lcbc_picked_te:
+	cmoveq	%r10,$sbox
 
 	mov	OPENSSL_ia32cap_P(%rip),%r10d
 	cmp	\$$speed_limit,%rdx
@@ -2580,7 +2579,6 @@ block_se_handler:
 	jae	.Lin_block_prologue
 
 	mov	24(%rax),%rax		# pull saved real stack pointer
-	lea	48(%rax),%rax		# adjust...
 
 	mov	-8(%rax),%rbx
 	mov	-16(%rax),%rbp

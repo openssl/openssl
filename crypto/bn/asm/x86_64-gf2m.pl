@@ -174,8 +174,9 @@ $code.=<<___;
 .type	bn_GF2m_mul_2x2,\@abi-omnipotent
 .align	16
 bn_GF2m_mul_2x2:
-	mov	OPENSSL_ia32cap_P(%rip),%rax
-	bt	\$33,%rax
+	mov	%rsp,%rax
+	mov	OPENSSL_ia32cap_P(%rip),%r10
+	bt	\$33,%r10
 	jnc	.Lvanilla_mul_2x2
 
 	movq		$a1,%xmm0
@@ -280,6 +281,7 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	lea	8*17(%rsp),%rsp
+.Lepilogue_mul_2x2:
 	ret
 .Lend_mul_2x2:
 .size	bn_GF2m_mul_2x2,.-bn_GF2m_mul_2x2
@@ -312,12 +314,18 @@ se_handler:
 	pushfq
 	sub	\$64,%rsp
 
-	mov	152($context),%rax	# pull context->Rsp
+	mov	120($context),%rax	# pull context->Rax
 	mov	248($context),%rbx	# pull context->Rip
 
 	lea	.Lbody_mul_2x2(%rip),%r10
 	cmp	%r10,%rbx		# context->Rip<"prologue" label
 	jb	.Lin_prologue
+
+	mov	152($context),%rax	# pull context->Rsp
+
+	lea	.Lepilogue_mul_2x2(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip>="epilogue" label
+	jae	.Lin_prologue
 
 	mov	8*10(%rax),%r14		# mimic epilogue
 	mov	8*11(%rax),%r13
@@ -335,8 +343,9 @@ se_handler:
 	mov	%r13,224($context)	# restore context->R13
 	mov	%r14,232($context)	# restore context->R14
 
-.Lin_prologue:
 	lea	8*17(%rax),%rax
+
+.Lin_prologue:
 	mov	%rax,152($context)	# restore context->Rsp
 
 	mov	40($disp),%rdi		# disp->ContextRecord

@@ -695,10 +695,11 @@ ___
 my @ri=("%rax","%rdx",$m0,$m1);
 $code.=<<___;
 	mov	16(%rsp,$num,8),$rp	# restore $rp
+	lea	-4($num),$j
 	mov	0(%rsp),@ri[0]		# tp[0]
 	pxor	%xmm0,%xmm0
 	mov	8(%rsp),@ri[1]		# tp[1]
-	shr	\$2,$num		# num/=4
+	shr	\$2,$j			# j=num/4-1
 	lea	(%rsp),$ap		# borrow ap for tp
 	xor	$i,$i			# i=0 and clear CF!
 
@@ -706,7 +707,6 @@ $code.=<<___;
 	mov	16($ap),@ri[2]		# tp[2]
 	mov	24($ap),@ri[3]		# tp[3]
 	sbb	8($np),@ri[1]
-	lea	-1($num),$j		# j=num/4-1
 	jmp	.Lsub4x
 .align	16
 .Lsub4x:
@@ -740,8 +740,9 @@ $code.=<<___;
 	not	@ri[0]
 	mov	$rp,$np
 	and	@ri[0],$np
-	lea	-1($num),$j
+	lea	-4($num),$j
 	or	$np,$ap			# ap=borrow?tp:rp
+	shr	\$2,$j			# j=num/4-1
 
 	movdqu	($ap),%xmm1
 	movdqa	%xmm0,(%rsp)
@@ -759,7 +760,6 @@ $code.=<<___;
 	dec	$j
 	jnz	.Lcopy4x
 
-	shl	\$2,$num
 	movdqu	16($ap,$i),%xmm2
 	movdqa	%xmm0,16(%rsp,$i)
 	movdqu	%xmm2,16($rp,$i)
@@ -1401,12 +1401,12 @@ sqr_handler:
 
 	mov	0(%r11),%r10d		# HandlerData[0]
 	lea	(%rsi,%r10),%r10	# end of prologue label
-	cmp	%r10,%rbx		# context->Rip<.Lsqr_body
+	cmp	%r10,%rbx		# context->Rip<.Lsqr_prologue
 	jb	.Lcommon_seh_tail
 
 	mov	4(%r11),%r10d		# HandlerData[1]
 	lea	(%rsi,%r10),%r10	# body label
-	cmp	%r10,%rbx		# context->Rip>=.Lsqr_epilogue
+	cmp	%r10,%rbx		# context->Rip<.Lsqr_body
 	jb	.Lcommon_pop_regs
 
 	mov	152($context),%rax	# pull context->Rsp
