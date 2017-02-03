@@ -2279,7 +2279,9 @@ int tls_choose_sigalg(SSL *s)
 {
     if (SSL_IS_TLS13(s)) {
         size_t i;
+#ifndef OPENSSL_NO_EC
         int curve = -1;
+#endif
 
         /* Look for a certificate matching shared sigaglgs */
         for (i = 0; i < s->cert->shared_sigalgslen; i++) {
@@ -2305,6 +2307,7 @@ int tls_choose_sigalg(SSL *s)
                     continue;
             }
             if (lu->sig == EVP_PKEY_EC) {
+#ifndef OPENSSL_NO_EC
                 if (curve == -1) {
                     EC_KEY *ec = EVP_PKEY_get0_EC_KEY(c->privatekey);
 
@@ -2312,6 +2315,9 @@ int tls_choose_sigalg(SSL *s)
                 }
                 if (curve != lu->curve)
                     continue;
+#else
+                continue;
+#endif
             }
             s->s3->tmp.sigalg = lu;
             s->s3->tmp.cert_idx = idx;
