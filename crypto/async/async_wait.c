@@ -148,6 +148,33 @@ int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key)
             continue;
         }
         if (curr->key == key) {
+            /* If fd has just been added, remove it from the list */
+            if (curr->add == 1) {
+                if (ctx->fds == curr) {
+                    ctx->fds = curr->next;
+                }
+                else {
+                    struct fd_lookup_st *prev = ctx->fds;
+                    while (prev->next != curr && prev->next != NULL) {
+                        prev = prev->next;
+                    }
+                    if (prev->next == NULL) {
+                        return 1;
+                    }
+                    prev->next = curr->next;
+                }
+
+                /*
+                 * The fd has just been added so it can't be used externally
+                 * and it is safe to call the cleanup function here
+                 */
+                if (curr->cleanup != NULL)
+                    curr->cleanup(ctx, curr->key, curr->fd, curr->custom_data);
+                OPENSSL_free(curr);
+                ctx->numadd--;
+                return 1;
+            }
+
             /*
              * Mark it as deleted. We don't call cleanup if explicitly asked
              * to clear an fd. We assume the caller is going to do that (if
