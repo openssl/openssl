@@ -21,6 +21,7 @@
 
 static int siphash_size(const EVP_PKEY *pkey)
 {
+    (void)pkey;
     return SIPHASH_MAX_DIGEST_SIZE;
 }
 
@@ -37,6 +38,10 @@ static void siphash_key_free(EVP_PKEY *pkey)
 
 static int siphash_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
+    (void)pkey;
+    (void)op;
+    (void)arg1;
+    (void)arg2;
     /* nothing (including ASN1_PKEY_CTRL_DEFAULT_MD_NID), is supported */
     return -2;
 }

@@ -202,6 +202,10 @@ int ssl_log_secret(SSL *ssl,
                    const uint8_t *secret,
                    size_t secret_len)
 {
+    (void)ssl;
+    (void)label;
+    (void)secret;
+    (void)secret_len;
     return 1;
 }
 

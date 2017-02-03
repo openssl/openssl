@@ -109,6 +109,7 @@ static int siphash_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen
 {
     SIPHASH_PKEY_CTX *pctx = ctx->data;
 
+    (void)mctx;
     *siglen = SipHash_hash_size(&pctx->ctx);
     if (sig != NULL)
         return SipHash_Final(&pctx->ctx, sig, *siglen);
