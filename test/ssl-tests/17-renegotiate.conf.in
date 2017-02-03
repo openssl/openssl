@@ -102,5 +102,81 @@ our @tests = (
             "ResumptionExpected" => "No",
             "ExpectedResult" => "Success"
         }
-    }
+    },
+    {
+        name => "renegotiate-aead-to-non-aead",
+        server => {
+            "Options" => "NoResumptionOnRenegotiation",
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            "CipherString" => "AES128-GCM-SHA256",
+            extra => {
+                "RenegotiateCiphers" => "AES128-SHA"
+            }
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-non-aead-to-aead",
+        server => {
+            "Options" => "NoResumptionOnRenegotiation",
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            "CipherString" => "AES128-SHA",
+            extra => {
+                "RenegotiateCiphers" => "AES128-GCM-SHA256"
+            }
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-non-aead-to-non-aead",
+        server => {
+            "Options" => "NoResumptionOnRenegotiation",
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            "CipherString" => "AES128-SHA",
+            extra => {
+                "RenegotiateCiphers" => "AES256-SHA"
+            }
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-aead-to-aead",
+        server => {
+            "Options" => "NoResumptionOnRenegotiation",
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            "CipherString" => "AES128-GCM-SHA256",
+            extra => {
+                "RenegotiateCiphers" => "AES256-GCM-SHA384"
+            }
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "Success"
+        }
+    },
 );

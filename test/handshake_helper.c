@@ -607,10 +607,20 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
              * session. The server may or may not resume dependant on the
              * setting of SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
              */
-            if (SSL_is_server(peer->ssl))
+            if (SSL_is_server(peer->ssl)) {
                 ret = SSL_renegotiate(peer->ssl);
-            else
-                ret = SSL_renegotiate_abbreviated(peer->ssl);
+            } else {
+                if (test_ctx->extra.client.reneg_ciphers != NULL) {
+                    if (!SSL_set_cipher_list(peer->ssl,
+                                test_ctx->extra.client.reneg_ciphers)) {
+                        peer->status = PEER_ERROR;
+                        return;
+                    }
+                    ret = SSL_renegotiate(peer->ssl);
+                } else {
+                    ret = SSL_renegotiate_abbreviated(peer->ssl);
+                }
+            }
             if (!ret) {
                 peer->status = PEER_ERROR;
                 return;

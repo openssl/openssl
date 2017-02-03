@@ -88,9 +88,7 @@ static const char *enum_name(const test_enum *enums, size_t num_enums,
 }
 
 
-/*******************/
-/* ExpectedResult. */
-/*******************/
+/* ExpectedResult */
 
 static const test_enum ssl_test_results[] = {
     {"Success", SSL_TEST_SUCCESS},
@@ -115,9 +113,7 @@ const char *ssl_test_result_name(ssl_test_result_t result)
     return enum_name(ssl_test_results, OSSL_NELEM(ssl_test_results), result);
 }
 
-/**********************************************/
-/* ExpectedClientAlert / ExpectedServerAlert. */
-/**********************************************/
+/* ExpectedClientAlert / ExpectedServerAlert */
 
 static const test_enum ssl_alerts[] = {
     {"UnknownCA", SSL_AD_UNKNOWN_CA},
@@ -147,9 +143,7 @@ const char *ssl_alert_name(int alert)
     return enum_name(ssl_alerts, OSSL_NELEM(ssl_alerts), alert);
 }
 
-/********************/
 /* ExpectedProtocol */
-/********************/
 
 static const test_enum ssl_protocols[] = {
      {"TLSv1.2", TLS1_2_VERSION},
@@ -171,9 +165,7 @@ const char *ssl_protocol_name(int protocol)
     return enum_name(ssl_protocols, OSSL_NELEM(ssl_protocols), protocol);
 }
 
-/***********************/
-/* VerifyCallback.     */
-/***********************/
+/* VerifyCallback */
 
 static const test_enum ssl_verify_callbacks[] = {
     {"None", SSL_TEST_VERIFY_NONE},
@@ -199,9 +191,7 @@ const char *ssl_verify_callback_name(ssl_verify_callback_t callback)
                      callback);
 }
 
-/**************/
 /* ServerName */
-/**************/
 
 static const test_enum ssl_servername[] = {
     {"None", SSL_TEST_SERVERNAME_NONE},
@@ -240,9 +230,7 @@ const char *ssl_servername_name(ssl_servername_t server)
                      server);
 }
 
-/**********************/
 /* ServerNameCallback */
-/**********************/
 
 static const test_enum ssl_servername_callbacks[] = {
     {"None", SSL_TEST_SERVERNAME_CB_NONE},
@@ -268,9 +256,7 @@ const char *ssl_servername_callback_name(ssl_servername_callback_t callback)
                      OSSL_NELEM(ssl_servername_callbacks), callback);
 }
 
-/*************************/
 /* SessionTicketExpected */
-/*************************/
 
 static const test_enum ssl_session_ticket[] = {
     {"Ignore", SSL_TEST_SESSION_TICKET_IGNORE},
@@ -296,9 +282,7 @@ const char *ssl_session_ticket_name(ssl_session_ticket_t server)
                      server);
 }
 
-/***********************/
-/* Method              */
-/***********************/
+/* Method */
 
 static const test_enum ssl_test_methods[] = {
     {"TLS", SSL_TEST_METHOD_TLS},
@@ -321,9 +305,7 @@ const char *ssl_test_method_name(ssl_test_method_t method)
     return enum_name(ssl_test_methods, OSSL_NELEM(ssl_test_methods), method);
 }
 
-/************************************/
-/* NPN and ALPN options             */
-/************************************/
+/* NPN and ALPN options */
 
 IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CLIENT_CONF, client, npn_protocols)
 IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_SERVER_CONF, server, npn_protocols)
@@ -332,9 +314,7 @@ IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CLIENT_CONF, client, alpn_protocols)
 IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_SERVER_CONF, server, alpn_protocols)
 IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, expected_alpn_protocol)
 
-/***********************/
-/* Handshake mode      */
-/***********************/
+/* Handshake mode */
 
 static const test_enum ssl_handshake_modes[] = {
     {"Simple", SSL_TEST_HANDSHAKE_SIMPLE},
@@ -360,9 +340,11 @@ const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode)
                      mode);
 }
 
-/***********************/
-/* CT Validation       */
-/***********************/
+/* Renegotiation Ciphersuites */
+
+IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CLIENT_CONF, client, reneg_ciphers)
+
+/* CT Validation */
 
 static const test_enum ssl_ct_validation_modes[] = {
     {"None", SSL_TEST_CT_VALIDATION_NONE},
@@ -391,9 +373,7 @@ const char *ssl_ct_validation_name(ssl_ct_validation_t mode)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, resumption_expected)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_SERVER_CONF, server, broken_session_ticket)
 
-/**************/
 /* CertStatus */
-/**************/
 
 static const test_enum ssl_certstatus[] = {
     {"None", SSL_TEST_CERT_STATUS_NONE},
@@ -419,21 +399,17 @@ const char *ssl_certstatus_name(ssl_cert_status_t cert_status)
                      OSSL_NELEM(ssl_certstatus), cert_status);
 }
 
-/***********************/
-/* ApplicationData     */
-/***********************/
+/* ApplicationData */
 
 IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, app_data_size)
 
-/***********************/
-/* MaxFragmentSize     */
-/***********************/
+
+/* MaxFragmentSize */
 
 IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, max_fragment_size)
 
-/***********************/
-/* ExpectedTmpKeyType  */
-/***********************/
+
+/* ExpectedTmpKeyType */
 
 __owur static int parse_expected_tmp_key_type(SSL_TEST_CTX *test_ctx,
                                               const char *value)
@@ -455,9 +431,7 @@ __owur static int parse_expected_tmp_key_type(SSL_TEST_CTX *test_ctx,
     return 1;
 }
 
-/*************************************************************/
 /* Known test options and their corresponding parse methods. */
-/*************************************************************/
 
 /* Top-level options. */
 typedef struct {
@@ -494,6 +468,7 @@ static const ssl_test_client_option ssl_test_client_options[] = {
     { "NPNProtocols", &parse_client_npn_protocols },
     { "ALPNProtocols", &parse_client_alpn_protocols },
     { "CTValidation", &parse_ct_validation },
+    { "RenegotiateCiphers", &parse_client_reneg_ciphers},
 };
 
 /* Nested server options. */

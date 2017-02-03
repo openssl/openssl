@@ -84,6 +84,8 @@ typedef struct {
     char *npn_protocols;
     char *alpn_protocols;
     ssl_ct_validation_t ct_validation;
+    /* Ciphersuites to set on a renegotiation */
+    char *reneg_ciphers;
 } SSL_TEST_CLIENT_CONF;
 
 typedef struct {
