@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include "../ssl_locl.h"
 #include "internal/constant_time_locl.h"
 #include <openssl/rand.h>
@@ -133,6 +134,7 @@ int ssl3_get_record(SSL *s)
     unsigned char md[EVP_MAX_MD_SIZE];
     short version;
     unsigned mac_size;
+    int imac_size;
     unsigned int num_recs = 0;
     unsigned int max_recs;
     unsigned int j;
@@ -348,8 +350,16 @@ int ssl3_get_record(SSL *s)
      */
     if (SSL_READ_ETM(s) && s->read_hash) {
         unsigned char *mac;
-        mac_size = EVP_MD_CTX_size(s->read_hash);
-        OPENSSL_assert(mac_size <= EVP_MAX_MD_SIZE);
+
+        imac_size = EVP_MD_CTX_size(s->read_hash);
+        assert(imac_size >= 0 && imac_size <= EVP_MAX_MD_SIZE);
+        if (imac_size < 0 || imac_size > EVP_MAX_MD_SIZE) {
+                al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_SSL3_GET_RECORD, ERR_LIB_EVP);
+                goto f_err;
+        }
+        mac_size = (unsigned)imac_size;
+
         for (j = 0; j < num_recs; j++) {
             if (rr[j].length < mac_size) {
                 al = SSL_AD_DECODE_ERROR;
