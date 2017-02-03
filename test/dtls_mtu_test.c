@@ -16,7 +16,7 @@
 
 #include "ssltestlib.h"
 
-/* for SSL_USE_ETM() */
+/* for SSL_READ_ETM() */
 #include "../ssl/ssl_locl.h"
 
 static int debug = 0;
@@ -133,7 +133,7 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
         }
     }
     rv = 1;
-    if (SSL_USE_ETM(clnt_ssl))
+    if (SSL_READ_ETM(clnt_ssl))
         rv = 2;
  out:
     SSL_free(clnt_ssl);
