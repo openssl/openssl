@@ -341,13 +341,13 @@ $code.=<<___;
 ${func}_xop:
 .Lxop_shortcut:
 	mov	`($win64?56:8)`(%rsp),$in0	# load 7th parameter
+	mov	%rsp,%rax		# copy %rsp
 	push	%rbx
 	push	%rbp
 	push	%r12
 	push	%r13
 	push	%r14
 	push	%r15
-	mov	%rsp,%r11		# copy %rsp
 	sub	\$`$framesz+$win64*16*10`,%rsp
 	and	\$-64,%rsp		# align stack frame
 
@@ -363,7 +363,7 @@ ${func}_xop:
 	mov	$ivp,$_ivp
 	mov	$ctx,$_ctx
 	mov	$in0,$_in0
-	mov	%r11,$_rsp
+	mov	%rax,$_rsp
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,`$framesz+16*0`(%rsp)
@@ -617,13 +617,13 @@ $code.=<<___ if ($win64);
 	movaps	`$framesz+16*9`(%rsp),%xmm15
 ___
 $code.=<<___;
-	mov	(%rsi),%r15
-	mov	8(%rsi),%r14
-	mov	16(%rsi),%r13
-	mov	24(%rsi),%r12
-	mov	32(%rsi),%rbp
-	mov	40(%rsi),%rbx
-	lea	48(%rsi),%rsp
+	mov	-48(%rsi),%r15
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lepilogue_xop:
 	ret
 .size	${func}_xop,.-${func}_xop
@@ -639,13 +639,13 @@ $code.=<<___;
 ${func}_avx:
 .Lavx_shortcut:
 	mov	`($win64?56:8)`(%rsp),$in0	# load 7th parameter
+	mov	%rsp,%rax		# copy %rsp
 	push	%rbx
 	push	%rbp
 	push	%r12
 	push	%r13
 	push	%r14
 	push	%r15
-	mov	%rsp,%r11		# copy %rsp
 	sub	\$`$framesz+$win64*16*10`,%rsp
 	and	\$-64,%rsp		# align stack frame
 
@@ -661,7 +661,7 @@ ${func}_avx:
 	mov	$ivp,$_ivp
 	mov	$ctx,$_ctx
 	mov	$in0,$_in0
-	mov	%r11,$_rsp
+	mov	%rax,$_rsp
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,`$framesz+16*0`(%rsp)
@@ -868,13 +868,13 @@ $code.=<<___ if ($win64);
 	movaps	`$framesz+16*9`(%rsp),%xmm15
 ___
 $code.=<<___;
-	mov	(%rsi),%r15
-	mov	8(%rsi),%r14
-	mov	16(%rsi),%r13
-	mov	24(%rsi),%r12
-	mov	32(%rsi),%rbp
-	mov	40(%rsi),%rbx
-	lea	48(%rsi),%rsp
+	mov	-48(%rsi),%r15
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lepilogue_avx:
 	ret
 .size	${func}_avx,.-${func}_avx
@@ -935,13 +935,13 @@ $code.=<<___;
 ${func}_avx2:
 .Lavx2_shortcut:
 	mov	`($win64?56:8)`(%rsp),$in0	# load 7th parameter
+	mov	%rsp,%rax		# copy %rsp
 	push	%rbx
 	push	%rbp
 	push	%r12
 	push	%r13
 	push	%r14
 	push	%r15
-	mov	%rsp,%r11		# copy %rsp
 	sub	\$`2*$SZ*$rounds+8*8+$win64*16*10`,%rsp
 	and	\$-256*$SZ,%rsp		# align stack frame
 	add	\$`2*$SZ*($rounds-8)`,%rsp
@@ -958,7 +958,7 @@ ${func}_avx2:
 	mov	$ivp,$_ivp
 	mov	$ctx,$_ctx
 	mov	$in0,$_in0
-	mov	%r11,$_rsp
+	mov	%rax,$_rsp
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,`$framesz+16*0`(%rsp)
@@ -1205,13 +1205,13 @@ $code.=<<___ if ($win64);
 	movaps	`$framesz+16*9`(%rsp),%xmm15
 ___
 $code.=<<___;
-	mov	(%rsi),%r15
-	mov	8(%rsi),%r14
-	mov	16(%rsi),%r13
-	mov	24(%rsi),%r12
-	mov	32(%rsi),%rbp
-	mov	40(%rsi),%rbx
-	lea	48(%rsi),%rsp
+	mov	-48(%rsi),%r15
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lepilogue_avx2:
 	ret
 .size	${func}_avx2,.-${func}_avx2
@@ -1569,7 +1569,6 @@ ___
 $code.=<<___;
 	mov	%rax,%rsi		# put aside Rsp
 	mov	16*$SZ+7*8(%rax),%rax	# pull $_rsp
-	lea	48(%rax),%rax
 
 	mov	-8(%rax),%rbx
 	mov	-16(%rax),%rbp
