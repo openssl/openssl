@@ -367,6 +367,12 @@ typedef struct {
 # define EVP_CCM_TLS_FIXED_IV_LEN                        4
 /* Length of explicit part of IV part of TLS records */
 # define EVP_CCM_TLS_EXPLICIT_IV_LEN                     8
+/* Total length of CCM IV length for TLS */
+# define EVP_CCM_TLS_IV_LEN                              12
+/* Length of tag for TLS */
+# define EVP_CCM_TLS_TAG_LEN                             16
+/* Length of CCM8 tag for TLS */
+# define EVP_CCM8_TLS_TAG_LEN                            8
 
 typedef struct evp_cipher_info_st {
     const EVP_CIPHER *cipher;
