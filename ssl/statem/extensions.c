@@ -207,7 +207,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #endif
     {
         TLSEXT_TYPE_encrypt_then_mac,
-        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY,
+        EXT_CLIENT_HELLO | EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY | EXT_SSL3_ALLOWED,
         init_etm, tls_parse_ctos_etm, tls_parse_stoc_etm,
         tls_construct_stoc_etm, tls_construct_ctos_etm, NULL
     },
@@ -912,7 +912,7 @@ static int init_srp(SSL *s, unsigned int context)
 
 static int init_etm(SSL *s, unsigned int context)
 {
-    s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
+    s->ext.use_etm = 0;
 
     return 1;
 }

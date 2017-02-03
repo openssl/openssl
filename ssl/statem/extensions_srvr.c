@@ -451,7 +451,7 @@ int tls_parse_ctos_etm(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx, int *al)
 {
     if (!(s->options & SSL_OP_NO_ENCRYPT_THEN_MAC))
-        s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
+        s->ext.use_etm = 1;
 
     return 1;
 }
@@ -953,7 +953,7 @@ int tls_construct_stoc_use_srtp(SSL *s, WPACKET *pkt, unsigned int context,
 int tls_construct_stoc_etm(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
                            size_t chainidx, int *al)
 {
-    if ((s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC) == 0)
+    if (!s->ext.use_etm)
         return 1;
 
     /*
@@ -964,7 +964,7 @@ int tls_construct_stoc_etm(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
         || s->s3->tmp.new_cipher->algorithm_enc == SSL_RC4
         || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT
         || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT12) {
-        s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
+        s->ext.use_etm = 0;
         return 1;
     }
 
