@@ -346,7 +346,7 @@ int ssl3_get_record(SSL *s)
      * If in encrypt-then-mac mode calculate mac from encrypted record. All
      * the details below are public so no timing details can leak.
      */
-    if (SSL_USE_ETM(s) && s->read_hash) {
+    if (SSL_READ_ETM(s) && s->read_hash) {
         unsigned char *mac;
         mac_size = EVP_MD_CTX_size(s->read_hash);
         OPENSSL_assert(mac_size <= EVP_MAX_MD_SIZE);
@@ -393,7 +393,7 @@ int ssl3_get_record(SSL *s)
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL) &&
         (s->enc_read_ctx != NULL) &&
-        (EVP_MD_CTX_md(s->read_hash) != NULL) && !SSL_USE_ETM(s)) {
+        (!SSL_READ_ETM(s) && EVP_MD_CTX_md(s->read_hash) != NULL)) {
         /* s->read_hash != NULL => mac_size != -1 */
         unsigned char *mac = NULL;
         unsigned char mac_tmp[EVP_MAX_MD_SIZE];
@@ -823,7 +823,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
         }
 
         ret = 1;
-        if (!SSL_USE_ETM(s) && EVP_MD_CTX_md(s->read_hash) != NULL)
+        if (!SSL_READ_ETM(s) && EVP_MD_CTX_md(s->read_hash) != NULL)
             mac_size = EVP_MD_CTX_size(s->read_hash);
         if ((bs != 1) && !send) {
             int tmpret;
@@ -997,7 +997,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
     header[11] = (rec->length) >> 8;
     header[12] = (rec->length) & 0xff;
 
-    if (!send && !SSL_USE_ETM(ssl) &&
+    if (!send && !SSL_READ_ETM(ssl) &&
         EVP_CIPHER_CTX_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
         ssl3_cbc_record_digest_supported(mac_ctx)) {
         /*
@@ -1022,7 +1022,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int send)
             EVP_MD_CTX_free(hmac);
             return -1;
         }
-        if (!send && !SSL_USE_ETM(ssl) && FIPS_mode())
+        if (!send && !SSL_READ_ETM(ssl) && FIPS_mode())
             if (!tls_fips_digest_extra(ssl->enc_read_ctx,
                                        mac_ctx, rec->input,
                                        rec->length, rec->orig_len)) {

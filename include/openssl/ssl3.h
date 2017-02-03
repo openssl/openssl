@@ -264,10 +264,13 @@ extern "C" {
 # define TLS1_FLAGS_SKIP_CERT_VERIFY             0x0010
 
 /* Set if we encrypt then mac instead of usual mac then encrypt */
-# define TLS1_FLAGS_ENCRYPT_THEN_MAC             0x0100
+# define TLS1_FLAGS_ENCRYPT_THEN_MAC_READ        0x0100
+# define TLS1_FLAGS_ENCRYPT_THEN_MAC             TLS1_FLAGS_ENCRYPT_THEN_MAC_READ
 
 /* Set if extended master secret extension received from peer */
 # define TLS1_FLAGS_RECEIVED_EXTMS               0x0200
+
+# define TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE       0x0400
 
 # define SSL3_MT_HELLO_REQUEST                   0
 # define SSL3_MT_CLIENT_HELLO                    1

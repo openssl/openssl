@@ -1674,7 +1674,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
 #endif
     if (!custom_ext_add(s, 1, &ret, limit, al))
         return NULL;
-    if (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC) {
+    if (s->tlsext_use_etm) {
         /*
          * Don't use encrypt_then_mac if AEAD or RC4 might want to disable
          * for other cases too.
@@ -1683,7 +1683,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
             || s->s3->tmp.new_cipher->algorithm_enc == SSL_RC4
             || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT
             || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT12)
-            s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
+            s->tlsext_use_etm = 0;
         else {
             /*-
              * check for enough space.
@@ -1916,7 +1916,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
     /* Clear any signature algorithms extension received */
     OPENSSL_free(s->s3->tmp.peer_sigalgs);
     s->s3->tmp.peer_sigalgs = NULL;
-    s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
+    s->tlsext_use_etm = 0;
 
 #ifndef OPENSSL_NO_SRP
     OPENSSL_free(s->srp_ctx.login);
@@ -2264,7 +2264,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
         }
 #endif
         else if (type == TLSEXT_TYPE_encrypt_then_mac)
-            s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
+            s->tlsext_use_etm = 1;
         /*
          * Note: extended master secret extension handled in
          * tls_check_serverhello_tlsext_early()
@@ -2366,7 +2366,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
                              SSL_DTLSEXT_HB_DONT_SEND_REQUESTS);
 #endif
 
-    s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC;
+    s->tlsext_use_etm = 0;
 
     s->s3->flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
 
@@ -2585,7 +2585,7 @@ static int ssl_scan_serverhello_tlsext(SSL *s, PACKET *pkt, int *al)
             /* Ignore if inappropriate ciphersuite */
             if (s->s3->tmp.new_cipher->algorithm_mac != SSL_AEAD
                 && s->s3->tmp.new_cipher->algorithm_enc != SSL_RC4)
-                s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC;
+                s->tlsext_use_etm = 1;
         } else if (type == TLSEXT_TYPE_extended_master_secret) {
             s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
             if (!s->hit)

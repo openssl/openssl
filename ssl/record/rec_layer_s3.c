@@ -395,7 +395,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
     if (type == SSL3_RT_APPLICATION_DATA &&
         u_len >= 4 * (max_send_fragment = s->max_send_fragment) &&
         s->compress == NULL && s->msg_callback == NULL &&
-        !SSL_USE_ETM(s) && SSL_USE_EXPLICIT_IV(s) &&
+        !SSL_WRITE_ETM(s) && SSL_USE_EXPLICIT_IV(s) &&
         EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_write_ctx)) &
         EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) {
         unsigned char aad[13];
@@ -791,7 +791,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * wb->buf
          */
 
-        if (!SSL_USE_ETM(s) && mac_size != 0) {
+        if (!SSL_WRITE_ETM(s) && mac_size != 0) {
             if (s->method->ssl3_enc->mac(s, &wr[j],
                                          &(outbuf[j][wr[j].length + eivlen]),
                                          1) < 0)
@@ -814,7 +814,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         goto err;
 
     for (j = 0; j < numpipes; j++) {
-        if (SSL_USE_ETM(s) && mac_size != 0) {
+        if (SSL_WRITE_ETM(s) && mac_size != 0) {
             if (s->method->ssl3_enc->mac(s, &wr[j],
                                          outbuf[j] + wr[j].length, 1) < 0)
                 goto err;

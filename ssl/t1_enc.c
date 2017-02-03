@@ -130,6 +130,11 @@ int tls1_change_cipher_state(SSL *s, int which)
 #endif
 
     if (which & SSL3_CC_READ) {
+        if (s->tlsext_use_etm)
+            s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
+        else
+            s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
+
         if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
             s->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
         else
@@ -168,6 +173,11 @@ int tls1_change_cipher_state(SSL *s, int which)
         mac_secret = &(s->s3->read_mac_secret[0]);
         mac_secret_size = &(s->s3->read_mac_secret_size);
     } else {
+        if (s->tlsext_use_etm)
+            s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE;
+        else
+            s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE;
+
         if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
             s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
         else
@@ -367,9 +377,8 @@ int tls1_setup_key_block(SSL *s)
     if (s->s3->tmp.key_block_length != 0)
         return (1);
 
-    if (!ssl_cipher_get_evp
-        (s->session, &c, &hash, &mac_type, &mac_secret_size, &comp,
-         SSL_USE_ETM(s))) {
+    if (!ssl_cipher_get_evp(s->session, &c, &hash, &mac_type, &mac_secret_size,
+                            &comp, s->tlsext_use_etm)) {
         SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
         return (0);
     }

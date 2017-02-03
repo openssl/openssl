@@ -378,7 +378,8 @@
 # define SSL_CLIENT_USE_SIGALGS(s)        \
     SSL_CLIENT_USE_TLS1_2_CIPHERS(s)
 
-# define SSL_USE_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC)
+# define SSL_READ_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
+# define SSL_WRITE_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
 
 /* Mostly for SSLv3 */
 # define SSL_PKEY_RSA_ENC        0
@@ -1110,6 +1111,10 @@ struct ssl_st {
      */
     unsigned char *alpn_client_proto_list;
     unsigned alpn_client_proto_list_len;
+
+    /* Set to one if we have negotiated ETM */
+    int tlsext_use_etm;
+
     /*-
      * 1 if we are renegotiating.
      * 2 if we are a server and are inside a handshake
