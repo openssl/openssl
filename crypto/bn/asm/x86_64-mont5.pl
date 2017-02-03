@@ -3669,8 +3669,8 @@ mul_handler:
 	jb	.Lcommon_seh_tail
 
 	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
+	lea	(%rsi,%r10),%r10	# beginning of body label
+	cmp	%r10,%rbx		# context->Rip<body label
 	jb	.Lcommon_pop_regs
 
 	mov	152($context),%rax	# pull context->Rsp

@@ -1738,11 +1738,11 @@ $code.=<<___ if ($win64);
 	movaps	-0x38(%r11),%xmm13
 	movaps	-0x28(%r11),%xmm14
 	movaps	-0x18(%r11),%xmm15
-.LSEH_end_rsaz_1024_gather5:
 ___
 $code.=<<___;
 	lea	(%r11),%rsp
 	ret
+.LSEH_end_rsaz_1024_gather5:
 .size	rsaz_1024_gather5_avx2,.-rsaz_1024_gather5_avx2
 ___
 }
