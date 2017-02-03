@@ -395,7 +395,8 @@
 # define SSL_CLIENT_USE_SIGALGS(s)        \
     SSL_CLIENT_USE_TLS1_2_CIPHERS(s)
 
-# define SSL_USE_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC)
+# define SSL_READ_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
+# define SSL_WRITE_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
 
 /* Mostly for SSLv3 */
 # define SSL_PKEY_RSA            0
@@ -1132,6 +1133,9 @@ struct ssl_st {
 
         /* The available PSK key exchange modes */
         int psk_kex_mode;
+
+        /* Set to one if we have negotiated ETM */
+        int use_etm;
     } ext;
 
     /*-

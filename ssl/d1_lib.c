@@ -966,7 +966,7 @@ size_t DTLS_get_data_mtu(const SSL *s)
                                  &blocksize, &ext_overhead))
         return 0;
 
-    if (SSL_USE_ETM(s))
+    if (SSL_READ_ETM(s))
         ext_overhead += mac_overhead;
     else
         int_overhead += mac_overhead;
