@@ -13,8 +13,17 @@
 
 #include <openssl/ct.h>
 #include <openssl/err.h>
+#include <time.h>
 
 #include "ct_locl.h"
+
+/*
+ * Number of seconds in the future that an SCT timestamp can be, by default,
+ * without being considered invalid. This is added to time() when setting a
+ * default value for CT_POLICY_EVAL_CTX.epoch_time_in_ms.
+ * It can be overridden by calling CT_POLICY_EVAL_CTX_set_time().
+ */
+static const time_t SCT_CLOCK_DRIFT_TOLERANCE = 300;
 
 CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void)
 {
@@ -24,6 +33,10 @@ CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void)
         CTerr(CT_F_CT_POLICY_EVAL_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+
+    /* time(NULL) shouldn't ever fail, so don't bother checking for -1. */
+    ctx->epoch_time_in_ms = (uint64_t)(time(NULL) + SCT_CLOCK_DRIFT_TOLERANCE) *
+            1000;
 
     return ctx;
 }
@@ -59,6 +72,11 @@ void CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(CT_POLICY_EVAL_CTX *ctx,
     ctx->log_store = log_store;
 }
 
+void CT_POLICY_EVAL_CTX_set_time(CT_POLICY_EVAL_CTX *ctx, uint64_t time_in_ms)
+{
+    ctx->epoch_time_in_ms = time_in_ms;
+}
+
 X509* CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx)
 {
     return ctx->cert;
@@ -74,3 +92,7 @@ const CTLOG_STORE *CT_POLICY_EVAL_CTX_get0_log_store(const CT_POLICY_EVAL_CTX *c
     return ctx->log_store;
 }
 
+uint64_t CT_POLICY_EVAL_CTX_get_time(const CT_POLICY_EVAL_CTX *ctx)
+{
+    return ctx->epoch_time_in_ms;
+}

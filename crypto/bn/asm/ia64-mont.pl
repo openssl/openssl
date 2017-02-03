@@ -80,7 +80,7 @@ $code=<<___;
 
 // int bn_mul_mont (BN_ULONG *rp,const BN_ULONG *ap,
 //		    const BN_ULONG *bp,const BN_ULONG *np,
-//		    const BN_ULONG *n0p,int num);			
+//		    const BN_ULONG *n0p,int num);
 .align	64
 .global	bn_mul_mont#
 .proc	bn_mul_mont#
@@ -203,7 +203,7 @@ bn_mul_mont_general:
 { .mmi;	.pred.rel	"mutex",p39,p41
 (p39)	add		topbit=r0,r0
 (p41)	add		topbit=r0,r0,1
-	nop.i		0		}	
+	nop.i		0		}
 { .mmi;	st8		[tp_1]=n[0]
 	add		tptr=16,sp
 	add		tp_1=8,sp	};;

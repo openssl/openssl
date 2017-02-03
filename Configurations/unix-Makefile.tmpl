@@ -153,6 +153,10 @@ LIBDIR={- #
 ENGINESDIR={- use File::Spec::Functions;
               catdir($prefix,$libdir,"engines-$sover") -}
 
+# Convenience variable for those who want to set the rpath in shared
+# libraries and applications
+LIBRPATH=$(INSTALLTOP)/$(LIBDIR)
+
 MANDIR=$(INSTALLTOP)/share/man
 DOCDIR=$(INSTALLTOP)/share/doc/$(BASENAME)
 HTMLDIR=$(DOCDIR)/html
@@ -169,27 +173,19 @@ CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CC= $(CROSS_COMPILE){- $target{cc} -}
 CFLAGS={- our $cflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cflags} -} {- $config{cflags} -}
 CFLAGS_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
+CXX= $(CROSS_COMPILE){- $target{cxx} -}
+CXXFLAGS={- our $cxxflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cxxflags} -} {- $config{cxxflags} -} -std=c++11
 LDFLAGS= {- $target{lflags} -}
 PLIB_LDFLAGS= {- $target{plib_lflags} -}
 EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
 LIB_CFLAGS={- $target{shared_cflag} || "" -}
-LIB_LDFLAGS={- $target{shared_ldflag}." ".$config{shared_ldflag}
-               # Unlike other OSes (like Solaris, Linux, Tru64,
-               # IRIX) BSD run-time linkers (tested OpenBSD, NetBSD
-               # and FreeBSD) "demand" RPATH set on .so objects.
-               # Apparently application RPATH is not global and
-               # does not apply to .so linked with other .so.
-               # Problem manifests itself when libssl.so fails to
-               # load libcrypto.so. One can argue that we should
-               # engrave this into Makefile.shared rules or into
-               # BSD-* config lines above. Meanwhile let's try to
-               # be cautious and pass -rpath to linker only when
-               # $prefix is not /usr.
-               . ($config{target} =~ m|^BSD-| && $prefix !~ m|^/usr/.*$|
-                  ? " -Wl,-rpath,\$\$(LIBRPATH)" : "") -}
+LIB_CXXFLAGS={- $target{shared_cxxflag} || "" -}
+LIB_LDFLAGS={- $target{shared_ldflag}." ".$config{shared_ldflag} -}
 DSO_CFLAGS={- $target{shared_cflag} || "" -}
+DSO_CXXFLAGS={- $target{shared_cxxflag} || "" -}
 DSO_LDFLAGS=$(LIB_LDFLAGS)
 BIN_CFLAGS={- $target{bin_cflags} -}
+BIN_CXXFLAGS={- $target{bin_cxxflag} || "" -}
 
 PERL={- $config{perl} -}
 
@@ -255,6 +251,7 @@ test: tests
 	  PERL="$(PERL)" \
 	  EXE_EXT={- $exeext -} \
 	  OPENSSL_ENGINES=../$(BLDDIR)/engines \
+	  OPENSSL_DEBUG_MEMORY=on \
 	    $(PERL) ../$(SRCDIR)/test/run_tests.pl $(TESTS) )
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@echo "Tests are not supported with your chosen Configure options"
@@ -293,6 +290,7 @@ clean: libclean
 	-$(RM) `find . -name '*{- $objext -}' -a \! -path "./.git/*"`
 	$(RM) core
 	$(RM) tags TAGS
+	$(RM) test/.rnd
 	$(RM) openssl.pc libcrypto.pc libssl.pc
 	-$(RM) `find . -type l -a \! -path "./.git/*"`
 	$(RM) $(TARFILE)
@@ -301,14 +299,12 @@ distclean: clean
 	$(RM) configdata.pm
 	$(RM) Makefile
 
-# This exists solely for those who still type 'make depend'
-#
 # We check if any depfile is newer than Makefile and decide to
 # concatenate only if that is true.
 depend:
 	@: {- output_off() if $disabled{makedepend}; "" -}
-	@if [ -n "`find $(DEPS) -newer Makefile 2>/dev/null; exit 0`" ]; then \
-	  ( sed -e '/^# DO NOT DELETE THIS LINE.*/,$$d' < Makefile; \
+	@if egrep "^# DO NOT DELETE THIS LINE" Makefile >/dev/null && [ -z "`find $(DEPS) -newer Makefile 2>/dev/null; exit 0`" ]; then :; else \
+	  ( $(PERL) -pe 'exit 0 if /^# DO NOT DELETE THIS LINE.*/' < Makefile; \
 	    echo '# DO NOT DELETE THIS LINE -- make depend depends on it.'; \
 	    echo; \
 	    for f in $(DEPS); do \
@@ -350,10 +346,19 @@ install_ssldirs:
 	@cp $(SRCDIR)/apps/openssl.cnf $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new
 	@chmod 644 $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new
 	@mv -f  $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.dist
-	@if ! [ -f "$(DESTDIR)$(OPENSSLDIR)/openssl.cnf" ]; then \
+	@if [ ! -f "$(DESTDIR)$(OPENSSLDIR)/openssl.cnf" ]; then \
 		echo "install $(SRCDIR)/apps/openssl.cnf -> $(DESTDIR)$(OPENSSLDIR)/openssl.cnf"; \
 		cp $(SRCDIR)/apps/openssl.cnf $(DESTDIR)$(OPENSSLDIR)/openssl.cnf; \
 		chmod 644 $(DESTDIR)$(OPENSSLDIR)/openssl.cnf; \
+	fi
+	@echo "install $(SRCDIR)/apps/ct_log_list.cnf -> $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.dist"
+	@cp $(SRCDIR)/apps/ct_log_list.cnf $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.new
+	@chmod 644 $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.new
+	@mv -f  $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.new $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf.dist
+	@if [ ! -f "$(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf" ]; then \
+		echo "install $(SRCDIR)/apps/ct_log_list.cnf -> $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf"; \
+		cp $(SRCDIR)/apps/ct_log_list.cnf $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf; \
+		chmod 644 $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf; \
 	fi
 
 install_dev:
@@ -570,12 +575,9 @@ PROCESS_PODS=\
 	set -e; \
 	here=`cd $(SRCDIR); pwd`; \
 	point=$$here/util/point.sh; \
-	for ds in apps:1 crypto:3 ssl:3; do \
-	    defdir=`echo $$ds | cut -f1 -d:`; \
-	    defsec=`echo $$ds | cut -f2 -d:`; \
-	    for p in $(SRCDIR)/doc/$$defdir/*.pod; do \
-		SEC=`sed -ne 's/^=for  *comment  *openssl_manual_section: *\([0-9]\) *$$/\1/p' $$p`; \
-		[ -z "$$SEC" ] && SEC=$$defsec; \
+	for ds in man1 man3 man5 man7 ; do \
+	    SEC=`echo $$ds | sed -e s/man//`; \
+	    for p in $(SRCDIR)/doc/$$ds/*.pod; do \
 		fn=`basename $$p .pod`; \
 		Name=$$fn; \
 		NAME=`echo $$fn | tr '[a-z]' '[A-Z]'`; \
@@ -605,12 +607,9 @@ PROCESS_PODS=\
 UNINSTALL_DOCS=\
 	set -e; \
 	here=`cd $(SRCDIR); pwd`; \
-	for ds in apps:1 crypto:3 ssl:3; do \
-	    defdir=`echo $$ds | cut -f1 -d:`; \
-	    defsec=`echo $$ds | cut -f2 -d:`; \
-	    for p in $(SRCDIR)/doc/$$defdir/*.pod; do \
-		SEC=`sed -ne 's/^=for  *comment  *openssl_manual_section: *\([0-9]\) *$$/\1/p' $$p`; \
-		[ -z "$$SEC" ] && SEC=$$defsec; \
+	for ds in man1 man3 man5 man7 ; do \
+	    SEC=`echo $$ds | sed -e s/man//`; \
+	    for p in $(SRCDIR)/doc/$$ds/*.pod; do \
 		fn=`basename $$p .pod`; \
 		suf=`eval "echo $$OUTSUFFIX"`; \
 		top=`eval "echo $$OUTTOP"`; \
@@ -675,6 +674,10 @@ update: generate errors ordinals
 
 generate: generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1
+
+doc-nits:
+	(cd $(SRCDIR); $(PERL) util/find-doc-nits.pl -n ) >doc-nits
+	if [ -s doc-nits ] ; then cat doc-nits; exit 1; fi
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
@@ -771,22 +774,18 @@ tar:
 	cd $(SRCDIR); ls -l $(TARFILE).gz
 
 dist:
-	@$(MAKE) PREPARE_CMD='./Configure dist' tar
+	@$(MAKE) PREPARE_CMD='$(PERL) ./Configure dist' tar
 
 # Helper targets #####################################################
 
-link-utils: $(BLDDIR)/util/opensslwrap.sh $(BLDDIR)/util/shlib_wrap.sh
+link-utils: $(BLDDIR)/util/opensslwrap.sh
 
 $(BLDDIR)/util/opensslwrap.sh: configdata.pm
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
 	    mkdir -p "$(BLDDIR)/util"; \
 	    ln -sf "../$(SRCDIR)/util/opensslwrap.sh" "$(BLDDIR)/util"; \
 	fi
-$(BLDDIR)/util/shlib_wrap.sh: configdata.pm
-	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
-	    mkdir -p "$(BLDDIR)/util"; \
-	    ln -sf "../$(SRCDIR)/util/shlib_wrap.sh" "$(BLDDIR)/util"; \
-	fi
+
 FORCE:
 
 # Building targets ###################################################
@@ -797,6 +796,7 @@ libcrypto.pc:
 	    echo 'exec_prefix=$${prefix}'; \
 	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
 	    echo 'includedir=$${prefix}/include'; \
+	    echo 'enginesdir=$${libdir}/engines-{- $sover -}'; \
 	    echo ''; \
 	    echo 'Name: OpenSSL-libcrypto'; \
 	    echo 'Description: OpenSSL cryptography library'; \
@@ -830,10 +830,10 @@ openssl.pc:
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: libssl libcrypto' ) > openssl.pc
 
-configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configurations/common.tmpl $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_infos}}) -}
+configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
 	@echo "Detected changed: $?"
 	@echo "Reconfiguring..."
-	$(SRCDIR)/Configure reconf
+	$(PERL) $(SRCDIR)/Configure reconf
 	@echo "**************************************************"
 	@echo "***                                            ***"
 	@echo "***   Please run the same make command again   ***"
@@ -849,13 +849,13 @@ configdata.pm: {- $config{build_file_template} -} $(SRCDIR)/Configurations/commo
   # It takes a list of library names and outputs a list of dependencies
   sub compute_lib_depends {
       if ($disabled{shared}) {
-          return map { $_.$libext } @_;
+          return map { $_ =~ /\.a$/ ? $`.$libext : $_.$libext } @_;
       }
 
       # Depending on shared libraries:
       # On Windows POSIX layers, we depend on {libname}.dll.a
       # On Unix platforms, we depend on {shlibname}.so
-      return map { shlib_simple($_) } @_;
+      return map { $_ =~ /\.a$/ ? $`.$libext : shlib_simple($_) } @_;
   }
 
   sub generatesrc {
@@ -940,35 +940,26 @@ EOF
               $incs .= " -I".$withargs{zlib_include};
           }
       }
-      my $ecflags = { lib => '$(LIB_CFLAGS)',
-                      dso => '$(DSO_CFLAGS)',
-                      bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
+      my $cc = '$(CC)';
+      my $cflags = '$(CFLAGS)';
+      if (grep /\.(cc|cpp)$/, @srcs) {
+          $cc = '$(CXX)';
+          $cflags = '$(CXXFLAGS)';
+          $cflags .= ' ' . { lib => '$(LIB_CXXFLAGS)',
+                             dso => '$(DSO_CXXFLAGS)',
+                             bin => '$(BIN_CXXFLAGS)' } -> {$args{intent}};
+      } else {
+          $cflags .= ' ' . { lib => '$(LIB_CFLAGS)',
+                             dso => '$(DSO_CFLAGS)',
+                             bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
+      }
       my $makedepprog = $config{makedepprog};
-      my $recipe = "";
-      if (!$disabled{makedepend} && $makedepprog =~ /\/makedepend/) {
-          $recipe .= <<"EOF";
-$obj$depext: $deps
-	-\$(MAKEDEPEND) -f- -o"|$obj$objext" -- $incs \$(CFLAGS) $ecflags -- $srcs \\
-	    >\$\@.tmp 2>/dev/null
-	-\$(PERL) -i -pe 's/^.*\\|//; s/ \\/(\\\\.|[^ ])*//; \$\$_ = undef if (/: *\$\$/ || /^(#.*| *)\$\$/); \$\$_.="\\n" unless !defined(\$\$_) or /\\R\$\$/g;' \$\@.tmp
-	\@if cmp \$\@.tmp \$\@ > /dev/null 2> /dev/null; then \\
-		rm -f \$\@.tmp; \\
-	else \\
-		mv \$\@.tmp \$\@; \\
-	fi
-EOF
-          $deps = $obj.$depext;
-      }
-      if ($disabled{makedepend} || $makedepprog =~ /\/makedepend/) {
-          $recipe .= <<"EOF";
+      my $recipe = <<"EOF";
 $obj$objext: $deps
-	\$(CC) $incs \$(CFLAGS) $ecflags -c -o \$\@ $srcs
 EOF
-      }
       if (!$disabled{makedepend} && $makedepprog !~ /\/makedepend/) {
           $recipe .= <<"EOF";
-$obj$objext: $deps
-	\$(CC) $incs \$(CFLAGS) $ecflags -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
+	$cc $incs $cflags -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
 	\@touch $obj$depext.tmp
 	\@if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
 		rm -f $obj$depext.tmp; \\
@@ -976,6 +967,22 @@ $obj$objext: $deps
 		mv $obj$depext.tmp $obj$depext; \\
 	fi
 EOF
+      } else {
+          $recipe .= <<"EOF";
+	$cc $incs $cflags -c -o \$\@ $srcs
+EOF
+          if (!$disabled{makedepend} && $makedepprog =~ /\/makedepend/) {
+              $recipe .= <<"EOF";
+	-\$(MAKEDEPEND) -f- -o"|\$\@" -- $incs $cflags -- $srcs \\
+	    >$obj$depext.tmp 2>/dev/null
+	-\$(PERL) -i -pe 's/^.*\\|//; s/ \\/(\\\\.|[^ ])*//; \$\$_ = undef if (/: *\$\$/ || /^(#.*| *)\$\$/); \$\$_.="\\n" unless !defined(\$\$_) or /\\R\$\$/g;' $obj$depext.tmp
+	\@if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
+		rm -f $obj$depext.tmp; \\
+	else \\
+		mv $obj$depext.tmp $obj$depext; \\
+	fi
+EOF
+          }
       }
       return $recipe;
   }
@@ -1071,12 +1078,23 @@ EOF
       my $binn = basename($bin);
       my $objs = join(" ", map { $_.$objext } @{$args{objs}});
       my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
-      my $linklibs = join("", map { my $d = dirname($_);
-                                    my $f = basename($_);
-                                    $d = "." if $d eq $f;
-                                    (my $l = $f) =~ s/^lib//;
-                                    " -L$d -l$l" } @{$args{deps}});
+      my $linklibs = join("", map { if ($_ =~ /\.a$/) {
+                                        " $_";
+                                    } else {
+                                        my $d = dirname($_);
+                                        my $f = basename($_);
+                                        $d = "." if $d eq $f;
+                                        (my $l = $f) =~ s/^lib//;
+                                        " -L$d -l$l"
+                                    }
+                                  } @{$args{deps}});
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
+      my $cc = '$(CC)';
+      my $cflags = '$(CFLAGS) $(BIN_CFLAGS)';
+      if (grep /_cc$/, @{$args{objs}}) {
+          $cc = '$(CXX)';
+          $cflags = '$(CXXFLAGS) $(BIN_CXXFLAGS)';
+      }
       return <<"EOF";
 $bin$exeext: $objs $deps
 	\$(RM) $bin$exeext
@@ -1084,8 +1102,8 @@ $bin$exeext: $objs $deps
 		PERL="\$(PERL)" SRCDIR=\$(SRCDIR) \\
 		APPNAME=$bin$exeext OBJECTS="$objs" \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
-		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(BIN_CFLAGS)' \\
-		LDFLAGS='\$(LDFLAGS)' LIBRPATH='\$(INSTALLTOP)/\$(LIBDIR)' \\
+		CC='$cc' CFLAGS='$cflags' \\
+		LDFLAGS='\$(LDFLAGS)' \\
 		link_app.$shlib_target
 EOF
   }

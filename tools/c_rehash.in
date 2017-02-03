@@ -30,7 +30,7 @@ while ( $ARGV[0] =~ /^-/ ) {
     if ( $flag eq '-old') {
 	    $x509hash = "-subject_hash_old";
 	    $crlhash = "-hash_old";
-    } elsif ( $flag eq '-h') {
+    } elsif ( $flag eq '-h' || $flag eq '-help' ) {
 	    help();
     } elsif ( $flag eq '-n' ) {
 	    $removelinks = 0;
@@ -38,15 +38,15 @@ while ( $ARGV[0] =~ /^-/ ) {
 	    $verbose++;
     }
     else {
-	    print STDERR "Usage error; try -help.\n";
+	    print STDERR "Usage error; try -h.\n";
 	    exit 1;
     }
 }
 
 sub help {
-	print "Usage: c_rehash [-old] [-h] [-v] [dirs...]\n";
+	print "Usage: c_rehash [-old] [-h] [-help] [-v] [dirs...]\n";
 	print "   -old use old-style digest\n";
-	print "   -h print this help text\n";
+	print "   -h or -help print this help text\n";
 	print "   -v print files removed and linked\n";
 	exit 0;
 }

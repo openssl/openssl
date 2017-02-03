@@ -36,7 +36,7 @@ typedef enum OPTION_choice {
     OPT_OUT, OPT_RAND, OPT_PASSOUT, OPT_CIPHER
 } OPTION_CHOICE;
 
-OPTIONS genrsa_options[] = {
+const OPTIONS genrsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"3", OPT_3, '-', "Use 3 for the E value"},
     {"F4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
@@ -166,6 +166,7 @@ int genrsa_main(int argc, char **argv)
     BN_GENCB_free(cb);
     RSA_free(rsa);
     BIO_free_all(out);
+    release_engine(eng);
     OPENSSL_free(passout);
     if (ret != 0)
         ERR_print_errors(bio_err);

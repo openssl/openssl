@@ -35,7 +35,7 @@ typedef enum OPTION_choice {
     OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_CHECK, OPT_CIPHER
 } OPTION_CHOICE;
 
-OPTIONS rsa_options[] = {
+const OPTIONS rsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'f', "Input format, one of DER NET PEM"},
     {"outform", OPT_OUTFORM, 'f', "Output format, one of DER NET PEM PVK"},
@@ -263,7 +263,7 @@ int rsa_main(int argc, char **argv)
             i = PEM_write_bio_RSAPrivateKey(out, rsa,
                                             enc, NULL, 0, NULL, passout);
         }
-# if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
+# ifndef OPENSSL_NO_DSA
     } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
         EVP_PKEY *pk;
         pk = EVP_PKEY_new();
@@ -275,7 +275,13 @@ int rsa_main(int argc, char **argv)
                 goto end;
             }
             assert(private);
+#  ifdef OPENSSL_NO_RC4
+            BIO_printf(bio_err, "PVK format not supported\n");
+            EVP_PKEY_free(pk);
+            goto end;
+#  else
             i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
+#  endif
         } else if (pubin || pubout) {
             i = i2b_PublicKey_bio(out, pk);
         } else {
@@ -294,6 +300,7 @@ int rsa_main(int argc, char **argv)
     } else
         ret = 0;
  end:
+    release_engine(e);
     BIO_free_all(out);
     RSA_free(rsa);
     OPENSSL_free(passin);

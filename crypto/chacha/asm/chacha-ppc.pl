@@ -15,7 +15,7 @@
 # ====================================================================
 #
 # October 2015
-# 
+#
 # ChaCha20 for PowerPC/AltiVec.
 #
 # Performance in cycles per byte out of large buffer.
@@ -23,7 +23,8 @@
 #			IALU/gcc-4.x    3xAltiVec+1xIALU
 #
 # Freescale e300	13.6/+115%	-
-# PPC74x0		6.81/+310%	4.66
+# PPC74x0/G4e		6.81/+310%	4.66
+# PPC970/G5		9.29/+160%	4.60
 # POWER7		8.62/+61%	4.27
 # POWER8		8.70/+51%	3.96
 
@@ -133,6 +134,7 @@ my ($a3,$b3,$c3,$d3)=map(($_&~3)+(($_+1)&3),($a2,$b2,$c2,$d2));
 
 $code.=<<___;
 .machine	"any"
+.text
 
 .globl	.ChaCha20_ctr32_int
 .align	5
@@ -523,7 +525,7 @@ $code.=<<___;
 	lwz	@d[3],12($ctr)
 	vadduwm	@K[5],@K[4],@K[5]
 
-	vspltisw $twenty,-12			# synthesize constants 
+	vspltisw $twenty,-12			# synthesize constants
 	vspltisw $twelve,12
 	vspltisw $twenty5,-7
 	#vspltisw $seven,7			# synthesized in the loop

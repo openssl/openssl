@@ -35,31 +35,56 @@ $utillib =~ s|\\|\\\\|g if $^O eq "MSWin32";
 # switches to be used when it calls our recipes.
 $switches = "-w \"-I$testlib\" \"-I$utillib\"";
 
-my @tests = ( "alltests" );
-if (@ARGV) {
-    @tests = @ARGV;
-}
-my $list_mode = scalar(grep /^list$/, @tests) != 0;
-if (grep /^(alltests|list)$/, @tests) {
-    @tests = grep {
-	basename($_) =~ /^[0-9][0-9]-[^\.]*\.t$/
-    } glob(catfile($recipesdir,"*.t"));
-} else {
-    my @t = ();
-    foreach (@tests) {
-	push @t, grep {
-	    basename($_) =~ /^[0-9][0-9]-[^\.]*\.t$/
-	} glob(catfile($recipesdir,"*-$_.t"));
+my @alltests = find_matching_tests("*");
+my %tests = ();
+
+my $initial_arg = 1;
+foreach my $arg (@ARGV ? @ARGV : ('alltests')) {
+    if ($arg eq 'list') {
+	foreach (@alltests) {
+	    (my $x = basename($_)) =~ s|^[0-9][0-9]-(.*)\.t$|$1|;
+	    print $x,"\n";
+	}
+	exit 0;
     }
-    @tests = @t;
+    if ($arg eq 'alltests') {
+	warn "'alltests' encountered, ignoring everything before that...\n"
+	    unless $initial_arg;
+	%tests = map { $_ => 1 } @alltests;
+    } elsif ($arg =~ m/^(-?)(.*)/) {
+	my $sign = $1;
+	my $test = $2;
+	my @matches = find_matching_tests($test);
+
+	# If '-foo' is the first arg, it's short for 'alltests -foo'
+	if ($sign eq '-' && $initial_arg) {
+	    %tests = map { $_ => 1 } @alltests;
+	}
+
+	if (scalar @matches == 0) {
+	    warn "Test $test found no match, skipping ",
+		($sign eq '-' ? "removal" : "addition"),
+		"...\n";
+	} else {
+	    foreach $test (@matches) {
+		if ($sign eq '-') {
+		    delete $tests{$test};
+		} else {
+		    $tests{$test} = 1;
+		}
+	    }
+	}
+    } else {
+	warn "I don't know what '$arg' is about, ignoring...\n";
+    }
+
+    $initial_arg = 0;
 }
 
-if ($list_mode) {
-    @tests = map { $_ = basename($_); $_ =~ s/^[0-9][0-9]-//; $_ =~ s/\.t$//;
-                   $_ } @tests;
-    print join("\n", @tests), "\n";
-} else {
-    @tests = map { abs2rel($_, rel2abs(curdir())); } @tests;
+runtests(map { abs2rel($_, rel2abs(curdir())); } sort keys %tests);
 
-    runtests(sort @tests);
+sub find_matching_tests {
+    my ($glob) = @_;
+
+    return glob(catfile($recipesdir,"*-$glob.t"));
 }

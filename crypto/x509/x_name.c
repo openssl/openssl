@@ -125,6 +125,11 @@ static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
     *pval = NULL;
 }
 
+static void name_entry_stack_free(STACK_OF(X509_NAME_ENTRY) *ents)
+{
+    sk_X509_NAME_ENTRY_pop_free(ents, X509_NAME_ENTRY_free);
+}
+
 static int x509_name_ex_d2i(ASN1_VALUE **val,
                             const unsigned char **in, long len,
                             const ASN1_ITEM *it, int tag, int aclass,
@@ -173,25 +178,16 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
         for (j = 0; j < sk_X509_NAME_ENTRY_num(entries); j++) {
             entry = sk_X509_NAME_ENTRY_value(entries, j);
             entry->set = i;
-            if (!sk_X509_NAME_ENTRY_push(nm.x->entries, entry)) {
-                /*
-                 * Free all in entries if sk_X509_NAME_ENTRY_push return failure.
-                 * X509_NAME_ENTRY_free will check the null entry.
-                 */
-                sk_X509_NAME_ENTRY_pop_free(entries, X509_NAME_ENTRY_free);
+            if (!sk_X509_NAME_ENTRY_push(nm.x->entries, entry))
                 goto err;
-            }
-            /*
-             * If sk_X509_NAME_ENTRY_push return success, clean the entries[j].
-             * It's necessary when 'goto err;' happens.
-             */
-            sk_X509_NAME_ENTRY_set(entries, j, NULL);
         }
-        sk_X509_NAME_ENTRY_free(entries);
-        sk_STACK_OF_X509_NAME_ENTRY_set(intname.s, i, NULL);
     }
-
-    sk_STACK_OF_X509_NAME_ENTRY_free(intname.s);
+    /*
+     * All entries have now been pushed to nm->x.entries
+     * free up the stacks in intname.s but not the entries
+     * themselves.
+     */
+    sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s, sk_X509_NAME_ENTRY_free);
     intname.s = NULL;
     ret = x509_name_canon(nm.x);
     if (!ret)
@@ -202,8 +198,15 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
     return ret;
 
  err:
+    /* If intname.s is not NULL only some entries exist in nm->x.entries:
+     * zero references in nm->x.entries list. Since all entries exist
+     * in intname.s we can free them all there
+     */
+    if (intname.s != NULL) {
+        sk_X509_NAME_ENTRY_zero(nm.x->entries);
+        sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s, name_entry_stack_free);
+    }
     X509_NAME_free(nm.x);
-    sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s, sk_X509_NAME_ENTRY_free);
     ASN1err(ASN1_F_X509_NAME_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
     return 0;
 }

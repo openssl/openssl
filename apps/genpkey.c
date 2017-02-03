@@ -26,7 +26,7 @@ typedef enum OPTION_choice {
     OPT_ALGORITHM, OPT_PKEYOPT, OPT_GENPARAM, OPT_TEXT, OPT_CIPHER
 } OPTION_CHOICE;
 
-OPTIONS genpkey_options[] = {
+const OPTIONS genpkey_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"out", OPT_OUT, '>', "Output file"},
     {"outform", OPT_OUTFORM, 'F', "output format (DER or PEM)"},
@@ -193,8 +193,8 @@ int genpkey_main(int argc, char **argv)
     EVP_PKEY_CTX_free(ctx);
     BIO_free_all(out);
     BIO_free(in);
+    release_engine(e);
     OPENSSL_free(pass);
-
     return ret;
 }
 

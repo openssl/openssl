@@ -17,7 +17,7 @@ typedef enum OPTION_choice {
     OPT_HEX, OPT_GENERATE, OPT_BITS, OPT_SAFE, OPT_CHECKS
 } OPTION_CHOICE;
 
-OPTIONS prime_options[] = {
+const OPTIONS prime_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [number...]\n"},
     {OPT_HELP_STR, 1, '-',
         "  number Number to check for primality\n"},
@@ -106,7 +106,7 @@ int prime_main(int argc, char **argv)
             else
                 r = BN_dec2bn(&bn, argv[0]);
 
-            if(!r) {
+            if (!r) {
                 BIO_printf(bio_err, "Failed to process value (%s)\n", argv[0]);
                 goto end;
             }

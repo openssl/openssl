@@ -857,7 +857,6 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
             goto err;
     } else
         rr = r;
-    rr->neg = a->neg ^ b->neg;
 
 #if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
     i = al - bl;
@@ -969,9 +968,11 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 #if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
  end:
 #endif
+    rr->neg = a->neg ^ b->neg;
     bn_correct_top(rr);
-    if (r != rr)
-        BN_copy(r, rr);
+    if (r != rr && BN_copy(r, rr) == NULL)
+        goto err;
+
     ret = 1;
  err:
     bn_check_top(r);

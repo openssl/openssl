@@ -27,7 +27,7 @@ typedef enum OPTION_choice {
     OPT_SPKSECT
 } OPTION_CHOICE;
 
-OPTIONS spkac_options[] = {
+const OPTIONS spkac_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
@@ -38,7 +38,8 @@ OPTIONS spkac_options[] = {
     {"noout", OPT_NOOUT, '-', "Don't print SPKAC"},
     {"pubkey", OPT_PUBKEY, '-', "Output public key"},
     {"verify", OPT_VERIFY, '-', "Verify SPKAC signature"},
-    {"spksect", OPT_SPKSECT, 's'},
+    {"spksect", OPT_SPKSECT, 's',
+     "Specify the name of an SPKAC-dedicated section of configuration"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
@@ -186,6 +187,7 @@ int spkac_main(int argc, char **argv)
     NETSCAPE_SPKI_free(spki);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
+    release_engine(e);
     OPENSSL_free(passin);
     return (ret);
 }

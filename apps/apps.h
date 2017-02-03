@@ -210,7 +210,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
 # define OPT_S_ENUM \
         OPT_S__FIRST=3000, \
         OPT_S_NOSSL3, OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
-        OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
+        OPT_S_NOTLS1_3, OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
         OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_STRICT, OPT_S_SIGALGS, \
         OPT_S_CLIENTSIGALGS, OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
@@ -222,6 +222,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         {"no_tls1", OPT_S_NOTLS1, '-', "Just disable TLSv1"}, \
         {"no_tls1_1", OPT_S_NOTLS1_1, '-', "Just disable TLSv1.1" }, \
         {"no_tls1_2", OPT_S_NOTLS1_2, '-', "Just disable TLSv1.2"}, \
+        {"no_tls1_3", OPT_S_NOTLS1_3, '-', "Just disable TLSv1.3"}, \
         {"bugs", OPT_S_BUGS, '-', "Turn on SSL bug compatibility"}, \
         {"no_comp", OPT_S_NO_COMP, '-', "Disable SSL/TLS compression (default)" }, \
         {"comp", OPT_S_COMP, '-', "Use SSL/TLS-level compression" }, \
@@ -259,6 +260,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_NOTLS1: \
         case OPT_S_NOTLS1_1: \
         case OPT_S_NOTLS1_2: \
+        case OPT_S_NOTLS1_3: \
         case OPT_S_BUGS: \
         case OPT_S_NO_COMP: \
         case OPT_S_COMP: \
@@ -279,7 +281,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
 
 #define IS_NO_PROT_FLAG(o) \
  (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
-  || o == OPT_S_NOTLS1_2)
+  || o == OPT_S_NOTLS1_2 || o == OPT_S_NOTLS1_3)
 
 /*
  * Option parsing.
@@ -292,7 +294,7 @@ typedef struct options_st {
     /*
      * value type: - no value (also the value zero), n number, p positive
      * number, u unsigned, l long, s string, < input file, > output file,
-     * f any format, F der/pem format , E der/pem/engine format identifier.
+     * f any format, F der/pem format, E der/pem/engine format identifier.
      * l, n and u include zero; p does not.
      */
     int valtype;
@@ -387,6 +389,7 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_data);
 
 int setup_ui_method(void);
 void destroy_ui_method(void);
+const UI_METHOD *get_ui_method(void);
 
 int chopup_args(ARGS *arg, char *buf);
 # ifdef HEADER_X509_H
@@ -430,11 +433,9 @@ __owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
 
 #endif
 
-# ifdef OPENSSL_NO_ENGINE
-#  define setup_engine(engine, debug) NULL
-# else
 ENGINE *setup_engine(const char *engine, int debug);
-# endif
+void release_engine(ENGINE *e);
+
 # ifndef OPENSSL_NO_OCSP
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
                                  const char *host, const char *path,
@@ -456,9 +457,10 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
                                  * disabled */
 # define DB_NUMBER       6
 
-# define DB_TYPE_REV     'R'
-# define DB_TYPE_EXP     'E'
-# define DB_TYPE_VAL     'V'
+# define DB_TYPE_REV     'R'    /* Revoked  */
+# define DB_TYPE_EXP     'E'    /* Expired  */
+# define DB_TYPE_VAL     'V'    /* Valid ; inserted with: ca ... -valid */
+# define DB_TYPE_SUSP    'S'    /* Suspended  */
 
 typedef struct db_attr_st {
     int unique_subject;
@@ -548,6 +550,8 @@ void store_setup_crl_download(X509_STORE *st);
 
 int app_isdir(const char *);
 int app_access(const char *, int flag);
+int fileno_stdin(void);
+int fileno_stdout(void);
 int raw_read_stdin(void *, int);
 int raw_write_stdout(const void *, int);
 

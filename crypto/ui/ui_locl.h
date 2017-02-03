@@ -46,6 +46,10 @@ struct ui_method_st {
      */
     char *(*ui_construct_prompt) (UI *ui, const char *object_desc,
                                   const char *object_name);
+    /*
+     * UI_METHOD specific application data.
+     */
+    CRYPTO_EX_DATA ex_data;
 };
 
 struct ui_string_st {

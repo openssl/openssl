@@ -144,6 +144,38 @@ static int servername_reject_cb(SSL *s, int *ad, void *arg)
     return select_server_ctx(s, arg, 0);
 }
 
+static unsigned char dummy_ocsp_resp_good_val = 0xff;
+static unsigned char dummy_ocsp_resp_bad_val = 0xfe;
+
+static int server_ocsp_cb(SSL *s, void *arg)
+{
+    unsigned char *resp;
+
+    resp = OPENSSL_malloc(1);
+    if (resp == NULL)
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    /*
+     * For the purposes of testing we just send back a dummy OCSP response
+     */
+    *resp = *(unsigned char *)arg;
+    if (!SSL_set_tlsext_status_ocsp_resp(s, resp, 1))
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+
+    return SSL_TLSEXT_ERR_OK;
+}
+
+static int client_ocsp_cb(SSL *s, void *arg)
+{
+    const unsigned char *resp;
+    int len;
+
+    len = SSL_get_tlsext_status_ocsp_resp(s, &resp);
+    if (len != 1 || *resp != dummy_ocsp_resp_good_val)
+        return 0;
+
+    return 1;
+}
+
 static int verify_reject_cb(X509_STORE_CTX *ctx, void *arg) {
     X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
     return 0;
@@ -301,7 +333,7 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         SSL_CTX_set_cert_verify_callback(client_ctx, &verify_reject_cb,
                                          NULL);
         break;
-    default:
+    case SSL_TEST_VERIFY_NONE:
         break;
     }
 
@@ -315,8 +347,18 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         SSL_CTX_set_tlsext_servername_callback(server_ctx, servername_reject_cb);
         SSL_CTX_set_tlsext_servername_arg(server_ctx, server2_ctx);
         break;
-    default:
+    case SSL_TEST_SERVERNAME_CB_NONE:
         break;
+    }
+
+    if (extra->server.cert_status != SSL_TEST_CERT_STATUS_NONE) {
+        SSL_CTX_set_tlsext_status_type(client_ctx, TLSEXT_STATUSTYPE_ocsp);
+        SSL_CTX_set_tlsext_status_cb(client_ctx, client_ocsp_cb);
+        SSL_CTX_set_tlsext_status_arg(client_ctx, NULL);
+        SSL_CTX_set_tlsext_status_cb(server_ctx, server_ocsp_cb);
+        SSL_CTX_set_tlsext_status_arg(server_ctx,
+            ((extra->server.cert_status == SSL_TEST_CERT_STATUS_GOOD_RESPONSE)
+            ? &dummy_ocsp_resp_good_val : &dummy_ocsp_resp_bad_val));
     }
 
     /*
@@ -336,16 +378,16 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         parse_protos(extra->server.npn_protocols,
                      &server_ctx_data->npn_protocols,
                      &server_ctx_data->npn_protocols_len);
-        SSL_CTX_set_next_protos_advertised_cb(server_ctx, server_npn_cb,
-                                              server_ctx_data);
+        SSL_CTX_set_npn_advertised_cb(server_ctx, server_npn_cb,
+                                      server_ctx_data);
     }
     if (extra->server2.npn_protocols != NULL) {
         parse_protos(extra->server2.npn_protocols,
                      &server2_ctx_data->npn_protocols,
                      &server2_ctx_data->npn_protocols_len);
         TEST_check(server2_ctx != NULL);
-        SSL_CTX_set_next_protos_advertised_cb(server2_ctx, server_npn_cb,
-                                              server2_ctx_data);
+        SSL_CTX_set_npn_advertised_cb(server2_ctx, server_npn_cb,
+                                      server2_ctx_data);
     }
     if (extra->client.npn_protocols != NULL) {
         parse_protos(extra->client.npn_protocols,
@@ -541,6 +583,85 @@ static void do_app_data_step(PEER *peer)
     }
 }
 
+static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
+{
+    int ret;
+    char buf;
+
+    TEST_check(peer->status == PEER_RETRY);
+    TEST_check(test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_SERVER
+                || test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_CLIENT);
+
+    /* Check if we are the peer that is going to initiate */
+    if ((test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_SERVER
+                && SSL_is_server(peer->ssl))
+            || (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_CLIENT
+                && !SSL_is_server(peer->ssl))) {
+        /*
+         * If we already asked for a renegotiation then fall through to the
+         * SSL_read() below.
+         */
+        if (!SSL_renegotiate_pending(peer->ssl)) {
+            /*
+             * If we are the client we will always attempt to resume the
+             * session. The server may or may not resume dependant on the
+             * setting of SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+             */
+            if (SSL_is_server(peer->ssl))
+                ret = SSL_renegotiate(peer->ssl);
+            else
+                ret = SSL_renegotiate_abbreviated(peer->ssl);
+            if (!ret) {
+                peer->status = PEER_ERROR;
+                return;
+            }
+            do_handshake_step(peer);
+            /*
+             * If status is PEER_RETRY it means we're waiting on the peer to
+             * continue the handshake. As far as setting up the renegotiation is
+             * concerned that is a success. The next step will continue the
+             * handshake to its conclusion.
+             *
+             * If status is PEER_SUCCESS then we are the server and we have
+             * successfully sent the HelloRequest. We need to continue to wait
+             * until the handshake arrives from the client.
+             */
+            if (peer->status == PEER_RETRY)
+                peer->status = PEER_SUCCESS;
+            else if (peer->status == PEER_SUCCESS)
+                peer->status = PEER_RETRY;
+            return;
+        }
+    }
+
+    /*
+     * The SSL object is still expecting app data, even though it's going to
+     * get a handshake message. We try to read, and it should fail - after which
+     * we should be in a handshake
+     */
+    ret = SSL_read(peer->ssl, &buf, sizeof(buf));
+    if (ret >= 0) {
+        /*
+         * We're not actually expecting data - we're expecting a reneg to
+         * start
+         */
+        peer->status = PEER_ERROR;
+        return;
+    } else {
+        int error = SSL_get_error(peer->ssl, ret);
+        if (error != SSL_ERROR_WANT_READ) {
+            peer->status = PEER_ERROR;
+            return;
+        }
+        /* If we're no in init yet then we're not done with setup yet */
+        if (!SSL_in_init(peer->ssl))
+            return;
+    }
+
+    peer->status = PEER_SUCCESS;
+}
+
+
 /*
  * RFC 5246 says:
  *
@@ -575,29 +696,54 @@ static void do_shutdown_step(PEER *peer)
 
 typedef enum {
     HANDSHAKE,
+    RENEG_APPLICATION_DATA,
+    RENEG_SETUP,
+    RENEG_HANDSHAKE,
     APPLICATION_DATA,
     SHUTDOWN,
     CONNECTION_DONE
 } connect_phase_t;
 
-static connect_phase_t next_phase(connect_phase_t phase)
+static connect_phase_t next_phase(const SSL_TEST_CTX *test_ctx,
+                                  connect_phase_t phase)
 {
     switch (phase) {
     case HANDSHAKE:
+        if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_SERVER
+                || test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_CLIENT)
+            return RENEG_APPLICATION_DATA;
+        return APPLICATION_DATA;
+    case RENEG_APPLICATION_DATA:
+        return RENEG_SETUP;
+    case RENEG_SETUP:
+        return RENEG_HANDSHAKE;
+    case RENEG_HANDSHAKE:
         return APPLICATION_DATA;
     case APPLICATION_DATA:
         return SHUTDOWN;
     case SHUTDOWN:
         return CONNECTION_DONE;
-    default:
-        TEST_check(0); /* Should never call next_phase when done. */
+    case CONNECTION_DONE:
+        TEST_check(0);
+        break;
     }
+    return -1;
 }
 
-static void do_connect_step(PEER *peer, connect_phase_t phase)
+static void do_connect_step(const SSL_TEST_CTX *test_ctx, PEER *peer,
+                            connect_phase_t phase)
 {
     switch (phase) {
     case HANDSHAKE:
+        do_handshake_step(peer);
+        break;
+    case RENEG_APPLICATION_DATA:
+        do_app_data_step(peer);
+        break;
+    case RENEG_SETUP:
+        do_reneg_setup_step(test_ctx, peer);
+        break;
+    case RENEG_HANDSHAKE:
         do_handshake_step(peer);
         break;
     case APPLICATION_DATA:
@@ -606,8 +752,9 @@ static void do_connect_step(PEER *peer, connect_phase_t phase)
     case SHUTDOWN:
         do_shutdown_step(peer);
         break;
-    default:
+    case CONNECTION_DONE:
         TEST_check(0);
+        break;
     }
 }
 
@@ -690,7 +837,7 @@ static char *dup_str(const unsigned char *in, size_t len)
 {
     char *ret;
 
-    if(len == 0)
+    if (len == 0)
         return NULL;
 
     /* Assert that the string does not contain NUL-bytes. */
@@ -698,6 +845,32 @@ static char *dup_str(const unsigned char *in, size_t len)
     ret = OPENSSL_strndup((const char*)(in), len);
     TEST_check(ret != NULL);
     return ret;
+}
+
+static int pkey_type(EVP_PKEY *pkey)
+{
+    int nid = EVP_PKEY_id(pkey);
+
+#ifndef OPENSSL_NO_EC
+    if (nid == EVP_PKEY_EC) {
+        const EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+        return EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+    }
+#endif
+    return nid;
+}
+
+static int peer_pkey_type(SSL *s)
+{
+    X509 *x = SSL_get_peer_certificate(s);
+
+    if (x != NULL) {
+        int nid = pkey_type(X509_get0_pubkey(x));
+
+        X509_free(x);
+        return nid;
+    }
+    return NID_undef;
 }
 
 /*
@@ -723,7 +896,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     HANDSHAKE_EX_DATA server_ex_data, client_ex_data;
     CTX_DATA client_ctx_data, server_ctx_data, server2_ctx_data;
     HANDSHAKE_RESULT *ret = HANDSHAKE_RESULT_new();
-    int client_turn = 1;
+    int client_turn = 1, client_turn_count = 0;
     connect_phase_t phase = HANDSHAKE;
     handshake_status_t status = HANDSHAKE_RETRY;
     const unsigned char* tick = NULL;
@@ -732,6 +905,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     const unsigned char *proto = NULL;
     /* API dictates unsigned int rather than size_t. */
     unsigned int proto_len = 0;
+    EVP_PKEY *tmp_key;
 
     memset(&server_ctx_data, 0, sizeof(server_ctx_data));
     memset(&server2_ctx_data, 0, sizeof(server2_ctx_data));
@@ -801,18 +975,19 @@ static HANDSHAKE_RESULT *do_handshake_internal(
      */
     for(;;) {
         if (client_turn) {
-            do_connect_step(&client, phase);
+            do_connect_step(test_ctx, &client, phase);
             status = handshake_status(client.status, server.status,
                                       1 /* client went last */);
         } else {
-            do_connect_step(&server, phase);
+            do_connect_step(test_ctx, &server, phase);
             status = handshake_status(server.status, client.status,
                                       0 /* server went last */);
         }
 
         switch (status) {
         case HANDSHAKE_SUCCESS:
-            phase = next_phase(phase);
+            client_turn_count = 0;
+            phase = next_phase(test_ctx, phase);
             if (phase == CONNECTION_DONE) {
                 ret->result = SSL_TEST_SUCCESS;
                 goto err;
@@ -837,6 +1012,16 @@ static HANDSHAKE_RESULT *do_handshake_internal(
             ret->result = SSL_TEST_INTERNAL_ERROR;
             goto err;
         case HANDSHAKE_RETRY:
+            if (client_turn_count++ >= 2000) {
+                /*
+                 * At this point, there's been so many PEER_RETRY in a row
+                 * that it's likely both sides are stuck waiting for a read.
+                 * It's time to give up.
+                 */
+                ret->result = SSL_TEST_INTERNAL_ERROR;
+                goto err;
+            }
+
             /* Continue. */
             client_turn ^= 1;
             break;
@@ -880,6 +1065,20 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     if (session_out != NULL)
         *session_out = SSL_get1_session(client.ssl);
 
+    if (SSL_get_server_tmp_key(client.ssl, &tmp_key)) {
+        ret->tmp_key_type = pkey_type(tmp_key);
+        EVP_PKEY_free(tmp_key);
+    }
+
+    SSL_get_peer_signature_nid(client.ssl, &ret->server_sign_hash);
+    SSL_get_peer_signature_nid(server.ssl, &ret->client_sign_hash);
+
+    SSL_get_peer_signature_type_nid(client.ssl, &ret->server_sign_type);
+    SSL_get_peer_signature_type_nid(server.ssl, &ret->client_sign_type);
+
+    ret->server_cert_type = peer_pkey_type(client.ssl);
+    ret->client_cert_type = peer_pkey_type(server.ssl);
+
     ctx_data_free_data(&server_ctx_data);
     ctx_data_free_data(&server2_ctx_data);
     ctx_data_free_data(&client_ctx_data);
@@ -900,10 +1099,8 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     result = do_handshake_internal(server_ctx, server2_ctx, client_ctx,
                                    test_ctx, &test_ctx->extra,
                                    NULL, &session);
-    if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_SIMPLE)
+    if (test_ctx->handshake_mode != SSL_TEST_HANDSHAKE_RESUME)
         goto end;
-
-    TEST_check(test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME);
 
     if (result->result != SSL_TEST_SUCCESS) {
         result->result = SSL_TEST_FIRST_HANDSHAKE_FAILED;

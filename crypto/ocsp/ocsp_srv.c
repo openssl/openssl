@@ -193,17 +193,10 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
 
     rid = &brsp->tbsResponseData.responderId;
     if (flags & OCSP_RESPID_KEY) {
-        unsigned char md[SHA_DIGEST_LENGTH];
-        X509_pubkey_digest(signer, EVP_sha1(), md, NULL);
-        if ((rid->value.byKey = ASN1_OCTET_STRING_new()) == NULL)
+        if (!OCSP_RESPID_set_by_key(rid, signer))
             goto err;
-        if (!(ASN1_OCTET_STRING_set(rid->value.byKey, md, SHA_DIGEST_LENGTH)))
-            goto err;
-        rid->type = V_OCSP_RESPID_KEY;
-    } else {
-        if (!X509_NAME_set(&rid->value.byName, X509_get_subject_name(signer)))
-            goto err;
-        rid->type = V_OCSP_RESPID_NAME;
+    } else if (!OCSP_RESPID_set_by_name(rid, signer)) {
+        goto err;
     }
 
     if (!(flags & OCSP_NOTIME) &&
@@ -220,5 +213,65 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
 
     return 1;
  err:
+    return 0;
+}
+
+int OCSP_RESPID_set_by_name(OCSP_RESPID *respid, X509 *cert)
+{
+    if (!X509_NAME_set(&respid->value.byName, X509_get_subject_name(cert)))
+        return 0;
+
+    respid->type = V_OCSP_RESPID_NAME;
+
+    return 1;
+}
+
+int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert)
+{
+    ASN1_OCTET_STRING *byKey = NULL;
+    unsigned char md[SHA_DIGEST_LENGTH];
+
+    /* RFC2560 requires SHA1 */
+    if (!X509_pubkey_digest(cert, EVP_sha1(), md, NULL))
+        return 0;
+
+    byKey = ASN1_OCTET_STRING_new();
+    if (byKey == NULL)
+        return 0;
+
+    if (!(ASN1_OCTET_STRING_set(byKey, md, SHA_DIGEST_LENGTH))) {
+        ASN1_OCTET_STRING_free(byKey);
+        return 0;
+    }
+
+    respid->type = V_OCSP_RESPID_KEY;
+    respid->value.byKey = byKey;
+
+    return 1;
+}
+
+int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert)
+{
+    if (respid->type == V_OCSP_RESPID_KEY) {
+        unsigned char md[SHA_DIGEST_LENGTH];
+
+        if (respid->value.byKey == NULL)
+            return 0;
+
+        /* RFC2560 requires SHA1 */
+        if (!X509_pubkey_digest(cert, EVP_sha1(), md, NULL))
+            return 0;
+
+        return (ASN1_STRING_length(respid->value.byKey) == SHA_DIGEST_LENGTH)
+            && (memcmp(ASN1_STRING_get0_data(respid->value.byKey), md,
+                       SHA_DIGEST_LENGTH) == 0);
+    } else if(respid->type == V_OCSP_RESPID_NAME) {
+        if (respid->value.byName == NULL)
+            return 0;
+
+        return X509_NAME_cmp(respid->value.byName,
+                             X509_get_subject_name(cert)) == 0;
+    }
+
     return 0;
 }

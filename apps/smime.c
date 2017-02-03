@@ -37,7 +37,7 @@ typedef enum OPTION_choice {
     OPT_PK7OUT, OPT_TEXT, OPT_NOINTERN, OPT_NOVERIFY, OPT_NOCHAIN,
     OPT_NOCERTS, OPT_NOATTR, OPT_NODETACH, OPT_NOSMIMECAP,
     OPT_BINARY, OPT_NOSIGS, OPT_STREAM, OPT_INDEF, OPT_NOINDEF,
-    OPT_NOOLDMIME, OPT_CRLFEOL, OPT_RAND, OPT_ENGINE, OPT_PASSIN,
+    OPT_CRLFEOL, OPT_RAND, OPT_ENGINE, OPT_PASSIN,
     OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP, OPT_MD,
     OPT_CIPHER, OPT_INKEY, OPT_KEYFORM, OPT_CERTFILE, OPT_CAFILE,
     OPT_V_ENUM,
@@ -45,7 +45,7 @@ typedef enum OPTION_choice {
     OPT_OUTFORM, OPT_CONTENT
 } OPTION_CHOICE;
 
-OPTIONS smime_options[] = {
+const OPTIONS smime_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
     {OPT_HELP_STR, 1, '-',
         "  cert.pem... recipient certs for encryption\n"},
@@ -88,14 +88,14 @@ OPTIONS smime_options[] = {
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
-    {"resign", OPT_RESIGN, '-'},
-    {"nochain", OPT_NOCHAIN, '-'},
-    {"nosmimecap", OPT_NOSMIMECAP, '-'},
-    {"stream", OPT_STREAM, '-'},
-    {"indef", OPT_INDEF, '-'},
-    {"noindef", OPT_NOINDEF, '-'},
-    {"nooldmime", OPT_NOOLDMIME, '-'},
-    {"crlfeol", OPT_CRLFEOL, '-'},
+    {"resign", OPT_RESIGN, '-', "Resign a signed message"},
+    {"nochain", OPT_NOCHAIN, '-',
+     "set PKCS7_NOCHAIN so certificates contained in the message are not used as untrusted CAs" },
+    {"nosmimecap", OPT_NOSMIMECAP, '-', "Omit the SMIMECapabilities attribute"},
+    {"stream", OPT_STREAM, '-', "Enable CMS streaming" },
+    {"indef", OPT_INDEF, '-', "Same as -stream" },
+    {"noindef", OPT_NOINDEF, '-', "Disable CMS streaming"},
+    {"crlfeol", OPT_CRLFEOL, '-', "Use CRLF as EOL termination instead of CR only"},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
@@ -219,9 +219,6 @@ int smime_main(int argc, char **argv)
             break;
         case OPT_NOINDEF:
             indef = 0;
-            break;
-        case OPT_NOOLDMIME:
-            flags |= PKCS7_NOOLDMIMETYPE;
             break;
         case OPT_CRLFEOL:
             flags |= PKCS7_CRLFEOL;
@@ -617,6 +614,7 @@ int smime_main(int argc, char **argv)
     X509_free(signer);
     EVP_PKEY_free(key);
     PKCS7_free(p7);
+    release_engine(e);
     BIO_free(in);
     BIO_free(indata);
     BIO_free_all(out);

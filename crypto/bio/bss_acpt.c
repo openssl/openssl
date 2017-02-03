@@ -54,7 +54,11 @@ static void BIO_ACCEPT_free(BIO_ACCEPT *a);
 static const BIO_METHOD methods_acceptp = {
     BIO_TYPE_ACCEPT,
     "socket accept",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     acpt_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     acpt_read,
     acpt_puts,
     NULL,                       /* connect_gets, */

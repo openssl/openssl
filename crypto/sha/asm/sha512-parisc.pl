@@ -368,7 +368,7 @@ L\$parisc1
 ___
 
 @V=(  $Ahi,  $Alo,  $Bhi,  $Blo,  $Chi,  $Clo,  $Dhi,  $Dlo,
-      $Ehi,  $Elo,  $Fhi,  $Flo,  $Ghi,  $Glo,  $Hhi,  $Hlo) = 
+      $Ehi,  $Elo,  $Fhi,  $Flo,  $Ghi,  $Glo,  $Hhi,  $Hlo) =
    ( "%r1", "%r2", "%r3", "%r4", "%r5", "%r6", "%r7", "%r8",
      "%r9","%r10","%r11","%r12","%r13","%r14","%r15","%r16");
 $a0 ="%r17";
@@ -419,7 +419,7 @@ $code.=<<___;
 	 add	$t0,$hlo,$hlo
 	shd	$ahi,$alo,$Sigma0[0],$t0
 	 addc	$t1,$hhi,$hhi		; h += Sigma1(e)
-	shd	$alo,$ahi,$Sigma0[0],$t1	
+	shd	$alo,$ahi,$Sigma0[0],$t1
 	 add	$a0,$hlo,$hlo
 	shd	$ahi,$alo,$Sigma0[1],$t2
 	 addc	$a1,$hhi,$hhi		; h += Ch(e,f,g)

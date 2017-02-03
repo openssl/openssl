@@ -51,7 +51,11 @@ static int file_free(BIO *data);
 static const BIO_METHOD methods_filep = {
     BIO_TYPE_FILE,
     "FILE pointer",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     file_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     file_read,
     file_puts,
     file_gets,
@@ -73,7 +77,11 @@ BIO *BIO_new_file(const char *filename, const char *mode)
     if (file == NULL) {
         SYSerr(SYS_F_FOPEN, get_last_sys_error());
         ERR_add_error_data(5, "fopen('", filename, "','", mode, "')");
-        if (errno == ENOENT)
+        if (errno == ENOENT
+# ifdef ENXIO
+            || errno == ENXIO
+# endif
+            )
             BIOerr(BIO_F_BIO_NEW_FILE, BIO_R_NO_SUCH_FILE);
         else
             BIOerr(BIO_F_BIO_NEW_FILE, ERR_R_SYS_LIB);
@@ -390,7 +398,11 @@ static int file_free(BIO *a)
 static const BIO_METHOD methods_filep = {
     BIO_TYPE_FILE,
     "FILE pointer",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     file_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     file_read,
     file_puts,
     file_gets,

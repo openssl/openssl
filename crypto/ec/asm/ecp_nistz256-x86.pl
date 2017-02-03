@@ -443,7 +443,7 @@ for(1..37) {
 	&mov	(&DWP(20,"esp"),"eax");
 	&mov	(&DWP(24,"esp"),"eax");
 	&mov	(&DWP(28,"esp"),"eax");
-	
+
 	&call	("_ecp_nistz256_sub");
 
 	&stack_pop(8);

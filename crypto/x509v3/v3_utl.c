@@ -18,8 +18,10 @@
 #include <openssl/bn.h>
 #include "ext_dat.h"
 
+# ifndef OPENSSL_NO_EAI
 #include <idna.h>
 #include <idn-free.h>
+# endif
 
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char *const *a, const char *const *b);
@@ -427,11 +429,11 @@ static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name,
 {
     STACK_OF(OPENSSL_STRING) *ret = NULL;
     X509_NAME_ENTRY *ne;
-    ASN1_IA5STRING *email;
+    const ASN1_IA5STRING *email;
     GENERAL_NAME *gen;
-    int i;
+    int i = -1;
+
     /* Now add any email address(es) to STACK */
-    i = -1;
     /* First supplied X509_NAME */
     while ((i = X509_NAME_get_index_by_NID(name,
                                            NID_pkcs9_emailAddress, i)) >= 0) {
@@ -472,6 +474,7 @@ static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, const ASN1_IA5STRING *email
         return 1;
     emtmp = OPENSSL_strdup((char *)email->data);
     if (emtmp == NULL || !sk_OPENSSL_STRING_push(*sk, emtmp)) {
+        OPENSSL_free(emtmp);    /* free on push failure */
         X509_email_free(*sk);
         *sk = NULL;
         return 0;
@@ -773,6 +776,7 @@ static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
     return rv;
 }
 
+# ifndef OPENSSL_NO_EAI
 static int do_check_smtputf8(const ASN1_STRING *a, 
                            const char *b, size_t blen,
                            char **peername)
@@ -844,13 +848,14 @@ static int do_check_smtputf8(const ASN1_STRING *a,
 		}
 
     /* 
-		 * OK, now we can copy the smtputf8Name
+		 * OK, now we can copy the SmtpUtf8Name
 		 */
     if (peername)
         *peername = OPENSSL_strndup((char *)a->data, a->length);
 
     return (*peername) ? 1 : -1;
 }
+# endif
 
 static int do_x509_check(X509 *x, const char *chk, size_t chklen,
                          unsigned int flags, int check_type, char **peername)
@@ -894,12 +899,13 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
             GENERAL_NAME *gen;
             ASN1_STRING *cstr;
             gen = sk_GENERAL_NAME_value(gens, i);
+# ifndef OPENSSL_NO_EAI
             if ((gen->type != check_type) && (gen->type != GEN_OTHERNAME))
                 continue;
             if (gen->type == GEN_OTHERNAME) {
                 if (check_type == GEN_EMAIL) {
                     if (OBJ_obj2nid(gen->d.otherName->type_id) ==
-                        NID_smtputf8Name) {
+                        NID_SmtpUtf8Name) {
                         san_present = 1;
                         cstr = gen->d.otherName->value->value.utf8string;
 
@@ -912,6 +918,10 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
                 } else
                     continue;
             }
+# else
+            if (gen->type != check_type)
+                 continue;
+# endif
             san_present = 1;
             if (check_type == GEN_EMAIL)
                 cstr = gen->d.rfc822Name;

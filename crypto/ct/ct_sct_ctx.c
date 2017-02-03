@@ -256,3 +256,8 @@ int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey)
     sctx->pkey = pkey;
     return 1;
 }
+
+void SCT_CTX_set_time(SCT_CTX *sctx, uint64_t time_in_ms)
+{
+    sctx->epoch_time_in_ms = time_in_ms;
+}

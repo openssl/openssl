@@ -89,7 +89,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&ja	(&label("generic"));
 	&and	("edx",0xefffffff);	# clear hyper-threading bit
 	&jmp	(&label("generic"));
-	
+
 &set_label("intel");
 	&cmp	("edi",7);
 	&jb	(&label("cacheinfo"));

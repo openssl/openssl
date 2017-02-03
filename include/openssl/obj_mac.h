@@ -4576,7 +4576,15 @@
 #define LN_auth_null            "auth-null"
 #define NID_auth_null           1053
 
-#define SN_smtputf8Name         "smtputf8Name"
-#define LN_smtputf8Name         "smtputf8Name"
-#define NID_smtputf8Name                1061
-#define OBJ_smtputf8Name                1L,2L,643L,2L,9L,7L,123L
+#define SN_poly1305             "Poly1305"
+#define LN_poly1305             "poly1305"
+#define NID_poly1305            1061
+
+#define SN_siphash              "SipHash"
+#define LN_siphash              "siphash"
+#define NID_siphash             1062
+
+#define SN_SmtpUtf8Name         "SmtpUtf8Name"
+#define LN_SmtpUtf8Name         "SmtpUtf8Name"
+#define NID_SmtpUtf8Name                1063
+#define OBJ_SmtpUtf8Name                1L,3L,6L,1L,5L,5L,7L,0L,18L,8L,9L

@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <internal/thread_once.h>
+#include <internal/dso.h>
 
 static int stopped = 0;
 
@@ -67,6 +68,9 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_base: Setting up stop handlers\n");
 #endif
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    ossl_malloc_setup_failures();
+#endif
     /*
      * We use a dummy thread local key here. We use the destructor to detect
      * when the thread is going to stop (where that feature is available)
@@ -78,7 +82,42 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
     if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
         return 0;
     OPENSSL_cpuid_setup();
+
+    /*
+     * BIG FAT WARNING!
+     * Everything needed to be initialized in this function before threads
+     * come along MUST happen before base_inited is set to 1, or we will
+     * see race conditions.
+     */
     base_inited = 1;
+
+#if !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE)
+# ifdef DSO_WIN32
+    {
+        HMODULE handle = NULL;
+        BOOL ret;
+
+        /* We don't use the DSO route for WIN32 because there is a better way */
+        ret = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+                                | GET_MODULE_HANDLE_EX_FLAG_PIN,
+                                (void *)&base_inited, &handle);
+
+        return (ret == TRUE) ? 1 : 0;
+    }
+# else
+    /*
+     * Deliberately leak a reference to ourselves. This will force the library
+     * to remain loaded until the atexit() handler is run a process exit.
+     */
+    {
+        DSO *dso = NULL;
+
+        dso = DSO_dsobyaddr(&base_inited, DSO_FLAG_NO_UNLOAD_ON_FREE);
+        DSO_free(dso);
+    }
+# endif
+#endif
+
     return 1;
 }
 
@@ -103,8 +142,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_strings)
                     "err_load_crypto_strings_int()\n");
 # endif
     ret = err_load_crypto_strings_int();
-#endif
     load_crypto_strings_inited = 1;
+#endif    
     return ret;
 }
 
@@ -198,7 +237,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_engine_openssl)
     return 1;
 }
 # if !defined(OPENSSL_NO_HW) && \
-    (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV))
+    (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(HAVE_CRYPTODEV))
 static CRYPTO_ONCE engine_cryptodev = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(ossl_init_engine_cryptodev)
 {
@@ -474,7 +513,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
     }
 
-    if (!RUN_ONCE(&base, ossl_init_base))
+    if (!base_inited && !RUN_ONCE(&base, ossl_init_base))
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS)
@@ -525,7 +564,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
             && !RUN_ONCE(&engine_openssl, ossl_init_engine_openssl))
         return 0;
 # if !defined(OPENSSL_NO_HW) && \
-    (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV))
+    (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(HAVE_CRYPTODEV))
     if ((opts & OPENSSL_INIT_ENGINE_CRYPTODEV)
             && !RUN_ONCE(&engine_cryptodev, ossl_init_engine_cryptodev))
         return 0;
@@ -574,6 +613,47 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 int OPENSSL_atexit(void (*handler)(void))
 {
     OPENSSL_INIT_STOP *newhand;
+
+#if !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE)
+    {
+        union {
+            void *sym;
+            void (*func)(void);
+        } handlersym;
+
+        handlersym.func = handler;
+# ifdef DSO_WIN32
+        {
+            HMODULE handle = NULL;
+            BOOL ret;
+
+            /*
+             * We don't use the DSO route for WIN32 because there is a better
+             * way
+             */
+            ret = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+                                    | GET_MODULE_HANDLE_EX_FLAG_PIN,
+                                    handlersym.sym, &handle);
+
+            if (!ret)
+                return 0;
+        }
+# else
+        /*
+         * Deliberately leak a reference to the handler. This will force the
+         * library/code containing the handler to remain loaded until we run the
+         * atexit handler. If -znodelete has been used then this is
+         * unneccessary.
+         */
+        {
+            DSO *dso = NULL;
+
+            dso = DSO_dsobyaddr(handlersym.sym, DSO_FLAG_NO_UNLOAD_ON_FREE);
+            DSO_free(dso);
+        }
+# endif
+    }
+#endif
 
     newhand = OPENSSL_malloc(sizeof(*newhand));
     if (newhand == NULL)

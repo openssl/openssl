@@ -74,17 +74,16 @@ int custom_ext_parse(SSL *s, int server,
  * Request custom extension data from the application and add to the return
  * buffer.
  */
-int custom_ext_add(SSL *s, int server,
-                   unsigned char **pret, unsigned char *limit, int *al)
+int custom_ext_add(SSL *s, int server, WPACKET *pkt, int *al)
 {
     custom_ext_methods *exts = server ? &s->cert->srv_ext : &s->cert->cli_ext;
     custom_ext_method *meth;
-    unsigned char *ret = *pret;
     size_t i;
 
     for (i = 0; i < exts->meths_count; i++) {
         const unsigned char *out = NULL;
         size_t outlen = 0;
+
         meth = exts->meths + i;
 
         if (server) {
@@ -106,13 +105,13 @@ int custom_ext_add(SSL *s, int server,
             if (cb_retval == 0)
                 continue;       /* skip this extension */
         }
-        if (4 > limit - ret || outlen > (size_t)(limit - ret - 4))
+
+        if (!WPACKET_put_bytes_u16(pkt, meth->ext_type)
+                || !WPACKET_start_sub_packet_u16(pkt)
+                || (outlen > 0 && !WPACKET_memcpy(pkt, out, outlen))
+                || !WPACKET_close(pkt)) {
+            *al = SSL_AD_INTERNAL_ERROR;
             return 0;
-        s2n(meth->ext_type, ret);
-        s2n(outlen, ret);
-        if (outlen) {
-            memcpy(ret, out, outlen);
-            ret += outlen;
         }
         /*
          * We can't send duplicates: code logic should prevent this.
@@ -127,7 +126,6 @@ int custom_ext_add(SSL *s, int server,
         if (meth->free_cb)
             meth->free_cb(s, meth->ext_type, out, meth->add_arg);
     }
-    *pret = ret;
     return 1;
 }
 
@@ -244,8 +242,7 @@ int SSL_extension_supported(unsigned int ext_type)
         /* Internally supported extensions. */
     case TLSEXT_TYPE_application_layer_protocol_negotiation:
     case TLSEXT_TYPE_ec_point_formats:
-    case TLSEXT_TYPE_elliptic_curves:
-    case TLSEXT_TYPE_heartbeat:
+    case TLSEXT_TYPE_supported_groups:
 #ifndef OPENSSL_NO_NEXTPROTONEG
     case TLSEXT_TYPE_next_proto_neg:
 #endif
@@ -261,6 +258,9 @@ int SSL_extension_supported(unsigned int ext_type)
 #ifdef TLSEXT_TYPE_encrypt_then_mac
     case TLSEXT_TYPE_encrypt_then_mac:
 #endif
+    case TLSEXT_TYPE_key_share:
+    case TLSEXT_TYPE_supported_versions:
+    case TLSEXT_TYPE_extended_master_secret:
         return 1;
     default:
         return 0;

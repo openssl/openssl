@@ -132,7 +132,7 @@ ___
 	grep {s/(^extern\s+${nmdecor}OPENSSL_ia32cap_P)/\;$1/} @out;
 	push (@out,$comm)
     }
-    push (@out,$initseg) if ($initseg);		
+    push (@out,$initseg) if ($initseg);
 }
 
 sub ::comment {   foreach (@_) { push(@out,"\t; $_\n"); }   }

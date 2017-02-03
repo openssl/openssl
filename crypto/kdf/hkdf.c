@@ -34,6 +34,7 @@ static unsigned char *HKDF_Expand(const EVP_MD *evp_md,
                                   unsigned char *okm, size_t okm_len);
 
 typedef struct {
+    int mode;
     const EVP_MD *md;
     unsigned char *salt;
     size_t salt_len;
@@ -75,6 +76,10 @@ static int pkey_hkdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             return 0;
 
         kctx->md = p2;
+        return 1;
+
+    case EVP_PKEY_CTRL_HKDF_MODE:
+        kctx->mode = p1;
         return 1;
 
     case EVP_PKEY_CTRL_HKDF_SALT:
@@ -128,6 +133,21 @@ static int pkey_hkdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 static int pkey_hkdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
                               const char *value)
 {
+    if (strcmp(type, "mode") == 0) {
+        int mode;
+
+        if (strcmp(value, "EXTRACT_AND_EXPAND") == 0)
+            mode = EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND;
+        else if (strcmp(value, "EXTRACT_ONLY") == 0)
+            mode = EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY;
+        else if (strcmp(value, "EXPAND_ONLY") == 0)
+            mode = EVP_PKEY_HKDEF_MODE_EXPAND_ONLY;
+        else
+            return 0;
+
+        return EVP_PKEY_CTX_hkdf_mode(ctx, mode);
+    }
+
     if (strcmp(type, "md") == 0)
         return EVP_PKEY_CTX_set_hkdf_md(ctx, EVP_get_digestbyname(value));
 
@@ -160,13 +180,27 @@ static int pkey_hkdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
     if (kctx->md == NULL || kctx->key == NULL)
         return 0;
 
-    if (HKDF(kctx->md, kctx->salt, kctx->salt_len, kctx->key, kctx->key_len,
-             kctx->info, kctx->info_len, key, *keylen) == NULL)
-    {
+    switch (kctx->mode) {
+    case EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND:
+        return HKDF(kctx->md, kctx->salt, kctx->salt_len, kctx->key,
+                    kctx->key_len, kctx->info, kctx->info_len, key,
+                    *keylen) != NULL;
+
+    case EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY:
+        if (key == NULL) {
+            *keylen = EVP_MD_size(kctx->md);
+            return 1;
+        }
+        return HKDF_Extract(kctx->md, kctx->salt, kctx->salt_len, kctx->key,
+                            kctx->key_len, key, keylen) != NULL;
+
+    case EVP_PKEY_HKDEF_MODE_EXPAND_ONLY:
+        return HKDF_Expand(kctx->md, kctx->key, kctx->key_len, kctx->info,
+                           kctx->info_len, key, *keylen) != NULL;
+
+    default:
         return 0;
     }
-
-    return 1;
 }
 
 const EVP_PKEY_METHOD hkdf_pkey_meth = {
@@ -206,12 +240,16 @@ static unsigned char *HKDF(const EVP_MD *evp_md,
                            unsigned char *okm, size_t okm_len)
 {
     unsigned char prk[EVP_MAX_MD_SIZE];
+    unsigned char *ret;
     size_t prk_len;
 
     if (!HKDF_Extract(evp_md, salt, salt_len, key, key_len, prk, &prk_len))
         return NULL;
 
-    return HKDF_Expand(evp_md, prk, prk_len, info, info_len, okm, okm_len);
+    ret = HKDF_Expand(evp_md, prk, prk_len, info, info_len, okm, okm_len);
+    OPENSSL_cleanse(prk, sizeof(prk));
+
+    return ret;
 }
 
 static unsigned char *HKDF_Extract(const EVP_MD *evp_md,
@@ -245,7 +283,7 @@ static unsigned char *HKDF_Expand(const EVP_MD *evp_md,
     if (okm_len % dig_len)
         n++;
 
-    if (n > 255)
+    if (n > 255 || okm == NULL)
         return NULL;
 
     if ((hmac = HMAC_CTX_new()) == NULL)

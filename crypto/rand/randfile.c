@@ -208,8 +208,8 @@ int RAND_write_file(const char *file)
              */
             return 1;
         }
-# endif
     }
+# endif
 #endif
 
 #if defined(O_CREAT) && !defined(OPENSSL_NO_POSIX_IO) && \
@@ -316,12 +316,14 @@ const char *RAND_file_name(char *buf, size_t size)
         }
     }
 #else
-    if (OPENSSL_issetugid() == 0) {
-        s = getenv("RANDFILE");
-    } else {
+    if (OPENSSL_issetugid() != 0) {
         use_randfile = 0;
-        if (OPENSSL_issetugid() == 0)
+    } else {
+        s = getenv("RANDFILE");
+        if (s == NULL || *s == '\0') {
+            use_randfile = 0;
             s = getenv("HOME");
+        }
     }
 #endif
 #ifdef DEFAULT_HOME
@@ -355,14 +357,10 @@ const char *RAND_file_name(char *buf, size_t size)
      * available.
      */
 
-    if (!buf[0])
-        if (OPENSSL_strlcpy(buf, "/dev/arandom", size) >= size) {
-            return NULL;
-        }
-    if (stat(buf, &sb) == -1)
+    if (!buf[0] || stat(buf, &sb) == -1)
         if (OPENSSL_strlcpy(buf, "/dev/arandom", size) >= size) {
             return NULL;
         }
 #endif
-    return buf;
+    return buf[0] ? buf : NULL;
 }

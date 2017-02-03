@@ -43,10 +43,9 @@ extern "C" {
 # define DSO_FLAG_NAME_TRANSLATION_EXT_ONLY      0x02
 
 /*
- * The following flag controls the translation of symbol names to upper case.
- * This is currently only being implemented for OpenVMS.
+ * Don't unload the DSO when we call DSO_free()
  */
-# define DSO_FLAG_UPCASE_SYMBOL                  0x10
+# define DSO_FLAG_NO_UNLOAD_ON_FREE              0x04
 
 /*
  * This flag loads the library with public symbols. Meaning: The exported
@@ -137,6 +136,23 @@ DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname);
 DSO_METHOD *DSO_METHOD_openssl(void);
 
 /*
+ * This function writes null-terminated pathname of DSO module containing
+ * 'addr' into 'sz' large caller-provided 'path' and returns the number of
+ * characters [including trailing zero] written to it. If 'sz' is 0 or
+ * negative, 'path' is ignored and required amount of charachers [including
+ * trailing zero] to accommodate pathname is returned. If 'addr' is NULL, then
+ * pathname of cryptolib itself is returned. Negative or zero return value
+ * denotes error.
+ */
+int DSO_pathbyaddr(void *addr, char *path, int sz);
+
+/*
+ * Like DSO_pathbyaddr() but instead returns a handle to the DSO for the symbol
+ * or NULL on error.
+ */
+DSO *DSO_dsobyaddr(void *addr, int flags);
+
+/*
  * This function should be used with caution! It looks up symbols in *all*
  * loaded modules and if module gets unloaded by somebody else attempt to
  * dereference the pointer is doomed to have fatal consequences. Primary
@@ -177,6 +193,7 @@ int ERR_load_DSO_strings(void);
 # define DSO_F_DSO_LOAD                                   112
 # define DSO_F_DSO_MERGE                                  132
 # define DSO_F_DSO_NEW_METHOD                             113
+# define DSO_F_DSO_PATHBYADDR                             105
 # define DSO_F_DSO_SET_FILENAME                           129
 # define DSO_F_DSO_UP_REF                                 114
 # define DSO_F_VMS_BIND_SYM                               115
@@ -189,6 +206,7 @@ int ERR_load_DSO_strings(void);
 # define DSO_F_WIN32_LOAD                                 120
 # define DSO_F_WIN32_MERGER                               134
 # define DSO_F_WIN32_NAME_CONVERTER                       125
+# define DSO_F_WIN32_PATHBYADDR                           109
 # define DSO_F_WIN32_SPLITTER                             136
 # define DSO_F_WIN32_UNLOAD                               121
 

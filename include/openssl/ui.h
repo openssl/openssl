@@ -18,6 +18,7 @@
 #   include <openssl/crypto.h>
 #  endif
 #  include <openssl/safestack.h>
+#  include <openssl/pem.h>
 #  include <openssl/ossl_typ.h>
 
 #ifdef  __cplusplus
@@ -284,14 +285,15 @@ int UI_method_set_prompt_constructor(UI_METHOD *method,
                                                                   *object_desc,
                                                                   const char
                                                                   *object_name));
-int (*UI_method_get_opener(UI_METHOD *method)) (UI *);
-int (*UI_method_get_writer(UI_METHOD *method)) (UI *, UI_STRING *);
-int (*UI_method_get_flusher(UI_METHOD *method)) (UI *);
-int (*UI_method_get_reader(UI_METHOD *method)) (UI *, UI_STRING *);
-int (*UI_method_get_closer(UI_METHOD *method)) (UI *);
-char *(*UI_method_get_prompt_constructor(UI_METHOD *method)) (UI *,
-                                                              const char *,
-                                                              const char *);
+int UI_method_set_ex_data(UI_METHOD *method, int idx, void *data);
+int (*UI_method_get_opener(const UI_METHOD *method)) (UI *);
+int (*UI_method_get_writer(const UI_METHOD *method)) (UI *, UI_STRING *);
+int (*UI_method_get_flusher(const UI_METHOD *method)) (UI *);
+int (*UI_method_get_reader(const UI_METHOD *method)) (UI *, UI_STRING *);
+int (*UI_method_get_closer(const UI_METHOD *method)) (UI *);
+char *(*UI_method_get_prompt_constructor(const UI_METHOD *method))
+    (UI *, const char *, const char *);
+const void *UI_method_get_ex_data(const UI_METHOD *method, int idx);
 
 /*
  * The following functions are helpers for method writers to access relevant
@@ -327,6 +329,7 @@ int UI_UTIL_read_pw_string(char *buf, int length, const char *prompt,
                            int verify);
 int UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt,
                     int verify);
+    UI_METHOD *UI_UTIL_wrap_read_pem_callback(pem_password_cb *cb, int rwflag);
 
 /* BEGIN ERROR CODES */
 /*
@@ -339,8 +342,12 @@ int ERR_load_UI_strings(void);
 /* Error codes for the UI functions. */
 
 /* Function codes. */
+# define UI_F_CLOSE_CONSOLE                               115
+# define UI_F_ECHO_CONSOLE                                116
 # define UI_F_GENERAL_ALLOCATE_BOOLEAN                    108
 # define UI_F_GENERAL_ALLOCATE_PROMPT                     109
+# define UI_F_NOECHO_CONSOLE                              117
+# define UI_F_OPEN_CONSOLE                                114
 # define UI_F_UI_CREATE_METHOD                            112
 # define UI_F_UI_CTRL                                     111
 # define UI_F_UI_DUP_ERROR_STRING                         101
@@ -350,6 +357,7 @@ int ERR_load_UI_strings(void);
 # define UI_F_UI_DUP_VERIFY_STRING                        106
 # define UI_F_UI_GET0_RESULT                              107
 # define UI_F_UI_NEW_METHOD                               104
+# define UI_F_UI_PROCESS                                  113
 # define UI_F_UI_SET_RESULT                               105
 
 /* Reason codes. */
@@ -357,9 +365,14 @@ int ERR_load_UI_strings(void);
 # define UI_R_INDEX_TOO_LARGE                             102
 # define UI_R_INDEX_TOO_SMALL                             103
 # define UI_R_NO_RESULT_BUFFER                            105
+# define UI_R_PROCESSING_ERROR                            107
 # define UI_R_RESULT_TOO_LARGE                            100
 # define UI_R_RESULT_TOO_SMALL                            101
+# define UI_R_SYSASSIGN_ERROR                             109
+# define UI_R_SYSDASSGN_ERROR                             110
+# define UI_R_SYSQIOW_ERROR                               111
 # define UI_R_UNKNOWN_CONTROL_COMMAND                     106
+# define UI_R_UNKNOWN_TTYGET_ERRNO_VALUE                  108
 
 #  ifdef  __cplusplus
 }

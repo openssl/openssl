@@ -16,6 +16,8 @@
 
 # *all* Makefiles
 Makefile
+# ... except in demos
+!/demos/*/Makefile
 
 # Links under apps
 /apps/CA.pl
@@ -48,6 +50,7 @@ Makefile
 /test/ssltest_old
 /test/x509aux
 /test/v3ext
+/test/ossl_shim/ossl_shim
 
 # Certain files that get created by tests on the fly
 /test/*.ss
@@ -72,6 +75,7 @@ Makefile
 /include/openssl/opensslconf.h
 /tools/c_rehash
 /tools/c_rehash.pl
+/util/shlib_wrap.sh
 /tags
 /TAGS
 /crypto.map
@@ -173,3 +177,4 @@ pod2htmd.tmp
 
 # Windows manifest files
 *.manifest
+doc-nits

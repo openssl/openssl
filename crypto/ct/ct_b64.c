@@ -45,6 +45,11 @@ static int ct_base64_decode(const char *in, unsigned char **out)
         goto err;
     }
 
+    /* Subtract padding bytes from |outlen| */
+    while (in[--inlen] == '=') {
+        --outlen;
+    }
+
     *out = outbuf;
     return outlen;
 err:
@@ -59,6 +64,7 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
 {
     SCT *sct = SCT_new();
     unsigned char *dec = NULL;
+    const unsigned char* p = NULL;
     int declen;
 
     if (sct == NULL) {
@@ -97,7 +103,9 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
         CTerr(CT_F_SCT_NEW_FROM_BASE64, X509_R_BASE64_DECODE_ERROR);
         goto err;
     }
-    if (o2i_SCT_signature(sct, (const unsigned char **)&dec, declen) <= 0)
+
+    p = dec;
+    if (o2i_SCT_signature(sct, &p, declen) <= 0)
         goto err;
     OPENSSL_free(dec);
     dec = NULL;

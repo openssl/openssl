@@ -26,7 +26,7 @@
 
 static int done = 0;
 
-void interrupt()
+void interrupt(int sig)
 {
     done = 1;
 }
@@ -57,11 +57,6 @@ int main(int argc, char *argv[])
         port = "*:4433";
     else
         port = argv[1];
-
-    SSL_load_error_strings();
-
-    /* Add ciphers and message digests */
-    OpenSSL_add_ssl_algorithms();
 
     ctx = SSL_CTX_new(TLS_server_method());
     if (!SSL_CTX_use_certificate_chain_file(ctx, CERT_FILE))

@@ -50,7 +50,9 @@ static DSO_METHOD dso_meth_vms = {
     vms_name_converter,
     vms_merger,
     NULL,                       /* init */
-    NULL                        /* finish */
+    NULL,                       /* finish */
+    NULL,                       /* pathbyaddr */
+    NULL                        /* globallookup */
 };
 
 /*
@@ -261,15 +263,13 @@ static int do_find_symbol(DSO_VMS_INTERNAL *ptr,
                                      symname_dsc, sym, 0, flags);
 }
 
+# ifndef LIB$M_FIS_MIXEDCASE
+#  define LIB$M_FIS_MIXEDCASE (1 << 4);
+# endif
 void vms_bind_sym(DSO *dso, const char *symname, void **sym)
 {
     DSO_VMS_INTERNAL *ptr;
-    int status;
-# ifdef LIB$M_FIS_MIXEDCASE
-    int flags = LIB$M_FIS_MIXEDCASE;
-# else
-    int flags = (1 << 4);
-# endif
+    int status = 0;
     struct dsc$descriptor_s symname_dsc;
 
 /* Arrange 32-bit pointer to (copied) string storage, if needed. */
@@ -312,10 +312,10 @@ void vms_bind_sym(DSO *dso, const char *symname, void **sym)
         return;
     }
 
-    if (dso->flags & DSO_FLAG_UPCASE_SYMBOL)
-        flags = 0;
+    status = do_find_symbol(ptr, &symname_dsc, sym, LIB$M_FIS_MIXEDCASE);
 
-    status = do_find_symbol(ptr, &symname_dsc, sym, flags);
+    if (!$VMS_STATUS_SUCCESS(status))
+        status = do_find_symbol(ptr, &symname_dsc, sym, 0);
 
     if (!$VMS_STATUS_SUCCESS(status)) {
         unsigned short length;

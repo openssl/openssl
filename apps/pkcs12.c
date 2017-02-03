@@ -56,7 +56,7 @@ typedef enum OPTION_choice {
     OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_ENGINE
 } OPTION_CHOICE;
 
-OPTIONS pkcs12_options[] = {
+const OPTIONS pkcs12_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"nokeys", OPT_NOKEYS, '-', "Don't output private keys"},
     {"keyex", OPT_KEYEX, '-', "Set MS key exchange type"},
@@ -574,6 +574,7 @@ int pkcs12_main(int argc, char **argv)
     PKCS12_free(p12);
     if (export_cert || inrand)
         app_RAND_write_file(NULL);
+    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     sk_OPENSSL_STRING_free(canames);

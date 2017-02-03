@@ -1,5 +1,7 @@
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
+        poly1305_pmeth.c \
+        poly1305_ameth.c \
         poly1305.c {- $target{poly1305_asm_src} -}
 
 GENERATE[poly1305-sparcv9.S]=asm/poly1305-sparcv9.pl $(PERLASM_SCHEME)
@@ -13,6 +15,7 @@ INCLUDE[poly1305-armv4.o]=..
 GENERATE[poly1305-armv8.S]=asm/poly1305-armv8.pl $(PERLASM_SCHEME)
 INCLUDE[poly1305-armv8.o]=..
 GENERATE[poly1305-mips.S]=asm/poly1305-mips.pl $(PERLASM_SCHEME)
+INCLUDE[poly1305-mips.o]=..
 
 BEGINRAW[Makefile(unix)]
 {- $builddir -}/poly1305-%.S:	{- $sourcedir -}/asm/poly1305-%.pl

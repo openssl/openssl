@@ -129,13 +129,17 @@ typedef struct GENERAL_NAME_st {
 # define GEN_URI         6
 # define GEN_IPADD       7
 # define GEN_RID         8
-# define GEN_EMAILUTF8  -1
+# ifndef OPENSSL_NO_EAI
+# define GEN_EMAILUTF8   9
+# endif				
     int type;
     union {
         char *ptr;
         OTHERNAME *otherName;   /* otherName */
         ASN1_IA5STRING *rfc822Name;
-        ASN1_UTF8STRING *smtputf8Name;
+# ifndef OPENSSL_NO_EAI
+        ASN1_UTF8STRING *SmtpUtf8Name;
+# endif				
         ASN1_IA5STRING *dNSName;
         ASN1_TYPE *x400Address;
         X509_NAME *directoryName;
@@ -357,6 +361,7 @@ struct ISSUING_DIST_POINT_st {
 # define EXFLAG_SI               0x20
 # define EXFLAG_V1               0x40
 # define EXFLAG_INVALID          0x80
+/* EXFLAG_SET is set to indicate that some values have been precomputed */
 # define EXFLAG_SET              0x100
 # define EXFLAG_CRITICAL         0x200
 # define EXFLAG_PROXY            0x400

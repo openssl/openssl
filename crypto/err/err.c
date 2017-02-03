@@ -52,6 +52,7 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_TS, 0, 0), "time stamp routines"},
     {ERR_PACK(ERR_LIB_ENGINE, 0, 0), "engine routines"},
     {ERR_PACK(ERR_LIB_OCSP, 0, 0), "OCSP routines"},
+    {ERR_PACK(ERR_LIB_UI, 0, 0), "UI routines"},
     {ERR_PACK(ERR_LIB_FIPS, 0, 0), "FIPS routines"},
     {ERR_PACK(ERR_LIB_CMS, 0, 0), "CMS routines"},
     {ERR_PACK(ERR_LIB_HMAC, 0, 0), "HMAC routines"},
@@ -251,6 +252,7 @@ static void ERR_STATE_free(ERR_STATE *s)
 
 DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
+    OPENSSL_init_crypto(0, NULL);
     err_string_lock = CRYPTO_THREAD_lock_new();
     return err_string_lock != NULL;
 }
@@ -498,6 +500,9 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
     char lsbuf[64], fsbuf[64], rsbuf[64];
     const char *ls, *fs, *rs;
     unsigned long l, f, r;
+
+    if (len == 0)
+        return;
 
     l = ERR_GET_LIB(e);
     f = ERR_GET_FUNC(e);

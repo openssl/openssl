@@ -35,38 +35,24 @@ static sigset_t all_masked;
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                 const BN_ULONG *np, const BN_ULONG *n0, int num)
 {
-    int bn_mul_mont_fpu64(BN_ULONG *rp, const BN_ULONG *ap,
-                          const BN_ULONG *bp, const BN_ULONG *np,
-                          const BN_ULONG *n0, int num);
     int bn_mul_mont_int(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                         const BN_ULONG *np, const BN_ULONG *n0, int num);
+    int bn_mul4x_mont_int(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
+                          const BN_ULONG *np, const BN_ULONG *n0, int num);
 
-    if (sizeof(size_t) == 4) {
-# if 1 || (defined(__APPLE__) && defined(__MACH__))
-        if (num >= 8 && (num & 3) == 0 && (OPENSSL_ppccap_P & PPC_FPU64))
-            return bn_mul_mont_fpu64(rp, ap, bp, np, n0, num);
-# else
-        /*
-         * boundary of 32 was experimentally determined on Linux 2.6.22,
-         * might have to be adjusted on AIX...
-         */
-        if (num >= 32 && (num & 3) == 0 && (OPENSSL_ppccap_P & PPC_FPU64)) {
-            sigset_t oset;
-            int ret;
+    if (num < 4)
+        return 0;
 
-            sigprocmask(SIG_SETMASK, &all_masked, &oset);
-            ret = bn_mul_mont_fpu64(rp, ap, bp, np, n0, num);
-            sigprocmask(SIG_SETMASK, &oset, NULL);
+    if ((num & 3) == 0)
+        return bn_mul4x_mont_int(rp, ap, bp, np, n0, num);
 
-            return ret;
-        }
-# endif
-    } else if ((OPENSSL_ppccap_P & PPC_FPU64))
-        /*
-         * this is a "must" on POWER6, but run-time detection is not
-         * implemented yet...
-         */
-        return bn_mul_mont_fpu64(rp, ap, bp, np, n0, num);
+    /*
+     * There used to be [optional] call to bn_mul_mont_fpu64 here,
+     * but above subroutine is faster on contemporary processors.
+     * Formulation means that there might be old processors where
+     * FPU code path would be faster, POWER6 perhaps, but there was
+     * no opportunity to figure it out...
+     */
 
     return bn_mul_mont_int(rp, ap, bp, np, n0, num);
 }
@@ -128,6 +114,30 @@ int poly1305_init(void *ctx, const unsigned char key[16], void *func[2])
         func[1] = poly1305_emit;
     }
     return 1;
+}
+#endif
+
+#ifdef ECP_NISTZ256_ASM
+void ecp_nistz256_mul_mont(unsigned long res[4], const unsigned long a[4],
+                           const unsigned long b[4]);
+
+void ecp_nistz256_to_mont(unsigned long res[4], const unsigned long in[4]);
+void ecp_nistz256_to_mont(unsigned long res[4], const unsigned long in[4])
+{
+    static const unsigned long RR[] = { 0x0000000000000003U,
+                                        0xfffffffbffffffffU,
+                                        0xfffffffffffffffeU,
+                                        0x00000004fffffffdU };
+
+    ecp_nistz256_mul_mont(res, in, RR);
+}
+
+void ecp_nistz256_from_mont(unsigned long res[4], const unsigned long in[4]);
+void ecp_nistz256_from_mont(unsigned long res[4], const unsigned long in[4])
+{
+    static const unsigned long one[] = { 1, 0, 0, 0 };
+
+    ecp_nistz256_mul_mont(res, in, one);
 }
 #endif
 

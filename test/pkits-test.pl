@@ -6,7 +6,7 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Perl utility to run PKITS tests for RFC3280 compliance. 
+# Perl utility to run PKITS tests for RFC3280 compliance.
 
 my $ossl_path;
 

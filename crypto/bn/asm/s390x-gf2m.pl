@@ -198,7 +198,7 @@ $code.=<<___;
 	xgr	$hi,@r[1]
 	xgr	$lo,@r[0]
 	xgr	$hi,@r[2]
-	xgr	$lo,@r[3]	
+	xgr	$lo,@r[3]
 	xgr	$hi,@r[3]
 	xgr	$lo,$hi
 	stg	$hi,16($rp)

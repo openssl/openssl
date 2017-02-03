@@ -399,10 +399,11 @@ typedef enum OPTION_choice {
     OPT_COMPAT, OPT_OLD, OPT_N, OPT_VERBOSE
 } OPTION_CHOICE;
 
-OPTIONS rehash_options[] = {
+const OPTIONS rehash_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [cert-directory...]\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"h", OPT_HELP, '-', "Display this summary"},
     {"compat", OPT_COMPAT, '-', "Create both new- and old-style hash links"},
     {"old", OPT_OLD, '-', "Use old-style hash to generate links"},
     {"n", OPT_N, '-', "Do not remove existing links"},
@@ -466,7 +467,7 @@ int rehash_main(int argc, char **argv)
 }
 
 #else
-OPTIONS rehash_options[] = {
+const OPTIONS rehash_options[] = {
     {NULL}
 };
 

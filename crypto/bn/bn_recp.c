@@ -12,10 +12,9 @@
 
 void BN_RECP_CTX_init(BN_RECP_CTX *recp)
 {
+    memset(recp, 0, sizeof(*recp));
     bn_init(&(recp->N));
     bn_init(&(recp->Nr));
-    recp->num_bits = 0;
-    recp->flags = 0;
 }
 
 BN_RECP_CTX *BN_RECP_CTX_new(void)
@@ -25,7 +24,8 @@ BN_RECP_CTX *BN_RECP_CTX_new(void)
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         return (NULL);
 
-    BN_RECP_CTX_init(ret);
+    bn_init(&(ret->N));
+    bn_init(&(ret->Nr));
     ret->flags = BN_FLG_MALLOCED;
     return (ret);
 }

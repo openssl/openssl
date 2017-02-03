@@ -20,7 +20,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP
 } OPTION_CHOICE;
 
-OPTIONS errstr_options[] = {
+const OPTIONS errstr_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] errnum...\n"},
     {OPT_HELP_STR, 1, '-', "  errnum  Error number\n"},
     {"help", OPT_HELP, '-', "Display this summary"},

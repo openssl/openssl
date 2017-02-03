@@ -39,7 +39,7 @@ typedef enum OPTION_choice {
     OPT_RAND, OPT_DSAPARAM, OPT_C, OPT_2, OPT_5
 } OPTION_CHOICE;
 
-OPTIONS dhparam_options[] = {
+const OPTIONS dhparam_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [flags] [numbits]\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -70,6 +70,7 @@ int dhparam_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     DH *dh = NULL;
     char *infile = NULL, *outfile = NULL, *prog, *inrand = NULL;
+    ENGINE *e = NULL;
 #ifndef OPENSSL_NO_DSA
     int dsaparam = 0;
 #endif
@@ -104,7 +105,7 @@ int dhparam_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_CHECK:
             check = 1;
@@ -356,6 +357,7 @@ int dhparam_main(int argc, char **argv)
     BIO_free(in);
     BIO_free_all(out);
     DH_free(dh);
+    release_engine(e);
     return (ret);
 }
 

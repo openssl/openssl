@@ -22,7 +22,11 @@ static int null_free(BIO *data);
 static const BIO_METHOD null_method = {
     BIO_TYPE_NULL,
     "NULL",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     null_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     null_read,
     null_puts,
     null_gets,

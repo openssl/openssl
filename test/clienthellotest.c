@@ -32,7 +32,7 @@
 int main(int argc, char *argv[])
 {
     SSL_CTX *ctx;
-    SSL *con;
+    SSL *con = NULL;
     BIO *rbio;
     BIO *wbio;
     BIO *err;
@@ -56,10 +56,23 @@ int main(int argc, char *argv[])
     for (; currtest < TOTAL_NUM_TESTS; currtest++) {
         testresult = 0;
         ctx = SSL_CTX_new(TLS_method());
+
+        /* Testing for session tickets <= TLS1.2; not relevant for 1.3 */
+        if (ctx == NULL || !SSL_CTX_set_max_proto_version(ctx, TLS1_2_VERSION))
+            goto end;
+
         con = SSL_new(ctx);
+        if (con == NULL)
+            goto end;
 
         rbio = BIO_new(BIO_s_mem());
         wbio = BIO_new(BIO_s_mem());
+        if (rbio == NULL || wbio == NULL) {
+            BIO_free(rbio);
+            BIO_free(wbio);
+            goto end;
+        }
+
         SSL_set_bio(con, rbio, wbio);
         SSL_set_connect_state(con);
 

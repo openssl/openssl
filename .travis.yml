@@ -2,7 +2,9 @@ language: c
 cache: ccache
 
 before_install:
-    - pip install --user cpp-coveralls
+    - if [ -n "$COVERALLS" ]; then
+          pip install --user cpp-coveralls;
+      fi;
 
 addons:
     apt:
@@ -10,9 +12,10 @@ addons:
             - ccache
             - clang-3.6
             - gcc-5
+            - g++-5
+            - golang
             - binutils-mingw-w64
             - gcc-mingw-w64
-            - wine
         sources:
             - llvm-toolchain-precise-3.6
             - ubuntu-toolchain-r-test
@@ -28,45 +31,42 @@ compiler:
 env:
     - CONFIG_OPTS="" DESTDIR="_install"
     - CONFIG_OPTS="--debug no-shared enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes"
+    - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes"
     - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
     - CONFIG_OPTS="no-stdio --strict-warnings" BUILDONLY="yes"
 
 matrix:
     include:
         - os: linux
-          compiler: gcc
-          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers" COVERALLS="yes"
+          compiler: clang-3.6
+          env: CONFIG_OPTS="--strict-warnings no-deprecated" BUILDONLY="yes"
+        - os: linux
+          compiler: gcc-5
+          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers enable-external-tests no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-shared enable-asan"
+          env: CONFIG_OPTS="enable-msan"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-shared enable-msan"
+          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
           compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method -fno-sanitize=alignment"
-        - os: linux
-          compiler: clang-3.6
-          env: CONFIG_OPTS="no-shared no-asm enable-asan enable-rc5 enable-md2"
-        - os: linux
-          compiler: clang-3.6
-          env: CONFIG_OPTS="no-stdio"
+          env: CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
           compiler: gcc-5
           env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC"
         - os: linux
+          compiler: gcc-5
+          env: CONFIG_OPTS="--strict-warnings enable-tls1_3" COMMENT="Move to the BORINGTEST build when interoperable"
+        - os: linux
+          compiler: i686-w64-mingw32-gcc
+          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
+        - os: linux
           compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="no-pic"
         - os: linux
-          compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-stdio"
-        - os: linux
           compiler: x86_64-w64-mingw32-gcc
           env: CONFIG_OPTS="no-pic"
-        - os: linux
-          compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-stdio"
     exclude:
         - os: linux
           compiler: clang
@@ -105,34 +105,35 @@ script:
       else
           make="make";
       fi
+    - top=${PWD}
     - if [ -n "$DESTDIR" ]; then
           cd _build;
-          top=..;
-      else
-          top=.;
       fi
     - $make update
+    - if [ -n "$CHECKDOCS" ]; then
+          $make doc-nits;
+      fi
     - $make
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
+              sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install wine;
               export EXE_SHELL="wine" WINEPREFIX=`pwd`;
           fi;
-          HARNESS_VERBOSE=yes make test;
+          HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test;
       else
           $make build_tests;
       fi
     - if [ -n "$DESTDIR" ]; then
-          mkdir "../$DESTDIR";
-          $make install install_docs DESTDIR="../$DESTDIR";
+          mkdir "$top/$DESTDIR";
+          $make install install_docs DESTDIR="$top/$DESTDIR";
       fi
     - cd $top
 
 after_success:
     - if [ -n "$COVERALLS" ]; then
-          coveralls -b . --gcov-options '\-lp';
+          coveralls -b . --gcov gcov-5 --gcov-options '\-lp';
       fi;
 
 notifications:
     email:
-        - openssl-commits@openssl.org
-
+        secure: "xeGNgWO7aoaDgRvcZubposqMsj36aU8c6F0oHfw+rUqltCQ14IgYCUwzocmR2O+Pa7B3Cx5VjMfBFHbQaajZsfod8vu7g+aGq/zkjwbhsr/SR4dljJjFJXLGZjIalm9KgP6KInmVDuINfCqP+MHIY5lZkNI7DMcyHDhVc5nSKvCXV7xTDNgmstvh8rB/z51WfHDqGqfBtiuK5FDNxmvYK8OFJ5W94Lu9LDlizcxwK3GAj7arOui7Z5w8bQ6p4seUE3IvJL1Zbj0pZHxvNb6Zeb2Pn8QF1qLlN8YmBktD4aiw0ce4wYRiL87uLgcOxZY7SVXtv2XYFIYWapU/FKjCqa6vK93V/H9eZWEIYNMKnN3wXm2beqVdnKek3OeGJ8v0y7MbSfuLfRtBqbTSNYnpU1Zuo4MQAvHvEPuwCAYkYQajOSRplMH5sULFKptuVqNtOMfjL8jHb8AEoL1acYIk43ydxeYrzzas4fqgCDJ52573/u0RNdF1lkQBLkuM365OB8VRqtpnoxcdEIY/qBc/8TzZ24fxyrs5qdHFcxGSgpN2EP6cJMqpvkemnCNSdhxUqfzm22N7a3O8+4LFSBGOnHto/PwdsvF/01yGYL0LoZTnoO1i6x7AMJPBh+eyDU0ZjGhj/msjmqeb9C8vRqQ+1WjHrIS1iqCD0Czib8tUPD4="

@@ -38,6 +38,7 @@ static CRYPTO_ONCE ex_data_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(do_ex_data_init)
 {
+    OPENSSL_init_crypto(0, NULL);
     ex_data_lock = CRYPTO_THREAD_lock_new();
     return ex_data_lock != NULL;
 }

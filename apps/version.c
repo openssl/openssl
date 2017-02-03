@@ -35,7 +35,7 @@ typedef enum OPTION_choice {
     OPT_B, OPT_D, OPT_E, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A
 } OPTION_CHOICE;
 
-OPTIONS version_options[] = {
+const OPTIONS version_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"a", OPT_A, '-', "Show all data"},
     {"b", OPT_B, '-', "Show build date"},

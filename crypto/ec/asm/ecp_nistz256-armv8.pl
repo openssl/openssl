@@ -660,7 +660,7 @@ __ecp_nistz256_div_by_2:
 	adc	$ap,xzr,xzr		// zap $ap
 	tst	$acc0,#1		// is a even?
 
-	csel	$acc0,$acc0,$t0,eq	// ret = even ? a : a+modulus 
+	csel	$acc0,$acc0,$t0,eq	// ret = even ? a : a+modulus
 	csel	$acc1,$acc1,$t1,eq
 	csel	$acc2,$acc2,$t2,eq
 	csel	$acc3,$acc3,$t3,eq

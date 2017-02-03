@@ -17,23 +17,12 @@
 #include "handshake_helper.h"
 #include "ssl_test_ctx.h"
 #include "testutil.h"
+#include "test_main_custom.h"
 
 static CONF *conf = NULL;
 
 /* Currently the section names are of the form test-<number>, e.g. test-15. */
 #define MAX_TESTCASE_NAME_LENGTH 100
-
-typedef struct ssl_test_ctx_test_fixture {
-    const char *test_case_name;
-    char test_app[MAX_TESTCASE_NAME_LENGTH];
-} SSL_TEST_FIXTURE;
-
-static SSL_TEST_FIXTURE set_up(const char *const test_case_name)
-{
-    SSL_TEST_FIXTURE fixture;
-    fixture.test_case_name = test_case_name;
-    return fixture;
-}
 
 static const char *print_alert(int alert)
 {
@@ -198,6 +187,64 @@ static int check_resumption(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
     return 1;
 }
 
+static int check_nid(const char *name, int expected_nid, int nid)
+{
+    if (expected_nid == 0 || expected_nid == nid)
+        return 1;
+    fprintf(stderr, "%s type mismatch, %s vs %s\n",
+            name, OBJ_nid2ln(expected_nid),
+            nid == NID_undef ? "absent" : OBJ_nid2ln(nid));
+    return 0;
+}
+
+static int check_tmp_key(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Tmp key", test_ctx->expected_tmp_key_type,
+                     result->tmp_key_type);
+}
+
+static int check_server_cert_type(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Server certificate", test_ctx->expected_server_cert_type,
+                     result->server_cert_type);
+}
+
+static int check_server_sign_hash(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Server signing hash", test_ctx->expected_server_sign_hash,
+                     result->server_sign_hash);
+}
+
+static int check_server_sign_type(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Server signing", test_ctx->expected_server_sign_type,
+                     result->server_sign_type);
+}
+
+static int check_client_cert_type(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Client certificate", test_ctx->expected_client_cert_type,
+                     result->client_cert_type);
+}
+
+static int check_client_sign_hash(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Client signing hash", test_ctx->expected_client_sign_hash,
+                     result->client_sign_hash);
+}
+
+static int check_client_sign_type(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Client signing", test_ctx->expected_client_sign_type,
+                     result->client_sign_type);
+}
+
 /*
  * This could be further simplified by constructing an expected
  * HANDSHAKE_RESULT, and implementing comparison methods for
@@ -218,19 +265,29 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 #endif
         ret &= check_alpn(result, test_ctx);
         ret &= check_resumption(result, test_ctx);
+        ret &= check_tmp_key(result, test_ctx);
+        ret &= check_server_cert_type(result, test_ctx);
+        ret &= check_server_sign_hash(result, test_ctx);
+        ret &= check_server_sign_type(result, test_ctx);
+        ret &= check_client_cert_type(result, test_ctx);
+        ret &= check_client_sign_hash(result, test_ctx);
+        ret &= check_client_sign_type(result, test_ctx);
     }
     return ret;
 }
 
-static int execute_test(SSL_TEST_FIXTURE fixture)
+static int test_handshake(int idx)
 {
     int ret = 0;
     SSL_CTX *server_ctx = NULL, *server2_ctx = NULL, *client_ctx = NULL,
         *resume_server_ctx = NULL, *resume_client_ctx = NULL;
     SSL_TEST_CTX *test_ctx = NULL;
     HANDSHAKE_RESULT *result = NULL;
+    char test_app[MAX_TESTCASE_NAME_LENGTH];
 
-    test_ctx = SSL_TEST_CTX_create(conf, fixture.test_app);
+    BIO_snprintf(test_app, sizeof(test_app), "test-%d", idx);
+
+    test_ctx = SSL_TEST_CTX_create(conf, test_app);
     if (test_ctx == NULL)
         goto err;
 
@@ -272,7 +329,7 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
     TEST_check(server_ctx != NULL);
     TEST_check(client_ctx != NULL);
 
-    TEST_check(CONF_modules_load(conf, fixture.test_app, 0) > 0);
+    TEST_check(CONF_modules_load(conf, test_app, 0) > 0);
 
     if (!SSL_CTX_config(server_ctx, "server")
         || !SSL_CTX_config(client_ctx, "client")) {
@@ -301,30 +358,11 @@ err:
     SSL_CTX_free(resume_server_ctx);
     SSL_CTX_free(resume_client_ctx);
     SSL_TEST_CTX_free(test_ctx);
-    if (ret != 1)
-        ERR_print_errors_fp(stderr);
     HANDSHAKE_RESULT_free(result);
     return ret;
 }
 
-static void tear_down(SSL_TEST_FIXTURE fixture)
-{
-}
-
-#define SETUP_SSL_TEST_FIXTURE()                        \
-    SETUP_TEST_FIXTURE(SSL_TEST_FIXTURE, set_up)
-#define EXECUTE_SSL_TEST()             \
-    EXECUTE_TEST(execute_test, tear_down)
-
-static int test_handshake(int idx)
-{
-    SETUP_SSL_TEST_FIXTURE();
-    BIO_snprintf(fixture.test_app, sizeof(fixture.test_app),
-                 "test-%d", idx);
-    EXECUTE_SSL_TEST();
-}
-
-int main(int argc, char **argv)
+int test_main(int argc, char **argv)
 {
     int result = 0;
     long num_tests;
@@ -343,5 +381,6 @@ int main(int argc, char **argv)
     ADD_ALL_TESTS(test_handshake, (int)(num_tests));
     result = run_tests(argv[0]);
 
+    NCONF_free(conf);
     return result;
 }

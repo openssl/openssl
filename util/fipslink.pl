@@ -109,7 +109,7 @@ sub check_hash
 	$hashval =~ s/^.*=\s+//;
 	die "Invalid hash syntax in file" if (length($hashfile) != 40);
 	die "Invalid hash received for file" if (length($hashval) != 40);
-	die "***HASH VALUE MISMATCH FOR FILE $filename ***" if ($hashval ne $hashfile); 
+	die "***HASH VALUE MISMATCH FOR FILE $filename ***" if ($hashval ne $hashfile);
 	}
 
 

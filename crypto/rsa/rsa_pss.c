@@ -41,7 +41,6 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     unsigned char H_[EVP_MAX_MD_SIZE];
 
-
     if (ctx == NULL)
         goto err;
 
@@ -57,11 +56,9 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
      *      -2      salt length is autorecovered from signature
      *      -N      reserved
      */
-    if (sLen == -1)
+    if (sLen == RSA_PSS_SALTLEN_DIGEST)
         sLen = hLen;
-    else if (sLen == -2)
-        sLen = -2;
-    else if (sLen < -2) {
+    else if (sLen < RSA_PSS_SALTLEN_MAX) {
         RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_SLEN_CHECK_FAILED);
         goto err;
     }
@@ -76,7 +73,9 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         EM++;
         emLen--;
     }
-    if (emLen < (hLen + sLen + 2)) { /* sLen can be small negative */
+    if (sLen == RSA_PSS_SALTLEN_MAX) {
+        sLen = emLen - hLen - 2;
+    } else if (emLen < (hLen + sLen + 2)) { /* sLen can be small negative */
         RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_DATA_TOO_LARGE);
         goto err;
     }
@@ -102,7 +101,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_SLEN_RECOVERY_FAILED);
         goto err;
     }
-    if (sLen >= 0 && (maskedDBLen - i) != sLen) {
+    if (sLen != RSA_PSS_SALTLEN_AUTO && (maskedDBLen - i) != sLen) {
         RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_SLEN_CHECK_FAILED);
         goto err;
     }
@@ -160,11 +159,11 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
      *      -2      salt length is maximized
      *      -N      reserved
      */
-    if (sLen == -1)
+    if (sLen == RSA_PSS_SALTLEN_DIGEST)
         sLen = hLen;
-    else if (sLen == -2)
-        sLen = -2;
-    else if (sLen < -2) {
+    else if (sLen == RSA_PSS_SALTLEN_MAX_SIGN)
+        sLen = RSA_PSS_SALTLEN_MAX;
+    else if (sLen < RSA_PSS_SALTLEN_MAX) {
         RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1, RSA_R_SLEN_CHECK_FAILED);
         goto err;
     }
@@ -175,7 +174,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
         *EM++ = 0;
         emLen--;
     }
-    if (sLen == -2) {
+    if (sLen == RSA_PSS_SALTLEN_MAX) {
         sLen = emLen - hLen - 2;
     } else if (emLen < (hLen + sLen + 2)) {
         RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,

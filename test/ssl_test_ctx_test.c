@@ -18,6 +18,7 @@
 #include "e_os.h"
 #include "ssl_test_ctx.h"
 #include "testutil.h"
+#include "test_main_custom.h"
 #include <openssl/e_os2.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
@@ -81,6 +82,12 @@ static int SSL_TEST_SERVER_CONF_equal(SSL_TEST_SERVER_CONF *server,
     if (server->broken_session_ticket != server2->broken_session_ticket) {
         fprintf(stderr, "Broken session ticket mismatch: %d vs %d.\n",
                 server->broken_session_ticket, server2->broken_session_ticket);
+        return 0;
+    }
+    if (server->cert_status != server2->cert_status) {
+        fprintf(stderr, "CertStatus mismatch: %s vs %s.\n",
+                ssl_certstatus_name(server->cert_status),
+                ssl_certstatus_name(server2->cert_status));
         return 0;
     }
     return 1;
@@ -210,32 +217,15 @@ static int execute_test(SSL_TEST_CTX_TEST_FIXTURE fixture)
     return success;
 }
 
-static int execute_failure_test(SSL_TEST_CTX_TEST_FIXTURE fixture)
-{
-    SSL_TEST_CTX *ctx = SSL_TEST_CTX_create(conf, fixture.test_section);
-
-    if (ctx != NULL) {
-        fprintf(stderr, "Parsing bad configuration %s succeeded.\n",
-                fixture.test_section);
-        SSL_TEST_CTX_free(ctx);
-        return 0;
-    }
-
-    return 1;
-}
-
 static void tear_down(SSL_TEST_CTX_TEST_FIXTURE fixture)
 {
     SSL_TEST_CTX_free(fixture.expected_ctx);
-    ERR_print_errors_fp(stderr);
 }
 
 #define SETUP_SSL_TEST_CTX_TEST_FIXTURE()                       \
     SETUP_TEST_FIXTURE(SSL_TEST_CTX_TEST_FIXTURE, set_up)
 #define EXECUTE_SSL_TEST_CTX_TEST()             \
     EXECUTE_TEST(execute_test, tear_down)
-#define EXECUTE_SSL_TEST_CTX_FAILURE_TEST()             \
-    EXECUTE_TEST(execute_failure_test, tear_down)
 
 static int test_empty_configuration()
 {
@@ -302,12 +292,19 @@ static const char *bad_configurations[] = {
 
 static int test_bad_configuration(int idx)
 {
-        SETUP_SSL_TEST_CTX_TEST_FIXTURE();
-        fixture.test_section = bad_configurations[idx];
-        EXECUTE_SSL_TEST_CTX_FAILURE_TEST();
+    SSL_TEST_CTX *ctx = SSL_TEST_CTX_create(conf, bad_configurations[idx]);
+
+    if (ctx != NULL) {
+        fprintf(stderr, "Parsing bad configuration %s succeeded.\n",
+                bad_configurations[idx]);
+        SSL_TEST_CTX_free(ctx);
+        return 0;
+    }
+
+    return 1;
 }
 
-int main(int argc, char **argv)
+int test_main(int argc, char **argv)
 {
     int result = 0;
 

@@ -198,6 +198,7 @@ tests: build_generated build_programs_nodep build_engines_nodep depend
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
 	set PERL=$(PERL)
+	set OPENSSL_DEBUG_MEMORY=on
 	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
 	@rem {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@echo "Tests are not supported with your chosen Configure options"
@@ -263,6 +264,11 @@ install_ssldirs:
                                         "$(OPENSSLDIR)\openssl.cnf"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(MISC_SCRIPTS) \
                                         "$(OPENSSLDIR)\misc"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\ct_log_list.cnf" \
+                                        "$(OPENSSLDIR)\ct_log_list.cnf.dist"
+	@IF NOT EXIST "$(OPENSSLDIR)\ct_log_list.cnf" \
+         "$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\ct_log_list.cnf" \
+                                        "$(OPENSSLDIR)\ct_log_list.cnf"
 
 install_dev:
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
@@ -322,7 +328,7 @@ uninstall_html_docs:
 
 # Building targets ###################################################
 
-configdata.pm: "{- $config{build_file_template} -}" "$(SRCDIR)\Configurations\common.tmpl" "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{build_infos}}) -}
+configdata.pm: "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
 	@echo "Detected changed: $?"
 	@echo "Reconfiguring..."
 	"$(PERL)" "$(SRCDIR)\Configure" reconf
@@ -341,8 +347,10 @@ configdata.pm: "{- $config{build_file_template} -}" "$(SRCDIR)\Configurations\co
  # It takes a list of library names and outputs a list of dependencies
  sub compute_lib_depends {
      if ($disabled{shared}) {
-	 return map { $_.$libext } @_;
+	 return map { $_ =~ /\.a$/ ? $`.$libext : $_.$libext } @_;
      }
+     die "Linking with static OpenSSL libraries is not supported in this configuration\n"
+         if grep /\.a$/, @_;
      return map { shlib_import($_) } @_;
  }
 

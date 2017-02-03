@@ -158,7 +158,7 @@ $code.=<<___;
 	lg	$Zhi,0+1($Xi)
 	lghi	$tmp,0
 .Louter:
-	xg	$Zhi,0($inp)		# Xi ^= inp 
+	xg	$Zhi,0($inp)		# Xi ^= inp
 	xg	$Zlo,8($inp)
 	xgr	$Zhi,$tmp
 	stg	$Zlo,8+1($Xi)

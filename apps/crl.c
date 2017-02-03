@@ -26,7 +26,7 @@ typedef enum OPTION_choice {
     OPT_NOOUT, OPT_NAMEOPT, OPT_MD
 } OPTION_CHOICE;
 
-OPTIONS crl_options[] = {
+const OPTIONS crl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format; default PEM"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
@@ -41,7 +41,7 @@ OPTIONS crl_options[] = {
     {"fingerprint", OPT_FINGERPRINT, '-', "Print the crl fingerprint"},
     {"crlnumber", OPT_CRLNUMBER, '-', "Print CRL number"},
     {"badsig", OPT_BADSIG, '-', "Corrupt last byte of loaded CRL signature (for test)" },
-    {"gendelta", OPT_GENDELTA, '<'},
+    {"gendelta", OPT_GENDELTA, '<', "Other CRL to compare/diff to the Input one"},
     {"CApath", OPT_CAPATH, '/', "Verify CRL using certificates in dir"},
     {"CAfile", OPT_CAFILE, '<', "Verify CRL using certificates in file name"},
     {"no-CAfile", OPT_NOCAFILE, '-',

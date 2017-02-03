@@ -35,6 +35,7 @@ GENERATE[aesp8-ppc.s]=asm/aesp8-ppc.pl $(PERLASM_SCHEME)
 GENERATE[aes-parisc.s]=asm/aes-parisc.pl $(PERLASM_SCHEME)
 
 GENERATE[aes-mips.S]=asm/aes-mips.pl $(PERLASM_SCHEME)
+INCLUDE[aes-mips.o]=..
 
 GENERATE[aesv8-armx.S]=asm/aesv8-armx.pl $(PERLASM_SCHEME)
 INCLUDE[aesv8-armx.o]=..

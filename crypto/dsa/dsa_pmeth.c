@@ -31,8 +31,8 @@ typedef struct {
 
 static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
 {
-    DSA_PKEY_CTX *dctx;
-    dctx = OPENSSL_malloc(sizeof(*dctx));
+    DSA_PKEY_CTX *dctx = OPENSSL_malloc(sizeof(*dctx));
+
     if (dctx == NULL)
         return 0;
     dctx->nbits = 1024;
@@ -50,6 +50,7 @@ static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
 static int pkey_dsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 {
     DSA_PKEY_CTX *dctx, *sctx;
+
     if (!pkey_dsa_init(dst))
         return 0;
     sctx = src->data;
@@ -116,6 +117,7 @@ static int pkey_dsa_verify(EVP_PKEY_CTX *ctx,
 static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
     DSA_PKEY_CTX *dctx = ctx->data;
+
     switch (type) {
     case EVP_PKEY_CTRL_DSA_PARAMGEN_BITS:
         if (p1 < 256)
@@ -136,7 +138,7 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             DSAerr(DSA_F_PKEY_DSA_CTRL, DSA_R_INVALID_DIGEST_TYPE);
             return 0;
         }
-        dctx->md = p2;
+        dctx->pmd = p2;
         return 1;
 
     case EVP_PKEY_CTRL_MD:
@@ -200,6 +202,7 @@ static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     DSA_PKEY_CTX *dctx = ctx->data;
     BN_GENCB *pcb;
     int ret;
+
     if (ctx->pkey_gencb) {
         pcb = BN_GENCB_new();
         if (pcb == NULL)
@@ -225,6 +228,7 @@ static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 static int pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
     DSA *dsa = NULL;
+
     if (ctx->pkey == NULL) {
         DSAerr(DSA_F_PKEY_DSA_KEYGEN, DSA_R_NO_PARAMETERS_SET);
         return 0;

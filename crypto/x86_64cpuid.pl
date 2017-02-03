@@ -175,13 +175,21 @@ OPENSSL_ia32_cpuid:
 	jnc	.Lclear_avx
 	xor	%ecx,%ecx		# XCR0
 	.byte	0x0f,0x01,0xd0		# xgetbv
+	and	\$0xe6,%eax		# isolate XMM, YMM and ZMM state support
+	cmp	\$0xe6,%eax
+	je	.Ldone
+	andl	\$0xfffeffff,8(%rdi)	# clear AVX512F, ~(1<<16)
+					# note that we don't touch other AVX512
+					# extensions, because they can be used
+					# with YMM (without opmasking though)
 	and	\$6,%eax		# isolate XMM and YMM state support
 	cmp	\$6,%eax
 	je	.Ldone
 .Lclear_avx:
 	mov	\$0xefffe7ff,%eax	# ~(1<<28|1<<12|1<<11)
 	and	%eax,%r9d		# clear AVX, FMA and AMD XOP bits
-	andl	\$0xffffffdf,8(%rdi)	# cleax AVX2, ~(1<<5)
+	mov	\$0x3fdeffdf,%eax	# ~(1<<31|1<<30|1<<21|1<<16|1<<5)
+	and	%eax,8(%rdi)		# cleax AVX2 and AVX512* bits
 .Ldone:
 	shl	\$32,%r9
 	mov	%r10d,%eax

@@ -107,6 +107,14 @@ my @smime_pkcs7_tests = (
 	"-CAfile", catfile($smdir, "smroot.pem"), "-out", "smtst.txt" ]
     ],
 
+    [ "signed content S/MIME format, RSA key SHA1",
+      [ "-sign", "-in", $smcont, "-md", "sha1",
+	"-certfile", catfile($smdir, "smroot.pem"),
+	"-signer", catfile($smdir, "smrsa1.pem"), "-out", "test.cms" ],
+      [ "-verify", "-in", "test.cms",
+	"-CAfile", catfile($smdir, "smroot.pem"), "-out", "smtst.txt" ]
+    ],
+
     [ "signed content test streaming S/MIME format, 2 DSA and 2 RSA keys",
       [ "-sign", "-in", $smcont, "-nodetach",
 	"-signer", catfile($smdir, "smrsa1.pem"),

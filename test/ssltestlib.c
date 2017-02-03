@@ -155,7 +155,7 @@ static void dump_data(const char *data, int len)
                 printf("*** Message Fragment len: %d\n", fraglen);
                 if (fragoff + fraglen > msglen)
                     printf("***---- HANDSHAKE MESSAGE FRAGMENT INVALID ----\n");
-                else if(reclen < fraglen)
+                else if (reclen < fraglen)
                     printf("**---- HANDSHAKE MESSAGE FRAGMENT TRUNCATED ----\n");
                 else
                     printf("**---- END OF HANDSHAKE MESSAGE FRAGMENT ----\n");
@@ -442,7 +442,7 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
                 else
                     return inl;
             } while(1);
-        } else if(looppkt->num == thispkt->num) {
+        } else if (looppkt->num == thispkt->num) {
             if (!ctx->noinject) {
                 /* We injected two packets with the same packet number! */
                 return -1;
@@ -550,6 +550,10 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
         goto err;
     }
 
+#ifndef OPENSSL_NO_DH
+    SSL_CTX_set_dh_auto(serverctx, 1);
+#endif
+
     *sctx = serverctx;
     *cctx = clientctx;
 
@@ -560,7 +564,7 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
     return 0;
 }
 
-#define MAXLOOPS    100000
+#define MAXLOOPS    1000000
 
 /*
  * NOTE: Transfers control of the BIOs - this function will free them on error
@@ -587,7 +591,7 @@ int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
 
     if (SSL_is_dtls(clientssl)) {
         s_to_c_bio = BIO_new(bio_s_mempacket_test());
-        c_to_s_bio = BIO_new(bio_s_mempacket_test());;
+        c_to_s_bio = BIO_new(bio_s_mempacket_test());
     } else {
         s_to_c_bio = BIO_new(BIO_s_mem());
         c_to_s_bio = BIO_new(BIO_s_mem());
@@ -641,6 +645,8 @@ int create_ssl_connection(SSL *serverssl, SSL *clientssl)
 {
     int retc = -1, rets = -1, err, abortctr = 0;
     int clienterr = 0, servererr = 0;
+    unsigned char buf;
+    size_t readbytes;
 
     do {
         err = SSL_ERROR_WANT_WRITE;
@@ -673,6 +679,21 @@ int create_ssl_connection(SSL *serverssl, SSL *clientssl)
             return 0;
         }
     } while (retc <=0 || rets <= 0);
+
+    /*
+     * We attempt to read some data on the client side which we expect to fail.
+     * This will ensure we have received the NewSessionTicket in TLSv1.3 where
+     * appropriate.
+     */
+    if (SSL_read_ex(clientssl, &buf, sizeof(buf), &readbytes) > 0) {
+        if (readbytes != 0) {
+            printf("Unexpected success reading data %"OSSLzu"\n", readbytes);
+            return 0;
+        }
+    } else if (SSL_get_error(clientssl, 0) != SSL_ERROR_WANT_READ) {
+        printf("SSL_read_ex() failed\n");
+        return 0;
+    }
 
     return 1;
 }

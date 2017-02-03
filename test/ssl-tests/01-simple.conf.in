@@ -20,6 +20,14 @@ our @tests = (
     },
 
     {
+        name => "Server signature algorithms bug",
+        # Should have no effect as we aren't doing client auth
+        server => { "ClientSignatureAlgorithms" => "PSS+SHA512:RSA+SHA512" },
+        client => { "SignatureAlgorithms" => "PSS+SHA256:RSA+SHA256" },
+        test   => { "ExpectedResult" => "Success" },
+    },
+
+    {
         name => "verify-cert",
         server => { },
         client => {

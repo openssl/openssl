@@ -25,7 +25,7 @@ typedef enum OPTION_choice {
     OPT_TEXT, OPT_PRINT, OPT_PRINT_CERTS, OPT_ENGINE
 } OPTION_CHOICE;
 
-OPTIONS pkcs7_options[] = {
+const OPTIONS pkcs7_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
     {"in", OPT_IN, '<', "Input file"},
@@ -33,7 +33,7 @@ OPTIONS pkcs7_options[] = {
     {"out", OPT_OUT, '>', "Output file"},
     {"noout", OPT_NOOUT, '-', "Don't output encoded data"},
     {"text", OPT_TEXT, '-', "Print full details of certificates"},
-    {"print", OPT_PRINT, '-'},
+    {"print", OPT_PRINT, '-', "Print out all fields of the PKCS7 structure"},
     {"print_certs", OPT_PRINT_CERTS, '-',
      "Print_certs  print any certs or crl in the input"},
 #ifndef OPENSSL_NO_ENGINE
@@ -44,6 +44,7 @@ OPTIONS pkcs7_options[] = {
 
 int pkcs7_main(int argc, char **argv)
 {
+    ENGINE *e = NULL;
     PKCS7 *p7 = NULL;
     BIO *in = NULL, *out = NULL;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM;
@@ -90,7 +91,7 @@ int pkcs7_main(int argc, char **argv)
             print_certs = 1;
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         }
     }
@@ -189,6 +190,7 @@ int pkcs7_main(int argc, char **argv)
     ret = 0;
  end:
     PKCS7_free(p7);
+    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     return (ret);

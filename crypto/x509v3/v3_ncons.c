@@ -17,8 +17,10 @@
 #include "internal/x509_int.h"
 #include "ext_dat.h"
 
+# ifndef OPENSSL_NO_EAI
 #include <idna.h>
 #include <idn-free.h>
+# endif
 
 static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
                                   X509V3_CTX *ctx,
@@ -37,8 +39,9 @@ static int nc_dns(ASN1_IA5STRING *sub, ASN1_IA5STRING *dns);
 static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
 static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base);
-
+# ifndef OPENSSL_NO_EAI
 static int nc_smtp8(ASN1_UTF8STRING *sub, ASN1_IA5STRING *eml);
+# endif
 
 const X509V3_EXT_METHOD v3_name_constraints = {
     NID_name_constraints, 0,
@@ -224,11 +227,12 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_NAME_num(x->altname); i++) {
         GENERAL_NAME *gen = sk_GENERAL_NAME_value(x->altname, i);
+# ifndef OPENSSL_NO_EAI
         if (gen->type == GEN_OTHERNAME) {
-            if (OBJ_obj2nid(gen->d.otherName->type_id) == NID_smtputf8Name) {
+            if (OBJ_obj2nid(gen->d.otherName->type_id) == NID_SmtpUtf8Name) {
                 GENERAL_NAME gntmp;
                 gntmp.type = GEN_EMAILUTF8;
-                gntmp.d.smtputf8Name =
+                gntmp.d.SmtpUtf8Name =
                     gen->d.otherName->value->value.utf8string;
 
                 r = nc_match(&gntmp, nc);
@@ -237,6 +241,7 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
             } else
                 continue;
         } else
+# endif				
             r = nc_match(gen, nc);
 
         if (r != X509_V_OK)
@@ -266,6 +271,7 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
     for (i = -1;;) {
         X509_NAME_ENTRY *ne;
         ASN1_STRING *hn;
+
         i = X509_NAME_get_index_by_NID(nm, NID_commonName, i);
         if (i == -1)
             break;
@@ -356,8 +362,10 @@ static int nc_match_single(GENERAL_NAME *gen, GENERAL_NAME *base)
     case GEN_EMAIL:
         return nc_email(gen->d.rfc822Name, base->d.rfc822Name);
 
+# ifndef OPENSSL_NO_EAI
     case GEN_EMAILUTF8:
-        return nc_smtp8(gen->d.smtputf8Name, base->d.rfc822Name);
+        return nc_smtp8(gen->d.SmtpUtf8Name, base->d.rfc822Name);
+# endif				
 
     case GEN_URI:
         return nc_uri(gen->d.uniformResourceIdentifier,
@@ -416,6 +424,7 @@ static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
 
 }
 
+# ifndef OPENSSL_NO_EAI
 static int nc_smtp8(ASN1_UTF8STRING *eml, ASN1_IA5STRING *base)
 {
     const char *baseptr = (char *)base->data;
@@ -491,6 +500,7 @@ static int nc_smtp8(ASN1_UTF8STRING *eml, ASN1_IA5STRING *base)
     return X509_V_OK;
 
 }
+# endif
 
 static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
 {

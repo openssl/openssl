@@ -39,7 +39,7 @@ require "x86asm.pl";
 
 $output = pop;
 open STDOUT,">$output";
- 
+
 &asm_init($ARGV[0],$0);
 
 $sse2=0;

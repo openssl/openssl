@@ -289,7 +289,7 @@ static int asn1_get_int64(int64_t *pr, const unsigned char *b, size_t blen,
             ASN1err(ASN1_F_ASN1_GET_INT64, ASN1_R_TOO_SMALL);
             return 0;
         }
-        *pr = -(int64_t)r;
+        *pr = 0 - (uint64_t)r;
     } else {
         if (r > INT64_MAX) {
             ASN1err(ASN1_F_ASN1_GET_INT64, ASN1_R_TOO_LARGE);

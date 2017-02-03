@@ -56,8 +56,8 @@ typedef enum {
 typedef enum {
     SSL_TEST_HANDSHAKE_SIMPLE = 0, /* Default */
     SSL_TEST_HANDSHAKE_RESUME,
-    /* Not yet implemented */
-    SSL_TEST_HANDSHAKE_RENEGOTIATE
+    SSL_TEST_HANDSHAKE_RENEG_SERVER,
+    SSL_TEST_HANDSHAKE_RENEG_CLIENT
 } ssl_handshake_mode_t;
 
 typedef enum {
@@ -65,6 +65,12 @@ typedef enum {
     SSL_TEST_CT_VALIDATION_PERMISSIVE,
     SSL_TEST_CT_VALIDATION_STRICT
 } ssl_ct_validation_t;
+
+typedef enum {
+    SSL_TEST_CERT_STATUS_NONE = 0, /* Default */
+    SSL_TEST_CERT_STATUS_GOOD_RESPONSE,
+    SSL_TEST_CERT_STATUS_BAD_RESPONSE
+} ssl_cert_status_t;
 /*
  * Server/client settings that aren't supported by the SSL CONF library,
  * such as callbacks.
@@ -88,6 +94,8 @@ typedef struct {
     char *alpn_protocols;
     /* Whether to set a broken session ticket callback. */
     int broken_session_ticket;
+    /* Should we send a CertStatus message? */
+    ssl_cert_status_t cert_status;
 } SSL_TEST_SERVER_CONF;
 
 typedef struct {
@@ -151,6 +159,20 @@ typedef struct {
     char *expected_alpn_protocol;
     /* Whether the second handshake is resumed or a full handshake (boolean). */
     int resumption_expected;
+    /* Expected temporary key type */
+    int expected_tmp_key_type;
+    /* Expected server certificate key type */
+    int expected_server_cert_type;
+    /* Expected server signing hash */
+    int expected_server_sign_hash;
+    /* Expected server signature type */
+    int expected_server_sign_type;
+    /* Expected client certificate key type */
+    int expected_client_cert_type;
+    /* Expected client signing hash */
+    int expected_client_sign_hash;
+    /* Expected client signature type */
+    int expected_client_sign_type;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);
@@ -164,6 +186,7 @@ const char *ssl_session_ticket_name(ssl_session_ticket_t server);
 const char *ssl_test_method_name(ssl_test_method_t method);
 const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode);
 const char *ssl_ct_validation_name(ssl_ct_validation_t mode);
+const char *ssl_certstatus_name(ssl_cert_status_t cert_status);
 
 /*
  * Load the test case context from |conf|.

@@ -8,7 +8,9 @@
  */
 
 /* Required for vmsplice */
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -17,20 +19,24 @@
 #include <openssl/async.h>
 #include <openssl/err.h>
 
+#include <sys/socket.h>
 #include <linux/version.h>
 #define K_MAJ   4
 #define K_MIN1  1
 #define K_MIN2  0
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2)
-# warning "AFALG ENGINE requires Kernel Headers >= 4.1.0"
-# warning "Skipping Compilation of AFALG engine"
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2) || \
+    !defined(AF_ALG)
+# ifndef PEDANTIC
+#  warning "AFALG ENGINE requires Kernel Headers >= 4.1.0"
+#  warning "Skipping Compilation of AFALG engine"
+# endif
+void engine_load_afalg_int(void);
 void engine_load_afalg_int(void)
 {
 }
 #else
 
 # include <linux/if_alg.h>
-# include <sys/socket.h>
 # include <fcntl.h>
 # include <sys/utsname.h>
 
@@ -319,12 +325,12 @@ int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
 }
 
 static ossl_inline void afalg_set_op_sk(struct cmsghdr *cmsg,
-                                   const unsigned int op)
+                                   const ALG_OP_TYPE op)
 {
     cmsg->cmsg_level = SOL_ALG;
     cmsg->cmsg_type = ALG_SET_OP;
     cmsg->cmsg_len = CMSG_LEN(ALG_OP_LEN);
-    *CMSG_DATA(cmsg) = (char)op;
+    memcpy(CMSG_DATA(cmsg), &op, ALG_OP_LEN);
 }
 
 static void afalg_set_iv_sk(struct cmsghdr *cmsg, const unsigned char *iv,

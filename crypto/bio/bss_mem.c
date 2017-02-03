@@ -26,7 +26,11 @@ static int mem_buf_sync(BIO *h);
 static const BIO_METHOD mem_method = {
     BIO_TYPE_MEM,
     "memory buffer",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     mem_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     mem_read,
     mem_puts,
     mem_gets,
@@ -39,7 +43,11 @@ static const BIO_METHOD mem_method = {
 static const BIO_METHOD secmem_method = {
     BIO_TYPE_MEM,
     "secure memory buffer",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     mem_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     mem_read,
     mem_puts,
     mem_gets,

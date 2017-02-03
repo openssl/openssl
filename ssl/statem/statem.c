@@ -105,8 +105,8 @@ void ossl_statem_clear(SSL *s)
  */
 void ossl_statem_set_renegotiate(SSL *s)
 {
-    s->statem.state = MSG_FLOW_RENEGOTIATE;
     s->statem.in_init = 1;
+    s->statem.request_state = TLS_ST_SW_HELLO_REQ;
 }
 
 /*
@@ -189,10 +189,10 @@ static info_cb get_callback(SSL *s)
 
 /*
  * The main message flow state machine. We start in the MSG_FLOW_UNINITED or
- * MSG_FLOW_RENEGOTIATE state and finish in MSG_FLOW_FINISHED. Valid states and
+ * MSG_FLOW_FINISHED state and finish in MSG_FLOW_FINISHED. Valid states and
  * transitions are as follows:
  *
- * MSG_FLOW_UNINITED     MSG_FLOW_RENEGOTIATE
+ * MSG_FLOW_UNINITED     MSG_FLOW_FINISHED
  *        |                       |
  *        +-----------------------+
  *        v
@@ -251,31 +251,12 @@ static int state_machine(SSL *s, int server)
     }
 #endif
 
-#ifndef OPENSSL_NO_HEARTBEATS
-    /*
-     * If we're awaiting a HeartbeatResponse, pretend we already got and
-     * don't await it anymore, because Heartbeats don't make sense during
-     * handshakes anyway.
-     */
-    if (s->tlsext_hb_pending) {
-        if (SSL_IS_DTLS(s))
-            dtls1_stop_timer(s);
-        s->tlsext_hb_pending = 0;
-        s->tlsext_hb_seq++;
-    }
-#endif
-
     /* Initialise state machine */
-
-    if (st->state == MSG_FLOW_RENEGOTIATE) {
-        s->renegotiate = 1;
-        if (!server)
-            s->ctx->stats.sess_connect_renegotiate++;
-    }
-
-    if (st->state == MSG_FLOW_UNINITED || st->state == MSG_FLOW_RENEGOTIATE) {
+    if (st->state == MSG_FLOW_UNINITED
+            || st->state == MSG_FLOW_FINISHED) {
         if (st->state == MSG_FLOW_UNINITED) {
             st->hand_state = TLS_ST_BEFORE;
+            st->request_state = TLS_ST_BEFORE;
         }
 
         s->server = server;
@@ -332,52 +313,18 @@ static int state_machine(SSL *s, int server)
                 goto end;
             }
 
-        if (!server || st->state != MSG_FLOW_RENEGOTIATE) {
-            if (!ssl3_init_finished_mac(s)) {
+        if (SSL_IS_FIRST_HANDSHAKE(s) || s->renegotiate) {
+            if (!tls_setup_handshake(s)) {
                 ossl_statem_set_error(s);
                 goto end;
             }
-        }
 
-        if (server) {
-            if (st->state != MSG_FLOW_RENEGOTIATE) {
-                s->ctx->stats.sess_accept++;
-            } else if (!s->s3->send_connection_binding &&
-                       !(s->options &
-                         SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)) {
-                /*
-                 * Server attempting to renegotiate with client that doesn't
-                 * support secure renegotiation.
-                 */
-                SSLerr(SSL_F_STATE_MACHINE,
-                       SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
-                ossl_statem_set_error(s);
-                goto end;
-            } else {
-                /*
-                 * st->state == MSG_FLOW_RENEGOTIATE, we will just send a
-                 * HelloRequest
-                 */
-                s->ctx->stats.sess_accept_renegotiate++;
-            }
-        } else {
-            s->ctx->stats.sess_connect++;
-
-            /* mark client_random uninitialized */
-            memset(s->s3->client_random, 0, sizeof(s->s3->client_random));
-            s->hit = 0;
-
-            s->s3->tmp.cert_request = 0;
-
-            if (SSL_IS_DTLS(s)) {
-                st->use_timer = 1;
-            }
+            if (SSL_IS_FIRST_HANDSHAKE(s))
+                st->read_state_first_init = 1;
         }
 
         st->state = MSG_FLOW_WRITING;
         init_write_state_machine(s);
-        st->read_state_first_init = 1;
     }
 
     while (st->state != MSG_FLOW_FINISHED) {
@@ -408,7 +355,6 @@ static int state_machine(SSL *s, int server)
         }
     }
 
-    st->state = MSG_FLOW_UNINITED;
     ret = 1;
 
  end:
@@ -445,6 +391,21 @@ static void init_read_state_machine(SSL *s)
     st->read_state = READ_STATE_HEADER;
 }
 
+static int grow_init_buf(SSL *s, size_t size) {
+
+    size_t msg_offset = (char *)s->init_msg - s->init_buf->data;
+
+    if (!BUF_MEM_grow_clean(s->init_buf, (int)size))
+        return 0;
+
+    if (size < msg_offset)
+        return 0;
+
+    s->init_msg = s->init_buf->data + msg_offset;
+
+    return 1;
+}
+
 /*
  * This function implements the sub-state machine when the message flow is in
  * MSG_FLOW_READING. The valid sub-states and transitions are:
@@ -475,12 +436,12 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
     int ret, mt;
-    unsigned long len = 0;
+    size_t len = 0;
     int (*transition) (SSL *s, int mt);
     PACKET pkt;
     MSG_PROCESS_RETURN(*process_message) (SSL *s, PACKET *pkt);
     WORK_STATE(*post_process_message) (SSL *s, WORK_STATE wst);
-    unsigned long (*max_message_size) (SSL *s);
+    size_t (*max_message_size) (SSL *s);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
     cb = get_callback(s);
@@ -542,6 +503,16 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
                 return SUB_STATE_ERROR;
             }
 
+            /* dtls_get_message already did this */
+            if (!SSL_IS_DTLS(s)
+                    && s->s3->tmp.message_size > 0
+                    && !grow_init_buf(s, s->s3->tmp.message_size
+                                         + SSL3_HM_HEADER_LENGTH)) {
+                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+                SSLerr(SSL_F_READ_STATE_MACHINE, ERR_R_BUF_LIB);
+                return SUB_STATE_ERROR;
+            }
+
             st->read_state = READ_STATE_BODY;
             /* Fall through */
 
@@ -566,29 +537,33 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
             /* Discard the packet data */
             s->init_num = 0;
 
-            if (ret == MSG_PROCESS_ERROR) {
+            switch (ret) {
+            case MSG_PROCESS_ERROR:
                 return SUB_STATE_ERROR;
-            }
 
-            if (ret == MSG_PROCESS_FINISHED_READING) {
+            case MSG_PROCESS_FINISHED_READING:
                 if (SSL_IS_DTLS(s)) {
                     dtls1_stop_timer(s);
                 }
                 return SUB_STATE_FINISHED;
-            }
 
-            if (ret == MSG_PROCESS_CONTINUE_PROCESSING) {
+            case MSG_PROCESS_CONTINUE_PROCESSING:
                 st->read_state = READ_STATE_POST_PROCESS;
                 st->read_state_work = WORK_MORE_A;
-            } else {
+                break;
+
+            default:
                 st->read_state = READ_STATE_HEADER;
+                break;
             }
             break;
 
         case READ_STATE_POST_PROCESS:
             st->read_state_work = post_process_message(s, st->read_state_work);
             switch (st->read_state_work) {
-            default:
+            case WORK_ERROR:
+            case WORK_MORE_A:
+            case WORK_MORE_B:
                 return SUB_STATE_ERROR;
 
             case WORK_FINISHED_CONTINUE:
@@ -679,8 +654,13 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
     WRITE_TRAN(*transition) (SSL *s);
     WORK_STATE(*pre_work) (SSL *s, WORK_STATE wst);
     WORK_STATE(*post_work) (SSL *s, WORK_STATE wst);
-    int (*construct_message) (SSL *s);
+    int (*get_construct_message_f) (SSL *s, WPACKET *pkt,
+                                    int (**confunc) (SSL *s, WPACKET *pkt),
+                                    int *mt);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
+    int (*confunc) (SSL *s, WPACKET *pkt);
+    int mt;
+    WPACKET pkt;
 
     cb = get_callback(s);
 
@@ -688,12 +668,12 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
         transition = ossl_statem_server_write_transition;
         pre_work = ossl_statem_server_pre_work;
         post_work = ossl_statem_server_post_work;
-        construct_message = ossl_statem_server_construct_message;
+        get_construct_message_f = ossl_statem_server_construct_message;
     } else {
         transition = ossl_statem_client_write_transition;
         pre_work = ossl_statem_client_pre_work;
         post_work = ossl_statem_client_post_work;
-        construct_message = ossl_statem_client_construct_message;
+        get_construct_message_f = ossl_statem_client_construct_message;
     }
 
     while (1) {
@@ -716,14 +696,16 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
                 return SUB_STATE_FINISHED;
                 break;
 
-            default:
+            case WRITE_TRAN_ERROR:
                 return SUB_STATE_ERROR;
             }
             break;
 
         case WRITE_STATE_PRE_WORK:
             switch (st->write_state_work = pre_work(s, st->write_state_work)) {
-            default:
+            case WORK_ERROR:
+            case WORK_MORE_A:
+            case WORK_MORE_B:
                 return SUB_STATE_ERROR;
 
             case WORK_FINISHED_CONTINUE:
@@ -733,8 +715,16 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             case WORK_FINISHED_STOP:
                 return SUB_STATE_END_HANDSHAKE;
             }
-            if (construct_message(s) == 0)
+            if (!WPACKET_init(&pkt, s->init_buf)
+                    || !get_construct_message_f(s, &pkt, &confunc, &mt)
+                    || !ssl_set_handshake_header(s, &pkt, mt)
+                    || (confunc != NULL && !confunc(s, &pkt))
+                    || !ssl_close_construct_packet(s, &pkt, mt)
+                    || !WPACKET_finish(&pkt)) {
+                WPACKET_cleanup(&pkt);
+                ossl_statem_set_error(s);
                 return SUB_STATE_ERROR;
+            }
 
             /* Fall through */
 
@@ -752,7 +742,9 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
 
         case WRITE_STATE_POST_WORK:
             switch (st->write_state_work = post_work(s, st->write_state_work)) {
-            default:
+            case WORK_ERROR:
+            case WORK_MORE_A:
+            case WORK_MORE_B:
                 return SUB_STATE_ERROR;
 
             case WORK_FINISHED_CONTINUE:
@@ -786,7 +778,7 @@ int statem_flush(SSL *s)
 
 /*
  * Called by the record layer to determine whether application data is
- * allowed to be sent in the current handshake state or not.
+ * allowed to be received in the current handshake state or not.
  *
  * Return values are:
  *   1: Yes (application data allowed)
@@ -796,7 +788,7 @@ int ossl_statem_app_data_allowed(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
-    if (st->state == MSG_FLOW_UNINITED || st->state == MSG_FLOW_RENEGOTIATE)
+    if (st->state == MSG_FLOW_UNINITED)
         return 0;
 
     if (!s->s3->in_read_app_data || (s->s3->total_renegotiations == 0))

@@ -21,12 +21,13 @@ typedef enum OPTION_choice {
     OPT_TLS1,
     OPT_TLS1_1,
     OPT_TLS1_2,
+    OPT_TLS1_3,
     OPT_PSK,
     OPT_SRP,
     OPT_V, OPT_UPPER_V, OPT_S
 } OPTION_CHOICE;
 
-OPTIONS ciphers_options[] = {
+const OPTIONS ciphers_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"v", OPT_V, '-', "Verbose listing of the SSL/TLS ciphers"},
     {"V", OPT_UPPER_V, '-', "Even more verbose"},
@@ -42,6 +43,9 @@ OPTIONS ciphers_options[] = {
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     {"tls1_2", OPT_TLS1_2, '-', "TLS1.2 mode"},
+#endif
+#ifndef OPENSSL_NO_TLS1_3
+    {"tls1_3", OPT_TLS1_3, '-', "TLS1.3 mode"},
 #endif
 #ifndef OPENSSL_NO_SSL_TRACE
     {"stdname", OPT_STDNAME, '-', "Show standard cipher names"},
@@ -134,6 +138,10 @@ int ciphers_main(int argc, char **argv)
         case OPT_TLS1_2:
             min_version = TLS1_2_VERSION;
             max_version = TLS1_2_VERSION;
+            break;
+        case OPT_TLS1_3:
+            min_version = TLS1_3_VERSION;
+            max_version = TLS1_3_VERSION;
             break;
         case OPT_PSK:
 #ifndef OPENSSL_NO_PSK

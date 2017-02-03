@@ -34,8 +34,14 @@ ok(run(app([ 'openssl', 'rsa', '-check', '-in', srctop_file('test', 'testrsa.pem
      subtest 'rsa conversions -- private key PKCS#8' => sub {
 	 tconversion("rsa", srctop_file("test","testrsa.pem"), "pkey");
      };
+}
+
+ SKIP: {
+     skip "Skipping msblob conversion test", 1
+	 if disabled("rsa") || disabled("dsa");
+
      subtest 'rsa conversions -- public key' => sub {
-	 tconversion("rsa", srctop_file("test","testrsapub.pem"), "rsa",
+	 tconversion("msb", srctop_file("test","testrsapub.pem"), "rsa",
 		     "-pubin", "-pubout");
      };
 }

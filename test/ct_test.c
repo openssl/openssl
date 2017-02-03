@@ -8,6 +8,7 @@
  */
 
 #include <ctype.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,9 +19,9 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "testutil.h"
+#include "test_main_custom.h"
 
 #ifndef OPENSSL_NO_CT
-
 /* Used when declaring buffers to read text files into */
 #define CT_TEST_MAX_FILE_SIZE 8096
 
@@ -29,13 +30,18 @@ static char *ct_dir = NULL;
 
 typedef struct ct_test_fixture {
     const char *test_case_name;
+    /* The current time in milliseconds */
+    uint64_t epoch_time_in_ms;
     /* The CT log store to use during tests */
     CTLOG_STORE* ctlog_store;
     /* Set the following to test handling of SCTs in X509 certificates */
     const char *certs_dir;
     char *certificate_file;
     char *issuer_file;
+    /* Expected number of SCTs */
     int expected_sct_count;
+    /* Expected number of valid SCTS */
+    int expected_valid_sct_count;
     /* Set the following to test handling of SCTs in TLS format */
     const unsigned char *tls_sct_list;
     size_t tls_sct_list_len;
@@ -49,36 +55,34 @@ typedef struct ct_test_fixture {
     const char *sct_text_file;
     /* Whether to test the validity of the SCT(s) */
     int test_validity;
-
 } CT_TEST_FIXTURE;
 
 static CT_TEST_FIXTURE set_up(const char *const test_case_name)
 {
     CT_TEST_FIXTURE fixture;
     int setup_ok = 1;
-    CTLOG_STORE *ctlog_store;
 
     memset(&fixture, 0, sizeof(fixture));
 
-    ctlog_store = CTLOG_STORE_new();
+    fixture.test_case_name = test_case_name;
+    fixture.epoch_time_in_ms = 1473269626000; /* Sep 7 17:33:46 2016 GMT */
+    fixture.ctlog_store = CTLOG_STORE_new();
 
-    if (ctlog_store == NULL) {
+    if (fixture.ctlog_store == NULL) {
         setup_ok = 0;
         fprintf(stderr, "Failed to create a new CT log store\n");
         goto end;
     }
 
-    if (CTLOG_STORE_load_default_file(ctlog_store) != 1) {
+    if (CTLOG_STORE_load_default_file(fixture.ctlog_store) != 1) {
         setup_ok = 0;
         fprintf(stderr, "Failed to load CT log list\n");
         goto end;
     }
 
-    fixture.test_case_name = test_case_name;
-    fixture.ctlog_store = ctlog_store;
-
 end:
     if (!setup_ok) {
+        CTLOG_STORE_free(fixture.ctlog_store);
         exit(EXIT_FAILURE);
     }
     return fixture;
@@ -88,7 +92,6 @@ static void tear_down(CT_TEST_FIXTURE fixture)
 {
     CTLOG_STORE_free(fixture.ctlog_store);
     SCT_LIST_free(fixture.sct_list);
-    ERR_print_errors_fp(stderr);
 }
 
 static char *mk_file_path(const char *dir, const char *file)
@@ -244,13 +247,16 @@ static int assert_validity(CT_TEST_FIXTURE fixture,
         case SCT_VALIDATION_STATUS_INVALID:
             ++invalid_sct_count;
             break;
-        default:
+        case SCT_VALIDATION_STATUS_NOT_SET:
+        case SCT_VALIDATION_STATUS_UNKNOWN_LOG:
+        case SCT_VALIDATION_STATUS_UNVERIFIED:
+        case SCT_VALIDATION_STATUS_UNKNOWN_VERSION:
             /* Ignore other validation statuses. */
             break;
         }
     }
 
-    if (valid_sct_count != fixture.expected_sct_count) {
+    if (valid_sct_count != fixture.expected_valid_sct_count) {
         int unverified_sct_count = sk_SCT_num(scts) -
                 invalid_sct_count - valid_sct_count;
 
@@ -260,7 +266,7 @@ static int assert_validity(CT_TEST_FIXTURE fixture,
                 "%d SCTs were unverified\n",
                 invalid_sct_count,
                 valid_sct_count,
-                fixture.expected_sct_count,
+                fixture.expected_valid_sct_count,
                 unverified_sct_count);
         return 0;
     }
@@ -296,6 +302,8 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
 
     CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(
             ct_policy_ctx, fixture.ctlog_store);
+
+    CT_POLICY_EVAL_CTX_set_time(ct_policy_ctx, fixture.epoch_time_in_ms);
 
     if (fixture.certificate_file != NULL) {
         int sct_extension_index;
@@ -443,7 +451,7 @@ static int test_verify_one_sct()
     fixture.certs_dir = certs_dir;
     fixture.certificate_file = "embeddedSCTs1.pem";
     fixture.issuer_file = "embeddedSCTs1_issuer.pem";
-    fixture.expected_sct_count = 1;
+    fixture.expected_sct_count = fixture.expected_valid_sct_count = 1;
     fixture.test_validity = 1;
     EXECUTE_CT_TEST();
 }
@@ -454,7 +462,20 @@ static int test_verify_multiple_scts()
     fixture.certs_dir = certs_dir;
     fixture.certificate_file = "embeddedSCTs3.pem";
     fixture.issuer_file = "embeddedSCTs3_issuer.pem";
-    fixture.expected_sct_count = 3;
+    fixture.expected_sct_count = fixture.expected_valid_sct_count = 3;
+    fixture.test_validity = 1;
+    EXECUTE_CT_TEST();
+}
+
+static int test_verify_fails_for_future_sct()
+{
+    SETUP_CT_TEST_FIXTURE();
+    fixture.epoch_time_in_ms = 1365094800000; /* Apr 4 17:00:00 2013 GMT */
+    fixture.certs_dir = certs_dir;
+    fixture.certificate_file = "embeddedSCTs1.pem";
+    fixture.issuer_file = "embeddedSCTs1_issuer.pem";
+    fixture.expected_sct_count = 1;
+    fixture.expected_valid_sct_count = 0;
     fixture.test_validity = 1;
     EXECUTE_CT_TEST();
 }
@@ -489,54 +510,60 @@ static int test_decode_tls_sct()
 
 static int test_encode_tls_sct()
 {
-    const unsigned char log_id[] = "\xDF\x1C\x2E\xC1\x15\x00\x94\x52\x47\xA9"
-            "\x61\x68\x32\x5D\xDC\x5C\x79\x59\xE8\xF7\xC6\xD3\x88\xFC\x00\x2E"
-            "\x0B\xBD\x3F\x74\xD7\x64";
-
-    const unsigned char signature[] = "\x45\x02\x20\x48\x2F\x67\x51\xAF\x35"
-            "\xDB\xA6\x54\x36\xBE\x1F\xD6\x64\x0F\x3D\xBF\x9A\x41\x42\x94\x95"
-            "\x92\x45\x30\x28\x8F\xA3\xE5\xE2\x3E\x06\x02\x21\x00\xE4\xED\xC0"
-            "\xDB\x3A\xC5\x72\xB1\xE2\xF5\xE8\xAB\x6A\x68\x06\x53\x98\x7D\xCF"
-            "\x41\x02\x7D\xFE\xFF\xA1\x05\x51\x9D\x89\xED\xBF\x08";
+    const char log_id[] = "3xwuwRUAlFJHqWFoMl3cXHlZ6PfG04j8AC4LvT9012Q=";
+    const uint64_t timestamp = 1;
+    const char extensions[] = "";
+    const char signature[] = "BAMARzBAMiBIL2dRrzXbplQ2vh/WZA89v5pBQpSVkkUwKI+j5"
+            "eI+BgIhAOTtwNs6xXKx4vXoq2poBlOYfc9BAn3+/6EFUZ2J7b8I";
+    SCT *sct = NULL;
 
     SETUP_CT_TEST_FIXTURE();
 
-    STACK_OF(SCT) *sct_list = sk_SCT_new_null();
-    SCT *sct = SCT_new();
-    if (!SCT_set_version(sct, SCT_VERSION_V1)) {
-        fprintf(stderr, "Failed to set SCT version\n");
-        return 1;
-    }
-    if (!SCT_set1_log_id(sct, log_id, 32)) {
-        fprintf(stderr, "Failed to set SCT log ID\n");
-        return 1;
-    }
-    SCT_set_timestamp(sct, 1);
-    if (!SCT_set_signature_nid(sct, NID_ecdsa_with_SHA256)) {
-        fprintf(stderr, "Failed to set SCT signature NID\n");
-        return 1;
-    }
-    if (!SCT_set1_signature(sct, signature, 71)) {
-        fprintf(stderr, "Failed to set SCT signature\n");
-        return 1;
-    }
-    sk_SCT_push(sct_list, sct);
+    fixture.sct_list = sk_SCT_new_null();
+    sct = SCT_new_from_base64(SCT_VERSION_V1, log_id,
+                              CT_LOG_ENTRY_TYPE_X509, timestamp,
+                              extensions, signature);
 
-    fixture.sct_list = sct_list;
+    if (sct == NULL) {
+        tear_down(fixture);
+        fprintf(stderr, "Failed to create SCT from base64-encoded test data\n");
+        return 0;
+    }
+
+    sk_SCT_push(fixture.sct_list, sct);
     fixture.sct_dir = ct_dir;
     fixture.sct_text_file = "tls1.sct";
     EXECUTE_CT_TEST();
 }
 
-int main(int argc, char *argv[])
+/*
+ * Tests that the CT_POLICY_EVAL_CTX default time is approximately now.
+ * Allow +-10 minutes, as it may compensate for clock skew.
+ */
+static int test_default_ct_policy_eval_ctx_time_is_now()
+{
+    int success = 0;
+    CT_POLICY_EVAL_CTX *ct_policy_ctx = CT_POLICY_EVAL_CTX_new();
+    const time_t default_time = CT_POLICY_EVAL_CTX_get_time(ct_policy_ctx) /
+            1000;
+    const time_t time_tolerance = 600;  /* 10 minutes */
+
+    if (fabs(difftime(time(NULL), default_time)) > time_tolerance) {
+        fprintf(stderr,
+                "Default CT_POLICY_EVAL_CTX time is not approximately now.\n");
+        goto end;
+    }
+
+    success = 1;
+end:
+    CT_POLICY_EVAL_CTX_free(ct_policy_ctx);
+    return success;
+}
+
+int test_main(int argc, char *argv[])
 {
     int result = 0;
-    char *tmp_env = NULL;
-
-    tmp_env = getenv("OPENSSL_DEBUG_MEMORY");
-    if (tmp_env != NULL && strcmp(tmp_env, "on") == 0)
-        CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+    char *tmp_env;
 
     tmp_env = getenv("CT_DIR");
     ct_dir = OPENSSL_strdup(tmp_env != NULL ? tmp_env : "ct");
@@ -548,28 +575,22 @@ int main(int argc, char *argv[])
     ADD_TEST(test_multiple_scts_in_certificate);
     ADD_TEST(test_verify_one_sct);
     ADD_TEST(test_verify_multiple_scts);
+    ADD_TEST(test_verify_fails_for_future_sct);
     ADD_TEST(test_decode_tls_sct);
     ADD_TEST(test_encode_tls_sct);
+    ADD_TEST(test_default_ct_policy_eval_ctx_time_is_now);
 
     result = run_tests(argv[0]);
-    ERR_print_errors_fp(stderr);
 
     OPENSSL_free(ct_dir);
     OPENSSL_free(certs_dir);
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
-        result = 1;
-#endif
-
     return result;
 }
-
-#else /* OPENSSL_NO_CT */
-
-int main(int argc, char* argv[])
+#else
+int test_main(int argc, char *argv[])
 {
-    return EXIT_SUCCESS;
+    printf("No CT support\n");
+    return 0;
 }
-
-#endif /* OPENSSL_NO_CT */
+#endif

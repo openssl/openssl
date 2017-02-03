@@ -141,10 +141,10 @@ pitem *pqueue_next(pitem **item)
     return ret;
 }
 
-int pqueue_size(pqueue *pq)
+size_t pqueue_size(pqueue *pq)
 {
     pitem *item = pq->items;
-    int count = 0;
+    size_t count = 0;
 
     while (item != NULL) {
         count++;

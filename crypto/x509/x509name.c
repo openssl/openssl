@@ -86,9 +86,9 @@ X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc)
 {
     if (name == NULL || sk_X509_NAME_ENTRY_num(name->entries) <= loc
         || loc < 0)
-        return (NULL);
-    else
-        return (sk_X509_NAME_ENTRY_value(name->entries, loc));
+        return NULL;
+
+    return sk_X509_NAME_ENTRY_value(name->entries, loc);
 }
 
 X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc)
@@ -99,13 +99,14 @@ X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc)
 
     if (name == NULL || sk_X509_NAME_ENTRY_num(name->entries) <= loc
         || loc < 0)
-        return (NULL);
+        return NULL;
+
     sk = name->entries;
     ret = sk_X509_NAME_ENTRY_delete(sk, loc);
     n = sk_X509_NAME_ENTRY_num(sk);
     name->modified = 1;
     if (loc == n)
-        return (ret);
+        return ret;
 
     /* else we need to fixup the set field */
     if (loc != 0)
@@ -127,7 +128,7 @@ X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc)
     if (set_prev + 1 < set_next)
         for (i = loc; i < n; i++)
             sk_X509_NAME_ENTRY_value(sk, i)->set--;
-    return (ret);
+    return ret;
 }
 
 int X509_NAME_add_entry_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, int type,
@@ -136,6 +137,7 @@ int X509_NAME_add_entry_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, int type
 {
     X509_NAME_ENTRY *ne;
     int ret;
+
     ne = X509_NAME_ENTRY_create_by_OBJ(NULL, obj, type, bytes, len);
     if (!ne)
         return 0;

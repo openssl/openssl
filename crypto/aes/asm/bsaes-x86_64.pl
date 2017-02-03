@@ -48,6 +48,7 @@
 # Nehalem(**) 	7.63		6.88		+11%
 # Atom	    	17.1		16.4		+4%
 # Silvermont	-		12.9
+# Goldmont	-		8.85
 #
 # (*)	Comparison is not completely fair, because "this" is ECB,
 #	i.e. no extra processing such as counter values calculation
@@ -87,6 +88,7 @@
 # Nehalem	7.80
 # Atom		17.9
 # Silvermont	14.0
+# Goldmont	10.2
 #
 # November 2011.
 #
@@ -129,7 +131,7 @@ my @s=@_[12..15];
 
 sub InBasisChange {
 # input in  lsb > [b0, b1, b2, b3, b4, b5, b6, b7] < msb
-# output in lsb > [b6, b5, b0, b3, b7, b1, b4, b2] < msb 
+# output in lsb > [b6, b5, b0, b3, b7, b1, b4, b2] < msb
 my @b=@_[0..7];
 $code.=<<___;
 	pxor	@b[6], @b[5]
@@ -379,7 +381,7 @@ $code.=<<___;
 	pxor	@s[0], @t[3]
 	pxor	@s[1], @t[2]
 	pxor	@s[2], @t[1]
-	pxor	@s[3], @t[0] 
+	pxor	@s[3], @t[0]
 
 	#Inv_GF16 \t0, \t1, \t2, \t3, \s0, \s1, \s2, \s3
 

@@ -805,7 +805,7 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_txt(X509_NAME_ENTRY **ne,
                                                const unsigned char *bytes,
                                                int len);
 X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_NID(X509_NAME_ENTRY **ne, int nid,
-                                               int type, 
+                                               int type,
                                                const unsigned char *bytes,
                                                int len);
 int X509_NAME_add_entry_by_txt(X509_NAME *name, const char *field, int type,

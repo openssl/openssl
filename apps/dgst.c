@@ -36,7 +36,7 @@ typedef enum OPTION_choice {
     OPT_DIGEST
 } OPTION_CHOICE;
 
-OPTIONS dgst_options[] = {
+const OPTIONS dgst_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [file...]\n"},
     {OPT_HELP_STR, 1, '-',
         "  file... files to digest (default is stdin)\n"},
@@ -185,6 +185,10 @@ int dgst_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+    if (keyfile != NULL && argc > 1) {
+        BIO_printf(bio_err, "%s: Can only sign or verify one file.\n", prog);
+        goto end;
+    }
 
     if (do_verify && !sigfile) {
         BIO_printf(bio_err,
@@ -394,6 +398,7 @@ int dgst_main(int argc, char **argv)
     sk_OPENSSL_STRING_free(macopts);
     OPENSSL_free(sigbuf);
     BIO_free(bmd);
+    release_engine(e);
     return (ret);
 }
 

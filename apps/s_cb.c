@@ -213,6 +213,26 @@ static void ssl_print_client_cert_types(BIO *bio, SSL *s)
     BIO_puts(bio, "\n");
 }
 
+static const char *get_sigtype(int nid)
+{
+    switch (nid) {
+    case EVP_PKEY_RSA:
+        return "RSA";
+
+    case EVP_PKEY_RSA_PSS:
+        return "RSA-PSS";
+
+    case EVP_PKEY_DSA:
+        return "DSA";
+
+     case EVP_PKEY_EC:
+        return "ECDSA";
+
+    default:
+        return NULL;
+    }
+}
+
 static int do_print_sigalgs(BIO *out, SSL *s, int shared)
 {
     int i, nsig, client;
@@ -241,12 +261,7 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
             SSL_get_sigalgs(s, i, &sign_nid, &hash_nid, NULL, &rsign, &rhash);
         if (i)
             BIO_puts(out, ":");
-        if (sign_nid == EVP_PKEY_RSA)
-            sstr = "RSA";
-        else if (sign_nid == EVP_PKEY_DSA)
-            sstr = "DSA";
-        else if (sign_nid == EVP_PKEY_EC)
-            sstr = "ECDSA";
+        sstr = get_sigtype(sign_nid);
         if (sstr)
             BIO_printf(out, "%s+", sstr);
         else
@@ -262,13 +277,15 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
 
 int ssl_print_sigalgs(BIO *out, SSL *s)
 {
-    int mdnid;
+    int nid;
     if (!SSL_is_server(s))
         ssl_print_client_cert_types(out, s);
     do_print_sigalgs(out, s, 0);
     do_print_sigalgs(out, s, 1);
-    if (SSL_get_peer_signature_nid(s, &mdnid))
-        BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(mdnid));
+    if (SSL_get_peer_signature_nid(s, &nid))
+        BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(nid));
+    if (SSL_get_peer_signature_type_nid(s, &nid))
+        BIO_printf(bio_err, "Peer signature type: %s\n", get_sigtype(nid));
     return 1;
 }
 
@@ -307,50 +324,52 @@ int ssl_print_point_formats(BIO *out, SSL *s)
     return 1;
 }
 
-int ssl_print_curves(BIO *out, SSL *s, int noshared)
+int ssl_print_groups(BIO *out, SSL *s, int noshared)
 {
-    int i, ncurves, *curves, nid;
-    const char *cname;
+    int i, ngroups, *groups, nid;
+    const char *gname;
 
-    ncurves = SSL_get1_curves(s, NULL);
-    if (ncurves <= 0)
+    ngroups = SSL_get1_groups(s, NULL);
+    if (ngroups <= 0)
         return 1;
-    curves = app_malloc(ncurves * sizeof(int), "curves to print");
-    SSL_get1_curves(s, curves);
+    groups = app_malloc(ngroups * sizeof(int), "groups to print");
+    SSL_get1_groups(s, groups);
 
-    BIO_puts(out, "Supported Elliptic Curves: ");
-    for (i = 0; i < ncurves; i++) {
+    BIO_puts(out, "Supported Elliptic Groups: ");
+    for (i = 0; i < ngroups; i++) {
         if (i)
             BIO_puts(out, ":");
-        nid = curves[i];
+        nid = groups[i];
         /* If unrecognised print out hex version */
         if (nid & TLSEXT_nid_unknown)
             BIO_printf(out, "0x%04X", nid & 0xFFFF);
         else {
+            /* TODO(TLS1.3): Get group name here */
             /* Use NIST name for curve if it exists */
-            cname = EC_curve_nid2nist(nid);
-            if (!cname)
-                cname = OBJ_nid2sn(nid);
-            BIO_printf(out, "%s", cname);
+            gname = EC_curve_nid2nist(nid);
+            if (!gname)
+                gname = OBJ_nid2sn(nid);
+            BIO_printf(out, "%s", gname);
         }
     }
-    OPENSSL_free(curves);
+    OPENSSL_free(groups);
     if (noshared) {
         BIO_puts(out, "\n");
         return 1;
     }
-    BIO_puts(out, "\nShared Elliptic curves: ");
-    ncurves = SSL_get_shared_curve(s, -1);
-    for (i = 0; i < ncurves; i++) {
+    BIO_puts(out, "\nShared Elliptic groups: ");
+    ngroups = SSL_get_shared_group(s, -1);
+    for (i = 0; i < ngroups; i++) {
         if (i)
             BIO_puts(out, ":");
-        nid = SSL_get_shared_curve(s, i);
-        cname = EC_curve_nid2nist(nid);
-        if (!cname)
-            cname = OBJ_nid2sn(nid);
-        BIO_printf(out, "%s", cname);
+        nid = SSL_get_shared_group(s, i);
+        /* TODO(TLS1.3): Convert for DH groups */
+        gname = EC_curve_nid2nist(nid);
+        if (!gname)
+            gname = OBJ_nid2sn(nid);
+        BIO_printf(out, "%s", gname);
     }
-    if (ncurves == 0)
+    if (ngroups == 0)
         BIO_puts(out, "NONE");
     BIO_puts(out, "\n");
     return 1;
@@ -453,6 +472,7 @@ static STRINT_PAIR ssl_versions[] = {
     {"TLS 1.0", TLS1_VERSION},
     {"TLS 1.1", TLS1_1_VERSION},
     {"TLS 1.2", TLS1_2_VERSION},
+    {"TLS 1.3", TLS1_3_VERSION},
     {"DTLS 1.0", DTLS1_VERSION},
     {"DTLS 1.0 (bad)", DTLS1_BAD_VER},
     {NULL}
@@ -522,6 +542,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
         version == TLS1_VERSION ||
         version == TLS1_1_VERSION ||
         version == TLS1_2_VERSION ||
+        version == TLS1_3_VERSION ||
         version == DTLS1_VERSION || version == DTLS1_BAD_VER) {
         switch (content_type) {
         case 20:
@@ -602,7 +623,7 @@ static STRINT_PAIR tlsext_types[] = {
     {"client authz", TLSEXT_TYPE_client_authz},
     {"server authz", TLSEXT_TYPE_server_authz},
     {"cert type", TLSEXT_TYPE_cert_type},
-    {"elliptic curves", TLSEXT_TYPE_elliptic_curves},
+    {"supported_groups", TLSEXT_TYPE_supported_groups},
     {"EC point formats", TLSEXT_TYPE_ec_point_formats},
     {"SRP", TLSEXT_TYPE_srp},
     {"signature algorithms", TLSEXT_TYPE_signature_algorithms},
@@ -1084,6 +1105,8 @@ void print_ssl_summary(SSL *s)
         BIO_puts(bio_err, "\n");
         if (SSL_get_peer_signature_nid(s, &nid))
             BIO_printf(bio_err, "Hash used: %s\n", OBJ_nid2sn(nid));
+        if (SSL_get_peer_signature_type_nid(s, &nid))
+            BIO_printf(bio_err, "Signature type: %s\n", get_sigtype(nid));
         print_verify_detail(s, bio_err);
     } else
         BIO_puts(bio_err, "No peer certificate\n");
@@ -1091,7 +1114,7 @@ void print_ssl_summary(SSL *s)
 #ifndef OPENSSL_NO_EC
     ssl_print_point_formats(bio_err, s);
     if (SSL_is_server(s))
-        ssl_print_curves(bio_err, s, 1);
+        ssl_print_groups(bio_err, s, 1);
     else
         ssl_print_tmp_key(bio_err, s);
 #else

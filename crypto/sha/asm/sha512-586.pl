@@ -32,10 +32,12 @@
 # Sandy Bridge	58	-	35	11.9	11.2
 # Ivy Bridge	50	-	33	11.5	8.17
 # Haswell	46	-	29	11.3	7.66
+# Skylake	40	-	26	13.3	7.25
 # Bulldozer	121	-	50	14.0	13.5
 # VIA Nano	91	-	52	33	14.7
 # Atom		126	-	68	48(***)	14.7
 # Silvermont	97	-	58	42(***)	17.5
+# Goldmont	80	-	48	19.5	12.0
 #
 # (*)	whichever best applicable.
 # (**)	x86_64 assembler performance is presented for reference
@@ -383,7 +385,7 @@ if ($sse2) {
 
 &set_label("16_79_sse2",16);
     for ($j=0;$j<2;$j++) {			# 2x unroll
-	#&movq	("mm7",&QWP(8*(9+16-1),"esp"));	# prefetched in BODY_00_15 
+	#&movq	("mm7",&QWP(8*(9+16-1),"esp"));	# prefetched in BODY_00_15
 	&movq	("mm5",&QWP(8*(9+16-14),"esp"));
 	&movq	("mm1","mm7");
 	&psrlq	("mm7",1);

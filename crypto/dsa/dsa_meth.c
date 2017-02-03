@@ -21,19 +21,20 @@
 
 DSA_METHOD *DSA_meth_new(const char *name, int flags)
 {
-    DSA_METHOD *dsam = OPENSSL_zalloc(sizeof(DSA_METHOD));
+    DSA_METHOD *dsam = OPENSSL_zalloc(sizeof(*dsam));
 
     if (dsam != NULL) {
-        dsam->name = OPENSSL_strdup(name);
-        if (dsam->name == NULL) {
-            OPENSSL_free(dsam);
-            DSAerr(DSA_F_DSA_METH_NEW, ERR_R_MALLOC_FAILURE);
-            return NULL;
-        }
         dsam->flags = flags;
+
+        dsam->name = OPENSSL_strdup(name);
+        if (dsam->name != NULL)
+            return dsam;
+
+        OPENSSL_free(dsam);
     }
 
-    return dsam;
+    DSAerr(DSA_F_DSA_METH_NEW, ERR_R_MALLOC_FAILURE);
+    return NULL;
 }
 
 void DSA_meth_free(DSA_METHOD *dsam)
@@ -46,21 +47,20 @@ void DSA_meth_free(DSA_METHOD *dsam)
 
 DSA_METHOD *DSA_meth_dup(const DSA_METHOD *dsam)
 {
-    DSA_METHOD *ret;
-
-    ret = OPENSSL_malloc(sizeof(DSA_METHOD));
+    DSA_METHOD *ret = OPENSSL_malloc(sizeof(*ret));
 
     if (ret != NULL) {
         memcpy(ret, dsam, sizeof(*dsam));
+
         ret->name = OPENSSL_strdup(dsam->name);
-        if (ret->name == NULL) {
-            OPENSSL_free(ret);
-            DSAerr(DSA_F_DSA_METH_DUP, ERR_R_MALLOC_FAILURE);
-            return NULL;
-        }
+        if (ret->name != NULL)
+            return ret;
+
+        OPENSSL_free(ret);
     }
 
-    return ret;
+    DSAerr(DSA_F_DSA_METH_DUP, ERR_R_MALLOC_FAILURE);
+    return NULL;
 }
 
 const char *DSA_meth_get0_name(const DSA_METHOD *dsam)
@@ -70,9 +70,8 @@ const char *DSA_meth_get0_name(const DSA_METHOD *dsam)
 
 int DSA_meth_set1_name(DSA_METHOD *dsam, const char *name)
 {
-    char *tmpname;
+    char *tmpname = OPENSSL_strdup(name);
 
-    tmpname = OPENSSL_strdup(name);
     if (tmpname == NULL) {
         DSAerr(DSA_F_DSA_METH_SET1_NAME, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -133,7 +132,7 @@ int DSA_meth_set_sign_setup(DSA_METHOD *dsam,
 }
 
 int (*DSA_meth_get_verify(const DSA_METHOD *dsam))
-        (const unsigned char *, int , DSA_SIG *, DSA *)
+        (const unsigned char *, int, DSA_SIG *, DSA *)
 {
     return dsam->dsa_do_verify;
 }

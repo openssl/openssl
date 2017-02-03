@@ -180,7 +180,6 @@ static int test_certs(BIO *fp)
 int main(int argc, char *argv[])
 {
     BIO *bio_err;
-    const char *certfile;
     const char *p;
     int ret = 1;
 
@@ -197,24 +196,30 @@ int main(int argc, char *argv[])
         CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-    while ((certfile = *++argv) != NULL) {
-        BIO *f = BIO_new_file(certfile, "r");
+    argc--;
+    argv++;
+
+    while (argc >= 1) {
+        BIO *f = BIO_new_file(*argv, "r");
         int ok;
 
         if (f == NULL) {
             fprintf(stderr, "%s: Error opening cert file: '%s': %s\n",
-                    progname, certfile, strerror(errno));
+                    progname, *argv, strerror(errno));
             EXIT(ret);
         }
         ret = !(ok = test_certs(f));
         BIO_free(f);
 
         if (!ok) {
-            printf("%s ERROR\n", certfile);
+            printf("%s ERROR\n", *argv);
             ret = 1;
             break;
         }
-        printf("%s OK\n", certfile);
+        printf("%s OK\n", *argv);
+
+        argc--;
+        argv++;
     }
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG

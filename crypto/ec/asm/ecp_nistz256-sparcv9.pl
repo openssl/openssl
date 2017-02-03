@@ -1874,7 +1874,7 @@ $code.=<<___	if ($i<3);
 	ldx	[$bp+8*($i+1)],$bi	! bp[$i+1]
 ___
 $code.=<<___;
-	addcc	$acc1,$t0,$acc1		! accumulate high parts of multiplication 
+	addcc	$acc1,$t0,$acc1		! accumulate high parts of multiplication
 	 sllx	$acc0,32,$t0
 	addxccc	$acc2,$t1,$acc2
 	 srlx	$acc0,32,$t1

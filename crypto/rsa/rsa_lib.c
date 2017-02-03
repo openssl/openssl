@@ -13,6 +13,8 @@
 #include <openssl/lhash.h>
 #include "internal/bn_int.h"
 #include <openssl/engine.h>
+#include <openssl/evp.h>
+#include "internal/evp_int.h"
 #include "rsa_locl.h"
 
 static const RSA_METHOD *default_RSA_meth = NULL;
@@ -128,7 +130,7 @@ void RSA_free(RSA *r)
     if (r == NULL)
         return;
 
-    CRYPTO_atomic_add(&r->references, -1, &i, r->lock);
+    CRYPTO_DOWN_REF(&r->references, &i, r->lock);
     REF_PRINT_COUNT("RSA", r);
     if (i > 0)
         return;
@@ -152,6 +154,7 @@ void RSA_free(RSA *r)
     BN_clear_free(r->dmp1);
     BN_clear_free(r->dmq1);
     BN_clear_free(r->iqmp);
+    RSA_PSS_PARAMS_free(r->pss);
     BN_BLINDING_free(r->blinding);
     BN_BLINDING_free(r->mt_blinding);
     OPENSSL_free(r->bignum_data);
@@ -162,7 +165,7 @@ int RSA_up_ref(RSA *r)
 {
     int i;
 
-    if (CRYPTO_atomic_add(&r->references, 1, &i, r->lock) <= 0)
+    if (CRYPTO_UP_REF(&r->references, &i, r->lock) <= 0)
         return 0;
 
     REF_PRINT_COUNT("RSA", r);
@@ -307,4 +310,14 @@ void RSA_set_flags(RSA *r, int flags)
 ENGINE *RSA_get0_engine(const RSA *r)
 {
     return r->engine;
+}
+
+int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2)
+{
+    /* If key type not RSA or RSA-PSS return error */
+    if (ctx != NULL && ctx->pmeth != NULL
+        && ctx->pmeth->pkey_id != EVP_PKEY_RSA
+        && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+        return -1;
+     return EVP_PKEY_CTX_ctrl(ctx, -1, optype, cmd, p1, p2);
 }

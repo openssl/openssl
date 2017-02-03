@@ -34,10 +34,10 @@ typedef enum OPTION_choice {
     OPT_PUBOUT, OPT_CIPHER, OPT_PASSIN, OPT_PASSOUT
 } OPTION_CHOICE;
 
-OPTIONS dsa_options[] = {
+const OPTIONS dsa_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'f', "Input format, DER PEM PVK"},
-    {"outform", OPT_OUTFORM, 'F', "Output format, DER PEM PVK"},
+    {"outform", OPT_OUTFORM, 'f', "Output format, DER PEM PVK"},
     {"in", OPT_IN, 's', "Input key"},
     {"out", OPT_OUT, '>', "Output file"},
     {"noout", OPT_NOOUT, '-', "Don't print key out"},
@@ -96,8 +96,7 @@ int dsa_main(int argc, char **argv)
             infile = opt_arg();
             break;
         case OPT_OUTFORM:
-            if (!opt_format
-                (opt_arg(), OPT_FMT_PEMDER | OPT_FMT_PVK, &outformat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &outformat))
                 goto opthelp;
             break;
         case OPT_OUT:
@@ -214,7 +213,7 @@ int dsa_main(int argc, char **argv)
             i = PEM_write_bio_DSAPrivateKey(out, dsa, enc,
                                             NULL, 0, NULL, passout);
         }
-# if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_RC4)
+# ifndef OPENSSL_NO_RSA
     } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
         EVP_PKEY *pk;
         pk = EVP_PKEY_new();
@@ -226,7 +225,13 @@ int dsa_main(int argc, char **argv)
                 goto end;
             }
             assert(private);
+#  ifdef OPENSSL_NO_RC4
+            BIO_printf(bio_err, "PVK format not supported\n");
+            EVP_PKEY_free(pk);
+            goto end;
+#  else
             i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
+#  endif
         }
         else if (pubin || pubout)
             i = i2b_PublicKey_bio(out, pk);
@@ -249,6 +254,7 @@ int dsa_main(int argc, char **argv)
  end:
     BIO_free_all(out);
     DSA_free(dsa);
+    release_engine(e);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
     return (ret);

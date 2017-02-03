@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[6772] = {
+static const unsigned char so[6775] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -961,10 +961,10 @@ static const unsigned char so[6772] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x13,  /* [ 6731] OBJ_id_smime_ct_contentCollection */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x17,  /* [ 6742] OBJ_id_smime_ct_authEnvelopedData */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x1C,  /* [ 6753] OBJ_id_ct_xml */
-    0x2A,0x85,0x03,0x02,0x09,0x07,0x7B,            /* [ 6764] OBJ_smtputf8Name */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x00,0x12,0x08,0x09,  /* [ 6764] OBJ_SmtpUtf8Name */
 };
 
-#define NUM_NID 1062
+#define NUM_NID 1064
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2027,10 +2027,12 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-smime-ct-contentCollection", "id-smime-ct-contentCollection", NID_id_smime_ct_contentCollection, 11, &so[6731]},
     {"id-smime-ct-authEnvelopedData", "id-smime-ct-authEnvelopedData", NID_id_smime_ct_authEnvelopedData, 11, &so[6742]},
     {"id-ct-xml", "id-ct-xml", NID_id_ct_xml, 11, &so[6753]},
-    {"smtputf8Name", "smtputf8Name", NID_smtputf8Name, 7, &so[6764]},
+    {"Poly1305", "poly1305", NID_poly1305},
+    {"SipHash", "siphash", NID_siphash},
+    {"SmtpUtf8Name", "SmtpUtf8Name", NID_SmtpUtf8Name, 10, &so[6764]},
 };
 
-#define NUM_SN 1053
+#define NUM_SN 1055
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2210,6 +2212,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      162,    /* "PBMAC1" */
      127,    /* "PKIX" */
      935,    /* "PSPECIFIED" */
+    1061,    /* "Poly1305" */
       98,    /* "RC2-40-CBC" */
      166,    /* "RC2-64-CBC" */
       37,    /* "RC2-CBC" */
@@ -2256,6 +2259,8 @@ static const unsigned int sn_objs[NUM_SN] = {
     1006,    /* "SNILS" */
       16,    /* "ST" */
      143,    /* "SXNetID" */
+    1062,    /* "SipHash" */
+    1063,    /* "SmtpUtf8Name" */
     1021,    /* "TLS1-PRF" */
      458,    /* "UID" */
        0,    /* "UNDEF" */
@@ -3035,7 +3040,6 @@ static const unsigned int sn_objs[NUM_SN] = {
       52,    /* "signingTime" */
      454,    /* "simpleSecurityObject" */
      496,    /* "singleLevelQuality" */
-    1061,    /* "smtputf8Name" */
      387,    /* "snmpv2" */
      660,    /* "street" */
       85,    /* "subjectAltName" */
@@ -3087,7 +3091,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      160,    /* "x509Crl" */
 };
 
-#define NUM_LN 1053
+#define NUM_LN 1055
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3222,6 +3226,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1033,    /* "Signing KDC Response" */
     1008,    /* "Signing Tool of Issuer" */
     1007,    /* "Signing Tool of Subject" */
+    1063,    /* "SmtpUtf8Name" */
      143,    /* "Strong Extranet ID" */
      398,    /* "Subject Information Access" */
     1020,    /* "TLS Feature" */
@@ -3869,6 +3874,7 @@ static const unsigned int ln_objs[NUM_LN] = {
       22,    /* "pkcs7-signedData" */
      151,    /* "pkcs8ShroudedKeyBag" */
       47,    /* "pkcs9" */
+    1061,    /* "poly1305" */
      862,    /* "postOfficeBox" */
      861,    /* "postalAddress" */
      661,    /* "postalCode" */
@@ -4096,7 +4102,7 @@ static const unsigned int ln_objs[NUM_LN] = {
       52,    /* "signingTime" */
      454,    /* "simpleSecurityObject" */
      496,    /* "singleLevelQuality" */
-    1061,    /* "smtputf8Name" */
+    1062,    /* "siphash" */
       16,    /* "stateOrProvinceName" */
      660,    /* "streetAddress" */
      498,    /* "subtreeMaximumQuality" */
@@ -4525,7 +4531,6 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      842,    /* OBJ_id_GostR3410_2001_CryptoPro_C_ParamSet 1 2 643 2 2 35 3 */
      843,    /* OBJ_id_GostR3410_2001_CryptoPro_XchA_ParamSet 1 2 643 2 2 36 0 */
      844,    /* OBJ_id_GostR3410_2001_CryptoPro_XchB_ParamSet 1 2 643 2 2 36 1 */
-    1061,    /* OBJ_smtputf8Name                 1 2 643 2 9 7 123 */
      978,    /* OBJ_id_tc26_sign                 1 2 643 7 1 1 1 */
      981,    /* OBJ_id_tc26_digest               1 2 643 7 1 1 2 */
      984,    /* OBJ_id_tc26_signwithdigest       1 2 643 7 1 1 3 */
@@ -5017,6 +5022,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      952,    /* OBJ_ct_precert_poison            1 3 6 1 4 1 11129 2 4 3 */
      953,    /* OBJ_ct_precert_signer            1 3 6 1 4 1 11129 2 4 4 */
      954,    /* OBJ_ct_cert_scts                 1 3 6 1 4 1 11129 2 4 5 */
+    1063,    /* OBJ_SmtpUtf8Name                 1 3 6 1 5 5 7 0 18 8 9 */
      751,    /* OBJ_camellia_128_cbc             1 2 392 200011 61 1 1 1 2 */
      752,    /* OBJ_camellia_192_cbc             1 2 392 200011 61 1 1 1 3 */
      753,    /* OBJ_camellia_256_cbc             1 2 392 200011 61 1 1 1 4 */

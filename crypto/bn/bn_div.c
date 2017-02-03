@@ -105,7 +105,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
         ({  asm volatile (                      \
                 "divl   %4"                     \
                 : "=a"(q), "=d"(rem)            \
-                : "a"(n1), "d"(n0), "g"(d0)     \
+                : "a"(n1), "d"(n0), "r"(d0)     \
                 : "cc");                        \
             q;                                  \
         })
@@ -120,7 +120,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
         ({  asm volatile (                      \
                 "divq   %4"                     \
                 : "=a"(q), "=d"(rem)            \
-                : "a"(n1), "d"(n0), "g"(d0)     \
+                : "a"(n1), "d"(n0), "r"(d0)     \
                 : "cc");                        \
             q;                                  \
         })
@@ -254,9 +254,9 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     wnump = &(snum->d[num_n - 1]);
 
     /* Setup to 'res' */
-    res->neg = (num->neg ^ divisor->neg);
     if (!bn_wexpand(res, (loop + 1)))
         goto err;
+    res->neg = (num->neg ^ divisor->neg);
     res->top = loop - no_branch;
     resp = &(res->d[loop - 1]);
 

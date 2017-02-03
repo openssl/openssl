@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/numbers.h"
 #include <openssl/stack.h>
 #include <openssl/objects.h>
 
@@ -16,7 +17,7 @@ struct stack_st {
     int num;
     const char **data;
     int sorted;
-    int num_alloc;
+    size_t num_alloc;
     OPENSSL_sk_compfunc comp;
 };
 
@@ -40,6 +41,9 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
 {
     OPENSSL_STACK *ret;
 
+    if (sk->num < 0)
+        return NULL;
+
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         return NULL;
 
@@ -62,13 +66,16 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
     OPENSSL_STACK *ret;
     int i;
 
+    if (sk->num < 0)
+        return NULL;
+
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         return NULL;
 
     /* direct structure assignment */
     *ret = *sk;
 
-    ret->num_alloc = sk->num > MIN_NODES ? sk->num : MIN_NODES;
+    ret->num_alloc = sk->num > MIN_NODES ? (size_t)sk->num : MIN_NODES;
     ret->data = OPENSSL_zalloc(sizeof(*ret->data) * ret->num_alloc);
     if (ret->data == NULL) {
         OPENSSL_free(ret);
@@ -113,28 +120,40 @@ OPENSSL_STACK *OPENSSL_sk_new(OPENSSL_sk_compfunc c)
 
 int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
 {
-    const char **s;
-
-    if (st == NULL)
+    if (st == NULL || st->num < 0 || st->num == INT_MAX) {
         return 0;
-    if (st->num_alloc <= st->num + 1) {
-        s = OPENSSL_realloc((char *)st->data,
-                            (unsigned int)sizeof(char *) * st->num_alloc * 2);
-        if (s == NULL)
-            return (0);
-        st->data = s;
-        st->num_alloc *= 2;
     }
-    if ((loc >= (int)st->num) || (loc < 0))
+
+    if (st->num_alloc <= (size_t)(st->num + 1)) {
+        size_t doub_num_alloc = st->num_alloc * 2;
+        const char **tmpdata;
+
+        /* Overflow checks */
+        if (doub_num_alloc < st->num_alloc)
+            return 0;
+
+        /* Avoid overflow due to multiplication by sizeof(char *) */
+        if (doub_num_alloc > SIZE_MAX / sizeof(char *))
+            return 0;
+
+        tmpdata = OPENSSL_realloc((char *)st->data,
+                                  sizeof(char *) * doub_num_alloc);
+        if (tmpdata == NULL)
+            return 0;
+
+        st->data = tmpdata;
+        st->num_alloc = doub_num_alloc;
+    }
+    if ((loc >= st->num) || (loc < 0)) {
         st->data[st->num] = data;
-    else {
+    } else {
         memmove(&st->data[loc + 1], &st->data[loc],
                 sizeof(st->data[0]) * (st->num - loc));
         st->data[loc] = data;
     }
     st->num++;
     st->sorted = 0;
-    return (st->num);
+    return st->num;
 }
 
 void *OPENSSL_sk_delete_ptr(OPENSSL_STACK *st, const void *p)

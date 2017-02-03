@@ -22,7 +22,7 @@ The number {nn} is (somewhat loosely) grouped as follows:
 05  individual symmetric cipher algorithms
 10  math (bignum)
 15  individual asymmetric cipher algorithms
-20  openssl enc
+20  openssl commands (some otherwise not tested)
 25  certificate forms, generation and verification
 30  engine and evp
 70  PACKET layer

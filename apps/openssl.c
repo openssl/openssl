@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
     EXIT(ret);
 }
 
-OPTIONS exit_options[] = {
+const OPTIONS exit_options[] = {
     {NULL}
 };
 
@@ -296,15 +296,33 @@ static void list_md_fn(const EVP_MD *m,
     }
 }
 
+static void list_missing_help(void)
+{
+    const FUNCTION *fp;
+    const OPTIONS *o;
+
+    for (fp = functions; fp->name != NULL; fp++) {
+        if ((o = fp->help) == NULL) {
+            BIO_printf(bio_out, "%s *\n", fp->name);
+            continue;
+        }
+        for ( ; o->name != NULL; o++) {
+            if (o->helpstr == NULL)
+                BIO_printf(bio_out, "%s %s\n", fp->name, o->name);
+        }
+    }
+}
+
+
 /* Unified enum for help and list commands. */
 typedef enum HELPLIST_CHOICE {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_COMMANDS, OPT_DIGEST_COMMANDS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
-    OPT_PK_ALGORITHMS, OPT_DISABLED
+    OPT_PK_ALGORITHMS, OPT_DISABLED, OPT_MISSING_HELP
 } HELPLIST_CHOICE;
 
-OPTIONS list_options[] = {
+const OPTIONS list_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"commands", OPT_COMMANDS, '-', "List of standard commands"},
     {"digest-commands", OPT_DIGEST_COMMANDS, '-',
@@ -318,6 +336,8 @@ OPTIONS list_options[] = {
      "List of public key algorithms"},
     {"disabled", OPT_DISABLED, '-',
      "List of disabled features"},
+    {"missing-help", OPT_MISSING_HELP, '-',
+     "List missing detailed help strings"},
     {NULL}
 };
 
@@ -358,6 +378,9 @@ int list_main(int argc, char **argv)
         case OPT_DISABLED:
             list_disabled();
             break;
+        case OPT_MISSING_HELP:
+            list_missing_help();
+            break;
         }
         done = 1;
     }
@@ -370,10 +393,15 @@ int list_main(int argc, char **argv)
     return 0;
 }
 
-OPTIONS help_options[] = {
-    {"help", OPT_HELP, '-', "Display this summary"},
+typedef enum HELP_CHOICE {
+    OPT_hERR = -1, OPT_hEOF = 0, OPT_hHELP
+} HELP_CHOICE;
+
+const OPTIONS help_options[] = {
+    {"help", OPT_hHELP, '-', "Display this summary"},
     {NULL}
 };
+
 
 int help_main(int argc, char **argv)
 {
@@ -381,15 +409,16 @@ int help_main(int argc, char **argv)
     int i, nl;
     FUNC_TYPE tp;
     char *prog;
-    HELPLIST_CHOICE o;
+    HELP_CHOICE o;
 
     prog = opt_init(argc, argv, help_options);
-    while ((o = opt_next()) != OPT_EOF) {
+    while ((o = opt_next()) != OPT_hEOF) {
         switch (o) {
-        default:
+        case OPT_hERR:
+        case OPT_hEOF:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             return 1;
-        case OPT_HELP:
+        case OPT_hHELP:
             opt_help(help_options);
             return 0;
         }
@@ -548,7 +577,7 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_BF
     BIO_puts(bio_out, "BF\n");
 #endif
-#ifndef OPENSSL_NO_BLAKE2
+#ifdef OPENSSL_NO_BLAKE2
     BIO_puts(bio_out, "BLAKE2\n");
 #endif
 #ifdef OPENSSL_NO_CAMELLIA

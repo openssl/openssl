@@ -90,6 +90,7 @@ static char *keymatexportlabel = NULL;
 static int keymatexportlen = 20;
 static BIO *bio_c_out = NULL;
 static int c_quiet = 0;
+static char *sess_out = NULL;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
 #ifndef OPENSSL_NO_OCSP
@@ -539,7 +540,7 @@ typedef enum OPTION_choice {
     OPT_SRP_MOREGROUPS,
 #endif
     OPT_SSL3, OPT_SSL_CONFIG,
-    OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
+    OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM, OPT_PASS,
     OPT_CERT_CHAIN, OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH,
         OPT_VERIFYCAPATH,
@@ -558,7 +559,7 @@ typedef enum OPTION_choice {
     OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME
 } OPTION_CHOICE;
 
-OPTIONS s_client_options[] = {
+const OPTIONS s_client_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"host", OPT_HOST, 's', "Use -connect instead"},
     {"port", OPT_PORT, 'p', "Use -connect instead"},
@@ -567,7 +568,7 @@ OPTIONS s_client_options[] = {
     {"proxy", OPT_PROXY, 's',
      "Connect to via specified proxy to the real server"},
 #ifdef AF_UNIX
-    {"unix", OPT_UNIX, 's', "Connect over unix domain sockets"},
+    {"unix", OPT_UNIX, 's', "Connect over the specified Unix-domain socket"},
 #endif
     {"4", OPT_4, '-', "Use IPv4 only"},
 #ifdef AF_INET6
@@ -577,8 +578,8 @@ OPTIONS s_client_options[] = {
     {"cert", OPT_CERT, '<', "Certificate file to use, PEM format assumed"},
     {"certform", OPT_CERTFORM, 'F',
      "Certificate format (PEM or DER) PEM default"},
-    {"key", OPT_KEY, '<', "Private key file to use, if not in -cert file"},
-    {"keyform", OPT_KEYFORM, 'F', "Key format (PEM or DER) PEM default"},
+    {"key", OPT_KEY, 's', "Private key file to use, if not in -cert file"},
+    {"keyform", OPT_KEYFORM, 'E', "Key format (PEM, DER or engine) PEM default"},
     {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
     {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
     {"CAfile", OPT_CAFILE, '<', "PEM format file of CA's"},
@@ -619,7 +620,8 @@ OPTIONS s_client_options[] = {
     {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
      "Export len bytes of keying material (default 20)"},
     {"fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV"},
-    {"name", OPT_SMTPHOST, 's', "Hostname to use for \"-starttls smtp\""},
+    {"name", OPT_SMTPHOST, 's',
+     "Hostname to use for \"-starttls lmtp\" or \"-starttls smtp\""},
     {"CRL", OPT_CRL, '<', "CRL file to use"},
     {"crl_download", OPT_CRL_DOWNLOAD, '-', "Download CRL from distribution points"},
     {"CRLform", OPT_CRLFORM, 'F', "CRL format (PEM or DER) PEM is default"},
@@ -680,6 +682,9 @@ OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_TLS1_2
     {"tls1_2", OPT_TLS1_2, '-', "Just use TLSv1.2"},
 #endif
+#ifndef OPENSSL_NO_TLS1_3
+    {"tls1_3", OPT_TLS1_3, '-', "Just use TLSv1.3"},
+#endif
 #ifndef OPENSSL_NO_DTLS
     {"dtls", OPT_DTLS, '-', "Use any version of DTLS"},
     {"timeout", OPT_TIMEOUT, '-',
@@ -739,7 +744,9 @@ typedef enum PROTOCOL_choice {
     PROTO_XMPP,
     PROTO_XMPP_SERVER,
     PROTO_CONNECT,
-    PROTO_IRC
+    PROTO_IRC,
+    PROTO_POSTGRES,
+    PROTO_LMTP
 } PROTOCOL_CHOICE;
 
 static const OPT_PAIR services[] = {
@@ -751,6 +758,8 @@ static const OPT_PAIR services[] = {
     {"xmpp-server", PROTO_XMPP_SERVER},
     {"telnet", PROTO_TELNET},
     {"irc", PROTO_IRC},
+    {"postgres", PROTO_POSTGRES},
+    {"lmtp", PROTO_LMTP},
     {NULL, 0}
 };
 
@@ -760,7 +769,7 @@ static const OPT_PAIR services[] = {
 
 #define IS_PROT_FLAG(o) \
  (o == OPT_SSL3 || o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
-  || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2)
+  || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2)
 
 /* Free |*dest| and optionally set it to a copy of |source|. */
 static void freeandcopy(char **dest, const char *source)
@@ -769,6 +778,24 @@ static void freeandcopy(char **dest, const char *source)
     *dest = NULL;
     if (source != NULL)
         *dest = OPENSSL_strdup(source);
+}
+
+static int new_session_cb(SSL *S, SSL_SESSION *sess)
+{
+    BIO *stmp = BIO_new_file(sess_out, "w");
+
+    if (stmp == NULL) {
+        BIO_printf(bio_err, "Error writing session file %s\n", sess_out);
+    } else {
+        PEM_write_bio_SSL_SESSION(stmp, sess);
+        BIO_free(stmp);
+    }
+
+    /*
+     * We always return a "fail" response so that the session gets freed again
+     * because we haven't used the reference.
+     */
+    return 0;
 }
 
 int s_client_main(int argc, char **argv)
@@ -796,7 +823,7 @@ int s_client_main(int argc, char **argv)
     char *port = OPENSSL_strdup(PORT);
     char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
-    char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
+    char *sess_in = NULL, *crl_file = NULL, *p;
     char *xmpphost = NULL;
     const char *ehlo = "mail.example.com";
     struct timeval timeout, *timeoutp;
@@ -812,7 +839,9 @@ int s_client_main(int argc, char **argv)
     int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM;
     int starttls_proto = PROTO_OFF, crl_format = FORMAT_PEM, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
     int at_eof = 0;
+#endif
     int read_buf_len = 0;
     int fallback_scsv = 0;
     long randamt = 0;
@@ -854,7 +883,10 @@ int s_client_main(int argc, char **argv)
     enum { use_inet, use_unix, use_unknown } connect_type = use_unknown;
     int count4or6 = 0;
     int c_nbio = 0, c_msg = 0, c_ign_eof = 0, c_brief = 0;
-    int c_tlsextdebug = 0, c_status_req = 0;
+    int c_tlsextdebug = 0;
+#ifndef OPENSSL_NO_OCSP
+    int c_status_req = 0;
+#endif
     BIO *bio_c_msg = NULL;
 
     FD_ZERO(&readfds);
@@ -1065,7 +1097,9 @@ int s_client_main(int argc, char **argv)
             c_tlsextdebug = 1;
             break;
         case OPT_STATUS:
+#ifndef OPENSSL_NO_OCSP
             c_status_req = 1;
+#endif
             break;
         case OPT_WDEBUG:
 #ifdef WATT32
@@ -1147,6 +1181,10 @@ int s_client_main(int argc, char **argv)
             min_version = SSL3_VERSION;
             max_version = SSL3_VERSION;
             break;
+        case OPT_TLS1_3:
+            min_version = TLS1_3_VERSION;
+            max_version = TLS1_3_VERSION;
+            break;
         case OPT_TLS1_2:
             min_version = TLS1_2_VERSION;
             max_version = TLS1_2_VERSION;
@@ -1195,7 +1233,7 @@ int s_client_main(int argc, char **argv)
             fallback_scsv = 1;
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &key_format))
+            if (!opt_format(opt_arg(), OPT_FMT_PDE, &key_format))
                 goto opthelp;
             break;
         case OPT_PASS:
@@ -1655,6 +1693,17 @@ int s_client_main(int argc, char **argv)
         }
     }
 
+    /*
+     * In TLSv1.3 NewSessionTicket messages arrive after the handshake and can
+     * come at any time. Therefore we use a callback to write out the session
+     * when we know about it. This approach works for < TLSv1.3 as well.
+     */
+    if (sess_out) {
+        SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT
+                                            | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+        SSL_CTX_sess_set_new_cb(ctx, new_session_cb);
+    }
+
     con = SSL_new(ctx);
     if (sess_in) {
         SSL_SESSION *sess;
@@ -1819,7 +1868,10 @@ int s_client_main(int argc, char **argv)
     SSL_set_connect_state(con);
 
     /* ok, lets connect */
-    width = SSL_get_fd(con) + 1;
+    if (fileno_stdin() > SSL_get_fd(con))
+        width = fileno_stdin() + 1;
+    else
+        width = SSL_get_fd(con) + 1;
 
     read_tty = 1;
     write_tty = 0;
@@ -1835,6 +1887,7 @@ int s_client_main(int argc, char **argv)
     switch ((PROTOCOL_CHOICE) starttls_proto) {
     case PROTO_OFF:
         break;
+    case PROTO_LMTP:
     case PROTO_SMTP:
         {
             /*
@@ -1848,14 +1901,20 @@ int s_client_main(int argc, char **argv)
             int foundit = 0;
             BIO *fbio = BIO_new(BIO_f_buffer());
             BIO_push(fbio, sbio);
-            /* wait for multi-line response to end from SMTP */
+            /* Wait for multi-line response to end from LMTP or SMTP */
             do {
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
             }
             while (mbuf_len > 3 && mbuf[3] == '-');
-            BIO_printf(fbio, "EHLO %s\r\n", ehlo);
+            if (starttls_proto == (int)PROTO_LMTP)
+                BIO_printf(fbio, "LHLO %s\r\n", ehlo);
+            else
+                BIO_printf(fbio, "EHLO %s\r\n", ehlo);
             (void)BIO_flush(fbio);
-            /* wait for multi-line response to end EHLO SMTP response */
+            /*
+             * Wait for multi-line response to end LHLO LMTP or EHLO SMTP
+             * response.
+             */
             do {
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
                 if (strstr(mbuf, "STARTTLS"))
@@ -1991,24 +2050,44 @@ int s_client_main(int argc, char **argv)
         break;
     case PROTO_CONNECT:
         {
-            int foundit = 0;
+            enum {
+                error_proto,     /* Wrong protocol, not even HTTP */
+                error_connect,   /* CONNECT failed */
+                success
+            } foundit = error_connect;
             BIO *fbio = BIO_new(BIO_f_buffer());
 
             BIO_push(fbio, sbio);
             BIO_printf(fbio, "CONNECT %s HTTP/1.0\r\n\r\n", connectstr);
             (void)BIO_flush(fbio);
-            /* wait for multi-line response to end CONNECT response */
-            do {
-                mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
-                if (strstr(mbuf, "200") != NULL
-                    && strstr(mbuf, "established") != NULL)
-                    foundit++;
-            } while (mbuf_len > 3 && foundit == 0);
+            /*
+             * The first line is the HTTP response.  According to RFC 7230,
+             * it's formated exactly like this:
+             *
+             * HTTP/d.d ddd Reason text\r\n
+             */
+            mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+            if (mbuf[8] != ' ') {
+                BIO_printf(bio_err,
+                           "%s: HTTP CONNECT failed, incorrect response "
+                           "from proxy\n", prog);
+                foundit = error_proto;
+            } else if (mbuf[9] != '2') {
+                BIO_printf(bio_err, "%s: HTTP CONNECT failed: %s ", prog,
+                           &mbuf[9]);
+            } else {
+                foundit = success;
+            }
+            if (foundit != error_proto) {
+                /* Read past all following headers */
+                do {
+                    mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+                } while (mbuf_len > 2);
+            }
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);
-            if (!foundit) {
-                BIO_printf(bio_err, "%s: HTTP CONNECT failed\n", prog);
+            if (foundit != success) {
                 goto shut;
             }
         }
@@ -2074,6 +2153,25 @@ int s_client_main(int argc, char **argv)
                 goto shut;
             }
         }
+        break;
+    case PROTO_POSTGRES:
+        {
+            static const unsigned char ssl_request[] = {
+                /* Length        SSLRequest */
+                   0, 0, 0, 8,   4, 210, 22, 47
+            };
+            int bytes;
+
+            /* Send SSLRequest packet */
+            BIO_write(sbio, ssl_request, 8);
+            (void)BIO_flush(sbio);
+
+            /* Reply will be a single S if SSL is enabled */
+            bytes = BIO_read(sbio, sbuf, BUFSIZZ);
+            if (bytes != 1 || sbuf[0] != 'S')
+                goto shut;
+        }
+        break;
     }
 
     for (;;) {
@@ -2100,15 +2198,6 @@ int s_client_main(int argc, char **argv)
                                tlsextcbp.ack ? "" : "not ");
                 }
 
-                if (sess_out) {
-                    BIO *stmp = BIO_new_file(sess_out, "w");
-                    if (stmp) {
-                        PEM_write_bio_SSL_SESSION(stmp, SSL_get_session(con));
-                        BIO_free(stmp);
-                    } else
-                        BIO_printf(bio_err, "Error writing session file %s\n",
-                                   sess_out);
-                }
                 if (c_brief) {
                     BIO_puts(bio_err, "CONNECTION ESTABLISHED\n");
                     print_ssl_summary(con);
@@ -2148,9 +2237,11 @@ int s_client_main(int argc, char **argv)
                  * set the flag so we exit.
                  */
                 if (read_tty && !at_eof)
-                    openssl_fdset(fileno(stdin), &readfds);
+                    openssl_fdset(fileno_stdin(), &readfds);
+#if !defined(OPENSSL_SYS_VMS)
                 if (write_tty)
-                    openssl_fdset(fileno(stdout), &writefds);
+                    openssl_fdset(fileno_stdout(), &writefds);
+#endif
             }
             if (read_ssl)
                 openssl_fdset(SSL_get_fd(con), &readfds);
@@ -2276,11 +2367,11 @@ int s_client_main(int argc, char **argv)
                 goto shut;
             }
         }
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_VMS)
         /* Assume Windows/DOS/BeOS can always write */
         else if (!ssl_pending && write_tty)
 #else
-        else if (!ssl_pending && FD_ISSET(fileno(stdout), &writefds))
+        else if (!ssl_pending && FD_ISSET(fileno_stdout(), &writefds))
 #endif
         {
 #ifdef CHARSET_EBCDIC
@@ -2295,7 +2386,7 @@ int s_client_main(int argc, char **argv)
                 /* goto end; */
             }
 
-            sbuf_len -= i;;
+            sbuf_len -= i;
             sbuf_off += i;
             if (sbuf_len <= 0) {
                 read_ssl = 1;
@@ -2369,7 +2460,7 @@ int s_client_main(int argc, char **argv)
 #if defined(OPENSSL_SYS_MSDOS)
         else if (has_stdin_waiting())
 #else
-        else if (FD_ISSET(fileno(stdin), &readfds))
+        else if (FD_ISSET(fileno_stdin(), &readfds))
 #endif
         {
             if (crlf) {
@@ -2392,9 +2483,10 @@ int s_client_main(int argc, char **argv)
                 assert(lf_num == 0);
             } else
                 i = raw_read_stdin(cbuf, BUFSIZZ);
-
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
             if (i == 0)
                 at_eof = 1;
+#endif
 
             if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q' && cmdletters))) {
                 BIO_printf(bio_err, "DONE\n");
@@ -2461,6 +2553,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_SRP
     OPENSSL_free(srp_arg.srppassin);
 #endif
+    OPENSSL_free(connectstr);
     OPENSSL_free(host);
     OPENSSL_free(port);
     X509_VERIFY_PARAM_free(vpm);
@@ -2471,6 +2564,7 @@ int s_client_main(int argc, char **argv)
     OPENSSL_clear_free(cbuf, BUFSIZZ);
     OPENSSL_clear_free(sbuf, BUFSIZZ);
     OPENSSL_clear_free(mbuf, BUFSIZZ);
+    release_engine(e);
     BIO_free(bio_c_out);
     bio_c_out = NULL;
     BIO_free(bio_c_msg);
