@@ -281,9 +281,9 @@ int tls1_change_cipher_state(SSL *s, int which)
         int taglen;
         if (s->s3->tmp.
             new_cipher->algorithm_enc & (SSL_AES128CCM8 | SSL_AES256CCM8))
-            taglen = 8;
+            taglen = EVP_CCM8_TLS_TAG_LEN;
         else
-            taglen = 16;
+            taglen = EVP_CCM_TLS_TAG_LEN;
         if (!EVP_CipherInit_ex(dd, c, NULL, NULL, NULL, (which & SSL3_CC_WRITE))
             || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_IVLEN, 12, NULL)
             || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_TAG, taglen, NULL)

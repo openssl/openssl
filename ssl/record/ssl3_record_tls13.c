@@ -24,7 +24,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
 {
     EVP_CIPHER_CTX *ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH];
-    size_t ivlen, offset, loop;
+    size_t ivlen, taglen, offset, loop;
     unsigned char *staticiv;
     unsigned char *seq;
     int lenu, lenf;
@@ -53,21 +53,27 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
     }
     ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 
+    if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_CCM_MODE) {
+        if (s->s3->tmp.new_cipher->algorithm_enc
+                & (SSL_AES128CCM8 | SSL_AES256CCM8))
+            taglen = EVP_CCM8_TLS_TAG_LEN;
+         else
+            taglen = EVP_CCM_TLS_TAG_LEN;
+         if (send && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen,
+                                         NULL) <= 0)
+            return -1;
+    } else {
+        taglen = EVP_GCM_TLS_TAG_LEN;
+    }
+
     if (!send) {
         /*
          * Take off tag. There must be at least one byte of content type as
          * well as the tag
          */
-        /*
-         * TODO(TLS1.3): We're going to need to figure out the tag len based on
-         * the cipher. For now we just support GCM tags.
-         * TODO(TLS1.3): When we've swapped over the record layer to TLSv1.3
-         * then the length must be 1 + the tag len to account for the content
-         * byte that we know must have been encrypted.
-         */
-        if (rec->length < EVP_GCM_TLS_TAG_LEN)
+        if (rec->length < taglen + 1)
             return 0;
-        rec->length -= EVP_GCM_TLS_TAG_LEN;
+        rec->length -= taglen;
     }
 
     /* Set up IV */
@@ -93,22 +99,21 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
 
     /* TODO(size_t): lenu/lenf should be a size_t but EVP doesn't support it */
     if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, send) <= 0
+            || (!send && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                             taglen,
+                                             rec->data + rec->length) <= 0)
             || EVP_CipherUpdate(ctx, rec->data, &lenu, rec->input,
                                 (unsigned int)rec->length) <= 0
-            || (!send && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                             EVP_GCM_TLS_TAG_LEN,
-                                             rec->data + rec->length) <= 0)
             || EVP_CipherFinal_ex(ctx, rec->data + lenu, &lenf) <= 0
             || (size_t)(lenu + lenf) != rec->length) {
         return -1;
     }
-
     if (send) {
         /* Add the tag */
-        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, EVP_GCM_TLS_TAG_LEN,
+        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen,
                                 rec->data + rec->length) <= 0)
             return -1;
-        rec->length += EVP_GCM_TLS_TAG_LEN;
+        rec->length += taglen;
     }
 
     return 1;
