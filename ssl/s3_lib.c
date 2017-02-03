@@ -55,6 +55,7 @@
 #include <openssl/rand.h>
 
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
+#define SSL3_NUM_SCSVS          OSSL_NELEM(ssl3_scsvs)
 
 /*
  * The list of available ciphers, mostly organized into the following
@@ -2797,6 +2798,26 @@ static SSL_CIPHER ssl3_ciphers[] = {
 
 };
 
+/*
+ * The list of known Signalling Cipher-Suite Value "ciphers", non-valid
+ * values stuffed into the ciphers field of the wire protocol for signalling
+ * purposes.
+ */
+static SSL_CIPHER ssl3_scsvs[] = {
+    {
+     0,
+     "TLS_EMPTY_RENEGOTIATION_INFO_SCSV",
+     SSL3_CK_SCSV,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    },
+    {
+     0,
+     "TLS_FALLBACK_SCSV",
+     SSL3_CK_FALLBACK_SCSV,
+     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    },
+};
+
 static int cipher_compare(const void *a, const void *b)
 {
     const SSL_CIPHER *ap = (const SSL_CIPHER *)a;
@@ -2807,8 +2828,9 @@ static int cipher_compare(const void *a, const void *b)
 
 void ssl_sort_cipher_list(void)
 {
-    qsort(ssl3_ciphers, OSSL_NELEM(ssl3_ciphers), sizeof ssl3_ciphers[0],
+    qsort(ssl3_ciphers, SSL3_NUM_CIPHERS, sizeof ssl3_ciphers[0],
           cipher_compare);
+    qsort(ssl3_scsvs, SSL3_NUM_SCSVS, sizeof ssl3_scsvs[0], cipher_compare);
 }
 
 const SSL3_ENC_METHOD SSLv3_enc_data = {
@@ -3598,9 +3620,13 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
 {
     SSL_CIPHER c;
+    const SSL_CIPHER *cp;
 
     c.id = id;
-    return OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
+    cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
+    if (cp != NULL)
+        return cp;
+    return OBJ_bsearch_ssl_cipher_id(&c, ssl3_scsvs, SSL3_NUM_SCSVS);
 }
 
 /*
