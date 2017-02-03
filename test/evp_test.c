@@ -1040,13 +1040,9 @@ static int cipher_test_enc(struct evp_test *t, int enc,
             tmplen += chunklen;
         }
     }
-    if (cdat->aead == EVP_CIPH_CCM_MODE)
-        tmpflen = 0;
-    else {
-        err = "CIPHERFINAL_ERROR";
-        if (!EVP_CipherFinal_ex(ctx, tmp + out_misalign + tmplen, &tmpflen))
-            goto err;
-    }
+    err = "CIPHERFINAL_ERROR";
+    if (!EVP_CipherFinal_ex(ctx, tmp + out_misalign + tmplen, &tmpflen))
+        goto err;
     err = "LENGTH_MISMATCH";
     if (out_len != (size_t)(tmplen + tmpflen))
         goto err;
