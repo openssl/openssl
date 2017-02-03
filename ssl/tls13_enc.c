@@ -264,7 +264,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     const char *log_label = NULL;
     EVP_CIPHER_CTX *ciph_ctx;
     const EVP_CIPHER *ciph = s->s3->tmp.new_sym_enc;
-    size_t ivlen, keylen, finsecretlen = 0;
+    size_t ivlen, keylen, taglen, finsecretlen = 0;
     const unsigned char *label;
     size_t labellen, hashlen = 0;
     int ret = 0;
@@ -373,7 +373,17 @@ int tls13_change_cipher_state(SSL *s, int which)
 
     /* TODO(size_t): convert me */
     keylen = EVP_CIPHER_key_length(ciph);
-    ivlen = EVP_CIPHER_iv_length(ciph);
+    if (EVP_CIPHER_mode(ciph) == EVP_CIPH_CCM_MODE) {
+        ivlen = EVP_CCM_TLS_IV_LEN;
+        if (s->s3->tmp.new_cipher->algorithm_enc
+                & (SSL_AES128CCM8 | SSL_AES256CCM8))
+            taglen = EVP_CCM8_TLS_TAG_LEN;
+         else
+            taglen = EVP_CCM_TLS_TAG_LEN;
+    } else {
+        ivlen = EVP_CIPHER_iv_length(ciph);
+        taglen = 0;
+    }
 
     if (!ssl_log_secret(s, log_label, secret, hashlen)) {
         SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
@@ -391,8 +401,12 @@ int tls13_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
-    if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, key, NULL,
-                          (which & SSL3_CC_WRITE)) <= 0) {
+    if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL,
+                          (which & SSL3_CC_WRITE)) <= 0
+        || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
+        || (taglen != 0 && !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG,
+                                                taglen, NULL))
+        || EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, -1) <= 0) {
         SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_EVP_LIB);
         goto err;
     }
