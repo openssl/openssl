@@ -2129,6 +2129,10 @@ static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (cctx->tls_aad_len >= 0)
         return aes_ccm_tls_cipher(ctx, out, in, len);
 
+    /* EVP_*Final() doesn't return any data */
+    if (in == NULL && out != NULL)
+        return 0;
+
     if (!cctx->iv_set)
         return -1;
 
@@ -2148,9 +2152,6 @@ static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         CRYPTO_ccm128_aad(ccm, in, len);
         return len;
     }
-    /* EVP_*Final() doesn't return any data */
-    if (!in)
-        return 0;
     /* If not set length yet do it */
     if (!cctx->len_set) {
         if (CRYPTO_ccm128_setiv(ccm, EVP_CIPHER_CTX_iv_noconst(ctx),
