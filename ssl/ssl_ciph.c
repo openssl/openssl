@@ -153,7 +153,8 @@ static const ssl_cipher_table ssl_cipher_table_kx[] = {
     {SSL_kRSAPSK,   NID_kx_rsa_psk},
     {SSL_kPSK,      NID_kx_psk},
     {SSL_kSRP,      NID_kx_srp},
-    {SSL_kGOST,     NID_kx_gost}
+    {SSL_kGOST,     NID_kx_gost},
+    {SSL_kANY,      NID_kx_any}
 };
 
 static const ssl_cipher_table ssl_cipher_table_auth[] = {
@@ -164,7 +165,8 @@ static const ssl_cipher_table ssl_cipher_table_auth[] = {
     {SSL_aGOST01, NID_auth_gost01},
     {SSL_aGOST12, NID_auth_gost12},
     {SSL_aSRP,    NID_auth_srp},
-    {SSL_aNULL,   NID_auth_null}
+    {SSL_aNULL,   NID_auth_null},
+    {SSL_aANY,    NID_auth_any}
 };
 /* *INDENT-ON* */
 
