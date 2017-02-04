@@ -51,12 +51,7 @@
 # 7. Stick to explicit ip-relative addressing. If you have to use
 #    GOTPCREL addressing, stick to mov symbol@GOTPCREL(%rip),%r??.
 #    Both are recognized and translated to proper Win64 addressing
-#    modes. To support legacy code a synthetic directive, .picmeup,
-#    is implemented. It puts address of the *next* instruction into
-#    target register, e.g.:
-#
-#		.picmeup	%rax
-#		lea		.Label-.(%rax),%rax
+#    modes.
 #
 # 8. In order to provide for structured exception handling unified
 #    Win64 prologue copies %rsp value to %rax. For further details
@@ -485,24 +480,6 @@ my %globals;
 	    $$line = substr($$line,@+[0]); $$line =~ s/^\s+//;
 
 	    SWITCH: for ($dir) {
-		# obsolete, to be removed
-		/\.picmeup/ && do { if ($$line =~ /(%r[\w]+)/i) {
-					my %opcode = # lea 2f-1f(%rip),%dst; 1: nop; 2:
-						   ( "%rax"=>0x01058d48, "%rcx"=>0x010d8d48,
-						     "%rdx"=>0x01158d48, "%rbx"=>0x011d8d48,
-						     "%rsp"=>0x01258d48, "%rbp"=>0x012d8d48,
-						     "%rsi"=>0x01358d48, "%rdi"=>0x013d8d48,
-						     "%r8" =>0x01058d4c, "%r9" =>0x010d8d4c,
-						     "%r10"=>0x01158d4c, "%r11"=>0x011d8d4c,
-						     "%r12"=>0x01258d4c, "%r13"=>0x012d8d4c,
-						     "%r14"=>0x01358d4c, "%r15"=>0x013d8d4c);
-
-
-			    		$dir="\t.long";
-					$$line=sprintf "0x%x,0x90000000",$opcode{$1};
-				    }
-				    last;
-				  };
 		/\.global|\.globl|\.extern/
 			    && do { $globals{$$line} = $prefix . $$line;
 				    $$line = $globals{$$line} if ($prefix);
