@@ -100,7 +100,7 @@ elsif (!$gas)
     {	$nasm = $1 + $2*0.01; $PTR="";  }
     elsif (`ml64 2>&1` =~ m/Version ([0-9]+)\.([0-9]+)(\.([0-9]+))?/)
     {	$masm = $1 + $2*2**-16 + $4*2**-32;   }
-    die "no assembler found on %PATH" if (!($nasm || $masm));
+    die "no assembler found on %PATH%" if (!($nasm || $masm));
     $win64=1;
     $elf=0;
     $decor="\$L\$";
@@ -223,6 +223,13 @@ my %globals;
     }
 }
 { package ea;		# pick up effective addresses: expr(%reg,%reg,scale)
+
+    my %szmap = (	b=>"BYTE$PTR",    w=>"WORD$PTR",
+			l=>"DWORD$PTR",   d=>"DWORD$PTR",
+			q=>"QWORD$PTR",   o=>"OWORD$PTR",
+			x=>"XMMWORD$PTR", y=>"YMMWORD$PTR",
+			z=>"ZMMWORD$PTR" ) if (!$gas);
+
     sub re {
 	my	($class, $line, $opcode) = @_;
 	my	$self = {};
@@ -235,7 +242,7 @@ my %globals;
 	    $self->{label} = $2;
 	    ($self->{base},$self->{index},$self->{scale})=split(/,/,$3);
 	    $self->{scale} = 1 if (!defined($self->{scale}));
-	    $self->{pred} = $4;
+	    $self->{opmask} = $4;
 	    $ret = $self;
 	    $$line = substr($$line,@+[0]); $$line =~ s/^\s+//;
 
@@ -276,6 +283,8 @@ my %globals;
 	    $self->{label} =~ s/\b([0-9]+)\b/$1>>0/eg;
 	}
 
+	# if base register is %rbp or %r13, see if it's possible to
+	# flip base and ingex registers [for better performance]
 	if (!$self->{label} && $self->{index} && $self->{scale}==1 &&
 	    $self->{base} =~ /(rbp|r13)/) {
 		$self->{base} = $self->{index}; $self->{index} = $1;
@@ -289,17 +298,12 @@ my %globals;
 					$self->{asterisk},$self->{label},
 					$self->{base}?"%$self->{base}":"",
 					$self->{index},$self->{scale},
-					$self->{pred};
+					$self->{opmask};
 	    } else {
 		sprintf "%s%s(%%%s)%s",	$self->{asterisk},$self->{label},
-					$self->{base},$self->{pred};
+					$self->{base},$self->{opmask};
 	    }
 	} else {
-	    my %szmap = (	b=>"BYTE$PTR",  w=>"WORD$PTR",
-			l=>"DWORD$PTR", d=>"DWORD$PTR",
-	    		q=>"QWORD$PTR", o=>"OWORD$PTR",
-			x=>"XMMWORD$PTR", y=>"YMMWORD$PTR", z=>"ZMMWORD$PTR" );
-
 	    $self->{label} =~ s/\./\$/g;
 	    $self->{label} =~ s/(?<![\w\$\.])0x([0-9a-f]+)/0$1h/ig;
 	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
@@ -311,20 +315,20 @@ my %globals;
 	    ($mnemonic =~ /^vpbroadcast([qdwb])$/)	&& ($sz=$1)  ||
 	    ($mnemonic =~ /^v(?!perm)[a-z]+[fi]128$/)	&& ($sz="x");
 
-	    $self->{pred}  =~ s/%(k[0-7])/$1/;
+	    $self->{opmask}  =~ s/%(k[0-7])/$1/;
 
 	    if (defined($self->{index})) {
 		sprintf "%s[%s%s*%d%s]%s",$szmap{$sz},
 					$self->{label}?"$self->{label}+":"",
 					$self->{index},$self->{scale},
 					$self->{base}?"+$self->{base}":"",
-					$self->{pred};
+					$self->{opmask};
 	    } elsif ($self->{base} eq "rip") {
 		sprintf "%s[%s]",$szmap{$sz},$self->{label};
 	    } else {
 		sprintf "%s[%s%s]%s",	$szmap{$sz},
 					$self->{label}?"$self->{label}+":"",
-					$self->{base},$self->{pred};
+					$self->{base},$self->{opmask};
 	    }
 	}
     }
@@ -340,7 +344,7 @@ my %globals;
 	    bless $self,$class;
 	    $self->{asterisk} = $1;
 	    $self->{value} = $2;
-	    $self->{pred} = $3;
+	    $self->{opmask} = $3;
 	    $opcode->size($self->size());
 	    $ret = $self;
 	    $$line = substr($$line,@+[0]); $$line =~ s/^\s+//;
@@ -366,9 +370,9 @@ my %globals;
     	my $self = shift;
 	if ($gas)	{ sprintf "%s%%%s%s",	$self->{asterisk},
 						$self->{value},
-						$self->{pred}; }
-	else		{ $self->{pred} =~ s/%(k[0-7])/$1/;
-			  $self->{value}.$self->{pred}; }
+						$self->{opmask}; }
+	else		{ $self->{opmask} =~ s/%(k[0-7])/$1/;
+			  $self->{value}.$self->{opmask}; }
     }
 }
 { package label;	# pick up labels, which end with :
@@ -392,9 +396,8 @@ my %globals;
 
 	if ($gas) {
 	    my $func = ($globals{$self->{value}} or $self->{value}) . ":";
-	    if ($win64	&&
-			$current_function->{name} eq $self->{value} &&
-			$current_function->{abi} eq "svr4") {
+	    if ($win64	&& $current_function->{name} eq $self->{value}
+			&& $current_function->{abi} eq "svr4") {
 		$func .= "\n";
 		$func .= "	movq	%rdi,8(%rsp)\n";
 		$func .= "	movq	%rsi,16(%rsp)\n";
@@ -473,15 +476,6 @@ my %globals;
 	my	$self = {};
 	my	$ret;
 	my	$dir;
-	my	%opcode =	# lea 2f-1f(%rip),%dst; 1: nop; 2:
-		(	"%rax"=>0x01058d48,	"%rcx"=>0x010d8d48,
-			"%rdx"=>0x01158d48,	"%rbx"=>0x011d8d48,
-			"%rsp"=>0x01258d48,	"%rbp"=>0x012d8d48,
-			"%rsi"=>0x01358d48,	"%rdi"=>0x013d8d48,
-			"%r8" =>0x01058d4c,	"%r9" =>0x010d8d4c,
-			"%r10"=>0x01158d4c,	"%r11"=>0x011d8d4c,
-			"%r12"=>0x01258d4c,	"%r13"=>0x012d8d4c,
-			"%r14"=>0x01358d4c,	"%r15"=>0x013d8d4c	);
 
 	if ($$line =~ /^\s*(\.\w+)/) {
 	    bless $self,$class;
@@ -491,7 +485,19 @@ my %globals;
 	    $$line = substr($$line,@+[0]); $$line =~ s/^\s+//;
 
 	    SWITCH: for ($dir) {
+		# obsolete, to be removed
 		/\.picmeup/ && do { if ($$line =~ /(%r[\w]+)/i) {
+					my %opcode = # lea 2f-1f(%rip),%dst; 1: nop; 2:
+						   ( "%rax"=>0x01058d48, "%rcx"=>0x010d8d48,
+						     "%rdx"=>0x01158d48, "%rbx"=>0x011d8d48,
+						     "%rsp"=>0x01258d48, "%rbp"=>0x012d8d48,
+						     "%rsi"=>0x01358d48, "%rdi"=>0x013d8d48,
+						     "%r8" =>0x01058d4c, "%r9" =>0x010d8d4c,
+						     "%r10"=>0x01158d4c, "%r11"=>0x011d8d4c,
+						     "%r12"=>0x01258d4c, "%r13"=>0x012d8d4c,
+						     "%r14"=>0x01358d4c, "%r15"=>0x013d8d4c);
+
+
 			    		$dir="\t.long";
 					$$line=sprintf "0x%x,0x90000000",$opcode{$1};
 				    }
@@ -701,15 +707,6 @@ my %globals;
     }
 }
 
-sub rex {
- my $opcode=shift;
- my ($dst,$src,$rex)=@_;
-
-   $rex|=0x04 if($dst>=8);
-   $rex|=0x01 if($src>=8);
-   push @$opcode,($rex|0x40) if ($rex);
-}
-
 # Upon initial x86_64 introduction SSE>2 extensions were not introduced
 # yet. In order not to be bothered by tracing exact assembler versions,
 # but at the same time to provide a bare security minimum of AES-NI, we
@@ -719,6 +716,15 @@ sub rex {
 
 my %regrm = (	"%eax"=>0, "%ecx"=>1, "%edx"=>2, "%ebx"=>3,
 		"%esp"=>4, "%ebp"=>5, "%esi"=>6, "%edi"=>7	);
+
+sub rex {
+ my $opcode=shift;
+ my ($dst,$src,$rex)=@_;
+
+   $rex|=0x04 if($dst>=8);
+   $rex|=0x01 if($src>=8);
+   push @$opcode,($rex|0x40) if ($rex);
+}
 
 my $movq = sub {	# elderly gas can't handle inter-register movq
   my $arg = shift;
@@ -843,6 +849,10 @@ my $rdseed = sub {
     }
 };
 
+# Not all AVX-capable assemblers recognize AMD XOP extension. Since we
+# are using only two instructions hand-code them in order to be excused
+# from chasing assembler versions...
+
 sub rxb {
  my $opcode=shift;
  my ($dst,$src1,$src2,$rxb)=@_;
@@ -882,9 +892,14 @@ my $vprotq = sub {
     }
 };
 
+# Intel Control-flow Enforcement Technology extension. All functions and
+# indirect branch targets will have to start with this instruction...
+
 my $endbranch = sub {
     (0xf3,0x0f,0x1e,0xfa);
 };
+
+########################################################################
 
 if ($nasm) {
     print <<___;
