@@ -229,6 +229,9 @@
 
 # define SSL_PSK     (SSL_kPSK | SSL_kRSAPSK | SSL_kECDHEPSK | SSL_kDHEPSK)
 
+/* Any appropriate key exchange algorithm (for TLS 1.3 ciphersuites) */
+# define SSL_kANY                0x00000000U
+
 /* Bits for algorithm_auth (server authentication) */
 /* RSA auth */
 # define SSL_aRSA                0x00000001U
@@ -246,6 +249,8 @@
 # define SSL_aSRP                0x00000040U
 /* GOST R 34.10-2012 signature auth */
 # define SSL_aGOST12             0x00000080U
+/* Any appropriate signature auth (for TLS 1.3 ciphersuites) */
+# define SSL_aANY                0x00000000U
 
 /* Bits for algorithm_enc (symmetric encryption) */
 # define SSL_DES                 0x00000001U

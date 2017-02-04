@@ -1576,6 +1576,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_kGOST:
         kx = "GOST";
         break;
+    case SSL_kANY:
+        kx = "any";
+        break;
     default:
         kx = "unknown";
     }
@@ -1605,6 +1608,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     /* New GOST ciphersuites have both SSL_aGOST12 and SSL_aGOST01 bits */
     case (SSL_aGOST12 | SSL_aGOST01):
         au = "GOST12";
+        break;
+    case SSL_aANY:
+        au = "any";
         break;
     default:
         au = "unknown";
