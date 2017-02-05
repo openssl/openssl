@@ -121,7 +121,7 @@ OPTIONS req_options[] = {
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
      "Enable support for multivalued RDNs"},
     {"days", OPT_DAYS, 'p', "Number of days cert is valid for"},
-    {"set_serial", OPT_SET_SERIAL, 'p', "Serial number to use"},
+    {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
     {"extensions", OPT_EXTENSIONS, 's',
      "Cert extension section (override value in config file)"},
     {"reqexts", OPT_REQEXTS, 's',
