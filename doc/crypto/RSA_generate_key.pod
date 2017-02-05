@@ -53,14 +53,15 @@ it is called as B<BN_GENCB_call(cb, 3, 0)>.
 
 The process is then repeated for prime q with B<BN_GENCB_call(cb, 3, 1)>.
 
-RSA_generate_key is deprecated (new applications should use
-RSA_generate_key_ex instead). RSA_generate_key works in the same way as
-RSA_generate_key_ex except it uses "old style" call backs. See
+RSA_generate_key() is deprecated (new applications should use
+RSA_generate_key_ex() instead). RSA_generate_key() works in the same way as
+RSA_generate_key_ex() except it uses "old style" call backs. See
 L<BN_generate_prime(3)> for further details.
 
 =head1 RETURN VALUE
 
-If key generation fails, RSA_generate_key() returns B<NULL>.
+RSA_generate_key_ex() returns 1 on success or 0 on error.
+RSA_generate_key() returns the key on success or B<NULL> on error.
 
 The error codes can be obtained by L<ERR_get_error(3)>.
 
@@ -72,7 +73,7 @@ RSA_generate_key() goes into an infinite loop for illegal input values.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)>, L<rand(3)>,
+L<ERR_get_error(3)>, L<RAND_bytes(3)>,
 L<RSA_generate_key(3)>, L<BN_generate_prime(3)>
 
 =head1 COPYRIGHT
