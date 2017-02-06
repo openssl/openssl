@@ -531,8 +531,8 @@ int tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt, unsigned int context,
 #ifndef OPENSSL_NO_TLS1_3
 static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
 {
-    unsigned char *encodedPoint = NULL;
-    EVP_PKEY *key_share_key = NULL;
+    unsigned char *encoded_point;
+    EVP_PKEY *key_share_key;
     size_t encodedlen;
 
     key_share_key = ssl_generate_pkey_curve(curve_id);
@@ -543,7 +543,7 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
 
     /* Encode the public key. */
     encodedlen = EVP_PKEY_get1_tls_encodedpoint(key_share_key,
-                                                &encodedPoint);
+                                                &encoded_point);
     if (encodedlen == 0) {
         SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_EC_LIB);
         EVP_PKEY_free(key_share_key);
@@ -552,10 +552,10 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
 
     /* Create KeyShareEntry */
     if (!WPACKET_put_bytes_u16(pkt, curve_id)
-            || !WPACKET_sub_memcpy_u16(pkt, encodedPoint, encodedlen)) {
+            || !WPACKET_sub_memcpy_u16(pkt, encoded_point, encodedlen)) {
         SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         EVP_PKEY_free(key_share_key);
-        OPENSSL_free(encodedPoint);
+        OPENSSL_free(encoded_point);
         return 0;
     }
 
@@ -566,7 +566,7 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
      */
     s->s3->tmp.pkey = key_share_key;
     s->s3->group_id = curve_id;
-    OPENSSL_free(encodedPoint);
+    OPENSSL_free(encoded_point);
 
     return 1;
 }

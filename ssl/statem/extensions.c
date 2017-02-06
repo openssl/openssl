@@ -1020,7 +1020,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
             size_t num_curves, clnt_num_curves, i;
             unsigned int group_id;
 
-            /* Check a shared group exists */
+            /* Check if a shared group exists */
 
             /* Get the clients list of supported groups. */
             if (!tls1_get_curvelist(s, 1, &clntcurves, &clnt_num_curves)) {
