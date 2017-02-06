@@ -890,9 +890,15 @@ static TS_VERIFY_CTX *create_verify_ctx(const char *data, const char *digest,
             goto err;
         f = TS_VFY_VERSION | TS_VFY_SIGNER;
         if (data != NULL) {
+            BIO *out = NULL;
+
             f |= TS_VFY_DATA;
-            if (TS_VERIFY_CTX_set_data(ctx, BIO_new_file(data, "rb")) == NULL)
+            if ((out = BIO_new_file(data, "rb")) == NULL)
                 goto err;
+            if (TS_VERIFY_CTX_set_data(ctx, out) == NULL) {
+                BIO_free_all(out);
+                goto err;
+            }
         } else if (digest != NULL) {
             long imprint_len;
             unsigned char *hexstr = OPENSSL_hexstr2buf(digest, &imprint_len);
