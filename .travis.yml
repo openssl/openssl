@@ -20,15 +20,22 @@ compiler:
     - gcc
 
 env:
-    - CONFIG_OPTS="" DESTDIR="_install"
-    - CONFIG_OPTS="--debug no-shared enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes"
-    - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
-    - CONFIG_OPTS="no-stdio --strict-warnings" BUILDONLY="yes"
-    - CONFIG_OPTS="no-ec" BUILDONLY="yes"
+    - CONFIG_OPTS="" DESTDIR="_install" TESTS="-test_fuzz"
+    - CONFIG_OPTS="no-asm -Werror --debug no-shared enable-crypto-mdebug enable-rc5 enable-md2" TESTS="-test_fuzz"
+    - CONFIG_OPTS="no-asm --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes"
 
 matrix:
     include:
+        - os: linux
+          addons:
+              apt:
+                  packages:
+                      - gcc-5
+                      - g++-5
+                  sources:
+                      - ubuntu-toolchain-r-test
+          compiler: gcc-5
+          env: CONFIG_OPTS="--strict-warnings enable-tls1_3" TESTS="-test_fuzz" COMMENT="Move to the BORINGTEST build when interoperable"
         - os: linux
           addons:
               apt:
@@ -43,66 +50,6 @@ matrix:
           addons:
               apt:
                   packages:
-                      - gcc-5
-                      - g++-5
-                  sources:
-                      - ubuntu-toolchain-r-test
-          compiler: gcc-5
-          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers enable-external-tests no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
-        - os: linux
-          addons:
-              apt:
-                  packages:
-                      - clang-3.6
-                  sources:
-                      - llvm-toolchain-precise-3.6
-                      - ubuntu-toolchain-r-test
-          compiler: clang-3.6
-          env: CONFIG_OPTS="enable-msan"
-        - os: linux
-          addons:
-              apt:
-                  packages:
-                      - clang-3.6
-                  sources:
-                      - llvm-toolchain-precise-3.6
-                      - ubuntu-toolchain-r-test
-          compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
-        - os: linux
-          addons:
-              apt:
-                  packages:
-                      - clang-3.6
-                  sources:
-                      - llvm-toolchain-precise-3.6
-                      - ubuntu-toolchain-r-test
-          compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
-        - os: linux
-          addons:
-              apt:
-                  packages:
-                      - gcc-5
-                      - g++-5
-                  sources:
-                      - ubuntu-toolchain-r-test
-          compiler: gcc-5
-          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC"
-        - os: linux
-          addons:
-              apt:
-                  packages:
-                      - gcc-5
-                      - g++-5
-                  sources:
-                      - ubuntu-toolchain-r-test
-          compiler: gcc-5
-          env: CONFIG_OPTS="--strict-warnings enable-tls1_3" COMMENT="Move to the BORINGTEST build when interoperable"
-        - os: linux
-          addons:
-              apt:
-                  packages:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
@@ -111,20 +58,68 @@ matrix:
           addons:
               apt:
                   packages:
-                      - binutils-mingw-w64
-                      - gcc-mingw-w64
-                      - wine
-          compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-pic"
+                      - gcc-5
+                      - g++-5
+                  sources:
+                      - ubuntu-toolchain-r-test
+          compiler: gcc-5
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers enable-external-tests no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
+        - os: linux
+          addons:
+              apt:
+                  packages:
+                      - clang-3.6
+                  sources:
+                      - llvm-toolchain-precise-3.6
+                      - ubuntu-toolchain-r-test
+          compiler: clang-3.6
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan"
+        - os: linux
+          addons:
+              apt:
+                  packages:
+                      - clang-3.6
+                  sources:
+                      - llvm-toolchain-precise-3.6
+                      - ubuntu-toolchain-r-test
+          compiler: clang-3.6
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+        - os: linux
+          addons:
+              apt:
+                  packages:
+                      - clang-3.6
+                  sources:
+                      - llvm-toolchain-precise-3.6
+                      - ubuntu-toolchain-r-test
+          compiler: clang-3.6
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+        - os: linux
+          addons:
+              apt:
+                  packages:
+                      - gcc-5
+                      - g++-5
+                  sources:
+                      - ubuntu-toolchain-r-test
+          compiler: gcc-5
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC"
         - os: linux
           addons:
               apt:
                   packages:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
-                      - wine
+          compiler: i686-w64-mingw32-gcc
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic" TESTS="-test_fuzz"
+        - os: linux
+          addons:
+              apt:
+                  packages:
+                      - binutils-mingw-w64
+                      - gcc-mingw-w64
           compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-pic"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic" TESTS="-test_fuzz"
     exclude:
         - os: linux
           compiler: clang
@@ -132,6 +127,10 @@ matrix:
           compiler: gcc
 
 before_script:
+    - env
+    - if [ "$TRAVIS_EVENT_TYPE" == "pull_request" -a -n "$EXTENDED_TEST" ]; then
+          (git log -1 $TRAVIS_COMMIT_RANGE | grep '\[extended tests\]' > /dev/null) || exit 0;
+      fi
     - if [ -n "$DESTDIR" ]; then
           sh .travis-create-release.sh $TRAVIS_OS_NAME;
           tar -xvzf _srcdist.tar.gz;
@@ -174,6 +173,7 @@ script:
     - $make
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
+              sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install wine;
               export EXE_SHELL="wine" WINEPREFIX=`pwd`;
           fi;
           HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test;
