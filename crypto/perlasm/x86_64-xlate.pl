@@ -465,12 +465,248 @@ my %globals;
 	}
     }
 }
+{ package cfi_directive;
+    # CFI directives annotate instructions that are significant for
+    # stack unwinding procedure compliant with DWARF specification,
+    # see http://dwarfstd.org/. Besides naturally expected for this
+    # script platform-specific filtering function, this module adds
+    # three auxiliary synthetic directives not recognized by [GNU]
+    # assembler:
+    #
+    # - .cfi_push to annotate push instructions in prologue, which
+    #   translates to .cfi_adjust_cfa_offset (if needed) and
+    #   .cfi_offset;
+    # - .cfi_pop to annotate pop instructions in epilogue, which
+    #   translates to .cfi_adjust_cfa_offset (if needed) and
+    #   .cfi_restore;
+    # - [and most notably] .cfi_cfa_expression which encodes
+    #   DW_CFA_def_cfa_expression and passes it  to .cfi_escape as
+    #   byte vector;
+    #
+    # CFA expressions were introduced in DWARF specification version
+    # 3 and describe how to deduce CFA, Canonical Frame Address, which
+    # becomes handy if your stack frame is variable and you can't
+    # afford [previous] frame pointer register. Suggested directive
+    # syntax is made-up mix of DWARF operator suffixes [subset of]
+    # and references to registers with optional bias. Following example
+    # describes offloaded *original* stack pointer at specific offset
+    # from *current* stack pointer:
+    #
+    #   .cfi_cfa_expression     %rsp+40,deref,+8
+    #
+    # Final +8 has everything to do with the fact that CFA is defined
+    # as reference to top of caller's stack, and on x86_64 call to
+    # subroutine pushes 8-byte return address. In other words original
+    # stack pointer upon entry to a subroutine is 8 bytes off CFA.
+
+    # Below constants are taken from "DWARF Expressions" section of the
+    # DWARF specification, section is numbered 7.7 in versions 3 and 4.
+    my %DW_OP_simple = (	# no-arg operators, mapped directly
+	deref	=> 0x06,	dup	=> 0x12,
+	drop	=> 0x13,	over	=> 0x14,
+	pick	=> 0x15,	swap	=> 0x16,
+	rot	=> 0x17,	xderef	=> 0x18,
+
+	abs	=> 0x19,	and	=> 0x1a,
+	div	=> 0x1b,	minus	=> 0x1c,
+	mod	=> 0x1d,	mul	=> 0x1e,
+	neg	=> 0x1f,	not	=> 0x20,
+	or	=> 0x21,	plus	=> 0x22,
+	shl	=> 0x24,	shr	=> 0x25,
+	shra	=> 0x26,	xor	=> 0x27,
+	);
+
+    my %DW_OP_complex = (	# used in specific subroutines
+	constu		=> 0x10,	# uleb128
+	consts		=> 0x11,	# sleb128
+	plus_uconst	=> 0x23,	# uleb128
+	lit0 		=> 0x30,	# add 0-31 to opcode
+	reg0		=> 0x50,	# add 0-31 to opcode
+	breg0		=> 0x70,	# add 0-31 to opcole, sleb128
+	regx		=> 0x90,	# uleb28
+	fbreg		=> 0x91,	# sleb128
+	bregx		=> 0x92,	# uleb128, sleb128
+	piece		=> 0x93,	# uleb128
+	);
+
+    # Following constants are defined in x86_64 ABI supplement, for
+    # example avaiable at https://www.uclibc.org/docs/psABI-x86_64.pdf,
+    # see section 3.7 "Stack Unwind Algorithm".
+    my %DW_reg_idx = (
+	"%rax"=>0,  "%rdx"=>1,  "%rcx"=>2,  "%rbx"=>3,
+	"%rsi"=>4,  "%rdi"=>5,  "%rbp"=>6,  "%rsp"=>7,
+	"%r8" =>8,  "%r9" =>9,  "%r10"=>10, "%r11"=>11,
+	"%r12"=>12, "%r13"=>13, "%r14"=>14, "%r15"=>15
+	);
+
+    my ($cfa_reg, $cfa_rsp);
+
+    # [us]leb128 format is variable-length integer representation base
+    # 2^128, with most significant bit of each byte being 0 denoting
+    # *last* most significat digit. See "Variable Length Data" in the
+    # DWARF specification, numbered 7.6 at least in versions 3 and 4.
+    sub sleb128 {
+	use integer;	# get right shift extend sign
+
+	my $val = shift;
+	my $sign = ($val < 0) ? -1 : 0;
+	my @ret = ();
+
+	while(1) {
+	    push @ret, $val&0x7f;
+
+	    # see if most significant bit of the current digit
+	    # equals to sign bit, if so, it's last one...
+	    last if (($val>>6) == $sign);
+
+	    @ret[-1] |= 0x80;
+	    $val >>= 7;
+	}
+
+	return @ret;
+    }
+    sub uleb128 {
+	my $val = shift;
+	my @ret = ();
+
+	while(1) {
+	    push @ret, $val&0x7f;
+
+	    # see if it's last significant digit...
+	    last if (($val >>= 7) == 0);
+
+	    @ret[-1] |= 0x80;
+	}
+
+	return @ret;
+    }
+    sub const {
+	my $val = shift;
+
+	if ($val >= 0 && $val < 32) {
+            return ($DW_OP_complex{lit0}+$val);
+	}
+	return ($DW_OP_complex{consts}, sleb128($val));
+    }
+    sub reg {
+	my $val = shift;
+
+	return if ($val !~ m/^(%r\w+)(?:([\+\-])((?:0x)?[0-9a-f]+))?/);
+
+	my $reg = $DW_reg_idx{$1};
+	my $off = eval ("0 $2 $3");
+
+	return (($DW_OP_complex{breg0} + $reg), sleb128($off));
+	# Yes, we use DW_OP_bregX+0 to push register value and not
+	# DW_OP_regX, because latter would require even DW_OP_piece,
+	# which would be a waste under the circumstances. If you have
+	# to use DWP_OP_reg, use "regx:N"...
+    }
+    sub cfa_expression {
+	my $line = shift;
+	my @ret;
+
+	foreach my $token (split(/,\s*/,$line)) {
+	    if ($token =~ /^%r/) {
+		push @ret,reg($token);
+	    } elsif ($token =~ /(\w+):(\-?(?:0x)?[0-9a-f]+)(U?)/i) {
+		my $i = 1*eval($2);
+		push @ret,$DW_OP_complex{$1}, ($3 ? uleb128($i) : sleb128($i));
+	    } elsif (my $i = 1*eval($token) or $token eq "0") {
+		if ($token =~ /^\+/) {
+		    push @ret,$DW_OP_complex{plus_uconst},uleb128($i);
+		} else {
+		    push @ret,const($i);
+		}
+	    } else {
+		push @ret,$DW_OP_simple{$token};
+	    }
+	}
+
+	# Finally we return DW_CFA_def_cfa_expression, 15, followed by
+	# length of the expression and of course the expression itself.
+	return (15,scalar(@ret),@ret);
+    }
+    sub re {
+	my	($class, $line) = @_;
+	my	$self = {};
+	my	$ret;
+
+	if ($$line =~ s/^\s*\.cfi_(\w+)\s+//) {
+	    bless $self,$class;
+	    $ret = $self;
+	    undef $self->{value};
+	    my $dir = $1;
+
+	    SWITCH: for ($dir) {
+	    # What is $cfa_rsp? Effectively it's difference between %rsp
+	    # value and current CFA, Canonical Frame Address, which is
+	    # why it starts with -8. Recall that CFA is top of caller's
+	    # stack...
+	    /startproc/	&& do {	($cfa_reg, $cfa_rsp) = ("%rsp", -8); last; };
+	    /endproc/	&& do {	($cfa_reg, $cfa_rsp) = ("%rsp",  0); last; };
+	    /def_cfa_register/
+			&& do {	$cfa_reg = $$line; last; };
+	    /def_cfa_offset/
+			&& do {	$cfa_rsp = -1*eval($$line) if ($cfa_reg eq "%rsp");
+				last;
+			      };
+	    /adjust_cfa_offset/
+			&& do {	$cfa_rsp -= 1*eval($$line) if ($cfa_reg eq "%rsp");
+				last;
+			      };
+	    /def_cfa/	&& do {	if ($$line =~ /(%r\w+)\s*,\s*(\.+)/) {
+				    $cfa_reg = $1;
+				    $cfa_rsp = -1*eval($2) if ($cfa_reg eq "%rsp");
+				}
+				last;
+			      };
+	    /push/	&& do {	$dir = undef;
+				$cfa_rsp -= 8;
+				if ($cfa_reg eq "%rsp") {
+				    $self->{value} = ".cfi_adjust_cfa_offset\t8\n";
+				}
+				$self->{value} .= ".cfi_offset\t$$line,$cfa_rsp";
+				last;
+			      };
+	    /pop/	&& do {	$dir = undef;
+				$cfa_rsp += 8;
+				if ($cfa_reg eq "%rsp") {
+				    $self->{value} = ".cfi_adjust_cfa_offset\t-8\n";
+				}
+				$self->{value} .= ".cfi_restore\t$$line";
+				last;
+			      };
+	    /cfa_expression/
+			&& do {	$dir = undef;
+				$self->{value} = ".cfi_escape\t" .
+					join(",", map(sprintf("0x%02x", $_),
+						      cfa_expression($$line)));
+				last;
+			      };
+	    }
+
+	    $self->{value} = ".cfi_$dir\t$$line" if ($dir);
+
+	    $$line = "";
+	}
+
+	return $ret;
+    }
+    sub out {
+	my $self = shift;
+	return ($elf ? $self->{value} : undef);
+    }
+}
 { package directive;	# pick up directives, which start with .
     sub re {
 	my	($class, $line) = @_;
 	my	$self = {};
 	my	$ret;
 	my	$dir;
+
+	# chain-call to cfi_directive
+	$ret = cfi_directive->re($line) and return $ret;
 
 	if ($$line =~ /^\s*(\.\w+)/) {
 	    bless $self,$class;
