@@ -1466,7 +1466,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
 static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
 {
     unsigned int sversion;
-    int protverr;
+    int errorcode;
     RAW_EXTENSION *extensions = NULL;
     int al;
     PACKET extpkt;
@@ -1480,10 +1480,10 @@ static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
     s->hello_retry_request = 1;
 
     /* This will fail if it doesn't choose TLSv1.3+ */
-    protverr = ssl_choose_client_version(s, sversion);
-    if (protverr != 0) {
+    errorcode = ssl_choose_client_version(s, sversion);
+    if (errorcode != 0) {
         al = SSL_AD_PROTOCOL_VERSION;
-        SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST, protverr);
+        SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST, errorcode);
         goto f_err;
     }
 
