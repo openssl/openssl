@@ -374,6 +374,9 @@ typedef struct {
 /* Length of CCM8 tag for TLS */
 # define EVP_CCM8_TLS_TAG_LEN                            8
 
+/* Length of tag for TLS */
+# define EVP_CHACHAPOLY_TLS_TAG_LEN                      16
+
 typedef struct evp_cipher_info_st {
     const EVP_CIPHER *cipher;
     unsigned char iv[EVP_MAX_IV_LENGTH];
