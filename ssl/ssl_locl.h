@@ -2194,6 +2194,9 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 # define TLS_CURVE_PRIME         0x0
 # define TLS_CURVE_CHAR2         0x1
 # define TLS_CURVE_CUSTOM        0x2
+
+#define bytestogroup(bytes) ((unsigned int)(bytes[0] << 8 | bytes[1]))
+
 __owur int tls1_ec_curve_id2nid(int curve_id, unsigned int *pflags);
 __owur int tls1_ec_nid2curve_id(int nid);
 __owur int tls1_check_curve(SSL *s, const unsigned char *p, size_t len);
