@@ -1039,7 +1039,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
             /* Find the first group we allow that is also in client's list */
             for (i = 0, pcurvestmp = pcurves; i < num_curves;
                  i++, pcurvestmp += 2) {
-                group_id = pcurvestmp[0] << 8 | pcurvestmp[1];
+                group_id = bytestogroup(pcurvestmp);
 
                 if (check_in_list(s, group_id, clntcurves, clnt_num_curves, 1))
                     break;
