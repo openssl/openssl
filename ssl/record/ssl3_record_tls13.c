@@ -29,6 +29,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
     unsigned char *seq;
     int lenu, lenf;
     SSL3_RECORD *rec = &recs[0];
+    uint32_t alg_enc = s->s3->tmp.new_cipher->algorithm_enc;
 
     if (n_recs != 1) {
         /* Should not happen */
@@ -53,17 +54,20 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
     }
     ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 
-    if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_CCM_MODE) {
-        if (s->s3->tmp.new_cipher->algorithm_enc
-                & (SSL_AES128CCM8 | SSL_AES256CCM8))
+    if (alg_enc & SSL_AESCCM) {
+        if (alg_enc & (SSL_AES128CCM8 | SSL_AES256CCM8))
             taglen = EVP_CCM8_TLS_TAG_LEN;
          else
             taglen = EVP_CCM_TLS_TAG_LEN;
          if (send && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen,
                                          NULL) <= 0)
             return -1;
-    } else {
+    } else if (alg_enc & SSL_AESGCM) {
         taglen = EVP_GCM_TLS_TAG_LEN;
+    } else if (alg_enc & SSL_CHACHA20) {
+        taglen = EVP_CHACHAPOLY_TLS_TAG_LEN;
+    } else {
+        return -1;
     }
 
     if (!send) {
