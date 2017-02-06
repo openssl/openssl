@@ -564,6 +564,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
             case WORK_ERROR:
             case WORK_MORE_A:
             case WORK_MORE_B:
+            case WORK_MORE_C:
                 return SUB_STATE_ERROR;
 
             case WORK_FINISHED_CONTINUE:
@@ -706,6 +707,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             case WORK_ERROR:
             case WORK_MORE_A:
             case WORK_MORE_B:
+            case WORK_MORE_C:
                 return SUB_STATE_ERROR;
 
             case WORK_FINISHED_CONTINUE:
@@ -745,6 +747,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             case WORK_ERROR:
             case WORK_MORE_A:
             case WORK_MORE_B:
+            case WORK_MORE_C:
                 return SUB_STATE_ERROR;
 
             case WORK_FINISHED_CONTINUE:

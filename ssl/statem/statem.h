@@ -27,7 +27,9 @@ typedef enum {
     /* We're working on phase A */
     WORK_MORE_A,
     /* We're working on phase B */
-    WORK_MORE_B
+    WORK_MORE_B,
+    /* We're working on phase C */
+    WORK_MORE_C
 } WORK_STATE;
 
 /* Write transition return codes */
