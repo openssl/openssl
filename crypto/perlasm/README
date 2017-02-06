@@ -7,7 +7,7 @@ and then include it.
 push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
 
-The first thing we do is setup the file and type of assember
+The first thing we do is setup the file and type of assembler
 
 &asm_init($ARGV[0],$0);
 
@@ -18,7 +18,7 @@ Argument 2 is the file name.
 The reciprocal function is
 &asm_finish() which should be called at the end.
 
-There are 2 main 'packages'. x86ms.pl, which is the microsoft assembler,
+There are 2 main 'packages'. x86ms.pl, which is the Microsoft assembler,
 and x86unix.pl which is the unix (gas) version.
 
 Functions of interest are:
@@ -32,7 +32,7 @@ Functions of interest are:
 &function_begin(name,extra)	Start a function with pushing of
 				edi, esi, ebx and ebp.  extra is extra win32
 				external info that may be required.
-&function_begin_B(name,extra)	Same as norma function_begin but no pushing.
+&function_begin_B(name,extra)	Same as normal function_begin but no pushing.
 &function_end(name)		Call at end of function.
 &function_end_A(name)		Standard pop and ret, for use inside functions
 &function_end_B(name)		Call at end but with poping or 'ret'.
