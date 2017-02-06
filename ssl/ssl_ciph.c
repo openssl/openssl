@@ -1915,11 +1915,12 @@ int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
     return -1;
 }
 
-const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl, const unsigned char *ptr)
+const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl, const unsigned char *ptr,
+                                         int all)
 {
     const SSL_CIPHER *c = ssl->method->get_cipher_by_char(ptr);
 
-    if (c == NULL || c->valid == 0)
+    if (c == NULL || (!all && c->valid == 0))
         return NULL;
     return c;
 }
