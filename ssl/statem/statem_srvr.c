@@ -3633,7 +3633,7 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
         }
 
         /* For SSLv2-compat, ignore leading 0-byte. */
-        c = ssl_get_cipher_by_char(s, sslv2format ? &cipher[1] : cipher);
+        c = ssl_get_cipher_by_char(s, sslv2format ? &cipher[1] : cipher, 0);
         if (c != NULL) {
             if (!sk_SSL_CIPHER_push(sk, c)) {
                 SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
