@@ -614,7 +614,7 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, unsigned int context,
             if (!tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED))
                 continue;
 
-            curve_id = (pcurves[0] << 8) | pcurves[1];
+            curve_id = bytestogroup(pcurves);
             break;
         }
     }
@@ -1235,7 +1235,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             return 0;
         }
         for (i = 0; i < num_curves; i++, pcurves += 2) {
-            if (group_id == (unsigned int)((pcurves[0] << 8) | pcurves[1]))
+            if (group_id == bytestogroup(pcurves))
                 break;
         }
         if (i >= num_curves
