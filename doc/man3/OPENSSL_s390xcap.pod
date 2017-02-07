@@ -27,6 +27,15 @@ corresponding parts of the environment variable.
 
 The following bits are significant:
 
+:
+:
+
+=over
+
+=item #62 vector facility
+
+=back
+
 .
 
 =over
@@ -131,6 +140,8 @@ The following bits are significant:
 =back
 
 =head1 EXAMPLES
+
+OPENSSL_s390xcap=0:0:~0x4000000000000000 disables the vector facility.
 
 OPENSSL_s390xcap=.0:0 disables KIMD.
 
