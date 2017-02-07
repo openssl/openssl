@@ -202,6 +202,7 @@ int ERR_load_STORE_strings(void);
 # define STORE_F_FILE_GET_PASS                            118
 # define STORE_F_FILE_LOAD                                119
 # define STORE_F_FILE_LOAD_TRY_DECODE                     124
+# define STORE_F_FILE_NAME_TO_URI                         126
 # define STORE_F_FILE_OPEN                                120
 # define STORE_F_STORE_GET0_LOADER_INT                    100
 # define STORE_F_STORE_INFO_GET1_CERT                     101

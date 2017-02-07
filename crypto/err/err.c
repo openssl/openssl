@@ -84,6 +84,7 @@ static ERR_STRING_DATA ERR_str_functs[] = {
     {ERR_PACK(0, SYS_F_GETSOCKNAME, 0), "getsockname"},
     {ERR_PACK(0, SYS_F_GETHOSTBYNAME, 0), "gethostbyname"},
     {ERR_PACK(0, SYS_F_FFLUSH, 0), "fflush"},
+    {ERR_PACK(0, SYS_F_STAT, 0), "stat"},
     {0, NULL},
 };
 

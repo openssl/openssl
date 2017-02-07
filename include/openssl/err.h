@@ -161,6 +161,7 @@ typedef struct err_state_st {
 # define SYS_F_GETSOCKNAME       16
 # define SYS_F_GETHOSTBYNAME     17
 # define SYS_F_FFLUSH            18
+# define SYS_F_STAT              19
 
 /* reasons */
 # define ERR_R_SYS_LIB   ERR_LIB_SYS/* 2 */
