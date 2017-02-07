@@ -191,17 +191,11 @@ be wrong. In this case the command:
  perl -S CA.pl
 
 can be used and the B<OPENSSL_CONF> environment variable changed to point to
-the correct path of the configuration file "openssl.cnf".
+the correct path of the configuration file.
 
 The script is intended as a simple front end for the B<openssl> program for use
 by a beginner. Its behaviour isn't always what is wanted. For more control over the
 behaviour of the certificate commands call the B<openssl> command directly.
-
-=head1 ENVIRONMENT VARIABLES
-
-The variable B<OPENSSL_CONF> if defined allows an alternative configuration
-file location to be specified, it should contain the full path to the
-configuration file, not just its directory.
 
 =head1 SEE ALSO
 
