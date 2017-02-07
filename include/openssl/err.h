@@ -164,6 +164,7 @@ typedef struct err_state_st {
 # define SYS_F_OPEN              19
 # define SYS_F_CLOSE             20
 # define SYS_F_IOCTL             21
+# define SYS_F_STAT              22
 
 /* reasons */
 # define ERR_R_SYS_LIB   ERR_LIB_SYS/* 2 */
