@@ -782,74 +782,74 @@ static int do_check_smtputf8(const ASN1_STRING *a,
                            char **peername)
 {
     size_t emposa = 0, emposb = 0;
-		int a_found = 0, b_found = 0;
-		size_t i;
-		int rc;
-		char *tmpbuf = NULL, *tmputfbuf = NULL;
+    int a_found = 0, b_found = 0;
+    size_t i;
+    int rc;
+    char *tmpbuf = NULL, *tmputfbuf = NULL;
 
     if (!a->data || !a->length)
         return 0;
 
-		for (i = 0; i < a->length; i++) {
-		    if((a->data)[i] == '@') {
-				    a_found = 1;
-						emposa  = i;
-				    break;
-				}
-		}
+    for (i = 0; i < a->length; i++) {
+        if((a->data)[i] == '@') {
+            a_found = 1;
+            emposa  = i;
+            break;
+        }
+    }
 
-		for (i = 0; i < blen; i++) {
-		    if(b[i] == '@') {
-				    b_found = 1;
-						emposb  = i;
-				    break;
-				}
-		}
+    for (i = 0; i < blen; i++) {
+        if(b[i] == '@') {
+            b_found = 1;
+            emposb  = i;
+            break;
+        }
+    }
 
-		/*
-		 * We compare local part similar to equal_email
-		 */
-		if (!a_found || !b_found)
-		    return 0;
+    /*
+     * We compare local part similar to equal_email
+     */
+    if (!a_found || !b_found)
+        return 0;
 
-		if (emposa != emposb)		
-		    return 0;
+    if (emposa != emposb)    
+        return 0;
 
-		if (memcmp(a->data, b, emposa))
-		    return 0;
+    if (memcmp(a->data, b, emposa))
+        return 0;
 
-		/* 
-		 * On success we encode the right part as UTF8 
-		 * and compare them.
-		 * */
+    /* 
+     * On success we encode the right part as UTF8 
+     * and compare them.
+     * */
 
-		if ((emposa + 1 >= a->length) || (emposb + 1 >= blen))
+    if ((emposa + 1 >= a->length) || (emposb + 1 >= blen))
         return 0;
 
     tmpbuf = OPENSSL_strndup(b + emposb + 1, blen - emposb - 1);
-		if (tmpbuf == NULL)
-		    return -1;
+    if (tmpbuf == NULL)
+        return -1;
     
-		rc = idna_to_unicode_lzlz(tmpbuf, &tmputfbuf, 0);
-	  OPENSSL_free(tmpbuf);
+    rc = idna_to_unicode_lzlz(tmpbuf, &tmputfbuf, 0);
+    OPENSSL_free(tmpbuf);
 
-		if (rc != IDNA_SUCCESS) {
-		    return -1;	
-		}
+    if (rc != IDNA_SUCCESS) {
+        return -1;  
+    }
 
-		if (strlen(tmputfbuf) != a->length - emposa - 1) {
-		    idn_free(tmputfbuf);
-				return 0;
-		}
-
-		if (memcmp(a->data + emposa + 1, tmputfbuf, strlen(tmputfbuf) )) {
-		    idn_free(tmputfbuf);
+    if (strlen(tmputfbuf) != a->length - emposa - 1) {
+        idn_free(tmputfbuf);
         return 0;
-		}
+    }
+
+    if (memcmp(a->data + emposa + 1, tmputfbuf, strlen(tmputfbuf) )) {
+        idn_free(tmputfbuf);
+        return 0;
+    }
 
     /* 
-		 * OK, now we can copy the SmtpUtf8Name
-		 */
+     * OK, now we can copy the SmtpUtf8Name
+     */
     if (peername)
         *peername = OPENSSL_strndup((char *)a->data, a->length);
 

@@ -433,39 +433,39 @@ static int nc_smtp8(ASN1_UTF8STRING *eml, ASN1_IA5STRING *base)
     const char *baseat = strchr(baseptr, '@');
     const char *emlat = strchr(emlptr, '@');
 
-		int rc = IDNA_SUCCESS;
-		char* tmpunicodebuf = NULL;
+    int rc = IDNA_SUCCESS;
+    char* tmpunicodebuf = NULL;
 
     if (!emlat)
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
     /* Special case: initial '.' is RHS match */
     if (!baseat && (*baseptr == '.')) {
-				char* comparebuf    = NULL;
+        char* comparebuf    = NULL;
 
-				rc = idna_to_unicode_lzlz(baseptr+1, &tmpunicodebuf, 0);
-				if (rc != IDNA_SUCCESS) {
-				  return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;	
-				}
-				/*buffer + dot*/
-				comparebuf = OPENSSL_malloc(1+strlen(tmpunicodebuf)+1);
-				if (comparebuf == NULL)
-				{
-				  idn_free(tmpunicodebuf);
-					return X509_V_ERR_OUT_OF_MEM; 
-				}
+        rc = idna_to_unicode_lzlz(baseptr+1, &tmpunicodebuf, 0);
+        if (rc != IDNA_SUCCESS) {
+          return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;  
+        }
+        /*buffer + dot*/
+        comparebuf = OPENSSL_malloc(1+strlen(tmpunicodebuf)+1);
+        if (comparebuf == NULL)
+        {
+          idn_free(tmpunicodebuf);
+          return X509_V_ERR_OUT_OF_MEM; 
+        }
 
-				comparebuf[0] = '.';
-				memcpy(comparebuf+1, tmpunicodebuf, strlen(tmpunicodebuf));
-				comparebuf[1+strlen(tmpunicodebuf)] = 0;
+        comparebuf[0] = '.';
+        memcpy(comparebuf+1, tmpunicodebuf, strlen(tmpunicodebuf));
+        comparebuf[1+strlen(tmpunicodebuf)] = 0;
 
         if (eml->length > strlen(comparebuf)) {
             emlptr += eml->length - strlen(comparebuf);
             if (strlen(comparebuf) == strlen(emlptr) && memcmp(comparebuf, emlptr, strlen(emlptr)) == 0) {
-						    OPENSSL_free(comparebuf);
+                OPENSSL_free(comparebuf);
                 return X509_V_OK;
-						}
+            }
         }
-				OPENSSL_free(comparebuf);
+        OPENSSL_free(comparebuf);
         return X509_V_ERR_PERMITTED_VIOLATION;
     }
 
@@ -483,18 +483,18 @@ static int nc_smtp8(ASN1_UTF8STRING *eml, ASN1_IA5STRING *base)
         baseptr = baseat + 1;
     }
 
-		rc = idna_to_unicode_lzlz(baseptr, &tmpunicodebuf, 0);
-		if (rc != IDNA_SUCCESS) {
-		  return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;	
-		}
+    rc = idna_to_unicode_lzlz(baseptr, &tmpunicodebuf, 0);
+    if (rc != IDNA_SUCCESS) {
+      return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;  
+    }
 
     emlptr = emlat + 1;
     /* Just have hostname left to match: case insensitive */
     if (strlen(tmpunicodebuf) == strlen(emlptr) && memcmp(tmpunicodebuf, emlptr, strlen(emlptr)))
-		{
-		    idn_free(tmpunicodebuf);
+    {
+        idn_free(tmpunicodebuf);
         return X509_V_ERR_PERMITTED_VIOLATION;
-		}
+    }
 
     idn_free(tmpunicodebuf);
     return X509_V_OK;
