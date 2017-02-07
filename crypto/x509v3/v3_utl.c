@@ -18,6 +18,11 @@
 #include <openssl/bn.h>
 #include "ext_dat.h"
 
+# ifndef OPENSSL_NO_EAI
+#include <idna.h>
+#include <idn-free.h>
+# endif
+
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char *const *a, const char *const *b);
 static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name,
@@ -771,6 +776,87 @@ static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
     return rv;
 }
 
+# ifndef OPENSSL_NO_EAI
+static int do_check_smtputf8(const ASN1_STRING *a, 
+                           const char *b, size_t blen,
+                           char **peername)
+{
+    size_t emposa = 0, emposb = 0;
+    int a_found = 0, b_found = 0;
+    size_t i;
+    int rc;
+    char *tmpbuf = NULL, *tmputfbuf = NULL;
+
+    if (!a->data || !a->length)
+        return 0;
+
+    for (i = 0; i < a->length; i++) {
+        if((a->data)[i] == '@') {
+            a_found = 1;
+            emposa  = i;
+            break;
+        }
+    }
+
+    for (i = 0; i < blen; i++) {
+        if(b[i] == '@') {
+            b_found = 1;
+            emposb  = i;
+            break;
+        }
+    }
+
+    /*
+     * We compare local part similar to equal_email
+     */
+    if (!a_found || !b_found)
+        return 0;
+
+    if (emposa != emposb)    
+        return 0;
+
+    if (memcmp(a->data, b, emposa))
+        return 0;
+
+    /* 
+     * On success we encode the right part as UTF8 
+     * and compare them.
+     * */
+
+    if ((emposa + 1 >= a->length) || (emposb + 1 >= blen))
+        return 0;
+
+    tmpbuf = OPENSSL_strndup(b + emposb + 1, blen - emposb - 1);
+    if (tmpbuf == NULL)
+        return -1;
+    
+    rc = idna_to_unicode_lzlz(tmpbuf, &tmputfbuf, 0);
+    OPENSSL_free(tmpbuf);
+
+    if (rc != IDNA_SUCCESS) {
+        return -1;  
+    }
+
+    if (strlen(tmputfbuf) != a->length - emposa - 1) {
+        idn_free(tmputfbuf);
+        return 0;
+    }
+
+    if (memcmp(a->data + emposa + 1, tmputfbuf, strlen(tmputfbuf) )) {
+        idn_free(tmputfbuf);
+        return 0;
+    }
+
+    /* 
+     * OK, now we can copy the SmtpUtf8Name
+     */
+    if (peername)
+        *peername = OPENSSL_strndup((char *)a->data, a->length);
+
+    return (*peername) ? 1 : -1;
+}
+# endif
+
 static int do_x509_check(X509 *x, const char *chk, size_t chklen,
                          unsigned int flags, int check_type, char **peername)
 {
@@ -813,8 +899,29 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
             GENERAL_NAME *gen;
             ASN1_STRING *cstr;
             gen = sk_GENERAL_NAME_value(gens, i);
-            if (gen->type != check_type)
+# ifndef OPENSSL_NO_EAI
+            if ((gen->type != check_type) && (gen->type != GEN_OTHERNAME))
                 continue;
+            if (gen->type == GEN_OTHERNAME) {
+                if (check_type == GEN_EMAIL) {
+                    if (OBJ_obj2nid(gen->d.otherName->type_id) ==
+                        NID_SmtpUtf8Name) {
+                        san_present = 1;
+                        cstr = gen->d.otherName->value->value.utf8string;
+
+                        /* Positive on success, negative on error! */
+                        if ((rv =
+                             do_check_smtputf8(cstr, chk, chklen, peername)) != 0)
+                            break;
+                    } else
+                        continue;
+                } else
+                    continue;
+            }
+# else
+            if (gen->type != check_type)
+                 continue;
+# endif
             san_present = 1;
             if (check_type == GEN_EMAIL)
                 cstr = gen->d.rfc822Name;

@@ -17,6 +17,11 @@
 #include "internal/x509_int.h"
 #include "ext_dat.h"
 
+# ifndef OPENSSL_NO_EAI
+#include <idna.h>
+#include <idn-free.h>
+# endif
+
 static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
                                   X509V3_CTX *ctx,
                                   STACK_OF(CONF_VALUE) *nval);
@@ -34,6 +39,9 @@ static int nc_dns(ASN1_IA5STRING *sub, ASN1_IA5STRING *dns);
 static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
 static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base);
+# ifndef OPENSSL_NO_EAI
+static int nc_smtp8(ASN1_UTF8STRING *sub, ASN1_IA5STRING *eml);
+# endif
 
 const X509V3_EXT_METHOD v3_name_constraints = {
     NID_name_constraints, 0,
@@ -219,7 +227,23 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_NAME_num(x->altname); i++) {
         GENERAL_NAME *gen = sk_GENERAL_NAME_value(x->altname, i);
-        r = nc_match(gen, nc);
+# ifndef OPENSSL_NO_EAI
+        if (gen->type == GEN_OTHERNAME) {
+            if (OBJ_obj2nid(gen->d.otherName->type_id) == NID_SmtpUtf8Name) {
+                GENERAL_NAME gntmp;
+                gntmp.type = GEN_EMAILUTF8;
+                gntmp.d.SmtpUtf8Name =
+                    gen->d.otherName->value->value.utf8string;
+
+                r = nc_match(&gntmp, nc);
+                if (r != X509_V_OK)
+                    return r;
+            } else
+                continue;
+        } else
+# endif				
+            r = nc_match(gen, nc);
+
         if (r != X509_V_OK)
             return r;
     }
@@ -338,6 +362,11 @@ static int nc_match_single(GENERAL_NAME *gen, GENERAL_NAME *base)
     case GEN_EMAIL:
         return nc_email(gen->d.rfc822Name, base->d.rfc822Name);
 
+# ifndef OPENSSL_NO_EAI
+    case GEN_EMAILUTF8:
+        return nc_smtp8(gen->d.SmtpUtf8Name, base->d.rfc822Name);
+# endif				
+
     case GEN_URI:
         return nc_uri(gen->d.uniformResourceIdentifier,
                       base->d.uniformResourceIdentifier);
@@ -394,6 +423,84 @@ static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
     return X509_V_OK;
 
 }
+
+# ifndef OPENSSL_NO_EAI
+static int nc_smtp8(ASN1_UTF8STRING *eml, ASN1_IA5STRING *base)
+{
+    const char *baseptr = (char *)base->data;
+    const char *emlptr = (char *)eml->data;
+
+    const char *baseat = strchr(baseptr, '@');
+    const char *emlat = strchr(emlptr, '@');
+
+    int rc = IDNA_SUCCESS;
+    char* tmpunicodebuf = NULL;
+
+    if (!emlat)
+        return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+    /* Special case: initial '.' is RHS match */
+    if (!baseat && (*baseptr == '.')) {
+        char* comparebuf    = NULL;
+
+        rc = idna_to_unicode_lzlz(baseptr+1, &tmpunicodebuf, 0);
+        if (rc != IDNA_SUCCESS) {
+          return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;  
+        }
+        /*buffer + dot*/
+        comparebuf = OPENSSL_malloc(1+strlen(tmpunicodebuf)+1);
+        if (comparebuf == NULL)
+        {
+          idn_free(tmpunicodebuf);
+          return X509_V_ERR_OUT_OF_MEM; 
+        }
+
+        comparebuf[0] = '.';
+        memcpy(comparebuf+1, tmpunicodebuf, strlen(tmpunicodebuf));
+        comparebuf[1+strlen(tmpunicodebuf)] = 0;
+
+        if (eml->length > strlen(comparebuf)) {
+            emlptr += eml->length - strlen(comparebuf);
+            if (strlen(comparebuf) == strlen(emlptr) && memcmp(comparebuf, emlptr, strlen(emlptr)) == 0) {
+                OPENSSL_free(comparebuf);
+                return X509_V_OK;
+            }
+        }
+        OPENSSL_free(comparebuf);
+        return X509_V_ERR_PERMITTED_VIOLATION;
+    }
+
+    /* If we have anything before '@' match local part */
+
+    if (baseat) {
+        if (baseat != baseptr) {
+            if ((baseat - baseptr) != (emlat - emlptr))
+                return X509_V_ERR_PERMITTED_VIOLATION;
+            /* Case sensitive match of local part */
+            if (strncmp(baseptr, emlptr, emlat - emlptr))
+                return X509_V_ERR_PERMITTED_VIOLATION;
+        }
+        /* Position base after '@' */
+        baseptr = baseat + 1;
+    }
+
+    rc = idna_to_unicode_lzlz(baseptr, &tmpunicodebuf, 0);
+    if (rc != IDNA_SUCCESS) {
+      return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;  
+    }
+
+    emlptr = emlat + 1;
+    /* Just have hostname left to match: case insensitive */
+    if (strlen(tmpunicodebuf) == strlen(emlptr) && memcmp(tmpunicodebuf, emlptr, strlen(emlptr)))
+    {
+        idn_free(tmpunicodebuf);
+        return X509_V_ERR_PERMITTED_VIOLATION;
+    }
+
+    idn_free(tmpunicodebuf);
+    return X509_V_OK;
+
+}
+# endif
 
 static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
 {

@@ -4583,3 +4583,8 @@
 #define SN_siphash              "SipHash"
 #define LN_siphash              "siphash"
 #define NID_siphash             1062
+
+#define SN_SmtpUtf8Name         "SmtpUtf8Name"
+#define LN_SmtpUtf8Name         "SmtpUtf8Name"
+#define NID_SmtpUtf8Name                1063
+#define OBJ_SmtpUtf8Name                1L,3L,6L,1L,5L,5L,7L,0L,18L,8L,9L

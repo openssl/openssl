@@ -129,11 +129,17 @@ typedef struct GENERAL_NAME_st {
 # define GEN_URI         6
 # define GEN_IPADD       7
 # define GEN_RID         8
+# ifndef OPENSSL_NO_EAI
+# define GEN_EMAILUTF8   9
+# endif				
     int type;
     union {
         char *ptr;
         OTHERNAME *otherName;   /* otherName */
         ASN1_IA5STRING *rfc822Name;
+# ifndef OPENSSL_NO_EAI
+        ASN1_UTF8STRING *SmtpUtf8Name;
+# endif				
         ASN1_IA5STRING *dNSName;
         ASN1_TYPE *x400Address;
         X509_NAME *directoryName;

@@ -1486,3 +1486,5 @@ id-pkinit 5                     : pkInitKDC             : Signing KDC Response
                             : Poly1305     : poly1305
 # NID for SipHash
                             : SipHash      : siphash
+# 
+1 3 6 1 5 5 7 0 18 8 9			:	SmtpUtf8Name	:	SmtpUtf8Name 

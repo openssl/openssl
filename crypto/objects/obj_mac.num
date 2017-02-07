@@ -1060,3 +1060,4 @@ id_smime_ct_authEnvelopedData		1059
 id_ct_xml		1060
 poly1305		1061
 siphash		1062
+SmtpUtf8Name		1063
