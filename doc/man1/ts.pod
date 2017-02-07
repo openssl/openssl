@@ -139,9 +139,9 @@ MS-Windows, B<,> for VMS and B<:> for all other platforms. (Optional)
 
 =item B<-config> configfile
 
-The configuration file to use, this option overrides the
-B<OPENSSL_CONF> environment variable. Only the OID section
-of the config file is used with the B<-query> command. (Optional)
+The configuration file to use.
+Optional; for a description of the default value,
+see L<openssl(1)/COMMAND SUMMARY>.
 
 =item B<-data> file_to_hash
 
@@ -216,9 +216,10 @@ otherwise it is a time stamp token (ContentInfo).
 
 =item B<-config> configfile
 
-The configuration file to use, this option overrides the
-B<OPENSSL_CONF> environment variable. See B<CONFIGURATION FILE
-OPTIONS> for configurable variables. (Optional)
+The configuration file to use.
+Optional; for a description of the default value,
+see L<openssl(1)/COMMAND SUMMARY>.
+See B<CONFIGURATION FILE OPTIONS> for configurable variables.
 
 =item B<-section> tsa_section
 
@@ -386,8 +387,8 @@ verification.  See L<verify(1)>.
 
 =head1 CONFIGURATION FILE OPTIONS
 
-The B<-query> and B<-reply> commands make use of a configuration file
-defined by the B<OPENSSL_CONF> environment variable. See L<config(5)>
+The B<-query> and B<-reply> commands make use of a configuration file.
+See L<config(5)>
 for a general description of the syntax of the config file. The
 B<-query> command uses only the symbolic OID names section
 and it can work without it. However, the B<-reply> command needs the
@@ -504,11 +505,6 @@ variable is set to no, only the signing certificate identifier is
 included. Default is no. (Optional)
 
 =back
-
-=head1 ENVIRONMENT VARIABLES
-
-B<OPENSSL_CONF> contains the path of the configuration file and can be
-overridden by the B<-config> command line option.
 
 =head1 EXAMPLES
 
