@@ -113,9 +113,15 @@ The ALPN select callback B<cb>, must return one of the following:
 
 ALPN protocol selected.
 
+=item SSL_TLSEXT_ERR_ALERT_FATAL
+
+There was no overlap between the client's supplied list and the server
+configuration.
+
 =item SSL_TLSEXT_ERR_NOACK
 
-ALPN protocol not selected.
+ALPN protocol not selected, e.g., because no ALPN protocols are configured for
+this connection.
 
 =back
 

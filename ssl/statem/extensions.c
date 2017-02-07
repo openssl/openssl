@@ -875,6 +875,9 @@ static int final_alpn(SSL *s, unsigned int context, int sent, int *al)
             /* ALPN takes precedence over NPN. */
             s->s3->npn_seen = 0;
 #endif
+        } else if (r == SSL_TLSEXT_ERR_NOACK) {
+            /* Behave as if no callback was present. */
+            return 1;
         } else {
             *al = SSL_AD_NO_APPLICATION_PROTOCOL;
             return 0;
