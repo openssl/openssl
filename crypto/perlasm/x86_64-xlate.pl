@@ -555,8 +555,9 @@ my %globals;
 	while(1) {
 	    push @ret, $val&0x7f;
 
-	    # see if most significant bit of the current digit
-	    # equals to sign bit, if so, it's last one...
+	    # see if remaining bits are same and equal to most
+	    # significant bit of the current digit, if so, it's
+	    # last digit...
 	    last if (($val>>6) == $sign);
 
 	    @ret[-1] |= 0x80;
