@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include "../ssl_locl.h"
 #include "record_locl.h"
 
@@ -29,7 +30,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
     unsigned char *seq;
     int lenu, lenf;
     SSL3_RECORD *rec = &recs[0];
-    uint32_t alg_enc = s->s3->tmp.new_cipher->algorithm_enc;
+    uint32_t alg_enc;
 
     if (n_recs != 1) {
         /* Should not happen */
@@ -52,7 +53,17 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
         rec->input = rec->data;
         return 1;
     }
+
     ivlen = EVP_CIPHER_CTX_iv_length(ctx);
+
+    /*
+     * To get here we must have selected a ciphersuite - otherwise ctx would
+     * be NULL
+     */
+    assert(s->s3->tmp.new_cipher != NULL);
+    if (s->s3->tmp.new_cipher == NULL)
+        return -1;
+    alg_enc = s->s3->tmp.new_cipher->algorithm_enc;
 
     if (alg_enc & SSL_AESCCM) {
         if (alg_enc & (SSL_AES128CCM8 | SSL_AES256CCM8))
