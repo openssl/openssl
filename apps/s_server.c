@@ -2320,6 +2320,20 @@ static int sv_body(int s, int stype, unsigned char *context)
                      * cert\n");
                      */
                 }
+                if ((buf[0] == 'K' || buf[0] == 'k')
+                        && ((buf[1] == '\n') || (buf[1] == '\r'))) {
+                    SSL_key_update(con, buf[0] == 'K' ?
+                                        SSL_KEY_UPDATE_REQUESTED
+                                        : SSL_KEY_UPDATE_NOT_REQUESTED);
+                    i = SSL_do_handshake(con);
+                    printf("SSL_do_handshake -> %d\n", i);
+                    i = 0;
+                    continue;
+                    /*
+                     * strcpy(buf,"server side RE-NEGOTIATE asking for client
+                     * cert\n");
+                     */
+                }
                 if (buf[0] == 'P') {
                     static const char *str = "Lets print some clear text\n";
                     BIO_write(SSL_get_wbio(con), str, strlen(str));
