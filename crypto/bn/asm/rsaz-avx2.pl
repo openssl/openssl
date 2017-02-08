@@ -827,6 +827,7 @@ $code.=<<___;
 	mov	%rbp, %rax
 ___
 $code.=<<___ if ($win64);
+.Lsqr_1024_in_tail:
 	movaps	-0xd8(%rax),%xmm6
 	movaps	-0xc8(%rax),%xmm7
 	movaps	-0xb8(%rax),%xmm8
@@ -1460,6 +1461,7 @@ $code.=<<___;
 	mov	%rbp, %rax
 ___
 $code.=<<___ if ($win64);
+.Lmul_1024_in_tail:
 	movaps	-0xd8(%rax),%xmm6
 	movaps	-0xc8(%rax),%xmm7
 	movaps	-0xb8(%rax),%xmm8
@@ -1815,14 +1817,17 @@ rsaz_se_handler:
 	cmp	%r10,%rbx		# context->Rip<prologue label
 	jb	.Lcommon_seh_tail
 
-	mov	152($context),%rax	# pull context->Rsp
-
 	mov	4(%r11),%r10d		# HandlerData[1]
 	lea	(%rsi,%r10),%r10	# epilogue label
 	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lcommon_seh_tail
 
-	mov	160($context),%rax	# pull context->Rbp
+	mov	160($context),%rbp	# pull context->Rbp
+
+	mov	8(%r11),%r10d		# HandlerData[2]
+	lea	(%rsi,%r10),%r10	# "in tail" label
+	cmp	%r10,%rbx		# context->Rip>="in tail" label
+	cmovc	%rbp,%rax
 
 	mov	-48(%rax),%r15
 	mov	-40(%rax),%r14
@@ -1900,11 +1905,13 @@ rsaz_se_handler:
 .LSEH_info_rsaz_1024_sqr_avx2:
 	.byte	9,0,0,0
 	.rva	rsaz_se_handler
-	.rva	.Lsqr_1024_body,.Lsqr_1024_epilogue
+	.rva	.Lsqr_1024_body,.Lsqr_1024_epilogue,.Lsqr_1024_in_tail
+	.long	0
 .LSEH_info_rsaz_1024_mul_avx2:
 	.byte	9,0,0,0
 	.rva	rsaz_se_handler
-	.rva	.Lmul_1024_body,.Lmul_1024_epilogue
+	.rva	.Lmul_1024_body,.Lmul_1024_epilogue,.Lmul_1024_in_tail
+	.long	0
 .LSEH_info_rsaz_1024_gather5:
 	.byte	0x01,0x36,0x17,0x0b
 	.byte	0x36,0xf8,0x09,0x00	# vmovaps 0x90(rsp),xmm15
