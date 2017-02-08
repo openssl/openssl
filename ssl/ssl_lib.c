@@ -471,6 +471,8 @@ int SSL_clear(SSL *s)
     clear_ciphers(s);
     s->first_packet = 0;
 
+    s->key_update = SSL_KEY_UPDATE_NONE;
+
     /* Reset DANE verification result state */
     s->dane.mdpth = -1;
     s->dane.pdpth = -1;
@@ -638,6 +640,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->default_passwd_callback_userdata = ctx->default_passwd_callback_userdata;
 
     s->method = ctx->method;
+
+    s->key_update = SSL_KEY_UPDATE_NONE;
 
     if (!s->method->ssl_new(s))
         goto err;
@@ -1714,14 +1718,37 @@ int SSL_shutdown(SSL *s)
     }
 }
 
+int SSL_key_update(SSL *s, SSL_KEY_UPDATE updatetype)
+{
+    if (!SSL_IS_TLS13(s)) {
+        SSLerr(SSL_F_SSL_KEY_UPDATE, SSL_R_WRONG_SSL_VERSION);
+        return 0;
+    }
+
+    if (updatetype != SSL_KEY_UPDATE_NOT_REQUESTED
+            && updatetype != SSL_KEY_UPDATE_REQUESTED) {
+        SSLerr(SSL_F_SSL_KEY_UPDATE, SSL_R_INVALID_KEY_UPDATE_TYPE);
+        return 0;
+    }
+
+    if (!SSL_is_init_finished(s)) {
+        SSLerr(SSL_F_SSL_KEY_UPDATE, SSL_R_STILL_IN_INIT);
+        return 0;
+    }
+
+    ossl_statem_set_in_init(s, 1);
+
+    s->key_update = updatetype;
+
+    return 1;
+}
+
 int SSL_renegotiate(SSL *s)
 {
-    /*
-     * TODO(TLS1.3): Return an error for now. Perhaps we should do a KeyUpdate
-     * instead when we support that?
-     */
-    if (SSL_IS_TLS13(s))
+    if (SSL_IS_TLS13(s)) {
+        SSLerr(SSL_F_SSL_RENEGOTIATE, SSL_R_WRONG_SSL_VERSION);
         return 0;
+    }
 
     if (s->renegotiate == 0)
         s->renegotiate = 1;
@@ -1733,10 +1760,6 @@ int SSL_renegotiate(SSL *s)
 
 int SSL_renegotiate_abbreviated(SSL *s)
 {
-    /*
-     * TODO(TLS1.3): Return an error for now. Perhaps we should do a KeyUpdate
-     * instead when we support that?
-     */
     if (SSL_IS_TLS13(s))
         return 0;
 
