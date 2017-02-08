@@ -1682,22 +1682,23 @@ int SSL_get_shared_sigalgs(SSL *s, int idx,
                            int *psign, int *phash, int *psignhash,
                            unsigned char *rsig, unsigned char *rhash)
 {
-    const SIGALG_LOOKUP *shsigalgs;
     if (s->cert->shared_sigalgs == NULL
         || idx >= (int)s->cert->shared_sigalgslen
         || s->cert->shared_sigalgslen > INT_MAX)
         return 0;
-    shsigalgs = s->cert->shared_sigalgs[idx];
-    if (phash != NULL)
-        *phash = shsigalgs->hash;
-    if (psign != NULL)
-        *psign = shsigalgs->sig;
-    if (psignhash != NULL)
-        *psignhash = shsigalgs->sigandhash;
-    if (rsig != NULL)
-        *rsig = (unsigned char)(shsigalgs->sigalg & 0xff);
-    if (rhash != NULL)
-        *rhash = (unsigned char)((shsigalgs->sigalg >> 8) & 0xff);
+    if (idx >= 0) {
+        const SIGALG_LOOKUP *shsigalgs = s->cert->shared_sigalgs[idx];
+        if (phash != NULL)
+            *phash = shsigalgs->hash;
+        if (psign != NULL)
+            *psign = shsigalgs->sig;
+        if (psignhash != NULL)
+            *psignhash = shsigalgs->sigandhash;
+        if (rsig != NULL)
+            *rsig = (unsigned char)(shsigalgs->sigalg & 0xff);
+        if (rhash != NULL)
+            *rhash = (unsigned char)((shsigalgs->sigalg >> 8) & 0xff);
+    }
     return (int)s->cert->shared_sigalgslen;
 }
 
