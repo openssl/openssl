@@ -495,6 +495,19 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
     return 0;
 }
 
+int tls_construct_key_update(SSL *s, WPACKET *pkt)
+{
+    if (!WPACKET_put_bytes_u8(pkt, s->key_update)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_KEY_UPDATE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    return 1;
+ err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+    return 0;
+}
+
 #ifndef OPENSSL_NO_NEXTPROTONEG
 /*
  * ssl3_take_mac calculates the Finished MAC for the handshakes messages seen
