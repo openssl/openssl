@@ -138,14 +138,22 @@ $code.=<<___;
 .type	rsaz_512_sqr,\@function,5
 .align	32
 rsaz_512_sqr:				# 25-29% faster than rsaz_512_mul
+.cfi_startproc
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 
 	subq	\$128+24, %rsp
+.cfi_adjust_cfa_offset	128+24
 .Lsqr_body:
 	movq	$mod, %rbp		# common argument
 	movq	($inp), %rdx
@@ -800,15 +808,24 @@ ___
 $code.=<<___;
 
 	leaq	128+24+48(%rsp), %rax
+.cfi_def_cfa	%rax,8
 	movq	-48(%rax), %r15
+.cfi_restore	%r15
 	movq	-40(%rax), %r14
+.cfi_restore	%r14
 	movq	-32(%rax), %r13
+.cfi_restore	%r13
 	movq	-24(%rax), %r12
+.cfi_restore	%r12
 	movq	-16(%rax), %rbp
+.cfi_restore	%rbp
 	movq	-8(%rax), %rbx
+.cfi_restore	%rbx
 	leaq	(%rax), %rsp
+.cfi_def_cfa_register	%rsp
 .Lsqr_epilogue:
 	ret
+.cfi_endproc
 .size	rsaz_512_sqr,.-rsaz_512_sqr
 ___
 }
@@ -819,14 +836,22 @@ $code.=<<___;
 .type	rsaz_512_mul,\@function,5
 .align	32
 rsaz_512_mul:
+.cfi_startproc
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 
 	subq	\$128+24, %rsp
+.cfi_adjust_cfa_offset	128+24
 .Lmul_body:
 	movq	$out, %xmm0		# off-load arguments
 	movq	$mod, %xmm1
@@ -896,15 +921,24 @@ $code.=<<___;
 	call	__rsaz_512_subtract
 
 	leaq	128+24+48(%rsp), %rax
+.cfi_def_cfa	%rax,8
 	movq	-48(%rax), %r15
+.cfi_restore	%r15
 	movq	-40(%rax), %r14
+.cfi_restore	%r14
 	movq	-32(%rax), %r13
+.cfi_restore	%r13
 	movq	-24(%rax), %r12
+.cfi_restore	%r12
 	movq	-16(%rax), %rbp
+.cfi_restore	%rbp
 	movq	-8(%rax), %rbx
+.cfi_restore	%rbx
 	leaq	(%rax), %rsp
+.cfi_def_cfa_register	%rsp
 .Lmul_epilogue:
 	ret
+.cfi_endproc
 .size	rsaz_512_mul,.-rsaz_512_mul
 ___
 }
@@ -915,14 +949,22 @@ $code.=<<___;
 .type	rsaz_512_mul_gather4,\@function,6
 .align	32
 rsaz_512_mul_gather4:
+.cfi_startproc
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 
 	subq	\$`128+24+($win64?0xb0:0)`, %rsp
+.cfi_adjust_cfa_offset	`128+24+($win64?0xb0:0)`
 ___
 $code.=<<___	if ($win64);
 	movaps	%xmm6,0xa0(%rsp)
@@ -1348,15 +1390,24 @@ $code.=<<___	if ($win64);
 	lea	0xb0(%rax),%rax
 ___
 $code.=<<___;
+.cfi_def_cfa	%rax,8
 	movq	-48(%rax), %r15
+.cfi_restore	%r15
 	movq	-40(%rax), %r14
+.cfi_restore	%r14
 	movq	-32(%rax), %r13
+.cfi_restore	%r13
 	movq	-24(%rax), %r12
+.cfi_restore	%r12
 	movq	-16(%rax), %rbp
+.cfi_restore	%rbp
 	movq	-8(%rax), %rbx
+.cfi_restore	%rbx
 	leaq	(%rax), %rsp
+.cfi_def_cfa_register	%rsp
 .Lmul_gather4_epilogue:
 	ret
+.cfi_endproc
 .size	rsaz_512_mul_gather4,.-rsaz_512_mul_gather4
 ___
 }
@@ -1367,15 +1418,23 @@ $code.=<<___;
 .type	rsaz_512_mul_scatter4,\@function,6
 .align	32
 rsaz_512_mul_scatter4:
+.cfi_startproc
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 
 	mov	$pwr, $pwr
 	subq	\$128+24, %rsp
+.cfi_adjust_cfa_offset	128+24
 .Lmul_scatter4_body:
 	leaq	($tbl,$pwr,8), $tbl
 	movq	$out, %xmm0		# off-load arguments
@@ -1458,15 +1517,24 @@ $code.=<<___;
 	movq	%r15, 128*7($inp)
 
 	leaq	128+24+48(%rsp), %rax
+.cfi_def_cfa	%rax,8
 	movq	-48(%rax), %r15
+.cfi_restore	%r15
 	movq	-40(%rax), %r14
+.cfi_restore	%r14
 	movq	-32(%rax), %r13
+.cfi_restore	%r13
 	movq	-24(%rax), %r12
+.cfi_restore	%r12
 	movq	-16(%rax), %rbp
+.cfi_restore	%rbp
 	movq	-8(%rax), %rbx
+.cfi_restore	%rbx
 	leaq	(%rax), %rsp
+.cfi_def_cfa_register	%rsp
 .Lmul_scatter4_epilogue:
 	ret
+.cfi_endproc
 .size	rsaz_512_mul_scatter4,.-rsaz_512_mul_scatter4
 ___
 }
@@ -1477,14 +1545,22 @@ $code.=<<___;
 .type	rsaz_512_mul_by_one,\@function,4
 .align	32
 rsaz_512_mul_by_one:
+.cfi_startproc
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 
 	subq	\$128+24, %rsp
+.cfi_adjust_cfa_offset	128+24
 .Lmul_by_one_body:
 ___
 $code.=<<___ if ($addx);
@@ -1539,15 +1615,24 @@ $code.=<<___;
 	movq	%r15, 56($out)
 
 	leaq	128+24+48(%rsp), %rax
+.cfi_def_cfa	%rax,8
 	movq	-48(%rax), %r15
+.cfi_restore	%r15
 	movq	-40(%rax), %r14
+.cfi_restore	%r14
 	movq	-32(%rax), %r13
+.cfi_restore	%r13
 	movq	-24(%rax), %r12
+.cfi_restore	%r12
 	movq	-16(%rax), %rbp
+.cfi_restore	%rbp
 	movq	-8(%rax), %rbx
+.cfi_restore	%rbx
 	leaq	(%rax), %rsp
+.cfi_def_cfa_register	%rsp
 .Lmul_by_one_epilogue:
 	ret
+.cfi_endproc
 .size	rsaz_512_mul_by_one,.-rsaz_512_mul_by_one
 ___
 }
