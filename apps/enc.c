@@ -43,7 +43,7 @@ typedef enum OPTION_choice {
     OPT_E, OPT_IN, OPT_OUT, OPT_PASS, OPT_ENGINE, OPT_D, OPT_P, OPT_V,
     OPT_NOPAD, OPT_SALT, OPT_NOSALT, OPT_DEBUG, OPT_UPPER_P, OPT_UPPER_A,
     OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
-    OPT_UPPER_S, OPT_IV, OPT_MD, OPT_CIPHER,
+    OPT_UPPER_S, OPT_IV, OPT_AEAD_TAGLEN, OPT_MD, OPT_CIPHER,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
@@ -72,6 +72,7 @@ const OPTIONS enc_options[] = {
     {"K", OPT_UPPER_K, 's', "Raw key, in hex"},
     {"S", OPT_UPPER_S, 's', "Salt, in hex"},
     {"iv", OPT_IV, 's', "IV in hex"},
+    {"aeadtaglen", OPT_AEAD_TAGLEN, 's', "AEAD tag length"},
     {"md", OPT_MD, 's', "Use specified digest to create a key from the passphrase"},
     {"none", OPT_NONE, '-', "Don't encrypt"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
@@ -103,8 +104,8 @@ int enc_main(int argc, char **argv)
     int bsize = BSIZE, verbose = 0, debug = 0, olb64 = 0, nosalt = 0;
     int enc = 1, printkey = 0, i, k;
     int base64 = 0, informat = FORMAT_BINARY, outformat = FORMAT_BINARY;
-    int ret = 1, inl, nopad = 0;
-    unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
+    int ret = 1, inl, nopad = 0, aeadtaglen = 0;
+    unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH], aeadtag[EVP_MAX_AEAD_TAG_LENGTH];
     unsigned char *buff = NULL, salt[PKCS5_SALT_LEN];
     long n;
     struct doall_enc_ciphers dec;
@@ -245,6 +246,10 @@ int enc_main(int argc, char **argv)
         case OPT_IV:
             hiv = opt_arg();
             break;
+        case OPT_AEAD_TAGLEN:
+            p = opt_arg();
+            aeadtaglen = atoi(p);
+            break;
         case OPT_MD:
             if (!opt_md(opt_arg(), &dgst))
                 goto opthelp;
@@ -266,11 +271,6 @@ int enc_main(int argc, char **argv)
     if (opt_num_rest() != 0) {
         BIO_printf(bio_err, "Extra arguments given.\n");
         goto opthelp;
-    }
-
-    if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
-        BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);
-        goto end;
     }
 
     if (cipher && (EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)) {
@@ -298,7 +298,7 @@ int enc_main(int argc, char **argv)
         }
 
     strbuf = app_malloc(SIZE, "strbuf");
-    buff = app_malloc(EVP_ENCODE_LENGTH(bsize), "evp buffer");
+    buff = app_malloc(EVP_ENCODE_LENGTH(bsize + aeadtaglen), "evp buffer"); /* It must be large enough for buffer and potential AEAD tag */
 
     if (infile == NULL) {
         in = dup_bio_in(informat);
@@ -484,6 +484,17 @@ int enc_main(int argc, char **argv)
             /* wiping secret data as we no longer need it */
             OPENSSL_cleanse(hkey, strlen(hkey));
         }
+        if (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
+            if (aeadtaglen == 0 || aeadtaglen > EVP_MAX_AEAD_TAG_LENGTH) {
+                BIO_printf(bio_err, "invalid AEAD tag length %d, overriding to %d\n", aeadtaglen, EVP_MAX_AEAD_TAG_LENGTH);
+                aeadtaglen = EVP_MAX_AEAD_TAG_LENGTH;
+            }
+        } else {
+            if (aeadtaglen > 0) {
+                BIO_printf(bio_err, "invalid AEAD tag length %d, overriding to 0\n", aeadtaglen);
+                aeadtaglen = 0;
+            }
+        }
 
         if ((benc = BIO_new(BIO_f_cipher())) == NULL)
             goto end;
@@ -547,22 +558,70 @@ int enc_main(int argc, char **argv)
     if (benc != NULL)
         wbio = BIO_push(benc, wbio);
 
+    /* When decrypting, first read aeadtaglen bytes as potential AEAD tag. */
+    if (!enc && aeadtaglen > 0) {
+        if (BIO_read(rbio, buff, aeadtaglen) != aeadtaglen) {
+            BIO_printf(bio_err, "error reading input file\n");
+            goto end;
+        }
+    }
+
     for (;;) {
-        inl = BIO_read(rbio, (char *)buff, bsize);
+        /* When decrypting, read to buffer after aeadtaglen offset. */
+        inl = BIO_read(rbio, (char *)(buff + (!enc ? aeadtaglen : 0)), bsize);
         if (inl <= 0)
             break;
         if (BIO_write(wbio, (char *)buff, inl) != inl) {
             BIO_printf(bio_err, "error writing output file\n");
             goto end;
         }
+
+        /* When decrypting, extract last read aeadtaglen bytes as potential AEAD tag. */
+        if (!enc && aeadtaglen > 0) {
+            memcpy(aeadtag, buff + inl, aeadtaglen);
+            memcpy(buff, aeadtag, aeadtaglen);
+        }
     }
+
+    /* When decrypting, set final AEAD tag */
+    if (!enc && aeadtaglen > 0) {
+        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, aeadtaglen, aeadtag) != 1) {
+            BIO_printf(bio_err, "error setting AEAD tag\n");
+            goto end;
+        }
+    }
+
+    /* Flush encrypted/decrypted data, check AEAD tag */
     if (!BIO_flush(wbio)) {
         BIO_printf(bio_err, "bad decrypt\n");
         goto end;
     }
 
+    /* Encryption/decryption finished */
+    if (benc != NULL)
+        wbio = BIO_pop(benc);
+
+    /* When encrypting, write AEAD tag */
+    if (enc && aeadtaglen > 0) {
+        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, aeadtaglen, aeadtag) != 1) {
+            BIO_printf(bio_err, "error getting AEAD tag\n");
+            goto end;
+        }
+        if (BIO_write(wbio, aeadtag, aeadtaglen) != aeadtaglen) {
+            BIO_printf(bio_err, "error writing output file\n");
+            goto end;
+        }
+    }
+
     ret = 0;
     if (verbose) {
+        if (aeadtaglen > 0) {
+            BIO_printf(bio_err, "aeadtag=");
+            for (i = 0; i < aeadtaglen; i++)
+                BIO_printf(bio_err, "%02X", aeadtag[i]);
+            BIO_printf(bio_err, "\n");
+        }
+
         BIO_printf(bio_err, "bytes read   : %8ju\n", BIO_number_read(in));
         BIO_printf(bio_err, "bytes written: %8ju\n", BIO_number_written(out));
     }
@@ -593,7 +652,6 @@ static void show_ciphers(const OBJ_NAME *name, void *arg)
     /* Filter out ciphers that we cannot use */
     cipher = EVP_get_cipherbyname(name->name);
     if (cipher == NULL ||
-            (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0 ||
             EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)
         return;
 

@@ -22,6 +22,7 @@ B<openssl enc -I<cipher>>
 [B<-kfile filename>]
 [B<-K key>]
 [B<-iv IV>]
+[B<-aeadtaglen N>]
 [B<-S salt>]
 [B<-salt>]
 [B<-nosalt>]
@@ -140,6 +141,10 @@ of hex digits. When only the key is specified using the B<-K> option, the
 IV must explicitly be defined. When a password is being specified using
 one of the other options, the IV is generated from this password.
 
+=item B<-aeadtaglen N>
+
+AEAD tag length for AEAD ciphers. Usually 16.
+
 =item B<-p>
 
 Print out the key and IV used.
@@ -242,9 +247,9 @@ the B<-ciphers> option (that is B<openssl enc -ciphers>) produces a
 list of ciphers, supported by your version of OpenSSL, including
 ones provided by configured engines.
 
-The B<enc> program does not support authenticated encryption modes
-like CCM and GCM. The utility does not store or retrieve the
-authentication tag.
+Authenticated encryption modes are supported. When encrypting,
+the authentication tag is appended to output. When decrypting,
+authentication failure is indicated by non-zero exit code.
 
 
  base64             Base 64
