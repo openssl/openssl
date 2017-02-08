@@ -94,7 +94,8 @@ static ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
     {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
     {SSL3_MT_FINISHED, "Finished"},
-    {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"}
+    {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
+    {SSL3_MT_KEY_UPDATE, "KeyUpdate"}
 };
 
 /* Cipher suites */
@@ -560,6 +561,11 @@ static ssl_trace_tbl ssl_crypto_tbl[] = {
     {TLS1_RT_CRYPTO_IV | TLS1_RT_CRYPTO_READ, "Read IV"},
     {TLS1_RT_CRYPTO_FIXED_IV | TLS1_RT_CRYPTO_WRITE, "Write IV (fixed part)"},
     {TLS1_RT_CRYPTO_FIXED_IV | TLS1_RT_CRYPTO_READ, "Read IV (fixed part)"}
+};
+
+static ssl_trace_tbl ssl_key_update_tbl[] = {
+    {SSL_KEY_UPDATE_NOT_REQUESTED, "update_not_requested"},
+    {SSL_KEY_UPDATE_REQUESTED, "update_requested"}
 };
 
 static void ssl_print_hex(BIO *bio, int indent, const char *name,
@@ -1348,6 +1354,16 @@ static int ssl_print_handshake(BIO *bio, SSL *ssl, int server,
     case SSL3_MT_ENCRYPTED_EXTENSIONS:
         if (!ssl_print_extensions(bio, indent + 2, 1,
                                   SSL3_MT_ENCRYPTED_EXTENSIONS, &msg, &msglen))
+            return 0;
+        break;
+
+    case SSL3_MT_KEY_UPDATE:
+        if (msglen != 1) {
+            ssl_print_hex(bio, indent + 2, "unexpected value", msg, msglen);
+            return 0;
+        }
+        if (!ssl_trace_list(bio, indent + 2, msg, msglen, 1,
+                            ssl_key_update_tbl))
             return 0;
         break;
 
