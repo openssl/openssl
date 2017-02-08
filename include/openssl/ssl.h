@@ -825,6 +825,14 @@ DEFINE_STACK_OF(SSL_COMP)
 # define SSL_CTX_set_app_data(ctx,arg)   (SSL_CTX_set_ex_data(ctx,0,(char *)arg))
 DEPRECATEDIN_1_1_0(void SSL_set_debug(SSL *s, int debug))
 
+/* TLSv1.3 KeyUpdate message types */
+typedef enum {
+    /* -1 used so that this is an invalid value for the on-the-wire protocol */
+    SSL_KEY_UPDATE_NONE = -1,
+    /* Values as defined for the on-the-wire protocol */
+    SSL_KEY_UPDATE_NOT_REQUESTED = 0,
+    SSL_KEY_UPDATE_REQUESTED = 1
+} SSL_KEY_UPDATE;
 
 /*
  * The valid handshake states (one for each type message sent and one for each
@@ -882,7 +890,9 @@ typedef enum {
     TLS_ST_SW_CERT_VRFY,
     TLS_ST_CR_HELLO_REQ,
     TLS_ST_SW_HELLO_RETRY_REQUEST,
-    TLS_ST_CR_HELLO_RETRY_REQUEST
+    TLS_ST_CR_HELLO_RETRY_REQUEST,
+    TLS_ST_SW_KEY_UPDATE,
+    TLS_ST_CW_KEY_UPDATE
 } OSSL_HANDSHAKE_STATE;
 
 /*
@@ -1650,6 +1660,7 @@ __owur STACK_OF(SSL_CIPHER) *SSL_get_client_ciphers(const SSL *s);
 __owur STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s);
 
 __owur int SSL_do_handshake(SSL *s);
+int SSL_key_update(SSL *s, SSL_KEY_UPDATE updatetype);
 int SSL_renegotiate(SSL *s);
 int SSL_renegotiate_abbreviated(SSL *s);
 __owur int SSL_renegotiate_pending(SSL *s);
@@ -2195,6 +2206,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_GET_SERVER_CERT_INDEX                  322
 # define SSL_F_SSL_GET_SIGN_PKEY                          183
 # define SSL_F_SSL_INIT_WBIO_BUFFER                       184
+# define SSL_F_SSL_KEY_UPDATE                             515
 # define SSL_F_SSL_LOAD_CLIENT_CA_FILE                    185
 # define SSL_F_SSL_LOG_MASTER_SECRET                      498
 # define SSL_F_SSL_LOG_RSA_CLIENT_KEY_EXCHANGE            499
@@ -2210,6 +2222,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_PEEK_EX                                432
 # define SSL_F_SSL_READ                                   223
 # define SSL_F_SSL_READ_EX                                434
+# define SSL_F_SSL_RENEGOTIATE                            516
 # define SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT                320
 # define SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT                321
 # define SSL_F_SSL_SESSION_DUP                            348
@@ -2305,6 +2318,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_FINISHED                     359
 # define SSL_F_TLS_CONSTRUCT_HELLO_REQUEST                373
 # define SSL_F_TLS_CONSTRUCT_HELLO_RETRY_REQUEST          510
+# define SSL_F_TLS_CONSTRUCT_KEY_UPDATE                   517
 # define SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET           428
 # define SSL_F_TLS_CONSTRUCT_NEXT_PROTO                   426
 # define SSL_F_TLS_CONSTRUCT_SERVER_CERTIFICATE           490
@@ -2472,6 +2486,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_INVALID_COMPRESSION_ALGORITHM              341
 # define SSL_R_INVALID_CONFIGURATION_NAME                 113
 # define SSL_R_INVALID_CT_VALIDATION_TYPE                 212
+# define SSL_R_INVALID_KEY_UPDATE_TYPE                    120
 # define SSL_R_INVALID_NULL_CMD_NAME                      385
 # define SSL_R_INVALID_SEQUENCE_NUMBER                    402
 # define SSL_R_INVALID_SERVERINFO_DATA                    388
@@ -2578,6 +2593,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH              303
 # define SSL_R_SSL_SESSION_ID_TOO_LONG                    408
 # define SSL_R_SSL_SESSION_VERSION_MISMATCH               210
+# define SSL_R_STILL_IN_INIT                              121
 # define SSL_R_TLSV1_ALERT_ACCESS_DENIED                  1049
 # define SSL_R_TLSV1_ALERT_DECODE_ERROR                   1050
 # define SSL_R_TLSV1_ALERT_DECRYPTION_FAILED              1021
