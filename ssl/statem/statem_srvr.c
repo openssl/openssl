@@ -3638,7 +3638,7 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
 
 static int tls_construct_hello_retry_request(SSL *s, WPACKET *pkt)
 {
-    int al;
+    int al = SSL_AD_INTERNAL_ERROR;
 
     /*
      * TODO(TLS1.3): Remove the DRAFT version before release
@@ -3647,7 +3647,6 @@ static int tls_construct_hello_retry_request(SSL *s, WPACKET *pkt)
     if (!WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)
             || !tls_construct_extensions(s, pkt, EXT_TLS1_3_HELLO_RETRY_REQUEST,
                                          NULL, 0, &al)) {
-        ssl3_send_alert(s, SSL3_AL_FATAL, al);
         SSLerr(SSL_F_TLS_CONSTRUCT_HELLO_RETRY_REQUEST, ERR_R_INTERNAL_ERROR);
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
         return 0;
