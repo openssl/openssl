@@ -480,13 +480,13 @@ my %globals;
     #   translates to .cfi_adjust_cfa_offset (if needed) and
     #   .cfi_restore;
     # - [and most notably] .cfi_cfa_expression which encodes
-    #   DW_CFA_def_cfa_expression and passes it  to .cfi_escape as
+    #   DW_CFA_def_cfa_expression and passes it to .cfi_escape as
     #   byte vector;
     #
     # CFA expressions were introduced in DWARF specification version
-    # 3 and describe how to deduce CFA, Canonical Frame Address, which
+    # 3 and describe how to deduce CFA, Canonical Frame Address. This
     # becomes handy if your stack frame is variable and you can't
-    # afford [previous] frame pointer register. Suggested directive
+    # spare register for [previous] frame pointer. Suggested directive
     # syntax is made-up mix of DWARF operator suffixes [subset of]
     # and references to registers with optional bias. Following example
     # describes offloaded *original* stack pointer at specific offset
@@ -497,7 +497,7 @@ my %globals;
     # Final +8 has everything to do with the fact that CFA is defined
     # as reference to top of caller's stack, and on x86_64 call to
     # subroutine pushes 8-byte return address. In other words original
-    # stack pointer upon entry to a subroutine is 8 bytes off CFA.
+    # stack pointer upon entry to a subroutine is 8 bytes off from CFA.
 
     # Below constants are taken from "DWARF Expressions" section of the
     # DWARF specification, section is numbered 7.7 in versions 3 and 4.
