@@ -1018,7 +1018,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
                        != 0)) {
             const unsigned char *pcurves, *pcurvestmp, *clntcurves;
             size_t num_curves, clnt_num_curves, i;
-            unsigned int group_id;
+            unsigned int group_id = 0;
 
             /* Check if a shared group exists */
 
