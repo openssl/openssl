@@ -394,11 +394,6 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
     OSSL_STATEM *st = &s->statem;
 
     /*
-     * TODO(TLS1.3): This is still based on the TLSv1.2 state machine. Over time
-     * we will update this to look more like real TLSv1.3
-     */
-
-    /*
      * No case for TLS_ST_BEFORE, because at that stage we have not negotiated
      * TLSv1.3 yet, so that is handled by ossl_statem_server_write_transition()
      */
@@ -406,6 +401,13 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
     switch (st->hand_state) {
     default:
         /* Shouldn't happen */
+        return WRITE_TRAN_ERROR;
+
+    case TLS_ST_OK:
+        if (s->key_update != SSL_KEY_UPDATE_NONE) {
+            st->hand_state = TLS_ST_SW_KEY_UPDATE;
+            return WRITE_TRAN_CONTINUE;
+        }
         return WRITE_TRAN_ERROR;
 
     case TLS_ST_SR_CLNT_HELLO:
@@ -459,6 +461,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         st->hand_state = TLS_ST_SW_SESSION_TICKET;
         return WRITE_TRAN_CONTINUE;
 
+    case TLS_ST_SW_KEY_UPDATE:
     case TLS_ST_SW_SESSION_TICKET:
         st->hand_state = TLS_ST_OK;
         ossl_statem_set_in_init(s, 0);
@@ -822,6 +825,7 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
         }
         break;
 
+    case TLS_ST_SW_KEY_UPDATE:
     case TLS_ST_SW_SESSION_TICKET:
         if (SSL_IS_TLS13(s) && statem_flush(s) != 1)
             return WORK_MORE_A;
@@ -922,6 +926,11 @@ int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt,
     case TLS_ST_SW_HELLO_RETRY_REQUEST:
         *confunc = tls_construct_hello_retry_request;
         *mt = SSL3_MT_HELLO_RETRY_REQUEST;
+        break;
+
+    case TLS_ST_SW_KEY_UPDATE:
+        *confunc = tls_construct_key_update;
+        *mt = SSL3_MT_KEY_UPDATE;
         break;
     }
 

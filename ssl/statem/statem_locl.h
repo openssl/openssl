@@ -111,6 +111,7 @@ __owur int tls_construct_change_cipher_spec(SSL *s, WPACKET *pkt);
 __owur int dtls_construct_change_cipher_spec(SSL *s, WPACKET *pkt);
 
 __owur int tls_construct_finished(SSL *s, WPACKET *pkt);
+__owur int tls_construct_key_update(SSL *s, WPACKET *pkt);
 __owur WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs);
 __owur WORK_STATE dtls_wait_for_dry(SSL *s);
 
