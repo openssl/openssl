@@ -406,11 +406,6 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
     OSSL_STATEM *st = &s->statem;
 
     /*
-     * TODO(TLS1.3): This is still based on the TLSv1.2 state machine. Over time
-     * we will update this to look more like real TLSv1.3
-     */
-
-    /*
      * Note: There are no cases for TLS_ST_BEFORE because we haven't negotiated
      * TLSv1.3 yet at that point. They are handled by
      * ossl_statem_client_write_transition().
@@ -444,6 +439,7 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CR_KEY_UPDATE:
+    case TLS_ST_CW_KEY_UPDATE:
     case TLS_ST_CR_SESSION_TICKET:
     case TLS_ST_CW_FINISHED:
         st->hand_state = TLS_ST_OK;
@@ -451,7 +447,12 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_OK:
-        /* Just go straight to trying to read from the server */
+        if (s->key_update != SSL_KEY_UPDATE_NONE) {
+            st->hand_state = TLS_ST_CW_KEY_UPDATE;
+            return WRITE_TRAN_CONTINUE;
+        }
+
+        /* Try to read from the server instead */
         return WRITE_TRAN_FINISHED;
     }
 }
@@ -724,6 +725,11 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
             return WORK_ERROR;
         }
         break;
+
+    case TLS_ST_CW_KEY_UPDATE:
+        if (statem_flush(s) != 1)
+            return WORK_MORE_A;
+        break;
     }
 
     return WORK_FINISHED_CONTINUE;
@@ -784,6 +790,11 @@ int ossl_statem_client_construct_message(SSL *s, WPACKET *pkt,
     case TLS_ST_CW_FINISHED:
         *confunc = tls_construct_finished;
         *mt = SSL3_MT_FINISHED;
+        break;
+
+    case TLS_ST_CW_KEY_UPDATE:
+        *confunc = tls_construct_key_update;
+        *mt = SSL3_MT_KEY_UPDATE;
         break;
     }
 
