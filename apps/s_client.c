@@ -749,7 +749,8 @@ typedef enum PROTOCOL_choice {
     PROTO_IRC,
     PROTO_POSTGRES,
     PROTO_LMTP,
-    PROTO_NNTP
+    PROTO_NNTP,
+    PROTO_SIEVE
 } PROTOCOL_CHOICE;
 
 static const OPT_PAIR services[] = {
@@ -764,6 +765,7 @@ static const OPT_PAIR services[] = {
     {"postgres", PROTO_POSTGRES},
     {"lmtp", PROTO_LMTP},
     {"nntp", PROTO_NNTP},
+    {"sieve", PROTO_SIEVE},
     {NULL, 0}
 };
 
@@ -1911,12 +1913,12 @@ int s_client_main(int argc, char **argv)
              */
             int foundit = 0;
             BIO *fbio = BIO_new(BIO_f_buffer());
+
             BIO_push(fbio, sbio);
             /* Wait for multi-line response to end from LMTP or SMTP */
             do {
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
-            }
-            while (mbuf_len > 3 && mbuf[3] == '-');
+            } while (mbuf_len > 3 && mbuf[3] == '-');
             if (starttls_proto == (int)PROTO_LMTP)
                 BIO_printf(fbio, "LHLO %s\r\n", ehlo);
             else
@@ -1930,14 +1932,13 @@ int s_client_main(int argc, char **argv)
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
                 if (strstr(mbuf, "STARTTLS"))
                     foundit = 1;
-            }
-            while (mbuf_len > 3 && mbuf[3] == '-');
+            } while (mbuf_len > 3 && mbuf[3] == '-');
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);
             if (!foundit)
                 BIO_printf(bio_err,
-                           "didn't find starttls in server response,"
+                           "Didn't find STARTTLS in server response,"
                            " trying anyway...\n");
             BIO_printf(sbio, "STARTTLS\r\n");
             BIO_read(sbio, sbuf, BUFSIZZ);
@@ -1958,6 +1959,7 @@ int s_client_main(int argc, char **argv)
         {
             int foundit = 0;
             BIO *fbio = BIO_new(BIO_f_buffer());
+
             BIO_push(fbio, sbio);
             BIO_gets(fbio, mbuf, BUFSIZZ);
             /* STARTTLS command requires CAPABILITY... */
@@ -1975,7 +1977,7 @@ int s_client_main(int argc, char **argv)
             BIO_free(fbio);
             if (!foundit)
                 BIO_printf(bio_err,
-                           "didn't find STARTTLS in server response,"
+                           "Didn't find STARTTLS in server response,"
                            " trying anyway...\n");
             BIO_printf(sbio, ". STARTTLS\r\n");
             BIO_read(sbio, sbuf, BUFSIZZ);
@@ -1984,6 +1986,7 @@ int s_client_main(int argc, char **argv)
     case PROTO_FTP:
         {
             BIO *fbio = BIO_new(BIO_f_buffer());
+
             BIO_push(fbio, sbio);
             /* wait for multi-line response to end from FTP */
             do {
@@ -2007,7 +2010,11 @@ int s_client_main(int argc, char **argv)
                        starttls_proto == PROTO_XMPP ? "client" : "server",
                        xmpphost ? xmpphost : host);
             seen = BIO_read(sbio, mbuf, BUFSIZZ);
-            mbuf[seen] = 0;
+            if (seen < 0) {
+                BIO_printf(bio_err, "BIO_read failed\n");
+                goto end;
+            }
+            mbuf[seen] = '\0';
             while (!strstr
                    (mbuf, "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'")
                    && !strstr(mbuf,
@@ -2018,15 +2025,19 @@ int s_client_main(int argc, char **argv)
                 if (seen <= 0)
                     goto shut;
 
-                mbuf[seen] = 0;
+                mbuf[seen] = '\0';
             }
             BIO_printf(sbio,
                        "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
             seen = BIO_read(sbio, sbuf, BUFSIZZ);
-            sbuf[seen] = 0;
+            if (seen < 0) {
+                BIO_printf(bio_err, "BIO_read failed\n");
+                goto shut;
+            }
+            sbuf[seen] = '\0';
             if (!strstr(sbuf, "<proceed"))
                 goto shut;
-            mbuf[0] = 0;
+            mbuf[0] = '\0';
         }
         break;
     case PROTO_TELNET:
@@ -2208,6 +2219,54 @@ int s_client_main(int argc, char **argv)
                            " trying anyway...\n");
             BIO_printf(sbio, "STARTTLS\r\n");
             BIO_read(sbio, sbuf, BUFSIZZ);
+        }
+        break;
+    case PROTO_SIEVE:
+        {
+            int foundit = 0;
+            BIO *fbio = BIO_new(BIO_f_buffer());
+
+            BIO_push(fbio, sbio);
+            /* wait for multi-line response to end from Sieve */
+            do {
+                mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+                /*
+                 * According to RFC 5804 § 1.7, capability
+                 * is case-insensitive, make it uppercase
+                 */
+                if (mbuf_len > 1 && mbuf[0] == '"') {
+                    make_uppercase(mbuf);
+                    if (strncmp(mbuf, "\"STARTTLS\"", 10) == 0)
+                        foundit = 1;
+                }
+            } while (mbuf_len > 1 && mbuf[0] == '"');
+            (void)BIO_flush(fbio);
+            BIO_pop(fbio);
+            BIO_free(fbio);
+            if (!foundit)
+                BIO_printf(bio_err,
+                           "Didn't find STARTTLS in server response,"
+                           " trying anyway...\n");
+            BIO_printf(sbio, "STARTTLS\r\n");
+            mbuf_len = BIO_read(sbio, mbuf, BUFSIZZ);
+            if (mbuf_len < 0) {
+                BIO_printf(bio_err, "BIO_read failed\n");
+                goto end;
+            } else if (mbuf_len < 2) {
+                BIO_printf(bio_err, "Server does not support STARTTLS.\n");
+                goto shut;
+            }
+            /*
+             * According to RFC 5804 § 2.2, response codes are case-
+             * insensitive, make it uppercase but preserve the response.
+             */
+            mbuf[mbuf_len] = '\0';
+            strncpy(sbuf, mbuf, 2);
+            make_uppercase(sbuf);
+            if (strncmp(sbuf, "OK", 2) != 0) {
+                BIO_printf(bio_err, "STARTTLS not supported: %s", mbuf);
+                goto shut;
+            }
         }
         break;
     }
