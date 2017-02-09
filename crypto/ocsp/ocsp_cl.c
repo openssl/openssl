@@ -230,8 +230,8 @@ int OCSP_resp_get1_id(const OCSP_BASICRESP *bs,
     } else {
         return 0;
     }
-    if (!pname && !pid)
-        return -1;
+    if (pname == NULL && pid == NULL)
+        return 0;
     return 1;
 }
 
