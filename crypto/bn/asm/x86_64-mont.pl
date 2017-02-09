@@ -51,6 +51,7 @@ $output  = shift;
 if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
 
 $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
+$cfi_ok=0; $cfi_ok=1 if ($flavour = "linux64");
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
@@ -350,6 +351,7 @@ $code.=<<___;
 .type	bn_mul4x_mont,\@function,6
 .align	16
 bn_mul4x_mont:
+.cfi_startproc
 	mov	${num}d,${num}d
 	mov	%rsp,%rax
 .Lmul4x_enter:
@@ -361,12 +363,31 @@ $code.=<<___ if ($addx);
 ___
 $code.=<<___;
 	push	%rbx
+.cfi_adjust_cfa_offset 8
+.cfi_offset rbx, -16
 	push	%rbp
+.cfi_adjust_cfa_offset 8
+.cfi_offset rbp, -24
 	push	%r12
+.cfi_adjust_cfa_offset 8
+.cfi_offset r12, -32
 	push	%r13
+.cfi_adjust_cfa_offset 8
+.cfi_offset r13, -40
 	push	%r14
+.cfi_adjust_cfa_offset 8
+.cfi_offset r14, -48
 	push	%r15
+.cfi_adjust_cfa_offset 8
+.cfi_offset r15, -56
+___
 
+$code.=<<___ if ($cfi_ok);
+	mov	%rsp, %r12
+.cfi_def_cfa_register r12
+___
+
+$code.=<<___;
 	neg	$num
 	mov	%rsp,%r11
 	lea	-32(%rsp,$num,8),%r10	# future alloca(8*(num+4))
@@ -387,7 +408,26 @@ $code.=<<___;
 	cmp	%r10,%rsp
 	ja	.Lmul4x_page_walk
 .Lmul4x_page_walk_done:
+___
 
+if ($cfi_ok) {
+    # Create a dummy call frame below RSP so that CFI-based unwinders can
+    # handle the variable-length space on the stack. This cannot work on
+    # platforms without a redzone (i.e. Windows).
+    die("need red-zone") if $win64;
+    $code.=<<___
+	lea	(%rip), %r13
+	mov	%r13, -8(%rsp)
+.cfi_endproc
+.cfi_startproc
+.cfi_def_cfa rsp, 0
+.cfi_offset rip, -8
+	mov	%r12, -16(%rsp)
+.cfi_offset r12, -16
+___
+}
+
+$code.=<<___;
 	mov	%rax,8(%rsp,$num,8)	# tp[num+1]=%rsp
 .Lmul4x_body:
 	mov	$rp,16(%rsp,$num,8)	# tp[num+2]=$rp
@@ -767,6 +807,7 @@ ___
 }
 $code.=<<___;
 	mov	8(%rsp,$num,8),%rsi	# restore %rsp
+.cfi_def_cfa rsi, 8
 	mov	\$1,%rax
 	mov	-48(%rsi),%r15
 	mov	-40(%rsi),%r14
@@ -777,6 +818,7 @@ $code.=<<___;
 	lea	(%rsi),%rsp
 .Lmul4x_epilogue:
 	ret
+.cfi_endproc
 .size	bn_mul4x_mont,.-bn_mul4x_mont
 ___
 }}}
