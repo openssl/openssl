@@ -446,15 +446,15 @@ $code.=<<___;
 	mov	-48(%rsi),%r15
 .cfi_restore	%r15
 	mov	-40(%rsi),%r14
-.cfi_restore	%r15
+.cfi_restore	%r14
 	mov	-32(%rsi),%r13
-.cfi_restore	%r15
+.cfi_restore	%r13
 	mov	-24(%rsi),%r12
-.cfi_restore	%r15
+.cfi_restore	%r12
 	mov	-16(%rsi),%rbp
-.cfi_restore	%r15
+.cfi_restore	%rbp
 	mov	-8(%rsi),%rbx
-.cfi_restore	%r15
+.cfi_restore	%rbx
 	lea	(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
 .Lmul_epilogue:
