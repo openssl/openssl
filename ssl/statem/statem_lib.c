@@ -502,6 +502,8 @@ int tls_construct_key_update(SSL *s, WPACKET *pkt)
         goto err;
     }
 
+    s->key_update = SSL_KEY_UPDATE_NONE;
+
     return 1;
  err:
     ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
