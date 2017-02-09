@@ -892,7 +892,9 @@ typedef enum {
     TLS_ST_SW_HELLO_RETRY_REQUEST,
     TLS_ST_CR_HELLO_RETRY_REQUEST,
     TLS_ST_SW_KEY_UPDATE,
-    TLS_ST_CW_KEY_UPDATE
+    TLS_ST_CW_KEY_UPDATE,
+    TLS_ST_SR_KEY_UPDATE,
+    TLS_ST_CR_KEY_UPDATE
 } OSSL_HANDSHAKE_STATE;
 
 /*
@@ -2375,6 +2377,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST            511
 # define SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT          442
 # define SSL_F_TLS_PROCESS_KEY_EXCHANGE                   365
+# define SSL_F_TLS_PROCESS_KEY_UPDATE                     513
 # define SSL_F_TLS_PROCESS_NEW_SESSION_TICKET             366
 # define SSL_F_TLS_PROCESS_NEXT_PROTO                     383
 # define SSL_F_TLS_PROCESS_SERVER_CERTIFICATE             367
@@ -2406,6 +2409,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_BAD_HANDSHAKE_LENGTH                       332
 # define SSL_R_BAD_HELLO_REQUEST                          105
 # define SSL_R_BAD_KEY_SHARE                              108
+# define SSL_R_BAD_KEY_UPDATE                             122
 # define SSL_R_BAD_LENGTH                                 271
 # define SSL_R_BAD_PACKET_LENGTH                          115
 # define SSL_R_BAD_PROTOCOL_VERSION_NUMBER                116
