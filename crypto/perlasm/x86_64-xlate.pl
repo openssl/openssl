@@ -279,7 +279,7 @@ my %globals;
 	}
 
 	# if base register is %rbp or %r13, see if it's possible to
-	# flip base and ingex registers [for better performance]
+	# flip base and index registers [for better performance]
 	if (!$self->{label} && $self->{index} && $self->{scale}==1 &&
 	    $self->{base} =~ /(rbp|r13)/) {
 		$self->{base} = $self->{index}; $self->{index} = $1;
