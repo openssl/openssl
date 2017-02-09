@@ -2291,7 +2291,8 @@ int s_client_main(int argc, char **argv)
         else
             timeoutp = NULL;
 
-        if (SSL_in_init(con) && !SSL_total_renegotiations(con)) {
+        if (SSL_in_init(con) && !SSL_total_renegotiations(con)
+                && SSL_get_key_update_type(con) == SSL_KEY_UPDATE_NONE) {
             in_init = 1;
             tty_on = 0;
         } else {
@@ -2604,6 +2605,15 @@ int s_client_main(int argc, char **argv)
             if ((!c_ign_eof) && (cbuf[0] == 'R' && cmdletters)) {
                 BIO_printf(bio_err, "RENEGOTIATING\n");
                 SSL_renegotiate(con);
+                cbuf_len = 0;
+            }
+
+            if ((!c_ign_eof) && ((cbuf[0] == 'K' || cbuf[0] == 'k' )
+                                 && cmdletters)) {
+                BIO_printf(bio_err, "KEYUPDATE\n");
+                SSL_key_update(con,
+                               cbuf[0] == 'K' ? SSL_KEY_UPDATE_REQUESTED
+                                              : SSL_KEY_UPDATE_NOT_REQUESTED);
                 cbuf_len = 0;
             }
 #ifndef OPENSSL_NO_HEARTBEATS
