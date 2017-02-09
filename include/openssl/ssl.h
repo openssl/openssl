@@ -1663,6 +1663,7 @@ __owur STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s);
 
 __owur int SSL_do_handshake(SSL *s);
 int SSL_key_update(SSL *s, SSL_KEY_UPDATE updatetype);
+SSL_KEY_UPDATE SSL_get_key_update_type(SSL *s);
 int SSL_renegotiate(SSL *s);
 int SSL_renegotiate_abbreviated(SSL *s);
 __owur int SSL_renegotiate_pending(SSL *s);
