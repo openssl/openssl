@@ -508,6 +508,24 @@ int tls_construct_key_update(SSL *s, WPACKET *pkt)
     return 0;
 }
 
+
+MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
+{
+    unsigned int updatetype;
+
+    if (!PACKET_get_1(pkt, &updatetype)
+            || PACKET_remaining(pkt) != 0
+            || (updatetype != SSL_KEY_UPDATE_NOT_REQUESTED
+                && updatetype != SSL_KEY_UPDATE_REQUESTED)) {
+        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+        SSLerr(SSL_F_TLS_PROCESS_KEY_UPDATE, SSL_R_BAD_KEY_UPDATE);
+        ossl_statem_set_error(s);
+        return MSG_PROCESS_ERROR;
+    }
+
+    return MSG_PROCESS_FINISHED_READING;
+}
+
 #ifndef OPENSSL_NO_NEXTPROTONEG
 /*
  * ssl3_take_mac calculates the Finished MAC for the handshakes messages seen
