@@ -97,7 +97,7 @@ $sslv2testtype = SSLV2_IN_SSLV2;
 $proxy->clear();
 $proxy->serverflags("-tls1_2");
 $proxy->start();
-ok(!TLSProxy::Message->end(), "SSLv2 in SSLv2 ClientHello test");
+ok(TLSProxy::Message->fail(), "SSLv2 in SSLv2 ClientHello test");
 
 #Test 7: Sanity check ClientHello fragmentation. This isn't really an SSLv2 test
 #        at all, but it gives us confidence that Test 8 fails for the right
