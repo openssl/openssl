@@ -23,6 +23,7 @@
 #define ENCRYPTED_EXTENSIONS_MAX_LENGTH 20000
 #define SERVER_KEY_EXCH_MAX_LENGTH      102400
 #define SERVER_HELLO_DONE_MAX_LENGTH    0
+#define KEY_UPDATE_MAX_LENGTH           1
 #define CCS_MAX_LENGTH                  1
 /* Max should actually be 36 but we are generous */
 #define FINISHED_MAX_LENGTH             64
@@ -112,6 +113,7 @@ __owur int dtls_construct_change_cipher_spec(SSL *s, WPACKET *pkt);
 
 __owur int tls_construct_finished(SSL *s, WPACKET *pkt);
 __owur int tls_construct_key_update(SSL *s, WPACKET *pkt);
+__owur MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt);
 __owur WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs);
 __owur WORK_STATE dtls_wait_for_dry(SSL *s);
 

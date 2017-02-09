@@ -200,6 +200,10 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
             st->hand_state = TLS_ST_CR_SESSION_TICKET;
             return 1;
         }
+        if (mt == SSL3_MT_KEY_UPDATE) {
+            st->hand_state = TLS_ST_CR_KEY_UPDATE;
+            return 1;
+        }
         break;
     }
 
@@ -439,6 +443,7 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         st->hand_state = TLS_ST_CW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
+    case TLS_ST_CR_KEY_UPDATE:
     case TLS_ST_CR_SESSION_TICKET:
     case TLS_ST_CW_FINISHED:
         st->hand_state = TLS_ST_OK;
@@ -843,6 +848,9 @@ size_t ossl_statem_client_max_message_size(SSL *s)
 
     case TLS_ST_CR_ENCRYPTED_EXTENSIONS:
         return ENCRYPTED_EXTENSIONS_MAX_LENGTH;
+
+    case TLS_ST_CR_KEY_UPDATE:
+        return KEY_UPDATE_MAX_LENGTH;
     }
 }
 
@@ -899,6 +907,9 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
 
     case TLS_ST_CR_ENCRYPTED_EXTENSIONS:
         return tls_process_encrypted_extensions(s, pkt);
+
+    case TLS_ST_CR_KEY_UPDATE:
+        return tls_process_key_update(s, pkt);
     }
 }
 
