@@ -2664,3 +2664,11 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
     }
     return 1;
 }
+
+void make_uppercase(char *string)
+{
+    int i;
+
+    for (i = 0; string[i] != '\0'; i++)
+        string[i] = toupper((unsigned char)string[i]);
+}
