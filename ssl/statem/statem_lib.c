@@ -516,6 +516,14 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
         return MSG_PROCESS_ERROR;
     }
 
+    /*
+     * If we get a request for us to update our sending keys too then, we need
+     * to additionally send a KeyUpdate message. However that message should
+     * not also request an update (otherwise we get into an infinite loop).
+     */
+    if (updatetype == SSL_KEY_UPDATE_REQUESTED)
+        s->key_update = SSL_KEY_UPDATE_NOT_REQUESTED;
+
     return MSG_PROCESS_FINISHED_READING;
 }
 
