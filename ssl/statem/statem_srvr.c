@@ -470,6 +470,12 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SR_KEY_UPDATE:
+        if (s->key_update != SSL_KEY_UPDATE_NONE) {
+            st->hand_state = TLS_ST_SW_KEY_UPDATE;
+            return WRITE_TRAN_CONTINUE;
+        }
+        /* Fall through */
+
     case TLS_ST_SW_KEY_UPDATE:
     case TLS_ST_SW_SESSION_TICKET:
         st->hand_state = TLS_ST_OK;
