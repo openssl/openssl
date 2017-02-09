@@ -132,6 +132,13 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
             return 1;
         }
         break;
+
+    case TLS_ST_OK:
+        if (mt == SSL3_MT_KEY_UPDATE) {
+            st->hand_state = TLS_ST_SR_KEY_UPDATE;
+            return 1;
+        }
+        break;
     }
 
     /* No valid transition found */
@@ -408,7 +415,8 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
             st->hand_state = TLS_ST_SW_KEY_UPDATE;
             return WRITE_TRAN_CONTINUE;
         }
-        return WRITE_TRAN_ERROR;
+        /* Try to read from the client instead */
+        return WRITE_TRAN_FINISHED;
 
     case TLS_ST_SR_CLNT_HELLO:
         if (s->hello_retry_request)
@@ -461,6 +469,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         st->hand_state = TLS_ST_SW_SESSION_TICKET;
         return WRITE_TRAN_CONTINUE;
 
+    case TLS_ST_SR_KEY_UPDATE:
     case TLS_ST_SW_KEY_UPDATE:
     case TLS_ST_SW_SESSION_TICKET:
         st->hand_state = TLS_ST_OK;
@@ -992,6 +1001,9 @@ size_t ossl_statem_server_max_message_size(SSL *s)
 
     case TLS_ST_SR_FINISHED:
         return FINISHED_MAX_LENGTH;
+
+    case TLS_ST_SR_KEY_UPDATE:
+        return KEY_UPDATE_MAX_LENGTH;
     }
 }
 
@@ -1029,6 +1041,10 @@ MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL *s, PACKET *pkt)
 
     case TLS_ST_SR_FINISHED:
         return tls_process_finished(s, pkt);
+
+    case TLS_ST_SR_KEY_UPDATE:
+        return tls_process_key_update(s, pkt);
+
     }
 }
 
