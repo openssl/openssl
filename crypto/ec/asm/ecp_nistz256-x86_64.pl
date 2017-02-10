@@ -3178,8 +3178,8 @@ full_handler:
 	mov	8(%r11),%r10d		# HandlerData[2]
 	lea	(%rax,%r10),%rax
 
-	mov	-8(%rax),%rbx
-	mov	-16(%rax),%rbp
+	mov	-8(%rax),%rbp
+	mov	-16(%rax),%rbx
 	mov	-24(%rax),%r12
 	mov	-32(%rax),%r13
 	mov	-40(%rax),%r14
