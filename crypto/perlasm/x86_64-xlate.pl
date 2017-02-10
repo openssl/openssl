@@ -633,7 +633,7 @@ my %globals;
 	my	$self = {};
 	my	$ret;
 
-	if ($$line =~ s/^\s*\.cfi_(\w+)\s+//) {
+	if ($$line =~ s/^\s*\.cfi_(\w+)\s*//) {
 	    bless $self,$class;
 	    $ret = $self;
 	    undef $self->{value};
