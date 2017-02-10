@@ -218,7 +218,7 @@
      to service a connection. This could lead to a Denial of Service through
      memory exhaustion. However, the excessive message length check still takes
      place, and this would cause the connection to immediately fail. Assuming
-     that the application calls SSL_free() on the failed conneciton in a timely
+     that the application calls SSL_free() on the failed connection in a timely
      manner then the 21Mb of allocated memory will then be immediately freed
      again. Therefore the excessive memory allocation will be transitory in
      nature. This then means that there is only a security impact if:
@@ -971,7 +971,7 @@
      done while fixing the error code for the key-too-small case.
      [Annie Yousar <a.yousar@informatik.hu-berlin.de>]
 
-  *) CA.sh has been removmed; use CA.pl instead.
+  *) CA.sh has been removed; use CA.pl instead.
      [Rich Salz]
 
   *) Removed old DES API.
