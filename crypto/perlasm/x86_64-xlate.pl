@@ -633,7 +633,7 @@ my %globals;
 	my	$self = {};
 	my	$ret;
 
-	if ($$line =~ s/^\s*\.cfi_(\w+)\s+//) {
+	if ($$line =~ s/^\s*\.cfi_(\w+)\s*//) {
 	    bless $self,$class;
 	    $ret = $self;
 	    undef $self->{value};
@@ -656,7 +656,7 @@ my %globals;
 			&& do {	$cfa_rsp -= 1*eval($$line) if ($cfa_reg eq "%rsp");
 				last;
 			      };
-	    /def_cfa/	&& do {	if ($$line =~ /(%r\w+)\s*,\s*(\.+)/) {
+	    /def_cfa/	&& do {	if ($$line =~ /(%r\w+)\s*,\s*(.+)/) {
 				    $cfa_reg = $1;
 				    $cfa_rsp = -1*eval($2) if ($cfa_reg eq "%rsp");
 				}
