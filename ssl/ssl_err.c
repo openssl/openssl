@@ -28,6 +28,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_DANE_CTX_ENABLE), "dane_ctx_enable"},
     {ERR_FUNC(SSL_F_DANE_MTYPE_SET), "dane_mtype_set"},
     {ERR_FUNC(SSL_F_DANE_TLSA_ADD), "dane_tlsa_add"},
+    {ERR_FUNC(SSL_F_DERIVE_SECRET_KEY_AND_IV), "derive_secret_key_and_iv"},
     {ERR_FUNC(SSL_F_DO_DTLS1_WRITE), "do_dtls1_write"},
     {ERR_FUNC(SSL_F_DO_SSL3_WRITE), "do_ssl3_write"},
     {ERR_FUNC(SSL_F_DTLS1_BUFFER_RECORD), "dtls1_buffer_record"},
