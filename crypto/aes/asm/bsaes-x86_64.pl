@@ -1165,15 +1165,23 @@ $code.=<<___;
 .type	bsaes_ecb_encrypt_blocks,\@abi-omnipotent
 .align	16
 bsaes_ecb_encrypt_blocks:
+.cfi_startproc
 	mov	%rsp, %rax
 .Lecb_enc_prologue:
 	push	%rbp
+.cfi_push	%rbp
 	push	%rbx
+.cfi_push	%rbx
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	lea	-0x48(%rsp),%rsp
+.cfi_adjust_cfa_offset	0x48
 ___
 $code.=<<___ if ($win64);
 	lea	-0xa0(%rsp), %rsp
@@ -1191,6 +1199,7 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	%rsp,%rbp		# backup %rsp
+.cfi_def_cfa_register	%rbp
 	mov	240($arg4),%eax		# rounds
 	mov	$arg1,$inp		# backup arguments
 	mov	$arg2,$out
@@ -1335,6 +1344,7 @@ $code.=<<___;
 	jb	.Lecb_enc_bzero
 
 	lea	0x78(%rbp),%rax
+.cfi_def_cfa	%rax,8
 ___
 $code.=<<___ if ($win64);
 	movaps	0x40(%rbp), %xmm6
@@ -1352,29 +1362,45 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-48(%rax), %r15
+.cfi_restore	%r15
 	mov	-40(%rax), %r14
+.cfi_restore	%r14
 	mov	-32(%rax), %r13
+.cfi_restore	%r13
 	mov	-24(%rax), %r12
+.cfi_restore	%r12
 	mov	-16(%rax), %rbx
+.cfi_restore	%rbx
 	mov	-8(%rax), %rbp
+.cfi_restore	%rbp
 	lea	(%rax), %rsp		# restore %rsp
+.cfi_def_cfa_register	%rsp
 .Lecb_enc_epilogue:
 	ret
+.cfi_endproc
 .size	bsaes_ecb_encrypt_blocks,.-bsaes_ecb_encrypt_blocks
 
 .globl	bsaes_ecb_decrypt_blocks
 .type	bsaes_ecb_decrypt_blocks,\@abi-omnipotent
 .align	16
 bsaes_ecb_decrypt_blocks:
+.cfi_startproc
 	mov	%rsp, %rax
 .Lecb_dec_prologue:
 	push	%rbp
+.cfi_push	%rbp
 	push	%rbx
+.cfi_push	%rbx
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	lea	-0x48(%rsp),%rsp
+.cfi_adjust_cfa_offset	0x48
 ___
 $code.=<<___ if ($win64);
 	lea	-0xa0(%rsp), %rsp
@@ -1392,6 +1418,7 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	%rsp,%rbp		# backup %rsp
+.cfi_def_cfa_register	%rbp
 	mov	240($arg4),%eax		# rounds
 	mov	$arg1,$inp		# backup arguments
 	mov	$arg2,$out
@@ -1537,6 +1564,7 @@ $code.=<<___;
 	jb	.Lecb_dec_bzero
 
 	lea	0x78(%rbp),%rax
+.cfi_def_cfa	%rax,8
 ___
 $code.=<<___ if ($win64);
 	movaps	0x40(%rbp), %xmm6
@@ -1554,14 +1582,22 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-48(%rax), %r15
+.cfi_restore	%r15
 	mov	-40(%rax), %r14
+.cfi_restore	%r14
 	mov	-32(%rax), %r13
+.cfi_restore	%r13
 	mov	-24(%rax), %r12
+.cfi_restore	%r12
 	mov	-16(%rax), %rbx
+.cfi_restore	%rbx
 	mov	-8(%rax), %rbp
+.cfi_restore	%rbp
 	lea	(%rax), %rsp		# restore %rsp
+.cfi_def_cfa_register	%rsp
 .Lecb_dec_epilogue:
 	ret
+.cfi_endproc
 .size	bsaes_ecb_decrypt_blocks,.-bsaes_ecb_decrypt_blocks
 ___
 }
@@ -1571,6 +1607,7 @@ $code.=<<___;
 .type	bsaes_cbc_encrypt,\@abi-omnipotent
 .align	16
 bsaes_cbc_encrypt:
+.cfi_startproc
 ___
 $code.=<<___ if ($win64);
 	mov	48(%rsp),$arg6		# pull direction flag
@@ -1584,12 +1621,19 @@ $code.=<<___;
 	mov	%rsp, %rax
 .Lcbc_dec_prologue:
 	push	%rbp
+.cfi_push	%rbp
 	push	%rbx
+.cfi_push	%rbx
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	lea	-0x48(%rsp), %rsp
+.cfi_adjust_cfa_offset	0x48
 ___
 $code.=<<___ if ($win64);
 	mov	0xa0(%rsp),$arg5	# pull ivp
@@ -1608,6 +1652,7 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	%rsp, %rbp		# backup %rsp
+.cfi_def_cfa_register	%rbp
 	mov	240($arg4), %eax	# rounds
 	mov	$arg1, $inp		# backup arguments
 	mov	$arg2, $out
@@ -1827,6 +1872,7 @@ $code.=<<___;
 	ja	.Lcbc_dec_bzero
 
 	lea	0x78(%rbp),%rax
+.cfi_def_cfa	%rax,8
 ___
 $code.=<<___ if ($win64);
 	movaps	0x40(%rbp), %xmm6
@@ -1844,29 +1890,45 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-48(%rax), %r15
+.cfi_restore	%r15
 	mov	-40(%rax), %r14
+.cfi_restore	%r14
 	mov	-32(%rax), %r13
+.cfi_restore	%r13
 	mov	-24(%rax), %r12
+.cfi_restore	%r12
 	mov	-16(%rax), %rbx
+.cfi_restore	%rbx
 	mov	-8(%rax), %rbp
+.cfi_restore	%rbp
 	lea	(%rax), %rsp		# restore %rsp
+.cfi_def_cfa_register	%rsp
 .Lcbc_dec_epilogue:
 	ret
+.cfi_endproc
 .size	bsaes_cbc_encrypt,.-bsaes_cbc_encrypt
 
 .globl	bsaes_ctr32_encrypt_blocks
 .type	bsaes_ctr32_encrypt_blocks,\@abi-omnipotent
 .align	16
 bsaes_ctr32_encrypt_blocks:
+.cfi_startproc
 	mov	%rsp, %rax
 .Lctr_enc_prologue:
 	push	%rbp
+.cfi_push	%rbp
 	push	%rbx
+.cfi_push	%rbx
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	lea	-0x48(%rsp), %rsp
+.cfi_adjust_cfa_offset	0x48
 ___
 $code.=<<___ if ($win64);
 	mov	0xa0(%rsp),$arg5	# pull ivp
@@ -1885,6 +1947,7 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	%rsp, %rbp		# backup %rsp
+.cfi_def_cfa_register	%rbp
 	movdqu	($arg5), %xmm0		# load counter
 	mov	240($arg4), %eax	# rounds
 	mov	$arg1, $inp		# backup arguments
@@ -2059,6 +2122,7 @@ $code.=<<___;
 	ja	.Lctr_enc_bzero
 
 	lea	0x78(%rbp),%rax
+.cfi_def_cfa	%rax,8
 ___
 $code.=<<___ if ($win64);
 	movaps	0x40(%rbp), %xmm6
@@ -2076,14 +2140,22 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-48(%rax), %r15
+.cfi_restore	%r15
 	mov	-40(%rax), %r14
+.cfi_restore	%r14
 	mov	-32(%rax), %r13
+.cfi_restore	%r13
 	mov	-24(%rax), %r12
+.cfi_restore	%r12
 	mov	-16(%rax), %rbx
+.cfi_restore	%rbx
 	mov	-8(%rax), %rbp
+.cfi_restore	%rbp
 	lea	(%rax), %rsp		# restore %rsp
+.cfi_def_cfa_register	%rsp
 .Lctr_enc_epilogue:
 	ret
+.cfi_endproc
 .size	bsaes_ctr32_encrypt_blocks,.-bsaes_ctr32_encrypt_blocks
 ___
 ######################################################################
@@ -2099,15 +2171,23 @@ $code.=<<___;
 .type	bsaes_xts_encrypt,\@abi-omnipotent
 .align	16
 bsaes_xts_encrypt:
+.cfi_startproc
 	mov	%rsp, %rax
 .Lxts_enc_prologue:
 	push	%rbp
+.cfi_push	%rbp
 	push	%rbx
+.cfi_push	%rbx
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	lea	-0x48(%rsp), %rsp
+.cfi_adjust_cfa_offset	0x48
 ___
 $code.=<<___ if ($win64);
 	mov	0xa0(%rsp),$arg5	# pull key2
@@ -2127,6 +2207,7 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	%rsp, %rbp		# backup %rsp
+.cfi_def_cfa_register	%rbp
 	mov	$arg1, $inp		# backup arguments
 	mov	$arg2, $out
 	mov	$arg3, $len
@@ -2449,6 +2530,7 @@ $code.=<<___;
 	ja	.Lxts_enc_bzero
 
 	lea	0x78(%rbp),%rax
+.cfi_def_cfa	%rax,8
 ___
 $code.=<<___ if ($win64);
 	movaps	0x40(%rbp), %xmm6
@@ -2466,29 +2548,45 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-48(%rax), %r15
+.cfi_restore	%r15
 	mov	-40(%rax), %r14
+.cfi_restore	%r14
 	mov	-32(%rax), %r13
+.cfi_restore	%r13
 	mov	-24(%rax), %r12
+.cfi_restore	%r12
 	mov	-16(%rax), %rbx
+.cfi_restore	%rbx
 	mov	-8(%rax), %rbp
+.cfi_restore	%rbp
 	lea	(%rax), %rsp		# restore %rsp
+.cfi_def_cfa_register	%rsp
 .Lxts_enc_epilogue:
 	ret
+.cfi_endproc
 .size	bsaes_xts_encrypt,.-bsaes_xts_encrypt
 
 .globl	bsaes_xts_decrypt
 .type	bsaes_xts_decrypt,\@abi-omnipotent
 .align	16
 bsaes_xts_decrypt:
+.cfi_startproc
 	mov	%rsp, %rax
 .Lxts_dec_prologue:
 	push	%rbp
+.cfi_push	%rbp
 	push	%rbx
+.cfi_push	%rbx
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	lea	-0x48(%rsp), %rsp
+.cfi_adjust_cfa_offset	0x48
 ___
 $code.=<<___ if ($win64);
 	mov	0xa0(%rsp),$arg5	# pull key2
@@ -2856,6 +2954,7 @@ $code.=<<___;
 	ja	.Lxts_dec_bzero
 
 	lea	0x78(%rbp),%rax
+.cfi_def_cfa	%rax,8
 ___
 $code.=<<___ if ($win64);
 	movaps	0x40(%rbp), %xmm6
@@ -2873,14 +2972,22 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-48(%rax), %r15
+.cfi_restore	%r15
 	mov	-40(%rax), %r14
+.cfi_restore	%r14
 	mov	-32(%rax), %r13
+.cfi_restore	%r13
 	mov	-24(%rax), %r12
+.cfi_restore	%r12
 	mov	-16(%rax), %rbx
+.cfi_restore	%rbx
 	mov	-8(%rax), %rbp
+.cfi_restore	%rbp
 	lea	(%rax), %rsp		# restore %rsp
+.cfi_def_cfa_register	%rsp
 .Lxts_dec_epilogue:
 	ret
+.cfi_endproc
 .size	bsaes_xts_decrypt,.-bsaes_xts_decrypt
 ___
 }

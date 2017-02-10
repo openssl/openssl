@@ -1180,6 +1180,7 @@ $code.=<<___;
 .type	aesni_ctr32_encrypt_blocks,\@function,5
 .align	16
 aesni_ctr32_encrypt_blocks:
+.cfi_startproc
 	cmp	\$1,$len
 	jne	.Lctr32_bulk
 
@@ -1202,7 +1203,9 @@ $code.=<<___;
 .align	16
 .Lctr32_bulk:
 	lea	(%rsp),$key_			# use $key_ as frame pointer
+.cfi_def_cfa_register	$key_
 	push	%rbp
+.cfi_push	%rbp
 	sub	\$$frame_size,%rsp
 	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
@@ -1722,9 +1725,12 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-8($key_),%rbp
+.cfi_restore	%rbp
 	lea	($key_),%rsp
+.cfi_def_cfa_register	%rsp
 .Lctr32_epilogue:
 	ret
+.cfi_endproc
 .size	aesni_ctr32_encrypt_blocks,.-aesni_ctr32_encrypt_blocks
 ___
 }
@@ -1746,8 +1752,11 @@ $code.=<<___;
 .type	aesni_xts_encrypt,\@function,6
 .align	16
 aesni_xts_encrypt:
+.cfi_startproc
 	lea	(%rsp),%r11			# frame pointer
+.cfi_def_cfa_register	%r11
 	push	%rbp
+.cfi_push	%rbp
 	sub	\$$frame_size,%rsp
 	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
@@ -2212,9 +2221,12 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-8(%r11),%rbp
+.cfi_restore	%rbp
 	lea	(%r11),%rsp
+.cfi_def_cfa_register	%rsp
 .Lxts_enc_epilogue:
 	ret
+.cfi_endproc
 .size	aesni_xts_encrypt,.-aesni_xts_encrypt
 ___
 
@@ -2223,8 +2235,11 @@ $code.=<<___;
 .type	aesni_xts_decrypt,\@function,6
 .align	16
 aesni_xts_decrypt:
+.cfi_startproc
 	lea	(%rsp),%r11			# frame pointer
+.cfi_def_cfa_register	%r11
 	push	%rbp
+.cfi_push	%rbp
 	sub	\$$frame_size,%rsp
 	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
@@ -2715,9 +2730,12 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-8(%r11),%rbp
+.cfi_restore	%rbp
 	lea	(%r11),%rsp
+.cfi_def_cfa_register	%rsp
 .Lxts_dec_epilogue:
 	ret
+.cfi_endproc
 .size	aesni_xts_decrypt,.-aesni_xts_decrypt
 ___
 }
@@ -2742,12 +2760,18 @@ $code.=<<___;
 .type	aesni_ocb_encrypt,\@function,6
 .align	32
 aesni_ocb_encrypt:
+.cfi_startproc
 	lea	(%rsp),%rax
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 ___
 $code.=<<___ if ($win64);
 	lea	-0xa0(%rsp),%rsp
@@ -2942,6 +2966,7 @@ $code.=<<___ if (!$win64);
 	pxor	%xmm14,%xmm14
 	pxor	%xmm15,%xmm15
 	lea	0x28(%rsp),%rax
+.cfi_def_cfa	%rax,8
 ___
 $code.=<<___ if ($win64);
 	movaps	0x00(%rsp),%xmm6
@@ -2969,13 +2994,20 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-40(%rax),%r14
+.cfi_restore	%r14
 	mov	-32(%rax),%r13
+.cfi_restore	%r13
 	mov	-24(%rax),%r12
+.cfi_restore	%r12
 	mov	-16(%rax),%rbp
+.cfi_restore	%rbp
 	mov	-8(%rax),%rbx
+.cfi_restore	%rbx
 	lea	(%rax),%rsp
+.cfi_def_cfa_register	%rsp
 .Locb_enc_epilogue:
 	ret
+.cfi_endproc
 .size	aesni_ocb_encrypt,.-aesni_ocb_encrypt
 
 .type	__ocb_encrypt6,\@abi-omnipotent
@@ -3188,12 +3220,18 @@ __ocb_encrypt1:
 .type	aesni_ocb_decrypt,\@function,6
 .align	32
 aesni_ocb_decrypt:
+.cfi_startproc
 	lea	(%rsp),%rax
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 ___
 $code.=<<___ if ($win64);
 	lea	-0xa0(%rsp),%rsp
@@ -3410,6 +3448,7 @@ $code.=<<___ if (!$win64);
 	pxor	%xmm14,%xmm14
 	pxor	%xmm15,%xmm15
 	lea	0x28(%rsp),%rax
+.cfi_def_cfa	%rax,8
 ___
 $code.=<<___ if ($win64);
 	movaps	0x00(%rsp),%xmm6
@@ -3437,13 +3476,20 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-40(%rax),%r14
+.cfi_restore	%r14
 	mov	-32(%rax),%r13
+.cfi_restore	%r13
 	mov	-24(%rax),%r12
+.cfi_restore	%r12
 	mov	-16(%rax),%rbp
+.cfi_restore	%rbp
 	mov	-8(%rax),%rbx
+.cfi_restore	%rbx
 	lea	(%rax),%rsp
+.cfi_def_cfa_register	%rsp
 .Locb_dec_epilogue:
 	ret
+.cfi_endproc
 .size	aesni_ocb_decrypt,.-aesni_ocb_decrypt
 
 .type	__ocb_decrypt6,\@abi-omnipotent
@@ -3656,6 +3702,7 @@ $code.=<<___;
 .type	${PREFIX}_cbc_encrypt,\@function,6
 .align	16
 ${PREFIX}_cbc_encrypt:
+.cfi_startproc
 	test	$len,$len		# check length
 	jz	.Lcbc_ret
 
@@ -3732,7 +3779,9 @@ $code.=<<___;
 .align	16
 .Lcbc_decrypt_bulk:
 	lea	(%rsp),%r11		# frame pointer
+.cfi_def_cfa_register	%r11
 	push	%rbp
+.cfi_push	%rbp
 	sub	\$$frame_size,%rsp
 	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
@@ -4175,9 +4224,12 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-8(%r11),%rbp
+.cfi_restore	%rbp
 	lea	(%r11),%rsp
+.cfi_def_cfa_register	%rsp
 .Lcbc_ret:
 	ret
+.cfi_endproc
 .size	${PREFIX}_cbc_encrypt,.-${PREFIX}_cbc_encrypt
 ___
 } 
@@ -4198,7 +4250,9 @@ $code.=<<___;
 .type	${PREFIX}_set_decrypt_key,\@abi-omnipotent
 .align	16
 ${PREFIX}_set_decrypt_key:
+.cfi_startproc
 	.byte	0x48,0x83,0xEC,0x08	# sub rsp,8
+.cfi_adjust_cfa_offset	8
 	call	__aesni_set_encrypt_key
 	shl	\$4,$bits		# rounds-1 after _aesni_set_encrypt_key
 	test	%eax,%eax
@@ -4231,7 +4285,9 @@ ${PREFIX}_set_decrypt_key:
 	pxor	%xmm0,%xmm0
 .Ldec_key_ret:
 	add	\$8,%rsp
+.cfi_adjust_cfa_offset	-8
 	ret
+.cfi_endproc
 .LSEH_end_set_decrypt_key:
 .size	${PREFIX}_set_decrypt_key,.-${PREFIX}_set_decrypt_key
 ___
@@ -4267,7 +4323,9 @@ $code.=<<___;
 .align	16
 ${PREFIX}_set_encrypt_key:
 __aesni_set_encrypt_key:
+.cfi_startproc
 	.byte	0x48,0x83,0xEC,0x08	# sub rsp,8
+.cfi_adjust_cfa_offset	8
 	mov	\$-1,%rax
 	test	$inp,$inp
 	jz	.Lenc_key_ret
@@ -4560,7 +4618,9 @@ __aesni_set_encrypt_key:
 	pxor	%xmm4,%xmm4
 	pxor	%xmm5,%xmm5
 	add	\$8,%rsp
+.cfi_adjust_cfa_offset	-8
 	ret
+.cfi_endproc
 .LSEH_end_set_encrypt_key:
 
 .align	16
