@@ -1601,7 +1601,7 @@ int tls1_process_sigalgs(SSL *s)
         if (SSL_IS_TLS13(s) && sigptr->sig == EVP_PKEY_RSA)
             continue;
         idx = tls12_get_pkey_idx(sigptr->sig);
-        if (idx > 0 && pmd[idx] == NULL) {
+        if (idx >= 0 && pmd[idx] == NULL) {
             md = ssl_md(sigptr->hash_idx);
             pmd[idx] = md;
             pvalid[idx] = CERT_PKEY_EXPLICIT_SIGN;
