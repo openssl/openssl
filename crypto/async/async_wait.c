@@ -138,11 +138,12 @@ int ASYNC_WAIT_CTX_get_changed_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *addfd,
 
 int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key)
 {
-    struct fd_lookup_st *curr;
+    struct fd_lookup_st *curr, *prev;
 
     curr = ctx->fds;
+    prev = NULL;
     while (curr != NULL) {
-        if (curr->del) {
+        if (curr->del == 1) {
             /* This one has been marked deleted already so do nothing */
             curr = curr->next;
             continue;
@@ -152,24 +153,13 @@ int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key)
             if (curr->add == 1) {
                 if (ctx->fds == curr) {
                     ctx->fds = curr->next;
-                }
-                else {
-                    struct fd_lookup_st *prev = ctx->fds;
-                    while (prev->next != curr && prev->next != NULL) {
-                        prev = prev->next;
-                    }
-                    if (prev->next == NULL) {
-                        return 1;
-                    }
+                } else {
                     prev->next = curr->next;
                 }
 
-                /*
-                 * The fd has just been added so it can't be used externally
-                 * and it is safe to call the cleanup function here
+                /* It is responsibility of the caller to cleanup before calling
+                 * ASYNC_WAIT_CTX_clear_fd
                  */
-                if (curr->cleanup != NULL)
-                    curr->cleanup(ctx, curr->key, curr->fd, curr->custom_data);
                 OPENSSL_free(curr);
                 ctx->numadd--;
                 return 1;
@@ -184,6 +174,7 @@ int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key)
             ctx->numdel++;
             return 1;
         }
+        prev = curr;
         curr = curr->next;
     }
     return 0;
