@@ -2740,8 +2740,8 @@ void ssl_set_masks(SSL *s)
     dh_tmp = 0;
 #endif
 
-    rsa_enc = pvalid[SSL_PKEY_RSA_ENC] & CERT_PKEY_VALID;
-    rsa_sign = pvalid[SSL_PKEY_RSA_SIGN] & CERT_PKEY_SIGN;
+    rsa_enc = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
+    rsa_sign = pvalid[SSL_PKEY_RSA] & CERT_PKEY_SIGN;
     dsa_sign = pvalid[SSL_PKEY_DSA_SIGN] & CERT_PKEY_SIGN;
 #ifndef OPENSSL_NO_EC
     have_ecc_cert = pvalid[SSL_PKEY_ECC] & CERT_PKEY_VALID;
@@ -2855,8 +2855,6 @@ static int ssl_get_server_cert_index(const SSL *s)
     }
 
     idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
-    if (idx == SSL_PKEY_RSA_ENC && !s->cert->pkeys[SSL_PKEY_RSA_ENC].x509)
-        idx = SSL_PKEY_RSA_SIGN;
     if (idx == SSL_PKEY_GOST_EC) {
         if (s->cert->pkeys[SSL_PKEY_GOST12_512].x509)
             idx = SSL_PKEY_GOST12_512;
@@ -2902,15 +2900,12 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher,
     alg_a = cipher->algorithm_auth;
     c = s->cert;
 
-    if ((alg_a & SSL_aDSS) && (c->pkeys[SSL_PKEY_DSA_SIGN].privatekey != NULL))
+    if (alg_a & SSL_aDSS && c->pkeys[SSL_PKEY_DSA_SIGN].privatekey != NULL)
         idx = SSL_PKEY_DSA_SIGN;
-    else if (alg_a & SSL_aRSA) {
-        if (c->pkeys[SSL_PKEY_RSA_SIGN].privatekey != NULL)
-            idx = SSL_PKEY_RSA_SIGN;
-        else if (c->pkeys[SSL_PKEY_RSA_ENC].privatekey != NULL)
-            idx = SSL_PKEY_RSA_ENC;
-    } else if ((alg_a & SSL_aECDSA) &&
-               (c->pkeys[SSL_PKEY_ECC].privatekey != NULL))
+    else if (alg_a & SSL_aRSA && c->pkeys[SSL_PKEY_RSA].privatekey != NULL)
+            idx = SSL_PKEY_RSA;
+    else if (alg_a & SSL_aECDSA &&
+             c->pkeys[SSL_PKEY_ECC].privatekey != NULL)
         idx = SSL_PKEY_ECC;
     if (idx == -1) {
         SSLerr(SSL_F_SSL_GET_SIGN_PKEY, ERR_R_INTERNAL_ERROR);

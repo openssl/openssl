@@ -1071,7 +1071,7 @@ int ssl_cert_type(const X509 *x, const EVP_PKEY *pk)
     default:
         return -1;
     case EVP_PKEY_RSA:
-        return SSL_PKEY_RSA_ENC;
+        return SSL_PKEY_RSA;
     case EVP_PKEY_DSA:
         return SSL_PKEY_DSA_SIGN;
 #ifndef OPENSSL_NO_EC

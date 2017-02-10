@@ -730,16 +730,16 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_RSA_PSS, SSL_PKEY_RSA_PSS_SIGN,
      NID_undef, NID_undef},
     {"rsa_pkcs1_sha256", TLSEXT_SIGALG_rsa_pkcs1_sha256,
-     NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA_SIGN,
+     NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha256WithRSAEncryption, NID_undef},
     {"rsa_pkcs1_sha384", TLSEXT_SIGALG_rsa_pkcs1_sha384,
-     NID_sha384, SSL_MD_SHA384_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA_SIGN,
+     NID_sha384, SSL_MD_SHA384_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha384WithRSAEncryption, NID_undef},
     {"rsa_pkcs1_sha512", TLSEXT_SIGALG_rsa_pkcs1_sha512,
-     NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA_SIGN,
+     NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha512WithRSAEncryption, NID_undef},
     {"rsa_pkcs1_sha1", TLSEXT_SIGALG_rsa_pkcs1_sha1,
-     NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA_SIGN,
+     NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha1WithRSAEncryption, NID_undef},
 #ifndef OPENSSL_NO_DSA
     {NULL, TLSEXT_SIGALG_dsa_sha256,
@@ -1022,10 +1022,9 @@ void ssl_set_default_md(SSL *s)
 #endif
 #ifndef OPENSSL_NO_RSA
     if (SSL_USE_SIGALGS(s))
-        pmd[SSL_PKEY_RSA_SIGN] = ssl_md(SSL_MD_SHA1_IDX);
+        pmd[SSL_PKEY_RSA] = ssl_md(SSL_MD_SHA1_IDX);
     else
-        pmd[SSL_PKEY_RSA_SIGN] = ssl_md(SSL_MD_MD5_SHA1_IDX);
-    pmd[SSL_PKEY_RSA_ENC] = pmd[SSL_PKEY_RSA_SIGN];
+        pmd[SSL_PKEY_RSA] = ssl_md(SSL_MD_MD5_SHA1_IDX);
 #endif
 #ifndef OPENSSL_NO_EC
     pmd[SSL_PKEY_ECC] = ssl_md(SSL_MD_SHA1_IDX);
@@ -1358,13 +1357,13 @@ static int tls12_get_pkey_idx(int sig_nid)
     switch (sig_nid) {
 #ifndef OPENSSL_NO_RSA
     case EVP_PKEY_RSA:
-        return SSL_PKEY_RSA_SIGN;
+        return SSL_PKEY_RSA;
     /*
      * For now return RSA key for PSS. When we support PSS only keys
      * this will need to be updated.
      */
     case EVP_PKEY_RSA_PSS:
-        return SSL_PKEY_RSA_SIGN;
+        return SSL_PKEY_RSA;
 #endif
 #ifndef OPENSSL_NO_DSA
     case EVP_PKEY_DSA:
@@ -1605,10 +1604,6 @@ int tls1_process_sigalgs(SSL *s)
             md = ssl_md(sigptr->hash_idx);
             pmd[idx] = md;
             pvalid[idx] = CERT_PKEY_EXPLICIT_SIGN;
-            if (idx == SSL_PKEY_RSA_SIGN) {
-                pvalid[SSL_PKEY_RSA_ENC] = CERT_PKEY_EXPLICIT_SIGN;
-                pmd[SSL_PKEY_RSA_ENC] = md;
-            }
         }
     }
     /*
@@ -1626,9 +1621,8 @@ int tls1_process_sigalgs(SSL *s)
             pmd[SSL_PKEY_DSA_SIGN] = EVP_sha1();
 #endif
 #ifndef OPENSSL_NO_RSA
-        if (pmd[SSL_PKEY_RSA_SIGN] == NULL) {
-            pmd[SSL_PKEY_RSA_SIGN] = EVP_sha1();
-            pmd[SSL_PKEY_RSA_ENC] = EVP_sha1();
+        if (pmd[SSL_PKEY_RSA] == NULL) {
+            pmd[SSL_PKEY_RSA] = EVP_sha1();
         }
 #endif
 #ifndef OPENSSL_NO_EC
@@ -1945,8 +1939,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
         /* If no sigalgs extension use defaults from RFC5246 */
         else {
             switch (idx) {
-            case SSL_PKEY_RSA_ENC:
-            case SSL_PKEY_RSA_SIGN:
+            case SSL_PKEY_RSA:
                 rsign = EVP_PKEY_RSA;
                 default_nid = NID_sha1WithRSAEncryption;
                 break;
@@ -2133,8 +2126,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 /* Set validity of certificates in an SSL structure */
 void tls1_set_cert_validity(SSL *s)
 {
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_ENC);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_SIGN);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DSA_SIGN);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ECC);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST01);
@@ -2299,14 +2291,8 @@ int tls_choose_sigalg(SSL *s)
                 continue;
             idx = lu->sig_idx;
             c = &s->cert->pkeys[idx];
-            if (c->x509 == NULL || c->privatekey == NULL) {
-                if (idx != SSL_PKEY_RSA_SIGN)
+            if (c->x509 == NULL || c->privatekey == NULL)
                     continue;
-                idx = SSL_PKEY_RSA_ENC;
-                c = s->cert->pkeys + idx;
-                if (c->x509 == NULL || c->privatekey == NULL)
-                    continue;
-            }
             if (lu->sig == EVP_PKEY_EC) {
 #ifndef OPENSSL_NO_EC
                 if (curve == -1) {
