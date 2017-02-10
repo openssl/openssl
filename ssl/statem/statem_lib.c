@@ -513,16 +513,16 @@ int tls_construct_key_update(SSL *s, WPACKET *pkt)
 
 MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
 {
+    int al;
     unsigned int updatetype;
 
     if (!PACKET_get_1(pkt, &updatetype)
             || PACKET_remaining(pkt) != 0
             || (updatetype != SSL_KEY_UPDATE_NOT_REQUESTED
                 && updatetype != SSL_KEY_UPDATE_REQUESTED)) {
-        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+        al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_KEY_UPDATE, SSL_R_BAD_KEY_UPDATE);
-        ossl_statem_set_error(s);
-        return MSG_PROCESS_ERROR;
+        goto err;
     }
 
     /*
@@ -533,7 +533,17 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
     if (updatetype == SSL_KEY_UPDATE_REQUESTED)
         s->key_update = SSL_KEY_UPDATE_NOT_REQUESTED;
 
+    if (!tls13_update_key(s, 0)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_UPDATE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
     return MSG_PROCESS_FINISHED_READING;
+ err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    ossl_statem_set_error(s);
+    return MSG_PROCESS_ERROR;
 }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
