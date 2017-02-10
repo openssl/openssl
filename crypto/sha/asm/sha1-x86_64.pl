@@ -257,6 +257,7 @@ $code.=<<___;
 .type	sha1_block_data_order,\@function,3
 .align	16
 sha1_block_data_order:
+.cfi_startproc
 	mov	OPENSSL_ia32cap_P+0(%rip),%r9d
 	mov	OPENSSL_ia32cap_P+4(%rip),%r8d
 	mov	OPENSSL_ia32cap_P+8(%rip),%r10d
@@ -285,17 +286,24 @@ $code.=<<___;
 .align	16
 .Lialu:
 	mov	%rsp,%rax
+.cfi_def_cfa_register	%rax
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	mov	%rdi,$ctx	# reassigned argument
 	sub	\$`8+16*4`,%rsp
 	mov	%rsi,$inp	# reassigned argument
 	and	\$-64,%rsp
 	mov	%rdx,$num	# reassigned argument
 	mov	%rax,`16*4`(%rsp)
+.cfi_cfa_expression	%rsp+64,deref,+8
 .Lprologue:
 
 	mov	0($ctx),$A
@@ -329,14 +337,22 @@ $code.=<<___;
 	jnz	.Lloop
 
 	mov	`16*4`(%rsp),%rsi
+.cfi_def_cfa	%rsi,8
 	mov	-40(%rsi),%r14
+.cfi_restore	%r14
 	mov	-32(%rsi),%r13
+.cfi_restore	%r13
 	mov	-24(%rsi),%r12
+.cfi_restore	%r12
 	mov	-16(%rsi),%rbp
+.cfi_restore	%rbp
 	mov	-8(%rsi),%rbx
+.cfi_restore	%rbx
 	lea	(%rsi),%rsp
+.cfi_def_cfa_register	%rsp
 .Lepilogue:
 	ret
+.cfi_endproc
 .size	sha1_block_data_order,.-sha1_block_data_order
 ___
 if ($shaext) {{{
@@ -352,6 +368,7 @@ $code.=<<___;
 .align	32
 sha1_block_data_order_shaext:
 _shaext_shortcut:
+.cfi_startproc
 ___
 $code.=<<___ if ($win64);
 	lea	`-8-4*16`(%rsp),%rsp
@@ -449,6 +466,7 @@ $code.=<<___ if ($win64);
 .Lepilogue_shaext:
 ___
 $code.=<<___;
+.cfi_endproc
 	ret
 .size	sha1_block_data_order_shaext,.-sha1_block_data_order_shaext
 ___
@@ -484,12 +502,19 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_ssse3:
 _ssse3_shortcut:
+.cfi_startproc
 	mov	%rsp,$fp	# frame pointer
+.cfi_def_cfa_register	$fp
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13		# redundant, done to share Win64 SE handler
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	lea	`-64-($win64?6*16:0)`(%rsp),%rsp
 ___
 $code.=<<___ if ($win64);
@@ -917,13 +942,20 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-40($fp),%r14
+.cfi_restore	%r14
 	mov	-32($fp),%r13
+.cfi_restore	%r13
 	mov	-24($fp),%r12
+.cfi_restore	%r12
 	mov	-16($fp),%rbp
+.cfi_restore	%rbp
 	mov	-8($fp),%rbx
+.cfi_restore	%rbx
 	lea	($fp),%rsp
+.cfi_def_cfa_register	%rsp
 .Lepilogue_ssse3:
 	ret
+.cfi_endproc
 .size	sha1_block_data_order_ssse3,.-sha1_block_data_order_ssse3
 ___
 
@@ -944,12 +976,19 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_avx:
 _avx_shortcut:
+.cfi_startproc
 	mov	%rsp,$fp
+.cfi_def_cfa_register	$fp
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13		# redundant, done to share Win64 SE handler
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	lea	`-64-($win64?6*16:0)`(%rsp),%rsp
 	vzeroupper
 ___
@@ -1279,13 +1318,20 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-40($fp),%r14
+.cfi_restore	%r14
 	mov	-32($fp),%r13
+.cfi_restore	%r13
 	mov	-24($fp),%r12
+.cfi_restore	%r12
 	mov	-16($fp),%rbp
+.cfi_restore	%rbp
 	mov	-8($fp),%rbx
+.cfi_restore	%rbx
 	lea	($fp),%rsp
+.cfi_def_cfa_register	%rsp
 .Lepilogue_avx:
 	ret
+.cfi_endproc
 .size	sha1_block_data_order_avx,.-sha1_block_data_order_avx
 ___
 
@@ -1309,12 +1355,19 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_avx2:
 _avx2_shortcut:
+.cfi_startproc
 	mov	%rsp,$fp
+.cfi_def_cfa_register	$fp
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	vzeroupper
 ___
 $code.=<<___ if ($win64);
@@ -1756,13 +1809,20 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-40($fp),%r14
+.cfi_restore	%r14
 	mov	-32($fp),%r13
+.cfi_restore	%r13
 	mov	-24($fp),%r12
+.cfi_restore	%r12
 	mov	-16($fp),%rbp
+.cfi_restore	%rbp
 	mov	-8($fp),%rbx
+.cfi_restore	%rbx
 	lea	($fp),%rsp
+.cfi_def_cfa_register	%rsp
 .Lepilogue_avx2:
 	ret
+.cfi_endproc
 .size	sha1_block_data_order_avx2,.-sha1_block_data_order_avx2
 ___
 }
