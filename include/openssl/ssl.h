@@ -2100,6 +2100,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_DANE_CTX_ENABLE                            347
 # define SSL_F_DANE_MTYPE_SET                             393
 # define SSL_F_DANE_TLSA_ADD                              394
+# define SSL_F_DERIVE_SECRET_KEY_AND_IV                   514
 # define SSL_F_DO_DTLS1_WRITE                             245
 # define SSL_F_DO_SSL3_WRITE                              104
 # define SSL_F_DTLS1_BUFFER_RECORD                        247

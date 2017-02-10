@@ -242,6 +242,74 @@ int tls13_setup_key_block(SSL *s)
     return 1;
 }
 
+static int derive_secret_key_and_iv(SSL *s, int write,
+                                    const unsigned char *insecret,
+                                    const unsigned char *hash,
+                                    const unsigned char *label,
+                                    size_t labellen, unsigned char *secret,
+                                    unsigned char *iv, EVP_CIPHER_CTX *ciph_ctx)
+{
+    unsigned char key[EVP_MAX_KEY_LENGTH];
+    size_t ivlen, keylen, taglen;
+    const EVP_MD *md = ssl_handshake_md(s);
+    size_t hashlen = EVP_MD_size(md);
+    const EVP_CIPHER *ciph = s->s3->tmp.new_sym_enc;
+
+    if (!tls13_hkdf_expand(s, md, insecret, label, labellen, hash, secret,
+                           hashlen)) {
+        SSLerr(SSL_F_DERIVE_SECRET_KEY_AND_IV, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /* TODO(size_t): convert me */
+    keylen = EVP_CIPHER_key_length(ciph);
+    if (EVP_CIPHER_mode(ciph) == EVP_CIPH_CCM_MODE) {
+        ivlen = EVP_CCM_TLS_IV_LEN;
+        if (s->s3->tmp.new_cipher->algorithm_enc
+                & (SSL_AES128CCM8 | SSL_AES256CCM8))
+            taglen = EVP_CCM8_TLS_TAG_LEN;
+         else
+            taglen = EVP_CCM_TLS_TAG_LEN;
+    } else {
+        ivlen = EVP_CIPHER_iv_length(ciph);
+        taglen = 0;
+    }
+
+    if (!tls13_derive_key(s, secret, key, keylen)
+            || !tls13_derive_iv(s, secret, iv, ivlen)) {
+        SSLerr(SSL_F_DERIVE_SECRET_KEY_AND_IV, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL, write) <= 0
+        || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
+        || (taglen != 0 && !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG,
+                                                taglen, NULL))
+        || EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, -1) <= 0) {
+        SSLerr(SSL_F_DERIVE_SECRET_KEY_AND_IV, ERR_R_EVP_LIB);
+        goto err;
+    }
+
+#ifdef OPENSSL_SSL_TRACE_CRYPTO
+    if (s->msg_callback) {
+        int wh = write ? TLS1_RT_CRYPTO_WRITE : 0;
+
+        if (ciph->key_len)
+            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
+                            key, ciph->key_len, s, s->msg_callback_arg);
+
+        wh |= TLS1_RT_CRYPTO_IV;
+        s->msg_callback(2, s->version, wh, iv, ivlen, s,
+                        s->msg_callback_arg);
+    }
+#endif
+
+    return 1;
+ err:
+    OPENSSL_cleanse(key, sizeof(key));
+    return 0;
+}
+
 int tls13_change_cipher_state(SSL *s, int which)
 {
     static const unsigned char client_handshake_traffic[] =
@@ -254,7 +322,6 @@ int tls13_change_cipher_state(SSL *s, int which)
         "server application traffic secret";
     static const unsigned char resumption_master_secret[] =
         "resumption master secret";
-    unsigned char key[EVP_MAX_KEY_LENGTH];
     unsigned char *iv;
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char hashval[EVP_MAX_MD_SIZE];
@@ -263,8 +330,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     unsigned char *finsecret = NULL;
     const char *log_label = NULL;
     EVP_CIPHER_CTX *ciph_ctx;
-    const EVP_CIPHER *ciph = s->s3->tmp.new_sym_enc;
-    size_t ivlen, keylen, taglen, finsecretlen = 0;
+    size_t finsecretlen = 0;
     const unsigned char *label;
     size_t labellen, hashlen = 0;
     int ret = 0;
@@ -350,12 +416,6 @@ int tls13_change_cipher_state(SSL *s, int which)
     if (label == server_application_traffic)
         memcpy(s->server_finished_hash, hashval, hashlen);
 
-    if (!tls13_hkdf_expand(s, ssl_handshake_md(s), insecret, label, labellen,
-                           hash, secret, hashlen)) {
-        SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
     if (label == client_application_traffic) {
         /*
          * We also create the resumption master secret, but this time use the
@@ -371,64 +431,70 @@ int tls13_change_cipher_state(SSL *s, int which)
         s->session->master_key_length = hashlen;
     }
 
-    /* TODO(size_t): convert me */
-    keylen = EVP_CIPHER_key_length(ciph);
-    if (EVP_CIPHER_mode(ciph) == EVP_CIPH_CCM_MODE) {
-        ivlen = EVP_CCM_TLS_IV_LEN;
-        if (s->s3->tmp.new_cipher->algorithm_enc
-                & (SSL_AES128CCM8 | SSL_AES256CCM8))
-            taglen = EVP_CCM8_TLS_TAG_LEN;
-         else
-            taglen = EVP_CCM_TLS_TAG_LEN;
-    } else {
-        ivlen = EVP_CIPHER_iv_length(ciph);
-        taglen = 0;
+    if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, insecret, hash,
+                                  label, labellen, secret, iv, ciph_ctx)) {
+        goto err;
     }
+
+    if (label == server_application_traffic)
+        memcpy(s->server_app_traffic_secret, secret, hashlen);
+    else if (label == client_application_traffic)
+        memcpy(s->client_app_traffic_secret, secret, hashlen);
 
     if (!ssl_log_secret(s, log_label, secret, hashlen)) {
         SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    if (!tls13_derive_key(s, secret, key, keylen)
-            || !tls13_derive_iv(s, secret, iv, ivlen)
-            || (finsecret != NULL && !tls13_derive_finishedkey(s,
-                                                           ssl_handshake_md(s),
-                                                           secret,
-                                                           finsecret,
-                                                           finsecretlen))) {
+    if (finsecret != NULL
+            && !tls13_derive_finishedkey(s, ssl_handshake_md(s), secret,
+                                         finsecret, finsecretlen)) {
         SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL,
-                          (which & SSL3_CC_WRITE)) <= 0
-        || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
-        || (taglen != 0 && !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG,
-                                                taglen, NULL))
-        || EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, -1) <= 0) {
-        SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_EVP_LIB);
+    ret = 1;
+ err:
+    OPENSSL_cleanse(secret, sizeof(secret));
+    return ret;
+}
+
+int tls13_update_key(SSL *s, int write)
+{
+    static const unsigned char application_traffic[] =
+        "application traffic secret";
+    const EVP_MD *md = ssl_handshake_md(s);
+    size_t hashlen = EVP_MD_size(md);
+    unsigned char *insecret, *iv;
+    unsigned char secret[EVP_MAX_MD_SIZE];
+    EVP_CIPHER_CTX *ciph_ctx;
+    int ret = 0;
+
+    if (s->server == write)
+        insecret = s->server_app_traffic_secret;
+    else
+        insecret = s->client_app_traffic_secret;
+
+    if (write) {
+        iv = s->write_iv;
+        ciph_ctx = s->enc_write_ctx;
+        RECORD_LAYER_reset_write_sequence(&s->rlayer);
+    } else {
+        iv = s->read_iv;
+        ciph_ctx = s->enc_read_ctx;
+        RECORD_LAYER_reset_read_sequence(&s->rlayer);
+    }
+
+    if (!derive_secret_key_and_iv(s, write, insecret, NULL, application_traffic,
+                                  sizeof(application_traffic) - 1, secret, iv,
+                                  ciph_ctx))
         goto err;
-    }
 
-#ifdef OPENSSL_SSL_TRACE_CRYPTO
-    if (s->msg_callback) {
-        int wh = which & SSL3_CC_WRITE ? TLS1_RT_CRYPTO_WRITE : 0;
-
-        if (ciph->key_len)
-            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
-                            key, ciph->key_len, s, s->msg_callback_arg);
-
-        wh |= TLS1_RT_CRYPTO_IV;
-        s->msg_callback(2, s->version, wh, iv, ivlen, s,
-                        s->msg_callback_arg);
-    }
-#endif
+    memcpy(insecret, secret, hashlen);
 
     ret = 1;
  err:
     OPENSSL_cleanse(secret, sizeof(secret));
-    OPENSSL_cleanse(key, sizeof(key));
     return ret;
 }
 
