@@ -610,6 +610,8 @@ my %globals;
 	foreach my $token (split(/,\s*/,$line)) {
 	    if ($token =~ /^%r/) {
 		push @ret,reg($token);
+	    } elsif ($token =~ /((?:0x)?[0-9a-f]+)\((%r\w+)\)/) {
+		push @ret,reg("$2+$1");
 	    } elsif ($token =~ /(\w+):(\-?(?:0x)?[0-9a-f]+)(U?)/i) {
 		my $i = 1*eval($2);
 		push @ret,$DW_OP_complex{$1}, ($3 ? uleb128($i) : sleb128($i));
