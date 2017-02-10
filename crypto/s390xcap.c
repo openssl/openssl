@@ -21,6 +21,31 @@ static void ill_handler(int sig)
     siglongjmp(ill_jmp, sig);
 }
 
+/*-
+ * os-specific function to check if "vector enablement control"-bit and
+ * "AFP register control"-bit in control register 0 are set.
+ */
+static int vx_enabled(void)
+{
+#if defined(OPENSSL_SYS_LINUX)
+    FILE *fd;
+    char buf[4096];
+
+    if ((fd = fopen("/proc/cpuinfo", "r")) == NULL)
+        return 0;
+
+    buf[0] = '\0';
+
+    while ((fgets(buf, sizeof(buf), fd) != NULL)
+           && (strstr(buf, "features") != buf));
+
+    fclose(fd);
+    return (strstr(buf, " vx ") != NULL) ? 1 : 0;
+#else
+    return 0;
+#endif
+}
+
 void OPENSSL_s390x_facilities(void);
 
 void OPENSSL_cpuid_setup(void)
@@ -51,6 +76,12 @@ void OPENSSL_cpuid_setup(void)
 
     sigaction(SIGILL, &oact, NULL);
     sigprocmask(SIG_SETMASK, &oset, NULL);
+
+    /* protection against disabled vector facility */
+    if (!vx_enabled()) {
+        OPENSSL_s390xcap_P[2] &= ~(S390X_STFLE_VXE | S390X_STFLE_VXD |
+                                   S390X_STFLE_VX);
+    }
 
     if ((env = getenv("OPENSSL_s390xcap")) != NULL) {
         for (i = 0; i < S390X_CAP_DWORDS; i++) {
