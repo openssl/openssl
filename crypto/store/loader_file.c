@@ -559,6 +559,174 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
     return NULL;
 }
 
+static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
+                                             const char *pem_name,
+                                             const char *pem_header,
+                                             unsigned char *data, size_t len,
+                                             const UI_METHOD *ui_method,
+                                             void *ui_data, int *matchcount)
+{
+    OSSL_STORE_INFO *result = NULL;
+    BUF_MEM *new_mem = NULL;
+    char *new_pem_name = NULL;
+    int t = 0;
+
+ again:
+    {
+        size_t i = 0;
+        void *handler_ctx = NULL;
+        const FILE_HANDLER **matching_handlers =
+            OPENSSL_zalloc(sizeof(*matching_handlers)
+                           * OSSL_NELEM(file_handlers));
+
+        if (matching_handlers == NULL) {
+            OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD_TRY_DECODE,
+                          ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+
+        *matchcount = 0;
+        for (i = 0; i < OSSL_NELEM(file_handlers); i++) {
+            const FILE_HANDLER *handler = file_handlers[i];
+            void *tmp_handler_ctx = NULL;
+            OSSL_STORE_INFO *tmp_result =
+                handler->try_decode(pem_name, pem_header, data, len,
+                                    &tmp_handler_ctx, ui_method, ui_data);
+
+            if (tmp_result == NULL) {
+                OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD_TRY_DECODE,
+                              OSSL_STORE_R_IS_NOT_A);
+                ERR_add_error_data(1, handler->name);
+            } else {
+                if (matching_handlers)
+                    matching_handlers[*matchcount] = handler;
+
+                if (handler_ctx)
+                    handler->destroy_ctx(&handler_ctx);
+                handler_ctx = tmp_handler_ctx;
+
+                if (++*matchcount == 1) {
+                    result = tmp_result;
+                    tmp_result = NULL;
+                } else {
+                    /* more than one match => ambiguous, kill any result */
+                    OSSL_STORE_INFO_free(result);
+                    OSSL_STORE_INFO_free(tmp_result);
+                    if (handler->destroy_ctx != NULL)
+                        handler->destroy_ctx(&handler_ctx);
+                    handler_ctx = NULL;
+                    result = NULL;
+                }
+            }
+        }
+
+        if (*matchcount > 1)
+            OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD_TRY_DECODE,
+                          OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE);
+        if (*matchcount == 0)
+            OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD_TRY_DECODE,
+                          OSSL_STORE_R_UNSUPPORTED_CONTENT_TYPE);
+        else if (matching_handlers[0]->repeatable) {
+            if (ctx == NULL) {
+                OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD_TRY_DECODE,
+                              OSSL_STORE_R_UNSUPPORTED_CONTENT_TYPE);
+                OSSL_STORE_INFO_free(result);
+                result = NULL;
+            } else {
+                ctx->last_handler = matching_handlers[0];
+                ctx->last_handler_ctx = handler_ctx;
+            }
+        }
+
+        OPENSSL_free(matching_handlers);
+    }
+
+ err:
+    OPENSSL_free(new_pem_name);
+    BUF_MEM_free(new_mem);
+
+    if (result != NULL
+        && (t = OSSL_STORE_INFO_get_type(result)) == OSSL_STORE_INFO_EMBEDDED) {
+        pem_name = new_pem_name =
+            ossl_store_info_get0_EMBEDDED_pem_name(result);
+        new_mem = ossl_store_info_get0_EMBEDDED_buffer(result);
+        data = (unsigned char *)new_mem->data;
+        len = new_mem->length;
+        OPENSSL_free(result);
+        result = NULL;
+        goto again;
+    }
+
+    if (result != NULL)
+        ERR_clear_error();
+
+    return result;
+}
+
+static OSSL_STORE_INFO *file_load_try_repeat(OSSL_STORE_LOADER_CTX *ctx,
+                                             const UI_METHOD *ui_method,
+                                             void *ui_data)
+{
+    OSSL_STORE_INFO *result = NULL;
+
+    if (ctx->last_handler != NULL) {
+        result = ctx->last_handler->try_decode(NULL, NULL, NULL, 0,
+                                               &ctx->last_handler_ctx,
+                                               ui_method, ui_data);
+
+        if (result == NULL) {
+            ctx->last_handler->destroy_ctx(&ctx->last_handler_ctx);
+            ctx->last_handler_ctx = NULL;
+            ctx->last_handler = NULL;
+        }
+    }
+    return result;
+}
+
+static int file_read_pem(BIO *bp, char **pem_name, char **pem_header,
+                         unsigned char **data, long *len,
+                         const UI_METHOD *ui_method,
+                         void *ui_data)
+{
+    int i = PEM_read_bio(bp, pem_name, pem_header, data, len);
+
+    if (i <= 0)
+        return 0;
+
+    /*
+     * 10 is the number of characters in "Proc-Type:", which
+     * PEM_get_EVP_CIPHER_INFO() requires to be present.
+     * If the PEM header has less characters than that, it's
+     * not worth spending cycles on it.
+     */
+    if (strlen(*pem_header) > 10) {
+        EVP_CIPHER_INFO cipher;
+        struct pem_pass_data pass_data;
+
+        if (!PEM_get_EVP_CIPHER_INFO(*pem_header, &cipher)
+            || !file_fill_pem_pass_data(&pass_data, "PEM", ui_method, ui_data)
+            || !PEM_do_header(&cipher, *data, len, file_get_pem_pass,
+                              &pass_data)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int file_read_asn1(BIO *bp, unsigned char **data, long *len)
+{
+    BUF_MEM *mem = NULL;
+
+    if (asn1_d2i_read_bio(bp, &mem) < 0)
+        return 0;
+
+    *data = (unsigned char *)mem->data;
+    *len = (long)mem->length;
+    OPENSSL_free(mem);
+
+    return 1;
+}
+
 static int file_eof(OSSL_STORE_LOADER_CTX *ctx);
 static int file_error(OSSL_STORE_LOADER_CTX *ctx);
 static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
@@ -567,18 +735,9 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
     OSSL_STORE_INFO *result = NULL;
     int matchcount = -1;
 
-    if (ctx->last_handler != NULL) {
-        result = ctx->last_handler->try_decode(NULL, NULL, NULL, 0,
-                                               &ctx->last_handler_ctx,
-                                               ui_method, ui_data);
-
-        if (result != NULL)
-            return result;
-
-        ctx->last_handler->destroy_ctx(&ctx->last_handler_ctx);
-        ctx->last_handler_ctx = NULL;
-        ctx->last_handler = NULL;
-    }
+    result = file_load_try_repeat(ctx, ui_method, ui_data);
+    if (result != NULL)
+        return result;
 
     if (file_error(ctx))
         return NULL;
@@ -587,130 +746,37 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
         char *pem_name = NULL;      /* PEM record name */
         char *pem_header = NULL;    /* PEM record header */
         unsigned char *data = NULL; /* DER encoded data */
-        BUF_MEM *mem = NULL;
         long len = 0;               /* DER encoded data length */
-        int r = 0;
 
-        matchcount = -1;
         if (ctx->is_pem) {
-            r = PEM_read_bio(ctx->file, &pem_name, &pem_header, &data, &len);
-            if (r <= 0) {
+            if (!file_read_pem(ctx->file, &pem_name, &pem_header, &data, &len,
+                               ui_method, ui_data)) {
                 if (!file_eof(ctx))
                     ctx->errcnt++;
-                goto end;
-            }
-
-            /*
-             * 10 is the number of characters in "Proc-Type:", which
-             * PEM_get_EVP_CIPHER_INFO() requires to be present.
-             * If the PEM header has less characters than that, it's
-             * not worth spending cycles on it.
-             */
-            if (strlen(pem_header) > 10) {
-                EVP_CIPHER_INFO cipher;
-                struct pem_pass_data pass_data;
-
-                if (!PEM_get_EVP_CIPHER_INFO(pem_header, &cipher)
-                    || !file_fill_pem_pass_data(&pass_data, "PEM", ui_method,
-                                                ui_data)
-                    || !PEM_do_header(&cipher, data, &len, file_get_pem_pass,
-                                      &pass_data)) {
-                    ctx->errcnt++;
-                    goto err;
-                }
+                goto err;
             }
         } else {
-            if ((len = asn1_d2i_read_bio(ctx->file, &mem)) < 0) {
+            if (!file_read_asn1(ctx->file, &data, &len)) {
                 if (!file_eof(ctx))
                     ctx->errcnt++;
                 goto err;
             }
-
-            data = (unsigned char *)mem->data;
-            len = (long)mem->length;
         }
 
-        result = NULL;
-
-        {
-            size_t i = 0;
-            void *handler_ctx = NULL;
-            const FILE_HANDLER **matching_handlers =
-                OPENSSL_zalloc(sizeof(*matching_handlers)
-                               * OSSL_NELEM(file_handlers));
-
-            if (matching_handlers == NULL) {
-                OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD, ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
-
-            matchcount = 0;
-            for (i = 0; i < OSSL_NELEM(file_handlers); i++) {
-                const FILE_HANDLER *handler = file_handlers[i];
-                void *tmp_handler_ctx = NULL;
-                OSSL_STORE_INFO *tmp_result =
-                    handler->try_decode(pem_name, pem_header, data, len,
-                                        &tmp_handler_ctx, ui_method, ui_data);
-
-                if (tmp_result == NULL) {
-                    OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD, OSSL_STORE_R_IS_NOT_A);
-                    ERR_add_error_data(1, handler->name);
-                } else {
-                    if (matching_handlers)
-                        matching_handlers[matchcount] = handler;
-
-                    if (handler_ctx)
-                        handler->destroy_ctx(&handler_ctx);
-                    handler_ctx = tmp_handler_ctx;
-
-                    if (++matchcount == 1) {
-                        result = tmp_result;
-                        tmp_result = NULL;
-                    } else {
-                        /* more than one match => ambiguous, kill any result */
-                        OSSL_STORE_INFO_free(result);
-                        OSSL_STORE_INFO_free(tmp_result);
-                        if (handler->destroy_ctx != NULL)
-                            handler->destroy_ctx(&handler_ctx);
-                        handler_ctx = NULL;
-                        result = NULL;
-                    }
-                }
-            }
-
-            if (matchcount > 1)
-                OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD,
-                              OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE);
-            if (matchcount == 0)
-                OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD,
-                              OSSL_STORE_R_UNSUPPORTED_CONTENT_TYPE);
-            else if (matching_handlers[0]->repeatable) {
-                ctx->last_handler = matching_handlers[0];
-                ctx->last_handler_ctx = handler_ctx;
-                mem = NULL;
-                data = NULL;
-            }
-
-            OPENSSL_free(matching_handlers);
-        }
-
-        if (result)
-            ERR_clear_error();
+        matchcount = -1;
+        result = file_load_try_decode(ctx, pem_name, pem_header, data, len,
+                                      ui_method, ui_data, &matchcount);
 
      err:
         OPENSSL_free(pem_name);
         OPENSSL_free(pem_header);
-        if (mem == NULL)
-            OPENSSL_free(data);
-        else
-            BUF_MEM_free(mem);
+        OPENSSL_free(data);
     } while (matchcount == 0 && !file_eof(ctx) && !file_error(ctx));
 
     /* We bail out on ambiguity */
     if (matchcount > 1)
         return NULL;
 
- end:
     return result;
 }
 
