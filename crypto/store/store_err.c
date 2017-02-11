@@ -21,6 +21,7 @@
 static ERR_STRING_DATA STORE_str_functs[] = {
     {ERR_FUNC(STORE_F_FILE_GET_PASS), "file_get_pass"},
     {ERR_FUNC(STORE_F_FILE_LOAD), "file_load"},
+    {ERR_FUNC(STORE_F_FILE_LOAD_TRY_DECODE), "file_load_try_decode"},
     {ERR_FUNC(STORE_F_FILE_OPEN), "file_open"},
     {ERR_FUNC(STORE_F_STORE_GET0_LOADER_INT), "store_get0_loader_int"},
     {ERR_FUNC(STORE_F_STORE_INFO_GET1_CERT), "STORE_INFO_get1_CERT"},
