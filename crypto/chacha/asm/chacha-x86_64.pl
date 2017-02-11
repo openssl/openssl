@@ -261,6 +261,7 @@ $code.=<<___;
 	push	%r14
 	push	%r15
 	sub	\$64+24,%rsp
+.Lctr32_body:
 
 	#movdqa	.Lsigma(%rip),%xmm0
 	movdqu	($key),%xmm1
@@ -399,13 +400,14 @@ $code.=<<___;
 	jnz	.Loop_tail
 
 .Ldone:
-	add	\$64+24,%rsp
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
+	lea	64+24+48(%rsp),%rsi
+	mov	-48(%rsi),%r15
+	mov	-40(%rsi),%r14
+	mov	-32(%rsi),%r13
+	mov	-24(%rsi),%r12
+	mov	-16(%rsi),%rbp
+	mov	-8(%rsi),%rbx
+	lea	(%rsi),%rsp
 .Lno_data:
 	ret
 .size	ChaCha20_ctr32,.-ChaCha20_ctr32
@@ -440,13 +442,14 @@ sub SSSE3ROUND {	# critical path is 20 "SIMD ticks" per round
 	&por	($b,$t);
 }
 
-my $xframe = $win64 ? 32+32+8 : 24;
+my $xframe = $win64 ? 32+8 : 8;
 
 $code.=<<___;
 .type	ChaCha20_ssse3,\@function,5
 .align	32
 ChaCha20_ssse3:
 .LChaCha20_ssse3:
+	mov	%rsp,%r9		# frame pointer
 ___
 $code.=<<___	if ($avx);
 	test	\$`1<<(43-32)`,%r10d
@@ -457,18 +460,12 @@ $code.=<<___;
 	ja	.LChaCha20_4x		# but overall it won't be slower
 
 .Ldo_sse3_after_all:
-	push	%rbx			# just to share SEH handler, no pops
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-
 	sub	\$64+$xframe,%rsp
 ___
 $code.=<<___	if ($win64);
-	movaps	%xmm6,64+32(%rsp)
-	movaps	%xmm7,64+48(%rsp)
+	movaps	%xmm6,-0x28(%r9)
+	movaps	%xmm7,-0x18(%r9)
+.Lssse3_body:
 ___
 $code.=<<___;
 	movdqa	.Lsigma(%rip),$a
@@ -563,11 +560,12 @@ $code.=<<___;
 .Ldone_ssse3:
 ___
 $code.=<<___	if ($win64);
-	movaps	64+32(%rsp),%xmm6
-	movaps	64+48(%rsp),%xmm7
+	movaps	-0x28(%r9),%xmm6
+	movaps	-0x18(%r9),%xmm7
 ___
 $code.=<<___;
-	add	\$64+$xframe+48,%rsp
+	lea	(%r9),%rsp
+.Lssse3_epilogue:
 	ret
 .size	ChaCha20_ssse3,.-ChaCha20_ssse3
 ___
@@ -704,13 +702,14 @@ my @x=map("\"$_\"",@xx);
 	);
 }
 
-my $xframe = $win64 ? 0xa0 : 0;
+my $xframe = $win64 ? 0xa8 : 8;
 
 $code.=<<___;
 .type	ChaCha20_4x,\@function,5
 .align	32
 ChaCha20_4x:
 .LChaCha20_4x:
+	mov		%rsp,%r9		# frame pointer
 	mov		%r10,%r11
 ___
 $code.=<<___	if ($avx>1);
@@ -727,8 +726,7 @@ $code.=<<___;
 	je		.Ldo_sse3_after_all	# to detect Atom
 
 .Lproceed4x:
-	lea		-0x78(%rsp),%r11
-	sub		\$0x148+$xframe,%rsp
+	sub		\$0x140+$xframe,%rsp
 ___
 	################ stack layout
 	# +0x00		SIMD equivalent of @x[8-12]
@@ -739,16 +737,17 @@ ___
 	# ...
 	# +0x140
 $code.=<<___	if ($win64);
-	movaps		%xmm6,-0x30(%r11)
-	movaps		%xmm7,-0x20(%r11)
-	movaps		%xmm8,-0x10(%r11)
-	movaps		%xmm9,0x00(%r11)
-	movaps		%xmm10,0x10(%r11)
-	movaps		%xmm11,0x20(%r11)
-	movaps		%xmm12,0x30(%r11)
-	movaps		%xmm13,0x40(%r11)
-	movaps		%xmm14,0x50(%r11)
-	movaps		%xmm15,0x60(%r11)
+	movaps		%xmm6,-0xa8(%r9)
+	movaps		%xmm7,-0x98(%r9)
+	movaps		%xmm8,-0x88(%r9)
+	movaps		%xmm9,-0x78(%r9)
+	movaps		%xmm10,-0x68(%r9)
+	movaps		%xmm11,-0x58(%r9)
+	movaps		%xmm12,-0x48(%r9)
+	movaps		%xmm13,-0x38(%r9)
+	movaps		%xmm14,-0x28(%r9)
+	movaps		%xmm15,-0x18(%r9)
+.L4x_body:
 ___
 $code.=<<___;
 	movdqa		.Lsigma(%rip),$xa3	# key[0]
@@ -1137,20 +1136,20 @@ $code.=<<___;
 .Ldone4x:
 ___
 $code.=<<___	if ($win64);
-	lea		0x140+0x30(%rsp),%r11
-	movaps		-0x30(%r11),%xmm6
-	movaps		-0x20(%r11),%xmm7
-	movaps		-0x10(%r11),%xmm8
-	movaps		0x00(%r11),%xmm9
-	movaps		0x10(%r11),%xmm10
-	movaps		0x20(%r11),%xmm11
-	movaps		0x30(%r11),%xmm12
-	movaps		0x40(%r11),%xmm13
-	movaps		0x50(%r11),%xmm14
-	movaps		0x60(%r11),%xmm15
+	movaps		-0xa8(%r9),%xmm6
+	movaps		-0x98(%r9),%xmm7
+	movaps		-0x88(%r9),%xmm8
+	movaps		-0x78(%r9),%xmm9
+	movaps		-0x68(%r9),%xmm10
+	movaps		-0x58(%r9),%xmm11
+	movaps		-0x48(%r9),%xmm12
+	movaps		-0x38(%r9),%xmm13
+	movaps		-0x28(%r9),%xmm14
+	movaps		-0x18(%r9),%xmm15
 ___
 $code.=<<___;
-	add		\$0x148+$xframe,%rsp
+	lea		(%r9),%rsp
+.L4x_epilogue:
 	ret
 .size	ChaCha20_4x,.-ChaCha20_4x
 ___
@@ -1232,15 +1231,15 @@ my @x=map("\"$_\"",@xx);
 	);
 }
 
-my $xframe = $win64 ? 0xa0 : 0;
+my $xframe = $win64 ? 0xa8 : 8;
 
 $code.=<<___;
 .type	ChaCha20_4xop,\@function,5
 .align	32
 ChaCha20_4xop:
 .LChaCha20_4xop:
-	lea		-0x78(%rsp),%r11
-	sub		\$0x148+$xframe,%rsp
+	mov		%rsp,%r9		# frame pointer
+	sub		\$0x140+$xframe,%rsp
 ___
 	################ stack layout
 	# +0x00		SIMD equivalent of @x[8-12]
@@ -1251,16 +1250,17 @@ ___
 	# ...
 	# +0x140
 $code.=<<___	if ($win64);
-	movaps		%xmm6,-0x30(%r11)
-	movaps		%xmm7,-0x20(%r11)
-	movaps		%xmm8,-0x10(%r11)
-	movaps		%xmm9,0x00(%r11)
-	movaps		%xmm10,0x10(%r11)
-	movaps		%xmm11,0x20(%r11)
-	movaps		%xmm12,0x30(%r11)
-	movaps		%xmm13,0x40(%r11)
-	movaps		%xmm14,0x50(%r11)
-	movaps		%xmm15,0x60(%r11)
+	movaps		%xmm6,-0xa8(%r9)
+	movaps		%xmm7,-0x98(%r9)
+	movaps		%xmm8,-0x88(%r9)
+	movaps		%xmm9,-0x78(%r9)
+	movaps		%xmm10,-0x68(%r9)
+	movaps		%xmm11,-0x58(%r9)
+	movaps		%xmm12,-0x48(%r9)
+	movaps		%xmm13,-0x38(%r9)
+	movaps		%xmm14,-0x28(%r9)
+	movaps		%xmm15,-0x18(%r9)
+.L4xop_body:
 ___
 $code.=<<___;
 	vzeroupper
@@ -1588,20 +1588,20 @@ $code.=<<___;
 	vzeroupper
 ___
 $code.=<<___	if ($win64);
-	lea		0x140+0x30(%rsp),%r11
-	movaps		-0x30(%r11),%xmm6
-	movaps		-0x20(%r11),%xmm7
-	movaps		-0x10(%r11),%xmm8
-	movaps		0x00(%r11),%xmm9
-	movaps		0x10(%r11),%xmm10
-	movaps		0x20(%r11),%xmm11
-	movaps		0x30(%r11),%xmm12
-	movaps		0x40(%r11),%xmm13
-	movaps		0x50(%r11),%xmm14
-	movaps		0x60(%r11),%xmm15
+	movaps		-0xa8(%r9),%xmm6
+	movaps		-0x98(%r9),%xmm7
+	movaps		-0x88(%r9),%xmm8
+	movaps		-0x78(%r9),%xmm9
+	movaps		-0x68(%r9),%xmm10
+	movaps		-0x58(%r9),%xmm11
+	movaps		-0x48(%r9),%xmm12
+	movaps		-0x38(%r9),%xmm13
+	movaps		-0x28(%r9),%xmm14
+	movaps		-0x18(%r9),%xmm15
 ___
 $code.=<<___;
-	add		\$0x148+$xframe,%rsp
+	lea		(%r9),%rsp
+.L4xop_epilogue:
 	ret
 .size	ChaCha20_4xop,.-ChaCha20_4xop
 ___
@@ -1729,33 +1729,32 @@ my @x=map("\"$_\"",@xx);
 	);
 }
 
-my $xframe = $win64 ? 0xb0 : 8;
+my $xframe = $win64 ? 0xa8 : 8;
 
 $code.=<<___;
 .type	ChaCha20_8x,\@function,5
 .align	32
 ChaCha20_8x:
 .LChaCha20_8x:
-	mov		%rsp,%r10
+	mov		%rsp,%r9		# frame register
 	sub		\$0x280+$xframe,%rsp
 	and		\$-32,%rsp
 ___
 $code.=<<___	if ($win64);
-	lea		0x290+0x30(%rsp),%r11
-	movaps		%xmm6,-0x30(%r11)
-	movaps		%xmm7,-0x20(%r11)
-	movaps		%xmm8,-0x10(%r11)
-	movaps		%xmm9,0x00(%r11)
-	movaps		%xmm10,0x10(%r11)
-	movaps		%xmm11,0x20(%r11)
-	movaps		%xmm12,0x30(%r11)
-	movaps		%xmm13,0x40(%r11)
-	movaps		%xmm14,0x50(%r11)
-	movaps		%xmm15,0x60(%r11)
+	movaps		%xmm6,-0xa8(%r9)
+	movaps		%xmm7,-0x98(%r9)
+	movaps		%xmm8,-0x88(%r9)
+	movaps		%xmm9,-0x78(%r9)
+	movaps		%xmm10,-0x68(%r9)
+	movaps		%xmm11,-0x58(%r9)
+	movaps		%xmm12,-0x48(%r9)
+	movaps		%xmm13,-0x38(%r9)
+	movaps		%xmm14,-0x28(%r9)
+	movaps		%xmm15,-0x18(%r9)
+.L8x_body:
 ___
 $code.=<<___;
 	vzeroupper
-	mov		%r10,0x280(%rsp)
 
 	################ stack layout
 	# +0x00		SIMD equivalent of @x[8-12]
@@ -1764,7 +1763,7 @@ $code.=<<___;
 	# ...
 	# +0x200	SIMD counters (with nonce smashed by lanes)
 	# ...
-	# +0x280	saved %rsp
+	# +0x280
 
 	vbroadcasti128	.Lsigma(%rip),$xa3	# key[0]
 	vbroadcasti128	($key),$xb3		# key[1]
@@ -2230,20 +2229,20 @@ $code.=<<___;
 	vzeroall
 ___
 $code.=<<___	if ($win64);
-	lea		0x290+0x30(%rsp),%r11
-	movaps		-0x30(%r11),%xmm6
-	movaps		-0x20(%r11),%xmm7
-	movaps		-0x10(%r11),%xmm8
-	movaps		0x00(%r11),%xmm9
-	movaps		0x10(%r11),%xmm10
-	movaps		0x20(%r11),%xmm11
-	movaps		0x30(%r11),%xmm12
-	movaps		0x40(%r11),%xmm13
-	movaps		0x50(%r11),%xmm14
-	movaps		0x60(%r11),%xmm15
+	movaps		-0xa8(%r9),%xmm6
+	movaps		-0x98(%r9),%xmm7
+	movaps		-0x88(%r9),%xmm8
+	movaps		-0x78(%r9),%xmm9
+	movaps		-0x68(%r9),%xmm10
+	movaps		-0x58(%r9),%xmm11
+	movaps		-0x48(%r9),%xmm12
+	movaps		-0x38(%r9),%xmm13
+	movaps		-0x28(%r9),%xmm14
+	movaps		-0x18(%r9),%xmm15
 ___
 $code.=<<___;
-	mov		0x280(%rsp),%rsp
+	lea		(%r9),%rsp
+.L8x_epilogue:
 	ret
 .size	ChaCha20_8x,.-ChaCha20_8x
 ___
@@ -2275,28 +2274,23 @@ sub AVX512ROUND {	# critical path is 14 "SIMD ticks" per round
 	&vprold	($b,$b,7);
 }
 
-my $xframe = $win64 ? 32+32+8 : 24;
+my $xframe = $win64 ? 32+8 : 8;
 
 $code.=<<___;
 .type	ChaCha20_avx512,\@function,5
 .align	32
 ChaCha20_avx512:
 .LChaCha20_avx512:
+	mov	%rsp,%r9		# frame pointer
 	cmp	\$512,$len
 	ja	.LChaCha20_16x
-
-	push	%rbx			# just to share SEH handler, no pops
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
 
 	sub	\$64+$xframe,%rsp
 ___
 $code.=<<___	if ($win64);
-	movaps	%xmm6,64+32(%rsp)
-	movaps	%xmm7,64+48(%rsp)
+	movaps	%xmm6,-0x28(%r9)
+	movaps	%xmm7,-0x18(%r9)
+.Lavx512_body:
 ___
 $code.=<<___;
 	vbroadcasti32x4	.Lsigma(%rip),$a
@@ -2462,11 +2456,12 @@ $code.=<<___;
 	vzeroall
 ___
 $code.=<<___	if ($win64);
-	movaps	64+32(%rsp),%xmm6
-	movaps	64+48(%rsp),%xmm7
+	movaps	-0x28(%r9),%xmm6
+	movaps	-0x18(%r9),%xmm7
 ___
 $code.=<<___;
-	add	\$64+$xframe+48,%rsp
+	lea	(%r9),%rsp
+.Lavx512_epilogue:
 	ret
 .size	ChaCha20_avx512,.-ChaCha20_avx512
 ___
@@ -2543,29 +2538,29 @@ my @x=map("\"$_\"",@xx);
 	);
 }
 
-my $xframe = $win64 ? 0xb0 : 8;
+my $xframe = $win64 ? 0xa8 : 8;
 
 $code.=<<___;
 .type	ChaCha20_16x,\@function,5
 .align	32
 ChaCha20_16x:
 .LChaCha20_16x:
-	mov		%rsp,%r11
+	mov		%rsp,%r9		# frame register
 	sub		\$64+$xframe,%rsp
 	and		\$-64,%rsp
 ___
 $code.=<<___	if ($win64);
-	lea		0x290+0x30(%rsp),%r11
-	movaps		%xmm6,-0x30(%r11)
-	movaps		%xmm7,-0x20(%r11)
-	movaps		%xmm8,-0x10(%r11)
-	movaps		%xmm9,0x00(%r11)
-	movaps		%xmm10,0x10(%r11)
-	movaps		%xmm11,0x20(%r11)
-	movaps		%xmm12,0x30(%r11)
-	movaps		%xmm13,0x40(%r11)
-	movaps		%xmm14,0x50(%r11)
-	movaps		%xmm15,0x60(%r11)
+	movaps		%xmm6,-0xa8(%r9)
+	movaps		%xmm7,-0x98(%r9)
+	movaps		%xmm8,-0x88(%r9)
+	movaps		%xmm9,-0x78(%r9)
+	movaps		%xmm10,-0x68(%r9)
+	movaps		%xmm11,-0x58(%r9)
+	movaps		%xmm12,-0x48(%r9)
+	movaps		%xmm13,-0x38(%r9)
+	movaps		%xmm14,-0x28(%r9)
+	movaps		%xmm15,-0x18(%r9)
+.L16x_body:
 ___
 $code.=<<___;
 	vzeroupper
@@ -2955,22 +2950,272 @@ $code.=<<___;
 	vzeroall
 ___
 $code.=<<___	if ($win64);
-	lea		0x290+0x30(%rsp),%r11
-	movaps		-0x30(%r11),%xmm6
-	movaps		-0x20(%r11),%xmm7
-	movaps		-0x10(%r11),%xmm8
-	movaps		0x00(%r11),%xmm9
-	movaps		0x10(%r11),%xmm10
-	movaps		0x20(%r11),%xmm11
-	movaps		0x30(%r11),%xmm12
-	movaps		0x40(%r11),%xmm13
-	movaps		0x50(%r11),%xmm14
-	movaps		0x60(%r11),%xmm15
+	movaps		-0xa8(%r9),%xmm6
+	movaps		-0x98(%r9),%xmm7
+	movaps		-0x88(%r9),%xmm8
+	movaps		-0x78(%r9),%xmm9
+	movaps		-0x68(%r9),%xmm10
+	movaps		-0x58(%r9),%xmm11
+	movaps		-0x48(%r9),%xmm12
+	movaps		-0x38(%r9),%xmm13
+	movaps		-0x28(%r9),%xmm14
+	movaps		-0x18(%r9),%xmm15
 ___
 $code.=<<___;
-	mov		%r11,%rsp
+	lea		(%r9),%rsp
+.L16x_epilogue:
 	ret
 .size	ChaCha20_16x,.-ChaCha20_16x
+___
+}
+
+# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
+#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
+if ($win64) {
+$rec="%rcx";
+$frame="%rdx";
+$context="%r8";
+$disp="%r9";
+
+$code.=<<___;
+.extern	__imp_RtlVirtualUnwind
+.type	se_handler,\@abi-omnipotent
+.align	16
+se_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	mov	8($disp),%rsi		# disp->ImageBase
+	mov	56($disp),%r11		# disp->HandlerData
+
+	lea	.Lctr32_body(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<.Lprologue
+	jb	.Lcommon_seh_tail
+
+	mov	152($context),%rax	# pull context->Rsp
+
+	lea	.Lno_data(%rip),%r10	# epilogue label
+	cmp	%r10,%rbx		# context->Rip>=.Lepilogue
+	jae	.Lcommon_seh_tail
+
+	lea	64+24+48(%rax),%rax
+
+	mov	-8(%rax),%rbx
+	mov	-16(%rax),%rbp
+	mov	-24(%rax),%r12
+	mov	-32(%rax),%r13
+	mov	-40(%rax),%r14
+	mov	-48(%rax),%r15
+	mov	%rbx,144($context)	# restore context->Rbx
+	mov	%rbp,160($context)	# restore context->Rbp
+	mov	%r12,216($context)	# restore context->R12
+	mov	%r13,224($context)	# restore context->R13
+	mov	%r14,232($context)	# restore context->R14
+	mov	%r15,240($context)	# restore context->R14
+
+.Lcommon_seh_tail:
+	mov	8(%rax),%rdi
+	mov	16(%rax),%rsi
+	mov	%rax,152($context)	# restore context->Rsp
+	mov	%rsi,168($context)	# restore context->Rsi
+	mov	%rdi,176($context)	# restore context->Rdi
+
+	mov	40($disp),%rdi		# disp->ContextRecord
+	mov	$context,%rsi		# context
+	mov	\$154,%ecx		# sizeof(CONTEXT)
+	.long	0xa548f3fc		# cld; rep movsq
+
+	mov	$disp,%rsi
+	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
+	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
+	mov	0(%rsi),%r8		# arg3, disp->ControlPc
+	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
+	mov	40(%rsi),%r10		# disp->ContextRecord
+	lea	56(%rsi),%r11		# &disp->HandlerData
+	lea	24(%rsi),%r12		# &disp->EstablisherFrame
+	mov	%r10,32(%rsp)		# arg5
+	mov	%r11,40(%rsp)		# arg6
+	mov	%r12,48(%rsp)		# arg7
+	mov	%rcx,56(%rsp)		# arg8, (NULL)
+	call	*__imp_RtlVirtualUnwind(%rip)
+
+	mov	\$1,%eax		# ExceptionContinueSearch
+	add	\$64,%rsp
+	popfq
+	pop	%r15
+	pop	%r14
+	pop	%r13
+	pop	%r12
+	pop	%rbp
+	pop	%rbx
+	pop	%rdi
+	pop	%rsi
+	ret
+.size	se_handler,.-se_handler
+
+.type	ssse3_handler,\@abi-omnipotent
+.align	16
+ssse3_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	mov	8($disp),%rsi		# disp->ImageBase
+	mov	56($disp),%r11		# disp->HandlerData
+
+	mov	0(%r11),%r10d		# HandlerData[0]
+	lea	(%rsi,%r10),%r10	# prologue label
+	cmp	%r10,%rbx		# context->Rip<prologue label
+	jb	.Lcommon_seh_tail
+
+	mov	192($context),%rax	# pull context->R9
+
+	mov	4(%r11),%r10d		# HandlerData[1]
+	lea	(%rsi,%r10),%r10	# epilogue label
+	cmp	%r10,%rbx		# context->Rip>=epilogue label
+	jae	.Lcommon_seh_tail
+
+	lea	-0x28(%rax),%rsi
+	lea	512($context),%rdi	# &context.Xmm6
+	mov	\$4,%ecx
+	.long	0xa548f3fc		# cld; rep movsq
+
+	jmp	.Lcommon_seh_tail
+.size	ssse3_handler,.-ssse3_handler
+
+.type	full_handler,\@abi-omnipotent
+.align	16
+full_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	mov	8($disp),%rsi		# disp->ImageBase
+	mov	56($disp),%r11		# disp->HandlerData
+
+	mov	0(%r11),%r10d		# HandlerData[0]
+	lea	(%rsi,%r10),%r10	# prologue label
+	cmp	%r10,%rbx		# context->Rip<prologue label
+	jb	.Lcommon_seh_tail
+
+	mov	192($context),%rax	# pull context->R9
+
+	mov	4(%r11),%r10d		# HandlerData[1]
+	lea	(%rsi,%r10),%r10	# epilogue label
+	cmp	%r10,%rbx		# context->Rip>=epilogue label
+	jae	.Lcommon_seh_tail
+
+	lea	-0xa8(%rax),%rsi
+	lea	512($context),%rdi	# &context.Xmm6
+	mov	\$20,%ecx
+	.long	0xa548f3fc		# cld; rep movsq
+
+	jmp	.Lcommon_seh_tail
+.size	full_handler,.-full_handler
+
+.section	.pdata
+.align	4
+	.rva	.LSEH_begin_ChaCha20_ctr32
+	.rva	.LSEH_end_ChaCha20_ctr32
+	.rva	.LSEH_info_ChaCha20_ctr32
+
+	.rva	.LSEH_begin_ChaCha20_ssse3
+	.rva	.LSEH_end_ChaCha20_ssse3
+	.rva	.LSEH_info_ChaCha20_ssse3
+
+	.rva	.LSEH_begin_ChaCha20_4x
+	.rva	.LSEH_end_ChaCha20_4x
+	.rva	.LSEH_info_ChaCha20_4x
+___
+$code.=<<___ if ($avx);
+	.rva	.LSEH_begin_ChaCha20_4xop
+	.rva	.LSEH_end_ChaCha20_4xop
+	.rva	.LSEH_info_ChaCha20_4xop
+___
+$code.=<<___ if ($avx>1);
+	.rva	.LSEH_begin_ChaCha20_8x
+	.rva	.LSEH_end_ChaCha20_8x
+	.rva	.LSEH_info_ChaCha20_8x
+___
+$code.=<<___ if ($avx>2);
+	.rva	.LSEH_begin_ChaCha20_avx512
+	.rva	.LSEH_end_ChaCha20_avx512
+	.rva	.LSEH_info_ChaCha20_avx512
+
+	.rva	.LSEH_begin_ChaCha20_16x
+	.rva	.LSEH_end_ChaCha20_16x
+	.rva	.LSEH_info_ChaCha20_16x
+___
+$code.=<<___;
+.section	.xdata
+.align	8
+.LSEH_info_ChaCha20_ctr32:
+	.byte	9,0,0,0
+	.rva	se_handler
+
+.LSEH_info_ChaCha20_ssse3:
+	.byte	9,0,0,0
+	.rva	ssse3_handler
+	.rva	.Lssse3_body,.Lssse3_epilogue
+
+.LSEH_info_ChaCha20_4x:
+	.byte	9,0,0,0
+	.rva	full_handler
+	.rva	.L4x_body,.L4x_epilogue
+___
+$code.=<<___ if ($avx);
+.LSEH_info_ChaCha20_4xop:
+	.byte	9,0,0,0
+	.rva	full_handler
+	.rva	.L4xop_body,.L4xop_epilogue		# HandlerData[]
+___
+$code.=<<___ if ($avx>1);
+.LSEH_info_ChaCha20_8x:
+	.byte	9,0,0,0
+	.rva	full_handler
+	.rva	.L8x_body,.L8x_epilogue			# HandlerData[]
+___
+$code.=<<___ if ($avx>2);
+.LSEH_info_ChaCha20_avx512:
+	.byte	9,0,0,0
+	.rva	ssse3_handler
+	.rva	.Lavx512_body,.Lavx512_epilogue		# HandlerData[]
+
+.LSEH_info_ChaCha20_16x:
+	.byte	9,0,0,0
+	.rva	full_handler
+	.rva	.L16x_body,.L16x_epilogue		# HandlerData[]
 ___
 }
 

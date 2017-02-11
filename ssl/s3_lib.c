@@ -838,14 +838,76 @@ static SSL_CIPHER ssl3_ciphers[] = {
      1,
      TLS1_3_TXT_AES_128_GCM_SHA256,
      TLS1_3_CK_AES_128_GCM_SHA256,
-     SSL_kRSA,
-     SSL_aRSA,
+     0, 0,
      SSL_AES128GCM,
+     SSL_AEAD,
+     TLS1_3_VERSION, TLS1_3_VERSION,
+     SSL_kANY,
+     SSL_aANY,
+     SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256,
+     128,
+     128,
+     },
+    {
+     1,
+     TLS1_3_TXT_AES_256_GCM_SHA384,
+     TLS1_3_CK_AES_256_GCM_SHA384,
+     SSL_kANY,
+     SSL_aANY,
+     SSL_AES256GCM,
      SSL_AEAD,
      TLS1_3_VERSION, TLS1_3_VERSION,
      0, 0,
      SSL_HIGH,
-     SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
+     SSL_HANDSHAKE_MAC_SHA384,
+     256,
+     256,
+     },
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+    {
+     1,
+     TLS1_3_TXT_CHACHA20_POLY1305_SHA256,
+     TLS1_3_CK_CHACHA20_POLY1305_SHA256,
+     SSL_kANY,
+     SSL_aANY,
+     SSL_CHACHA20POLY1305,
+     SSL_AEAD,
+     TLS1_3_VERSION, TLS1_3_VERSION,
+     0, 0,
+     SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256,
+     256,
+     256,
+     },
+#endif
+    {
+     1,
+     TLS1_3_TXT_AES_128_CCM_SHA256,
+     TLS1_3_CK_AES_128_CCM_SHA256,
+     SSL_kANY,
+     SSL_aANY,
+     SSL_AES128CCM,
+     SSL_AEAD,
+     TLS1_3_VERSION, TLS1_3_VERSION,
+     0, 0,
+     SSL_NOT_DEFAULT | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256,
+     128,
+     128,
+     },
+    {
+     1,
+     TLS1_3_TXT_AES_128_CCM_8_SHA256,
+     TLS1_3_CK_AES_128_CCM_8_SHA256,
+     SSL_kANY,
+     SSL_aANY,
+     SSL_AES128CCM8,
+     SSL_AEAD,
+     TLS1_3_VERSION, TLS1_3_VERSION,
+     0, 0,
+     SSL_NOT_DEFAULT | SSL_HIGH,
+     SSL_HANDSHAKE_MAC_SHA256,
      128,
      128,
      },
@@ -3177,20 +3239,10 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         return ssl_cert_set_cert_store(s->cert, parg, 1, larg);
 
     case SSL_CTRL_GET_PEER_SIGNATURE_NID:
-        if (SSL_USE_SIGALGS(s)) {
-            if (s->session) {
-                const EVP_MD *sig;
-                sig = s->s3->tmp.peer_md;
-                if (sig) {
-                    *(int *)parg = EVP_MD_type(sig);
-                    return 1;
-                }
-            }
+        if (s->s3->tmp.peer_sigalg == NULL)
             return 0;
-        }
-        /* Might want to do something here for other versions */
-        else
-            return 0;
+        *(int *)parg = s->s3->tmp.peer_sigalg->hash;
+        return 1;
 
     case SSL_CTRL_GET_SERVER_TMP_KEY:
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
@@ -3545,25 +3597,28 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
     return (1);
 }
 
+const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
+{
+    SSL_CIPHER c;
+
+    c.id = id;
+    return OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
+}
+
 /*
  * This function needs to check if the ciphers required are actually
  * available
  */
 const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 {
-    SSL_CIPHER c;
-    const SSL_CIPHER *cp;
-    uint32_t id;
-
-    id = 0x03000000 | ((uint32_t)p[0] << 8L) | (uint32_t)p[1];
-    c.id = id;
-    cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
-    return cp;
+    return ssl3_get_cipher_by_id(SSL3_CK_CIPHERSUITE_FLAG
+                                 | ((uint32_t)p[0] << 8L)
+                                 | (uint32_t)p[1]);
 }
 
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt, size_t *len)
 {
-    if ((c->id & 0xff000000) != 0x03000000) {
+    if ((c->id & 0xff000000) != SSL3_CK_CIPHERSUITE_FLAG) {
         *len = 0;
         return 1;
     }
@@ -3589,7 +3644,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     const SSL_CIPHER *c, *ret = NULL;
     STACK_OF(SSL_CIPHER) *prio, *allow;
     int i, ii, ok;
-    unsigned long alg_k, alg_a, mask_k, mask_a;
+    unsigned long alg_k = 0, alg_a = 0, mask_k, mask_a;
 
     /* Let's see which ciphers we can support */
 
@@ -3641,42 +3696,47 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
             (DTLS_VERSION_LT(s->version, c->min_dtls) ||
              DTLS_VERSION_GT(s->version, c->max_dtls)))
             continue;
-
-        mask_k = s->s3->tmp.mask_k;
-        mask_a = s->s3->tmp.mask_a;
+        /*
+         * Since TLS 1.3 ciphersuites can be used with any auth or
+         * key exchange scheme skip tests.
+         */
+        if (!SSL_IS_TLS13(s)) {
+            mask_k = s->s3->tmp.mask_k;
+            mask_a = s->s3->tmp.mask_a;
 #ifndef OPENSSL_NO_SRP
-        if (s->srp_ctx.srp_Mask & SSL_kSRP) {
-            mask_k |= SSL_kSRP;
-            mask_a |= SSL_aSRP;
-        }
+            if (s->srp_ctx.srp_Mask & SSL_kSRP) {
+                mask_k |= SSL_kSRP;
+                mask_a |= SSL_aSRP;
+            }
 #endif
 
-        alg_k = c->algorithm_mkey;
-        alg_a = c->algorithm_auth;
+            alg_k = c->algorithm_mkey;
+            alg_a = c->algorithm_auth;
 
 #ifndef OPENSSL_NO_PSK
-        /* with PSK there must be server callback set */
-        if ((alg_k & SSL_PSK) && s->psk_server_callback == NULL)
-            continue;
+            /* with PSK there must be server callback set */
+            if ((alg_k & SSL_PSK) && s->psk_server_callback == NULL)
+                continue;
 #endif                          /* OPENSSL_NO_PSK */
 
-        ok = (alg_k & mask_k) && (alg_a & mask_a);
+            ok = (alg_k & mask_k) && (alg_a & mask_a);
 #ifdef CIPHER_DEBUG
-        fprintf(stderr, "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n", ok, alg_k,
-                alg_a, mask_k, mask_a, (void *)c, c->name);
+            fprintf(stderr, "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n", ok, alg_k,
+                    alg_a, mask_k, mask_a, (void *)c, c->name);
 #endif
 
 #ifndef OPENSSL_NO_EC
-        /*
-         * if we are considering an ECC cipher suite that uses an ephemeral
-         * EC key check it
-         */
-        if (alg_k & SSL_kECDHE)
-            ok = ok && tls1_check_ec_tmp_key(s, c->id);
+            /*
+             * if we are considering an ECC cipher suite that uses an ephemeral
+             * EC key check it
+             */
+            if (alg_k & SSL_kECDHE)
+                ok = ok && tls1_check_ec_tmp_key(s, c->id);
 #endif                          /* OPENSSL_NO_EC */
 
-        if (!ok)
-            continue;
+            if (!ok)
+                continue;
+        }
         ii = sk_SSL_CIPHER_find(allow, c);
         if (ii >= 0) {
             /* Check security callback permits this cipher */
@@ -3822,7 +3882,7 @@ int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written)
 {
     clear_sys_error();
     if (s->s3->renegotiate)
-        ssl3_renegotiate_check(s);
+        ssl3_renegotiate_check(s, 0);
 
     return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len,
                                       written);
@@ -3835,7 +3895,7 @@ static int ssl3_read_internal(SSL *s, void *buf, size_t len, int peek,
 
     clear_sys_error();
     if (s->s3->renegotiate)
-        ssl3_renegotiate_check(s);
+        ssl3_renegotiate_check(s, 0);
     s->s3->in_read_app_data = 1;
     ret =
         s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, NULL, buf, len,
@@ -3874,21 +3934,26 @@ int ssl3_renegotiate(SSL *s)
     if (s->handshake_func == NULL)
         return (1);
 
-    if (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)
-        return (0);
-
     s->s3->renegotiate = 1;
     return (1);
 }
 
-int ssl3_renegotiate_check(SSL *s)
+/*
+ * Check if we are waiting to do a renegotiation and if so whether now is a
+ * good time to do it. If |initok| is true then we are being called from inside
+ * the state machine so ignore the result of SSL_in_init(s). Otherwise we
+ * should not do a renegotiation if SSL_in_init(s) is true. Returns 1 if we
+ * should do a renegotiation now and sets up the state machine for it. Otherwise
+ * returns 0.
+ */
+int ssl3_renegotiate_check(SSL *s, int initok)
 {
     int ret = 0;
 
     if (s->s3->renegotiate) {
         if (!RECORD_LAYER_read_pending(&s->rlayer)
             && !RECORD_LAYER_write_pending(&s->rlayer)
-            && !SSL_in_init(s)) {
+            && (initok || !SSL_in_init(s))) {
             /*
              * if we are the server, and we have sent a 'RENEGOTIATE'
              * message, we need to set the state machine into the renegotiate
@@ -3901,7 +3966,7 @@ int ssl3_renegotiate_check(SSL *s)
             ret = 1;
         }
     }
-    return (ret);
+    return ret;
 }
 
 /*
@@ -4098,18 +4163,20 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
     if (gensecret) {
         if (SSL_IS_TLS13(s)) {
             /*
-             * TODO(TLS1.3): For now we just use the default early_secret, this
-             * will need to change later when other early_secrets will be
-             * possible.
+             * If we are resuming then we already generated the early secret
+             * when we created the ClientHello, so don't recreate it.
              */
-            rv = tls13_generate_early_secret(s, NULL, 0)
-                 && tls13_generate_handshake_secret(s, pms, pmslen);
-            OPENSSL_free(pms);
+            if (!s->hit)
+                rv = tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL,
+                                           0,
+                                           (unsigned char *)&s->early_secret);
+            else
+                rv = 1;
+
+            rv = rv && tls13_generate_handshake_secret(s, pms, pmslen);
         } else {
-            /* Generate master secret and discard premaster */
-            rv = ssl_generate_master_secret(s, pms, pmslen, 1);
+            rv = ssl_generate_master_secret(s, pms, pmslen, 0);
         }
-        pms = NULL;
     } else {
         /* Save premaster secret */
         s->s3->tmp.pms = pms;

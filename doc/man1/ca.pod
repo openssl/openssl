@@ -77,6 +77,8 @@ this prints extra details about the operations being performed.
 =item B<-config filename>
 
 specifies the configuration file to use.
+Optional; for a description of the default value,
+see L<openssl(1)/COMMAND SUMMARY>.
 
 =item B<-name section>
 
@@ -632,11 +634,6 @@ The values below reflect the default values.
  ./demoCA/index.txt.old         - CA text database backup file
  ./demoCA/certs                 - certificate output file
  ./demoCA/.rnd                  - CA random seed information
-
-=head1 ENVIRONMENT VARIABLES
-
-B<OPENSSL_CONF> reflects the location of master configuration file it can
-be overridden by the B<-config> command line option.
 
 =head1 RESTRICTIONS
 

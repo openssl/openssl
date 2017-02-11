@@ -34,6 +34,10 @@ typedef struct {
 
 static RECORD_DATA refdata[] = {
     {
+        /*
+         * Server: EncryptedExtensions, Certificate, CertificateVerify and
+         *         Finished
+         */
         {
             "0800001e001c000a00140012001d001700180019010001010102010301040000"
             "00000b0001b9000001b50001b0308201ac30820115a003020102020102300d06"
@@ -85,6 +89,7 @@ static RECORD_DATA refdata[] = {
         "0000000000000000"
     },
     {
+        /* Client: Finished */
         {
             "1400002078367856d3c8cc4e0a95eb98906ca7a48bd3cc7029f48bd4ae0dc91a"
             "b903ca8916","",""
@@ -98,6 +103,7 @@ static RECORD_DATA refdata[] = {
         "0000000000000000"
     },
     {
+        /* Server: NewSessionTicket */
         {
             "040000a60002a3004abe594b00924e535321cadc96238da09caf9b02fecafdd6"
             "5e3e418f03e43772cf512ed8066100503b1c08abbbf298a9d138ce821dd12fe1"
@@ -119,6 +125,7 @@ static RECORD_DATA refdata[] = {
         "0000000000000000"
     },
     {
+        /* Client: Application Data */
         {
             "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
             "202122232425262728292a2b2c2d2e2f303117","",""
@@ -133,6 +140,7 @@ static RECORD_DATA refdata[] = {
         "0000000000000000"
     },
     {
+        /* Server: Application Data */
         {
             "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
             "202122232425262728292a2b2c2d2e2f303117","",""
@@ -147,6 +155,7 @@ static RECORD_DATA refdata[] = {
         "0000000000000001"
     },
     {
+        /* Client: CloseNotify */
         {
             "010015","",""
         },
@@ -158,6 +167,7 @@ static RECORD_DATA refdata[] = {
         "0000000000000001"
     },
     {
+        /* Server: CloseNotify */
         {
             "010015","",""
         },
@@ -281,6 +291,8 @@ static int test_record(SSL3_RECORD *rec, RECORD_DATA *recd, int enc)
     return ret;
 }
 
+#define TLS13_AES_128_GCM_SHA256_BYTES  ((const unsigned char *)"\x13\x01")
+
 static int test_tls13_encryption(void)
 {
     SSL_CTX *ctx = NULL;
@@ -309,6 +321,12 @@ static int test_tls13_encryption(void)
     s->enc_write_ctx = EVP_CIPHER_CTX_new();
     if (s->enc_read_ctx == NULL || s->enc_write_ctx == NULL) {
         fprintf(stderr, "Failed creating EVP_CIPHER_CTX\n");
+        goto err;
+    }
+
+    s->s3->tmp.new_cipher = SSL_CIPHER_find(s, TLS13_AES_128_GCM_SHA256_BYTES);
+    if (s->s3->tmp.new_cipher == NULL) {
+        fprintf(stderr, "Failed to find cipher\n");
         goto err;
     }
 

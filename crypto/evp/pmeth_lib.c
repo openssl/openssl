@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -51,6 +51,9 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &hkdf_pkey_meth,
 #ifndef OPENSSL_NO_POLY1305
     &poly1305_pkey_meth,
+#endif
+#ifndef OPENSSL_NO_SIPHASH
+    &siphash_pkey_meth,
 #endif
 };
 
@@ -139,6 +142,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 
     if (pmeth->init) {
         if (pmeth->init(ret) <= 0) {
+            ret->pmeth = NULL;
             EVP_PKEY_CTX_free(ret);
             return NULL;
         }
@@ -264,6 +268,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
     if (pctx->pmeth->copy(rctx, pctx) > 0)
         return rctx;
 
+    rctx->pmeth = NULL;
     EVP_PKEY_CTX_free(rctx);
     return NULL;
 

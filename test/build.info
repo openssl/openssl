@@ -309,11 +309,7 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   IF[{- $disabled{shared} -}]
-    PROGRAMS_NO_INST=wpackettest cipher_overhead_test
-    SOURCE[wpackettest]=wpackettest.c testutil.c test_main_custom.c
-    INCLUDE[wpackettest]=../include
-    DEPEND[wpackettest]=../libcrypto ../libssl
-
+    PROGRAMS_NO_INST=cipher_overhead_test
     SOURCE[cipher_overhead_test]=cipher_overhead_test.c
     INCLUDE[cipher_overhead_test]=.. ../include
     DEPEND[cipher_overhead_test]=../libcrypto ../libssl
@@ -334,9 +330,12 @@ IF[{- !$disabled{tests} -}]
   # names with the DLL import libraries.
   IF[{- $disabled{shared} || $target{build_scheme}->[1] ne 'windows' -}]
     PROGRAMS_NO_INST=asn1_internal_test modes_internal_test x509_internal_test \
-                     tls13encryptiontest
+                     tls13encryptiontest wpackettest
     IF[{- !$disabled{poly1305} -}]
       PROGRAMS_NO_INST=poly1305_internal_test
+    ENDIF
+    IF[{- !$disabled{siphash} -}]
+      PROGRAMS_NO_INST=siphash_internal_test
     ENDIF
 
     SOURCE[poly1305_internal_test]=poly1305_internal_test.c testutil.c test_main_custom.c
@@ -358,6 +357,14 @@ IF[{- !$disabled{tests} -}]
     SOURCE[tls13encryptiontest]=tls13encryptiontest.c testutil.c test_main.c
     INCLUDE[tls13encryptiontest]=.. ../include
     DEPEND[tls13encryptiontest]=../libcrypto ../libssl.a
+
+    SOURCE[wpackettest]=wpackettest.c testutil.c test_main_custom.c
+    INCLUDE[wpackettest]=../include
+    DEPEND[wpackettest]=../libcrypto ../libssl.a
+
+    SOURCE[siphash_internal_test]=siphash_internal_test.c testutil.c test_main_custom.c
+    INCLUDE[siphash_internal_test]=.. ../include ../crypto/include
+    DEPEND[siphash_internal_test]=../libcrypto.a
   ENDIF
 
   IF[{- !$disabled{mdc2} -}]

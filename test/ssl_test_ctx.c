@@ -432,9 +432,9 @@ IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, app_data_size)
 
 IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, max_fragment_size)
 
-/***********************/
-/* Expected key types  */
-/***********************/
+/*************************************/
+/* Expected key and signature types  */
+/*************************************/
 
 __owur static int parse_expected_key_type(int *ptype, const char *value)
 {
@@ -473,10 +473,24 @@ __owur static int parse_expected_server_cert_type(SSL_TEST_CTX *test_ctx,
                                    value);
 }
 
+__owur static int parse_expected_server_sign_type(SSL_TEST_CTX *test_ctx,
+                                                 const char *value)
+{
+    return parse_expected_key_type(&test_ctx->expected_server_sign_type,
+                                   value);
+}
+
 __owur static int parse_expected_client_cert_type(SSL_TEST_CTX *test_ctx,
                                                   const char *value)
 {
     return parse_expected_key_type(&test_ctx->expected_client_cert_type,
+                                   value);
+}
+
+__owur static int parse_expected_client_sign_type(SSL_TEST_CTX *test_ctx,
+                                                 const char *value)
+{
+    return parse_expected_key_type(&test_ctx->expected_client_sign_type,
                                    value);
 }
 
@@ -540,8 +554,10 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ExpectedTmpKeyType", &parse_expected_tmp_key_type },
     { "ExpectedServerCertType", &parse_expected_server_cert_type },
     { "ExpectedServerSignHash", &parse_expected_server_sign_hash },
+    { "ExpectedServerSignType", &parse_expected_server_sign_type },
     { "ExpectedClientCertType", &parse_expected_client_cert_type },
     { "ExpectedClientSignHash", &parse_expected_client_sign_hash },
+    { "ExpectedClientSignType", &parse_expected_client_sign_type },
 };
 
 /* Nested client options. */

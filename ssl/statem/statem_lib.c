@@ -72,6 +72,49 @@ int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype)
     return 1;
 }
 
+int tls_setup_handshake(SSL *s)
+{
+    if (!ssl3_init_finished_mac(s))
+        return 0;
+
+    if (s->server) {
+        if (SSL_IS_FIRST_HANDSHAKE(s)) {
+            s->ctx->stats.sess_accept++;
+        } else if (!s->s3->send_connection_binding &&
+                   !(s->options &
+                     SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)) {
+            /*
+             * Server attempting to renegotiate with client that doesn't
+             * support secure renegotiation.
+             */
+            SSLerr(SSL_F_TLS_SETUP_HANDSHAKE,
+                   SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+            return 0;
+        } else {
+            s->ctx->stats.sess_accept_renegotiate++;
+
+            s->s3->tmp.cert_request = 0;
+        }
+    } else {
+        if (SSL_IS_FIRST_HANDSHAKE(s))
+            s->ctx->stats.sess_connect++;
+        else
+            s->ctx->stats.sess_connect_renegotiate++;
+
+        /* mark client_random uninitialized */
+        memset(s->s3->client_random, 0, sizeof(s->s3->client_random));
+        s->hit = 0;
+
+        s->s3->tmp.cert_req = 0;
+
+        if (SSL_IS_DTLS(s))
+            s->statem.use_timer = 1;
+    }
+
+    return 1;
+}
+
 /*
  * Size of the to-be-signed TLS13 data, without the hash size itself:
  * 64 bytes of value 32, 33 context bytes, 1 byte separator
@@ -128,8 +171,8 @@ static int get_cert_verify_tbs_data(SSL *s, unsigned char *tls13tbs,
 
 int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
 {
-    EVP_PKEY *pkey;
-    const EVP_MD *md;
+    EVP_PKEY *pkey = s->cert->key->privatekey;
+    const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
     EVP_MD_CTX *mctx = NULL;
     EVP_PKEY_CTX *pctx = NULL;
     size_t hdatalen = 0, siglen = 0;
@@ -138,20 +181,6 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
     unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
     int pktype, ispss = 0;
 
-    if (s->server) {
-        /* Only happens in TLSv1.3 */
-        /*
-         * TODO(TLS1.3): This needs to change. We should not get this from the
-         * cipher. However, for now, we have not done the work to separate the
-         * certificate type from the ciphersuite
-         */
-        pkey = ssl_get_sign_pkey(s, s->s3->tmp.new_cipher, &md);
-        if (pkey == NULL)
-            goto err;
-    } else {
-        md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
-        pkey = s->cert->key->privatekey;
-    }
     pktype = EVP_PKEY_id(pkey);
 
     mctx = EVP_MD_CTX_new();
@@ -188,8 +217,8 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
 
     if (ispss) {
         if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
-                   /* -1 here means set saltlen to the digest len */
-                || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0) {
+            || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx,
+                                                RSA_PSS_SALTLEN_DIGEST) <= 0) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
             goto err;
         }
@@ -243,7 +272,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     unsigned char *gost_data = NULL;
 #endif
     int al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
-    int type = 0, j, pktype, ispss = 0;
+    int type = 0, j, pktype;
     unsigned int len;
     X509 *peer;
     const EVP_MD *md = NULL;
@@ -260,6 +289,11 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 
     peer = s->session->peer;
     pkey = X509_get0_pubkey(peer);
+    if (pkey == NULL) {
+        al = SSL_AD_INTERNAL_ERROR;
+        goto f_err;
+    }
+
     pktype = EVP_PKEY_id(pkey);
     type = X509_certificate_type(peer, pkey);
 
@@ -290,14 +324,14 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
                 al = SSL_AD_DECODE_ERROR;
                 goto f_err;
             }
-            rv = tls12_check_peer_sigalg(&md, s, sigalg, pkey);
+            rv = tls12_check_peer_sigalg(s, sigalg, pkey);
             if (rv == -1) {
                 goto f_err;
             } else if (rv == 0) {
                 al = SSL_AD_DECODE_ERROR;
                 goto f_err;
             }
-            ispss = SIGID_IS_PSS(sigalg);
+            md = ssl_md(s->s3->tmp.peer_sigalg->hash_idx);
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
@@ -359,10 +393,10 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
 #endif
 
-    if (ispss) {
+    if (SSL_USE_PSS(s)) {
         if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
-                   /* -1 here means set saltlen to the digest len */
-                || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0) {
+            || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx,
+                                                RSA_PSS_SALTLEN_DIGEST) <= 0) {
             SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
             goto f_err;
         }
@@ -427,10 +461,13 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    /* Log the master secret, if logging is enabled. */
-    if (!ssl_log_master_secret(s, s->s3->client_random, SSL3_RANDOM_SIZE,
-                               s->session->master_key,
-                               s->session->master_key_length))
+    /*
+     * Log the master secret, if logging is enabled. We don't log it for
+     * TLSv1.3: there's a different key schedule for that.
+     */
+    if (!SSL_IS_TLS13(s) && !ssl_log_secret(s, MASTER_SECRET_LABEL,
+                                            s->session->master_key,
+                                            s->session->master_key_length))
         return 0;
 
     /*
@@ -607,7 +644,7 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
             }
         } else {
             if (!s->method->ssl3_enc->generate_master_secret(s,
-                    s->session->master_key, s->handshake_secret, 0,
+                    s->master_secret, s->handshake_secret, 0,
                     &s->session->master_key_length)) {
                 SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_CANNOT_CHANGE_CIPHER);
                 goto f_err;
@@ -778,7 +815,12 @@ unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk,
     return 1;
 }
 
-WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
+/*
+ * Tidy up after the end of a handshake. In the case of SCTP this may result
+ * in NBIO events. If |clearbufs| is set then init_buf and the wbio buffer is
+ * freed up as well.
+ */
+WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
 {
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
@@ -791,26 +833,26 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
     }
 #endif
 
-    /* clean a few things up */
-    ssl3_cleanup_key_block(s);
-
-    if (!SSL_IS_DTLS(s)) {
-        /*
-         * We don't do this in DTLS because we may still need the init_buf
-         * in case there are any unexpected retransmits
-         */
-        BUF_MEM_free(s->init_buf);
-        s->init_buf = NULL;
+    if (clearbufs) {
+        if (!SSL_IS_DTLS(s)) {
+            /*
+             * We don't do this in DTLS because we may still need the init_buf
+             * in case there are any unexpected retransmits
+             */
+            BUF_MEM_free(s->init_buf);
+            s->init_buf = NULL;
+        }
+        ssl_free_wbio_buffer(s);
+        s->init_num = 0;
     }
 
-    ssl_free_wbio_buffer(s);
-
-    s->init_num = 0;
-
-    if (!s->server || s->renegotiate == 2) {
+    if (s->statem.cleanuphand) {
         /* skipped if we just sent a HelloRequest */
         s->renegotiate = 0;
         s->new_session = 0;
+        s->statem.cleanuphand = 0;
+
+        ssl3_cleanup_key_block(s);
 
         if (s->server) {
             ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
@@ -842,6 +884,13 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
             dtls1_clear_received_buffer(s);
         }
     }
+
+    /*
+     * If we've not cleared the buffers its because we've got more work to do,
+     * so continue.
+     */
+    if (!clearbufs)
+        return WORK_FINISHED_CONTINUE;
 
     return WORK_FINISHED_STOP;
 }
@@ -891,7 +940,8 @@ int tls_get_message_header(SSL *s, int *mt)
 
         skip_message = 0;
         if (!s->server)
-            if (p[0] == SSL3_MT_HELLO_REQUEST)
+            if (s->statem.hand_state != TLS_ST_OK
+                    && p[0] == SSL3_MT_HELLO_REQUEST)
                 /*
                  * The server may always send 'Hello Request' messages --
                  * we are doing a handshake anyway now, so ignore them if
@@ -1021,7 +1071,7 @@ int ssl_cert_type(const X509 *x, const EVP_PKEY *pk)
     default:
         return -1;
     case EVP_PKEY_RSA:
-        return SSL_PKEY_RSA_ENC;
+        return SSL_PKEY_RSA;
     case EVP_PKEY_DSA:
         return SSL_PKEY_DSA_SIGN;
 #ifndef OPENSSL_NO_EC

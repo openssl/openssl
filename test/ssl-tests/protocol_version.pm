@@ -135,22 +135,6 @@ sub generate_resumption_tests {
     # Don't write the redundant "Method = TLS" into the configuration.
     undef $method if !$dtls;
 
-
-    #TODO(TLS1.3): This is temporary code while we do not have support for
-    #              TLS1.3 resumption. We recalculate min_tls_enabled and
-    #              max_tls_enabled, ignoring TLS1.3
-    foreach my $i (0..($#tls_protocols - 1)) {
-        if (!$is_tls_disabled[$i]) {
-            $min_tls_enabled = $i;
-            last;
-        }
-    }
-    foreach my $i (0..($#tls_protocols - 1)) {
-        if (!$is_tls_disabled[$i]) {
-            $max_tls_enabled = $i;
-        }
-    }
-
     my @protocols = $dtls ? @dtls_protocols : @tls_protocols;
     my $min_enabled  = $dtls ? $min_dtls_enabled : $min_tls_enabled;
     my $max_enabled = $dtls ? $max_dtls_enabled : $max_tls_enabled;

@@ -204,9 +204,9 @@ GOST R 34.11-94 (B<-md_gost94>).
 
 =item B<-config filename>
 
-this allows an alternative configuration file to be specified,
-this overrides the compile time filename or any specified in
-the B<OPENSSL_CONF> environment variable.
+this allows an alternative configuration file to be specified.
+Optional; for a description of the default value,
+see L<openssl(1)/COMMAND SUMMARY>.
 
 =item B<-subj arg>
 
@@ -242,7 +242,6 @@ days to certify the certificate for. The default is 30 days.
 
 serial number to use when outputting a self signed certificate. This
 may be specified as a decimal value or a hex value if preceded by B<0x>.
-It is possible to use negative serial numbers but this is not recommended.
 
 =item B<-extensions section>
 
@@ -623,12 +622,6 @@ the correct empty B<SET OF> structure (the DER encoding of which is 0xa0
 then the B<SET OF> is missing and the encoding is technically invalid (but
 it is tolerated). See the description of the command line option B<-asn1-kludge>
 for more information.
-
-=head1 ENVIRONMENT VARIABLES
-
-The variable B<OPENSSL_CONF> if defined allows an alternative configuration
-file location to be specified, it will be overridden by the B<-config> command
-line switch if it is present.
 
 =head1 BUGS
 

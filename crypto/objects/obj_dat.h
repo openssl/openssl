@@ -963,7 +963,7 @@ static const unsigned char so[6765] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x1C,  /* [ 6753] OBJ_id_ct_xml */
 };
 
-#define NUM_NID 1062
+#define NUM_NID 1065
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2027,9 +2027,12 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-smime-ct-authEnvelopedData", "id-smime-ct-authEnvelopedData", NID_id_smime_ct_authEnvelopedData, 11, &so[6742]},
     {"id-ct-xml", "id-ct-xml", NID_id_ct_xml, 11, &so[6753]},
     {"Poly1305", "poly1305", NID_poly1305},
+    {"SipHash", "siphash", NID_siphash},
+    {"KxANY", "kx-any", NID_kx_any},
+    {"AuthANY", "auth-any", NID_auth_any},
 };
 
-#define NUM_SN 1053
+#define NUM_SN 1056
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2064,6 +2067,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      960,    /* "AES-256-OCB" */
      428,    /* "AES-256-OFB" */
      914,    /* "AES-256-XTS" */
+    1064,    /* "AuthANY" */
     1049,    /* "AuthDSS" */
     1047,    /* "AuthECDSA" */
     1050,    /* "AuthGOST01" */
@@ -2162,6 +2166,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      645,    /* "ITU-T" */
      646,    /* "JOINT-ISO-ITU-T" */
      773,    /* "KISA" */
+    1063,    /* "KxANY" */
     1039,    /* "KxDHE" */
     1041,    /* "KxDHE-PSK" */
     1038,    /* "KxECDHE" */
@@ -2256,6 +2261,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1006,    /* "SNILS" */
       16,    /* "ST" */
      143,    /* "SXNetID" */
+    1062,    /* "SipHash" */
     1021,    /* "TLS1-PRF" */
      458,    /* "UID" */
        0,    /* "UNDEF" */
@@ -3086,7 +3092,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      160,    /* "x509Crl" */
 };
 
-#define NUM_LN 1053
+#define NUM_LN 1056
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3308,6 +3314,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      484,    /* "associatedDomain" */
      485,    /* "associatedName" */
      501,    /* "audio" */
+    1064,    /* "auth-any" */
     1049,    /* "auth-dss" */
     1047,    /* "auth-ecdsa" */
     1050,    /* "auth-gost01" */
@@ -3781,6 +3788,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      956,    /* "jurisdictionStateOrProvinceName" */
      150,    /* "keyBag" */
      773,    /* "kisa" */
+    1063,    /* "kx-any" */
     1039,    /* "kx-dhe" */
     1041,    /* "kx-dhe-psk" */
     1038,    /* "kx-ecdhe" */
@@ -4096,6 +4104,7 @@ static const unsigned int ln_objs[NUM_LN] = {
       52,    /* "signingTime" */
      454,    /* "simpleSecurityObject" */
      496,    /* "singleLevelQuality" */
+    1062,    /* "siphash" */
       16,    /* "stateOrProvinceName" */
      660,    /* "streetAddress" */
      498,    /* "subtreeMaximumQuality" */

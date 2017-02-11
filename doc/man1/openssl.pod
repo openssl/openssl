@@ -40,6 +40,15 @@ The B<openssl> program provides a rich variety of commands (I<command> in the
 SYNOPSIS above), each of which often has a wealth of options and arguments
 (I<command_opts> and I<command_args> in the SYNOPSIS).
 
+Many commands use an external configuration file for some or all of their
+arguments and have a B<-config> option to specify that file.
+The environment variable B<OPENSSL_CONF> can be used to specify
+the location of the file.
+If the environment variable is not specified, then the file is named
+B<openssl.cnf> in the default certificate storage area, whose value
+depends on the configuration flags specified when the OpenSSL
+was built.
+
 The list parameters B<standard-commands>, B<digest-commands>,
 and B<cipher-commands> output a list (one entry per line) of the names
 of all standard commands, message digest commands, or cipher commands,

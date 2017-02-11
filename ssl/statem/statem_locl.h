@@ -107,7 +107,7 @@ __owur int tls_construct_change_cipher_spec(SSL *s, WPACKET *pkt);
 __owur int dtls_construct_change_cipher_spec(SSL *s, WPACKET *pkt);
 
 __owur int tls_construct_finished(SSL *s, WPACKET *pkt);
-__owur WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst);
+__owur WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs);
 __owur WORK_STATE dtls_wait_for_dry(SSL *s);
 
 /* some client-only functions */
@@ -132,6 +132,7 @@ __owur int ssl3_check_cert_and_algorithm(SSL *s);
 #ifndef OPENSSL_NO_NEXTPROTONEG
 __owur int tls_construct_next_proto(SSL *s, WPACKET *pkt);
 #endif
+__owur MSG_PROCESS_RETURN tls_process_hello_req(SSL *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, PACKET *pkt);
 
 /* some server-only functions */
@@ -164,6 +165,12 @@ __owur int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts,
                                     X509 *x, size_t chainidx, int *al);
 __owur int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
                                     X509 *x, size_t chainidx, int *al);
+
+__owur int tls_psk_do_binder(SSL *s, const EVP_MD *md,
+                             const unsigned char *msgstart,
+                             size_t binderoffset, const unsigned char *binderin,
+                             unsigned char *binderout,
+                             SSL_SESSION *sess, int sign);
 
 /* Server Extension processing */
 int tls_parse_ctos_renegotiate(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
@@ -199,6 +206,9 @@ int tls_parse_ctos_etm(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
 int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                              int *al);
 int tls_parse_ctos_ems(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
+int tls_parse_ctos_psk_kex_modes(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
+                                 int *al);
+int tls_parse_ctos_psk(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
 
 int tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt, X509 *x,
                                    size_t chainidx, int *al);
@@ -237,6 +247,8 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
 #define TLSEXT_TYPE_cryptopro_bug      0xfde8
 int tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt, X509 *x,
                                      size_t chainidx, int *al);
+int tls_construct_stoc_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
+                           int *al);
 
 /* Client Extension processing */
 int tls_construct_ctos_renegotiate(SSL *s, WPACKET *pkt, X509 *x,
@@ -283,8 +295,12 @@ int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt, X509 *x,
                                           size_t chainidx, int *al);
 int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                                  int *al);
+int tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt, X509 *x,
+                                     size_t chainidx, int *al);
 int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
                                int *al);
+int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, X509 *x, size_t chainidx,
+                           int *al);
 int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                                int *al);
 int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
@@ -314,3 +330,4 @@ int tls_parse_stoc_etm(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
 int tls_parse_stoc_ems(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);
 int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, X509 *x, size_t chainidx,
                              int *al);
+int tls_parse_stoc_psk(SSL *s, PACKET *pkt, X509 *x, size_t chainidx, int *al);

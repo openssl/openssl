@@ -153,7 +153,8 @@ static const ssl_cipher_table ssl_cipher_table_kx[] = {
     {SSL_kRSAPSK,   NID_kx_rsa_psk},
     {SSL_kPSK,      NID_kx_psk},
     {SSL_kSRP,      NID_kx_srp},
-    {SSL_kGOST,     NID_kx_gost}
+    {SSL_kGOST,     NID_kx_gost},
+    {SSL_kANY,      NID_kx_any}
 };
 
 static const ssl_cipher_table ssl_cipher_table_auth[] = {
@@ -164,7 +165,8 @@ static const ssl_cipher_table ssl_cipher_table_auth[] = {
     {SSL_aGOST01, NID_auth_gost01},
     {SSL_aGOST12, NID_auth_gost12},
     {SSL_aSRP,    NID_auth_srp},
-    {SSL_aNULL,   NID_auth_null}
+    {SSL_aNULL,   NID_auth_null},
+    {SSL_aANY,    NID_auth_any}
 };
 /* *INDENT-ON* */
 
@@ -1576,6 +1578,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_kGOST:
         kx = "GOST";
         break;
+    case SSL_kANY:
+        kx = "any";
+        break;
     default:
         kx = "unknown";
     }
@@ -1605,6 +1610,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     /* New GOST ciphersuites have both SSL_aGOST12 and SSL_aGOST01 bits */
     case (SSL_aGOST12 | SSL_aGOST01):
         au = "GOST12";
+        break;
+    case SSL_aANY:
+        au = "any";
         break;
     default:
         au = "unknown";
@@ -1901,7 +1909,7 @@ int ssl_cipher_get_cert_index(const SSL_CIPHER *c)
     else if (alg_a & SSL_aDSS)
         return SSL_PKEY_DSA_SIGN;
     else if (alg_a & SSL_aRSA)
-        return SSL_PKEY_RSA_ENC;
+        return SSL_PKEY_RSA;
     else if (alg_a & SSL_aGOST12)
         return SSL_PKEY_GOST_EC;
     else if (alg_a & SSL_aGOST01)

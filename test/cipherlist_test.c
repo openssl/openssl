@@ -110,6 +110,8 @@ static const uint32_t default_ciphers_in_order[] = {
     TLS1_CK_RSA_WITH_AES_128_GCM_SHA256,
 #endif
 #ifndef OPENSSL_NO_TLS1_3
+    TLS1_3_CK_AES_256_GCM_SHA384,
+    TLS1_3_CK_CHACHA20_POLY1305_SHA256,
     TLS1_3_CK_AES_128_GCM_SHA256,
 #endif
 #ifndef OPENSSL_NO_TLS1_2

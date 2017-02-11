@@ -462,7 +462,8 @@ my @V=($A,$B,$C,$D,$E)=("%eax","%ebx","%ecx","%edx","%ebp");	# size optimization
 my @T=("%esi","%edi");
 my $j=0;
 my $rx=0;
-my $K_XX_XX="%r11";
+my $K_XX_XX="%r14";
+my $fp="%r11";
 
 my $_rol=sub { &rol(@_) };
 my $_ror=sub { &ror(@_) };
@@ -483,7 +484,7 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_ssse3:
 _ssse3_shortcut:
-	mov	%rsp,%rax
+	mov	%rsp,$fp	# frame pointer
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -492,16 +493,15 @@ _ssse3_shortcut:
 	lea	`-64-($win64?6*16:0)`(%rsp),%rsp
 ___
 $code.=<<___ if ($win64);
-	movaps	%xmm6,-40-6*16(%rax)
-	movaps	%xmm7,-40-5*16(%rax)
-	movaps	%xmm8,-40-4*16(%rax)
-	movaps	%xmm9,-40-3*16(%rax)
-	movaps	%xmm10,-40-2*16(%rax)
-	movaps	%xmm11,-40-1*16(%rax)
+	movaps	%xmm6,-40-6*16($fp)
+	movaps	%xmm7,-40-5*16($fp)
+	movaps	%xmm8,-40-4*16($fp)
+	movaps	%xmm9,-40-3*16($fp)
+	movaps	%xmm10,-40-2*16($fp)
+	movaps	%xmm11,-40-1*16($fp)
 .Lprologue_ssse3:
 ___
 $code.=<<___;
-	mov	%rax,%r14	# original %rsp
 	and	\$-64,%rsp
 	mov	%rdi,$ctx	# reassigned argument
 	mov	%rsi,$inp	# reassigned argument
@@ -908,21 +908,20 @@ $code.=<<___;
 	mov	$E,16($ctx)
 ___
 $code.=<<___ if ($win64);
-	movaps	-40-6*16(%r14),%xmm6
-	movaps	-40-5*16(%r14),%xmm7
-	movaps	-40-4*16(%r14),%xmm8
-	movaps	-40-3*16(%r14),%xmm9
-	movaps	-40-2*16(%r14),%xmm10
-	movaps	-40-1*16(%r14),%xmm11
+	movaps	-40-6*16($fp),%xmm6
+	movaps	-40-5*16($fp),%xmm7
+	movaps	-40-4*16($fp),%xmm8
+	movaps	-40-3*16($fp),%xmm9
+	movaps	-40-2*16($fp),%xmm10
+	movaps	-40-1*16($fp),%xmm11
 ___
 $code.=<<___;
-	lea	(%r14),%rsi
-	mov	-40(%rsi),%r14
-	mov	-32(%rsi),%r13
-	mov	-24(%rsi),%r12
-	mov	-16(%rsi),%rbp
-	mov	-8(%rsi),%rbx
-	lea	(%rsi),%rsp
+	mov	-40($fp),%r14
+	mov	-32($fp),%r13
+	mov	-24($fp),%r12
+	mov	-16($fp),%rbp
+	mov	-8($fp),%rbx
+	lea	($fp),%rsp
 .Lepilogue_ssse3:
 	ret
 .size	sha1_block_data_order_ssse3,.-sha1_block_data_order_ssse3
@@ -945,7 +944,7 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_avx:
 _avx_shortcut:
-	mov	%rsp,%rax
+	mov	%rsp,$fp
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -955,16 +954,15 @@ _avx_shortcut:
 	vzeroupper
 ___
 $code.=<<___ if ($win64);
-	vmovaps	%xmm6,-40-6*16(%rax)
-	vmovaps	%xmm7,-40-5*16(%rax)
-	vmovaps	%xmm8,-40-4*16(%rax)
-	vmovaps	%xmm9,-40-3*16(%rax)
-	vmovaps	%xmm10,-40-2*16(%rax)
-	vmovaps	%xmm11,-40-1*16(%rax)
+	vmovaps	%xmm6,-40-6*16($fp)
+	vmovaps	%xmm7,-40-5*16($fp)
+	vmovaps	%xmm8,-40-4*16($fp)
+	vmovaps	%xmm9,-40-3*16($fp)
+	vmovaps	%xmm10,-40-2*16($fp)
+	vmovaps	%xmm11,-40-1*16($fp)
 .Lprologue_avx:
 ___
 $code.=<<___;
-	mov	%rax,%r14	# original %rsp
 	and	\$-64,%rsp
 	mov	%rdi,$ctx	# reassigned argument
 	mov	%rsi,$inp	# reassigned argument
@@ -1272,21 +1270,20 @@ $code.=<<___;
 	mov	$E,16($ctx)
 ___
 $code.=<<___ if ($win64);
-	movaps	-40-6*16(%r14),%xmm6
-	movaps	-40-5*16(%r14),%xmm7
-	movaps	-40-4*16(%r14),%xmm8
-	movaps	-40-3*16(%r14),%xmm9
-	movaps	-40-2*16(%r14),%xmm10
-	movaps	-40-1*16(%r14),%xmm11
+	movaps	-40-6*16($fp),%xmm6
+	movaps	-40-5*16($fp),%xmm7
+	movaps	-40-4*16($fp),%xmm8
+	movaps	-40-3*16($fp),%xmm9
+	movaps	-40-2*16($fp),%xmm10
+	movaps	-40-1*16($fp),%xmm11
 ___
 $code.=<<___;
-	lea	(%r14),%rsi
-	mov	-40(%rsi),%r14
-	mov	-32(%rsi),%r13
-	mov	-24(%rsi),%r12
-	mov	-16(%rsi),%rbp
-	mov	-8(%rsi),%rbx
-	lea	(%rsi),%rsp
+	mov	-40($fp),%r14
+	mov	-32($fp),%r13
+	mov	-24($fp),%r12
+	mov	-16($fp),%rbp
+	mov	-8($fp),%rbx
+	lea	($fp),%rsp
 .Lepilogue_avx:
 	ret
 .size	sha1_block_data_order_avx,.-sha1_block_data_order_avx
@@ -1312,7 +1309,7 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_avx2:
 _avx2_shortcut:
-	mov	%rsp,%rax
+	mov	%rsp,$fp
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -1322,16 +1319,15 @@ _avx2_shortcut:
 ___
 $code.=<<___ if ($win64);
 	lea	-6*16(%rsp),%rsp
-	vmovaps	%xmm6,-40-6*16(%rax)
-	vmovaps	%xmm7,-40-5*16(%rax)
-	vmovaps	%xmm8,-40-4*16(%rax)
-	vmovaps	%xmm9,-40-3*16(%rax)
-	vmovaps	%xmm10,-40-2*16(%rax)
-	vmovaps	%xmm11,-40-1*16(%rax)
+	vmovaps	%xmm6,-40-6*16($fp)
+	vmovaps	%xmm7,-40-5*16($fp)
+	vmovaps	%xmm8,-40-4*16($fp)
+	vmovaps	%xmm9,-40-3*16($fp)
+	vmovaps	%xmm10,-40-2*16($fp)
+	vmovaps	%xmm11,-40-1*16($fp)
 .Lprologue_avx2:
 ___
 $code.=<<___;
-	mov	%rax,%r14		# original %rsp
 	mov	%rdi,$ctx		# reassigned argument
 	mov	%rsi,$inp		# reassigned argument
 	mov	%rdx,$num		# reassigned argument
@@ -1751,21 +1747,20 @@ $code.=<<___;
 	vzeroupper
 ___
 $code.=<<___ if ($win64);
-	movaps	-40-6*16(%r14),%xmm6
-	movaps	-40-5*16(%r14),%xmm7
-	movaps	-40-4*16(%r14),%xmm8
-	movaps	-40-3*16(%r14),%xmm9
-	movaps	-40-2*16(%r14),%xmm10
-	movaps	-40-1*16(%r14),%xmm11
+	movaps	-40-6*16($fp),%xmm6
+	movaps	-40-5*16($fp),%xmm7
+	movaps	-40-4*16($fp),%xmm8
+	movaps	-40-3*16($fp),%xmm9
+	movaps	-40-2*16($fp),%xmm10
+	movaps	-40-1*16($fp),%xmm11
 ___
 $code.=<<___;
-	lea	(%r14),%rsi
-	mov	-40(%rsi),%r14
-	mov	-32(%rsi),%r13
-	mov	-24(%rsi),%r12
-	mov	-16(%rsi),%rbp
-	mov	-8(%rsi),%rbx
-	lea	(%rsi),%rsp
+	mov	-40($fp),%r14
+	mov	-32($fp),%r13
+	mov	-24($fp),%r12
+	mov	-16($fp),%rbp
+	mov	-8($fp),%rbx
+	lea	($fp),%rsp
 .Lepilogue_avx2:
 	ret
 .size	sha1_block_data_order_avx2,.-sha1_block_data_order_avx2
@@ -1908,14 +1903,12 @@ ssse3_handler:
 	cmp	%r10,%rbx		# context->Rip<prologue label
 	jb	.Lcommon_seh_tail
 
-	mov	152($context),%rax	# pull context->Rsp
+	mov	208($context),%rax	# pull context->R11
 
 	mov	4(%r11),%r10d		# HandlerData[1]
 	lea	(%rsi,%r10),%r10	# epilogue label
 	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lcommon_seh_tail
-
-	mov	232($context),%rax	# pull context->R14
 
 	lea	-40-6*16(%rax),%rsi
 	lea	512($context),%rdi	# &context.Xmm6

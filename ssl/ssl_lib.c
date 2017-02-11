@@ -599,7 +599,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->ext.ocsp.resp = NULL;
     s->ext.ocsp.resp_len = 0;
     SSL_CTX_up_ref(ctx);
-    s->initial_ctx = ctx;
+    s->session_ctx = ctx;
 #ifndef OPENSSL_NO_EC
     if (ctx->ext.ecpointformats) {
         s->ext.ecpointformats =
@@ -995,7 +995,7 @@ void SSL_free(SSL *s)
     /* Free up if allocated */
 
     OPENSSL_free(s->ext.hostname);
-    SSL_CTX_free(s->initial_ctx);
+    SSL_CTX_free(s->session_ctx);
 #ifndef OPENSSL_NO_EC
     OPENSSL_free(s->ext.ecpointformats);
     OPENSSL_free(s->ext.supportedgroups);
@@ -1716,6 +1716,13 @@ int SSL_shutdown(SSL *s)
 
 int SSL_renegotiate(SSL *s)
 {
+    /*
+     * TODO(TLS1.3): Return an error for now. Perhaps we should do a KeyUpdate
+     * instead when we support that?
+     */
+    if (SSL_IS_TLS13(s))
+        return 0;
+
     if (s->renegotiate == 0)
         s->renegotiate = 1;
 
@@ -1726,6 +1733,13 @@ int SSL_renegotiate(SSL *s)
 
 int SSL_renegotiate_abbreviated(SSL *s)
 {
+    /*
+     * TODO(TLS1.3): Return an error for now. Perhaps we should do a KeyUpdate
+     * instead when we support that?
+     */
+    if (SSL_IS_TLS13(s))
+        return 0;
+
     if (s->renegotiate == 0)
         s->renegotiate = 1;
 
@@ -2377,13 +2391,21 @@ int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 
 static unsigned long ssl_session_hash(const SSL_SESSION *a)
 {
+    const unsigned char *session_id = a->session_id;
     unsigned long l;
+    unsigned char tmp_storage[4];
+
+    if (a->session_id_length < sizeof(tmp_storage)) {
+        memset(tmp_storage, 0, sizeof(tmp_storage));
+        memcpy(tmp_storage, a->session_id, a->session_id_length);
+        session_id = tmp_storage;
+    }
 
     l = (unsigned long)
-        ((unsigned int)a->session_id[0]) |
-        ((unsigned int)a->session_id[1] << 8L) |
-        ((unsigned long)a->session_id[2] << 16L) |
-        ((unsigned long)a->session_id[3] << 24L);
+        ((unsigned long)session_id[0]) |
+        ((unsigned long)session_id[1] << 8L) |
+        ((unsigned long)session_id[2] << 16L) |
+        ((unsigned long)session_id[3] << 24L);
     return (l);
 }
 
@@ -2718,8 +2740,8 @@ void ssl_set_masks(SSL *s)
     dh_tmp = 0;
 #endif
 
-    rsa_enc = pvalid[SSL_PKEY_RSA_ENC] & CERT_PKEY_VALID;
-    rsa_sign = pvalid[SSL_PKEY_RSA_SIGN] & CERT_PKEY_SIGN;
+    rsa_enc = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
+    rsa_sign = pvalid[SSL_PKEY_RSA] & CERT_PKEY_SIGN;
     dsa_sign = pvalid[SSL_PKEY_DSA_SIGN] & CERT_PKEY_SIGN;
 #ifndef OPENSSL_NO_EC
     have_ecc_cert = pvalid[SSL_PKEY_ECC] & CERT_PKEY_VALID;
@@ -2824,14 +2846,15 @@ static int ssl_get_server_cert_index(const SSL *s)
 {
     int idx;
 
-    /*
-     * TODO(TLS1.3): In TLS1.3 the selected certificate is not based on the
-     * ciphersuite. For now though it still is. Our only TLS1.3 ciphersuite
-     * forces the use of an RSA cert. This will need to change.
-     */
+    if (SSL_IS_TLS13(s)) {
+        if (s->s3->tmp.sigalg == NULL) {
+            SSLerr(SSL_F_SSL_GET_SERVER_CERT_INDEX, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
+        return s->s3->tmp.cert_idx;
+    }
+
     idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
-    if (idx == SSL_PKEY_RSA_ENC && !s->cert->pkeys[SSL_PKEY_RSA_ENC].x509)
-        idx = SSL_PKEY_RSA_SIGN;
     if (idx == SSL_PKEY_GOST_EC) {
         if (s->cert->pkeys[SSL_PKEY_GOST12_512].x509)
             idx = SSL_PKEY_GOST12_512;
@@ -2877,15 +2900,12 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher,
     alg_a = cipher->algorithm_auth;
     c = s->cert;
 
-    if ((alg_a & SSL_aDSS) && (c->pkeys[SSL_PKEY_DSA_SIGN].privatekey != NULL))
+    if (alg_a & SSL_aDSS && c->pkeys[SSL_PKEY_DSA_SIGN].privatekey != NULL)
         idx = SSL_PKEY_DSA_SIGN;
-    else if (alg_a & SSL_aRSA) {
-        if (c->pkeys[SSL_PKEY_RSA_SIGN].privatekey != NULL)
-            idx = SSL_PKEY_RSA_SIGN;
-        else if (c->pkeys[SSL_PKEY_RSA_ENC].privatekey != NULL)
-            idx = SSL_PKEY_RSA_ENC;
-    } else if ((alg_a & SSL_aECDSA) &&
-               (c->pkeys[SSL_PKEY_ECC].privatekey != NULL))
+    else if (alg_a & SSL_aRSA && c->pkeys[SSL_PKEY_RSA].privatekey != NULL)
+            idx = SSL_PKEY_RSA;
+    else if (alg_a & SSL_aECDSA &&
+             c->pkeys[SSL_PKEY_ECC].privatekey != NULL)
         idx = SSL_PKEY_ECC;
     if (idx == -1) {
         SSLerr(SSL_F_SSL_GET_SIGN_PKEY, ERR_R_INTERNAL_ERROR);
@@ -3087,7 +3107,7 @@ int SSL_do_handshake(SSL *s)
         return -1;
     }
 
-    s->method->ssl_renegotiate_check(s);
+    s->method->ssl_renegotiate_check(s, 0);
 
     if (SSL_in_init(s) || SSL_in_before(s)) {
         if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
@@ -3469,7 +3489,7 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
     if (ssl->ctx == ctx)
         return ssl->ctx;
     if (ctx == NULL)
-        ctx = ssl->initial_ctx;
+        ctx = ssl->session_ctx;
     new_cert = ssl_cert_dup(ctx->cert);
     if (new_cert == NULL) {
         return NULL;
@@ -4427,32 +4447,16 @@ int ssl_log_rsa_client_key_exchange(SSL *ssl,
                           premaster_len);
 }
 
-int ssl_log_master_secret(SSL *ssl,
-                          const uint8_t *client_random,
-                          size_t client_random_len,
-                          const uint8_t *master,
-                          size_t master_len)
+int ssl_log_secret(SSL *ssl,
+                   const char *label,
+                   const uint8_t *secret,
+                   size_t secret_len)
 {
-    /*
-     * TLSv1.3 changes the derivation of the master secret compared to earlier
-     * TLS versions, meaning that logging it out is less useful. Instead we
-     * want to log out other secrets: specifically, the handshake and
-     * application traffic secrets. For this reason, if this function is called
-     * for TLSv1.3 we don't bother logging, and just return success
-     * immediately.
-     */
-    if (SSL_IS_TLS13(ssl)) return 1;
-
-    if (client_random_len != 32) {
-        SSLerr(SSL_F_SSL_LOG_MASTER_SECRET, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
-    return nss_keylog_int("CLIENT_RANDOM",
+    return nss_keylog_int(label,
                           ssl,
-                          client_random,
-                          client_random_len,
-                          master,
-                          master_len);
+                          ssl->s3->client_random,
+                          SSL3_RANDOM_SIZE,
+                          secret,
+                          secret_len);
 }
 

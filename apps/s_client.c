@@ -90,6 +90,7 @@ static char *keymatexportlabel = NULL;
 static int keymatexportlen = 20;
 static BIO *bio_c_out = NULL;
 static int c_quiet = 0;
+static char *sess_out = NULL;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
 #ifndef OPENSSL_NO_OCSP
@@ -548,6 +549,7 @@ typedef enum OPTION_choice {
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
     OPT_ASYNC, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
+    OPT_KEYLOG_FILE,
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
@@ -730,6 +732,7 @@ const OPTIONS s_client_options[] = {
     {"noct", OPT_NOCT, '-', "Do not request or parse SCTs (default)"},
     {"ctlogfile", OPT_CTLOG_FILE, '<', "CT log list CONF file"},
 #endif
+    {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
     {NULL, OPT_EOF, 0x00, NULL}
 };
 
@@ -745,7 +748,8 @@ typedef enum PROTOCOL_choice {
     PROTO_CONNECT,
     PROTO_IRC,
     PROTO_POSTGRES,
-    PROTO_LMTP
+    PROTO_LMTP,
+    PROTO_NNTP
 } PROTOCOL_CHOICE;
 
 static const OPT_PAIR services[] = {
@@ -759,6 +763,7 @@ static const OPT_PAIR services[] = {
     {"irc", PROTO_IRC},
     {"postgres", PROTO_POSTGRES},
     {"lmtp", PROTO_LMTP},
+    {"nntp", PROTO_NNTP},
     {NULL, 0}
 };
 
@@ -777,6 +782,24 @@ static void freeandcopy(char **dest, const char *source)
     *dest = NULL;
     if (source != NULL)
         *dest = OPENSSL_strdup(source);
+}
+
+static int new_session_cb(SSL *S, SSL_SESSION *sess)
+{
+    BIO *stmp = BIO_new_file(sess_out, "w");
+
+    if (stmp == NULL) {
+        BIO_printf(bio_err, "Error writing session file %s\n", sess_out);
+    } else {
+        PEM_write_bio_SSL_SESSION(stmp, sess);
+        BIO_free(stmp);
+    }
+
+    /*
+     * We always return a "fail" response so that the session gets freed again
+     * because we haven't used the reference.
+     */
+    return 0;
 }
 
 int s_client_main(int argc, char **argv)
@@ -804,7 +827,7 @@ int s_client_main(int argc, char **argv)
     char *port = OPENSSL_strdup(PORT);
     char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
-    char *sess_in = NULL, *sess_out = NULL, *crl_file = NULL, *p;
+    char *sess_in = NULL, *crl_file = NULL, *p;
     char *xmpphost = NULL;
     const char *ehlo = "mail.example.com";
     struct timeval timeout, *timeoutp;
@@ -869,6 +892,7 @@ int s_client_main(int argc, char **argv)
     int c_status_req = 0;
 #endif
     BIO *bio_c_msg = NULL;
+    const char *keylog_file = NULL;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1337,6 +1361,9 @@ int s_client_main(int argc, char **argv)
         case OPT_READ_BUF:
             read_buf_len = atoi(opt_arg());
             break;
+        case OPT_KEYLOG_FILE:
+            keylog_file = opt_arg();
+            break;
         }
     }
     if (count4or6 >= 2) {
@@ -1673,6 +1700,20 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
     }
+
+    /*
+     * In TLSv1.3 NewSessionTicket messages arrive after the handshake and can
+     * come at any time. Therefore we use a callback to write out the session
+     * when we know about it. This approach works for < TLSv1.3 as well.
+     */
+    if (sess_out) {
+        SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT
+                                            | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+        SSL_CTX_sess_set_new_cb(ctx, new_session_cb);
+    }
+
+    if (set_keylog_file(ctx, keylog_file))
+        goto end;
 
     con = SSL_new(ctx);
     if (sess_in) {
@@ -2142,6 +2183,33 @@ int s_client_main(int argc, char **argv)
                 goto shut;
         }
         break;
+    case PROTO_NNTP:
+        {
+            int foundit = 0;
+            BIO *fbio = BIO_new(BIO_f_buffer());
+
+            BIO_push(fbio, sbio);
+            BIO_gets(fbio, mbuf, BUFSIZZ);
+            /* STARTTLS command requires CAPABILITIES... */
+            BIO_printf(fbio, "CAPABILITIES\r\n");
+            (void)BIO_flush(fbio);
+            /* wait for multi-line CAPABILITIES response */
+            do {
+                mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+                if (strstr(mbuf, "STARTTLS"))
+                    foundit = 1;
+            } while (mbuf_len > 1 && mbuf[0] != '.');
+            (void)BIO_flush(fbio);
+            BIO_pop(fbio);
+            BIO_free(fbio);
+            if (!foundit)
+                BIO_printf(bio_err,
+                           "Didn't find STARTTLS in server response,"
+                           " trying anyway...\n");
+            BIO_printf(sbio, "STARTTLS\r\n");
+            BIO_read(sbio, sbuf, BUFSIZZ);
+        }
+        break;
     }
 
     for (;;) {
@@ -2168,15 +2236,6 @@ int s_client_main(int argc, char **argv)
                                tlsextcbp.ack ? "" : "not ");
                 }
 
-                if (sess_out) {
-                    BIO *stmp = BIO_new_file(sess_out, "w");
-                    if (stmp) {
-                        PEM_write_bio_SSL_SESSION(stmp, SSL_get_session(con));
-                        BIO_free(stmp);
-                    } else
-                        BIO_printf(bio_err, "Error writing session file %s\n",
-                                   sess_out);
-                }
                 if (c_brief) {
                     BIO_puts(bio_err, "CONNECTION ESTABLISHED\n");
                     print_ssl_summary(con);
@@ -2524,6 +2583,7 @@ int s_client_main(int argc, char **argv)
     OPENSSL_free(next_proto.data);
 #endif
     SSL_CTX_free(ctx);
+    set_keylog_file(NULL, NULL);
     X509_free(cert);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
     EVP_PKEY_free(key);

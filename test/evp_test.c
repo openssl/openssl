@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1040,13 +1040,9 @@ static int cipher_test_enc(struct evp_test *t, int enc,
             tmplen += chunklen;
         }
     }
-    if (cdat->aead == EVP_CIPH_CCM_MODE)
-        tmpflen = 0;
-    else {
-        err = "CIPHERFINAL_ERROR";
-        if (!EVP_CipherFinal_ex(ctx, tmp + out_misalign + tmplen, &tmpflen))
-            goto err;
-    }
+    err = "CIPHERFINAL_ERROR";
+    if (!EVP_CipherFinal_ex(ctx, tmp + out_misalign + tmplen, &tmpflen))
+        goto err;
     err = "LENGTH_MISMATCH";
     if (out_len != (size_t)(tmplen + tmpflen))
         goto err;
@@ -1199,6 +1195,13 @@ static int mac_test_init(struct evp_test *t, const char *alg)
         t->skip = 1;
         return 1;
 #endif
+    } else if (strcmp(alg, "SipHash") == 0) {
+#ifndef OPENSSL_NO_SIPHASH
+        type = EVP_PKEY_SIPHASH;
+#else
+        t->skip = 1;
+        return 1;
+#endif
     } else
         return 0;
 
@@ -1252,7 +1255,7 @@ static int mac_test_run(struct evp_test *t)
     size_t mac_len;
 
 #ifdef OPENSSL_NO_DES
-    if (strstr(mdata->alg, "DES") != NULL) {
+    if (mdata->alg != NULL && strstr(mdata->alg, "DES") != NULL) {
         /* Skip DES */
         err = NULL;
         goto err;

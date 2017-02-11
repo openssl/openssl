@@ -63,7 +63,7 @@ CERT *ssl_cert_new(void)
         return NULL;
     }
 
-    ret->key = &(ret->pkeys[SSL_PKEY_RSA_ENC]);
+    ret->key = &(ret->pkeys[SSL_PKEY_RSA]);
     ret->references = 1;
     ret->sec_cb = ssl_security_default_callback;
     ret->sec_level = OPENSSL_TLS_SECURITY_LEVEL;

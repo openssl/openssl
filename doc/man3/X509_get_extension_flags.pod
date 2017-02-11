@@ -105,7 +105,7 @@ B<id-kp-timeStamping>, B<id-kp-dvcs> and B<anyExtendedKeyUsage> respectively.
 Additionally B<XKU_SGC> is set if either Netscape or Microsoft SGC OIDs are
 present.
 
-X509_get_extended_key_usage() return an internal pointer to the subject key
+X509_get0_subject_key_id() returns an internal pointer to the subject key
 identifier of B<x> as an B<ASN1_OCTET_STRING> or B<NULL> if the extension
 is not present or cannot be parsed.
 

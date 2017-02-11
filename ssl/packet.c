@@ -180,12 +180,13 @@ static int put_value(unsigned char *data, size_t value, size_t len)
 
 
 /*
- * Internal helper function used by WPACKET_close() and WPACKET_finish() to
- * close a sub-packet and write out its length if necessary.
+ * Internal helper function used by WPACKET_close(), WPACKET_finish() and
+ * WPACKET_fill_lengths() to close a sub-packet and write out its length if
+ * necessary. If |doclose| is 0 then it goes through the motions of closing
+ * (i.e. it fills in all the lengths), but doesn't actually close anything.
  */
-static int wpacket_intern_close(WPACKET *pkt)
+static int wpacket_intern_close(WPACKET *pkt, WPACKET_SUB *sub, int doclose)
 {
-    WPACKET_SUB *sub = pkt->subs;
     size_t packlen = pkt->written - sub->pwritten;
 
     if (packlen == 0
@@ -194,6 +195,10 @@ static int wpacket_intern_close(WPACKET *pkt)
 
     if (packlen == 0
             && sub->flags & WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH) {
+        /* We can't handle this case. Return an error */
+        if (!doclose)
+            return 0;
+
         /* Deallocate any bytes allocated for the length of the WPACKET */
         if ((pkt->curr - sub->lenbytes) == sub->packet_len) {
             pkt->written -= sub->lenbytes;
@@ -211,8 +216,26 @@ static int wpacket_intern_close(WPACKET *pkt)
                               sub->lenbytes))
             return 0;
 
-    pkt->subs = sub->parent;
-    OPENSSL_free(sub);
+    if (doclose) {
+        pkt->subs = sub->parent;
+        OPENSSL_free(sub);
+    }
+
+    return 1;
+}
+
+int WPACKET_fill_lengths(WPACKET *pkt)
+{
+    WPACKET_SUB *sub;
+
+    assert(pkt->subs != NULL);
+    if (pkt->subs == NULL)
+        return 0;
+
+    for (sub = pkt->subs; sub != NULL; sub = sub->parent) {
+        if (!wpacket_intern_close(pkt, sub, 0))
+            return 0;
+    }
 
     return 1;
 }
@@ -226,7 +249,7 @@ int WPACKET_close(WPACKET *pkt)
     if (pkt->subs == NULL || pkt->subs->parent == NULL)
         return 0;
 
-    return wpacket_intern_close(pkt);
+    return wpacket_intern_close(pkt, pkt->subs, 1);
 }
 
 int WPACKET_finish(WPACKET *pkt)
@@ -240,7 +263,7 @@ int WPACKET_finish(WPACKET *pkt)
     if (pkt->subs == NULL || pkt->subs->parent != NULL)
         return 0;
 
-    ret = wpacket_intern_close(pkt);
+    ret = wpacket_intern_close(pkt, pkt->subs, 1);
     if (ret) {
         OPENSSL_free(pkt->subs);
         pkt->subs = NULL;

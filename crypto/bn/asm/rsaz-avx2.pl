@@ -168,13 +168,21 @@ $code.=<<___;
 .type	rsaz_1024_sqr_avx2,\@function,5
 .align	64
 rsaz_1024_sqr_avx2:		# 702 cycles, 14% faster than rsaz_1024_mul_avx2
+.cfi_startproc
 	lea	(%rsp), %rax
+.cfi_def_cfa_register	%rax
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	vzeroupper
 ___
 $code.=<<___ if ($win64);
@@ -193,6 +201,7 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	%rax,%rbp
+.cfi_def_cfa_register	%rbp
 	mov	%rdx, $np			# reassigned argument
 	sub	\$$FrameSize, %rsp
 	mov	$np, $tmp
@@ -825,8 +834,10 @@ $code.=<<___;
 
 	vzeroall
 	mov	%rbp, %rax
+.cfi_def_cfa_register	%rax
 ___
 $code.=<<___ if ($win64);
+.Lsqr_1024_in_tail:
 	movaps	-0xd8(%rax),%xmm6
 	movaps	-0xc8(%rax),%xmm7
 	movaps	-0xb8(%rax),%xmm8
@@ -840,14 +851,22 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-48(%rax),%r15
+.cfi_restore	%r15
 	mov	-40(%rax),%r14
+.cfi_restore	%r14
 	mov	-32(%rax),%r13
+.cfi_restore	%r13
 	mov	-24(%rax),%r12
+.cfi_restore	%r12
 	mov	-16(%rax),%rbp
+.cfi_restore	%rbp
 	mov	-8(%rax),%rbx
+.cfi_restore	%rbx
 	lea	(%rax),%rsp		# restore %rsp
+.cfi_def_cfa_register	%rsp
 .Lsqr_1024_epilogue:
 	ret
+.cfi_endproc
 .size	rsaz_1024_sqr_avx2,.-rsaz_1024_sqr_avx2
 ___
 }
@@ -900,13 +919,21 @@ $code.=<<___;
 .type	rsaz_1024_mul_avx2,\@function,5
 .align	64
 rsaz_1024_mul_avx2:
+.cfi_startproc
 	lea	(%rsp), %rax
+.cfi_def_cfa_register	%rax
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 ___
 $code.=<<___ if ($win64);
 	vzeroupper
@@ -925,6 +952,7 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	%rax,%rbp
+.cfi_def_cfa_register	%rbp
 	vzeroall
 	mov	%rdx, $bp	# reassigned argument
 	sub	\$64,%rsp
@@ -1458,8 +1486,10 @@ $code.=<<___;
 	vzeroupper
 
 	mov	%rbp, %rax
+.cfi_def_cfa_register	%rax
 ___
 $code.=<<___ if ($win64);
+.Lmul_1024_in_tail:
 	movaps	-0xd8(%rax),%xmm6
 	movaps	-0xc8(%rax),%xmm7
 	movaps	-0xb8(%rax),%xmm8
@@ -1473,14 +1503,22 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	mov	-48(%rax),%r15
+.cfi_restore	%r15
 	mov	-40(%rax),%r14
+.cfi_restore	%r14
 	mov	-32(%rax),%r13
+.cfi_restore	%r13
 	mov	-24(%rax),%r12
+.cfi_restore	%r12
 	mov	-16(%rax),%rbp
+.cfi_restore	%rbp
 	mov	-8(%rax),%rbx
+.cfi_restore	%rbx
 	lea	(%rax),%rsp		# restore %rsp
+.cfi_def_cfa_register	%rsp
 .Lmul_1024_epilogue:
 	ret
+.cfi_endproc
 .size	rsaz_1024_mul_avx2,.-rsaz_1024_mul_avx2
 ___
 }
@@ -1599,8 +1637,10 @@ rsaz_1024_scatter5_avx2:
 .type	rsaz_1024_gather5_avx2,\@abi-omnipotent
 .align	32
 rsaz_1024_gather5_avx2:
+.cfi_startproc
 	vzeroupper
 	mov	%rsp,%r11
+.cfi_def_cfa_register	%r11
 ___
 $code.=<<___ if ($win64);
 	lea	-0x88(%rsp),%rax
@@ -1738,11 +1778,13 @@ $code.=<<___ if ($win64);
 	movaps	-0x38(%r11),%xmm13
 	movaps	-0x28(%r11),%xmm14
 	movaps	-0x18(%r11),%xmm15
-.LSEH_end_rsaz_1024_gather5:
 ___
 $code.=<<___;
 	lea	(%r11),%rsp
+.cfi_def_cfa_register	%rsp
 	ret
+.cfi_endproc
+.LSEH_end_rsaz_1024_gather5:
 .size	rsaz_1024_gather5_avx2,.-rsaz_1024_gather5_avx2
 ___
 }
@@ -1815,14 +1857,17 @@ rsaz_se_handler:
 	cmp	%r10,%rbx		# context->Rip<prologue label
 	jb	.Lcommon_seh_tail
 
-	mov	152($context),%rax	# pull context->Rsp
-
 	mov	4(%r11),%r10d		# HandlerData[1]
 	lea	(%rsi,%r10),%r10	# epilogue label
 	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lcommon_seh_tail
 
-	mov	160($context),%rax	# pull context->Rbp
+	mov	160($context),%rbp	# pull context->Rbp
+
+	mov	8(%r11),%r10d		# HandlerData[2]
+	lea	(%rsi,%r10),%r10	# "in tail" label
+	cmp	%r10,%rbx		# context->Rip>="in tail" label
+	cmovc	%rbp,%rax
 
 	mov	-48(%rax),%r15
 	mov	-40(%rax),%r14
@@ -1900,11 +1945,13 @@ rsaz_se_handler:
 .LSEH_info_rsaz_1024_sqr_avx2:
 	.byte	9,0,0,0
 	.rva	rsaz_se_handler
-	.rva	.Lsqr_1024_body,.Lsqr_1024_epilogue
+	.rva	.Lsqr_1024_body,.Lsqr_1024_epilogue,.Lsqr_1024_in_tail
+	.long	0
 .LSEH_info_rsaz_1024_mul_avx2:
 	.byte	9,0,0,0
 	.rva	rsaz_se_handler
-	.rva	.Lmul_1024_body,.Lmul_1024_epilogue
+	.rva	.Lmul_1024_body,.Lmul_1024_epilogue,.Lmul_1024_in_tail
+	.long	0
 .LSEH_info_rsaz_1024_gather5:
 	.byte	0x01,0x36,0x17,0x0b
 	.byte	0x36,0xf8,0x09,0x00	# vmovaps 0x90(rsp),xmm15

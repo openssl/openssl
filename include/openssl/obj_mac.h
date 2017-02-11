@@ -4544,6 +4544,10 @@
 #define LN_kx_gost              "kx-gost"
 #define NID_kx_gost             1045
 
+#define SN_kx_any               "KxANY"
+#define LN_kx_any               "kx-any"
+#define NID_kx_any              1063
+
 #define SN_auth_rsa             "AuthRSA"
 #define LN_auth_rsa             "auth-rsa"
 #define NID_auth_rsa            1046
@@ -4576,6 +4580,14 @@
 #define LN_auth_null            "auth-null"
 #define NID_auth_null           1053
 
+#define SN_auth_any             "AuthANY"
+#define LN_auth_any             "auth-any"
+#define NID_auth_any            1064
+
 #define SN_poly1305             "Poly1305"
 #define LN_poly1305             "poly1305"
 #define NID_poly1305            1061
+
+#define SN_siphash              "SipHash"
+#define LN_siphash              "siphash"
+#define NID_siphash             1062

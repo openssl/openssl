@@ -41,6 +41,19 @@ static X509 *ocspcert = NULL;
 
 #define NUM_EXTRA_CERTS 40
 
+/*
+ * This structure is used to validate that the correct number of log messages
+ * of various types are emitted when emitting secret logs.
+ */
+struct sslapitest_log_counts {
+    unsigned int rsa_key_exchange_count;
+    unsigned int master_secret_count;
+    unsigned int client_handshake_secret_count;
+    unsigned int server_handshake_secret_count;
+    unsigned int client_application_secret_count;
+    unsigned int server_application_secret_count;
+};
+
 static void client_keylog_callback(const SSL *ssl, const char *line) {
     int line_length = strlen(line);
 
@@ -105,38 +118,51 @@ static int compare_hex_encoded_buffer(const char *hex_encoded,
 }
 
 static int test_keylog_output(char *buffer, const SSL *ssl,
-                              const SSL_SESSION *session) {
-    int saw_client_random = 0;
+                              const SSL_SESSION *session,
+                              struct sslapitest_log_counts *expected) {
     char *token = NULL;
     unsigned char actual_client_random[SSL3_RANDOM_SIZE] = {0};
     size_t client_random_size = SSL3_RANDOM_SIZE;
     unsigned char actual_master_key[SSL_MAX_MASTER_KEY_LENGTH] = {0};
     size_t master_key_size = SSL_MAX_MASTER_KEY_LENGTH;
+    unsigned int rsa_key_exchange_count = 0;
+    unsigned int master_secret_count = 0;
+    unsigned int client_handshake_secret_count = 0;
+    unsigned int server_handshake_secret_count = 0;
+    unsigned int client_application_secret_count = 0;
+    unsigned int server_application_secret_count = 0;
 
     token = strtok(buffer, " \n");
     while (token) {
         if (strcmp(token, "RSA") == 0) {
-            /* Premaster secret. Tokens should be: 16 ASCII bytes of
+            /*
+             * Premaster secret. Tokens should be: 16 ASCII bytes of
              * hex-encoded encrypted secret, then the hex-encoded pre-master
              * secret.
              */
             token = strtok(NULL, " \n");
             if (!token) {
                 printf("Unexpectedly short premaster secret log.\n");
-                return -1;
+                return 0;
             }
             if (strlen(token) != 16) {
                 printf("Bad value for encrypted secret: %s\n", token);
-                return -1;
+                return 0;
             }
             token = strtok(NULL, " \n");
             if (!token) {
                 printf("Unexpectedly short premaster secret log.\n");
-                return -1;
+                return 0;
             }
-            /* TODO: Can I check this sensibly? */
+            /*
+             * We can't sensibly check the log because the premaster secret is
+             * transient, and OpenSSL doesn't keep hold of it once the master
+             * secret is generated.
+             */
+            rsa_key_exchange_count++;
         } else if (strcmp(token, "CLIENT_RANDOM") == 0) {
-            /* Master secret. Tokens should be: 64 ASCII bytes of hex-encoded
+            /*
+             * Master secret. Tokens should be: 64 ASCII bytes of hex-encoded
              * client random, then the hex-encoded master secret.
              */
             client_random_size = SSL_get_client_random(ssl,
@@ -144,28 +170,28 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
                                                        SSL3_RANDOM_SIZE);
             if (client_random_size != SSL3_RANDOM_SIZE) {
                 printf("Unexpected short client random.\n");
-                return -1;
+                return 0;
             }
 
             token = strtok(NULL, " \n");
             if (!token) {
                 printf("Unexpected short master secret log.\n");
-                return -1;
+                return 0;
             }
             if (strlen(token) != 64) {
                 printf("Bad value for client random: %s\n", token);
-                return -1;
+                return 0;
             }
             if (compare_hex_encoded_buffer(token, 64, actual_client_random,
                                            client_random_size)) {
                 printf("Bad value for client random: %s\n", token);
-                return -1;
+                return 0;
             }
 
             token = strtok(NULL, " \n");
             if (!token) {
                 printf("Unexpectedly short master secret log.\n");
-                return -1;
+                return 0;
             }
 
             master_key_size = SSL_SESSION_get_master_key(session,
@@ -173,25 +199,82 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
                                                          master_key_size);
             if (!master_key_size) {
                 printf("Error getting master key to compare.\n");
-                return -1;
+                return 0;
             }
             if (compare_hex_encoded_buffer(token, strlen(token),
                                            actual_master_key,
                                            master_key_size)) {
                 printf("Bad value for master key: %s\n", token);
-                return -1;
+                return 0;
             }
 
-            saw_client_random = 1;
+            master_secret_count++;
+        } else if ((strcmp(token, "CLIENT_HANDSHAKE_TRAFFIC_SECRET") == 0) ||
+                   (strcmp(token, "SERVER_HANDSHAKE_TRAFFIC_SECRET") == 0) ||
+                   (strcmp(token, "CLIENT_TRAFFIC_SECRET_0") == 0) ||
+                   (strcmp(token, "SERVER_TRAFFIC_SECRET_0") == 0)) {
+            /*
+             * TLSv1.3 secret. Tokens should be: 64 ASCII bytes of hex-encoded
+             * client random, and then the hex-encoded secret. In this case,
+             * we treat all of these secrets identically and then just
+             * distinguish between them when counting what we saw.
+             */
+            if (strcmp(token, "CLIENT_HANDSHAKE_TRAFFIC_SECRET") == 0)
+                client_handshake_secret_count++;
+            else if (strcmp(token, "SERVER_HANDSHAKE_TRAFFIC_SECRET") == 0)
+                server_handshake_secret_count++;
+            else if (strcmp(token, "CLIENT_TRAFFIC_SECRET_0") == 0)
+                client_application_secret_count++;
+            else if (strcmp(token, "SERVER_TRAFFIC_SECRET_0") == 0)
+                server_application_secret_count++;
+
+            client_random_size = SSL_get_client_random(ssl,
+                                                       actual_client_random,
+                                                       SSL3_RANDOM_SIZE);
+            if (client_random_size != SSL3_RANDOM_SIZE) {
+                printf("Unexpected short client random.\n");
+                return 0;
+            }
+
+            token = strtok(NULL, " \n");
+            if (!token) {
+                printf("Unexpected short client handshake secret log.\n");
+                return 0;
+            }
+            if (strlen(token) != 64) {
+                printf("Bad value for client random: %s\n", token);
+                return 0;
+            }
+            if (compare_hex_encoded_buffer(token, 64, actual_client_random,
+                                           client_random_size)) {
+                printf("Bad value for client random: %s\n", token);
+                return 0;
+            }
+
+            token = strtok(NULL, " \n");
+            if (!token) {
+                printf("Unexpectedly short master secret log.\n");
+                return 0;
+            }
+
+            /*
+             * TODO(TLS1.3): test that application traffic secrets are what
+             * we expect */
         } else {
             printf("Unexpected token in buffer: %s\n", token);
-            return -1;
+            return 0;
         }
 
         token = strtok(NULL, " \n");
     }
 
-    return saw_client_random;
+    /* Return whether we got what we expected. */
+    return ((rsa_key_exchange_count == expected->rsa_key_exchange_count) &&
+            (master_secret_count == expected->master_secret_count) &&
+            (client_handshake_secret_count == expected->client_handshake_secret_count) &&
+            (server_handshake_secret_count == expected->server_handshake_secret_count) &&
+            (client_application_secret_count == expected->client_application_secret_count) &&
+            (server_application_secret_count == expected->server_application_secret_count));
 }
 
 static int test_keylog(void) {
@@ -199,6 +282,7 @@ static int test_keylog(void) {
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
     int rc;
+    struct sslapitest_log_counts expected = {0};
 
     /* Clean up logging space */
     memset(client_log_buffer, 0, LOG_BUFFER_SIZE + 1);
@@ -269,17 +353,23 @@ static int test_keylog(void) {
         goto end;
     }
 
-    /* Now we want to test that our output data was vaguely sensible. We
+    /*
+     * Now we want to test that our output data was vaguely sensible. We
      * do that by using strtok and confirming that we have more or less the
-     * data we expect.
+     * data we expect. For both client and server, we expect to see one master
+     * secret. The client should also see a RSA key exchange.
      */
-    if (test_keylog_output(client_log_buffer, clientssl,
-                           SSL_get_session(clientssl)) != 1) {
+    expected.rsa_key_exchange_count = 1;
+    expected.master_secret_count = 1;
+    if (!test_keylog_output(client_log_buffer, clientssl,
+                            SSL_get_session(clientssl), &expected)) {
         printf("Error encountered in client log buffer\n");
         goto end;
     }
-    if (test_keylog_output(server_log_buffer, serverssl,
-                           SSL_get_session(serverssl)) != 1) {
+
+    expected.rsa_key_exchange_count = 0;
+    if (!test_keylog_output(server_log_buffer, serverssl,
+                            SSL_get_session(serverssl), &expected)) {
         printf("Error encountered in server log buffer\n");
         goto end;
     }
@@ -300,6 +390,7 @@ static int test_keylog_no_master_key(void) {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
+    struct sslapitest_log_counts expected = {0};
 
     /* Clean up logging space */
     memset(client_log_buffer, 0, LOG_BUFFER_SIZE + 1);
@@ -354,16 +445,22 @@ static int test_keylog_no_master_key(void) {
         goto end;
     }
 
-    /* Now we want to test that our output data was vaguely sensible. For this
-     * test, we expect no CLIENT_RANDOM entry.
+    /*
+     * Now we want to test that our output data was vaguely sensible. For this
+     * test, we expect no CLIENT_RANDOM entry becuase it doesn't make sense for
+     * TLSv1.3, but we do expect both client and server to emit keys.
      */
-    if (test_keylog_output(client_log_buffer, clientssl,
-                           SSL_get_session(clientssl)) != 0) {
+    expected.client_handshake_secret_count = 1;
+    expected.server_handshake_secret_count = 1;
+    expected.client_application_secret_count = 1;
+    expected.server_application_secret_count = 1;
+    if (!test_keylog_output(client_log_buffer, clientssl,
+                            SSL_get_session(clientssl), &expected)) {
         printf("Error encountered in client log buffer\n");
         goto end;
     }
-    if (test_keylog_output(server_log_buffer, serverssl,
-                           SSL_get_session(serverssl)) != 0) {
+    if (!test_keylog_output(server_log_buffer, serverssl,
+                            SSL_get_session(serverssl), &expected)) {
         printf("Error encountered in server log buffer\n");
         goto end;
     }
@@ -788,12 +885,6 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
     /* Only allow TLS1.2 so we can force a connection failure later */
     SSL_CTX_set_min_proto_version(cctx, TLS1_2_VERSION);
 #endif
-
-    /*
-     * TODO(TLS1.3): Test temporarily disabled for TLS1.3 until we've
-     * implemented session resumption.
-     */
-    SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION);
 
     /* Set up session cache */
     if (fix.use_ext_cache) {

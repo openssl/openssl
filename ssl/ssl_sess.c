@@ -39,10 +39,20 @@
 #include <openssl/rand.h>
 #include <openssl/engine.h>
 #include "ssl_locl.h"
+#include "statem/statem_locl.h"
 
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s);
 static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
+
+/*
+ * TODO(TLS1.3): SSL_get_session() and SSL_get1_session() are problematic in
+ * TLS1.3 because, unlike in earlier protocol versions, the session ticket
+ * may not have been sent yet even though a handshake has finished. The session
+ * ticket data could come in sometime later...or even change if multiple session
+ * ticket messages are sent from the server. We need to work out how to deal
+ * with this.
+ */
 
 SSL_SESSION *SSL_get_session(const SSL *ssl)
 /* aka SSL_get0_session; gets 0 objects, just returns a copy of the pointer */
@@ -80,6 +90,9 @@ void *SSL_SESSION_get_ex_data(const SSL_SESSION *s, int idx)
 SSL_SESSION *SSL_SESSION_new(void)
 {
     SSL_SESSION *ss;
+
+    if (!OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL))
+        return NULL;
 
     ss = OPENSSL_zalloc(sizeof(*ss));
     if (ss == NULL) {
@@ -435,8 +448,9 @@ int ssl_get_new_session(SSL *s, int session)
  *   hello: The parsed ClientHello data
  *
  * Returns:
- *   -1: error
- *    0: a session may have been found.
+ *   -1: fatal error
+ *    0: no session found
+ *    1: a session may have been found.
  *
  * Side effects:
  *   - If a session is found then s->session is pointed at it (after freeing an
@@ -444,33 +458,40 @@ int ssl_get_new_session(SSL *s, int session)
  *   - Both for new and resumed sessions, s->ext.ticket_expected is set to 1
  *     if the server should issue a new session ticket (to 0 otherwise).
  */
-int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
+int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
 {
     /* This is used only by servers. */
 
     SSL_SESSION *ret = NULL;
     int fatal = 0;
-    int try_session_cache = 1;
-    int r;
+    int try_session_cache = 0;
+    TICKET_RETURN r;
 
-    if (hello->session_id_len == 0)
-        try_session_cache = 0;
+    if (SSL_IS_TLS13(s)) {
+        if (!tls_parse_extension(s, TLSEXT_IDX_psk_kex_modes, EXT_CLIENT_HELLO,
+                                 hello->pre_proc_exts, NULL, 0, al)
+                || !tls_parse_extension(s, TLSEXT_IDX_psk, EXT_CLIENT_HELLO,
+                                        hello->pre_proc_exts, NULL, 0, al))
+            return -1;
 
-    /* sets s->ext.ticket_expected */
-    r = tls_get_ticket_from_client(s, hello, &ret);
-    switch (r) {
-    case -1:                   /* Error during processing */
-        fatal = 1;
-        goto err;
-    case 0:                    /* No ticket found */
-    case 1:                    /* Zero length ticket found */
-        break;                  /* Ok to carry on processing session id. */
-    case 2:                    /* Ticket found but not decrypted. */
-    case 3:                    /* Ticket decrypted, *ret has been set. */
-        try_session_cache = 0;
-        break;
-    default:
-        abort();
+        ret = s->session;
+    } else {
+        /* sets s->ext.ticket_expected */
+        r = tls_get_ticket_from_client(s, hello, &ret);
+        switch (r) {
+        case TICKET_FATAL_ERR_MALLOC:
+        case TICKET_FATAL_ERR_OTHER:
+            fatal = 1;
+            goto err;
+        case TICKET_NONE:
+        case TICKET_EMPTY:
+            try_session_cache = 1;
+            break;
+        case TICKET_NO_DECRYPT:
+        case TICKET_SUCCESS:
+        case TICKET_SUCCESS_RENEW:
+            break;
+        }
     }
 
     if (try_session_cache &&
@@ -538,6 +559,10 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
 
     /* Now ret is non-NULL and we own one of its reference counts. */
 
+    /* Check TLS version consistency */
+    if (ret->ssl_version != s->version)
+        goto err;
+
     if (ret->sid_ctx_length != s->sid_ctx_length
         || memcmp(ret->sid_ctx, s->sid_ctx, ret->sid_ctx_length)) {
         /*
@@ -564,44 +589,12 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
         goto err;
     }
 
-    if (ret->cipher == NULL) {
-        unsigned char buf[5], *p;
-        unsigned long l;
-
-        p = buf;
-        l = ret->cipher_id;
-        l2n(l, p);
-        if ((ret->ssl_version >> 8) >= SSL3_VERSION_MAJOR)
-            ret->cipher = ssl_get_cipher_by_char(s, &(buf[2]));
-        else
-            ret->cipher = ssl_get_cipher_by_char(s, &(buf[1]));
-        if (ret->cipher == NULL)
-            goto err;
-    }
-
     if (ret->timeout < (long)(time(NULL) - ret->time)) { /* timeout */
         s->session_ctx->stats.sess_timeout++;
         if (try_session_cache) {
             /* session was from the cache, so remove it */
             SSL_CTX_remove_session(s->session_ctx, ret);
         }
-        goto err;
-    }
-
-    /*
-     * TODO(TLS1.3): This is temporary, because TLSv1.3 resumption is completely
-     * different. For now though we're still using the old resumption logic, so
-     * to avoid test failures we need this. Remove this code!
-     * 
-     * Check TLS version consistency. We can't resume <=TLSv1.2 session if we
-     * have negotiated TLSv1.3, and vice versa.
-     */
-    if (!SSL_IS_DTLS(s)
-            && ((ret->ssl_version <= TLS1_2_VERSION
-                 && s->version >=TLS1_3_VERSION)
-                || (ret->ssl_version >= TLS1_3_VERSION
-                    && s->version <= TLS1_2_VERSION))) {
-        /* Continue but do not resume */
         goto err;
     }
 
@@ -619,16 +612,22 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
         goto err;
     }
 
-    s->session_ctx->stats.sess_hit++;
+    if (!SSL_IS_TLS13(s)) {
+        /* We already did this for TLS1.3 */
+        SSL_SESSION_free(s->session);
+        s->session = ret;
+    }
 
-    SSL_SESSION_free(s->session);
-    s->session = ret;
+    s->session_ctx->stats.sess_hit++;
     s->verify_result = s->session->verify_result;
     return 1;
 
  err:
     if (ret != NULL) {
         SSL_SESSION_free(ret);
+        /* In TLSv1.3 s->session was already set to ret, so we NULL it out */
+        if (SSL_IS_TLS13(s))
+            s->session = NULL;
 
         if (!try_session_cache) {
             /*
@@ -638,10 +637,12 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
             s->ext.ticket_expected = 1;
         }
     }
-    if (fatal)
+    if (fatal) {
+        *al = SSL_AD_INTERNAL_ERROR;
         return -1;
-    else
-        return 0;
+    }
+
+    return 0;
 }
 
 int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)

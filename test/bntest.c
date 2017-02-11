@@ -146,8 +146,14 @@ static int equalBN(const char *op, const BIGNUM *expected, const BIGNUM *actual)
     if (BN_cmp(expected, actual) == 0)
         return 1;
 
-    exstr = BN_bn2hex(expected);
-    actstr = BN_bn2hex(actual);
+    if (BN_is_zero(expected) && BN_is_negative(expected))
+        exstr = OPENSSL_strdup("-0");
+    else
+        exstr = BN_bn2hex(expected);
+    if (BN_is_zero(actual) && BN_is_negative(actual))
+        actstr = OPENSSL_strdup("-0");
+    else
+        actstr = BN_bn2hex(actual);
     if (exstr == NULL || actstr == NULL)
         goto err;
 
@@ -1149,21 +1155,28 @@ static int file_rshift(STANZA *s)
     BIGNUM *rshift = getBN(s, "RShift");
     BIGNUM *ret = BN_new();
     int n = 0;
-    int st = 0;
+    int errcnt = 1;
 
     if (a == NULL || rshift == NULL || ret == NULL || !getint(s, &n, "N"))
         goto err;
 
+    errcnt = 0;
     if (!BN_rshift(ret, a, n)
             || !equalBN("A >> N", rshift, ret))
-        goto err;
+        errcnt++;
 
-    st = 1;
+    /* If N == 1, try with rshift1 as well */
+    if (n == 1) {
+        if (!BN_rshift1(ret, a)
+                || !equalBN("A >> 1 (rshift1)", rshift, ret))
+            errcnt++;
+    }
+
 err:
     BN_free(a);
     BN_free(rshift);
     BN_free(ret);
-    return st;
+    return errcnt == 0;
 }
 
 static int file_square(STANZA *s)
@@ -2182,7 +2195,7 @@ static int file_test_run(STANZA *s)
 static int file_tests()
 {
     STANZA s;
-    int linesread = 0, result = 0;
+    int linesread = 0, errcnt = 0;
 
     /* Read test file. */
     memset(&s, 0, sizeof(s));
@@ -2190,17 +2203,14 @@ static int file_tests()
         if (s.numpairs == 0)
             continue;
         if (!file_test_run(&s)) {
-            if (result == 0)
-                fprintf(stderr, "Test at %d failed\n", s.start);
-            goto err;
+            fprintf(stderr, "Test at %d failed\n", s.start);
+            errcnt++;
         }
         clearstanza(&s);
         s.start = linesread;
     }
-    result = 1;
 
-err:
-    return result;
+    return errcnt == 0;
 }
 
 int test_main(int argc, char *argv[])

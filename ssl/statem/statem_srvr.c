@@ -162,6 +162,7 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_BEFORE:
+    case TLS_ST_OK:
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
         if (mt == SSL3_MT_CLIENT_HELLO) {
             st->hand_state = TLS_ST_SR_CLNT_HELLO;
@@ -438,6 +439,18 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_FINISHED;
 
     case TLS_ST_SR_FINISHED:
+        /*
+         * Technically we have finished the handshake at this point, but we're
+         * going to remain "in_init" for now and write out the session ticket
+         * immediately.
+         * TODO(TLS1.3): Perhaps we need to be able to control this behaviour
+         * and give the application the opportunity to delay sending the
+         * session ticket?
+         */
+        st->hand_state = TLS_ST_SW_SESSION_TICKET;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_SESSION_TICKET:
         st->hand_state = TLS_ST_OK;
         ossl_statem_set_in_init(s, 0);
         return WRITE_TRAN_CONTINUE;
@@ -465,14 +478,23 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
         /* Shouldn't happen */
         return WRITE_TRAN_ERROR;
 
+    case TLS_ST_OK:
+        if (st->request_state == TLS_ST_SW_HELLO_REQ) {
+            /* We must be trying to renegotiate */
+            st->hand_state = TLS_ST_SW_HELLO_REQ;
+            st->request_state = TLS_ST_BEFORE;
+            return WRITE_TRAN_CONTINUE;
+        }
+        /* Must be an incoming ClientHello */
+        if (!tls_setup_handshake(s)) {
+            ossl_statem_set_error(s);
+            return WRITE_TRAN_ERROR;
+        }
+        /* Fall through */
+
     case TLS_ST_BEFORE:
         /* Just go straight to trying to read from the client */
         return WRITE_TRAN_FINISHED;
-
-    case TLS_ST_OK:
-        /* We must be trying to renegotiate */
-        st->hand_state = TLS_ST_SW_HELLO_REQ;
-        return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_HELLO_REQ:
         st->hand_state = TLS_ST_OK;
@@ -616,7 +638,14 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
         return WORK_FINISHED_CONTINUE;
 
     case TLS_ST_SW_SESSION_TICKET:
-        if (SSL_IS_DTLS(s)) {
+        if (SSL_IS_TLS13(s)) {
+            /*
+             * Actually this is the end of the handshake, but we're going
+             * straight into writing the session ticket out. So we finish off
+             * the handshake, but keep the various buffers active.
+             */
+            return tls_finish_handshake(s, wst, 0);
+        } if (SSL_IS_DTLS(s)) {
             /*
              * We're into the last flight. We don't retransmit the last flight
              * unless we need to, so we don't use the timer
@@ -643,7 +672,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
         return WORK_FINISHED_CONTINUE;
 
     case TLS_ST_OK:
-        return tls_finish_handshake(s, wst);
+        return tls_finish_handshake(s, wst, 1);
     }
 
     return WORK_FINISHED_CONTINUE;
@@ -771,12 +800,17 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
 #endif
         if (SSL_IS_TLS13(s)) {
             if (!s->method->ssl3_enc->generate_master_secret(s,
-                        s->session->master_key, s->handshake_secret, 0,
+                        s->master_secret, s->handshake_secret, 0,
                         &s->session->master_key_length)
                 || !s->method->ssl3_enc->change_cipher_state(s,
                         SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_SERVER_WRITE))
             return WORK_ERROR;
         }
+        break;
+
+    case TLS_ST_SW_SESSION_TICKET:
+        if (SSL_IS_TLS13(s) && statem_flush(s) != 1)
+            return WORK_MORE_A;
         break;
     }
 
@@ -1147,6 +1181,15 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     static const unsigned char null_compression = 0;
     CLIENTHELLO_MSG clienthello;
 
+    /* Check if this is actually an unexpected renegotiation ClientHello */
+    if (s->renegotiate == 0 && !SSL_IS_FIRST_HANDSHAKE(s)) {
+        s->renegotiate = 1;
+        s->new_session = 1;
+    }
+
+    /* This is a real handshake so make sure we clean it up at the end */
+    s->statem.cleanuphand = 1;
+
     /*
      * First, parse the raw ClientHello data into the CLIENTHELLO_MSG structure.
      */
@@ -1432,21 +1475,12 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         if (!ssl_get_new_session(s, 1))
             goto err;
     } else {
-        i = ssl_get_prev_session(s, &clienthello);
-        /*
-         * Only resume if the session's version matches the negotiated
-         * version.
-         * RFC 5246 does not provide much useful advice on resumption
-         * with a different protocol version. It doesn't forbid it but
-         * the sanity of such behaviour would be questionable.
-         * In practice, clients do not accept a version mismatch and
-         * will abort the handshake with an error.
-         */
-        if (i == 1 && s->version == s->session->ssl_version) {
+        i = ssl_get_prev_session(s, &clienthello, &al);
+        if (i == 1) {
             /* previous session */
             s->hit = 1;
         } else if (i == -1) {
-            goto err;
+            goto f_err;
         } else {
             /* i == 0 */
             if (!ssl_get_new_session(s, 1))
@@ -1514,15 +1548,6 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    /* Check we've got a key_share for TLSv1.3 */
-    if (SSL_IS_TLS13(s) && s->s3->peer_tmp == NULL && !s->hit) {
-        /* No suitable share */
-        /* TODO(TLS1.3): Send a HelloRetryRequest */
-        al = SSL_AD_HANDSHAKE_FAILURE;
-        SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_NO_SUITABLE_KEY_SHARE);
-        goto f_err;
-    }
-
     /*
      * Check if we want to use external pre-shared secret for this handshake
      * for not reused session only. We need to generate server_random before
@@ -1559,12 +1584,9 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
             ciphers = NULL;
 
             /* check if some cipher was preferred by call back */
-            pref_cipher =
-                pref_cipher ? pref_cipher : ssl3_choose_cipher(s,
-                                                               s->
-                                                               session->ciphers,
-                                                               SSL_get_ciphers
-                                                               (s));
+            if (pref_cipher == NULL)
+                pref_cipher = ssl3_choose_cipher(s, s->session->ciphers,
+                                                 SSL_get_ciphers(s));
             if (pref_cipher == NULL) {
                 al = SSL_AD_HANDSHAKE_FAILURE;
                 SSLerr(SSL_F_TLS_PROCESS_CLIENT_HELLO, SSL_R_NO_SHARED_CIPHER);
@@ -1775,6 +1797,12 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
                 goto f_err;
             }
             s->s3->tmp.new_cipher = cipher;
+            if (!tls_choose_sigalg(s)) {
+                al = SSL_AD_HANDSHAKE_FAILURE;
+                SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
+                       SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
+                goto f_err;
+            }
             /* check whether we should disable session resumption */
             if (s->not_resumable_session_cb != NULL)
                 s->session->not_resumable =
@@ -1845,7 +1873,6 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
         }
     }
 #endif
-    s->renegotiate = 2;
 
     return WORK_FINISHED_STOP;
  f_err:
@@ -2250,8 +2277,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
             if (ispss) {
                 if (EVP_PKEY_CTX_set_rsa_padding(pctx,
                                                  RSA_PKCS1_PSS_PADDING) <= 0
-                           /* -1 here means set saltlen to the digest len */
-                        || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0) {
+                    || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, RSA_PSS_SALTLEN_DIGEST) <= 0) {
                     SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                            ERR_R_EVP_LIB);
                     goto f_err;
@@ -2309,7 +2335,7 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
     }
 
     if (SSL_USE_SIGALGS(s)) {
-        const unsigned int *psigs;
+        const uint16_t *psigs;
         size_t nl = tls12_get_psigalgs(s, 1, &psigs);
 
         if (!WPACKET_start_sub_packet_u16(pkt)
@@ -2439,7 +2465,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt, int *al)
     unsigned char *rsa_decrypt = NULL;
     int ret = 0;
 
-    rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey);
+    rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA].privatekey);
     if (rsa == NULL) {
         *al = SSL_AD_HANDSHAKE_FAILURE;
         SSLerr(SSL_F_TLS_PROCESS_CKE_RSA, SSL_R_MISSING_RSA_CERTIFICATE);
@@ -3198,11 +3224,21 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     int len, slen_full, slen, lenfinal;
     SSL_SESSION *sess;
     unsigned int hlen;
-    SSL_CTX *tctx = s->initial_ctx;
+    SSL_CTX *tctx = s->session_ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char key_name[TLSEXT_KEYNAME_LENGTH];
-    int iv_len;
+    int iv_len, al = SSL_AD_INTERNAL_ERROR;
     size_t macoffset, macendoffset;
+    union {
+        unsigned char age_add_c[sizeof(uint32_t)];
+        uint32_t age_add;
+    } age_add_u;
+
+    if (SSL_IS_TLS13(s)) {
+        if (RAND_bytes(age_add_u.age_add_c, sizeof(age_add_u)) <= 0)
+            goto err;
+        s->session->ext.tick_age_add = age_add_u.age_add;
+    }
 
     /* get session encoding length */
     slen_full = i2d_SSL_SESSION(s->session, NULL);
@@ -3301,6 +3337,8 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
      * new sessions will live as long as their sessions.
      */
     if (!WPACKET_put_bytes_u32(pkt, s->hit ? 0 : s->session->timeout)
+            || (SSL_IS_TLS13(s)
+                && !WPACKET_put_bytes_u32(pkt, age_add_u.age_add))
                /* Now the actual ticket data */
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_get_total_written(pkt, &macoffset)
@@ -3327,7 +3365,11 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             || hlen > EVP_MAX_MD_SIZE
             || !WPACKET_allocate_bytes(pkt, hlen, &macdata2)
             || macdata1 != macdata2
-            || !WPACKET_close(pkt)) {
+            || !WPACKET_close(pkt)
+            || (SSL_IS_TLS13(s)
+                && !tls_construct_extensions(s, pkt,
+                                             EXT_TLS1_3_NEW_SESSION_TICKET,
+                                             NULL, 0, &al))) {
         SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -3489,7 +3531,7 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,
                     || (leadbyte != 0
                         && !PACKET_forward(&sslv2ciphers, TLS_CIPHER_LEN))) {
                 *al = SSL_AD_INTERNAL_ERROR;
-                OPENSSL_free(raw);
+                OPENSSL_free(s->s3->tmp.ciphers_raw);
                 s->s3->tmp.ciphers_raw = NULL;
                 s->s3->tmp.ciphers_rawlen = 0;
                 goto err;
