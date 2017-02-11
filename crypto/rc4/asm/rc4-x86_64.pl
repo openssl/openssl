@@ -142,9 +142,13 @@ RC4:	or	$len,$len
 	jne	.Lentry
 	ret
 .Lentry:
+.cfi_startproc
 	push	%rbx
+.cfi_push	%rbx
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 .Lprologue:
 	mov	$len,%r11
 	mov	$inp,%r12
@@ -427,11 +431,16 @@ $code.=<<___;
 	movl	$YY#d,-4($dat)
 
 	mov	(%rsp),%r13
+.cfi_restore	%r13
 	mov	8(%rsp),%r12
+.cfi_restore	%r12
 	mov	16(%rsp),%rbx
+.cfi_restore	%rbx
 	add	\$24,%rsp
+.cfi_adjust_cfa_offset	-24
 .Lepilogue:
 	ret
+.cfi_endproc
 .size	RC4,.-RC4
 ___
 }
