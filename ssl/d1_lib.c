@@ -166,7 +166,7 @@ void dtls1_clear(SSL *s)
     DTLS_RECORD_LAYER_clear(&s->rlayer);
 
     if (s->d1) {
-        dtls_timer_cb *timer_cb = s->d1->timer_cb;
+        DTLS_timer_cb timer_cb = s->d1->timer_cb;
 
         buffered_messages = s->d1->buffered_messages;
         sent_messages = s->d1->sent_messages;
@@ -989,7 +989,7 @@ size_t DTLS_get_data_mtu(const SSL *s)
     return mtu;
 }
 
-void DTLS_set_timer_cb(SSL *s, unsigned (*cb)(SSL *s, unsigned timeout_ms))
+void DTLS_set_timer_cb(SSL *s, DTLS_timer_cb cb)
 {
     s->d1->timer_cb = cb;
 }

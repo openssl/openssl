@@ -2060,7 +2060,9 @@ __owur const struct openssl_ssl_test_functions *SSL_test_functions(void);
 
 extern const char SSL_version_str[];
 
-void DTLS_set_timer_cb(SSL *s, unsigned (*cb)(SSL *s, unsigned timer));
+typedef unsigned (*DTLS_timer_cb)(SSL *s, unsigned timer);
+
+void DTLS_set_timer_cb(SSL *s, DTLS_timer_cb cb);
 
 /* BEGIN ERROR CODES */
 /*
