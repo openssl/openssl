@@ -17,6 +17,8 @@ static const ERR_STRING_DATA OSSL_STORE_str_functs[] = {
     {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_GET_PASS, 0),
      "file_get_pass"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_LOAD, 0), "file_load"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_LOAD_TRY_DECODE, 0),
+     "file_load_try_decode"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_OPEN, 0), "file_open"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_OSSL_STORE_GET0_LOADER_INT, 0),
      "ossl_store_get0_loader_int"},

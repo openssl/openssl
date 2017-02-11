@@ -24,6 +24,7 @@ int ERR_load_OSSL_STORE_strings(void);
  */
 # define OSSL_STORE_F_FILE_GET_PASS                       118
 # define OSSL_STORE_F_FILE_LOAD                           119
+# define OSSL_STORE_F_FILE_LOAD_TRY_DECODE                124
 # define OSSL_STORE_F_FILE_OPEN                           120
 # define OSSL_STORE_F_OSSL_STORE_GET0_LOADER_INT          100
 # define OSSL_STORE_F_OSSL_STORE_INFO_GET1_CERT           101
