@@ -185,17 +185,20 @@ static int test_sub()
 {
     BIGNUM *a, *b, *c;
     int i;
+    int st = 0;
 
     a = BN_new();
     b = BN_new();
     c = BN_new();
+    if (a == NULL || b == NULL || c == NULL)
+        goto err;
 
     for (i = 0; i < NUM0 + NUM1; i++) {
         if (i < NUM1) {
             BN_bntest_rand(a, 512, 0, 0);
             BN_copy(b, a);
             if (BN_set_bit(a, i) == 0)
-                return 0;
+                goto err;
             BN_add_word(b, i);
         } else {
             BN_bntest_rand(b, 400 + i - NUM1, 0, 0);
@@ -207,13 +210,15 @@ static int test_sub()
         BN_sub(c, c, a);
         if (!BN_is_zero(c)) {
             printf("Subtract test failed!\n");
-            return 0;
+            goto err;
         }
     }
+    st = 1;
+ err:
     BN_free(a);
     BN_free(b);
     BN_free(c);
-    return 1;
+    return st;
 }
 
 
@@ -222,6 +227,7 @@ static int test_div_recip()
     BIGNUM *a, *b, *c, *d, *e;
     BN_RECP_CTX *recp;
     int i;
+    int st = 0;
 
     recp = BN_RECP_CTX_new();
     a = BN_new();
@@ -229,6 +235,8 @@ static int test_div_recip()
     c = BN_new();
     d = BN_new();
     e = BN_new();
+    if (a == NULL || b == NULL || c == NULL || d == NULL || e == NULL)
+        goto err;
 
     for (i = 0; i < NUM0 + NUM1; i++) {
         if (i < NUM1) {
@@ -252,16 +260,18 @@ static int test_div_recip()
             printf("\nb=");
             BN_print_fp(stdout, b);
             printf("\n");
-            return 0;
+            goto err;
         }
     }
+    st = 1;
+ err:
     BN_free(a);
     BN_free(b);
     BN_free(c);
     BN_free(d);
     BN_free(e);
     BN_RECP_CTX_free(recp);
-    return 1;
+    return st;
 }
 
 
@@ -269,12 +279,15 @@ static int test_mod()
 {
     BIGNUM *a, *b, *c, *d, *e;
     int i;
+    int st = 0;
 
     a = BN_new();
     b = BN_new();
     c = BN_new();
     d = BN_new();
     e = BN_new();
+    if (a == NULL || b == NULL || c == NULL || d == NULL || e == NULL)
+        goto err;
 
     BN_bntest_rand(a, 1024, 0, 0);
     for (i = 0; i < NUM0; i++) {
@@ -286,15 +299,17 @@ static int test_mod()
         BN_sub(e, e, c);
         if (!BN_is_zero(e)) {
             printf("Modulo test failed!\n");
-            return 0;
+            goto err;
         }
     }
+    st = 1;
+ err:
     BN_free(a);
     BN_free(b);
     BN_free(c);
     BN_free(d);
     BN_free(e);
-    return 1;
+    return st;
 }
 
 static const char *bn1strings[] = {
@@ -362,6 +377,7 @@ static int test_modexp_mont5()
     BIGNUM *a, *p, *m, *d, *e, *b, *n, *c;
     BN_MONT_CTX *mont;
     char *bigstring;
+    int st = 0;
 
     a = BN_new();
     p = BN_new();
@@ -372,16 +388,19 @@ static int test_modexp_mont5()
     n = BN_new();
     c = BN_new();
     mont = BN_MONT_CTX_new();
+    if (a == NULL || p == NULL || m == NULL || d == NULL || e == NULL 
+            || b == NULL || n == NULL || c == NULL || mont == NULL)
+        goto err;
 
     BN_bntest_rand(m, 1024, 0, 1); /* must be odd for montgomery */
     /* Zero exponent */
     BN_bntest_rand(a, 1024, 0, 0);
     BN_zero(p);
     if (!BN_mod_exp_mont_consttime(d, a, p, m, ctx, NULL))
-        return 0;
+        goto err;
     if (!BN_is_one(d)) {
         printf("Modular exponentiation test failed!\n");
-        return 0;
+        goto err;
     }
 
     /* Regression test for carry bug in mulx4x_mont */
@@ -406,7 +425,7 @@ static int test_modexp_mont5()
     if (BN_cmp(c, d)) {
         fprintf(stderr, "Montgomery multiplication test failed:"
                         " a*b != b*a.\n");
-        return 0;
+        goto err;
     }
 
     /* Regression test for carry bug in sqr[x]8x_mont */
@@ -424,17 +443,17 @@ static int test_modexp_mont5()
     if (BN_cmp(c, d)) {
         fprintf(stderr, "Montgomery multiplication test failed:"
                         " a**2 != a*a.\n");
-        return 0;
+        goto err;
     }
 
     /* Zero input */
     BN_bntest_rand(p, 1024, 0, 0);
     BN_zero(a);
     if (!BN_mod_exp_mont_consttime(d, a, p, m, ctx, NULL))
-        return 0;
+        goto err;
     if (!BN_is_zero(d)) {
         fprintf(stderr, "Modular exponentiation test failed!\n");
-        return 0;
+        goto err;
     }
     /*
      * Craft an input whose Montgomery representation is 1, i.e., shorter
@@ -444,25 +463,27 @@ static int test_modexp_mont5()
     BN_one(a);
     BN_MONT_CTX_set(mont, m, ctx);
     if (!BN_from_montgomery(e, a, mont, ctx))
-        return 0;
+        goto err;
     if (!BN_mod_exp_mont_consttime(d, e, p, m, ctx, NULL))
-        return 0;
+        goto err;
     if (!BN_mod_exp_simple(a, e, p, m, ctx))
-        return 0;
+        goto err;
     if (BN_cmp(a, d) != 0) {
         printf("Modular exponentiation test failed!\n");
-        return 0;
+        goto err;
     }
     /* Finally, some regular test vectors. */
     BN_bntest_rand(e, 1024, 0, 0);
     if (!BN_mod_exp_mont_consttime(d, e, p, m, ctx, NULL))
-        return 0;
+        goto err;
     if (!BN_mod_exp_simple(a, e, p, m, ctx))
-        return 0;
+        goto err;
     if (BN_cmp(a, d) != 0) {
         printf("Modular exponentiation test failed!\n");
-        return 0;
+        goto err;
     }
+    st = 1;
+ err:
     BN_MONT_CTX_free(mont);
     BN_free(a);
     BN_free(p);
@@ -472,7 +493,7 @@ static int test_modexp_mont5()
     BN_free(b);
     BN_free(n);
     BN_free(c);
-    return 1;
+    return st;
 }
 
 #ifndef OPENSSL_NO_EC2M
@@ -484,6 +505,8 @@ static int test_gf2m_add()
     a = BN_new();
     b = BN_new();
     c = BN_new();
+    if (a == NULL || b == NULL || c == NULL)
+        goto err;
 
     for (i = 0; i < NUM0; i++) {
         BN_rand(a, 512, 0, 0);
@@ -525,6 +548,9 @@ static int test_gf2m_mod()
     c = BN_new();
     d = BN_new();
     e = BN_new();
+    if (a == NULL || b[0] == NULL || b[1] == NULL 
+            || c == NULL || d == NULL || e == NULL)
+        goto err;
 
     BN_GF2m_arr2poly(p0, b[0]);
     BN_GF2m_arr2poly(p1, b[1]);
@@ -569,6 +595,9 @@ static int test_gf2m_mul()
     f = BN_new();
     g = BN_new();
     h = BN_new();
+    if (a == NULL || b[0] == NULL || b[1] == NULL || c == NULL 
+            || d == NULL || e == NULL || f == NULL || g == NULL || h == NULL)
+        goto err;
 
     BN_GF2m_arr2poly(p0, b[0]);
     BN_GF2m_arr2poly(p1, b[1]);
@@ -617,6 +646,8 @@ static int test_gf2m_sqr()
     b[1] = BN_new();
     c = BN_new();
     d = BN_new();
+    if (a == NULL || b[0] == NULL || b[1] == NULL || c == NULL || d == NULL)
+        goto err;
 
     BN_GF2m_arr2poly(p0, b[0]);
     BN_GF2m_arr2poly(p1, b[1]);
@@ -657,6 +688,8 @@ static int test_gf2m_modinv()
     b[1] = BN_new();
     c = BN_new();
     d = BN_new();
+    if (a == NULL || b[0] == NULL || b[1] == NULL || c == NULL || d == NULL)
+        goto err;
 
     BN_GF2m_arr2poly(p0, b[0]);
     BN_GF2m_arr2poly(p1, b[1]);
@@ -697,6 +730,9 @@ static int test_gf2m_moddiv()
     d = BN_new();
     e = BN_new();
     f = BN_new();
+    if (a == NULL || b[0] == NULL || b[1] == NULL 
+            || c == NULL || d == NULL || e == NULL || f == NULL)
+        goto err;
 
     BN_GF2m_arr2poly(p0, b[0]);
     BN_GF2m_arr2poly(p1, b[1]);
@@ -741,6 +777,9 @@ static int test_gf2m_modexp()
     d = BN_new();
     e = BN_new();
     f = BN_new();
+    if (a == NULL || b[0] == NULL || b[1] == NULL || c == NULL 
+            || d == NULL || e == NULL || f == NULL)
+        goto err;
 
     BN_GF2m_arr2poly(p0, b[0]);
     BN_GF2m_arr2poly(p1, b[1]);
@@ -789,6 +828,9 @@ static int test_gf2m_modsqrt()
     d = BN_new();
     e = BN_new();
     f = BN_new();
+    if (a == NULL || b[0] == NULL || b[1] == NULL || c == NULL 
+            || d == NULL || e == NULL || f == NULL)
+        goto err;
 
     BN_GF2m_arr2poly(p0, b[0]);
     BN_GF2m_arr2poly(p1, b[1]);
@@ -832,6 +874,9 @@ static int test_gf2m_modsolvequad()
     c = BN_new();
     d = BN_new();
     e = BN_new();
+    if (a == NULL || b[0] == NULL || b[1] == NULL 
+            || c == NULL || d == NULL || e == NULL)
+        goto err;
 
     BN_GF2m_arr2poly(p0, b[0]);
     BN_GF2m_arr2poly(p1, b[1]);

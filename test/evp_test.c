@@ -1389,8 +1389,11 @@ static int pkey_test_init(struct evp_test *t, const char *name,
     kdata->keyop = keyop;
     t->data = kdata;
     kdata->ctx = EVP_PKEY_CTX_new(pkey, NULL);
-    if (!kdata->ctx)
+    if (kdata->ctx == NULL) {
+        EVP_PKEY_free(pkey);
+        OPENSSL_free(kdata);
         return 0;
+    }
     if (keyopinit(kdata->ctx) <= 0)
         t->err = "KEYOP_INIT_ERROR";
     return 1;
@@ -1968,10 +1971,14 @@ static int kdf_test_init(struct evp_test *t, const char *name)
     kdata->output = NULL;
     t->data = kdata;
     kdata->ctx = EVP_PKEY_CTX_new_id(OBJ_sn2nid(name), NULL);
-    if (kdata->ctx == NULL)
+    if (kdata->ctx == NULL) {
+        OPENSSL_free(kdata);
         return 0;
-    if (EVP_PKEY_derive_init(kdata->ctx) <= 0)
+    }
+    if (EVP_PKEY_derive_init(kdata->ctx) <= 0) {
+        OPENSSL_free(kdata);
         return 0;
+    }
     return 1;
 }
 
