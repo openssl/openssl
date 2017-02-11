@@ -48,11 +48,13 @@ int ERR_load_OSSL_STORE_strings(void);
 # define OSSL_STORE_F_OSSL_STORE_UNREGISTER_LOADER_INT    116
 # define OSSL_STORE_F_TRY_DECODE_PARAMS                   121
 # define OSSL_STORE_F_TRY_DECODE_PKCS12                   122
+# define OSSL_STORE_F_TRY_DECODE_PKCS8ENCRYPTED           125
 
 /*
  * OSSL_STORE reason codes.
  */
 # define OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE              107
+# define OSSL_STORE_R_BAD_PASSWORD_READ                   115
 # define OSSL_STORE_R_ERROR_VERIFYING_PKCS12_MAC          113
 # define OSSL_STORE_R_INVALID_SCHEME                      106
 # define OSSL_STORE_R_IS_NOT_A                            112
