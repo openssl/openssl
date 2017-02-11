@@ -236,13 +236,21 @@ $code=<<___;
 .type	gcm_gmult_4bit,\@function,2
 .align	16
 gcm_gmult_4bit:
+.cfi_startproc
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp		# %rbp and others are pushed exclusively in
+.cfi_push	%rbp
 	push	%r12		# order to reuse Win64 exception handler...
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	sub	\$280,%rsp
+.cfi_adjust_cfa_offset	280
 .Lgmult_prologue:
 
 	movzb	15($Xi),$Zlo
@@ -254,10 +262,14 @@ $code.=<<___;
 	mov	$Zhi,($Xi)
 
 	lea	280+48(%rsp),%rsi
+.cfi_def_cfa	%rsi,8
 	mov	-8(%rsi),%rbx
+.cfi_restore	%rbx
 	lea	(%rsi),%rsp
+.cfi_def_cfa_register	%rsp
 .Lgmult_epilogue:
 	ret
+.cfi_endproc
 .size	gcm_gmult_4bit,.-gcm_gmult_4bit
 ___
 
@@ -271,13 +283,21 @@ $code.=<<___;
 .type	gcm_ghash_4bit,\@function,4
 .align	16
 gcm_ghash_4bit:
+.cfi_startproc
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	sub	\$280,%rsp
+.cfi_adjust_cfa_offset	280
 .Lghash_prologue:
 	mov	$inp,%r14		# reassign couple of args
 	mov	$len,%r15
@@ -406,15 +426,24 @@ $code.=<<___;
 	mov	$Zhi,($Xi)
 
 	lea	280+48(%rsp),%rsi
+.cfi_def_cfa	%rsi,8
 	mov	-48(%rsi),%r15
+.cfi_restore	%r15
 	mov	-40(%rsi),%r14
+.cfi_restore	%r14
 	mov	-32(%rsi),%r13
+.cfi_restore	%r13
 	mov	-24(%rsi),%r12
+.cfi_restore	%r12
 	mov	-16(%rsi),%rbp
+.cfi_restore	%rbp
 	mov	-8(%rsi),%rbx
+.cfi_restore	%rbx
 	lea	0(%rsi),%rsp
+.cfi_def_cfa_register	%rsp
 .Lghash_epilogue:
 	ret
+.cfi_endproc
 .size	gcm_ghash_4bit,.-gcm_ghash_4bit
 ___
 
