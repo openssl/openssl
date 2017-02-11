@@ -151,6 +151,12 @@ const char *OSSL_STORE_INFO_type_string(int type);
  */
 void OSSL_STORE_INFO_free(OSSL_STORE_INFO *info);
 
+/*
+ * Add expected return type (which can be unspecified) to the loading channel.
+ *  This MUST happen before the first STORE_load().
+ */
+int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type);
+
 
 /*-
  *  Function to register a loader for the given URI scheme.
@@ -177,6 +183,9 @@ typedef int (*OSSL_STORE_ctrl_fn)(OSSL_STORE_LOADER_CTX *ctx, int cmd,
                                   va_list args);
 int OSSL_STORE_LOADER_set_ctrl(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_ctrl_fn ctrl_function);
+typedef int (*OSSL_STORE_expect_fn)(OSSL_STORE_LOADER_CTX *ctx, int expected);
+int OSSL_STORE_LOADER_set_expect(OSSL_STORE_LOADER *loader,
+                                 OSSL_STORE_expect_fn expect_function);
 typedef OSSL_STORE_INFO *(*OSSL_STORE_load_fn)(OSSL_STORE_LOADER_CTX *ctx,
                                                const UI_METHOD *ui_method,
                                                void *ui_data);
