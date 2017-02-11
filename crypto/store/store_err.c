@@ -57,12 +57,16 @@ static const ERR_STRING_DATA OSSL_STORE_str_functs[] = {
      "ossl_store_unregister_loader_int"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_TRY_DECODE_PARAMS, 0),
      "try_decode_params"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_TRY_DECODE_PKCS12, 0),
+     "try_decode_PKCS12"},
     {0, NULL}
 };
 
 static const ERR_STRING_DATA OSSL_STORE_str_reasons[] = {
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE),
     "ambiguous content type"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_ERROR_VERIFYING_PKCS12_MAC),
+    "error verifying pkcs12 mac"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_INVALID_SCHEME),
     "invalid scheme"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_IS_NOT_A), "is not a"},
@@ -73,6 +77,8 @@ static const ERR_STRING_DATA OSSL_STORE_str_reasons[] = {
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_NOT_A_NAME), "not a name"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_NOT_PARAMETERS),
     "not parameters"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_PASSPHRASE_CALLBACK_ERROR),
+    "passphrase callback error"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_PATH_MUST_BE_ABSOLUTE),
     "path must be absolute"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_UI_PROCESS_INTERRUPTED_OR_CANCELLED),

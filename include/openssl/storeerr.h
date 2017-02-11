@@ -45,11 +45,13 @@ int ERR_load_OSSL_STORE_strings(void);
 # define OSSL_STORE_F_OSSL_STORE_REGISTER_LOADER_INT      117
 # define OSSL_STORE_F_OSSL_STORE_UNREGISTER_LOADER_INT    116
 # define OSSL_STORE_F_TRY_DECODE_PARAMS                   121
+# define OSSL_STORE_F_TRY_DECODE_PKCS12                   122
 
 /*
  * OSSL_STORE reason codes.
  */
 # define OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE              107
+# define OSSL_STORE_R_ERROR_VERIFYING_PKCS12_MAC          113
 # define OSSL_STORE_R_INVALID_SCHEME                      106
 # define OSSL_STORE_R_IS_NOT_A                            112
 # define OSSL_STORE_R_NOT_A_CERTIFICATE                   100
@@ -57,6 +59,7 @@ int ERR_load_OSSL_STORE_strings(void);
 # define OSSL_STORE_R_NOT_A_KEY                           102
 # define OSSL_STORE_R_NOT_A_NAME                          103
 # define OSSL_STORE_R_NOT_PARAMETERS                      104
+# define OSSL_STORE_R_PASSPHRASE_CALLBACK_ERROR           114
 # define OSSL_STORE_R_PATH_MUST_BE_ABSOLUTE               108
 # define OSSL_STORE_R_UI_PROCESS_INTERRUPTED_OR_CANCELLED 109
 # define OSSL_STORE_R_UNREGISTERED_SCHEME                 105
