@@ -272,6 +272,69 @@ static FILE_HANDLER PKCS12_handler = {
     1                            /* repeatable */
 };
 
+static OSSL_STORE_INFO *try_decode_PKCS8Encrypted(const char *pem_name,
+                                                  const char *pem_header,
+                                                  const unsigned char *blob,
+                                                  size_t len, void **pctx,
+                                                  const UI_METHOD *ui_method,
+                                                  void *ui_data)
+{
+    X509_SIG *p8 = NULL;
+    char kbuf[PEM_BUFSIZE];
+    char *pass = NULL;
+    const X509_ALGOR *dalg = NULL;
+    const ASN1_OCTET_STRING *doct = NULL;
+    OSSL_STORE_INFO *store_info = NULL;
+    BUF_MEM *mem = NULL;
+    unsigned char *new_data = NULL;
+    int new_data_len;
+
+    if (pem_name != NULL && strcmp(pem_name, PEM_STRING_PKCS8) != 0)
+        return NULL;
+
+    if ((p8 = d2i_X509_SIG(NULL, &blob, len)) == NULL)
+        return NULL;
+
+    if ((mem = BUF_MEM_new()) == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_TRY_DECODE_PKCS8ENCRYPTED,
+                      ERR_R_MALLOC_FAILURE);
+        goto nop8;
+    }
+
+    if ((pass = file_get_pass(ui_method, kbuf, PEM_BUFSIZE,
+                              "PKCS8 decrypt password", ui_data)) == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_TRY_DECODE_PKCS8ENCRYPTED,
+                      OSSL_STORE_R_BAD_PASSWORD_READ);
+        goto nop8;
+    }
+
+    X509_SIG_get0(p8, &dalg, &doct);
+    if (!PKCS12_pbe_crypt(dalg, pass, strlen(pass), doct->data, doct->length,
+                          &new_data, &new_data_len, 0))
+        goto nop8;
+
+    mem->data = (char *)new_data;
+    mem->max = mem->length = (size_t)new_data_len;
+    X509_SIG_free(p8);
+
+    store_info = ossl_store_info_new_EMBEDDED(PEM_STRING_PKCS8INF, mem);
+    if (store_info == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_TRY_DECODE_PKCS8ENCRYPTED,
+                      ERR_R_MALLOC_FAILURE);
+        goto nop8;
+    }
+
+    return store_info;
+ nop8:
+    X509_SIG_free(p8);
+    BUF_MEM_free(mem);
+    return NULL;
+}
+static FILE_HANDLER PKCS8Encrypted_handler = {
+    "PKCS8Encrypted",
+    try_decode_PKCS8Encrypted
+};
+
 int pem_check_suffix(const char *pem_str, const char *suffix);
 static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
                                               const char *pem_header,
@@ -285,11 +348,21 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
 
     if (pem_name != NULL) {
-        int slen;
+        if (strcmp(pem_name, PEM_STRING_PKCS8INF) == 0) {
+            PKCS8_PRIV_KEY_INFO *p8inf =
+                d2i_PKCS8_PRIV_KEY_INFO(NULL, &blob, len);
 
-        if ((slen = pem_check_suffix(pem_name, "PRIVATE KEY")) > 0
-            && (ameth = EVP_PKEY_asn1_find_str(NULL, pem_name, slen)) != NULL)
-            pkey = d2i_PrivateKey(ameth->pkey_id, NULL, &blob, len);
+            if (p8inf != NULL)
+                pkey = EVP_PKCS82PKEY(p8inf);
+            PKCS8_PRIV_KEY_INFO_free(p8inf);
+        } else {
+            int slen;
+
+            if ((slen = pem_check_suffix(pem_name, "PRIVATE KEY")) > 0
+                && (ameth = EVP_PKEY_asn1_find_str(NULL, pem_name,
+                                                   slen)) != NULL)
+                pkey = d2i_PrivateKey(ameth->pkey_id, NULL, &blob, len);
+        }
     } else {
         int i;
 
@@ -468,6 +541,7 @@ static FILE_HANDLER X509CRL_handler = {
 
 static const FILE_HANDLER *file_handlers[] = {
     &PKCS12_handler,
+    &PKCS8Encrypted_handler,
     &X509Certificate_handler,
     &X509CRL_handler,
     &params_handler,
