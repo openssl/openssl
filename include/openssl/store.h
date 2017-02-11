@@ -226,9 +226,11 @@ int ERR_load_STORE_strings(void);
 # define STORE_F_STORE_UNREGISTER_LOADER_INT              116
 # define STORE_F_TRY_DECODE_PARAMS                        121
 # define STORE_F_TRY_DECODE_PKCS12                        122
+# define STORE_F_TRY_DECODE_PKCS8ENCRYPTED                125
 
 /* Reason codes. */
 # define STORE_R_AMBIGUOUS_CONTENT_TYPE                   107
+# define STORE_R_BAD_PASSWORD_READ                        115
 # define STORE_R_ERROR_VERIFYING_PKCS12_MAC               113
 # define STORE_R_INVALID_SCHEME                           106
 # define STORE_R_IS_NOT_A                                 112
