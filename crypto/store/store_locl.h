@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -75,6 +75,7 @@ struct ossl_store_loader_st {
     ENGINE *engine;
     OSSL_STORE_open_fn open;
     OSSL_STORE_ctrl_fn ctrl;
+    OSSL_STORE_expect_fn expect;
     OSSL_STORE_load_fn load;
     OSSL_STORE_eof_fn eof;
     OSSL_STORE_error_fn error;

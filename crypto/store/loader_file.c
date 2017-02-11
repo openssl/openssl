@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1295,6 +1295,7 @@ static OSSL_STORE_LOADER file_loader =
         NULL,
         file_open,
         file_ctrl,
+        NULL,
         file_load,
         file_eof,
         file_error,

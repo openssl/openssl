@@ -78,6 +78,13 @@ int OSSL_STORE_LOADER_set_ctrl(OSSL_STORE_LOADER *loader,
     return 1;
 }
 
+int OSSL_STORE_LOADER_set_expect(OSSL_STORE_LOADER *loader,
+                                 OSSL_STORE_expect_fn expect_function)
+{
+    loader->expect = expect_function;
+    return 1;
+}
+
 int OSSL_STORE_LOADER_set_load(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_load_fn load_function)
 {
