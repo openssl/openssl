@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,9 @@ struct ossl_store_ctx_st {
     void *ui_data;
     OSSL_STORE_post_process_info_fn post_process;
     void *post_process_data;
+
+    /* 0 before the first STORE_load(), 1 otherwise */
+    int loading;
 };
 
 OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
@@ -129,6 +132,7 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
 {
     OSSL_STORE_INFO *v = NULL;
 
+    ctx->loading = 1;
  again:
     if (OSSL_STORE_eof(ctx))
         return NULL;
