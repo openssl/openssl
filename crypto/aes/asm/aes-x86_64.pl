@@ -1728,7 +1728,7 @@ AES_cbc_encrypt:
 	cmp	\$0,%rdx	# check length
 	je	.Lcbc_epilogue
 	pushfq
-.cfi_push	%rflags
+.cfi_push	49		# %rflags
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -2187,7 +2187,7 @@ AES_cbc_encrypt:
 .cfi_def_cfa	%rsp,16
 .Lcbc_popfq:
 	popfq
-.cfi_pop	%rflags
+.cfi_pop	49		# %rflags
 .Lcbc_epilogue:
 	ret
 .cfi_endproc
