@@ -721,6 +721,9 @@ struct ossl_store_loader_ctx_st {
             int last_errno;
         } dir;
     } _;
+
+    /* Expected object type.  May be unspecified */
+    int expected_type;
 };
 
 static void OSSL_STORE_LOADER_CTX_free(OSSL_STORE_LOADER_CTX *ctx)
@@ -906,6 +909,12 @@ static int file_ctrl(OSSL_STORE_LOADER_CTX *ctx, int cmd, va_list args)
     }
 
     return ret;
+}
+
+static int file_expect(OSSL_STORE_LOADER_CTX *ctx, int expected)
+{
+    ctx->expected_type = expected;
+    return 1;
 }
 
 /* Internal function to decode an already opened PEM file */
@@ -1181,6 +1190,7 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
     } else {
         int matchcount = -1;
 
+     again:
         result = file_load_try_repeat(ctx, ui_method, ui_data);
         if (result != NULL)
             return result;
@@ -1251,6 +1261,13 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
         /* We bail out on ambiguity */
         if (matchcount > 1)
             return NULL;
+
+        if (result != NULL
+            && ctx->expected_type != 0
+            && ctx->expected_type != OSSL_STORE_INFO_get_type(result)) {
+            OSSL_STORE_INFO_free(result);
+            goto again;
+        }
     }
 
     return result;
@@ -1295,7 +1312,7 @@ static OSSL_STORE_LOADER file_loader =
         NULL,
         file_open,
         file_ctrl,
-        NULL,
+        file_expect,
         file_load,
         file_eof,
         file_error,
