@@ -18,10 +18,10 @@
  * functions. If STFLE returns fewer doublewords or an instruction is not
  * supported, the corresponding element is zero. The order is as follows:
  *
- * STFLE:STFLE:STFLE.KIMD:KIMD:KM:KM:KMC:KMC:KMCTR:KMCTR
+ * STFLE:STFLE:STFLE.KIMD:KIMD:KM:KM:KMC:KMC:KMCTR:KMCTR:KMA:KMA
  */
 # define S390X_STFLE_DWORDS	3
-# define S390X_QUERY_DWORDS	8
+# define S390X_QUERY_DWORDS	10
 # define S390X_CAP_DWORDS	(S390X_STFLE_DWORDS + S390X_QUERY_DWORDS)
 extern uint64_t OPENSSL_s390xcap_P[];
 
@@ -39,5 +39,10 @@ extern uint64_t OPENSSL_s390xcap_P[];
 # define S390X_KMC_AES_256	(1ULL << 43)
 # define S390X_KMC_AES_192	(1ULL << 44)
 # define S390X_KMC_AES_128	(1ULL << 45)
+
+/* OPENSSL_s390xcap_P[11] flags */
+# define S390X_KMA_GCM_AES_256	(1ULL << 43)
+# define S390X_KMA_GCM_AES_192	(1ULL << 44)
+# define S390X_KMA_GCM_AES_128	(1ULL << 45)
 
 #endif

@@ -2219,7 +2219,7 @@ ___
 }
 $code.=<<___;
 .string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
-.comm	OPENSSL_s390xcap_P,88,8
+.comm	OPENSSL_s390xcap_P,104,8
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
