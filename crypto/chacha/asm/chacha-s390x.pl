@@ -223,6 +223,7 @@ GLOBL	("ChaCha20_ctr32");
 TYPE	("ChaCha20_ctr32","\@function");
 ALIGN	(32);
 LABEL	("ChaCha20_ctr32");
+	CFI_STARTPROC	();
 	larl	("%r1","OPENSSL_s390xcap_P");
 	lg	("%r0","16(%r1)");
 	tmhh	("%r0",0x4000);	# check for vector facility
@@ -234,10 +235,12 @@ if (!$z) {
 	std	("%f6","16*$SIZE_T+3*8($sp)");
 }
 &{$z?	\&stg:\&st}	("%r7","7*$SIZE_T($sp)");
+	CFI_REL_OFFSET	("%r7",7*$SIZE_T);
 
 	lghi	("%r1",-$frame);
 	lgr	("%r0",$sp);
 	la	($sp,"0(%r1,$sp)");	# allocate stack frame
+	CFI_ADJUST_CFA_OFFSET($frame);
 &{$z?	\&stg:\&st}	("%r0","0($sp)");	# backchain
 
 	larl	("%r7",".Lsigma");
@@ -314,16 +317,22 @@ if (!$vxsingle) {
 	brc	(3,".Lvx_rem");	# cc==2 || cc==3?
 
 	lgr	("%r7",$counter);
+	CFI_REGISTER	($counter,"%r7");
 &{$z?	\&stmg:\&stm}	("%r14",$sp,"$off($sp)");
+	CFI_REL_OFFSET	("%r14",$off);
 
 	lghi	($len,64);	# 1 block
 	la	($key,"16+$off($sp)");	# load key
 	la	($counter,"48+$off($sp)");	# load updated iv
 	aghi	($sp,-$stdframe);
+	CFI_ADJUST_CFA_OFFSET($stdframe);
 	bras	("%r14","_s390x_chacha_novx");
 
 &{$z?	\&lmg:\&lm}	("%r14",$sp,"$stdframe+$off($sp)");
+	CFI_RESTORE	("%r14");
+	CFI_ADJUST_CFA_OFFSET(-$stdframe);
 	lgr	($counter,"%r7");
+	CFI_RESTORE	($counter);
 	j	(".Lvx_done");
 
 ALIGN	(16);
@@ -386,7 +395,9 @@ LABEL	(".Lvx_done");
 	vlm	("%v8","%v15","16($sp)") if ($z);
 
 &{$z?	\&lg:\&l}	($sp,"0($sp)");
+	CFI_ADJUST_CFA_OFFSET	(-$frame);
 &{$z?	\&lg:\&l}	("%r7","7*$SIZE_T($sp)");
+	CFI_RESTORE	("%r7");
 
 if (!$z) {
 	ld	("%f4","16*$SIZE_T+2*8($sp)");
@@ -394,6 +405,7 @@ if (!$z) {
 	vzero	("%v$_") for (8..15);
 }
 	br	("%r14");
+	CFI_ENDPROC	();
 SIZE	("ChaCha20_ctr32",".-ChaCha20_ctr32");
 }
 
@@ -404,16 +416,19 @@ my $frame=$stdframe+4*20;
 TYPE	("_s390x_chacha_novx","\@function");
 ALIGN	(32);
 LABEL	("_s390x_chacha_novx");
+	CFI_STARTPROC	();
 &{$z?	\&ltgr:\&ltr}	($len,$len);	# $len==0?
 	bzr	("%r14");
 &{$z?	\&aghi:\&ahi}	($len,-64);
 &{$z?	\&lghi:\&lhi}	("%r1",-$frame);
 &{$z?	\&stmg:\&stm}	("%r6","%r15","6*$SIZE_T($sp)");
+	CFI_REL_OFFSET	("%r$_",$_*$SIZE_T) for (6..15);
 &{$z?	\&slgr:\&slr}	($out,$inp);	# difference
 	la	($len,"0($inp,$len)");	# end of input minus 64
 	larl	("%r7",".Lsigma");
 	lgr	("%r0",$sp);
 	la	($sp,"0(%r1,$sp)");
+	CFI_ADJUST_CFA_OFFSET	($frame);
 &{$z?	\&stg:\&st}	("%r0","0($sp)");
 
 	lmg	("%r8","%r11","0($key)");	# load key
@@ -535,6 +550,8 @@ LABEL	(".Ldone");
 	stmg	("%r0","%r3","$stdframe+4*12($sp)");
 
 &{$z?	\&lmg:\&lm}	("%r6","%r15","$frame+6*$SIZE_T($sp)");
+	CFI_RESTORE	("%r$_") for (6..15);
+	CFI_ADJUST_CFA_OFFSET	(-$frame);
 	br	("%r14");
 
 ALIGN	(16);
@@ -564,6 +581,7 @@ LABEL	(".Loop_tail");
 	brct	(@t[1],".Loop_tail");
 
 	j	(".Ldone");
+	CFI_ENDPROC	();
 SIZE	("_s390x_chacha_novx",".-_s390x_chacha_novx");
 }
 }
