@@ -89,7 +89,7 @@ static int test_dtls_unprocessed(int testidx)
     mempacket_test_inject(c_to_s_mempacket, (char *)certstatus,
                           sizeof(certstatus), 1, INJECT_PACKET_IGNORE_REC_SEQ);
 
-    if (!create_ssl_connection(serverssl1, clientssl1)) {
+    if (!create_ssl_connection(serverssl1, clientssl1, SSL_ERROR_NONE)) {
         printf("Unable to create SSL connection\n");
         ERR_print_errors_fp(stdout);
         goto end;
