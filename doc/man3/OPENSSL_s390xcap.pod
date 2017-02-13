@@ -76,6 +76,21 @@ The following bits are significant:
 
 =back
 
+:
+:
+:
+:
+
+=over
+
+=item #43 KMA-GCM-AES-256
+
+=item #44 KMA-GCM-AES-192
+
+=item #45 KMA-GCM-AES-128
+
+=back
+
 =head1 EXAMPLES
 
 OPENSSL_s390xcap=.0:0 disables KIMD.
