@@ -669,7 +669,7 @@ int create_ssl_connection(SSL *serverssl, SSL *clientssl)
         }
 
         if (!servererr && rets <= 0 && err != SSL_ERROR_WANT_READ) {
-            printf("SSL_accept() failed %d, %d\n", retc, err);
+            printf("SSL_accept() failed %d, %d\n", rets, err);
             servererr = 1;
         }
         if (clienterr && servererr)
