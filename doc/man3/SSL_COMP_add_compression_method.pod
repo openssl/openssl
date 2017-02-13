@@ -27,6 +27,7 @@ SSL_COMP_add_compression_method() adds the compression method B<cm> with
 the identifier B<id> to the list of available compression methods. This
 list is globally maintained for all SSL operations within this application.
 It cannot be set for specific SSL_CTX or SSL objects.
+From OpenSSL 1.1.0 calling this function does nothing.
 
 SSL_COMP_get_compression_methods() returns a stack of all of the available
 compression methods or NULL on error.
