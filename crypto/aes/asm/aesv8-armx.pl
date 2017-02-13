@@ -59,9 +59,12 @@ $code=<<___;
 .text
 ___
 $code.=".arch	armv8-a+crypto\n"			if ($flavour =~ /64/);
-$code.=".arch	armv7-a\n.fpu	neon\n.code	32\n"	if ($flavour !~ /64/);
-		#^^^^^^ this is done to simplify adoption by not depending
-		#	on latest binutils.
+$code.=<<___						if ($flavour !~ /64/);
+.arch	armv7-a	// don't confuse not-so-latest binutils with argv8 :-)
+.fpu	neon
+.code	32
+#undef	__thumb2__
+___
 
 # Assembler mnemonics are an eclectic mix of 32- and 64-bit syntax,
 # NEON is mostly 32-bit mnemonics, integer - mostly 64. Goal is to

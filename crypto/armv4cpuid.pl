@@ -27,6 +27,7 @@ $code.=<<___;
 .thumb
 #else
 .code	32
+#undef	__thumb2__
 #endif
 
 .align	5
