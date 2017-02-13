@@ -3137,12 +3137,11 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     case SSL_CTRL_SET_CURRENT_CERT:
         if (larg == SSL_CERT_SET_SERVER) {
-            CERT_PKEY *cpk;
             const SSL_CIPHER *cipher;
             if (!s->server)
                 return 0;
             cipher = s->s3->tmp.new_cipher;
-            if (!cipher)
+            if (cipher == NULL)
                 return 0;
             /*
              * No certificate for unauthenticated ciphersuites or using SRP
@@ -3150,10 +3149,9 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
              */
             if (cipher->algorithm_auth & (SSL_aNULL | SSL_aSRP))
                 return 2;
-            cpk = ssl_get_server_send_pkey(s);
-            if (!cpk)
+            if (s->s3->tmp.cert_idx == -1)
                 return 0;
-            s->cert->key = cpk;
+            s->cert->key = &s->cert->pkeys[s->s3->tmp.cert_idx];
             return 1;
         }
         return ssl_cert_set_current(s->cert, larg);

@@ -2201,7 +2201,10 @@ DH *ssl_get_auto_dh(SSL *s)
         else
             dh_secbits = 80;
     } else {
-        CERT_PKEY *cpk = ssl_get_server_send_pkey(s);
+        CERT_PKEY *cpk;
+        if (s->s3->tmp.cert_idx == -1)
+            return NULL;
+        cpk = &s->cert->pkeys[s->s3->tmp.cert_idx];
         dh_secbits = EVP_PKEY_security_bits(cpk->privatekey);
     }
 
