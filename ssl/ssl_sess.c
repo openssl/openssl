@@ -501,7 +501,6 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
         SSL_SESSION data;
 
         data.ssl_version = s->version;
-        memset(data.session_id, 0, sizeof(data.session_id));
         memcpy(data.session_id, hello->session_id, hello->session_id_len);
         data.session_id_length = hello->session_id_len;
 
