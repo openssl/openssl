@@ -544,7 +544,7 @@ typedef enum OPTION_choice {
         OPT_VERIFYCAPATH,
     OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE,
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
-    OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME,
+    OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_NOSERVERNAME,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
     OPT_ASYNC, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_KEYLOG_FILE, OPT_EARLY_DATA, OPT_REQCAFILE,
@@ -652,6 +652,8 @@ const OPTIONS s_client_options[] = {
     {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
     {"servername", OPT_SERVERNAME, 's',
      "Set TLS extension servername in ClientHello"},
+    {"noservername", OPT_NOSERVERNAME, '-',
+     "Do not send the server name (SNI) extension in the ClientHello"},
     {"tlsextdebug", OPT_TLSEXTDEBUG, '-',
      "Hex dump of all TLS extensions received"},
 #ifndef OPENSSL_NO_OCSP
@@ -872,6 +874,7 @@ int s_client_main(int argc, char **argv)
     struct timeval tv;
 #endif
     char *servername = NULL;
+    int noservername = 0;
     const char *alpn_in = NULL;
     tlsextctx tlsextcbp = { NULL, 0 };
     const char *ssl_config = NULL;
@@ -1359,6 +1362,9 @@ int s_client_main(int argc, char **argv)
         case OPT_SERVERNAME:
             servername = opt_arg();
             break;
+        case OPT_NOSERVERNAME:
+            noservername = 1;
+            break;
         case OPT_USE_SRTP:
             srtp_profiles = opt_arg();
             break;
@@ -1398,6 +1404,20 @@ int s_client_main(int argc, char **argv)
     if (count4or6 >= 2) {
         BIO_printf(bio_err, "%s: Can't use both -4 and -6\n", prog);
         goto opthelp;
+    }
+    if (noservername) {
+        if (servername != NULL) {
+            BIO_printf(bio_err,
+                       "%s: Can't use -servername and -noservername together\n",
+                       prog);
+            goto opthelp;
+        }
+        if (dane_tlsa_domain != NULL) {
+            BIO_printf(bio_err,
+               "%s: Can't use -dane_tlsa_domain and -noservername together\n",
+               prog);
+            goto opthelp;
+        }
     }
     argc = opt_num_rest();
     if (argc != 0)
@@ -1720,7 +1740,7 @@ int s_client_main(int argc, char **argv)
     if (!set_cert_key_stuff(ctx, cert, key, chain, build_chain))
         goto end;
 
-    if (servername != NULL) {
+    if (!noservername) {
         tlsextcbp.biodebug = bio_err;
         SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
         SSL_CTX_set_tlsext_servername_arg(ctx, &tlsextcbp);
@@ -1793,7 +1813,9 @@ int s_client_main(int argc, char **argv)
     if (fallback_scsv)
         SSL_set_mode(con, SSL_MODE_SEND_FALLBACK_SCSV);
 
-    if (servername != NULL) {
+    if (!noservername && (servername != NULL || dane_tlsa_domain == NULL)) {
+        if (servername == NULL)
+            servername = (host == NULL) ? "localhost" : host;
         if (!SSL_set_tlsext_host_name(con, servername)) {
             BIO_printf(bio_err, "Unable to set TLS servername extension.\n");
             ERR_print_errors(bio_err);
@@ -2459,7 +2481,7 @@ int s_client_main(int argc, char **argv)
             if (in_init) {
                 in_init = 0;
 
-                if (servername != NULL && !SSL_session_reused(con)) {
+                if (!noservername && !SSL_session_reused(con)) {
                     BIO_printf(bio_c_out,
                                "Server did %sacknowledge servername extension.\n",
                                tlsextcbp.ack ? "" : "not ");

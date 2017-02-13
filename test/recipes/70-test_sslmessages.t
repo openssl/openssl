@@ -222,22 +222,23 @@ checkhandshake($proxy, checkhandshake::RENEG_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
                "Rengotiation handshake test");
 
-#Test 8: Server name handshake (client request only)
+#Test 8: Server name handshake (no client request)
 $proxy->clear();
-$proxy->clientflags("-no_tls1_3 -servername testhost");
+$proxy->clientflags("-no_tls1_3 -noservername");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::SERVER_NAME_CLI_EXTENSION,
+               & ~checkhandshake::SERVER_NAME_CLI_EXTENSION,
                "Server name handshake test (client)");
 
 #Test 9: Server name handshake (server support only)
 $proxy->clear();
-$proxy->clientflags("-no_tls1_3");
+$proxy->clientflags("-no_tls1_3 -noservername");
 $proxy->serverflags("-servername testhost");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS,
+               checkhandshake::DEFAULT_EXTENSIONS
+               & ~checkhandshake::SERVER_NAME_CLI_EXTENSION,
                "Server name handshake test (server)");
 
 #Test 10: Server name handshake (client and server)
@@ -247,7 +248,6 @@ $proxy->serverflags("-servername testhost");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::SERVER_NAME_CLI_EXTENSION
                | checkhandshake::SERVER_NAME_SRV_EXTENSION,
                "Server name handshake test");
 
