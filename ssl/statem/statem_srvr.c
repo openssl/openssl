@@ -1822,12 +1822,8 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
                 goto f_err;
             }
             s->s3->tmp.new_cipher = cipher;
-            if (!tls_choose_sigalg(s)) {
-                al = SSL_AD_HANDSHAKE_FAILURE;
-                SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
-                       SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
+            if (!tls_choose_sigalg(s, &al))
                 goto f_err;
-            }
             /* check whether we should disable session resumption */
             if (s->not_resumable_session_cb != NULL)
                 s->session->not_resumable =
