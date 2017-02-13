@@ -260,7 +260,7 @@ void dtls1_start_timer(SSL *s)
     if (s->d1->next_timeout.tv_sec == 0 && s->d1->next_timeout.tv_usec == 0) {
 
         if (s->d1->timer_cb != NULL)
-            s->d1->timeout_duration_ms = s->d1->timer_cb(s, 1000);
+            s->d1->timeout_duration_ms = s->d1->timer_cb(s, 0);
         else
             s->d1->timeout_duration_ms = 1000;
     }

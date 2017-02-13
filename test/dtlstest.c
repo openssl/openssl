@@ -48,7 +48,10 @@ static unsigned timer_cb(SSL *s, unsigned timer)
 
     ++timer_cb_count;
 
-    return timer;
+    if (timer == 0)
+        return 1000;
+    else
+        return 2*timer;
 }
 
 static int test_dtls_unprocessed(int testidx)
