@@ -173,21 +173,23 @@ checkhandshake($proxy, checkhandshake::CLIENT_AUTH_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
                "Client auth handshake test");
 
-#Test 7: Server name handshake (client request only)
+#Test 7: Server name handshake (no client request)
 $proxy->clear();
-$proxy->clientflags("-servername testhost");
+$proxy->clientflags("-noservername");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::SERVER_NAME_CLI_EXTENSION,
+               & ~checkhandshake::SERVER_NAME_CLI_EXTENSION,
                "Server name handshake test (client)");
 
 #Test 8: Server name handshake (server support only)
 $proxy->clear();
+$proxy->clientflags("-noservername");
 $proxy->serverflags("-servername testhost");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS,
+               checkhandshake::DEFAULT_EXTENSIONS
+               & ~checkhandshake::SERVER_NAME_CLI_EXTENSION,
                "Server name handshake test (server)");
 
 #Test 9: Server name handshake (client and server)
@@ -197,7 +199,6 @@ $proxy->serverflags("-servername testhost");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::SERVER_NAME_CLI_EXTENSION
                | checkhandshake::SERVER_NAME_SRV_EXTENSION,
                "Server name handshake test");
 

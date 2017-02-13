@@ -4,6 +4,12 @@
 
  Changes between 1.1.0a and 1.1.1 [xx XXX xxxx]
 
+  *) s_client will now send the Server Name Indication (SNI) extension by
+     default unless the new "-noservername" option is used. The server name is
+     based on the host provided to the "-connect" option unless overridden by
+     using "-servername".
+     [Matt Caswell]
+
   *) Add support for SipHash
      [Todd Short]
 

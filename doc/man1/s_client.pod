@@ -14,6 +14,7 @@ B<openssl> B<s_client>
 [B<-4>]
 [B<-6>]
 [B<-servername name>]
+[B<-noservername>]
 [B<-verify depth>]
 [B<-verify_return_error>]
 [B<-cert filename>]
@@ -149,7 +150,17 @@ Use IPv6 only.
 
 =item B<-servername name>
 
-Set the TLS SNI (Server Name Indication) extension in the ClientHello message.
+Set the TLS SNI (Server Name Indication) extension in the ClientHello message to
+the given value.
+
+=item B<-noservername>
+
+Suppresses sending of the SNI (Server Name Indication) extension in the
+ClientHello message. Cannot be used in conjunction with the B<-servername> or
+<-dane_tlsa_domain> options. If this option is not given then the hostname
+provided to the B<-connect> option is used in the SNI extension, or "localhost"
+if B<-connect> has not been supplied. Note that an SNI name should normally be a
+DNS name and not an IP address.
 
 =item B<-cert certname>
 
