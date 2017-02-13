@@ -1759,15 +1759,14 @@ static int tls_handle_status_request(SSL *s, int *al)
     if (s->ext.status_type != TLSEXT_STATUSTYPE_nothing && s->ctx != NULL
             && s->ctx->ext.status_cb != NULL) {
         int ret;
-        CERT_PKEY *certpkey = ssl_get_server_send_pkey(s);
 
         /* If no certificate can't return certificate status */
-        if (certpkey != NULL) {
+        if (s->s3->tmp.cert_idx != -1) {
             /*
              * Set current certificate to one we will use so SSL_get_certificate
              * et al can pick it up.
              */
-            s->cert->key = certpkey;
+            s->cert->key = &s->cert->pkeys[s->s3->tmp.cert_idx];
             ret = s->ctx->ext.status_cb(s, s->ctx->ext.status_arg);
             switch (ret) {
                 /* We don't want to send a status request response */
@@ -2157,11 +2156,12 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
 
     if (!(s->s3->tmp.new_cipher->algorithm_auth & (SSL_aNULL | SSL_aSRP))
         && !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK)) {
-        if ((pkey = ssl_get_sign_pkey(s, s->s3->tmp.new_cipher, &md))
-            == NULL) {
+        if (s->s3->tmp.cert_idx == -1 || s->s3->tmp.sigalg == NULL) {
             al = SSL_AD_DECODE_ERROR;
             goto f_err;
         }
+        pkey = s->cert->pkeys[s->s3->tmp.cert_idx].privatekey;
+        md = ssl_md(s->s3->tmp.sigalg->hash_idx);
     } else {
         pkey = NULL;
     }
@@ -3214,11 +3214,11 @@ int tls_construct_server_certificate(SSL *s, WPACKET *pkt)
     CERT_PKEY *cpk;
     int al = SSL_AD_INTERNAL_ERROR;
 
-    cpk = ssl_get_server_send_pkey(s);
-    if (cpk == NULL) {
+    if (s->s3->tmp.cert_idx == -1) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_CERTIFICATE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+    cpk = &s->cert->pkeys[s->s3->tmp.cert_idx];
 
     /*
      * In TLSv1.3 the certificate chain is always preceded by a 0 length context
