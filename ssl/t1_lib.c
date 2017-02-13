@@ -770,6 +770,26 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_undef, NID_undef}
 #endif
 };
+/* Legacy sigalgs for TLS < 1.2 RSA TLS signatures */
+static const SIGALG_LOOKUP legacy_rsa_sigalg = {
+    "rsa_pkcs1_md5_sha1", 0,
+     NID_md5_sha1, SSL_MD_MD5_SHA1_IDX,
+     EVP_PKEY_RSA, SSL_PKEY_RSA,
+     NID_undef, NID_undef
+};
+
+/*
+ * Default signature algorithm values used if signature algorithms not present.
+ * From RFC5246. Note: order must match certificate index order.
+ */
+static const uint16_t tls_default_sigalg[] = {
+    TLSEXT_SIGALG_rsa_pkcs1_sha1, /* SSL_PKEY_RSA */
+    TLSEXT_SIGALG_dsa_sha1, /* SSL_PKEY_DSA_SIGN */
+    TLSEXT_SIGALG_ecdsa_sha1, /* SSL_PKEY_ECC */
+    TLSEXT_SIGALG_gostr34102001_gostr3411, /* SSL_PKEY_GOST01 */
+    TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, /* SSL_PKEY_GOST12_256 */
+    TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512 /* SSL_PKEY_GOST12_512 */
+};
 
 /* Lookup TLS signature algorithm */
 static const SIGALG_LOOKUP *tls1_lookup_sigalg(uint16_t sigalg)
@@ -783,6 +803,35 @@ static const SIGALG_LOOKUP *tls1_lookup_sigalg(uint16_t sigalg)
             return s;
     }
     return NULL;
+}
+/*
+ * Return a signature algorithm for TLS < 1.2 where the signature type
+ * is fixed by the certificate type.
+ */
+static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
+{
+    if (idx < 0 || idx >= (int)OSSL_NELEM(tls_default_sigalg))
+        return NULL;
+    if (SSL_USE_SIGALGS(s) || idx != SSL_PKEY_RSA) {
+        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(tls_default_sigalg[idx]);
+
+        if (lu == NULL || ssl_md(lu->hash_idx) == NULL) {
+            return NULL;
+        }
+        return lu;
+    }
+    return &legacy_rsa_sigalg;
+}
+/* Set peer sigalg based key type */
+int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey)
+{
+    int idx = ssl_cert_type(NULL, pkey);
+
+    const SIGALG_LOOKUP *lu = tls1_get_legacy_sigalg(s, idx);
+    if (lu == NULL)
+        return 0;
+    s->s3->tmp.peer_sigalg = lu;
+    return 1;
 }
 
 static int tls_sigalg_get_sig(uint16_t sigalg)
@@ -2270,6 +2319,9 @@ int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *x, int vfy)
  */
 int tls_choose_sigalg(SSL *s, int *al)
 {
+    int idx;
+    const SIGALG_LOOKUP *lu = NULL;
+
     if (SSL_IS_TLS13(s)) {
         size_t i;
 #ifndef OPENSSL_NO_EC
@@ -2278,25 +2330,20 @@ int tls_choose_sigalg(SSL *s, int *al)
 
         /* Look for a certificate matching shared sigaglgs */
         for (i = 0; i < s->cert->shared_sigalgslen; i++) {
-            const SIGALG_LOOKUP *lu = s->cert->shared_sigalgs[i];
-            int idx;
-            const EVP_MD *md;
-            CERT_PKEY *c;
+            lu = s->cert->shared_sigalgs[i];
 
             /* Skip RSA if not PSS */
             if (lu->sig == EVP_PKEY_RSA)
                 continue;
-            md = ssl_md(lu->hash_idx);
-            if (md == NULL)
+            if (ssl_md(lu->hash_idx) == NULL)
                 continue;
             idx = lu->sig_idx;
-            c = &s->cert->pkeys[idx];
-            if (c->x509 == NULL || c->privatekey == NULL)
+            if (!ssl_has_cert(s, idx))
                     continue;
             if (lu->sig == EVP_PKEY_EC) {
 #ifndef OPENSSL_NO_EC
                 if (curve == -1) {
-                    EC_KEY *ec = EVP_PKEY_get0_EC_KEY(c->privatekey);
+                    EC_KEY *ec = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[idx].privatekey);
 
                     curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
                 }
@@ -2306,19 +2353,96 @@ int tls_choose_sigalg(SSL *s, int *al)
                 continue;
 #endif
             }
-            s->s3->tmp.sigalg = lu;
-            s->s3->tmp.cert_idx = idx;
-            s->s3->tmp.md[idx] = md;
-            s->cert->key = s->cert->pkeys + idx;
+            break;
+        }
+        if (i == s->cert->shared_sigalgslen) {
+            *al = SSL_AD_HANDSHAKE_FAILURE;
+            SSLerr(SSL_F_TLS_CHOOSE_SIGALG,
+                   SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
+            return 0;
+        }
+    } else {
+        /* Find index corresponding to ciphersuite */
+        idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
+        /* If no certificate for ciphersuite return */
+        if (idx == -1) {
+            s->s3->tmp.cert_idx = -1;
+            s->s3->tmp.sigalg = NULL;
             return 1;
         }
-        *al = SSL_AD_HANDSHAKE_FAILURE;
-        SSLerr(SSL_F_TLS_CHOOSE_SIGALG, SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
-        return 0;
+        if (idx == SSL_PKEY_GOST_EC) {
+            /* Work out which GOST certificate is avaiable */
+            if (ssl_has_cert(s, SSL_PKEY_GOST12_512)) {
+                idx = SSL_PKEY_GOST12_512;
+            } else if (ssl_has_cert(s, SSL_PKEY_GOST12_256)) {
+                idx = SSL_PKEY_GOST12_256;
+            } else if (ssl_has_cert(s, SSL_PKEY_GOST01)) {
+                idx = SSL_PKEY_GOST01;
+            } else {
+                *al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        } else if (!ssl_has_cert(s, idx)) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+
+        if (SSL_USE_SIGALGS(s)) {
+            if (s->s3->tmp.peer_sigalgs != NULL) {
+                size_t i;
+
+                /*
+                 * Find highest preference signature algorithm matching
+                 * cert type
+                 */
+                for (i = 0; i < s->cert->shared_sigalgslen; i++) {
+                    lu = s->cert->shared_sigalgs[i];
+                    if (lu->sig_idx == idx)
+                        break;
+                    if (idx == SSL_PKEY_RSA && lu->sig == EVP_PKEY_RSA_PSS)
+                        break;
+                }
+                if (i == s->cert->shared_sigalgslen) {
+                    *al = SSL_AD_INTERNAL_ERROR;
+                    SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+            } else {
+                /*
+                 * If we have no sigalg use defaults
+                 */
+                const uint16_t *sent_sigs;
+                size_t sent_sigslen, i;
+
+                if ((lu = tls1_get_legacy_sigalg(s, idx)) == NULL) {
+                    *al = SSL_AD_INTERNAL_ERROR;
+                    SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+
+                /* Check signature matches a type we sent */
+                sent_sigslen = tls12_get_psigalgs(s, 1, &sent_sigs);
+                for (i = 0; i < sent_sigslen; i++, sent_sigs++) {
+                    if (lu->sigalg == *sent_sigs)
+                        break;
+                }
+                if (i == sent_sigslen) {
+                    SSLerr(SSL_F_TLS_CHOOSE_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
+                    *al = SSL_AD_HANDSHAKE_FAILURE;
+                    return 0;
+                }
+            }
+        } else {
+            if ((lu = tls1_get_legacy_sigalg(s, idx)) == NULL) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        }
     }
-    /*
-     * FIXME: could handle previous TLS versions in an appropriate way
-     * and tidy up certificate and signature algorithm handling.
-     */
+    s->s3->tmp.cert_idx = idx;
+    s->s3->tmp.sigalg = lu;
     return 1;
 }
