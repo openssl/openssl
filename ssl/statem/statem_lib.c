@@ -331,20 +331,15 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
                 al = SSL_AD_DECODE_ERROR;
                 goto f_err;
             }
-            md = ssl_md(s->s3->tmp.peer_sigalg->hash_idx);
 #ifdef SSL_DEBUG
             fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 #endif
-        } else {
-            /* Use default digest for this key type */
-            int idx = ssl_cert_type(NULL, pkey);
-            if (idx >= 0)
-                md = s->s3->tmp.md[idx];
-            if (md == NULL) {
+        } else if (!tls1_set_peer_legacy_sigalg(s, pkey)) {
                 al = SSL_AD_INTERNAL_ERROR;
                 goto f_err;
-            }
         }
+
+        md = ssl_md(s->s3->tmp.peer_sigalg->hash_idx);
 
         if (!PACKET_get_net_2(pkt, &len)) {
             SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_LENGTH_MISMATCH);
