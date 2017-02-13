@@ -1,6 +1,6 @@
 {- our @apps_openssl_src =
        qw(openssl.c
-          asn1pars.c ca.c ciphers.c cms.c crl.c crl2p7.c dgst.c dhparam.c
+          asn1pars.c ca.c ciphers.c cmp.c cms.c crl.c crl2p7.c dgst.c dhparam.c
           dsa.c dsaparam.c ec.c ecparam.c enc.c engine.c errstr.c gendsa.c
           genpkey.c genrsa.c nseq.c ocsp.c passwd.c pkcs12.c pkcs7.c pkcs8.c
           pkey.c pkeyparam.c pkeyutl.c prime.c rand.c req.c rsa.c rsautl.c

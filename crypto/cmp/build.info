@@ -1,0 +1,2 @@
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]= cmp_asn.c cmp_ctx.c cmp_err.c cmp_http.c cmp_lib.c cmp_msg.c cmp_ses.c cmp_vfy.c cmp_srv.c

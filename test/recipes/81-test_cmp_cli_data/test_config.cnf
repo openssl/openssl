@@ -1,0 +1,159 @@
+[default]
+batch = 1
+#proxy = 194.145.60.1:9400
+totaltimeout = 6 # prevent, e.g., infinite polling due to error
+trusted = root.crt
+cert = signer.crt
+key  = signer.p12
+keypass = pass:12345
+newkey = test.ECC256p.pem
+newkeypass = pass:
+cmd = ir
+out_trusted = root.crt
+certout = test.cert.pem
+policies = 1.2.3.4 # gets ignored
+policies_critical = 1 # gets ignored
+
+############################# CA configurations
+
+[EJBCA]
+server_cn = ec2-204-236-244-127.compute-1.amazonaws.com
+server_ip = 204.236.244.127
+server_port = 80
+server_cert = issuing.crt
+server = $server_cn:$server_port
+path = /ejbca/publicweb/cmp/ECCEndEntity
+recipient = /CN=ECC Issuing CA v10/OU=For test purpose only/O=CMPforOpenSSL/C=DE
+subject = "/CN=ECC-EE/OU=For test purposes only/O=CMPforOpenSSL/C=DE"
+pbm_secret = pass:SecretCmp
+ignore_keyusage = 0
+unprotectederrors = 1 # EJBCA sends error messages and negative responses without protection
+column = 0
+sleep = 0
+
+[Insta]
+server_cn = pki.certificate.fi
+server_ip = 91.213.161.196
+server_port = 8700
+server_cert = issuing.crt
+server = $server_cn:$server_port
+path = pkix/
+recipient = /C=FI/O=Insta Demo/CN=Insta Demo CA
+subject = /C=FI/O=Insta Demo/CN=ECC-EE
+pbm_secret = pass:insta
+ref = 3078
+secret = $pbm_secret
+key =
+cert =
+ignore_keyusage = 1
+unprotectederrors = 0
+column = 1
+sleep = 3
+
+[CmpWsRa] # this is a Siemens-only test configuration
+server_cn = localhost
+server_ip = 127.0.0.1
+server_port = 9080
+server_cert = signer.crt
+server = $server_cn:$server_port
+server_cert = signer.crt
+path = cmp/PlaygroundECC/
+recipient = /CN=PPKI Playground ECC Issuing CA v1.0/OU=Corporate Technology/OU=For internal test purposes only/O=Siemens/C=DE
+ra = /CN=Product PKI Playground CMP Signer/OU=PPKI Playground/OU=Corporate Technology/OU=For internal test purposes only/O=Siemens/C=DE
+subject = /CN=ECC-EE/OU=PPKI Playground/OU=Corporate Technology/OU=For internal test purposes only/O=Siemens/C=DE
+pbm_secret = pass:SecretCmp
+ignore_keyusage = 0
+unprotectederrors = 1 # EJBCA sends error messages and negative responses without protection
+column = 0
+sleep = 0
+
+############################# aspects
+
+[connection]
+msgtimeout = 15
+totaltimeout =
+tls_used =
+tls_cert =
+tls_key =
+tls_keypass =
+tls_trusted =
+tls_host =
+
+[credentials]
+ref =
+secret =
+cert =
+key =
+keypass =
+extracerts =
+geninfo = # TODO move geninfo tests to commands section
+digest =
+unprotectedrequests =
+
+[verification]
+recipient =
+expected_sender =
+srvcert =
+trusted =
+untrusted =
+unprotectederrors =
+extracertsout =
+
+[tls]
+server =
+tls_used =
+tls_cert =
+tls_key =
+tls_keypass =
+tls_trusted =
+tls_host =
+
+[commands]
+cmd =
+cacertsout =
+infotype =
+oldcert =
+revreason =
+
+[enrollment]
+cmd =
+newkey =
+newkeypass =
+#subject =
+issuer =
+days =
+reqexts =
+sans =
+san_default = 0
+#popo =
+implicitconfirm = 0
+disableconfirm = 0
+certout =
+out_trusted =
+oldcert =
+csr =
+
+############################# extra cert template contents
+
+[reqexts]
+basicConstraints = CA:FALSE
+#basicConstraints = critical, CA:TRUE
+keyUsage = critical, digitalSignature # keyAgreement, keyEncipherment, nonRepudiation
+extendedKeyUsage = critical, clientAuth # serverAuth, codeSigning
+#crlDistributionPoints = URI:http:
+# authorityInfoAccess = URI:http:
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.0 = localhost
+IP.0 = 127.0.0.1
+IP.1 = 192.168.1.1
+
+[reqexts_invalidkey]
+subjectAltName = @alt_names_3
+
+[alt_names_3]
+DNS.0 = localhost
+DNS.1 = example.com
+DNS.2 = example2.com
+DNS__3 = example3.com

@@ -54,6 +54,8 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_OCSP, 0, 0), "OCSP routines"},
     {ERR_PACK(ERR_LIB_UI, 0, 0), "UI routines"},
     {ERR_PACK(ERR_LIB_FIPS, 0, 0), "FIPS routines"},
+    {ERR_PACK(ERR_LIB_CMP, 0, 0), "CMP routines"},
+    {ERR_PACK(ERR_LIB_CRMF, 0, 0), "CRMF routines"},
     {ERR_PACK(ERR_LIB_CMS, 0, 0), "CMS routines"},
     {ERR_PACK(ERR_LIB_HMAC, 0, 0), "HMAC routines"},
     {ERR_PACK(ERR_LIB_CT, 0, 0), "CT routines"},
@@ -114,6 +116,8 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_UI_LIB, "UI lib"},
     {ERR_R_OSSL_STORE_LIB, "STORE lib"},
     {ERR_R_ECDSA_LIB, "ECDSA lib"},
+    {ERR_R_CMP_LIB, "CMP lib"},
+    {ERR_R_CRMF_LIB, "CRMF lib"},
 
     {ERR_R_NESTED_ASN1_ERROR, "nested asn1 error"},
     {ERR_R_MISSING_ASN1_EOS, "missing asn1 eos"},

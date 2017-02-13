@@ -1,0 +1,69 @@
+EJBCA,Insta,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infotype,val,, -oldcert,val, -revreason,int
+,,,,,Generic,message options:,,,,,,,,Misc,request options:,,
+,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+0,0,config default, -section,, -cmd,ir,,BLANK,,,BLANK,,,BLANK,,BLANK,
+TBD,TBD,config default all set, -section,, -cmd,ir,, -cacertsout,test.cacerts.crt,, -infotype,signKeyPairTypes,, -oldcert,test.cert.pem,BLANK,
+,,,,, -cmd,kur,,,,,,,, -oldcert,test.cert.pem,,
+,,,,, -cmd,rr,,,,,,,, -oldcert,test.cert.pem, -revreason,5
+,,,,,,,,,,,,,,,,,
+0,0,minimum, -section,, -cmd,ir,,BLANK,,,BLANK,,,BLANK,,BLANK,
+,,,,,,,,,,,,,,,,,
+1,1,no cmd, -section,,BLANK,,,BLANK,,,BLANK,,,BLANK,,BLANK,
+1,1,cmd empty, -section,, -cmd,,,BLANK,,,BLANK,,,BLANK,,BLANK,
+1,1,cmd undefined , -section,, -cmd,abc,,BLANK,,,BLANK,,,BLANK,,BLANK,
+1,1,cmd incomplete, -section,, -cmd,i,,BLANK,,,BLANK,,,BLANK,,BLANK,
+1,1,multiple cmds, -section,, -cmd,ir,kur,BLANK,,,BLANK,,,BLANK,,BLANK,
+,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+0,0,no cacertsout, -section,, -cmd,ir,,BLANK,,,BLANK,,,BLANK,,BLANK,
+0,0,cacertsout, -section,, -cmd,ir,, -cacertsout,test.cacerts.crt,,BLANK,,,BLANK,,BLANK,
+,,,,,,,,,,,,,,,,,
+1,1,cacertsout empty, -section,, -cmd,ir,, -cacertsout,,,BLANK,,,BLANK,,BLANK,
+1, -,cacertsout value is a dir, -section,, -cmd,ir,, -cacertsout,,,BLANK,,,BLANK,,BLANK,
+1,1,cacertsout too many parameters, -section,, -cmd,ir,, -cacertsout,abc,def,BLANK,,,BLANK,,BLANK,
+,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+,,rr,,,,,,,,,,,,,,,
+0,0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+0,0,rr command, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem,BLANK,
+0,0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+0,0,revreason unspecified, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,0
+0,0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+0,0,revreason keyCompromise, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,1
+0,0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+0,0,revreason CACompromise, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,2
+0,0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+0,0,revreason affiliationChanged, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,3
+0,0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+0,0,revreason superseded, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,4
+0,0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+0,0,revreason cessationOfOperation, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,5
+0,0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+0,0,revreason certificateHold, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,6
+0,0,revreason removeFromCRL, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,8
+1,TBD,revreason removeFromCRL - not on hold, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,8
+1,1,revreason 7 (invalid), -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,7
+0,0,revreason priviligeWithdrawn, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,9
+0,0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+0,0,revreason AACompromise, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,10
+0,0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+0,0,revreason none, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,-1
+0,0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+1,1,without oldcert, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,,BLANK,
+1,1,oldcert is directory, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,,BLANK,
+1,1,oldcert file nonexistent, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,idontexist,BLANK,
+1,1,empty oldcert, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,emptycert.crt,BLANK,
+1,1,oldcert and key do not match, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,WrongRootCA.crt,BLANK,
+1,1,revreason 11 (invalid), -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,11
+1,1,revreason string, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,abc
+1,1,revreason out of integer range, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,0x10000000000000000000
+,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,
+0,0,ir + infotype, -section,, -cmd,ir,,BLANK,,, -infotype,signKeyPairTypes,,BLANK,,BLANK,
+TBD,TBD,EJBCA does not support genm,,,,,,,,,,,,,,,
+-,0,infotype blank as in config, -section,, -cmd,genm,,BLANK,,,BLANK,,,BLANK,,BLANK,
+-,0,infotype some value, -section,, -cmd,genm,,BLANK,,, -infotype,signKeyPairTypes,,BLANK,,BLANK,
+,,,,,,,,,,,,,,,,,
+-,1,missing infotype value, -section,, -cmd,genm,,BLANK,,, -infotype,,,BLANK,,BLANK,
+-,1,invalid infotype, -section,, -cmd,genm,,BLANK,,, -infotype,asdf,,BLANK,,BLANK,
