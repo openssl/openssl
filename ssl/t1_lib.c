@@ -3151,8 +3151,8 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     }
     /* Attempt to decrypt session data */
     /* Move p after IV to start of encrypted ticket, update length */
-    p = etick + 16 + EVP_CIPHER_CTX_iv_length(ctx);
-    eticklen -= 16 + EVP_CIPHER_CTX_iv_length(ctx);
+    p = etick + TLSEXT_KEYNAME_LENGTH + EVP_CIPHER_CTX_iv_length(ctx);
+    eticklen -= TLSEXT_KEYNAME_LENGTH + EVP_CIPHER_CTX_iv_length(ctx);
     sdec = OPENSSL_malloc(eticklen);
     if (sdec == NULL || EVP_DecryptUpdate(ctx, sdec, &slen, p, eticklen) <= 0) {
         EVP_CIPHER_CTX_free(ctx);
