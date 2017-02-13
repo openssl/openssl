@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
             goto end;
         }
 
-        if (!create_ssl_connection(serverssl, clientssl)) {
+        if (!create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)) {
             printf("Test %d failed: Create SSL connection failed\n", test);
             goto end;
         }

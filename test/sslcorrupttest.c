@@ -240,7 +240,7 @@ static int test_ssl_corrupt(int testidx)
         goto end;
     }
 
-    if (!create_ssl_connection(server, client)) {
+    if (!create_ssl_connection(server, client, SSL_ERROR_NONE)) {
         printf("Unable to create SSL connection\n");
         ERR_print_errors_fp(stdout);
         goto end;
