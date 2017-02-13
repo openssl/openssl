@@ -2274,7 +2274,7 @@ __owur int ssl_security_cert(SSL *s, SSL_CTX *ctx, X509 *x, int vfy, int is_ee);
 __owur int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *ex,
                                    int vfy);
 
-int tls_choose_sigalg(SSL *s);
+int tls_choose_sigalg(SSL *s, int *al);
 
 __owur EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md);
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);

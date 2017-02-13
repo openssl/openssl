@@ -260,6 +260,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_TLS1_PRF), "tls1_PRF"},
     {ERR_FUNC(SSL_F_TLS1_SETUP_KEY_BLOCK), "tls1_setup_key_block"},
     {ERR_FUNC(SSL_F_TLS1_SET_SERVER_SIGALGS), "tls1_set_server_sigalgs"},
+    {ERR_FUNC(SSL_F_TLS_CHOOSE_SIGALG), "tls_choose_sigalg"},
     {ERR_FUNC(SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK),
      "tls_client_key_exchange_post_work"},
     {ERR_FUNC(SSL_F_TLS_COLLECT_EXTENSIONS), "tls_collect_extensions"},

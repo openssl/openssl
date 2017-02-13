@@ -2268,7 +2268,7 @@ int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *x, int vfy)
  * Choose an appropriate signature algorithm based on available certificates
  * Set current certificate and digest to match chosen algorithm.
  */
-int tls_choose_sigalg(SSL *s)
+int tls_choose_sigalg(SSL *s, int *al)
 {
     if (SSL_IS_TLS13(s)) {
         size_t i;
@@ -2312,6 +2312,8 @@ int tls_choose_sigalg(SSL *s)
             s->cert->key = s->cert->pkeys + idx;
             return 1;
         }
+        *al = SSL_AD_HANDSHAKE_FAILURE;
+        SSLerr(SSL_F_TLS_CHOOSE_SIGALG, SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
         return 0;
     }
     /*
