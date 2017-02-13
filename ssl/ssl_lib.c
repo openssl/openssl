@@ -2720,16 +2720,12 @@ void SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg)
 
 void ssl_set_masks(SSL *s)
 {
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_GOST)
-    CERT_PKEY *cpk;
-#endif
     CERT *c = s->cert;
     uint32_t *pvalid = s->s3->tmp.valid_flags;
     int rsa_enc, rsa_sign, dh_tmp, dsa_sign;
     unsigned long mask_k, mask_a;
 #ifndef OPENSSL_NO_EC
     int have_ecc_cert, ecdsa_ok;
-    X509 *x = NULL;
 #endif
     if (c == NULL)
         return;
@@ -2755,18 +2751,15 @@ void ssl_set_masks(SSL *s)
 #endif
 
 #ifndef OPENSSL_NO_GOST
-    cpk = &(c->pkeys[SSL_PKEY_GOST12_512]);
-    if (cpk->x509 != NULL && cpk->privatekey != NULL) {
+    if (ssl_has_cert(s, SSL_PKEY_GOST12_512)) {
         mask_k |= SSL_kGOST;
         mask_a |= SSL_aGOST12;
     }
-    cpk = &(c->pkeys[SSL_PKEY_GOST12_256]);
-    if (cpk->x509 != NULL && cpk->privatekey != NULL) {
+    if (ssl_has_cert(s, SSL_PKEY_GOST12_256)) {
         mask_k |= SSL_kGOST;
         mask_a |= SSL_aGOST12;
     }
-    cpk = &(c->pkeys[SSL_PKEY_GOST01]);
-    if (cpk->x509 != NULL && cpk->privatekey != NULL) {
+    if (ssl_has_cert(s, SSL_PKEY_GOST01)) {
         mask_k |= SSL_kGOST;
         mask_a |= SSL_aGOST01;
     }
@@ -2795,9 +2788,7 @@ void ssl_set_masks(SSL *s)
 #ifndef OPENSSL_NO_EC
     if (have_ecc_cert) {
         uint32_t ex_kusage;
-        cpk = &c->pkeys[SSL_PKEY_ECC];
-        x = cpk->x509;
-        ex_kusage = X509_get_key_usage(x);
+        ex_kusage = X509_get_key_usage(c->pkeys[SSL_PKEY_ECC].x509);
         ecdsa_ok = ex_kusage & X509v3_KU_DIGITAL_SIGNATURE;
         if (!(pvalid[SSL_PKEY_ECC] & CERT_PKEY_SIGN))
             ecdsa_ok = 0;

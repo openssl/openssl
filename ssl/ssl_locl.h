@@ -1947,6 +1947,15 @@ struct openssl_ssl_test_functions {
 
 const char *ssl_protocol_to_string(int version);
 
+/* Returns true if certificate and private key for 'idx' are present */
+static ossl_inline int ssl_has_cert(const SSL *s, int idx)
+{
+    if (idx < 0 || idx >= SSL_PKEY_NUM)
+        return 0;
+    return s->cert->pkeys[idx].x509 != NULL
+        && s->cert->pkeys[idx].privatekey != NULL;
+}
+
 # ifndef OPENSSL_UNIT_TEST
 
 void ssl_clear_cipher_ctx(SSL *s);
