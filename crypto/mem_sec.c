@@ -356,6 +356,10 @@ static int sh_init(size_t size, int minsize)
     sh.minsize = minsize;
     sh.bittable_size = (sh.arena_size / sh.minsize) * 2;
 
+    /* Prevent allocations of size 0 later on */
+    if (sh.bittable_size >> 3 == 0)
+        goto err;
+
     sh.freelist_size = -1;
     for (i = sh.bittable_size; i; i >>= 1)
         sh.freelist_size++;
