@@ -281,8 +281,8 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
         goto err;
     }
 
-    p = as->cipher->data;
-    id = 0x03000000L | ((unsigned long)p[0] << 8L) | (unsigned long)p[1];
+    id = 0x03000000L | ((unsigned long)as->cipher->data[0] << 8L)
+                     | (unsigned long)as->cipher->data[1];
 
     ret->cipher_id = id;
     ret->cipher = ssl3_get_cipher_by_id(id);
