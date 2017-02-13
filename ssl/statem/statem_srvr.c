@@ -1972,8 +1972,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
     size_t encodedlen = 0;
     int curve_id = 0;
 #endif
-    EVP_PKEY *pkey;
-    const EVP_MD *md = NULL;
+    const SIGALG_LOOKUP *lu = s->s3->tmp.sigalg;
     int al = SSL_AD_INTERNAL_ERROR, i;
     unsigned long type;
     const BIGNUM *r[4];
@@ -2130,16 +2129,12 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         goto f_err;
     }
 
-    if (!(s->s3->tmp.new_cipher->algorithm_auth & (SSL_aNULL | SSL_aSRP))
-        && !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK)) {
-        if (s->s3->tmp.cert_idx == -1 || s->s3->tmp.sigalg == NULL) {
-            al = SSL_AD_DECODE_ERROR;
-            goto f_err;
-        }
-        pkey = s->cert->pkeys[s->s3->tmp.cert_idx].privatekey;
-        md = ssl_md(s->s3->tmp.sigalg->hash_idx);
-    } else {
-        pkey = NULL;
+    if (((s->s3->tmp.new_cipher->algorithm_auth & (SSL_aNULL | SSL_aSRP)) != 0)
+        || ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK)) != 0) {
+        lu = NULL;
+    } else if (lu == NULL) {
+        al = SSL_AD_DECODE_ERROR;
+        goto f_err;
     }
 
 #ifndef OPENSSL_NO_PSK
@@ -2229,75 +2224,66 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
 #endif
 
     /* not anonymous */
-    if (pkey != NULL) {
+    if (lu != NULL) {
+        EVP_PKEY *pkey = s->cert->pkeys[s->s3->tmp.cert_idx].privatekey;
+        const EVP_MD *md = ssl_md(lu->hash_idx);
+        unsigned char *sigbytes1, *sigbytes2;
+        size_t siglen;
+
+        if (pkey == NULL || md == NULL) {
+            /* Should never happen */
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                   ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
         /*
          * n is the length of the params, they start at &(d[4]) and p
          * points to the space at the end.
          */
-        if (md) {
-            unsigned char *sigbytes1, *sigbytes2;
-            size_t siglen;
-            int ispss = 0;
 
-            /* Get length of the parameters we have written above */
-            if (!WPACKET_get_length(pkt, &paramlen)) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
-                       ERR_R_INTERNAL_ERROR);
-                goto f_err;
-            }
-            /* send signature algorithm */
-            if (SSL_USE_SIGALGS(s)) {
-                if (!tls12_get_sigandhash(s, pkt, pkey, md, &ispss)) {
-                    /* Should never happen */
-                    SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
-                           ERR_R_INTERNAL_ERROR);
-                    goto f_err;
-                }
-            }
-#ifdef SSL_DEBUG
-            fprintf(stderr, "Using hash %s\n", EVP_MD_name(md));
-#endif
-            /*
-             * Create the signature. We don't know the actual length of the sig
-             * until after we've created it, so we reserve enough bytes for it
-             * up front, and then properly allocate them in the WPACKET
-             * afterwards.
-             */
-            siglen = EVP_PKEY_size(pkey);
-            if (!WPACKET_sub_reserve_bytes_u16(pkt, siglen, &sigbytes1)
-                    || EVP_DigestSignInit(md_ctx, &pctx, md, NULL, pkey) <= 0) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
-                       ERR_R_INTERNAL_ERROR);
-                goto f_err;
-            }
-            if (ispss) {
-                if (EVP_PKEY_CTX_set_rsa_padding(pctx,
-                                                 RSA_PKCS1_PSS_PADDING) <= 0
-                    || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, RSA_PSS_SALTLEN_DIGEST) <= 0) {
-                    SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
-                           ERR_R_EVP_LIB);
-                    goto f_err;
-                }
-            }
-            if (EVP_DigestSignUpdate(md_ctx, &(s->s3->client_random[0]),
-                                     SSL3_RANDOM_SIZE) <= 0
-                    || EVP_DigestSignUpdate(md_ctx, &(s->s3->server_random[0]),
-                                            SSL3_RANDOM_SIZE) <= 0
-                    || EVP_DigestSignUpdate(md_ctx,
-                                            s->init_buf->data + paramoffset,
-                                            paramlen) <= 0
-                    || EVP_DigestSignFinal(md_ctx, sigbytes1, &siglen) <= 0
-                    || !WPACKET_sub_allocate_bytes_u16(pkt, siglen, &sigbytes2)
-                    || sigbytes1 != sigbytes2) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
-                       ERR_R_INTERNAL_ERROR);
-                goto f_err;
-            }
-        } else {
-            /* Is this error check actually needed? */
-            al = SSL_AD_HANDSHAKE_FAILURE;
+        /* Get length of the parameters we have written above */
+        if (!WPACKET_get_length(pkt, &paramlen)) {
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
-                   SSL_R_UNKNOWN_PKEY_TYPE);
+                   ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
+        /* send signature algorithm */
+        if (SSL_USE_SIGALGS(s) && !WPACKET_put_bytes_u16(pkt, lu->sigalg))
+                return 0;
+        /*
+         * Create the signature. We don't know the actual length of the sig
+         * until after we've created it, so we reserve enough bytes for it
+         * up front, and then properly allocate them in the WPACKET
+         * afterwards.
+         */
+        siglen = EVP_PKEY_size(pkey);
+        if (!WPACKET_sub_reserve_bytes_u16(pkt, siglen, &sigbytes1)
+            || EVP_DigestSignInit(md_ctx, &pctx, md, NULL, pkey) <= 0) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                   ERR_R_INTERNAL_ERROR);
+            goto f_err;
+        }
+        if (lu->sig == EVP_PKEY_RSA_PSS) {
+            if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
+                || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, RSA_PSS_SALTLEN_DIGEST) <= 0) {
+                SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                       ERR_R_EVP_LIB);
+                goto f_err;
+            }
+        }
+        if (EVP_DigestSignUpdate(md_ctx, &(s->s3->client_random[0]),
+                                 SSL3_RANDOM_SIZE) <= 0
+            || EVP_DigestSignUpdate(md_ctx, &(s->s3->server_random[0]),
+                                        SSL3_RANDOM_SIZE) <= 0
+            || EVP_DigestSignUpdate(md_ctx,
+                                        s->init_buf->data + paramoffset,
+                                        paramlen) <= 0
+            || EVP_DigestSignFinal(md_ctx, sigbytes1, &siglen) <= 0
+            || !WPACKET_sub_allocate_bytes_u16(pkt, siglen, &sigbytes2)
+            || sigbytes1 != sigbytes2) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                   ERR_R_INTERNAL_ERROR);
             goto f_err;
         }
     }
