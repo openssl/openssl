@@ -510,11 +510,19 @@ int tls_construct_key_update(SSL *s, WPACKET *pkt)
     return 0;
 }
 
+#define MAX_KEY_UPDATE_MESSAGES     32
 
 MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
 {
     int al;
     unsigned int updatetype;
+
+    s->key_update_count++;
+    if (s->key_update_count > MAX_KEY_UPDATE_MESSAGES) {
+        al = SSL_AD_ILLEGAL_PARAMETER;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_UPDATE, SSL_R_TOO_MANY_KEY_UPDATES);
+        goto err;
+    }
 
     if (!PACKET_get_1(pkt, &updatetype)
             || PACKET_remaining(pkt) != 0
