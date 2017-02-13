@@ -2833,80 +2833,6 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 
 #endif
 
-static int ssl_get_server_cert_index(const SSL *s)
-{
-    int idx;
-
-    if (SSL_IS_TLS13(s)) {
-        if (s->s3->tmp.sigalg == NULL) {
-            SSLerr(SSL_F_SSL_GET_SERVER_CERT_INDEX, ERR_R_INTERNAL_ERROR);
-            return -1;
-        }
-        return s->s3->tmp.cert_idx;
-    }
-
-    idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
-    if (idx == SSL_PKEY_GOST_EC) {
-        if (s->cert->pkeys[SSL_PKEY_GOST12_512].x509)
-            idx = SSL_PKEY_GOST12_512;
-        else if (s->cert->pkeys[SSL_PKEY_GOST12_256].x509)
-            idx = SSL_PKEY_GOST12_256;
-        else if (s->cert->pkeys[SSL_PKEY_GOST01].x509)
-            idx = SSL_PKEY_GOST01;
-        else
-            idx = -1;
-    }
-    if (idx == -1)
-        SSLerr(SSL_F_SSL_GET_SERVER_CERT_INDEX, ERR_R_INTERNAL_ERROR);
-    return idx;
-}
-
-CERT_PKEY *ssl_get_server_send_pkey(SSL *s)
-{
-    CERT *c;
-    int i;
-
-    c = s->cert;
-    if (!s->s3 || !s->s3->tmp.new_cipher)
-        return NULL;
-    ssl_set_masks(s);
-
-    i = ssl_get_server_cert_index(s);
-
-    /* This may or may not be an error. */
-    if (i < 0)
-        return NULL;
-
-    /* May be NULL. */
-    return &c->pkeys[i];
-}
-
-EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher,
-                            const EVP_MD **pmd)
-{
-    unsigned long alg_a;
-    CERT *c;
-    int idx = -1;
-
-    alg_a = cipher->algorithm_auth;
-    c = s->cert;
-
-    if (alg_a & SSL_aDSS && c->pkeys[SSL_PKEY_DSA_SIGN].privatekey != NULL)
-        idx = SSL_PKEY_DSA_SIGN;
-    else if (alg_a & SSL_aRSA && c->pkeys[SSL_PKEY_RSA].privatekey != NULL)
-            idx = SSL_PKEY_RSA;
-    else if (alg_a & SSL_aECDSA &&
-             c->pkeys[SSL_PKEY_ECC].privatekey != NULL)
-        idx = SSL_PKEY_ECC;
-    if (idx == -1) {
-        SSLerr(SSL_F_SSL_GET_SIGN_PKEY, ERR_R_INTERNAL_ERROR);
-        return (NULL);
-    }
-    if (pmd)
-        *pmd = s->s3->tmp.md[idx];
-    return c->pkeys[idx].privatekey;
-}
-
 int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char **serverinfo,
                                    size_t *serverinfo_length)
 {
@@ -2915,7 +2841,7 @@ int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char **serverinfo,
     *serverinfo_length = 0;
 
     c = s->cert;
-    i = ssl_get_server_cert_index(s);
+    i = s->s3->tmp.cert_idx;
 
     if (i == -1)
         return 0;
