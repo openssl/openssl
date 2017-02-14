@@ -922,6 +922,7 @@ int args_excert(int opt, SSL_EXCERT **pexc)
             BIO_printf(bio_err, "%s: Error adding xcert\n", opt_getprog());
             goto err;
         }
+        *pexc = exc;
         exc->certfile = opt_arg();
         break;
     case OPT_X_KEY:
