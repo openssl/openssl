@@ -513,6 +513,10 @@ struct servent *getservbyname(const char *name, const char *proto);
 
 #define OSSL_NELEM(x)    (sizeof(x)/sizeof(x[0]))
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+# define CRYPTO_memcmp memcmp
+#endif
+
 #ifdef  __cplusplus
 }
 #endif
