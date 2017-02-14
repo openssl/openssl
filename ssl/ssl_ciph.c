@@ -1776,6 +1776,11 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
     return (NULL);
 }
 
+int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
+{
+    return 0;
+}
+
 #ifdef OPENSSL_NO_COMP
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 {
@@ -1786,11 +1791,6 @@ STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
                                                       *meths)
 {
     return meths;
-}
-
-int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
-{
-    return 1;
 }
 
 #else
@@ -1818,55 +1818,6 @@ void ssl_comp_free_compression_methods_int(void)
     STACK_OF(SSL_COMP) *old_meths = ssl_comp_methods;
     ssl_comp_methods = NULL;
     sk_SSL_COMP_pop_free(old_meths, cmeth_free);
-}
-
-int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
-{
-    SSL_COMP *comp;
-
-    if (cm == NULL || COMP_get_type(cm) == NID_undef)
-        return 1;
-
-    /*-
-     * According to draft-ietf-tls-compression-04.txt, the
-     * compression number ranges should be the following:
-     *
-     *   0 to  63:  methods defined by the IETF
-     *  64 to 192:  external party methods assigned by IANA
-     * 193 to 255:  reserved for private use
-     */
-    if (id < 193 || id > 255) {
-        SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
-               SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE);
-        return 1;
-    }
-
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
-    comp = OPENSSL_malloc(sizeof(*comp));
-    if (comp == NULL) {
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
-        SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
-        return (1);
-    }
-
-    comp->id = id;
-    comp->method = cm;
-    load_builtin_compressions();
-    if (ssl_comp_methods && sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
-        OPENSSL_free(comp);
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
-        SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
-               SSL_R_DUPLICATE_COMPRESSION_ID);
-        return (1);
-    }
-    if (ssl_comp_methods == NULL || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
-        OPENSSL_free(comp);
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
-        SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
-        return (1);
-    }
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
-    return (0);
 }
 #endif
 
