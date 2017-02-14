@@ -1745,6 +1745,7 @@ int ssl_set_client_hello_version(SSL *s)
  * used. Returns 1 if the group is in the list (and allowed if |checkallow| is
  * 1) or 0 otherwise.
  */
+#ifndef OPENSSL_NO_EC
 int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
                   size_t num_groups, int checkallow)
 {
@@ -1766,3 +1767,4 @@ int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
     /* If i == num_groups then not in the list */
     return i < num_groups;
 }
+#endif
