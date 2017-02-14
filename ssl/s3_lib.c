@@ -3149,9 +3149,9 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
              */
             if (cipher->algorithm_auth & (SSL_aNULL | SSL_aSRP))
                 return 2;
-            if (s->s3->tmp.cert_idx == -1)
+            if (s->s3->tmp.cert == NULL)
                 return 0;
-            s->cert->key = &s->cert->pkeys[s->s3->tmp.cert_idx];
+            s->cert->key = s->s3->tmp.cert;
             return 1;
         }
         return ssl_cert_set_current(s->cert, larg);

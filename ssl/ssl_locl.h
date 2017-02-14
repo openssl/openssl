@@ -1213,6 +1213,8 @@ typedef struct sigalg_lookup_st {
     int curve;
 } SIGALG_LOOKUP;
 
+typedef struct cert_pkey_st CERT_PKEY;
+
 typedef struct ssl3_state_st {
     long flags;
     size_t read_mac_secret_size;
@@ -1296,8 +1298,8 @@ typedef struct ssl3_state_st {
 # endif
         /* Signature algorithm we actually use */
         const SIGALG_LOOKUP *sigalg;
-        /* Index of certificate we use */
-        int cert_idx;
+        /* Pointer to certificate we use */
+        CERT_PKEY *cert;
         /*
          * signature algorithms peer reports: e.g. supported signature
          * algorithms extension for server or as part of a certificate
@@ -1495,7 +1497,7 @@ typedef struct dtls1_state_st {
 #  define NAMED_CURVE_TYPE           3
 # endif                         /* OPENSSL_NO_EC */
 
-typedef struct cert_pkey_st {
+struct cert_pkey_st {
     X509 *x509;
     EVP_PKEY *privatekey;
     /* Chain for this certificate */
@@ -1509,7 +1511,7 @@ typedef struct cert_pkey_st {
      */
     unsigned char *serverinfo;
     size_t serverinfo_length;
-} CERT_PKEY;
+};
 /* Retrieve Suite B flags */
 # define tls1_suiteb(s)  (s->cert->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS)
 /* Uses to check strict mode: suite B modes are always strict */
