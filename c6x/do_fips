@@ -1,6 +1,11 @@
 #!/bin/sh
 
-perl Configure c64xplus fipscanisteronly no-engine
+if ! which cl6x > /dev/null 2>&1; then
+	echo 'fatal: cl6x is not on $PATH'
+	exit 1
+fi
+
+perl Configure ${C6XPLATFORM:-c64xplus} fipscanisteronly no-engine
 perl util/mkfiles.pl > MINFO
 perl util/mk1mf.pl auto > c6x/fips.mak
 make -f c6x/fips.mak

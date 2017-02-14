@@ -150,7 +150,7 @@ extern int fips_rsavtest_main(int argc, char **argv);
 extern int fips_shatest_main(int argc, char **argv);
 extern int fips_test_suite_main(int argc, char **argv);
 
-#if !defined(_TMS320C6400_PLUS)
+#if !defined(_TMS320C6400_PLUS) && !defined(_TMS320C6400)
 #include "fips_aesavs.c"
 #include "fips_cmactest.c"
 #include "fips_desmovs.c"
