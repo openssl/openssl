@@ -1405,7 +1405,61 @@ $code.=<<___ if (!$softonly);
 	clr	%r0,%r1
 	jl	.Lctr32_software
 
-	stm${g}	%r6,$s3,6*$SIZE_T($sp)
+	st${g}	$s2,10*$SIZE_T($sp)
+	st${g}	$s3,11*$SIZE_T($sp)
+
+	clr	$len,%r1		# does work even in 64-bit mode
+	jle	.Lctr32_nokma		# kma is slower for <= 16 blocks
+
+	larl	%r1,OPENSSL_s390xcap_P
+	lr	$s2,%r0
+	llihh	$s3,0x8000
+	srlg	$s3,$s3,0($s2)
+	ng	$s3,S390X_KMA(%r1)		# check kma capability vector
+	jz	.Lctr32_nokma
+
+	l${g}hi	%r1,-$stdframe-112
+	l${g}r	$s3,$sp
+	la	$sp,0(%r1,$sp)			# prepare parameter block
+
+	lhi	%r1,0x0600
+	sllg	$len,$len,4
+	or	%r0,%r1				# set HS and LAAD flags
+
+	st${g}	$s3,0($sp)			# backchain
+	la	%r1,$stdframe($sp)
+
+	lmg	$s2,$s3,0($key)			# copy key
+	stg	$s2,$stdframe+80($sp)
+	stg	$s3,$stdframe+88($sp)
+	lmg	$s2,$s3,16($key)
+	stg	$s2,$stdframe+96($sp)
+	stg	$s3,$stdframe+104($sp)
+
+	lmg	$s2,$s3,0($ivp)			# copy iv
+	stg	$s2,$stdframe+64($sp)
+	ahi	$s3,-1				# kma requires counter-1
+	stg	$s3,$stdframe+72($sp)
+	st	$s3,$stdframe+12($sp)		# copy counter
+
+	lghi	$s2,0				# no AAD
+	lghi	$s3,0
+
+	.long	0xb929a042	# kma $out,$s2,$inp
+	brc	1,.-4		# pay attention to "partial completion"
+
+	stg	%r0,$stdframe+80($sp)		# wipe key
+	stg	%r0,$stdframe+88($sp)
+	stg	%r0,$stdframe+96($sp)
+	stg	%r0,$stdframe+104($sp)
+	la	$sp,$stdframe+112($sp)
+
+	lm${g}	$s2,$s3,10*$SIZE_T($sp)
+	br	$ra
+
+.align	16
+.Lctr32_nokma:
+	stm${g}	%r6,$s1,6*$SIZE_T($sp)
 
 	slgr	$out,$inp
 	la	%r1,0($key)	# %r1 is permanent copy of $key
