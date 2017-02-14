@@ -917,7 +917,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         if (SSL_IS_TLS13(s)) {
             /* For TLS 1.3 check curve matches signature algorithm */
 
-            if (curve != lu->curve) {
+            if (lu->curve != NID_undef && curve != lu->curve) {
                 SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
                 return 0;
             }
@@ -2348,7 +2348,7 @@ int tls_choose_sigalg(SSL *s, int *al)
 
                     curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
                 }
-                if (curve != lu->curve)
+                if (lu->curve != NID_undef && curve != lu->curve)
                     continue;
 #else
                 continue;
