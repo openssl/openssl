@@ -1403,7 +1403,39 @@ $code.=<<___ if (!$softonly);
 	clr	%r0,%r1
 	jl	.Lctr32_software
 
-	stm${g}	%r6,$s3,6*$SIZE_T($sp)
+	stm${g}	$s2,$s3,10*$SIZE_T($sp)
+	llgfr	$s2,%r0
+	larl	%r1,OPENSSL_s390xcap_P
+	llihh	%r0,0x8000	# check if kma supports the function code
+	srlg	%r0,%r0,0($s2)
+	ng	%r0,88(%r1)	# check kma capability vector
+	lgr	%r0,$s2
+	jz	.Lctr32_nokma
+
+	aghi	$sp,-112
+	lhi	%r1,0x0600
+	sllg	$len,$len,4
+	or	%r0,%r1		# set HS and LAAD flags
+	lmg	$s2,$s3,0($ivp)
+	la	%r1,0($sp)	# prepare parameter block
+	ahi	$s3,-1		# decrement counter
+	mvc	80(32,$sp),0($key)	# copy key
+	stmg	$s2,$s3,64($sp)	# copy iv
+	st	$s3,12($sp)	# copy counter
+	lghi	$s3,0		# no AAD
+
+	.long	0xb929a042	# kma $out,$s2,$inp
+	brc	1,.-4		# pay attention to "partial completion"
+
+	xc	80(32,$sp),80($sp)	# wipe key copy
+	la	$sp,112($sp)
+	lm${g}	$s2,$s3,10*$SIZE_T($sp)
+	br	$ra
+
+.align	16
+.Lctr32_nokma:
+
+	stm${g}	%r6,$s1,6*$SIZE_T($sp)
 
 	slgr	$out,$inp
 	la	%r1,0($key)	# %r1 is permanent copy of $key
