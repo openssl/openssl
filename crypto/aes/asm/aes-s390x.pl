@@ -1392,6 +1392,7 @@ $code.=<<___;
 .type	AES_ctr32_encrypt,\@function
 .align	16
 AES_ctr32_encrypt:
+.cfi_startproc
 	xgr	%r3,%r4		# flip %r3 and %r4, $out and $len
 	xgr	%r4,%r3
 	xgr	%r3,%r4
@@ -1404,6 +1405,8 @@ $code.=<<___ if (!$softonly);
 	jl	.Lctr32_software
 
 	stm${g}	$s2,$s3,10*$SIZE_T($sp)
+	.cfi_rel_offset $s2,10*$SIZE_T
+	.cfi_rel_offset $s3,11*$SIZE_T
 	llgfr	$s2,%r0
 	larl	%r1,OPENSSL_s390xcap_P
 	llihh	%r0,0x8000	# check if kma supports the function code
@@ -1413,6 +1416,7 @@ $code.=<<___ if (!$softonly);
 	jz	.Lctr32_nokma
 
 	aghi	$sp,-112
+	.cfi_adjust_cfa_offset 112
 	lhi	%r1,0x0600
 	sllg	$len,$len,4
 	or	%r0,%r1		# set HS and LAAD flags
@@ -1429,7 +1433,10 @@ $code.=<<___ if (!$softonly);
 
 	xc	80(32,$sp),80($sp)	# wipe key copy
 	la	$sp,112($sp)
+	.cfi_adjust_cfa_offset -112
 	lm${g}	$s2,$s3,10*$SIZE_T($sp)
+	.cfi_restore $s2
+	.cfi_restore $s3
 	br	$ra
 
 .align	16
@@ -1594,6 +1601,7 @@ $code.=<<___;
 
 	lm${g}	%r6,$ra,6*$SIZE_T($sp)
 	br	$ra
+.cfi_endproc
 .size	AES_ctr32_encrypt,.-AES_ctr32_encrypt
 ___
 }
