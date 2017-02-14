@@ -2201,11 +2201,9 @@ DH *ssl_get_auto_dh(SSL *s)
         else
             dh_secbits = 80;
     } else {
-        CERT_PKEY *cpk;
-        if (s->s3->tmp.cert_idx == -1)
+        if (s->s3->tmp.cert == NULL)
             return NULL;
-        cpk = &s->cert->pkeys[s->s3->tmp.cert_idx];
-        dh_secbits = EVP_PKEY_security_bits(cpk->privatekey);
+        dh_secbits = EVP_PKEY_security_bits(s->s3->tmp.cert->privatekey);
     }
 
     if (dh_secbits >= 128) {
@@ -2369,7 +2367,7 @@ int tls_choose_sigalg(SSL *s, int *al)
         idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
         /* If no certificate for ciphersuite return */
         if (idx == -1) {
-            s->s3->tmp.cert_idx = -1;
+            s->s3->tmp.cert = NULL;
             s->s3->tmp.sigalg = NULL;
             return 1;
         }
@@ -2445,7 +2443,7 @@ int tls_choose_sigalg(SSL *s, int *al)
             }
         }
     }
-    s->s3->tmp.cert_idx = idx;
+    s->s3->tmp.cert = &s->cert->pkeys[idx];
     s->s3->tmp.sigalg = lu;
     return 1;
 }
