@@ -1411,7 +1411,7 @@ $code.=<<___ if (!$softonly);
 	larl	%r1,OPENSSL_s390xcap_P
 	llihh	%r0,0x8000	# check if kma supports the function code
 	srlg	%r0,%r0,0($s2)
-	ng	%r0,88(%r1)	# check kma capability vector
+	ng	%r0,104(%r1)	# check kma capability vector
 	lgr	%r0,$s2
 	jz	.Lctr32_nokma
 
@@ -1481,7 +1481,7 @@ $code.=<<___ if (!$softonly && 0);# kmctr code was measured to be ~12% slower
 	larl	%r1,OPENSSL_s390xcap_P
 	llihh	%r0,0x8000	# check if kmctr supports the function code
 	srlg	%r0,%r0,0($s0)
-	ng	%r0,72(%r1)	# check kmctr capability vector
+	ng	%r0,88(%r1)	# check kmctr capability vector
 	lgr	%r0,$s0
 	lgr	%r1,$s1
 	jz	.Lctr32_km_loop
@@ -2321,7 +2321,7 @@ ___
 
 $code.=<<___;
 .string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
-.comm	OPENSSL_s390xcap_P,104,8
+.comm	OPENSSL_s390xcap_P,120,8
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
