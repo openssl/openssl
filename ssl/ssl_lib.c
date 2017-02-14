@@ -1720,6 +1720,11 @@ int SSL_shutdown(SSL *s)
 
 int SSL_key_update(SSL *s, SSL_KEY_UPDATE updatetype)
 {
+    /*
+     * TODO(TLS1.3): How will applications know whether TLSv1.3+ has been
+     * negotiated, and that it is appropriate to call SSL_key_update() instead
+     * of SSL_renegotiate().
+     */
     if (!SSL_IS_TLS13(s)) {
         SSLerr(SSL_F_SSL_KEY_UPDATE, SSL_R_WRONG_SSL_VERSION);
         return 0;
@@ -1737,9 +1742,7 @@ int SSL_key_update(SSL *s, SSL_KEY_UPDATE updatetype)
     }
 
     ossl_statem_set_in_init(s, 1);
-
     s->key_update = updatetype;
-
     return 1;
 }
 
