@@ -1,0 +1,55 @@
+=pod
+
+=head1 NAME
+
+OPENSSL_timegm,
+OPENSSL_gmtime,
+OPENSSL_gmtime_adj,
+OPENSSL_gmtime_diff - OpenSSL time routines
+
+=head1 SYNOPSIS
+
+ #include <openssl/crypto.h>
+
+ int OPENSSL_timegm(struct tm *tm, time_t *t);
+ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result);
+ int OPENSSL_gmtime_adj(struct tm *tm, int off_day, long offset_sec);
+ int OPENSSL_gmtime_diff(int *pday, int *psec, const struct tm *from
+                         const struct tm *to);
+
+
+=head1 DESCRIPTION
+
+OpenSSL provides a number of system-independent time functions. All functions
+operate on GMT (sometimes referred to as UTC).
+
+OPENSSL_timegm() converts B<tm> into a time_t. It is similar to BSD's timegm()
+and is the inverse of POSIX gmtime().
+
+OPENSSL_gmtime() converts B<timer> into struct tm as provided by the B<result>
+parameter, which must not be NULL. It is similar to POSIX gmtime().
+
+OPENSSL_gmtime_adj() adds the B<off_day> in days and the B<offset_sec> in
+seconds to the B<tm> parameter.
+
+OPENSSL_gmtime_diff() calculates the difference between B<from> and B<to> in days stored in B<pday> and seconds B<psec>.
+
+=head1 RETURN VALUES
+
+OPENSSL_timegm() returns 1 on success and 0 on failure. A time_t value (the number of seconds since 1970-01-01 0:00:00),
+is placed into B<t> if non-NULL.
+
+OPENSSL_gmtime() returns B<result> on success, and NULL on error.
+
+OPENSSL_gmtime_adj() and OPENSSL_gmtime_diff() return 1 on success, and 0 on error.
+
+=head1 COPYRIGHT
+
+Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

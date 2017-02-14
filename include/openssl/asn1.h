@@ -588,6 +588,13 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
                                                time_t t, int offset_day,
                                                long offset_sec);
 int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str);
+int ASN1_GENERALIZEDTIME_cmp_time_t(const ASN1_GENERALIZEDTIME *s, time_t t);
+
+int ASN1_UTCTIME_diff(int *pday, int *psec,
+                      const ASN1_UTCTIME *from, const ASN1_UTCTIME *to);
+int ASN1_GENERALIZEDTIME_diff(int *pday, int *psec,
+                              const ASN1_GENERALIZEDTIME *from,
+                              const ASN1_GENERALIZEDTIME *to);
 int ASN1_TIME_diff(int *pday, int *psec,
                    const ASN1_TIME *from, const ASN1_TIME *to);
 
@@ -625,9 +632,11 @@ ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t);
 ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s, time_t t,
                          int offset_day, long offset_sec);
 int ASN1_TIME_check(const ASN1_TIME *t);
-ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZEDTIME
-                                                   **out);
+ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(const ASN1_TIME *t,
+                                                   ASN1_GENERALIZEDTIME **out);
+ASN1_UTCTIME *ASN1_TIME_to_utctime(const ASN1_TIME *t, ASN1_UTCTIME **out);
 int ASN1_TIME_set_string(ASN1_TIME *s, const char *str);
+int ASN1_TIME_cmp_time_t(const ASN1_TIME *s, time_t t);
 
 int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a);
 int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size);
@@ -749,8 +758,12 @@ int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, unsigned char *x);
 
 int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x);
 int ASN1_UTCTIME_print(BIO *fp, const ASN1_UTCTIME *a);
+int ASN1_UTCTIME_get(const ASN1_UTCTIME *a, time_t *t, struct tm *tm);
 int ASN1_GENERALIZEDTIME_print(BIO *fp, const ASN1_GENERALIZEDTIME *a);
+int ASN1_GENERALIZEDTIME_get(const ASN1_GENERALIZEDTIME *a, time_t *t,
+                             struct tm *tm);
 int ASN1_TIME_print(BIO *fp, const ASN1_TIME *a);
+int ASN1_TIME_get(const ASN1_TIME *a, time_t *t, struct tm *tm);
 int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v);
 int ASN1_STRING_print_ex(BIO *out, const ASN1_STRING *str, unsigned long flags);
 int ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen, int off);

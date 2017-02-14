@@ -252,3 +252,20 @@ int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
     BIO_write(bp, "Bad time value", 14);
     return (0);
 }
+
+int ASN1_UTCTIME_get(const ASN1_UTCTIME *s, time_t *t, struct tm *tm)
+{
+    if (s->type == V_ASN1_UTCTIME)
+        return ASN1_TIME_get(s, t, tm);
+    return 0;
+}
+
+int ASN1_UTCTIME_diff(int *pday, int *psec,
+                      const ASN1_UTCTIME *from,
+                      const ASN1_UTCTIME *to)
+{
+    if (from->type == V_ASN1_UTCTIME &&
+        to->type == V_ASN1_UTCTIME)
+        return ASN1_TIME_diff(pday, psec, from, to);
+    return 0;
+}

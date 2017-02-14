@@ -339,6 +339,7 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result);
 int OPENSSL_gmtime_adj(struct tm *tm, int offset_day, long offset_sec);
 int OPENSSL_gmtime_diff(int *pday, int *psec,
                         const struct tm *from, const struct tm *to);
+int OPENSSL_timegm(struct tm *tm, time_t *t);
 
 /*
  * CRYPTO_memcmp returns zero iff the |len| bytes at |a| and |b| are equal.

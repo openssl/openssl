@@ -59,7 +59,7 @@ int ASN1_TIME_check(const ASN1_TIME *t)
 }
 
 /* Convert an ASN1_TIME structure to GeneralizedTime */
-ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t,
+ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(const ASN1_TIME *t,
                                                    ASN1_GENERALIZEDTIME **out)
 {
     ASN1_GENERALIZEDTIME *ret = NULL;
@@ -107,6 +107,75 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t,
     return NULL;
 }
 
+/* Convert an ASN1_TIME structure to UTCTime */
+ASN1_UTCTIME *ASN1_TIME_to_utctime(const ASN1_TIME *t, ASN1_UTCTIME **out)
+{
+    ASN1_UTCTIME *ret;
+    int newlen;
+    char newstr[20];
+
+    if (!ASN1_TIME_check(t))
+        return NULL;
+
+    if (out == NULL || *out == NULL) {
+        if ((ret = ASN1_UTCTIME_new()) == NULL)
+            goto err;
+    } else
+        ret = *out;
+
+    /* If already UTCTime just copy across */
+    if (t->type == V_ASN1_UTCTIME) {
+        if (!ASN1_STRING_set(ret, t->data, t->length))
+            goto err;
+        goto done;
+    }
+
+    /* check the year 1950..2049 */
+    if (t->data[0] == '1') {
+        if (t->data[1] != '9' || t->data[2] < '5')
+            goto err;
+    } else if (t->data[0] == '2') {
+        if (t->data[1] != '0' || t->data[2] > '4')
+            goto err;
+    } else
+        goto err;
+
+    /* copy YYMMDDhhmm - ignore century */
+    memcpy(newstr, &t->data[2], 10);
+    newlen = 10;
+
+    /* ss? Optional on both */
+    if (t->data[12] >= '0' && t->data[12] <= '9') {
+        newstr[newlen++] = t->data[12];
+        newstr[newlen++] = t->data[13];
+    }
+
+    /* ignore any fractional, just get the offset */
+    if (t->data[t->length-1] == 'Z')
+        newstr[newlen++] = 'Z';
+    else if (t->data[t->length-5] == '+' || t->data[t->length-5] == '-') {
+        newstr[newlen++] = t->data[t->length-5];
+        newstr[newlen++] = t->data[t->length-4];
+        newstr[newlen++] = t->data[t->length-3];
+        newstr[newlen++] = t->data[t->length-2];
+        newstr[newlen++] = t->data[t->length-1];
+    } else
+        goto err;
+
+    /* set the string */
+    if (!ASN1_STRING_set(ret, newstr, newlen))
+        goto err;
+
+ done:
+    if (out != NULL && *out == NULL)
+        *out = ret;
+
+    return ret;
+ err:
+    if (out == NULL || *out != ret)
+        ASN1_UTCTIME_free(ret);
+    return NULL;
+}
 
 int ASN1_TIME_set_string(ASN1_TIME *s, const char *str)
 {
@@ -159,6 +228,15 @@ int ASN1_TIME_diff(int *pday, int *psec,
     return OPENSSL_gmtime_diff(pday, psec, &tm_from, &tm_to);
 }
 
+int ASN1_TIME_cmp_time_t(const ASN1_TIME *s, time_t t)
+{
+    if (s->type == V_ASN1_UTCTIME)
+        return ASN1_UTCTIME_cmp_time_t(s, t);
+    if (s->type == V_ASN1_GENERALIZEDTIME)
+        return ASN1_GENERALIZEDTIME_cmp_time_t(s, t);
+    return -2;
+}
+
 int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
 {
     if (tm->type == V_ASN1_UTCTIME)
@@ -167,4 +245,15 @@ int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
         return ASN1_GENERALIZEDTIME_print(bp, tm);
     BIO_write(bp, "Bad time value", 14);
     return (0);
+}
+
+int ASN1_TIME_get(const ASN1_TIME *s, time_t *t, struct tm *tm)
+{
+    struct tm atm;
+    if (tm == NULL)
+        tm = &atm;
+    memset(tm, 0, sizeof(atm));
+    if (asn1_time_to_tm(tm, s) == 0)
+        return 0;
+    return OPENSSL_timegm(tm, t);
 }

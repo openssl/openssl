@@ -70,10 +70,7 @@ static int test_offset(int idx)
     if (at.type == V_ASN1_UTCTIME)
         ret = ASN1_UTCTIME_cmp_time_t(&at, the_time);
     else
-        return 1;
-#if 0 /* this function doesn't exist yet! */
         ret = ASN1_GENERALIZEDTIME_cmp_time_t(&at, the_time);
-#endif
 
     if (testdata->time_result != ret) {
         fprintf(stderr, "ERROR: ASN1_xxxTIME_cmp_t test failed for %s\n", at.data);
