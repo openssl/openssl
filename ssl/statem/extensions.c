@@ -36,7 +36,9 @@ static int init_etm(SSL *s, unsigned int context);
 static int init_ems(SSL *s, unsigned int context);
 static int final_ems(SSL *s, unsigned int context, int sent, int *al);
 static int init_psk_kex_modes(SSL *s, unsigned int context);
+#ifndef OPENSSL_NO_EC
 static int final_key_share(SSL *s, unsigned int context, int sent, int *al);
+#endif
 #ifndef OPENSSL_NO_SRTP
 static int init_srtp(SSL *s, unsigned int context);
 #endif
@@ -244,6 +246,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         init_psk_kex_modes, tls_parse_ctos_psk_kex_modes, NULL, NULL,
         tls_construct_ctos_psk_kex_modes, NULL
     },
+#ifndef OPENSSL_NO_EC
     {
         /*
          * Must be in this list after supported_groups. We need that to have
@@ -257,6 +260,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_stoc_key_share, tls_construct_ctos_key_share,
         final_key_share
     },
+#endif
     {
         /*
          * Special unsolicited ServerHello extension only used when
@@ -960,7 +964,7 @@ static int final_sig_algs(SSL *s, unsigned int context, int sent, int *al)
     return 1;
 }
 
-
+#ifndef OPENSSL_NO_EC
 static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
 {
     if (!SSL_IS_TLS13(s))
@@ -1078,6 +1082,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
 
     return 1;
 }
+#endif
 
 static int init_psk_kex_modes(SSL *s, unsigned int context)
 {
