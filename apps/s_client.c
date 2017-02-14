@@ -2218,7 +2218,16 @@ int s_client_main(int argc, char **argv)
                            "Didn't find STARTTLS in server response,"
                            " trying anyway...\n");
             BIO_printf(sbio, "STARTTLS\r\n");
-            BIO_read(sbio, sbuf, BUFSIZZ);
+            mbuf_len = BIO_read(sbio, mbuf, BUFSIZZ);
+            if (mbuf_len < 0) {
+                BIO_printf(bio_err, "BIO_read failed\n");
+                goto end;
+            }
+            mbuf[mbuf_len] = '\0';
+            if (strstr(mbuf, "382") == NULL) {
+                BIO_printf(bio_err, "STARTTLS failed: %s", mbuf);
+                goto shut;
+            }
         }
         break;
     case PROTO_SIEVE:
@@ -2252,15 +2261,16 @@ int s_client_main(int argc, char **argv)
             if (mbuf_len < 0) {
                 BIO_printf(bio_err, "BIO_read failed\n");
                 goto end;
-            } else if (mbuf_len < 2) {
-                BIO_printf(bio_err, "Server does not support STARTTLS.\n");
+            }
+            mbuf[mbuf_len] = '\0';
+            if (mbuf_len < 2) {
+                BIO_printf(bio_err, "STARTTLS failed: %s", mbuf);
                 goto shut;
             }
             /*
              * According to RFC 5804 § 2.2, response codes are case-
              * insensitive, make it uppercase but preserve the response.
              */
-            mbuf[mbuf_len] = '\0';
             strncpy(sbuf, mbuf, 2);
             make_uppercase(sbuf);
             if (strncmp(sbuf, "OK", 2) != 0) {
