@@ -494,14 +494,12 @@ int tls_construct_key_update(SSL *s, WPACKET *pkt)
     }
 
     s->key_update = SSL_KEY_UPDATE_NONE;
-
     return 1;
+
  err:
     ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
     return 0;
 }
-
-#define MAX_KEY_UPDATE_MESSAGES     32
 
 MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
 {
