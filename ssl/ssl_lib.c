@@ -2836,20 +2836,14 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char **serverinfo,
                                    size_t *serverinfo_length)
 {
-    CERT *c = NULL;
-    int i = 0;
+    CERT_PKEY *cpk = s->s3->tmp.cert;
     *serverinfo_length = 0;
 
-    c = s->cert;
-    i = s->s3->tmp.cert_idx;
-
-    if (i == -1)
-        return 0;
-    if (c->pkeys[i].serverinfo == NULL)
+    if (cpk == NULL || cpk->serverinfo == NULL)
         return 0;
 
-    *serverinfo = c->pkeys[i].serverinfo;
-    *serverinfo_length = c->pkeys[i].serverinfo_length;
+    *serverinfo = cpk->serverinfo;
+    *serverinfo_length = cpk->serverinfo_length;
     return 1;
 }
 

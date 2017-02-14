@@ -1761,12 +1761,12 @@ static int tls_handle_status_request(SSL *s, int *al)
         int ret;
 
         /* If no certificate can't return certificate status */
-        if (s->s3->tmp.cert_idx != -1) {
+        if (s->s3->tmp.cert != NULL) {
             /*
              * Set current certificate to one we will use so SSL_get_certificate
              * et al can pick it up.
              */
-            s->cert->key = &s->cert->pkeys[s->s3->tmp.cert_idx];
+            s->cert->key = s->s3->tmp.cert;
             ret = s->ctx->ext.status_cb(s, s->ctx->ext.status_arg);
             switch (ret) {
                 /* We don't want to send a status request response */
@@ -2249,7 +2249,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
 
     /* not anonymous */
     if (lu != NULL) {
-        EVP_PKEY *pkey = s->cert->pkeys[s->s3->tmp.cert_idx].privatekey;
+        EVP_PKEY *pkey = s->s3->tmp.cert->privatekey;
         const EVP_MD *md = ssl_md(lu->hash_idx);
         unsigned char *sigbytes1, *sigbytes2;
         size_t siglen;
@@ -3197,14 +3197,13 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
 
 int tls_construct_server_certificate(SSL *s, WPACKET *pkt)
 {
-    CERT_PKEY *cpk;
+    CERT_PKEY *cpk = s->s3->tmp.cert;
     int al = SSL_AD_INTERNAL_ERROR;
 
-    if (s->s3->tmp.cert_idx == -1) {
+    if (cpk == NULL) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_CERTIFICATE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    cpk = &s->cert->pkeys[s->s3->tmp.cert_idx];
 
     /*
      * In TLSv1.3 the certificate chain is always preceded by a 0 length context
