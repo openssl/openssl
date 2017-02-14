@@ -1362,6 +1362,7 @@ void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose)
 
 static void keylog_callback(const SSL *ssl, const char *line)
 {
+    (void)ssl;
     if (bio_keylog == NULL) {
         BIO_printf(bio_err, "Keylog callback is invoked without valid file!\n");
         return;

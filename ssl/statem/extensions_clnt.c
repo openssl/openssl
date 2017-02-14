@@ -15,6 +15,7 @@
 int tls_construct_ctos_renegotiate(SSL *s, WPACKET *pkt, unsigned int context,
                                    X509 *x, size_t chainidx, int *al)
 {
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -37,6 +38,7 @@ int tls_construct_ctos_renegotiate(SSL *s, WPACKET *pkt, unsigned int context,
 int tls_construct_ctos_server_name(SSL *s, WPACKET *pkt, unsigned int context,
                                    X509 *x, size_t chainidx, int *al)
 {
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -65,6 +67,7 @@ int tls_construct_ctos_server_name(SSL *s, WPACKET *pkt, unsigned int context,
 int tls_construct_ctos_srp(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
                            size_t chainidx, int *al)
 {
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -123,6 +126,7 @@ int tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
     const unsigned char *pformats;
     size_t num_formats;
 
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -151,6 +155,7 @@ int tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
     const unsigned char *pcurves = NULL, *pcurvestmp;
     size_t num_curves = 0, i;
 
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -204,6 +209,7 @@ int tls_construct_ctos_session_ticket(SSL *s, WPACKET *pkt,
 {
     size_t ticklen;
 
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -249,6 +255,7 @@ int tls_construct_ctos_sig_algs(SSL *s, WPACKET *pkt, unsigned int context,
     size_t salglen;
     const uint16_t *salg;
 
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -278,6 +285,7 @@ int tls_construct_ctos_status_request(SSL *s, WPACKET *pkt,
 {
     int i;
 
+    (void)context;
     (void)chainidx;
     (void)al;
     /* This extension isn't defined for client Certificates */
@@ -345,6 +353,7 @@ int tls_construct_ctos_status_request(SSL *s, WPACKET *pkt,
 int tls_construct_ctos_npn(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
                            size_t chainidx, int *al)
 {
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -368,6 +377,7 @@ int tls_construct_ctos_npn(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
 int tls_construct_ctos_alpn(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
                             size_t chainidx, int *al)
 {
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -398,6 +408,7 @@ int tls_construct_ctos_use_srtp(SSL *s, WPACKET *pkt, unsigned int context,
     STACK_OF(SRTP_PROTECTION_PROFILE) *clnt = SSL_get_srtp_profiles(s);
     int i, end;
 
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -438,6 +449,7 @@ int tls_construct_ctos_use_srtp(SSL *s, WPACKET *pkt, unsigned int context,
 int tls_construct_ctos_etm(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
                            size_t chainidx, int *al)
 {
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -457,6 +469,7 @@ int tls_construct_ctos_etm(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
 int tls_construct_ctos_sct(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
                            size_t chainidx, int *al)
 {
+    (void)context;
     (void)chainidx;
     (void)al;
     if (s->ct_validation_callback == NULL)
@@ -479,6 +492,7 @@ int tls_construct_ctos_sct(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
 int tls_construct_ctos_ems(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
                            size_t chainidx, int *al)
 {
+    (void)context;
     (void)s;
     (void)x;
     (void)chainidx;
@@ -498,6 +512,7 @@ int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
 {
     int currv, min_version, max_version, reason;
 
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -570,6 +585,7 @@ int tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt, unsigned int context,
     s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_KE | TLSEXT_KEX_MODE_FLAG_KE_DHE;
 #else
     (void)pkt;
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -684,6 +700,7 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, unsigned int context,
 #else
     (void)s;
     (void)pkt;
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -702,6 +719,7 @@ int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, unsigned int context,
     size_t hlen;
 
     (void)x;
+    (void)context;
     (void)chainidx;
     (void)al;
     if ((s->options & SSL_OP_TLSEXT_PADDING) == 0)
@@ -852,6 +870,7 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
 #else
     (void)s;
     (void)pkt;
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -871,6 +890,7 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
     const unsigned char *data;
 
     (void)x;
+    (void)context;
     (void)chainidx;
 
     /* Check for logic errors */
@@ -927,6 +947,7 @@ int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, unsigned int context,
                                X509 *x, size_t chainidx, int *al)
 {
     (void)x;
+    (void)context;
     (void)chainidx;
     if (s->ext.hostname == NULL || PACKET_remaining(pkt) > 0) {
         *al = SSL_AD_UNRECOGNIZED_NAME;
@@ -956,6 +977,7 @@ int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
     PACKET ecptformatlist;
 
     (void)x;
+    (void)context;
     (void)chainidx;
     if (!PACKET_as_length_prefixed_1(pkt, &ecptformatlist)) {
         *al = SSL_AD_DECODE_ERROR;
@@ -990,6 +1012,7 @@ int tls_parse_stoc_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx, int *al)
 {
     (void)x;
+    (void)context;
     (void)chainidx;
     if (s->ext.session_ticket_cb != NULL &&
         !s->ext.session_ticket_cb(s, PACKET_data(pkt),
@@ -1013,6 +1036,7 @@ int tls_parse_stoc_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx, int *al)
 {
+    (void)context;
     (void)x;
     /*
      * MUST only be sent if we've requested a status
@@ -1045,6 +1069,7 @@ int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_stoc_sct(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx, int *al)
 {
+    (void)context;
     (void)x;
     (void)chainidx;
     /*
@@ -1105,6 +1130,7 @@ int tls_parse_stoc_npn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     unsigned char selected_len;
     PACKET tmppkt;
 
+    (void)context;
     (void)x;
     (void)chainidx;
     /* Check if we are in a renegotiation. If so ignore this extension */
@@ -1156,6 +1182,7 @@ int tls_parse_stoc_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 {
     size_t len;
 
+    (void)context;
     (void)x;
     (void)chainidx;
     /* We must have requested it. */
@@ -1199,6 +1226,7 @@ int tls_parse_stoc_use_srtp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     STACK_OF(SRTP_PROTECTION_PROFILE) *clnt;
     SRTP_PROTECTION_PROFILE *prof;
 
+    (void)context;
     (void)x;
     (void)chainidx;
     if (!PACKET_get_net_2(pkt, &ct) || ct != 2
@@ -1251,6 +1279,7 @@ int tls_parse_stoc_etm(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx, int *al)
 {
     (void)pkt;
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -1267,6 +1296,7 @@ int tls_parse_stoc_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx, int *al)
 {
     (void)pkt;
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -1382,6 +1412,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 #else
     (void)s;
     (void)pkt;
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
@@ -1412,6 +1443,7 @@ int tls_parse_stoc_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 #else
     (void)s;
     (void)pkt;
+    (void)context;
     (void)x;
     (void)chainidx;
     (void)al;
