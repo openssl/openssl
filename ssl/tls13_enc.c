@@ -242,7 +242,7 @@ int tls13_setup_key_block(SSL *s)
     return 1;
 }
 
-static int derive_secret_key_and_iv(SSL *s, int write,
+static int derive_secret_key_and_iv(SSL *s, int send,
                                     const unsigned char *insecret,
                                     const unsigned char *hash,
                                     const unsigned char *label,
@@ -281,7 +281,7 @@ static int derive_secret_key_and_iv(SSL *s, int write,
         goto err;
     }
 
-    if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL, write) <= 0
+    if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL, send) <= 0
         || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
         || (taglen != 0 && !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG,
                                                 taglen, NULL))
@@ -292,7 +292,7 @@ static int derive_secret_key_and_iv(SSL *s, int write,
 
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
     if (s->msg_callback) {
-        int wh = write ? TLS1_RT_CRYPTO_WRITE : 0;
+        int wh = send ? TLS1_RT_CRYPTO_WRITE : 0;
 
         if (ciph->key_len)
             s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
@@ -459,7 +459,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     return ret;
 }
 
-int tls13_update_key(SSL *s, int write)
+int tls13_update_key(SSL *s, int send)
 {
     static const unsigned char application_traffic[] =
         "application traffic secret";
@@ -470,12 +470,12 @@ int tls13_update_key(SSL *s, int write)
     EVP_CIPHER_CTX *ciph_ctx;
     int ret = 0;
 
-    if (s->server == write)
+    if (s->server == send)
         insecret = s->server_app_traffic_secret;
     else
         insecret = s->client_app_traffic_secret;
 
-    if (write) {
+    if (send) {
         iv = s->write_iv;
         ciph_ctx = s->enc_write_ctx;
         RECORD_LAYER_reset_write_sequence(&s->rlayer);
@@ -485,7 +485,7 @@ int tls13_update_key(SSL *s, int write)
         RECORD_LAYER_reset_read_sequence(&s->rlayer);
     }
 
-    if (!derive_secret_key_and_iv(s, write, insecret, NULL, application_traffic,
+    if (!derive_secret_key_and_iv(s, send, insecret, NULL, application_traffic,
                                   sizeof(application_traffic) - 1, secret, iv,
                                   ciph_ctx))
         goto err;
