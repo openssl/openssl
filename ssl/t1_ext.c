@@ -223,16 +223,14 @@ static int custom_ext_meth_add(custom_ext_methods *exts,
     /* Search for duplicate */
     if (custom_ext_find(exts, ext_type))
         return 0;
-    exts->meths = OPENSSL_realloc(exts->meths,
-                                  (exts->meths_count +
-                                   1) * sizeof(custom_ext_method));
-
-    if (!exts->meths) {
-        exts->meths_count = 0;
+    meth = OPENSSL_realloc(exts->meths,
+                           (exts->meths_count + 1)
+                           * sizeof(custom_ext_method));
+    if (meth == NULL)
         return 0;
-    }
 
-    meth = exts->meths + exts->meths_count;
+    exts->meths = meth;
+    meth += exts->meths_count;
     memset(meth, 0, sizeof(custom_ext_method));
     meth->parse_cb = parse_cb;
     meth->add_cb = add_cb;
