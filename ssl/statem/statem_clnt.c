@@ -3090,10 +3090,8 @@ int tls_client_key_exchange_post_work(SSL *s)
  */
 static int ssl3_check_client_certificate(SSL *s)
 {
-    if (!s->cert || !s->cert->key->x509 || !s->cert->key->privatekey)
-        return 0;
     /* If no suitable signature algorithm can't use certificate */
-    if (SSL_USE_SIGALGS(s) && !s->s3->tmp.md[s->cert->key - s->cert->pkeys])
+    if (!tls_choose_sigalg(s, NULL) || s->s3->tmp.sigalg == NULL)
         return 0;
     /*
      * If strict mode check suitability of chain before using it. This also
