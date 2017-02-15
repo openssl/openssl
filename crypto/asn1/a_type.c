@@ -25,7 +25,7 @@ void ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value)
 {
     if (a->value.ptr != NULL) {
         ASN1_TYPE **tmp_a = &a;
-        asn1_primitive_free((ASN1_VALUE **)tmp_a, NULL);
+        asn1_primitive_free((ASN1_VALUE **)tmp_a, NULL, 0);
     }
     a->type = type;
     if (type == V_ASN1_BOOLEAN)

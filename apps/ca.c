@@ -47,8 +47,14 @@
 # define R_OK 4
 #endif
 
-#undef BSIZE
-#define BSIZE 256
+#ifndef PATH_MAX
+# define PATH_MAX 4096
+#endif
+#ifndef NAME_MAX
+# define NAME_MAX 255
+#endif
+
+#define CERT_MAX (PATH_MAX + NAME_MAX)
 
 #define BASE_SECTION            "ca"
 
@@ -246,7 +252,8 @@ int ca_main(int argc, char **argv)
     const char *serialfile = NULL, *subj = NULL;
     char *prog, *startdate = NULL, *enddate = NULL;
     char *dbfile = NULL, *f, *randfile = NULL;
-    char buf[3][BSIZE];
+    char new_cert[CERT_MAX + 1];
+    char tmp[10 + 1] = "\0";
     char *const *pp;
     const char *p;
     int create_ser = 0, free_key = 0, total = 0, total_done = 0;
@@ -260,6 +267,8 @@ int ca_main(int argc, char **argv)
     REVINFO_TYPE rev_type = REV_NONE;
     X509_REVOKED *r = NULL;
     OPTION_CHOICE o;
+
+    new_cert[CERT_MAX] = '\0';
 
     prog = opt_init(argc, argv, ca_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -950,14 +959,14 @@ end_of_options:
                            "\n%d out of %d certificate requests certified, commit? [y/n]",
                            total_done, total);
                 (void)BIO_flush(bio_err);
-                buf[0][0] = '\0';
-                if (!fgets(buf[0], 10, stdin)) {
+                tmp[0] = '\0';
+                if (fgets(tmp, sizeof(tmp), stdin) == NULL) {
                     BIO_printf(bio_err,
                                "CERTIFICATION CANCELED: I/O error\n");
                     ret = 0;
                     goto end;
                 }
-                if ((buf[0][0] != 'y') && (buf[0][0] != 'Y')) {
+                if (tmp[0] != 'y' && tmp[0] != 'Y') {
                     BIO_printf(bio_err, "CERTIFICATION CANCELED\n");
                     ret = 0;
                     goto end;
@@ -978,33 +987,31 @@ end_of_options:
             BIO_printf(bio_err, "writing new certificates\n");
         for (i = 0; i < sk_X509_num(cert_sk); i++) {
             BIO *Cout = NULL;
-            ASN1_INTEGER *serialNumber = X509_get_serialNumber(x);
+            X509 *xi = sk_X509_value(cert_sk, i);
+            ASN1_INTEGER *serialNumber = X509_get_serialNumber(xi);
             int k;
             char *n;
-
-            x = sk_X509_value(cert_sk, i);
 
             j = ASN1_STRING_length(serialNumber);
             p = (const char *)ASN1_STRING_get0_data(serialNumber);
 
-            if (strlen(outdir) >= (size_t)(j ? BSIZE - j * 2 - 6 : BSIZE - 8)) {
+            if (strlen(outdir) >= (size_t)(j ? CERT_MAX - j * 2 - 6 : CERT_MAX - 8)) {
                 BIO_printf(bio_err, "certificate file name too long\n");
                 goto end;
             }
 
-            strcpy(buf[2], outdir);
-
+            strcpy(new_cert, outdir);
 #ifndef OPENSSL_SYS_VMS
-            OPENSSL_strlcat(buf[2], "/", sizeof(buf[2]));
+            OPENSSL_strlcat(new_cert, "/", sizeof(new_cert));
 #endif
 
-            n = (char *)&(buf[2][strlen(buf[2])]);
+            n = (char *)&(new_cert[strlen(new_cert)]);
             if (j > 0) {
                 for (k = 0; k < j; k++) {
-                    if (n >= &(buf[2][sizeof(buf[2])]))
+                    if (n >= &(new_cert[sizeof(new_cert)]))
                         break;
                     BIO_snprintf(n,
-                                 &buf[2][0] + sizeof(buf[2]) - n,
+                                 &new_cert[0] + sizeof(new_cert) - n,
                                  "%02X", (unsigned char)*(p++));
                     n += 2;
                 }
@@ -1018,15 +1025,15 @@ end_of_options:
             *(n++) = 'm';
             *n = '\0';
             if (verbose)
-                BIO_printf(bio_err, "writing %s\n", buf[2]);
+                BIO_printf(bio_err, "writing %s\n", new_cert);
 
-            Cout = BIO_new_file(buf[2], "w");
+            Cout = BIO_new_file(new_cert, "w");
             if (Cout == NULL) {
-                perror(buf[2]);
+                perror(new_cert);
                 goto end;
             }
-            write_new_certificate(Cout, x, 0, notext);
-            write_new_certificate(Sout, x, output_der, notext);
+            write_new_certificate(Cout, xi, 0, notext);
+            write_new_certificate(Sout, xi, output_der, notext);
             BIO_free_all(Cout);
         }
 
@@ -1231,6 +1238,7 @@ end_of_options:
     X509_CRL_free(crl);
     NCONF_free(conf);
     NCONF_free(extconf);
+    release_engine(e);
     return (ret);
 }
 
@@ -1377,8 +1385,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     ASN1_STRING *str, *str2;
     ASN1_OBJECT *obj;
     X509 *ret = NULL;
-    X509_NAME_ENTRY *ne;
-    X509_NAME_ENTRY *tne, *push;
+    X509_NAME_ENTRY *ne, *tne;
     EVP_PKEY *pktmp;
     int ok = -1, i, j, last, nid;
     const char *p;
@@ -1411,41 +1418,37 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         ne = X509_NAME_get_entry(name, i);
         str = X509_NAME_ENTRY_get_data(ne);
         obj = X509_NAME_ENTRY_get_object(ne);
+        nid = OBJ_obj2nid(obj);
 
         if (msie_hack) {
             /* assume all type should be strings */
-            nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(ne));
 
             if (str->type == V_ASN1_UNIVERSALSTRING)
                 ASN1_UNIVERSALSTRING_to_string(str);
 
-            if ((str->type == V_ASN1_IA5STRING) &&
-                (nid != NID_pkcs9_emailAddress))
+            if (str->type == V_ASN1_IA5STRING && nid != NID_pkcs9_emailAddress)
                 str->type = V_ASN1_T61STRING;
 
-            if ((nid == NID_pkcs9_emailAddress) &&
-                (str->type == V_ASN1_PRINTABLESTRING))
+            if (nid == NID_pkcs9_emailAddress
+                && str->type == V_ASN1_PRINTABLESTRING)
                 str->type = V_ASN1_IA5STRING;
         }
 
         /* If no EMAIL is wanted in the subject */
-        if ((OBJ_obj2nid(obj) == NID_pkcs9_emailAddress) && (!email_dn))
+        if (nid == NID_pkcs9_emailAddress && !email_dn)
             continue;
 
         /* check some things */
-        if ((OBJ_obj2nid(obj) == NID_pkcs9_emailAddress) &&
-            (str->type != V_ASN1_IA5STRING)) {
+        if (nid == NID_pkcs9_emailAddress && str->type != V_ASN1_IA5STRING) {
             BIO_printf(bio_err,
                        "\nemailAddress type needs to be of type IA5STRING\n");
             goto end;
         }
-        if ((str->type != V_ASN1_BMPSTRING)
-            && (str->type != V_ASN1_UTF8STRING)) {
+        if (str->type != V_ASN1_BMPSTRING && str->type != V_ASN1_UTF8STRING) {
             j = ASN1_PRINTABLE_type(str->data, str->length);
-            if (((j == V_ASN1_T61STRING) &&
-                 (str->type != V_ASN1_T61STRING)) ||
-                ((j == V_ASN1_IA5STRING) &&
-                 (str->type == V_ASN1_PRINTABLESTRING))) {
+            if ((j == V_ASN1_T61STRING && str->type != V_ASN1_T61STRING) ||
+                (j == V_ASN1_IA5STRING && str->type == V_ASN1_PRINTABLESTRING))
+            {
                 BIO_printf(bio_err,
                            "\nThe string contains characters that are illegal for the ASN.1 type\n");
                 goto end;
@@ -1483,6 +1486,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
         last = -1;
         for (;;) {
+            X509_NAME_ENTRY *push = NULL;
+
             /* lookup the object in the supplied name list */
             j = X509_NAME_get_index_by_OBJ(name, obj, last);
             if (j < 0) {
@@ -1495,7 +1500,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
             last = j;
 
             /* depending on the 'policy', decide what to do. */
-            push = NULL;
             if (strcmp(cv->value, "optional") == 0) {
                 if (tne != NULL)
                     push = tne;
@@ -1576,10 +1580,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         BIO_printf(bio_err,
                    "The subject name appears to be ok, checking data base for clashes\n");
 
-    /* Build the correct Subject if no e-mail is wanted in the subject */
-    /*
-     * and add it later on because of the method extensions are added
-     * (altName)
+    /* 
+     * Build the correct Subject if no e-mail is wanted in the subject.
+     * And add it later on because of the method extensions are added (altName)
      */
 
     if (email_dn)
@@ -1795,13 +1798,13 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         BIO_printf(bio_err, "Sign the certificate? [y/n]:");
         (void)BIO_flush(bio_err);
         buf[0] = '\0';
-        if (!fgets(buf, sizeof(buf) - 1, stdin)) {
+        if (fgets(buf, sizeof(buf), stdin) == NULL) {
             BIO_printf(bio_err,
                        "CERTIFICATE WILL NOT BE CERTIFIED: I/O error\n");
             ok = 0;
             goto end;
         }
-        if (!((buf[0] == 'y') || (buf[0] == 'Y'))) {
+        if (!(buf[0] == 'y' || buf[0] == 'Y')) {
             BIO_printf(bio_err, "CERTIFICATE WILL NOT BE CERTIFIED\n");
             ok = 0;
             goto end;
@@ -1911,7 +1914,6 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
     sk = CONF_get_section(parms, "default");
     if (sk_CONF_VALUE_num(sk) == 0) {
         BIO_printf(bio_err, "no name/value pairs found in %s\n", infile);
-        CONF_free(parms);
         goto end;
     }
 
@@ -2139,8 +2141,7 @@ static int get_certificate_status(const char *serial, CA_DB *db)
     }
 
     /* Make it Upper Case */
-    for (i = 0; row[DB_serial][i] != '\0'; i++)
-        row[DB_serial][i] = toupper((unsigned char)row[DB_serial][i]);
+    make_uppercase(row[DB_serial]);
 
     ok = 1;
 

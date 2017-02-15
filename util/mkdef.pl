@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -82,6 +82,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "MDC2", "WHIRLPOOL", "RSA", "DSA", "DH", "EC", "EC2M",
 			 "HMAC", "AES", "CAMELLIA", "SEED", "GOST",
                          "SCRYPT", "CHACHA", "POLY1305", "BLAKE2",
+			 "SIPHASH",
 			 # EC_NISTP_64_GCC_128
 			 "EC_NISTP_64_GCC_128",
 			 # Envelope "algorithms"
@@ -1630,8 +1631,7 @@ sub check_version_lte()
 	if ($cvnums ne $tvnums) {
 		die "Invalid version number: $testversion "
 			."for current version $currversion\n"
-			if (substr($cvnums, -1) < substr($tvnums, -1)
-				|| substr($cvnums, 0, 4) ne substr($tvnums, 0, 4));
+			if (substr($cvnums, 0, 4) ne substr($tvnums, 0, 4));
 		return;
 	}
 	#If we get here then the base version (i.e. the numbers) are the same - they

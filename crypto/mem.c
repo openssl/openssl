@@ -12,6 +12,10 @@
 #include <limits.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
+#include "internal/cryptlib_int.h"
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
+# include <execinfo.h>
+#endif
 
 /*
  * the following pointers may be changed as long as 'allow_customize' is set
@@ -26,9 +30,21 @@ static void (*free_impl)(void *, const char *, int)
     = CRYPTO_free;
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
+static char *md_failstring;
+static long md_count;
+static int md_fail_percent = 0;
+static int md_tracefd = -1;
 static int call_malloc_debug = 1;
+
+static void parseit(void);
+static int shouldfail(void);
+
+# define FAILTEST() if (shouldfail()) return NULL
+
 #else
 static int call_malloc_debug = 0;
+
+# define FAILTEST() /* empty */
 #endif
 
 int CRYPTO_set_mem_functions(
@@ -68,6 +84,77 @@ void CRYPTO_get_mem_functions(
         *f = free_impl;
 }
 
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+/*
+ * Parse a "malloc failure spec" string.  This likes like a set of fields
+ * separated by semicolons.  Each field has a count and an optional failure
+ * percentage.  For example:
+ *          100@0;100@25;0@0
+ *    or    100;100@25;0
+ * This means 100 mallocs succeed, then next 100 fail 25% of the time, and
+ * all remaining (count is zero) succeed.
+ */
+static void parseit(void)
+{
+    char *semi = strchr(md_failstring, ';');
+    char *atsign;
+
+    if (semi != NULL)
+        *semi++ = '\0';
+
+    /* Get the count (atol will stop at the @ if there), and percentage */
+    md_count = atol(md_failstring);
+    atsign = strchr(md_failstring, '@');
+    md_fail_percent = atsign == NULL ? 0 : atoi(atsign + 1);
+
+    if (semi != NULL)
+        md_failstring = semi;
+}
+
+/*
+ * See if the current malloc should fail.
+ */
+static int shouldfail(void)
+{
+    int roll = (int)(random() % 100);
+    int shouldfail = roll < md_fail_percent;
+    char buff[80];
+
+    if (md_tracefd > 0) {
+        BIO_snprintf(buff, sizeof(buff),
+                     "%c C%ld %%%d R%d\n",
+                     shouldfail ? '-' : '+', md_count, md_fail_percent, roll);
+        write(md_tracefd, buff, strlen(buff));
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
+        if (shouldfail) {
+            void *addrs[30];
+            int num = backtrace(addrs, OSSL_NELEM(addrs));
+
+            backtrace_symbols_fd(addrs, num, md_tracefd);
+        }
+#endif
+    }
+
+    if (md_count) {
+        /* If we used up this one, go to the next. */
+        if (--md_count == 0)
+            parseit();
+    }
+
+    return shouldfail;
+}
+
+void ossl_malloc_setup_failures(void)
+{
+    const char *cp = getenv("OPENSSL_MALLOC_FAILURES");
+
+    if (cp != NULL && (md_failstring = strdup(cp)) != NULL)
+        parseit();
+    if ((cp = getenv("OPENSSL_MALLOC_FD")) != NULL)
+        md_tracefd = atoi(cp);
+}
+#endif
+
 void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
     void *ret = NULL;
@@ -78,6 +165,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
     if (num <= 0)
         return NULL;
 
+    FAILTEST();
     allow_customize = 0;
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (call_malloc_debug) {
@@ -99,6 +187,7 @@ void *CRYPTO_zalloc(size_t num, const char *file, int line)
 {
     void *ret = CRYPTO_malloc(num, file, line);
 
+    FAILTEST();
     if (ret != NULL)
         memset(ret, 0, num);
     return ret;
@@ -109,6 +198,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     if (realloc_impl != NULL && realloc_impl != &CRYPTO_realloc)
         return realloc_impl(str, num, file, line);
 
+    FAILTEST();
     if (str == NULL)
         return CRYPTO_malloc(num, file, line);
 

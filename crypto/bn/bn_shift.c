@@ -74,6 +74,8 @@ int BN_rshift1(BIGNUM *r, const BIGNUM *a)
         c = (t & 1) ? BN_TBIT : 0;
     }
     r->top = j;
+    if (!r->top)
+        r->neg = 0; /* don't allow negative zero */
     bn_check_top(r);
     return (1);
 }
@@ -92,10 +94,10 @@ int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
         return 0;
     }
 
-    r->neg = a->neg;
     nw = n / BN_BITS2;
     if (bn_wexpand(r, a->top + nw + 1) == NULL)
         return (0);
+    r->neg = a->neg;
     lb = n % BN_BITS2;
     rb = BN_BITS2 - lb;
     f = a->d;
@@ -140,9 +142,9 @@ int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
     }
     i = (BN_num_bits(a) - n + (BN_BITS2 - 1)) / BN_BITS2;
     if (r != a) {
-        r->neg = a->neg;
         if (bn_wexpand(r, i) == NULL)
             return (0);
+        r->neg = a->neg;
     } else {
         if (n == 0)
             return 1;           /* or the copying loop will go berserk */
@@ -166,6 +168,8 @@ int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
         if ((l = (l >> rb) & BN_MASK2))
             *(t) = l;
     }
+    if (!r->top)
+        r->neg = 0; /* don't allow negative zero */
     bn_check_top(r);
     return (1);
 }

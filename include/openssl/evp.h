@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -40,6 +40,7 @@
 # define EVP_PKEY_NONE   NID_undef
 # define EVP_PKEY_RSA    NID_rsaEncryption
 # define EVP_PKEY_RSA2   NID_rsa
+# define EVP_PKEY_RSA_PSS NID_rsassaPss
 # define EVP_PKEY_DSA    NID_dsa
 # define EVP_PKEY_DSA1   NID_dsa_2
 # define EVP_PKEY_DSA2   NID_dsaWithSHA
@@ -52,6 +53,8 @@
 # define EVP_PKEY_CMAC   NID_cmac
 # define EVP_PKEY_TLS1_PRF NID_tls1_prf
 # define EVP_PKEY_HKDF   NID_hkdf
+# define EVP_PKEY_POLY1305 NID_poly1305
+# define EVP_PKEY_SIPHASH NID_siphash
 
 #ifdef  __cplusplus
 extern "C" {
@@ -364,6 +367,15 @@ typedef struct {
 # define EVP_CCM_TLS_FIXED_IV_LEN                        4
 /* Length of explicit part of IV part of TLS records */
 # define EVP_CCM_TLS_EXPLICIT_IV_LEN                     8
+/* Total length of CCM IV length for TLS */
+# define EVP_CCM_TLS_IV_LEN                              12
+/* Length of tag for TLS */
+# define EVP_CCM_TLS_TAG_LEN                             16
+/* Length of CCM8 tag for TLS */
+# define EVP_CCM8_TLS_TAG_LEN                            8
+
+/* Length of tag for TLS */
+# define EVP_CHACHAPOLY_TLS_TAG_LEN                      16
 
 typedef struct evp_cipher_info_st {
     const EVP_CIPHER *cipher;
@@ -395,6 +407,15 @@ typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
 # ifndef OPENSSL_NO_EC
 #  define EVP_PKEY_assign_EC_KEY(pkey,eckey) EVP_PKEY_assign((pkey),EVP_PKEY_EC,\
                                         (char *)(eckey))
+# endif
+# ifndef OPENSSL_NO_SIPHASH
+#  define EVP_PKEY_assign_SIPHASH(pkey,shkey) EVP_PKEY_assign((pkey),EVP_PKEY_SIPHASH,\
+                                        (char *)(shkey))
+# endif
+
+# ifndef OPENSSL_NO_POLY1305
+#  define EVP_PKEY_assign_POLY1305(pkey,polykey) EVP_PKEY_assign((pkey),EVP_PKEY_POLY1305,\
+                                        (char *)(polykey))
 # endif
 
 /* Add some extra combinations */
@@ -903,6 +924,12 @@ int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key);
 void *EVP_PKEY_get0(const EVP_PKEY *pkey);
 const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len);
+# ifndef OPENSSL_NO_POLY1305
+const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len);
+# endif
+# ifndef OPENSSL_NO_SIPHASH
+const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len);
+# endif
 
 # ifndef OPENSSL_NO_RSA
 struct rsa_st;
@@ -1175,6 +1202,8 @@ void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
 
 # define EVP_PKEY_CTRL_GET_MD            13
 
+# define EVP_PKEY_CTRL_SET_DIGEST_SIZE   14
+
 # define EVP_PKEY_ALG_CTRL               0x1000
 
 # define EVP_PKEY_FLAG_AUTOARGLEN        2
@@ -1203,6 +1232,8 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
 
 int EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str);
 int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex);
+
+int EVP_PKEY_CTX_md(EVP_PKEY_CTX *ctx, int optype, int cmd, const char *md);
 
 int EVP_PKEY_CTX_get_operation(EVP_PKEY_CTX *ctx);
 void EVP_PKEY_CTX_set0_keygen_info(EVP_PKEY_CTX *ctx, int *dat, int datlen);
@@ -1455,11 +1486,14 @@ int ERR_load_EVP_strings(void);
 /* Function codes. */
 # define EVP_F_AESNI_INIT_KEY                             165
 # define EVP_F_AES_INIT_KEY                               133
+# define EVP_F_AES_OCB_CIPHER                             169
 # define EVP_F_AES_T4_INIT_KEY                            178
+# define EVP_F_AES_WRAP_CIPHER                            170
 # define EVP_F_ALG_MODULE_INIT                            177
 # define EVP_F_CAMELLIA_INIT_KEY                          159
 # define EVP_F_CHACHA20_POLY1305_CTRL                     182
 # define EVP_F_CMLL_T4_INIT_KEY                           179
+# define EVP_F_DES_EDE3_WRAP_CIPHER                       171
 # define EVP_F_DO_SIGVER_INIT                             161
 # define EVP_F_EVP_CIPHERINIT_EX                          123
 # define EVP_F_EVP_CIPHER_CTX_COPY                        163
@@ -1483,6 +1517,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_CTX_CTRL                          137
 # define EVP_F_EVP_PKEY_CTX_CTRL_STR                      150
 # define EVP_F_EVP_PKEY_CTX_DUP                           156
+# define EVP_F_EVP_PKEY_CTX_MD                            168
 # define EVP_F_EVP_PKEY_DECRYPT                           104
 # define EVP_F_EVP_PKEY_DECRYPT_INIT                      138
 # define EVP_F_EVP_PKEY_DECRYPT_OLD                       151
@@ -1496,7 +1531,9 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_GET0_DSA                          120
 # define EVP_F_EVP_PKEY_GET0_EC_KEY                       131
 # define EVP_F_EVP_PKEY_GET0_HMAC                         183
+# define EVP_F_EVP_PKEY_GET0_POLY1305                     184
 # define EVP_F_EVP_PKEY_GET0_RSA                          121
+# define EVP_F_EVP_PKEY_GET0_SIPHASH                      172
 # define EVP_F_EVP_PKEY_KEYGEN                            146
 # define EVP_F_EVP_PKEY_KEYGEN_INIT                       147
 # define EVP_F_EVP_PKEY_NEW                               106
@@ -1540,12 +1577,15 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_EXPECTING_A_DH_KEY                         128
 # define EVP_R_EXPECTING_A_DSA_KEY                        129
 # define EVP_R_EXPECTING_A_EC_KEY                         142
+# define EVP_R_EXPECTING_A_POLY1305_KEY                   164
+# define EVP_R_EXPECTING_A_SIPHASH_KEY                    175
 # define EVP_R_FIPS_MODE_NOT_SUPPORTED                    167
 # define EVP_R_ILLEGAL_SCRYPT_PARAMETERS                  171
 # define EVP_R_INITIALIZATION_ERROR                       134
 # define EVP_R_INPUT_NOT_INITIALIZED                      111
 # define EVP_R_INVALID_DIGEST                             152
 # define EVP_R_INVALID_FIPS_MODE                          168
+# define EVP_R_INVALID_KEY                                163
 # define EVP_R_INVALID_KEY_LENGTH                         130
 # define EVP_R_INVALID_OPERATION                          148
 # define EVP_R_KEYGEN_FAILURE                             120
@@ -1568,12 +1608,12 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_UNKNOWN_DIGEST                             161
 # define EVP_R_UNKNOWN_OPTION                             169
 # define EVP_R_UNKNOWN_PBE_ALGORITHM                      121
-# define EVP_R_UNSUPPORTED_NUMBER_OF_ROUNDS               135
 # define EVP_R_UNSUPPORTED_ALGORITHM                      156
 # define EVP_R_UNSUPPORTED_CIPHER                         107
 # define EVP_R_UNSUPPORTED_KEYLENGTH                      123
 # define EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION        124
 # define EVP_R_UNSUPPORTED_KEY_SIZE                       108
+# define EVP_R_UNSUPPORTED_NUMBER_OF_ROUNDS               135
 # define EVP_R_UNSUPPORTED_PRF                            125
 # define EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM          118
 # define EVP_R_UNSUPPORTED_SALT_TYPE                      126

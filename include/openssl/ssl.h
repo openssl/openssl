@@ -77,6 +77,7 @@ extern "C" {
 # define SSL_MIN_RSA_MODULUS_LENGTH_IN_BYTES     (512/8)
 # define SSL_MAX_KEY_ARG_LENGTH                  8
 # define SSL_MAX_MASTER_KEY_LENGTH               48
+# define TLS13_MAX_RESUMPTION_MASTER_LENGTH      64
 
 /* The maximum number of encrypt/decrypt pipelines we can support */
 # define SSL_MAX_PIPELINES  32
@@ -262,6 +263,9 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
                                     const unsigned char *in,
                                     size_t inlen, int *al, void *parse_arg);
 
+/* Typedef for verification callback */
+typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
+
 /* Allow initial connection to servers that don't support RI */
 # define SSL_OP_LEGACY_SERVER_CONNECT                    0x00000004U
 /* Removed from OpenSSL 0.9.8q and 1.0.0c */
@@ -318,6 +322,8 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 # define SSL_OP_NO_COMPRESSION                           0x00020000U
 /* Permit unsafe legacy renegotiation */
 # define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION        0x00040000U
+/* Disable encrypt-then-mac */
+# define SSL_OP_NO_ENCRYPT_THEN_MAC                      0x00080000U
 /* Does nothing: retained for compatibility */
 # define SSL_OP_SINGLE_ECDH_USE                          0x0
 /* Does nothing: retained for compatibility */
@@ -341,12 +347,13 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
 # define SSL_OP_NO_TLSv1                                 0x04000000U
 # define SSL_OP_NO_TLSv1_2                               0x08000000U
 # define SSL_OP_NO_TLSv1_1                               0x10000000U
+# define SSL_OP_NO_TLSv1_3                               0x20000000U
 
 # define SSL_OP_NO_DTLSv1                                0x04000000U
 # define SSL_OP_NO_DTLSv1_2                              0x08000000U
 
 # define SSL_OP_NO_SSL_MASK (SSL_OP_NO_SSLv3|\
-        SSL_OP_NO_TLSv1|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2)
+        SSL_OP_NO_TLSv1|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2|SSL_OP_NO_TLSv1_3)
 # define SSL_OP_NO_DTLS_MASK (SSL_OP_NO_DTLSv1|SSL_OP_NO_DTLSv1_2)
 
 
@@ -650,21 +657,30 @@ void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
                                                                unsigned int
                                                                cookie_len));
 # ifndef OPENSSL_NO_NEXTPROTONEG
+
+typedef int (*SSL_CTX_npn_advertised_cb_func)(SSL *ssl,
+                                              const unsigned char **out,
+                                              unsigned int *outlen,
+                                              void *arg);
 void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *s,
-                                           int (*cb) (SSL *ssl,
-                                                      const unsigned char
-                                                      **out,
-                                                      unsigned int *outlen,
-                                                      void *arg), void *arg);
+                                   SSL_CTX_npn_advertised_cb_func cb,
+                                   void *arg);
+#  define SSL_CTX_set_npn_advertised_cb SSL_CTX_set_next_protos_advertised_cb
+
+typedef int (*SSL_CTX_npn_select_cb_func)(SSL *s,
+                                          unsigned char **out,
+                                          unsigned char *outlen,
+                                          const unsigned char *in,
+                                          unsigned int inlen,
+                                          void *arg);
 void SSL_CTX_set_next_proto_select_cb(SSL_CTX *s,
-                                      int (*cb) (SSL *ssl,
-                                                 unsigned char **out,
-                                                 unsigned char *outlen,
-                                                 const unsigned char *in,
-                                                 unsigned int inlen,
-                                                 void *arg), void *arg);
+                                      SSL_CTX_npn_select_cb_func cb,
+                                      void *arg);
+#  define SSL_CTX_set_npn_select_cb SSL_CTX_set_next_proto_select_cb
+
 void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
                                     unsigned *len);
+#  define SSL_get0_npn_negotiated SSL_get0_next_proto_negotiated
 # endif
 
 __owur int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
@@ -680,13 +696,15 @@ __owur int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
                                    unsigned int protos_len);
 __owur int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
                                unsigned int protos_len);
-void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
-                                int (*cb) (SSL *ssl,
+typedef int (*SSL_CTX_alpn_select_cb_func)(SSL *ssl,
                                            const unsigned char **out,
                                            unsigned char *outlen,
                                            const unsigned char *in,
                                            unsigned int inlen,
-                                           void *arg), void *arg);
+                                           void *arg);
+void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
+                                SSL_CTX_alpn_select_cb_func cb,
+                                void *arg);
 void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
                             unsigned int *len);
 
@@ -697,64 +715,22 @@ void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
  */
 #  define PSK_MAX_IDENTITY_LEN 128
 #  define PSK_MAX_PSK_LEN 256
-void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx,
-                                     unsigned int (*psk_client_callback) (SSL
-                                                                          *ssl,
-                                                                          const
-                                                                          char
-                                                                          *hint,
-                                                                          char
-                                                                          *identity,
-                                                                          unsigned
-                                                                          int
-                                                                          max_identity_len,
-                                                                          unsigned
-                                                                          char
-                                                                          *psk,
-                                                                          unsigned
-                                                                          int
-                                                                          max_psk_len));
-void SSL_set_psk_client_callback(SSL *ssl,
-                                 unsigned int (*psk_client_callback) (SSL
-                                                                      *ssl,
-                                                                      const
-                                                                      char
-                                                                      *hint,
-                                                                      char
-                                                                      *identity,
-                                                                      unsigned
-                                                                      int
-                                                                      max_identity_len,
-                                                                      unsigned
-                                                                      char
-                                                                      *psk,
-                                                                      unsigned
-                                                                      int
-                                                                      max_psk_len));
-void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx,
-                                     unsigned int (*psk_server_callback) (SSL
-                                                                          *ssl,
-                                                                          const
-                                                                          char
-                                                                          *identity,
-                                                                          unsigned
-                                                                          char
-                                                                          *psk,
-                                                                          unsigned
-                                                                          int
-                                                                          max_psk_len));
-void SSL_set_psk_server_callback(SSL *ssl,
-                                 unsigned int (*psk_server_callback) (SSL
-                                                                      *ssl,
-                                                                      const
-                                                                      char
-                                                                      *identity,
-                                                                      unsigned
-                                                                      char
-                                                                      *psk,
-                                                                      unsigned
-                                                                      int
-                                                                      max_psk_len));
+typedef unsigned int (*SSL_psk_client_cb_func)(SSL *ssl,
+                                               const char *hint,
+                                               char *identity,
+                                               unsigned int max_identity_len,
+                                               unsigned char *psk,
+                                               unsigned int max_psk_len);
+void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx, SSL_psk_client_cb_func cb);
+void SSL_set_psk_client_callback(SSL *ssl, SSL_psk_client_cb_func cb);
+
+typedef unsigned int (*SSL_psk_server_cb_func)(SSL *ssl,
+                                               const char *identity,
+                                               unsigned char *psk,
+                                               unsigned int max_psk_len);
+void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx, SSL_psk_server_cb_func cb);
+void SSL_set_psk_server_callback(SSL *ssl, SSL_psk_server_cb_func cb);
+
 __owur int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint);
 __owur int SSL_use_psk_identity_hint(SSL *s, const char *identity_hint);
 const char *SSL_get_psk_identity_hint(const SSL *s);
@@ -799,6 +775,25 @@ __owur int SSL_extension_supported(unsigned int ext_type);
 
 # define SSL_MAC_FLAG_READ_MAC_STREAM 1
 # define SSL_MAC_FLAG_WRITE_MAC_STREAM 2
+
+/*
+ * A callback for logging out TLS key material. This callback should log out
+ * |line| followed by a newline.
+ */
+typedef void (*SSL_CTX_keylog_cb_func)(const SSL *ssl, const char *line);
+
+/*
+ * SSL_CTX_set_keylog_callback configures a callback to log key material. This
+ * is intended for debugging use with tools like Wireshark. The cb function
+ * should log line followed by a newline.
+ */
+void SSL_CTX_set_keylog_callback(SSL_CTX *ctx, SSL_CTX_keylog_cb_func cb);
+
+/*
+ * SSL_CTX_get_keylog_callback returns the callback configured by
+ * SSL_CTX_set_keylog_callback.
+ */
+SSL_CTX_keylog_cb_func SSL_CTX_get_keylog_callback(const SSL_CTX *ctx);
 
 #ifdef __cplusplus
 }
@@ -880,7 +875,14 @@ typedef enum {
     TLS_ST_SW_SESSION_TICKET,
     TLS_ST_SW_CERT_STATUS,
     TLS_ST_SW_CHANGE,
-    TLS_ST_SW_FINISHED
+    TLS_ST_SW_FINISHED,
+    TLS_ST_SW_ENCRYPTED_EXTENSIONS,
+    TLS_ST_CR_ENCRYPTED_EXTENSIONS,
+    TLS_ST_CR_CERT_VRFY,
+    TLS_ST_SW_CERT_VRFY,
+    TLS_ST_CR_HELLO_REQ,
+    TLS_ST_SW_HELLO_RETRY_REQUEST,
+    TLS_ST_CR_HELLO_RETRY_REQUEST
 } OSSL_HANDSHAKE_STATE;
 
 /*
@@ -1006,6 +1008,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_AD_INTERNAL_ERROR           TLS1_AD_INTERNAL_ERROR
 # define SSL_AD_USER_CANCELLED           TLS1_AD_USER_CANCELLED
 # define SSL_AD_NO_RENEGOTIATION         TLS1_AD_NO_RENEGOTIATION
+# define SSL_AD_MISSING_EXTENSION        TLS13_AD_MISSING_EXTENSION
 # define SSL_AD_UNSUPPORTED_EXTENSION    TLS1_AD_UNSUPPORTED_EXTENSION
 # define SSL_AD_CERTIFICATE_UNOBTAINABLE TLS1_AD_CERTIFICATE_UNOBTAINABLE
 # define SSL_AD_UNRECOGNIZED_NAME        TLS1_AD_UNRECOGNIZED_NAME
@@ -1106,10 +1109,10 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS        83
 # define SSL_CTRL_CHAIN                          88
 # define SSL_CTRL_CHAIN_CERT                     89
-# define SSL_CTRL_GET_CURVES                     90
-# define SSL_CTRL_SET_CURVES                     91
-# define SSL_CTRL_SET_CURVES_LIST                92
-# define SSL_CTRL_GET_SHARED_CURVE               93
+# define SSL_CTRL_GET_GROUPS                     90
+# define SSL_CTRL_SET_GROUPS                     91
+# define SSL_CTRL_SET_GROUPS_LIST                92
+# define SSL_CTRL_GET_SHARED_GROUP               93
 # define SSL_CTRL_SET_SIGALGS                    97
 # define SSL_CTRL_SET_SIGALGS_LIST               98
 # define SSL_CTRL_CERT_FLAGS                     99
@@ -1224,24 +1227,36 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(s,SSL_CTRL_SET_CHAIN_CERT_STORE,0,(char *)st)
 # define SSL_set1_chain_cert_store(s,st) \
         SSL_ctrl(s,SSL_CTRL_SET_CHAIN_CERT_STORE,1,(char *)st)
+# define SSL_get1_groups(ctx, s) \
+        SSL_ctrl(ctx,SSL_CTRL_GET_GROUPS,0,(char *)s)
 # define SSL_get1_curves(ctx, s) \
-        SSL_ctrl(ctx,SSL_CTRL_GET_CURVES,0,(char *)s)
+        SSL_get1_groups((ctx), (s))
+# define SSL_CTX_set1_groups(ctx, glist, glistlen) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_GROUPS,glistlen,(char *)glist)
+# define SSL_CTX_set1_groups_list(ctx, s) \
+        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_GROUPS_LIST,0,(char *)s)
 # define SSL_CTX_set1_curves(ctx, clist, clistlen) \
-        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_CURVES,clistlen,(char *)clist)
+        SSL_CTX_set1_groups((ctx), (clist), (clistlen))
 # define SSL_CTX_set1_curves_list(ctx, s) \
-        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_CURVES_LIST,0,(char *)s)
+        SSL_CTX_set1_groups_list((ctx), (s))
+# define SSL_set1_groups(ctx, glist, glistlen) \
+        SSL_ctrl(ctx,SSL_CTRL_SET_GROUPS,glistlen,(char *)glist)
+# define SSL_set1_groups_list(ctx, s) \
+        SSL_ctrl(ctx,SSL_CTRL_SET_GROUPS_LIST,0,(char *)s)
 # define SSL_set1_curves(ctx, clist, clistlen) \
-        SSL_ctrl(ctx,SSL_CTRL_SET_CURVES,clistlen,(char *)clist)
+        SSL_set1_groups((ctx), (clist), (clistlen))
 # define SSL_set1_curves_list(ctx, s) \
-        SSL_ctrl(ctx,SSL_CTRL_SET_CURVES_LIST,0,(char *)s)
+        SSL_set1_groups_list((ctx), (s))
+# define SSL_get_shared_group(s, n) \
+        SSL_ctrl(s,SSL_CTRL_GET_SHARED_GROUP,n,NULL)
 # define SSL_get_shared_curve(s, n) \
-        SSL_ctrl(s,SSL_CTRL_GET_SHARED_CURVE,n,NULL)
+        SSL_get_shared_group((s), (n))
 # define SSL_CTX_set1_sigalgs(ctx, slist, slistlen) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_SIGALGS,slistlen,(int *)slist)
 # define SSL_CTX_set1_sigalgs_list(ctx, s) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_SIGALGS_LIST,0,(char *)s)
 # define SSL_set1_sigalgs(ctx, slist, slistlen) \
-        SSL_ctrl(ctx,SSL_CTRL_SET_SIGALGS,clistlen,(int *)slist)
+        SSL_ctrl(ctx,SSL_CTRL_SET_SIGALGS,slistlen,(int *)slist)
 # define SSL_set1_sigalgs_list(ctx, s) \
         SSL_ctrl(ctx,SSL_CTRL_SET_SIGALGS_LIST,0,(char *)s)
 # define SSL_CTX_set1_client_sigalgs(ctx, slist, slistlen) \
@@ -1306,6 +1321,7 @@ __owur long SSL_CTX_set_timeout(SSL_CTX *ctx, long t);
 __owur long SSL_CTX_get_timeout(const SSL_CTX *ctx);
 __owur X509_STORE *SSL_CTX_get_cert_store(const SSL_CTX *);
 void SSL_CTX_set_cert_store(SSL_CTX *, X509_STORE *);
+void SSL_CTX_set1_cert_store(SSL_CTX *, X509_STORE *);
 __owur int SSL_want(const SSL *s);
 __owur int SSL_clear(SSL *s);
 
@@ -1342,9 +1358,8 @@ __owur int SSL_set_cipher_list(SSL *s, const char *str);
 void SSL_set_read_ahead(SSL *s, int yes);
 __owur int SSL_get_verify_mode(const SSL *s);
 __owur int SSL_get_verify_depth(const SSL *s);
-__owur int (*SSL_get_verify_callback(const SSL *s)) (int, X509_STORE_CTX *);
-void SSL_set_verify(SSL *s, int mode,
-                    int (*callback) (int ok, X509_STORE_CTX *ctx));
+__owur SSL_verify_cb SSL_get_verify_callback(const SSL *s);
+void SSL_set_verify(SSL *s, int mode, SSL_verify_cb callback);
 void SSL_set_verify_depth(SSL *s, int depth);
 void SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg);
 # ifndef OPENSSL_NO_RSA
@@ -1443,10 +1458,8 @@ __owur STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s);
 
 __owur int SSL_CTX_get_verify_mode(const SSL_CTX *ctx);
 __owur int SSL_CTX_get_verify_depth(const SSL_CTX *ctx);
-__owur int (*SSL_CTX_get_verify_callback(const SSL_CTX *ctx)) (int,
-                                                        X509_STORE_CTX *);
-void SSL_CTX_set_verify(SSL_CTX *ctx, int mode,
-                        int (*callback) (int, X509_STORE_CTX *));
+__owur SSL_verify_cb SSL_CTX_get_verify_callback(const SSL_CTX *ctx);
+void SSL_CTX_set_verify(SSL_CTX *ctx, int mode, SSL_verify_cb callback);
 void SSL_CTX_set_verify_depth(SSL_CTX *ctx, int depth);
 void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx,
                                       int (*cb) (X509_STORE_CTX *, void *),
@@ -1564,8 +1577,11 @@ __owur int SSL_get_changed_async_fds(SSL *s, OSSL_ASYNC_FD *addfd,
 __owur int SSL_accept(SSL *ssl);
 __owur int SSL_connect(SSL *ssl);
 __owur int SSL_read(SSL *ssl, void *buf, int num);
+__owur int SSL_read_ex(SSL *ssl, void *buf, size_t num, size_t *readbytes);
 __owur int SSL_peek(SSL *ssl, void *buf, int num);
+__owur int SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *readbytes);
 __owur int SSL_write(SSL *ssl, const void *buf, int num);
+__owur int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written);
 long SSL_ctrl(SSL *ssl, int cmd, long larg, void *parg);
 long SSL_callback_ctrl(SSL *, int, void (*)(void));
 long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg);
@@ -1626,6 +1642,8 @@ __owur const SSL_METHOD *DTLS_method(void); /* DTLS 1.0 and 1.2 */
 __owur const SSL_METHOD *DTLS_server_method(void); /* DTLS 1.0 and 1.2 */
 __owur const SSL_METHOD *DTLS_client_method(void); /* DTLS 1.0 and 1.2 */
 
+__owur size_t DTLS_get_data_mtu(const SSL *s);
+
 __owur STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s);
 __owur STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx);
 __owur STACK_OF(SSL_CIPHER) *SSL_get_client_ciphers(const SSL *s);
@@ -1633,7 +1651,7 @@ __owur STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s);
 
 __owur int SSL_do_handshake(SSL *s);
 int SSL_renegotiate(SSL *s);
-__owur int SSL_renegotiate_abbreviated(SSL *s);
+int SSL_renegotiate_abbreviated(SSL *s);
 __owur int SSL_renegotiate_pending(SSL *s);
 int SSL_shutdown(SSL *s);
 
@@ -1777,6 +1795,8 @@ void SSL_set_tmp_dh_callback(SSL *ssl,
 __owur const COMP_METHOD *SSL_get_current_compression(SSL *s);
 __owur const COMP_METHOD *SSL_get_current_expansion(SSL *s);
 __owur const char *SSL_COMP_get_name(const COMP_METHOD *comp);
+__owur const char *SSL_COMP_get0_name(const SSL_COMP *comp);
+__owur int SSL_COMP_get_id(const SSL_COMP *comp);
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 __owur STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
                                                       *meths);
@@ -2053,6 +2073,8 @@ int ERR_load_SSL_strings(void);
 /* Error codes for the SSL functions. */
 
 /* Function codes. */
+# define SSL_F_ADD_CLIENT_KEY_SHARE_EXT                   438
+# define SSL_F_ADD_KEY_SHARE                              512
 # define SSL_F_CHECK_SUITEB_CIPHER_LIST                   331
 # define SSL_F_CT_MOVE_SCTS                               345
 # define SSL_F_CT_STRICT                                  349
@@ -2077,11 +2099,20 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST        385
 # define SSL_F_DTLS_GET_REASSEMBLED_MESSAGE               370
 # define SSL_F_DTLS_PROCESS_HELLO_VERIFY                  386
+# define SSL_F_FINAL_EC_PT_FORMATS                        485
+# define SSL_F_FINAL_EMS                                  486
+# define SSL_F_FINAL_KEY_SHARE                            503
+# define SSL_F_FINAL_RENEGOTIATE                          483
+# define SSL_F_FINAL_SIG_ALGS                             497
+# define SSL_F_NSS_KEYLOG_INT                             500
 # define SSL_F_OPENSSL_INIT_SSL                           342
+# define SSL_F_OSSL_STATEM_CLIENT13_READ_TRANSITION       436
 # define SSL_F_OSSL_STATEM_CLIENT_CONSTRUCT_MESSAGE       430
 # define SSL_F_OSSL_STATEM_CLIENT_READ_TRANSITION         417
+# define SSL_F_OSSL_STATEM_SERVER13_READ_TRANSITION       437
 # define SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE       431
 # define SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION         418
+# define SSL_F_PROCESS_KEY_SHARE_EXT                      439
 # define SSL_F_READ_STATE_MACHINE                         352
 # define SSL_F_SSL3_CHANGE_CIPHER_STATE                   129
 # define SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM              130
@@ -2104,6 +2135,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_WRITE_PENDING                         159
 # define SSL_F_SSL_ADD_CERT_CHAIN                         316
 # define SSL_F_SSL_ADD_CERT_TO_BUF                        319
+# define SSL_F_SSL_ADD_CERT_TO_WPACKET                    493
 # define SSL_F_SSL_ADD_CLIENTHELLO_RENEGOTIATE_EXT        298
 # define SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT                 277
 # define SSL_F_SSL_ADD_CLIENTHELLO_USE_SRTP_EXT           307
@@ -2164,6 +2196,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_GET_SIGN_PKEY                          183
 # define SSL_F_SSL_INIT_WBIO_BUFFER                       184
 # define SSL_F_SSL_LOAD_CLIENT_CA_FILE                    185
+# define SSL_F_SSL_LOG_MASTER_SECRET                      498
+# define SSL_F_SSL_LOG_RSA_CLIENT_KEY_EXCHANGE            499
 # define SSL_F_SSL_MODULE_INIT                            392
 # define SSL_F_SSL_NEW                                    186
 # define SSL_F_SSL_PARSE_CLIENTHELLO_RENEGOTIATE_EXT      300
@@ -2173,7 +2207,9 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT               303
 # define SSL_F_SSL_PARSE_SERVERHELLO_USE_SRTP_EXT         311
 # define SSL_F_SSL_PEEK                                   270
+# define SSL_F_SSL_PEEK_EX                                432
 # define SSL_F_SSL_READ                                   223
+# define SSL_F_SSL_READ_EX                                434
 # define SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT                320
 # define SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT                321
 # define SSL_F_SSL_SESSION_DUP                            348
@@ -2210,8 +2246,11 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_VALIDATE_CT                            400
 # define SSL_F_SSL_VERIFY_CERT_CHAIN                      207
 # define SSL_F_SSL_WRITE                                  208
+# define SSL_F_SSL_WRITE_EX                               433
 # define SSL_F_STATE_MACHINE                              353
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
+# define SSL_F_TLS13_CHANGE_CIPHER_STATE                  440
+# define SSL_F_TLS13_SETUP_KEY_BLOCK                      441
 # define SSL_F_TLS1_CHANGE_CIPHER_STATE                   209
 # define SSL_F_TLS1_CHECK_DUPLICATE_EXTENSIONS            341
 # define SSL_F_TLS1_ENC                                   401
@@ -2220,9 +2259,13 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS1_PRF                                   284
 # define SSL_F_TLS1_SETUP_KEY_BLOCK                       211
 # define SSL_F_TLS1_SET_SERVER_SIGALGS                    335
+# define SSL_F_TLS_CHOOSE_SIGALG                          510
 # define SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK          354
+# define SSL_F_TLS_COLLECT_EXTENSIONS                     435
 # define SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST          372
 # define SSL_F_TLS_CONSTRUCT_CERT_STATUS                  429
+# define SSL_F_TLS_CONSTRUCT_CERT_STATUS_BODY             494
+# define SSL_F_TLS_CONSTRUCT_CERT_VERIFY                  496
 # define SSL_F_TLS_CONSTRUCT_CHANGE_CIPHER_SPEC           427
 # define SSL_F_TLS_CONSTRUCT_CKE_DHE                      404
 # define SSL_F_TLS_CONSTRUCT_CKE_ECDHE                    405
@@ -2230,25 +2273,77 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CKE_PSK_PREAMBLE             407
 # define SSL_F_TLS_CONSTRUCT_CKE_RSA                      409
 # define SSL_F_TLS_CONSTRUCT_CKE_SRP                      410
-# define SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE           355
-# define SSL_F_TLS_CONSTRUCT_CLIENT_HELLO                 356
-# define SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE          357
-# define SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY                358
+# define SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE           484
+# define SSL_F_TLS_CONSTRUCT_CLIENT_HELLO                 487
+# define SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE          488
+# define SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY                489
+# define SSL_F_TLS_CONSTRUCT_CTOS_ALPN                    466
+# define SSL_F_TLS_CONSTRUCT_CTOS_CERTIFICATE             355
+# define SSL_F_TLS_CONSTRUCT_CTOS_EC_PT_FORMATS           467
+# define SSL_F_TLS_CONSTRUCT_CTOS_EMS                     468
+# define SSL_F_TLS_CONSTRUCT_CTOS_ETM                     469
+# define SSL_F_TLS_CONSTRUCT_CTOS_HELLO                   356
+# define SSL_F_TLS_CONSTRUCT_CTOS_KEY_EXCHANGE            357
+# define SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE               470
+# define SSL_F_TLS_CONSTRUCT_CTOS_NPN                     471
+# define SSL_F_TLS_CONSTRUCT_CTOS_PADDING                 472
+# define SSL_F_TLS_CONSTRUCT_CTOS_PSK                     501
+# define SSL_F_TLS_CONSTRUCT_CTOS_PSK_KEX_MODES           509
+# define SSL_F_TLS_CONSTRUCT_CTOS_RENEGOTIATE             473
+# define SSL_F_TLS_CONSTRUCT_CTOS_SCT                     474
+# define SSL_F_TLS_CONSTRUCT_CTOS_SERVER_NAME             475
+# define SSL_F_TLS_CONSTRUCT_CTOS_SESSION_TICKET          476
+# define SSL_F_TLS_CONSTRUCT_CTOS_SIG_ALGS                477
+# define SSL_F_TLS_CONSTRUCT_CTOS_SRP                     478
+# define SSL_F_TLS_CONSTRUCT_CTOS_STATUS_REQUEST          479
+# define SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS        480
+# define SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS      481
+# define SSL_F_TLS_CONSTRUCT_CTOS_USE_SRTP                482
+# define SSL_F_TLS_CONSTRUCT_CTOS_VERIFY                  358
+# define SSL_F_TLS_CONSTRUCT_ENCRYPTED_EXTENSIONS         443
+# define SSL_F_TLS_CONSTRUCT_EXTENSIONS                   447
 # define SSL_F_TLS_CONSTRUCT_FINISHED                     359
 # define SSL_F_TLS_CONSTRUCT_HELLO_REQUEST                373
+# define SSL_F_TLS_CONSTRUCT_HELLO_RETRY_REQUEST          510
 # define SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET           428
 # define SSL_F_TLS_CONSTRUCT_NEXT_PROTO                   426
-# define SSL_F_TLS_CONSTRUCT_SERVER_CERTIFICATE           374
-# define SSL_F_TLS_CONSTRUCT_SERVER_DONE                  375
-# define SSL_F_TLS_CONSTRUCT_SERVER_HELLO                 376
-# define SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE          377
+# define SSL_F_TLS_CONSTRUCT_SERVER_CERTIFICATE           490
+# define SSL_F_TLS_CONSTRUCT_SERVER_HELLO                 491
+# define SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE          492
+# define SSL_F_TLS_CONSTRUCT_STOC_ALPN                    451
+# define SSL_F_TLS_CONSTRUCT_STOC_CERTIFICATE             374
+# define SSL_F_TLS_CONSTRUCT_STOC_CRYPTOPRO_BUG           452
+# define SSL_F_TLS_CONSTRUCT_STOC_DONE                    375
+# define SSL_F_TLS_CONSTRUCT_STOC_EC_PT_FORMATS           453
+# define SSL_F_TLS_CONSTRUCT_STOC_EMS                     454
+# define SSL_F_TLS_CONSTRUCT_STOC_ETM                     455
+# define SSL_F_TLS_CONSTRUCT_STOC_HELLO                   376
+# define SSL_F_TLS_CONSTRUCT_STOC_KEY_EXCHANGE            377
+# define SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE               456
+# define SSL_F_TLS_CONSTRUCT_STOC_NEXT_PROTO_NEG          457
+# define SSL_F_TLS_CONSTRUCT_STOC_PSK                     504
+# define SSL_F_TLS_CONSTRUCT_STOC_RENEGOTIATE             458
+# define SSL_F_TLS_CONSTRUCT_STOC_SERVER_NAME             459
+# define SSL_F_TLS_CONSTRUCT_STOC_SESSION_TICKET          460
+# define SSL_F_TLS_CONSTRUCT_STOC_STATUS_REQUEST          461
+# define SSL_F_TLS_CONSTRUCT_STOC_USE_SRTP                462
 # define SSL_F_TLS_GET_MESSAGE_BODY                       351
 # define SSL_F_TLS_GET_MESSAGE_HEADER                     387
+# define SSL_F_TLS_PARSE_CLIENTHELLO_TLSEXT               449
+# define SSL_F_TLS_PARSE_CTOS_KEY_SHARE                   463
+# define SSL_F_TLS_PARSE_CTOS_PSK                         505
+# define SSL_F_TLS_PARSE_CTOS_RENEGOTIATE                 464
+# define SSL_F_TLS_PARSE_CTOS_USE_SRTP                    465
+# define SSL_F_TLS_PARSE_STOC_KEY_SHARE                   445
+# define SSL_F_TLS_PARSE_STOC_PSK                         502
+# define SSL_F_TLS_PARSE_STOC_RENEGOTIATE                 448
+# define SSL_F_TLS_PARSE_STOC_USE_SRTP                    446
 # define SSL_F_TLS_POST_PROCESS_CLIENT_HELLO              378
 # define SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE       384
 # define SSL_F_TLS_PREPARE_CLIENT_CERTIFICATE             360
 # define SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST            361
 # define SSL_F_TLS_PROCESS_CERT_STATUS                    362
+# define SSL_F_TLS_PROCESS_CERT_STATUS_BODY               495
 # define SSL_F_TLS_PROCESS_CERT_VERIFY                    379
 # define SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC             363
 # define SSL_F_TLS_PROCESS_CKE_DHE                        411
@@ -2260,7 +2355,11 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE             380
 # define SSL_F_TLS_PROCESS_CLIENT_HELLO                   381
 # define SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE            382
+# define SSL_F_TLS_PROCESS_ENCRYPTED_EXTENSIONS           444
 # define SSL_F_TLS_PROCESS_FINISHED                       364
+# define SSL_F_TLS_PROCESS_HELLO_REQ                      507
+# define SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST            511
+# define SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT          442
 # define SSL_F_TLS_PROCESS_KEY_EXCHANGE                   365
 # define SSL_F_TLS_PROCESS_NEW_SESSION_TICKET             366
 # define SSL_F_TLS_PROCESS_NEXT_PROTO                     383
@@ -2271,6 +2370,9 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_SKE_ECDHE                      420
 # define SSL_F_TLS_PROCESS_SKE_PSK_PREAMBLE               421
 # define SSL_F_TLS_PROCESS_SKE_SRP                        422
+# define SSL_F_TLS_PSK_DO_BINDER                          506
+# define SSL_F_TLS_SCAN_CLIENTHELLO_TLSEXT                450
+# define SSL_F_TLS_SETUP_HANDSHAKE                        508
 # define SSL_F_USE_CERTIFICATE_CHAIN_FILE                 220
 
 /* Reason codes. */
@@ -2286,11 +2388,15 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_BAD_DIGEST_LENGTH                          111
 # define SSL_R_BAD_ECC_CERT                               304
 # define SSL_R_BAD_ECPOINT                                306
+# define SSL_R_BAD_EXTENSION                              110
 # define SSL_R_BAD_HANDSHAKE_LENGTH                       332
 # define SSL_R_BAD_HELLO_REQUEST                          105
+# define SSL_R_BAD_KEY_SHARE                              108
 # define SSL_R_BAD_LENGTH                                 271
 # define SSL_R_BAD_PACKET_LENGTH                          115
 # define SSL_R_BAD_PROTOCOL_VERSION_NUMBER                116
+# define SSL_R_BAD_PSK_IDENTITY                           114
+# define SSL_R_BAD_RECORD_TYPE                            443
 # define SSL_R_BAD_RSA_ENCRYPT                            119
 # define SSL_R_BAD_SIGNATURE                              123
 # define SSL_R_BAD_SRP_A_LENGTH                           347
@@ -2303,6 +2409,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_BIO_NOT_SET                                128
 # define SSL_R_BLOCK_CIPHER_PAD_IS_WRONG                  129
 # define SSL_R_BN_LIB                                     130
+# define SSL_R_CANNOT_CHANGE_CIPHER                       109
 # define SSL_R_CA_DN_LENGTH_MISMATCH                      131
 # define SSL_R_CA_KEY_TOO_SMALL                           397
 # define SSL_R_CA_MD_TOO_WEAK                             398
@@ -2381,6 +2488,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_MISSING_RSA_CERTIFICATE                    168
 # define SSL_R_MISSING_RSA_ENCRYPTING_CERT                169
 # define SSL_R_MISSING_RSA_SIGNING_CERT                   170
+# define SSL_R_MISSING_SIGALGS_EXTENSION                  112
 # define SSL_R_MISSING_SRP_PARAM                          358
 # define SSL_R_MISSING_TMP_DH_KEY                         171
 # define SSL_R_MISSING_TMP_ECDH_KEY                       311
@@ -2400,8 +2508,11 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_NO_RENEGOTIATION                           339
 # define SSL_R_NO_REQUIRED_DIGEST                         324
 # define SSL_R_NO_SHARED_CIPHER                           193
+# define SSL_R_NO_SHARED_GROUPS                           410
 # define SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS             376
 # define SSL_R_NO_SRTP_PROFILES                           359
+# define SSL_R_NO_SUITABLE_KEY_SHARE                      101
+# define SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM            118
 # define SSL_R_NO_VALID_SCTS                              216
 # define SSL_R_NO_VERIFY_COOKIE_CALLBACK                  403
 # define SSL_R_NULL_SSL_CTX                               195

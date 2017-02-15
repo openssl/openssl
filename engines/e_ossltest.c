@@ -226,7 +226,7 @@ static int ossltest_ciphers(ENGINE *, const EVP_CIPHER **,
                             const int **, int);
 
 static int ossltest_cipher_nids[] = {
-    NID_aes_128_cbc, 0
+    NID_aes_128_cbc, NID_aes_128_gcm, 0
 };
 
 /* AES128 */
@@ -235,6 +235,12 @@ int ossltest_aes128_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc);
 int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                const unsigned char *in, size_t inl);
+int ossltest_aes128_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+                             const unsigned char *iv, int enc);
+int ossltest_aes128_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                               const unsigned char *in, size_t inl);
+static int ossltest_aes128_gcm_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
+                                    void *ptr);
 
 static EVP_CIPHER *_hidden_aes_128_cbc = NULL;
 static const EVP_CIPHER *ossltest_aes_128_cbc(void)
@@ -258,9 +264,40 @@ static const EVP_CIPHER *ossltest_aes_128_cbc(void)
     }
     return _hidden_aes_128_cbc;
 }
+static EVP_CIPHER *_hidden_aes_128_gcm = NULL;
+
+#define AES_GCM_FLAGS   (EVP_CIPH_FLAG_DEFAULT_ASN1 \
+                | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER \
+                | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT \
+                | EVP_CIPH_CUSTOM_COPY |EVP_CIPH_FLAG_AEAD_CIPHER \
+                | EVP_CIPH_GCM_MODE)
+
+static const EVP_CIPHER *ossltest_aes_128_gcm(void)
+{
+    if (_hidden_aes_128_gcm == NULL
+        && ((_hidden_aes_128_gcm = EVP_CIPHER_meth_new(NID_aes_128_gcm,
+                                                       1 /* block size */,
+                                                       16 /* key len */)) == NULL
+            || !EVP_CIPHER_meth_set_iv_length(_hidden_aes_128_gcm,12)
+            || !EVP_CIPHER_meth_set_flags(_hidden_aes_128_gcm, AES_GCM_FLAGS)
+            || !EVP_CIPHER_meth_set_init(_hidden_aes_128_gcm,
+                                         ossltest_aes128_gcm_init_key)
+            || !EVP_CIPHER_meth_set_do_cipher(_hidden_aes_128_gcm,
+                                              ossltest_aes128_gcm_cipher)
+            || !EVP_CIPHER_meth_set_ctrl(_hidden_aes_128_gcm,
+                                              ossltest_aes128_gcm_ctrl)
+            || !EVP_CIPHER_meth_set_impl_ctx_size(_hidden_aes_128_gcm,
+                              EVP_CIPHER_impl_ctx_size(EVP_aes_128_gcm())))) {
+        EVP_CIPHER_meth_free(_hidden_aes_128_gcm);
+        _hidden_aes_128_gcm = NULL;
+    }
+    return _hidden_aes_128_gcm;
+}
+
 static void destroy_ciphers(void)
 {
     EVP_CIPHER_meth_free(_hidden_aes_128_cbc);
+    EVP_CIPHER_meth_free(_hidden_aes_128_gcm);
     _hidden_aes_128_cbc = NULL;
 }
 
@@ -388,6 +425,9 @@ static int ossltest_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
     switch (nid) {
     case NID_aes_128_cbc:
         *cipher = ossltest_aes_128_cbc();
+        break;
+    case NID_aes_128_gcm:
+        *cipher = ossltest_aes_128_gcm();
         break;
     default:
         ok = 0;
@@ -565,4 +605,55 @@ int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     OPENSSL_free(tmpbuf);
 
     return ret;
+}
+
+int ossltest_aes128_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+                             const unsigned char *iv, int enc)
+{
+    return EVP_CIPHER_meth_get_init(EVP_aes_128_gcm()) (ctx, key, iv, enc);
+}
+
+
+int ossltest_aes128_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                               const unsigned char *in, size_t inl)
+{
+    unsigned char *tmpbuf = OPENSSL_malloc(inl);
+
+    /* OPENSSL_malloc will return NULL if inl == 0 */
+    if (tmpbuf == NULL && inl > 0)
+        return -1;
+
+    /* Remember what we were asked to encrypt */
+    memcpy(tmpbuf, in, inl);
+
+    /* Go through the motions of encrypting it */
+    EVP_CIPHER_meth_get_do_cipher(EVP_aes_128_gcm())(ctx, out, in, inl);
+
+    /* Throw it all away and just use the plaintext as the output */
+    memcpy(out, tmpbuf, inl);
+    OPENSSL_free(tmpbuf);
+
+    return inl;
+}
+
+static int ossltest_aes128_gcm_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
+                                    void *ptr)
+{
+    /* Pass the ctrl down */
+    int ret = EVP_CIPHER_meth_get_ctrl(EVP_aes_128_gcm())(ctx, type, arg, ptr);
+
+    if (ret <= 0)
+        return ret;
+
+    switch(type) {
+    case EVP_CTRL_AEAD_GET_TAG:
+        /* Always give the same tag */
+        memset(ptr, 0, EVP_GCM_TLS_TAG_LEN);
+        break;
+
+    default:
+        break;
+    }
+
+    return 1;
 }

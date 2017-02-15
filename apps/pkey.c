@@ -179,7 +179,10 @@ int pkey_main(int argc, char **argv)
     ret = 0;
 
  end:
+    if (ret != 0)
+        ERR_print_errors(bio_err);
     EVP_PKEY_free(pkey);
+    release_engine(e);
     BIO_free_all(out);
     BIO_free(in);
     OPENSSL_free(passin);

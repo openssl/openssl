@@ -138,16 +138,33 @@ int ASYNC_WAIT_CTX_get_changed_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *addfd,
 
 int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key)
 {
-    struct fd_lookup_st *curr;
+    struct fd_lookup_st *curr, *prev;
 
     curr = ctx->fds;
+    prev = NULL;
     while (curr != NULL) {
-        if (curr->del) {
+        if (curr->del == 1) {
             /* This one has been marked deleted already so do nothing */
             curr = curr->next;
             continue;
         }
         if (curr->key == key) {
+            /* If fd has just been added, remove it from the list */
+            if (curr->add == 1) {
+                if (ctx->fds == curr) {
+                    ctx->fds = curr->next;
+                } else {
+                    prev->next = curr->next;
+                }
+
+                /* It is responsibility of the caller to cleanup before calling
+                 * ASYNC_WAIT_CTX_clear_fd
+                 */
+                OPENSSL_free(curr);
+                ctx->numadd--;
+                return 1;
+            }
+
             /*
              * Mark it as deleted. We don't call cleanup if explicitly asked
              * to clear an fd. We assume the caller is going to do that (if
@@ -157,6 +174,7 @@ int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key)
             ctx->numdel++;
             return 1;
         }
+        prev = curr;
         curr = curr->next;
     }
     return 0;

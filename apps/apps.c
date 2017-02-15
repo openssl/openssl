@@ -245,6 +245,11 @@ void destroy_ui_method(void)
         ui_method = NULL;
     }
 }
+
+const UI_METHOD *get_ui_method(void)
+{
+    return ui_method;
+}
 #endif
 
 int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
@@ -252,36 +257,27 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
     int res = 0;
 #ifndef OPENSSL_NO_UI
     UI *ui = NULL;
-    const char *prompt_info = NULL;
 #endif
-    const char *password = NULL;
     PW_CB_DATA *cb_data = (PW_CB_DATA *)cb_tmp;
 
-    if (cb_data) {
-        if (cb_data->password)
-            password = cb_data->password;
-#ifndef OPENSSL_NO_UI
-        if (cb_data->prompt_info)
-            prompt_info = cb_data->prompt_info;
-#endif
-    }
-
-    if (password) {
-        res = strlen(password);
+#ifdef OPENSSL_NO_UI
+    if (cb_data != NULL && cb_data->password != NULL) {
+        res = strlen(cb_data->password);
         if (res > bufsiz)
             res = bufsiz;
-        memcpy(buf, password, res);
-        return res;
+        memcpy(buf, cb_data->password, res);
     }
-
-#ifndef OPENSSL_NO_UI
+#else
     ui = UI_new_method(ui_method);
     if (ui) {
         int ok = 0;
         char *buff = NULL;
         int ui_flags = 0;
+        const char *prompt_info = NULL;
         char *prompt;
 
+        if (cb_data != NULL && cb_data->prompt_info != NULL)
+            prompt_info = cb_data->prompt_info;
         prompt = UI_construct_prompt(ui, "pass phrase", prompt_info);
         if (!prompt) {
             BIO_printf(bio_err, "Out of memory\n");
@@ -291,6 +287,9 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
 
         ui_flags |= UI_INPUT_FLAG_DEFAULT_PWD;
         UI_ctrl(ui, UI_CTRL_PRINT_ERRORS, 1, 0, 0);
+
+        /* We know that there is no previous user data to return to us */
+        (void)UI_add_user_data(ui, cb_data);
 
         if (ok >= 0)
             ok = UI_add_input_string(ui, prompt, ui_flags, buf,
@@ -1251,11 +1250,13 @@ static ENGINE *try_load_engine(const char *engine)
     }
     return e;
 }
+#endif
 
 ENGINE *setup_engine(const char *engine, int debug)
 {
     ENGINE *e = NULL;
 
+#ifndef OPENSSL_NO_ENGINE
     if (engine) {
         if (strcmp(engine, "auto") == 0) {
             BIO_printf(bio_err, "enabling auto ENGINE support\n");
@@ -1280,13 +1281,19 @@ ENGINE *setup_engine(const char *engine, int debug)
         }
 
         BIO_printf(bio_err, "engine \"%s\" set.\n", ENGINE_get_id(e));
-
-        /* Free our "structural" reference. */
-        ENGINE_free(e);
     }
+#endif
     return e;
 }
+
+void release_engine(ENGINE *e)
+{
+#ifndef OPENSSL_NO_ENGINE
+    if (e != NULL)
+        /* Free our "structural" reference. */
+        ENGINE_free(e);
 #endif
+}
 
 static unsigned long index_serial_hash(const OPENSSL_CSTRING *a)
 {
@@ -2656,4 +2663,12 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         return 0;
     }
     return 1;
+}
+
+void make_uppercase(char *string)
+{
+    int i;
+
+    for (i = 0; string[i] != '\0'; i++)
+        string[i] = toupper((unsigned char)string[i]);
 }

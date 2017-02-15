@@ -63,7 +63,7 @@ CERT *ssl_cert_new(void)
         return NULL;
     }
 
-    ret->key = &(ret->pkeys[SSL_PKEY_RSA_ENC]);
+    ret->key = &(ret->pkeys[SSL_PKEY_RSA]);
     ret->references = 1;
     ret->sec_cb = ssl_security_default_callback;
     ret->sec_level = OPENSSL_TLS_SECURITY_LEVEL;
@@ -141,20 +141,23 @@ CERT *ssl_cert_dup(CERT *cert)
 
     /* Configured sigalgs copied across */
     if (cert->conf_sigalgs) {
-        ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen);
+        ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen
+                                           * sizeof(*cert->conf_sigalgs));
         if (ret->conf_sigalgs == NULL)
             goto err;
-        memcpy(ret->conf_sigalgs, cert->conf_sigalgs, cert->conf_sigalgslen);
+        memcpy(ret->conf_sigalgs, cert->conf_sigalgs,
+               cert->conf_sigalgslen * sizeof(*cert->conf_sigalgs));
         ret->conf_sigalgslen = cert->conf_sigalgslen;
     } else
         ret->conf_sigalgs = NULL;
 
     if (cert->client_sigalgs) {
-        ret->client_sigalgs = OPENSSL_malloc(cert->client_sigalgslen);
+        ret->client_sigalgs = OPENSSL_malloc(cert->client_sigalgslen
+                                             * sizeof(*cert->client_sigalgs));
         if (ret->client_sigalgs == NULL)
             goto err;
         memcpy(ret->client_sigalgs, cert->client_sigalgs,
-               cert->client_sigalgslen);
+               cert->client_sigalgslen * sizeof(*cert->client_sigalgs));
         ret->client_sigalgslen = cert->client_sigalgslen;
     } else
         ret->client_sigalgs = NULL;
@@ -235,7 +238,7 @@ void ssl_cert_free(CERT *c)
     if (c == NULL)
         return;
 
-    CRYPTO_atomic_add(&c->references, -1, &i, c->lock);
+    CRYPTO_DOWN_REF(&c->references, &i, c->lock);
     REF_PRINT_COUNT("CERT", c);
     if (i > 0)
         return;
@@ -738,116 +741,6 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
         OPENSSL_DIR_end(&d);
 
     return ret;
-}
-
-/* Add a certificate to the WPACKET */
-static int ssl_add_cert_to_buf(WPACKET *pkt, X509 *x)
-{
-    int len;
-    unsigned char *outbytes;
-
-    len = i2d_X509(x, NULL);
-    if (len < 0) {
-        SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_BUF_LIB);
-        return 0;
-    }
-    if (!WPACKET_sub_allocate_bytes_u24(pkt, len, &outbytes)
-            || i2d_X509(x, &outbytes) != len) {
-        SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
-    return 1;
-}
-
-/* Add certificate chain to internal SSL BUF_MEM structure */
-int ssl_add_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
-{
-    int i, chain_count;
-    X509 *x;
-    STACK_OF(X509) *extra_certs;
-    STACK_OF(X509) *chain = NULL;
-    X509_STORE *chain_store;
-
-    if (cpk == NULL || cpk->x509 == NULL)
-        return 1;
-
-    x = cpk->x509;
-
-    /*
-     * If we have a certificate specific chain use it, else use parent ctx.
-     */
-    if (cpk->chain)
-        extra_certs = cpk->chain;
-    else
-        extra_certs = s->ctx->extra_certs;
-
-    if ((s->mode & SSL_MODE_NO_AUTO_CHAIN) || extra_certs)
-        chain_store = NULL;
-    else if (s->cert->chain_store)
-        chain_store = s->cert->chain_store;
-    else
-        chain_store = s->ctx->cert_store;
-
-    if (chain_store) {
-        X509_STORE_CTX *xs_ctx = X509_STORE_CTX_new();
-
-        if (xs_ctx == NULL) {
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_MALLOC_FAILURE);
-            return (0);
-        }
-        if (!X509_STORE_CTX_init(xs_ctx, chain_store, x, NULL)) {
-            X509_STORE_CTX_free(xs_ctx);
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, ERR_R_X509_LIB);
-            return (0);
-        }
-        /*
-         * It is valid for the chain not to be complete (because normally we
-         * don't include the root cert in the chain). Therefore we deliberately
-         * ignore the error return from this call. We're not actually verifying
-         * the cert - we're just building as much of the chain as we can
-         */
-        (void)X509_verify_cert(xs_ctx);
-        /* Don't leave errors in the queue */
-        ERR_clear_error();
-        chain = X509_STORE_CTX_get0_chain(xs_ctx);
-        i = ssl_security_cert_chain(s, chain, NULL, 0);
-        if (i != 1) {
-#if 0
-            /* Dummy error calls so mkerr generates them */
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_EE_KEY_TOO_SMALL);
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_CA_KEY_TOO_SMALL);
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, SSL_R_CA_MD_TOO_WEAK);
-#endif
-            X509_STORE_CTX_free(xs_ctx);
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, i);
-            return 0;
-        }
-        chain_count = sk_X509_num(chain);
-        for (i = 0; i < chain_count; i++) {
-            x = sk_X509_value(chain, i);
-
-            if (!ssl_add_cert_to_buf(pkt, x)) {
-                X509_STORE_CTX_free(xs_ctx);
-                return 0;
-            }
-        }
-        X509_STORE_CTX_free(xs_ctx);
-    } else {
-        i = ssl_security_cert_chain(s, extra_certs, x, 0);
-        if (i != 1) {
-            SSLerr(SSL_F_SSL_ADD_CERT_CHAIN, i);
-            return 0;
-        }
-        if (!ssl_add_cert_to_buf(pkt, x))
-            return 0;
-        for (i = 0; i < sk_X509_num(extra_certs); i++) {
-            x = sk_X509_value(extra_certs, i);
-            if (!ssl_add_cert_to_buf(pkt, x))
-                return 0;
-        }
-    }
-    return 1;
 }
 
 /* Build a certificate chain for current certificate */

@@ -57,14 +57,17 @@
 # Sandy Bridge	25	-	15.9		12.4	11.6
 # Ivy Bridge	24	-	15.0		11.4	10.3
 # Haswell	22	-	13.9		9.46	7.80
+# Skylake	20	-	14.9		9.50	7.70
 # Bulldozer	36	-	27/22		17.0	13.6
 # VIA Nano	36	-	25/22		16.8	16.5
 # Atom		50	-	30/25		21.9	18.9
 # Silvermont	40	-	34/31		22.9	20.6
+# Goldmont	29	-	20		16.3(***)
 #
 # (*)	numbers after slash are for unrolled loop, where applicable;
 # (**)	x86_64 assembly performance is presented for reference
 #	purposes, results are best-available;
+# (***)	SHAEXT result is 4.1, strangely enough better than 64-bit one;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");

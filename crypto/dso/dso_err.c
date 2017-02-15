@@ -38,6 +38,7 @@ static ERR_STRING_DATA DSO_str_functs[] = {
     {ERR_FUNC(DSO_F_DSO_LOAD), "DSO_load"},
     {ERR_FUNC(DSO_F_DSO_MERGE), "DSO_merge"},
     {ERR_FUNC(DSO_F_DSO_NEW_METHOD), "DSO_new_method"},
+    {ERR_FUNC(DSO_F_DSO_PATHBYADDR), "DSO_pathbyaddr"},
     {ERR_FUNC(DSO_F_DSO_SET_FILENAME), "DSO_set_filename"},
     {ERR_FUNC(DSO_F_DSO_UP_REF), "DSO_up_ref"},
     {ERR_FUNC(DSO_F_VMS_BIND_SYM), "vms_bind_sym"},
@@ -50,6 +51,7 @@ static ERR_STRING_DATA DSO_str_functs[] = {
     {ERR_FUNC(DSO_F_WIN32_LOAD), "win32_load"},
     {ERR_FUNC(DSO_F_WIN32_MERGER), "win32_merger"},
     {ERR_FUNC(DSO_F_WIN32_NAME_CONVERTER), "win32_name_converter"},
+    {ERR_FUNC(DSO_F_WIN32_PATHBYADDR), "win32_pathbyaddr"},
     {ERR_FUNC(DSO_F_WIN32_SPLITTER), "win32_splitter"},
     {ERR_FUNC(DSO_F_WIN32_UNLOAD), "win32_unload"},
     {0, NULL}

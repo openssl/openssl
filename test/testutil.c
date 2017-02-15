@@ -15,6 +15,10 @@
 #include <string.h>
 #include "e_os.h"
 
+#include <openssl/opensslconf.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+
 /*
  * Declares the structures needed to register each test case function.
  */
@@ -55,6 +59,50 @@ void add_all_tests(const char *test_case_name, int(*test_fn)(int idx),
     num_test_cases += num;
 }
 
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+static int should_report_leaks()
+{
+    /*
+     * When compiled with enable-crypto-mdebug, OPENSSL_DEBUG_MEMORY=0
+     * can be used to disable leak checking at runtime.
+     * Note this only works when running the test binary manually;
+     * the test harness always enables OPENSSL_DEBUG_MEMORY.
+     */
+    char *mem_debug_env = getenv("OPENSSL_DEBUG_MEMORY");
+
+    return mem_debug_env == NULL
+        || (strcmp(mem_debug_env, "0") && strcmp(mem_debug_env, ""));
+}
+#endif
+
+
+void setup_test()
+{
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (should_report_leaks()) {
+        CRYPTO_set_mem_debug(1);
+        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+    }
+#endif
+}
+
+int finish_test(int ret)
+{
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    if (should_report_leaks() && CRYPTO_mem_leaks_fp(stderr) <= 0)
+        return EXIT_FAILURE;
+#endif
+    return ret;
+}
+
+static void finalize(int success)
+{
+    if (success)
+        ERR_clear_error();
+    else
+        ERR_print_errors_fp(stderr);
+}
+
 int run_tests(const char *test_prog_name)
 {
     int num_failed = 0;
@@ -66,18 +114,24 @@ int run_tests(const char *test_prog_name)
 
     for (i = 0; i != num_tests; ++i) {
         if (all_tests[i].num == -1) {
-            if (!all_tests[i].test_fn()) {
+            int ret = all_tests[i].test_fn();
+
+            if (!ret) {
                 printf("** %s failed **\n--------\n",
                        all_tests[i].test_case_name);
                 ++num_failed;
             }
+            finalize(ret);
         } else {
             for (j = 0; j < all_tests[i].num; j++) {
-                if (!all_tests[i].param_test_fn(j)) {
+                int ret = all_tests[i].param_test_fn(j);
+
+                if (!ret) {
                     printf("** %s failed test %d\n--------\n",
                            all_tests[i].test_case_name, j);
                     ++num_failed;
                 }
+                finalize(ret);
             }
         }
     }

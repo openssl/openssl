@@ -27,13 +27,18 @@ sub generate_tests() {
         push @tests, {
 	    name => "curve-${curve}",
             server => {
-                "Curves" => $curve
+                "Curves" => $curve,
+                # TODO(TLS1.3): Can we get this to work for TLSv1.3?
+                "MaxProtocol" => "TLSv1.2"
             },
             client => {
 		"CipherString" => "ECDHE",
                 "Curves" => $curve
             },
-            test   => { "ExpectedResult" => "Success" },
+            test   => {
+                "ExpectedTmpKeyType" => $curve,
+                "ExpectedResult" => "Success"
+            },
         };
     }
 }

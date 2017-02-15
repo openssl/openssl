@@ -14,12 +14,14 @@ use warnings;
 
 package ssltests;
 
+my $dir_sep = $^O ne "VMS" ? "/" : "";
 
 our @tests = (
     {
         name => "renegotiate-client-no-resume",
         server => {
-            "Options" => "NoResumptionOnRenegotiation"
+            "Options" => "NoResumptionOnRenegotiation",
+            "MaxProtocol" => "TLSv1.2"
         },
         client => {},
         test => {
@@ -31,7 +33,9 @@ our @tests = (
     },
     {
         name => "renegotiate-client-resume",
-        server => {},
+        server => {
+            "MaxProtocol" => "TLSv1.2"
+        },
         client => {},
         test => {
             "Method" => "TLS",
@@ -43,7 +47,8 @@ our @tests = (
     {
         name => "renegotiate-server-no-resume",
         server => {
-            "Options" => "NoResumptionOnRenegotiation"
+            "Options" => "NoResumptionOnRenegotiation",
+            "MaxProtocol" => "TLSv1.2"
         },
         client => {},
         test => {
@@ -55,7 +60,9 @@ our @tests = (
     },
     {
         name => "renegotiate-server-resume",
-        server => {},
+        server => {
+            "MaxProtocol" => "TLSv1.2"
+        },
         client => {},
         test => {
             "Method" => "TLS",
@@ -64,4 +71,42 @@ our @tests = (
             "ExpectedResult" => "Success"
         }
     },
+    {
+        name => "renegotiate-client-auth-require",
+        server => {
+            "Options" => "NoResumptionOnRenegotiation",
+            "MaxProtocol" => "TLSv1.2",
+            "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
+            "VerifyMode" => "Require",
+        },
+        client => {
+            "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
+            "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem"
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateServer",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "Success"
+        }
+    },
+    {
+        name => "renegotiate-client-auth-once",
+        server => {
+            "Options" => "NoResumptionOnRenegotiation",
+            "MaxProtocol" => "TLSv1.2",
+            "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
+            "VerifyMode" => "Once",
+        },
+        client => {
+            "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
+            "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem"
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateServer",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "Success"
+        }
+    }
 );

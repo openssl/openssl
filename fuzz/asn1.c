@@ -27,6 +27,7 @@
 #include <openssl/ts.h>
 #include <openssl/x509v3.h>
 #include <openssl/cms.h>
+#include <openssl/err.h>
 #include "fuzzer.h"
 
 static ASN1_ITEM_EXP *item_type[] = {
@@ -183,20 +184,28 @@ static ASN1_ITEM_EXP *item_type[] = {
     NULL
 };
 
-int FuzzerInitialize(int *argc, char ***argv) {
-    return 1;
-}
+static ASN1_PCTX *pctx;
 
-int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
-    int n;
-
-    ASN1_PCTX *pctx = ASN1_PCTX_new();
-
+int FuzzerInitialize(int *argc, char ***argv)
+{
+    pctx = ASN1_PCTX_new();
     ASN1_PCTX_set_flags(pctx, ASN1_PCTX_FLAGS_SHOW_ABSENT |
         ASN1_PCTX_FLAGS_SHOW_SEQUENCE | ASN1_PCTX_FLAGS_SHOW_SSOF |
         ASN1_PCTX_FLAGS_SHOW_TYPE | ASN1_PCTX_FLAGS_SHOW_FIELD_STRUCT_NAME);
     ASN1_PCTX_set_str_flags(pctx, ASN1_STRFLGS_UTF8_CONVERT |
         ASN1_STRFLGS_SHOW_TYPE | ASN1_STRFLGS_DUMP_ALL);
+
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+    ERR_get_state();
+    CRYPTO_free_ex_index(0, -1);
+
+    return 1;
+}
+
+int FuzzerTestOneInput(const uint8_t *buf, size_t len)
+{
+    int n;
+
 
     for (n = 0; item_type[n] != NULL; ++n) {
         const uint8_t *b = buf;
@@ -216,7 +225,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len) {
         }
     }
 
-    ASN1_PCTX_free(pctx);
+    ERR_clear_error();
 
     return 0;
+}
+
+void FuzzerCleanup(void)
+{
+    ASN1_PCTX_free(pctx);
 }

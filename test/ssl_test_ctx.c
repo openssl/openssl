@@ -152,6 +152,7 @@ const char *ssl_alert_name(int alert)
 /********************/
 
 static const test_enum ssl_protocols[] = {
+     {"TLSv1.3", TLS1_3_VERSION},
      {"TLSv1.2", TLS1_2_VERSION},
      {"TLSv1.1", TLS1_1_VERSION},
      {"TLSv1", TLS1_VERSION},
@@ -431,6 +432,101 @@ IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, app_data_size)
 
 IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, max_fragment_size)
 
+/*************************************/
+/* Expected key and signature types  */
+/*************************************/
+
+__owur static int parse_expected_key_type(int *ptype, const char *value)
+{
+    int nid;
+    const EVP_PKEY_ASN1_METHOD *ameth;
+
+    if (value == NULL)
+        return 0;
+    ameth = EVP_PKEY_asn1_find_str(NULL, value, -1);
+    if (ameth != NULL)
+        EVP_PKEY_asn1_get0_info(&nid, NULL, NULL, NULL, NULL, ameth);
+    else
+        nid = OBJ_sn2nid(value);
+    if (nid == NID_undef)
+        nid = OBJ_ln2nid(value);
+#ifndef OPENSSL_NO_EC
+    if (nid == NID_undef)
+        nid = EC_curve_nist2nid(value);
+#endif
+    if (nid == NID_undef)
+        return 0;
+    *ptype = nid;
+    return 1;
+}
+
+__owur static int parse_expected_tmp_key_type(SSL_TEST_CTX *test_ctx,
+                                              const char *value)
+{
+    return parse_expected_key_type(&test_ctx->expected_tmp_key_type, value);
+}
+
+__owur static int parse_expected_server_cert_type(SSL_TEST_CTX *test_ctx,
+                                                  const char *value)
+{
+    return parse_expected_key_type(&test_ctx->expected_server_cert_type,
+                                   value);
+}
+
+__owur static int parse_expected_server_sign_type(SSL_TEST_CTX *test_ctx,
+                                                 const char *value)
+{
+    return parse_expected_key_type(&test_ctx->expected_server_sign_type,
+                                   value);
+}
+
+__owur static int parse_expected_client_cert_type(SSL_TEST_CTX *test_ctx,
+                                                  const char *value)
+{
+    return parse_expected_key_type(&test_ctx->expected_client_cert_type,
+                                   value);
+}
+
+__owur static int parse_expected_client_sign_type(SSL_TEST_CTX *test_ctx,
+                                                 const char *value)
+{
+    return parse_expected_key_type(&test_ctx->expected_client_sign_type,
+                                   value);
+}
+
+/*************************/
+/* Expected signing hash */
+/*************************/
+
+__owur static int parse_expected_sign_hash(int *ptype, const char *value)
+{
+    int nid;
+
+    if (value == NULL)
+        return 0;
+    nid = OBJ_sn2nid(value);
+    if (nid == NID_undef)
+        nid = OBJ_ln2nid(value);
+    if (nid == NID_undef)
+        return 0;
+    *ptype = nid;
+    return 1;
+}
+
+__owur static int parse_expected_server_sign_hash(SSL_TEST_CTX *test_ctx,
+                                                  const char *value)
+{
+    return parse_expected_sign_hash(&test_ctx->expected_server_sign_hash,
+                                    value);
+}
+
+__owur static int parse_expected_client_sign_hash(SSL_TEST_CTX *test_ctx,
+                                                  const char *value)
+{
+    return parse_expected_sign_hash(&test_ctx->expected_client_sign_hash,
+                                    value);
+}
+
 /*************************************************************/
 /* Known test options and their corresponding parse methods. */
 /*************************************************************/
@@ -455,6 +551,13 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ResumptionExpected", &parse_test_resumption_expected },
     { "ApplicationData", &parse_test_app_data_size },
     { "MaxFragmentSize", &parse_test_max_fragment_size },
+    { "ExpectedTmpKeyType", &parse_expected_tmp_key_type },
+    { "ExpectedServerCertType", &parse_expected_server_cert_type },
+    { "ExpectedServerSignHash", &parse_expected_server_sign_hash },
+    { "ExpectedServerSignType", &parse_expected_server_sign_type },
+    { "ExpectedClientCertType", &parse_expected_client_cert_type },
+    { "ExpectedClientSignHash", &parse_expected_client_sign_hash },
+    { "ExpectedClientSignType", &parse_expected_client_sign_type },
 };
 
 /* Nested client options. */

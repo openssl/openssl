@@ -42,5 +42,8 @@ int main(int argc, char **argv) {
         free(buf);
         fclose(f);
     }
+
+    FuzzerCleanup();
+
     return 0;
 }

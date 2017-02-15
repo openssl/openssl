@@ -21,15 +21,6 @@
 # include <openssl/md5.h>
 # include "internal/evp_int.h"
 
-# ifndef EVP_CIPH_FLAG_AEAD_CIPHER
-#  define EVP_CIPH_FLAG_AEAD_CIPHER       0x200000
-#  define EVP_CTRL_AEAD_TLS1_AAD          0x16
-#  define EVP_CTRL_AEAD_SET_MAC_KEY       0x17
-# endif
-
-/* FIXME: surely this is available elsewhere? */
-# define EVP_RC4_KEY_SIZE                16
-
 typedef struct {
     RC4_KEY ks;
     MD5_CTX head, tail, md;
@@ -228,6 +219,8 @@ static int rc4_hmac_md5_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             len = p[arg - 2] << 8 | p[arg - 1];
 
             if (!EVP_CIPHER_CTX_encrypting(ctx)) {
+                if (len < MD5_DIGEST_LENGTH)
+                    return -1;
                 len -= MD5_DIGEST_LENGTH;
                 p[arg - 2] = len >> 8;
                 p[arg - 1] = len;

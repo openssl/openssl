@@ -1,5 +1,7 @@
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
+        poly1305_pmeth.c \
+        poly1305_ameth.c \
         poly1305.c {- $target{poly1305_asm_src} -}
 
 GENERATE[poly1305-sparcv9.S]=asm/poly1305-sparcv9.pl $(PERLASM_SCHEME)

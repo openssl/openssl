@@ -58,7 +58,6 @@ static void list_type(FUNC_TYPE ft);
 static void list_disabled(void);
 char *default_config_file = NULL;
 
-static CONF *config = NULL;
 BIO *bio_in = NULL;
 BIO *bio_out = NULL;
 BIO *bio_err = NULL;
@@ -248,8 +247,6 @@ int main(int argc, char *argv[])
  end:
     OPENSSL_free(copied_argv);
     OPENSSL_free(default_config_file);
-    NCONF_free(config);
-    config = NULL;
     lh_FUNCTION_free(prog);
     OPENSSL_free(arg.argv);
 
@@ -577,7 +574,7 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_BF
     BIO_puts(bio_out, "BF\n");
 #endif
-#ifndef OPENSSL_NO_BLAKE2
+#ifdef OPENSSL_NO_BLAKE2
     BIO_puts(bio_out, "BLAKE2\n");
 #endif
 #ifdef OPENSSL_NO_CAMELLIA

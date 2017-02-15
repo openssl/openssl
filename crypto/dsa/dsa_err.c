@@ -21,7 +21,7 @@
 static ERR_STRING_DATA DSA_str_functs[] = {
     {ERR_FUNC(DSA_F_DSAPARAMS_PRINT), "DSAparams_print"},
     {ERR_FUNC(DSA_F_DSAPARAMS_PRINT_FP), "DSAparams_print_fp"},
-    {ERR_FUNC(DSA_F_DSA_BUILTIN_PARAMGEN), "DSA_BUILTIN_PARAMGEN"},
+    {ERR_FUNC(DSA_F_DSA_BUILTIN_PARAMGEN), "dsa_builtin_paramgen"},
     {ERR_FUNC(DSA_F_DSA_BUILTIN_PARAMGEN2), "dsa_builtin_paramgen2"},
     {ERR_FUNC(DSA_F_DSA_DO_SIGN), "DSA_do_sign"},
     {ERR_FUNC(DSA_F_DSA_DO_VERIFY), "DSA_do_verify"},
@@ -56,6 +56,8 @@ static ERR_STRING_DATA DSA_str_reasons[] = {
     {ERR_REASON(DSA_R_NO_PARAMETERS_SET), "no parameters set"},
     {ERR_REASON(DSA_R_PARAMETER_ENCODING_ERROR), "parameter encoding error"},
     {ERR_REASON(DSA_R_Q_NOT_PRIME), "q not prime"},
+    {ERR_REASON(DSA_R_SEED_LEN_SMALL),
+     "seed_len is less than the length of q"},
     {0, NULL}
 };
 

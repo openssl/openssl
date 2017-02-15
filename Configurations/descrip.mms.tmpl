@@ -63,17 +63,9 @@
   }
   my $sd1 = sourcedir("ssl","record");
   my $sd2 = sourcedir("ssl","statem");
-  $unified_info{before}->{"[.test]heartbeat_test.OBJ"}
-      = $unified_info{before}->{"[.test]ssltest_old.OBJ"}
-      = qq(record_include = F\$PARSE("$sd1","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define record 'record_include'
-        statem_include = F\$PARSE("$sd2","A.;",,,"SYNTAX_ONLY") - "A.;"
-        define statem 'statem_include');
-  $unified_info{after}->{"[.test]heartbeat_test.OBJ"}
-      = $unified_info{after}->{"[.test]ssltest.OBJ"}
-      = qq(deassign statem
-        deassign record);
-  foreach (grep /^\[\.ssl\.(?:record|statem)\].*\.o$/, keys %{$unified_info{sources}}) {
+  my @ssl_locl_users = grep(/^\[\.(?:ssl\.(?:record|statem)|test)\].*\.o$/,
+                            keys %{$unified_info{sources}});
+  foreach (@ssl_locl_users) {
       (my $x = $_) =~ s|\.o$|.OBJ|;
       $unified_info{before}->{$x}
           = qq(record_include = F\$PARSE("$sd1","A.;",,,"SYNTAX_ONLY") - "A.;"
@@ -226,7 +218,7 @@ NODEBUG=@
         $(NODEBUG) !
         $(NODEBUG) ! Figure out the architecture
         $(NODEBUG) !
-        $(NODEBUG) arch == f$edit( f$getsyi( "arch_name"), "upcase")
+        $(NODEBUG) arch = f$edit( f$getsyi( "arch_name"), "upcase")
         $(NODEBUG) !
         $(NODEBUG) ! Set up logical names for the libraries, so LINK and
         $(NODEBUG) ! running programs can use them.
@@ -267,8 +259,10 @@ test tests : build_generated, build_programs_nodep, build_engines_nodep, -
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
         DEFINE OPENSSL_ENGINES {- builddir("engines") -}
+        DEFINE OPENSSL_DEBUG_MEMORY "on"
         IF "$(VERBOSE)" .NES. "" THEN DEFINE VERBOSE "$(VERBOSE)"
         $(PERL) {- sourcefile("test", "run_tests.pl") -} $(TESTS)
+        DEASSIGN OPENSSL_DEBUG_MEMORY
         DEASSIGN OPENSSL_ENGINES
         DEASSIGN BLDTOP
         DEASSIGN SRCTOP
@@ -531,6 +525,17 @@ configdata.pm : $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{bu
   use File::Basename;
   use File::Spec::Functions qw/abs2rel rel2abs catfile catdir/;
 
+  # Helper function to figure out dependencies on libraries
+  # It takes a list of library names and outputs a list of dependencies
+  sub compute_lib_depends {
+      if ($disabled{shared}) {
+          return map { $_ =~ /\.a$/ ? $`.".OLB" : $_.".OLB" } @_;
+      }
+      return map { $_ =~ /\.a$/
+                   ? $`.".OLB"
+                   : $unified_info{sharednames}->{$_}.".EXE" } @_;
+  }
+
   sub generatesrc {
       my %args = @_;
       my $generator = join(" ", @{$args{generator}});
@@ -633,9 +638,7 @@ EOF
       my $libd = dirname($lib);
       my $libn = basename($lib);
       (my $mkdef_key = $libn) =~ s/^${osslprefix_q}lib([^0-9]*)\d*/$1/i;
-      my @deps = map {
-          $disabled{shared} ? $_.".OLB"
-              : $unified_info{sharednames}->{$_}.".EXE"; } @{$args{deps}};
+      my @deps = compute_lib_depends(@{$args{deps}});
       my $deps = join(", -\n\t\t", @deps);
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
       my $ordinalsfile = defined($args{ordinals}) ? $args{ordinals}->[1] : "";
@@ -681,9 +684,7 @@ EOF
       my $libn = basename($lib);
       (my $libn_nolib = $libn) =~ s/^lib//;
       my @objs = map { "$_.OBJ" } @{$args{objs}};
-      my @deps = map {
-          $disabled{shared} ? $_.".OLB"
-              : $unified_info{sharednames}->{$_}.".EXE"; } @{$args{deps}};
+      my @deps = compute_lib_depends(@{$args{deps}});
       my $deps = join(", -\n\t\t", @objs, @deps);
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
       my $engine_opt = abs2rel(rel2abs(catfile($config{sourcedir},
@@ -733,9 +734,7 @@ EOF
       my $bind = dirname($bin);
       my $binn = basename($bin);
       my @objs = map { "$_.OBJ" } @{$args{objs}};
-      my @deps = map {
-          $disabled{shared} ? $_.".OLB"
-              : $unified_info{sharednames}->{$_}.".EXE"; } @{$args{deps}};
+      my @deps = compute_lib_depends(@{$args{deps}});
       my $deps = join(", -\n\t\t", @objs, @deps);
       # The "[]" hack is because in .OPT files, each line inherits the
       # previous line's file spec as default, so if no directory spec
@@ -751,13 +750,49 @@ EOF
                              $x =~ s|(\.OLB)|$1/LIB|;
                              "WRITE OPT_FILE \"$x\"" } @deps)
           || "\@ !";
+      # The linking commands looks a bit complex, but it's for good reason.
+      # When you link, say, foo.obj, bar.obj and libsomething.exe/share, and
+      # bar.obj happens to have a symbol that also exists in libsomething.exe,
+      # the linker will warn about it, loudly, and will then choose to pick
+      # the first copy encountered (the one in bar.obj in this example).
+      # On Unix and on Windows, the corresponding maneuvre goes through
+      # silently with the same effect.
+      # With some test programs, made for checking the internals of OpenSSL,
+      # we do this kind of linking deliberately, picking a few specific object
+      # files from within [.crypto] or [.ssl] so we can reach symbols that are
+      # otherwise unreachable (since the shareable images only exports the
+      # symbols listed in [.util]*.num), and then with the shared libraries
+      # themselves.  So we need to silence the warning about multiply defined
+      # symbols, to mimic the way linking work on Unix and Windows, and so
+      # the build isn't interrupted (MMS stops when warnings are signaled,
+      # by default), and so someone building doesn't have to worry where it
+      # isn't necessary.  If there are other warnings, however, we show them
+      # and let it break the build.
       return <<"EOF";
 $bin.EXE : $deps
         OPEN/WRITE/SHARE=READ OPT_FILE $bin.OPT
         $write_opt1
         $write_opt2
         CLOSE OPT_FILE
-        LINK/EXEC=$bin.EXE \$(LDFLAGS) $bin.OPT/OPT \$(EX_LIBS)
+        - pipe SPAWN/WAIT/NOLOG/OUT=$bin.LINKLOG -
+                    LINK/EXEC=$bin.EXE \$(LDFLAGS) $bin.OPT/OPT \$(EX_LIBS) ; -
+               link_status = \$status ; link_severity = link_status .AND. 7
+        @ search_severity = 1
+        -@ IF link_severity .EQ. 0 THEN -
+                pipe SEARCH $bin.LINKLOG "%","-"/MATCH=AND | -
+                     SPAWN/WAIT/NOLOG/OUT=NLA0: -
+                          SEARCH SYS\$INPUT: "-W-MULDEF,"/MATCH=NOR ; -
+                     search_severity = \$severity
+        @ ! search_severity is 3 when the last search didn't find any matching
+        @ ! string: %SEARCH-I-NOMATCHES, no strings matched
+        @ ! If that was the result, we pretend linking got through without
+        @ ! fault or warning.
+        @ IF search_severity .EQ. 3 THEN link_severity = 1
+        @ ! At this point, if link_severity shows that there was a fault
+        @ ! or warning, make sure to restore the linking status.
+        -@ IF .NOT. link_severity THEN TYPE $bin.LINKLOG
+        -@ DELETE $bin.LINKLOG;*
+        @ IF .NOT. link_severity THEN SPAWN/WAIT/NOLOG EXIT 'link_status'
         - PURGE $bin.EXE,$bin.OPT
 EOF
   }

@@ -105,8 +105,8 @@ void ossl_statem_clear(SSL *s)
  */
 void ossl_statem_set_renegotiate(SSL *s)
 {
-    s->statem.state = MSG_FLOW_RENEGOTIATE;
     s->statem.in_init = 1;
+    s->statem.request_state = TLS_ST_SW_HELLO_REQ;
 }
 
 /*
@@ -189,10 +189,10 @@ static info_cb get_callback(SSL *s)
 
 /*
  * The main message flow state machine. We start in the MSG_FLOW_UNINITED or
- * MSG_FLOW_RENEGOTIATE state and finish in MSG_FLOW_FINISHED. Valid states and
+ * MSG_FLOW_FINISHED state and finish in MSG_FLOW_FINISHED. Valid states and
  * transitions are as follows:
  *
- * MSG_FLOW_UNINITED     MSG_FLOW_RENEGOTIATE
+ * MSG_FLOW_UNINITED     MSG_FLOW_FINISHED
  *        |                       |
  *        +-----------------------+
  *        v
@@ -251,31 +251,12 @@ static int state_machine(SSL *s, int server)
     }
 #endif
 
-#ifndef OPENSSL_NO_HEARTBEATS
-    /*
-     * If we're awaiting a HeartbeatResponse, pretend we already got and
-     * don't await it anymore, because Heartbeats don't make sense during
-     * handshakes anyway.
-     */
-    if (s->tlsext_hb_pending) {
-        if (SSL_IS_DTLS(s))
-            dtls1_stop_timer(s);
-        s->tlsext_hb_pending = 0;
-        s->tlsext_hb_seq++;
-    }
-#endif
-
     /* Initialise state machine */
-
-    if (st->state == MSG_FLOW_RENEGOTIATE) {
-        s->renegotiate = 1;
-        if (!server)
-            s->ctx->stats.sess_connect_renegotiate++;
-    }
-
-    if (st->state == MSG_FLOW_UNINITED || st->state == MSG_FLOW_RENEGOTIATE) {
+    if (st->state == MSG_FLOW_UNINITED
+            || st->state == MSG_FLOW_FINISHED) {
         if (st->state == MSG_FLOW_UNINITED) {
             st->hand_state = TLS_ST_BEFORE;
+            st->request_state = TLS_ST_BEFORE;
         }
 
         s->server = server;
@@ -332,52 +313,18 @@ static int state_machine(SSL *s, int server)
                 goto end;
             }
 
-        if (!server || st->state != MSG_FLOW_RENEGOTIATE) {
-            if (!ssl3_init_finished_mac(s)) {
+        if (SSL_IS_FIRST_HANDSHAKE(s) || s->renegotiate) {
+            if (!tls_setup_handshake(s)) {
                 ossl_statem_set_error(s);
                 goto end;
             }
-        }
 
-        if (server) {
-            if (st->state != MSG_FLOW_RENEGOTIATE) {
-                s->ctx->stats.sess_accept++;
-            } else if (!s->s3->send_connection_binding &&
-                       !(s->options &
-                         SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)) {
-                /*
-                 * Server attempting to renegotiate with client that doesn't
-                 * support secure renegotiation.
-                 */
-                SSLerr(SSL_F_STATE_MACHINE,
-                       SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
-                ossl_statem_set_error(s);
-                goto end;
-            } else {
-                /*
-                 * st->state == MSG_FLOW_RENEGOTIATE, we will just send a
-                 * HelloRequest
-                 */
-                s->ctx->stats.sess_accept_renegotiate++;
-            }
-        } else {
-            s->ctx->stats.sess_connect++;
-
-            /* mark client_random uninitialized */
-            memset(s->s3->client_random, 0, sizeof(s->s3->client_random));
-            s->hit = 0;
-
-            s->s3->tmp.cert_request = 0;
-
-            if (SSL_IS_DTLS(s)) {
-                st->use_timer = 1;
-            }
+            if (SSL_IS_FIRST_HANDSHAKE(s))
+                st->read_state_first_init = 1;
         }
 
         st->state = MSG_FLOW_WRITING;
         init_write_state_machine(s);
-        st->read_state_first_init = 1;
     }
 
     while (st->state != MSG_FLOW_FINISHED) {
@@ -408,7 +355,6 @@ static int state_machine(SSL *s, int server)
         }
     }
 
-    st->state = MSG_FLOW_UNINITED;
     ret = 1;
 
  end:
@@ -490,12 +436,12 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
     int ret, mt;
-    unsigned long len = 0;
+    size_t len = 0;
     int (*transition) (SSL *s, int mt);
     PACKET pkt;
     MSG_PROCESS_RETURN(*process_message) (SSL *s, PACKET *pkt);
     WORK_STATE(*post_process_message) (SSL *s, WORK_STATE wst);
-    unsigned long (*max_message_size) (SSL *s);
+    size_t (*max_message_size) (SSL *s);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
     cb = get_callback(s);
@@ -832,7 +778,7 @@ int statem_flush(SSL *s)
 
 /*
  * Called by the record layer to determine whether application data is
- * allowed to be sent in the current handshake state or not.
+ * allowed to be received in the current handshake state or not.
  *
  * Return values are:
  *   1: Yes (application data allowed)
@@ -842,7 +788,7 @@ int ossl_statem_app_data_allowed(SSL *s)
 {
     OSSL_STATEM *st = &s->statem;
 
-    if (st->state == MSG_FLOW_UNINITED || st->state == MSG_FLOW_RENEGOTIATE)
+    if (st->state == MSG_FLOW_UNINITED)
         return 0;
 
     if (!s->s3->in_read_app_data || (s->s3->total_renegotiations == 0))

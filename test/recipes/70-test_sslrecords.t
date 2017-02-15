@@ -37,13 +37,22 @@ my $proxy = TLSProxy::Proxy->new(
 #Test 1: Injecting out of context empty records should fail
 my $content_type = TLSProxy::Record::RT_APPLICATION_DATA;
 my $inject_recs_num = 1;
+$proxy->serverflags("-tls1_2");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 9;
+my $num_tests = 11;
+if (!disabled("tls1_1")) {
+    $num_tests++;
+}
+if (!disabled("tls1_3")) {
+    $num_tests += 3;
+}
+plan tests => $num_tests;
 ok(TLSProxy::Message->fail(), "Out of context empty records test");
 
 #Test 2: Injecting in context empty records should succeed
 $proxy->clear();
 $content_type = TLSProxy::Record::RT_HANDSHAKE;
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(TLSProxy::Message->success(), "In context empty records test");
 
@@ -51,6 +60,7 @@ ok(TLSProxy::Message->success(), "In context empty records test");
 $proxy->clear();
 #We allow 32 consecutive in context empty records
 $inject_recs_num = 33;
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Too many in context empty records test");
 
@@ -59,6 +69,7 @@ ok(TLSProxy::Message->fail(), "Too many in context empty records test");
 #        alert, i.e. this will look like a disorderly close
 $proxy->clear();
 $proxy->filter(\&add_frag_alert_filter);
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(!TLSProxy::Message->end(), "Fragmented alert records test");
 
@@ -75,6 +86,7 @@ use constant {
 my $sslv2testtype = TLSV1_2_IN_SSLV2;
 $proxy->clear();
 $proxy->filter(\&add_sslv2_filter);
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(TLSProxy::Message->success(), "TLSv1.2 in SSLv2 ClientHello test");
 
@@ -83,6 +95,7 @@ ok(TLSProxy::Message->success(), "TLSv1.2 in SSLv2 ClientHello test");
 #        protocol so we don't even send an alert in this case.
 $sslv2testtype = SSLV2_IN_SSLV2;
 $proxy->clear();
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(!TLSProxy::Message->end(), "SSLv2 in SSLv2 ClientHello test");
 
@@ -91,6 +104,7 @@ ok(!TLSProxy::Message->end(), "SSLv2 in SSLv2 ClientHello test");
 #        reasons
 $sslv2testtype = FRAGMENTED_IN_TLSV1_2;
 $proxy->clear();
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(TLSProxy::Message->success(), "Fragmented ClientHello in TLSv1.2 test");
 
@@ -98,6 +112,7 @@ ok(TLSProxy::Message->success(), "Fragmented ClientHello in TLSv1.2 test");
 #        record; and another TLS1.2 record. This isn't allowed so should fail
 $sslv2testtype = FRAGMENTED_IN_SSLV2;
 $proxy->clear();
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Fragmented ClientHello in TLSv1.2/SSLv2 test");
 
@@ -105,8 +120,57 @@ ok(TLSProxy::Message->fail(), "Fragmented ClientHello in TLSv1.2/SSLv2 test");
 #        fail because an SSLv2 ClientHello must be the first record.
 $sslv2testtype = ALERT_BEFORE_SSLV2;
 $proxy->clear();
+$proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Alert before SSLv2 ClientHello test");
+
+#Unregcognised record type tests
+
+#Test 10: Sending an unrecognised record type in TLS1.2 should fail
+$proxy->clear();
+$proxy->serverflags("-tls1_2");
+$proxy->filter(\&add_unknown_record_type);
+$proxy->start();
+ok(TLSProxy::Message->fail(), "Unrecognised record type in TLS1.2");
+
+#Test 11: Sending an unrecognised record type in TLS1.1 should fail
+if (!disabled("tls1_1")) {
+    $proxy->clear();
+    $proxy->clientflags("-tls1_1");
+    $proxy->start();
+    ok(TLSProxy::Message->fail(), "Unrecognised record type in TLS1.1");
+}
+
+#Test 12: Sending a different record version in TLS1.2 should fail
+$proxy->clear();
+$proxy->clientflags("-tls1_2");
+$proxy->filter(\&change_version);
+$proxy->start();
+ok(TLSProxy::Message->fail(), "Changed record version in TLS1.2");
+
+#TLS1.3 specific tests
+if (!disabled("tls1_3")) {
+    #Test 13: Sending a different record version in TLS1.3 should succeed
+    $proxy->clear();
+    $proxy->filter(\&change_version);
+    $proxy->start();
+    ok(TLSProxy::Message->success(), "Changed record version in TLS1.3");
+
+    #Test 14: Sending an unrecognised record type in TLS1.3 should fail
+    $proxy->clear();
+    $proxy->filter(\&add_unknown_record_type);
+    $proxy->start();
+    ok(TLSProxy::Message->fail(), "Unrecognised record type in TLS1.3");
+
+    #Test 15: Sending an outer record type other than app data once encrypted
+    #should fail
+    $proxy->clear();
+    $proxy->filter(\&change_outer_record_type);
+    $proxy->start();
+    ok(TLSProxy::Message->fail(), "Wrong outer record type in TLS1.3");
+ }
+
+
 sub add_empty_recs_filter
 {
     my $proxy = shift;
@@ -332,4 +396,66 @@ sub add_sslv2_filter
         push @{$proxy->record_list}, $record;
     }
 
+}
+
+sub add_unknown_record_type
+{
+    my $proxy = shift;
+
+    # We'll change a record after the initial version neg has taken place
+    if ($proxy->flight != 1) {
+        return;
+    }
+
+    my $lastrec = ${$proxy->record_list}[-1];
+    my $record = TLSProxy::Record->new(
+        1,
+        TLSProxy::Record::RT_UNKNOWN,
+        $lastrec->version(),
+        1,
+        0,
+        1,
+        1,
+        "X",
+        "X"
+    );
+
+    #Find ServerHello record and insert after that
+    my $i;
+    for ($i = 0; ${$proxy->record_list}[$i]->flight() < 1; $i++) {
+        next;
+    }
+    $i++;
+
+    splice @{$proxy->record_list}, $i, 0, $record;
+}
+
+sub change_version
+{
+    my $proxy = shift;
+
+    # We'll change a version after the initial version neg has taken place
+    if ($proxy->flight != 2) {
+        return;
+    }
+
+    (${$proxy->record_list}[-1])->version(TLSProxy::Record::VERS_TLS_1_1);
+}
+
+sub change_outer_record_type
+{
+    my $proxy = shift;
+
+    # We'll change a record after the initial version neg has taken place
+    if ($proxy->flight != 1) {
+        return;
+    }
+
+    #Find ServerHello record and change record after that
+    my $i;
+    for ($i = 0; ${$proxy->record_list}[$i]->flight() < 1; $i++) {
+        next;
+    }
+    $i++;
+    ${$proxy->record_list}[$i]->outer_content_type(TLSProxy::Record::RT_HANDSHAKE);
 }

@@ -98,6 +98,8 @@ struct sct_ctx_st {
     /* pre-certificate encoding */
     unsigned char *preder;
     size_t prederlen;
+    /* milliseconds since epoch (to check that the SCT isn't from the future) */
+    uint64_t epoch_time_in_ms;
 };
 
 /* Context when evaluating whether a Certificate Transparency policy is met */
@@ -105,6 +107,8 @@ struct ct_policy_eval_ctx_st {
     X509 *cert;
     X509 *issuer;
     CTLOG_STORE *log_store;
+    /* milliseconds since epoch (to check that SCTs aren't from the future) */
+    uint64_t epoch_time_in_ms;
 };
 
 /*
@@ -149,6 +153,15 @@ __owur int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
  * Returns 1 on success, 0 on failure.
  */
 __owur int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
+
+/*
+ * Sets the time to evaluate the SCT against, in milliseconds since the Unix
+ * epoch. If the SCT's timestamp is after this time, it will be interpreted as
+ * having been issued in the future. RFC6962 states that "TLS clients MUST
+ * reject SCTs whose timestamp is in the future", so an SCT will not validate
+ * in this case.
+ */
+void SCT_CTX_set_time(SCT_CTX *sctx, uint64_t time_in_ms);
 
 /*
  * Verifies an SCT with the given context.

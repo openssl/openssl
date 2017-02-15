@@ -13,19 +13,20 @@
 
 RSA_METHOD *RSA_meth_new(const char *name, int flags)
 {
-    RSA_METHOD *meth = OPENSSL_zalloc(sizeof(RSA_METHOD));
+    RSA_METHOD *meth = OPENSSL_zalloc(sizeof(*meth));
 
     if (meth != NULL) {
-        meth->name = OPENSSL_strdup(name);
-        if (meth->name == NULL) {
-            OPENSSL_free(meth);
-            RSAerr(RSA_F_RSA_METH_NEW, ERR_R_MALLOC_FAILURE);
-            return NULL;
-        }
         meth->flags = flags;
+
+        meth->name = OPENSSL_strdup(name);
+        if (meth->name != NULL)
+            return meth;
+
+        OPENSSL_free(meth);
     }
 
-    return meth;
+    RSAerr(RSA_F_RSA_METH_NEW, ERR_R_MALLOC_FAILURE);
+    return NULL;
 }
 
 void RSA_meth_free(RSA_METHOD *meth)
@@ -38,21 +39,20 @@ void RSA_meth_free(RSA_METHOD *meth)
 
 RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth)
 {
-    RSA_METHOD *ret;
-
-    ret = OPENSSL_malloc(sizeof(RSA_METHOD));
+    RSA_METHOD *ret = OPENSSL_malloc(sizeof(*ret));
 
     if (ret != NULL) {
         memcpy(ret, meth, sizeof(*meth));
+
         ret->name = OPENSSL_strdup(meth->name);
-        if (ret->name == NULL) {
-            OPENSSL_free(ret);
-            RSAerr(RSA_F_RSA_METH_DUP, ERR_R_MALLOC_FAILURE);
-            return NULL;
-        }
+        if (ret->name != NULL)
+            return ret;
+
+        OPENSSL_free(ret);
     }
 
-    return ret;
+    RSAerr(RSA_F_RSA_METH_DUP, ERR_R_MALLOC_FAILURE);
+    return NULL;
 }
 
 const char *RSA_meth_get0_name(const RSA_METHOD *meth)
@@ -62,9 +62,8 @@ const char *RSA_meth_get0_name(const RSA_METHOD *meth)
 
 int RSA_meth_set1_name(RSA_METHOD *meth, const char *name)
 {
-    char *tmpname;
+    char *tmpname = OPENSSL_strdup(name);
 
-    tmpname = OPENSSL_strdup(name);
     if (tmpname == NULL) {
         RSAerr(RSA_F_RSA_METH_SET1_NAME, ERR_R_MALLOC_FAILURE);
         return 0;

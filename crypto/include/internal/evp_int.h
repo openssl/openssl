@@ -1,11 +1,13 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+#include "internal/refcount.h"
 
 struct evp_pkey_ctx_st {
     /* Method associated with this operation */
@@ -82,8 +84,11 @@ extern const EVP_PKEY_METHOD ec_pkey_meth;
 extern const EVP_PKEY_METHOD ecx25519_pkey_meth;
 extern const EVP_PKEY_METHOD hmac_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
+extern const EVP_PKEY_METHOD rsa_pss_pkey_meth;
 extern const EVP_PKEY_METHOD tls1_prf_pkey_meth;
 extern const EVP_PKEY_METHOD hkdf_pkey_meth;
+extern const EVP_PKEY_METHOD poly1305_pkey_meth;
+extern const EVP_PKEY_METHOD siphash_pkey_meth;
 
 struct evp_md_st {
     int type;
@@ -353,7 +358,7 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 struct evp_pkey_st {
     int type;
     int save_type;
-    int references;
+    CRYPTO_REF_COUNT references;
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE *engine;
     union {
@@ -380,3 +385,10 @@ struct evp_pkey_st {
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
+
+/* Pulling defines out of C soure files */
+
+#define EVP_RC4_KEY_SIZE 16
+#ifndef TLS1_1_VERSION
+# define TLS1_1_VERSION   0x0302
+#endif

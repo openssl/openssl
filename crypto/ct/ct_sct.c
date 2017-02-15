@@ -45,6 +45,11 @@ void SCT_free(SCT *sct)
     OPENSSL_free(sct);
 }
 
+void SCT_LIST_free(STACK_OF(SCT) *a)
+{
+    sk_SCT_pop_free(a, SCT_free);
+}
+
 int SCT_set_version(SCT *sct, sct_version_t version)
 {
     if (version != SCT_VERSION_V1) {
@@ -331,6 +336,8 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
         if (SCT_CTX_set1_issuer_pubkey(sctx, pub) != 1)
             goto err;
     }
+
+    SCT_CTX_set_time(sctx, ctx->epoch_time_in_ms);
 
     /*
      * XXX: Potential for optimization.  This repeats some idempotent heavy

@@ -378,16 +378,16 @@ static void configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         parse_protos(extra->server.npn_protocols,
                      &server_ctx_data->npn_protocols,
                      &server_ctx_data->npn_protocols_len);
-        SSL_CTX_set_next_protos_advertised_cb(server_ctx, server_npn_cb,
-                                              server_ctx_data);
+        SSL_CTX_set_npn_advertised_cb(server_ctx, server_npn_cb,
+                                      server_ctx_data);
     }
     if (extra->server2.npn_protocols != NULL) {
         parse_protos(extra->server2.npn_protocols,
                      &server2_ctx_data->npn_protocols,
                      &server2_ctx_data->npn_protocols_len);
         TEST_check(server2_ctx != NULL);
-        SSL_CTX_set_next_protos_advertised_cb(server2_ctx, server_npn_cb,
-                                              server2_ctx_data);
+        SSL_CTX_set_npn_advertised_cb(server2_ctx, server_npn_cb,
+                                      server2_ctx_data);
     }
     if (extra->client.npn_protocols != NULL) {
         parse_protos(extra->client.npn_protocols,
@@ -837,7 +837,7 @@ static char *dup_str(const unsigned char *in, size_t len)
 {
     char *ret;
 
-    if(len == 0)
+    if (len == 0)
         return NULL;
 
     /* Assert that the string does not contain NUL-bytes. */
@@ -845,6 +845,32 @@ static char *dup_str(const unsigned char *in, size_t len)
     ret = OPENSSL_strndup((const char*)(in), len);
     TEST_check(ret != NULL);
     return ret;
+}
+
+static int pkey_type(EVP_PKEY *pkey)
+{
+    int nid = EVP_PKEY_id(pkey);
+
+#ifndef OPENSSL_NO_EC
+    if (nid == EVP_PKEY_EC) {
+        const EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+        return EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+    }
+#endif
+    return nid;
+}
+
+static int peer_pkey_type(SSL *s)
+{
+    X509 *x = SSL_get_peer_certificate(s);
+
+    if (x != NULL) {
+        int nid = pkey_type(X509_get0_pubkey(x));
+
+        X509_free(x);
+        return nid;
+    }
+    return NID_undef;
 }
 
 /*
@@ -870,7 +896,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     HANDSHAKE_EX_DATA server_ex_data, client_ex_data;
     CTX_DATA client_ctx_data, server_ctx_data, server2_ctx_data;
     HANDSHAKE_RESULT *ret = HANDSHAKE_RESULT_new();
-    int client_turn = 1;
+    int client_turn = 1, client_turn_count = 0;
     connect_phase_t phase = HANDSHAKE;
     handshake_status_t status = HANDSHAKE_RETRY;
     const unsigned char* tick = NULL;
@@ -879,6 +905,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     const unsigned char *proto = NULL;
     /* API dictates unsigned int rather than size_t. */
     unsigned int proto_len = 0;
+    EVP_PKEY *tmp_key;
 
     memset(&server_ctx_data, 0, sizeof(server_ctx_data));
     memset(&server2_ctx_data, 0, sizeof(server2_ctx_data));
@@ -959,6 +986,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
         switch (status) {
         case HANDSHAKE_SUCCESS:
+            client_turn_count = 0;
             phase = next_phase(test_ctx, phase);
             if (phase == CONNECTION_DONE) {
                 ret->result = SSL_TEST_SUCCESS;
@@ -984,6 +1012,16 @@ static HANDSHAKE_RESULT *do_handshake_internal(
             ret->result = SSL_TEST_INTERNAL_ERROR;
             goto err;
         case HANDSHAKE_RETRY:
+            if (client_turn_count++ >= 2000) {
+                /*
+                 * At this point, there's been so many PEER_RETRY in a row
+                 * that it's likely both sides are stuck waiting for a read.
+                 * It's time to give up.
+                 */
+                ret->result = SSL_TEST_INTERNAL_ERROR;
+                goto err;
+            }
+
             /* Continue. */
             client_turn ^= 1;
             break;
@@ -1026,6 +1064,20 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     if (session_out != NULL)
         *session_out = SSL_get1_session(client.ssl);
+
+    if (SSL_get_server_tmp_key(client.ssl, &tmp_key)) {
+        ret->tmp_key_type = pkey_type(tmp_key);
+        EVP_PKEY_free(tmp_key);
+    }
+
+    SSL_get_peer_signature_nid(client.ssl, &ret->server_sign_hash);
+    SSL_get_peer_signature_nid(server.ssl, &ret->client_sign_hash);
+
+    SSL_get_peer_signature_type_nid(client.ssl, &ret->server_sign_type);
+    SSL_get_peer_signature_type_nid(server.ssl, &ret->client_sign_type);
+
+    ret->server_cert_type = peer_pkey_type(client.ssl);
+    ret->client_cert_type = peer_pkey_type(server.ssl);
 
     ctx_data_free_data(&server_ctx_data);
     ctx_data_free_data(&server2_ctx_data);

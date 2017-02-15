@@ -187,6 +187,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
         echo "${MACH}-${ARCH}-freebsd${VERS}"; exit 0
         ;;
 
+    DragonFly:*)
+	echo "${MACHINE}-whatever-dragonfly"; exit 0
+	;;
+
     FreeBSD:*)
 	echo "${MACHINE}-whatever-freebsd"; exit 0
 	;;
@@ -500,16 +504,6 @@ case "$GUESSOS" in
 	    OUT="darwin-i386-cc"
 	fi ;;
   x86_64-apple-darwin*)
-	if [ -z "$KERNEL_BITS" ]; then
-	    echo "WARNING! If you wish to build 32-bit library, then you have to"
-	    echo "         invoke 'KERNEL_BITS=32 $THERE/config $options'."
-	    if [ "$DRYRUN" = "false" -a -t 1 ]; then
-	      echo "         You have about 5 seconds to press Ctrl-C to abort."
-	      # The stty technique used elsewhere doesn't work on
-	      # MacOS. At least, right now on this Mac.
-	      sleep 5
-	    fi
-	fi
 	if [ "$KERNEL_BITS" = "32" ]; then
 	    OUT="darwin-i386-cc"
 	else
@@ -636,7 +630,14 @@ case "$GUESSOS" in
 	else
 	    OUT="linux-x86_64"
 	fi ;;
-  *86-*-linux2) OUT="linux-elf" ;;
+  *86-*-linux2)
+        # On machines where the compiler understands -m32, prefer a
+        # config target that uses it
+        if $CC -m32 -E -x c /dev/null > /dev/null 2>&1; then
+            OUT="linux-x86"
+        else
+            OUT="linux-elf"
+        fi ;;
   *86-*-linux1) OUT="linux-aout" ;;
   *-*-linux?) OUT="linux-generic32" ;;
   sun4[uv]*-*-solaris2)
@@ -697,6 +698,7 @@ case "$GUESSOS" in
   powerpc64-*-*bsd*)	OUT="BSD-generic64"; options="$options -DB_ENDIAN" ;;
   sparc64-*-*bsd*)	OUT="BSD-sparc64" ;;
   ia64-*-*bsd*)		OUT="BSD-ia64" ;;
+  x86_64-*-dragonfly*)  OUT="BSD-x86_64" ;;
   amd64-*-*bsd*)	OUT="BSD-x86_64" ;;
   *86*-*-*bsd*)		# mimic ld behaviour when it's looking for libc...
 			if [ -L /usr/lib/libc.so ]; then	# [Free|Net]BSD
@@ -912,5 +914,10 @@ if [ $? = "0" ]; then
 else
   echo "This system ($OUT) is not supported. See file INSTALL for details."
   exit 1
+fi
+
+if [ "$OUT" = "darwin64-x86_64-cc" ]; then
+    echo "WARNING! If you wish to build 32-bit libraries, then you have to"
+    echo "         invoke 'KERNEL_BITS=32 $THERE/config $options'."
 fi
 )

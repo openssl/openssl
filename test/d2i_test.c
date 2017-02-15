@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include "testutil.h"
+#include "test_main_custom.h"
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
@@ -41,18 +42,7 @@ typedef struct {
 
 static expected_error_t expected_error = ASN1_UNKNOWN;
 
-typedef struct d2i_test_fixture {
-    const char *test_case_name;
-} D2I_TEST_FIXTURE;
-
-static D2I_TEST_FIXTURE set_up(const char *const test_case_name)
-{
-    D2I_TEST_FIXTURE fixture;
-    fixture.test_case_name = test_case_name;
-    return fixture;
-}
-
-static int execute_test(D2I_TEST_FIXTURE fixture)
+static int test_bad_asn1()
 {
     BIO *bio = NULL;
     ASN1_VALUE *value = NULL;
@@ -116,33 +106,14 @@ static int execute_test(D2I_TEST_FIXTURE fixture)
     return ret;
 }
 
-static void tear_down(D2I_TEST_FIXTURE fixture)
-{
-    ERR_print_errors_fp(stderr);
-}
-
-#define SETUP_D2I_TEST_FIXTURE() \
-    SETUP_TEST_FIXTURE(D2I_TEST_FIXTURE, set_up)
-
-#define EXECUTE_D2I_TEST() \
-    EXECUTE_TEST(execute_test, tear_down)
-
-static int test_bad_asn1()
-{
-    SETUP_D2I_TEST_FIXTURE();
-    EXECUTE_D2I_TEST();
-}
-
 /*
  * Usage: d2i_test <type> <file>, e.g.
  * d2i_test generalname bad_generalname.der
  */
-int main(int argc, char **argv)
+int test_main(int argc, char *argv[])
 {
-    int result = 0;
     const char *test_type_name;
     const char *expected_error_string;
-    const char *p = getenv("OPENSSL_DEBUG_MEMORY");
 
     size_t i;
 
@@ -153,10 +124,6 @@ int main(int argc, char **argv)
         {"encode", ASN1_ENCODE},
         {"compare", ASN1_COMPARE}
     };
-
-    if (p != NULL && strcmp(p, "on") == 0)
-        CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     if (argc != 4) {
         fprintf(stderr,
@@ -197,12 +164,5 @@ int main(int argc, char **argv)
 
     ADD_TEST(test_bad_asn1);
 
-    result = run_tests(argv[0]);
-
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
-        result = 1;
-#endif
-
-    return result;
+    return run_tests(argv[0]);
 }

@@ -1594,7 +1594,7 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
 /* Precomputation for the group generator. */
 struct nistp521_pre_comp_st {
     felem g_pre_comp[16][3];
-    int references;
+    CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
 };
 
@@ -1684,7 +1684,7 @@ NISTP521_PRE_COMP *EC_nistp521_pre_comp_dup(NISTP521_PRE_COMP *p)
 {
     int i;
     if (p != NULL)
-        CRYPTO_atomic_add(&p->references, 1, &i, p->lock);
+        CRYPTO_UP_REF(&p->references, &i, p->lock);
     return p;
 }
 
@@ -1695,7 +1695,7 @@ void EC_nistp521_pre_comp_free(NISTP521_PRE_COMP *p)
     if (p == NULL)
         return;
 
-    CRYPTO_atomic_add(&p->references, -1, &i, p->lock);
+    CRYPTO_DOWN_REF(&p->references, &i, p->lock);
     REF_PRINT_COUNT("EC_nistp521", x);
     if (i > 0)
         return;

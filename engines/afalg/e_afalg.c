@@ -26,8 +26,11 @@
 #define K_MIN2  0
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2) || \
     !defined(AF_ALG)
-# warning "AFALG ENGINE requires Kernel Headers >= 4.1.0"
-# warning "Skipping Compilation of AFALG engine"
+# ifndef PEDANTIC
+#  warning "AFALG ENGINE requires Kernel Headers >= 4.1.0"
+#  warning "Skipping Compilation of AFALG engine"
+# endif
+void engine_load_afalg_int(void);
 void engine_load_afalg_int(void)
 {
 }

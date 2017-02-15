@@ -179,6 +179,7 @@
 # Haswell	4.44/0.63	0.63	0.73	0.63	0.70
 # Skylake	2.62/0.63	0.63	0.63	0.63
 # Silvermont	5.75/3.54	3.56	4.12	3.87(*)	4.11
+# Goldmont	3.82/1.26	1.26	1.29	1.29	1.50
 # Bulldozer	5.77/0.70	0.72	0.90	0.70	0.95
 #
 # (*)	Atom Silvermont ECB result is suboptimal because of penalties
@@ -1171,7 +1172,7 @@ ___
 # with zero-round key xor.
 {
 my ($in0,$in1,$in2,$in3,$in4,$in5)=map("%xmm$_",(10..15));
-my ($key0,$ctr)=("${key_}d","${ivp}d");
+my ($key0,$ctr)=("%ebp","${ivp}d");
 my $frame_size = 0x80 + ($win64?160:0);
 
 $code.=<<___;
@@ -1179,6 +1180,7 @@ $code.=<<___;
 .type	aesni_ctr32_encrypt_blocks,\@function,5
 .align	16
 aesni_ctr32_encrypt_blocks:
+.cfi_startproc
 	cmp	\$1,$len
 	jne	.Lctr32_bulk
 
@@ -1200,26 +1202,27 @@ $code.=<<___;
 
 .align	16
 .Lctr32_bulk:
-	lea	(%rsp),%rax
+	lea	(%rsp),$key_			# use $key_ as frame pointer
+.cfi_def_cfa_register	$key_
 	push	%rbp
+.cfi_push	%rbp
 	sub	\$$frame_size,%rsp
 	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
-	movaps	%xmm6,-0xa8(%rax)		# offload everything
-	movaps	%xmm7,-0x98(%rax)
-	movaps	%xmm8,-0x88(%rax)
-	movaps	%xmm9,-0x78(%rax)
-	movaps	%xmm10,-0x68(%rax)
-	movaps	%xmm11,-0x58(%rax)
-	movaps	%xmm12,-0x48(%rax)
-	movaps	%xmm13,-0x38(%rax)
-	movaps	%xmm14,-0x28(%rax)
-	movaps	%xmm15,-0x18(%rax)
+	movaps	%xmm6,-0xa8($key_)		# offload everything
+	movaps	%xmm7,-0x98($key_)
+	movaps	%xmm8,-0x88($key_)
+	movaps	%xmm9,-0x78($key_)
+	movaps	%xmm10,-0x68($key_)
+	movaps	%xmm11,-0x58($key_)
+	movaps	%xmm12,-0x48($key_)
+	movaps	%xmm13,-0x38($key_)
+	movaps	%xmm14,-0x28($key_)
+	movaps	%xmm15,-0x18($key_)
 .Lctr32_body:
 ___
 $code.=<<___;
-	lea	-8(%rax),%rbp
 
 	# 8 16-byte words on top of stack are counter values
 	# xor-ed with zero-round key
@@ -1691,26 +1694,26 @@ $code.=<<___ if (!$win64);
 	pxor	%xmm15,%xmm15
 ___
 $code.=<<___ if ($win64);
-	movaps	-0xa0(%rbp),%xmm6
-	movaps	%xmm0,-0xa0(%rbp)		# clear stack
-	movaps	-0x90(%rbp),%xmm7
-	movaps	%xmm0,-0x90(%rbp)
-	movaps	-0x80(%rbp),%xmm8
-	movaps	%xmm0,-0x80(%rbp)
-	movaps	-0x70(%rbp),%xmm9
-	movaps	%xmm0,-0x70(%rbp)
-	movaps	-0x60(%rbp),%xmm10
-	movaps	%xmm0,-0x60(%rbp)
-	movaps	-0x50(%rbp),%xmm11
-	movaps	%xmm0,-0x50(%rbp)
-	movaps	-0x40(%rbp),%xmm12
-	movaps	%xmm0,-0x40(%rbp)
-	movaps	-0x30(%rbp),%xmm13
-	movaps	%xmm0,-0x30(%rbp)
-	movaps	-0x20(%rbp),%xmm14
-	movaps	%xmm0,-0x20(%rbp)
-	movaps	-0x10(%rbp),%xmm15
-	movaps	%xmm0,-0x10(%rbp)
+	movaps	-0xa8($key_),%xmm6
+	movaps	%xmm0,-0xa8($key_)		# clear stack
+	movaps	-0x98($key_),%xmm7
+	movaps	%xmm0,-0x98($key_)
+	movaps	-0x88($key_),%xmm8
+	movaps	%xmm0,-0x88($key_)
+	movaps	-0x78($key_),%xmm9
+	movaps	%xmm0,-0x78($key_)
+	movaps	-0x68($key_),%xmm10
+	movaps	%xmm0,-0x68($key_)
+	movaps	-0x58($key_),%xmm11
+	movaps	%xmm0,-0x58($key_)
+	movaps	-0x48($key_),%xmm12
+	movaps	%xmm0,-0x48($key_)
+	movaps	-0x38($key_),%xmm13
+	movaps	%xmm0,-0x38($key_)
+	movaps	-0x28($key_),%xmm14
+	movaps	%xmm0,-0x28($key_)
+	movaps	-0x18($key_),%xmm15
+	movaps	%xmm0,-0x18($key_)
 	movaps	%xmm0,0x00(%rsp)
 	movaps	%xmm0,0x10(%rsp)
 	movaps	%xmm0,0x20(%rsp)
@@ -1721,10 +1724,13 @@ $code.=<<___ if ($win64);
 	movaps	%xmm0,0x70(%rsp)
 ___
 $code.=<<___;
-	lea	(%rbp),%rsp
-	pop	%rbp
+	mov	-8($key_),%rbp
+.cfi_restore	%rbp
+	lea	($key_),%rsp
+.cfi_def_cfa_register	%rsp
 .Lctr32_epilogue:
 	ret
+.cfi_endproc
 .size	aesni_ctr32_encrypt_blocks,.-aesni_ctr32_encrypt_blocks
 ___
 }
@@ -1739,32 +1745,35 @@ my @tweak=map("%xmm$_",(10..15));
 my ($twmask,$twres,$twtmp)=("%xmm8","%xmm9",@tweak[4]);
 my ($key2,$ivp,$len_)=("%r8","%r9","%r9");
 my $frame_size = 0x70 + ($win64?160:0);
+my $key_ = "%rbp";	# override so that we can use %r11 as FP
 
 $code.=<<___;
 .globl	aesni_xts_encrypt
 .type	aesni_xts_encrypt,\@function,6
 .align	16
 aesni_xts_encrypt:
-	lea	(%rsp),%rax
+.cfi_startproc
+	lea	(%rsp),%r11			# frame pointer
+.cfi_def_cfa_register	%r11
 	push	%rbp
+.cfi_push	%rbp
 	sub	\$$frame_size,%rsp
 	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
-	movaps	%xmm6,-0xa8(%rax)		# offload everything
-	movaps	%xmm7,-0x98(%rax)
-	movaps	%xmm8,-0x88(%rax)
-	movaps	%xmm9,-0x78(%rax)
-	movaps	%xmm10,-0x68(%rax)
-	movaps	%xmm11,-0x58(%rax)
-	movaps	%xmm12,-0x48(%rax)
-	movaps	%xmm13,-0x38(%rax)
-	movaps	%xmm14,-0x28(%rax)
-	movaps	%xmm15,-0x18(%rax)
+	movaps	%xmm6,-0xa8(%r11)		# offload everything
+	movaps	%xmm7,-0x98(%r11)
+	movaps	%xmm8,-0x88(%r11)
+	movaps	%xmm9,-0x78(%r11)
+	movaps	%xmm10,-0x68(%r11)
+	movaps	%xmm11,-0x58(%r11)
+	movaps	%xmm12,-0x48(%r11)
+	movaps	%xmm13,-0x38(%r11)
+	movaps	%xmm14,-0x28(%r11)
+	movaps	%xmm15,-0x18(%r11)
 .Lxts_enc_body:
 ___
 $code.=<<___;
-	lea	-8(%rax),%rbp
 	movups	($ivp),$inout0			# load clear-text tweak
 	mov	240(%r8),$rounds		# key2->rounds
 	mov	240($key),$rnds_		# key1->rounds
@@ -2182,26 +2191,26 @@ $code.=<<___ if (!$win64);
 	pxor	%xmm15,%xmm15
 ___
 $code.=<<___ if ($win64);
-	movaps	-0xa0(%rbp),%xmm6
-	movaps	%xmm0,-0xa0(%rbp)		# clear stack
-	movaps	-0x90(%rbp),%xmm7
-	movaps	%xmm0,-0x90(%rbp)
-	movaps	-0x80(%rbp),%xmm8
-	movaps	%xmm0,-0x80(%rbp)
-	movaps	-0x70(%rbp),%xmm9
-	movaps	%xmm0,-0x70(%rbp)
-	movaps	-0x60(%rbp),%xmm10
-	movaps	%xmm0,-0x60(%rbp)
-	movaps	-0x50(%rbp),%xmm11
-	movaps	%xmm0,-0x50(%rbp)
-	movaps	-0x40(%rbp),%xmm12
-	movaps	%xmm0,-0x40(%rbp)
-	movaps	-0x30(%rbp),%xmm13
-	movaps	%xmm0,-0x30(%rbp)
-	movaps	-0x20(%rbp),%xmm14
-	movaps	%xmm0,-0x20(%rbp)
-	movaps	-0x10(%rbp),%xmm15
-	movaps	%xmm0,-0x10(%rbp)
+	movaps	-0xa8(%r11),%xmm6
+	movaps	%xmm0,-0xa8(%r11)		# clear stack
+	movaps	-0x98(%r11),%xmm7
+	movaps	%xmm0,-0x98(%r11)
+	movaps	-0x88(%r11),%xmm8
+	movaps	%xmm0,-0x88(%r11)
+	movaps	-0x78(%r11),%xmm9
+	movaps	%xmm0,-0x78(%r11)
+	movaps	-0x68(%r11),%xmm10
+	movaps	%xmm0,-0x68(%r11)
+	movaps	-0x58(%r11),%xmm11
+	movaps	%xmm0,-0x58(%r11)
+	movaps	-0x48(%r11),%xmm12
+	movaps	%xmm0,-0x48(%r11)
+	movaps	-0x38(%r11),%xmm13
+	movaps	%xmm0,-0x38(%r11)
+	movaps	-0x28(%r11),%xmm14
+	movaps	%xmm0,-0x28(%r11)
+	movaps	-0x18(%r11),%xmm15
+	movaps	%xmm0,-0x18(%r11)
 	movaps	%xmm0,0x00(%rsp)
 	movaps	%xmm0,0x10(%rsp)
 	movaps	%xmm0,0x20(%rsp)
@@ -2211,10 +2220,13 @@ $code.=<<___ if ($win64);
 	movaps	%xmm0,0x60(%rsp)
 ___
 $code.=<<___;
-	lea	(%rbp),%rsp
-	pop	%rbp
+	mov	-8(%r11),%rbp
+.cfi_restore	%rbp
+	lea	(%r11),%rsp
+.cfi_def_cfa_register	%rsp
 .Lxts_enc_epilogue:
 	ret
+.cfi_endproc
 .size	aesni_xts_encrypt,.-aesni_xts_encrypt
 ___
 
@@ -2223,26 +2235,28 @@ $code.=<<___;
 .type	aesni_xts_decrypt,\@function,6
 .align	16
 aesni_xts_decrypt:
-	lea	(%rsp),%rax
+.cfi_startproc
+	lea	(%rsp),%r11			# frame pointer
+.cfi_def_cfa_register	%r11
 	push	%rbp
+.cfi_push	%rbp
 	sub	\$$frame_size,%rsp
 	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
-	movaps	%xmm6,-0xa8(%rax)		# offload everything
-	movaps	%xmm7,-0x98(%rax)
-	movaps	%xmm8,-0x88(%rax)
-	movaps	%xmm9,-0x78(%rax)
-	movaps	%xmm10,-0x68(%rax)
-	movaps	%xmm11,-0x58(%rax)
-	movaps	%xmm12,-0x48(%rax)
-	movaps	%xmm13,-0x38(%rax)
-	movaps	%xmm14,-0x28(%rax)
-	movaps	%xmm15,-0x18(%rax)
+	movaps	%xmm6,-0xa8(%r11)		# offload everything
+	movaps	%xmm7,-0x98(%r11)
+	movaps	%xmm8,-0x88(%r11)
+	movaps	%xmm9,-0x78(%r11)
+	movaps	%xmm10,-0x68(%r11)
+	movaps	%xmm11,-0x58(%r11)
+	movaps	%xmm12,-0x48(%r11)
+	movaps	%xmm13,-0x38(%r11)
+	movaps	%xmm14,-0x28(%r11)
+	movaps	%xmm15,-0x18(%r11)
 .Lxts_dec_body:
 ___
 $code.=<<___;
-	lea	-8(%rax),%rbp
 	movups	($ivp),$inout0			# load clear-text tweak
 	mov	240($key2),$rounds		# key2->rounds
 	mov	240($key),$rnds_		# key1->rounds
@@ -2686,26 +2700,26 @@ $code.=<<___ if (!$win64);
 	pxor	%xmm15,%xmm15
 ___
 $code.=<<___ if ($win64);
-	movaps	-0xa0(%rbp),%xmm6
-	movaps	%xmm0,-0xa0(%rbp)		# clear stack
-	movaps	-0x90(%rbp),%xmm7
-	movaps	%xmm0,-0x90(%rbp)
-	movaps	-0x80(%rbp),%xmm8
-	movaps	%xmm0,-0x80(%rbp)
-	movaps	-0x70(%rbp),%xmm9
-	movaps	%xmm0,-0x70(%rbp)
-	movaps	-0x60(%rbp),%xmm10
-	movaps	%xmm0,-0x60(%rbp)
-	movaps	-0x50(%rbp),%xmm11
-	movaps	%xmm0,-0x50(%rbp)
-	movaps	-0x40(%rbp),%xmm12
-	movaps	%xmm0,-0x40(%rbp)
-	movaps	-0x30(%rbp),%xmm13
-	movaps	%xmm0,-0x30(%rbp)
-	movaps	-0x20(%rbp),%xmm14
-	movaps	%xmm0,-0x20(%rbp)
-	movaps	-0x10(%rbp),%xmm15
-	movaps	%xmm0,-0x10(%rbp)
+	movaps	-0xa8(%r11),%xmm6
+	movaps	%xmm0,-0xa8(%r11)		# clear stack
+	movaps	-0x98(%r11),%xmm7
+	movaps	%xmm0,-0x98(%r11)
+	movaps	-0x88(%r11),%xmm8
+	movaps	%xmm0,-0x88(%r11)
+	movaps	-0x78(%r11),%xmm9
+	movaps	%xmm0,-0x78(%r11)
+	movaps	-0x68(%r11),%xmm10
+	movaps	%xmm0,-0x68(%r11)
+	movaps	-0x58(%r11),%xmm11
+	movaps	%xmm0,-0x58(%r11)
+	movaps	-0x48(%r11),%xmm12
+	movaps	%xmm0,-0x48(%r11)
+	movaps	-0x38(%r11),%xmm13
+	movaps	%xmm0,-0x38(%r11)
+	movaps	-0x28(%r11),%xmm14
+	movaps	%xmm0,-0x28(%r11)
+	movaps	-0x18(%r11),%xmm15
+	movaps	%xmm0,-0x18(%r11)
 	movaps	%xmm0,0x00(%rsp)
 	movaps	%xmm0,0x10(%rsp)
 	movaps	%xmm0,0x20(%rsp)
@@ -2715,10 +2729,13 @@ $code.=<<___ if ($win64);
 	movaps	%xmm0,0x60(%rsp)
 ___
 $code.=<<___;
-	lea	(%rbp),%rsp
-	pop	%rbp
+	mov	-8(%r11),%rbp
+.cfi_restore	%rbp
+	lea	(%r11),%rsp
+.cfi_def_cfa_register	%rsp
 .Lxts_dec_epilogue:
 	ret
+.cfi_endproc
 .size	aesni_xts_decrypt,.-aesni_xts_decrypt
 ___
 }
@@ -2743,12 +2760,18 @@ $code.=<<___;
 .type	aesni_ocb_encrypt,\@function,6
 .align	32
 aesni_ocb_encrypt:
+.cfi_startproc
 	lea	(%rsp),%rax
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 ___
 $code.=<<___ if ($win64);
 	lea	-0xa0(%rsp),%rsp
@@ -2942,6 +2965,8 @@ $code.=<<___ if (!$win64);
 	pxor	%xmm13,%xmm13
 	pxor	%xmm14,%xmm14
 	pxor	%xmm15,%xmm15
+	lea	0x28(%rsp),%rax
+.cfi_def_cfa	%rax,8
 ___
 $code.=<<___ if ($win64);
 	movaps	0x00(%rsp),%xmm6
@@ -2966,16 +2991,23 @@ $code.=<<___ if ($win64);
 	movaps	%xmm0,0x90(%rsp)
 	lea	0xa0+0x28(%rsp),%rax
 .Locb_enc_pop:
-	lea	0xa0(%rsp),%rsp
 ___
 $code.=<<___;
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
+	mov	-40(%rax),%r14
+.cfi_restore	%r14
+	mov	-32(%rax),%r13
+.cfi_restore	%r13
+	mov	-24(%rax),%r12
+.cfi_restore	%r12
+	mov	-16(%rax),%rbp
+.cfi_restore	%rbp
+	mov	-8(%rax),%rbx
+.cfi_restore	%rbx
+	lea	(%rax),%rsp
+.cfi_def_cfa_register	%rsp
 .Locb_enc_epilogue:
 	ret
+.cfi_endproc
 .size	aesni_ocb_encrypt,.-aesni_ocb_encrypt
 
 .type	__ocb_encrypt6,\@abi-omnipotent
@@ -3188,12 +3220,18 @@ __ocb_encrypt1:
 .type	aesni_ocb_decrypt,\@function,6
 .align	32
 aesni_ocb_decrypt:
+.cfi_startproc
 	lea	(%rsp),%rax
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 ___
 $code.=<<___ if ($win64);
 	lea	-0xa0(%rsp),%rsp
@@ -3409,6 +3447,8 @@ $code.=<<___ if (!$win64);
 	pxor	%xmm13,%xmm13
 	pxor	%xmm14,%xmm14
 	pxor	%xmm15,%xmm15
+	lea	0x28(%rsp),%rax
+.cfi_def_cfa	%rax,8
 ___
 $code.=<<___ if ($win64);
 	movaps	0x00(%rsp),%xmm6
@@ -3433,16 +3473,23 @@ $code.=<<___ if ($win64);
 	movaps	%xmm0,0x90(%rsp)
 	lea	0xa0+0x28(%rsp),%rax
 .Locb_dec_pop:
-	lea	0xa0(%rsp),%rsp
 ___
 $code.=<<___;
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
+	mov	-40(%rax),%r14
+.cfi_restore	%r14
+	mov	-32(%rax),%r13
+.cfi_restore	%r13
+	mov	-24(%rax),%r12
+.cfi_restore	%r12
+	mov	-16(%rax),%rbp
+.cfi_restore	%rbp
+	mov	-8(%rax),%rbx
+.cfi_restore	%rbx
+	lea	(%rax),%rsp
+.cfi_def_cfa_register	%rsp
 .Locb_dec_epilogue:
 	ret
+.cfi_endproc
 .size	aesni_ocb_decrypt,.-aesni_ocb_decrypt
 
 .type	__ocb_decrypt6,\@abi-omnipotent
@@ -3649,13 +3696,13 @@ ___
 {
 my $frame_size = 0x10 + ($win64?0xa0:0);	# used in decrypt
 my ($iv,$in0,$in1,$in2,$in3,$in4)=map("%xmm$_",(10..15));
-my $inp_=$key_;
 
 $code.=<<___;
 .globl	${PREFIX}_cbc_encrypt
 .type	${PREFIX}_cbc_encrypt,\@function,6
 .align	16
 ${PREFIX}_cbc_encrypt:
+.cfi_startproc
 	test	$len,$len		# check length
 	jz	.Lcbc_ret
 
@@ -3731,8 +3778,10 @@ $code.=<<___;
 	jmp	.Lcbc_ret
 .align	16
 .Lcbc_decrypt_bulk:
-	lea	(%rsp),%rax
+	lea	(%rsp),%r11		# frame pointer
+.cfi_def_cfa_register	%r11
 	push	%rbp
+.cfi_push	%rbp
 	sub	\$$frame_size,%rsp
 	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
@@ -3749,8 +3798,11 @@ $code.=<<___ if ($win64);
 	movaps	%xmm15,0xa0(%rsp)
 .Lcbc_decrypt_body:
 ___
+
+my $inp_=$key_="%rbp";			# reassign $key_
+
 $code.=<<___;
-	lea	-8(%rax),%rbp
+	mov	$key,$key_		# [re-]backup $key [after reassignment]
 	movups	($ivp),$iv
 	mov	$rnds_,$rounds
 	cmp	\$0x50,$len
@@ -3790,7 +3842,7 @@ $code.=<<___;
 	pxor		$rndkey0,$inout1
 	$movkey		0x10-0x70($key),$rndkey1
 	pxor		$rndkey0,$inout2
-	xor		$inp_,$inp_
+	mov		\$-1,$inp_
 	cmp		\$0x70,$len	# is there at least 0x60 bytes ahead?
 	pxor		$rndkey0,$inout3
 	pxor		$rndkey0,$inout4
@@ -3806,8 +3858,8 @@ $code.=<<___;
 	aesdec		$rndkey1,$inout4
 	aesdec		$rndkey1,$inout5
 	aesdec		$rndkey1,$inout6
-	setnc		${inp_}b
-	shl		\$7,$inp_
+	adc		\$0,$inp_
+	and		\$128,$inp_
 	aesdec		$rndkey1,$inout7
 	add		$inp,$inp_
 	$movkey		0x30-0x70($key),$rndkey1
@@ -4171,10 +4223,13 @@ $code.=<<___ if ($win64);
 	movaps	%xmm0,0xa0(%rsp)
 ___
 $code.=<<___;
-	lea	(%rbp),%rsp
-	pop	%rbp
+	mov	-8(%r11),%rbp
+.cfi_restore	%rbp
+	lea	(%r11),%rsp
+.cfi_def_cfa_register	%rsp
 .Lcbc_ret:
 	ret
+.cfi_endproc
 .size	${PREFIX}_cbc_encrypt,.-${PREFIX}_cbc_encrypt
 ___
 } 
@@ -4195,7 +4250,9 @@ $code.=<<___;
 .type	${PREFIX}_set_decrypt_key,\@abi-omnipotent
 .align	16
 ${PREFIX}_set_decrypt_key:
+.cfi_startproc
 	.byte	0x48,0x83,0xEC,0x08	# sub rsp,8
+.cfi_adjust_cfa_offset	8
 	call	__aesni_set_encrypt_key
 	shl	\$4,$bits		# rounds-1 after _aesni_set_encrypt_key
 	test	%eax,%eax
@@ -4228,7 +4285,9 @@ ${PREFIX}_set_decrypt_key:
 	pxor	%xmm0,%xmm0
 .Ldec_key_ret:
 	add	\$8,%rsp
+.cfi_adjust_cfa_offset	-8
 	ret
+.cfi_endproc
 .LSEH_end_set_decrypt_key:
 .size	${PREFIX}_set_decrypt_key,.-${PREFIX}_set_decrypt_key
 ___
@@ -4264,7 +4323,9 @@ $code.=<<___;
 .align	16
 ${PREFIX}_set_encrypt_key:
 __aesni_set_encrypt_key:
+.cfi_startproc
 	.byte	0x48,0x83,0xEC,0x08	# sub rsp,8
+.cfi_adjust_cfa_offset	8
 	mov	\$-1,%rax
 	test	$inp,$inp
 	jz	.Lenc_key_ret
@@ -4557,7 +4618,9 @@ __aesni_set_encrypt_key:
 	pxor	%xmm4,%xmm4
 	pxor	%xmm5,%xmm5
 	add	\$8,%rsp
+.cfi_adjust_cfa_offset	-8
 	ret
+.cfi_endproc
 .LSEH_end_set_encrypt_key:
 
 .align	16
@@ -4743,13 +4806,16 @@ ctr_xts_se_handler:
 	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lcommon_seh_tail
 
-	mov	160($context),%rax	# pull context->Rbp
-	lea	-0xa0(%rax),%rsi	# %xmm save area
+	mov	208($context),%rax	# pull context->R11
+
+	lea	-0xa8(%rax),%rsi	# %xmm save area
 	lea	512($context),%rdi	# & context.Xmm6
 	mov	\$20,%ecx		# 10*sizeof(%xmm0)/sizeof(%rax)
 	.long	0xa548f3fc		# cld; rep movsq
 
-	jmp	.Lcommon_rbp_tail
+	mov	-8(%rax),%rbp		# restore saved %rbp
+	mov	%rbp,160($context)	# restore context->Rbp
+	jmp	.Lcommon_seh_tail
 .size	ctr_xts_se_handler,.-ctr_xts_se_handler
 
 .type	ocb_se_handler,\@abi-omnipotent
@@ -4833,9 +4899,13 @@ cbc_se_handler:
 	cmp	%r10,%rbx		# context->Rip<"prologue" label
 	jb	.Lcommon_seh_tail
 
+	mov	120($context),%rax	# pull context->Rax
+
 	lea	.Lcbc_decrypt_body(%rip),%r10
 	cmp	%r10,%rbx		# context->Rip<cbc_decrypt_body
-	jb	.Lrestore_cbc_rax
+	jb	.Lcommon_seh_tail
+
+	mov	152($context),%rax	# pull context->Rsp
 
 	lea	.Lcbc_ret(%rip),%r10
 	cmp	%r10,%rbx		# context->Rip>="epilogue" label
@@ -4846,15 +4916,10 @@ cbc_se_handler:
 	mov	\$20,%ecx		# 10*sizeof(%xmm0)/sizeof(%rax)
 	.long	0xa548f3fc		# cld; rep movsq
 
-.Lcommon_rbp_tail:
-	mov	160($context),%rax	# pull context->Rbp
-	mov	(%rax),%rbp		# restore saved %rbp
-	lea	8(%rax),%rax		# adjust stack pointer
-	mov	%rbp,160($context)	# restore context->Rbp
-	jmp	.Lcommon_seh_tail
+	mov	208($context),%rax	# pull context->R11
 
-.Lrestore_cbc_rax:
-	mov	120($context),%rax
+	mov	-8(%rax),%rbp		# restore saved %rbp
+	mov	%rbp,160($context)	# restore context->Rbp
 
 .Lcommon_seh_tail:
 	mov	8(%rax),%rdi

@@ -74,6 +74,7 @@
 # Skylake	0.44(+110%)(if system doesn't support AVX)
 # Bulldozer	1.49(+27%)
 # Silvermont	2.88(+13%)
+# Goldmont	1.08(+24%)
 
 # March 2013
 #
@@ -235,9 +236,21 @@ $code=<<___;
 .type	gcm_gmult_4bit,\@function,2
 .align	16
 gcm_gmult_4bit:
+.cfi_startproc
 	push	%rbx
-	push	%rbp		# %rbp and %r12 are pushed exclusively in
+.cfi_push	%rbx
+	push	%rbp		# %rbp and others are pushed exclusively in
+.cfi_push	%rbp
 	push	%r12		# order to reuse Win64 exception handler...
+.cfi_push	%r12
+	push	%r13
+.cfi_push	%r13
+	push	%r14
+.cfi_push	%r14
+	push	%r15
+.cfi_push	%r15
+	sub	\$280,%rsp
+.cfi_adjust_cfa_offset	280
 .Lgmult_prologue:
 
 	movzb	15($Xi),$Zlo
@@ -248,10 +261,15 @@ $code.=<<___;
 	mov	$Zlo,8($Xi)
 	mov	$Zhi,($Xi)
 
-	mov	16(%rsp),%rbx
-	lea	24(%rsp),%rsp
+	lea	280+48(%rsp),%rsi
+.cfi_def_cfa	%rsi,8
+	mov	-8(%rsi),%rbx
+.cfi_restore	%rbx
+	lea	(%rsi),%rsp
+.cfi_def_cfa_register	%rsp
 .Lgmult_epilogue:
 	ret
+.cfi_endproc
 .size	gcm_gmult_4bit,.-gcm_gmult_4bit
 ___
 
@@ -265,13 +283,21 @@ $code.=<<___;
 .type	gcm_ghash_4bit,\@function,4
 .align	16
 gcm_ghash_4bit:
+.cfi_startproc
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	sub	\$280,%rsp
+.cfi_adjust_cfa_offset	280
 .Lghash_prologue:
 	mov	$inp,%r14		# reassign couple of args
 	mov	$len,%r15
@@ -399,16 +425,25 @@ $code.=<<___;
 	mov	$Zlo,8($Xi)
 	mov	$Zhi,($Xi)
 
-	lea	280(%rsp),%rsi
-	mov	0(%rsi),%r15
-	mov	8(%rsi),%r14
-	mov	16(%rsi),%r13
-	mov	24(%rsi),%r12
-	mov	32(%rsi),%rbp
-	mov	40(%rsi),%rbx
-	lea	48(%rsi),%rsp
+	lea	280+48(%rsp),%rsi
+.cfi_def_cfa	%rsi,8
+	mov	-48(%rsi),%r15
+.cfi_restore	%r15
+	mov	-40(%rsi),%r14
+.cfi_restore	%r14
+	mov	-32(%rsi),%r13
+.cfi_restore	%r13
+	mov	-24(%rsi),%r12
+.cfi_restore	%r12
+	mov	-16(%rsi),%rbp
+.cfi_restore	%rbp
+	mov	-8(%rsi),%rbx
+.cfi_restore	%rbx
+	lea	0(%rsi),%rsp
+.cfi_def_cfa_register	%rsp
 .Lghash_epilogue:
 	ret
+.cfi_endproc
 .size	gcm_ghash_4bit,.-gcm_ghash_4bit
 ___
 
@@ -1647,14 +1682,20 @@ se_handler:
 	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lin_prologue
 
-	lea	24(%rax),%rax		# adjust "rsp"
+	lea	48+280(%rax),%rax	# adjust "rsp"
 
 	mov	-8(%rax),%rbx
 	mov	-16(%rax),%rbp
 	mov	-24(%rax),%r12
+	mov	-32(%rax),%r13
+	mov	-40(%rax),%r14
+	mov	-48(%rax),%r15
 	mov	%rbx,144($context)	# restore context->Rbx
 	mov	%rbp,160($context)	# restore context->Rbp
 	mov	%r12,216($context)	# restore context->R12
+	mov	%r13,224($context)	# restore context->R13
+	mov	%r14,232($context)	# restore context->R14
+	mov	%r15,240($context)	# restore context->R15
 
 .Lin_prologue:
 	mov	8(%rax),%rdi

@@ -26,6 +26,7 @@
 #include <openssl/obj_mac.h>
 #include <openssl/ec.h>
 #include <openssl/bn.h>
+#include "internal/refcount.h"
 
 #include "e_os.h"
 
@@ -261,7 +262,7 @@ struct ec_key_st {
     BIGNUM *priv_key;
     unsigned int enc_flag;
     point_conversion_form_t conv_form;
-    int references;
+    CRYPTO_REF_COUNT references;
     int flags;
     CRYPTO_EX_DATA ex_data;
     CRYPTO_RWLOCK *lock;

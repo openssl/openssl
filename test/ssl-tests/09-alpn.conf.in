@@ -314,7 +314,8 @@ our @tests = (
                 "ALPNProtocols" => "foo",
             },
         },
-        resume_client => { },
+        resume_client => {
+        },
         test => {
             "HandshakeMode" => "Resume",
             "ResumptionExpected" => "Yes",

@@ -120,7 +120,7 @@ void DSA_free(DSA *r)
     if (r == NULL)
         return;
 
-    CRYPTO_atomic_add(&r->references, -1, &i, r->lock);
+    CRYPTO_DOWN_REF(&r->references, &i, r->lock);
     REF_PRINT_COUNT("DSA", r);
     if (i > 0)
         return;
@@ -148,7 +148,7 @@ int DSA_up_ref(DSA *r)
 {
     int i;
 
-    if (CRYPTO_atomic_add(&r->references, 1, &i, r->lock) <= 0)
+    if (CRYPTO_UP_REF(&r->references, &i, r->lock) <= 0)
         return 0;
 
     REF_PRINT_COUNT("DSA", r);

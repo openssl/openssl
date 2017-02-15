@@ -33,6 +33,15 @@ sub generate_tests() {
             } else {
                 $caalert = "UnknownCA";
             }
+            my $clihash;
+            my $clisigtype;
+            my $clisigalgs;
+            # TODO(TLS1.3) add TLSv1.3 versions
+            if ($protocol_name eq "TLSv1.2") {
+                $clihash = "SHA256";
+                $clisigtype = "RSA";
+                $clisigalgs = "SHA256+RSA";
+            }
             # Sanity-check simple handshake.
             push @tests, {
                 name => "server-auth-${protocol_name}",
@@ -87,6 +96,7 @@ sub generate_tests() {
                 server => {
                     "MinProtocol" => $protocol,
                     "MaxProtocol" => $protocol,
+                    "ClientSignatureAlgorithms" => $clisigalgs,
                     "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
                     "VerifyMode" => "Request",
                 },
@@ -96,7 +106,11 @@ sub generate_tests() {
                     "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
                     "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem",
                 },
-                test   => { "ExpectedResult" => "Success" },
+                test   => { "ExpectedResult" => "Success",
+                            "ExpectedClientCertType" => "RSA",
+                            "ExpectedClientSignType" => $clisigtype,
+                            "ExpectedClientSignHash" => $clihash,
+                },
             };
 
             # Handshake with client authentication but without the root certificate.

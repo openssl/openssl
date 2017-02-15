@@ -202,15 +202,21 @@ static int cmd_ClientSignatureAlgorithms(SSL_CONF_CTX *cctx, const char *value)
     return rv > 0;
 }
 
-static int cmd_Curves(SSL_CONF_CTX *cctx, const char *value)
+static int cmd_Groups(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv;
     if (cctx->ssl)
-        rv = SSL_set1_curves_list(cctx->ssl, value);
+        rv = SSL_set1_groups_list(cctx->ssl, value);
     /* NB: ctx == NULL performs syntax checking only */
     else
-        rv = SSL_CTX_set1_curves_list(cctx->ctx, value);
+        rv = SSL_CTX_set1_groups_list(cctx->ctx, value);
     return rv > 0;
+}
+
+/* This is the old name for cmd_Groups - retained for backwards compatibility */
+static int cmd_Curves(SSL_CONF_CTX *cctx, const char *value)
+{
+    return cmd_Groups(cctx, value);
 }
 
 #ifndef OPENSSL_NO_EC
@@ -257,6 +263,7 @@ static int cmd_Protocol(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL_INV("TLSv1", SSL_OP_NO_TLSv1),
         SSL_FLAG_TBL_INV("TLSv1.1", SSL_OP_NO_TLSv1_1),
         SSL_FLAG_TBL_INV("TLSv1.2", SSL_OP_NO_TLSv1_2),
+        SSL_FLAG_TBL_INV("TLSv1.3", SSL_OP_NO_TLSv1_3),
         SSL_FLAG_TBL_INV("DTLSv1", SSL_OP_NO_DTLSv1),
         SSL_FLAG_TBL_INV("DTLSv1.2", SSL_OP_NO_DTLSv1_2)
     };
@@ -282,6 +289,7 @@ static int protocol_from_string(const char *value)
         {"TLSv1", TLS1_VERSION},
         {"TLSv1.1", TLS1_1_VERSION},
         {"TLSv1.2", TLS1_2_VERSION},
+        {"TLSv1.3", TLS1_3_VERSION},
         {"DTLSv1", DTLS1_VERSION},
         {"DTLSv1.2", DTLS1_2_VERSION}
     };
@@ -349,6 +357,7 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL_SRV("ECDHSingle", SSL_OP_SINGLE_ECDH_USE),
         SSL_FLAG_TBL("UnsafeLegacyRenegotiation",
                      SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION),
+        SSL_FLAG_TBL_INV("EncryptThenMac", SSL_OP_NO_ENCRYPT_THEN_MAC),
     };
     if (value == NULL)
         return -3;
@@ -526,6 +535,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_SWITCH("no_tls1", 0),
     SSL_CONF_CMD_SWITCH("no_tls1_1", 0),
     SSL_CONF_CMD_SWITCH("no_tls1_2", 0),
+    SSL_CONF_CMD_SWITCH("no_tls1_3", 0),
     SSL_CONF_CMD_SWITCH("bugs", 0),
     SSL_CONF_CMD_SWITCH("no_comp", 0),
     SSL_CONF_CMD_SWITCH("comp", 0),
@@ -540,6 +550,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(SignatureAlgorithms, "sigalgs", 0),
     SSL_CONF_CMD_STRING(ClientSignatureAlgorithms, "client_sigalgs", 0),
     SSL_CONF_CMD_STRING(Curves, "curves", 0),
+    SSL_CONF_CMD_STRING(Groups, "groups", 0),
 #ifndef OPENSSL_NO_EC
     SSL_CONF_CMD_STRING(ECDHParameters, "named_curve", SSL_CONF_FLAG_SERVER),
 #endif
@@ -583,6 +594,7 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
     {SSL_OP_NO_TLSv1, 0},       /* no_tls1 */
     {SSL_OP_NO_TLSv1_1, 0},     /* no_tls1_1 */
     {SSL_OP_NO_TLSv1_2, 0},     /* no_tls1_2 */
+    {SSL_OP_NO_TLSv1_3, 0},     /* no_tls1_3 */
     {SSL_OP_ALL, 0},            /* bugs */
     {SSL_OP_NO_COMPRESSION, 0}, /* no_comp */
     {SSL_OP_NO_COMPRESSION, SSL_TFLAG_INV}, /* comp */

@@ -497,8 +497,8 @@ link_dso.hpux:
 	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+h,$$SHLIB$$SHLIB_SUFFIX,+cdp,../:,+cdp,./:"; \
 	fi; \
-	rm -f $$SHLIB$$SHLIB_SUFFIX || :; \
-	$(LINK_SO_DSO) && chmod a=rx $$SHLIB$$SHLIB_SUFFIX
+	rm -f $(DSTDIR)/$$SHLIB$$SHLIB_SUFFIX || :; \
+	$(LINK_SO_DSO) && chmod a=rx $(DSTDIR)/$$SHLIB$$SHLIB_SUFFIX
 link_shlib.hpux:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_SO); else \
 	$(CALC_VERSIONS); \
@@ -510,8 +510,8 @@ link_shlib.hpux:
 	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+cdp,../:,+cdp,./:"; \
 	fi; \
-	rm -f $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX || :; \
-	$(LINK_SO_SHLIB) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
+	rm -f $(DSTDIR)/$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX || :; \
+	$(LINK_SO_SHLIB) && chmod a=rx $(DSTDIR)/$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
 link_app.hpux:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_APP); else \
 	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,+s,+cdp,../:,+cdp,./:"; \

@@ -60,11 +60,12 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # zlib-dynamic	Like "zlib", but the zlib library is expected to be a shared
 #		library and will be loaded in run-time by the OpenSSL library.
 # sctp          include SCTP support
-# 386           generate 80386 code
 # enable-weak-ssl-ciphers
 #               Enable weak ciphers that are disabled by default. This currently
 #               only includes RC4 based ciphers.
-# no-sse2	disables IA-32 SSE2 code, above option implies no-sse2
+# 386           generate 80386 code in assembly modules
+# no-sse2       disables IA-32 SSE2 code in assembly modules, the above
+#               mentioned '386' option implies this one
 # no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
 # -<xxx> +<xxx> compiler options are passed through
 # -static       while -static is also a pass-through compiler option (and
@@ -102,18 +103,19 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # past these.
 
 # DEBUG_UNUSED enables __owur (warn unused result) checks.
+# -DPEDANTIC complements -pedantic and is meant to mask code that
+# is not strictly standard-compliant and/or implementation-specific,
+# e.g. inline assembly, disregards to alignment requirements, such
+# that -pedantic would complain about. Incidentally -DPEDANTIC has
+# to be used even in sanitized builds, because sanitizer too is
+# supposed to and does take notice of non-standard behaviour. Then
+# -pedantic with pre-C9x compiler would also complain about 'long
+# long' not being supported. As 64-bit algorithms are common now,
+# it grew impossible to resolve this without sizeable additional
+# code, so we just tell compiler to be pedantic about everything
+# but 'long long' type.
+
 my $gcc_devteam_warn = "-DDEBUG_UNUSED"
-        # -DPEDANTIC complements -pedantic and is meant to mask code that
-        # is not strictly standard-compliant and/or implementation-specific,
-        # e.g. inline assembly, disregards to alignment requirements, such
-        # that -pedantic would complain about. Incidentally -DPEDANTIC has
-        # to be used even in sanitized builds, because sanitizer too is
-        # supposed to and does take notice of non-standard behaviour. Then
-        # -pedantic with pre-C9x compiler would also complain about 'long
-        # long' not being supported. As 64-bit algorithms are common now,
-        # it grew impossible to resolve this without sizeable additional
-        # code, so we just tell compiler to be pedantic about everything
-        # but 'long long' type.
         . " -Wswitch"
         . " -DPEDANTIC -pedantic -Wno-long-long"
         . " -Wall"
@@ -122,6 +124,7 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
         . " -Wshadow"
         . " -Wformat"
         . " -Wtype-limits"
+        . " -Wno-parentheses-equality"
         . " -Werror"
         ;
 
@@ -129,7 +132,7 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
 # TODO(openssl-team): fix problems and investigate if (at least) the
 # following warnings can also be enabled:
 #       -Wcast-align
-#       -Wunreachable-code
+#       -Wunreachable-code -- no, too ugly/compiler-specific
 #       -Wlanguage-extension-token -- no, we use asm()
 #       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
@@ -138,6 +141,7 @@ my $clang_devteam_warn = ""
         . " -Wextra"
         . " -Wswitch -Wswitch-default"
         . " -Wno-unused-parameter"
+        . " -Wno-parentheses-equality"
         . " -Wno-missing-field-initializers"
         . " -Wno-language-extension-token"
         . " -Wno-extended-offsetof"
@@ -309,16 +313,18 @@ $config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "util", "tools", "
 # crypto/ subdirectories to build
 $config{sdirs} = [
     "objects",
-    "md2", "md4", "md5", "sha", "mdc2", "hmac", "ripemd", "whrlpool", "poly1305", "blake2",
+    "md2", "md4", "md5", "sha", "mdc2", "hmac", "ripemd", "whrlpool", "poly1305", "blake2", "siphash",
     "des", "aes", "rc2", "rc4", "rc5", "idea", "bf", "cast", "camellia", "seed", "chacha", "modes",
     "bn", "ec", "rsa", "dsa", "dh", "dso", "engine",
     "buffer", "bio", "stack", "lhash", "rand", "err",
     "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "comp", "ocsp", "ui",
     "cms", "ts", "srp", "cmac", "ct", "async", "kdf"
     ];
+# test/ subdirectories to build
+$config{tdirs} = [ "ossl_shim" ];
 
 # Known TLS and DTLS protocols
-my @tls = qw(ssl3 tls1 tls1_1 tls1_2);
+my @tls = qw(ssl3 tls1 tls1_1 tls1_2 tls1_3);
 my @dtls = qw(dtls1 dtls1_2);
 
 # Explicitly known options that are possible to disable.  They can
@@ -360,6 +366,7 @@ my @disablables = (
     "egd",
     "engine",
     "err",
+    "external-tests",
     "filenames",
     "fuzz-libfuzzer",
     "fuzz-afl",
@@ -390,6 +397,7 @@ my @disablables = (
     "sctp",
     "seed",
     "shared",
+    "siphash",
     "sock",
     "srp",
     "srtp",
@@ -398,6 +406,7 @@ my @disablables = (
     "ssl-trace",
     "static-engine",
     "stdio",
+    "tests",
     "threads",
     "tls",
     "ts",
@@ -429,6 +438,7 @@ our %disabled = ( # "what"         => "comment"
 		  "crypto-mdebug-backtrace" => "default",
 		  "ec_nistp_64_gcc_128" => "default",
 		  "egd"                 => "default",
+		  "external-tests"	=> "default",
 		  "fuzz-libfuzzer"	=> "default",
 		  "fuzz-afl"		=> "default",
 		  "heartbeats"          => "default",
@@ -440,6 +450,8 @@ our %disabled = ( # "what"         => "comment"
 		  "ssl3"                => "default",
 		  "ssl3-method"         => "default",
                   "ubsan"		=> "default",
+          #TODO(TLS1.3): Temporarily disabled while this is a WIP
+		  "tls1_3"              => "default",
 		  "unit-test"           => "default",
 		  "weak-ssl-ciphers"    => "default",
 		  "zlib"                => "default",
@@ -476,7 +488,7 @@ my @disable_cascades = (
     sub { $disabled{rsa}
 	  && ($disabled{dsa} || $disabled{dh})
 	  && ($disabled{ecdsa} || $disabled{ecdh}); }
-			=> [ "tls1", "tls1_1", "tls1_2",
+			=> [ "tls1", "tls1_1", "tls1_2", "tls1_3",
 			     "dtls1", "dtls1_2" ],
 
     "tls"		=> [ @tls ],
@@ -499,7 +511,8 @@ my @disable_cascades = (
 
     "stdio"             => [ "apps", "capieng" ],
     "apps"              => [ "tests" ],
-    "comp"		=> [ "zlib" ],
+    "comp"              => [ "zlib" ],
+    "ec"                => [ "tls1_3" ],
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
 
     sub { !$disabled{"msan"} } => [ "asm" ],
@@ -1102,10 +1115,6 @@ if ($disabled{"dynamic-engine"}) {
         $config{dynamic_engines} = 1;
 }
 
-unless ($disabled{"fuzz-libfuzzer"}) {
-    $config{cflags} .= "-fsanitize-coverage=edge,indirect-calls ";
-}
-
 unless ($disabled{asan}) {
     $config{cflags} .= "-fsanitize=address ";
 }
@@ -1198,6 +1207,9 @@ unless ($disabled{asm}) {
     }
     if ($target{ec_asm_src} =~ /ecp_nistz256/) {
 	push @{$config{defines}}, "ECP_NISTZ256_ASM";
+    }
+    if ($target{padlock_asm_src} ne $table{DEFAULTS}->{padlock_asm_src}) {
+	push @{$config{defines}}, "PADLOCK_ASM";
     }
     if ($target{poly1305_asm_src} ne "") {
 	push @{$config{defines}}, "POLY1305_ASM";
@@ -1298,7 +1310,7 @@ unless ($disabled{"crypto-mdebug-backtrace"})
 		}
 	}
 
-if ($user_cflags ne "") { $config{cflags}="$config{cflags}$user_cflags"; }
+if ($user_cflags ne "") { $config{cflags}="$config{cflags}$user_cflags"; $config{cxxflags}="$config{cxxflags}$user_cflags";}
 else                    { $no_user_cflags=1;  }
 if (@user_defines) { $config{defines}=[ @{$config{defines}}, @user_defines ]; }
 else               { $no_user_defines=1;    }
@@ -1423,6 +1435,10 @@ if ($builder eq "unified") {
     foreach (@{$config{engdirs}}) {
         push @build_infos, [ catdir("engines", $_), "build.info" ]
             if (-f catfile($srcdir, "engines", $_, "build.info"));
+    }
+    foreach (@{$config{tdirs}}) {
+        push @build_infos, [ catdir("test", $_), "build.info" ]
+            if (-f catfile($srcdir, "test", $_, "build.info"));
     }
 
     $config{build_infos} = [ ];
@@ -1590,7 +1606,7 @@ if ($builder eq "unified") {
                             || $target_kind eq $target{build_file}."(".$builder_platform.")");
                 }
             },
-            qr/^(?:#.*|\s*)$/ => sub { },
+            qr/^\s*(?:#.*)?$/ => sub { },
             "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" },
             "BEFORE" => sub {
                 if ($buildinfo_debug) {
@@ -1846,9 +1862,16 @@ EOF
                     $d = cleanfile($buildd, $_, $blddir);
                 }
                 # Take note if the file to depend on is being renamed
+                # Take extra care with files ending with .a, they should
+                # be treated without that extension, and the extension
+                # should be added back after treatment.
+                $d =~ /(\.a)?$/;
+                my $e = $1 // "";
+                $d = $`;
                 if ($unified_info{rename}->{$d}) {
                     $d = $unified_info{rename}->{$d};
                 }
+                $d .= $e;
                 $unified_info{depends}->{$ddest}->{$d} = 1;
                 # If we depend on a header file or a perl module, let's make
                 # sure it can get included

@@ -11,6 +11,7 @@
 #include <openssl/buffer.h>
 #include "../ssl/packet_locl.h"
 #include "testutil.h"
+#include "test_main_custom.h"
 
 const static unsigned char simple1 = 0xff;
 const static unsigned char simple2[] = { 0x01, 0xff };
@@ -20,6 +21,7 @@ const static unsigned char seqsub[] = { 0x01, 0xff, 0x01, 0xff };
 const static unsigned char empty = 0x00;
 const static unsigned char alloc[] = { 0x02, 0xfe, 0xff };
 const static unsigned char submem[] = { 0x03, 0x02, 0xfe, 0xff };
+const static unsigned char fixed[] = { 0xff, 0xff, 0xff };
 
 static BUF_MEM *buf;
 
@@ -34,6 +36,7 @@ static int test_WPACKET_init(void)
     WPACKET pkt;
     int i;
     size_t written;
+    unsigned char sbuf[3];
 
     if (!WPACKET_init(&pkt, buf)
             || !WPACKET_put_bytes_u8(&pkt, 0xff)
@@ -92,6 +95,31 @@ static int test_WPACKET_init(void)
     }
     if (!WPACKET_finish(&pkt)) {
         testfail("test_WPACKET_init():4 failed\n", &pkt);
+        return 0;
+    }
+
+    /* Test initialising from a fixed size buffer */
+    if (!WPACKET_init_static_len(&pkt, sbuf, sizeof(sbuf), 0)
+                /* Adding 3 bytes should succeed */
+            || !WPACKET_put_bytes_u24(&pkt, 0xffffff)
+                /* Adding 1 more byte should fail */
+            ||  WPACKET_put_bytes_u8(&pkt, 0xff)
+                /* Finishing the top level WPACKET should succeed */
+            || !WPACKET_finish(&pkt)
+            || !WPACKET_get_total_written(&pkt, &written)
+            ||  written != sizeof(fixed)
+            || memcmp(sbuf, fixed, sizeof(sbuf)) != 0
+                /* Initialise with 1 len byte */
+            || !WPACKET_init_static_len(&pkt, sbuf, sizeof(sbuf), 1)
+                /* Adding 2 bytes should succeed */
+            || !WPACKET_put_bytes_u16(&pkt, 0xfeff)
+                /* Adding 1 more byte should fail */
+            ||  WPACKET_put_bytes_u8(&pkt, 0xff)
+            || !WPACKET_finish(&pkt)
+            || !WPACKET_get_total_written(&pkt, &written)
+            ||  written != sizeof(alloc)
+            ||  memcmp(sbuf, alloc, written) != 0) {
+        testfail("test_WPACKET_init():5 failed\n", &pkt);
         return 0;
     }
 
@@ -223,6 +251,27 @@ static int test_WPACKET_start_sub_packet(void)
             ||  written != sizeof(seqsub)
             ||  memcmp(buf->data, &seqsub, written) != 0) {
         testfail("test_WPACKET_start_sub_packet():4 failed\n", &pkt);
+        return 0;
+    }
+
+    /* Nested sub-packets with lengths filled before finish */
+    if (!WPACKET_init(&pkt, buf)
+            || !WPACKET_start_sub_packet_u8(&pkt)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
+            || !WPACKET_start_sub_packet_u8(&pkt)
+            || !WPACKET_put_bytes_u8(&pkt, 0xff)
+            || !WPACKET_get_length(&pkt, &len)
+            || len != 1
+            || !WPACKET_close(&pkt)
+            || !WPACKET_get_length(&pkt, &len)
+            || len != 3
+            || !WPACKET_close(&pkt)
+            || !WPACKET_fill_lengths(&pkt)
+            || !WPACKET_get_total_written(&pkt, &written)
+            ||  written != sizeof(nestedsub)
+            ||  memcmp(buf->data, &nestedsub, written) != 0
+            || !WPACKET_finish(&pkt)) {
+        testfail("test_WPACKET_start_sub_packet():5 failed\n", &pkt);
         return 0;
     }
 
@@ -374,15 +423,9 @@ static int test_WPACKET_memcpy(void)
     return 1;
 }
 
-int main(int argc, char *argv[])
+int test_main(int argc, char *argv[])
 {
-    BIO *err = NULL;
     int testresult = 0;
-
-    err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
     buf = BUF_MEM_new();
     if (buf != NULL) {
@@ -398,15 +441,5 @@ int main(int argc, char *argv[])
         BUF_MEM_free(buf);
     }
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks(err) <= 0)
-        testresult = 1;
-#endif
-    BIO_free(err);
-
-    if (!testresult)
-        printf("PASS\n");
-
     return testresult;
 }
-

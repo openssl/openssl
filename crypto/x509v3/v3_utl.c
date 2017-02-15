@@ -424,11 +424,11 @@ static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name,
 {
     STACK_OF(OPENSSL_STRING) *ret = NULL;
     X509_NAME_ENTRY *ne;
-    ASN1_IA5STRING *email;
+    const ASN1_IA5STRING *email;
     GENERAL_NAME *gen;
-    int i;
+    int i = -1;
+
     /* Now add any email address(es) to STACK */
-    i = -1;
     /* First supplied X509_NAME */
     while ((i = X509_NAME_get_index_by_NID(name,
                                            NID_pkcs9_emailAddress, i)) >= 0) {
@@ -469,6 +469,7 @@ static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, const ASN1_IA5STRING *email
         return 1;
     emtmp = OPENSSL_strdup((char *)email->data);
     if (emtmp == NULL || !sk_OPENSSL_STRING_push(*sk, emtmp)) {
+        OPENSSL_free(emtmp);    /* free on push failure */
         X509_email_free(*sk);
         *sk = NULL;
         return 0;

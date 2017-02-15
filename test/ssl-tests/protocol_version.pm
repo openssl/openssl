@@ -20,12 +20,12 @@ use OpenSSL::Test;
 use OpenSSL::Test::Utils qw/anydisabled alldisabled/;
 setup("no_test_here");
 
-my @tls_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2");
+my @tls_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
 # undef stands for "no limit".
-my @min_tls_protocols = (undef, "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2");
-my @max_tls_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", undef);
+my @min_tls_protocols = (undef, "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
+my @max_tls_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3", undef);
 
-my @is_tls_disabled = anydisabled("ssl3", "tls1", "tls1_1", "tls1_2");
+my @is_tls_disabled = anydisabled("ssl3", "tls1", "tls1_1", "tls1_2", "tls1_3");
 
 my $min_tls_enabled; my $max_tls_enabled;
 
@@ -74,7 +74,7 @@ foreach my $i (0..$#dtls_protocols) {
 sub no_tests {
     my ($dtls) = @_;
     return $dtls ? alldisabled("dtls1", "dtls1_2") :
-      alldisabled("ssl3", "tls1", "tls1_1", "tls1_2");
+      alldisabled("ssl3", "tls1", "tls1_1", "tls1_2", "tls1_3");
 }
 
 sub generate_version_tests {
@@ -137,6 +137,7 @@ sub generate_resumption_tests {
 
     my @protocols = $dtls ? @dtls_protocols : @tls_protocols;
     my $min_enabled  = $dtls ? $min_dtls_enabled : $min_tls_enabled;
+    my $max_enabled = $dtls ? $max_dtls_enabled : $max_tls_enabled;
 
     if (no_tests($dtls)) {
         return;
@@ -146,10 +147,10 @@ sub generate_resumption_tests {
     my @client_tests = ();
 
     # Obtain the first session against a fixed-version server/client.
-    foreach my $original_protocol($min_enabled..$#protocols) {
+    foreach my $original_protocol($min_enabled..$max_enabled) {
         # Upgrade or downgrade the server/client max version support and test
         # that it upgrades, downgrades or resumes the session as well.
-        foreach my $resume_protocol($min_enabled..$#protocols) {
+        foreach my $resume_protocol($min_enabled..$max_enabled) {
             my $resumption_expected;
             # We should only resume on exact version match.
             if ($original_protocol eq $resume_protocol) {
@@ -234,9 +235,16 @@ sub expected_result {
         # Server doesn't support the client range.
         return ("ServerFail", undef);
     } elsif ($c_min > $s_max) {
-        # Server will try with a version that is lower than the lowest
-        # supported client version.
-        return ("ClientFail", undef);
+        my @prots = @$protocols;
+        if ($prots[$c_max] eq "TLSv1.3") {
+            # Client will have sent supported_versions, so server will know
+            # that there are no overlapping versions.
+            return ("ServerFail", undef);
+        } else {
+            # Server will try with a version that is lower than the lowest
+            # supported client version.
+            return ("ClientFail", undef);
+        }
     } else {
         # Server and client ranges overlap.
         my $max_common = $s_max < $c_max ? $s_max : $c_max;

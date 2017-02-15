@@ -29,16 +29,19 @@ map { s/\.in// } @conf_files;
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 18;  # = scalar @conf_srcs
+plan tests => 20;  # = scalar @conf_srcs
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
 my $is_default_tls = (disabled("ssl3") && !disabled("tls1") &&
-                      !disabled("tls1_1") && !disabled("tls1_2"));
+                      !disabled("tls1_1") && !disabled("tls1_2") &&
+                      disabled("tls1_3"));
 
 my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2"));
 
+my @all_pre_tls1_3 = ("ssl3", "tls1", "tls1_1", "tls1_2");
 my $no_tls = alldisabled(available_protocols("tls"));
+my $no_pre_tls1_3 = alldisabled(@all_pre_tls1_3);
 my $no_dtls = alldisabled(available_protocols("dtls"));
 my $no_npn = disabled("nextprotoneg");
 my $no_ct = disabled("ct");
@@ -54,6 +57,8 @@ my %conf_dependent_tests = (
   "07-dtls-protocol-version.conf" => !$is_default_dtls,
   "10-resumption.conf" => !$is_default_tls,
   "11-dtls_resumption.conf" => !$is_default_dtls,
+  "19-mac-then-encrypt.conf" => !$is_default_tls,
+  "20-cert-select.conf" => !$is_default_tls,
 );
 
 # Add your test here if it should be skipped for some compile-time
@@ -61,7 +66,8 @@ my %conf_dependent_tests = (
 # conditions.
 my %skip = (
   "07-dtls-protocol-version.conf" => $no_dtls,
-  "08-npn.conf" => $no_tls || $no_npn,
+  "08-npn.conf" => (disabled("tls1") && disabled("tls1_1")
+                    && disabled("tls1_2")) || $no_npn,
   "10-resumption.conf" => disabled("tls1_1") || disabled("tls1_2"),
   "11-dtls_resumption.conf" => disabled("dtls1") || disabled("dtls1_2"),
   "12-ct.conf" => $no_tls || $no_ct || $no_ec,
@@ -71,9 +77,11 @@ my %skip = (
   # We should review this once we have TLS 1.3.
   "13-fragmentation.conf" => disabled("tls1_2"),
   "14-curves.conf" => disabled("tls1_2") || $no_ec || $no_ec2m,
-  "15-certstatus.conf" => $no_ocsp,
+  "15-certstatus.conf" => $no_tls || $no_ocsp,
   "16-dtls-certstatus.conf" => $no_dtls || $no_ocsp,
   "18-dtls-renegotiate.conf" => $no_dtls,
+  "19-mac-then-encrypt.conf" => $no_pre_tls1_3,
+  "20-cert-select.conf" => disabled("tls1_2") || $no_ec,
 );
 
 foreach my $conf (@conf_files) {

@@ -225,16 +225,14 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             /* If field not present, try the next one */
             if (ret == -1)
                 continue;
-            /*
-             * Set the choice selector here to ensure that the value is
-             * correctly freed upon error. It may be partially initialized
-             * even if parsing failed.
-             */
-            asn1_set_choice_selector(pval, i, it);
             /* If positive return, read OK, break loop */
             if (ret > 0)
                 break;
-            /* Otherwise must be an ASN1 parsing error */
+            /*
+             * Must be an ASN1 parsing error.
+             * Free up any partial choice value
+             */
+            asn1_template_free(pchptr, tt);
             errtt = tt;
             ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ERR_R_NESTED_ASN1_ERROR);
             goto err;
@@ -251,6 +249,8 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ASN1_R_NO_MATCHING_CHOICE_TYPE);
             goto err;
         }
+
+        asn1_set_choice_selector(pval, i, it);
 
         if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
             goto auxerr;

@@ -133,7 +133,7 @@ library 'libssl' is built from the source file 'ssl/tls.c'.
 
     ENGINES_NO_INST=ossltest
     SOURCE[ossltest]=e_ossltest.c
-    DEPEND[ossltest]=../libcrypto
+    DEPEND[ossltest]=../libcrypto.a
     INCLUDE[ossltest]=../include
 
 This is the build.info file in 'engines/', telling us that two engines
@@ -142,8 +142,9 @@ dasync's source is 'engines/e_dasync.c' and ossltest's source is
 'engines/e_ossltest.c' and that the include directory 'include/' may
 be used when building anything that will be part of these engines.
 Also, both engines depend on the library 'libcrypto' to function
-properly.  Finally, only dasync is being installed, as ossltest is
-only for internal testing.
+properly.  ossltest is explicitly linked with the static variant of
+the library 'libcrypto'.  Finally, only dasync is being installed, as
+ossltest is only for internal testing.
 
 When Configure digests these build.info files, the accumulated
 information comes down to this:
@@ -170,7 +171,7 @@ information comes down to this:
 
     ENGINES_NO_INST=engines/ossltest
     SOURCE[engines/ossltest]=engines/e_ossltest.c
-    DEPEND[engines/ossltest]=libcrypto
+    DEPEND[engines/ossltest]=libcrypto.a
     INCLUDE[engines/ossltest]=include
     
     GENERATE[crypto/buildinf.h]=util/mkbuildinf.pl "$(CC) $(CFLAGS)" "$(PLATFORM)"
@@ -281,9 +282,13 @@ section above would be digested into a %unified_info table:
                     [
                         "crypto/buildinf.h",
                     ],
-                "engines/ossltest" =>
+                "engines/dasync" =>
                     [
                         "libcrypto",
+                    ],
+                "engines/ossltest" =>
+                    [
+                        "libcrypto.a",
                     ],
                 "libssl" =>
                     [
@@ -395,6 +400,14 @@ section above would be digested into a %unified_info table:
                 "crypto/evp.o" =>
                     [
                         "crypto/evp.c",
+                    ],
+                "engines/e_dasync.o" =>
+                    [
+                        "engines/e_dasync.c",
+                    ],
+                "engines/dasync" =>
+                    [
+                        "engines/e_dasync.o",
                     ],
                 "engines/e_ossltest.o" =>
                     [

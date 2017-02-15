@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,6 +38,9 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_CMAC
     &cmac_pkey_meth,
 #endif
+#ifndef OPENSSL_NO_RSA
+    &rsa_pss_pkey_meth,
+#endif
 #ifndef OPENSSL_NO_DH
     &dhx_pkey_meth,
 #endif
@@ -45,7 +48,13 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_EC
     &ecx25519_pkey_meth,
 #endif
-    &hkdf_pkey_meth
+    &hkdf_pkey_meth,
+#ifndef OPENSSL_NO_POLY1305
+    &poly1305_pkey_meth,
+#endif
+#ifndef OPENSSL_NO_SIPHASH
+    &siphash_pkey_meth,
+#endif
 };
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,
@@ -133,6 +142,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 
     if (pmeth->init) {
         if (pmeth->init(ret) <= 0) {
+            ret->pmeth = NULL;
             EVP_PKEY_CTX_free(ret);
             return NULL;
         }
@@ -258,6 +268,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
     if (pctx->pmeth->copy(rctx, pctx) > 0)
         return rctx;
 
+    rctx->pmeth = NULL;
     EVP_PKEY_CTX_free(rctx);
     return NULL;
 
@@ -327,14 +338,9 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
         return -2;
     }
-    if (strcmp(name, "digest") == 0) {
-        const EVP_MD *md;
-        if (value == NULL || (md = EVP_get_digestbyname(value)) == NULL) {
-            EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR, EVP_R_INVALID_DIGEST);
-            return 0;
-        }
-        return EVP_PKEY_CTX_set_signature_md(ctx, md);
-    }
+    if (strcmp(name, "digest") == 0)
+        return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_TYPE_SIG, EVP_PKEY_CTRL_MD,
+                               value);
     return ctx->pmeth->ctrl_str(ctx, name, value);
 }
 
@@ -363,6 +369,18 @@ int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex)
         rv = ctx->pmeth->ctrl(ctx, cmd, binlen, bin);
     OPENSSL_free(bin);
     return rv;
+}
+
+/* Pass a message digest to a ctrl */
+int EVP_PKEY_CTX_md(EVP_PKEY_CTX *ctx, int optype, int cmd, const char *md)
+{
+    const EVP_MD *m;
+
+    if (md == NULL || (m = EVP_get_digestbyname(md)) == NULL) {
+        EVPerr(EVP_F_EVP_PKEY_CTX_MD, EVP_R_INVALID_DIGEST);
+        return 0;
+    }
+    return EVP_PKEY_CTX_ctrl(ctx, -1, optype, cmd, 0, (void *)m);
 }
 
 int EVP_PKEY_CTX_get_operation(EVP_PKEY_CTX *ctx)

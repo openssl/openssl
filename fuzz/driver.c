@@ -17,12 +17,11 @@
 
 int LLVMFuzzerInitialize(int *argc, char ***argv)
 {
-    if (FuzzerInitialize)
-        return FuzzerInitialize(argc, argv);
-    return 0;
+    return FuzzerInitialize(argc, argv);
 }
 
-int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
+int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
+{
     return FuzzerTestOneInput(buf, len);
 }
 
@@ -32,8 +31,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len) {
 
 int main(int argc, char** argv)
 {
-    if (FuzzerInitialize)
-        FuzzerInitialize(&argc, &argv);
+    FuzzerInitialize(&argc, &argv);
 
     while (__AFL_LOOP(10000)) {
         uint8_t *buf = malloc(BUF_SIZE);
@@ -42,6 +40,8 @@ int main(int argc, char** argv)
         FuzzerTestOneInput(buf, size);
         free(buf);
     }
+
+    FuzzerCleanup();
     return 0;
 }
 

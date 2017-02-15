@@ -4,14 +4,116 @@
 
  Changes between 1.1.0a and 1.1.1 [xx XXX xxxx]
 
-  *)
+  *) Add support for SipHash
+     [Todd Short]
+
+  *) OpenSSL now fails if it receives an unrecognised record type in TLS1.0
+     or TLS1.1. Previously this only happened in SSLv3 and TLS1.2. This is to
+     prevent issues where no progress is being made and the peer continually
+     sends unrecognised record types, using up resources processing them.
+     [Matt Caswell]
 
   *) 'openssl passwd' can now produce SHA256 and SHA512 based output,
      using the algorithm defined in
      https://www.akkadia.org/drepper/SHA-crypt.txt
      [Richard Levitte]
 
- Changes between 1.1.0b and 1.1.0c [xx XXX xxxx]
+  *) Heartbeat support has been removed; the ABI is changed for now.
+     [Richard Levitte, Rich Salz]
+
+  *) Support for SSL_OP_NO_ENCRYPT_THEN_MAC in SSL_CONF_cmd.
+     [Emilia Käsper]
+
+ Changes between 1.1.0c and 1.1.0d [26 Jan 2017]
+
+  *) Truncated packet could crash via OOB read
+
+     If one side of an SSL/TLS path is running on a 32-bit host and a specific
+     cipher is being used, then a truncated packet can cause that host to
+     perform an out-of-bounds read, usually resulting in a crash.
+
+     This issue was reported to OpenSSL by Robert Święcki of Google.
+     (CVE-2017-3731)
+     [Andy Polyakov]
+
+  *) Bad (EC)DHE parameters cause a client crash
+
+     If a malicious server supplies bad parameters for a DHE or ECDHE key
+     exchange then this can result in the client attempting to dereference a
+     NULL pointer leading to a client crash. This could be exploited in a Denial
+     of Service attack.
+
+     This issue was reported to OpenSSL by Guido Vranken.
+     (CVE-2017-3730)
+     [Matt Caswell]
+
+  *) BN_mod_exp may produce incorrect results on x86_64
+
+     There is a carry propagating bug in the x86_64 Montgomery squaring
+     procedure. No EC algorithms are affected. Analysis suggests that attacks
+     against RSA and DSA as a result of this defect would be very difficult to
+     perform and are not believed likely. Attacks against DH are considered just
+     feasible (although very difficult) because most of the work necessary to
+     deduce information about a private key may be performed offline. The amount
+     of resources required for such an attack would be very significant and
+     likely only accessible to a limited number of attackers. An attacker would
+     additionally need online access to an unpatched system using the target
+     private key in a scenario with persistent DH parameters and a private
+     key that is shared between multiple clients. For example this can occur by
+     default in OpenSSL DHE based SSL/TLS ciphersuites. Note: This issue is very
+     similar to CVE-2015-3193 but must be treated as a separate problem.
+
+     This issue was reported to OpenSSL by the OSS-Fuzz project.
+     (CVE-2017-3732)
+     [Andy Polyakov]
+
+ Changes between 1.1.0b and 1.1.0c [10 Nov 2016]
+
+  *) ChaCha20/Poly1305 heap-buffer-overflow
+
+     TLS connections using *-CHACHA20-POLY1305 ciphersuites are susceptible to
+     a DoS attack by corrupting larger payloads. This can result in an OpenSSL
+     crash. This issue is not considered to be exploitable beyond a DoS.
+
+     This issue was reported to OpenSSL by Robert Święcki (Google Security Team)
+     (CVE-2016-7054)
+     [Richard Levitte]
+
+  *) CMS Null dereference
+
+     Applications parsing invalid CMS structures can crash with a NULL pointer
+     dereference. This is caused by a bug in the handling of the ASN.1 CHOICE
+     type in OpenSSL 1.1.0 which can result in a NULL value being passed to the
+     structure callback if an attempt is made to free certain invalid encodings.
+     Only CHOICE structures using a callback which do not handle NULL value are
+     affected.
+
+     This issue was reported to OpenSSL by Tyler Nighswander of ForAllSecure.
+     (CVE-2016-7053)
+     [Stephen Henson]
+
+  *) Montgomery multiplication may produce incorrect results
+
+     There is a carry propagating bug in the Broadwell-specific Montgomery
+     multiplication procedure that handles input lengths divisible by, but
+     longer than 256 bits. Analysis suggests that attacks against RSA, DSA
+     and DH private keys are impossible. This is because the subroutine in
+     question is not used in operations with the private key itself and an input
+     of the attacker's direct choice. Otherwise the bug can manifest itself as
+     transient authentication and key negotiation failures or reproducible
+     erroneous outcome of public-key operations with specially crafted input.
+     Among EC algorithms only Brainpool P-512 curves are affected and one
+     presumably can attack ECDH key negotiation. Impact was not analyzed in
+     detail, because pre-requisites for attack are considered unlikely. Namely
+     multiple clients have to choose the curve in question and the server has to
+     share the private key among them, neither of which is default behaviour.
+     Even then only clients that chose the curve will be affected.
+
+     This issue was publicly reported as transient failures and was not
+     initially recognized as a security issue. Thanks to Richard Morgan for
+     providing reproducible case.
+     (CVE-2016-7055)
+     [Andy Polyakov]
 
   *) Removed automatic addition of RPATH in shared libraries and executables,
      as this was a remainder from OpenSSL 1.0.x and isn't needed any more.
@@ -405,6 +507,12 @@
      information for each directory with source to compile, and a
      template in Configurations, like unix-Makefile.tmpl or
      descrip.mms.tmpl.
+
+     With this change, the library names were also renamed on Windows
+     and on VMS.  They now have names that are closer to the standard
+     on Unix, and include the major version number, and in certain
+     cases, the architecture they are built for.  See "Notes on shared
+     libraries" in INSTALL.
 
      We rely heavily on the perl module Text::Template.
      [Richard Levitte]

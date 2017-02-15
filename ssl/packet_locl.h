@@ -160,6 +160,18 @@ __owur static ossl_inline int PACKET_get_net_2(PACKET *pkt, unsigned int *data)
     return 1;
 }
 
+/* Same as PACKET_get_net_2() but for a size_t */
+__owur static ossl_inline int PACKET_get_net_2_len(PACKET *pkt, size_t *data)
+{
+    unsigned int i;
+    int ret = PACKET_get_net_2(pkt, &i);
+
+    if (ret)
+        *data = (size_t)i;
+
+    return ret;
+}
+
 /*
  * Peek ahead at 3 bytes in network order from |pkt| and store the value in
  * |*data|
@@ -187,6 +199,18 @@ __owur static ossl_inline int PACKET_get_net_3(PACKET *pkt, unsigned long *data)
     packet_forward(pkt, 3);
 
     return 1;
+}
+
+/* Same as PACKET_get_net_3() but for a size_t */
+__owur static ossl_inline int PACKET_get_net_3_len(PACKET *pkt, size_t *data)
+{
+    unsigned long i;
+    int ret = PACKET_get_net_3(pkt, &i);
+
+    if (ret)
+        *data = (size_t)i;
+
+    return ret;
 }
 
 /*
@@ -219,6 +243,18 @@ __owur static ossl_inline int PACKET_get_net_4(PACKET *pkt, unsigned long *data)
     return 1;
 }
 
+/* Same as PACKET_get_net_4() but for a size_t */
+__owur static ossl_inline int PACKET_get_net_4_len(PACKET *pkt, size_t *data)
+{
+    unsigned long i;
+    int ret = PACKET_get_net_4(pkt, &i);
+
+    if (ret)
+        *data = (size_t)i;
+
+    return ret;
+}
+
 /* Peek ahead at 1 byte from |pkt| and store the value in |*data| */
 __owur static ossl_inline int PACKET_peek_1(const PACKET *pkt,
                                             unsigned int *data)
@@ -240,6 +276,18 @@ __owur static ossl_inline int PACKET_get_1(PACKET *pkt, unsigned int *data)
     packet_forward(pkt, 1);
 
     return 1;
+}
+
+/* Same as PACKET_get_1() but for a size_t */
+__owur static ossl_inline int PACKET_get_1_len(PACKET *pkt, size_t *data)
+{
+    unsigned int i;
+    int ret = PACKET_get_1(pkt, &i);
+
+    if (ret)
+        *data = (size_t)i;
+
+    return ret;
 }
 
 /*
@@ -577,6 +625,9 @@ struct wpacket_st {
     /* The buffer where we store the output data */
     BUF_MEM *buf;
 
+    /* Fixed sized buffer which can be used as an alternative to buf */
+    unsigned char *staticbuf;
+
     /*
      * Offset into the buffer where we are currently writing. We use an offset
      * in case the buffer grows and gets reallocated.
@@ -623,6 +674,13 @@ int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes);
 int WPACKET_init(WPACKET *pkt, BUF_MEM *buf);
 
 /*
+ * Same as WPACKET_init_len except we do not use a growable BUF_MEM structure.
+ * A fixed buffer of memory |buf| of size |len| is used instead. A failure will
+ * occur if you attempt to write beyond the end of the buffer
+ */
+int WPACKET_init_static_len(WPACKET *pkt, unsigned char *buf, size_t len,
+                            size_t lenbytes);
+/*
  * Set the flags to be applied to the current sub-packet
  */
 int WPACKET_set_flags(WPACKET *pkt, unsigned int flags);
@@ -640,6 +698,15 @@ int WPACKET_close(WPACKET *pkt);
  * frees memory resources for this WPACKET.
  */
 int WPACKET_finish(WPACKET *pkt);
+
+/*
+ * Iterate through all the sub-packets and write out their lengths as if they
+ * were being closed. The lengths will be overwritten with the final lengths
+ * when the sub-packets are eventually closed (which may be different if more
+ * data is added to the WPACKET). This function fails if a sub-packet is of 0
+ * length and WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH is set.
+ */
+int WPACKET_fill_lengths(WPACKET *pkt);
 
 /*
  * Initialise a new sub-packet. Additionally |lenbytes| of data is preallocated
@@ -670,7 +737,7 @@ int WPACKET_start_sub_packet(WPACKET *pkt);
 /*
  * Allocate bytes in the WPACKET for the output. This reserves the bytes
  * and counts them as "written", but doesn't actually do the writing. A pointer
- * to the allocated bytes is stored in |*allocbytes|.
+ * to the allocated bytes is stored in |*allocbytes|. |allocbytes| may be NULL.
  * WARNING: the allocated bytes must be filled in immediately, without further
  * WPACKET_* calls. If not then the underlying buffer may be realloc'd and
  * change its location.
@@ -795,6 +862,12 @@ int WPACKET_get_total_written(WPACKET *pkt, size_t *written);
  * allocated for the length itself.
  */
 int WPACKET_get_length(WPACKET *pkt, size_t *len);
+
+/*
+ * Returns a pointer to the current write location, but does not allocate any
+ * bytes.
+ */
+unsigned char *WPACKET_get_curr(WPACKET *pkt);
 
 /* Release resources in a WPACKET if a failure has occurred. */
 void WPACKET_cleanup(WPACKET *pkt);

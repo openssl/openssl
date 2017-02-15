@@ -208,8 +208,8 @@ int RAND_write_file(const char *file)
              */
             return 1;
         }
-# endif
     }
+# endif
 #endif
 
 #if defined(O_CREAT) && !defined(OPENSSL_NO_POSIX_IO) && \
