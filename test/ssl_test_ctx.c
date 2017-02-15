@@ -322,6 +322,8 @@ static const test_enum ssl_handshake_modes[] = {
     {"Resume", SSL_TEST_HANDSHAKE_RESUME},
     {"RenegotiateServer", SSL_TEST_HANDSHAKE_RENEG_SERVER},
     {"RenegotiateClient", SSL_TEST_HANDSHAKE_RENEG_CLIENT},
+    {"KeyUpdateServer", SSL_TEST_HANDSHAKE_KEY_UPDATE_SERVER},
+    {"KeyUpdateClient", SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT},
 };
 
 __owur static int parse_handshake_mode(SSL_TEST_CTX *test_ctx, const char *value)
@@ -344,6 +346,24 @@ const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode)
 /* Renegotiation Ciphersuites */
 
 IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CLIENT_CONF, client, reneg_ciphers)
+
+/* KeyUpdateType */
+
+static const test_enum ssl_key_update_types[] = {
+    {"KeyUpdateRequested", SSL_KEY_UPDATE_REQUESTED},
+    {"KeyUpdateNotRequested", SSL_KEY_UPDATE_NOT_REQUESTED},
+};
+
+__owur static int parse_key_update_type(SSL_TEST_CTX *test_ctx, const char *value)
+{
+    int ret_value;
+    if (!parse_enum(ssl_key_update_types, OSSL_NELEM(ssl_key_update_types),
+                    &ret_value, value)) {
+        return 0;
+    }
+    test_ctx->key_update_type = ret_value;
+    return 1;
+}
 
 /* CT Validation */
 
@@ -522,6 +542,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ExpectedNPNProtocol", &parse_test_expected_npn_protocol },
     { "ExpectedALPNProtocol", &parse_test_expected_alpn_protocol },
     { "HandshakeMode", &parse_handshake_mode },
+    { "KeyUpdateType", &parse_key_update_type },
     { "ResumptionExpected", &parse_test_resumption_expected },
     { "ApplicationData", &parse_test_app_data_size },
     { "MaxFragmentSize", &parse_test_max_fragment_size },
