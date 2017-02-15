@@ -2316,12 +2316,22 @@ int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *x, int vfy)
 
 /*
  * Choose an appropriate signature algorithm based on available certificates
- * Set current certificate and digest to match chosen algorithm.
+ * Sets chosen certificate and signature algorithm.
+ *
+ * For servers if we fail to find a required certificate it is a fatal error
+ * and an appropriate error code is set and the TLS alert set in *al.
+ *
+ * For clients al is set to NULL. If a certificate is not suitable it is not
+ * a fatal error: we will either try another certificate or not present one
+ * to the server. In this case no error is set.
  */
 int tls_choose_sigalg(SSL *s, int *al)
 {
     int idx = -1;
     const SIGALG_LOOKUP *lu = NULL;
+
+    s->s3->tmp.cert = NULL;
+    s->s3->tmp.sigalg = NULL;
 
     if (SSL_IS_TLS13(s)) {
         size_t i;
@@ -2357,37 +2367,47 @@ int tls_choose_sigalg(SSL *s, int *al)
             break;
         }
         if (i == s->cert->shared_sigalgslen) {
+            if (al == NULL)
+                return 1;
             *al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_TLS_CHOOSE_SIGALG,
                    SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
             return 0;
         }
     } else {
-        /* Find index corresponding to ciphersuite */
-        idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
-        /* If no certificate for ciphersuite return */
-        if (idx == -1) {
-            s->s3->tmp.cert = NULL;
-            s->s3->tmp.sigalg = NULL;
-            return 1;
-        }
-        if (idx == SSL_PKEY_GOST_EC) {
-            /* Work out which GOST certificate is avaiable */
-            if (ssl_has_cert(s, SSL_PKEY_GOST12_512)) {
-                idx = SSL_PKEY_GOST12_512;
-            } else if (ssl_has_cert(s, SSL_PKEY_GOST12_256)) {
-                idx = SSL_PKEY_GOST12_256;
-            } else if (ssl_has_cert(s, SSL_PKEY_GOST01)) {
-                idx = SSL_PKEY_GOST01;
-            } else {
+        if (s->server) {
+            /* Find index corresponding to ciphersuite */
+            idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
+            /* If no certificate for ciphersuite return */
+            if (idx == -1)
+                return 1;
+            if (idx == SSL_PKEY_GOST_EC) {
+                /* Work out which GOST certificate is avaiable */
+                if (ssl_has_cert(s, SSL_PKEY_GOST12_512)) {
+                    idx = SSL_PKEY_GOST12_512;
+                } else if (ssl_has_cert(s, SSL_PKEY_GOST12_256)) {
+                    idx = SSL_PKEY_GOST12_256;
+                } else if (ssl_has_cert(s, SSL_PKEY_GOST01)) {
+                    idx = SSL_PKEY_GOST01;
+                } else {
+                    if (al == NULL)
+                        return 1;
+                    *al = SSL_AD_INTERNAL_ERROR;
+                    SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+            } else if (!ssl_has_cert(s, idx)) {
+                if (al == NULL)
+                    return 1;
                 *al = SSL_AD_INTERNAL_ERROR;
                 SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
-        } else if (!ssl_has_cert(s, idx)) {
-            *al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
-            return 0;
+        } else {
+            /* Find index for client certificate */
+            idx = s->cert->key - s->cert->pkeys;
+            if (!ssl_has_cert(s, idx))
+                return 1;
         }
 
         if (SSL_USE_SIGALGS(s)) {
@@ -2406,6 +2426,8 @@ int tls_choose_sigalg(SSL *s, int *al)
                         break;
                 }
                 if (i == s->cert->shared_sigalgslen) {
+                    if (al == NULL)
+                        return 1;
                     *al = SSL_AD_INTERNAL_ERROR;
                     SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
                     return 0;
@@ -2418,6 +2440,8 @@ int tls_choose_sigalg(SSL *s, int *al)
                 size_t sent_sigslen, i;
 
                 if ((lu = tls1_get_legacy_sigalg(s, idx)) == NULL) {
+                    if (al == NULL)
+                        return 1;
                     *al = SSL_AD_INTERNAL_ERROR;
                     SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
                     return 0;
@@ -2430,6 +2454,8 @@ int tls_choose_sigalg(SSL *s, int *al)
                         break;
                 }
                 if (i == sent_sigslen) {
+                    if (al == NULL)
+                        return 1;
                     SSLerr(SSL_F_TLS_CHOOSE_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
                     *al = SSL_AD_HANDSHAKE_FAILURE;
                     return 0;
@@ -2437,6 +2463,8 @@ int tls_choose_sigalg(SSL *s, int *al)
             }
         } else {
             if ((lu = tls1_get_legacy_sigalg(s, idx)) == NULL) {
+                if (al == NULL)
+                    return 1;
                 *al = SSL_AD_INTERNAL_ERROR;
                 SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
                 return 0;
@@ -2444,8 +2472,10 @@ int tls_choose_sigalg(SSL *s, int *al)
         }
     }
     if (idx == -1) {
-        *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
+        if (al != NULL) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
+        }
         return 0;
     }
     s->s3->tmp.cert = &s->cert->pkeys[idx];
