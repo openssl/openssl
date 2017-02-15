@@ -29,7 +29,7 @@ map { s/\.in// } @conf_files;
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 20;  # = scalar @conf_srcs
+plan tests => 21;  # = scalar @conf_srcs
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
@@ -82,6 +82,7 @@ my %skip = (
   "18-dtls-renegotiate.conf" => $no_dtls,
   "19-mac-then-encrypt.conf" => $no_pre_tls1_3,
   "20-cert-select.conf" => disabled("tls1_2") || $no_ec,
+  "21-key-update.conf" => disabled("tls1_3"),
 );
 
 foreach my $conf (@conf_files) {
