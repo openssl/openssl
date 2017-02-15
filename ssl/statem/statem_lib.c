@@ -171,17 +171,27 @@ static int get_cert_verify_tbs_data(SSL *s, unsigned char *tls13tbs,
 
 int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
 {
-    EVP_PKEY *pkey = s->cert->key->privatekey;
-    const EVP_MD *md = s->s3->tmp.md[s->cert->key - s->cert->pkeys];
+    EVP_PKEY *pkey = NULL;
+    const EVP_MD *md = NULL;
     EVP_MD_CTX *mctx = NULL;
     EVP_PKEY_CTX *pctx = NULL;
     size_t hdatalen = 0, siglen = 0;
     void *hdata;
     unsigned char *sig = NULL;
     unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
-    int pktype, ispss = 0;
+    const SIGALG_LOOKUP *lu = s->s3->tmp.sigalg;
 
-    pktype = EVP_PKEY_id(pkey);
+    if (lu == NULL || s->s3->tmp.cert == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    pkey = s->s3->tmp.cert->privatekey;
+    md = ssl_md(lu->hash_idx);
+
+    if (pkey == NULL || md == NULL) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     mctx = EVP_MD_CTX_new();
     if (mctx == NULL) {
@@ -195,13 +205,10 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    if (SSL_USE_SIGALGS(s) && !tls12_get_sigandhash(s, pkt, pkey, md, &ispss)) {
+    if (SSL_USE_SIGALGS(s) && !WPACKET_put_bytes_u16(pkt, lu->sigalg)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-#ifdef SSL_DEBUG
-    fprintf(stderr, "Using client alg %s\n", EVP_MD_name(md));
-#endif
     siglen = EVP_PKEY_size(pkey);
     sig = OPENSSL_malloc(siglen);
     if (sig == NULL) {
@@ -215,7 +222,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    if (ispss) {
+    if (lu->sig == EVP_PKEY_RSA_PSS) {
         if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
             || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx,
                                                 RSA_PSS_SALTLEN_DIGEST) <= 0) {
@@ -238,6 +245,8 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
 
 #ifndef OPENSSL_NO_GOST
     {
+        int pktype = lu->sig;
+
         if (pktype == NID_id_GostR3410_2001
             || pktype == NID_id_GostR3410_2012_256
             || pktype == NID_id_GostR3410_2012_512)
