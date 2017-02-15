@@ -1349,58 +1349,6 @@ TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     return ret;
 }
 
-int tls12_get_sigandhash(SSL *s, WPACKET *pkt, const EVP_PKEY *pk,
-                         const EVP_MD *md, int *ispss)
-{
-    int md_id, sig_id;
-    size_t i;
-    const SIGALG_LOOKUP *curr;
-
-    if (md == NULL)
-        return 0;
-    md_id = EVP_MD_type(md);
-    sig_id = EVP_PKEY_id(pk);
-    if (md_id == NID_undef)
-        return 0;
-    /* For TLS 1.3 only allow RSA-PSS */
-    if (SSL_IS_TLS13(s) && sig_id == EVP_PKEY_RSA)
-        sig_id = EVP_PKEY_RSA_PSS;
-
-    if (s->s3->tmp.peer_sigalgs == NULL) {
-        /* Should never happen: we abort if no sigalgs extension and TLS 1.3 */
-        if (SSL_IS_TLS13(s))
-            return 0;
-        /* For TLS 1.2 and no sigalgs lookup using complete table */
-        for (i = 0, curr = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
-             i++, curr++) {
-            if (curr->hash == md_id && curr->sig == sig_id) {
-                if (!WPACKET_put_bytes_u16(pkt, curr->sigalg))
-                    return 0;
-                *ispss = curr->sig == EVP_PKEY_RSA_PSS;
-                return 1;
-            }
-        }
-        return 0;
-    }
-
-    for (i = 0; i < s->cert->shared_sigalgslen; i++) {
-        curr = s->cert->shared_sigalgs[i];
-
-        /*
-         * Look for matching key and hash. If key type is RSA also match PSS
-         * signature type.
-         */
-        if (curr->hash == md_id && (curr->sig == sig_id
-            || (sig_id == EVP_PKEY_RSA && curr->sig == EVP_PKEY_RSA_PSS))){
-            if (!WPACKET_put_bytes_u16(pkt, curr->sigalg))
-                return 0;
-            *ispss = curr->sig == EVP_PKEY_RSA_PSS;
-            return 1;
-        }
-    }
-    return 0;
-}
-
 static int tls12_get_pkey_idx(int sig_nid)
 {
     switch (sig_nid) {
