@@ -590,7 +590,14 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
 
     TEST_check(peer->status == PEER_RETRY);
     TEST_check(test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_SERVER
-                || test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_CLIENT);
+                || test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_CLIENT
+                || test_ctx->handshake_mode
+                   == SSL_TEST_HANDSHAKE_KEY_UPDATE_SERVER
+                || test_ctx->handshake_mode
+                   == SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT);
+
+    /* Reset the count of the amount of app data we need to read/write */
+    peer->bytes_to_write = peer->bytes_to_read = test_ctx->app_data_size;
 
     /* Check if we are the peer that is going to initiate */
     if ((test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_SERVER
@@ -642,6 +649,29 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
                 peer->status = PEER_RETRY;
             return;
         }
+    } else if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_KEY_UPDATE_SERVER
+               || test_ctx->handshake_mode
+                  == SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT) {
+        if (SSL_is_server(peer->ssl)
+                != (test_ctx->handshake_mode
+                    == SSL_TEST_HANDSHAKE_KEY_UPDATE_SERVER)) {
+            peer->status = PEER_SUCCESS;
+            return;
+        }
+
+        ret = SSL_key_update(peer->ssl, test_ctx->key_update_type);
+        if (!ret) {
+            peer->status = PEER_ERROR;
+            return;
+        }
+        do_handshake_step(peer);
+        /*
+         * This is a one step handshake. We shouldn't get anything other than
+         * PEER_SUCCESS
+         */
+        if (peer->status != PEER_SUCCESS)
+            peer->status = PEER_ERROR;
+        return;
     }
 
     /*
@@ -663,7 +693,7 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
             peer->status = PEER_ERROR;
             return;
         }
-        /* If we're no in init yet then we're not done with setup yet */
+        /* If we're not in init yet then we're not done with setup yet */
         if (!SSL_in_init(peer->ssl))
             return;
     }
@@ -720,12 +750,20 @@ static connect_phase_t next_phase(const SSL_TEST_CTX *test_ctx,
     switch (phase) {
     case HANDSHAKE:
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_SERVER
-                || test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_CLIENT)
+                || test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_CLIENT
+                || test_ctx->handshake_mode
+                   == SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT
+                || test_ctx->handshake_mode
+                   == SSL_TEST_HANDSHAKE_KEY_UPDATE_SERVER)
             return RENEG_APPLICATION_DATA;
         return APPLICATION_DATA;
     case RENEG_APPLICATION_DATA:
         return RENEG_SETUP;
     case RENEG_SETUP:
+        if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_KEY_UPDATE_SERVER
+                || test_ctx->handshake_mode
+                   == SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT)
+            return APPLICATION_DATA;
         return RENEG_HANDSHAKE;
     case RENEG_HANDSHAKE:
         return APPLICATION_DATA;
