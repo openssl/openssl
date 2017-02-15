@@ -2444,6 +2444,7 @@ int tls_choose_sigalg(SSL *s, int *al)
         }
     }
     s->s3->tmp.cert = &s->cert->pkeys[idx];
+    s->cert->key = s->s3->tmp.cert;
     s->s3->tmp.sigalg = lu;
     return 1;
 }
