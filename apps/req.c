@@ -1273,7 +1273,7 @@ static int req_check_len(int len, int n_min, int n_max)
     }
     if ((n_max >= 0) && (len > n_max)) {
         BIO_printf(bio_err,
-                   "string is too long, it needs to be less than  %d bytes long\n",
+                   "string is too long, it needs to be no more than %d bytes long\n",
                    n_max);
         return (0);
     }
