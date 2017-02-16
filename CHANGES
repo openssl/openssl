@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.1.0e and 1.1.0f [xx XXX xxxx]
+
+  *)
+
  Changes between 1.1.0d and 1.1.0e [16 Feb 2017]
 
   *) Encrypt-Then-Mac renegotiation crash
