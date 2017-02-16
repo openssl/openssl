@@ -14,8 +14,6 @@ use warnings;
 
 package ssltests;
 
-my $dir_sep = $^O ne "VMS" ? "/" : "";
-
 our @tests = (
     {
         name => "renegotiate-client-no-resume",
@@ -64,12 +62,12 @@ our @tests = (
     {
         name => "renegotiate-client-auth-require",
         server => {
-            "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
+            "VerifyCAFile" => test_pem("root-cert.pem"),
             "VerifyMode" => "Require",
         },
         client => {
-            "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
-            "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem"
+            "Certificate" => test_pem("ee-client-chain.pem"),
+            "PrivateKey"  => test_pem("ee-key.pem"),
         },
         test => {
             "Method" => "DTLS",
@@ -81,12 +79,12 @@ our @tests = (
     {
         name => "renegotiate-client-auth-once",
         server => {
-            "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
+            "VerifyCAFile" => test_pem("root-cert.pem"),
             "VerifyMode" => "Once",
         },
         client => {
-            "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
-            "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem"
+            "Certificate" => test_pem("ee-client-chain.pem"),
+            "PrivateKey"  => test_pem("ee-key.pem"),
         },
         test => {
             "Method" => "DTLS",
