@@ -1177,7 +1177,7 @@ struct ssl_st {
      */
     int renegotiate;
     /* If sending a KeyUpdate is pending */
-    SSL_KEY_UPDATE key_update;
+    int key_update;
 # ifndef OPENSSL_NO_SRP
     /* ctx for SRP authentication */
     SRP_CTX srp_ctx;
