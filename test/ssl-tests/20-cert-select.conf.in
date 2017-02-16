@@ -9,13 +9,9 @@ use warnings;
 package ssltests;
 use OpenSSL::Test::Utils;
 
-my $dir_sep = $^O ne "VMS" ? "/" : "";
-
-my $cert_dir = "\${ENV::TEST_CERTS_DIR}${dir_sep}";
-
 my $server = {
-    "ECDSA.Certificate" => "${cert_dir}server-ecdsa-cert.pem",
-    "ECDSA.PrivateKey" => "${cert_dir}server-ecdsa-key.pem",
+    "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+    "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
     "MaxProtocol" => "TLSv1.2"
 };
 
@@ -124,17 +120,17 @@ our @tests = (
 
 
 my $server_tls_1_3 = {
-    "ECDSA.Certificate" => "${cert_dir}server-ecdsa-cert.pem",
-    "ECDSA.PrivateKey" => "${cert_dir}server-ecdsa-key.pem",
+    "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+    "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
     "MinProtocol" => "TLSv1.3",
     "MaxProtocol" => "TLSv1.3"
 };
 
 my $client_tls_1_3 = {
-    "RSA.Certificate" => "${cert_dir}ee-client-chain.pem",
-    "RSA.PrivateKey" => "${cert_dir}ee-key.pem",
-    "ECDSA.Certificate" => "${cert_dir}ee-ecdsa-client-chain.pem",
-    "ECDSA.PrivateKey" => "${cert_dir}ee-ecdsa-key.pem",
+    "RSA.Certificate" => test_pem("ee-client-chain.pem"),
+    "RSA.PrivateKey" => test_pem("ee-key.pem"),
+    "ECDSA.Certificate" => test_pem("ee-ecdsa-client-chain.pem"),
+    "ECDSA.PrivateKey" => test_pem("ee-ecdsa-key.pem"),
     "MinProtocol" => "TLSv1.3",
     "MaxProtocol" => "TLSv1.3"
 };
@@ -219,7 +215,7 @@ my @tests_tls_1_3 = (
         name => "TLS 1.3 RSA Client Auth Signature Algorithm Selection",
         server => {
             "ClientSignatureAlgorithms" => "PSS+SHA256",
-            "VerifyCAFile" => "${cert_dir}root-cert.pem",
+            "VerifyCAFile" => test_pem("root-cert.pem"),
             "VerifyMode" => "Require"
         },
         client => $client_tls_1_3,
@@ -234,7 +230,7 @@ my @tests_tls_1_3 = (
         name => "TLS 1.3 ECDSA Client Auth Signature Algorithm Selection",
         server => {
             "ClientSignatureAlgorithms" => "ECDSA+SHA256",
-            "VerifyCAFile" => "${cert_dir}root-cert.pem",
+            "VerifyCAFile" => test_pem("root-cert.pem"),
             "VerifyMode" => "Require"
         },
         client => $client_tls_1_3,

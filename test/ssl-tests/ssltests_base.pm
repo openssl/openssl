@@ -10,16 +10,21 @@
 
 package ssltests;
 
-my $dir_sep = $^O ne "VMS" ? "/" : "";
+sub test_pem
+{
+    my ($file) = @_;
+    my $dir_sep = $^O ne "VMS" ? "/" : "";
+    return "\${ENV::TEST_CERTS_DIR}" . $dir_sep . $file,
+}
 
 our %base_server = (
-    "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}servercert.pem",
-    "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}serverkey.pem",
+    "Certificate" => test_pem("servercert.pem"),
+    "PrivateKey"  => test_pem("serverkey.pem"),
     "CipherString" => "DEFAULT",
 );
 
 our %base_client = (
-    "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}rootcert.pem",
+    "VerifyCAFile" => test_pem("rootcert.pem"),
     "VerifyMode" => "Peer",
     "CipherString" => "DEFAULT",
 );
