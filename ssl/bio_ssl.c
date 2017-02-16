@@ -517,12 +517,13 @@ int BIO_ssl_copy_session_id(BIO *t, BIO *f)
 
 void BIO_ssl_shutdown(BIO *b)
 {
-    SSL *s;
+    BIO_SSL *bdata;
 
-    b = BIO_find_type(b, BIO_TYPE_SSL);
-    if (b == NULL)
-        return;
-
-    s = BIO_get_data(b);
-    SSL_shutdown(s);
+    for (; b != NULL; b = BIO_next(b)) {
+        if (BIO_method_type(b) != BIO_TYPE_SSL)
+            continue;
+        bdata = BIO_get_data(b);
+        if (bdata != NULL && bdata->ssl != NULL)
+            SSL_shutdown(bdata->ssl);
+    }
 }
