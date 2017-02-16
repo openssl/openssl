@@ -120,7 +120,7 @@ $code.=<<___;
 	push	%r14
 .cfi_push	%r14
 	push	%r15
-.cfi_push	%r14
+.cfi_push	%r15
 
 	neg	$num
 	mov	%rsp,%r11
