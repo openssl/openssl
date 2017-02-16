@@ -4,7 +4,16 @@
 
  Changes between 1.1.0d and 1.1.0e [xx XXX xxxx]
 
-  *)
+  *) Encrypt-Then-Mac renegotiation crash
+
+     During a renegotiation handshake if the Encrypt-Then-Mac extension is
+     negotiated where it was not in the original handshake (or vice-versa) then
+     this can cause OpenSSL to crash (dependant on ciphersuite). Both clients
+     and servers are affected.
+
+     This issue was reported to OpenSSL by Joe Orton (Red Hat).
+     (CVE-2017-3733)
+     [Matt Caswell]
 
  Changes between 1.1.0c and 1.1.0d [26 Jan 2017]
 

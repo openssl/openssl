@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.1.0d and OpenSSL 1.1.0e [under development]
 
-      o
+      o Encrypt-Then-Mac renegotiation crash (CVE-2017-3733)
 
   Major changes between OpenSSL 1.1.0c and OpenSSL 1.1.0d [26 Jan 2017]
 
