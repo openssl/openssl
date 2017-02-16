@@ -507,6 +507,7 @@ static void ssl_test_extra_conf_free_data(SSL_TEST_EXTRA_CONF *conf)
     OPENSSL_free(conf->client.alpn_protocols);
     OPENSSL_free(conf->server.alpn_protocols);
     OPENSSL_free(conf->server2.alpn_protocols);
+    OPENSSL_free(conf->client.reneg_ciphers);
 }
 
 static void ssl_test_ctx_free_extra_data(SSL_TEST_CTX *ctx)
