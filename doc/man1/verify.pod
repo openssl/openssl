@@ -25,6 +25,7 @@ B<openssl> B<verify>
 [B<-ignore_critical>]
 [B<-inhibit_any>]
 [B<-inhibit_map>]
+[B<-nameopt option>]
 [B<-no_check_time>]
 [B<-partial_chain>]
 [B<-policy arg>]
@@ -150,6 +151,13 @@ Set policy variable inhibit-any-policy (see RFC5280).
 =item B<-inhibit_map>
 
 Set policy variable inhibit-policy-mapping (see RFC5280).
+
+=item B<-nameopt option>
+
+option which determines how the subject or issuer names are displayed. The
+B<option> argument can be a single option or multiple options separated by
+commas.  Alternatively the B<-nameopt> switch may be used more than once to
+set multiple options. See the L<x509(1)> manual page for details.
 
 =item B<-no_check_time>
 
