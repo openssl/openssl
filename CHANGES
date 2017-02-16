@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.1.0a and 1.1.1 [xx XXX xxxx]
+ Changes between 1.1.0e and 1.1.1 [xx XXX xxxx]
 
   *) Add support for SipHash
      [Todd Short]
@@ -23,6 +23,19 @@
 
   *) Support for SSL_OP_NO_ENCRYPT_THEN_MAC in SSL_CONF_cmd.
      [Emilia Käsper]
+
+ Changes between 1.1.0d and 1.1.0e [16 Feb 2017]
+
+  *) Encrypt-Then-Mac renegotiation crash
+
+     During a renegotiation handshake if the Encrypt-Then-Mac extension is
+     negotiated where it was not in the original handshake (or vice-versa) then
+     this can cause OpenSSL to crash (dependant on ciphersuite). Both clients
+     and servers are affected.
+
+     This issue was reported to OpenSSL by Joe Orton (Red Hat).
+     (CVE-2017-3733)
+     [Matt Caswell]
 
  Changes between 1.1.0c and 1.1.0d [26 Jan 2017]
 
