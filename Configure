@@ -838,6 +838,18 @@ while (@tocheckfor) {
     @tocheckfor = (keys %new_tocheckfor);
 }
 
+# Disable protocols with no supported versions
+my $present = 0;
+foreach (@tls) {
+    $present = 1 if (!$disabled{$_});
+}
+$disabled{"tls"} = "no versions enabled" if (!$present);
+$present = 0;
+foreach (@dtls) {
+    $present = 1 if (!$disabled{$_});
+}
+$disabled{"dtls"} = "no versions enabled" if (!$present);
+
 our $die = sub { die @_; };
 if ($target eq "TABLE") {
     local $die = sub { warn @_; };
