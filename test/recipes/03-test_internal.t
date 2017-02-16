@@ -19,7 +19,8 @@ my %known_internal_tests =
     poly1305_internal_test => !disabled("poly1305") && !$shared_windows,
     modes_internal_test => !$shared_windows,
     asn1_internal_test => !$shared_windows,
-    x509_internal_test => !$shared_windows );
+    x509_internal_test => !$shared_windows,
+    siphash_internal_test => !disabled("siphash") && !$shared_windows );
 
 plan tests => scalar keys %known_internal_tests;
 
