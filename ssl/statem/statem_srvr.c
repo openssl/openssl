@@ -843,7 +843,6 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
     case TLS_ST_SW_KEY_UPDATE:
         if (statem_flush(s) != 1)
             return WORK_MORE_A;
-
         if (!tls13_update_key(s, 1))
             return WORK_ERROR;
         break;
