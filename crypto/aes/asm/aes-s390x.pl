@@ -1411,7 +1411,7 @@ $code.=<<___ if (!$softonly);
 	larl	%r1,OPENSSL_s390xcap_P
 	llihh	%r0,0x8000	# check if kma supports the function code
 	srlg	%r0,%r0,0($s2)
-	ng	%r0,104(%r1)	# check kma capability vector
+	ng	%r0,120(%r1)	# check kma capability vector
 	lgr	%r0,$s2
 	jz	.Lctr32_nokma
 
@@ -2321,7 +2321,7 @@ ___
 
 $code.=<<___;
 .string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
-.comm	OPENSSL_s390xcap_P,120,8
+.comm	OPENSSL_s390xcap_P,136,8
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
