@@ -552,7 +552,7 @@ fresh handle for each connection.
 
 =item void (*B<SSL_get_info_callback>(const SSL *ssl);)()
 
-=item SSL_KEY_UPDATE B<SSL_get_key_update_type>(SSL *s);
+=item int B<SSL_get_key_update_type>(SSL *s);
 
 =item STACK *B<SSL_get_peer_cert_chain>(const SSL *ssl);
 
@@ -602,7 +602,7 @@ fresh handle for each connection.
 
 =item int B<SSL_is_init_finished>(SSL *ssl);
 
-=item int B<SSL_key_update>(SSL *s, SSL_KEY_UPDATE updatetype);
+=item int B<SSL_key_update>(SSL *s, int updatetype);
 
 =item STACK *B<SSL_load_client_CA_file>(const char *file);
 

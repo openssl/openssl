@@ -826,13 +826,11 @@ DEFINE_STACK_OF(SSL_COMP)
 DEPRECATEDIN_1_1_0(void SSL_set_debug(SSL *s, int debug))
 
 /* TLSv1.3 KeyUpdate message types */
-typedef enum {
-    /* -1 used so that this is an invalid value for the on-the-wire protocol */
-    SSL_KEY_UPDATE_NONE = -1,
-    /* Values as defined for the on-the-wire protocol */
-    SSL_KEY_UPDATE_NOT_REQUESTED = 0,
-    SSL_KEY_UPDATE_REQUESTED = 1
-} SSL_KEY_UPDATE;
+/* -1 used so that this is an invalid value for the on-the-wire protocol */
+#define SSL_KEY_UPDATE_NONE             -1
+/* Values as defined for the on-the-wire protocol */
+#define SSL_KEY_UPDATE_NOT_REQUESTED     0
+#define SSL_KEY_UPDATE_REQUESTED         1
 
 /*
  * The valid handshake states (one for each type message sent and one for each
@@ -1662,8 +1660,8 @@ __owur STACK_OF(SSL_CIPHER) *SSL_get_client_ciphers(const SSL *s);
 __owur STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s);
 
 __owur int SSL_do_handshake(SSL *s);
-int SSL_key_update(SSL *s, SSL_KEY_UPDATE updatetype);
-SSL_KEY_UPDATE SSL_get_key_update_type(SSL *s);
+int SSL_key_update(SSL *s, int updatetype);
+int SSL_get_key_update_type(SSL *s);
 int SSL_renegotiate(SSL *s);
 int SSL_renegotiate_abbreviated(SSL *s);
 __owur int SSL_renegotiate_pending(SSL *s);
