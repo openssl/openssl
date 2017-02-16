@@ -14,7 +14,7 @@
 #include "../e_os.h"
 
 #ifdef OPENSSL_NO_RC4
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No RC4 support\n");
     return (0);
@@ -64,7 +64,7 @@ static unsigned char output[7][30] = {
     {0},
 };
 
-int main(int argc, char *argv[])
+int main(void)
 {
     int i, err = 0;
     int j;

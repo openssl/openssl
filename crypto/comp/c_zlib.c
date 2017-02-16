@@ -48,12 +48,14 @@ static void *zlib_zalloc(void *opaque, unsigned int no, unsigned int size)
 {
     void *p;
 
+    (void)opaque;
     p = OPENSSL_zalloc(no * size);
     return p;
 }
 
 static void zlib_zfree(void *opaque, void *address)
 {
+    (void)opaque;
     OPENSSL_free(address);
 }
 

@@ -194,16 +194,19 @@ static int ecx_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
 static int ecx_size(const EVP_PKEY *pkey)
 {
+    (void)pkey;
     return X25519_KEYLEN;
 }
 
 static int ecx_bits(const EVP_PKEY *pkey)
 {
+    (void)pkey;
     return X25519_BITS;
 }
 
 static int ecx_security_bits(const EVP_PKEY *pkey)
 {
+    (void)pkey;
     return X25519_SECURITY_BITS;
 }
 
@@ -219,6 +222,8 @@ static void ecx_free(EVP_PKEY *pkey)
 /* "parameters" are always equal */
 static int ecx_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
+    (void)a;
+    (void)b;
     return 1;
 }
 
@@ -227,6 +232,7 @@ static int ecx_key_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 {
     const X25519_KEY *xkey = pkey->pkey.ptr;
 
+    (void)ctx;
     if (op == X25519_PRIVATE) {
         if (xkey == NULL || xkey->privkey == NULL) {
             if (BIO_printf(bp, "%*s<INVALID PRIVATE KEY>\n", indent, "") <= 0)
@@ -326,6 +332,7 @@ const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
 
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
+    (void)ctx;
     return ecx_key_op(pkey, NULL, NULL, 0, X25519_KEYGEN);
 }
 
@@ -356,6 +363,9 @@ static int pkey_ecx_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 
 static int pkey_ecx_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
+    (void)ctx;
+    (void)p1;
+    (void)p2;
     /* Only need to handle peer key for derivation */
     if (type == EVP_PKEY_CTRL_PEER_KEY)
         return 1;

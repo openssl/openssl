@@ -344,6 +344,10 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     char *passin = NULL;
     int rv = -1;
     X509 *x;
+
+#ifdef OPENSSL_NO_ENGINE
+    (void)engine_impl;
+#endif
     if (((pkey_op == EVP_PKEY_OP_SIGN) || (pkey_op == EVP_PKEY_OP_DECRYPT)
          || (pkey_op == EVP_PKEY_OP_DERIVE))
         && (key_type != KEY_PRIVKEY && kdfalg == NULL)) {

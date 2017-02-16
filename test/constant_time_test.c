@@ -270,7 +270,7 @@ static size_t test_values_s[] =
     SIZE_MAX
 };
 
-int main(int argc, char *argv[])
+int main(void)
 {
     unsigned int a, b, i, j;
     int c, d;

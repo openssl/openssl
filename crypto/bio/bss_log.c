@@ -387,6 +387,7 @@ static void xcloselog(BIO *bp)
 
 static void xopenlog(BIO *bp, char *name, int level)
 {
+    (void)bp;
 #  ifdef WATT32                 /* djgpp/DOS */
     openlog(name, LOG_PID | LOG_CONS | LOG_NDELAY, level);
 #  else
@@ -396,11 +397,13 @@ static void xopenlog(BIO *bp, char *name, int level)
 
 static void xsyslog(BIO *bp, int priority, const char *string)
 {
+    (void)bp;
     syslog(priority, "%s", string);
 }
 
 static void xcloselog(BIO *bp)
 {
+    (void)bp;
     closelog();
 }
 

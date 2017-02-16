@@ -18,16 +18,20 @@
  */
 BIO *BIO_new_fd(int fd, int close_flag)
 {
+    (void)fd;
+    (void)close_flag;
     return NULL;
 }
 
 int BIO_fd_non_fatal_error(int err)
 {
+    (void)err;
     return 0;
 }
 
 int BIO_fd_should_retry(int i)
 {
+    (void)i;
     return 0;
 }
 

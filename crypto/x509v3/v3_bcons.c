@@ -46,6 +46,7 @@ static STACK_OF(CONF_VALUE) *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
                                                    STACK_OF(CONF_VALUE)
                                                    *extlist)
 {
+    (void)method;
     X509V3_add_value_bool("CA", bcons->ca, &extlist);
     X509V3_add_value_int("pathlen", bcons->pathlen, &extlist);
     return extlist;
@@ -59,6 +60,8 @@ static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
     CONF_VALUE *val;
     int i;
 
+    (void)method;
+    (void)ctx;
     if ((bcons = BASIC_CONSTRAINTS_new()) == NULL) {
         X509V3err(X509V3_F_V2I_BASIC_CONSTRAINTS, ERR_R_MALLOC_FAILURE);
         return NULL;

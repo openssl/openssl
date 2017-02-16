@@ -56,7 +56,7 @@ static const unsigned char addenum_3[SHA224_DIGEST_LENGTH] = {
     0x4e, 0xe7, 0xad, 0x67
 };
 
-int main(int argc, char **argv)
+int main(void)
 {
     unsigned char md[SHA256_DIGEST_LENGTH];
     int i;

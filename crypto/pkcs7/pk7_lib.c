@@ -19,8 +19,8 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
     int nid;
     long ret;
 
+    (void)parg;
     nid = OBJ_obj2nid(p7->type);
-
     switch (cmd) {
     /* NOTE(emilia): does not support detached digested data. */
     case PKCS7_OP_SET_DETACHED_SIGNATURE:

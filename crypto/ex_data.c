@@ -113,17 +113,35 @@ void crypto_cleanup_all_ex_data_int(void)
 static void dummy_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad, int idx,
                      long argl, void *argp)
 {
+    (void)parent;
+    (void)ptr;
+    (void)ad;
+    (void)idx;
+    (void)argl;
+    (void)argp;
 }
 
 static void dummy_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad, int idx,
                        long argl, void *argp)
 {
+    (void)parent;
+    (void)ptr;
+    (void)ad;
+    (void)idx;
+    (void)argl;
+    (void)argp;
 }
 
 static int dummy_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                      void *from_d, int idx,
                      long argl, void *argp)
 {
+    (void)to;
+    (void)from;
+    (void)from_d;
+    (void)idx;
+    (void)argl;
+    (void)argp;
     return 0;
 }
 

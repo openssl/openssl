@@ -427,6 +427,7 @@ int test_main(int argc, char *argv[])
 {
     int testresult = 0;
 
+    (void)argc;
     buf = BUF_MEM_new();
     if (buf != NULL) {
         ADD_TEST(test_WPACKET_init);

@@ -65,12 +65,20 @@ static unsigned int dummy_psk(SSL *ssl, const char *hint, char *identity,
                               unsigned char *psk,
                               unsigned int max_psk_len)
 {
+    (void)ssl;
+    (void)hint;
+    (void)identity;
+    (void)max_identity_len;
+    (void)psk;
+    (void)max_psk_len;
     return 0;
 }
 #endif
 #ifndef OPENSSL_NO_SRP
 static char *dummy_srp(SSL *ssl, void *arg)
 {
+    (void)ssl;
+    (void)arg;
     return "";
 }
 #endif

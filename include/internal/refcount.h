@@ -9,6 +9,7 @@
 #ifndef HEADER_INTERNAL_REFCOUNT_H
 # define HEADER_INTERNAL_REFCOUNT_H
 
+
 # if __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_ATOMICS__)
 # include <stdatomic.h>
 # define HAVE_C11_ATOMICS
@@ -42,12 +43,14 @@ typedef int CRYPTO_REF_COUNT;
 
 static ossl_inline int CRYPTO_UP_REF(int *val, int *ret, void *lock)
 {
+    (void)lock;
     *ret = __atomic_fetch_add(val, 1, __ATOMIC_RELAXED) + 1;
     return 1;
 }
 
 static ossl_inline int CRYPTO_DOWN_REF(int *val, int *ret, void *lock)
 {
+    (void)lock;
     *ret = __atomic_fetch_sub(val, 1, __ATOMIC_RELEASE) - 1;
     if (*ret == 0)
         __atomic_thread_fence(__ATOMIC_ACQUIRE);

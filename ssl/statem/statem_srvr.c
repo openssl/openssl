@@ -695,6 +695,7 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
 {
     OSSL_STATEM *st = &s->statem;
 
+    (void)wst;
     s->init_num = 0;
 
     switch (st->hand_state) {
@@ -844,6 +845,7 @@ int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt,
 {
     OSSL_STATEM *st = &s->statem;
 
+    (void)pkt;
     switch (st->hand_state) {
     default:
         /* Shouldn't happen */
@@ -1977,6 +1979,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
 
 int tls_construct_server_done(SSL *s, WPACKET *pkt)
 {
+    (void)pkt;
     if (!s->s3->tmp.cert_request) {
         if (!ssl3_digest_cached_records(s, 0)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
@@ -2453,6 +2456,8 @@ static int tls_process_cke_psk_preamble(SSL *s, PACKET *pkt, int *al)
     return 1;
 #else
     /* Should never happen */
+    (void)s;
+    (void)pkt;
     *al = SSL_AD_INTERNAL_ERROR;
     SSLerr(SSL_F_TLS_PROCESS_CKE_PSK_PREAMBLE, ERR_R_INTERNAL_ERROR);
     return 0;
@@ -2687,6 +2692,8 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt, int *al)
     EVP_PKEY_free(ckey);
     return ret;
 #else
+    (void)s;
+    (void)pkt;
     /* Should never happen */
     *al = SSL_AD_INTERNAL_ERROR;
     SSLerr(SSL_F_TLS_PROCESS_CKE_DHE, ERR_R_INTERNAL_ERROR);
@@ -2749,6 +2756,8 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt, int *al)
     return ret;
 #else
     /* Should never happen */
+    (void)s;
+    (void)pkt;
     *al = SSL_AD_INTERNAL_ERROR;
     SSLerr(SSL_F_TLS_PROCESS_CKE_ECDHE, ERR_R_INTERNAL_ERROR);
     return 0;
@@ -2791,6 +2800,8 @@ static int tls_process_cke_srp(SSL *s, PACKET *pkt, int *al)
     return 1;
 #else
     /* Should never happen */
+    (void)s;
+    (void)pkt;
     *al = SSL_AD_INTERNAL_ERROR;
     SSLerr(SSL_F_TLS_PROCESS_CKE_SRP, ERR_R_INTERNAL_ERROR);
     return 0;
@@ -2892,6 +2903,8 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt, int *al)
     return ret;
 #else
     /* Should never happen */
+    (void)s;
+    (void)pkt;
     *al = SSL_AD_INTERNAL_ERROR;
     SSLerr(SSL_F_TLS_PROCESS_CKE_GOST, ERR_R_INTERNAL_ERROR);
     return 0;
@@ -3002,6 +3015,8 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
     } else {
         ossl_statem_set_sctp_read_sock(s, 0);
     }
+#else
+    (void)wst;
 #endif
 
     if (s->statem.no_cert_verify || !s->session->peer) {

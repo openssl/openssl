@@ -36,6 +36,8 @@ static size_t ssl_names_count;
 static void ssl_module_free(CONF_IMODULE *md)
 {
     size_t i, j;
+
+    (void)md;
     if (ssl_names == NULL)
         return;
     for (i = 0; i < ssl_names_count; i++) {

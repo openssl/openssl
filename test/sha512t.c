@@ -75,7 +75,7 @@ static const unsigned char app_d3[SHA384_DIGEST_LENGTH] = {
     0xae, 0x97, 0xdd, 0xd8, 0x7f, 0x3d, 0x89, 0x85
 };
 
-int main(int argc, char **argv)
+int main(void)
 {
     unsigned char md[SHA512_DIGEST_LENGTH];
     int i;

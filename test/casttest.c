@@ -15,7 +15,7 @@
 #include "../e_os.h"
 
 #ifdef OPENSSL_NO_CAST
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No CAST support\n");
     return (0);
@@ -63,7 +63,7 @@ static unsigned char c_b[16] = {
     0x80, 0xAC, 0x05, 0xB8, 0xE8, 0x3D, 0x69, 0x6E
 };
 
-int main(int argc, char *argv[])
+int main(void)
 {
 # ifdef FULL_TEST
     long l;

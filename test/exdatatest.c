@@ -78,7 +78,7 @@ static void MYOBJ_free(MYOBJ *obj)
     OPENSSL_free(obj);
 }
 
-int main()
+int main(void)
 {
     MYOBJ *t1, *t2;
     const char *cp;

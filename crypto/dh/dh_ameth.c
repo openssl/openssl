@@ -456,18 +456,21 @@ static int dh_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 static int dh_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                           ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_dh_print(bp, pkey->pkey.dh, indent, 0);
 }
 
 static int dh_public_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                            ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_dh_print(bp, pkey->pkey.dh, indent, 1);
 }
 
 static int dh_private_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                             ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_dh_print(bp, pkey->pkey.dh, indent, 2);
 }
 
@@ -483,6 +486,11 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri);
 
 static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
+    (void)pkey;
+#ifdef OPENSSL_NO_CMS
+    (void)arg1;
+    (void)arg2;
+#endif
     switch (op) {
 #ifndef OPENSSL_NO_CMS
 

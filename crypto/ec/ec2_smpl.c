@@ -172,6 +172,7 @@ int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
 {
     int ret = 0, i;
 
+    (void)ctx;
     /* group->field */
     if (!BN_copy(group->field, p))
         goto err;
@@ -211,6 +212,7 @@ int ec_GF2m_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p,
 {
     int ret = 0;
 
+    (void)ctx;
     if (p != NULL) {
         if (!BN_copy(p, group->field))
             return 0;
@@ -341,6 +343,7 @@ int ec_GF2m_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
 int ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group,
                                          EC_POINT *point)
 {
+    (void)group;
     point->Z_is_one = 0;
     BN_zero(point->Z);
     return 1;
@@ -356,6 +359,9 @@ int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group,
                                                 const BIGNUM *y, BN_CTX *ctx)
 {
     int ret = 0;
+
+    (void)group;
+    (void)ctx;
     if (x == NULL || y == NULL) {
         ECerr(EC_F_EC_GF2M_SIMPLE_POINT_SET_AFFINE_COORDINATES,
               ERR_R_PASSED_NULL_PARAMETER);
@@ -389,6 +395,7 @@ int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group,
 {
     int ret = 0;
 
+    (void)ctx;
     if (EC_POINT_is_at_infinity(group, point)) {
         ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES,
               EC_R_POINT_AT_INFINITY);
@@ -556,6 +563,7 @@ int ec_GF2m_simple_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 int ec_GF2m_simple_is_at_infinity(const EC_GROUP *group,
                                   const EC_POINT *point)
 {
+    (void)group;
     return BN_is_zero(point->Z);
 }
 

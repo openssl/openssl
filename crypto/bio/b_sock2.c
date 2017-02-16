@@ -41,6 +41,7 @@ int BIO_socket(int domain, int socktype, int protocol, int options)
 {
     int sock = -1;
 
+    (void)options;
     if (BIO_sock_init() != 1)
         return INVALID_SOCKET;
 

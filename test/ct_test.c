@@ -565,6 +565,7 @@ int test_main(int argc, char *argv[])
     int result = 0;
     char *tmp_env;
 
+    (void)argc;
     tmp_env = getenv("CT_DIR");
     ct_dir = OPENSSL_strdup(tmp_env != NULL ? tmp_env : "ct");
     tmp_env = getenv("CERTS_DIR");
@@ -590,6 +591,8 @@ int test_main(int argc, char *argv[])
 #else
 int test_main(int argc, char *argv[])
 {
+    (void)argc;
+    (void)argv;
     printf("No CT support\n");
     return 0;
 }

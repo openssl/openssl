@@ -65,6 +65,10 @@ DSA *DSA_new_method(ENGINE *engine)
 {
     DSA *ret = OPENSSL_zalloc(sizeof(*ret));
 
+#ifdef OPENSSL_NO_ENGINE
+    (void)engine;
+#endif
+
     if (ret == NULL) {
         DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_MALLOC_FAILURE);
         return NULL;

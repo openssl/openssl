@@ -22,6 +22,7 @@ static ASYNC_JOB *currjob = NULL;
 
 static int only_pause(void *args)
 {
+    (void)args;
     ASYNC_pause_job();
 
     return 1;
@@ -29,6 +30,7 @@ static int only_pause(void *args)
 
 static int add_two(void *args)
 {
+    (void)args;
     ctr++;
     ASYNC_pause_job();
     ctr++;
@@ -38,6 +40,7 @@ static int add_two(void *args)
 
 static int save_current(void *args)
 {
+    (void)args;
     currjob = ASYNC_get_current_job();
     ASYNC_pause_job();
 
@@ -49,6 +52,8 @@ static int waitfd(void *args)
 {
     ASYNC_JOB *job;
     ASYNC_WAIT_CTX *waitctx;
+
+    (void)args;
     job = ASYNC_get_current_job();
     if (job == NULL)
         return 0;
@@ -80,6 +85,7 @@ static int waitfd(void *args)
 
 static int blockpause(void *args)
 {
+    (void)args;
     ASYNC_block_pause();
     ASYNC_pause_job();
     ASYNC_unblock_pause();
@@ -270,7 +276,7 @@ static int test_ASYNC_block_pause()
     return 1;
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
     if (!ASYNC_is_capable()) {
         fprintf(stderr,

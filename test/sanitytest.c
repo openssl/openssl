@@ -36,7 +36,7 @@ enum largechoices {
     a10, b10, c10, d10, e10, f10, g10, h10, i10, j10,
     xxx };
 
-int main()
+int main(void)
 {
     char *p;
     char bytes[sizeof(p)];

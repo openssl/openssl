@@ -22,7 +22,7 @@
 #include <openssl/bn.h>
 
 #ifdef OPENSSL_NO_DSA
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No DSA support\n");
     return (0);
@@ -76,7 +76,7 @@ static const char rnd_seed[] =
 
 static BIO *bio_err = NULL;
 
-int main(int argc, char **argv)
+int main(void)
 {
     BN_GENCB *cb;
     DSA *dsa = NULL;
@@ -172,6 +172,7 @@ static int dsa_cb(int p, int n, BN_GENCB *arg)
     char c = '*';
     static int ok = 0, num = 0;
 
+    (void)n;
     if (p == 0) {
         c = '.';
         num++;

@@ -61,6 +61,8 @@ static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
     char *tmp;
     SXNETID *id;
     int i;
+
+    (void)method;
     v = ASN1_INTEGER_get(sx->version);
     BIO_printf(out, "%*sVersion: %ld (0x%lX)", indent, "", v + 1, v);
     for (i = 0; i < sk_SXNETID_num(sx->ids); i++) {
@@ -87,6 +89,9 @@ static SXNET *sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
     CONF_VALUE *cnf;
     SXNET *sx = NULL;
     int i;
+
+    (void)method;
+    (void)ctx;
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
         if (!SXNET_add_id_asc(&sx, cnf->name, cnf->value, -1))

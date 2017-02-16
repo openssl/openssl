@@ -32,7 +32,7 @@
 #include <time.h>
 
 #ifdef OPENSSL_NO_EC
-int main(int argc, char *argv[])
+int main(void)
 {
     puts("Elliptic curves are disabled.");
     return 0;
@@ -1742,7 +1742,7 @@ static void parameter_test(void)
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
 
-int main(int argc, char *argv[])
+int main(void)
 {
     char *p;
 

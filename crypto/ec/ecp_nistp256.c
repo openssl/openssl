@@ -1934,6 +1934,7 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
     smallfelem x_out, y_out;
     longfelem tmp;
 
+    (void)ctx;
     if (EC_POINT_is_at_infinity(group, point)) {
         ECerr(EC_F_EC_GFP_NISTP256_POINT_GET_AFFINE_COORDINATES,
               EC_R_POINT_AT_INFINITY);

@@ -42,7 +42,6 @@ extern "C" {
 #  define REF_PRINT_COUNT(a, b)
 # endif
 
-# define osslargused(x)      (void)x
 # define OPENSSL_CONF        "openssl.cnf"
 
 # ifndef DEVRANDOM

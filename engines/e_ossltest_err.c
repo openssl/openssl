@@ -83,6 +83,10 @@ static void ERR_unload_OSSLTEST_strings(void)
 
 static void ERR_OSSLTEST_error(int function, int reason, char *file, int line)
 {
+#ifdef OPENSSL_NO_ERR
+    (void)file;
+    (void)line;
+#endif
     if (OSSLTEST_lib_error_code == 0)
         OSSLTEST_lib_error_code = ERR_get_next_error_library();
     ERR_PUT_error(OSSLTEST_lib_error_code, function, reason, file, line);

@@ -1413,6 +1413,7 @@ __owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
     BN_ULONG point_x[P256_LIMBS], point_y[P256_LIMBS], point_z[P256_LIMBS];
     BN_ULONG x_ret[P256_LIMBS], y_ret[P256_LIMBS];
 
+    (void)ctx;
     if (EC_POINT_is_at_infinity(group, point)) {
         ECerr(EC_F_ECP_NISTZ256_GET_AFFINE, EC_R_POINT_AT_INFINITY);
         return 0;

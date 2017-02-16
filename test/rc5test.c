@@ -19,7 +19,7 @@
 #include "../e_os.h"
 
 #ifdef OPENSSL_NO_RC5
-int main(int argc, char *argv[])
+int main(void)
 {
     printf("No RC5 support\n");
     return (0);
@@ -187,7 +187,7 @@ static unsigned char rc5_cbc_iv[RC5_CBC_NUM][8] = {
     {0x7c, 0xb3, 0xf1, 0xdf, 0x34, 0xf9, 0x48, 0x11},
 };
 
-int main(int argc, char *argv[])
+int main(void)
 {
     int i, n, err = 0;
     RC5_32_KEY key;

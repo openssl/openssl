@@ -241,6 +241,9 @@ static long async_ctrl(BIO *bio, int cmd, long num, void *ptr)
 
 static int async_gets(BIO *bio, char *buf, int size)
 {
+    (void)bio;
+    (void)buf;
+    (void)size;
     /* We don't support this - not needed anyway */
     return -1;
 }

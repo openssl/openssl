@@ -13,7 +13,7 @@
 #define perror_line1(l)  perror_line2(l)
 #define perror_line2(l)  perror("failed " #l)
 
-int main(int argc, char **argv)
+int main(void)
 {
 #if defined(OPENSSL_SYS_LINUX) || defined(OPENSSL_SYS_UNIX)
     char *p = NULL, *q = NULL, *r = NULL, *s = NULL;

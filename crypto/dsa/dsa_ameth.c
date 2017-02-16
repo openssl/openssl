@@ -388,18 +388,21 @@ static int dsa_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
 static int dsa_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                            ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 0);
 }
 
 static int dsa_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                          ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 1);
 }
 
 static int dsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                           ASN1_PCTX *ctx)
 {
+    (void)ctx;
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 2);
 }
 
@@ -427,6 +430,8 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
     DSA_SIG *dsa_sig;
     const unsigned char *p;
 
+    (void)sigalg;
+    (void)pctx;
     if (!sig) {
         if (BIO_puts(bp, "\n") <= 0)
             return 0;

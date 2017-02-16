@@ -37,6 +37,7 @@ static int chacha_init_key(EVP_CIPHER_CTX *ctx,
     EVP_CHACHA_KEY *key = data(ctx);
     unsigned int i;
 
+    (void)enc;
     if (user_key)
         for (i = 0; i < CHACHA_KEY_SIZE; i+=4) {
             key->key.d[i/4] = CHACHA_U8TOU32(user_key+i);

@@ -69,6 +69,7 @@ int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
 {
     static unsigned int thread_local_key = 0;
 
+    (void)cleanup;
     if (thread_local_key >= OPENSSL_CRYPTO_THREAD_LOCAL_KEY_MAX)
         return 0;
 
@@ -115,6 +116,7 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b)
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 {
+    (void)lock;
     *val += amount;
     *ret  = *val;
 

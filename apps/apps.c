@@ -118,6 +118,7 @@ int chopup_args(ARGS *arg, char *buf)
 #ifndef APP_INIT
 int app_init(long mesgwin)
 {
+    (void)mesgwin;
     return (1);
 }
 #endif
@@ -261,6 +262,7 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
     PW_CB_DATA *cb_data = (PW_CB_DATA *)cb_tmp;
 
 #ifdef OPENSSL_NO_UI
+    (void)verify;
     if (cb_data != NULL && cb_data->password != NULL) {
         res = strlen(cb_data->password);
         if (res > bufsiz)
@@ -1254,9 +1256,9 @@ static ENGINE *try_load_engine(const char *engine)
 
 ENGINE *setup_engine(const char *engine, int debug)
 {
+#ifndef OPENSSL_NO_ENGINE
     ENGINE *e = NULL;
 
-#ifndef OPENSSL_NO_ENGINE
     if (engine) {
         if (strcmp(engine, "auto") == 0) {
             BIO_printf(bio_err, "enabling auto ENGINE support\n");
@@ -1282,8 +1284,12 @@ ENGINE *setup_engine(const char *engine, int debug)
 
         BIO_printf(bio_err, "engine \"%s\" set.\n", ENGINE_get_id(e));
     }
-#endif
     return e;
+#else
+    (void)engine;
+    (void)debug;
+    return NULL;
+#endif
 }
 
 void release_engine(ENGINE *e)
@@ -1292,6 +1298,8 @@ void release_engine(ENGINE *e)
     if (e != NULL)
         /* Free our "structural" reference. */
         ENGINE_free(e);
+#else
+    (void)e;
 #endif
 }
 
@@ -1996,6 +2004,7 @@ static STACK_OF(X509_CRL) *crls_http_cb(X509_STORE_CTX *ctx, X509_NAME *nm)
     X509_CRL *crl;
     STACK_OF(DIST_POINT) *crldp;
 
+    (void)nm;
     crls = sk_X509_CRL_new_null();
     if (!crls)
         return NULL;

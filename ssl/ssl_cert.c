@@ -883,6 +883,8 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
 {
     int level, minbits;
     static const int minbits_table[5] = { 80, 112, 128, 192, 256 };
+
+    (void)ex;
     if (ctx)
         level = SSL_CTX_get_security_level(ctx);
     else

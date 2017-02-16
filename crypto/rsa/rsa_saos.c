@@ -23,6 +23,7 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
     int i, j, ret = 1;
     unsigned char *p, *s;
 
+    (void)type; /* FIXME(API) */
     sig.type = V_ASN1_OCTET_STRING;
     sig.length = m_len;
     sig.data = (unsigned char *)m;
@@ -61,6 +62,7 @@ int RSA_verify_ASN1_OCTET_STRING(int dtype,
     const unsigned char *p;
     ASN1_OCTET_STRING *sig = NULL;
 
+    (void)dtype; /* FIXME(API) */
     if (siglen != (unsigned int)RSA_size(rsa)) {
         RSAerr(RSA_F_RSA_VERIFY_ASN1_OCTET_STRING,
                RSA_R_WRONG_SIGNATURE_LENGTH);

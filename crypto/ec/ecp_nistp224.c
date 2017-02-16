@@ -1314,6 +1314,7 @@ int ec_GFp_nistp224_point_get_affine_coordinates(const EC_GROUP *group,
                                                  BIGNUM *x, BIGNUM *y,
                                                  BN_CTX *ctx)
 {
+    (void)ctx;
     felem z1, z2, x_in, y_in, x_out, y_out;
     widefelem tmp;
 

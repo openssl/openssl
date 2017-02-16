@@ -960,6 +960,10 @@ static void benchmark_gcm128(const unsigned char *K, size_t Klen,
     }
 # endif
 #else
+    (void)K;
+    (void)Klen;
+    (void)IV;
+    (void)IVlen;
     fprintf(stderr,
             "Benchmarking of modes isn't available on this platform\n");
 #endif

@@ -79,7 +79,7 @@ static struct test_st {
 
 static char *pt(unsigned char *md, unsigned int len);
 
-int main(int argc, char *argv[])
+int main(void)
 {
 # ifndef OPENSSL_NO_MD5
     int i;

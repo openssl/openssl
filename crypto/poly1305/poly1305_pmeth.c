@@ -105,6 +105,7 @@ static int poly1305_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *sigle
 {
     POLY1305_PKEY_CTX *pctx = ctx->data;
 
+    (void)mctx;
     *siglen = POLY1305_DIGEST_SIZE;
     if (sig != NULL)
         Poly1305_Final(&pctx->ctx, sig);

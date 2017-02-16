@@ -18,6 +18,8 @@
 static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
 {
+    (void)it;
+    (void)exarg;
     if (operation == ASN1_OP_NEW_PRE) {
         *pval = (ASN1_VALUE *)RSA_new();
         if (*pval != NULL)
@@ -53,6 +55,8 @@ ASN1_SEQUENCE_cb(RSAPublicKey, rsa_cb) = {
 static int rsa_pss_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                       void *exarg)
 {
+    (void)it;
+    (void)exarg;
     if (operation == ASN1_OP_FREE_PRE) {
         RSA_PSS_PARAMS *pss = (RSA_PSS_PARAMS *)*pval;
         X509_ALGOR_free(pss->maskHash);
@@ -73,6 +77,8 @@ IMPLEMENT_ASN1_FUNCTIONS(RSA_PSS_PARAMS)
 static int rsa_oaep_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                        void *exarg)
 {
+    (void)it;
+    (void)exarg;
     if (operation == ASN1_OP_FREE_PRE) {
         RSA_OAEP_PARAMS *oaep = (RSA_OAEP_PARAMS *)*pval;
         X509_ALGOR_free(oaep->maskHash);

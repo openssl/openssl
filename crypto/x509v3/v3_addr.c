@@ -198,6 +198,8 @@ static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
 {
     const IPAddrBlocks *addr = ext;
     int i;
+
+    (void)method;
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
         IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
         const unsigned int afi = X509v3_addr_get_afi(f);
@@ -892,6 +894,8 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
     char *s = NULL, *t;
     int i;
 
+    (void)method;
+    (void)ctx;
     if ((addr = sk_IPAddressFamily_new(IPAddressFamily_cmp)) == NULL) {
         X509V3err(X509V3_F_V2I_IPADDRBLOCKS, ERR_R_MALLOC_FAILURE);
         return NULL;

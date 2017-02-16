@@ -457,6 +457,8 @@ int help_main(int argc, char **argv)
 
 int exit_main(int argc, char **argv)
 {
+    (void)argc;
+    (void)argv;
     return EXIT_THE_PROGRAM;
 }
 

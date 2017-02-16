@@ -60,6 +60,9 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 
 int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 {
+#ifdef OPENSSL_NO_ENGINE
+    (void)impl;
+#endif
     EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
 #ifndef OPENSSL_NO_ENGINE
     /*

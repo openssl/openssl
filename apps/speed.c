@@ -275,6 +275,7 @@ static const char rnd_seed[] =
 static SIGRETTYPE sig_done(int sig);
 static SIGRETTYPE sig_done(int sig)
 {
+    (void)sig;
     signal(SIGALRM, sig_done);
     run = 0;
 }
@@ -2895,6 +2896,7 @@ int speed_main(int argc, char **argv)
 
 static void print_message(const char *s, long num, int length)
 {
+    (void)num;
 #ifdef SIGALRM
     BIO_printf(bio_err,
                mr ? "+DT:%s:%d:%d\n"
@@ -2912,6 +2914,7 @@ static void print_message(const char *s, long num, int length)
 static void pkey_print_message(const char *str, const char *str2, long num,
                                int bits, int tm)
 {
+    (void)num;
 #ifdef SIGALRM
     BIO_printf(bio_err,
                mr ? "+DTP:%d:%s:%s:%d\n"

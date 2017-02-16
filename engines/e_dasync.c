@@ -319,18 +319,21 @@ void engine_load_dasync_int(void)
 
 static int dasync_init(ENGINE *e)
 {
+    (void)e;
     return 1;
 }
 
 
 static int dasync_finish(ENGINE *e)
 {
+    (void)e;
     return 1;
 }
 
 
 static int dasync_destroy(ENGINE *e)
 {
+    (void)e;
     destroy_digests();
     destroy_ciphers();
     RSA_meth_free(dasync_rsa_method);
@@ -342,6 +345,8 @@ static int dasync_digests(ENGINE *e, const EVP_MD **digest,
                           const int **nids, int nid)
 {
     int ok = 1;
+
+    (void)e;
     if (!digest) {
         /* We are returning a list of supported nids */
         return dasync_digest_nids(nids);
@@ -363,6 +368,8 @@ static int dasync_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                                    const int **nids, int nid)
 {
     int ok = 1;
+
+    (void)e;
     if (cipher == NULL) {
         /* We are returning a list of supported nids */
         *nids = dasync_cipher_nids;
@@ -389,6 +396,12 @@ static void wait_cleanup(ASYNC_WAIT_CTX *ctx, const void *key,
                          OSSL_ASYNC_FD readfd, void *pvwritefd)
 {
     OSSL_ASYNC_FD *pwritefd = (OSSL_ASYNC_FD *)pvwritefd;
+
+    (void)ctx;
+    (void)key;
+#ifndef OPENSSL_THREADS
+    (void)readfd;
+#endif
 #if defined(ASYNC_WIN)
     CloseHandle(readfd);
     CloseHandle(*pwritefd);

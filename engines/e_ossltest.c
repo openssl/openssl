@@ -360,18 +360,21 @@ void ENGINE_load_ossltest(void)
 
 static int ossltest_init(ENGINE *e)
 {
+    (void)e;
     return 1;
 }
 
 
 static int ossltest_finish(ENGINE *e)
 {
+    (void)e;
     return 1;
 }
 
 
 static int ossltest_destroy(ENGINE *e)
 {
+    (void)e;
     destroy_digests();
     destroy_ciphers();
     ERR_unload_OSSLTEST_strings();
@@ -382,6 +385,8 @@ static int ossltest_digests(ENGINE *e, const EVP_MD **digest,
                           const int **nids, int nid)
 {
     int ok = 1;
+
+    (void)e;
     if (!digest) {
         /* We are returning a list of supported nids */
         return ossltest_digest_nids(nids);
@@ -415,6 +420,8 @@ static int ossltest_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                           const int **nids, int nid)
 {
     int ok = 1;
+
+    (void)e;
     if (!cipher) {
         /* We are returning a list of supported nids */
         *nids = ossltest_cipher_nids;

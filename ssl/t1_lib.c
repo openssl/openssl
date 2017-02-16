@@ -664,6 +664,9 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 
 static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
 {
+    (void)s;
+    (void)x;
+    (void)set_ee_md;
     return 1;
 }
 

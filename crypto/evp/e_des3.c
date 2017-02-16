@@ -228,6 +228,8 @@ static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     DES_cblock *deskey = (DES_cblock *)key;
     DES_EDE_KEY *dat = data(ctx);
 
+    (void)iv;
+    (void)enc;
     dat->stream.cbc = NULL;
 # if defined(SPARC_DES_CAPABLE)
     if (SPARC_DES_CAPABLE) {
@@ -255,6 +257,8 @@ static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     DES_cblock *deskey = (DES_cblock *)key;
     DES_EDE_KEY *dat = data(ctx);
 
+    (void)iv;
+    (void)enc;
     dat->stream.cbc = NULL;
 # if defined(SPARC_DES_CAPABLE)
     if (SPARC_DES_CAPABLE) {
@@ -278,9 +282,9 @@ static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
 static int des3_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
-
     DES_cblock *deskey = ptr;
 
+    (void)arg;
     switch (type) {
     case EVP_CTRL_RAND_KEY:
         if (RAND_bytes(ptr, EVP_CIPHER_CTX_key_length(ctx)) <= 0)

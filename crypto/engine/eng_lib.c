@@ -71,6 +71,7 @@ int engine_free_util(ENGINE *e, int not_locked)
 {
     int i;
 
+    (void)not_locked;
     if (e == NULL)
         return 1;
 #ifdef HAVE_ATOMICS

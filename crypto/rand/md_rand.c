@@ -660,11 +660,14 @@ void rand_hw_xor(unsigned char *buf, size_t num)
 
 static int rand_hw_seed(EVP_MD_CTX *ctx)
 {
+    (void)ctx;
     return 1;
 }
 
 void rand_hw_xor(unsigned char *buf, size_t num)
 {
+    (void)buf;
+    (void)num;
     return;
 }
 

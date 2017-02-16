@@ -992,6 +992,7 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
 static BIO *init_responder(const char *port)
 {
 # ifdef OPENSSL_NO_SOCK
+    (void)port;
     BIO_printf(bio_err,
                "Error setting up accept BIO - sockets not supported.\n");
     return NULL;
@@ -1056,6 +1057,9 @@ static int urldecode(char *p)
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
 {
 # ifdef OPENSSL_NO_SOCK
+    (void)preq;
+    (void)pcbio;
+    (void)acbio;
     return 0;
 # else
     int len;

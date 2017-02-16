@@ -87,7 +87,7 @@ static int test_afalg_aes_128_cbc(ENGINE *e)
     return status;
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
     ENGINE *e;
 
@@ -123,7 +123,7 @@ int main(int argc, char **argv)
 
 #else  /* OPENSSL_NO_AFALGENG */
 
-int main(int argc, char **argv)
+int main(void)
 {
     fprintf(stderr, "AFALG not supported - skipping AFALG tests\n");
     printf("PASS\n");

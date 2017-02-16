@@ -1370,6 +1370,7 @@ void SSL_trace(int write_p, int version, int content_type,
     const unsigned char *msg = buf;
     BIO *bio = arg;
 
+    (void)version; /* FIXME(API) */
     if (write_p == 2) {
         BIO_puts(bio, "Session ");
         ssl_print_hex(bio, 0,

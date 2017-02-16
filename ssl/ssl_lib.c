@@ -3054,6 +3054,7 @@ void SSL_set_connect_state(SSL *s)
 
 int ssl_undefined_function(SSL *s)
 {
+    (void)s;
     SSLerr(SSL_F_SSL_UNDEFINED_FUNCTION, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return (0);
 }
@@ -3067,11 +3068,13 @@ int ssl_undefined_void_function(void)
 
 int ssl_undefined_const_function(const SSL *s)
 {
+    (void)s;
     return (0);
 }
 
 const SSL_METHOD *ssl_bad_method(int ver)
 {
+    (void)ver;
     SSLerr(SSL_F_SSL_BAD_METHOD, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return (NULL);
 }
@@ -3303,6 +3306,7 @@ const COMP_METHOD *SSL_get_current_compression(SSL *s)
 #ifndef OPENSSL_NO_COMP
     return s->compress ? COMP_CTX_get_method(s->compress) : NULL;
 #else
+    (void)s;
     return NULL;
 #endif
 }
@@ -3312,6 +3316,7 @@ const COMP_METHOD *SSL_get_current_expansion(SSL *s)
 #ifndef OPENSSL_NO_COMP
     return s->expand ? COMP_CTX_get_method(s->expand) : NULL;
 #else
+    (void)s;
     return NULL;
 #endif
 }
@@ -3555,6 +3560,7 @@ void *SSL_CTX_get_ex_data(const SSL_CTX *s, int idx)
 
 int ssl_ok(SSL *s)
 {
+    (void)s;
     return (1);
 }
 
@@ -4001,6 +4007,7 @@ static int ct_extract_ocsp_response_scts(SSL *s)
     OCSP_RESPONSE_free(rsp);
     return scts_extracted;
 # else
+    (void)s;
     /* Behave as if no OCSP response exists */
     return 0;
 # endif
@@ -4052,6 +4059,9 @@ const STACK_OF(SCT) *SSL_get0_peer_scts(SSL *s)
 static int ct_permissive(const CT_POLICY_EVAL_CTX * ctx,
                          const STACK_OF(SCT) *scts, void *unused_arg)
 {
+    (void)ctx;
+    (void)scts;
+    (void)unused_arg;
     return 1;
 }
 
@@ -4061,6 +4071,8 @@ static int ct_strict(const CT_POLICY_EVAL_CTX * ctx,
     int count = scts != NULL ? sk_SCT_num(scts) : 0;
     int i;
 
+    (void)ctx;
+    (void)unused_arg;
     for (i = 0; i < count; ++i) {
         SCT *sct = sk_SCT_value(scts, i);
         int status = SCT_get_validation_status(sct);

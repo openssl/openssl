@@ -432,11 +432,18 @@ int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags)
 int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
                             unsigned long flags)
 {
+    (void)perror_depth;
+    (void)x;
+    (void)chain;
+    (void)flags;
     return 0;
 }
 
 int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags)
 {
+    (void)crl;
+    (void)pk;
+    (void)flags;
     return 0;
 }
 

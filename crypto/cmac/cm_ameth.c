@@ -20,6 +20,7 @@
 
 static int cmac_size(const EVP_PKEY *pkey)
 {
+    (void)pkey;
     return EVP_MAX_BLOCK_LENGTH;
 }
 

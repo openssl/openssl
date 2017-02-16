@@ -381,6 +381,8 @@ void CRYPTO_mem_debug_free(void *addr, int before_p,
 {
     MEM m, *mp;
 
+    (void)file;
+    (void)line;
     switch (before_p) {
     case 0:
         if (addr == NULL)

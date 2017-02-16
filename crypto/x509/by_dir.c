@@ -75,8 +75,8 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
     BY_DIR *ld;
     char *dir = NULL;
 
+    (void)retp;
     ld = (BY_DIR *)ctx->method_data;
-
     switch (cmd) {
     case X509_L_ADD_DIR:
         if (argl == X509_FILETYPE_DEFAULT) {

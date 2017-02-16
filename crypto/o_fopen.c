@@ -97,6 +97,8 @@ FILE *openssl_fopen(const char *filename, const char *mode)
 
 void *openssl_fopen(const char *filename, const char *mode)
 {
+    (void)filename;
+    (void)mode;
     return NULL;
 }
 

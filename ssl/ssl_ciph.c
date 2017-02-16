@@ -1785,11 +1785,14 @@ STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
                                                       *meths)
 {
+    (void)meths;
     return meths;
 }
 
 int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 {
+    (void)id;
+    (void)cm;
     return 1;
 }
 
@@ -1875,6 +1878,7 @@ const char *SSL_COMP_get_name(const COMP_METHOD *comp)
 #ifndef OPENSSL_NO_COMP
     return comp ? COMP_get_name(comp) : NULL;
 #else
+    (void)comp;
     return NULL;
 #endif
 }
@@ -1884,6 +1888,7 @@ const char *SSL_COMP_get0_name(const SSL_COMP *comp)
 #ifndef OPENSSL_NO_COMP
     return comp->name;
 #else
+    (void)comp;
     return NULL;
 #endif
 }
@@ -1893,6 +1898,7 @@ int SSL_COMP_get_id(const SSL_COMP *comp)
 #ifndef OPENSSL_NO_COMP
     return comp->id;
 #else
+    (void)comp;
     return -1;
 #endif
 }
