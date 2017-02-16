@@ -1721,7 +1721,7 @@ int SSL_shutdown(SSL *s)
 int SSL_key_update(SSL *s, int updatetype)
 {
     /*
-     * TODO(TLS1.3): How will applications know whether TLSv1.3+ has been
+     * TODO(TLS1.3): How will applications know whether TLSv1.3 has been
      * negotiated, and that it is appropriate to call SSL_key_update() instead
      * of SSL_renegotiate().
      */
