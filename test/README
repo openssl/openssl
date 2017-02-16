@@ -19,15 +19,17 @@ digit number and {name} is a unique name of your choice.
 
 The number {nn} is (somewhat loosely) grouped as follows:
 
-05  individual symmetric cipher algorithms
-10  math (bignum)
-15  individual asymmetric cipher algorithms
-20  openssl commands (some otherwise not tested)
-25  certificate forms, generation and verification
-30  engine and evp
-70  PACKET layer
-80  "larger" protocols (CA, CMS, OCSP, SSL, TSA)
-90  misc
+00-04  sanity, internal and essential API tests
+05-09  individual symmetric cipher algorithms
+10-14  math (bignum)
+15-19  individual asymmetric cipher algorithms
+20-24  openssl commands (some otherwise not tested)
+25-29  certificate forms, generation and verification
+30-35  engine and evp
+60-79  APIs
+   70  PACKET layer
+80-89  "larger" protocols (CA, CMS, OCSP, SSL, TSA)
+90-99  misc
 
 
 A recipe that just runs a test executable
