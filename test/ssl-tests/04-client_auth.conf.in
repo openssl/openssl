@@ -19,8 +19,6 @@ push @is_disabled, anydisabled("ssl3", "tls1", "tls1_1", "tls1_2");
 
 our @tests = ();
 
-my $dir_sep = $^O ne "VMS" ? "/" : "";
-
 sub generate_tests() {
 
     foreach (0..$#protocols) {
@@ -68,7 +66,7 @@ sub generate_tests() {
                 server => {
                     "MinProtocol" => $protocol,
                     "MaxProtocol" => $protocol,
-                    "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
+                    "VerifyCAFile" => test_pem("root-cert.pem"),
                     "VerifyMode" => "Require",
                 },
                 client => {
@@ -87,14 +85,14 @@ sub generate_tests() {
                 server => {
                     "MinProtocol" => $protocol,
                     "MaxProtocol" => $protocol,
-                    "VerifyCAFile" => "\${ENV::TEST_CERTS_DIR}${dir_sep}root-cert.pem",
+                    "VerifyCAFile" => test_pem("root-cert.pem"),
                     "VerifyMode" => "Request",
                 },
                 client => {
                     "MinProtocol" => $protocol,
                     "MaxProtocol" => $protocol,
-                    "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
-                    "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem",
+                    "Certificate" => test_pem("ee-client-chain.pem"),
+                    "PrivateKey"  => test_pem("ee-key.pem"),
                 },
                 test   => { "ExpectedResult" => "Success" },
             };
@@ -110,8 +108,8 @@ sub generate_tests() {
                 client => {
                     "MinProtocol" => $protocol,
                     "MaxProtocol" => $protocol,
-                    "Certificate" => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-client-chain.pem",
-                    "PrivateKey"  => "\${ENV::TEST_CERTS_DIR}${dir_sep}ee-key.pem",
+                    "Certificate" => test_pem("ee-client-chain.pem"),
+                    "PrivateKey"  => test_pem("ee-key.pem"),
                 },
                 test   => {
                     "ExpectedResult" => "ServerFail",
