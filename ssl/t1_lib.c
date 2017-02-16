@@ -2320,7 +2320,7 @@ int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *x, int vfy)
  */
 int tls_choose_sigalg(SSL *s, int *al)
 {
-    int idx;
+    int idx = -1;
     const SIGALG_LOOKUP *lu = NULL;
 
     if (SSL_IS_TLS13(s)) {
@@ -2442,6 +2442,11 @@ int tls_choose_sigalg(SSL *s, int *al)
                 return 0;
             }
         }
+    }
+    if (idx == -1) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
     s->s3->tmp.cert = &s->cert->pkeys[idx];
     s->cert->key = s->s3->tmp.cert;
