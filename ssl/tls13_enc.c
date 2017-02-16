@@ -390,6 +390,11 @@ int tls13_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
+    if (!ssl_log_secret(s, log_label, secret, hashlen)) {
+        SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
     if (!tls13_derive_key(s, secret, key, keylen)
             || !tls13_derive_iv(s, secret, iv, ivlen)
             || (finsecret != NULL && !tls13_derive_finishedkey(s,
