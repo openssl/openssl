@@ -30,4 +30,14 @@ extern uint64_t OPENSSL_s390xcap_P[];
 # define S390X_STFLE_VXD	(1ULL << 57)
 # define S390X_STFLE_VX		(1ULL << 62)
 
+/* OPENSSL_s390xcap_P[5] flags */
+# define S390X_KM_AES_256	(1ULL << 43)
+# define S390X_KM_AES_192	(1ULL << 44)
+# define S390X_KM_AES_128	(1ULL << 45)
+
+/* OPENSSL_s390xcap_P[7] flags */
+# define S390X_KMC_AES_256	(1ULL << 43)
+# define S390X_KMC_AES_192	(1ULL << 44)
+# define S390X_KMC_AES_128	(1ULL << 45)
+
 #endif
