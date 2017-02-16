@@ -124,7 +124,7 @@ typedef struct {
     /* Maximum send fragment size. */
     int max_fragment_size;
     /* KeyUpdate type */
-    SSL_KEY_UPDATE key_update_type;
+    int key_update_type;
 
     /*
      * Extra server/client configurations. Per-handshake.

@@ -1718,7 +1718,7 @@ int SSL_shutdown(SSL *s)
     }
 }
 
-int SSL_key_update(SSL *s, SSL_KEY_UPDATE updatetype)
+int SSL_key_update(SSL *s, int updatetype)
 {
     /*
      * TODO(TLS1.3): How will applications know whether TLSv1.3+ has been
@@ -1746,7 +1746,7 @@ int SSL_key_update(SSL *s, SSL_KEY_UPDATE updatetype)
     return 1;
 }
 
-SSL_KEY_UPDATE SSL_get_key_update_type(SSL *s)
+int SSL_get_key_update_type(SSL *s)
 {
     return s->key_update;
 }
