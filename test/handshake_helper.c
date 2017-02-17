@@ -15,7 +15,6 @@
 
 #include "handshake_helper.h"
 #include "testutil.h"
-#include "packet_locl.h"
 
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new()
 {
@@ -127,21 +126,40 @@ static int select_server_ctx(SSL *s, void *arg, int ignore)
 static int early_select_server_ctx(SSL *s, void *arg, int ignore)
 {
     const char *servername;
-    PACKET pkt, list, name;
     const unsigned char *p;
-    unsigned int type;
-    size_t len;
+    size_t len, remaining;
     HANDSHAKE_EX_DATA *ex_data =
         (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
 
-    if (!SSL_early_get0_ext(s, TLSEXT_TYPE_server_name, &p, &len) ||
-        !PACKET_buf_init(&pkt, p, len) ||
-        !PACKET_as_length_prefixed_2(&pkt, &list) ||
-        !PACKET_get_1(&list, &type) || type != TLSEXT_NAMETYPE_host_name ||
-        !PACKET_as_length_prefixed_2(&list, &name))
+    /*
+     * The server_name extension was given too much extensibility when it
+     * was written, so parsing the normal case is a bit complex.
+     */
+    if (!SSL_early_get0_ext(s, TLSEXT_TYPE_server_name, &p, &remaining) ||
+        remaining <= 2)
         return 0;
-    servername = (const char *)PACKET_data(&name);
-    len = PACKET_remaining(&name);
+    /* Extract the length of the supplied list of names. */
+    len = (*(p++) << 1);
+    len += *(p++);
+    if (len + 2 != remaining)
+        return 0;
+    remaining = len;
+    /*
+     * The list in practice only has a single element, so we only consider
+     * the first one.
+     */
+    if (remaining == 0 || *p++ != TLSEXT_NAMETYPE_host_name)
+        return 0;
+    remaining--;
+    /* Now we can finally pull out the byte array with the actual hostname. */
+    if (remaining <= 2)
+        return 0;
+    len = (*(p++) << 1);
+    len += *(p++);
+    if (len + 2 > remaining)
+        return 0;
+    remaining = len;
+    servername = (const char *)p;
 
     if (len == strlen("server2") && strncmp(servername, "server2", len) == 0) {
         SSL_CTX *new_ctx = arg;
