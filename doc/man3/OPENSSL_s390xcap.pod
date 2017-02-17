@@ -82,6 +82,17 @@ The following bits are significant:
 :
 :
 :
+
+=over
+
+=item #43 KMO-AES-256
+
+=item #44 KMO-AES-192
+
+=item #45 KMO-AES-128
+
+=back
+
 :
 :
 
