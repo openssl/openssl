@@ -1603,7 +1603,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
                 candidate_vers = TLS1_3_VERSION;
             /*
              * TODO(TLS1.3): There is some discussion on the TLS list about
-             * wheter to ignore versions <TLS1.2 in supported_versions. At the
+             * whether to ignore versions <TLS1.2 in supported_versions. At the
              * moment we honour them if present. To be reviewed later
              */
             if (version_cmp(s, candidate_vers, best_vers) <= 0)

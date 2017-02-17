@@ -471,7 +471,7 @@ int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
     }
 
     /*
-     * TODO(TLS1.3): There is some discussion on the TLS list as to wheter
+     * TODO(TLS1.3): There is some discussion on the TLS list as to whether
      * we should include versions <TLS1.2. For the moment we do. To be
      * reviewed later.
      */
@@ -745,7 +745,7 @@ int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, unsigned int context,
     }
 
     if (hlen > F5_WORKAROUND_MIN_MSG_LEN && hlen < F5_WORKAROUND_MAX_MSG_LEN) {
-        /* Calculate the amond of padding we need to add */
+        /* Calculate the amount of padding we need to add */
         hlen = F5_WORKAROUND_MAX_MSG_LEN - hlen;
 
         /*
@@ -804,7 +804,7 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
 
     md = ssl_md(s->session->cipher->algorithm2);
     if (md == NULL) {
-        /* Don't recognise this cipher so we can't use the session. Ignore it */
+        /* Don't recognize this cipher so we can't use the session. Ignore it */
         return 1;
     }
 
@@ -1051,7 +1051,7 @@ int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, unsigned int context,
 
     if (SSL_IS_TLS13(s)) {
         /* We only know how to handle this if it's for the first Certificate in
-         * the chain. We ignore any other repsonses.
+         * the chain. We ignore any other responses.
          */
         if (chainidx != 0)
             return 1;
