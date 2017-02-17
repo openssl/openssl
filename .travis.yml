@@ -31,9 +31,6 @@ compiler:
 env:
     - CONFIG_OPTS="" DESTDIR="_install"
     - CONFIG_OPTS="--debug no-shared enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes"
-    - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
-    - CONFIG_OPTS="no-stdio --strict-warnings" BUILDONLY="yes"
     - CONFIG_OPTS="no-ec" BUILDONLY="yes"
 
 matrix:
