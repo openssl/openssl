@@ -2377,7 +2377,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST            511
 # define SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT          442
 # define SSL_F_TLS_PROCESS_KEY_EXCHANGE                   365
-# define SSL_F_TLS_PROCESS_KEY_UPDATE                     513
+# define SSL_F_TLS_PROCESS_KEY_UPDATE                     518
 # define SSL_F_TLS_PROCESS_NEW_SESSION_TICKET             366
 # define SSL_F_TLS_PROCESS_NEXT_PROTO                     383
 # define SSL_F_TLS_PROCESS_SERVER_CERTIFICATE             367
