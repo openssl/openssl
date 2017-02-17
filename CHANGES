@@ -9,6 +9,11 @@
 
  Changes between 1.1.0h and 1.1.0i [xx XXX xxxx]
 
+  *) Certificate time validation (X509_cmp_time) enforces stricter
+     compliance with RFC 5280. Fractional seconds and timezone offsets
+     are no longer allowed.
+     [Emilia Käsper]
+
   *) Fixed a text canonicalisation bug in CMS
 
      Where a CMS detached signature is used with text content the text goes
