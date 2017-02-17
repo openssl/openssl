@@ -22,6 +22,9 @@ void CRYPTO_cbc128_encrypt(const unsigned char *in, unsigned char *out,
     size_t n;
     const unsigned char *iv = ivec;
 
+    if (len == 0)
+        return;
+
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
     if (STRICT_ALIGNMENT &&
         ((size_t)in | (size_t)out | (size_t)ivec) % sizeof(size_t) != 0) {
