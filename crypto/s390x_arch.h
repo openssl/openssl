@@ -19,10 +19,10 @@
  * supported, the corresponding element is zero. The order is as follows:
  *
  * STFLE:STFLE:STFLE.
- * KIMD:KIMD:KM:KM:KMC:KMC:KMAC:KMAC:KMCTR:KMCTR:KMO:KMO:KMA:KMA
+ * KIMD:KIMD:KM:KM:KMC:KMC:KMAC:KMAC:KMCTR:KMCTR:KMO:KMO:KMF:KMF:KMA:KMA
  */
 # define S390X_STFLE_DWORDS	3
-# define S390X_QUERY_DWORDS	14
+# define S390X_QUERY_DWORDS	16
 # define S390X_CAP_DWORDS	(S390X_STFLE_DWORDS + S390X_QUERY_DWORDS)
 extern uint64_t OPENSSL_s390xcap_P[];
 
@@ -52,6 +52,11 @@ extern uint64_t OPENSSL_s390xcap_P[];
 # define S390X_KMO_AES_128	(1ULL << 45)
 
 /* OPENSSL_s390xcap_P[15] flags */
+# define S390X_KMF_AES_256	(1ULL << 43)
+# define S390X_KMF_AES_192	(1ULL << 44)
+# define S390X_KMF_AES_128	(1ULL << 45)
+
+/* OPENSSL_s390xcap_P[17] flags */
 # define S390X_KMA_GCM_AES_256	(1ULL << 43)
 # define S390X_KMA_GCM_AES_192	(1ULL << 44)
 # define S390X_KMA_GCM_AES_128	(1ULL << 45)

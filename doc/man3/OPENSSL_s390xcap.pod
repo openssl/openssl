@@ -95,6 +95,8 @@ The following bits are significant:
 
 :
 :
+:
+:
 
 =over
 
