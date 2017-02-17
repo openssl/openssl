@@ -472,6 +472,8 @@ my @disable_cascades = (
     "dgram"		=> [ "dtls", "sctp" ],
     "sock"		=> [ "dgram" ],
     "dtls"		=> [ @dtls ],
+    sub { 0 == scalar grep { !$disabled{$_} } @dtls }
+			=> [ "dtls" ],
 
     # SSL 3.0, (D)TLS 1.0 and TLS 1.1 require MD5 and SHA
     "md5"		=> [ "ssl", "tls1", "tls1_1", "dtls1" ],
@@ -492,6 +494,8 @@ my @disable_cascades = (
 			     "dtls1", "dtls1_2" ],
 
     "tls"		=> [ @tls ],
+    sub { 0 == scalar grep { !$disabled{$_} } @tls }
+			=> [ "tls" ],
 
     # SRP and HEARTBEATS require TLSEXT
     "tlsext"		=> [ "srp", "heartbeats" ],
