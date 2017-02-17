@@ -797,6 +797,11 @@ void SSL_CTX_set_keylog_callback(SSL_CTX *ctx, SSL_CTX_keylog_cb_func cb);
  */
 SSL_CTX_keylog_cb_func SSL_CTX_get_keylog_callback(const SSL_CTX *ctx);
 
+int SSL_CTX_set_max_early_data(SSL_CTX *ctx, uint32_t max_early_data);
+uint32_t SSL_CTX_get_max_early_data(SSL_CTX *ctx);
+int SSL_set_max_early_data(SSL *s, uint32_t max_early_data);
+uint32_t SSL_get_max_early_data(SSL_CTX *s);
+
 #ifdef __cplusplus
 }
 #endif
@@ -2355,6 +2360,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_STOC_CERTIFICATE             374
 # define SSL_F_TLS_CONSTRUCT_STOC_CRYPTOPRO_BUG           452
 # define SSL_F_TLS_CONSTRUCT_STOC_DONE                    375
+# define SSL_F_TLS_CONSTRUCT_STOC_EARLY_DATA_INFO         525
 # define SSL_F_TLS_CONSTRUCT_STOC_EC_PT_FORMATS           453
 # define SSL_F_TLS_CONSTRUCT_STOC_EMS                     454
 # define SSL_F_TLS_CONSTRUCT_STOC_ETM                     455

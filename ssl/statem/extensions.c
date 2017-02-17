@@ -129,6 +129,11 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #else
     INVALID_EXTENSION,
 #endif
+    {
+        TLSEXT_TYPE_early_data_info,
+        EXT_TLS1_3_NEW_SESSION_TICKET,
+        NULL, NULL, NULL, tls_construct_stoc_early_data_info, NULL, NULL
+    },
 #ifndef OPENSSL_NO_EC
     {
         TLSEXT_TYPE_ec_point_formats,

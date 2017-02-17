@@ -551,6 +551,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
     s->references = 1;
+    s->max_early_data = ctx->max_early_data;
 
     /*
      * Earlier library versions used to copy the pointer to the CERT, not
@@ -4656,4 +4657,28 @@ int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
     sk_SSL_CIPHER_free(sk);
     sk_SSL_CIPHER_free(scsvs);
     return 0;
+}
+
+int SSL_CTX_set_max_early_data(SSL_CTX *ctx, uint32_t max_early_data)
+{
+    ctx->max_early_data = max_early_data;
+
+    return 1;
+}
+
+uint32_t SSL_CTX_get_max_early_data(SSL_CTX *ctx)
+{
+    return ctx->max_early_data;
+}
+
+int SSL_set_max_early_data(SSL *s, uint32_t max_early_data)
+{
+    s->max_early_data = max_early_data;
+
+    return 1;
+}
+
+uint32_t SSL_get_max_early_data(SSL_CTX *s)
+{
+    return s->max_early_data;
 }
