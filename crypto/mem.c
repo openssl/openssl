@@ -117,16 +117,16 @@ static void parseit(void)
 static int shouldfail(void)
 {
     int roll = (int)(random() % 100);
-    int shouldfail = roll < md_fail_percent;
+    int shoulditfail = roll < md_fail_percent;
     char buff[80];
 
     if (md_tracefd > 0) {
         BIO_snprintf(buff, sizeof(buff),
                      "%c C%ld %%%d R%d\n",
-                     shouldfail ? '-' : '+', md_count, md_fail_percent, roll);
+                     shoulditfail ? '-' : '+', md_count, md_fail_percent, roll);
         write(md_tracefd, buff, strlen(buff));
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
-        if (shouldfail) {
+        if (shoulditfail) {
             void *addrs[30];
             int num = backtrace(addrs, OSSL_NELEM(addrs));
 
@@ -141,7 +141,7 @@ static int shouldfail(void)
             parseit();
     }
 
-    return shouldfail;
+    return shoulditfail;
 }
 
 void ossl_malloc_setup_failures(void)
