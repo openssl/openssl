@@ -2356,6 +2356,28 @@ s390x_aes_ofb_blocks:
 ___
 }
 
+################
+# void s390x_aes_ecb_blocks(unsigned char *out, const AES_KEY *key,
+#                           const unsigned char *in, size_t len)
+{
+my ($out,$key,$in,$len) = map("%r$_",(2..5));
+
+$code.=<<___ if (!$softonly);
+.globl	s390x_aes_ecb_blocks
+.type	s390x_aes_ecb_blocks,\@function
+.align	16
+s390x_aes_ecb_blocks:
+	l	%r0,240($key)	# km capability vector checked by caller
+	la	%r1,0($key)
+
+	.long	0xb92e0024	# km $out,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	br	$ra
+.size	s390x_aes_ecb_blocks,.-s390x_aes_ecb_blocks
+___
+}
+
 $code.=<<___;
 .string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
 .comm	OPENSSL_s390xcap_P,136,8

@@ -969,6 +969,8 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 # define S390X_aes_256_CAPABLE ((OPENSSL_s390xcap_P[5]&S390X_KM_AES_256)&&\
                                 (OPENSSL_s390xcap_P[7]&S390X_KMC_AES_256))
 
+void s390x_aes_ecb_blocks(unsigned char *out, const AES_KEY *key,
+                          const unsigned char *in, size_t len);
 void s390x_aes_ofb_blocks(unsigned char *out, unsigned char iv[AES_BLOCK_SIZE],
                           const unsigned char *in, size_t len,
                           const AES_KEY *key);
@@ -994,13 +996,22 @@ static int s390x_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int s390x_aes_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                 const unsigned char *in, size_t len);
 
-# define S390X_aes_128_ecb_CAPABLE	0
-# define S390X_aes_192_ecb_CAPABLE	0
-# define S390X_aes_256_ecb_CAPABLE	0
+# define S390X_aes_128_ecb_CAPABLE (S390X_aes_128_CAPABLE&&\
+                                    OPENSSL_s390xcap_P[5]&S390X_KM_AES_128)
+# define S390X_aes_192_ecb_CAPABLE (S390X_aes_192_CAPABLE&&\
+                                    OPENSSL_s390xcap_P[5]&S390X_KM_AES_192)
+# define S390X_aes_256_ecb_CAPABLE (S390X_aes_256_CAPABLE&&\
+                                    OPENSSL_s390xcap_P[5]&S390X_KM_AES_256)
 
-# define s390x_aes_ecb_cipher aes_ecb_cipher
 static int s390x_aes_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                                const unsigned char *in, size_t len);
+                                const unsigned char *in, size_t len)
+{
+    EVP_AES_KEY *dat = EVP_C_DATA(EVP_AES_KEY,ctx);
+
+    s390x_aes_ecb_blocks(out, &dat->ks.ks, in, len);
+
+    return 1;
+}
 
 # define S390X_aes_128_ofb_CAPABLE (S390X_aes_128_CAPABLE&&\
                                     OPENSSL_s390xcap_P[13]&S390X_KMO_AES_128)
