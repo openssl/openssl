@@ -30,7 +30,7 @@ compiler:
 
 env:
     - CONFIG_OPTS="" DESTDIR="_install" TESTS="-test_fuzz"
-    - CONFIG_OPTS="--debug no-shared enable-crypto-mdebug enable-rc5 enable-md2" TESTS="-test_fuzz"
+    - CONFIG_OPTS="--debug --strict-warnings no-shared enable-crypto-mdebug enable-rc5 enable-md2" TESTS="-test_fuzz"
     - CONFIG_OPTS="no-ec" BUILDONLY="yes"
 
 matrix:
