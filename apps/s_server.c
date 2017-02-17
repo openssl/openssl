@@ -719,7 +719,7 @@ typedef enum OPTION_choice {
     OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
-    OPT_KEYLOG_FILE,
+    OPT_KEYLOG_FILE, OPT_MAX_EARLY,
     OPT_S_ENUM,
     OPT_V_ENUM,
     OPT_X_ENUM
@@ -916,6 +916,8 @@ const OPTIONS s_server_options[] = {
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
+    {"max_early_data", OPT_MAX_EARLY, 'p',
+     "The maximum number of bytes of early data"},
     {NULL, OPT_EOF, 0, NULL}
 };
 
@@ -992,6 +994,7 @@ int s_server_main(int argc, char *argv[])
     unsigned int split_send_fragment = 0, max_pipelines = 0;
     const char *s_serverinfo_file = NULL;
     const char *keylog_file = NULL;
+    uint32_t max_early_data = 0;
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1500,7 +1503,9 @@ int s_server_main(int argc, char *argv[])
         case OPT_KEYLOG_FILE:
             keylog_file = opt_arg();
             break;
-
+        case OPT_MAX_EARLY:
+            max_early_data = atoi(opt_arg());
+            break;
         }
     }
     argc = opt_num_rest();
@@ -1990,6 +1995,9 @@ int s_server_main(int argc, char *argv[])
 #endif
     if (set_keylog_file(ctx, keylog_file))
         goto end;
+
+    if (max_early_data > 0)
+        SSL_CTX_set_max_early_data(ctx, max_early_data);
 
     BIO_printf(bio_s_out, "ACCEPT\n");
     (void)BIO_flush(bio_s_out);
