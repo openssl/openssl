@@ -16,6 +16,11 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509_store");
 
+#If "openssl rehash -help" fails it's most likely because we're on a platform
+#that doesn't support the rehash command (e.g. Windows)
+plan skip_all => "test_rehash is not available on this platform"
+    unless run(app(["openssl", "rehash", "-help"]));
+
 # We use 'openssl verify' for these tests, as it contains everything
 # we need to conduct these tests.  The tests here are a subset of the
 # ones found in 25-test_verify.t
