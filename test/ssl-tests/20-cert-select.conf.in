@@ -244,3 +244,49 @@ my @tests_tls_1_3 = (
 );
 
 push @tests, @tests_tls_1_3 unless disabled("tls1_3");
+
+my @tests_dsa_tls_1_2 = (
+    {
+        name => "TLS 1.2 DSA Certificate Test",
+        server => {
+            "DSA.Certificate" => test_pem("server-dsa-cert.pem"),
+            "DSA.PrivateKey" => test_pem("server-dsa-key.pem"),
+            "DHParameters" => test_pem("dhp2048.pem"),
+            "MinProtocol" => "TLSv1.2",
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ALL",
+        },
+        client => {
+            "SignatureAlgorithms" => "DSA+SHA256:DSA+SHA1",
+            "CipherString" => "ALL",
+        },
+        test   => {
+            "ExpectedResult" => "Success"
+        },
+    },
+);
+
+my @tests_dsa_tls_1_3 = (
+    {
+        name => "TLS 1.3 DSA Certificate Test",
+        server => {
+            "DSA.Certificate" => test_pem("server-dsa-cert.pem"),
+            "DSA.PrivateKey" => test_pem("server-dsa-key.pem"),
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3",
+            "CipherString" => "ALL",
+        },
+        client => {
+            "SignatureAlgorithms" => "DSA+SHA1:DSA+SHA256",
+            "CipherString" => "ALL",
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail"
+        },
+    },
+);
+
+if (!disabled("dsa")) {
+    push @tests, @tests_dsa_tls_1_2 unless disabled("dh");
+    push @tests, @tests_dsa_tls_1_3 unless disabled("tls1_3");
+}
