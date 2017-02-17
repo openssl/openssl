@@ -555,8 +555,8 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     OPENSSL_strlcat(out_buf, magic, sizeof out_buf);
     OPENSSL_strlcat(out_buf, "$", sizeof out_buf);
     if (rounds_custom) {
-        char tmp_buf[7 + 9 + 1]; /* "rounds=999999999" */
-        sprintf(tmp_buf, "rounds=%lu", rounds);
+        char tmp_buf[80]; /* "rounds=999999999" */
+        sprintf(tmp_buf, "rounds=%"OSSLzu, rounds);
         OPENSSL_strlcat(out_buf, tmp_buf, sizeof out_buf);
         OPENSSL_strlcat(out_buf, "$", sizeof out_buf);
     }
