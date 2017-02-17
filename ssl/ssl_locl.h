@@ -922,6 +922,9 @@ struct ssl_ctx_st {
      * Wireshark. The callback should log `line` followed by a newline.
      */
     SSL_CTX_keylog_cb_func keylog_callback;
+
+    /* The maximum number of bytes that can be sent as early data */
+    uint32_t max_early_data;
 };
 
 struct ssl_st {
@@ -1217,6 +1220,9 @@ struct ssl_st {
     ASYNC_JOB *job;
     ASYNC_WAIT_CTX *waitctx;
     size_t asyncrw;
+
+    /* The maximum number of bytes that can be sent as early data */
+    uint32_t max_early_data;
 
     CRYPTO_RWLOCK *lock;
 };
@@ -1724,6 +1730,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_renegotiate,
     TLSEXT_IDX_server_name,
     TLSEXT_IDX_srp,
+    TLSEXT_IDX_early_data_info,
     TLSEXT_IDX_ec_point_formats,
     TLSEXT_IDX_supported_groups,
     TLSEXT_IDX_session_ticket,
