@@ -424,3 +424,7 @@ SSL_early_get0_random                   424	1_1_1	EXIST::FUNCTION:
 SSL_CTX_set_early_cb                    425	1_1_1	EXIST::FUNCTION:
 SSL_early_get0_legacy_version           426	1_1_1	EXIST::FUNCTION:
 SSL_early_isv2                          427	1_1_1	EXIST::FUNCTION:
+SSL_set_max_early_data                  428	1_1_1	EXIST::FUNCTION:
+SSL_CTX_set_max_early_data              429	1_1_1	EXIST::FUNCTION:
+SSL_get_max_early_data                  430	1_1_1	EXIST::FUNCTION:
+SSL_CTX_get_max_early_data              431	1_1_1	EXIST::FUNCTION:

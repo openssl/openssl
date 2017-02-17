@@ -801,6 +801,24 @@ int tls_construct_stoc_server_name(SSL *s, WPACKET *pkt, unsigned int context,
     return 1;
 }
 
+int tls_construct_stoc_early_data_info(SSL *s, WPACKET *pkt,
+                                       unsigned int context, X509 *x,
+                                       size_t chainidx, int *al)
+{
+    if (s->max_early_data == 0)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_early_data_info)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u32(pkt, s->max_early_data)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_EARLY_DATA_INFO, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
 #ifndef OPENSSL_NO_EC
 int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
                                      X509 *x, size_t chainidx, int *al)

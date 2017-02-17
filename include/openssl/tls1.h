@@ -180,6 +180,7 @@ extern "C" {
 # define TLSEXT_TYPE_psk                         41
 # define TLSEXT_TYPE_supported_versions          43
 # define TLSEXT_TYPE_psk_kex_modes               45
+# define TLSEXT_TYPE_early_data_info             46
 
 /* Temporary extension type */
 # define TLSEXT_TYPE_renegotiate                 0xff01
