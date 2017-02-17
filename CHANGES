@@ -9,7 +9,10 @@
 
  Changes between 1.0.2o and 1.0.2p [xx XXX xxxx]
 
-  *)
+  *) Certificate time validation (X509_cmp_time) enforces stricter
+     compliance with RFC 5280. Fractional seconds and timezone offsets
+     are no longer allowed.
+     [Emilia Käsper]
 
  Changes between 1.0.2n and 1.0.2o [27 Mar 2018]
 
