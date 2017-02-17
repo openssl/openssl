@@ -102,7 +102,9 @@ if ($flavour =~ /3[12]/) {
 while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
-$softonly=0;	# allow hardware support
+# 0: Enable hardware support.
+# 1: Disable hardware support. Requires -DAES_SOFTONLY built.
+$softonly=0;
 
 $t0="%r0";	$mask="%r0";
 $t1="%r1";
@@ -2316,6 +2318,37 @@ s390x_aes_gcm_blocks:
 	br	$ra
 .cfi_endproc
 .size	s390x_aes_gcm_blocks,.-s390x_aes_gcm_blocks
+___
+}
+
+################
+# void s390x_aes_ofb_blocks(unsigned char *out,
+#                           unsigned char iv[AES_BLOCK_SIZE],
+#                           const unsigned char *in, size_t len,
+#                           const AES_KEY *key)
+{
+my ($out,$iv,$in,$len,$key) = map("%r$_",(2..6));
+
+$code.=<<___ if (!$softonly);
+.globl	s390x_aes_ofb_blocks
+.type	s390x_aes_ofb_blocks,\@function
+.align	16
+s390x_aes_ofb_blocks:
+	aghi	$sp,-48
+	l	%r0,240($key)	# kmo capability vector checked by caller
+
+	mvc	0(16,$sp),0($iv)
+	mvc	16(32,$sp),0($key)
+	la	%r1,0($sp)
+
+	.long	0xb92b0024	# kmo $out,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	mvc	0(16,$iv),0($sp)
+	xc	0(48,$sp),0($sp)	# wipe iv,key
+	la	$sp,48($sp)
+	br	$ra
+.size	s390x_aes_ofb_blocks,.-s390x_aes_ofb_blocks
 ___
 }
 
