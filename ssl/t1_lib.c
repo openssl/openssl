@@ -896,9 +896,16 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     /* Should never happen */
     if (pkeyid == -1)
         return -1;
-    /* Only allow PSS for TLS 1.3 */
-    if (SSL_IS_TLS13(s) && pkeyid == EVP_PKEY_RSA)
-        pkeyid = EVP_PKEY_RSA_PSS;
+    if (SSL_IS_TLS13(s)) {
+        /* Disallow DSA for TLS 1.3 */
+        if (pkeyid == EVP_PKEY_DSA) {
+            SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
+            return 0;
+        }
+        /* Only allow PSS for TLS 1.3 */
+        if (pkeyid == EVP_PKEY_RSA)
+            pkeyid = EVP_PKEY_RSA_PSS;
+    }
     lu = tls1_lookup_sigalg(sig);
     /*
      * Check sigalgs is known and key type is consistent with signature:
@@ -2291,8 +2298,8 @@ int tls_choose_sigalg(SSL *s, int *al)
         for (i = 0; i < s->cert->shared_sigalgslen; i++) {
             lu = s->cert->shared_sigalgs[i];
 
-            /* Skip RSA if not PSS */
-            if (lu->sig == EVP_PKEY_RSA)
+            /* Skip DSA and RSA if not PSS */
+            if (lu->sig == EVP_PKEY_DSA || lu->sig == EVP_PKEY_RSA)
                 continue;
             if (ssl_md(lu->hash_idx) == NULL)
                 continue;
