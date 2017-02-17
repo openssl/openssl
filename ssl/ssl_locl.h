@@ -1481,11 +1481,15 @@ typedef struct dtls1_state_st {
      */
     struct timeval next_timeout;
     /* Timeout duration */
-    unsigned short timeout_duration;
+    unsigned timeout_duration_ms;
+
     unsigned int retransmitting;
 # ifndef OPENSSL_NO_SCTP
     int shutdown_received;
 # endif
+
+    DTLS_timer_cb timer_cb;
+
 } DTLS1_STATE;
 
 # ifndef OPENSSL_NO_EC

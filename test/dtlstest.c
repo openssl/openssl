@@ -18,6 +18,7 @@
 
 static char *cert = NULL;
 static char *privkey = NULL;
+static unsigned timer_cb_count;
 
 #define NUM_TESTS   2
 
@@ -41,6 +42,18 @@ static unsigned char certstatus[] = {
 
 #define RECORD_SEQUENCE 10
 
+static unsigned timer_cb(SSL *s, unsigned timer)
+{
+    (void)s;
+
+    ++timer_cb_count;
+
+    if (timer == 0)
+        return 1000;
+    else
+        return 2*timer;
+}
+
 static int test_dtls_unprocessed(int testidx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -49,6 +62,8 @@ static int test_dtls_unprocessed(int testidx)
     int testresult = 0;
 
     printf("Starting Test %d\n", testidx);
+
+    timer_cb_count = 0;
 
     if (!create_ssl_ctx_pair(DTLS_server_method(), DTLS_client_method(), &sctx,
                              &cctx, cert, privkey)) {
@@ -74,6 +89,8 @@ static int test_dtls_unprocessed(int testidx)
         goto end;
     }
 
+    DTLS_set_timer_cb(clientssl1, timer_cb);
+
     if (testidx == 1)
         certstatus[RECORD_SEQUENCE] = 0xff;
 
@@ -92,6 +109,11 @@ static int test_dtls_unprocessed(int testidx)
     if (!create_ssl_connection(serverssl1, clientssl1)) {
         printf("Unable to create SSL connection\n");
         ERR_print_errors_fp(stdout);
+        goto end;
+    }
+
+    if (timer_cb_count == 0) {
+        printf("timer_callback was not called.\n");
         goto end;
     }
 
