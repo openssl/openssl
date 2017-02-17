@@ -29,7 +29,8 @@ The number {nn} is (somewhat loosely) grouped as follows:
 60-79  APIs
    70  PACKET layer
 80-89  "larger" protocols (CA, CMS, OCSP, SSL, TSA)
-90-99  misc
+90-98  misc
+99     most time consuming tests [such as test_fuzz]
 
 
 A recipe that just runs a test executable
