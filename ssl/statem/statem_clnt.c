@@ -2240,11 +2240,9 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        /* Clear certificate digests and validity flags */
-        for (i = 0; i < SSL_PKEY_NUM; i++) {
-            s->s3->tmp.md[i] = NULL;
+        /* Clear certificate validity flags */
+        for (i = 0; i < SSL_PKEY_NUM; i++)
             s->s3->tmp.valid_flags[i] = 0;
-        }
         if (!tls1_save_sigalgs(s, &sigalgs)) {
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
             SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
@@ -2256,8 +2254,6 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
             SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-    } else {
-        ssl_set_default_md(s);
     }
 
     /* get the CA RDNs */

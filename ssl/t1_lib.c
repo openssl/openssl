@@ -568,7 +568,7 @@ void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
  * Check cert parameters compatible with extensions: currently just checks EC
  * certificates have compatible curves and compression.
  */
-static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
+static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
 {
     unsigned char comp_id, curve_id[2];
     EVP_PKEY *pkey;
@@ -591,9 +591,9 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
         return 0;
     /*
      * Special case for suite B. We *MUST* sign using SHA256+P-256 or
-     * SHA384+P-384, adjust digest if necessary.
+     * SHA384+P-384.
      */
-    if (set_ee_md && tls1_suiteb(s)) {
+    if (check_ee_md && tls1_suiteb(s)) {
         int check_md;
         size_t i;
         CERT *c = s->cert;
@@ -611,12 +611,6 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
                 break;
         if (i == c->shared_sigalgslen)
             return 0;
-        if (set_ee_md == 2) {
-            if (check_md == NID_ecdsa_with_SHA256)
-                s->s3->tmp.md[SSL_PKEY_ECC] = EVP_sha256();
-            else
-                s->s3->tmp.md[SSL_PKEY_ECC] = EVP_sha384();
-        }
     }
     return rv;
 }
@@ -1069,29 +1063,6 @@ int tls_use_ticket(SSL *s)
     return ssl_security(s, SSL_SECOP_TICKET, 0, 0, NULL);
 }
 
-/* Initialise digests to default values */
-void ssl_set_default_md(SSL *s)
-{
-    const EVP_MD **pmd = s->s3->tmp.md;
-#ifndef OPENSSL_NO_DSA
-    pmd[SSL_PKEY_DSA_SIGN] = ssl_md(SSL_MD_SHA1_IDX);
-#endif
-#ifndef OPENSSL_NO_RSA
-    if (SSL_USE_SIGALGS(s))
-        pmd[SSL_PKEY_RSA] = ssl_md(SSL_MD_SHA1_IDX);
-    else
-        pmd[SSL_PKEY_RSA] = ssl_md(SSL_MD_MD5_SHA1_IDX);
-#endif
-#ifndef OPENSSL_NO_EC
-    pmd[SSL_PKEY_ECC] = ssl_md(SSL_MD_SHA1_IDX);
-#endif
-#ifndef OPENSSL_NO_GOST
-    pmd[SSL_PKEY_GOST01] = ssl_md(SSL_MD_GOST94_IDX);
-    pmd[SSL_PKEY_GOST12_256] = ssl_md(SSL_MD_GOST12_256_IDX);
-    pmd[SSL_PKEY_GOST12_512] = ssl_md(SSL_MD_GOST12_512_IDX);
-#endif
-}
-
 int tls1_set_server_sigalgs(SSL *s)
 {
     int al;
@@ -1101,30 +1072,23 @@ int tls1_set_server_sigalgs(SSL *s)
     OPENSSL_free(s->cert->shared_sigalgs);
     s->cert->shared_sigalgs = NULL;
     s->cert->shared_sigalgslen = 0;
-    /* Clear certificate digests and validity flags */
-    for (i = 0; i < SSL_PKEY_NUM; i++) {
-        s->s3->tmp.md[i] = NULL;
+    /* Clear certificate validity flags */
+    for (i = 0; i < SSL_PKEY_NUM; i++)
         s->s3->tmp.valid_flags[i] = 0;
-    }
 
-    /* If sigalgs received process it. */
-    if (s->s3->tmp.peer_sigalgs) {
-        if (!tls1_process_sigalgs(s)) {
-            SSLerr(SSL_F_TLS1_SET_SERVER_SIGALGS, ERR_R_MALLOC_FAILURE);
-            al = SSL_AD_INTERNAL_ERROR;
-            goto err;
-        }
-        /* Fatal error is no shared signature algorithms */
-        if (!s->cert->shared_sigalgs) {
-            SSLerr(SSL_F_TLS1_SET_SERVER_SIGALGS,
-                   SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS);
-            al = SSL_AD_ILLEGAL_PARAMETER;
-            goto err;
-        }
-    } else {
-        ssl_set_default_md(s);
+    if (s->s3->tmp.peer_sigalgs == NULL)
+        return 1;
+
+    if (!tls1_process_sigalgs(s)) {
+        SSLerr(SSL_F_TLS1_SET_SERVER_SIGALGS, ERR_R_MALLOC_FAILURE);
+        al = SSL_AD_INTERNAL_ERROR;
+        goto err;
     }
-    return 1;
+    if (s->cert->shared_sigalgs != NULL)
+        return 1;
+    /* Fatal error is no shared signature algorithms */
+    SSLerr(SSL_F_TLS1_SET_SERVER_SIGALGS, SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS);
+    al = SSL_AD_ILLEGAL_PARAMETER;
  err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
     return 0;
@@ -1587,62 +1551,26 @@ int tls1_save_sigalgs(SSL *s, PACKET *pkt)
 
 int tls1_process_sigalgs(SSL *s)
 {
-    int idx;
     size_t i;
-    const EVP_MD *md;
-    const EVP_MD **pmd = s->s3->tmp.md;
     uint32_t *pvalid = s->s3->tmp.valid_flags;
     CERT *c = s->cert;
 
     if (!tls1_set_shared_sigalgs(s))
         return 0;
 
+    for (i = 0; i < SSL_PKEY_NUM; i++)
+        pvalid[i] = 0;
+
     for (i = 0; i < c->shared_sigalgslen; i++) {
         const SIGALG_LOOKUP *sigptr = c->shared_sigalgs[i];
+        int idx = sigptr->sig_idx;
 
         /* Ignore PKCS1 based sig algs in TLSv1.3 */
         if (SSL_IS_TLS13(s) && sigptr->sig == EVP_PKEY_RSA)
             continue;
-        idx = tls12_get_pkey_idx(sigptr->sig);
-        if (idx >= 0 && pmd[idx] == NULL) {
-            md = ssl_md(sigptr->hash_idx);
-            pmd[idx] = md;
-            pvalid[idx] = CERT_PKEY_EXPLICIT_SIGN;
-        }
-    }
-    /*
-     * In strict mode or TLS1.3 leave unset digests as NULL to indicate we can't
-     * use the certificate for signing.
-     */
-    if (!(s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)
-            && !SSL_IS_TLS13(s)) {
-        /*
-         * Set any remaining keys to default values. NOTE: if alg is not
-         * supported it stays as NULL.
-         */
-#ifndef OPENSSL_NO_DSA
-        if (pmd[SSL_PKEY_DSA_SIGN] == NULL)
-            pmd[SSL_PKEY_DSA_SIGN] = EVP_sha1();
-#endif
-#ifndef OPENSSL_NO_RSA
-        if (pmd[SSL_PKEY_RSA] == NULL) {
-            pmd[SSL_PKEY_RSA] = EVP_sha1();
-        }
-#endif
-#ifndef OPENSSL_NO_EC
-        if (pmd[SSL_PKEY_ECC] == NULL)
-            pmd[SSL_PKEY_ECC] = EVP_sha1();
-#endif
-#ifndef OPENSSL_NO_GOST
-        if (pmd[SSL_PKEY_GOST01] == NULL)
-            pmd[SSL_PKEY_GOST01] = EVP_get_digestbynid(NID_id_GostR3411_94);
-        if (pmd[SSL_PKEY_GOST12_256] == NULL)
-            pmd[SSL_PKEY_GOST12_256] =
-                EVP_get_digestbynid(NID_id_GostR3411_2012_256);
-        if (pmd[SSL_PKEY_GOST12_512] == NULL)
-            pmd[SSL_PKEY_GOST12_512] =
-                EVP_get_digestbynid(NID_id_GostR3411_2012_512);
-#endif
+        /* If not disabled indicate we can explicitly sign */
+        if (pvalid[idx] == 0 && tls12_get_pkey_idx(sigptr->sig) != -1)
+            pvalid[sigptr->sig_idx] = CERT_PKEY_EXPLICIT_SIGN;
     }
     return 1;
 }
@@ -2020,7 +1948,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
         rv |= CERT_PKEY_EE_SIGNATURE | CERT_PKEY_CA_SIGNATURE;
  skip_sigs:
     /* Check cert parameters are consistent */
-    if (tls1_check_cert_param(s, x, check_flags ? 1 : 2))
+    if (tls1_check_cert_param(s, x, 1))
         rv |= CERT_PKEY_EE_PARAM;
     else if (!check_flags)
         goto end;
@@ -2106,8 +2034,6 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
     if (TLS1_get_version(s) >= TLS1_2_VERSION) {
         if (*pvalid & CERT_PKEY_EXPLICIT_SIGN)
             rv |= CERT_PKEY_EXPLICIT_SIGN | CERT_PKEY_SIGN;
-        else if (s->s3->tmp.md[idx] != NULL)
-            rv |= CERT_PKEY_SIGN;
     } else
         rv |= CERT_PKEY_SIGN | CERT_PKEY_EXPLICIT_SIGN;
 
