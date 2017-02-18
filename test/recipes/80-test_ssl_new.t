@@ -24,8 +24,8 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 
 my @conf_srcs =  glob(srctop_file("test", "ssl-tests", "*.conf.in"));
 map { s/;.*// } @conf_srcs if $^O eq "VMS";
-my @conf_files = map { basename($_) } @conf_srcs;
-map { s/\.in// } @conf_files;
+my @conf_files = map { basename($_, ".in") } @conf_srcs;
+map { s/\^// } @conf_files if $^O eq "VMS";
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
