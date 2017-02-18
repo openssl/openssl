@@ -162,7 +162,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
     if (malloc_impl != NULL && malloc_impl != CRYPTO_malloc)
         return malloc_impl(num, file, line);
 
-    if (num <= 0)
+    if (num == 0)
         return NULL;
 
     FAILTEST();
