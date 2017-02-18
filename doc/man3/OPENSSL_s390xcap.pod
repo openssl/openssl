@@ -95,6 +95,17 @@ The following bits are significant:
 
 :
 :
+
+=over
+
+=item #43 KMF-AES-256
+
+=item #44 KMF-AES-192
+
+=item #45 KMF-AES-128
+
+=back
+
 :
 :
 
