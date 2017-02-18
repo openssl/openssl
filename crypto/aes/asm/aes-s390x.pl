@@ -2378,6 +2378,46 @@ s390x_aes_ecb_blocks:
 ___
 }
 
+################
+# void s390x_aes_cfb_blocks(unsigned char *out,
+#                           unsigned char iv[AES_BLOCK_SIZE],
+#                           const unsigned char *in, size_t len,
+#                           const AES_KEY *key, int s, int enc)
+{
+my ($out,$iv,$in,$len,$key,$s,$enc) = map("%r$_",(2..8));
+$code.=<<___ if (!$softonly);
+.globl	s390x_aes_cfb_blocks
+.type	s390x_aes_cfb_blocks,\@function
+.align	16
+s390x_aes_cfb_blocks:
+	stm$g	$s,$enc,7*$SIZE_T($sp)
+	lm$g	$s,$enc,$stdframe($sp)
+	aghi	$sp,-48
+	lhi	%r1,128
+
+	sllg	%r0,$s,24
+	sll	$enc,7
+	xr	$enc,%r1
+	o	%r0,240($key)	# kmf capability vector checked by caller
+	or	%r0,$enc
+
+	mvc	0(16,$sp),0($iv)
+	mvc	16(32,$sp),0($key)
+	la	%r1,0($sp)
+
+	.long	0xb92a0024	# kmf $out,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	mvc	0(16,$iv),0($sp)
+	xc	0(48,$sp),0($sp)	# wipe iv,key
+
+	la	$sp,48($sp)
+	lm$g	$s,$enc,7*$SIZE_T($sp)
+	br	$ra
+.size	s390x_aes_cfb_blocks,.-s390x_aes_cfb_blocks
+___
+}
+
 $code.=<<___;
 .string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
 .comm	OPENSSL_s390xcap_P,152,8
