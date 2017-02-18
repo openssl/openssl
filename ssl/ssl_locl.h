@@ -1320,8 +1320,6 @@ typedef struct ssl3_state_st {
         size_t peer_sigalgslen;
         /* Sigalg peer actualy uses */
         const SIGALG_LOOKUP *peer_sigalg;
-        /* Array of digests used for signing */
-        const EVP_MD *md[SSL_PKEY_NUM];
         /*
          * Set if corresponding CERT_PKEY can be used with current
          * SSL session: e.g. appropriate curve, signature algorithms etc.
