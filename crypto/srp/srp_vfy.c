@@ -42,7 +42,7 @@ static int t_fromb64(unsigned char *a, size_t alen, const char *src)
     while (*src && (*src == ' ' || *src == '\t' || *src == '\n'))
         ++src;
     size = strlen(src);
-    if (size > (int)alen)
+    if (size < 0 || size > (int)alen)
         return -1;
 
     i = 0;
