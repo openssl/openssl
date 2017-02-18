@@ -80,7 +80,7 @@ static int t_fromb64(unsigned char *a, size_t alen, const char *src)
         if (--i < 0)
             break;
     }
-    while (a[j] == 0 && j <= size)
+    while (j <= size && a[j] == 0)
         ++j;
     i = 0;
     while (j <= size)
