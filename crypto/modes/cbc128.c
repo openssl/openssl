@@ -76,6 +76,9 @@ void CRYPTO_cbc128_decrypt(const unsigned char *in, unsigned char *out,
         unsigned char c[16];
     } tmp;
 
+    if (len == 0)
+        return;
+
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
     if (in != out) {
         const unsigned char *iv = ivec;
