@@ -46,6 +46,8 @@ my $no_dtls = alldisabled(available_protocols("dtls"));
 my $no_npn = disabled("nextprotoneg");
 my $no_ct = disabled("ct");
 my $no_ec = disabled("ec");
+my $no_dh = disabled("dh");
+my $no_dsa = disabled("dsa");
 my $no_ec2m = disabled("ec2m");
 my $no_ocsp = disabled("ocsp");
 
@@ -58,7 +60,7 @@ my %conf_dependent_tests = (
   "10-resumption.conf" => !$is_default_tls,
   "11-dtls_resumption.conf" => !$is_default_dtls,
   "19-mac-then-encrypt.conf" => !$is_default_tls,
-  "20-cert-select.conf" => !$is_default_tls,
+  "20-cert-select.conf" => !$is_default_tls && !$no_dh && !$no_dsa,
 );
 
 # Add your test here if it should be skipped for some compile-time
