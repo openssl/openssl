@@ -117,3 +117,15 @@ Since the corpus depends on the default behaviour of the client and the server,
 changes in what they send by default will have an impact on the coverage. The
 corpus will need to be updated in that case.
 
+Updating the corpus
+===================
+
+The client and server corpus is generated with multiple config options:
+- The options as documented above
+- Without enable-ec_nistp_64_gcc_128 and without --debug
+- With no-asm
+- Using 32 bit
+- A default config, plus options needed to generate the fuzzer.
+
+The libfuzzer merge option is used to add the additional coverage
+from each config to the minimal set.
