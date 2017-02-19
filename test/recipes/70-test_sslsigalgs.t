@@ -48,7 +48,7 @@ use constant {
 
 #Test 1: Default sig algs should succeed
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 15;
+plan tests => 16;
 ok(TLSProxy::Message->success, "Default sigalgs");
 my $testtype;
 
@@ -183,6 +183,18 @@ SKIP: {
     $proxy->start();
     ok(TLSProxy::Message->fail, "No matching TLSv1.2 sigalgs");
     $proxy->filter(\&sigalgs_filter);
+
+    #Test 16: No sig algs extension, ECDSA cert, TLSv1.2 should succeed
+    $proxy->clear();
+    $testtype = NO_SIG_ALGS_EXT;
+    $proxy->clientflags("-no_tls1_3");
+    $proxy->serverflags("-cert " . srctop_file("test", "certs",
+                                               "server-ecdsa-cert.pem") .
+                        " -key " . srctop_file("test", "certs",
+                                               "server-ecdsa-key.pem")),
+    $proxy->ciphers("ECDHE-ECDSA-AES128-SHA:TLS13-AES-128-GCM-SHA256");
+    $proxy->start();
+    ok(TLSProxy::Message->success, "No TLSv1.2 sigalgs, ECDSA");
 }
 
 
