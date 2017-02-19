@@ -92,10 +92,8 @@ static int update_index(CA_DB *db, char **row)
     int i;
 
     irow = app_malloc(sizeof(*irow) * (DB_NUMBER + 1), "row pointers");
-    for (i = 0; i < DB_NUMBER; i++) {
+    for (i = 0; i < DB_NUMBER; i++)
         irow[i] = row[i];
-        row[i] = NULL;
-    }
     irow[DB_NUMBER] = NULL;
 
     if (!TXT_DB_insert(db->db, irow)) {
