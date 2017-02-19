@@ -1075,9 +1075,30 @@ int tls1_set_server_sigalgs(SSL *s)
     /* Clear certificate validity flags */
     for (i = 0; i < SSL_PKEY_NUM; i++)
         s->s3->tmp.valid_flags[i] = 0;
+    /*
+     * If peer sent no signature algorithms check to see if we support
+     * the default algorithm for each certificate type
+     */
+    if (s->s3->tmp.peer_sigalgs == NULL) {
+        const uint16_t *sent_sigs;
+        size_t sent_sigslen = tls12_get_psigalgs(s, 1, &sent_sigs);
 
-    if (s->s3->tmp.peer_sigalgs == NULL)
+        for (i = 0; i < SSL_PKEY_NUM; i++) {
+            const SIGALG_LOOKUP *lu = tls1_get_legacy_sigalg(s, i);
+            size_t j;
+
+            if (lu == NULL)
+                continue;
+            /* Check default matches a type we sent */
+            for (j = 0; j < sent_sigslen; j++) {
+                if (lu->sigalg == sent_sigs[j]) {
+                        s->s3->tmp.valid_flags[i] = CERT_PKEY_SIGN;
+                        break;
+                }
+            }
+        }
         return 1;
+    }
 
     if (!tls1_process_sigalgs(s)) {
         SSLerr(SSL_F_TLS1_SET_SERVER_SIGALGS, ERR_R_MALLOC_FAILURE);
@@ -1570,7 +1591,7 @@ int tls1_process_sigalgs(SSL *s)
             continue;
         /* If not disabled indicate we can explicitly sign */
         if (pvalid[idx] == 0 && tls12_get_pkey_idx(sigptr->sig) != -1)
-            pvalid[sigptr->sig_idx] = CERT_PKEY_EXPLICIT_SIGN;
+            pvalid[sigptr->sig_idx] = CERT_PKEY_EXPLICIT_SIGN | CERT_PKEY_SIGN;
     }
     return 1;
 }
@@ -2031,10 +2052,9 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 
  end:
 
-    if (TLS1_get_version(s) >= TLS1_2_VERSION) {
-        if (*pvalid & CERT_PKEY_EXPLICIT_SIGN)
-            rv |= CERT_PKEY_EXPLICIT_SIGN | CERT_PKEY_SIGN;
-    } else
+    if (TLS1_get_version(s) >= TLS1_2_VERSION)
+        rv |= *pvalid & (CERT_PKEY_EXPLICIT_SIGN | CERT_PKEY_SIGN);
+    else
         rv |= CERT_PKEY_SIGN | CERT_PKEY_EXPLICIT_SIGN;
 
     /*
@@ -2042,11 +2062,11 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
      * chain is invalid.
      */
     if (!check_flags) {
-        if (rv & CERT_PKEY_VALID)
+        if (rv & CERT_PKEY_VALID) {
             *pvalid = rv;
-        else {
-            /* Preserve explicit sign flag, clear rest */
-            *pvalid &= CERT_PKEY_EXPLICIT_SIGN;
+        } else {
+            /* Preserve sign and explicit sign flag, clear rest */
+            *pvalid &= CERT_PKEY_EXPLICIT_SIGN | CERT_PKEY_SIGN;
             return 0;
         }
     }
