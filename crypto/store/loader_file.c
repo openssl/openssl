@@ -1313,6 +1313,7 @@ static OSSL_STORE_LOADER file_loader =
         file_open,
         file_ctrl,
         file_expect,
+        NULL,
         file_load,
         file_eof,
         file_error,

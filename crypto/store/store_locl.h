@@ -62,6 +62,34 @@ BUF_MEM *ossl_store_info_get0_EMBEDDED_buffer(OSSL_STORE_INFO *info);
 char *ossl_store_info_get0_EMBEDDED_pem_name(OSSL_STORE_INFO *info);
 
 /*-
+ *  OSSL_STORE_SEARCH stuff
+ *  -----------------------
+ */
+
+struct ossl_store_search_st {
+    int search_type;
+
+    /*
+     * Used by OSSL_STORE_SEARCH_BY_NAME and
+     * OSSL_STORE_SEARCH_BY_ISSUER_SERIAL
+     */
+    X509_NAME *name;
+
+    /* Used by OSSL_STORE_SEARCH_BY_ISSUER_SERIAL */
+    const ASN1_INTEGER *serial;
+
+    /* Used by OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT */
+    const EVP_MD *digest;
+
+    /*
+     * Used by OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT and
+     * OSSL_STORE_SEARCH_BY_ALIAS
+     */
+    const unsigned char *string;
+    size_t stringlength;
+};
+
+/*-
  *  OSSL_STORE_LOADER stuff
  *  -----------------------
  */
@@ -76,6 +104,7 @@ struct ossl_store_loader_st {
     OSSL_STORE_open_fn open;
     OSSL_STORE_ctrl_fn ctrl;
     OSSL_STORE_expect_fn expect;
+    OSSL_STORE_find_fn find;
     OSSL_STORE_load_fn load;
     OSSL_STORE_eof_fn eof;
     OSSL_STORE_error_fn error;
