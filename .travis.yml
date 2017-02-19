@@ -7,7 +7,6 @@ addons:
 
 os:
     - linux
-    - osx
 
 compiler:
     - clang
