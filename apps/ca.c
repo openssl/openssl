@@ -2126,10 +2126,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         goto err;
     }
 
-    for (i = 0; i < DB_NUMBER; i++) {
+    for (i = 0; i < DB_NUMBER; i++)
         irow[i] = row[i];
-        row[i] = NULL;
-    }
     irow[DB_NUMBER] = NULL;
 
     if (!TXT_DB_insert(db->db, irow)) {
@@ -2137,11 +2135,14 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         BIO_printf(bio_err, "TXT_DB error number %ld\n", db->db->error);
         goto err;
     }
+    irow = NULL;
     ok = 1;
  err:
-    for (i = 0; i < DB_NUMBER; i++)
-        if (row[i] != NULL)
+    if (irow != NULL) {
+        for (i = 0; i < DB_NUMBER; i++)
             OPENSSL_free(row[i]);
+        OPENSSL_free(irow);
+    }
 
     if (CAname != NULL)
         X509_NAME_free(CAname);
