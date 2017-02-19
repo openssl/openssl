@@ -14,10 +14,10 @@ before_build:
     - ps: >-
         If ($env:Platform -Match "x86") {
             $env:VCVARS_PLATFORM="x86"
-            $env:TARGET="VC-WIN32"
+            $env:TARGET="VC-WIN32 no-asm"
         } Else {
             $env:VCVARS_PLATFORM="amd64"
-            $env:TARGET="VC-WIN64A"
+            $env:TARGET="VC-WIN64A-masm"
         }
     - ps: >-
         If ($env:Configuration -Match "shared") {
@@ -29,7 +29,7 @@ before_build:
     - call "%VSCOMNTOOLS%\..\..\VC\vcvarsall.bat" %VCVARS_PLATFORM%
     - mkdir _build
     - cd _build
-    - perl ..\Configure %TARGET% no-asm %SHARED%
+    - perl ..\Configure %TARGET% %SHARED%
     - cd ..
 
 build_script:
