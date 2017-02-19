@@ -2426,6 +2426,37 @@ s390x_aes_cfb_blocks:
 ___
 }
 
+################
+# void s390x_aes_cbc_mac_blocks(unsigned char mac[AES_BLOCK_SIZE],
+#                               const AES_KEY *key, const unsigned char *in,
+#                               size_t len)
+{
+my ($mac,$key,$in,$len) = map("%r$_",(2..6));
+$code.=<<___ if (!$softonly);
+.globl	s390x_aes_cbc_mac_blocks
+.type	s390x_aes_cbc_mac_blocks,\@function
+.align	16
+s390x_aes_cbc_mac_blocks:
+	aghi	$sp,-48
+	l	%r0,240($key)	# kmac capability vector checked by caller
+	nill	%r0,0xff7f	# clear "decrypt" bit
+
+	mvc	0(16,$sp),0($mac)
+	mvc	16(32,$sp),0($key)
+	la	%r1,0($sp)
+
+	.long	0xb91e0024	# kmac %r2,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	mvc	0(16,$mac),0($sp)
+	xc	0(48,$sp),0($sp)	# wipe mac,key
+
+	la	$sp,48($sp)
+	br	$ra
+.size	s390x_aes_cbc_mac_blocks,.-s390x_aes_cbc_mac_blocks
+___
+}
+
 $code.=<<___;
 .string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
 .comm	OPENSSL_s390xcap_P,152,8
