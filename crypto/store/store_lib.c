@@ -147,6 +147,22 @@ int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type)
     return 1;
 }
 
+int OSSL_STORE_find(OSSL_STORE_CTX *ctx, OSSL_STORE_SEARCH *search)
+{
+    if (ctx->loading) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_FIND,
+                      OSSL_STORE_R_LOADING_STARTED);
+        return 0;
+    }
+    if (ctx->loader->find == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_FIND,
+                      OSSL_STORE_R_UNSUPPORTED_OPERATION);
+        return 0;
+    }
+
+    return ctx->loader->find(ctx->loader_ctx, search);
+}
+
 OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
 {
     OSSL_STORE_INFO *v = NULL;
@@ -450,6 +466,135 @@ void OSSL_STORE_INFO_free(OSSL_STORE_INFO *info)
         }
         OPENSSL_free(info);
     }
+}
+
+int OSSL_STORE_supports_search(OSSL_STORE_CTX *ctx, int search_type)
+{
+    OSSL_STORE_SEARCH tmp_search;
+
+    if (ctx->loader->find == NULL)
+        return 0;
+    tmp_search.search_type = search_type;
+    return ctx->loader->find(NULL, &tmp_search);
+}
+
+/* Search term constructors */
+OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_name(X509_NAME *name)
+{
+    OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
+
+    if (search == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_NAME,
+                      ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    search->search_type = OSSL_STORE_SEARCH_BY_NAME;
+    search->name = name;
+    return search;
+}
+
+OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_issuer_serial(X509_NAME *name,
+                                                    const ASN1_INTEGER *serial)
+{
+    OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
+
+    if (search == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_ISSUER_SERIAL,
+                      ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    search->search_type = OSSL_STORE_SEARCH_BY_ISSUER_SERIAL;
+    search->name = name;
+    search->serial = serial;
+    return search;
+}
+
+OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_key_fingerprint(const EVP_MD *digest,
+                                                        const unsigned char
+                                                        *bytes, size_t len)
+{
+    OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
+
+    if (search == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT,
+                      ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    if (digest != NULL && len != (size_t)EVP_MD_size(digest)) {
+        char buf1[20], buf2[20];
+
+        BIO_snprintf(buf1, sizeof(buf1), "%d", EVP_MD_size(digest));
+        BIO_snprintf(buf2, sizeof(buf2), "%zu", len);
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT,
+                      OSSL_STORE_R_FINGERPRINT_SIZE_DOES_NOT_MATCH_DIGEST);
+        ERR_add_error_data(5, EVP_MD_name(digest), " size is ", buf1,
+                           ", fingerprint size is ", buf2);
+    }
+
+    search->search_type = OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT;
+    search->digest = digest;
+    search->string = bytes;
+    search->stringlength = len;
+    return search;
+}
+
+OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_alias(const char *alias)
+{
+    OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
+
+    if (search == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_ALIAS,
+                      ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    search->search_type = OSSL_STORE_SEARCH_BY_ALIAS;
+    search->string = (const unsigned char *)alias;
+    search->stringlength = strlen(alias);
+    return search;
+}
+
+/* Search term destructor */
+void OSSL_STORE_SEARCH_free(OSSL_STORE_SEARCH *search)
+{
+    OPENSSL_free(search);
+}
+
+/* Search term accessors */
+int OSSL_STORE_SEARCH_get_type(const OSSL_STORE_SEARCH *criterion)
+{
+    return criterion->search_type;
+}
+
+X509_NAME *OSSL_STORE_SEARCH_get0_name(OSSL_STORE_SEARCH *criterion)
+{
+    return criterion->name;
+}
+
+const ASN1_INTEGER *OSSL_STORE_SEARCH_get0_serial(const OSSL_STORE_SEARCH
+                                                 *criterion)
+{
+    return criterion->serial;
+}
+
+const unsigned char *OSSL_STORE_SEARCH_get0_bytes(const OSSL_STORE_SEARCH
+                                                  *criterion, size_t *length)
+{
+    *length = criterion->stringlength;
+    return criterion->string;
+}
+
+const char *OSSL_STORE_SEARCH_get0_string(const OSSL_STORE_SEARCH *criterion)
+{
+    return (const char *)criterion->string;
+}
+
+const EVP_MD *OSSL_STORE_SEARCH_get0_digest(const OSSL_STORE_SEARCH *criterion)
+{
+    return criterion->digest;
 }
 
 /* Internal functions */

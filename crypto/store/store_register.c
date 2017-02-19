@@ -85,6 +85,13 @@ int OSSL_STORE_LOADER_set_expect(OSSL_STORE_LOADER *loader,
     return 1;
 }
 
+int OSSL_STORE_LOADER_set_find(OSSL_STORE_LOADER *loader,
+                               OSSL_STORE_find_fn find_function)
+{
+    loader->find = find_function;
+    return 1;
+}
+
 int OSSL_STORE_LOADER_set_load(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_load_fn load_function)
 {

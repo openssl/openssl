@@ -4507,3 +4507,17 @@ X509_get0_authority_key_id              4448	1_1_0h	EXIST::FUNCTION:
 BIO_bind                                4449	1_1_1	EXIST::FUNCTION:SOCK
 OSSL_STORE_LOADER_set_expect            4450	1_1_1	EXIST::FUNCTION:
 OSSL_STORE_expect                       4451	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_SEARCH_by_key_fingerprint    4452	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_SEARCH_get0_serial           4453	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_SEARCH_by_name               4454	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_supports_search              4455	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_find                         4456	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_SEARCH_get_type              4457	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_SEARCH_get0_bytes            4458	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_SEARCH_get0_string           4459	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_SEARCH_by_issuer_serial      4460	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_SEARCH_get0_name             4461	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_SEARCH_by_alias              4462	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_LOADER_set_find              4463	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_SEARCH_free                  4464	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_SEARCH_get0_digest           4465	1_1_1	EXIST::FUNCTION:
