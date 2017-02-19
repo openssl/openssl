@@ -2768,8 +2768,8 @@ void ssl_set_masks(SSL *s)
 #endif
 
     rsa_enc = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
-    rsa_sign = pvalid[SSL_PKEY_RSA] & CERT_PKEY_SIGN;
-    dsa_sign = pvalid[SSL_PKEY_DSA_SIGN] & CERT_PKEY_SIGN;
+    rsa_sign = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
+    dsa_sign = pvalid[SSL_PKEY_DSA_SIGN] & CERT_PKEY_VALID;
 #ifndef OPENSSL_NO_EC
     have_ecc_cert = pvalid[SSL_PKEY_ECC] & CERT_PKEY_VALID;
 #endif
