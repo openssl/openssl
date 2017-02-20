@@ -1746,6 +1746,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_server_name,
     TLSEXT_IDX_srp,
     TLSEXT_IDX_early_data_info,
+    TLSEXT_IDX_early_data,
     TLSEXT_IDX_ec_point_formats,
     TLSEXT_IDX_supported_groups,
     TLSEXT_IDX_session_ticket,

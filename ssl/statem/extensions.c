@@ -135,6 +135,11 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL, NULL, tls_parse_stoc_early_data_info,
         tls_construct_stoc_early_data_info, NULL, NULL
     },
+    {
+        TLSEXT_TYPE_early_data,
+        EXT_CLIENT_HELLO | EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
+        NULL, NULL, NULL, NULL, tls_construct_ctos_early_data, NULL
+    },
 #ifndef OPENSSL_NO_EC
     {
         TLSEXT_TYPE_ec_point_formats,

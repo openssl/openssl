@@ -108,6 +108,26 @@ static int use_ecc(SSL *s)
     return i < end;
 }
 
+int tls_construct_ctos_early_data(SSL *s, WPACKET *pkt, unsigned int context,
+                                  X509 *x, size_t chainidx, int *al)
+{
+    if (s->early_data_state != SSL_EARLY_DATA_CONNECTING
+            || s->session->ext.max_early_data == 0) {
+        s->max_early_data = 0;
+        return 1;
+    }
+    s->max_early_data = s->session->ext.max_early_data;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_early_data)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
 int tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
                                      X509 *x, size_t chainidx, int *al)
 {

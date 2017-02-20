@@ -476,7 +476,8 @@ static ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_padding, "padding"},
     {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"},
-    {TLSEXT_TYPE_early_data_info, "ticket_early_data_info"}
+    {TLSEXT_TYPE_early_data_info, "ticket_early_data_info"},
+    {TLSEXT_TYPE_early_data, "early_data"}
 };
 
 static ssl_trace_tbl ssl_groups_tbl[] = {

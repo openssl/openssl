@@ -301,6 +301,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CTOS_ALPN), "tls_construct_ctos_alpn"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CTOS_CERTIFICATE),
      "TLS_CONSTRUCT_CTOS_CERTIFICATE"},
+    {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA),
+     "tls_construct_ctos_early_data"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CTOS_EC_PT_FORMATS),
      "tls_construct_ctos_ec_pt_formats"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_CTOS_EMS), "tls_construct_ctos_ems"},
