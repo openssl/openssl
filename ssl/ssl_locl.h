@@ -575,6 +575,8 @@ struct ssl_session_st {
         unsigned long tick_lifetime_hint;
         uint32_t tick_age_add;
         int tick_identity;
+        /* Max number of bytes that can be sent as early data */
+        uint32_t max_early_data;
     } ext;
 # ifndef OPENSSL_NO_SRP
     char *srp_username;

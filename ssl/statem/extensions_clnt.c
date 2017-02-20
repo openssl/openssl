@@ -879,6 +879,24 @@ int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, unsigned int context,
     return 1;
 }
 
+int tls_parse_stoc_early_data_info(SSL *s, PACKET *pkt, unsigned int context,
+                                   X509 *x, size_t chainidx, int *al)
+{
+    unsigned long max_early_data;
+
+    if (!PACKET_get_net_4(pkt, &max_early_data)
+            || PACKET_remaining(pkt) != 0) {
+        SSLerr(SSL_F_TLS_PARSE_STOC_EARLY_DATA_INFO,
+               SSL_R_INVALID_MAX_EARLY_DATA);
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
+
+    s->session->ext.max_early_data = max_early_data;
+
+    return 1;
+}
+
 #ifndef OPENSSL_NO_EC
 int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx, int *al)
