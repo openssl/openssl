@@ -57,6 +57,8 @@ static const ERR_STRING_DATA X509_str_functs[] = {
      "X509_get_pubkey_parameters"},
     {ERR_PACK(ERR_LIB_X509, X509_F_X509_LOAD_CERT_CRL_FILE, 0),
      "X509_load_cert_crl_file"},
+    {ERR_PACK(ERR_LIB_X509, X509_F_X509_LOAD_CERT_CRL_FILE_INT, 0),
+     "x509_load_cert_crl_file_int"},
     {ERR_PACK(ERR_LIB_X509, X509_F_X509_LOAD_CERT_FILE, 0),
      "X509_load_cert_file"},
     {ERR_PACK(ERR_LIB_X509, X509_F_X509_LOAD_CRL_FILE, 0),

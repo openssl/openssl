@@ -47,6 +47,7 @@ int ERR_load_X509_strings(void);
 # define X509_F_X509_EXTENSION_CREATE_BY_OBJ              109
 # define X509_F_X509_GET_PUBKEY_PARAMETERS                110
 # define X509_F_X509_LOAD_CERT_CRL_FILE                   132
+# define X509_F_X509_LOAD_CERT_CRL_FILE_INT               151
 # define X509_F_X509_LOAD_CERT_FILE                       111
 # define X509_F_X509_LOAD_CRL_FILE                        112
 # define X509_F_X509_LOOKUP_METH_NEW                      160
