@@ -78,6 +78,17 @@ The following bits are significant:
 
 :
 :
+
+=over
+
+=item #43 KMAC-AES-256
+
+=item #44 KMAC-AES-192
+
+=item #45 KMAC-AES-128
+
+=back
+
 :
 :
 :
