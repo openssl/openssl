@@ -288,6 +288,8 @@ int tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
                                         unsigned int context, X509 *x,
                                         size_t chainidx, int *al);
 #endif
+int tls_construct_ctos_early_data(SSL *s, WPACKET *pkt, unsigned int context,
+                                  X509 *x, size_t chainidx, int *al);
 int tls_construct_ctos_session_ticket(SSL *s, WPACKET *pkt,
                                       unsigned int context, X509 *x,
                                       size_t chainidx, int *al);
