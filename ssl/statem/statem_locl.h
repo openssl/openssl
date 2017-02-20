@@ -191,6 +191,8 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_ctos_srp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx, int *al);
 #endif
+int tls_parse_ctos_early_data(SSL *s, PACKET *pkt, unsigned int context,
+                              X509 *x, size_t chainidx, int *al);
 #ifndef OPENSSL_NO_EC
 int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx, int *al);

@@ -162,6 +162,19 @@ int tls_parse_ctos_srp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 }
 #endif
 
+int tls_parse_ctos_early_data(SSL *s, PACKET *pkt, unsigned int context,
+                              X509 *x, size_t chainidx, int *al)
+{
+    if (PACKET_remaining(pkt) != 0) {
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
+
+    s->ext.expect_early_data = 1;
+
+    return 1;
+}
+
 #ifndef OPENSSL_NO_EC
 int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx, int *al)
