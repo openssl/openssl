@@ -65,6 +65,7 @@ typedef struct {
     ASN1_OCTET_STRING *srp_username;
 #endif
     long flags;
+    uint32_t max_early_data;
 } SSL_SESSION_ASN1;
 
 ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
@@ -91,7 +92,8 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_EXP_OPT(SSL_SESSION_ASN1, srp_username, ASN1_OCTET_STRING, 12),
 #endif
     ASN1_EXP_OPT(SSL_SESSION_ASN1, flags, ZLONG, 13),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, tlsext_tick_age_add, ZLONG, 14)
+    ASN1_EXP_OPT(SSL_SESSION_ASN1, tlsext_tick_age_add, ZLONG, 14),
+    ASN1_EXP_OPT(SSL_SESSION_ASN1, max_early_data, ZLONG, 15)
 } static_ASN1_SEQUENCE_END(SSL_SESSION_ASN1)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
@@ -203,6 +205,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 #endif                          /* OPENSSL_NO_SRP */
 
     as.flags = in->flags;
+    as.max_early_data = in->ext.max_early_data;
 
     return i2d_SSL_SESSION_ASN1(&as, pp);
 
@@ -357,6 +360,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 #endif                          /* OPENSSL_NO_SRP */
     /* Flags defaults to zero which is fine */
     ret->flags = as->flags;
+    ret->ext.max_early_data = as->max_early_data;
 
     M_ASN1_free_of(as, SSL_SESSION_ASN1);
 

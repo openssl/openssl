@@ -2382,6 +2382,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PARSE_CTOS_PSK                         505
 # define SSL_F_TLS_PARSE_CTOS_RENEGOTIATE                 464
 # define SSL_F_TLS_PARSE_CTOS_USE_SRTP                    465
+# define SSL_F_TLS_PARSE_STOC_EARLY_DATA_INFO             520
 # define SSL_F_TLS_PARSE_STOC_KEY_SHARE                   445
 # define SSL_F_TLS_PARSE_STOC_PSK                         502
 # define SSL_F_TLS_PARSE_STOC_RENEGOTIATE                 448
@@ -2525,6 +2526,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_INVALID_CONFIGURATION_NAME                 113
 # define SSL_R_INVALID_CT_VALIDATION_TYPE                 212
 # define SSL_R_INVALID_KEY_UPDATE_TYPE                    120
+# define SSL_R_INVALID_MAX_EARLY_DATA                     174
 # define SSL_R_INVALID_NULL_CMD_NAME                      385
 # define SSL_R_INVALID_SEQUENCE_NUMBER                    402
 # define SSL_R_INVALID_SERVERINFO_DATA                    388
