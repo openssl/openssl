@@ -193,6 +193,7 @@ static int AES_ige_192_encrypt_loop(void *args);
 static int AES_ige_256_encrypt_loop(void *args);
 static int CRYPTO_gcm128_aad_loop(void *args);
 static int EVP_Update_loop(void *args);
+static int EVP_Update_loop_ccm(void *args);
 static int EVP_Digest_loop(void *args);
 #ifndef OPENSSL_NO_RSA
 static int RSA_sign_loop(void *args);
@@ -857,6 +858,39 @@ static int EVP_Update_loop(void *args)
         EVP_EncryptFinal_ex(ctx, buf, &outl);
     return count;
 }
+/*
+ * CCM does not support streaming. For the purpose of performance measurement,
+ * each message is encrypted using the same (key,iv)-pair. Do not use this
+ * code in your application.
+ */
+static int EVP_Update_loop_ccm(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    EVP_CIPHER_CTX *ctx = tempargs->ctx;
+    int outl, count;
+    unsigned char tag[12];
+#ifndef SIGALRM
+    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
+#endif
+    if (decrypt) {
+        for (count = 0; COND(nb_iter); count++) {
+            EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
+            EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(tag), tag);
+            EVP_DecryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]);
+            EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            EVP_DecryptFinal_ex(ctx, buf, &outl);
+        }
+    } else {
+        for (count = 0; COND(nb_iter); count++) {
+            EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv);
+            EVP_EncryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]);
+            EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            EVP_EncryptFinal_ex(ctx, buf, &outl);
+        }
+    }
+    return count;
+}
 
 static const EVP_MD *evp_md = NULL;
 static int EVP_Digest_loop(void *args)
@@ -1181,6 +1215,7 @@ static int run_benchmark(int async_jobs,
 int speed_main(int argc, char **argv)
 {
     ENGINE *e = NULL;
+    int (*loopfunc)(void *args);
     loopargs_t *loopargs = NULL;
     int async_init = 0;
     int loopargs_len = 0;
@@ -2299,9 +2334,16 @@ int speed_main(int argc, char **argv)
                                            key16, iv);
                     EVP_CIPHER_CTX_set_padding(loopargs[k].ctx, 0);
                 }
+                switch (EVP_CIPHER_mode(evp_cipher)) {
+                case EVP_CIPH_CCM_MODE:
+                    loopfunc = EVP_Update_loop_ccm;
+                    break;
+                default:
+                    loopfunc = EVP_Update_loop;
+                }
 
                 Time_F(START);
-                count = run_benchmark(async_jobs, EVP_Update_loop, loopargs);
+                count = run_benchmark(async_jobs, loopfunc, loopargs);
                 d = Time_F(STOP);
                 for (k = 0; k < loopargs_len; k++) {
                     EVP_CIPHER_CTX_free(loopargs[k].ctx);
