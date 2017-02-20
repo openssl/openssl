@@ -403,16 +403,28 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
 int BN_GF2m_mod(BIGNUM *r, const BIGNUM *a, const BIGNUM *p)
 {
     int ret = 0;
-    int arr[6];
+    const size_t max = BN_num_bits(p) + 1;
+    int *arr = NULL;
+
+    arr = OPENSSL_malloc(sizeof(*arr) * max);
+    if (arr == NULL) {
+        BNerr(BN_F_BN_GF2M_MOD, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
     bn_check_top(a);
     bn_check_top(p);
-    ret = BN_GF2m_poly2arr(p, arr, OSSL_NELEM(arr));
-    if (!ret || ret > (int)OSSL_NELEM(arr)) {
+    ret = BN_GF2m_poly2arr(p, arr, max);
+    if (ret == 0 || ret > (int)max) {
         BNerr(BN_F_BN_GF2M_MOD, BN_R_INVALID_LENGTH);
-        return 0;
+        ret = 0;
+        goto err;
     }
     ret = BN_GF2m_mod_arr(r, a, arr);
     bn_check_top(r);
+
+ err:
+    OPENSSL_free(arr);
     return ret;
 }
 
