@@ -15,6 +15,7 @@
 
 static const ERR_STRING_DATA OSSL_STORE_str_functs[] = {
     {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_CTRL, 0), "file_ctrl"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_FIND, 0), "file_find"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_GET_PASS, 0),
      "file_get_pass"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_LOAD, 0), "file_load"},
@@ -114,6 +115,8 @@ static const ERR_STRING_DATA OSSL_STORE_str_reasons[] = {
     "passphrase callback error"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_PATH_MUST_BE_ABSOLUTE),
     "path must be absolute"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES),
+    "search only supported for directories"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_UI_PROCESS_INTERRUPTED_OR_CANCELLED),
     "ui process interrupted or cancelled"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_UNREGISTERED_SCHEME),
@@ -122,6 +125,8 @@ static const ERR_STRING_DATA OSSL_STORE_str_reasons[] = {
     "unsupported content type"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_UNSUPPORTED_OPERATION),
     "unsupported operation"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_UNSUPPORTED_SEARCH_TYPE),
+    "unsupported search type"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED),
     "uri authority unsupported"},
     {0, NULL}
