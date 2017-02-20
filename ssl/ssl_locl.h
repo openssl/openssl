@@ -1176,6 +1176,9 @@ struct ssl_st {
 
         /* Set to one if we have negotiated ETM */
         int use_etm;
+
+        /* Set to 1 if we are expecting to receive early data */
+        int expect_early_data;
     } ext;
 
     /* Parsed form of the ClientHello, kept around across early_cb calls. */
