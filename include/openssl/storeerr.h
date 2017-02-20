@@ -20,6 +20,7 @@ int ERR_load_OSSL_STORE_strings(void);
  * OSSL_STORE function codes.
  */
 # define OSSL_STORE_F_FILE_CTRL                           129
+# define OSSL_STORE_F_FILE_FIND                           138
 # define OSSL_STORE_F_FILE_GET_PASS                       118
 # define OSSL_STORE_F_FILE_LOAD                           119
 # define OSSL_STORE_F_FILE_LOAD_TRY_DECODE                124
@@ -75,10 +76,12 @@ int ERR_load_OSSL_STORE_strings(void);
 # define OSSL_STORE_R_NOT_PARAMETERS                      104
 # define OSSL_STORE_R_PASSPHRASE_CALLBACK_ERROR           114
 # define OSSL_STORE_R_PATH_MUST_BE_ABSOLUTE               108
+# define OSSL_STORE_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES 119
 # define OSSL_STORE_R_UI_PROCESS_INTERRUPTED_OR_CANCELLED 109
 # define OSSL_STORE_R_UNREGISTERED_SCHEME                 105
 # define OSSL_STORE_R_UNSUPPORTED_CONTENT_TYPE            110
 # define OSSL_STORE_R_UNSUPPORTED_OPERATION               118
+# define OSSL_STORE_R_UNSUPPORTED_SEARCH_TYPE             120
 # define OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED           111
 
 #endif
