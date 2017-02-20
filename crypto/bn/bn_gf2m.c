@@ -336,6 +336,8 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
         z[j] = 0;
 
         for (k = 1; p[k] != 0; k++) {
+            if (p[k] < 0)
+                return 0;
             /* reducing component t^p[k] */
             n = p[0] - p[k];
             d0 = n % BN_BITS2;
@@ -373,6 +375,9 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
 
         for (k = 1; p[k] != 0; k++) {
             BN_ULONG tmp_ulong;
+
+            if (p[k] < 0)
+                return 0;
 
             /* reducing component t^p[k] */
             n = p[k] / BN_BITS2;
