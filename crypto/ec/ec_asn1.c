@@ -15,15 +15,17 @@
 
 int EC_GROUP_get_basis_type(const EC_GROUP *group)
 {
-    int i = 0;
+    int i;
 
     if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) !=
         NID_X9_62_characteristic_two_field)
         /* everything else is currently not supported */
         return 0;
 
-    while (group->poly[i] != 0)
-        i++;
+    /* Find the last non-zero element of group->poly[] */
+    for (i = 0;
+        i < sizeof(group->poly)/sizeof(group->poly[0]) && group->poly[i] != 0;
+        i++) ;
 
     if (i == 4)
         return NID_X9_62_ppBasis;
