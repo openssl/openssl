@@ -424,6 +424,17 @@ int ssl3_get_record(SSL *s)
      *    -1: if the padding is invalid
      */
     if (enc_err == 0) {
+        if (num_recs == 1 && ossl_statem_skip_early_data(s)) {
+            /*
+             * We assume this is unreadable early_data - we treat it like an
+             * empty record
+             */
+            thisrr = &rr[0];
+            thisrr->length = 0;
+            thisrr->read = 1;
+            RECORD_LAYER_set_numrpipes(&s->rlayer, 1);
+            return 1;
+        }
         al = SSL_AD_DECRYPTION_FAILED;
         SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
         goto f_err;
