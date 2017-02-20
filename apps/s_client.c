@@ -546,7 +546,7 @@ typedef enum OPTION_choice {
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
     OPT_ASYNC, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
-    OPT_KEYLOG_FILE,
+    OPT_KEYLOG_FILE, OPT_EARLY_DATA,
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
@@ -731,6 +731,7 @@ const OPTIONS s_client_options[] = {
     {"ctlogfile", OPT_CTLOG_FILE, '<', "CT log list CONF file"},
 #endif
     {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
+    {"early_data", OPT_EARLY_DATA, '<', "File to send as early data"},
     {NULL, OPT_EOF, 0x00, NULL}
 };
 
@@ -892,7 +893,7 @@ int s_client_main(int argc, char **argv)
     int c_status_req = 0;
 #endif
     BIO *bio_c_msg = NULL;
-    const char *keylog_file = NULL;
+    const char *keylog_file = NULL, *early_data_file = NULL;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1367,6 +1368,9 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_KEYLOG_FILE:
             keylog_file = opt_arg();
+            break;
+        case OPT_EARLY_DATA:
+            early_data_file = opt_arg();
             break;
         }
     }
@@ -2281,6 +2285,40 @@ int s_client_main(int argc, char **argv)
             }
         }
         break;
+    }
+
+    if (early_data_file != NULL) {
+        BIO *edfile = BIO_new_file(early_data_file, "r");
+        size_t readbytes, writtenbytes;
+        int finish = 0;
+
+        if (edfile == NULL) {
+            BIO_printf(bio_err, "Cannot open early data file\n");
+            goto shut;
+        }
+
+        while (!finish) {
+            if (!BIO_read_ex(edfile, cbuf, BUFSIZZ, &readbytes))
+                finish = 1;
+
+            while (finish ? !SSL_write_early_finish(con)
+                          : !SSL_write_early(con, cbuf, readbytes,
+                                             &writtenbytes)) {
+                switch (SSL_get_error(con, 0)) {
+                case SSL_ERROR_WANT_WRITE:
+                case SSL_ERROR_WANT_ASYNC:
+                case SSL_ERROR_WANT_READ:
+                    /* Just keep trying - busy waiting */
+                    continue;
+                default:
+                    BIO_printf(bio_err, "Error writing early data\n");
+                    BIO_free(edfile);
+                    goto shut;
+                }
+            }
+        }
+
+        BIO_free(edfile);
     }
 
     for (;;) {
