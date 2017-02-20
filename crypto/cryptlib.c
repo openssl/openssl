@@ -324,7 +324,6 @@ void OPENSSL_die(const char *message, const char *file, int line)
  * pointers to volatile to not be emitted in some rare,
  * never needed in real life, pieces of code.
  */
-# undef CRYPTO_memcmp
 int CRYPTO_memcmp(const volatile void * volatile in_a,
                   const volatile void * volatile in_b,
                   size_t len)
