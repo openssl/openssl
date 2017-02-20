@@ -2330,6 +2330,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY                489
 # define SSL_F_TLS_CONSTRUCT_CTOS_ALPN                    466
 # define SSL_F_TLS_CONSTRUCT_CTOS_CERTIFICATE             355
+# define SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA              521
 # define SSL_F_TLS_CONSTRUCT_CTOS_EC_PT_FORMATS           467
 # define SSL_F_TLS_CONSTRUCT_CTOS_EMS                     468
 # define SSL_F_TLS_CONSTRUCT_CTOS_ETM                     469
