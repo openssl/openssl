@@ -24,7 +24,7 @@ int EC_GROUP_get_basis_type(const EC_GROUP *group)
 
     /* Find the last non-zero element of group->poly[] */
     for (i = 0;
-        i < sizeof(group->poly)/sizeof(group->poly[0]) && group->poly[i] != 0;
+        i < OSSL_NELEM(group->poly) & group->poly[i] != 0;
         i++) ;
 
     if (i == 4)
