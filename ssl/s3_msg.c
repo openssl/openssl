@@ -63,7 +63,10 @@ int ssl3_do_change_cipher_spec(SSL *s)
 int ssl3_send_alert(SSL *s, int level, int desc)
 {
     /* Map tls/ssl alert value to correct one */
-    desc = s->method->ssl3_enc->alert_value(desc);
+    if (SSL_TREAT_AS_TLS13(s))
+        desc = tls13_alert_code(desc);
+    else
+        desc = s->method->ssl3_enc->alert_value(desc);
     if (s->version == SSL3_VERSION && desc == SSL_AD_PROTOCOL_VERSION)
         desc = SSL_AD_HANDSHAKE_FAILURE; /* SSL 3.0 does not have
                                           * protocol_version alerts */

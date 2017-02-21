@@ -349,6 +349,9 @@
                           && (s)->method->version >= TLS1_3_VERSION \
                           && (s)->method->version != TLS_ANY_VERSION)
 
+# define SSL_TREAT_AS_TLS13(s) \
+    (SSL_IS_TLS13(s) || (s)->early_data_state == SSL_EARLY_DATA_WRITING)
+
 # define SSL_IS_FIRST_HANDSHAKE(S) ((s)->s3->tmp.finish_md_len == 0)
 
 /* See if we need explicit IV */
@@ -608,6 +611,15 @@ typedef struct srp_ctx_st {
 } SRP_CTX;
 
 # endif
+
+typedef enum {
+    SSL_EARLY_DATA_NONE = 0,
+    SSL_EARLY_DATA_CONNECT_RETRY,
+    SSL_EARLY_DATA_CONNECTING,
+    SSL_EARLY_DATA_WRITE_RETRY,
+    SSL_EARLY_DATA_WRITING,
+    SSL_EARLY_DATA_FINISHED_WRITING
+} SSL_EARLY_DATA_STATE;
 
 #define MAX_COMPRESSIONS_SIZE   255
 
@@ -976,6 +988,7 @@ struct ssl_st {
     int shutdown;
     /* where we are */
     OSSL_STATEM statem;
+    SSL_EARLY_DATA_STATE early_data_state;
     BUF_MEM *init_buf;          /* buffer used during init */
     void *init_msg;             /* pointer to handshake message body, set by
                                  * ssl3_get_message() */
