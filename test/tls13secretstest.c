@@ -192,6 +192,11 @@ int ssl_log_secret(SSL *ssl,
     return 1;
 }
 
+const EVP_MD *ssl_md(int idx)
+{
+    return EVP_sha256();
+}
+
 /* End of mocked out code */
 
 static int test_secret(SSL *s, unsigned char *prk,
@@ -222,7 +227,7 @@ static int test_secret(SSL *s, unsigned char *prk,
         return 0;
     }
 
-    if (!tls13_derive_key(s, gensecret, key, KEYLEN)) {
+    if (!tls13_derive_key(s, md, gensecret, key, KEYLEN)) {
         fprintf(stderr, "Key generation failed\n");
         return 0;
     }
@@ -232,7 +237,7 @@ static int test_secret(SSL *s, unsigned char *prk,
         return 0;
     }
 
-    if (!tls13_derive_iv(s, gensecret, iv, IVLEN)) {
+    if (!tls13_derive_iv(s, md, gensecret, iv, IVLEN)) {
         fprintf(stderr, "IV generation failed\n");
         return 0;
     }

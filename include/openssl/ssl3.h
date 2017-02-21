@@ -299,12 +299,13 @@ extern "C" {
 # define SSL3_MT_CCS                             1
 
 /* These are used when changing over to a new cipher */
-# define SSL3_CC_READ            0x01
-# define SSL3_CC_WRITE           0x02
-# define SSL3_CC_CLIENT          0x10
-# define SSL3_CC_SERVER          0x20
-# define SSL3_CC_HANDSHAKE       0x40
-# define SSL3_CC_APPLICATION     0x80
+# define SSL3_CC_READ            0x001
+# define SSL3_CC_WRITE           0x002
+# define SSL3_CC_CLIENT          0x010
+# define SSL3_CC_SERVER          0x020
+# define SSL3_CC_EARLY           0x040
+# define SSL3_CC_HANDSHAKE       0x080
+# define SSL3_CC_APPLICATION     0x100
 # define SSL3_CHANGE_CIPHER_CLIENT_WRITE (SSL3_CC_CLIENT|SSL3_CC_WRITE)
 # define SSL3_CHANGE_CIPHER_SERVER_READ  (SSL3_CC_SERVER|SSL3_CC_READ)
 # define SSL3_CHANGE_CIPHER_CLIENT_READ  (SSL3_CC_CLIENT|SSL3_CC_READ)
