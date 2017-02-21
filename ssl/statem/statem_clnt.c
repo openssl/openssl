@@ -1229,12 +1229,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     SSL_COMP *comp;
 #endif
 
-    /*
-     * This is a real handshake so make sure we clean it up at the end. We set
-     * this here so that we are after any early_data
-     */
-    s->statem.cleanuphand = 1;
-
     if (!PACKET_get_net_2(pkt, &sversion)) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);

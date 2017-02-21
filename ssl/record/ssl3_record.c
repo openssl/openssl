@@ -419,15 +419,15 @@ int ssl3_get_record(SSL *s)
 
     /*-
      * enc_err is:
-     *    0: (in non-constant time) if the record is publically invalid.
+     *    0: (in non-constant time) if the record is publicly invalid.
      *    1: if the padding is valid
      *    -1: if the padding is invalid
      */
     if (enc_err == 0) {
         if (num_recs == 1 && ossl_statem_skip_early_data(s)) {
             /*
-             * We assume this is unreadable early_data - we treat it like an
-             * empty record
+             * Valid early_data that we cannot decrypt might fail here as
+             * publicly invalid. We treat it like an empty record.
              */
             thisrr = &rr[0];
             thisrr->length = 0;
@@ -507,6 +507,17 @@ int ssl3_get_record(SSL *s)
     }
 
     if (enc_err < 0) {
+        if (num_recs == 1 && ossl_statem_skip_early_data(s)) {
+            /*
+             * We assume this is unreadable early_data - we treat it like an
+             * empty record
+             */
+            thisrr = &rr[0];
+            thisrr->length = 0;
+            thisrr->read = 1;
+            RECORD_LAYER_set_numrpipes(&s->rlayer, 1);
+            return 1;
+        }
         /*
          * A separate 'decryption_failed' alert was introduced with TLS 1.0,
          * SSL 3.0 only has 'bad_record_mac'.  But unless a decryption
