@@ -2196,10 +2196,12 @@ __owur int tls13_hkdf_expand(SSL *s, const EVP_MD *md,
                              const unsigned char *label, size_t labellen,
                              const unsigned char *hash,
                              unsigned char *out, size_t outlen);
-__owur int tls13_derive_key(SSL *s, const unsigned char *secret,
-                            unsigned char *key, size_t keylen);
-__owur int tls13_derive_iv(SSL *s, const unsigned char *secret,
-                           unsigned char *iv, size_t ivlen);
+__owur int tls13_derive_key(SSL *s, const EVP_MD *md,
+                            const unsigned char *secret, unsigned char *key,
+                            size_t keylen);
+__owur int tls13_derive_iv(SSL *s, const EVP_MD *md,
+                           const unsigned char *secret, unsigned char *iv,
+                           size_t ivlen);
 __owur int tls13_derive_finishedkey(SSL *s, const EVP_MD *md,
                                     const unsigned char *secret,
                                     unsigned char *fin, size_t finlen);
@@ -2352,6 +2354,7 @@ __owur int ssl_log_secret(SSL *ssl, const char *label,
                           const uint8_t *secret, size_t secret_len);
 
 #define MASTER_SECRET_LABEL "CLIENT_RANDOM"
+#define CLIENT_EARLY_LABEL "CLIENT_EARLY_TRAFFIC_SECRET"
 #define CLIENT_HANDSHAKE_LABEL "CLIENT_HANDSHAKE_TRAFFIC_SECRET"
 #define SERVER_HANDSHAKE_LABEL "SERVER_HANDSHAKE_TRAFFIC_SECRET"
 #define CLIENT_APPLICATION_LABEL "CLIENT_TRAFFIC_SECRET_0"

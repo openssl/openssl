@@ -56,6 +56,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
             || !WPACKET_sub_memcpy_u8(&pkt, hash, (hash == NULL) ? 0 : hashlen)
             || !WPACKET_get_total_written(&pkt, &hkdflabellen)
             || !WPACKET_finish(&pkt)) {
+        EVP_PKEY_CTX_free(pctx);
         WPACKET_cleanup(&pkt);
         return 0;
     }
@@ -77,26 +78,26 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
  * Given a |secret| generate a |key| of length |keylen| bytes. Returns 1 on
  * success  0 on failure.
  */
-int tls13_derive_key(SSL *s, const unsigned char *secret, unsigned char *key,
-                     size_t keylen)
+int tls13_derive_key(SSL *s, const EVP_MD *md, const unsigned char *secret,
+                     unsigned char *key, size_t keylen)
 {
     static const unsigned char keylabel[] = "key";
 
-    return tls13_hkdf_expand(s, ssl_handshake_md(s), secret, keylabel,
-                             sizeof(keylabel) - 1, NULL, key, keylen);
+    return tls13_hkdf_expand(s, md, secret, keylabel, sizeof(keylabel) - 1,
+                             NULL, key, keylen);
 }
 
 /*
  * Given a |secret| generate an |iv| of length |ivlen| bytes. Returns 1 on
  * success  0 on failure.
  */
-int tls13_derive_iv(SSL *s, const unsigned char *secret, unsigned char *iv,
-                    size_t ivlen)
+int tls13_derive_iv(SSL *s, const EVP_MD *md, const unsigned char *secret,
+                    unsigned char *iv, size_t ivlen)
 {
     static const unsigned char ivlabel[] = "iv";
 
-    return tls13_hkdf_expand(s, ssl_handshake_md(s), secret, ivlabel,
-                             sizeof(ivlabel) - 1, NULL, iv, ivlen);
+    return tls13_hkdf_expand(s, md, secret, ivlabel, sizeof(ivlabel) - 1,
+                             NULL, iv, ivlen);
 }
 
 int tls13_derive_finishedkey(SSL *s, const EVP_MD *md,
@@ -242,7 +243,8 @@ int tls13_setup_key_block(SSL *s)
     return 1;
 }
 
-static int derive_secret_key_and_iv(SSL *s, int send,
+static int derive_secret_key_and_iv(SSL *s, int send, const EVP_MD *md,
+                                    const EVP_CIPHER *ciph,
                                     const unsigned char *insecret,
                                     const unsigned char *hash,
                                     const unsigned char *label,
@@ -251,9 +253,7 @@ static int derive_secret_key_and_iv(SSL *s, int send,
 {
     unsigned char key[EVP_MAX_KEY_LENGTH];
     size_t ivlen, keylen, taglen;
-    const EVP_MD *md = ssl_handshake_md(s);
     size_t hashlen = EVP_MD_size(md);
-    const EVP_CIPHER *ciph = s->s3->tmp.new_sym_enc;
 
     if (!tls13_hkdf_expand(s, md, insecret, label, labellen, hash, secret,
                            hashlen)) {
@@ -275,8 +275,8 @@ static int derive_secret_key_and_iv(SSL *s, int send,
         taglen = 0;
     }
 
-    if (!tls13_derive_key(s, secret, key, keylen)
-            || !tls13_derive_iv(s, secret, iv, ivlen)) {
+    if (!tls13_derive_key(s, md, secret, key, keylen)
+            || !tls13_derive_iv(s, md, secret, iv, ivlen)) {
         SSLerr(SSL_F_DERIVE_SECRET_KEY_AND_IV, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -312,6 +312,8 @@ static int derive_secret_key_and_iv(SSL *s, int send,
 
 int tls13_change_cipher_state(SSL *s, int which)
 {
+    static const unsigned char client_early_traffic[] =
+        "client early traffic secret";
     static const unsigned char client_handshake_traffic[] =
         "client handshake traffic secret";
     static const unsigned char client_application_traffic[] =
@@ -334,6 +336,8 @@ int tls13_change_cipher_state(SSL *s, int which)
     const unsigned char *label;
     size_t labellen, hashlen = 0;
     int ret = 0;
+    const EVP_MD *md;
+    const EVP_CIPHER *cipher;
 
     if (which & SSL3_CC_READ) {
         if (s->enc_read_ctx != NULL) {
@@ -367,7 +371,51 @@ int tls13_change_cipher_state(SSL *s, int which)
 
     if (((which & SSL3_CC_CLIENT) && (which & SSL3_CC_WRITE))
             || ((which & SSL3_CC_SERVER) && (which & SSL3_CC_READ))) {
-        if (which & SSL3_CC_HANDSHAKE) {
+        if (which & SSL3_CC_EARLY) {
+            EVP_MD_CTX *mdctx = NULL;
+            long handlen;
+            void *hdata;
+            unsigned int hashlenui;
+            const SSL_CIPHER *sslcipher = SSL_SESSION_get0_cipher(s->session);
+
+            insecret = s->early_secret;
+            label = client_early_traffic;
+            labellen = sizeof(client_early_traffic) - 1;
+            log_label = CLIENT_EARLY_LABEL;
+
+            handlen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+            if (handlen <= 0) {
+                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE,
+                       SSL_R_BAD_HANDSHAKE_LENGTH);
+                goto err;
+            }
+            if (sslcipher == NULL) {
+                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+
+            /*
+             * We need to calculate the handshake digest using the digest from
+             * the session. We haven't yet selected our ciphersuite so we can't
+             * use ssl_handshake_md().
+             */
+            mdctx = EVP_MD_CTX_new();
+            if (mdctx == NULL) {
+                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+            cipher = EVP_get_cipherbynid(SSL_CIPHER_get_cipher_nid(sslcipher));
+            md = ssl_md(sslcipher->algorithm2);
+            if (md == NULL || !EVP_DigestInit_ex(mdctx, md, NULL)
+                    || !EVP_DigestUpdate(mdctx, hdata, handlen)
+                    || !EVP_DigestFinal_ex(mdctx, hashval, &hashlenui)) {
+                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+                EVP_MD_CTX_free(mdctx);
+                goto err;
+            }
+            hashlen = hashlenui;
+            EVP_MD_CTX_free(mdctx);
+        } else if (which & SSL3_CC_HANDSHAKE) {
             insecret = s->handshake_secret;
             finsecret = s->client_finished_secret;
             finsecretlen = EVP_MD_size(ssl_handshake_md(s));
@@ -388,6 +436,7 @@ int tls13_change_cipher_state(SSL *s, int which)
             hash = s->server_finished_hash;
         }
     } else {
+        /* Early data never applies to client-read/server-write */
         if (which & SSL3_CC_HANDSHAKE) {
             insecret = s->handshake_secret;
             finsecret = s->server_finished_secret;
@@ -403,10 +452,14 @@ int tls13_change_cipher_state(SSL *s, int which)
         }
     }
 
-    if (!ssl3_digest_cached_records(s, 1)
-            || !ssl_handshake_hash(s, hashval, sizeof(hashval), &hashlen)) {
-        SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
-        goto err;
+    if (!(which & SSL3_CC_EARLY)) {
+        md = ssl_handshake_md(s);
+        cipher = s->s3->tmp.new_sym_enc;
+        if (!ssl3_digest_cached_records(s, 1)
+                || !ssl_handshake_hash(s, hashval, sizeof(hashval), &hashlen)) {
+            SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
     }
 
     /*
@@ -431,8 +484,9 @@ int tls13_change_cipher_state(SSL *s, int which)
         s->session->master_key_length = hashlen;
     }
 
-    if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, insecret, hash,
-                                  label, labellen, secret, iv, ciph_ctx)) {
+    if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, md, cipher,
+                                  insecret, hash, label, labellen, secret, iv,
+                                  ciph_ctx)) {
         goto err;
     }
 
@@ -485,7 +539,9 @@ int tls13_update_key(SSL *s, int send)
         RECORD_LAYER_reset_read_sequence(&s->rlayer);
     }
 
-    if (!derive_secret_key_and_iv(s, send, insecret, NULL, application_traffic,
+    if (!derive_secret_key_and_iv(s, send, ssl_handshake_md(s),
+                                  s->s3->tmp.new_sym_enc, insecret, NULL,
+                                  application_traffic,
                                   sizeof(application_traffic) - 1, secret, iv,
                                   ciph_ctx))
         goto err;
