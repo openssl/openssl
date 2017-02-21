@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -351,6 +351,9 @@ static int sh_init(size_t size, int minsize)
         goto err;
     if (minsize <= 0 || (minsize & (minsize - 1)) != 0)
         goto err;
+
+    while (minsize < sizeof(SH_LIST))
+        minsize *= 2;
 
     sh.arena_size = size;
     sh.minsize = minsize;
