@@ -19,6 +19,7 @@ B<openssl> B<s_time>
 [B<-reuse>]
 [B<-new>]
 [B<-verify depth>]
+[B<-nameopt option>]
 [B<-nbio>]
 [B<-time seconds>]
 [B<-ssl3>]
@@ -69,6 +70,13 @@ server certificate chain and turns on server certificate verification.
 Currently the verify operation continues after errors so all the problems
 with a certificate chain can be seen. As a side effect the connection
 will never fail due to a server certificate verify failure.
+
+=item B<-nameopt option>
+
+option which determines how the subject or issuer names are displayed. The
+B<option> argument can be a single option or multiple options separated by
+commas.  Alternatively the B<-nameopt> switch may be used more than once to
+set multiple options. See the L<x509(1)> manual page for details.
 
 =item B<-CApath directory>
 

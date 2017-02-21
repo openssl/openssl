@@ -69,6 +69,8 @@ int should_retry(int i);
 long bio_dump_callback(BIO *bio, int cmd, const char *argp,
                        int argi, long argl, long ret);
 
+int set_nameopt(const char *arg);
+
 #ifdef HEADER_SSL_H
 void apps_ssl_info_callback(const SSL *s, int where, int ret);
 void msg_cb(int write_p, int version, int content_type, const void *buf,
