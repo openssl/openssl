@@ -347,9 +347,7 @@ int OPENSSL_gmtime_diff(int *pday, int *psec,
  * into a defined order as the return value when a != b is undefined, other
  * than to be non-zero.
  */
-int CRYPTO_memcmp(const volatile void * volatile in_a,
-                  const volatile void * volatile in_b,
-                  size_t len);
+int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len);
 
 /* Standard initialisation options */
 # define OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS 0x00000001L
