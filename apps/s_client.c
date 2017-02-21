@@ -524,7 +524,7 @@ static int tlsa_import_rrset(SSL *con, STACK_OF(OPENSSL_STRING) *rrset)
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_4, OPT_6, OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_UNIX,
-    OPT_XMPPHOST, OPT_VERIFY,
+    OPT_XMPPHOST, OPT_VERIFY, OPT_NAMEOPT,
     OPT_CERT, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BRIEF, OPT_PREXIT, OPT_CRLF, OPT_QUIET, OPT_NBIO,
@@ -579,6 +579,7 @@ const OPTIONS s_client_options[] = {
     {"cert", OPT_CERT, '<', "Certificate file to use, PEM format assumed"},
     {"certform", OPT_CERTFORM, 'F',
      "Certificate format (PEM or DER) PEM default"},
+    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"key", OPT_KEY, 's', "Private key file to use, if not in -cert file"},
     {"keyform", OPT_KEYFORM, 'E', "Key format (PEM, DER or engine) PEM default"},
     {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
@@ -1012,6 +1013,10 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_CERT:
             cert_file = opt_arg();
+            break;
+        case OPT_NAMEOPT:
+            if (!set_nameopt(opt_arg()))
+                goto end;
             break;
         case OPT_CRL:
             crl_file = opt_arg();

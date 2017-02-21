@@ -50,6 +50,7 @@ B<openssl> B<s_client>
 [B<-no_alt_chains>]
 [B<-use_deltas>]
 [B<-auth_level num>]
+[B<-nameopt option>]
 [B<-verify_depth num>]
 [B<-verify_email email>]
 [B<-verify_hostname hostname>]
@@ -186,6 +187,13 @@ will never fail due to a server certificate verify failure.
 
 Return verification errors instead of continuing. This will typically
 abort the handshake with a fatal error.
+
+=item B<-nameopt option>
+
+option which determines how the subject or issuer names are displayed. The
+B<option> argument can be a single option or multiple options separated by
+commas.  Alternatively the B<-nameopt> switch may be used more than once to
+set multiple options. See the L<x509(1)> manual page for details.
 
 =item B<-CApath directory>
 

@@ -699,7 +699,7 @@ static char *srtp_profiles = NULL;
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ENGINE,
     OPT_4, OPT_6, OPT_ACCEPT, OPT_PORT, OPT_UNIX, OPT_UNLINK, OPT_NACCEPT,
-    OPT_VERIFY, OPT_UPPER_V_VERIFY, OPT_CONTEXT, OPT_CERT, OPT_CRL,
+    OPT_VERIFY, OPT_NAMEOPT, OPT_UPPER_V_VERIFY, OPT_CONTEXT, OPT_CERT, OPT_CRL,
     OPT_CRL_DOWNLOAD, OPT_SERVERINFO, OPT_CERTFORM, OPT_KEY, OPT_KEYFORM,
     OPT_PASS, OPT_CERT_CHAIN, OPT_DHPARAM, OPT_DCERTFORM, OPT_DCERT,
     OPT_DKEYFORM, OPT_DPASS, OPT_DKEY, OPT_DCERT_CHAIN, OPT_NOCERT,
@@ -744,6 +744,7 @@ const OPTIONS s_server_options[] = {
     {"Verify", OPT_UPPER_V_VERIFY, 'n',
      "Turn on peer certificate verification, must have a cert"},
     {"cert", OPT_CERT, '<', "Certificate file to use; default is " TEST_CERT},
+    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"naccept", OPT_NACCEPT, 'p', "Terminate after #num connections"},
     {"serverinfo", OPT_SERVERINFO, 's',
      "PEM serverinfo file for certificate"},
@@ -1126,6 +1127,10 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_CERT:
             s_cert_file = opt_arg();
+            break;
+        case OPT_NAMEOPT:
+            if (!set_nameopt(opt_arg()))
+                goto end;
             break;
         case OPT_CRL:
             crl_file = opt_arg();
