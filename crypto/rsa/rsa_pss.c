@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -168,19 +169,28 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
         goto err;
     }
 
-    MSBits = (BN_num_bits(rsa->n) - 1) & 0x7;
     emLen = RSA_size(rsa);
+    if (emLen <= 1)
+        goto err;
+
+    MSBits = (BN_num_bits(rsa->n) - 1) & 0x7;
     if (MSBits == 0) {
         *EM++ = 0;
         emLen--;
     }
     if (sLen == RSA_PSS_SALTLEN_MAX) {
+        if (hLen < 2 || hLen - 2 > emLen)
+            goto err;
         sLen = emLen - hLen - 2;
-    } else if (emLen < (hLen + sLen + 2)) {
+    } else if (sLen > INT_MAX - 2 - hLen ||
+               emLen < (hLen + sLen + 2)) {
         RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,
-               RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+                RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         goto err;
     }
+
+    /* At this point, sLen is >= 0 */
+
     if (sLen > 0) {
         salt = OPENSSL_malloc(sLen);
         if (salt == NULL) {
@@ -191,6 +201,8 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
         if (RAND_bytes(salt, sLen) <= 0)
             goto err;
     }
+    if (hLen < 1 || hLen - 1 > emLen)
+        goto err;
     maskedDBLen = emLen - hLen - 1;
     H = EM + maskedDBLen;
     ctx = EVP_MD_CTX_new();
@@ -217,15 +229,13 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
      */
     p += emLen - sLen - hLen - 2;
     *p++ ^= 0x1;
-    if (sLen > 0) {
-        for (i = 0; i < sLen; i++)
-            *p++ ^= salt[i];
-    }
+    for (i = 0; i < sLen; i++)
+        *p++ ^= salt[i];
     if (MSBits)
         EM[0] &= 0xFF >> (8 - MSBits);
 
     /* H is already in place so just set final 0xbc */
-
+    /* It was previously asserted that emLen >= 1, so this is safe */
     EM[emLen - 1] = 0xbc;
 
     ret = 1;
