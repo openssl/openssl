@@ -618,7 +618,12 @@ typedef enum {
     SSL_EARLY_DATA_CONNECTING,
     SSL_EARLY_DATA_WRITE_RETRY,
     SSL_EARLY_DATA_WRITING,
-    SSL_EARLY_DATA_FINISHED_WRITING
+    SSL_EARLY_DATA_FINISHED_WRITING,
+    SSL_EARLY_DATA_ACCEPT_RETRY,
+    SSL_EARLY_DATA_ACCEPTING,
+    SSL_EARLY_DATA_READ_RETRY,
+    SSL_EARLY_DATA_READING,
+    SSL_EARLY_DATA_FINISHED_READING
 } SSL_EARLY_DATA_STATE;
 
 #define MAX_COMPRESSIONS_SIZE   255
@@ -1987,6 +1992,7 @@ static ossl_inline int ssl_has_cert(const SSL *s, int idx)
 
 # ifndef OPENSSL_UNIT_TEST
 
+int ssl_end_of_early_data_seen(SSL *s);
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
 __owur int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written);
 void ssl_clear_cipher_ctx(SSL *s);

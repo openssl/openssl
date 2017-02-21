@@ -1611,6 +1611,12 @@ __owur int SSL_accept(SSL *ssl);
 __owur int SSL_connect(SSL *ssl);
 __owur int SSL_read(SSL *ssl, void *buf, int num);
 __owur int SSL_read_ex(SSL *ssl, void *buf, size_t num, size_t *readbytes);
+
+# define SSL_READ_EARLY_ERROR   0
+# define SSL_READ_EARLY_SUCCESS 1
+# define SSL_READ_EARLY_FINISH  2
+
+__owur int SSL_read_early(SSL *s, void *buf, size_t num, size_t *readbytes);
 __owur int SSL_peek(SSL *ssl, void *buf, int num);
 __owur int SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *readbytes);
 __owur int SSL_write(SSL *ssl, const void *buf, int num);
@@ -2255,6 +2261,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_PEEK_EX                                432
 # define SSL_F_SSL_PEEK_INTERNAL                          522
 # define SSL_F_SSL_READ                                   223
+# define SSL_F_SSL_READ_EARLY                             529
 # define SSL_F_SSL_READ_EX                                434
 # define SSL_F_SSL_READ_INTERNAL                          523
 # define SSL_F_SSL_RENEGOTIATE                            516
@@ -2330,7 +2337,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY                489
 # define SSL_F_TLS_CONSTRUCT_CTOS_ALPN                    466
 # define SSL_F_TLS_CONSTRUCT_CTOS_CERTIFICATE             355
-# define SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA              521
+# define SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA              530
 # define SSL_F_TLS_CONSTRUCT_CTOS_EC_PT_FORMATS           467
 # define SSL_F_TLS_CONSTRUCT_CTOS_EMS                     468
 # define SSL_F_TLS_CONSTRUCT_CTOS_ETM                     469
@@ -2669,6 +2676,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS       239
 # define SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES           242
 # define SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES          243
+# define SSL_R_UNEXPECTED_END_OF_EARLY_DATA               178
 # define SSL_R_UNEXPECTED_MESSAGE                         244
 # define SSL_R_UNEXPECTED_RECORD                          245
 # define SSL_R_UNINITIALIZED                              276

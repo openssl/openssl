@@ -654,6 +654,10 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
     int al = SSL_AD_INTERNAL_ERROR;
     size_t md_len;
 
+
+    /* This is a real handshake so make sure we clean it up at the end */
+    s->statem.cleanuphand = 1;
+
     /* If this occurs, we have missed a message */
     if (!SSL_IS_TLS13(s) && !s->s3->change_cipher_spec) {
         al = SSL_AD_UNEXPECTED_MESSAGE;
@@ -944,6 +948,7 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
             s->d1->next_handshake_write_seq = 0;
             dtls1_clear_received_buffer(s);
         }
+        s->early_data_state = SSL_EARLY_DATA_NONE;
     }
 
     /*
