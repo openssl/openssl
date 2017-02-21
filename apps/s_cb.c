@@ -292,7 +292,7 @@ int ssl_print_sigalgs(BIO *out, SSL *s)
     if (SSL_get_peer_signature_nid(s, &nid))
         BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(nid));
     if (SSL_get_peer_signature_type_nid(s, &nid))
-        BIO_printf(bio_err, "Peer signature type: %s\n", get_sigtype(nid));
+        BIO_printf(out, "Peer signature type: %s\n", get_sigtype(nid));
     return 1;
 }
 
