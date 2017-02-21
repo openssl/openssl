@@ -745,7 +745,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     }
 
     /* Explicit IV length, block ciphers appropriate version flag */
-    if (s->enc_write_ctx && SSL_USE_EXPLICIT_IV(s)) {
+    if (s->enc_write_ctx && SSL_USE_EXPLICIT_IV(s) && !SSL_TREAT_AS_TLS13(s)) {
         int mode = EVP_CIPHER_CTX_mode(s->enc_write_ctx);
         if (mode == EVP_CIPH_CBC_MODE) {
             /* TODO(size_t): Convert me */
@@ -764,7 +764,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     /* Clear our SSL3_RECORD structures */
     memset(wr, 0, sizeof wr);
     for (j = 0; j < numpipes; j++) {
-        unsigned int version = SSL_IS_TLS13(s) ? TLS1_VERSION : s->version;
+        unsigned int version = SSL_TREAT_AS_TLS13(s) ? TLS1_VERSION : s->version;
         unsigned char *compressdata = NULL;
         size_t maxcomplen;
         unsigned int rectype;
@@ -777,7 +777,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * In TLSv1.3, once encrypting, we always use application data for the
          * record type
          */
-        if (SSL_IS_TLS13(s) && s->enc_write_ctx != NULL)
+        if (SSL_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL)
             rectype = SSL3_RT_APPLICATION_DATA;
         else
             rectype = type;
@@ -835,7 +835,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             SSL3_RECORD_reset_input(&wr[j]);
         }
 
-        if (SSL_IS_TLS13(s) && s->enc_write_ctx != NULL) {
+        if (SSL_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL) {
             if (!WPACKET_put_bytes_u8(thispkt, type)) {
                 SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
                 goto err;
@@ -887,8 +887,17 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         SSL3_RECORD_set_length(thiswr, len);
     }
 
-    if (s->method->ssl3_enc->enc(s, wr, numpipes, 1) < 1)
-        goto err;
+    if (s->early_data_state == SSL_EARLY_DATA_WRITING) {
+        /*
+         * We haven't actually negotiated the version yet, but we're trying to
+         * send early data - so we need to use the the tls13enc function.
+         */
+        if (tls13_enc(s, wr, numpipes, 1) < 1)
+            goto err;
+    } else {
+        if (s->method->ssl3_enc->enc(s, wr, numpipes, 1) < 1)
+            goto err;
+    }
 
     for (j = 0; j < numpipes; j++) {
         size_t origlen;

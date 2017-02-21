@@ -56,14 +56,18 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
 
     ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 
-    /*
-     * To get here we must have selected a ciphersuite - otherwise ctx would
-     * be NULL
-     */
-    assert(s->s3->tmp.new_cipher != NULL);
-    if (s->s3->tmp.new_cipher == NULL)
-        return -1;
-    alg_enc = s->s3->tmp.new_cipher->algorithm_enc;
+    if (s->early_data_state == SSL_EARLY_DATA_WRITING) {
+        alg_enc = s->session->cipher->algorithm_enc;
+    } else {
+        /*
+         * To get here we must have selected a ciphersuite - otherwise ctx would
+         * be NULL
+         */
+        assert(s->s3->tmp.new_cipher != NULL);
+        if (s->s3->tmp.new_cipher == NULL)
+            return -1;
+        alg_enc = s->s3->tmp.new_cipher->algorithm_enc;
+    }
 
     if (alg_enc & SSL_AESCCM) {
         if (alg_enc & (SSL_AES128CCM8 | SSL_AES256CCM8))
