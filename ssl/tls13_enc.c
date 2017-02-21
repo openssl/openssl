@@ -500,7 +500,7 @@ int tls13_update_key(SSL *s, int send)
 
 int tls13_alert_code(int code)
 {
-    if (code == SSL_AD_MISSING_EXTENSION)
+    if (code == SSL_AD_MISSING_EXTENSION || code == SSL_AD_END_OF_EARLY_DATA)
         return code;
 
     return tls1_alert_code(code);

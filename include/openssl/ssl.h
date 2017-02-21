@@ -1025,6 +1025,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_AD_INTERNAL_ERROR           TLS1_AD_INTERNAL_ERROR
 # define SSL_AD_USER_CANCELLED           TLS1_AD_USER_CANCELLED
 # define SSL_AD_NO_RENEGOTIATION         TLS1_AD_NO_RENEGOTIATION
+# define SSL_AD_END_OF_EARLY_DATA        TLS13_AD_END_OF_EARLY_DATA
 # define SSL_AD_MISSING_EXTENSION        TLS13_AD_MISSING_EXTENSION
 # define SSL_AD_UNSUPPORTED_EXTENSION    TLS1_AD_UNSUPPORTED_EXTENSION
 # define SSL_AD_CERTIFICATE_UNOBTAINABLE TLS1_AD_CERTIFICATE_UNOBTAINABLE
@@ -1614,6 +1615,9 @@ __owur int SSL_peek(SSL *ssl, void *buf, int num);
 __owur int SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *readbytes);
 __owur int SSL_write(SSL *ssl, const void *buf, int num);
 __owur int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written);
+__owur int SSL_write_early(SSL *s, const void *buf, size_t num,
+                           size_t *written);
+__owur int SSL_write_early_finish(SSL *s);
 long SSL_ctrl(SSL *ssl, int cmd, long larg, void *parg);
 long SSL_callback_ctrl(SSL *, int, void (*)(void));
 long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg);
@@ -2290,6 +2294,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_VALIDATE_CT                            400
 # define SSL_F_SSL_VERIFY_CERT_CHAIN                      207
 # define SSL_F_SSL_WRITE                                  208
+# define SSL_F_SSL_WRITE_EARLY                            526
+# define SSL_F_SSL_WRITE_EARLY_FINISH                     527
 # define SSL_F_SSL_WRITE_EX                               433
 # define SSL_F_SSL_WRITE_INTERNAL                         524
 # define SSL_F_STATE_MACHINE                              353
@@ -2382,7 +2388,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PARSE_CTOS_PSK                         505
 # define SSL_F_TLS_PARSE_CTOS_RENEGOTIATE                 464
 # define SSL_F_TLS_PARSE_CTOS_USE_SRTP                    465
-# define SSL_F_TLS_PARSE_STOC_EARLY_DATA_INFO             520
+# define SSL_F_TLS_PARSE_STOC_EARLY_DATA_INFO             528
 # define SSL_F_TLS_PARSE_STOC_KEY_SHARE                   445
 # define SSL_F_TLS_PARSE_STOC_PSK                         502
 # define SSL_F_TLS_PARSE_STOC_RENEGOTIATE                 448

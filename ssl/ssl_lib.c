@@ -1667,6 +1667,10 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
         return -1;
     }
 
+    if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY
+            || s->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY)
+        return 0;
+
     if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         int ret;
         struct ssl_async_args args;
@@ -1714,6 +1718,76 @@ int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
     if (ret < 0)
         ret = 0;
     return ret;
+}
+
+int SSL_write_early(SSL *s, const void *buf, size_t num, size_t *written)
+{
+    int ret;
+
+    if (s->server) {
+        SSLerr(SSL_F_SSL_WRITE_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
+    /*
+     * TODO(TLS1.3): Somehow we need to check that we're not sending too much
+     * data
+     */
+
+    switch (s->early_data_state) {
+    case SSL_EARLY_DATA_NONE:
+        if (!SSL_in_before(s)) {
+            SSLerr(SSL_F_SSL_WRITE_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+            return 0;
+        }
+        /* fall through */
+
+    case SSL_EARLY_DATA_CONNECT_RETRY:
+        s->early_data_state = SSL_EARLY_DATA_CONNECTING;
+        ret = SSL_connect(s);
+        if (ret <= 0) {
+            /* NBIO or error */
+            s->early_data_state = SSL_EARLY_DATA_CONNECT_RETRY;
+            return 0;
+        }
+        /* fall through */
+
+    case SSL_EARLY_DATA_WRITE_RETRY:
+        s->early_data_state = SSL_EARLY_DATA_WRITING;
+        ret = SSL_write_ex(s, buf, num, written);
+        s->early_data_state = SSL_EARLY_DATA_WRITE_RETRY;
+        return ret;
+
+    default:
+        SSLerr(SSL_F_SSL_WRITE_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+}
+
+int SSL_write_early_finish(SSL *s)
+{
+    int ret;
+
+    if (s->early_data_state != SSL_EARLY_DATA_WRITE_RETRY) {
+        SSLerr(SSL_F_SSL_WRITE_EARLY_FINISH, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
+    s->early_data_state = SSL_EARLY_DATA_WRITING;
+    ret = ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_END_OF_EARLY_DATA);
+    if (ret <= 0) {
+        s->early_data_state = SSL_EARLY_DATA_WRITE_RETRY;
+        return 0;
+    }
+    s->early_data_state = SSL_EARLY_DATA_FINISHED_WRITING;
+    /*
+     * We set the enc_write_ctx back to NULL because we may end up writing
+     * in cleartext again if we get a HelloRetryRequest from the server.
+     */
+    EVP_CIPHER_CTX_free(s->enc_write_ctx);
+    s->enc_write_ctx = NULL;
+    ossl_statem_set_in_init(s, 1);
+    return 1;
 }
 
 int SSL_shutdown(SSL *s)
@@ -3072,6 +3146,10 @@ int SSL_do_handshake(SSL *s)
         SSLerr(SSL_F_SSL_DO_HANDSHAKE, SSL_R_CONNECTION_TYPE_NOT_SET);
         return -1;
     }
+
+    if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY
+            || s->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY)
+        return -1;
 
     s->method->ssl_renegotiate_check(s, 0);
 

@@ -196,6 +196,11 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_OK:
+        if (s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING
+                && mt == SSL3_MT_SERVER_HELLO) {
+            st->hand_state = TLS_ST_CR_SRVR_HELLO;
+            return 1;
+        }
         if (mt == SSL3_MT_NEWSESSION_TICKET) {
             st->hand_state = TLS_ST_CR_SESSION_TICKET;
             return 1;
@@ -382,7 +387,21 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_OK:
-        if (mt == SSL3_MT_HELLO_REQUEST) {
+        if (s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING) {
+            /*
+             * We've not actually selected TLSv1.3 yet, but we have sent early
+             * data. The only thing allowed now is a ServerHello or a
+             * HelloRetryRequest.
+             */
+            if (mt == SSL3_MT_SERVER_HELLO) {
+                st->hand_state = TLS_ST_CR_SRVR_HELLO;
+                return 1;
+            }
+            if (mt == SSL3_MT_HELLO_RETRY_REQUEST) {
+                st->hand_state = TLS_ST_CR_HELLO_RETRY_REQUEST;
+                return 1;
+            }
+        } else if (mt == SSL3_MT_HELLO_REQUEST) {
             st->hand_state = TLS_ST_CR_HELLO_REQ;
             return 1;
         }
@@ -485,6 +504,13 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
         return WRITE_TRAN_ERROR;
 
     case TLS_ST_OK:
+        if (s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING) {
+            /*
+             * We are assuming this is a TLSv1.3 connection, although we haven't
+             * actually selected a version yet.
+             */
+            return WRITE_TRAN_FINISHED;
+        }
         if (!s->renegotiate) {
             /*
              * We haven't requested a renegotiation ourselves so we must have
@@ -498,6 +524,15 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_CLNT_HELLO:
+        if (s->early_data_state == SSL_EARLY_DATA_CONNECTING) {
+            /*
+             * We are assuming this is a TLSv1.3 connection, although we haven't
+             * actually selected a version yet.
+             */
+            st->hand_state = TLS_ST_OK;
+            ossl_statem_set_in_init(s, 0);
+            return WRITE_TRAN_CONTINUE;
+        }
         /*
          * No transition at the end of writing because we don't know what
          * we will be sent
@@ -999,9 +1034,6 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
     }
     /* else use the pre-loaded session */
 
-    /* This is a real handshake so make sure we clean it up at the end */
-    s->statem.cleanuphand = 1;
-
     p = s->s3->client_random;
 
     /*
@@ -1182,6 +1214,12 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
 #endif
+
+    /*
+     * This is a real handshake so make sure we clean it up at the end. We set
+     * this here so that we are after any early_data
+     */
+    s->statem.cleanuphand = 1;
 
     if (!PACKET_get_net_2(pkt, &sversion)) {
         al = SSL_AD_DECODE_ERROR;
