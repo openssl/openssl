@@ -326,7 +326,8 @@ static int state_machine(SSL *s, int server)
             }
 
         if ((SSL_IS_FIRST_HANDSHAKE(s)
-                    && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING)
+                    && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING
+                    && s->early_data_state != SSL_EARLY_DATA_FINISHED_READING)
                 || s->renegotiate) {
             if (!tls_setup_handshake(s)) {
                 ossl_statem_set_error(s);

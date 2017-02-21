@@ -1437,6 +1437,14 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 al = SSL_AD_HANDSHAKE_FAILURE;
                 SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_NO_RENEGOTIATION);
                 goto f_err;
+            } else if (alert_descr == SSL_AD_END_OF_EARLY_DATA) {
+                if (!ssl_end_of_early_data_seen(s)) {
+                    al = SSL_AD_UNEXPECTED_MESSAGE;
+                    SSLerr(SSL_F_SSL3_READ_BYTES,
+                           SSL_R_UNEXPECTED_END_OF_EARLY_DATA);
+                    goto f_err;
+                }
+                return 0;
             }
         } else if (alert_level == SSL3_AL_FATAL) {
             char tmp[16];

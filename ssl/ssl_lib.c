@@ -1594,6 +1594,75 @@ int SSL_read_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
     return ret;
 }
 
+int SSL_read_early(SSL *s, void *buf, size_t num, size_t *readbytes)
+{
+    int ret;
+
+    if (!s->server) {
+        SSLerr(SSL_F_SSL_READ_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return SSL_READ_EARLY_ERROR;
+    }
+
+    /*
+     * TODO(TLS1.3): Somehow we need to check that we're not receiving too much
+     * data
+     */
+
+    switch (s->early_data_state) {
+    case SSL_EARLY_DATA_NONE:
+        if (!SSL_in_before(s)) {
+            SSLerr(SSL_F_SSL_READ_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+            return SSL_READ_EARLY_ERROR;
+        }
+        /* fall through */
+
+    case SSL_EARLY_DATA_ACCEPT_RETRY:
+        s->early_data_state = SSL_EARLY_DATA_ACCEPTING;
+        ret = SSL_accept(s);
+        if (ret <= 0) {
+            /* NBIO or error */
+            s->early_data_state = SSL_EARLY_DATA_ACCEPT_RETRY;
+            return SSL_READ_EARLY_ERROR;
+        }
+        /* fall through */
+
+    case SSL_EARLY_DATA_READ_RETRY:
+        if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED) {
+            s->early_data_state = SSL_EARLY_DATA_READING;
+            ret = SSL_read_ex(s, buf, num, readbytes);
+            /*
+             * Record layer will call ssl_end_of_early_data_seen() if we see
+             * that alert - which updates the early_data_state to
+             * SSL_EARLY_DATA_FINISHED_READING
+             */
+            if (ret > 0 || (ret <= 0 && s->early_data_state
+                                        != SSL_EARLY_DATA_FINISHED_READING)) {
+                s->early_data_state = SSL_EARLY_DATA_READ_RETRY;
+                return ret > 0 ? SSL_READ_EARLY_SUCCESS : SSL_READ_EARLY_ERROR;
+            }
+        } else {
+            s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
+        }
+        *readbytes = 0;
+        ossl_statem_set_in_init(s, 1);
+        return SSL_READ_EARLY_FINISH;
+
+    default:
+        SSLerr(SSL_F_SSL_READ_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return SSL_READ_EARLY_ERROR;
+    }
+}
+
+int ssl_end_of_early_data_seen(SSL *s)
+{
+    if (s->early_data_state == SSL_EARLY_DATA_READING) {
+        s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
+        return 1;
+    }
+
+    return 0;
+}
+
 static int ssl_peek_internal(SSL *s, void *buf, size_t num, size_t *readbytes)
 {
     if (s->handshake_func == NULL) {

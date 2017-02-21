@@ -406,6 +406,10 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_ERROR;
 
     case TLS_ST_OK:
+        if (s->early_data_state == SSL_EARLY_DATA_FINISHED_READING) {
+            st->hand_state = TLS_ST_SW_FINISHED;
+            return WRITE_TRAN_FINISHED;
+        }
         if (s->key_update != SSL_KEY_UPDATE_NONE) {
             st->hand_state = TLS_ST_SW_KEY_UPDATE;
             return WRITE_TRAN_CONTINUE;
@@ -450,6 +454,11 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_FINISHED:
+        if (s->early_data_state == SSL_EARLY_DATA_ACCEPTING) {
+            st->hand_state = TLS_ST_OK;
+            ossl_statem_set_in_init(s, 0);
+            return WRITE_TRAN_CONTINUE;
+        }
         return WRITE_TRAN_FINISHED;
 
     case TLS_ST_SR_FINISHED:
@@ -1233,9 +1242,6 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
         s->renegotiate = 1;
         s->new_session = 1;
     }
-
-    /* This is a real handshake so make sure we clean it up at the end */
-    s->statem.cleanuphand = 1;
 
     /*
      * First, parse the raw ClientHello data into the CLIENTHELLO_MSG structure.
