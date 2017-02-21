@@ -53,7 +53,7 @@ static const char fmt_http_get_cmd[] = "GET %s HTTP/1.0\r\n\r\n";
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_CONNECT, OPT_CIPHER, OPT_CERT, OPT_KEY, OPT_CAPATH,
+    OPT_CONNECT, OPT_CIPHER, OPT_CERT, OPT_NAMEOPT, OPT_KEY, OPT_CAPATH,
     OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NEW, OPT_REUSE, OPT_BUGS,
     OPT_VERIFY, OPT_TIME, OPT_SSL3,
     OPT_WWW
@@ -65,6 +65,7 @@ const OPTIONS s_time_options[] = {
      "Where to connect as post:port (default is " SSL_CONNECT_NAME ")"},
     {"cipher", OPT_CIPHER, 's', "Cipher to use, see 'openssl ciphers'"},
     {"cert", OPT_CERT, '<', "Cert file to use, PEM format assumed"},
+    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"key", OPT_KEY, '<', "File with key, PEM; default is -cert file"},
     {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
     {"cafile", OPT_CAFILE, '<', "PEM format file of CA's"},
@@ -140,6 +141,10 @@ int s_time_main(int argc, char **argv)
             break;
         case OPT_CERT:
             certfile = opt_arg();
+            break;
+        case OPT_NAMEOPT:
+            if (!set_nameopt(opt_arg()))
+                goto end;
             break;
         case OPT_KEY:
             keyfile = opt_arg();
