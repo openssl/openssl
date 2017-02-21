@@ -20,6 +20,7 @@ int ERR_load_X509_strings(void);
  * X509 function codes.
  */
 # define X509_F_ADD_CERT_DIR                              100
+# define X509_F_ADD_LOCATIONS                             168
 # define X509_F_BUILD_CHAIN                               106
 # define X509_F_BY_FILE_CTRL                              101
 # define X509_F_CHECK_NAME_CONSTRAINTS                    149
@@ -29,6 +30,7 @@ int ERR_load_X509_strings(void);
 # define X509_F_GET_CERT_BY_SUBJECT                       103
 # define X509_F_I2D_X509_AUX                              151
 # define X509_F_LOOKUP_CERTS_SK                           152
+# define X509_F_LOOKUP_INT                                161
 # define X509_F_NETSCAPE_SPKI_B64_DECODE                  129
 # define X509_F_NETSCAPE_SPKI_B64_ENCODE                  130
 # define X509_F_NEW_DIR                                   153
@@ -47,8 +49,14 @@ int ERR_load_X509_strings(void);
 # define X509_F_X509_EXTENSION_CREATE_BY_OBJ              109
 # define X509_F_X509_GET_PUBKEY_PARAMETERS                110
 # define X509_F_X509_LOAD_CERT_CRL_FILE                   132
+# define X509_F_X509_LOAD_CERT_CRL_FILE_INT               167
 # define X509_F_X509_LOAD_CERT_FILE                       111
 # define X509_F_X509_LOAD_CRL_FILE                        112
+# define X509_F_X509_LOOKUP_BY_ALIAS                      162
+# define X509_F_X509_LOOKUP_BY_FINGERPRINT                163
+# define X509_F_X509_LOOKUP_BY_ISSUER_SERIAL              164
+# define X509_F_X509_LOOKUP_BY_SUBJECT                    165
+# define X509_F_X509_LOOKUP_CTRL                          166
 # define X509_F_X509_LOOKUP_METH_NEW                      160
 # define X509_F_X509_LOOKUP_NEW                           155
 # define X509_F_X509_NAME_ADD_ENTRY                       113
@@ -95,6 +103,7 @@ int ERR_load_X509_strings(void);
 # define X509_R_IDP_MISMATCH                              128
 # define X509_R_INVALID_DIRECTORY                         113
 # define X509_R_INVALID_FIELD_NAME                        119
+# define X509_R_INVALID_LOCATIONS                         138
 # define X509_R_INVALID_TRUST                             123
 # define X509_R_ISSUER_MISMATCH                           129
 # define X509_R_KEY_TYPE_MISMATCH                         115

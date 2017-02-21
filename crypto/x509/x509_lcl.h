@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/store.h>
 #include "internal/refcount.h"
 
 /*
@@ -68,33 +69,28 @@ struct x509_crl_method_st {
     int (*crl_verify) (X509_CRL *crl, EVP_PKEY *pk);
 };
 
-struct x509_lookup_method_st {
-    char *name;
-    int (*new_item) (X509_LOOKUP *ctx);
-    void (*free) (X509_LOOKUP *ctx);
-    int (*init) (X509_LOOKUP *ctx);
-    int (*shutdown) (X509_LOOKUP *ctx);
-    int (*ctrl) (X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
-                 char **ret);
-    int (*get_by_subject) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                           X509_NAME *name, X509_OBJECT *ret);
-    int (*get_by_issuer_serial) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                                 X509_NAME *name, ASN1_INTEGER *serial,
-                                 X509_OBJECT *ret);
-    int (*get_by_fingerprint) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                               const unsigned char *bytes, int len,
-                               X509_OBJECT *ret);
-    int (*get_by_alias) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                         const char *str, int len, X509_OBJECT *ret);
-};
+typedef struct lookup_load_entry_st {
+    char *name;                 /* dir or file, we don't know, or care */
+} LOCATION;
+DEFINE_STACK_OF(LOCATION)
+
+/* When we cache a stack of names, that we keep as OSSL_STORE_INFO */
+typedef struct loaded_entry_st {
+    OSSL_STORE_INFO *name;
+    int type; /* the type of data loaded */
+} LOADED_ENTRY;
+DEFINE_STACK_OF(LOADED_ENTRY)
 
 /* This is the functions plus an instance of the local variables. */
 struct x509_lookup_st {
-    int init;                   /* have we been started */
-    int skip;                   /* don't use us. */
-    X509_LOOKUP_METHOD *method; /* the functions */
-    void *method_data;          /* method data */
+    STACK_OF(LOCATION) *locations;   /* Locations added by application */
+    STACK_OF(LOADED_ENTRY) *entries; /* Cache of names of already loaded objs */
+    CRYPTO_RWLOCK *lock;
+
     X509_STORE *store_ctx;      /* who owns us */
+
+    /* Unused */
+    void *method_data;
 };
 
 /*
@@ -106,8 +102,8 @@ struct x509_store_st {
     /* The following is a cache of trusted certs */
     int cache;                  /* if true, stash any hits */
     STACK_OF(X509_OBJECT) *objs; /* Cache of all objects */
-    /* These are external lookup methods */
-    STACK_OF(X509_LOOKUP) *get_cert_methods;
+    /* Lookup information */
+    X509_LOOKUP *lookup;
     X509_VERIFY_PARAM *param;
     /* Callbacks for various operations */
     /* called to verify a certificate */
@@ -136,10 +132,6 @@ struct x509_store_st {
     CRYPTO_RWLOCK *lock;
 };
 
-typedef struct lookup_dir_hashes_st BY_DIR_HASH;
-typedef struct lookup_dir_entry_st BY_DIR_ENTRY;
-DEFINE_STACK_OF(BY_DIR_HASH)
-DEFINE_STACK_OF(BY_DIR_ENTRY)
 typedef STACK_OF(X509_NAME_ENTRY) STACK_OF_X509_NAME_ENTRY;
 DEFINE_STACK_OF(STACK_OF_X509_NAME_ENTRY)
 
