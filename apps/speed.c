@@ -1235,7 +1235,7 @@ int speed_main(int argc, char **argv)
 #ifndef NO_FORK
     int multi = 0;
 #endif
-    int async_jobs = 0;
+    unsigned int async_jobs = 0;
 #if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA) \
     || !defined(OPENSSL_NO_EC)
     long rsa_count = 1;
@@ -1411,6 +1411,12 @@ int speed_main(int argc, char **argv)
             if (!ASYNC_is_capable()) {
                 BIO_printf(bio_err,
                            "%s: async_jobs specified but async not supported\n",
+                           prog);
+                goto opterr;
+            }
+            if (async_jobs > 99999) {
+                BIO_printf(bio_err,
+                           "%s: too many async_jobs\n",
                            prog);
                 goto opterr;
             }
