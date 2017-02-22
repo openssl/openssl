@@ -185,7 +185,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     } else if (sLen > INT_MAX - 2 - hLen ||
                emLen < (hLen + sLen + 2)) {
         RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,
-                RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+               RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         goto err;
     }
 
