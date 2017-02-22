@@ -749,8 +749,8 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
                 return 0;
             group_id = (ext[0] << 8) | ext[1];
             BIO_indent(bio, indent + 4, 80);
-            BIO_printf(bio, "NamedGroup: %s\n",
-                       ssl_trace_str(group_id, ssl_groups_tbl));
+            BIO_printf(bio, "NamedGroup: %s (%d)\n",
+                       ssl_trace_str(group_id, ssl_groups_tbl), group_id);
             break;
         }
         if (extlen < 2)
@@ -775,8 +775,8 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
             if (xlen < share_len)
                 return 0;
             BIO_indent(bio, indent + 4, 80);
-            BIO_printf(bio, "NamedGroup: %s\n",
-                       ssl_trace_str(group_id, ssl_groups_tbl));
+            BIO_printf(bio, "NamedGroup: %s (%d)\n",
+                       ssl_trace_str(group_id, ssl_groups_tbl), group_id);
             ssl_print_hex(bio, indent + 4, "key_exchange: ", ext, share_len);
         }
         break;
