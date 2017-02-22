@@ -714,7 +714,7 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
              */
             if (!tls13_change_cipher_state(s,
                         SSL3_CC_EARLY | SSL3_CHANGE_CIPHER_CLIENT_WRITE))
-            return WORK_ERROR;
+                return WORK_ERROR;
         }
         break;
 
