@@ -787,10 +787,13 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
         if (SSL_IS_TLS13(s)) {
             if (!s->method->ssl3_enc->setup_key_block(s)
                 || !s->method->ssl3_enc->change_cipher_state(s,
-                        SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_WRITE)
-                || !s->method->ssl3_enc->change_cipher_state(s,
+                        SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_WRITE))
+                return WORK_ERROR;
+
+            if (s->ext.early_data != SSL_EARLY_DATA_ACCEPTED
+                && !s->method->ssl3_enc->change_cipher_state(s,
                         SSL3_CC_HANDSHAKE |SSL3_CHANGE_CIPHER_SERVER_READ))
-            return WORK_ERROR;
+                return WORK_ERROR;
         }
         break;
 
@@ -1102,6 +1105,15 @@ WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
         return WORK_FINISHED_CONTINUE;
     }
     return WORK_FINISHED_CONTINUE;
+}
+
+int ossl_statem_finish_early_data(SSL *s)
+{
+    if (!s->method->ssl3_enc->change_cipher_state(s,
+                SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ))
+        return 0;
+
+    return 1;
 }
 
 #ifndef OPENSSL_NO_SRP
