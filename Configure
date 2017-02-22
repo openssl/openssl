@@ -124,7 +124,6 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
         . " -Wshadow"
         . " -Wformat"
         . " -Wtype-limits"
-        . " -Wno-parentheses-equality"
         . " -Werror"
         ;
 
