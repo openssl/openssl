@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
@@ -1756,10 +1757,8 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
 {
     static const size_t utctime_length = sizeof("YYMMDDHHMMSSZ") - 1;
     static const size_t generalizedtime_length = sizeof("YYYYMMDDHHMMSSZ") - 1;
-
-    ASN1_TIME atm;
-    unsigned char time1[24], time2[24];
-    int year, result;
+    ASN1_TIME *asn1_cmp_time = NULL;
+    int day, sec, ret = 0;
 
     /*
      * Note that ASN.1 allows much more slack in the time format than RFC5280.
@@ -1768,56 +1767,55 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
      * GeneralizedTime: YYYYMMDDHHMMSSZ
      *
      * We do NOT currently enforce the following RFC 5280 requirement:
-     *
-     * CAs conforming to this profile MUST always encode certificate
-     * validity dates through the year 2049 as UTCTime; certificate validity
-     * dates in 2050 or later MUST be encoded as GeneralizedTime.
+     * "CAs conforming to this profile MUST always encode certificate
+     *  validity dates through the year 2049 as UTCTime; certificate validity
+     *  dates in 2050 or later MUST be encoded as GeneralizedTime."
      */
     switch (ctm->type) {
     case V_ASN1_UTCTIME:
         if (ctm->length != utctime_length)
             return 0;
-        /*
-         * Years >= 50 are 19YY, years < 50 are 20YY.
-         * We verify all digits later; for now we assume they're in valid range.
-         */
-        year = (ctm->data[0] - '0') * 10 + ctm->data[1] - '0';
-        memcpy(time1, year >= 50 ? "19" : "20", 2);
-        memcpy(time1 + 2, ctm->data, ctm->length);
         break;
     case V_ASN1_GENERALIZEDTIME:
         if (ctm->length != generalizedtime_length)
             return 0;
-        memcpy(time1, ctm->data, ctm->length);
         break;
     default:
         return 0;
     }
 
     /**
-     * Now everything is in GeneralizedTime. We verify that the digits
-     * are in valid range; we don't verify that the date is valid.
+     * Verify the format: the ASN.1 functions we use below allow a more
+     * flexible format than what's mandated by RFC 5280.
+     * Digit and date ranges will be verified in the conversion methods.
      */
-    for (size_t i = 0; i < generalizedtime_length - 1; i++) {
-        if (time1[i] < '0' || time1[i] > '9')
+    for (int i = 0; i < ctm->length - 1; i++) {
+        if (!isdigit(ctm->data[i]))
             return 0;
     }
-    if (time1[generalizedtime_length - 1] != 'Z')
+    if (ctm->data[ctm->length - 1] != 'Z')
         return 0;
 
-    memset(&atm, 0, sizeof(atm));
-    atm.type = V_ASN1_GENERALIZEDTIME;
-    atm.length = sizeof(time2);
-    atm.data = time2;
+    /*
+     * There is ASN1_UTCTIME_cmp_time_t but no
+     * ASN1_GENERALIZEDTIME_cmp_time_t or ASN1_TIME_cmp_time_t,
+     * so we go through ASN.1
+     */
+    asn1_cmp_time = X509_time_adj(NULL, 0, cmp_time);
+    if (asn1_cmp_time == NULL)
+        goto err;
+    if (!ASN1_TIME_diff(&day, &sec, ctm, asn1_cmp_time))
+        goto err;
 
-    if (X509_time_adj(&atm, 0, cmp_time) == NULL)
-        return 0;
+    /*
+     * X509_cmp_time comparison is <=.
+     * The return value 0 is reserved for errors.
+     */
+    ret = (day >= 0 && sec >= 0) ? -1 : 1;
 
-    result = memcmp(time1, time2, generalizedtime_length);
-    if (result == 0)                 /* wait a second then return younger :-) */
-        return -1;
-    else
-        return result;
+ err:
+    ASN1_TIME_free(asn1_cmp_time);
+    return ret;
 }
 
 ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj)

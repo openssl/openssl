@@ -148,24 +148,54 @@ static TESTDATA x509_cmp_tests[] = {
 static int test_x509_cmp_time(int idx)
 {
     ASN1_TIME t;
-    TESTDATA tv = x509_cmp_tests[idx];
     int result;
 
     memset(&t, 0, sizeof(t));
-    t.type = tv.type;
-    t.data = (unsigned char*)(tv.data);
-    t.length = strlen(tv.data);
+    t.type = x509_cmp_tests[idx].type;
+    t.data = (unsigned char*)(x509_cmp_tests[idx].data);
+    t.length = strlen(x509_cmp_tests[idx].data);
 
-    result = X509_cmp_time(&t, &tv.cmp_time);
-    if (result != tv.expected) {
+    result = X509_cmp_time(&t, &x509_cmp_tests[idx].cmp_time);
+    if (result != x509_cmp_tests[idx].expected) {
         fprintf(stderr, "test_x509_cmp_time(%d) failed: expected %d, got %d\n",
-                idx, tv.expected, result);
+                idx, x509_cmp_tests[idx].expected, result);
         return 0;
     }
     return 1;
 }
 
+static int test_x509_cmp_time_current()
+{
+    time_t now = time(NULL);
+    /* Pick a day earlier and later, relative to any system clock. */
+    ASN1_TIME *asn1_before = NULL, *asn1_after = NULL;
+    int cmp_result, failed = 0;
+
+    asn1_before = ASN1_TIME_adj(NULL, now, -1, 0);
+    asn1_after = ASN1_TIME_adj(NULL, now, 1, 0);
+
+    cmp_result  = X509_cmp_time(asn1_before, NULL);
+    if (cmp_result != -1) {
+        fprintf(stderr, "test_x509_cmp_time_current failed: expected -1, got %d\n",
+                cmp_result);
+        failed = 1;
+    }
+
+    cmp_result = X509_cmp_time(asn1_after, NULL);
+    if (cmp_result != 1) {
+        fprintf(stderr, "test_x509_cmp_time_current failed: expected 1, got %d\n",
+                cmp_result);
+        failed = 1;
+    }
+
+    ASN1_TIME_free(asn1_before);
+    ASN1_TIME_free(asn1_after);
+
+    return failed == 0;
+}
+
 void register_tests()
 {
+    ADD_TEST(test_x509_cmp_time_current);
     ADD_ALL_TESTS(test_x509_cmp_time, OSSL_NELEM(x509_cmp_tests));
 }
