@@ -73,7 +73,7 @@ int EC_GROUP_get_basis_type(const EC_GROUP *group)
 
     /* Find the last non-zero element of group->poly[] */
     for (i = 0;
-         i < (int)OSSL_NELEM(group->poly) & group->poly[i] != 0;
+         i < (int)OSSL_NELEM(group->poly) && group->poly[i] != 0;
          i++)
         continue;
 
