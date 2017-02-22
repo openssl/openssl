@@ -147,6 +147,8 @@ static int dtlslisten = 0;
 static char *psk_identity = "Client_identity";
 char *psk_key = NULL;           /* by default PSK is not used */
 
+int early_data = 0;
+
 static unsigned int psk_server_cb(SSL *ssl, const char *identity,
                                   unsigned char *psk,
                                   unsigned int max_psk_len)
@@ -719,7 +721,7 @@ typedef enum OPTION_choice {
     OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
-    OPT_KEYLOG_FILE, OPT_MAX_EARLY,
+    OPT_KEYLOG_FILE, OPT_MAX_EARLY, OPT_EARLY_DATA,
     OPT_S_ENUM,
     OPT_V_ENUM,
     OPT_X_ENUM
@@ -918,6 +920,7 @@ const OPTIONS s_server_options[] = {
     {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
     {"max_early_data", OPT_MAX_EARLY, 'p',
      "The maximum number of bytes of early data"},
+    {"early_data", OPT_EARLY_DATA, '-', "Attempt to read early data"},
     {NULL, OPT_EOF, 0, NULL}
 };
 
@@ -1505,6 +1508,9 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_MAX_EARLY:
             max_early_data = atoi(opt_arg());
+            break;
+        case OPT_EARLY_DATA:
+            early_data = 1;
             break;
         }
     }
@@ -2197,6 +2203,43 @@ static int sv_body(int s, int stype, unsigned char *context)
     if (s_tlsextdebug) {
         SSL_set_tlsext_debug_callback(con, tlsext_cb);
         SSL_set_tlsext_debug_arg(con, bio_s_out);
+    }
+
+    if (early_data) {
+        int write_header = 1, edret = SSL_READ_EARLY_ERROR;
+        size_t readbytes;
+
+        while (edret != SSL_READ_EARLY_FINISH) {
+            for (;;) {
+                edret = SSL_read_early(con, buf, bufsize, &readbytes);
+                if (edret != SSL_READ_EARLY_ERROR)
+                    break;
+
+                switch (SSL_get_error(con, 0)) {
+                case SSL_ERROR_WANT_WRITE:
+                case SSL_ERROR_WANT_ASYNC:
+                case SSL_ERROR_WANT_READ:
+                    /* Just keep trying - busy waiting */
+                    continue;
+                default:
+                    BIO_printf(bio_err, "Error reading early data\n");
+                    ERR_print_errors(bio_err);
+                    goto err;
+                }
+            }
+            if (readbytes > 0) {
+                if (write_header) {
+                    BIO_printf(bio_s_out, "Early data received:\n");
+                    write_header = 0;
+                }
+                raw_write_stdout(buf, (unsigned int)readbytes);
+                (void)BIO_flush(bio_s_out);
+            }
+        }
+        if (write_header)
+            BIO_printf(bio_s_out, "No early data received\n");
+        else
+            BIO_printf(bio_s_out, "\nEnd of early data\n");
     }
 
     if (fileno_stdin() > s)
