@@ -1657,6 +1657,7 @@ int ssl_end_of_early_data_seen(SSL *s)
 {
     if (s->early_data_state == SSL_EARLY_DATA_READING) {
         s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
+        ossl_statem_finish_early_data(s);
         return 1;
     }
 

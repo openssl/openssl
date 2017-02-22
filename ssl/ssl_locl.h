@@ -1027,6 +1027,7 @@ struct ssl_st {
     unsigned char client_finished_secret[EVP_MAX_MD_SIZE];
     unsigned char server_finished_secret[EVP_MAX_MD_SIZE];
     unsigned char server_finished_hash[EVP_MAX_MD_SIZE];
+    unsigned char handshake_traffic_hash[EVP_MAX_MD_SIZE];
     unsigned char client_app_traffic_secret[EVP_MAX_MD_SIZE];
     unsigned char server_app_traffic_secret[EVP_MAX_MD_SIZE];
     EVP_CIPHER_CTX *enc_read_ctx; /* cryptographic state */
