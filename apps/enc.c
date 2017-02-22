@@ -134,10 +134,11 @@ int enc_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_LIST:
-            BIO_printf(bio_err, "Supported ciphers:\n");
+            BIO_printf(bio_out, "Supported ciphers:\n");
             OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH,
-                                   show_ciphers, bio_err);
-            BIO_printf(bio_err, "\n");
+                                   show_ciphers, bio_out);
+            BIO_printf(bio_out, "\n");
+            ret = 0;
             goto end;
         case OPT_E:
             enc = 1;
