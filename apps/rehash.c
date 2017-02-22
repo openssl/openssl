@@ -267,19 +267,18 @@ static void str_free(char *s)
     OPENSSL_free(s);
 }
 
-static int slashy_dir_end_needed(const char *path)
+static int ends_with_dirsep(const char *path)
 {
-    size_t pos = strlen(path) - 1;
+    if (*path != '\0')
+        path += strlen(path) - 1;
 # ifdef __VMS
-    if (path[pos] == ']' || path[pos] == '>' || path[pos] == ':')
-        return 0;
+    if (*path == ']' || *path == '>' || *path == ':')
+        return 1;
 # elif _WIN32
-    if (path[pos] == '\\')
-        return 0;
+    if (*path == '\\')
+        return 1;
 # endif
-    if (path[pos] == '/')
-        return 0;
-    return 1;
+    return *path == '/';
 }
 
 /*
@@ -304,7 +303,7 @@ static int do_dir(const char *dirname, enum Hash h)
         return 1;
     }
     buflen = strlen(dirname);
-    pathsep = (buflen && slashy_dir_end_needed(dirname)) ? "/": "";
+    pathsep = (buflen && !ends_with_dirsep(dirname)) ? "/": "";
     buflen += NAME_MAX + 1 + 1;
     buf = app_malloc(buflen, "filename buffer");
 
