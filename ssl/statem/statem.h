@@ -129,3 +129,4 @@ __owur int ossl_statem_app_data_allowed(SSL *s);
 void ossl_statem_set_sctp_read_sock(SSL *s, int read_sock);
 __owur int ossl_statem_in_sctp_read_sock(SSL *s);
 #endif
+int ossl_statem_finish_early_data(SSL *s);
