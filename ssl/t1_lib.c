@@ -1315,6 +1315,11 @@ TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     sess = d2i_SSL_SESSION(NULL, &p, slen);
     OPENSSL_free(sdec);
     if (sess) {
+        /* Some additional consistency checks */
+        if (p != sdec + slen || sess->session_id_length != 0) {
+            SSL_SESSION_free(sess);
+            return 2;
+        }
         /*
          * The session ID, if non-empty, is used by some clients to detect
          * that the ticket has been accepted. So we copy it to the session
