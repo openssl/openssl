@@ -16,7 +16,7 @@
 #include "apps.h"
 
 #if defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) || \
-    (defined(__VMS) && defined(__DECC) && __CTRL_VER >= 80300000)
+    (defined(__VMS) && defined(__DECC) && __CRTL_VER >= 80300000)
 # include <unistd.h>
 # include <stdio.h>
 # include <limits.h>
@@ -267,6 +267,21 @@ static void str_free(char *s)
     OPENSSL_free(s);
 }
 
+static int slashy_dir_end_needed(const char *path)
+{
+    size_t pos = strlen(path) - 1;
+# ifdef __VMS
+    if (path[pos] == ']' || path[pos] == '>' || path[pos] == ':')
+        return 0;
+# elif _WIN32
+    if (path[pos] == '\\')
+        return 0;
+# endif
+    if (path[pos] == '/')
+        return 0;
+    return 1;
+}
+
 /*
  * Process a directory; return number of errors found.
  */
@@ -289,7 +304,7 @@ static int do_dir(const char *dirname, enum Hash h)
         return 1;
     }
     buflen = strlen(dirname);
-    pathsep = (buflen && dirname[buflen - 1] == '/') ? "" : "/";
+    pathsep = (buflen && slashy_dir_end_needed(dirname)) ? "/": "";
     buflen += NAME_MAX + 1 + 1;
     buf = app_malloc(buflen, "filename buffer");
 
