@@ -62,6 +62,8 @@
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 
+#define OSSL_NELEM(x)    (sizeof(x)/sizeof(x[0]))
+
 int EC_GROUP_get_basis_type(const EC_GROUP *group)
 {
     int i;
