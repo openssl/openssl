@@ -1629,6 +1629,12 @@ long SSL_callback_ctrl(SSL *, int, void (*)(void));
 long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg);
 long SSL_CTX_callback_ctrl(SSL_CTX *, int, void (*)(void));
 
+# define SSL_EARLY_DATA_NOT_SENT    0
+# define SSL_EARLY_DATA_REJECTED    1
+# define SSL_EARLY_DATA_ACCEPTED    2
+
+__owur int SSL_get_early_data_status(SSL *s);
+
 __owur int SSL_get_error(const SSL *s, int ret_code);
 __owur const char *SSL_get_version(const SSL *s);
 
@@ -2374,6 +2380,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_STOC_CERTIFICATE             374
 # define SSL_F_TLS_CONSTRUCT_STOC_CRYPTOPRO_BUG           452
 # define SSL_F_TLS_CONSTRUCT_STOC_DONE                    375
+# define SSL_F_TLS_CONSTRUCT_STOC_EARLY_DATA              531
 # define SSL_F_TLS_CONSTRUCT_STOC_EARLY_DATA_INFO         525
 # define SSL_F_TLS_CONSTRUCT_STOC_EC_PT_FORMATS           453
 # define SSL_F_TLS_CONSTRUCT_STOC_EMS                     454

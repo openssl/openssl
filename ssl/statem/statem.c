@@ -154,7 +154,7 @@ void ossl_statem_set_in_handshake(SSL *s, int inhand)
 /* Are we in a sensible state to skip over unreadable early data? */
 int ossl_statem_skip_early_data(SSL *s)
 {
-    if (!s->ext.expect_early_data)
+    if (s->ext.early_data != SSL_EARLY_DATA_REJECTED)
         return 0;
 
     if (s->statem.hand_state != TLS_ST_SW_FINISHED)

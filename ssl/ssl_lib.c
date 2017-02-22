@@ -1663,6 +1663,11 @@ int ssl_end_of_early_data_seen(SSL *s)
     return 0;
 }
 
+int SSL_get_early_data_status(SSL *s)
+{
+    return s->ext.early_data;
+}
+
 static int ssl_peek_internal(SSL *s, void *buf, size_t num, size_t *readbytes)
 {
     if (s->handshake_func == NULL) {
