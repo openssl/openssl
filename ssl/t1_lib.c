@@ -1318,7 +1318,7 @@ TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         /* Some additional consistency checks */
         if (p != sdec + slen || sess->session_id_length != 0) {
             SSL_SESSION_free(sess);
-            return 2;
+            return TICKET_NO_DECRYPT;
         }
         /*
          * The session ID, if non-empty, is used by some clients to detect
