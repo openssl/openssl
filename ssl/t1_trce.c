@@ -1167,46 +1167,50 @@ static int ssl_print_cert_request(BIO *bio, int indent, SSL *s,
     size_t xlen;
     unsigned int sigalg;
 
-    if (msglen < 1)
-        return 0;
-    xlen = msg[0];
-    if (msglen < xlen + 1)
-        return 0;
-    msg++;
-    BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "certificate_types (len=%d)\n", (int)xlen);
-    if (!ssl_trace_list(bio, indent + 2, msg, xlen, 1, ssl_ctype_tbl))
-        return 0;
-    msg += xlen;
-    msglen -= xlen + 1;
-    if (!SSL_USE_SIGALGS(s))
-        goto skip_sig;
-    if (msglen < 2)
-        return 0;
-    xlen = (msg[0] << 8) | msg[1];
-    if (msglen < xlen + 2 || (xlen & 1))
-        return 0;
-    msg += 2;
-    BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "signature_algorithms (len=%d)\n", (int)xlen);
-    while (xlen > 0) {
-        BIO_indent(bio, indent + 2, 80);
-        sigalg = (msg[0] << 8) | msg[1];
-        BIO_printf(bio, "%s (0x%04x)\n",
-                   ssl_trace_str(sigalg, ssl_sigalg_tbl), sigalg);
-        xlen -= 2;
-        msg += 2;
+    if (SSL_IS_TLS13(s)) {
+        if (!ssl_print_hexbuf(bio, indent, "request_context", 1, &msg, &msglen))
+            return 0;
+    } else {
+        if (msglen < 1)
+            return 0;
+        xlen = msg[0];
+        if (msglen < xlen + 1)
+            return 0;
+        msg++;
+        BIO_indent(bio, indent, 80);
+        BIO_printf(bio, "certificate_types (len=%d)\n", (int)xlen);
+        if (!ssl_trace_list(bio, indent + 2, msg, xlen, 1, ssl_ctype_tbl))
+            return 0;
+        msg += xlen;
+        msglen -= xlen + 1;
     }
-    msg += xlen;
-    msglen -= xlen + 2;
+    if (SSL_USE_SIGALGS(s)) {
+        if (msglen < 2)
+            return 0;
+        xlen = (msg[0] << 8) | msg[1];
+        if (msglen < xlen + 2 || (xlen & 1))
+            return 0;
+        msg += 2;
+        msglen -= xlen + 2;
+        BIO_indent(bio, indent, 80);
+        BIO_printf(bio, "signature_algorithms (len=%d)\n", (int)xlen);
+        while (xlen > 0) {
+            BIO_indent(bio, indent + 2, 80);
+            sigalg = (msg[0] << 8) | msg[1];
+            BIO_printf(bio, "%s (0x%04x)\n",
+                       ssl_trace_str(sigalg, ssl_sigalg_tbl), sigalg);
+            xlen -= 2;
+            msg += 2;
+        }
+        msg += xlen;
+    }
 
- skip_sig:
     xlen = (msg[0] << 8) | msg[1];
     BIO_indent(bio, indent, 80);
     if (msglen < xlen + 2)
         return 0;
     msg += 2;
-    msglen -= 2;
+    msglen -= 2 + xlen;
     BIO_printf(bio, "certificate_authorities (len=%d)\n", (int)xlen);
     while (xlen > 0) {
         size_t dlen;
@@ -1232,7 +1236,12 @@ static int ssl_print_cert_request(BIO *bio, int indent, SSL *s,
         xlen -= dlen + 2;
         msg += dlen;
     }
-    return 1;
+    if (SSL_IS_TLS13(s)) {
+         if (!ssl_print_hexbuf(bio, indent, "request_extensions", 2,
+                               &msg, &msglen))
+        return 0;
+    }
+    return msglen == 0;
 }
 
 static int ssl_print_ticket(BIO *bio, int indent,
