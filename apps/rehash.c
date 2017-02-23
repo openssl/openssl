@@ -287,10 +287,10 @@ static int ends_with_dirsep(const char *path)
 {
     if (*path != '\0')
         path += strlen(path) - 1;
-# ifdef __VMS
+# if defined __VMS
     if (*path == ']' || *path == '>' || *path == ':')
         return 1;
-# elif _WIN32
+# elif defined _WIN32
     if (*path == '\\')
         return 1;
 # endif
