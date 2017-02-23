@@ -2925,6 +2925,7 @@ void ssl3_free(SSL *s)
     s->s3->tmp.pkey = NULL;
 #endif
 
+    OPENSSL_free(s->s3->tmp.ctype);
     sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
     OPENSSL_free(s->s3->tmp.ciphers_raw);
     OPENSSL_clear_free(s->s3->tmp.pms, s->s3->tmp.pmslen);
@@ -2943,6 +2944,7 @@ void ssl3_free(SSL *s)
 void ssl3_clear(SSL *s)
 {
     ssl3_cleanup_key_block(s);
+    OPENSSL_free(s->s3->tmp.ctype);
     sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
     OPENSSL_free(s->s3->tmp.ciphers_raw);
     OPENSSL_clear_free(s->s3->tmp.pms, s->s3->tmp.pmslen);
@@ -3234,14 +3236,9 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             const unsigned char **pctype = parg;
             if (s->server || !s->s3->tmp.cert_req)
                 return 0;
-            if (s->cert->ctypes) {
-                if (pctype)
-                    *pctype = s->cert->ctypes;
-                return (int)s->cert->ctype_num;
-            }
             if (pctype)
-                *pctype = (unsigned char *)s->s3->tmp.ctype;
-            return s->s3->tmp.ctype_num;
+                *pctype = s->s3->tmp.ctype;
+            return s->s3->tmp.ctype_len;
         }
 
     case SSL_CTRL_SET_CLIENT_CERT_TYPES:
@@ -3787,9 +3784,8 @@ int ssl3_get_req_cert_type(SSL *s, WPACKET *pkt)
     uint32_t alg_k, alg_a = 0;
 
     /* If we have custom certificate types set, use them */
-    if (s->cert->ctypes) {
-        return WPACKET_memcpy(pkt, s->cert->ctypes, s->cert->ctype_num);
-    }
+    if (s->cert->ctype)
+        return WPACKET_memcpy(pkt, s->cert->ctype, s->cert->ctype_len);
     /* Get mask of algorithms disabled by signature list */
     ssl_set_sig_mask(&alg_a, s, SSL_SECOP_SIGALG_MASK);
 
@@ -3837,17 +3833,17 @@ int ssl3_get_req_cert_type(SSL *s, WPACKET *pkt)
 
 static int ssl3_set_req_cert_type(CERT *c, const unsigned char *p, size_t len)
 {
-    OPENSSL_free(c->ctypes);
-    c->ctypes = NULL;
-    if (!p || !len)
+    OPENSSL_free(c->ctype);
+    c->ctype = NULL;
+    c->ctype_len = 0;
+    if (p == NULL || len == 0)
         return 1;
     if (len > 0xff)
         return 0;
-    c->ctypes = OPENSSL_malloc(len);
-    if (c->ctypes == NULL)
+    c->ctype = OPENSSL_memdup(p, len);
+    if (c->ctype == NULL)
         return 0;
-    memcpy(c->ctypes, p, len);
-    c->ctype_num = len;
+    c->ctype_len = len;
     return 1;
 }
 

@@ -1316,8 +1316,9 @@ typedef struct ssl3_state_st {
 # endif
         /* used for certificate requests */
         int cert_req;
-        int ctype_num;
-        char ctype[SSL3_CT_NUMBER];
+        /* Certificate types in certificate request message. */
+        uint8_t *ctype;
+        size_t ctype_len;
         STACK_OF(X509_NAME) *ca_names;
         size_t key_block_length;
         unsigned char *key_block;
@@ -1606,13 +1607,9 @@ typedef struct cert_st {
     /* Flags related to certificates */
     uint32_t cert_flags;
     CERT_PKEY pkeys[SSL_PKEY_NUM];
-    /*
-     * Certificate types (received or sent) in certificate request message.
-     * On receive this is only set if number of certificate types exceeds
-     * SSL3_CT_NUMBER.
-     */
-    unsigned char *ctypes;
-    size_t ctype_num;
+    /* Custom certificate types sent in certificate request message. */
+    uint8_t *ctype;
+    size_t ctype_len;
     /*
      * supported signature algorithms. When set on a client this is sent in
      * the client hello as the supported signature algorithms extension. For
