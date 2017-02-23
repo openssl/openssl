@@ -918,7 +918,7 @@ const OPTIONS s_server_options[] = {
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
-    {"max_early_data", OPT_MAX_EARLY, 'p',
+    {"max_early_data", OPT_MAX_EARLY, 'n',
      "The maximum number of bytes of early data"},
     {"early_data", OPT_EARLY_DATA, '-', "Attempt to read early data"},
     {NULL, OPT_EOF, 0, NULL}
@@ -997,7 +997,7 @@ int s_server_main(int argc, char *argv[])
     unsigned int split_send_fragment = 0, max_pipelines = 0;
     const char *s_serverinfo_file = NULL;
     const char *keylog_file = NULL;
-    uint32_t max_early_data = 0;
+    int max_early_data = -1;
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1508,6 +1508,10 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_MAX_EARLY:
             max_early_data = atoi(opt_arg());
+            if (max_early_data < 0) {
+                BIO_printf(bio_err, "Invalid value for max_early_data\n");
+                goto end;
+            }
             break;
         case OPT_EARLY_DATA:
             early_data = 1;
@@ -2002,7 +2006,7 @@ int s_server_main(int argc, char *argv[])
     if (set_keylog_file(ctx, keylog_file))
         goto end;
 
-    if (max_early_data > 0)
+    if (max_early_data >= 0)
         SSL_CTX_set_max_early_data(ctx, max_early_data);
 
     BIO_printf(bio_s_out, "ACCEPT\n");
