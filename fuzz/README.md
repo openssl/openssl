@@ -46,7 +46,7 @@ Configure for fuzzing:
             enable-ssl3 enable-ssl3-method enable-nextprotoneg \
             --debug
     $ sudo apt-get install make
-    $ LDCMD=clang++ make -j
+    $ LDCMD=clang++ make -j5
     $ fuzz/helper.py $FUZZER
 
 Where $FUZZER is one of the executables in `fuzz/`.
