@@ -129,6 +129,12 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_OK:
+        /*
+         * Its never ok to start processing handshake messages in the middle of
+         * early data (i.e. before we've received the end of early data alert)
+         */
+        if (s->early_data_state == SSL_EARLY_DATA_READING)
+            break;
         if (mt == SSL3_MT_KEY_UPDATE) {
             st->hand_state = TLS_ST_SR_KEY_UPDATE;
             return 1;
