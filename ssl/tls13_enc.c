@@ -264,9 +264,16 @@ static int derive_secret_key_and_iv(SSL *s, int send, const EVP_MD *md,
     /* TODO(size_t): convert me */
     keylen = EVP_CIPHER_key_length(ciph);
     if (EVP_CIPHER_mode(ciph) == EVP_CIPH_CCM_MODE) {
+        uint32_t algenc;
+
         ivlen = EVP_CCM_TLS_IV_LEN;
-        if (s->s3->tmp.new_cipher->algorithm_enc
-                & (SSL_AES128CCM8 | SSL_AES256CCM8))
+        if (s->s3->tmp.new_cipher == NULL) {
+            /* We've not selected a cipher yet - we must be doing early data */
+            algenc = s->session->cipher->algorithm_enc;
+        } else {
+            algenc = s->s3->tmp.new_cipher->algorithm_enc;
+        }
+        if (algenc & (SSL_AES128CCM8 | SSL_AES256CCM8))
             taglen = EVP_CCM8_TLS_TAG_LEN;
          else
             taglen = EVP_CCM_TLS_TAG_LEN;
