@@ -433,6 +433,7 @@ int ssl3_get_record(SSL *s)
             thisrr->length = 0;
             thisrr->read = 1;
             RECORD_LAYER_set_numrpipes(&s->rlayer, 1);
+            RECORD_LAYER_reset_read_sequence(&s->rlayer);
             return 1;
         }
         al = SSL_AD_DECRYPTION_FAILED;
@@ -516,6 +517,7 @@ int ssl3_get_record(SSL *s)
             thisrr->length = 0;
             thisrr->read = 1;
             RECORD_LAYER_set_numrpipes(&s->rlayer, 1);
+            RECORD_LAYER_reset_read_sequence(&s->rlayer);
             return 1;
         }
         /*
