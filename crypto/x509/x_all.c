@@ -8,8 +8,8 @@
  */
 
 #include <stdio.h>
-#include <openssl/stack.h>
 #include "internal/cryptlib.h"
+#include <openssl/stack.h>
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
