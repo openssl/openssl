@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-SSL_CTX_set_early_cb, SSL_early_isv2, SSL_early_get0_legacy_version, SSL_early_get0_random, SSL_early_get0_session, SSL_early_get0_ciphers, SSL_early_get0_compression_methods, SSL_early_get0_ext - callback functions for early server-side ClientHello processing
+SSL_CTX_set_early_cb, SSL_early_cb_fn, SSL_early_isv2, SSL_early_get0_legacy_version, SSL_early_get0_random, SSL_early_get0_session_id, SSL_early_get0_ciphers, SSL_early_get0_compression_methods, SSL_early_get0_ext - callback functions for early server-side ClientHello processing
 
 =head1 SYNOPSIS
 
- typedef int (*SSL_early_cb_fn) (SSL *s, int *al, void *arg);
+ typedef int (*SSL_early_cb_fn)(SSL *s, int *al, void *arg);
  void SSL_CTX_set_early_cb(SSL_CTX *c, SSL_early_cb_fn *f, void *arg);
  int SSL_early_isv2(SSL *s);
  unsigned int SSL_early_get0_legacy_version(SSL *s);

@@ -3,8 +3,8 @@
 =head1 NAME
 
 SSL_want, SSL_want_nothing, SSL_want_read, SSL_want_write, SSL_want_x509_lookup,
-SSL_want_async, SSL_want_async_job - obtain state information TLS/SSL I/O
-operation
+SSL_want_async, SSL_want_async_job, SSL_want_early - obtain state information
+TLS/SSL I/O operation
 
 =head1 SYNOPSIS
 
