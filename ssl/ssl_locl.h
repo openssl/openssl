@@ -626,6 +626,18 @@ typedef enum {
     SSL_EARLY_DATA_FINISHED_READING
 } SSL_EARLY_DATA_STATE;
 
+/*
+ * We check that the amount of unreadable early data doesn't exceed
+ * max_early_data. max_early_data is given in plaintext bytes. However if it is
+ * unreadable then we only know the number of ciphertext bytes. We also don't
+ * know how much the overhead should be because it depends on the ciphersuite.
+ * We make a small allowance. We assume 5 records of actual data plus the end
+ * of early data alert record. Each record has a tag and a content type byte.
+ * The longest tag length we know of is EVP_GCM_TLS_TAG_LEN. We don't count the
+ * content of the alert record either which is 2 bytes.
+ */
+# define EARLY_DATA_CIPHERTEXT_OVERHEAD ((6 * (EVP_GCM_TLS_TAG_LEN + 1)) + 2)
+
 #define MAX_COMPRESSIONS_SIZE   255
 
 struct ssl_comp_st {
@@ -1245,8 +1257,14 @@ struct ssl_st {
     ASYNC_WAIT_CTX *waitctx;
     size_t asyncrw;
 
-    /* The maximum number of bytes that can be sent as early data */
+    /* The maximum number of plaintext bytes that can be sent as early data */
     uint32_t max_early_data;
+    /*
+     * The number of bytes of early data received so far. If we accepted early
+     * data then this is a count of the plaintext bytes. If we rejected it then
+     * this is a count of the ciphertext bytes.
+     */
+    uint32_t early_data_count;
 
     CRYPTO_RWLOCK *lock;
 };

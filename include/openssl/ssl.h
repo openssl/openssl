@@ -2154,6 +2154,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST        385
 # define SSL_F_DTLS_GET_REASSEMBLED_MESSAGE               370
 # define SSL_F_DTLS_PROCESS_HELLO_VERIFY                  386
+# define SSL_F_EARLY_DATA_COUNT_OK                        532
 # define SSL_F_FINAL_EC_PT_FORMATS                        485
 # define SSL_F_FINAL_EMS                                  486
 # define SSL_F_FINAL_KEY_SHARE                            503
@@ -2679,6 +2680,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST             157
 # define SSL_R_TOO_MANY_KEY_UPDATES                       132
 # define SSL_R_TOO_MANY_WARN_ALERTS                       409
+# define SSL_R_TOO_MUCH_EARLY_DATA                        164
 # define SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS             314
 # define SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS       239
 # define SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES           242
