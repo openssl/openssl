@@ -2196,11 +2196,11 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
 {
     int ret = MSG_PROCESS_ERROR;
-    unsigned int list_len, ctype_num, i, name_len;
+    unsigned int list_len, i, name_len;
     X509_NAME *xn = NULL;
-    const unsigned char *data;
     const unsigned char *namestart, *namebytes;
     STACK_OF(X509_NAME) *ca_sk = NULL;
+    PACKET ctypes;
 
     if ((ca_sk = sk_X509_NAME_new(ca_dn_cmp)) == NULL) {
         SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
@@ -2208,27 +2208,16 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
     }
 
     /* get the certificate types */
-    if (!PACKET_get_1(pkt, &ctype_num)
-        || !PACKET_get_bytes(pkt, &data, ctype_num)) {
+    if (!PACKET_get_length_prefixed_1(pkt, &ctypes)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
         SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, SSL_R_LENGTH_MISMATCH);
         goto err;
     }
-    OPENSSL_free(s->cert->ctypes);
-    s->cert->ctypes = NULL;
-    if (ctype_num > SSL3_CT_NUMBER) {
-        /* If we exceed static buffer copy all to cert structure */
-        s->cert->ctypes = OPENSSL_malloc(ctype_num);
-        if (s->cert->ctypes == NULL) {
-            SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
+
+    if (!PACKET_memdup(&ctypes, &s->s3->tmp.ctype, &s->s3->tmp.ctype_len)) {
+        SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
             goto err;
-        }
-        memcpy(s->cert->ctypes, data, ctype_num);
-        s->cert->ctype_num = ctype_num;
-        ctype_num = SSL3_CT_NUMBER;
     }
-    for (i = 0; i < ctype_num; i++)
-        s->s3->tmp.ctype[i] = data[i];
 
     if (SSL_USE_SIGALGS(s)) {
         PACKET sigalgs;
@@ -2297,7 +2286,6 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
 
     /* we should setup a certificate to return.... */
     s->s3->tmp.cert_req = 1;
-    s->s3->tmp.ctype_num = ctype_num;
     sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
     s->s3->tmp.ca_names = ca_sk;
     ca_sk = NULL;
