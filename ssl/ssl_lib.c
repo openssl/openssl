@@ -2772,6 +2772,12 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 
     ret->ext.status_type = TLSEXT_STATUSTYPE_nothing;
 
+    /*
+     * Default max early data is a fully loaded single record. Could be split
+     * across multiple records in practice
+     */
+    ret->max_early_data = SSL3_RT_MAX_PLAIN_LENGTH;
+
     return ret;
  err:
     SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
