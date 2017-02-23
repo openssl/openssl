@@ -101,6 +101,36 @@ static int ssl3_record_app_data_waiting(SSL *s)
     return 1;
 }
 
+static int early_data_count_ok(SSL *s, size_t length, size_t overhead, int *al)
+{
+    uint32_t max_early_data = s->max_early_data;
+
+    /*
+     * We go with the lowest out of the max early data set in the session
+     * and the configured max_early_data
+     */
+    if (s->session->ext.max_early_data < s->max_early_data)
+        max_early_data = s->max_early_data;
+
+    if (max_early_data == 0) {
+        *al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_EARLY_DATA_COUNT_OK, SSL_R_TOO_MUCH_EARLY_DATA);
+        return 0;
+    }
+
+    /* If we are dealing with ciphertext we need to allow for the overhead */
+    max_early_data += overhead;
+
+    s->early_data_count += length;
+    if (s->early_data_count > max_early_data) {
+        *al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_EARLY_DATA_COUNT_OK, SSL_R_TOO_MUCH_EARLY_DATA);
+        return 0;
+    }
+
+    return 1;
+}
+
 /*
  * MAX_EMPTY_RECORDS defines the number of consecutive, empty records that
  * will be processed per call to ssl3_get_record. Without this limit an
@@ -139,6 +169,7 @@ int ssl3_get_record(SSL *s)
     int imac_size;
     size_t num_recs = 0, max_recs, j;
     PACKET pkt, sslv2pkt;
+    size_t first_rec_len;
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
     rbuf = RECORD_LAYER_get_rbuf(&s->rlayer);
@@ -415,6 +446,8 @@ int ssl3_get_record(SSL *s)
         }
     }
 
+    first_rec_len = rr[0].length;
+
     enc_err = s->method->ssl3_enc->enc(s, rr, num_recs, 0);
 
     /*-
@@ -429,7 +462,13 @@ int ssl3_get_record(SSL *s)
              * Valid early_data that we cannot decrypt might fail here as
              * publicly invalid. We treat it like an empty record.
              */
+
             thisrr = &rr[0];
+
+            if (!early_data_count_ok(s, thisrr->length,
+                                     EARLY_DATA_CIPHERTEXT_OVERHEAD, &al))
+                goto f_err;
+
             thisrr->length = 0;
             thisrr->read = 1;
             RECORD_LAYER_set_numrpipes(&s->rlayer, 1);
@@ -513,6 +552,15 @@ int ssl3_get_record(SSL *s)
              * We assume this is unreadable early_data - we treat it like an
              * empty record
              */
+
+            /*
+             * The record length may have been modified by the mac check above
+             * so we use the previously saved value
+             */
+            if (!early_data_count_ok(s, first_rec_len,
+                                     EARLY_DATA_CIPHERTEXT_OVERHEAD, &al))
+                goto f_err;
+
             thisrr = &rr[0];
             thisrr->length = 0;
             thisrr->read = 1;
@@ -602,6 +650,13 @@ int ssl3_get_record(SSL *s)
         } else {
             RECORD_LAYER_reset_empty_record_count(&s->rlayer);
         }
+    }
+
+    if (s->early_data_state == SSL_EARLY_DATA_READING) {
+        thisrr = &rr[0];
+        if (thisrr->type == SSL3_RT_APPLICATION_DATA
+                && !early_data_count_ok(s, thisrr->length, 0, &al))
+            goto f_err;
     }
 
     RECORD_LAYER_set_numrpipes(&s->rlayer, num_recs);
