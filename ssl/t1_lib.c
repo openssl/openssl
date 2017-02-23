@@ -2009,25 +2009,20 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
             break;
         }
         if (check_type) {
-            const unsigned char *ctypes;
-            int ctypelen;
-            if (c->ctypes) {
-                ctypes = c->ctypes;
-                ctypelen = (int)c->ctype_num;
-            } else {
-                ctypes = (unsigned char *)s->s3->tmp.ctype;
-                ctypelen = s->s3->tmp.ctype_num;
-            }
-            for (i = 0; i < ctypelen; i++) {
-                if (ctypes[i] == check_type) {
+            const uint8_t *ctypes = s->s3->tmp.ctype;
+            size_t j;
+
+            for (j = 0; j < s->s3->tmp.ctype_len; j++, ctypes++) {
+                if (*ctypes == check_type) {
                     rv |= CERT_PKEY_CERT_TYPE;
                     break;
                 }
             }
             if (!(rv & CERT_PKEY_CERT_TYPE) && !check_flags)
                 goto end;
-        } else
+        } else {
             rv |= CERT_PKEY_CERT_TYPE;
+        }
 
         ca_dn = s->s3->tmp.ca_names;
 
