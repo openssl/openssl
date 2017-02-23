@@ -2906,6 +2906,23 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     }
 #endif
 
+    if (SSL_version(s) == TLS1_3_VERSION) {
+        switch (SSL_get_early_data_status(s)) {
+        case SSL_EARLY_DATA_NOT_SENT:
+            BIO_printf(bio, "Early data was not sent\n");
+            break;
+
+        case SSL_EARLY_DATA_REJECTED:
+            BIO_printf(bio, "Early data was rejected\n");
+            break;
+
+        case SSL_EARLY_DATA_ACCEPTED:
+            BIO_printf(bio, "Early data was accepted\n");
+            break;
+
+        }
+    }
+
     SSL_SESSION_print(bio, SSL_get_session(s));
     if (SSL_get_session(s) != NULL && keymatexportlabel != NULL) {
         BIO_printf(bio, "Keying material exporter:\n");
