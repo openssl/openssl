@@ -25,7 +25,23 @@
 # include <ctype.h>
 # include <sys/stat.h>
 
+/*
+ * Make sure that the processing of symbol names is treated the same as when
+ * libcrypto is built.  This is done automatically for public headers (see
+ * include/openssl/__DECC_INCLUDE_PROLOGUE.H and __DECC_INCLUDE_EPILOGUE.H),
+ * but not for internal headers.
+ */
+# ifdef __VMS
+#  pragma names save
+#  pragma names as_is,shortened
+# endif
+
 # include "internal/o_dir.h"
+
+# ifdef __VMS
+#  pragma names restore
+# endif
+
 # include <openssl/evp.h>
 # include <openssl/pem.h>
 # include <openssl/x509.h>
