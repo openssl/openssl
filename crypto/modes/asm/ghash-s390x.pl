@@ -95,14 +95,23 @@ $code.=<<___ if(!$softonly && 0);	# hardware is slow for single block...
 	lg	%r1,24(%r1)	# load second word of kimd capabilities vector
 	tmhh	%r1,0x4000	# check for function 65
 	jz	.Lsoft_gmult
+	lghi	%r1,-16
 	stg	%r0,16($sp)	# arrange 16 bytes of zero input
 	stg	%r0,24($sp)
+	la	$Htbl,0(%r1,$Htbl)	# H lies right before Htable
+
 	lghi	%r0,65		# function 65
-	la	%r1,0($Xi)	# H lies right after Xi in gcm128_context
+	la	%r1,32($sp)
+	mvc	32(16,$sp),0($Xi)	# copy Xi/Yi
+	mvc	48(16,$sp),0($Htbl)	# copy H
 	la	$inp,16($sp)
 	lghi	$len,16
 	.long	0xb93e0004	# kimd %r0,$inp
 	brc	1,.-4		# pay attention to "partial completion"
+
+	mvc	0(16,$Xi),32($sp)
+	xc	32(32,$sp),32($sp)	# wipe stack
+
 	br	%r14
 .align	32
 .Lsoft_gmult:
