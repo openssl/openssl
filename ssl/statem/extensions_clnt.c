@@ -125,6 +125,12 @@ int tls_construct_ctos_early_data(SSL *s, WPACKET *pkt, unsigned int context,
         return 0;
     }
 
+    /*
+     * We set this to rejected here. Later, if the server acknowledges the
+     * extension, we set it to accepted.
+     */
+    s->ext.early_data = SSL_EARLY_DATA_REJECTED;
+
     return 1;
 }
 
@@ -913,6 +919,28 @@ int tls_parse_stoc_early_data_info(SSL *s, PACKET *pkt, unsigned int context,
     }
 
     s->session->ext.max_early_data = max_early_data;
+
+    return 1;
+}
+
+int tls_parse_stoc_early_data(SSL *s, PACKET *pkt, unsigned int context,
+                              X509 *x, size_t chainidx, int *al)
+{
+    if (PACKET_remaining(pkt) != 0) {
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
+
+    if (s->ext.early_data != SSL_EARLY_DATA_REJECTED) {
+        /*
+         * If we get here then we didn't send early data, so the server should
+         * not be accepting it.
+         */
+        *al = SSL_AD_ILLEGAL_PARAMETER;
+        return 0;
+    }
+
+    s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;
 
     return 1;
 }
