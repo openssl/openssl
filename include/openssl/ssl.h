@@ -2248,10 +2248,10 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_PARSE_SERVERHELLO_USE_SRTP_EXT         311
 # define SSL_F_SSL_PEEK                                   270
 # define SSL_F_SSL_PEEK_EX                                432
-# define SSL_F_SSL_PEEK_INTERNAL                          521
+# define SSL_F_SSL_PEEK_INTERNAL                          522
 # define SSL_F_SSL_READ                                   223
 # define SSL_F_SSL_READ_EX                                434
-# define SSL_F_SSL_READ_INTERNAL                          519
+# define SSL_F_SSL_READ_INTERNAL                          523
 # define SSL_F_SSL_RENEGOTIATE                            516
 # define SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT                320
 # define SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT                321
@@ -2290,7 +2290,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_VERIFY_CERT_CHAIN                      207
 # define SSL_F_SSL_WRITE                                  208
 # define SSL_F_SSL_WRITE_EX                               433
-# define SSL_F_SSL_WRITE_INTERNAL                         520
+# define SSL_F_SSL_WRITE_INTERNAL                         524
 # define SSL_F_STATE_MACHINE                              353
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
 # define SSL_F_TLS13_CHANGE_CIPHER_STATE                  440
