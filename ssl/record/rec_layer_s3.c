@@ -348,6 +348,10 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
         return -1;
     }
 
+    if (s->early_data_state == SSL_EARLY_DATA_WRITING
+            && !early_data_count_ok(s, len, 0, NULL))
+        return -1;
+
     s->rlayer.wnum = 0;
 
     if (SSL_in_init(s) && !ossl_statem_get_in_handshake(s)) {
