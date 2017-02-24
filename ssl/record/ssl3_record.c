@@ -101,16 +101,16 @@ static int ssl3_record_app_data_waiting(SSL *s)
     return 1;
 }
 
-static int early_data_count_ok(SSL *s, size_t length, size_t overhead, int *al)
+int early_data_count_ok(SSL *s, size_t length, size_t overhead, int *al)
 {
     uint32_t max_early_data = s->max_early_data;
 
     /*
      * We go with the lowest out of the max early data set in the session
-     * and the configured max_early_data
+     * and the configured max_early_data.
      */
-    if (s->session->ext.max_early_data < s->max_early_data)
-        max_early_data = s->max_early_data;
+    if (s->hit && s->session->ext.max_early_data < s->max_early_data)
+        max_early_data = s->session->ext.max_early_data;
 
     if (max_early_data == 0) {
         *al = SSL_AD_UNEXPECTED_MESSAGE;
