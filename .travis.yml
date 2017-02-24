@@ -111,7 +111,7 @@ matrix:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic" TESTS="-test_fuzz"
         - os: linux
           addons:
               apt:
@@ -119,7 +119,7 @@ matrix:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
           compiler: x86_64-w64-mingw32-gcc
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic" TESTS="-test_fuzz"
     exclude:
         - os: linux
           compiler: clang
@@ -174,7 +174,7 @@ script:
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
               sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install wine;
-              export EXE_SHELL="wine" WINEPREFIX=`pwd` TESTS=-test_fuzz;
+              export EXE_SHELL="wine" WINEPREFIX=`pwd`
           fi;
           HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test;
       else
