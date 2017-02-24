@@ -1659,7 +1659,7 @@ int ssl_end_of_early_data_seen(SSL *s)
     return 0;
 }
 
-int SSL_get_early_data_status(SSL *s)
+int SSL_get_early_data_status(const SSL *s)
 {
     return s->ext.early_data;
 }
