@@ -3232,9 +3232,15 @@ int SSL_do_handshake(SSL *s)
         return -1;
     }
 
-    if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY
-            || s->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY)
-        return -1;
+    if (s->early_data_state != SSL_EARLY_DATA_NONE
+            && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING
+            && s->early_data_state != SSL_EARLY_DATA_FINISHED_READING
+            && s->early_data_state != SSL_EARLY_DATA_ACCEPTING
+            && s->early_data_state != SSL_EARLY_DATA_CONNECTING) {
+        SSLerr(SSL_F_SSL_WRITE_INTERNAL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
 
     s->method->ssl_renegotiate_check(s, 0);
 
