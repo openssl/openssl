@@ -3399,6 +3399,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         if (RAND_bytes(age_add_u.age_add_c, sizeof(age_add_u)) <= 0)
             goto err;
         s->session->ext.tick_age_add = age_add_u.age_add;
+        s->session->time = (long)time(NULL);
     }
 
     /* get session encoding length */
@@ -3493,11 +3494,14 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     }
 
     /*
-     * Ticket lifetime hint (advisory only): We leave this unspecified
-     * for resumed session (for simplicity), and guess that tickets for
-     * new sessions will live as long as their sessions.
+     * Ticket lifetime hint: For TLSv1.2 this is advisory only and we leave this
+     * unspecified for resumed session (for simplicity).
+     * In TLSv1.3 we reset the "time" field above, and always specify the
+     * timeout.
      */
-    if (!WPACKET_put_bytes_u32(pkt, s->hit ? 0 : s->session->timeout)
+    if (!WPACKET_put_bytes_u32(pkt,
+                               (s->hit && !SSL_IS_TLS13(s))
+                               ? 0 : s->session->timeout)
             || (SSL_IS_TLS13(s)
                 && !WPACKET_put_bytes_u32(pkt, age_add_u.age_add))
                /* Now the actual ticket data */
