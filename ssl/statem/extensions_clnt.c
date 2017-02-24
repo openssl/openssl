@@ -931,10 +931,12 @@ int tls_parse_stoc_early_data(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
-    if (s->ext.early_data != SSL_EARLY_DATA_REJECTED) {
+    if (s->ext.early_data != SSL_EARLY_DATA_REJECTED
+            || !s->hit
+            || s->session->ext.tick_identity != 0) {
         /*
-         * If we get here then we didn't send early data, so the server should
-         * not be accepting it.
+         * If we get here then we didn't send early data, or we didn't resume
+         * using the first identity so the server should not be accepting it.
          */
         *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;
