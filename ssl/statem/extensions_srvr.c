@@ -171,7 +171,8 @@ int tls_parse_ctos_early_data(SSL *s, PACKET *pkt, unsigned int context,
     }
 
     if (s->max_early_data == 0 || !s->hit || s->session->ext.tick_identity != 0
-            || s->early_data_state != SSL_EARLY_DATA_ACCEPTING) {
+            || s->early_data_state != SSL_EARLY_DATA_ACCEPTING
+            || !s->ext.early_data_ok) {
         s->ext.early_data = SSL_EARLY_DATA_REJECTED;
     } else {
         s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;
@@ -693,6 +694,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     SSL_SESSION *sess = NULL;
     unsigned int id, i;
     const EVP_MD *md = NULL;
+    uint32_t ticket_age, now, agesec, agems;
 
     /*
      * If we have no PSK kex mode that we recognise then we can't resume so
@@ -709,16 +711,16 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
     for (id = 0; PACKET_remaining(&identities) != 0; id++) {
         PACKET identity;
-        unsigned long ticket_age;
+        unsigned long ticket_agel;
         int ret;
 
         if (!PACKET_get_length_prefixed_2(&identities, &identity)
-                || !PACKET_get_net_4(&identities, &ticket_age)) {
+                || !PACKET_get_net_4(&identities, &ticket_agel)) {
             *al = SSL_AD_DECODE_ERROR;
             return 0;
         }
 
-        /* TODO(TLS1.3): Should we validate the ticket age? */
+        ticket_age = (uint32_t)ticket_agel;
 
         ret = tls_decrypt_ticket(s, PACKET_data(&identity),
                                  PACKET_remaining(&identity), NULL, 0, &sess);
@@ -777,6 +779,32 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     sess->ext.tick_identity = id;
+
+    now = (uint32_t)time(NULL);
+    agesec = now - (uint32_t)sess->time;
+    agems = agesec * (uint32_t)1000;
+    ticket_age -= sess->ext.tick_age_add;
+
+
+    /*
+     * For simplicity we do our age calculations in seconds. If the client does
+     * it in ms then it could appear that their ticket age is longer than ours
+     * (our ticket age calculation should always be slightly longer than the
+     * client's due to the network latency). Therefore we add 1000ms to our age
+     * calculation to adjust for rounding errors.
+     */
+    if (sess->timeout >= agesec
+            && agems / (uint32_t)1000 == agesec
+            && ticket_age <= agems + 1000
+            && ticket_age + TICKET_AGE_ALLOWANCE >= agems + 1000) {
+        /*
+         * Ticket age is within tolerance and not expired. We allow it for early
+         * data
+         */
+        s->ext.early_data_ok = 1;
+    }
+
+
     SSL_SESSION_free(s->session);
     s->session = sess;
     return 1;
