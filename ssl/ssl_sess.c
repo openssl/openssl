@@ -902,6 +902,11 @@ void SSL_SESSION_get0_ticket(const SSL_SESSION *s, const unsigned char **tick,
         *tick = s->ext.tick;
 }
 
+uint32_t SSL_SESSION_get_max_early_data(const SSL_SESSION *s)
+{
+    return s->ext.max_early_data;
+}
+
 X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
 {
     return s->peer;
