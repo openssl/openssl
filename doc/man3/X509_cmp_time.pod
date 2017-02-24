@@ -24,7 +24,7 @@ Unlike many standard comparison functions, X509_cmp_time returns 0 on error.
 
 =head1 RETURN VALUES
 
-X509_cmp_time returns -1 if B<asn1_time> is earlier than, or equal to,
+X509_cmp_time() returns -1 if B<asn1_time> is earlier than, or equal to,
 B<cmp_time>, and 1 otherwise. It returns 0 on error.
 
 =head1 COPYRIGHT

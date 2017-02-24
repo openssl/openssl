@@ -1758,7 +1758,7 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
     static const size_t utctime_length = sizeof("YYMMDDHHMMSSZ") - 1;
     static const size_t generalizedtime_length = sizeof("YYYYMMDDHHMMSSZ") - 1;
     ASN1_TIME *asn1_cmp_time = NULL;
-    int day, sec, ret = 0;
+    int i, day, sec, ret = 0;
 
     /*
      * Note that ASN.1 allows much more slack in the time format than RFC5280.
@@ -1773,11 +1773,11 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
      */
     switch (ctm->type) {
     case V_ASN1_UTCTIME:
-        if (ctm->length != utctime_length)
+        if (ctm->length != (int)(utctime_length))
             return 0;
         break;
     case V_ASN1_GENERALIZEDTIME:
-        if (ctm->length != generalizedtime_length)
+        if (ctm->length != (int)(generalizedtime_length))
             return 0;
         break;
     default:
@@ -1789,7 +1789,7 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
      * flexible format than what's mandated by RFC 5280.
      * Digit and date ranges will be verified in the conversion methods.
      */
-    for (int i = 0; i < ctm->length - 1; i++) {
+    for (i = 0; i < ctm->length - 1; i++) {
         if (!isdigit(ctm->data[i]))
             return 0;
     }
