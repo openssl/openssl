@@ -4261,3 +4261,9 @@ ASN1_UTCTIME_diff                       4211	1_1_1	EXIST::FUNCTION:
 ASN1_GENERALIZEDTIME_diff               4212	1_1_1	EXIST::FUNCTION:
 ASN1_GENERALIZEDTIME_get                4213	1_1_1	EXIST::FUNCTION:
 ASN1_UTCTIME_get                        4214	1_1_1	EXIST::FUNCTION:
+ASN1_GENERALIZEDTIME_set_string_gmt     4215	1_1_1	EXIST::FUNCTION:
+ASN1_TIME_set_string_gmt                4216	1_1_1	EXIST::FUNCTION:
+ASN1_GENERALIZEDTIME_print_gmt          4217	1_1_1	EXIST::FUNCTION:
+ASN1_TIME_print_gmt                     4218	1_1_1	EXIST::FUNCTION:
+ASN1_UTCTIME_print_gmt                  4219	1_1_1	EXIST::FUNCTION:
+ASN1_UTCTIME_set_string_gmt             4220	1_1_1	EXIST::FUNCTION:

@@ -7,7 +7,9 @@ ASN1_TIME_get, ASN1_UTCTIME_get, ASN1_GENERALIZEDTIME_get,
 ASN1_TIME_adj, ASN1_UTCTIME_adj, ASN1_GENERALIZEDTIME_adj,
 ASN1_TIME_check, ASN1_UTCTIME_check, ASN1_GENERALIZEDTIME_check,
 ASN1_TIME_set_string, ASN1_UTCTIME_set_string, ASN1_GENERALIZEDTIME_set_string,
+ASN1_TIME_set_string_gmt, ASN1_UTCTIME_set_string_gmt, ASN1_GENERALIZEDTIME_set_string_gmt,
 ASN1_TIME_print, ASN1_UTCTIME_print, ASN1_GENERALIZEDTIME_print,
+ASN1_TIME_print_gmt, ASN1_UTCTIME_print_gmt, ASN1_GENERALIZEDTIME_print_gmt,
 ASN1_TIME_diff, ASN1_UTCTIME_diff, ASN1_GENERALIZEDTIME_diff
 ASN1_TIME_cmp_time_t, ASN1_UTCTIME_cmp_time_t, ASN1_GENERLIZEDTIME_cmp_time_t,
 ASN1_TIME_to_utctime, ASN1_TIME_to_generalizedtime - ASN.1 Time functions
@@ -37,6 +39,11 @@ ASN1_TIME_to_utctime, ASN1_TIME_to_generalizedtime - ASN.1 Time functions
  int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s,
                                      const char *str);
 
+ int ASN1_TIME_set_string_gmt(ASN1_TIME *s, const char *str);
+ int ASN1_UTCTIME_set_string_gmt(ASN1_UTCTIME *s, const char *str);
+ int ASN1_GENERALIZEDTIME_set_string_gmt(ASN1_GENERALIZEDTIME *s,
+                                         const char *str);
+
  int ASN1_TIME_check(const ASN1_TIME *t);
  int ASN1_UTCTIME_check(const ASN1_UTCTIME *t);
  int ASN1_GENERALIZEDTIME_check(const ASN1_GENERALIZEDTIME *t);
@@ -44,6 +51,10 @@ ASN1_TIME_to_utctime, ASN1_TIME_to_generalizedtime - ASN.1 Time functions
  int ASN1_TIME_print(BIO *b, const ASN1_TIME *s);
  int ASN1_UTCTIME_print(BIO *b, const ASN1_UTCTIME *s);
  int ASN1_GENERALIZEDTIME_print(BIO *b, const ASN1_GENERALIZEDTIME *s);
+
+ int ASN1_TIME_print_gmt(BIO *b, const ASN1_TIME *s);
+ int ASN1_UTCTIME_print_gmt(BIO *b, const ASN1_UTCTIME *s);
+ int ASN1_GENERALIZEDTIME_print_gmt(BIO *b, const ASN1_GENERALIZEDTIME *s);
 
  int ASN1_TIME_diff(int *pday, int *psec, const ASN1_TIME *from,
                     const ASN1_TIME *to);
@@ -84,7 +95,14 @@ and returned.
 The ASN1_TIME_set_string(), ASN1_UTCTIME_set_string() and
 ASN1_GENERALIZEDTIME_set_string() functions set the time structure B<s>
 to the time represented by string B<str> which must be in appropriate ASN.1
-time format (for example YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ).
+time format (for example YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ). The string B<str>
+is copied into B<s>.
+
+The ASN1_TIME_set_string_gmt(), ASN1_UTCTIME_set_string_gmt() and
+ASN1_GENERALIZEDTIME_set_stringgmt_() functions set the time structure B<s>
+to the time represented by string B<str> which must be in appropriate ASN.1
+time format (for example YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ). The string value
+B<str> is converted to GMT before it is copined into B<s>
 
 The ASN1_TIME_check(), ASN1_UTCTIME_check() and ASN1_GENERALIZEDTIME_check()
 functions check the syntax of the tim structure B<s>.
@@ -92,6 +110,14 @@ functions check the syntax of the tim structure B<s>.
 The ASN1_TIME_print(), ASN1_UTCTIME_print() and ASN1_GENERALIZEDTIME_print()
 functions print the time structure B<s> to BIO B<b> in human readable
 format. It will be of the format MMM DD HH:MM:SS YYYY [GMT], for example
+"Feb  3 00:55:52 2015 GMT" it does not include a newline. If the time
+structure has invalid format it prints out "Bad time value" and returns
+an error. The output for generalized time may include a fractional part
+following the second.
+
+The ASN1_TIME_print_gmt(), ASN1_UTCTIME_print_gmt() and ASN1_GENERALIZEDTIME_print_gmt()
+functions print the time structure B<s> to BIO B<b> in human readable
+format. It will be of the format MMM DD HH:MM:SS YYYY GMT, for example
 "Feb  3 00:55:52 2015 GMT" it does not include a newline. If the time
 structure has invalid format it prints out "Bad time value" and returns
 an error.
@@ -135,6 +161,10 @@ New applications should use ASN1_TIME_adj() instead and pass the offset value
 in the B<offset_sec> and B<offset_day> parameters instead of directly
 manipulating a time_t value.
 
+ASN1_TIME_adj() may change the type from ASN1_GENERALIZEDTIME to ASN1_UTCTIME,
+or vise-versa, based on the resulting year. The ASN1_GENERALIZEDTIME_adj() and
+ASN1_UTCTIME_adj() functions will not modify the type of the return structure.
+
 It is recommended that functions starting with ASN1_TIME be used instead of
 those starting with ASN1_UTCTIME or ASN1_GENERALIZEDTIME. The functions
 starting with ASN1_UTCTIME and ASN1_GENERALIZEDTIME act only on that specific
@@ -147,7 +177,9 @@ ASN1_UTCTIME is limited to a year range of 1950 through 2049.
 
 ASN1_TIME_print(), ASN1_UTCTIME_print() and ASN1_GENERALIZEDTIME_print() currently
 do not print out the time zone: it either prints out "GMT" or nothing. But all
-certificates complying with RFC5280 et al use GMT anyway.
+certificates complying with RFC5280 et al use GMT anyway. Use the ASN1_TIME_print_gmt(),
+ASN1_UTCTIME_print_gmt() and ASN1_GENERALIZEDTIME_print_gmt() functions to convert
+and print as GMT instead.
 
 =head1 EXAMPLES
 
@@ -192,10 +224,17 @@ B<tm> parameters.
 ASN1_TIME_set_string(), ASN1_UTCTIME_set_string() and ASN1_GENERALIZEDTIME_set_string()
 return 1 if the time value is successfully set and 0 otherwise.
 
+ASN1_TIME_set_string_gmt(), ASN1_UTCTIME_set_string_gmt() and ASN1_GENERALIZEDTIME_set_string_gmt()
+return 1 if the time value is successfully set and 0 otherwise.
+
 ASN1_TIME_check(), ASN1_UTCTIME_check and ASN1_GENERALIZEDTIME_check() return 1
 if the structure is syntactically correct and 0 otherwise.
 
 ASN1_TIME_print(), ASN1_UTCTIME_print() and ASN1_GENERALIZEDTIME_print() return 1
+if the time is successfully printed out and 0 if an error occurred (I/O error or
+invalid time format).
+
+ASN1_TIME_print_gmt(), ASN1_UTCTIME_print_gmt() and ASN1_GENERALIZEDTIME_print_gmt() return 1
 if the time is successfully printed out and 0 if an error occurred (I/O error or
 invalid time format).
 
