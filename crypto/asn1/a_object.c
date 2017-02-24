@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <limits.h>
+#include <ctype.h>
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
@@ -84,7 +85,7 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
             c = *(p++);
             if ((c == ' ') || (c == '.'))
                 break;
-            if ((c < '0') || (c > '9')) {
+            if (!isdigit(c)) {
                 ASN1err(ASN1_F_A2D_ASN1_OBJECT, ASN1_R_INVALID_DIGIT);
                 goto err;
             }
