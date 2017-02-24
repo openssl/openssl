@@ -174,7 +174,7 @@ script:
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
               sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install wine;
-              export EXE_SHELL="wine" WINEPREFIX=`pwd`
+              export EXE_SHELL="wine" WINEPREFIX=`pwd`;
           fi;
           HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test;
       else
