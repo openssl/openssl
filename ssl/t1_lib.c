@@ -2314,6 +2314,17 @@ int tls_choose_sigalg(SSL *s, int *al)
         if (SSL_USE_SIGALGS(s)) {
             if (s->s3->tmp.peer_sigalgs != NULL) {
                 size_t i;
+#ifndef OPENSSL_NO_EC
+                int curve;
+
+                /* For Suite B need to match signature algorithm to curve */
+                if (tls1_suiteb(s)) {
+                    EC_KEY *ec = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[idx].privatekey);
+                    curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+                } else {
+                    curve = -1;
+                }
+#endif
 
                 /*
                  * Find highest preference signature algorithm matching
@@ -2321,8 +2332,14 @@ int tls_choose_sigalg(SSL *s, int *al)
                  */
                 for (i = 0; i < s->cert->shared_sigalgslen; i++) {
                     lu = s->cert->shared_sigalgs[i];
+#ifdef OPENSSL_NO_EC
                     if (lu->sig_idx == idx)
                         break;
+#else
+                    if (lu->sig_idx == idx
+                        && (curve == -1 || lu->curve == curve))
+                        break;
+#endif
                     if (idx == SSL_PKEY_RSA && lu->sig == EVP_PKEY_RSA_PSS)
                         break;
                 }
