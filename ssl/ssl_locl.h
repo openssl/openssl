@@ -580,6 +580,9 @@ struct ssl_session_st {
         int tick_identity;
         /* Max number of bytes that can be sent as early data */
         uint32_t max_early_data;
+        /* The ALPN protocol selected for this session */
+        unsigned char *alpn_selected;
+        size_t alpn_selected_len;
     } ext;
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
