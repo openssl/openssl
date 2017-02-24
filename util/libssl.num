@@ -432,3 +432,4 @@ SSL_write_early                         432	1_1_1	EXIST::FUNCTION:
 SSL_write_early_finish                  433	1_1_1	EXIST::FUNCTION:
 SSL_read_early                          434	1_1_1	EXIST::FUNCTION:
 SSL_get_early_data_status               435	1_1_1	EXIST::FUNCTION:
+SSL_SESSION_get_max_early_data          436	1_1_1	EXIST::FUNCTION:
