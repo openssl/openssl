@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <ctype.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include "asn1_locl.h"
@@ -35,13 +36,13 @@ int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
                 tm->tm_sec = 0;
             break;
         }
-        if ((a[o] < '0') || (a[o] > '9'))
+        if (!isdigit(a[o]))
             goto err;
         n = a[o] - '0';
         if (++o > l)
             goto err;
 
-        if ((a[o] < '0') || (a[o] > '9'))
+        if (!isdigit(a[o]))
             goto err;
         n = (n * 10) + a[o] - '0';
         if (++o > l)
@@ -80,11 +81,11 @@ int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
         if (o + 4 > l)
             goto err;
         for (i = 6; i < 8; i++) {
-            if ((a[o] < '0') || (a[o] > '9'))
+            if (!isdigit(a[o]))
                 goto err;
             n = a[o] - '0';
             o++;
-            if ((a[o] < '0') || (a[o] > '9'))
+            if (!isdigit(a[o]))
                 goto err;
             n = (n * 10) + a[o] - '0';
             if ((n < min[i]) || (n > max[i]))
@@ -227,7 +228,7 @@ int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
     if (v[i - 1] == 'Z')
         gmt = 1;
     for (i = 0; i < 10; i++)
-        if ((v[i] > '9') || (v[i] < '0'))
+        if (!isdigit(v[i]))
             goto err;
     y = (v[0] - '0') * 10 + (v[1] - '0');
     if (y < 50)
@@ -238,8 +239,7 @@ int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
     d = (v[4] - '0') * 10 + (v[5] - '0');
     h = (v[6] - '0') * 10 + (v[7] - '0');
     m = (v[8] - '0') * 10 + (v[9] - '0');
-    if (tm->length >= 12 &&
-        (v[10] >= '0') && (v[10] <= '9') && (v[11] >= '0') && (v[11] <= '9'))
+    if (tm->length >= 12 && isdigit(v[10]) && isdigit(v[11]))
         s = (v[10] - '0') * 10 + (v[11] - '0');
 
     if (BIO_printf(bp, "%s %2d %02d:%02d:%02d %d%s",

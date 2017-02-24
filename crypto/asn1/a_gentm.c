@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <ctype.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include "asn1_locl.h"
@@ -43,13 +44,13 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
                 tm->tm_sec = 0;
             break;
         }
-        if ((a[o] < '0') || (a[o] > '9'))
+        if (!isdigit(a[o]))
             goto err;
         n = a[o] - '0';
         if (++o > l)
             goto err;
 
-        if ((a[o] < '0') || (a[o] > '9'))
+        if (!isdigit(a[o]))
             goto err;
         n = (n * 10) + a[o] - '0';
         if (++o > l)
@@ -91,7 +92,7 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
         if (++o > l)
             goto err;
         i = o;
-        while ((a[o] >= '0') && (a[o] <= '9') && (o <= l))
+        while (isdigit(a[o]) && (o <= l))
             o++;
         /* Must have at least one digit after decimal point */
         if (i == o)
@@ -106,11 +107,11 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
         if (o + 4 > l)
             goto err;
         for (i = 7; i < 9; i++) {
-            if ((a[o] < '0') || (a[o] > '9'))
+            if (!isdigit(a[o]))
                 goto err;
             n = a[o] - '0';
             o++;
-            if ((a[o] < '0') || (a[o] > '9'))
+            if (!isdigit(a[o]))
                 goto err;
             n = (n * 10) + a[o] - '0';
             if ((n < min[i]) || (n > max[i]))
@@ -237,7 +238,7 @@ int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
     if (v[i - 1] == 'Z')
         gmt = 1;
     for (i = 0; i < 12; i++)
-        if ((v[i] > '9') || (v[i] < '0'))
+        if (!isdigit(v[i]))
             goto err;
     y = (v[0] - '0') * 1000 + (v[1] - '0') * 100
         + (v[2] - '0') * 10 + (v[3] - '0');
@@ -247,16 +248,14 @@ int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
     d = (v[6] - '0') * 10 + (v[7] - '0');
     h = (v[8] - '0') * 10 + (v[9] - '0');
     m = (v[10] - '0') * 10 + (v[11] - '0');
-    if (tm->length >= 14 &&
-        (v[12] >= '0') && (v[12] <= '9') &&
-        (v[13] >= '0') && (v[13] <= '9')) {
+    if (tm->length >= 14 && isdigit(v[12]) && isdigit(v[13])) {
         s = (v[12] - '0') * 10 + (v[13] - '0');
         /* Check for fractions of seconds. */
         if (tm->length >= 15 && v[14] == '.') {
             int l = tm->length;
             f = &v[14];         /* The decimal point. */
             f_len = 1;
-            while (14 + f_len < l && f[f_len] >= '0' && f[f_len] <= '9')
+            while (14 + f_len < l && isdigit(f[f_len]))
                 ++f_len;
         }
     }
