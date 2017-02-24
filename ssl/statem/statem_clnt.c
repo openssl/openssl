@@ -124,11 +124,6 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
     OSSL_STATEM *st = &s->statem;
 
     /*
-     * TODO(TLS1.3): This is still based on the TLSv1.2 state machine. Over time
-     * we will update this to look more like real TLSv1.3
-     */
-
-    /*
      * Note: There is no case for TLS_ST_CW_CLNT_HELLO, because we haven't
      * yet negotiated TLSv1.3 at that point so that is handled by
      * ossl_statem_client_read_transition()

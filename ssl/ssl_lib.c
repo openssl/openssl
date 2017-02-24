@@ -1603,11 +1603,6 @@ int SSL_read_early(SSL *s, void *buf, size_t num, size_t *readbytes)
         return SSL_READ_EARLY_ERROR;
     }
 
-    /*
-     * TODO(TLS1.3): Somehow we need to check that we're not receiving too much
-     * data
-     */
-
     switch (s->early_data_state) {
     case SSL_EARLY_DATA_NONE:
         if (!SSL_in_before(s)) {
@@ -1803,11 +1798,6 @@ int SSL_write_early(SSL *s, const void *buf, size_t num, size_t *written)
         SSLerr(SSL_F_SSL_WRITE_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
-
-    /*
-     * TODO(TLS1.3): Somehow we need to check that we're not sending too much
-     * data
-     */
 
     switch (s->early_data_state) {
     case SSL_EARLY_DATA_NONE:
