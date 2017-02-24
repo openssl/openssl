@@ -113,6 +113,8 @@ B<openssl> B<s_server>
 [B<-status_file file>]
 [B<-alpn protocols>]
 [B<-nextprotoneg protocols>]
+[B<-max_early_data>]
+[B<-early_data>]
 
 =head1 DESCRIPTION
 
@@ -526,6 +528,16 @@ comma-separated list of supported protocol names.
 The list should contain most wanted protocols first.
 Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
+
+=item B<-max_early_data>
+
+Change the default maximum early data bytes that are specified for new sessions
+and any incoming early data (when used in conjunction with the B<-early_data>
+flag). The default value is approximately 16k.
+
+=item B<-early_data>
+
+Accept early data where possible.
 
 =back
 
