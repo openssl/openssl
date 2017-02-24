@@ -1565,6 +1565,21 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         if (ossl_statem_app_data_allowed(s)) {
             s->s3->in_read_app_data = 2;
             return -1;
+        } else if (ossl_statem_skip_early_data(s)) {
+            /*
+             * This can happen after a client sends a CH followed by early_data,
+             * but the server responds with a HelloRetryRequest. The server
+             * reads the next record from the client expecting to find a
+             * plaintext ClientHello but gets a record which appears to be
+             * application data. The trial decrypt "works" because null
+             * decryption was applied. We just skip it and move on to the next
+             * record.
+             */
+            if (!early_data_count_ok(s, rr->length,
+                                     EARLY_DATA_CIPHERTEXT_OVERHEAD, &al))
+                goto f_err;
+            SSL3_RECORD_set_read(rr);
+            goto start;
         } else {
             al = SSL_AD_UNEXPECTED_MESSAGE;
             SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_UNEXPECTED_RECORD);
