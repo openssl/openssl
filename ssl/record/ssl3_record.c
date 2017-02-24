@@ -106,14 +106,17 @@ int early_data_count_ok(SSL *s, size_t length, size_t overhead, int *al)
     uint32_t max_early_data = s->max_early_data;
 
     /*
-     * We go with the lowest out of the max early data set in the session
-     * and the configured max_early_data.
+     * If we are a client then we always use the max_early_data from the
+     * session. Otherwise we go with the lowest out of the max early data set in
+     * the session and the configured max_early_data.
      */
-    if (s->hit && s->session->ext.max_early_data < s->max_early_data)
+    if (!s->server || (s->hit
+                       && s->session->ext.max_early_data < s->max_early_data))
         max_early_data = s->session->ext.max_early_data;
 
     if (max_early_data == 0) {
-        *al = SSL_AD_UNEXPECTED_MESSAGE;
+        if (al != NULL)
+            *al = SSL_AD_UNEXPECTED_MESSAGE;
         SSLerr(SSL_F_EARLY_DATA_COUNT_OK, SSL_R_TOO_MUCH_EARLY_DATA);
         return 0;
     }
@@ -121,12 +124,13 @@ int early_data_count_ok(SSL *s, size_t length, size_t overhead, int *al)
     /* If we are dealing with ciphertext we need to allow for the overhead */
     max_early_data += overhead;
 
-    s->early_data_count += length;
-    if (s->early_data_count > max_early_data) {
-        *al = SSL_AD_UNEXPECTED_MESSAGE;
+    if (s->early_data_count + length > max_early_data) {
+        if (al != NULL)
+            *al = SSL_AD_UNEXPECTED_MESSAGE;
         SSLerr(SSL_F_EARLY_DATA_COUNT_OK, SSL_R_TOO_MUCH_EARLY_DATA);
         return 0;
     }
+    s->early_data_count += length;
 
     return 1;
 }
