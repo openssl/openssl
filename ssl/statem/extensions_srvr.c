@@ -162,31 +162,6 @@ int tls_parse_ctos_srp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 }
 #endif
 
-int tls_parse_ctos_early_data(SSL *s, PACKET *pkt, unsigned int context,
-                              X509 *x, size_t chainidx, int *al)
-{
-    if (PACKET_remaining(pkt) != 0) {
-        *al = SSL_AD_DECODE_ERROR;
-        return 0;
-    }
-
-    if (s->max_early_data == 0 || !s->hit || s->session->ext.tick_identity != 0
-            || s->early_data_state != SSL_EARLY_DATA_ACCEPTING
-            || !s->ext.early_data_ok) {
-        s->ext.early_data = SSL_EARLY_DATA_REJECTED;
-    } else {
-        s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;
-
-        if (!tls13_change_cipher_state(s,
-                    SSL3_CC_EARLY | SSL3_CHANGE_CIPHER_SERVER_READ)) {
-            *al = SSL_AD_INTERNAL_ERROR;
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
 #ifndef OPENSSL_NO_EC
 int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx, int *al)
@@ -686,6 +661,18 @@ int tls_parse_ctos_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     return 1;
 }
 
+
+int tls_parse_ctos_early_data(SSL *s, PACKET *pkt, unsigned int context,
+                              X509 *x, size_t chainidx, int *al)
+{
+    if (PACKET_remaining(pkt) != 0) {
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
+
+    return 1;
+}
+
 int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx, int *al)
 {
@@ -865,22 +852,6 @@ int tls_construct_stoc_early_data_info(SSL *s, WPACKET *pkt,
             || !WPACKET_put_bytes_u32(pkt, s->max_early_data)
             || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_EARLY_DATA_INFO, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
-    return 1;
-}
-
-int tls_construct_stoc_early_data(SSL *s, WPACKET *pkt, unsigned int context,
-                                  X509 *x, size_t chainidx, int *al)
-{
-    if (s->ext.early_data != SSL_EARLY_DATA_ACCEPTED)
-        return 1;
-
-    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_early_data)
-            || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_EARLY_DATA, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -1170,6 +1141,22 @@ int tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt, unsigned int context,
 
     if (!WPACKET_memcpy(pkt, cryptopro_ext, sizeof(cryptopro_ext))) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_CRYPTOPRO_BUG, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+int tls_construct_stoc_early_data(SSL *s, WPACKET *pkt, unsigned int context,
+                                  X509 *x, size_t chainidx, int *al)
+{
+    if (s->ext.early_data != SSL_EARLY_DATA_ACCEPTED)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_early_data)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_EARLY_DATA, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
