@@ -570,6 +570,8 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_REASON(SSL_R_GOT_A_FIN_BEFORE_A_CCS), "got a fin before a ccs"},
     {ERR_REASON(SSL_R_HTTPS_PROXY_REQUEST), "https proxy request"},
     {ERR_REASON(SSL_R_HTTP_REQUEST), "http request"},
+    {ERR_REASON(SSL_R_ILLEGAL_POINT_COMPRESSION),
+     "illegal point compression"},
     {ERR_REASON(SSL_R_ILLEGAL_SUITEB_DIGEST), "illegal Suite B digest"},
     {ERR_REASON(SSL_R_INAPPROPRIATE_FALLBACK), "inappropriate fallback"},
     {ERR_REASON(SSL_R_INCONSISTENT_COMPRESSION), "inconsistent compression"},

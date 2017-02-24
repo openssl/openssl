@@ -916,8 +916,12 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         int curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
 
         if (SSL_IS_TLS13(s)) {
+            if (EC_KEY_get_conv_form(ec) != POINT_CONVERSION_UNCOMPRESSED) {
+                SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
+                       SSL_R_ILLEGAL_POINT_COMPRESSION);
+                return 0;
+            }
             /* For TLS 1.3 check curve matches signature algorithm */
-
             if (lu->curve != NID_undef && curve != lu->curve) {
                 SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
                 return 0;
@@ -2237,7 +2241,7 @@ int tls_choose_sigalg(SSL *s, int *al)
     if (SSL_IS_TLS13(s)) {
         size_t i;
 #ifndef OPENSSL_NO_EC
-        int curve = -1;
+        int curve = -1, skip_ec = 0;
 #endif
 
         /* Look for a certificate matching shared sigaglgs */
@@ -2258,8 +2262,11 @@ int tls_choose_sigalg(SSL *s, int *al)
                     EC_KEY *ec = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[idx].privatekey);
 
                     curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+                    if (EC_KEY_get_conv_form(ec)
+                        != POINT_CONVERSION_UNCOMPRESSED)
+                        skip_ec = 1;
                 }
-                if (lu->curve != NID_undef && curve != lu->curve)
+                if (skip_ec || (lu->curve != NID_undef && curve != lu->curve))
                     continue;
 #else
                 continue;
