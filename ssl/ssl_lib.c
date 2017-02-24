@@ -1545,6 +1545,14 @@ int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes)
         return 0;
     }
 
+    if (s->early_data_state != SSL_EARLY_DATA_NONE
+            && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING
+            && s->early_data_state != SSL_EARLY_DATA_FINISHED_READING
+            && s->early_data_state != SSL_EARLY_DATA_READING) {
+        SSLerr(SSL_F_SSL_READ_INTERNAL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
     if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         struct ssl_async_args args;
         int ret;
@@ -1737,9 +1745,13 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
         return -1;
     }
 
-    if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY
-            || s->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY)
+    if (s->early_data_state != SSL_EARLY_DATA_NONE
+            && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING
+            && s->early_data_state != SSL_EARLY_DATA_FINISHED_READING
+            && s->early_data_state != SSL_EARLY_DATA_WRITING) {
+        SSLerr(SSL_F_SSL_WRITE_INTERNAL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
+    }
 
     if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         int ret;
@@ -1801,7 +1813,9 @@ int SSL_write_early(SSL *s, const void *buf, size_t num, size_t *written)
 
     switch (s->early_data_state) {
     case SSL_EARLY_DATA_NONE:
-        if (!SSL_in_before(s)) {
+        if (!SSL_in_before(s)
+                || s->session == NULL
+                || s->session->ext.max_early_data == 0) {
             SSLerr(SSL_F_SSL_WRITE_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return 0;
         }
