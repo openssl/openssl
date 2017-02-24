@@ -5,19 +5,14 @@ language: c
 cache: ccache
 
 before_install:
-    - pip install --user cpp-coveralls
+    - if [ -n "$COVERALLS" ]; then
+          pip install --user cpp-coveralls;
+      fi;
 
 addons:
     apt:
         packages:
             - ccache
-            - clang-3.9
-            - gcc-5
-            - binutils-mingw-w64
-            - gcc-mingw-w64
-        sources:
-            - llvm-toolchain-trusty-3.9
-            - ubuntu-toolchain-r-test
 
 os:
     - linux
@@ -37,39 +32,107 @@ env:
 matrix:
     include:
         - os: linux
+          addons:
+              apt:
+                  packages:
+                      - clang-3.9
+                  sources:
+                      - llvm-toolchain-precise-3.9
+                      - ubuntu-toolchain-r-test
           compiler: clang-3.9
           env: CONFIG_OPTS="--strict-warnings no-deprecated" BUILDONLY="yes"
         - os: linux
           compiler: gcc
           env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers" COVERALLS="yes"
         - os: linux
+          addons:
+              apt:
+                  packages:
+                      - clang-3.9
+                  sources:
+                      - llvm-toolchain-precise-3.9
+                      - ubuntu-toolchain-r-test
           compiler: clang-3.9
           env: CONFIG_OPTS="enable-asan"
         - os: linux
+          addons:
+              apt:
+                  packages:
+                      - clang-3.9
+                  sources:
+                      - llvm-toolchain-precise-3.9
+                      - ubuntu-toolchain-r-test
           compiler: clang-3.9
           env: CONFIG_OPTS="enable-msan"
         - os: linux
+          addons:
+              apt:
+                  packages:
+                      - clang-3.9
+                  sources:
+                      - llvm-toolchain-precise-3.9
+                      - ubuntu-toolchain-r-test
           compiler: clang-3.9
           env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method -fno-sanitize=alignment"
         - os: linux
+          addons:
+              apt:
+                  packages:
+                      - clang-3.9
+                  sources:
+                      - llvm-toolchain-precise-3.9
+                      - ubuntu-toolchain-r-test
           compiler: clang-3.9
           env: CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2"
         - os: linux
+          addons:
+              apt:
+                  packages:
+                      - clang-3.9
+                  sources:
+                      - llvm-toolchain-precise-3.9
+                      - ubuntu-toolchain-r-test
           compiler: clang-3.9
           env: CONFIG_OPTS="no-stdio"
         - os: linux
+          addons:
+              apt:
+                  packages:
+                      - gcc-5
+                   sources:
+                      - ubuntu-toolchain-r-test
           compiler: gcc-5
           env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC"
         - os: linux
+          addons:
+              apt:
+                  packages:
+                      - binutils-mingw-w64
+                      - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="no-pic"
         - os: linux
+          addons:
+              apt:
+                  packages:
+                      - binutils-mingw-w64
+                      - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="no-stdio"
         - os: linux
+          addons:
+              apt:
+                  packages:
+                      - binutils-mingw-w64
+                      - gcc-mingw-w64
           compiler: x86_64-w64-mingw32-gcc
           env: CONFIG_OPTS="no-pic"
         - os: linux
+          addons:
+              apt:
+                  packages:
+                      - binutils-mingw-w64
+                      - gcc-mingw-w64
           compiler: x86_64-w64-mingw32-gcc
           env: CONFIG_OPTS="no-stdio"
     exclude:
@@ -107,7 +170,6 @@ before_script:
               if [ "$TRAVIS_OS_NAME" == "linux" ]; then
                   sudo dpkg --add-architecture i386;
                   sudo apt-get update;
-                  sudo apt-get -yq install wine;
               fi;
           fi;
       fi
@@ -129,6 +191,7 @@ script:
     - $make
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
+              sudo apt-get -yq install wine;
               export EXE_SHELL="wine" WINEPREFIX=`pwd`;
           fi;
           HARNESS_VERBOSE=yes make test;
