@@ -483,13 +483,7 @@ size_t tls1_final_finish_mac(SSL *s, const char *str, size_t slen,
 int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
                                 size_t len, size_t *secret_size)
 {
-    /*
-     * TODO(TLS1.3): We haven't implemented TLS1.3 key derivation yet. For now
-     * we will just force no use of EMS (which adds complications around the
-     * handshake hash). This will need to be removed later
-     */
-    if ((s->session->flags & SSL_SESS_FLAG_EXTMS)
-            && !SSL_IS_TLS13(s)) {
+    if (s->session->flags & SSL_SESS_FLAG_EXTMS) {
         unsigned char hash[EVP_MAX_MD_SIZE * 2];
         size_t hashlen;
         /*
