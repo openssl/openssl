@@ -108,32 +108,6 @@ static int use_ecc(SSL *s)
     return i < end;
 }
 
-int tls_construct_ctos_early_data(SSL *s, WPACKET *pkt, unsigned int context,
-                                  X509 *x, size_t chainidx, int *al)
-{
-    if (s->early_data_state != SSL_EARLY_DATA_CONNECTING
-            || s->session->ext.max_early_data == 0) {
-        s->max_early_data = 0;
-        return 1;
-    }
-    s->max_early_data = s->session->ext.max_early_data;
-
-    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_early_data)
-            || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
-    /*
-     * We set this to rejected here. Later, if the server acknowledges the
-     * extension, we set it to accepted.
-     */
-    s->ext.early_data = SSL_EARLY_DATA_REJECTED;
-
-    return 1;
-}
-
 int tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
                                      X509 *x, size_t chainidx, int *al)
 {
@@ -662,6 +636,32 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, unsigned int context,
     return 1;
 }
 
+int tls_construct_ctos_early_data(SSL *s, WPACKET *pkt, unsigned int context,
+                                  X509 *x, size_t chainidx, int *al)
+{
+    if (s->early_data_state != SSL_EARLY_DATA_CONNECTING
+            || s->session->ext.max_early_data == 0) {
+        s->max_early_data = 0;
+        return 1;
+    }
+    s->max_early_data = s->session->ext.max_early_data;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_early_data)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /*
+     * We set this to rejected here. Later, if the server acknowledges the
+     * extension, we set it to accepted.
+     */
+    s->ext.early_data = SSL_EARLY_DATA_REJECTED;
+
+    return 1;
+}
+
 #define F5_WORKAROUND_MIN_MSG_LEN   0xff
 #define F5_WORKAROUND_MAX_MSG_LEN   0x200
 
@@ -919,30 +919,6 @@ int tls_parse_stoc_early_data_info(SSL *s, PACKET *pkt, unsigned int context,
     }
 
     s->session->ext.max_early_data = max_early_data;
-
-    return 1;
-}
-
-int tls_parse_stoc_early_data(SSL *s, PACKET *pkt, unsigned int context,
-                              X509 *x, size_t chainidx, int *al)
-{
-    if (PACKET_remaining(pkt) != 0) {
-        *al = SSL_AD_DECODE_ERROR;
-        return 0;
-    }
-
-    if (s->ext.early_data != SSL_EARLY_DATA_REJECTED
-            || !s->hit
-            || s->session->ext.tick_identity != 0) {
-        /*
-         * If we get here then we didn't send early data, or we didn't resume
-         * using the first identity so the server should not be accepting it.
-         */
-        *al = SSL_AD_ILLEGAL_PARAMETER;
-        return 0;
-    }
-
-    s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;
 
     return 1;
 }
@@ -1358,6 +1334,30 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
     EVP_PKEY_free(skey);
 #endif
+
+    return 1;
+}
+
+int tls_parse_stoc_early_data(SSL *s, PACKET *pkt, unsigned int context,
+                              X509 *x, size_t chainidx, int *al)
+{
+    if (PACKET_remaining(pkt) != 0) {
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
+
+    if (s->ext.early_data != SSL_EARLY_DATA_REJECTED
+            || !s->hit
+            || s->session->ext.tick_identity != 0) {
+        /*
+         * If we get here then we didn't send early data, or we didn't resume
+         * using the first identity so the server should not be accepting it.
+         */
+        *al = SSL_AD_ILLEGAL_PARAMETER;
+        return 0;
+    }
+
+    s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;
 
     return 1;
 }
