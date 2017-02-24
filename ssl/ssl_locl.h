@@ -638,6 +638,14 @@ typedef enum {
  */
 # define EARLY_DATA_CIPHERTEXT_OVERHEAD ((6 * (EVP_GCM_TLS_TAG_LEN + 1)) + 2)
 
+/*
+ * The allowance we have between the client's calculated ticket age and our own.
+ * We allow for 10 seconds (units are in ms). If a ticket is presented and the
+ * client's age calculation is different by more than this than our own then we
+ * do not allow that ticket for early_data.
+ */
+# define TICKET_AGE_ALLOWANCE   (10 * 1000)
+
 #define MAX_COMPRESSIONS_SIZE   255
 
 struct ssl_comp_st {
@@ -1197,6 +1205,8 @@ struct ssl_st {
 
         /* Are we expecting to receive early data? */
         int early_data;
+        /* Is the session suitable for early data? */
+        int early_data_ok;
     } ext;
 
     /* Parsed form of the ClientHello, kept around across early_cb calls. */
