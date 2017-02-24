@@ -43,6 +43,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al);
 static int init_srtp(SSL *s, unsigned int context);
 #endif
 static int final_sig_algs(SSL *s, unsigned int context, int sent, int *al);
+static int final_early_data(SSL *s, unsigned int context, int sent, int *al);
 
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
@@ -134,12 +135,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         EXT_TLS1_3_NEW_SESSION_TICKET,
         NULL, NULL, tls_parse_stoc_early_data_info,
         tls_construct_stoc_early_data_info, NULL, NULL
-    },
-    {
-        TLSEXT_TYPE_early_data,
-        EXT_CLIENT_HELLO | EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
-        NULL, tls_parse_ctos_early_data, tls_parse_stoc_early_data,
-        tls_construct_stoc_early_data, tls_construct_ctos_early_data, NULL
     },
 #ifndef OPENSSL_NO_EC
     {
@@ -281,6 +276,13 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_cryptopro_bug,
         EXT_TLS1_2_SERVER_HELLO | EXT_TLS1_2_AND_BELOW_ONLY,
         NULL, NULL, NULL, tls_construct_stoc_cryptopro_bug, NULL, NULL
+    },
+    {
+        TLSEXT_TYPE_early_data,
+        EXT_CLIENT_HELLO | EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
+        NULL, tls_parse_ctos_early_data, tls_parse_stoc_early_data,
+        tls_construct_stoc_early_data, tls_construct_ctos_early_data,
+        final_early_data
     },
     {
         /* Must be immediately before pre_shared_key */
@@ -1228,4 +1230,29 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     EVP_MD_CTX_free(mctx);
 
     return ret;
+}
+
+static int final_early_data(SSL *s, unsigned int context, int sent, int *al)
+{
+    if (!s->server || !sent)
+        return 1;
+
+    if (s->max_early_data == 0
+            || !s->hit
+            || s->session->ext.tick_identity != 0
+            || s->early_data_state != SSL_EARLY_DATA_ACCEPTING
+            || !s->ext.early_data_ok
+            || s->hello_retry_request) {
+        s->ext.early_data = SSL_EARLY_DATA_REJECTED;
+    } else {
+        s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;
+
+        if (!tls13_change_cipher_state(s,
+                    SSL3_CC_EARLY | SSL3_CHANGE_CIPHER_SERVER_READ)) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            return 0;
+        }
+    }
+
+    return 1;
 }
