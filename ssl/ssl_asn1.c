@@ -66,6 +66,7 @@ typedef struct {
 #endif
     long flags;
     uint32_t max_early_data;
+    ASN1_OCTET_STRING *alpn_selected;
 } SSL_SESSION_ASN1;
 
 ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
@@ -93,7 +94,8 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
 #endif
     ASN1_EXP_OPT(SSL_SESSION_ASN1, flags, ZLONG, 13),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, tlsext_tick_age_add, ZLONG, 14),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, max_early_data, ZLONG, 15)
+    ASN1_EXP_OPT(SSL_SESSION_ASN1, max_early_data, ZLONG, 15),
+    ASN1_EXP_OPT(SSL_SESSION_ASN1, alpn_selected, ASN1_OCTET_STRING, 16)
 } static_ASN1_SEQUENCE_END(SSL_SESSION_ASN1)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
@@ -134,16 +136,14 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     ASN1_OCTET_STRING comp_id;
     unsigned char comp_id_data;
 #endif
-
     ASN1_OCTET_STRING tlsext_hostname, tlsext_tick;
-
 #ifndef OPENSSL_NO_SRP
     ASN1_OCTET_STRING srp_username;
 #endif
-
 #ifndef OPENSSL_NO_PSK
     ASN1_OCTET_STRING psk_identity, psk_identity_hint;
 #endif
+    ASN1_OCTET_STRING alpn_selected;
 
     long l;
 
@@ -206,6 +206,12 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 
     as.flags = in->flags;
     as.max_early_data = in->ext.max_early_data;
+
+    if (in->ext.alpn_selected == NULL)
+        as.alpn_selected = NULL;
+    else
+        ssl_session_oinit(&as.alpn_selected, &alpn_selected,
+                          in->ext.alpn_selected, in->ext.alpn_selected_len);
 
     return i2d_SSL_SESSION_ASN1(&as, pp);
 
@@ -361,6 +367,16 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     /* Flags defaults to zero which is fine */
     ret->flags = as->flags;
     ret->ext.max_early_data = as->max_early_data;
+
+    if (as->alpn_selected != NULL) {
+        if (!ssl_session_strndup((char **)&ret->ext.alpn_selected,
+                                 as->alpn_selected))
+            goto err;
+        ret->ext.alpn_selected_len = as->alpn_selected->length;
+    } else {
+        ret->ext.alpn_selected = NULL;
+        ret->ext.alpn_selected_len = 0;
+    }
 
     M_ASN1_free_of(as, SSL_SESSION_ASN1);
 

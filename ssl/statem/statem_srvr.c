@@ -3400,6 +3400,18 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             goto err;
         s->session->ext.tick_age_add = age_add_u.age_add;
         s->session->time = (long)time(NULL);
+        if (s->s3->alpn_selected != NULL) {
+            OPENSSL_free(s->session->ext.alpn_selected);
+            s->session->ext.alpn_selected =
+                OPENSSL_memdup(s->s3->alpn_selected, s->s3->alpn_selected_len);
+            if (s->session->ext.alpn_selected == NULL) {
+                SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
+                       ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+            s->session->ext.alpn_selected_len = s->s3->alpn_selected_len;
+        }
+        s->session->ext.max_early_data = s->max_early_data;
     }
 
     /* get session encoding length */
@@ -3409,13 +3421,13 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
      * long
      */
     if (slen_full == 0 || slen_full > 0xFF00) {
-        ossl_statem_set_error(s);
-        return 0;
+        SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
+        goto err;
     }
     senc = OPENSSL_malloc(slen_full);
     if (senc == NULL) {
-        ossl_statem_set_error(s);
-        return 0;
+        SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
+        goto err;
     }
 
     ctx = EVP_CIPHER_CTX_new();
@@ -3544,6 +3556,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
 
     return 1;
  err:
+    ossl_statem_set_error(s);
     OPENSSL_free(senc);
     EVP_CIPHER_CTX_free(ctx);
     HMAC_CTX_free(hctx);
