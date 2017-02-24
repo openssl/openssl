@@ -1634,7 +1634,7 @@ long SSL_CTX_callback_ctrl(SSL_CTX *, int, void (*)(void));
 # define SSL_EARLY_DATA_REJECTED    1
 # define SSL_EARLY_DATA_ACCEPTED    2
 
-__owur int SSL_get_early_data_status(SSL *s);
+__owur int SSL_get_early_data_status(const SSL *s);
 
 __owur int SSL_get_error(const SSL *s, int ret_code);
 __owur const char *SSL_get_version(const SSL *s);
