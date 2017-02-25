@@ -2257,6 +2257,58 @@ $code.=<<___;
 .size	AES_xts_decrypt,.-AES_xts_decrypt
 ___
 }
+
+################
+# void s390x_aes_gcm_blocks(unsigned char *out, GCM128_CONTEXT *ctx,
+#                           const unsigned char *in, size_t len,
+#                           const unsigned char *aad, size_t alen,
+#                           const AES_KEY *key, int enc)
+{
+my ($out,$ctx,$in,$len,$aad,$alen,$key,$enc) = map("%r$_",(2..9));
+$code.=<<___ if (!$softonly);
+.globl	s390x_aes_gcm_blocks
+.type	s390x_aes_gcm_blocks,\@function
+.align	16
+s390x_aes_gcm_blocks:
+	stm$g	$alen,$enc,7*$SIZE_T($sp)
+	lm$g	$alen,$enc,$stdframe($sp)
+
+	aghi	$sp,-112
+
+	lmg	%r0,%r1,0($ctx)
+	ahi	%r1,-1
+
+	mvc	16(32,$sp),64($ctx)	# copy Xi/H
+	#mvc	48(16,$sp),48($ctx)	# copy len
+	mvc	80(32,$sp),0($key)	# copy key
+	st	%r1,12($sp)		# copy Yi
+	stmg	%r0,%r1,64($sp)
+
+	lhi	%r1,128
+	l	%r0,240($key)	# kma capability vector checked by caller
+	sll	$enc,7
+	xr	$enc,%r1
+	or	%r0,$enc
+
+	la	%r1,0($sp)
+
+	.long	0xb9296024	# kma $out,$aad,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	l	%r0,12($sp)
+	mvc	64(16,$ctx),16($sp)	# update Xi
+	xc	0(112,$sp),0($sp)	# wipe stack
+
+	la	$sp,112($sp)
+	ahi	%r0,1
+	st	%r0,12($ctx)
+
+	lm$g	$alen,$enc,7*$SIZE_T($sp)
+	br	$ra
+.size	s390x_aes_gcm_blocks,.-s390x_aes_gcm_blocks
+___
+}
+
 $code.=<<___;
 .string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
 .comm	OPENSSL_s390xcap_P,104,8
