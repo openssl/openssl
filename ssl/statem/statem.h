@@ -123,6 +123,7 @@ void ossl_statem_set_in_init(SSL *s, int init);
 int ossl_statem_get_in_handshake(SSL *s);
 void ossl_statem_set_in_handshake(SSL *s, int inhand);
 __owur int ossl_statem_skip_early_data(SSL *s);
+void ossl_statem_check_finish_init(SSL *s, int send);
 void ossl_statem_set_hello_verify_done(SSL *s);
 __owur int ossl_statem_app_data_allowed(SSL *s);
 #ifndef OPENSSL_NO_SCTP
