@@ -357,12 +357,13 @@
 # define SSL_CLIENT_USE_SIGALGS(s)        \
     SSL_CLIENT_USE_TLS1_2_CIPHERS(s)
 
-# define SSL_USE_MAX_FRAGMENT_LENGTH_EXT(s) \
-    (s->session) && \
-    ((s->session->ext.max_fragment_len_mode >= TLSEXT_max_fragment_length_2_TO_9) && \
-     (s->session->ext.max_fragment_len_mode <= TLSEXT_max_fragment_length_2_TO_12))
-# define SSL_GET_MAX_FRAGMENT_LENGTH(s) \
-    (512U << (s->session->ext.max_fragment_len_mode - 1))
+# define IS_MAX_FRAGMENT_LENGTH_EXT_VALID(value) \
+    (((value) >= TLSEXT_max_fragment_length_512) && \
+     ((value) <= TLSEXT_max_fragment_length_4096))
+# define USE_MAX_FRAGMENT_LENGTH_EXT(session) \
+    IS_MAX_FRAGMENT_LENGTH_EXT_VALID(session->ext.max_fragment_len_mode)
+# define GET_MAX_FRAGMENT_LENGTH(session) \
+    (512U << (session->ext.max_fragment_len_mode - 1))
 
 # define SSL_READ_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_READ)
 # define SSL_WRITE_ETM(s) (s->s3->flags & TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE)
@@ -2202,6 +2203,8 @@ __owur EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm);
 __owur int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey,
                       int genmaster);
 __owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);
+__owur unsigned int ssl_get_max_send_fragment(const SSL *ssl);
+__owur unsigned int ssl_get_split_send_fragment(const SSL *ssl);
 
 __owur const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname);

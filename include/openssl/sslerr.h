@@ -129,6 +129,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CTX_SET_CT_VALIDATION_CALLBACK         396
 # define SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT             219
 # define SSL_F_SSL_CTX_SET_SSL_VERSION                    170
+# define SSL_F_SSL_CTX_SET_TLSEXT_MAX_FRAGMENT_LENGTH     551
 # define SSL_F_SSL_CTX_USE_CERTIFICATE                    171
 # define SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1               172
 # define SSL_F_SSL_CTX_USE_CERTIFICATE_FILE               173
@@ -192,6 +193,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_SET_SESSION                            195
 # define SSL_F_SSL_SET_SESSION_ID_CONTEXT                 218
 # define SSL_F_SSL_SET_SESSION_TICKET_EXT                 294
+# define SSL_F_SSL_SET_TLSEXT_MAX_FRAGMENT_LENGTH         550
 # define SSL_F_SSL_SET_WFD                                196
 # define SSL_F_SSL_SHUTDOWN                               224
 # define SSL_F_SSL_SRP_CTX_INIT                           313

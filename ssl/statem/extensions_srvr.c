@@ -149,9 +149,18 @@ int tls_parse_ctos_maxfragmentlen(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
-    /* |value| should contains a valid max-fragment-length code. */
-    if (value < TLSEXT_max_fragment_length_2_TO_9
-        || value > TLSEXT_max_fragment_length_2_TO_12) {
+    /* Received |value| should be a valid max-fragment-length code. */
+    if (!IS_MAX_FRAGMENT_LENGTH_EXT_VALID(value)) {
+        *al = SSL_AD_ILLEGAL_PARAMETER;
+        return 0;
+    }
+
+    /*
+     * RFC 6066:  The negotiated length applies for the duration of the session
+     * including session resumptions.
+     * We should receive the same code as in resumed session !
+     */
+    if (s->hit && s->session->ext.max_fragment_len_mode != value) {
         *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;
     }
@@ -874,7 +883,7 @@ EXT_RETURN tls_construct_stoc_maxfragmentlen(SSL *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
                                              size_t chainidx, int *al)
 {
-    if (!SSL_USE_MAX_FRAGMENT_LENGTH_EXT(s))
+    if (!USE_MAX_FRAGMENT_LENGTH_EXT(s->session))
         return EXT_RETURN_NOT_SENT;
 
     /*-

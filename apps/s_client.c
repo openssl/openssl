@@ -1431,16 +1431,16 @@ int s_client_main(int argc, char **argv)
             len = atoi(opt_arg());
             switch (len) {
             case 512:
-                maxfraglen = TLSEXT_max_fragment_length_2_TO_9;
+                maxfraglen = TLSEXT_max_fragment_length_512;
                 break;
             case 1024:
-                maxfraglen = TLSEXT_max_fragment_length_2_TO_10;
+                maxfraglen = TLSEXT_max_fragment_length_1024;
                 break;
             case 2048:
-                maxfraglen = TLSEXT_max_fragment_length_2_TO_11;
+                maxfraglen = TLSEXT_max_fragment_length_2048;
                 break;
             case 4096:
-                maxfraglen = TLSEXT_max_fragment_length_2_TO_12;
+                maxfraglen = TLSEXT_max_fragment_length_4096;
                 break;
             default:
                 BIO_printf(bio_err,

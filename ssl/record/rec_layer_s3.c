@@ -334,9 +334,9 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
 {
     const unsigned char *buf = buf_;
     size_t tot;
-    size_t n, split_send_fragment, maxpipes;
+    size_t n, max_send_fragment, split_send_fragment, maxpipes;
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
-    size_t max_send_fragment = 0, nw;
+    size_t nw;
 #endif
     SSL3_BUFFER *wb = &s->rlayer.wbuf[0];
     int i;
@@ -396,14 +396,6 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
         tot += tmpwrit;               /* this might be last fragment */
     }
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
-    if (type == SSL3_RT_APPLICATION_DATA) {
-        max_send_fragment = s->max_send_fragment;
-
-        if (USE_MAX_FRAGMENT_LENGTH_EXT(s)) {
-            if (max_send_fragment > GET_MAX_FRAGMENT_LENGTH(s))
-                max_send_fragment = GET_MAX_FRAGMENT_LENGTH(s);
-        }
-    }
     /*
      * Depending on platform multi-block can deliver several *times*
      * better performance. Downside is that it has to allocate
@@ -411,7 +403,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
      * compromise is considered worthy.
      */
     if (type == SSL3_RT_APPLICATION_DATA &&
-        len >= 4 * max_send_fragment &&
+        len >= 4 * (max_send_fragment = ssl_get_max_send_fragment(s)) &&
         s->compress == NULL && s->msg_callback == NULL &&
         !SSL_WRITE_ETM(s) && SSL_USE_EXPLICIT_IV(s) &&
         EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_write_ctx)) &
@@ -531,7 +523,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
             tot += tmpwrit;
         }
     } else
-#endif
+#endif  /* !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK */
     if (tot == len) {           /* done? */
         if (s->mode & SSL_MODE_RELEASE_BUFFERS && !SSL_IS_DTLS(s))
             ssl3_release_write_buffer(s);
@@ -542,7 +534,8 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
 
     n = (len - tot);
 
-    split_send_fragment = s->split_send_fragment;
+    max_send_fragment = ssl_get_max_send_fragment(s);
+    split_send_fragment = ssl_get_split_send_fragment(s);
     /*
      * If max_pipelines is 0 then this means "undefined" and we default to
      * 1 pipeline. Similarly if the cipher does not support pipelined
@@ -564,10 +557,10 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
              & EVP_CIPH_FLAG_PIPELINE)
         || !SSL_USE_EXPLICIT_IV(s))
         maxpipes = 1;
-    if (s->max_send_fragment == 0 || split_send_fragment > s->max_send_fragment
-        || split_send_fragment == 0) {
+    if (max_send_fragment == 0 || split_send_fragment == 0
+        || split_send_fragment > max_send_fragment) {
         /*
-         * We should have prevented this when we set the split and max send
+         * We should have prevented this when we set/get the split and max send
          * fragments so we shouldn't get here
          */
         SSLerr(SSL_F_SSL3_WRITE_BYTES, ERR_R_INTERNAL_ERROR);
@@ -585,13 +578,13 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
         if (numpipes > maxpipes)
             numpipes = maxpipes;
 
-        if (n / numpipes >= s->max_send_fragment) {
+        if (n / numpipes >= max_send_fragment) {
             /*
              * We have enough data to completely fill all available
              * pipelines
              */
             for (j = 0; j < numpipes; j++) {
-                pipelens[j] = s->max_send_fragment;
+                pipelens[j] = max_send_fragment;
             }
         } else {
             /* We can partially fill all available pipelines */
@@ -601,14 +594,6 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
                 pipelens[j] = tmppipelen;
                 if (j < remain)
                     pipelens[j]++;
-            }
-        }
-
-        if (SSL_USE_MAX_FRAGMENT_LENGTH_EXT(s)) {
-            unsigned int max_fragment_len =  SSL_GET_MAX_FRAGMENT_LENGTH(s);
-            for (j = 0; j < numpipes; j++) {
-                if (pipelens[j] > max_fragment_len)
-                    pipelens[j] = max_fragment_len;
             }
         }
 

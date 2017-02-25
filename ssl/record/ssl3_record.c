@@ -686,8 +686,8 @@ int ssl3_get_record(SSL *s)
         }
 
         /* If received packet overflows current Max Fragment Length setting */
-        if (SSL_USE_MAX_FRAGMENT_LENGTH_EXT(s)
-                && thisrr->length > SSL_GET_MAX_FRAGMENT_LENGTH(s)) {
+        if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
+                && thisrr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
             al = SSL_AD_RECORD_OVERFLOW;
             SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_DATA_LENGTH_TOO_LONG);
             goto f_err;
@@ -1833,8 +1833,8 @@ int dtls1_get_record(SSL *s)
 
         /* If received packet overflows own-client Max Fragment Length setting */
         if (!s->server
-                && s->session != NULL && SSL_USE_MAX_FRAGMENT_LENGTH_EXT(s)
-                && rr->length > SSL_GET_MAX_FRAGMENT_LENGTH(s)) {
+                && s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
+                && rr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
             /* record too long, silently discard it */
             rr->length = 0;
             RECORD_LAYER_reset_packet_length(&s->rlayer);

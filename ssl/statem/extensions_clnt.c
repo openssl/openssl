@@ -1152,13 +1152,17 @@ int tls_parse_stoc_maxfragmentlen(SSL *s, PACKET *pkt, unsigned int context,
     }
 
     /* |value| should contains a valid max-fragment-length code. */
-    if (value < TLSEXT_max_fragment_length_2_TO_9
-        || value > TLSEXT_max_fragment_length_2_TO_12) {
+    if (!IS_MAX_FRAGMENT_LENGTH_EXT_VALID(value)) {
         *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;
     }
 
     /* Must be the same value as client-configured one who was sent to server */
+    /*-
+     * RFC 6066: if a client receives a maximum fragment length negotiation
+     * response that differs from the length it requested, ...
+     * It must abort with SSL_AD_ILLEGAL_PARAMETER alert
+     */
     if (value != s->ext.max_fragment_len_mode) {
         *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;

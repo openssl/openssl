@@ -5162,3 +5162,28 @@ int ssl_randbytes(SSL *s, unsigned char *rnd, size_t size)
     }
     return RAND_bytes(rnd, (int)size);
 }
+
+__owur unsigned int ssl_get_max_send_fragment(const SSL *ssl)
+{
+    /* Return any active Max Fragment Len extension */
+    if (ssl->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(ssl->session))
+        return GET_MAX_FRAGMENT_LENGTH(ssl->session);
+
+    /* ssl_get_max_send_fragment return current SSL connection setting */
+    return ssl->max_send_fragment;
+}
+
+__owur unsigned int ssl_get_split_send_fragment(const SSL *ssl)
+{
+    /* Return a value regarding an active Max Fragment Len extension */
+    if (ssl->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(ssl->session)
+            && ssl->split_send_fragment > GET_MAX_FRAGMENT_LENGTH(ssl->session))
+        return GET_MAX_FRAGMENT_LENGTH(ssl->session);
+
+    /* else limit |split_send_fragment| to current |max_send_fragment| */
+    if (ssl->split_send_fragment > ssl->max_send_fragment)
+        return ssl->max_send_fragment;
+
+    /* ssl_get_split_send_fragment return current SSL connection setting */
+    return ssl->split_send_fragment;
+}

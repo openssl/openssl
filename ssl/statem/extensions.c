@@ -55,6 +55,7 @@ static int init_srtp(SSL *s, unsigned int context);
 #endif
 static int final_sig_algs(SSL *s, unsigned int context, int sent, int *al);
 static int final_early_data(SSL *s, unsigned int context, int sent, int *al);
+static int final_maxfragmentlen(SSL *s, unsigned int context, int sent, int *al);
 
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
@@ -141,7 +142,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
         NULL, tls_parse_ctos_maxfragmentlen, tls_parse_stoc_maxfragmentlen,
         tls_construct_stoc_maxfragmentlen, tls_construct_ctos_maxfragmentlen,
-        NULL
+        final_maxfragmentlen
     },
 #ifndef OPENSSL_NO_SRP
     {
@@ -1481,5 +1482,22 @@ static int final_early_data(SSL *s, unsigned int context, int sent, int *al)
         }
     }
 
+    return 1;
+}
+
+static int final_maxfragmentlen(SSL *ssl, unsigned int context, int sent, int *al)
+{
+    if (!ssl->server)
+        return 1;
+
+    /*
+     * Session resumption on server-side with MFL extension active
+     *  BUT MFL extension packet not resent
+     */
+    if (ssl->hit && USE_MAX_FRAGMENT_LENGTH_EXT(ssl->session)
+            && !sent ) {
+        *al = SSL_AD_MISSING_EXTENSION;
+        return 0;
+    }
     return 1;
 }
