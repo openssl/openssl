@@ -462,7 +462,6 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
     case TLS_ST_SW_FINISHED:
         if (s->early_data_state == SSL_EARLY_DATA_ACCEPTING) {
             st->hand_state = TLS_ST_OK;
-            ossl_statem_set_in_init(s, 0);
             return WRITE_TRAN_CONTINUE;
         }
         return WRITE_TRAN_FINISHED;
@@ -489,7 +488,6 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
     case TLS_ST_SW_KEY_UPDATE:
     case TLS_ST_SW_SESSION_TICKET:
         st->hand_state = TLS_ST_OK;
-        ossl_statem_set_in_init(s, 0);
         return WRITE_TRAN_CONTINUE;
     }
 }
@@ -535,7 +533,6 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
 
     case TLS_ST_SW_HELLO_REQ:
         st->hand_state = TLS_ST_OK;
-        ossl_statem_set_in_init(s, 0);
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SR_CLNT_HELLO:
@@ -602,7 +599,6 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
     case TLS_ST_SR_FINISHED:
         if (s->hit) {
             st->hand_state = TLS_ST_OK;
-            ossl_statem_set_in_init(s, 0);
             return WRITE_TRAN_CONTINUE;
         } else if (s->ext.ticket_expected) {
             st->hand_state = TLS_ST_SW_SESSION_TICKET;
@@ -624,7 +620,6 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
             return WRITE_TRAN_FINISHED;
         }
         st->hand_state = TLS_ST_OK;
-        ossl_statem_set_in_init(s, 0);
         return WRITE_TRAN_CONTINUE;
     }
 }

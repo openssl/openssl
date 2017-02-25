@@ -958,6 +958,7 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
     if (!clearbufs)
         return WORK_FINISHED_CONTINUE;
 
+    ossl_statem_set_in_init(s, 0);
     return WORK_FINISHED_STOP;
 }
 
