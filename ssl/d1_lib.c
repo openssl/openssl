@@ -356,7 +356,7 @@ void dtls1_stop_timer(SSL *s)
     /* Reset everything */
     memset(&s->d1->timeout, 0, sizeof(s->d1->timeout));
     memset(&s->d1->next_timeout, 0, sizeof(s->d1->next_timeout));
-    s->d1->timeout_duration_ms = 1000;
+    s->d1->timeout_duration_ms = 0;
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
              &(s->d1->next_timeout));
     /* Clear retransmission buffer */
