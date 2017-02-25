@@ -902,10 +902,11 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     }
     lu = tls1_lookup_sigalg(sig);
     /*
-     * Check sigalgs is known and key type is consistent with signature:
-     * RSA keys can be used for RSA-PSS
+     * Check sigalgs is known. Disallow SHA1 with TLS 1.3. Check key type is
+     * consistent with signature: RSA keys can be used for RSA-PSS
      */
-    if (lu == NULL || (pkeyid != lu->sig
+    if (lu == NULL || (SSL_IS_TLS13(s) && lu->hash == NID_sha1)
+        || (pkeyid != lu->sig
         && (lu->sig != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA))) {
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
@@ -2248,8 +2249,9 @@ int tls_choose_sigalg(SSL *s, int *al)
         for (i = 0; i < s->cert->shared_sigalgslen; i++) {
             lu = s->cert->shared_sigalgs[i];
 
-            /* Skip DSA and RSA if not PSS */
-            if (lu->sig == EVP_PKEY_DSA || lu->sig == EVP_PKEY_RSA)
+            /* Skip SHA1, DSA and RSA if not PSS */
+            if (lu->hash == NID_sha1 || lu->sig == EVP_PKEY_DSA
+                || lu->sig == EVP_PKEY_RSA)
                 continue;
             if (ssl_md(lu->hash_idx) == NULL)
                 continue;
