@@ -191,11 +191,6 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_OK:
-        if (s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING
-                && mt == SSL3_MT_SERVER_HELLO) {
-            st->hand_state = TLS_ST_CR_SRVR_HELLO;
-            return 1;
-        }
         if (mt == SSL3_MT_NEWSESSION_TICKET) {
             st->hand_state = TLS_ST_CR_SESSION_TICKET;
             return 1;
@@ -255,6 +250,22 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
                 st->hand_state = TLS_ST_CR_HELLO_RETRY_REQUEST;
                 return 1;
             }
+        }
+        break;
+
+    case TLS_ST_CW_EARLY_DATA:
+        /*
+         * We've not actually selected TLSv1.3 yet, but we have sent early
+         * data. The only thing allowed now is a ServerHello or a
+         * HelloRetryRequest.
+         */
+        if (mt == SSL3_MT_SERVER_HELLO) {
+            st->hand_state = TLS_ST_CR_SRVR_HELLO;
+            return 1;
+        }
+        if (mt == SSL3_MT_HELLO_RETRY_REQUEST) {
+            st->hand_state = TLS_ST_CR_HELLO_RETRY_REQUEST;
+            return 1;
         }
         break;
 
@@ -382,21 +393,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_OK:
-        if (s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING) {
-            /*
-             * We've not actually selected TLSv1.3 yet, but we have sent early
-             * data. The only thing allowed now is a ServerHello or a
-             * HelloRetryRequest.
-             */
-            if (mt == SSL3_MT_SERVER_HELLO) {
-                st->hand_state = TLS_ST_CR_SRVR_HELLO;
-                return 1;
-            }
-            if (mt == SSL3_MT_HELLO_RETRY_REQUEST) {
-                st->hand_state = TLS_ST_CR_HELLO_RETRY_REQUEST;
-                return 1;
-            }
-        } else if (mt == SSL3_MT_HELLO_REQUEST) {
+        if (mt == SSL3_MT_HELLO_REQUEST) {
             st->hand_state = TLS_ST_CR_HELLO_REQ;
             return 1;
         }
@@ -463,7 +460,6 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
     case TLS_ST_CR_SESSION_TICKET:
     case TLS_ST_CW_FINISHED:
         st->hand_state = TLS_ST_OK;
-        ossl_statem_set_in_init(s, 0);
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_OK:
@@ -499,13 +495,6 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
         return WRITE_TRAN_ERROR;
 
     case TLS_ST_OK:
-        if (s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING) {
-            /*
-             * We are assuming this is a TLSv1.3 connection, although we haven't
-             * actually selected a version yet.
-             */
-            return WRITE_TRAN_FINISHED;
-        }
         if (!s->renegotiate) {
             /*
              * We haven't requested a renegotiation ourselves so we must have
@@ -524,14 +513,16 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
              * We are assuming this is a TLSv1.3 connection, although we haven't
              * actually selected a version yet.
              */
-            st->hand_state = TLS_ST_OK;
-            ossl_statem_set_in_init(s, 0);
+            st->hand_state = TLS_ST_CW_EARLY_DATA;
             return WRITE_TRAN_CONTINUE;
         }
         /*
          * No transition at the end of writing because we don't know what
          * we will be sent
          */
+        return WRITE_TRAN_FINISHED;
+
+    case TLS_ST_CW_EARLY_DATA:
         return WRITE_TRAN_FINISHED;
 
     case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
@@ -576,7 +567,8 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
 
     case TLS_ST_CW_CHANGE:
 #if defined(OPENSSL_NO_NEXTPROTONEG)
-        st->hand_state = TLS_ST_CW_FINISHED;
+        st->
+        hand_state = TLS_ST_CW_FINISHED;
 #else
         if (!SSL_IS_DTLS(s) && s->s3->npn_seen)
             st->hand_state = TLS_ST_CW_NEXT_PROTO;
@@ -594,7 +586,6 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
     case TLS_ST_CW_FINISHED:
         if (s->hit) {
             st->hand_state = TLS_ST_OK;
-            ossl_statem_set_in_init(s, 0);
             return WRITE_TRAN_CONTINUE;
         } else {
             return WRITE_TRAN_FINISHED;
@@ -606,7 +597,6 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
             return WRITE_TRAN_CONTINUE;
         } else {
             st->hand_state = TLS_ST_OK;
-            ossl_statem_set_in_init(s, 0);
             return WRITE_TRAN_CONTINUE;
         }
 
@@ -624,7 +614,6 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
             return WRITE_TRAN_CONTINUE;
         }
         st->hand_state = TLS_ST_OK;
-        ossl_statem_set_in_init(s, 0);
         return WRITE_TRAN_CONTINUE;
     }
 }
@@ -669,6 +658,7 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
         }
         break;
 
+    case TLS_ST_CW_EARLY_DATA:
     case TLS_ST_OK:
         return tls_finish_handshake(s, wst, 1);
     }
