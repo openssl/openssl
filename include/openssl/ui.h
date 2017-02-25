@@ -206,6 +206,12 @@ const UI_METHOD *UI_set_method(UI *ui, const UI_METHOD *meth);
 /* The method with all the built-in thingies */
 UI_METHOD *UI_OpenSSL(void);
 
+/*
+ * NULL method.  Literarily does nothing, but may serve as a placeholder
+ * to avoid internal default.
+ */
+const UI_METHOD *UI_null(void);
+
 /* ---------- For method writers ---------- */
 /*-
    A method contains a number of functions that implement the low level
