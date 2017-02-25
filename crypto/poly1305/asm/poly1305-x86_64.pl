@@ -210,16 +210,23 @@ $code.=<<___;
 .type	poly1305_blocks,\@function,4
 .align	32
 poly1305_blocks:
+.cfi_startproc
 .Lblocks:
 	shr	\$4,$len
 	jz	.Lno_data		# too short
 
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 .Lblocks_body:
 
 	mov	$len,%r15		# reassign $len
@@ -255,15 +262,23 @@ $code.=<<___;
 	mov	$h2,16($ctx)
 
 	mov	0(%rsp),%r15
+.cfi_restore	%r15
 	mov	8(%rsp),%r14
+.cfi_restore	%r14
 	mov	16(%rsp),%r13
+.cfi_restore	%r13
 	mov	24(%rsp),%r12
+.cfi_restore	%r12
 	mov	32(%rsp),%rbp
+.cfi_restore	%rbp
 	mov	40(%rsp),%rbx
+.cfi_restore	%rbx
 	lea	48(%rsp),%rsp
+.cfi_adjust_cfa_offset	-48
 .Lno_data:
 .Lblocks_epilogue:
 	ret
+.cfi_endproc
 .size	poly1305_blocks,.-poly1305_blocks
 
 .type	poly1305_emit,\@function,3
@@ -484,6 +499,7 @@ __poly1305_init_avx:
 .type	poly1305_blocks_avx,\@function,4
 .align	32
 poly1305_blocks_avx:
+.cfi_startproc
 	mov	20($ctx),%r8d		# is_base2_26
 	cmp	\$128,$len
 	jae	.Lblocks_avx
@@ -503,11 +519,17 @@ poly1305_blocks_avx:
 	jz	.Leven_avx
 
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 .Lblocks_avx_body:
 
 	mov	$len,%r15		# reassign $len
@@ -610,24 +632,39 @@ poly1305_blocks_avx:
 .align	16
 .Ldone_avx:
 	mov	0(%rsp),%r15
+.cfi_restore	%r15
 	mov	8(%rsp),%r14
+.cfi_restore	%r14
 	mov	16(%rsp),%r13
+.cfi_restore	%r13
 	mov	24(%rsp),%r12
+.cfi_restore	%r12
 	mov	32(%rsp),%rbp
+.cfi_restore	%rbp
 	mov	40(%rsp),%rbx
+.cfi_restore	%rbx
 	lea	48(%rsp),%rsp
+.cfi_adjust_cfa_offset	-48
 .Lno_data_avx:
 .Lblocks_avx_epilogue:
 	ret
+.cfi_endproc
 
 .align	32
 .Lbase2_64_avx:
+.cfi_startproc
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 .Lbase2_64_avx_body:
 
 	mov	$len,%r15		# reassign $len
@@ -687,18 +724,27 @@ poly1305_blocks_avx:
 	mov	%r15,$len
 
 	mov	0(%rsp),%r15
+.cfi_restore	%r15
 	mov	8(%rsp),%r14
+.cfi_restore	%r14
 	mov	16(%rsp),%r13
+.cfi_restore	%r13
 	mov	24(%rsp),%r12
+.cfi_restore	%r12
 	mov	32(%rsp),%rbp
+.cfi_restore	%rbp
 	mov	40(%rsp),%rbx
+.cfi_restore	%rbx
 	lea	48(%rsp),%rax
 	lea	48(%rsp),%rsp
+.cfi_adjust_cfa_offset	-48
 .Lbase2_64_avx_epilogue:
 	jmp	.Ldo_avx
+.cfi_endproc
 
 .align	32
 .Leven_avx:
+.cfi_startproc
 	vmovd		4*0($ctx),$H0		# load hash value
 	vmovd		4*1($ctx),$H1
 	vmovd		4*2($ctx),$H2
@@ -709,6 +755,7 @@ poly1305_blocks_avx:
 ___
 $code.=<<___	if (!$win64);
 	lea		-0x58(%rsp),%r11
+.cfi_def_cfa		%r11,0x60
 	sub		\$0x178,%rsp
 ___
 $code.=<<___	if ($win64);
@@ -1301,10 +1348,12 @@ $code.=<<___	if ($win64);
 ___
 $code.=<<___	if (!$win64);
 	lea		0x58(%r11),%rsp
+.cfi_def_cfa		%rsp,8
 ___
 $code.=<<___;
 	vzeroupper
 	ret
+.cfi_endproc
 .size	poly1305_blocks_avx,.-poly1305_blocks_avx
 
 .type	poly1305_emit_avx,\@function,3
@@ -1372,6 +1421,7 @@ $code.=<<___;
 .type	poly1305_blocks_avx2,\@function,4
 .align	32
 poly1305_blocks_avx2:
+.cfi_startproc
 	mov	20($ctx),%r8d		# is_base2_26
 	cmp	\$128,$len
 	jae	.Lblocks_avx2
@@ -1391,11 +1441,17 @@ poly1305_blocks_avx2:
 	jz	.Leven_avx2
 
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 .Lblocks_avx2_body:
 
 	mov	$len,%r15		# reassign $len
@@ -1504,24 +1560,39 @@ poly1305_blocks_avx2:
 .align	16
 .Ldone_avx2:
 	mov	0(%rsp),%r15
+.cfi_restore	%r15
 	mov	8(%rsp),%r14
+.cfi_restore	%r14
 	mov	16(%rsp),%r13
+.cfi_restore	%r13
 	mov	24(%rsp),%r12
+.cfi_restore	%r12
 	mov	32(%rsp),%rbp
+.cfi_restore	%rbp
 	mov	40(%rsp),%rbx
+.cfi_restore	%rbx
 	lea	48(%rsp),%rsp
+.cfi_adjust_cfa_offset	-48
 .Lno_data_avx2:
 .Lblocks_avx2_epilogue:
 	ret
+.cfi_endproc
 
 .align	32
 .Lbase2_64_avx2:
+.cfi_startproc
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 .Lbase2_64_avx2_body:
 
 	mov	$len,%r15		# reassign $len
@@ -1588,18 +1659,27 @@ poly1305_blocks_avx2:
 	mov	\$`(1<<31|1<<30|1<<16)`,%r11d
 
 	mov	0(%rsp),%r15
+.cfi_restore	%r15
 	mov	8(%rsp),%r14
+.cfi_restore	%r14
 	mov	16(%rsp),%r13
+.cfi_restore	%r13
 	mov	24(%rsp),%r12
+.cfi_restore	%r12
 	mov	32(%rsp),%rbp
+.cfi_restore	%rbp
 	mov	40(%rsp),%rbx
+.cfi_restore	%rbx
 	lea	48(%rsp),%rax
 	lea	48(%rsp),%rsp
+.cfi_adjust_cfa_offset	-48
 .Lbase2_64_avx2_epilogue:
 	jmp	.Ldo_avx2
+.cfi_endproc
 
 .align	32
 .Leven_avx2:
+.cfi_startproc
 	mov		OPENSSL_ia32cap_P+8(%rip),%r10d
 	mov		\$`(1<<31|1<<30|1<<16)`,%r11d
 	vmovd		4*0($ctx),%x#$H0	# load hash value base 2^26
@@ -1620,6 +1700,7 @@ $code.=<<___		if ($avx>2);
 ___
 $code.=<<___	if (!$win64);
 	lea		-8(%rsp),%r11
+.cfi_def_cfa		%r11,16
 	sub		\$0x128,%rsp
 ___
 $code.=<<___	if ($win64);
@@ -2008,10 +2089,12 @@ $code.=<<___	if ($win64);
 ___
 $code.=<<___	if (!$win64);
 	lea		8(%r11),%rsp
+.cfi_def_cfa		%rsp,8
 ___
 $code.=<<___;
 	vzeroupper
 	ret
+.cfi_endproc
 .size	poly1305_blocks_avx2,.-poly1305_blocks_avx2
 ___
 #######################################################################
@@ -2031,11 +2114,13 @@ $code.=<<___;
 .type	poly1305_blocks_avx512,\@function,4
 .align	32
 poly1305_blocks_avx512:
+.cfi_startproc
 .Lblocks_avx512:
 	vzeroupper
 ___
 $code.=<<___	if (!$win64);
 	lea		-8(%rsp),%r11
+.cfi_def_cfa		%r11,16
 	sub		\$0x128,%rsp
 ___
 $code.=<<___	if ($win64);
@@ -2622,9 +2707,11 @@ $code.=<<___	if ($win64);
 ___
 $code.=<<___	if (!$win64);
 	lea		8(%r11),%rsp
+.cfi_def_cfa		%rsp,8
 ___
 $code.=<<___;
 	ret
+.cfi_endproc
 .size	poly1305_blocks_avx512,.-poly1305_blocks_avx512
 ___
 if ($avx>3) {
