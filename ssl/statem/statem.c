@@ -168,6 +168,13 @@ int ossl_statem_skip_early_data(SSL *s)
     return 1;
 }
 
+void ossl_statem_check_finish_init(SSL *s, int send)
+{
+    if ((send && s->statem.hand_state == TLS_ST_CW_PENDING_EARLY_DATA_END)
+            || (!send && s->statem.hand_state == TLS_ST_CW_EARLY_DATA))
+        ossl_statem_set_in_init(s, 1);
+}
+
 void ossl_statem_set_hello_verify_done(SSL *s)
 {
     s->statem.state = MSG_FLOW_UNINITED;

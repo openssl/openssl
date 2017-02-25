@@ -1545,13 +1545,16 @@ int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes)
         return 0;
     }
 
-    if (s->early_data_state != SSL_EARLY_DATA_NONE
-            && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING
-            && s->early_data_state != SSL_EARLY_DATA_FINISHED_READING
-            && s->early_data_state != SSL_EARLY_DATA_READING) {
+    if (s->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY
+                || s->early_data_state == SSL_EARLY_DATA_ACCEPT_RETRY) {
         SSLerr(SSL_F_SSL_READ_INTERNAL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
+    /*
+     * If we are a client and haven't received the ServerHello etc then we
+     * better do that
+     */
+    ossl_statem_check_finish_init(s, 0);
 
     if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         struct ssl_async_args args;
@@ -1745,13 +1748,20 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
         return -1;
     }
 
-    if (s->early_data_state != SSL_EARLY_DATA_NONE
-            && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING
-            && s->early_data_state != SSL_EARLY_DATA_FINISHED_READING
-            && s->early_data_state != SSL_EARLY_DATA_WRITING) {
+    if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
+        /*
+         * We're still writing early data. We need to stop that so we can write
+         * normal data
+         */
+        if (!SSL_write_early_finish(s))
+            return 0;
+    } else if (s->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY
+                || s->early_data_state == SSL_EARLY_DATA_ACCEPT_RETRY) {
         SSLerr(SSL_F_SSL_WRITE_INTERNAL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
+    /* If we are a client and haven't sent the Finished we better do that */
+    ossl_statem_check_finish_init(s, 1);
 
     if ((s->mode & SSL_MODE_ASYNC) && ASYNC_get_current_job() == NULL) {
         int ret;

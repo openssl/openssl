@@ -435,6 +435,14 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CR_FINISHED:
+        if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY)
+            st->hand_state = TLS_ST_CW_PENDING_EARLY_DATA_END;
+        else
+            st->hand_state = (s->s3->tmp.cert_req != 0) ? TLS_ST_CW_CERT
+                                                        : TLS_ST_CW_FINISHED;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_CW_PENDING_EARLY_DATA_END:
         st->hand_state = (s->s3->tmp.cert_req != 0) ? TLS_ST_CW_CERT
                                                     : TLS_ST_CW_FINISHED;
         return WRITE_TRAN_CONTINUE;
@@ -659,6 +667,7 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
         break;
 
     case TLS_ST_CW_EARLY_DATA:
+    case TLS_ST_CW_PENDING_EARLY_DATA_END:
     case TLS_ST_OK:
         return tls_finish_handshake(s, wst, 1);
     }
