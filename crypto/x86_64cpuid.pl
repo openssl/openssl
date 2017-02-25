@@ -63,7 +63,9 @@ OPENSSL_rdtsc:
 .type	OPENSSL_ia32_cpuid,\@function,1
 .align	16
 OPENSSL_ia32_cpuid:
+.cfi_startproc
 	mov	%rbx,%r8		# save %rbx
+.cfi_register	%rbx,%r8
 
 	xor	%eax,%eax
 	mov	%eax,8(%rdi)		# clear 3rd word
@@ -194,8 +196,10 @@ OPENSSL_ia32_cpuid:
 	shl	\$32,%r9
 	mov	%r10d,%eax
 	mov	%r8,%rbx		# restore %rbx
+.cfi_restore	%rbx
 	or	%r9,%rax
 	ret
+.cfi_endproc
 .size	OPENSSL_ia32_cpuid,.-OPENSSL_ia32_cpuid
 
 .globl  OPENSSL_cleanse
