@@ -17,6 +17,9 @@
 #include <openssl/pem.h>
 #include <openssl/engine.h>
 #include <openssl/dh.h>
+#include <openssl/store.h>
+#include <openssl/ui.h>
+#include "crypto/store.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
@@ -25,70 +28,39 @@ int pem_check_suffix(const char *pem_str, const char *suffix);
 EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
                                   void *u)
 {
-    char *nm = NULL;
-    const unsigned char *p = NULL;
-    unsigned char *data = NULL;
-    long len;
-    int slen;
     EVP_PKEY *ret = NULL;
+    OSSL_STORE_CTX *ctx = NULL;
+    OSSL_STORE_INFO *info = NULL;
+    UI_METHOD *ui_method = NULL;
 
-    if (!PEM_bytes_read_bio_secmem(&data, &len, &nm, PEM_STRING_EVP_PKEY, bp,
-                                   cb, u))
+    if ((ui_method = UI_UTIL_wrap_read_pem_callback(cb, 0)) == NULL)
         return NULL;
-    p = data;
 
-    if (strcmp(nm, PEM_STRING_PKCS8INF) == 0) {
-        PKCS8_PRIV_KEY_INFO *p8inf;
-        p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, len);
-        if (p8inf == NULL)
-            goto p8err;
-        ret = EVP_PKCS82PKEY(p8inf);
-        if (x != NULL) {
-            EVP_PKEY_free((EVP_PKEY *)*x);
-            *x = ret;
-        }
-        PKCS8_PRIV_KEY_INFO_free(p8inf);
-    } else if (strcmp(nm, PEM_STRING_PKCS8) == 0) {
-        PKCS8_PRIV_KEY_INFO *p8inf;
-        X509_SIG *p8;
-        int klen;
-        char psbuf[PEM_BUFSIZE];
-        p8 = d2i_X509_SIG(NULL, &p, len);
-        if (p8 == NULL)
-            goto p8err;
-        if (cb)
-            klen = cb(psbuf, PEM_BUFSIZE, 0, u);
-        else
-            klen = PEM_def_callback(psbuf, PEM_BUFSIZE, 0, u);
-        if (klen < 0) {
-            PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY, PEM_R_BAD_PASSWORD_READ);
-            X509_SIG_free(p8);
+    if ((ctx = ossl_store_attach_pem_bio(bp, ui_method, u)) == NULL)
+        goto err;
+#ifndef OPENSSL_NO_SECURE_HEAP
+    {
+        int on = 1;
+        if (!OSSL_STORE_ctrl(ctx, OSSL_STORE_C_USE_SECMEM, &on))
             goto err;
-        }
-        p8inf = PKCS8_decrypt(p8, psbuf, klen);
-        X509_SIG_free(p8);
-        OPENSSL_cleanse(psbuf, klen);
-        if (p8inf == NULL)
-            goto p8err;
-        ret = EVP_PKCS82PKEY(p8inf);
-        if (x) {
-            EVP_PKEY_free((EVP_PKEY *)*x);
-            *x = ret;
-        }
-        PKCS8_PRIV_KEY_INFO_free(p8inf);
-    } else if ((slen = pem_check_suffix(nm, "PRIVATE KEY")) > 0) {
-        const EVP_PKEY_ASN1_METHOD *ameth;
-        ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
-        if (!ameth || !ameth->old_priv_decode)
-            goto p8err;
-        ret = d2i_PrivateKey(ameth->pkey_id, x, &p, len);
     }
- p8err:
-    if (ret == NULL)
-        PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY, ERR_R_ASN1_LIB);
+#endif
+
+    while (!OSSL_STORE_eof(ctx) && (info = OSSL_STORE_load(ctx)) != NULL) {
+        if (OSSL_STORE_INFO_get_type(info) == OSSL_STORE_INFO_PKEY) {
+            ret = OSSL_STORE_INFO_get1_PKEY(info);
+            break;
+        }
+        OSSL_STORE_INFO_free(info);
+    }
+
+    if (ret != NULL && x != NULL)
+        *x = ret;
+
  err:
-    OPENSSL_secure_free(nm);
-    OPENSSL_secure_clear_free(data, len);
+    ossl_store_detach_pem_bio(ctx);
+    UI_destroy_method(ui_method);
+    OSSL_STORE_INFO_free(info);
     return ret;
 }
 
@@ -115,39 +87,27 @@ int PEM_write_bio_PrivateKey_traditional(BIO *bp, EVP_PKEY *x,
 
 EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
 {
-    char *nm = NULL;
-    const unsigned char *p = NULL;
-    unsigned char *data = NULL;
-    long len;
-    int slen;
     EVP_PKEY *ret = NULL;
+    OSSL_STORE_CTX *ctx = NULL;
+    OSSL_STORE_INFO *info = NULL;
 
-    if (!PEM_bytes_read_bio(&data, &len, &nm, PEM_STRING_PARAMETERS,
-                            bp, 0, NULL))
-        return NULL;
-    p = data;
+    if ((ctx = ossl_store_attach_pem_bio(bp, UI_null(), NULL)) == NULL)
+        goto err;
 
-    if ((slen = pem_check_suffix(nm, "PARAMETERS")) > 0) {
-        ret = EVP_PKEY_new();
-        if (ret == NULL)
-            goto err;
-        if (!EVP_PKEY_set_type_str(ret, nm, slen)
-            || !ret->ameth->param_decode
-            || !ret->ameth->param_decode(ret, &p, len)) {
-            EVP_PKEY_free(ret);
-            ret = NULL;
-            goto err;
+    while (!OSSL_STORE_eof(ctx) && (info = OSSL_STORE_load(ctx)) != NULL) {
+        if (OSSL_STORE_INFO_get_type(info) == OSSL_STORE_INFO_PARAMS) {
+            ret = OSSL_STORE_INFO_get1_PARAMS(info);
+            break;
         }
-        if (x) {
-            EVP_PKEY_free((EVP_PKEY *)*x);
-            *x = ret;
-        }
+        OSSL_STORE_INFO_free(info);
     }
+
+    if (ret != NULL && x != NULL)
+        *x = ret;
+
  err:
-    if (ret == NULL)
-        PEMerr(PEM_F_PEM_READ_BIO_PARAMETERS, ERR_R_ASN1_LIB);
-    OPENSSL_free(nm);
-    OPENSSL_free(data);
+    ossl_store_detach_pem_bio(ctx);
+    OSSL_STORE_INFO_free(info);
     return ret;
 }
 
@@ -203,25 +163,37 @@ int PEM_write_PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
 
 DH *PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u)
 {
-    char *nm = NULL;
-    const unsigned char *p = NULL;
-    unsigned char *data = NULL;
-    long len;
     DH *ret = NULL;
+    EVP_PKEY *pkey = NULL;
+    OSSL_STORE_CTX *ctx = NULL;
+    OSSL_STORE_INFO *info = NULL;
+    UI_METHOD *ui_method = NULL;
 
-    if (!PEM_bytes_read_bio(&data, &len, &nm, PEM_STRING_DHPARAMS, bp, cb, u))
+    if ((ui_method = UI_UTIL_wrap_read_pem_callback(cb, 0)) == NULL)
         return NULL;
-    p = data;
 
-    if (strcmp(nm, PEM_STRING_DHXPARAMS) == 0)
-        ret = d2i_DHxparams(x, &p, len);
-    else
-        ret = d2i_DHparams(x, &p, len);
+    if ((ctx = ossl_store_attach_pem_bio(bp, ui_method, u)) == NULL)
+        goto err;
 
-    if (ret == NULL)
-        PEMerr(PEM_F_PEM_READ_BIO_DHPARAMS, ERR_R_ASN1_LIB);
-    OPENSSL_free(nm);
-    OPENSSL_free(data);
+    while (!OSSL_STORE_eof(ctx) && (info = OSSL_STORE_load(ctx)) != NULL) {
+        if (OSSL_STORE_INFO_get_type(info) == OSSL_STORE_INFO_PARAMS) {
+            pkey = OSSL_STORE_INFO_get0_PARAMS(info);
+            if (EVP_PKEY_id(pkey) == EVP_PKEY_DHX
+                || EVP_PKEY_id(pkey) == EVP_PKEY_DH) {
+                ret = EVP_PKEY_get1_DH(pkey);
+                break;
+            }
+        }
+        OSSL_STORE_INFO_free(info);
+    }
+
+    if (ret != NULL && x != NULL)
+        *x = ret;
+
+ err:
+    ossl_store_detach_pem_bio(ctx);
+    UI_destroy_method(ui_method);
+    OSSL_STORE_INFO_free(info);
     return ret;
 }
 
