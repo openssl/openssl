@@ -4252,3 +4252,4 @@ EVP_aria_256_ecb                        4202	1_1_1	EXIST::FUNCTION:ARIA
 EVP_aria_256_ctr                        4203	1_1_1	EXIST::FUNCTION:ARIA
 EVP_aria_128_ctr                        4204	1_1_1	EXIST::FUNCTION:ARIA
 EVP_aria_192_ctr                        4205	1_1_1	EXIST::FUNCTION:ARIA
+UI_null                                 4206	1_1_1	EXIST::FUNCTION:UI
