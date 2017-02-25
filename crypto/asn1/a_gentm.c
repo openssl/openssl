@@ -13,10 +13,12 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <ctype.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include "asn1_locl.h"
 
+/* This is the primary function used to parse ASN1_GENERALIZEDTIME */
 int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
 {
     static const int min[9] = { 0, 0, 1, 1, 0, 0, 0, 0, 0 };
@@ -43,13 +45,13 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
                 tm->tm_sec = 0;
             break;
         }
-        if ((a[o] < '0') || (a[o] > '9'))
+        if (!isdigit(a[o]))
             goto err;
         n = a[o] - '0';
         if (++o > l)
             goto err;
 
-        if ((a[o] < '0') || (a[o] > '9'))
+        if (!isdigit(a[o]))
             goto err;
         n = (n * 10) + a[o] - '0';
         if (++o > l)
@@ -91,7 +93,7 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
         if (++o > l)
             goto err;
         i = o;
-        while ((a[o] >= '0') && (a[o] <= '9') && (o <= l))
+        while (isdigit(a[o]) && (o <= l))
             o++;
         /* Must have at least one digit after decimal point */
         if (i == o)
@@ -101,16 +103,16 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
     if (a[o] == 'Z')
         o++;
     else if ((a[o] == '+') || (a[o] == '-')) {
-        int offsign = a[o] == '-' ? -1 : 1, offset = 0;
+        int offsign = a[o] == '-' ? 1 : -1, offset = 0;
         o++;
         if (o + 4 > l)
             goto err;
         for (i = 7; i < 9; i++) {
-            if ((a[o] < '0') || (a[o] > '9'))
+            if (!isdigit(a[o]))
                 goto err;
             n = a[o] - '0';
             o++;
-            if ((a[o] < '0') || (a[o] > '9'))
+            if (!isdigit(a[o]))
                 goto err;
             n = (n * 10) + a[o] - '0';
             if ((n < min[i]) || (n > max[i]))
@@ -134,44 +136,12 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
     return (0);
 }
 
-int ASN1_GENERALIZEDTIME_check(const ASN1_GENERALIZEDTIME *d)
+/* Inverse of asn1_generalizedtime_to_tm ()*/
+ASN1_GENERALIZEDTIME *asn1_generalizedtime_from_tm(ASN1_GENERALIZEDTIME *s, struct tm *ts)
 {
-    return asn1_generalizedtime_to_tm(NULL, d);
-}
-
-int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str)
-{
-    ASN1_GENERALIZEDTIME t;
-
-    t.type = V_ASN1_GENERALIZEDTIME;
-    t.length = strlen(str);
-    t.data = (unsigned char *)str;
-    if (ASN1_GENERALIZEDTIME_check(&t)) {
-        if (s != NULL) {
-            if (!ASN1_STRING_set((ASN1_STRING *)s, str, t.length))
-                return 0;
-            s->type = V_ASN1_GENERALIZEDTIME;
-        }
-        return (1);
-    } else
-        return (0);
-}
-
-ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
-                                               time_t t)
-{
-    return ASN1_GENERALIZEDTIME_adj(s, t, 0, 0);
-}
-
-ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
-                                               time_t t, int offset_day,
-                                               long offset_sec)
-{
-    char *p;
-    struct tm *ts;
-    struct tm data;
-    size_t len = 20;
+    char* p;
     ASN1_GENERALIZEDTIME *tmps = NULL;
+    size_t len = 20;
 
     if (s == NULL)
         tmps = ASN1_GENERALIZEDTIME_new();
@@ -180,26 +150,10 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
     if (tmps == NULL)
         return NULL;
 
-    ts = OPENSSL_gmtime(&t, &data);
-    if (ts == NULL)
+    if (!ASN1_STRING_set(tmps, NULL, len))
         goto err;
 
-    if (offset_day || offset_sec) {
-        if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
-            goto err;
-    }
-
-    p = (char *)tmps->data;
-    if ((p == NULL) || ((size_t)tmps->length < len)) {
-        p = OPENSSL_malloc(len);
-        if (p == NULL) {
-            ASN1err(ASN1_F_ASN1_GENERALIZEDTIME_ADJ, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-        OPENSSL_free(tmps->data);
-        tmps->data = (unsigned char *)p;
-    }
-
+    p = (char*)tmps->data;
     BIO_snprintf(p, len, "%04d%02d%02d%02d%02d%02dZ", ts->tm_year + 1900,
                  ts->tm_mon + 1, ts->tm_mday, ts->tm_hour, ts->tm_min,
                  ts->tm_sec);
@@ -210,9 +164,108 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
 #endif
     return tmps;
  err:
-    if (s == NULL)
-        ASN1_GENERALIZEDTIME_free(tmps);
+    if (tmps != s)
+        ASN1_STRING_free(tmps);
     return NULL;
+}
+
+int ASN1_GENERALIZEDTIME_check(const ASN1_GENERALIZEDTIME *d)
+{
+    return asn1_generalizedtime_to_tm(NULL, d);
+}
+
+/* Sets the string via simple copy without cleaning it up */
+int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str)
+{
+    ASN1_GENERALIZEDTIME t;
+
+    t.length = strlen(str);
+    t.data = (unsigned char *)str;
+    t.flags = 0;
+    t.type = V_ASN1_GENERALIZEDTIME;
+
+    if (!ASN1_GENERALIZEDTIME_check(&t))
+        return 0;
+
+    if (s != NULL && !ASN1_STRING_copy(s, &t))
+        return 0;
+
+    return 1;
+}
+
+/* Sets the string as a clean GENERALIZEDTIME */
+int ASN1_GENERALIZEDTIME_set_string_gmt(ASN1_GENERALIZEDTIME *s, const char *str)
+{
+    ASN1_GENERALIZEDTIME t;
+    ASN1_GENERALIZEDTIME *ret;
+    struct tm tm;
+
+    t.length = strlen(str);
+    t.data = (unsigned char *)str;
+    t.flags = 0;
+    t.type = V_ASN1_GENERALIZEDTIME;
+
+    if (!asn1_generalizedtime_to_tm(&tm, &t))
+        return 0;
+
+    if ((ret = asn1_generalizedtime_from_tm(s, &tm)) == NULL)
+        return 0;
+
+    if (ret != s)
+        ASN1_STRING_free(ret);
+
+    return 1;
+}
+
+ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
+                                               time_t t)
+{
+    return ASN1_GENERALIZEDTIME_adj(s, t, 0, 0);
+}
+
+int ASN1_GENERALIZEDTIME_cmp_time_t(const ASN1_GENERALIZEDTIME *s, time_t t)
+{
+    struct tm stm, ttm;
+    int day, sec;
+
+    if (!asn1_generalizedtime_to_tm(&stm, s))
+        return -2;
+
+    if (!OPENSSL_gmtime(&t, &ttm))
+        return -2;
+
+    if (!OPENSSL_gmtime_diff(&day, &sec, &ttm, &stm))
+        return -2;
+
+    if (day > 0)
+        return 1;
+    if (day < 0)
+        return -1;
+    if (sec > 0)
+        return 1;
+    if (sec < 0)
+        return -1;
+    return 0;
+}
+
+/* Will not switch types */
+ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
+                                               time_t t, int offset_day,
+                                               long offset_sec)
+{
+    struct tm *ts;
+    struct tm data;
+
+    ts = OPENSSL_gmtime(&t, &data);
+    if (ts == NULL)
+        return NULL;
+
+    if (offset_day || offset_sec) {
+        if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
+            return NULL;
+    }
+
+    return asn1_generalizedtime_from_tm(s, ts);
 }
 
 const char *_asn1_mon[12] = {
@@ -237,7 +290,7 @@ int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
     if (v[i - 1] == 'Z')
         gmt = 1;
     for (i = 0; i < 12; i++)
-        if ((v[i] > '9') || (v[i] < '0'))
+        if (!isdigit(v[i]))
             goto err;
     y = (v[0] - '0') * 1000 + (v[1] - '0') * 100
         + (v[2] - '0') * 10 + (v[3] - '0');
@@ -247,16 +300,14 @@ int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
     d = (v[6] - '0') * 10 + (v[7] - '0');
     h = (v[8] - '0') * 10 + (v[9] - '0');
     m = (v[10] - '0') * 10 + (v[11] - '0');
-    if (tm->length >= 14 &&
-        (v[12] >= '0') && (v[12] <= '9') &&
-        (v[13] >= '0') && (v[13] <= '9')) {
+    if (tm->length >= 14 && isdigit(v[12]) && isdigit(v[13])) {
         s = (v[12] - '0') * 10 + (v[13] - '0');
         /* Check for fractions of seconds. */
         if (tm->length >= 15 && v[14] == '.') {
             int l = tm->length;
             f = &v[14];         /* The decimal point. */
             f_len = 1;
-            while (14 + f_len < l && f[f_len] >= '0' && f[f_len] <= '9')
+            while (14 + f_len < l && isdigit(f[f_len]))
                 ++f_len;
         }
     }
@@ -270,4 +321,39 @@ int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
  err:
     BIO_write(bp, "Bad time value", 14);
     return (0);
+}
+
+int ASN1_GENERALIZEDTIME_print_gmt(BIO *bp, const ASN1_GENERALIZEDTIME *t)
+{
+    struct tm tm;
+
+    if (!asn1_generalizedtime_to_tm(&tm, t))
+        goto err;
+
+    if (BIO_printf(bp, "%s %2d %02d:%02d:%02d %d GMT",
+                   _asn1_mon[tm.tm_mon], tm.tm_mday, tm.tm_hour, tm.tm_min,
+                   tm.tm_sec, tm.tm_year + 1900) <= 0)
+        return (0);
+    else
+        return (1);
+ err:
+    BIO_write(bp, "Bad time value", 14);
+    return (0);
+}
+
+int ASN1_GENERALIZEDTIME_get(const ASN1_GENERALIZEDTIME *s, time_t *t, struct tm *tm)
+{
+    if (s->type == V_ASN1_GENERALIZEDTIME)
+        return ASN1_TIME_get(s, t, tm);
+    return 0;
+}
+
+int ASN1_GENERALIZEDTIME_diff(int *pday, int *psec,
+                              const ASN1_GENERALIZEDTIME *from,
+                              const ASN1_GENERALIZEDTIME *to)
+{
+    if (from->type == V_ASN1_GENERALIZEDTIME &&
+        to->type == V_ASN1_GENERALIZEDTIME)
+        return ASN1_TIME_diff(pday, psec, from, to);
+    return 0;
 }

@@ -76,3 +76,7 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
 int i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp);
 ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
                                long length);
+ASN1_GENERALIZEDTIME *asn1_generalizedtime_from_tm(ASN1_GENERALIZEDTIME *s,
+                                                   struct tm *ts);
+int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *t);
+ASN1_UTCTIME *asn1_utctime_from_tm(ASN1_UTCTIME *s, struct tm *ts);

@@ -9,10 +9,12 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <ctype.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include "asn1_locl.h"
 
+/* This is the primary function used to parse ASN1_UTCTIME */
 int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
 {
     static const int min[8] = { 0, 1, 1, 0, 0, 0, 0, 0 };
@@ -35,13 +37,13 @@ int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
                 tm->tm_sec = 0;
             break;
         }
-        if ((a[o] < '0') || (a[o] > '9'))
+        if (!isdigit(a[o]))
             goto err;
         n = a[o] - '0';
         if (++o > l)
             goto err;
 
-        if ((a[o] < '0') || (a[o] > '9'))
+        if (!isdigit(a[o]))
             goto err;
         n = (n * 10) + a[o] - '0';
         if (++o > l)
@@ -75,16 +77,16 @@ int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
     if (a[o] == 'Z')
         o++;
     else if ((a[o] == '+') || (a[o] == '-')) {
-        int offsign = a[o] == '-' ? -1 : 1, offset = 0;
+        int offsign = a[o] == '-' ? 1 : -1, offset = 0;
         o++;
         if (o + 4 > l)
             goto err;
         for (i = 6; i < 8; i++) {
-            if ((a[o] < '0') || (a[o] > '9'))
+            if (!isdigit(a[o]))
                 goto err;
             n = a[o] - '0';
             o++;
-            if ((a[o] < '0') || (a[o] > '9'))
+            if (!isdigit(a[o]))
                 goto err;
             n = (n * 10) + a[o] - '0';
             if ((n < min[i]) || (n > max[i]))
@@ -105,86 +107,93 @@ int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
     return 0;
 }
 
+/* Inverse of asn1_utctime_to_tm ()*/
+ASN1_UTCTIME *asn1_utctime_from_tm(ASN1_UTCTIME *s, struct tm *ts)
+{
+    char *p;
+    ASN1_UTCTIME *tmps = NULL;
+    size_t len = 20;
+
+    if ((ts->tm_year < 50) || (ts->tm_year >= 150))
+        return NULL;
+
+    if (s == NULL)
+        tmps = ASN1_UTCTIME_new();
+    else
+        tmps = s;
+    if (tmps == NULL)
+        return NULL;
+
+    if (!ASN1_STRING_set(tmps, NULL, len))
+        goto err;
+
+    p = (char*) tmps->data;
+    BIO_snprintf(p, len, "%02d%02d%02d%02d%02d%02dZ", ts->tm_year % 100,
+                 ts->tm_mon + 1, ts->tm_mday, ts->tm_hour, ts->tm_min,
+                 ts->tm_sec);
+    tmps->length = strlen(p);
+    tmps->type = V_ASN1_UTCTIME;
+#ifdef CHARSET_EBCDIC_not
+    ebcdic2ascii(tmps->data, tmps->data, tmps->length);
+#endif
+    return tmps;
+ err:
+    if (tmps != s)
+        ASN1_STRING_free(tmps);
+    return NULL;
+}
+
 int ASN1_UTCTIME_check(const ASN1_UTCTIME *d)
 {
     return asn1_utctime_to_tm(NULL, d);
 }
 
+/* Sets the string via simple copy without cleaning it up */
 int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str)
 {
     ASN1_UTCTIME t;
 
-    t.type = V_ASN1_UTCTIME;
     t.length = strlen(str);
     t.data = (unsigned char *)str;
-    if (ASN1_UTCTIME_check(&t)) {
-        if (s != NULL) {
-            if (!ASN1_STRING_set((ASN1_STRING *)s, str, t.length))
-                return 0;
-            s->type = V_ASN1_UTCTIME;
-        }
-        return (1);
-    } else
-        return (0);
+    t.flags = 0;
+    t.type = V_ASN1_UTCTIME;
+
+    if (!ASN1_UTCTIME_check(&t))
+        return 0;
+
+    if (s != NULL && !ASN1_STRING_copy(s, &t))
+        return 0;
+
+    return 1;
+}
+
+/* Sets the string as a clean UTCTIME */
+int ASN1_UTCTIME_set_string_gmt(ASN1_UTCTIME *s, const char *str)
+{
+    ASN1_UTCTIME t;
+    ASN1_UTCTIME *ret;
+    struct tm tm;
+
+    t.length = strlen(str);
+    t.data = (unsigned char *)str;
+    t.flags = 0;
+    t.type = V_ASN1_UTCTIME;
+
+    if (!asn1_utctime_to_tm(&tm, &t))
+        return 0;
+
+    if ((ret = asn1_utctime_from_tm(s, &tm)) == NULL)
+        return 0;
+
+    if (ret != s)
+        ASN1_STRING_free(ret);
+
+    return 1;
 }
 
 ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 {
     return ASN1_UTCTIME_adj(s, t, 0, 0);
-}
-
-ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
-                               int offset_day, long offset_sec)
-{
-    char *p;
-    struct tm *ts;
-    struct tm data;
-    size_t len = 20;
-    int free_s = 0;
-
-    if (s == NULL) {
-        s = ASN1_UTCTIME_new();
-        if (s == NULL)
-            goto err;
-        free_s = 1;
-    }
-
-    ts = OPENSSL_gmtime(&t, &data);
-    if (ts == NULL)
-        goto err;
-
-    if (offset_day || offset_sec) {
-        if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
-            goto err;
-    }
-
-    if ((ts->tm_year < 50) || (ts->tm_year >= 150))
-        goto err;
-
-    p = (char *)s->data;
-    if ((p == NULL) || ((size_t)s->length < len)) {
-        p = OPENSSL_malloc(len);
-        if (p == NULL) {
-            ASN1err(ASN1_F_ASN1_UTCTIME_ADJ, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-        OPENSSL_free(s->data);
-        s->data = (unsigned char *)p;
-    }
-
-    BIO_snprintf(p, len, "%02d%02d%02d%02d%02d%02dZ", ts->tm_year % 100,
-                 ts->tm_mon + 1, ts->tm_mday, ts->tm_hour, ts->tm_min,
-                 ts->tm_sec);
-    s->length = strlen(p);
-    s->type = V_ASN1_UTCTIME;
-#ifdef CHARSET_EBCDIC_not
-    ebcdic2ascii(s->data, s->data, s->length);
-#endif
-    return (s);
- err:
-    if (free_s)
-        ASN1_UTCTIME_free(s);
-    return NULL;
 }
 
 int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
@@ -212,6 +221,25 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
     return 0;
 }
 
+/* Will not switch types */
+ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
+                               int offset_day, long offset_sec)
+{
+    struct tm *ts;
+    struct tm data;
+
+    ts = OPENSSL_gmtime(&t, &data);
+    if (ts == NULL)
+        return NULL;
+
+    if (offset_day || offset_sec) {
+        if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
+            return NULL;
+    }
+
+    return asn1_utctime_from_tm(s, ts);
+}
+
 int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 {
     const char *v;
@@ -227,7 +255,7 @@ int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
     if (v[i - 1] == 'Z')
         gmt = 1;
     for (i = 0; i < 10; i++)
-        if ((v[i] > '9') || (v[i] < '0'))
+        if (!isdigit(v[i]))
             goto err;
     y = (v[0] - '0') * 10 + (v[1] - '0');
     if (y < 50)
@@ -238,8 +266,7 @@ int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
     d = (v[4] - '0') * 10 + (v[5] - '0');
     h = (v[6] - '0') * 10 + (v[7] - '0');
     m = (v[8] - '0') * 10 + (v[9] - '0');
-    if (tm->length >= 12 &&
-        (v[10] >= '0') && (v[10] <= '9') && (v[11] >= '0') && (v[11] <= '9'))
+    if (tm->length >= 12 && isdigit(v[10]) && isdigit(v[11]))
         s = (v[10] - '0') * 10 + (v[11] - '0');
 
     if (BIO_printf(bp, "%s %2d %02d:%02d:%02d %d%s",
@@ -251,4 +278,39 @@ int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
  err:
     BIO_write(bp, "Bad time value", 14);
     return (0);
+}
+
+int ASN1_UTCTIME_print_gmt(BIO *bp, const ASN1_UTCTIME *t)
+{
+    struct tm tm;
+
+    if (!asn1_utctime_to_tm(&tm, t))
+        goto err;
+
+    if (BIO_printf(bp, "%s %2d %02d:%02d:%02d %d GMT",
+                   _asn1_mon[tm.tm_mon], tm.tm_mday, tm.tm_hour, tm.tm_min,
+                   tm.tm_sec, tm.tm_year + 1900) <= 0)
+        return (0);
+    else
+        return (1);
+ err:
+    BIO_write(bp, "Bad time value", 14);
+    return (0);
+}
+
+int ASN1_UTCTIME_get(const ASN1_UTCTIME *s, time_t *t, struct tm *tm)
+{
+    if (s->type == V_ASN1_UTCTIME)
+        return ASN1_TIME_get(s, t, tm);
+    return 0;
+}
+
+int ASN1_UTCTIME_diff(int *pday, int *psec,
+                      const ASN1_UTCTIME *from,
+                      const ASN1_UTCTIME *to)
+{
+    if (from->type == V_ASN1_UTCTIME &&
+        to->type == V_ASN1_UTCTIME)
+        return ASN1_TIME_diff(pday, psec, from, to);
+    return 0;
 }
