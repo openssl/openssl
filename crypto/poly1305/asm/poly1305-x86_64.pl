@@ -2129,13 +2129,13 @@ $code.=<<___	if ($win64);
 	vmovdqa		%xmm6,0x50(%r11)
 	vmovdqa		%xmm7,0x60(%r11)
 	vmovdqa		%xmm8,0x70(%r11)
-	vmovdqa		%xmm9,0x80(%r11)
-	vmovdqa		%xmm10,0x90(%r11)
-	vmovdqa		%xmm11,0xa0(%r11)
-	vmovdqa		%xmm12,0xb0(%r11)
-	vmovdqa		%xmm13,0xc0(%r11)
-	vmovdqa		%xmm14,0xd0(%r11)
-	vmovdqa		%xmm15,0xe0(%r11)
+	vmovdqa32	%xmm9,0x80(%r11)
+	vmovdqa32	%xmm10,0x90(%r11)
+	vmovdqa32	%xmm11,0xa0(%r11)
+	vmovdqa32	%xmm12,0xb0(%r11)
+	vmovdqa32	%xmm13,0xc0(%r11)
+	vmovdqa32	%xmm14,0xd0(%r11)
+	vmovdqa32	%xmm15,0xe0(%r11)
 .Ldo_avx512_body:
 ___
 $code.=<<___;
@@ -2298,36 +2298,21 @@ $code.=<<___;
 	# we could just flow along, hence the goal for $R0-$S4 is
 	# 1858286838784888 ...
 
-	mov		\$0b0110011001100110,%eax
-	mov		\$0b1100110011001100,%r8d
-	mov		\$0b0101010101010101,%r9d
+	vmovdqa32	128(%rcx),$M0		# .Lpermd_avx512:
+	mov		\$0x7777,%eax
 	kmovw		%eax,%k1
-	kmovw		%r8d,%k2
-	kmovw		%r9d,%k3
 
-	vpbroadcastq	%x#$D0,$M0	# 0808080808080808
-	vpbroadcastq	%x#$D1,$M1
-	vpbroadcastq	%x#$D2,$M2
-	vpbroadcastq	%x#$D3,$M3
-	vpbroadcastq	%x#$D4,$M4
+	vpermd		$R0,$M0,$R0		# 14243444 -> 1---2---3---4---
+	vpermd		$R1,$M0,$R1
+	vpermd		$R2,$M0,$R2
+	vpermd		$R3,$M0,$R3
+	vpermd		$R4,$M0,$R4
 
-	vpexpandd	$D0,${D0}{%k1}	# 05060708 -> -05--06--07--08-
-	vpexpandd	$D1,${D1}{%k1}
-	vpexpandd	$D2,${D2}{%k1}
-	vpexpandd	$D3,${D3}{%k1}
-	vpexpandd	$D4,${D4}{%k1}
-
-	vpexpandd	$R0,${D0}{%k2}	# -05--06--07--08- -> 145-246-347-448-
-	vpexpandd	$R1,${D1}{%k2}
-	vpexpandd	$R2,${D2}{%k2}
-	vpexpandd	$R3,${D3}{%k2}
-	vpexpandd	$R4,${D4}{%k2}
-
-	vpblendmd	$M0,$D0,${R0}{%k3}	# 1858286838784888
-	vpblendmd	$M1,$D1,${R1}{%k3}
-	vpblendmd	$M2,$D2,${R2}{%k3}
-	vpblendmd	$M3,$D3,${R3}{%k3}
-	vpblendmd	$M4,$D4,${R4}{%k3}
+	vpermd		$D0,$M0,${R0}{%k1}	# 05060708 -> 1858286838784888
+	vpermd		$D1,$M0,${R1}{%k1}
+	vpermd		$D2,$M0,${R2}{%k1}
+	vpermd		$D3,$M0,${R3}{%k1}
+	vpermd		$D4,$M0,${R4}{%k1}
 
 	vpslld		\$2,$R1,$S1		# *5
 	vpslld		\$2,$R2,$S2
@@ -2349,15 +2334,14 @@ $code.=<<___;
 	vpsrlq		\$40,$T4,$T4		# 4
 	vpandq		$MASK,$T2,$T2		# 2
 	vpandq		$MASK,$T0,$T0		# 0
-	vpandq		$MASK,$T1,$T1		# 1
-	vpandq		$MASK,$T3,$T3		# 3
+	#vpandq		$MASK,$T1,$T1		# 1
+	#vpandq		$MASK,$T3,$T3		# 3
 	#vporq		$PADBIT,$T4,$T4		# padbit, yes, always
 
 	vpaddq		$H2,$T2,$H2		# accumulate input
-	mov		\$0x0f,%eax
 	sub		\$192,$len
 	jbe		.Ltail_avx512
-	jmp		.Loop_avx512
+	#jmp		.Loop_avx512
 
 .align	32
 .Loop_avx512:
@@ -2392,7 +2376,9 @@ $code.=<<___;
 	vpmuludq	$H2,$R1,$D3		# d3 = h2*r1
 	 vpaddq		$H0,$T0,$H0
 	vpmuludq	$H2,$R2,$D4		# d4 = h2*r2
+	 vpandq		$MASK,$T1,$T1		# 1
 	vpmuludq	$H2,$S3,$D0		# d0 = h2*s3
+	 vpandq		$MASK,$T3,$T3		# 3
 	vpmuludq	$H2,$S4,$D1		# d1 = h2*s4
 	 vporq		$PADBIT,$T4,$T4		# padbit, yes, always
 	vpmuludq	$H2,$R0,$D2		# d2 = h2*r0
@@ -2500,8 +2486,8 @@ $code.=<<___;
 	vpaddq		$D3,$H4,$H4		# h3 -> h4
 
 	 vpandq		$MASK,$T0,$T0		# 0
-	 vpandq		$MASK,$T1,$T1		# 1
-	 vpandq		$MASK,$T3,$T3		# 3
+	 #vpandq	$MASK,$T1,$T1		# 1
+	 #vpandq	$MASK,$T3,$T3		# 3
 	 #vporq		$PADBIT,$T4,$T4		# padbit, yes, always
 
 	sub		\$128,$len
@@ -2533,7 +2519,9 @@ $code.=<<___;
 	vpmuludq	$H2,$R1,$D3		# d3 = h2*r1
 	vpmuludq	$H2,$R2,$D4		# d4 = h2*r2
 	vpmuludq	$H2,$S3,$D0		# d0 = h2*s3
+	 vpandq		$MASK,$T1,$T1		# 1
 	vpmuludq	$H2,$S4,$D1		# d1 = h2*s4
+	 vpandq		$MASK,$T3,$T3		# 3
 	vpmuludq	$H2,$R0,$D2		# d2 = h2*r0
 	 vporq		$PADBIT,$T4,$T4		# padbit, yes, always
 	 vpaddq		$H1,$T1,$H1		# accumulate input
@@ -2919,6 +2907,8 @@ $code.=<<___;
 .long	0x3ffffff,0,0x3ffffff,0,0x3ffffff,0,0x3ffffff,0
 .Lpermd_avx2:
 .long	2,2,2,3,2,0,2,1
+.Lpermd_avx512:
+.long	0,0,0,1, 0,2,0,3, 0,4,0,5, 0,6,0,7
 
 .L2_44_inp_permd:
 .long	0,1,1,2,2,3,7,7
