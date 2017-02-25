@@ -93,6 +93,7 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
         }
         break;
 
+    case TLS_ST_EARLY_DATA:
     case TLS_ST_SW_FINISHED:
         if (s->s3->tmp.cert_request) {
             if (mt == SSL3_MT_CERTIFICATE) {
@@ -461,9 +462,12 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
 
     case TLS_ST_SW_FINISHED:
         if (s->early_data_state == SSL_EARLY_DATA_ACCEPTING) {
-            st->hand_state = TLS_ST_OK;
+            st->hand_state = TLS_ST_EARLY_DATA;
             return WRITE_TRAN_CONTINUE;
         }
+        return WRITE_TRAN_FINISHED;
+
+    case TLS_ST_EARLY_DATA:
         return WRITE_TRAN_FINISHED;
 
     case TLS_ST_SR_FINISHED:
@@ -703,6 +707,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
         }
         return WORK_FINISHED_CONTINUE;
 
+    case TLS_ST_EARLY_DATA:
     case TLS_ST_OK:
         return tls_finish_handshake(s, wst, 1);
     }
