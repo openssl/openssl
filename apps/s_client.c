@@ -96,6 +96,7 @@ static void print_stuff(BIO *berr, SSL *con, int full);
 #ifndef OPENSSL_NO_OCSP
 static int ocsp_resp_cb(SSL *s, void *arg);
 #endif
+static int ldap_ExtendedResponse_parse(const char *buf, long rem);
 
 static int saved_errno;
 
@@ -751,7 +752,8 @@ typedef enum PROTOCOL_choice {
     PROTO_POSTGRES,
     PROTO_LMTP,
     PROTO_NNTP,
-    PROTO_SIEVE
+    PROTO_SIEVE,
+    PROTO_LDAP
 } PROTOCOL_CHOICE;
 
 static const OPT_PAIR services[] = {
@@ -767,6 +769,7 @@ static const OPT_PAIR services[] = {
     {"lmtp", PROTO_LMTP},
     {"nntp", PROTO_NNTP},
     {"sieve", PROTO_SIEVE},
+    {"ldap", PROTO_LDAP},
     {NULL, 0}
 };
 
@@ -2284,6 +2287,75 @@ int s_client_main(int argc, char **argv)
             }
         }
         break;
+    case PROTO_LDAP:
+        {
+            /* StartTLS Operation according to RFC 4511 */
+            static char ldap_tls_genconf[] = "asn1=SEQUENCE:LDAPMessage\n"
+                "[LDAPMessage]\n"
+                "messageID=INTEGER:1\n"
+                "extendedReq=EXPLICIT:23A,IMPLICIT:0C,"
+                "FORMAT:ASCII,OCT:1.3.6.1.4.1.1466.20037\n";
+            long errline = -1;
+            char *genstr = NULL;
+            int result = -1;
+            ASN1_TYPE *atyp = NULL;
+            BIO *ldapbio = BIO_new(BIO_s_mem());
+            CONF *cnf = NCONF_new(NULL);
+
+            if (cnf == NULL) {
+                BIO_free(ldapbio);
+                goto end;
+            }
+            BIO_puts(ldapbio, ldap_tls_genconf);
+            if (NCONF_load_bio(cnf, ldapbio, &errline) <= 0) {
+                BIO_free(ldapbio);
+                NCONF_free(cnf);
+                if (errline <= 0) {
+                    BIO_printf(bio_err, "NCONF_load_bio failed\n");
+                    goto end;
+                } else {
+                    BIO_printf(bio_err, "Error on line %ld\n", errline);
+                    goto end;
+                }
+            }
+            BIO_free(ldapbio);
+            genstr = NCONF_get_string(cnf, "default", "asn1");
+            if (genstr == NULL) {
+                NCONF_free(cnf);
+                BIO_printf(bio_err, "NCONF_get_string failed\n");
+                goto end;
+            }
+            atyp = ASN1_generate_nconf(genstr, cnf);
+            if (atyp == NULL) {
+                NCONF_free(cnf);
+                BIO_printf(bio_err, "ASN1_generate_nconf failed\n");
+                goto end;
+            }
+            NCONF_free(cnf);
+
+            /* Send SSLRequest packet */
+            BIO_write(sbio, atyp->value.sequence->data,
+                      atyp->value.sequence->length);
+            (void)BIO_flush(sbio);
+            ASN1_TYPE_free(atyp);
+
+            mbuf_len = BIO_read(sbio, mbuf, BUFSIZZ);
+            if (mbuf_len < 0) {
+                BIO_printf(bio_err, "BIO_read failed\n");
+                goto end;
+            }
+            result = ldap_ExtendedResponse_parse(mbuf, mbuf_len);
+            if (result < 0) {
+                BIO_printf(bio_err, "ldap_ExtendedResponse_parse failed\n");
+                goto shut;
+            } else if (result > 0) {
+                BIO_printf(bio_err, "STARTTLS failed, LDAP Result Code: %i\n",
+                           result);
+                goto shut;
+            }
+            mbuf_len = 0;
+        }
+        break;
     }
 
     for (;;) {
@@ -2925,5 +2997,87 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     return 1;
 }
 # endif
+
+static int ldap_ExtendedResponse_parse(const char *buf, long rem)
+{
+    const unsigned char *cur, *end;
+    long len;
+    int tag, xclass, inf, ret = -1;
+
+    cur = (const unsigned char *)buf;
+    end = cur + rem;
+
+    /*
+     * From RFC 4511:
+     *
+     *    LDAPMessage ::= SEQUENCE {
+     *         messageID       MessageID,
+     *         protocolOp      CHOICE {
+     *              ...
+     *              extendedResp          ExtendedResponse,
+     *              ... },
+     *         controls       [0] Controls OPTIONAL }
+     *
+     *    ExtendedResponse ::= [APPLICATION 24] SEQUENCE {
+     *         COMPONENTS OF LDAPResult,
+     *         responseName     [10] LDAPOID OPTIONAL,
+     *         responseValue    [11] OCTET STRING OPTIONAL }
+     *
+     *    LDAPResult ::= SEQUENCE {
+     *         resultCode         ENUMERATED {
+     *              success                      (0),
+     *              ...
+     *              other                        (80),
+     *              ...  },
+     *         matchedDN          LDAPDN,
+     *         diagnosticMessage  LDAPString,
+     *         referral           [3] Referral OPTIONAL }
+     */
+
+    /* pull SEQUENCE */
+    inf = ASN1_get_object(&cur, &len, &tag, &xclass, rem);
+    if (inf != V_ASN1_CONSTRUCTED || tag != V_ASN1_SEQUENCE ||
+        (rem = end - cur, len > rem)) {
+        BIO_printf(bio_err, "Unexpected LDAP response\n");
+        goto end;
+    }
+
+    /* pull MessageID */
+    inf = ASN1_get_object(&cur, &len, &tag, &xclass, rem);
+    if (inf != V_ASN1_UNIVERSAL || tag != V_ASN1_INTEGER ||
+        (rem = end - cur, len > rem)) {
+        BIO_printf(bio_err, "No MessageID\n");
+        goto end;
+    }
+
+    cur += len; /* shall we check for MessageId match or just skip? */
+
+    /* pull [APPLICATION 24] */
+    rem = end - cur;
+    inf = ASN1_get_object(&cur, &len, &tag, &xclass, rem);
+    if (inf != V_ASN1_CONSTRUCTED || xclass != V_ASN1_APPLICATION ||
+        tag != 24) {
+        BIO_printf(bio_err, "Not ExtendedResponse\n");
+        goto end;
+    }
+
+    /* pull resultCode */
+    rem = end - cur;
+    inf = ASN1_get_object(&cur, &len, &tag, &xclass, rem);
+    if (inf != V_ASN1_UNIVERSAL || tag != V_ASN1_ENUMERATED || len == 0 ||
+        (rem = end - cur, len > rem)) {
+        BIO_printf(bio_err, "Not LDAPResult\n");
+        goto end;
+    }
+
+    /* len should always be one, but just in case... */
+    for (ret = 0, inf = 0; inf < len; inf++) {
+        ret <<= 8;
+        ret |= cur[inf];
+    }
+    /* There is more data, but we don't care... */
+ end:
+    return ret;
+}
 
 #endif                          /* OPENSSL_NO_SOCK */
