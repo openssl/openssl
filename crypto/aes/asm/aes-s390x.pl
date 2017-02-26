@@ -2334,7 +2334,9 @@ $code.=<<___ if (!$softonly);
 .type	s390x_aes_ofb_blocks,\@function
 .align	16
 s390x_aes_ofb_blocks:
+.cfi_startproc
 	aghi	$sp,-48
+	.cfi_adjust_cfa_offset 48
 	l	%r0,240($key)	# kmo capability vector checked by caller
 
 	mvc	0(16,$sp),0($iv)
@@ -2347,7 +2349,9 @@ s390x_aes_ofb_blocks:
 	mvc	0(16,$iv),0($sp)
 	xc	0(48,$sp),0($sp)	# wipe iv,key
 	la	$sp,48($sp)
+	.cfi_adjust_cfa_offset -48
 	br	$ra
+.cfi_endproc
 .size	s390x_aes_ofb_blocks,.-s390x_aes_ofb_blocks
 ___
 }
