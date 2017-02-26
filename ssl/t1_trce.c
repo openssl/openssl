@@ -468,6 +468,8 @@ static ssl_trace_tbl ssl_exts_tbl[] = {
 # ifndef OPENSSL_NO_NEXTPROTONEG
     {TLSEXT_TYPE_next_proto_neg, "next_proto_neg"},
 # endif
+    {TLSEXT_TYPE_application_layer_protocol_negotiation,
+     "application_layer_protocol_negotiation"},
     {TLSEXT_TYPE_signed_certificate_timestamp, "signed_certificate_timestamps"},
     {TLSEXT_TYPE_padding, "padding"},
     {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
@@ -693,6 +695,24 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         if (extlen != xlen + 2)
             return 0;
         return ssl_trace_list(bio, indent + 2, ext + 2, xlen, 2, ssl_groups_tbl);
+    case TLSEXT_TYPE_application_layer_protocol_negotiation:
+        if (extlen < 2)
+            return 0;
+        xlen = (ext[0] << 8) | ext[1];
+        if (extlen != xlen + 2)
+            return 0;
+        ext += 2;
+        while (xlen > 0) {
+            size_t plen = *ext++;
+            if (plen > xlen + 1)
+                return 0;
+            BIO_indent(bio, indent + 2, 80);
+            BIO_write(bio, ext, plen);
+            BIO_puts(bio, "\n");
+            ext += plen;
+            xlen -= plen + 1;
+        }
+        return 1;
 
     case TLSEXT_TYPE_signature_algorithms:
 
