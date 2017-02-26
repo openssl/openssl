@@ -1265,7 +1265,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, SSL *s,
     return 1;
 }
 
-static int ssl_print_ticket(BIO *bio, int indent,
+static int ssl_print_ticket(BIO *bio, int indent, SSL *s,
                             const unsigned char *msg, size_t msglen)
 {
     unsigned int tick_life;
@@ -1281,7 +1281,22 @@ static int ssl_print_ticket(BIO *bio, int indent,
     msg += 4;
     BIO_indent(bio, indent + 2, 80);
     BIO_printf(bio, "ticket_lifetime_hint=%u\n", tick_life);
+    if (SSL_IS_TLS13(s)) {
+        unsigned int ticket_age_add;
+        if (msglen < 4)
+            return 0;
+        ticket_age_add = (msg[0] << 24) | (msg[1] << 16) | (msg[2] << 8)
+                          | msg[3];
+        msglen -= 4;
+        msg += 4;
+        BIO_indent(bio, indent + 2, 80);
+        BIO_printf(bio, "ticket_age_add=%u\n", ticket_age_add);
+    }
     if (!ssl_print_hexbuf(bio, indent + 2, "ticket", 2, &msg, &msglen))
+        return 0;
+    if (SSL_IS_TLS13(s) && !ssl_print_extensions(bio, indent + 2, 0,
+                                                 SSL3_MT_NEWSESSION_TICKET,
+                                                 &msg, &msglen))
         return 0;
     if (msglen)
         return 0;
@@ -1368,7 +1383,7 @@ static int ssl_print_handshake(BIO *bio, SSL *ssl, int server,
         break;
 
     case SSL3_MT_NEWSESSION_TICKET:
-        if (!ssl_print_ticket(bio, indent + 2, msg, msglen))
+        if (!ssl_print_ticket(bio, indent + 2, ssl, msg, msglen))
             return 0;
         break;
 
