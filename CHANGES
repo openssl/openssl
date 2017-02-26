@@ -4,6 +4,10 @@
 
  Changes between 1.1.0e and 1.1.1 [xx XXX xxxx]
 
+  *) x86_64 assembly pack: annotate code with DWARF CFI directives to
+     facilitate stack unwinding even from assembly subroutines.
+     [Andy Polyakov]
+
   *) Remove VAX C specific definitions of OPENSSL_EXPORT, OPENSSL_EXTERN.
      Also remove OPENSSL_GLOBAL entirely, as it became a no-op.
      [Richard Levitte]
