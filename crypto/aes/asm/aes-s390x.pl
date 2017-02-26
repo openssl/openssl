@@ -2270,10 +2270,15 @@ $code.=<<___ if (!$softonly);
 .type	s390x_aes_gcm_blocks,\@function
 .align	16
 s390x_aes_gcm_blocks:
+.cfi_startproc
 	stm$g	$alen,$enc,7*$SIZE_T($sp)
+	.cfi_rel_offset $alen,7*$SIZE_T
+	.cfi_rel_offset $key,8*$SIZE_T
+	.cfi_rel_offset $enc,9*$SIZE_T
 	lm$g	$alen,$enc,$stdframe($sp)
 
 	aghi	$sp,-112
+	.cfi_adjust_cfa_offset 112
 
 	lmg	%r0,%r1,0($ctx)
 	ahi	%r1,-1
@@ -2300,11 +2305,16 @@ s390x_aes_gcm_blocks:
 	xc	0(112,$sp),0($sp)	# wipe stack
 
 	la	$sp,112($sp)
+	.cfi_adjust_cfa_offset -112
 	ahi	%r0,1
 	st	%r0,12($ctx)
 
 	lm$g	$alen,$enc,7*$SIZE_T($sp)
+	.cfi_restore $alen
+	.cfi_restore $key
+	.cfi_restore $enc
 	br	$ra
+.cfi_endproc
 .size	s390x_aes_gcm_blocks,.-s390x_aes_gcm_blocks
 ___
 }
