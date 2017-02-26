@@ -2437,7 +2437,9 @@ $code.=<<___ if (!$softonly);
 .type	s390x_aes_cbc_mac_blocks,\@function
 .align	16
 s390x_aes_cbc_mac_blocks:
+.cfi_startproc
 	aghi	$sp,-48
+	.cfi_adjust_cfa_offset 48
 	l	%r0,240($key)	# kmac capability vector checked by caller
 	nill	%r0,0xff7f	# clear "decrypt" bit
 
@@ -2452,7 +2454,9 @@ s390x_aes_cbc_mac_blocks:
 	xc	0(48,$sp),0($sp)	# wipe mac,key
 
 	la	$sp,48($sp)
+	.cfi_adjust_cfa_offset -48
 	br	$ra
+.cfi_endproc
 .size	s390x_aes_cbc_mac_blocks,.-s390x_aes_cbc_mac_blocks
 ___
 }
