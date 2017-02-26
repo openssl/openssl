@@ -2390,9 +2390,13 @@ $code.=<<___ if (!$softonly);
 .type	s390x_aes_cfb_blocks,\@function
 .align	16
 s390x_aes_cfb_blocks:
+.cfi_startproc
 	stm$g	$s,$enc,7*$SIZE_T($sp)
+	.cfi_rel_offset $s,7*$SIZE_T
+	.cfi_rel_offset $enc,8*$SIZE_T
 	lm$g	$s,$enc,$stdframe($sp)
 	aghi	$sp,-48
+	.cfi_adjust_cfa_offset 48
 	lhi	%r1,128
 
 	sllg	%r0,$s,24
@@ -2412,8 +2416,12 @@ s390x_aes_cfb_blocks:
 	xc	0(48,$sp),0($sp)	# wipe iv,key
 
 	la	$sp,48($sp)
+	.cfi_adjust_cfa_offset -48
 	lm$g	$s,$enc,7*$SIZE_T($sp)
+	.cfi_restore $s
+	.cfi_restore $enc
 	br	$ra
+.cfi_endproc
 .size	s390x_aes_cfb_blocks,.-s390x_aes_cfb_blocks
 ___
 }
