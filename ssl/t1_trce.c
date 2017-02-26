@@ -504,6 +504,11 @@ static ssl_trace_tbl ssl_groups_tbl[] = {
     {27, "brainpoolP384r1"},
     {28, "brainpoolP512r1"},
     {29, "ecdh_x25519"},
+    {256, "ffdhe2048"},
+    {257, "ffdhe3072"},
+    {258, "ffdhe4096"},
+    {259, "ffdhe6144"},
+    {260, "ffdhe8192"},
     {0xFF01, "arbitrary_explicit_prime_curves"},
     {0xFF02, "arbitrary_explicit_char2_curves"}
 };
