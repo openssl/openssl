@@ -28,6 +28,7 @@ typedef struct {
 static const char *do_ssl_trace_str(int val, ssl_trace_tbl *tbl, size_t ntbl)
 {
     size_t i;
+
     for (i = 0; i < ntbl; i++, tbl++) {
         if (tbl->num == val)
             return tbl->name;
@@ -40,6 +41,7 @@ static int do_ssl_trace_list(BIO *bio, int indent,
                              size_t vlen, ssl_trace_tbl *tbl, size_t ntbl)
 {
     int val;
+
     if (msglen % vlen)
         return 0;
     while (msglen) {
@@ -584,6 +586,7 @@ static void ssl_print_hex(BIO *bio, int indent, const char *name,
                           const unsigned char *msg, size_t msglen)
 {
     size_t i;
+
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "%s (len=%d): ", name, (int)msglen);
     for (i = 0; i < msglen; i++)
@@ -597,6 +600,7 @@ static int ssl_print_hexbuf(BIO *bio, int indent,
 {
     size_t blen;
     const unsigned char *p = *pmsg;
+
     if (*pmsglen < nlen)
         return 0;
     blen = p[0];
@@ -637,6 +641,7 @@ static int ssl_print_random(BIO *bio, int indent,
 {
     unsigned int tm;
     const unsigned char *p = *pmsg;
+
     if (*pmsglen < 32)
         return 0;
     tm = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
@@ -704,6 +709,7 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         ext += 2;
         while (xlen > 0) {
             size_t plen = *ext++;
+
             if (plen > xlen + 1)
                 return 0;
             BIO_indent(bio, indent + 2, 80);
@@ -875,6 +881,7 @@ static int ssl_print_client_hello(BIO *bio, SSL *ssl, int indent,
 {
     size_t len;
     unsigned int cs;
+
     if (!ssl_print_version(bio, indent, "client_version", &msg, &msglen, NULL))
         return 0;
     if (!ssl_print_random(bio, indent, &msg, &msglen))
@@ -975,6 +982,7 @@ static int ssl_print_server_hello(BIO *bio, int indent,
 static int ssl_get_keyex(const char **pname, SSL *ssl)
 {
     unsigned long alg_k = ssl->s3->tmp.new_cipher->algorithm_mkey;
+
     if (alg_k & SSL_kRSA) {
         *pname = "rsa";
         return SSL_kRSA;
@@ -1019,8 +1027,8 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
                                   const unsigned char *msg, size_t msglen)
 {
     const char *algname;
-    int id;
-    id = ssl_get_keyex(&algname, ssl);
+    int id = ssl_get_keyex(&algname, ssl);
+
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "KeyExchangeAlgorithm=%s\n", algname);
     if (id & SSL_PSK) {
@@ -1063,8 +1071,8 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
                                   const unsigned char *msg, size_t msglen)
 {
     const char *algname;
-    int id;
-    id = ssl_get_keyex(&algname, ssl);
+    int id = ssl_get_keyex(&algname, ssl);
+
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "KeyExchangeAlgorithm=%s\n", algname);
     if (id & SSL_PSK) {
@@ -1136,6 +1144,7 @@ static int ssl_print_certificate(BIO *bio, int indent,
     size_t clen;
     X509 *x;
     const unsigned char *p = *pmsg, *q;
+
     if (msglen < 3)
         return 0;
     clen = (p[0] << 16) | (p[1] << 8) | p[2];
@@ -1269,6 +1278,7 @@ static int ssl_print_ticket(BIO *bio, int indent, SSL *s,
                             const unsigned char *msg, size_t msglen)
 {
     unsigned int tick_life;
+
     if (msglen == 0) {
         BIO_indent(bio, indent + 2, 80);
         BIO_puts(bio, "No Ticket\n");
@@ -1283,6 +1293,7 @@ static int ssl_print_ticket(BIO *bio, int indent, SSL *s,
     BIO_printf(bio, "ticket_lifetime_hint=%u\n", tick_life);
     if (SSL_IS_TLS13(s)) {
         unsigned int ticket_age_add;
+
         if (msglen < 4)
             return 0;
         ticket_age_add = (msg[0] << 24) | (msg[1] << 16) | (msg[2] << 8)
@@ -1309,6 +1320,7 @@ static int ssl_print_handshake(BIO *bio, SSL *ssl, int server,
 {
     size_t hlen;
     unsigned char htype;
+
     if (msglen < 4)
         return 0;
     htype = msg[0];
