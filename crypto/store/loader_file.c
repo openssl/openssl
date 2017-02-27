@@ -623,6 +623,8 @@ struct ossl_store_loader_ctx_st {
         is_dir
     } type;
     int errcnt;
+#define FILE_FLAG_SECMEM         (1<<0)
+    unsigned int flags;
     union {
         struct {                 /* Used with is_raw and is_pem */
             BIO *file;
@@ -767,6 +769,37 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
     return NULL;
 }
 
+static int file_ctrl(OSSL_STORE_LOADER_CTX *ctx, int cmd, va_list args)
+{
+    int ret = 1;
+
+    switch (cmd) {
+    case OSSL_STORE_C_USE_SECMEM:
+        {
+            int on = *(va_arg(args, int *));
+
+            switch (on) {
+            case 0:
+                ctx->flags &= ~FILE_FLAG_SECMEM;
+                break;
+            case 1:
+                ctx->flags |= FILE_FLAG_SECMEM;
+                break;
+            default:
+                OSSL_STOREerr(OSSL_STORE_F_FILE_CTRL,
+                              ERR_R_PASSED_INVALID_ARGUMENT);
+                ret = 0;
+                break;
+            }
+        }
+        break;
+    default:
+        break;
+    }
+
+    return ret;
+}
+
 static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
                                              const char *pem_name,
                                              const char *pem_header,
@@ -879,12 +912,22 @@ static OSSL_STORE_INFO *file_load_try_repeat(OSSL_STORE_LOADER_CTX *ctx,
     return result;
 }
 
+static void pem_free_flag(void *pem_data, int secure)
+{
+    if (secure)
+        OPENSSL_secure_free(pem_data);
+    else
+        OPENSSL_free(pem_data);
+}
 static int file_read_pem(BIO *bp, char **pem_name, char **pem_header,
                          unsigned char **data, long *len,
                          const UI_METHOD *ui_method,
-                         void *ui_data)
+                         void *ui_data, int secure)
 {
-    int i = PEM_read_bio(bp, pem_name, pem_header, data, len);
+    int i = secure
+        ? PEM_read_bio_ex(bp, pem_name, pem_header, data, len,
+                          PEM_FLAG_SECURE | PEM_FLAG_EAY_COMPATIBLE)
+        : PEM_read_bio(bp, pem_name, pem_header, data, len);
 
     if (i <= 0)
         return 0;
@@ -1029,7 +1072,8 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
             matchcount = -1;
             if (ctx->type == is_pem) {
                 if (!file_read_pem(ctx->_.file.file, &pem_name, &pem_header,
-                                   &data, &len, ui_method, ui_data)) {
+                                   &data, &len, ui_method, ui_data,
+                                   (ctx->flags & FILE_FLAG_SECMEM) != 0)) {
                     ctx->errcnt++;
                     goto endloop;
                 }
@@ -1074,9 +1118,9 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
                 ctx->errcnt++;
 
          endloop:
-            OPENSSL_free(pem_name);
-            OPENSSL_free(pem_header);
-            OPENSSL_free(data);
+            pem_free_flag(pem_name, (ctx->flags & FILE_FLAG_SECMEM) != 0);
+            pem_free_flag(pem_header, (ctx->flags & FILE_FLAG_SECMEM) != 0);
+            pem_free_flag(data, (ctx->flags & FILE_FLAG_SECMEM) != 0);
         } while (matchcount == 0 && !file_eof(ctx) && !file_error(ctx));
 
         /* We bail out on ambiguity */
@@ -1119,7 +1163,7 @@ static OSSL_STORE_LOADER file_loader =
         "file",
         NULL,
         file_open,
-        NULL,
+        file_ctrl,
         file_load,
         file_eof,
         file_error,

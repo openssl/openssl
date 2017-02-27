@@ -14,6 +14,7 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA OSSL_STORE_str_functs[] = {
+    {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_CTRL, 0), "file_ctrl"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_GET_PASS, 0),
      "file_get_pass"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, OSSL_STORE_F_FILE_LOAD, 0), "file_load"},

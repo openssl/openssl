@@ -62,6 +62,8 @@ int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ... /* args */);
 /*
  * Common ctrl commands that different loaders may choose to support.
  */
+/* int on = 0 or 1; STORE_ctrl(ctx, STORE_C_USE_SECMEM, &on); */
+# define OSSL_STORE_C_USE_SECMEM      1
 /* Where custom commands start */
 # define OSSL_STORE_C_CUSTOM_START    100
 
