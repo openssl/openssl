@@ -413,10 +413,6 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_ERROR;
 
     case TLS_ST_OK:
-        if (s->early_data_state == SSL_EARLY_DATA_FINISHED_READING) {
-            st->hand_state = TLS_ST_SW_FINISHED;
-            return WRITE_TRAN_FINISHED;
-        }
         if (s->key_update != SSL_KEY_UPDATE_NONE) {
             st->hand_state = TLS_ST_SW_KEY_UPDATE;
             return WRITE_TRAN_CONTINUE;
@@ -461,11 +457,8 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_FINISHED:
-        if (s->early_data_state == SSL_EARLY_DATA_ACCEPTING) {
-            st->hand_state = TLS_ST_EARLY_DATA;
-            return WRITE_TRAN_CONTINUE;
-        }
-        return WRITE_TRAN_FINISHED;
+        st->hand_state = TLS_ST_EARLY_DATA;
+        return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_EARLY_DATA:
         return WRITE_TRAN_FINISHED;
@@ -708,6 +701,10 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
         return WORK_FINISHED_CONTINUE;
 
     case TLS_ST_EARLY_DATA:
+        if (s->early_data_state != SSL_EARLY_DATA_ACCEPTING)
+            return WORK_FINISHED_CONTINUE;
+        /* Fall through */
+
     case TLS_ST_OK:
         return tls_finish_handshake(s, wst, 1);
     }
@@ -950,6 +947,11 @@ int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt,
     case TLS_ST_SW_FINISHED:
         *confunc = tls_construct_finished;
         *mt = SSL3_MT_FINISHED;
+        break;
+
+    case TLS_ST_EARLY_DATA:
+        *confunc = NULL;
+        *mt = SSL3_MT_DUMMY;
         break;
 
     case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
