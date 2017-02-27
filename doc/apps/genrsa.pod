@@ -13,6 +13,9 @@ B<openssl> B<genrsa>
 [B<-aes128>]
 [B<-aes192>]
 [B<-aes256>]
+[B<-aria128>]
+[B<-aria192>]
+[B<-aria256>]
 [B<-camellia128>]
 [B<-camellia192>]
 [B<-camellia256>]
@@ -47,7 +50,7 @@ standard output is used.
 the output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-aes128|-aes192|-aes256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea>
+=item B<-aes128|-aes192|-aes256|-aria128|-aria192|-aria256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea>
 
 These options encrypt the private key with specified
 cipher before outputting it. If none of these options is
@@ -76,7 +79,7 @@ for all available algorithms.
 =item B<numbits>
 
 the size of the private key to generate in bits. This must be the last option
-specified. The default is 512.
+specified. The default is 2048.
 
 =back
 
@@ -105,7 +108,7 @@ L<gendsa(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
