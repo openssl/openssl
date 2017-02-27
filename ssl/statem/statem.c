@@ -168,9 +168,21 @@ int ossl_statem_skip_early_data(SSL *s)
     return 1;
 }
 
+/*
+ * Called when we are in SSL_read*(), SSL_write*(), or SSL_accept()
+ * /SSL_connect()/SSL_do_handshake(). Used to test whether we are in an early
+ * data state and whether we should attempt to move the handshake on if so.
+ * |send| is 1 if we are attempting to send data (SSL_write*()), 0 if we are
+ * attempting to read data (SSL_read*()), or -1 if we are in SSL_do_handshake()
+ * or similar.
+ */
 void ossl_statem_check_finish_init(SSL *s, int send)
 {
-    if (!s->server) {
+    if (send == -1) {
+        if (s->statem.hand_state == TLS_ST_PENDING_EARLY_DATA_END
+                || s->statem.hand_state == TLS_ST_EARLY_DATA)
+            ossl_statem_set_in_init(s, 1);
+    } else if (!s->server) {
         if ((send && s->statem.hand_state == TLS_ST_PENDING_EARLY_DATA_END
                   && s->early_data_state != SSL_EARLY_DATA_WRITING)
                 || (!send && s->statem.hand_state == TLS_ST_EARLY_DATA))

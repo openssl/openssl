@@ -1626,7 +1626,6 @@ __owur int SSL_write(SSL *ssl, const void *buf, int num);
 __owur int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written);
 __owur int SSL_write_early(SSL *s, const void *buf, size_t num,
                            size_t *written);
-__owur int SSL_write_early_finish(SSL *s);
 long SSL_ctrl(SSL *ssl, int cmd, long larg, void *parg);
 long SSL_callback_ctrl(SSL *, int, void (*)(void));
 long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg);
