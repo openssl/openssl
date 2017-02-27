@@ -1537,6 +1537,652 @@ static int test_set_sigalgs(int idx)
     return testresult;
 }
 
+#ifndef OPENSSL_NO_TLS1_3
+
+#define MSG1    "Hello"
+#define MSG2    "World."
+#define MSG3    "This"
+#define MSG4    "is"
+#define MSG5    "a"
+#define MSG6    "test."
+
+/*
+ * Helper method to setup objects for early data test. Caller frees objects on
+ * error.
+ */
+static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
+                                SSL **serverssl, SSL_SESSION **sess)
+{
+    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(), sctx,
+                             cctx, cert, privkey)) {
+        printf("Unable to create SSL_CTX pair\n");
+        return 0;
+    }
+
+    if (!create_ssl_objects(*sctx, *cctx, serverssl, clientssl, NULL, NULL)) {
+        printf("Unable to create SSL objects\n");
+        return 0;
+    }
+
+    if (!create_ssl_connection(*serverssl, *clientssl, SSL_ERROR_NONE)) {
+        printf("Unable to create SSL connection\n");
+        return 0;
+    }
+
+    *sess = SSL_get1_session(*clientssl);
+
+    SSL_shutdown(*clientssl);
+    SSL_shutdown(*serverssl);
+
+    SSL_free(*serverssl);
+    SSL_free(*clientssl);
+    *serverssl = *clientssl = NULL;
+
+    if (!create_ssl_objects(*sctx, *cctx, serverssl, clientssl, NULL, NULL)) {
+        printf("Unable to create SSL objects (2)\n");
+        return 0;
+    }
+
+    if (!SSL_set_session(*clientssl, *sess)) {
+        printf("Failed setting session\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+static int test_early_data_read_write(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    SSL_SESSION *sess = NULL;
+    unsigned char buf[20];
+    size_t readbytes, written;
+
+    if (!setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl, &sess))
+        goto end;
+
+    /* Write and read some early data */
+    if (!SSL_write_early(clientssl, MSG1, strlen(MSG1), &written)
+            || written != strlen(MSG1)) {
+        printf("Failed writing early data message 1\n");
+        goto end;
+    }
+
+    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_SUCCESS
+            || readbytes != strlen(MSG1)
+            || memcmp(MSG1, buf, strlen(MSG1))) {
+        printf("Failed reading early data message 1\n");
+        goto end;
+    }
+
+    if (SSL_get_early_data_status(serverssl) != SSL_EARLY_DATA_ACCEPTED) {
+        printf("Unexpected early data status\n");
+        goto end;
+    }
+
+    /*
+     * Server should be able to write normal data, and client should be able to
+     * read it.
+     */
+    if (!SSL_write_ex(serverssl, MSG2, strlen(MSG2), &written)
+            || written != strlen(MSG2)) {
+        printf("Failed writing message 2\n");
+        goto end;
+    }
+
+    if (!SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)
+            || readbytes != strlen(MSG2)
+            || memcmp(MSG2, buf, strlen(MSG2))) {
+        printf("Failed reading message 2\n");
+        goto end;
+    }
+
+    /* Even after reading normal data, client should be able write early data */
+    if (!SSL_write_early(clientssl, MSG3, strlen(MSG3), &written)
+            || written != strlen(MSG3)) {
+        printf("Failed writing early data message 3\n");
+        goto end;
+    }
+
+    /* Server should still be able read early data after writing normal data */
+    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_SUCCESS
+            || readbytes != strlen(MSG3)
+            || memcmp(MSG3, buf, strlen(MSG3))) {
+        printf("Failed reading early data message 3\n");
+        goto end;
+    }
+
+    /* Write more normal data from server and read it from client */
+    if (!SSL_write_ex(serverssl, MSG4, strlen(MSG4), &written)
+            || written != strlen(MSG4)) {
+        printf("Failed writing message 4\n");
+        goto end;
+    }
+
+    if (!SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)
+            || readbytes != strlen(MSG4)
+            || memcmp(MSG4, buf, strlen(MSG4))) {
+        printf("Failed reading message 4\n");
+        goto end;
+    }
+
+    /*
+     * If client writes normal data it should mean writing early data is no
+     * longer possible.
+     */
+    if (!SSL_write_ex(clientssl, MSG5, strlen(MSG5), &written)
+            || written != strlen(MSG5)) {
+        printf("Failed writing message 5\n");
+        goto end;
+    }
+
+    if (SSL_get_early_data_status(clientssl) != SSL_EARLY_DATA_ACCEPTED) {
+        printf("Unexpected early data status(2)\n");
+        goto end;
+    }
+
+    /* Server should be told that there is no more early data */
+    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_FINISH
+            || readbytes != 0) {
+        printf("Failed finishing read of early data\n");
+        goto end;
+    }
+
+    /* Server should be able to read normal data */
+    if (!SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes)
+            || readbytes != strlen(MSG5)) {
+        printf("Failed reading message 5\n");
+        goto end;
+    }
+
+    /* Client and server should not be able to write early data now */
+    if (SSL_write_early(clientssl, MSG6, strlen(MSG6), &written)) {
+        printf("Unexpected success writing early data\n");
+        goto end;
+    }
+    ERR_clear_error();
+
+    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_ERROR) {
+        printf("Unexpected success reading early data\n");
+        goto end;
+    }
+    ERR_clear_error();
+
+    /*
+     * Make sure we process the NewSessionTicket. This arrives post-handshake
+     * so we must make sure we attempt a read - even though we don't expect to
+     * actually get any application data.
+     */
+    if (SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)) {
+        printf("Unexpected success doing final client read\n");
+        goto end;
+    }
+
+    SSL_SESSION_free(sess);
+    sess = SSL_get1_session(clientssl);
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    if (!create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL)) {
+        printf("Unable to create SSL objects (3)\n");
+        goto end;
+    }
+
+    if (!SSL_set_session(clientssl, sess)) {
+        printf("Failed setting session (2)\n");
+        goto end;
+    }
+
+    /* Write and read some early data */
+    if (!SSL_write_early(clientssl, MSG1, strlen(MSG1), &written)
+            || written != strlen(MSG1)) {
+        printf("Failed writing early data message 1\n");
+        goto end;
+    }
+
+    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_SUCCESS
+            || readbytes != strlen(MSG1)
+            || memcmp(MSG1, buf, strlen(MSG1))) {
+        printf("Failed reading early data message 1\n");
+        goto end;
+    }
+
+    if (SSL_connect(clientssl) <= 0) {
+        printf("Unable to complete client handshake\n");
+        goto end;
+    }
+
+    /*
+     * We expect SSL_accept() to initially block as it handles the end of early
+     * data alert
+     */
+    if (SSL_accept(serverssl) > 0) {
+        printf("Unexpected success completing server handshake\n");
+        goto end;
+    }
+
+    if (SSL_accept(serverssl) <= 0) {
+        printf("Unable to complete server handshake\n");
+        goto end;
+    }
+
+    /* Client and server should not be able to write early data now */
+    if (SSL_write_early(clientssl, MSG6, strlen(MSG6), &written)) {
+        printf("Unexpected success writing early data (2)\n");
+        goto end;
+    }
+    ERR_clear_error();
+
+    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_ERROR) {
+        printf("Unexpected success reading early data (2)\n");
+        goto end;
+    }
+    ERR_clear_error();
+
+    /* Client and server should be able to write/read normal data */
+    if (!SSL_write_ex(clientssl, MSG5, strlen(MSG5), &written)
+            || written != strlen(MSG5)) {
+        printf("Failed writing message 5 (2)\n");
+        goto end;
+    }
+
+    if (!SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes)
+            || readbytes != strlen(MSG5)) {
+        printf("Failed reading message 5 (2)\n");
+        goto end;
+    }
+
+    testresult = 1;
+
+ end:
+    if(!testresult)
+        ERR_print_errors_fp(stdout);
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+static int test_early_data_skip(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    SSL_SESSION *sess;
+    unsigned char buf[20];
+    size_t readbytes, written;
+
+    /*
+     * Test that a server attempting to read early data can handle a connection
+     * from a client where the early data is not acceptable.
+     */
+
+    if (!setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl, &sess))
+        goto end;
+
+    /*
+     * Deliberately corrupt the creation time. We take 20 seconds off the time.
+     * It could be any value as long as it is not within tolerance. This should
+     * mean the ticket is rejected.
+     */
+    if (!SSL_SESSION_set_time(sess, time(NULL) - 20)) {
+        printf("Unexpected failure setting session creation time\n");
+        goto end;
+    }
+
+    /* Write some early data */
+    if (!SSL_write_early(clientssl, MSG1, strlen(MSG1), &written)
+            || written != strlen(MSG1)) {
+        printf("Failed writing early data message 1\n");
+        goto end;
+    }
+
+    /* Server should reject the early data and skip over it */
+    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_FINISH
+            || readbytes != 0) {
+        printf("Failed reading early data\n");
+        goto end;
+    }
+
+    if (SSL_get_early_data_status(serverssl) != SSL_EARLY_DATA_REJECTED) {
+        printf("Unexpected early data status\n");
+        goto end;
+    }
+
+    /*
+     * We should be able to send normal data despite rejection of early data
+     */
+    if (!SSL_write_ex(clientssl, MSG2, strlen(MSG2), &written)
+            || written != strlen(MSG2)) {
+        printf("Failed writing message 2\n");
+        goto end;
+    }
+
+    if (SSL_get_early_data_status(clientssl) != SSL_EARLY_DATA_REJECTED) {
+        printf("Unexpected early data status (2)\n");
+        goto end;
+    }
+
+    if (!SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes)
+            || readbytes != strlen(MSG2)
+            || memcmp(MSG2, buf, strlen(MSG2))) {
+        printf("Failed reading message 2\n");
+        goto end;
+    }
+
+    testresult = 1;
+
+ end:
+    if(!testresult)
+        ERR_print_errors_fp(stdout);
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+static int test_early_data_not_sent(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    SSL_SESSION *sess;
+    unsigned char buf[20];
+    size_t readbytes, written;
+
+    /*
+     * Test that a server attempting to read early data can handle a connection
+     * from a client that doesn't send any.
+     */
+
+    if (!setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl, &sess))
+        goto end;
+
+    /* Write some data - should block due to handshake with server */
+    SSL_set_connect_state(clientssl);
+    if (SSL_write_ex(clientssl, MSG1, strlen(MSG1), &written)) {
+        printf("Unexpected success writing message 1\n");
+        goto end;
+    }
+
+    /* Server should detect that early data has not been sent */
+    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_FINISH
+            || readbytes != 0) {
+        printf("Failed reading early data\n");
+        goto end;
+    }
+
+    if (SSL_get_early_data_status(serverssl) != SSL_EARLY_DATA_NOT_SENT) {
+        printf("Unexpected early data status\n");
+        goto end;
+    }
+
+    if (SSL_get_early_data_status(clientssl) != SSL_EARLY_DATA_NOT_SENT) {
+        printf("Unexpected early data status (2)\n");
+        goto end;
+    }
+
+    /* Continue writing the message we started earlier */
+    if (!SSL_write_ex(clientssl, MSG1, strlen(MSG1), &written)
+            || written != strlen(MSG1)) {
+        printf("Failed writing message 1\n");
+        goto end;
+    }
+
+    if (!SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes)
+            || readbytes != strlen(MSG1)
+            || memcmp(MSG1, buf, strlen(MSG1))) {
+        printf("Failed reading message 1\n");
+        goto end;
+    }
+
+    if (!SSL_write_ex(serverssl, MSG2, strlen(MSG2), &written)
+            || written != strlen(MSG2)) {
+        printf("Failed writing message 2\n");
+        goto end;
+    }
+
+    /* Should block due to the NewSessionTicket arrival */
+    if (SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)) {
+        printf("Unexpected success reading message 2\n");
+        goto end;
+    }
+
+    if (!SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)
+            || readbytes != strlen(MSG2)
+            || memcmp(MSG2, buf, strlen(MSG2))) {
+        printf("Failed reading message 2\n");
+        goto end;
+    }
+
+    testresult = 1;
+
+ end:
+    if(!testresult)
+        ERR_print_errors_fp(stdout);
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+static int test_early_data_not_expected(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    SSL_SESSION *sess;
+    unsigned char buf[20];
+    size_t readbytes, written;
+
+    /*
+     * Test that a server that doesn't try to read early data can handle a
+     * client sending some.
+     */
+
+    if (!setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl, &sess))
+        goto end;
+
+    /* Write some early data */
+    if (!SSL_write_early(clientssl, MSG1, strlen(MSG1), &written)) {
+        printf("Unexpected failure writing message 1\n");
+        goto end;
+    }
+
+    /*
+     * Server should skip over early data and then block waiting for client to
+     * continue handshake
+     */
+    if (SSL_accept(serverssl) > 0) {
+        printf("Unexpected success setting up server connection\n");
+        goto end;
+    }
+
+    if (SSL_connect(clientssl) <= 0) {
+        printf("Failed setting up client connection\n");
+        goto end;
+    }
+
+    if (SSL_get_early_data_status(serverssl) != SSL_EARLY_DATA_REJECTED) {
+        printf("Unexpected early data status\n");
+        goto end;
+    }
+
+    if (SSL_accept(serverssl) <= 0) {
+        printf("Failed setting up server connection\n");
+        goto end;
+    }
+
+    if (SSL_get_early_data_status(clientssl) != SSL_EARLY_DATA_REJECTED) {
+        printf("Unexpected early data status (2)\n");
+        goto end;
+    }
+
+    /* Send some normal data from client to server */
+    if (!SSL_write_ex(clientssl, MSG2, strlen(MSG2), &written)
+            || written != strlen(MSG2)) {
+        printf("Failed writing message 2\n");
+        goto end;
+    }
+
+    if (!SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes)
+            || readbytes != strlen(MSG2)
+            || memcmp(MSG2, buf, strlen(MSG2))) {
+        printf("Failed reading message 2\n");
+        goto end;
+    }
+
+    testresult = 1;
+
+ end:
+    if(!testresult)
+        ERR_print_errors_fp(stdout);
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+
+# ifndef OPENSSL_NO_TLS1_2
+static int test_early_data_tls1_2(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    unsigned char buf[20];
+    size_t readbytes, written;
+
+    /*
+     * Test that a server attempting to read early data can handle a connection
+     * from a TLSv1.2 client.
+     */
+
+    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(), &sctx,
+                             &cctx, cert, privkey)) {
+        printf("Unable to create SSL_CTX pair\n");
+        goto end;
+    }
+
+    if (!create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL)) {
+        printf("Unable to create SSL objects\n");
+        goto end;
+    }
+
+    /* Write some data - should block due to handshake with server */
+    SSL_set_max_proto_version(clientssl, TLS1_2_VERSION);
+    SSL_set_connect_state(clientssl);
+    if (SSL_write_ex(clientssl, MSG1, strlen(MSG1), &written)) {
+        printf("Unexpected success writing message 1\n");
+        goto end;
+    }
+
+    /*
+     * Server should do TLSv1.2 handshake. First it will block waiting for more
+     * messages from client after ServerDone. Then SSL_read_early should finish
+     * and detect that early data has not been sent
+     */
+    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_ERROR) {
+        printf("Unexpected success reading early data\n");
+        goto end;
+    }
+
+    /*
+     * Continue writing the message we started earlier. Will still block waiting
+     * for the CCS/Finished from server
+     */
+    if (SSL_write_ex(clientssl, MSG1, strlen(MSG1), &written)) {
+        printf("Unexpected success writing message 1\n");
+        goto end;
+    }
+
+    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_FINISH
+            || readbytes != 0) {
+        printf("Failed reading early data\n");
+        goto end;
+    }
+
+    if (SSL_get_early_data_status(serverssl) != SSL_EARLY_DATA_NOT_SENT) {
+        printf("Unexpected early data status\n");
+        goto end;
+    }
+
+    /* Continue writing the message we started earlier */
+    if (!SSL_write_ex(clientssl, MSG1, strlen(MSG1), &written)
+            || written != strlen(MSG1)) {
+        printf("Failed writing message 1\n");
+        goto end;
+    }
+
+    if (SSL_get_early_data_status(clientssl) != SSL_EARLY_DATA_NOT_SENT) {
+        printf("Unexpected early data status (2)\n");
+        goto end;
+    }
+
+    if (!SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes)
+            || readbytes != strlen(MSG1)
+            || memcmp(MSG1, buf, strlen(MSG1))) {
+        printf("Failed reading message 1\n");
+        goto end;
+    }
+
+    if (!SSL_write_ex(serverssl, MSG2, strlen(MSG2), &written)
+            || written != strlen(MSG2)) {
+        printf("Failed writing message 2\n");
+        goto end;
+    }
+
+    if (!SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)
+            || readbytes != strlen(MSG2)
+            || memcmp(MSG2, buf, strlen(MSG2))) {
+        printf("Failed reading message 2\n");
+        goto end;
+    }
+
+    testresult = 1;
+
+ end:
+    if(!testresult)
+        ERR_print_errors_fp(stdout);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+# endif
+#endif
+
 int test_main(int argc, char *argv[])
 {
     int testresult = 1;
@@ -1572,6 +2218,15 @@ int test_main(int argc, char *argv[])
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_early_cb);
+#endif
+#ifndef OPENSSL_NO_TLS1_3
+    ADD_TEST(test_early_data_read_write);
+    ADD_TEST(test_early_data_skip);
+    ADD_TEST(test_early_data_not_sent);
+    ADD_TEST(test_early_data_not_expected);
+# ifndef OPENSSL_NO_TLS1_2
+    ADD_TEST(test_early_data_tls1_2);
+# endif
 #endif
 
     testresult = run_tests(argv[0]);
