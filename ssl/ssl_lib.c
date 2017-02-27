@@ -105,6 +105,8 @@ static const struct {
     },
 };
 
+static int ssl_write_early_finish(SSL *s);
+
 static int dane_ctx_enable(struct dane_ctx_st *dctx)
 {
     const EVP_MD **mdevp;
@@ -1753,7 +1755,7 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
          * We're still writing early data. We need to stop that so we can write
          * normal data
          */
-        if (!SSL_write_early_finish(s))
+        if (!ssl_write_early_finish(s))
             return 0;
     } else if (s->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY
                 || s->early_data_state == SSL_EARLY_DATA_ACCEPT_RETRY) {
@@ -1853,7 +1855,7 @@ int SSL_write_early(SSL *s, const void *buf, size_t num, size_t *written)
     }
 }
 
-int SSL_write_early_finish(SSL *s)
+static int ssl_write_early_finish(SSL *s)
 {
     int ret;
 
@@ -3242,21 +3244,14 @@ int SSL_do_handshake(SSL *s)
         return -1;
     }
 
-    if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY
-            || s->early_data_state == SSL_EARLY_DATA_READ_RETRY) {
-        /*
-         * We skip this if we were called via SSL_read_early() or
-         * SSL_write_early()
-         */
-        if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
-            int edfin;
+    if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
+        int edfin;
 
-            edfin = SSL_write_early_finish(s);
-            if (edfin <= 0)
-                return edfin;
-        }
-        ossl_statem_set_in_init(s, 1);
+        edfin = ssl_write_early_finish(s);
+        if (edfin <= 0)
+            return edfin;
     }
+    ossl_statem_check_finish_init(s, -1);
 
     s->method->ssl_renegotiate_check(s, 0);
 
