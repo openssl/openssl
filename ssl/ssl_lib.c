@@ -1650,7 +1650,6 @@ int SSL_read_early(SSL *s, void *buf, size_t num, size_t *readbytes)
             s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
         }
         *readbytes = 0;
-        ossl_statem_set_in_init(s, 1);
         return SSL_READ_EARLY_FINISH;
 
     default:
@@ -1661,7 +1660,8 @@ int SSL_read_early(SSL *s, void *buf, size_t num, size_t *readbytes)
 
 int ssl_end_of_early_data_seen(SSL *s)
 {
-    if (s->early_data_state == SSL_EARLY_DATA_READING) {
+    if (s->early_data_state == SSL_EARLY_DATA_READING
+            || s->early_data_state == SSL_EARLY_DATA_READ_RETRY) {
         s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
         ossl_statem_finish_early_data(s);
         return 1;
@@ -3242,15 +3242,21 @@ int SSL_do_handshake(SSL *s)
         return -1;
     }
 
-    if (s->early_data_state != SSL_EARLY_DATA_NONE
-            && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING
-            && s->early_data_state != SSL_EARLY_DATA_FINISHED_READING
-            && s->early_data_state != SSL_EARLY_DATA_ACCEPTING
-            && s->early_data_state != SSL_EARLY_DATA_CONNECTING) {
-        SSLerr(SSL_F_SSL_WRITE_INTERNAL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-        return 0;
-    }
+    if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY
+            || s->early_data_state == SSL_EARLY_DATA_READ_RETRY) {
+        /*
+         * We skip this if we were called via SSL_read_early() or
+         * SSL_write_early()
+         */
+        if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
+            int edfin;
 
+            edfin = SSL_write_early_finish(s);
+            if (edfin <= 0)
+                return edfin;
+        }
+        ossl_statem_set_in_init(s, 1);
+    }
 
     s->method->ssl_renegotiate_check(s, 0);
 

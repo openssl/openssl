@@ -1512,8 +1512,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     if (SSL_IS_TLS13(s)
             && (!s->method->ssl3_enc->setup_key_block(s)
                 || !s->method->ssl3_enc->change_cipher_state(s,
-                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE)
-                || !s->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_READ))) {
         al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_CANNOT_CHANGE_CIPHER);
@@ -3270,11 +3268,22 @@ int tls_construct_client_certificate(SSL *s, WPACKET *pkt)
                                                           : s->cert->key,
                                 &al)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE, ERR_R_INTERNAL_ERROR);
-        ssl3_send_alert(s, SSL3_AL_FATAL, al);
-        return 0;
+        goto err;
+    }
+
+    if (SSL_IS_TLS13(s)
+            && SSL_IS_FIRST_HANDSHAKE(s)
+            && (!s->method->ssl3_enc->change_cipher_state(s,
+                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE,
+               SSL_R_CANNOT_CHANGE_CIPHER);
+        goto err;
     }
 
     return 1;
+ err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    return 0;
 }
 
 #define has_bits(i,m)   (((i)&(m)) == (m))

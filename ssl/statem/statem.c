@@ -161,7 +161,7 @@ int ossl_statem_skip_early_data(SSL *s)
         if (s->statem.hand_state != TLS_ST_SW_HELLO_RETRY_REQUEST)
             return 0;
     } else {
-        if (s->statem.hand_state != TLS_ST_SW_FINISHED)
+        if (!s->server || s->statem.hand_state != TLS_ST_EARLY_DATA)
             return 0;
     }
 
@@ -171,8 +171,13 @@ int ossl_statem_skip_early_data(SSL *s)
 void ossl_statem_check_finish_init(SSL *s, int send)
 {
     if (!s->server) {
-        if ((send && s->statem.hand_state == TLS_ST_PENDING_EARLY_DATA_END)
+        if ((send && s->statem.hand_state == TLS_ST_PENDING_EARLY_DATA_END
+                  && s->early_data_state != SSL_EARLY_DATA_WRITING)
                 || (!send && s->statem.hand_state == TLS_ST_EARLY_DATA))
+            ossl_statem_set_in_init(s, 1);
+    } else {
+        if (s->early_data_state == SSL_EARLY_DATA_FINISHED_READING
+                && s->statem.hand_state == TLS_ST_EARLY_DATA)
             ossl_statem_set_in_init(s, 1);
     }
 }
@@ -339,9 +344,7 @@ static int state_machine(SSL *s, int server)
                 goto end;
             }
 
-        if ((SSL_IS_FIRST_HANDSHAKE(s)
-                    && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING
-                    && s->early_data_state != SSL_EARLY_DATA_FINISHED_READING)
+        if ((SSL_in_before(s))
                 || s->renegotiate) {
             if (!tls_setup_handshake(s)) {
                 ossl_statem_set_error(s);
@@ -746,8 +749,17 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             case WORK_FINISHED_STOP:
                 return SUB_STATE_END_HANDSHAKE;
             }
+            if (!get_construct_message_f(s, &pkt, &confunc, &mt)) {
+                ossl_statem_set_error(s);
+                return SUB_STATE_ERROR;
+            }
+            if (mt == SSL3_MT_DUMMY) {
+                /* Skip construction and sending. This isn't a "real" state */
+                st->write_state = WRITE_STATE_POST_WORK;
+                st->write_state_work = WORK_MORE_A;
+                break;
+            }
             if (!WPACKET_init(&pkt, s->init_buf)
-                    || !get_construct_message_f(s, &pkt, &confunc, &mt)
                     || !ssl_set_handshake_header(s, &pkt, mt)
                     || (confunc != NULL && !confunc(s, &pkt))
                     || !ssl_close_construct_packet(s, &pkt, mt)

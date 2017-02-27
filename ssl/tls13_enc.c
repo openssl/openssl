@@ -430,15 +430,15 @@ int tls13_change_cipher_state(SSL *s, int which)
             labellen = sizeof(client_handshake_traffic) - 1;
             log_label = CLIENT_HANDSHAKE_LABEL;
             /*
-             * The hanshake hash used for the server read handshake traffic
-             * secret is the same as the hash for the server write handshake
-             * traffic secret. However, if we processed early data then we delay
-             * changing the server read cipher state until later, and the
-             * handshake hashes have moved on. Therefore we use the value saved
-             * earlier when we did the server write change cipher state.
+             * The hanshake hash used for the server read/client write handshake
+             * traffic secret is the same as the hash for the server
+             * write/client read handshake traffic secret. However, if we
+             * processed early data then we delay changing the server
+             * read/client write cipher state until later, and the handshake
+             * hashes have moved on. Therefore we use the value saved earlier
+             * when we did the server write/client read change cipher state.
              */
-            if (s->server)
-                hash = s->handshake_traffic_hash;
+            hash = s->handshake_traffic_hash;
         } else {
             insecret = s->master_secret;
             label = client_application_traffic;
@@ -486,7 +486,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     if (label == server_application_traffic)
         memcpy(s->server_finished_hash, hashval, hashlen);
 
-    if (s->server && label == server_handshake_traffic)
+    if (label == server_handshake_traffic)
         memcpy(s->handshake_traffic_hash, hashval, hashlen);
 
     if (label == client_application_traffic) {
