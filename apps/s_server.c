@@ -104,6 +104,7 @@ static void free_sessions(void);
 #ifndef OPENSSL_NO_DH
 static DH *load_dh_param(const char *dhfile);
 #endif
+static void print_connection_info(SSL *con);
 
 /* static int load_CA(SSL_CTX *ctx, char *file);*/
 
@@ -2244,6 +2245,8 @@ static int sv_body(int s, int stype, unsigned char *context)
             BIO_printf(bio_s_out, "No early data received\n");
         else
             BIO_printf(bio_s_out, "\nEnd of early data\n");
+        if (SSL_is_init_finished(con))
+            print_connection_info(con);
     }
 
     if (fileno_stdin() > s)
@@ -2571,15 +2574,7 @@ static void close_accept_socket(void)
 static int init_ssl_connection(SSL *con)
 {
     int i;
-    const char *str;
-    X509 *peer;
     long verify_err;
-    char buf[BUFSIZ];
-#if !defined(OPENSSL_NO_NEXTPROTONEG)
-    const unsigned char *next_proto_neg;
-    unsigned next_proto_neg_len;
-#endif
-    unsigned char *exportedkeymat;
     int retry = 0;
 
 #ifndef OPENSSL_NO_DTLS
@@ -2673,6 +2668,22 @@ static int init_ssl_connection(SSL *con)
         return (0);
     }
 
+    print_connection_info(con);
+    return 1;
+}
+
+static void print_connection_info(SSL *con)
+{
+    const char *str;
+    X509 *peer;
+    char buf[BUFSIZ];
+#if !defined(OPENSSL_NO_NEXTPROTONEG)
+    const unsigned char *next_proto_neg;
+    unsigned next_proto_neg_len;
+#endif
+    unsigned char *exportedkeymat;
+    int i;
+
     if (s_brief)
         print_ssl_summary(con);
 
@@ -2743,7 +2754,6 @@ static int init_ssl_connection(SSL *con)
     }
 
     (void)BIO_flush(bio_s_out);
-    return (1);
 }
 
 #ifndef OPENSSL_NO_DH
