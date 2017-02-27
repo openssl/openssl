@@ -23,17 +23,17 @@
 
 static void remove_space(char **pval)
 {
-    unsigned char *p = (unsigned char *)*pval;
+    unsigned char *p = (unsigned char *)*pval, *beginning;
 
     while (isspace(*p))
         p++;
 
-    *pval = (char *)p;
+    *pval = (char *)(beginning = p);
 
     p = p + strlen(*pval) - 1;
 
     /* Remove trailing space */
-    while (isspace(*p))
+    while (p >= beginning && isspace(*p))
         *p-- = 0;
 }
 
