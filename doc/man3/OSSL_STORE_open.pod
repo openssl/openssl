@@ -58,8 +58,23 @@ OSSL_STORE_load() to manipulate or drop the value to be returned.
 
 OSSL_STORE_ctrl() takes a B<OSSL_STORE_CTX>, and command number B<cmd> and
 more arguments not specified here.
-The available command numbers and arguments they each take depends on
-the loader that's used and is documented together with that loader.
+The available loader specific command numbers and arguments they each
+take depends on the loader that's used and is documented together with
+that loader.
+
+There are also global controls available:
+
+=over 4
+
+=item B<OSSL_STORE_C_USE_SECMEM>
+
+Controls if the loader should attempt to use secure memory for any
+allocated B<OSSL_STORE_INFO> and its contents.
+This control expects one argument, a pointer to an B<int> that is expected to
+have the value 1 (yes) or 0 (no).
+Any other value is an error.
+
+=back
 
 OSSL_STORE_load() takes a B<OSSL_STORE_CTX>, tries to load the next available
 object and return it wrapped with  B<OSSL_STORE_INFO>.
