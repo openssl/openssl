@@ -79,7 +79,7 @@ for all available algorithms.
 =item B<numbits>
 
 the size of the private key to generate in bits. This must be the last option
-specified. The default is 512.
+specified. The default is 2048.
 
 =back
 
