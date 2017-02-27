@@ -54,6 +54,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
      * Negative sLen has special meanings:
      *      -1      sLen == hLen
      *      -2      salt length is autorecovered from signature
+     *      -3      salt length is maximized
      *      -N      reserved
      */
     if (sLen == RSA_PSS_SALTLEN_DIGEST)
@@ -73,9 +74,13 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         EM++;
         emLen--;
     }
+    if (emLen < hLen + 2) {
+        RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_DATA_TOO_LARGE);
+        goto err;
+    }
     if (sLen == RSA_PSS_SALTLEN_MAX) {
         sLen = emLen - hLen - 2;
-    } else if (emLen < (hLen + sLen + 2)) { /* sLen can be small negative */
+    } else if (sLen > emLen - hLen - 2) { /* sLen can be small negative */
         RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_DATA_TOO_LARGE);
         goto err;
     }
@@ -157,6 +162,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
      * Negative sLen has special meanings:
      *      -1      sLen == hLen
      *      -2      salt length is maximized
+     *      -3      same as above (on signing)
      *      -N      reserved
      */
     if (sLen == RSA_PSS_SALTLEN_DIGEST)
@@ -174,9 +180,14 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
         *EM++ = 0;
         emLen--;
     }
+    if (emLen < hLen + 2) {
+        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,
+               RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        goto err;
+    }
     if (sLen == RSA_PSS_SALTLEN_MAX) {
         sLen = emLen - hLen - 2;
-    } else if (emLen < (hLen + sLen + 2)) {
+    } else if (sLen > emLen - hLen - 2) {
         RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,
                RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         goto err;
