@@ -53,6 +53,9 @@
 #define EXT_TLS1_3_CERTIFICATE              0x0800
 #define EXT_TLS1_3_NEW_SESSION_TICKET       0x1000
 
+/* Dummy message type */
+#define SSL3_MT_DUMMY   -1
+
 /* Message processing return codes */
 typedef enum {
     /* Something bad happened */

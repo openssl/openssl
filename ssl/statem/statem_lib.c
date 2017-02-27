@@ -442,6 +442,23 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
     const char *sender;
     size_t slen;
 
+    /* This is a real handshake so make sure we clean it up at the end */
+    if (!s->server)
+        s->statem.cleanuphand = 1;
+
+    /*
+     * We only change the keys if we didn't already do this when we sent the
+     * client certificate
+     */
+    if (SSL_IS_TLS13(s)
+            && !s->server
+            && s->s3->tmp.cert_req == 0
+            && (!s->method->ssl3_enc->change_cipher_state(s,
+                    SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, SSL_R_CANNOT_CHANGE_CIPHER);
+        goto err;
+    }
+
     if (s->server) {
         sender = s->method->ssl3_enc->server_finished_label;
         slen = s->method->ssl3_enc->server_finished_label_len;
@@ -656,7 +673,8 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
 
 
     /* This is a real handshake so make sure we clean it up at the end */
-    s->statem.cleanuphand = 1;
+    if (s->server)
+        s->statem.cleanuphand = 1;
 
     /* If this occurs, we have missed a message */
     if (!SSL_IS_TLS13(s) && !s->s3->change_cipher_spec) {
