@@ -2132,7 +2132,7 @@ static int get_certificate_status(const char *serial, CA_DB *db)
     if (serial_len % 2) {
         /*
          * Set the first char to 0
-         */ ;
+         */
         row[DB_serial][0] = '0';
 
         /* Copy String from serial to row[DB_serial] */
