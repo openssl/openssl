@@ -1096,7 +1096,6 @@ void print_ssl_summary(SSL *s)
 {
     const SSL_CIPHER *c;
     X509 *peer;
-    /* const char *pnam = SSL_is_server(s) ? "client" : "server"; */
 
     BIO_printf(bio_err, "Protocol version: %s\n", SSL_get_version(s));
     print_raw_cipherlist(s);

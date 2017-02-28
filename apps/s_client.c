@@ -136,9 +136,6 @@ static void do_ssl_shutdown(SSL *ssl)
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
 static char *psk_identity = "Client_identity";
-/*
- * char *psk_key=NULL; by default PSK is not used
- */
 
 static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
                                   unsigned int max_identity_len,
@@ -2405,7 +2402,6 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_err, "bad select %d\n",
                            get_last_socket_error());
                 goto shut;
-                /* goto end; */
             }
         }
 
@@ -2496,7 +2492,6 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_c_out, "DONE\n");
                 ret = 0;
                 goto shut;
-                /* goto end; */
             }
 
             sbuf_len -= i;
@@ -2566,7 +2561,6 @@ int s_client_main(int argc, char **argv)
             case SSL_ERROR_SSL:
                 ERR_print_errors(bio_err);
                 goto shut;
-                /* break; */
             }
         }
 /* OPENSSL_SYS_MSDOS includes OPENSSL_SYS_WINDOWS */
