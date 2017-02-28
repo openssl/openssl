@@ -144,10 +144,6 @@
  *	    }
  */
 
-#ifdef OPENSSL_FIPSCANISTER
-#include <openssl/fipssyms.h>
-#endif
-
 #if defined(__SUNPRO_C) && defined(__sparcv9)
   /* They've said -xarch=v9 at command line */
   .register	%g2,#scratch

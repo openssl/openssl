@@ -193,17 +193,8 @@ This modules has the name B<alg_section> which points to a section containing
 algorithm commands.
 
 Currently the only algorithm command supported is B<fips_mode> whose
-value should be a boolean string such as B<on> or B<off>. If the value is
-B<on> this attempt to enter FIPS mode. If the call fails or the library is
-not FIPS capable then an error occurs.
-
-For example:
-
- alg_section = evp_settings
-
- [evp_settings]
-
- fips_mode = on
+value can only be the boolean string B<off>. If B<fips_mode> is set to B<on>,
+an error occurs as this library version is not FIPS capable.
 
 =head2 SSL Configuration Module
 

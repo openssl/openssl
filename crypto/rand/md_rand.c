@@ -29,10 +29,6 @@
 
 #include <internal/thread_once.h>
 
-#ifdef OPENSSL_FIPS
-# include <openssl/fips.h>
-#endif
-
 #if defined(BN_DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
 # define PREDICT
 #endif
