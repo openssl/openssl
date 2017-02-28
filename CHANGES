@@ -4,6 +4,11 @@
 
  Changes between 1.1.0e and 1.1.1 [xx XXX xxxx]
 
+  *) Remove the VMS-specific reimplementation of gmtime from crypto/o_times.c.
+     VMS C's RTL has a fully up to date gmtime() and gmtime_r() since V7.1,
+     which is the minimum version we support.
+     [Richard Levitte]
+
   *) Certificate time validation (X509_cmp_time) enforces stricter
      compliance with RFC 5280. Fractional seconds and timezone offsets
      are no longer allowed.
