@@ -6,8 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-
-/* #define COMPILE_STANDALONE_TEST_DRIVER  */
 #include "apps.h"
 #include <string.h>
 #if !defined(OPENSSL_SYS_MSDOS)
@@ -888,90 +886,3 @@ void opt_help(const OPTIONS *list)
         BIO_printf(bio_err, "%s  %s\n", start, help);
     }
 }
-
-#ifdef COMPILE_STANDALONE_TEST_DRIVER
-# include <sys/stat.h>
-
-typedef enum OPTION_choice {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_IN, OPT_INFORM, OPT_OUT, OPT_COUNT, OPT_U, OPT_FLAG,
-    OPT_STR, OPT_NOTUSED
-} OPTION_CHOICE;
-
-static OPTIONS options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s flags\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
-    {"help", OPT_HELP, '-', "Display this summary"},
-    {"in", OPT_IN, '<', "input file"},
-    {OPT_MORE_STR, 1, '-', "more detail about input"},
-    {"inform", OPT_INFORM, 'f', "input file format; defaults to pem"},
-    {"out", OPT_OUT, '>', "output file"},
-    {"count", OPT_COUNT, 'p', "a counter greater than zero"},
-    {"u", OPT_U, 'u', "an unsigned number"},
-    {"flag", OPT_FLAG, 0, "just some flag"},
-    {"str", OPT_STR, 's', "the magic word"},
-    {"areallyverylongoption", OPT_HELP, '-', "long way for help"},
-    {NULL}
-};
-
-BIO *bio_err;
-
-int app_isdir(const char *name)
-{
-    struct stat sb;
-
-    return name != NULL && stat(name, &sb) >= 0 && S_ISDIR(sb.st_mode);
-}
-
-int main(int ac, char **av)
-{
-    OPTION_CHOICE o;
-    char **rest;
-    char *prog;
-
-    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    prog = opt_init(ac, av, options);
-    while ((o = opt_next()) != OPT_EOF) {
-        switch (c) {
-        case OPT_NOTUSED:
-        case OPT_EOF:
-        case OPT_ERR:
-            printf("%s: Usage error; try -help.\n", prog);
-            return 1;
-        case OPT_HELP:
-            opt_help(options);
-            return 0;
-        case OPT_IN:
-            printf("in %s\n", opt_arg());
-            break;
-        case OPT_INFORM:
-            printf("inform %s\n", opt_arg());
-            break;
-        case OPT_OUT:
-            printf("out %s\n", opt_arg());
-            break;
-        case OPT_COUNT:
-            printf("count %s\n", opt_arg());
-            break;
-        case OPT_U:
-            printf("u %s\n", opt_arg());
-            break;
-        case OPT_FLAG:
-            printf("flag\n");
-            break;
-        case OPT_STR:
-            printf("str %s\n", opt_arg());
-            break;
-        }
-    }
-    argc = opt_num_rest();
-    argv = opt_rest();
-
-    printf("args = %d\n", argc);
-    if (argc)
-        while (*argv)
-            printf("  %s\n", *argv++);
-    return 0;
-}
-#endif
