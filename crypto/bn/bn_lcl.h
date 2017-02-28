@@ -147,11 +147,6 @@ extern "C" {
 # ifdef BN_DEBUG
 
 #  ifdef BN_DEBUG_RAND
-/* To avoid "make update" cvs wars due to BN_DEBUG, use some tricks */
-#   ifndef RAND_bytes
-int RAND_bytes(unsigned char *buf, int num);
-#    define BN_DEBUG_TRIX
-#   endif
 #   define bn_pollute(a) \
         do { \
             const BIGNUM *_bnum1 = (a); \
@@ -167,9 +162,6 @@ int RAND_bytes(unsigned char *buf, int num);
                        sizeof(*_not_const) * (_bnum1->dmax - _bnum1->top)); \
             } \
         } while(0)
-#   ifdef BN_DEBUG_TRIX
-#    undef RAND_bytes
-#   endif
 #  else
 #   define bn_pollute(a)
 #  endif
