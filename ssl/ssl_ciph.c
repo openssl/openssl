@@ -701,9 +701,6 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
         co_list[co_list_num].prev = NULL;
         co_list[co_list_num].active = 0;
         co_list_num++;
-        /*
-         * if (!sk_push(ca_list,(char *)c)) goto err;
-         */
     }
 
     /*
