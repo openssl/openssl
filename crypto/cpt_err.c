@@ -20,7 +20,6 @@
 
 static ERR_STRING_DATA CRYPTO_str_functs[] = {
     {ERR_FUNC(CRYPTO_F_CRYPTO_DUP_EX_DATA), "CRYPTO_dup_ex_data"},
-    {ERR_FUNC(CRYPTO_F_CRYPTO_FREE_EX_DATA), "CRYPTO_free_ex_data"},
     {ERR_FUNC(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX), "CRYPTO_get_ex_new_index"},
     {ERR_FUNC(CRYPTO_F_CRYPTO_MEMDUP), "CRYPTO_memdup"},
     {ERR_FUNC(CRYPTO_F_CRYPTO_NEW_EX_DATA), "CRYPTO_new_ex_data"},

@@ -810,17 +810,14 @@ int ERR_load_BIO_strings(void);
 # define BIO_F_BIO_PARSE_HOSTSERV                         136
 # define BIO_F_BIO_PUTS                                   110
 # define BIO_F_BIO_READ                                   111
-# define BIO_F_BIO_READ_EX                                105
 # define BIO_F_BIO_READ_INTERN                            120
 # define BIO_F_BIO_SOCKET                                 140
 # define BIO_F_BIO_SOCKET_NBIO                            142
 # define BIO_F_BIO_SOCK_INFO                              141
 # define BIO_F_BIO_SOCK_INIT                              112
 # define BIO_F_BIO_WRITE                                  113
-# define BIO_F_BIO_WRITE_EX                               119
 # define BIO_F_BIO_WRITE_INTERN                           128
 # define BIO_F_BUFFER_CTRL                                114
-# define BIO_F_CONN_CTRL                                  127
 # define BIO_F_CONN_STATE                                 115
 # define BIO_F_DGRAM_SCTP_READ                            132
 # define BIO_F_DGRAM_SCTP_WRITE                           133

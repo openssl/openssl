@@ -39,7 +39,6 @@ static ERR_STRING_DATA RSA_str_functs[] = {
     {ERR_FUNC(RSA_F_RSA_METH_DUP), "RSA_meth_dup"},
     {ERR_FUNC(RSA_F_RSA_METH_NEW), "RSA_meth_new"},
     {ERR_FUNC(RSA_F_RSA_METH_SET1_NAME), "RSA_meth_set1_name"},
-    {ERR_FUNC(RSA_F_RSA_MGF1_TO_MD), "rsa_mgf1_to_md"},
     {ERR_FUNC(RSA_F_RSA_NEW_METHOD), "RSA_new_method"},
     {ERR_FUNC(RSA_F_RSA_NULL), "RSA_NULL"},
     {ERR_FUNC(RSA_F_RSA_NULL_PRIVATE_DECRYPT), "RSA_null_private_decrypt"},

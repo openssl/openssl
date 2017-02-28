@@ -1072,7 +1072,6 @@ int ERR_load_X509_strings(void);
 # define X509_F_X509_REQ_TO_X509                          123
 # define X509_F_X509_STORE_ADD_CERT                       124
 # define X509_F_X509_STORE_ADD_CRL                        125
-# define X509_F_X509_STORE_CTX_GET1_ISSUER                146
 # define X509_F_X509_STORE_CTX_INIT                       143
 # define X509_F_X509_STORE_CTX_NEW                        142
 # define X509_F_X509_STORE_CTX_PURPOSE_INHERIT            134
