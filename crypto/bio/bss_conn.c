@@ -478,15 +478,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         break;
     case BIO_CTRL_SET_CALLBACK:
-        {
-# if 0                          /* FIXME: Should this be used? -- Richard
-                                 * Levitte */
-            BIOerr(BIO_F_CONN_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-            ret = -1;
-# else
-            ret = 0;
-# endif
-        }
+        ret = 0; /* use callback ctrl */
         break;
     case BIO_CTRL_GET_CALLBACK:
         {
