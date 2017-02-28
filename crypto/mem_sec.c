@@ -538,7 +538,7 @@ static void *sh_malloc(size_t size)
 static void sh_free(void *ptr)
 {
     size_t list;
-    char *buddy;
+    void *buddy;
 
     if (ptr == NULL)
         return;
