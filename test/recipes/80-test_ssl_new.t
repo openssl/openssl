@@ -54,6 +54,8 @@ my %conf_dependent_tests = (
   "07-dtls-protocol-version.conf" => !$is_default_dtls,
   "10-resumption.conf" => !$is_default_tls,
   "11-dtls_resumption.conf" => !$is_default_dtls,
+  "17-renegotiate.conf" => disabled("tls1_2"),
+  "18-dtls-renegotiate.conf" => disabled("dtls1_2"),
 );
 
 # Add your test here if it should be skipped for some compile-time
