@@ -676,7 +676,6 @@ int OBJ_create_objects(BIO *in)
             return (num);
         num++;
     }
-    /* return(num); */
 }
 
 int OBJ_create(const char *oid, const char *sn, const char *ln)

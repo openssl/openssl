@@ -268,7 +268,6 @@ int BIO_fd_non_fatal_error(int err)
     case EALREADY:
 # endif
         return (1);
-        /* break; */
     default:
         break;
     }

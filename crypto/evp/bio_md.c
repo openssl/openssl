@@ -22,9 +22,6 @@
 
 static int md_write(BIO *h, char const *buf, int num);
 static int md_read(BIO *h, char *buf, int size);
-/*
- * static int md_puts(BIO *h, const char *str);
- */
 static int md_gets(BIO *h, char *str, int size);
 static long md_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int md_new(BIO *h);
