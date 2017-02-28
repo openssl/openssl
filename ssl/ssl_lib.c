@@ -3612,11 +3612,6 @@ void *SSL_CTX_get_ex_data(const SSL_CTX *s, int idx)
     return (CRYPTO_get_ex_data(&s->ex_data, idx));
 }
 
-int ssl_ok(SSL *s)
-{
-    return (1);
-}
-
 X509_STORE *SSL_CTX_get_cert_store(const SSL_CTX *ctx)
 {
     return (ctx->cert_store);

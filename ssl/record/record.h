@@ -208,8 +208,6 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl);
 void RECORD_LAYER_release(RECORD_LAYER *rl);
 int RECORD_LAYER_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl);
-int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf,
-                          size_t len);
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl);
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl);
 int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl);
@@ -236,7 +234,6 @@ void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_set_saved_w_epoch(RECORD_LAYER *rl, unsigned short e);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
-void DTLS_RECORD_LAYER_resync_write(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, unsigned char *seq);
 __owur int dtls1_read_bytes(SSL *s, int type, int *recvd_type,
                             unsigned char *buf, size_t len, int peek,
