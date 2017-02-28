@@ -13,9 +13,7 @@
 #include <openssl/rand.h>
 #include "ssl_locl.h"
 
-#if defined(OPENSSL_SYS_VMS)
-# include <sys/timeb.h>
-#elif defined(OPENSSL_SYS_VXWORKS)
+#if defined(OPENSSL_SYS_VXWORKS)
 # include <sys/times.h>
 #elif !defined(OPENSSL_SYS_WIN32)
 # include <sys/time.h>
@@ -404,11 +402,6 @@ static void get_current_time(struct timeval *t)
 # endif
     t->tv_sec = (long)(now.ul / 10000000);
     t->tv_usec = ((int)(now.ul % 10000000)) / 10;
-#elif defined(OPENSSL_SYS_VMS)
-    struct timeb tb;
-    ftime(&tb);
-    t->tv_sec = (long)tb.time;
-    t->tv_usec = (long)tb.millitm * 1000;
 #else
     gettimeofday(t, NULL);
 #endif
