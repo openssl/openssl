@@ -302,7 +302,6 @@ link_shlib.mingw:
 	SHLIB_SOVER=-$$sover$$arch; \
 	SHLIB_SUFFIX=.dll; \
 	dll_name=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
-	base=; [ $(LIBNAME) = "crypto" -a -n "$(FIPSCANLIB)" ] && base=-Wl,--image-base,0x63000000; \
 	$(PERL) $(SRCDIR)/util/mkdef.pl 32 $(LIBNAME) \
 		| sed -e 's|^\(LIBRARY  *\)$(LIBNAME)32|\1'"$$dll_name"'|' \
 		> $(LIBNAME).def; \
@@ -312,7 +311,7 @@ link_shlib.mingw:
 		$(RC) $(SHARED_RCFLAGS) -o rc.o; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a $(LIBNAME).def rc.o"; \
+	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a $(LIBNAME).def rc.o"; \
 	$(LINK_SO_SHLIB) || exit 1; \
 	rm $(LIBNAME).def rc.o
 
