@@ -653,10 +653,6 @@ void bn_sqr_recursive(BN_ULONG *r, const BN_ULONG *a, int n2, BN_ULONG *t);
 void bn_mul_low_normal(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n);
 void bn_mul_low_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
                           BN_ULONG *t);
-void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
-                 BN_ULONG *t);
-BN_ULONG bn_add_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
-                           int cl, int dl);
 BN_ULONG bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
                            int cl, int dl);
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
@@ -668,8 +664,6 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
 
 int bn_probable_prime_dh(BIGNUM *rnd, int bits,
                          const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
-int bn_probable_prime_dh_retry(BIGNUM *rnd, int bits, BN_CTX *ctx);
-int bn_probable_prime_dh_coprime(BIGNUM *rnd, int bits, BN_CTX *ctx);
 
 static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
 {
