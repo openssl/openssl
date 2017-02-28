@@ -63,8 +63,6 @@ my $do_ctest = 0;
 my $do_ctestall = 0;
 my $do_checkexist = 0;
 
-my $VMSVAX=0;
-my $VMSNonVAX=0;
 my $VMS=0;
 my $W32=0;
 my $NT=0;
@@ -153,18 +151,10 @@ foreach (@ARGV, split(/ /, $config{options}))
 		$W32 = 1;
 		$NT = 1;
 	}
-	if ($_ eq "VMS-VAX") {
-		$VMS=1;
-		$VMSVAX=1;
-	}
-	if ($_ eq "VMS-NonVAX") {
-		$VMS=1;
-		$VMSNonVAX=1;
-	}
 	if ($_ eq "linux") {
 		$linux=1;
 	}
-	$VMS=$VMSNonVAX=1 if $_ eq "VMS";
+	$VMS=1 if $_ eq "VMS";
 	if ($_ eq "zlib" || $_ eq "enable-zlib" || $_ eq "zlib-dynamic"
 			 || $_ eq "enable-zlib-dynamic") {
 		$zlib = 1;
@@ -980,19 +970,6 @@ sub do_defs
 	$platform{"PEM_write_NS_CERT_SEQ"} = "VMS";
 	$platform{"PEM_read_P8_PRIV_KEY_INFO"} = "VMS";
 	$platform{"PEM_write_P8_PRIV_KEY_INFO"} = "VMS";
-	$platform{"EVP_sha384"} = "!VMSVAX";
-	$platform{"EVP_sha512"} = "!VMSVAX";
-	$platform{"SHA384_Init"} = "!VMSVAX";
-	$platform{"SHA384_Transform"} = "!VMSVAX";
-	$platform{"SHA384_Update"} = "!VMSVAX";
-	$platform{"SHA384_Final"} = "!VMSVAX";
-	$platform{"SHA384"} = "!VMSVAX";
-	$platform{"SHA512_Init"} = "!VMSVAX";
-	$platform{"SHA512_Transform"} = "!VMSVAX";
-	$platform{"SHA512_Update"} = "!VMSVAX";
-	$platform{"SHA512_Final"} = "!VMSVAX";
-	$platform{"SHA512"} = "!VMSVAX";
-
 
 	# Info we know about
 
@@ -1117,17 +1094,14 @@ sub is_valid
 
 		if ($platforms) {
 			# platforms
-			if ($keyword eq "VMSVAX" && $VMSVAX) { return 1; }
-			if ($keyword eq "VMSNonVAX" && $VMSNonVAX) { return 1; }
 			if ($keyword eq "VMS" && $VMS) { return 1; }
 			if ($keyword eq "WIN32" && $W32) { return 1; }
 			if ($keyword eq "_WIN32" && $W32) { return 1; }
 			if ($keyword eq "WINNT" && $NT) { return 1; }
 			# Special platforms:
 			# EXPORT_VAR_AS_FUNCTION means that global variables
-			# will be represented as functions.  This currently
-			# only happens on VMS-VAX.
-			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && ($VMSVAX || $W32)) {
+			# will be represented as functions.
+			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && $W32) {
 				return 1;
 			}
 			if ($keyword eq "ZLIB" && $zlib) { return 1; }
