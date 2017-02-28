@@ -649,8 +649,6 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
 /*
  * Perform any work that needs to be done after sending a message from the
  * client to the server.
-    case TLS_ST_SR_CERT_VRFY:
-        return SSL3_RT_MAX_PLAIN_LENGTH;
  */
 WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
 {

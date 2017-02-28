@@ -3347,9 +3347,6 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             ctx->cert->dh_tmp = pkdh;
             return 1;
         }
-        /*
-         * break;
-         */
     case SSL_CTRL_SET_TMP_DH_CB:
         {
             SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -3381,7 +3378,6 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                                    &ctx->ext.supportedgroups_len,
                                    &nid, 1);
         }
-        /* break; */
 #endif                          /* !OPENSSL_NO_EC */
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
         ctx->ext.servername_arg = parg;
