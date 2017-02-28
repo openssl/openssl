@@ -66,7 +66,6 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
     default:
         ASN1err(ASN1_F_D2I_PUBLICKEY, ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
         goto err;
-        /* break; */
     }
     if (a != NULL)
         (*a) = ret;
