@@ -1403,8 +1403,6 @@ int main(int argc, char *argv[])
                     "Warning: For accurate timings, use more connections (e.g. -num 1000)\n");
     }
 
-/*      if (cipher == NULL) cipher=getenv("SSL_CIPHER"); */
-
 #ifndef OPENSSL_NO_COMP
     if (comp == COMP_ZLIB)
         cm = COMP_zlib();
@@ -1557,9 +1555,7 @@ int main(int argc, char *argv[])
         (!SSL_CTX_set_default_verify_paths(s_ctx2)) ||
         (!SSL_CTX_load_verify_locations(c_ctx, CAfile, CApath)) ||
         (!SSL_CTX_set_default_verify_paths(c_ctx))) {
-        /* fprintf(stderr,"SSL_load_verify_locations\n"); */
         ERR_print_errors(bio_err);
-        /* goto end; */
     }
 
 #ifndef OPENSSL_NO_CT
@@ -2721,22 +2717,12 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
             if (SSL_in_init(s_ssl))
                 printf("server waiting in SSL_accept - %s\n",
                        SSL_state_string_long(s_ssl));
-/*-
-            else if (s_write)
-                printf("server:SSL_write()\n");
-            else
-                printf("server:SSL_read()\n"); */
         }
 
         if (do_client && debug) {
             if (SSL_in_init(c_ssl))
                 printf("client waiting in SSL_connect - %s\n",
                        SSL_state_string_long(c_ssl));
-/*-
-            else if (c_write)
-                printf("client:SSL_write()\n");
-            else
-                printf("client:SSL_read()\n"); */
         }
 
         if (!do_client && !do_server) {
