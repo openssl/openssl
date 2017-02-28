@@ -33,7 +33,7 @@ extern "C" {
 /* Macros for start and end of ASN1_ITEM definition */
 
 #  define ASN1_ITEM_start(itname) \
-        OPENSSL_GLOBAL const ASN1_ITEM itname##_it = {
+        const ASN1_ITEM itname##_it = {
 
 #  define static_ASN1_ITEM_start(itname) \
         static const ASN1_ITEM itname##_it = {
