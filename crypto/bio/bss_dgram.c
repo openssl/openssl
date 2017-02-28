@@ -13,11 +13,8 @@
 #include "bio_lcl.h"
 #ifndef OPENSSL_NO_DGRAM
 
-# if !(defined(_WIN32) || defined(OPENSSL_SYS_VMS))
+# if !defined(_WIN32)
 #  include <sys/time.h>
-# endif
-# if defined(OPENSSL_SYS_VMS)
-#  include <sys/timeb.h>
 # endif
 
 # ifndef OPENSSL_NO_SCTP
@@ -1939,11 +1936,6 @@ static void get_current_time(struct timeval *t)
 #  endif
     t->tv_sec = (long)(now.ul / 10000000);
     t->tv_usec = ((int)(now.ul % 10000000)) / 10;
-# elif defined(OPENSSL_SYS_VMS)
-    struct timeb tb;
-    ftime(&tb);
-    t->tv_sec = (long)tb.time;
-    t->tv_usec = (long)tb.millitm * 1000;
 # else
     gettimeofday(t, NULL);
 # endif
