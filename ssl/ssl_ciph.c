@@ -388,9 +388,6 @@ void ssl_load_ciphers(void)
                 disabled_enc_mask |= t->mask;
         }
     }
-#ifdef SSL_FORBID_ENULL
-    disabled_enc_mask |= SSL_eNULL;
-#endif
     disabled_mac_mask = 0;
     for (i = 0, t = ssl_cipher_table_mac; i < SSL_MD_NUM_IDX; i++, t++) {
         const EVP_MD *md = EVP_get_digestbynid(t->nid);

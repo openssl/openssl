@@ -2752,12 +2752,6 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt, int *al)
     }
     EVP_PKEY_CTX_free(pctx);
     pctx = NULL;
-# ifdef PKCS1_CHECK
-    if (s->options & SSL_OP_PKCS1_CHECK_1)
-        (*p)[1]++;
-    if (s->options & SSL_OP_PKCS1_CHECK_2)
-        tmp_buf[0] = 0x70;
-# endif
 
     /* Fix buf for TLS and beyond */
     if (s->version > SSL3_VERSION && !WPACKET_close(pkt)) {
