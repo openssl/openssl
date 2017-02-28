@@ -16,7 +16,7 @@ IF[{- !$disabled{tests} -}]
           ectest ecdsatest ecdhtest gmdifftest pbelutest ideatest \
           md2test \
           hmactest \
-          rc2test rc5test \
+          rc2test rc4test rc5test \
           destest sha1test sha256t sha512t \
           mdc2test \
           randtest dhtest enginetest casttest \
