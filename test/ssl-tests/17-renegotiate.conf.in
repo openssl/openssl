@@ -13,6 +13,7 @@ use strict;
 use warnings;
 
 package ssltests;
+use OpenSSL::Test::Utils;
 
 our @tests = (
     {
@@ -106,7 +107,9 @@ our @tests = (
             "ResumptionExpected" => "No",
             "ExpectedResult" => "Success"
         }
-    },
+    }
+);
+our @tests_tls1_2 = (
     {
         name => "renegotiate-aead-to-non-aead",
         server => {
@@ -182,5 +185,7 @@ our @tests = (
             "ResumptionExpected" => "No",
             "ExpectedResult" => "Success"
         }
-    },
+    }
 );
+
+push @tests, @tests_tls1_2 unless disabled("tls1_2");
