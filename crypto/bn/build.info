@@ -65,14 +65,3 @@ INCLUDE[armv4-mont.o]=..
 GENERATE[armv4-gf2m.S]=asm/armv4-gf2m.pl $(PERLASM_SCHEME)
 INCLUDE[armv4-gf2m.o]=..
 GENERATE[armv8-mont.S]=asm/armv8-mont.pl $(PERLASM_SCHEME)
-
-OVERRIDES=pa-risc2W.o pa-risc2.c
-BEGINRAW[Makefile]
-# GNU assembler fails to compile PA-RISC2 modules, insist on calling
-# vendor assembler...
-{- $builddir -}/pa-risc2W.o: {- $sourcedir -}/asm/pa-risc2W.s
-	CC="$(CC)" $(PERL) $(SRCDIR)/util/fipsas.pl $(SRCDIR) $< /usr/ccs/bin/as -o pa-risc2W.o {- $sourcedir -}/asm/pa-risc2W.s
-{- $builddir -}/pa-risc2.o: {- $sourcedir -}/asm/pa-risc2.s
-	CC="$(CC)" $(PERL) $(SRCDIR)/util/fipsas.pl $(SRCDIR) $< /usr/ccs/bin/as -o pa-risc2.o {- $sourcedir -}/asm/pa-risc2.s
-
-ENDRAW[Makefile]
