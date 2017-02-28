@@ -254,8 +254,6 @@ bytes.
 
 =head1 BUGS
 
-DES_3cbc_encrypt() is flawed and must not be used in applications.
-
 DES_cbc_encrypt() does not modify B<ivec>; use DES_ncbc_encrypt()
 instead.
 
