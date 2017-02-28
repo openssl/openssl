@@ -52,8 +52,8 @@ static CRYPTO_RWLOCK *sec_malloc_lock = NULL;
  * These are the functions that must be implemented by a secure heap (sh).
  */
 static int sh_init(size_t size, int minsize);
-static char *sh_malloc(size_t size);
-static void sh_free(char *ptr);
+static void *sh_malloc(size_t size);
+static void sh_free(void *ptr);
 static void sh_done(void);
 static size_t sh_actual_size(char *ptr);
 static int sh_allocated(const char *ptr);
@@ -476,7 +476,7 @@ static char *sh_find_my_buddy(char *ptr, int list)
     return chunk;
 }
 
-static char *sh_malloc(size_t size)
+static void *sh_malloc(size_t size)
 {
     ossl_ssize_t list, slist;
     size_t i;
@@ -535,7 +535,7 @@ static char *sh_malloc(size_t size)
     return chunk;
 }
 
-static void sh_free(char *ptr)
+static void sh_free(void *ptr)
 {
     size_t list;
     char *buddy;
