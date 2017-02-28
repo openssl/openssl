@@ -1055,19 +1055,10 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     }
 
     /* record length after mac and block padding */
-    /*
-     * if (type == SSL3_RT_APPLICATION_DATA || (type == SSL3_RT_ALERT && !
-     * SSL_in_init(s)))
-     */
 
     /* there's only one epoch between handshake and app data */
 
     s2n(s->rlayer.d->w_epoch, pseq);
-
-    /* XDTLS: ?? */
-    /*
-     * else s2n(s->d1->handshake_epoch, pseq);
-     */
 
     memcpy(pseq, &(s->rlayer.write_sequence[2]), 6);
     pseq += 6;
