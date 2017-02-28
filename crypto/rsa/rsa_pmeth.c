@@ -553,9 +553,10 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 #ifndef OPENSSL_NO_CMS
     case EVP_PKEY_CTRL_CMS_DECRYPT:
     case EVP_PKEY_CTRL_CMS_ENCRYPT:
+#endif
     if (!pkey_ctx_is_pss(ctx))
         return 1;
-#endif
+    /* fall through */
     case EVP_PKEY_CTRL_PEER_KEY:
         RSAerr(RSA_F_PKEY_RSA_CTRL,
                RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
