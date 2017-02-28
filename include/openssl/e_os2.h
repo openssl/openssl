@@ -147,7 +147,6 @@ extern "C" {
 # endif
 
 /*-
- * OPENSSL_GLOBAL had some meaning for VAX C, which isn't supported any more.
  * OPENSSL_EXTERN is normally used to declare a symbol with possible extra
  * attributes to handle its presence in a shared library.
  * OPENSSL_EXPORT is used to define a symbol with extra possible attributes
@@ -162,18 +161,16 @@ extern "C" {
  * # define OPENSSL_EXTERN OPENSSL_EXPORT
  * #endif
  *
- * The default is to have OPENSSL_EXPORT, OPENSSL_EXTERN and OPENSSL_GLOBAL
+ * The default is to have OPENSSL_EXPORT and OPENSSL_EXTERN
  * have some generally sensible values.
  */
 
 # if defined(OPENSSL_SYS_WINDOWS) && defined(OPENSSL_OPT_WINDLL)
 #  define OPENSSL_EXPORT extern __declspec(dllexport)
 #  define OPENSSL_EXTERN extern __declspec(dllimport)
-#  define OPENSSL_GLOBAL
 # else
 #  define OPENSSL_EXPORT extern
 #  define OPENSSL_EXTERN extern
-#  define OPENSSL_GLOBAL
 # endif
 
 /*-
@@ -194,7 +191,7 @@ extern "C" {
 #  define OPENSSL_DECLARE_GLOBAL(type,name) type *_shadow_##name(void)
 #  define OPENSSL_GLOBAL_REF(name) (*(_shadow_##name()))
 # else
-#  define OPENSSL_IMPLEMENT_GLOBAL(type,name,value) OPENSSL_GLOBAL type _shadow_##name=value;
+#  define OPENSSL_IMPLEMENT_GLOBAL(type,name,value) type _shadow_##name=value;
 #  define OPENSSL_DECLARE_GLOBAL(type,name) OPENSSL_EXPORT type _shadow_##name
 #  define OPENSSL_GLOBAL_REF(name) _shadow_##name
 # endif
