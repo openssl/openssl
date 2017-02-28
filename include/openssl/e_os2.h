@@ -147,14 +147,15 @@ extern "C" {
 # endif
 
 /*-
- * Definitions of OPENSSL_GLOBAL and OPENSSL_EXTERN, to define and declare
- * certain global symbols that, with some compilers under VMS, have to be
- * defined and declared explicitly with globaldef and globalref.
- * Definitions of OPENSSL_EXPORT and OPENSSL_IMPORT, to define and declare
- * DLL exports and imports for compilers under Win32.  These are a little
- * more complicated to use.  Basically, for any library that exports some
- * global variables, the following code must be present in the header file
- * that declares them, before OPENSSL_EXTERN is used:
+ * OPENSSL_GLOBAL had some meaning for VAX C, which isn't supported any more.
+ * OPENSSL_EXTERN is normally used to declare a symbol with possible extra
+ * attributes to handle its presence in a shared library.
+ * OPENSSL_EXPORT is used to define a symbol with extra possible attributes
+ * to make it visible in a shared library.
+ * Care needs to be taken when a header file is used both to declare and
+ * define symbols.  Basically, for any library that exports some global
+ * variables, the following code must be present in the header file that
+ * declares them, before OPENSSL_EXTERN is used:
  *
  * #ifdef SOME_BUILD_FLAG_MACRO
  * # undef OPENSSL_EXTERN
@@ -165,11 +166,7 @@ extern "C" {
  * have some generally sensible values.
  */
 
-# if defined(OPENSSL_SYS_VMS_NODECC)
-#  define OPENSSL_EXPORT globalref
-#  define OPENSSL_EXTERN globalref
-#  define OPENSSL_GLOBAL globaldef
-# elif defined(OPENSSL_SYS_WINDOWS) && defined(OPENSSL_OPT_WINDLL)
+# if defined(OPENSSL_SYS_WINDOWS) && defined(OPENSSL_OPT_WINDLL)
 #  define OPENSSL_EXPORT extern __declspec(dllexport)
 #  define OPENSSL_EXTERN extern __declspec(dllimport)
 #  define OPENSSL_GLOBAL
