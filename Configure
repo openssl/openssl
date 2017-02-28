@@ -302,7 +302,6 @@ $config{openssldir}="";
 $config{processor}="";
 $config{libdir}="";
 $config{cross_compile_prefix}="";
-$config{baseaddr}="0xFB00000";
 my $auto_threads=1;    # enable threads automatically? true by default
 my $default_ranlib;
 
@@ -729,10 +728,6 @@ while (@argvcopy)
 		elsif (/^--with-fuzzer-include=(.*)$/)
 			{
 			$withargs{fuzzer_include}=$1;
-			}
-		elsif (/^--with-baseaddr=(.*)$/)
-			{
-			$config{baseaddr}="$1";
 			}
 		elsif (/^--cross-compile-prefix=(.*)$/)
 			{
