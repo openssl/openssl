@@ -78,11 +78,6 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     memcpy(db + emlen - flen - mdlen, from, (unsigned int)flen);
     if (RAND_bytes(seed, mdlen) <= 0)
         return 0;
-#ifdef PKCS_TESTVECT
-    memcpy(seed,
-           "\xaa\xfd\x12\xf6\x59\xca\xe6\x34\x89\xb4\x79\xe5\x07\x6d\xde\xc2\xf0\x6c\xb5\x8f",
-           20);
-#endif
 
     dbmask = OPENSSL_malloc(emlen - mdlen);
     if (dbmask == NULL) {

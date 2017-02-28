@@ -599,14 +599,6 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
              * fragmented--don't always expect dest_maxlen bytes
              */
             if (SSL3_RECORD_get_length(rr) < dest_maxlen) {
-#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
-                /*
-                 * for normal alerts rr->length is 2, while
-                 * dest_maxlen is 7 if we were to handle this
-                 * non-existing alert...
-                 */
-                FIX ME;
-#endif
                 s->rlayer.rstate = SSL_ST_READ_HEADER;
                 SSL3_RECORD_set_length(rr, 0);
                 goto start;
@@ -678,34 +670,6 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 s->shutdown |= SSL_RECEIVED_SHUTDOWN;
                 return 0;
             }
-#if 0
-            /* XXX: this is a possible improvement in the future */
-            /* now check if it's a missing record */
-            if (alert_descr == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE) {
-                unsigned short seq;
-                unsigned int frag_off;
-                unsigned char *p = &(s->rlayer.d->alert_fragment[2]);
-
-                n2s(p, seq);
-                n2l3(p, frag_off);
-
-                dtls1_retransmit_message(s,
-                                         dtls1_get_queue_priority
-                                         (frag->msg_header.seq, 0), frag_off,
-                                         &found);
-                if (!found && SSL_in_init(s)) {
-                    /*
-                     * fprintf( stderr,"in init = %d\n", SSL_in_init(s));
-                     */
-                    /*
-                     * requested a message not yet sent, send an alert
-                     * ourselves
-                     */
-                    ssl3_send_alert(s, SSL3_AL_WARNING,
-                                    DTLS1_AD_MISSING_HANDSHAKE_MESSAGE);
-                }
-            }
-#endif
         } else if (alert_level == SSL3_AL_FATAL) {
             char tmp[16];
 

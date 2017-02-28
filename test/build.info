@@ -47,7 +47,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[bntest]=../libcrypto
 
   SOURCE[ectest]=ectest.c
-  INCLUDE[ectest]=../include
+  INCLUDE[ectest]=.. ../include
   DEPEND[ectest]=../libcrypto
 
   SOURCE[ecdsatest]=ecdsatest.c

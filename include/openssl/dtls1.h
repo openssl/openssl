@@ -37,12 +37,7 @@ extern "C" {
 
 # define DTLS1_CCS_HEADER_LENGTH                  1
 
-# ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
-#  define DTLS1_AL_HEADER_LENGTH                   7
-# else
-#  define DTLS1_AL_HEADER_LENGTH                   2
-# endif
-
+# define DTLS1_AL_HEADER_LENGTH                   2
 
 /* Timeout multipliers (timeout slice is defined in apps/timeouts.h */
 # define DTLS1_TMO_READ_COUNT                      2
