@@ -6,6 +6,11 @@
 
   *)
 
+  *) Remove the VMS-specific reimplementation of gmtime from crypto/o_times.c.
+     VMS C's RTL has a fully up to date gmtime() and gmtime_r() since V7.1,
+     which is the minimum version we support.
+     [Richard Levitte]
+
  Changes between 1.1.0d and 1.1.0e [16 Feb 2017]
 
   *) Encrypt-Then-Mac renegotiation crash
