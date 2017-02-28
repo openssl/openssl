@@ -28,11 +28,7 @@
 
 #ifndef W_OK
 # ifdef OPENSSL_SYS_VMS
-#  if defined(__DECC)
-#   include <unistd.h>
-#  else
-#   include <unixlib.h>
-#  endif
+#  include <unistd.h>
 # elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS)
 #  include <sys/file.h>
 # endif
