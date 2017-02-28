@@ -477,6 +477,7 @@ end:
 }
 #endif
 
+#ifndef OPENSSL_NO_TLS1_2
 static int full_early_callback(SSL *s, int *al, void *arg)
 {
     int *ctr = arg;
@@ -559,6 +560,7 @@ end:
 
     return testresult;
 }
+#endif
 
 static int execute_test_large_message(const SSL_METHOD *smeth,
                                       const SSL_METHOD *cmeth, int read_ahead)
@@ -1568,7 +1570,9 @@ int test_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_TLS1_3
     ADD_TEST(test_keylog_no_master_key);
 #endif
+#ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_early_cb);
+#endif
 
     testresult = run_tests(argv[0]);
 
