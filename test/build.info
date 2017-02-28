@@ -14,15 +14,15 @@ IF[{- !$disabled{tests} -}]
           aborttest \
           sanitytest bntest \
           ectest ecdsatest ecdhtest gmdifftest pbelutest ideatest \
-          md2test md4test md5test \
+          md2test \
           hmactest \
-          rc2test rc4test rc5test \
+          rc2test rc5test \
           destest sha1test sha256t sha512t \
-          mdc2test rmdtest \
+          mdc2test \
           randtest dhtest enginetest casttest \
           bftest ssltest_old dsatest exptest rsa_test \
           evp_test evp_extra_test igetest v3nametest v3ext \
-          crltest danetest p5_crpt2_test bad_dtls_test \
+          crltest danetest bad_dtls_test \
           constant_time_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
@@ -70,21 +70,9 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[md2test]=../include
   DEPEND[md2test]=../libcrypto
 
-  SOURCE[md4test]=md4test.c
-  INCLUDE[md4test]=../include
-  DEPEND[md4test]=../libcrypto
-
-  SOURCE[md5test]=md5test.c
-  INCLUDE[md5test]=../include
-  DEPEND[md5test]=../libcrypto
-
   SOURCE[hmactest]=hmactest.c
   INCLUDE[hmactest]=../include
   DEPEND[hmactest]=../libcrypto
-
-  SOURCE[wp_test]=wp_test.c
-  INCLUDE[wp_test]=../include
-  DEPEND[wp_test]=../libcrypto
 
   SOURCE[rc2test]=rc2test.c
   INCLUDE[rc2test]=../include
@@ -117,10 +105,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[mdc2test]=mdc2test.c
   INCLUDE[mdc2test]=../include
   DEPEND[mdc2test]=../libcrypto
-
-  SOURCE[rmdtest]=rmdtest.c
-  INCLUDE[rmdtest]=../include
-  DEPEND[rmdtest]=../libcrypto
 
   SOURCE[randtest]=randtest.c
   INCLUDE[randtest]=../include
@@ -185,10 +169,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[danetest]=danetest.c
   INCLUDE[danetest]=../include
   DEPEND[danetest]=../libcrypto ../libssl
-
-  SOURCE[p5_crpt2_test]=p5_crpt2_test.c
-  INCLUDE[p5_crpt2_test]=../include
-  DEPEND[p5_crpt2_test]=../libcrypto
 
   SOURCE[constant_time_test]=constant_time_test.c
   INCLUDE[constant_time_test]=.. ../include
