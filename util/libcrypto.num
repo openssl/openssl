@@ -153,7 +153,7 @@ ENGINE_get_ctrl_function                153	1_1_0	EXIST::FUNCTION:ENGINE
 X509_REVOKED_get_ext_count              154	1_1_0	EXIST::FUNCTION:
 BN_is_prime_fasttest_ex                 155	1_1_0	EXIST::FUNCTION:
 ERR_load_PKCS12_strings                 156	1_1_0	EXIST::FUNCTION:
-EVP_sha384                              157	1_1_0	EXIST:!VMSVAX:FUNCTION:
+EVP_sha384                              157	1_1_0	EXIST::FUNCTION:
 i2d_DHparams                            158	1_1_0	EXIST::FUNCTION:DH
 TS_VERIFY_CTX_set_store                 159	1_1_0	EXIST::FUNCTION:TS
 PKCS12_verify_mac                       160	1_1_0	EXIST::FUNCTION:
@@ -1420,7 +1420,7 @@ EVP_MD_meth_get_cleanup                 1408	1_1_0	EXIST::FUNCTION:
 SRP_Calc_server_key                     1409	1_1_0	EXIST::FUNCTION:SRP
 BN_mod_exp_simple                       1410	1_1_0	EXIST::FUNCTION:
 BIO_set_ex_data                         1411	1_1_0	EXIST::FUNCTION:
-SHA512                                  1412	1_1_0	EXIST:!VMSVAX:FUNCTION:
+SHA512                                  1412	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get_explicit_policy      1413	1_1_0	EXIST::FUNCTION:
 EVP_DecodeBlock                         1414	1_1_0	EXIST::FUNCTION:
 OCSP_REQ_CTX_http                       1415	1_1_0	EXIST::FUNCTION:OCSP
@@ -1487,7 +1487,7 @@ X509V3_section_free                     1474	1_1_0	EXIST::FUNCTION:
 CRYPTO_mem_debug_free                   1475	1_1_0	EXIST::FUNCTION:CRYPTO_MDEBUG
 d2i_OCSP_REQUEST                        1476	1_1_0	EXIST::FUNCTION:OCSP
 ENGINE_get_cipher_engine                1477	1_1_0	EXIST::FUNCTION:ENGINE
-SHA384_Final                            1478	1_1_0	EXIST:!VMSVAX:FUNCTION:
+SHA384_Final                            1478	1_1_0	EXIST::FUNCTION:
 TS_RESP_CTX_set_certs                   1479	1_1_0	EXIST::FUNCTION:TS
 BN_MONT_CTX_free                        1480	1_1_0	EXIST::FUNCTION:
 BN_GF2m_mod_solve_quad_arr              1481	1_1_0	EXIST::FUNCTION:EC2M
@@ -2829,7 +2829,7 @@ CMS_RecipientInfo_encrypt               2786	1_1_0	EXIST::FUNCTION:CMS
 X509_get_pubkey_parameters              2787	1_1_0	EXIST::FUNCTION:
 PKCS12_setup_mac                        2788	1_1_0	EXIST::FUNCTION:
 PEM_read_bio_PKCS7                      2789	1_1_0	EXIST::FUNCTION:
-SHA512_Final                            2790	1_1_0	EXIST:!VMSVAX:FUNCTION:
+SHA512_Final                            2790	1_1_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_host             2791	1_1_0	EXIST::FUNCTION:
 OCSP_resp_find_status                   2792	1_1_0	EXIST::FUNCTION:OCSP
 d2i_ASN1_T61STRING                      2793	1_1_0	EXIST::FUNCTION:
@@ -3010,7 +3010,7 @@ EC_curve_nid2nist                       2964	1_1_0	EXIST::FUNCTION:EC
 ENGINE_get_finish_function              2965	1_1_0	EXIST::FUNCTION:ENGINE
 EC_POINT_add                            2966	1_1_0	EXIST::FUNCTION:EC
 EC_KEY_oct2key                          2967	1_1_0	EXIST::FUNCTION:EC
-SHA384_Init                             2968	1_1_0	EXIST:!VMSVAX:FUNCTION:
+SHA384_Init                             2968	1_1_0	EXIST::FUNCTION:
 ASN1_UNIVERSALSTRING_new                2969	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_print_private                  2970	1_1_0	EXIST::FUNCTION:
 ASN1_INTEGER_new                        2971	1_1_0	EXIST::FUNCTION:
@@ -3038,7 +3038,7 @@ EC_GROUP_set_asn1_flag                  2991	1_1_0	EXIST::FUNCTION:EC
 EVP_PKEY_new                            2992	1_1_0	EXIST::FUNCTION:
 i2d_POLICYINFO                          2993	1_1_0	EXIST::FUNCTION:
 BN_get_flags                            2994	1_1_0	EXIST::FUNCTION:
-SHA384                                  2995	1_1_0	EXIST:!VMSVAX:FUNCTION:
+SHA384                                  2995	1_1_0	EXIST::FUNCTION:
 NCONF_get_string                        2996	1_1_0	EXIST::FUNCTION:
 d2i_PROXY_CERT_INFO_EXTENSION           2997	1_1_0	EXIST::FUNCTION:
 EC_POINT_point2buf                      2998	1_1_0	EXIST::FUNCTION:EC
@@ -3093,7 +3093,7 @@ i2d_X509_PUBKEY                         3045	1_1_0	EXIST::FUNCTION:
 EVP_DecryptUpdate                       3046	1_1_0	EXIST::FUNCTION:
 CAST_cbc_encrypt                        3047	1_1_0	EXIST::FUNCTION:CAST
 BN_BLINDING_invert                      3048	1_1_0	EXIST::FUNCTION:
-SHA512_Update                           3049	1_1_0	EXIST:!VMSVAX:FUNCTION:
+SHA512_Update                           3049	1_1_0	EXIST::FUNCTION:
 ESS_ISSUER_SERIAL_new                   3050	1_1_0	EXIST::FUNCTION:TS
 PKCS12_SAFEBAG_get0_pkcs8               3051	1_1_0	EXIST::FUNCTION:
 X509_get_ext_by_NID                     3052	1_1_0	EXIST::FUNCTION:
@@ -3337,7 +3337,7 @@ d2i_DIST_POINT                          3289	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_free                       3290	1_1_0	EXIST::FUNCTION:
 PBEPARAM_free                           3291	1_1_0	EXIST::FUNCTION:
 NETSCAPE_SPKI_set_pubkey                3292	1_1_0	EXIST::FUNCTION:
-EVP_sha512                              3293	1_1_0	EXIST:!VMSVAX:FUNCTION:
+EVP_sha512                              3293	1_1_0	EXIST::FUNCTION:
 X509_CRL_match                          3294	1_1_0	EXIST::FUNCTION:
 i2s_ASN1_IA5STRING                      3295	1_1_0	EXIST::FUNCTION:
 EC_KEY_get_default_method               3296	1_1_0	EXIST::FUNCTION:EC
@@ -3444,7 +3444,7 @@ d2i_PKCS8_PRIV_KEY_INFO_fp              3395	1_1_0	EXIST::FUNCTION:STDIO
 X509_OBJECT_retrieve_match              3396	1_1_0	EXIST::FUNCTION:
 EVP_aes_128_ctr                         3397	1_1_0	EXIST::FUNCTION:
 EVP_PBE_find                            3398	1_1_0	EXIST::FUNCTION:
-SHA512_Transform                        3399	1_1_0	EXIST:!VMSVAX:FUNCTION:
+SHA512_Transform                        3399	1_1_0	EXIST::FUNCTION:
 ERR_add_error_vdata                     3400	1_1_0	EXIST::FUNCTION:
 OCSP_REQUEST_get_ext                    3401	1_1_0	EXIST::FUNCTION:OCSP
 NETSCAPE_SPKAC_new                      3402	1_1_0	EXIST::FUNCTION:
@@ -3676,7 +3676,7 @@ PKCS5_pbe_set                           3631	1_1_0	EXIST::FUNCTION:
 TS_RESP_CTX_free                        3632	1_1_0	EXIST::FUNCTION:TS
 d2i_PUBKEY                              3633	1_1_0	EXIST::FUNCTION:
 ASYNC_cleanup_thread                    3634	1_1_0	EXIST::FUNCTION:
-SHA384_Update                           3635	1_1_0	EXIST:!VMSVAX:FUNCTION:
+SHA384_Update                           3635	1_1_0	EXIST::FUNCTION:
 CRYPTO_cfb128_1_encrypt                 3636	1_1_0	EXIST::FUNCTION:
 BIO_set_cipher                          3637	1_1_0	EXIST::FUNCTION:
 PEM_read_PUBKEY                         3638	1_1_0	EXIST::FUNCTION:STDIO
@@ -3951,7 +3951,7 @@ CRL_DIST_POINTS_free                    3899	1_1_0	EXIST::FUNCTION:
 d2i_OCSP_SINGLERESP                     3900	1_1_0	EXIST::FUNCTION:OCSP
 EVP_CIPHER_CTX_num                      3901	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_verify_recover_init            3902	1_1_0	EXIST::FUNCTION:
-SHA512_Init                             3903	1_1_0	EXIST:!VMSVAX:FUNCTION:
+SHA512_Init                             3903	1_1_0	EXIST::FUNCTION:
 TS_MSG_IMPRINT_set_msg                  3904	1_1_0	EXIST::FUNCTION:TS
 CMS_unsigned_add1_attr                  3905	1_1_0	EXIST::FUNCTION:CMS
 OPENSSL_LH_doall                        3906	1_1_0	EXIST::FUNCTION:
