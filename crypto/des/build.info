@@ -5,7 +5,7 @@ SOURCE[../../libcrypto]=\
         ofb64ede.c ofb64enc.c ofb_enc.c \
         str2key.c  pcbc_enc.c qud_cksm.c rand_key.c \
         {- $target{des_asm_src} -} \
-        fcrypt.c xcbc_enc.c rpc_enc.c  cbc_cksm.c
+        fcrypt.c xcbc_enc.c cbc_cksm.c
 
 GENERATE[des_enc-sparc.S]=asm/des_enc.m4
 GENERATE[dest4-sparcv9.S]=asm/dest4-sparcv9.pl $(PERLASM_SCHEME)
