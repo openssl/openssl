@@ -292,11 +292,7 @@ int main(int argc, char *argv[])
         } else if (memcmp(ctext, ctext_ex, num) == 0)
             printf("OAEP test vector %d passed!\n", v);
 
-        /*
-         * Different ciphertexts (rsa_oaep.c without -DPKCS_TESTVECT). Try
-         * decrypting ctext_ex
-         */
-
+        /* Different ciphertexts. Try decrypting ctext_ex */
         num = RSA_private_decrypt(clen, ctext_ex, ptext, key,
                                   RSA_PKCS1_OAEP_PADDING);
 

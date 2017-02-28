@@ -167,22 +167,6 @@ void OPENSSL_showfatal(const char *fmta, ...)
     va_list ap;
     TCHAR buf[256];
     const TCHAR *fmt;
-# ifdef STD_ERROR_HANDLE        /* what a dirty trick! */
-    HANDLE h;
-
-    if ((h = GetStdHandle(STD_ERROR_HANDLE)) != NULL &&
-        GetFileType(h) != FILE_TYPE_UNKNOWN) {
-        /* must be console application */
-        int len;
-        DWORD out;
-
-        va_start(ap, fmta);
-        len = _vsnprintf((char *)buf, sizeof(buf), fmta, ap);
-        WriteFile(h, buf, len < 0 ? sizeof(buf) : (DWORD) len, &out, NULL);
-        va_end(ap);
-        return;
-    }
-# endif
 
     if (sizeof(TCHAR) == sizeof(char))
         fmt = (const TCHAR *)fmta;
