@@ -17,9 +17,6 @@
 static int b64_write(BIO *h, const char *buf, int num);
 static int b64_read(BIO *h, char *buf, int size);
 static int b64_puts(BIO *h, const char *str);
-/*
- * static int b64_gets(BIO *h, char *str, int size);
- */
 static long b64_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int b64_new(BIO *h);
 static int b64_free(BIO *data);

@@ -499,7 +499,6 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n,
         bn_sub_part_words(&(t[n]), b, &(b[n]), tnb, n - tnb); /* - */
         break;
     case -3:
-        /* break; */
     case -2:
         bn_sub_part_words(t, &(a[n]), a, tna, tna - n); /* - */
         bn_sub_part_words(&(t[n]), &(b[n]), b, tnb, tnb - n); /* + */
@@ -508,14 +507,12 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n,
     case -1:
     case 0:
     case 1:
-        /* break; */
     case 2:
         bn_sub_part_words(t, a, &(a[n]), tna, n - tna); /* + */
         bn_sub_part_words(&(t[n]), b, &(b[n]), tnb, n - tnb); /* - */
         neg = 1;
         break;
     case 3:
-        /* break; */
     case 4:
         bn_sub_part_words(t, a, &(a[n]), tna, n - tna);
         bn_sub_part_words(&(t[n]), &(b[n]), b, tnb, tnb - n);
