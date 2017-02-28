@@ -109,11 +109,6 @@ void DTLS_RECORD_LAYER_set_saved_w_epoch(RECORD_LAYER *rl, unsigned short e)
     rl->d->w_epoch = e;
 }
 
-void DTLS_RECORD_LAYER_resync_write(RECORD_LAYER *rl)
-{
-    memcpy(rl->write_sequence, rl->read_sequence, sizeof(rl->write_sequence));
-}
-
 void DTLS_RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, unsigned char *seq)
 {
     memcpy(rl->write_sequence, seq, SEQ_NUM_SIZE);

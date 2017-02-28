@@ -88,23 +88,6 @@ int RECORD_LAYER_write_pending(const RECORD_LAYER *rl)
         && SSL3_BUFFER_get_left(&rl->wbuf[rl->numwpipes - 1]) != 0;
 }
 
-int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf,
-                          size_t len)
-{
-    rl->packet_length = len;
-    if (len != 0) {
-        rl->rstate = SSL_ST_READ_HEADER;
-        if (!SSL3_BUFFER_is_initialised(&rl->rbuf))
-            if (!ssl3_setup_read_buffer(rl->s))
-                return 0;
-    }
-
-    rl->packet = SSL3_BUFFER_get_buf(&rl->rbuf);
-    SSL3_BUFFER_set_data(&rl->rbuf, buf, len);
-
-    return 1;
-}
-
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl)
 {
     memset(rl->read_sequence, 0, sizeof(rl->read_sequence));
