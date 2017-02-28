@@ -103,7 +103,7 @@ CALC_VERSIONS=	\
 LINK_APP=	\
   ( $(SET_X);   \
     LIBDEPS="$${LIBDEPS:-$(LIBDEPS)}"; \
-    LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$${LDFLAGS:-$(CFLAGS) $(LDFLAGS)}"; \
+    LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$${LDFLAGS:-$(LDFLAGS)}"; \
     LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t' -e d | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     echo LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
@@ -115,7 +115,7 @@ LINK_SO=	\
   ( $(SET_X);   \
     LIBDEPS="$${LIBDEPS:-$(LIBDEPS)}"; \
     SHAREDCMD="$${SHAREDCMD:-$(CC)}"; \
-    SHAREDFLAGS="$${SHAREDFLAGS:-$(CFLAGS) $(SHARED_LDFLAGS)}"; \
+    SHAREDFLAGS="$${SHAREDFLAGS:-$(SHARED_LDFLAGS)}"; \
     LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t' -e d | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     echo LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
@@ -164,7 +164,7 @@ LINK_SO_SHLIB_UNPACKED=	\
 DETECT_GNU_LD=($(CC) -Wl,-V /dev/null 2>&1 | grep '^GNU ld' )>/dev/null
 
 DO_GNU_SO_COMMON=\
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"
+	SHAREDFLAGS="$(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"
 DO_GNU_DSO=\
 	SHLIB=$(LIBNAME).so; \
 	SHLIB_SOVER=; \
@@ -176,7 +176,7 @@ DO_GNU_SO=\
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	$(DO_GNU_SO_COMMON)
-DO_GNU_APP=LDFLAGS="$(CFLAGS) $(LDFLAGS)"
+DO_GNU_APP=LDFLAGS="$(LDFLAGS)"
 
 #This is rather special.  It's a special target with which one can link
 #applications without bothering with any features that have anything to
@@ -206,7 +206,7 @@ link_dso.bsd:
 	LIBDEPS=" "; \
 	ALLSYMSFLAGS=; \
 	NOALLSYMSFLAGS=; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -nostdlib"; \
+	SHAREDFLAGS="$(SHARED_LDFLAGS) -shared -nostdlib"; \
 	fi; $(LINK_SO_DSO)
 link_shlib.bsd:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_SO); else \
@@ -216,11 +216,11 @@ link_shlib.bsd:
 	LIBDEPS=" "; \
 	ALLSYMSFLAGS="-Wl,-Bforcearchive"; \
 	NOALLSYMSFLAGS=; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -nostdlib"; \
+	SHAREDFLAGS="$(SHARED_LDFLAGS) -shared -nostdlib"; \
 	fi; $(LINK_SO_SHLIB)
 link_app.bsd:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_APP); else \
-	LDFLAGS="$(CFLAGS) $(LDFLAGS)"; \
+	LDFLAGS="$(LDFLAGS)"; \
 	fi; $(LINK_APP)
 
 # For Darwin AKA Mac OS/X (dyld)
@@ -245,7 +245,7 @@ link_dso.darwin:
 	SHLIB_SUFFIX=.dylib; \
 	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS="$(CFLAGS) `echo $(SHARED_LDFLAGS) | sed s/dynamiclib/bundle/`"; \
+	SHAREDFLAGS="`echo $(SHARED_LDFLAGS) | sed s/dynamiclib/bundle/`"; \
 	$(LINK_SO_DSO)
 link_shlib.darwin:
 	@ $(CALC_VERSIONS); \
@@ -253,7 +253,7 @@ link_shlib.darwin:
 	SHLIB_SUFFIX=.dylib; \
 	ALLSYMSFLAGS='-all_load'; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS)"; \
+	SHAREDFLAGS="$(SHARED_LDFLAGS)"; \
 	if [ -n "$(LIBVERSION)" ]; then \
 		SHAREDFLAGS="$$SHAREDFLAGS -current_version $(LIBVERSION)"; \
 	fi; \
@@ -271,7 +271,7 @@ link_dso.cygwin:
 	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
 	base=-Wl,--enable-auto-image-base; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-Bsymbolic"; \
+	SHAREDFLAGS="$(SHARED_LDFLAGS) -shared $$base -Wl,-Bsymbolic"; \
 	$(LINK_SO_DSO)
 link_shlib.cygwin:
 	@ $(CALC_VERSIONS); \
@@ -284,7 +284,7 @@ link_shlib.cygwin:
 		$(RC) $(SHARED_RCFLAGS) -o rc.o; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,--enable-auto-image-base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a rc.o"; \
+	SHAREDFLAGS="$(SHARED_LDFLAGS) -shared -Wl,--enable-auto-image-base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a rc.o"; \
 	$(LINK_SO_SHLIB) || exit 1; \
 	rm rc.o
 link_app.cygwin:
@@ -312,7 +312,7 @@ link_shlib.mingw:
 		$(RC) $(SHARED_RCFLAGS) -o rc.o; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a $(LIBNAME).def rc.o"; \
+	SHAREDFLAGS="$(SHARED_LDFLAGS) -shared $$base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a $(LIBNAME).def rc.o"; \
 	$(LINK_SO_SHLIB) || exit 1; \
 	rm $(LIBNAME).def rc.o
 
@@ -324,7 +324,7 @@ link_dso.alpha-osf1:
 		SHLIB_SUFFIX=; \
 		ALLSYMSFLAGS=''; \
 		NOALLSYMSFLAGS=''; \
-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-B,symbolic"; \
+		SHAREDFLAGS="$(SHARED_LDFLAGS) -shared -Wl,-B,symbolic"; \
 	fi; \
 	$(LINK_SO_DSO)
 link_shlib.alpha-osf1:
@@ -342,7 +342,7 @@ link_shlib.alpha-osf1:
 		SHLIB_SOVER=; \
 		ALLSYMSFLAGS='-all'; \
 		NOALLSYMSFLAGS='-none'; \
-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-B,symbolic"; \
+		SHAREDFLAGS="$(SHARED_LDFLAGS) -shared -Wl,-B,symbolic"; \
 		if [ -n "$$SHLIB_HIST" ]; then \
 			SHAREDFLAGS="$$SHAREDFLAGS -set_version $$SHLIB_HIST"; \
 		fi; \
@@ -352,7 +352,7 @@ link_app.alpha-osf1:
 	@if $(DETECT_GNU_LD); then \
 		$(DO_GNU_APP); \
 	else \
-		LDFLAGS="$(CFLAGS) $(LDFLAGS)"; \
+		LDFLAGS="$(LDFLAGS)"; \
 	fi; \
 	$(LINK_APP)
 
@@ -365,7 +365,7 @@ link_dso.solaris:
 		SHLIB_SUFFIX=; \
 		ALLSYMSFLAGS=""; \
 		NOALLSYMSFLAGS=""; \
-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
+		SHAREDFLAGS="$(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
 	fi; \
 	$(LINK_SO_DSO)
 link_shlib.solaris:
@@ -378,14 +378,14 @@ link_shlib.solaris:
 		$(PERL) $(SRCDIR)/util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
 		ALLSYMSFLAGS="-Wl,-z,allextract,-M,$(LIBNAME).map"; \
 		NOALLSYMSFLAGS="-Wl,-z,defaultextract"; \
-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
+		SHAREDFLAGS="$(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
 	fi; \
 	$(LINK_SO_SHLIB)
 link_app.solaris:
 	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_APP); \
 	else \
-		LDFLAGS="$(CFLAGS) $(LDFLAGS)"; \
+		LDFLAGS="$(LDFLAGS)"; \
 	fi; \
 	$(LINK_APP)
 
@@ -458,7 +458,7 @@ link_dso.irix:
 		SHLIB_SUFFIX=; \
 		ALLSYMSFLAGS=""; \
 		NOALLSYMSFLAGS=""; \
-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-soname,$$SHLIB$$SHLIB_SUFFIX,-B,symbolic"; \
+		SHAREDFLAGS="$(SHARED_LDFLAGS) -shared -Wl,-soname,$$SHLIB$$SHLIB_SUFFIX,-B,symbolic"; \
 	fi; \
 	$(LINK_SO_DSO)
 link_shlib.irix:
@@ -472,11 +472,11 @@ link_shlib.irix:
 		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL="-Wl,"; \
 		ALLSYMSFLAGS="$${MINUSWL}-all"; \
 		NOALLSYMSFLAGS="$${MINUSWL}-none"; \
-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,-B,symbolic"; \
+		SHAREDFLAGS="$(SHARED_LDFLAGS) -shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,-B,symbolic"; \
 	fi; \
 	$(LINK_SO_SHLIB)
 link_app.irix:
-	@LDFLAGS="$(CFLAGS) $(LDFLAGS)"; \
+	@LDFLAGS="$(LDFLAGS)"; \
 	$(LINK_APP)
 
 # 32-bit PA-RISC HP-UX embeds the -L pathname of libs we link with, so
@@ -495,7 +495,7 @@ link_dso.hpux:
 	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
 	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+h,$$SHLIB$$SHLIB_SUFFIX,+cdp,../:,+cdp,./:"; \
+	SHAREDFLAGS="$(SHARED_LDFLAGS) -Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+h,$$SHLIB$$SHLIB_SUFFIX,+cdp,../:,+cdp,./:"; \
 	fi; \
 	rm -f $(DSTDIR)/$$SHLIB$$SHLIB_SUFFIX || :; \
 	$(LINK_SO_DSO) && chmod a=rx $(DSTDIR)/$$SHLIB$$SHLIB_SUFFIX
@@ -508,13 +508,13 @@ link_shlib.hpux:
 	ALLSYMSFLAGS='-Wl,-Fl'; \
 	NOALLSYMSFLAGS=''; \
 	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+cdp,../:,+cdp,./:"; \
+	SHAREDFLAGS="$(SHARED_LDFLAGS) -Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+cdp,../:,+cdp,./:"; \
 	fi; \
 	rm -f $(DSTDIR)/$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX || :; \
 	$(LINK_SO_SHLIB) && chmod a=rx $(DSTDIR)/$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
 link_app.hpux:
 	@if $(DETECT_GNU_LD); then $(DO_GNU_APP); else \
-	LDFLAGS="$(CFLAGS) $(LDFLAGS) -Wl,+s,+cdp,../:,+cdp,./:"; \
+	LDFLAGS="$(LDFLAGS) -Wl,+s,+cdp,../:,+cdp,./:"; \
 	fi; \
 	$(LINK_APP)
 
@@ -525,7 +525,7 @@ link_dso.aix:
 	SHLIB_SUFFIX=; \
 	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
+	SHAREDFLAGS='$(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
 	rm -f $(DSTDIR)/$$SHLIB$$SHLIB_SOVER 2>&1 > /dev/null ; \
 	$(LINK_SO_DSO);
 link_shlib.aix:
@@ -536,11 +536,11 @@ link_shlib.aix:
 	SHLIB_SUFFIX=; \
 	ALLSYMSFLAGS='-bnogc'; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
+	SHAREDFLAGS='$(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
 	rm -f $(DSTDIR)/$$SHLIB$$SHLIB_SOVER 2>&1 > /dev/null ; \
 	$(LINK_SO_SHLIB_VIA_O)
 link_app.aix:
-	LDFLAGS="$(CFLAGS) -Wl,-bsvr4 $(LDFLAGS)"; \
+	LDFLAGS="-Wl,-bsvr4 $(LDFLAGS)"; \
 	$(LINK_APP)
 
 
