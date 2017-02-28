@@ -3669,16 +3669,12 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 
     /* Let's see which ciphers we can support */
 
-#if 0
     /*
      * Do not set the compare functions, because this may lead to a
      * reordering by "id". We want to keep the original ordering. We may pay
      * a price in performance during sk_SSL_CIPHER_find(), but would have to
      * pay with the price of sk_SSL_CIPHER_dup().
      */
-    sk_SSL_CIPHER_set_cmp_func(srvr, ssl_cipher_ptr_id_cmp);
-    sk_SSL_CIPHER_set_cmp_func(clnt, ssl_cipher_ptr_id_cmp);
-#endif
 
 #ifdef CIPHER_DEBUG
     fprintf(stderr, "Server has %d from %p:\n", sk_SSL_CIPHER_num(srvr),
