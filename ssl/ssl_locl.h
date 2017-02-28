@@ -2210,7 +2210,6 @@ __owur int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 __owur int tls1_alert_code(int code);
 __owur int tls13_alert_code(int code);
 __owur int ssl3_alert_code(int code);
-__owur int ssl_ok(SSL *s);
 
 #  ifndef OPENSSL_NO_EC
 __owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
