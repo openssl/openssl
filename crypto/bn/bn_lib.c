@@ -245,9 +245,7 @@ BIGNUM *BN_new(void)
 /* The caller MUST check that words > b->dmax before calling this */
 static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
 {
-    BN_ULONG *A, *a = NULL;
-    const BN_ULONG *B;
-    int i;
+    BN_ULONG *a = NULL;
 
     bn_check_top(b);
 
@@ -260,56 +258,18 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         return (NULL);
     }
     if (BN_get_flags(b, BN_FLG_SECURE))
-        a = A = OPENSSL_secure_zalloc(words * sizeof(*a));
+        a = OPENSSL_secure_zalloc(words * sizeof(*a));
     else
-        a = A = OPENSSL_zalloc(words * sizeof(*a));
-    if (A == NULL) {
+        a = OPENSSL_zalloc(words * sizeof(*a));
+    if (a == NULL) {
         BNerr(BN_F_BN_EXPAND_INTERNAL, ERR_R_MALLOC_FAILURE);
         return (NULL);
     }
 
-#if 1
-    B = b->d;
-    /* Check if the previous number needs to be copied */
-    if (B != NULL) {
-        for (i = b->top >> 2; i > 0; i--, A += 4, B += 4) {
-            /*
-             * The fact that the loop is unrolled
-             * 4-wise is a tribute to Intel. It's
-             * the one that doesn't have enough
-             * registers to accommodate more data.
-             * I'd unroll it 8-wise otherwise:-)
-             *
-             *              <appro@fy.chalmers.se>
-             */
-            BN_ULONG a0, a1, a2, a3;
-            a0 = B[0];
-            a1 = B[1];
-            a2 = B[2];
-            a3 = B[3];
-            A[0] = a0;
-            A[1] = a1;
-            A[2] = a2;
-            A[3] = a3;
-        }
-        switch (b->top & 3) {
-        case 3:
-            A[2] = B[2];
-        case 2:
-            A[1] = B[1];
-        case 1:
-            A[0] = B[0];
-        case 0:
-            /* Without the "case 0" some old optimizers got this wrong. */
-            ;
-        }
-    }
-#else
-    memset(A, 0, sizeof(*A) * words);
-    memcpy(A, b->d, sizeof(b->d[0]) * b->top);
-#endif
+    assert(b->top <= words);
+    memcpy(a, b->d, sizeof(*a) * b->top);
 
-    return (a);
+    return a;
 }
 
 /*
@@ -361,49 +321,19 @@ BIGNUM *BN_dup(const BIGNUM *a)
 
 BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 {
-    int i;
-    BN_ULONG *A;
-    const BN_ULONG *B;
-
     bn_check_top(b);
 
     if (a == b)
-        return (a);
+        return a;
     if (bn_wexpand(a, b->top) == NULL)
-        return (NULL);
+        return NULL;
 
-#if 1
-    A = a->d;
-    B = b->d;
-    for (i = b->top >> 2; i > 0; i--, A += 4, B += 4) {
-        BN_ULONG a0, a1, a2, a3;
-        a0 = B[0];
-        a1 = B[1];
-        a2 = B[2];
-        a3 = B[3];
-        A[0] = a0;
-        A[1] = a1;
-        A[2] = a2;
-        A[3] = a3;
-    }
-    /* ultrix cc workaround, see comments in bn_expand_internal */
-    switch (b->top & 3) {
-    case 3:
-        A[2] = B[2];
-    case 2:
-        A[1] = B[1];
-    case 1:
-        A[0] = B[0];
-    case 0:;
-    }
-#else
     memcpy(a->d, b->d, sizeof(b->d[0]) * b->top);
-#endif
 
     a->top = b->top;
     a->neg = b->neg;
     bn_check_top(a);
-    return (a);
+    return a;
 }
 
 void BN_swap(BIGNUM *a, BIGNUM *b)
