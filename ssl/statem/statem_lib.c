@@ -1321,8 +1321,6 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
         return SSL_R_UNSUPPORTED_PROTOCOL;
     if ((method->flags & SSL_METHOD_NO_SUITEB) != 0 && tls1_suiteb(s))
         return SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE;
-    else if ((method->flags & SSL_METHOD_NO_FIPS) != 0 && FIPS_mode())
-        return SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE;
 
     return 0;
 }
@@ -1680,7 +1678,7 @@ int ssl_choose_client_version(SSL *s, int version)
  * Work out what version we should be using for the initial ClientHello if the
  * version is initially (D)TLS_ANY_VERSION.  We apply any explicit SSL_OP_NO_xxx
  * options, the MinProtocol and MaxProtocol configuration commands, any Suite B
- * or FIPS_mode() constraints and any floor imposed by the security level here,
+ * constraints and any floor imposed by the security level here,
  * so we don't advertise the wrong protocol version to only reject the outcome later.
  *
  * Computing the right floor matters.  If, e.g., TLS 1.0 and 1.2 are enabled,

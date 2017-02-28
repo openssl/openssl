@@ -342,10 +342,6 @@ $SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? "0xc0fff008" : "0xc0ff0000";
 $code=<<___;
 #include "mips_arch.h"
 
-#ifdef OPENSSL_FIPSCANISTER
-# include <openssl/fipssyms.h>
-#endif
-
 .text
 
 .set	noat

@@ -302,12 +302,9 @@ $config{openssldir}="";
 $config{processor}="";
 $config{libdir}="";
 $config{cross_compile_prefix}="";
-$config{fipslibdir}="/usr/local/ssl/fips-2.0/lib/";
-my $nofipscanistercheck=0;
 $config{baseaddr}="0xFB00000";
 my $auto_threads=1;    # enable threads automatically? true by default
 my $default_ranlib;
-$config{fips}=0;
 
 # Top level directories to build
 $config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "util", "tools", "fuzz" ];
@@ -685,7 +682,7 @@ while (@argvcopy)
 		{ $config{processor}=386; }
 	elsif (/^fips$/)
 		{
-		$config{fips}=1;
+		die "FIPS mode not supported\n";
 		}
 	elsif (/^rsaref$/)
 		{
@@ -695,8 +692,7 @@ while (@argvcopy)
 		}
 	elsif (/^nofipscanistercheck$/)
 		{
-		$config{fips} = 1;
-		$nofipscanistercheck = 1;
+		die "FIPS mode not supported\n";
 		}
 	elsif (/^[-+]/)
 		{
@@ -733,10 +729,6 @@ while (@argvcopy)
 		elsif (/^--with-fuzzer-include=(.*)$/)
 			{
 			$withargs{fuzzer_include}=$1;
-			}
-		elsif (/^--with-fipslibdir=(.*)$/)
-			{
-			$config{fipslibdir}="$1/";
 			}
 		elsif (/^--with-baseaddr=(.*)$/)
 			{
@@ -820,15 +812,6 @@ if ($libs =~ /(^|\s)-Wl,-rpath,/
     die "***** Cannot simultaneously use -rpath, shared libraries, and\n",
 	"***** any of asan, msan or ubsan\n";
 }
-
-if ($config{fips})
-	{
-	delete $disabled{"shared"} if ($disabled{"shared"} =~ /^default/);
-	}
-else
-	{
-	@{$config{dirs}} = grep !/^fips$/, @{$config{dirs}};
-	}
 
 my @tocheckfor = (keys %disabled);
 while (@tocheckfor) {
@@ -1058,15 +1041,6 @@ if (!$disabled{dso} && $target{dso_scheme} ne "")
 
 $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
 
-if ($disabled{asm})
-	{
-	if ($config{fips})
-		{
-		@{$config{defines}} = grep !/^[BL]_ENDIAN$/, @{$config{defines}};
-		@{$target{defines}} = grep !/^[BL]_ENDIAN$/, @{$target{defines}};
-		}
-	}
-
 # If threads aren't disabled, check how possible they are
 unless ($disabled{threads}) {
     if ($auto_threads) {
@@ -1107,8 +1081,7 @@ if (defined($disabled{"deprecated"})) {
 if ($target{shared_target} eq "")
 	{
 	$no_shared_warn = 1
-	    if ((!$disabled{shared} || !$disabled{"dynamic-engine"})
-		&& !$config{fips});
+	    if (!$disabled{shared} || !$disabled{"dynamic-engine"});
 	$disabled{shared} = "no-shared-target";
 	$disabled{pic} = $disabled{shared} = $disabled{"dynamic-engine"} =
 	    "no-shared-target";
@@ -1171,10 +1144,6 @@ unless ($disabled{asm}) {
     push @{$config{defines}}, "OPENSSL_BN_ASM_MONT" if ($target{bn_asm_src} =~ /-mont/);
     push @{$config{defines}}, "OPENSSL_BN_ASM_MONT5" if ($target{bn_asm_src} =~ /-mont5/);
     push @{$config{defines}}, "OPENSSL_BN_ASM_GF2m" if ($target{bn_asm_src} =~ /-gf2m/);
-
-    if ($config{fips}) {
-	push @{$config{openssl_other_defines}}, "OPENSSL_FIPS";
-    }
 
     if ($target{sha1_asm_src}) {
 	push @{$config{defines}}, "SHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
