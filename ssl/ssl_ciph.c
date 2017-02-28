@@ -577,9 +577,6 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
             s->ssl_version < TLS1_VERSION)
             return 1;
 
-        if (FIPS_mode())
-            return 1;
-
         if (c->algorithm_enc == SSL_RC4 &&
             c->algorithm_mac == SSL_MD5 &&
             (evp = EVP_get_cipherbyname("RC4-HMAC-MD5")))
@@ -686,8 +683,6 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
         c = ssl_method->get_cipher(i);
         /* drop those that use any of that is not available */
         if (c == NULL || !c->valid)
-            continue;
-        if (FIPS_mode() && (c->algo_strength & SSL_FIPS))
             continue;
         if ((c->algorithm_mkey & disabled_mkey) ||
             (c->algorithm_auth & disabled_auth) ||
@@ -1495,8 +1490,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
      * to the resulting precedence to the STACK_OF(SSL_CIPHER).
      */
     for (curr = head; curr != NULL; curr = curr->next) {
-        if (curr->active
-            && (!FIPS_mode() || curr->cipher->algo_strength & SSL_FIPS)) {
+        if (curr->active) {
             if (!sk_SSL_CIPHER_push(cipherstack, curr->cipher)) {
                 OPENSSL_free(co_list);
                 sk_SSL_CIPHER_free(cipherstack);

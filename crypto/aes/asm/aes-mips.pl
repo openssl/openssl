@@ -105,10 +105,6 @@ $code.=<<___;
 #include "mips_arch.h"
 
 .text
-#ifdef OPENSSL_FIPSCANISTER
-# include <openssl/fipssyms.h>
-#endif
-
 #if !defined(__mips_eabi) && (!defined(__vxworks) || defined(__pic__))
 .option	pic2
 #endif

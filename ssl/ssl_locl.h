@@ -2358,10 +2358,6 @@ __owur int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
                                   const unsigned char *mac_secret,
                                   size_t mac_secret_length, char is_sslv3);
 
-__owur int tls_fips_digest_extra(const EVP_CIPHER_CTX *cipher_ctx,
-                                 EVP_MD_CTX *mac_ctx, const unsigned char *data,
-                                 size_t data_len, size_t orig_len);
-
 __owur int srp_generate_server_master_secret(SSL *s);
 __owur int srp_generate_client_master_secret(SSL *s);
 __owur int srp_verify_server_param(SSL *s, int *al);

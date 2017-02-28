@@ -15,11 +15,6 @@
 
 #include <openssl/engine.h>
 
-#ifdef OPENSSL_FIPS
-# include <openssl/fips.h>
-# include <openssl/fips_rand.h>
-#endif
-
 #ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
 static ENGINE *funct_ref = NULL;

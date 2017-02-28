@@ -38,16 +38,8 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
                 return 0;
             }
             if (m > 0) {
-#ifdef OPENSSL_FIPS
-                if (!FIPS_mode() && !FIPS_mode_set(1)) {
-                    EVPerr(EVP_F_ALG_MODULE_INIT,
-                           EVP_R_ERROR_SETTING_FIPS_MODE);
-                    return 0;
-                }
-#else
                 EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_FIPS_MODE_NOT_SUPPORTED);
                 return 0;
-#endif
             }
         } else {
             EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_UNKNOWN_OPTION);
