@@ -21,9 +21,10 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
          * On VMS, gmtime_r() takes a 32-bit pointer as second argument.
          * Since we can't know that |result| is in a space that can easily
          * translate to a 32-bit pointer, we must store temporarly on stack
-         * and copy the result.
+         * and copy the result.  The stack is always reachable with 32-bit
+         * pointers.
          */
-#if defined(OPENSSL_SYS_VMS)&& __INITIAL_POINTER_SIZE
+#if defined(OPENSSL_SYS_VMS) && __INITIAL_POINTER_SIZE
 # pragma pointer_size save
 # pragma pointer_size 32
 #endif
