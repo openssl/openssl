@@ -1396,6 +1396,9 @@ static int tls12_sigalg_allowed(SSL *s, int op, uint16_t ptmp)
     /* See if sigalgs is recognised and if hash is enabled */
     if (lu == NULL || ssl_md(lu->hash_idx) == NULL)
         return 0;
+    /* DSA is not allowed in TLS 1.3 */
+    if (SSL_IS_TLS13(s) && lu->sig == EVP_PKEY_DSA)
+        return 0;
     /* See if public key algorithm allowed */
     if (tls12_get_pkey_idx(lu->sig) == -1)
         return 0;
