@@ -349,7 +349,7 @@ static TEST_DATA *read_test_data(FILE *f)
                 test_data = NULL;
                 OPENSSL_free(value);
             }
-        else {
+        } else {
             fprintf(stderr, "Invalid line %d: %s\n", linecounter, line);
             errcount++;
             skip_stanza = 1;
