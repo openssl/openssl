@@ -175,19 +175,6 @@
 # define DTLS_VERSION_LT(v1, v2) (dtls_ver_ordinal(v1) > dtls_ver_ordinal(v2))
 # define DTLS_VERSION_LE(v1, v2) (dtls_ver_ordinal(v1) >= dtls_ver_ordinal(v2))
 
-/* LOCAL STUFF */
-
-# define SSL_DECRYPT     0
-# define SSL_ENCRYPT     1
-
-# define TWO_BYTE_BIT    0x80
-# define SEC_ESC_BIT     0x40
-# define TWO_BYTE_MASK   0x7fff
-# define THREE_BYTE_MASK 0x3fff
-
-# define INC32(a)        ((a)=((a)+1)&0xffffffffL)
-# define DEC32(a)        ((a)=((a)-1)&0xffffffffL)
-# define MAX_MAC_SIZE    20     /* up from 16 for SSLv3 */
 
 /*
  * Define the Bitmasks for SSL_CIPHER.algorithms.
