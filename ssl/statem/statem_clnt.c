@@ -1105,7 +1105,9 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
         return 0;
     }
 #ifndef OPENSSL_NO_COMP
-    if (ssl_allow_compression(s) && s->ctx->comp_methods) {
+    if (ssl_allow_compression(s)
+            && s->ctx->comp_methods
+            && (SSL_IS_DTLS(s) || s->s3->tmp.max_ver < TLS1_3_VERSION)) {
         int compnum = sk_SSL_COMP_num(s->ctx->comp_methods);
         for (i = 0; i < compnum; i++) {
             comp = sk_SSL_COMP_value(s->ctx->comp_methods, i);
