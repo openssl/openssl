@@ -209,7 +209,7 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
                 wrmax = inl;
             ret = BIO_write(next, in, wrmax);
             if (ret <= 0)
-                break;
+                goto done;
             wrlen += ret;
             ctx->copylen -= ret;
             in += ret;
