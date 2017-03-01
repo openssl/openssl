@@ -791,7 +791,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
         maxcomplen = pipelens[j];
         if (s->compress != NULL)
-            pipelens[j] += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+            maxcomplen += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 
         /* write the header */
         if (!WPACKET_put_bytes_u8(thispkt, rectype)
