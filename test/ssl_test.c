@@ -146,6 +146,16 @@ static int check_session_ticket(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx
     return 1;
 }
 
+static int check_compression(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+{
+    if (result->compression != test_ctx->compression_expected) {
+        fprintf(stderr, "Client CompressionExpected mismatch, expected %s, got %s\n.",
+                ssl_compression_name(test_ctx->compression_expected),
+                ssl_compression_name(result->compression));
+        return 0;
+    }
+    return 1;
+}
 #ifndef OPENSSL_NO_NEXTPROTONEG
 static int check_npn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
@@ -259,6 +269,7 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         ret &= check_protocol(result, test_ctx);
         ret &= check_servername(result, test_ctx);
         ret &= check_session_ticket(result, test_ctx);
+        ret &= check_compression(result, test_ctx);
         ret &= (result->session_ticket_do_not_call == 0);
 #ifndef OPENSSL_NO_NEXTPROTONEG
         ret &= check_npn(result, test_ctx);
