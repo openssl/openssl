@@ -101,6 +101,9 @@ static int parse_key_value(const char *line, char **key, char **value)
     return 1;
 }
 
+/*
+ * read_test_data() reads exactly one valid stanza and returns the parsed data
+ */
 static int linecounter = 0;
 static TEST_DATA *read_test_data(FILE *f)
 {
@@ -123,9 +126,13 @@ static TEST_DATA *read_test_data(FILE *f)
         linecounter++;
 
         for (p = line; *p != '\n' && isspace(*p); p++)
-            ;
+            continue;
 
         if (*p == '\n') {
+            /*
+             * If test_data is non-NULL, it means we're done reading a stanza,
+             * time to return to caller.
+             */
             if (test_data != NULL)
                 break;
             skip_stanza = 0;
@@ -145,7 +152,7 @@ static TEST_DATA *read_test_data(FILE *f)
         if (skip_stanza)
             continue;
 
-        if (strcasecmp(key, "uri") == 0)
+        if (strcasecmp(key, "uri") == 0) {
             if (test_data == NULL) {
                 test_data = OPENSSL_zalloc(sizeof(*test_data));
                 test_data->uri = value;
@@ -158,7 +165,7 @@ static TEST_DATA *read_test_data(FILE *f)
                 test_data = NULL;
                 OPENSSL_free(value);
             }
-        else if (strcasecmp(key, "baduri") == 0)
+        } else if (strcasecmp(key, "baduri") == 0) {
             if (test_data == NULL) {
                 test_data = OPENSSL_zalloc(sizeof(*test_data));
                 test_data->uri = value;
@@ -171,8 +178,8 @@ static TEST_DATA *read_test_data(FILE *f)
                 test_data = NULL;
                 OPENSSL_free(value);
             }
-        else if (strcasecmp(key, "scheme") == 0
-                 || strcasecmp(key, "decoded_scheme") == 0)
+        } else if (strcasecmp(key, "scheme") == 0
+                 || strcasecmp(key, "decoded_scheme") == 0) {
             if (test_data != NULL && test_data->expected.scheme == NULL) {
                 test_data->expected.scheme = value;
                 test_data->expected.decoded_scheme = *key == 'd';
@@ -190,8 +197,8 @@ static TEST_DATA *read_test_data(FILE *f)
                 test_data = NULL;
                 OPENSSL_free(value);
             }
-        else if (strcasecmp(key, "authority") == 0
-                 || strcasecmp(key, "decoded_authority") == 0)
+        } else if (strcasecmp(key, "authority") == 0
+                 || strcasecmp(key, "decoded_authority") == 0) {
             if (test_data != NULL && test_data->expected.authority == NULL) {
                 test_data->expected.authority = value;
                 test_data->expected.decoded_authority = *key == 'd';
@@ -209,8 +216,8 @@ static TEST_DATA *read_test_data(FILE *f)
                 test_data = NULL;
                 OPENSSL_free(value);
             }
-        else if (strcasecmp(key, "path") == 0
-                 || strcasecmp(key, "decoded_path") == 0)
+        } else if (strcasecmp(key, "path") == 0
+                 || strcasecmp(key, "decoded_path") == 0) {
             if (test_data != NULL && test_data->expected.path == NULL) {
                 test_data->expected.path = value;
                 test_data->expected.decoded_path = *key == 'd';
@@ -228,8 +235,8 @@ static TEST_DATA *read_test_data(FILE *f)
                 test_data = NULL;
                 OPENSSL_free(value);
             }
-        else if (strcasecmp(key, "query") == 0
-                 || strcasecmp(key, "decoded_query") == 0)
+        } else if (strcasecmp(key, "query") == 0
+                 || strcasecmp(key, "decoded_query") == 0) {
             if (test_data != NULL && test_data->expected.query == NULL) {
                 test_data->expected.query = value;
                 test_data->expected.decoded_query = *key == 'd';
@@ -247,8 +254,8 @@ static TEST_DATA *read_test_data(FILE *f)
                 test_data = NULL;
                 OPENSSL_free(value);
             }
-        else if (strcasecmp(key, "fragment") == 0
-                 || strcasecmp(key, "decoded_fragment") == 0)
+        } else if (strcasecmp(key, "fragment") == 0
+                 || strcasecmp(key, "decoded_fragment") == 0) {
             if (test_data != NULL && test_data->expected.fragment == NULL) {
                 test_data->expected.fragment = value;
                 test_data->expected.decoded_fragment = *key == 'd';
@@ -266,8 +273,8 @@ static TEST_DATA *read_test_data(FILE *f)
                 test_data = NULL;
                 OPENSSL_free(value);
             }
-        else if (strcasecmp(key, "user") == 0
-                 || strcasecmp(key, "decoded_user") == 0)
+        } else if (strcasecmp(key, "user") == 0
+                 || strcasecmp(key, "decoded_user") == 0) {
             if (test_data != NULL && test_data->expected.user == NULL) {
                 test_data->expected.user = value;
                 test_data->expected.decoded_user = *key == 'd';
@@ -285,8 +292,8 @@ static TEST_DATA *read_test_data(FILE *f)
                 test_data = NULL;
                 OPENSSL_free(value);
             }
-        else if (strcasecmp(key, "password") == 0
-                 || strcasecmp(key, "decoded_password") == 0)
+        } else if (strcasecmp(key, "password") == 0
+                 || strcasecmp(key, "decoded_password") == 0) {
             if (test_data != NULL && test_data->expected.password == NULL) {
                 test_data->expected.password = value;
                 test_data->expected.decoded_password = *key == 'd';
@@ -304,8 +311,8 @@ static TEST_DATA *read_test_data(FILE *f)
                 test_data = NULL;
                 OPENSSL_free(value);
             }
-        else if (strcasecmp(key, "host") == 0
-                 || strcasecmp(key, "decoded_host") == 0)
+        } else if (strcasecmp(key, "host") == 0
+                 || strcasecmp(key, "decoded_host") == 0) {
             if (test_data != NULL && test_data->expected.host == NULL) {
                 test_data->expected.host = value;
                 test_data->expected.decoded_host = *key == 'd';
@@ -323,8 +330,8 @@ static TEST_DATA *read_test_data(FILE *f)
                 test_data = NULL;
                 OPENSSL_free(value);
             }
-        else if (strcasecmp(key, "service") == 0
-                 || strcasecmp(key, "decoded_service") == 0)
+        } else if (strcasecmp(key, "service") == 0
+                 || strcasecmp(key, "decoded_service") == 0) {
             if (test_data != NULL && test_data->expected.service == NULL) {
                 test_data->expected.service = value;
                 test_data->expected.decoded_service = *key == 'd';
@@ -411,6 +418,7 @@ static int run_test(TEST_DATA *test_data)
             || OPENSSL_percent_decode_inline(service));
     if (!rv) {
         ERR_print_errors_fp(stderr);
+        errcount++;
         goto err;
     }
     rv = (cmp(scheme, test_data->expected.scheme) == 0
