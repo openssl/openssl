@@ -14,14 +14,14 @@ my ($i, @arr);
 # Each set bit represents a character property.
 
 # RFC3986 character properties
-my $ALPHA         = 0x0001;     # a-zA-Z
-my $DIGIT         = 0x0002;     # 0-9
-my $HEXDIG        = 0x0004;     # 0-9a-fA-F
-my $unreserved    = 0x0008;     # ALPHA / DIGIT / "-" / "." / "_" / "~"
-my $reserved      = 0x0030;     # gen-delims / sub-delims
-my $gen_delims    = 0x0010;     # ":" / "/" / "?" / "#" / "[" / "]" / "@"
-my $sub_delims    = 0x0020;     # "!" / "$" / "&" / "'" / "(" / ")"
-                                # / "*" / "+" / "," / ";" / "="
+my $ALPHA         = 0x01;        # a-zA-Z
+my $DIGIT         = 0x02;        # 0-9
+my $HEXDIG        = 0x04;        # 0-9a-fA-F
+my $unreserved    = 0x08;        # ALPHA / DIGIT / "-" / "." / "_" / "~"
+my $reserved      = 0x30;        # gen-delims / sub-delims
+my $gen_delims    = 0x10;        # ":" / "/" / "?" / "#" / "[" / "]" / "@"
+my $sub_delims    = 0x20;        # "!" / "$" / "&" / "'" / "(" / ")"
+                                 # / "*" / "+" / "," / ";" / "="
 
 for($i = 0; $i < 128; $i++) {
     $arr[$i] = 0;
@@ -79,13 +79,12 @@ print <<EOF;
  * https://www.openssl.org/source/license.html
  */
 
-#define CHARTYPE_ALPHA          $ALPHA
-#define CHARTYPE_DIGIT          $DIGIT
-#define CHARTYPE_HEXDIG         $HEXDIG
-#define CHARTYPE_unreserved     $unreserved
-#define CHARTYPE_reserved       $reserved
-#define CHARTYPE_gen_delims     $gen_delims
-#define CHARTYPE_sub_delims     $sub_delims
+EOF
+foreach (("ALPHA", "DIGIT", "HEXDIG", "unreserved", "reserved", "gen_delims",
+          "sub_delims")) {
+    printf "#define CHARTYPE_%-14s 0x%02x\n", $_, eval '$'.$_;
+}
+print <<EOF;
 
 #define is_valid(c)             ((unsigned char)(c) < 128)
 #define is_type(c,t)            ((char_type[(size_t)(c)] & (t)) != 0)
@@ -107,7 +106,7 @@ EOF
 print "   ";
 for($i = 0; $i < 128; $i++) {
     print("\n   ") if ($i && ($i % 12) == 0);
-    printf(" %4d", $arr[$i]);
+    printf(" 0x%02x", $arr[$i]);
     print(",") if ($i != 127);
 }
 print("\n};\n");
