@@ -22,6 +22,13 @@
  *
  * pct-encoded   = "%" HEXDIG HEXDIG
  */
+#define span_pchars(p, off) span_pchars2((p), (off), ":@")
+
+/*
+ * A more generalised form of spanning over |pchar|, where the span is
+ * over unreserved / pct-encoded / sub-delims + a caller defined set of
+ * special characters.
+ */
 static int span_pchars2(const char *p, size_t *off, const char *chars)
 {
     size_t save_off = *off;
@@ -39,18 +46,17 @@ static int span_pchars2(const char *p, size_t *off, const char *chars)
     }
     return *off != save_off;
 }
-#define span_pchars(p, off) span_pchars2((p), (off), ":@")
 
+/*
+ * An even more general variant of spanning over valid characters, where
+ * valid characters is defined as (bitwise combined) character types and
+ * a set of extra characters.
+ */
 static int span_chars(const char *p, size_t *off, unsigned int types,
                       const char *chars)
 {
     size_t save_off = *off;
 
-    /*
-     * pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
-     *
-     * pct-encoded   = "%" HEXDIG HEXDIG
-     */
     while (p[*off] != '\0') {
         if (!is_valid(p[*off]))
             break;
@@ -81,7 +87,7 @@ static int extract_scheme(char **scheme, const char **pp)
     if (!is_ALPHA(p[off]))
         return 1;
     while (span_chars(p, &off, CHARTYPE_ALPHA|CHARTYPE_DIGIT, "+-."))
-        ;
+        continue;
 
     /* Check if the loop stopped because of an invalid character */
     if (!is_valid(p[off])) {
@@ -216,14 +222,14 @@ static int span_host(const char *p, size_t *off)
                  * If there was no :: and there wasn't exactly 7 HEXDIG series
                  * followed by a colon, all is lost as well
                  */
-                if (dblcolon > 1 || (dblcolon == 0 && maxcolons > 0))
+                if (dblcolon > 1 || (dblcolon == 0 && maxcolons > 0)) {
                     tmp_off = tmp_off2;
                 /*
                  * Otherwise, we might end this with an IPv4 address,
                  * maxcolumns allowing, and we might also end this with a last
                  * serie of HEXDIG.  We try IPv4 first.
                  */
-                else {
+                } else {
                     size_t v4_end = tmp_off;
 
                     /*
@@ -242,14 +248,14 @@ static int span_host(const char *p, size_t *off)
                         && p[v4_end++] == '.'
                         && ((p[v4_end] == '0' && (v4_end++, 1))
                             || span_chars(p, &v4_end, CHARTYPE_DIGIT, ""))
-                        && v4_end - tmp_off < 16)
+                        && v4_end - tmp_off < 16) {
                         tmp_off = v4_end;
                     /*
                      * If there was no IPv4 address, we check for an ending
                      * serie of HEXDIG.  If there is no such thing, there MUST
                      * be an ending ::
                      */
-                    else if (!span_chars(p, &tmp_off, CHARTYPE_HEXDIG, "")
+                    } else if (!span_chars(p, &tmp_off, CHARTYPE_HEXDIG, "")
                              && (dblcolon == 0
                                  || p[tmp_off - 1] != ':'
                                  || p[tmp_off - 2] != ':'))
@@ -391,7 +397,7 @@ static int extract_path_abempty(char **path, const char **pp)
 
     *path = NULL;
     while(span_slash_segment(p, &off))
-        ;
+        continue;
 
     /* Check if the loop stopped because of an invalid character */
     if (!is_valid(p[off])) {
@@ -417,7 +423,7 @@ static int extract_path_absolute(char **path, const char **pp)
         off++;
         if (span_segment_nz(p, &off)) {
             while(span_slash_segment(p, &off))
-                ;
+                continue;
         }
     }
 
@@ -443,7 +449,7 @@ static int extract_path_noscheme(char **path, const char **pp)
     *path = NULL;
     if (span_segment_nz_nc(p, &off))
         while(span_slash_segment(p, &off))
-            ;
+            continue;
 
     /* Check if the loop stopped because of an invalid character */
     if (!is_valid(p[off])) {
@@ -467,7 +473,7 @@ static int extract_path_rootless(char **path, const char **pp)
     *path = NULL;
     if (span_segment_nz(p, &off))
         while(span_slash_segment(p, &off))
-            ;
+            continue;
 
     /* Check if the loop stopped because of an invalid character */
     if (!is_valid(p[off])) {
@@ -558,7 +564,7 @@ static int extract_query(char **query, const char **pp)
     p++;
 
     while(span_pchars(p, &off) || span_chars(p, &off, 0, "/?"))
-        ;
+        continue;
 
     /* Check if the loop stopped because of an invalid character */
     if (!is_valid(p[off])) {
@@ -595,7 +601,7 @@ static int extract_fragment(char **fragment, const char **pp)
     p++;
 
     while(span_pchars(p, &off) || span_chars(p, &off, 0, "/?"))
-        ;
+        continue;
 
     /* Check if the loop stopped because of an invalid character */
     if (!is_valid(p[off])) {
@@ -627,7 +633,7 @@ int OPENSSL_decode_uri(const char *uri, char **scheme, char **authority,
     OPENSSL_init_crypto(0, NULL);
 
     if (extract_scheme(scheme, &p)
-        && (*scheme
+        && (*scheme != NULL
             ? extract_hierpart(authority, path, &p)
             : extract_relativepart(authority, path, &p))
         && extract_query(query, &p)
@@ -667,13 +673,13 @@ int OPENSSL_decode_uri(const char *uri, char **scheme, char **authority,
 /* Inline percent decoding */
 static ossl_inline int dehex(char c)
 {
-    return (c >= '0' && c <= '9'
-            ? c - '0'
-            : (c >= 'A' && c <= 'F'
-               ? c - 'A' + 10
-               : (c >= 'a' && c <= 'f'
-                  ? c - 'a' + 10
-                  : -1)));
+    if (c >= '0' && c <= '9')
+        return c - '0';
+    if (c >= 'A' && c <= 'F')
+        return c - 'A' + 10;
+    if (c >= 'a' && c <= 'f')
+        return c - 'a' + 10;
+    return -1;
 }
 
 int OPENSSL_percent_decode_inline(char *str)
