@@ -1,14 +1,15 @@
 platform:
-    - x86
     - x64
+    - x86
 
 environment:
+    fast_finish: true
     matrix:
         - VSVER: 14
 
 configuration:
-    - plain
     - shared
+    - plain
 
 before_build:
     - ps: >-
@@ -31,18 +32,32 @@ before_build:
     - cd _build
     - perl ..\Configure %TARGET% %SHARED%
     - cd ..
+    - ps: >-
+        if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER -or (&git log -2 | Select-String "\[extended tests\]") ) {
+            $env:EXTENDED_TESTS="yes"
+        }
 
 build_script:
-    - cd _build
-    - nmake
-    - cd ..
+    - ps: >-
+        If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
+            cd _build
+            &nmake
+            cd ..
+        }
 
 test_script:
-    - cd _build
-    - nmake test V=1
-    - mkdir ..\_install
-    - nmake install install_docs DESTDIR=..\_install
-    - cd ..
+    - ps: >-
+        If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
+            cd _build
+            if ($env:EXTENDED_TESTS) {
+                &nmake test V=1
+                mkdir ..\_install
+                &nmake install install_docs DESTDIR=..\_install
+            } Else {
+                &nmake test V=1 TESTS=-test_fuzz
+            }
+            cd ..
+        }
 
 notifications:
     - provider: Email
