@@ -18,6 +18,7 @@
  For additional platform specific requirements, solutions to specific
  issues and other details, please read one of these:
 
+  * NOTES.UNIX (any supported Unix like system)
   * NOTES.VMS (OpenVMS)
   * NOTES.WIN (any supported Windows)
   * NOTES.DJGPP (DOS platform with DJGPP)
