@@ -76,15 +76,15 @@ struct x509_lookup_method_st {
     int (*shutdown) (X509_LOOKUP *ctx);
     int (*ctrl) (X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
                  char **ret);
-    int (*get_by_subject) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+    int (*get_by_subject) (X509_LOOKUP *ctx, int type,
                            X509_NAME *name, X509_OBJECT *ret);
-    int (*get_by_issuer_serial) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+    int (*get_by_issuer_serial) (X509_LOOKUP *ctx, int type,
                                  X509_NAME *name, ASN1_INTEGER *serial,
                                  X509_OBJECT *ret);
-    int (*get_by_fingerprint) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+    int (*get_by_fingerprint) (X509_LOOKUP *ctx, int type,
                                const unsigned char *bytes, int len,
                                X509_OBJECT *ret);
-    int (*get_by_alias) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+    int (*get_by_alias) (X509_LOOKUP *ctx, int type,
                          const char *str, int len, X509_OBJECT *ret);
 };
 

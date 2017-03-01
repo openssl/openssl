@@ -44,10 +44,9 @@ The X509_STORE then calls a function to actually verify the
 certificate chain.
 */
 
-typedef enum {
-    X509_LU_NONE = 0,
-    X509_LU_X509, X509_LU_CRL
-} X509_LOOKUP_TYPE;
+#define X509_LU_NONE 0
+#define X509_LU_X509 1
+#define X509_LU_CRL 2
 
 #if OPENSSL_API_COMPAT < 0x10100000L
 #define X509_LU_RETRY   -1
@@ -245,17 +244,17 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
                                 | X509_V_FLAG_INHIBIT_ANY \
                                 | X509_V_FLAG_INHIBIT_MAP)
 
-int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
+int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, int type,
                                X509_NAME *name);
 X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h,
-                                             X509_LOOKUP_TYPE type,
+                                             int type,
                                              X509_NAME *name);
 X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
                                         X509_OBJECT *x);
 int X509_OBJECT_up_ref_count(X509_OBJECT *a);
 X509_OBJECT *X509_OBJECT_new(void);
 void X509_OBJECT_free(X509_OBJECT *a);
-X509_LOOKUP_TYPE X509_OBJECT_get_type(const X509_OBJECT *a);
+int X509_OBJECT_get_type(const X509_OBJECT *a);
 X509 *X509_OBJECT_get0_X509(const X509_OBJECT *a);
 X509_CRL *X509_OBJECT_get0_X509_CRL(X509_OBJECT *a);
 X509_STORE *X509_STORE_new(void);
@@ -368,10 +367,10 @@ X509_LOOKUP_METHOD *X509_LOOKUP_file(void);
 int X509_STORE_add_cert(X509_STORE *ctx, X509 *x);
 int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x);
 
-int X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
+int X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, int type,
                                   X509_NAME *name, X509_OBJECT *ret);
 X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs,
-                                               X509_LOOKUP_TYPE type,
+                                               int type,
                                                X509_NAME *name);
 
 int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
@@ -384,15 +383,15 @@ int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type);
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method);
 void X509_LOOKUP_free(X509_LOOKUP *ctx);
 int X509_LOOKUP_init(X509_LOOKUP *ctx);
-int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, int type,
                            X509_NAME *name, X509_OBJECT *ret);
-int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, int type,
                                  X509_NAME *name, ASN1_INTEGER *serial,
                                  X509_OBJECT *ret);
-int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, int type,
                                const unsigned char *bytes, int len,
                                X509_OBJECT *ret);
-int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, int type,
                          const char *str, int len, X509_OBJECT *ret);
 int X509_LOOKUP_shutdown(X509_LOOKUP *ctx);
 

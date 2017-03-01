@@ -17,28 +17,10 @@ SCT_get_source, SCT_set_source
 
  #include <openssl/ct.h>
 
- typedef enum {
-  CT_LOG_ENTRY_TYPE_NOT_SET = -1,
-  CT_LOG_ENTRY_TYPE_X509 = 0,
-  CT_LOG_ENTRY_TYPE_PRECERT = 1
- } ct_log_entry_type_t;
-
- typedef enum {
-  SCT_VERSION_NOT_SET = -1,
-  SCT_VERSION_V1 = 0
- } sct_version_t;
-
- typedef enum {
-  SCT_SOURCE_UNKNOWN,
-  SCT_SOURCE_TLS_EXTENSION,
-  SCT_SOURCE_X509V3_EXTENSION,
-  SCT_SOURCE_OCSP_STAPLED_RESPONSE
- } sct_source_t;
-
  SCT *SCT_new(void);
  SCT *SCT_new_from_base64(unsigned char version,
                           const char *logid_base64,
-                          ct_log_entry_type_t entry_type,
+                          int entry_type,
                           uint64_t timestamp,
                           const char *extensions_base64,
                           const char *signature_base64);
@@ -46,11 +28,11 @@ SCT_get_source, SCT_set_source
  void SCT_free(SCT *sct);
  void SCT_LIST_free(STACK_OF(SCT) *a);
 
- sct_version_t SCT_get_version(const SCT *sct);
- int SCT_set_version(SCT *sct, sct_version_t version);
+ int SCT_get_version(const SCT *sct);
+ int SCT_set_version(SCT *sct, int version);
 
- ct_log_entry_type_t SCT_get_log_entry_type(const SCT *sct);
- int SCT_set_log_entry_type(SCT *sct, ct_log_entry_type_t entry_type);
+ int SCT_get_log_entry_type(const SCT *sct);
+ int SCT_set_log_entry_type(SCT *sct, int entry_type);
 
  size_t SCT_get0_log_id(const SCT *sct, unsigned char **log_id);
  int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len);
@@ -70,8 +52,8 @@ SCT_get_source, SCT_set_source
  void SCT_set0_extensions(SCT *sct, unsigned char *ext, size_t ext_len);
  int SCT_set1_extensions(SCT *sct, const unsigned char *ext, size_t ext_len);
 
- sct_source_t SCT_get_source(const SCT *sct);
- int SCT_set_source(SCT *sct, sct_source_t source);
+ int SCT_get_source(const SCT *sct);
+ int SCT_set_source(SCT *sct, int source);
 
 =head1 DESCRIPTION
 

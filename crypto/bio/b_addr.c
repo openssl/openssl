@@ -489,7 +489,7 @@ void BIO_ADDRINFO_free(BIO_ADDRINFO *bai)
  *
  */
 int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
-                       enum BIO_hostserv_priorities hostserv_prio)
+                       int hostserv_prio)
 {
     const char *h = NULL; size_t hl = 0;
     const char *p = NULL; size_t pl = 0;
@@ -652,7 +652,7 @@ DEFINE_RUN_ONCE_STATIC(do_bio_lookup_init)
  * The return value is 1 on success or 0 in case of error.
  */
 int BIO_lookup(const char *host, const char *service,
-               enum BIO_lookup_type lookup_type,
+               int lookup_type,
                int family, int socktype, BIO_ADDRINFO **res)
 {
     int ret = 0;                 /* Assume failure */

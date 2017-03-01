@@ -53,7 +53,7 @@ struct ui_method_st {
 };
 
 struct ui_string_st {
-    enum UI_string_types type;  /* Input */
+    int type;  /* Input */
     const char *out_string;     /* Input */
     int input_flags;            /* Flags from the user */
     /*

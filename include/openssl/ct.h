@@ -27,32 +27,24 @@ extern "C" {
 /* All hashes are SHA256 in v1 of Certificate Transparency */
 # define CT_V1_HASHLEN SHA256_DIGEST_LENGTH
 
-typedef enum {
-    CT_LOG_ENTRY_TYPE_NOT_SET = -1,
-    CT_LOG_ENTRY_TYPE_X509 = 0,
-    CT_LOG_ENTRY_TYPE_PRECERT = 1
-} ct_log_entry_type_t;
+# define CT_LOG_ENTRY_TYPE_NOT_SET -1
+# define CT_LOG_ENTRY_TYPE_X509 0
+# define CT_LOG_ENTRY_TYPE_PRECERT 1
 
-typedef enum {
-    SCT_VERSION_NOT_SET = -1,
-    SCT_VERSION_V1 = 0
-} sct_version_t;
+# define SCT_VERSION_NOT_SET -1
+# define SCT_VERSION_V1 0
 
-typedef enum {
-    SCT_SOURCE_UNKNOWN,
-    SCT_SOURCE_TLS_EXTENSION,
-    SCT_SOURCE_X509V3_EXTENSION,
-    SCT_SOURCE_OCSP_STAPLED_RESPONSE
-} sct_source_t;
+# define SCT_SOURCE_UNKNOWN 0
+# define SCT_SOURCE_TLS_EXTENSION 1
+# define SCT_SOURCE_X509V3_EXTENSION 2
+# define SCT_SOURCE_OCSP_STAPLED_RESPONSE 3
 
-typedef enum {
-    SCT_VALIDATION_STATUS_NOT_SET,
-    SCT_VALIDATION_STATUS_UNKNOWN_LOG,
-    SCT_VALIDATION_STATUS_VALID,
-    SCT_VALIDATION_STATUS_INVALID,
-    SCT_VALIDATION_STATUS_UNVERIFIED,
-    SCT_VALIDATION_STATUS_UNKNOWN_VERSION
-} sct_validation_status_t;
+# define SCT_VALIDATION_STATUS_NOT_SET 0
+# define SCT_VALIDATION_STATUS_UNKNOWN_LOG 1
+# define SCT_VALIDATION_STATUS_VALID 2
+# define SCT_VALIDATION_STATUS_INVALID 3
+# define SCT_VALIDATION_STATUS_UNVERIFIED 4
+# define SCT_VALIDATION_STATUS_UNKNOWN_VERSION 5
 
 DEFINE_STACK_OF(SCT)
 DEFINE_STACK_OF(CTLOG)
@@ -129,7 +121,7 @@ SCT *SCT_new(void);
  */
 SCT *SCT_new_from_base64(unsigned char version,
                          const char *logid_base64,
-                         ct_log_entry_type_t entry_type,
+                         int entry_type,
                          uint64_t timestamp,
                          const char *extensions_base64,
                          const char *signature_base64);
@@ -148,24 +140,24 @@ void SCT_LIST_free(STACK_OF(SCT) *a);
 /*
  * Returns the version of the SCT.
  */
-sct_version_t SCT_get_version(const SCT *sct);
+int SCT_get_version(const SCT *sct);
 
 /*
  * Set the version of an SCT.
  * Returns 1 on success, 0 if the version is unrecognized.
  */
-__owur int SCT_set_version(SCT *sct, sct_version_t version);
+__owur int SCT_set_version(SCT *sct, int version);
 
 /*
  * Returns the log entry type of the SCT.
  */
-ct_log_entry_type_t SCT_get_log_entry_type(const SCT *sct);
+int SCT_get_log_entry_type(const SCT *sct);
 
 /*
  * Set the log entry type of an SCT.
  * Returns 1 on success, 0 otherwise.
  */
-__owur int SCT_set_log_entry_type(SCT *sct, ct_log_entry_type_t entry_type);
+__owur int SCT_set_log_entry_type(SCT *sct, int entry_type);
 
 /*
  * Gets the ID of the log that an SCT came from.
@@ -258,13 +250,13 @@ __owur int SCT_set1_signature(SCT *sct, const unsigned char *sig,
 /*
  * The origin of this SCT, e.g. TLS extension, OCSP response, etc.
  */
-sct_source_t SCT_get_source(const SCT *sct);
+int SCT_get_source(const SCT *sct);
 
 /*
  * Set the origin of this SCT, e.g. TLS extension, OCSP response, etc.
  * Returns 1 on success, 0 otherwise.
  */
-__owur int SCT_set_source(SCT *sct, sct_source_t source);
+__owur int SCT_set_source(SCT *sct, int source);
 
 /*
  * Returns a text string describing the validation status of |sct|.
@@ -293,7 +285,7 @@ void SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
  * Gets the last result of validating this SCT.
  * If it has not been validated yet, returns SCT_VALIDATION_STATUS_NOT_SET.
  */
-sct_validation_status_t SCT_get_validation_status(const SCT *sct);
+int SCT_get_validation_status(const SCT *sct);
 
 /*
  * Validates the given SCT with the provided context.

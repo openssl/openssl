@@ -3952,7 +3952,7 @@ IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
  * Returns the number of SCTs moved, or a negative integer if an error occurs.
  */
 static int ct_move_scts(STACK_OF(SCT) **dst, STACK_OF(SCT) *src,
-                        sct_source_t origin)
+                        int origin)
 {
     int scts_moved = 0;
     SCT *sct = NULL;

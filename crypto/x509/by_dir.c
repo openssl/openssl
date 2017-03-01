@@ -48,7 +48,7 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 static int new_dir(X509_LOOKUP *lu);
 static void free_dir(X509_LOOKUP *lu);
 static int add_cert_dir(BY_DIR *ctx, const char *dir, int type);
-static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
+static int get_cert_by_subject(X509_LOOKUP *xl, int type,
                                X509_NAME *name, X509_OBJECT *ret);
 static X509_LOOKUP_METHOD x509_dir_lookup = {
     "Load certs from files in a directory",
@@ -205,7 +205,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
     return 1;
 }
 
-static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
+static int get_cert_by_subject(X509_LOOKUP *xl, int type,
                                X509_NAME *name, X509_OBJECT *ret)
 {
     BY_DIR *ctx;
