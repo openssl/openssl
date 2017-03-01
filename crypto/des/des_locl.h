@@ -82,7 +82,7 @@
                                 } \
                         }
 
-# if (defined(_WIN32) && defined(_MSC_VER))
+# if defined(_MSC_VER)
 #  define ROTATE(a,n)     (_lrotr(a,n))
 # elif defined(__ICC)
 #  define ROTATE(a,n)     (_rotr(a,n))
