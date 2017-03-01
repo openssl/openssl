@@ -1207,6 +1207,9 @@ static HANDSHAKE_RESULT *do_handshake_internal(
         ret->session_ticket = SSL_TEST_SESSION_TICKET_NO;
     else
         ret->session_ticket = SSL_TEST_SESSION_TICKET_YES;
+    ret->compression = (SSL_get_current_compression(client.ssl) == NULL)
+                       ? SSL_TEST_COMPRESSION_NO
+                       : SSL_TEST_COMPRESSION_YES;
     ret->session_ticket_do_not_call = server_ex_data.session_ticket_do_not_call;
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
