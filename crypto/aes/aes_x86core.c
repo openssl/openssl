@@ -7,6 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * This is experimental x86[_64] derivative. It assumes little-endian
+ * byte order and expects CPU to sustain unaligned memory references.
+ * It is used as playground for cache-time attack mitigations and
+ * serves as reference C implementation for x86[_64] as well as some
+ * other assembly modules.
+ */
+
 /**
  * rijndael-alg-fst.c
  *
@@ -31,15 +39,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * This is experimental x86[_64] derivative. It assumes little-endian
- * byte order and expects CPU to sustain unaligned memory references.
- * It is used as playground for cache-time attack mitigations and
- * serves as reference C implementation for x86[_64] assembler.
- *
- *                  <appro@fy.chalmers.se>
  */
 
 
