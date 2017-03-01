@@ -1736,7 +1736,7 @@ static int tls_early_post_process_client_hello(SSL *s, int *al)
     s->s3->tmp.new_compression = NULL;
 #ifndef OPENSSL_NO_COMP
     /* This only happens if we have a cache hit */
-    if (s->session->compress_meth != 0) {
+    if (s->session->compress_meth != 0 && !SSL_IS_TLS13(s)) {
         int m, comp_id = s->session->compress_meth;
         unsigned int k;
         /* Perform sanity checks on resumed compression algorithm */
@@ -1770,9 +1770,10 @@ static int tls_early_post_process_client_hello(SSL *s, int *al)
                    SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING);
             goto err;
         }
-    } else if (s->hit)
+    } else if (s->hit) {
         comp = NULL;
-    else if (ssl_allow_compression(s) && s->ctx->comp_methods) {
+    } else if (ssl_allow_compression(s) && s->ctx->comp_methods
+                   && !SSL_IS_TLS13(s)) {
         /* See if we have a match */
         int m, nn, v, done = 0;
         unsigned int o;
