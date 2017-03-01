@@ -506,8 +506,6 @@ int main(int argc, char *argv[])
     TEST_DATA *test_data = NULL;
     int errs = 0;
 
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-
     if (argc != 2) {
         fprintf(stderr, "%s TESTFILE\n", argv[0]);
         exit(1);
