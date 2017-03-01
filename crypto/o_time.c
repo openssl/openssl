@@ -15,7 +15,28 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
 {
     struct tm *ts = NULL;
 
-#if defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_MACOSX)
+#if defined(OPENSSL_THREADS) && defined(OPENSSL_SYS_VMS)
+    {
+        /*
+         * On VMS, gmtime_r() takes a 32-bit pointer as second argument.
+         * Since we can't know that |result| is in a space that can easily
+         * translate to a 32-bit pointer, we must store temporarly on stack
+         * and copy the result.
+         */
+#if defined(OPENSSL_SYS_VMS)&& __INITIAL_POINTER_SIZE
+# pragma pointer_size save
+# pragma pointer_size 32
+#endif
+        struct tm data, *ts2 = &data;
+#if defined OPENSSL_SYS_VMS && __INITIAL_POINTER_SIZE
+# pragma pointer_size restore
+#endif
+        if (gmtime_r(timer, ts2) == NULL)
+            return NULL;
+        memcpy(result, ts2, sizeof(struct tm));
+        ts = result;
+    }
+#elif defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_MACOSX)
     if (gmtime_r(timer, result) == NULL)
         return NULL;
     ts = result;
