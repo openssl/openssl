@@ -68,11 +68,6 @@
 # include "internal/dane.h"
 # include "internal/refcount.h"
 
-# ifdef OPENSSL_BUILD_SHLIBSSL
-#  undef OPENSSL_EXTERN
-#  define OPENSSL_EXTERN OPENSSL_EXPORT
-# endif
-
 # undef PKCS1_CHECK
 
 # define c2l(c,l)        (l = ((unsigned long)(*((c)++)))     , \
