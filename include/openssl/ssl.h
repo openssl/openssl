@@ -2347,6 +2347,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CLIENT_VERIFY                489
 # define SSL_F_TLS_CONSTRUCT_CTOS_ALPN                    466
 # define SSL_F_TLS_CONSTRUCT_CTOS_CERTIFICATE             355
+# define SSL_F_TLS_CONSTRUCT_CTOS_COOKIE                  533
 # define SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA              530
 # define SSL_F_TLS_CONSTRUCT_CTOS_EC_PT_FORMATS           467
 # define SSL_F_TLS_CONSTRUCT_CTOS_EMS                     468
@@ -2407,6 +2408,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PARSE_CTOS_PSK                         505
 # define SSL_F_TLS_PARSE_CTOS_RENEGOTIATE                 464
 # define SSL_F_TLS_PARSE_CTOS_USE_SRTP                    465
+# define SSL_F_TLS_PARSE_STOC_COOKIE                      534
 # define SSL_F_TLS_PARSE_STOC_EARLY_DATA_INFO             528
 # define SSL_F_TLS_PARSE_STOC_KEY_SHARE                   445
 # define SSL_F_TLS_PARSE_STOC_PSK                         502

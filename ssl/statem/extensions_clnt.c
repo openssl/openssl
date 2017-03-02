@@ -636,6 +636,33 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, unsigned int context,
     return 1;
 }
 
+int tls_construct_ctos_cookie(SSL *s, WPACKET *pkt, unsigned int context,
+                              X509 *x, size_t chainidx, int *al)
+{
+    int ret = 0;
+
+    /* Should only be set if we've had an HRR */
+    if (s->ext.tls13_cookie_len == 0)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cookie)
+               /* Extension data sub-packet */
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u16(pkt, s->ext.tls13_cookie,
+                                       s->ext.tls13_cookie_len)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_COOKIE, ERR_R_INTERNAL_ERROR);
+        goto end;
+    }
+
+    ret = 1;
+ end:
+    OPENSSL_free(s->ext.tls13_cookie);
+    s->ext.tls13_cookie_len = 0;
+
+    return ret;
+}
+
 int tls_construct_ctos_early_data(SSL *s, WPACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx, int *al)
 {
@@ -1334,6 +1361,22 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
     EVP_PKEY_free(skey);
 #endif
+
+    return 1;
+}
+
+int tls_parse_stoc_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
+                       size_t chainidx, int *al)
+{
+    PACKET cookie;
+
+    if (!PACKET_as_length_prefixed_2(pkt, &cookie)
+            || !PACKET_memdup(&cookie, &s->ext.tls13_cookie,
+                              &s->ext.tls13_cookie_len)) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PARSE_STOC_COOKIE, SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
 
     return 1;
 }

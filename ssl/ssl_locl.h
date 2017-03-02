@@ -1211,6 +1211,10 @@ struct ssl_st {
         int early_data;
         /* Is the session suitable for early data? */
         int early_data_ok;
+
+        /* May be sent by a server in HRR. Must be echoed back in ClientHello */
+        unsigned char *tls13_cookie;
+        size_t tls13_cookie_len;
     } ext;
 
     /* Parsed form of the ClientHello, kept around across early_cb calls. */
@@ -1801,6 +1805,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_supported_versions,
     TLSEXT_IDX_psk_kex_modes,
     TLSEXT_IDX_key_share,
+    TLSEXT_IDX_cookie,
     TLSEXT_IDX_cryptopro_bug,
     TLSEXT_IDX_early_data,
     TLSEXT_IDX_padding,
