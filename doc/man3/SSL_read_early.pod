@@ -7,7 +7,7 @@ SSL_CTX_set_max_early_data,
 SSL_get_max_early_data,
 SSL_CTX_get_max_early_data,
 SSL_SESSION_get_max_early_data,
-SSL_write_early,
+SSL_write_early_data,
 SSL_read_early_data,
 SSL_get_early_data_status
 - functions for sending and receiving early data
@@ -22,7 +22,7 @@ SSL_get_early_data_status
  uint32_t SSL_get_max_early_data(const SSL_CTX *s);
  uint32_t SSL_SESSION_get_max_early_data(const SSL_SESSION *s);
 
- int SSL_write_early(SSL *s, const void *buf, size_t num, size_t *written);
+ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written);
 
  int SSL_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes);
 
@@ -60,24 +60,24 @@ determine whether a session established with a server can be used to send early
 data. If the session cannot be used then this function will return 0. Otherwise
 it will return the maximum number of early data bytes that can be sent.
 
-A client uses the function SSL_write_early() to send early data. This function
-works in the same way as the L<SSL_write_ex(3)> function, but with a few
-differences. Refer to the L<SSL_write_ex(3)> documentation for
+A client uses the function SSL_write_early_data() to send early data. This
+function works in the same way as the L<SSL_write_ex(3)> function, but with a
+few differences. Refer to the L<SSL_write_ex(3)> documentation for
 information on how to write bytes to the underlying connection, and how to
 handle any errors that may arise. This page will detail the differences between
-SSL_write_early() and L<SSL_write_ex(3)>.
+SSL_write_early_data() and L<SSL_write_ex(3)>.
 
-SSL_write_early() must be the first IO function called on a new connection, i.e.
-it must occur before any calls to L<SSL_write_ex(3)>, L<SSL_read_ex(3)>,
+SSL_write_early_data() must be the first IO function called on a new connection,
+i.e. it must occur before any calls to L<SSL_write_ex(3)>, L<SSL_read_ex(3)>,
 L<SSL_connect(3)>, L<SSL_do_handshake(3)> or other similar functions. It may be
 called multiple times to stream data to the server, but the total number of
 bytes written must not exceed the value returned from
-SSL_SESSION_get_max_early_data(). Once the initial SSL_write_early() call has
-completed successfully the client may interleave calls to L<SSL_read_ex(3)> and
-L<SSL_read(3)> with calls to SSL_write_early() as required.
+SSL_SESSION_get_max_early_data(). Once the initial SSL_write_early_data() call
+has completed successfully the client may interleave calls to L<SSL_read_ex(3)>
+and L<SSL_read(3)> with calls to SSL_write_early_data() as required.
 
-If SSL_write_early() fails you should call L<SSL_get_error(3)> to determine the
-correct course of action, as for L<SSL_write_ex(3)>.
+If SSL_write_early_data() fails you should call L<SSL_get_error(3)> to determine
+the correct course of action, as for L<SSL_write_ex(3)>.
 
 When the client no longer wishes to send any more early data then it should
 complete the handshake by calling a function such as L<SSL_connect(3)> or
@@ -85,7 +85,7 @@ L<SSL_do_handshake(3)>. Alternatively you can call a standard write function
 such as L<SSL_write_ex(3)>, which will transparently complete the connection and
 write the requested data.
 
-Only clients may call SSL_write_early().
+Only clients may call SSL_write_early_data().
 
 A server may choose to ignore early data that has been sent to it. Once the
 connection has been completed you can determine whether the server accepted or
@@ -95,10 +95,10 @@ was rejected or SSL_EARLY_DATA_NOT_SENT if no early data was sent. This function
 may be called by either the client or the server.
 
 A server uses the SSL_read_early_data() function to receive early data on a
-connection. As for SSL_write_early() this must be the first IO function called
-on a connection, i.e. it must occur before any calls to L<SSL_write_ex(3)>,
-L<SSL_read_ex(3)>, L<SSL_accept(3)>, L<SSL_do_handshake(3)>, or other similar
-functions.
+connection. As for SSL_write_early_data() this must be the first IO function
+called on a connection, i.e. it must occur before any calls to
+L<SSL_write_ex(3)>, L<SSL_read_ex(3)>, L<SSL_accept(3)>, L<SSL_do_handshake(3)>,
+or other similar functions.
 
 SSL_read_early_data() works in the same way as L<SSL_read_ex(3)> except for the
 differences noted here. Refer to the L<SSL_read_ex(3)> documentation for full
@@ -127,9 +127,9 @@ or if the early data was rejected.
 
 =back
 
-Once the initial SSL_write_early() call has completed successfully the client
-may interleave calls to L<SSL_write_ex(3)> and L<SSL_write(3)> with calls to
-SSL_read_early_data() as required. As noted above data sent via
+Once the initial SSL_read_early_data() call has completed successfully the
+server may interleave calls to L<SSL_write_ex(3)> and L<SSL_write(3)> with calls
+to SSL_read_early_data() as required. As noted above data sent via
 L<SSL_write_ex(3)> or L<SSL_write(3)> in this way is sent to an unauthenticated
 client.
 
@@ -166,7 +166,7 @@ with then the lower of the two values will apply.
 
 =head1 RETURN VALUES
 
-SSL_write_early() returns 1 for success or 0 for failure. In the event of a
+SSL_write_early_data() returns 1 for success or 0 for failure. In the event of a
 failure call L<SSL_get_error(3)> to determine the correct course of action.
 
 SSL_read_early_data() returns SSL_READ_EARLY_DATA_ERROR for failure,

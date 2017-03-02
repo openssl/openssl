@@ -1625,8 +1625,8 @@ __owur int SSL_peek(SSL *ssl, void *buf, int num);
 __owur int SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *readbytes);
 __owur int SSL_write(SSL *ssl, const void *buf, int num);
 __owur int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written);
-__owur int SSL_write_early(SSL *s, const void *buf, size_t num,
-                           size_t *written);
+__owur int SSL_write_early_data(SSL *s, const void *buf, size_t num,
+                                size_t *written);
 long SSL_ctrl(SSL *ssl, int cmd, long larg, void *parg);
 long SSL_callback_ctrl(SSL *, int, void (*)(void));
 long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg);
@@ -2311,7 +2311,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_VALIDATE_CT                            400
 # define SSL_F_SSL_VERIFY_CERT_CHAIN                      207
 # define SSL_F_SSL_WRITE                                  208
-# define SSL_F_SSL_WRITE_EARLY                            526
+# define SSL_F_SSL_WRITE_EARLY_DATA                       526
 # define SSL_F_SSL_WRITE_EARLY_FINISH                     527
 # define SSL_F_SSL_WRITE_EX                               433
 # define SSL_F_SSL_WRITE_INTERNAL                         524
