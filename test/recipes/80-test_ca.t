@@ -13,6 +13,7 @@ use warnings;
 use POSIX;
 use File::Path 2.00 qw/rmtree/;
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_ca");
 
@@ -41,6 +42,9 @@ plan tests => 5;
 
      ok(run(perlapp(["CA.pl", "-verify", "newcert.pem"])),
         'verifying new certificate');
+
+     skip "CT not configured, can't use -precert", 1
+         if disabled("ct");
 
      $ENV{OPENSSL_CONFIG} = "-config ".srctop_file("test", "Uss.cnf");
      ok(run(perlapp(["CA.pl", "-precert"], stderr => undef)),
