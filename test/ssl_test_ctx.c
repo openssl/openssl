@@ -288,26 +288,7 @@ const char *ssl_session_ticket_name(ssl_session_ticket_t server)
 
 /* CompressionExpected */
 
-static const test_enum ssl_compression[] = {
-    {"Yes", SSL_TEST_COMPRESSION_YES},
-    {"No", SSL_TEST_COMPRESSION_NO},
-};
-
-__owur static int parse_compression(SSL_TEST_CTX *test_ctx, const char *value)
-{
-    int ret_value;
-    if (!parse_enum(ssl_compression, OSSL_NELEM(ssl_compression),
-                    &ret_value, value)) {
-        return 0;
-    }
-    test_ctx->compression_expected = ret_value;
-    return 1;
-}
-
-const char *ssl_compression_name(ssl_compression_t comp)
-{
-    return enum_name(ssl_compression, OSSL_NELEM(ssl_compression), comp);
-}
+IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, compression_expected)
 
 /* Method */
 
@@ -564,7 +545,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ExpectedProtocol", &parse_protocol },
     { "ExpectedServerName", &parse_expected_servername },
     { "SessionTicketExpected", &parse_session_ticket },
-    { "CompressionExpected", &parse_compression },
+    { "CompressionExpected", &parse_test_compression_expected },
     { "Method", &parse_test_method },
     { "ExpectedNPNProtocol", &parse_test_expected_npn_protocol },
     { "ExpectedALPNProtocol", &parse_test_expected_alpn_protocol },

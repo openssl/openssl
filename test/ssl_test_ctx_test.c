@@ -174,9 +174,9 @@ static int SSL_TEST_CTX_equal(SSL_TEST_CTX *ctx, SSL_TEST_CTX *ctx2)
         return 0;
     }
     if (ctx->compression_expected != ctx2->compression_expected) {
-        fprintf(stderr, "ComrpessionExpected mismatch: %s vs %s.\n",
-                ssl_compression_name(ctx->compression_expected),
-                ssl_compression_name(ctx2->compression_expected));
+        fprintf(stderr, "ComrpessionExpected mismatch: %d vs %d.\n",
+                ctx->compression_expected,
+                ctx2->compression_expected);
         return 0;
     }
     if (!strings_equal("ExpectedNPNProtocol", ctx->expected_npn_protocol,
