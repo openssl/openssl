@@ -3036,6 +3036,8 @@ static int ldap_ExtendedResponse_parse(const char *buf, long rem)
         goto end;
     }
 
+    rem = len;  /* ensure that we don't overstep the SEQUENCE */
+
     /* pull MessageID */
     inf = ASN1_get_object(&cur, &len, &tag, &xclass, rem);
     if (inf != V_ASN1_UNIVERSAL || tag != V_ASN1_INTEGER ||
