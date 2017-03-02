@@ -206,7 +206,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_SSL_PEEK_EX), "SSL_peek_ex"},
     {ERR_FUNC(SSL_F_SSL_PEEK_INTERNAL), "ssl_peek_internal"},
     {ERR_FUNC(SSL_F_SSL_READ), "SSL_read"},
-    {ERR_FUNC(SSL_F_SSL_READ_EARLY), "SSL_read_early"},
+    {ERR_FUNC(SSL_F_SSL_READ_EARLY_DATA), "SSL_read_early_data"},
     {ERR_FUNC(SSL_F_SSL_READ_EX), "SSL_read_ex"},
     {ERR_FUNC(SSL_F_SSL_READ_INTERNAL), "ssl_read_internal"},
     {ERR_FUNC(SSL_F_SSL_RENEGOTIATE), "SSL_renegotiate"},

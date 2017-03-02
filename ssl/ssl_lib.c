@@ -1607,20 +1607,21 @@ int SSL_read_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
     return ret;
 }
 
-int SSL_read_early(SSL *s, void *buf, size_t num, size_t *readbytes)
+int SSL_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes)
 {
     int ret;
 
     if (!s->server) {
-        SSLerr(SSL_F_SSL_READ_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-        return SSL_READ_EARLY_ERROR;
+        SSLerr(SSL_F_SSL_READ_EARLY_DATA, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return SSL_READ_EARLY_DATA_ERROR;
     }
 
     switch (s->early_data_state) {
     case SSL_EARLY_DATA_NONE:
         if (!SSL_in_before(s)) {
-            SSLerr(SSL_F_SSL_READ_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-            return SSL_READ_EARLY_ERROR;
+            SSLerr(SSL_F_SSL_READ_EARLY_DATA,
+                   ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+            return SSL_READ_EARLY_DATA_ERROR;
         }
         /* fall through */
 
@@ -1630,7 +1631,7 @@ int SSL_read_early(SSL *s, void *buf, size_t num, size_t *readbytes)
         if (ret <= 0) {
             /* NBIO or error */
             s->early_data_state = SSL_EARLY_DATA_ACCEPT_RETRY;
-            return SSL_READ_EARLY_ERROR;
+            return SSL_READ_EARLY_DATA_ERROR;
         }
         /* fall through */
 
@@ -1646,17 +1647,18 @@ int SSL_read_early(SSL *s, void *buf, size_t num, size_t *readbytes)
             if (ret > 0 || (ret <= 0 && s->early_data_state
                                         != SSL_EARLY_DATA_FINISHED_READING)) {
                 s->early_data_state = SSL_EARLY_DATA_READ_RETRY;
-                return ret > 0 ? SSL_READ_EARLY_SUCCESS : SSL_READ_EARLY_ERROR;
+                return ret > 0 ? SSL_READ_EARLY_DATA_SUCCESS
+                               : SSL_READ_EARLY_DATA_ERROR;
             }
         } else {
             s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
         }
         *readbytes = 0;
-        return SSL_READ_EARLY_FINISH;
+        return SSL_READ_EARLY_DATA_FINISH;
 
     default:
-        SSLerr(SSL_F_SSL_READ_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-        return SSL_READ_EARLY_ERROR;
+        SSLerr(SSL_F_SSL_READ_EARLY_DATA, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return SSL_READ_EARLY_DATA_ERROR;
     }
 }
 

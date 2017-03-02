@@ -2211,13 +2211,13 @@ static int sv_body(int s, int stype, unsigned char *context)
     }
 
     if (early_data) {
-        int write_header = 1, edret = SSL_READ_EARLY_ERROR;
+        int write_header = 1, edret = SSL_READ_EARLY_DATA_ERROR;
         size_t readbytes;
 
-        while (edret != SSL_READ_EARLY_FINISH) {
+        while (edret != SSL_READ_EARLY_DATA_FINISH) {
             for (;;) {
-                edret = SSL_read_early(con, buf, bufsize, &readbytes);
-                if (edret != SSL_READ_EARLY_ERROR)
+                edret = SSL_read_early_data(con, buf, bufsize, &readbytes);
+                if (edret != SSL_READ_EARLY_DATA_ERROR)
                     break;
 
                 switch (SSL_get_error(con, 0)) {
