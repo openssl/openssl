@@ -1610,8 +1610,8 @@ static int test_early_data_read_write(void)
         goto end;
     }
 
-    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
-                != SSL_READ_EARLY_SUCCESS
+    if (SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_DATA_SUCCESS
             || readbytes != strlen(MSG1)
             || memcmp(MSG1, buf, strlen(MSG1))) {
         printf("Failed reading early data message 1\n");
@@ -1648,8 +1648,8 @@ static int test_early_data_read_write(void)
     }
 
     /* Server should still be able read early data after writing normal data */
-    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
-                != SSL_READ_EARLY_SUCCESS
+    if (SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_DATA_SUCCESS
             || readbytes != strlen(MSG3)
             || memcmp(MSG3, buf, strlen(MSG3))) {
         printf("Failed reading early data message 3\n");
@@ -1686,8 +1686,8 @@ static int test_early_data_read_write(void)
     }
 
     /* Server should be told that there is no more early data */
-    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
-                != SSL_READ_EARLY_FINISH
+    if (SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_DATA_FINISH
             || readbytes != 0) {
         printf("Failed finishing read of early data\n");
         goto end;
@@ -1707,8 +1707,8 @@ static int test_early_data_read_write(void)
     }
     ERR_clear_error();
 
-    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
-                != SSL_READ_EARLY_ERROR) {
+    if (SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_DATA_ERROR) {
         printf("Unexpected success reading early data\n");
         goto end;
     }
@@ -1751,8 +1751,8 @@ static int test_early_data_read_write(void)
         goto end;
     }
 
-    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
-                != SSL_READ_EARLY_SUCCESS
+    if (SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_DATA_SUCCESS
             || readbytes != strlen(MSG1)
             || memcmp(MSG1, buf, strlen(MSG1))) {
         printf("Failed reading early data message 1\n");
@@ -1785,8 +1785,8 @@ static int test_early_data_read_write(void)
     }
     ERR_clear_error();
 
-    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
-                != SSL_READ_EARLY_ERROR) {
+    if (SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_DATA_ERROR) {
         printf("Unexpected success reading early data (2)\n");
         goto end;
     }
@@ -1854,8 +1854,8 @@ static int test_early_data_skip(void)
     }
 
     /* Server should reject the early data and skip over it */
-    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
-                != SSL_READ_EARLY_FINISH
+    if (SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_DATA_FINISH
             || readbytes != 0) {
         printf("Failed reading early data\n");
         goto end;
@@ -1926,8 +1926,8 @@ static int test_early_data_not_sent(void)
     }
 
     /* Server should detect that early data has not been sent */
-    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
-                != SSL_READ_EARLY_FINISH
+    if (SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_DATA_FINISH
             || readbytes != 0) {
         printf("Failed reading early data\n");
         goto end;
@@ -2106,11 +2106,11 @@ static int test_early_data_tls1_2(void)
 
     /*
      * Server should do TLSv1.2 handshake. First it will block waiting for more
-     * messages from client after ServerDone. Then SSL_read_early should finish
-     * and detect that early data has not been sent
+     * messages from client after ServerDone. Then SSL_read_early_data should
+     * finish and detect that early data has not been sent
      */
-    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
-                != SSL_READ_EARLY_ERROR) {
+    if (SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_DATA_ERROR) {
         printf("Unexpected success reading early data\n");
         goto end;
     }
@@ -2124,8 +2124,8 @@ static int test_early_data_tls1_2(void)
         goto end;
     }
 
-    if (SSL_read_early(serverssl, buf, sizeof(buf), &readbytes)
-                != SSL_READ_EARLY_FINISH
+    if (SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes)
+                != SSL_READ_EARLY_DATA_FINISH
             || readbytes != 0) {
         printf("Failed reading early data\n");
         goto end;
