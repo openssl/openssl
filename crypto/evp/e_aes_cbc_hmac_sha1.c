@@ -565,7 +565,6 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             }
 # endif
 
-# if 1
             len -= SHA_DIGEST_LENGTH; /* amend mac */
             if (len >= (256 + SHA_CBLOCK)) {
                 j = (len - (256 + SHA_CBLOCK)) & (0 - SHA_CBLOCK);
@@ -659,26 +658,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             }
 #  endif
             len += SHA_DIGEST_LENGTH;
-# else
-            SHA1_Update(&key->md, out, inp_len);
-            res = key->md.num;
-            SHA1_Final(pmac->c, &key->md);
 
-            {
-                unsigned int inp_blocks, pad_blocks;
-
-                /* but pretend as if we hashed padded payload */
-                inp_blocks =
-                    1 + ((SHA_CBLOCK - 9 - res) >> (sizeof(res) * 8 - 1));
-                res += (unsigned int)(len - inp_len);
-                pad_blocks = res / SHA_CBLOCK;
-                res %= SHA_CBLOCK;
-                pad_blocks +=
-                    1 + ((SHA_CBLOCK - 9 - res) >> (sizeof(res) * 8 - 1));
-                for (; inp_blocks < pad_blocks; inp_blocks++)
-                    sha1_block_data_order(&key->md, data, 1);
-            }
-# endif
             key->md = key->tail;
             SHA1_Update(&key->md, pmac->c, SHA_DIGEST_LENGTH);
             SHA1_Final(pmac->c, &key->md);
@@ -686,7 +666,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             /* verify HMAC */
             out += inp_len;
             len -= inp_len;
-# if 1
+
             {
                 unsigned char *p = out + len - 1 - maxpad - SHA_DIGEST_LENGTH;
                 size_t off = out - p;
@@ -708,21 +688,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 res = 0 - ((0 - res) >> (sizeof(res) * 8 - 1));
                 ret &= (int)~res;
             }
-# else
-            for (res = 0, i = 0; i < SHA_DIGEST_LENGTH; i++)
-                res |= out[i] ^ pmac->c[i];
-            res = 0 - ((0 - res) >> (sizeof(res) * 8 - 1));
-            ret &= (int)~res;
 
-            /* verify padding */
-            pad = (pad & ~res) | (maxpad & res);
-            out = out + len - 1 - pad;
-            for (res = 0, i = 0; i < pad; i++)
-                res |= out[i] ^ pad;
-
-            res = (0 - res) >> (sizeof(res) * 8 - 1);
-            ret &= (int)~res;
-# endif
             return ret;
         } else {
 # if defined(STITCHED_DECRYPT_CALL)
