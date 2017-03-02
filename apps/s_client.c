@@ -2393,6 +2393,40 @@ int s_client_main(int argc, char **argv)
         BIO_free(edfile);
     }
 
+    if (early_data_file != NULL
+            && SSL_get0_session(con) != NULL
+            && SSL_SESSION_get_max_early_data(SSL_get0_session(con)) > 0) {
+        BIO *edfile = BIO_new_file(early_data_file, "r");
+        size_t readbytes, writtenbytes;
+        int finish = 0;
+
+        if (edfile == NULL) {
+            BIO_printf(bio_err, "Cannot open early data file\n");
+            goto shut;
+        }
+
+        while (!finish) {
+            if (!BIO_read_ex(edfile, cbuf, BUFSIZZ, &readbytes))
+                finish = 1;
+
+            while (!SSL_write_early_data(con, cbuf, readbytes, &writtenbytes)) {
+                switch (SSL_get_error(con, 0)) {
+                case SSL_ERROR_WANT_WRITE:
+                case SSL_ERROR_WANT_ASYNC:
+                case SSL_ERROR_WANT_READ:
+                    /* Just keep trying - busy waiting */
+                    continue;
+                default:
+                    BIO_printf(bio_err, "Error writing early data\n");
+                    BIO_free(edfile);
+                    goto shut;
+                }
+            }
+        }
+
+        BIO_free(edfile);
+    }
+
     for (;;) {
         FD_ZERO(&readfds);
         FD_ZERO(&writefds);
