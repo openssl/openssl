@@ -1816,7 +1816,7 @@ int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
     return ret;
 }
 
-int SSL_write_early(SSL *s, const void *buf, size_t num, size_t *written)
+int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 {
     int ret;
 

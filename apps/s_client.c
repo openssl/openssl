@@ -2303,7 +2303,7 @@ int s_client_main(int argc, char **argv)
             if (!BIO_read_ex(edfile, cbuf, BUFSIZZ, &readbytes))
                 finish = 1;
 
-            while (!SSL_write_early(con, cbuf, readbytes, &writtenbytes)) {
+            while (!SSL_write_early_data(con, cbuf, readbytes, &writtenbytes)) {
                 switch (SSL_get_error(con, 0)) {
                 case SSL_ERROR_WANT_WRITE:
                 case SSL_ERROR_WANT_ASYNC:

@@ -1604,7 +1604,7 @@ static int test_early_data_read_write(void)
         goto end;
 
     /* Write and read some early data */
-    if (!SSL_write_early(clientssl, MSG1, strlen(MSG1), &written)
+    if (!SSL_write_early_data(clientssl, MSG1, strlen(MSG1), &written)
             || written != strlen(MSG1)) {
         printf("Failed writing early data message 1\n");
         goto end;
@@ -1641,7 +1641,7 @@ static int test_early_data_read_write(void)
     }
 
     /* Even after reading normal data, client should be able write early data */
-    if (!SSL_write_early(clientssl, MSG3, strlen(MSG3), &written)
+    if (!SSL_write_early_data(clientssl, MSG3, strlen(MSG3), &written)
             || written != strlen(MSG3)) {
         printf("Failed writing early data message 3\n");
         goto end;
@@ -1701,7 +1701,7 @@ static int test_early_data_read_write(void)
     }
 
     /* Client and server should not be able to write early data now */
-    if (SSL_write_early(clientssl, MSG6, strlen(MSG6), &written)) {
+    if (SSL_write_early_data(clientssl, MSG6, strlen(MSG6), &written)) {
         printf("Unexpected success writing early data\n");
         goto end;
     }
@@ -1745,7 +1745,7 @@ static int test_early_data_read_write(void)
     }
 
     /* Write and read some early data */
-    if (!SSL_write_early(clientssl, MSG1, strlen(MSG1), &written)
+    if (!SSL_write_early_data(clientssl, MSG1, strlen(MSG1), &written)
             || written != strlen(MSG1)) {
         printf("Failed writing early data message 1\n");
         goto end;
@@ -1779,7 +1779,7 @@ static int test_early_data_read_write(void)
     }
 
     /* Client and server should not be able to write early data now */
-    if (SSL_write_early(clientssl, MSG6, strlen(MSG6), &written)) {
+    if (SSL_write_early_data(clientssl, MSG6, strlen(MSG6), &written)) {
         printf("Unexpected success writing early data (2)\n");
         goto end;
     }
@@ -1847,7 +1847,7 @@ static int test_early_data_skip(void)
     }
 
     /* Write some early data */
-    if (!SSL_write_early(clientssl, MSG1, strlen(MSG1), &written)
+    if (!SSL_write_early_data(clientssl, MSG1, strlen(MSG1), &written)
             || written != strlen(MSG1)) {
         printf("Failed writing early data message 1\n");
         goto end;
@@ -2008,7 +2008,7 @@ static int test_early_data_not_expected(void)
         goto end;
 
     /* Write some early data */
-    if (!SSL_write_early(clientssl, MSG1, strlen(MSG1), &written)) {
+    if (!SSL_write_early_data(clientssl, MSG1, strlen(MSG1), &written)) {
         printf("Unexpected failure writing message 1\n");
         goto end;
     }
