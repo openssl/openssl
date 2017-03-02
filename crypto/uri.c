@@ -221,10 +221,10 @@ static int span_host(const char *p, size_t *off)
                 }
                 /* If there's more then one ::, all is lost */
                 /*
-                 * If there was no :: and there wasn't exactly 7 HEXDIG series
+                 * If there was no :: and there wasn't at least 6 HEXDIG series
                  * followed by a colon, all is lost as well
                  */
-                if (dblcolon > 1 || (dblcolon == 0 && maxcolons > 0)) {
+                if (dblcolon > 1 || (dblcolon == 0 && maxcolons > 1)) {
                     tmp_off = tmp_off2;
                 /*
                  * Otherwise, we might end this with an IPv4 address,
@@ -257,14 +257,17 @@ static int span_host(const char *p, size_t *off)
                      * serie of HEXDIG.  If there is no such thing, there MUST
                      * be an ending ::
                      */
-                    } else if (!span_chars(p, &tmp_off, CHARTYPE_HEXDIG, "")
-                             && (dblcolon == 0
-                                 || p[tmp_off - 1] != ':'
-                                 || p[tmp_off - 2] != ':'))
+                    } else if ((!(dblcolon == 0
+                                  ? maxcolons == 0 : maxcolons >= 0)
+                                || !span_chars(p, &tmp_off, CHARTYPE_HEXDIG,
+                                               ""))
+                               && !(dblcolon == 1
+                                    && p[tmp_off - 1] == ':'
+                                    && p[tmp_off - 2] == ':')) {
                         /* None found */
                         tmp_off = tmp_off2;
+                    }
                 }
-
             }
         }
 
