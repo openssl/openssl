@@ -97,7 +97,7 @@ the corresponding condition is true or 0 otherwise.
 
 =head1 SEE ALSO
 
-L<ssl(7)>, L<err(7)>, L<SSL_get_error(3)>
+L<ssl(7)>, L<SSL_get_error(3)>
 
 =head1 HISTORY
 
