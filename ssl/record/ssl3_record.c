@@ -740,6 +740,9 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
     int imac_size;
     const EVP_CIPHER *enc;
 
+    if (n_recs == 0)
+        return 0;
+
     if (send) {
         if (EVP_MD_CTX_md(s->write_hash)) {
             int n = EVP_MD_CTX_size(s->write_hash);
