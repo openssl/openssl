@@ -61,7 +61,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s);
 static void init_write_state_machine(SSL *s);
 static SUB_STATE_RETURN write_state_machine(SSL *s);
 
-OSSL_HANDSHAKE_STATE SSL_get_state(const SSL *ssl)
+int SSL_get_state(const SSL *ssl)
 {
     return ssl->statem.hand_state;
 }

@@ -266,14 +266,12 @@ DEFINE_STACK_OF(UI_STRING)
  * The different types of strings that are currently supported. This is only
  * needed by method authors.
  */
-enum UI_string_types {
-    UIT_NONE = 0,
-    UIT_PROMPT,                 /* Prompt for a string */
-    UIT_VERIFY,                 /* Prompt for a string and verify */
-    UIT_BOOLEAN,                /* Prompt for a yes/no response */
-    UIT_INFO,                   /* Send info to the user */
-    UIT_ERROR                   /* Send an error message to the user */
-};
+# define UIT_NONE 0
+# define UIT_PROMPT 1                 /* Prompt for a string */
+# define UIT_VERIFY 2                 /* Prompt for a string and verify */
+# define UIT_BOOLEAN 3                /* Prompt for a yes/no response */
+# define UIT_INFO 4                   /* Send info to the user */
+# define UIT_ERROR 5                  /* Send an error message to the user */
 
 /* Create and manipulate methods */
 UI_METHOD *UI_create_method(const char *name);
@@ -307,7 +305,7 @@ const void *UI_method_get_ex_data(const UI_METHOD *method, int idx);
  */
 
 /* Return type of the UI_STRING */
-enum UI_string_types UI_get_string_type(UI_STRING *uis);
+int UI_get_string_type(UI_STRING *uis);
 /* Return input flags of the UI_STRING */
 int UI_get_input_flags(UI_STRING *uis);
 /* Return the actual string to output (the prompt, info or error) */

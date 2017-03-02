@@ -94,7 +94,7 @@ static int allocate_string_stack(UI *ui)
 
 static UI_STRING *general_allocate_prompt(UI *ui, const char *prompt,
                                           int prompt_freeable,
-                                          enum UI_string_types type,
+                                          int type,
                                           int input_flags, char *result_buf)
 {
     UI_STRING *ret = NULL;
@@ -116,7 +116,7 @@ static UI_STRING *general_allocate_prompt(UI *ui, const char *prompt,
 
 static int general_allocate_string(UI *ui, const char *prompt,
                                    int prompt_freeable,
-                                   enum UI_string_types type, int input_flags,
+                                   int type, int input_flags,
                                    char *result_buf, int minsize, int maxsize,
                                    const char *test_buf)
 {
@@ -147,7 +147,7 @@ static int general_allocate_boolean(UI *ui,
                                     const char *ok_chars,
                                     const char *cancel_chars,
                                     int prompt_freeable,
-                                    enum UI_string_types type,
+                                    int type,
                                     int input_flags, char *result_buf)
 {
     int ret = -1;
@@ -706,7 +706,7 @@ const void *UI_method_get_ex_data(const UI_METHOD *method, int idx)
     return CRYPTO_get_ex_data(&method->ex_data, idx);
 }
 
-enum UI_string_types UI_get_string_type(UI_STRING *uis)
+int UI_get_string_type(UI_STRING *uis)
 {
     return uis->type;
 }

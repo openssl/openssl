@@ -50,7 +50,7 @@ void SCT_LIST_free(STACK_OF(SCT) *a)
     sk_SCT_pop_free(a, SCT_free);
 }
 
-int SCT_set_version(SCT *sct, sct_version_t version)
+int SCT_set_version(SCT *sct, int version)
 {
     if (version != SCT_VERSION_V1) {
         CTerr(CT_F_SCT_SET_VERSION, CT_R_UNSUPPORTED_VERSION);
@@ -61,7 +61,7 @@ int SCT_set_version(SCT *sct, sct_version_t version)
     return 1;
 }
 
-int SCT_set_log_entry_type(SCT *sct, ct_log_entry_type_t entry_type)
+int SCT_set_log_entry_type(SCT *sct, int entry_type)
 {
     sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 
@@ -192,12 +192,12 @@ int SCT_set1_signature(SCT *sct, const unsigned char *sig, size_t sig_len)
     return 1;
 }
 
-sct_version_t SCT_get_version(const SCT *sct)
+int SCT_get_version(const SCT *sct)
 {
     return sct->version;
 }
 
-ct_log_entry_type_t SCT_get_log_entry_type(const SCT *sct)
+int SCT_get_log_entry_type(const SCT *sct)
 {
     return sct->entry_type;
 }
@@ -260,12 +260,12 @@ int SCT_signature_is_complete(const SCT *sct)
         sct->sig != NULL && sct->sig_len > 0;
 }
 
-sct_source_t SCT_get_source(const SCT *sct)
+int SCT_get_source(const SCT *sct)
 {
     return sct->source;
 }
 
-int SCT_set_source(SCT *sct, sct_source_t source)
+int SCT_set_source(SCT *sct, int source)
 {
     sct->source = source;
     sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
@@ -282,7 +282,7 @@ int SCT_set_source(SCT *sct, sct_source_t source)
     return 1;
 }
 
-sct_validation_status_t SCT_get_validation_status(const SCT *sct)
+int SCT_get_validation_status(const SCT *sct)
 {
     return sct->validation_status;
 }

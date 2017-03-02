@@ -846,56 +846,54 @@ DEPRECATEDIN_1_1_0(void SSL_set_debug(SSL *s, int debug))
  * TLS_ST_BEFORE = No handshake has been initiated yet
  * TLS_ST_OK = A handshake has been successfully completed
  */
-typedef enum {
-    TLS_ST_BEFORE,
-    TLS_ST_OK,
-    DTLS_ST_CR_HELLO_VERIFY_REQUEST,
-    TLS_ST_CR_SRVR_HELLO,
-    TLS_ST_CR_CERT,
-    TLS_ST_CR_CERT_STATUS,
-    TLS_ST_CR_KEY_EXCH,
-    TLS_ST_CR_CERT_REQ,
-    TLS_ST_CR_SRVR_DONE,
-    TLS_ST_CR_SESSION_TICKET,
-    TLS_ST_CR_CHANGE,
-    TLS_ST_CR_FINISHED,
-    TLS_ST_CW_CLNT_HELLO,
-    TLS_ST_CW_CERT,
-    TLS_ST_CW_KEY_EXCH,
-    TLS_ST_CW_CERT_VRFY,
-    TLS_ST_CW_CHANGE,
-    TLS_ST_CW_NEXT_PROTO,
-    TLS_ST_CW_FINISHED,
-    TLS_ST_SW_HELLO_REQ,
-    TLS_ST_SR_CLNT_HELLO,
-    DTLS_ST_SW_HELLO_VERIFY_REQUEST,
-    TLS_ST_SW_SRVR_HELLO,
-    TLS_ST_SW_CERT,
-    TLS_ST_SW_KEY_EXCH,
-    TLS_ST_SW_CERT_REQ,
-    TLS_ST_SW_SRVR_DONE,
-    TLS_ST_SR_CERT,
-    TLS_ST_SR_KEY_EXCH,
-    TLS_ST_SR_CERT_VRFY,
-    TLS_ST_SR_NEXT_PROTO,
-    TLS_ST_SR_CHANGE,
-    TLS_ST_SR_FINISHED,
-    TLS_ST_SW_SESSION_TICKET,
-    TLS_ST_SW_CERT_STATUS,
-    TLS_ST_SW_CHANGE,
-    TLS_ST_SW_FINISHED,
-    TLS_ST_SW_ENCRYPTED_EXTENSIONS,
-    TLS_ST_CR_ENCRYPTED_EXTENSIONS,
-    TLS_ST_CR_CERT_VRFY,
-    TLS_ST_SW_CERT_VRFY,
-    TLS_ST_CR_HELLO_REQ,
-    TLS_ST_SW_HELLO_RETRY_REQUEST,
-    TLS_ST_CR_HELLO_RETRY_REQUEST,
-    TLS_ST_SW_KEY_UPDATE,
-    TLS_ST_CW_KEY_UPDATE,
-    TLS_ST_SR_KEY_UPDATE,
-    TLS_ST_CR_KEY_UPDATE
-} OSSL_HANDSHAKE_STATE;
+#define TLS_ST_BEFORE                           0
+#define TLS_ST_OK                               1
+#define DTLS_ST_CR_HELLO_VERIFY_REQUEST         2
+#define TLS_ST_CR_SRVR_HELLO                    3
+#define TLS_ST_CR_CERT                          4
+#define TLS_ST_CR_CERT_STATUS                   5
+#define TLS_ST_CR_KEY_EXCH                      6
+#define TLS_ST_CR_CERT_REQ                      7
+#define TLS_ST_CR_SRVR_DONE                     8
+#define TLS_ST_CR_SESSION_TICKET                9
+#define TLS_ST_CR_CHANGE                       10
+#define TLS_ST_CR_FINISHED                     11
+#define TLS_ST_CW_CLNT_HELLO                   12
+#define TLS_ST_CW_CERT                         13
+#define TLS_ST_CW_KEY_EXCH                     14
+#define TLS_ST_CW_CERT_VRFY                    15
+#define TLS_ST_CW_CHANGE                       16
+#define TLS_ST_CW_NEXT_PROTO                   17
+#define TLS_ST_CW_FINISHED                     18
+#define TLS_ST_SW_HELLO_REQ                    19
+#define TLS_ST_SR_CLNT_HELLO                   20
+#define DTLS_ST_SW_HELLO_VERIFY_REQUEST        21
+#define TLS_ST_SW_SRVR_HELLO                   22
+#define TLS_ST_SW_CERT                         23
+#define TLS_ST_SW_KEY_EXCH                     24
+#define TLS_ST_SW_CERT_REQ                     25
+#define TLS_ST_SW_SRVR_DONE                    26
+#define TLS_ST_SR_CERT                         27
+#define TLS_ST_SR_KEY_EXCH                     28
+#define TLS_ST_SR_CERT_VRFY                    29
+#define TLS_ST_SR_NEXT_PROTO                   30
+#define TLS_ST_SR_CHANGE                       31
+#define TLS_ST_SR_FINISHED                     32
+#define TLS_ST_SW_SESSION_TICKET               33
+#define TLS_ST_SW_CERT_STATUS                  34
+#define TLS_ST_SW_CHANGE                       35
+#define TLS_ST_SW_FINISHED                     36
+#define TLS_ST_SW_ENCRYPTED_EXTENSIONS         37
+#define TLS_ST_CR_ENCRYPTED_EXTENSIONS         38
+#define TLS_ST_CR_CERT_VRFY                    39
+#define TLS_ST_SW_CERT_VRFY                    40
+#define TLS_ST_CR_HELLO_REQ                    41
+#define TLS_ST_SW_HELLO_RETRY_REQUEST          42
+#define TLS_ST_CR_HELLO_RETRY_REQUEST          43
+#define TLS_ST_SW_KEY_UPDATE                   44
+#define TLS_ST_CW_KEY_UPDATE                   45
+#define TLS_ST_SR_KEY_UPDATE                   46
+#define TLS_ST_CR_KEY_UPDATE                   47
 
 /*
  * Most of the following state values are no longer used and are defined to be
@@ -1743,7 +1741,7 @@ void SSL_set_info_callback(SSL *ssl,
                            void (*cb) (const SSL *ssl, int type, int val));
 void (*SSL_get_info_callback(const SSL *ssl)) (const SSL *ssl, int type,
                                                int val);
-__owur OSSL_HANDSHAKE_STATE SSL_get_state(const SSL *ssl);
+__owur int SSL_get_state(const SSL *ssl);
 
 void SSL_set_verify_result(SSL *ssl, long v);
 __owur long SSL_get_verify_result(const SSL *ssl);
@@ -1934,10 +1932,8 @@ int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx,
  * CT validation callback selected via SSL_enable_ct() and SSL_CTX_enable_ct().
  * The underlying callback is a static function in libssl.
  */
-enum {
-    SSL_CT_VALIDATION_PERMISSIVE = 0,
-    SSL_CT_VALIDATION_STRICT
-};
+#define SSL_CT_VALIDATION_PERMISSIVE 0
+#define SSL_CT_VALIDATION_STRICT 1
 
 /*
  * Enable CT by setting up a callback that implements one of the built-in

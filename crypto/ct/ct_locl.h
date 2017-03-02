@@ -55,7 +55,7 @@
 
 /* Signed Certificate Timestamp */
 struct sct_st {
-    sct_version_t version;
+    int version;
     /* If version is not SCT_VERSION_V1, this contains the encoded SCT */
     unsigned char *sct;
     size_t sct_len;
@@ -75,11 +75,11 @@ struct sct_st {
     unsigned char *sig;
     size_t sig_len;
     /* Log entry type */
-    ct_log_entry_type_t entry_type;
+    int entry_type;
     /* Where this SCT was found, e.g. certificate, OCSP response, etc. */
-    sct_source_t source;
+    int source;
     /* The result of the last attempt to validate this SCT. */
-    sct_validation_status_t validation_status;
+    int validation_status;
 };
 
 /* Miscellaneous data that is useful when verifying an SCT  */

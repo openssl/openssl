@@ -58,7 +58,7 @@ err:
 }
 
 SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
-                         ct_log_entry_type_t entry_type, uint64_t timestamp,
+                         int entry_type, uint64_t timestamp,
                          const char *extensions_base64,
                          const char *signature_base64)
 {

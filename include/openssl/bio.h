@@ -656,17 +656,14 @@ int BIO_ADDRINFO_protocol(const BIO_ADDRINFO *bai);
 const BIO_ADDR *BIO_ADDRINFO_address(const BIO_ADDRINFO *bai);
 void BIO_ADDRINFO_free(BIO_ADDRINFO *bai);
 
-enum BIO_hostserv_priorities {
-    BIO_PARSE_PRIO_HOST, BIO_PARSE_PRIO_SERV
-};
+# define BIO_PARSE_PRIO_HOST 0
+# define BIO_PARSE_PRIO_SERV 1
 int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
-                       enum BIO_hostserv_priorities hostserv_prio);
-enum BIO_lookup_type {
-    BIO_LOOKUP_CLIENT, BIO_LOOKUP_SERVER
-};
+                       int hostserv_prio);
+# define BIO_LOOKUP_CLIENT 0
+# define BIO_LOOKUP_SERVER 1
 int BIO_lookup(const char *host, const char *service,
-               enum BIO_lookup_type lookup_type,
-               int family, int socktype, BIO_ADDRINFO **res);
+               int lookup_type, int family, int socktype, BIO_ADDRINFO **res);
 int BIO_sock_error(int sock);
 int BIO_socket_ioctl(int fd, long type, void *arg);
 int BIO_socket_nbio(int fd, int mode);
@@ -685,11 +682,8 @@ DEPRECATEDIN_1_1_0(int BIO_accept(int sock, char **ip_port))
 union BIO_sock_info_u {
     BIO_ADDR *addr;
 };
-enum BIO_sock_info_type {
-    BIO_SOCK_INFO_ADDRESS
-};
-int BIO_sock_info(int sock,
-                  enum BIO_sock_info_type type, union BIO_sock_info_u *info);
+# define BIO_SOCK_INFO_ADDRESS 0
+int BIO_sock_info(int sock, int type, union BIO_sock_info_u *info);
 
 #  define BIO_SOCK_REUSEADDR    0x01
 #  define BIO_SOCK_V6_ONLY      0x02

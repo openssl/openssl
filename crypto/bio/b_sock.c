@@ -350,7 +350,7 @@ int BIO_socket_nbio(int s, int mode)
 }
 
 int BIO_sock_info(int sock,
-                  enum BIO_sock_info_type type, union BIO_sock_info_u *info)
+                  int type, union BIO_sock_info_u *info)
 {
     switch (type) {
     case BIO_SOCK_INFO_ADDRESS:
