@@ -92,6 +92,7 @@ static int extract_scheme(char **scheme, const char **pp)
     /* Check if the loop stopped because of an invalid character */
     if (!is_valid(p[off])) {
         char tmpbuf[200];
+
         URIerr(URI_F_EXTRACT_SCHEME, URI_R_INVALID_CHARACTER_IN_URI);
         BIO_snprintf(tmpbuf, sizeof(tmpbuf),
                  "character code = %u, offset = %" OSSLzu,
@@ -212,8 +213,9 @@ static int span_host(const char *p, size_t *off)
                             if (++dblcolon > 1)
                                 break;
                             maxcolons -= 2;
-                        } else
+                        } else {
                             maxcolons--;
+                        }
                     }
                     tmp_off = laststart;
                 }
