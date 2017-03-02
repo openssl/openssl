@@ -661,6 +661,9 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, unsigned int n_recs, int send)
     const EVP_CIPHER *enc;
     unsigned int ctr;
 
+    if (n_recs == 0)
+        return 0;
+
     if (send) {
         if (EVP_MD_CTX_md(s->write_hash)) {
             int n = EVP_MD_CTX_size(s->write_hash);
