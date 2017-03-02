@@ -30,17 +30,17 @@ SSL_get_early_data_status
 
 =head1 DESCRIPTION
 
-These functions are used to send and recieve early data. Early data can be sent
-by the client immediately after its initial ClientHello without having to wait
-for the server to complete the handshake. Early data can only be sent if a
-session has previously been established with the server, and the server is known
-to support it. Additionally these functions can be used to send data from the
-server to the client when the client has not yet completed the authentication
-stage of the handshake.
+These functions are used to send and recieve early data where TLSv1.3 has been
+negotiated. Early data can be sent by the client immediately after its initial
+ClientHello without having to wait for the server to complete the handshake.
+Early data can only be sent if a session has previously been established with
+the server, and the server is known to support it. Additionally these functions
+can be used to send data from the server to the client when the client has not
+yet completed the authentication stage of the handshake.
 
 Early data has weaker security properties than other data sent over an SSL/TLS
-connection. In particular the data is not forward secret and the server has no
-guarantees that the same early data was not replayed across multiple
+connection. In particular the data does not have forward secrecy and there are
+no guarantees that the same early data was not replayed across multiple
 connections. For this reason extreme care should be exercised when using early
 data.
 
@@ -48,22 +48,23 @@ When a server receives early data it may opt to immediately respond by sending
 application data back to the client. Data sent by the server at this stage is
 done before the full handshake has been completed. Specifically the client's
 authentication messages have not yet been received, i.e. the client is
-unauthenticated at this point.
+unauthenticated at this point and care should be taken when using this
+capability.
 
 A server or client can determine whether the full handshake has been completed
 or not by calling L<SSL_is_init_finished(3)>.
 
-On the client side the function SSL_SESSION_get_max_early_data() can be used to
-determine whether a session established with a server can be used to send early
-data. If the session cannot be used then this function will return 0. Otherwise
-it will return the maximum number of early data bytes that can be sent.
+On the client side, the function SSL_SESSION_get_max_early_data() can be used to
+determine if a session established with a server can be used to send early data.
+If the session cannot be used then this function will return 0. Otherwise it
+will return the maximum number of early data bytes that can be sent.
 
 A client uses the function SSL_write_early_data() to send early data. This
-function works in the same way as the L<SSL_write_ex(3)> function, but with a
-few differences. Refer to the L<SSL_write_ex(3)> documentation for
-information on how to write bytes to the underlying connection, and how to
-handle any errors that may arise. This page will detail the differences between
-SSL_write_early_data() and L<SSL_write_ex(3)>.
+function is similar to the L<SSL_write_ex(3)> function, but with the following
+differences. See L<SSL_write_ex(3)> for information on how to write bytes to
+the underlying connection, and how to handle any errors that may arise. This 
+page describes the differences between SSL_write_early_data() and
+L<SSL_write_ex(3)>.
 
 When called by a client, SSL_write_early_data() must be the first IO function
 called on a new connection, i.e. it must occur before any calls to
@@ -97,9 +98,8 @@ called on a connection, i.e. it must occur before any calls to
 L<SSL_write_ex(3)>, L<SSL_read_ex(3)>, L<SSL_accept(3)>, L<SSL_do_handshake(3)>,
 or other similar functions.
 
-SSL_read_early_data() works in the same way as L<SSL_read_ex(3)> except for the
-differences noted here. Refer to the L<SSL_read_ex(3)> documentation for full
-details.
+SSL_read_early_data() is similar to L<SSL_read_ex(3)> with the following
+differences. Refer to L<SSL_read_ex(3)> for full details.
 
 SSL_read_early_data() may return 3 possible values:
 
@@ -129,7 +129,7 @@ has returned SSL_READ_EARLY_DATA_SUCCESS or SSL_READ_EARLY_DATA_FINISH) then the
 server may choose to write data immediately to the unauthenticated client using
 SSL_write_early_data(). If SSL_read_early_data() returned
 SSL_READ_EARLY_DATA_FINISH then in some situations (e.g. if the client only
-support TLSv1.2) the handshake may have already been completed and calls
+supports TLSv1.2) the handshake may have already been completed and calls
 to SSL_write_early_data() are not allowed. Call L<SSL_is_init_finished(3)> to
 determine whether the handshake has completed or not. If the handshake is still
 in progress then the server may interleave calls to SSL_write_early_data() with
@@ -149,7 +149,8 @@ Only servers may call SSL_read_early_data().
 
 Calls to SSL_read_early_data() may, in certain circumstances, complete the
 connection immediately without further need to call a function such as
-L<SSL_accept(3)>. Applications can test for this by calling
+L<SSL_accept(3)>. This can happen if the client is using a protocol version less
+than TLSv1.3. Applications can test for this by calling
 L<SSL_is_init_finished(3)>. Alternatively, applications may choose to call
 L<SSL_accept(3)> anway. Such a call will successfully return immediately with no
 further action taken.
@@ -174,8 +175,9 @@ failure call L<SSL_get_error(3)> to determine the correct course of action.
 
 SSL_read_early_data() returns SSL_READ_EARLY_DATA_ERROR for failure,
 SSL_READ_EARLY_DATA_SUCCESS for success with more data to read and
-SSL_READ_EARLY_DATA_FINISH for no more to data be read. In the event of a
-failure call L<SSL_get_error(3)> to determine the correct course of action.
+SSL_READ_EARLY_DATA_FINISH for success with no more to data be read. In the
+event of a failure call L<SSL_get_error(3)> to determine the correct course of
+action.
 
 SSL_get_max_early_data(), SSL_CTX_get_max_early_data() and
 SSL_SESSION_get_max_early_data() return the maximum number of early data bytes
