@@ -15,7 +15,9 @@ use warnings;
 package ssltests;
 use OpenSSL::Test::Utils;
 
-our @tests = (
+our @tests = ();
+
+our @tests_tls = (
     {
         name => "SNI-switch-context",
         server => {
@@ -145,6 +147,8 @@ our @tests = (
         },
     },
 );
+
+push @tests, @tests_tls unless disabled("tls");
 
 our @tests_tls_1_1 = (
     {

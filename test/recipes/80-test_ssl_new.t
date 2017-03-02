@@ -56,6 +56,7 @@ my $no_ocsp = disabled("ocsp");
 my %conf_dependent_tests = (
   "02-protocol-version.conf" => !$is_default_tls,
   "04-client_auth.conf" => !$is_default_tls,
+  "05-sni.conf" => $no_tls || disabled("tls1_1"),
   "07-dtls-protocol-version.conf" => !$is_default_dtls,
   "10-resumption.conf" => !$is_default_tls,
   "11-dtls_resumption.conf" => !$is_default_dtls,
