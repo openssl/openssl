@@ -1760,7 +1760,8 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
         if (!ssl_write_early_finish(s))
             return 0;
     } else if (s->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY
-                || s->early_data_state == SSL_EARLY_DATA_ACCEPT_RETRY) {
+                || s->early_data_state == SSL_EARLY_DATA_ACCEPT_RETRY
+                || s->early_data_state == SSL_EARLY_DATA_READ_RETRY) {
         SSLerr(SSL_F_SSL_WRITE_INTERNAL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
@@ -1820,17 +1821,14 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 {
     int ret;
 
-    if (s->server) {
-        SSLerr(SSL_F_SSL_WRITE_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-        return 0;
-    }
-
     switch (s->early_data_state) {
     case SSL_EARLY_DATA_NONE:
-        if (!SSL_in_before(s)
+        if (s->server
+                || !SSL_in_before(s)
                 || s->session == NULL
                 || s->session->ext.max_early_data == 0) {
-            SSLerr(SSL_F_SSL_WRITE_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+            SSLerr(SSL_F_SSL_WRITE_EARLY_DATA,
+                   ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return 0;
         }
         /* fall through */
@@ -1851,8 +1849,15 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
         s->early_data_state = SSL_EARLY_DATA_WRITE_RETRY;
         return ret;
 
+    case SSL_EARLY_DATA_READ_RETRY:
+        /* We are a server writing to an unauthenticated client */
+        s->early_data_state = SSL_EARLY_DATA_UNAUTH_WRITING;
+        ret = SSL_write_ex(s, buf, num, written);
+        s->early_data_state = SSL_EARLY_DATA_READ_RETRY;
+        return ret;
+
     default:
-        SSLerr(SSL_F_SSL_WRITE_EARLY, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        SSLerr(SSL_F_SSL_WRITE_EARLY_DATA, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
 }

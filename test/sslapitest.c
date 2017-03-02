@@ -1624,10 +1624,10 @@ static int test_early_data_read_write(void)
     }
 
     /*
-     * Server should be able to write normal data, and client should be able to
+     * Server should be able to write data, and client should be able to
      * read it.
      */
-    if (!SSL_write_ex(serverssl, MSG2, strlen(MSG2), &written)
+    if (!SSL_write_early_data(serverssl, MSG2, strlen(MSG2), &written)
             || written != strlen(MSG2)) {
         printf("Failed writing message 2\n");
         goto end;
@@ -1647,7 +1647,7 @@ static int test_early_data_read_write(void)
         goto end;
     }
 
-    /* Server should still be able read early data after writing normal data */
+    /* Server should still be able read early data after writing data */
     if (SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes)
                 != SSL_READ_EARLY_DATA_SUCCESS
             || readbytes != strlen(MSG3)
@@ -1656,8 +1656,8 @@ static int test_early_data_read_write(void)
         goto end;
     }
 
-    /* Write more normal data from server and read it from client */
-    if (!SSL_write_ex(serverssl, MSG4, strlen(MSG4), &written)
+    /* Write more data from server and read it from client */
+    if (!SSL_write_early_data(serverssl, MSG4, strlen(MSG4), &written)
             || written != strlen(MSG4)) {
         printf("Failed writing message 4\n");
         goto end;
@@ -1700,7 +1700,7 @@ static int test_early_data_read_write(void)
         goto end;
     }
 
-    /* Client and server should not be able to write early data now */
+    /* Client and server should not be able to write/read early data now */
     if (SSL_write_early_data(clientssl, MSG6, strlen(MSG6), &written)) {
         printf("Unexpected success writing early data\n");
         goto end;
@@ -1778,7 +1778,7 @@ static int test_early_data_read_write(void)
         goto end;
     }
 
-    /* Client and server should not be able to write early data now */
+    /* Client and server should not be able to write/read early data now */
     if (SSL_write_early_data(clientssl, MSG6, strlen(MSG6), &written)) {
         printf("Unexpected success writing early data (2)\n");
         goto end;
