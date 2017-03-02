@@ -1017,6 +1017,7 @@ void SSL_free(SSL *s)
 #endif
     OPENSSL_free(s->ext.ocsp.resp);
     OPENSSL_free(s->ext.alpn);
+    OPENSSL_free(s->ext.tls13_cookie);
     OPENSSL_free(s->clienthello);
 
     sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);

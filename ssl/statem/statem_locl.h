@@ -332,6 +332,8 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx, int *al);
 int tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt, unsigned int context,
                                      X509 *x, size_t chainidx, int *al);
+int tls_construct_ctos_cookie(SSL *s, WPACKET *pkt, unsigned int context,
+                              X509 *x, size_t chainidx, int *al);
 int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, unsigned int context,
                                X509 *x, size_t chainidx, int *al);
 int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
@@ -374,5 +376,7 @@ int tls_parse_stoc_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx, int *al);
 int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                              size_t chainidx, int *al);
+int tls_parse_stoc_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
+                       size_t chainidx, int *al);
 int tls_parse_stoc_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx, int *al);
