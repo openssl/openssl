@@ -149,9 +149,9 @@ static int check_session_ticket(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx
 static int check_compression(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
     if (result->compression != test_ctx->compression_expected) {
-        fprintf(stderr, "Client CompressionExpected mismatch, expected %s, got %s\n.",
-                ssl_compression_name(test_ctx->compression_expected),
-                ssl_compression_name(result->compression));
+        fprintf(stderr, "Client CompressionExpected mismatch, expected %d, got %d\n.",
+                test_ctx->compression_expected,
+                result->compression);
         return 0;
     }
     return 1;
