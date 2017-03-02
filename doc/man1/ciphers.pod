@@ -219,7 +219,8 @@ When in doubt, include B<!aNULL> in your cipherlist.
 
 =item B<kRSA>, B<aRSA>, B<RSA>
 
-Cipher suites using RSA key exchange, authentication or either respectively.
+Cipher suites using RSA key exchange or authentication. B<RSA> is an alias for
+B<kRSA>.
 
 =item B<kDHr>, B<kDHd>, B<kDH>
 
