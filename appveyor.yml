@@ -33,7 +33,8 @@ before_build:
     - perl ..\Configure %TARGET% %SHARED%
     - cd ..
     - ps: >-
-        if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER -or (&git log -2 | Select-String "\[extended tests\]") ) {
+        if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER`
+            -or (&git log -2 | Select-String "\[extended tests\]") ) {
             $env:EXTENDED_TESTS="yes"
         }
 
@@ -41,7 +42,7 @@ build_script:
     - ps: >-
         If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
             cd _build
-            nmake /nologo
+            cmd /c "nmake 2>&1"
             cd ..
         }
 
@@ -50,11 +51,11 @@ test_script:
         If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
             cd _build
             if ($env:EXTENDED_TESTS) {
-                nmake /nologo test V=1
+                cmd /c "nmake test V=1 2>&1"
                 mkdir ..\_install
-                nmake /nologo install install_docs DESTDIR=..\_install
+                cmd /c "nmake install install_docs DESTDIR=..\_install 2>&1"
             } Else {
-                nmake /nologo test V=1 TESTS=-test_fuzz
+                cmd /c "nmake test V=1 TESTS=-test_fuzz 2>&1"
             }
             cd ..
         }
