@@ -168,7 +168,7 @@ typedef struct {
      */
     ssl_servername_t expected_servername;
     ssl_session_ticket_t session_ticket_expected;
-    ssl_compression_t compression_expected;
+    int compression_expected;
     /* The expected NPN/ALPN protocol to negotiate. */
     char *expected_npn_protocol;
     char *expected_alpn_protocol;
@@ -198,7 +198,6 @@ const char *ssl_servername_name(ssl_servername_t server);
 const char *ssl_servername_callback_name(ssl_servername_callback_t
                                          servername_callback);
 const char *ssl_session_ticket_name(ssl_session_ticket_t server);
-const char *ssl_compression_name(ssl_compression_t server);
 const char *ssl_test_method_name(ssl_test_method_t method);
 const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode);
 const char *ssl_ct_validation_name(ssl_ct_validation_t mode);

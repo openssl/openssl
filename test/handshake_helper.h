@@ -34,7 +34,7 @@ typedef struct handshake_result {
     ssl_servername_t servername;
     /* Session ticket status */
     ssl_session_ticket_t session_ticket;
-    ssl_compression_t compression;
+    int compression;
     /* Was this called on the second context? */
     int session_ticket_do_not_call;
     char *client_npn_negotiated;
