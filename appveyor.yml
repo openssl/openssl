@@ -41,7 +41,7 @@ build_script:
     - ps: >-
         If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
             cd _build
-            &nmake
+            nmake /nologo
             cd ..
         }
 
@@ -50,11 +50,11 @@ test_script:
         If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
             cd _build
             if ($env:EXTENDED_TESTS) {
-                &nmake test V=1
+                nmake /nologo test V=1
                 mkdir ..\_install
-                &nmake install install_docs DESTDIR=..\_install
+                nmake /nologo install install_docs DESTDIR=..\_install
             } Else {
-                &nmake test V=1 TESTS=-test_fuzz
+                nmake /nologo test V=1 TESTS=-test_fuzz
             }
             cd ..
         }
