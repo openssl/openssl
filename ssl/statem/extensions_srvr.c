@@ -681,7 +681,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     SSL_SESSION *sess = NULL;
     unsigned int id, i;
     const EVP_MD *md = NULL;
-    uint32_t ticket_age, now, agesec, agems;
+    uint32_t ticket_age = 0, now, agesec, agems;
 
     /*
      * If we have no PSK kex mode that we recognise then we can't resume so
