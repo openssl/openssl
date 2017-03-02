@@ -632,8 +632,6 @@ int OPENSSL_decode_uri(const char *uri, char **scheme, char **authority,
 {
     const char *p = uri;
 
-    OPENSSL_init_crypto(0, NULL);
-
     if (extract_scheme(scheme, &p)
         && (*scheme != NULL
             ? extract_hierpart(authority, path, &p)
@@ -810,8 +808,6 @@ int OPENSSL_decode_authority(const char *authority, char **user,
                              char **password, char **host, char **service)
 {
     const char *p = authority;
-
-    OPENSSL_init_crypto(0, NULL);
 
     if (extract_userinfo(user, password, &p)
         && extract_hostinfo(host, service, &p)
