@@ -529,11 +529,12 @@ The list should contain most wanted protocols first.
 Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
 
-=item B<-max_early_data>
+=item B<-max_early_data arg>
 
 Change the default maximum early data bytes that are specified for new sessions
 and any incoming early data (when used in conjunction with the B<-early_data>
-flag). The default value is approximately 16k.
+flag). The default value is approximately 16k. The argument must be an integer
+greater than or equal to 0.
 
 =item B<-early_data>
 
