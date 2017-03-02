@@ -152,203 +152,68 @@ static TEST_DATA *read_test_data(FILE *f)
         if (skip_stanza)
             continue;
 
+#define PROCESS_URI(__good)                                             \
+        do {                                                            \
+            if (test_data == NULL) {                                    \
+                test_data = OPENSSL_zalloc(sizeof(*test_data));         \
+                test_data->uri = value;                                 \
+                test_data->good = (__good);                             \
+            } else {                                                    \
+                fprintf(stderr, "Duplicate URI at line %d\n", linecounter); \
+                errcount++;                                             \
+                skip_stanza = 1;                                        \
+                free_test_data(test_data);                              \
+                test_data = NULL;                                       \
+                OPENSSL_free(value);                                    \
+            }                                                           \
+        } while (0)
+#define CHECK_KEY(__key)                                 \
+        (strcasecmp(key, #__key) == 0                    \
+         || strcasecmp(key, "decoded_" #__key) == 0)
+#define PROCESS_KEY(__key,__key_uc)                                     \
+        do {                                                            \
+            if (test_data != NULL && test_data->expected.__key == NULL) { \
+                test_data->expected.__key = value;                      \
+                test_data->expected.decoded_ ## __key = *key == 'd';    \
+            } else {                                                    \
+                if (test_data == NULL) {                                \
+                    fprintf(stderr,                                     \
+                            "Stanza didn't start with URI at line %d\n", \
+                            linecounter);                               \
+                } else {                                                \
+                    fprintf(stderr, "Duplicate " #__key_uc " at line %d\n", \
+                            linecounter);                               \
+                }                                                       \
+                errcount++;                                             \
+                skip_stanza = 1;                                        \
+                free_test_data(test_data);                              \
+                test_data = NULL;                                       \
+                OPENSSL_free(value);                                    \
+            }                                                           \
+        } while (0)
+
         if (strcasecmp(key, "uri") == 0) {
-            if (test_data == NULL) {
-                test_data = OPENSSL_zalloc(sizeof(*test_data));
-                test_data->uri = value;
-                test_data->good = 1;
-            } else {
-                fprintf(stderr, "Duplicate URI at line %d\n", linecounter);
-                errcount++;
-                skip_stanza = 1;
-                free_test_data(test_data);
-                test_data = NULL;
-                OPENSSL_free(value);
-            }
+            PROCESS_URI(1);
         } else if (strcasecmp(key, "baduri") == 0) {
-            if (test_data == NULL) {
-                test_data = OPENSSL_zalloc(sizeof(*test_data));
-                test_data->uri = value;
-                test_data->good = 0;
-            } else {
-                fprintf(stderr, "Duplicate URI at line %d\n", linecounter);
-                errcount++;
-                skip_stanza = 1;
-                free_test_data(test_data);
-                test_data = NULL;
-                OPENSSL_free(value);
-            }
-        } else if (strcasecmp(key, "scheme") == 0
-                 || strcasecmp(key, "decoded_scheme") == 0) {
-            if (test_data != NULL && test_data->expected.scheme == NULL) {
-                test_data->expected.scheme = value;
-                test_data->expected.decoded_scheme = *key == 'd';
-            } else {
-                if (test_data == NULL) {
-                    fprintf(stderr, "Stanza didn't start with URI at line %d\n",
-                            linecounter);
-                } else {
-                    fprintf(stderr, "Duplicate SCHEME at line %d\n",
-                            linecounter);
-                }
-                errcount++;
-                skip_stanza = 1;
-                free_test_data(test_data);
-                test_data = NULL;
-                OPENSSL_free(value);
-            }
-        } else if (strcasecmp(key, "authority") == 0
-                 || strcasecmp(key, "decoded_authority") == 0) {
-            if (test_data != NULL && test_data->expected.authority == NULL) {
-                test_data->expected.authority = value;
-                test_data->expected.decoded_authority = *key == 'd';
-            } else {
-                if (test_data == NULL) {
-                    fprintf(stderr, "Stanza didn't start with URI at line %d\n",
-                            linecounter);
-                } else {
-                    fprintf(stderr, "Duplicate AUTHORITY at line %d\n",
-                            linecounter);
-                }
-                errcount++;
-                skip_stanza = 1;
-                free_test_data(test_data);
-                test_data = NULL;
-                OPENSSL_free(value);
-            }
-        } else if (strcasecmp(key, "path") == 0
-                 || strcasecmp(key, "decoded_path") == 0) {
-            if (test_data != NULL && test_data->expected.path == NULL) {
-                test_data->expected.path = value;
-                test_data->expected.decoded_path = *key == 'd';
-            } else {
-                if (test_data == NULL) {
-                    fprintf(stderr, "Stanza didn't start with URI at line %d\n",
-                            linecounter);
-                } else {
-                    fprintf(stderr, "Duplicate PATH at line %d\n",
-                            linecounter);
-                }
-                errcount++;
-                skip_stanza = 1;
-                free_test_data(test_data);
-                test_data = NULL;
-                OPENSSL_free(value);
-            }
-        } else if (strcasecmp(key, "query") == 0
-                 || strcasecmp(key, "decoded_query") == 0) {
-            if (test_data != NULL && test_data->expected.query == NULL) {
-                test_data->expected.query = value;
-                test_data->expected.decoded_query = *key == 'd';
-            } else {
-                if (test_data == NULL) {
-                    fprintf(stderr, "Stanza didn't start with URI at line %d\n",
-                            linecounter);
-                } else {
-                    fprintf(stderr, "Duplicate QUERY at line %d\n",
-                            linecounter);
-                }
-                errcount++;
-                skip_stanza = 1;
-                free_test_data(test_data);
-                test_data = NULL;
-                OPENSSL_free(value);
-            }
-        } else if (strcasecmp(key, "fragment") == 0
-                 || strcasecmp(key, "decoded_fragment") == 0) {
-            if (test_data != NULL && test_data->expected.fragment == NULL) {
-                test_data->expected.fragment = value;
-                test_data->expected.decoded_fragment = *key == 'd';
-            } else {
-                if (test_data == NULL) {
-                    fprintf(stderr, "Stanza didn't start with URI at line %d\n",
-                            linecounter);
-                } else {
-                    fprintf(stderr, "Duplicate FRAGMENT at line %d\n",
-                            linecounter);
-                }
-                errcount++;
-                skip_stanza = 1;
-                free_test_data(test_data);
-                test_data = NULL;
-                OPENSSL_free(value);
-            }
-        } else if (strcasecmp(key, "user") == 0
-                 || strcasecmp(key, "decoded_user") == 0) {
-            if (test_data != NULL && test_data->expected.user == NULL) {
-                test_data->expected.user = value;
-                test_data->expected.decoded_user = *key == 'd';
-            } else {
-                if (test_data == NULL) {
-                    fprintf(stderr, "Stanza didn't start with URI at line %d\n",
-                            linecounter);
-                } else {
-                    fprintf(stderr, "Duplicate USER at line %d\n",
-                            linecounter);
-                }
-                errcount++;
-                skip_stanza = 1;
-                free_test_data(test_data);
-                test_data = NULL;
-                OPENSSL_free(value);
-            }
-        } else if (strcasecmp(key, "password") == 0
-                 || strcasecmp(key, "decoded_password") == 0) {
-            if (test_data != NULL && test_data->expected.password == NULL) {
-                test_data->expected.password = value;
-                test_data->expected.decoded_password = *key == 'd';
-            } else {
-                if (test_data == NULL) {
-                    fprintf(stderr, "Stanza didn't start with URI at line %d\n",
-                            linecounter);
-                } else {
-                    fprintf(stderr, "Duplicate PASSWORD at line %d\n",
-                            linecounter);
-                }
-                errcount++;
-                skip_stanza = 1;
-                free_test_data(test_data);
-                test_data = NULL;
-                OPENSSL_free(value);
-            }
-        } else if (strcasecmp(key, "host") == 0
-                 || strcasecmp(key, "decoded_host") == 0) {
-            if (test_data != NULL && test_data->expected.host == NULL) {
-                test_data->expected.host = value;
-                test_data->expected.decoded_host = *key == 'd';
-            } else {
-                if (test_data == NULL) {
-                    fprintf(stderr, "Stanza didn't start with URI at line %d\n",
-                            linecounter);
-                } else {
-                    fprintf(stderr, "Duplicate HOST at line %d\n",
-                            linecounter);
-                }
-                errcount++;
-                skip_stanza = 1;
-                free_test_data(test_data);
-                test_data = NULL;
-                OPENSSL_free(value);
-            }
-        } else if (strcasecmp(key, "service") == 0
-                 || strcasecmp(key, "decoded_service") == 0) {
-            if (test_data != NULL && test_data->expected.service == NULL) {
-                test_data->expected.service = value;
-                test_data->expected.decoded_service = *key == 'd';
-            } else {
-                if (test_data == NULL) {
-                    fprintf(stderr, "Stanza didn't start with URI at line %d\n",
-                            linecounter);
-                } else {
-                    fprintf(stderr, "Duplicate SERVICE at line %d\n",
-                            linecounter);
-                }
-                errcount++;
-                skip_stanza = 1;
-                free_test_data(test_data);
-                test_data = NULL;
-                OPENSSL_free(value);
-            }
+            PROCESS_URI(0);
+        } else if (CHECK_KEY(scheme)) {
+            PROCESS_KEY(scheme,SCHEME);
+        } else if (CHECK_KEY(authority)) {
+            PROCESS_KEY(authority,AUTHORITY);
+        } else if (CHECK_KEY(path)) {
+            PROCESS_KEY(path,PATH);
+        } else if (CHECK_KEY(query)) {
+            PROCESS_KEY(query,QUERY);
+        } else if (CHECK_KEY(fragment)) {
+            PROCESS_KEY(fragment,FRAGMENT);
+        } else if (CHECK_KEY(user)) {
+            PROCESS_KEY(user,USER);
+        } else if (CHECK_KEY(password)) {
+            PROCESS_KEY(password,PASSWORD);
+        } else if (CHECK_KEY(host)) {
+            PROCESS_KEY(host,HOST);
+        } else if (CHECK_KEY(service)) {
+            PROCESS_KEY(service,SERVICE);
         } else {
             fprintf(stderr, "Invalid line %d: %s\n", linecounter, line);
             errcount++;
