@@ -42,7 +42,7 @@ Early data has weaker security properties than other data sent over an SSL/TLS
 connection. In particular the data does not have forward secrecy and there are
 no guarantees that the same early data was not replayed across multiple
 connections. For this reason extreme care should be exercised when using early
-data.
+data. For specific details, consult the TLS 1.3 specification.
 
 When a server receives early data it may opt to immediately respond by sending
 application data back to the client. Data sent by the server at this stage is
