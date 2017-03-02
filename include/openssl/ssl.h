@@ -1615,11 +1615,12 @@ __owur int SSL_connect(SSL *ssl);
 __owur int SSL_read(SSL *ssl, void *buf, int num);
 __owur int SSL_read_ex(SSL *ssl, void *buf, size_t num, size_t *readbytes);
 
-# define SSL_READ_EARLY_ERROR   0
-# define SSL_READ_EARLY_SUCCESS 1
-# define SSL_READ_EARLY_FINISH  2
+# define SSL_READ_EARLY_DATA_ERROR   0
+# define SSL_READ_EARLY_DATA_SUCCESS 1
+# define SSL_READ_EARLY_DATA_FINISH  2
 
-__owur int SSL_read_early(SSL *s, void *buf, size_t num, size_t *readbytes);
+__owur int SSL_read_early_data(SSL *s, void *buf, size_t num,
+                               size_t *readbytes);
 __owur int SSL_peek(SSL *ssl, void *buf, int num);
 __owur int SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *readbytes);
 __owur int SSL_write(SSL *ssl, const void *buf, int num);
@@ -2270,7 +2271,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_PEEK_EX                                432
 # define SSL_F_SSL_PEEK_INTERNAL                          522
 # define SSL_F_SSL_READ                                   223
-# define SSL_F_SSL_READ_EARLY                             529
+# define SSL_F_SSL_READ_EARLY_DATA                        529
 # define SSL_F_SSL_READ_EX                                434
 # define SSL_F_SSL_READ_INTERNAL                          523
 # define SSL_F_SSL_RENEGOTIATE                            516

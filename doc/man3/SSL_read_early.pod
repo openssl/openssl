@@ -8,7 +8,7 @@ SSL_get_max_early_data,
 SSL_CTX_get_max_early_data,
 SSL_SESSION_get_max_early_data,
 SSL_write_early,
-SSL_read_early,
+SSL_read_early_data,
 SSL_get_early_data_status
 - functions for sending and receiving early data
 
@@ -24,7 +24,7 @@ SSL_get_early_data_status
 
  int SSL_write_early(SSL *s, const void *buf, size_t num, size_t *written);
 
- int SSL_read_early(SSL *s, void *buf, size_t num, size_t *readbytes);
+ int SSL_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes);
 
  int SSL_get_early_data_status(const SSL *s);
 
@@ -94,60 +94,62 @@ SSL_EARLY_DATA_ACCEPTED if the data was accepted, SSL_EARLY_DATA_REJECTED if it
 was rejected or SSL_EARLY_DATA_NOT_SENT if no early data was sent. This function
 may be called by either the client or the server.
 
-A server uses the SSL_read_early() function to receive early data on a
+A server uses the SSL_read_early_data() function to receive early data on a
 connection. As for SSL_write_early() this must be the first IO function called
 on a connection, i.e. it must occur before any calls to L<SSL_write_ex(3)>,
 L<SSL_read_ex(3)>, L<SSL_accept(3)>, L<SSL_do_handshake(3)>, or other similar
 functions.
 
-SSL_read_early() works in the same way as L<SSL_read_ex(3)> except for the
+SSL_read_early_data() works in the same way as L<SSL_read_ex(3)> except for the
 differences noted here. Refer to the L<SSL_read_ex(3)> documentation for full
 details.
 
-SSL_read_early() may return 3 possible values:
+SSL_read_early_data() may return 3 possible values:
 
 =over 4
 
-=item SSL_READ_EARLY_ERROR
+=item SSL_READ_EARLY_DATA_ERROR
 
 This indicates an IO or some other error occured. This should be treated in the
 same way as a 0 return value from L<SSL_read_ex(3)>.
 
-=item SSL_READ_EARLY_SUCCESS
+=item SSL_READ_EARLY_DATA_SUCCESS
 
 This indicates that early data was successfully read. This should be treated in
 the same way as a 1 return value from L<SSL_read_ex(3)>. You should continue to
-call SSL_read_early() to read more data.
+call SSL_read_early_data() to read more data.
 
-=item SSL_READ_EARLY_FINISH
+=item SSL_READ_EARLY_DATA_FINISH
 
 This indicates that no more early data can be read. It may be returned on the
-first call to SSL_read_early() if the client has not sent any early data, or
-if the early data was rejected.
+first call to SSL_read_early_data() if the client has not sent any early data,
+or if the early data was rejected.
 
 =back
 
 Once the initial SSL_write_early() call has completed successfully the client
 may interleave calls to L<SSL_write_ex(3)> and L<SSL_write(3)> with calls to
-SSL_read_early() as required. As noted above data sent via L<SSL_write_ex(3)> or
-L<SSL_write(3)> in this way is sent to an unauthenticated client.
+SSL_read_early_data() as required. As noted above data sent via
+L<SSL_write_ex(3)> or L<SSL_write(3)> in this way is sent to an unauthenticated
+client.
 
-Servers must not call L<SSL_read_ex(3)> or L<SSL_read(3)> until SSL_read_early()
-has returned with SSL_READ_EARLY_FINISH. Once it has done so the connection to
-the client still needs to be completed. Complete the connection by calling a
-function such as L<SSL_accept(3)> or L<SSL_do_handshake(3)>. Alternatively you
-can call a standard read function such as L<SSL_read_ex(3)>, which will
-transparently complete the connection and read the requested data. Note that it
-is an error to attempt to complete the connection before SSL_read_early() has
-returned SSL_READ_EARLY_FINISH.
+Servers must not call L<SSL_read_ex(3)> or L<SSL_read(3)> until
+SSL_read_early_data() has returned with SSL_READ_EARLY_DATA_FINISH. Once it has
+done so the connection to the client still needs to be completed. Complete the
+connection by calling a function such as L<SSL_accept(3)> or
+L<SSL_do_handshake(3)>. Alternatively you can call a standard read function such
+as L<SSL_read_ex(3)>, which will transparently complete the connection and read
+the requested data. Note that it is an error to attempt to complete the
+connection before SSL_read_early_data() has returned SSL_READ_EARLY_DATA_FINISH.
 
-Only servers may call SSL_read_early().
+Only servers may call SSL_read_early_data().
 
-Calls to SSL_read_early() may, in certain circumstances, complete the connection
-immediately without further need to call a function such as L<SSL_accept(3)>.
-Applications can test for this by calling L<SSL_is_init_finished(3)>.
-Alternatively, applications may choose to call L<SSL_accept(3)> anway. Such a
-call will successfully return immediately with no further action taken.
+Calls to SSL_read_early_data() may, in certain circumstances, complete the
+connection immediately without further need to call a function such as
+L<SSL_accept(3)>. Applications can test for this by calling
+L<SSL_is_init_finished(3)>. Alternatively, applications may choose to call
+L<SSL_accept(3)> anway. Such a call will successfully return immediately with no
+further action taken.
 
 When a session is created between a server and a client the server will specify
 the maximum amount of any early data that it will accept on any future
@@ -167,10 +169,10 @@ with then the lower of the two values will apply.
 SSL_write_early() returns 1 for success or 0 for failure. In the event of a
 failure call L<SSL_get_error(3)> to determine the correct course of action.
 
-SSL_read_early() returns SSL_READ_EARLY_ERROR for failure,
-SSL_READ_EARLY_SUCCESS for success with more data to read and
-SSL_READ_EARLY_FINISH for no more to data be read. In the event of a failure
-call L<SSL_get_error(3)> to determine the correct course of action.
+SSL_read_early_data() returns SSL_READ_EARLY_DATA_ERROR for failure,
+SSL_READ_EARLY_DATA_SUCCESS for success with more data to read and
+SSL_READ_EARLY_DATA_FINISH for no more to data be read. In the event of a
+failure call L<SSL_get_error(3)> to determine the correct course of action.
 
 SSL_get_max_early_data(), SSL_CTX_get_max_early_data() and
 SSL_SESSION_get_max_early_data() return the maximum number of early data bytes
