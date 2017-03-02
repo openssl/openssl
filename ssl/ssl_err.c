@@ -255,7 +255,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_SSL_VALIDATE_CT), "ssl_validate_ct"},
     {ERR_FUNC(SSL_F_SSL_VERIFY_CERT_CHAIN), "ssl_verify_cert_chain"},
     {ERR_FUNC(SSL_F_SSL_WRITE), "SSL_write"},
-    {ERR_FUNC(SSL_F_SSL_WRITE_EARLY), "SSL_write_early"},
+    {ERR_FUNC(SSL_F_SSL_WRITE_EARLY_DATA), "SSL_write_early_data"},
     {ERR_FUNC(SSL_F_SSL_WRITE_EARLY_FINISH), "SSL_write_early_finish"},
     {ERR_FUNC(SSL_F_SSL_WRITE_EX), "SSL_write_ex"},
     {ERR_FUNC(SSL_F_SSL_WRITE_INTERNAL), "ssl_write_internal"},
