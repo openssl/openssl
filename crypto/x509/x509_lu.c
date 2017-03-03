@@ -369,8 +369,12 @@ int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
         X509err(X509_F_X509_STORE_ADD_CERT,
                 X509_R_CERT_ALREADY_IN_HASH_TABLE);
         ret = 0;
-    } else
-        sk_X509_OBJECT_push(ctx->objs, obj);
+    } else if (!sk_X509_OBJECT_push(ctx->objs, obj)) {
+        X509_OBJECT_free_contents(obj);
+        OPENSSL_free(obj);
+        X509err(X509_F_X509_STORE_ADD_CERT, ERR_R_MALLOC_FAILURE);
+        ret = 0;
+    }
 
     CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 
@@ -401,8 +405,12 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
         OPENSSL_free(obj);
         X509err(X509_F_X509_STORE_ADD_CRL, X509_R_CERT_ALREADY_IN_HASH_TABLE);
         ret = 0;
-    } else
-        sk_X509_OBJECT_push(ctx->objs, obj);
+    } else if (!sk_X509_OBJECT_push(ctx->objs, obj)) {
+        X509_OBJECT_free_contents(obj);
+        OPENSSL_free(obj);
+        X509err(X509_F_X509_STORE_ADD_CRL, ERR_R_MALLOC_FAILURE);
+        ret = 0;
+    }
 
     CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 
