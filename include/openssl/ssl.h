@@ -2317,6 +2317,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_WRITE_INTERNAL                         524
 # define SSL_F_STATE_MACHINE                              353
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
+# define SSL_F_TLS12_COPY_SIGALGS                         533
 # define SSL_F_TLS13_CHANGE_CIPHER_STATE                  440
 # define SSL_F_TLS13_SETUP_KEY_BLOCK                      441
 # define SSL_F_TLS1_CHANGE_CIPHER_STATE                   209

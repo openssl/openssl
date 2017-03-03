@@ -1476,6 +1476,8 @@ int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
             || (lu->sig != EVP_PKEY_RSA && lu->hash != NID_sha1)))
             rv = 1;
     }
+    if (rv == 0)
+        SSLerr(SSL_F_TLS12_COPY_SIGALGS, SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
     return rv;
 }
 
