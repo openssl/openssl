@@ -267,7 +267,8 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
     }
 
     assert(b->top <= words);
-    memcpy(a, b->d, sizeof(*a) * b->top);
+    if (b->top > 0)
+        memcpy(a, b->d, sizeof(*a) * b->top);
 
     return a;
 }
@@ -328,7 +329,8 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
     if (bn_wexpand(a, b->top) == NULL)
         return NULL;
 
-    memcpy(a->d, b->d, sizeof(b->d[0]) * b->top);
+    if (b->top > 0)
+        memcpy(a->d, b->d, sizeof(b->d[0]) * b->top);
 
     a->top = b->top;
     a->neg = b->neg;
