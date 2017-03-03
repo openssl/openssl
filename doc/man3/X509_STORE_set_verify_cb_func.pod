@@ -32,16 +32,13 @@ X509_STORE_CTX_cert_crl_fn, X509_STORE_CTX_check_crl_fn,
 X509_STORE_CTX_check_issued_fn, X509_STORE_CTX_check_policy_fn,
 X509_STORE_CTX_check_revocation_fn, X509_STORE_CTX_cleanup_fn
 X509_STORE_CTX_get_crl_fn, X509_STORE_CTX_get_issuer_fn,
-X509_STORE_CTX_lookup_certs_fn, X509_STORE_CTX_lookup_crls_fn,
-X509_STORE_CTX_verify_cb, X509_STORE_CTX_verify_fn,
+X509_STORE_CTX_lookup_certs_fn, X509_STORE_CTX_lookup_crls_fn
 - set verification callback
 
 =head1 SYNOPSIS
 
  #include <openssl/x509_vfy.h>
 
- typedef int (*X509_STORE_CTX_verify_cb)(int ok, X509_STORE_CTX *ctx);
- typedef int (*X509_STORE_CTX_verify_fn)(X509_STORE_CTX *ctx);
  typedef int (*X509_STORE_CTX_get_issuer_fn)(X509 **issuer,
                                              X509_STORE_CTX *ctx, X509 *x);
  typedef int (*X509_STORE_CTX_check_issued_fn)(X509_STORE_CTX *ctx,
@@ -235,6 +232,7 @@ function type.
 =head1 SEE ALSO
 
 L<X509_STORE_CTX_set_verify_cb(3)>, L<X509_STORE_CTX_get0_chain(3)>,
+L<X509_STORE_CTX_verify_cb(3)>, L<X509_STORE_CTX_verify_fn(3)>,
 L<CMS_verify(3)>
 
 =head1 HISTORY
