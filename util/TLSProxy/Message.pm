@@ -78,6 +78,7 @@ use constant {
     EXT_KEY_SHARE => 40,
     EXT_PSK => 41,
     EXT_SUPPORTED_VERSIONS => 43,
+    EXT_COOKIE => 44,
     EXT_PSK_KEX_MODES => 45,
     EXT_RENEGOTIATE => 65281,
     EXT_NPN => 13172,
