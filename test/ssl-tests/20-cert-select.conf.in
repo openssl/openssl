@@ -334,6 +334,18 @@ my @tests_tls_1_3 = (
             "ExpectedResult" => "Success"
         },
     },
+    {
+        name => "TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms",
+        server => {
+            "ClientSignatureAlgorithms" => "ECDSA+SHA1:DSA+SHA256:RSA+SHA256",
+            "VerifyCAFile" => test_pem("root-cert.pem"),
+            "VerifyMode" => "Request"
+        },
+        client => {},
+        test   => {
+            "ExpectedResult" => "ServerFail"
+        },
+    },
 );
 
 push @tests, @tests_tls_1_3 unless disabled("tls1_3");
@@ -370,7 +382,7 @@ my @tests_dsa_tls_1_3 = (
             "CipherString" => "ALL",
         },
         client => {
-            "SignatureAlgorithms" => "DSA+SHA1:DSA+SHA256",
+            "SignatureAlgorithms" => "DSA+SHA1:DSA+SHA256:ECDSA+SHA256",
             "CipherString" => "ALL",
         },
         test   => {
