@@ -1313,7 +1313,7 @@ int SSL_has_pending(const SSL *s)
      * data. That data may not result in any application data, or we may fail
      * to parse the records for some reason.
      */
-    if (SSL_pending(s))
+    if (RECORD_LAYER_processed_read_pending(&s->rlayer))
         return 1;
 
     return RECORD_LAYER_read_pending(&s->rlayer);
