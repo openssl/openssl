@@ -2167,10 +2167,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_NSS_KEYLOG_INT                             500
 # define SSL_F_OPENSSL_INIT_SSL                           342
 # define SSL_F_OSSL_STATEM_CLIENT_READ_TRANSITION         417
-# define SSL_F_OSSL_STATEM_SERVER13_READ_TRANSITION       437
 # define SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION         418
 # define SSL_F_PARSE_CA_NAMES                             541
-# define SSL_F_PROCESS_KEY_SHARE_EXT                      439
 # define SSL_F_READ_STATE_MACHINE                         352
 # define SSL_F_SET_CLIENT_CIPHERSUITE                     540
 # define SSL_F_SSL3_CHANGE_CIPHER_STATE                   129
@@ -2251,6 +2249,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_PEEK                                   270
 # define SSL_F_SSL_PEEK_INTERNAL                          522
 # define SSL_F_SSL_READ                                   223
+# define SSL_F_SSL_READ_EARLY_DATA                        529
 # define SSL_F_SSL_READ_INTERNAL                          523
 # define SSL_F_SSL_RENEGOTIATE                            516
 # define SSL_F_SSL_SESSION_DUP                            348
@@ -2287,6 +2286,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_VALIDATE_CT                            400
 # define SSL_F_SSL_VERIFY_CERT_CHAIN                      207
 # define SSL_F_SSL_WRITE                                  208
+# define SSL_F_SSL_WRITE_EARLY_DATA                       526
 # define SSL_F_SSL_WRITE_INTERNAL                         524
 # define SSL_F_STATE_MACHINE                              353
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
@@ -2319,7 +2319,6 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CLIENT_HELLO                 487
 # define SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE          488
 # define SSL_F_TLS_CONSTRUCT_CTOS_ALPN                    466
-# define SSL_F_TLS_CONSTRUCT_CTOS_CERTIFICATE             355
 # define SSL_F_TLS_CONSTRUCT_CTOS_COOKIE                  535
 # define SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA              530
 # define SSL_F_TLS_CONSTRUCT_CTOS_EC_PT_FORMATS           467
@@ -2353,6 +2352,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE          492
 # define SSL_F_TLS_CONSTRUCT_STOC_ALPN                    451
 # define SSL_F_TLS_CONSTRUCT_STOC_CRYPTOPRO_BUG           452
+# define SSL_F_TLS_CONSTRUCT_STOC_EARLY_DATA              531
 # define SSL_F_TLS_CONSTRUCT_STOC_EC_PT_FORMATS           453
 # define SSL_F_TLS_CONSTRUCT_STOC_EMS                     454
 # define SSL_F_TLS_CONSTRUCT_STOC_ETM                     455
@@ -2373,7 +2373,6 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PARSE_CTOS_USE_SRTP                    465
 # define SSL_F_TLS_PARSE_STOC_COOKIE                      534
 # define SSL_F_TLS_PARSE_STOC_EARLY_DATA                  538
-# define SSL_F_TLS_PARSE_STOC_EARLY_DATA_INFO             528
 # define SSL_F_TLS_PARSE_STOC_KEY_SHARE                   445
 # define SSL_F_TLS_PARSE_STOC_PSK                         502
 # define SSL_F_TLS_PARSE_STOC_RENEGOTIATE                 448
@@ -2382,7 +2381,6 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE       384
 # define SSL_F_TLS_PREPARE_CLIENT_CERTIFICATE             360
 # define SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST            361
-# define SSL_F_TLS_PROCESS_CERT_STATUS                    362
 # define SSL_F_TLS_PROCESS_CERT_STATUS_BODY               495
 # define SSL_F_TLS_PROCESS_CERT_VERIFY                    379
 # define SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC             363
@@ -2413,7 +2411,6 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_SKE_PSK_PREAMBLE               421
 # define SSL_F_TLS_PROCESS_SKE_SRP                        422
 # define SSL_F_TLS_PSK_DO_BINDER                          506
-# define SSL_F_TLS_SCAN_CLIENTHELLO_TLSEXT                450 KILLME!!!
 # define SSL_F_TLS_SETUP_HANDSHAKE                        508
 # define SSL_F_USE_CERTIFICATE_CHAIN_FILE                 220
 
