@@ -1563,7 +1563,7 @@ int tls1_save_sigalgs(SSL *s, PACKET *pkt)
     size = PACKET_remaining(pkt);
 
     /* Invalid data length */
-    if ((size & 1) != 0)
+    if (size == 0 || (size & 1) != 0)
         return 0;
 
     size >>= 1;
