@@ -343,8 +343,8 @@ int tls13_change_cipher_state(SSL *s, int which)
     const unsigned char *label;
     size_t labellen, hashlen = 0;
     int ret = 0;
-    const EVP_MD *md;
-    const EVP_CIPHER *cipher;
+    const EVP_MD *md = NULL;
+    const EVP_CIPHER *cipher = NULL;
 
     if (which & SSL3_CC_READ) {
         if (s->enc_read_ctx != NULL) {
