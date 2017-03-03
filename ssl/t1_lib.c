@@ -828,13 +828,6 @@ int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey)
     return 1;
 }
 
-static int tls_sigalg_get_sig(uint16_t sigalg)
-{
-    const SIGALG_LOOKUP *r = tls1_lookup_sigalg(sigalg);
-
-    return r != NULL ? r->sig : 0;
-}
-
 size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
 {
     /*
@@ -1387,9 +1380,8 @@ static int tls12_get_pkey_idx(int sig_nid)
 }
 
 /* Check to see if a signature algorithm is allowed */
-static int tls12_sigalg_allowed(SSL *s, int op, uint16_t ptmp)
+static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
 {
-    const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(ptmp);
     unsigned char sigalgstr[2];
     int secbits;
 
@@ -1405,8 +1397,8 @@ static int tls12_sigalg_allowed(SSL *s, int op, uint16_t ptmp)
     /* Security bits: half digest bits */
     secbits = EVP_MD_size(ssl_md(lu->hash_idx)) * 4;
     /* Finally see if security callback allows it */
-    sigalgstr[0] = (ptmp >> 8) & 0xff;
-    sigalgstr[1] = ptmp & 0xff;
+    sigalgstr[0] = (lu->sigalg >> 8) & 0xff;
+    sigalgstr[1] = lu->sigalg & 0xff;
     return ssl_security(s, op, secbits, lu->hash, (void *)sigalgstr);
 }
 
@@ -1428,24 +1420,28 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
      */
     sigalgslen = tls12_get_psigalgs(s, 1, &sigalgs);
     for (i = 0; i < sigalgslen; i ++, sigalgs++) {
-        switch (tls_sigalg_get_sig(*sigalgs)) {
+        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(*sigalgs);
+
+        if (lu == NULL)
+            continue;
+        switch (lu->sig) {
 #ifndef OPENSSL_NO_RSA
         /* Any RSA-PSS signature algorithms also mean we allow RSA */
         case EVP_PKEY_RSA_PSS:
         case EVP_PKEY_RSA:
-            if (!have_rsa && tls12_sigalg_allowed(s, op, *sigalgs))
+            if (!have_rsa && tls12_sigalg_allowed(s, op, lu))
                 have_rsa = 1;
             break;
 #endif
 #ifndef OPENSSL_NO_DSA
         case EVP_PKEY_DSA:
-            if (!have_dsa && tls12_sigalg_allowed(s, op, *sigalgs))
+            if (!have_dsa && tls12_sigalg_allowed(s, op, lu))
                 have_dsa = 1;
             break;
 #endif
 #ifndef OPENSSL_NO_EC
         case EVP_PKEY_EC:
-            if (!have_ecdsa && tls12_sigalg_allowed(s, op, *sigalgs))
+            if (!have_ecdsa && tls12_sigalg_allowed(s, op, lu))
                 have_ecdsa = 1;
             break;
 #endif
@@ -1463,14 +1459,24 @@ int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
                        const uint16_t *psig, size_t psiglen)
 {
     size_t i;
+    int rv = 0;
 
     for (i = 0; i < psiglen; i++, psig++) {
-        if (tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, *psig)) {
-            if (!WPACKET_put_bytes_u16(pkt, *psig))
-                return 0;
-        }
+        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(*psig);
+
+        if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
+            continue;
+        if (!WPACKET_put_bytes_u16(pkt, *psig))
+            return 0;
+        /*
+         * If TLS 1.3 must have at least one valid TLS 1.3 message
+         * signing algorithm: i.e. neither RSA nor SHA1
+         */
+        if (rv == 0 && (!SSL_IS_TLS13(s)
+            || (lu->sig != EVP_PKEY_RSA && lu->hash != NID_sha1)))
+            rv = 1;
     }
-    return 1;
+    return rv;
 }
 
 /* Given preference and allowed sigalgs set shared sigalgs */
@@ -1481,16 +1487,16 @@ static size_t tls12_shared_sigalgs(SSL *s, const SIGALG_LOOKUP **shsig,
     const uint16_t *ptmp, *atmp;
     size_t i, j, nmatch = 0;
     for (i = 0, ptmp = pref; i < preflen; i++, ptmp++) {
+        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(*ptmp);
+
         /* Skip disabled hashes or signature algorithms */
-        if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SHARED, *ptmp))
+        if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SHARED, lu))
             continue;
         for (j = 0, atmp = allow; j < allowlen; j++, atmp++) {
             if (*ptmp == *atmp) {
                 nmatch++;
-                if (shsig) {
-                    *shsig = tls1_lookup_sigalg(*ptmp);
-                    shsig++;
-                }
+                if (shsig)
+                    *shsig++ = lu;
                 break;
             }
         }
