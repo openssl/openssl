@@ -270,6 +270,13 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     },
 #endif
     {
+        TLSEXT_TYPE_cookie,
+        EXT_CLIENT_HELLO | EXT_TLS1_3_HELLO_RETRY_REQUEST
+        | EXT_TLS_IMPLEMENTATION_ONLY | EXT_TLS1_3_ONLY,
+        NULL, NULL, tls_parse_stoc_cookie, NULL, tls_construct_ctos_cookie,
+        NULL
+    },
+    {
         /*
          * Special unsolicited ServerHello extension only used when
          * SSL_OP_CRYPTOPRO_TLSEXT_BUG is set
