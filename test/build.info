@@ -330,6 +330,9 @@ IF[{- !$disabled{tests} -}]
     IF[{- !$disabled{poly1305} -}]
       PROGRAMS_NO_INST=poly1305_internal_test
     ENDIF
+    IF[{- !$disabled{chacha} -}]
+      PROGRAMS_NO_INST=chacha_internal_test
+    ENDIF
     IF[{- !$disabled{siphash} -}]
       PROGRAMS_NO_INST=siphash_internal_test
     ENDIF
@@ -337,6 +340,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[poly1305_internal_test]=poly1305_internal_test.c testutil.c test_main_custom.c
     INCLUDE[poly1305_internal_test]=.. ../include ../crypto/include
     DEPEND[poly1305_internal_test]=../libcrypto.a
+
+    SOURCE[chacha_internal_test]=chacha_internal_test.c
+    INCLUDE[chacha_internal_test]=.. ../include ../crypto/include
+    DEPEND[chacha_internal_test]=../libcrypto.a
 
     SOURCE[asn1_internal_test]=asn1_internal_test.c testutil.c test_main.c
     INCLUDE[asn1_internal_test]=.. ../include ../crypto/include

@@ -17,6 +17,7 @@ my $shared_windows = $^O eq 'MSWin32' && !disabled("shared");
 my %known_internal_tests =
   ( mdc2_internal_test => !disabled("mdc2"),
     poly1305_internal_test => !disabled("poly1305") && !$shared_windows,
+    chacha_internal_test => !disabled("chacha") && !$shared_windows,
     modes_internal_test => !$shared_windows,
     asn1_internal_test => !$shared_windows,
     x509_internal_test => !$shared_windows,
