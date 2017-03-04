@@ -1252,8 +1252,9 @@ static int final_early_data(SSL *s, unsigned int context, int sent, int *al)
             || !s->ext.early_data_ok
             || s->hello_retry_request
             || s->s3->alpn_selected_len != s->session->ext.alpn_selected_len
-            || memcmp(s->s3->alpn_selected, s->session->ext.alpn_selected,
-                      s->s3->alpn_selected_len) != 0){
+            || (s->s3->alpn_selected_len > 0
+                && memcmp(s->s3->alpn_selected, s->session->ext.alpn_selected,
+                          s->s3->alpn_selected_len) != 0)) {
         s->ext.early_data = SSL_EARLY_DATA_REJECTED;
     } else {
         s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;
