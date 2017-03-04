@@ -796,6 +796,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     s->session = sess;
     return 1;
 err:
+    SSL_SESSION_free(sess);
     return 0;
 }
 
