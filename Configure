@@ -994,6 +994,25 @@ $target{build_scheme} = [ $target{build_scheme} ]
 my ($builder, $builder_platform, @builder_opts) =
     @{$target{build_scheme}};
 
+foreach my $checker (($builder_platform."-".$target{build_file}."-checker.pm",
+                      $builder_platform."-checker.pm")) {
+    my $checker_path = catfile($srcdir, "Configurations", $checker);
+    if (-f $checker_path) {
+        my $fn = $ENV{CONFIGURE_CHECKER_WARN}
+            ? sub { warn $@; } : sub { die $@; };
+        if (! do $checker_path) {
+            if ($@) {
+                $fn->($@);
+            } elsif ($!) {
+                $fn->($!);
+            } else {
+                $fn->("The detected tools didn't match the platform\n");
+            }
+        }
+        last;
+    }
+}
+
 push @{$config{defines}}, "NDEBUG"    if $config{build_type} eq "release";
 
 if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
