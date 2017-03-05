@@ -1,0 +1,261 @@
+uri             = http://user@f.q.d.n:8080/foo/bar/cookie.crt?n=2#foo
+scheme          = http
+authority       = user@f.q.d.n:8080
+path            = /foo/bar/cookie.crt
+query           = n=2
+fragment        = foo
+user            = user
+host            = f.q.d.n
+service         = 8080
+
+uri             = file:foo.pem?n=1
+scheme          = file
+path            = foo.pem
+query           = n=1
+
+uri             = bar.pem
+path            = bar.pem
+
+# whitespace not allowd
+baduri          = http://www.example.com/?q=goddag. yxskaft
+
+# No IRI support (the query value is "example" with math symbol letters)
+baduri          = http://www.example.com/?q=&#x1D4EE;&#x1D501;&#x1D4EA;&#x1D4F6;&#x1D4F9;&#x1D4F5;&#x1D4EE;
+
+# However, percent notation UTF-8 is fine
+# (the query value is "hello, world" translated to Russian with Google Trans)
+uri             = http://www.example.com/?q=%d0%9f%d1%80%d0%b8%d0%b2%d0%b5%d1%82%2c%20%d0%bc%d0%b8%d1%80
+scheme          = http
+authority       = www.example.com
+path            = /
+decoded_query = q=Привет, мир
+host            = www.example.com
+
+# The same as above but with one hex character removed (bad percent coding)
+baduri          = http://www.example.com/?q=%d0%9f%d1%80%d0%b8%d0%b2%d0%b5%d1%82%2c%20%d0%bc%d0%b8%d1%8
+
+# A fragment in a fragment isn't allowed
+baduri          = http://www.example.com/#foo#bar
+
+baduri          = http://www.example.com/##foobar
+
+# Backslashes aren't allowed
+baduri          = file:c:\User\JRandom\foo.txt
+
+# Neither are pipes (this was an older style file: URI for DOS paths)
+baduri          = file:c|/User/JRandom/foo.txt
+
+# Trivial nonsense that are still URIs
+uri             = //
+authority       =
+host            =
+
+uri             = ///
+authority       =
+path            = /
+host            =
+
+# Trivial, but not nonsense
+uri             = file://test
+scheme          = file
+authority       = test
+host            = test
+
+uri             = file://localhost/
+scheme          = file
+authority       = localhost
+path            = /
+host            = localhost
+
+uri             = file://localhost/test
+scheme          = file
+authority       = localhost
+path            = /test
+host            = localhost
+
+# Dangerous, but perfectly acceptable as a URI.
+# Don't try to decode it, as the NUL byte isn't supported
+uri             = http://null%00
+scheme          = http
+authority       = null%00
+host            = null%00
+
+# IPv4
+uri             = http://192.168.0.1
+scheme          = http
+authority       = 192.168.0.1
+host            = 192.168.0.1
+
+# IPv4 with invalid address, which still parses as a good URI
+# (technically, it parses as a reg-name according to the ABNF)
+uri             = http://192.168.0.257
+scheme          = http
+authority       = 192.168.0.257
+host            = 192.168.0.257
+
+uri             = http://192.168.257
+scheme          = http
+authority       = 192.168.257
+host            = 192.168.257
+
+# IPv6
+baduri          = http://2a00:1450:400f:807::200e
+
+baduri          = http://[2a00:1450:400f:807::200e
+
+baduri          = http://2a00:1450:400f:807::200e]
+
+uri             = http://[2a00:1450:400f:807::200e]
+scheme          = http
+authority       = [2a00:1450:400f:807::200e]
+host            = [2a00:1450:400f:807::200e]
+
+uri             = http://[::]
+scheme          = http
+authority       = [::]
+host            = [::]
+
+uri             = http://[::1]
+scheme          = http
+authority       = [::1]
+host            = [::1]
+
+uri             = http://[1::]
+scheme          = http
+authority       = [1::]
+host            = [1::]
+
+uri             = http://[::192.168.0.1]
+scheme          = http
+authority       = [::192.168.0.1]
+host            = [::192.168.0.1]
+
+uri             = http://[::ffff:192.168.0.1]
+scheme          = http
+authority       = [::ffff:192.168.0.1]
+host            = [::ffff:192.168.0.1]
+
+uri             = http://[0:0:0:0:0:ffff:192.168.0.1]
+scheme          = http
+authority       = [0:0:0:0:0:ffff:192.168.0.1]
+host            = [0:0:0:0:0:ffff:192.168.0.1]
+
+# When part of an IPv6 address, a malformed IPv4 address isn't tolerated
+baduri          = http://[::192.168.1]
+
+baduri          = http://[::192.168..1]
+
+# Malformed IPv6 addresses and well formed variants
+baduri          = http://[d:e:a:d:b:e:e::f]
+
+baduri          = http://[d:e:a:d:b:e:e:f:1]
+
+baduri          = http://[d:e:a:d:b:e:e:f::]
+
+baduri          = http://[d:e:a:d:b:e:e:f:]
+
+baduri          = http://[d:e:a:d:b:e:e:]
+
+baduri          = http://[d:e:a:d:b:e:e]
+
+baduri          = http://[-d:e:a:d:b:e:e]
+
+uri             = http://[d:e:a:d:b:e:e:f]
+scheme          = http
+authority       = [d:e:a:d:b:e:e:f]
+host            = [d:e:a:d:b:e:e:f]
+
+uri             = http://[d:e:a:d:b:e::e]
+scheme          = http
+authority       = [d:e:a:d:b:e::e]
+host            = [d:e:a:d:b:e::e]
+
+uri             = http://[d:e:a:d:b:e:e::]
+scheme          = http
+authority       = [d:e:a:d:b:e:e::]
+host            = [d:e:a:d:b:e:e::]
+
+# "funny" schemes
+baduri          = git[ssh]://git.example.com
+
+baduri          = 3way://git.example.com
+
+######################################################################
+# Examples taken from https://url.spec.whatwg.org/
+# The acklog says the following (2017-03-02):
+#
+# Per CC0[0], to the extent possible under law, the editors have
+# waived all copyright and related or neighboring rights to this work.
+#
+# [0]https://creativecommons.org/publicdomain/zero/1.0/
+
+uri             = https:example.org
+scheme          = https
+path            = example.org
+
+# Excessive amount of slashes ok
+uri             = https://////example.com///
+scheme          = https
+authority       = 
+path            = ////example.com///
+host            = 
+
+uri             = https://example.com/././foo
+scheme          = https
+authority       = example.com
+path            = /././foo
+host            = example.com
+
+uri             = hello:world
+scheme          = hello
+path            = world
+
+uri             = example
+path            = example
+
+baduri          = file:///C|/demo
+
+uri             = file:///C:/demo
+scheme          = file
+authority =
+path            = /C:/demo
+host            =
+
+uri             = ..
+path            = ..
+
+uri             = file://loc%61lhost/
+scheme          = file
+authority       = loc%61lhost
+path            = /
+decoded_host    = localhost
+
+uri             = https://user:password@example.org/
+scheme          = https
+authority       = user:password@example.org
+path            = /
+user            = user
+password        = password
+host            = example.org
+
+baduri          = https://example.org/foo bar
+
+uri             = https://example.org/foo%20bar
+scheme          = https
+authority       = example.org
+decoded_path    = /foo bar
+decoded_host    = example.org
+
+uri             = https://EXAMPLE.com/../x
+scheme          = https
+authority       = EXAMPLE.com
+path            = /../x
+host            = EXAMPLE.com
+
+baduri          = https://ex ample.org/
+
+# Only numeric service allowed
+baduri          = https://example.com:demo
+
+baduri          = http://[www.example.com]/
+######################################################################
