@@ -658,6 +658,7 @@ int tls_construct_ctos_cookie(SSL *s, WPACKET *pkt, unsigned int context,
     ret = 1;
  end:
     OPENSSL_free(s->ext.tls13_cookie);
+    s->ext.tls13_cookie = NULL;
     s->ext.tls13_cookie_len = 0;
 
     return ret;
