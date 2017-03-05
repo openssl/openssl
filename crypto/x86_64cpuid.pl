@@ -63,6 +63,16 @@ OPENSSL_ia32_cpuid:
 	cpuid
 	mov	%eax,%r11d		# max value for standard query level
 
+	cmp	\$7,%eax
+	jb	.Lno_extended_info
+
+	mov	\$7,%eax
+	xor	%ecx,%ecx
+	cpuid
+	mov	%ebx,8(%rdi)
+
+.Lno_extended_info:
+
 	xor	%eax,%eax
 	cmp	\$0x756e6547,%ebx	# "Genu"
 	setne	%al
@@ -126,14 +136,6 @@ OPENSSL_ia32_cpuid:
 	mov	%eax,%r10d
 	shr	\$14,%r10d
 	and	\$0xfff,%r10d		# number of cores -1 per L1D
-
-	cmp	\$7,%r11d
-	jb	.Lnocacheinfo
-
-	mov	\$7,%eax
-	xor	%ecx,%ecx
-	cpuid
-	mov	%ebx,8(%rdi)
 
 .Lnocacheinfo:
 	mov	\$1,%eax
