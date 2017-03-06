@@ -1,3 +1,20 @@
+Intro
+=====
+
+This directory contains a few sets of files that are used for
+configuration in diverse ways:
+
+    *.conf      Target platform configurations, please read
+                'Configurations of OpenSSL target platforms' for more
+                information.
+    *.tmpl      Build file templates, please read 'Build-file
+                programming with the "unified" build system' as well
+                as 'Build info files' for more information.
+    *.pm        Helper scripts / modules for the main `Configure`
+                script.  See 'Configure helper scripts for more
+                information.
+
+
 Configurations of OpenSSL target platforms
 ==========================================
 
@@ -672,3 +689,23 @@ else, end it like this:
 
       "";       # Make sure no lingering values end up in the Makefile
     -}
+
+
+Configure helper scripts
+========================
+
+Configure uses helper scripts in this directory:
+
+Checker scripts
+---------------
+
+These scripts are per platform family, to check the integrity of the
+tools used for configuration and building.  The checker script used is
+either {build_platform}-{build_file}-checker.pm or
+{build_platform}-checker.pm, where {build_platform} is the second
+'build_scheme' list element from the configuration target data, and
+{build_file} is 'build_file' from the same target data.
+
+If the check succeeds, the script is expected to end with a non-zero
+expression.  If the check fails, the script can end with a zero, or
+with a `die`.
