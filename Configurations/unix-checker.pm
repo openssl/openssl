@@ -10,8 +10,9 @@ if (rel2abs('.') !~ m|/|) {
     die <<EOF;
 
 ******************************************************************************
-This perl version doesn't produce Unix like paths (with forward slash
-directory separators).  Please use an implementation that does.
+This perl implementation doesn't produce Unix like paths (with forward slash
+directory separators).  Please use an implementation that matches your
+building platform.
 
 This Perl version: $Config{version} for $Config{archname}
 ******************************************************************************
