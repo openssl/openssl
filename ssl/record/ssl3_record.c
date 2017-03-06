@@ -340,6 +340,25 @@ int ssl3_get_record(SSL *s)
             /* now s->rlayer.rstate == SSL_ST_READ_BODY */
         }
 
+        if (SSL_IS_TLS13(s)) {
+            if (thisrr->length > SSL3_RT_MAX_TLS13_ENCRYPTED_LENGTH) {
+                al = SSL_AD_RECORD_OVERFLOW;
+                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
+                goto f_err;
+            }
+        } else {
+            size_t len = SSL3_RT_MAX_ENCRYPTED_LENGTH;
+
+            if (s->expand == NULL)
+                len -= SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+
+            if (thisrr->length > len) {
+                al = SSL_AD_RECORD_OVERFLOW;
+                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
+                goto f_err;
+            }
+        }
+
         /*
          * s->rlayer.rstate == SSL_ST_READ_BODY, get and decode the data.
          * Calculate how much more data we need to read for the rest of the
@@ -387,13 +406,6 @@ int ssl3_get_record(SSL *s)
          * We now have - encrypted [ MAC [ compressed [ plain ] ] ]
          * thisrr->length bytes of encrypted compressed stuff.
          */
-
-        /* check is not needed I believe */
-        if (thisrr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
-            al = SSL_AD_RECORD_OVERFLOW;
-            SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
-            goto f_err;
-        }
 
         /* decrypt in place in 'thisrr->input' */
         thisrr->data = thisrr->input;

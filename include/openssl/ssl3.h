@@ -170,7 +170,8 @@ extern "C" {
  * practice the value is lower than this. The overhead is the maximum number
  * of padding bytes (256) plus the mac size.
  */
-# define SSL3_RT_MAX_ENCRYPTED_OVERHEAD  (256 + SSL3_RT_MAX_MD_SIZE)
+# define SSL3_RT_MAX_ENCRYPTED_OVERHEAD        (256 + SSL3_RT_MAX_MD_SIZE)
+# define SSL3_RT_MAX_TLS13_ENCRYPTED_OVERHEAD  256
 
 /*
  * OpenSSL currently only uses a padding length of at most one block so the
@@ -186,12 +187,14 @@ extern "C" {
 #  define SSL3_RT_MAX_COMPRESSED_LENGTH           SSL3_RT_MAX_PLAIN_LENGTH
 # else
 #  define SSL3_RT_MAX_COMPRESSED_LENGTH   \
-                (SSL3_RT_MAX_PLAIN_LENGTH+SSL3_RT_MAX_COMPRESSED_OVERHEAD)
+            (SSL3_RT_MAX_PLAIN_LENGTH+SSL3_RT_MAX_COMPRESSED_OVERHEAD)
 # endif
 # define SSL3_RT_MAX_ENCRYPTED_LENGTH    \
-                (SSL3_RT_MAX_ENCRYPTED_OVERHEAD+SSL3_RT_MAX_COMPRESSED_LENGTH)
+            (SSL3_RT_MAX_ENCRYPTED_OVERHEAD+SSL3_RT_MAX_COMPRESSED_LENGTH)
+# define SSL3_RT_MAX_TLS13_ENCRYPTED_LENGTH \
+            (SSL3_RT_MAX_PLAIN_LENGTH + SSL3_RT_MAX_TLS13_ENCRYPTED_OVERHEAD)
 # define SSL3_RT_MAX_PACKET_SIZE         \
-                (SSL3_RT_MAX_ENCRYPTED_LENGTH+SSL3_RT_HEADER_LENGTH)
+            (SSL3_RT_MAX_ENCRYPTED_LENGTH+SSL3_RT_HEADER_LENGTH)
 
 # define SSL3_MD_CLIENT_FINISHED_CONST   "\x43\x4C\x4E\x54"
 # define SSL3_MD_SERVER_FINISHED_CONST   "\x53\x52\x56\x52"
