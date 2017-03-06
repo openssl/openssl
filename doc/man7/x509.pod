@@ -10,7 +10,7 @@ x509 - X.509 certificate handling
 
 =head1 DESCRIPTION
 
-A X.509 certificate is a structured grouping of information about
+An X.509 certificate is a structured grouping of information about
 an individual, a device, or anything one can imagine.  A X.509 CRL
 (certificate revocation list) is a tool to help determine if a
 certificate is still valid.  The exact definition of those can be
@@ -58,8 +58,7 @@ L<d2i_X509_CRL(3)>,
 L<d2i_X509_NAME(3)>,
 L<d2i_X509_REQ(3)>,
 L<d2i_X509_SIG(3)>,
-L<crypto(7)>,
-L<x509v3(3)>
+L<crypto(7)>
 
 =head1 COPYRIGHT
 
