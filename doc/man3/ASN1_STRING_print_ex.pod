@@ -28,7 +28,7 @@ ASN1_STRING_print() prints B<str> to B<out> but using a different format to
 ASN1_STRING_print_ex(). It replaces unprintable characters (other than CR, LF)
 with '.'.
 
-ASN1_tag2str() returns a human-readonable name of the specified ASN.1 B<tag>.
+ASN1_tag2str() returns a human-readable name of the specified ASN.1 B<tag>.
 
 =head1 NOTES
 

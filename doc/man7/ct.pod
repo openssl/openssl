@@ -34,6 +34,7 @@ L<SCT_new(3)>,
 L<SCT_print(3)>,
 L<SCT_validate(3)>,
 L<SCT_validate(3)>,
+L<CT_POLICY_EVAL_CTX_new(3)>,
 L<SSL_CTX_set_ct_validation_callback(3)>
 
 =head1 HISTORY
