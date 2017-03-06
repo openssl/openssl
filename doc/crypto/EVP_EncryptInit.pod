@@ -395,8 +395,6 @@ Sets the expected tag to B<taglen> bytes from B<tag>. This call is only legal
 when decrypting data and must be made B<before> any data is processed (e.g.
 before any EVP_DecryptUpdate() call). 
 
-See L<EXAMPLES> below for an example of the use of GCM mode.
-
 =head1 CCM Mode
 
 The behaviour of CCM mode ciphers is similar to CCM mode but with a few
