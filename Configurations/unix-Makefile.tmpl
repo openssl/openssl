@@ -549,115 +549,29 @@ uninstall_runtime:
 	@ : {- output_on() unless windowsdll(); "" -}
 	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin
 
-# A method to extract all names from a .pod file
-# The first sed extracts everything between "=head1 NAME" and the next =head1
-# The perl command joins all the lines into one
-# The second sed removes the description and turns all commas into spaces
-# Voilà, you have a space separated list of names!
-EXTRACT_NAMES=sed -e '1,/^=head1  *NAME *$$/d;/^=head1/,$$d' | \
-              $(PERL) -p -0 -e 's/\n/ /g; END {print "\n"}' | \
-              sed -e 's/ - .*$$//;s/,/ /g'
-PROCESS_PODS=\
-	set -e; \
-	here=`cd $(SRCDIR); pwd`; \
-	point=$$here/util/point.sh; \
-	for ds in apps:1 crypto:3 ssl:3; do \
-	    defdir=`echo $$ds | cut -f1 -d:`; \
-	    defsec=`echo $$ds | cut -f2 -d:`; \
-	    for p in $(SRCDIR)/doc/$$defdir/*.pod; do \
-		SEC=`sed -ne 's/^=for  *comment  *openssl_manual_section: *\([0-9]\) *$$/\1/p' $$p`; \
-		[ -z "$$SEC" ] && SEC=$$defsec; \
-		fn=`basename $$p .pod`; \
-		Name=$$fn; \
-		NAME=`echo $$fn | tr '[a-z]' '[A-Z]'`; \
-		suf=`eval "echo $$OUTSUFFIX"`; \
-		top=`eval "echo $$OUTTOP"`; \
-		$(PERL) $(SRCDIR)/util/mkdir-p.pl $$top/man$$SEC; \
-		echo "install $$p -> $$top/man$$SEC/$$fn$$suf"; \
-		cat $$p | eval "$$GENERATE" \
-			>  $$top/man$$SEC/$$fn$$suf; \
-		names=`cat $$p | $(EXTRACT_NAMES)`; \
-		( cd $$top/man$$SEC; \
-		  for n in $$names; do \
-		      comp_n="$$n"; \
-		      comp_fn="$$fn"; \
-		      case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin*-*-cc) \
-			  comp_n=`echo "$$n" | tr '[A-Z]' '[a-z]'`; \
-			  comp_fn=`echo "$$fn" | tr '[A-Z]' '[a-z]'`; \
-			  ;; \
-		      esac; \
-		      if [ "$$comp_n" != "$$comp_fn" ]; then \
-			  echo "link $$top/man$$SEC/$$n$$suf -> $$top/man$$SEC/$$fn$$suf"; \
-			  PLATFORM=$(PLATFORM) $$point $$fn$$suf $$n$$suf; \
-		      fi; \
-		  done ); \
-	    done; \
-	done
-UNINSTALL_DOCS=\
-	set -e; \
-	here=`cd $(SRCDIR); pwd`; \
-	for ds in apps:1 crypto:3 ssl:3; do \
-	    defdir=`echo $$ds | cut -f1 -d:`; \
-	    defsec=`echo $$ds | cut -f2 -d:`; \
-	    for p in $(SRCDIR)/doc/$$defdir/*.pod; do \
-		SEC=`sed -ne 's/^=for  *comment  *openssl_manual_section: *\([0-9]\) *$$/\1/p' $$p`; \
-		[ -z "$$SEC" ] && SEC=$$defsec; \
-		fn=`basename $$p .pod`; \
-		suf=`eval "echo $$OUTSUFFIX"`; \
-		top=`eval "echo $$OUTTOP"`; \
-		echo "$(RM) $$top/man$$SEC/$$fn$$suf"; \
-	        $(RM) $$top/man$$SEC/$$fn$$suf; \
-		names=`cat $$p | $(EXTRACT_NAMES)`; \
-		for n in $$names; do \
-		    comp_n="$$n"; \
-		    comp_fn="$$fn"; \
-		    case "$(PLATFORM)" in DJGPP|Cygwin*|mingw*|darwin*-*-cc) \
-			comp_n=`echo "$$n" | tr '[A-Z]' '[a-z]'`; \
-			comp_fn=`echo "$$fn" | tr '[A-Z]' '[a-z]'`; \
-			;; \
-		    esac; \
-		    if [ "$$comp_n" != "$$comp_fn" ]; then \
-			echo "$(RM) $$top/man$$SEC/$$n$$suf"; \
-			$(RM) $$top/man$$SEC/$$n$$suf; \
-		    fi; \
-		done; \
-		( $(RMDIR) $$top/man$$SEC 2>/dev/null || exit 0 ); \
-	    done; \
-	done
 
 install_man_docs:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@echo "*** Installing manpages"
-	@\
-	OUTSUFFIX='.$${SEC}$(MANSUFFIX)'; \
-	OUTTOP="$(DESTDIR)$(MANDIR)"; \
-	GENERATE='pod2man --name=$$NAME --section=$$SEC --center=OpenSSL --release=$(VERSION)'; \
-	$(PROCESS_PODS)
+	$(PERL) $(SRCDIR)/util/process_docs.pl \
+		--destdir=$(DESTDIR)$(MANDIR) --type=man --suffix=$(MANSUFFIX)
 
 uninstall_man_docs:
 	@echo "*** Uninstalling manpages"
-	@\
-	OUTSUFFIX='.$${SEC}$(MANSUFFIX)'; \
-	OUTTOP="$(DESTDIR)$(MANDIR)"; \
-	$(UNINSTALL_DOCS)
+	$(PERL) $(SRCDIR)/util/process_docs.pl \
+		--destdir=$(DESTDIR)$(MANDIR) --type=man --suffix=$(MANSUFFIX) \
+		--remove
 
 install_html_docs:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@echo "*** Installing HTML manpages"
-	@\
-	OUTSUFFIX='.$(HTMLSUFFIX)'; \
-	OUTTOP="$(DESTDIR)$(HTMLDIR)"; \
-	GENERATE="pod2html --podroot=$(SRCDIR)/doc --htmldir=.. \
-			   --podpath=apps:crypto:ssl --title=\$$Name \
-		  | perl -pe 's|href=\"http://man.he.net/man|href=\"../man|g; s|href=\"(.*/man.*)(?<!\.html)\">|href=\"\$$1.html\">|g;'"; \
-	$(PROCESS_PODS)
+	$(PERL) $(SRCDIR)/util/process_docs.pl \
+		--destdir=$(DESTDIR)$(HTMLDIR) --type=html
 
 uninstall_html_docs:
 	@echo "*** Uninstalling manpages"
-	@\
-	OUTSUFFIX='.$(HTMLSUFFIX)'; \
-	OUTTOP="$(DESTDIR)$(HTMLDIR)"; \
-	$(UNINSTALL_DOCS)
+	$(PERL) $(SRCDIR)/util/process_docs.pl \
+		--destdir=$(DESTDIR)$(HTMLDIR) --type=html --remove
 
 
 # Developer targets (note: these are only available on Unix) #########
