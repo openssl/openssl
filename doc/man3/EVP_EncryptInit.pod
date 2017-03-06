@@ -455,8 +455,6 @@ length can only be set before specifying an IV. If not called a default tag
 length is used. For OCB AES the default is 16 (i.e. 128 bits). This is also the
 maximum tag length for OCB.
 
-See L</EXAMPLES> below for an example of the use of GCM mode.
-
 =head1 CCM Mode
 
 The behaviour of CCM mode ciphers is similar to GCM mode but with a few
