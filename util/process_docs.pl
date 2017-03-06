@@ -33,6 +33,8 @@ GetOptions(\%options,
            'destdir=s',         # Destination directory
            #'in=s@',             # Explicit files to process (ignores sourcedir)
            'type=s',            # The result type, 'man' or 'html'
+           'suffix:s',          # Suffix to add to the extension.
+                                # Only used with type=man
            'remove',            # To remove files rather than writing them
            'dry-run|n',         # Only output file names on STDOUT
            'debug|D+',
@@ -50,6 +52,8 @@ pod2usage(1) unless ( defined $options{section}
                       && defined $options{type}
                       && ($options{type} eq 'man'
                           || $options{type} eq 'html') );
+pod2usage(1) if ( $options{type} eq 'html'
+                  && defined $options{suffix} );
 
 if ($options{debug}) {
     print STDERR "DEBUG: options:\n";
@@ -59,6 +63,8 @@ if ($options{debug}) {
         if defined $options{destdir};
     print STDERR "DEBUG:   --type      = $options{type}\n"
         if defined $options{type};
+    print STDERR "DEBUG:   --suffix    = $options{suffix}\n"
+        if defined $options{suffix};
     foreach (sort @{$options{section}}) {
         print STDERR "DEBUG:   --section   = $_\n";
     }
@@ -87,7 +93,7 @@ foreach my $section (sort @{$options{section}}) {
 
         my $updir = updir();
         my $name = uc $podname;
-        my $suffix = { man  => ".$podinfo{section}",
+        my $suffix = { man  => ".$podinfo{section}".($options{suffix} // ""),
                        html => ".html" } -> {$options{type}};
         my $generate = { man  => "pod2man --name=$name --section=$podinfo{section} --center=OpenSSL --release=$config{version} \"$podpath\"",
                          html => "pod2html \"--podroot=$options{sourcedir}\" --htmldir=$updir --podpath=man1:man3:man5:man7 \"--infile=$podpath\" \"--title=$podname\""
@@ -174,6 +180,7 @@ B<process_docs.pl>
 [B<--sourcedir>=I<dir>]
 B<--destdir>=I<dir>
 B<--type>=B<man>|B<html>
+[B<--suffix>=I<suffix>]
 [B<--remove>]
 [B<--dry-run>|B<-n>]
 [B<--debug>|B<-D>]
@@ -205,6 +212,10 @@ Top directory where the resulting files should end up
 =item B<--type>=B<man>|B<html>
 
 Type of output to produce.  Currently supported are man pages and HTML files.
+
+=item B<--suffix>=I<suffix>
+
+A suffix added to the extension.  Only valid with B<--type>=B<man>
 
 =item B<--remove>
 
