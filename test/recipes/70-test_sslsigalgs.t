@@ -118,7 +118,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "EC or TLSv1.2 disabled", 7 if disabled("tls1_2") || disabled("ec");
+    skip "EC or TLSv1.2 disabled", 8 if disabled("tls1_2") || disabled("ec");
 
     $proxy->filter(\&sigalgs_filter);
 
