@@ -175,7 +175,7 @@ B<SCT_set_source> returns 1 on success, 0 otherwise.
 =head1 SEE ALSO
 
 L<ct(7)>,
-L<SCT_verify(3)>,
+L<SCT_validate(3)>,
 L<OBJ_nid2obj(3)>
 
 =head1 HISTORY

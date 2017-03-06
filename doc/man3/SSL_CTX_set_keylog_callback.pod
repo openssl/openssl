@@ -31,10 +31,9 @@ format used by NSS for its B<SSLKEYLOGFILE> debugging output. To recreate that
 file, the key logging callback should log B<line>, followed by a newline.
 B<line> will always be a NULL-terminated string.
 
-
 =head1 SEE ALSO
 
-L<ssl(3)>
+L<ssl(7)>
 
 =head1 COPYRIGHT
 
