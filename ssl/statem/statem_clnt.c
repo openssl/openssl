@@ -1237,6 +1237,16 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
+    /*
+     * In TLSv1.3 a ServerHello message signals a key change so the end of the
+     * message must be on a record boundary.
+     */
+    if (SSL_IS_TLS13(s) && RECORD_LAYER_processed_read_pending(&s->rlayer)) {
+        al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_NOT_ON_RECORD_BOUNDARY);
+        goto f_err;
+    }
+
     /* load the server hello data */
     /* load the server random */
     if (!PACKET_copy_bytes(pkt, s->s3->server_random, SSL3_RANDOM_SIZE)) {
