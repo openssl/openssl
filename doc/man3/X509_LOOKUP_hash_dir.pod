@@ -108,7 +108,7 @@ Note that the hash algorithm used for subject name hashing changed in OpenSSL
 1.0.0, and all certificate stores have to be rehashed when moving from OpenSSL
 0.9.8 to 1.0.0.
 
-OpenSSL includes a L<c_rehash(1)> utility which creates symlinks with correct
+OpenSSL includes a L<rehash(1)> utility which creates symlinks with correct
 hashed names for all files with .pem suffix in a given directory.
 
 =head1 SEE ALSO

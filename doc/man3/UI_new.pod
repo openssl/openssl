@@ -15,8 +15,11 @@ UI_set_method, UI_OpenSSL, UI_null - user interface
 
  #include <openssl/ui.h>
 
+<<<<<<< a52996e78cb744373093891b934ce056f391f21c
  typedef struct ui_st UI;
 
+=======
+>>>>>>> Restore most links to non-existant manpages
  UI *UI_new(void);
  UI *UI_new_method(const UI_METHOD *method);
  void UI_free(UI *ui);
