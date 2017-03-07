@@ -349,8 +349,14 @@ int ssl3_get_record(SSL *s)
         } else {
             size_t len = SSL3_RT_MAX_ENCRYPTED_LENGTH;
 
+#ifndef OPENSSL_NO_COMP
+            /*
+             * If OPENSSL_NO_COMP is defined then SSL3_RT_MAX_ENCRYPTED_LENGTH
+             * does not include the compression overhead anyway.
+             */
             if (s->expand == NULL)
                 len -= SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+#endif
 
             if (thisrr->length > len) {
                 al = SSL_AD_RECORD_OVERFLOW;
