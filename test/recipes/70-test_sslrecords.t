@@ -147,7 +147,7 @@ ok(TLSProxy::Message->fail(), "Changed record version in TLS1.2");
 
 #TLS1.3 specific tests
 SKIP: {
-    skip "TLSv1.3 disabled", 4 if disabled("tls1_3");
+    skip "TLSv1.3 disabled", 6 if disabled("tls1_3");
 
     #Test 13: Sending a different record version in TLS1.3 should succeed
     $proxy->clear();
