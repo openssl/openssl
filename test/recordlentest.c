@@ -78,7 +78,7 @@ static int fail_due_to_record_overflow(int enc)
     return 0;
 }
 
-static int test_record_plain_overflow(int idx)
+static int test_record_overflow(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -111,7 +111,10 @@ static int test_record_plain_overflow(int idx)
 
     if (idx == TEST_ENCRYPTED_OVERFLOW_TLS1_2_OK
             || idx == TEST_ENCRYPTED_OVERFLOW_TLS1_2_NOT_OK) {
-        len = SSL3_RT_MAX_ENCRYPTED_LENGTH - SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+        len = SSL3_RT_MAX_ENCRYPTED_LENGTH;
+#ifndef OPENSSL_NO_COMP
+        len -= SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+#endif
         SSL_CTX_set_max_proto_version(sctx, TLS1_2_VERSION);
     } else if (idx == TEST_ENCRYPTED_OVERFLOW_TLS1_3_OK
                || idx == TEST_ENCRYPTED_OVERFLOW_TLS1_3_NOT_OK) {
@@ -211,7 +214,7 @@ int test_main(int argc, char *argv[])
     cert = argv[1];
     privkey = argv[2];
 
-    ADD_ALL_TESTS(test_record_plain_overflow, TOTAL_RECORD_OVERFLOW_TESTS);
+    ADD_ALL_TESTS(test_record_overflow, TOTAL_RECORD_OVERFLOW_TESTS);
 
     testresult = run_tests(argv[0]);
 
