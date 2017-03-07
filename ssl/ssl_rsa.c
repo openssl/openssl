@@ -55,8 +55,8 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
         x = d2i_X509_bio(in, NULL);
     } else if (type == SSL_FILETYPE_PEM) {
         j = ERR_R_PEM_LIB;
-        x = PEM_read_bio_X509(in, NULL, ssl->ctx->default_passwd_callback,
-                              ssl->ctx->default_passwd_callback_userdata);
+        x = PEM_read_bio_X509(in, NULL, ssl->default_passwd_callback,
+                              ssl->default_passwd_callback_userdata);
     } else {
         SSLerr(SSL_F_SSL_USE_CERTIFICATE_FILE, SSL_R_BAD_SSL_FILETYPE);
         goto end;
@@ -187,9 +187,8 @@ int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type)
     } else if (type == SSL_FILETYPE_PEM) {
         j = ERR_R_PEM_LIB;
         rsa = PEM_read_bio_RSAPrivateKey(in, NULL,
-                                         ssl->ctx->default_passwd_callback,
-                                         ssl->
-                                         ctx->default_passwd_callback_userdata);
+                                         ssl->default_passwd_callback,
+                                         ssl->default_passwd_callback_userdata);
     } else {
         SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY_FILE, SSL_R_BAD_SSL_FILETYPE);
         goto end;
@@ -254,9 +253,8 @@ int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
     if (type == SSL_FILETYPE_PEM) {
         j = ERR_R_PEM_LIB;
         pkey = PEM_read_bio_PrivateKey(in, NULL,
-                                       ssl->ctx->default_passwd_callback,
-                                       ssl->
-                                       ctx->default_passwd_callback_userdata);
+                                       ssl->default_passwd_callback,
+                                       ssl->default_passwd_callback_userdata);
     } else if (type == SSL_FILETYPE_ASN1) {
         j = ERR_R_ASN1_LIB;
         pkey = d2i_PrivateKey_bio(in, NULL);
