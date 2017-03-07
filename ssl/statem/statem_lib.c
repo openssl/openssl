@@ -539,6 +539,16 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
         goto err;
     }
 
+    /*
+     * A KeyUpdate message signals a key change so the end of the message must
+     * be on a record boundary.
+     */
+    if (RECORD_LAYER_processed_read_pending(&s->rlayer)) {
+        al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_UPDATE, SSL_R_NOT_ON_RECORD_BOUNDARY);
+        goto err;
+    }
+
     if (!PACKET_get_1(pkt, &updatetype)
             || PACKET_remaining(pkt) != 0
             || (updatetype != SSL_KEY_UPDATE_NOT_REQUESTED
@@ -675,6 +685,16 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
     /* This is a real handshake so make sure we clean it up at the end */
     if (s->server)
         s->statem.cleanuphand = 1;
+
+    /*
+     * In TLSv1.3 a Finished message signals a key change so the end of the
+     * message must be on a record boundary.
+     */
+    if (SSL_IS_TLS13(s) && RECORD_LAYER_processed_read_pending(&s->rlayer)) {
+        al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_TLS_PROCESS_FINISHED, SSL_R_NOT_ON_RECORD_BOUNDARY);
+        goto f_err;
+    }
 
     /* If this occurs, we have missed a message */
     if (!SSL_IS_TLS13(s) && !s->s3->change_cipher_spec) {

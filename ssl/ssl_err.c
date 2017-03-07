@@ -625,6 +625,7 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_REASON(SSL_R_MISSING_SRP_PARAM), "can't find SRP server param"},
     {ERR_REASON(SSL_R_MISSING_TMP_DH_KEY), "missing tmp dh key"},
     {ERR_REASON(SSL_R_MISSING_TMP_ECDH_KEY), "missing tmp ecdh key"},
+    {ERR_REASON(SSL_R_NOT_ON_RECORD_BOUNDARY), "not on record boundary"},
     {ERR_REASON(SSL_R_NO_CERTIFICATES_RETURNED), "no certificates returned"},
     {ERR_REASON(SSL_R_NO_CERTIFICATE_ASSIGNED), "no certificate assigned"},
     {ERR_REASON(SSL_R_NO_CERTIFICATE_SET), "no certificate set"},
