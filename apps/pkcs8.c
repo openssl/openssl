@@ -66,7 +66,7 @@ int pkcs8_main(int argc, char **argv)
     char *infile = NULL, *outfile = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *prog;
 #ifndef OPENSSL_NO_UI
-    char pass[50];
+    char pass[APP_PASS_LEN];
 #endif
     char *passin = NULL, *passout = NULL, *p8pass = NULL;
     OPTION_CHOICE o;
