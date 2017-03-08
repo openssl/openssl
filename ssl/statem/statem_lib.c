@@ -1907,3 +1907,98 @@ int create_synthetic_message_hash(SSL *s)
 
     return 1;
 }
+
+static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
+{
+    return X509_NAME_cmp(*a, *b);
+}
+
+int parse_ca_names(SSL *s, PACKET *pkt, int *al)
+{
+    STACK_OF(X509_NAME) *ca_sk = sk_X509_NAME_new(ca_dn_cmp);
+    X509_NAME *xn = NULL;
+    PACKET cadns;
+
+    if (ca_sk == NULL) {
+        SSLerr(SSL_F_PARSE_CA_NAMES, ERR_R_MALLOC_FAILURE);
+        goto decerr;
+    }
+    /* get the CA RDNs */
+    if (!PACKET_get_length_prefixed_2(pkt, &cadns)) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_PARSE_CA_NAMES, SSL_R_LENGTH_MISMATCH);
+        goto decerr;
+    }
+
+    while (PACKET_remaining(&cadns)) {
+        const unsigned char *namestart, *namebytes;
+        unsigned int name_len;
+
+        if (!PACKET_get_net_2(&cadns, &name_len)
+            || !PACKET_get_bytes(&cadns, &namebytes, name_len)) {
+            SSLerr(SSL_F_PARSE_CA_NAMES, SSL_R_LENGTH_MISMATCH);
+            goto decerr;
+        }
+
+        namestart = namebytes;
+        if ((xn = d2i_X509_NAME(NULL, &namebytes, name_len)) == NULL) {
+            SSLerr(SSL_F_PARSE_CA_NAMES, ERR_R_ASN1_LIB);
+            goto decerr;
+        }
+        if (namebytes != (namestart + name_len)) {
+            SSLerr(SSL_F_PARSE_CA_NAMES, SSL_R_CA_DN_LENGTH_MISMATCH);
+            goto decerr;
+        }
+
+        if (!sk_X509_NAME_push(ca_sk, xn)) {
+            SSLerr(SSL_F_PARSE_CA_NAMES, ERR_R_MALLOC_FAILURE);
+            *al = SSL_AD_INTERNAL_ERROR;
+            goto err;
+        }
+        xn = NULL;
+    }
+
+    sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
+    s->s3->tmp.ca_names = ca_sk;
+
+    return 1;
+
+ decerr:
+    *al = SSL_AD_DECODE_ERROR;
+ err:
+    sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
+    X509_NAME_free(xn);
+    return 0;
+}
+
+int construct_ca_names(SSL *s, WPACKET *pkt)
+{
+    STACK_OF(X509_NAME) *ca_sk = SSL_get_client_CA_list(s);
+
+    /* Start sub-packet for client CA list */
+    if (!WPACKET_start_sub_packet_u16(pkt))
+        return 0;
+
+    if (ca_sk != NULL) {
+        int i;
+
+        for (i = 0; i < sk_X509_NAME_num(ca_sk); i++) {
+            unsigned char *namebytes;
+            X509_NAME *name = sk_X509_NAME_value(ca_sk, i);
+            int namelen;
+
+            if (name == NULL
+                    || (namelen = i2d_X509_NAME(name, NULL)) < 0
+                    || !WPACKET_sub_allocate_bytes_u16(pkt, namelen,
+                                                       &namebytes)
+                    || i2d_X509_NAME(name, &namebytes) != namelen) {
+                return 0;
+            }
+        }
+    }
+
+    if (!WPACKET_close(pkt))
+        return 0;
+
+    return 1;
+}
