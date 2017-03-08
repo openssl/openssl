@@ -85,6 +85,7 @@ static void show_ciphers(const OBJ_NAME *name, void *bio_)
 {
     BIO *bio = bio_;
     static int n;
+    const EVP_CIPHER *cipher;
 
     if (!islower((unsigned char)*name->name))
         return;
