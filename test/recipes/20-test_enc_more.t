@@ -29,7 +29,7 @@ my $fail = "";
 my $cmd = "openssl";
 
 my @ciphers =
-    grep(! /wrap|hmac|poly|ocb|xts|^$|^[^-]|(?i)[cg]cm/,
+    grep(! /wrap|^$|^[^-]/,
          (map { split /\s+/ }
               run(app([$cmd, "enc", "-ciphers"]), capture => 1)));
 
