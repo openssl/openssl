@@ -65,7 +65,6 @@ static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt);
 
 static ossl_inline int cert_req_allowed(SSL *s);
 static int key_exchange_expected(SSL *s);
-static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b);
 static int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk,
                                     WPACKET *pkt);
 
@@ -2328,16 +2327,8 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
 {
     int ret = MSG_PROCESS_ERROR;
-    unsigned int i, name_len;
-    X509_NAME *xn = NULL;
-    const unsigned char *namestart, *namebytes;
-    STACK_OF(X509_NAME) *ca_sk = NULL;
-    PACKET cadns;
-
-    if ((ca_sk = sk_X509_NAME_new(ca_dn_cmp)) == NULL) {
-        SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
+    int al = -1;
+    unsigned int i;
 
     if (SSL_IS_TLS13(s)) {
         PACKET reqctx;
@@ -2396,42 +2387,11 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
     }
 
     /* get the CA RDNs */
-    if (!PACKET_get_length_prefixed_2(pkt, &cadns)) {
-        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-        SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, SSL_R_LENGTH_MISMATCH);
+    if (!parse_ca_names(s, pkt, &al)) {
+        ssl3_send_alert(s, SSL3_AL_FATAL, al);
         goto err;
     }
 
-    while (PACKET_remaining(&cadns)) {
-        if (!PACKET_get_net_2(&cadns, &name_len)
-            || !PACKET_get_bytes(&cadns, &namebytes, name_len)) {
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-            SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
-                   SSL_R_LENGTH_MISMATCH);
-            goto err;
-        }
-
-        namestart = namebytes;
-
-        if ((xn = d2i_X509_NAME(NULL, (const unsigned char **)&namebytes,
-                                name_len)) == NULL) {
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-            SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, ERR_R_ASN1_LIB);
-            goto err;
-        }
-
-        if (namebytes != (namestart + name_len)) {
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-            SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
-                   SSL_R_CA_DN_LENGTH_MISMATCH);
-            goto err;
-        }
-        if (!sk_X509_NAME_push(ca_sk, xn)) {
-            SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-        xn = NULL;
-    }
     /* TODO(TLS1.3) need to parse and process extensions, for now ignore */
     if (SSL_IS_TLS13(s)) {
         PACKET reqexts;
@@ -2452,23 +2412,13 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
 
     /* we should setup a certificate to return.... */
     s->s3->tmp.cert_req = 1;
-    sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
-    s->s3->tmp.ca_names = ca_sk;
-    ca_sk = NULL;
 
     ret = MSG_PROCESS_CONTINUE_PROCESSING;
     goto done;
  err:
     ossl_statem_set_error(s);
  done:
-    X509_NAME_free(xn);
-    sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
     return ret;
-}
-
-static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
-{
-    return (X509_NAME_cmp(*a, *b));
 }
 
 MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
