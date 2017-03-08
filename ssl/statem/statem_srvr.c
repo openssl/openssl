@@ -2499,9 +2499,6 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
 
 int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
 {
-    int i;
-    STACK_OF(X509_NAME) *sk = NULL;
-
     if (SSL_IS_TLS13(s)) {
         /* TODO(TLS1.3) for now send empty request context */
         if (!WPACKET_put_bytes_u8(pkt, 0)) {
@@ -2533,35 +2530,11 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
         }
     }
 
-    /* Start sub-packet for client CA list */
-    if (!WPACKET_start_sub_packet_u16(pkt)) {
+    if (!construct_ca_names(s, pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    sk = SSL_get_client_CA_list(s);
-    if (sk != NULL) {
-        for (i = 0; i < sk_X509_NAME_num(sk); i++) {
-            unsigned char *namebytes;
-            X509_NAME *name = sk_X509_NAME_value(sk, i);
-            int namelen;
-
-            if (name == NULL
-                    || (namelen = i2d_X509_NAME(name, NULL)) < 0
-                    || !WPACKET_sub_allocate_bytes_u16(pkt, namelen,
-                                                       &namebytes)
-                    || i2d_X509_NAME(name, &namebytes) != namelen) {
-                SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST,
-                       ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-        }
-    }
-    /* else no CA names */
-    if (!WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     /*
      * TODO(TLS1.3) implement configurable certificate_extensions
      * For now just send zero length extensions.

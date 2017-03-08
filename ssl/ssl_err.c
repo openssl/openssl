@@ -74,6 +74,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "ossl_statem_server_construct_message"},
     {ERR_FUNC(SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION),
      "ossl_statem_server_read_transition"},
+    {ERR_FUNC(SSL_F_PARSE_CA_NAMES), "parse_ca_names"},
     {ERR_FUNC(SSL_F_PROCESS_KEY_SHARE_EXT), "process_key_share_ext"},
     {ERR_FUNC(SSL_F_READ_STATE_MACHINE), "read_state_machine"},
     {ERR_FUNC(SSL_F_SET_CLIENT_CIPHERSUITE), "set_client_ciphersuite"},
