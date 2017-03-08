@@ -486,6 +486,7 @@ static STRINT_PAIR ssl_versions[] = {
 };
 static STRINT_PAIR alert_types[] = {
     {" close_notify", 0},
+    {" end_of_early_data", 1},
     {" unexpected_message", 10},
     {" bad_record_mac", 20},
     {" decryption_failed", 21},
@@ -506,14 +507,17 @@ static STRINT_PAIR alert_types[] = {
     {" protocol_version", 70},
     {" insufficient_security", 71},
     {" internal_error", 80},
+    {" inappropriate_fallback", 86},
     {" user_canceled", 90},
     {" no_renegotiation", 100},
+    {" missing_extension", 109},
     {" unsupported_extension", 110},
     {" certificate_unobtainable", 111},
     {" unrecognized_name", 112},
     {" bad_certificate_status_response", 113},
     {" bad_certificate_hash_value", 114},
     {" unknown_psk_identity", 115},
+    {" certificate_required", 116},
     {NULL}
 };
 
@@ -523,6 +527,7 @@ static STRINT_PAIR handshakes[] = {
     {", ServerHello", 2},
     {", HelloVerifyRequest", 3},
     {", NewSessionTicket", 4},
+    {", EncryptedExtensions", 8},
     {", Certificate", 11},
     {", ServerKeyExchange", 12},
     {", CertificateRequest", 13},
@@ -533,6 +538,7 @@ static STRINT_PAIR handshakes[] = {
     {", CertificateUrl", 21},
     {", CertificateStatus", 22},
     {", SupplementalData", 23},
+    {", KeyUpdate", 24 },
     {NULL}
 };
 
@@ -553,10 +559,10 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
         version == DTLS1_VERSION || version == DTLS1_BAD_VER) {
         switch (content_type) {
         case 20:
-            str_content_type = "ChangeCipherSpec";
+            str_content_type = ", ChangeCipherSpec";
             break;
         case 21:
-            str_content_type = "Alert";
+            str_content_type = ", Alert";
             str_details1 = ", ???";
             if (len == 2) {
                 switch (bp[0]) {
@@ -571,13 +577,13 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             }
             break;
         case 22:
-            str_content_type = "Handshake";
+            str_content_type = ", Handshake";
             str_details1 = "???";
             if (len > 0)
                 str_details1 = lookup((int)bp[0], handshakes, "???");
             break;
         case 23:
-            str_content_type = "ApplicationData";
+            str_content_type = ", ApplicationData";
             break;
 #ifndef OPENSSL_NO_HEARTBEATS
         case 24:
