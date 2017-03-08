@@ -35,14 +35,14 @@ my %record_type = (
 );
 
 use constant {
-    VERS_TLS_1_4 => 773,
-    VERS_TLS_1_3_DRAFT => 32530,
-    VERS_TLS_1_3 => 772,
-    VERS_TLS_1_2 => 771,
-    VERS_TLS_1_1 => 770,
-    VERS_TLS_1_0 => 769,
-    VERS_SSL_3_0 => 768,
-    VERS_SSL_LT_3_0 => 767
+    VERS_TLS_1_4 => 0x0305,
+    VERS_TLS_1_3_DRAFT => 0x7f13,
+    VERS_TLS_1_3 => 0x0304,
+    VERS_TLS_1_2 => 0x0303,
+    VERS_TLS_1_1 => 0x0302,
+    VERS_TLS_1_0 => 0x0301,
+    VERS_SSL_3_0 => 0x0300,
+    VERS_SSL_LT_3_0 => 0x02ff
 };
 
 my %tls_version = (
