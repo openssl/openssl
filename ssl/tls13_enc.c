@@ -124,6 +124,8 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     size_t mdlen, prevsecretlen;
     int ret;
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
+    const char *derived_secret_label = "derived secret";
+    unsigned char preextractsec[EVP_MAX_MD_SIZE];
 
     if (pctx == NULL)
         return 0;
@@ -138,6 +140,26 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
         prevsecret = default_zeros;
         prevsecretlen = 0;
     } else {
+        EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+        unsigned char hash[EVP_MAX_MD_SIZE];
+
+        /* The pre-extract derive step uses a hash of no messages */
+        if (mctx == NULL
+                || EVP_DigestInit_ex(mctx, md, NULL) <= 0
+                || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
+            EVP_MD_CTX_free(mctx);
+            return 0;
+        }
+        EVP_MD_CTX_free(mctx);
+
+        /* Generate the pre-extract secret */
+        if (!tls13_hkdf_expand(s, md, prevsecret,
+                               (unsigned char *)derived_secret_label,
+                               sizeof(derived_secret_label) - 1, hash,
+                               preextractsec, mdlen))
+            return 0;
+
+        prevsecret = preextractsec;
         prevsecretlen = mdlen;
     }
 
@@ -152,6 +174,8 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
                <= 0;
 
     EVP_PKEY_CTX_free(pctx);
+    if (prevsecret == preextractsec)
+        OPENSSL_cleanse(preextractsec, mdlen);
     return ret == 0;
 }
 
