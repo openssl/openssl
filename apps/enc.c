@@ -89,6 +89,13 @@ static void show_ciphers(const OBJ_NAME *name, void *bio_)
     if (!islower((unsigned char)*name->name))
         return;
 
+    /* Filter out ciphers that we cannot use */
+    cipher = EVP_get_cipherbyname(name->name);
+    if (cipher == NULL ||
+            (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0 ||
+            EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)
+        return;
+
     BIO_printf(bio, "-%-25s", name->name);
     if (++n == 3) {
         BIO_printf(bio, "\n");
