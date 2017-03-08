@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -31,6 +31,11 @@
 
 static int set_hex(char *in, unsigned char *out, int size);
 static void show_ciphers(const OBJ_NAME *name, void *bio_);
+
+struct doall_enc_ciphers {
+    BIO *bio;
+    int n;
+};
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -100,6 +105,7 @@ int enc_main(int argc, char **argv)
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
     unsigned char *buff = NULL, salt[PKCS5_SALT_LEN];
     long n;
+    struct doall_enc_ciphers dec;
 #ifdef ZLIB
     int do_zlib = 0;
     BIO *bzl = NULL;
@@ -135,8 +141,10 @@ int enc_main(int argc, char **argv)
             goto end;
         case OPT_LIST:
             BIO_printf(bio_out, "Supported ciphers:\n");
+            dec.bio = bio_out;
+            dec.n = 0;
             OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH,
-                                   show_ciphers, bio_out);
+                                   show_ciphers, &dec);
             BIO_printf(bio_out, "\n");
             ret = 0;
             goto end;
@@ -559,10 +567,9 @@ int enc_main(int argc, char **argv)
     return (ret);
 }
 
-static void show_ciphers(const OBJ_NAME *name, void *bio_)
+static void show_ciphers(const OBJ_NAME *name, void *arg)
 {
-    BIO *bio = bio_;
-    static int n;
+    struct doall_enc_ciphers *dec = (struct doall_enc_ciphers *)arg;
     const EVP_CIPHER *cipher;
 
     if (!islower((unsigned char)*name->name))
@@ -575,12 +582,12 @@ static void show_ciphers(const OBJ_NAME *name, void *bio_)
             EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)
         return;
 
-    BIO_printf(bio, "-%-25s", name->name);
-    if (++n == 3) {
-        BIO_printf(bio, "\n");
-        n = 0;
+    BIO_printf(dec->bio, "-%-25s", name->name);
+    if (++dec->n == 3) {
+        BIO_printf(dec->bio, "\n");
+        dec->n = 0;
     } else
-        BIO_printf(bio, " ");
+        BIO_printf(dec->bio, " ");
 }
 
 static int set_hex(char *in, unsigned char *out, int size)
