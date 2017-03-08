@@ -1102,7 +1102,10 @@ int ERR_load_X509_strings(void);
 # define X509_R_METHOD_NOT_SUPPORTED                      124
 # define X509_R_NAME_TOO_LONG                             134
 # define X509_R_NEWER_CRL_NOT_NEWER                       132
+# define X509_R_NO_CERTIFICATE_FOUND                      135
+# define X509_R_NO_CERTIFICATE_OR_CRL_FOUND               136
 # define X509_R_NO_CERT_SET_FOR_US_TO_VERIFY              105
+# define X509_R_NO_CRL_FOUND                              137
 # define X509_R_NO_CRL_NUMBER                             130
 # define X509_R_PUBLIC_KEY_DECODE_ERROR                   125
 # define X509_R_PUBLIC_KEY_ENCODE_ERROR                   126
