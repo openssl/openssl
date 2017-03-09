@@ -86,5 +86,8 @@ runtests(map { abs2rel($_, rel2abs(curdir())); } sort keys %tests);
 sub find_matching_tests {
     my ($glob) = @_;
 
+    if ($glob =~ m|^[\d\[\]\?\-]+$|) {
+        return glob(catfile($recipesdir,"$glob-*.t"));
+    }
     return glob(catfile($recipesdir,"*-$glob.t"));
 }
