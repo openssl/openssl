@@ -476,7 +476,6 @@ static ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_padding, "padding"},
     {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"},
-    {TLSEXT_TYPE_early_data_info, "ticket_early_data_info"},
     {TLSEXT_TYPE_early_data, "early_data"}
 };
 
@@ -833,7 +832,9 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         return ssl_trace_list(bio, indent + 2, ext + 1, xlen, 1,
                               ssl_psk_kex_modes_tbl);
 
-    case TLSEXT_TYPE_early_data_info:
+    case TLSEXT_TYPE_early_data:
+        if (mt != SSL3_MT_NEWSESSION_TICKET)
+            break;
         if (extlen != 4)
             return 0;
         max_early_data = (ext[0] << 24) | (ext[1] << 16) | (ext[2] << 8)
