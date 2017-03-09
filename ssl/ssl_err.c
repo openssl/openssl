@@ -405,6 +405,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "tls_parse_ctos_renegotiate"},
     {ERR_FUNC(SSL_F_TLS_PARSE_CTOS_USE_SRTP), "tls_parse_ctos_use_srtp"},
     {ERR_FUNC(SSL_F_TLS_PARSE_STOC_COOKIE), "tls_parse_stoc_cookie"},
+    {ERR_FUNC(SSL_F_TLS_PARSE_STOC_EARLY_DATA), "tls_parse_stoc_early_data"},
     {ERR_FUNC(SSL_F_TLS_PARSE_STOC_EARLY_DATA_INFO),
      "tls_parse_stoc_early_data_info"},
     {ERR_FUNC(SSL_F_TLS_PARSE_STOC_KEY_SHARE), "tls_parse_stoc_key_share"},

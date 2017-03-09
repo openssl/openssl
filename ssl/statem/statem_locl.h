@@ -238,9 +238,6 @@ int tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt, unsigned int context,
                                    X509 *x, size_t chainidx, int *al);
 int tls_construct_stoc_server_name(SSL *s, WPACKET *pkt, unsigned int context,
                                    X509 *x, size_t chainidx, int *al);
-int tls_construct_stoc_early_data_info(SSL *s, WPACKET *pkt,
-                                       unsigned int context, X509 *x,
-                                       size_t chainidx, int *al);
 int tls_construct_stoc_early_data(SSL *s, WPACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx, int *al);
 #ifndef OPENSSL_NO_EC
@@ -345,8 +342,6 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
                                X509 *x, size_t chainidx, int *al);
 int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, unsigned int context,
                                X509 *x, size_t chainidx, int *al);
-int tls_parse_stoc_early_data_info(SSL *s, PACKET *pkt, unsigned int context,
-                              X509 *x, size_t chainidx, int *al);
 int tls_parse_stoc_early_data(SSL *s, PACKET *pkt, unsigned int context,
                               X509 *x, size_t chainidx, int *al);
 #ifndef OPENSSL_NO_EC
