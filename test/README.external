@@ -2,34 +2,38 @@ Running external test suites with OpenSSL
 =========================================
 
 It is possible to integrate external test suites into OpenSSL's "make test".
-This capability is considered a developer option and may not work on all
+This capability is considered a developer option and does not work on all
 platforms.
 
-At the current time the only supported external suite is the one used by
-BoringSSL.
 
 
 The BoringSSL test suite
 ========================
 
 In order to run the BoringSSL tests with OpenSSL, first checkout the BoringSSL
-source code into an appropriate directory:
+source code into an appropriate directory. This can be done in two ways:
 
-$ git clone https://boringssl.googlesource.com/boringssl boringssl
+1) Separately from the OpenSSL checkout using:
 
-The BoringSSL tests are only confirmed to work at a specific commit in the
-BoringSSL repository. Later commits may or may not pass the test suite:
+  $ git clone https://boringssl.googlesource.com/boringssl boringssl
 
-$ cd boringssl
-$ git checkout 490469f850e
+  The BoringSSL tests are only confirmed to work at a specific commit in the
+  BoringSSL repository. Later commits may or may not pass the test suite:
 
-From the OpenSSL source code configure to use the external tests:
+  $ cd boringssl
+  $ git checkout 490469f850e
+
+2) Using the already configured submodule settings in OpenSSL:
+
+  $ git submodule update --init
+
+Configure the OpenSSL source code to enable the external tests:
 
 $ cd ../openssl
 $ ./config enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers \
   enable-external-tests
 
-Note that using other config option than those given above may cause the tests
+Note that using other config options than those given above may cause the tests
 to fail.
 
 Run the OpenSSL tests by providing the path to the BoringSSL test runner in the
@@ -66,4 +70,31 @@ within the OpenSSL source code.
 
 The community is encouraged to contribute patches which reduce the number of
 suppressions that are currently present.
+
+
+Python PYCA/Cryptography test suite
+===================================
+
+This python test suite runs cryptographic tests with a local OpenSSL build as
+the implementation.
+
+First checkout the PYCA/Cryptography module into ./pyca-cryptography using:
+
+$ git submodule update --init
+
+Then configure/build OpenSSL compatible with the python module:
+
+$ ./config shared enable-external-tests
+$ make
+
+The tests will run in a python virtual environment which requires virtualenv
+to be installed.
+
+$ HARNESS_VERBOSE=1 TESTS="test_external" make test
+
+Test failures and suppressions
+==============================
+
+Some tests target older (<=1.0.2) versions so will not run. Other tests target
+other crypto implementations so are not relevant. Currently no tests fail.
 
