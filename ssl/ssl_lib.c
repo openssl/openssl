@@ -105,8 +105,6 @@ static const struct {
     },
 };
 
-static int ssl_write_early_finish(SSL *s);
-
 static int dane_ctx_enable(struct dane_ctx_st *dctx)
 {
     const EVP_MD **mdevp;
@@ -1641,9 +1639,9 @@ int SSL_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes)
             s->early_data_state = SSL_EARLY_DATA_READING;
             ret = SSL_read_ex(s, buf, num, readbytes);
             /*
-             * Record layer will call ssl_end_of_early_data_seen() if we see
-             * that alert - which updates the early_data_state to
-             * SSL_EARLY_DATA_FINISHED_READING
+             * State machine will update early_data_state to
+             * SSL_EARLY_DATA_FINISHED_READING if we get an EndOfEarlyData
+             * message
              */
             if (ret > 0 || (ret <= 0 && s->early_data_state
                                         != SSL_EARLY_DATA_FINISHED_READING)) {
@@ -1661,18 +1659,6 @@ int SSL_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes)
         SSLerr(SSL_F_SSL_READ_EARLY_DATA, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return SSL_READ_EARLY_DATA_ERROR;
     }
-}
-
-int ssl_end_of_early_data_seen(SSL *s)
-{
-    if (s->early_data_state == SSL_EARLY_DATA_READING
-            || s->early_data_state == SSL_EARLY_DATA_READ_RETRY) {
-        s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
-        ossl_statem_finish_early_data(s);
-        return 1;
-    }
-
-    return 0;
 }
 
 int SSL_get_early_data_status(const SSL *s)
@@ -1753,14 +1739,7 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written)
         return -1;
     }
 
-    if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
-        /*
-         * We're still writing early data. We need to stop that so we can write
-         * normal data
-         */
-        if (!ssl_write_early_finish(s))
-            return 0;
-    } else if (s->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY
+    if (s->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY
                 || s->early_data_state == SSL_EARLY_DATA_ACCEPT_RETRY
                 || s->early_data_state == SSL_EARLY_DATA_READ_RETRY) {
         SSLerr(SSL_F_SSL_WRITE_INTERNAL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -1861,32 +1840,6 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
         SSLerr(SSL_F_SSL_WRITE_EARLY_DATA, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
-}
-
-static int ssl_write_early_finish(SSL *s)
-{
-    int ret;
-
-    if (s->early_data_state != SSL_EARLY_DATA_WRITE_RETRY) {
-        SSLerr(SSL_F_SSL_WRITE_EARLY_FINISH, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-        return 0;
-    }
-
-    s->early_data_state = SSL_EARLY_DATA_WRITING;
-    ret = ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_END_OF_EARLY_DATA);
-    if (ret <= 0) {
-        s->early_data_state = SSL_EARLY_DATA_WRITE_RETRY;
-        return 0;
-    }
-    s->early_data_state = SSL_EARLY_DATA_FINISHED_WRITING;
-    /*
-     * We set the enc_write_ctx back to NULL because we may end up writing
-     * in cleartext again if we get a HelloRetryRequest from the server.
-     */
-    EVP_CIPHER_CTX_free(s->enc_write_ctx);
-    s->enc_write_ctx = NULL;
-    ossl_statem_set_in_init(s, 1);
-    return 1;
 }
 
 int SSL_shutdown(SSL *s)
@@ -3252,13 +3205,6 @@ int SSL_do_handshake(SSL *s)
         return -1;
     }
 
-    if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
-        int edfin;
-
-        edfin = ssl_write_early_finish(s);
-        if (edfin <= 0)
-            return edfin;
-    }
     ossl_statem_check_finish_init(s, -1);
 
     s->method->ssl_renegotiate_check(s, 0);

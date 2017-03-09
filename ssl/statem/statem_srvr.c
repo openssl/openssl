@@ -94,6 +94,16 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
         break;
 
     case TLS_ST_EARLY_DATA:
+        if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED) {
+            if (mt == SSL3_MT_END_OF_EARLY_DATA) {
+                st->hand_state = TLS_ST_SR_END_OF_EARLY_DATA;
+                return 1;
+            }
+            break;
+        }
+        /* Fall through */
+
+    case TLS_ST_SR_END_OF_EARLY_DATA:
     case TLS_ST_SW_FINISHED:
         if (s->s3->tmp.cert_request) {
             if (mt == SSL3_MT_CERTIFICATE) {
@@ -144,9 +154,6 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
     }
 
     /* No valid transition found */
-    ssl3_send_alert(s, SSL3_AL_FATAL, SSL3_AD_UNEXPECTED_MESSAGE);
-    SSLerr(SSL_F_OSSL_STATEM_SERVER13_READ_TRANSITION,
-           SSL_R_UNEXPECTED_MESSAGE);
     return 0;
 }
 
@@ -1009,6 +1016,9 @@ size_t ossl_statem_server_max_message_size(SSL *s)
     case TLS_ST_SR_CLNT_HELLO:
         return CLIENT_HELLO_MAX_LENGTH;
 
+    case TLS_ST_SR_END_OF_EARLY_DATA:
+        return END_OF_EARLY_DATA_MAX_LENGTH;
+
     case TLS_ST_SR_CERT:
         return s->max_cert_list;
 
@@ -1048,6 +1058,9 @@ MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL *s, PACKET *pkt)
 
     case TLS_ST_SR_CLNT_HELLO:
         return tls_process_client_hello(s, pkt);
+
+    case TLS_ST_SR_END_OF_EARLY_DATA:
+        return tls_process_end_of_early_data(s, pkt);
 
     case TLS_ST_SR_CERT:
         return tls_process_client_certificate(s, pkt);
@@ -1113,15 +1126,6 @@ WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
         return WORK_FINISHED_CONTINUE;
     }
     return WORK_FINISHED_CONTINUE;
-}
-
-int ossl_statem_finish_early_data(SSL *s)
-{
-    if (!s->method->ssl3_enc->change_cipher_state(s,
-                SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ))
-        return 0;
-
-    return 1;
 }
 
 #ifndef OPENSSL_NO_SRP
@@ -3669,4 +3673,46 @@ static int tls_construct_hello_retry_request(SSL *s, WPACKET *pkt)
     s->hit = 0;
 
     return 1;
+}
+
+MSG_PROCESS_RETURN tls_process_end_of_early_data(SSL *s, PACKET *pkt)
+{
+    int al = SSL_AD_INTERNAL_ERROR;
+
+    if (PACKET_remaining(pkt) != 0) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_END_OF_EARLY_DATA, SSL_R_LENGTH_MISMATCH);
+        ossl_statem_set_error(s);
+        return MSG_PROCESS_ERROR;
+    }
+
+    if (s->early_data_state != SSL_EARLY_DATA_READING
+            && s->early_data_state != SSL_EARLY_DATA_READ_RETRY) {
+        SSLerr(SSL_F_TLS_PROCESS_END_OF_EARLY_DATA, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /*
+     * EndOfEarlyData signals a key change so the end of the message must be on
+     * a record boundary.
+     */
+    if (RECORD_LAYER_processed_read_pending(&s->rlayer)) {
+        al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_TLS_PROCESS_END_OF_EARLY_DATA,
+               SSL_R_NOT_ON_RECORD_BOUNDARY);
+        goto err;
+    }
+
+    s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
+    if (!s->method->ssl3_enc->change_cipher_state(s,
+                SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ)) {
+        SSLerr(SSL_F_TLS_PROCESS_END_OF_EARLY_DATA, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    return MSG_PROCESS_CONTINUE_READING;
+ err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    ossl_statem_set_error(s);
+    return MSG_PROCESS_ERROR;
 }
