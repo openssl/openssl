@@ -1764,15 +1764,6 @@ static int test_early_data_read_write(void)
         goto end;
     }
 
-    /*
-     * We expect SSL_accept() to initially block as it handles the end of early
-     * data alert
-     */
-    if (SSL_accept(serverssl) > 0) {
-        printf("Unexpected success completing server handshake\n");
-        goto end;
-    }
-
     if (SSL_accept(serverssl) <= 0) {
         printf("Unable to complete server handshake\n");
         goto end;

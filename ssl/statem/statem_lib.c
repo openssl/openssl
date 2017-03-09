@@ -986,7 +986,6 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
             s->d1->next_handshake_write_seq = 0;
             dtls1_clear_received_buffer(s);
         }
-        s->early_data_state = SSL_EARLY_DATA_NONE;
     }
 
     /*
