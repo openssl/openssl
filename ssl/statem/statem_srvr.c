@@ -1534,6 +1534,14 @@ static int tls_early_post_process_client_hello(SSL *s, int *al)
         goto err;
     }
 
+    /* TLSv1.3 defines that a ClientHello must end on a record boundary */
+    if (SSL_IS_TLS13(s) && RECORD_LAYER_processed_read_pending(&s->rlayer)) {
+        *al = SSL_AD_UNEXPECTED_MESSAGE;
+        SSLerr(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO,
+               SSL_R_NOT_ON_RECORD_BOUNDARY);
+        goto err;
+    }
+
     if (SSL_IS_DTLS(s)) {
         /* Empty cookie was already handled above by returning early. */
         if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
