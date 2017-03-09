@@ -435,7 +435,8 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CR_FINISHED:
-        if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY)
+        if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY
+                || s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING)
             st->hand_state = TLS_ST_PENDING_EARLY_DATA_END;
         else
             st->hand_state = (s->s3->tmp.cert_req != 0) ? TLS_ST_CW_CERT
@@ -443,6 +444,13 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_PENDING_EARLY_DATA_END:
+        if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED) {
+            st->hand_state = TLS_ST_CW_END_OF_EARLY_DATA;
+            return WRITE_TRAN_CONTINUE;
+        }
+        /* Fall through */
+
+    case TLS_ST_CW_END_OF_EARLY_DATA:
         st->hand_state = (s->s3->tmp.cert_req != 0) ? TLS_ST_CW_CERT
                                                     : TLS_ST_CW_FINISHED;
         return WRITE_TRAN_CONTINUE;
@@ -666,8 +674,18 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
         }
         break;
 
-    case TLS_ST_EARLY_DATA:
     case TLS_ST_PENDING_EARLY_DATA_END:
+        /*
+         * If we've been called by SSL_do_handshake()/SSL_write(), or we did not
+         * attempt to write early data before calling SSL_read() then we press
+         * on with the handshake. Otherwise we pause here.
+         */
+        if (s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING
+                || s->early_data_state == SSL_EARLY_DATA_NONE)
+            return WORK_FINISHED_CONTINUE;
+        /* Fall through */
+
+    case TLS_ST_EARLY_DATA:
     case TLS_ST_OK:
         return tls_finish_handshake(s, wst, 1);
     }
@@ -710,6 +728,15 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
                         SSL3_CC_EARLY | SSL3_CHANGE_CIPHER_CLIENT_WRITE))
                 return WORK_ERROR;
         }
+        break;
+
+    case TLS_ST_CW_END_OF_EARLY_DATA:
+        /*
+         * We set the enc_write_ctx back to NULL because we may end up writing
+         * in cleartext again if we get a HelloRetryRequest from the server.
+         */
+        EVP_CIPHER_CTX_free(s->enc_write_ctx);
+        s->enc_write_ctx = NULL;
         break;
 
     case TLS_ST_CW_KEY_EXCH:
@@ -811,6 +838,16 @@ int ossl_statem_client_construct_message(SSL *s, WPACKET *pkt,
     case TLS_ST_CW_CLNT_HELLO:
         *confunc = tls_construct_client_hello;
         *mt = SSL3_MT_CLIENT_HELLO;
+        break;
+
+    case TLS_ST_CW_END_OF_EARLY_DATA:
+        *confunc = tls_construct_end_of_early_data;
+        *mt = SSL3_MT_END_OF_EARLY_DATA;
+        break;
+
+    case TLS_ST_PENDING_EARLY_DATA_END:
+        *confunc = NULL;
+        *mt = SSL3_MT_DUMMY;
         break;
 
     case TLS_ST_CW_CERT:
@@ -3541,5 +3578,18 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, WPACKET *pkt)
         }
     }
 
+    return 1;
+}
+
+int tls_construct_end_of_early_data(SSL *s, WPACKET *pkt)
+{
+    if (s->early_data_state != SSL_EARLY_DATA_WRITE_RETRY
+            && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_END_OF_EARLY_DATA,
+               ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+
+    s->early_data_state = SSL_EARLY_DATA_FINISHED_WRITING;
     return 1;
 }

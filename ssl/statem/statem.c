@@ -180,13 +180,29 @@ void ossl_statem_check_finish_init(SSL *s, int send)
 {
     if (send == -1) {
         if (s->statem.hand_state == TLS_ST_PENDING_EARLY_DATA_END
-                || s->statem.hand_state == TLS_ST_EARLY_DATA)
+                || s->statem.hand_state == TLS_ST_EARLY_DATA) {
             ossl_statem_set_in_init(s, 1);
+            if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
+                /*
+                 * SSL_connect() or SSL_do_handshake() has been called directly.
+                 * We don't allow any more writing of early data.
+                 */
+                s->early_data_state = SSL_EARLY_DATA_FINISHED_WRITING;
+            }
+        }
     } else if (!s->server) {
-        if ((send && s->statem.hand_state == TLS_ST_PENDING_EARLY_DATA_END
+        if ((send && (s->statem.hand_state == TLS_ST_PENDING_EARLY_DATA_END
+                      || s->statem.hand_state == TLS_ST_EARLY_DATA)
                   && s->early_data_state != SSL_EARLY_DATA_WRITING)
-                || (!send && s->statem.hand_state == TLS_ST_EARLY_DATA))
+                || (!send && s->statem.hand_state == TLS_ST_EARLY_DATA)) {
             ossl_statem_set_in_init(s, 1);
+            /*
+             * SSL_write() has been called directly. We don't allow any more
+             * writing of early data.
+             */
+            if (send && s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY)
+                s->early_data_state = SSL_EARLY_DATA_FINISHED_WRITING;
+        }
     } else {
         if (s->early_data_state == SSL_EARLY_DATA_FINISHED_READING
                 && s->statem.hand_state == TLS_ST_EARLY_DATA)

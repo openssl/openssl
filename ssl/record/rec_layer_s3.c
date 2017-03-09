@@ -904,7 +904,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         SSL3_RECORD_set_length(thiswr, len);
     }
 
-    if (s->early_data_state == SSL_EARLY_DATA_WRITING) {
+    if (s->early_data_state == SSL_EARLY_DATA_WRITING
+            || s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
         /*
          * We haven't actually negotiated the version yet, but we're trying to
          * send early data - so we need to use the the tls13enc function.
@@ -1367,17 +1368,16 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 n = SSL3_RECORD_get_length(rr); /* available bytes */
 
             /* now move 'n' bytes: */
-            while (n-- > 0) {
-                dest[(*dest_len)++] =
-                    SSL3_RECORD_get_data(rr)[SSL3_RECORD_get_off(rr)];
-                SSL3_RECORD_add_off(rr, 1);
-                SSL3_RECORD_add_length(rr, -1);
-            }
-
-            if (*dest_len < dest_maxlen) {
+            memcpy(dest + *dest_len,
+                   SSL3_RECORD_get_data(rr) + SSL3_RECORD_get_off(rr), n);
+            SSL3_RECORD_add_off(rr, n);
+            SSL3_RECORD_add_length(rr, -n);
+            *dest_len += n;
+            if (SSL3_RECORD_get_length(rr) == 0)
                 SSL3_RECORD_set_read(rr);
+
+            if (*dest_len < dest_maxlen)
                 goto start;     /* fragment was too small */
-            }
         }
     }
 
@@ -1454,14 +1454,6 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 al = SSL_AD_HANDSHAKE_FAILURE;
                 SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_NO_RENEGOTIATION);
                 goto f_err;
-            } else if (alert_descr == SSL_AD_END_OF_EARLY_DATA) {
-                if (!ssl_end_of_early_data_seen(s)) {
-                    al = SSL_AD_UNEXPECTED_MESSAGE;
-                    SSLerr(SSL_F_SSL3_READ_BYTES,
-                           SSL_R_UNEXPECTED_END_OF_EARLY_DATA);
-                    goto f_err;
-                }
-                return 0;
             }
         } else if (alert_level == SSL3_AL_FATAL) {
             char tmp[16];
@@ -1504,19 +1496,6 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      */
     if ((s->rlayer.handshake_fragment_len >= 4)
             && !ossl_statem_get_in_handshake(s)) {
-        /*
-         * To get here we must be trying to read app data but found handshake
-         * data. But if we're trying to read app data, and we're not in init
-         * (which is tested for at the top of this function) then init must be
-         * finished
-         */
-        assert(SSL_is_init_finished(s));
-        if (!SSL_is_init_finished(s)) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_SSL3_READ_BYTES, ERR_R_INTERNAL_ERROR);
-            goto f_err;
-        }
-
         /* We found handshake data, so we're going back into init */
         ossl_statem_set_in_init(s, 1);
 

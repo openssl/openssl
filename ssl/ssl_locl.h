@@ -350,7 +350,8 @@
                           && (s)->method->version != TLS_ANY_VERSION)
 
 # define SSL_TREAT_AS_TLS13(s) \
-    (SSL_IS_TLS13(s) || (s)->early_data_state == SSL_EARLY_DATA_WRITING)
+    (SSL_IS_TLS13(s) || (s)->early_data_state == SSL_EARLY_DATA_WRITING \
+     || (s)->early_data_state == SSL_EARLY_DATA_WRITE_RETRY)
 
 # define SSL_IS_FIRST_HANDSHAKE(S) ((s)->s3->tmp.finish_md_len == 0)
 
@@ -2030,7 +2031,6 @@ static ossl_inline int ssl_has_cert(const SSL *s, int idx)
 
 # ifndef OPENSSL_UNIT_TEST
 
-int ssl_end_of_early_data_seen(SSL *s);
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
 __owur int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written);
 void ssl_clear_cipher_ctx(SSL *s);
