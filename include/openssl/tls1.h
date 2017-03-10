@@ -106,6 +106,7 @@ extern "C" {
 /* TLSv1.3 alerts */
 # define TLS13_AD_END_OF_EARLY_DATA      1
 # define TLS13_AD_MISSING_EXTENSION      109 /* fatal */
+# define TLS13_AD_CERTIFICATE_REQUIRED   116 /* fatal */
 /* codes 110-114 are from RFC3546 */
 # define TLS1_AD_UNSUPPORTED_EXTENSION   110
 # define TLS1_AD_CERTIFICATE_UNOBTAINABLE 111
