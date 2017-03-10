@@ -591,6 +591,8 @@ int ssl3_alert_code(int code)
         return (TLS1_AD_INAPPROPRIATE_FALLBACK);
     case SSL_AD_NO_APPLICATION_PROTOCOL:
         return (TLS1_AD_NO_APPLICATION_PROTOCOL);
+    case SSL_AD_CERTIFICATE_REQUIRED:
+        return SSL_AD_HANDSHAKE_FAILURE;
     default:
         return (-1);
     }
