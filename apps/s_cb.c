@@ -527,6 +527,7 @@ static STRINT_PAIR handshakes[] = {
     {", ServerHello", 2},
     {", HelloVerifyRequest", 3},
     {", NewSessionTicket", 4},
+    {", HelloRetryRequest", 6},
     {", EncryptedExtensions", 8},
     {", Certificate", 11},
     {", ServerKeyExchange", 12},
