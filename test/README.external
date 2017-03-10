@@ -1,12 +1,16 @@
-Running the BoringSSL test suite with OpenSSL
-=============================================
+Running external test suites with OpenSSL
+=========================================
 
-It is possible to integrate external test suites into OpenSSL's "make test". At
-the current time the only supported external suite is the one used by
-BoringSSL.
-
+It is possible to integrate external test suites into OpenSSL's "make test".
 This capability is considered a developer option and may not work on all
 platforms.
+
+At the current time the only supported external suite is the one used by
+BoringSSL.
+
+
+The BoringSSL test suite
+========================
 
 In order to run the BoringSSL tests with OpenSSL, first checkout the BoringSSL
 source code into an appropriate directory:
@@ -40,11 +44,11 @@ To see more detailed output you can run just the BoringSSL tests with the
 verbose option:
 
 $ VERBOSE=1 BORING_RUNNER_DIR=/path/to/boringssl/ssl/test/runner make \
-  TESTS="test_external" test
+  TESTS="test_external_boringssl" test
 
 
 Test failures and suppressions
-==============================
+------------------------------
 
 A large number of the BoringSSL tests are known to fail. A test could fail
 because of many possible reasons. For example:
