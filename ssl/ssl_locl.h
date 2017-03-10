@@ -1808,6 +1808,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_cookie,
     TLSEXT_IDX_cryptopro_bug,
     TLSEXT_IDX_early_data,
+    TLSEXT_IDX_certificate_authorities,
     TLSEXT_IDX_padding,
     TLSEXT_IDX_psk
 } TLSEXT_INDEX;

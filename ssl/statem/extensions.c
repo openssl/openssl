@@ -30,6 +30,13 @@ static int init_npn(SSL *s, unsigned int context);
 static int init_alpn(SSL *s, unsigned int context);
 static int final_alpn(SSL *s, unsigned int context, int sent, int *al);
 static int init_sig_algs(SSL *s, unsigned int context);
+static int init_certificate_authorities(SSL *s, unsigned int context);
+static int tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
+                                                 unsigned int context, X509 *x,
+                                                 size_t chainidx, int *al);
+static int tls_parse_certificate_authorities(SSL *s, PACKET *pkt,
+                                             unsigned int context, X509 *x,
+                                             size_t chainidx, int *al);
 #ifndef OPENSSL_NO_SRP
 static int init_srp(SSL *s, unsigned int context);
 #endif
@@ -287,6 +294,14 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL, tls_parse_ctos_early_data, tls_parse_stoc_early_data,
         tls_construct_stoc_early_data, tls_construct_ctos_early_data,
         final_early_data
+    },
+    {
+        TLSEXT_TYPE_certificate_authorities,
+        EXT_CLIENT_HELLO | EXT_TLS1_3_CERTIFICATE_REQUEST | EXT_TLS1_3_ONLY,
+        init_certificate_authorities,
+        tls_parse_certificate_authorities, tls_parse_certificate_authorities,
+        tls_construct_certificate_authorities,
+        tls_construct_certificate_authorities, NULL,
     },
     {
         /* Must be immediately before pre_shared_key */
@@ -963,6 +978,47 @@ static int final_ems(SSL *s, unsigned int context, int sent, int *al)
         }
     }
 
+    return 1;
+}
+
+static int init_certificate_authorities(SSL *s, unsigned int context)
+{
+    sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
+    s->s3->tmp.ca_names = NULL;
+    return 1;
+}
+
+static int tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
+                                                 unsigned int context, X509 *x,
+                                                 size_t chainidx, int *al)
+{
+    STACK_OF(X509_NAME) *ca_sk = SSL_get_client_CA_list(s);
+
+    if (ca_sk == NULL || sk_X509_NAME_num(ca_sk) == 0)
+        return 1;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_certificate_authorities)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !construct_ca_names(s, pkt)
+        || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_AUTHORITIES,
+               ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+static int tls_parse_certificate_authorities(SSL *s, PACKET *pkt,
+                                             unsigned int context, X509 *x,
+                                             size_t chainidx, int *al)
+{
+    if (!parse_ca_names(s, pkt, al))
+        return 0;
+    if (PACKET_remaining(pkt) != 0) {
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
     return 1;
 }
 
