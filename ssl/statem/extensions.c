@@ -447,10 +447,14 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
         }
         /*
          * Verify this extension is allowed. We only check duplicates for
-         * extensions that we recognise.
+         * extensions that we recognise. We also have a special case for the
+         * PSK extension, which must be the last one in the ClientHello.
          */
         if (!verify_extension(s, context, type, exts, raw_extensions, &thisex)
-                || (thisex != NULL && thisex->present == 1)) {
+                || (thisex != NULL && thisex->present == 1)
+                || (type == TLSEXT_TYPE_psk
+                    && (context & EXT_CLIENT_HELLO) != 0
+                    && PACKET_remaining(&extensions) != 0)) {
             SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, SSL_R_BAD_EXTENSION);
             *al = SSL_AD_ILLEGAL_PARAMETER;
             goto err;
