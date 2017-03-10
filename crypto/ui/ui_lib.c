@@ -724,9 +724,9 @@ const char *UI_get0_output_string(UI_STRING *uis)
 const char *UI_get0_action_string(UI_STRING *uis)
 {
     switch (uis->type) {
-    case UIT_PROMPT:
     case UIT_BOOLEAN:
         return uis->_.boolean_data.action_desc;
+    case UIT_PROMPT:
     case UIT_NONE:
     case UIT_VERIFY:
     case UIT_INFO:
