@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-UI, UI_METHOD,
+UI,
 UI_new, UI_new_method, UI_free, UI_add_input_string, UI_dup_input_string,
 UI_add_verify_string, UI_dup_verify_string, UI_add_input_boolean,
 UI_dup_input_boolean, UI_add_info_string, UI_dup_info_string,
@@ -16,7 +16,6 @@ UI_set_method, UI_OpenSSL, - user interface
  #include <openssl/ui.h>
 
  typedef struct ui_st UI;
- typedef struct ui_method_st UI_METHOD;
 
  UI *UI_new(void);
  UI *UI_new_method(const UI_METHOD *method);
@@ -64,7 +63,7 @@ UI_set_method, UI_OpenSSL, - user interface
 
 UI stands for User Interface, and is general purpose set of routines to
 prompt the user for text-based information.  Through user-written methods
-(see L<ui_create(3)>), prompting can be done in any way
+(see L<UI_create_method(3)>), prompting can be done in any way
 imaginable, be it plain text prompting, through dialog boxes or from a
 cell phone.
 
@@ -158,7 +157,8 @@ UI_get0_result() returns a pointer to the result buffer associated with
 the information indexed by I<i>.
 
 UI_process() goes through the information given so far, does all the printing
-and prompting and returns.
+and prompting and returns the final status, which is -2 on out-of-band events
+(Interrupt, Cancel, ...), -1 on error and 0 on success.
 
 UI_ctrl() adds extra control for the application author.  For now, it
 understands two commands: B<UI_CTRL_PRINT_ERRORS>, which makes UI_process()
@@ -173,6 +173,9 @@ UI_get_default_method() returns a pointer to the current default UI method.
 UI_get_method() returns the UI method associated with a given UI.
 
 UI_set_method() changes the UI method associated with a given UI.
+
+UI_OpenSSL() is the default OpenSSL UI method for prompting
+passphrases on the command line.
 
 =head1 COPYRIGHT
 
