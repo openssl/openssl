@@ -3280,7 +3280,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
                  (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
             SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE,
                    SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
-            al = SSL_AD_HANDSHAKE_FAILURE;
+            al = SSL_AD_CERTIFICATE_REQUIRED;
             goto f_err;
         }
         /* No client certificate so digest cached records */
