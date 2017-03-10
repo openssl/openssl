@@ -184,6 +184,7 @@ extern "C" {
 # define TLSEXT_TYPE_supported_versions          43
 # define TLSEXT_TYPE_cookie                      44
 # define TLSEXT_TYPE_psk_kex_modes               45
+# define TLSEXT_TYPE_certificate_authorities     47
 
 /* Temporary extension type */
 # define TLSEXT_TYPE_renegotiate                 0xff01
