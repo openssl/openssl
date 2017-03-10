@@ -3170,10 +3170,11 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     p = sdec;
 
     sess = d2i_SSL_SESSION(NULL, &p, slen);
+    slen -= p - sdec;
     OPENSSL_free(sdec);
     if (sess) {
         /* Some additional consistency checks */
-        if (p != sdec + slen || sess->session_id_length != 0) {
+        if (slen != 0 || sess->session_id_length != 0) {
             SSL_SESSION_free(sess);
             return 2;
         }
