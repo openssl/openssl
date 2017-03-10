@@ -2351,7 +2351,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
         }
 
         if (!PACKET_get_length_prefixed_2(pkt, &extensions)) {
-                SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, SSL_R_BAD_LENGTH);
+                SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, SSL_R_BAD_LENGTH);
                 goto err;
         }
         if (!tls_collect_extensions(s, &extensions,
