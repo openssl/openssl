@@ -915,7 +915,14 @@
  -xxx           Removes 'xxx' from the current set of tests.  If this is the
                 first token in the list, the current set of tests is first
                 assigned the whole set of available tests, effectively making
-                this token equivalent to TESTS="alltests -xxx"
+                this token equivalent to TESTS="alltests -xxx".
+ nn             Adds the test group 'nn' (which is a number) to the current
+                set of tests.
+ -nn            Removes the test group 'nn' from the current set of tests.
+                If this is the first token in the list, the current set of
+                tests is first assigned the whole set of available tests,
+                effectively making this token equivalent to
+                TESTS="alltests -xxx".
 
  Also, all tokens except for "alltests" may have wildcards, such as *.
  (on Unix and Windows, BSD style wildcards are supported, while on VMS,
@@ -933,6 +940,18 @@
  starting with "test_ssl_":
 
  $ make TESTS='test_ssl* -test_ssl_*' test
+
+ Example: Only test group 10:
+
+ $ make TESTS='10'
+
+ Example: All tests except the slow group (group 99):
+
+ $ make TESTS='-99'
+
+ Example: All tests in test groups 80 to 99 except for tests in group 90:
+
+ $ make TESTS='[89]? -90'
 
  Note on multi-threading
  -----------------------
