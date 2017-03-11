@@ -1,8 +1,13 @@
 =pod
 
-=head1 NAMES
+=head1 NAME
 
-UI_STRING, UI_string_types,
+UI_STRING, UI_string_types, UI_get_string_type,
+UI_get_input_flags, UI_get0_output_string,
+UI_get0_action_string, UI_get0_result_string,
+UI_get0_test_string, UI_get_result_minsize,
+UI_get_result_maxsize, UI_set_result
+- User interface string parsing
 
 =head1 SYNOPSIS
 
