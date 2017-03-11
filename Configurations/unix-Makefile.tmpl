@@ -289,7 +289,7 @@ clean: libclean
 	-$(RM) `find . -name '*{- $depext -}' -a \! -path "./.git/*"`
 	-$(RM) `find . -name '*{- $objext -}' -a \! -path "./.git/*"`
 	$(RM) core
-	$(RM) tags TAGS
+	$(RM) tags TAGS doc-nits
 	$(RM) test/.rnd
 	$(RM) openssl.pc libcrypto.pc libssl.pc
 	-$(RM) `find . -type l -a \! -path "./.git/*"`
@@ -597,7 +597,7 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects \
 
 doc-nits:
 	(cd $(SRCDIR); $(PERL) util/find-doc-nits.pl -n ) >doc-nits
-	if [ -s doc-nits ] ; then cat doc-nits; exit 1; fi
+	if [ -s doc-nits ] ; then cat doc-nits; rm doc-nits ; exit 1; fi
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)

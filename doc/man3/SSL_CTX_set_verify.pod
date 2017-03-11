@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+SSL_get_ex_data_X509_STORE_CTX_idx,
 SSL_CTX_set_verify, SSL_set_verify,
 SSL_CTX_set_verify_depth, SSL_set_verify_depth,
 SSL_verify_cb
@@ -13,8 +14,11 @@ SSL_verify_cb
 
  void SSL_CTX_set_verify(SSL_CTX *ctx, int mode, SSL_verify_cb verify_callback);
  void SSL_set_verify(SSL *s, int mode, SSL_verify_cb verify_callback);
+ SSL_get_ex_data_X509_STORE_CTX_idx(void);
+
  void SSL_CTX_set_verify_depth(SSL_CTX *ctx, int depth);
  void SSL_set_verify_depth(SSL *s, int depth);
+
 
  typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 
@@ -30,7 +34,9 @@ shall be specified, the NULL pointer can be used for B<verify_callback>. In
 this case last B<verify_callback> set specifically for this B<ssl> remains. If
 no special B<callback> was set before, the default callback for the underlying
 B<ctx> is used, that was valid at the time B<ssl> was created with
-L<SSL_new(3)>.
+L<SSL_new(3)>. Within the callback function,
+B<SSL_get_ex_data_X509_STORE_CTX_idx> can be called to get the data index
+of the current SSL object that is doing the verification.
 
 SSL_CTX_set_verify_depth() sets the maximum B<depth> for the certificate chain
 verification that shall be allowed for B<ctx>. (See the BUGS section.)
@@ -171,7 +177,7 @@ certificates.
 
 The example makes use of the ex_data technique to store application data
 into/retrieve application data from the SSL structure
-(see L<SSL_get_ex_new_index(3)>,
+(see L<CRYPTO_get_ex_new_index(3)>,
 L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
 
  ...
@@ -284,11 +290,11 @@ L<SSL_CTX_load_verify_locations(3)>,
 L<SSL_get_peer_certificate(3)>,
 L<SSL_CTX_set_cert_verify_callback(3)>,
 L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>,
-L<SSL_get_ex_new_index(3)>
+L<CRYPTO_get_ex_new_index(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

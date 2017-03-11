@@ -105,10 +105,6 @@ BN_BLINDING_get_flags() returns the currently set B<BN_BLINDING> flags
 BN_BLINDING_create_param() returns the newly created B<BN_BLINDING>
 parameters or NULL on error.
 
-=head1 SEE ALSO
-
-L<bn(7)>
-
 =head1 HISTORY
 
 BN_BLINDING_thread_id() was first introduced in OpenSSL 1.0.0, and it
@@ -116,7 +112,7 @@ deprecates BN_BLINDING_set_thread_id() and BN_BLINDING_get_thread_id().
 
 =head1 COPYRIGHT
 
-Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2005-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
