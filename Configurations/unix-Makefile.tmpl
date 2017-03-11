@@ -596,7 +596,7 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1
 
 doc-nits:
-	(cd $(SRCDIR); $(PERL) util/find-doc-nits.pl -n ) >doc-nits
+	(cd $(SRCDIR); $(PERL) util/find-doc-nits -n ) >doc-nits
 	if [ -s doc-nits ] ; then cat doc-nits; rm doc-nits ; exit 1; fi
 
 # Test coverage is a good idea for the future
