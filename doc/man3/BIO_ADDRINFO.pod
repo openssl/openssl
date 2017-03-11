@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+BIO_lookup_type,
 BIO_ADDRINFO, BIO_ADDRINFO_next, BIO_ADDRINFO_free,
 BIO_ADDRINFO_family, BIO_ADDRINFO_socktype, BIO_ADDRINFO_protocol,
 BIO_ADDRINFO_address,
