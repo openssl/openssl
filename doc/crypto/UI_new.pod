@@ -9,7 +9,7 @@ UI_dup_input_boolean, UI_add_info_string, UI_dup_info_string,
 UI_add_error_string, UI_dup_error_string, UI_construct_prompt,
 UI_add_user_data, UI_get0_user_data, UI_get0_result, UI_process,
 UI_ctrl, UI_set_default_method, UI_get_default_method, UI_get_method,
-UI_set_method, UI_OpenSSL, - user interface
+UI_set_method, UI_OpenSSL, UI_null - user interface
 
 =head1 SYNOPSIS
 
@@ -58,6 +58,7 @@ UI_set_method, UI_OpenSSL, - user interface
  const UI_METHOD *UI_set_method(UI *ui, const UI_METHOD *meth);
 
  UI_METHOD *UI_OpenSSL(void);
+ const UI_METHOD *UI_null(void);
 
 =head1 DESCRIPTION
 
@@ -177,9 +178,12 @@ UI_set_method() changes the UI method associated with a given UI.
 UI_OpenSSL() is the default OpenSSL UI method for prompting
 passphrases on the command line.
 
+UI_null() is a UI method that does nothing.  Its use is to avoid
+getting internal defaults for passed UI_METHOD pointers.
+
 =head1 COPYRIGHT
 
-Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
