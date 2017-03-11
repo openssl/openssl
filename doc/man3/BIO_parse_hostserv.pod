@@ -2,8 +2,9 @@
 
 =head1 NAME
 
-BIO_parse_hostserv - utility routines to parse a standard host and service
-string
+BIO_hostserv_priorities,
+BIO_parse_hostserv
+- utility routines to parse a standard host and service string
 
 =head1 SYNOPSIS
 
