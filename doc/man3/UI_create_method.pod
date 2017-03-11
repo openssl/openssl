@@ -85,27 +85,12 @@ by closing the channel to the tty, maybe by destroying a dialog box.
 
 =back
 
-All of these functions are expected to return one of these values:
-
-=over 4
-
-=item 0
-
-on error.
-
-=item 1
-
-on success.
-
-=item -1
-
-on out-off-band events, for example if some prompting has been
-cancelled (by pressing Ctrl-C, for example).
-This is only expected to be returned by the flusher or the reader.
+All of these functions are expected to return 0 on error, 1 on
+success, or -1 on out-off-band events, for example if some prompting
+has been cancelled (by pressing Ctrl-C, for example).
+Only the flusher or the reader are expected to return -1.
 If returned by another of the functions, it's treated as if 0 was
 returned.
-
-=back
 
 Regarding the writer and the reader, don't assume the former should
 only write and don't assume the latter should only read.
