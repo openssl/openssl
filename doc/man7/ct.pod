@@ -32,9 +32,9 @@ L<CTLOG_STORE_new(3)>,
 L<CTLOG_STORE_get0_log_by_id(3)>,
 L<SCT_new(3)>,
 L<SCT_print(3)>,
-L<SCT_verify(3)>,
 L<SCT_validate(3)>,
-L<CT_POLICY_EVAL_CTX(3)>,
+L<SCT_validate(3)>,
+L<CT_POLICY_EVAL_CTX_new(3)>,
 L<SSL_CTX_set_ct_validation_callback(3)>
 
 =head1 HISTORY
@@ -43,7 +43,7 @@ This library was added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

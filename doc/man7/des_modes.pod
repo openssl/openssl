@@ -246,12 +246,11 @@ it to:
 
 =head1 SEE ALSO
 
-L<BF_encrypt(3)>, L<DES_crypt(3)>, L<IDEA(3)>,
-L<RC2(3)>
+L<BF_encrypt(3)>, L<DES_crypt(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -51,7 +51,7 @@ All functions described here return 1 for success and 0 for failure.
 
 =head1 SEE ALSO
 
-L<EVP_SHA1(3)>
+L<EVP_sha1(3)>
 
 =head1 COPYRIGHT
 
