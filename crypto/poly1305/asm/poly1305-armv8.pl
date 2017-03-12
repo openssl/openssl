@@ -100,7 +100,11 @@ poly1305_init:
 	csel	$d0,$d0,$r0,eq
 	csel	$d1,$d1,$r1,eq
 
+#ifdef	__ILP32__
+	stp	w12,w13,[$len]
+#else
 	stp	$d0,$d1,[$len]
+#endif
 
 	mov	x0,#1
 .Lno_key:
