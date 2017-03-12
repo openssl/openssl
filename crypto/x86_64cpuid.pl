@@ -68,19 +68,9 @@ OPENSSL_ia32_cpuid:
 .cfi_register	%rbx,%r8
 
 	xor	%eax,%eax
-	mov	%eax,8(%rdi)		# clear 3rd word
+	mov	%eax,8(%rdi)		# clear extended feature flags
 	cpuid
 	mov	%eax,%r11d		# max value for standard query level
-
-	cmp	\$7,%eax
-	jb	.Lno_extended_info
-
-	mov	\$7,%eax
-	xor	%ecx,%ecx
-	cpuid
-	mov	%ebx,8(%rdi)
-
-.Lno_extended_info:
 
 	xor	%eax,%eax
 	cmp	\$0x756e6547,%ebx	# "Genu"
@@ -175,6 +165,15 @@ OPENSSL_ia32_cpuid:
 	or	%ecx,%r9d		# merge AMD XOP flag
 
 	mov	%edx,%r10d		# %r9d:%r10d is copy of %ecx:%edx
+
+	cmp	\$7,%r11d
+	jb	.Lno_extended_info
+	mov	\$7,%eax
+	xor	%ecx,%ecx
+	cpuid
+	mov	%ebx,8(%rdi)		# save extended feature flags
+.Lno_extended_info:
+
 	bt	\$27,%r9d		# check OSXSAVE bit
 	jnc	.Lclear_avx
 	xor	%ecx,%ecx		# XCR0
