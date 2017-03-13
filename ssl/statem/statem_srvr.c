@@ -2499,6 +2499,8 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
 
 int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
 {
+    int al = SSL_AD_INTERNAL_ERROR;
+
     if (SSL_IS_TLS13(s)) {
         /* TODO(TLS1.3) for now send empty request context */
         if (!WPACKET_put_bytes_u8(pkt, 0)) {
@@ -2506,14 +2508,21 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
                    ERR_R_INTERNAL_ERROR);
             goto err;
         }
-    } else {
-        /* get the list of acceptable cert types */
-        if (!WPACKET_start_sub_packet_u8(pkt)
-            || !ssl3_get_req_cert_type(s, pkt) || !WPACKET_close(pkt)) {
+
+        if (!tls_construct_extensions(s, pkt, EXT_TLS1_3_CERTIFICATE_REQUEST,
+                                      NULL, 0, &al)) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST,
                    ERR_R_INTERNAL_ERROR);
             goto err;
         }
+        goto done;
+    }
+
+    /* get the list of acceptable cert types */
+    if (!WPACKET_start_sub_packet_u8(pkt)
+        || !ssl3_get_req_cert_type(s, pkt) || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
+        goto err;
     }
 
     if (SSL_USE_SIGALGS(s)) {
@@ -2535,20 +2544,11 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    /*
-     * TODO(TLS1.3) implement configurable certificate_extensions
-     * For now just send zero length extensions.
-     */
-    if (SSL_IS_TLS13(s) && !WPACKET_put_bytes_u16(pkt, 0)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
+ done:
     s->s3->tmp.cert_request = 1;
-
     return 1;
  err:
-    ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
     return 0;
 }
 
