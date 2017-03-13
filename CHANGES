@@ -6,6 +6,10 @@
 
   *)
 
+  *) Have 'config' recognise 64-bit mingw and choose 'mingw64' as the target
+     platform rather than 'mingw'.
+     [Richard Levitte]
+
   *) Remove the VMS-specific reimplementation of gmtime from crypto/o_times.c.
      VMS C's RTL has a fully up to date gmtime() and gmtime_r() since V7.1,
      which is the minimum version we support.
