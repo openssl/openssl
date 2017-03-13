@@ -53,6 +53,7 @@
 #define EXT_TLS1_3_HELLO_RETRY_REQUEST      0x0400
 #define EXT_TLS1_3_CERTIFICATE              0x0800
 #define EXT_TLS1_3_NEW_SESSION_TICKET       0x1000
+#define EXT_TLS1_3_CERTIFICATE_REQUEST      0x2000
 
 /* Dummy message type */
 #define SSL3_MT_DUMMY   -1
