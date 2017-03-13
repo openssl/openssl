@@ -992,6 +992,29 @@ static int ssl_print_server_hello(BIO *bio, int indent,
     return 1;
 }
 
+static int ssl_print_hello_retry_request(BIO *bio, int indent,
+                                         const unsigned char *msg,
+                                         size_t msglen)
+{
+    unsigned int cs;
+
+    if (!ssl_print_version(bio, indent, "server_version", &msg, &msglen, NULL))
+        return 0;
+
+    cs = (msg[0] << 8) | msg[1];
+    BIO_indent(bio, indent, 80);
+    BIO_printf(bio, "cipher_suite {0x%02X, 0x%02X} %s\n",
+               msg[0], msg[1], ssl_trace_str(cs, ssl_ciphers_tbl));
+    msg += 2;
+    msglen -= 2;
+
+    if (!ssl_print_extensions(bio, indent, 1, SSL3_MT_HELLO_RETRY_REQUEST, &msg,
+                              &msglen))
+        return 0;
+
+    return 1;
+}
+
 static int ssl_get_keyex(const char **pname, SSL *ssl)
 {
     unsigned long alg_k = ssl->s3->tmp.new_cipher->algorithm_mkey;
@@ -1422,11 +1445,7 @@ static int ssl_print_handshake(BIO *bio, SSL *ssl, int server,
         break;
 
     case SSL3_MT_HELLO_RETRY_REQUEST:
-        if (!ssl_print_version(bio, indent + 2, "server_version", &msg, &msglen,
-                               NULL)
-                || !ssl_print_extensions(bio, indent + 2, 1,
-                                         SSL3_MT_HELLO_RETRY_REQUEST, &msg,
-                                         &msglen))
+        if (!ssl_print_hello_retry_request(bio, indent + 2, msg, msglen))
             return 0;
         break;
 

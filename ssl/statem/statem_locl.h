@@ -79,7 +79,7 @@ typedef int (*confunc_f) (SSL *s, WPACKET *pkt);
 
 int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
                   size_t num_groups, int checkallow);
-
+int create_synthetic_message_hash(SSL *s);
 /*
  * TLS/DTLS client state machine functions
  */

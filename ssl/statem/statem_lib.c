@@ -1149,8 +1149,13 @@ int tls_get_message_body(SSL *s, size_t *len)
             s->msg_callback(0, SSL2_VERSION, 0, s->init_buf->data,
                             (size_t)s->init_num, s, s->msg_callback_arg);
     } else {
-        if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                             s->init_num + SSL3_HM_HEADER_LENGTH)) {
+        /*
+         * We defer feeding in the HRR until later. We'll do it as part of
+         * processing the message
+         */
+        if (s->s3->tmp.message_type != SSL3_MT_HELLO_RETRY_REQUEST
+                && !ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+                                    s->init_num + SSL3_HM_HEADER_LENGTH)) {
             SSLerr(SSL_F_TLS_GET_MESSAGE_BODY, ERR_R_EVP_LIB);
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
             *len = 0;
@@ -1870,3 +1875,37 @@ int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
     return i < num_groups;
 }
 #endif
+
+/* Replace ClientHello1 in the transcript hash with a synthetic message */
+int create_synthetic_message_hash(SSL *s)
+{
+    unsigned char hashval[EVP_MAX_MD_SIZE];
+    size_t hashlen = 0;
+    unsigned char msghdr[SSL3_HM_HEADER_LENGTH] = {
+        SSL3_MT_MESSAGE_HASH,
+        0,
+        0,
+        0
+    };
+
+    /* Get the hash of the initial ClientHello */
+    if (!ssl3_digest_cached_records(s, 0)
+            || !ssl_handshake_hash(s, hashval, sizeof(hashval), &hashlen)) {
+        SSLerr(SSL_F_CREATE_SYNTHETIC_MESSAGE_HASH, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* Reinitialise the transcript hash */
+    if (!ssl3_init_finished_mac(s))
+        return 0;
+
+    /* Inject the synthetic message_hash message */
+    msghdr[SSL3_HM_HEADER_LENGTH - 1] = hashlen;
+    if (!ssl3_finish_mac(s, msghdr, SSL3_HM_HEADER_LENGTH)
+            || !ssl3_finish_mac(s, hashval, hashlen)) {
+        SSLerr(SSL_F_CREATE_SYNTHETIC_MESSAGE_HASH, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
