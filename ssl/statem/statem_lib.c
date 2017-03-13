@@ -2023,8 +2023,8 @@ int parse_ca_names(SSL *s, PACKET *pkt, int *al)
         xn = NULL;
     }
 
-    sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
-    s->s3->tmp.ca_names = ca_sk;
+    sk_X509_NAME_pop_free(s->s3->tmp.peer_ca_names, X509_NAME_free);
+    s->s3->tmp.peer_ca_names = ca_sk;
 
     return 1;
 

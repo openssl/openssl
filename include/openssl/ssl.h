@@ -1718,6 +1718,14 @@ __owur const char *SSL_alert_type_string(int value);
 __owur const char *SSL_alert_desc_string_long(int value);
 __owur const char *SSL_alert_desc_string(int value);
 
+void SSL_set0_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list);
+void SSL_CTX_set0_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list);
+__owur const STACK_OF(X509_NAME) *SSL_get0_CA_list(const SSL *s);
+__owur const STACK_OF(X509_NAME) *SSL_CTX_get0_CA_list(const SSL_CTX *ctx);
+__owur int SSL_add1_CA_list(SSL *ssl, const X509 *x);
+__owur int SSL_CTX_add1_CA_list(SSL_CTX *ctx, const X509 *x);
+__owur const STACK_OF(X509_NAME) *SSL_get0_peer_CA_list(const SSL *s);
+
 void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list);
 void SSL_CTX_set_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list);
 __owur STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s);

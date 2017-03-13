@@ -983,8 +983,8 @@ static int final_ems(SSL *s, unsigned int context, int sent, int *al)
 
 static int init_certificate_authorities(SSL *s, unsigned int context)
 {
-    sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
-    s->s3->tmp.ca_names = NULL;
+    sk_X509_NAME_pop_free(s->s3->tmp.peer_ca_names, X509_NAME_free);
+    s->s3->tmp.peer_ca_names = NULL;
     return 1;
 }
 

@@ -542,7 +542,7 @@ struct ssl_session_st {
     /* This is the cert and type for the other end. */
     X509 *peer;
     int peer_type;
-    /* Certificate chain peer sent */
+    /* Certificate chain peer sent. */
     STACK_OF(X509) *peer_chain;
     /*
      * when app_verify_callback accepts a session where the peer's
@@ -790,8 +790,12 @@ struct ssl_ctx_st {
     /* used if SSL's info_callback is NULL */
     void (*info_callback) (const SSL *ssl, int type, int val);
 
-    /* what we put in client cert requests */
-    STACK_OF(X509_NAME) *client_CA;
+    /*
+     * What we put in certificate_authorities extension for TLS 1.3
+     * (ClientHello and CertificateRequest) or just client cert requests for
+     * earlier versions.
+     */
+    STACK_OF(X509_NAME) *ca_names;
 
     /*
      * Default values to use in SSL structures follow (these are copied by
@@ -1115,7 +1119,7 @@ struct ssl_st {
     /* extra application data */
     CRYPTO_EX_DATA ex_data;
     /* for server side, keep the list of CA_dn we can use */
-    STACK_OF(X509_NAME) *client_CA;
+    STACK_OF(X509_NAME) *ca_names;
     CRYPTO_REF_COUNT references;
     /* protocol behaviour */
     uint32_t options;
@@ -1371,7 +1375,8 @@ typedef struct ssl3_state_st {
         /* Certificate types in certificate request message. */
         uint8_t *ctype;
         size_t ctype_len;
-        STACK_OF(X509_NAME) *ca_names;
+        /* Certificate authorities list peer sent */
+        STACK_OF(X509_NAME) *peer_ca_names;
         size_t key_block_length;
         unsigned char *key_block;
         const EVP_CIPHER *new_sym_enc;
