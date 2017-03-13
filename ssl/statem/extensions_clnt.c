@@ -771,6 +771,14 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
         return 1;
     }
 
+    if (s->hello_retry_request && md != ssl_handshake_md(s)) {
+        /*
+         * Selected ciphersuite hash does not match the hash for the session so
+         * we can't use it.
+         */
+        return 1;
+    }
+
     /*
      * Technically the C standard just says time() returns a time_t and says
      * nothing about the encoding of that type. In practice most implementations
