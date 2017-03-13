@@ -1975,6 +1975,16 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
                        SSL_R_NO_SHARED_CIPHER);
                 goto f_err;
             }
+            if (SSL_IS_TLS13(s) && s->s3->tmp.new_cipher != NULL
+                    && s->s3->tmp.new_cipher->id != cipher->id) {
+                /*
+                 * A previous HRR picked a different ciphersuite to the one we
+                 * just selected. Something must have changed.
+                 */
+                al = SSL_AD_ILLEGAL_PARAMETER;
+                SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO, SSL_R_BAD_CIPHER);
+                goto f_err;
+            }
             s->s3->tmp.new_cipher = cipher;
             if (!tls_choose_sigalg(s, &al))
                 goto f_err;
@@ -3662,17 +3672,18 @@ static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt)
 static int tls_construct_hello_retry_request(SSL *s, WPACKET *pkt)
 {
     int al = SSL_AD_INTERNAL_ERROR;
+    size_t len = 0;
 
     /*
      * TODO(TLS1.3): Remove the DRAFT version before release
      * (should be s->version)
      */
     if (!WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)
+            || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, pkt, &len)
             || !tls_construct_extensions(s, pkt, EXT_TLS1_3_HELLO_RETRY_REQUEST,
                                          NULL, 0, &al)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_HELLO_RETRY_REQUEST, ERR_R_INTERNAL_ERROR);
-        ssl3_send_alert(s, SSL3_AL_FATAL, al);
-        return 0;
+        goto err;
     }
 
     /* Ditch the session. We'll create a new one next time around */
@@ -3680,7 +3691,17 @@ static int tls_construct_hello_retry_request(SSL *s, WPACKET *pkt)
     s->session = NULL;
     s->hit = 0;
 
+    /*
+     * Re-initialise the Transcript Hash. We're going to prepopulate it with
+     * a synthetic message_hash in place of ClientHello1.
+     */
+    if (!create_synthetic_message_hash(s))
+        goto err;
+
     return 1;
+ err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    return 0;
 }
 
 MSG_PROCESS_RETURN tls_process_end_of_early_data(SSL *s, PACKET *pkt)

@@ -1243,14 +1243,65 @@ MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, PACKET *pkt)
     return MSG_PROCESS_ERROR;
 }
 
-MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
+static int set_client_ciphersuite(SSL *s, const unsigned char *cipherchars)
 {
     STACK_OF(SSL_CIPHER) *sk;
     const SSL_CIPHER *c;
+    int i;
+
+    c = ssl_get_cipher_by_char(s, cipherchars, 0);
+    if (c == NULL) {
+        /* unknown cipher */
+        SSLerr(SSL_F_SET_CLIENT_CIPHERSUITE, SSL_R_UNKNOWN_CIPHER_RETURNED);
+        return 0;
+    }
+    /*
+     * If it is a disabled cipher we either didn't send it in client hello,
+     * or it's not allowed for the selected protocol. So we return an error.
+     */
+    if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_CHECK)) {
+        SSLerr(SSL_F_SET_CLIENT_CIPHERSUITE, SSL_R_WRONG_CIPHER_RETURNED);
+        return 0;
+    }
+
+    sk = ssl_get_ciphers_by_id(s);
+    i = sk_SSL_CIPHER_find(sk, c);
+    if (i < 0) {
+        /* we did not say we would use this cipher */
+        SSLerr(SSL_F_SET_CLIENT_CIPHERSUITE, SSL_R_WRONG_CIPHER_RETURNED);
+        return 0;
+    }
+
+    if (SSL_IS_TLS13(s) && s->s3->tmp.new_cipher != NULL
+            && s->s3->tmp.new_cipher->id != c->id) {
+        /* ServerHello selected a different ciphersuite to that in the HRR */
+        SSLerr(SSL_F_SET_CLIENT_CIPHERSUITE, SSL_R_WRONG_CIPHER_RETURNED);
+        return 0;
+    }
+
+    /*
+     * Depending on the session caching (internal/external), the cipher
+     * and/or cipher_id values may not be set. Make sure that cipher_id is
+     * set and use it for comparison.
+     */
+    if (s->session->cipher != NULL)
+        s->session->cipher_id = s->session->cipher->id;
+    if (s->hit && (s->session->cipher_id != c->id)) {
+        SSLerr(SSL_F_SET_CLIENT_CIPHERSUITE,
+               SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
+        return 0;
+    }
+    s->s3->tmp.new_cipher = c;
+
+    return 1;
+}
+
+MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
+{
     PACKET session_id, extpkt;
     size_t session_id_len;
     const unsigned char *cipherchars;
-    int i, al = SSL_AD_INTERNAL_ERROR;
+    int al = SSL_AD_INTERNAL_ERROR;
     unsigned int compression;
     unsigned int sversion;
     unsigned int context;
@@ -1437,53 +1488,17 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
                SSL_R_SSL_SESSION_VERSION_MISMATCH);
         goto f_err;
     }
-
-    c = ssl_get_cipher_by_char(s, cipherchars, 0);
-    if (c == NULL) {
-        /* unknown cipher */
-        al = SSL_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_UNKNOWN_CIPHER_RETURNED);
-        goto f_err;
-    }
     /*
      * Now that we know the version, update the check to see if it's an allowed
      * version.
      */
     s->s3->tmp.min_ver = s->version;
     s->s3->tmp.max_ver = s->version;
-    /*
-     * If it is a disabled cipher we either didn't send it in client hello,
-     * or it's not allowed for the selected protocol. So we return an error.
-     */
-    if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_CHECK)) {
-        al = SSL_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_WRONG_CIPHER_RETURNED);
-        goto f_err;
-    }
 
-    sk = ssl_get_ciphers_by_id(s);
-    i = sk_SSL_CIPHER_find(sk, c);
-    if (i < 0) {
-        /* we did not say we would use this cipher */
+    if (!set_client_ciphersuite(s, cipherchars)) {
         al = SSL_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_WRONG_CIPHER_RETURNED);
         goto f_err;
     }
-
-    /*
-     * Depending on the session caching (internal/external), the cipher
-     * and/or cipher_id values may not be set. Make sure that cipher_id is
-     * set and use it for comparison.
-     */
-    if (s->session->cipher)
-        s->session->cipher_id = s->session->cipher->id;
-    if (s->hit && (s->session->cipher_id != c->id)) {
-        al = SSL_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO,
-               SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
-        goto f_err;
-    }
-    s->s3->tmp.new_cipher = c;
 
 #ifdef OPENSSL_NO_COMP
     if (compression != 0) {
@@ -1580,6 +1595,7 @@ static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
 {
     unsigned int sversion;
     int errorcode;
+    const unsigned char *cipherchars;
     RAW_EXTENSION *extensions = NULL;
     int al;
     PACKET extpkt;
@@ -1600,6 +1616,17 @@ static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
+    if (!PACKET_get_bytes(pkt, &cipherchars, TLS_CIPHER_LEN)) {
+        SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST, SSL_R_LENGTH_MISMATCH);
+        al = SSL_AD_DECODE_ERROR;
+        goto f_err;
+    }
+
+    if (!set_client_ciphersuite(s, cipherchars)) {
+        al = SSL_AD_ILLEGAL_PARAMETER;
+        goto f_err;
+    }
+
     if (!PACKET_as_length_prefixed_2(pkt, &extpkt)) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST, SSL_R_BAD_LENGTH);
@@ -1613,6 +1640,28 @@ static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
         goto f_err;
 
     OPENSSL_free(extensions);
+
+    /*
+     * Re-initialise the Transcript Hash. We're going to prepopulate it with
+     * a synthetic message_hash in place of ClientHello1.
+     */
+    if (!create_synthetic_message_hash(s)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        goto f_err;
+    }
+
+    /*
+     * Add this message to the Transcript Hash. Normally this is done
+     * automatically prior to the message processing stage. However due to the
+     * need to create the synthetic message hash, we defer that step until now
+     * for HRR messages.
+     */
+    if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+                                s->init_num + SSL3_HM_HEADER_LENGTH)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
 
     return MSG_PROCESS_FINISHED_READING;
  f_err:
