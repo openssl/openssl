@@ -19,10 +19,11 @@
  * supported, the corresponding element is zero. The order is as follows:
  *
  * STFLE:STFLE:STFLE.
- * KIMD:KIMD:KM:KM:KMC:KMC:KMAC:KMAC:KMCTR:KMCTR:KMO:KMO:KMF:KMF:KMA:KMA
+ * KIMD:KIMD:KM:KM:KMC:KMC:KMAC:KMAC:KMCTR:KMCTR:KMO:KMO:KMF:KMF:PPNO:PPNO:
+ * KMA:KMA
  */
 # define S390X_STFLE_DWORDS	3
-# define S390X_QUERY_DWORDS	16
+# define S390X_QUERY_DWORDS	18
 # define S390X_CAP_DWORDS	(S390X_STFLE_DWORDS + S390X_QUERY_DWORDS)
 extern uint64_t OPENSSL_s390xcap_P[];
 
@@ -57,11 +58,18 @@ extern uint64_t OPENSSL_s390xcap_P[];
 # define S390X_KMF_AES_128	(1ULL << 45)
 
 /* OPENSSL_s390xcap_P[17] flags */
+# define S390X_PRNO_SHA_512_DRNG	(1ULL << 60)
+
+/* OPENSSL_s390xcap_P[18] flags */
+# define S390X_PRNO_TRNG	(1ULL << 13)
+
+/* OPENSSL_s390xcap_P[19] flags */
 # define S390X_KMA_GCM_AES_256	(1ULL << 43)
 # define S390X_KMA_GCM_AES_192	(1ULL << 44)
 # define S390X_KMA_GCM_AES_128	(1ULL << 45)
 
 /* %r0 flags */
+# define S390X_PRNO_SEED	(1ULL <<  7)
 # define S390X_KMA_LPC		(1ULL <<  8)
 # define S390X_KMA_LAAD		(1ULL <<  9)
 # define S390X_KMA_HS		(1ULL << 10)

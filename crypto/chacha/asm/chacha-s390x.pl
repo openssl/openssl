@@ -596,6 +596,6 @@ LONG	(0x0b0a0908,0x0f0e0d0c,0x1b1a1918,0x1f1e1d1c);	# vperm serialization
 ASCIZ	("\"ChaCha20 for s390x, CRYPTOGAMS by <appro\@openssl.org>\"");
 ALIGN	(4);
 
-COMM	("OPENSSL_s390xcap_P",152,8);
+COMM	("OPENSSL_s390xcap_P",168,8);
 
 PERLASM_END();

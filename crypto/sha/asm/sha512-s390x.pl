@@ -312,7 +312,7 @@ $code.=<<___;
 	br	%r14
 .size	$Func,.-$Func
 .string	"SHA${label} block transform for s390x, CRYPTOGAMS by <appro\@openssl.org>"
-.comm	OPENSSL_s390xcap_P,152,8
+.comm	OPENSSL_s390xcap_P,168,8
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

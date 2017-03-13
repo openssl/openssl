@@ -1143,13 +1143,13 @@ static int s390x_aes_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                 const unsigned char *in, size_t len);
 
 # define S390X_aes_128_gcm_CAPABLE (S390X_aes_128_CAPABLE&&\
-                                    OPENSSL_s390xcap_P[17]\
+                                    OPENSSL_s390xcap_P[19]\
                                     &S390X_KMA_GCM_AES_128)
 # define S390X_aes_192_gcm_CAPABLE (S390X_aes_192_CAPABLE&&\
-                                    OPENSSL_s390xcap_P[17]\
+                                    OPENSSL_s390xcap_P[19]\
                                     &S390X_KMA_GCM_AES_192)
 # define S390X_aes_256_gcm_CAPABLE (S390X_aes_256_CAPABLE&&\
-                                    OPENSSL_s390xcap_P[17]\
+                                    OPENSSL_s390xcap_P[19]\
                                     &S390X_KMA_GCM_AES_256)
 
 static int s390x_aes_gcm(GCM128_CONTEXT *ctx, const unsigned char *in,

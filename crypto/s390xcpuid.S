@@ -30,6 +30,8 @@ OPENSSL_s390x_facilities:
 	stg	%r0,128(%r4)
 	stg	%r0,136(%r4)
 	stg	%r0,144(%r4)
+	stg	%r0,152(%r4)
+	stg	%r0,160(%r4)
 
 	.long	0xb2b04000	# stfle	0(%r4)
 	brc	8,.Ldone
@@ -74,12 +76,19 @@ OPENSSL_s390x_facilities:
 	la	%r1,120(%r4)
 	.long	0xb92a0042	# kmf %r4,%r2
 
+	tml	%r2,0x40	# check for message-security-assist-5
+	jz	.Lret
+
+	lghi	%r0,0		# query prno capability vector
+	la	%r1,136(%r4)
+	.long	0xb93c0042	# prno %r4,%r2
+
 	lg	%r2,16(%r4)
 	tmhl	%r2,0x2000	# check for message-security-assist-8
 	jz	.Lret
 
 	lghi	%r0,0		# query kma capability vector
-	la	%r1,136(%r4)
+	la	%r1,152(%r4)
 	.long	0xb9294022	# kma %r2,%r4,%r2
 
 .Lret:
@@ -209,4 +218,4 @@ OPENSSL_instrument_bus2:
 .section	.init
 	brasl	%r14,OPENSSL_cpuid_setup
 
-.comm	OPENSSL_s390xcap_P,152,8
+.comm	OPENSSL_s390xcap_P,168,8
