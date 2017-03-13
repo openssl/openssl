@@ -2135,6 +2135,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_ADD_KEY_SHARE                              512
 # define SSL_F_BYTES_TO_CIPHER_LIST                       519
 # define SSL_F_CHECK_SUITEB_CIPHER_LIST                   331
+# define SSL_F_CREATE_SYNTHETIC_MESSAGE_HASH              539
 # define SSL_F_CT_MOVE_SCTS                               345
 # define SSL_F_CT_STRICT                                  349
 # define SSL_F_D2I_SSL_SESSION                            103
@@ -2175,6 +2176,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION         418
 # define SSL_F_PROCESS_KEY_SHARE_EXT                      439
 # define SSL_F_READ_STATE_MACHINE                         352
+# define SSL_F_SET_CLIENT_CIPHERSUITE                     540
 # define SSL_F_SSL3_CHANGE_CIPHER_STATE                   129
 # define SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM              130
 # define SSL_F_SSL3_CTRL                                  213
@@ -2464,6 +2466,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE       143
 # define SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE     158
 # define SSL_R_BAD_CHANGE_CIPHER_SPEC                     103
+# define SSL_R_BAD_CIPHER                                 186
 # define SSL_R_BAD_DATA                                   390
 # define SSL_R_BAD_DATA_RETURNED_BY_CALLBACK              106
 # define SSL_R_BAD_DECOMPRESSION                          107

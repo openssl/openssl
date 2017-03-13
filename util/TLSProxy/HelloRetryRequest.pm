@@ -47,6 +47,9 @@ sub parse
         $server_version = TLSProxy::Record::VERS_TLS_1_3;
     }
 
+    my $ciphersuite = unpack('n', substr($self->data, $ptr));
+    $ptr += 2;
+
     my $extensions_len = unpack('n', substr($self->data, $ptr));
     if (!defined $extensions_len) {
         $extensions_len = 0;
@@ -75,6 +78,7 @@ sub parse
     }
 
     $self->server_version($server_version);
+    $self->ciphersuite($ciphersuite);
     $self->extension_data(\%extensions);
 
     print "    Extensions Len:".$extensions_len."\n";
@@ -100,6 +104,7 @@ sub set_message_contents
     }
 
     $data = pack('n', $self->server_version);
+    $data .= pack('n', $self->ciphersuite);
     $data .= pack('n', length($extensions));
     $data .= $extensions;
     $self->data($data);
@@ -113,6 +118,14 @@ sub server_version
       $self->{server_version} = shift;
     }
     return $self->{server_version};
+}
+sub ciphersuite
+{
+    my $self = shift;
+    if (@_) {
+      $self->{ciphersuite} = shift;
+    }
+    return $self->{ciphersuite};
 }
 sub extension_data
 {
