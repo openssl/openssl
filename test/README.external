@@ -90,7 +90,7 @@ $ make
 The tests will run in a python virtual environment which requires virtualenv
 to be installed.
 
-$ HARNESS_VERBOSE=1 TESTS="test_external" make test
+$ make test VERBOSE=1 TESTS=test_external_pyca
 
 Test failures and suppressions
 ==============================
