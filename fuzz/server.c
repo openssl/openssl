@@ -530,8 +530,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 #ifndef OPENSSL_NO_DSA
     DSA *dsakey = NULL;
 #endif
+    uint8_t opt;
 
-    if (len == 0)
+    if (len < 2)
         return 0;
 
     /*
@@ -615,7 +616,24 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     out = BIO_new(BIO_s_mem());
     SSL_set_bio(server, in, out);
     SSL_set_accept_state(server);
+
+    opt = (uint8_t)buf[len-1];
+    len--;
+
     OPENSSL_assert((size_t)BIO_write(in, buf, len) == len);
+
+    if ((opt & 0x01) != 0)
+    {
+        do {
+            char early_buf[16384];
+            size_t early_len;
+            ret = SSL_read_early_data(server, early_buf, sizeof(early_buf), &early_len);
+
+            if (ret != SSL_READ_EARLY_DATA_SUCCESS)
+                break;
+        } while (1);
+    }
+
     if (SSL_do_handshake(server) == 1) {
         /* Keep reading application data until error or EOF. */
         uint8_t tmp[1024];
