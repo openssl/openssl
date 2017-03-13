@@ -517,6 +517,17 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
         return i;
     }
 
+    /*
+     * Don't change the *message* read sequence number while listening. For
+     * the *record* write sequence we reflect the ClientHello sequence number
+     * when listening.
+     */
+    if (s->d1->listen)
+        memcpy(s->s3->write_sequence, s->s3->read_sequence,
+               sizeof(s->s3->write_sequence));
+    else
+        s->d1->handshake_read_seq++;
+
     if (mt >= 0 && s->s3->tmp.message_type != mt) {
         al = SSL_AD_UNEXPECTED_MESSAGE;
         SSLerr(SSL_F_DTLS1_GET_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
@@ -543,10 +554,6 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
                         p, msg_len, s, s->msg_callback_arg);
 
     memset(msg_hdr, 0x00, sizeof(struct hm_header_st));
-
-    /* Don't change sequence numbers while listening */
-    if (!s->d1->listen)
-        s->d1->handshake_read_seq++;
 
     s->init_msg = s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
     return s->init_num;
