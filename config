@@ -801,6 +801,8 @@ case "$GUESSOS" in
 	    options="$options no-asm"
 	fi
 	;;
+  i[3456]86-*-mingw) OUT="mingw" ;;
+  x86_64-*-mingw) OUT="mingw64" ;;
   # these are all covered by the catchall below
   i[3456]86-*-cygwin) OUT="Cygwin-x86" ;;
   *-*-cygwin) OUT="Cygwin-${MACHINE}" ;;
