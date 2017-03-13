@@ -4,6 +4,10 @@
 
  Changes between 1.1.0e and 1.1.1 [xx XXX xxxx]
 
+  *) Have 'config' recognise 64-bit mingw and choose 'mingw64' as the target
+     platform rather than 'mingw'.
+     [Richard Levitte]
+
   *) x86_64 assembly pack: annotate code with DWARF CFI directives to
      facilitate stack unwinding even from assembly subroutines.
      [Andy Polyakov]
