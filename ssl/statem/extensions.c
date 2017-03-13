@@ -159,8 +159,9 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     },
     {
         TLSEXT_TYPE_signature_algorithms,
-        EXT_CLIENT_HELLO,
-        init_sig_algs, tls_parse_ctos_sig_algs, NULL, NULL,
+        EXT_CLIENT_HELLO | EXT_TLS1_3_CERTIFICATE_REQUEST,
+        init_sig_algs, tls_parse_ctos_sig_algs,
+        tls_parse_ctos_sig_algs, tls_construct_ctos_sig_algs,
         tls_construct_ctos_sig_algs, final_sig_algs
     },
 #ifndef OPENSSL_NO_OCSP
