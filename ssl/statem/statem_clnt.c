@@ -2327,20 +2327,45 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
 {
     int ret = MSG_PROCESS_ERROR;
-    int al = -1;
-    unsigned int i;
+    int al = SSL_AD_DECODE_ERROR;
+    size_t i;
+
+    /* Clear certificate validity flags */
+    for (i = 0; i < SSL_PKEY_NUM; i++)
+        s->s3->tmp.valid_flags[i] = 0;
 
     if (SSL_IS_TLS13(s)) {
-        PACKET reqctx;
+        PACKET reqctx, extensions;
+        RAW_EXTENSION *rawexts = NULL;
 
         /* Free and zero certificate types: it is not present in TLS 1.3 */
         OPENSSL_free(s->s3->tmp.ctype);
         s->s3->tmp.ctype = NULL;
         s->s3->tmp.ctype_len = 0;
+
         /* TODO(TLS1.3) need to process request context, for now ignore */
         if (!PACKET_get_length_prefixed_1(pkt, &reqctx)) {
             SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
                    SSL_R_LENGTH_MISMATCH);
+            goto err;
+        }
+
+        if (!PACKET_get_length_prefixed_2(pkt, &extensions)) {
+                SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, SSL_R_BAD_LENGTH);
+                goto err;
+        }
+        if (!tls_collect_extensions(s, &extensions,
+                                    EXT_TLS1_3_CERTIFICATE_REQUEST,
+                                    &rawexts, &al, NULL)
+            || !tls_parse_all_extensions(s, EXT_TLS1_3_CERTIFICATE_REQUEST,
+                                         rawexts, NULL, 0, &al)) {
+            OPENSSL_free(rawexts);
+            goto err;
+        }
+        OPENSSL_free(rawexts);
+        if (!tls1_process_sigalgs(s)) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     } else {
@@ -2348,64 +2373,45 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
 
         /* get the certificate types */
         if (!PACKET_get_length_prefixed_1(pkt, &ctypes)) {
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
             SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
                    SSL_R_LENGTH_MISMATCH);
             goto err;
         }
 
         if (!PACKET_memdup(&ctypes, &s->s3->tmp.ctype, &s->s3->tmp.ctype_len)) {
+            al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-    }
 
-    if (SSL_USE_SIGALGS(s)) {
-        PACKET sigalgs;
+        if (SSL_USE_SIGALGS(s)) {
+            PACKET sigalgs;
 
-        if (!PACKET_get_length_prefixed_2(pkt, &sigalgs)) {
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-            SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
-                   SSL_R_LENGTH_MISMATCH);
-            goto err;
+            if (!PACKET_get_length_prefixed_2(pkt, &sigalgs)) {
+                SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
+                       SSL_R_LENGTH_MISMATCH);
+                goto err;
+            }
+
+            if (!tls1_save_sigalgs(s, &sigalgs)) {
+                SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
+                       SSL_R_SIGNATURE_ALGORITHMS_ERROR);
+                goto err;
+            }
+            if (!tls1_process_sigalgs(s)) {
+                al = SSL_AD_INTERNAL_ERROR;
+                SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
+                       ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
         }
 
-        /* Clear certificate validity flags */
-        for (i = 0; i < SSL_PKEY_NUM; i++)
-            s->s3->tmp.valid_flags[i] = 0;
-        if (!tls1_save_sigalgs(s, &sigalgs)) {
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-            SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
-                   SSL_R_SIGNATURE_ALGORITHMS_ERROR);
+        /* get the CA RDNs */
+        if (!parse_ca_names(s, pkt, &al))
             goto err;
-        }
-        if (!tls1_process_sigalgs(s)) {
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-            SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-    }
-
-    /* get the CA RDNs */
-    if (!parse_ca_names(s, pkt, &al)) {
-        ssl3_send_alert(s, SSL3_AL_FATAL, al);
-        goto err;
-    }
-
-    /* TODO(TLS1.3) need to parse and process extensions, for now ignore */
-    if (SSL_IS_TLS13(s)) {
-        PACKET reqexts;
-
-        if (!PACKET_get_length_prefixed_2(pkt, &reqexts)) {
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
-            SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
-                   SSL_R_EXT_LENGTH_MISMATCH);
-            goto err;
-        }
     }
 
     if (PACKET_remaining(pkt) != 0) {
-        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
         SSLerr(SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, SSL_R_LENGTH_MISMATCH);
         goto err;
     }
@@ -2416,6 +2422,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
     ret = MSG_PROCESS_CONTINUE_PROCESSING;
     goto done;
  err:
+    ssl3_send_alert(s, SSL3_AL_FATAL, al);
     ossl_statem_set_error(s);
  done:
     return ret;
