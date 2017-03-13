@@ -1018,7 +1018,7 @@ void SSL_free(SSL *s)
     OPENSSL_free(s->ext.tls13_cookie);
     OPENSSL_free(s->clienthello);
 
-    sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);
+    sk_X509_NAME_pop_free(s->ca_names, X509_NAME_free);
 
     sk_X509_pop_free(s->verified_chain, X509_free);
 
@@ -2691,7 +2691,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         goto err2;
     }
 
-    if ((ret->client_CA = sk_X509_NAME_new_null()) == NULL)
+    if ((ret->ca_names = sk_X509_NAME_new_null()) == NULL)
         goto err;
 
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data))
@@ -2813,7 +2813,7 @@ void SSL_CTX_free(SSL_CTX *a)
     sk_SSL_CIPHER_free(a->cipher_list);
     sk_SSL_CIPHER_free(a->cipher_list_by_id);
     ssl_cert_free(a->cert);
-    sk_X509_NAME_pop_free(a->client_CA, X509_NAME_free);
+    sk_X509_NAME_pop_free(a->ca_names, X509_NAME_free);
     sk_X509_pop_free(a->extra_certs, X509_free);
     a->comp_methods = NULL;
 #ifndef OPENSSL_NO_SRTP
@@ -3409,10 +3409,10 @@ SSL *SSL_dup(SSL *s)
             goto err;
 
     /* Dup the client_CA list */
-    if (s->client_CA != NULL) {
-        if ((sk = sk_X509_NAME_dup(s->client_CA)) == NULL)
+    if (s->ca_names != NULL) {
+        if ((sk = sk_X509_NAME_dup(s->ca_names)) == NULL)
             goto err;
-        ret->client_CA = sk;
+        ret->ca_names = sk;
         for (i = 0; i < sk_X509_NAME_num(sk); i++) {
             xn = sk_X509_NAME_value(sk, i);
             if (sk_X509_NAME_set(sk, i, X509_NAME_dup(xn)) == NULL) {

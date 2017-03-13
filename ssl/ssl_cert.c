@@ -459,8 +459,8 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
     return i;
 }
 
-static void set_client_CA_list(STACK_OF(X509_NAME) **ca_list,
-                               STACK_OF(X509_NAME) *name_list)
+static void set0_CA_list(STACK_OF(X509_NAME) **ca_list,
+                        STACK_OF(X509_NAME) *name_list)
 {
     sk_X509_NAME_pop_free(*ca_list, X509_NAME_free);
     *ca_list = name_list;
@@ -488,63 +488,90 @@ STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk)
     return (ret);
 }
 
-void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
+void SSL_set0_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
 {
-    set_client_CA_list(&(s->client_CA), name_list);
+    set0_CA_list(&s->ca_names, name_list);
+}
+
+void SSL_CTX_set0_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list)
+{
+    set0_CA_list(&ctx->ca_names, name_list);
+}
+
+const STACK_OF(X509_NAME) *SSL_CTX_get0_CA_list(const SSL_CTX *ctx)
+{
+    return ctx->ca_names;
+}
+
+const STACK_OF(X509_NAME) *SSL_get0_CA_list(const SSL *s)
+{
+    return s->ca_names != NULL ? s->ca_names : s->ctx->ca_names;
 }
 
 void SSL_CTX_set_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list)
 {
-    set_client_CA_list(&(ctx->client_CA), name_list);
+    SSL_CTX_set0_CA_list(ctx, name_list);
 }
 
 STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
 {
-    return (ctx->client_CA);
+    return ctx->ca_names;
+}
+
+void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
+{
+    SSL_set0_CA_list(s, name_list);
+}
+
+const STACK_OF(X509_NAME) *SSL_get0_peer_CA_list(const SSL *s)
+{
+    return s->s3 != NULL ? s->s3->tmp.peer_ca_names : NULL;
 }
 
 STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s)
 {
-    if (!s->server) {           /* we are in the client */
-        if (s->s3 != NULL)
-            return s->s3->tmp.ca_names;
-        else
-            return NULL;
-    } else {
-        if (s->client_CA != NULL)
-            return s->client_CA;
-        else
-            return s->ctx->client_CA;
-    }
+    if (!s->server)
+        return s->s3 != NULL ?  s->s3->tmp.peer_ca_names : NULL;
+    return s->ca_names != NULL ?  s->ca_names : s->ctx->ca_names;
 }
 
-static int add_client_CA(STACK_OF(X509_NAME) **sk, X509 *x)
+static int add_ca_name(STACK_OF(X509_NAME) **sk, const X509 *x)
 {
     X509_NAME *name;
 
     if (x == NULL)
-        return (0);
-    if ((*sk == NULL) && ((*sk = sk_X509_NAME_new_null()) == NULL))
-        return (0);
+        return 0;
+    if (*sk == NULL && ((*sk = sk_X509_NAME_new_null()) == NULL))
+        return 0;
 
     if ((name = X509_NAME_dup(X509_get_subject_name(x))) == NULL)
-        return (0);
+        return 0;
 
     if (!sk_X509_NAME_push(*sk, name)) {
         X509_NAME_free(name);
-        return (0);
+        return 0;
     }
-    return (1);
+    return 1;
+}
+
+int SSL_add1_CA_list(SSL *ssl, const X509 *x)
+{
+    return add_ca_name(&ssl->ca_names, x);
+}
+
+int SSL_CTX_add1_CA_list(SSL_CTX *ctx, const X509 *x)
+{
+    return add_ca_name(&ctx->ca_names, x);
 }
 
 int SSL_add_client_CA(SSL *ssl, X509 *x)
 {
-    return (add_client_CA(&(ssl->client_CA), x));
+    return add_ca_name(&ssl->ca_names, x);
 }
 
 int SSL_CTX_add_client_CA(SSL_CTX *ctx, X509 *x)
 {
-    return (add_client_CA(&(ctx->client_CA), x));
+    return add_ca_name(&ctx->ca_names, x);
 }
 
 static int xname_sk_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
