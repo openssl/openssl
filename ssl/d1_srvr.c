@@ -355,15 +355,6 @@ int dtls1_accept(SSL *s)
 
             s->init_num = 0;
 
-            /*
-             * Reflect ClientHello sequence to remain stateless while
-             * listening
-             */
-            if (listen) {
-                memcpy(s->s3->write_sequence, s->s3->read_sequence,
-                       sizeof(s->s3->write_sequence));
-            }
-
             /* If we're just listening, stop here */
             if (listen && s->state == SSL3_ST_SW_SRVR_HELLO_A) {
                 ret = 2;
