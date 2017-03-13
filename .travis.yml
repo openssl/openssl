@@ -7,7 +7,7 @@ before_install:
     - if [ -n "$COVERALLS" ]; then
           pip install --user cpp-coveralls;
       fi;
-    - if expr "$CONFIG_OPTS" : enable-external-tests > /dev/null; then
+    - if expr "$CONFIG_OPTS" ":" ".*enable-external-tests" > /dev/null; then
           git submodule update --init --recursive;
       fi;
 
