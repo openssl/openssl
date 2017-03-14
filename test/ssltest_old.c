@@ -84,9 +84,6 @@
 #ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
 #endif
-#ifndef OPENSSL_NO_SRP
-# include <openssl/srp.h>
-#endif
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_CT
 # include <openssl/ct.h>
@@ -139,45 +136,6 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
 static unsigned int psk_server_callback(SSL *ssl, const char *identity,
                                         unsigned char *psk,
                                         unsigned int max_psk_len);
-#endif
-
-#ifndef OPENSSL_NO_SRP
-/* SRP client */
-/* This is a context that we pass to all callbacks */
-typedef struct srp_client_arg_st {
-    char *srppassin;
-    char *srplogin;
-} SRP_CLIENT_ARG;
-
-# define PWD_STRLEN 1024
-
-static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
-{
-    SRP_CLIENT_ARG *srp_client_arg = (SRP_CLIENT_ARG *)arg;
-    return OPENSSL_strdup((char *)srp_client_arg->srppassin);
-}
-
-/* SRP server */
-/* This is a context that we pass to SRP server callbacks */
-typedef struct srp_server_arg_st {
-    char *expected_user;
-    char *pass;
-} SRP_SERVER_ARG;
-
-static int ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
-{
-    SRP_SERVER_ARG *p = (SRP_SERVER_ARG *)arg;
-
-    if (strcmp(p->expected_user, SSL_get_srp_username(s)) != 0) {
-        fprintf(stderr, "User %s doesn't exist\n", SSL_get_srp_username(s));
-        return SSL3_AL_FATAL;
-    }
-    if (SSL_set_srp_server_param_pw(s, p->expected_user, p->pass, "1024") < 0) {
-        *ad = SSL_AD_INTERNAL_ERROR;
-        return SSL3_AL_FATAL;
-    }
-    return SSL_ERROR_NONE;
-}
 #endif
 
 static BIO *bio_err = NULL;
@@ -722,10 +680,6 @@ static void sv_usage(void)
 #ifndef OPENSSL_NO_PSK
     fprintf(stderr, " -psk arg      - PSK in hex (without 0x)\n");
 #endif
-#ifndef OPENSSL_NO_SRP
-    fprintf(stderr, " -srpuser user - SRP username to use\n");
-    fprintf(stderr, " -srppass arg  - password for 'user'\n");
-#endif
 #ifndef OPENSSL_NO_SSL3
     fprintf(stderr, " -ssl3         - use SSLv3\n");
 #endif
@@ -971,12 +925,6 @@ int main(int argc, char *argv[])
     DH *dh;
     int dhe512 = 0, dhe1024dsa = 0;
 #endif
-#ifndef OPENSSL_NO_SRP
-    /* client */
-    SRP_CLIENT_ARG srp_client_arg = { NULL, NULL };
-    /* server */
-    SRP_SERVER_ARG srp_server_arg = { NULL, NULL };
-#endif
     int no_dhe = 0;
     int no_psk = 0;
     int print_time = 0;
@@ -1098,20 +1046,6 @@ int main(int argc, char *argv[])
             no_psk = 1;
 #endif
         }
-#ifndef OPENSSL_NO_SRP
-        else if (strcmp(*argv, "-srpuser") == 0) {
-            if (--argc < 1)
-                goto bad;
-            srp_server_arg.expected_user = srp_client_arg.srplogin =
-                *(++argv);
-            min_version = TLS1_VERSION;
-        } else if (strcmp(*argv, "-srppass") == 0) {
-            if (--argc < 1)
-                goto bad;
-            srp_server_arg.pass = srp_client_arg.srppassin = *(++argv);
-            min_version = TLS1_VERSION;
-        }
-#endif
         else if (strcmp(*argv, "-tls1_2") == 0) {
             tls1_2 = 1;
         } else if (strcmp(*argv, "-tls1") == 0) {
@@ -1605,29 +1539,6 @@ int main(int argc, char *argv[])
         }
 #endif
     }
-#ifndef OPENSSL_NO_SRP
-    if (srp_client_arg.srplogin) {
-        if (!SSL_CTX_set_srp_username(c_ctx, srp_client_arg.srplogin)) {
-            BIO_printf(bio_err, "Unable to set SRP username\n");
-            goto end;
-        }
-        SSL_CTX_set_srp_cb_arg(c_ctx, &srp_client_arg);
-        SSL_CTX_set_srp_client_pwd_callback(c_ctx,
-                                            ssl_give_srp_client_pwd_cb);
-        /*
-         * SSL_CTX_set_srp_strength(c_ctx, srp_client_arg.strength);
-         */
-    }
-
-    if (srp_server_arg.expected_user != NULL) {
-        SSL_CTX_set_verify(s_ctx, SSL_VERIFY_NONE, verify_callback);
-        SSL_CTX_set_verify(s_ctx2, SSL_VERIFY_NONE, verify_callback);
-        SSL_CTX_set_srp_cb_arg(s_ctx, &srp_server_arg);
-        SSL_CTX_set_srp_cb_arg(s_ctx2, &srp_server_arg);
-        SSL_CTX_set_srp_username_callback(s_ctx, ssl_srp_server_param_cb);
-        SSL_CTX_set_srp_username_callback(s_ctx2, ssl_srp_server_param_cb);
-    }
-#endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
     if (npn_client) {

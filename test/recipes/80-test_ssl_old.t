@@ -20,10 +20,10 @@ setup("test_ssl");
 
 $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 
-my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_srp, $no_psk,
+my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
     $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2, $no_tls1_3,
     $no_dtls, $no_dtls1, $no_dtls1_2, $no_ct) =
-    anydisabled qw/rsa dsa dh ec srp psk
+    anydisabled qw/rsa dsa dh ec psk
                    ssl3 tls1 tls1_1 tls1_2 tls1_3
                    dtls dtls1 dtls1_2 ct/;
 my $no_anytls = alldisabled(available_protocols("tls"));
@@ -79,7 +79,7 @@ my $client_sess="client.ss";
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
     1				# For testss
-    +6  			# For the first testssl
+    +5  			# For the first testssl
     ;
 
 subtest 'test_ss' => sub {
@@ -566,28 +566,6 @@ sub testssl {
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_tack"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_sct", "-serverinfo_tack"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-custom_ext", "-serverinfo_file", $serverinfo, "-serverinfo_sct", "-serverinfo_tack"])));
-	}
-    };
-
-    subtest 'SRP tests' => sub {
-
-	plan tests => 4;
-
-      SKIP: {
-	  skip "skipping SRP tests", 4
-	      if $no_srp || alldisabled(grep !/^ssl3/, available_protocols("tls"));
-
-	  ok(run(test([@ssltest, "-tls1", "-cipher", "SRP", "-srpuser", "test", "-srppass", "abc123"])),
-	     'test tls1 with SRP');
-
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "SRP", "-srpuser", "test", "-srppass", "abc123"])),
-	     'test tls1 with SRP via BIO pair');
-
-	  ok(run(test([@ssltest, "-tls1", "-cipher", "aSRP", "-srpuser", "test", "-srppass", "abc123"])),
-	     'test tls1 with SRP auth');
-
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "aSRP", "-srpuser", "test", "-srppass", "abc123"])),
-	     'test tls1 with SRP auth via BIO pair');
 	}
     };
 }

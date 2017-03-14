@@ -179,6 +179,9 @@ client => {
   protocols can be specified as a comma-separated list, and a callback with the
   recommended behaviour will be installed automatically.
 
+* SRPUser, SRPPassword - SRP settings. For client, this is the SRP user to
+  connect as; for server, this is a known SRP user.
+
 ### Default server and client configurations
 
 The default server certificate and CA files are added to the configurations
