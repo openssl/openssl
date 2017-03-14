@@ -1184,7 +1184,20 @@
             "SkipHelloRetryRequest":"Test failure - reason unknown",
             "Peek-Alert":"Test failure - reason unknown",
             "TLS13-TrailingKeyShareData":"Test failure - reason unknown",
-            "Peek-KeyUpdate":"Test failure - reason unknown"
+            "Peek-KeyUpdate":"Test failure - reason unknown",
+            "Resume-Server-SSL3-SSL3":"Test failure - runner using <draft17 TLS1.3 causes failures due to incorrect PSK extension placement",
+            "Resume-Server-SSL3-TLS1":"Test failure - runner using <draft17 TLS1.3 causes failures due to incorrect PSK extension placement",
+            "Resume-Server-SSL3-TLS11":"Test failure - runner using <draft17 TLS1.3 causes failures due to incorrect PSK extension placement",
+            "Resume-Server-TLS1-TLS1":"Test failure - runner using <draft17 TLS1.3 causes failures due to incorrect PSK extension placement",
+            "Resume-Server-TLS1-TLS1-DTLS":"Test failure - runner using <draft17 TLS1.3 causes failures due to incorrect PSK extension placement",
+            "Resume-Server-SSL3-TLS12":"Test failure - runner using <draft17 TLS1.3 causes failures due to incorrect PSK extension placement",
+            "Resume-Server-TLS1-TLS12":"Test failure - runner using <draft17 TLS1.3 causes failures due to incorrect PSK extension placement",
+            "Resume-Server-TLS1-TLS11":"Test failure - runner using <draft17 TLS1.3 causes failures due to incorrect PSK extension placement",
+            "Resume-Server-TLS1-TLS12-DTLS":"Test failure - runner using <draft17 TLS1.3 causes failures due to incorrect PSK extension placement",
+            "Resume-Server-TLS11-TLS11":"Test failure - runner using <draft17 TLS1.3 causes failures due to incorrect PSK extension placement",
+            "Resume-Server-TLS11-TLS12":"Test failure - runner using <draft17 TLS1.3 causes failures due to incorrect PSK extension placement",
+            "Resume-Server-TLS12-TLS12":"Test failure - runner using <draft17 TLS1.3 causes failures due to incorrect PSK extension placement",
+            "Resume-Server-TLS12-TLS12-DTLS":"Test failure - runner using <draft17 TLS1.3 causes failures due to incorrect PSK extension placement"
     },
     "ErrorMap" : {
     }
