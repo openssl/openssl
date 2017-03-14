@@ -26,6 +26,9 @@
      are no longer allowed.
      [Emilia Käsper]
 
+  *) Add support for ARIA
+     [Paul Dale]
+
   *) Add support for SipHash
      [Todd Short]
 
