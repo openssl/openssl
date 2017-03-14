@@ -10,7 +10,7 @@ addons:
     apt:
         packages:
             - ccache
-            - golang
+            - golang-1.6
 
 os:
     - linux
