@@ -146,7 +146,6 @@ int tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
      * Add TLS extension supported_groups to the ClientHello message
      */
     /* TODO(TLS1.3): Add support for DHE groups */
-    pcurves = s->ext.supportedgroups;
     if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
                ERR_R_INTERNAL_ERROR);
@@ -590,7 +589,6 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, unsigned int context,
         return 0;
     }
 
-    pcurves = s->ext.supportedgroups;
     if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -1301,7 +1299,6 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         }
 
         /* Validate the selected group is one we support */
-        pcurves = s->ext.supportedgroups;
         if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
             SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
             return 0;
