@@ -81,6 +81,7 @@ typedef enum {
     SSL_TEST_CERT_STATUS_GOOD_RESPONSE,
     SSL_TEST_CERT_STATUS_BAD_RESPONSE
 } ssl_cert_status_t;
+
 /*
  * Server/client settings that aren't supported by the SSL CONF library,
  * such as callbacks.
@@ -96,6 +97,8 @@ typedef struct {
     ssl_ct_validation_t ct_validation;
     /* Ciphersuites to set on a renegotiation */
     char *reneg_ciphers;
+    char *srp_user;
+    char *srp_password;
 } SSL_TEST_CLIENT_CONF;
 
 typedef struct {
@@ -108,6 +111,9 @@ typedef struct {
     int broken_session_ticket;
     /* Should we send a CertStatus message? */
     ssl_cert_status_t cert_status;
+    /* An SRP user known to the server. */
+    char *srp_user;
+    char *srp_password;
 } SSL_TEST_SERVER_CONF;
 
 typedef struct {
