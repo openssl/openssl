@@ -102,10 +102,10 @@ static int use_ecc(SSL *s)
         if ((alg_k & (SSL_kECDHE | SSL_kECDHEPSK))
                 || (alg_a & SSL_aECDSA)
                 || c->min_tls >= TLS1_3_VERSION)
-            break;
+            return 1;
     }
 
-    return i < end;
+    return 0;
 }
 
 int tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
