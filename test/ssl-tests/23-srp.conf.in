@@ -11,6 +11,8 @@ use warnings;
 
 package ssltests;
 
+# SRP is only supported up to TLSv1.2
+
 our @tests = (
     {
 	name => "srp",
@@ -23,6 +25,7 @@ our @tests = (
         },
 	client => {
 	    "CipherString" => "SRP",
+	    "MaxProtocol" => "TLSv1.2",
 	    extra => {
 	        "SRPUser" => "user",
 		"SRPPassword" => "password",
@@ -43,6 +46,7 @@ our @tests = (
         },
 	client => {
 	    "CipherString" => "SRP",
+	    "MaxProtocol" => "TLSv1.2",
 	    extra => {
 	        "SRPUser" => "user",
 		"SRPPassword" => "passw0rd",
@@ -64,6 +68,7 @@ our @tests = (
         },
 	client => {
 	    "CipherString" => "aSRP",
+	    "MaxProtocol" => "TLSv1.2",
 	    extra => {
 	        "SRPUser" => "user",
 		"SRPPassword" => "password",
@@ -84,6 +89,7 @@ our @tests = (
         },
 	client => {
 	    "CipherString" => "aSRP",
+	    "MaxProtocol" => "TLSv1.2",
 	    extra => {
 	        "SRPUser" => "user",
 		"SRPPassword" => "passw0rd",

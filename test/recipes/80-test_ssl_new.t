@@ -90,7 +90,8 @@ my %skip = (
   "20-cert-select.conf" => disabled("tls1_2") || $no_ec,
   "21-key-update.conf" => disabled("tls1_3"),
   "22-compression.conf" => disabled("zlib") || $no_tls,
-  "23-srp.conf" => disabled("srp"),
+  "23-srp.conf" => (disabled("tls1") && disabled ("tls1_1")
+                    && disabled("tls1_2")) || disabled("srp"),
 );
 
 foreach my $conf (@conf_files) {
