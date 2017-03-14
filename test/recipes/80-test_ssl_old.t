@@ -331,7 +331,7 @@ sub testssl {
 
     subtest 'standard SSL tests' => sub {
 	######################################################################
-      plan tests => 21;
+      plan tests => 13;
 
       SKIP: {
 	  skip "SSLv3 is not supported by this OpenSSL build", 4
@@ -353,34 +353,6 @@ sub testssl {
 
 	  ok(run(test([@ssltest, "-bio_pair"])),
 	     'test sslv2/sslv3 via BIO pair');
-	}
-
-      SKIP: {
-	  skip "DTLSv1 is not supported by this OpenSSL build", 4
-	      if disabled("dtls1");
-
-	  ok(run(test([@ssltest, "-dtls1"])),
-	     'test dtlsv1');
-	  ok(run(test([@ssltest, "-dtls1", "-server_auth", @CA])),
-	   'test dtlsv1 with server authentication');
-	  ok(run(test([@ssltest, "-dtls1", "-client_auth", @CA])),
-	     'test dtlsv1 with client authentication');
-	  ok(run(test([@ssltest, "-dtls1", "-server_auth", "-client_auth", @CA])),
-	     'test dtlsv1 with both server and client authentication');
-	}
-
-      SKIP: {
-	  skip "DTLSv1.2 is not supported by this OpenSSL build", 4
-	      if disabled("dtls1_2");
-
-	  ok(run(test([@ssltest, "-dtls12"])),
-	     'test dtlsv1.2');
-	  ok(run(test([@ssltest, "-dtls12", "-server_auth", @CA])),
-	     'test dtlsv1.2 with server authentication');
-	  ok(run(test([@ssltest, "-dtls12", "-client_auth", @CA])),
-	     'test dtlsv1.2 with client authentication');
-	  ok(run(test([@ssltest, "-dtls12", "-server_auth", "-client_auth", @CA])),
-	     'test dtlsv1.2 with both server and client authentication');
 	}
 
       SKIP: {
