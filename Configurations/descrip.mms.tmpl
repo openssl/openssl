@@ -2,6 +2,7 @@
 ##
 ## {- join("\n## ", @autowarntext) -}
 {-
+  use File::Basename;
   use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
 
   # Our prefix, claimed when speaking with the VSI folks Tuesday
@@ -314,11 +315,14 @@ uninstall : uninstall_docs uninstall_sw
 # use $(LIBS), $(PROGRAMS), $(GENERATED) and $(ENGINES)directly.
 libclean :
         {- join("\n\t", map { "- DELETE $_.OLB;*" } @{$unified_info{libraries}}) || "@ !" -}
-        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.DSF;*,$_.MAP;*,$_.OPT;*" } @shlibs) || "@ !" -}
+        {- join("\n\t", map { "- DELETE ".buildfile(basename($_)).".DSF;*,"
+                              ."$_.EXE;*,$_.MAP;*,$_.OPT;*" } @shlibs) || "@ !" -}
 
 clean : libclean
-        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.DSF;*,$_.OPT;*" } @{$unified_info{programs}}) || "@ !" -}
-        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.DSF;*,$_.OPT;*" } @{$unified_info{engines}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE ".buildfile(basename($_)).".DSF;*,"
+                              ."$_.EXE;*,$_.OPT;*" } @{$unified_info{programs}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE ".buildfile(basename($_)).".DSF;*,"
+                              ."$_.EXE;*,$_.OPT;*" } @{$unified_info{engines}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{scripts}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_;*" } @generated) || "@ !" -}
         - DELETE [...]*.MAP;*
