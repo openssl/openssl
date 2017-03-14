@@ -1,3 +1,6 @@
+dist: trusty
+sudo: required
+
 language: c
 cache: ccache
 
@@ -10,7 +13,7 @@ addons:
     apt:
         packages:
             - ccache
-            - golang
+            - golang-1.6
 
 os:
     - linux
@@ -40,11 +43,11 @@ matrix:
           addons:
               apt:
                   packages:
-                      - clang-3.6
+                      - clang-3.9
                   sources:
-                      - llvm-toolchain-precise-3.6
+                      - llvm-toolchain-trusty-3.9
                       - ubuntu-toolchain-r-test
-          compiler: clang-3.6
+          compiler: clang-3.9
           env: CONFIG_OPTS="--strict-warnings no-deprecated" BUILDONLY="yes"
         - os: linux
           addons:
@@ -68,31 +71,31 @@ matrix:
           addons:
               apt:
                   packages:
-                      - clang-3.6
+                      - clang-3.9
                   sources:
-                      - llvm-toolchain-precise-3.6
+                      - llvm-toolchain-trusty-3.9
                       - ubuntu-toolchain-r-test
-          compiler: clang-3.6
+          compiler: clang-3.9
           env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan"
         - os: linux
           addons:
               apt:
                   packages:
-                      - clang-3.6
+                      - clang-3.9
                   sources:
-                      - llvm-toolchain-precise-3.6
+                      - llvm-toolchain-trusty-3.9
                       - ubuntu-toolchain-r-test
-          compiler: clang-3.6
+          compiler: clang-3.9
           env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
           addons:
               apt:
                   packages:
-                      - clang-3.6
+                      - clang-3.9
                   sources:
-                      - llvm-toolchain-precise-3.6
+                      - llvm-toolchain-trusty-3.9
                       - ubuntu-toolchain-r-test
-          compiler: clang-3.6
+          compiler: clang-3.9
           env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
           addons:
@@ -149,7 +152,7 @@ before_script:
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           $srcdir/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
       else
-          if which ccache >/dev/null && [ "$CC" != clang-3.6 ]; then
+          if which ccache >/dev/null && [ "$CC" != clang-3.9 ]; then
               CC="ccache $CC";
           fi;
           $srcdir/config -v $CONFIG_OPTS;
