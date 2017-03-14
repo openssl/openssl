@@ -12,24 +12,27 @@ use OpenSSL::Test::Utils qw(anydisabled);
 setup("no_test_here");
 
 # We test version-flexible negotiation (undef) and each protocol version.
-my @protocols = (undef, "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2");
+my @protocols = (undef, "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "DTLSv1", "DTLSv1.2");
 
 my @is_disabled = (0);
-push @is_disabled, anydisabled("ssl3", "tls1", "tls1_1", "tls1_2");
+push @is_disabled, anydisabled("ssl3", "tls1", "tls1_1", "tls1_2", "dtls1", "dtls1_2");
 
 our @tests = ();
 
 sub generate_tests() {
-
     foreach (0..$#protocols) {
         my $protocol = $protocols[$_];
         my $protocol_name = $protocol || "flex";
         my $caalert;
+        my $method;
         if (!$is_disabled[$_]) {
             if ($protocol_name eq "SSLv3") {
                 $caalert = "BadCertificate";
             } else {
                 $caalert = "UnknownCA";
+            }
+            if ($protocol_name =~ m/^DTLS/) {
+                $method = "DTLS";
             }
             my $clihash;
             my $clisigtype;
@@ -51,7 +54,10 @@ sub generate_tests() {
                     "MinProtocol" => $protocol,
                     "MaxProtocol" => $protocol
                 },
-                test   => { "ExpectedResult" => "Success" },
+                test   => {
+                    "ExpectedResult" => "Success",
+                    "Method" => $method,
+                },
             };
 
             # Handshake with client cert requested but not required or received.
@@ -66,7 +72,10 @@ sub generate_tests() {
                     "MinProtocol" => $protocol,
                     "MaxProtocol" => $protocol
                 },
-                test   => { "ExpectedResult" => "Success" },
+                test   => {
+                    "ExpectedResult" => "Success",
+                    "Method" => $method,
+                },
             };
 
             # Handshake with client cert required but not present.
@@ -85,6 +94,7 @@ sub generate_tests() {
                 test   => {
                     "ExpectedResult" => "ServerFail",
                     "ExpectedServerAlert" => "HandshakeFailure",
+                    "Method" => $method,
                 },
             };
 
@@ -104,10 +114,12 @@ sub generate_tests() {
                     "Certificate" => test_pem("ee-client-chain.pem"),
                     "PrivateKey"  => test_pem("ee-key.pem"),
                 },
-                test   => { "ExpectedResult" => "Success",
-                            "ExpectedClientCertType" => "RSA",
-                            "ExpectedClientSignType" => $clisigtype,
-                            "ExpectedClientSignHash" => $clihash,
+                test   => {
+                    "ExpectedResult" => "Success",
+                    "ExpectedClientCertType" => "RSA",
+                    "ExpectedClientSignType" => $clisigtype,
+                    "ExpectedClientSignHash" => $clihash,
+                    "Method" => $method,
                 },
             };
 
@@ -128,10 +140,11 @@ sub generate_tests() {
                 test   => {
                     "ExpectedResult" => "ServerFail",
                     "ExpectedServerAlert" => $caalert,
+                    "Method" => $method,
                 },
             };
         }
     }
 }
- 
+
 generate_tests();
