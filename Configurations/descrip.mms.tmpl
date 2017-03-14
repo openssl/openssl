@@ -314,11 +314,11 @@ uninstall : uninstall_docs uninstall_sw
 # use $(LIBS), $(PROGRAMS), $(GENERATED) and $(ENGINES)directly.
 libclean :
         {- join("\n\t", map { "- DELETE $_.OLB;*" } @{$unified_info{libraries}}) || "@ !" -}
-        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.MAP;*,$_.OPT;*" } @shlibs) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.DSF;*,$_.MAP;*,$_.OPT;*" } @shlibs) || "@ !" -}
 
 clean : libclean
-        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{programs}}) || "@ !" -}
-        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{engines}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.DSF;*,$_.OPT;*" } @{$unified_info{programs}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.DSF;*,$_.OPT;*" } @{$unified_info{engines}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{scripts}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_;*" } @generated) || "@ !" -}
         - DELETE [...]*.MAP;*
@@ -672,7 +672,7 @@ $shlib.EXE : $lib.OLB $deps $ordinalsfile
         WRITE OPT_FILE "$lib.OLB/LIBRARY"
         $write_opt
         CLOSE OPT_FILE
-        LINK /MAP=$shlib.MAP /FULL/SHARE=$shlib.EXE $shlib.OPT/OPT \$(EX_LIBS)
+        LINK \$(LDFLAGS)/SHARE=\$\@ $shlib.OPT/OPT \$(EX_LIBS)
         DELETE $shlib.SYMVEC;*
         PURGE $shlib.EXE,$shlib.OPT,$shlib.MAP
 EOF
@@ -711,7 +711,7 @@ $lib.EXE : $deps
         $write_opt1
         $write_opt2
         CLOSE OPT_FILE
-        LINK /MAP=$lib.MAP /FULL/SHARE=$lib.EXE $lib.OPT/OPT \$(EX_LIBS)
+        LINK \$(LDFLAGS)/SHARE=\$\@ $lib.OPT/OPT \$(EX_LIBS)
         - PURGE $lib.EXE,$lib.OPT,$lib.MAP
 EOF
   }
@@ -775,7 +775,7 @@ $bin.EXE : $deps
         $write_opt2
         CLOSE OPT_FILE
         - pipe SPAWN/WAIT/NOLOG/OUT=$bin.LINKLOG -
-                    LINK/EXEC=$bin.EXE \$(LDFLAGS) $bin.OPT/OPT \$(EX_LIBS) ; -
+                    LINK \$(LDFLAGS)/EXEC=\$\@ $bin.OPT/OPT \$(EX_LIBS) ; -
                link_status = \$status ; link_severity = link_status .AND. 7
         @ search_severity = 1
         -@ IF link_severity .EQ. 0 THEN -
