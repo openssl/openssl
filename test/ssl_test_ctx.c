@@ -322,6 +322,12 @@ IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CLIENT_CONF, client, alpn_protocols)
 IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_SERVER_CONF, server, alpn_protocols)
 IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, expected_alpn_protocol)
 
+/* SRP options */
+IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CLIENT_CONF, client, srp_user)
+IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_SERVER_CONF, server, srp_user)
+IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CLIENT_CONF, client, srp_password)
+IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_SERVER_CONF, server, srp_password)
+
 /* Handshake mode */
 
 static const test_enum ssl_handshake_modes[] = {
@@ -576,6 +582,8 @@ static const ssl_test_client_option ssl_test_client_options[] = {
     { "ALPNProtocols", &parse_client_alpn_protocols },
     { "CTValidation", &parse_ct_validation },
     { "RenegotiateCiphers", &parse_client_reneg_ciphers},
+    { "SRPUser", &parse_client_srp_user },
+    { "SRPPassword", &parse_client_srp_password },
 };
 
 /* Nested server options. */
@@ -590,6 +598,8 @@ static const ssl_test_server_option ssl_test_server_options[] = {
     { "ALPNProtocols", &parse_server_alpn_protocols },
     { "BrokenSessionTicket", &parse_server_broken_session_ticket },
     { "CertStatus", &parse_certstatus },
+    { "SRPUser", &parse_server_srp_user },
+    { "SRPPassword", &parse_server_srp_password },
 };
 
 /*
