@@ -24,7 +24,7 @@ IF[{- !$disabled{tests} -}]
           evp_test evp_extra_test igetest v3nametest v3ext \
           crltest danetest bad_dtls_test \
           constant_time_test verify_extra_test clienthellotest \
-          packettest asynctest secmemtest srptest memleaktest \
+          packettest asynctest secmemtest srptest memleaktest stack_test \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
@@ -209,6 +209,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[memleaktest]=memleaktest.c
   INCLUDE[memleaktest]=../include
   DEPEND[memleaktest]=../libcrypto
+
+  SOURCE[stack_test]=stack_test.c testutil.c test_main.c
+  INCLUDE[stack_test]=.. ../include
+  DEPEND[stack_test]=../libcrypto
 
   SOURCE[dtlsv1listentest]=dtlsv1listentest.c
   INCLUDE[dtlsv1listentest]=.. ../include
