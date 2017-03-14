@@ -1016,7 +1016,7 @@ int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, unsigned int context,
      * MUST only be sent if we've requested a status
      * request message. In TLS <= 1.2 it must also be empty.
      */
-    if (s->ext.status_type == TLSEXT_STATUSTYPE_nothing
+    if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp
             || (!SSL_IS_TLS13(s) && PACKET_remaining(pkt) > 0)) {
         *al = SSL_AD_UNSUPPORTED_EXTENSION;
         return 0;
