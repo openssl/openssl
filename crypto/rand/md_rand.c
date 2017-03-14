@@ -91,11 +91,6 @@ DEFINE_RUN_ONCE_STATIC(do_rand_lock_init)
     return rand_lock != NULL && rand_tmp_lock != NULL;
 }
 
-RAND_METHOD *RAND_OpenSSL(void)
-{
-    return (&rand_meth);
-}
-
 static void rand_cleanup(void)
 {
     OPENSSL_cleanse(state, sizeof(state));
@@ -665,3 +660,160 @@ void rand_hw_xor(unsigned char *buf, size_t num)
 }
 
 #endif
+
+#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__) && !defined(PREDICT)
+
+# include "s390x_arch.h"
+
+void s390x_drng(void *buf, size_t buflen, const void *seed, size_t seedlen,
+                int fc, void  *state);
+void s390x_trng(void *buf, size_t buflen);
+
+/* SHA-512-DRNG [NIST SP 800-90A, Rev 1] */
+
+# define S390X_MAXBYTES		65536
+# define S390X_MAXCOUNTER	65536
+# define S390X_MAXADD		512
+
+static struct {
+    unsigned int pad;
+    unsigned int counter;
+    unsigned int opaque[58];
+} s390x_state;
+
+/* may only be called within the lock */
+static void _s390x_seed(void) {
+    unsigned char seed[S390X_MAXADD];
+
+    s390x_trng(seed, sizeof(seed));
+    s390x_drng(NULL, 0, seed, sizeof(seed), S390X_PRNO_SHA_512_DRNG_FC |
+               S390X_PRNO_SEED, &s390x_state);
+    OPENSSL_cleanse(seed, sizeof(seed));
+}
+
+static int s390x_rand_add(const void *buf, int num, double add_entropy)
+{
+    if (num <= 0)
+        return 1;
+
+    if (!RUN_ONCE(&rand_lock_init, do_rand_lock_init))
+        return 0;
+
+    CRYPTO_THREAD_write_lock(rand_lock);
+
+    if (!initialized) {
+        _s390x_seed();
+        initialized = 1;
+    }
+
+    if (s390x_state.counter > S390X_MAXCOUNTER)
+        _s390x_seed();
+
+    while (num > S390X_MAXADD) {
+        s390x_drng(NULL, 0, buf, S390X_MAXADD, S390X_PRNO_SHA_512_DRNG_FC |
+                   S390X_PRNO_SEED, &s390x_state);
+        buf = (unsigned char *)buf + S390X_MAXADD;
+        num -= S390X_MAXADD;
+    }
+
+    s390x_drng(NULL, 0, buf, num, S390X_PRNO_SHA_512_DRNG_FC | S390X_PRNO_SEED,
+               &s390x_state);
+
+    CRYPTO_THREAD_unlock(rand_lock);
+    return 1;
+}
+
+static int s390x_rand_seed(const void *buf, int num)
+{
+    return s390x_rand_add(buf, num, (double)num);
+}
+
+static int s390x_rand_bytes(unsigned char *buf, int num)
+{
+    if (num <= 0)
+        return 1;
+
+    if (!RUN_ONCE(&rand_lock_init, do_rand_lock_init))
+        return 0;
+
+    CRYPTO_THREAD_write_lock(rand_lock);
+
+    if (!initialized) {
+        _s390x_seed();
+        initialized = 1;
+    }
+
+    while (num > S390X_MAXBYTES) {
+        if (s390x_state.counter > S390X_MAXCOUNTER)
+            _s390x_seed();
+
+        s390x_drng(buf, S390X_MAXBYTES, NULL, 0, S390X_PRNO_SHA_512_DRNG_FC,
+                   &s390x_state);
+        buf += S390X_MAXBYTES;
+        num -= S390X_MAXBYTES;
+    }
+
+    if (s390x_state.counter > S390X_MAXCOUNTER)
+        _s390x_seed();
+
+    s390x_drng(buf, num, NULL, 0, S390X_PRNO_SHA_512_DRNG_FC, &s390x_state);
+
+    CRYPTO_THREAD_unlock(rand_lock);
+    return 1;
+}
+
+static void s390x_rand_cleanup(void)
+{
+    if (!RUN_ONCE(&rand_lock_init, do_rand_lock_init))
+        return;
+
+    CRYPTO_THREAD_write_lock(rand_lock);
+
+    OPENSSL_cleanse(&s390x_state, sizeof(s390x_state));
+    initialized = 0;
+
+    CRYPTO_THREAD_unlock(rand_lock);
+    CRYPTO_THREAD_lock_free(rand_lock);
+    CRYPTO_THREAD_lock_free(rand_tmp_lock);
+}
+
+static int s390x_rand_status(void)
+{
+    if (!RUN_ONCE(&rand_lock_init, do_rand_lock_init))
+        return 0;
+
+    CRYPTO_THREAD_write_lock(rand_lock);
+
+    if (!initialized) {
+        _s390x_seed();
+        initialized = 1;
+    }
+
+    CRYPTO_THREAD_unlock(rand_lock);
+    return 1;
+}
+
+static RAND_METHOD s390x_rand_meth = {
+    s390x_rand_seed,
+    s390x_rand_bytes,
+    s390x_rand_cleanup,
+    s390x_rand_add,
+# if OPENSSL_API_COMPAT < 0x10100000L
+    s390x_rand_bytes,
+# else
+    NULL,
+# endif
+    s390x_rand_status,
+};
+
+#endif
+
+RAND_METHOD *RAND_OpenSSL(void)
+{
+#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__) && !defined(PREDICT)
+    if ((OPENSSL_s390xcap_P[18] & S390X_PRNO_TRNG) &&
+        (OPENSSL_s390xcap_P[17] & S390X_PRNO_SHA_512_DRNG))
+        return &s390x_rand_meth;
+#endif
+    return (&rand_meth);
+}

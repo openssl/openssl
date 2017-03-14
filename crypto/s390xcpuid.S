@@ -215,6 +215,32 @@ OPENSSL_instrument_bus2:
 	br	%r14
 .size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
 
+.globl	s390x_trng
+.type	s390x_trng,@function
+.align	16
+s390x_trng:
+	lghi	%r5,0
+	lghi	%r0,114		# prno capability vector checked by caller
+	.long	0xb93c0042	# prno %r4,%r2
+	brc	1,.-4		# pay attention to "partial completion"
+	br	%r14
+.size	s390x_trng,.-s390x_trng
+
+.globl	s390x_drng
+.type	s390x_drng,@function
+.align	16
+s390x_drng:
+#if !defined(__s390x__) && !defined(__s390x)
+	l	%r1,96(%r15)
+#else
+	lg	%r1,160(%r15)
+#endif
+	lr	%r0,%r6		# prno capability vector checked by caller
+	.long	0xb93c0024	# prno %r2,%r4
+	brc	1,.-4		# pay attention to "partial completion"
+	br	%r14
+.size	s390x_drng,.-s390x_drng
+
 .section	.init
 	brasl	%r14,OPENSSL_cpuid_setup
 

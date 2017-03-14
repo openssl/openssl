@@ -46,6 +46,7 @@ static int vx_enabled(void)
 #endif
 }
 
+
 void OPENSSL_s390x_facilities(void);
 
 void OPENSSL_cpuid_setup(void)

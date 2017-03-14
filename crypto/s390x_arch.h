@@ -74,4 +74,7 @@ extern uint64_t OPENSSL_s390xcap_P[];
 # define S390X_KMA_LAAD		(1ULL <<  9)
 # define S390X_KMA_HS		(1ULL << 10)
 
+/* %r0 function codes */
+# define S390X_PRNO_SHA_512_DRNG_FC	3
+
 #endif
