@@ -176,6 +176,8 @@ script:
     - $make
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
+              sudo dpkg --add-architecture i386;
+              sudo apt-get update;
               sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install wine;
               export EXE_SHELL="wine" WINEPREFIX=`pwd`;
           fi;
