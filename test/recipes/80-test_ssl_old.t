@@ -416,29 +416,30 @@ sub testssl {
             push @exkeys, "-s_cert", "certE.ss", "-s_key", "keyE.ss";
         }
 
-	my @protocols = ();
+	my %protocols = ();
 	# FIXME: I feel unsure about the following line, is that really just TLSv1.2, or is it all of the SSLv3/TLS protocols?
-        push(@protocols, "TLSv1.3") unless $no_tls1_3;
-        push(@protocols, "TLSv1.2") unless $no_tls1_2;
-        push(@protocols, "SSLv3") unless $no_ssl3;
-	my $protocolciphersuitcount = 0;
-	my %ciphersuites =
-	    map { my @c =
-		      map { split(/:/, $_) }
-		      run(app(["openssl", "ciphers", "${_}:$ciphers"]),
-                          capture => 1);
-		  map { s/\R//; } @c;  # chomp @c;
-		  $protocolciphersuitcount += scalar @c;
-		  $_ => [ @c ] } @protocols;
+	$protocols{"TLSv1.3"} = 1 unless $no_tls1_3;
+	$protocols{"TLSv1.2"} = 1 unless $no_tls1_2;
+	$protocols{"SSLv3"} = 1 unless $no_ssl3;
+	my $protocolciphersuitecount = 0;
+	my %ciphersuites = ();
+	foreach (map { s|\R||; $_ }
+		 run(app(["openssl", "ciphers", "-v", "ALL:$ciphers"]), capture => 1)) {
+	    my ($cipher, $protocol, @rest) = split /\s+/, $_;
+	    if (defined $protocols{$protocol}) {
+		push @{$ciphersuites{$protocol}}, $cipher;
+		$protocolciphersuitecount++;
+	    }
+	}
 
         plan skip_all => "None of the ciphersuites to test are available in this OpenSSL build"
-            if $protocolciphersuitcount + scalar(@protocols) == 0;
+            if $protocolciphersuitecount + scalar(keys %ciphersuites) == 0;
 
         # The count of protocols is because in addition to the ciphersuits
         # we got above, we're running a weak DH test for each protocol
-        plan tests => $protocolciphersuitcount + scalar(@protocols);
+        plan tests => $protocolciphersuitecount + scalar(keys %ciphersuites);
 
-        foreach my $protocol (@protocols) {
+        foreach my $protocol (sort keys %ciphersuites) {
             note "Testing ciphersuites for $protocol";
             my $flag = "";
             if ($protocol eq "SSLv3") {
