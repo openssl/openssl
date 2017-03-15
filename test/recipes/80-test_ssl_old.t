@@ -445,30 +445,31 @@ sub testssl {
         }
 
 	my @protocols = ();
-	# FIXME: I feel unsure about the following line, is that really just TLSv1.2, or is it all of the SSLv3/TLS protocols?
-        push(@protocols, "TLSv1.2") unless $no_tls1_2;
-        push(@protocols, "SSLv3") unless $no_ssl3;
-	my $protocolciphersuitcount = 0;
-	my %ciphersuites =
-	    map { my @c =
-		      map { split(/:/, $_) }
-		      run(app(["openssl", "ciphers", "${_}:$ciphers"]),
-                          capture => 1);
-		  map { s/\R//; } @c;  # chomp @c;
-		  $protocolciphersuitcount += scalar @c;
-		  $_ => [ @c ] } @protocols;
+	# We only use the flags that ssltest_old understands
+	push @protocols, "-tls1_2" unless $no_tls1_2;
+	push @protocols, "-tls1" unless $no_tls1;
+	push @protocols, "-ssl3" unless $no_ssl3;
+	my $protocolciphersuitecount = 0;
+	my %ciphersuites = ();
+	foreach my $protocol (@protocols) {
+	    $ciphersuites{$protocol} =
+		[ map { s|\R||; split(/:/, $_) }
+		  run(app(["openssl", "ciphers", "-s", $protocol,
+			   "ALL:$ciphers"]), capture => 1) ];
+	    $protocolciphersuitecount += scalar @{$ciphersuites{$protocol}};
+	}
 
         plan skip_all => "None of the ciphersuites to test are available in this OpenSSL build"
-            if $protocolciphersuitcount + scalar(@protocols) == 0;
+            if $protocolciphersuitecount + scalar(keys %ciphersuites) == 0;
 
         # The count of protocols is because in addition to the ciphersuits
         # we got above, we're running a weak DH test for each protocol
-	plan tests => $protocolciphersuitcount + scalar(@protocols);
+	plan tests => $protocolciphersuitecount + scalar(keys %ciphersuites);
 
-	foreach my $protocol (@protocols) {
+	foreach my $protocol (sort keys %ciphersuites) {
 	    note "Testing ciphersuites for $protocol";
 	    foreach my $cipher (@{$ciphersuites{$protocol}}) {
-                if ($protocol eq "SSLv3" && $cipher =~ /ECDH/ ) {
+                if ($protocol eq "-ssl3" && $cipher =~ /ECDH/ ) {
                     note "*****SKIPPING $protocol $cipher";
                     ok(1);
                 } else {
