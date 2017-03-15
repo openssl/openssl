@@ -58,6 +58,8 @@ typedef struct handshake_result {
     int client_sign_hash;
     /* client signature type */
     int client_sign_type;
+    /* Client CA names */
+    STACK_OF(X509_NAME) *client_ca_names;
 } HANDSHAKE_RESULT;
 
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void);
