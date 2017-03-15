@@ -119,6 +119,34 @@ sub generate_tests() {
                     "ExpectedClientCertType" => "RSA",
                     "ExpectedClientSignType" => $clisigtype,
                     "ExpectedClientSignHash" => $clihash,
+                    "ExpectedClientCANames" => "empty",
+                    "Method" => $method,
+                },
+            };
+
+            # Successful handshake with client authentication non-empty names
+            push @tests, {
+                name => "client-auth-${protocol_name}-require-non-empty-names",
+                server => {
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
+                    "ClientSignatureAlgorithms" => $clisigalgs,
+                    "ClientCAFile" => test_pem("root-cert.pem"),
+                    "VerifyCAFile" => test_pem("root-cert.pem"),
+                    "VerifyMode" => "Request",
+                },
+                client => {
+                    "MinProtocol" => $protocol,
+                    "MaxProtocol" => $protocol,
+                    "Certificate" => test_pem("ee-client-chain.pem"),
+                    "PrivateKey"  => test_pem("ee-key.pem"),
+                },
+                test   => {
+                    "ExpectedResult" => "Success",
+                    "ExpectedClientCertType" => "RSA",
+                    "ExpectedClientSignType" => $clisigtype,
+                    "ExpectedClientSignHash" => $clihash,
+                    "ExpectedClientCANames" => test_pem("root-cert.pem"),
                     "Method" => $method,
                 },
             };
