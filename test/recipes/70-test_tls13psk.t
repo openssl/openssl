@@ -37,6 +37,11 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
+use constant {
+    PSK_LAST_FIRST_CH => 0,
+    ILLEGAL_EXT_SECOND_CH => 1
+};
+
 #Most PSK tests are done in test_ssl_new. This just checks sending a PSK
 #extension when it isn't in the last place in a ClientHello
 
@@ -45,29 +50,82 @@ my $proxy = TLSProxy::Proxy->new(
 $proxy->clientflags("-sess_out ".$session);
 $proxy->sessionfile($session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 2;
+plan tests => 4;
 ok(TLSProxy::Message->success(), "Initial connection");
 
 #Test 2: Attempt a resume with PSK not in last place. Should fail
 $proxy->clear();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->filter(\&modify_psk_filter);
+my $testtype = PSK_LAST_FIRST_CH;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "PSK not last");
+
+#Test 3: Attempt a resume after an HRR where PSK hash matches selected
+#        ciperhsuite. Should see PSK on second ClientHello
+$proxy->clear();
+$proxy->clientflags("-sess_in ".$session);
+$proxy->serverflags("-curves P-256");
+$proxy->filter(undef);
+$proxy->start();
+#Check if the PSK is present in the second ClientHello
+my $ch2 = ${$proxy->message_list}[2];
+my $ch2seen = defined $ch2 && $ch2->mt() == TLSProxy::Message::MT_CLIENT_HELLO;
+my $pskseen = $ch2seen
+              && defined ${$ch2->{extension_data}}{TLSProxy::Message::EXT_PSK};
+ok($pskseen, "PSK hash matches");
+
+#Test 4: Attempt a resume after an HRR where PSK hash does not match selected
+#        ciphersuite. Should not see PSK on second ClientHello
+$proxy->clear();
+$proxy->clientflags("-sess_in ".$session);
+$proxy->filter(\&modify_psk_filter);
+$proxy->serverflags("-curves P-256");
+$proxy->cipherc("TLS13-AES-128-GCM-SHA256:TLS13-AES-256-GCM-SHA384");
+$proxy->ciphers("TLS13-AES-256-GCM-SHA384");
+#We force an early failure because TLS Proxy doesn't actually support
+#TLS13-AES-256-GCM-SHA384. That doesn't matter for this test though.
+$testtype = ILLEGAL_EXT_SECOND_CH;
+$proxy->start();
+#Check if the PSK is present in the second ClientHello
+$ch2 = ${$proxy->message_list}[2];
+$ch2seen = defined $ch2 && $ch2->mt() == TLSProxy::Message::MT_CLIENT_HELLO;
+$pskseen = $ch2seen
+           && defined ${$ch2->extension_data}{TLSProxy::Message::EXT_PSK};
+ok($ch2seen && !$pskseen, "PSK hash does not match");
+
 
 unlink $session;
 
 sub modify_psk_filter
 {
     my $proxy = shift;
+    my $flight;
+    my $message;
 
-    # We're only interested in the initial ClientHello
-    return if ($proxy->flight != 0);
-
-    foreach my $message (@{$proxy->message_list}) {
-        if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
-            $message->set_extension(TLSProxy::Message::EXT_FORCE_LAST, "");
-            $message->repack();
-        }
+    if ($testtype == PSK_LAST_FIRST_CH) {
+        $flight = 0;
+    } else {
+        $flight = 2;
     }
+
+    # Only look at the first or second ClientHello
+    return if $proxy->flight != $flight;
+
+    if ($testtype == PSK_LAST_FIRST_CH) {
+        $message = ${$proxy->message_list}[0];
+    } else {
+        $message = ${$proxy->message_list}[2];
+    }
+
+    return if (!defined $message
+               || $message->mt != TLSProxy::Message::MT_CLIENT_HELLO);
+
+    if ($testtype == PSK_LAST_FIRST_CH) {
+        $message->set_extension(TLSProxy::Message::EXT_FORCE_LAST, "");
+    } else {
+        #Deliberately break the connection
+        $message->set_extension(TLSProxy::Message::EXT_SUPPORTED_GROUPS, "");
+    }
+    $message->repack();
 }
