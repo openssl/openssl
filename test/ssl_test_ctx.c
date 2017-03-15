@@ -535,6 +535,22 @@ __owur static int parse_expected_client_sign_hash(SSL_TEST_CTX *test_ctx,
                                     value);
 }
 
+__owur static int parse_expected_ca_names(STACK_OF(X509_NAME) **pnames,
+                                          const char *value)
+{
+    if (value == NULL)
+        return 0;
+    if (!strcmp(value, "empty"))
+        *pnames = sk_X509_NAME_new_null();
+    else
+        *pnames = SSL_load_client_CA_file(value);
+    return *pnames != NULL;
+}
+__owur static int parse_expected_client_ca_names(SSL_TEST_CTX *test_ctx,
+                                                 const char *value)
+{
+    return parse_expected_ca_names(&test_ctx->expected_client_ca_names, value);
+}
 
 /* Known test options and their corresponding parse methods. */
 
@@ -567,6 +583,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ExpectedClientCertType", &parse_expected_client_cert_type },
     { "ExpectedClientSignHash", &parse_expected_client_sign_hash },
     { "ExpectedClientSignType", &parse_expected_client_sign_type },
+    { "ExpectedClientCANames", &parse_expected_client_ca_names },
 };
 
 /* Nested client options. */
@@ -644,6 +661,7 @@ void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx)
     ssl_test_ctx_free_extra_data(ctx);
     OPENSSL_free(ctx->expected_npn_protocol);
     OPENSSL_free(ctx->expected_alpn_protocol);
+    sk_X509_NAME_pop_free(ctx->expected_client_ca_names, X509_NAME_free);
     OPENSSL_free(ctx);
 }
 
