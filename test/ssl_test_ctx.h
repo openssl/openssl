@@ -127,6 +127,7 @@ typedef struct {
     char *srp_password;
     /* Forced PHA */
     int force_pha;
+    char *session_ticket_app_data;
 } SSL_TEST_SERVER_CONF;
 
 typedef struct {
@@ -216,6 +217,8 @@ typedef struct {
     /* Whether to expect a session id from the server */
     ssl_session_id_t session_id_expected;
     char *expected_cipher;
+    /* Expected Session Ticket Application Data */
+    char *expected_session_ticket_app_data;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);

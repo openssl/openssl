@@ -591,6 +591,8 @@ struct ssl_session_st {
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
 # endif
+    unsigned char *ticket_appdata;
+    size_t ticket_appdata_len;
     uint32_t flags;
     CRYPTO_RWLOCK *lock;
 };
@@ -1025,6 +1027,11 @@ struct ssl_ctx_st {
     size_t (*record_padding_cb)(SSL *s, int type, size_t len, void *arg);
     void *record_padding_arg;
     size_t block_padding;
+
+    /* Session ticket appdata */
+    SSL_CTX_generate_session_ticket_fn generate_ticket_cb;
+    SSL_CTX_decrypt_session_ticket_fn decrypt_ticket_cb;
+    void *ticket_cb_data;
 };
 
 struct ssl_st {
@@ -2446,30 +2453,12 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
 
 __owur int tls1_set_server_sigalgs(SSL *s);
 
-/* Return codes for tls_get_ticket_from_client() and tls_decrypt_ticket() */
-typedef enum ticket_en {
-    /* fatal error, malloc failure */
-    TICKET_FATAL_ERR_MALLOC,
-    /* fatal error, either from parsing or decrypting the ticket */
-    TICKET_FATAL_ERR_OTHER,
-    /* No ticket present */
-    TICKET_NONE,
-    /* Empty ticket present */
-    TICKET_EMPTY,
-    /* the ticket couldn't be decrypted */
-    TICKET_NO_DECRYPT,
-    /* a ticket was successfully decrypted */
-    TICKET_SUCCESS,
-    /* same as above but the ticket needs to be renewed */
-    TICKET_SUCCESS_RENEW
-} TICKET_RETURN;
-
-__owur TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
-                                                SSL_SESSION **ret);
-__owur TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
-                                        size_t eticklen,
-                                        const unsigned char *sess_id,
-                                        size_t sesslen, SSL_SESSION **psess);
+__owur SSL_TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
+                                                    SSL_SESSION **ret);
+__owur SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
+                                            size_t eticklen,
+                                            const unsigned char *sess_id,
+                                            size_t sesslen, SSL_SESSION **psess);
 
 __owur int tls_use_ticket(SSL *s);
 

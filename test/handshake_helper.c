@@ -38,6 +38,7 @@ void HANDSHAKE_RESULT_free(HANDSHAKE_RESULT *result)
     OPENSSL_free(result->server_npn_negotiated);
     OPENSSL_free(result->client_alpn_negotiated);
     OPENSSL_free(result->server_alpn_negotiated);
+    OPENSSL_free(result->result_session_ticket_app_data);
     sk_X509_NAME_pop_free(result->server_ca_names, X509_NAME_free);
     sk_X509_NAME_pop_free(result->client_ca_names, X509_NAME_free);
     OPENSSL_free(result->cipher);
@@ -64,6 +65,7 @@ typedef struct ctx_data_st {
     size_t alpn_protocols_len;
     char *srp_user;
     char *srp_password;
+    char *session_ticket_app_data;
 } CTX_DATA;
 
 /* |ctx_data| itself is stack-allocated. */
@@ -77,6 +79,8 @@ static void ctx_data_free_data(CTX_DATA *ctx_data)
     ctx_data->srp_user = NULL;
     OPENSSL_free(ctx_data->srp_password);
     ctx_data->srp_password = NULL;
+    OPENSSL_free(ctx_data->session_ticket_app_data);
+    ctx_data->session_ticket_app_data = NULL;
 }
 
 static int ex_data_idx;
@@ -453,6 +457,26 @@ static int server_srp_cb(SSL *s, int *ad, void *arg)
 }
 #endif  /* !OPENSSL_NO_SRP */
 
+static int generate_session_ticket_cb(SSL *s, void *arg)
+{
+    CTX_DATA *server_ctx_data = arg;
+    SSL_SESSION *ss = SSL_get_session(s);
+    char *app_data = server_ctx_data->session_ticket_app_data;
+
+    if (ss == NULL || app_data == NULL)
+        return 0;
+
+    return SSL_SESSION_set1_ticket_appdata(ss, app_data, strlen(app_data));
+}
+
+static SSL_TICKET_RETURN decrypt_session_ticket_cb(SSL *s, SSL_SESSION *ss,
+                                                   const unsigned char *keyname,
+                                                   size_t keyname_len,
+                                                   SSL_TICKET_RETURN retv, void *arg)
+{
+    return retv;
+}
+
 /*
  * Configure callbacks and other properties that can't be set directly
  * in the server/client CONF.
@@ -605,6 +629,21 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                                         alpn_protos_len), 0))
             goto err;
         OPENSSL_free(alpn_protos);
+    }
+
+    if (extra->server.session_ticket_app_data != NULL) {
+        server_ctx_data->session_ticket_app_data =
+            OPENSSL_strdup(extra->server.session_ticket_app_data);
+        SSL_CTX_set_session_ticket_cb(server_ctx, generate_session_ticket_cb,
+                                      decrypt_session_ticket_cb, server_ctx_data);
+    }
+    if (extra->server2.session_ticket_app_data != NULL) {
+        if (!TEST_ptr(server2_ctx))
+            goto err;
+        server2_ctx_data->session_ticket_app_data =
+            OPENSSL_strdup(extra->server2.session_ticket_app_data);
+        SSL_CTX_set_session_ticket_cb(server2_ctx, NULL,
+                                      decrypt_session_ticket_cb, server2_ctx_data);
     }
 
     /*
@@ -1582,6 +1621,11 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     SSL_get0_alpn_selected(server.ssl, &proto, &proto_len);
     ret->server_alpn_negotiated = dup_str(proto, proto_len);
+
+    if ((sess = SSL_get0_session(server.ssl)) != NULL) {
+        SSL_SESSION_get0_ticket_appdata(sess, (void**)&tick, &tick_len);
+        ret->result_session_ticket_app_data = OPENSSL_strndup((const char*)tick, tick_len);
+    }
 
     ret->client_resumed = SSL_session_reused(client.ssl);
     ret->server_resumed = SSL_session_reused(server.ssl);

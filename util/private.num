@@ -248,7 +248,9 @@ SSL_CTX_build_cert_chain                define
 SSL_CTX_clear_chain_certs               define
 SSL_CTX_clear_extra_chain_certs         define
 SSL_CTX_clear_mode                      define
+SSL_CTX_decrypt_session_ticket_fn       define
 SSL_CTX_disable_ct                      define
+SSL_CTX_generate_session_ticket_fn      define
 SSL_CTX_get0_chain_certs                define
 SSL_CTX_get_default_read_ahead          define
 SSL_CTX_get_max_cert_list               define

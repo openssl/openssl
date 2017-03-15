@@ -134,6 +134,7 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     dest->peer_chain = NULL;
     dest->peer = NULL;
     dest->ext.tick_nonce = NULL;
+    dest->ticket_appdata = NULL;
     memset(&dest->ex_data, 0, sizeof(dest->ex_data));
 
     /* We deliberately don't copy the prev and next pointers */
@@ -243,6 +244,13 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
         }
     }
 #endif
+
+    if (src->ticket_appdata != NULL) {
+        dest->ticket_appdata =
+            OPENSSL_memdup(src->ticket_appdata, src->ticket_appdata_len);
+        if (dest->ticket_appdata == NULL)
+            goto err;
+    }
 
     return dest;
  err:
@@ -471,7 +479,7 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
     SSL_SESSION *ret = NULL;
     int fatal = 0, discard;
     int try_session_cache = 0;
-    TICKET_RETURN r;
+    SSL_TICKET_RETURN r;
 
     if (SSL_IS_TLS13(s)) {
         if (!tls_parse_extension(s, TLSEXT_IDX_psk_kex_modes,
@@ -486,20 +494,20 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
         /* sets s->ext.ticket_expected */
         r = tls_get_ticket_from_client(s, hello, &ret);
         switch (r) {
-        case TICKET_FATAL_ERR_MALLOC:
-        case TICKET_FATAL_ERR_OTHER:
+        case SSL_TICKET_FATAL_ERR_MALLOC:
+        case SSL_TICKET_FATAL_ERR_OTHER:
             fatal = 1;
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_PREV_SESSION,
                      ERR_R_INTERNAL_ERROR);
             goto err;
-        case TICKET_NONE:
-        case TICKET_EMPTY:
+        case SSL_TICKET_NONE:
+        case SSL_TICKET_EMPTY:
             if (hello->session_id_len > 0)
                 try_session_cache = 1;
             break;
-        case TICKET_NO_DECRYPT:
-        case TICKET_SUCCESS:
-        case TICKET_SUCCESS_RENEW:
+        case SSL_TICKET_NO_DECRYPT:
+        case SSL_TICKET_SUCCESS:
+        case SSL_TICKET_SUCCESS_RENEW:
             break;
         }
     }
@@ -806,6 +814,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 #endif
     OPENSSL_free(ss->ext.alpn_selected);
     OPENSSL_free(ss->ext.tick_nonce);
+    OPENSSL_free(ss->ticket_appdata);
     CRYPTO_THREAD_lock_free(ss->lock);
     OPENSSL_clear_free(ss, sizeof(*ss));
 }
@@ -1267,6 +1276,29 @@ void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
                                              unsigned int cookie_len))
 {
     ctx->app_verify_cookie_cb = cb;
+}
+
+int SSL_SESSION_set1_ticket_appdata(SSL_SESSION *ss, const void *data, size_t len)
+{
+    OPENSSL_free(ss->ticket_appdata);
+    ss->ticket_appdata_len = 0;
+    if (data == NULL || len == 0) {
+        ss->ticket_appdata = NULL;
+        return 1;
+    }
+    ss->ticket_appdata = OPENSSL_memdup(data, len);
+    if (ss->ticket_appdata != NULL) {
+        ss->ticket_appdata_len = len;
+        return 1;
+    }
+    return 0;
+}
+
+int SSL_SESSION_get0_ticket_appdata(SSL_SESSION *ss, void **data, size_t *len)
+{
+    *data = ss->ticket_appdata;
+    *len = ss->ticket_appdata_len;
+    return 1;
 }
 
 IMPLEMENT_PEM_rw(SSL_SESSION, SSL_SESSION, PEM_STRING_SSL_SESSION, SSL_SESSION)

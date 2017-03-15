@@ -2294,6 +2294,38 @@ __owur const struct openssl_ssl_test_functions *SSL_test_functions(void);
 __owur int SSL_free_buffers(SSL *ssl);
 __owur int SSL_alloc_buffers(SSL *ssl);
 
+/* Return codes for tls_get_ticket_from_client() and tls_decrypt_ticket() */
+typedef int SSL_TICKET_RETURN;
+
+/* Support for ticket appdata */
+/* fatal error, malloc failure */
+# define SSL_TICKET_FATAL_ERR_MALLOC 0
+/* fatal error, either from parsing or decrypting the ticket */
+# define SSL_TICKET_FATAL_ERR_OTHER  1
+/* No ticket present */
+# define SSL_TICKET_NONE             2
+/* Empty ticket present */
+# define SSL_TICKET_EMPTY            3
+/* the ticket couldn't be decrypted */
+# define SSL_TICKET_NO_DECRYPT       4
+/* a ticket was successfully decrypted */
+# define SSL_TICKET_SUCCESS          5
+/* same as above but the ticket needs to be renewed */
+# define SSL_TICKET_SUCCESS_RENEW    6
+
+typedef int (*SSL_CTX_generate_session_ticket_fn)(SSL *s, void *arg);
+typedef SSL_TICKET_RETURN (*SSL_CTX_decrypt_session_ticket_fn)(SSL *s, SSL_SESSION *ss,
+                                                               const unsigned char *keyname,
+                                                               size_t keyname_length,
+                                                               SSL_TICKET_RETURN retv,
+                                                               void *arg);
+int SSL_CTX_set_session_ticket_cb(SSL_CTX *ctx,
+                                  SSL_CTX_generate_session_ticket_fn gen_cb,
+                                  SSL_CTX_decrypt_session_ticket_fn dec_cb,
+                                  void *arg);
+int SSL_SESSION_set1_ticket_appdata(SSL_SESSION *ss, const void *data, size_t len);
+int SSL_SESSION_get0_ticket_appdata(SSL_SESSION *ss, void **data, size_t *len);
+
 extern const char SSL_version_str[];
 
 
