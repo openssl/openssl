@@ -61,7 +61,7 @@ extern "C" {
 #  define DEVRANDOM_EGD "/var/run/egd-pool","/dev/egd-pool","/etc/egd-pool","/etc/entropy"
 # endif
 
-# if defined(OPENSSL_SYS_VXWORKS)
+# if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
 #  define NO_SYS_PARAM_H
 #  define NO_CHMOD
 #  define NO_SYSLOG
