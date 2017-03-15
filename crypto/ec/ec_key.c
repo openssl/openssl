@@ -177,6 +177,11 @@ int EC_KEY_up_ref(EC_KEY *r)
     return ((i > 1) ? 1 : 0);
 }
 
+ENGINE *EC_KEY_get0_engine(const EC_KEY *eckey)
+{
+    return eckey->engine;
+}
+
 int EC_KEY_generate_key(EC_KEY *eckey)
 {
     if (eckey == NULL || eckey->group == NULL) {
