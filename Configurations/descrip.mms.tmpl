@@ -661,7 +661,7 @@ EOF
                              $x =~ s|(\.OLB)|$1/LIB|;
                              "WRITE OPT_FILE \"$x\"" } @deps)
           || "\@ !";
-      return <<"EOF";
+      return <<"EOF"
 $shlib.EXE : $lib.OLB $deps $ordinalsfile
         \$(PERL) $mkdef_pl "$mkdef_key" "VMS" > $shlib.SYMVEC-tmp
         \$(PERL) $translatesyms_pl \$(BLDDIR)CXX\$DEMANGLER_DB. < $shlib.SYMVEC-tmp > $shlib.SYMVEC
@@ -673,10 +673,13 @@ $shlib.EXE : $lib.OLB $deps $ordinalsfile
         $write_opt
         CLOSE OPT_FILE
         LINK \$(LDFLAGS)/SHARE=\$\@ $shlib.OPT/OPT \$(EX_LIBS)
-        SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
         DELETE $shlib.SYMVEC;*
         PURGE $shlib.EXE,$shlib.OPT,$shlib.MAP
 EOF
+        . ($config{target} =~ m|alpha| ? "" : <<"EOF"
+        SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
+EOF
+        );
   }
   sub obj2dso {
       my %args = @_;
@@ -705,7 +708,7 @@ EOF
                              $x =~ s|(\.OLB)|$1/LIB|;
                              "WRITE OPT_FILE \"$x\"" } @deps)
           || "\@ !";
-      return <<"EOF";
+      return <<"EOF"
 $lib.EXE : $deps
         OPEN/WRITE/SHARE=READ OPT_FILE $lib.OPT
         TYPE $engine_opt /OUTPUT=OPT_FILE:
@@ -713,9 +716,12 @@ $lib.EXE : $deps
         $write_opt2
         CLOSE OPT_FILE
         LINK \$(LDFLAGS)/SHARE=\$\@ $lib.OPT/OPT \$(EX_LIBS)
-        SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
         - PURGE $lib.EXE,$lib.OPT,$lib.MAP
 EOF
+        . ($config{target} =~ m|alpha| ? "" : <<"EOF"
+        SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
+EOF
+        );
   }
   sub obj2lib {
       my %args = @_;
@@ -770,7 +776,7 @@ EOF
       # by default), and so someone building doesn't have to worry where it
       # isn't necessary.  If there are other warnings, however, we show them
       # and let it break the build.
-      return <<"EOF";
+      return <<"EOF"
 $bin.EXE : $deps
         OPEN/WRITE/SHARE=READ OPT_FILE $bin.OPT
         $write_opt1
@@ -795,9 +801,12 @@ $bin.EXE : $deps
         -@ IF .NOT. link_severity THEN TYPE $bin.LINKLOG
         -@ DELETE $bin.LINKLOG;*
         @ IF .NOT. link_severity THEN SPAWN/WAIT/NOLOG EXIT 'link_status'
-        SET IMAGE/FLAGS=(NOCALL_DEBUG) $bin.EXE
         - PURGE $bin.EXE,$bin.OPT
 EOF
+        . ($config{target} =~ m|alpha| ? "" : <<"EOF"
+        SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
+EOF
+        );
   }
   sub in2script {
       my %args = @_;
