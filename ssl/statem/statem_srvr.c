@@ -1849,12 +1849,7 @@ static int tls_early_post_process_client_hello(SSL *s, int *al)
      * Given s->session->ciphers and SSL_get_ciphers, we must pick a cipher
      */
 
-    if (!s->hit) {
-#ifdef OPENSSL_NO_COMP
-        s->session->compress_meth = 0;
-#else
-        s->session->compress_meth = (comp == NULL) ? 0 : comp->id;
-#endif
+    if (!s->hit || s->hello_retry_request) {
         sk_SSL_CIPHER_free(s->session->ciphers);
         s->session->ciphers = ciphers;
         if (ciphers == NULL) {
@@ -1863,6 +1858,14 @@ static int tls_early_post_process_client_hello(SSL *s, int *al)
             goto err;
         }
         ciphers = NULL;
+    }
+
+    if (!s->hit) {
+#ifdef OPENSSL_NO_COMP
+        s->session->compress_meth = 0;
+#else
+        s->session->compress_meth = (comp == NULL) ? 0 : comp->id;
+#endif
         if (!tls1_set_server_sigalgs(s)) {
             SSLerr(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO, SSL_R_CLIENTHELLO_TLSEXT);
             goto err;
@@ -1951,7 +1954,7 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
         wst = WORK_MORE_B;
     }
     if (wst == WORK_MORE_B) {
-        if (!s->hit) {
+        if (!s->hit || s->hello_retry_request) {
             /* Let cert callback update server certificates if required */
             if (s->cert->cert_cb) {
                 int rv = s->cert->cert_cb(s, s->cert->cert_cb_arg);
@@ -1986,17 +1989,19 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
                 goto f_err;
             }
             s->s3->tmp.new_cipher = cipher;
-            if (!tls_choose_sigalg(s, &al))
-                goto f_err;
-            /* check whether we should disable session resumption */
-            if (s->not_resumable_session_cb != NULL)
-                s->session->not_resumable =
-                    s->not_resumable_session_cb(s, ((cipher->algorithm_mkey
-                                                    & (SSL_kDHE | SSL_kECDHE))
-                                                   != 0));
-            if (s->session->not_resumable)
-                /* do not send a session ticket */
-                s->ext.ticket_expected = 0;
+            if (!s->hit) {
+                if (!tls_choose_sigalg(s, &al))
+                    goto f_err;
+                /* check whether we should disable session resumption */
+                if (s->not_resumable_session_cb != NULL)
+                    s->session->not_resumable =
+                        s->not_resumable_session_cb(s, ((cipher->algorithm_mkey
+                                                        & (SSL_kDHE | SSL_kECDHE))
+                                                       != 0));
+                if (s->session->not_resumable)
+                    /* do not send a session ticket */
+                    s->ext.ticket_expected = 0;
+            }
         } else {
             /* Session-id reuse */
             s->s3->tmp.new_cipher = s->session->cipher;
