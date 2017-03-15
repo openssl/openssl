@@ -81,6 +81,8 @@ sub parse
     $self->ciphersuite($ciphersuite);
     $self->extension_data(\%extensions);
 
+    print "    Server Version:".$server_version."\n";
+    print "    Ciphersuite:".$ciphersuite."\n";
     print "    Extensions Len:".$extensions_len."\n";
 }
 
