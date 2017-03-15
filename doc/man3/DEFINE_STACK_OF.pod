@@ -140,14 +140,22 @@ sk_TYPE_set() sets element B<idx> of B<sk> to B<ptr> replacing the current
 element. The new element value is returned or B<NULL> if an error occurred:
 this will only happen if B<sk> is B<NULL> or B<idx> is out of range.
 
-sk_TYPE_find() and sk_TYPE_find_ex() search B<sk> using the supplied
-comparison function for an element matching B<ptr>. sk_TYPE_find() returns
-the index of the first matching element or B<-1> if there is no match.
-sk_TYPE_find_ex() returns a matching element or the nearest element that
-does not match B<ptr>. Note: if a comparison function is set then  B<sk> is
-sorted before the search which may change its order. If no comparison
-function is set then a linear search is made for a pointer matching B<ptr>
-and the stack is not reordered.
+sk_TYPE_find() searches B<sk> for the element B<ptr>.  In the case
+where no comparison function has been specified, the function performs
+a linear search for a pointer equal to B<ptr>. The index of the first
+matching element is returned or B<-1> if there is no match. In the case
+where a comparison function has been specified, B<sk> is sorted then
+sk_TYPE_find() returns the index of a matching element or B<-1> if there
+is no match. Note that, in this case, the matching element returned is
+not guaranteed to be the first; the comparison function will usually
+compare the values pointed to rather than the pointers themselves and
+the order of elements in B<sk> could change.
+
+sk_TYPE_find_ex() operates like sk_TYPE_find() except when a comparison
+function has been specified and no matching element is found. Instead
+of returning B<-1>, sk_TYPE_find_ex() returns the index of the element
+either before or after the location where B<ptr> would be if it were
+present in B<sk>.
 
 sk_TYPE_sort() sorts B<sk> using the supplied comparison function.
 
