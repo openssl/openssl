@@ -98,6 +98,10 @@ handshake.
 * ExpectedServerSignType, ExpectedClientSignType - the expected
   signature type used by server or client when signing messages
 
+* ExpectedClientCANames - for client auth list of CA names the server must
+  send. If this is "empty" the list is expected to be empty otherwise it
+  is a file of certificates whose subject names form the list.
+
 ## Configuring the client and server
 
 The client and server configurations can be any valid `SSL_CTX`
