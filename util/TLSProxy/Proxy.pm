@@ -284,32 +284,30 @@ sub clientstart
 
     #Wait for either the server socket or the client socket to become readable
     my @ready;
-    while(!(TLSProxy::Message->end) && (@ready = $sel->can_read)) {
+    my $ctr = 0;
+    while(     (!(TLSProxy::Message->end)
+                || (defined $self->sessionfile()
+                    && (-s $self->sessionfile()) == 0))
+            && $ctr < 10
+            && (@ready = $sel->can_read(1))) {
         foreach my $hand (@ready) {
             if ($hand == $server_sock) {
                 $server_sock->sysread($indata, 16384) or goto END;
                 $indata = $self->process_packet(1, $indata);
                 $client_sock->syswrite($indata);
+                $ctr = 0;
             } elsif ($hand == $client_sock) {
                 $client_sock->sysread($indata, 16384) or goto END;
                 $indata = $self->process_packet(0, $indata);
                 $server_sock->syswrite($indata);
+                $ctr = 0;
             } else {
-                print "Err\n";
-                goto END;
+                $ctr++
             }
         }
     }
 
-    for (my $ctr = 0;
-         defined $self->sessionfile()
-            && (!(-f $self->sessionfile()) || $ctr == 3);
-         $ctr++) {
-        sleep 1;
-    }
-
-    die "Session file not created"
-        if (defined $self->sessionfile() && !(-f $self->sessionfile()));
+    die "No progress made" if $ctr >= 10;
 
     END:
     print "Connection closed\n";
