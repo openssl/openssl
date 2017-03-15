@@ -314,11 +314,11 @@ uninstall : uninstall_docs uninstall_sw
 # use $(LIBS), $(PROGRAMS), $(GENERATED) and $(ENGINES)directly.
 libclean :
         {- join("\n\t", map { "- DELETE $_.OLB;*" } @{$unified_info{libraries}}) || "@ !" -}
-        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.DSF;*,$_.MAP;*,$_.OPT;*" } @shlibs) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.MAP;*,$_.OPT;*" } @shlibs) || "@ !" -}
 
 clean : libclean
-        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.DSF;*,$_.OPT;*" } @{$unified_info{programs}}) || "@ !" -}
-        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.DSF;*,$_.OPT;*" } @{$unified_info{engines}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{programs}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{engines}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{scripts}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_;*" } @generated) || "@ !" -}
         - DELETE [...]*.MAP;*
@@ -673,6 +673,7 @@ $shlib.EXE : $lib.OLB $deps $ordinalsfile
         $write_opt
         CLOSE OPT_FILE
         LINK \$(LDFLAGS)/SHARE=\$\@ $shlib.OPT/OPT \$(EX_LIBS)
+        SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
         DELETE $shlib.SYMVEC;*
         PURGE $shlib.EXE,$shlib.OPT,$shlib.MAP
 EOF
@@ -712,6 +713,7 @@ $lib.EXE : $deps
         $write_opt2
         CLOSE OPT_FILE
         LINK \$(LDFLAGS)/SHARE=\$\@ $lib.OPT/OPT \$(EX_LIBS)
+        SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
         - PURGE $lib.EXE,$lib.OPT,$lib.MAP
 EOF
   }
@@ -793,6 +795,7 @@ $bin.EXE : $deps
         -@ IF .NOT. link_severity THEN TYPE $bin.LINKLOG
         -@ DELETE $bin.LINKLOG;*
         @ IF .NOT. link_severity THEN SPAWN/WAIT/NOLOG EXIT 'link_status'
+        SET IMAGE/FLAGS=(NOCALL_DEBUG) $bin.EXE
         - PURGE $bin.EXE,$bin.OPT
 EOF
   }

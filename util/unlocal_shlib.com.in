@@ -2,10 +2,9 @@ ${-
   use File::Spec::Functions qw(rel2abs);
 
   my $bldtop = rel2abs($config{builddir});
-  our %names = ( ( map { $_ => $bldtop.$_.".EXE" }
-                   map { $unified_info{sharednames}->{$_} || () }
-                   @{$unified_info{libraries}} ),
-                 'DBG$IMAGE_DSF_PATH' => $bldtop );
+  our %names = ( map { $_ => $bldtop.$_.".EXE" }
+                 map { $unified_info{sharednames}->{$_} || () }
+                 @{$unified_info{libraries}} );
   "" -}
 $       ! Remove the local environment created by local_shlib.com
 $
