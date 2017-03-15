@@ -4,6 +4,10 @@
 
  Changes between 1.1.0e and 1.1.1 [xx XXX xxxx]
 
+  *) Add EC_KEY_get0_engine(), which does for EC_KEY what RSA_get0_engine()
+     does for RSA, etc.
+     [Richard Levitte]
+
   *) Have 'config' recognise 64-bit mingw and choose 'mingw64' as the target
      platform rather than 'mingw'.
      [Richard Levitte]
