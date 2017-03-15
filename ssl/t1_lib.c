@@ -1241,6 +1241,12 @@ TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
 
     retv = tls_decrypt_ticket(s, PACKET_data(&ticketext->data), size,
                               hello->session_id, hello->session_id_len, ret);
+
+    if (s->session_ctx->decrypt_ticket_cb != NULL)
+        retv = s->session_ctx->decrypt_ticket_cb(s, *ret,
+                                                 PACKET_data(&ticketext->data),
+                                                 retv, s->session_ctx->ticket_cb_data);
+
     switch (retv) {
     case TICKET_NO_DECRYPT:
         s->ext.ticket_expected = 1;
@@ -1252,6 +1258,13 @@ TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
     case TICKET_SUCCESS_RENEW:
         s->ext.ticket_expected = 1;
         return TICKET_SUCCESS;
+
+    case TICKET_EMPTY:
+        s->ext.ticket_expected = 1;
+        return TICKET_EMPTY;
+
+    case TICKET_NONE:
+        return TICKET_NONE;
 
     default:
         return TICKET_FATAL_ERR_OTHER;

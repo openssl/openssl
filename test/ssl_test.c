@@ -188,6 +188,27 @@ static int check_alpn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
     return ret;
 }
 
+static int check_session_ticket_app_data(HANDSHAKE_RESULT *result,
+                                         SSL_TEST_CTX *test_ctx)
+{
+    size_t result_len = 0;
+    size_t expected_len = 0;
+
+    /* consider empty and NULL strings to be the same */
+    if (result->result_session_ticket_app_data != NULL)
+        result_len = strlen(result->result_session_ticket_app_data);
+    if (test_ctx->expected_session_ticket_app_data != NULL)
+        expected_len = strlen(test_ctx->expected_session_ticket_app_data);
+    if (result_len == 0 && expected_len == 0)
+        return 1;
+
+    if (!TEST_str_eq(result->result_session_ticket_app_data,
+                     test_ctx->expected_session_ticket_app_data))
+        return 0;
+
+    return 1;
+}
+
 static int check_resumption(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
     if (!TEST_int_eq(result->client_resumed, result->server_resumed))
@@ -352,6 +373,7 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 #endif
         ret &= check_cipher(result, test_ctx);
         ret &= check_alpn(result, test_ctx);
+        ret &= check_session_ticket_app_data(result, test_ctx);
         ret &= check_resumption(result, test_ctx);
         ret &= check_tmp_key(result, test_ctx);
         ret &= check_server_cert_type(result, test_ctx);
