@@ -92,7 +92,9 @@ use constant {
 
 use constant {
     CIPHER_DHE_RSA_AES_128_SHA => 0x0033,
-    CIPHER_ADH_AES_128_SHA => 0x0034
+    CIPHER_ADH_AES_128_SHA => 0x0034,
+    CIPHER_TLS13_AES_128_GCM_SHA256 => 0x1301,
+    CIPHER_TLS13_AES_256_GCM_SHA384 => 0x1302
 };
 
 my $payload = "";
