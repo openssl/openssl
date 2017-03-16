@@ -506,15 +506,15 @@ STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
 STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s)
 {
     if (!s->server) {           /* we are in the client */
-        if (((s->version >> 8) == SSL3_VERSION_MAJOR) && (s->s3 != NULL))
-            return (s->s3->tmp.ca_names);
+        if (s->s3 != NULL)
+            return s->s3->tmp.ca_names;
         else
-            return (NULL);
+            return NULL;
     } else {
         if (s->client_CA != NULL)
-            return (s->client_CA);
+            return s->client_CA;
         else
-            return (s->ctx->client_CA);
+            return s->ctx->client_CA;
     }
 }
 
