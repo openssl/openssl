@@ -691,6 +691,20 @@ int tls_construct_ctos_early_data(SSL *s, WPACKET *pkt, unsigned int context,
 #define F5_WORKAROUND_MIN_MSG_LEN   0xff
 #define F5_WORKAROUND_MAX_MSG_LEN   0x200
 
+/*
+ * PSK pre binder overhead =
+ *  2 bytes for TLSEXT_TYPE_psk
+ *  2 bytes for extension length
+ *  2 bytes for identities list length
+ *  2 bytes for identity length
+ *  4 bytes for obfuscated_ticket_age
+ *  2 bytes for binder list length
+ *  1 byte for binder length
+ * The above excludes the number of bytes for the identity itself and the
+ * subsequent binder bytes
+ */
+#define PSK_PRE_BINDER_OVERHEAD (2 + 2 + 2 + 2 + 4 + 2 + 1)
+
 int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, unsigned int context,
                                X509 *x, size_t chainidx, int *al)
 {
@@ -701,14 +715,33 @@ int tls_construct_ctos_padding(SSL *s, WPACKET *pkt, unsigned int context,
         return 1;
 
     /*
-     * Add padding to workaround bugs in F5 terminators. See
-     * https://tools.ietf.org/html/draft-agl-tls-padding-03 NB: because this
-     * code calculates the length of all existing extensions it MUST always
-     * appear last.
+     * Add padding to workaround bugs in F5 terminators. See RFC7685.
+     * This code calculates the length of all extensions added so far but
+     * excludes the PSK extension (because that MUST be written last). Therefore
+     * this extension MUST always appear second to last.
      */
     if (!WPACKET_get_total_written(pkt, &hlen)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PADDING, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
+
+    /*
+     * If we're going to send a PSK then that will be written out after this
+     * extension, so we need to calculate how long it is going to be.
+     */
+    if (s->session->ssl_version == TLS1_3_VERSION
+            && s->session->ext.ticklen != 0
+            && s->session->cipher != NULL) {
+        const EVP_MD *md = ssl_md(s->session->cipher->algorithm2);
+
+        if (md != NULL) {
+            /*
+             * Add the fixed PSK overhead, the identity length and the binder
+             * length.
+             */
+            hlen +=  PSK_PRE_BINDER_OVERHEAD + s->session->ext.ticklen
+                     + EVP_MD_size(md);
+        }
     }
 
     if (hlen > F5_WORKAROUND_MIN_MSG_LEN && hlen < F5_WORKAROUND_MAX_MSG_LEN) {
@@ -749,6 +782,12 @@ int tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
     int ret = 0;
 
     s->session->ext.tick_identity = TLSEXT_PSK_BAD_IDENTITY;
+
+    /*
+     * Note: At this stage we only support adding a single resumption PSK. If
+     * we add support for multiple PSKs then the length calculations in the
+     * padding extension will need to be adjusted.
+     */
 
     /*
      * If this is an incompatible or new session then we have nothing to resume

@@ -294,7 +294,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     },
     {
         /* Must be immediately before pre_shared_key */
-        /* TODO(TLS1.3): Fix me */
         TLSEXT_TYPE_padding,
         EXT_CLIENT_HELLO,
         NULL,
