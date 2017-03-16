@@ -182,7 +182,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[verify_extra_test]=../include
   DEPEND[verify_extra_test]=../libcrypto
 
-  SOURCE[clienthellotest]=clienthellotest.c
+  SOURCE[clienthellotest]=clienthellotest.c testutil.c test_main_custom.c
   INCLUDE[clienthellotest]=../include
   DEPEND[clienthellotest]=../libcrypto ../libssl
 
