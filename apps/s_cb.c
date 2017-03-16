@@ -522,24 +522,29 @@ static STRINT_PAIR alert_types[] = {
 };
 
 static STRINT_PAIR handshakes[] = {
-    {", HelloRequest", 0},
-    {", ClientHello", 1},
-    {", ServerHello", 2},
-    {", HelloVerifyRequest", 3},
-    {", NewSessionTicket", 4},
-    {", HelloRetryRequest", 6},
-    {", EncryptedExtensions", 8},
-    {", Certificate", 11},
-    {", ServerKeyExchange", 12},
-    {", CertificateRequest", 13},
-    {", ServerHelloDone", 14},
-    {", CertificateVerify", 15},
-    {", ClientKeyExchange", 16},
-    {", Finished", 20},
+    {", HelloRequest", SSL3_MT_HELLO_REQUEST},
+    {", ClientHello", SSL3_MT_CLIENT_HELLO},
+    {", ServerHello", SSL3_MT_SERVER_HELLO},
+    {", HelloVerifyRequest", DTLS1_MT_HELLO_VERIFY_REQUEST},
+    {", NewSessionTicket", SSL3_MT_NEWSESSION_TICKET},
+    {", EndOfEarlyData", SSL3_MT_END_OF_EARLY_DATA},
+    {", HelloRetryRequest", SSL3_MT_HELLO_RETRY_REQUEST},
+    {", EncryptedExtensions", SSL3_MT_ENCRYPTED_EXTENSIONS},
+    {", Certificate", SSL3_MT_CERTIFICATE},
+    {", ServerKeyExchange", SSL3_MT_SERVER_KEY_EXCHANGE},
+    {", CertificateRequest", SSL3_MT_CERTIFICATE_REQUEST},
+    {", ServerHelloDone", SSL3_MT_SERVER_DONE},
+    {", CertificateVerify", SSL3_MT_CERTIFICATE_VERIFY},
+    {", ClientKeyExchange", SSL3_MT_CLIENT_KEY_EXCHANGE},
+    {", Finished", SSL3_MT_FINISHED},
     {", CertificateUrl", 21},
-    {", CertificateStatus", 22},
+    {", CertificateStatus", SSL3_MT_CERTIFICATE_STATUS},
     {", SupplementalData", 23},
-    {", KeyUpdate", 24 },
+    {", KeyUpdate", SSL3_MT_KEY_UPDATE},
+#ifndef OPENSSL_NO_NEXTPROTONEG
+    {", NextProto", SSL3_MT_NEXT_PROTO},
+#endif
+    {", MessageHash", SSL3_MT_MESSAGE_HASH},
     {NULL}
 };
 
