@@ -85,6 +85,7 @@ static ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_SERVER_HELLO, "ServerHello"},
     {DTLS1_MT_HELLO_VERIFY_REQUEST, "HelloVerifyRequest"},
     {SSL3_MT_NEWSESSION_TICKET, "NewSessionTicket"},
+    {SSL3_MT_END_OF_EARLY_DATA, "EndOfEarlyData"},
     {SSL3_MT_HELLO_RETRY_REQUEST, "HelloRetryRequest"},
     {SSL3_MT_ENCRYPTED_EXTENSIONS, "EncryptedExtensions"},
     {SSL3_MT_CERTIFICATE, "Certificate"},
@@ -97,7 +98,11 @@ static ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
     {SSL3_MT_FINISHED, "Finished"},
     {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
-    {SSL3_MT_KEY_UPDATE, "KeyUpdate"}
+    {SSL3_MT_KEY_UPDATE, "KeyUpdate"},
+# ifndef OPENSSL_NO_NEXTPROTONEG
+    {SSL3_MT_NEXT_PROTO, "NextProto"},
+# endif
+    {SSL3_MT_MESSAGE_HASH, "MessageHash"}
 };
 
 /* Cipher suites */
