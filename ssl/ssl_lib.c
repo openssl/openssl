@@ -4598,6 +4598,38 @@ size_t SSL_early_get0_compression_methods(SSL *s, const unsigned char **out)
     return s->clienthello->compressions_len;
 }
 
+int SSL_early_get1_extensions_present(SSL *s, int **out, size_t *outlen)
+{
+    RAW_EXTENSION *ext;
+    int *present;
+    size_t num = 0, i;
+
+    if (s->clienthello == NULL || out == NULL || outlen == NULL)
+        return 0;
+    for (i = 0; i < s->clienthello->pre_proc_exts_len; i++) {
+        ext = s->clienthello->pre_proc_exts + i;
+        if (ext->present)
+            num++;
+    }
+    present = OPENSSL_malloc(sizeof(*present) * num);
+    if (present == NULL)
+        return 0;
+    for (i = 0; i < s->clienthello->pre_proc_exts_len; i++) {
+        ext = s->clienthello->pre_proc_exts + i;
+        if (ext->present) {
+            if (ext->received_order >= num)
+                goto err;
+            present[ext->received_order] = ext->type;
+        }
+    }
+    *out = present;
+    *outlen = num;
+    return 1;
+ err:
+    OPENSSL_free(present);
+    return 0;
+}
+
 int SSL_early_get0_ext(SSL *s, unsigned int type, const unsigned char **out,
                        size_t *outlen)
 {
