@@ -668,6 +668,8 @@ typedef struct raw_extension_st {
     int parsed;
     /* The type of this extension, i.e. a TLSEXT_TYPE_* value */
     unsigned int type;
+    /* Track what order extensions are received in (0-based). */
+    size_t received_order;
 } RAW_EXTENSION;
 
 typedef struct {
