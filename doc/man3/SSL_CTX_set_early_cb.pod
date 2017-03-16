@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CTX_set_early_cb, SSL_early_cb_fn, SSL_early_isv2, SSL_early_get0_legacy_version, SSL_early_get0_random, SSL_early_get0_session_id, SSL_early_get0_ciphers, SSL_early_get0_compression_methods, SSL_early_get0_ext - callback functions for early server-side ClientHello processing
+SSL_CTX_set_early_cb, SSL_early_cb_fn, SSL_early_isv2, SSL_early_get0_legacy_version, SSL_early_get0_random, SSL_early_get0_session_id, SSL_early_get0_ciphers, SSL_early_get0_compression_methods, SSL_early_get1_extensions_present, SSL_early_get0_ext - callback functions for early server-side ClientHello processing
 
 =head1 SYNOPSIS
 
@@ -14,6 +14,7 @@ SSL_CTX_set_early_cb, SSL_early_cb_fn, SSL_early_isv2, SSL_early_get0_legacy_ver
  size_t SSL_early_get0_session_id(SSL *s, const unsigned char **out);
  size_t SSL_early_get0_ciphers(SSL *s, const unsigned char **out);
  size_t SSL_early_get0_compression_methods(SSL *s, const unsigned char **out);
+ int SSL_early_get1_extensions_present(SSL *s, int **out, size_t *outlen);
  int SSL_early_get0_ext(SSL *s, int type, const unsigned char **out,
                         size_t *outlen);
 
@@ -53,6 +54,14 @@ from the ClientHello on a per-extension basis.  For the provided wire
 protocol extension type value, the extension value and length are returned
 in the output parameters (if present).
 
+SSL_early_get1_extensions_present() can be used prior to SSL_early_get0_ext(),
+to determine which extensions are present in the ClientHello before querying
+for them.  The B<out> and B<outlen> parameters are both required, and on
+success the caller must release the storage allocated for B<*out> using
+OPENSSL_free().  The contents of B<*out> is an array of integers holding the
+numerical value of the TLS extension types in the order they appear in the
+ClientHello.  B<*outlen> contains the number of elements in the array.
+
 =head1 NOTES
 
 The early callback provides a vast window of possibilities for application
@@ -88,6 +97,8 @@ assumed to be valid.
 SSL_early_get0_ext() returns 1 if the extension of type 'type' is present, and
 0 otherwise.
 
+SSL_early_get1_extensions_present() returns 1 on success and 0 on failure.
+
 =head1 SEE ALSO
 
 L<ssl(7)>, L<SSL_CTX_set_tlsext_servername_callback(3)>,
@@ -97,8 +108,8 @@ L<SSL_bytes_to_cipher_list>
 
 The SSL early callback, SSL_early_isv2(), SSL_early_get0_random(),
 SSL_early_get0_session_id(), SSL_early_get0_ciphers(),
-SSL_early_get0_compression_methods(), and SSL_early_get0_ext() were
-added in OpenSSL 1.1.1.
+SSL_early_get0_compression_methods(), SSL_early_get0_ext(), and
+SSL_early_get1_extensions_present() were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

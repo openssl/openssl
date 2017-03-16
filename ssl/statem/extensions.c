@@ -462,6 +462,7 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
         return 0;
     }
 
+    i = 0;
     while (PACKET_remaining(&extensions) > 0) {
         unsigned int type, idx;
         PACKET extension;
@@ -518,6 +519,7 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
             thisex->data = extension;
             thisex->present = 1;
             thisex->type = type;
+            thisex->received_order = i++;
         }
     }
 
