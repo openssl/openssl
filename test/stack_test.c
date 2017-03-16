@@ -57,6 +57,7 @@ static int int_compare(const int *const *a, const int *const *b)
 static int test_int_stack(void)
 {
     static int v[] = { 1, 2, -4, 16, 999, 1, -173, 1, 9 };
+    static int notpresent = -1;
     const int n = OSSL_NELEM(v);
     static struct {
         int value;
@@ -108,18 +109,26 @@ static int test_int_stack(void)
         }
 
     /* find unsorted -- the pointers are compared */
-    for (i = 0; i < n_finds; i++)
-        if (sk_sint_find(s, v + finds[i].unsorted) != finds[i].unsorted) {
+    for (i = 0; i < n_finds; i++) {
+        int *val = (finds[i].unsorted == -1) ? &notpresent
+                                             : v + finds[i].unsorted;
+
+        if (sk_sint_find(s, val) != finds[i].unsorted) {
             fprintf(stderr, "test int unsorted find %d\n", i);
             goto end;
         }
+    }
 
     /* find_ex unsorted */
-    for (i = 0; i < n_finds; i++)
-        if (sk_sint_find_ex(s, v + finds[i].unsorted) != finds[i].unsorted) {
+    for (i = 0; i < n_finds; i++) {
+        int *val = (finds[i].unsorted == -1) ? &notpresent
+                                             : v + finds[i].unsorted;
+
+        if (sk_sint_find_ex(s, val) != finds[i].unsorted) {
             fprintf(stderr, "test int unsorted find_ex %d\n", i);
             goto end;
         }
+    }
 
     /* sorting */
     if (sk_sint_is_sorted(s)) {
