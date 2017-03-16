@@ -44,7 +44,11 @@
 #define F5_WORKAROUND_MIN_MSG_LEN   0xff
 #define F5_WORKAROUND_MAX_MSG_LEN   0x200
 
-const char *sessionfile = NULL;
+static const char *sessionfile = NULL;
+/* Dummy ALPN protocols used to pad out the size of the ClientHello */
+static const char alpn_prots[] =
+    "0123456789012345678901234567890123456789012345678901234567890123456789"
+    "0123456789012345678901234567890123456789012345678901234567890123456789";
 
 static int test_client_hello(int currtest)
 {
@@ -61,6 +65,11 @@ static int test_client_hello(int currtest)
     size_t msglen;
     BIO *sessbio = NULL;
     SSL_SESSION *sess = NULL;
+
+#ifdef OPENSSL_NO_TLS1_3
+    if (currtest == TEST_ADD_PADDING_AND_PSK)
+        return 1;
+#endif
 
     /*
      * For each test set up an SSL_CTX and SSL and see what ClientHello gets
@@ -84,12 +93,16 @@ static int test_client_hello(int currtest)
         /*
          * Add lots of ciphersuites so that the ClientHello is at least
          * F5_WORKAROUND_MIN_MSG_LEN bytes long - meaning padding will be
-         * needed.
+         * needed. Also add some dummy ALPN protocols in case we still don't
+         * have enough.
          * In the padding not needed case we assume the test will pass, but then
          * set testresult to 0 if we see the padding extension.
          */
         if (currtest == TEST_ADD_PADDING
-                && !SSL_CTX_set_cipher_list(ctx, "ALL"))
+                && (!SSL_CTX_set_cipher_list(ctx, "ALL")
+                    || SSL_CTX_set_alpn_protos(ctx,
+                                               (unsigned char *)alpn_prots,
+                                               sizeof(alpn_prots) - 1)))
             goto end;
         else if (currtest == TEST_PADDING_NOT_NEEDED)
             testresult = 1;
@@ -224,7 +237,7 @@ end:
 int test_main(int argc, char *argv[])
 {
     if (argc != 2)
-        return 0;
+        return EXIT_FAILURE;
 
     sessionfile = argv[1];
 
