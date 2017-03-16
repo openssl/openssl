@@ -1881,12 +1881,9 @@ int create_synthetic_message_hash(SSL *s)
 {
     unsigned char hashval[EVP_MAX_MD_SIZE];
     size_t hashlen = 0;
-    unsigned char msghdr[SSL3_HM_HEADER_LENGTH] = {
-        SSL3_MT_MESSAGE_HASH,
-        0,
-        0,
-        0
-    };
+    unsigned char msghdr[SSL3_HM_HEADER_LENGTH];
+
+    memset(msghdr, 0, sizeof(msghdr));
 
     /* Get the hash of the initial ClientHello */
     if (!ssl3_digest_cached_records(s, 0)
@@ -1900,6 +1897,7 @@ int create_synthetic_message_hash(SSL *s)
         return 0;
 
     /* Inject the synthetic message_hash message */
+    msghdr[0] = SSL3_MT_MESSAGE_HASH;
     msghdr[SSL3_HM_HEADER_LENGTH - 1] = hashlen;
     if (!ssl3_finish_mac(s, msghdr, SSL3_HM_HEADER_LENGTH)
             || !ssl3_finish_mac(s, hashval, hashlen)) {
