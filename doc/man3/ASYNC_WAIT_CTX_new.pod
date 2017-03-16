@@ -57,7 +57,7 @@ asynchronous engine is being used then normally this call will only ever return
 one fd. If multiple asynchronous engines are being used then more could be
 returned.
 
-The function ASYNC_WAIT_CTX_fds_have_changed() can be used to detect if any fds
+The function ASYNC_WAIT_CTX_get_changed_fds() can be used to detect if any fds
 have changed since the last call time ASYNC_start_job() returned an ASYNC_PAUSE
 result (or since the ASYNC_WAIT_CTX was created if no ASYNC_PAUSE result has
 been received). The B<numaddfds> and B<numdelfds> parameters will be populated
