@@ -137,8 +137,13 @@ static const char *session_id_prefix = NULL;
 #ifndef OPENSSL_NO_DTLS
 static int enable_timeouts = 0;
 static long socket_mtu;
-static int dtlslisten = 0;
 #endif
+
+/*
+ * We define this but make it always be 0 in no-dtls builds to simplify the
+ * code.
+ */
+static int dtlslisten = 0;
 
 #ifndef OPENSSL_NO_PSK
 static const char psk_identity[] = "Client_identity";
