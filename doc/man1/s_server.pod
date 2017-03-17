@@ -529,6 +529,11 @@ The list should contain most wanted protocols first.
 Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
 
+=item B<-keylogfile path>
+
+Appends TLS secrets to the specified keylog file such that external programs
+(like Wireshark) can decrypt TLS connections.
+
 =item B<-max_early_data arg>
 
 Change the default maximum early data bytes that are specified for new sessions
@@ -577,11 +582,6 @@ cause the client to disconnect due to a protocol violation.
 =item B<S>
 
 print out some session cache status information.
-
-=item B<-keylogfile path>
-
-Appends TLS secrets to the specified keylog file such that external programs
-(like Wireshark) can decrypt TLS connections.
 
 =back
 
