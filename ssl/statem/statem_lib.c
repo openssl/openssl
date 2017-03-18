@@ -278,7 +278,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     EVP_PKEY *pkey = NULL;
     const unsigned char *data;
 #ifndef OPENSSL_NO_GOST
-    unsigned char *gost_data = NULL;
+    unsigned char *gost_data = NULL;
 #endif
     int al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
     int type = 0, j;
