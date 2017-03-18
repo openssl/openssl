@@ -167,7 +167,7 @@ registered ID: OBJECT IDENTIFIER), B<IP> (an IP address), B<dirName>
 (a distinguished name) and otherName.
 
 The email option include a special 'copy' value. This will automatically
-include and email addresses contained in the certificate subject name in
+include any email addresses contained in the certificate subject name in
 the extension.
 
 The IP address used in the B<IP> options can be in either IPv4 or IPv6 format.
