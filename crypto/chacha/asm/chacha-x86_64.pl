@@ -37,6 +37,7 @@
 # Goldmont	10.6/+17%	5.10/-		3.28
 # Sledgehammer	7.28/+52%	-/14.2(ii)	-
 # Bulldozer	9.66/+28%	9.85/11.1	3.06(iv)
+# Ryzen		5.96		?		2.40        2.09
 # VIA Nano	10.5/+46%	6.72/8.60	6.05
 #
 # (i)	compared to older gcc 3.x one can observe >2x improvement on

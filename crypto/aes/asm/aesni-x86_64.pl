@@ -181,6 +181,7 @@
 # Silvermont	5.75/3.54	3.56	4.12	3.87(*)	4.11
 # Goldmont	3.82/1.26	1.26	1.29	1.29	1.50
 # Bulldozer	5.77/0.70	0.72	0.90	0.70	0.95
+# Ryzen		2.71/0.35	0.35	0.44	?	?
 #
 # (*)	Atom Silvermont ECB result is suboptimal because of penalties
 #	incurred by operations on %xmm8-15. As ECB is not considered
