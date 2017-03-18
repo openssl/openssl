@@ -465,7 +465,7 @@ static int cmd_VerifyCAFile(SSL_CONF_CTX *cctx, const char *value)
     return do_store(cctx, value, NULL, 1);
 }
 
-static int cmd_ClientCAFile(SSL_CONF_CTX *cctx, const char *value)
+static int cmd_RequestCAFile(SSL_CONF_CTX *cctx, const char *value)
 {
     if (cctx->canames == NULL)
         cctx->canames = sk_X509_NAME_new_null();
@@ -474,13 +474,23 @@ static int cmd_ClientCAFile(SSL_CONF_CTX *cctx, const char *value)
     return SSL_add_file_cert_subjects_to_stack(cctx->canames, value);
 }
 
-static int cmd_ClientCAPath(SSL_CONF_CTX *cctx, const char *value)
+static int cmd_ClientCAFile(SSL_CONF_CTX *cctx, const char *value)
+{
+    return cmd_RequestCAFile(cctx, value);
+}
+
+static int cmd_RequestCAPath(SSL_CONF_CTX *cctx, const char *value)
 {
     if (cctx->canames == NULL)
         cctx->canames = sk_X509_NAME_new_null();
     if (cctx->canames == NULL)
         return 0;
     return SSL_add_dir_cert_subjects_to_stack(cctx->canames, value);
+}
+
+static int cmd_ClientCAPath(SSL_CONF_CTX *cctx, const char *value)
+{
+    return cmd_RequestCAPath(cctx, value);
 }
 
 #ifndef OPENSSL_NO_DH
@@ -575,9 +585,13 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
                  SSL_CONF_TYPE_DIR),
     SSL_CONF_CMD(VerifyCAFile, "verifyCAfile", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
+    SSL_CONF_CMD(RequestCAFile, "requestCAFile", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_FILE),
     SSL_CONF_CMD(ClientCAFile, NULL,
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
+    SSL_CONF_CMD(RequestCAPath, NULL, SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_DIR),
     SSL_CONF_CMD(ClientCAPath, NULL,
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_DIR),
@@ -802,9 +816,9 @@ int SSL_CONF_CTX_finish(SSL_CONF_CTX *cctx)
     }
     if (cctx->canames) {
         if (cctx->ssl)
-            SSL_set_client_CA_list(cctx->ssl, cctx->canames);
+            SSL_set0_CA_list(cctx->ssl, cctx->canames);
         else if (cctx->ctx)
-            SSL_CTX_set_client_CA_list(cctx->ctx, cctx->canames);
+            SSL_CTX_set0_CA_list(cctx->ctx, cctx->canames);
         else
             sk_X509_NAME_pop_free(cctx->canames, X509_NAME_free);
         cctx->canames = NULL;
