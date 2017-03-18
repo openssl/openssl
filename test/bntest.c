@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,7 @@
 #include <openssl/rand.h>
 #include "testutil.h"
 #include "test_main_custom.h"
+#include "test/testfile_helper.h"
 
 /*
  * In bn_lcl.h, bn_expand() is defined as a static ossl_inline function.
@@ -44,17 +45,6 @@ BIGNUM *bn_expand2(BIGNUM *b, int words) { return NULL; }
 #define HAVE_BN_PADDED 0
 #define HAVE_BN_SQRT 0
 
-typedef struct pair_st {
-    char *key;
-    char *value;
-} PAIR;
-
-typedef struct stanza_st {
-    int start;
-    int numpairs;
-    PAIR pairs[MAXPAIRS];
-} STANZA;
-
 typedef struct filetest_st {
     const char *name;
     int (*func)(STANZA *s);
@@ -68,28 +58,14 @@ typedef struct mpitest_st {
 
 static const int NUM0 = 100;           /* number of tests */
 static const int NUM1 = 50;            /* additional tests for some functions */
-static FILE *fp;
+static STANZA *sp;
 static BN_CTX *ctx;
 
 
 /*
- * Look for |key| in the stanza and return it or NULL if not found.
- */
-static const char *findattr(STANZA *s, const char *key)
-{
-    int i = s->numpairs;
-    PAIR *pp = s->pairs;
-
-    for ( ; --i >= 0; pp++)
-        if (strcasecmp(pp->key, key) == 0)
-            return pp->value;
-    return NULL;
-}
-
-/*
  * Parse BIGNUM, return number of bytes parsed.
  */
-static int parseBN(BIGNUM **out, const char *in)
+static int parsehexBN(BIGNUM **out, const char *in)
 {
     *out = NULL;
     return BN_hex2bn(out, in);
@@ -99,43 +75,6 @@ static int parsedecBN(BIGNUM **out, const char *in)
 {
     *out = NULL;
     return BN_dec2bn(out, in);
-}
-
-static BIGNUM *getBN(STANZA *s, const char *attribute)
-{
-    const char *hex;
-    BIGNUM *ret = NULL;
-
-    if ((hex = findattr(s, attribute)) == NULL) {
-        fprintf(stderr, "Can't find %s in test at line %d\n",
-                attribute, s->start);
-        return NULL;
-    }
-
-    if (parseBN(&ret, hex) != (int)strlen(hex)) {
-        fprintf(stderr, "Could not decode '%s'.\n", hex);
-        return NULL;
-    }
-    return ret;
-}
-
-static int getint(STANZA *s, int *out, const char *attribute)
-{
-    BIGNUM *ret = getBN(s, attribute);
-    BN_ULONG word;
-    int st = 0;
-
-    if (ret == NULL)
-        goto err;
-
-    if ((word = BN_get_word(ret)) > INT_MAX)
-        goto err;
-
-    *out = (int)word;
-    st = 1;
-err:
-    BN_free(ret);
-    return st;
 }
 
 static int equalBN(const char *op, const BIGNUM *expected, const BIGNUM *actual)
@@ -965,9 +904,9 @@ static int test_kronecker()
 
 static int file_sum(STANZA *s)
 {
-    BIGNUM *a = getBN(s, "A");
-    BIGNUM *b = getBN(s, "B");
-    BIGNUM *sum = getBN(s, "Sum");
+    BIGNUM *a = stanza_get_bignum(s, "A");
+    BIGNUM *b = stanza_get_bignum(s, "B");
+    BIGNUM *sum = stanza_get_bignum(s, "Sum");
     BIGNUM *ret = BN_new();
     BN_ULONG b_word;
     int st = 0;
@@ -1074,8 +1013,8 @@ err:
 
 static int file_lshift1(STANZA *s)
 {
-    BIGNUM *a = getBN(s, "A");
-    BIGNUM *lshift1 = getBN(s, "LShift1");
+    BIGNUM *a = stanza_get_bignum(s, "A");
+    BIGNUM *lshift1 = stanza_get_bignum(s, "LShift1");
     BIGNUM *zero = BN_new();
     BIGNUM *ret = BN_new();
     BIGNUM *two = BN_new();
@@ -1126,13 +1065,14 @@ err:
 
 static int file_lshift(STANZA *s)
 {
-    BIGNUM *a = getBN(s, "A");
-    BIGNUM *lshift = getBN(s, "LShift");
+    BIGNUM *a = stanza_get_bignum(s, "A");
+    BIGNUM *lshift = stanza_get_bignum(s, "LShift");
     BIGNUM *ret = BN_new();
     int n = 0;
     int st = 0;
 
-    if (a == NULL || lshift == NULL || ret == NULL || !getint(s, &n, "N"))
+    if (a == NULL || lshift == NULL || ret == NULL
+            || !stanza_get_int(s, "N", &n))
         goto err;
 
     if (!BN_lshift(ret, a, n)
@@ -1151,13 +1091,14 @@ err:
 
 static int file_rshift(STANZA *s)
 {
-    BIGNUM *a = getBN(s, "A");
-    BIGNUM *rshift = getBN(s, "RShift");
+    BIGNUM *a = stanza_get_bignum(s, "A");
+    BIGNUM *rshift = stanza_get_bignum(s, "RShift");
     BIGNUM *ret = BN_new();
     int n = 0;
     int errcnt = 1;
 
-    if (a == NULL || rshift == NULL || ret == NULL || !getint(s, &n, "N"))
+    if (a == NULL || rshift == NULL || ret == NULL
+            || !stanza_get_int(s, "N", &n))
         goto err;
 
     errcnt = 0;
@@ -1181,8 +1122,8 @@ err:
 
 static int file_square(STANZA *s)
 {
-    BIGNUM *a = getBN(s, "A");
-    BIGNUM *square = getBN(s, "Square");
+    BIGNUM *a = stanza_get_bignum(s, "A");
+    BIGNUM *square = stanza_get_bignum(s, "Square");
     BIGNUM *zero = BN_new();
     BIGNUM *ret = BN_new();
     BIGNUM *remainder = BN_new();
@@ -1247,9 +1188,9 @@ err:
 
 static int file_product(STANZA *s)
 {
-    BIGNUM *a = getBN(s, "A");
-    BIGNUM *b = getBN(s, "B");
-    BIGNUM *product = getBN(s, "Product");
+    BIGNUM *a = stanza_get_bignum(s, "A");
+    BIGNUM *b = stanza_get_bignum(s, "B");
+    BIGNUM *product = stanza_get_bignum(s, "Product");
     BIGNUM *ret = BN_new();
     BIGNUM *remainder = BN_new();
     BIGNUM *zero = BN_new();
@@ -1284,10 +1225,10 @@ err:
 
 static int file_quotient(STANZA *s)
 {
-    BIGNUM *a = getBN(s, "A");
-    BIGNUM *b = getBN(s, "B");
-    BIGNUM *quotient = getBN(s, "Quotient");
-    BIGNUM *remainder = getBN(s, "Remainder");
+    BIGNUM *a = stanza_get_bignum(s, "A");
+    BIGNUM *b = stanza_get_bignum(s, "B");
+    BIGNUM *quotient = stanza_get_bignum(s, "Quotient");
+    BIGNUM *remainder = stanza_get_bignum(s, "Remainder");
     BIGNUM *ret = BN_new();
     BIGNUM *ret2 = BN_new();
     BIGNUM *nnmod = BN_new();
@@ -1367,10 +1308,10 @@ err:
 
 static int file_modmul(STANZA *s)
 {
-    BIGNUM *a = getBN(s, "A");
-    BIGNUM *b = getBN(s, "B");
-    BIGNUM *m = getBN(s, "M");
-    BIGNUM *mod_mul = getBN(s, "ModMul");
+    BIGNUM *a = stanza_get_bignum(s, "A");
+    BIGNUM *b = stanza_get_bignum(s, "B");
+    BIGNUM *m = stanza_get_bignum(s, "M");
+    BIGNUM *mod_mul = stanza_get_bignum(s, "ModMul");
     BIGNUM *ret = BN_new();
     int st = 0;
 
@@ -1418,10 +1359,10 @@ err:
 
 static int file_modexp(STANZA *s)
 {
-    BIGNUM *a = getBN(s, "A");
-    BIGNUM *e = getBN(s, "E");
-    BIGNUM *m = getBN(s, "M");
-    BIGNUM *mod_exp = getBN(s, "ModExp");
+    BIGNUM *a = stanza_get_bignum(s, "A");
+    BIGNUM *e = stanza_get_bignum(s, "E");
+    BIGNUM *m = stanza_get_bignum(s, "M");
+    BIGNUM *mod_exp = stanza_get_bignum(s, "ModExp");
     BIGNUM *ret = BN_new();
     BIGNUM *b = NULL, *c = NULL, *d = BN_new();
     int st = 0;
@@ -1473,9 +1414,9 @@ err:
 
 static int file_exp(STANZA *s)
 {
-    BIGNUM *a = getBN(s, "A");
-    BIGNUM *e = getBN(s, "E");
-    BIGNUM *exp = getBN(s, "Exp");
+    BIGNUM *a = stanza_get_bignum(s, "A");
+    BIGNUM *e = stanza_get_bignum(s, "E");
+    BIGNUM *exp = stanza_get_bignum(s, "Exp");
     BIGNUM *ret = BN_new();
     int st = 0;
 
@@ -1497,9 +1438,9 @@ err:
 
 static int file_modsqrt(STANZA *s)
 {
-    BIGNUM *a = getBN(s, "A");
-    BIGNUM *p = getBN(s, "P");
-    BIGNUM *mod_sqrt = getBN(s, "ModSqrt");
+    BIGNUM *a = stanza_get_bignum(s, "A");
+    BIGNUM *p = stanza_get_bignum(s, "P");
+    BIGNUM *mod_sqrt = stanza_get_bignum(s, "ModSqrt");
     BIGNUM *ret = BN_new();
     BIGNUM *ret2 = BN_new();
     int st = 0;
@@ -1663,35 +1604,35 @@ static int test_hex2bn()
     BIGNUM *bn = NULL;
     int ret, st = 0;
 
-    ret = parseBN(&bn, "0");
+    ret = parsehexBN(&bn, "0");
     if (ret != 1 || !BN_is_zero(bn) || BN_is_negative(bn)) {
         fprintf(stderr, "BN_hex2bn(0) gave a bad result.\n");
         goto err;
     }
     BN_free(bn);
 
-    ret = parseBN(&bn, "256");
+    ret = parsehexBN(&bn, "256");
     if (ret != 3 || !BN_is_word(bn, 0x256) || BN_is_negative(bn)) {
         fprintf(stderr, "BN_hex2bn(256) gave a bad result.\n");
         goto err;
     }
     BN_free(bn);
 
-    ret = parseBN(&bn, "-42");
+    ret = parsehexBN(&bn, "-42");
     if (ret != 3 || !BN_abs_is_word(bn, 0x42) || !BN_is_negative(bn)) {
         fprintf(stderr, "BN_hex2bn(-42) gave a bad result.\n");
         goto err;
     }
     BN_free(bn);
 
-    ret = parseBN(&bn, "-0");
+    ret = parsehexBN(&bn, "-0");
     if (ret != 2 || !BN_is_zero(bn) || BN_is_negative(bn)) {
         fprintf(stderr, "BN_hex2bn(-0) gave a bad result.\n");
         goto err;
     }
     BN_free(bn);
 
-    ret = parseBN(&bn, "abctrailing garbage is ignored");
+    ret = parsehexBN(&bn, "abctrailing garbage is ignored");
     if (ret != 3 || !BN_is_word(bn, 0xabc) || BN_is_negative(bn)) {
         fprintf(stderr, "BN_hex2bn(abctrail...) gave a bad result.\n");
         goto err;
@@ -2085,87 +2026,6 @@ err:
 }
 
 
-/* Delete leading and trailing spaces from a string */
-static char *strip_spaces(char *p)
-{
-    char *q;
-
-    /* Skip over leading spaces */
-    while (*p && isspace(*p))
-        p++;
-    if (!*p)
-        return NULL;
-
-    for (q = p + strlen(p) - 1; q != p && isspace(*q); )
-        *q-- = '\0';
-    return *p ? p : NULL;
-}
-
-/*
- * Read next test stanza; return 1 if found, 0 on EOF or error.
- */
-static int readstanza(STANZA *s, int *linesread)
-{
-    PAIR *pp = s->pairs;
-    char *p, *equals, *key, *value;
-    char buff[1024];
-
-    while (fgets(buff, sizeof(buff), fp) != NULL) {
-        (*linesread)++;
-        if ((p = strchr(buff, '\n')) == NULL) {
-            fprintf(stderr, "Line %d too long.\n", s->start);
-            return 0;
-        }
-        *p = '\0';
-
-        /* Blank line marks end of tests. */
-        if (buff[0] == '\0')
-            break;
-
-        /* Lines starting with a pound sign are ignored. */
-        if (buff[0] == '#')
-            continue;
-
-        if ((equals = strchr(buff, '=')) == NULL) {
-            fprintf(stderr, "Line %d missing equals.\n", s->start);
-            return 0;
-        }
-        *equals++ = '\0';
-
-        key = strip_spaces(buff);
-        value = strip_spaces(equals);
-        if (key == NULL || value == NULL) {
-            fprintf(stderr, "Line %d missing field.\n", s->start);
-            return 0;
-        }
-        s->numpairs++;
-        if (s->numpairs >= MAXPAIRS) {
-            fprintf(stderr, "Line %d too many lines\n", s->start);
-            return 0;
-        }
-        pp->key = OPENSSL_strdup(key);
-        pp->value = OPENSSL_strdup(value);
-        pp++;
-    }
-
-    /* If we read anything, return ok. */
-    return 1;
-}
-
-static void clearstanza(STANZA *s)
-{
-    PAIR *pp = s->pairs;
-    int i = s->numpairs;
-    int start = s->start;
-
-    for ( ; --i >= 0; pp++) {
-        OPENSSL_free(pp->key);
-        OPENSSL_free(pp->value);
-    }
-    memset(s, 0, sizeof(*s));
-    s->start = start;
-}
-
 static int file_test_run(STANZA *s)
 {
     static const FILETEST filetests[] = {
@@ -2185,7 +2045,7 @@ static int file_test_run(STANZA *s)
     const FILETEST *tp = filetests;
 
     for ( ; --numtests >= 0; tp++) {
-        if (findattr(s, tp->name) != NULL)
+        if (stanza_find_attr(s, tp->name) != NULL)
             return tp->func(s);
     }
     fprintf(stderr, "Unknown test at %d\n", s->start);
@@ -2194,22 +2054,19 @@ static int file_test_run(STANZA *s)
 
 static int file_tests()
 {
-    STANZA s;
-    int linesread = 0, errcnt = 0;
+    int count = 0, errcnt = 0;
 
-    /* Read test file. */
-    memset(&s, 0, sizeof(s));
-    while (!feof(fp) && readstanza(&s, &linesread)) {
-        if (s.numpairs == 0)
+    for ( ; sp; sp = sp->next) {
+        if (sp->numpairs == 0)
             continue;
-        if (!file_test_run(&s)) {
-            fprintf(stderr, "Test at %d failed\n", s.start);
+        if (!file_test_run(sp)) {
+            fprintf(stderr, "Test at %d failed\n", sp->start);
             errcnt++;
         }
-        clearstanza(&s);
-        s.start = linesread;
+        count++;
     }
 
+    fprintf(stderr, "Did %d tests from config file\n", count);
     return errcnt == 0;
 }
 
@@ -2218,11 +2075,13 @@ int test_main(int argc, char *argv[])
     static const char rnd_seed[] =
         "If not seeded, BN_generate_prime might fail";
     int result = 0;
+    STANZA *save;
 
     if (argc != 2) {
         fprintf(stderr, "%s TEST_FILE\n", argv[0]);
         return 1;
     }
+    save = sp = stanza_parse_file(argv[1]);
 
     ADD_TEST(test_sub);
     ADD_TEST(test_div_recip);
@@ -2256,10 +2115,8 @@ int test_main(int argc, char *argv[])
     ctx = BN_CTX_new();
     TEST_check(ctx != NULL);
 
-    fp = fopen(argv[1], "r");
-    TEST_check(fp != NULL);
     result = run_tests(argv[0]);
-    fclose(fp);
+    stanza_free_all(save);
 
     BN_CTX_free(ctx);
     return result;

@@ -101,14 +101,6 @@ const char *stanza_find_attr(const STANZA *sp, const char *key);
 BIGNUM *stanza_get_bignum(STANZA *s, const char *attribute);
 
 /*
- * Parse named |attribute| as binary data, fill in |buf| and |buflen| with
- * the data (should be OPENSSL_free'd when done) and size and return 1
- * if successful.  On error, return 0 (and error to stderr).
- */
-int stanza_get_bin(const STANZA *s, const char *attribute,
-                   unsigned char **buf, size_t *buflen);
-
-/*
  * Parse named |attribute| as an int, and put value in |out|. Return 1
  * if okay, or 0 (and error message to stderr) on error.
  */

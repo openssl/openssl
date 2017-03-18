@@ -61,12 +61,6 @@ BIGNUM *stanza_get_bignum(STANZA *s, const char *attribute)
     return ret;
 }
 
-int stanza_get_bin(const STANZA *sp, const char *attribute,
-                   unsigned char **buf, size_t *buflen)
-{
-    return 0;
-}
-
 int stanza_get_int(STANZA *s, const char *attribute, int *out)
 {
     BIGNUM *ret = stanza_get_bignum(s, attribute);
