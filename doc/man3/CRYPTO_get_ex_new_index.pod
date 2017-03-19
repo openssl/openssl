@@ -130,12 +130,15 @@ the same callback handles different types of exdata.
 dup_func() is called when a structure is being copied.  This is only done
 for B<SSL> and B<SSL_SESSION> objects.  The B<to> and B<from> parameters
 are pointers to the destination and source B<CRYPTO_EX_DATA> structures,
-respectively.  The B<srcp> parameter is a pointer to the source exdata.
-When the dup_func() returns, the value in B<srcp> is copied to the
-destination ex_data.  If the pointer contained in B<srcp> is not modified
+respectively.  The B<from_d> parameter needs to be cast to a B<void **pptr>
+as the API has currently the wrong signature; that will be changed in a
+future version.  The B<*pptr> is a pointer to the source exdata.
+When the dup_func() returns, the value in B<*pptr> is copied to the
+destination ex_data.  If the pointer contained in B<*pptr> is not modified
 by the dup_func(), then both B<to> and B<from> will point to the same data.
 The B<idx>, B<argl> and B<argp> parameters are as described for the other
-two callbacks.
+two callbacks.  If the dup_func() returns B<0> the whole CRYPTO_dup_ex_data()
+will fail.
 
 =head1 RETURN VALUES
 

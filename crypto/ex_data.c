@@ -124,7 +124,7 @@ static int dummy_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                      void *from_d, int idx,
                      long argl, void *argp)
 {
-    return 0;
+    return 1;
 }
 
 int CRYPTO_free_ex_index(int class_index, int idx)
@@ -254,10 +254,11 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
                        const CRYPTO_EX_DATA *from)
 {
     int mx, j, i;
-    char *ptr;
+    void *ptr;
     EX_CALLBACK *stack[10];
     EX_CALLBACK **storage = NULL;
     EX_CALLBACKS *ip;
+    int toret = 0;
 
     if (from->sk == NULL)
         /* Nothing to copy over */
@@ -280,21 +281,28 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
     }
     CRYPTO_THREAD_unlock(ex_data_lock);
 
-    if (mx > 0 && storage == NULL) {
+    if (mx == 0)
+        return 1;
+    if (storage == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_DUP_EX_DATA, ERR_R_MALLOC_FAILURE);
         return 0;
     }
+    if (!CRYPTO_set_ex_data(to, mx - 1, NULL))
+        goto err;
 
     for (i = 0; i < mx; i++) {
         ptr = CRYPTO_get_ex_data(from, i);
         if (storage[i] && storage[i]->dup_func)
-            storage[i]->dup_func(to, from, &ptr, i,
-                                 storage[i]->argl, storage[i]->argp);
+            if (!storage[i]->dup_func(to, from, &ptr, i,
+                                      storage[i]->argl, storage[i]->argp))
+                goto err;
         CRYPTO_set_ex_data(to, i, ptr);
     }
+    toret = 1;
+ err:
     if (storage != stack)
         OPENSSL_free(storage);
-    return 1;
+    return toret;
 }
 
 
