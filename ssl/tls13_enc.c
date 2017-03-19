@@ -124,7 +124,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     size_t mdlen, prevsecretlen;
     int ret;
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
-    const char *derived_secret_label = "derived secret";
+    static const char derived_secret_label[] = "derived secret";
     unsigned char preextractsec[EVP_MAX_MD_SIZE];
 
     if (pctx == NULL)
