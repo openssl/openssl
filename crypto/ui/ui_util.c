@@ -71,9 +71,8 @@ static void ui_new_method_data(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
 }
 
 static int ui_dup_method_data(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
-                              void *from_d, int idx, long argl, void *argp)
+                              void **pptr, int idx, long argl, void *argp)
 {
-    void **pptr = (void **)from_d;
     if (*pptr != NULL)
         *pptr = OPENSSL_memdup(*pptr, sizeof(struct pem_password_cb_data));
     return 1;
