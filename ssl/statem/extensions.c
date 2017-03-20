@@ -1191,11 +1191,18 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
          * ClientHello - which we don't want - so we need to take that bit off.
          */
         if (s->server) {
-            if (hdatalen < s->init_num + SSL3_HM_HEADER_LENGTH) {
+            PACKET hashprefix, msg;
+
+            /* Find how many bytes are left after the first two messages */
+            if (!PACKET_buf_init(&hashprefix, hdata, hdatalen)
+                    || !PACKET_forward(&hashprefix, 1)
+                    || !PACKET_get_length_prefixed_3(&hashprefix, &msg)
+                    || !PACKET_forward(&hashprefix, 1)
+                    || !PACKET_get_length_prefixed_3(&hashprefix, &msg)) {
                 SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            hdatalen -= s->init_num + SSL3_HM_HEADER_LENGTH;
+            hdatalen -= PACKET_remaining(&hashprefix);
         }
 
         if (EVP_DigestUpdate(mctx, hdata, hdatalen) <= 0) {
