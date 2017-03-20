@@ -992,7 +992,7 @@ static int tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
                                                  unsigned int context, X509 *x,
                                                  size_t chainidx, int *al)
 {
-    STACK_OF(X509_NAME) *ca_sk = SSL_get_client_CA_list(s);
+    const STACK_OF(X509_NAME) *ca_sk = SSL_get0_CA_list(s);
 
     if (ca_sk == NULL || sk_X509_NAME_num(ca_sk) == 0)
         return 1;
