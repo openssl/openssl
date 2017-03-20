@@ -547,7 +547,7 @@ typedef enum OPTION_choice {
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
     OPT_ASYNC, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
-    OPT_KEYLOG_FILE, OPT_EARLY_DATA,
+    OPT_KEYLOG_FILE, OPT_EARLY_DATA, OPT_REQCAFILE,
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
@@ -587,6 +587,8 @@ const OPTIONS s_client_options[] = {
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
+    {"requestCAfile", OPT_REQCAFILE, '<',
+      "PEM format file of CA names sent to server"},
     {"dane_tlsa_domain", OPT_DANE_TLSA_DOMAIN, 's', "DANE TLSA base domain"},
     {"dane_tlsa_rrdata", OPT_DANE_TLSA_RRDATA, 's',
      "DANE TLSA rrdata presentation form"},
@@ -831,6 +833,7 @@ int s_client_main(int argc, char **argv)
     char *port = OPENSSL_strdup(PORT);
     char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
+    char *ReqCAfile = NULL;
     char *sess_in = NULL, *crl_file = NULL, *p;
     char *xmpphost = NULL;
     const char *ehlo = "mail.example.com";
@@ -1276,6 +1279,9 @@ int s_client_main(int argc, char **argv)
         case OPT_BUILD_CHAIN:
             build_chain = 1;
             break;
+        case OPT_REQCAFILE:
+            ReqCAfile = opt_arg();
+            break;
         case OPT_CAFILE:
             CAfile = opt_arg();
             break;
@@ -1576,6 +1582,16 @@ int s_client_main(int argc, char **argv)
         BIO_printf(bio_err, "Error loading store locations\n");
         ERR_print_errors(bio_err);
         goto end;
+    }
+    if (ReqCAfile != NULL) {
+        STACK_OF(X509_NAME) *nm = sk_X509_NAME_new_null();
+        if (nm == NULL || !SSL_add_file_cert_subjects_to_stack(nm, ReqCAfile)) {
+            sk_X509_NAME_pop_free(nm, X509_NAME_free);
+            BIO_printf(bio_err, "Error loading CA names\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        SSL_CTX_set0_CA_list(ctx, nm);
     }
 #ifndef OPENSSL_NO_ENGINE
     if (ssl_client_engine) {
