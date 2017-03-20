@@ -128,7 +128,21 @@ The following bits are significant:
 
 :
 :
+
+=over
+
+=item #60 PRNO-SHA-512-DRNG
+
+=back
+
 :
+
+=over
+
+=item #13 PRNO-TRNG
+
+=back
+
 :
 
 =over
