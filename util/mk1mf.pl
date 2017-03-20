@@ -465,7 +465,7 @@ LINK_CMD=$link
 LFLAGS=$lflags
 RSC=$rsc
 
-# The output directory for everything intersting
+# The output directory for everything interesting
 OUT_D=$out_dir
 # The output directory for all the temporary muck
 TMP_D=$tmp_dir
@@ -634,7 +634,7 @@ printf OUT "  #define DATE \"%s\"\n", scalar gmtime();
 printf OUT "#endif\n";
 close(OUT);
 
-# Strip of trailing ' '
+# Strip off trailing ' '
 foreach (keys %lib_obj) { $lib_obj{$_}=&clean_up_ws($lib_obj{$_}); }
 $test=&clean_up_ws($test);
 $e_exe=&clean_up_ws($e_exe);
@@ -679,7 +679,7 @@ foreach (values %lib_nam)
 	}
 
 # hack to add version info on MSVC
-if (($platform eq "VC-WIN32") || ($platform eq "VC-WIN64A")
+if (($platform eq "VC-WIN32") || ($platform eq "VC-WIN64A") || ($platform eq "VC-CE")
 	|| ($platform eq "VC-WIN64I") || ($platform eq "VC-NT")) {
     $rules.= <<"EOF";
 \$(OBJ_D)\\\$(CRYPTO).res: ms\\version32.rc
@@ -905,7 +905,8 @@ sub do_defs
 		$ret.=$t;
 		}
 	# hack to add version info on MSVC
-	if ($shlib && (($platform eq "VC-WIN32") || ($platfrom eq "VC-WIN64I") || ($platform eq "VC-WIN64A") || ($platform eq "VC-NT")))
+	if ($shlib && (($platform eq "VC-WIN32") || ($platfrom eq "VC-WIN64I") || ($platform eq "VC-CE")
+	 || ($platform eq "VC-WIN64A") || ($platform eq "VC-NT")))
 		{
 		if ($var eq "CRYPTOOBJ")
 			{ $ret.="\$(OBJ_D)\\\$(CRYPTO).res "; }
