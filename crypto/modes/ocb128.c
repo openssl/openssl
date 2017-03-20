@@ -294,7 +294,7 @@ int CRYPTO_ocb128_aad(OCB128_CONTEXT *ctx, const unsigned char *aad,
 
         /* Sum_i = Sum_{i-1} xor ENCIPHER(K, A_i xor Offset_i) */
         aad_block = (OCB_BLOCK *)(aad + ((i - ctx->blocks_hashed - 1) * 16));
-        ocb_block16_xor(&ctx->offset_aad, aad_block, &tmp1);
+        ocb_block16_xor_misaligned(&ctx->offset_aad, aad_block, &tmp1);
         ctx->encrypt(tmp1.c, tmp2.c, ctx->keyenc);
         ocb_block16_xor(&ctx->sum, &tmp2, &ctx->sum);
     }
