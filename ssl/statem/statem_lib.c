@@ -2038,7 +2038,7 @@ int parse_ca_names(SSL *s, PACKET *pkt, int *al)
 
 int construct_ca_names(SSL *s, WPACKET *pkt)
 {
-    STACK_OF(X509_NAME) *ca_sk = SSL_get_client_CA_list(s);
+    const STACK_OF(X509_NAME) *ca_sk = SSL_get0_CA_list(s);
 
     /* Start sub-packet for client CA list */
     if (!WPACKET_start_sub_packet_u16(pkt))
