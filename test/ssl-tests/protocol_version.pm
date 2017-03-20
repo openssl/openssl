@@ -17,7 +17,7 @@ use warnings;
 use List::Util qw/max min/;
 
 use OpenSSL::Test;
-use OpenSSL::Test::Utils qw/anydisabled alldisabled/;
+use OpenSSL::Test::Utils qw/anydisabled alldisabled disabled/;
 setup("no_test_here");
 
 my @tls_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
@@ -201,6 +201,25 @@ sub generate_resumption_tests {
                 };
             }
         }
+    }
+
+    if (!disabled("tls1_3") && !$dtls) {
+        push @client_tests, {
+            "name" => "resumption-with-hrr",
+            "client" => {
+            },
+            "server" => {
+                "Curves" => "P-256"
+            },
+            "resume_client" => {
+            },
+            "test" => {
+                "ExpectedProtocol" => "TLSv1.3",
+                "Method" => "TLS",
+                "HandshakeMode" => "Resume",
+                "ResumptionExpected" => "Yes",
+            }
+        };
     }
 
     return (@server_tests, @client_tests);
