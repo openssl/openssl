@@ -665,6 +665,11 @@ static STRINT_PAIR tlsext_types[] = {
 #ifdef TLSEXT_TYPE_extended_master_secret
     {"extended master secret", TLSEXT_TYPE_extended_master_secret},
 #endif
+    {"key share", TLSEXT_TYPE_key_share},
+    {"supported versions", TLSEXT_TYPE_supported_versions},
+    {"psk", TLSEXT_TYPE_psk},
+    {"psk kex modes", TLSEXT_TYPE_psk_kex_modes},
+    {"certificate authorities", TLSEXT_TYPE_certificate_authorities},
     {NULL}
 };
 
