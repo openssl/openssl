@@ -459,7 +459,7 @@ static int int_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
                            CRYPTO_EX_DATA *from)
 {
     int mx, j, i;
-    char *ptr;
+    void *ptr;
     CRYPTO_EX_DATA_FUNCS **storage = NULL;
     EX_CLASS_ITEM *item;
     if (!from->sk)
@@ -473,6 +473,8 @@ static int int_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
     if (j < mx)
         mx = j;
     if (mx > 0) {
+        if (!CRYPTO_set_ex_data(to, mx - 1, NULL))
+            goto skip;
         storage = OPENSSL_malloc(mx * sizeof(CRYPTO_EX_DATA_FUNCS *));
         if (!storage)
             goto skip;
