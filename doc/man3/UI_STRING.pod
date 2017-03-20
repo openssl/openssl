@@ -58,7 +58,7 @@ output (prompt, info, error, ...).
 UI_get0_action_string() is used to retrieve the action description
 associated with a B<UIT_BOOLEAN> type B<UI_STRING>.
 For all other B<UI_STRING> types, NULL is returned.
-See L<UI_Add_input_boolean(3)>.
+See L<UI_add_input_boolean(3)>.
 
 UI_get0_result_string() is used to retrieve the result of a prompt.
 This is only useful for B<UIT_PROMPT> and B<UIT_VERIFY> type strings.
