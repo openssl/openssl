@@ -20,7 +20,8 @@
  * ignored.
  *
  * A line ending with a backslash means the next line is joined to it; the
- * backslask and newline charactesr are removed.
+ * backslask and newline charactesr are removed.  A double-backslash means
+ * keep a newline between the two lines; this is useful for PEM content.
  *
  * A stanze may start with a test name in square brackets.
  * Lines look like this:
@@ -28,20 +29,16 @@
  * where value (after any line-joining) may be surrounded by
  * double-quotes.
  *
- * The following four entries are equivalent:
+ * The following entries are equivalent:
  *      pem =          asdf
- *      pem = "asdf"
+ *      pem = asdf
  *      pem = a\
  *      sdf
- *      pem = "asd\
- *      f"
  *
- * Leading and trailing whitespace is stripped from value. To preserve them,
- * put quotes around it.  Leading and trailing whitespace is also stripped
- * from the key.
+ * Leading and trailing whitespace is stripped from both key and value.
  *
- * To use URL-encoded values (%% for % and %xx for hex value), use a
- * tilde instead of the equal sign.
+ * Values can be quoted and URL-encoded; see stanza_get_string() and
+ * stanza_get_urlstring().
  */
 
 /*
@@ -93,6 +90,18 @@ int stanza_type(const STANZA *sp, const char **list);
  * Look for |key| in the stanza and return its value or NULL if not found.
  */
 const char *stanza_find_attr(const STANZA *sp, const char *key);
+
+/*
+ * Parse named |attribute| as a possibly-quoted string, return it or
+ * NULL on error (and error message to stderr).
+ */
+char *stanza_get_string(STANZA *s, const char *attribute);
+
+/*
+ * Parse named |attribute| as a possibly-quoted string with URL encoding,
+ * return it or NULL on error (and error message to stderr).
+ */
+char *stanza_get_urlstring(STANZA *s, const char *attribute);
 
 /*
  * Parse named |attribute| as a BIGNUM, return it or NULL on error

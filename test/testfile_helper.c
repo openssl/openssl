@@ -35,13 +35,74 @@ int stanza_type(const STANZA *sp, const char **list)
     return -1;
 }
 
-#if 0
-static int parsedecbn(BIGNUM **out, const char *in)
+#define KWOTE(c)        (c == '"' || c == '\'')
+
+char *stanza_get_string(STANZA *s, const char *attribute)
 {
-    *out = NULL;
-    return BN_dec2bn(out, in);
+    const char *value = stanza_find_attr(s, attribute);
+    char *ret;
+    size_t len;
+    char first;
+
+    if (value == NULL) {
+        fprintf(stderr, "Can't find %s in test at line %d\n",
+                attribute, s->start);
+        return NULL;
+    }
+    first = value[0];
+    ret = KWOTE(first) ? OPENSSL_strdup(value + 1) : OPENSSL_strdup(value);
+    if (ret == NULL)
+        return NULL;
+    if (KWOTE(first)) {
+        len = strlen(ret);
+        if (len < 2 || ret[--len] != first) {
+            fprintf(stderr, "Line %d missing close quote.\n", s->start);
+            OPENSSL_free(ret);
+            return NULL;
+        }
+        ret[len] = '\0';
+    }
+    return ret;
 }
-#endif
+
+/* Decode %xx URL-decoding in-place; return 0 on failure. */
+static int urldecode(char *p)
+{
+    char *out = p;
+
+    for (; *p; p++) {
+        if (*p != '%')
+            *out++ = *p;
+        else if (isxdigit(p[1]) && isxdigit(p[2])) {
+            /* Don't check, can't fail because of ixdigit() call. */
+            *out++ = (OPENSSL_hexchar2int(p[1]) << 4)
+                   | OPENSSL_hexchar2int(p[2]);
+            p += 2;
+        }
+        else
+            return 0;
+    }
+    *out = '\0';
+    return 1;
+}
+
+char *stanza_get_urlstring(STANZA *s, const char *attribute)
+{
+    char *value = stanza_get_string(s, attribute);
+
+    if (value == NULL) {
+        fprintf(stderr, "Can't find %s in test at line %d\n",
+                attribute, s->start);
+        return NULL;
+    }
+    if (!urldecode(value)) {
+        fprintf(stderr, "Bad url decode for %s int est at line %d\n",
+                attribute, s->start);
+        OPENSSL_free(value);
+        return NULL;
+    }
+    return value;
+}
 
 BIGNUM *stanza_get_bignum(STANZA *s, const char *attribute)
 {
@@ -80,21 +141,17 @@ err:
     return st;
 }
 
-/* Skip leading whitespace. */
-static char *skip_spaces(char *p)
-{
-    while (*p && isspace(*p))
-        p++;
-    return p;
-}
-
-/* Delete leading and trailing spaces from a string */
+/*
+ * Delete leading and trailing spaces from a string; return NULL for a
+ * blank line.
+ */
 static char *trim_spaces(char *p)
 {
     char *q;
 
     /* Skip over leading spaces */
-    p = skip_spaces(p);
+    while (*p && isspace(*p))
+        p++;
     if (*p == '\0')
         return NULL;
 
@@ -145,10 +202,9 @@ STANZA *stanza_parse_file(const char *file)
  */
 static char *read_line(FILE *fp, int *lineno)
 {
-    char buff[1024];
-    char *line = NULL, *p, *copy;
-    size_t linelen = 0;
-    size_t frag;
+    char buff[1024], *line = NULL, *p, *copy;
+    size_t linelen = 0, frag;
+    int more;
 
     for ( ; ; ) {
         if (fgets(buff, sizeof(buff), fp) == NULL || feof(fp))
@@ -161,6 +217,15 @@ static char *read_line(FILE *fp, int *lineno)
         *p = '\0';
         frag = p - buff;
 
+        /* Continuation line? */
+        more = p > buff && p[-1] == '\\';
+        if (more) {
+            /* See if it ends with \\ and turn first \ into a newline. */
+            *--p = '\0';
+            if (p > buff && p[-1] == '\\')
+                p[-1] = '\n';
+        }
+
         /* Append the physical line. */
         copy = OPENSSL_realloc(line, linelen + frag + 1);
         if (copy == NULL) {
@@ -171,9 +236,9 @@ static char *read_line(FILE *fp, int *lineno)
         strcpy(&line[linelen], buff);
         linelen += strlen(buff);
 
-        if (p == buff || p[-1] != '\\')
+        /* Continuation line? */
+        if (!more)
             return line;
-        line[--linelen] = '\0';
     }
 
     /* Failed; clean up and return. */
@@ -181,34 +246,12 @@ static char *read_line(FILE *fp, int *lineno)
     return NULL;
 }
 
-/* Decode %xx URL-decoding in-place; return 0 on failure. */
-static int urldecode(char *p)
-{
-    char *out = p;
-
-    for (; *p; p++) {
-        if (*p != '%')
-            *out++ = *p;
-        else if (isxdigit(p[1]) && isxdigit(p[2])) {
-            /* Don't check, can't fail because of ixdigit() call. */
-            *out++ = (OPENSSL_hexchar2int(p[1]) << 4)
-                   | OPENSSL_hexchar2int(p[2]);
-            p += 2;
-        }
-        else
-            return 0;
-    }
-    *out = '\0';
-    return 1;
-}
-
 STANZA *stanza_parse_fp(FILE *fp)
 {
     STANZA *sp = NULL, *save = NULL;
     PAIR *pp;
     char *line, *equals, *key, *value;
-    int encoded, comment, lineno = 0;
-    size_t len;
+    int comment, lineno = 0;
 
     /* Skip any prolog. */
     for ( ; ; ) {
@@ -235,26 +278,14 @@ STANZA *stanza_parse_fp(FILE *fp)
                 *equals = '\0';
         } else {
             /* Add a key/value pair line. */
-            encoded = 0;
-            if ((equals = strchr(line, '~')) != NULL)
-                encoded++;
-            else if ((equals = strchr(line, '=')) == NULL) {
+            if ((equals = strchr(line, '=')) == NULL) {
                 fprintf(stderr, "Line %d missing equals.\n", sp->start);
                 return save;
             }
             *equals++ = '\0';
 
             key = trim_spaces(line);
-            value = skip_spaces(equals);
-            if (*value == '"') {
-                value++;
-                len = strlen(value);
-                if (len < 2 || value[--len] != '"') {
-                    fprintf(stderr, "Line %d missing close quote.\n", sp->start);
-                    return save;
-                }
-                value[len] = '\0';
-            }
+            value = trim_spaces(equals);
 
             if (key == NULL || value == NULL) {
                 fprintf(stderr, "Line %d missing field.\n", sp->start);
@@ -268,10 +299,6 @@ STANZA *stanza_parse_fp(FILE *fp)
             pp->key = OPENSSL_strdup(key);
             pp->value = OPENSSL_strdup(value);
             OPENSSL_free(line);
-            if (encoded && !urldecode(pp->value)) {
-                fprintf(stderr, "Line %d bad URL encoding\n", lineno);
-                return save;
-            }
         }
 
         /* Blank or comment? Mark end of stanza, eat all such lines. */
