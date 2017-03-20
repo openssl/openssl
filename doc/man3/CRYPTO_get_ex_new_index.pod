@@ -23,7 +23,7 @@ CRYPTO_free_ex_data, CRYPTO_new_ex_data
  typedef void CRYPTO_EX_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                              int idx, long argl, void *argp);
  typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
-                           void *from_d, int idx, long argl, void *argp);
+                           void **from_d, int idx, long argl, void *argp);
 
  int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 
@@ -140,10 +140,8 @@ dup_func() is called when a structure is being copied.  This is only done
 for B<SSL>, B<SSL_SESSION>, B<EC_KEY> objects and B<BIO> chains via
 BIO_dup_chain().  The B<to> and B<from> parameters
 are pointers to the destination and source B<CRYPTO_EX_DATA> structures,
-respectively.  The B<from_d> parameter needs to be cast to a B<void **pptr>
-as the API has currently the wrong signature; that will be changed in a
-future version.  The B<*pptr> is a pointer to the source exdata.
-When the dup_func() returns, the value in B<*pptr> is copied to the
+respectively.  The B<*from_d> parameter is a pointer to the source exdata.
+When the dup_func() returns, the value in B<*from_d> is copied to the
 destination ex_data.  If the pointer contained in B<*pptr> is not modified
 by the dup_func(), then both B<to> and B<from> will point to the same data.
 The B<idx>, B<argl> and B<argp> parameters are as described for the other
@@ -165,6 +163,8 @@ dup_func() should return 0 for failure and 1 for success.
 =head1 HISTORY
 
 CRYPTO_alloc_ex_data() was added in OpenSSL 3.0.
+The signature of the dup_func() callback was changed in OpenSSL 3.0 to use the
+type B<void **> for B<from_d>.  Previously this parameter was of type B<void *>.
 
 =head1 COPYRIGHT
 
