@@ -1049,13 +1049,9 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
         return 0;
     }
 
-    if ((sess == NULL) || !ssl_version_supported(s, sess->ssl_version) ||
-        /*
-         * In the case of EAP-FAST, we can have a pre-shared
-         * "ticket" without a session ID.
-         */
-        (!sess->session_id_length && !sess->ext.tick) ||
-        (sess->not_resumable)) {
+    if (sess == NULL
+            || !ssl_version_supported(s, sess->ssl_version)
+            || !SSL_SESSION_is_resumable(sess)) {
         if (!ssl_get_new_session(s, 0))
             return 0;
     }

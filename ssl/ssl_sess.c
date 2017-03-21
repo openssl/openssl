@@ -46,12 +46,12 @@ static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s);
 static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
 
 /*
- * TODO(TLS1.3): SSL_get_session() and SSL_get1_session() are problematic in
- * TLS1.3 because, unlike in earlier protocol versions, the session ticket
- * may not have been sent yet even though a handshake has finished. The session
- * ticket data could come in sometime later...or even change if multiple session
- * ticket messages are sent from the server. We need to work out how to deal
- * with this.
+ * SSL_get_session() and SSL_get1_session() are problematic in TLS1.3 because,
+ * unlike in earlier protocol versions, the session ticket may not have been
+ * sent yet even though a handshake has finished. The session ticket data could
+ * come in sometime later...or even change if multiple session ticket messages
+ * are sent from the server. The preferred way for applications to obtain
+ * a resumable session is to use SSL_CTX_sess_set_new_cb().
  */
 
 SSL_SESSION *SSL_get_session(const SSL *ssl)
@@ -927,6 +927,16 @@ int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,
         memcpy(s->sid_ctx, sid_ctx, sid_ctx_len);
 
     return 1;
+}
+
+int SSL_SESSION_is_resumable(const SSL_SESSION *s)
+{
+    /*
+     * In the case of EAP-FAST, we can have a pre-shared "ticket" without a
+     * session ID.
+     */
+    return !s->not_resumable
+           && (s->session_id_length > 0 || s->ext.ticklen > 0);
 }
 
 long SSL_CTX_set_timeout(SSL_CTX *s, long t)
