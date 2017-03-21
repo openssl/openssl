@@ -1713,6 +1713,12 @@ int ssl3_send_server_key_exchange(SSL *s)
         if (type & SSL_kEECDH) {
             const EC_GROUP *group;
 
+            if (s->s3->tmp.ecdh != NULL) {
+                SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
+                       ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+
             ecdhp = cert->ecdh_tmp;
             if (s->cert->ecdh_tmp_auto) {
                 /* Get NID of appropriate shared curve */
@@ -1733,17 +1739,7 @@ int ssl3_send_server_key_exchange(SSL *s)
                 goto f_err;
             }
 
-            if (s->s3->tmp.ecdh != NULL) {
-                SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,
-                       ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
-
             /* Duplicate the ECDH structure. */
-            if (ecdhp == NULL) {
-                SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_ECDH_LIB);
-                goto err;
-            }
             if (s->cert->ecdh_tmp_auto)
                 ecdh = ecdhp;
             else if ((ecdh = EC_KEY_dup(ecdhp)) == NULL) {
