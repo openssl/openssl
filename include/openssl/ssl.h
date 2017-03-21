@@ -1502,6 +1502,7 @@ __owur int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_
                                 unsigned int sid_ctx_len);
 __owur int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
                                unsigned int sid_len);
+__owur int SSL_SESSION_is_resumable(const SSL_SESSION *s);
 
 __owur SSL_SESSION *SSL_SESSION_new(void);
 const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
