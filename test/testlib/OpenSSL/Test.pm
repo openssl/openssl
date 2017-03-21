@@ -403,6 +403,12 @@ return the resulting output as an array of lines.  If false or not given,
 the command will be executed with C<system()>, and C<run> will return 1 if
 the command was successful or 0 if it wasn't.
 
+=item B<statusvar =E<gt> VARREF>
+
+If used, B<VARREF> must be a reference to a scalar variable.  It will be
+assigned a boolean indicating if the command succeeded or not.  This is
+particularly useful together with B<capture>.
+
 =back
 
 For further discussion on what is considered a successful command or not, see
@@ -427,6 +433,9 @@ sub run {
     my $r = 0;
     my $e = 0;
 
+    die "OpenSSL::Test::run(): statusvar value not a scalar reference"
+        if $opts{statusvar} && ref($opts{statusvar}) ne "SCALAR";
+
     # In non-verbose, we want to shut up the command interpreter, in case
     # it has something to complain about.  On VMS, it might complain both
     # on stdout and stderr
@@ -445,11 +454,13 @@ sub run {
     # to make it easier to compare with a manual run of the command.
     if ($opts{capture}) {
 	@r = `$prefix$cmd`;
-	$e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
     } else {
 	system("$prefix$cmd");
-	$e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
-	$r = $hooks{exit_checker}->($e);
+    }
+    $e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
+    $r = $hooks{exit_checker}->($e);
+    if ($opts{statusvar}) {
+        ${$opts{statusvar}} = $r;
     }
 
     if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
