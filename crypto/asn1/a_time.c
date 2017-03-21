@@ -147,10 +147,9 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t,
     if (!out || !*out) {
         if (!(ret = ASN1_GENERALIZEDTIME_new()))
             goto err;
-        if (out)
-            *out = ret;
-    } else
+    } else {
         ret = *out;
+    }
 
     /* If already GeneralizedTime just copy across */
     if (t->type == V_ASN1_GENERALIZEDTIME) {
