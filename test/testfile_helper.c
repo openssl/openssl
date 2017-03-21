@@ -28,8 +28,8 @@ int stanza_type(const STANZA *sp, const char **list)
 {
     int i;
 
-    for (i = 0; list[i]; ++i) {
-        if (stanza_find_attr(sp, list[i]) != NULL)
+    for (i = 0; *list != NULL; i++) {
+        if (stanza_find_attr(sp, *list++) != NULL)
             return i;
     }
     return -1;
@@ -40,9 +40,8 @@ int stanza_type(const STANZA *sp, const char **list)
 char *stanza_get_string(STANZA *s, const char *attribute)
 {
     const char *value = stanza_find_attr(s, attribute);
-    char *ret;
+    char *ret, first;
     size_t len;
-    char first;
 
     if (value == NULL) {
         fprintf(stderr, "Can't find %s in test at line %d\n",
@@ -56,7 +55,8 @@ char *stanza_get_string(STANZA *s, const char *attribute)
     if (KWOTE(first)) {
         len = strlen(ret);
         if (len < 2 || ret[--len] != first) {
-            fprintf(stderr, "Line %d missing close quote.\n", s->start);
+            fprintf(stderr, "Missing close quote for %s in test at line %d\n",
+                    attribute, s->start);
             OPENSSL_free(ret);
             return NULL;
         }
@@ -96,7 +96,7 @@ char *stanza_get_urlstring(STANZA *s, const char *attribute)
         return NULL;
     }
     if (!urldecode(value)) {
-        fprintf(stderr, "Bad url decode for %s int est at line %d\n",
+        fprintf(stderr, "Bad URL decode for %s in test at line %d\n",
                 attribute, s->start);
         OPENSSL_free(value);
         return NULL;
@@ -116,7 +116,8 @@ BIGNUM *stanza_get_bignum(STANZA *s, const char *attribute)
     }
 
     if (BN_hex2bn(&ret, hex) != (int)strlen(hex)) {
-        fprintf(stderr, "Could not decode '%s'.\n", hex);
+        fprintf(stderr, "Can't decode value for %s in test at line %d\n",
+                attribute, s->start);
         return NULL;
     }
     return ret;
@@ -211,7 +212,7 @@ static char *read_line(FILE *fp, int *lineno)
             break;
         (*lineno)++;
         if ((p = strchr(buff, '\n')) == NULL) {
-            fprintf(stderr, "Line %d too long.\n", *lineno);
+            fprintf(stderr, "Line %d too long\n", *lineno);
             break;
         }
         *p = '\0';
@@ -257,7 +258,7 @@ STANZA *stanza_parse_fp(FILE *fp)
     for ( ; ; ) {
         line = read_line(fp, &lineno);
         if (line == NULL) {
-            fprintf(stderr, "Empty file.\n");
+            fprintf(stderr, "Empty file\n");
             return NULL;
         }
         if (line[0] == '#' || line[0] == '\0') {
@@ -279,7 +280,7 @@ STANZA *stanza_parse_fp(FILE *fp)
         } else {
             /* Add a key/value pair line. */
             if ((equals = strchr(line, '=')) == NULL) {
-                fprintf(stderr, "Line %d missing equals.\n", sp->start);
+                fprintf(stderr, "Line %d missing equals\n", lineno);
                 return save;
             }
             *equals++ = '\0';
@@ -288,12 +289,12 @@ STANZA *stanza_parse_fp(FILE *fp)
             value = trim_spaces(equals);
 
             if (key == NULL || value == NULL) {
-                fprintf(stderr, "Line %d missing field.\n", sp->start);
+                fprintf(stderr, "Line %d missing field\n", lineno);
                 return save;
             }
             pp = &sp->pairs[sp->numpairs++];
             if (sp->numpairs >= MAXPAIRS) {
-                fprintf(stderr, "Line %d too many lines\n", sp->start);
+                fprintf(stderr, "Line %d too many values\n", lineno);
                 return save;
             }
             pp->key = OPENSSL_strdup(key);
