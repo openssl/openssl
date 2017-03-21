@@ -1867,12 +1867,11 @@ int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
         if (group_id == share_id
                 && (!checkallow
                     || tls_curve_allowed(s, groups, SSL_SECOP_CURVE_CHECK))) {
-            break;
+            return 1;
         }
     }
 
-    /* If i == num_groups then not in the list */
-    return i < num_groups;
+    return 0;
 }
 #endif
 
