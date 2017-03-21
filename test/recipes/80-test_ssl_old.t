@@ -468,13 +468,15 @@ sub testssl {
 
 	foreach my $protocol (sort keys %ciphersuites) {
 	    note "Testing ciphersuites for $protocol";
+	    # ssltest_old doesn't know -tls1_2, but that's fine, since that's
+	    # the default choice if TLSv1.2 enabled
+	    my $flag = $protocol eq "-tls1_2" ? "" : $protocol;
 	    foreach my $cipher (@{$ciphersuites{$protocol}}) {
                 if ($protocol eq "-ssl3" && $cipher =~ /ECDH/ ) {
                     note "*****SKIPPING $protocol $cipher";
                     ok(1);
                 } else {
-                    ok(run(test([@ssltest, @exkeys, "-cipher", $cipher,
-                                 $protocol eq "SSLv3" ? ("-ssl3") : ()])),
+                    ok(run(test([@ssltest, @exkeys, "-cipher", $cipher, $flag])),
                        "Testing $cipher");
                }
 	    }
