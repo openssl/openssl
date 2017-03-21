@@ -44,7 +44,7 @@ virtualenv venv-pycrypto
 
 cd pyca-cryptography
 
-pip install -q --requirement dev-requirements.txt
+pip install .[test]
 
 echo "------------------------------------------------------------------"
 echo "Building cryptography"
