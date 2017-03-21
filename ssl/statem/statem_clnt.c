@@ -2442,7 +2442,6 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     if (ticklen == 0)
         return MSG_PROCESS_CONTINUE_READING;
 
-    /* TODO(TLS1.3): Is this a suitable test for TLS1.3? */
     if (s->session->session_id_length > 0) {
         int i = s->session_ctx->session_cache_mode;
         SSL_SESSION *new_sess;
