@@ -424,11 +424,17 @@ sub testssl {
 	push @protocols, "-ssl3" unless $no_ssl3;
 	my $protocolciphersuitecount = 0;
 	my %ciphersuites = ();
+	my %ciphersstatus = ();
 	foreach my $protocol (@protocols) {
-	    $ciphersuites{$protocol} =
-		[ map { s|\R||; split(/:/, $_) }
-		  run(app(["openssl", "ciphers", "-s", $protocol,
-                           "ALL:$ciphers"]), capture => 1) ];
+	    my $ciphersstatus = undef;
+	    my @ciphers = run(app(["openssl", "ciphers", "-s", $protocol,
+				   "ALL:$ciphers"]),
+			      capture => 1, statusvar => \$ciphersstatus);
+	    $ciphersstatus{$protocol} = $ciphersstatus;
+	    if ($ciphersstatus) {
+		$ciphersuites{$protocol} = [ map { s|\R||; split(/:/, $_) }
+					     @ciphers ];
+	    }
 	    $protocolciphersuitecount += scalar @{$ciphersuites{$protocol}};
 	}
 
@@ -437,7 +443,12 @@ sub testssl {
 
         # The count of protocols is because in addition to the ciphersuits
         # we got above, we're running a weak DH test for each protocol
-        plan tests => $protocolciphersuitecount + scalar(keys %ciphersuites);
+        plan tests => scalar(@protocols) + $protocolciphersuitecount
+            + scalar(keys %ciphersuites);
+
+        foreach my $protocol (@protocols) {
+            ok($ciphersstatus{$protocol}, "Getting ciphers for $protocol");
+        }
 
         foreach my $protocol (sort keys %ciphersuites) {
             note "Testing ciphersuites for $protocol";
