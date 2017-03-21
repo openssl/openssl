@@ -172,21 +172,6 @@ err:
     return NULL;
 }
 
-static void cleanup(X509_OBJECT *a)
-{
-    if (!a)
-        return;
-    if (a->type == X509_LU_X509) {
-        X509_free(a->data.x509);
-    } else if (a->type == X509_LU_CRL) {
-        X509_CRL_free(a->data.crl);
-    } else {
-        /* abort(); */
-    }
-
-    OPENSSL_free(a);
-}
-
 void X509_STORE_free(X509_STORE *vfy)
 {
     int i;
@@ -209,7 +194,7 @@ void X509_STORE_free(X509_STORE *vfy)
         X509_LOOKUP_free(lu);
     }
     sk_X509_LOOKUP_free(sk);
-    sk_X509_OBJECT_pop_free(vfy->objs, cleanup);
+    sk_X509_OBJECT_pop_free(vfy->objs, X509_OBJECT_free);
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, vfy, &vfy->ex_data);
     X509_VERIFY_PARAM_free(vfy->param);
