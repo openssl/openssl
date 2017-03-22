@@ -1317,10 +1317,20 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    /* We do this immediately so we know what format the ServerHello is in */
-    protverr = ssl_choose_client_version(s, sversion);
+    /* load the server random */
+    if (!PACKET_copy_bytes(pkt, s->s3->server_random, SSL3_RANDOM_SIZE)) {
+        al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
+        goto f_err;
+    }
+
+    /*
+     * We do this immediately so we know what format the ServerHello is in.
+     * Must be done after reading the random data so we can check for the
+     * TLSv1.3 downgrade sentinels
+     */
+    protverr = ssl_choose_client_version(s, sversion, 1, &al);
     if (protverr != 0) {
-        al = SSL_AD_PROTOCOL_VERSION;
         SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, protverr);
         goto f_err;
     }
@@ -1332,14 +1342,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     if (SSL_IS_TLS13(s) && RECORD_LAYER_processed_read_pending(&s->rlayer)) {
         al = SSL_AD_UNEXPECTED_MESSAGE;
         SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_NOT_ON_RECORD_BOUNDARY);
-        goto f_err;
-    }
-
-    /* load the server hello data */
-    /* load the server random */
-    if (!PACKET_copy_bytes(pkt, s->s3->server_random, SSL3_RANDOM_SIZE)) {
-        al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_LENGTH_MISMATCH);
         goto f_err;
     }
 
@@ -1609,9 +1611,8 @@ static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
     s->hello_retry_request = 1;
 
     /* This will fail if it doesn't choose TLSv1.3+ */
-    errorcode = ssl_choose_client_version(s, sversion);
+    errorcode = ssl_choose_client_version(s, sversion, 0, &al);
     if (errorcode != 0) {
-        al = SSL_AD_PROTOCOL_VERSION;
         SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST, errorcode);
         goto f_err;
     }
