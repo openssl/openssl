@@ -1476,6 +1476,7 @@ static int tls_early_post_process_client_hello(SSL *s, int *al)
     STACK_OF(SSL_CIPHER) *ciphers = NULL;
     STACK_OF(SSL_CIPHER) *scsvs = NULL;
     CLIENTHELLO_MSG *clienthello = s->clienthello;
+    DOWNGRADE dgrd = DOWNGRADE_NONE;
 
     *al = SSL_AD_INTERNAL_ERROR;
     /* Finished parsing the ClientHello, now we can start processing it */
@@ -1516,7 +1517,7 @@ static int tls_early_post_process_client_hello(SSL *s, int *al)
      * versions are potentially compatible. Version negotiation comes later.
      */
     if (!SSL_IS_DTLS(s)) {
-        protverr = ssl_choose_server_version(s, clienthello);
+        protverr = ssl_choose_server_version(s, clienthello, &dgrd);
     } else if (s->method->version != DTLS_ANY_VERSION &&
                DTLS_VERSION_LT((int)clienthello->legacy_version, s->version)) {
         protverr = SSL_R_VERSION_TOO_LOW;
@@ -1565,7 +1566,7 @@ static int tls_early_post_process_client_hello(SSL *s, int *al)
             s->d1->cookie_verified = 1;
         }
         if (s->method->version == DTLS_ANY_VERSION) {
-            protverr = ssl_choose_server_version(s, clienthello);
+            protverr = ssl_choose_server_version(s, clienthello, &dgrd);
             if (protverr != 0) {
                 SSLerr(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO, protverr);
                 s->version = s->client_version;
@@ -1722,7 +1723,7 @@ static int tls_early_post_process_client_hello(SSL *s, int *al)
     {
         unsigned char *pos;
         pos = s->s3->server_random;
-        if (ssl_fill_hello_random(s, 1, pos, SSL3_RANDOM_SIZE) <= 0) {
+        if (ssl_fill_hello_random(s, 1, pos, SSL3_RANDOM_SIZE, dgrd) <= 0) {
             goto err;
         }
     }
