@@ -90,21 +90,19 @@ static int test_int_stack(void)
 
     /* Check push and num */
     for (i = 0; i < n; i++) {
-        if (sk_sint_num(s) != i) {
-            fprintf(stderr, "test int stack size %d\n", i);
+        if (!TEST_int_eq(sk_sint_num(s), i)) {
+            TEST_info("int stack size %d", i);
             goto end;
         }
         sk_sint_push(s, v + i);
     }
-    if (sk_sint_num(s) != n) {
-        fprintf(stderr, "test int stack size %d\n", n);
+    if (!TEST_int_eq(sk_sint_num(s), n))
         goto end;
-    }
 
     /* check the values */
     for (i = 0; i < n; i++)
-        if (sk_sint_value(s, i) != v + i) {
-            fprintf(stderr, "test int value %d\n", i);
+        if (!TEST_ptr_eq(sk_sint_value(s, i), v + i)) {
+            TEST_info("int value %d", i);
             goto end;
         }
 
@@ -113,8 +111,8 @@ static int test_int_stack(void)
         int *val = (finds[i].unsorted == -1) ? &notpresent
                                              : v + finds[i].unsorted;
 
-        if (sk_sint_find(s, val) != finds[i].unsorted) {
-            fprintf(stderr, "test int unsorted find %d\n", i);
+        if (!TEST_int_eq(sk_sint_find(s, val), finds[i].unsorted)) {
+            TEST_info("int unsorted find %d", i);
             goto end;
         }
     }
@@ -124,48 +122,42 @@ static int test_int_stack(void)
         int *val = (finds[i].unsorted == -1) ? &notpresent
                                              : v + finds[i].unsorted;
 
-        if (sk_sint_find_ex(s, val) != finds[i].unsorted) {
-            fprintf(stderr, "test int unsorted find_ex %d\n", i);
+        if (!TEST_int_eq(sk_sint_find_ex(s, val), finds[i].unsorted)) {
+            TEST_info("int unsorted find_ex %d", i);
             goto end;
         }
     }
 
     /* sorting */
-    if (sk_sint_is_sorted(s)) {
-        fprintf(stderr, "test int unsorted\n");
+    if (!TEST_false(sk_sint_is_sorted(s)))
         goto end;
-    }
     sk_sint_set_cmp_func(s, &int_compare);
     sk_sint_sort(s);
-    if (!sk_sint_is_sorted(s)) {
-        fprintf(stderr, "test int sorted\n");
+    if (!TEST_true(sk_sint_is_sorted(s)))
         goto end;
-    }
 
     /* find sorted -- the value is matched so we don't need to locate it */
     for (i = 0; i < n_finds; i++)
-        if (sk_sint_find(s, &finds[i].value) != finds[i].sorted) {
-            fprintf(stderr, "test int sorted find %d\n", i);
+        if (!TEST_int_eq(sk_sint_find(s, &finds[i].value), finds[i].sorted)) {
+            TEST_info("int sorted find %d", i);
             goto end;
         }
 
     /* find_ex sorted */
     for (i = 0; i < n_finds; i++)
-        if (sk_sint_find_ex(s, &finds[i].value) != finds[i].ex) {
-            fprintf(stderr, "test int sorted find_ex present %d\n", i);
+        if (!TEST_int_eq(sk_sint_find_ex(s, &finds[i].value), finds[i].ex)) {
+            TEST_info("int sorted find_ex present %d", i);
             goto end;
         }
     for (i = 0; i < n_exfinds; i++)
-        if (sk_sint_find_ex(s, &exfinds[i].value) != exfinds[i].ex) {
-            fprintf(stderr, "test int sorted find_ex absent %d\n", i);
+        if (!TEST_int_eq(sk_sint_find_ex(s, &exfinds[i].value), exfinds[i].ex)){
+            TEST_info("int sorted find_ex absent %d", i);
             goto end;
         }
 
     /* shift */
-    if (sk_sint_shift(s) != v + 6) {
-        fprintf(stderr, "test int shift\n");
+    if (!TEST_ptr_eq(sk_sint_shift(s), v + 6))
         goto end;
-    }
 
     testresult = 1;
 end:
@@ -189,29 +181,25 @@ static int test_uchar_stack(void)
 
     /* unshift and num */
     for (i = 0; i < n; i++) {
-        if (sk_uchar_num(s) != i) {
-            fprintf(stderr, "test uchar stack size %d\n", i);
+        if (!TEST_int_eq(sk_uchar_num(s), i)) {
+            TEST_info("uchar stack size %d", i);
             goto end;
         }
         sk_uchar_unshift(s, v + i);
     }
-    if (sk_uchar_num(s) != n) {
-        fprintf(stderr, "test uchar stack size %d\n", n);
+    if (!TEST_int_eq(sk_uchar_num(s), n))
         goto end;
-    }
 
     /* dup */
     r = sk_uchar_dup(s);
-    if (sk_uchar_num(r) != n) {
-        fprintf(stderr, "test uchar dup size %d\n", n);
+    if (!TEST_int_eq(sk_uchar_num(r), n))
         goto end;
-    }
     sk_uchar_sort(r);
 
     /* pop */
     for (i = 0; i < n; i++) 
-        if (sk_uchar_pop(s) != v + i) {
-            fprintf(stderr, "test uchar pop %d\n", i);
+        if (!TEST_ptr_eq(sk_uchar_pop(s), v + i)) {
+            TEST_info("uchar pop %d", i);
             goto end;
         }
 
@@ -220,43 +208,35 @@ static int test_uchar_stack(void)
     s = NULL;
 
     /* dup again */
-    if (sk_uchar_num(r) != n) {
-        fprintf(stderr, "test uchar dup size %d\n", n);
+    if (!TEST_int_eq(sk_uchar_num(r), n))
         goto end;
-    }
 
     /* zero */
     sk_uchar_zero(r);
-    if (sk_uchar_num(r) != 0) {
-        fprintf(stderr, "test uchar zero %d\n", n);
+    if (!TEST_int_eq(sk_uchar_num(r), 0))
         goto end;
-    }
 
     /* insert */
     sk_uchar_insert(r, v, 0);
     sk_uchar_insert(r, v + 2, -1);
     sk_uchar_insert(r, v + 1, 1);
     for (i = 0; i < 3; i++)
-        if (sk_uchar_value(r, i) != v + i) {
-            fprintf(stderr, "test uchar insert %d\n", i);
+        if (!TEST_ptr_eq(sk_uchar_value(r, i), v + i)) {
+            TEST_info("uchar insert %d", i);
             goto end;
         }
 
     /* delete */
-    if (sk_uchar_delete(r, 12) != NULL) {
-        fprintf(stderr, "test uchar delete missing %d\n", n);
+    if (!TEST_ptr_null(sk_uchar_delete(r, 12)))
         goto end;
-    }
-    if (sk_uchar_delete(r, 1) != v + 1) {
-        fprintf(stderr, "test uchar delete middle %d\n", n);
+    if (!TEST_ptr_eq(sk_uchar_delete(r, 1), v + 1))
         goto end;
-    }
 
     /* set */
     sk_uchar_set(r, 1, v + 1);
     for (i = 0; i < 2; i++)
-        if (sk_uchar_value(r, i) != v + i) {
-            fprintf(stderr, "test uchar set %d\n", i);
+        if (!TEST_ptr_eq(sk_uchar_value(r, i), v + i)) {
+            TEST_info("uchar set %d", i);
             goto end;
         }
 
@@ -293,37 +273,35 @@ static int test_SS_stack(void)
     for (i = 0; i < n; i++) {
         v[i] = OPENSSL_malloc(sizeof(*v[i]));
 
-        if (v[i] == NULL) {
-            fprintf(stderr, "test SS memory allocation failure\n");
+        if (!TEST_ptr(v[i]))
             goto end;
-        }
         v[i]->n = i;
         v[i]->c = 'A' + i;
-        if (sk_SS_num(s) != i) {
-            fprintf(stderr, "test SS stack size %d\n", i);
+        if (!TEST_int_eq(sk_SS_num(s), i)) {
+            TEST_info("SS stack size %d", i);
             goto end;
         }
         sk_SS_push(s, v[i]);
     }
-    if (sk_SS_num(s) != n) {
-        fprintf(stderr, "test SS size %d\n", n);
+    if (!TEST_int_eq(sk_SS_num(s), n))
         goto end;
-    }
 
     /* deepcopy */
     r = sk_SS_deep_copy(s, &SS_copy, &SS_free);
-    if (r == NULL) {
-        fprintf(stderr, "test SS deepcopy failure\n");
+    if (!TEST_ptr(r))
         goto end;
-    }
     for (i = 0; i < n; i++) {
         p = sk_SS_value(r, i);
-        if (p == v[i]) {
-            fprintf(stderr, "test SS deepcopy non-copy %d\n", i);
+        if (!TEST_ptr_ne(p, v[i])) {
+            TEST_info("SS deepcopy non-copy %d", i);
             goto end;
         }
-        if (p->n != v[i]->n || p->c != v[i]->c) {
-            fprintf(stderr, "test SS deepcopy values %d\n", i);
+        if (!TEST_int_eq(p->n, v[i]->n)) {
+            TEST_info("test SS deepcopy int %d", i);
+            goto end;
+        }
+        if (!TEST_char_eq(p->c, v[i]->c)) {
+            TEST_info("SS deepcopy char %d", i);
             goto end;
         }
     }
@@ -333,18 +311,15 @@ static int test_SS_stack(void)
     r = NULL;
 
     /* delete_ptr */
-    if ((p = sk_SS_delete_ptr(s, v[3])) == NULL) {
-        fprintf(stderr, "test SS delete ptr not found\n");
+    p = sk_SS_delete_ptr(s, v[3]);
+    if (!TEST_ptr(p))
         goto end;
-    }
     SS_free(p);
-    if (sk_SS_num(s) != n-1) {
-        fprintf(stderr, "test SS delete ptr size\n");
+    if (!TEST_int_eq(sk_SS_num(s), n - 1))
         goto end;
-    }
     for (i = 0; i < n-1; i++)
-        if (sk_SS_value(s, i) != v[i<3 ? i : 1+i]) {
-            fprintf(stderr, "test SS delete ptr item %d\n", i);
+        if (!TEST_ptr_eq(sk_SS_value(s, i), v[i<3 ? i : 1+i])) {
+            TEST_info("SS delete ptr item %d", i);
             goto end;
         }
 
@@ -369,21 +344,19 @@ static int test_SU_stack(void)
             v[i].n = i;
         else
             v[i].c = 'A' + i;
-        if (sk_SU_num(s) != i) {
-            fprintf(stderr, "test SU stack size %d\n", i);
+        if (!TEST_int_eq(sk_SU_num(s), i)) {
+            TEST_info("SU stack size %d", i);
             goto end;
         }
         sk_SU_push(s, v + i);
     }
-    if (sk_SU_num(s) != n) {
-        fprintf(stderr, "test SU size %d\n", n);
+    if (!TEST_int_eq(sk_SU_num(s), n))
         goto end;
-    }
 
     /* check the pointers are correct */
     for (i = 0; i < n; i++)
-        if (sk_SU_value(s, i) != v + i) {
-            fprintf(stderr, "test SU pointer check %d\n", i);
+        if (!TEST_ptr_eq(sk_SU_value(s, i),  v + i)) {
+            TEST_info("SU pointer check %d", i);
             goto end;
         }
 

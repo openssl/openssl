@@ -1565,14 +1565,14 @@ static int test_poly1305(int idx)
     size_t expectedlen = test.expected.size;
     unsigned char out[16];
 
-    if (expectedlen != sizeof(out))
+    if (!TEST_size_t_eq(expectedlen, sizeof(out)))
         return 0;
 
     Poly1305_Init(&poly1305, key);
     Poly1305_Update(&poly1305, in, inlen);
     Poly1305_Final(&poly1305, out);
 
-    if (memcmp(out, expected, expectedlen) != 0) {
+    if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
         fprintf(stderr, "Poly1305 test #%d failed.\n", idx);
         fprintf(stderr, "got:      ");
         hexdump(out, sizeof(out));
@@ -1588,7 +1588,7 @@ static int test_poly1305(int idx)
         Poly1305_Update(&poly1305, in+1, inlen-1);
         Poly1305_Final(&poly1305, out);
 
-        if (memcmp(out, expected, expectedlen) != 0) {
+        if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
             fprintf(stderr, "Poly1305 test #%d/1+(N-1) failed.\n", idx);
             fprintf(stderr, "got:      ");
             hexdump(out, sizeof(out));
@@ -1607,7 +1607,7 @@ static int test_poly1305(int idx)
         Poly1305_Update(&poly1305, in+half, inlen-half);
         Poly1305_Final(&poly1305, out);
 
-        if (memcmp(out, expected, expectedlen) != 0) {
+        if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
             fprintf(stderr, "Poly1305 test #%d/2 failed.\n", idx);
             fprintf(stderr, "got:      ");
             hexdump(out, sizeof(out));
@@ -1623,7 +1623,7 @@ static int test_poly1305(int idx)
             Poly1305_Update(&poly1305, in+half, inlen-half);
             Poly1305_Final(&poly1305, out);
 
-            if (memcmp(out, expected, expectedlen) != 0) {
+            if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
                 fprintf(stderr, "Poly1305 test #%d/%" OSSLzu "+%" OSSLzu " failed.\n",
                        idx, half, inlen-half);
                 fprintf(stderr, "got:      ");
