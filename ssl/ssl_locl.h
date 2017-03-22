@@ -1783,6 +1783,12 @@ typedef struct ssl3_comp_st {
 } SSL3_COMP;
 # endif
 
+typedef enum downgrade_en {
+    DOWNGRADE_NONE,
+    DOWNGRADE_TO_1_2,
+    DOWNGRADE_TO_1_1
+} DOWNGRADE;
+
 /*
  * Extension index values NOTE: Any updates to these defines should be mirrored
  * with equivalent updates to ext_defs in extensions.c
@@ -2101,7 +2107,7 @@ __owur int ssl_verify_alarm_type(long type);
 void ssl_sort_cipher_list(void);
 void ssl_load_ciphers(void);
 __owur int ssl_fill_hello_random(SSL *s, int server, unsigned char *field,
-                                 size_t len);
+                                 size_t len, DOWNGRADE dgrd);
 __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
                                       int free_pms);
 __owur EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm);
@@ -2167,7 +2173,8 @@ __owur int ssl_version_supported(const SSL *s, int version);
 __owur int ssl_set_client_hello_version(SSL *s);
 __owur int ssl_check_version_downgrade(SSL *s);
 __owur int ssl_set_version_bound(int method_version, int version, int *bound);
-__owur int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello);
+__owur int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello,
+                                     DOWNGRADE *dgrd);
 __owur int ssl_choose_client_version(SSL *s, int version);
 int ssl_get_client_min_max_version(const SSL *s, int *min_version,
                                    int *max_version);
