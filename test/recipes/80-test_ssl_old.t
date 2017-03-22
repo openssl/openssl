@@ -434,8 +434,8 @@ sub testssl {
 	    if ($ciphersstatus) {
 		$ciphersuites{$protocol} = [ map { s|\R||; split(/:/, $_) }
 					     @ciphers ];
+		$protocolciphersuitecount += scalar @{$ciphersuites{$protocol}};
 	    }
-	    $protocolciphersuitecount += scalar @{$ciphersuites{$protocol}};
 	}
 
         plan skip_all => "None of the ciphersuites to test are available in this OpenSSL build"
