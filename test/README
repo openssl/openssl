@@ -86,25 +86,52 @@ A script to start from could be this:
     }
     
 
-Changes to test/Makefile
-========================
+Changes to test/build.info
+==========================
 
 Whenever a new test involves a new test executable you need to do the
 following (at all times, replace {NAME} and {name} with the name of your
 test):
 
-* among the variables for test executables at the beginning, add a line like
-  this:
+* add {name} to the list of programs under PROGRAMS_NO_INST
 
-    {NAME}TEST= {name}test
+* create a three line description of how to build the test, you will have
+to modify the include paths and source files if you don't want to use the
+basic test framework:
 
-* add `$({NAME}TEST)$(EXE_EXT)' to the assignment of EXE:
+    SOURCE[{name}]={name}.c testutil.c test_main.c
+    INCLUDE[{name}]=.. ../include
+    DEPEND[{name}]=../libcrypto
 
-* add `$({NAME}TEST).o' to the assignment of OBJ:
+Generic form of C test executables
+==================================
 
-* add `$({NAME}TEST).c' to the assignment of SRC:
+    #include "test_main.h"
+    #include "testutil.h"
 
-* add the following lines for building the executable:
+    static int my_test(void)
+    {
+        int testresult = 0;                 /* Assume the test will fail    */
+        int observed;
 
-    $({NAME}TEST)$(EXE_EXT): $({NAME}TEST).o $(DLIBCRYPTO)
-           @target=$({NAME}TEST); $(BUILD_CMD)
+        observed = function();              /* Call the code under test     */
+        if (!TEST_int_equal(observed, 2))   /* Check the result is correct  */
+            goto end;                       /* Exit on failure - optional   */
+
+        testresult = 1;                     /* Mark the test case a success */
+    end:
+        cleanup();                          /* Any cleanup you require      */
+        return testresult;
+    }
+
+    void register_tests(void)
+    {
+        ADD_TEST(my_test);                  /* Add each test separately     */
+    }
+
+You should use the TEST_xxx macros provided by testutil.h to test all failure
+conditions.  These macros produce an error message in a standard format if the
+condition is not met (and nothing if the condition is met).  Additional
+information can be presented with the TEST_info macro that takes a printf
+format string and arguments.  TEST_error is useful for complicated conditions,
+it also takes a printf format string and argument.

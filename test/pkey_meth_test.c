@@ -39,7 +39,7 @@ static int test_asn1_meths()
 
     }
     if (!good) {
-        fprintf(stderr, "EVP_PKEY_ASN1_METHOD table out of order!\n");
+        TEST_error("EVP_PKEY_ASN1_METHOD table out of order");
         for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
             const char *info;
 

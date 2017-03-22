@@ -42,7 +42,7 @@ static int test_standard_exts()
     }
     if (!good) {
         tmp = standard_exts;
-        fprintf(stderr, "Extensions out of order!\n");
+        TEST_error("Extensions out of order!");
         for (i = 0; i < STANDARD_EXTENSION_COUNT; i++, tmp++)
             fprintf(stderr, "%d : %s\n", (*tmp)->ext_nid,
                     OBJ_nid2sn((*tmp)->ext_nid));
