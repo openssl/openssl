@@ -556,6 +556,11 @@
      (CVE-2015-1791)
      [Matt Caswell]
 
+  *) New ctrl to retrieve server temporary keys received during key exchange.
+     Print bit lengths in s_client. For ECDH, also print named curve. Back
+     ported from 1.0.2.
+     [mancha security <mancha1@zoho.com>]
+
   *) Reject DH handshakes with parameters shorter than 768 bits.
      [Kurt Roeckx and Emilia Kasper]
 
