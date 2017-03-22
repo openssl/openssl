@@ -33,7 +33,7 @@ static int test_asn1_meths()
     for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
         ameth = EVP_PKEY_asn1_get0(i);
         EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth);
-        if (pkey_id < prev)
+        if (!TEST_int_ge(pkey_id, prev))
             good = 0;
         prev = pkey_id;
 

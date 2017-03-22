@@ -10,6 +10,8 @@
 #ifndef HEADER_TESTUTIL_H
 # define HEADER_TESTUTIL_H
 
+#include <stdarg.h>
+
 #include <openssl/err.h>
 #include <openssl/e_os2.h>
 
@@ -140,18 +142,169 @@ __owur int run_tests(const char *test_prog_name);
  *  Test assumption verification helpers.
  */
 
+# if defined(__GNUC__)
+#define PRINTF_FORMAT(a, b)   __attribute__ ((format(printf, a, b)))
+# else
+#define PRINTF_FORMAT(a, b)
+#endif
+
+#  define DECLARE_COMPARISON(type, name, opname)                        \
+    int test_ ## name ## _ ## opname(const type, const type,            \
+                                     const char *, ...)                 \
+            PRINTF_FORMAT(3, 4);
+
+# define DECLARE_COMPARISONS(type, name)                                \
+    DECLARE_COMPARISON(type, name, eq)                                  \
+    DECLARE_COMPARISON(type, name, ne)                                  \
+    DECLARE_COMPARISON(type, name, lt)                                  \
+    DECLARE_COMPARISON(type, name, le)                                  \
+    DECLARE_COMPARISON(type, name, gt)                                  \
+    DECLARE_COMPARISON(type, name, ge)
+
+DECLARE_COMPARISONS(int, int)
+DECLARE_COMPARISONS(unsigned int, uint)
+DECLARE_COMPARISONS(char, char)
+DECLARE_COMPARISONS(unsigned char, uchar)
+DECLARE_COMPARISONS(long, long)
+DECLARE_COMPARISONS(unsigned long, ulong)
+DECLARE_COMPARISONS(size_t, size_t)
+
 /*
- * Returns 1 if |s1| and |s2| are both NULL or equal.
- * Otherwise, returns 0 and pretty-prints diagnostics using |desc|.
+ * Pointer comparisons against other pointers and null.
+ * These functions return 1 if the test is true.
+ * Otherwise, they return 0 and pretty-print diagnostics.
+ * These should not be called directly, use the TEST_xxx macros below instead.
  */
-int strings_equal(const char *desc, const char *s1, const char *s2);
+DECLARE_COMPARISON(void *, ptr, eq)
+DECLARE_COMPARISON(void *, ptr, ne)
+int test_ptr(const void *, const char *, ...) PRINTF_FORMAT(2, 3);
+int test_ptr_null(const void *, const char *, ...) PRINTF_FORMAT(2, 3);
+
+/*
+ * Equality tests for strings where NULL is a legitimate value.
+ * These calls return 1 if the two passed strings compare true.
+ * Otherwise, they return 0 and pretty-print diagnostics.
+ * These should not be called directly, use the TEST_xxx macros below instead.
+ */
+DECLARE_COMPARISON(char *, str, eq)
+DECLARE_COMPARISON(char *, str, ne)
+
+/*
+ * Equality test for memory blocks where NULL is a legitimate value.
+* These calls return 1 if the two memory blocks compare true.
+ * Otherwise, they return 0 and pretty-print diagnostics.
+ * These should not be called directly, use the TEST_xxx macros below instead.
+ */
+int test_mem_eq(const void *, const void *, size_t, const char *, ...)
+    PRINTF_FORMAT(4, 5);
+int test_mem_ne(const void *, const void *, size_t, const char *, ...)
+    PRINTF_FORMAT(4, 5);
+
+/*
+ * Check a boolean result for being true or false.
+ * They return 1 if the condition is true (i.e. the value is non-zro).
+ * Otherwise, they return 0 and pretty-prints diagnostics using |desc|.
+ * These should not be called directly, use the TEST_xxx macros below instead.
+ */
+int test_true(int, const char *desc, ...) PRINTF_FORMAT(2, 3);
+int test_false(int, const char *desc, ...) PRINTF_FORMAT(2, 3);
+
+/*
+ * Ppretty print a failure message.
+ * These should not be called directly, use the TEST_xxx macros below instead.
+ */
+void test_error(const char *file, int line, const char *desc, ...)
+    PRINTF_FORMAT(3, 4);
+void test_error_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
+void test_info(const char *file, int line, const char *desc, ...)
+    PRINTF_FORMAT(3, 4);
+void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
+
+/*
+ * The following macros provide wrapper calls to the test functions with
+ * a default description that indicates the file and line number of the error.
+ */
+# define TEST_int_eq(a, b)    test_int_eq(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_int_ne(a, b)    test_int_ne(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_int_lt(a, b)    test_int_lt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_int_le(a, b)    test_int_le(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_int_gt(a, b)    test_int_gt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_int_ge(a, b)    test_int_ge(a, b, "%s: %d", __FILE__, __LINE__)
+
+# define TEST_uint_eq(a, b)   test_uint_eq(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_uint_ne(a, b)   test_uint_ne(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_uint_lt(a, b)   test_uint_lt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_uint_le(a, b)   test_uint_le(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_uint_gt(a, b)   test_uint_gt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_uint_ge(a, b)   test_uint_ge(a, b, "%s: %d", __FILE__, __LINE__)
+
+# define TEST_char_eq(a, b)   test_char_eq(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_char_ne(a, b)   test_char_ne(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_char_lt(a, b)   test_char_lt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_char_le(a, b)   test_char_le(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_char_gt(a, b)   test_char_gt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_char_ge(a, b)   test_char_ge(a, b, "%s: %d", __FILE__, __LINE__)
+
+# define TEST_uchar_eq(a, b)  test_uchar_eq(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_uchar_ne(a, b)  test_uchar_ne(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_uchar_lt(a, b)  test_uchar_lt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_uchar_le(a, b)  test_uchar_le(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_uchar_gt(a, b)  test_uchar_gt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_uchar_ge(a, b)  test_uchar_ge(a, b, "%s: %d", __FILE__, __LINE__)
+
+# define TEST_long_eq(a, b)   test_long_eq(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_long_ne(a, b)   test_long_ne(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_long_lt(a, b)   test_long_lt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_long_le(a, b)   test_long_le(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_long_gt(a, b)   test_long_gt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_long_ge(a, b)   test_long_ge(a, b, "%s: %d", __FILE__, __LINE__)
+
+# define TEST_ulong_eq(a, b)  test_ulong_eq(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_ulong_ne(a, b)  test_ulong_ne(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_ulong_lt(a, b)  test_ulong_lt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_ulong_le(a, b)  test_ulong_le(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_ulong_gt(a, b)  test_ulong_gt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_ulong_ge(a, b)  test_ulong_ge(a, b, "%s: %d", __FILE__, __LINE__)
+
+# define TEST_size_t_eq(a, b) test_size_t_eq(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_size_t_ne(a, b) test_size_t_ne(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_size_t_lt(a, b) test_size_t_lt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_size_t_le(a, b) test_size_t_le(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_size_t_gt(a, b) test_size_t_gt(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_size_t_ge(a, b) test_size_t_ge(a, b, "%s: %d", __FILE__, __LINE__)
+
+# define TEST_ptr_eq(a, b)    test_ptr_eq(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_ptr_ne(a, b)    test_ptr_ne(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_ptr(a)          test_ptr(a, "%s: %d", __FILE__, __LINE__)
+# define TEST_ptr_null(a)     test_ptr_null(a, "%s: %d", __FILE__, __LINE__)
+
+# define TEST_str_eq(a, b)    test_str_eq(a, b, "%s: %d", __FILE__, __LINE__)
+# define TEST_str_ne(a, b)    test_str_ne(a, b, "%s: %d", __FILE__, __LINE__)
+
+# define TEST_mem_eq(a, b, n) test_mem_eq(a, b, n, "%s: %d", __FILE__, __LINE__)
+# define TEST_mem_ne(a, b, n) test_mem_ne(a, b, n, "%s: %d", __FILE__, __LINE__)
+
+# define TEST_true(a)         test_true(a, "%s: %d", __FILE__, __LINE__)
+# define TEST_false(a)        test_false(a, "%s: %d", __FILE__, __LINE__)
+
+/*
+ * TEST_error(desc, ...) prints an informative error message in the standard
+ * format.  |desc| is a printf format string.
+ */
+# if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
+#  define TEST_error         test_error_c90
+#  define TEST_info          test_info_c90
+# else
+#  define TEST_error(...)    test_error(__FILE__, __LINE__, __VA_ARGS__)
+#  define TEST_info(...)     test_info(__FILE__, __LINE__, __VA_ARGS__)
+# endif
 
 /*
  * For "impossible" conditions such as malloc failures or bugs in test code,
  * where continuing the test would be meaningless. Note that OPENSSL_assert
  * is fatal, and is never compiled out.
  */
-#define TEST_check(condition)                   \
+# define TEST_check(condition)                  \
     do {                                        \
         if (!(condition)) {                     \
             ERR_print_errors_fp(stderr);        \

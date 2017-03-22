@@ -31,10 +31,10 @@ static const char *print_alert(int alert)
 
 static int check_result(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
-    if (result->result != test_ctx->expected_result) {
-        fprintf(stderr, "ExpectedResult mismatch: expected %s, got %s.\n",
-                ssl_test_result_name(test_ctx->expected_result),
-                ssl_test_result_name(result->result));
+    if (!TEST_int_eq(result->result, test_ctx->expected_result)) {
+        TEST_info("ExpectedResult mismatch: expected %s, got %s.",
+                  ssl_test_result_name(test_ctx->expected_result),
+                  ssl_test_result_name(result->result));
         return 0;
     }
     return 1;
@@ -42,10 +42,11 @@ static int check_result(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 
 static int check_alerts(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
-    if (result->client_alert_sent != result->client_alert_received) {
-        fprintf(stderr, "Client sent alert %s but server received %s\n.",
-                print_alert(result->client_alert_sent),
-                print_alert(result->client_alert_received));
+    if (!TEST_int_eq(result->client_alert_sent,
+                     result->client_alert_received)) {
+        TEST_info("Client sent alert %s but server received %s.",
+                  print_alert(result->client_alert_sent),
+                  print_alert(result->client_alert_received));
         /*
          * We can't bail here because the peer doesn't always get far enough
          * to process a received alert. Specifically, in protocol version
@@ -60,10 +61,11 @@ static int check_alerts(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         /* return 0; */
     }
 
-    if (result->server_alert_sent != result->server_alert_received) {
-        fprintf(stderr, "Server sent alert %s but client received %s\n.",
-                print_alert(result->server_alert_sent),
-                print_alert(result->server_alert_received));
+    if (!TEST_int_eq(result->server_alert_sent,
+                     result->server_alert_received)) {
+        TEST_info("Server sent alert %s but client received %s.",
+                  print_alert(result->server_alert_sent),
+                  print_alert(result->server_alert_received));
         /* return 0; */
     }
 
@@ -75,27 +77,27 @@ static int check_alerts(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
          * where the low byte is the alert code and the high byte is other stuff.
          */
         && (result->client_alert_sent & 0xff) != test_ctx->expected_client_alert) {
-        fprintf(stderr, "ClientAlert mismatch: expected %s, got %s.\n",
-                print_alert(test_ctx->expected_client_alert),
-                print_alert(result->client_alert_sent));
+        TEST_error("ClientAlert mismatch: expected %s, got %s.",
+                   print_alert(test_ctx->expected_client_alert),
+                   print_alert(result->client_alert_sent));
         return 0;
     }
 
     if (test_ctx->expected_server_alert
         && (result->server_alert_sent & 0xff) != test_ctx->expected_server_alert) {
-        fprintf(stderr, "ServerAlert mismatch: expected %s, got %s.\n",
-                print_alert(test_ctx->expected_server_alert),
-                print_alert(result->server_alert_sent));
+        TEST_error("ServerAlert mismatch: expected %s, got %s.",
+                   print_alert(test_ctx->expected_server_alert),
+                   print_alert(result->server_alert_sent));
         return 0;
     }
 
-    if (result->client_num_fatal_alerts_sent > 1) {
-        fprintf(stderr, "Client sent %d fatal alerts.\n",
+    if (!TEST_int_le(result->client_num_fatal_alerts_sent, 1)) {
+        TEST_info("Client sent %d fatal alerts.",
                 result->client_num_fatal_alerts_sent);
         return 0;
     }
-    if (result->server_num_fatal_alerts_sent > 1) {
-        fprintf(stderr, "Server sent %d alerts.\n",
+    if (!TEST_int_le(result->server_num_fatal_alerts_sent, 1)) {
+        TEST_info("Server sent %d alerts.\n",
                 result->server_num_fatal_alerts_sent);
         return 0;
     }
@@ -104,18 +106,19 @@ static int check_alerts(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 
 static int check_protocol(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
-    if (result->client_protocol != result->server_protocol) {
-        fprintf(stderr, "Client has protocol %s but server has %s\n.",
-                ssl_protocol_name(result->client_protocol),
-                ssl_protocol_name(result->server_protocol));
+    if (!TEST_int_eq(result->client_protocol, result->server_protocol)) {
+        TEST_info("Client has protocol %s but server has %s.",
+                  ssl_protocol_name(result->client_protocol),
+                  ssl_protocol_name(result->server_protocol));
         return 0;
     }
 
     if (test_ctx->expected_protocol) {
-        if (result->client_protocol != test_ctx->expected_protocol) {
-            fprintf(stderr, "Protocol mismatch: expected %s, got %s.\n",
-                    ssl_protocol_name(test_ctx->expected_protocol),
-                    ssl_protocol_name(result->client_protocol));
+        if (!TEST_int_eq(result->client_protocol,
+                         test_ctx->expected_protocol)) {
+            TEST_info("Protocol mismatch: expected %s, got %s.\n",
+                      ssl_protocol_name(test_ctx->expected_protocol),
+                      ssl_protocol_name(result->client_protocol));
             return 0;
         }
     }
@@ -124,10 +127,10 @@ static int check_protocol(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 
 static int check_servername(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
-    if (result->servername != test_ctx->expected_servername) {
-      fprintf(stderr, "Client ServerName mismatch, expected %s, got %s\n.",
-              ssl_servername_name(test_ctx->expected_servername),
-              ssl_servername_name(result->servername));
+    if (!TEST_int_eq(result->servername, test_ctx->expected_servername)) {
+      TEST_info("Client ServerName mismatch, expected %s, got %s.",
+                ssl_servername_name(test_ctx->expected_servername),
+                ssl_servername_name(result->servername));
       return 0;
     }
   return 1;
@@ -137,10 +140,11 @@ static int check_session_ticket(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx
 {
     if (test_ctx->session_ticket_expected == SSL_TEST_SESSION_TICKET_IGNORE)
         return 1;
-    if (result->session_ticket != test_ctx->session_ticket_expected) {
-        fprintf(stderr, "Client SessionTicketExpected mismatch, expected %s, got %s\n.",
-                ssl_session_ticket_name(test_ctx->session_ticket_expected),
-                ssl_session_ticket_name(result->session_ticket));
+    if (!TEST_int_eq(result->session_ticket,
+                     test_ctx->session_ticket_expected)) {
+        TEST_info("Client SessionTicketExpected mismatch, expected %s, got %s.",
+                  ssl_session_ticket_name(test_ctx->session_ticket_expected),
+                  ssl_session_ticket_name(result->session_ticket));
         return 0;
     }
     return 1;
@@ -148,10 +152,10 @@ static int check_session_ticket(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx
 
 static int check_compression(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
-    if (result->compression != test_ctx->compression_expected) {
-        fprintf(stderr, "Client CompressionExpected mismatch, expected %d, got %d\n.",
-                test_ctx->compression_expected,
-                result->compression);
+    if (!TEST_int_eq(result->compression, test_ctx->compression_expected)) {
+        TEST_info("Client CompressionExpected mismatch, expected %d, got %d.",
+                  test_ctx->compression_expected,
+                  result->compression);
         return 0;
     }
     return 1;
@@ -160,12 +164,16 @@ static int check_compression(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 static int check_npn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
     int ret = 1;
-    ret &= strings_equal("NPN Negotiated (client vs server)",
-                         result->client_npn_negotiated,
-                         result->server_npn_negotiated);
-    ret &= strings_equal("ExpectedNPNProtocol",
-                         test_ctx->expected_npn_protocol,
-                         result->client_npn_negotiated);
+    if (!TEST_str_eq(result->client_npn_negotiated,
+                     result->server_npn_negotiated)) {
+        TEST_info("NPN Negotiated (client vs server)");
+        ret = 0;
+    }
+    if (!TEST_str_eq(test_ctx->expected_npn_protocol,
+                     result->client_npn_negotiated)) {
+        TEST_info("ExpectedNPNProtocol");
+        ret = 0;
+    }
     return ret;
 }
 #endif
@@ -173,25 +181,29 @@ static int check_npn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 static int check_alpn(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
     int ret = 1;
-    ret &= strings_equal("ALPN Negotiated (client vs server)",
-                         result->client_alpn_negotiated,
-                         result->server_alpn_negotiated);
-    ret &= strings_equal("ExpectedALPNProtocol",
-                         test_ctx->expected_alpn_protocol,
-                         result->client_alpn_negotiated);
+    if (!TEST_str_eq(result->client_alpn_negotiated,
+                     result->server_alpn_negotiated)) {
+        TEST_info("ALPN Negotiated (client vs server)");
+        ret = 0;
+    }
+    if (!TEST_str_eq(test_ctx->expected_alpn_protocol,
+                     result->client_alpn_negotiated)) {
+        TEST_info("ExpectedALPNProtocol");
+        ret = 0;
+    }
     return ret;
 }
 
 static int check_resumption(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
 {
-    if (result->client_resumed != result->server_resumed) {
-        fprintf(stderr, "Resumption mismatch (client vs server): %d vs %d\n",
-                result->client_resumed, result->server_resumed);
+    if (!TEST_int_eq(result->client_resumed, result->server_resumed)) {
+        TEST_info("Resumption mismatch (client vs server): %d vs %d",
+                  result->client_resumed, result->server_resumed);
         return 0;
     }
-    if (result->client_resumed != test_ctx->resumption_expected) {
-        fprintf(stderr, "ResumptionExpected mismatch: %d vs %d\n",
-                test_ctx->resumption_expected, result->client_resumed);
+    if (!TEST_int_eq(result->client_resumed, test_ctx->resumption_expected)) {
+        TEST_info("ResumptionExpected mismatch: %d vs %d",
+                  test_ctx->resumption_expected, result->client_resumed);
         return 0;
     }
     return 1;
@@ -201,9 +213,9 @@ static int check_nid(const char *name, int expected_nid, int nid)
 {
     if (expected_nid == 0 || expected_nid == nid)
         return 1;
-    fprintf(stderr, "%s type mismatch, %s vs %s\n",
-            name, OBJ_nid2ln(expected_nid),
-            nid == NID_undef ? "absent" : OBJ_nid2ln(nid));
+    TEST_error("%s type mismatch, %s vs %s\n",
+               name, OBJ_nid2ln(expected_nid),
+               nid == NID_undef ? "absent" : OBJ_nid2ln(nid));
     return 0;
 }
 
@@ -356,7 +368,7 @@ static int test_handshake(int idx)
     BIO_snprintf(test_app, sizeof(test_app), "test-%d", idx);
 
     test_ctx = SSL_TEST_CTX_create(conf, test_app);
-    if (test_ctx == NULL)
+    if (!TEST_ptr(test_ctx))
         goto err;
 
 #ifndef OPENSSL_NO_DTLS

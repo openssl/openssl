@@ -145,18 +145,261 @@ int run_tests(const char *test_prog_name)
     return EXIT_SUCCESS;
 }
 
+/*
+ * A common routine to output test failure messages.  Generally this should not
+ * be called directly, rather it should be called by the following functions.
+ *
+ * |desc| is a printf formatted description with arguments |args| that is
+ * supplied by the user and |desc| can be NULL.  |type| is the data type
+ * that was tested (int, char, ptr, ...).  |fmt| is a system provided
+ * printf format with following arguments that spell out the failure
+ * details i.e. the actual values compared and the operator used.
+ *
+ * The typical use for this is from an utility test function:
+ *
+ * int test6(int n, const char *desc, ...) {
+ *     va_list ap;
+ *
+ *     if (n != 6) {
+ *         va_start(ap, desc);
+ *         test_fail_message(desc, ap, "int", "value %d is not %d", n, 6);
+ *         va_end(ap);
+ *         return 0;
+ *     }
+ *     return 1;
+ * }
+ *
+ * calling test6(3, "oops") will return 0 and produce out along the lines of:
+ *      FAIL oops: (int) value 3 is not 6\n
+ *
+ * It general, test_fail_message should not be called directly.
+ */
+static void test_fail_message(int error, const char *desc, va_list args,
+                              const char *type, const char *fmt, ...)
+            PRINTF_FORMAT(5, 6);
+
+static void test_fail_message(int error, const char *desc, va_list args,
+                              const char *type, const char *fmt, ...)
+{
+    va_list ap;
+
+    fprintf(stderr, error ? "ERROR " : "INFO ");
+    if (desc != NULL)
+        vfprintf(stderr, desc, args);
+    fputs(":", stderr);
+    if (type)
+        fprintf(stderr, " (%s)", type);
+    if (fmt != NULL) {
+        fputc(' ', stderr);
+        va_start(ap, fmt);
+        vfprintf(stderr, fmt, ap);
+        va_end(ap);
+    }
+    fputc('\n', stderr);
+}
+
+void test_info_c90(const char *desc, ...)
+{
+    va_list ap;
+
+    va_start(ap, desc);
+    test_fail_message(0, desc, ap, NULL, NULL);
+    va_end(ap);
+}
+
+void test_info(const char *file, int line, const char *desc, ...)
+{
+    va_list ap;
+
+    va_start(ap, desc);
+    test_fail_message(0, desc, ap, NULL, "%s: %d", file, line);
+    va_end(ap);
+}
+
+void test_error_c90(const char *desc, ...)
+{
+    va_list ap;
+
+    va_start(ap, desc);
+    test_fail_message(1, desc, ap, NULL, NULL);
+    va_end(ap);
+}
+
+void test_error(const char *file, int line, const char *desc, ...)
+{
+    va_list ap;
+
+    va_start(ap, desc);
+    test_fail_message(1, desc, ap, NULL, "%s: %d", file, line);
+    va_end(ap);
+}
+
+/*
+ * Define some comparisons between pairs of various types.
+ * These functions return 1 if the test is true.
+ * Otherwise, they return 0 and pretty-print diagnostics.
+ *
+ * In each case the functions produced are:
+ *  int test_name_eq(const type t1, const type t2, const char *desc, ...);
+ *  int test_name_ne(const type t1, const type t2, const char *desc, ...);
+ *  int test_name_lt(const type t1, const type t2, const char *desc, ...);
+ *  int test_name_le(const type t1, const type t2, const char *desc, ...);
+ *  int test_name_gt(const type t1, const type t2, const char *desc, ...);
+ *  int test_name_ge(const type t1, const type t2, const char *desc, ...);
+ *
+ * The t1 and t2 arguments are to be compared for equality, inequality,
+ * less than, less than or equal to, greater than and greater than or
+ * equal to respectively.  If the specified condition holds, the functions
+ * return 1.  If the condition does not hold, the functions print a diagnostic
+ * message and return 0.
+ *
+ * The desc argument is a printf format string followed by its arguments and
+ * this is included in the output if the condition being tested for is false.
+ */
+#define DEFINE_COMPARISON(type, name, opname, op, fmt)                  \
+    int test_ ## name ## _ ## opname(const type t1, const type t2,      \
+                                     const char *desc, ...)             \
+    {                                                                   \
+        va_list ap;                                                     \
+        if (t1 op t2)                                                   \
+            return 1;                                                   \
+        va_start(ap, desc);                                             \
+        test_fail_message(1, desc, ap, #type, fmt " " #opname " " fmt,  \
+                                           t1, t2);                     \
+        va_end(ap);                                                     \
+        return 0;                                                       \
+    }
+
+#define DEFINE_COMPARISONS(type, name, fmt)                             \
+    DEFINE_COMPARISON(type, name, eq, ==, fmt)                          \
+    DEFINE_COMPARISON(type, name, ne, !=, fmt)                          \
+    DEFINE_COMPARISON(type, name, lt, <, fmt)                           \
+    DEFINE_COMPARISON(type, name, le, <=, fmt)                          \
+    DEFINE_COMPARISON(type, name, gt, >, fmt)                           \
+    DEFINE_COMPARISON(type, name, ge, >=, fmt)
+
+DEFINE_COMPARISONS(int, int, "%d")
+DEFINE_COMPARISONS(unsigned int, uint, "%u")
+DEFINE_COMPARISONS(char, char, "%c")
+DEFINE_COMPARISONS(unsigned char, uchar, "%u")
+DEFINE_COMPARISONS(long, long, "%ld")
+DEFINE_COMPARISONS(unsigned long, ulong, "%lu")
+DEFINE_COMPARISONS(size_t, size_t, "%" OSSLzu)
+
+DEFINE_COMPARISON(void *, ptr, eq, ==, "%p")
+DEFINE_COMPARISON(void *, ptr, ne, !=, "%p")
+
+int test_ptr_null(const void *p, const char *desc, ...)
+{
+    va_list ap;
+
+    if (p == NULL)
+        return 1;
+    va_start(ap, desc);
+    test_fail_message(1, desc, ap, "ptr", "%p == NULL", p);
+    va_end(ap);
+    return 0;
+}
+
+int test_ptr(const void *p, const char *desc, ...)
+{
+    va_list ap;
+
+    if (p != NULL)
+        return 1;
+    va_start(ap, desc);
+    test_fail_message(1, desc, ap, "ptr", "%p != NULL", p);
+    va_end(ap);
+    return 0;
+}
+
+int test_true(int b, const char *desc, ...)
+{
+    va_list ap;
+
+    if (b)
+        return 1;
+    va_start(ap, desc);
+    test_fail_message(1, desc, ap, "bool", "false == true");
+    va_end(ap);
+    return 0;
+}
+
+int test_false(int b, const char *desc, ...)
+{
+    va_list ap;
+
+    if (!b)
+        return 1;
+    va_start(ap, desc);
+    test_fail_message(1, desc, ap, "bool", "true == false");
+    va_end(ap);
+    return 0;
+}
+
 static const char *print_string_maybe_null(const char *s)
 {
     return s == NULL ? "(NULL)" : s;
 }
 
-int strings_equal(const char *desc, const char *s1, const char *s2)
+int test_str_eq(const char *s1, const char *s2, const char *desc, ...)
 {
+    va_list ap;
+
     if (s1 == NULL && s2 == NULL)
       return 1;
     if (s1 == NULL || s2 == NULL || strcmp(s1, s2) != 0) {
-        fprintf(stderr, "%s mismatch: %s vs %s\n", desc, print_string_maybe_null(s1),
-                print_string_maybe_null(s2));
+        va_start(ap, desc);
+        test_fail_message(1, desc, ap, "string", "%s == %s",
+                          print_string_maybe_null(s1), print_string_maybe_null(s2));
+        va_end(ap);
+        return 0;
+    }
+    return 1;
+}
+
+int test_str_ne(const char *s1, const char *s2, const char *desc, ...)
+{
+    va_list ap;
+
+    if ((s1 == NULL) ^ (s2 == NULL))
+      return 1;
+    if (s1 == NULL || strcmp(s1, s2) == 0) {
+        va_start(ap, desc);
+        test_fail_message(1, desc, ap, "string", "%s != %s",
+                          print_string_maybe_null(s1), print_string_maybe_null(s2));
+        va_end(ap);
+        return 0;
+    }
+    return 1;
+}
+
+
+int test_mem_eq(const void *s1, const void *s2, size_t n, const char *desc, ...)
+{
+    va_list ap;
+
+    if (s1 == NULL && s2 == NULL)
+      return 1;
+    if (s1 == NULL || s2 == NULL || memcmp(s1, s2, n) != 0) {
+        va_start(ap, desc);
+        test_fail_message(1, desc, ap, "memory", "%p == %p [%u]", s1, s2, (unsigned)n);
+        va_end(ap);
+        return 0;
+    }
+    return 1;
+}
+
+int test_mem_ne(const void *s1, const void *s2, size_t n, const char *desc, ...)
+{
+    va_list ap;
+
+    if ((s1 == NULL) ^ (s2 == NULL))
+      return 1;
+    if (s1 == NULL || memcmp(s1, s2, n) == 0) {
+        va_start(ap, desc);
+        test_fail_message(1, desc, ap, "memory", "%p != %p [%u]", s1, s2, (unsigned)n);
+        va_end(ap);
         return 0;
     }
     return 1;

@@ -261,64 +261,68 @@ static int test_handshake_secrets(void)
     size_t master_secret_length;
 
     ctx = SSL_CTX_new(TLS_method());
-    if (ctx == NULL)
+    if (!TEST_ptr(ctx))
         goto err;
 
     s = SSL_new(ctx);
-    if (s == NULL)
+    if (!TEST_ptr(s ))
         goto err;
 
     s->session = SSL_SESSION_new();
-    if (s->session == NULL)
+    if (!TEST_ptr(s->session))
         goto err;
 
-    if (!tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL, 0,
-                               (unsigned char *)&s->early_secret)) {
-        fprintf(stderr, "Early secret generation failed\n");
-        goto err;
-    }
-
-    if (memcmp(s->early_secret, early_secret, sizeof(early_secret)) != 0) {
-        fprintf(stderr, "Early secret does not match\n");
+    if (!TEST_true(tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL, 0,
+                                         (unsigned char *)&s->early_secret))) {
+        TEST_info("Early secret generation failed");
         goto err;
     }
 
-    if (!tls13_generate_handshake_secret(s, ecdhe_secret,
-                                         sizeof(ecdhe_secret))) {
-        fprintf(stderr, "Hanshake secret generation failed\n");
+    if (!TEST_mem_eq(s->early_secret, early_secret, sizeof(early_secret))) {
+        TEST_info("Early secret does not match");
         goto err;
     }
 
-    if (memcmp(s->handshake_secret, handshake_secret,
-               sizeof(handshake_secret)) != 0) {
-        fprintf(stderr, "Handshake secret does not match\n");
+    if (!TEST_true(tls13_generate_handshake_secret(s, ecdhe_secret,
+                                                   sizeof(ecdhe_secret)))) {
+        TEST_info("Hanshake secret generation failed");
+        goto err;
+    }
+
+    if (!TEST_mem_eq(s->handshake_secret, handshake_secret,
+                     sizeof(handshake_secret))) {
+        TEST_info("Handshake secret does not match");
         goto err;
     }
 
     hashsize = EVP_MD_size(ssl_handshake_md(s));
-    if (sizeof(client_hts) != hashsize || sizeof(client_hts_key) != KEYLEN
-            || sizeof(client_hts_iv) != IVLEN) {
-        fprintf(stderr, "Internal test error\n");
+    if (!TEST_size_t_eq(sizeof(client_hts), hashsize))
+        goto err;
+    if (!TEST_size_t_eq(sizeof(client_hts_key), KEYLEN))
+        goto err;
+    if (!TEST_size_t_eq(sizeof(client_hts_iv), IVLEN))
+        goto err;
+
+    if (!TEST_true(test_secret(s, s->handshake_secret,
+                               (unsigned char *)client_hts_label,
+                               strlen(client_hts_label), client_hts,
+                               client_hts_key, client_hts_iv))) {
+        TEST_info("Client handshake secret test failed");
         goto err;
     }
 
-    if (!test_secret(s, s->handshake_secret, (unsigned char *)client_hts_label,
-                     strlen(client_hts_label), client_hts, client_hts_key,
-                     client_hts_iv)) {
-        fprintf(stderr, "Client handshake secret test failed\n");
+    if (!TEST_size_t_eq(sizeof(server_hts), hashsize))
         goto err;
-    }
-
-    if (sizeof(server_hts) != hashsize || sizeof(server_hts_key) != KEYLEN
-            || sizeof(server_hts_iv) != IVLEN) {
-        fprintf(stderr, "Internal test error\n");
+    if (!TEST_size_t_eq(sizeof(server_hts_key), KEYLEN))
         goto err;
-    }
+    if (!TEST_size_t_eq(sizeof(server_hts_iv), IVLEN))
+        goto err;
 
-    if (!test_secret(s, s->handshake_secret, (unsigned char *)server_hts_label,
-                     strlen(server_hts_label), server_hts, server_hts_key,
-                     server_hts_iv)) {
-        fprintf(stderr, "Server handshake secret test failed\n");
+    if (!TEST_true(test_secret(s, s->handshake_secret,
+                               (unsigned char *)server_hts_label,
+                               strlen(server_hts_label), server_hts,
+                               server_hts_key, server_hts_iv))) {
+        TEST_info("Server handshake secret test failed");
         goto err;
     }
 
@@ -328,43 +332,49 @@ static int test_handshake_secrets(void)
      */
     full_hash = 1;
 
-    if (!tls13_generate_master_secret(s, out_master_secret,
-                                      s->handshake_secret, hashsize,
-                                      &master_secret_length)) {
-        fprintf(stderr, "Master secret generation failed\n");
+    if (!TEST_true(tls13_generate_master_secret(s, out_master_secret,
+                                                s->handshake_secret, hashsize,
+                                                &master_secret_length))) {
+        TEST_info("Master secret generation failed");
         goto err;
     }
 
-    if (master_secret_length != sizeof(master_secret) ||
-            memcmp(out_master_secret, master_secret,
-                   sizeof(master_secret)) != 0) {
-        fprintf(stderr, "Master secret does not match\n");
+    if (!TEST_size_t_eq(master_secret_length, sizeof(master_secret))) {
+        TEST_info("Master secret length does not match");
+        goto err;
+    }
+    if (!TEST_mem_eq(out_master_secret, master_secret, sizeof(master_secret))) {
+        TEST_info("Master secret does not match");
         goto err;
     }
 
-    if (sizeof(client_ats) != hashsize || sizeof(client_ats_key) != KEYLEN
-            || sizeof(client_ats_iv) != IVLEN) {
-        fprintf(stderr, "Internal test error\n");
+    if (!TEST_size_t_eq(sizeof(client_ats), hashsize))
+        goto err;
+    if (!TEST_size_t_eq(sizeof(client_ats_key), KEYLEN))
+        goto err;
+    if (!TEST_size_t_eq(sizeof(client_ats_iv), IVLEN))
+        goto err;
+
+    if (!TEST_true(test_secret(s, out_master_secret,
+                               (unsigned char *)client_ats_label,
+                               strlen(client_ats_label), client_ats,
+                               client_ats_key, client_ats_iv))) {
+        TEST_info("Client application data secret test failed\n");
         goto err;
     }
 
-    if (!test_secret(s, out_master_secret, (unsigned char *)client_ats_label,
-                     strlen(client_ats_label), client_ats, client_ats_key,
-                     client_ats_iv)) {
-        fprintf(stderr, "Client application data secret test failed\n");
+    if (!TEST_size_t_eq(sizeof(server_ats), hashsize))
         goto err;
-    }
-
-    if (sizeof(server_ats) != hashsize || sizeof(server_ats_key) != KEYLEN
-            || sizeof(server_ats_iv) != IVLEN) {
-        fprintf(stderr, "Internal test error\n");
+    if (!TEST_size_t_eq(sizeof(server_ats_key), KEYLEN))
         goto err;
-    }
+    if (!TEST_size_t_eq(sizeof(server_ats_iv), IVLEN))
+        goto err;
 
-    if (!test_secret(s, out_master_secret, (unsigned char *)server_ats_label,
-                     strlen(server_ats_label), server_ats, server_ats_key,
-                     server_ats_iv)) {
-        fprintf(stderr, "Server application data secret test failed\n");
+    if (!TEST_true(test_secret(s, out_master_secret,
+                               (unsigned char *)server_ats_label,
+                               strlen(server_ats_label), server_ats,
+                               server_ats_key, server_ats_iv))) {
+        TEST_info("Server application data secret test failed\n");
         goto err;
     }
 

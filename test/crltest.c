@@ -243,21 +243,27 @@ static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
     STACK_OF(X509) *roots = sk_X509_new_null();
     int status = X509_V_ERR_UNSPECIFIED;
 
-    if (ctx == NULL || store == NULL || param == NULL || roots == NULL)
+    if (!TEST_ptr(ctx))
+        goto err;
+    if (!TEST_ptr(store))
+        goto err;
+    if (!TEST_ptr(param))
+        goto err;
+    if (!TEST_ptr(roots))
         goto err;
 
     /* Create a stack; upref the cert because we free it below. */
     X509_up_ref(root);
-    if (!sk_X509_push(roots, root))
+    if (!TEST_true(sk_X509_push(roots, root)))
         goto err;
 
-    if (!X509_STORE_CTX_init(ctx, store, leaf, NULL))
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL)))
         goto err;
     X509_STORE_CTX_set0_trusted_stack(ctx, roots);
     X509_STORE_CTX_set0_crls(ctx, crls);
     X509_VERIFY_PARAM_set_time(param, PARAM_TIME);
-    if (X509_VERIFY_PARAM_get_time(param) != PARAM_TIME) {
-        fprintf(stderr, "set_time/get_time mismatch.\n");
+    if (!TEST_long_eq(X509_VERIFY_PARAM_get_time(param), PARAM_TIME)) {
+        TEST_info("set_time/get_time mismatch.");
         goto err;
     }
     X509_VERIFY_PARAM_set_depth(param, 16);
@@ -306,55 +312,64 @@ static int test_crl()
     X509_CRL *unknown_critical_crl2 = CRL_from_strings(kUnknownCriticalCRL2);
     int status = 0;
 
-    if (root == NULL || leaf == NULL || basic_crl == NULL
-            || revoked_crl == NULL || bad_issuer_crl == NULL
-            || known_critical_crl == NULL || unknown_critical_crl == NULL
-            || unknown_critical_crl2 == NULL) {
-        fprintf(stderr, "Failed to parse certificates and CRLs.\n");
+    if (!TEST_ptr(root))
         goto err;
-    }
+    if (!TEST_ptr(leaf))
+        goto err;
+    if (!TEST_ptr(basic_crl))
+        goto err;
+    if (!TEST_ptr(revoked_crl))
+        goto err;
+    if (!TEST_ptr(bad_issuer_crl))
+        goto err;
+    if (!TEST_ptr(known_critical_crl))
+        goto err;
+    if (!TEST_ptr(unknown_critical_crl))
+        goto err;
+    if (!TEST_ptr(unknown_critical_crl2))
+        goto err;
 
     if (verify(leaf, root, make_CRL_stack(basic_crl, NULL),
                X509_V_FLAG_CRL_CHECK) != X509_V_OK) {
-        fprintf(stderr, "Cert with CRL didn't verify.\n");
+        TEST_info("Cert with CRL didn't verify.");
         goto err;
     }
 
     if (verify(leaf, root, make_CRL_stack(basic_crl, revoked_crl),
                X509_V_FLAG_CRL_CHECK) != X509_V_ERR_CERT_REVOKED) {
-        fprintf(stderr, "Revoked CRL wasn't checked.\n");
+        TEST_info("Revoked CRL wasn't checked.");
         goto err;
     }
 
     if (verify(leaf, root, NULL,
                X509_V_FLAG_CRL_CHECK) != X509_V_ERR_UNABLE_TO_GET_CRL) {
-        fprintf(stderr, "CRLs were not required.\n");
+        TEST_info("CRLs were not required.");
         goto err;
     }
 
     if (verify(leaf, root, make_CRL_stack(bad_issuer_crl, NULL),
                X509_V_FLAG_CRL_CHECK) != X509_V_ERR_UNABLE_TO_GET_CRL) {
-        fprintf(stderr, "Bad CRL issuer was unnoticed.\n");
+        TEST_info("Bad CRL issuer was unnoticed.");
         goto err;
     }
 
     if (verify(leaf, root, make_CRL_stack(known_critical_crl, NULL),
                X509_V_FLAG_CRL_CHECK) != X509_V_OK) {
-        fprintf(stderr, "CRL with known critical extension was rejected.\n");
+        TEST_info("CRL with known critical extension was rejected.");
         goto err;
     }
 
     if (verify(leaf, root, make_CRL_stack(unknown_critical_crl, NULL),
                X509_V_FLAG_CRL_CHECK) !=
             X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION) {
-        fprintf(stderr, "CRL with unknown critical extension was accepted.\n");
+        TEST_info("CRL with unknown critical extension was accepted.");
         goto err;
     }
 
     if (verify(leaf, root, make_CRL_stack(unknown_critical_crl2, NULL),
                X509_V_FLAG_CRL_CHECK) !=
             X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION) {
-        fprintf(stderr, "CRL with unknown critical extension (2) was accepted.\n");
+        TEST_info("CRL with unknown critical extension (2) was accepted.");
         goto err;
     }
 

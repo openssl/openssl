@@ -136,18 +136,18 @@ static int test_default_cipherlist(SSL_CTX *ctx)
     OPENSSL_assert(ciphers != NULL);
     num_expected_ciphers = OSSL_NELEM(default_ciphers_in_order);
     num_ciphers = sk_SSL_CIPHER_num(ciphers);
-    if (num_ciphers != num_expected_ciphers) {
-        fprintf(stderr, "Expected %d supported ciphers, got %d.\n",
-                num_expected_ciphers, num_ciphers);
+    if (!TEST_int_eq(num_ciphers, num_expected_ciphers)) {
+        TEST_info("Expected %d supported ciphers, got %d.\n",
+                  num_expected_ciphers, num_ciphers);
         goto err;
     }
 
     for (i = 0; i < num_ciphers; i++) {
         expected_cipher_id = default_ciphers_in_order[i];
         cipher_id = SSL_CIPHER_get_id(sk_SSL_CIPHER_value(ciphers, i));
-        if (cipher_id != expected_cipher_id) {
-            fprintf(stderr, "Wrong cipher at position %d: expected %x, "
-                    "got %x\n", i, expected_cipher_id, cipher_id);
+        if (!TEST_int_eq(cipher_id, expected_cipher_id)) {
+            TEST_info("Wrong cipher at position %d: expected %x, "
+                      "got %x\n", i, expected_cipher_id, cipher_id);
             goto err;
         }
     }

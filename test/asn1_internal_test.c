@@ -70,7 +70,7 @@ static int test_standard_methods()
 
     for (tmp = standard_methods, i = 0; i < OSSL_NELEM(standard_methods);
          i++, tmp++) {
-        if ((*tmp)->pkey_id < last_pkey_id) {
+        if (!TEST_int_ge((*tmp)->pkey_id, last_pkey_id)) {
             last_pkey_id = 0;
             break;
         }

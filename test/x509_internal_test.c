@@ -35,7 +35,7 @@ static int test_standard_exts()
 
     tmp = standard_exts;
     for (i = 0; i < OSSL_NELEM(standard_exts); i++, tmp++) {
-        if ((*tmp)->ext_nid < prev)
+        if (!TEST_int_ge((*tmp)->ext_nid, prev))
             good = 0;
         prev = (*tmp)->ext_nid;
 
