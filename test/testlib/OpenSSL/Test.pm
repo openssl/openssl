@@ -91,9 +91,9 @@ my %hooks = (
 
     # exit_checker is used by run() directly after completion of a command.
     # it receives the exit code from that command and is expected to return
-    # 1 (for success) or 0 (for failure).  This is the value that will be
-    # returned by run().
-    # NOTE: When run() gets the option 'capture => 1', this hook is ignored.
+    # 1 (for success) or 0 (for failure).  This is the status value that run()
+    # will give back (through the |statusvar| referens and as returned value
+    # when capture => 1 doesn't apply).
     exit_checker => sub { return shift == 0 ? 1 : 0 },
 
     );
