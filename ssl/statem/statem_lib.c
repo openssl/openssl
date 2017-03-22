@@ -1295,6 +1295,7 @@ typedef struct {
 # error Code needs update for TLS_method() support beyond TLS1_3_VERSION.
 #endif
 
+/* Must be in order high to low */
 static const version_info tls_version_table[] = {
 #ifndef OPENSSL_NO_TLS1_3
     {TLS1_3_VERSION, tlsv1_3_client_method, tlsv1_3_server_method},
@@ -1328,6 +1329,7 @@ static const version_info tls_version_table[] = {
 # error Code needs update for DTLS_method() support beyond DTLS1_2_VERSION.
 #endif
 
+/* Must be in order high to low */
 static const version_info dtls_version_table[] = {
 #ifndef OPENSSL_NO_DTLS1_2
     {DTLS1_2_VERSION, dtlsv1_2_client_method, dtlsv1_2_server_method},
@@ -1510,6 +1512,20 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
     return 1;
 }
 
+static void check_for_downgrade(SSL *s, int vers, DOWNGRADE *dgrd)
+{
+    if (vers == TLS1_2_VERSION
+            && ssl_version_supported(s, TLS1_3_VERSION)) {
+        *dgrd = DOWNGRADE_TO_1_2;
+    } else if (!SSL_IS_DTLS(s) && vers < TLS1_2_VERSION
+            && (ssl_version_supported(s, TLS1_2_VERSION)
+                || ssl_version_supported(s, TLS1_3_VERSION))) {
+        *dgrd = DOWNGRADE_TO_1_1;
+    } else {
+        *dgrd = DOWNGRADE_NONE;
+    }
+}
+
 /*
  * ssl_choose_server_version - Choose server (D)TLS version.  Called when the
  * client HELLO is received to select the final server protocol version and
@@ -1519,7 +1535,7 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
  *
  * Returns 0 on success or an SSL error reason number on failure.
  */
-int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
+int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
 {
     /*-
      * With version-flexible methods we have an initial state with:
@@ -1544,6 +1560,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
         if (!SSL_IS_TLS13(s)) {
             if (version_cmp(s, client_version, s->version) < 0)
                 return SSL_R_WRONG_SSL_VERSION;
+            *dgrd = DOWNGRADE_NONE;
             /*
              * If this SSL handle is not from a version flexible method we don't
              * (and never did) check min/max FIPS or Suite B constraints.  Hope
@@ -1620,6 +1637,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
                     return SSL_R_UNSUPPORTED_PROTOCOL;
                 return 0;
             }
+            check_for_downgrade(s, best_vers, dgrd);
             s->version = best_vers;
             s->method = best_method;
             return 0;
@@ -1646,6 +1664,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
             continue;
         method = vent->smeth();
         if (ssl_method_error(s, method) == 0) {
+            check_for_downgrade(s, vent->version, dgrd);
             s->version = vent->version;
             s->method = method;
             return 0;
