@@ -31,6 +31,11 @@
 # include <unistd.h>
 # include <sys/types.h>
 # include <sys/mman.h>
+# if defined(OPENSSL_SYS_LINUX)
+#  include <sys/syscall.h>
+#  include <linux/mman.h>
+#  include <errno.h>
+# endif
 # include <sys/param.h>
 # include <sys/stat.h>
 # include <fcntl.h>
@@ -433,8 +438,19 @@ static int sh_init(size_t size, int minsize)
     if (mprotect(sh.map_result + aligned, pgsize, PROT_NONE) < 0)
         ret = 2;
 
+#if defined(OPENSSL_SYS_LINUX) && defined(MLOCK_ONFAULT) && defined(SYS_mlock2)
+    if (syscall(SYS_mlock2, sh.arena, sh.arena_size, MLOCK_ONFAULT) < 0) {
+        if (errno == ENOSYS) {
+            if (mlock(sh.arena, sh.arena_size) < 0)
+                ret = 2;
+        } else {
+            ret = 2;
+        }
+    }
+#else
     if (mlock(sh.arena, sh.arena_size) < 0)
         ret = 2;
+#endif
 #ifdef MADV_DONTDUMP
     if (madvise(sh.arena, sh.arena_size, MADV_DONTDUMP) < 0)
         ret = 2;
