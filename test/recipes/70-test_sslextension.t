@@ -43,6 +43,15 @@ sub extension_filter
 {
     my $proxy = shift;
 
+    if ($proxy->flight == 1) {
+        # Change the ServerRandom so that the downgrade sentinel doesn't cause
+        # the connection to fail
+        my $message = ${$proxy->message_list}[1];
+        $message->random("\0"x32);
+        $message->repack();
+        return;
+    }
+
     # We're only interested in the initial ClientHello
     if ($proxy->flight != 0) {
         return;
