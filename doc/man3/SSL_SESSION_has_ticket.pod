@@ -3,7 +3,7 @@
 =head1 NAME
 
 SSL_SESSION_get0_ticket,
-SSL_SESSION_has_ticket, SSL_SESSION_get_ticket_lifetime_hint,
+SSL_SESSION_has_ticket, SSL_SESSION_get_ticket_lifetime_hint
 - get details about the ticket associated with a session
 
 =head1 SYNOPSIS
