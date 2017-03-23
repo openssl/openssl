@@ -3,7 +3,7 @@
 =head1 NAME
 
 SSL_SESSION_get0_ticket,
-SSL_SESSION_has_ticket, SSL_SESSION_get_ticket_lifetime_hint,
+SSL_SESSION_has_ticket, SSL_SESSION_get_ticket_lifetime_hint
 - get details about the ticket associated with a session
 
 =head1 SYNOPSIS
@@ -31,7 +31,7 @@ may also become invalid as a result of a call to SSL_CTX_flush_sessions().
 
 =head1 SEE ALSO
 
-L<ssl(3)>,
+L<ssl(7)>,
 L<d2i_SSL_SESSION(3)>,
 L<SSL_SESSION_get_time(3)>,
 L<SSL_SESSION_free(3)>

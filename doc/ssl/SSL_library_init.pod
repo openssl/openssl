@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_library_init, OpenSSL_add_ssl_algorithms,
+SSL_library_init, OpenSSL_add_ssl_algorithms
 - initialize SSL library by registering algorithms
 
 =head1 SYNOPSIS
@@ -37,7 +37,7 @@ value.
 
 =head1 SEE ALSO
 
-L<ssl(3)>,
+L<ssl(7)>,
 L<RAND_add(3)>
 
 =head1 HISTORY
