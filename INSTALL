@@ -484,8 +484,9 @@
   enable-tls1_3
                    TODO(TLS1.3): Make this enabled by default
                    Build support for TLS1.3. Note: This is a WIP feature and
-                   does not currently interoperate with other TLS1.3
-                   implementations! Use with caution!!
+                   only a single draft version is supported.  Implementations
+                   of different draft versions will negotiate TLS 1.2 instead
+                   of (draft) TLS 1.3.  Use with caution!!
 
   no-<prot>
                    Don't build support for negotiating the specified SSL/TLS

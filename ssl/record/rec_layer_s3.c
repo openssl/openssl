@@ -841,9 +841,6 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
         /* first we compress */
         if (s->compress != NULL) {
-            /*
-             * TODO(TLS1.3): Make sure we prevent compression!!!
-             */
             if (!ssl3_do_compress(s, thiswr)
                     || !WPACKET_allocate_bytes(thispkt, thiswr->length, NULL)) {
                 SSLerr(SSL_F_DO_SSL3_WRITE, SSL_R_COMPRESSION_FAILURE);
