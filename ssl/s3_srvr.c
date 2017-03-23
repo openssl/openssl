@@ -3168,7 +3168,9 @@ int ssl3_get_cert_verify(SSL *s)
             goto f_err;
         }
         if (i != 64) {
+#ifdef SSL_DEBUG
             fprintf(stderr, "GOST signature length is %d", i);
+#endif
         }
         for (idx = 0; idx < 64; idx++) {
             signature[63 - idx] = p[idx];
