@@ -59,6 +59,7 @@ sub name_synopsis()
     return unless $contents =~ /=head1 NAME(.*)=head1 SYNOPSIS/ms;
     my $tmp = $1;
     $tmp =~ tr/\n/ /;
+    print "$id trailing comma before - in NAME\n" if $tmp =~ /, *-/;
     $tmp =~ s/-.*//g;
     $tmp =~ s/,//g;
 
