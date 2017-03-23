@@ -2438,7 +2438,15 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     if (ticklen == 0)
         return MSG_PROCESS_CONTINUE_READING;
 
-    if (s->session->session_id_length > 0) {
+    /*
+     * Sessions must be immutable once they go into the session cache. Otherwise
+     * we can get multi-thread problems. Therefore we don't "update" sessions,
+     * we replace them with a duplicate. In TLSv1.3 we need to do this every
+     * time a NewSessionTicket arrives because those messages arrive
+     * post-handshake and the session may have already gone into the session
+     * cache.
+     */
+    if (SSL_IS_TLS13(s) || s->session->session_id_length > 0) {
         int i = s->session_ctx->session_cache_mode;
         SSL_SESSION *new_sess;
         /*
