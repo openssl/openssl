@@ -1726,14 +1726,6 @@ int ssl_choose_client_version(SSL *s, int version, int checkdgrd, int *al)
     for (vent = table; vent->version != 0; ++vent) {
         const SSL_METHOD *method;
         int err;
-#ifndef OPENSSL_NO_TLS13DOWNGRADE
-        static const unsigned char tls11downgrade[] = {
-            0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x00
-        };
-        static const unsigned char tls12downgrade[] = {
-            0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x01
-        };
-#endif
 
         if (vent->cmeth == NULL)
             continue;
