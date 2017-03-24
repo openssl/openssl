@@ -345,6 +345,7 @@ my @disablables = (
     "ct",
     "deprecated",
     "des",
+    "devcryptoeng",
     "dgram",
     "dh",
     "dsa",
@@ -431,6 +432,7 @@ our %disabled = ( # "what"         => "comment"
                   "asan"		=> "default",
 		  "crypto-mdebug"       => "default",
 		  "crypto-mdebug-backtrace" => "default",
+		  "devcryptoeng"	=> "default",
 		  "ec_nistp_64_gcc_128" => "default",
 		  "egd"                 => "default",
 		  "external-tests"	=> "default",
@@ -504,7 +506,7 @@ my @disable_cascades = (
     # Without position independent code, there can be no shared libraries or DSOs
     "pic"               => [ "shared" ],
     "shared"            => [ "dynamic-engine" ],
-    "engine"            => [ "afalgeng" ],
+    "engine"            => [ "afalgeng", "devcryptoeng" ],
 
     # no-autoalginit is only useful when building non-shared
     "autoalginit"       => [ "shared", "apps" ],
