@@ -777,10 +777,12 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
     case EVP_CTRL_AEAD_TLS1_AAD:
         {
             unsigned char *p = ptr;
-            unsigned int len = p[arg - 2] << 8 | p[arg - 1];
+            unsigned int len;
 
             if (arg != EVP_AEAD_TLS1_AAD_LEN)
                 return -1;
+
+            len = p[arg - 2] << 8 | p[arg - 1];
 
             if (EVP_CIPHER_CTX_encrypting(ctx)) {
                 key->payload_length = len;
