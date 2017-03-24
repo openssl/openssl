@@ -58,6 +58,14 @@
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 #define SSL3_NUM_SCSVS          OSSL_NELEM(ssl3_scsvs)
 
+/* TLSv1.3 downgrade protection sentinel values */
+const unsigned char tls11downgrade[] = {
+    0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x00
+};
+const unsigned char tls12downgrade[] = {
+    0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x01
+};
+
 /*
  * The list of available ciphers, mostly organized into the following
  * groups:
@@ -4030,13 +4038,6 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
     }
 #ifndef OPENSSL_NO_TLS13DOWNGRADE
     if (ret) {
-        static const unsigned char tls11downgrade[] = {
-            0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x00
-        };
-        static const unsigned char tls12downgrade[] = {
-            0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x01
-        };
-
         assert(sizeof(tls11downgrade) < len && sizeof(tls12downgrade) < len);
         if (dgrd == DOWNGRADE_TO_1_2)
             memcpy(result + len - sizeof(tls12downgrade), tls12downgrade,

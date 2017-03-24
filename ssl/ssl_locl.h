@@ -1865,6 +1865,9 @@ typedef enum tlsext_index_en {
 /* A dummy signature value not valid for TLSv1.2 signature algs */
 #define TLSEXT_signature_rsa_pss                                0x0101
 
+/* TLSv1.3 downgrade protection sentinel values */
+extern const unsigned char tls11downgrade[8];
+extern const unsigned char tls12downgrade[8];
 
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 
