@@ -35,15 +35,15 @@ static ESS_SIGNING_CERT *ess_SIGNING_CERT_new_init(X509 *signcert,
                                                    STACK_OF(X509) *certs);
 static ESS_CERT_ID *ess_CERT_ID_new_init(X509 *cert, int issuer_needed);
 static int ts_TST_INFO_content_new(PKCS7 *p7);
-static int ESS_add_signing_cert(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc);
+static int ess_add_signing_cert(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc);
 
-static ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
+static ESS_SIGNING_CERT_V2 *ess_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
                                                          X509 *signcert,
                                                          STACK_OF(X509)
                                                          *certs);
-static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
+static ESS_CERT_ID_V2 *ess_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
                                                X509 *cert, int issuer_needed);
-static int ESS_add_signing_cert_v2(PKCS7_SIGNER_INFO *si,
+static int ess_add_signing_cert_v2(PKCS7_SIGNER_INFO *si,
                                    ESS_SIGNING_CERT_V2 *sc);
 
 static ASN1_GENERALIZEDTIME
@@ -685,17 +685,17 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
         if ((sc = ess_SIGNING_CERT_new_init(ctx->signer_cert, certs)) == NULL)
             goto err;
 
-        if (!ESS_add_signing_cert(si, sc)) {
+        if (!ess_add_signing_cert(si, sc)) {
             TSerr(TS_F_TS_RESP_SIGN, TS_R_ESS_ADD_SIGNING_CERT_ERROR);
             goto err;
         }
     } else {
-        sc2 = ESS_SIGNING_CERT_V2_new_init(ctx->ess_cert_id_digest,
+        sc2 = ess_SIGNING_CERT_V2_new_init(ctx->ess_cert_id_digest,
                                            ctx->signer_cert, certs);
         if (sc2 == NULL)
             goto err;
 
-        if (!ESS_add_signing_cert_v2(si, sc2)) {
+        if (!ess_add_signing_cert_v2(si, sc2)) {
             TSerr(TS_F_TS_RESP_SIGN, TS_R_ESS_ADD_SIGNING_CERT_V2_ERROR);
             goto err;
         }
@@ -830,7 +830,7 @@ static int ts_TST_INFO_content_new(PKCS7 *p7)
     return 0;
 }
 
-static int ESS_add_signing_cert(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
+static int ess_add_signing_cert(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
 {
     ASN1_STRING *seq = NULL;
     unsigned char *p, *pp = NULL;
@@ -859,7 +859,7 @@ static int ESS_add_signing_cert(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
     return 0;
 }
 
-static ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
+static ESS_SIGNING_CERT_V2 *ess_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
                                                          X509 *signcert,
                                                          STACK_OF(X509) *certs)
 {
@@ -873,7 +873,7 @@ static ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
             (sc->cert_ids = sk_ESS_CERT_ID_V2_new_null()) == NULL)
         goto err;
 
-    if ((cid = ESS_CERT_ID_V2_new_init(hash_alg, signcert, 0)) == NULL)
+    if ((cid = ess_CERT_ID_V2_new_init(hash_alg, signcert, 0)) == NULL)
         goto err;
     if (!sk_ESS_CERT_ID_V2_push(sc->cert_ids, cid))
         goto err;
@@ -882,7 +882,7 @@ static ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
     for (i = 0; i < sk_X509_num(certs); ++i) {
         X509 *cert = sk_X509_value(certs, i);
 
-        if ((cid = ESS_CERT_ID_V2_new_init(hash_alg, cert, 1)) == NULL)
+        if ((cid = ess_CERT_ID_V2_new_init(hash_alg, cert, 1)) == NULL)
             goto err;
         if (!sk_ESS_CERT_ID_V2_push(sc->cert_ids, cid))
             goto err;
@@ -897,7 +897,7 @@ static ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
     return NULL;
 }
 
-static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
+static ESS_CERT_ID_V2 *ess_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
                                                X509 *cert, int issuer_needed)
 {
     ESS_CERT_ID_V2 *cid = NULL;
@@ -958,7 +958,7 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
     return NULL;
 }
 
-static int ESS_add_signing_cert_v2(PKCS7_SIGNER_INFO *si,
+static int ess_add_signing_cert_v2(PKCS7_SIGNER_INFO *si,
                                    ESS_SIGNING_CERT_V2 *sc)
 {
     ASN1_STRING *seq = NULL;
