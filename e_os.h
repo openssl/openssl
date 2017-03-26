@@ -539,7 +539,7 @@ struct servent *getservbyname(const char *name, const char *proto);
 # endif
 /* end vxworks */
 
-#define OSSL_NELEM(x)    (sizeof(x)/sizeof(x[0]))
+#define OSSL_NELEM(x)    (sizeof(x)/sizeof((x)[0]))
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 # define CRYPTO_memcmp memcmp
