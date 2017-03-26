@@ -502,7 +502,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     EVP_MD_CTX *md = NULL, *md2 = NULL;
     const EVP_MD *sha = NULL;
     size_t passwd_len, salt_len, magic_len;
-    size_t rounds = 5000;        /* Default */
+    unsigned int rounds = 5000;        /* Default */
     char rounds_custom = 0;
     char *p_bytes = NULL;
     char *s_bytes = NULL;
@@ -539,7 +539,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
             else if (srounds < ROUNDS_MIN)
                 rounds = ROUNDS_MIN;
             else
-                rounds = srounds;
+                rounds = (unsigned int)srounds;
             rounds_custom = 1;
         } else {
             return NULL;
@@ -556,7 +556,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     OPENSSL_strlcat(out_buf, "$", sizeof out_buf);
     if (rounds_custom) {
         char tmp_buf[80]; /* "rounds=999999999" */
-        sprintf(tmp_buf, "rounds=%"OSSLzu, rounds);
+        sprintf(tmp_buf, "rounds=%u", rounds);
         OPENSSL_strlcat(out_buf, tmp_buf, sizeof out_buf);
         OPENSSL_strlcat(out_buf, "$", sizeof out_buf);
     }
