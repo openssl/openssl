@@ -398,6 +398,10 @@ static DSA_METHOD *capi_dsa_method = NULL;
 # endif
 
 static int use_aes_csp = 0;
+static const WCHAR rsa_aes_cspname[] =
+    L"Microsoft Enhanced RSA and AES Cryptographic Provider";
+static const WCHAR rsa_enh_cspname[] =
+    L"Microsoft Enhanced Cryptographic Provider v1.0";
 
 static int capi_init(ENGINE *e)
 {
@@ -472,9 +476,8 @@ static int capi_init(ENGINE *e)
     }
 # endif
 
-    /* See if we support AES CSP */
-
-    if (CryptAcquireContextW(&hprov, NULL, NULL, PROV_RSA_AES,
+    /* See if there is RSA+AES CSP */
+    if (CryptAcquireContextW(&hprov, NULL, rsa_aes_cspname, PROV_RSA_AES,
                              CRYPT_VERIFYCONTEXT)) {
         use_aes_csp = 1;
         CryptReleaseContext(hprov, 0);
@@ -1459,7 +1462,8 @@ static PCCERT_CONTEXT capi_find_cert(CAPI_CTX *ctx, const char *id,
 }
 
 static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const WCHAR *contname,
-                              WCHAR *provname, DWORD ptype, DWORD keyspec)
+                              const WCHAR *provname, DWORD ptype,
+                              DWORD keyspec)
 {
     DWORD dwFlags = 0;
     CAPI_KEY *key = OPENSSL_malloc(sizeof(*key));
@@ -1467,15 +1471,14 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const WCHAR *contname,
     if (key == NULL)
         return NULL;
     /* If PROV_RSA_AES supported use it instead */
-    if (ptype == PROV_RSA_FULL && use_aes_csp) {
-        provname = NULL;
+    if (ptype == PROV_RSA_FULL && use_aes_csp &&
+        wcscmp(provname, rsa_enh_cspname) == 0) {
+        provname = rsa_aes_cspname;
         ptype = PROV_RSA_AES;
-        CAPI_trace(ctx, "capi_get_key, contname=%s, RSA_AES_CSP\n", contname);
-    } else if (sizeof(TCHAR) == sizeof(char)) {
-        CAPI_trace(ctx, "capi_get_key, contname=%s, provname=%s, type=%d\n",
-                   contname, provname, ptype);
-    } else if (ctx && ctx->debug_level >= CAPI_DBG_TRACE && ctx->debug_file) {
-        /* above 'if' is optimization to minimize malloc-ations */
+    }
+    if (ctx && ctx->debug_level >= CAPI_DBG_TRACE && ctx->debug_file) {
+        /* above 'if' is [complementary] copy from CAPI_trace and serves
+	 * as optimization to minimize [below] malloc-ations */
         char *_contname = wide_to_asc(contname);
         char *_provname = wide_to_asc(provname);
 
