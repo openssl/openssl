@@ -108,17 +108,17 @@ typedef struct CAPI_KEY_st CAPI_KEY;
 static void capi_addlasterror(void);
 static void capi_adderror(DWORD err);
 
-static void CAPI_trace(CAPI_CTX * ctx, char *format, ...);
+static void CAPI_trace(CAPI_CTX *ctx, char *format, ...);
 
-static int capi_list_providers(CAPI_CTX * ctx, BIO *out);
-static int capi_list_containers(CAPI_CTX * ctx, BIO *out);
-int capi_list_certs(CAPI_CTX * ctx, BIO *out, char *storename);
-void capi_free_key(CAPI_KEY * key);
+static int capi_list_providers(CAPI_CTX *ctx, BIO *out);
+static int capi_list_containers(CAPI_CTX *ctx, BIO *out);
+int capi_list_certs(CAPI_CTX *ctx, BIO *out, char *storename);
+void capi_free_key(CAPI_KEY *key);
 
-static PCCERT_CONTEXT capi_find_cert(CAPI_CTX * ctx, const char *id,
+static PCCERT_CONTEXT capi_find_cert(CAPI_CTX *ctx, const char *id,
                                      HCERTSTORE hstore);
 
-CAPI_KEY *capi_find_key(CAPI_CTX * ctx, const char *id);
+CAPI_KEY *capi_find_key(CAPI_CTX *ctx, const char *id);
 
 static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
                                    UI_METHOD *ui_method, void *callback_data);
@@ -193,10 +193,10 @@ struct CAPI_CTX_st {
 };
 
 static CAPI_CTX *capi_ctx_new(void);
-static void capi_ctx_free(CAPI_CTX * ctx);
-static int capi_ctx_set_provname(CAPI_CTX * ctx, LPSTR pname, DWORD type,
+static void capi_ctx_free(CAPI_CTX *ctx);
+static int capi_ctx_set_provname(CAPI_CTX *ctx, LPSTR pname, DWORD type,
                                  int check);
-static int capi_ctx_set_provname_idx(CAPI_CTX * ctx, int idx);
+static int capi_ctx_set_provname_idx(CAPI_CTX *ctx, int idx);
 
 # define CAPI_CMD_LIST_CERTS             ENGINE_CMD_BASE
 # define CAPI_CMD_LOOKUP_CERT            (ENGINE_CMD_BASE + 1)
@@ -622,7 +622,7 @@ static int lend_tobn(BIGNUM *bn, unsigned char *bin, int binlen)
 
 /* Given a CAPI_KEY get an EVP_PKEY structure */
 
-static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY * key)
+static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY *key)
 {
     unsigned char *pubkey = NULL;
     DWORD len;
@@ -1050,7 +1050,7 @@ static int capi_dsa_free(DSA *dsa)
 }
 # endif
 
-static void capi_vtrace(CAPI_CTX * ctx, int level, char *format,
+static void capi_vtrace(CAPI_CTX *ctx, int level, char *format,
                         va_list argptr)
 {
     BIO *out;
@@ -1066,7 +1066,7 @@ static void capi_vtrace(CAPI_CTX * ctx, int level, char *format,
     BIO_free(out);
 }
 
-static void CAPI_trace(CAPI_CTX * ctx, char *format, ...)
+static void CAPI_trace(CAPI_CTX *ctx, char *format, ...)
 {
     va_list args;
     va_start(args, format);
@@ -1112,7 +1112,7 @@ static char *wide_to_asc(LPCWSTR wstr)
     return str;
 }
 
-static int capi_get_provname(CAPI_CTX * ctx, LPSTR * pname, DWORD * ptype,
+static int capi_get_provname(CAPI_CTX *ctx, LPSTR *pname, DWORD *ptype,
                              DWORD idx)
 {
     DWORD len, err;
@@ -1154,7 +1154,7 @@ static int capi_get_provname(CAPI_CTX * ctx, LPSTR * pname, DWORD * ptype,
     return 1;
 }
 
-static int capi_list_providers(CAPI_CTX * ctx, BIO *out)
+static int capi_list_providers(CAPI_CTX *ctx, BIO *out)
 {
     DWORD idx, ptype;
     int ret;
@@ -1173,7 +1173,7 @@ static int capi_list_providers(CAPI_CTX * ctx, BIO *out)
     return 1;
 }
 
-static int capi_list_containers(CAPI_CTX * ctx, BIO *out)
+static int capi_list_containers(CAPI_CTX *ctx, BIO *out)
 {
     int ret = 1;
     HCRYPTPROV hprov;
@@ -1257,7 +1257,7 @@ static int capi_list_containers(CAPI_CTX * ctx, BIO *out)
     return ret;
 }
 
-static CRYPT_KEY_PROV_INFO *capi_get_prov_info(CAPI_CTX * ctx,
+static CRYPT_KEY_PROV_INFO *capi_get_prov_info(CAPI_CTX *ctx,
                                                PCCERT_CONTEXT cert)
 {
     DWORD len;
@@ -1282,8 +1282,8 @@ static CRYPT_KEY_PROV_INFO *capi_get_prov_info(CAPI_CTX * ctx,
     return pinfo;
 }
 
-static void capi_dump_prov_info(CAPI_CTX * ctx, BIO *out,
-                                CRYPT_KEY_PROV_INFO * pinfo)
+static void capi_dump_prov_info(CAPI_CTX *ctx, BIO *out,
+                                CRYPT_KEY_PROV_INFO *pinfo)
 {
     char *provname = NULL, *contname = NULL;
     if (!pinfo) {
@@ -1305,7 +1305,7 @@ static void capi_dump_prov_info(CAPI_CTX * ctx, BIO *out,
     OPENSSL_free(contname);
 }
 
-static char *capi_cert_get_fname(CAPI_CTX * ctx, PCCERT_CONTEXT cert)
+static char *capi_cert_get_fname(CAPI_CTX *ctx, PCCERT_CONTEXT cert)
 {
     LPWSTR wfname;
     DWORD dlen;
@@ -1330,7 +1330,7 @@ static char *capi_cert_get_fname(CAPI_CTX * ctx, PCCERT_CONTEXT cert)
     return NULL;
 }
 
-static void capi_dump_cert(CAPI_CTX * ctx, BIO *out, PCCERT_CONTEXT cert)
+static void capi_dump_cert(CAPI_CTX *ctx, BIO *out, PCCERT_CONTEXT cert)
 {
     X509 *x;
     const unsigned char *p;
@@ -1372,7 +1372,7 @@ static void capi_dump_cert(CAPI_CTX * ctx, BIO *out, PCCERT_CONTEXT cert)
     X509_free(x);
 }
 
-static HCERTSTORE capi_open_store(CAPI_CTX * ctx, char *storename)
+static HCERTSTORE capi_open_store(CAPI_CTX *ctx, char *storename)
 {
     HCERTSTORE hstore;
 
@@ -1391,7 +1391,7 @@ static HCERTSTORE capi_open_store(CAPI_CTX * ctx, char *storename)
     return hstore;
 }
 
-int capi_list_certs(CAPI_CTX * ctx, BIO *out, char *id)
+int capi_list_certs(CAPI_CTX *ctx, BIO *out, char *id)
 {
     char *storename;
     int idx;
@@ -1429,7 +1429,7 @@ int capi_list_certs(CAPI_CTX * ctx, BIO *out, char *id)
     return ret;
 }
 
-static PCCERT_CONTEXT capi_find_cert(CAPI_CTX * ctx, const char *id,
+static PCCERT_CONTEXT capi_find_cert(CAPI_CTX *ctx, const char *id,
                                      HCERTSTORE hstore)
 {
     PCCERT_CONTEXT cert = NULL;
@@ -1460,7 +1460,7 @@ static PCCERT_CONTEXT capi_find_cert(CAPI_CTX * ctx, const char *id,
     }
 }
 
-static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
+static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const TCHAR *contname,
                               TCHAR *provname, DWORD ptype, DWORD keyspec)
 {
     DWORD dwFlags = 0;
@@ -1508,7 +1508,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX * ctx, const TCHAR *contname,
     return NULL;
 }
 
-static CAPI_KEY *capi_get_cert_key(CAPI_CTX * ctx, PCCERT_CONTEXT cert)
+static CAPI_KEY *capi_get_cert_key(CAPI_CTX *ctx, PCCERT_CONTEXT cert)
 {
     CAPI_KEY *key = NULL;
     CRYPT_KEY_PROV_INFO *pinfo = NULL;
@@ -1536,7 +1536,7 @@ static CAPI_KEY *capi_get_cert_key(CAPI_CTX * ctx, PCCERT_CONTEXT cert)
     return key;
 }
 
-CAPI_KEY *capi_find_key(CAPI_CTX * ctx, const char *id)
+CAPI_KEY *capi_find_key(CAPI_CTX *ctx, const char *id)
 {
     PCCERT_CONTEXT cert;
     HCERTSTORE hstore;
@@ -1580,7 +1580,7 @@ CAPI_KEY *capi_find_key(CAPI_CTX * ctx, const char *id)
     return key;
 }
 
-void capi_free_key(CAPI_KEY * key)
+void capi_free_key(CAPI_KEY *key)
 {
     if (!key)
         return;
@@ -1611,7 +1611,7 @@ static CAPI_CTX *capi_ctx_new(void)
     return ctx;
 }
 
-static void capi_ctx_free(CAPI_CTX * ctx)
+static void capi_ctx_free(CAPI_CTX *ctx)
 {
     CAPI_trace(ctx, "Calling capi_ctx_free with %lx\n", ctx);
     if (!ctx)
@@ -1623,7 +1623,7 @@ static void capi_ctx_free(CAPI_CTX * ctx)
     OPENSSL_free(ctx);
 }
 
-static int capi_ctx_set_provname(CAPI_CTX * ctx, LPSTR pname, DWORD type,
+static int capi_ctx_set_provname(CAPI_CTX *ctx, LPSTR pname, DWORD type,
                                  int check)
 {
     LPSTR tmpcspname;
@@ -1662,7 +1662,7 @@ static int capi_ctx_set_provname(CAPI_CTX * ctx, LPSTR pname, DWORD type,
     return 1;
 }
 
-static int capi_ctx_set_provname_idx(CAPI_CTX * ctx, int idx)
+static int capi_ctx_set_provname_idx(CAPI_CTX *ctx, int idx)
 {
     LPSTR pname;
     DWORD type;
