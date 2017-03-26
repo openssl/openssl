@@ -869,10 +869,6 @@ static ESS_SIGNING_CERT_V2 *ess_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
 
     if ((sc = ESS_SIGNING_CERT_V2_new()) == NULL)
         goto err;
-    if (sc->cert_ids == NULL &&
-            (sc->cert_ids = sk_ESS_CERT_ID_V2_new_null()) == NULL)
-        goto err;
-
     if ((cid = ess_CERT_ID_V2_new_init(hash_alg, signcert, 0)) == NULL)
         goto err;
     if (!sk_ESS_CERT_ID_V2_push(sc->cert_ids, cid))
@@ -931,8 +927,7 @@ static ESS_CERT_ID_V2 *ess_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
         goto err;
 
     if (issuer_needed) {
-        if (cid->issuer_serial == NULL
-            && (cid->issuer_serial = ESS_ISSUER_SERIAL_new()) == NULL)
+        if ((cid->issuer_serial = ESS_ISSUER_SERIAL_new()) == NULL)
             goto err;
         if ((name = GENERAL_NAME_new()) == NULL)
             goto err;
