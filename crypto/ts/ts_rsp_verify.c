@@ -316,9 +316,6 @@ static int ts_find_cert_v2(STACK_OF(ESS_CERT_ID_V2) *cert_ids, X509 *cert)
     unsigned char cert_digest[EVP_MAX_MD_SIZE];
     unsigned int len;
 
-    if (cert_ids == NULL || cert == NULL)
-        return -1;
-
     /* Look for cert in the cert_ids vector. */
     for (i = 0; i < sk_ESS_CERT_ID_V2_num(cert_ids); ++i) {
         ESS_CERT_ID_V2 *cid = sk_ESS_CERT_ID_V2_value(cert_ids, i);
