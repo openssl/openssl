@@ -648,6 +648,7 @@ const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
 void X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
                     const ASN1_BIT_STRING **psuid);
 const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
+const X509_ALGOR *X509_PUBKEY_get0_algor(X509_PUBKEY *key);
 
 EVP_PKEY *X509_get0_pubkey(const X509 *x);
 EVP_PKEY *X509_get_pubkey(X509 *x);

@@ -372,3 +372,10 @@ ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x)
         return NULL;
     return x->cert_info.key->public_key;
 }
+
+const X509_ALGOR *X509_PUBKEY_get0_algor(X509_PUBKEY *key)
+{
+    if (key == NULL)
+        return NULL;
+    return key->algor;
+}
