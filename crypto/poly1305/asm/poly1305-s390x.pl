@@ -169,6 +169,7 @@ GLOBL	("poly1305_init");
 TYPE	("poly1305_init","\@function");
 ALIGN	(16);
 LABEL	("poly1305_init");
+	CFI_STARTPROC	();
 	lghi	("%r0",0);
 	lghi	("%r1",-1);
 	stg	("%r0","0($ctx)");	# zero hash value / acc1
@@ -201,6 +202,7 @@ LABEL	("poly1305_init");
 	larl	("%r5","poly1305_emit_vx");
 
 &{$z?	\&stmg:\&stm}	("%r6","%r13","6*$SIZE_T($sp)");
+	CFI_REL_OFFSET	("%r$_",$_*$SIZE_T) for (6..13);
 &{$z?	\&stmg:\&stm}	("%r4","%r5","4*$z+228($ctx)");
 
 	lg	($r0,"32($ctx)");
@@ -222,12 +224,14 @@ LABEL	("poly1305_init");
 	stg	("%r0","40($ctx)");
 
 &{$z?	\&lmg:\&lm}	("%r6","%r13","6*$SIZE_T($sp)");
+	CFI_RESTORE	("%r$_") for (6..13);
 	lghi	("%r2",1);
 	br	("%r14");
 
 LABEL	(".Ldone");
 	lghi	("%r2",0);
 	br	("%r14");
+	CFI_ENDPROC	();
 SIZE	("poly1305_init",".-poly1305_init");
 }
 
@@ -285,8 +289,10 @@ GLOBL	("poly1305_blocks_vx");
 TYPE	("poly1305_blocks_vx","\@function");
 ALIGN	(16);
 LABEL	("poly1305_blocks_vx");
+	CFI_STARTPROC	();
 if ($z) {
 	aghi	($sp,-$frame);
+	CFI_ADJUST_CFA_OFFSET	($frame);
 	vstm	("%v8","%v15","0($sp)");
 } else {
 	std	("%f4","16*$SIZE_T+2*8($sp)");
@@ -539,11 +545,13 @@ LABEL	(".Lvx_done");
 if ($z) {
 	vlm	("%v8","%v15","0($sp)");
 	la	($sp,"$frame($sp)");
+	CFI_ADJUST_CFA_OFFSET	(-$frame);
 } else {
 	ld	("%f4","16*$SIZE_T+2*8($sp)");
 	ld	("%f6","16*$SIZE_T+3*8($sp)");
 }
 	br	("%r14");
+	CFI_ENDPROC	();
 SIZE	("poly1305_blocks_vx",".-poly1305_blocks_vx");
 }
 
@@ -557,8 +565,10 @@ GLOBL	("poly1305_emit_vx");
 TYPE	("poly1305_emit_vx","\@function");
 ALIGN	(16);
 LABEL	("poly1305_emit_vx");
+	CFI_STARTPROC	();
 if ($z) {
 	aghi	($sp,-$frame);
+	CFI_ADJUST_CFA_OFFSET	($frame);
 	vstm	("%v8","%v15","0($sp)");
 } else {
 	std	("%f4","16*$SIZE_T+2*8($sp)");
@@ -672,11 +682,13 @@ if ($z) {
 if ($z) {
 	vlm	("%v8","%v15","0($sp)");
 	la	($sp,"$frame($sp)");
+	CFI_ADJUST_CFA_OFFSET	(-$frame);
 } else {
 	ld	("%f4","16*$SIZE_T+2*8($sp)");
 	ld	("%f6","16*$SIZE_T+3*8($sp)");
 }
 	br	("%r14");
+	CFI_ENDPROC	();
 SIZE	("poly1305_emit_vx",".-poly1305_emit_vx");
 }
 }
@@ -695,12 +707,14 @@ GLOBL	("poly1305_blocks");
 TYPE	("poly1305_blocks","\@function");
 ALIGN	(16);
 LABEL	("poly1305_blocks");
+	CFI_STARTPROC	();
 $z?	srlg	($len,$len,4)	:srl	($len,4);
 	lghi	("%r0",0);
 &{$z?	\&clgr:\&clr}	($len,"%r0");
 	je	(".Lno_data");
 
 &{$z?	\&stmg:\&stm}	("%r6","%r14","6*$SIZE_T($sp)");
+	CFI_REL_OFFSET	("%r$_",$_*$SIZE_T) for (6..14);
 
 	llgfr	($padbit,$padbit);	# clear upper half, much needed with
 					# non-64-bit ABI
@@ -771,8 +785,10 @@ LABEL	(".Loop");
 	stg	($h2,"16($ctx)");
 
 &{$z?	\&lmg:\&lm}	("%r6","%r14","6*$SIZE_T($sp)");
+	CFI_RESTORE	("%r$_") for (6..14);
 LABEL	(".Lno_data");
 	br	("%r14");
+	CFI_ENDPROC	();
 SIZE	("poly1305_blocks",".-poly1305_blocks");
 }
 
@@ -787,7 +803,9 @@ GLOBL	("poly1305_emit");
 TYPE	("poly1305_emit","\@function");
 ALIGN	(16);
 LABEL	("poly1305_emit");
+	CFI_STARTPROC	();
 &{$z?	\&stmg:\&stm}	("%r6","%r9","6*$SIZE_T($sp)");
+	CFI_REL_OFFSET	("%r$_",$_*$SIZE_T) for (6..9);
 
 	lg	($h0,"0($ctx)");
 	lg	($h1,"8($ctx)");
@@ -825,7 +843,9 @@ LABEL	("poly1305_emit");
 	strvg	($h1,"8($mac)");
 
 &{$z?	\&lmg:\&lm}	("%r6","%r9","6*$SIZE_T($sp)");
+	CFI_RESTORE	("%r$_") for (6..9);
 	br	("%r14");
+	CFI_ENDPROC	();
 SIZE	("poly1305_emit",".-poly1305_emit");
 }
 }
