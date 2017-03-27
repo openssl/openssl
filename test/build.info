@@ -253,7 +253,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[testutil.o]=..
   INCLUDE[ssl_test_ctx.o]=../include
   INCLUDE[handshake_helper.o]=../include
-  INCLUDE[ssltestlib.o]=../include
+  INCLUDE[ssltestlib.o]=.. ../include
 
   SOURCE[x509aux]=x509aux.c
   INCLUDE[x509aux]=../include
