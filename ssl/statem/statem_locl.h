@@ -18,6 +18,7 @@
 
 /* The spec allows for a longer length than this, but we limit it */
 #define HELLO_VERIFY_REQUEST_MAX_LENGTH 258
+#define END_OF_EARLY_DATA_MAX_LENGTH    0
 #define SERVER_HELLO_MAX_LENGTH         20000
 #define HELLO_RETRY_REQUEST_MAX_LENGTH  20000
 #define ENCRYPTED_EXTENSIONS_MAX_LENGTH 20000
@@ -52,6 +53,7 @@
 #define EXT_TLS1_3_HELLO_RETRY_REQUEST      0x0400
 #define EXT_TLS1_3_CERTIFICATE              0x0800
 #define EXT_TLS1_3_NEW_SESSION_TICKET       0x1000
+#define EXT_TLS1_3_CERTIFICATE_REQUEST      0x2000
 
 /* Dummy message type */
 #define SSL3_MT_DUMMY   -1
@@ -78,6 +80,9 @@ typedef int (*confunc_f) (SSL *s, WPACKET *pkt);
 
 int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
                   size_t num_groups, int checkallow);
+int create_synthetic_message_hash(SSL *s);
+int parse_ca_names(SSL *s, PACKET *pkt, int *al);
+int construct_ca_names(SSL *s, WPACKET *pkt);
 
 /*
  * TLS/DTLS client state machine functions
@@ -147,6 +152,7 @@ __owur int tls_construct_next_proto(SSL *s, WPACKET *pkt);
 #endif
 __owur MSG_PROCESS_RETURN tls_process_hello_req(SSL *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN dtls_process_hello_verify(SSL *s, PACKET *pkt);
+__owur int tls_construct_end_of_early_data(SSL *s, WPACKET *pkt);
 
 /* some server-only functions */
 __owur MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt);
@@ -165,6 +171,7 @@ __owur MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, PACKET *pkt);
 #endif
 __owur int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt);
+MSG_PROCESS_RETURN tls_process_end_of_early_data(SSL *s, PACKET *pkt);
 
 
 /* Extension processing */
@@ -235,9 +242,6 @@ int tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt, unsigned int context,
                                    X509 *x, size_t chainidx, int *al);
 int tls_construct_stoc_server_name(SSL *s, WPACKET *pkt, unsigned int context,
                                    X509 *x, size_t chainidx, int *al);
-int tls_construct_stoc_early_data_info(SSL *s, WPACKET *pkt,
-                                       unsigned int context, X509 *x,
-                                       size_t chainidx, int *al);
 int tls_construct_stoc_early_data(SSL *s, WPACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx, int *al);
 #ifndef OPENSSL_NO_EC
@@ -342,8 +346,6 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
                                X509 *x, size_t chainidx, int *al);
 int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, unsigned int context,
                                X509 *x, size_t chainidx, int *al);
-int tls_parse_stoc_early_data_info(SSL *s, PACKET *pkt, unsigned int context,
-                              X509 *x, size_t chainidx, int *al);
 int tls_parse_stoc_early_data(SSL *s, PACKET *pkt, unsigned int context,
                               X509 *x, size_t chainidx, int *al);
 #ifndef OPENSSL_NO_EC

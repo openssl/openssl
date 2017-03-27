@@ -417,37 +417,46 @@ sub testssl {
         }
 
 	my @protocols = ();
-	# FIXME: I feel unsure about the following line, is that really just TLSv1.2, or is it all of the SSLv3/TLS protocols?
-        push(@protocols, "TLSv1.3") unless $no_tls1_3;
-        push(@protocols, "TLSv1.2") unless $no_tls1_2;
-        push(@protocols, "SSLv3") unless $no_ssl3;
-	my $protocolciphersuitcount = 0;
-	my %ciphersuites =
-	    map { my @c =
-		      map { split(/:/, $_) }
-		      run(app(["openssl", "ciphers", "${_}:$ciphers"]),
-                          capture => 1);
-		  map { s/\R//; } @c;  # chomp @c;
-		  $protocolciphersuitcount += scalar @c;
-		  $_ => [ @c ] } @protocols;
+	# We only use the flags that ssltest_old understands
+	push @protocols, "-tls1_3" unless $no_tls1_3;
+	push @protocols, "-tls1_2" unless $no_tls1_2;
+	push @protocols, "-tls1" unless $no_tls1;
+	push @protocols, "-ssl3" unless $no_ssl3;
+	my $protocolciphersuitecount = 0;
+	my %ciphersuites = ();
+	my %ciphersstatus = ();
+	foreach my $protocol (@protocols) {
+	    my $ciphersstatus = undef;
+	    my @ciphers = run(app(["openssl", "ciphers", "-s", $protocol,
+				   "ALL:$ciphers"]),
+			      capture => 1, statusvar => \$ciphersstatus);
+	    $ciphersstatus{$protocol} = $ciphersstatus;
+	    if ($ciphersstatus) {
+		$ciphersuites{$protocol} = [ map { s|\R||; split(/:/, $_) }
+					     @ciphers ];
+		$protocolciphersuitecount += scalar @{$ciphersuites{$protocol}};
+	    }
+	}
 
         plan skip_all => "None of the ciphersuites to test are available in this OpenSSL build"
-            if $protocolciphersuitcount + scalar(@protocols) == 0;
+            if $protocolciphersuitecount + scalar(keys %ciphersuites) == 0;
 
         # The count of protocols is because in addition to the ciphersuits
         # we got above, we're running a weak DH test for each protocol
-        plan tests => $protocolciphersuitcount + scalar(@protocols);
+        plan tests => scalar(@protocols) + $protocolciphersuitecount
+            + scalar(keys %ciphersuites);
 
         foreach my $protocol (@protocols) {
+            ok($ciphersstatus{$protocol}, "Getting ciphers for $protocol");
+        }
+
+        foreach my $protocol (sort keys %ciphersuites) {
             note "Testing ciphersuites for $protocol";
-            my $flag = "";
-            if ($protocol eq "SSLv3") {
-                $flag = "-ssl3";
-            } elsif ($protocol eq "TLSv1.2") {
-                $flag = "-tls1_2";
-            }
+            # ssltest_old doesn't know -tls1_3, but that's fine, since that's
+            # the default choice if TLSv1.3 enabled
+            my $flag = $protocol eq "-tls1_3" ? "" : $protocol;
             foreach my $cipher (@{$ciphersuites{$protocol}}) {
-                if ($protocol eq "SSLv3" && $cipher =~ /ECDH/ ) {
+                if ($protocol eq "-ssl3" && $cipher =~ /ECDH/ ) {
                     note "*****SKIPPING $protocol $cipher";
                     ok(1);
                 } else {

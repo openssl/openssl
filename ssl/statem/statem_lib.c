@@ -986,7 +986,6 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
             s->d1->next_handshake_write_seq = 0;
             dtls1_clear_received_buffer(s);
         }
-        s->early_data_state = SSL_EARLY_DATA_NONE;
     }
 
     /*
@@ -1150,8 +1149,13 @@ int tls_get_message_body(SSL *s, size_t *len)
             s->msg_callback(0, SSL2_VERSION, 0, s->init_buf->data,
                             (size_t)s->init_num, s, s->msg_callback_arg);
     } else {
-        if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                             s->init_num + SSL3_HM_HEADER_LENGTH)) {
+        /*
+         * We defer feeding in the HRR until later. We'll do it as part of
+         * processing the message
+         */
+        if (s->s3->tmp.message_type != SSL3_MT_HELLO_RETRY_REQUEST
+                && !ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+                                    s->init_num + SSL3_HM_HEADER_LENGTH)) {
             SSLerr(SSL_F_TLS_GET_MESSAGE_BODY, ERR_R_EVP_LIB);
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
             *len = 0;
@@ -1291,6 +1295,7 @@ typedef struct {
 # error Code needs update for TLS_method() support beyond TLS1_3_VERSION.
 #endif
 
+/* Must be in order high to low */
 static const version_info tls_version_table[] = {
 #ifndef OPENSSL_NO_TLS1_3
     {TLS1_3_VERSION, tlsv1_3_client_method, tlsv1_3_server_method},
@@ -1324,6 +1329,7 @@ static const version_info tls_version_table[] = {
 # error Code needs update for DTLS_method() support beyond DTLS1_2_VERSION.
 #endif
 
+/* Must be in order high to low */
 static const version_info dtls_version_table[] = {
 #ifndef OPENSSL_NO_DTLS1_2
     {DTLS1_2_VERSION, dtlsv1_2_client_method, dtlsv1_2_server_method},
@@ -1506,6 +1512,20 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
     return 1;
 }
 
+static void check_for_downgrade(SSL *s, int vers, DOWNGRADE *dgrd)
+{
+    if (vers == TLS1_2_VERSION
+            && ssl_version_supported(s, TLS1_3_VERSION)) {
+        *dgrd = DOWNGRADE_TO_1_2;
+    } else if (!SSL_IS_DTLS(s) && vers < TLS1_2_VERSION
+            && (ssl_version_supported(s, TLS1_2_VERSION)
+                || ssl_version_supported(s, TLS1_3_VERSION))) {
+        *dgrd = DOWNGRADE_TO_1_1;
+    } else {
+        *dgrd = DOWNGRADE_NONE;
+    }
+}
+
 /*
  * ssl_choose_server_version - Choose server (D)TLS version.  Called when the
  * client HELLO is received to select the final server protocol version and
@@ -1515,7 +1535,7 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
  *
  * Returns 0 on success or an SSL error reason number on failure.
  */
-int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
+int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
 {
     /*-
      * With version-flexible methods we have an initial state with:
@@ -1540,6 +1560,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
         if (!SSL_IS_TLS13(s)) {
             if (version_cmp(s, client_version, s->version) < 0)
                 return SSL_R_WRONG_SSL_VERSION;
+            *dgrd = DOWNGRADE_NONE;
             /*
              * If this SSL handle is not from a version flexible method we don't
              * (and never did) check min/max FIPS or Suite B constraints.  Hope
@@ -1616,6 +1637,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
                     return SSL_R_UNSUPPORTED_PROTOCOL;
                 return 0;
             }
+            check_for_downgrade(s, best_vers, dgrd);
             s->version = best_vers;
             s->method = best_method;
             return 0;
@@ -1642,6 +1664,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
             continue;
         method = vent->smeth();
         if (ssl_method_error(s, method) == 0) {
+            check_for_downgrade(s, vent->version, dgrd);
             s->version = vent->version;
             s->method = method;
             return 0;
@@ -1658,22 +1681,32 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello)
  *
  * @s: client SSL handle.
  * @version: The proposed version from the server's HELLO.
+ * @checkdgrd: Whether to check the downgrade sentinels in the server_random
+ * @al: Where to store any alert value that may be generated
  *
  * Returns 0 on success or an SSL error reason number on failure.
  */
-int ssl_choose_client_version(SSL *s, int version)
+int ssl_choose_client_version(SSL *s, int version, int checkdgrd, int *al)
 {
     const version_info *vent;
     const version_info *table;
+    int highver = 0;
 
     /* TODO(TLS1.3): Remove this before release */
     if (version == TLS1_3_VERSION_DRAFT)
         version = TLS1_3_VERSION;
 
+    if (s->hello_retry_request && version != TLS1_3_VERSION) {
+        *al = SSL_AD_PROTOCOL_VERSION;
+        return SSL_R_WRONG_SSL_VERSION;
+    }
+
     switch (s->method->version) {
     default:
-        if (version != s->version)
+        if (version != s->version) {
+            *al = SSL_AD_PROTOCOL_VERSION;
             return SSL_R_WRONG_SSL_VERSION;
+        }
         /*
          * If this SSL handle is not from a version flexible method we don't
          * (and never did) check min/max, FIPS or Suite B constraints.  Hope
@@ -1694,22 +1727,59 @@ int ssl_choose_client_version(SSL *s, int version)
         const SSL_METHOD *method;
         int err;
 
-        if (version != vent->version)
-            continue;
         if (vent->cmeth == NULL)
-            break;
-        if (s->hello_retry_request && version != TLS1_3_VERSION)
-            return SSL_R_WRONG_SSL_VERSION;
+            continue;
+
+        if (highver != 0 && version != vent->version)
+            continue;
 
         method = vent->cmeth();
         err = ssl_method_error(s, method);
-        if (err != 0)
-            return err;
+        if (err != 0) {
+            if (version == vent->version) {
+                *al = SSL_AD_PROTOCOL_VERSION;
+                return err;
+            }
+
+            continue;
+        }
+        if (highver == 0)
+            highver = vent->version;
+
+        if (version != vent->version)
+            continue;
+
+#ifndef OPENSSL_NO_TLS13DOWNGRADE
+        /* Check for downgrades */
+        if (checkdgrd) {
+            if (version == TLS1_2_VERSION && highver > version) {
+                if (memcmp(tls12downgrade,
+                           s->s3->server_random + SSL3_RANDOM_SIZE
+                                                - sizeof(tls12downgrade),
+                           sizeof(tls12downgrade)) == 0) {
+                    *al = SSL_AD_ILLEGAL_PARAMETER;
+                    return SSL_R_INAPPROPRIATE_FALLBACK;
+                }
+            } else if (!SSL_IS_DTLS(s)
+                       && version < TLS1_2_VERSION
+                       && highver > version) {
+                if (memcmp(tls11downgrade,
+                           s->s3->server_random + SSL3_RANDOM_SIZE
+                                                - sizeof(tls11downgrade),
+                           sizeof(tls11downgrade)) == 0) {
+                    *al = SSL_AD_ILLEGAL_PARAMETER;
+                    return SSL_R_INAPPROPRIATE_FALLBACK;
+                }
+            }
+        }
+#endif
+
         s->method = method;
         s->version = version;
         return 0;
     }
 
+    *al = SSL_AD_PROTOCOL_VERSION;
     return SSL_R_UNSUPPORTED_PROTOCOL;
 }
 
@@ -1871,3 +1941,130 @@ int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
     return i < num_groups;
 }
 #endif
+
+/* Replace ClientHello1 in the transcript hash with a synthetic message */
+int create_synthetic_message_hash(SSL *s)
+{
+    unsigned char hashval[EVP_MAX_MD_SIZE];
+    size_t hashlen = 0;
+    unsigned char msghdr[SSL3_HM_HEADER_LENGTH];
+
+    memset(msghdr, 0, sizeof(msghdr));
+
+    /* Get the hash of the initial ClientHello */
+    if (!ssl3_digest_cached_records(s, 0)
+            || !ssl_handshake_hash(s, hashval, sizeof(hashval), &hashlen)) {
+        SSLerr(SSL_F_CREATE_SYNTHETIC_MESSAGE_HASH, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* Reinitialise the transcript hash */
+    if (!ssl3_init_finished_mac(s))
+        return 0;
+
+    /* Inject the synthetic message_hash message */
+    msghdr[0] = SSL3_MT_MESSAGE_HASH;
+    msghdr[SSL3_HM_HEADER_LENGTH - 1] = hashlen;
+    if (!ssl3_finish_mac(s, msghdr, SSL3_HM_HEADER_LENGTH)
+            || !ssl3_finish_mac(s, hashval, hashlen)) {
+        SSLerr(SSL_F_CREATE_SYNTHETIC_MESSAGE_HASH, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+static int ca_dn_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
+{
+    return X509_NAME_cmp(*a, *b);
+}
+
+int parse_ca_names(SSL *s, PACKET *pkt, int *al)
+{
+    STACK_OF(X509_NAME) *ca_sk = sk_X509_NAME_new(ca_dn_cmp);
+    X509_NAME *xn = NULL;
+    PACKET cadns;
+
+    if (ca_sk == NULL) {
+        SSLerr(SSL_F_PARSE_CA_NAMES, ERR_R_MALLOC_FAILURE);
+        goto decerr;
+    }
+    /* get the CA RDNs */
+    if (!PACKET_get_length_prefixed_2(pkt, &cadns)) {
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_PARSE_CA_NAMES, SSL_R_LENGTH_MISMATCH);
+        goto decerr;
+    }
+
+    while (PACKET_remaining(&cadns)) {
+        const unsigned char *namestart, *namebytes;
+        unsigned int name_len;
+
+        if (!PACKET_get_net_2(&cadns, &name_len)
+            || !PACKET_get_bytes(&cadns, &namebytes, name_len)) {
+            SSLerr(SSL_F_PARSE_CA_NAMES, SSL_R_LENGTH_MISMATCH);
+            goto decerr;
+        }
+
+        namestart = namebytes;
+        if ((xn = d2i_X509_NAME(NULL, &namebytes, name_len)) == NULL) {
+            SSLerr(SSL_F_PARSE_CA_NAMES, ERR_R_ASN1_LIB);
+            goto decerr;
+        }
+        if (namebytes != (namestart + name_len)) {
+            SSLerr(SSL_F_PARSE_CA_NAMES, SSL_R_CA_DN_LENGTH_MISMATCH);
+            goto decerr;
+        }
+
+        if (!sk_X509_NAME_push(ca_sk, xn)) {
+            SSLerr(SSL_F_PARSE_CA_NAMES, ERR_R_MALLOC_FAILURE);
+            *al = SSL_AD_INTERNAL_ERROR;
+            goto err;
+        }
+        xn = NULL;
+    }
+
+    sk_X509_NAME_pop_free(s->s3->tmp.ca_names, X509_NAME_free);
+    s->s3->tmp.ca_names = ca_sk;
+
+    return 1;
+
+ decerr:
+    *al = SSL_AD_DECODE_ERROR;
+ err:
+    sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
+    X509_NAME_free(xn);
+    return 0;
+}
+
+int construct_ca_names(SSL *s, WPACKET *pkt)
+{
+    STACK_OF(X509_NAME) *ca_sk = SSL_get_client_CA_list(s);
+
+    /* Start sub-packet for client CA list */
+    if (!WPACKET_start_sub_packet_u16(pkt))
+        return 0;
+
+    if (ca_sk != NULL) {
+        int i;
+
+        for (i = 0; i < sk_X509_NAME_num(ca_sk); i++) {
+            unsigned char *namebytes;
+            X509_NAME *name = sk_X509_NAME_value(ca_sk, i);
+            int namelen;
+
+            if (name == NULL
+                    || (namelen = i2d_X509_NAME(name, NULL)) < 0
+                    || !WPACKET_sub_allocate_bytes_u16(pkt, namelen,
+                                                       &namebytes)
+                    || i2d_X509_NAME(name, &namebytes) != namelen) {
+                return 0;
+            }
+        }
+    }
+
+    if (!WPACKET_close(pkt))
+        return 0;
+
+    return 1;
+}

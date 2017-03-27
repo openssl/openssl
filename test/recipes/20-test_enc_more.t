@@ -28,17 +28,22 @@ my $plaintext = catfile(".", "testdatafile");
 my $fail = "";
 my $cmd = "openssl";
 
+my $ciphersstatus = undef;
 my @ciphers =
     grep(! /wrap|^$|^[^-]/,
          (map { split /\s+/ }
-              run(app([$cmd, "enc", "-ciphers"]), capture => 1)));
+          run(app([$cmd, "enc", "-ciphers"]),
+              capture => 1, statusvar => \$ciphersstatus)));
 
-plan tests => 1 + scalar @ciphers;
-
-my $init = ok(copy($testsrc, $plaintext));
+plan tests => 2 + scalar @ciphers;
 
 SKIP: {
-    skip "Not initialized, skipping...", (scalar @ciphers) unless $init;
+    skip "Problems getting ciphers...", 1 + scalar(@ciphers)
+        unless ok($ciphersstatus, "Running 'openssl enc -ciphers'");
+    unless (ok(copy($testsrc, $plaintext), "Copying $testsrc to $plaintext")) {
+        diag($!);
+        skip "Not initialized, skipping...", scalar(@ciphers);
+    }
 
     foreach my $cipher (@ciphers) {
         my $ciphername = substr $cipher, 1;

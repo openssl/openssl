@@ -56,7 +56,8 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
 
     ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 
-    if (s->early_data_state == SSL_EARLY_DATA_WRITING) {
+    if (s->early_data_state == SSL_EARLY_DATA_WRITING
+            || s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
         alg_enc = s->session->cipher->algorithm_enc;
     } else {
         /*

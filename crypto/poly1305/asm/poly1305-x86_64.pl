@@ -39,6 +39,7 @@
 # VIA Nano	1.82/+150%	-
 # Sledgehammer	1.38/+160%	-
 # Bulldozer	2.30/+130%	0.97
+# Ryzen		1.15/?		1.08		1.18
 #
 # (*)	improvement coefficients relative to clang are more modest and
 #	are ~50% on most processors, in both cases we are comparing to
@@ -2893,6 +2894,11 @@ poly1305_blocks_vpmadd52:
 ___
 }
 {
+########################################################################
+# As implied by its name 4x subroutine processes 4 blocks in parallel
+# (but handles even 4*n+2 blocks lengths). It takes up to 4th key power
+# and is handled in 256-bit %ymm registers.
+
 my ($H0,$H1,$H2,$R0,$R1,$R2,$S1,$S2) = map("%ymm$_",(0..5,16,17));
 my ($D0lo,$D0hi,$D1lo,$D1hi,$D2lo,$D2hi) = map("%ymm$_",(18..23));
 my ($T0,$T1,$T2,$T3,$mask44,$mask42,$tmp,$PAD) = map("%ymm$_",(24..31));
@@ -2935,6 +2941,9 @@ poly1305_blocks_vpmadd52_4x:
 	vpsllq		\$2,$R2,$S2		# S2 = R2*5*4
 	vpaddq		$R2,$S2,$S2
 	vpsllq		\$2,$S2,$S2
+
+	test		\$7,$len		# is len 8*n?
+	jz		.Lblocks_vpmadd52_8x
 
 	vmovdqu64	16*0($inp),$T2		# load data
 	vmovdqu64	16*2($inp),$T3
@@ -3318,10 +3327,384 @@ poly1305_blocks_vpmadd52_4x:
 	vmovq		%x#$H0,0($ctx)
 	vmovq		%x#$H1,8($ctx)
 	vmovq		%x#$H2,16($ctx)
+	vzeroall
 
 .Lno_data_vpmadd52_4x:
 	ret
 .size	poly1305_blocks_vpmadd52_4x,.-poly1305_blocks_vpmadd52_4x
+___
+}
+{
+########################################################################
+# As implied by its name 8x subroutine processes 8 blocks in parallel...
+# This is intermediate version, as it's used only in cases when input
+# length is either 8*n, 8*n+1 or 8*n+2...
+
+my ($H0,$H1,$H2,$R0,$R1,$R2,$S1,$S2) = map("%ymm$_",(0..5,16,17));
+my ($D0lo,$D0hi,$D1lo,$D1hi,$D2lo,$D2hi) = map("%ymm$_",(18..23));
+my ($T0,$T1,$T2,$T3,$mask44,$mask42,$tmp,$PAD) = map("%ymm$_",(24..31));
+my ($RR0,$RR1,$RR2,$SS1,$SS2) = map("%ymm$_",(6..10));
+
+$code.=<<___;
+.type	poly1305_blocks_vpmadd52_8x,\@function,4
+.align	32
+poly1305_blocks_vpmadd52_8x:
+	shr	\$4,$len
+	jz	.Lno_data_vpmadd52_8x		# too short
+
+	shl	\$40,$padbit
+	mov	64($ctx),%r8			# peek on power of the key
+
+	vmovdqa64	.Lx_mask44(%rip),$mask44
+	vmovdqa64	.Lx_mask42(%rip),$mask42
+
+	test	%r8,%r8				# is power value impossible?
+	js	.Linit_vpmadd52			# if it is, then init R[4]
+
+	vmovq	0($ctx),%x#$H0			# load current hash value
+	vmovq	8($ctx),%x#$H1
+	vmovq	16($ctx),%x#$H2
+
+.Lblocks_vpmadd52_8x:
+	################################################################
+	# fist we calculate more key powers
+
+	vmovdqu64	128($ctx),$R2		# load 1-3-2-4 powers
+	vmovdqu64	160($ctx),$S1
+	vmovdqu64	64($ctx),$R0
+	vmovdqu64	96($ctx),$R1
+
+	vpsllq		\$2,$R2,$S2		# S2 = R2*5*4
+	vpaddq		$R2,$S2,$S2
+	vpsllq		\$2,$S2,$S2
+
+	vpbroadcastq	%x#$R2,$RR2		# broadcast 4th power
+	vpbroadcastq	%x#$R0,$RR0
+	vpbroadcastq	%x#$R1,$RR1
+
+	vpxorq		$D0lo,$D0lo,$D0lo
+	vpmadd52luq	$RR2,$S1,$D0lo
+	vpxorq		$D0hi,$D0hi,$D0hi
+	vpmadd52huq	$RR2,$S1,$D0hi
+	vpxorq		$D1lo,$D1lo,$D1lo
+	vpmadd52luq	$RR2,$S2,$D1lo
+	vpxorq		$D1hi,$D1hi,$D1hi
+	vpmadd52huq	$RR2,$S2,$D1hi
+	vpxorq		$D2lo,$D2lo,$D2lo
+	vpmadd52luq	$RR2,$R0,$D2lo
+	vpxorq		$D2hi,$D2hi,$D2hi
+	vpmadd52huq	$RR2,$R0,$D2hi
+
+	vpmadd52luq	$RR0,$R0,$D0lo
+	vpmadd52huq	$RR0,$R0,$D0hi
+	vpmadd52luq	$RR0,$R1,$D1lo
+	vpmadd52huq	$RR0,$R1,$D1hi
+	vpmadd52luq	$RR0,$R2,$D2lo
+	vpmadd52huq	$RR0,$R2,$D2hi
+
+	vpmadd52luq	$RR1,$S2,$D0lo
+	vpmadd52huq	$RR1,$S2,$D0hi
+	vpmadd52luq	$RR1,$R0,$D1lo
+	vpmadd52huq	$RR1,$R0,$D1hi
+	vpmadd52luq	$RR1,$R1,$D2lo
+	vpmadd52huq	$RR1,$R1,$D2hi
+
+	################################################################
+	# partial reduction
+	vpsrlq		\$44,$D0lo,$tmp
+	vpsllq		\$8,$D0hi,$D0hi
+	vpandq		$mask44,$D0lo,$RR0
+	vpaddq		$tmp,$D0hi,$D0hi
+
+	vpaddq		$D0hi,$D1lo,$D1lo
+
+	vpsrlq		\$44,$D1lo,$tmp
+	vpsllq		\$8,$D1hi,$D1hi
+	vpandq		$mask44,$D1lo,$RR1
+	vpaddq		$tmp,$D1hi,$D1hi
+
+	vpaddq		$D1hi,$D2lo,$D2lo
+
+	vpsrlq		\$42,$D2lo,$tmp
+	vpsllq		\$10,$D2hi,$D2hi
+	vpandq		$mask42,$D2lo,$RR2
+	vpaddq		$tmp,$D2hi,$D2hi
+
+	vpaddq		$D2hi,$RR0,$RR0
+	vpsllq		\$2,$D2hi,$D2hi
+
+	vpaddq		$D2hi,$RR0,$RR0
+
+	vpsrlq		\$44,$RR0,$tmp		# additional step
+	vpandq		$mask44,$RR0,$RR0
+
+	vpaddq		$tmp,$RR1,$RR1
+
+	################################################################
+	# At this point Rx holds 1324 powers, RRx - 5768, and the goal
+	# is 15263748, which reflects how data is loaded...
+
+	vpunpcklqdq	$R2,$RR2,$T2		# 3748
+	vpunpckhqdq	$R2,$RR2,$R2		# 1526
+	vpunpcklqdq	$R0,$RR0,$T0
+	vpunpckhqdq	$R0,$RR0,$R0
+	vpunpcklqdq	$R1,$RR1,$T1
+	vpunpckhqdq	$R1,$RR1,$R1
+___
+######## switch to %zmm
+map(s/%y/%z/, $H0,$H1,$H2,$R0,$R1,$R2,$S1,$S2);
+map(s/%y/%z/, $D0lo,$D0hi,$D1lo,$D1hi,$D2lo,$D2hi);
+map(s/%y/%z/, $T0,$T1,$T2,$T3,$mask44,$mask42,$tmp,$PAD);
+map(s/%y/%z/, $RR0,$RR1,$RR2,$SS1,$SS2);
+
+$code.=<<___;
+	vshufi64x2	\$0x44,$R2,$T2,$RR2	# 15263748
+	vshufi64x2	\$0x44,$R0,$T0,$RR0
+	vshufi64x2	\$0x44,$R1,$T1,$RR1
+
+	vmovdqu64	16*0($inp),$T2		# load data
+	vmovdqu64	16*4($inp),$T3
+	lea		16*8($inp),$inp
+
+	vpsllq		\$2,$RR2,$SS2		# S2 = R2*5*4
+	vpsllq		\$2,$RR1,$SS1		# S1 = R1*5*4
+	vpaddq		$RR2,$SS2,$SS2
+	vpaddq		$RR1,$SS1,$SS1
+	vpsllq		\$2,$SS2,$SS2
+	vpsllq		\$2,$SS1,$SS1
+
+	vpbroadcastq	$padbit,$PAD
+	vpbroadcastq	%x#$mask44,$mask44
+	vpbroadcastq	%x#$mask42,$mask42
+
+	vpbroadcastq	%x#$SS1,$S1		# broadcast 8th power
+	vpbroadcastq	%x#$SS2,$S2
+	vpbroadcastq	%x#$RR0,$R0
+	vpbroadcastq	%x#$RR1,$R1
+	vpbroadcastq	%x#$RR2,$R2
+
+	vpunpcklqdq	$T3,$T2,$T1		# transpose data
+	vpunpckhqdq	$T3,$T2,$T3
+
+	# at this point 64-bit lanes are ordered as 73625140
+
+	vpsrlq		\$24,$T3,$T2		# splat the data
+	vporq		$PAD,$T2,$T2
+	 vpaddq		$T2,$H2,$H2		# accumulate input
+	vpandq		$mask44,$T1,$T0
+	vpsrlq		\$44,$T1,$T1
+	vpsllq		\$20,$T3,$T3
+	vporq		$T3,$T1,$T1
+	vpandq		$mask44,$T1,$T1
+
+	sub		\$8,$len
+	jz		.Ltail_vpmadd52_8x
+	jmp		.Loop_vpmadd52_8x
+
+.align	32
+.Loop_vpmadd52_8x:
+	#vpaddq		$T2,$H2,$H2		# accumulate input
+	vpaddq		$T0,$H0,$H0
+	vpaddq		$T1,$H1,$H1
+
+	vpxorq		$D0lo,$D0lo,$D0lo
+	vpmadd52luq	$H2,$S1,$D0lo
+	vpxorq		$D0hi,$D0hi,$D0hi
+	vpmadd52huq	$H2,$S1,$D0hi
+	vpxorq		$D1lo,$D1lo,$D1lo
+	vpmadd52luq	$H2,$S2,$D1lo
+	vpxorq		$D1hi,$D1hi,$D1hi
+	vpmadd52huq	$H2,$S2,$D1hi
+	vpxorq		$D2lo,$D2lo,$D2lo
+	vpmadd52luq	$H2,$R0,$D2lo
+	vpxorq		$D2hi,$D2hi,$D2hi
+	vpmadd52huq	$H2,$R0,$D2hi
+
+	 vmovdqu64	16*0($inp),$T2		# load data
+	 vmovdqu64	16*4($inp),$T3
+	 lea		16*8($inp),$inp
+	vpmadd52luq	$H0,$R0,$D0lo
+	vpmadd52huq	$H0,$R0,$D0hi
+	vpmadd52luq	$H0,$R1,$D1lo
+	vpmadd52huq	$H0,$R1,$D1hi
+	vpmadd52luq	$H0,$R2,$D2lo
+	vpmadd52huq	$H0,$R2,$D2hi
+
+	 vpunpcklqdq	$T3,$T2,$T1		# transpose data
+	 vpunpckhqdq	$T3,$T2,$T3
+	vpmadd52luq	$H1,$S2,$D0lo
+	vpmadd52huq	$H1,$S2,$D0hi
+	vpmadd52luq	$H1,$R0,$D1lo
+	vpmadd52huq	$H1,$R0,$D1hi
+	vpmadd52luq	$H1,$R1,$D2lo
+	vpmadd52huq	$H1,$R1,$D2hi
+
+	################################################################
+	# partial reduction (interleaved with data splat)
+	vpsrlq		\$44,$D0lo,$tmp
+	vpsllq		\$8,$D0hi,$D0hi
+	vpandq		$mask44,$D0lo,$H0
+	vpaddq		$tmp,$D0hi,$D0hi
+
+	 vpsrlq		\$24,$T3,$T2
+	 vporq		$PAD,$T2,$T2
+	vpaddq		$D0hi,$D1lo,$D1lo
+
+	vpsrlq		\$44,$D1lo,$tmp
+	vpsllq		\$8,$D1hi,$D1hi
+	vpandq		$mask44,$D1lo,$H1
+	vpaddq		$tmp,$D1hi,$D1hi
+
+	 vpandq		$mask44,$T1,$T0
+	 vpsrlq		\$44,$T1,$T1
+	 vpsllq		\$20,$T3,$T3
+	vpaddq		$D1hi,$D2lo,$D2lo
+
+	vpsrlq		\$42,$D2lo,$tmp
+	vpsllq		\$10,$D2hi,$D2hi
+	vpandq		$mask42,$D2lo,$H2
+	vpaddq		$tmp,$D2hi,$D2hi
+
+	  vpaddq	$T2,$H2,$H2		# accumulate input
+	vpaddq		$D2hi,$H0,$H0
+	vpsllq		\$2,$D2hi,$D2hi
+
+	vpaddq		$D2hi,$H0,$H0
+	 vporq		$T3,$T1,$T1
+	 vpandq		$mask44,$T1,$T1
+
+	vpsrlq		\$44,$H0,$tmp		# additional step
+	vpandq		$mask44,$H0,$H0
+
+	vpaddq		$tmp,$H1,$H1
+
+	sub		\$8,$len		# len-=128
+	jnz		.Loop_vpmadd52_8x
+
+.Ltail_vpmadd52_8x:
+	#vpaddq		$T2,$H2,$H2		# accumulate input
+	vpaddq		$T0,$H0,$H0
+	vpaddq		$T1,$H1,$H1
+
+	vpxorq		$D0lo,$D0lo,$D0lo
+	vpmadd52luq	$H2,$SS1,$D0lo
+	vpxorq		$D0hi,$D0hi,$D0hi
+	vpmadd52huq	$H2,$SS1,$D0hi
+	vpxorq		$D1lo,$D1lo,$D1lo
+	vpmadd52luq	$H2,$SS2,$D1lo
+	vpxorq		$D1hi,$D1hi,$D1hi
+	vpmadd52huq	$H2,$SS2,$D1hi
+	vpxorq		$D2lo,$D2lo,$D2lo
+	vpmadd52luq	$H2,$RR0,$D2lo
+	vpxorq		$D2hi,$D2hi,$D2hi
+	vpmadd52huq	$H2,$RR0,$D2hi
+
+	vpmadd52luq	$H0,$RR0,$D0lo
+	vpmadd52huq	$H0,$RR0,$D0hi
+	vpmadd52luq	$H0,$RR1,$D1lo
+	vpmadd52huq	$H0,$RR1,$D1hi
+	vpmadd52luq	$H0,$RR2,$D2lo
+	vpmadd52huq	$H0,$RR2,$D2hi
+
+	vpmadd52luq	$H1,$SS2,$D0lo
+	vpmadd52huq	$H1,$SS2,$D0hi
+	vpmadd52luq	$H1,$RR0,$D1lo
+	vpmadd52huq	$H1,$RR0,$D1hi
+	vpmadd52luq	$H1,$RR1,$D2lo
+	vpmadd52huq	$H1,$RR1,$D2hi
+
+	################################################################
+	# horizontal addition
+
+	mov		\$1,%eax
+	kmovw		%eax,%k1
+	vpsrldq		\$8,$D0lo,$T0
+	vpsrldq		\$8,$D0hi,$H0
+	vpsrldq		\$8,$D1lo,$T1
+	vpsrldq		\$8,$D1hi,$H1
+	vpaddq		$T0,$D0lo,$D0lo
+	vpaddq		$H0,$D0hi,$D0hi
+	vpsrldq		\$8,$D2lo,$T2
+	vpsrldq		\$8,$D2hi,$H2
+	vpaddq		$T1,$D1lo,$D1lo
+	vpaddq		$H1,$D1hi,$D1hi
+	 vpermq		\$0x2,$D0lo,$T0
+	 vpermq		\$0x2,$D0hi,$H0
+	vpaddq		$T2,$D2lo,$D2lo
+	vpaddq		$H2,$D2hi,$D2hi
+
+	vpermq		\$0x2,$D1lo,$T1
+	vpermq		\$0x2,$D1hi,$H1
+	vpaddq		$T0,$D0lo,$D0lo
+	vpaddq		$H0,$D0hi,$D0hi
+	vpermq		\$0x2,$D2lo,$T2
+	vpermq		\$0x2,$D2hi,$H2
+	vpaddq		$T1,$D1lo,$D1lo
+	vpaddq		$H1,$D1hi,$D1hi
+	 vextracti64x4	\$1,$D0lo,%y#$T0
+	 vextracti64x4	\$1,$D0hi,%y#$H0
+	vpaddq		$T2,$D2lo,$D2lo
+	vpaddq		$H2,$D2hi,$D2hi
+
+	vextracti64x4	\$1,$D1lo,%y#$T1
+	vextracti64x4	\$1,$D1hi,%y#$H1
+	vextracti64x4	\$1,$D2lo,%y#$T2
+	vextracti64x4	\$1,$D2hi,%y#$H2
+___
+######## switch back to %ymm
+map(s/%z/%y/, $H0,$H1,$H2,$R0,$R1,$R2,$S1,$S2);
+map(s/%z/%y/, $D0lo,$D0hi,$D1lo,$D1hi,$D2lo,$D2hi);
+map(s/%z/%y/, $T0,$T1,$T2,$T3,$mask44,$mask42,$tmp,$PAD);
+
+$code.=<<___;
+	vpaddq		$T0,$D0lo,${D0lo}{%k1}{z}
+	vpaddq		$H0,$D0hi,${D0hi}{%k1}{z}
+	vpaddq		$T1,$D1lo,${D1lo}{%k1}{z}
+	vpaddq		$H1,$D1hi,${D1hi}{%k1}{z}
+	vpaddq		$T2,$D2lo,${D2lo}{%k1}{z}
+	vpaddq		$H2,$D2hi,${D2hi}{%k1}{z}
+
+	################################################################
+	# partial reduction
+	vpsrlq		\$44,$D0lo,$tmp
+	vpsllq		\$8,$D0hi,$D0hi
+	vpandq		$mask44,$D0lo,$H0
+	vpaddq		$tmp,$D0hi,$D0hi
+
+	vpaddq		$D0hi,$D1lo,$D1lo
+
+	vpsrlq		\$44,$D1lo,$tmp
+	vpsllq		\$8,$D1hi,$D1hi
+	vpandq		$mask44,$D1lo,$H1
+	vpaddq		$tmp,$D1hi,$D1hi
+
+	vpaddq		$D1hi,$D2lo,$D2lo
+
+	vpsrlq		\$42,$D2lo,$tmp
+	vpsllq		\$10,$D2hi,$D2hi
+	vpandq		$mask42,$D2lo,$H2
+	vpaddq		$tmp,$D2hi,$D2hi
+
+	vpaddq		$D2hi,$H0,$H0
+	vpsllq		\$2,$D2hi,$D2hi
+
+	vpaddq		$D2hi,$H0,$H0
+
+	vpsrlq		\$44,$H0,$tmp		# additional step
+	vpandq		$mask44,$H0,$H0
+
+	vpaddq		$tmp,$H1,$H1
+
+	################################################################
+
+	vmovq		%x#$H0,0($ctx)
+	vmovq		%x#$H1,8($ctx)
+	vmovq		%x#$H2,16($ctx)
+	vzeroall
+
+.Lno_data_vpmadd52_8x:
+	ret
+.size	poly1305_blocks_vpmadd52_8x,.-poly1305_blocks_vpmadd52_8x
 ___
 }
 $code.=<<___;
@@ -3386,6 +3769,7 @@ $code.=<<___;
 .L2_44_shift_lft:
 .quad	8,8,10,64
 
+.align	64
 .Lx_mask44:
 .quad	0xfffffffffff,0xfffffffffff,0xfffffffffff,0xfffffffffff
 .quad	0xfffffffffff,0xfffffffffff,0xfffffffffff,0xfffffffffff

@@ -350,7 +350,8 @@
                           && (s)->method->version != TLS_ANY_VERSION)
 
 # define SSL_TREAT_AS_TLS13(s) \
-    (SSL_IS_TLS13(s) || (s)->early_data_state == SSL_EARLY_DATA_WRITING)
+    (SSL_IS_TLS13(s) || (s)->early_data_state == SSL_EARLY_DATA_WRITING \
+     || (s)->early_data_state == SSL_EARLY_DATA_WRITE_RETRY)
 
 # define SSL_IS_FIRST_HANDSHAKE(S) ((s)->s3->tmp.finish_md_len == 0)
 
@@ -1782,6 +1783,12 @@ typedef struct ssl3_comp_st {
 } SSL3_COMP;
 # endif
 
+typedef enum downgrade_en {
+    DOWNGRADE_NONE,
+    DOWNGRADE_TO_1_2,
+    DOWNGRADE_TO_1_1
+} DOWNGRADE;
+
 /*
  * Extension index values NOTE: Any updates to these defines should be mirrored
  * with equivalent updates to ext_defs in extensions.c
@@ -1790,7 +1797,6 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_renegotiate,
     TLSEXT_IDX_server_name,
     TLSEXT_IDX_srp,
-    TLSEXT_IDX_early_data_info,
     TLSEXT_IDX_ec_point_formats,
     TLSEXT_IDX_supported_groups,
     TLSEXT_IDX_session_ticket,
@@ -1808,6 +1814,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_cookie,
     TLSEXT_IDX_cryptopro_bug,
     TLSEXT_IDX_early_data,
+    TLSEXT_IDX_certificate_authorities,
     TLSEXT_IDX_padding,
     TLSEXT_IDX_psk
 } TLSEXT_INDEX;
@@ -1858,6 +1865,9 @@ typedef enum tlsext_index_en {
 /* A dummy signature value not valid for TLSv1.2 signature algs */
 #define TLSEXT_signature_rsa_pss                                0x0101
 
+/* TLSv1.3 downgrade protection sentinel values */
+extern const unsigned char tls11downgrade[8];
+extern const unsigned char tls12downgrade[8];
 
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 
@@ -2030,7 +2040,6 @@ static ossl_inline int ssl_has_cert(const SSL *s, int idx)
 
 # ifndef OPENSSL_UNIT_TEST
 
-int ssl_end_of_early_data_seen(SSL *s);
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
 __owur int ssl_write_internal(SSL *s, const void *buf, size_t num, size_t *written);
 void ssl_clear_cipher_ctx(SSL *s);
@@ -2101,7 +2110,7 @@ __owur int ssl_verify_alarm_type(long type);
 void ssl_sort_cipher_list(void);
 void ssl_load_ciphers(void);
 __owur int ssl_fill_hello_random(SSL *s, int server, unsigned char *field,
-                                 size_t len);
+                                 size_t len, DOWNGRADE dgrd);
 __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
                                       int free_pms);
 __owur EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm);
@@ -2167,8 +2176,10 @@ __owur int ssl_version_supported(const SSL *s, int version);
 __owur int ssl_set_client_hello_version(SSL *s);
 __owur int ssl_check_version_downgrade(SSL *s);
 __owur int ssl_set_version_bound(int method_version, int version, int *bound);
-__owur int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello);
-__owur int ssl_choose_client_version(SSL *s, int version);
+__owur int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello,
+                                     DOWNGRADE *dgrd);
+__owur int ssl_choose_client_version(SSL *s, int version, int checkdgrd,
+                                     int *al);
 int ssl_get_client_min_max_version(const SSL *s, int *min_version,
                                    int *max_version);
 

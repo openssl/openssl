@@ -3482,6 +3482,49 @@ iter = 4096
 MD = sha512
 Key = 9d9e9c4cd21fe4be24d5b8244c759665
 
+# PBKDF2 tests for empty and NULL inputs
+PBE = pbkdf2
+Password = ""
+Salt = "salt"
+iter = 1
+MD = sha1
+Key = a33dddc30478185515311f8752895d36ea4363a2
+
+PBE = pbkdf2
+Password = ""
+Salt = "salt"
+iter = 1
+MD = sha256
+Key = f135c27993baf98773c5cdb40a5706ce6a345cde
+
+PBE = pbkdf2
+Password = ""
+Salt = "salt"
+iter = 1
+MD = sha512
+Key = 00ef42cdbfc98d29db20976608e455567fdddf14
+
+PBE = pbkdf2
+Password = NULL
+Salt = "salt"
+iter = 1
+MD = sha1
+Key = a33dddc30478185515311f8752895d36ea4363a2
+
+PBE = pbkdf2
+Password = NULL
+Salt = "salt"
+iter = 1
+MD = sha256
+Key = f135c27993baf98773c5cdb40a5706ce6a345cde
+
+PBE = pbkdf2
+Password = NULL
+Salt = "salt"
+iter = 1
+MD = sha512
+Key = 00ef42cdbfc98d29db20976608e455567fdddf14
+
 # Base64 tests
 
 Encoding = canonical

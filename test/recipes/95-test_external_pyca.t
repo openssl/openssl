@@ -23,6 +23,8 @@ SKIP: {
         if ! -f srctop_file("pyca-cryptography", "setup.py");
     skip "PYCA tests not available on Windows or VMS", 1
         if $^O =~ /^(VMS|MSWin32)$/;
+    skip "PYCA tests only available in a shared build", 1
+        if disabled("shared");
 
     ok(run(cmd(["sh", data_file("cryptography.sh")])),
         "running Python Cryptography tests");

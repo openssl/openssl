@@ -68,9 +68,9 @@ extern "C" {
 # define TLS1_3_VERSION                  0x0304
 # define TLS_MAX_VERSION                 TLS1_3_VERSION
 
-/* TODO(TLS1.3) REMOVE ME: Version indicator for draft -18 */
-# define TLS1_3_VERSION_DRAFT            0x7f12
-# define TLS1_3_VERSION_DRAFT_TXT        "TLS 1.3 (draft 18)"
+/* TODO(TLS1.3) REMOVE ME: Version indicator for draft -19 */
+# define TLS1_3_VERSION_DRAFT            0x7f13
+# define TLS1_3_VERSION_DRAFT_TXT        "TLS 1.3 (draft 19)"
 
 /* Special value for method supporting multiple versions */
 # define TLS_ANY_VERSION                 0x10000
@@ -184,7 +184,7 @@ extern "C" {
 # define TLSEXT_TYPE_supported_versions          43
 # define TLSEXT_TYPE_cookie                      44
 # define TLSEXT_TYPE_psk_kex_modes               45
-# define TLSEXT_TYPE_early_data_info             46
+# define TLSEXT_TYPE_certificate_authorities     47
 
 /* Temporary extension type */
 # define TLSEXT_TYPE_renegotiate                 0xff01

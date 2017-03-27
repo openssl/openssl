@@ -4,7 +4,7 @@
 
 CMS_SignerInfo_set1_signer_cert,
 CMS_get0_SignerInfos, CMS_SignerInfo_get0_signer_id,
-CMS_SignerInfo_get0_signature, CMS_SignerInfo_cert_cmp,
+CMS_SignerInfo_get0_signature, CMS_SignerInfo_cert_cmp
 - CMS signedData signer functions
 
 =head1 SYNOPSIS

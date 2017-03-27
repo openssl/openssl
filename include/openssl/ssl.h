@@ -901,7 +901,9 @@ typedef enum {
     TLS_ST_SR_KEY_UPDATE,
     TLS_ST_CR_KEY_UPDATE,
     TLS_ST_EARLY_DATA,
-    TLS_ST_PENDING_EARLY_DATA_END
+    TLS_ST_PENDING_EARLY_DATA_END,
+    TLS_ST_CW_END_OF_EARLY_DATA,
+    TLS_ST_SR_END_OF_EARLY_DATA
 } OSSL_HANDSHAKE_STATE;
 
 /*
@@ -1027,7 +1029,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_AD_INTERNAL_ERROR           TLS1_AD_INTERNAL_ERROR
 # define SSL_AD_USER_CANCELLED           TLS1_AD_USER_CANCELLED
 # define SSL_AD_NO_RENEGOTIATION         TLS1_AD_NO_RENEGOTIATION
-# define SSL_AD_END_OF_EARLY_DATA        TLS13_AD_END_OF_EARLY_DATA
 # define SSL_AD_MISSING_EXTENSION        TLS13_AD_MISSING_EXTENSION
 # define SSL_AD_CERTIFICATE_REQUIRED     TLS13_AD_CERTIFICATE_REQUIRED
 # define SSL_AD_UNSUPPORTED_EXTENSION    TLS1_AD_UNSUPPORTED_EXTENSION
@@ -2134,6 +2135,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_ADD_KEY_SHARE                              512
 # define SSL_F_BYTES_TO_CIPHER_LIST                       519
 # define SSL_F_CHECK_SUITEB_CIPHER_LIST                   331
+# define SSL_F_CREATE_SYNTHETIC_MESSAGE_HASH              539
 # define SSL_F_CT_MOVE_SCTS                               345
 # define SSL_F_CT_STRICT                                  349
 # define SSL_F_D2I_SSL_SESSION                            103
@@ -2172,8 +2174,10 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_OSSL_STATEM_SERVER13_READ_TRANSITION       437
 # define SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE       431
 # define SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION         418
+# define SSL_F_PARSE_CA_NAMES                             541
 # define SSL_F_PROCESS_KEY_SHARE_EXT                      439
 # define SSL_F_READ_STATE_MACHINE                         352
+# define SSL_F_SET_CLIENT_CIPHERSUITE                     540
 # define SSL_F_SSL3_CHANGE_CIPHER_STATE                   129
 # define SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM              130
 # define SSL_F_SSL3_CTRL                                  213
@@ -2332,6 +2336,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CHOOSE_SIGALG                          513
 # define SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK          354
 # define SSL_F_TLS_COLLECT_EXTENSIONS                     435
+# define SSL_F_TLS_CONSTRUCT_CERTIFICATE_AUTHORITIES      542
 # define SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST          372
 # define SSL_F_TLS_CONSTRUCT_CERT_STATUS                  429
 # define SSL_F_TLS_CONSTRUCT_CERT_STATUS_BODY             494
@@ -2373,6 +2378,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CTOS_USE_SRTP                482
 # define SSL_F_TLS_CONSTRUCT_CTOS_VERIFY                  358
 # define SSL_F_TLS_CONSTRUCT_ENCRYPTED_EXTENSIONS         443
+# define SSL_F_TLS_CONSTRUCT_END_OF_EARLY_DATA            536
 # define SSL_F_TLS_CONSTRUCT_EXTENSIONS                   447
 # define SSL_F_TLS_CONSTRUCT_FINISHED                     359
 # define SSL_F_TLS_CONSTRUCT_HELLO_REQUEST                373
@@ -2411,6 +2417,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PARSE_CTOS_RENEGOTIATE                 464
 # define SSL_F_TLS_PARSE_CTOS_USE_SRTP                    465
 # define SSL_F_TLS_PARSE_STOC_COOKIE                      534
+# define SSL_F_TLS_PARSE_STOC_EARLY_DATA                  538
 # define SSL_F_TLS_PARSE_STOC_EARLY_DATA_INFO             528
 # define SSL_F_TLS_PARSE_STOC_KEY_SHARE                   445
 # define SSL_F_TLS_PARSE_STOC_PSK                         502
@@ -2434,6 +2441,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PROCESS_CLIENT_HELLO                   381
 # define SSL_F_TLS_PROCESS_CLIENT_KEY_EXCHANGE            382
 # define SSL_F_TLS_PROCESS_ENCRYPTED_EXTENSIONS           444
+# define SSL_F_TLS_PROCESS_END_OF_EARLY_DATA              537
 # define SSL_F_TLS_PROCESS_FINISHED                       364
 # define SSL_F_TLS_PROCESS_HELLO_REQ                      507
 # define SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST            511
@@ -2460,6 +2468,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE       143
 # define SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE     158
 # define SSL_R_BAD_CHANGE_CIPHER_SPEC                     103
+# define SSL_R_BAD_CIPHER                                 186
 # define SSL_R_BAD_DATA                                   390
 # define SSL_R_BAD_DATA_RETURNED_BY_CALLBACK              106
 # define SSL_R_BAD_DECOMPRESSION                          107

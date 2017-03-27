@@ -48,6 +48,7 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 #include <openssl/md5.h>
@@ -56,6 +57,14 @@
 
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 #define SSL3_NUM_SCSVS          OSSL_NELEM(ssl3_scsvs)
+
+/* TLSv1.3 downgrade protection sentinel values */
+const unsigned char tls11downgrade[] = {
+    0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x00
+};
+const unsigned char tls12downgrade[] = {
+    0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x01
+};
 
 /*
  * The list of available ciphers, mostly organized into the following
@@ -4007,9 +4016,10 @@ long ssl_get_algorithm2(SSL *s)
  * Fill a ClientRandom or ServerRandom field of length len. Returns <= 0 on
  * failure, 1 on success.
  */
-int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len)
+int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
+                          DOWNGRADE dgrd)
 {
-    int send_time = 0;
+    int send_time = 0, ret;
 
     if (len < 4)
         return 0;
@@ -4022,9 +4032,22 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len)
         unsigned char *p = result;
         l2n(Time, p);
         /* TODO(size_t): Convert this */
-        return RAND_bytes(p, (int)(len - 4));
-    } else
-        return RAND_bytes(result, (int)len);
+        ret = RAND_bytes(p, (int)(len - 4));
+    } else {
+        ret = RAND_bytes(result, (int)len);
+    }
+#ifndef OPENSSL_NO_TLS13DOWNGRADE
+    if (ret) {
+        assert(sizeof(tls11downgrade) < len && sizeof(tls12downgrade) < len);
+        if (dgrd == DOWNGRADE_TO_1_2)
+            memcpy(result + len - sizeof(tls12downgrade), tls12downgrade,
+                   sizeof(tls12downgrade));
+        else if (dgrd == DOWNGRADE_TO_1_1)
+            memcpy(result + len - sizeof(tls11downgrade), tls11downgrade,
+                   sizeof(tls11downgrade));
+    }
+#endif
+    return ret;
 }
 
 int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
