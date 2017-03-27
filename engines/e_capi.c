@@ -1546,7 +1546,7 @@ CAPI_KEY *capi_find_key(CAPI_CTX *ctx, const char *id)
         break;
 
     case CAPI_LU_CONTNAME:
-        if (1) {
+        {
             WCHAR *contname, *provname;
             DWORD len;
 
