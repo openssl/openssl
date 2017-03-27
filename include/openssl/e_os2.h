@@ -258,29 +258,6 @@ typedef unsigned __int64 uint64_t;
 #  include <stdint.h>
 # endif
 
-/*
- * We need a format operator for some client tools for uint64_t.  If inttypes.h
- * isn't available or did not define it, just go with hard-coded.
- */
-# ifndef PRIu64
-#  ifdef SIXTY_FOUR_BIT_LONG
-#   define PRIu64 "lu"
-#  else
-#   define PRIu64 "llu"
-#  endif
-# endif
-
-/* Format specifier for printing size_t */
-# if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
-#  define OSSLzu  "zu"
-# else
-#  ifdef THIRTY_TWO_BIT
-#   define OSSLzu "u"
-#  else
-#   define OSSLzu PRIu64
-#  endif
-# endif
-
 /* ossl_inline: portable inline definition usable in public headers */
 # if !defined(inline) && !defined(__cplusplus)
 #  if defined(__STDC_VERSION__) && __STDC_VERSION__>=199901L

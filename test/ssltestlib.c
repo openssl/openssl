@@ -9,6 +9,7 @@
 
 #include <string.h>
 
+#include "e_os.h"
 #include "ssltestlib.h"
 
 static int tls_dump_new(BIO *bi);
