@@ -724,10 +724,16 @@ void BIO_copy_next_retry(BIO *b);
  * long BIO_ghbn_ctrl(int cmd,int iarg,char *parg);
  */
 
-# ifdef __GNUC__
-#  define __bio_h__attr__ __attribute__
-# else
-#  define __bio_h__attr__(x)
+# define __bio_h__attr__(x)
+# if defined(__GNUC__) && defined(__STDC_VERSION__)
+    /*
+     * Because we support the 'z' modifier, which made its appearance in C99,
+     * we can't use __attribute__ with pre C99 dialects.
+     */
+#  if __STDC_VERSION__ >= 199901L
+#   undef __bio_h__attr__
+#   define __bio_h__attr__ __attribute__
+#  endif
 # endif
 int BIO_printf(BIO *bio, const char *format, ...)
 __bio_h__attr__((__format__(__printf__, 2, 3)));
