@@ -15,7 +15,7 @@ SSL_CONF_cmd_argv - SSL configuration command line processing
 The function SSL_CONF_cmd_argv() processes at most two command line
 arguments from B<pargv> and B<pargc>. The values of B<pargv> and B<pargc>
 are updated to reflect the number of command options processed. The B<pargc>
-argument can be set to B<NULL> is it is not used.
+argument can be set to B<NULL> if it is not used.
 
 =head1 RETURN VALUES
 
