@@ -70,6 +70,8 @@ B<openssl> B<s_server>
 [B<-verify_name name>]
 [B<-x509_strict>]
 [B<-nocert>]
+[B<-client_sigalgs sigalglist>]
+[B<-named_curve curve>]
 [B<-cipher cipherlist>]
 [B<-serverpref>]
 [B<-quiet>]
@@ -412,6 +414,18 @@ OpenSSL 1.1.0.
 
 Provide a brief summary of connection parameters instead of the normal verbose
 output.
+
+=item B<-client_sigalgs sigalglist>
+
+Signature algorithms to support for client certificate authentication
+(colon-separated list)
+
+=item B<-named_curve curve>
+
+Specifies the elliptic curve to use. NOTE: this is single curve, not a list.
+For a list of all possible curves, use:
+
+    $ openssl ecparam -list_curves
 
 =item B<-cipher cipherlist>
 
