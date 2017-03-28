@@ -321,7 +321,7 @@ static int test_siphash(int idx)
             }
 
             if (memcmp(out, expected, expectedlen) != 0) {
-                BIO_printf(b_stderr, "SipHash test #%d/%" OSSLzu "+%" OSSLzu " failed.\n",
+                BIO_printf(b_stderr, "SipHash test #%d/%zu+%zu failed.\n",
                        idx, half, inlen-half);
                 hex_out(b_stderr, "got:      ", 16, out, expectedlen);
                 hex_out(b_stderr, "expected: ", 16, expected, expectedlen);
