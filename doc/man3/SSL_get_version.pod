@@ -33,7 +33,7 @@ SSL_version() returns the protocol version used for the connection.
 
 SSL_get_version() returns one of the following strings:
 
-=over 5
+=over 4
 
 =item SSLv3
 
@@ -61,7 +61,7 @@ This indicates that no version has been set (no connection established).
 
 =back
 
-SSL_version() and SSL_version() return an integer which could include any of
+SSL_version() and SSL_client_version() return an integer which could include any of
 the following:
 
 =over 5
