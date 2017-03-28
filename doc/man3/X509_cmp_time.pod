@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-X509_cmp_time - X509 time functions
+X509_cmp_time, X509_cmp_current_time, X509_time_adj, X509_time_adj_ex
+- X509 time functions
 
 =head1 SYNOPSIS
 
