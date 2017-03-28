@@ -5,7 +5,7 @@
 SSL_CTX_get_ex_data, SSL_CTX_set_ex_data,
 SSL_get_ex_data, SSL_set_ex_data,
 SSL_SESSION_get_ex_data, SSL_SESSION_set_ex_data
-- Store and retrieve extra data from the B<SSL_CTX>, B<SSL> or B<SSL_SESSION>
+- Store and retrieve extra data from the SSL_CTX, SSL or SSL_SESSION
 
 =head1 SYNOPSIS
 
@@ -30,7 +30,8 @@ B<SSL_CTX>, B<SSL> or B<SSL_SESSION>. The user must supply a unique index
 which they can subsequently use to retrieve the data using SSL*_get_ex_data().
 
 For more detailed information see L<CRYPTO_get_ex_data(3)> and
-L<CRYPTO_set_ex_data(3)> which implement these functions.
+L<CRYPTO_set_ex_data(3)> which implement these functions and
+L<CRYPTO_get_ex_new_index(3)> for generating a unique index.
 
 =head1 RETURN VALUES
 
