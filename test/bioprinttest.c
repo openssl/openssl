@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <openssl/bio.h>
+#include "internal/numbers.h"
+
+#define nelem(x) (sizeof(x)/sizeof((x)[0]))
 
 static int justprint = 0;
 
@@ -138,10 +141,42 @@ static void dofptest(int test, double val, char *width, int prec, int *fail)
     }
 }
 
+struct z_data_st {
+    size_t value;
+    const char *format;
+    const char *expected;
+};
+static struct z_data_st zu_data[] = {
+    { SIZE_MAX, "%zu", (sizeof(size_t) == 4 ? "4294967295"
+                        : sizeof(size_t) == 8 ? "18446744073709551615"
+                        : "") },
+    /*
+     * in 2-complement, the unsigned number divided by two plus one becomes the
+     * smallest possible negative signed number of the corresponding type
+     */
+    { SIZE_MAX / 2 + 1, "%zi", (sizeof(size_t) == 4 ? "-2147483648"
+                                : sizeof(size_t) == 8 ? "-9223372036854775808"
+                                : "") },
+    { 0, "%zu", "0" },
+    { 0, "%zi", "0" },
+};
+
+static void dozutest(int test, const struct z_data_st *data, int *fail)
+{
+    char bio_buf[80];
+
+    BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
+    if (strcmp(bio_buf, data->expected) != 0) {
+        printf("Test %d failed.  Expected \"%s\".  Got \"%s\". "
+               "Format \"%s\"\n", test, data->expected, bio_buf, data->format);
+        *fail = 1;
+    }
+}
+
 int main(int argc, char **argv)
 {
     int test = 0;
-    int i;
+    size_t i;
     int fail = 0;
     int prec = -1;
     char *width = "";
@@ -206,6 +241,16 @@ int main(int argc, char **argv)
                "BIO_snprintf()\n", test);
         fail = 1;
     }
+
+    for (i = 0; i < nelem(zu_data); i++) {
+        dozutest(test++, &zu_data[i], &fail);
+    }
+
+#if 0
+    for (i = 0; i < nelem(zi_data); i++) {
+        dozitest(test++, &zu_data[i], &fail);
+    }
+#endif
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks_fp(stderr) <= 0)
