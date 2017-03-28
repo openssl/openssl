@@ -88,6 +88,8 @@ B<openssl> B<s_client>
 [B<-bugs>]
 [B<-comp>]
 [B<-no_comp>]
+[B<-sigalgs sigalglist>]
+[B<-curves curvelist>]
 [B<-cipher cipherlist>]
 [B<-serverpref>]
 [B<-starttls protocol>]
@@ -424,6 +426,19 @@ OpenSSL 1.1.0.
 
 only provide a brief summary of connection parameters instead of the
 normal verbose output.
+
+=item B<-sigalgs sigalglist>
+
+Specifies the list of signature algorithms that are sent by the client.
+The server selects one entry in the list based on its preferences.
+For example strings, see L<SSL_CTX_set1_sigalgs(3)>
+
+=item B<-curves curvelist>
+
+Specifies the list of supported curves to be sent by the client. The curve is
+is ultimately selected by the server. For a list of all curves, use:
+
+    $ openssl ecparam -list_curves
 
 =item B<-cipher cipherlist>
 
