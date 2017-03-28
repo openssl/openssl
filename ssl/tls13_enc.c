@@ -454,7 +454,7 @@ int tls13_change_cipher_state(SSL *s, int which)
             labellen = sizeof(client_handshake_traffic) - 1;
             log_label = CLIENT_HANDSHAKE_LABEL;
             /*
-             * The hanshake hash used for the server read/client write handshake
+             * The handshake hash used for the server read/client write handshake
              * traffic secret is the same as the hash for the server
              * write/client read handshake traffic secret. However, if we
              * processed early data then we delay changing the server

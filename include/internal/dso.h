@@ -139,7 +139,7 @@ DSO_METHOD *DSO_METHOD_openssl(void);
  * This function writes null-terminated pathname of DSO module containing
  * 'addr' into 'sz' large caller-provided 'path' and returns the number of
  * characters [including trailing zero] written to it. If 'sz' is 0 or
- * negative, 'path' is ignored and required amount of charachers [including
+ * negative, 'path' is ignored and required amount of characters [including
  * trailing zero] to accommodate pathname is returned. If 'addr' is NULL, then
  * pathname of cryptolib itself is returned. Negative or zero return value
  * denotes error.

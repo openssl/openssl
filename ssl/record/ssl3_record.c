@@ -1662,8 +1662,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
 }
 
 /*
- * retrieve a buffered record that belongs to the current epoch, ie,
- * processed
+ * Retrieve a buffered record that belongs to the current epoch, i.e. processed
  */
 #define dtls1_get_processed_record(s) \
                    dtls1_retrieve_buffered_record((s), \
