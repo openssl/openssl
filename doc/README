@@ -21,6 +21,7 @@ man5/
 
 man7/
         Overviews; start with crypto.pod and ssl.pod, for example
+        Algorithm specific EVP_PKEY documentation.
 
 Formatted versions of the manpages (apps,ssl,crypto) can be found at
         https://www.openssl.org/docs/manpages.html
