@@ -4,6 +4,10 @@
 
  Changes between 1.1.0e and 1.1.1 [xx XXX xxxx]
 
+  *) Add the z modifier parsing to BIO_printf() et al formatting string,
+     to be used for size_t and ssize_t (ossl_ssize_t).
+     [Richard Levitte]
+
   *) Add EC_KEY_get0_engine(), which does for EC_KEY what RSA_get0_engine()
      does for RSA, etc.
      [Richard Levitte]
