@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CONF_CTX_set_flags, SSL_CONF_CTX_clear_flags - Set of clear SSL configuration context flags
+SSL_CONF_CTX_set_flags, SSL_CONF_CTX_clear_flags - Set or clear SSL configuration context flags
 
 =head1 SYNOPSIS
 
