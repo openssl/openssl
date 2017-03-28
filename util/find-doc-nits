@@ -344,8 +344,7 @@ getopts('lnshu');
 
 &help() if ( $opt_h );
 
-die "Need one of -l -n -s or -u flags.\n"
-    unless $opt_l or $opt_n or $opt_s or $opt_u;
+&help() unless $opt_l or $opt_n or $opt_s or $opt_u;
 
 if ( $opt_n or $opt_s ) {
     foreach (@ARGV ? @ARGV : glob('doc/*/*.pod')) {
