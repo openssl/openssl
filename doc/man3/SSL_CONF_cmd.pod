@@ -428,22 +428,22 @@ however the call sequence is:
 SSLv3 is B<always> disabled and attempt to override this by the user are
 ignored.
 
-By checking the return code of SSL_CTX_cmd() it is possible to query if a
-given B<cmd> is recognised, this is useful is SSL_CTX_cmd() values are
+By checking the return code of SSL_CONF_cmd() it is possible to query if a
+given B<cmd> is recognised, this is useful is SSL_CONF_cmd() values are
 mixed with additional application specific operations.
 
-For example an application might call SSL_CTX_cmd() and if it returns
+For example an application might call SSL_CONF_cmd() and if it returns
 -2 (unrecognised command) continue with processing of application specific
 commands.
 
-Applications can also use SSL_CTX_cmd() to process command lines though the
-utility function SSL_CTX_cmd_argv() is normally used instead. One way
+Applications can also use SSL_CONF_cmd() to process command lines though the
+utility function SSL_CONF_cmd_argv() is normally used instead. One way
 to do this is to set the prefix to an appropriate value using
 SSL_CONF_CTX_set1_prefix(), pass the current argument to B<cmd> and the
 following argument to B<value> (which may be NULL).
 
 In this case if the return value is positive then it is used to skip that
-number of arguments as they have been processed by SSL_CTX_cmd(). If -2 is
+number of arguments as they have been processed by SSL_CONF_cmd(). If -2 is
 returned then B<cmd> is not recognised and application specific arguments
 can be checked instead. If -3 is returned a required argument is missing
 and an error is indicated. If 0 is returned some other error occurred and
