@@ -103,7 +103,7 @@ SSL_use_PrivateKey_ASN1() and SSL_use_RSAPrivateKey_ASN1() add the private
 key to B<ssl>.
 
 SSL_CTX_use_PrivateKey_file() adds the first private key found in
-B<file> to B<ctx>. The formatting B<type> of the certificate must be specified
+B<file> to B<ctx>. The formatting B<type> of the private key must be specified
 from the known types SSL_FILETYPE_PEM, SSL_FILETYPE_ASN1.
 SSL_CTX_use_RSAPrivateKey_file() adds the first private RSA key found in
 B<file> to B<ctx>. SSL_use_PrivateKey_file() adds the first private key found
