@@ -29,6 +29,21 @@ extern "C" {
 #  endif
 # endif
 
+/*
+ * We need a format operator for some client tools for uint64_t.  If inttypes.h
+ * isn't available or did not define it, just go with hard-coded.
+ */
+# if defined(OPENSSL_SYS_UEFI)
+#  define PRIu64 "Lu"
+# endif
+# ifndef PRIu64
+#  ifdef SIXTY_FOUR_BIT_LONG
+#   define PRIu64 "lu"
+#  else
+#   define PRIu64 "llu"
+#  endif
+# endif
+
 # if !defined(NDEBUG) && !defined(OPENSSL_NO_STDIO)
 #  define REF_ASSERT_ISNT(test) \
     (void)((test) ? (OPENSSL_die("refcount error", __FILE__, __LINE__), 1) : 0)
