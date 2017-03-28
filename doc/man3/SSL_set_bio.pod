@@ -63,7 +63,7 @@ previously set value, then no additional references are consumed.
 =item *
 
 If the rbio and wbio parameters are different and the rbio is the same as the
-previously set value then one reference is consumbed for the wbio and no
+previously set value then one reference is consumed for the wbio and no
 references are consumed for the rbio.
 
 =item *

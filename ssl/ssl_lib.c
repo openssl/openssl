@@ -741,7 +741,7 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 {
     /*
      * A quick examination of SSL_SESSION_hash and SSL_SESSION_cmp shows how
-     * we can "construct" a session to give us the desired check - ie. to
+     * we can "construct" a session to give us the desired check - i.e. to
      * find if there's a session in the hash table that would conflict with
      * any new session built out of this id/id_len and the ssl_version in use
      * by this SSL.
@@ -2546,8 +2546,8 @@ void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
 }
 
 /*
- * SSL_get0_alpn_selected gets the selected ALPN protocol (if any) from
- * |ssl|. On return it sets |*data| to point to |*len| bytes of protocol name
+ * SSL_get0_alpn_selected gets the selected ALPN protocol (if any) from |ssl|.
+ * On return it sets |*data| to point to |*len| bytes of protocol name
  * (not including the leading length-prefix byte). If the server didn't
  * respond with a negotiated protocol then |*len| will be zero.
  */
@@ -3147,10 +3147,7 @@ int SSL_get_error(const SSL *s, int i)
     }
 
     if (SSL_want_write(s)) {
-        /*
-         * Access wbio directly - in order to use the buffered bio if
-         * present
-         */
+        /* Access wbio directly - in order to use the buffered bio if present */
         bio = s->wbio;
         if (BIO_should_write(bio))
             return (SSL_ERROR_WANT_WRITE);
@@ -3893,7 +3890,7 @@ void SSL_set_not_resumable_session_callback(SSL *ssl,
 /*
  * Allocates new EVP_MD_CTX and sets pointer to it into given pointer
  * variable, freeing EVP_MD_CTX previously stored in that variable, if any.
- * If EVP_MD pointer is passed, initializes ctx with this md.
+ * If EVP_MD pointer is passed, initializes ctx with this |md|.
  * Returns the newly allocated ctx;
  */
 

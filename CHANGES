@@ -466,7 +466,7 @@
   *) Add X25519 support.
      Add ASN.1 and EVP_PKEY methods for X25519. This includes support
      for public and private key encoding using the format documented in
-     draft-ietf-curdle-pkix-02. The coresponding EVP_PKEY method supports
+     draft-ietf-curdle-pkix-02. The corresponding EVP_PKEY method supports
      key generation and key derivation.
 
      TLS support complies with draft-ietf-tls-rfc4492bis-08 and uses

@@ -174,7 +174,7 @@ static int test_record_overflow(int idx)
         recversion = TLS1_2_VERSION;
 
     if (!write_record(serverbio, len, SSL3_RT_APPLICATION_DATA, recversion)) {
-        printf("Unable to write encryprted record\n");
+        printf("Unable to write encrypted record\n");
         goto end;
     }
 

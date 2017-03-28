@@ -1983,7 +1983,7 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
         goto err;
     }
 
-    /* test non-zero pupkey */
+    /* test non-zero pubkey */
     if (BN_is_zero(bnpub_key)) {
         *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_SKE_DHE, SSL_R_BAD_DH_VALUE);

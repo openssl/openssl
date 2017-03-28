@@ -762,7 +762,7 @@ int BIO_lookup(const char *host, const char *service,
                  * it was errno. To minimize mixup add 1000. Underlying
                  * reason for this is that hstrerror is declared obsolete,
                  * not to mention that a) h_errno is not always guaranteed
-                 * to be meanigless; b) hstrerror can reside in yet another
+                 * to be meaningless; b) hstrerror can reside in yet another
                  * library, linking for sake of hstrerror is an overkill;
                  * c) this path is not executed on contemporary systems
                  * anyway [above getaddrinfo/gai_strerror is]. We just let
