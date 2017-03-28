@@ -247,7 +247,7 @@ sub decrypt()
             #record layer changes yet, so it's a bit more complicated. For now
             #we will additionally check if the data length is 2 (1 byte for
             #alert level, 1 byte for alert description). If it is, then this is
-            #an unecrypted alert, so don't try to decrypt
+            #an unencrypted alert, so don't try to decrypt
             return $data if (length($data) == 2);
         }
         $mactaglen = 16;

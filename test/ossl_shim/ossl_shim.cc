@@ -1048,7 +1048,7 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
     }
 
     // Reset the state to assert later that the callback isn't called in
-    // renegotations.
+    // renegotiations.
     GetTestState(ssl.get())->got_new_session = false;
   }
 

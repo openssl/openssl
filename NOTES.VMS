@@ -77,7 +77,7 @@
     $ set image /flag=call_debug [.test]evp_test.exe
 
  Then just run it and you will find yourself in a debugging session.
- When done, we recomment that you turn that flag back off:
+ When done, we recommend that you turn that flag back off:
 
     $ set image /flag=nocall_debug [.test]evp_test.exe
 

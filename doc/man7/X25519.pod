@@ -36,7 +36,7 @@ output in PEM format:
  EVP_PKEY_CTX_free(pctx);
  PEM_write_PrivateKey(stdout, pkey, NULL, NULL, 0, NULL, NULL);
 
-The key derviation example in L<EVP_PKEY_derive(3)> can be used with
+The key derivation example in L<EVP_PKEY_derive(3)> can be used with
 B<X25519>.
 
 =head1 SEE ALSO

@@ -91,7 +91,7 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
  * const void *a_;
  * const nid_triple const *a = a_;
  *
- * The assignement discards a const because what you really want is:
+ * The assignment discards a const because what you really want is:
  *
  * const int const * const *a = a_;
  *
@@ -99,7 +99,7 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
  * which breaks comparison functions.
  *
  * Thus we end up having to cast, sadly, or unpack the
- * declarations. Or, as I finally did in this case, delcare nid_triple
+ * declarations. Or, as I finally did in this case, declare nid_triple
  * to be a struct, which it should have been in the first place.
  *
  * Ben, August 2008.

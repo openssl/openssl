@@ -207,7 +207,7 @@ const UI_METHOD *UI_set_method(UI *ui, const UI_METHOD *meth);
 UI_METHOD *UI_OpenSSL(void);
 
 /*
- * NULL method.  Literarily does nothing, but may serve as a placeholder
+ * NULL method.  Literally does nothing, but may serve as a placeholder
  * to avoid internal default.
  */
 const UI_METHOD *UI_null(void);

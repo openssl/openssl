@@ -30,7 +30,7 @@
 # instructions...
 
 # (*)	Engine accessing the driver in question is on my TODO list.
-#	For reference, acceleator is estimated to give 6 to 10 times
+#	For reference, accelerator is estimated to give 6 to 10 times
 #	improvement on single-threaded RSA sign. It should be noted
 #	that 6-10x improvement coefficient does not actually mean
 #	something extraordinary in terms of absolute [single-threaded]
