@@ -3,8 +3,7 @@
 =head1 NAME
 
 SSL_CTX_get_ex_data, SSL_CTX_set_ex_data,
-SSL_get_ex_data, SSL_set_ex_data,
-SSL_SESSION_get_ex_data, SSL_SESSION_set_ex_data
+SSL_get_ex_data, SSL_set_ex_data
 - Store and retrieve extra data from the SSL_CTX, SSL or SSL_SESSION
 
 =head1 SYNOPSIS
@@ -19,14 +18,10 @@ SSL_SESSION_get_ex_data, SSL_SESSION_set_ex_data
 
  int SSL_set_ex_data(SSL *s, int idx, void *arg);
 
- int SSL_SESSION_set_ex_data(SSL_SESSION *s, int idx, void *arg);
-
- void *SSL_SESSION_get_ex_data(const SSL_SESSION *s, int idx);
-
 =head1 DESCRIPTION
 
 SSL*_set_ex_data() functions can be used to store arbitrary user data into the
-B<SSL_CTX>, B<SSL> or B<SSL_SESSION>. The user must supply a unique index
+B<SSL_CTX>, or B<SSL> object. The user must supply a unique index
 which they can subsequently use to retrieve the data using SSL*_get_ex_data().
 
 For more detailed information see L<CRYPTO_get_ex_data(3)> and
