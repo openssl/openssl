@@ -107,7 +107,7 @@ default.
 
 =item B<-[digest]>
 
-the digest to use.
+The digest to use.
 This affects any signing or display option that uses a message
 digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options.
 Any digest supported by the OpenSSL B<dgst> command can be used.
@@ -116,7 +116,7 @@ the default digest for the signing algorithm is used, typically SHA256.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<x509>
+Specifying an engine (by its unique B<id> string) will cause B<x509>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -132,110 +132,110 @@ but are described in the B<TRUST SETTINGS> section.
 
 =item B<-text>
 
-prints out the certificate in text form. Full details are output including the
+Prints out the certificate in text form. Full details are output including the
 public key, signature algorithms, issuer and subject names, serial number
 any extensions present and any trust settings.
 
 =item B<-certopt option>
 
-customise the output format used with B<-text>. The B<option> argument can be
-a single option or multiple options separated by commas. The B<-certopt> switch
-may be also be used more than once to set multiple options. See the B<TEXT OPTIONS>
-section for more information.
+Customise the output format used with B<-text>. The B<option> argument
+can be a single option or multiple options separated by commas. The
+B<-certopt> switch may be also be used more than once to set multiple
+options. See the B<TEXT OPTIONS> section for more information.
 
 =item B<-noout>
 
-this option prevents output of the encoded version of the request.
+This option prevents output of the encoded version of the request.
 
 =item B<-pubkey>
 
-outputs the certificate's SubjectPublicKeyInfo block in PEM format.
+Outputs the certificate's SubjectPublicKeyInfo block in PEM format.
 
 =item B<-modulus>
 
-this option prints out the value of the modulus of the public key
+This option prints out the value of the modulus of the public key
 contained in the certificate.
 
 =item B<-serial>
 
-outputs the certificate serial number.
+Outputs the certificate serial number.
 
 =item B<-subject_hash>
 
-outputs the "hash" of the certificate subject name. This is used in OpenSSL to
+Outputs the "hash" of the certificate subject name. This is used in OpenSSL to
 form an index to allow certificates in a directory to be looked up by subject
 name.
 
 =item B<-issuer_hash>
 
-outputs the "hash" of the certificate issuer name.
+Outputs the "hash" of the certificate issuer name.
 
 =item B<-ocspid>
 
-outputs the OCSP hash values for the subject name and public key.
+Outputs the OCSP hash values for the subject name and public key.
 
 =item B<-hash>
 
-synonym for "-subject_hash" for backward compatibility reasons.
+Synonym for "-subject_hash" for backward compatibility reasons.
 
 =item B<-subject_hash_old>
 
-outputs the "hash" of the certificate subject name using the older algorithm
+Outputs the "hash" of the certificate subject name using the older algorithm
 as used by OpenSSL versions before 1.0.0.
 
 =item B<-issuer_hash_old>
 
-outputs the "hash" of the certificate issuer name using the older algorithm
+Outputs the "hash" of the certificate issuer name using the older algorithm
 as used by OpenSSL versions before 1.0.0.
 
 =item B<-subject>
 
-outputs the subject name.
+Outputs the subject name.
 
 =item B<-issuer>
 
-outputs the issuer name.
+Outputs the issuer name.
 
 =item B<-nameopt option>
 
-option which determines how the subject or issuer names are displayed. The
+Option which determines how the subject or issuer names are displayed. The
 B<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the B<NAME OPTIONS> section for more information.
 
 =item B<-email>
 
-outputs the email address(es) if any.
+Outputs the email address(es) if any.
 
 =item B<-ocsp_uri>
 
-outputs the OCSP responder address(es) if any.
+Outputs the OCSP responder address(es) if any.
 
 =item B<-startdate>
 
-prints out the start date of the certificate, that is the notBefore date.
+Prints out the start date of the certificate, that is the notBefore date.
 
 =item B<-enddate>
 
-prints out the expiry date of the certificate, that is the notAfter date.
+Prints out the expiry date of the certificate, that is the notAfter date.
 
 =item B<-dates>
 
-prints out the start and expiry dates of a certificate.
+Prints out the start and expiry dates of a certificate.
 
 =item B<-checkend arg>
 
-checks if the certificate expires within the next B<arg> seconds and exits
+Checks if the certificate expires within the next B<arg> seconds and exits
 non-zero if yes it will expire or zero if not.
 
 =item B<-fingerprint>
 
-prints out the digest of the DER encoded version of the whole certificate
+Prints out the digest of the DER encoded version of the whole certificate
 (see digest options).
 
 =item B<-C>
 
-this outputs the certificate in the form of a C source file.
+This outputs the certificate in the form of a C source file.
 
 =back
 
@@ -265,7 +265,7 @@ certificate: not just root CAs.
 
 =item B<-trustout>
 
-this causes B<x509> to output a B<trusted> certificate. An ordinary
+This causes B<x509> to output a B<trusted> certificate. An ordinary
 or trusted certificate can be input but by default an ordinary
 certificate is output and any trust settings are discarded. With the
 B<-trustout> option a trusted certificate is output. A trusted
@@ -273,24 +273,24 @@ certificate is automatically output if any trust settings are modified.
 
 =item B<-setalias arg>
 
-sets the alias of the certificate. This will allow the certificate
+Sets the alias of the certificate. This will allow the certificate
 to be referred to using a nickname for example "Steve's Certificate".
 
 =item B<-alias>
 
-outputs the certificate alias, if any.
+Outputs the certificate alias, if any.
 
 =item B<-clrtrust>
 
-clears all the permitted or trusted uses of the certificate.
+Clears all the permitted or trusted uses of the certificate.
 
 =item B<-clrreject>
 
-clears all the prohibited or rejected uses of the certificate.
+Clears all the prohibited or rejected uses of the certificate.
 
 =item B<-addtrust arg>
 
-adds a trusted certificate use.
+Adds a trusted certificate use.
 Any object name can be used here but currently only B<clientAuth> (SSL client
 use), B<serverAuth> (SSL server use), B<emailProtection> (S/MIME email) and
 B<anyExtendedKeyUsage> are used.
@@ -300,12 +300,12 @@ Other OpenSSL applications may define additional uses.
 
 =item B<-addreject arg>
 
-adds a prohibited use. It accepts the same values as the B<-addtrust>
+Adds a prohibited use. It accepts the same values as the B<-addtrust>
 option.
 
 =item B<-purpose>
 
-this option performs tests on the certificate extensions and outputs
+This option performs tests on the certificate extensions and outputs
 the results. For a more complete description see the B<CERTIFICATE
 EXTENSIONS> section.
 
@@ -320,7 +320,7 @@ can thus behave like a "mini CA".
 
 =item B<-signkey filename>
 
-this option causes the input file to be self signed using the supplied
+This option causes the input file to be self signed using the supplied
 private key.
 
 If the input file is a certificate it sets the issuer name to the
@@ -337,39 +337,39 @@ the request.
 
 =item B<-passin arg>
 
-the key password source. For more information about the format of B<arg>
+The key password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-clrext>
 
-delete any extensions from a certificate. This option is used when a
+Delete any extensions from a certificate. This option is used when a
 certificate is being created from another certificate (for example with
 the B<-signkey> or the B<-CA> options). Normally all extensions are
 retained.
 
 =item B<-keyform PEM|DER>
 
-specifies the format (DER or PEM) of the private key file used in the
+Specifies the format (DER or PEM) of the private key file used in the
 B<-signkey> option.
 
 =item B<-days arg>
 
-specifies the number of days to make a certificate valid for. The default
+Specifies the number of days to make a certificate valid for. The default
 is 30 days.
 
 =item B<-x509toreq>
 
-converts a certificate into a certificate request. The B<-signkey> option
+Converts a certificate into a certificate request. The B<-signkey> option
 is used to pass the required private key.
 
 =item B<-req>
 
-by default a certificate is expected on input. With this option a
+By default a certificate is expected on input. With this option a
 certificate request is expected instead.
 
 =item B<-set_serial n>
 
-specifies the serial number to use. This option can be used with either
+Specifies the serial number to use. This option can be used with either
 the B<-signkey> or B<-CA> options. If used in conjunction with the B<-CA>
 option the serial number file (as specified by the B<-CAserial> or
 B<-CAcreateserial> options) is not used.
@@ -378,7 +378,7 @@ The serial number can be decimal or hex (if preceded by B<0x>).
 
 =item B<-CA filename>
 
-specifies the CA certificate to be used for signing. When this option is
+Specifies the CA certificate to be used for signing. When this option is
 present B<x509> behaves like a "mini CA". The input file is signed by this
 CA using this option: that is its issuer name is set to the subject name
 of the CA and it is digitally signed using the CAs private key.
@@ -388,13 +388,13 @@ B<-req> option the input is a certificate which must be self signed.
 
 =item B<-CAkey filename>
 
-sets the CA private key to sign a certificate with. If this option is
+Sets the CA private key to sign a certificate with. If this option is
 not specified then it is assumed that the CA private key is present in
 the CA certificate file.
 
 =item B<-CAserial filename>
 
-sets the CA serial number file to use.
+Sets the CA serial number file to use.
 
 When the B<-CA> option is used to sign a certificate it uses a serial
 number specified in a file. This file consist of one line containing
@@ -407,7 +407,7 @@ The default filename consists of the CA certificate file base name with
 
 =item B<-CAcreateserial>
 
-with this option the CA serial number file is created if it does not exist:
+With this option the CA serial number file is created if it does not exist:
 it will contain the serial number "02" and the certificate being signed will
 have the 1 as its serial number. If the B<-CA> option is specified
 and the serial number file does not exist a random number is generated;
@@ -415,12 +415,12 @@ this is the recommended practice.
 
 =item B<-extfile filename>
 
-file containing certificate extensions to use. If not specified then
+File containing certificate extensions to use. If not specified then
 no extensions are added to the certificate.
 
 =item B<-extensions section>
 
-the section to add certificate extensions from. If this option is not
+The section to add certificate extensions from. If this option is not
 specified then the extensions should either be contained in the unnamed
 (default) section or the default section should contain a variable called
 "extensions" which contains the section to use. See the
@@ -429,7 +429,7 @@ extension section format.
 
 =item B<-force_pubkey key>
 
-when a certificate is created set its public key to B<key> instead of the
+When a certificate is created set its public key to B<key> instead of the
 key in the certificate or certificate request. This option is useful for
 creating certificates where the algorithm can't normally sign requests, for
 example DH.
@@ -450,57 +450,57 @@ a B<-> to turn the option off. Only the first four will normally be used.
 
 =item B<compat>
 
-use the old format.
+Use the old format.
 
 =item B<RFC2253>
 
-displays names compatible with RFC2253 equivalent to B<esc_2253>, B<esc_ctrl>,
+Displays names compatible with RFC2253 equivalent to B<esc_2253>, B<esc_ctrl>,
 B<esc_msb>, B<utf8>, B<dump_nostr>, B<dump_unknown>, B<dump_der>,
 B<sep_comma_plus>, B<dn_rev> and B<sname>.
 
 =item B<oneline>
 
-a oneline format which is more readable than RFC2253. It is equivalent to
+A oneline format which is more readable than RFC2253. It is equivalent to
 specifying the  B<esc_2253>, B<esc_ctrl>, B<esc_msb>, B<utf8>, B<dump_nostr>,
 B<dump_der>, B<use_quote>, B<sep_comma_plus_space>, B<space_eq> and B<sname>
 options.  This is the I<default> of no name options are given explicitly.
 
 =item B<multiline>
 
-a multiline format. It is equivalent B<esc_ctrl>, B<esc_msb>, B<sep_multiline>,
+A multiline format. It is equivalent B<esc_ctrl>, B<esc_msb>, B<sep_multiline>,
 B<space_eq>, B<lname> and B<align>.
 
 =item B<esc_2253>
 
-escape the "special" characters required by RFC2253 in a field. That is
+Escape the "special" characters required by RFC2253 in a field. That is
 B<,+"E<lt>E<gt>;>. Additionally B<#> is escaped at the beginning of a string
 and a space character at the beginning or end of a string.
 
 =item B<esc_2254>
 
-escape the "special" characters required by RFC2254 in a field. That is
+Escape the "special" characters required by RFC2254 in a field. That is
 the B<NUL> character as well as and B<()*>.
 
 =item B<esc_ctrl>
 
-escape control characters. That is those with ASCII values less than
+Escape control characters. That is those with ASCII values less than
 0x20 (space) and the delete (0x7f) character. They are escaped using the
 RFC2253 \XX notation (where XX are two hex digits representing the
 character value).
 
 =item B<esc_msb>
 
-escape characters with the MSB set, that is with ASCII values larger than
+Escape characters with the MSB set, that is with ASCII values larger than
 127.
 
 =item B<use_quote>
 
-escapes some characters by surrounding the whole string with B<"> characters,
+Escapes some characters by surrounding the whole string with B<"> characters,
 without the option all escaping is done with the B<\> character.
 
 =item B<utf8>
 
-convert all strings to UTF8 format first. This is required by RFC2253. If
+Convert all strings to UTF8 format first. This is required by RFC2253. If
 you are lucky enough to have a UTF8 compatible terminal then the use
 of this option (and B<not> setting B<esc_msb>) may result in the correct
 display of multibyte (international) characters. Is this option is not
@@ -511,42 +511,42 @@ character form first.
 
 =item B<ignore_type>
 
-this option does not attempt to interpret multibyte characters in any
+This option does not attempt to interpret multibyte characters in any
 way. That is their content octets are merely dumped as though one octet
 represents each character. This is useful for diagnostic purposes but
 will result in rather odd looking output.
 
 =item B<show_type>
 
-show the type of the ASN1 character string. The type precedes the
+Show the type of the ASN1 character string. The type precedes the
 field contents. For example "BMPSTRING: Hello World".
 
 =item B<dump_der>
 
-when this option is set any fields that need to be hexdumped will
+When this option is set any fields that need to be hexdumped will
 be dumped using the DER encoding of the field. Otherwise just the
 content octets will be displayed. Both options use the RFC2253
 B<#XXXX...> format.
 
 =item B<dump_nostr>
 
-dump non character string types (for example OCTET STRING) if this
+Dump non character string types (for example OCTET STRING) if this
 option is not set then non character string types will be displayed
 as though each content octet represents a single character.
 
 =item B<dump_all>
 
-dump all fields. This option when used with B<dump_der> allows the
+Dump all fields. This option when used with B<dump_der> allows the
 DER encoding of the structure to be unambiguously determined.
 
 =item B<dump_unknown>
 
-dump any field whose OID is not recognised by OpenSSL.
+Dump any field whose OID is not recognised by OpenSSL.
 
 =item B<sep_comma_plus>, B<sep_comma_plus_space>, B<sep_semi_plus_space>,
 B<sep_multiline>
 
-these options determine the field separators. The first character is
+These options determine the field separators. The first character is
 between RDNs and the second between multiple AVAs (multiple AVAs are
 very rare and their use is discouraged). The options ending in
 "space" additionally place a space after the separator to make it
@@ -557,13 +557,13 @@ then B<sep_comma_plus_space> is used by default.
 
 =item B<dn_rev>
 
-reverse the fields of the DN. This is required by RFC2253. As a side
+Reverse the fields of the DN. This is required by RFC2253. As a side
 effect this also reverses the order of multiple AVAs but this is
 permissible.
 
 =item B<nofname>, B<sname>, B<lname>, B<oid>
 
-these options alter how the field name is displayed. B<nofname> does
+These options alter how the field name is displayed. B<nofname> does
 not display the field at all. B<sname> uses the "short name" form
 (CN for commonName for example). B<lname> uses the long form.
 B<oid> represents the OID in numerical form and is useful for
@@ -571,12 +571,12 @@ diagnostic purpose.
 
 =item B<align>
 
-align field values for a more readable output. Only usable with
+Align field values for a more readable output. Only usable with
 B<sep_multiline>.
 
 =item B<space_eq>
 
-places spaces round the B<=> character which follows the field
+Places spaces round the B<=> character which follows the field
 name.
 
 =back
@@ -591,59 +591,61 @@ the B<text> option is present. The default behaviour is to print all fields.
 
 =item B<compatible>
 
-use the old format. This is equivalent to specifying no output options at all.
+Use the old format. This is equivalent to specifying no output options at all.
 
 =item B<no_header>
 
-don't print header information: that is the lines saying "Certificate" and "Data".
+Don't print header information: that is the lines saying "Certificate"
+and "Data".
 
 =item B<no_version>
 
-don't print out the version number.
+Don't print out the version number.
 
 =item B<no_serial>
 
-don't print out the serial number.
+Don't print out the serial number.
 
 =item B<no_signame>
 
-don't print out the signature algorithm used.
+Don't print out the signature algorithm used.
 
 =item B<no_validity>
 
-don't print the validity, that is the B<notBefore> and B<notAfter> fields.
+Don't print the validity, that is the B<notBefore> and B<notAfter> fields.
 
 =item B<no_subject>
 
-don't print out the subject name.
+Don't print out the subject name.
 
 =item B<no_issuer>
 
-don't print out the issuer name.
+Don't print out the issuer name.
 
 =item B<no_pubkey>
 
-don't print out the public key.
+Don't print out the public key.
 
 =item B<no_sigdump>
 
-don't give a hexadecimal dump of the certificate signature.
+Don't give a hexadecimal dump of the certificate signature.
 
 =item B<no_aux>
 
-don't print out certificate trust information.
+Don't print out certificate trust information.
 
 =item B<no_extensions>
 
-don't print out any X509V3 extensions.
+Don't print out any X509V3 extensions.
 
 =item B<ext_default>
 
-retain default extension behaviour: attempt to print out unsupported certificate extensions.
+Retain default extension behaviour: attempt to print out unsupported
+certificate extensions.
 
 =item B<ext_error>
 
-print an error message for unsupported certificate extensions.
+Print an error message for unsupported certificate extensions.
 
 =item B<ext_parse>
 
@@ -651,11 +653,11 @@ ASN1 parse unsupported extensions.
 
 =item B<ext_dump>
 
-hex dump unsupported extensions.
+Hex dump unsupported extensions.
 
 =item B<ca_default>
 
-the value used by the B<ca> utility, equivalent to B<no_issuer>, B<no_pubkey>,
+The value used by the B<ca> utility, equivalent to B<no_issuer>, B<no_pubkey>,
 B<no_header>, and B<no_version>.
 
 =back
@@ -895,7 +897,7 @@ the old form must have their links rebuilt using B<c_rehash> or similar.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -53,7 +53,7 @@ prompted for.
 
 =item B<-passin arg>
 
-the input file password source. For more information about the format of B<arg>
+The input file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-out filename>
@@ -65,12 +65,12 @@ filename.
 
 =item B<-passout password>
 
-the output file password source. For more information about the format of B<arg>
+The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-traditional>
 
-normally a private key is written using standard format: this is PKCS#8 form
+Normally a private key is written using standard format: this is PKCS#8 form
 with the appropriate encryption algorithm (if any). If the B<-traditional>
 option is specified then the older "traditional" format is used instead.
 
@@ -81,31 +81,31 @@ name accepted by EVP_get_cipherbyname() is acceptable such as B<des3>.
 
 =item B<-text>
 
-prints out the various public or private key components in
+Prints out the various public or private key components in
 plain text in addition to the encoded version.
 
 =item B<-text_pub>
 
-print out only public key components even if a private key is being processed.
+Print out only public key components even if a private key is being processed.
 
 =item B<-noout>
 
-do not output the encoded version of the key.
+Do not output the encoded version of the key.
 
 =item B<-pubin>
 
-by default a private key is read from the input file: with this
+By default a private key is read from the input file: with this
 option a public key is read instead.
 
 =item B<-pubout>
 
-by default a private key is output: with this option a public
+By default a private key is output: with this option a public
 key will be output instead. This option is automatically set if
 the input is a public key.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<pkey>
+Specifying an engine (by its unique B<id> string) will cause B<pkey>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -145,7 +145,7 @@ L<dsa(1)>, L<genrsa(1)>, L<gendsa(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -42,7 +42,7 @@ This specifies the output format DER or PEM.
 
 =item B<-pass arg>
 
-the output file password source. For more information about the format of B<arg>
+The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-cipher>
@@ -52,7 +52,7 @@ name accepted by EVP_get_cipherbyname() is acceptable such as B<des3>.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<genpkey>
+Specifying an engine (by its unique B<id> string) will cause B<genpkey>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms. If used this option should precede all other
@@ -60,19 +60,19 @@ options.
 
 =item B<-algorithm alg>
 
-public key algorithm to use such as RSA, DSA or DH. If used this option must
+Public key algorithm to use such as RSA, DSA or DH. If used this option must
 precede any B<-pkeyopt> options. The options B<-paramfile> and B<-algorithm>
 are mutually exclusive.
 
 =item B<-pkeyopt opt:value>
 
-set the public key algorithm option B<opt> to B<value>. The precise set of
+Set the public key algorithm option B<opt> to B<value>. The precise set of
 options supported depends on the public key algorithm used and its
 implementation. See B<KEY GENERATION OPTIONS> below for more details.
 
 =item B<-genparam>
 
-generate a set of parameters instead of a private key. If used this option must
+Generate a set of parameters instead of a private key. If used this option must
 precede any B<-algorithm>, B<-paramfile> or B<-pkeyopt> options.
 
 =item B<-paramfile filename>
@@ -179,11 +179,11 @@ key from a named curve without the need to use an explicit parameter file.
 
 =item B<ec_paramgen_curve:curve>
 
-the EC curve to use. OpenSSL supports NIST curve names such as "P-256".
+The EC curve to use. OpenSSL supports NIST curve names such as "P-256".
 
 =item B<ec_param_enc:encoding>
 
-the encoding to use for parameters. The "encoding" parameter must be either
+The encoding to use for parameters. The "encoding" parameter must be either
 "named_curve" or "explicit".
 
 =back
@@ -292,7 +292,7 @@ were added in OpenSSL 1.0.2.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

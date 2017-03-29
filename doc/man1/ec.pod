@@ -66,7 +66,7 @@ prompted for.
 
 =item B<-passin arg>
 
-the input file password source. For more information about the format of B<arg>
+The input file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-out filename>
@@ -78,7 +78,7 @@ filename.
 
 =item B<-passout arg>
 
-the output file password source. For more information about the format of B<arg>
+The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-des|-des3|-idea>
@@ -94,24 +94,24 @@ These options can only be used with PEM format output files.
 
 =item B<-text>
 
-prints out the public, private key components and parameters.
+Prints out the public, private key components and parameters.
 
 =item B<-noout>
 
-this option prevents output of the encoded version of the key.
+This option prevents output of the encoded version of the key.
 
 =item B<-modulus>
 
-this option prints out the value of the public key component of the key.
+This option prints out the value of the public key component of the key.
 
 =item B<-pubin>
 
-by default a private key is read from the input file: with this option a
+By default, a private key is read from the input file. With this option a
 public key is read instead.
 
 =item B<-pubout>
 
-by default a private key is output. With this option a public
+By default a private key is output. With this option a public
 key will be output instead. This option is automatically set if the input is
 a public key.
 
@@ -141,11 +141,11 @@ This option omits the public key components from the private key output.
 
 =item B<-check>
 
-this option checks the consistency of an EC private or public key.
+This option checks the consistency of an EC private or public key.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<ec>
+Specifying an engine (by its unique B<id> string) will cause B<ec>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -196,7 +196,7 @@ L<ecparam(1)>, L<dsa(1)>, L<rsa(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2003-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2003-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

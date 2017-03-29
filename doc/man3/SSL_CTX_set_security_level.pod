@@ -70,31 +70,31 @@ OpenSSL.
 The security level corresponds to a minimum of 80 bits of security. Any
 parameters offering below 80 bits of security are excluded. As a result RSA,
 DSA and DH keys shorter than 1024 bits and ECC keys shorter than 160 bits
-are prohibited. All export ciphersuites are prohibited since they all offer
-less than 80 bits of security. SSL version 2 is prohibited. Any ciphersuite
+are prohibited. All export cipher suites are prohibited since they all offer
+less than 80 bits of security. SSL version 2 is prohibited. Any cipher suite
 using MD5 for the MAC is also prohibited.
 
 =item B<Level 2>
 
 Security level set to 112 bits of security. As a result RSA, DSA and DH keys
 shorter than 2048 bits and ECC keys shorter than 224 bits are prohibited.
-In addition to the level 1 exclusions any ciphersuite using RC4 is also
+In addition to the level 1 exclusions any cipher suite using RC4 is also
 prohibited. SSL version 3 is also not allowed. Compression is disabled.
 
 =item B<Level 3>
 
 Security level set to 128 bits of security. As a result RSA, DSA and DH keys
 shorter than 3072 bits and ECC keys shorter than 256 bits are prohibited.
-In addition to the level 2 exclusions ciphersuites not offering forward
+In addition to the level 2 exclusions cipher suites not offering forward
 secrecy are prohibited. TLS versions below 1.1 are not permitted. Session
 tickets are disabled.
 
 =item B<Level 4>
 
-Security level set to 192 bits of security. As a result RSA, DSA and DH keys
-shorter than 7680 bits and ECC keys shorter than 384 bits are prohibited.
-Ciphersuites using SHA1 for the MAC are prohibited. TLS versions below 1.2 are
-not permitted.
+Security level set to 192 bits of security. As a result RSA, DSA and
+DH keys shorter than 7680 bits and ECC keys shorter than 384 bits are
+prohibited.  Cipher suites using SHA1 for the MAC are prohibited. TLS
+versions below 1.2 are not permitted.
 
 =item B<Level 5>
 
@@ -128,11 +128,11 @@ By setting an appropriate security level much of this complexity can be
 avoided.
 
 The bits of security limits affect all relevant parameters including
-ciphersuite encryption algorithms, supported ECC curves, supported
+cipher suite encryption algorithms, supported ECC curves, supported
 signature algorithms, DH parameter sizes, certificate key sizes and
 signature algorithms. This limit applies no matter what other custom
-settings an application has set: so if the ciphersuite is set to B<ALL>
-then only ciphersuites consistent with the security level are permissible.
+settings an application has set: so if the cipher suite is set to B<ALL>
+then only cipher suites consistent with the security level are permissible.
 
 See SP800-57 for how the security limits are related to individual
 algorithms.
@@ -141,7 +141,7 @@ Some security levels require large key sizes for non-ECC public key
 algorithms which can severely degrade performance. For example 256 bits
 of security requires the use of RSA keys of at least 15360 bits in size.
 
-Some restrictions can be gracefully handled: for example ciphersuites
+Some restrictions can be gracefully handled: for example cipher suites
 offering insufficient security are not sent by the client and will not
 be selected by the server. Other restrictions such as the peer certificate
 key size or the DH parameter size will abort the handshake with a fatal

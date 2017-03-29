@@ -51,7 +51,7 @@ If none of these options is specified no encryption is used.
 
 =item B<-rand file(s)>
 
-a file or files containing random data used to seed the random number
+A file or files containing random data used to seed the random number
 generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
@@ -59,7 +59,7 @@ all others.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<gendsa>
+Specifying an engine (by its unique B<id> string) will cause B<gendsa>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

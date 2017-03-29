@@ -25,7 +25,7 @@ where it is B<EVP_PKEY_RSA_PSS>.
 =head1 RETURN VALUES
 
 These functions return 1 for success and 0 for failure. There are several
-possible reasons for failure: the ciphersuite has no signature (e.g. it
+possible reasons for failure: the cipher suite has no signature (e.g. it
 uses RSA key exchange or is anonymous), the TLS version is below 1.2 or
 the functions were called before the peer signed a message.
 
