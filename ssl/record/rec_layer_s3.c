@@ -1496,6 +1496,8 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      */
     if ((s->rlayer.handshake_fragment_len >= 4)
             && !ossl_statem_get_in_handshake(s)) {
+        int ined = (s->early_data_state == SSL_EARLY_DATA_READING);
+
         /* We found handshake data, so we're going back into init */
         ossl_statem_set_in_init(s, 1);
 
@@ -1506,6 +1508,14 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_SSL_HANDSHAKE_FAILURE);
             return -1;
         }
+
+        /*
+         * If we were actually trying to read early data and we found a
+         * handshake message, then we don't want to continue to try and read
+         * the application data any more. It won't be "early" now.
+         */
+        if (ined)
+            return -1;
 
         if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
             if (SSL3_BUFFER_get_left(rbuf) == 0) {
