@@ -208,6 +208,7 @@ _dopr(char **sbuffer,
                 ch = *format++;
                 break;
             case 'q':
+            case 'j':
                 cflags = DP_C_LLONG;
                 ch = *format++;
                 break;

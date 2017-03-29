@@ -173,6 +173,34 @@ static void dozutest(int test, const struct z_data_st *data, int *fail)
     }
 }
 
+struct j_data_st {
+    uint64_t value;
+    const char *format;
+    const char *expected;
+};
+static struct j_data_st j_data[] = {
+    { 0xffffffffffffffffU, "%ju", "18446744073709551615" },
+    { 0xffffffffffffffffU, "%jx", "ffffffffffffffff" },
+    { 0x8000000000000000U, "%ju", "9223372036854775808" },
+    /*
+     * These tests imply two's-complement, but it's the only binary
+     * representation we support, see test/sanitytest.c...
+     */
+    { 0x8000000000000000U, "%ji", "-9223372036854775808" },
+};
+
+static void dojtest(int test, const struct j_data_st *data, int *fail)
+{
+    char bio_buf[80];
+
+    BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
+    if (strcmp(bio_buf, data->expected) != 0) {
+        printf("Test %d failed.  Expected \"%s\".  Got \"%s\". "
+               "Format \"%s\"\n", test, data->expected, bio_buf, data->format);
+        *fail = 1;
+    }
+}
+
 int main(int argc, char **argv)
 {
     int test = 0;
@@ -246,11 +274,9 @@ int main(int argc, char **argv)
         dozutest(test++, &zu_data[i], &fail);
     }
 
-#if 0
-    for (i = 0; i < nelem(zi_data); i++) {
-        dozitest(test++, &zu_data[i], &fail);
+    for (i = 0; i < nelem(j_data); i++) {
+        dojtest(test++, &j_data[i], &fail);
     }
-#endif
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks_fp(stderr) <= 0)
