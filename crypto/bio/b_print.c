@@ -267,10 +267,10 @@ _dopr(char **sbuffer,
                     value = va_arg(args, unsigned LLONG);
                     break;
                 case DP_C_SIZE:
-                    value = (ossl_ssize_t)va_arg(args, size_t);
+                    value = va_arg(args, size_t);
                     break;
                 default:
-                    value = (LLONG) va_arg(args, unsigned int);
+                    value = (LLONG)va_arg(args, unsigned int);
                     break;
                 }
                 if (!fmtint(sbuffer, buffer, &currlen, maxlen, value,
