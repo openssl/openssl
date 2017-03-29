@@ -72,73 +72,73 @@ Print out a usage message.
 
 =item B<-verbose>
 
-this prints extra details about the operations being performed.
+This prints extra details about the operations being performed.
 
 =item B<-config filename>
 
-specifies the configuration file to use.
+Specifies the configuration file to use.
 Optional; for a description of the default value,
 see L<openssl(1)/COMMAND SUMMARY>.
 
 =item B<-name section>
 
-specifies the configuration file section to use (overrides
+Specifies the configuration file section to use (overrides
 B<default_ca> in the B<ca> section).
 
 =item B<-in filename>
 
-an input filename containing a single certificate request to be
+An input filename containing a single certificate request to be
 signed by the CA.
 
 =item B<-ss_cert filename>
 
-a single self-signed certificate to be signed by the CA.
+A single self-signed certificate to be signed by the CA.
 
 =item B<-spkac filename>
 
-a file containing a single Netscape signed public key and challenge
+A file containing a single Netscape signed public key and challenge
 and additional field values to be signed by the CA. See the B<SPKAC FORMAT>
 section for information on the required input and output format.
 
 =item B<-infiles>
 
-if present this should be the last option, all subsequent arguments
+If present this should be the last option, all subsequent arguments
 are taken as the names of files containing certificate requests.
 
 =item B<-out filename>
 
-the output file to output certificates to. The default is standard
+The output file to output certificates to. The default is standard
 output. The certificate details will also be printed out to this
 file in PEM format (except that B<-spkac> outputs DER format).
 
 =item B<-outdir directory>
 
-the directory to output certificates to. The certificate will be
+The directory to output certificates to. The certificate will be
 written to a filename consisting of the serial number in hex with
 ".pem" appended.
 
 =item B<-cert>
 
-the CA certificate file.
+The CA certificate file.
 
 =item B<-keyfile filename>
 
-the private key to sign requests with.
+The private key to sign requests with.
 
 =item B<-keyform PEM|DER>
 
-the format of the data in the private key file.
+The format of the data in the private key file.
 The default is PEM.
 
 =item B<-key password>
 
-the password used to encrypt the private key. Since on some
+The password used to encrypt the private key. Since on some
 systems the command line arguments are visible (e.g. Unix with
 the 'ps' utility) this option should be used with caution.
 
 =item B<-selfsign>
 
-indicates the issued certificates are to be signed with the key
+Indicates the issued certificates are to be signed with the key
 the certificate requests were signed with (given with B<-keyfile>).
 Certificate requests signed with a different key are ignored.  If
 B<-spkac>, B<-ss_cert> or B<-gencrl> are given, B<-selfsign> is
@@ -152,43 +152,43 @@ self-signed certificate.
 
 =item B<-passin arg>
 
-the key password source. For more information about the format of B<arg>
+The key password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-notext>
 
-don't output the text form of a certificate to the output file.
+Don't output the text form of a certificate to the output file.
 
 =item B<-startdate date>
 
-this allows the start date to be explicitly set. The format of the
+This allows the start date to be explicitly set. The format of the
 date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure).
 
 =item B<-enddate date>
 
-this allows the expiry date to be explicitly set. The format of the
+This allows the expiry date to be explicitly set. The format of the
 date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure).
 
 =item B<-days arg>
 
-the number of days to certify the certificate for.
+The number of days to certify the certificate for.
 
 =item B<-md alg>
 
-the message digest to use.
+The message digest to use.
 Any digest supported by the OpenSSL B<dgst> command can be used.
 This option also applies to CRLs.
 
 =item B<-policy arg>
 
-this option defines the CA "policy" to use. This is a section in
+This option defines the CA "policy" to use. This is a section in
 the configuration file which decides which fields should be mandatory
 or match the CA certificate. Check out the B<POLICY FORMAT> section
 for more information.
 
 =item B<-msie_hack>
 
-this is a legacy option to make B<ca> work with very old versions of
+This is a legacy option to make B<ca> work with very old versions of
 the IE certificate enrollment control "certenr3". It used UniversalStrings
 for almost everything. Since the old control has various security bugs
 its use is strongly discouraged. The newer control "Xenroll" does not
@@ -213,12 +213,12 @@ used in the configuration file to enable this behaviour.
 
 =item B<-batch>
 
-this sets the batch mode. In this mode no questions will be asked
+This sets the batch mode. In this mode no questions will be asked
 and all certificates will be certified automatically.
 
 =item B<-extensions section>
 
-the section of the configuration file containing certificate extensions
+The section of the configuration file containing certificate extensions
 to be added when a certificate is issued (defaults to B<x509_extensions>
 unless the B<-extfile> option is used). If no extension section is
 present then, a V1 certificate is created. If the extension section
@@ -228,33 +228,33 @@ extension section format.
 
 =item B<-extfile file>
 
-an additional configuration file to read certificate extensions from
+An additional configuration file to read certificate extensions from
 (using the default section unless the B<-extensions> option is also
 used).
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<ca>
+Specifying an engine (by its unique B<id> string) will cause B<ca>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
 =item B<-subj arg>
 
-supersedes subject name given in the request.
+Supersedes subject name given in the request.
 The arg must be formatted as I</type0=value0/type1=value1/type2=...>,
 characters may be escaped by \ (backslash), no spaces are skipped.
 
 =item B<-utf8>
 
-this option causes field values to be interpreted as UTF8 strings, by
+This option causes field values to be interpreted as UTF8 strings, by
 default they are interpreted as ASCII. This means that the field
 values, whether prompted from a terminal or obtained from a
 configuration file, must be valid UTF8 strings.
 
 =item B<-create_serial>
 
-if reading serial from the text file as specified in the configuration
+If reading serial from the text file as specified in the configuration
 fails, specifying this option creates a new random serial to be used as next
 serial number.
 
@@ -275,28 +275,28 @@ If -multi-rdn is not used then the UID value is I<123456+CN=John Doe>.
 
 =item B<-gencrl>
 
-this option generates a CRL based on information in the index file.
+This option generates a CRL based on information in the index file.
 
 =item B<-crldays num>
 
-the number of days before the next CRL is due. That is the days from
+The number of days before the next CRL is due. That is the days from
 now to place in the CRL nextUpdate field.
 
 =item B<-crlhours num>
 
-the number of hours before the next CRL is due.
+The number of hours before the next CRL is due.
 
 =item B<-revoke filename>
 
-a filename containing a certificate to revoke.
+A filename containing a certificate to revoke.
 
 =item B<-valid filename>
 
-a filename containing a certificate to add a Valid certificate entry.
+A filename containing a certificate to add a Valid certificate entry.
 
 =item B<-status serial>
 
-displays the revocation status of the certificate with the specified
+Displays the revocation status of the certificate with the specified
 serial number and exits.
 
 =item B<-updatedb>
@@ -305,7 +305,7 @@ Updates the database index to purge expired certificates.
 
 =item B<-crl_reason reason>
 
-revocation reason, where B<reason> is one of: B<unspecified>, B<keyCompromise>,
+Revocation reason, where B<reason> is one of: B<unspecified>, B<keyCompromise>,
 B<CACompromise>, B<affiliationChanged>, B<superseded>, B<cessationOfOperation>,
 B<certificateHold> or B<removeFromCRL>. The matching of B<reason> is case
 insensitive. Setting any revocation reason will make the CRL v2.
@@ -332,7 +332,7 @@ B<CACompromise>.
 
 =item B<-crlexts section>
 
-the section of the configuration file containing CRL extensions to
+The section of the configuration file containing CRL extensions to
 include. If no CRL extension section is present then a V1 CRL is
 created, if the CRL extension section is present (even if it is
 empty) then a V2 CRL is created. The CRL extensions specified are
@@ -383,58 +383,58 @@ and long names are the same when this option is used.
 
 =item B<new_certs_dir>
 
-the same as the B<-outdir> command line option. It specifies
+The same as the B<-outdir> command line option. It specifies
 the directory where new certificates will be placed. Mandatory.
 
 =item B<certificate>
 
-the same as B<-cert>. It gives the file containing the CA
+The same as B<-cert>. It gives the file containing the CA
 certificate. Mandatory.
 
 =item B<private_key>
 
-same as the B<-keyfile> option. The file containing the
+Same as the B<-keyfile> option. The file containing the
 CA private key. Mandatory.
 
 =item B<RANDFILE>
 
-a file used to read and write random number seed information, or
+A file used to read and write random number seed information, or
 an EGD socket (see L<RAND_egd(3)>).
 
 =item B<default_days>
 
-the same as the B<-days> option. The number of days to certify
+The same as the B<-days> option. The number of days to certify
 a certificate for.
 
 =item B<default_startdate>
 
-the same as the B<-startdate> option. The start date to certify
+The same as the B<-startdate> option. The start date to certify
 a certificate for. If not set the current time is used.
 
 =item B<default_enddate>
 
-the same as the B<-enddate> option. Either this option or
+The same as the B<-enddate> option. Either this option or
 B<default_days> (or the command line equivalents) must be
 present.
 
 =item B<default_crl_hours default_crl_days>
 
-the same as the B<-crlhours> and the B<-crldays> options. These
+The same as the B<-crlhours> and the B<-crldays> options. These
 will only be used if neither command line option is present. At
 least one of these must be present to generate a CRL.
 
 =item B<default_md>
 
-the same as the B<-md> option. Mandatory.
+The same as the B<-md> option. Mandatory.
 
 =item B<database>
 
-the text database file to use. Mandatory. This file must be present
+The text database file to use. Mandatory. This file must be present
 though initially it will be empty.
 
 =item B<unique_subject>
 
-if the value B<yes> is given, the valid certificate entries in the
+If the value B<yes> is given, the valid certificate entries in the
 database must have unique subjects.  if the value B<no> is given,
 several valid certificate entries may have the exact same subject.
 The default value is B<yes>, to be compatible with older (pre 0.9.8)
@@ -444,45 +444,45 @@ the B<-selfsign> command line option.
 
 =item B<serial>
 
-a text file containing the next serial number to use in hex. Mandatory.
+A text file containing the next serial number to use in hex. Mandatory.
 This file must be present and contain a valid serial number.
 
 =item B<crlnumber>
 
-a text file containing the next CRL number to use in hex. The crl number
+A text file containing the next CRL number to use in hex. The crl number
 will be inserted in the CRLs only if this file exists. If this file is
 present, it must contain a valid CRL number.
 
 =item B<x509_extensions>
 
-the same as B<-extensions>.
+The same as B<-extensions>.
 
 =item B<crl_extensions>
 
-the same as B<-crlexts>.
+The same as B<-crlexts>.
 
 =item B<preserve>
 
-the same as B<-preserveDN>
+The same as B<-preserveDN>
 
 =item B<email_in_dn>
 
-the same as B<-noemailDN>. If you want the EMAIL field to be removed
+The same as B<-noemailDN>. If you want the EMAIL field to be removed
 from the DN of the certificate simply set this to 'no'. If not present
 the default is to allow for the EMAIL filed in the certificate's DN.
 
 =item B<msie_hack>
 
-the same as B<-msie_hack>
+The same as B<-msie_hack>
 
 =item B<policy>
 
-the same as B<-policy>. Mandatory. See the B<POLICY FORMAT> section
+The same as B<-policy>. Mandatory. See the B<POLICY FORMAT> section
 for more information.
 
 =item B<name_opt>, B<cert_opt>
 
-these options allow the format used to display the certificate details
+These options allow the format used to display the certificate details
 when asking the user to confirm signing. All the options supported by
 the B<x509> utilities B<-nameopt> and B<-certopt> switches can be used
 here, except the B<no_signame> and B<no_sigdump> are permanently set
@@ -499,7 +499,7 @@ multicharacter string types and does not display extensions.
 
 =item B<copy_extensions>
 
-determines how extensions in certificate requests should be handled.
+Determines how extensions in certificate requests should be handled.
 If set to B<none> or this option is not present then extensions are
 ignored and not copied to the certificate. If set to B<copy> then any
 extensions present in the request that are not already present are copied
@@ -709,7 +709,7 @@ L<config(5)>, L<x509v3_config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

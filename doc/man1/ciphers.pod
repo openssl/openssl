@@ -63,7 +63,7 @@ When combined with B<-s> includes cipher suites which require SRP.
 
 =item B<-v>
 
-Verbose output: For each ciphersuite, list details as provided by
+Verbose output: For each cipher suite, list details as provided by
 L<SSL_CIPHER_description(3)>.
 
 =item B<-V>
@@ -97,12 +97,12 @@ TLSv1.1 were negotiated.
 
 =item B<-stdname>
 
-precede each ciphersuite by its standard name: only available is OpenSSL
+Precede each cipher suite by its standard name: only available is OpenSSL
 is built with tracing enabled (B<enable-ssl-trace> argument to Configure).
 
 =item B<cipherlist>
 
-a cipher list to convert to a cipher preference list. If it is not included
+A cipher list to convert to a cipher preference list. If it is not included
 then the default cipher list will be used. The format is described below.
 
 =back
@@ -168,7 +168,7 @@ When used, this must be the first cipherstring specified.
 The ciphers included in B<ALL>, but not enabled by default. Currently
 this includes all RC4 and anonymous ciphers. Note that this rule does
 not cover B<eNULL>, which is not included by B<ALL> (use B<COMPLEMENTOFALL> if
-necessary). Note that RC4 based ciphersuites are not built into OpenSSL by
+necessary). Note that RC4 based cipher suites are not built into OpenSSL by
 default (see the enable-weak-ssl-ciphers option to Configure).
 
 =item B<ALL>
@@ -183,19 +183,19 @@ The cipher suites not enabled by B<ALL>, currently B<eNULL>.
 
 =item B<HIGH>
 
-"high" encryption cipher suites. This currently means those with key lengths
+"High" encryption cipher suites. This currently means those with key lengths
 larger than 128 bits, and some cipher suites with 128-bit keys.
 
 =item B<MEDIUM>
 
-"medium" encryption cipher suites, currently some of those using 128 bit
+"Medium" encryption cipher suites, currently some of those using 128 bit
 encryption.
 
 =item B<LOW>
 
-"low" encryption cipher suites, currently those using 64 or 56 bit
+"Low" encryption cipher suites, currently those using 64 or 56 bit
 encryption algorithms but excluding export cipher suites.  All these
-ciphersuites have been removed as of OpenSSL 1.1.0.
+cipher suites have been removed as of OpenSSL 1.1.0.
 
 =item B<eNULL>, B<NULL>
 
@@ -272,11 +272,11 @@ keys.
 
 =item B<TLSv1.2>, B<TLSv1.0>, B<SSLv3>
 
-Lists ciphersuites which are only supported in at least TLS v1.2, TLS v1.0 or
+Lists cipher suites which are only supported in at least TLS v1.2, TLS v1.0 or
 SSL v3.0 respectively.
-Note: there are no ciphersuites specific to TLS v1.1.
+Note: there are no cipher suites specific to TLS v1.1.
 Since this is only the minimum version, if, for example, TLSv1.0 is negotiated
-then both TLSv1.0 and SSLv3.0 ciphersuites are available.
+then both TLSv1.0 and SSLv3.0 cipher suites are available.
 
 Note: these cipher strings B<do not> change the negotiated version of SSL or
 TLS, they only affect the list of available cipher suites.
@@ -287,33 +287,33 @@ cipher suites using 128 bit AES, 256 bit AES or either 128 or 256 bit AES.
 
 =item B<AESGCM>
 
-AES in Galois Counter Mode (GCM): these ciphersuites are only supported
+AES in Galois Counter Mode (GCM): these cipher suites are only supported
 in TLS v1.2.
 
 =item B<AESCCM>, B<AESCCM8>
 
 AES in Cipher Block Chaining - Message Authentication Mode (CCM): these
-ciphersuites are only supported in TLS v1.2. B<AESCCM> references CCM
+cipher suites are only supported in TLS v1.2. B<AESCCM> references CCM
 cipher suites using both 16 and 8 octet Integrity Check Value (ICV)
 while B<AESCCM8> only references 8 octet ICV.
 
 =item B<ARIA128>, B<ARIA256>, B<ARIA>
 
-cipher suites using 128 bit ARIA, 256 bit ARIA or either 128 or 256 bit
+Cipher suites using 128 bit ARIA, 256 bit ARIA or either 128 or 256 bit
 ARIA.
 
 =item B<CAMELLIA128>, B<CAMELLIA256>, B<CAMELLIA>
 
-cipher suites using 128 bit CAMELLIA, 256 bit CAMELLIA or either 128 or 256 bit
+Cipher suites using 128 bit CAMELLIA, 256 bit CAMELLIA or either 128 or 256 bit
 CAMELLIA.
 
 =item B<CHACHA20>
 
-cipher suites using ChaCha20.
+Cipher suites using ChaCha20.
 
 =item B<3DES>
 
-cipher suites using triple DES.
+Cipher suites using triple DES.
 
 =item B<DES>
 
@@ -346,7 +346,7 @@ Cipher suites using SHA1.
 
 =item B<SHA256>, B<SHA384>
 
-Ciphersuites using SHA256 or SHA384.
+Cipher suites using SHA256 or SHA384.
 
 =item B<aGOST>
 
@@ -393,7 +393,7 @@ Setting Suite B mode has additional consequences required to comply with
 RFC6460.
 In particular the supported signature algorithms is reduced to support only
 ECDSA and SHA256 or SHA384, only the elliptic curves P-256 and P-384 can be
-used and only the two suite B compliant ciphersuites
+used and only the two suite B compliant cipher suites
 (ECDHE-ECDSA-AES128-GCM-SHA256 and ECDHE-ECDSA-AES256-GCM-SHA384) are
 permissible.
 
@@ -444,7 +444,7 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
  TLS_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
  TLS_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
 
-=head2 AES ciphersuites from RFC3268, extending TLS v1.0
+=head2 AES cipher suites from RFC3268, extending TLS v1.0
 
  TLS_RSA_WITH_AES_128_CBC_SHA            AES128-SHA
  TLS_RSA_WITH_AES_256_CBC_SHA            AES256-SHA
@@ -462,7 +462,7 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
  TLS_DH_anon_WITH_AES_128_CBC_SHA        ADH-AES128-SHA
  TLS_DH_anon_WITH_AES_256_CBC_SHA        ADH-AES256-SHA
 
-=head2 Camellia ciphersuites from RFC4132, extending TLS v1.0
+=head2 Camellia cipher suites from RFC4132, extending TLS v1.0
 
  TLS_RSA_WITH_CAMELLIA_128_CBC_SHA      CAMELLIA128-SHA
  TLS_RSA_WITH_CAMELLIA_256_CBC_SHA      CAMELLIA256-SHA
@@ -480,7 +480,7 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
  TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA  ADH-CAMELLIA128-SHA
  TLS_DH_anon_WITH_CAMELLIA_256_CBC_SHA  ADH-CAMELLIA256-SHA
 
-=head2 SEED ciphersuites from RFC4162, extending TLS v1.0
+=head2 SEED cipher suites from RFC4162, extending TLS v1.0
 
  TLS_RSA_WITH_SEED_CBC_SHA              SEED-SHA
 
@@ -492,7 +492,7 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
 
  TLS_DH_anon_WITH_SEED_CBC_SHA          ADH-SEED-SHA
 
-=head2 GOST ciphersuites from draft-chudov-cryptopro-cptls, extending TLS v1.0
+=head2 GOST cipher suites from draft-chudov-cryptopro-cptls, extending TLS v1.0
 
 Note: these ciphers require an engine which including GOST cryptographic
 algorithms, such as the B<ccgost> engine, included in the OpenSSL distribution.
@@ -585,7 +585,7 @@ Note: these ciphers can also be used in SSL v3.
  ECDHE_ECDSA_WITH_AES_128_CCM_8            ECDHE-ECDSA-AES128-CCM8
  ECDHE_ECDSA_WITH_AES_256_CCM_8            ECDHE-ECDSA-AES256-CCM8
 
-=head2 ARIA ciphersuites from RFC6209, extending TLS v1.2
+=head2 ARIA cipher suites from RFC6209, extending TLS v1.2
 
  TLS_RSA_WITH_ARIA_128_CBC_SHA256          ARIA128-CBC-SHA256
  TLS_RSA_WITH_ARIA_256_CBC_SHA384          ARIA256-CBC-SHA384
@@ -600,14 +600,14 @@ Note: these ciphers can also be used in SSL v3.
  TLS_ECDHE_RSA_WITH_ARIA_128_CBC_SHA256    ECDHE-RSA-ARIA128-CBC-SHA256
  TLS_ECDHE_RSA_WITH_ARIA_256_CBC_SHA384    ECDHE-RSA-ARIA256-CBC-SHA384
 
-=head2 Camellia HMAC-Based ciphersuites from RFC6367, extending TLS v1.2
+=head2 Camellia HMAC-Based cipher suites from RFC6367, extending TLS v1.2
 
  TLS_ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256 ECDHE-ECDSA-CAMELLIA128-SHA256
  TLS_ECDHE_ECDSA_WITH_CAMELLIA_256_CBC_SHA384 ECDHE-ECDSA-CAMELLIA256-SHA384
  TLS_ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256   ECDHE-RSA-CAMELLIA128-SHA256
  TLS_ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384   ECDHE-RSA-CAMELLIA256-SHA384
 
-=head2 Pre-shared keying (PSK) ciphersuites
+=head2 Pre-shared keying (PSK) cipher suites
 
  PSK_WITH_NULL_SHA                         PSK-NULL-SHA
  DHE_PSK_WITH_NULL_SHA                     DHE-PSK-NULL-SHA

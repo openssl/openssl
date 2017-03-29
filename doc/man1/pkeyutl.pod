@@ -53,7 +53,7 @@ if this option is not specified.
 
 =item B<-out filename>
 
-specifies the output filename to write to or standard output by
+Specifies the output filename to write to or standard output by
 default.
 
 =item B<-sigfile file>
@@ -62,64 +62,63 @@ Signature file, required for B<verify> operations only
 
 =item B<-inkey file>
 
-the input key file, by default it should be a private key.
+The input key file, by default it should be a private key.
 
 =item B<-keyform PEM|DER|ENGINE>
 
-the key format PEM, DER or ENGINE. Default is PEM.
+The key format PEM, DER or ENGINE. Default is PEM.
 
 =item B<-passin arg>
 
-the input key password source. For more information about the format of B<arg>
+The input key password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
-
 
 =item B<-peerkey file>
 
-the peer key file, used by key derivation (agreement) operations.
+The peer key file, used by key derivation (agreement) operations.
 
 =item B<-peerform PEM|DER|ENGINE>
 
-the peer key format PEM, DER or ENGINE. Default is PEM.
+The peer key format PEM, DER or ENGINE. Default is PEM.
 
 =item B<-pubin>
 
-the input file is a public key.
+The input file is a public key.
 
 =item B<-certin>
 
-the input is a certificate containing a public key.
+The input is a certificate containing a public key.
 
 =item B<-rev>
 
-reverse the order of the input buffer. This is useful for some libraries
+Reverse the order of the input buffer. This is useful for some libraries
 (such as CryptoAPI) which represent the buffer in little endian format.
 
 =item B<-sign>
 
-sign the input data and output the signed result. This requires
+Sign the input data and output the signed result. This requires
 a private key.
 
 =item B<-verify>
 
-verify the input data against the signature file and indicate if the
+Verify the input data against the signature file and indicate if the
 verification succeeded or failed.
 
 =item B<-verifyrecover>
 
-verify the input data and output the recovered data.
+Verify the input data and output the recovered data.
 
 =item B<-encrypt>
 
-encrypt the input data using a public key.
+Encrypt the input data using a public key.
 
 =item B<-decrypt>
 
-decrypt the input data using a private key.
+Decrypt the input data using a private key.
 
 =item B<-derive>
 
-derive a shared secret using the peer key.
+Derive a shared secret using the peer key.
 
 =item B<-kdf algorithm>
 
@@ -144,12 +143,12 @@ hex dump the output data.
 
 =item B<-asn1parse>
 
-asn1parse the output data, this is useful when combined with the
+Parse the ASN.1 output data, this is useful when combined with the
 B<-verifyrecover> option when an ASN1 structure is signed.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<pkeyutl>
+Specifying an engine (by its unique B<id> string) will cause B<pkeyutl>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -308,7 +307,7 @@ L<EVP_PKEY_CTX_set_hkdf_md(3)>, L<EVP_PKEY_CTX_set_tls1_prf_md(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

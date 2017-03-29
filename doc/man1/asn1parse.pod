@@ -39,56 +39,56 @@ Print out a usage message.
 
 =item B<-inform> B<DER|PEM>
 
-the input format. B<DER> is binary format and B<PEM> (the default) is base64
+The input format. B<DER> is binary format and B<PEM> (the default) is base64
 encoded.
 
 =item B<-in filename>
 
-the input file, default is standard input
+The input file, default is standard input.
 
 =item B<-out filename>
 
-output file to place the DER encoded data into. If this
+Output file to place the DER encoded data into. If this
 option is not present then no data will be output. This is most useful when
 combined with the B<-strparse> option.
 
 =item B<-noout>
 
-don't output the parsed version of the input file.
+Don't output the parsed version of the input file.
 
 =item B<-offset number>
 
-starting offset to begin parsing, default is start of file.
+Starting offset to begin parsing, default is start of file.
 
 =item B<-length number>
 
-number of bytes to parse, default is until end of file.
+Number of bytes to parse, default is until end of file.
 
 =item B<-i>
 
-indents the output according to the "depth" of the structures.
+Indents the output according to the "depth" of the structures.
 
 =item B<-oid filename>
 
-a file containing additional OBJECT IDENTIFIERs (OIDs). The format of this
+A file containing additional OBJECT IDENTIFIERs (OIDs). The format of this
 file is described in the NOTES section below.
 
 =item B<-dump>
 
-dump unknown data in hex format.
+Dump unknown data in hex format.
 
 =item B<-dlimit num>
 
-like B<-dump>, but only the first B<num> bytes are output.
+Like B<-dump>, but only the first B<num> bytes are output.
 
 =item B<-strparse offset>
 
-parse the contents octets of the ASN.1 object starting at B<offset>. This
+Parse the contents octets of the ASN.1 object starting at B<offset>. This
 option can be used multiple times to "drill down" into a nested structure.
 
 =item B<-genstr string>, B<-genconf file>
 
-generate encoded data based on B<string>, B<file> or both using
+Generate encoded data based on B<string>, B<file> or both using
 L<ASN1_generate_nconf(3)> format. If B<file> only is
 present then the string is obtained from the default section using the name
 B<asn1>. The encoded data is passed through the ASN1 parser and printed out as
@@ -105,7 +105,7 @@ END marker in a PEM file.
 
 =item B<-item name>
 
-attempt to decode and print the data as B<ASN1_ITEM name>. This can be used to
+Attempt to decode and print the data as B<ASN1_ITEM name>. This can be used to
 print out the fields of any supported ASN.1 structure if the type is known.
 
 =back
@@ -204,7 +204,7 @@ L<ASN1_generate_nconf(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

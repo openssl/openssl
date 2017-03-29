@@ -81,7 +81,7 @@ options (B<-new> and B<-newkey>) are not specified.
 
 =item B<-passin arg>
 
-the input file password source. For more information about the format of B<arg>
+The input file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-out filename>
@@ -91,38 +91,38 @@ default.
 
 =item B<-passout arg>
 
-the output file password source. For more information about the format of B<arg>
+The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-text>
 
-prints out the certificate request in text form.
+Prints out the certificate request in text form.
 
 =item B<-subject>
 
-prints out the request subject (or certificate subject if B<-x509> is
+Prints out the request subject (or certificate subject if B<-x509> is
 specified)
 
 =item B<-pubkey>
 
-outputs the public key.
+Outputs the public key.
 
 =item B<-noout>
 
-this option prevents output of the encoded version of the request.
+This option prevents output of the encoded version of the request.
 
 =item B<-modulus>
 
-this option prints out the value of the modulus of the public key
+This option prints out the value of the modulus of the public key
 contained in the request.
 
 =item B<-verify>
 
-verifies the signature on the request.
+Verifies the signature on the request.
 
 =item B<-new>
 
-this option generates a new certificate request. It will prompt
+This option generates a new certificate request. It will prompt
 the user for the relevant field values. The actual fields
 prompted for and their maximum and minimum sizes are specified
 in the configuration file and any requested extensions.
@@ -132,7 +132,7 @@ key using information specified in the configuration file.
 
 =item B<-rand file(s)>
 
-a file or files containing random data used to seed the random number
+A file or files containing random data used to seed the random number
 generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
@@ -140,7 +140,7 @@ all others.
 
 =item B<-newkey arg>
 
-this option creates a new certificate request and a new private
+This option creates a new certificate request and a new private
 key. The argument takes one of several forms. B<rsa:nbits>, where
 B<nbits> is the number of bits, generates an RSA key B<nbits>
 in size. If B<nbits> is omitted, i.e. B<-newkey rsa> specified,
@@ -166,7 +166,7 @@ specified by B<-pkeyopt paramset:X>
 
 =item B<-pkeyopt opt:value>
 
-set the public key algorithm option B<opt> to B<value>. The precise set of
+Set the public key algorithm option B<opt> to B<value>. The precise set of
 options supported depends on the public key algorithm used and its
 implementation. See B<KEY GENERATION OPTIONS> in the B<genpkey> manual page
 for more details.
@@ -178,23 +178,23 @@ accepts PKCS#8 format private keys for PEM format files.
 
 =item B<-keyform PEM|DER>
 
-the format of the private key file specified in the B<-key>
+The format of the private key file specified in the B<-key>
 argument. PEM is the default.
 
 =item B<-keyout filename>
 
-this gives the filename to write the newly created private key to.
+This gives the filename to write the newly created private key to.
 If this option is not specified then the filename present in the
 configuration file is used.
 
 =item B<-nodes>
 
-if this option is specified then if a private key is created it
+If this option is specified then if a private key is created it
 will not be encrypted.
 
 =item B<-[digest]>
 
-this specifies the message digest to sign the request.
+This specifies the message digest to sign the request.
 Any digest supported by the OpenSSL B<dgst> command can be used.
 This overrides the digest algorithm specified in
 the configuration file.
@@ -205,20 +205,20 @@ GOST R 34.11-94 (B<-md_gost94>).
 
 =item B<-config filename>
 
-this allows an alternative configuration file to be specified.
+This allows an alternative configuration file to be specified.
 Optional; for a description of the default value,
 see L<openssl(1)/COMMAND SUMMARY>.
 
 =item B<-subj arg>
 
-sets subject name for new request or supersedes the subject name
+Sets subject name for new request or supersedes the subject name
 when processing a request.
 The arg must be formatted as I</type0=value0/type1=value1/type2=...>,
 characters may be escaped by \ (backslash), no spaces are skipped.
 
 =item B<-multivalue-rdn>
 
-this option causes the -subj argument to be interpreted with full
+This option causes the -subj argument to be interpreted with full
 support for multivalued RDNs. Example:
 
 I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
@@ -227,7 +227,7 @@ If -multi-rdn is not used then the UID value is I<123456+CN=John Doe>.
 
 =item B<-x509>
 
-this option outputs a self signed certificate instead of a certificate
+This option outputs a self signed certificate instead of a certificate
 request. This is typically used to generate a test certificate or
 a self signed root CA. The extensions added to the certificate
 (if any) are specified in the configuration file. Unless specified
@@ -236,19 +236,19 @@ the serial number.
 
 =item B<-days n>
 
-when the B<-x509> option is being used this specifies the number of
+When the B<-x509> option is being used this specifies the number of
 days to certify the certificate for. The default is 30 days.
 
 =item B<-set_serial n>
 
-serial number to use when outputting a self signed certificate. This
+Serial number to use when outputting a self signed certificate. This
 may be specified as a decimal value or a hex value if preceded by B<0x>.
 
 =item B<-extensions section>
 
 =item B<-reqexts section>
 
-these options specify alternative sections to include certificate
+These options specify alternative sections to include certificate
 extensions (if the B<-x509> option is present) or certificate
 request extensions. This allows several different sections to
 be used in the same configuration file to specify requests for
@@ -256,7 +256,7 @@ a variety of purposes.
 
 =item B<-precert>
 
-a poison extension will be added to the certificate, making it a
+A poison extension will be added to the certificate, making it a
 "pre-certificate" (see RFC6962). This can be submitted to Certificate
 Transparency logs in order to obtain signed certificate timestamps (SCTs).
 These SCTs can then be embedded into the pre-certificate as an extension, before
@@ -266,21 +266,21 @@ This implies the B<-new> flag.
 
 =item B<-utf8>
 
-this option causes field values to be interpreted as UTF8 strings, by
+This option causes field values to be interpreted as UTF8 strings, by
 default they are interpreted as ASCII. This means that the field
 values, whether prompted from a terminal or obtained from a
 configuration file, must be valid UTF8 strings.
 
 =item B<-nameopt option>
 
-option which determines how the subject or issuer names are displayed. The
+Option which determines how the subject or issuer names are displayed. The
 B<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<x509(1)> manual page for details.
 
 =item B<-reqopt>
 
-customise the output format used with B<-text>. The B<option> argument can be
+Customise the output format used with B<-text>. The B<option> argument can be
 a single option or multiple options separated by commas.
 
 See discussion of the  B<-certopt> parameter in the L<x509(1)>
@@ -293,22 +293,22 @@ request. Some software (Netscape certificate server) and some CAs need this.
 
 =item B<-batch>
 
-non-interactive mode.
+Non-interactive mode.
 
 =item B<-verbose>
 
-print extra details about the operations being performed.
+Print extra details about the operations being performed.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<req>
+Specifying an engine (by its unique B<id> string) will cause B<req>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
 =item B<-keygen_engine id>
 
-specifies an engine (by its unique B<id> string) which would be used
+Specifies an engine (by its unique B<id> string) which would be used
 for key generation operations.
 
 =back
@@ -395,7 +395,7 @@ problems with BMPStrings and UTF8Strings: in particular Netscape.
 
 =item B<req_extensions>
 
-this specifies the configuration file section containing a list of
+This specifies the configuration file section containing a list of
 extensions to add to the certificate request. It can be overridden
 by the B<-reqexts> command line switch. See the
 L<x509v3_config(5)> manual page for details of the
@@ -403,26 +403,26 @@ extension section format.
 
 =item B<x509_extensions>
 
-this specifies the configuration file section containing a list of
+This specifies the configuration file section containing a list of
 extensions to add to certificate generated when the B<-x509> switch
 is used. It can be overridden by the B<-extensions> command line switch.
 
 =item B<prompt>
 
-if set to the value B<no> this disables prompting of certificate fields
+If set to the value B<no> this disables prompting of certificate fields
 and just takes values from the config file directly. It also changes the
 expected format of the B<distinguished_name> and B<attributes> sections.
 
 =item B<utf8>
 
-if set to the value B<yes> then field values to be interpreted as UTF8
+If set to the value B<yes> then field values to be interpreted as UTF8
 strings, by default they are interpreted as ASCII. This means that
 the field values, whether prompted from a terminal or obtained from a
 configuration file, must be valid UTF8 strings.
 
 =item B<attributes>
 
-this specifies the section containing any request attributes: its format
+This specifies the section containing any request attributes: its format
 is the same as B<distinguished_name>. Typically these may contain the
 challengePassword or unstructuredName types. They are currently ignored
 by OpenSSL's request signing utilities but some CAs might want them.
@@ -659,7 +659,7 @@ L<x509v3_config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

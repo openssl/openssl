@@ -69,7 +69,7 @@ prompted for.
 
 =item B<-passin arg>
 
-the input file password source. For more information about the format of B<arg>
+The input file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-out filename>
@@ -81,7 +81,7 @@ filename.
 
 =item B<-passout arg>
 
-the output file password source. For more information about the format of B<arg>
+The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-iter count>
@@ -124,21 +124,21 @@ If not specified PKCS#5 v2.0 form is used.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<pkcs8>
+Specifying an engine (by its unique B<id> string) will cause B<pkcs8>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
 =item B<-scrypt>
 
-uses the B<scrypt> algorithm for private key encryption using default
+Uses the B<scrypt> algorithm for private key encryption using default
 parameters: currently N=16384, r=8 and p=1 and AES in CBC mode with a 256 bit
 key. These parameters can be modified using the B<-scrypt_N>, B<-scrypt_r>,
 B<-scrypt_p> and B<-v2> options.
 
-B<-scrypt_N N> B<-scrypt_r r> B<-scrypt_p p>
+=item B<-scrypt_N N> B<-scrypt_r r> B<-scrypt_p p>
 
-sets the scrypt B<N>, B<r> or B<p> parameters.
+Sets the scrypt B<N>, B<r> or B<p> parameters.
 
 =back
 
@@ -291,7 +291,7 @@ The B<-iter> option was added to OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

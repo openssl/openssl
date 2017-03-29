@@ -74,7 +74,7 @@ can supply the DH parameters via a callback function.
 
 Previous versions of the callback used B<is_export> and B<keylength>
 parameters to control parameter generation for export and non-export
-cipher suites. Modern servers that do not support export ciphersuites
+cipher suites. Modern servers that do not support export cipher suites
 are advised to either use SSL_CTX_set_tmp_dh() or alternatively, use
 the callback but ignore B<keylength> and B<is_export> and simply
 supply at least 2048-bit parameters in the callback.
