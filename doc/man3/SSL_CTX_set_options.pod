@@ -62,26 +62,10 @@ The following B<bug workaround> options are available:
 
 =over 4
 
-=item SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG
-
-...
-
-=item SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER
-
-...
-
 =item SSL_OP_SAFARI_ECDHE_ECDSA_BUG
 
 Don't prefer ECDHE-ECDSA ciphers when the client appears to be Safari on OS X.
 OS X 10.8..10.8.3 has broken support for ECDHE-ECDSA ciphers.
-
-=item SSL_OP_SSLEAY_080_CLIENT_DH_BUG
-
-...
-
-=item SSL_OP_TLS_D5_BUG
-
-...
 
 =item SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
 
@@ -98,7 +82,8 @@ implementations.
 
 =item SSL_OP_ALL
 
-All of the above bug workarounds.
+All of the above bug workarounds plus B<SSL_OP_LEGACY_SERVER_CONNECT> as
+mentioned below.
 
 =back
 
@@ -122,37 +107,12 @@ only understands up to SSLv3. In this case the client must still use the
 same SSLv3.1=TLSv1 announcement. Some clients step down to SSLv3 with respect
 to the server's answer and violate the version rollback protection.)
 
-=item SSL_OP_SINGLE_DH_USE
-
-Always create a new key when using temporary/ephemeral DH parameters
-(see L<SSL_CTX_set_tmp_dh_callback(3)>).
-This option must be used to prevent small subgroup attacks, when
-the DH parameters were not generated using "strong" primes
-(e.g. when using DSA-parameters, see L<dhparam(1)>).
-If "strong" primes were used, it is not strictly necessary to generate
-a new DH key during each handshake but it is also recommended.
-B<SSL_OP_SINGLE_DH_USE> should therefore be enabled whenever
-temporary/ephemeral DH parameters are used.
-
-=item SSL_OP_EPHEMERAL_RSA
-
-This option is no longer implemented and is treated as no op.
-
 =item SSL_OP_CIPHER_SERVER_PREFERENCE
 
 When choosing a cipher, use the server's preferences instead of the client
 preferences. When not set, the SSL server will always follow the clients
 preferences. When set, the SSL/TLS server will choose following its
 own preferences.
-
-=item SSL_OP_PKCS1_CHECK_1
-
-...
-
-=item SSL_OP_PKCS1_CHECK_2
-
-...
-
 
 =item SSL_OP_NO_SSLv3, SSL_OP_NO_TLSv1, SSL_OP_NO_TLSv1_1,
 SSL_OP_NO_TLSv1_2, SSL_OP_NO_TLSv1_3, SSL_OP_NO_DTLSv1, SSL_OP_NO_DTLSv1_2
@@ -169,6 +129,19 @@ L<SSL_CTX_set_max_proto_version(3)> instead.
 When performing renegotiation as a server, always start a new session
 (i.e., session resumption requests are only accepted in the initial
 handshake). This option is not needed for clients.
+
+=item SSL_OP_NO_COMPRESSION
+
+Do not use compression even if it is supported.
+
+=item SSL_OP_NO_QUERY_MTU
+
+Do not query the MTU. Only affects DTLS connections.
+
+=item SSL_OP_COOKIE_EXCHANGE
+
+Turn on Cookie Exchange as described in RFC4347 Section 4.2.1. Only affects
+DTLS connections.
 
 =item SSL_OP_NO_TICKET
 
@@ -196,6 +169,41 @@ RFC7366 Encrypt-then-MAC option on TLS and DTLS connection.
 
 If this option is set, Encrypt-then-MAC is disabled. Clients will not
 propose, and servers will not accept the extension.
+
+=back
+
+The following options no longer have any effect but their identifiers are
+retained for compatibility purposes:
+
+=over 4
+
+=item SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
+
+=item SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER
+
+=item SSL_OP_SSLEAY_080_CLIENT_DH_BUG
+
+=item SSL_OP_TLS_D5_BUG
+
+=item SSL_OP_TLS_BLOCK_PADDING_BUG
+
+=item SSL_OP_MSIE_SSLV2_RSA_PADDING
+
+=item SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG
+
+=item SSL_OP_MICROSOFT_SESS_ID_BUG
+
+=item SSL_OP_NETSCAPE_CHALLENGE_BUG
+
+=item SSL_OP_PKCS1_CHECK_1
+
+=item SSL_OP_PKCS1_CHECK_2
+
+=item SSL_OP_SINGLE_DH_USE
+
+=item SSL_OP_SINGLE_ECDH_USE
+
+=item SSL_OP_EPHEMERAL_RSA
 
 =back
 
