@@ -20,7 +20,7 @@ returned value (unless L<X509_up_ref(3)> has also been called).
 =head1 RETURN VALUES
 
 SSL_SESSION_get0_peer() returns a pointer to the peer certificate or NULL if
-no peer certificat is available.
+no peer certificate is available.
 
 =head1 SEE ALSO
 

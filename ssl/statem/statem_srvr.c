@@ -448,7 +448,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
     case TLS_ST_SW_SRVR_HELLO:
         if (SSL_IS_DTLS(s)) {
             /*
-             * Messages we write from now on should be bufferred and
+             * Messages we write from now on should be buffered and
              * retransmitted if necessary, so we need to use the timer now
              */
             st->use_timer = 1;

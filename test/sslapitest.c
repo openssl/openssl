@@ -45,7 +45,7 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
     int certlen;
 
     if (certbio == NULL) {
-        printf("Can't load the certficate file\n");
+        printf("Can't load the certificate file\n");
         goto end;
     }
     chaincert = PEM_read_bio_X509(certbio, NULL, NULL, NULL);
@@ -74,7 +74,7 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
      * We assume the supplied certificate is big enough so that if we add
      * NUM_EXTRA_CERTS it will make the overall message large enough. The
      * default buffer size is requested to be 16k, but due to the way BUF_MEM
-     * works, it ends up allocing a little over 21k (16 * 4/3). So, in this test
+     * works, it ends up allocating a little over 21k (16 * 4/3). So, in this test
      * we need to have a message larger than that.
      */
     certlen = i2d_X509(chaincert, NULL);
@@ -331,11 +331,11 @@ static int test_tlsext_status_type(void)
 
     /*
      * We'll just use any old cert for this test - it doesn't have to be an OCSP
-     * specifc one. We'll use the server cert.
+     * specific one. We'll use the server cert.
      */
     certbio = BIO_new_file(cert, "r");
     if (certbio == NULL) {
-        printf("Can't load the certficate file\n");
+        printf("Can't load the certificate file\n");
         goto end;
     }
     id = OCSP_RESPID_new();
@@ -717,7 +717,7 @@ static int test_ssl_set_bio(int idx)
 
     /*
      * We want to maintain our own refs to these BIO, so do an up ref for each
-     * BIO that will have ownersip transferred in the SSL_set_bio() call
+     * BIO that will have ownership transferred in the SSL_set_bio() call
      */
     if (irbio != NULL)
         BIO_up_ref(irbio);
@@ -813,7 +813,7 @@ static int execute_test_ssl_bio(SSL_BIO_TEST_FIXTURE fix)
      */
     BIO_push(sslbio, membio1);
 
-    /* Verify chaning the rbio/wbio directly does not cause leaks */
+    /* Verify changing the rbio/wbio directly does not cause leaks */
     if (fix.change_bio != NO_BIO_CHANGE) {
         membio2 = BIO_new(BIO_s_mem());
         if (membio2 == NULL) {

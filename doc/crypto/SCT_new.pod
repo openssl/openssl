@@ -162,7 +162,7 @@ SCT_set_version() returns 1 if the specified version is supported, 0 otherwise.
 SCT_set_log_entry_type() returns 1 if the specified log entry type is supported, 0 otherwise.
 
 SCT_set0_log_id() and B<SCT_set1_log_id> return 1 if the specified LogID is a
-valid SHA-256 hash, 0 otherwise. Aditionally, B<SCT_set1_log_id> returns 0 if
+valid SHA-256 hash, 0 otherwise. Additionally, B<SCT_set1_log_id> returns 0 if
 malloc fails.
 
 B<SCT_set_signature_nid> returns 1 if the specified NID is supported, 0 otherwise.

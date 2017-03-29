@@ -2609,7 +2609,7 @@ sub isabsolute {
     # On non-platforms, we just use file_name_is_absolute().
     return file_name_is_absolute($file) unless $^O eq "VMS";
 
-    # If the file spec includes a device or a directpry spec,
+    # If the file spec includes a device or a directory spec,
     # file_name_is_absolute() is perfectly safe.
     return file_name_is_absolute($file) if $file =~ m|[:\[]|;
 

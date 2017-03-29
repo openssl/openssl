@@ -641,7 +641,7 @@ int X509_get_signature_type(const X509 *x);
 
 /*
  * This one is only used so that a binary form can output, as in
- * i2d_X509_NAME(X509_get_X509_PUBKEY(x),&buf)
+ * i2d_X509_NAME(X509_get_X509_PUBKEY(x), &buf)
  */
 X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x);
 const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
