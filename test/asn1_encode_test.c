@@ -33,14 +33,14 @@ typedef struct {
     size_t suffix_len;
 } ASN1_ENCODINGS;
 
-unsigned char test_long_prefix[] = { 0x02 };
-unsigned char test_long_suffix[] = { 0x02, 0x01, 0x01 };
-unsigned char test_zlong_prefix[] = { 0x02, 0x01, 0x00, 0x02 };
+static unsigned char test_long_prefix[] = { 0x02 };
+static unsigned char test_long_suffix[] = { 0x02, 0x01, 0x01 };
+static unsigned char test_zlong_prefix[] = { 0x02, 0x01, 0x00, 0x02 };
 
 #define FIELD_TEST_LONG     0
 #define FIELD_TEST_ZLONG    1
 
-ASN1_ENCODINGS encodings[] = {
+static ASN1_ENCODINGS encodings[] = {
     {
         test_long_prefix,
         sizeof(test_long_prefix),
@@ -96,6 +96,7 @@ static int do_enc_dec_long(size_t field, long testval)
     ASN1_ENCODE_TEST enctstin;
     int len;
     unsigned char *data = NULL;
+    int ret;
 
     memset(&enctstin, 0, sizeof(enctstin));
     if (field == FIELD_TEST_LONG) {
@@ -109,7 +110,9 @@ static int do_enc_dec_long(size_t field, long testval)
     if (len < 0)
         return 0;
 
-    return do_decode_long(field, testval, 1, data, len);
+    ret = do_decode_long(field, testval, 1, data, len);
+    OPENSSL_free(data);
+    return ret;
 }
 
 /* Attempt to decode a custom encoding of the test structure */
