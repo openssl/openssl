@@ -19,8 +19,6 @@
 #include <openssl/tls1.h>
 
 #include "e_os.h"
-#include "test_main.h"
-#include "testutil.h"
 
 static int test_empty(SSL *s)
 {
