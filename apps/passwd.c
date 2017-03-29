@@ -54,7 +54,7 @@ typedef enum OPTION_choice {
 
 OPTIONS passwd_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"in", OPT_IN, '<', "Pead passwords from file"},
+    {"in", OPT_IN, '<', "Read passwords from file"},
     {"noverify", OPT_NOVERIFY, '-',
      "Never verify when reading password from terminal"},
     {"quiet", OPT_QUIET, '-', "No warnings"},

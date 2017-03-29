@@ -551,7 +551,7 @@ sub AUTOLOAD()		# thunk [simplified] 32-bit style perlasm
     $code .= "\t$opcode\t".join(',',$arg,reverse @_)."\n";
 }
 
-sub Xupdate_ssse3_16_31()		# recall that $Xi starts wtih 4
+sub Xupdate_ssse3_16_31()		# recall that $Xi starts with 4
 { use integer;
   my $body = shift;
   my @insns = (&$body,&$body,&$body,&$body);	# 40 instructions
@@ -1004,7 +1004,7 @@ $code.=<<___;
 	jmp	.Loop_avx
 ___
 
-sub Xupdate_avx_16_31()		# recall that $Xi starts wtih 4
+sub Xupdate_avx_16_31()		# recall that $Xi starts with 4
 { use integer;
   my $body = shift;
   my @insns = (&$body,&$body,&$body,&$body);	# 40 instructions
@@ -1476,7 +1476,7 @@ sub bodyx_40_59 () {	# 10 instructions, 3 cycles critical path
 	)
 }
 
-sub Xupdate_avx2_16_31()		# recall that $Xi starts wtih 4
+sub Xupdate_avx2_16_31()		# recall that $Xi starts with 4
 { use integer;
   my $body = shift;
   my @insns = (&$body,&$body,&$body,&$body,&$body);	# 35 instructions

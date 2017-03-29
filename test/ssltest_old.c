@@ -327,7 +327,6 @@ static int verify_servername(SSL *client, SSL *server)
  * next_protos_parse parses a comma separated list of strings into a string
  * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
  *   outlen: (output) set to the length of the resulting buffer on success.
- *   err: (maybe NULL) on failure, an error message line is written to this BIO.
  *   in: a NUL terminated string like "abc,def,ghi"
  *
  *   returns: a malloced buffer or NULL on failure.
@@ -1860,7 +1859,7 @@ int main(int argc, char *argv[])
             goto err;
         }
         if (SSL_version(c_ssl) != version) {
-            BIO_printf(bio_err, "Unxpected version negotiated. "
+            BIO_printf(bio_err, "Unexpected version negotiated. "
                 "Expected: %s, got %s\n", should_negotiate, SSL_get_version(c_ssl));
             ret = 1;
             goto err;

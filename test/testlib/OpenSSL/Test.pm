@@ -964,7 +964,7 @@ sub __fixup_cmd {
 	# Make sure to quotify the program file on platforms that may
 	# have spaces or similar in their path name.
 	# To our knowledge, VMS is the exception where quotifying should
-	# never happem.
+	# never happen.
 	($prog) = quotify($prog) unless $^O eq "VMS";
 	return $prefix.$prog;
     }
