@@ -30,29 +30,30 @@ extern "C" {
 # endif
 
 /*
- * We need a format operator for some client tools for uint64_t.  If inttypes.h
- * isn't available or did not define it, just go with hard-coded.
+ * Format specifier for printing size_t. Original conundrum was to
+ * get it working with -Wformat [-Werror], which can be considered
+ * overzelaous, especially in multi-platform context, but it's
+ * conscious choice...
  */
-# if defined(OPENSSL_SYS_UEFI)
-#  define PRIu64 "Lu"
-# endif
-# ifndef PRIu64
-#  ifdef SIXTY_FOUR_BIT_LONG
-#   define PRIu64 "lu"
-#  else
-#   define PRIu64 "llu"
-#  endif
-# endif
-
-/* Format specifier for printing size_t */
-# if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
+# if defined(_WIN64)
+#  define OSSLzu  "I64u"    /* One would expect _WIN{64|32} cases after
+                             * __STDC_VERSION__, but there are corner
+                             * cases of MinGW compilers that link with
+                             * non-compliant MSVCRT.DLL... */
+# elif defined(_WIN32)
+#  define OSSLzu  "u"
+# elif defined(__VMS)
+#  define OSSLzu  "u"       /* VMS suffers from similar problem as MinGW,
+                             * i.e. C RTL falling behind compiler. Recall
+                             * that sizeof(size_t)==4 even in LP64 case. */
+# elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 #  define OSSLzu  "zu"
+# elif defined(__SIZEOF_SIZE_T__) && __SIZEOF_SIZE_T__==4
+#  define OSSLzu  "u"       /* 'lu' should have worked, but when generating
+                             * 32-bit code gcc still complains :-( */
 # else
-#  ifdef THIRTY_TWO_BIT
-#   define OSSLzu "u"
-#  else
-#   define OSSLzu PRIu64
-#  endif
+#  define OSSLzu  "lu"      /* To see that is works recall what does L
+                             * stand for in ILP32 and LP64 */
 # endif
 
 # if !defined(NDEBUG) && !defined(OPENSSL_NO_STDIO)
