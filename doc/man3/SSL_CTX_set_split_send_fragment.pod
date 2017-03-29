@@ -51,7 +51,7 @@ used (i.e. normal non-parallel operation). The number of pipelines set must be
 in the range 1 - SSL_MAX_PIPELINES (32). Setting this to a value > 1 will also
 automatically turn on "read_ahead" (see L<SSL_CTX_set_read_ahead(3)>). This is
 explained further below. OpenSSL will only every use more than one pipeline if
-a ciphersuite is negotiated that uses a pipeline capable cipher provided by an
+a cipher suite is negotiated that uses a pipeline capable cipher provided by an
 engine.
 
 Pipelining operates slightly differently for reading encrypted data compared to

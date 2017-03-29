@@ -52,52 +52,52 @@ option is not specified.
 
 =item B<-out filename>
 
-specifies the output filename to write to or standard output by
+Specifies the output filename to write to or standard output by
 default.
 
 =item B<-text>
 
-print out the CRL in text form.
+Print out the CRL in text form.
 
 =item B<-nameopt option>
 
-option which determines how the subject or issuer names are displayed. See
+Option which determines how the subject or issuer names are displayed. See
 the description of B<-nameopt> in L<x509(1)>.
 
 =item B<-noout>
 
-don't output the encoded version of the CRL.
+Don't output the encoded version of the CRL.
 
 =item B<-hash>
 
-output a hash of the issuer name. This can be use to lookup CRLs in
+Output a hash of the issuer name. This can be use to lookup CRLs in
 a directory by issuer name.
 
 =item B<-hash_old>
 
-outputs the "hash" of the CRL issuer name using the older algorithm
+Outputs the "hash" of the CRL issuer name using the older algorithm
 as used by OpenSSL versions before 1.0.0.
 
 =item B<-issuer>
 
-output the issuer name.
+Output the issuer name.
 
 =item B<-lastupdate>
 
-output the lastUpdate field.
+Output the lastUpdate field.
 
 =item B<-nextupdate>
 
-output the nextUpdate field.
+Output the nextUpdate field.
 
 =item B<-CAfile file>
 
-verify the signature on a CRL by looking up the issuing certificate in
-B<file>
+Verify the signature on a CRL by looking up the issuing certificate in
+B<file>.
 
 =item B<-CApath dir>
 
-verify the signature on a CRL by looking up the issuing certificate in
+Verify the signature on a CRL by looking up the issuing certificate in
 B<dir>. This directory must be a standard certificate directory: that
 is a hash of each subject name (using B<x509 -hash>) should be linked
 to each certificate.
@@ -132,7 +132,7 @@ L<crl2pkcs7(1)>, L<ca(1)>, L<x509(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

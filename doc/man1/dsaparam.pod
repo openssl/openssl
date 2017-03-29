@@ -58,25 +58,25 @@ as the input filename.
 
 =item B<-noout>
 
-this option inhibits the output of the encoded version of the parameters.
+This option inhibits the output of the encoded version of the parameters.
 
 =item B<-text>
 
-this option prints out the DSA parameters in human readable form.
+This option prints out the DSA parameters in human readable form.
 
 =item B<-C>
 
-this option converts the parameters into C code. The parameters can then
+This option converts the parameters into C code. The parameters can then
 be loaded by calling the get_dsaXXX() function.
 
 =item B<-genkey>
 
-this option will generate a DSA either using the specified or generated
+This option will generate a DSA either using the specified or generated
 parameters.
 
 =item B<-rand file(s)>
 
-a file or files containing random data used to seed the random number
+A file or files containing random data used to seed the random number
 generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
@@ -84,13 +84,13 @@ all others.
 
 =item B<numbits>
 
-this option specifies that a parameter set should be generated of size
+This option specifies that a parameter set should be generated of size
 B<numbits>. It must be the last option. If this option is included then
 the input file (if any) is ignored.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<dsaparam>
+Specifying an engine (by its unique B<id> string) will cause B<dsaparam>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -114,7 +114,7 @@ L<rsa(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

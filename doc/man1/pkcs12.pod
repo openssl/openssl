@@ -75,13 +75,13 @@ default.  They are all written in PEM format.
 
 =item B<-passin arg>
 
-the PKCS#12 file (i.e. input file) password source. For more information about
+The PKCS#12 file (i.e. input file) password source. For more information about
 the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
 L<openssl(1)>.
 
 =item B<-passout arg>
 
-pass phrase source to encrypt any outputted private keys with. For more
+Pass phrase source to encrypt any outputted private keys with. For more
 information about the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section
 in L<openssl(1)>.
 
@@ -92,65 +92,65 @@ Otherwise, -password is equivalent to -passin.
 
 =item B<-noout>
 
-this option inhibits output of the keys and certificates to the output file
+This option inhibits output of the keys and certificates to the output file
 version of the PKCS#12 file.
 
 =item B<-clcerts>
 
-only output client certificates (not CA certificates).
+Only output client certificates (not CA certificates).
 
 =item B<-cacerts>
 
-only output CA certificates (not client certificates).
+Only output CA certificates (not client certificates).
 
 =item B<-nocerts>
 
-no certificates at all will be output.
+No certificates at all will be output.
 
 =item B<-nokeys>
 
-no private keys will be output.
+No private keys will be output.
 
 =item B<-info>
 
-output additional information about the PKCS#12 file structure, algorithms used and
-iteration counts.
+Output additional information about the PKCS#12 file structure, algorithms
+used and iteration counts.
 
 =item B<-des>
 
-use DES to encrypt private keys before outputting.
+Use DES to encrypt private keys before outputting.
 
 =item B<-des3>
 
-use triple DES to encrypt private keys before outputting, this is the default.
+Use triple DES to encrypt private keys before outputting, this is the default.
 
 =item B<-idea>
 
-use IDEA to encrypt private keys before outputting.
+Use IDEA to encrypt private keys before outputting.
 
 =item B<-aes128>, B<-aes192>, B<-aes256>
 
-use AES to encrypt private keys before outputting.
+Use AES to encrypt private keys before outputting.
 
 =item B<-aria128>, B<-aria192>, B<-aria256>
 
-use ARIA to encrypt private keys before outputting.
+Use ARIA to encrypt private keys before outputting.
 
 =item B<-camellia128>, B<-camellia192>, B<-camellia256>
 
-use Camellia to encrypt private keys before outputting.
+Use Camellia to encrypt private keys before outputting.
 
 =item B<-nodes>
 
-don't encrypt the private keys at all.
+Don't encrypt the private keys at all.
 
 =item B<-nomacver>
 
-don't attempt to verify the integrity MAC before reading the file.
+Don't attempt to verify the integrity MAC before reading the file.
 
 =item B<-twopass>
 
-prompt for separate integrity and encryption passwords: most software
+Prompt for separate integrity and encryption passwords: most software
 always assumes these are the same so this option will render such
 PKCS#12 files unreadable.
 
@@ -179,7 +179,7 @@ certificates are present they will also be included in the PKCS#12 file.
 
 =item B<-inkey filename>
 
-file to read private key from. If not present then a private key must be present
+File to read private key from. If not present then a private key must be present
 in the input file.
 
 =item B<-name friendlyname>
@@ -200,31 +200,31 @@ displays them.
 
 =item B<-pass arg>, B<-passout arg>
 
-the PKCS#12 file (i.e. output file) password source. For more information about
+The PKCS#12 file (i.e. output file) password source. For more information about
 the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
 L<openssl(1)>.
 
 =item B<-passin password>
 
-pass phrase source to decrypt any input private keys with. For more information
+Pass phrase source to decrypt any input private keys with. For more information
 about the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
 L<openssl(1)>.
 
 =item B<-chain>
 
-if this option is present then an attempt is made to include the entire
+If this option is present then an attempt is made to include the entire
 certificate chain of the user certificate. The standard CA store is used
 for this search. If the search fails it is considered a fatal error.
 
 =item B<-descert>
 
-encrypt the certificate using triple DES, this may render the PKCS#12
+Encrypt the certificate using triple DES, this may render the PKCS#12
 file unreadable by some "export grade" software. By default the private
 key is encrypted using triple DES and the certificate using 40 bit RC2.
 
 =item B<-keypbe alg>, B<-certpbe alg>
 
-these options allow the algorithm used to encrypt the private key and
+These options allow the algorithm used to encrypt the private key and
 certificates to be selected. Any PKCS#5 v1.5 or PKCS#12 PBE algorithm name
 can be used (see B<NOTES> section for more information). If a cipher name
 (as output by the B<list-cipher-algorithms> command is specified then it
@@ -233,7 +233,7 @@ use PKCS#12 algorithms.
 
 =item B<-keyex|-keysig>
 
-specifies that the private key is to be used for key exchange or just signing.
+Specifies that the private key is to be used for key exchange or just signing.
 This option is only interpreted by MSIE and similar MS software. Normally
 "export grade" software will only allow 512 bit RSA keys to be used for
 encryption purposes but arbitrary length keys for signing. The B<-keysig>
@@ -244,11 +244,11 @@ the use of signing only keys for SSL client authentication.
 
 =item B<-macalg digest>
 
-specify the MAC digest algorithm. If not included them SHA1 will be used.
+Specify the MAC digest algorithm. If not included them SHA1 will be used.
 
 =item B<-nomaciter>, B<-noiter>
 
-these options affect the iteration counts on the MAC and key algorithms.
+These options affect the iteration counts on the MAC and key algorithms.
 Unless you wish to produce files compatible with MSIE 4.0 you should leave
 these options alone.
 
@@ -271,11 +271,11 @@ to be needed to use MAC iterations counts but they are now used by default.
 
 =item B<-nomac>
 
-don't attempt to provide the MAC integrity.
+Don't attempt to provide the MAC integrity.
 
 =item B<-rand file(s)>
 
-a file or files containing random data used to seed the random number
+A file or files containing random data used to seed the random number
 generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
@@ -293,15 +293,15 @@ linked to each certificate.
 
 =item B<-no-CAfile>
 
-Do not load the trusted CA certificates from the default file location
+Do not load the trusted CA certificates from the default file location.
 
 =item B<-no-CApath>
 
-Do not load the trusted CA certificates from the default directory location
+Do not load the trusted CA certificates from the default directory location.
 
 =item B<-CSP name>
 
-write B<name> as a Microsoft CSP name.
+Write B<name> as a Microsoft CSP name.
 
 =back
 

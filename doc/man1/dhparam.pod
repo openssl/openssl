@@ -84,7 +84,7 @@ default generator 2.
 
 =item B<-rand> I<file(s)>
 
-a file or files containing random data used to seed the random number
+A file or files containing random data used to seed the random number
 generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
@@ -92,7 +92,7 @@ all others.
 
 =item I<numbits>
 
-this option specifies that a parameter set should be generated of size
+This option specifies that a parameter set should be generated of size
 I<numbits>. It must be the last option. If this option is present then
 the input file is ignored and parameters are generated instead. If
 this option is not present but a generator (B<-2> or B<-5>) is
@@ -100,20 +100,20 @@ present, parameters are generated with a default length of 2048 bits.
 
 =item B<-noout>
 
-this option inhibits the output of the encoded version of the parameters.
+This option inhibits the output of the encoded version of the parameters.
 
 =item B<-text>
 
-this option prints out the DH parameters in human readable form.
+This option prints out the DH parameters in human readable form.
 
 =item B<-C>
 
-this option converts the parameters into C code. The parameters can then
+This option converts the parameters into C code. The parameters can then
 be loaded by calling the get_dhNNNN() function.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<dhparam>
+Specifying an engine (by its unique B<id> string) will cause B<dhparam>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -149,7 +149,7 @@ L<dsaparam(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

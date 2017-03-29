@@ -44,56 +44,56 @@ if this option is not specified.
 
 =item B<-out filename>
 
-specifies the output filename to write to or standard output by
+Specifies the output filename to write to or standard output by
 default.
 
 =item B<-inkey file>
 
-the input key file, by default it should be an RSA private key.
+The input key file, by default it should be an RSA private key.
 
 =item B<-keyform PEM|DER|ENGINE>
 
-the key format PEM, DER or ENGINE.
+The key format PEM, DER or ENGINE.
 
 =item B<-pubin>
 
-the input file is an RSA public key.
+The input file is an RSA public key.
 
 =item B<-certin>
 
-the input is a certificate containing an RSA public key.
+The input is a certificate containing an RSA public key.
 
 =item B<-sign>
 
-sign the input data and output the signed result. This requires
+Sign the input data and output the signed result. This requires
 an RSA private key.
 
 =item B<-verify>
 
-verify the input data and output the recovered data.
+Verify the input data and output the recovered data.
 
 =item B<-encrypt>
 
-encrypt the input data using an RSA public key.
+Encrypt the input data using an RSA public key.
 
 =item B<-decrypt>
 
-decrypt the input data using an RSA private key.
+Decrypt the input data using an RSA private key.
 
 =item B<-pkcs, -oaep, -ssl, -raw>
 
-the padding to use: PKCS#1 v1.5 (the default), PKCS#1 OAEP,
+The padding to use: PKCS#1 v1.5 (the default), PKCS#1 OAEP,
 special padding used in SSL v2 backwards compatible handshakes,
 or no padding, respectively.
 For signatures, only B<-pkcs> and B<-raw> can be used.
 
 =item B<-hexdump>
 
-hex dump the output data.
+Hex dump the output data.
 
 =item B<-asn1parse>
 
-asn1parse the output data, this is useful when combined with the
+Parse the ASN.1 output data, this is useful when combined with the
 B<-verify> option.
 
 =back
@@ -194,7 +194,7 @@ L<dgst(1)>, L<rsa(1)>, L<genrsa(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

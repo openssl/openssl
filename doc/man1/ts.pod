@@ -187,7 +187,6 @@ response. (Optional)
 This option specifies a previously created time stamp request in DER
 format that will be printed into the output file. Useful when you need
 to examine the content of a request in human-readable
-
 format. (Optional)
 
 =item B<-out> request.tsq
@@ -640,7 +639,7 @@ L<config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

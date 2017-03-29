@@ -249,11 +249,11 @@ a certificate is requested.
 
 =item B<-no-CAfile>
 
-Do not load the trusted CA certificates from the default file location
+Do not load the trusted CA certificates from the default file location.
 
 =item B<-no-CApath>
 
-Do not load the trusted CA certificates from the default directory location
+Do not load the trusted CA certificates from the default directory location.
 
 =item B<-verify depth>, B<-Verify depth>
 
@@ -263,12 +263,12 @@ the client. With the B<-verify> option a certificate is requested but the
 client does not have to send one, with the B<-Verify> option the client
 must supply a certificate or an error occurs.
 
-If the ciphersuite cannot request a client certificate (for example an
-anonymous ciphersuite or PSK) this option has no effect.
+If the cipher suite cannot request a client certificate (for example an
+anonymous cipher suite or PSK) this option has no effect.
 
 =item B<-nameopt option>
 
-option which determines how the subject or issuer names are displayed. The
+Option which determines how the subject or issuer names are displayed. The
 B<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<x509(1)> manual page for details.
@@ -313,11 +313,11 @@ File to send output of B<-msg> or B<-trace> to, default standard output.
 
 =item B<-nbio_test>
 
-Tests non blocking I/O
+Tests non blocking I/O.
 
 =item B<-nbio>
 
-Turns on non blocking I/O
+Turns on non blocking I/O.
 
 =item B<-crlf>
 
@@ -374,7 +374,7 @@ is also used via the B<-engine> option. For test purposes the dummy async engine
 The size used to split data for encrypt pipelines. If more data is written in
 one go than this value then it will be split into multiple pipelines, up to the
 maximum number of pipelines defined by max_pipelines. This only has an effect if
-a suitable ciphersuite has been negotiated, an engine that supports pipelining
+a suitable cipher suite has been negotiated, an engine that supports pipelining
 has been loaded, and max_pipelines is greater than 1. See
 L<SSL_CTX_set_split_send_fragment(3)> for further information.
 
@@ -382,7 +382,7 @@ L<SSL_CTX_set_split_send_fragment(3)> for further information.
 
 The maximum number of encrypt/decrypt pipelines to be used. This will only have
 an effect if an engine has been loaded that supports pipelining (e.g. the dasync
-engine) and a suitable ciphersuite has been negotiated. The default value is 1.
+engine) and a suitable cipher suite has been negotiated. The default value is 1.
 See L<SSL_CTX_set_max_pipelines(3)> for further information.
 
 =item B<-read_buf int>
@@ -418,7 +418,7 @@ output.
 =item B<-client_sigalgs sigalglist>
 
 Signature algorithms to support for client certificate authentication
-(colon-separated list)
+(colon-separated list).
 
 =item B<-named_curve curve>
 
@@ -533,13 +533,11 @@ OCSP Response stored in the file. The file must be in DER format.
 
 =item B<-alpn protocols>, B<-nextprotoneg protocols>
 
-these flags enable the 
-Enable the Application-Layer Protocol Negotiation or Next Protocol
-Negotiation extension, respectively. ALPN is the IETF standard and
-replaces NPN.
-The B<protocols> list is a
-comma-separated list of supported protocol names.
-The list should contain most wanted protocols first.
+These flags enable the Enable the Application-Layer Protocol Negotiation
+or Next Protocol Negotiation (NPN) extension, respectively. ALPN is the
+IETF standard and replaces NPN.
+The B<protocols> list is a comma-separated list of supported protocol
+names.  The list should contain the most desirable protocols first.
 Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
 
@@ -574,28 +572,28 @@ operations: these are listed below.
 
 =item B<q>
 
-end the current SSL connection but still accept new connections.
+End the current SSL connection but still accept new connections.
 
 =item B<Q>
 
-end the current SSL connection and exit.
+End the current SSL connection and exit.
 
 =item B<r>
 
-renegotiate the SSL session.
+Renegotiate the SSL session.
 
 =item B<R>
 
-renegotiate the SSL session and request a client certificate.
+Renegotiate the SSL session and request a client certificate.
 
 =item B<P>
 
-send some plain text down the underlying TCP connection: this should
+Send some plain text down the underlying TCP connection: this should
 cause the client to disconnect due to a protocol violation.
 
 =item B<S>
 
-print out some session cache status information.
+Print out some session cache status information.
 
 =back
 
@@ -642,7 +640,7 @@ The -no_alt_chains options was first added to OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
