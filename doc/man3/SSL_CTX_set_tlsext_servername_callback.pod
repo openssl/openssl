@@ -25,11 +25,11 @@ the servername extension received in the incoming connection. When B<cb>
 is NULL, SNI is not used. The B<arg> value is a pointer which is passed to
 the application callback.
 
-SSL_CTX_set_tlsext_servername_arg() set a context-specific argument to be
+SSL_CTX_set_tlsext_servername_arg() sets a context-specific argument to be
 passed into the callback for this B<SSL_CTX>.
 
 SSL_get_servername() returns a servername extension value of the specified
-type if provided in the Client Hello, or NULL.
+type if provided in the Client Hello or NULL.
 
 SSL_get_servername_type() returns the servername type or -1 if no servername
 is present. Currently the only supported type (defined in RFC3546) is
@@ -43,8 +43,7 @@ The servername callback is executed first, followed by the ALPN callback.
 =head1 RETURN VALUES
 
 SSL_CTX_set_tlsext_servername_callback() and
-SSL_CTX_set_tlsext_servername_arg() both return 1 on success, and always
-succeed.
+SSL_CTX_set_tlsext_servername_arg() both always return 1 indicating success.
 
 =head1 SEE ALSO
 
