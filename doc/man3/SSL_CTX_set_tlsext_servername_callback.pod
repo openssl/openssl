@@ -11,12 +11,11 @@ SSL_get_servername_type, SSL_get_servername - handle server name indication
  #include <openssl/ssl.h>
 
  long SSL_CTX_set_tlsext_servername_callback(SSL_CTX *ctx,
-                                   int (*cb)(SSL *, void *));
-
+                                   int (*cb)(SSL *, int *, void *));
  long SSL_CTX_set_tlsext_servername_arg(SSL_CTX *ctx, void *arg);
 
- long SSL_get_servername_type(SSL *s);
- long SSL_get_servername(SSL *s);
+ const char *SSL_get_servername(const SSL *s, const int type);
+ int SSL_get_servername_type(const SSL *s);
 
 =head1 DESCRIPTION
 
@@ -26,23 +25,31 @@ the servername extension received in the incoming connection. When B<cb>
 is NULL, SNI is not used. The B<arg> value is a pointer which is passed to
 the application callback.
 
-SSL_get_servername() returns a pointer to the selected server name for the 
-connection, SSL_get_servername_type() returns the type.
+SSL_CTX_set_tlsext_servername_arg() set a context-specific argument to be
+passed into the callback for this B<SSL_CTX>.
+
+SSL_get_servername() returns a servername extension value of the specified
+type if provided in the Client Hello, or NULL.
+
+SSL_get_servername_type() returns the servername type or -1 if no servername
+is present. Currently the only supported type (defined in RFC3546) is
+B<TLSEXT_NAMETYPE_host_name>.
 
 =head1 NOTES
 
-The ALPN callback is executed after the servername callback; as that servername
-callback may update the SSL_CTX, and subsequently, the ALPN callback.
+The ALPN and SNI callbacks are both executed during Client Hello processing.
+The servername callback is executed first, followed by the ALPN callback.
 
 =head1 RETURN VALUES
 
-SSL_CTX_set_alpn_protos() and SSL_set_alpn_protos() return 0 on success, and
-non-0 on failure. WARNING: these functions reverse the return value convention.
+SSL_CTX_set_tlsext_servername_callback() and
+SSL_CTX_set_tlsext_servername_arg() both return 1 on success, and always
+succeed.
 
 =head1 SEE ALSO
 
-L<ssl(7)>, L<SSL_CTX_set_tlsext_servername_callback(3)>,
-L<SSL_CTX_set_tlsext_servername_arg(3)>
+L<ssl(7)>, L<SSL_CTX_set_alpn_select_cb(3)>,
+L<SSL_get0_alpn_selected(3)>
 
 =head1 COPYRIGHT
 
