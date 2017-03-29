@@ -1042,8 +1042,8 @@ static char *hexencode(const unsigned char *data, size_t len)
     int ilen = (int) outlen;
 
     if (outlen < len || ilen < 0 || outlen != (size_t)ilen) {
-        BIO_printf(bio_err, "%s: %" PRIu64 "-byte buffer too large to hexencode\n",
-                   opt_getprog(), (uint64_t)len);
+        BIO_printf(bio_err, "%s: %zu-byte buffer too large to hexencode\n",
+                   opt_getprog(), len);
         exit(1);
     }
     cp = out = app_malloc(ilen, "TLSA hex data buffer");
