@@ -82,7 +82,7 @@ a TLS server needs a list of supported protocols for Next Protocol
 Negotiation. The returned list must be in protocol-list format, described
 below.  The list is
 returned by setting B<out> to point to it and B<outlen> to its length. This
-memory will not be modified, but one should assume that the B<SSL*> keeps a
+memory will not be modified, but the B<SSL> does keep a
 reference to it. The callback should return B<SSL_TLSEXT_ERR_OK> if it
 wishes to advertise. Otherwise, no such extension will be included in the
 ServerHello.
