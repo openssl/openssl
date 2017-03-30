@@ -8,7 +8,7 @@ SSL_SESSION_get0_hostname - retrieve the SNI hostname associated with a session
 
  #include <openssl/ssl.h>
 
- const char *SSL_SESSION_get0_hostname(const SSL_SESSSION *s);
+ const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s);
 
 =head1 DESCRIPTION
 

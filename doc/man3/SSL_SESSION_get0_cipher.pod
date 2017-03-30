@@ -8,7 +8,7 @@ SSL_SESSION_get0_cipher - retrieve the SSL cipher associated with a session
 
  #include <openssl/ssl.h>
 
- const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSSION *s);
+ const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSION *s);
 
 =head1 DESCRIPTION
 
