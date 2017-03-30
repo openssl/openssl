@@ -11,7 +11,7 @@
 -}
 IF[{- !$disabled{tests} -}]
   PROGRAMS_NO_INST=\
-          aborttest \
+          aborttest test_test \
           sanitytest exdatatest bntest \
           ectest ecdsatest ecdhtest gmdifftest pbelutest ideatest \
           md2test \
@@ -37,6 +37,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sanitytest]=sanitytest.c
   INCLUDE[sanitytest]=../include
   DEPEND[sanitytest]=../libcrypto
+
+  SOURCE[test_test]=test_test.c testutil.c test_main.c
+  INCLUDE[test_test]=.. ../include
+  DEPEND[test_test]=../libcrypto
 
   SOURCE[exdatatest]=exdatatest.c
   INCLUDE[exdatatest]=../include
@@ -253,7 +257,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[testutil.o]=..
   INCLUDE[ssl_test_ctx.o]=../include
   INCLUDE[handshake_helper.o]=../include
-  INCLUDE[ssltestlib.o]=../include
+  INCLUDE[ssltestlib.o]=.. ../include
 
   SOURCE[x509aux]=x509aux.c
   INCLUDE[x509aux]=../include
@@ -328,7 +332,7 @@ IF[{- !$disabled{tests} -}]
   # test routines.  Some of them need to reach internal symbols that aren't
   # available through the shared library (at least on Linux, Solaris, Windows
   # and VMS, where the exported symbols are those listed in util/*.num), these
-  # programs are forcebly linked with the static libraries, where all symbols
+  # programs are forcibly linked with the static libraries, where all symbols
   # are always available.  This excludes linking these programs natively on
   # Windows when building shared libraries, since the static libraries share
   # names with the DLL import libraries.

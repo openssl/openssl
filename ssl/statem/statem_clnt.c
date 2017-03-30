@@ -1983,7 +1983,7 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
         goto err;
     }
 
-    /* test non-zero pupkey */
+    /* test non-zero pubkey */
     if (BN_is_zero(bnpub_key)) {
         *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_SKE_DHE, SSL_R_BAD_DH_VALUE);
@@ -2978,7 +2978,7 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt, int *al)
         dgst_nid = NID_id_GostR3411_2012_256;
 
     /*
-     * Get server sertificate PKEY and create ctx from it
+     * Get server certificate PKEY and create ctx from it
      */
     peer_cert = s->session->peer;
     if (!peer_cert) {

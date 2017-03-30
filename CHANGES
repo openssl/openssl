@@ -4,6 +4,10 @@
 
  Changes between 1.1.0e and 1.1.1 [xx XXX xxxx]
 
+  *) Add the z modifier parsing to BIO_printf() et al formatting string,
+     to be used for size_t and ssize_t (ossl_ssize_t).
+     [Richard Levitte]
+
   *) Add EC_KEY_get0_engine(), which does for EC_KEY what RSA_get0_engine()
      does for RSA, etc.
      [Richard Levitte]
@@ -218,7 +222,7 @@
      to service a connection. This could lead to a Denial of Service through
      memory exhaustion. However, the excessive message length check still takes
      place, and this would cause the connection to immediately fail. Assuming
-     that the application calls SSL_free() on the failed conneciton in a timely
+     that the application calls SSL_free() on the failed connection in a timely
      manner then the 21Mb of allocated memory will then be immediately freed
      again. Therefore the excessive memory allocation will be transitory in
      nature. This then means that there is only a security impact if:
@@ -466,7 +470,7 @@
   *) Add X25519 support.
      Add ASN.1 and EVP_PKEY methods for X25519. This includes support
      for public and private key encoding using the format documented in
-     draft-ietf-curdle-pkix-02. The coresponding EVP_PKEY method supports
+     draft-ietf-curdle-pkix-02. The corresponding EVP_PKEY method supports
      key generation and key derivation.
 
      TLS support complies with draft-ietf-tls-rfc4492bis-08 and uses
@@ -971,7 +975,7 @@
      done while fixing the error code for the key-too-small case.
      [Annie Yousar <a.yousar@informatik.hu-berlin.de>]
 
-  *) CA.sh has been removmed; use CA.pl instead.
+  *) CA.sh has been removed; use CA.pl instead.
      [Rich Salz]
 
   *) Removed old DES API.

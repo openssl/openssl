@@ -153,25 +153,25 @@ a nonce is automatically added specifying B<no_nonce> overrides this.
 
 =item B<-req_text>, B<-resp_text>, B<-text>
 
-print out the text form of the OCSP request, response or both respectively.
+Print out the text form of the OCSP request, response or both respectively.
 
 =item B<-reqout file>, B<-respout file>
 
-write out the DER encoded certificate request or response to B<file>.
+Write out the DER encoded certificate request or response to B<file>.
 
 =item B<-reqin file>, B<-respin file>
 
-read OCSP request or response file from B<file>. These option are ignored
+Read OCSP request or response file from B<file>. These option are ignored
 if OCSP request or response creation is implied by other options (for example
 with B<serial>, B<cert> and B<host> options).
 
 =item B<-url responder_url>
 
-specify the responder URL. Both HTTP and HTTPS (SSL/TLS) URLs can be specified.
+Specify the responder URL. Both HTTP and HTTPS (SSL/TLS) URLs can be specified.
 
 =item B<-host hostname:port>, B<-path pathname>
 
-if the B<host> option is present then the OCSP request is sent to the host
+If the B<host> option is present then the OCSP request is sent to the host
 B<hostname> on port B<port>. B<path> specifies the HTTP path name to use
 or "/" by default.  This is equivalent to specifying B<-url> with scheme
 http:// and the given hostname, port, and pathname.
@@ -184,11 +184,11 @@ This may be repeated.
 
 =item B<-timeout seconds>
 
-connection timeout to the OCSP responder in seconds
+Connection timeout to the OCSP responder in seconds
 
 =item B<-CAfile file>, B<-CApath pathname>
 
-file or pathname containing trusted CA certificates. These are used to verify
+File or pathname containing trusted CA certificates. These are used to verify
 the signature on the OCSP response.
 
 =item B<-no-CAfile>
@@ -212,65 +212,66 @@ See L<verify(1)> manual page for details.
 
 =item B<-verify_other file>
 
-file containing additional certificates to search when attempting to locate
+File containing additional certificates to search when attempting to locate
 the OCSP response signing certificate. Some responders omit the actual signer's
 certificate from the response: this option can be used to supply the necessary
 certificate in such cases.
 
 =item B<-trust_other>
 
-the certificates specified by the B<-verify_other> option should be explicitly
+The certificates specified by the B<-verify_other> option should be explicitly
 trusted and no additional checks will be performed on them. This is useful
 when the complete responder certificate chain is not available or trusting a
 root CA is not appropriate.
 
 =item B<-VAfile file>
 
-file containing explicitly trusted responder certificates. Equivalent to the
+File containing explicitly trusted responder certificates. Equivalent to the
 B<-verify_other> and B<-trust_other> options.
 
 =item B<-noverify>
 
-don't attempt to verify the OCSP response signature or the nonce values. This
-option will normally only be used for debugging since it disables all verification
-of the responders certificate.
+Don't attempt to verify the OCSP response signature or the nonce
+values. This option will normally only be used for debugging since it
+disables all verification of the responders certificate.
 
 =item B<-no_intern>
 
-ignore certificates contained in the OCSP response when searching for the
+Ignore certificates contained in the OCSP response when searching for the
 signers certificate. With this option the signers certificate must be specified
 with either the B<-verify_other> or B<-VAfile> options.
 
 =item B<-no_signature_verify>
 
-don't check the signature on the OCSP response. Since this option tolerates invalid
-signatures on OCSP responses it will normally only be used for testing purposes.
+Don't check the signature on the OCSP response. Since this option
+tolerates invalid signatures on OCSP responses it will normally only be
+used for testing purposes.
 
 =item B<-no_cert_verify>
 
-don't verify the OCSP response signers certificate at all. Since this option allows
-the OCSP response to be signed by any certificate it should only be used for
-testing purposes.
+Don't verify the OCSP response signers certificate at all. Since this
+option allows the OCSP response to be signed by any certificate it should
+only be used for testing purposes.
 
 =item B<-no_chain>
 
-do not use certificates in the response as additional untrusted CA
+Do not use certificates in the response as additional untrusted CA
 certificates.
 
 =item B<-no_explicit>
 
-do not explicitly trust the root CA if it is set to be trusted for OCSP signing.
+Do not explicitly trust the root CA if it is set to be trusted for OCSP signing.
 
 =item B<-no_cert_checks>
 
-don't perform any additional checks on the OCSP response signers certificate.
+Don't perform any additional checks on the OCSP response signers certificate.
 That is do not make any checks to see if the signers certificate is authorised
 to provide the necessary status information: as a result this option should
 only be used for testing purposes.
 
 =item B<-validity_period nsec>, B<-status_age age>
 
-these options specify the range of times, in seconds, which will be tolerated
+These options specify the range of times, in seconds, which will be tolerated
 in an OCSP response. Each certificate status response includes a B<notBefore>
 time and an optional B<notAfter> time. The current time should fall between
 these two values, but the interval between the two times may be only a few
@@ -286,7 +287,7 @@ By default this additional check is not performed.
 
 =item B<-[digest]>
 
-this option sets digest algorithm to use for certificate identification in the
+This option sets digest algorithm to use for certificate identification in the
 OCSP request. Any digest supported by the OpenSSL B<dgst> command can be used.
 The default is SHA-1. This option may be used multiple times to specify the
 digest used by subsequent certificate identifiers.
@@ -299,16 +300,17 @@ digest used by subsequent certificate identifiers.
 
 =item B<-index indexfile>
 
-B<indexfile> is a text index file in B<ca> format containing certificate revocation
-information.
+The B<indexfile> parameter is the name of a text index file in B<ca>
+format containing certificate revocation information.
 
-If the B<index> option is specified the B<ocsp> utility is in responder mode, otherwise
-it is in client mode. The request(s) the responder processes can be either specified on
-the command line (using B<issuer> and B<serial> options), supplied in a file (using the
-B<reqin> option) or via external OCSP clients (if B<port> or B<url> is specified).
+If the B<index> option is specified the B<ocsp> utility is in responder
+mode, otherwise it is in client mode. The request(s) the responder
+processes can be either specified on the command line (using B<issuer>
+and B<serial> options), supplied in a file (using the B<reqin> option)
+or via external OCSP clients (if B<port> or B<url> is specified).
 
-If the B<index> option is present then the B<CA> and B<rsigner> options must also be
-present.
+If the B<index> option is present then the B<CA> and B<rsigner> options
+must also be present.
 
 =item B<-CA file>
 
@@ -328,17 +330,18 @@ Don't include any certificates in the OCSP response.
 
 =item B<-resp_key_id>
 
-Identify the signer certificate using the key ID, default is to use the subject name.
+Identify the signer certificate using the key ID, default is to use the
+subject name.
 
 =item B<-rkey file>
 
-The private key to sign OCSP responses with: if not present the file specified in the
-B<rsigner> option is used.
+The private key to sign OCSP responses with: if not present the file
+specified in the B<rsigner> option is used.
 
 =item B<-port portnum>
 
-Port to listen for OCSP requests on. The port may also be specified using the B<url>
-option.
+Port to listen for OCSP requests on. The port may also be specified
+using the B<url> option.
 
 =item B<-nrequest number>
 
@@ -346,9 +349,10 @@ The OCSP server will exit after receiving B<number> requests, default unlimited.
 
 =item B<-nmin minutes>, B<-ndays days>
 
-Number of minutes or days when fresh revocation information is available: used in the
-B<nextUpdate> field. If neither option is present then the B<nextUpdate> field
-is omitted meaning fresh revocation information is immediately available.
+Number of minutes or days when fresh revocation information is available:
+used in the B<nextUpdate> field. If neither option is present then the
+B<nextUpdate> field is omitted meaning fresh revocation information is
+immediately available.
 
 =back
 
@@ -456,7 +460,7 @@ The -no_alt_chains options was first added to OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

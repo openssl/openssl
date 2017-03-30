@@ -34,11 +34,11 @@ option is not specified.
 
 =item B<-out filename>
 
-specifies the output filename or standard output by default.
+Specifies the output filename or standard output by default.
 
 =item B<-toseq>
 
-normally a Netscape certificate sequence will be input and the output
+Normally a Netscape certificate sequence will be input and the output
 is the certificates contained in it. With the B<-toseq> option the
 situation is reversed: a Netscape certificate sequence is created from
 a file of certificates.
@@ -62,7 +62,7 @@ The B<PEM> encoded form uses the same headers and footers as a certificate:
  -----BEGIN CERTIFICATE-----
  -----END CERTIFICATE-----
 
-A Netscape certificate sequence is a Netscape specific form that can be sent
+A Netscape certificate sequence is a Netscape specific format that can be sent
 to browsers as an alternative to the standard PKCS#7 format when several
 certificates are sent to the browser: for example during certificate enrollment.
 It is used by Netscape certificate server for example.
@@ -74,7 +74,7 @@ output files and allowing multiple certificate files to be used.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

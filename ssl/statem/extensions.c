@@ -325,7 +325,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
  * Verify whether we are allowed to use the extension |type| in the current
  * |context|. Returns 1 to indicate the extension is allowed or unknown or 0 to
  * indicate the extension is not allowed. If returning 1 then |*found| is set to
- * 1 if we found a definition for the extension, and |*idx| is set to its index
+ * the definition for the extension we found.
  */
 static int verify_extension(SSL *s, unsigned int context, unsigned int type,
                             custom_ext_methods *meths, RAW_EXTENSION *rawexlist,

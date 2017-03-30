@@ -21,7 +21,7 @@ BN_rand, BN_pseudo_rand, BN_rand_range, BN_pseudo_rand_range - generate pseudo-r
 BN_rand() generates a cryptographically strong pseudo-random number of
 B<bits> in length and stores it in B<rnd>.
 If B<bits> is less than zero, or too small to
-accomodate the requirements specified by the B<top> and B<bottom>
+accommodate the requirements specified by the B<top> and B<bottom>
 parameters, an error is returned.
 The B<top> parameters specifies
 requirements on the most significant bit of the generated number.

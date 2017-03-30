@@ -259,6 +259,7 @@ DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 
 void err_cleanup(void)
 {
+    CRYPTO_THREAD_cleanup_local(&err_thread_local);
     CRYPTO_THREAD_lock_free(err_string_lock);
     err_string_lock = NULL;
 }

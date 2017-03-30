@@ -447,7 +447,7 @@ static int test_keylog_no_master_key(void) {
 
     /*
      * Now we want to test that our output data was vaguely sensible. For this
-     * test, we expect no CLIENT_RANDOM entry becuase it doesn't make sense for
+     * test, we expect no CLIENT_RANDOM entry because it doesn't make sense for
      * TLSv1.3, but we do expect both client and server to emit keys.
      */
     expected.client_handshake_secret_count = 1;
@@ -503,7 +503,7 @@ static int full_early_callback(SSL *s, int *al, void *arg)
     }
     len = SSL_early_get0_compression_methods(s, &p);
     if (len != 1 || *p != 0) {
-        printf("Early callback expected comperssion methods mismatch\n");
+        printf("Early callback expected compression methods mismatch\n");
         return 0;
     }
     return 1;
@@ -574,7 +574,7 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
     int certlen;
 
     if (certbio == NULL) {
-        printf("Can't load the certficate file\n");
+        printf("Can't load the certificate file\n");
         goto end;
     }
     chaincert = PEM_read_bio_X509(certbio, NULL, NULL, NULL);
@@ -603,7 +603,7 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
      * We assume the supplied certificate is big enough so that if we add
      * NUM_EXTRA_CERTS it will make the overall message large enough. The
      * default buffer size is requested to be 16k, but due to the way BUF_MEM
-     * works, it ends up allocing a little over 21k (16 * 4/3). So, in this test
+     * works, it ends up allocating a little over 21k (16 * 4/3). So, in this test
      * we need to have a message larger than that.
      */
     certlen = i2d_X509(chaincert, NULL);
@@ -860,11 +860,11 @@ static int test_tlsext_status_type(void)
 
     /*
      * We'll just use any old cert for this test - it doesn't have to be an OCSP
-     * specifc one. We'll use the server cert.
+     * specific one. We'll use the server cert.
      */
     certbio = BIO_new_file(cert, "r");
     if (certbio == NULL) {
-        printf("Can't load the certficate file\n");
+        printf("Can't load the certificate file\n");
         goto end;
     }
     id = OCSP_RESPID_new();
@@ -1246,7 +1246,7 @@ static int test_ssl_set_bio(int idx)
 
     /*
      * We want to maintain our own refs to these BIO, so do an up ref for each
-     * BIO that will have ownersip transferred in the SSL_set_bio() call
+     * BIO that will have ownership transferred in the SSL_set_bio() call
      */
     if (irbio != NULL)
         BIO_up_ref(irbio);
@@ -1342,7 +1342,7 @@ static int execute_test_ssl_bio(SSL_BIO_TEST_FIXTURE fix)
      */
     BIO_push(sslbio, membio1);
 
-    /* Verify chaning the rbio/wbio directly does not cause leaks */
+    /* Verify changing the rbio/wbio directly does not cause leaks */
     if (fix.change_bio != NO_BIO_CHANGE) {
         membio2 = BIO_new(BIO_s_mem());
         if (membio2 == NULL) {
@@ -1551,12 +1551,18 @@ static int test_set_sigalgs(int idx)
  * error.
  */
 static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
-                                SSL **serverssl, SSL_SESSION **sess)
+                                SSL **serverssl, SSL_SESSION **sess, int idx)
 {
     if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(), sctx,
                              cctx, cert, privkey)) {
         printf("Unable to create SSL_CTX pair\n");
         return 0;
+    }
+
+    /* When idx == 1 we repeat the tests with read_ahead set */
+    if (idx > 0) {
+        SSL_CTX_set_read_ahead(*cctx, 1);
+        SSL_CTX_set_read_ahead(*sctx, 1);
     }
 
     if (!create_ssl_objects(*sctx, *cctx, serverssl, clientssl, NULL, NULL)) {
@@ -1591,16 +1597,17 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
     return 1;
 }
 
-static int test_early_data_read_write(void)
+static int test_early_data_read_write(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
     SSL_SESSION *sess = NULL;
-    unsigned char buf[20];
-    size_t readbytes, written;
+    unsigned char buf[20], data[1024];
+    size_t readbytes, written, eoedlen, rawread, rawwritten;
+    BIO *rbio;
 
-    if (!setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl, &sess))
+    if (!setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl, &sess, idx))
         goto end;
 
     /* Write and read some early data */
@@ -1685,11 +1692,49 @@ static int test_early_data_read_write(void)
         goto end;
     }
 
+    /*
+     * At this point the client has written EndOfEarlyData, ClientFinished and
+     * normal (fully protected) data. We are going to cause a delay between the
+     * arrival of EndOfEarlyData and ClientFinished. We read out all the data
+     * in the read BIO, and then just put back the EndOfEarlyData message.
+     */
+    rbio = SSL_get_rbio(serverssl);
+    if (!BIO_read_ex(rbio, data, sizeof(data), &rawread)
+            || rawread >= sizeof(data)
+            || rawread < SSL3_RT_HEADER_LENGTH) {
+        printf("Failed reading data from rbio\n");
+        goto end;
+    }
+    /* Record length is in the 4th and 5th bytes of the record header */
+    eoedlen = SSL3_RT_HEADER_LENGTH + (data[3] << 8 | data[4]);
+    if (!BIO_write_ex(rbio, data, eoedlen, &rawwritten)
+            || rawwritten != eoedlen) {
+        printf("Failed to write the EndOfEarlyData message to server rbio\n");
+        goto end;
+    }
+
     /* Server should be told that there is no more early data */
     if (SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes)
                 != SSL_READ_EARLY_DATA_FINISH
             || readbytes != 0) {
         printf("Failed finishing read of early data\n");
+        goto end;
+    }
+
+    /* Push the ClientFinished and the normal data back into the server rbio */
+    if (!BIO_write_ex(rbio, data + eoedlen, rawread - eoedlen, &rawwritten)
+            || rawwritten != rawread - eoedlen) {
+        printf("Failed to write the ClientFinished and data to server rbio\n");
+        goto end;
+    }
+
+    /*
+     * Server has not finished init yet, so should still be able to write early
+     * data.
+     */
+    if (!SSL_write_early_data(serverssl, MSG6, strlen(MSG6), &written)
+            || written != strlen(MSG6)) {
+        printf("Failed writing early data message 6\n");
         goto end;
     }
 
@@ -1715,14 +1760,23 @@ static int test_early_data_read_write(void)
     ERR_clear_error();
 
     /*
-     * Make sure we process the NewSessionTicket. This arrives post-handshake
-     * so we must make sure we attempt a read - even though we don't expect to
-     * actually get any application data.
+     * Make sure we process the NewSessionTicket. This arrives post-handshake.
+     * We attempt a read which we do not expect to return any data.  Doesn't
+     * apply when read_ahead is in use - the ticket will get processed along
+     * with the application data in the second read below.
      */
-    if (SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)) {
+    if (idx == 0 && SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)) {
         printf("Unexpected success doing final client read\n");
         goto end;
     }
+    /* Client should be able to read the data sent by the server */
+    if (!SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)
+            || readbytes != strlen(MSG6)
+            || memcmp(MSG6, buf, strlen(MSG6))) {
+        printf("Failed reading message 6\n");
+        goto end;
+    }
+
 
     SSL_SESSION_free(sess);
     sess = SSL_get1_session(clientssl);
@@ -1810,7 +1864,7 @@ static int test_early_data_read_write(void)
     return testresult;
 }
 
-static int test_early_data_skip(void)
+static int test_early_data_skip(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -1824,7 +1878,7 @@ static int test_early_data_skip(void)
      * from a client where the early data is not acceptable.
      */
 
-    if (!setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl, &sess))
+    if (!setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl, &sess, idx))
         goto end;
 
     /*
@@ -1892,7 +1946,7 @@ static int test_early_data_skip(void)
     return testresult;
 }
 
-static int test_early_data_not_sent(void)
+static int test_early_data_not_sent(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -1906,7 +1960,7 @@ static int test_early_data_not_sent(void)
      * from a client that doesn't send any.
      */
 
-    if (!setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl, &sess))
+    if (!setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl, &sess, idx))
         goto end;
 
     /* Write some data - should block due to handshake with server */
@@ -1954,10 +2008,15 @@ static int test_early_data_not_sent(void)
         goto end;
     }
 
-    /* Should block due to the NewSessionTicket arrival */
-    if (SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)) {
-        printf("Unexpected success reading message 2\n");
-        goto end;
+    /*
+     * Should block due to the NewSessionTicket arrival unless we're using
+     * read_ahead
+     */
+    if (idx == 0) {
+        if (SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)) {
+            printf("Unexpected success reading message 2\n");
+            goto end;
+        }
     }
 
     if (!SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)
@@ -1981,7 +2040,7 @@ static int test_early_data_not_sent(void)
     return testresult;
 }
 
-static int test_early_data_not_expected(void)
+static int test_early_data_not_expected(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -1995,7 +2054,7 @@ static int test_early_data_not_expected(void)
      * client sending some.
      */
 
-    if (!setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl, &sess))
+    if (!setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl, &sess, idx))
         goto end;
 
     /* Write some early data */
@@ -2063,7 +2122,7 @@ static int test_early_data_not_expected(void)
 
 
 # ifndef OPENSSL_NO_TLS1_2
-static int test_early_data_tls1_2(void)
+static int test_early_data_tls1_2(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -2080,6 +2139,12 @@ static int test_early_data_tls1_2(void)
                              &cctx, cert, privkey)) {
         printf("Unable to create SSL_CTX pair\n");
         goto end;
+    }
+
+    /* When idx == 1 we repeat the tests with read_ahead set */
+    if (idx > 0) {
+        SSL_CTX_set_read_ahead(cctx, 1);
+        SSL_CTX_set_read_ahead(sctx, 1);
     }
 
     if (!create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL)) {
@@ -2211,12 +2276,12 @@ int test_main(int argc, char *argv[])
     ADD_TEST(test_early_cb);
 #endif
 #ifndef OPENSSL_NO_TLS1_3
-    ADD_TEST(test_early_data_read_write);
-    ADD_TEST(test_early_data_skip);
-    ADD_TEST(test_early_data_not_sent);
-    ADD_TEST(test_early_data_not_expected);
+    ADD_ALL_TESTS(test_early_data_read_write, 2);
+    ADD_ALL_TESTS(test_early_data_skip, 2);
+    ADD_ALL_TESTS(test_early_data_not_sent, 2);
+    ADD_ALL_TESTS(test_early_data_not_expected, 2);
 # ifndef OPENSSL_NO_TLS1_2
-    ADD_TEST(test_early_data_tls1_2);
+    ADD_ALL_TESTS(test_early_data_tls1_2, 2);
 # endif
 #endif
 

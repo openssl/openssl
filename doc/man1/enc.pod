@@ -54,47 +54,47 @@ List all supported ciphers.
 
 =item B<-in filename>
 
-the input filename, standard input by default.
+The input filename, standard input by default.
 
 =item B<-out filename>
 
-the output filename, standard output by default.
+The output filename, standard output by default.
 
 =item B<-pass arg>
 
-the password source. For more information about the format of B<arg>
+The password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-e>
 
-encrypt the input data: this is the default.
+Encrypt the input data: this is the default.
 
 =item B<-d>
 
-decrypt the input data.
+Decrypt the input data.
 
 =item B<-a>
 
-base64 process the data. This means that if encryption is taking place
+Base64 process the data. This means that if encryption is taking place
 the data is base64 encoded after encryption. If decryption is set then
 the input data is base64 decoded before being decrypted.
 
 =item B<-base64>
 
-same as B<-a>
+Same as B<-a>
 
 =item B<-A>
 
-if the B<-a> option is set then base64 process the data on one line.
+If the B<-a> option is set then base64 process the data on one line.
 
 =item B<-k password>
 
-the password to derive the key from. This is for compatibility with previous
+The password to derive the key from. This is for compatibility with previous
 versions of OpenSSL. Superseded by the B<-pass> argument.
 
 =item B<-kfile filename>
 
-read the password to derive the key from the first line of B<filename>.
+Read the password to derive the key from the first line of B<filename>.
 This is for compatibility with previous versions of OpenSSL. Superseded by
 the B<-pass> argument.
 
@@ -105,55 +105,55 @@ The default algorithm is sha-256.
 
 =item B<-nosalt>
 
-don't use a salt in the key derivation routines. This option B<SHOULD NOT> be
+Don't use a salt in the key derivation routines. This option B<SHOULD NOT> be
 used except for test purposes or compatibility with ancient versions of
 OpenSSL.
 
 =item B<-salt>
 
-use salt (randomly generated or provide with B<-S> option) when
-encrypting (this is the default).
+Use salt (randomly generated or provide with B<-S> option) when
+encrypting, this is the default.
 
 =item B<-S salt>
 
-the actual salt to use: this must be represented as a string of hex digits.
+The actual salt to use: this must be represented as a string of hex digits.
 
 =item B<-K key>
 
-the actual key to use: this must be represented as a string comprised only
+The actual key to use: this must be represented as a string comprised only
 of hex digits. If only the key is specified, the IV must additionally specified
 using the B<-iv> option. When both a key and a password are specified, the
 key given with the B<-K> option will be used and the IV generated from the
-password will be taken. It probably does not make much sense to specify
-both key and password.
+password will be taken. It does not make much sense to specify both key
+and password.
 
 =item B<-iv IV>
 
-the actual IV to use: this must be represented as a string comprised only
+The actual IV to use: this must be represented as a string comprised only
 of hex digits. When only the key is specified using the B<-K> option, the
 IV must explicitly be defined. When a password is being specified using
 one of the other options, the IV is generated from this password.
 
 =item B<-p>
 
-print out the key and IV used.
+Print out the key and IV used.
 
 =item B<-P>
 
-print out the key and IV used then immediately exit: don't do any encryption
+Print out the key and IV used then immediately exit: don't do any encryption
 or decryption.
 
 =item B<-bufsize number>
 
-set the buffer size for I/O
+Set the buffer size for I/O.
 
 =item B<-nopad>
 
-disable standard block padding
+Disable standard block padding.
 
 =item B<-debug>
 
-debug the BIOs used for I/O.
+Debug the BIOs used for I/O.
 
 =item B<-z>
 
@@ -170,18 +170,18 @@ Use NULL cipher (no encryption or decryption of input).
 =head1 NOTES
 
 The program can be called either as B<openssl ciphername> or
-B<openssl enc -ciphername>. But the first form doesn't work with
+B<openssl enc -ciphername>. The first form doesn't work with
 engine-provided ciphers, because this form is processed before the
 configuration file is read and any ENGINEs loaded.
 
-Engines which provide entirely new encryption algorithms (such as ccgost
+Engines which provide entirely new encryption algorithms (such as the ccgost
 engine which provides gost89 algorithm) should be configured in the
-configuration file. Engines, specified in the command line using -engine
+configuration file. Engines specified on the command line using -engine
 options can only be used for hardware-assisted implementations of
-ciphers, which are supported by OpenSSL core or other engine, specified
+ciphers which are supported by the OpenSSL core or another engine specified
 in the configuration file.
 
-When enc command lists supported ciphers, ciphers provided by engines,
+When the enc command lists supported ciphers, ciphers provided by engines,
 specified in the configuration files are listed too.
 
 A password will be prompted for to derive the key and IV if necessary.
@@ -199,12 +199,12 @@ encrypting a file and read from the encrypted file when it is decrypted.
 
 Some of the ciphers do not have large keys and others have security
 implications if not used correctly. A beginner is advised to just use
-a strong block cipher in CBC mode such as bf or des3.
+a strong block cipher, such as AES, in CBC mode.
 
-All the block ciphers normally use PKCS#5 padding also known as standard block
-padding: this allows a rudimentary integrity or password check to be
-performed. However since the chance of random data passing the test is
-better than 1 in 256 it isn't a very good test.
+All the block ciphers normally use PKCS#5 padding, also known as standard
+block padding. This allows a rudimentary integrity or password check to
+be performed. However since the chance of random data passing the test
+is better than 1 in 256 it isn't a very good test.
 
 If padding is disabled then the input data must be a multiple of the cipher
 block length.
@@ -218,7 +218,7 @@ Blowfish and RC5 algorithms use a 128 bit key.
 Note that some of these ciphers can be disabled at compile time
 and some are available only if an appropriate engine is configured
 in the configuration file. The output of the B<enc> command run with
-unsupported options (for example B<openssl enc -help>) includes a
+the B<-ciphers> option (that is B<openssl enc -ciphers>) produces a
 list of ciphers, supported by your version of OpenSSL, including
 ones provided by configured engines.
 
@@ -293,8 +293,18 @@ authentication tag.
  aes-[128|192|256]-cfb  128/192/256 bit AES in 128 bit CFB mode
  aes-[128|192|256]-cfb1 128/192/256 bit AES in 1 bit CFB mode
  aes-[128|192|256]-cfb8 128/192/256 bit AES in 8 bit CFB mode
+ aes-[128|192|256]-ctr  128/192/256 bit AES in CTR mode
  aes-[128|192|256]-ecb  128/192/256 bit AES in ECB mode
  aes-[128|192|256]-ofb  128/192/256 bit AES in OFB mode
+
+ camellia-[128|192|256]-cbc  128/192/256 bit Camellia in CBC mode
+ camellia[128|192|256]       Alias for camellia-[128|192|256]-cbc
+ camellia-[128|192|256]-cfb  128/192/256 bit Camellia in 128 bit CFB mode
+ camellia-[128|192|256]-cfb1 128/192/256 bit Camellia in 1 bit CFB mode
+ camellia-[128|192|256]-cfb8 128/192/256 bit Camellia in 8 bit CFB mode
+ camellia-[128|192|256]-ctr  128/192/256 bit Camellia in CTR mode
+ camellia-[128|192|256]-ecb  128/192/256 bit Camellia in ECB mode
+ camellia-[128|192|256]-ofb  128/192/256 bit Camellia in OFB mode
 
 =head1 EXAMPLES
 
@@ -343,7 +353,7 @@ The default digest was changed from MD5 to SHA256 in Openssl 1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

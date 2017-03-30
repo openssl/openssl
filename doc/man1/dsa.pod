@@ -73,7 +73,7 @@ prompted for.
 
 =item B<-passin arg>
 
-the input file password source. For more information about the format of B<arg>
+The input file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-out filename>
@@ -85,7 +85,7 @@ filename.
 
 =item B<-passout arg>
 
-the output file password source. For more information about the format of B<arg>
+The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-aes128|-aes192|-aes256|-aria128|-aria192|-aria256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea>
@@ -100,30 +100,30 @@ These options can only be used with PEM format output files.
 
 =item B<-text>
 
-prints out the public, private key components and parameters.
+Prints out the public, private key components and parameters.
 
 =item B<-noout>
 
-this option prevents output of the encoded version of the key.
+This option prevents output of the encoded version of the key.
 
 =item B<-modulus>
 
-this option prints out the value of the public key component of the key.
+This option prints out the value of the public key component of the key.
 
 =item B<-pubin>
 
-by default a private key is read from the input file: with this option a
+By default, a private key is read from the input file. With this option a
 public key is read instead.
 
 =item B<-pubout>
 
-by default a private key is output. With this option a public
+By default, a private key is output. With this option a public
 key will be output instead. This option is automatically set if the input is
 a public key.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<dsa>
+Specifying an engine (by its unique B<id> string) will cause B<dsa>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

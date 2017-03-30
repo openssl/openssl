@@ -78,7 +78,7 @@ If no callback is set, SCTs will not be requested and Certificate Transparency
 validation will not occur.
 
 No callback will be invoked when the peer presents no certificate, e.g. by
-employing an anonymous (aNULL) ciphersuite.
+employing an anonymous (aNULL) cipher suite.
 In that case the handshake continues as it would had no callback been
 requested.
 Callbacks are also not invoked when the peer certificate chain is invalid or

@@ -88,62 +88,50 @@ static int test_int_lhash(void)
     unsigned int i;
     int testresult = 0, j, *p;
 
-    if (h == NULL) {
-        fprintf(stderr, "test lhash int allocation\n");
+    if (!TEST_ptr(h))
         goto end;
-    }
 
     /* insert */
     for (i = 0; i < n_int_tests; i++)
-        if (lh_int_insert(h, int_tests + i) != NULL) {
-            fprintf(stderr, "test lhash int insert %d\n", i);
+        if (!TEST_ptr_null(lh_int_insert(h, int_tests + i))) {
+            TEST_info("int insert %d", i);
             goto end;
         }
 
     /* num_items */
-    if (lh_int_num_items(h) != n_int_tests) {
-            fprintf(stderr, "test lhash int num items\n");
-            goto end;
-    }
+    if (!TEST_int_eq(lh_int_num_items(h), n_int_tests))
+        goto end;
 
     /* retrieve */
     for (i = 0; i < n_int_tests; i++)
-        if (*lh_int_retrieve(h, int_tests + i) != int_tests[i]) {
-            fprintf(stderr, "test lhash int retrieve value %d\n", i);
+        if (!TEST_int_eq(*lh_int_retrieve(h, int_tests + i), int_tests[i])) {
+            TEST_info("lhash int retrieve value %d", i);
             goto end;
         }
     for (i = 0; i < n_int_tests; i++)
-        if (lh_int_retrieve(h, int_tests + i) != int_tests + i) {
-            fprintf(stderr, "test lhash int retrieve address %d\n", i);
+        if (!TEST_ptr_eq(lh_int_retrieve(h, int_tests + i), int_tests + i)) {
+            TEST_info("lhash int retrieve address %d", i);
             goto end;
         }
     j = 1;
-    if (lh_int_retrieve(h, &j) != int_tests + 2) {
-        fprintf(stderr, "test lhash int retrieve other\n");
+    if (!TEST_ptr_eq(lh_int_retrieve(h, &j), int_tests + 2))
         goto end;
-    }
 
     /* replace */
     j = 13;
-    if ((p = lh_int_insert(h, &j)) == NULL) {
-        fprintf(stderr, "test lhash int replacement insert\n");
+    if (!TEST_ptr(p = lh_int_insert(h, &j)))
         goto end;
-    }
-    if (p != int_tests + 1) {
-        fprintf(stderr, "test lhash int replacement pointer\n");
+    if (!TEST_ptr_eq(p, int_tests + 1))
         goto end;
-    }
-    if (lh_int_retrieve(h, int_tests + 1) != &j) {
-        fprintf(stderr, "test lhash int replacement variable\n");
+    if (!TEST_ptr_eq(lh_int_retrieve(h, int_tests + 1), &j))
         goto end;
-    }
 
     /* do_all */
     memset(int_found, 0, sizeof(int_found));
     lh_int_doall(h, &int_doall);
     for (i = 0; i < n_int_tests; i++)
-        if (int_found[i] != 1) {
-            fprintf(stderr, "test lhash int doall %d\n", i);
+        if (!TEST_int_eq(int_found[i], 1)) {
+            TEST_info("lhash int doall %d", i);
             goto end;
         }
     
@@ -151,25 +139,23 @@ static int test_int_lhash(void)
     memset(int_found, 0, sizeof(int_found));
     lh_int_doall_short(h, int_doall_arg, int_found);
     for (i = 0; i < n_int_tests; i++)
-        if (int_found[i] != 1) {
-            fprintf(stderr, "test lhash int doall arg %d\n", i);
+        if (!TEST_int_eq(int_found[i], 1)) {
+            TEST_info("lhash int doall arg %d", i);
             goto end;
         }
     
     /* delete */
     for (i = 0; i < n_dels; i++) {
         const int b = lh_int_delete(h, &dels[i].data) == NULL;
-        if ((b ^ dels[i].null) != 0) {
-            fprintf(stderr, "test lhash int delete %d\n", i);
+        if (!TEST_int_eq(b ^ dels[i].null,  0)) {
+            TEST_info("lhash int delete %d", i);
             goto end;
         }
     }
 
     /* error */
-    if (lh_int_error(h) != 0) {
-        fprintf(stderr, "test lhash int error\n");
+    if (!TEST_int_eq(lh_int_error(h), 0))
         goto end;
-    }
 
     testresult = 1;
 end:
@@ -189,16 +175,14 @@ static int test_stress(void)
     unsigned int i;
     int testresult = 0, *p;
 
-    if (h == NULL) {
-        fprintf(stderr, "test lhash stress allocation\n");
+    if (!TEST_ptr(h))
         goto end;
-    }
 
     /* insert */
     for (i = 0; i < n; i++) {
         p = OPENSSL_malloc(sizeof(i));
-        if (p == NULL) {
-            fprintf(stderr, "test lhash stress out of memory %d\n", i);
+        if (!TEST_ptr(p)) {
+            TEST_info("lhash stress out of memory %d", i);
             goto end;
         }
         *p = 3 * i + 1;
@@ -206,10 +190,8 @@ static int test_stress(void)
     }
 
     /* num_items */
-    if (lh_int_num_items(h) != n) {
-            fprintf(stderr, "test lhash stress num items\n");
+    if (!TEST_int_eq(lh_int_num_items(h), n))
             goto end;
-    }
 
     fprintf(stderr, "hash full statistics:\n");
     OPENSSL_LH_stats((OPENSSL_LHASH *)h, stderr);
@@ -220,12 +202,12 @@ static int test_stress(void)
     for (i = 0; i < n; i++) {
         const int j = (7 * i + 4) % n * 3 + 1;
 
-        if ((p = lh_int_delete(h, &j)) == NULL) {
-            fprintf(stderr, "test lhash stress delete %d\n", i);
+        if (!TEST_ptr(p = lh_int_delete(h, &j))) {
+            TEST_info("lhash stress delete %d\n", i);
             goto end;
         }
-        if (*p != j) {
-            fprintf(stderr, "test lhash stress bad value %d\n", i);
+        if (!TEST_int_eq(*p, j)) {
+            TEST_info("lhash stress bad value %d", i);
             goto end;
         }
         OPENSSL_free(p);

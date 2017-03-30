@@ -50,7 +50,7 @@ All these functions are implemented as macros.
 
 A context for the TLS PRF can be obtained by calling:
 
- EVP_PKEY_CTX *pctx = EVP_PKEY_new_id(EVP_PKEY_TLS1_PRF, NULL);
+ EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_TLS1_PRF, NULL);
 
 The digest, secret value and seed must be set before a key is derived or an
 error occurs.

@@ -269,20 +269,13 @@ static int test_record(SSL3_RECORD *rec, RECORD_DATA *recd, int enc)
     else
         refd = multihexstr2buf(recd->plaintext, &refdatalen);
 
-    if (refd == NULL) {
-        fprintf(stderr, "Failed to get reference data\n");
+    if (!TEST_ptr(refd)) {
+        TEST_info("Failed to get reference data");
         goto err;
     }
 
-    if (rec->length != refdatalen) {
-        fprintf(stderr, "Unexpected length\n");
+    if (!TEST_mem_eq(rec->data, rec->length, refd, refdatalen))
         goto err;
-    }
-
-    if (memcmp(rec->data, refd, refdatalen) != 0) {
-        fprintf(stderr, "Data does not match\n");
-        goto err;
-    }
 
     ret = 1;
 
@@ -306,27 +299,28 @@ static int test_tls13_encryption(void)
     rec.data = NULL;
 
     ctx = SSL_CTX_new(TLS_method());
-    if (ctx == NULL) {
-        fprintf(stderr, "Failed creating SSL_CTX\n");
+    if (!TEST_ptr(ctx)) {
+        TEST_info("Failed creating SSL_CTX");
         goto err;
     }
 
     s = SSL_new(ctx);
-    if (s == NULL) {
-        fprintf(stderr, "Failed creating SSL\n");
+    if (!TEST_ptr(s)) {
+        TEST_info("Failed creating SSL");
         goto err;
     }
 
     s->enc_read_ctx = EVP_CIPHER_CTX_new();
-    s->enc_write_ctx = EVP_CIPHER_CTX_new();
-    if (s->enc_read_ctx == NULL || s->enc_write_ctx == NULL) {
-        fprintf(stderr, "Failed creating EVP_CIPHER_CTX\n");
+    if (!TEST_ptr(s->enc_read_ctx))
         goto err;
-    }
+
+    s->enc_write_ctx = EVP_CIPHER_CTX_new();
+    if (!TEST_ptr(s->enc_write_ctx))
+        goto err;
 
     s->s3->tmp.new_cipher = SSL_CIPHER_find(s, TLS13_AES_128_GCM_SHA256_BYTES);
-    if (s->s3->tmp.new_cipher == NULL) {
-        fprintf(stderr, "Failed to find cipher\n");
+    if (!TEST_ptr(s->s3->tmp.new_cipher)) {
+        TEST_info("Failed to find cipher");
         goto err;
     }
 
@@ -335,7 +329,7 @@ static int test_tls13_encryption(void)
         ivlen = EVP_CIPHER_iv_length(ciph);
         if (!load_record(&rec, &refdata[ctr], &key, s->read_iv, ivlen,
                          RECORD_LAYER_get_read_sequence(&s->rlayer))) {
-            fprintf(stderr, "Failed loading key into EVP_CIPHER_CTX\n");
+            TEST_error("Failed loading key into EVP_CIPHER_CTX");
             goto err;
         }
 
@@ -348,27 +342,27 @@ static int test_tls13_encryption(void)
         if (EVP_CipherInit_ex(s->enc_write_ctx, ciph, NULL, key, NULL, 1) <= 0
                 || EVP_CipherInit_ex(s->enc_read_ctx, ciph, NULL, key, NULL, 0)
                    <= 0) {
-            fprintf(stderr, "Failed loading key into EVP_CIPHER_CTX\n");
+            TEST_error("Failed loading key into EVP_CIPHER_CTX\n");
             goto err;
         }
 
         /* Encrypt it */
-        if (tls13_enc(s, &rec, 1, 1) != 1) {
-            fprintf(stderr, "Failed to encrypt record %"OSSLzu"\n", ctr);
+        if (!TEST_size_t_eq(tls13_enc(s, &rec, 1, 1), 1)) {
+            TEST_info("Failed to encrypt record %"OSSLzu"", ctr);
             goto err;
         }
-        if (!test_record(&rec, &refdata[ctr], 1)) {
-            fprintf(stderr, "Record %"OSSLzu" encryption test failed\n", ctr);
+        if (!TEST_true(test_record(&rec, &refdata[ctr], 1))) {
+            TEST_info("Record %"OSSLzu" encryption test failed", ctr);
             goto err;
         }
 
         /* Decrypt it */
-        if (tls13_enc(s, &rec, 1, 0) != 1) {
-            fprintf(stderr, "Failed to decrypt record %"OSSLzu"\n", ctr);
+        if (!TEST_int_eq(tls13_enc(s, &rec, 1, 0), 1)) {
+            TEST_info("Failed to decrypt record %"OSSLzu"", ctr);
             goto err;
         }
-        if (!test_record(&rec, &refdata[ctr], 0)) {
-            fprintf(stderr, "Record %"OSSLzu" decryption test failed\n", ctr);
+        if (!TEST_true(test_record(&rec, &refdata[ctr], 0))) {
+            TEST_info("Record %"OSSLzu" decryption test failed", ctr);
             goto err;
         }
 

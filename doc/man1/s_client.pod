@@ -89,6 +89,8 @@ B<openssl> B<s_client>
 [B<-bugs>]
 [B<-comp>]
 [B<-no_comp>]
+[B<-sigalgs sigalglist>]
+[B<-curves curvelist>]
 [B<-cipher cipherlist>]
 [B<-serverpref>]
 [B<-starttls protocol>]
@@ -192,7 +194,7 @@ abort the handshake with a fatal error.
 
 =item B<-nameopt option>
 
-option which determines how the subject or issuer names are displayed. The
+Option which determines how the subject or issuer names are displayed. The
 B<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<x509(1)> manual page for details.
@@ -285,17 +287,17 @@ L<verify(1)> manual page for details.
 
 =item B<-reconnect>
 
-reconnects to the same server 5 times using the same session ID, this can
+Reconnects to the same server 5 times using the same session ID, this can
 be used as a test that session caching is working.
 
 =item B<-showcerts>
 
-display the whole server certificate chain: normally only the server
+Display the whole server certificate chain: normally only the server
 certificate itself is displayed.
 
 =item B<-prexit>
 
-print session information when the program exits. This will always attempt
+Print session information when the program exits. This will always attempt
 to print out information even if the connection fails. Normally information
 will only be printed out once if the connection succeeds. This option is useful
 because the cipher in use may be renegotiated or the connection may fail
@@ -306,51 +308,51 @@ established.
 
 =item B<-state>
 
-prints out the SSL session states.
+Prints out the SSL session states.
 
 =item B<-debug>
 
-print extensive debugging information including a hex dump of all traffic.
+Print extensive debugging information including a hex dump of all traffic.
 
 =item B<-msg>
 
-show all protocol messages with hex dump.
+Show all protocol messages with hex dump.
 
 =item B<-trace>
 
-show verbose trace output of protocol messages. OpenSSL needs to be compiled
+Show verbose trace output of protocol messages. OpenSSL needs to be compiled
 with B<enable-ssl-trace> for this option to work.
 
 =item B<-msgfile>
 
-file to send output of B<-msg> or B<-trace> to, default standard output.
+File to send output of B<-msg> or B<-trace> to, default standard output.
 
 =item B<-nbio_test>
 
-tests non-blocking I/O
+Tests non-blocking I/O
 
 =item B<-nbio>
 
-turns on non-blocking I/O
+Turns on non-blocking I/O
 
 =item B<-crlf>
 
-this option translated a line feed from the terminal into CR+LF as required
+This option translated a line feed from the terminal into CR+LF as required
 by some servers.
 
 =item B<-ign_eof>
 
-inhibit shutting down the connection when end of file is reached in the
+Inhibit shutting down the connection when end of file is reached in the
 input.
 
 =item B<-quiet>
 
-inhibit printing of session and certificate information.  This implicitly
+Inhibit printing of session and certificate information.  This implicitly
 turns on B<-ign_eof> as well.
 
 =item B<-no_ign_eof>
 
-shut down the connection when end of file is reached in the input.
+Shut down the connection when end of file is reached in the input.
 Can be used to override the implicit B<-ign_eof> after B<-quiet>.
 
 =item B<-psk_identity identity>
@@ -384,7 +386,7 @@ Send TLS_FALLBACK_SCSV in the ClientHello.
 
 =item B<-async>
 
-switch on asynchronous mode. Cryptographic operations will be performed
+Switch on asynchronous mode. Cryptographic operations will be performed
 asynchronously. This will only have an effect if an asynchronous capable engine
 is also used via the B<-engine> option. For test purposes the dummy async engine
 (dasync) can be used (if available).
@@ -394,7 +396,7 @@ is also used via the B<-engine> option. For test purposes the dummy async engine
 The size used to split data for encrypt pipelines. If more data is written in
 one go than this value then it will be split into multiple pipelines, up to the
 maximum number of pipelines defined by max_pipelines. This only has an effect if
-a suitable ciphersuite has been negotiated, an engine that supports pipelining
+a suitable cipher suite has been negotiated, an engine that supports pipelining
 has been loaded, and max_pipelines is greater than 1. See
 L<SSL_CTX_set_split_send_fragment(3)> for further information.
 
@@ -402,7 +404,7 @@ L<SSL_CTX_set_split_send_fragment(3)> for further information.
 
 The maximum number of encrypt/decrypt pipelines to be used. This will only have
 an effect if an engine has been loaded that supports pipelining (e.g. the dasync
-engine) and a suitable ciphersuite has been negotiated. The default value is 1.
+engine) and a suitable cipher suite has been negotiated. The default value is 1.
 See L<SSL_CTX_set_max_pipelines(3)> for further information.
 
 =item B<-read_buf int>
@@ -414,7 +416,7 @@ further information).
 
 =item B<-bugs>
 
-there are several known bug in SSL and TLS implementations. Adding this
+There are several known bug in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
 =item B<-comp>
@@ -432,19 +434,32 @@ OpenSSL 1.1.0.
 
 =item B<-brief>
 
-only provide a brief summary of connection parameters instead of the
+Only provide a brief summary of connection parameters instead of the
 normal verbose output.
+
+=item B<-sigalgs sigalglist>
+
+Specifies the list of signature algorithms that are sent by the client.
+The server selects one entry in the list based on its preferences.
+For example strings, see L<SSL_CTX_set1_sigalgs(3)>
+
+=item B<-curves curvelist>
+
+Specifies the list of supported curves to be sent by the client. The curve is
+is ultimately selected by the server. For a list of all curves, use:
+
+    $ openssl ecparam -list_curves
 
 =item B<-cipher cipherlist>
 
-this allows the cipher list sent by the client to be modified. Although
+This allows the cipher list sent by the client to be modified. Although
 the server determines which cipher suite is used it should take the first
 supported cipher in the list sent by the client. See the B<ciphers>
 command for more information.
 
 =item B<-starttls protocol>
 
-send the protocol-specific message(s) to switch to TLS for communication.
+Send the protocol-specific message(s) to switch to TLS for communication.
 B<protocol> is a keyword for the intended protocol.  Currently, the only
 supported keywords are "smtp", "pop3", "imap", "ftp", "xmpp", "xmpp-server",
 "irc", "postgres", "lmtp", "nntp", "sieve" and "ldap".
@@ -458,31 +473,31 @@ will be used.
 
 =item B<-tlsextdebug>
 
-print out a hex dump of any TLS extensions received from the server.
+Print out a hex dump of any TLS extensions received from the server.
 
 =item B<-no_ticket>
 
-disable RFC4507bis session ticket support.
+Disable RFC4507bis session ticket support.
 
 =item B<-sess_out filename>
 
-output SSL session to B<filename>
+Output SSL session to B<filename>.
 
 =item B<-sess_in sess.pem>
 
-load SSL session from B<filename>. The client will attempt to resume a
+Load SSL session from B<filename>. The client will attempt to resume a
 connection from this session.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<s_client>
+Specifying an engine (by its unique B<id> string) will cause B<s_client>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
 =item B<-rand file(s)>
 
-a file or files containing random data used to seed the random number
+A file or files containing random data used to seed the random number
 generator, or an EGD socket (see L<RAND_egd(3)>).
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
@@ -490,30 +505,28 @@ all others.
 
 =item B<-serverinfo types>
 
-a list of comma-separated TLS Extension Types (numbers between 0 and
+A list of comma-separated TLS Extension Types (numbers between 0 and
 65535).  Each type will be sent as an empty ClientHello TLS Extension.
 The server's response (if any) will be encoded and displayed as a PEM
 file.
 
 =item B<-status>
 
-sends a certificate status request to the server (OCSP stapling). The server
+Sends a certificate status request to the server (OCSP stapling). The server
 response (if any) is printed out.
 
 =item B<-alpn protocols>, B<-nextprotoneg protocols>
 
-these flags enable the 
-Enable the Application-Layer Protocol Negotiation or Next Protocol
-Negotiation extension, respectively. ALPN is the IETF standard and
-replaces NPN.
-The B<protocols> list is a
-comma-separated protocol names that the client should advertise
-support for. The list should contain most wanted protocols first.
-Protocol names are printable ASCII strings, for example "http/1.1" or
-"spdy/3".
-Empty list of protocols is treated specially and will cause the client to
-advertise support for the TLS extension but disconnect just after
-receiving ServerHello with a list of server supported protocols.
+These flags enable the Enable the Application-Layer Protocol Negotiation
+or Next Protocol Negotiation (NPN) extension, respectively. ALPN is the
+IETF standard and replaces NPN.
+The B<protocols> list is a comma-separated list of protocol names that
+the client should advertise support for. The list should contain the most
+desirable protocols first.  Protocol names are printable ASCII strings,
+for example "http/1.1" or "spdy/3".
+An empty list of protocols is treated specially and will cause the
+client to advertise support for the TLS extension but disconnect just
+after receiving ServerHello with a list of server supported protocols.
 
 =item B<-ct|noct>
 
@@ -614,7 +627,7 @@ The -no_alt_chains options was first added to OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

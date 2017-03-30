@@ -281,7 +281,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     unsigned char *gost_data = NULL;
 #endif
     int al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
-    int type = 0, j, pktype;
+    int type = 0, j;
     unsigned int len;
     X509 *peer;
     const EVP_MD *md = NULL;
@@ -303,7 +303,6 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    pktype = EVP_PKEY_id(pkey);
     type = X509_certificate_type(peer, pkey);
 
     if (!(type & EVP_PKT_SIGN)) {
@@ -384,6 +383,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
 #ifndef OPENSSL_NO_GOST
     {
+        int pktype = EVP_PKEY_id(pkey);
         if (pktype == NID_id_GostR3410_2001
             || pktype == NID_id_GostR3410_2012_256
             || pktype == NID_id_GostR3410_2012_512) {
@@ -1603,7 +1603,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
                 candidate_vers = TLS1_3_VERSION;
             /*
              * TODO(TLS1.3): There is some discussion on the TLS list about
-             * wheter to ignore versions <TLS1.2 in supported_versions. At the
+             * whether to ignore versions <TLS1.2 in supported_versions. At the
              * moment we honour them if present. To be reviewed later
              */
             if (version_cmp(s, candidate_vers, best_vers) <= 0)
@@ -1933,12 +1933,11 @@ int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
         if (group_id == share_id
                 && (!checkallow
                     || tls_curve_allowed(s, groups, SSL_SECOP_CURVE_CHECK))) {
-            break;
+            return 1;
         }
     }
 
-    /* If i == num_groups then not in the list */
-    return i < num_groups;
+    return 0;
 }
 #endif
 

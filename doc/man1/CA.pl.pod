@@ -42,28 +42,28 @@ by the use of some simple options.
 
 =item B<?>, B<-h>, B<-help>
 
-prints a usage message.
+Prints a usage message.
 
 =item B<-newcert>
 
-creates a new self signed certificate. The private key is written to the file
+Creates a new self signed certificate. The private key is written to the file
 "newkey.pem" and the request written to the file "newreq.pem".
 This argument invokes B<openssl req> command.
 
 =item B<-newreq>
 
-creates a new certificate request. The private key is written to the file
+Creates a new certificate request. The private key is written to the file
 "newkey.pem" and the request written to the file "newreq.pem".
 Executes B<openssl req> command below the hood.
 
 =item B<-newreq-nodes>
 
-is like B<-newreq> except that the private key will not be encrypted.
+Is like B<-newreq> except that the private key will not be encrypted.
 Uses B<openssl req> command.
 
 =item B<-newca>
 
-creates a new CA hierarchy for use with the B<ca> program (or the B<-signcert>
+Creates a new CA hierarchy for use with the B<ca> program (or the B<-signcert>
 and B<-xsign> options). The user is prompted to enter the filename of the CA
 certificates (which should also contain the private key) or by hitting ENTER
 details of the CA will be prompted for. The relevant files and directories
@@ -72,7 +72,7 @@ B<openssl req> and B<openssl ca> commands are get invoked.
 
 =item B<-pkcs12>
 
-create a PKCS#12 file containing the user certificate, private key and CA
+Create a PKCS#12 file containing the user certificate, private key and CA
 certificate. It expects the user certificate and private key to be in the
 file "newcert.pem" and the CA certificate to be in the file demoCA/cacert.pem,
 it creates a file "newcert.p12". This command can thus be called after the
@@ -84,31 +84,31 @@ Delegates work to B<openssl pkcs12> command.
 
 =item B<-sign>, B<-signcert>, B<-xsign>
 
-calls the B<ca> program to sign a certificate request. It expects the request
+Calls the B<ca> program to sign a certificate request. It expects the request
 to be in the file "newreq.pem". The new certificate is written to the file
 "newcert.pem" except in the case of the B<-xsign> option when it is written
 to standard output. Leverages B<openssl ca> command.
 
 =item B<-signCA>
 
-this option is the same as the B<-signreq> option except it uses the configuration
-file section B<v3_ca> and so makes the signed request a valid CA certificate. This
-is useful when creating intermediate CA from a root CA.
-Extra params are passed on to B<openssl ca> command.
+This option is the same as the B<-signreq> option except it uses the
+configuration file section B<v3_ca> and so makes the signed request a
+valid CA certificate. This is useful when creating intermediate CA from
+a root CA.  Extra params are passed on to B<openssl ca> command.
 
 =item B<-signcert>
 
-this option is the same as B<-sign> except it expects a self signed certificate
+This option is the same as B<-sign> except it expects a self signed certificate
 to be present in the file "newreq.pem".
 Extra params are passed on to B<openssl x509> and B<openssl ca> commands.
 
 =item B<-crl>
 
-generate a CRL. Executes B<openssl ca> command.
+Generate a CRL. Executes B<openssl ca> command.
 
 =item B<-revoke certfile [reason]>
 
-revoke the certificate contained in the specified B<certfile>. An optional
+Revoke the certificate contained in the specified B<certfile>. An optional
 reason may be specified, and must be one of: B<unspecified>,
 B<keyCompromise>, B<CACompromise>, B<affiliationChanged>, B<superseded>,
 B<cessationOfOperation>, B<certificateHold>, or B<removeFromCRL>.
@@ -116,9 +116,9 @@ Leverages B<openssl ca> command.
 
 =item B<-verify>
 
-verifies certificates against the CA certificate for "demoCA". If no certificates
-are specified on the command line it tries to verify the file "newcert.pem".
-Invokes B<openssl verify> command.
+Verifies certificates against the CA certificate for "demoCA". If no
+certificates are specified on the command line it tries to verify the file
+"newcert.pem".  Invokes B<openssl verify> command.
 
 =item B<-extra-req> | B<-extra-ca> | B<-extra-pkcs12> | B<-extra-x509> | B<-extra-verify> <extra-params>
 
@@ -204,7 +204,7 @@ L<config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

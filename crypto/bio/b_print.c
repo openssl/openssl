@@ -89,6 +89,7 @@ static int _dopr(char **sbuffer, char **buffer,
 #define DP_C_LONG       2
 #define DP_C_LDOUBLE    3
 #define DP_C_LLONG      4
+#define DP_C_SIZE       5
 
 /* Floating point formats */
 #define F_FORMAT        0
@@ -214,6 +215,10 @@ _dopr(char **sbuffer,
                 cflags = DP_C_LDOUBLE;
                 ch = *format++;
                 break;
+            case 'z':
+                cflags = DP_C_SIZE;
+                ch = *format++;
+                break;
             default:
                 break;
             }
@@ -232,6 +237,9 @@ _dopr(char **sbuffer,
                     break;
                 case DP_C_LLONG:
                     value = va_arg(args, LLONG);
+                    break;
+                case DP_C_SIZE:
+                    value = va_arg(args, ossl_ssize_t);
                     break;
                 default:
                     value = va_arg(args, int);
@@ -253,13 +261,16 @@ _dopr(char **sbuffer,
                     value = (unsigned short int)va_arg(args, unsigned int);
                     break;
                 case DP_C_LONG:
-                    value = (LLONG) va_arg(args, unsigned long int);
+                    value = (LLONG)va_arg(args, unsigned long int);
                     break;
                 case DP_C_LLONG:
                     value = va_arg(args, unsigned LLONG);
                     break;
+                case DP_C_SIZE:
+                    value = va_arg(args, size_t);
+                    break;
                 default:
-                    value = (LLONG) va_arg(args, unsigned int);
+                    value = (LLONG)va_arg(args, unsigned int);
                     break;
                 }
                 if (!fmtint(sbuffer, buffer, &currlen, maxlen, value,

@@ -79,15 +79,15 @@ create symbolic links to a directory of certificates.
 
 =item B<-no-CAfile>
 
-Do not load the trusted CA certificates from the default file location
+Do not load the trusted CA certificates from the default file location.
 
 =item B<-no-CApath>
 
-Do not load the trusted CA certificates from the default directory location
+Do not load the trusted CA certificates from the default directory location.
 
 =item B<-allow_proxy_certs>
 
-Allow the verification of proxy certificates
+Allow the verification of proxy certificates.
 
 =item B<-attime timestamp>
 
@@ -154,7 +154,7 @@ Set policy variable inhibit-policy-mapping (see RFC5280).
 
 =item B<-nameopt option>
 
-option which determines how the subject or issuer names are displayed. The
+Option which determines how the subject or issuer names are displayed. The
 B<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<x509(1)> manual page for details.
@@ -195,7 +195,7 @@ information.
 
 =item B<-suiteB_128_only>, B<-suiteB_128>, B<-suiteB_192>
 
-enable the Suite B mode operation at 128 bit Level of Security, 128 bit or
+Enable the Suite B mode operation at 128 bit Level of Security, 128 bit or
 192 bit, or only 192 bit Level of Security respectively.
 See RFC6460 for details. In particular the supported signature algorithms are
 reduced to support only ECDSA and SHA256 or SHA384 and only the elliptic curves
@@ -427,14 +427,15 @@ The CRL of a certificate could not be found.
 
 =item B<X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE>
 
-The certificate signature could not be decrypted. This means that the actual signature value
-could not be determined rather than it not matching the expected value, this is only
-meaningful for RSA keys.
+The certificate signature could not be decrypted. This means that the
+actual signature value could not be determined rather than it not matching
+the expected value, this is only meaningful for RSA keys.
 
 =item B<X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE>
 
-The CRL signature could not be decrypted: this means that the actual signature value
-could not be determined rather than it not matching the expected value. Unused.
+The CRL signature could not be decrypted: this means that the actual
+signature value could not be determined rather than it not matching the
+expected value. Unused.
 
 =item B<X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY>
 
@@ -450,11 +451,13 @@ The signature of the certificate is invalid.
 
 =item B<X509_V_ERR_CERT_NOT_YET_VALID>
 
-The certificate is not yet valid: the notBefore date is after the current time.
+The certificate is not yet valid: the notBefore date is after the
+current time.
 
 =item B<X509_V_ERR_CERT_HAS_EXPIRED>
 
-The certificate has expired: that is the notAfter date is before the current time.
+The certificate has expired: that is the notAfter date is before the
+current time.
 
 =item B<X509_V_ERR_CRL_NOT_YET_VALID>
 
@@ -486,13 +489,13 @@ An error occurred trying to allocate memory. This should never happen.
 
 =item B<X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT>
 
-The passed certificate is self-signed and the same certificate cannot be found in the list of
-trusted certificates.
+The passed certificate is self-signed and the same certificate cannot
+be found in the list of trusted certificates.
 
 =item B<X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN>
 
-The certificate chain could be built up using the untrusted certificates but the root could not
-be found locally.
+The certificate chain could be built up using the untrusted certificates
+but the root could not be found locally.
 
 =item B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY>
 
@@ -501,12 +504,13 @@ certificate of an untrusted certificate cannot be found.
 
 =item B<X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE>
 
-No signatures could be verified because the chain contains only one certificate and it is not
-self signed.
+No signatures could be verified because the chain contains only one
+certificate and it is not self signed.
 
 =item B<X509_V_ERR_CERT_CHAIN_TOO_LONG>
 
-The certificate chain length is greater than the supplied maximum depth. Unused.
+The certificate chain length is greater than the supplied maximum
+depth. Unused.
 
 =item B<X509_V_ERR_CERT_REVOKED>
 
@@ -514,8 +518,8 @@ The certificate has been revoked.
 
 =item B<X509_V_ERR_INVALID_CA>
 
-A CA certificate is invalid. Either it is not a CA or its extensions are not consistent
-with the supplied purpose.
+A CA certificate is invalid. Either it is not a CA or its extensions
+are not consistent with the supplied purpose.
 
 =item B<X509_V_ERR_PATH_LENGTH_EXCEEDED>
 
@@ -527,7 +531,7 @@ The supplied certificate cannot be used for the specified purpose.
 
 =item B<X509_V_ERR_CERT_UNTRUSTED>
 
-the root CA is not marked as trusted for the specified purpose.
+The root CA is not marked as trusted for the specified purpose.
 
 =item B<X509_V_ERR_CERT_REJECTED>
 
@@ -535,7 +539,7 @@ The root CA is marked to reject the specified purpose.
 
 =item B<X509_V_ERR_SUBJECT_ISSUER_MISMATCH>
 
-not used as of OpenSSL 1.1.0 as a result of the deprecation of the
+Not used as of OpenSSL 1.1.0 as a result of the deprecation of the
 B<-issuer_checks> option.
 
 =item B<X509_V_ERR_AKID_SKID_MISMATCH>
@@ -696,14 +700,15 @@ This error is only possible in L<s_client(1)>.
 
 =head1 BUGS
 
-Although the issuer checks are a considerable improvement over the old technique they still
-suffer from limitations in the underlying X509_LOOKUP API. One consequence of this is that
-trusted certificates with matching subject name must either appear in a file (as specified by the
-B<-CAfile> option) or a directory (as specified by B<-CApath>). If they occur in both then only
-the certificates in the file will be recognised.
+Although the issuer checks are a considerable improvement over the old
+technique they still suffer from limitations in the underlying X509_LOOKUP
+API. One consequence of this is that trusted certificates with matching
+subject name must either appear in a file (as specified by the B<-CAfile>
+option) or a directory (as specified by B<-CApath>). If they occur in
+both then only the certificates in the file will be recognised.
 
-Previous versions of OpenSSL assume certificates with matching subject name are identical and
-mishandled them.
+Previous versions of OpenSSL assume certificates with matching subject
+name are identical and mishandled them.
 
 Previous versions of this documentation swapped the meaning of the
 B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT> and
@@ -722,7 +727,7 @@ is silently ignored.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

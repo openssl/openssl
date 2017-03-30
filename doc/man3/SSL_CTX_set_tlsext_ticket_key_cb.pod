@@ -112,12 +112,12 @@ exactly as if a full negotiation had occurred.
 
 If an attacker can obtain the key used to encrypt a session ticket, they can
 obtain the master secret for any ticket using that key and decrypt any traffic
-using that session: even if the ciphersuite supports forward secrecy. As
+using that session: even if the cipher suite supports forward secrecy. As
 a result applications may wish to use multiple keys and avoid using long term
 keys stored in files.
 
 Applications can use longer keys to maintain a consistent level of security.
-For example if a ciphersuite uses 256 bit ciphers but only a 128 bit ticket key
+For example if a cipher suite uses 256 bit ciphers but only a 128 bit ticket key
 the overall security is only 128 bits because breaking the ticket key will
 enable an attacker to obtain the session keys.
 
