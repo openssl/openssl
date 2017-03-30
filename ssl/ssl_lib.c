@@ -4810,7 +4810,7 @@ int SSL_set_max_early_data(SSL *s, uint32_t max_early_data)
     return 1;
 }
 
-uint32_t SSL_get_max_early_data(const SSL_CTX *s)
+uint32_t SSL_get_max_early_data(const SSL *s)
 {
     return s->max_early_data;
 }
