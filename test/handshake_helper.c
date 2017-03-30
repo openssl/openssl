@@ -208,7 +208,7 @@ static int early_select_server_ctx(SSL *s, void *arg, int ignore)
  *  actions: either abort the handshake by sending a fatal-level
  *  unrecognized_name(112) alert or continue the handshake.
  *
- * This behaviour is up to the application to configure; we test both
+ * This behavior is up to the application to configure; we test both
  * configurations to ensure the state machine propagates the result
  * correctly.
  */
@@ -855,7 +855,7 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
         if (!SSL_renegotiate_pending(peer->ssl)) {
             /*
              * If we are the client we will always attempt to resume the
-             * session. The server may or may not resume dependant on the
+             * session. The server may or may not resume dependent on the
              * setting of SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
              */
             if (SSL_is_server(peer->ssl)) {

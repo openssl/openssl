@@ -61,7 +61,7 @@ int tls_parse_ctos_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
  *   to allow the application to position itself to the right context.
  * - The servername is acknowledged if it is new for a session or when
  *   it is identical to a previously used for the same session.
- *   Applications can control the behaviour.  They can at any time
+ *   Applications can control the behavior.  They can at any time
  *   set a 'desirable' servername for a new SSL object. This can be the
  *   case for example with HTTPS when a Host: header field is received and
  *   a renegotiation is requested. In this case, a possible servername
@@ -89,7 +89,7 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
     /*
      * Although the server_name extension was intended to be
      * extensible to new name types, RFC 4366 defined the
-     * syntax inextensibly and OpenSSL 1.0.x parses it as
+     * syntax extensibility and OpenSSL 1.0.x parses it as
      * such.
      * RFC 6066 corrected the mistake but adding new name types
      * is nevertheless no longer feasible, so act as if no other

@@ -1891,7 +1891,7 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
          */
 
         /*
-         * We have non-blocking behaviour throughout this test program, but
+         * We have non-blocking behavior throughout this test program, but
          * can be sure that there is *some* progress in each iteration; so we
          * don't have to worry about ..._SHOULD_READ or ..._SHOULD_WRITE --
          * we just try everything in each iteration
@@ -2144,7 +2144,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
          * Useful functions for querying the state of BIO pair endpoints:
          *
          * BIO_ctrl_pending(bio)              number of bytes we can read now
-         * BIO_ctrl_get_read_request(bio)     number of bytes needed to fulfil
+         * BIO_ctrl_get_read_request(bio)     number of bytes needed to fulfill
          *                                      other side's read attempt
          * BIO_ctrl_get_write_guarantee(bio)   number of bytes we can write now
          *
