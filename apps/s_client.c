@@ -2403,7 +2403,7 @@ int s_client_main(int argc, char **argv)
         else
             timeoutp = NULL;
 
-        if (SSL_in_init(con) && !SSL_total_renegotiations(con)
+        if (!SSL_is_init_finished(con) && SSL_total_renegotiations(con) == 0
                 && SSL_get_key_update_type(con) == SSL_KEY_UPDATE_NONE) {
             in_init = 1;
             tty_on = 0;
