@@ -1721,13 +1721,6 @@ static int test_early_data_read_write(int idx)
         goto end;
     }
 
-    /* Push the ClientFinished and the normal data back into the server rbio */
-    if (!BIO_write_ex(rbio, data + eoedlen, rawread - eoedlen, &rawwritten)
-            || rawwritten != rawread - eoedlen) {
-        printf("Failed to write the ClientFinished and data to server rbio\n");
-        goto end;
-    }
-
     /*
      * Server has not finished init yet, so should still be able to write early
      * data.
@@ -1735,6 +1728,13 @@ static int test_early_data_read_write(int idx)
     if (!SSL_write_early_data(serverssl, MSG6, strlen(MSG6), &written)
             || written != strlen(MSG6)) {
         printf("Failed writing early data message 6\n");
+        goto end;
+    }
+
+    /* Push the ClientFinished and the normal data back into the server rbio */
+    if (!BIO_write_ex(rbio, data + eoedlen, rawread - eoedlen, &rawwritten)
+            || rawwritten != rawread - eoedlen) {
+        printf("Failed to write the ClientFinished and data to server rbio\n");
         goto end;
     }
 
@@ -1759,16 +1759,6 @@ static int test_early_data_read_write(int idx)
     }
     ERR_clear_error();
 
-    /*
-     * Make sure we process the NewSessionTicket. This arrives post-handshake.
-     * We attempt a read which we do not expect to return any data.  Doesn't
-     * apply when read_ahead is in use - the ticket will get processed along
-     * with the application data in the second read below.
-     */
-    if (idx == 0 && SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)) {
-        printf("Unexpected success doing final client read\n");
-        goto end;
-    }
     /* Client should be able to read the data sent by the server */
     if (!SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)
             || readbytes != strlen(MSG6)
@@ -1776,7 +1766,14 @@ static int test_early_data_read_write(int idx)
         printf("Failed reading message 6\n");
         goto end;
     }
-
+    /*
+     * Make sure we process the NewSessionTicket. This arrives post-handshake.
+     * We attempt a read which we do not expect to return any data.
+     */
+    if (SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)) {
+        printf("Unexpected success doing final client read\n");
+        goto end;
+    }
 
     SSL_SESSION_free(sess);
     sess = SSL_get1_session(clientssl);
