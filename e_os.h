@@ -42,6 +42,10 @@ extern "C" {
                              * non-compliant MSVCRT.DLL... */
 # elif defined(_WIN32)
 #  define OSSLzu  "u"
+# elif defined(__VMS)
+#  define OSSLzu  "u"       /* VMS suffers from similar problem as MinGW,
+                             * i.e. C RTL falling behind compiler. Recall
+			     * that sizeof(size_t)==4 even in LP64 VMS. */
 # elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 #  define OSSLzu  "zu"
 # elif defined(__SIZEOF_SIZE_T__) && __SIZEOF_SIZE_T__==4
