@@ -1603,8 +1603,9 @@ static int test_early_data_read_write(int idx)
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
     SSL_SESSION *sess = NULL;
-    unsigned char buf[20];
-    size_t readbytes, written;
+    unsigned char buf[20], data[1024];
+    size_t readbytes, written, eoedlen, rawread, rawwritten;
+    BIO *rbio;
 
     if (!setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl, &sess, idx))
         goto end;
@@ -1691,11 +1692,49 @@ static int test_early_data_read_write(int idx)
         goto end;
     }
 
+    /*
+     * At this point the client has written EndOfEarlyData, ClientFinished and
+     * normal (fully protected) data. We are going to cause a delay between the
+     * arrival of EndOfEarlyData and ClientFinished. We read out all the data
+     * in the read BIO, and then just put back the EndOfEarlyData message.
+     */
+    rbio = SSL_get_rbio(serverssl);
+    if (!BIO_read_ex(rbio, data, sizeof(data), &rawread)
+            || rawread >= sizeof(data)
+            || rawread < SSL3_RT_HEADER_LENGTH) {
+        printf("Failed reading data from rbio\n");
+        goto end;
+    }
+    /* Record length is in the 4th and 5th bytes of the record header */
+    eoedlen = SSL3_RT_HEADER_LENGTH + (data[3] << 8 | data[4]);
+    if (!BIO_write_ex(rbio, data, eoedlen, &rawwritten)
+            || rawwritten != eoedlen) {
+        printf("Failed to write the EndOfEarlyData message to server rbio\n");
+        goto end;
+    }
+
     /* Server should be told that there is no more early data */
     if (SSL_read_early_data(serverssl, buf, sizeof(buf), &readbytes)
                 != SSL_READ_EARLY_DATA_FINISH
             || readbytes != 0) {
         printf("Failed finishing read of early data\n");
+        goto end;
+    }
+
+    /* Push the ClientFinished and the normal data back into the server rbio */
+    if (!BIO_write_ex(rbio, data + eoedlen, rawread - eoedlen, &rawwritten)
+            || rawwritten != rawread - eoedlen) {
+        printf("Failed to write the ClientFinished and data to server rbio\n");
+        goto end;
+    }
+
+    /*
+     * Server has not finished init yet, so should still be able to write early
+     * data.
+     */
+    if (!SSL_write_early_data(serverssl, MSG6, strlen(MSG6), &written)
+            || written != strlen(MSG6)) {
+        printf("Failed writing early data message 6\n");
         goto end;
     }
 
@@ -1721,14 +1760,23 @@ static int test_early_data_read_write(int idx)
     ERR_clear_error();
 
     /*
-     * Make sure we process the NewSessionTicket. This arrives post-handshake
-     * so we must make sure we attempt a read - even though we don't expect to
-     * actually get any application data.
+     * Make sure we process the NewSessionTicket. This arrives post-handshake.
+     * We attempt a read which we do not expect to return any data.  Doesn't
+     * apply when read_ahead is in use - the ticket will get processed along
+     * with the application data in the second read below.
      */
-    if (SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)) {
+    if (idx == 0 && SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)) {
         printf("Unexpected success doing final client read\n");
         goto end;
     }
+    /* Client should be able to read the data sent by the server */
+    if (!SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)
+            || readbytes != strlen(MSG6)
+            || memcmp(MSG6, buf, strlen(MSG6))) {
+        printf("Failed reading message 6\n");
+        goto end;
+    }
+
 
     SSL_SESSION_free(sess);
     sess = SSL_get1_session(clientssl);
