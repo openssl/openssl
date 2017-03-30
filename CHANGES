@@ -6,7 +6,7 @@
 
   *) Add the 'z' and 'j' modifiers to BIO_printf() et al formatting string,
      'z' is to be used for [s]size_t, and 'j' - with [u]int64_t.
-     [Richard Levitte, Andt Polyakov]
+     [Richard Levitte, Andy Polyakov]
 
   *) Add EC_KEY_get0_engine(), which does for EC_KEY what RSA_get0_engine()
      does for RSA, etc.
