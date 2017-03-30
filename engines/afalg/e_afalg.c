@@ -236,15 +236,11 @@ int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
     memset(cb, '\0', sizeof(*cb));
     cb->aio_fildes = sfd;
     cb->aio_lio_opcode = IOCB_CMD_PREAD;
-    if (sizeof(buf) != sizeof(cb->aio_buf)) {
-        /*
-         * The pointer has to be converted to 32 bit unsigned value first
-         * to avoid sign extension on cast to 64 bit value
-         */
-        cb->aio_buf = (uint64_t)(unsigned long)buf;
-    } else {
-        cb->aio_buf = (uint64_t)buf;
-    }
+    /*
+     * The pointer has to be converted to unsigned value first to avoid
+     * sign extension on cast to 64 bit value in 32-bit builds
+     */
+    cb->aio_buf = (size_t)buf;
     cb->aio_offset = 0;
     cb->aio_data = 0;
     cb->aio_nbytes = len;
@@ -364,9 +360,9 @@ static int afalg_create_sk(afalg_ctx *actx, const char *ciphertype,
                                 const char *ciphername)
 {
     struct sockaddr_alg sa;
+    int r = -1;
 
     actx->bfd = actx->sfd = -1;
-    int r = -1;
 
     memset(&sa, 0, sizeof(sa));
     sa.salg_family = AF_ALG;
