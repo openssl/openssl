@@ -1829,6 +1829,7 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
         s->early_data_state = SSL_EARLY_DATA_WRITE_RETRY;
         return ret;
 
+    case SSL_EARLY_DATA_FINISHED_READING:
     case SSL_EARLY_DATA_READ_RETRY:
         /* We are a server writing to an unauthenticated client */
         s->early_data_state = SSL_EARLY_DATA_UNAUTH_WRITING;
