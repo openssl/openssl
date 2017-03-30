@@ -367,7 +367,13 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
 
     s->rlayer.wnum = 0;
 
-    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(s)) {
+    /*
+     * When writing early data on the server side we could be "in_init" in
+     * between receiving the EoED and the CF - but we don't want to handle those
+     * messages yet.
+     */
+    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(s)
+            && s->early_data_state != SSL_EARLY_DATA_UNAUTH_WRITING) {
         i = s->handshake_func(s);
         if (i < 0)
             return i;
