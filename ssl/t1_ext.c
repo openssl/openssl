@@ -237,8 +237,11 @@ int SSL_extension_supported(unsigned int ext_type)
     switch (ext_type) {
         /* Internally supported extensions. */
     case TLSEXT_TYPE_application_layer_protocol_negotiation:
+#ifndef OPENSSL_NO_EC
     case TLSEXT_TYPE_ec_point_formats:
     case TLSEXT_TYPE_supported_groups:
+    case TLSEXT_TYPE_key_share:
+#endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     case TLSEXT_TYPE_next_proto_neg:
 #endif
@@ -247,16 +250,26 @@ int SSL_extension_supported(unsigned int ext_type)
     case TLSEXT_TYPE_server_name:
     case TLSEXT_TYPE_session_ticket:
     case TLSEXT_TYPE_signature_algorithms:
+#ifndef OPENSSL_NO_SRP
     case TLSEXT_TYPE_srp:
-    case TLSEXT_TYPE_status_request:
-    case TLSEXT_TYPE_signed_certificate_timestamp:
-    case TLSEXT_TYPE_use_srtp:
-#ifdef TLSEXT_TYPE_encrypt_then_mac
-    case TLSEXT_TYPE_encrypt_then_mac:
 #endif
-    case TLSEXT_TYPE_key_share:
+#ifndef OPENSSL_NO_OCSP
+    case TLSEXT_TYPE_status_request:
+#endif
+#ifndef OPENSSL_NO_CT
+    case TLSEXT_TYPE_signed_certificate_timestamp:
+#endif
+#ifndef OPENSSL_NO_SRTP
+    case TLSEXT_TYPE_use_srtp:
+#endif
+    case TLSEXT_TYPE_encrypt_then_mac:
     case TLSEXT_TYPE_supported_versions:
     case TLSEXT_TYPE_extended_master_secret:
+    case TLSEXT_TYPE_psk_kex_modes:
+    case TLSEXT_TYPE_cookie:
+    case TLSEXT_TYPE_early_data:
+    case TLSEXT_TYPE_certificate_authorities:
+    case TLSEXT_TYPE_psk:
         return 1;
     default:
         return 0;
