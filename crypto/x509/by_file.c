@@ -191,7 +191,9 @@ int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type)
     STACK_OF(X509_INFO) *inf;
     X509_INFO *itmp;
     BIO *in;
-    int i, count = 0;
+    int i, ret = 0, count = 0;
+    unsigned long error;
+
     if (type != X509_FILETYPE_PEM)
         return X509_load_cert_file(ctx, file, type);
     in = BIO_new_file(file, "r");
@@ -208,14 +210,28 @@ int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type)
     for (i = 0; i < sk_X509_INFO_num(inf); i++) {
         itmp = sk_X509_INFO_value(inf, i);
         if (itmp->x509) {
-            X509_STORE_add_cert(ctx->store_ctx, itmp->x509);
+            if (!X509_STORE_add_cert(ctx->store_ctx, itmp->x509)) {
+                error = ERR_peek_last_error();
+                if (ERR_GET_LIB(error) != ERR_LIB_X509 ||
+                    ERR_GET_REASON(error) != X509_R_CERT_ALREADY_IN_HASH_TABLE)
+                    goto err;
+                ERR_clear_error();
+            }
             count++;
         }
         if (itmp->crl) {
-            X509_STORE_add_crl(ctx->store_ctx, itmp->crl);
+            if (!X509_STORE_add_crl(ctx->store_ctx, itmp->crl)) {
+                error = ERR_peek_last_error();
+                if (ERR_GET_LIB(error) != ERR_LIB_X509 ||
+                    ERR_GET_REASON(error) != X509_R_CERT_ALREADY_IN_HASH_TABLE)
+                    goto err;
+                ERR_clear_error();
+            }
             count++;
         }
     }
+    ret = count;
+err:
     sk_X509_INFO_pop_free(inf, X509_INFO_free);
-    return count;
+    return ret;
 }
