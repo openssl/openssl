@@ -10,6 +10,11 @@
 #ifndef HEADER_AFALG_H
 # define HEADER_AFALG_H
 
+# if defined(__GNUC__) && __GNUC__ >= 4 && \
+     (!defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L)
+#  pragma GCC diagnostic ignored "-Wvariadic-macros"
+# endif
+
 # ifdef ALG_DEBUG
 #  define ALG_DGB(x, ...) fprintf(stderr, "ALG_DBG: " x, __VA_ARGS__)
 #  define ALG_INFO(x, ...) fprintf(stderr, "ALG_INFO: " x, __VA_ARGS__)
