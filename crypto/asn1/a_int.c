@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -622,3 +622,32 @@ BIGNUM *ASN1_ENUMERATED_to_BN(const ASN1_ENUMERATED *ai, BIGNUM *bn)
 {
     return asn1_string_to_bn(ai, bn, V_ASN1_ENUMERATED);
 }
+
+/* Internal functions used by x_int64.c */
+int c2i_uint64_int(uint64_t *ret, int *neg, const unsigned char **pp, long len)
+{
+    unsigned char buf[sizeof(uint64_t)];
+    size_t buflen;
+
+    buflen = c2i_ibuf(NULL, NULL, *pp, len);
+    if (buflen == 0)
+        return 0;
+    if (buflen > sizeof(uint64_t)) {
+        ASN1err(ASN1_F_C2I_UINT64_INT, ASN1_R_TOO_LARGE);
+        return 0;
+    }
+    (void)c2i_ibuf(buf, neg, *pp, len);
+    return asn1_get_uint64(ret, buf, buflen);
+}
+
+int i2c_uint64_int(unsigned char *p, uint64_t r, int neg)
+{
+    unsigned char buf[sizeof(uint64_t)];
+    size_t buflen;
+
+    buflen = asn1_put_uint64(buf, r);
+    if (p == NULL)
+        return i2c_ibuf(buf, buflen, neg, NULL);
+    return i2c_ibuf(buf, buflen, neg, &p);
+}
+
