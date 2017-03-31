@@ -25,6 +25,7 @@ B<openssl> B<s_client>
 [B<-CAfile filename>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
+[B<-requestCAfile filename>]
 [B<-dane_tlsa_domain domain>]
 [B<-dane_tlsa_rrdata rrdata>]
 [B<-dane_ee_no_namechecks>]
@@ -217,6 +218,12 @@ Do not load the trusted CA certificates from the default file location
 =item B<-no-CApath>
 
 Do not load the trusted CA certificates from the default directory location
+
+=item B<-requestCAfile file>
+
+A file containing a list of certificates whose subject names will be sent
+to the server in the B<certificate_authorities> extension. Only supported
+for TLS 1.3
 
 =item B<-dane_tlsa_domain domain>
 
