@@ -9,7 +9,7 @@
 
 ##  Configure -- OpenSSL source tree configuration script
 
-require 5.10.0;
+use 5.10.0;
 use strict;
 use Config;
 use File::Basename;
