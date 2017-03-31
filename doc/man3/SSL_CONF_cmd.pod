@@ -217,6 +217,14 @@ These options indicate a file or directory used for building certificate
 chains or verifying certificate chains. These options are only supported
 if certificate operations are permitted.
 
+=item B<RequestCAFile>
+
+This option indicates a file containing a set of certificates in PEM form.
+The subject names of the certificates are sent to the peer in the
+B<certificate_authorities> extension for TLS 1.3 (in ClientHello or
+CertificateRequest) or in a certificate request for previous versions or
+TLS.
+
 =item B<ServerInfoFile>
 
 Attempts to use the file B<value> in the "serverinfo" extension using the
