@@ -21,10 +21,13 @@ our @tests = (
         server => $server,
         client => {
             "CipherString" => "aECDSA",
+            "RequestCAFile" => test_pem("root-cert.pem"),
         },
         test   => {
             "ExpectedServerCertType" =>, "P-256",
             "ExpectedServerSignType" =>, "EC",
+            # Note: certificate_authorities not sent for TLS < 1.3
+            "ExpectedServerCANames" =>, "empty",
             "ExpectedResult" => "Success"
         },
     },
@@ -214,6 +217,7 @@ my @tests_tls_1_3 = (
             "ExpectedServerCertType" => "P-256",
             "ExpectedServerSignHash" => "SHA256",
             "ExpectedServerSignType" => "EC",
+            "ExpectedServerCANames" => "empty",
             "ExpectedResult" => "Success"
         },
     },
@@ -247,11 +251,13 @@ my @tests_tls_1_3 = (
         server => $server_tls_1_3,
         client => {
             "SignatureAlgorithms" => "ECDSA+SHA256:RSA-PSS+SHA256",
+            "RequestCAFile" => test_pem("root-cert.pem"),
         },
         test   => {
             "ExpectedServerCertType" => "P-256",
             "ExpectedServerSignHash" => "SHA256",
             "ExpectedServerSignType" => "EC",
+            "ExpectedServerCANames" => test_pem("root-cert.pem"),
             "ExpectedResult" => "Success"
         },
     },
@@ -325,7 +331,7 @@ my @tests_tls_1_3 = (
         server => {
             "ClientSignatureAlgorithms" => "PSS+SHA256",
             "VerifyCAFile" => test_pem("root-cert.pem"),
-            "ClientCAFile" => test_pem("root-cert.pem"),
+            "RequestCAFile" => test_pem("root-cert.pem"),
             "VerifyMode" => "Require"
         },
         client => $client_tls_1_3,
