@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "internal/asn1t.h"
+#include "internal/numbers.h"
 #include "test_main.h"
 #include "testutil.h"
 
