@@ -110,7 +110,7 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     unsigned long utmp = 0;
     char *cp = (char *)pval;
 
-    if (len) {
+    if (len > 1) {
         /*
          * Check possible pad byte.  Worst case, we're skipping past actual
          * content, but since that's only with 0x00 and 0xff and we set neg
@@ -120,7 +120,7 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         case 0xff:
             cont++;
             len--;
-            neg = 1;
+            neg = 0x80;
             break;
         case 0:
             cont++;
@@ -139,6 +139,9 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
             neg = 1;
         else
             neg = 0;
+    } else if (neg == (cont[0] & 0x80)) {
+        ASN1err(ASN1_F_LONG_C2I, ASN1_R_ILLEGAL_PADDING);
+        return 0;
     }
     utmp = 0;
     for (i = 0; i < len; i++) {
