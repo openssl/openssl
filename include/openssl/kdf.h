@@ -29,31 +29,31 @@ extern "C" {
 
 # define EVP_PKEY_CTX_set_tls1_prf_md(pctx, md) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_TLS_MD, 0, (void *)md)
+                              EVP_PKEY_CTRL_TLS_MD, 0, (void *)(md))
 
 # define EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, sec, seclen) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_TLS_SECRET, seclen, (void *)sec)
+                              EVP_PKEY_CTRL_TLS_SECRET, seclen, (void *)(sec))
 
 # define EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed, seedlen) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_TLS_SEED, seedlen, (void *)seed)
+                              EVP_PKEY_CTRL_TLS_SEED, seedlen, (void *)(seed))
 
 # define EVP_PKEY_CTX_set_hkdf_md(pctx, md) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_HKDF_MD, 0, (void *)md)
+                              EVP_PKEY_CTRL_HKDF_MD, 0, (void *)(md))
 
 # define EVP_PKEY_CTX_set1_hkdf_salt(pctx, salt, saltlen) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_HKDF_SALT, saltlen, (void *)salt)
+                              EVP_PKEY_CTRL_HKDF_SALT, saltlen, (void *)(salt))
 
 # define EVP_PKEY_CTX_set1_hkdf_key(pctx, key, keylen) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_HKDF_KEY, keylen, (void *)key)
+                              EVP_PKEY_CTRL_HKDF_KEY, keylen, (void *)(key))
 
 # define EVP_PKEY_CTX_add1_hkdf_info(pctx, info, infolen) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_HKDF_INFO, infolen, (void *)info)
+                              EVP_PKEY_CTRL_HKDF_INFO, infolen, (void *)(info))
 
 # define EVP_PKEY_CTX_hkdf_mode(pctx, mode) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
