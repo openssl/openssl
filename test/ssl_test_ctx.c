@@ -546,6 +546,11 @@ __owur static int parse_expected_ca_names(STACK_OF(X509_NAME) **pnames,
         *pnames = SSL_load_client_CA_file(value);
     return *pnames != NULL;
 }
+__owur static int parse_expected_server_ca_names(SSL_TEST_CTX *test_ctx,
+                                                 const char *value)
+{
+    return parse_expected_ca_names(&test_ctx->expected_server_ca_names, value);
+}
 __owur static int parse_expected_client_ca_names(SSL_TEST_CTX *test_ctx,
                                                  const char *value)
 {
@@ -580,6 +585,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ExpectedServerCertType", &parse_expected_server_cert_type },
     { "ExpectedServerSignHash", &parse_expected_server_sign_hash },
     { "ExpectedServerSignType", &parse_expected_server_sign_type },
+    { "ExpectedServerCANames", &parse_expected_server_ca_names },
     { "ExpectedClientCertType", &parse_expected_client_cert_type },
     { "ExpectedClientSignHash", &parse_expected_client_sign_hash },
     { "ExpectedClientSignType", &parse_expected_client_sign_type },
@@ -661,6 +667,7 @@ void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx)
     ssl_test_ctx_free_extra_data(ctx);
     OPENSSL_free(ctx->expected_npn_protocol);
     OPENSSL_free(ctx->expected_alpn_protocol);
+    sk_X509_NAME_pop_free(ctx->expected_server_ca_names, X509_NAME_free);
     sk_X509_NAME_pop_free(ctx->expected_client_ca_names, X509_NAME_free);
     OPENSSL_free(ctx);
 }

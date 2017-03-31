@@ -188,6 +188,8 @@ typedef struct {
     int expected_server_sign_hash;
     /* Expected server signature type */
     int expected_server_sign_type;
+    /* Expected server CA names */
+    STACK_OF(X509_NAME) *expected_server_ca_names;
     /* Expected client certificate key type */
     int expected_client_cert_type;
     /* Expected client signing hash */
