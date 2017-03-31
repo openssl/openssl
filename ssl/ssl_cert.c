@@ -466,7 +466,7 @@ static void set0_CA_list(STACK_OF(X509_NAME) **ca_list,
     *ca_list = name_list;
 }
 
-STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk)
+STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk)
 {
     int i;
     STACK_OF(X509_NAME) *ret;
