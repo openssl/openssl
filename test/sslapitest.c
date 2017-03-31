@@ -757,7 +757,7 @@ static int test_tlsext_status_type(void)
 }
 #endif
 
-static int new_called = 0, remove_called = 0;
+static int new_called, remove_called, get_called;
 
 static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
 {
@@ -780,6 +780,7 @@ static SSL_SESSION *get_sess_val = NULL;
 static SSL_SESSION *get_session_cb(SSL *ssl, const unsigned char *id, int len,
                                    int *copy)
 {
+    get_called++;
     *copy = 1;
     return get_sess_val;
 }
@@ -969,7 +970,7 @@ static int execute_test_session(int maxprot, int use_int_cache,
 
     SSL_CTX_set_max_proto_version(sctx, maxprot);
     SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET);
-    new_called = remove_called = 0;
+    new_called = remove_called = get_called = 0;
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl1, &clientssl1,
                                       NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl1, clientssl1,
@@ -985,7 +986,9 @@ static int execute_test_session(int maxprot, int use_int_cache,
     if (use_ext_cache) {
         SSL_SESSION *tmp = sess2;
 
-        if (!TEST_int_eq(new_called, 1) || !TEST_int_eq(remove_called, 0))
+        if (!TEST_int_eq(new_called, 1)
+                || !TEST_int_eq(remove_called, 0)
+                || !TEST_int_eq(get_called, 0))
             goto end;
         /*
          * Delete the session from the internal cache to force a lookup from
@@ -1001,7 +1004,7 @@ static int execute_test_session(int maxprot, int use_int_cache,
         sess2 = tmp;
     }
 
-    new_called = remove_called = 0;
+    new_called = remove_called = get_called = 0;
     get_sess_val = sess2;
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl2,
                                       &clientssl2, NULL, NULL))
@@ -1011,10 +1014,19 @@ static int execute_test_session(int maxprot, int use_int_cache,
             || !TEST_true(SSL_session_reused(clientssl2)))
         goto end;
 
-    if (use_ext_cache
-            && (!TEST_int_eq(new_called, 0)
-                || !TEST_int_eq(remove_called, 0)))
-        goto end;
+    if (use_ext_cache) {
+        if (!TEST_int_eq(new_called, 0)
+                || !TEST_int_eq(remove_called, 0))
+            goto end;
+
+        if (maxprot == TLS1_3_VERSION) {
+            if (!TEST_int_eq(get_called, 0))
+                goto end;
+        } else {
+            if (!TEST_int_eq(get_called, 1))
+                goto end;
+        }
+    }
 
     testresult = 1;
 
