@@ -681,7 +681,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     SSL_SESSION *sess = NULL;
     unsigned int id, i;
     const EVP_MD *md = NULL;
-    uint32_t ticket_age = 0, now, agesec, agems;
+    uint32_t ticket_age = 0, agesec, agems;
 
     /*
      * If we have no PSK kex mode that we recognise then we can't resume so
@@ -767,8 +767,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
     sess->ext.tick_identity = id;
 
-    now = (uint32_t)time(NULL);
-    agesec = now - (uint32_t)sess->time;
+    agesec = (uint32_t)(time(NULL) - sess->time);
     agems = agesec * (uint32_t)1000;
     ticket_age -= sess->ext.tick_age_add;
 
@@ -780,7 +779,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
      * client's due to the network latency). Therefore we add 1000ms to our age
      * calculation to adjust for rounding errors.
      */
-    if (sess->timeout >= agesec
+    if (sess->timeout >= (long)agesec
             && agems / (uint32_t)1000 == agesec
             && ticket_age <= agems + 1000
             && ticket_age + TICKET_AGE_ALLOWANCE >= agems + 1000) {

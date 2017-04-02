@@ -551,7 +551,7 @@ struct ssl_session_st {
     long verify_result;         /* only for servers */
     CRYPTO_REF_COUNT references;
     long timeout;
-    long time;
+    time_t time;
     unsigned int compress_meth; /* Need to lookup the method */
     const SSL_CIPHER *cipher;
     unsigned long cipher_id;    /* when ASN.1 loaded, this needs to be used to
