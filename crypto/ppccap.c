@@ -128,8 +128,6 @@ void OPENSSL_cpuid_setup(void)
 #endif
 
 #if defined(__APPLE__) && defined(__MACH__)
-    OPENSSL_ppccap_P |= PPC_FPU;
-
     {
         int val;
         size_t len = sizeof(val);
