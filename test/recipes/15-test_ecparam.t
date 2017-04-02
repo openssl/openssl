@@ -18,7 +18,7 @@ use OpenSSL::Test::Utils;
 setup("test_ecparam");
 
 plan skip_all => "EC isn't supported in this build"
-    if disabled("ec");
+    if disabled("ec") || disabled("ec2m");
 
 my @valid = glob(data_file("valid", "*.pem"));
 my @invalid = glob(data_file("invalid", "*.pem"));
