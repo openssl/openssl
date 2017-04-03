@@ -32,56 +32,53 @@
  * for each type, further down.
  */
 
-static unsigned char t_true[] = {
-    V_ASN1_BOOLEAN, 0x01, 0xff
-};
 static unsigned char t_zero[] = {
-    V_ASN1_INTEGER, 0x01, 0x00
+    0x00
 };
 static unsigned char t_one[] = {
-    V_ASN1_INTEGER, 0x01, 0x01
+    0x01
 };
 static unsigned char t_longundef[] = {
-    V_ASN1_INTEGER, 0x04, 0x7f, 0xff, 0xff, 0xff
+    0x7f, 0xff, 0xff, 0xff
 };
 static unsigned char t_9bytes_1[] = {
-    V_ASN1_INTEGER, 0x09, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+    0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 static unsigned char t_8bytes_1[] = {
-    V_ASN1_INTEGER, 0x09, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    0x00, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 static unsigned char t_8bytes_2[] = {
-    V_ASN1_INTEGER, 0x08, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+    0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 static unsigned char t_8bytes_3_pad[] = {
-    V_ASN1_INTEGER, 0x09, 0x00, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+    0x00, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 static unsigned char t_8bytes_4_neg[] = {
-    V_ASN1_INTEGER, 0x08, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 static unsigned char t_8bytes_5_negpad[] = {
-    V_ASN1_INTEGER, 0x09, 0xff, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    0xff, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
 /* 32-bit long */
 static unsigned char t_5bytes_1[] = {
-    V_ASN1_INTEGER, 0x05, 0x01, 0xff, 0xff, 0xff, 0xff
+    0x01, 0xff, 0xff, 0xff, 0xff
 };
 static unsigned char t_4bytes_1[] = {
-    V_ASN1_INTEGER, 0x05, 0x00, 0x80, 0x00, 0x00, 0x00
+    0x00, 0x80, 0x00, 0x00, 0x00
 };
 /* We make the last byte 0xfe to avoid a clash with ASN1_LONG_UNDEF */
 static unsigned char t_4bytes_2[] = {
-    V_ASN1_INTEGER, 0x04, 0x7f, 0xff, 0xff, 0xfe
+    0x7f, 0xff, 0xff, 0xfe
 };
 static unsigned char t_4bytes_3_pad[] = {
-    V_ASN1_INTEGER, 0x05, 0x00, 0x7f, 0xff, 0xff, 0xfe
+    0x00, 0x7f, 0xff, 0xff, 0xfe
 };
 static unsigned char t_4bytes_4_neg[] = {
-    V_ASN1_INTEGER, 0x04, 0x80, 0x00, 0x00, 0x00
+    0x80, 0x00, 0x00, 0x00
 };
 static unsigned char t_4bytes_5_negpad[] = {
-    V_ASN1_INTEGER, 0x05, 0xff, 0x80, 0x00, 0x00, 0x00
+    0xff, 0x80, 0x00, 0x00, 0x00
 };
 
 typedef struct {
@@ -184,7 +181,7 @@ typedef struct {
 ASN1_SEQUENCE(ASN1_LONG_DATA) = {
     ASN1_SIMPLE(ASN1_LONG_DATA, success, ASN1_FBOOLEAN),
     ASN1_SIMPLE(ASN1_LONG_DATA, test_long, LONG),
-    ASN1_SIMPLE(ASN1_LONG_DATA, test_zlong, ZLONG)
+    ASN1_EXP_OPT(ASN1_LONG_DATA, test_zlong, ZLONG, 0)
 } static_ASN1_SEQUENCE_END(ASN1_LONG_DATA)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(ASN1_LONG_DATA)
@@ -243,7 +240,7 @@ typedef struct {
 ASN1_SEQUENCE(ASN1_INT32_DATA) = {
     ASN1_SIMPLE(ASN1_LONG_DATA, success, ASN1_FBOOLEAN),
     ASN1_SIMPLE(ASN1_INT32_DATA, test_int32, INT32),
-    ASN1_SIMPLE(ASN1_INT32_DATA, test_zint32, ZINT32)
+    ASN1_EXP_OPT(ASN1_INT32_DATA, test_zint32, ZINT32, 0)
 } static_ASN1_SEQUENCE_END(ASN1_INT32_DATA)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(ASN1_INT32_DATA)
@@ -289,7 +286,7 @@ typedef struct {
 ASN1_SEQUENCE(ASN1_UINT32_DATA) = {
     ASN1_SIMPLE(ASN1_LONG_DATA, success, ASN1_FBOOLEAN),
     ASN1_SIMPLE(ASN1_UINT32_DATA, test_uint32, UINT32),
-    ASN1_SIMPLE(ASN1_UINT32_DATA, test_zuint32, ZUINT32)
+    ASN1_EXP_OPT(ASN1_UINT32_DATA, test_zuint32, ZUINT32, 0)
 } static_ASN1_SEQUENCE_END(ASN1_UINT32_DATA)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(ASN1_UINT32_DATA)
@@ -335,7 +332,7 @@ typedef struct {
 ASN1_SEQUENCE(ASN1_INT64_DATA) = {
     ASN1_SIMPLE(ASN1_LONG_DATA, success, ASN1_FBOOLEAN),
     ASN1_SIMPLE(ASN1_INT64_DATA, test_int64, INT64),
-    ASN1_SIMPLE(ASN1_INT64_DATA, test_zint64, ZINT64)
+    ASN1_EXP_OPT(ASN1_INT64_DATA, test_zint64, ZINT64, 0)
 } static_ASN1_SEQUENCE_END(ASN1_INT64_DATA)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(ASN1_INT64_DATA)
@@ -382,7 +379,7 @@ typedef struct {
 ASN1_SEQUENCE(ASN1_UINT64_DATA) = {
     ASN1_SIMPLE(ASN1_LONG_DATA, success, ASN1_FBOOLEAN),
     ASN1_SIMPLE(ASN1_UINT64_DATA, test_uint64, UINT64),
-    ASN1_SIMPLE(ASN1_UINT64_DATA, test_zuint64, ZUINT64)
+    ASN1_EXP_OPT(ASN1_UINT64_DATA, test_zuint64, ZUINT64, 0)
 } static_ASN1_SEQUENCE_END(ASN1_UINT64_DATA)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(ASN1_UINT64_DATA)
@@ -480,53 +477,100 @@ static int do_enc_dec(EXPECTED *bytes, long nbytes,
     return ret;
 }
 
+static size_t der_encode_length(size_t len, unsigned char **pp)
+{
+    size_t lenbytes;
+
+    OPENSSL_assert(len < 0x8000);
+    if (len > 255)
+        lenbytes = 3;
+    else if (len > 127)
+        lenbytes = 2;
+    else
+        lenbytes = 1;
+
+    if (pp != NULL) {
+        if (lenbytes == 1) {
+            *(*pp)++ = len;
+        } else {
+            *(*pp)++ = lenbytes - 1;
+            if (lenbytes == 2) {
+                *(*pp)++ = 0x80 | len;
+            } else {
+                *(*pp)++ = 0x80 | (len >> 8);
+                *(*pp)++ = len & 0xff;
+            }
+        }
+    }
+    return lenbytes;
+}
+
 /* Attempt to decode a custom encoding of the test structure */
 static int do_decode_custom(const TEST_CUSTOM_DATA *custom_data,
                             const EXPECTED *expected, size_t expected_size,
                             const TEST_PACKAGE *package)
 {
-    size_t lenbytes, fulllen;
-    size_t totlen = sizeof(t_true) + custom_data->nbytes1
-        + custom_data->nbytes2;
+    size_t firstbytes, secondbytes, secondbytesinner, seqbytes;
+    const unsigned char t_true[] = { V_ASN1_BOOLEAN, 0x01, 0xff };
     unsigned char *encoding, *p = NULL;
     int ret;
 
-    /* lenbytes doesn't include the initial "short form" length byte */
-    if (totlen > 255)
-        lenbytes = 2;
-    else if (totlen > 127)
-        lenbytes = 1;
-    else
-        lenbytes = 0;
+    /*
+     * The first item is just an INTEGER tag, INTEGER length and INTEGER content
+     */
+    firstbytes =
+        1 + der_encode_length(custom_data->nbytes1, NULL)
+        + custom_data->nbytes1;
 
-    /* We have 2 bytes for the sequence tag, and the first length byte */
-    fulllen = 2 + lenbytes + totlen;
-    encoding = p = OPENSSL_malloc(fulllen);
+    /*
+     * The second item is an explicit tag, content length, INTEGER tag,
+     * INTEGER length, INTEGER bytes
+     */
+    secondbytesinner =
+        1 + der_encode_length(custom_data->nbytes2, NULL)
+        + custom_data->nbytes2;
+    secondbytes =
+        1 + der_encode_length(secondbytesinner, NULL) + secondbytesinner;
+
+    /*
+     * The whole sequence is the sequence tag, content length, BOOLEAN true
+     * (copied from t_true), the first (firstbytes) and second (secondbytes)
+     * items
+     */
+    seqbytes =
+        1 + der_encode_length(sizeof(t_true) + firstbytes + secondbytes, NULL)
+        + sizeof(t_true) + firstbytes + secondbytes;
+
+    encoding = p = OPENSSL_malloc(seqbytes);
     if (encoding == NULL)
         return -1;
 
     /* Sequence tag */
     *p++ = 0x30;
-    if (lenbytes == 0) {
-        *p++ = totlen;
-    } else {
-        *p++ = lenbytes;
-        if (lenbytes == 2) {
-            *p++ = 0x80 | (totlen >> 8);
-            totlen &= 0xff;
-            *p++ = totlen;
-        } else {
-            *p++ = 0x80 | totlen;
-        }
-    }
+    der_encode_length(sizeof(t_true) + firstbytes + secondbytes, &p);
+
+    /* ASN1_BOOLEAN TRUE */
     memcpy(p, t_true, sizeof(t_true)); /* Marks decoding success */
     p += sizeof(t_true);
+
+    /* First INTEGER item (non-optional) */
+    *p++ = V_ASN1_INTEGER;
+    der_encode_length(custom_data->nbytes1, &p);
     memcpy(p, custom_data->bytes1, custom_data->nbytes1);
     p += custom_data->nbytes1;
+
+    /* Second INTEGER item (optional) */
+    /* Start with the explicit optional tag */
+    *p++ = 0xa0;
+    der_encode_length(secondbytesinner, &p);
+    *p++ = V_ASN1_INTEGER;
+    der_encode_length(custom_data->nbytes2, &p);
     memcpy(p, custom_data->bytes2, custom_data->nbytes2);
     p += custom_data->nbytes2;
 
-    ret = do_decode(encoding, fulllen, expected, expected_size, package);
+    OPENSSL_assert(seqbytes == (size_t)(p - encoding));
+
+    ret = do_decode(encoding, seqbytes, expected, expected_size, package);
     OPENSSL_free(encoding);
 
     return ret;
