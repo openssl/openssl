@@ -86,6 +86,8 @@ The connection uses the TLSv1.2 protocol.
 
 The connection uses the TLSv1.3 protocol.
 
+=back
+
 =head1 SEE ALSO
 
 L<ssl(7)>
