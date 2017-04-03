@@ -242,10 +242,19 @@ int dhparam_main(int argc, char **argv)
         } else
 # endif
         {
-            if (informat == FORMAT_ASN1)
+            if (informat == FORMAT_ASN1) {
+                /*
+                 * We have no PEM header to determine what type of DH params it
+                 * is. We'll just try both.
+                 */
                 dh = d2i_DHparams_bio(in, NULL);
-            else                /* informat == FORMAT_PEM */
+                /* BIO_reset() returns 0 for success for file BIOs only!!! */
+                if (dh == NULL && BIO_reset(in) == 0)
+                    dh = d2i_DHxparams_bio(in, NULL);
+            } else {
+                /* informat == FORMAT_PEM */
                 dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
+            }
 
             if (dh == NULL) {
                 BIO_printf(bio_err, "unable to load DH parameters\n");
@@ -340,9 +349,12 @@ int dhparam_main(int argc, char **argv)
     if (!noout) {
         const BIGNUM *q;
         DH_get0_pqg(dh, NULL, &q, NULL);
-        if (outformat == FORMAT_ASN1)
-            i = i2d_DHparams_bio(out, dh);
-        else if (q != NULL)
+        if (outformat == FORMAT_ASN1) {
+            if (q != NULL)
+                i = i2d_DHxparams_bio(out, dh);
+            else
+                i = i2d_DHparams_bio(out, dh);
+        } else if (q != NULL)
             i = PEM_write_bio_DHxparams(out, dh);
         else
             i = PEM_write_bio_DHparams(out, dh);
