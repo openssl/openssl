@@ -84,7 +84,7 @@ An internal representation of an SCT can be created in one of two ways.
 The first option is to create a blank SCT, using SCT_new(), and then populate
 it using:
 
-=over
+=over 4
 
 =item * SCT_set_version() to set the SCT version.
 
@@ -117,7 +117,7 @@ The former takes ownership, whereas the latter makes a copy.
 Alternatively, the SCT can be pre-populated from the following data using
 SCT_new_from_base64():
 
-=over
+=over 4
 
 =item * The SCT version (only SCT_VERSION_V1 is currently supported).
 

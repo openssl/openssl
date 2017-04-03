@@ -107,7 +107,7 @@ By default, B<rehash> only lists each directory as it is processed.
 
 =head1 ENVIRONMENT
 
-=over
+=over 4
 
 =item B<OPENSSL>
 
