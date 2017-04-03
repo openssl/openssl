@@ -1295,7 +1295,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     EVP_PKEY *ckey = s->s3->tmp.pkey, *skey = NULL;
 
     /* Sanity check */
-    if (ckey == NULL) {
+    if (ckey == NULL || s->s3->peer_tmp != NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -1386,7 +1386,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         EVP_PKEY_free(skey);
         return 0;
     }
-    EVP_PKEY_free(skey);
+    s->s3->peer_tmp = skey;
 #endif
 
     return 1;
