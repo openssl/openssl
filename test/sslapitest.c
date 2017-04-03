@@ -1544,7 +1544,8 @@ static int test_set_sigalgs(int idx)
 #define MSG3    "This"
 #define MSG4    "is"
 #define MSG5    "a"
-#define MSG6    "test."
+#define MSG6    "test"
+#define MSG7    "message."
 
 /*
  * Helper method to setup objects for early data test. Caller frees objects on
@@ -1772,6 +1773,19 @@ static int test_early_data_read_write(int idx)
      */
     if (SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)) {
         printf("Unexpected success doing final client read\n");
+        goto end;
+    }
+
+    /* Server should be able to write normal data */
+    if (!SSL_write_ex(serverssl, MSG7, strlen(MSG7), &written)
+            || written != strlen(MSG7)) {
+        printf("Failed writing normal data message 7\n");
+        goto end;
+    }
+    if (!SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)
+            || readbytes != strlen(MSG7)
+            || memcmp(MSG7, buf, strlen(MSG7))) {
+        printf("Failed reading message 7\n");
         goto end;
     }
 
