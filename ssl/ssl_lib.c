@@ -1799,7 +1799,7 @@ int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
 
 int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 {
-    int ret;
+    int ret, early_data_state;
 
     switch (s->early_data_state) {
     case SSL_EARLY_DATA_NONE:
@@ -1830,14 +1830,13 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
         return ret;
 
     case SSL_EARLY_DATA_FINISHED_READING:
-    case SSL_EARLY_DATA_READ_RETRY: {
-        int early_data_state = s->early_data_state;
+    case SSL_EARLY_DATA_READ_RETRY:
+        early_data_state = s->early_data_state;
         /* We are a server writing to an unauthenticated client */
         s->early_data_state = SSL_EARLY_DATA_UNAUTH_WRITING;
         ret = SSL_write_ex(s, buf, num, written);
         s->early_data_state = early_data_state;
         return ret;
-    }
 
     default:
         SSLerr(SSL_F_SSL_WRITE_EARLY_DATA, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
