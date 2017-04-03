@@ -15,15 +15,20 @@ extensions are denoted by individual bits in the capability vector.
 When libcrypto is initialized, the bits returned by the STFLE instruction
 and by the QUERY functions are stored in the vector.
 
-The OPENSSL_s390xcap environment variable can be set before starting an
-application to affect capability detection. It is specified by a
-colon-separated list of 64-bit values in hexadecimal notation, the 0x
-prefix being optional. The ~ prefix means bitwise NOT and a point
-indicates the end of the STFLE bits respectively the beginning of the
-QUERY bits.
+To change the set of instructions available to an application, you can
+set the OPENSSL_s390xcap environment variable before you start the
+application. After initialization, the capability vector is ANDed bitwise
+with the corresponding parts of the environment variable.
 
-After initialization, the capability vector is ANDed bitwise with the
-corresponding parts of the environment variable.
+OPENSSL_s390xcap is a colon-separated list of 64-bit values in
+hexadecimal notation. The 0x prefix is optional. Prefix a value with a
+tilde (~) to denote a bitwise NOT operation. A point indicates the end
+of the STFLE bits and the beginning of the QUERY bits, respectively.
+
+The environment variable has the following structure:
+
+STFLE:STFLE:STFLE.KIMD:KIMD:KM:KM:KMC:KMC:KMAC:KMAC:KMCTR:KMCTR:KMO:KMO
+:KMF:KMF:PRNO:PRNO:KMA:KMA
 
 The following bits are significant:
 
@@ -155,9 +160,11 @@ The following bits are significant:
 
 =back
 
+Bits which are not significant need not be specified.
+
 =head1 EXAMPLES
 
-OPENSSL_s390xcap=0:0:~0x4000000000000000 disables the vector facility.
+OPENSSL_s390xcap=::~0x4000000000000000 disables the vector facility.
 
 OPENSSL_s390xcap=.0:0 disables KIMD.
 
