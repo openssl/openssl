@@ -31,7 +31,7 @@ SCT_get_validation_status().
 
 A CT_POLICY_EVAL_CTX must be provided that specifies:
 
-=over
+=over 4
 
 =item * The certificate the SCT was issued for.
 

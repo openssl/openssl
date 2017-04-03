@@ -16,7 +16,7 @@ other things.
 
 Normally, this is found as the function I<algorithm>_ecb_encrypt().
 
-=over 2
+=over 4
 
 =item *
 
@@ -43,7 +43,7 @@ Normally, this is found as the function I<algorithm>_cbc_encrypt().
 Be aware that des_cbc_encrypt() is not really DES CBC (it does
 not update the IV); use des_ncbc_encrypt() instead.
 
-=over 2
+=over 4
 
 =item *
 
@@ -75,7 +75,7 @@ An error will affect the current and the following ciphertext blocks.
 
 Normally, this is found as the function I<algorithm>_cfb_encrypt().
 
-=over 2
+=over 4
 
 =item *
 
@@ -122,7 +122,7 @@ An error will affect the current and the following ciphertext variables.
 
 Normally, this is found as the function I<algorithm>_ofb_encrypt().
 
-=over 2
+=over 4
 
 
 =item *
@@ -183,7 +183,7 @@ susceptible to a 'known plaintext' attack.
 
 Normally, this is found as the function I<algorithm>_ecb3_encrypt().
 
-=over 2
+=over 4
 
 =item *
 
@@ -218,8 +218,7 @@ ecb mode.
 
 Normally, this is found as the function I<algorithm>_ede3_cbc_encrypt().
 
-=over 2
-
+=over 4
 
 =item *
 
