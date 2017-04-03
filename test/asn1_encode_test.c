@@ -137,6 +137,7 @@ typedef void *d2i_fn(void **a, unsigned char **pp, long length);
 typedef void ifree_fn(void *a);
 typedef struct {
     char *name;
+    int skip;                    /* 1 if this package should be skipped */
 
     /* An array of structures to compare decoded custom data with */
     void *encode_expectations;
@@ -187,21 +188,12 @@ ASN1_SEQUENCE(ASN1_LONG_DATA) = {
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(ASN1_LONG_DATA)
 IMPLEMENT_STATIC_ASN1_ALLOC_FUNCTIONS(ASN1_LONG_DATA)
 
-static ASN1_LONG_DATA long_expected[] = {
+static ASN1_LONG_DATA long_expected_32bit[] = {
     /* The following should fail on the second because it's the default */
     { 0xff, 0, 1 }, { 0, 0, 0 }, /* t_zero */
     { 0, 0, 0 }, { 0xff, 1, 0x7fffffff }, /* t_longundef */
     CUSTOM_EXPECTED_SUCCESS(1, 1), /* t_one */
     CUSTOM_EXPECTED_FAILURE,     /* t_9bytes_1 */
-#ifdef SIXTY_FOUR_BIT_LONG
-    CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_1 */
-    CUSTOM_EXPECTED_SUCCESS(LONG_MAX, LONG_MAX), /* t_8bytes_2 */
-    CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_3_pad (illegal padding) */
-    CUSTOM_EXPECTED_SUCCESS(LONG_MIN, LONG_MIN), /* t_8bytes_4_neg */
-    CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_5_negpad (illegal padding) */
-    CUSTOM_EXPECTED_SUCCESS(0x1ffffffff, 0x1ffffffff), /* t_5bytes_1 */
-    CUSTOM_EXPECTED_SUCCESS(0x80000000, 0x80000000), /* t_4bytes_1 */
-#else
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_1 */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_2 */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_3_pad */
@@ -209,22 +201,57 @@ static ASN1_LONG_DATA long_expected[] = {
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_5_negpad */
     CUSTOM_EXPECTED_FAILURE,     /* t_5bytes_1 */
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_1 (too large positive) */
-#endif
     CUSTOM_EXPECTED_SUCCESS(INT32_MAX - 1, INT32_MAX -1), /* t_4bytes_2 */
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_3_pad (illegal padding) */
     CUSTOM_EXPECTED_SUCCESS(INT32_MIN, INT32_MIN), /* t_4bytes_4_neg */
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_5_negpad (illegal padding) */
 };
-static ASN1_LONG_DATA long_encdec_data[] = {
-    ENCDEC_ARRAY(INT32_MAX - 1, INT32_MAX, INT32_MIN, INT32_MIN),
+static ASN1_LONG_DATA long_encdec_data_32bit[] = {
+    ENCDEC_ARRAY(LONG_MAX - 1, LONG_MAX, LONG_MIN, LONG_MIN),
     /* Check that default numbers fail */
     { 0, ASN1_LONG_UNDEF, 1 }, { 0, 1, 0 }
 };
 
-static TEST_PACKAGE long_test_package = {
-    "LONG",
-    long_expected, sizeof(long_expected), sizeof(long_expected[0]),
-    long_encdec_data, sizeof(long_encdec_data), sizeof(long_encdec_data[0]),
+static TEST_PACKAGE long_test_package_32bit = {
+    "LONG", sizeof(long) != 4,
+    long_expected_32bit,
+    sizeof(long_expected_32bit), sizeof(long_expected_32bit[0]),
+    long_encdec_data_32bit,
+    sizeof(long_encdec_data_32bit), sizeof(long_encdec_data_32bit[0]),
+    (i2d_fn *)i2d_ASN1_LONG_DATA, (d2i_fn *)d2i_ASN1_LONG_DATA,
+    (ifree_fn *)ASN1_LONG_DATA_free
+};
+
+static ASN1_LONG_DATA long_expected_64bit[] = {
+    /* The following should fail on the second because it's the default */
+    { 0xff, 0, 1 }, { 0, 0, 0 }, /* t_zero */
+    { 0, 0, 0 }, { 0xff, 1, 0x7fffffff }, /* t_longundef */
+    CUSTOM_EXPECTED_SUCCESS(1, 1), /* t_one */
+    CUSTOM_EXPECTED_FAILURE,     /* t_9bytes_1 */
+    CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_1 */
+    CUSTOM_EXPECTED_SUCCESS(LONG_MAX, LONG_MAX), /* t_8bytes_2 */
+    CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_3_pad (illegal padding) */
+    CUSTOM_EXPECTED_SUCCESS(LONG_MIN, LONG_MIN), /* t_8bytes_4_neg */
+    CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_5_negpad (illegal padding) */
+    CUSTOM_EXPECTED_SUCCESS((long)0x1ffffffff, (long)0x1ffffffff), /* t_5bytes_1 */
+    CUSTOM_EXPECTED_SUCCESS((long)0x80000000, (long)0x80000000), /* t_4bytes_1 */
+    CUSTOM_EXPECTED_SUCCESS(INT32_MAX - 1, INT32_MAX -1), /* t_4bytes_2 */
+    CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_3_pad (illegal padding) */
+    CUSTOM_EXPECTED_SUCCESS(INT32_MIN, INT32_MIN), /* t_4bytes_4_neg */
+    CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_5_negpad (illegal padding) */
+};
+static ASN1_LONG_DATA long_encdec_data_64bit[] = {
+    ENCDEC_ARRAY(LONG_MAX, LONG_MAX, LONG_MIN, LONG_MIN),
+    /* Check that default numbers fail */
+    { 0, ASN1_LONG_UNDEF, 1 }, { 0, 1, 0 }
+};
+
+static TEST_PACKAGE long_test_package_64bit = {
+    "LONG", sizeof(long) != 8,
+    long_expected_64bit,
+    sizeof(long_expected_64bit), sizeof(long_expected_64bit[0]),
+    long_encdec_data_64bit,
+    sizeof(long_encdec_data_64bit), sizeof(long_encdec_data_64bit[0]),
     (i2d_fn *)i2d_ASN1_LONG_DATA, (d2i_fn *)d2i_ASN1_LONG_DATA,
     (ifree_fn *)ASN1_LONG_DATA_free
 };
@@ -268,7 +295,7 @@ static ASN1_INT32_DATA int32_encdec_data[] = {
 };
 
 static TEST_PACKAGE int32_test_package = {
-    "INT32",
+    "INT32", 0,
     int32_expected, sizeof(int32_expected), sizeof(int32_expected[0]),
     int32_encdec_data, sizeof(int32_encdec_data), sizeof(int32_encdec_data[0]),
     (i2d_fn *)i2d_ASN1_INT32_DATA, (d2i_fn *)d2i_ASN1_INT32_DATA,
@@ -314,7 +341,7 @@ static ASN1_UINT32_DATA uint32_encdec_data[] = {
 };
 
 static TEST_PACKAGE uint32_test_package = {
-    "UINT32",
+    "UINT32", 0,
     uint32_expected, sizeof(uint32_expected), sizeof(uint32_expected[0]),
     uint32_encdec_data, sizeof(uint32_encdec_data), sizeof(uint32_encdec_data[0]),
     (i2d_fn *)i2d_ASN1_UINT32_DATA, (d2i_fn *)d2i_ASN1_UINT32_DATA,
@@ -361,7 +388,7 @@ static ASN1_INT64_DATA int64_encdec_data[] = {
 };
 
 static TEST_PACKAGE int64_test_package = {
-    "INT64",
+    "INT64", 0,
     int64_expected, sizeof(int64_expected), sizeof(int64_expected[0]),
     int64_encdec_data, sizeof(int64_encdec_data), sizeof(int64_encdec_data[0]),
     (i2d_fn *)i2d_ASN1_INT64_DATA, (d2i_fn *)d2i_ASN1_INT64_DATA,
@@ -407,7 +434,7 @@ static ASN1_UINT64_DATA uint64_encdec_data[] = {
 };
 
 static TEST_PACKAGE uint64_test_package = {
-    "UINT64",
+    "UINT64", 0,
     uint64_expected, sizeof(uint64_expected), sizeof(uint64_expected[0]),
     uint64_encdec_data, sizeof(uint64_encdec_data), sizeof(uint64_encdec_data[0]),
     (i2d_fn *)i2d_ASN1_UINT64_DATA, (d2i_fn *)d2i_ASN1_UINT64_DATA,
@@ -583,6 +610,9 @@ static int test_intern(const TEST_PACKAGE *package)
     size_t nelems;
     int fail = 0;
 
+    if (package->skip)
+        return 1;
+
     /* Do decode_custom checks */
     nelems = package->encode_expectations_size
         / package->encode_expectations_elem_size;
@@ -646,9 +676,14 @@ static int test_intern(const TEST_PACKAGE *package)
     return fail == 0;
 }
 
-static int test_long(void)
+static int test_long_32bit(void)
 {
-    return test_intern(&long_test_package);
+    return test_intern(&long_test_package_32bit);
+}
+
+static int test_long_64bit(void)
+{
+    return test_intern(&long_test_package_64bit);
 }
 
 static int test_int32(void)
@@ -673,7 +708,8 @@ static int test_uint64(void)
 
 void register_tests(void)
 {
-    ADD_TEST(test_long);
+    ADD_TEST(test_long_32bit);
+    ADD_TEST(test_long_64bit);
     ADD_TEST(test_int32);
     ADD_TEST(test_uint32);
     ADD_TEST(test_int64);
