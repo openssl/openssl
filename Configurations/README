@@ -139,7 +139,7 @@ In each table entry, the following keys are significant:
         bn_ops          => Building options (was just bignum options in
                            the earlier history of this option, hence the
                            name). This is a string of words that describe
-                           implementation parameters of algorithms that
+                           algorithms' implementation parameters that
                            are optimal for the designated target platform,
                            such as the type of integers used to build up
                            the bignum, different ways to implement certain
@@ -150,7 +150,7 @@ In each table entry, the following keys are significant:
 
                            THIRTY_TWO_BIT       bignum limbs are 32 bits,
                                                 this is default if no
-                                                option is specificed, it
+                                                option is specified, it
                                                 works on any supported
                                                 system [unless "wider"
                                                 limb size is implied in
