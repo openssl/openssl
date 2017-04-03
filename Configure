@@ -743,6 +743,10 @@ while (@argvcopy)
 			{
 			$libs.=$_." ";
 			}
+		elsif (/^-framework$/)
+			{
+			$libs.=$_." ".shift(@argvcopy)." ";
+			}
 		elsif (/^-rpath$/ or /^-R$/)
 			# -rpath is the OSF1 rpath flag
 			# -R is the old Solaris rpath flag
