@@ -136,34 +136,38 @@ In each table entry, the following keys are significant:
                            to have the different variants in different
                            directories.
 
-        bn_ops          => Building options (was just bignum options
-                           in the earlier history of this option,
-                           hence the name).  This a string of words
-                           that describe properties on the designated
-                           target platform, such as the type of
-                           integers used to build up the bitnum,
-                           different ways to implement certain ciphers
-                           and so on.  To fully comprehend the
+        bn_ops          => Building options (was just bignum options in
+                           the earlier history of this option, hence the
+                           name). This is a string of words that describe
+                           algorithms' implementation parameters that
+                           are optimal for the designated target platform,
+                           such as the type of integers used to build up
+                           the bignum, different ways to implement certain
+                           ciphers and so on. To fully comprehend the
                            meaning, the best is to read the affected
                            source.
                            The valid words are:
 
-                           BN_LLONG     use 'unsigned long long' in
-                                        some bignum calculations.
-                                        This has no value when
-                                        SIXTY_FOUR_BIT or
-                                        SIXTY_FOUR_BIT_LONG is given.
-                           RC4_CHAR     makes the basic RC4 unit of
-                                        calculation an unsigned char.
-                           SIXTY_FOUR_BIT       processor registers
-                                                are 64 bits, long is
-                                                32 bits, long long is
-                                                64 bits.
-                           SIXTY_FOUR_BIT_LONG  processor registers
-                                                are 64 bits, long is
-                                                64 bits.
-                           THIRTY_TWO_BIT       processor registers
-                                                are 32 bits.
+                           THIRTY_TWO_BIT       bignum limbs are 32 bits,
+                                                this is default if no
+                                                option is specified, it
+                                                works on any supported
+                                                system [unless "wider"
+                                                limb size is implied in
+                                                assembly code];
+                           BN_LLONG             bignum limbs are 32 bits,
+                                                but 64-bit 'unsigned long
+                                                long' is used internally
+                                                in calculations;
+                           SIXTY_FOUR_BIT_LONG  bignum limbs are 64 bits
+                                                and sizeof(long) is 8;
+                           SIXTY_FOUR_BIT       bignums limbs are 64 bits,
+                                                but execution environment
+                                                is ILP32;
+                           RC4_CHAR             RC4 key schedule is made
+                                                up of 'unsigned char's;
+                           RC4_INT              RC4 key schedule is made
+                                                up of 'unsigned int's;
                            EXPORT_VAR_AS_FN     for shared libraries,
                                                 export vars as
                                                 accessor functions.
