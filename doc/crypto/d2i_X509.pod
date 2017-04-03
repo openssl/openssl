@@ -349,9 +349,9 @@ i2d_X509_SIG,
 i2d_X509_VAL,
 - convert objects from/to ASN.1/DER representation
 
-=for comment generic
-
 =head1 SYNOPSIS
+
+=for comment generic
 
  TYPE *d2i_TYPE(TYPE **a, unsigned char **pp, long length);
  TYPE *d2i_TYPE_bio(BIO *bp, TYPE **a);
@@ -436,7 +436,7 @@ another will be processed after it.
 
 The following points about the data types might be useful:
 
-=over
+=over 4
 
 =item B<ASN1_OBJECT>
 

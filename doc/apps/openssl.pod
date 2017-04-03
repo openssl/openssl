@@ -75,7 +75,7 @@ B<list>, or B<no->I<XXX> itself.)
 
 =head2 Standard Commands
 
-=over 10
+=over 4
 
 =item L<B<asn1parse>|asn1parse(1)>
 
@@ -91,7 +91,7 @@ Cipher Suite Description Determination.
 
 =item L<B<cms>|cms(1)>
 
-CMS (Cryptographic Message Syntax) utility
+CMS (Cryptographic Message Syntax) utility.
 
 =item L<B<crl>|crl(1)>
 
@@ -113,8 +113,7 @@ Obsoleted by L<B<dhparam>|dhparam(1)>.
 =item L<B<dhparam>|dhparam(1)>
 
 Generation and Management of Diffie-Hellman Parameters. Superseded by
-L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>
-
+L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>.
 
 =item L<B<dsa>|dsa(1)>
 
@@ -123,15 +122,15 @@ DSA Data Management.
 =item L<B<dsaparam>|dsaparam(1)>
 
 DSA Parameter Generation and Management. Superseded by
-L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>
+L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>.
 
 =item L<B<ec>|ec(1)>
 
-EC (Elliptic curve) key processing
+EC (Elliptic curve) key processing.
 
 =item L<B<ecparam>|ecparam(1)>
 
-EC parameter manipulation and generation
+EC parameter manipulation and generation.
 
 =item L<B<enc>|enc(1)>
 
@@ -153,7 +152,7 @@ Obsoleted by L<B<dhparam>|dhparam(1)>.
 =item L<B<gendsa>|gendsa(1)>
 
 Generation of DSA Private Key from Parameters. Superseded by
-L<B<genpkey>|genpkey(1)> and L<B<pkey>|pkey(1)>
+L<B<genpkey>|genpkey(1)> and L<B<pkey>|pkey(1)>.
 
 =item L<B<genpkey>|genpkey(1)>
 
@@ -165,7 +164,7 @@ Generation of RSA Private Key. Superseded by L<B<genpkey>|genpkey(1)>.
 
 =item L<B<nseq>|nseq(1)>
 
-Create or examine a Netscape certificate sequence
+Create or examine a Netscape certificate sequence.
 
 =item L<B<ocsp>|ocsp(1)>
 
@@ -211,7 +210,7 @@ RSA key management.
 =item L<B<rsautl>|rsautl(1)>
 
 RSA utility for signing, verification, encryption, and decryption. Superseded
-by  L<B<pkeyutl>|pkeyutl(1)>
+by  L<B<pkeyutl>|pkeyutl(1)>.
 
 =item L<B<s_client>|s_client(1)>
 
@@ -247,11 +246,11 @@ Algorithm Speed Measurement.
 
 =item L<B<spkac>|spkac(1)>
 
-SPKAC printing and generating utility
+SPKAC printing and generating utility.
 
 =item L<B<ts>|ts(1)>
 
-Time Stamping Authority tool (client/server)
+Time Stamping Authority tool (client/server).
 
 =item L<B<verify>|verify(1)>
 
@@ -269,7 +268,7 @@ X.509 Certificate Data Management.
 
 =head2 Message Digest Commands
 
-=over 10
+=over 4
 
 =item B<md2>
 
@@ -315,7 +314,7 @@ SHA-512 Digest
 
 =head2 Encoding and Cipher Commands
 
-=over 10
+=over 4
 
 =item B<base64>
 
@@ -366,7 +365,7 @@ This section describes some common options with common behavior.
 
 =head2 Common Options
 
-=over 10
+=over 4
 
 =item B<-help>
 
@@ -384,23 +383,23 @@ password argument is given and a password is required then the user is
 prompted to enter one: this will typically be read from the current
 terminal with echoing turned off.
 
-=over 10
+=over 4
 
 =item B<pass:password>
 
-the actual password is B<password>. Since the password is visible
+The actual password is B<password>. Since the password is visible
 to utilities (like 'ps' under Unix) this form should only be used
 where security is not important.
 
 =item B<env:var>
 
-obtain the password from the environment variable B<var>. Since
+Obtain the password from the environment variable B<var>. Since
 the environment of other processes is visible on certain platforms
 (e.g. ps under certain Unix OSes) this option should be used with caution.
 
 =item B<file:pathname>
 
-the first line of B<pathname> is the password. If the same B<pathname>
+The first line of B<pathname> is the password. If the same B<pathname>
 argument is supplied to B<-passin> and B<-passout> arguments then the first
 line will be used for the input password and the next line for the output
 password. B<pathname> need not refer to a regular file: it could for example
@@ -408,12 +407,12 @@ refer to a device or named pipe.
 
 =item B<fd:number>
 
-read the password from the file descriptor B<number>. This can be used to
+Read the password from the file descriptor B<number>. This can be used to
 send the data via a pipe for example.
 
 =item B<stdin>
 
-read the password from standard input.
+Read the password from standard input.
 
 =back
 
@@ -441,7 +440,7 @@ manual pages.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

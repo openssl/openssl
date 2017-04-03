@@ -1,5 +1,4 @@
 =pod
-
 =for comment openssl_manual_section:7
 
 =head1 NAME
@@ -18,7 +17,7 @@ other things.
 
 Normally, this is found as the function I<algorithm>_ecb_encrypt().
 
-=over 2
+=over 4
 
 =item *
 
@@ -45,7 +44,7 @@ Normally, this is found as the function I<algorithm>_cbc_encrypt().
 Be aware that des_cbc_encrypt() is not really DES CBC (it does
 not update the IV); use des_ncbc_encrypt() instead.
 
-=over 2
+=over 4
 
 =item *
 
@@ -77,7 +76,7 @@ An error will affect the current and the following ciphertext blocks.
 
 Normally, this is found as the function I<algorithm>_cfb_encrypt().
 
-=over 2
+=over 4
 
 =item *
 
@@ -124,7 +123,7 @@ An error will affect the current and the following ciphertext variables.
 
 Normally, this is found as the function I<algorithm>_ofb_encrypt().
 
-=over 2
+=over 4
 
 
 =item *
@@ -185,7 +184,7 @@ susceptible to a 'known plaintext' attack.
 
 Normally, this is found as the function I<algorithm>_ecb3_encrypt().
 
-=over 2
+=over 4
 
 =item *
 
@@ -220,8 +219,7 @@ ecb mode.
 
 Normally, this is found as the function I<algorithm>_ede3_cbc_encrypt().
 
-=over 2
-
+=over 4
 
 =item *
 
@@ -248,12 +246,11 @@ it to:
 
 =head1 SEE ALSO
 
-L<blowfish(3)>, L<des(3)>, L<idea(3)>,
-L<rc2(3)>
+L<BF_encrypt(3)>, L<DES_crypt(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
