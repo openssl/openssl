@@ -436,7 +436,7 @@ another will be processed after it.
 
 The following points about the data types might be useful:
 
-=over
+=over 4
 
 =item B<ASN1_OBJECT>
 

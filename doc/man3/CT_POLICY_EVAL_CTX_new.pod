@@ -32,7 +32,7 @@ This policy may be, for example, that at least one valid SCT is available. To
 determine this, an SCT's timestamp and signature must be verified.
 This requires:
 
-=over
+=over 4
 
 =item * the public key of the log that issued the SCT
 
@@ -49,7 +49,7 @@ The above requirements are met using the setters described below.
 CT_POLICY_EVAL_CTX_new() creates an empty policy evaluation context. This
 should then be populated using:
 
-=over
+=over 4
 
 =item * CT_POLICY_EVAL_CTX_set1_cert() to provide the certificate the SCTs were issued for
 

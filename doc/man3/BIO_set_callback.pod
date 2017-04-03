@@ -52,7 +52,7 @@ BIO_callback_fn_ex() is the type of the callback function and BIO_callback_fn()
 is the type of the old format callback function. The meaning of each argument
 is described below:
 
-=over
+=over 4
 
 =item B<b>
 

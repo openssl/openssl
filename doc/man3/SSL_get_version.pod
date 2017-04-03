@@ -64,7 +64,7 @@ This indicates that no version has been set (no connection established).
 SSL_version() and SSL_client_version() return an integer which could include any of
 the following:
 
-=over 5
+=over 4
 
 =item SSL3_VERSION
 

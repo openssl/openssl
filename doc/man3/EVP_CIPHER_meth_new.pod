@@ -82,7 +82,7 @@ With the exception of cipher modes, of which only one may be present,
 several flags can be or'd together.
 The available flags are:
 
-=over
+=over 4
 
 =item EVP_CIPH_STREAM_CIPHER, EVP_CIPH_ECB_MODE EVP_CIPH_CBC_MODE,
 EVP_CIPH_CFB_MODE, EVP_CIPH_OFB_MODE, EVP_CIPH_CTR_MODE, EVP_CIPH_GCM_MODE,

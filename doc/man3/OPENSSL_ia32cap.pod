@@ -19,7 +19,7 @@ between different code paths to provide optimal performance across wide
 range of processors. For the moment of this writing following bits are
 significant:
 
-=over
+=over 4
 
 =item bit #4 denoting presence of Time-Stamp Counter.
 
@@ -86,7 +86,7 @@ are applied, most notably in AES assembler module.
 The capability vector is further extended with EBX value returned by
 CPUID with EAX=7 and ECX=0 as input. Following bits are significant:
 
-=over
+=over 4
 
 =item bit #64+3 denoting availability of BMI1 instructions, e.g. ANDN;
 
