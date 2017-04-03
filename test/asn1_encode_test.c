@@ -19,7 +19,7 @@
 # pragma GCC diagnostic ignored "-Wunused-function"
 # pragma GCC diagnostic ignored "-Wformat"
 #endif
-#ifdef __clang_
+#ifdef __clang__
 # pragma clang diagnostic ignored "-Wunused-function"
 # pragma clang diagnostic ignored "-Wformat"
 #endif
@@ -90,8 +90,8 @@ typedef struct {
     unsigned char *bytes2;
     size_t nbytes2;
 } TEST_CUSTOM_DATA;
-#define CUSTOM_DATA(v)                                   \
-    { v, sizeof(v), t_one, sizeof(t_one) },       \
+#define CUSTOM_DATA(v)                          \
+    { v, sizeof(v), t_one, sizeof(t_one) },     \
     { t_one, sizeof(t_one), v, sizeof(v) }
 
 static TEST_CUSTOM_DATA test_custom_data[] = {
@@ -124,11 +124,11 @@ static TEST_CUSTOM_DATA test_custom_data[] = {
  * For easy creation of arrays of expected data.  These macros correspond to
  * the uses of CUSTOM_DATA above.
  */
-#define CUSTOM_EXPECTED_SUCCESS(num, znum) \
-    { 0xff, num, 1 },                      \
+#define CUSTOM_EXPECTED_SUCCESS(num, znum)      \
+    { 0xff, num, 1 },                           \
     { 0xff, 1, znum }
-#define CUSTOM_EXPECTED_FAILURE            \
-    { 0, 0, 0 },                           \
+#define CUSTOM_EXPECTED_FAILURE                 \
+    { 0, 0, 0 },                                \
     { 0, 0, 0 }
 
 /*
@@ -165,8 +165,9 @@ typedef struct {
 /* To facilitate the creation of an encdec_data array */
 #define ENCDEC_DATA(num, znum)                  \
     { 0xff, num, 1 }, { 0xff, 1, znum }
-#define ENCDEC_ARRAY(max, zmax)                 \
+#define ENCDEC_ARRAY(max, zmax, min, zmin)      \
     ENCDEC_DATA(max,zmax),                      \
+    ENCDEC_DATA(min,zmin),                      \
     ENCDEC_DATA(1, 1),                          \
     ENCDEC_DATA(-1, -1),                        \
     ENCDEC_DATA(0, ASN1_LONG_UNDEF)
@@ -202,11 +203,6 @@ static ASN1_LONG_DATA long_expected[] = {
     CUSTOM_EXPECTED_SUCCESS(LONG_MIN, LONG_MIN), /* t_8bytes_4_neg */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_5_negpad (illegal padding) */
     CUSTOM_EXPECTED_SUCCESS(0x1ffffffff, 0x1ffffffff), /* t_5bytes_1 */
-    /*
-     * Note: because t_4bytes_1 doesn't have a negative indication, we need
-     * to code the expectation with explicit constants which are negative on
-     * 32-bit platforms and positive on larger ones.
-     */
     CUSTOM_EXPECTED_SUCCESS(0x80000000, 0x80000000), /* t_4bytes_1 */
 #else
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_1 */
@@ -223,7 +219,7 @@ static ASN1_LONG_DATA long_expected[] = {
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_5_negpad (illegal padding) */
 };
 static ASN1_LONG_DATA long_encdec_data[] = {
-    ENCDEC_ARRAY(LONG_MAX - 1, LONG_MAX),
+    ENCDEC_ARRAY(INT32_MAX - 1, INT32_MAX, INT32_MIN, INT32_MIN),
     /* Check that default numbers fail */
     { 0, ASN1_LONG_UNDEF, 1 }, { 0, 1, 0 }
 };
@@ -271,7 +267,7 @@ static ASN1_INT32_DATA int32_expected[] = {
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_5_negpad (illegal padding) */
 };
 static ASN1_INT32_DATA int32_encdec_data[] = {
-    ENCDEC_ARRAY(INT32_MAX, INT32_MAX),
+    ENCDEC_ARRAY(INT32_MAX, INT32_MAX, INT32_MIN, INT32_MIN),
 };
 
 static TEST_PACKAGE int32_test_package = {
@@ -317,7 +313,7 @@ static ASN1_UINT32_DATA uint32_expected[] = {
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_5_negpad (illegal padding) */
 };
 static ASN1_UINT32_DATA uint32_encdec_data[] = {
-    ENCDEC_ARRAY(UINT32_MAX, UINT32_MAX),
+    ENCDEC_ARRAY(UINT32_MAX, UINT32_MAX, 0, 0),
 };
 
 static TEST_PACKAGE uint32_test_package = {
@@ -363,8 +359,8 @@ static ASN1_INT64_DATA int64_expected[] = {
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_5_negpad (illegal padding) */
 };
 static ASN1_INT64_DATA int64_encdec_data[] = {
-    ENCDEC_ARRAY(INT64_MAX, INT64_MAX),
-    ENCDEC_ARRAY(INT32_MAX, INT32_MAX),
+    ENCDEC_ARRAY(INT64_MAX, INT64_MAX, INT64_MIN, INT64_MIN),
+    ENCDEC_ARRAY(INT32_MAX, INT32_MAX, INT32_MIN, INT32_MIN),
 };
 
 static TEST_PACKAGE int64_test_package = {
@@ -410,7 +406,7 @@ static ASN1_UINT64_DATA uint64_expected[] = {
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_5_negpad (illegal padding) */
 };
 static ASN1_UINT64_DATA uint64_encdec_data[] = {
-    ENCDEC_ARRAY(UINT64_MAX, UINT64_MAX),
+    ENCDEC_ARRAY(UINT64_MAX, UINT64_MAX, 0, 0),
 };
 
 static TEST_PACKAGE uint64_test_package = {
