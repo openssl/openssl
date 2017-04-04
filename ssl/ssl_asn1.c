@@ -65,7 +65,7 @@ typedef struct {
     ASN1_OCTET_STRING *srp_username;
 #endif
     long flags;
-    uint32_t max_early_data;
+    long max_early_data;
     ASN1_OCTET_STRING *alpn_selected;
 } SSL_SESSION_ASN1;
 
@@ -194,7 +194,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     }
     if (in->ext.tick_lifetime_hint > 0)
         as.tlsext_tick_lifetime_hint = in->ext.tick_lifetime_hint;
-    as.tlsext_tick_age_add = in->ext.tick_age_add;
+    as.tlsext_tick_age_add = (long)(int32_t)in->ext.tick_age_add;
 #ifndef OPENSSL_NO_PSK
     ssl_session_sinit(&as.psk_identity_hint, &psk_identity_hint,
                       in->psk_identity_hint);
@@ -205,7 +205,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 #endif                          /* OPENSSL_NO_SRP */
 
     as.flags = in->flags;
-    as.max_early_data = in->ext.max_early_data;
+    as.max_early_data = (long)(int32_t)in->ext.max_early_data;
 
     if (in->ext.alpn_selected == NULL)
         as.alpn_selected = NULL;
@@ -340,7 +340,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 #endif
 
     ret->ext.tick_lifetime_hint = as->tlsext_tick_lifetime_hint;
-    ret->ext.tick_age_add = as->tlsext_tick_age_add;
+    ret->ext.tick_age_add = (uint32_t)as->tlsext_tick_age_add;
     if (as->tlsext_tick) {
         ret->ext.tick = as->tlsext_tick->data;
         ret->ext.ticklen = as->tlsext_tick->length;
@@ -366,7 +366,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 #endif                          /* OPENSSL_NO_SRP */
     /* Flags defaults to zero which is fine */
     ret->flags = as->flags;
-    ret->ext.max_early_data = as->max_early_data;
+    ret->ext.max_early_data = (uint32_t)as->max_early_data;
 
     if (as->alpn_selected != NULL) {
         if (!ssl_session_strndup((char **)&ret->ext.alpn_selected,
