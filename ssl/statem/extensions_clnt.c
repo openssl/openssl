@@ -1307,7 +1307,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    if ((context & EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
+    if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
         unsigned const char *pcurves = NULL;
         size_t i, num_curves;
 
@@ -1411,7 +1411,7 @@ int tls_parse_stoc_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 int tls_parse_stoc_early_data(SSL *s, PACKET *pkt, unsigned int context,
                               X509 *x, size_t chainidx, int *al)
 {
-    if (context == EXT_TLS1_3_NEW_SESSION_TICKET) {
+    if (context == SSL_EXT_TLS1_3_NEW_SESSION_TICKET) {
         unsigned long max_early_data;
 
         if (!PACKET_get_net_4(pkt, &max_early_data)
