@@ -10,7 +10,7 @@
 /* Custom extension utility functions */
 
 #include <openssl/ct.h>
-#include "ssl_locl.h"
+#include "../ssl_locl.h"
 
 /* Find a custom extension from the list. */
 static custom_ext_method *custom_ext_find(const custom_ext_methods *exts,
