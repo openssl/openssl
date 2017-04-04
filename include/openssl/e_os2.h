@@ -206,9 +206,9 @@ extern "C" {
 #  endif
 # endif
 
-# if defined(OPENSSL_SYS_UEFI) && !defined(ssize_t)
-#  define ossl_ssize_t int
-#  define OSSL_SSIZE_MAX INT_MAX
+# if defined(OPENSSL_SYS_UEFI) && !defined(ossl_ssize_t)
+#  define ossl_ssize_t INTN
+#  define OSSL_SSIZE_MAX MAX_INTN
 # endif
 
 # ifndef ossl_ssize_t
