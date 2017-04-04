@@ -1442,7 +1442,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 
     /* Preserve the raw extensions PACKET for later use */
     extensions = clienthello->extensions;
-    if (!tls_collect_extensions(s, &extensions, EXT_CLIENT_HELLO,
+    if (!tls_collect_extensions(s, &extensions, SSL_EXT_CLIENT_HELLO,
                                 &clienthello->pre_proc_exts, &al,
                                 &clienthello->pre_proc_exts_len)) {
         /* SSLerr already been called */
@@ -1580,7 +1580,7 @@ static int tls_early_post_process_client_hello(SSL *s, int *al)
 
     /* We need to do this before getting the session */
     if (!tls_parse_extension(s, TLSEXT_IDX_extended_master_secret,
-                             EXT_CLIENT_HELLO,
+                             SSL_EXT_CLIENT_HELLO,
                              clienthello->pre_proc_exts, NULL, 0, al)) {
         SSLerr(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO, SSL_R_CLIENTHELLO_TLSEXT);
         goto err;
@@ -1708,7 +1708,7 @@ static int tls_early_post_process_client_hello(SSL *s, int *al)
 #endif                          /* !OPENSSL_NO_EC */
 
     /* TLS extensions */
-    if (!tls_parse_all_extensions(s, EXT_CLIENT_HELLO,
+    if (!tls_parse_all_extensions(s, SSL_EXT_CLIENT_HELLO,
                                   clienthello->pre_proc_exts, NULL, 0, al)) {
         SSLerr(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO, SSL_R_PARSE_TLSEXT);
         goto err;
@@ -2127,8 +2127,8 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
                 && !WPACKET_put_bytes_u8(pkt, compm))
             || !tls_construct_extensions(s, pkt,
                                          SSL_IS_TLS13(s)
-                                            ? EXT_TLS1_3_SERVER_HELLO
-                                            : EXT_TLS1_2_SERVER_HELLO,
+                                            ? SSL_EXT_TLS1_3_SERVER_HELLO
+                                            : SSL_EXT_TLS1_2_SERVER_HELLO,
                                          NULL, 0, &al)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_HELLO, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -2510,8 +2510,9 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
             goto err;
         }
 
-        if (!tls_construct_extensions(s, pkt, EXT_TLS1_3_CERTIFICATE_REQUEST,
-                                      NULL, 0, &al)) {
+        if (!tls_construct_extensions(s, pkt,
+                                      SSL_EXT_TLS1_3_CERTIFICATE_REQUEST, NULL,
+                                      0, &al)) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST,
                    ERR_R_INTERNAL_ERROR);
             goto err;
@@ -3251,9 +3252,10 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
                 SSLerr(SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, SSL_R_BAD_LENGTH);
                 goto f_err;
             }
-            if (!tls_collect_extensions(s, &extensions, EXT_TLS1_3_CERTIFICATE,
-                                        &rawexts, &al, NULL)
-                    || !tls_parse_all_extensions(s, EXT_TLS1_3_CERTIFICATE,
+            if (!tls_collect_extensions(s, &extensions,
+                                        SSL_EXT_TLS1_3_CERTIFICATE, &rawexts,
+                                        &al, NULL)
+                    || !tls_parse_all_extensions(s, SSL_EXT_TLS1_3_CERTIFICATE,
                                                  rawexts, x, chainidx, &al)) {
                 OPENSSL_free(rawexts);
                 goto f_err;
@@ -3550,7 +3552,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             || !WPACKET_close(pkt)
             || (SSL_IS_TLS13(s)
                 && !tls_construct_extensions(s, pkt,
-                                             EXT_TLS1_3_NEW_SESSION_TICKET,
+                                             SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
                                              NULL, 0, &al))) {
         SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -3637,7 +3639,7 @@ static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt)
 {
     int al;
 
-    if (!tls_construct_extensions(s, pkt, EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
+    if (!tls_construct_extensions(s, pkt, SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
                                   NULL, 0, &al)) {
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
         SSLerr(SSL_F_TLS_CONSTRUCT_ENCRYPTED_EXTENSIONS, ERR_R_INTERNAL_ERROR);
@@ -3659,7 +3661,8 @@ static int tls_construct_hello_retry_request(SSL *s, WPACKET *pkt)
      */
     if (!WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)
             || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, pkt, &len)
-            || !tls_construct_extensions(s, pkt, EXT_TLS1_3_HELLO_RETRY_REQUEST,
+            || !tls_construct_extensions(s, pkt,
+                                         SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
                                          NULL, 0, &al)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_HELLO_RETRY_REQUEST, ERR_R_INTERNAL_ERROR);
         goto err;
