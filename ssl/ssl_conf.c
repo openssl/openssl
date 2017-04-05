@@ -520,6 +520,25 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
     return rv > 0;
 }
 #endif
+
+static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
+{
+    int rv = 0;
+    int block_size = atoi(value);
+
+    /*
+     * All we care about is a non-negative value,
+     * the setters check the range
+     */
+    if (block_size >= 0) {
+        if (cctx->ctx)
+            rv = SSL_CTX_set_block_padding(cctx->ctx, block_size);
+        if (cctx->ssl)
+            rv = SSL_set_block_padding(cctx->ssl, block_size);
+    }
+    return rv;
+}
+
 typedef struct {
     int (*cmd) (SSL_CONF_CTX *cctx, const char *value);
     const char *str_file;
@@ -598,8 +617,9 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
 #ifndef OPENSSL_NO_DH
     SSL_CONF_CMD(DHParameters, "dhparam",
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
-                 SSL_CONF_TYPE_FILE)
+                 SSL_CONF_TYPE_FILE),
 #endif
+    SSL_CONF_CMD_STRING(RecordPadding, "record_padding", 0)
 };
 
 /* Supported switches: must match order of switches in ssl_conf_cmds */

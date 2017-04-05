@@ -214,7 +214,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_STRICT, OPT_S_SIGALGS, \
         OPT_S_CLIENTSIGALGS, OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
-        OPT_S_DHPARAM, OPT_S_DEBUGBROKE, OPT_S_COMP, \
+        OPT_S_DHPARAM, OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
         OPT_S__LAST
 
 # define OPT_S_OPTIONS \
@@ -251,8 +251,11 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         {"cipher", OPT_S_CIPHER, 's', "Specify cipher list to be used"}, \
         {"dhparam", OPT_S_DHPARAM, '<', \
             "DH parameter file to use, in cert file if not specified"}, \
+        {"record_padding", OPT_S_RECORD_PADDING, 's', \
+            "Block size to pad TLS 1.3 records to."}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
             "Perform all sorts of protocol violations for testing purposes"}
+
 
 # define OPT_S_CASES \
         OPT_S__FIRST: case OPT_S__LAST: break; \
@@ -277,6 +280,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_NAMEDCURVE: \
         case OPT_S_CIPHER: \
         case OPT_S_DHPARAM: \
+        case OPT_S_RECORD_PADDING: \
         case OPT_S_DEBUGBROKE
 
 #define IS_NO_PROT_FLAG(o) \
