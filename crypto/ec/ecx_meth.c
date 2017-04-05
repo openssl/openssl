@@ -34,7 +34,7 @@ typedef enum {
 } ecx_key_op_t;
 
 /* Setup EVP_PKEY using public, private or generation */
-static int ecx_key_op(EVP_PKEY *pkey, const X509_ALGOR *palg,
+static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
                       const unsigned char *p, int plen, ecx_key_op_t op)
 {
     X25519_KEY *xkey;
@@ -78,7 +78,7 @@ static int ecx_key_op(EVP_PKEY *pkey, const X509_ALGOR *palg,
                 OPENSSL_free(xkey);
                 return 0;
             }
-            if (pkey->ameth->pkey_id == NID_X25519) {
+            if (id == NID_X25519) {
                 xkey->privkey[0] &= 248;
                 xkey->privkey[31] &= 127;
                 xkey->privkey[31] |= 64;
@@ -86,13 +86,13 @@ static int ecx_key_op(EVP_PKEY *pkey, const X509_ALGOR *palg,
         } else {
             memcpy(xkey->privkey, p, X25519_KEYLEN);
         }
-        if (pkey->ameth->pkey_id == NID_X25519)
+        if (id == NID_X25519)
             X25519_public_from_private(xkey->pubkey, xkey->privkey);
         else
             ED25519_public_from_private(xkey->pubkey, xkey->privkey);
     }
 
-    EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, xkey);
+    EVP_PKEY_assign(pkey, id, xkey);
     return 1;
 }
 
@@ -129,7 +129,8 @@ static int ecx_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 
     if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, &palg, pubkey))
         return 0;
-    return ecx_key_op(pkey, palg, p, pklen, X25519_PUBLIC);
+    return ecx_key_op(pkey, pkey->ameth->pkey_id, palg, p, pklen,
+                      X25519_PUBLIC);
 }
 
 static int ecx_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
@@ -162,7 +163,7 @@ static int ecx_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
         plen = ASN1_STRING_length(oct);
     }
 
-    rv = ecx_key_op(pkey, palg, p, plen, X25519_PRIVATE);
+    rv = ecx_key_op(pkey, pkey->ameth->pkey_id, palg, p, plen, X25519_PRIVATE);
     ASN1_OCTET_STRING_free(oct);
     return rv;
 }
@@ -281,7 +282,7 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     switch (op) {
 
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return ecx_key_op(pkey, NULL, arg2, arg1, X25519_PUBLIC);
+        return ecx_key_op(pkey, NID_X25519, NULL, arg2, arg1, X25519_PUBLIC);
 
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
         if (pkey->pkey.ptr != NULL) {
@@ -370,7 +371,7 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
 
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
-    return ecx_key_op(pkey, NULL, NULL, 0, X25519_KEYGEN);
+    return ecx_key_op(pkey, ctx->pmeth->pkey_id, NULL, NULL, 0, X25519_KEYGEN);
 }
 
 static int pkey_ecx_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
@@ -414,4 +415,64 @@ const EVP_PKEY_METHOD ecx25519_pkey_meth = {
     pkey_ecx_derive,
     pkey_ecx_ctrl,
     0
+};
+
+static int pkey_ecd_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
+                               size_t *siglen, const unsigned char *tbs,
+                               size_t tbslen)
+{
+    const X25519_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
+
+    if (sig == NULL) {
+        *siglen = ED25519_SIGSIZE;
+        return 1;
+    }
+    if (*siglen < ED25519_SIGSIZE) {
+        ECerr(EC_F_PKEY_ECD_DIGESTSIGN, EC_R_BUFFER_TOO_SMALL);
+        return 0;
+    }
+
+    if (ED25519_sign(sig, tbs, tbslen, edkey->pubkey, edkey->privkey) == 0)
+        return 0;
+    *siglen = ED25519_SIGSIZE;
+    return 1;
+}
+
+static int pkey_ecd_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
+                                 size_t siglen, const unsigned char *tbs,
+                                 size_t tbslen)
+{
+    const X25519_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
+
+    if (siglen != ED25519_SIGSIZE)
+        return 0;
+
+    return ED25519_verify(tbs, tbslen, sig, edkey->pubkey);
+}
+
+static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
+{
+    switch (type) {
+    case EVP_PKEY_CTRL_MD:
+        /* Only NULL allowed as digest */
+        if (p2 == NULL)
+            return 1;
+        ECerr(EC_F_PKEY_ECD_CTRL, EC_R_INVALID_DIGEST_TYPE);
+        return 0;
+
+    case EVP_PKEY_CTRL_DIGESTINIT:
+        return 1;
+    }
+    return -2;
+}
+
+const EVP_PKEY_METHOD ed25519_pkey_meth = {
+    NID_ED25519, EVP_PKEY_FLAG_SIGCTX_CUSTOM,
+    0, 0, 0, 0, 0, 0,
+    pkey_ecx_keygen,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    pkey_ecd_ctrl,
+    0,
+    pkey_ecd_digestsign,
+    pkey_ecd_digestverify
 };
