@@ -92,20 +92,20 @@ SKIP: {
 }
 
 SKIP: {
-    skip "EC, TLSv1.3 or TLSv1.2 disabled", 2
-        if disabled("tls1_2") || disabled("tls1_3") || disabled("ec");
-
+    skip "EC or TLSv1.3 disabled", 1
+        if disabled("tls1_3") || disabled("ec");
     #Test 7: Sending a valid sig algs list but not including a sig type that
-    #        matches the certificate should fail in TLSv1.3. We need TLSv1.2
-    #        enabled for this test - otherwise the client will not attempt to
-    #        connect due to no TLSv1.3 ciphers being available.
-    #        TODO(TLS1.3): When proper TLSv1.3 certificate selection is working
-    #        we can move this test into the section above
+    #        matches the certificate should fail in TLSv1.3.
     $proxy->clear();
     $proxy->clientflags("-sigalgs ECDSA+SHA256");
     $proxy->filter(undef);
     $proxy->start();
     ok(TLSProxy::Message->fail, "No matching TLSv1.3 sigalgs");
+}
+
+SKIP: {
+    skip "EC, TLSv1.3 or TLSv1.2 disabled", 1
+        if disabled("tls1_2") || disabled("tls1_3") || disabled("ec");
 
     #Test 8: Sending a full list of TLSv1.3 sig algs but negotiating TLSv1.2
     #        should succeed
