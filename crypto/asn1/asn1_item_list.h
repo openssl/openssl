@@ -160,4 +160,12 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(X509_VAL),
     ASN1_ITEM_ref(X509),
     ASN1_ITEM_ref(ZLONG),
+    ASN1_ITEM_ref(INT32),
+    ASN1_ITEM_ref(UINT32),
+    ASN1_ITEM_ref(ZINT32),
+    ASN1_ITEM_ref(ZUINT32),
+    ASN1_ITEM_ref(INT64),
+    ASN1_ITEM_ref(UINT64),
+    ASN1_ITEM_ref(ZINT64),
+    ASN1_ITEM_ref(ZUINT64),
 };
