@@ -4613,6 +4613,14 @@
 #define NID_X448                1035
 #define OBJ_X448                1L,3L,101L,111L
 
+#define SN_ED25519              "ED25519"
+#define NID_ED25519             1087
+#define OBJ_ED25519             1L,3L,101L,112L
+
+#define SN_ED448                "ED448"
+#define NID_ED448               1088
+#define OBJ_ED448               1L,3L,101L,113L
+
 #define SN_kx_rsa               "KxRSA"
 #define LN_kx_rsa               "kx-rsa"
 #define NID_kx_rsa              1037
