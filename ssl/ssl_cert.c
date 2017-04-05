@@ -190,9 +190,7 @@ CERT *ssl_cert_dup(CERT *cert)
     ret->sec_level = cert->sec_level;
     ret->sec_ex = cert->sec_ex;
 
-    if (!custom_exts_copy(&ret->cli_ext, &cert->cli_ext))
-        goto err;
-    if (!custom_exts_copy(&ret->srv_ext, &cert->srv_ext))
+    if (!custom_exts_copy(&ret->custext, &cert->custext))
         goto err;
 #ifndef OPENSSL_NO_PSK
     if (cert->psk_identity_hint) {
@@ -254,8 +252,7 @@ void ssl_cert_free(CERT *c)
     OPENSSL_free(c->ctype);
     X509_STORE_free(c->verify_store);
     X509_STORE_free(c->chain_store);
-    custom_exts_free(&c->cli_ext);
-    custom_exts_free(&c->srv_ext);
+    custom_exts_free(&c->custext);
 #ifndef OPENSSL_NO_PSK
     OPENSSL_free(c->psk_identity_hint);
 #endif
