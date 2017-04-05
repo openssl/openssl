@@ -22,19 +22,28 @@ SSL_select_next_proto, SSL_get0_alpn_selected, SSL_get0_next_proto_negotiated
                                             const unsigned char *in,
                                             unsigned int inlen,
                                             void *arg), void *arg);
+ void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
+                             unsigned int *len);
+
  void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *ctx,
-                                   SSL_CTX_npn_advertised_cb_func cb,
-                                   void *arg);
+                                            int (*cb)(SSL *ssl,
+                                                      const unsigned char **out,
+                                                      unsigned int *outlen,
+                                                      void *arg),
+                                            void *arg);
  void SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx,
-                               SSL_CTX_npn_select_cb_func cb,
+                               int (*cb)(SSL *s,
+                                         unsigned char **out,
+                                         unsigned char *outlen,
+                                         const unsigned char *in,
+                                         unsigned int inlen,
+                                         void *arg),
                                void *arg);
  int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
                            const unsigned char *server,
                            unsigned int server_len,
                            const unsigned char *client,
                            unsigned int client_len)
- void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
-                             unsigned int *len);
  void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
                              unsigned *len);
 
@@ -68,7 +77,7 @@ B<client>, so it should be copied immediately. If no match is found, the first
 item in B<client>, B<client_len> is returned in B<out>, B<outlen>. This
 function can also be used in the NPN callback.
 
-SSL_CTX_set_next_proto_select_cb() sets a callback that is called when a
+SSL_CTX_set_next_proto_select_cb() sets a callback B<cb> that is called when a
 client needs to select a protocol from the server's provided list. B<out>
 must be set to point to the selected protocol (which may be within B<in>).
 The length of the protocol name must be written into B<outlen>. The
@@ -77,8 +86,8 @@ callback can assume that B<in> is syntactically valid. The client must
 select a protocol. It is fatal to the connection if this callback returns
 a value other than B<SSL_TLSEXT_ERR_OK>.
 
-SSL_CTX_set_next_protos_advertised_cb() sets a callback that is called when
-a TLS server needs a list of supported protocols for Next Protocol
+SSL_CTX_set_next_protos_advertised_cb() sets a callback B<cb> that is called
+when a TLS server needs a list of supported protocols for Next Protocol
 Negotiation. The returned list must be in protocol-list format, described
 below.  The list is
 returned by setting B<out> to point to it and B<outlen> to its length. This
@@ -154,10 +163,10 @@ ALPN protocol not selected.
 
 =back
 
-The SSL_CTX_set_next_proto_select_cb() callback should return
+The callback set using SSL_CTX_set_next_proto_select_cb() should return
 B<SSL_TLSEXT_ERR_OK> if successful. Any other value is fatal to the connection.
 
-The SSL_CTX_set_next_protos_advertised_cb() callback should return
+The callback set using SSL_CTX_set_next_protos_advertised_cb() should return
 B<SSL_TLSEXT_ERR_OK> if it wishes to advertise. Otherwise, no such extension
 will be included in the ServerHello.
 
