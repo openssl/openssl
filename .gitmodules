@@ -5,3 +5,7 @@
 [submodule "pyca.cryptography"]
 	path = pyca-cryptography
 	url = https://github.com/pyca/cryptography.git
+
+[submodule "krb5"]
+	path = krb5
+	url = https://github.com/krb5/krb5
