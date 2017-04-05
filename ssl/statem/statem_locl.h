@@ -153,6 +153,8 @@ MSG_PROCESS_RETURN tls_process_end_of_early_data(SSL *s, PACKET *pkt);
 
 /* Extension processing */
 
+__owur int extension_is_relevant(SSL *s, unsigned int extctx,
+                                 unsigned int thisctx);
 __owur int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
                                   RAW_EXTENSION **res, int *al, size_t *len);
 __owur int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
@@ -160,6 +162,8 @@ __owur int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
                                int *al);
 __owur int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts,
                                     X509 *x, size_t chainidx, int *al);
+__owur int should_add_extension(SSL *s, unsigned int extctx,
+                                unsigned int thisctx, int max_version);
 __owur int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
                                     X509 *x, size_t chainidx, int *al);
 
