@@ -4,6 +4,12 @@
 
  Changes between 1.1.0e and 1.1.1 [xx XXX xxxx]
 
+  *) Add the ASN.1 types INT32, UINT32, INT64, UINT64 and variants prefixed
+     with Z.  These are meant to replace LONG and ZLONG and to be size safe.
+     The use of LONG and ZLONG is discouraged and scheduled for deprecation
+     in OpenSSL 1.2.0.
+     [Richard Levitte]
+
   *) Add the 'z' and 'j' modifiers to BIO_printf() et al formatting string,
      'z' is to be used for [s]size_t, and 'j' - with [u]int64_t.
      [Richard Levitte, Andy Polyakov]
