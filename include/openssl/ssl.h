@@ -1952,6 +1952,21 @@ void SSL_set_not_resumable_session_callback(SSL *ssl,
                                             int (*cb) (SSL *ssl,
                                                        int
                                                        is_forward_secure));
+
+void SSL_CTX_set_record_padding_callback(SSL_CTX *ctx,
+                                         size_t (*cb) (SSL *ssl, int type,
+                                                       size_t len, void *arg));
+void SSL_CTX_set_record_padding_callback_arg(SSL_CTX *ctx, void *arg);
+void *SSL_CTX_get_record_padding_callback_arg(SSL_CTX *ctx);
+int SSL_CTX_set_block_padding(SSL_CTX *ctx, size_t block_size);
+
+void SSL_set_record_padding_callback(SSL *ssl,
+                                    size_t (*cb) (SSL *ssl, int type,
+                                                  size_t len, void *arg));
+void SSL_set_record_padding_callback_arg(SSL *ssl, void *arg);
+void *SSL_get_record_padding_callback_arg(SSL *ssl);
+int SSL_set_block_padding(SSL *ssl, size_t block_size);
+
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  define SSL_cache_hit(s) SSL_session_reused(s)
 # endif
