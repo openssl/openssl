@@ -170,6 +170,7 @@ typedef struct {
     ENCDEC_DATA(-1, -1),                        \
     ENCDEC_DATA(0, ASN1_LONG_UNDEF)
 
+#if OPENSSL_API_COMPAT < 0x10200000L
 /***** LONG ******************************************************************/
 
 typedef struct {
@@ -255,6 +256,7 @@ static TEST_PACKAGE long_test_package_64bit = {
     (i2d_fn *)i2d_ASN1_LONG_DATA, (d2i_fn *)d2i_ASN1_LONG_DATA,
     (ifree_fn *)ASN1_LONG_DATA_free
 };
+#endif
 
 /***** INT32 *****************************************************************/
 
@@ -676,6 +678,7 @@ static int test_intern(const TEST_PACKAGE *package)
     return fail == 0;
 }
 
+#if OPENSSL_API_COMPAT < 0x10200000L
 static int test_long_32bit(void)
 {
     return test_intern(&long_test_package_32bit);
@@ -685,6 +688,7 @@ static int test_long_64bit(void)
 {
     return test_intern(&long_test_package_64bit);
 }
+#endif
 
 static int test_int32(void)
 {
@@ -708,8 +712,10 @@ static int test_uint64(void)
 
 void register_tests(void)
 {
+#if OPENSSL_API_COMPAT < 0x10200000L
     ADD_TEST(test_long_32bit);
     ADD_TEST(test_long_64bit);
+#endif
     ADD_TEST(test_int32);
     ADD_TEST(test_uint32);
     ADD_TEST(test_int64);
