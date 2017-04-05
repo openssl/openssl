@@ -11,6 +11,9 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 
+#if !(OPENSSL_API_COMPAT < 0x10200000L)
+NON_EMPTY_TRANSLATION_UNIT
+#else
 /*
  * Custom primitive type for long handling. This converts between an
  * ASN1_INTEGER and a long directly.
@@ -194,3 +197,4 @@ static int long_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
 {
     return BIO_printf(out, "%ld\n", *(long *)pval);
 }
+#endif
