@@ -39,10 +39,10 @@ B<SSL_get_ex_data_X509_STORE_CTX_idx> can be called to get the data index
 of the current SSL object that is doing the verification.
 
 SSL_CTX_set_verify_depth() sets the maximum B<depth> for the certificate chain
-verification that shall be allowed for B<ctx>. (See the BUGS section.)
+verification that shall be allowed for B<ctx>.
 
 SSL_set_verify_depth() sets the maximum B<depth> for the certificate chain
-verification that shall be allowed for B<ssl>. (See the BUGS section.)
+verification that shall be allowed for B<ssl>.
 
 =head1 NOTES
 
@@ -107,16 +107,19 @@ application provided procedure also has access to the verify depth information
 and the verify_callback() function, but the way this information is used
 may be different.
 
-SSL_CTX_set_verify_depth() and SSL_set_verify_depth() set the limit up
-to which depth certificates in a chain are used during the verification
-procedure. If the certificate chain is longer than allowed, the certificates
-above the limit are ignored. Error messages are generated as if these
-certificates would not be present, most likely a
-X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY will be issued.
+SSL_CTX_set_verify_depth() and SSL_set_verify_depth() set a limit on the
+number of certificates between the end-entity and trust-anchor certificates.
+Neither the
+end-entity nor the trust-anchor certificates count against B<depth>. If the
+certificate chain needed to reach a trusted issuer is longer than B<depth+2>,
+X509_V_ERR_CERT_CHAIN_TOO_LONG will be issued.
 The depth count is "level 0:peer certificate", "level 1: CA certificate",
 "level 2: higher level CA certificate", and so on. Setting the maximum
-depth to 2 allows the levels 0, 1, and 2. The default depth limit is 100,
-allowing for the peer certificate and additional 100 CA certificates.
+depth to 2 allows the levels 0, 1, 2 and 3 (0 being the end-entity and 3 the
+trust-anchor).
+The default depth limit is 100,
+allowing for the peer certificate, at most 100 intermediate CA certificates and
+a final trust anchor certificate.
 
 The B<verify_callback> function is used to control the behaviour when the
 SSL_VERIFY_PEER flag is set. It must be supplied by the application and
