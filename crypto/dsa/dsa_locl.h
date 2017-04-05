@@ -16,7 +16,7 @@ struct dsa_st {
      * instead of of a EVP_PKEY
      */
     int pad;
-    long version;
+    int32_t version;
     BIGNUM *p;
     BIGNUM *q;                  /* == 20 */
     BIGNUM *g;

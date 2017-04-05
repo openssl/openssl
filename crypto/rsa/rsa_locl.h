@@ -16,7 +16,7 @@ struct rsa_st {
      * instead of aEVP_PKEY, it is set to 0
      */
     int pad;
-    long version;
+    int32_t version;
     const RSA_METHOD *meth;
     /* functional reference if 'meth' is ENGINE-provided */
     ENGINE *engine;
