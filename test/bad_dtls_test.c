@@ -268,7 +268,7 @@ static int send_server_hello(BIO *rbio)
 }
 
 /* Create header, HMAC, pad, encrypt and send a record */
-static int send_record(BIO *rbio, unsigned char type, unsigned long seqnr,
+static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
                        const void *msg, size_t len)
 {
     /* Note that the order of the record header fields on the wire,
@@ -284,11 +284,8 @@ static int send_record(BIO *rbio, unsigned char type, unsigned long seqnr,
     unsigned char pad;
     unsigned char *enc;
 
-    if (sizeof(seqnr) > 4) {
-        /* two-step shifts avoid shift-count-overflow warnings */
-        seq[0] = (seqnr >> 24 >> 16) & 0xff;
-        seq[1] = (seqnr >> 24 >> 8) & 0xff;
-    }
+    seq[0] = (seqnr >> 40) & 0xff;
+    seq[1] = (seqnr >> 32) & 0xff;
     seq[2] = (seqnr >> 24) & 0xff;
     seq[3] = (seqnr >> 16) & 0xff;
     seq[4] = (seqnr >> 8) & 0xff;
