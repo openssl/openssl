@@ -860,15 +860,44 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         }
 
         if (SSL_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL) {
+            size_t padding = 0;
+
             if (!WPACKET_put_bytes_u8(thispkt, type)) {
                 SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             SSL3_RECORD_add_length(thiswr, 1);
-            /*
-             * TODO(TLS1.3): Padding goes here. Do we need an API to add this?
-             * For now, use no padding
-             */
+
+            /* Add TLS1.3 padding */
+            if (s->record_padding_cb != NULL) {
+                size_t rlen = SSL3_RECORD_get_length(thiswr);
+
+                padding = s->record_padding_cb(s, type, rlen, s->record_padding_arg);
+                /* do not allow the record to exceed max plaintext length */
+                if (padding > (SSL3_RT_MAX_PLAIN_LENGTH - rlen))
+                    padding = SSL3_RT_MAX_PLAIN_LENGTH - rlen;
+            } else if (s->block_padding > 0) {
+                size_t mask = s->block_padding - 1;
+                size_t remainder;
+
+                /* optimize for power of 2 */
+                if ((s->block_padding & mask) == 0)
+                    remainder = SSL3_RECORD_get_length(thiswr) & mask;
+                else
+                    remainder = SSL3_RECORD_get_length(thiswr) % s->block_padding;
+                /* don't want to add a block of padding if we don't have to */
+                if (remainder == 0)
+                    padding = 0;
+                else
+                    padding = s->block_padding - remainder;
+            }
+            if (padding > 0) {
+                if (!WPACKET_memset(thispkt, 0, padding)) {
+                    SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+                SSL3_RECORD_add_length(thiswr, padding);
+            }
         }
 
         /*
