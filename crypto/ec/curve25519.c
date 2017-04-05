@@ -4590,15 +4590,9 @@ static void sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
   s[30] = s11 >> 9;
   s[31] = s11 >> 17;
 }
-#if 0
-void ED25519_keypair(uint8_t out_public_key[32], uint8_t out_private_key[64]) {
-  uint8_t seed[32];
-  RAND_bytes(seed, 32);
-  ED25519_keypair_from_seed(out_public_key, out_private_key, seed);
-}
-#endif
+
 int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
-                 const uint8_t private_key[64]) {
+                 const uint8_t public_key[32], const uint8_t private_key[32]) {
   uint8_t az[SHA512_DIGEST_LENGTH];
   uint8_t nonce[SHA512_DIGEST_LENGTH];
   ge_p3 R;
@@ -4622,7 +4616,7 @@ int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
 
   SHA512_Init(&hash_ctx);
   SHA512_Update(&hash_ctx, out_sig, 32);
-  SHA512_Update(&hash_ctx, private_key + 32, 32);
+  SHA512_Update(&hash_ctx, public_key, 32);
   SHA512_Update(&hash_ctx, message, message_len);
   SHA512_Final(hram, &hash_ctx);
 
@@ -4670,13 +4664,12 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
   return CRYPTO_memcmp(rcheck, rcopy, sizeof(rcheck)) == 0;
 }
 
-void ED25519_keypair_from_seed(uint8_t out_public_key[32],
-                               uint8_t out_private_key[64],
-                               const uint8_t seed[32]) {
+void ED25519_public_from_private(uint8_t out_public_key[32],
+                                 const uint8_t private_key[32]) {
   uint8_t az[SHA512_DIGEST_LENGTH];
   ge_p3 A;
 
-  SHA512(seed, 32, az);
+  SHA512(private_key, 32, az);
 
   az[0] &= 248;
   az[31] &= 63;
@@ -4684,9 +4677,6 @@ void ED25519_keypair_from_seed(uint8_t out_public_key[32],
 
   ge_scalarmult_base(&A, az);
   ge_p3_tobytes(out_public_key, &A);
-
-  memcpy(out_private_key, seed, 32);
-  memcpy(out_private_key + 32, out_public_key, 32);
 }
 
 int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
