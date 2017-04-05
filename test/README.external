@@ -93,7 +93,7 @@ to be installed.
 $ make test VERBOSE=1 TESTS=test_external_pyca
 
 Test failures and suppressions
-==============================
+------------------------------
 
 Some tests target older (<=1.0.2) versions so will not run. Other tests target
 other crypto implementations so are not relevant. Currently no tests fail.
