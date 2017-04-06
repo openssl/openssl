@@ -669,7 +669,8 @@ typedef enum OPTION_choice {
     OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
-    OPT_SSL_CONFIG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
+    OPT_SSL_CONFIG,
+    OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_SSL3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN,
     OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
@@ -804,6 +805,7 @@ OPTIONS s_server_options[] = {
     {"async", OPT_ASYNC, '-', "Operate in asynchronous mode"},
     {"ssl_config", OPT_SSL_CONFIG, 's',
      "Configure SSL_CTX using the configuration 'val'"},
+    {"max_send_frag", OPT_MAX_SEND_FRAG, 'p', "Maximum Size of send frames "},
     {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'n',
      "Size used to split data for encrypt pipelines"},
     {"max_pipelines", OPT_MAX_PIPELINES, 'n',
@@ -937,6 +939,7 @@ int s_server_main(int argc, char *argv[])
     int s_tlsextstatus = 0;
 #endif
     int no_resume_ephemeral = 0;
+    unsigned int max_send_fragment = 0;
     unsigned int split_send_fragment = 0, max_pipelines = 0;
     const char *s_serverinfo_file = NULL;
 
@@ -1414,6 +1417,16 @@ int s_server_main(int argc, char *argv[])
         case OPT_ASYNC:
             async = 1;
             break;
+        case OPT_MAX_SEND_FRAG:
+            max_send_fragment = atoi(opt_arg());
+            if (max_send_fragment == 0) {
+                /*
+                 * Not allowed - set to a deliberately bad value so we get an
+                 * error message below
+                 */
+                max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH + 1;
+            }
+            break;
         case OPT_SPLIT_SEND_FRAG:
             split_send_fragment = atoi(opt_arg());
             if (split_send_fragment == 0) {
@@ -1455,6 +1468,11 @@ int s_server_main(int argc, char *argv[])
         goto end;
     }
 #endif
+
+    if (max_send_fragment > SSL3_RT_MAX_PLAIN_LENGTH) {
+        BIO_printf(bio_err, "Bad max send fragment size\n");
+        goto end;
+    }
 
     if (split_send_fragment > SSL3_RT_MAX_PLAIN_LENGTH) {
         BIO_printf(bio_err, "Bad split send fragment size\n");
@@ -1654,6 +1672,10 @@ int s_server_main(int argc, char *argv[])
     if (async) {
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
     }
+
+    if (max_send_fragment > 0)
+        SSL_CTX_set_max_send_fragment(ctx, max_send_fragment);
+
     if (split_send_fragment > 0) {
         SSL_CTX_set_split_send_fragment(ctx, split_send_fragment);
     }
