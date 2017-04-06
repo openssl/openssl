@@ -74,7 +74,7 @@ int RAND_set_rand_engine(ENGINE *engine)
 
 void rand_cleanup_int(void)
 {
-    const RAND_METHOD *meth = RAND_get_rand_method();
+    const RAND_METHOD *meth = default_RAND_meth;
     if (meth && meth->cleanup)
         meth->cleanup();
     RAND_set_rand_method(NULL);
