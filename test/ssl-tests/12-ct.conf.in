@@ -16,9 +16,8 @@ package ssltests;
 
 
 our @tests = (
-    # Currently only have tests for certs without SCTs.
     {
-        name => "ct-permissive",
+        name => "ct-permissive-without-scts",
         server => { },
         client => {
             extra => {
@@ -28,9 +27,25 @@ our @tests = (
         test => {
             "ExpectedResult" => "Success",
         },
-    }, 
+    },
     {
-        name => "ct-strict",
+        name => "ct-permissive-with-scts",
+        server => {
+            "Certificate" => test_pem("embeddedSCTs1.pem"),
+            "PrivateKey"  => test_pem("embeddedSCTs1-key.pem"),
+        },
+        client => {
+            "VerifyCAFile" => test_pem("embeddedSCTs1_issuer.pem"),
+            extra => {
+                "CTValidation" => "Permissive",
+            },
+        },
+        test => {
+            "ExpectedResult" => "Success",
+        },
+    },
+    {
+        name => "ct-strict-without-scts",
         server => { },
         client => {
             extra => {
@@ -43,9 +58,29 @@ our @tests = (
         },
     },
     {
-        name => "ct-permissive-resumption",
-        server => { },
+        name => "ct-strict-with-scts",
+        server => {
+            "Certificate" => test_pem("embeddedSCTs1.pem"),
+            "PrivateKey"  => test_pem("embeddedSCTs1-key.pem"),
+        },
         client => {
+            "VerifyCAFile" => test_pem("embeddedSCTs1_issuer.pem"),
+            extra => {
+                "CTValidation" => "Strict",
+            },
+        },
+        test => {
+            "ExpectedResult" => "Success",
+        },
+    },
+    {
+        name => "ct-permissive-resumption",
+        server => {
+            "Certificate" => test_pem("embeddedSCTs1.pem"),
+            "PrivateKey"  => test_pem("embeddedSCTs1-key.pem"),
+        },
+        client => {
+            "VerifyCAFile" => test_pem("embeddedSCTs1_issuer.pem"),
             extra => {
                 "CTValidation" => "Permissive",
             },
@@ -55,13 +90,17 @@ our @tests = (
             "ResumptionExpected" => "Yes",
             "ExpectedResult" => "Success",
         },
-    }, 
+    },
     {
         name => "ct-strict-resumption",
-        server => { },
+        server => {
+            "Certificate" => test_pem("embeddedSCTs1.pem"),
+            "PrivateKey"  => test_pem("embeddedSCTs1-key.pem"),
+        },
         client => {
+            "VerifyCAFile" => test_pem("embeddedSCTs1_issuer.pem"),
             extra => {
-                "CTValidation" => "Permissive",
+                "CTValidation" => "Strict",
             },
         },
         # SCTs are not present during resumption, so the resumption
