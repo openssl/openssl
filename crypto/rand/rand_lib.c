@@ -109,6 +109,8 @@ void rand_cleanup_int(void)
     if (meth && meth->cleanup)
         meth->cleanup();
     RAND_set_rand_method(NULL);
+    CRYPTO_THREAD_lock_free(rand_meth_lock);
+    CRYPTO_THREAD_lock_free(rand_engine_lock);
 }
 
 void RAND_seed(const void *buf, int num)
