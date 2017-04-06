@@ -166,11 +166,6 @@ void engine_cleanup_int(void)
                                         engine_cleanup_cb_free);
         cleanup_stack = NULL;
     }
-    /*
-     * FIXME: This should be handled (somehow) through RAND, eg. by it
-     * registering a cleanup callback.
-     */
-    RAND_set_rand_method(NULL);
     CRYPTO_THREAD_lock_free(global_engine_lock);
 }
 
