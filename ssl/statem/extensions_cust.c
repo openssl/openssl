@@ -303,10 +303,10 @@ int SSL_CTX_has_client_custom_ext(const SSL_CTX *ctx, unsigned int ext_type)
 static int add_custom_ext_intern(SSL_CTX *ctx, int server,
                                  unsigned int ext_type,
                                  unsigned int context,
-                                 custom_ext_add_cb_ex add_cb,
-                                 custom_ext_free_cb_ex free_cb,
+                                 SSL_custom_ext_add_cb_ex add_cb,
+                                 SSL_custom_ext_free_cb_ex free_cb,
                                  void *add_arg,
-                                 custom_ext_parse_cb_ex parse_cb,
+                                 SSL_custom_ext_parse_cb_ex parse_cb,
                                  void *parse_arg)
 {
     custom_ext_methods *exts = &ctx->cert->custext;
@@ -442,10 +442,10 @@ int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
 
 int SSL_CTX_add_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
                            unsigned int context,
-                           custom_ext_add_cb_ex add_cb,
-                           custom_ext_free_cb_ex free_cb,
+                           SSL_custom_ext_add_cb_ex add_cb,
+                           SSL_custom_ext_free_cb_ex free_cb,
                            void *add_arg,
-                           custom_ext_parse_cb_ex parse_cb, void *parse_arg)
+                           SSL_custom_ext_parse_cb_ex parse_cb, void *parse_arg)
 {
     return add_custom_ext_intern(ctx, -1, ext_type, context, add_cb, free_cb,
                                  add_arg, parse_cb, parse_arg);
