@@ -2602,7 +2602,11 @@ int test_main(int argc, char *argv[])
     ADD_ALL_TESTS(test_early_data_tls1_2, 2);
 # endif
 #endif
+#ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_custom_exts, 4);
+#else
+    ADD_ALL_TESTS(test_custom_exts, 2);
+#endif
 
     testresult = run_tests(argv[0]);
 
