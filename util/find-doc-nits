@@ -160,6 +160,10 @@ sub check()
         if $contents =~ /=head1 NAME.*\.\n.*=head1 SYNOPSIS/ms;
     print "$id POD markup in NAME section\n"
         if $contents =~ /=head1 NAME.*[<>].*=head1 SYNOPSIS/ms;
+    print "$id Duplicate $1 in L<>\n"
+        if $contents =~ /L<([^>]*)\|([^>]*)>/ && $1 eq $2;
+    print "$id Bad =over $1\n"
+        if $contents =~ /=over([^ ][^24])/;
 
     # Look for multiple consecutive openssl #include lines.
     # Consecutive because of files like md5.pod. Sometimes it's okay

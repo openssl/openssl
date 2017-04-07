@@ -29,7 +29,7 @@ B<BN_FLG_CONSTTIME> flag set for constant time operations. The temporary copy in
 B<dest> will share some internal state with B<b>. For this reason the following
 restrictions apply to the use of B<dest>:
 
-=over 4
+=over 2
 
 =item *
 
