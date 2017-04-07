@@ -1384,6 +1384,8 @@ int ERR_load_EC_strings(void);
 # define EC_F_ECDSA_SIGN_SETUP                            248
 # define EC_F_ECDSA_SIG_NEW                               265
 # define EC_F_ECDSA_VERIFY                                253
+# define EC_F_ECD_ITEM_SIGN                               273
+# define EC_F_ECD_ITEM_VERIFY                             272
 # define EC_F_ECKEY_PARAM2TYPE                            223
 # define EC_F_ECKEY_PARAM_DECODE                          212
 # define EC_F_ECKEY_PRIV_DECODE                           213
