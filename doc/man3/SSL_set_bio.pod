@@ -37,7 +37,7 @@ the rules for this are much more complex. For this reason this function is
 considered a legacy function and SSL_set0_rbio() and SSL_set0_wbio() should be
 used in preference. The ownership rules are as follows:
 
-=over 4
+=over 2
 
 =item *
 
