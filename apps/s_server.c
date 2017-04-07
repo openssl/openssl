@@ -806,11 +806,11 @@ OPTIONS s_server_options[] = {
     {"ssl_config", OPT_SSL_CONFIG, 's',
      "Configure SSL_CTX using the configuration 'val'"},
     {"max_send_frag", OPT_MAX_SEND_FRAG, 'p', "Maximum Size of send frames "},
-    {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'n',
+    {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'p',
      "Size used to split data for encrypt pipelines"},
-    {"max_pipelines", OPT_MAX_PIPELINES, 'n',
+    {"max_pipelines", OPT_MAX_PIPELINES, 'p',
      "Maximum number of encrypt/decrypt pipelines to be used"},
-    {"read_buf", OPT_READ_BUF, 'n',
+    {"read_buf", OPT_READ_BUF, 'p',
      "Default read buffer size to be used for connections"},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
@@ -1419,23 +1419,9 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_MAX_SEND_FRAG:
             max_send_fragment = atoi(opt_arg());
-            if (max_send_fragment == 0) {
-                /*
-                 * Not allowed - set to a deliberately bad value so we get an
-                 * error message below
-                 */
-                max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH + 1;
-            }
             break;
         case OPT_SPLIT_SEND_FRAG:
             split_send_fragment = atoi(opt_arg());
-            if (split_send_fragment == 0) {
-                /*
-                 * Not allowed - set to a deliberately bad value so we get an
-                 * error message below
-                 */
-                split_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH + 1;
-            }
             break;
         case OPT_MAX_PIPELINES:
             max_pipelines = atoi(opt_arg());
@@ -1468,21 +1454,6 @@ int s_server_main(int argc, char *argv[])
         goto end;
     }
 #endif
-
-    if (max_send_fragment > SSL3_RT_MAX_PLAIN_LENGTH) {
-        BIO_printf(bio_err, "%s: Bad max send fragment size\n", prog);
-        goto end;
-    }
-
-    if (split_send_fragment > SSL3_RT_MAX_PLAIN_LENGTH) {
-        BIO_printf(bio_err, "%s:Bad split send fragment size\n", prog);
-        goto end;
-    }
-
-    if (max_pipelines > SSL_MAX_PIPELINES) {
-        BIO_printf(bio_err, "%s:too large max-pipelines value\n", prog);
-        goto end;
-    }
 
     if (!app_passwd(passarg, dpassarg, &pass, &dpass)) {
         BIO_printf(bio_err, "Error getting password\n");
@@ -1673,14 +1644,24 @@ int s_server_main(int argc, char *argv[])
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
     }
 
-    if (max_send_fragment > 0)
-        SSL_CTX_set_max_send_fragment(ctx, max_send_fragment);
-
-    if (split_send_fragment > 0) {
-        SSL_CTX_set_split_send_fragment(ctx, split_send_fragment);
+    if (max_send_fragment > 0
+        && !SSL_CTX_set_max_send_fragment(ctx, max_send_fragment)) {
+        BIO_printf(bio_err, "%s: Max send fragment size %u is out of permitted range\n",
+                   prog, max_send_fragment);
+        goto end;
     }
-    if (max_pipelines > 0) {
-        SSL_CTX_set_max_pipelines(ctx, max_pipelines);
+
+    if (split_send_fragment > 0
+        && !SSL_CTX_set_split_send_fragment(ctx, split_send_fragment)) {
+        BIO_printf(bio_err, "%s: Split send fragment size %u is out of permitted range\n",
+                   prog, split_send_fragment);
+        goto end;
+    }
+    if (max_pipelines > 0
+        && !SSL_CTX_set_max_pipelines(ctx, max_pipelines)) {
+        BIO_printf(bio_err, "%s: Max pipelines %u is out of permitted range\n",
+                   prog, max_pipelines);
+        goto end;
     }
 
     if (read_buf_len > 0) {
