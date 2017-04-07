@@ -798,7 +798,8 @@ static int serverinfo_process_buffer(const unsigned char *serverinfo,
         /* Register callbacks for extensions */
         ext_type = (serverinfo[0] << 8) + serverinfo[1];
         if (ctx != NULL
-                && custom_ext_find(&ctx->cert->custext, 1, ext_type, NULL)
+                && custom_ext_find(&ctx->cert->custext, ENDPOINT_SERVER,
+                                   ext_type, NULL)
                    == NULL
                 && !SSL_CTX_add_server_custom_ext(ctx, ext_type,
                                                   serverinfo_srv_add_cb,

@@ -69,22 +69,23 @@ static int custom_ext_parse_old_cb_wrap(SSL *s, unsigned int ext_type,
 }
 
 /*
- * Find a custom extension from the list. The |server| param is there to
+ * Find a custom extension from the list. The |role| param is there to
  * support the legacy API where custom extensions for client and server could
- * be set independently on the same SSL_CTX. It is set to 1 if we are trying
- * to find a method relevant to the server, 0 for the client, or -1 if we don't
- * care
+ * be set independently on the same SSL_CTX. It is set to ENDPOINT_SERVER if we
+ * are trying to find a method relevant to the server, ENDPOINT_CLIENT for the
+ * client, or ENDPOINT_BOTH for either
  */
-custom_ext_method *custom_ext_find(const custom_ext_methods *exts, int server,
-                                   unsigned int ext_type, size_t *idx)
+custom_ext_method *custom_ext_find(const custom_ext_methods *exts,
+                                   ENDPOINT role, unsigned int ext_type,
+                                   size_t *idx)
 {
     size_t i;
     custom_ext_method *meth = exts->meths;
 
     for (i = 0; i < exts->meths_count; i++, meth++) {
         if (ext_type == meth->ext_type
-                && (server == -1 || server == meth->server
-                    || meth->server == -1)) {
+                && (role == ENDPOINT_BOTH || role == meth->role
+                    || meth->role == ENDPOINT_BOTH)) {
             if (idx != NULL)
                 *idx = i;
             return meth;
@@ -112,12 +113,12 @@ int custom_ext_parse(SSL *s, unsigned int context, unsigned int ext_type,
 {
     custom_ext_methods *exts = &s->cert->custext;
     custom_ext_method *meth;
-    int server = -1;
+    ENDPOINT role = ENDPOINT_BOTH;
 
     if ((context & (SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO)) != 0)
-        server = s->server;
+        role = s->server ? ENDPOINT_SERVER : ENDPOINT_CLIENT;
 
-    meth = custom_ext_find(exts, server, ext_type, NULL);
+    meth = custom_ext_find(exts, role, ext_type, NULL);
     /* If not found return success */
     if (!meth)
         return 1;
@@ -297,10 +298,11 @@ void custom_exts_free(custom_ext_methods *exts)
 /* Return true if a client custom extension exists, false otherwise */
 int SSL_CTX_has_client_custom_ext(const SSL_CTX *ctx, unsigned int ext_type)
 {
-    return custom_ext_find(&ctx->cert->custext, 0, ext_type, NULL) != NULL;
+    return custom_ext_find(&ctx->cert->custext, ENDPOINT_CLIENT, ext_type,
+                           NULL) != NULL;
 }
 
-static int add_custom_ext_intern(SSL_CTX *ctx, int server,
+static int add_custom_ext_intern(SSL_CTX *ctx, ENDPOINT role,
                                  unsigned int ext_type,
                                  unsigned int context,
                                  SSL_custom_ext_add_cb_ex add_cb,
@@ -343,7 +345,7 @@ static int add_custom_ext_intern(SSL_CTX *ctx, int server,
     if (ext_type > 0xffff)
         return 0;
     /* Search for duplicate */
-    if (custom_ext_find(exts, server, ext_type, NULL))
+    if (custom_ext_find(exts, role, ext_type, NULL))
         return 0;
     tmp = OPENSSL_realloc(exts->meths,
                           (exts->meths_count + 1) * sizeof(custom_ext_method));
@@ -353,7 +355,7 @@ static int add_custom_ext_intern(SSL_CTX *ctx, int server,
     exts->meths = tmp;
     meth = exts->meths + exts->meths_count;
     memset(meth, 0, sizeof(*meth));
-    meth->server = server;
+    meth->role = role;
     meth->context = context;
     meth->parse_cb = parse_cb;
     meth->add_cb = add_cb;
@@ -365,7 +367,8 @@ static int add_custom_ext_intern(SSL_CTX *ctx, int server,
     return 1;
 }
 
-static int add_old_custom_ext(SSL_CTX *ctx, int server, unsigned int ext_type,
+static int add_old_custom_ext(SSL_CTX *ctx, ENDPOINT role,
+                              unsigned int ext_type,
                               unsigned int context,
                               custom_ext_add_cb add_cb,
                               custom_ext_free_cb free_cb,
@@ -395,7 +398,7 @@ static int add_old_custom_ext(SSL_CTX *ctx, int server, unsigned int ext_type,
      * client and server for the same type in the same SSL_CTX? We don't handle
      * that yet.
      */
-    ret = add_custom_ext_intern(ctx, server, ext_type,
+    ret = add_custom_ext_intern(ctx, role, ext_type,
                                 context,
                                 custom_ext_add_old_cb_wrap,
                                 custom_ext_free_old_cb_wrap,
@@ -418,7 +421,7 @@ int SSL_CTX_add_client_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
                                   void *add_arg,
                                   custom_ext_parse_cb parse_cb, void *parse_arg)
 {
-    return add_old_custom_ext(ctx, 0, ext_type,
+    return add_old_custom_ext(ctx, ENDPOINT_CLIENT, ext_type,
                               SSL_EXT_TLS1_2_AND_BELOW_ONLY
                               | SSL_EXT_CLIENT_HELLO
                               | SSL_EXT_TLS1_2_SERVER_HELLO
@@ -432,7 +435,7 @@ int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
                                   void *add_arg,
                                   custom_ext_parse_cb parse_cb, void *parse_arg)
 {
-    return add_old_custom_ext(ctx, 1, ext_type,
+    return add_old_custom_ext(ctx, ENDPOINT_SERVER, ext_type,
                               SSL_EXT_TLS1_2_AND_BELOW_ONLY
                               | SSL_EXT_CLIENT_HELLO
                               | SSL_EXT_TLS1_2_SERVER_HELLO
@@ -447,8 +450,8 @@ int SSL_CTX_add_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
                            void *add_arg,
                            SSL_custom_ext_parse_cb_ex parse_cb, void *parse_arg)
 {
-    return add_custom_ext_intern(ctx, -1, ext_type, context, add_cb, free_cb,
-                                 add_arg, parse_cb, parse_arg);
+    return add_custom_ext_intern(ctx, ENDPOINT_BOTH, ext_type, context, add_cb,
+                                 free_cb, add_arg, parse_cb, parse_arg);
 }
 
 int SSL_extension_supported(unsigned int ext_type)
