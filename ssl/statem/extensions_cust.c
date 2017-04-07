@@ -393,11 +393,6 @@ static int add_old_custom_ext(SSL_CTX *ctx, ENDPOINT role,
     parse_cb_wrap->parse_arg = parse_arg;
     parse_cb_wrap->parse_cb = parse_cb;
 
-    /*
-     * TODO(TLS1.3): Is it possible with the old API to add custom exts for both
-     * client and server for the same type in the same SSL_CTX? We don't handle
-     * that yet.
-     */
     ret = add_custom_ext_intern(ctx, role, ext_type,
                                 context,
                                 custom_ext_add_old_cb_wrap,
