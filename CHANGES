@@ -57,6 +57,10 @@
   *) Support for SSL_OP_NO_ENCRYPT_THEN_MAC in SSL_CONF_cmd.
      [Emilia Käsper]
 
+  *) The RSA "null" method, which was partially supported to avoid patent
+     issues, has been replaced to always returns NULL.
+     [Rich Salz]
+
  Changes between 1.1.0d and 1.1.0e [16 Feb 2017]
 
   *) Encrypt-Then-Mac renegotiation crash

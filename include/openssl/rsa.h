@@ -236,13 +236,12 @@ int RSA_flags(const RSA *r);
 
 void RSA_set_default_method(const RSA_METHOD *meth);
 const RSA_METHOD *RSA_get_default_method(void);
+const RSA_METHOD *RSA_null_method(void);
 const RSA_METHOD *RSA_get_method(const RSA *rsa);
 int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
 
 /* these are the actual RSA functions */
 const RSA_METHOD *RSA_PKCS1_OpenSSL(void);
-
-const RSA_METHOD *RSA_null_method(void);
 
 int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2);
 
@@ -502,11 +501,11 @@ int ERR_load_RSA_strings(void);
 # define RSA_F_RSA_METH_SET1_NAME                         163
 # define RSA_F_RSA_MGF1_TO_MD                             157
 # define RSA_F_RSA_NEW_METHOD                             106
-# define RSA_F_RSA_NULL                                   124
-# define RSA_F_RSA_NULL_PRIVATE_DECRYPT                   132
-# define RSA_F_RSA_NULL_PRIVATE_ENCRYPT                   133
-# define RSA_F_RSA_NULL_PUBLIC_DECRYPT                    134
-# define RSA_F_RSA_NULL_PUBLIC_ENCRYPT                    135
+# define RSA_F_RSA_NULL                                   0
+# define RSA_F_RSA_NULL_PRIVATE_DECRYPT                   0
+# define RSA_F_RSA_NULL_PRIVATE_ENCRYPT                   0
+# define RSA_F_RSA_NULL_PUBLIC_DECRYPT                    0
+# define RSA_F_RSA_NULL_PUBLIC_ENCRYPT                    0
 # define RSA_F_RSA_OSSL_PRIVATE_DECRYPT                   101
 # define RSA_F_RSA_OSSL_PRIVATE_ENCRYPT                   102
 # define RSA_F_RSA_OSSL_PUBLIC_DECRYPT                    103
