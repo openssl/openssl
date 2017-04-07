@@ -35,12 +35,20 @@ extern "C" {
  */
 # if defined(OPENSSL_SYS_UEFI)
 #  define PRIu64 "Lu"
+#  define PRId64 "Ld"
 # endif
 # ifndef PRIu64
 #  ifdef SIXTY_FOUR_BIT_LONG
 #   define PRIu64 "lu"
 #  else
 #   define PRIu64 "llu"
+#  endif
+# endif
+# ifndef PRId64
+#  ifdef SIXTY_FOUR_BIT_LONG
+#   define PRId64 "ld"
+#  else
+#   define PRId64 "lld"
 #  endif
 # endif
 
