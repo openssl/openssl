@@ -2615,8 +2615,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #endif
 
         BIO_printf(bio,
-                   "---\nSSL handshake has read %" PRIu64
-                   " bytes and written %" PRIu64 " bytes\n",
+                   "---\nSSL handshake has read %"BIO_PRI64"u"
+                   " bytes and written %"BIO_PRI64"u bytes\n",
                    BIO_number_read(SSL_get_rbio(s)),
                    BIO_number_written(SSL_get_wbio(s)));
     }
