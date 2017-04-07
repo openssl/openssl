@@ -32,29 +32,6 @@
 /* The maximum number of incoming KeyUpdate messages we will accept */
 #define MAX_KEY_UPDATE_MESSAGES     32
 
-/* Extension context codes */
-/* This extension is only allowed in TLS */
-#define EXT_TLS_ONLY                        0x0001
-/* This extension is only allowed in DTLS */
-#define EXT_DTLS_ONLY                       0x0002
-/* Some extensions may be allowed in DTLS but we don't implement them for it */
-#define EXT_TLS_IMPLEMENTATION_ONLY         0x0004
-/* Most extensions are not defined for SSLv3 but EXT_TYPE_renegotiate is */
-#define EXT_SSL3_ALLOWED                    0x0008
-/* Extension is only defined for TLS1.2 and above */
-#define EXT_TLS1_2_AND_BELOW_ONLY           0x0010
-/* Extension is only defined for TLS1.3 and above */
-#define EXT_TLS1_3_ONLY                     0x0020
-#define EXT_CLIENT_HELLO                    0x0040
-/* Really means TLS1.2 or below */
-#define EXT_TLS1_2_SERVER_HELLO             0x0080
-#define EXT_TLS1_3_SERVER_HELLO             0x0100
-#define EXT_TLS1_3_ENCRYPTED_EXTENSIONS     0x0200
-#define EXT_TLS1_3_HELLO_RETRY_REQUEST      0x0400
-#define EXT_TLS1_3_CERTIFICATE              0x0800
-#define EXT_TLS1_3_NEW_SESSION_TICKET       0x1000
-#define EXT_TLS1_3_CERTIFICATE_REQUEST      0x2000
-
 /* Dummy message type */
 #define SSL3_MT_DUMMY   -1
 
@@ -176,6 +153,8 @@ MSG_PROCESS_RETURN tls_process_end_of_early_data(SSL *s, PACKET *pkt);
 
 /* Extension processing */
 
+__owur int extension_is_relevant(SSL *s, unsigned int extctx,
+                                 unsigned int thisctx);
 __owur int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
                                   RAW_EXTENSION **res, int *al, size_t *len);
 __owur int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
@@ -183,6 +162,8 @@ __owur int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
                                int *al);
 __owur int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts,
                                     X509 *x, size_t chainidx, int *al);
+__owur int should_add_extension(SSL *s, unsigned int extctx,
+                                unsigned int thisctx, int max_version);
 __owur int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
                                     X509 *x, size_t chainidx, int *al);
 

@@ -1616,17 +1616,27 @@ struct cert_pkey_st {
 # define SSL_CERT_FLAGS_CHECK_TLS_STRICT \
         (SSL_CERT_FLAG_SUITEB_128_LOS|SSL_CERT_FLAG_TLS_STRICT)
 
+typedef enum {
+    ENDPOINT_CLIENT = 0,
+    ENDPOINT_SERVER,
+    ENDPOINT_BOTH
+} ENDPOINT;
+
+
 typedef struct {
     unsigned short ext_type;
+    ENDPOINT role;
+    /* The context which this extension applies to */
+    unsigned int context;
     /*
      * Per-connection flags relating to this extension type: not used if
      * part of an SSL_CTX structure.
      */
     uint32_t ext_flags;
-    custom_ext_add_cb add_cb;
-    custom_ext_free_cb free_cb;
+    SSL_custom_ext_add_cb_ex add_cb;
+    SSL_custom_ext_free_cb_ex free_cb;
     void *add_arg;
-    custom_ext_parse_cb parse_cb;
+    SSL_custom_ext_parse_cb_ex parse_cb;
     void *parse_arg;
 } custom_ext_method;
 
@@ -1706,9 +1716,8 @@ typedef struct cert_st {
      */
     X509_STORE *chain_store;
     X509_STORE *verify_store;
-    /* Custom extension methods for server and client */
-    custom_ext_methods cli_ext;
-    custom_ext_methods srv_ext;
+    /* Custom extensions */
+    custom_ext_methods custext;
     /* Security callback */
     int (*sec_cb) (const SSL *s, const SSL_CTX *ctx, int op, int bits, int nid,
                    void *other, void *ex);
@@ -2436,15 +2445,19 @@ __owur int srp_generate_server_master_secret(SSL *s);
 __owur int srp_generate_client_master_secret(SSL *s);
 __owur int srp_verify_server_param(SSL *s, int *al);
 
-/* t1_ext.c */
+/* statem/extensions_cust.c */
+
+custom_ext_method *custom_ext_find(const custom_ext_methods *exts,
+                                   ENDPOINT role, unsigned int ext_type,
+                                   size_t *idx);
 
 void custom_ext_init(custom_ext_methods *meths);
 
-__owur int custom_ext_parse(SSL *s, int server,
-                            unsigned int ext_type,
+__owur int custom_ext_parse(SSL *s, unsigned int context, unsigned int ext_type,
                             const unsigned char *ext_data, size_t ext_size,
-                            int *al);
-__owur int custom_ext_add(SSL *s, int server, WPACKET *pkt, int *al);
+                            X509 *x, size_t chainidx, int *al);
+__owur int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x,
+                          size_t chainidx, int maxversion, int *al);
 
 __owur int custom_exts_copy(custom_ext_methods *dst,
                             const custom_ext_methods *src);

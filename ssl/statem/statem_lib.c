@@ -801,7 +801,7 @@ static int ssl_add_cert_to_wpacket(SSL *s, WPACKET *pkt, X509 *x, int chain,
     }
 
     if (SSL_IS_TLS13(s)
-            && !tls_construct_extensions(s, pkt, EXT_TLS1_3_CERTIFICATE, x,
+            && !tls_construct_extensions(s, pkt, SSL_EXT_TLS1_3_CERTIFICATE, x,
                                          chain, al))
         return 0;
 

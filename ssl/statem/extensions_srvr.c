@@ -1133,7 +1133,7 @@ int tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt, unsigned int context,
 int tls_construct_stoc_early_data(SSL *s, WPACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx, int *al)
 {
-    if (context == EXT_TLS1_3_NEW_SESSION_TICKET) {
+    if (context == SSL_EXT_TLS1_3_NEW_SESSION_TICKET) {
         if (s->max_early_data == 0)
             return 1;
 
