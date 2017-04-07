@@ -26,11 +26,14 @@ static CRYPTO_ONCE rand_lock_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(do_rand_lock_init)
 {
+    int ret = 1;
 #ifndef OPENSSL_NO_ENGINE
     rand_engine_lock = CRYPTO_THREAD_lock_new();
+    ret &= rand_engine_lock != NULL;
 #endif
     rand_meth_lock = CRYPTO_THREAD_lock_new();
-    return rand_engine_lock != NULL && rand_meth_lock != NULL;
+    ret &= rand_meth_lock != NULL;
+    return ret;
 }
 
 int RAND_set_rand_method(const RAND_METHOD *meth)
