@@ -66,30 +66,31 @@ custom_ext_add_cb, custom_ext_free_cb, custom_ext_parse_cb
 
 =head1 DESCRIPTION
 
-SSL_CTX_add_custom_ext() adds a custom extension for a (D)TLS client or server
+SSL_CTX_add_custom_ext() adds a custom extension for a TLS/DTLS client or server
 for all supported protocol versions with extension type B<ext_type> and
 callbacks B<add_cb>, B<free_cb> and B<parse_cb> (see the
 L</EXTENSION CALLBACKS> section below). The B<context> value determines
 which messages and under what conditions the extension will be added/parsed (see
 the L</EXTENSION CONTEXTS> section below).
 
-SSL_CTX_add_client_custom_ext() adds a custom extension for a (D)TLS client with
-extension type B<ext_type> and callbacks B<add_cb>, B<free_cb> and B<parse_cb>.
-This function is similar to SSL_CTX_add_custom_ext() except it only applies
-to clients, uses the older style of callbacks, and implicitly sets the
+SSL_CTX_add_client_custom_ext() adds a custom extension for a TLS/DTLS client
+with extension type B<ext_type> and callbacks B<add_cb>, B<free_cb> and
+B<parse_cb>. This function is similar to SSL_CTX_add_custom_ext() except it only
+applies to clients, uses the older style of callbacks, and implicitly sets the
 B<context> value to:
 
  SSL_EXT_TLS1_2_AND_BELOW_ONLY | SSL_EXT_CLIENT_HELLO
  | SSL_EXT_TLS1_2_SERVER_HELLO | SSL_EXT_IGNORE_ON_RESUMPTION
 
-SSL_CTX_add_server_custom_ext() adds a custom extension for a (D)TLS server with
-extension type B<ext_type> and callbacks B<add_cb>, B<free_cb> and
+SSL_CTX_add_server_custom_ext() adds a custom extension for a TLS/DTLS server
+with extension type B<ext_type> and callbacks B<add_cb>, B<free_cb> and
 B<parse_cb>. This function is similar to SSL_CTX_add_custom_ext() except it
 only applies to servers, uses the older style of callbacks, and implicitly sets
 the B<context> value to the same as for SSL_CTX_add_client_custom_ext() above.
 
-In all cases the extension type must not be handled by OpenSSL internally
-or an error occurs.
+The B<ext_type> parameter corresponds to the B<extension_type> field of
+RFC5246 et al. It is B<not> a NID. In all cases the extension type must not be
+handled by OpenSSL internally or an error occurs.
 
 SSL_extension_supported() returns 1 if the extension B<ext_type> is handled
 internally by OpenSSL and 0 otherwise.
@@ -112,7 +113,7 @@ If the B<add_cb> does not wish to include the extension it must return 0.
 If B<add_cb> returns -1 a fatal handshake error occurs using the TLS
 alert value specified in B<*al>.
 
-When constructing the ClientHello if B<add_cb> is set to NULL a zero length
+When constructing the ClientHello, if B<add_cb> is set to NULL a zero length
 extension is added for B<ext_type>. For all other messages if B<add_cb> is set
 to NULL then no extension is added.
 
@@ -120,7 +121,8 @@ When constructing a Certificate message the callback will be called for each
 certificate in the message. The B<x> parameter will indicate the
 current certificate and the B<chainidx> parameter will indicate the position
 of the certificate in the message. The first certificate is always the end
-entity certificate and has a B<chainidx> value of 0.
+entity certificate and has a B<chainidx> value of 0. The certificates are in the
+order that they were received in the Certificate message.
 
 For all messages except the ServerHello and EncryptedExtensions every
 registered B<add_cb> is always called to see if the application wishes to add an
@@ -188,8 +190,9 @@ the extension in SSLv3. Applications will not typically need to use this.
 
 =item SSL_EXT_TLS1_2_AND_BELOW_ONLY
 
-The extension is only defined for (D)TLSv1.2 and below. Servers will ignore this
-extension if it is present in the ClientHello and TLSv1.3 is negotiated.
+The extension is only defined for TLSv1.2/DTLSv1.2 and below. Servers will
+ignore this extension if it is present in the ClientHello and TLSv1.3 is
+negotiated.
 
 =item SSL_EXT_TLS1_3_ONLY
 
@@ -246,9 +249,6 @@ The B<add_arg> and B<parse_arg> parameters can be set to arbitrary values
 which will be passed to the corresponding callbacks. They can, for example,
 be used to store the extension data received in a convenient structure or
 pass the extension data to be added or freed when adding extensions.
-
-The B<ext_type> parameter corresponds to the B<extension_type> field of
-RFC5246 et al. It is B<not> a NID.
 
 If the same custom extension type is received multiple times a fatal
 B<decode_error> alert is sent and the handshake aborts. If a custom extension
