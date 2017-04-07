@@ -87,7 +87,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[rc2test]=../include
   DEPEND[rc2test]=../libcrypto
 
-  SOURCE[rc4test]=rc4test.c
+  SOURCE[rc4test]=rc4test.c testutil.c test_main.c
   INCLUDE[rc4test]=../include
   DEPEND[rc4test]=../libcrypto
 
