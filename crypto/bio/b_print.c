@@ -12,17 +12,7 @@
 #include <ctype.h>
 #include "internal/numbers.h"
 #include "internal/cryptlib.h"
-#ifndef NO_SYS_TYPES_H
-# include <sys/types.h>
-#endif
-#include <openssl/bn.h>         /* To get BN_LLONG properly defined */
 #include <openssl/bio.h>
-
-#if defined(BN_LLONG) || defined(SIXTY_FOUR_BIT)
-# ifndef HAVE_LONG_LONG
-#  define HAVE_LONG_LONG 1
-# endif
-#endif
 
 /*
  * Copyright Patrick Powell 1995
@@ -37,20 +27,10 @@
 # define LDOUBLE double
 #endif
 
-#ifdef HAVE_LONG_LONG
-# if defined(_WIN32) && !defined(__GNUC__)
-#  define LLONG __int64
-# else
-#  define LLONG long long
-# endif
-#else
-# define LLONG long
-#endif
-
 static int fmtstr(char **, char **, size_t *, size_t *,
                   const char *, int, int, int);
 static int fmtint(char **, char **, size_t *, size_t *,
-                  LLONG, int, int, int, int);
+                  int64_t, int, int, int, int);
 static int fmtfp(char **, char **, size_t *, size_t *,
                  LDOUBLE, int, int, int, int);
 static int doapr_outch(char **, char **, size_t *, size_t *, int);
@@ -106,7 +86,7 @@ _dopr(char **sbuffer,
       size_t *retlen, int *truncated, const char *format, va_list args)
 {
     char ch;
-    LLONG value;
+    int64_t value;
     LDOUBLE fvalue;
     char *strvalue;
     int min;
@@ -231,7 +211,7 @@ _dopr(char **sbuffer,
                     value = va_arg(args, long int);
                     break;
                 case DP_C_LLONG:
-                    value = va_arg(args, LLONG);
+                    value = va_arg(args, int64_t);
                     break;
                 default:
                     value = va_arg(args, int);
@@ -253,13 +233,13 @@ _dopr(char **sbuffer,
                     value = (unsigned short int)va_arg(args, unsigned int);
                     break;
                 case DP_C_LONG:
-                    value = (LLONG) va_arg(args, unsigned long int);
+                    value = va_arg(args, unsigned long int);
                     break;
                 case DP_C_LLONG:
-                    value = va_arg(args, unsigned LLONG);
+                    value = va_arg(args, uint64_t);
                     break;
                 default:
-                    value = (LLONG) va_arg(args, unsigned int);
+                    value = va_arg(args, unsigned int);
                     break;
                 }
                 if (!fmtint(sbuffer, buffer, &currlen, maxlen, value,
@@ -331,9 +311,9 @@ _dopr(char **sbuffer,
                     num = va_arg(args, long int *);
                     *num = (long int)currlen;
                 } else if (cflags == DP_C_LLONG) { /* XXX */
-                    LLONG *num;
-                    num = va_arg(args, LLONG *);
-                    *num = (LLONG) currlen;
+                    int64_t *num;
+                    num = va_arg(args, int64_t *);
+                    *num = (int64_t)currlen;
                 } else {
                     int *num;
                     num = va_arg(args, int *);
@@ -434,11 +414,11 @@ static int
 fmtint(char **sbuffer,
        char **buffer,
        size_t *currlen,
-       size_t *maxlen, LLONG value, int base, int min, int max, int flags)
+       size_t *maxlen, int64_t value, int base, int min, int max, int flags)
 {
     int signvalue = 0;
     const char *prefix = "";
-    unsigned LLONG uvalue;
+    uint64_t uvalue;
     char convert[DECIMAL_SIZE(value) + 3];
     int place = 0;
     int spadlen = 0;
@@ -451,7 +431,7 @@ fmtint(char **sbuffer,
     if (!(flags & DP_F_UNSIGNED)) {
         if (value < 0) {
             signvalue = '-';
-            uvalue = 0 - (unsigned LLONG)value;
+            uvalue = 0 - (uint64_t)value;
         } else if (flags & DP_F_PLUS)
             signvalue = '+';
         else if (flags & DP_F_SPACE)
