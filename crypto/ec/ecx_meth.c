@@ -339,6 +339,38 @@ static int ecd_size(const EVP_PKEY *pkey)
     return ED25519_SIGSIZE;
 }
 
+static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+                           X509_ALGOR *sigalg, ASN1_BIT_STRING *str,
+                           EVP_PKEY *pkey)
+{
+    const ASN1_OBJECT *obj;
+    int ptype;
+
+    X509_ALGOR_get0(&obj, &ptype, NULL, sigalg);
+    /* Sanity check: make sure it is ED25519 with absent parameters */
+    if (OBJ_obj2nid(obj) != NID_ED25519 || ptype != V_ASN1_UNDEF) {
+        ECerr(EC_F_ECD_ITEM_VERIFY, EC_R_INVALID_ENCODING);
+        return 0;
+    }
+
+    if (!EVP_DigestVerifyInit(ctx, NULL, NULL, NULL, pkey))
+        return 0;
+
+    return 2;
+}
+
+static int ecd_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+                         X509_ALGOR *alg1, X509_ALGOR *alg2,
+                         ASN1_BIT_STRING *str)
+{
+    /* Set algorithms identifiers */
+    X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_ED25519), V_ASN1_UNDEF, NULL);
+    if (alg2)
+        X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_ED25519), V_ASN1_UNDEF, NULL);
+    /* Algorithm idetifiers set: carry on as normal */
+    return 3;
+}
+
 const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     NID_ED25519,
     NID_ED25519,
@@ -366,7 +398,9 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     ecx_free,
     0,
     NULL,
-    NULL
+    NULL,
+    ecd_item_verify,
+    ecd_item_sign
 };
 
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
