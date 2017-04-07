@@ -1630,10 +1630,10 @@ typedef struct {
      * part of an SSL_CTX structure.
      */
     uint32_t ext_flags;
-    custom_ext_add_cb_ex add_cb;
-    custom_ext_free_cb_ex free_cb;
+    SSL_custom_ext_add_cb_ex add_cb;
+    SSL_custom_ext_free_cb_ex free_cb;
     void *add_arg;
-    custom_ext_parse_cb_ex parse_cb;
+    SSL_custom_ext_parse_cb_ex parse_cb;
     void *parse_arg;
 } custom_ext_method;
 
