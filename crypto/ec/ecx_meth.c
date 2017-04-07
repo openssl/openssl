@@ -341,6 +341,93 @@ static int ecd_size(const EVP_PKEY *pkey)
     return ED25519_SIGSIZE;
 }
 
+static int ecd_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+{
+    if (op != ASN1_PKEY_CTRL_DEFAULT_MD_NID)
+        return -2;
+
+    *(int *)arg2 = NID_sha512;
+    return 2;
+}
+
+static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+                           X509_ALGOR *sigalg, ASN1_BIT_STRING *str,
+                           EVP_PKEY *pkey)
+{
+    const ASN1_OBJECT *obj;
+    int ptype;
+    unsigned char *der = NULL;
+    size_t derlen;
+    EVP_PKEY_CTX *pctx = NULL;
+    const unsigned char *sig = ASN1_STRING_get0_data(str);
+    size_t siglen = ASN1_STRING_length(str);
+    int rv = 0;
+
+    X509_ALGOR_get0(&obj, &ptype, NULL, sigalg);
+    /* Sanity check: make sure it is ED25519 with absent parameters */
+    if (OBJ_obj2nid(obj) != NID_ED25519 || ptype != V_ASN1_UNDEF) {
+        ECerr(EC_F_ECD_ITEM_VERIFY, EC_R_INVALID_ENCODING);
+        goto err;
+    }
+    /* Generate encoding of item to be verified */
+    derlen = ASN1_item_i2d(asn, &der, it);
+    pctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (der == NULL || pctx == NULL) {
+        ECerr(EC_F_ECD_ITEM_VERIFY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (!EVP_PKEY_verify_init(pctx))
+        goto err;
+    /* If verify OK don't continue normal verification process */
+    if (EVP_PKEY_verify(pctx, sig, siglen, der, derlen) > 0)
+        rv = 3;
+ err:
+    OPENSSL_clear_free(der, derlen);
+    EVP_PKEY_CTX_free(pctx);
+    return rv;
+}
+
+static int ecd_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+                         X509_ALGOR *alg1, X509_ALGOR *alg2,
+                         ASN1_BIT_STRING *str)
+{
+    unsigned char *der = NULL, *sig = NULL;
+    size_t derlen, siglen;
+    EVP_PKEY_CTX *pctx = EVP_MD_CTX_pkey_ctx(ctx);
+    int rv = 0;
+    /* Set algorithms identifiers */
+    X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_ED25519), V_ASN1_UNDEF, NULL);
+    if (alg2)
+        X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_ED25519), V_ASN1_UNDEF, NULL);
+    /* Generate encoding of item to sign */
+    derlen = ASN1_item_i2d(asn, &der, it);
+    if (der == NULL) {
+        ECerr(EC_F_ECD_ITEM_SIGN, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (!EVP_PKEY_sign_init(pctx) ||
+        !EVP_PKEY_sign(pctx, NULL, &siglen, der, derlen))
+        goto err;
+    sig = OPENSSL_malloc(siglen);
+    if (sig == NULL) {
+        ECerr(EC_F_ECD_ITEM_SIGN, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (!EVP_PKEY_sign(pctx, sig, &siglen, der, derlen))
+        goto err;
+    ASN1_STRING_set0(str, sig, siglen);
+    sig = NULL;
+    /* Set BIT STRING to 0 bits left */
+    str->flags &= ~0x07;
+    str->flags |= ASN1_STRING_FLAG_BITS_LEFT;
+    rv = 1;
+
+ err:
+    OPENSSL_clear_free(der, derlen);
+    OPENSSL_clear_free(sig, siglen);
+    return rv;
+}
+
 const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     NID_ED25519,
     NID_ED25519,
@@ -366,9 +453,11 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     0, 0,
 
     ecx_free,
-    0,
+    ecd_ctrl,
     NULL,
-    NULL
+    NULL,
+    ecd_item_verify,
+    ecd_item_sign
 };
 
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
@@ -453,12 +542,16 @@ static int pkey_ecd_verify(EVP_PKEY_CTX *ctx,
 
 static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
-    if (type == EVP_PKEY_CTRL_MD) {
+    switch (type) {
+    case EVP_PKEY_CTRL_MD:
         /* Only allow SHA512 as it has hard coded into the algorithm */
-        if (EVP_MD_type(p2) == NID_sha512)
+        if (p2 == NULL || EVP_MD_type(p2) == NID_sha512)
             return 1;
         ECerr(EC_F_PKEY_ECD_CTRL, EC_R_INVALID_DIGEST_TYPE);
         return 0;
+
+    case EVP_PKEY_CTRL_DIGESTINIT:
+        return 1;
     }
     return -2;
 }
