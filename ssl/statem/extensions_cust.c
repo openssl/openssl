@@ -79,8 +79,8 @@ custom_ext_method *custom_ext_find(const custom_ext_methods *exts, int server,
                                    unsigned int ext_type, size_t *idx)
 {
     size_t i;
-
     custom_ext_method *meth = exts->meths;
+
     for (i = 0; i < exts->meths_count; i++, meth++) {
         if (ext_type == meth->ext_type
                 && (server == -1 || server == meth->server
@@ -100,6 +100,7 @@ void custom_ext_init(custom_ext_methods *exts)
 {
     size_t i;
     custom_ext_method *meth = exts->meths;
+
     for (i = 0; i < exts->meths_count; i++, meth++)
         meth->ext_flags = 0;
 }
@@ -192,9 +193,10 @@ int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x, size_t chainidx,
             continue;
 
         if (meth->add_cb != NULL) {
-            int cb_retval = 0;
-            cb_retval = meth->add_cb(s, meth->ext_type, context, &out, &outlen,
-                                     x, chainidx, al, meth->add_arg);
+            int cb_retval = meth->add_cb(s, meth->ext_type, context, &out,
+                                         &outlen, x, chainidx, al,
+                                         meth->add_arg);
+
             if (cb_retval < 0)
                 return 0;       /* error */
             if (cb_retval == 0)
@@ -212,7 +214,7 @@ int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x, size_t chainidx,
             /*
              * We can't send duplicates: code logic should prevent this.
              */
-            assert(!(meth->ext_flags & SSL_EXT_FLAG_SENT));
+            assert((meth->ext_flags & SSL_EXT_FLAG_SENT) == 0);
             /*
              * Indicate extension has been sent: this is both a sanity check to
              * ensure we don't send duplicate extensions and indicates that it
@@ -220,7 +222,7 @@ int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x, size_t chainidx,
              */
             meth->ext_flags |= SSL_EXT_FLAG_SENT;
         }
-        if (meth->free_cb)
+        if (meth->free_cb != NULL)
             meth->free_cb(s, meth->ext_type, context, out, meth->add_arg);
     }
     return 1;
@@ -235,7 +237,7 @@ int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src)
     if (src->meths_count > 0) {
         dst->meths =
             OPENSSL_memdup(src->meths,
-                           sizeof(custom_ext_method) * src->meths_count);
+                           sizeof(*src->meths) * src->meths_count);
         if (dst->meths == NULL)
             return 0;
         dst->meths_count = src->meths_count;
@@ -279,10 +281,9 @@ int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src)
 void custom_exts_free(custom_ext_methods *exts)
 {
     size_t i;
+    custom_ext_method *meth;
 
-    for (i = 0; i < exts->meths_count; i++) {
-        custom_ext_method *meth = exts->meths + i;
-
+    for (i = 0, meth = exts->meths; i < exts->meths_count; i++, meth++) {
         if (meth->add_cb != custom_ext_add_old_cb_wrap)
             continue;
 
@@ -315,7 +316,7 @@ static int add_custom_ext_intern(SSL_CTX *ctx, int server,
      * Check application error: if add_cb is not set free_cb will never be
      * called.
      */
-    if (!add_cb && free_cb)
+    if (add_cb == NULL && free_cb != NULL)
         return 0;
 
 #ifndef OPENSSL_NO_CT
@@ -346,7 +347,6 @@ static int add_custom_ext_intern(SSL_CTX *ctx, int server,
         return 0;
     tmp = OPENSSL_realloc(exts->meths,
                           (exts->meths_count + 1) * sizeof(custom_ext_method));
-
     if (tmp == NULL)
         return 0;
 
@@ -373,9 +373,9 @@ static int add_old_custom_ext(SSL_CTX *ctx, int server, unsigned int ext_type,
                               custom_ext_parse_cb parse_cb, void *parse_arg)
 {
     custom_ext_add_cb_wrap *add_cb_wrap
-        = OPENSSL_malloc(sizeof(custom_ext_add_cb_wrap));
+        = OPENSSL_malloc(sizeof(*add_cb_wrap));
     custom_ext_parse_cb_wrap *parse_cb_wrap
-        = OPENSSL_malloc(sizeof(custom_ext_parse_cb_wrap));
+        = OPENSSL_malloc(sizeof(*parse_cb_wrap));
     int ret;
 
     if (add_cb_wrap == NULL || parse_cb_wrap == NULL) {
