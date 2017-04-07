@@ -55,7 +55,7 @@ If B<ret> is not B<NULL>, it will be used to store the number.
 
 If B<cb> is not B<NULL>, it is used as follows:
 
-=over 4
+=over 2
 
 =item *
 

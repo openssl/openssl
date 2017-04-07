@@ -32,9 +32,10 @@ supported by OpenSSL.
 
 The following multi-threading function are provided:
 
-=over 4
+=over 2
 
 =item *
+
 CRYPTO_THREAD_run_once() can be used to perform one-time initialization.
 The B<once> argument must be a pointer to a static object of type
 B<CRYPTO_ONCE> that was statically initialized to the value
@@ -45,22 +46,28 @@ In particular, this can be used to allocate locks in a thread-safe manner,
 which can then be used with the locking functions below.
 
 =item *
+
 CRYPTO_THREAD_lock_new() allocates, initializes and returns a new read/write
 lock.
 
 =item *
+
 CRYPTO_THREAD_read_lock() locks the provided B<lock> for reading.
 
 =item *
+
 CRYPTO_THREAD_write_lock() locks the provided B<lock> for writing.
 
 =item *
+
 CRYPTO_THREAD_unlock() unlocks the previously locked B<lock>.
 
 =item *
+
 CRYPTO_THREAD_lock_frees() frees the provided B<lock>.
 
 =item *
+
 CRYPTO_atomic_add() atomically adds B<amount> to B<val> and returns the
 result of the operation in B<ret>. B<lock> will be locked, unless atomic
 operations are supported on the specific platform. Because of this, if a
