@@ -373,15 +373,15 @@ static int verify_extension(SSL *s, unsigned int context, unsigned int type,
     /* Check the custom extensions */
     if (meths != NULL) {
         size_t offset = 0;
-        int server = -1;
+        ENDPOINT role = ENDPOINT_BOTH;
         custom_ext_method *meth = NULL;
 
         if ((context & SSL_EXT_CLIENT_HELLO) != 0)
-            server = 1;
+            role = ENDPOINT_SERVER;
         else if ((context & SSL_EXT_TLS1_2_SERVER_HELLO) != 0)
-            server = 0;
+            role = ENDPOINT_CLIENT;
 
-        meth = custom_ext_find(meths, server, type, &offset);
+        meth = custom_ext_find(meths, role, type, &offset);
         if (meth != NULL) {
             if (!validate_context(s, meth->context, context))
                 return 0;

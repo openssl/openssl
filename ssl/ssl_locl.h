@@ -1616,13 +1616,16 @@ struct cert_pkey_st {
 # define SSL_CERT_FLAGS_CHECK_TLS_STRICT \
         (SSL_CERT_FLAG_SUITEB_128_LOS|SSL_CERT_FLAG_TLS_STRICT)
 
+typedef enum {
+    ENDPOINT_CLIENT = 0,
+    ENDPOINT_SERVER,
+    ENDPOINT_BOTH
+} ENDPOINT;
+
+
 typedef struct {
     unsigned short ext_type;
-    /*
-     * Set to 1 if this is only for the server side, 0 if it is only for the
-     * client side, or -1 if it is either.
-     */
-    int server;
+    ENDPOINT role;
     /* The context which this extension applies to */
     unsigned int context;
     /*
@@ -2444,8 +2447,9 @@ __owur int srp_verify_server_param(SSL *s, int *al);
 
 /* statem/extensions_cust.c */
 
-custom_ext_method *custom_ext_find(const custom_ext_methods *exts, int server,
-                                   unsigned int ext_type, size_t *idx);
+custom_ext_method *custom_ext_find(const custom_ext_methods *exts,
+                                   ENDPOINT role, unsigned int ext_type,
+                                   size_t *idx);
 
 void custom_ext_init(custom_ext_methods *meths);
 
