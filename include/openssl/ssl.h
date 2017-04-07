@@ -289,21 +289,24 @@ typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
                                     size_t inlen, int *al, void *parse_arg);
 
 
-typedef int (*custom_ext_add_cb_ex) (SSL *s, unsigned int ext_type,
-                                     unsigned int context,
-                                     const unsigned char **out,
-                                     size_t *outlen, X509 *x, size_t chainidx,
-                                     int *al, void *add_arg);
+typedef int (*SSL_custom_ext_add_cb_ex) (SSL *s, unsigned int ext_type,
+                                         unsigned int context,
+                                         const unsigned char **out,
+                                         size_t *outlen, X509 *x,
+                                         size_t chainidx,
+                                         int *al, void *add_arg);
 
-typedef void (*custom_ext_free_cb_ex) (SSL *s, unsigned int ext_type,
-                                       unsigned int context,
-                                       const unsigned char *out, void *add_arg);
+typedef void (*SSL_custom_ext_free_cb_ex) (SSL *s, unsigned int ext_type,
+                                           unsigned int context,
+                                           const unsigned char *out,
+                                           void *add_arg);
 
-typedef int (*custom_ext_parse_cb_ex) (SSL *s, unsigned int ext_type,
-                                       unsigned int context,
-                                       const unsigned char *in,
-                                       size_t inlen, X509 *x, size_t chainidx,
-                                       int *al, void *parse_arg);
+typedef int (*SSL_custom_ext_parse_cb_ex) (SSL *s, unsigned int ext_type,
+                                           unsigned int context,
+                                           const unsigned char *in,
+                                           size_t inlen, X509 *x,
+                                           size_t chainidx,
+                                           int *al, void *parse_arg);
 
 /* Typedef for verification callback */
 typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
@@ -800,10 +803,10 @@ __owur int SSL_CTX_add_server_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
 
 __owur int SSL_CTX_add_custom_ext(SSL_CTX *ctx, unsigned int ext_type,
                                   unsigned int context,
-                                  custom_ext_add_cb_ex add_cb,
-                                  custom_ext_free_cb_ex free_cb,
+                                  SSL_custom_ext_add_cb_ex add_cb,
+                                  SSL_custom_ext_free_cb_ex free_cb,
                                   void *add_arg,
-                                  custom_ext_parse_cb_ex parse_cb,
+                                  SSL_custom_ext_parse_cb_ex parse_cb,
                                   void *parse_arg);
 
 __owur int SSL_extension_supported(unsigned int ext_type);
