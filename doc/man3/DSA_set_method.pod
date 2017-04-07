@@ -31,8 +31,11 @@ Initially, the default DSA_METHOD is the OpenSSL internal implementation,
 as returned by DSA_OpenSSL().
 
 DSA_set_default_method() makes B<meth> the default method for all DSA
-structures created later. B<NB>: This is true only whilst no ENGINE has
+structures created later.
+B<NB>: This is true only whilst no ENGINE has
 been set as a default for DSA, so this function is no longer recommended.
+This function is not thread-safe and should not be called at the same time
+as other OpenSSL functions.
 
 DSA_get_default_method() returns a pointer to the current default
 DSA_METHOD. However, the meaningfulness of this result is dependent on
