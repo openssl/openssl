@@ -501,11 +501,11 @@ int ERR_load_RSA_strings(void);
 # define RSA_F_RSA_METH_SET1_NAME                         163
 # define RSA_F_RSA_MGF1_TO_MD                             157
 # define RSA_F_RSA_NEW_METHOD                             106
-# define RSA_F_RSA_NULL                                   0
-# define RSA_F_RSA_NULL_PRIVATE_DECRYPT                   0
-# define RSA_F_RSA_NULL_PRIVATE_ENCRYPT                   0
-# define RSA_F_RSA_NULL_PUBLIC_DECRYPT                    0
-# define RSA_F_RSA_NULL_PUBLIC_ENCRYPT                    0
+# define RSA_F_RSA_NULL                                   124
+# define RSA_F_RSA_NULL_PRIVATE_DECRYPT                   132
+# define RSA_F_RSA_NULL_PRIVATE_ENCRYPT                   133
+# define RSA_F_RSA_NULL_PUBLIC_DECRYPT                    134
+# define RSA_F_RSA_NULL_PUBLIC_ENCRYPT                    135
 # define RSA_F_RSA_OSSL_PRIVATE_DECRYPT                   101
 # define RSA_F_RSA_OSSL_PRIVATE_ENCRYPT                   102
 # define RSA_F_RSA_OSSL_PUBLIC_DECRYPT                    103
