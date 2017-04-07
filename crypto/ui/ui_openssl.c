@@ -202,6 +202,18 @@ static UI_METHOD ui_openssl = {
     NULL
 };
 
+static const UI_METHOD *default_UI_meth = &ui_openssl;
+
+void UI_set_default_method(const UI_METHOD *meth)
+{
+    default_UI_meth = meth;
+}
+
+const UI_METHOD *UI_get_default_method(void)
+{
+    return default_UI_meth;
+}
+
 /* The method with all the built-in thingies */
 UI_METHOD *UI_OpenSSL(void)
 {

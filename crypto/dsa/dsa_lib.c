@@ -17,20 +17,6 @@
 #include <openssl/engine.h>
 #include <openssl/dh.h>
 
-static const DSA_METHOD *default_DSA_method = NULL;
-
-void DSA_set_default_method(const DSA_METHOD *meth)
-{
-    default_DSA_method = meth;
-}
-
-const DSA_METHOD *DSA_get_default_method(void)
-{
-    if (!default_DSA_method)
-        default_DSA_method = DSA_OpenSSL();
-    return default_DSA_method;
-}
-
 DSA *DSA_new(void)
 {
     return DSA_new_method(NULL);

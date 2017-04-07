@@ -56,9 +56,21 @@ static DH_METHOD dh_ossl = {
     NULL
 };
 
+static const DH_METHOD *default_DH_method = &dh_ossl;
+
 const DH_METHOD *DH_OpenSSL(void)
 {
     return &dh_ossl;
+}
+
+void DH_set_default_method(const DH_METHOD *meth)
+{
+    default_DH_method = meth;
+}
+
+const DH_METHOD *DH_get_default_method(void)
+{
+    return default_DH_method;
 }
 
 static int generate_key(DH *dh)
