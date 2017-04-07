@@ -1388,17 +1388,17 @@ int s_client_main(int argc, char **argv)
     }
 
     if (max_send_fragment > SSL3_RT_MAX_PLAIN_LENGTH) {
-        BIO_printf(bio_err, "Bad max send fragment size\n");
+        BIO_printf(bio_err, "%s: Bad max send fragment size\n", prog);
         goto end;
     }
 
     if (split_send_fragment > SSL3_RT_MAX_PLAIN_LENGTH) {
-        BIO_printf(bio_err, "Bad split send fragment size\n");
+        BIO_printf(bio_err, "%s: Bad split send fragment size\n", prog);
         goto end;
     }
 
     if (max_pipelines > SSL_MAX_PIPELINES) {
-        BIO_printf(bio_err, "Bad max pipelines value\n");
+        BIO_printf(bio_err, "%s: Bad max pipelines value\n", prog);
         goto end;
     }
 
