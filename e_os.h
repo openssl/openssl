@@ -30,18 +30,13 @@ extern "C" {
 # endif
 
 /*
- * We need a format operator for some client tools for uint64_t.  If inttypes.h
- * isn't available or did not define it, just go with hard-coded.
+ * BIO_printf format modifier for [u]int64_t.
  */
-# if defined(OPENSSL_SYS_UEFI)
-#  define PRIu64 "Lu"
-# endif
-# ifndef PRIu64
-#  ifdef SIXTY_FOUR_BIT_LONG
-#   define PRIu64 "lu"
-#  else
-#   define PRIu64 "llu"
-#  endif
+# if defined(__LP64__) || (defined(__SIZEOF_LONG__) && __SIZEOF_LONG__==8)
+#  define BIO_PRI64 "l"     /* 'll' does work "universally", but 'l' is
+                             * here to shut -Wformat warnings in LP64... */
+# else
+#  define BIO_PRI64 "ll"
 # endif
 
 # if !defined(NDEBUG) && !defined(OPENSSL_NO_STDIO)
