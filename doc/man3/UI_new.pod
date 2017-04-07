@@ -168,6 +168,8 @@ B<UI_CTRL_IS_REDOABLE>, which returns a flag saying if the used UI can
 be used again or not.
 
 UI_set_default_method() changes the default UI method to the one given.
+This function is not thread-safe and should not be called at the same time
+as other OpenSSL functions.
 
 UI_get_default_method() returns a pointer to the current default UI method.
 
