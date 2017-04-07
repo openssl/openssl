@@ -17,31 +17,9 @@
 #include "internal/evp_int.h"
 #include "rsa_locl.h"
 
-static const RSA_METHOD *default_RSA_meth = NULL;
-
 RSA *RSA_new(void)
 {
-    RSA *r = RSA_new_method(NULL);
-
-    return r;
-}
-
-void RSA_set_default_method(const RSA_METHOD *meth)
-{
-    default_RSA_meth = meth;
-}
-
-const RSA_METHOD *RSA_get_default_method(void)
-{
-    if (default_RSA_meth == NULL) {
-#ifdef RSA_NULL
-        default_RSA_meth = RSA_null_method();
-#else
-        default_RSA_meth = RSA_PKCS1_OpenSSL();
-#endif
-    }
-
-    return default_RSA_meth;
+    return RSA_new_method(NULL);
 }
 
 const RSA_METHOD *RSA_get_method(const RSA *rsa)

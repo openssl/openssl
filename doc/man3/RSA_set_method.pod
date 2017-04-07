@@ -3,7 +3,7 @@
 =head1 NAME
 
 RSA_set_default_method, RSA_get_default_method, RSA_set_method,
-RSA_get_method, RSA_PKCS1_OpenSSL, RSA_null_method, RSA_flags,
+RSA_get_method, RSA_PKCS1_OpenSSL, RSA_flags,
 RSA_new_method - select RSA method
 
 =head1 SYNOPSIS
@@ -19,8 +19,6 @@ RSA_new_method - select RSA method
  RSA_METHOD *RSA_get_method(const RSA *rsa);
 
  RSA_METHOD *RSA_PKCS1_OpenSSL(void);
-
- RSA_METHOD *RSA_null_method(void);
 
  int RSA_flags(const RSA *rsa);
 
@@ -38,8 +36,11 @@ Initially, the default RSA_METHOD is the OpenSSL internal implementation,
 as returned by RSA_PKCS1_OpenSSL().
 
 RSA_set_default_method() makes B<meth> the default method for all RSA
-structures created later. B<NB>: This is true only whilst no ENGINE has
+structures created later.
+B<NB>: This is true only whilst no ENGINE has
 been set as a default for RSA, so this function is no longer recommended.
+This function is not thread-safe and should not be called at the same time
+as other OpenSSL functions.
 
 RSA_get_default_method() returns a pointer to the current default
 RSA_METHOD. However, the meaningfulness of this result is dependent on
@@ -167,6 +168,11 @@ not currently exist).
 =head1 SEE ALSO
 
 L<RSA_new(3)>
+
+=head1 HISTORY
+
+The RSA_null_method(), which was a partial attempt to avoid patent issues,
+was replaced to always return NULL in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
