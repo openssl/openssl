@@ -111,7 +111,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[sha512t]=../include
   DEPEND[sha512t]=../libcrypto
 
-  SOURCE[mdc2test]=mdc2test.c
+  SOURCE[mdc2test]=mdc2test.c testutil.c test_main.c
   INCLUDE[mdc2test]=../include
   DEPEND[mdc2test]=../libcrypto
 
