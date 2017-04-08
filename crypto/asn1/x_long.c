@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
-#include <openssl/bn.h>
 
 /*
  * Custom primitive type for long handling. This converts between an
@@ -56,11 +55,36 @@ static void long_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
     *(long *)pval = it->size;
 }
 
+/*
+ * Originally BN_num_bits_word was called to perform this operation, but
+ * trouble is that there is no guarantee that sizeof(long) equals to
+ * sizeof(BN_ULONG). BN_ULONG is a configurable type that can be as wide
+ * as long, but also double or half...
+ */
+static int num_bits_ulong(unsigned long value)
+{
+    size_t i;
+    unsigned long ret = 0;
+
+    /*
+     * It is argued that *on average* constant counter loop performs
+     * not worse [if not better] than one with conditional break or
+     * mask-n-table-lookup-style, because of branch misprediction
+     * penalties.
+     */
+    for (i = 0; i < sizeof(value) * 8; i++) {
+        ret += (value != 0);
+        value >>= 1;
+    }
+
+    return (int)ret;
+}
+
 static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
                     const ASN1_ITEM *it)
 {
     long ltmp;
-    unsigned long utmp;
+    unsigned long utmp, sign;
     int clen, pad, i;
     /* this exists to bypass broken gcc optimization */
     char *cp = (char *)pval;
@@ -75,11 +99,14 @@ static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
      * cleanly handle the padding if only the MSB of the leading octet is
      * set.
      */
-    if (ltmp < 0)
+    if (ltmp < 0) {
+        sign = 0xff;
         utmp = 0 - (unsigned long)ltmp - 1;
-    else
+    } else {
+        sign = 0;
         utmp = ltmp;
-    clen = BN_num_bits_word(utmp);
+    }
+    clen = num_bits_ulong(utmp);
     /* If MSB of leading octet set we need to pad */
     if (!(clen & 0x7))
         pad = 1;
@@ -89,13 +116,11 @@ static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
     /* Convert number of bits to number of octets */
     clen = (clen + 7) >> 3;
 
-    if (cont) {
+    if (cont != NULL) {
         if (pad)
-            *cont++ = (ltmp < 0) ? 0xff : 0;
+            *cont++ = (unsigned char)sign;
         for (i = clen - 1; i >= 0; i--) {
-            cont[i] = (unsigned char)(utmp & 0xff);
-            if (ltmp < 0)
-                cont[i] ^= 0xff;
+            cont[i] = (unsigned char)(utmp ^ sign);
             utmp >>= 8;
         }
     }
@@ -105,9 +130,9 @@ static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
 static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
                     int utype, char *free_cont, const ASN1_ITEM *it)
 {
-    int neg = -1, i;
+    int i;
     long ltmp;
-    unsigned long utmp = 0;
+    unsigned long utmp = 0, sign = 0x100;
     char *cp = (char *)pval;
 
     if (len > 1) {
@@ -120,12 +145,12 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         case 0xff:
             cont++;
             len--;
-            neg = 0x80;
+            sign = 0xff;
             break;
         case 0:
             cont++;
             len--;
-            neg = 0;
+            sign = 0;
             break;
         }
     }
@@ -133,33 +158,29 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         ASN1err(ASN1_F_LONG_C2I, ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
         return 0;
     }
-    if (neg == -1) {
+
+    if (sign == 0x100) {
         /* Is it negative? */
         if (len && (cont[0] & 0x80))
-            neg = 1;
+            sign = 0xff;
         else
-            neg = 0;
-    } else if (neg == (cont[0] & 0x80)) {
+            sign = 0;
+    } else if (((sign ^ cont[0]) & 0x80) == 0) { /* same sign bit? */
         ASN1err(ASN1_F_LONG_C2I, ASN1_R_ILLEGAL_PADDING);
         return 0;
     }
     utmp = 0;
     for (i = 0; i < len; i++) {
         utmp <<= 8;
-        if (neg)
-            utmp |= cont[i] ^ 0xff;
-        else
-            utmp |= cont[i];
+        utmp |= cont[i] ^ sign;
     }
     ltmp = (long)utmp;
     if (ltmp < 0) {
         ASN1err(ASN1_F_LONG_C2I, ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
         return 0;
     }
-    if (neg) {
-        ltmp = -ltmp;
-        ltmp--;
-    }
+    if (sign)
+        ltmp = -ltmp - 1;
     if (ltmp == it->size) {
         ASN1err(ASN1_F_LONG_C2I, ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
         return 0;
