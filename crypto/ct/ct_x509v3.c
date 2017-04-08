@@ -32,7 +32,8 @@ static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
 
 static int set_sct_list_source(STACK_OF(SCT) *s, sct_source_t source) {
     if (s != NULL) {
-        for (size_t i = 0; i < sk_SCT_num(s); i++) {
+        size_t i;
+        for (i = 0; i < sk_SCT_num(s); i++) {
             int res = SCT_set_source(
                 sk_SCT_value(s, i), SCT_SOURCE_X509V3_EXTENSION);
             if (res != 1) {
