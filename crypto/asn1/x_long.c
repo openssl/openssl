@@ -69,7 +69,7 @@ static int num_bits_ulong(unsigned long value)
      */
     for (i = 0; i < sizeof(value) * 8; i++) {
         ret += (value != 0);
-	value >>= 1;
+        value >>= 1;
     }
 
     return (int)ret;
