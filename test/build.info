@@ -99,7 +99,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[destest]=../include
   DEPEND[destest]=../libcrypto
 
-  SOURCE[sha1test]=sha1test.c
+  SOURCE[sha1test]=sha1test.c testutil.c test_main.c
   INCLUDE[sha1test]=../include
   DEPEND[sha1test]=../libcrypto
 
