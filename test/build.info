@@ -103,11 +103,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[sha1test]=../include
   DEPEND[sha1test]=../libcrypto
 
-  SOURCE[sha256t]=sha256t.c
+  SOURCE[sha256t]=sha256t.c testutil.c test_main.c
   INCLUDE[sha256t]=../include
   DEPEND[sha256t]=../libcrypto
 
-  SOURCE[sha512t]=sha512t.c
+  SOURCE[sha512t]=sha512t.c testutil.c test_main.c
   INCLUDE[sha512t]=../include
   DEPEND[sha512t]=../libcrypto
 
