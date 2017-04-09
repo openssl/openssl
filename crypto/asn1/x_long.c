@@ -92,7 +92,7 @@ static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
     /* Convert number of bits to number of octets */
     clen = (clen + 7) >> 3;
 
-    if (cont) {
+    if (cont != NULL) {
         if (pad)
             *cont++ = (unsigned char)sign;
         for (i = clen - 1; i >= 0; i--) {
