@@ -56,6 +56,25 @@ static void long_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
     *(long *)pval = it->size;
 }
 
+static int num_bits_ulong(unsigned long value)
+{
+    size_t i;
+    unsigned long ret = 0;
+
+    /*
+     * It is argued that *on average* constant counter loop performs
+     * not worse [if not better] than one with conditional break or
+     * mask-n-table-lookup-style, because of branch misprediction
+     * penalties.
+     */
+    for (i = 0; i < sizeof(value) * 8; i++) {
+        ret += (value != 0);
+	value >>= 1;
+    }
+
+    return (int)ret;
+}
+
 static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
                     const ASN1_ITEM *it)
 {
@@ -82,7 +101,7 @@ static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
         sign = 0;
         utmp = ltmp;
     }
-    clen = BN_num_bits_word(utmp);
+    clen = num_bits_ulong(utmp);
     /* If MSB of leading octet set we need to pad */
     if (!(clen & 0x7))
         pad = 1;
