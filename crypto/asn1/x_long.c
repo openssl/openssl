@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
-#include <openssl/bn.h>
 
 /*
  * Custom primitive type for long handling. This converts between an
