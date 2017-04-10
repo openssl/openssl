@@ -413,7 +413,7 @@ static int server_alpn_cb(SSL *s, const unsigned char **out,
     *out = tmp_out;
     /* Unlike NPN, we don't tolerate a mismatch. */
     return ret == OPENSSL_NPN_NEGOTIATED ? SSL_TLSEXT_ERR_OK
-        : SSL_TLSEXT_ERR_NOACK;
+        : SSL_TLSEXT_ERR_ALERT_FATAL;
 }
 
 #ifndef OPENSSL_NO_SRP
