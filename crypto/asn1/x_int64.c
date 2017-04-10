@@ -71,6 +71,11 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         ASN1err(ASN1_F_UINT64_C2I, ASN1_R_ILLEGAL_NEGATIVE_VALUE);
         return 0;
     }
+    if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED
+            && !neg && utmp > INT64_MAX) {
+        ASN1err(ASN1_F_UINT64_C2I, ASN1_R_TOO_LARGE);
+        return 0;
+    }
     memcpy(cp, &utmp, sizeof(utmp));
     return 1;
 }
