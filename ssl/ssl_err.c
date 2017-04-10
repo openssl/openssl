@@ -174,6 +174,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE),
      "SSL_CTX_use_RSAPrivateKey_file"},
     {ERR_FUNC(SSL_F_SSL_CTX_USE_SERVERINFO), "SSL_CTX_use_serverinfo"},
+    {ERR_FUNC(SSL_F_SSL_CTX_USE_SERVERINFO_EX), "SSL_CTX_use_serverinfo_ex"},
     {ERR_FUNC(SSL_F_SSL_CTX_USE_SERVERINFO_FILE),
      "SSL_CTX_use_serverinfo_file"},
     {ERR_FUNC(SSL_F_SSL_DANE_DUP), "ssl_dane_dup"},

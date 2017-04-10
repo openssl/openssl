@@ -1448,9 +1448,17 @@ __owur int SSL_use_PrivateKey_ASN1(int pk, SSL *ssl, const unsigned char *d,
 __owur int SSL_use_certificate(SSL *ssl, X509 *x);
 __owur int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len);
 
+
+/* serverinfo file format versions */
+# define SERVERINFOV1   1
+# define SERVERINFOV2   2
+
 /* Set serverinfo data for the current active cert. */
 __owur int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
                            size_t serverinfo_length);
+__owur int SSL_CTX_use_serverinfo_ex(SSL_CTX *ctx, unsigned int version,
+                                     const unsigned char *serverinfo,
+                                     size_t serverinfo_length);
 __owur int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file);
 
 #ifndef OPENSSL_NO_RSA
@@ -2309,6 +2317,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_ASN1             178
 # define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE             179
 # define SSL_F_SSL_CTX_USE_SERVERINFO                     336
+# define SSL_F_SSL_CTX_USE_SERVERINFO_EX                  543
 # define SSL_F_SSL_CTX_USE_SERVERINFO_FILE                337
 # define SSL_F_SSL_DANE_DUP                               403
 # define SSL_F_SSL_DANE_ENABLE                            395
