@@ -369,7 +369,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
      * report the error in a way the user will notice
      */
     if (((unsigned int)len < s->rlayer.wnum) 
-          || ((tot != 0) && (len < (tot + s->rlayer.wpend_tot)))) {
+        || ((wb->left != 0) && (len < (s->rlayer.wnum + s->rlayer.wpend_tot)))) {
         SSLerr(SSL_F_SSL3_WRITE_BYTES, SSL_R_BAD_LENGTH);
         return -1;
     }
