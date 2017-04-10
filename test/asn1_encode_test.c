@@ -381,7 +381,7 @@ static ASN1_INT64_DATA int64_expected[] = {
     CUSTOM_EXPECTED_SUCCESS(0x80000000, 0x80000000), /* t_4bytes_1 */
     CUSTOM_EXPECTED_SUCCESS(INT32_MAX - 1, INT32_MAX -1), /* t_4bytes_2 */
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_3_pad (illegal padding) */
-    CUSTOM_EXPECTED_SUCCESS(0x80000000, 0x80000000), /* t_4bytes_4_neg */
+    CUSTOM_EXPECTED_SUCCESS(INT32_MIN, INT32_MIN), /* t_4bytes_4_neg */
     CUSTOM_EXPECTED_FAILURE,     /* t_4bytes_5_negpad (illegal padding) */
 };
 static ASN1_INT64_DATA int64_encdec_data[] = {
@@ -419,7 +419,8 @@ static ASN1_UINT64_DATA uint64_expected[] = {
     CUSTOM_EXPECTED_SUCCESS(ASN1_LONG_UNDEF, ASN1_LONG_UNDEF), /* t_zero */
     CUSTOM_EXPECTED_SUCCESS(1, 1), /* t_one */
     CUSTOM_EXPECTED_FAILURE,     /* t_9bytes_1 */
-    CUSTOM_EXPECTED_SUCCESS(INT64_MIN, INT64_MIN), /* t_8bytes_1 */
+    CUSTOM_EXPECTED_SUCCESS((uint64_t)INT64_MAX+1, (uint64_t)INT64_MAX+1),
+                                 /* t_8bytes_1 */
     CUSTOM_EXPECTED_SUCCESS(INT64_MAX, INT64_MAX), /* t_8bytes_2 */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_3_pad */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_4_neg */
