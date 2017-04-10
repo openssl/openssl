@@ -55,6 +55,12 @@ static void long_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
     *(long *)pval = it->size;
 }
 
+/*
+ * Originally BN_num_bits_word was called to perform this operation, but
+ * trouble is that there is no guarantee that sizeof(long) equals to
+ * sizeof(BN_ULONG). BN_ULONG is a configurable type that can be as wide
+ * as long, but also double or half...
+ */
 static int num_bits_ulong(unsigned long value)
 {
     size_t i;
