@@ -63,7 +63,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[ecdhtest]=../include
   DEPEND[ecdhtest]=../libcrypto
 
-  SOURCE[gmdifftest]=gmdifftest.c
+  SOURCE[gmdifftest]=gmdifftest.c testutil.c test_main.c
   INCLUDE[gmdifftest]=../include
   DEPEND[gmdifftest]=../libcrypto
 
