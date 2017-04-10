@@ -132,7 +132,7 @@ static TEST_CUSTOM_DATA test_custom_data[] = {
  * A structure to collect all test information in.  There MUST be one instance
  * of this for each test
  */
-typedef int i2d_fn(void **a, unsigned char **pp);
+typedef int i2d_fn(void *a, unsigned char **pp);
 typedef void *d2i_fn(void **a, unsigned char **pp, long length);
 typedef void ifree_fn(void *a);
 typedef struct {
