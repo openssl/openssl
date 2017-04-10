@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -48,31 +48,22 @@ static int test_dtls_unprocessed(int testidx)
     BIO *c_to_s_fbio, *c_to_s_mempacket;
     int testresult = 0;
 
-    printf("Starting Test %d\n", testidx);
-
-    if (!create_ssl_ctx_pair(DTLS_server_method(), DTLS_client_method(), &sctx,
-                             &cctx, cert, privkey)) {
-        printf("Unable to create SSL_CTX pair\n");
+    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+                                       DTLS_client_method(), &sctx,
+                                       &cctx, cert, privkey)))
         return 0;
-    }
 
-    if (!SSL_CTX_set_cipher_list(cctx, "AES128-SHA")) {
-        printf("Failed setting cipher list\n");
-    }
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA")))
+        goto end;
 
     c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
-    if (c_to_s_fbio == NULL) {
-        printf("Failed to create filter BIO\n");
+    if (!TEST_ptr(c_to_s_fbio))
         goto end;
-    }
 
     /* BIO is freed by create_ssl_connection on error */
-    if (!create_ssl_objects(sctx, cctx, &serverssl1, &clientssl1, NULL,
-                               c_to_s_fbio)) {
-        printf("Unable to create SSL objects\n");
-        ERR_print_errors_fp(stdout);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl1, &clientssl1,
+                                      NULL, c_to_s_fbio)))
         goto end;
-    }
 
     if (testidx == 1)
         certstatus[RECORD_SEQUENCE] = 0xff;
@@ -89,11 +80,9 @@ static int test_dtls_unprocessed(int testidx)
     mempacket_test_inject(c_to_s_mempacket, (char *)certstatus,
                           sizeof(certstatus), 1, INJECT_PACKET_IGNORE_REC_SEQ);
 
-    if (!create_ssl_connection(serverssl1, clientssl1, SSL_ERROR_NONE)) {
-        printf("Unable to create SSL connection\n");
-        ERR_print_errors_fp(stdout);
+    if (!TEST_true(create_ssl_connection(serverssl1, clientssl1,
+                                         SSL_ERROR_NONE)))
         goto end;
-    }
 
     testresult = 1;
  end:
@@ -109,10 +98,8 @@ int test_main(int argc, char *argv[])
 {
     int testresult = 1;
 
-    if (argc != 3) {
-        printf("Invalid argument count\n");
+    if (!TEST_int_eq(argc, 3))
         return 1;
-    }
 
     cert = argv[1];
     privkey = argv[2];
