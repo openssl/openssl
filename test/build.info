@@ -203,7 +203,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[asynctest]=.. ../include
   DEPEND[asynctest]=../libcrypto
 
-  SOURCE[secmemtest]=secmemtest.c
+  SOURCE[secmemtest]=secmemtest.c testutil.c test_main.c
   INCLUDE[secmemtest]=../include
   DEPEND[secmemtest]=../libcrypto
 
@@ -211,7 +211,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[srptest]=../include
   DEPEND[srptest]=../libcrypto
 
-  SOURCE[memleaktest]=memleaktest.c
+  SOURCE[memleaktest]=memleaktest.c testutil.c
   INCLUDE[memleaktest]=../include
   DEPEND[memleaktest]=../libcrypto
 
