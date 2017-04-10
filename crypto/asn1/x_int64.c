@@ -52,8 +52,11 @@ static int uint64_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
         && utmp == 0)
         return -1;
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED
-        && (int64_t)utmp < 0)
+        && (int64_t)utmp < 0) {
+        /* i2c_uint64_int() assumes positive values */
+        utmp = 0 - utmp;
         neg = 1;
+    }
 
     return i2c_uint64_int(cont, utmp, neg);
 }
@@ -76,6 +79,9 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         ASN1err(ASN1_F_UINT64_C2I, ASN1_R_TOO_LARGE);
         return 0;
     }
+    if (neg)
+        /* c2i_uint64_int() returns positive values */
+        utmp = 0 - utmp;
     memcpy(cp, &utmp, sizeof(utmp));
     return 1;
 }
@@ -116,11 +122,21 @@ static int uint32_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
         && utmp == 0)
         return -1;
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED
-        && (int32_t)utmp < 0)
+        && (int32_t)utmp < 0) {
+        /* i2c_uint64_int() assumes positive values */
+        utmp = 0 - utmp;
         neg = 1;
+    }
 
     return i2c_uint64_int(cont, (uint64_t)utmp, neg);
 }
+
+/*
+ * Absolute value of INT32_MIN: we can't just use -INT32_MIN as it produces
+ * overflow warnings.
+ */
+
+#define ABS_INT32_MIN ((uint32_t)INT32_MAX + 1)
 
 static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
                     int utype, char *free_cont, const ASN1_ITEM *it)
@@ -136,13 +152,20 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         ASN1err(ASN1_F_UINT32_C2I, ASN1_R_ILLEGAL_NEGATIVE_VALUE);
         return 0;
     }
-    utmp2 = (uint32_t)utmp;
-    if (utmp != utmp2
-        || ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED
-            && !neg && utmp2 > INT32_MAX)) {
-        ASN1err(ASN1_F_UINT32_C2I, ASN1_R_TOO_LARGE);
-        return 0;
+    if (neg) {
+        if (utmp > ABS_INT32_MIN) {
+            ASN1err(ASN1_F_UINT32_C2I, ASN1_R_TOO_SMALL);
+            return 0;
+        }
+        utmp = 0 - utmp;
+    } else {
+        if (((it->size & INTxx_FLAG_SIGNED) != 0 && utmp > INT32_MAX)
+            || ((it->size & INTxx_FLAG_SIGNED) == 0 && utmp > UINT32_MAX)) {
+            ASN1err(ASN1_F_UINT32_C2I, ASN1_R_TOO_LARGE);
+            return 0;
+        }
     }
+    utmp2 = (uint32_t)utmp;
     memcpy(cp, &utmp2, sizeof(utmp2));
     return 1;
 }
