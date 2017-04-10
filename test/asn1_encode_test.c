@@ -372,7 +372,7 @@ static ASN1_INT64_DATA int64_expected[] = {
     CUSTOM_EXPECTED_SUCCESS(ASN1_LONG_UNDEF, ASN1_LONG_UNDEF), /* t_zero */
     CUSTOM_EXPECTED_SUCCESS(1, 1), /* t_one */
     CUSTOM_EXPECTED_FAILURE,     /* t_9bytes_1 */
-    CUSTOM_EXPECTED_SUCCESS(INT64_MIN, INT64_MIN), /* t_8bytes_1 */
+    CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_1 (too large positive) */
     CUSTOM_EXPECTED_SUCCESS(INT64_MAX, INT64_MAX), /* t_8bytes_2 */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_3_pad (illegal padding) */
     CUSTOM_EXPECTED_SUCCESS(INT64_MIN, INT64_MIN), /* t_8bytes_4_neg */
