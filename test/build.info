@@ -71,7 +71,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[pbelutest]=../include
   DEPEND[pbelutest]=../libcrypto
 
-  SOURCE[ideatest]=ideatest.c
+  SOURCE[ideatest]=ideatest.c testutil.c test_main.c
   INCLUDE[ideatest]=../include
   DEPEND[ideatest]=../libcrypto
 
