@@ -35,15 +35,6 @@ typedef struct {
  *
  ***/
 
-/* TODO : hex decoder / encoder should be implemented in testutil.c */
-static void hexdump(const unsigned char *a, size_t len)
-{
-    size_t i;
-
-    for (i = 0; i < len; i++)
-        fprintf(stderr, "%02x", a[i]);
-}
-
 static void benchmark_poly1305()
 {
 # ifdef OPENSSL_CPUID_OBJ
@@ -1573,12 +1564,7 @@ static int test_poly1305(int idx)
     Poly1305_Final(&poly1305, out);
 
     if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
-        fprintf(stderr, "Poly1305 test #%d failed.\n", idx);
-        fprintf(stderr, "got:      ");
-        hexdump(out, sizeof(out));
-        fprintf(stderr, "\nexpected: ");
-        hexdump(expected, expectedlen);
-        fprintf(stderr, "\n");
+        TEST_info("Poly1305 test #%d failed.", idx);
         return 0;
     }
 
@@ -1589,12 +1575,7 @@ static int test_poly1305(int idx)
         Poly1305_Final(&poly1305, out);
 
         if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
-            fprintf(stderr, "Poly1305 test #%d/1+(N-1) failed.\n", idx);
-            fprintf(stderr, "got:      ");
-            hexdump(out, sizeof(out));
-            fprintf(stderr, "\nexpected: ");
-            hexdump(expected, expectedlen);
-            fprintf(stderr, "\n");
+            TEST_info("Poly1305 test #%d/1+(N-1) failed.", idx);
             return 0;
         }
     }
@@ -1608,12 +1589,7 @@ static int test_poly1305(int idx)
         Poly1305_Final(&poly1305, out);
 
         if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
-            fprintf(stderr, "Poly1305 test #%d/2 failed.\n", idx);
-            fprintf(stderr, "got:      ");
-            hexdump(out, sizeof(out));
-            fprintf(stderr, "\nexpected: ");
-            hexdump(expected, expectedlen);
-            fprintf(stderr, "\n");
+            TEST_info("Poly1305 test #%d/2 failed.", idx);
             return 0;
         }
 
@@ -1624,13 +1600,8 @@ static int test_poly1305(int idx)
             Poly1305_Final(&poly1305, out);
 
             if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
-                fprintf(stderr, "Poly1305 test #%d/%" OSSLzu "+%" OSSLzu " failed.\n",
-                       idx, half, inlen-half);
-                fprintf(stderr, "got:      ");
-                hexdump(out, sizeof(out));
-                fprintf(stderr, "\nexpected: ");
-                hexdump(expected, expectedlen);
-                fprintf(stderr, "\n");
+                TEST_info("Poly1305 test #%d/%" OSSLzu "+%" OSSLzu " failed.",
+                          idx, half, inlen-half);
                 return 0;
             }
         }
