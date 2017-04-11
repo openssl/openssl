@@ -985,9 +985,11 @@ fi
 # compiler for the platform ... in which case we add it on
 # the end ... otherwise we leave it off
 
-$PERL ./Configure LIST | grep "$OUT-$CC" > /dev/null
-if [ $? = "0" ]; then
-  OUT="$OUT-$CC"
+if [ "$CC" != "" ]; then
+  $PERL ./Configure LIST | grep "$OUT-$CC" > /dev/null
+  if [ $? = "0" ]; then
+    OUT="$OUT-$CC"
+  fi
 fi
 
 OUT="$PREFIX$OUT"
