@@ -196,6 +196,8 @@ int i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 static int asn1_get_uint64(uint64_t *pr, const unsigned char *b, size_t blen)
 {
     size_t i;
+    uint64_t r;
+
     if (blen > sizeof(*pr)) {
         ASN1err(ASN1_F_ASN1_GET_UINT64, ASN1_R_TOO_LARGE);
         return 0;
@@ -203,40 +205,28 @@ static int asn1_get_uint64(uint64_t *pr, const unsigned char *b, size_t blen)
     *pr = 0;
     if (b == NULL)
         return 0;
-    for (i = 0; i < blen; i++) {
-        *pr <<= 8;
-        *pr |= b[i];
+    for (r = 0, i = 0; i < blen; i++) {
+        r <<= 8;
+        r |= b[i];
     }
+    *pr = r;
     return 1;
 }
 
-static size_t asn1_put_uint64(unsigned char *b, uint64_t r)
+/*
+ * Write uint64_t to big endian buffer and return offset to first
+ * written octet. In other words it returns offset in range from 0
+ * to 7, with 0 denoting 8 written octets and 7 - one.
+ */
+static size_t asn1_put_uint64(unsigned char b[sizeof(uint64_t)], uint64_t r)
 {
-    if (r >= 0x100) {
-        unsigned char *p;
-        uint64_t rtmp = r;
-        size_t i = 0;
+    size_t off = sizeof(uint64_t);
 
-        /* Work out how many bytes we need */
-        while (rtmp) {
-            rtmp >>= 8;
-            i++;
-        }
+    do {
+        b[--off] = (unsigned char)r;
+    } while (r >>= 8);
 
-        /* Copy from end to beginning */
-        p = b + i - 1;
-
-        do {
-            *p-- = r & 0xFF;
-            r >>= 8;
-        } while (p >= b);
-
-        return i;
-    }
-
-    b[0] = (unsigned char)r;
-    return 1;
-
+    return off;
 }
 
 /*
@@ -326,18 +316,17 @@ static int asn1_string_get_int64(int64_t *pr, const ASN1_STRING *a, int itype)
 static int asn1_string_set_int64(ASN1_STRING *a, int64_t r, int itype)
 {
     unsigned char tbuf[sizeof(r)];
-    size_t l;
+    size_t off;
+
     a->type = itype;
     if (r < 0) {
-        l = asn1_put_uint64(tbuf, -r);
+        off = asn1_put_uint64(tbuf, -r);
         a->type |= V_ASN1_NEG;
     } else {
-        l = asn1_put_uint64(tbuf, r);
+        off = asn1_put_uint64(tbuf, r);
         a->type &= ~V_ASN1_NEG;
     }
-    if (l == 0)
-        return 0;
-    return ASN1_STRING_set(a, tbuf, l);
+    return ASN1_STRING_set(a, tbuf + off, sizeof(tbuf) - off);
 }
 
 static int asn1_string_get_uint64(uint64_t *pr, const ASN1_STRING *a,
@@ -361,12 +350,11 @@ static int asn1_string_get_uint64(uint64_t *pr, const ASN1_STRING *a,
 static int asn1_string_set_uint64(ASN1_STRING *a, uint64_t r, int itype)
 {
     unsigned char tbuf[sizeof(r)];
-    size_t l;
+    size_t off;
+
     a->type = itype;
-    l = asn1_put_uint64(tbuf, r);
-    if (l == 0)
-        return 0;
-    return ASN1_STRING_set(a, tbuf, l);
+    off = asn1_put_uint64(tbuf, r);
+    return ASN1_STRING_set(a, tbuf + off, sizeof(tbuf) - off);
 }
 
 /*
@@ -613,9 +601,9 @@ int c2i_uint64_int(uint64_t *ret, int *neg, const unsigned char **pp, long len)
 int i2c_uint64_int(unsigned char *p, uint64_t r, int neg)
 {
     unsigned char buf[sizeof(uint64_t)];
-    size_t buflen;
+    size_t off;
 
-    buflen = asn1_put_uint64(buf, r);
-    return i2c_ibuf(buf, buflen, neg, &p);
+    off = asn1_put_uint64(buf, r);
+    return i2c_ibuf(buf + off, sizeof(buf) - off, neg, &p);
 }
 
