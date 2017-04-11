@@ -570,18 +570,7 @@ int main(int argc, char *argv[])
 
     if (!EC_get_builtin_curves(curves, crv_len)) goto err;
 
-    /* NAMED CURVES TESTS */
-    for (n = 0; n < crv_len; n++) {
-        nid = curves[n].nid;
-        /*
-         * Skipped for X25519 because affine coordinate operations are not
-         * supported for this curve.
-         * Higher level ECDH tests are performed in evptests.txt instead.
-         */
-        if (nid == NID_X25519)
-            continue;
-        if (!test_ecdh_curve(nid, ctx, out)) goto err;
-    }
+    /* NAMED CURVES TESTS: moved to evptests.txt */
 
     /* KATs */
     for (n = 0; n < (sizeof(ecdh_kats)/sizeof(ecdh_kat_t)); n++) {
