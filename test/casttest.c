@@ -10,9 +10,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_CAST is defined */
 
-#include "../e_os.h"
+#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_CAST is defined */
+#include "e_os.h"
+#include "test_main.h"
+#include "testutil.h"
 
 #ifdef OPENSSL_NO_CAST
 int main(int argc, char *argv[])
@@ -22,8 +24,6 @@ int main(int argc, char *argv[])
 }
 #else
 # include <openssl/cast.h>
-
-# define FULL_TEST
 
 static unsigned char k[16] = {
     0x01, 0x23, 0x45, 0x67, 0x12, 0x34, 0x56, 0x78,
@@ -63,101 +63,54 @@ static unsigned char c_b[16] = {
     0x80, 0xAC, 0x05, 0xB8, 0xE8, 0x3D, 0x69, 0x6E
 };
 
-int main(int argc, char *argv[])
+static int cast_test(void)
 {
-# ifdef FULL_TEST
+    static char *hex = "0123456789ABCDEF";
     long l;
-    CAST_KEY key_b;
-# endif
-    int i, z, err = 0;
-    CAST_KEY key;
+    int i, z, testresult = 1;
+    CAST_KEY key, key_b;
+    unsigned char out_a[16], out_b[16];
 
     for (z = 0; z < 3; z++) {
         CAST_set_key(&key, k_len[z], k);
-
         CAST_ecb_encrypt(in, out, &key, CAST_ENCRYPT);
-        if (memcmp(out, &(c[z][0]), 8) != 0) {
-            printf("ecb cast error encrypting for keysize %d\n",
-                   k_len[z] * 8);
-            printf("got     :");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", out[i]);
-            printf("\n");
-            printf("expected:");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", c[z][i]);
-            err = 20;
-            printf("\n");
-        }
+        if (!TEST_mem_eq(out, sizeof(c[z]), c[z], sizeof(c[z])))
+            testresult = 0;
 
         CAST_ecb_encrypt(out, out, &key, CAST_DECRYPT);
-        if (memcmp(out, in, 8) != 0) {
-            printf("ecb cast error decrypting for keysize %d\n",
-                   k_len[z] * 8);
-            printf("got     :");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", out[i]);
-            printf("\n");
-            printf("expected:");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", in[i]);
-            printf("\n");
-            err = 3;
+        if (!TEST_mem_eq(out, sizeof(in), in, sizeof(in)))
+            testresult = 0;
+    }
+    if (testresult)
+        TEST_info("ecb cast5 ok");
+
+
+    memcpy(out_a, in_a, sizeof(in_a));
+    memcpy(out_b, in_b, sizeof(in_b));
+
+    i = 1;
+    for (l = 0; l < 1000000L; l++) {
+        CAST_set_key(&key_b, 16, out_b);
+        CAST_ecb_encrypt(&(out_a[0]), &(out_a[0]), &key_b, CAST_ENCRYPT);
+        CAST_ecb_encrypt(&(out_a[8]), &(out_a[8]), &key_b, CAST_ENCRYPT);
+        CAST_set_key(&key, 16, out_a);
+        CAST_ecb_encrypt(&(out_b[0]), &(out_b[0]), &key, CAST_ENCRYPT);
+        CAST_ecb_encrypt(&(out_b[8]), &(out_b[8]), &key, CAST_ENCRYPT);
+        if ((l & 0xffff) == 0xffff) {
+            TEST_info("%c", hex[i & 0x0f]);
+            i++;
         }
     }
-    if (err == 0)
-        printf("ecb cast5 ok\n");
 
-# ifdef FULL_TEST
-    {
-        unsigned char out_a[16], out_b[16];
-        static char *hex = "0123456789ABCDEF";
+    if (!TEST_mem_eq(out_a, sizeof(c_a), c_a, sizeof(c_a))
+            || !TEST_mem_eq(out_b, sizeof(c_b), c_b, sizeof(c_b)))
+        testresult = 0;
 
-        printf("This test will take some time....");
-        fflush(stdout);
-        memcpy(out_a, in_a, sizeof(in_a));
-        memcpy(out_b, in_b, sizeof(in_b));
-        i = 1;
-
-        for (l = 0; l < 1000000L; l++) {
-            CAST_set_key(&key_b, 16, out_b);
-            CAST_ecb_encrypt(&(out_a[0]), &(out_a[0]), &key_b, CAST_ENCRYPT);
-            CAST_ecb_encrypt(&(out_a[8]), &(out_a[8]), &key_b, CAST_ENCRYPT);
-            CAST_set_key(&key, 16, out_a);
-            CAST_ecb_encrypt(&(out_b[0]), &(out_b[0]), &key, CAST_ENCRYPT);
-            CAST_ecb_encrypt(&(out_b[8]), &(out_b[8]), &key, CAST_ENCRYPT);
-            if ((l & 0xffff) == 0xffff) {
-                printf("%c", hex[i & 0x0f]);
-                fflush(stdout);
-                i++;
-            }
-        }
-
-        if ((memcmp(out_a, c_a, sizeof(c_a)) != 0) ||
-            (memcmp(out_b, c_b, sizeof(c_b)) != 0)) {
-            printf("\n");
-            printf("Error\n");
-
-            printf("A out =");
-            for (i = 0; i < 16; i++)
-                printf("%02X ", out_a[i]);
-            printf("\nactual=");
-            for (i = 0; i < 16; i++)
-                printf("%02X ", c_a[i]);
-            printf("\n");
-
-            printf("B out =");
-            for (i = 0; i < 16; i++)
-                printf("%02X ", out_b[i]);
-            printf("\nactual=");
-            for (i = 0; i < 16; i++)
-                printf("%02X ", c_b[i]);
-            printf("\n");
-        } else
-            printf(" ok\n");
-    }
-# endif
-
-    EXIT(err);
+    return testresult;
 }
 #endif
+
+void register_tests(void)
+{
+    ADD_TEST(cast_test);
+}
