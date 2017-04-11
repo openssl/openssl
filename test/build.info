@@ -35,7 +35,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[aborttest]=../include
   DEPEND[aborttest]=../libcrypto
 
-  SOURCE[sanitytest]=sanitytest.c
+  SOURCE[sanitytest]=sanitytest.c testutil.c test_main.c
   INCLUDE[sanitytest]=../include
   DEPEND[sanitytest]=../libcrypto
 
