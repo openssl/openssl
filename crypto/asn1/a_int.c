@@ -66,71 +66,74 @@ int ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y)
  * followed by optional zeros isn't padded.
  */
 
+/*
+ * If |pad| is zero, the operation is effectively reduced to memcpy,
+ * and if |pad| is 0xff, then it performs two's complement, ~dst + 1.
+ * Note that in latter case sequence of zeros yields itself, and so
+ * does 0x80 followed by any number of zeros. These properties are
+ * used elsewhere below...
+ */
+static void twos_complement(unsigned char *dst, const unsigned char *src,
+                            size_t len, unsigned char pad)
+{
+    unsigned int carry = pad & 1;
+
+    /* Begin at the end of the encoding */
+    dst += len;
+    src += len;
+    /* two's complement value: ~value + 1 */
+    while (len-- != 0) {
+        *(--dst) = (unsigned char)(carry += *(--src) ^ pad);
+        carry >>= 8;
+    }
+}
+
 static size_t i2c_ibuf(const unsigned char *b, size_t blen, int neg,
                        unsigned char **pp)
 {
-    int pad = 0;
+    unsigned int pad = 0;
     size_t ret, i;
     unsigned char *p, pb = 0;
-    const unsigned char *n;
 
-    if (b == NULL || blen == 0)
-        ret = 1;
-    else {
+    if (b != NULL && blen) {
         ret = blen;
         i = b[0];
-        if (ret == 1 && i == 0)
-            neg = 0;
         if (!neg && (i > 127)) {
             pad = 1;
             pb = 0;
         } else if (neg) {
+            pb = 0xFF;
             if (i > 128) {
                 pad = 1;
-                pb = 0xFF;
             } else if (i == 128) {
                 /*
-                 * Special case: if any other bytes non zero we pad:
-                 * otherwise we don't.
+                 * Special case [of minimal negative for given length]:
+                 * if any other bytes non zero we pad, otherwise we don't.
                  */
-                for (i = 1; i < blen; i++)
-                    if (b[i]) {
-                        pad = 1;
-                        pb = 0xFF;
-                        break;
-                    }
+                for (pad = 0, i = 1; i < blen; i++)
+                    pad |= b[i];
+                pb = pad != 0 ? 0xffU : 0;
+                pad = pb & 1;
             }
         }
         ret += pad;
+    } else {
+        ret = 1;
+        blen = 0;   /* reduce '(b == NULL || blen == 0)' to '(blen == 0)' */
     }
-    if (pp == NULL)
-        return ret;
-    p = *pp;
 
-    if (pad)
-        *(p++) = pb;
-    if (b == NULL || blen == 0)
-        *p = 0;
-    else if (!neg)
-        memcpy(p, b, blen);
-    else {
-        /* Begin at the end of the encoding */
-        n = b + blen;
-        p += blen;
-        i = blen;
-        /* Copy zeros to destination as long as source is zero */
-        while (!n[-1] && i > 1) {
-            *(--p) = 0;
-            n--;
-            i--;
-        }
-        /* Complement and increment next octet */
-        *(--p) = ((*(--n)) ^ 0xff) + 1;
-        i--;
-        /* Complement any octets left */
-        for (; i > 0; i--)
-            *(--p) = *(--n) ^ 0xff;
-    }
+    if (pp == NULL || (p = *pp) == NULL)
+        return ret;
+
+    /*
+     * This magically handles all corner cases, such as '(b == NULL ||
+     * blen == 0)', non-negative value, "negative" zero, 0x80 followed
+     * by any number of zeros...
+     */
+    *p = pb;
+    p += pad;       /* yes, p[0] can be written twice, but it's little
+                     * price to pay for eliminated branches */
+    twos_complement(p, b, blen, pb);
 
     *pp += ret;
     return ret;
@@ -145,7 +148,6 @@ static size_t i2c_ibuf(const unsigned char *b, size_t blen, int neg,
 static size_t c2i_ibuf(unsigned char *b, int *pneg,
                        const unsigned char *p, size_t plen)
 {
-    size_t i;
     int neg, pad;
     /* Zero content length is illegal */
     if (plen == 0) {
@@ -157,7 +159,7 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
         *pneg = neg;
     /* Handle common case where length is 1 octet separately */
     if (plen == 1) {
-        if (b) {
+        if (b != NULL) {
             if (neg)
                 b[0] = (p[0] ^ 0xFF) + 1;
             else
@@ -174,46 +176,14 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
         ASN1err(ASN1_F_C2I_IBUF, ASN1_R_ILLEGAL_PADDING);
         return 0;
     }
-    /* If positive just copy across */
-    if (neg == 0) {
-        if (b)
-            memcpy(b, p + pad, plen - pad);
-        return plen - pad;
-    }
 
-    if (neg && pad) {
-        /* check is any following octets are non zero */
-        for (i = 1; i < plen; i++) {
-            if (p[i] != 0)
-                break;
-        }
-        /* if all bytes are zero handle as special case */
-        if (i == plen) {
-            if (b) {
-                b[0] = 1;
-                memset(b + 1, 0, plen - 1);
-            }
-            return plen;
-        }
-    }
-
+    /* skip over pad */
+    p += pad;
     plen -= pad;
-    /* Must be negative: calculate twos complement */
-    if (b) {
-        const unsigned char *from = p + plen - 1 + pad;
-        unsigned char *to = b + plen;
-        i = plen;
-        while (*from == 0 && i) {
-            *--to = 0;
-            i--;
-            from--;
-        }
-        *--to = (*from-- ^ 0xff) + 1;
-        OPENSSL_assert(i != 0);
-        i--;
-        for (; i > 0; i--)
-            *--to = *from-- ^ 0xff;
-    }
+
+    if (b != NULL)
+        twos_complement(b, p, plen, neg ? 0xffU : 0);
+
     return plen;
 }
 
@@ -646,8 +616,6 @@ int i2c_uint64_int(unsigned char *p, uint64_t r, int neg)
     size_t buflen;
 
     buflen = asn1_put_uint64(buf, r);
-    if (p == NULL)
-        return i2c_ibuf(buf, buflen, neg, NULL);
     return i2c_ibuf(buf, buflen, neg, &p);
 }
 
