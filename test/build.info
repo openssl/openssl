@@ -131,7 +131,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[casttest]=../include
   DEPEND[casttest]=../libcrypto
 
-  SOURCE[bftest]=bftest.c
+  SOURCE[bftest]=bftest.c testutil.c test_main_custom.c
   INCLUDE[bftest]=../include
   DEPEND[bftest]=../libcrypto
 
