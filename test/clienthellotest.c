@@ -60,7 +60,7 @@ static int test_client_hello(int currtest)
     unsigned char *data;
     PACKET pkt, pkt2, pkt3;
     char *dummytick = "Hello World!";
-    unsigned int type;
+    unsigned int type = 0;
     int testresult = 0;
     size_t msglen;
     BIO *sessbio = NULL;
@@ -76,13 +76,13 @@ static int test_client_hello(int currtest)
      * produced when we try to connect
      */
     ctx = SSL_CTX_new(TLS_method());
-    if (ctx == NULL)
+    if (!TEST_ptr(ctx))
         goto end;
 
     switch(currtest) {
     case TEST_SET_SESSION_TICK_DATA_VER_NEG:
         /* Testing for session tickets <= TLS1.2; not relevant for 1.3 */
-        if (!SSL_CTX_set_max_proto_version(ctx, TLS1_2_VERSION))
+        if (!TEST_true(SSL_CTX_set_max_proto_version(ctx, TLS1_2_VERSION)))
             goto end;
         break;
 
@@ -95,17 +95,14 @@ static int test_client_hello(int currtest)
          * F5_WORKAROUND_MIN_MSG_LEN bytes long - meaning padding will be
          * needed. Also add some dummy ALPN protocols in case we still don't
          * have enough.
-         * In the padding not needed case we assume the test will pass, but then
-         * set testresult to 0 if we see the padding extension.
          */
         if (currtest == TEST_ADD_PADDING
-                && (!SSL_CTX_set_cipher_list(ctx, "ALL")
-                    || SSL_CTX_set_alpn_protos(ctx,
+                && (!TEST_true(SSL_CTX_set_cipher_list(ctx, "ALL"))
+                    || !TEST_false(SSL_CTX_set_alpn_protos(ctx,
                                                (unsigned char *)alpn_prots,
-                                               sizeof(alpn_prots) - 1)))
+                                               sizeof(alpn_prots) - 1))))
             goto end;
-        else if (currtest == TEST_PADDING_NOT_NEEDED)
-            testresult = 1;
+
         break;
 
     default:
@@ -113,37 +110,32 @@ static int test_client_hello(int currtest)
     }
 
     con = SSL_new(ctx);
-    if (con == NULL)
+    if (!TEST_ptr(con))
         goto end;
 
     if (currtest == TEST_ADD_PADDING_AND_PSK) {
         sessbio = BIO_new_file(sessionfile, "r");
-        if (sessbio == NULL) {
-            printf("Unable to open session.pem\n");
+        if (!TEST_ptr(sessbio)) {
+            TEST_info("Unable to open session.pem");
             goto end;
         }
         sess = PEM_read_bio_SSL_SESSION(sessbio, NULL, NULL, NULL);
-        if (sess == NULL) {
-            printf("Unable to load SSL_SESSION\n");
+        if (!TEST_ptr(sess)) {
+            TEST_info("Unable to load SSL_SESSION");
             goto end;
         }
         /*
          * We reset the creation time so that we don't discard the session as
          * too old.
          */
-        if (!SSL_SESSION_set_time(sess, time(NULL))) {
-            printf("Unable to set creation time on SSL_SESSION\n");
+        if (!TEST_true(SSL_SESSION_set_time(sess, time(NULL)))
+                || !TEST_true(SSL_set_session(con, sess)))
             goto end;
-        }
-        if (!SSL_set_session(con, sess)) {
-            printf("Unable to set the session on the connection\n");
-            goto end;
-        }
     }
 
     rbio = BIO_new(BIO_s_mem());
     wbio = BIO_new(BIO_s_mem());
-    if (rbio == NULL || wbio == NULL) {
+    if (!TEST_ptr(rbio)|| !TEST_ptr(wbio)) {
         BIO_free(rbio);
         BIO_free(wbio);
         goto end;
@@ -153,83 +145,73 @@ static int test_client_hello(int currtest)
     SSL_set_connect_state(con);
 
     if (currtest == TEST_SET_SESSION_TICK_DATA_VER_NEG) {
-        if (!SSL_set_session_ticket_ext(con, dummytick, strlen(dummytick)))
+        if (!TEST_true(SSL_set_session_ticket_ext(con, dummytick,
+                                                  strlen(dummytick))))
             goto end;
     }
 
-    if (SSL_connect(con) > 0) {
+    if (!TEST_int_le(SSL_connect(con), 0)) {
         /* This shouldn't succeed because we don't have a server! */
         goto end;
     }
 
     len = BIO_get_mem_data(wbio, (char **)&data);
-    if (!PACKET_buf_init(&pkt, data, len))
-        goto end;
-
-    /* Skip the record header */
-    if (!PACKET_forward(&pkt, SSL3_RT_HEADER_LENGTH))
+    if (!TEST_true(PACKET_buf_init(&pkt, data, len))
+               /* Skip the record header */
+            || !PACKET_forward(&pkt, SSL3_RT_HEADER_LENGTH))
         goto end;
 
     msglen = PACKET_remaining(&pkt);
 
     /* Skip the handshake message header */
-    if (!PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
-        goto end;
-
-    /* Skip client version and random */
-    if (!PACKET_forward(&pkt, CLIENT_VERSION_LEN + SSL3_RANDOM_SIZE))
-        goto end;
-
-    /* Skip session id */
-    if (!PACKET_get_length_prefixed_1(&pkt, &pkt2))
-        goto end;
-
-    /* Skip ciphers */
-    if (!PACKET_get_length_prefixed_2(&pkt, &pkt2))
-        goto end;
-
-    /* Skip compression */
-    if (!PACKET_get_length_prefixed_1(&pkt, &pkt2))
-        goto end;
-
-    /* Extensions len */
-    if (!PACKET_as_length_prefixed_2(&pkt, &pkt2))
+    if (!TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
+               /* Skip client version and random */
+            || !TEST_true(PACKET_forward(&pkt, CLIENT_VERSION_LEN
+                                               + SSL3_RANDOM_SIZE))
+               /* Skip session id */
+            || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &pkt2))
+               /* Skip ciphers */
+            || !TEST_true(PACKET_get_length_prefixed_2(&pkt, &pkt2))
+               /* Skip compression */
+            || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &pkt2))
+               /* Extensions len */
+            || !TEST_true(PACKET_as_length_prefixed_2(&pkt, &pkt2)))
         goto end;
 
     /* Loop through all extensions */
     while (PACKET_remaining(&pkt2)) {
 
-        if (!PACKET_get_net_2(&pkt2, &type) ||
-            !PACKET_get_length_prefixed_2(&pkt2, &pkt3))
+        if (!TEST_true(PACKET_get_net_2(&pkt2, &type))
+                || !TEST_true(PACKET_get_length_prefixed_2(&pkt2, &pkt3)))
             goto end;
 
         if (type == TLSEXT_TYPE_session_ticket) {
             if (currtest == TEST_SET_SESSION_TICK_DATA_VER_NEG) {
-                if (PACKET_equal(&pkt3, dummytick, strlen(dummytick))) {
+                if (TEST_true(PACKET_equal(&pkt3, dummytick,
+                                           strlen(dummytick)))) {
                     /* Ticket data is as we expected */
                     testresult = 1;
-                } else {
-                    printf("Received session ticket is not as expected\n");
                 }
-                break;
+                goto end;
             }
         }
         if (type == TLSEXT_TYPE_padding) {
-            if (currtest == TEST_ADD_PADDING
-                    || currtest == TEST_ADD_PADDING_AND_PSK)
-                testresult = (msglen == F5_WORKAROUND_MAX_MSG_LEN);
-            else
-                testresult = 0;
+            if (!TEST_false(currtest == TEST_PADDING_NOT_NEEDED))
+                goto end;
+            else if (TEST_true(currtest == TEST_ADD_PADDING
+                    || currtest == TEST_ADD_PADDING_AND_PSK))
+                testresult = TEST_true(msglen == F5_WORKAROUND_MAX_MSG_LEN);
         }
     }
+
+    if (currtest == TEST_PADDING_NOT_NEEDED)
+        testresult = 1;
 
 end:
     SSL_free(con);
     SSL_CTX_free(ctx);
     SSL_SESSION_free(sess);
     BIO_free(sessbio);
-    if (!testresult)
-        printf("ClientHello test: FAILED (Test %d)\n", currtest);
 
     return testresult;
 }
