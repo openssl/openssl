@@ -147,7 +147,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[exptest]=../include
   DEPEND[exptest]=../libcrypto
 
-  SOURCE[rsa_test]=rsa_test.c
+  SOURCE[rsa_test]=rsa_test.c testutil.c test_main.c
   INCLUDE[rsa_test]=.. ../include
   DEPEND[rsa_test]=../libcrypto
 
