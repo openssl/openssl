@@ -17,6 +17,9 @@
 #include <stdlib.h>
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_BF is defined */
 
+#include "test_main_custom.h"
+#include "testutil.h"
+
 #include "../e_os.h"
 
 #ifdef OPENSSL_NO_BF
@@ -229,19 +232,24 @@ static unsigned char key_out[KEY_TEST_NUM][8] = {
     {0x05, 0x04, 0x4B, 0x62, 0xFA, 0x52, 0xD0, 0x80},
 };
 
-static int test(void);
+static int test_bf(void);
+
 static int print_test_data(void);
-int main(int argc, char *argv[])
+
+int test_main(int argc, char *argv[])
 {
     int ret;
+
+    ADD_TEST(test_bf);
 
     if (argc > 1)
         ret = print_test_data();
     else
-        ret = test();
+        ret = run_tests(argv[0]);
 
-    EXIT(ret);
+    return ret;
 }
+
 
 static int print_test_data(void)
 {
@@ -308,10 +316,10 @@ static int print_test_data(void)
     return (0);
 }
 
-static int test(void)
+static int test_bf(void)
 {
     unsigned char cbc_in[40], cbc_out[40], iv[8];
-    int i, n, err = 0;
+    int i, n, ret = 1;
     BF_KEY key;
     BF_LONG data[2];
     unsigned char out[8];
@@ -321,7 +329,7 @@ static int test(void)
     ebcdic2ascii(cbc_data, cbc_data, strlen(cbc_data));
 # endif
 
-    printf("testing blowfish in raw ecb mode\n");
+    /* Raw ECB Mode */
     for (n = 0; n < 2; n++) {
 # ifdef CHARSET_EBCDIC
         ebcdic2ascii(bf_key[n], bf_key[n], strlen(bf_key[n]));
@@ -331,80 +339,37 @@ static int test(void)
         data[0] = bf_plain[n][0];
         data[1] = bf_plain[n][1];
         BF_encrypt(data, &key);
-        if (memcmp(&(bf_cipher[n][0]), &(data[0]), 8) != 0) {
-            printf("BF_encrypt error encrypting\n");
-            printf("got     :");
-            for (i = 0; i < 2; i++)
-                printf("%08lX ", (unsigned long)data[i]);
-            printf("\n");
-            printf("expected:");
-            for (i = 0; i < 2; i++)
-                printf("%08lX ", (unsigned long)bf_cipher[n][i]);
-            err = 1;
-            printf("\n");
-        }
+        if (!TEST_mem_eq(&(bf_cipher[n][0]), 8, &(data[0]), 8))
+            ret = 0;
 
         BF_decrypt(&(data[0]), &key);
-        if (memcmp(&(bf_plain[n][0]), &(data[0]), 8) != 0) {
-            printf("BF_encrypt error decrypting\n");
-            printf("got     :");
-            for (i = 0; i < 2; i++)
-                printf("%08lX ", (unsigned long)data[i]);
-            printf("\n");
-            printf("expected:");
-            for (i = 0; i < 2; i++)
-                printf("%08lX ", (unsigned long)bf_plain[n][i]);
-            printf("\n");
-            err = 1;
-        }
+        if (!TEST_mem_eq(&(bf_plain[n][0]), 8, &(data[0]), 8))
+            ret = 0;
     }
 
-    printf("testing blowfish in ecb mode\n");
-
+    /* ECB Mode */
     for (n = 0; n < NUM_TESTS; n++) {
         BF_set_key(&key, 8, ecb_data[n]);
 
         BF_ecb_encrypt(&(plain_data[n][0]), out, &key, BF_ENCRYPT);
-        if (memcmp(&(cipher_data[n][0]), out, 8) != 0) {
-            printf("BF_ecb_encrypt blowfish error encrypting\n");
-            printf("got     :");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", out[i]);
-            printf("\n");
-            printf("expected:");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", cipher_data[n][i]);
-            err = 1;
-            printf("\n");
-        }
+        if (!TEST_mem_eq(&(cipher_data[n][0]), 8, out, 8))
+            ret = 0;
 
         BF_ecb_encrypt(out, out, &key, BF_DECRYPT);
-        if (memcmp(&(plain_data[n][0]), out, 8) != 0) {
-            printf("BF_ecb_encrypt error decrypting\n");
-            printf("got     :");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", out[i]);
-            printf("\n");
-            printf("expected:");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", plain_data[n][i]);
-            printf("\n");
-            err = 1;
-        }
+        if (!TEST_mem_eq(&(plain_data[n][0]), 8, out, 8))
+            ret = 0;
     }
 
-    printf("testing blowfish set_key\n");
+    /* Set key */
     for (n = 1; n < KEY_TEST_NUM; n++) {
         BF_set_key(&key, n, key_test);
         BF_ecb_encrypt(key_data, out, &key, BF_ENCRYPT);
         /* mips-sgi-irix6.5-gcc  vv  -mabi=64 bug workaround */
-        if (memcmp(out, &(key_out[i = n - 1][0]), 8) != 0) {
-            printf("blowfish setkey error\n");
-            err = 1;
-        }
+        if (!TEST_mem_eq(out, 8, &(key_out[i = n - 1][0]), 8))
+            ret = 0;
     }
 
-    printf("testing blowfish in cbc mode\n");
+    /* CBC Mode */
     len = strlen(cbc_data) + 1;
 
     BF_set_key(&key, 16, cbc_key);
@@ -413,21 +378,15 @@ static int test(void)
     memcpy(iv, cbc_iv, sizeof iv);
     BF_cbc_encrypt((unsigned char *)cbc_data, cbc_out, len,
                    &key, iv, BF_ENCRYPT);
-    if (memcmp(cbc_out, cbc_ok, 32) != 0) {
-        err = 1;
-        printf("BF_cbc_encrypt encrypt error\n");
-        for (i = 0; i < 32; i++)
-            printf("0x%02X,", cbc_out[i]);
-    }
+    if (!TEST_mem_eq(cbc_out, 32, cbc_ok, 32))
+        ret = 0;
+
     memcpy(iv, cbc_iv, 8);
     BF_cbc_encrypt(cbc_out, cbc_in, len, &key, iv, BF_DECRYPT);
-    if (memcmp(cbc_in, cbc_data, strlen(cbc_data) + 1) != 0) {
-        printf("BF_cbc_encrypt decrypt error\n");
-        err = 1;
-    }
+    if (!TEST_mem_eq(cbc_in, len, cbc_data, strlen(cbc_data) + 1))
+        ret = 0;
 
-    printf("testing blowfish in cfb64 mode\n");
-
+    /* CFB64 Mode */
     BF_set_key(&key, 16, cbc_key);
     memset(cbc_in, 0, 40);
     memset(cbc_out, 0, 40);
@@ -437,24 +396,18 @@ static int test(void)
                      &key, iv, &n, BF_ENCRYPT);
     BF_cfb64_encrypt((unsigned char *)&(cbc_data[13]), &(cbc_out[13]),
                      len - 13, &key, iv, &n, BF_ENCRYPT);
-    if (memcmp(cbc_out, cfb64_ok, (int)len) != 0) {
-        err = 1;
-        printf("BF_cfb64_encrypt encrypt error\n");
-        for (i = 0; i < (int)len; i++)
-            printf("0x%02X,", cbc_out[i]);
-    }
+    if (!TEST_mem_eq(cbc_out, (int)len, cfb64_ok, (int)len))
+        ret = 0;
+
     n = 0;
     memcpy(iv, cbc_iv, 8);
     BF_cfb64_encrypt(cbc_out, cbc_in, 17, &key, iv, &n, BF_DECRYPT);
     BF_cfb64_encrypt(&(cbc_out[17]), &(cbc_in[17]), len - 17,
                      &key, iv, &n, BF_DECRYPT);
-    if (memcmp(cbc_in, cbc_data, (int)len) != 0) {
-        printf("BF_cfb64_encrypt decrypt error\n");
-        err = 1;
-    }
+    if (!TEST_mem_eq(cbc_in, (int)len, cbc_data, (int)len))
+        ret = 0;
 
-    printf("testing blowfish in ofb64\n");
-
+    /* OFB64 Mode */
     BF_set_key(&key, 16, cbc_key);
     memset(cbc_in, 0, 40);
     memset(cbc_out, 0, 40);
@@ -464,21 +417,16 @@ static int test(void)
                      &n);
     BF_ofb64_encrypt((unsigned char *)&(cbc_data[13]), &(cbc_out[13]),
                      len - 13, &key, iv, &n);
-    if (memcmp(cbc_out, ofb64_ok, (int)len) != 0) {
-        err = 1;
-        printf("BF_ofb64_encrypt encrypt error\n");
-        for (i = 0; i < (int)len; i++)
-            printf("0x%02X,", cbc_out[i]);
-    }
+    if (!TEST_mem_eq(cbc_out, (int)len, ofb64_ok, (int)len))
+        ret = 0;
+
     n = 0;
     memcpy(iv, cbc_iv, 8);
     BF_ofb64_encrypt(cbc_out, cbc_in, 17, &key, iv, &n);
     BF_ofb64_encrypt(&(cbc_out[17]), &(cbc_in[17]), len - 17, &key, iv, &n);
-    if (memcmp(cbc_in, cbc_data, (int)len) != 0) {
-        printf("BF_ofb64_encrypt decrypt error\n");
-        err = 1;
-    }
+    if (!TEST_mem_eq(cbc_in, (int)len, cbc_data, (int)len))
+        ret = 0;
 
-    return (err);
+    return ret;
 }
 #endif
