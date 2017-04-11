@@ -191,7 +191,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[clienthellotest]=../include
   DEPEND[clienthellotest]=../libcrypto ../libssl
 
-  SOURCE[bad_dtls_test]=bad_dtls_test.c
+  SOURCE[bad_dtls_test]=bad_dtls_test.c testutil.c test_main.c
   INCLUDE[bad_dtls_test]=../include
   DEPEND[bad_dtls_test]=../libcrypto ../libssl
 
