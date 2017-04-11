@@ -127,8 +127,8 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[enginetest]=../include
   DEPEND[enginetest]=../libcrypto
 
-  SOURCE[casttest]=casttest.c
-  INCLUDE[casttest]=../include
+  SOURCE[casttest]=casttest.c testutil.c test_main.o
+  INCLUDE[casttest]=.. ../include
   DEPEND[casttest]=../libcrypto
 
   SOURCE[bftest]=bftest.c testutil.c test_main_custom.c
@@ -260,8 +260,8 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[handshake_helper.o]=../include
   INCLUDE[ssltestlib.o]=.. ../include
 
-  SOURCE[x509aux]=x509aux.c
-  INCLUDE[x509aux]=../include
+  SOURCE[x509aux]=x509aux.c testutil.c test_main_custom.c
+  INCLUDE[x509aux]=.. ../include
   DEPEND[x509aux]=../libcrypto
 
   SOURCE[asynciotest]=asynciotest.c ssltestlib.c testutil.c test_main_custom.c

@@ -34,7 +34,7 @@ static CIPHERLIST_TEST_FIXTURE set_up(const char *const test_case_name)
     fixture.test_case_name = test_case_name;
     fixture.server = SSL_CTX_new(TLS_server_method());
     fixture.client = SSL_CTX_new(TLS_client_method());
-    OPENSSL_assert(fixture.client != NULL && fixture.server != NULL);
+    TEST_check(fixture.client != NULL && fixture.server != NULL);
     return fixture;
 }
 
@@ -130,10 +130,10 @@ static int test_default_cipherlist(SSL_CTX *ctx)
     uint32_t expected_cipher_id, cipher_id;
 
     ssl = SSL_new(ctx);
-    OPENSSL_assert(ssl != NULL);
+    TEST_check(ssl != NULL);
 
     ciphers = SSL_get1_supported_ciphers(ssl);
-    OPENSSL_assert(ciphers != NULL);
+    TEST_check(ciphers != NULL);
     num_expected_ciphers = OSSL_NELEM(default_ciphers_in_order);
     num_ciphers = sk_SSL_CIPHER_num(ciphers);
     if (!TEST_int_eq(num_ciphers, num_expected_ciphers))
@@ -183,8 +183,8 @@ static int test_default_cipherlist_implicit()
 static int test_default_cipherlist_explicit()
 {
     SETUP_CIPHERLIST_TEST_FIXTURE();
-    OPENSSL_assert(SSL_CTX_set_cipher_list(fixture.server, "DEFAULT"));
-    OPENSSL_assert(SSL_CTX_set_cipher_list(fixture.client, "DEFAULT"));
+    TEST_check(SSL_CTX_set_cipher_list(fixture.server, "DEFAULT"));
+    TEST_check(SSL_CTX_set_cipher_list(fixture.client, "DEFAULT"));
     EXECUTE_CIPHERLIST_TEST();
 }
 
