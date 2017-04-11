@@ -112,22 +112,12 @@ static int test_hmac_bad()
     int ret = 0;
 
     ctx = HMAC_CTX_new();
-    if (!TEST_ptr(ctx))
-        goto err;
-
-    if (!TEST_ptr_null(HMAC_CTX_get_md(ctx)))
-        goto err;
-
-    if (!TEST_false(HMAC_Init_ex(ctx, NULL, 0, NULL, NULL)))
-        goto err;
-
-    if (!TEST_false(HMAC_Update(ctx, test[4].data, test[4].data_len)))
-        goto err;
-
-    if (!TEST_false(HMAC_Init_ex(ctx, NULL, 0, EVP_sha1(), NULL)))
-        goto err;
-
-    if (!TEST_false(HMAC_Update(ctx, test[4].data, test[4].data_len)))
+    if (!TEST_ptr(ctx)
+      || !TEST_ptr_null(HMAC_CTX_get_md(ctx))
+      || !TEST_false(HMAC_Init_ex(ctx, NULL, 0, NULL, NULL))
+      || !TEST_false(HMAC_Update(ctx, test[4].data, test[4].data_len))
+      || !TEST_false(HMAC_Init_ex(ctx, NULL, 0, EVP_sha1(), NULL))
+      || !TEST_false(HMAC_Update(ctx, test[4].data, test[4].data_len)))
         goto err;
 
     ret = 1;
@@ -147,27 +137,18 @@ static int test_hmac_run()
     ctx = HMAC_CTX_new();
     HMAC_CTX_reset(ctx);
 
-    if (!TEST_ptr(ctx))
+    if (!TEST_ptr(ctx)
+      || !TEST_ptr_null(HMAC_CTX_get_md(ctx))
+      || !TEST_false(HMAC_Init_ex(ctx, NULL, 0, NULL, NULL))
+      || !TEST_false(HMAC_Update(ctx, test[4].data, test[4].data_len))
+      || !TEST_false(HMAC_Init_ex(ctx, test[4].key, -1, EVP_sha1(), NULL)))
         goto err;
 
-    if (!TEST_ptr_null(HMAC_CTX_get_md(ctx)))
+    if (!TEST_true(HMAC_Init_ex(ctx, test[4].key, test[4].key_len, EVP_sha1(), NULL))
+      || !TEST_true(HMAC_Update(ctx, test[4].data, test[4].data_len))
+      || !TEST_true(HMAC_Final(ctx, buf, &len)))
         goto err;
 
-    if (!TEST_false(HMAC_Init_ex(ctx, NULL, 0, NULL, NULL)))
-        goto err;
-
-    if (!TEST_false(HMAC_Update(ctx, test[4].data, test[4].data_len)))
-        goto err;
-
-    if (!TEST_false(HMAC_Init_ex(ctx, test[4].key, -1, EVP_sha1(), NULL)))
-        goto err;
-
-    if (!TEST_true(HMAC_Init_ex(ctx, test[4].key, test[4].key_len, EVP_sha1(), NULL)))
-        goto err;
-    if (!TEST_true(HMAC_Update(ctx, test[4].data, test[4].data_len)))
-        goto err;
-    if (!TEST_true(HMAC_Final(ctx, buf, &len)))
-        goto err;
     p = pt(buf, len);
     if (!TEST_str_eq(p, (char *)test[4].digest))
         goto err;
@@ -175,23 +156,19 @@ static int test_hmac_run()
     if (!TEST_false(HMAC_Init_ex(ctx, NULL, 0, EVP_sha256(), NULL)))
         goto err;
 
-    if (!TEST_true(HMAC_Init_ex(ctx, test[5].key, test[5].key_len, EVP_sha256(), NULL)))
+    if (!TEST_true(HMAC_Init_ex(ctx, test[5].key, test[5].key_len, EVP_sha256(), NULL))
+      || !TEST_ptr_eq(HMAC_CTX_get_md(ctx), EVP_sha256())
+      || !TEST_true(HMAC_Update(ctx, test[5].data, test[5].data_len))
+      || !TEST_true(HMAC_Final(ctx, buf, &len)))
         goto err;
-    if (!TEST_ptr_eq(HMAC_CTX_get_md(ctx), EVP_sha256()))
-        goto err;
-    if (!TEST_true(HMAC_Update(ctx, test[5].data, test[5].data_len)))
-        goto err;
-    if (!TEST_true(HMAC_Final(ctx, buf, &len)))
-        goto err;
+
     p = pt(buf, len);
     if (!TEST_str_eq(p, (char *)test[5].digest))
         goto err;
 
-    if (!TEST_true(HMAC_Init_ex(ctx, test[6].key, test[6].key_len, NULL, NULL)))
-        goto err;
-    if (!TEST_true(HMAC_Update(ctx, test[6].data, test[6].data_len)))
-        goto err;
-    if (!TEST_true(HMAC_Final(ctx, buf, &len)))
+    if (!TEST_true(HMAC_Init_ex(ctx, test[6].key, test[6].key_len, NULL, NULL))
+      || !TEST_true(HMAC_Update(ctx, test[6].data, test[6].data_len))
+      || !TEST_true(HMAC_Final(ctx, buf, &len)))
         goto err;
     p = pt(buf, len);
     if (!TEST_str_eq(p, (char *)test[6].digest))
@@ -211,7 +188,7 @@ static int test_hmac_single_shot()
     /* Test single-shot with an empty key. */
     p = pt(HMAC(EVP_sha1(), NULL, 0, test[4].data, test[4].data_len,
                 NULL, NULL), SHA_DIGEST_LENGTH);
-    if (!TEST_str_eq(p, (char *)test[4].digest) != 0)
+    if (!TEST_str_eq(p, (char *)test[4].digest))
         return 0;
 
     return 1;
@@ -228,19 +205,13 @@ static int test_hmac_copy()
 
     ctx = HMAC_CTX_new();
     ctx2 = HMAC_CTX_new();
-    if (!TEST_ptr(ctx))
-        goto err;
-    if (!TEST_ptr(ctx2))
+    if (!TEST_ptr(ctx) || !TEST_ptr(ctx2))
         goto err;
 
-    if (!TEST_true(HMAC_Init_ex(ctx, test[7].key, test[7].key_len, EVP_sha1(), NULL)))
-        goto err;
-    if (!TEST_true(HMAC_Update(ctx, test[7].data, test[7].data_len)))
-        goto err;
-
-    if (!TEST_true(HMAC_CTX_copy(ctx2, ctx)))
-        goto err;
-    if (!TEST_true(HMAC_Final(ctx2, buf, &len)))
+    if (!TEST_true(HMAC_Init_ex(ctx, test[7].key, test[7].key_len, EVP_sha1(), NULL))
+      || !TEST_true(HMAC_Update(ctx, test[7].data, test[7].data_len))
+      || !TEST_true(HMAC_CTX_copy(ctx2, ctx))
+      || !TEST_true(HMAC_Final(ctx2, buf, &len)))
         goto err;
 
     p = pt(buf, len);
