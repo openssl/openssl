@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/rand.h>
 #include <openssl/asn1t.h>
 #include "internal/numbers.h"
 #include "test_main.h"
@@ -140,7 +141,8 @@ typedef int i2d_fn(void *a, unsigned char **pp);
 typedef void *d2i_fn(void **a, unsigned char **pp, long length);
 typedef void ifree_fn(void *a);
 typedef struct {
-    char *name;
+    ASN1_ITEM_EXP *asn1_type;
+    const char *name;
     int skip;                    /* 1 if this package should be skipped */
 
     /* An array of structures to compare decoded custom data with */
@@ -219,7 +221,7 @@ static ASN1_LONG_DATA long_encdec_data_32bit[] = {
 };
 
 static TEST_PACKAGE long_test_package_32bit = {
-    "LONG", sizeof(long) != 4,
+    ASN1_ITEM_ref(ASN1_LONG_DATA), "LONG", sizeof(long) != 4,
     long_expected_32bit,
     sizeof(long_expected_32bit), sizeof(long_expected_32bit[0]),
     long_encdec_data_32bit,
@@ -254,7 +256,7 @@ static ASN1_LONG_DATA long_encdec_data_64bit[] = {
 };
 
 static TEST_PACKAGE long_test_package_64bit = {
-    "LONG", sizeof(long) != 8,
+    ASN1_ITEM_ref(ASN1_LONG_DATA), "LONG", sizeof(long) != 8,
     long_expected_64bit,
     sizeof(long_expected_64bit), sizeof(long_expected_64bit[0]),
     long_encdec_data_64bit,
@@ -304,7 +306,7 @@ static ASN1_INT32_DATA int32_encdec_data[] = {
 };
 
 static TEST_PACKAGE int32_test_package = {
-    "INT32", 0,
+    ASN1_ITEM_ref(ASN1_INT32_DATA), "INT32", 0,
     int32_expected, sizeof(int32_expected), sizeof(int32_expected[0]),
     int32_encdec_data, sizeof(int32_encdec_data), sizeof(int32_encdec_data[0]),
     (i2d_fn *)i2d_ASN1_INT32_DATA, (d2i_fn *)d2i_ASN1_INT32_DATA,
@@ -351,7 +353,7 @@ static ASN1_UINT32_DATA uint32_encdec_data[] = {
 };
 
 static TEST_PACKAGE uint32_test_package = {
-    "UINT32", 0,
+    ASN1_ITEM_ref(ASN1_UINT32_DATA), "UINT32", 0,
     uint32_expected, sizeof(uint32_expected), sizeof(uint32_expected[0]),
     uint32_encdec_data, sizeof(uint32_encdec_data), sizeof(uint32_encdec_data[0]),
     (i2d_fn *)i2d_ASN1_UINT32_DATA, (d2i_fn *)d2i_ASN1_UINT32_DATA,
@@ -399,7 +401,7 @@ static ASN1_INT64_DATA int64_encdec_data[] = {
 };
 
 static TEST_PACKAGE int64_test_package = {
-    "INT64", 0,
+    ASN1_ITEM_ref(ASN1_INT64_DATA), "INT64", 0,
     int64_expected, sizeof(int64_expected), sizeof(int64_expected[0]),
     int64_encdec_data, sizeof(int64_encdec_data), sizeof(int64_encdec_data[0]),
     (i2d_fn *)i2d_ASN1_INT64_DATA, (d2i_fn *)d2i_ASN1_INT64_DATA,
@@ -447,7 +449,7 @@ static ASN1_UINT64_DATA uint64_encdec_data[] = {
 };
 
 static TEST_PACKAGE uint64_test_package = {
-    "UINT64", 0,
+    ASN1_ITEM_ref(ASN1_UINT64_DATA), "UINT64", 0,
     uint64_expected, sizeof(uint64_expected), sizeof(uint64_expected[0]),
     uint64_encdec_data, sizeof(uint64_encdec_data), sizeof(uint64_encdec_data[0]),
     (i2d_fn *)i2d_ASN1_UINT64_DATA, (d2i_fn *)d2i_ASN1_UINT64_DATA,
@@ -695,6 +697,24 @@ static int do_encode_custom(EXPECTED *input,
     return ret;
 }
 
+static int do_print_item(const TEST_PACKAGE *package)
+{
+#define DATA_BUF_SIZE 256
+    unsigned char buf[DATA_BUF_SIZE];
+    const ASN1_ITEM *i = ASN1_ITEM_ptr(package->asn1_type);
+    ASN1_VALUE *o = (ASN1_VALUE *)&buf;
+    BIO *bio = BIO_new_fp(stdout, 0);
+    int ret;
+
+    OPENSSL_assert(package->encode_expectations_elem_size <= DATA_BUF_SIZE);
+
+    (void)RAND_bytes(buf, (int)package->encode_expectations_elem_size);
+    ret = ASN1_item_print(bio, o, 0, i, NULL);
+    BIO_free(bio);
+
+    return ret;
+}
+
 
 static int test_intern(const TEST_PACKAGE *package)
 {
@@ -788,6 +808,12 @@ static int test_intern(const TEST_PACKAGE *package)
             OPENSSL_die("do_enc_dec() return unknown value",
                         __FILE__, __LINE__);
         }
+    }
+
+    if (!do_print_item(package)) {
+        fprintf(stderr, "Printing of %s failed\n", package->name);
+        ERR_print_errors_fp(stderr);
+        fail++;
     }
 
     return fail == 0;
