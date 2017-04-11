@@ -223,6 +223,24 @@ static int pad_unknown(void)
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
 
+static int rsa_setkey(RSA** key, unsigned char* ctext, int idx)
+{
+    int clen = 0;
+    *key = RSA_new();
+    switch (idx) {
+    case 0:
+        clen = key1(*key, ctext);
+        break;
+    case 1:
+        clen = key2(*key, ctext);
+        break;
+    case 2:
+        clen = key3(*key, ctext);
+        break;
+    }
+    return clen;
+}
+
 static int test_rsa_pkcs1(int idx)
 {
     int ret = 0;
@@ -236,19 +254,7 @@ static int test_rsa_pkcs1(int idx)
     int num;
 
     plen = sizeof(ptext_ex) - 1;
-
-    key = RSA_new();
-    switch (idx) {
-    case 0:
-        clen = key1(key, ctext_ex);
-        break;
-    case 1:
-        clen = key2(key, ctext_ex);
-        break;
-    case 2:
-        clen = key3(key, ctext_ex);
-        break;
-    }
+    clen = rsa_setkey(&key, ctext_ex, idx);
 
     num = RSA_public_encrypt(plen, ptext_ex, ctext, key,
                              RSA_PKCS1_PADDING);
@@ -278,22 +284,8 @@ static int test_rsa_oaep(int idx)
     int num;
     int n;
 
-    RAND_seed(rnd_seed, sizeof rnd_seed); /* or OAEP may fail */
-
     plen = sizeof(ptext_ex) - 1;
-
-    key = RSA_new();
-    switch (idx) {
-    case 0:
-        clen = key1(key, ctext_ex);
-        break;
-    case 1:
-        clen = key2(key, ctext_ex);
-        break;
-    case 2:
-        clen = key3(key, ctext_ex);
-        break;
-    }
+    clen = rsa_setkey(&key, ctext_ex, idx);
 
     num = RSA_public_encrypt(plen, ptext_ex, ctext, key,
                              RSA_PKCS1_OAEP_PADDING);
