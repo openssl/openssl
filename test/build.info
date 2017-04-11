@@ -264,7 +264,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[x509aux]=../include
   DEPEND[x509aux]=../libcrypto
 
-  SOURCE[asynciotest]=asynciotest.c ssltestlib.c
+  SOURCE[asynciotest]=asynciotest.c ssltestlib.c testutil.c test_main_custom.c
   INCLUDE[asynciotest]=../include
   DEPEND[asynciotest]=../libcrypto ../libssl
 
