@@ -339,14 +339,14 @@ static int test_bf_ecb(int n)
 
 static int test_bf_set_key(int n)
 {   
-    int i, ret = 1;
+    int ret = 1;
     BF_KEY key;
     unsigned char out[8];
     
     BF_set_key(&key, n+1, key_test);
     BF_ecb_encrypt(key_data, out, &key, BF_ENCRYPT);
     /* mips-sgi-irix6.5-gcc  vv  -mabi=64 bug workaround */
-    if (!TEST_mem_eq(out, 8, &(key_out[i = n][0]), 8))
+    if (!TEST_mem_eq(out, 8, &(key_out[n][0]), 8))
         ret = 0;
 
     return ret;
