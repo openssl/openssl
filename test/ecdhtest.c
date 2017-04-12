@@ -212,10 +212,8 @@ static int ecdh_cavs_kat(BIO *out, const ecdh_cavs_kat_t *kat)
 
 int main(int argc, char *argv[])
 {
-    BN_CTX *ctx = NULL;
     int ret = 1;
-    EC_builtin_curve *curves = NULL;
-    size_t crv_len = 0, n = 0;
+    size_t n = 0;
     BIO *out;
 
     CRYPTO_set_mem_debug(1);
@@ -227,16 +225,6 @@ int main(int argc, char *argv[])
     if (out == NULL)
         EXIT(1);
     BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    if ((ctx = BN_CTX_new()) == NULL)
-        goto err;
-
-    /* get a list of all internal curves */
-    crv_len = EC_get_builtin_curves(NULL, 0);
-    curves = OPENSSL_malloc(sizeof(*curves) * crv_len);
-    if (curves == NULL) goto err;
-
-    if (!EC_get_builtin_curves(curves, crv_len)) goto err;
 
     /* NAMED CURVES TESTS: moved to evptests.txt */
 
@@ -252,8 +240,6 @@ int main(int argc, char *argv[])
 
  err:
     ERR_print_errors_fp(stderr);
-    OPENSSL_free(curves);
-    BN_CTX_free(ctx);
     BIO_free(out);
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
