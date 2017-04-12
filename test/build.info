@@ -284,7 +284,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[sslcorrupttest]=../include .
   DEPEND[sslcorrupttest]=../libcrypto ../libssl
 
-  SOURCE[bio_enc_test]=bio_enc_test.c
+  SOURCE[bio_enc_test]=bio_enc_test.c testutil.c test_main.c
   INCLUDE[bio_enc_test]=../include
   DEPEND[bio_enc_test]=../libcrypto
 
