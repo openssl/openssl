@@ -266,8 +266,14 @@ static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     if (it->funcs) {
         const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
-        if (pf->prim_new)
+        if (embed) {
+            if (pf->prim_clear) {
+                pf->prim_clear(pval, it);
+                return 1;
+            }
+        } else if (pf->prim_new) {
             return pf->prim_new(pval, it);
+        }
     }
 
     if (it->itype == ASN1_ITYPE_MSTRING)
