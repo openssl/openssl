@@ -13,6 +13,8 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#include "testutil.h"
+#include "test_main_custom.h"
 
 static STACK_OF(X509) *load_certs_from_file(const char *filename)
 {
@@ -132,31 +134,17 @@ static int test_alt_chains_cert_forgery(const char *roots_f,
     BIO_free(bio);
     sk_X509_pop_free(untrusted, X509_free);
     X509_STORE_free(store);
-    if (ret != 1)
-        ERR_print_errors_fp(stderr);
     return ret;
 }
 
-int main(int argc, char **argv)
+int test_main(int argc, char **argv)
 {
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
     if (argc != 4) {
-        fprintf(stderr, "usage: verify_extra_test roots.pem untrusted.pem bad.pem\n");
-        return 1;
+        TEST_error("usage: verify_extra_test roots.pem untrusted.pem bad.pem\n");
+        return EXIT_FAILURE;
     }
 
-    if (!test_alt_chains_cert_forgery(argv[1], argv[2], argv[3])) {
-        fprintf(stderr, "Test alt chains cert forgery failed\n");
-        return 1;
-    }
-
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
-        return 1;
-#endif
-
-    printf("PASS\n");
-    return 0;
+    if (!TEST_true(test_alt_chains_cert_forgery(argv[1], argv[2], argv[3])))
+        return EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }
