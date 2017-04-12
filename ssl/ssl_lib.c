@@ -1944,7 +1944,7 @@ STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s)
     ssl_set_client_disabled(s);
     for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
         const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
-        if (!ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED)) {
+        if (!ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0)) {
             if (!sk)
                 sk = sk_SSL_CIPHER_new_null();
             if (!sk)
