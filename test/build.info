@@ -171,7 +171,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[crltest]=../include
   DEPEND[crltest]=../libcrypto
 
-  SOURCE[v3ext]=v3ext.c
+  SOURCE[v3ext]=v3ext.c testutil.c test_main_custom.c
   INCLUDE[v3ext]=../include
   DEPEND[v3ext]=../libcrypto
 
@@ -183,7 +183,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[constant_time_test]=.. ../include
   DEPEND[constant_time_test]=../libcrypto
 
-  SOURCE[verify_extra_test]=verify_extra_test.c
+  SOURCE[verify_extra_test]=verify_extra_test.c testutil.c test_main_custom.c
   INCLUDE[verify_extra_test]=../include
   DEPEND[verify_extra_test]=../libcrypto
 
