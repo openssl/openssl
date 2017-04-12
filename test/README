@@ -134,4 +134,16 @@ conditions.  These macros produce an error message in a standard format if the
 condition is not met (and nothing if the condition is met).  Additional
 information can be presented with the TEST_info macro that takes a printf
 format string and arguments.  TEST_error is useful for complicated conditions,
-it also takes a printf format string and argument.
+it also takes a printf format string and argument.  In all cases the TEST_xxx
+macros are guaranteed to evaluate their arguments exactly once.  This means
+that expressions with side effects are allowed as parameters.  Thus,
+
+    if (!TEST_ptr(ptr = OPENSSL_malloc(..)))
+
+works fine and can be used in place of:
+
+    ptr = OPENSSL_malloc(..);
+    if (!TEST_ptr(ptr))
+
+The former produces a more meaningful message on failure than the latter.
+
