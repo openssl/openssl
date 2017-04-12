@@ -71,7 +71,7 @@ int ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y)
  * and if |pad| is 0xff, then it performs two's complement, ~dst + 1.
  * Note that in latter case sequence of zeros yields itself, and so
  * does 0x80 followed by any number of zeros. These properties are
- * used below...
+ * used elsewhere below...
  */
 static void twos_complement(unsigned char *dst, const unsigned char *src,
                             size_t len, unsigned char pad)
@@ -82,7 +82,7 @@ static void twos_complement(unsigned char *dst, const unsigned char *src,
     dst += len;
     src += len;
     /* two's complement value: ~value + 1 */
-    for (; len > 0; len--) {
+    while (len--) {
         *(--dst) = (unsigned char)(carry += *(--src) ^ pad);
         carry >>= 8;
     }
@@ -112,14 +112,14 @@ static size_t i2c_ibuf(const unsigned char *b, size_t blen, int neg,
                  */
                 for (pad = 0, i = 1; i < blen; i++)
                     pad |= b[i];
-                pb = ((0 - pad) >> 8) & 0xffU;
+                pb = pad ? 0xffU : 0;
                 pad = pb & 1;
             }
         }
         ret += pad;
     } else {
         ret = 1;
-        blen = 0;
+        blen = 0;   /* reduce '(b == NULL || blen == 0)' to '(blen == 0)' */
     }
 
     if (pp == NULL || (p = *pp) == NULL)
@@ -131,7 +131,8 @@ static size_t i2c_ibuf(const unsigned char *b, size_t blen, int neg,
      * by any number of zeros...
      */
     *p = pb;
-    p += pad;
+    p += pad;       /* yes, p[0] can be written twice, but it's little
+                     * price to pay for eliminated branches */
     twos_complement(p, b, blen, pb);
 
     *pp += ret;
