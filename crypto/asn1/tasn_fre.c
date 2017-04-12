@@ -156,11 +156,11 @@ void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
 
         if (embed) {
-            if (pf && pf->prim_clear)
+            if (pf && pf->prim_clear) {
                 pf->prim_clear(pval, it);
-            return;
-        }
-        if (pf && pf->prim_free) {
+                return;
+            }
+        } else if (pf && pf->prim_free) {
             pf->prim_free(pval, it);
             return;
         }
