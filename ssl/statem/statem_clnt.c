@@ -1259,7 +1259,7 @@ static int set_client_ciphersuite(SSL *s, const unsigned char *cipherchars)
      * If it is a disabled cipher we either didn't send it in client hello,
      * or it's not allowed for the selected protocol. So we return an error.
      */
-    if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_CHECK)) {
+    if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_CHECK, 1)) {
         SSLerr(SSL_F_SET_CLIENT_CIPHERSUITE, SSL_R_WRONG_CIPHER_RETURNED);
         return 0;
     }
@@ -3552,7 +3552,7 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, WPACKET *pkt)
 
         c = sk_SSL_CIPHER_value(sk, i);
         /* Skip disabled ciphers */
-        if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED))
+        if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0))
             continue;
 
         if (!s->method->put_cipher_by_char(c, pkt, &len)) {
