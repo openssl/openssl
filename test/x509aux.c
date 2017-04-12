@@ -21,7 +21,11 @@
 #include "test_main_custom.h"
 #include "testutil.h"
 
-static int test_certs(BIO *fp)
+
+/* List of files, from argv */
+static char **files;
+
+static int test_certs(int num)
 {
     int count;
     char *name = 0;
@@ -31,6 +35,10 @@ static int test_certs(BIO *fp)
     typedef X509 *(*d2i_X509_t)(X509 **, const unsigned char **, long);
     typedef int (*i2d_X509_t)(X509 *, unsigned char **);
     int err = 0;
+    BIO *fp = BIO_new_file(files[num], "r");
+
+    if (!TEST_ptr(fp))
+        return 0;
 
     for (count = 0;
          !err && PEM_read_bio(fp, &name, &header, &data, &len);
@@ -140,6 +148,7 @@ static int test_certs(BIO *fp)
 	OPENSSL_free(header);
 	OPENSSL_free(data);
     }
+    BIO_free(fp);
 
     if (ERR_GET_REASON(ERR_peek_last_error()) == PEM_R_NO_START_LINE) {
         /* Reached end of PEM file */
@@ -155,26 +164,12 @@ static int test_certs(BIO *fp)
 
 int test_main(int argc, char *argv[])
 {
-    BIO *bio_err;
-    int ret = 1;
-
-    if (argc < 2)
+    if (argc < 2) {
         TEST_error("usage: %s certfile...", argv[0]);
-
-    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    for (argv++; *argv; argv++) {
-        BIO *f = BIO_new_file(*argv, "r");
-        int ok;
-
-        TEST_check(f != NULL);
-        ok = test_certs(f);
-        BIO_free(f);
-
-        if (!TEST_int_eq(ok, 1))
-            break;
-        ret = 0;
+        return 0;
     }
-    BIO_free(bio_err);
-    return ret;
+
+    files = &argv[1];
+    ADD_ALL_TESTS(test_certs, argc - 1);
+    return run_tests(argv[0]);
 }
