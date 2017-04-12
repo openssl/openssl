@@ -460,6 +460,7 @@ sub run {
     # to make it easier to compare with a manual run of the command.
     if ($opts{capture} || defined($opts{prefix})) {
 	my $pipe;
+	local $_;
 
 	open($pipe, '-|', "$prefix$cmd") or die "Can't start command: $!";
 	while(<$pipe>) {
