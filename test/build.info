@@ -358,7 +358,7 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[poly1305_internal_test]=.. ../include ../crypto/include
     DEPEND[poly1305_internal_test]=../libcrypto.a
 
-    SOURCE[chacha_internal_test]=chacha_internal_test.c
+    SOURCE[chacha_internal_test]=chacha_internal_test.c testutil.c test_main.c
     INCLUDE[chacha_internal_test]=.. ../include ../crypto/include
     DEPEND[chacha_internal_test]=../libcrypto.a
 
