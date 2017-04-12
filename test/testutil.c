@@ -114,6 +114,7 @@ int run_tests(const char *test_prog_name)
 
     printf("%s: %d test case%s\n", test_prog_name, num_test_cases,
            num_test_cases == 1 ? "" : "s");
+    fflush(stdout);
 
     for (i = 0; i != num_tests; ++i) {
         if (all_tests[i].num == -1) {
@@ -122,6 +123,7 @@ int run_tests(const char *test_prog_name)
             if (!ret) {
                 printf("** %s failed **\n--------\n",
                        all_tests[i].test_case_name);
+                fflush(stdout);
                 ++num_failed;
             }
             finalize(ret);
@@ -132,6 +134,7 @@ int run_tests(const char *test_prog_name)
                 if (!ret) {
                     printf("** %s failed test %d\n--------\n",
                            all_tests[i].test_case_name, j);
+                    fflush(stdout);
                     ++num_failed;
                 }
                 finalize(ret);
@@ -142,9 +145,11 @@ int run_tests(const char *test_prog_name)
     if (num_failed != 0) {
         printf("%s: %d test%s failed (out of %d)\n", test_prog_name,
                num_failed, num_failed != 1 ? "s" : "", num_test_cases);
+        fflush(stdout);
         return EXIT_FAILURE;
     }
     printf("  All tests passed.\n");
+    fflush(stdout);
     return EXIT_SUCCESS;
 }
 
