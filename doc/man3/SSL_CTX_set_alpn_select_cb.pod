@@ -78,13 +78,16 @@ item in B<client>, B<client_len> is returned in B<out>, B<outlen>. This
 function can also be used in the NPN callback.
 
 SSL_CTX_set_next_proto_select_cb() sets a callback B<cb> that is called when a
-client needs to select a protocol from the server's provided list. B<out>
+client needs to select a protocol from the server's provided list, and a
+user-defined pointer argument B<arg> which will be passed to this callback.
+For the callback itself, B<out>
 must be set to point to the selected protocol (which may be within B<in>).
 The length of the protocol name must be written into B<outlen>. The
 server's advertised protocols are provided in B<in> and B<inlen>. The
 callback can assume that B<in> is syntactically valid. The client must
 select a protocol. It is fatal to the connection if this callback returns
-a value other than B<SSL_TLSEXT_ERR_OK>.
+a value other than B<SSL_TLSEXT_ERR_OK>. The B<arg> parameter is the pointer
+set via SSL_CTX_set_next_proto_select_cb().
 
 SSL_CTX_set_next_protos_advertised_cb() sets a callback B<cb> that is called
 when a TLS server needs a list of supported protocols for Next Protocol
@@ -101,8 +104,9 @@ with length B<len>. It is not NUL-terminated. B<data> is set to NULL and B<len>
 is set to 0 if no protocol has been selected. B<data> must not be freed.
 
 SSL_get0_next_proto_negotiated() sets B<data> and B<len> to point to the
-client's requested protocol for this connection and returns 0. If the
-client didn't request any protocol, then B<data> is set to NULL. Note that
+client's requested protocol for this connection. If the client did not
+request any protocol or NPN is not enabled, then B<data> is set to NULL and
+B<len> to 0. Note that
 the client can request any protocol it chooses. The value returned from
 this function need not be a member of the list of supported protocols
 provided by the callback.
