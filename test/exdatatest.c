@@ -24,9 +24,9 @@ static void exnew(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
           int idx, long argl, void *argp)
 {
     if (!TEST_int_eq(idx, saved_idx)
-      || !TEST_long_eq(argl, saved_argl)
-      || !TEST_ptr_eq(argp, saved_argp)
-      || !TEST_ptr_null(ptr))
+        || !TEST_long_eq(argl, saved_argl)
+        || !TEST_ptr_eq(argp, saved_argp)
+        || !TEST_ptr_null(ptr))
         gbl_result = 0;
 }
 
@@ -34,9 +34,9 @@ static int exdup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
           void *from_d, int idx, long argl, void *argp)
 {
     if (!TEST_int_eq(idx, saved_idx)
-      || !TEST_long_eq(argl, saved_argl)
-      || !TEST_ptr_eq(argp, saved_argp)
-      || !TEST_ptr(from_d))
+        || !TEST_long_eq(argl, saved_argl)
+        || !TEST_ptr_eq(argp, saved_argp)
+        || !TEST_ptr(from_d))
         gbl_result = 0;
     return 1;
 }
@@ -45,8 +45,8 @@ static void exfree(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
             int idx, long argl, void *argp)
 {
     if (!TEST_int_eq(idx, saved_idx)
-      || !TEST_long_eq(argl, saved_argl)
-      || !TEST_ptr_eq(argp, saved_argp))
+        || !TEST_long_eq(argl, saved_argl)
+        || !TEST_ptr_eq(argp, saved_argp))
         gbl_result = 0;
 }
 
