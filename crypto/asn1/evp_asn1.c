@@ -52,7 +52,7 @@ typedef struct {
 } asn1_int_oct;
 
 ASN1_SEQUENCE(asn1_int_oct) = {
-        ASN1_SIMPLE(asn1_int_oct, num, INT32),
+        ASN1_EMBED(asn1_int_oct, num, INT32),
         ASN1_SIMPLE(asn1_int_oct, oct, ASN1_OCTET_STRING)
 } static_ASN1_SEQUENCE_END(asn1_int_oct)
 
