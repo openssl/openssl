@@ -28,13 +28,21 @@
 
 static int uint64_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    *(uint64_t *)pval = 0;
+    *pval = (ASN1_VALUE *)OPENSSL_zalloc(sizeof(uint64_t));
+    if (*pval == NULL)
+        return 0;
     return 1;
 }
 
 static void uint64_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    *(uint64_t *)pval = 0;
+    OPENSSL_free(*pval);
+    *pval = NULL;
+}
+
+static void uint64_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+    **(uint64_t **)pval = 0;
 }
 
 static int uint64_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
@@ -43,7 +51,7 @@ static int uint64_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
     uint64_t utmp;
     int neg = 0;
     /* this exists to bypass broken gcc optimization */
-    char *cp = (char *)pval;
+    char *cp = (char *)*pval;
 
     /* use memcpy, because we may not be uint64_t aligned */
     memcpy(&utmp, cp, sizeof(utmp));
@@ -65,9 +73,13 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
                     int utype, char *free_cont, const ASN1_ITEM *it)
 {
     uint64_t utmp = 0;
-    char *cp = (char *)pval;
+    char *cp;
     int neg = 0;
 
+    if (*pval == NULL && !uint64_new(pval, it))
+        return 0;
+
+    cp = (char *)*pval;
     if (!c2i_uint64_int(&utmp, &neg, &cont, len))
         return 0;
     if ((it->size & INTxx_FLAG_SIGNED) == 0 && neg) {
@@ -90,21 +102,29 @@ static int uint64_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
                         int indent, const ASN1_PCTX *pctx)
 {
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
-        return BIO_printf(out, "%"BIO_PRI64"d\n", *(int64_t *)pval);
-    return BIO_printf(out, "%"BIO_PRI64"u\n", *(uint64_t *)pval);
+        return BIO_printf(out, "%"BIO_PRI64"d\n", **(int64_t **)pval);
+    return BIO_printf(out, "%"BIO_PRI64"u\n", **(uint64_t **)pval);
 }
 
 /* 32-bit variants */
 
 static int uint32_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    *(uint32_t *)pval = 0;
+    *pval = (ASN1_VALUE *)OPENSSL_zalloc(sizeof(uint32_t));
+    if (*pval == NULL)
+        return 0;
     return 1;
 }
 
 static void uint32_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    *(uint32_t *)pval = 0;
+    OPENSSL_free(*pval);
+    *pval = NULL;
+}
+
+static void uint32_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+    **(uint32_t **)pval = 0;
 }
 
 static int uint32_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
@@ -113,7 +133,7 @@ static int uint32_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
     uint32_t utmp;
     int neg = 0;
     /* this exists to bypass broken gcc optimization */
-    char *cp = (char *)pval;
+    char *cp = (char *)*pval;
 
     /* use memcpy, because we may not be uint32_t aligned */
     memcpy(&utmp, cp, sizeof(utmp));
@@ -143,9 +163,13 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 {
     uint64_t utmp = 0;
     uint32_t utmp2 = 0;
-    char *cp = (char *)pval;
+    char *cp;
     int neg = 0;
 
+    if (*pval == NULL && !uint64_new(pval, it))
+        return 0;
+
+    cp = (char *)*pval;
     if (!c2i_uint64_int(&utmp, &neg, &cont, len))
         return 0;
     if ((it->size & INTxx_FLAG_SIGNED) == 0 && neg) {
@@ -174,8 +198,8 @@ static int uint32_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
                         int indent, const ASN1_PCTX *pctx)
 {
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
-        return BIO_printf(out, "%d\n", *(int32_t *)pval);
-    return BIO_printf(out, "%u\n", *(uint32_t *)pval);
+        return BIO_printf(out, "%d\n", **(int32_t **)pval);
+    return BIO_printf(out, "%u\n", **(uint32_t **)pval);
 }
 
 
@@ -185,7 +209,7 @@ static ASN1_PRIMITIVE_FUNCS uint32_pf = {
     NULL, 0,
     uint32_new,
     uint32_free,
-    uint32_free,                  /* Clear should set to initial value */
+    uint32_clear,
     uint32_c2i,
     uint32_i2c,
     uint32_print
@@ -195,7 +219,7 @@ static ASN1_PRIMITIVE_FUNCS uint64_pf = {
     NULL, 0,
     uint64_new,
     uint64_free,
-    uint64_free,                  /* Clear should set to initial value */
+    uint64_clear,
     uint64_c2i,
     uint64_i2c,
     uint64_print
