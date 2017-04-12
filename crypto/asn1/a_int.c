@@ -229,12 +229,15 @@ static size_t asn1_put_uint64(unsigned char b[sizeof(uint64_t)], uint64_t r)
 }
 
 /*
- * Absolute value of INT64_MIN: we can't just use -INT64_MIN as it produces
- * overflow warnings.
+ * Absolute value of INT64_MIN: we can't just use -INT64_MIN as gcc produces
+ * overflow warnings. It's kind of ridiculous to say "can not because of
+ * somebody's warning," but here we are. The conundrum is that signed
+ * range is limited by internal binary representation, or more specifically
+ * ones' complement having one less possible negative number. But since we
+ * don't care about ones' complement anymore, we can be more explicit...
  */
 
-#define ABS_INT64_MIN \
-    ((uint64_t)INT64_MAX + (uint64_t)(-(INT64_MIN + INT64_MAX)))
+#define ABS_INT64_MIN ((uint64_t)INT64_MAX + 1)
 
 /* signed version of asn1_get_uint64 */
 static int asn1_get_int64(int64_t *pr, const unsigned char *b, size_t blen,
@@ -248,7 +251,7 @@ static int asn1_get_int64(int64_t *pr, const unsigned char *b, size_t blen,
             ASN1err(ASN1_F_ASN1_GET_INT64, ASN1_R_TOO_SMALL);
             return 0;
         }
-        *pr = 0 - (uint64_t)r;
+        *pr = (int64_t)(0 - r);
     } else {
         if (r > INT64_MAX) {
             ASN1err(ASN1_F_ASN1_GET_INT64, ASN1_R_TOO_LARGE);
