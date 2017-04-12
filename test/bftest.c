@@ -232,25 +232,6 @@ static unsigned char key_out[KEY_TEST_NUM][8] = {
     {0x05, 0x04, 0x4B, 0x62, 0xFA, 0x52, 0xD0, 0x80},
 };
 
-static int test_bf(void);
-
-static int print_test_data(void);
-
-int test_main(int argc, char *argv[])
-{
-    int ret;
-
-    ADD_TEST(test_bf);
-
-    if (argc > 1)
-        ret = print_test_data();
-    else
-        ret = run_tests(argv[0]);
-
-    return ret;
-}
-
-
 static int print_test_data(void)
 {
     unsigned int i, j;
@@ -316,60 +297,68 @@ static int print_test_data(void)
     return (0);
 }
 
-static int test_bf(void)
+static int test_bf_ecb_raw(int n)
 {
-    unsigned char cbc_in[40], cbc_out[40], iv[8];
-    int i, n, ret = 1;
+    int ret = 1;
     BF_KEY key;
     BF_LONG data[2];
+
+    BF_set_key(&key, strlen(bf_key[n]), (unsigned char *)bf_key[n]);
+
+    data[0] = bf_plain[n][0];
+    data[1] = bf_plain[n][1];
+    BF_encrypt(data, &key);
+    if (!TEST_mem_eq(&(bf_cipher[n][0]), BF_BLOCK, &(data[0]), BF_BLOCK))
+        ret = 0;
+
+    BF_decrypt(&(data[0]), &key);
+    if (!TEST_mem_eq(&(bf_plain[n][0]), BF_BLOCK, &(data[0]), BF_BLOCK))
+        ret = 0;
+
+    return ret;
+}
+
+static int test_bf_ecb(int n)
+{   
+    int ret = 1;
+    BF_KEY key;
     unsigned char out[8];
+    
+    BF_set_key(&key, 8, ecb_data[n]);
+
+    BF_ecb_encrypt(&(plain_data[n][0]), out, &key, BF_ENCRYPT);
+    if (!TEST_mem_eq(&(cipher_data[n][0]), BF_BLOCK, out, BF_BLOCK))
+        ret = 0;
+
+    BF_ecb_encrypt(out, out, &key, BF_DECRYPT);
+    if (!TEST_mem_eq(&(plain_data[n][0]), BF_BLOCK, out, BF_BLOCK))
+        ret = 0;
+
+    return ret;
+}
+
+static int test_bf_set_key(int n)
+{   
+    int i, ret = 1;
+    BF_KEY key;
+    unsigned char out[8];
+    
+    BF_set_key(&key, n+1, key_test);
+    BF_ecb_encrypt(key_data, out, &key, BF_ENCRYPT);
+    /* mips-sgi-irix6.5-gcc  vv  -mabi=64 bug workaround */
+    if (!TEST_mem_eq(out, 8, &(key_out[i = n][0]), 8))
+        ret = 0;
+
+    return ret;
+}
+
+static int test_bf_cbc(void)
+{   
+    unsigned char cbc_in[40], cbc_out[40], iv[8];
+    int ret = 1;
+    BF_KEY key;
     BF_LONG len;
-
-# ifdef CHARSET_EBCDIC
-    ebcdic2ascii(cbc_data, cbc_data, strlen(cbc_data));
-# endif
-
-    /* Raw ECB Mode */
-    for (n = 0; n < 2; n++) {
-# ifdef CHARSET_EBCDIC
-        ebcdic2ascii(bf_key[n], bf_key[n], strlen(bf_key[n]));
-# endif
-        BF_set_key(&key, strlen(bf_key[n]), (unsigned char *)bf_key[n]);
-
-        data[0] = bf_plain[n][0];
-        data[1] = bf_plain[n][1];
-        BF_encrypt(data, &key);
-        if (!TEST_mem_eq(&(bf_cipher[n][0]), 8, &(data[0]), 8))
-            ret = 0;
-
-        BF_decrypt(&(data[0]), &key);
-        if (!TEST_mem_eq(&(bf_plain[n][0]), 8, &(data[0]), 8))
-            ret = 0;
-    }
-
-    /* ECB Mode */
-    for (n = 0; n < NUM_TESTS; n++) {
-        BF_set_key(&key, 8, ecb_data[n]);
-
-        BF_ecb_encrypt(&(plain_data[n][0]), out, &key, BF_ENCRYPT);
-        if (!TEST_mem_eq(&(cipher_data[n][0]), 8, out, 8))
-            ret = 0;
-
-        BF_ecb_encrypt(out, out, &key, BF_DECRYPT);
-        if (!TEST_mem_eq(&(plain_data[n][0]), 8, out, 8))
-            ret = 0;
-    }
-
-    /* Set key */
-    for (n = 1; n < KEY_TEST_NUM; n++) {
-        BF_set_key(&key, n, key_test);
-        BF_ecb_encrypt(key_data, out, &key, BF_ENCRYPT);
-        /* mips-sgi-irix6.5-gcc  vv  -mabi=64 bug workaround */
-        if (!TEST_mem_eq(out, 8, &(key_out[i = n - 1][0]), 8))
-            ret = 0;
-    }
-
-    /* CBC Mode */
+    
     len = strlen(cbc_data) + 1;
 
     BF_set_key(&key, 16, cbc_key);
@@ -386,7 +375,18 @@ static int test_bf(void)
     if (!TEST_mem_eq(cbc_in, len, cbc_data, strlen(cbc_data) + 1))
         ret = 0;
 
-    /* CFB64 Mode */
+    return ret;
+}
+
+static int test_bf_cfb64(void)
+{
+    unsigned char cbc_in[40], cbc_out[40], iv[8];
+    int n, ret = 1;
+    BF_KEY key;
+    BF_LONG len;
+
+    len = strlen(cbc_data) + 1;
+
     BF_set_key(&key, 16, cbc_key);
     memset(cbc_in, 0, 40);
     memset(cbc_out, 0, 40);
@@ -407,7 +407,18 @@ static int test_bf(void)
     if (!TEST_mem_eq(cbc_in, (int)len, cbc_data, (int)len))
         ret = 0;
 
-    /* OFB64 Mode */
+    return ret;
+}
+
+static int test_bf_ofb64(void)
+{   
+    unsigned char cbc_in[40], cbc_out[40], iv[8];
+    int n, ret = 1;
+    BF_KEY key;
+    BF_LONG len;
+    
+    len = strlen(cbc_data) + 1;
+
     BF_set_key(&key, 16, cbc_key);
     memset(cbc_in, 0, 40);
     memset(cbc_out, 0, 40);
@@ -426,6 +437,33 @@ static int test_bf(void)
     BF_ofb64_encrypt(&(cbc_out[17]), &(cbc_in[17]), len - 17, &key, iv, &n);
     if (!TEST_mem_eq(cbc_in, (int)len, cbc_data, (int)len))
         ret = 0;
+
+    return ret;
+}
+
+int test_main(int argc, char *argv[])
+{
+    int ret;
+# ifdef CHARSET_EBCDIC
+    int n;
+
+    ebcdic2ascii(cbc_data, cbc_data, strlen(cbc_data));
+    for (n = 0; n < 2; n++) {
+        ebcdic2ascii(bf_key[n], bf_key[n], strlen(bf_key[n]));
+    }
+# endif
+
+    ADD_ALL_TESTS(test_bf_ecb_raw, 2);
+    ADD_ALL_TESTS(test_bf_ecb, NUM_TESTS);
+    ADD_ALL_TESTS(test_bf_set_key, KEY_TEST_NUM-1);
+    ADD_TEST(test_bf_cbc);
+    ADD_TEST(test_bf_cfb64);
+    ADD_TEST(test_bf_ofb64);
+
+    if (argc > 1)
+        ret = print_test_data();
+    else
+        ret = run_tests(argv[0]);
 
     return ret;
 }
