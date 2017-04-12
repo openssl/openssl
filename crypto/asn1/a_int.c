@@ -82,7 +82,7 @@ static void twos_complement(unsigned char *dst, const unsigned char *src,
     dst += len;
     src += len;
     /* two's complement value: ~value + 1 */
-    while (len--) {
+    while (len-- != 0) {
         *(--dst) = (unsigned char)(carry += *(--src) ^ pad);
         carry >>= 8;
     }
@@ -112,7 +112,7 @@ static size_t i2c_ibuf(const unsigned char *b, size_t blen, int neg,
                  */
                 for (pad = 0, i = 1; i < blen; i++)
                     pad |= b[i];
-                pb = pad ? 0xffU : 0;
+                pb = pad != 0 ? 0xffU : 0;
                 pad = pb & 1;
             }
         }
