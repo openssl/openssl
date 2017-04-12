@@ -3750,10 +3750,11 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #ifndef OPENSSL_NO_EC
             /*
              * if we are considering an ECC cipher suite that uses an ephemeral
-             * EC key check it
+             * EC key check it. Also we never select ECDHE in SSLv3.
              */
             if (alg_k & SSL_kECDHE)
-                ok = ok && tls1_check_ec_tmp_key(s, c->id);
+                ok = ok && tls1_check_ec_tmp_key(s, c->id)
+                     && s->version != SSL3_VERSION;
 #endif                          /* OPENSSL_NO_EC */
 
             if (!ok)
