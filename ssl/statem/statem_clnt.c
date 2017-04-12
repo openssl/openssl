@@ -1038,7 +1038,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
      * If it is a disabled cipher we either didn't send it in client hello,
      * or it's not allowed for the selected protocol. So we return an error.
      */
-    if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_CHECK)) {
+    if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_CHECK, 1)) {
         al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_WRONG_CIPHER_RETURNED);
         goto f_err;
@@ -2919,7 +2919,7 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, unsigned char *p)
     for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
         c = sk_SSL_CIPHER_value(sk, i);
         /* Skip disabled ciphers */
-        if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED))
+        if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0))
             continue;
         j = s->method->put_cipher_by_char(c, p);
         p += j;
