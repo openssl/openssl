@@ -220,9 +220,6 @@ static int pad_unknown(void)
     return (0);
 }
 
-static const char rnd_seed[] =
-    "string to make the random number generator think it has entropy";
-
 static int rsa_setkey(RSA** key, unsigned char* ctext, int idx)
 {
     int clen = 0;
