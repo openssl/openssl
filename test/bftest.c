@@ -22,13 +22,7 @@
 
 #include "../e_os.h"
 
-#ifdef OPENSSL_NO_BF
-int main(int argc, char *argv[])
-{
-    printf("No BF support\n");
-    return (0);
-}
-#else
+#ifndef OPENSSL_NO_BF
 # include <openssl/blowfish.h>
 
 # ifdef CHARSET_EBCDIC
@@ -440,10 +434,11 @@ static int test_bf_ofb64(void)
 
     return ret;
 }
+#endif
 
 int test_main(int argc, char *argv[])
 {
-    int ret;
+#ifndef OPENSSL_NO_BF
 # ifdef CHARSET_EBCDIC
     int n;
 
@@ -461,10 +456,7 @@ int test_main(int argc, char *argv[])
     ADD_TEST(test_bf_ofb64);
 
     if (argc > 1)
-        ret = print_test_data();
-    else
-        ret = run_tests(argv[0]);
-
-    return ret;
-}
+        return print_test_data();
 #endif
+    return run_tests(argv[0]);
+}
