@@ -65,30 +65,29 @@ static unsigned char c_b[16] = {
 
 static int cast_test(void)
 {
-    static char *hex = "0123456789ABCDEF";
     long l;
-    int i, z, testresult = 1;
+    int z, testresult = 1;
     CAST_KEY key, key_b;
     unsigned char out_a[16], out_b[16];
 
     for (z = 0; z < 3; z++) {
         CAST_set_key(&key, k_len[z], k);
         CAST_ecb_encrypt(in, out, &key, CAST_ENCRYPT);
-        if (!TEST_mem_eq(out, sizeof(c[z]), c[z], sizeof(c[z])))
+        if (!TEST_mem_eq(out, sizeof(c[z]), c[z], sizeof(c[z]))) {
+            TEST_info("CAST_ENCRYPT iteration %d failed (len=%d)", z, k_len[z]);
             testresult = 0;
+        }
 
         CAST_ecb_encrypt(out, out, &key, CAST_DECRYPT);
-        if (!TEST_mem_eq(out, sizeof(in), in, sizeof(in)))
+        if (!TEST_mem_eq(out, sizeof(in), in, sizeof(in))) {
+            TEST_info("CAST_DECRYPT iteration %d failed (len=%d)", z, k_len[z]);
             testresult = 0;
+        }
     }
-    if (testresult)
-        TEST_info("ecb cast5 ok");
-
 
     memcpy(out_a, in_a, sizeof(in_a));
     memcpy(out_b, in_b, sizeof(in_b));
 
-    i = 1;
     for (l = 0; l < 1000000L; l++) {
         CAST_set_key(&key_b, 16, out_b);
         CAST_ecb_encrypt(&(out_a[0]), &(out_a[0]), &key_b, CAST_ENCRYPT);
@@ -96,10 +95,6 @@ static int cast_test(void)
         CAST_set_key(&key, 16, out_a);
         CAST_ecb_encrypt(&(out_b[0]), &(out_b[0]), &key, CAST_ENCRYPT);
         CAST_ecb_encrypt(&(out_b[8]), &(out_b[8]), &key, CAST_ENCRYPT);
-        if ((l & 0xffff) == 0xffff) {
-            TEST_info("%c", hex[i & 0x0f]);
-            i++;
-        }
     }
 
     if (!TEST_mem_eq(out_a, sizeof(c_a), c_a, sizeof(c_a))
