@@ -322,10 +322,11 @@ int MAIN(int argc, char **argv)
                              buf_in, (size_t)buf_inlen);
         if (rv == 0)
             BIO_puts(out, "Signature Verification Failure\n");
-        else if (rv == 1)
+        else if (rv == 1) {
             BIO_puts(out, "Signature Verified Successfully\n");
-        if (rv >= 0)
-            goto end;
+            ret = 0;
+        }
+        goto end;
     } else {
         rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
                       buf_in, (size_t)buf_inlen);
