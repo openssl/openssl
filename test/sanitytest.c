@@ -76,6 +76,13 @@ static int test_sanity_unsigned_convertion(void)
     return 1;
 }
 
+static int test_sanity_pointer_sizes(void)
+{
+    if (!TEST_int_eq(sizeof(long), sizeof(void *)))
+        return 0;
+    return 1;
+}
+
 void register_tests(void)
 {
     ADD_TEST(test_sanity_null_zero);
@@ -83,5 +90,6 @@ void register_tests(void)
     ADD_TEST(test_sanity_twos_complement);
     ADD_TEST(test_sanity_sign);
     ADD_TEST(test_sanity_unsigned_convertion);
+    ADD_TEST(test_sanity_pointer_sizes);
 }
 
