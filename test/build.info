@@ -13,7 +13,7 @@ IF[{- !$disabled{tests} -}]
   PROGRAMS_NO_INST=\
           aborttest test_test \
           sanitytest exdatatest bntest \
-          ectest ecdsatest ecdhtest gmdifftest pbelutest ideatest \
+          ectest ecdsatest gmdifftest pbelutest ideatest \
           md2test \
           hmactest \
           rc2test rc4test rc5test \
@@ -58,10 +58,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[ecdsatest]=ecdsatest.c
   INCLUDE[ecdsatest]=../include
   DEPEND[ecdsatest]=../libcrypto
-
-  SOURCE[ecdhtest]=ecdhtest.c
-  INCLUDE[ecdhtest]=../include
-  DEPEND[ecdhtest]=../libcrypto
 
   SOURCE[gmdifftest]=gmdifftest.c testutil.c test_main.c
   INCLUDE[gmdifftest]=../include
