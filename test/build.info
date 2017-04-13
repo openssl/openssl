@@ -115,8 +115,8 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[randtest]=../include
   DEPEND[randtest]=../libcrypto
 
-  SOURCE[dhtest]=dhtest.c
-  INCLUDE[dhtest]=../include
+  SOURCE[dhtest]=dhtest.c testutil.c test_main.c
+  INCLUDE[dhtest]=.. ../include
   DEPEND[dhtest]=../libcrypto
 
   SOURCE[enginetest]=enginetest.c testutil.c test_main.c
@@ -135,8 +135,8 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[ssltest_old]=.. ../include
   DEPEND[ssltest_old]=../libcrypto ../libssl
 
-  SOURCE[dsatest]=dsatest.c
-  INCLUDE[dsatest]=../include
+  SOURCE[dsatest]=dsatest.c testutil.c test_main.c
+  INCLUDE[dsatest]=.. ../include
   DEPEND[dsatest]=../libcrypto
 
   SOURCE[exptest]=exptest.c
@@ -321,7 +321,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[uitest]=.. ../include
   DEPEND[uitest]=../libcrypto ../libssl
 
-  SOURCE[cipherbytes_test]=cipherbytes_test.c
+  SOURCE[cipherbytes_test]=cipherbytes_test.c testutil.c test_main_custom.c
   INCLUDE[cipherbytes_test]=.. ../include
   DEPEND[cipherbytes_test]=../libcrypto ../libssl
 
