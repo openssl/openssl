@@ -326,7 +326,8 @@ int MAIN(int argc, char **argv)
             BIO_puts(out, "Signature Verified Successfully\n");
             ret = 0;
         }
-        goto end;
+        if (rv >= 0)
+            goto end;
     } else {
         rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
                       buf_in, (size_t)buf_inlen);
