@@ -61,8 +61,8 @@ typedef struct ESS_signing_cert ESS_SIGNING_CERT;
 
 DEFINE_STACK_OF(ESS_CERT_ID)
 
-typedef struct ESS_cert_id_v2 ESS_CERT_ID_V2;
-typedef struct ESS_signing_cert_v2 ESS_SIGNING_CERT_V2;
+typedef struct ESS_cert_id_v2_st ESS_CERT_ID_V2;
+typedef struct ESS_signing_cert_v2_st ESS_SIGNING_CERT_V2;
 
 DEFINE_STACK_OF(ESS_CERT_ID_V2)
 
