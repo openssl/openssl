@@ -19,110 +19,133 @@
 #include <openssl/tls1.h>
 
 #include "e_os.h"
+#include "testutil.h"
+#include "test_main_custom.h"
 
-static int test_empty(SSL *s)
+static SSL_CTX *ctx;
+static SSL *s;
+
+static int test_empty(void)
 {
     STACK_OF(SSL_CIPHER) *sk = NULL, *scsv = NULL;
     const unsigned char bytes[] = {0x00};
+    int ret = 0;
 
-    if (SSL_bytes_to_cipher_list(s, bytes, 0, 0, &sk, &scsv) ||
-        sk != NULL || scsv != NULL)
-        return 0;
-    return 1;
+    if (!TEST_int_eq(SSL_bytes_to_cipher_list(s, bytes, 0, 0, &sk, &scsv), 0)
+            || !TEST_ptr_null(sk)
+            || !TEST_ptr_null(scsv))
+        goto err;
+    ret = 1;
+
+err:
+    sk_SSL_CIPHER_free(sk);
+    sk_SSL_CIPHER_free(scsv);
+    return ret;
 }
 
-static int test_unsupported(SSL *s)
+static int test_unsupported(void)
 {
     STACK_OF(SSL_CIPHER) *sk, *scsv;
     /* ECDH-RSA-AES256 (unsupported), ECDHE-ECDSA-AES128, <unassigned> */
     const unsigned char bytes[] = {0xc0, 0x0f, 0x00, 0x2f, 0x01, 0x00};
+    int ret = 0;
 
-    if (!SSL_bytes_to_cipher_list(s, bytes, sizeof(bytes), 0, &sk, &scsv) ||
-        sk == NULL || sk_SSL_CIPHER_num(sk) != 1 || scsv == NULL ||
-        sk_SSL_CIPHER_num(scsv) != 0)
-        return 0;
-    if (strcmp(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(sk, 0)),
-                "AES128-SHA") != 0)
-        return 0;
+    if (!TEST_true(SSL_bytes_to_cipher_list(s, bytes, sizeof(bytes),
+                                            0, &sk, &scsv))
+            || !TEST_ptr(sk)
+            || !TEST_int_eq(sk_SSL_CIPHER_num(sk), 1)
+            || !TEST_ptr(scsv)
+            || !TEST_int_eq(sk_SSL_CIPHER_num(scsv), 0)
+            || !TEST_str_eq(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(sk, 0)),
+                            "AES128-SHA"))
+        goto err;
 
+    ret = 1;
+err:
     sk_SSL_CIPHER_free(sk);
     sk_SSL_CIPHER_free(scsv);
-    return 1;
+    return ret;
 }
 
-static int test_v2(SSL *s)
+static int test_v2(void)
 {
     STACK_OF(SSL_CIPHER) *sk, *scsv;
     /* ECDHE-ECDSA-AES256GCM, SSL2_RC4_1238_WITH_MD5,
      * ECDHE-ECDSA-CHACHA20-POLY1305 */
     const unsigned char bytes[] = {0x00, 0x00, 0x35, 0x01, 0x00, 0x80,
                                    0x00, 0x00, 0x33};
+    int ret = 0;
 
-    if (!SSL_bytes_to_cipher_list(s, bytes, sizeof(bytes), 1, &sk, &scsv) ||
-        sk == NULL || sk_SSL_CIPHER_num(sk) != 2 || scsv == NULL ||
-        sk_SSL_CIPHER_num(scsv) != 0)
-        return 0;
+    if (!TEST_true(SSL_bytes_to_cipher_list(s, bytes, sizeof(bytes), 1,
+                                            &sk, &scsv))
+            || !TEST_ptr(sk)
+            || !TEST_int_eq(sk_SSL_CIPHER_num(sk), 2)
+            || !TEST_ptr(scsv)
+            || !TEST_int_eq(sk_SSL_CIPHER_num(scsv), 0))
+        goto err;
     if (strcmp(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(sk, 0)),
                "AES256-SHA") != 0 ||
         strcmp(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(sk, 1)),
                "DHE-RSA-AES128-SHA") != 0)
-        return 0;
+        goto err;
+
+    ret = 1;
+
+err:
     sk_SSL_CIPHER_free(sk);
     sk_SSL_CIPHER_free(scsv);
-    return 1;
+    return ret;
 }
 
-static int test_v3(SSL *s)
+static int test_v3(void)
 {
-    STACK_OF(SSL_CIPHER) *sk, *scsv;
+    STACK_OF(SSL_CIPHER) *sk = NULL, *scsv = NULL;
     /* ECDHE-ECDSA-AES256GCM, ECDHE-ECDSA-CHACHAPOLY, DHE-RSA-AES256GCM,
      * EMPTY-RENEGOTIATION-INFO-SCSV, FALLBACK-SCSV */
     const unsigned char bytes[] = {0x00, 0x2f, 0x00, 0x33, 0x00, 0x9f, 0x00, 0xff,
                                    0x56, 0x00};
+    int ret = 0;
 
-    if (!SSL_bytes_to_cipher_list(s, bytes, sizeof(bytes), 0, &sk, &scsv) ||
-        sk == NULL || sk_SSL_CIPHER_num(sk) != 3 || scsv == NULL ||
-        sk_SSL_CIPHER_num(scsv) != 2)
-        return 0;
-    if (strcmp(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(sk, 0)),
-               "AES128-SHA") != 0 ||
-        strcmp(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(sk, 1)),
-               "DHE-RSA-AES128-SHA") != 0 ||
-        strcmp(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(sk, 2)),
-               "DHE-RSA-AES256-GCM-SHA384") != 0 ||
-        strcmp(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(scsv, 0)),
-               "TLS_EMPTY_RENEGOTIATION_INFO_SCSV") != 0 ||
-        strcmp(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(scsv, 1)),
-               "TLS_FALLBACK_SCSV") != 0)
-        return 0;
+    if (!SSL_bytes_to_cipher_list(s, bytes, sizeof(bytes), 0, &sk, &scsv)
+            || !TEST_ptr(sk)
+            || !TEST_int_eq(sk_SSL_CIPHER_num(sk), 3)
+            || !TEST_ptr(scsv)
+            || !TEST_int_eq(sk_SSL_CIPHER_num(scsv), 2)
+            || !TEST_str_eq(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(sk, 0)),
+                            "AES128-SHA")
+            || !TEST_str_eq(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(sk, 1)),
+                            "DHE-RSA-AES128-SHA")
+            || !TEST_str_eq(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(sk, 2)),
+                            "DHE-RSA-AES256-GCM-SHA384")
+            || !TEST_str_eq(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(scsv, 0)),
+                            "TLS_EMPTY_RENEGOTIATION_INFO_SCSV")
+            || !TEST_str_eq(SSL_CIPHER_get_name(sk_SSL_CIPHER_value(scsv, 1)),
+                            "TLS_FALLBACK_SCSV"))
+        goto err;
+
+    ret = 1;
+err:
     sk_SSL_CIPHER_free(sk);
     sk_SSL_CIPHER_free(scsv);
-    return 1;
+    return ret;
 }
 
-int main(int argc, char **argv)
+int test_main(int argc, char **argv)
 {
-    SSL_CTX *ctx;
-    SSL *s;
+    int ret;
 
-    ctx = SSL_CTX_new(TLS_server_method());
-    s = SSL_new(ctx);
-    OPENSSL_assert(s != NULL);
+    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_server_method()))
+            || !TEST_ptr(s = SSL_new(ctx)))
+        return EXIT_FAILURE;
 
-    if (!test_empty(s))
-        return 1;
+    ADD_TEST(test_empty);
+    ADD_TEST(test_unsupported);
+    ADD_TEST(test_v2);
+    ADD_TEST(test_v3);
+    ret = run_tests(argv[0]);
 
-    if (!test_unsupported(s))
-        return 1;
-
-    if (!test_v2(s))
-        return 1;
-
-    if (!test_v3(s))
-        return 1;
-
-    printf("PASS\n");
     SSL_free(s);
     SSL_CTX_free(ctx);
-    return 0;
+
+    return ret;
 }
