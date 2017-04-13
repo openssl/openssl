@@ -212,18 +212,6 @@ static TESTDATA tests[] = {
     { 63, { 16, { 0x51, 0x50, 0xd1, 0x77, 0x2f, 0x50, 0x83, 0x4a, 0x50, 0x3e, 0x06, 0x9a, 0x97, 0x3f, 0xbd, 0x7c, } } }
 };
 
-static void hex_out(BIO *b, char *prefix, int width, unsigned char* data, size_t n)
-{
-    /*
-     * this could be modified to handle multiple lines, but as it is
-     * used here, this only displays up to 16 bytes
-     */
-    BIO_printf(b, "%s", prefix);
-    BIO_hex_string(b, 0, width, data, n);
-    BIO_printf(b, "\n");
-}
-
-
 static int test_siphash(int idx)
 {
     SIPHASH siphash;
@@ -237,10 +225,13 @@ static int test_siphash(int idx)
     size_t i;
 
     if (expectedlen != SIPHASH_MIN_DIGEST_SIZE &&
-        expectedlen != SIPHASH_MAX_DIGEST_SIZE)
+        expectedlen != SIPHASH_MAX_DIGEST_SIZE) {
+        TEST_info("size %" OSSLzu " vs %d and %d", expectedlen,
+                  SIPHASH_MIN_DIGEST_SIZE, SIPHASH_MAX_DIGEST_SIZE);
         return 0;
+    }
 
-    if (inlen > sizeof(in))
+    if (!TEST_int_le(inlen, sizeof(in)))
         return 0;
 
     /* key and in data are 00 01 02 ... */
@@ -250,39 +241,23 @@ static int test_siphash(int idx)
     for (i = 0; i < inlen; i++)
         in[i] = i;
 
-    if (!SipHash_Init(&siphash, key, expectedlen, 0, 0)) {
-        BIO_printf(b_stderr, "SipHash_Init failed\n");
+    if (!TEST_true(SipHash_Init(&siphash, key, expectedlen, 0, 0)))
         return 0;
-    }
     SipHash_Update(&siphash, in, inlen);
-    if (!SipHash_Final(&siphash, out, expectedlen)) {
-        BIO_printf(b_stderr, "SipHash_Final failed\n");
+    if (!TEST_true(SipHash_Final(&siphash, out, expectedlen))
+        || !TEST_mem_eq(out, expectedlen, expected, expectedlen))
         return 0;
-    }
-
-    if (memcmp(out, expected, expectedlen) != 0) {
-        BIO_printf(b_stderr, "SipHash test #%d failed.\n", idx);
-        hex_out(b_stderr, "got:      ", 16, out, expectedlen);
-        hex_out(b_stderr, "expected: ", 16, expected, expectedlen);
-        return 0;
-    }
 
     if (inlen > 16) {
-        if (!SipHash_Init(&siphash, key, expectedlen, 0, 0)) {
-            BIO_printf(b_stderr, "SipHash_Init failed\n");
+        if (!TEST_true(SipHash_Init(&siphash, key, expectedlen, 0, 0)))
             return 0;
-        }
         SipHash_Update(&siphash, in, 1);
         SipHash_Update(&siphash, in+1, inlen-1);
-        if (!SipHash_Final(&siphash, out, expectedlen)) {
-            BIO_printf(b_stderr, "SipHash_Final failed\n");
+        if (!TEST_true(SipHash_Final(&siphash, out, expectedlen)))
             return 0;
-        }
 
-        if (memcmp(out, expected, expectedlen) != 0) {
-            BIO_printf(b_stderr, "SipHash test #%d/1+(N-1) failed.\n", idx);
-            hex_out(b_stderr, "got:      ", 16, out, expectedlen);
-            hex_out(b_stderr, "expected: ", 16, expected, expectedlen);
+        if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
+            TEST_info("SipHash test #%d/1+(N-1) failed.", idx);
             return 0;
         }
     }
@@ -290,41 +265,29 @@ static int test_siphash(int idx)
     if (inlen > 32) {
         size_t half = inlen / 2;
 
-        if (!SipHash_Init(&siphash, key, expectedlen, 0, 0)) {
-            BIO_printf(b_stderr, "SipHash_Init failed\n");
+        if (!TEST_true(SipHash_Init(&siphash, key, expectedlen, 0, 0)))
             return 0;
-        }
         SipHash_Update(&siphash, in, half);
         SipHash_Update(&siphash, in+half, inlen-half);
-        if (!SipHash_Final(&siphash, out, expectedlen)) {
-            BIO_printf(b_stderr, "SipHash_Final failed\n");
+        if (!TEST_true(SipHash_Final(&siphash, out, expectedlen)))
             return 0;
-        }
 
-        if (memcmp(out, expected, expectedlen) != 0) {
-            BIO_printf(b_stderr, "SipHash test #%d/2 failed.\n", idx);
-            hex_out(b_stderr, "got:      ", 16, out, expectedlen);
-            hex_out(b_stderr, "expected: ", 16, expected, expectedlen);
+        if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
+            TEST_info("SipHash test #%d/2 failed.", idx);
             return 0;
         }
 
         for (half = 16; half < inlen; half += 16) {
-            if (!SipHash_Init(&siphash, key, expectedlen, 0, 0)) {
-                BIO_printf(b_stderr, "SipHash_Init failed\n");
+            if (!TEST_true(SipHash_Init(&siphash, key, expectedlen, 0, 0)))
                 return 0;
-            }
             SipHash_Update(&siphash, in, half);
             SipHash_Update(&siphash, in+half, inlen-half);
-            if (!SipHash_Final(&siphash, out, expectedlen)) {
-                BIO_printf(b_stderr, "SipHash_Final failed\n");
+            if (!TEST_true(SipHash_Final(&siphash, out, expectedlen)))
                 return 0;
-            }
 
-            if (memcmp(out, expected, expectedlen) != 0) {
-                BIO_printf(b_stderr, "SipHash test #%d/%zu+%zu failed.\n",
-                       idx, half, inlen-half);
-                hex_out(b_stderr, "got:      ", 16, out, expectedlen);
-                hex_out(b_stderr, "expected: ", 16, expected, expectedlen);
+            if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
+                TEST_info("SipHash test #%d/%" OSSLzu "+%" OSSLzu " failed.",
+                          idx, half, inlen-half);
                 return 0;
             }
         }
@@ -340,56 +303,22 @@ static int test_siphash_basic(void)
     unsigned char output[SIPHASH_MAX_DIGEST_SIZE];
 
     /* Use invalid hash size */
-    if (SipHash_Init(&siphash, key, 4, 0, 0)) {
-        BIO_printf(b_stderr, "SipHash_Init(output size = 4) should have failed\n");
-        return 0;
-    }
+    return TEST_int_eq(SipHash_Init(&siphash, key, 4, 0, 0), 0)
+           /* Use hash size = 8 */
+           && TEST_true(SipHash_Init(&siphash, key, 8, 0, 0))
+           && TEST_true(SipHash_Final(&siphash, output, 8))
+           && TEST_int_eq(SipHash_Final(&siphash, output, 16), 0)
 
-    /* Use hash size = 8 */
-    if (!SipHash_Init(&siphash, key, 8, 0, 0)) {
-        BIO_printf(b_stderr, "SipHash_Init(output size = 8) should have succeeded\n");
-        return 0;
-    }
-    if (!SipHash_Final(&siphash, output, 8)) {
-        BIO_printf(b_stderr, "SipHash_Final(output size = 8) should have succeeded\n");
-        return 0;
-    }
-    if (SipHash_Final(&siphash, output, 16)) {
-        BIO_printf(b_stderr, "SipHash_Final(output size = 16) should have failed\n");
-        return 0;
-    }
+           /* Use hash size = 16 */
+           && TEST_true(SipHash_Init(&siphash, key, 16, 0, 0))
+           && TEST_int_eq(SipHash_Final(&siphash, output, 8), 0)
+           && TEST_true(SipHash_Final(&siphash, output, 16))
 
-    /* Use hash size = 16 */
-    if (!SipHash_Init(&siphash, key, 16, 0, 0)) {
-        BIO_printf(b_stderr, "SipHash_Init(output size = 16) should have succeeded\n");
-        return 0;
-    }
-    if (SipHash_Final(&siphash, output, 8)) {
-        BIO_printf(b_stderr, "SipHash_Final(output size = 8) should have failed\n");
-        return 0;
-    }
-    if (!SipHash_Final(&siphash, output, 16)) {
-        BIO_printf(b_stderr, "SipHash_Final(output size = 16) should have succeeded\n");
-        return 0;
-    }
-
-    /* Use hash size = 0 (default = 16) */
-    if (!SipHash_Init(&siphash, key, 0, 0, 0)) {
-        BIO_printf(b_stderr, "SipHash_Init(output size = 0) should have succeeded\n");
-        return 0;
-    }
-    if (SipHash_Final(&siphash, output, 8)) {
-        BIO_printf(b_stderr, "SipHash_Final(output size = 8) should have failed\n");
-        return 0;
-    }
-    if (!SipHash_Final(&siphash, output, 16)) {
-        BIO_printf(b_stderr, "SipHash_Final(output size = 16) should have succeeded\n");
-        return 0;
-    }
-    return 1;
+           /* Use hash size = 0 (default = 16) */
+           && TEST_true(SipHash_Init(&siphash, key, 0, 0, 0))
+           && TEST_int_eq(SipHash_Final(&siphash, output, 8), 0)
+           && TEST_true(SipHash_Final(&siphash, output, 16));
 }
-
-
 
 int test_main(int argc, char **argv)
 {
