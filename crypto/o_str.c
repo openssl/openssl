@@ -193,7 +193,7 @@ unsigned char *OPENSSL_hexstr2buf(const char *str, long *len)
  */
 char *OPENSSL_buf2hexstr(const unsigned char *buffer, long len)
 {
-    const static char hexdig[] = "0123456789ABCDEF";
+    static const char hexdig[] = "0123456789ABCDEF";
     char *tmp, *q;
     const unsigned char *p;
     int i;
