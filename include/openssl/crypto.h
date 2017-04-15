@@ -440,7 +440,6 @@ int ERR_load_CRYPTO_strings(void);
 
 /* Function codes. */
 # define CRYPTO_F_CRYPTO_DUP_EX_DATA                      110
-# define CRYPTO_F_CRYPTO_FREE_EX_DATA                     111
 # define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX                 100
 # define CRYPTO_F_CRYPTO_MEMDUP                           115
 # define CRYPTO_F_CRYPTO_NEW_EX_DATA                      112

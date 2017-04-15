@@ -13,8 +13,18 @@
 export X1=/tmp/f.1.$$
 export X2=/tmp/f.2.$$
 
+case "$1" in
+    -f) PAT='_F_'
+        echo Functions only
+        ;;
+    -[er]) PAT='_R_' ; echo Reason codes only
+        ;;
+    *) PAT='_[RF]_' ; echo Function and reason codes
+        ;;
+esac
+
 cd include/openssl || exit 1
-grep '_[RF]_' * | awk '{print $3;}' | sort -u >$X1
+grep "$PAT" *  | grep -v ERR_FATAL_ERROR | awk '{print $3;}' | sort -u >$X1
 cd ../..
 
 for F in `cat $X1` ; do
@@ -33,3 +43,4 @@ for F in `cat $X1` ; do
 done
 
 rm $X1 $X2
+echo "Do a build, manual cleanups might be needed in the error tables"
