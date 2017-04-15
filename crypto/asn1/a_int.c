@@ -229,12 +229,10 @@ static size_t asn1_put_uint64(unsigned char b[sizeof(uint64_t)], uint64_t r)
 }
 
 /*
- * Absolute value of INT64_MIN: we can't just use -INT64_MIN as it produces
+ * Absolute value of INT64_MIN: we can't just use -INT64_MIN as gcc produces
  * overflow warnings.
  */
-
-#define ABS_INT64_MIN \
-    ((uint64_t)INT64_MAX + (uint64_t)(-(INT64_MIN + INT64_MAX)))
+#define ABS_INT64_MIN ((uint64_t)INT64_MAX + (-(INT64_MIN + INT64_MAX)))
 
 /* signed version of asn1_get_uint64 */
 static int asn1_get_int64(int64_t *pr, const unsigned char *b, size_t blen,
@@ -244,17 +242,25 @@ static int asn1_get_int64(int64_t *pr, const unsigned char *b, size_t blen,
     if (asn1_get_uint64(&r, b, blen) == 0)
         return 0;
     if (neg) {
-        if (r > ABS_INT64_MIN) {
+        if (r <= INT64_MAX) {
+            /* Most significant bit is guaranteed to be clear, negation
+             * is guaranteed to be meaningful in platform-neutral sense. */
+            *pr = -(int64_t)r;
+        } else if (r == ABS_INT64_MIN) {
+            /* This never happens if INT64_MAX == ABS_INT64_MIN, e.g.
+             * on ones'-complement system. */
+            *pr = (int64_t)(0 - r);
+        } else {
             ASN1err(ASN1_F_ASN1_GET_INT64, ASN1_R_TOO_SMALL);
             return 0;
         }
-        *pr = 0 - (uint64_t)r;
     } else {
-        if (r > INT64_MAX) {
+        if (r <= INT64_MAX) {
+            *pr = (int64_t)r;
+        } else {
             ASN1err(ASN1_F_ASN1_GET_INT64, ASN1_R_TOO_LARGE);
             return 0;
         }
-        *pr = (int64_t)r;
     }
     return 1;
 }
@@ -319,7 +325,12 @@ static int asn1_string_set_int64(ASN1_STRING *a, int64_t r, int itype)
 
     a->type = itype;
     if (r < 0) {
-        off = asn1_put_uint64(tbuf, -r);
+        /* Most obvious '-r' triggers undefined behaviour for most
+         * common INT64_MIN. Even though below '0 - (uint64_t)r' can
+         * appear two's-complement centric, it does produce correct/
+         * expected result even on one's-complement. This is because
+         * cast to unsigned has to change bit pattern... */
+        off = asn1_put_uint64(tbuf, 0 - (uint64_t)r);
         a->type |= V_ASN1_NEG;
     } else {
         off = asn1_put_uint64(tbuf, r);
