@@ -480,7 +480,7 @@ static int check_unsupported()
         ERR_clear_error();
         return 1;
     }
-#endif // OPENSSL_NO_EC
+#endif /* OPENSSL_NO_EC */
     return 0;
 }
 
