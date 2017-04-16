@@ -326,7 +326,8 @@ static int asn1_string_set_int64(ASN1_STRING *a, int64_t r, int itype)
 
     a->type = itype;
     if (r < 0) {
-        off = asn1_put_uint64(tbuf, -r);
+        off = asn1_put_uint64(tbuf, r >= -INT64_MAX ? (uint64_t)-r
+                                                    : (0 - (uint64_t)r));
         a->type |= V_ASN1_NEG;
     } else {
         off = asn1_put_uint64(tbuf, r);
