@@ -190,6 +190,14 @@ DECLARE_COMPARISON(char *, str, eq)
 DECLARE_COMPARISON(char *, str, ne)
 
 /*
+ * Same as above, but for strncmp.
+ */
+int test_strn_eq(const char *file, int line, const char *, const char *,
+                 const char *a, const char *b, size_t s);
+int test_strn_ne(const char *file, int line, const char *, const char *,
+                 const char *a, const char *b, size_t s);
+
+/*
  * Equality test for memory blocks where NULL is a legitimate value.
  * These calls return 1 if the two memory blocks compare true.
  * Otherwise, they return 0 and pretty-print diagnostics.
@@ -292,6 +300,7 @@ void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 # define TEST_ptr_null(a)     test_ptr_null(__FILE__, __LINE__, #a, a)
 
 # define TEST_str_eq(a, b)    test_str_eq(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_strn_eq(a, b, n) test_strn_eq(__FILE__, __LINE__, #a, #b, a, b, n)
 # define TEST_str_ne(a, b)    test_str_ne(__FILE__, __LINE__, #a, #b, a, b)
 
 # define TEST_mem_eq(a, m, b, n) test_mem_eq(__FILE__, __LINE__, #a, #b, a, m, b, n)
