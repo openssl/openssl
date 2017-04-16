@@ -10,6 +10,20 @@
 #include <stdio.h>
 #include <openssl/opensslconf.h>
 
+#include <string.h>
+#include <openssl/engine.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include "testutil.h"
+
+/* Use a buffer size which is not aligned to block size */
+#define BUFFER_SIZE     (8 * 1024) - 13
+
+#ifndef OPENSSL_NO_ENGINE
+static ENGINE *e;
+#endif
+
+
 #ifndef OPENSSL_NO_AFALGENG
 # include <linux/version.h>
 # define K_MAJ   4
@@ -27,18 +41,6 @@
 #endif
 
 #ifndef OPENSSL_NO_AFALGENG
-/* #if 1 */
-#include <string.h>
-#include <openssl/engine.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include "testutil.h"
-
-/* Use a buffer size which is not aligned to block size */
-#define BUFFER_SIZE     (8 * 1024) - 13
-
-static ENGINE *e;
-
 static int test_afalg_aes_128_cbc(void)
 {
     EVP_CIPHER_CTX *ctx;
@@ -81,11 +83,16 @@ static int test_afalg_aes_128_cbc(void)
     EVP_CIPHER_CTX_free(ctx);
     return ret;
 }
+#endif
 
 int main(int argc, char **argv)
 {
     int ret = 0;
 
+#ifdef OPENSSL_NO_ENGINE
+    setup_test();
+    ret = run_tests(argv[0]);
+#else
     ENGINE_load_builtin_engines();
 # ifndef OPENSSL_NO_STATIC_ENGINE
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_AFALG, NULL);
@@ -97,21 +104,13 @@ int main(int argc, char **argv)
         /* Probably a platform env issue, not a test failure. */
         TEST_info("Can't load AFALG engine");
     } else {
+# ifndef OPENSSL_NO_AFALGENG
         ADD_TEST(test_afalg_aes_128_cbc);
+# endif
     }
     ret = run_tests(argv[0]);
-
     ENGINE_free(e);
+#endif
+
     return finish_test(ret);
 }
-
-#else  /* OPENSSL_NO_AFALGENG */
-
-int main(int argc, char **argv)
-{
-    fprintf(stderr, "AFALG not supported - skipping AFALG tests\n");
-    printf("PASS\n");
-    return 0;
-}
-
-#endif
