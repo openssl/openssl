@@ -329,7 +329,7 @@ static int asn1_string_set_int64(ASN1_STRING *a, int64_t r, int itype)
         /* Most obvious '-r' triggers undefined behaviour for most
          * common INT64_MIN. Even though below '0 - (uint64_t)r' can
          * appear two's-complement centric, it does produce correct/
-         * expected result even on one's-complemet. This is because
+         * expected result even on one's-complement. This is because
          * cast to unsigned has to change bit pattern... */
         off = asn1_put_uint64(tbuf, 0 - (uint64_t)r);
         a->type |= V_ASN1_NEG;
