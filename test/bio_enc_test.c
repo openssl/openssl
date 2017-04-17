@@ -82,7 +82,7 @@ static int do_bio_cipher(const EVP_CIPHER* cipher, const unsigned char* key,
             return 0;
         }
     }
-    
+
     /* perform small-chunk operations and compare to reference */
     for (i = 1; i < lref / 2; i++) {
         int delta;
