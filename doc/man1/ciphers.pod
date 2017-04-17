@@ -276,9 +276,9 @@ All these cipher suites have been removed in OpenSSL 1.1.0.
 Cipher suites using ECDSA authentication, i.e. the certificates carry ECDSA
 keys.
 
-=item B<TLSv1.2>, B<TLSv1.0>, B<SSLv3>
+=item B<TLSv1.3>, B<TLSv1.2>, B<TLSv1.0>, B<SSLv3>
 
-Lists cipher suites which are only supported in at least TLS v1.2, TLS v1.0 or
+Lists cipher suites which are only supported in at least TLS v1.3, TLS v1.2, TLS v1.0 or
 SSL v3.0 respectively.
 Note: there are no cipher suites specific to TLS v1.1.
 Since this is only the minimum version, if, for example, TLSv1.0 is negotiated
@@ -294,7 +294,7 @@ cipher suites using 128 bit AES, 256 bit AES or either 128 or 256 bit AES.
 =item B<AESGCM>
 
 AES in Galois Counter Mode (GCM): these cipher suites are only supported
-in TLS v1.2.
+in TLS v1.2 and v1.3.
 
 =item B<AESCCM>, B<AESCCM8>
 
