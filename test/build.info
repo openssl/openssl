@@ -159,8 +159,8 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[igetest]=.. ../include
   DEPEND[igetest]=../libcrypto
 
-  SOURCE[v3nametest]=v3nametest.c
-  INCLUDE[v3nametest]=../include
+  SOURCE[v3nametest]=v3nametest.c testutil.c test_main.c
+  INCLUDE[v3nametest]=.. ../include
   DEPEND[v3nametest]=../libcrypto
 
   SOURCE[crltest]=crltest.c testutil.c test_main.c
@@ -276,7 +276,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[dtlstest]=../include .
   DEPEND[dtlstest]=../libcrypto ../libssl
 
-  SOURCE[sslcorrupttest]=sslcorrupttest.c ssltestlib.c testutil.c
+  SOURCE[sslcorrupttest]=sslcorrupttest.c ssltestlib.c testutil.c test_main_custom.c
   INCLUDE[sslcorrupttest]=../include .
   DEPEND[sslcorrupttest]=../libcrypto ../libssl
 
