@@ -55,7 +55,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[ectest]=.. ../include
   DEPEND[ectest]=../libcrypto
 
-  SOURCE[ecdsatest]=ecdsatest.c
+  SOURCE[ecdsatest]=ecdsatest.c testutil.c test_main.c
   INCLUDE[ecdsatest]=../include
   DEPEND[ecdsatest]=../libcrypto
 
@@ -63,7 +63,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[gmdifftest]=../include
   DEPEND[gmdifftest]=../libcrypto
 
-  SOURCE[pbelutest]=pbelutest.c
+  SOURCE[pbelutest]=pbelutest.c testutil.c test_main.c
   INCLUDE[pbelutest]=../include
   DEPEND[pbelutest]=../libcrypto
 
@@ -119,11 +119,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[dhtest]=../include
   DEPEND[dhtest]=../libcrypto
 
-  SOURCE[enginetest]=enginetest.c
+  SOURCE[enginetest]=enginetest.c testutil.c test_main.c
   INCLUDE[enginetest]=../include
   DEPEND[enginetest]=../libcrypto
 
-  SOURCE[casttest]=casttest.c testutil.c test_main.o
+  SOURCE[casttest]=casttest.c testutil.c test_main.c
   INCLUDE[casttest]=.. ../include
   DEPEND[casttest]=../libcrypto
 
@@ -203,7 +203,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[secmemtest]=../include
   DEPEND[secmemtest]=../libcrypto
 
-  SOURCE[srptest]=srptest.c
+  SOURCE[srptest]=srptest.c testutil.c test_main.c
   INCLUDE[srptest]=../include
   DEPEND[srptest]=../libcrypto
 

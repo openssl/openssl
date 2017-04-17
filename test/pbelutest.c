@@ -8,40 +8,49 @@
  */
 
 #include <openssl/evp.h>
-#include <stdio.h>
-#include <string.h>
+#include "testutil.h"
+#include "test_main.h"
 
 /*
  * Password based encryption (PBE) table ordering test.
  * Attempt to look up all supported algorithms.
  */
 
-int main(int argc, char **argv)
+static int test_pbelu(void)
 {
-    size_t i;
-    int rv = 0;
-    int pbe_type, pbe_nid;
-    int last_type = -1, last_nid = -1;
+    int i, failed = 0, ok;
+    int pbe_type, pbe_nid, last_type = -1, last_nid = -1;
+
     for (i = 0; EVP_PBE_get(&pbe_type, &pbe_nid, i) != 0; i++) {
-        if (EVP_PBE_find(pbe_type, pbe_nid, NULL, NULL, 0) == 0) {
-            rv = 1;
+        if (!TEST_true(EVP_PBE_find(pbe_type, pbe_nid, NULL, NULL, 0))) {
+            TEST_info("i=%d, pbe_type=%d, pbe_nid=%d", i, pbe_type, pbe_nid);
+            failed = 1;
             break;
         }
     }
-    if (rv == 0)
-        return 0;
+
+    if (!failed)
+        return 1;
+
     /* Error: print out whole table */
     for (i = 0; EVP_PBE_get(&pbe_type, &pbe_nid, i) != 0; i++) {
         if (pbe_type > last_type)
-            rv = 0;
+            ok = 0;
         else if (pbe_type < last_type || pbe_nid < last_nid)
-            rv = 1;
+            ok = 1;
         else
-            rv = 0;
-        fprintf(stderr, "PBE type=%d %d (%s): %s\n", pbe_type, pbe_nid,
-                OBJ_nid2sn(pbe_nid), rv ? "ERROR" : "OK");
+            ok = 0;
+        if (!ok)
+            failed = 1;
+        TEST_info("PBE type=%d %d (%s): %s\n", pbe_type, pbe_nid,
+                OBJ_nid2sn(pbe_nid), ok ? "ERROR" : "OK");
         last_type = pbe_type;
         last_nid = pbe_nid;
     }
-    return 1;
+    return failed ? 0 : 1;
+}
+
+void register_tests(void)
+{
+    ADD_TEST(test_pbelu);
 }
