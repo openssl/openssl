@@ -228,14 +228,6 @@ static size_t asn1_put_uint64(unsigned char b[sizeof(uint64_t)], uint64_t r)
     return off;
 }
 
-/*
- * Absolute value of INT64_MIN: we can't just use -INT64_MIN as it produces
- * overflow warnings.
- */
-
-#define ABS_INT64_MIN \
-    ((uint64_t)INT64_MAX + (uint64_t)(-(INT64_MIN + INT64_MAX)))
-
 /* signed version of asn1_get_uint64 */
 static int asn1_get_int64(int64_t *pr, const unsigned char *b, size_t blen,
                           int neg)
@@ -244,11 +236,18 @@ static int asn1_get_int64(int64_t *pr, const unsigned char *b, size_t blen,
     if (asn1_get_uint64(&r, b, blen) == 0)
         return 0;
     if (neg) {
-        if (r > ABS_INT64_MIN) {
+        if (r > INT64_MAX) {
+            /*
+             * It's a bit counter-intuitive to compare to INT64_MAX.
+             * Rationale is that for conversion to signed value to be
+             * unambiguous most significant bit of the value that is
+             * being converted has to be clear. And INT64_MAX is "last"
+             * such number...
+             */
             ASN1err(ASN1_F_ASN1_GET_INT64, ASN1_R_TOO_SMALL);
             return 0;
         }
-        *pr = 0 - (uint64_t)r;
+        *pr = -(int64_t)r;
     } else {
         if (r > INT64_MAX) {
             ASN1err(ASN1_F_ASN1_GET_INT64, ASN1_R_TOO_LARGE);
