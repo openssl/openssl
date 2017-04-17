@@ -469,6 +469,18 @@ static int check_unsupported()
         ERR_clear_error();
         return 1;
     }
+#ifndef OPENSSL_NO_EC
+    /*
+     * If EC support is enabled we should catch also EC_R_UNKNOWN_GROUP as an
+     * hint to an unsupported algorithm/curve (e.g. if binary EC support is
+     * disabled).
+     */
+    if (ERR_GET_LIB(err) == ERR_LIB_EC
+        && ERR_GET_REASON(err) == EC_R_UNKNOWN_GROUP) {
+        ERR_clear_error();
+        return 1;
+    }
+#endif /* OPENSSL_NO_EC */
     return 0;
 }
 
