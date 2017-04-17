@@ -232,7 +232,6 @@ static size_t asn1_put_uint64(unsigned char b[sizeof(uint64_t)], uint64_t r)
  * Absolute value of INT64_MIN: we can't just use -INT64_MIN as gcc produces
  * overflow warnings.
  */
-
 #define ABS_INT64_MIN ((uint64_t)INT64_MAX + (-(INT64_MIN + INT64_MAX)))
 
 /* signed version of asn1_get_uint64 */
