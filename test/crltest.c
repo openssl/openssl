@@ -17,7 +17,6 @@
 #include <openssl/x509.h>
 
 #include "testutil.h"
-#include "test_main.h"
 
 #define PARAM_TIME 1474934400 /* Sep 27th, 2016 */
 

@@ -11,7 +11,6 @@
 
 #include "ssltestlib.h"
 #include "testutil.h"
-#include "test_main_custom.h"
 
 static char *cert = NULL;
 static char *privkey = NULL;

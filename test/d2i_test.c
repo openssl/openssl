@@ -13,7 +13,6 @@
 #include <string.h>
 
 #include "testutil.h"
-#include "test_main_custom.h"
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>

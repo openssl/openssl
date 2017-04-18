@@ -18,7 +18,6 @@
 #include "e_os.h"
 #include "ssl_test_ctx.h"
 #include "testutil.h"
-#include "test_main_custom.h"
 #include <openssl/e_os2.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>

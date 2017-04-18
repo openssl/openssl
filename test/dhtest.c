@@ -17,7 +17,6 @@
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
-#include "test_main.h"
 #include "testutil.h"
 
 #ifdef OPENSSL_NO_DH

@@ -19,7 +19,6 @@
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 
-#include "test_main.h"
 #include "testutil.h"
 
 #ifdef OPENSSL_NO_RSA
