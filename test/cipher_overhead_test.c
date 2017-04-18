@@ -7,13 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
+#include "e_os.h"
+#include "testutil.h"
+#include "test_main.h"
 
 #include "../ssl/ssl_locl.h"
 
-int main(void)
+static int cipher_overhead(void)
 {
-    int i, n = ssl3_num_ciphers();
+    int ret = 1, i, n = ssl3_num_ciphers();
     const SSL_CIPHER *ciph;
     size_t mac, in, blk, ex;
 
@@ -21,13 +23,18 @@ int main(void)
         ciph = ssl3_get_cipher(i);
         if (!ciph->min_dtls)
             continue;
-        if (!ssl_cipher_get_overhead(ciph, &mac, &in, &blk, &ex)) {
-            printf("Error getting overhead for %s\n", ciph->name);
-            exit(1);
+        if (!TEST_true(ssl_cipher_get_overhead(ciph, &mac, &in, &blk, &ex))) {
+            TEST_info("Failed getting %s", ciph->name);
+            ret = 0;
         } else {
-            printf("Cipher %s: %"OSSLzu" %"OSSLzu" %"OSSLzu" %"OSSLzu"\n",
-                   ciph->name, mac, in, blk, ex);
+            TEST_info("Cipher %s: %"OSSLzu" %"OSSLzu" %"OSSLzu" %"OSSLzu,
+                      ciph->name, mac, in, blk, ex);
         }
     }
-    exit(0);
+    return ret;
+}
+
+void register_tests(void)
+{
+    ADD_TEST(cipher_overhead);
 }

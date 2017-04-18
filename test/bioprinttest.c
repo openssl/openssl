@@ -11,8 +11,11 @@
 #include <string.h>
 #include <openssl/bio.h>
 #include "internal/numbers.h"
+#include "testutil.h"
+#include "test_main.h"
+#include "test_main_custom.h"
 
-#define nelem(x) (sizeof(x)/sizeof((x)[0]))
+#define nelem(x) (int)(sizeof(x) / sizeof((x)[0]))
 
 static int justprint = 0;
 
@@ -89,64 +92,13 @@ static char *fpexpected[][5] = {
     /*  69 */ { "6.6667e+04", "66666.6667", "6.667e+04", "6.6667E+04", "6.667E+04" },
 };
 
-static void dofptest(int test, double val, char *width, int prec, int *fail)
-{
-    char format[80], result[80];
-    int i;
-
-    for (i = 0; i < 5; i++) {
-        char *fspec = NULL;
-        switch (i) {
-        case 0:
-            fspec = "e";
-            break;
-        case 1:
-            fspec = "f";
-            break;
-        case 2:
-            fspec = "g";
-            break;
-        case 3:
-            fspec = "E";
-            break;
-        case 4:
-            fspec = "G";
-            break;
-        }
-
-        if (prec >= 0)
-            BIO_snprintf(format, sizeof(format), "%%%s.%d%s", width, prec,
-                         fspec);
-        else
-            BIO_snprintf(format, sizeof(format), "%%%s%s", width, fspec);
-        BIO_snprintf(result, sizeof(result), format, val);
-
-        if (justprint) {
-            if (i == 0) {
-                printf("    /* %3d */ { \"%s\"", test, result);
-            } else {
-                printf(", \"%s\"", result);
-            }
-        } else {
-            if (strcmp(fpexpected[test][i], result) != 0) {
-                printf("Test %d(%d) failed. Expected \"%s\". Got \"%s\". "
-                       "Format \"%s\"\n", test, i, fpexpected[test][i], result,
-                       format);
-                *fail = 1;
-            }
-        }
-    }
-    if (justprint) {
-        printf(" },\n");
-    }
-}
-
-struct z_data_st {
+typedef struct z_data_st {
     size_t value;
     const char *format;
     const char *expected;
-};
-static struct z_data_st zu_data[] = {
+} z_data;
+
+static z_data zu_data[] = {
     { SIZE_MAX, "%zu", (sizeof(size_t) == 4 ? "4294967295"
                         : sizeof(size_t) == 8 ? "18446744073709551615"
                         : "") },
@@ -161,24 +113,24 @@ static struct z_data_st zu_data[] = {
     { 0, "%zi", "0" },
 };
 
-static void dozutest(int test, const struct z_data_st *data, int *fail)
+static int test_zu(int i)
 {
     char bio_buf[80];
+    const z_data *data = &zu_data[i];
 
     BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
-    if (strcmp(bio_buf, data->expected) != 0) {
-        printf("Test %d failed.  Expected \"%s\".  Got \"%s\". "
-               "Format \"%s\"\n", test, data->expected, bio_buf, data->format);
-        *fail = 1;
-    }
+    if (!TEST_str_eq(bio_buf, data->expected))
+        return 0;
+    return 1;
 }
 
-struct j_data_st {
+typedef struct j_data_st {
     uint64_t value;
     const char *format;
     const char *expected;
-};
-static struct j_data_st j_data[] = {
+} j_data;
+
+static j_data jf_data[] = {
     { 0xffffffffffffffffU, "%ju", "18446744073709551615" },
     { 0xffffffffffffffffU, "%jx", "ffffffffffffffff" },
     { 0x8000000000000000U, "%ju", "9223372036854775808" },
@@ -189,108 +141,109 @@ static struct j_data_st j_data[] = {
     { 0x8000000000000000U, "%ji", "-9223372036854775808" },
 };
 
-static void dojtest(int test, const struct j_data_st *data, int *fail)
+static int test_j(int i)
 {
+    const j_data *data = &jf_data[i];
     char bio_buf[80];
 
     BIO_snprintf(bio_buf, sizeof(bio_buf) - 1, data->format, data->value);
-    if (strcmp(bio_buf, data->expected) != 0) {
-        printf("Test %d failed.  Expected \"%s\".  Got \"%s\". "
-               "Format \"%s\"\n", test, data->expected, bio_buf, data->format);
-        *fail = 1;
-    }
+    if (!TEST_str_eq(bio_buf, data->expected))
+        return 0;
+    return 1;
 }
 
-int main(int argc, char **argv)
+
+/* Precision and width. */
+typedef struct pw_st {
+    int p;
+    const char *w;
+} pw;
+
+static pw pw_params[] = {
+    { 4, "" },
+    { 5, "" },
+    { 4, "12" },
+    { 5, "12" },
+    { 0, "" },
+    { -1, "" },
+    { 4, "08" }
+};
+
+static int dofptest(int test, double val, const char *width, int prec)
 {
-    int test = 0;
-    size_t i;
-    int fail = 0;
-    int prec = -1;
-    char *width = "";
-    const double frac = 2.0/3.0;
+    static const char *fspecs[] = {
+        "e", "f", "g", "E", "G"
+    };
+    char format[80], result[80];
+    int ret = 1, i;
+
+    for (i = 0; i < nelem(fspecs); i++) {
+        const char *fspec = fspecs[i];
+
+        if (prec >= 0)
+            BIO_snprintf(format, sizeof(format), "%%%s.%d%s", width, prec,
+                         fspec);
+        else
+            BIO_snprintf(format, sizeof(format), "%%%s%s", width, fspec);
+        BIO_snprintf(result, sizeof(result), format, val);
+
+        if (justprint) {
+            if (i == 0)
+                printf("    /* %d */  { \"%s\"", test, result);
+            else
+                printf(", \"%s\"", result);
+        } else if (!TEST_str_eq(fpexpected[test][i], result)) {
+            TEST_info("test %d format=|%s| exp=|%s|, ret=|%s|",
+                    test, format, fpexpected[test][i], result);
+            ret = 0;
+        }
+    }
+    if (justprint)
+        printf(" },\n");
+    return ret;
+}
+
+static int test_fp(int i)
+{
+    static int t = 0;
+    const double frac = 2.0 / 3.0;
+    const pw *pwp = &pw_params[i];
+
+        if (!TEST_true(dofptest(t++, 0.0, pwp->w, pwp->p))
+                || !TEST_true(dofptest(t++, 0.67, pwp->w, pwp->p))
+                || !TEST_true(dofptest(t++, frac, pwp->w, pwp->p))
+                || !TEST_true(dofptest(t++, frac / 1000, pwp->w, pwp->p))
+                || !TEST_true(dofptest(t++, frac / 10000, pwp->w, pwp->p))
+                || !TEST_true(dofptest(t++, 6.0 + frac, pwp->w, pwp->p))
+                || !TEST_true(dofptest(t++, 66.0 + frac, pwp->w, pwp->p))
+                || !TEST_true(dofptest(t++, 666.0 + frac, pwp->w, pwp->p))
+                || !TEST_true(dofptest(t++, 6666.0 + frac, pwp->w, pwp->p))
+                || !TEST_true(dofptest(t++, 66666.0 + frac, pwp->w, pwp->p)))
+            return 0;
+    return 1;
+}
+
+static int test_big(void)
+{
     char buf[80];
 
-    if (argc == 2 && strcmp(argv[1], "-expected") == 0) {
-        justprint = 1;
-    }
-
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-    /* Tests for floating point format specifiers */
-    for (i = 0; i < 7; i++) {
-        switch (i) {
-        case 0:
-            prec = 4;
-            width = "";
-            break;
-        case 1:
-            prec = 5;
-            width = "";
-            break;
-        case 2:
-            prec = 4;
-            width = "12";
-            break;
-        case 3:
-            prec = 5;
-            width = "12";
-            break;
-        case 4:
-            prec = 0;
-            width = "";
-            break;
-        case 5:
-            prec = -1;
-            width = "";
-            break;
-        case 6:
-            prec = 4;
-            width = "08";
-            break;
-        }
-
-        dofptest(test++, 0.0, width, prec, &fail);
-        dofptest(test++, 0.67, width, prec, &fail);
-        dofptest(test++, frac, width, prec, &fail);
-        dofptest(test++, frac / 1000, width, prec, &fail);
-        dofptest(test++, frac / 10000, width, prec, &fail);
-        dofptest(test++, 6.0 + frac, width, prec, &fail);
-        dofptest(test++, 66.0 + frac, width, prec, &fail);
-        dofptest(test++, 666.0 + frac, width, prec, &fail);
-        dofptest(test++, 6666.0 + frac, width, prec, &fail);
-        dofptest(test++, 66666.0 + frac, width, prec, &fail);
-    }
-
     /* Test excessively big number. Should fail */
-    if (BIO_snprintf(buf, sizeof(buf), "%f\n", 2 * (double)ULONG_MAX) != -1) {
-        printf("Test %d failed. Unexpected success return from "
-               "BIO_snprintf()\n", test);
-        fail = 1;
-    }
-
-    for (i = 0; i < nelem(zu_data); i++) {
-        dozutest(test++, &zu_data[i], &fail);
-    }
-
-    for (i = 0; i < nelem(j_data); i++) {
-        dojtest(test++, &j_data[i], &fail);
-    }
-
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
-        return 1;
-# endif
-
-    if (!justprint) {
-        if (fail) {
-            printf("FAIL\n");
-            return 1;
-        }
-        printf ("PASS\n");
-    }
-    return 0;
+    if (!TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
+                                  "%f\n", 2 * (double)ULONG_MAX), -1))
+        return 0;
+    return 1;
 }
 
 
+int test_main(int argc, char **argv)
+{
+    if (argc == 2 && strcmp(argv[1], "-expected") == 0)
+        justprint = 1;
+
+    ADD_TEST(test_big);
+    ADD_ALL_TESTS(test_fp, nelem(pw_params));
+    ADD_ALL_TESTS(test_zu, nelem(zu_data));
+    ADD_ALL_TESTS(test_j, nelem(jf_data));
+
+    return run_tests(argv[0]);
+}
