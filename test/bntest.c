@@ -19,7 +19,6 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include "testutil.h"
-#include "test_main_custom.h"
 
 /*
  * In bn_lcl.h, bn_expand() is defined as a static ossl_inline function.

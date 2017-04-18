@@ -14,7 +14,6 @@
 
 #include <string.h>
 #include <openssl/opensslconf.h>
-#include "test_main.h"
 #include "testutil.h"
 #include "internal/chacha.h"
 
