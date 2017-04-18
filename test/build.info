@@ -151,7 +151,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[evp_test]=../include
   DEPEND[evp_test]=../libcrypto
 
-  SOURCE[evp_extra_test]=evp_extra_test.c
+  SOURCE[evp_extra_test]=evp_extra_test.c testutil.c test_main.c
   INCLUDE[evp_extra_test]=../include
   DEPEND[evp_extra_test]=../libcrypto
 
@@ -191,7 +191,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[bad_dtls_test]=../include
   DEPEND[bad_dtls_test]=../libcrypto ../libssl
 
-  SOURCE[packettest]=packettest.c
+  SOURCE[packettest]=packettest.c testutil.c test_main.c
   INCLUDE[packettest]=../include
   DEPEND[packettest]=../libcrypto
 
