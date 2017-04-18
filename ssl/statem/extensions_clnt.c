@@ -1056,10 +1056,6 @@ int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, unsigned int context,
         if (chainidx != 0)
             return 1;
 
-        /*
-         * Ensure we get sensible values passed to tlsext_status_cb in the event
-         * that we don't receive a status message
-         */
         OPENSSL_free(s->ext.ocsp.resp);
         s->ext.ocsp.resp = NULL;
         s->ext.ocsp.resp_len = 0;
