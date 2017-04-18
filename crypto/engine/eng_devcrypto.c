@@ -161,6 +161,9 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     struct cipher_ctx *cipher_ctx =
         (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
     struct crypt_op cryp;
+#if !defined(COP_FLAG_WRITE_IV)
+    unsigned char saved_iv[EVP_MAX_IV_LENGTH];
+#endif
 
     memset(&cryp, 0, sizeof(cryp));
     cryp.ses = cipher_ctx->sess.ses;
@@ -169,11 +172,38 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     cryp.dst = (void *)out;
     cryp.iv = (void *)EVP_CIPHER_CTX_iv_noconst(ctx);
     cryp.op = cipher_ctx->op;
+#if !defined(COP_FLAG_WRITE_IV)
+    cryp.flags = 0;
+
+    if (EVP_CIPHER_CTX_iv_length(ctx) > 0) {
+        assert(inl >= EVP_CIPHER_CTX_iv_length(ctx));
+        if (!EVP_CIPHER_CTX_encrypting(ctx)) {
+            unsigned char *ivptr = in + inl - EVP_CIPHER_CTX_iv_length(ctx);
+
+            memcpy(saved_iv, ivptr, EVP_CIPHER_CTX_iv_length(ctx));
+        }
+    }
+#else
     cryp.flags = COP_FLAG_WRITE_IV;
+#endif
+
     if (ioctl(cipher_ctx->cfd, CIOCCRYPT, &cryp) < 0) {
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
     }
+
+#if !defined(COP_FLAG_WRITE_IV)
+    if (EVP_CIPHER_CTX_iv_length(ctx) > 0) {
+        unsigned char *ivptr = saved_iv;
+
+        assert(inl >= EVP_CIPHER_CTX_iv_length(ctx));
+        if (!EVP_CIPHER_CTX_encrypting(ctx))
+            ivptr = out + inl - EVP_CIPHER_CTX_iv_length(ctx);
+
+        memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), ivptr,
+               EVP_CIPHER_CTX_iv_length(ctx));
+    }
+#endif
 
     return 1;
 }
@@ -298,6 +328,14 @@ static int devcrypto_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
     return *cipher != NULL;
 }
 
+/*
+ * We only support digests if the cryptodev implementation supports multiple
+ * data updates.  Otherwise, we would be forced to maintain a cache, which is
+ * perilous if there's a lot of data coming in (if someone wants to checksum
+ * an OpenSSL tarball, for example).
+ */
+#if defined(COP_FLAG_UPDATE) && defined(COP_FLAG_FINAL)
+
 /******************************************************************************
  *
  * Digests
@@ -395,18 +433,30 @@ static int digest_init(EVP_MD_CTX *ctx)
     return 1;
 }
 
+static int digest_op(struct digest_ctx *ctx, const void *src, size_t srclen,
+                     void *res, unsigned int flags)
+{
+    struct crypt_op cryp;
+
+    memset(&cryp, 0, sizeof(cryp));
+    cryp.ses = ctx->sess.ses;
+    cryp.len = srclen;
+    cryp.src = (void *)src;
+    cryp.dst = NULL;
+    cryp.mac = res;
+    cryp.flags = flags;
+    return ioctl(ctx->cfd, CIOCCRYPT, &cryp);
+}
+
 static int digest_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
     struct digest_ctx *digest_ctx =
         (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
-    struct crypt_op cryp;
 
-    memset(&cryp, 0, sizeof(cryp));
-    cryp.ses = digest_ctx->sess.ses;
-    cryp.len = count;
-    cryp.src = (void *)data;
-    cryp.flags = COP_FLAG_UPDATE;
-    if (ioctl(digest_ctx->cfd, CIOCCRYPT, &cryp) < 0) {
+    if (count == 0)
+        return 1;
+
+    if (digest_op(digest_ctx, data, count, NULL, COP_FLAG_UPDATE) < 0) {
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
     }
@@ -418,15 +468,8 @@ static int digest_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
     struct digest_ctx *digest_ctx =
         (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
-    struct crypt_op cryp;
 
-    memset(&cryp, 0, sizeof(cryp));
-    cryp.ses = digest_ctx->sess.ses;
-    cryp.len = 0;
-    cryp.src = NULL;
-    cryp.mac = (void *)md;
-    cryp.flags = COP_FLAG_FINAL;
-    if (ioctl(digest_ctx->cfd, CIOCCRYPT, &cryp) < 0) {
+    if (digest_op(digest_ctx, NULL, 0, md, COP_FLAG_FINAL) < 0) {
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
     }
@@ -545,6 +588,8 @@ static int devcrypto_digests(ENGINE *e, const EVP_MD **digest,
     return *digest != NULL;
 }
 
+#endif
+
 /******************************************************************************
  *
  * LOAD / UNLOAD
@@ -554,7 +599,9 @@ static int devcrypto_digests(ENGINE *e, const EVP_MD **digest,
 static int devcrypto_unload(ENGINE *e)
 {
     destroy_all_cipher_methods();
+#if defined(COP_FLAG_UPDATE) && defined(COP_FLAG_FINAL)
     destroy_all_digest_methods();
+#endif
     return 1;
 }
 /*
@@ -572,7 +619,9 @@ void engine_load_devcrypto_int()
     }
 
     prepare_cipher_methods();
+#if defined(COP_FLAG_UPDATE) && defined(COP_FLAG_FINAL)
     prepare_digest_methods();
+#endif
 
     if ((e = ENGINE_new()) == NULL)
         return;
@@ -595,7 +644,10 @@ void engine_load_devcrypto_int()
 # endif
 #endif
         || !ENGINE_set_ciphers(e, devcrypto_ciphers)
-        || !ENGINE_set_digests(e, devcrypto_digests)) {
+#if defined(COP_FLAG_UPDATE) && defined(COP_FLAG_FINAL)
+        || !ENGINE_set_digests(e, devcrypto_digests)
+#endif
+        ) {
         ENGINE_free(e);
         return;
     }
