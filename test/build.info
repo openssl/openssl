@@ -111,7 +111,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[mdc2test]=../include
   DEPEND[mdc2test]=../libcrypto
 
-  SOURCE[randtest]=randtest.c
+  SOURCE[randtest]=randtest.c testutil.c test_main.c
   INCLUDE[randtest]=../include
   DEPEND[randtest]=../libcrypto
 
@@ -175,7 +175,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[danetest]=../include
   DEPEND[danetest]=../libcrypto ../libssl
 
-  SOURCE[constant_time_test]=constant_time_test.c
+  SOURCE[constant_time_test]=constant_time_test.c testutil.c test_main.c
   INCLUDE[constant_time_test]=.. ../include
   DEPEND[constant_time_test]=../libcrypto
 
@@ -264,8 +264,8 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[asynciotest]=../include
   DEPEND[asynciotest]=../libcrypto ../libssl
 
-  SOURCE[bioprinttest]=bioprinttest.c
-  INCLUDE[bioprinttest]=../include
+  SOURCE[bioprinttest]=bioprinttest.c testutil.c test_main_custom.c
+  INCLUDE[bioprinttest]=../ ../include
   DEPEND[bioprinttest]=../libcrypto
 
   SOURCE[sslapitest]=sslapitest.c ssltestlib.c testutil.c test_main_custom.c
@@ -311,7 +311,7 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- $disabled{shared} -}]
     PROGRAMS_NO_INST=cipher_overhead_test
-    SOURCE[cipher_overhead_test]=cipher_overhead_test.c
+    SOURCE[cipher_overhead_test]=cipher_overhead_test.c testutil.c test_main.c
     INCLUDE[cipher_overhead_test]=.. ../include
     DEPEND[cipher_overhead_test]=../libcrypto ../libssl
   ENDIF
