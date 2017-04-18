@@ -798,7 +798,7 @@ static int serverinfo_process_buffer(unsigned int version,
     if (serverinfo == NULL || serverinfo_length == 0)
         return 0;
 
-    if (version != SERVERINFOV1 && version != SERVERINFOV2)
+    if (version != SSL_SERVERINFOV1 && version != SSL_SERVERINFOV2)
         return 0;
 
     if (!PACKET_buf_init(&pkt, serverinfo, serverinfo_length))
@@ -817,7 +817,7 @@ static int serverinfo_process_buffer(unsigned int version,
         if (ctx == NULL)
             continue;
 
-        if (version == SERVERINFOV1) {
+        if (version == SSL_SERVERINFOV1) {
             if (!SSL_CTX_add_server_custom_ext(ctx, ext_type,
                                                serverinfo_srv_add_cb,
                                                NULL, NULL,
@@ -881,7 +881,7 @@ int SSL_CTX_use_serverinfo_ex(SSL_CTX *ctx, unsigned int version,
 int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
                            size_t serverinfo_length)
 {
-    return SSL_CTX_use_serverinfo_ex(ctx, SERVERINFOV1, serverinfo,
+    return SSL_CTX_use_serverinfo_ex(ctx, SSL_SERVERINFOV1, serverinfo,
                                      serverinfo_length);
 }
 
@@ -935,7 +935,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
             goto end;
         }
         if (strncmp(name, namePrefix1, strlen(namePrefix1)) == 0) {
-            version = SERVERINFOV1;
+            version = SSL_SERVERINFOV1;
         } else {
             if (strlen(name) < strlen(namePrefix2)) {
                 SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE,
@@ -947,12 +947,12 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
                        SSL_R_PEM_NAME_BAD_PREFIX);
                 goto end;
             }
-            version = SERVERINFOV2;
+            version = SSL_SERVERINFOV2;
         }
         /*
          * Check that the decoded PEM data is plausible (valid length field)
          */
-        if (version == SERVERINFOV1) {
+        if (version == SSL_SERVERINFOV1) {
             /* 4 byte header: 2 bytes type, 2 bytes len */
             if (extension_length < 4
                     || (extension[2] << 8) + extension[3]
