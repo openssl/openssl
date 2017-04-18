@@ -14,6 +14,7 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA ENGINE_str_functs[] = {
+    {ERR_PACK(ERR_LIB_ENGINE, ENGINE_F_DIGEST_UPDATE, 0), "digest_update"},
     {ERR_PACK(ERR_LIB_ENGINE, ENGINE_F_DYNAMIC_CTRL, 0), "dynamic_ctrl"},
     {ERR_PACK(ERR_LIB_ENGINE, ENGINE_F_DYNAMIC_GET_DATA_CTX, 0),
      "dynamic_get_data_ctx"},
