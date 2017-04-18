@@ -349,20 +349,6 @@ int test_str_eq(const char *file, int line, const char *st1, const char *st2,
     return 1;
 }
 
-int test_strn_eq(const char *file, int line, const char *st1, const char *st2,
-                 const char *s1, const char *s2, size_t len)
-{
-    if (s1 == NULL && s2 == NULL)
-      return 1;
-    if (s1 == NULL || s2 == NULL || strncmp(s1, s2, len) != 0) {
-        test_fail_message(NULL, file, line, "string", "%s [%s] == %s [%s]",
-                          st1, print_string_maybe_null(s1),
-                          st2, print_string_maybe_null(s2));
-        return 0;
-    }
-    return 1;
-}
-
 int test_str_ne(const char *file, int line, const char *st1, const char *st2,
                 const char *s1, const char *s2)
 {
@@ -377,15 +363,33 @@ int test_str_ne(const char *file, int line, const char *st1, const char *st2,
     return 1;
 }
 
+int test_strn_eq(const char *file, int line, const char *st1, const char *st2,
+                 const char *s1, const char *s2, size_t len)
+{
+    int prec = (int)len;
+
+    if (s1 == NULL && s2 == NULL)
+      return 1;
+    if (s1 == NULL || s2 == NULL || strncmp(s1, s2, len) != 0) {
+        test_fail_message(NULL, file, line, "string", "%.s [%.*s] == %s [%.*s]",
+                          st1, prec, print_string_maybe_null(s1),
+                          st2, prec, print_string_maybe_null(s2));
+        return 0;
+    }
+    return 1;
+}
+
 int test_strn_ne(const char *file, int line, const char *st1, const char *st2,
                  const char *s1, const char *s2, size_t len)
 {
+    int prec = (int)len;
+
     if ((s1 == NULL) ^ (s2 == NULL))
       return 1;
     if (s1 == NULL || strncmp(s1, s2, len) == 0) {
-        test_fail_message(NULL, file, line, "string", "%s [%s] != %s [%s]",
-                          st1, print_string_maybe_null(s1),
-                          st2, print_string_maybe_null(s2));
+        test_fail_message(NULL, file, line, "string", "%s [%.*s] != %s [%.*s]",
+                          st1, prec, print_string_maybe_null(s1),
+                          st2, prec, print_string_maybe_null(s2));
         return 0;
     }
     return 1;
