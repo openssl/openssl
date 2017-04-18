@@ -11,6 +11,8 @@
  * Copyright (c) 2017 Oracle and/or its affiliates.  All rights reserved.
  */
 
+ /* Copyright (c) 2017 National Security Resarch Institute.  All rights reserved. */
+
 #ifndef HEADER_ARIA_H
 # define HEADER_ARIA_H
 
@@ -35,8 +37,8 @@ extern "C" {
 typedef unsigned char ARIA_u128[ARIA_BLOCK_SIZE];
 
 struct aria_key_st {
-    unsigned int rounds;
     ARIA_u128 rd_key[ARIA_MAX_KEYS];
+    unsigned int rounds;
 };
 typedef struct aria_key_st ARIA_KEY;
 
