@@ -157,12 +157,12 @@ CFLAGS_Q=$(CFLAGS)
 DEPFLAG= /DEFINE=({- join(",", @{$config{depdefines}}) -})
 LDFLAGS= {- $target{lflags} -}
 EX_LIBS= {- $target{ex_libs} ? ",".$target{ex_libs} : "" -}{- $config{ex_libs} ? ",".$config{ex_libs} : "" -}
-LIB_CFLAGS={- $target{lib_cflags} || "" -}
-DSO_CFLAGS={- $target{dso_cflags} || "" -}
-BIN_CFLAGS={- $target{bin_cflags} || "" -}
-NO_INST_LIB_CFLAGS={- $target{no_inst_lib_cflags} || '$(LIB_CFLAGS)' -}
-NO_INST_DSO_CFLAGS={- $target{no_inst_dso_cflags} || '$(DSO_CFLAGS)' -}
-NO_INST_BIN_CFLAGS={- $target{no_inst_bin_cflags} || '$(BIN_CFLAGS)' -}
+LIB_CFLAGS={- $target{lib_cflags} // "" -}
+DSO_CFLAGS={- $target{dso_cflags} // "" -}
+BIN_CFLAGS={- $target{bin_cflags} // "" -}
+NO_INST_LIB_CFLAGS={- $target{no_inst_lib_cflags} // '$(LIB_CFLAGS)' -}
+NO_INST_DSO_CFLAGS={- $target{no_inst_dso_cflags} // '$(DSO_CFLAGS)' -}
+NO_INST_BIN_CFLAGS={- $target{no_inst_bin_cflags} // '$(BIN_CFLAGS)' -}
 
 PERL={- $config{perl} -}
 

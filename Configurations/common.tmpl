@@ -133,7 +133,7 @@
                      objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
                                @{$unified_info{sources}->{$lib}} ]);
      foreach (@{$unified_info{sources}->{$lib}}) {
-         doobj($_, $lib, intent => "lib");
+         doobj($_, $lib, intent => "lib", installed => is_installed($lib));
      }
      $cache{$lib} = 1;
  }
