@@ -1453,8 +1453,8 @@ __owur int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len);
 
 
 /* serverinfo file format versions */
-# define SERVERINFOV1   1
-# define SERVERINFOV2   2
+# define SSL_SERVERINFOV1   1
+# define SSL_SERVERINFOV2   2
 
 /* Set serverinfo data for the current active cert. */
 __owur int SSL_CTX_use_serverinfo(SSL_CTX *ctx, const unsigned char *serverinfo,
