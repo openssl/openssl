@@ -17,7 +17,6 @@
 
 #include "ssltestlib.h"
 #include "testutil.h"
-#include "test_main_custom.h"
 
 /* Should we fragment records or not? 0 = no, !0 = yes*/
 static int fragment = 0;

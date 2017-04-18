@@ -12,7 +12,6 @@
 #endif
 
 #include <openssl/crypto.h>
-#include "test_main.h"
 #include "testutil.h"
 
 #if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)

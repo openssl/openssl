@@ -13,7 +13,6 @@
 #include <openssl/rand.h>
 #include <openssl/asn1t.h>
 #include "internal/numbers.h"
-#include "test_main.h"
 #include "testutil.h"
 
 #ifdef __GNUC__

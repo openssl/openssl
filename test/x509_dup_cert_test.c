@@ -15,7 +15,6 @@
 #include <openssl/err.h>
 #include <openssl/x509_vfy.h>
 
-#include "test_main_custom.h"
 #include "testutil.h"
 
 static int test_509_dup_cert(const char *cert_f)

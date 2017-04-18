@@ -9,7 +9,6 @@
 
 #include "../ssl/packet_locl.h"
 #include "testutil.h"
-#include "test_main.h"
 
 #define BUF_LEN 255
 

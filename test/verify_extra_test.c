@@ -14,7 +14,6 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include "testutil.h"
-#include "test_main_custom.h"
 
 static STACK_OF(X509) *load_certs_from_file(const char *filename)
 {

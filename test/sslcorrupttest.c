@@ -10,7 +10,6 @@
 #include <string.h>
 #include "ssltestlib.h"
 #include "testutil.h"
-#include "test_main_custom.h"
 
 static int docorrupt = 0;
 

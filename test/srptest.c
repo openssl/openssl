@@ -24,7 +24,6 @@ int main(int argc, char *argv[])
 # include <openssl/rand.h>
 # include <openssl/err.h>
 # include "testutil.h"
-# include "test_main.h"
 
 static void showbn(const char *name, const BIGNUM *bn)
 {

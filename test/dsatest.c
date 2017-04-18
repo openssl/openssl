@@ -18,7 +18,6 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 
-#include "test_main.h"
 #include "testutil.h"
 #include "e_os.h"
 

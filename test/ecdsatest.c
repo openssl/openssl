@@ -46,7 +46,6 @@ int main(int argc, char *argv[])
 # include <openssl/err.h>
 # include <openssl/rand.h>
 # include "testutil.h"
-# include "test_main.h"
 
 static const char rnd_seed[] = "string to make the random number generator "
     "think it has entropy";
