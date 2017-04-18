@@ -15,7 +15,18 @@
 #include <openssl/bio.h>
 #include "testutil.h"
 #include "test_main_custom.h"
+
+#ifdef __VMS
+# pragma names save
+# pragma names as_is,shortened
+#endif
+
 #include "internal/siphash.h"
+
+#ifdef __VMS
+# pragma names restore
+#endif
+
 #include "../crypto/siphash/siphash_local.h"
 #include "e_os.h"
 

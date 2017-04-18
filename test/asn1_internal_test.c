@@ -59,7 +59,17 @@ static int test_tbl_standard()
  *
  ***/
 
+#ifdef __VMS
+# pragma names save
+# pragma names as_is,shortened
+#endif
+
 #include "internal/asn1_int.h"
+
+#ifdef __VMS
+# pragma names restore
+#endif
+
 #include "../crypto/asn1/standard_methods.h"
 
 static int test_standard_methods()
