@@ -589,6 +589,7 @@ EC_F_PKEY_EC_DERIVE:217:pkey_ec_derive
 EC_F_PKEY_EC_KEYGEN:199:pkey_ec_keygen
 EC_F_PKEY_EC_PARAMGEN:219:pkey_ec_paramgen
 EC_F_PKEY_EC_SIGN:218:pkey_ec_sign
+ENGINE_F_DIGEST_UPDATE:198:digest_update
 ENGINE_F_DYNAMIC_CTRL:180:dynamic_ctrl
 ENGINE_F_DYNAMIC_GET_DATA_CTX:181:dynamic_get_data_ctx
 ENGINE_F_DYNAMIC_LOAD:182:dynamic_load

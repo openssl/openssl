@@ -161,6 +161,9 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     struct cipher_ctx *cipher_ctx =
         (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
     struct crypt_op cryp;
+#if !defined(COP_FLAG_WRITE_IV)
+    unsigned char saved_iv[EVP_MAX_IV_LENGTH];
+#endif
 
     memset(&cryp, 0, sizeof(cryp));
     cryp.ses = cipher_ctx->sess.ses;
@@ -169,11 +172,36 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     cryp.dst = (void *)out;
     cryp.iv = (void *)EVP_CIPHER_CTX_iv_noconst(ctx);
     cryp.op = cipher_ctx->op;
+#if !defined(COP_FLAG_WRITE_IV)
+    cryp.flags = 0;
+
+    if (EVP_CIPHER_CTX_iv_length(ctx) > 0) {
+        if (!EVP_CIPHER_CTX_encrypting(ctx)) {
+            unsigned char *ivptr = in + inl - EVP_CIPHER_CTX_iv_length(ctx);
+
+            memcpy(saved_iv, ivptr, EVP_CIPHER_CTX_iv_length(ctx));
+        }
+    }
+#else
     cryp.flags = COP_FLAG_WRITE_IV;
+#endif
+
     if (ioctl(cipher_ctx->cfd, CIOCCRYPT, &cryp) < 0) {
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
     }
+
+#if !defined(COP_FLAG_WRITE_IV)
+    if (EVP_CIPHER_CTX_iv_length(ctx) > 0) {
+        unsigned char *ivptr = saved_iv;
+
+        if (!EVP_CIPHER_CTX_encrypting(ctx))
+            ivptr = out + inl - EVP_CIPHER_CTX_iv_length(ctx);
+
+        memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), ivptr,
+               EVP_CIPHER_CTX_iv_length(ctx));
+    }
+#endif
 
     return 1;
 }
@@ -289,6 +317,11 @@ struct digest_ctx {
     int cfd;
     struct session_op sess;
     int init;
+#if !defined(COP_FLAG_UPDATE) || !defined(COP_FLAG_FINAL)
+    void *saved_data;
+    size_t saved_data_len;
+    unsigned char digest[HASH_MAX_LEN];
+#endif
 };
 
 static const struct digest_data_st {
@@ -372,18 +405,53 @@ static int digest_init(EVP_MD_CTX *ctx)
     return 1;
 }
 
+static int digest_op(struct digest_ctx *ctx, const void *src, size_t srclen,
+                     void *res, unsigned int flags)
+{
+    struct crypt_op cryp;
+
+    memset(&cryp, 0, sizeof(cryp));
+    cryp.ses = ctx->sess.ses;
+    cryp.len = srclen;
+    cryp.src = (void *)src;
+    cryp.dst = NULL;
+    cryp.mac = res;
+    cryp.flags = flags;
+    return ioctl(ctx->cfd, CIOCCRYPT, &cryp);
+}
+
 static int digest_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
     struct digest_ctx *digest_ctx =
         (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
-    struct crypt_op cryp;
+    void *res = NULL;
+    int flags = 0;
 
-    memset(&cryp, 0, sizeof(cryp));
-    cryp.ses = digest_ctx->sess.ses;
-    cryp.len = count;
-    cryp.src = (void *)data;
-    cryp.flags = COP_FLAG_UPDATE;
-    if (ioctl(digest_ctx->cfd, CIOCCRYPT, &cryp) < 0) {
+#if !defined(COP_FLAG_UPDATE) || !defined(COP_FLAG_FINAL)
+    if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_ONESHOT)) {
+        /*
+         * TODO: Should we limit the amount of bytes that can be processed
+         * with this method?  What if someone wants to hash a multi-GB file?
+         */
+        digest_ctx->saved_data = OPENSSL_realloc(digest_ctx->saved_data,
+                                                 digest_ctx->saved_data_len
+                                                 + count);
+        if (digest_ctx->saved_data == NULL) {
+            ENGINEerr(ENGINE_F_DIGEST_UPDATE, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+
+        memcpy(digest_ctx->saved_data + digest_ctx->saved_data_len, data,
+               count);
+        digest_ctx->saved_data_len += count;
+        return 1;
+    }
+
+    res = digest_ctx->digest;
+#else
+    flags = COP_FLAG_UPDATE;
+#endif
+    if (digest_op(digest_ctx, data, count, res, flags) < 0) {
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
     }
@@ -395,15 +463,23 @@ static int digest_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
     struct digest_ctx *digest_ctx =
         (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
-    struct crypt_op cryp;
+    const void *data = NULL;
+    size_t count = 0;
+    int flags = 0;
 
-    memset(&cryp, 0, sizeof(cryp));
-    cryp.ses = digest_ctx->sess.ses;
-    cryp.len = 0;
-    cryp.src = NULL;
-    cryp.mac = (void *)md;
-    cryp.flags = COP_FLAG_FINAL;
-    if (ioctl(digest_ctx->cfd, CIOCCRYPT, &cryp) < 0) {
+#if !defined(COP_FLAG_UPDATE) || !defined(COP_FLAG_FINAL)
+    if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_ONESHOT)) {
+        memcpy(md, digest_ctx->digest, EVP_MD_CTX_size(ctx));
+        return 1;
+    }
+
+    data = digest_ctx->saved_data;
+    count = digest_ctx->saved_data_len;
+#else
+    flags = COP_FLAG_FINAL;
+#endif
+
+    if (digest_op(digest_ctx, data, count, md, flags) < 0) {
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
     }
@@ -420,6 +496,9 @@ static int digest_cleanup(EVP_MD_CTX *ctx)
     struct digest_ctx *digest_ctx =
         (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
 
+#if !defined(COP_FLAG_UPDATE) || !defined(COP_FLAG_FINAL)
+    OPENSSL_free(digest_ctx->saved_data);
+#endif
     if (close(digest_ctx->cfd) < 0) {
         SYSerr(SYS_F_CLOSE, errno);
         return 0;
