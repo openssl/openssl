@@ -300,7 +300,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[recordlentest]=../include .
   DEPEND[recordlentest]=../libcrypto ../libssl
 
-  SOURCE[x509_dup_cert_test]=x509_dup_cert_test.c
+  SOURCE[x509_dup_cert_test]=x509_dup_cert_test.c testutil.c test_main_custom.c
   INCLUDE[x509_dup_cert_test]=../include
   DEPEND[x509_dup_cert_test]=../libcrypto
 
