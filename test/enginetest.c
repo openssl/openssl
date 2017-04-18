@@ -72,35 +72,35 @@ static int test_engines(void)
             || !TEST_true(ENGINE_set_id(new_h4, "test_id3"))
             || !TEST_true(ENGINE_set_name(new_h4, "Fourth test item")))
         goto end;
-    TEST_info("");
+    TEST_info("Engines:");
     display_engine_list();
 
     if (!TEST_true(ENGINE_add(new_h1)))
         goto end;
-    TEST_info("");
+    TEST_info("Engines:");
     display_engine_list();
 
     ptr = ENGINE_get_first();
     if (!TEST_true(ENGINE_remove(ptr)))
         goto end;
     ENGINE_free(ptr);
-    TEST_info("");
+    TEST_info("Engines:");
     display_engine_list();
 
     if (!TEST_true(ENGINE_add(new_h3))
             || !TEST_true(ENGINE_add(new_h2)))
         goto end;
-    TEST_info("");
+    TEST_info("Engines:");
     display_engine_list();
 
     if (!TEST_true(ENGINE_remove(new_h2)))
         goto end;
-    TEST_info("");
+    TEST_info("Engines:");
     display_engine_list();
 
     if (!TEST_true(ENGINE_add(new_h4)))
         goto end;
-    TEST_info("");
+    TEST_info("Engines:");
     display_engine_list();
 
     /* Should fail. */
@@ -115,12 +115,12 @@ static int test_engines(void)
 
     if (!TEST_true(ENGINE_remove(new_h3)))
         goto end;
-    TEST_info("");
+    TEST_info("Engines:");
     display_engine_list();
 
     if (!TEST_true(ENGINE_remove(new_h4)))
         goto end;
-    TEST_info("");
+    TEST_info("Engines:");
     display_engine_list();
 
     /*
@@ -132,7 +132,7 @@ static int test_engines(void)
             TEST_info("Remove failed - probably no hardware support present");
     }
     ENGINE_free(ptr);
-    TEST_info("");
+    TEST_info("Engines:");
     display_engine_list();
 
     if (!TEST_true(ENGINE_add(new_h1))
