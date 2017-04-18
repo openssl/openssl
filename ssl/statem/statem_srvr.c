@@ -1444,7 +1444,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     extensions = clienthello->extensions;
     if (!tls_collect_extensions(s, &extensions, SSL_EXT_CLIENT_HELLO,
                                 &clienthello->pre_proc_exts, &al,
-                                &clienthello->pre_proc_exts_len)) {
+                                &clienthello->pre_proc_exts_len, 1)) {
         /* SSLerr already been called */
         goto f_err;
     }
@@ -1709,7 +1709,7 @@ static int tls_early_post_process_client_hello(SSL *s, int *al)
 
     /* TLS extensions */
     if (!tls_parse_all_extensions(s, SSL_EXT_CLIENT_HELLO,
-                                  clienthello->pre_proc_exts, NULL, 0, al)) {
+                                  clienthello->pre_proc_exts, NULL, 0, al, 1)) {
         SSLerr(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO, SSL_R_PARSE_TLSEXT);
         goto err;
     }
@@ -3254,9 +3254,10 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
             }
             if (!tls_collect_extensions(s, &extensions,
                                         SSL_EXT_TLS1_3_CERTIFICATE, &rawexts,
-                                        &al, NULL)
+                                        &al, NULL, chainidx == 0)
                     || !tls_parse_all_extensions(s, SSL_EXT_TLS1_3_CERTIFICATE,
-                                                 rawexts, x, chainidx, &al)) {
+                                                 rawexts, x, chainidx, &al,
+                                                 !PACKET_remaining(&spkt))) {
                 OPENSSL_free(rawexts);
                 goto f_err;
             }
