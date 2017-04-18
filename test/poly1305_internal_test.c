@@ -14,7 +14,18 @@
 
 #include "testutil.h"
 #include "test_main_custom.h"
+
+#ifdef __VMS
+# pragma names save
+# pragma names as_is,shortened
+#endif
+
 #include "internal/poly1305.h"
+
+#ifdef __VMS
+# pragma names restore
+#endif
+
 #include "../crypto/poly1305/poly1305_local.h"
 #include "e_os.h"
 

@@ -9,7 +9,18 @@
 
 #include <string.h>
 #include <openssl/buffer.h>
+
+#ifdef __VMS
+# pragma names save
+# pragma names as_is,shortened
+#endif
+
 #include "../ssl/packet_locl.h"
+
+#ifdef __VMS
+# pragma names restore
+#endif
+
 #include "testutil.h"
 #include "test_main_custom.h"
 

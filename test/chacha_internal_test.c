@@ -16,7 +16,17 @@
 #include <openssl/opensslconf.h>
 #include "test_main.h"
 #include "testutil.h"
+
+#ifdef __VMS
+# pragma names save
+# pragma names as_is,shortened
+#endif
+
 #include "internal/chacha.h"
+
+#ifdef __VMS
+# pragma names restore
+#endif
 
 const static unsigned int key[] = {
     0x03020100, 0x07060504, 0x0b0a0908, 0x0f0e0d0c,
