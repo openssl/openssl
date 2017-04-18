@@ -38,18 +38,24 @@
      # removed.  On some systems, they may therefore return the exact same
      # string.
      sub shlib {
-         return () if $disabled{shared};
          my $lib = shift;
+         return () if $disabled{shared} || $lib =~ /\.a$/;
          return $unified_info{sharednames}->{$lib} . $shlibext;
      }
      sub shlib_simple {
-         return () if $disabled{shared};
-
          my $lib = shift;
+         return () if $disabled{shared} || $lib =~ /\.a$/;
+
          if (windowsdll()) {
              return $lib . $shlibextimport;
          }
          return $lib .  $shlibextsimple;
+     }
+
+     # Easy fixing of static library names
+     sub lib {
+         (my $lib = shift) =~ s/\.a$//;
+         return $lib . $libext;
      }
 
      # dso is a complement to shlib / shlib_simple that returns the
@@ -84,7 +90,7 @@ SHLIB_MAJOR={- $config{shlib_major} -}
 SHLIB_MINOR={- $config{shlib_minor} -}
 SHLIB_TARGET={- $target{shared_target} -}
 
-LIBS={- join(" ", map { $_.$libext } @{$unified_info{libraries}}) -}
+LIBS={- join(" ", map { lib($_) } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}
 SHLIB_INFO={- join(" ", map { "\"".shlib($_).";".shlib_simple($_)."\"" } @{$unified_info{libraries}}) -}
 ENGINES={- join(" ", map { dso($_) } @{$unified_info{engines}}) -}
@@ -103,7 +109,7 @@ GENERATED={- join(" ",
                     grep { /\.o$/ } keys %{$unified_info{sources}} ),
                   ( grep { /\.h$/ } keys %{$unified_info{generate}} )) -}
 
-INSTALL_LIBS={- join(" ", map { $_.$libext } @{$unified_info{install}->{libraries}}) -}
+INSTALL_LIBS={- join(" ", map { lib($_) } @{$unified_info{install}->{libraries}}) -}
 INSTALL_SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{install}->{libraries}}) -}
 INSTALL_SHLIB_INFO={- join(" ", map { "\"".shlib($_).";".shlib_simple($_)."\"" } @{$unified_info{install}->{libraries}}) -}
 INSTALL_ENGINES={- join(" ", map { dso($_) } @{$unified_info{install}->{engines}}) -}
@@ -769,7 +775,7 @@ configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build
   # It takes a list of library names and outputs a list of dependencies
   sub compute_lib_depends {
       if ($disabled{shared}) {
-          return map { $_ =~ /\.a$/ ? $`.$libext : $_.$libext } @_;
+          return map { lib($_) } @_;
       }
 
       # Depending on shared libraries:
@@ -983,7 +989,7 @@ EOF
   }
   sub obj2lib {
       my %args = @_;
-      my $lib = $args{lib};
+      (my $lib = $args{lib}) =~ s/\.a$//;
       my $objs = join(" ", map { $_.$objext } @{$args{objs}});
       return <<"EOF";
 $lib$libext: $objs

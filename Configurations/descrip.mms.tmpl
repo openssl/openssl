@@ -42,8 +42,18 @@
 
   # Because we need to make two computations of these data,
   # we store them in arrays for reuse
-  our @shlibs = map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}};
-  our @install_shlibs = map { $unified_info{sharednames}->{$_} || () } @{$unified_info{install}->{libraries}};
+  our @libs =
+      map { (my $x = $_) =~ s/\.a$//; $x }
+      @{$unified_info{libraries}};
+  our @shlibs =
+      map { $unified_info{sharednames}->{$_} || () }
+      grep(!/\.a$/, @{$unified_info{libraries}});
+  our @install_libs =
+      map { (my $x = $_) =~ s/\.a$//; $x }
+      @{$unified_info{install}->{libraries}};
+  our @install_shlibs =
+      map { $unified_info{sharednames}->{$_} || () }
+      grep(!/\.a$/, @{$unified_info{install}->{libraries}});
   our @generated = ( ( map { (my $x = $_) =~ s|\.S$|\.s|; $x }
                        grep { defined $unified_info{generate}->{$_} }
                        map { @{$unified_info{sources}->{$_}} }
@@ -113,7 +123,7 @@ SHLIB_EXT=.EXE
 OBJ_EXT=.OBJ
 DEP_EXT=.D
 
-LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @{$unified_info{libraries}}) -}
+LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @libs) -}
 SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @shlibs) -}
 ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{engines}}) -}
 PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{programs}}) -}
@@ -127,7 +137,7 @@ DEPS={- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
 GENERATED_MANDATORY={- join(", ", map { "-\n\t".$_ } @{$unified_info{depends}->{""}} ) -}
 GENERATED={- join(", ", map { "-\n\t".$_ } @generated) -}
 
-INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @{$unified_info{install}->{libraries}}) -}
+INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @install_libs) -}
 INSTALL_SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @install_shlibs) -}
 INSTALL_ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{install}->{engines}}) -}
 INSTALL_PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{install}->{programs}}) -}
@@ -230,10 +240,10 @@ NODEBUG=@
         $(NODEBUG) ! Set up logical names for the libraries, so LINK and
         $(NODEBUG) ! running programs can use them.
         $(NODEBUG) !
-        $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEFINE ".uc($_)." 'F\$ENV(\"DEFAULT\")'".uc($_)."\$(SHLIB_EXT)" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) || "!" -}
+        $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEFINE ".uc($_)." 'F\$ENV(\"DEFAULT\")'".uc($_)."\$(SHLIB_EXT)" } @shlibs) || "!" -}
 
 .LAST :
-        $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEASSIGN ".uc($_) } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) || "!" -}
+        $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEASSIGN ".uc($_) } @shlibs) || "!" -}
         $(NODEBUG) DEASSIGN ossl_dataroot
         $(NODEBUG) DEASSIGN ossl_installroot
         $(NODEBUG) DEASSIGN internal
@@ -317,7 +327,7 @@ uninstall : uninstall_docs uninstall_sw
 # Because VMS wants the generation number (or *) to delete files, we can't
 # use $(LIBS), $(PROGRAMS), $(GENERATED) and $(ENGINES)directly.
 libclean :
-        {- join("\n\t", map { "- DELETE $_.OLB;*" } @{$unified_info{libraries}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.OLB;*" } @libs) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_.EXE;*,$_.MAP;*,$_.OPT;*" } @shlibs) || "@ !" -}
 
 clean : libclean
@@ -407,7 +417,7 @@ _install_dev_ns : check_INSTALLTOP
         - CREATE/DIR ossl_installroot:[LIB.'arch']
         {- join("\n        ",
                 map { "COPY/PROT=W:R $_.OLB ossl_installroot:[LIB.'arch']" }
-                @{$unified_info{install}->{libraries}}) -}
+                @install_libs) -}
 
 install_dev : install_shared _install_dev_ns
 
@@ -729,7 +739,7 @@ EOF
   }
   sub obj2lib {
       my %args = @_;
-      my $lib = $args{lib};
+      (my $lib = $args{lib}) =~ s/\.a$//;
       my $objs = join(", -\n\t\t", map { $_.".OBJ" } (@{$args{objs}}));
       my $fill_lib = join("\n\t", (map { "LIBRARY/REPLACE $lib.OLB $_.OBJ" }
                                     @{$args{objs}}));
