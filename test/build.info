@@ -5,11 +5,16 @@
          my ($base, $files) = @_;
          return join(" ", map { "$base/$_" } split(/\s+/, $files));
      }
-     our $apps_extra =
-         $config{target} =~ /^vms-/ ? "../apps/vms_term_sock.c" : "";
      ""
 -}
 IF[{- !$disabled{tests} -}]
+  LIBS_NO_INST=libtestutil.a
+  SOURCE[libtestutil.a]=testutil/basic_output.c testutil/driver.c \
+          testutil/tests.c testutil/test_main.c testutil/main.c \
+          {- rebase_files("../apps", $target{apps_aux_src}) -}
+  INCLUDE[libtestutil.a]=../include
+  DEPEND[libtestutil.a]=../libcrypto
+
   PROGRAMS_NO_INST=\
           aborttest test_test \
           sanitytest exdatatest bntest \

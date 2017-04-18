@@ -16,11 +16,8 @@
 #include <openssl/e_os2.h>
 
 /*-
- * Simple unit tests should implement register_tests() from test_main.h
- * and link against test_main.c.
+ * Simple unit tests should implement register_tests().
  * To register tests, call ADD_TEST or ADD_ALL_TESTS:
- *
- * #include "test_main.h"
  *
  * void register_tests(void)
  * {
@@ -29,8 +26,7 @@
  * }
  *
  * Tests that need to perform custom setup or read command-line arguments should
- * implement test_main() from test_main_custom.h and link against
- * test_main_custom.c:
+ * implement test_main():
  *
  * int test_main(int argc, char *argv[])
  * {
@@ -139,13 +135,26 @@ void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num)
 __owur int run_tests(const char *test_prog_name);
 
 /*
+ * Declarations for user defined functions
+ */
+void register_tests(void);
+int test_main(int argc, char *argv[]);
+
+
+/*
  *  Test assumption verification helpers.
  */
 
-# if defined(__GNUC__)
-#define PRINTF_FORMAT(a, b)   __attribute__ ((format(printf, a, b)))
-# else
 #define PRINTF_FORMAT(a, b)
+#if defined(__GNUC__) && defined(__STDC_VERSION__)
+  /*
+   * Because we support the 'z' modifier, which made its appearance in C99,
+   * we can't use __attribute__ with pre C99 dialects.
+   */
+# if __STDC_VERSION__ >= 199901L
+#  undef PRINTF_FORMAT
+#  define PRINTF_FORMAT(a, b)   __attribute__ ((format(printf, a, b)))
+# endif
 #endif
 
 #  define DECLARE_COMPARISON(type, name, opname)                        \
@@ -335,3 +344,22 @@ void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
         }                                       \
     } while (0)
 #endif                          /* HEADER_TESTUTIL_H */
+
+
+/*
+ * The basic I/O functions used by the test framework.  These can be
+ * overriden when needed. Note that if one is, then all must be.
+ */
+void test_open_streams(void);
+void test_close_streams(void);
+/* The following ALL return the number of characters written */
+int test_puts_stdout(const char *str);
+int test_puts_stderr(const char *str);
+int test_vprintf_stdout(const char *fmt, va_list ap);
+int test_vprintf_stderr(const char *fmt, va_list ap);
+/* These return failure or success */
+int test_flush_stdout(void);
+int test_flush_stderr(void);
+
+extern BIO *bio_out;
+extern BIO *bio_err;
