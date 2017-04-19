@@ -400,6 +400,8 @@ void print_name(BIO *out, const char *title, X509_NAME *nm,
 void print_bignum_var(BIO *, const BIGNUM *, const char*,
                       int, unsigned char *);
 void print_array(BIO *, const char *, int, const unsigned char *);
+int set_nameopt(const char *arg);
+unsigned long get_nameopt();
 int set_cert_ex(unsigned long *flags, const char *arg);
 int set_name_ex(unsigned long *flags, const char *arg);
 int set_ext_copy(int *copy_type, const char *arg);

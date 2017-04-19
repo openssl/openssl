@@ -966,6 +966,18 @@ int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
 #define X509_FLAG_CA (X509_FLAG_NO_ISSUER | X509_FLAG_NO_PUBKEY | \
                          X509_FLAG_NO_HEADER | X509_FLAG_NO_VERSION)
 
+static unsigned long nmflag = XN_FLAG_ONELINE;
+
+int set_nameopt(const char *arg)
+{
+  return set_name_ex(&nmflag, arg);
+}
+
+unsigned long get_nameopt()
+{
+  return nmflag;
+}
+
 int set_cert_ex(unsigned long *flags, const char *arg)
 {
     static const NAME_EX_TBL cert_tbl[] = {
