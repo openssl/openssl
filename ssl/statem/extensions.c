@@ -499,9 +499,9 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
          */
         for (thisexd = ext_defs, i = 0; i < OSSL_NELEM(ext_defs);
              i++, thisexd++) {
-            if (thisexd->init != NULL && (thisexd->context & context) != 0 &&
-                extension_is_relevant(s, thisexd->context, context) &&
-                !thisexd->init(s, context)) {
+            if (thisexd->init != NULL && (thisexd->context & context) != 0
+                && extension_is_relevant(s, thisexd->context, context)
+                && !thisexd->init(s, context)) {
                 *al = SSL_AD_INTERNAL_ERROR;
                 goto err;
             }
@@ -611,8 +611,8 @@ int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, X509 *x,
          */
         for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs);
              i++, thisexd++) {
-            if (thisexd->final != NULL && (thisexd->context & context) != 0 &&
-                !thisexd->final(s, context, exts[i].present, al))
+            if (thisexd->final != NULL && (thisexd->context & context) != 0
+                && !thisexd->final(s, context, exts[i].present, al))
                 return 0;
         }
     }
