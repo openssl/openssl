@@ -17,7 +17,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = "0.8";
 @ISA = qw(Exporter);
 @EXPORT = (@Test::More::EXPORT, qw(setup run indir cmd app fuzz test
-                                   perlapp perltest));
+                                   perlapp perltest subtest));
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
                                          srctop_dir srctop_file
                                          data_file
@@ -65,6 +65,7 @@ use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
 use File::Path 2.00 qw/rmtree mkpath/;
 use File::Basename;
 
+my $level = 0;
 
 # The name of the test.  This is set by setup() and is used in the other
 # functions to verify that setup() has been used.
@@ -453,6 +454,8 @@ sub run {
         open STDOUT, ">", devnull();
         open STDERR, ">", devnull();
     }
+
+    $ENV{HARNESS_OSSL_LEVEL} = $level + 1;
 
     # The dance we do with $? is the same dance the Unix shells appear to
     # do.  For example, a program that gets aborted (and therefore signals
@@ -1152,5 +1155,14 @@ Richard Levitte E<lt>levitte@openssl.orgE<gt> with assitance and
 inspiration from Andy Polyakov E<lt>appro@openssl.org<gt>.
 
 =cut
+
+no warnings 'redefine';
+sub subtest {
+    $level++;
+
+    Test::More::subtest @_;
+
+    $level--;
+};
 
 1;
