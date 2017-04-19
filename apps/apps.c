@@ -151,18 +151,10 @@ int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path)
 
 int dump_cert_text(BIO *out, X509 *x)
 {
-    char *p;
-
-    p = X509_NAME_oneline(X509_get_subject_name(x), NULL, 0);
-    BIO_puts(out, "subject=");
-    BIO_puts(out, p);
-    OPENSSL_free(p);
-
-    p = X509_NAME_oneline(X509_get_issuer_name(x), NULL, 0);
-    BIO_puts(out, "\nissuer=");
-    BIO_puts(out, p);
-    BIO_puts(out, "\n");
-    OPENSSL_free(p);
+    print_name(out, "subject=", X509_get_subject_name(x), get_nameopt());
+		BIO_puts(out, "\n");
+    print_name(out, "issuer=", X509_get_issuer_name(x), get_nameopt());
+		BIO_puts(out, "\n");
 
     return 0;
 }
