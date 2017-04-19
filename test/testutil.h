@@ -176,7 +176,13 @@ DECLARE_COMPARISONS(char, char)
 DECLARE_COMPARISONS(unsigned char, uchar)
 DECLARE_COMPARISONS(long, long)
 DECLARE_COMPARISONS(unsigned long, ulong)
+/*
+ * Because this comparison uses a printf format specifier that's not
+ * universally known (yet), we provide an option to not have it declared.
+ */
+# ifndef TESTUTIL_NO_size_t_COMPARISON
 DECLARE_COMPARISONS(size_t, size_t)
+# endif
 
 /*
  * Pointer comparisons against other pointers and null.
