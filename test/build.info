@@ -233,7 +233,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
 
   SOURCE[dtlsv1listentest]=dtlsv1listentest.c
   INCLUDE[dtlsv1listentest]=.. ../include
-  DEPEND[dtlsv1listentest]=../libssl
+  DEPEND[dtlsv1listentest]=../libssl libtestutil.a
 
   SOURCE[ct_test]=ct_test.c
   INCLUDE[ct_test]=../crypto/include ../include
@@ -316,7 +316,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     PROGRAMS_NO_INST=dtls_mtu_test
     SOURCE[dtls_mtu_test]=dtls_mtu_test.c ssltestlib.c
     INCLUDE[dtls_mtu_test]=.. ../include
-    DEPEND[dtls_mtu_test]=../libcrypto ../libssl
+    DEPEND[dtls_mtu_test]=../libcrypto ../libssl libtestutil.a
   ENDIF
 
   IF[{- !$disabled{shared} -}]
