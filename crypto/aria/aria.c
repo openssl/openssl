@@ -40,9 +40,9 @@
     (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
 #  define B_ENDIAN
 # elif defined(__BIG_ENDIAN__) || \
-	defined(_M_PPC) || defined(_M_MPPC) || \
-	defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) || \
-	defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__)
+    defined(_M_PPC) || defined(_M_MPPC) || \
+    defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) || \
+    defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__)
 #  define B_ENDIAN
 # endif
 #endif
@@ -60,10 +60,10 @@
 #if defined(_MSC_VER) && _MSC_VER >= 1400
 # define bswap32(v) _byteswap_ulong(v)
 #elif __has_builtin(__builtin_bswap32)
-# define bswap32(v)	__builtin_bswap32(v)
+# define bswap32(v) __builtin_bswap32(v)
 #elif (defined(__GNUC__) && \
     ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)))
-# define bswap32(v)	__builtin_bswap32(v)
+# define bswap32(v) __builtin_bswap32(v)
 #else
 # define bswap32(v)                                         \
     (((v) << 24) ^ ((v) >> 24) ^                            \
@@ -380,7 +380,7 @@ static const uint32_t X2[256] = {
 
 /* S-Box Layer 1 + M */
 #define ARIA_SBOX_LAYER1_WITH_PRE_DIFF(T0, T1, T2, T3)  \
-    do {						                        \
+    do {                                                \
         (T0) =                                          \
             S1[REF_U8_BE(T0, 0)] ^                      \
             S2[REF_U8_BE(T0, 1)] ^                      \
@@ -395,37 +395,37 @@ static const uint32_t X2[256] = {
             S1[REF_U8_BE(T2, 0)] ^                      \
             S2[REF_U8_BE(T2, 1)] ^                      \
             X1[REF_U8_BE(T2, 2)] ^                      \
-            X2[REF_U8_BE(T2, 3)];	                    \
+            X2[REF_U8_BE(T2, 3)];                       \
         (T3) =                                          \
             S1[REF_U8_BE(T3, 0)] ^                      \
             S2[REF_U8_BE(T3, 1)] ^                      \
             X1[REF_U8_BE(T3, 2)] ^                      \
-            X2[REF_U8_BE(T3, 3)];	                    \
+            X2[REF_U8_BE(T3, 3)];                       \
     } while(0)
 
 /* S-Box Layer 2 + M */
 #define ARIA_SBOX_LAYER2_WITH_PRE_DIFF(T0, T1, T2, T3)  \
-    do {		    				                    \
+    do {                                                \
         (T0) =                                          \
             X1[REF_U8_BE(T0, 0)] ^                      \
             X2[REF_U8_BE(T0, 1)] ^                      \
             S1[REF_U8_BE(T0, 2)] ^                      \
-            S2[REF_U8_BE(T0, 3)];	                    \
+            S2[REF_U8_BE(T0, 3)];                       \
         (T1) =                                          \
             X1[REF_U8_BE(T1, 0)] ^                      \
             X2[REF_U8_BE(T1, 1)] ^                      \
             S1[REF_U8_BE(T1, 2)] ^                      \
-            S2[REF_U8_BE(T1, 3)];	                    \
+            S2[REF_U8_BE(T1, 3)];                       \
         (T2) =                                          \
             X1[REF_U8_BE(T2, 0)] ^                      \
             X2[REF_U8_BE(T2, 1)] ^                      \
             S1[REF_U8_BE(T2, 2)] ^                      \
-            S2[REF_U8_BE(T2, 3)];	                    \
+            S2[REF_U8_BE(T2, 3)];                       \
         (T3) =                                          \
             X1[REF_U8_BE(T3, 0)] ^                      \
             X2[REF_U8_BE(T3, 1)] ^                      \
             S1[REF_U8_BE(T3, 2)] ^                      \
-            S2[REF_U8_BE(T3, 3)];	                    \
+            S2[REF_U8_BE(T3, 3)];                       \
     } while(0)
 
 /* Word-level diffusion */
@@ -442,10 +442,10 @@ static const uint32_t X2[256] = {
 
 /* Byte-level diffusion */
 #define ARIA_DIFF_BYTE(T0, T1, T2, T3)                                  \
-    do {                                		        			    \
+    do {                                                                \
         (T1) = (((T1) << 8) & 0xff00ff00) ^ (((T1) >> 8) & 0x00ff00ff); \
-        (T2) = rotr32(T2, 16);				                    	    \
-        (T3) = bswap32(T3);					                    	    \
+        (T2) = rotr32(T2, 16);                                          \
+        (T3) = bswap32(T3);                                             \
     } while(0)
 
 /* Odd round Substitution & Diffusion */
@@ -491,7 +491,7 @@ static const uint32_t X2[256] = {
 
 #define ARIA_DEC_DIFF_BYTE(X, Y, TMP)           \
     do {                                        \
-        (TMP) = rotr32((X), 8);				    \
+        (TMP) = rotr32((X), 8);                 \
         (Y) = (TMP) ^ rotr32((X) ^ (TMP), 16);  \
     } while(0)
 
@@ -1140,10 +1140,10 @@ static void a(ARIA_u128 y, const ARIA_u128 x)
  */
 static ossl_inline void FO(ARIA_u128 o, const ARIA_u128 d, const ARIA_u128 rk)
 {
-	ARIA_u128 y;
+    ARIA_u128 y;
 
-	sl1(y, d, rk);
-	a(o, y);
+    sl1(y, d, rk);
+    a(o, y);
 }
 
 /*
@@ -1153,10 +1153,10 @@ static ossl_inline void FO(ARIA_u128 o, const ARIA_u128 d, const ARIA_u128 rk)
  */
 static ossl_inline void FE(ARIA_u128 o, const ARIA_u128 d, const ARIA_u128 rk)
 {
-	ARIA_u128 y;
+    ARIA_u128 y;
 
-	sl2(y, d, rk);
-	a(o, y);
+    sl2(y, d, rk);
+    a(o, y);
 }
 
 /*
@@ -1234,9 +1234,9 @@ int aria_set_encrypt_key(const unsigned char *userKey, const int bits,
         break;
     }
 
-    FO(w3, w0, ck1);	xor128(w1, w3, kr);
-    FE(w3, w1, ck2);	xor128(w2, w3, w0);
-    FO(kr, w2, ck3);	xor128(w3, kr, w1);
+    FO(w3, w0, ck1);    xor128(w1, w3, kr);
+    FE(w3, w1, ck2);    xor128(w2, w3, w0);
+    FO(kr, w2, ck3);    xor128(w3, kr, w1);
 
     rot19r(key->rd_key[ 0], w0, w1);
     rot19r(key->rd_key[ 1], w1, w2);
