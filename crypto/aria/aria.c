@@ -31,59 +31,70 @@
 #ifndef OPENSSL_SMALL_FOOTPRINT
 
 /* Begin macro */
-#ifndef __has_builtin
-# define __has_builtin(x) 0
-#endif
-
-#if !defined(B_ENDIAN) && !defined(L_ENDIAN)
-# if defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && \
-    (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-#  define B_ENDIAN
-# elif defined(__BIG_ENDIAN__) || \
-    defined(_M_PPC) || defined(_M_MPPC) || \
-    defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) || \
-    defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__)
-#  define B_ENDIAN
-# endif
-#endif
 
 /* rotation */
-#if defined(_MSC_VER)
-# include <stdlib.h>
-# define rotl32(v, r) _lrotl(v, r)
-# define rotr32(v, r) _lrotr(v, r)
-#else
-# define rotl32(v, r) (((uint32_t)(v) << (r)) | ((uint32_t)(v) >> (32 - r)))
-# define rotr32(v, r) (((uint32_t)(v) >> (r)) | ((uint32_t)(v) << (32 - r)))
-#endif
+#define rotl32(v, r) (((uint32_t)(v) << (r)) | ((uint32_t)(v) >> (32 - r)))
+#define rotr32(v, r) (((uint32_t)(v) >> (r)) | ((uint32_t)(v) << (32 - r)))
 
-#if defined(_MSC_VER) && _MSC_VER >= 1400
-# define bswap32(v) _byteswap_ulong(v)
-#elif __has_builtin(__builtin_bswap32)
-# define bswap32(v) __builtin_bswap32(v)
-#elif (defined(__GNUC__) && \
-    ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)))
-# define bswap32(v) __builtin_bswap32(v)
-#else
-# define bswap32(v)                                         \
+#define bswap32(v)                                          \
     (((v) << 24) ^ ((v) >> 24) ^                            \
-    (((v) & 0x0000ff00) << 8) ^ (((v) & 0x00ff0000) >> 8)
-#endif
+    (((v) & 0x0000ff00) << 8) ^ (((v) & 0x00ff0000) >> 8))
 
-/* Load Big-Endian Integer */
-#ifndef B_ENDIAN
-# define loadBE32(v) bswap32(v)
-#else
-# define loadBE32(v) ((uint32_t)(v))
-#endif
+#define GET_U8_BE(X, Y) ((uint8_t)((X) >> ((3 - Y) * 8)))
+#define GET_U32_BE(X, Y) ( \
+    ((uint32_t)((const uint8_t *)(X))[Y * 4    ] << 24) ^ \
+    ((uint32_t)((const uint8_t *)(X))[Y * 4 + 1] << 16) ^ \
+    ((uint32_t)((const uint8_t *)(X))[Y * 4 + 2] <<  8) ^ \
+    ((uint32_t)((const uint8_t *)(X))[Y * 4 + 3]      ))
 
-#define REF_U8_BE(X, Y) ((uint8_t)((X) >> ((3 - Y) * 8)))
-#define REF_U32(X, Y) (((uint32_t *)(X))[Y])
-
-#define SET_U32(X, Y, VAL)          \
-    do {                            \
-        ((uint32_t *)(X))[Y] = (VAL); \
+#define PUT_U32_BE(DEST, IDX, VAL) \
+    do { \
+        ((uint8_t *)(DEST))[IDX * 4    ] = GET_U8_BE(VAL, 0); \
+        ((uint8_t *)(DEST))[IDX * 4 + 1] = GET_U8_BE(VAL, 1); \
+        ((uint8_t *)(DEST))[IDX * 4 + 2] = GET_U8_BE(VAL, 2); \
+        ((uint8_t *)(DEST))[IDX * 4 + 3] = GET_U8_BE(VAL, 3); \
     } while(0)
+
+#define COPY_U128_PTR(DEST, SRC) \
+    do { \
+        ((uint8_t *)(DEST))[ 0] = ((const uint8_t *)(SRC))[ 0];\
+        ((uint8_t *)(DEST))[ 1] = ((const uint8_t *)(SRC))[ 1];\
+        ((uint8_t *)(DEST))[ 2] = ((const uint8_t *)(SRC))[ 2];\
+        ((uint8_t *)(DEST))[ 3] = ((const uint8_t *)(SRC))[ 3];\
+        ((uint8_t *)(DEST))[ 4] = ((const uint8_t *)(SRC))[ 4];\
+        ((uint8_t *)(DEST))[ 5] = ((const uint8_t *)(SRC))[ 5];\
+        ((uint8_t *)(DEST))[ 6] = ((const uint8_t *)(SRC))[ 6];\
+        ((uint8_t *)(DEST))[ 7] = ((const uint8_t *)(SRC))[ 7];\
+        ((uint8_t *)(DEST))[ 8] = ((const uint8_t *)(SRC))[ 8];\
+        ((uint8_t *)(DEST))[ 9] = ((const uint8_t *)(SRC))[ 9];\
+        ((uint8_t *)(DEST))[10] = ((const uint8_t *)(SRC))[10];\
+        ((uint8_t *)(DEST))[11] = ((const uint8_t *)(SRC))[11];\
+        ((uint8_t *)(DEST))[12] = ((const uint8_t *)(SRC))[12];\
+        ((uint8_t *)(DEST))[13] = ((const uint8_t *)(SRC))[13];\
+        ((uint8_t *)(DEST))[14] = ((const uint8_t *)(SRC))[14];\
+        ((uint8_t *)(DEST))[15] = ((const uint8_t *)(SRC))[15];\
+    } while(0)
+
+#define XOR_U128_PTR(DEST, SRC) \
+    do { \
+        ((uint8_t *)(DEST))[ 0] ^= ((const uint8_t *)(SRC))[ 0];\
+        ((uint8_t *)(DEST))[ 1] ^= ((const uint8_t *)(SRC))[ 1];\
+        ((uint8_t *)(DEST))[ 2] ^= ((const uint8_t *)(SRC))[ 2];\
+        ((uint8_t *)(DEST))[ 3] ^= ((const uint8_t *)(SRC))[ 3];\
+        ((uint8_t *)(DEST))[ 4] ^= ((const uint8_t *)(SRC))[ 4];\
+        ((uint8_t *)(DEST))[ 5] ^= ((const uint8_t *)(SRC))[ 5];\
+        ((uint8_t *)(DEST))[ 6] ^= ((const uint8_t *)(SRC))[ 6];\
+        ((uint8_t *)(DEST))[ 7] ^= ((const uint8_t *)(SRC))[ 7];\
+        ((uint8_t *)(DEST))[ 8] ^= ((const uint8_t *)(SRC))[ 8];\
+        ((uint8_t *)(DEST))[ 9] ^= ((const uint8_t *)(SRC))[ 9];\
+        ((uint8_t *)(DEST))[10] ^= ((const uint8_t *)(SRC))[10];\
+        ((uint8_t *)(DEST))[11] ^= ((const uint8_t *)(SRC))[11];\
+        ((uint8_t *)(DEST))[12] ^= ((const uint8_t *)(SRC))[12];\
+        ((uint8_t *)(DEST))[13] ^= ((const uint8_t *)(SRC))[13];\
+        ((uint8_t *)(DEST))[14] ^= ((const uint8_t *)(SRC))[14];\
+        ((uint8_t *)(DEST))[15] ^= ((const uint8_t *)(SRC))[15];\
+    } while(0)
+
 
 /* End Macro*/
 
@@ -372,60 +383,60 @@ static const uint32_t X2[256] = {
 /* Key XOR Layer */
 #define ARIA_ADD_ROUND_KEY(RK, T0, T1, T2, T3)  \
     do {                                        \
-        (T0) ^= REF_U32(RK, 0);                 \
-        (T1) ^= REF_U32(RK, 1);                 \
-        (T2) ^= REF_U32(RK, 2);                 \
-        (T3) ^= REF_U32(RK, 3);                 \
+        (T0) ^= GET_U32_BE(RK, 0);              \
+        (T1) ^= GET_U32_BE(RK, 1);              \
+        (T2) ^= GET_U32_BE(RK, 2);              \
+        (T3) ^= GET_U32_BE(RK, 3);              \
     } while(0)
 
 /* S-Box Layer 1 + M */
 #define ARIA_SBOX_LAYER1_WITH_PRE_DIFF(T0, T1, T2, T3)  \
     do {                                                \
         (T0) =                                          \
-            S1[REF_U8_BE(T0, 0)] ^                      \
-            S2[REF_U8_BE(T0, 1)] ^                      \
-            X1[REF_U8_BE(T0, 2)] ^                      \
-            X2[REF_U8_BE(T0, 3)];                       \
+            S1[GET_U8_BE(T0, 0)] ^                      \
+            S2[GET_U8_BE(T0, 1)] ^                      \
+            X1[GET_U8_BE(T0, 2)] ^                      \
+            X2[GET_U8_BE(T0, 3)];                       \
         (T1) =                                          \
-            S1[REF_U8_BE(T1, 0)] ^                      \
-            S2[REF_U8_BE(T1, 1)] ^                      \
-            X1[REF_U8_BE(T1, 2)] ^                      \
-            X2[REF_U8_BE(T1, 3)];                       \
+            S1[GET_U8_BE(T1, 0)] ^                      \
+            S2[GET_U8_BE(T1, 1)] ^                      \
+            X1[GET_U8_BE(T1, 2)] ^                      \
+            X2[GET_U8_BE(T1, 3)];                       \
         (T2) =                                          \
-            S1[REF_U8_BE(T2, 0)] ^                      \
-            S2[REF_U8_BE(T2, 1)] ^                      \
-            X1[REF_U8_BE(T2, 2)] ^                      \
-            X2[REF_U8_BE(T2, 3)];                       \
+            S1[GET_U8_BE(T2, 0)] ^                      \
+            S2[GET_U8_BE(T2, 1)] ^                      \
+            X1[GET_U8_BE(T2, 2)] ^                      \
+            X2[GET_U8_BE(T2, 3)];                       \
         (T3) =                                          \
-            S1[REF_U8_BE(T3, 0)] ^                      \
-            S2[REF_U8_BE(T3, 1)] ^                      \
-            X1[REF_U8_BE(T3, 2)] ^                      \
-            X2[REF_U8_BE(T3, 3)];                       \
+            S1[GET_U8_BE(T3, 0)] ^                      \
+            S2[GET_U8_BE(T3, 1)] ^                      \
+            X1[GET_U8_BE(T3, 2)] ^                      \
+            X2[GET_U8_BE(T3, 3)];                       \
     } while(0)
 
 /* S-Box Layer 2 + M */
 #define ARIA_SBOX_LAYER2_WITH_PRE_DIFF(T0, T1, T2, T3)  \
     do {                                                \
         (T0) =                                          \
-            X1[REF_U8_BE(T0, 0)] ^                      \
-            X2[REF_U8_BE(T0, 1)] ^                      \
-            S1[REF_U8_BE(T0, 2)] ^                      \
-            S2[REF_U8_BE(T0, 3)];                       \
+            X1[GET_U8_BE(T0, 0)] ^                      \
+            X2[GET_U8_BE(T0, 1)] ^                      \
+            S1[GET_U8_BE(T0, 2)] ^                      \
+            S2[GET_U8_BE(T0, 3)];                       \
         (T1) =                                          \
-            X1[REF_U8_BE(T1, 0)] ^                      \
-            X2[REF_U8_BE(T1, 1)] ^                      \
-            S1[REF_U8_BE(T1, 2)] ^                      \
-            S2[REF_U8_BE(T1, 3)];                       \
+            X1[GET_U8_BE(T1, 0)] ^                      \
+            X2[GET_U8_BE(T1, 1)] ^                      \
+            S1[GET_U8_BE(T1, 2)] ^                      \
+            S2[GET_U8_BE(T1, 3)];                       \
         (T2) =                                          \
-            X1[REF_U8_BE(T2, 0)] ^                      \
-            X2[REF_U8_BE(T2, 1)] ^                      \
-            S1[REF_U8_BE(T2, 2)] ^                      \
-            S2[REF_U8_BE(T2, 3)];                       \
+            X1[GET_U8_BE(T2, 0)] ^                      \
+            X2[GET_U8_BE(T2, 1)] ^                      \
+            S1[GET_U8_BE(T2, 2)] ^                      \
+            S2[GET_U8_BE(T2, 3)];                       \
         (T3) =                                          \
-            X1[REF_U8_BE(T3, 0)] ^                      \
-            X2[REF_U8_BE(T3, 1)] ^                      \
-            S1[REF_U8_BE(T3, 2)] ^                      \
-            S2[REF_U8_BE(T3, 3)];                       \
+            X1[GET_U8_BE(T3, 0)] ^                      \
+            X2[GET_U8_BE(T3, 1)] ^                      \
+            S1[GET_U8_BE(T3, 2)] ^                      \
+            S2[GET_U8_BE(T3, 3)];                       \
     } while(0)
 
 /* Word-level diffusion */
@@ -469,39 +480,39 @@ static const uint32_t X2[256] = {
 /* Q, R Macro expanded ARIA GSRK */
 #define _ARIA_GSRK(RK, X, Y, Q, R)                  \
     do {                                            \
-        SET_U32(RK, 0,                              \
+        PUT_U32_BE(RK, 0,                           \
             ((X)[0]) ^                              \
-            (((Y)[((Q)    ) % 4]) >> R) ^           \
+            (((Y)[((Q)    ) % 4]) >> (R)) ^         \
             (((Y)[((Q) + 3) % 4]) << (32 - (R))));  \
-        SET_U32(RK, 1,                              \
+        PUT_U32_BE(RK, 1,                           \
             ((X)[1]) ^                              \
-            (((Y)[((Q) + 1) % 4]) >> R) ^           \
+            (((Y)[((Q) + 1) % 4]) >> (R)) ^         \
             (((Y)[((Q)    ) % 4]) << (32 - (R))));  \
-        SET_U32(RK, 2,                              \
+        PUT_U32_BE(RK, 2,                           \
             ((X)[2]) ^                              \
-            (((Y)[((Q) + 2) % 4]) >> R) ^           \
+            (((Y)[((Q) + 2) % 4]) >> (R)) ^         \
             (((Y)[((Q) + 1) % 4]) << (32 - (R))));  \
-        SET_U32(RK, 3,                              \
+        PUT_U32_BE(RK, 3,                           \
             ((X)[3]) ^                              \
-            (((Y)[((Q) + 3) % 4]) >> R) ^           \
+            (((Y)[((Q) + 3) % 4]) >> (R)) ^         \
             (((Y)[((Q) + 2) % 4]) << (32 - (R))));  \
     } while(0)
 
 #define ARIA_GSRK(RK, X, Y, N) _ARIA_GSRK(RK, X, Y, 4 - ((N) / 32), (N) % 32)
 
-#define ARIA_DEC_DIFF_BYTE(X, Y, TMP)           \
-    do {                                        \
-        (TMP) = rotr32((X), 8);                 \
-        (Y) = (TMP) ^ rotr32((X) ^ (TMP), 16);  \
+#define ARIA_DEC_DIFF_BYTE(X, Y, TMP, TMP2)         \
+    do {                                            \
+        (TMP) = (X);                                \
+        (TMP2) = rotr32((TMP), 8);                  \
+        (Y) = (TMP2) ^ rotr32((TMP) ^ (TMP2), 16);  \
     } while(0)
 
 void aria_encrypt(const unsigned char *in, unsigned char *out,
-    const ARIA_KEY *key) 
+                  const ARIA_KEY *key) 
 {
     register uint32_t reg0, reg1, reg2, reg3;
     int Nr;
 
-    const uint32_t *i32 = (const uint32_t*)in;
     const uint8_t *rk = (const uint8_t*)key->rd_key;
 
     if (in == NULL || out == NULL || key == NULL) {
@@ -514,10 +525,10 @@ void aria_encrypt(const unsigned char *in, unsigned char *out,
         return;
     }
 
-    reg0 = loadBE32(i32[0]);
-    reg1 = loadBE32(i32[1]);
-    reg2 = loadBE32(i32[2]);
-    reg3 = loadBE32(i32[3]);
+    reg0 = GET_U32_BE(in, 0);
+    reg1 = GET_U32_BE(in, 1);
+    reg2 = GET_U32_BE(in, 2);
+    reg3 = GET_U32_BE(in, 3);
 
     ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
     rk += 16;
@@ -586,55 +597,31 @@ void aria_encrypt(const unsigned char *in, unsigned char *out,
         }
     }
     
-#ifndef B_ENDIAN
-    out[ 0] = (uint8_t)(X1[REF_U8_BE(reg0, 0)]     ) ^ rk[ 3];
-    out[ 1] = (uint8_t)(X2[REF_U8_BE(reg0, 1)] >> 8) ^ rk[ 2];
-    out[ 2] = (uint8_t)(S1[REF_U8_BE(reg0, 2)]     ) ^ rk[ 1];
-    out[ 3] = (uint8_t)(S2[REF_U8_BE(reg0, 3)]     ) ^ rk[ 0];
-    out[ 4] = (uint8_t)(X1[REF_U8_BE(reg1, 0)]     ) ^ rk[ 7];
-    out[ 5] = (uint8_t)(X2[REF_U8_BE(reg1, 1)] >> 8) ^ rk[ 6];
-    out[ 6] = (uint8_t)(S1[REF_U8_BE(reg1, 2)]     ) ^ rk[ 5];
-    out[ 7] = (uint8_t)(S2[REF_U8_BE(reg1, 3)]     ) ^ rk[ 4];
-    out[ 8] = (uint8_t)(X1[REF_U8_BE(reg2, 0)]     ) ^ rk[11];
-    out[ 9] = (uint8_t)(X2[REF_U8_BE(reg2, 1)] >> 8) ^ rk[10];
-    out[10] = (uint8_t)(S1[REF_U8_BE(reg2, 2)]     ) ^ rk[ 9];
-    out[11] = (uint8_t)(S2[REF_U8_BE(reg2, 3)]     ) ^ rk[ 8];
-    out[12] = (uint8_t)(X1[REF_U8_BE(reg3, 0)]     ) ^ rk[15];
-    out[13] = (uint8_t)(X2[REF_U8_BE(reg3, 1)] >> 8) ^ rk[14];
-    out[14] = (uint8_t)(S1[REF_U8_BE(reg3, 2)]     ) ^ rk[13];
-    out[15] = (uint8_t)(S2[REF_U8_BE(reg3, 3)]     ) ^ rk[12];
-#else
-    out[ 0] = (uint8_t)(X1[REF_U8_BE(reg0, 0)]     );
-    out[ 1] = (uint8_t)(X2[REF_U8_BE(reg0, 1)] >> 8);
-    out[ 2] = (uint8_t)(S1[REF_U8_BE(reg0, 2)]     );
-    out[ 3] = (uint8_t)(S2[REF_U8_BE(reg0, 3)]     );
-    out[ 4] = (uint8_t)(X1[REF_U8_BE(reg1, 0)]     );
-    out[ 5] = (uint8_t)(X2[REF_U8_BE(reg1, 1)] >> 8);
-    out[ 6] = (uint8_t)(S1[REF_U8_BE(reg1, 2)]     );
-    out[ 7] = (uint8_t)(S2[REF_U8_BE(reg1, 3)]     );
-    out[ 8] = (uint8_t)(X1[REF_U8_BE(reg2, 0)]     );
-    out[ 9] = (uint8_t)(X2[REF_U8_BE(reg2, 1)] >> 8);
-    out[10] = (uint8_t)(S1[REF_U8_BE(reg2, 2)]     );
-    out[11] = (uint8_t)(S2[REF_U8_BE(reg2, 3)]     );
-    out[12] = (uint8_t)(X1[REF_U8_BE(reg3, 0)]     );
-    out[13] = (uint8_t)(X2[REF_U8_BE(reg3, 1)] >> 8);
-    out[14] = (uint8_t)(S1[REF_U8_BE(reg3, 2)]     );
-    out[15] = (uint8_t)(S2[REF_U8_BE(reg3, 3)]     );
-    SET_U32(out, 0, REF_U32(out, 0) ^ REF_U32(rk, 0));
-    SET_U32(out, 1, REF_U32(out, 1) ^ REF_U32(rk, 1));
-    SET_U32(out, 2, REF_U32(out, 2) ^ REF_U32(rk, 2));
-    SET_U32(out, 3, REF_U32(out, 3) ^ REF_U32(rk, 3));
-#endif
+    out[ 0] = (uint8_t)(X1[GET_U8_BE(reg0, 0)]     ) ^ rk[ 0];
+    out[ 1] = (uint8_t)(X2[GET_U8_BE(reg0, 1)] >> 8) ^ rk[ 1];
+    out[ 2] = (uint8_t)(S1[GET_U8_BE(reg0, 2)]     ) ^ rk[ 2];
+    out[ 3] = (uint8_t)(S2[GET_U8_BE(reg0, 3)]     ) ^ rk[ 3];
+    out[ 4] = (uint8_t)(X1[GET_U8_BE(reg1, 0)]     ) ^ rk[ 4];
+    out[ 5] = (uint8_t)(X2[GET_U8_BE(reg1, 1)] >> 8) ^ rk[ 5];
+    out[ 6] = (uint8_t)(S1[GET_U8_BE(reg1, 2)]     ) ^ rk[ 6];
+    out[ 7] = (uint8_t)(S2[GET_U8_BE(reg1, 3)]     ) ^ rk[ 7];
+    out[ 8] = (uint8_t)(X1[GET_U8_BE(reg2, 0)]     ) ^ rk[ 8];
+    out[ 9] = (uint8_t)(X2[GET_U8_BE(reg2, 1)] >> 8) ^ rk[ 9];
+    out[10] = (uint8_t)(S1[GET_U8_BE(reg2, 2)]     ) ^ rk[10];
+    out[11] = (uint8_t)(S2[GET_U8_BE(reg2, 3)]     ) ^ rk[11];
+    out[12] = (uint8_t)(X1[GET_U8_BE(reg3, 0)]     ) ^ rk[12];
+    out[13] = (uint8_t)(X2[GET_U8_BE(reg3, 1)] >> 8) ^ rk[13];
+    out[14] = (uint8_t)(S1[GET_U8_BE(reg3, 2)]     ) ^ rk[14];
+    out[15] = (uint8_t)(S2[GET_U8_BE(reg3, 3)]     ) ^ rk[15];
 }
 
 int aria_set_encrypt_key(const unsigned char *userKey, const int bits,
-    ARIA_KEY *key) 
+                         ARIA_KEY *key) 
 {
     register uint32_t reg0, reg1, reg2, reg3;
     uint32_t w0[4], w1[4], w2[4], w3[4];
     const uint32_t *ck;
 
-    const uint32_t *mk32 = (const uint32_t *)userKey;
     uint8_t *rk = (uint8_t *)key->rd_key;
     int Nr = (bits + 256) / 32;
 
@@ -648,10 +635,10 @@ int aria_set_encrypt_key(const unsigned char *userKey, const int bits,
     key->rounds = Nr;
     ck = &Key_RC[(bits - 128) / 64][0];
 
-    w0[0] = loadBE32(mk32[0]);
-    w0[1] = loadBE32(mk32[1]);
-    w0[2] = loadBE32(mk32[2]);
-    w0[3] = loadBE32(mk32[3]);
+    w0[0] = GET_U32_BE(userKey, 0);
+    w0[1] = GET_U32_BE(userKey, 1);
+    w0[2] = GET_U32_BE(userKey, 2);
+    w0[3] = GET_U32_BE(userKey, 3);
 
     reg0 = w0[0] ^ ck[0];
     reg1 = w0[1] ^ ck[1];
@@ -661,11 +648,11 @@ int aria_set_encrypt_key(const unsigned char *userKey, const int bits,
     ARIA_SUBST_DIFF_ODD(reg0, reg1, reg2, reg3);
 
     if (bits > 128) {
-        w1[0] = loadBE32(mk32[4]);
-        w1[1] = loadBE32(mk32[5]);
+        w1[0] = GET_U32_BE(userKey, 4);
+        w1[1] = GET_U32_BE(userKey, 5);
         if (bits > 192) {
-            w1[2] = loadBE32(mk32[6]);
-            w1[3] = loadBE32(mk32[7]);
+            w1[2] = GET_U32_BE(userKey, 6);
+            w1[3] = GET_U32_BE(userKey, 7);
         }
         else {
             w1[2] = w1[3] = 0;
@@ -760,10 +747,11 @@ int aria_set_encrypt_key(const unsigned char *userKey, const int bits,
 }
 
 int aria_set_decrypt_key(const unsigned char *userKey, const int bits,
-    ARIA_KEY *key) 
+                         ARIA_KEY *key) 
 {
-    uint32_t *rk_head, *rk_tail;
-    register uint32_t w;
+    uint8_t *rk_head;
+    uint8_t *rk_tail;
+    register uint32_t w1, w2;
     register uint32_t reg0, reg1, reg2, reg3;
     uint32_t s0, s1, s2, s3;
 
@@ -775,32 +763,29 @@ int aria_set_decrypt_key(const unsigned char *userKey, const int bits,
         return r;
     }
 
-    rk_head = (uint32_t *)(rk);  
-    rk_tail = rk_head + key->rounds * 4;
+    rk_head = rk;  
+    rk_tail = rk_head + key->rounds * 16;
 
-    reg0 = rk_head[0];
-    reg1 = rk_head[1];
-    reg2 = rk_head[2]; 
-    reg3 = rk_head[3];
+    reg0 = GET_U32_BE(rk_head, 0);
+    reg1 = GET_U32_BE(rk_head, 1);
+    reg2 = GET_U32_BE(rk_head, 2);
+    reg3 = GET_U32_BE(rk_head, 3);
 
-    rk_head[0] = rk_tail[0];
-    rk_head[1] = rk_tail[1];
-    rk_head[2] = rk_tail[2]; 
-    rk_head[3] = rk_tail[3];
+    COPY_U128_PTR(rk_head, rk_tail);
 
-    rk_tail[0] = reg0;
-    rk_tail[1] = reg1;
-    rk_tail[2] = reg2; 
-    rk_tail[3] = reg3;
+    PUT_U32_BE(rk_tail, 0, reg0);
+    PUT_U32_BE(rk_tail, 1, reg1);
+    PUT_U32_BE(rk_tail, 2, reg2);
+    PUT_U32_BE(rk_tail, 3, reg3);
 
-    rk_head += 4;
-    rk_tail -= 4;
+    rk_head += 16;
+    rk_tail -= 16;
 
-    for (; rk_head < rk_tail; rk_head += 4, rk_tail -= 4) {
-        ARIA_DEC_DIFF_BYTE(rk_head[0], reg0, w); 
-        ARIA_DEC_DIFF_BYTE(rk_head[1], reg1, w);
-        ARIA_DEC_DIFF_BYTE(rk_head[2], reg2, w);
-        ARIA_DEC_DIFF_BYTE(rk_head[3], reg3, w);
+    for (; rk_head < rk_tail; rk_head += 16, rk_tail -= 16) {
+        ARIA_DEC_DIFF_BYTE(GET_U32_BE(rk_head, 0), reg0, w1, w2); 
+        ARIA_DEC_DIFF_BYTE(GET_U32_BE(rk_head, 1), reg1, w1, w2);
+        ARIA_DEC_DIFF_BYTE(GET_U32_BE(rk_head, 2), reg2, w1, w2);
+        ARIA_DEC_DIFF_BYTE(GET_U32_BE(rk_head, 3), reg3, w1, w2);
 
         ARIA_DIFF_WORD(reg0, reg1, reg2, reg3);
         ARIA_DIFF_BYTE(reg0, reg1, reg2, reg3);
@@ -811,38 +796,39 @@ int aria_set_decrypt_key(const unsigned char *userKey, const int bits,
         s2 = reg2;
         s3 = reg3;
 
-        ARIA_DEC_DIFF_BYTE(rk_tail[0], reg0, w); 
-        ARIA_DEC_DIFF_BYTE(rk_tail[1], reg1, w); 
-        ARIA_DEC_DIFF_BYTE(rk_tail[2], reg2, w);
-        ARIA_DEC_DIFF_BYTE(rk_tail[3], reg3, w);
+        ARIA_DEC_DIFF_BYTE(GET_U32_BE(rk_tail, 0), reg0, w1, w2); 
+        ARIA_DEC_DIFF_BYTE(GET_U32_BE(rk_tail, 1), reg1, w1, w2); 
+        ARIA_DEC_DIFF_BYTE(GET_U32_BE(rk_tail, 2), reg2, w1, w2);
+        ARIA_DEC_DIFF_BYTE(GET_U32_BE(rk_tail, 3), reg3, w1, w2);
 
         ARIA_DIFF_WORD(reg0, reg1, reg2, reg3);
         ARIA_DIFF_BYTE(reg0, reg1, reg2, reg3);
         ARIA_DIFF_WORD(reg0, reg1, reg2, reg3);
 
-        rk_head[0] = reg0;
-        rk_head[1] = reg1;
-        rk_head[2] = reg2;
-        rk_head[3] = reg3;
+        PUT_U32_BE(rk_head, 0, reg0);
+        PUT_U32_BE(rk_head, 1, reg1);
+        PUT_U32_BE(rk_head, 2, reg2);
+        PUT_U32_BE(rk_head, 3, reg3);
 
-        rk_tail[0] = s0;
-        rk_tail[1] = s1;
-        rk_tail[2] = s2;
-        rk_tail[3] = s3;
+        PUT_U32_BE(rk_tail, 0, s0);
+        PUT_U32_BE(rk_tail, 1, s1);
+        PUT_U32_BE(rk_tail, 2, s2);
+        PUT_U32_BE(rk_tail, 3, s3);
+
     }
-    ARIA_DEC_DIFF_BYTE(rk_head[0], reg0, w);
-    ARIA_DEC_DIFF_BYTE(rk_head[1], reg1, w); 
-    ARIA_DEC_DIFF_BYTE(rk_head[2], reg2, w);
-    ARIA_DEC_DIFF_BYTE(rk_head[3], reg3, w);
+    ARIA_DEC_DIFF_BYTE(GET_U32_BE(rk_head, 0), reg0, w1, w2); 
+    ARIA_DEC_DIFF_BYTE(GET_U32_BE(rk_head, 1), reg1, w1, w2);
+    ARIA_DEC_DIFF_BYTE(GET_U32_BE(rk_head, 2), reg2, w1, w2);
+    ARIA_DEC_DIFF_BYTE(GET_U32_BE(rk_head, 3), reg3, w1, w2);
 
     ARIA_DIFF_WORD(reg0, reg1, reg2, reg3);
     ARIA_DIFF_BYTE(reg0, reg1, reg2, reg3);
     ARIA_DIFF_WORD(reg0, reg1, reg2, reg3);
 
-    rk_tail[0] = reg0;
-    rk_tail[1] = reg1;
-    rk_tail[2] = reg2;
-    rk_tail[3] = reg3;
+    PUT_U32_BE(rk_tail, 0, reg0);
+    PUT_U32_BE(rk_tail, 1, reg1);
+    PUT_U32_BE(rk_tail, 2, reg2);
+    PUT_U32_BE(rk_tail, 3, reg3);
 
     return 0;
 }
