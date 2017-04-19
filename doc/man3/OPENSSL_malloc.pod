@@ -15,7 +15,7 @@ CRYPTO_mem_debug_push, CRYPTO_mem_debug_pop,
 CRYPTO_clear_realloc, CRYPTO_clear_free,
 CRYPTO_get_mem_functions, CRYPTO_set_mem_functions,
 CRYPTO_set_mem_debug, CRYPTO_mem_ctrl,
-CRYPTO_mem_leaks, CRYPTO_mem_leaks_fp
+CRYPTO_mem_leaks, CRYPTO_mem_leaks_fp, CRYPTO_mem_leaks_cb,
 OPENSSL_MALLOC_FAILURES,
 OPENSSL_MALLOC_FD
 - Memory allocation functions
@@ -76,6 +76,8 @@ OPENSSL_MALLOC_FD
 
  void CRYPTO_mem_leaks(BIO *b);
  void CRYPTO_mem_leaks_fp(FILE *fp);
+ void CRYPTO_mem_leaks_cb(int (*cb)(const char *str, size_t len, void *u),
+                          void *u);
 
 =head1 DESCRIPTION
 
@@ -189,6 +191,11 @@ At the end of the program, calling CRYPTO_mem_leaks() or
 CRYPTO_mem_leaks_fp() will report all "leaked" memory, writing it
 to the specified BIO B<b> or FILE B<fp>. These functions return 1 if
 there are no leaks, 0 if there are leaks and -1 if an error occurred.
+
+CRYPTO_mem_leaks_cb() does the same as CRYPTO_mem_leaks(), but instead
+of writing to a given BIO, the callback function is called for each
+output string with the string, length, and userdata B<u> as the callback
+parameters.
 
 =head1 RETURN VALUES
 

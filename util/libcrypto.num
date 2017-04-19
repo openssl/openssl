@@ -4270,3 +4270,4 @@ UINT32_it                               4214	1_1_0f	EXIST:!EXPORT_VAR_AS_FUNCTIO
 UINT32_it                               4214	1_1_0f	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 ZINT64_it                               4215	1_1_0f	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ZINT64_it                               4215	1_1_0f	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
+CRYPTO_mem_leaks_cb                     4216	1_1_1	EXIST::FUNCTION:CRYPTO_MDEBUG
