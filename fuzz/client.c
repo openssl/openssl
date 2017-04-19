@@ -37,7 +37,7 @@ static int idx;
  * coverage.
  */
 #if defined(_WIN32) && defined(_TIME64_T_DEFINED)
-time64_t _time64(time64_t *t) TIME_IMPL(t)
+__time64_t _time64(__time64_t *t) TIME_IMPL(t)
 #endif
 #if !defined(_WIN32) || !defined(_MSC_VER)
 time_t time(time_t *t) TIME_IMPL(t)
