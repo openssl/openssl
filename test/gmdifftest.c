@@ -60,5 +60,5 @@ void register_tests(void)
     if (sizeof(time_t) < 8)
         TEST_info("Skipping; time_t is less than 64-bits");
     else
-        ADD_ALL_TESTS(test_gmtime, 1000000);
+        ADD_ALL_TESTS_NOSUBTEST(test_gmtime, 1000000);
 }

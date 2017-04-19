@@ -53,7 +53,12 @@
  * Simple parameterized tests. Calls test_function(idx) for each 0 <= idx < num.
  */
 # define ADD_ALL_TESTS(test_function, num) \
-  add_all_tests(#test_function, test_function, num)
+    add_all_tests(#test_function, test_function, num, 1)
+/*
+ * A variant of the same without TAP output.
+ */
+# define ADD_ALL_TESTS_NOSUBTEST(test_function, num) \
+    add_all_tests(#test_function, test_function, num, 0)
 
 /*-
  * Test cases that share common setup should use the helper
@@ -131,7 +136,8 @@ void setup_test(void);
 __owur int finish_test(int ret);
 
 void add_test(const char *test_case_name, int (*test_fn) ());
-void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num);
+void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num,
+                   int subtest);
 __owur int run_tests(const char *test_prog_name);
 
 /*
@@ -369,3 +375,5 @@ int test_flush_stderr(void);
 
 extern BIO *bio_out;
 extern BIO *bio_err;
+
+int subtest_level(void);

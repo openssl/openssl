@@ -23,6 +23,9 @@ typedef struct test_info {
     int (*test_fn) ();
     int (*param_test_fn)(int idx);
     int num;
+
+    /* flags */
+    int subtest:1;
 } TEST_INFO;
 
 static TEST_INFO all_tests[1024];
@@ -45,14 +48,22 @@ void add_test(const char *test_case_name, int (*test_fn) ())
 }
 
 void add_all_tests(const char *test_case_name, int(*test_fn)(int idx),
-                   int num)
+                   int num, int subtest)
 {
     assert(num_tests != OSSL_NELEM(all_tests));
     all_tests[num_tests].test_case_name = test_case_name;
     all_tests[num_tests].param_test_fn = test_fn;
     all_tests[num_tests].num = num;
+    all_tests[num_tests].subtest = subtest;
     ++num_tests;
     num_test_cases += num;
+}
+
+static int level = 0;
+
+int subtest_level(void)
+{
+    return level;
 }
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
@@ -71,7 +82,6 @@ static int should_report_leaks()
 }
 #endif
 
-
 static int err_cb(const char *str, size_t len, void *u)
 {
     return test_puts_stderr(str);
@@ -79,7 +89,11 @@ static int err_cb(const char *str, size_t len, void *u)
 
 void setup_test()
 {
+    char *TAP_levels = getenv("HARNESS_OSSL_LEVEL");
+
     test_open_streams();
+
+    level = TAP_levels != NULL ? 4 * atoi(TAP_levels) : 0;
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (should_report_leaks()) {
@@ -121,47 +135,69 @@ static void helper_printf_stdout(const char *fmt, ...)
 int run_tests(const char *test_prog_name)
 {
     int num_failed = 0;
+    char *verdict = NULL;
     int i, j;
 
-    helper_printf_stdout("%s: %d test case%s\n", test_prog_name, num_test_cases,
-                         num_test_cases == 1 ? "" : "s");
+    helper_printf_stdout("%*s%d..%d\n", level, "", 1, num_tests);
     test_flush_stdout();
 
     for (i = 0; i != num_tests; ++i) {
         if (all_tests[i].num == -1) {
             int ret = all_tests[i].test_fn();
 
+            verdict = "ok";
             if (!ret) {
-                helper_printf_stdout("** %s failed **\n--------\n",
-                                     all_tests[i].test_case_name);
-                test_flush_stdout();
+                verdict = "not ok";
                 ++num_failed;
             }
+            helper_printf_stdout("%*s%s %d - %s\n", level, "", verdict, i + 1,
+                                     all_tests[i].test_case_name);
+            test_flush_stdout();
             finalize(ret);
         } else {
+            int num_failed_inner = 0;
+
+            level += 4;
+            if (all_tests[i].subtest) {
+                helper_printf_stdout("%*s# Subtest: %s\n", level, "",
+                                     all_tests[i].test_case_name);
+                helper_printf_stdout("%*s%d..%d\n", level, "", 1,
+                                     all_tests[i].num);
+                test_flush_stdout();
+            }
+
             for (j = 0; j < all_tests[i].num; j++) {
                 int ret = all_tests[i].param_test_fn(j);
 
-                if (!ret) {
-                    helper_printf_stdout("** %s failed test %d\n--------\n",
-                                         all_tests[i].test_case_name, j);
-                    test_flush_stdout();
-                    ++num_failed;
-                }
+                if (!ret)
+                    ++num_failed_inner;
+
                 finalize(ret);
+
+                if (all_tests[i].subtest) {
+                    verdict = "ok";
+                    if (!ret) {
+                        verdict = "not ok";
+                        ++num_failed_inner;
+                    }
+                    helper_printf_stdout("%*s%s %d\n", level, "", verdict, j + 1);
+                    test_flush_stdout();
+                }
             }
+
+            level -= 4;
+            verdict = "ok";
+            if (num_failed_inner) {
+                verdict = "not ok";
+                ++num_failed;
+            }
+            helper_printf_stdout("%*s%s %d - %s\n", level, "", verdict, i + 1,
+                                 all_tests[i].test_case_name);
+            test_flush_stdout();
         }
     }
-
-    if (num_failed != 0) {
-        helper_printf_stdout("%s: %d test%s failed (out of %d)\n",
-                             test_prog_name, num_failed,
-                             num_failed != 1 ? "s" : "", num_test_cases);
-        test_flush_stdout();
+    if (num_failed != 0)
         return EXIT_FAILURE;
-    }
-    helper_printf_stdout("  All tests passed.\n");
-    test_flush_stdout();
     return EXIT_SUCCESS;
 }
 

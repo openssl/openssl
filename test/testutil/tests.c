@@ -43,6 +43,7 @@
 static void test_fail_message(const char *prefix, const char *file, int line,
                               const char *type, const char *fmt, ...)
             PRINTF_FORMAT(5, 6);
+int subtest_level(void);
 
 static void helper_printf_stderr(const char *fmt, ...)
 {
@@ -56,6 +57,7 @@ static void helper_printf_stderr(const char *fmt, ...)
 static void test_fail_message_va(const char *prefix, const char *file, int line,
                                  const char *type, const char *fmt, va_list ap)
 {
+    helper_printf_stderr("%*s# ", subtest_level(), "");
     test_puts_stderr(prefix != NULL ? prefix : "ERROR");
     test_puts_stderr(":");
     if (type)
