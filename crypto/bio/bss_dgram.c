@@ -842,6 +842,8 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
                    sizeof(struct sctp_authchunk));
     if (ret < 0) {
         BIO_vfree(bio);
+        BIOerr(BIO_F_BIO_NEW_DGRAM_SCTP, ERR_R_SYS_LIB);
+        ERR_add_error_data(1, "Ensure SCTP AUTH chunks are enabled in kernel");
         return (NULL);
     }
     auth.sauth_chunk = OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE;
@@ -850,13 +852,16 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
                    sizeof(struct sctp_authchunk));
     if (ret < 0) {
         BIO_vfree(bio);
+        BIOerr(BIO_F_BIO_NEW_DGRAM_SCTP, ERR_R_SYS_LIB);
+        ERR_add_error_data(1, "Ensure SCTP AUTH chunks are enabled in kernel");
         return (NULL);
     }
 
     /*
      * Test if activation was successful. When using accept(), SCTP-AUTH has
      * to be activated for the listening socket already, otherwise the
-     * connected socket won't use it.
+     * connected socket won't use it. Similarly with connect(): the socket
+     * prior to connection must be activated for SCTP-AUTH
      */
     sockopt_len = (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
     authchunks = OPENSSL_zalloc(sockopt_len);
@@ -883,8 +888,14 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 
     OPENSSL_free(authchunks);
 
-    OPENSSL_assert(auth_data);
-    OPENSSL_assert(auth_forward);
+    if (!auth_data || !auth_forward) {
+        BIO_vfree(bio);
+        BIOerr(BIO_F_BIO_NEW_DGRAM_SCTP, ERR_R_SYS_LIB);
+        ERR_add_error_data(1,
+                           "Ensure SCTP AUTH chunks are enabled on the "
+                           "underlying socket");
+        return NULL;
+    }
 
 #  ifdef SCTP_AUTHENTICATION_EVENT
 #   ifdef SCTP_EVENT
