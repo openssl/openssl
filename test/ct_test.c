@@ -265,8 +265,6 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
         int i;
         X509_EXTENSION *sct_extension = NULL;
 
-        cert = load_pem_cert(fixture.certs_dir, fixture.certificate_file);
-
         if (!TEST_ptr(cert = load_pem_cert(fixture.certs_dir,
                                            fixture.certificate_file)))
             goto end;
