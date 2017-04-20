@@ -152,9 +152,9 @@ int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path)
 int dump_cert_text(BIO *out, X509 *x)
 {
     print_name(out, "subject=", X509_get_subject_name(x), get_nameopt());
-		BIO_puts(out, "\n");
+    BIO_puts(out, "\n");
     print_name(out, "issuer=", X509_get_issuer_name(x), get_nameopt());
-		BIO_puts(out, "\n");
+    BIO_puts(out, "\n");
 
     return 0;
 }
@@ -964,10 +964,10 @@ static char nmflag_set = 0;
 int set_nameopt(const char *arg)
 {
   int ret = set_name_ex(&nmflag, arg);
+
   if (ret) 
-  {
     nmflag_set = 1;
-  }
+		
 	return ret;
 }
 
