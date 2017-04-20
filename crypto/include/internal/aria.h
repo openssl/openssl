@@ -22,8 +22,6 @@
 #  error ARIA is disabled.
 # endif
 
-# include <stddef.h>
-
 # define ARIA_ENCRYPT     1
 # define ARIA_DECRYPT     0
 

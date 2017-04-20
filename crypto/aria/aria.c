@@ -26,7 +26,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <stddef.h>
 
 #ifndef OPENSSL_SMALL_FOOTPRINT
 
@@ -502,47 +501,7 @@ void aria_encrypt(const unsigned char *in, unsigned char *out,
     ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
     rk++;
 
-    ARIA_SUBST_DIFF_EVEN(reg0, reg1, reg2, reg3);
-    ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
-    rk++;
-
-    ARIA_SUBST_DIFF_ODD(reg0, reg1, reg2, reg3);
-    ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
-    rk++;
-
-    ARIA_SUBST_DIFF_EVEN(reg0, reg1, reg2, reg3);
-    ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
-    rk++;
-
-    ARIA_SUBST_DIFF_ODD(reg0, reg1, reg2, reg3);
-    ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
-    rk++;
-
-    ARIA_SUBST_DIFF_EVEN(reg0, reg1, reg2, reg3);
-    ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
-    rk++;
-
-    ARIA_SUBST_DIFF_ODD(reg0, reg1, reg2, reg3);
-    ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
-    rk++;
-
-    ARIA_SUBST_DIFF_EVEN(reg0, reg1, reg2, reg3);
-    ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
-    rk++;
-
-    ARIA_SUBST_DIFF_ODD(reg0, reg1, reg2, reg3);
-    ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
-    rk++;
-
-    ARIA_SUBST_DIFF_EVEN(reg0, reg1, reg2, reg3);
-    ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
-    rk++;
-
-    ARIA_SUBST_DIFF_ODD(reg0, reg1, reg2, reg3);
-    ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
-    rk++;
-
-    if (Nr > 12) {
+    while(Nr -= 2){
         ARIA_SUBST_DIFF_EVEN(reg0, reg1, reg2, reg3);
         ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
         rk++;
@@ -550,16 +509,6 @@ void aria_encrypt(const unsigned char *in, unsigned char *out,
         ARIA_SUBST_DIFF_ODD(reg0, reg1, reg2, reg3);
         ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
         rk++;
-
-        if (Nr > 14) {
-            ARIA_SUBST_DIFF_EVEN(reg0, reg1, reg2, reg3);
-            ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
-            rk++;
-
-            ARIA_SUBST_DIFF_ODD(reg0, reg1, reg2, reg3);
-            ARIA_ADD_ROUND_KEY(rk, reg0, reg1, reg2, reg3);
-            rk++;
-        }
     }
     
     reg0 = rk->u[0] ^ MAKE_U32(
