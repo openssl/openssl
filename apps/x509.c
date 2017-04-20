@@ -160,7 +160,7 @@ int x509_main(int argc, char **argv)
     char *checkhost = NULL, *checkemail = NULL, *checkip = NULL;
     char *extsect = NULL, *extfile = NULL, *passin = NULL, *passinarg = NULL;
     char *infile = NULL, *outfile = NULL, *keyfile = NULL, *CAfile = NULL;
-    char buf[256], *prog;
+    char *prog;
     int x509req = 0, days = DEF_DAYS, modulus = 0, pubkey = 0, pprint = 0;
     int C = 0, CAformat = FORMAT_PEM, CAkeyformat = FORMAT_PEM;
     int fingerprint = 0, reqfile = 0, need_rand = 0, checkend = 0;
@@ -721,13 +721,13 @@ int x509_main(int argc, char **argv)
                 char *m;
                 int len;
 
-                X509_NAME_oneline(X509_get_subject_name(x), buf, sizeof buf);
                 BIO_printf(out, "/*\n"
-                                " * Subject: %s\n", buf);
-
-                X509_NAME_oneline(X509_get_issuer_name(x), buf, sizeof buf);
-                BIO_printf(out, " * Issuer:  %s\n"
-                                " */\n", buf);
+                                " * Subject: ");
+                X509_NAME_print_ex(out, X509_get_subject_name(x), 0, get_nameopt());
+                BIO_puts(out, "\n");
+                BIO_printf(out, " * Issuer:  ");
+                X509_NAME_print_ex(out, X509_get_issuer_name(x), 0, get_nameopt());
+                BIO_puts(out, "\n */\n");
 
                 len = i2d_X509(x, NULL);
                 m = app_malloc(len, "x509 name buffer");

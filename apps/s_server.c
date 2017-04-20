@@ -2688,10 +2688,12 @@ static void print_connection_info(SSL *con)
     if (peer != NULL) {
         BIO_printf(bio_s_out, "Client certificate\n");
         PEM_write_bio_X509(bio_s_out, peer);
-        X509_NAME_oneline(X509_get_subject_name(peer), buf, sizeof buf);
-        BIO_printf(bio_s_out, "subject=%s\n", buf);
-        X509_NAME_oneline(X509_get_issuer_name(peer), buf, sizeof buf);
-        BIO_printf(bio_s_out, "issuer=%s\n", buf);
+        BIO_puts(bio_s_out, "subject=");
+        X509_NAME_print_ex(bio_s_out, X509_get_subject_name(peer), 0, get_nameopt());
+        BIO_puts(bio_s_out, "\n");
+        BIO_puts(bio_s_out, "issuer=");
+        X509_NAME_print_ex(bio_s_out, X509_get_issuer_name(peer), 0, get_nameopt());
+        BIO_puts(bio_s_out, "\n");
         X509_free(peer);
         peer = NULL;
     }

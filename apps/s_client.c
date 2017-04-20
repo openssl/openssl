@@ -2819,7 +2819,6 @@ int s_client_main(int argc, char **argv)
 static void print_stuff(BIO *bio, SSL *s, int full)
 {
     X509 *peer = NULL;
-    char buf[BUFSIZ];
     STACK_OF(X509) *sk;
     const SSL_CIPHER *c;
     int i;
@@ -2840,12 +2839,12 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
             BIO_printf(bio, "---\nCertificate chain\n");
             for (i = 0; i < sk_X509_num(sk); i++) {
-                X509_NAME_oneline(X509_get_subject_name(sk_X509_value(sk, i)),
-                                  buf, sizeof buf);
-                BIO_printf(bio, "%2d s:%s\n", i, buf);
-                X509_NAME_oneline(X509_get_issuer_name(sk_X509_value(sk, i)),
-                                  buf, sizeof buf);
-                BIO_printf(bio, "   i:%s\n", buf);
+                BIO_printf(bio, "%2d s:", i);
+                X509_NAME_print_ex(bio, X509_get_subject_name(sk_X509_value(sk, i)), 0, get_nameopt());
+                BIO_puts(bio, "\n");
+                BIO_printf(bio, "   i:");
+                X509_NAME_print_ex(bio, X509_get_issuer_name(sk_X509_value(sk, i)), 0, get_nameopt());
+                BIO_puts(bio, "\n");
                 if (c_showcerts)
                     PEM_write_bio_X509(bio, sk_X509_value(sk, i));
             }
@@ -2859,10 +2858,12 @@ static void print_stuff(BIO *bio, SSL *s, int full)
             /* Redundant if we showed the whole chain */
             if (!(c_showcerts && got_a_chain))
                 PEM_write_bio_X509(bio, peer);
-            X509_NAME_oneline(X509_get_subject_name(peer), buf, sizeof buf);
-            BIO_printf(bio, "subject=%s\n", buf);
-            X509_NAME_oneline(X509_get_issuer_name(peer), buf, sizeof buf);
-            BIO_printf(bio, "issuer=%s\n", buf);
+            BIO_puts(bio, "subject=");
+            X509_NAME_print_ex(bio, X509_get_subject_name(peer), 0, get_nameopt());
+            BIO_puts(bio, "\n");
+            BIO_puts(bio, "issuer=");
+            X509_NAME_print_ex(bio, X509_get_issuer_name(peer), 0, get_nameopt());
+            BIO_puts(bio, "\n");
         } else {
             BIO_printf(bio, "no peer certificate available\n");
         }
