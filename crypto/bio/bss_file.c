@@ -317,10 +317,12 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->shutdown = (int)num;
         break;
     case BIO_CTRL_FLUSH:
-        if (b->flags & BIO_FLAGS_UPLINK)
-            UP_fflush(b->ptr);
-        else
-            fflush((FILE *)b->ptr);
+        if (b->flags & BIO_FLAGS_UPLINK) {
+            if (UP_fflush(b->ptr) == EOF)
+                ret = 0;
+        } else if (fflush((FILE *)b->ptr) == EOF) {
+            ret = 0;
+        }
         break;
     case BIO_CTRL_DUP:
         ret = 1;
