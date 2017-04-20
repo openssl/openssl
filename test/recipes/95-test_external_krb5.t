@@ -16,7 +16,7 @@ setup("test_external_krb5");
 plan tests => 1;
 
 SKIP: {
-    skip "No external tests in this configuration"
+    skip "No external tests in this configuration", 1
         if disabled("external-tests");
     skip "krb5 not available", 1
         if ! -f srctop_file("krb5", "README");
