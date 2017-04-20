@@ -958,16 +958,22 @@ int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
 #define X509_FLAG_CA (X509_FLAG_NO_ISSUER | X509_FLAG_NO_PUBKEY | \
                          X509_FLAG_NO_HEADER | X509_FLAG_NO_VERSION)
 
-static unsigned long nmflag = XN_FLAG_ONELINE;
+static unsigned long nmflag = 0;
+static char nmflag_set = 0;
 
 int set_nameopt(const char *arg)
 {
-  return set_name_ex(&nmflag, arg);
+  int ret = set_name_ex(&nmflag, arg);
+  if (ret) 
+  {
+    nmflag_set = 1;
+  }
+	return ret;
 }
 
 unsigned long get_nameopt()
 {
-  return nmflag;
+  return (nmflag_set) ? nmflag : XN_FLAG_ONELINE;
 }
 
 int set_cert_ex(unsigned long *flags, const char *arg)
