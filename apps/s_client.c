@@ -539,7 +539,7 @@ typedef enum OPTION_choice {
 #endif
     OPT_SSL3, OPT_SSL_CONFIG,
     OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
-    OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM, OPT_PASS,
+    OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_KEYFORM, OPT_PASS,
     OPT_CERT_CHAIN, OPT_CAPATH, OPT_NOCAPATH, OPT_CHAINCAPATH,
         OPT_VERIFYCAPATH,
     OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE,
@@ -699,6 +699,9 @@ const OPTIONS s_client_options[] = {
 #ifndef OPENSSL_NO_DTLS1_2
     {"dtls1_2", OPT_DTLS1_2, '-', "Just use DTLSv1.2"},
 #endif
+#ifndef OPENSSL_NO_SCTP
+    {"sctp", OPT_SCTP, '-', "Use SCTP"},
+#endif
 #ifndef OPENSSL_NO_SSL_TRACE
     {"trace", OPT_TRACE, '-', "Show trace output of protocol messages"},
 #endif
@@ -847,7 +850,7 @@ int s_client_main(int argc, char **argv)
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
     int ret = 1, in_init = 1, i, nbio_test = 0, s = -1, k, width, state = 0;
     int sbuf_len, sbuf_off, cmdletters = 1;
-    int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM;
+    int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM, protocol = 0;
     int starttls_proto = PROTO_OFF, crl_format = FORMAT_PEM, crl_download = 0;
     int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
@@ -900,6 +903,7 @@ int s_client_main(int argc, char **argv)
 #endif
     BIO *bio_c_msg = NULL;
     const char *keylog_file = NULL, *early_data_file = NULL;
+    int isdtls = 0;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1217,6 +1221,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DTLS
             meth = DTLS_client_method();
             socket_type = SOCK_DGRAM;
+            isdtls = 1;
 #endif
             break;
         case OPT_DTLS1:
@@ -1225,6 +1230,7 @@ int s_client_main(int argc, char **argv)
             min_version = DTLS1_VERSION;
             max_version = DTLS1_VERSION;
             socket_type = SOCK_DGRAM;
+            isdtls = 1;
 #endif
             break;
         case OPT_DTLS1_2:
@@ -1233,6 +1239,12 @@ int s_client_main(int argc, char **argv)
             min_version = DTLS1_2_VERSION;
             max_version = DTLS1_2_VERSION;
             socket_type = SOCK_DGRAM;
+            isdtls = 1;
+#endif
+            break;
+        case OPT_SCTP:
+#ifndef OPENSSL_NO_SCTP
+            protocol = IPPROTO_SCTP;
 #endif
             break;
         case OPT_TIMEOUT:
@@ -1431,6 +1443,17 @@ int s_client_main(int argc, char **argv)
                    "Can't use unix sockets and datagrams together\n");
         goto end;
     }
+
+#ifndef OPENSSL_NO_SCTP
+    if (protocol == IPPROTO_SCTP) {
+        if (socket_type != SOCK_DGRAM) {
+            BIO_printf(bio_err, "Can't use -sctp without DTLS\n");
+            goto end;
+        }
+        /* SCTP is unusual. It uses DTLS over a SOCK_STREAM protocol */
+        socket_type = SOCK_STREAM;
+    }
+#endif
 
     if (split_send_fragment > SSL3_RT_MAX_PLAIN_LENGTH) {
         BIO_printf(bio_err, "Bad split send fragment size\n");
@@ -1804,7 +1827,8 @@ int s_client_main(int argc, char **argv)
     }
 
  re_start:
-    if (init_client(&s, host, port, socket_family, socket_type) == 0) {
+    if (init_client(&s, host, port, socket_family, socket_type, protocol)
+            == 0) {
         BIO_printf(bio_err, "connect:errno=%d\n", get_last_socket_error());
         BIO_closesocket(s);
         goto end;
@@ -1819,10 +1843,16 @@ int s_client_main(int argc, char **argv)
         BIO_printf(bio_c_out, "Turned on non blocking io\n");
     }
 #ifndef OPENSSL_NO_DTLS
-    if (socket_type == SOCK_DGRAM) {
+    if (isdtls) {
         union BIO_sock_info_u peer_info;
 
-        sbio = BIO_new_dgram(s, BIO_NOCLOSE);
+#ifndef OPENSSL_NO_SCTP
+        if (protocol == IPPROTO_SCTP)
+            sbio = BIO_new_dgram_sctp(s, BIO_NOCLOSE);
+        else
+#endif
+            sbio = BIO_new_dgram(s, BIO_NOCLOSE);
+
         if ((peer_info.addr = BIO_ADDR_new()) == NULL) {
             BIO_printf(bio_err, "memory allocation failure\n");
             BIO_closesocket(s);
