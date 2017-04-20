@@ -21,7 +21,7 @@
  *   -1: if the record's AEAD-authenticator is invalid or, if sending,
  *       an internal error occurred.
  */
-int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
+int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
 {
     EVP_CIPHER_CTX *ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH];
@@ -38,7 +38,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
         return -1;
     }
 
-    if (send) {
+    if (sending) {
         ctx = s->enc_write_ctx;
         staticiv = s->write_iv;
         seq = RECORD_LAYER_get_write_sequence(&s->rlayer);
@@ -75,7 +75,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
             taglen = EVP_CCM8_TLS_TAG_LEN;
          else
             taglen = EVP_CCM_TLS_TAG_LEN;
-         if (send && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen,
+         if (sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen,
                                          NULL) <= 0)
             return -1;
     } else if (alg_enc & SSL_AESGCM) {
@@ -86,7 +86,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
         return -1;
     }
 
-    if (!send) {
+    if (!sending) {
         /*
          * Take off tag. There must be at least one byte of content type as
          * well as the tag
@@ -118,8 +118,8 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
     }
 
     /* TODO(size_t): lenu/lenf should be a size_t but EVP doesn't support it */
-    if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, send) <= 0
-            || (!send && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+    if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, sending) <= 0
+            || (!sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                              taglen,
                                              rec->data + rec->length) <= 0)
             || EVP_CipherUpdate(ctx, rec->data, &lenu, rec->input,
@@ -128,7 +128,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
             || (size_t)(lenu + lenf) != rec->length) {
         return -1;
     }
-    if (send) {
+    if (sending) {
         /* Add the tag */
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen,
                                 rec->data + rec->length) <= 0)

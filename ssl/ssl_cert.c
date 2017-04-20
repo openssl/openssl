@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -776,7 +776,6 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
     STACK_OF(X509) *chain = NULL, *untrusted = NULL;
     X509 *x;
     int i, rv = 0;
-    unsigned long error;
 
     if (!cpk->x509) {
         SSLerr(SSL_F_SSL_BUILD_CERT_CHAIN, SSL_R_NO_CERTIFICATE_SET);
@@ -789,22 +788,12 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
             goto err;
         for (i = 0; i < sk_X509_num(cpk->chain); i++) {
             x = sk_X509_value(cpk->chain, i);
-            if (!X509_STORE_add_cert(chain_store, x)) {
-                error = ERR_peek_last_error();
-                if (ERR_GET_LIB(error) != ERR_LIB_X509 ||
-                    ERR_GET_REASON(error) != X509_R_CERT_ALREADY_IN_HASH_TABLE)
-                    goto err;
-                ERR_clear_error();
-            }
+            if (!X509_STORE_add_cert(chain_store, x))
+                goto err;
         }
         /* Add EE cert too: it might be self signed */
-        if (!X509_STORE_add_cert(chain_store, cpk->x509)) {
-            error = ERR_peek_last_error();
-            if (ERR_GET_LIB(error) != ERR_LIB_X509 ||
-                ERR_GET_REASON(error) != X509_R_CERT_ALREADY_IN_HASH_TABLE)
-                goto err;
-            ERR_clear_error();
-        }
+        if (!X509_STORE_add_cert(chain_store, cpk->x509))
+            goto err;
     } else {
         if (c->chain_store)
             chain_store = c->chain_store;

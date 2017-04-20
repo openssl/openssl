@@ -780,7 +780,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
      * client's due to the network latency). Therefore we add 1000ms to our age
      * calculation to adjust for rounding errors.
      */
-    if (sess->timeout >= agesec
+    if (sess->timeout >= (long)agesec
             && agems / (uint32_t)1000 == agesec
             && ticket_age <= agems + 1000
             && ticket_age + TICKET_AGE_ALLOWANCE >= agems + 1000) {

@@ -45,7 +45,7 @@ static int dh_test(void)
     unsigned char *abuf = NULL;
     unsigned char *bbuf = NULL;
     int i, alen, blen, aout, bout;
-    int ret = 1;
+    int ret = 0;
 
     RAND_seed(rnd_seed, sizeof rnd_seed);
 
@@ -59,11 +59,13 @@ static int dh_test(void)
 
     if (!DH_check(a, &i))
         goto err;
-    if (TEST_false(i & DH_CHECK_P_NOT_PRIME)
-            || TEST_false(i & DH_CHECK_P_NOT_SAFE_PRIME)
-            || TEST_false(i & DH_UNABLE_TO_CHECK_GENERATOR)
-            || TEST_false(i & DH_NOT_SUITABLE_GENERATOR))
+    if (!TEST_false(i & DH_CHECK_P_NOT_PRIME)
+            || !TEST_false(i & DH_CHECK_P_NOT_SAFE_PRIME)
+            || !TEST_false(i & DH_UNABLE_TO_CHECK_GENERATOR)
+            || !TEST_false(i & DH_NOT_SUITABLE_GENERATOR))
         goto err;
+
+    DH_get0_pqg(a, &ap, NULL, &ag);
 
     if (!TEST_ptr(b = DH_new()))
         goto err;
@@ -76,23 +78,26 @@ static int dh_test(void)
 
     if (!DH_generate_key(a))
         goto err;
+    DH_get0_key(a, &apub_key, NULL);
 
     if (!DH_generate_key(b))
         goto err;
+    DH_get0_key(b, &bpub_key, NULL);
 
     alen = DH_size(a);
     if (!TEST_ptr(abuf = OPENSSL_malloc(alen))
-            || !TEST_true(aout = DH_compute_key(abuf, bpub_key, a)))
+            || !TEST_true((aout = DH_compute_key(abuf, bpub_key, a)) != -1))
         goto err;
 
     blen = DH_size(b);
     if (!TEST_ptr(bbuf = OPENSSL_malloc(blen))
-            || !TEST_true(bout = DH_compute_key(bbuf, apub_key, b)))
+            || !TEST_true((bout = DH_compute_key(bbuf, apub_key, b)) != -1))
         goto err;
-    if (!TEST_true(aout < 4)
+
+    if (!TEST_true(aout >= 4)
             || !TEST_mem_eq(abuf, aout, bbuf, bout))
         goto err;
-        ret = 0;
+
     ret = 1;
 
  err:

@@ -548,8 +548,8 @@ static int test_bad_dtls(void)
 
         if (!TEST_true(send_record(rbio, SSL3_RT_APPLICATION_DATA, tests[i].seq,
                                    &tests[i].seq, sizeof(uint64_t)))) {
-            TEST_error("Failed to send data seq #0x%lx (%d)\n",
-                       tests[i].seq, i);
+            TEST_error("Failed to send data seq #0x%x%08x (%d)\n",
+                       (unsigned int)(tests[i].seq >> 32), (unsigned int)tests[i].seq, i);
             goto end;
         }
 
@@ -558,8 +558,8 @@ static int test_bad_dtls(void)
 
         ret = SSL_read(con, recv_buf, 2 * sizeof(uint64_t));
         if (!TEST_int_eq(ret, (int)sizeof(uint64_t))) {
-            TEST_error("SSL_read failed or wrong size on seq#0x%lx (%d)\n",
-                       tests[i].seq, i);
+            TEST_error("SSL_read failed or wrong size on seq#0x%x%08x (%d)\n",
+                       (unsigned int)(tests[i].seq >> 32), (unsigned int)tests[i].seq, i);
             goto end;
         }
         if (!TEST_true(recv_buf[0] == tests[i].seq))
