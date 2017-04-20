@@ -418,10 +418,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    if (SSL_IS_TLS13(s))
-        ret = MSG_PROCESS_CONTINUE_READING;
-    else
-        ret = MSG_PROCESS_CONTINUE_PROCESSING;
+    ret = MSG_PROCESS_CONTINUE_READING;
     if (0) {
  f_err:
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
