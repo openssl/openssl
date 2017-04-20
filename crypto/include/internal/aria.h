@@ -34,7 +34,10 @@
 extern "C" {
 # endif
 
-typedef unsigned char ARIA_u128[ARIA_BLOCK_SIZE];
+typedef union {
+    unsigned char c[ARIA_BLOCK_SIZE];
+    unsigned int u[ARIA_BLOCK_SIZE / sizeof(unsigned int)];
+} ARIA_u128;
 
 struct aria_key_st {
     ARIA_u128 rd_key[ARIA_MAX_KEYS];
