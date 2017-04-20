@@ -667,6 +667,9 @@ enum BIO_lookup_type {
 int BIO_lookup(const char *host, const char *service,
                enum BIO_lookup_type lookup_type,
                int family, int socktype, BIO_ADDRINFO **res);
+int BIO_lookup_ex(const char *host, const char *service,
+                  enum BIO_lookup_type lookup_type,
+                  int family, int socktype, int protocol, BIO_ADDRINFO **res);
 int BIO_sock_error(int sock);
 int BIO_socket_ioctl(int fd, long type, void *arg);
 int BIO_socket_nbio(int fd, int mode);
@@ -805,6 +808,7 @@ int ERR_load_BIO_strings(void);
 # define BIO_F_BIO_GET_PORT                               107
 # define BIO_F_BIO_LISTEN                                 139
 # define BIO_F_BIO_LOOKUP                                 135
+# define BIO_F_BIO_LOOKUP_EX                              143
 # define BIO_F_BIO_MAKE_PAIR                              121
 # define BIO_F_BIO_NEW                                    108
 # define BIO_F_BIO_NEW_FILE                               109
