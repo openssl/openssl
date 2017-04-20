@@ -20,9 +20,9 @@
 #define PORT            "4433"
 #define PROTOCOL        "tcp"
 
-typedef int (*do_server_cb)(int s, int stype, unsigned char *context);
+typedef int (*do_server_cb)(int s, int stype, int prot, unsigned char *context);
 int do_server(int *accept_sock, const char *host, const char *port,
-              int family, int type,
+              int family, int type, int protocol,
               do_server_cb cb,
               unsigned char *context, int naccept);
 #ifdef HEADER_X509_H
