@@ -45,7 +45,7 @@ static int dh_test(void)
     unsigned char *abuf = NULL;
     unsigned char *bbuf = NULL;
     int i, alen, blen, aout, bout;
-    int ret = 1;
+    int ret = 0;
 
     RAND_seed(rnd_seed, sizeof rnd_seed);
 
@@ -92,7 +92,7 @@ static int dh_test(void)
     if (!TEST_true(aout < 4)
             || !TEST_mem_eq(abuf, aout, bbuf, bout))
         goto err;
-        ret = 0;
+
     ret = 1;
 
  err:
