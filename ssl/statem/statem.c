@@ -850,26 +850,3 @@ int ossl_statem_app_data_allowed(SSL *s)
 
     return 0;
 }
-
-#ifndef OPENSSL_NO_SCTP
-/*
- * Set flag used by SCTP to determine whether we are in the read sock state
- */
-void ossl_statem_set_sctp_read_sock(SSL *s, int read_sock)
-{
-    s->statem.in_sctp_read_sock = read_sock;
-}
-
-/*
- * Called by the record layer to determine whether we are in the read sock
- * state or not.
- *
- * Return values are:
- *   1: Yes (we are in the read sock state)
- *   0: No (we are not in the read sock state)
- */
-int ossl_statem_in_sctp_read_sock(SSL *s)
-{
-    return s->statem.in_sctp_read_sock;
-}
-#endif

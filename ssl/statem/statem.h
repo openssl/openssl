@@ -93,9 +93,6 @@ struct ossl_statem_st {
     /* Should we skip the CertificateVerify message? */
     unsigned int no_cert_verify;
     int use_timer;
-#ifndef OPENSSL_NO_SCTP
-    int in_sctp_read_sock;
-#endif
 };
 typedef struct ossl_statem_st OSSL_STATEM;
 
@@ -117,7 +114,3 @@ int ossl_statem_get_in_handshake(SSL *s);
 void ossl_statem_set_in_handshake(SSL *s, int inhand);
 void ossl_statem_set_hello_verify_done(SSL *s);
 __owur int ossl_statem_app_data_allowed(SSL *s);
-#ifndef OPENSSL_NO_SCTP
-void ossl_statem_set_sctp_read_sock(SSL *s, int read_sock);
-__owur int ossl_statem_in_sctp_read_sock(SSL *s);
-#endif

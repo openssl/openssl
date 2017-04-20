@@ -786,24 +786,6 @@ WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
     case TLS_ST_SR_KEY_EXCH:
         return tls_post_process_client_key_exchange(s, wst);
 
-    case TLS_ST_SR_CERT_VRFY:
-#ifndef OPENSSL_NO_SCTP
-        if (                    /* Is this SCTP? */
-               BIO_dgram_is_sctp(SSL_get_wbio(s))
-               /* Are we renegotiating? */
-               && s->renegotiate && BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s))) {
-            s->s3->in_read_app_data = 2;
-            s->rwstate = SSL_READING;
-            BIO_clear_retry_flags(SSL_get_rbio(s));
-            BIO_set_retry_read(SSL_get_rbio(s));
-            ossl_statem_set_sctp_read_sock(s, 1);
-            return WORK_MORE_A;
-        } else {
-            ossl_statem_set_sctp_read_sock(s, 0);
-        }
-#endif
-        return WORK_FINISHED_CONTINUE;
-
     default:
         break;
     }
@@ -2638,25 +2620,6 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
             BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
                      sizeof(sctpauthkey), sctpauthkey);
         }
-        wst = WORK_MORE_B;
-    }
-
-    if ((wst == WORK_MORE_B)
-        /* Is this SCTP? */
-        && BIO_dgram_is_sctp(SSL_get_wbio(s))
-        /* Are we renegotiating? */
-        && s->renegotiate
-        /* Are we going to skip the CertificateVerify? */
-        && (s->session->peer == NULL || s->statem.no_cert_verify)
-        && BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s))) {
-        s->s3->in_read_app_data = 2;
-        s->rwstate = SSL_READING;
-        BIO_clear_retry_flags(SSL_get_rbio(s));
-        BIO_set_retry_read(SSL_get_rbio(s));
-        ossl_statem_set_sctp_read_sock(s, 1);
-        return WORK_MORE_B;
-    } else {
-        ossl_statem_set_sctp_read_sock(s, 0);
     }
 #endif
 
@@ -2836,7 +2799,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    ret = MSG_PROCESS_CONTINUE_PROCESSING;
+    ret = MSG_PROCESS_CONTINUE_READING;
     if (0) {
  f_err:
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
