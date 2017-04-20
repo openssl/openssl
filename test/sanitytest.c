@@ -52,7 +52,8 @@ static int test_sanity_enum_size(void)
 static int test_sanity_int_size(void)
 {
     if (!TEST_size_t_eq(sizeof(int), 4)
-        || !TEST_int_eq(CHAR_BIT, 8))
+        || !TEST_int_eq(CHAR_BIT, 8)
+        || !TEST_size_t_lt(sizeof(int), sizeof(int64_t)))
         return 0;
     return 1;
 }
