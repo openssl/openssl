@@ -367,18 +367,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * type == SSL3_RT_HANDSHAKE.
      */
 
-#ifndef OPENSSL_NO_SCTP
-    /*
-     * Continue handshake if it had to be interrupted to read app data with
-     * SCTP.
-     */
-    if ((!ossl_statem_get_in_handshake(s) && SSL_in_init(s)) ||
-        (BIO_dgram_is_sctp(SSL_get_rbio(s))
-         && ossl_statem_in_sctp_read_sock(s)
-         && s->s3->in_read_app_data != 2))
-#else
     if (!ossl_statem_get_in_handshake(s) && SSL_in_init(s))
-#endif
     {
         /* type == SSL3_RT_APPLICATION_DATA */
         i = s->handshake_func(s);
@@ -520,18 +509,6 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             }
         }
 #ifndef OPENSSL_NO_SCTP
-        /*
-         * We were about to renegotiate but had to read belated application
-         * data first, so retry.
-         */
-        if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
-            SSL3_RECORD_get_type(rr) == SSL3_RT_APPLICATION_DATA &&
-            ossl_statem_in_sctp_read_sock(s)) {
-            s->rwstate = SSL_READING;
-            BIO_clear_retry_flags(SSL_get_rbio(s));
-            BIO_set_retry_read(SSL_get_rbio(s));
-        }
-
         /*
          * We might had to delay a close_notify alert because of reordered
          * app data. If there was an alert and there is no message to read
