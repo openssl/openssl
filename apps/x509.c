@@ -823,7 +823,7 @@ int x509_main(int argc, char **argv)
                     goto end;
                 }
                 if (!noout) {
-                    X509_REQ_print(out, rq);
+                    X509_REQ_print_ex(out, rq, get_nameopt(), X509_FLAG_COMPAT);
                     PEM_write_bio_X509_REQ(out, rq);
                 }
                 noout = 1;

@@ -1269,7 +1269,7 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
         goto end;
     }
     if (verbose)
-        X509_REQ_print(bio_err, req);
+        X509_REQ_print_ex(bio_err, req, nameopt, X509_FLAG_COMPAT);
 
     BIO_printf(bio_err, "Check that the request matches the signature\n");
 
