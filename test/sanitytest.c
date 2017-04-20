@@ -49,6 +49,13 @@ static int test_sanity_enum_size(void)
     return 1;
 }
 
+static int test_sanity_int_size(void)
+{
+    if (!TEST_size_t_eq(sizeof(int), 4))
+        return 0;
+    return 1;
+}
+
 static int test_sanity_twos_complement(void)
 {
     /* Basic two's complement checks. */
@@ -80,6 +87,7 @@ void register_tests(void)
 {
     ADD_TEST(test_sanity_null_zero);
     ADD_TEST(test_sanity_enum_size);
+    ADD_TEST(test_sanity_int_size);
     ADD_TEST(test_sanity_twos_complement);
     ADD_TEST(test_sanity_sign);
     ADD_TEST(test_sanity_unsigned_convertion);
