@@ -171,7 +171,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
 
   SOURCE[igetest]=igetest.c
   INCLUDE[igetest]=.. ../include
-  DEPEND[igetest]=../libcrypto
+  DEPEND[igetest]=../libcrypto libtestutil.a
 
   SOURCE[v3nametest]=v3nametest.c
   INCLUDE[v3nametest]=.. ../include
