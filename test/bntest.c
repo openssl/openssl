@@ -2084,6 +2084,29 @@ err:
     return st;
 }
 
+static int test_3_is_prime()
+{
+    int ret = 0;
+    BIGNUM *r = BN_new();
+
+    /* For a long time, small primes were not considered prime when
+     * do_trial_division was set. */
+    if (r == NULL ||
+        !BN_set_word(r, 3) ||
+        BN_is_prime_fasttest_ex(r, 3 /* nchecks */, ctx,
+                                0 /* do_trial_division */, NULL) != 1 ||
+        BN_is_prime_fasttest_ex(r, 3 /* nchecks */, ctx,
+                                1 /* do_trial_division */, NULL) != 1) {
+        goto err;
+    }
+
+    ret = 1;
+
+err:
+    BN_free(r);
+    return ret;
+}
+
 
 /* Delete leading and trailing spaces from a string */
 static char *strip_spaces(char *p)
@@ -2250,6 +2273,7 @@ int test_main(int argc, char *argv[])
     ADD_TEST(test_gf2m_modsqrt);
     ADD_TEST(test_gf2m_modsolvequad);
 #endif
+    ADD_TEST(test_3_is_prime);
     ADD_TEST(file_tests);
 
     RAND_seed(rnd_seed, sizeof rnd_seed);

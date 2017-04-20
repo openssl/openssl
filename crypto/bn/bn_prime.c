@@ -176,7 +176,7 @@ int BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
             if (mod == (BN_ULONG)-1)
                 goto err;
             if (mod == 0)
-                return 0;
+                return BN_is_word(a, primes[i]);
         }
         if (!BN_GENCB_call(cb, 1, -1))
             goto err;
