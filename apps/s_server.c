@@ -2646,7 +2646,7 @@ static int init_ssl_connection(SSL *con)
         i = SSL_accept(con);
 
         if (i <= 0)
-            retry = BIO_sock_should_retry(i);
+            retry = !SSL_want_nothing(con);
 #ifdef CERT_CB_TEST_RETRY
         {
             while (i <= 0
@@ -2656,7 +2656,7 @@ static int init_ssl_connection(SSL *con)
                            "LOOKUP from certificate callback during accept\n");
                 i = SSL_accept(con);
                 if (i <= 0)
-                    retry = BIO_sock_should_retry(i);
+                    retry = !SSL_want_nothing(con);
             }
         }
 #endif
@@ -2677,7 +2677,7 @@ static int init_ssl_connection(SSL *con)
                 BIO_printf(bio_s_out, "LOOKUP not successful\n");
             i = SSL_accept(con);
             if (i <= 0)
-                retry = BIO_sock_should_retry(i);
+                retry = !SSL_want_nothing(con);
         }
 #endif
     } while (i < 0 && SSL_waiting_for_async(con));
