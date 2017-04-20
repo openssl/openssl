@@ -91,9 +91,9 @@ typedef unsigned int u_int;
 #endif
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
-static int sv_body(int s, int stype, unsigned char *context);
-static int www_body(int s, int stype, unsigned char *context);
-static int rev_body(int s, int stype, unsigned char *context);
+static int sv_body(int s, int stype, int prot, unsigned char *context);
+static int www_body(int s, int stype, int prot, unsigned char *context);
+static int rev_body(int s, int stype, int prot, unsigned char *context);
 static void close_accept_socket(void);
 static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp, SSL_CTX *ctx);
@@ -719,7 +719,7 @@ typedef enum OPTION_choice {
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
     OPT_SSL_CONFIG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_SSL3, OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
-    OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN,
+    OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN,
     OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
@@ -903,6 +903,9 @@ const OPTIONS s_server_options[] = {
 #ifndef OPENSSL_NO_DTLS1_2
     {"dtls1_2", OPT_DTLS1_2, '-', "Just talk DTLSv1.2"},
 #endif
+#ifndef OPENSSL_NO_SCTP
+    {"sctp", OPT_SCTP, '-', "Use SCTP"},
+#endif
 #ifndef OPENSSL_NO_DH
     {"no_dhe", OPT_NO_DHE, '-', "Disable ephemeral DH"},
 #endif
@@ -960,7 +963,7 @@ int s_server_main(int argc, char *argv[])
     int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
     int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
     int rev = 0, naccept = -1, sdebug = 0;
-    int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM;
+    int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM, protocol = 0;
     int state = 0, crl_format = FORMAT_PEM, crl_download = 0;
     char *host = NULL;
     char *port = BUF_strdup(PORT);
@@ -1431,6 +1434,11 @@ int s_server_main(int argc, char *argv[])
             socket_type = SOCK_DGRAM;
 #endif
             break;
+        case OPT_SCTP:
+#ifndef OPENSSL_NO_SCTP
+            protocol = IPPROTO_SCTP;
+#endif
+            break;
         case OPT_TIMEOUT:
 #ifndef OPENSSL_NO_DTLS
             enable_timeouts = 1;
@@ -1540,6 +1548,17 @@ int s_server_main(int argc, char *argv[])
         BIO_printf(bio_err,
                    "Can't use unix sockets and datagrams together\n");
         goto end;
+    }
+#endif
+
+#ifndef OPENSSL_NO_SCTP
+    if (protocol == IPPROTO_SCTP) {
+        if (socket_type != SOCK_DGRAM) {
+            BIO_printf(bio_err, "Can't use -sctp without DTLS\n");
+            goto end;
+        }
+        /* SCTP is unusual. It uses DTLS over a SOCK_STREAM protocol */
+        socket_type = SOCK_STREAM;
     }
 #endif
 
@@ -2018,7 +2037,7 @@ int s_server_main(int argc, char *argv[])
         && unlink_unix_path)
         unlink(host);
 #endif
-    do_server(&accept_socket, host, port, socket_family, socket_type,
+    do_server(&accept_socket, host, port, socket_family, socket_type, protocol,
               server_cb, context, naccept);
     print_stats(bio_s_out, ctx);
     ret = 0;
@@ -2090,7 +2109,7 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
                SSL_CTX_sess_get_cache_size(ssl_ctx));
 }
 
-static int sv_body(int s, int stype, unsigned char *context)
+static int sv_body(int s, int stype, int prot, unsigned char *context)
 {
     char *buf = NULL;
     fd_set readfds;
@@ -2104,6 +2123,13 @@ static int sv_body(int s, int stype, unsigned char *context)
     struct timeval tv;
 #else
     struct timeval *timeoutp;
+#endif
+#ifndef OPENSSL_NO_DTLS
+ #ifndef OPENSSL_NO_SCTP
+    int isdtls = (stype == SOCK_DGRAM || prot == IPPROTO_SCTP);
+ #else
+    int isdtls = (stype == SOCK_DGRAM);
+ #endif
 #endif
 
     buf = app_malloc(bufsize, "server buffer");
@@ -2136,9 +2162,13 @@ static int sv_body(int s, int stype, unsigned char *context)
         goto err;
     }
 #ifndef OPENSSL_NO_DTLS
-    if (stype == SOCK_DGRAM) {
-
-        sbio = BIO_new_dgram(s, BIO_NOCLOSE);
+    if (isdtls) {
+#ifndef OPENSSL_NO_SCTP
+        if (prot == IPPROTO_SCTP)
+            sbio = BIO_new_dgram_sctp(s, BIO_NOCLOSE);
+        else
+#endif
+            sbio = BIO_new_dgram(s, BIO_NOCLOSE);
 
         if (enable_timeouts) {
             timeout.tv_sec = 0;
@@ -2169,11 +2199,19 @@ static int sv_body(int s, int stype, unsigned char *context)
             /* want to do MTU discovery */
             BIO_ctrl(sbio, BIO_CTRL_DGRAM_MTU_DISCOVER, 0, NULL);
 
-        /* turn on cookie exchange */
-        SSL_set_options(con, SSL_OP_COOKIE_EXCHANGE);
+        if (prot != IPPROTO_SCTP) {
+            /* Turn on cookie exchange. Not necessary for SCTP */
+            SSL_set_options(con, SSL_OP_COOKIE_EXCHANGE);
+        }
     } else
 #endif
         sbio = BIO_new_socket(s, BIO_NOCLOSE);
+
+    if (sbio == NULL) {
+        BIO_printf(bio_err, "Unable to create BIO\n");
+        ERR_print_errors(bio_err);
+        goto err;
+    }
 
     if (s_nbio_test) {
         BIO *test;
@@ -2767,7 +2805,7 @@ static DH *load_dh_param(const char *dhfile)
 }
 #endif
 
-static int www_body(int s, int stype, unsigned char *context)
+static int www_body(int s, int stype, int prot, unsigned char *context)
 {
     char *buf = NULL;
     int ret = 1;
@@ -3153,7 +3191,7 @@ static int www_body(int s, int stype, unsigned char *context)
     return (ret);
 }
 
-static int rev_body(int s, int stype, unsigned char *context)
+static int rev_body(int s, int stype, int prot, unsigned char *context)
 {
     char *buf = NULL;
     int i;
