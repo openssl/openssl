@@ -36,6 +36,7 @@ static ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_FUNC(BIO_F_BIO_LOOKUP_EX), "BIO_lookup_ex"},
     {ERR_FUNC(BIO_F_BIO_MAKE_PAIR), "bio_make_pair"},
     {ERR_FUNC(BIO_F_BIO_NEW), "BIO_new"},
+    {ERR_FUNC(BIO_F_BIO_NEW_DGRAM_SCTP), "BIO_new_dgram_sctp"},
     {ERR_FUNC(BIO_F_BIO_NEW_FILE), "BIO_new_file"},
     {ERR_FUNC(BIO_F_BIO_NEW_MEM_BUF), "BIO_new_mem_buf"},
     {ERR_FUNC(BIO_F_BIO_NREAD), "BIO_nread"},
