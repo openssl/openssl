@@ -162,7 +162,7 @@ int set_nameopt(const char *arg)
 	return ret;
 }
 
-unsigned long get_nameopt()
+unsigned long get_nameopt(void)
 {
   return (nmflag_set) ? nmflag : XN_FLAG_ONELINE;
 }
