@@ -22,6 +22,12 @@
      platform rather than 'mingw'.
      [Richard Levitte]
 
+  *) The functions X509_STORE_add_cert and X509_STORE_add_crl return
+     success if they are asked to add an object which already exists
+     in the store. This change cascades to other functions which load
+     certificates and CRLs.
+     [Paul Dale]
+
   *) x86_64 assembly pack: annotate code with DWARF CFI directives to
      facilitate stack unwinding even from assembly subroutines.
      [Andy Polyakov]
