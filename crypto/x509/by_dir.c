@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -373,6 +373,13 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
             ok = 1;
             ret->type = tmp->type;
             memcpy(&ret->data, &tmp->data, sizeof(ret->data));
+
+            /*
+             * Clear any errors that might have been raised processing empty
+             * or malformed files.
+             */
+            ERR_clear_error();
+
             /*
              * If we were going to up the reference count, we would need to
              * do it on a perl 'type' basis
