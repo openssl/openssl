@@ -47,8 +47,6 @@ if ($flavour =~ /3[12]/) {
 my $output;
 while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
 
-my $vxsingle=0;	# novx code path is faster for single block
-
 my $sp="%r15";
 my $stdframe=16*$SIZE_T+4*8;
 
@@ -216,7 +214,7 @@ my ($out,$inp,$len,$key,$counter)=map("%r$_",(2..6));
 
 # VX CODE PATH
 {
-my $off=$z*8*16+16;	# offset(initial state)
+my $off=$z*8*16+8;	# offset(initial state)
 my $frame=4*16+$off;
 
 GLOBL	("ChaCha20_ctr32");
@@ -225,12 +223,17 @@ ALIGN	(32);
 LABEL	("ChaCha20_ctr32");
 	CFI_STARTPROC	();
 	larl	("%r1","OPENSSL_s390xcap_P");
+
+	lghi	("%r0",64);
+&{$z?	\&cgr:\&cr}	($len,"%r0");
+	jle	("_s390x_chacha_novx");
+
 	lg	("%r0","16(%r1)");
 	tmhh	("%r0",0x4000);	# check for vector facility
 	jz	("_s390x_chacha_novx");
 
 if (!$z) {
-	llgfr	($len,$len);
+	llgfr   ($len,$len);
 	std	("%f4","16*$SIZE_T+2*8($sp)");
 	std	("%f6","16*$SIZE_T+3*8($sp)");
 }
@@ -241,16 +244,16 @@ if (!$z) {
 	lgr	("%r0",$sp);
 	la	($sp,"0(%r1,$sp)");	# allocate stack frame
 	CFI_ADJUST_CFA_OFFSET($frame);
-&{$z?	\&stg:\&st}	("%r0","0($sp)");	# backchain
 
 	larl	("%r7",".Lsigma");
-	l	("%r0","0($counter)");	# load counter
+&{$z?	\&stg:\&st}	("%r0","0($sp)");	# backchain
 
-	vstm	("%v8","%v15","16($sp)") if ($z);
+	vstm	("%v8","%v15","8($sp)") if ($z);
 
 	vlm	("%v1","%v2","0($key)");	# load key
 	vl	("%v0","0(%r7)");	# load sigma constant
 	vl	("%v3","0($counter)");	# load iv (counter||nonce)
+	l	("%r0","0($counter)");	# load counter
 	vstm	("%v0","%v3","$off($sp)");	# copy initial state to stack
 
 	srlg	("%r1",$len,8);
@@ -310,34 +313,61 @@ for (0..3) {	# blocks 2,3
 
 ALIGN	(16);
 LABEL	(".Lvx_4x_done");
-	tml	($len,128|64);
-	jz	(".Lvx_done");
+	lghi	("%r1",0xff);
+	ngr	($len,"%r1");
+	jnz	(".Lvx_rem");
 
-if (!$vxsingle) {
-	brc	(3,".Lvx_rem");	# cc==2 || cc==3?
+ALIGN	(16);
+LABEL	(".Lvx_done");
+	vzero	("%v$_") for (16..31);	# wipe ks and key copy
+	vstm	("%v16","%v17","16+$off($sp)");
+	vlm	("%v8","%v15","8($sp)") if ($z);
+
+	la	($sp,"$frame($sp)");
+	CFI_ADJUST_CFA_OFFSET	(-$frame);
+&{$z?	\&lg:\&l}	("%r7","7*$SIZE_T($sp)");
+	CFI_RESTORE	("%r7");
+
+if (!$z) {
+	ld	("%f4","16*$SIZE_T+2*8($sp)");
+	ld	("%f6","16*$SIZE_T+3*8($sp)");
+	vzero	("%v$_") for (8..15);
+}
+	br	("%r14");
+
+	CFI_ADJUST_CFA_OFFSET($frame);
+	CFI_REL_OFFSET	("%r7",7*$SIZE_T);
+ALIGN	(16);
+LABEL	(".Lvx_rem");
+	lhi	("%r0",64);
+
+	sr	($len,"%r0");
+	brc	(2,".Lvx_rem_g64");	# cc==2?
+
+	lghi	("%r1",-$stdframe);
+
+	la	($counter,"48+$off($sp)");	# load updated iv
+	ar	($len,"%r0");	# restore len
 
 	lgr	("%r7",$counter);
 	CFI_REGISTER	($counter,"%r7");
-&{$z?	\&stmg:\&stm}	("%r14",$sp,"$off($sp)");
-	CFI_REL_OFFSET	("%r14",$off);
-
-	lghi	($len,64);	# 1 block
-	la	($key,"16+$off($sp)");	# load key
-	la	($counter,"48+$off($sp)");	# load updated iv
-	aghi	($sp,-$stdframe);
+&{$z?	\&stg:\&st}	("%r14","14*$SIZE_T+$frame($sp)");
+	CFI_REL_OFFSET	("%r14",14*$SIZE_T+$frame);
+	la	($sp,"0(%r1,$sp)");
 	CFI_ADJUST_CFA_OFFSET($stdframe);
+
 	bras	("%r14","_s390x_chacha_novx");
 
-&{$z?	\&lmg:\&lm}	("%r14",$sp,"$stdframe+$off($sp)");
-	CFI_RESTORE	("%r14");
+	la	($sp,"$stdframe($sp)");
 	CFI_ADJUST_CFA_OFFSET(-$stdframe);
+&{$z?	\&lg:\&l}	("%r14","14*$SIZE_T+$frame($sp)");
+	CFI_RESTORE	("%r14");
 	lgr	($counter,"%r7");
 	CFI_RESTORE	($counter);
 	j	(".Lvx_done");
 
 ALIGN	(16);
-LABEL	(".Lvx_rem");
-}
+LABEL	(".Lvx_rem_g64");
 	vlrepf	("%v$_",($_*4)."+$off($sp)") for (0..15);	# load initial
 								#  state
 	vl	("%v31","16(%r7)");
@@ -361,50 +391,65 @@ LABEL	(".Loop_vx_rem");
 for (0..3) {	# blocks 1,2
 	vmrhf	("%v0",@v[$_*4+0],@v[$_*4+1]);	# ks = serialize(state)
 	vmrhf	("%v1",@v[$_*4+2],@v[$_*4+3]);
-	vperm	("%v".($_+ 8),"%v0","%v1","%v6");
+	vperm	("%v".($_+8),"%v0","%v1","%v6");
 	vperm	("%v".($_+12),"%v0","%v1","%v7");
 }
 	vlm	("%v0","%v3","0($inp)");	# load in
 	vx	("%v$_","%v$_","%v".($_+8)) for (0..3);	# out = in ^ ks
 	vstm	("%v0","%v3","0($out)");	# store out
 
-if ($vxsingle) {
-	tml	($len,128);
-	jz	(".Lvx_done");
-}
-	vlm	("%v0","%v3","64($inp)");	# load in
+	la	($inp,"64($inp)");
+	la	($out,"64($out)");
+
+	sr	($len,"%r0");
+	brc	(4,".Lvx_tail");	# cc==4?
+
+	vlm	("%v0","%v3","0($inp)");	# load in
 	vx	("%v$_","%v$_","%v".($_+12)) for (0..3);	# out = in ^ ks
-	vstm	("%v0","%v3","64($out)");	# store out
-
-	tml	($len,64);
+	vstm	("%v0","%v3","0($out)");	# store out
 	jz	(".Lvx_done");
 
-for (0..3) {	# block 3
+for (0..3) {	# blocks 3,4
 	vmrlf	("%v0",@v[$_*4+0],@v[$_*4+1]);	# ks = serialize(state)
 	vmrlf	("%v1",@v[$_*4+2],@v[$_*4+3]);
-	vperm	("%v".($_+ 8),"%v0","%v1","%v6");
+	vperm	("%v".($_+12),"%v0","%v1","%v6");
+	vperm	("%v".($_+8),"%v0","%v1","%v7");
 }
-	vlm	("%v0","%v3","128($inp)");	# load in
-	vx	("%v$_","%v$_","%v".($_+8)) for (0..3);	# out=in^ks
-	vstm	("%v0","%v3","128($out)");	# store out
+	la	($inp,"64($inp)");
+	la	($out,"64($out)");
+
+	sr	($len,"%r0");
+	brc	(4,".Lvx_tail");	# cc==4?
+
+	vlm	("%v0","%v3","0($inp)");	# load in
+	vx	("%v$_","%v$_","%v".($_+12)) for (0..3);	# out = in ^ ks
+	vstm	("%v0","%v3","0($out)");	# store out
+	jz	(".Lvx_done");
+
+	la	($inp,"64($inp)");
+	la	($out,"64($out)");
+
+	sr	($len,"%r0");
+	vlr	("%v".($_+4),"%v$_") for (8..11);
+	j	(".Lvx_tail");
 
 ALIGN	(16);
-LABEL	(".Lvx_done");
-	vzero	("%v$_") for (16..31);	# wipe ks and key copy
-	vstm	("%v16","%v17","16+$off($sp)");
-	vlm	("%v8","%v15","16($sp)") if ($z);
+LABEL	(".Lvx_tail");
+	ar	($len,"%r0");	# restore $len
+	ahi	($len,-1);
 
-&{$z?	\&lg:\&l}	($sp,"0($sp)");
-	CFI_ADJUST_CFA_OFFSET	(-$frame);
-&{$z?	\&lg:\&l}	("%r7","7*$SIZE_T($sp)");
-	CFI_RESTORE	("%r7");
-
-if (!$z) {
-	ld	("%f4","16*$SIZE_T+2*8($sp)");
-	ld	("%f6","16*$SIZE_T+3*8($sp)");
-	vzero	("%v$_") for (8..15);
+	lhi	("%r0",16);
+for (0..2) {
+	vll	("%v0",$len,($_*16)."($inp)");
+	vx	("%v0","%v0","%v".($_+12));
+	vstl	("%v0",$len,($_*16)."($out)");
+	sr	($len,"%r0");
+	brc	(4,".Lvx_done");	# cc==4?
 }
-	br	("%r14");
+	vll	("%v0",$len,"3*16($inp)");
+	vx	("%v0","%v0","%v15");
+	vstl	("%v0",$len,"3*16($out)");
+	j	(".Lvx_done");
 	CFI_ENDPROC	();
 SIZE	("ChaCha20_ctr32",".-ChaCha20_ctr32");
 }
@@ -554,6 +599,8 @@ LABEL	(".Ldone");
 	CFI_ADJUST_CFA_OFFSET	(-$frame);
 	br	("%r14");
 
+	CFI_REL_OFFSET	("%r$_",$_*$SIZE_T) for (6..15);
+	CFI_ADJUST_CFA_OFFSET	($frame);
 ALIGN	(16);
 LABEL	(".Ltail");
 	la	(@t[1],"64($t[1])");
