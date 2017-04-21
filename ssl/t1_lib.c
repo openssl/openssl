@@ -3513,9 +3513,12 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         int rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
                                             &ctx, &hctx, 0);
         if (rv < 0)
-            return -1;
-        if (rv == 0)
+            goto err;
+        if (rv == 0) {
+            HMAC_CTX_cleanup(&hctx);
+            EVP_CIPHER_CTX_cleanup(&ctx);
             return 2;
+        }
         if (rv == 2)
             renew_ticket = 1;
     } else {
