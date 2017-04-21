@@ -184,9 +184,9 @@ static int test_mod_exp(int round)
         || !TEST_true(BN_mod_exp_mont_consttime(r_mont_const, a, b, m, ctx, NULL)))
         goto err;
 
-    if (BN_cmp(r_simple, r_mont) == 0
-        && BN_cmp(r_simple, r_recp) == 0
-        && BN_cmp(r_simple, r_mont_const) == 0) {
+    if (TEST_int_eq(BN_cmp(r_simple, r_mont), 0)
+        && TEST_int_eq(BN_cmp(r_simple, r_recp), 0)
+        && TEST_int_eq(BN_cmp(r_simple, r_mont_const), 0)) {
         printf(".");
         fflush(stdout);
     } else {
