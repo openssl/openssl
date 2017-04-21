@@ -3513,7 +3513,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         int rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
                                             &ctx, &hctx, 0);
         if (rv < 0)
-            return -1;
+            goto err;
         if (rv == 0)
             return 2;
         if (rv == 2)
