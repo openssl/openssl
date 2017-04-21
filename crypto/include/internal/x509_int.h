@@ -37,6 +37,19 @@ struct X509_name_st {
     int canon_enclen;
 } /* X509_NAME */ ;
 
+/* Signature info structure */
+
+struct x509_sig_info_st {
+    /* NID of message digest */
+    int mdnid;
+    /* NID of public key algorithm */
+    int pknid;
+    /* Security bits */
+    int secbits;
+    /* Various flags */
+    uint32_t flags;
+};
+
 /* PKCS#10 certificate request */
 
 struct X509_req_info_st {
@@ -146,6 +159,7 @@ struct x509_st {
     X509_CINF cert_info;
     X509_ALGOR sig_alg;
     ASN1_BIT_STRING signature;
+    X509_SIG_INFO siginf;
     CRYPTO_REF_COUNT references;
     CRYPTO_EX_DATA ex_data;
     /* These contain copies of various extension values */
@@ -267,3 +281,5 @@ struct x509_object_st {
 
 int a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm);
+
+void x509_init_sig_info(X509 *x);

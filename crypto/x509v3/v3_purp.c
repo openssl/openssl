@@ -488,6 +488,7 @@ static void x509v3_cache_extensions(X509 *x)
             break;
         }
     }
+    x509_init_sig_info(x);
     x->ex_flags |= EXFLAG_SET;
 }
 
