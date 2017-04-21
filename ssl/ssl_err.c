@@ -415,6 +415,8 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
      "error in received cipher list"},
     {ERR_REASON(SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN),
      "error setting tlsa base domain"},
+    {ERR_REASON(SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE),
+     "exceeds max fragment size"},
     {ERR_REASON(SSL_R_EXCESSIVE_MESSAGE_SIZE), "excessive message size"},
     {ERR_REASON(SSL_R_EXTRA_DATA_IN_MESSAGE), "extra data in message"},
     {ERR_REASON(SSL_R_FAILED_TO_INIT_ASYNC), "failed to init async"},
