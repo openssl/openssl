@@ -510,6 +510,32 @@ static int read_key(struct evp_test *t)
     return 0;
 }
 
+
+static int read_key(struct evp_test *t)
+{
+    char tmpbuf[80];
+    if (t->key == NULL)
+        t->key = BIO_new(BIO_s_mem());
+    else if (BIO_reset(t->key) <= 0)
+        return 0;
+    if (t->key == NULL) {
+        fprintf(stderr, "Error allocating key memory BIO\n");
+        return 0;
+    }
+    /* Read to PEM end line and place content in memory BIO */
+    while (BIO_gets(t->in, tmpbuf, sizeof(tmpbuf))) {
+        t->line++;
+        if (BIO_puts(t->key, tmpbuf) <= 0) {
+            fprintf(stderr, "Error writing to key memory BIO\n");
+            return 0;
+        }
+        if (strncmp(tmpbuf, "-----END", 8) == 0)
+            return 1;
+    }
+    fprintf(stderr, "Can't find key end\n");
+    return 0;
+}
+
 static int process_test(struct evp_test *t, char *buf, int verbose)
 {
     char *keyword = NULL, *value = NULL;
