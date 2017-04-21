@@ -3255,9 +3255,9 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
             if (!tls_collect_extensions(s, &extensions,
                                         SSL_EXT_TLS1_3_CERTIFICATE, &rawexts,
                                         &al, NULL, chainidx == 0)
-                    || !tls_parse_all_extensions(s, SSL_EXT_TLS1_3_CERTIFICATE,
-                                                 rawexts, x, chainidx, &al,
-                                                 !PACKET_remaining(&spkt))) {
+                || !tls_parse_all_extensions(s, SSL_EXT_TLS1_3_CERTIFICATE,
+                                             rawexts, x, chainidx, &al,
+                                             PACKET_remaining(&spkt) == 0)) {
                 OPENSSL_free(rawexts);
                 goto f_err;
             }
