@@ -26,7 +26,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 125;
+plan tests => 126;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -340,3 +340,7 @@ ok(!verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_l
 
 ok(verify("ee-pss-sha256-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
     "PSS signature using SHA256 and auth level 2");
+
+# ED25519 certificate from draft-ietf-curdle-pkix-04
+ok(verify("ee-ed25519", "sslserver", ["root-ed25519"], []),
+   "ED25519 signature");
