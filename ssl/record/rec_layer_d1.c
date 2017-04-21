@@ -882,6 +882,11 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     if (len == 0 && !create_empty_fragment)
         return 0;
 
+    if (len > s->max_send_fragment) {
+        SSLerr(SSL_F_DO_DTLS1_WRITE, SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
+        return 0;
+    }
+
     sess = s->session;
 
     if ((sess == NULL) ||
