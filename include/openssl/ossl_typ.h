@@ -131,6 +131,8 @@ typedef struct x509_lookup_st X509_LOOKUP;
 typedef struct x509_lookup_method_st X509_LOOKUP_METHOD;
 typedef struct X509_VERIFY_PARAM_st X509_VERIFY_PARAM;
 
+typedef struct x509_sig_info_st X509_SIG_INFO;
+
 typedef struct pkcs8_priv_key_info_st PKCS8_PRIV_KEY_INFO;
 
 typedef struct v3_ext_ctx X509V3_CTX;
