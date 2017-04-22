@@ -2858,8 +2858,10 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt, int *al)
     s->s3->tmp.pmslen = pmslen;
 
     /* Log the premaster secret, if logging is enabled. */
-    if (!ssl_log_rsa_client_key_exchange(s, encdata, enclen, pms, pmslen))
+    if (!ssl_log_rsa_client_key_exchange(s, encdata, enclen, pms, pmslen)) {
+        s->s3->tmp.pms = NULL;
         goto err;
+    }
 
     return 1;
  err:
