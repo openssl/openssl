@@ -47,6 +47,13 @@
 
      return $dso . $dsoext;
  }
+ # This makes sure things get built in the order they need
+ # to. You're welcome.
+ sub dependmagic {
+     my $target = shift;
+
+     return "$target: build_generated\n\t\$(MAKE) depend && \$(MAKE) _$target\n_$target";
+ }
  '';
 -}
 
@@ -177,23 +184,21 @@ PROCESSOR= {- $config{processor} -}
 
 # The main targets ###################################################
 
-all: build_generated \
-     build_libs_nodep build_engines_nodep build_programs_nodep depend
-
-build_libs: build_generated build_libs_nodep depend
-build_libs_nodep: $(LIBS) {- join(" ",map { shlib_import($_) } @{$unified_info{libraries}}) -}
-build_engines: build_generated build_engines_nodep depend
-build_engines_nodep: $(ENGINES)
-build_programs: build_generated build_programs_nodep depend
-build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
+{- dependmagic('all'); -}: build_libs_nodep build_engines_nodep build_programs_nodep
+{- dependmagic('build_libs'); -}: build_libs_nodep
+{- dependmagic('build_engines'); -}: build_engines_nodep
+{- dependmagic('build_programs'); -}: build_programs_nodep
 
 build_generated: $(GENERATED_MANDATORY)
+build_libs_nodep: $(LIBS) {- join(" ",map { shlib_import($_) } @{$unified_info{libraries}}) -}
+build_engines_nodep: $(ENGINES)
+build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
 
 # Kept around for backward compatibility
 build_apps build_tests: build_programs
 
 test: tests
-tests: build_generated build_programs_nodep build_engines_nodep depend
+{- dependmagic('tests'); -}: build_programs_nodep build_engines_nodep
 	@rem {- output_off() if $disabled{tests}; "" -}
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
