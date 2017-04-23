@@ -438,6 +438,28 @@ static int server_srp_cb(SSL *s, int *ad, void *arg)
 }
 #endif  /* !OPENSSL_NO_SRP */
 
+#ifndef OPENSSL_NO_SRP
+static char *client_srp_cb(SSL *s, void *arg)
+{
+    CTX_DATA *ctx_data = (CTX_DATA*)(arg);
+    return OPENSSL_strdup(ctx_data->srp_password);
+}
+
+static int server_srp_cb(SSL *s, int *ad, void *arg)
+{
+    CTX_DATA *ctx_data = (CTX_DATA*)(arg);
+    if (strcmp(ctx_data->srp_user, SSL_get_srp_username(s)) != 0)
+        return SSL3_AL_FATAL;
+    if (SSL_set_srp_server_param_pw(s, ctx_data->srp_user,
+                                    ctx_data->srp_password,
+                                    "2048" /* known group */) < 0) {
+        *ad = SSL_AD_INTERNAL_ERROR;
+        return SSL3_AL_FATAL;
+    }
+    return SSL_ERROR_NONE;
+}
+#endif  /* !OPENSSL_NO_SRP */
+
 /*
  * Configure callbacks and other properties that can't be set directly
  * in the server/client CONF.
