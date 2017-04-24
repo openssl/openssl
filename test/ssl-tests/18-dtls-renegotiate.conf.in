@@ -19,7 +19,7 @@ our @tests = ();
 
 foreach my $sctp ("No", "Yes")
 {
-    next if disabled("sctp");
+    next if disabled("sctp") && $sctp eq "Yes";
 
     my $suffix = ($sctp eq "No") ? "" : "-sctp";
     our @tests_basic = (
