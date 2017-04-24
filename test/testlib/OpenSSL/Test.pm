@@ -403,6 +403,12 @@ return the resulting output as an array of lines.  If false or not given,
 the command will be executed with C<system()>, and C<run> will return 1 if
 the command was successful or 0 if it wasn't.
 
+=item B<prefix =E<gt> EXPR>
+
+If specified, EXPR will be used as a string to prefix the output from the
+command.  This is useful if the output contains lines starting with C<ok >
+or C<not ok > that can disturb Test::Harness.
+
 =item B<statusvar =E<gt> VARREF>
 
 If used, B<VARREF> must be a reference to a scalar variable.  It will be
@@ -452,8 +458,20 @@ sub run {
     # do.  For example, a program that gets aborted (and therefore signals
     # SIGABRT = 6) will appear to exit with the code 134.  We mimic this
     # to make it easier to compare with a manual run of the command.
-    if ($opts{capture}) {
-	@r = `$prefix$cmd`;
+    if ($opts{capture} || defined($opts{prefix})) {
+	my $pipe;
+	local $_;
+
+	open($pipe, '-|', "$prefix$cmd") or die "Can't start command: $!";
+	while(<$pipe>) {
+	    my $l = ($opts{prefix} // "") . $_;
+	    if ($opts{capture}) {
+		push @r, $l;
+	    } else {
+		print STDOUT $l;
+	    }
+	}
+	close $pipe;
     } else {
 	system("$prefix$cmd");
     }

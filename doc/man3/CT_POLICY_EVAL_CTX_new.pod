@@ -32,15 +32,23 @@ This policy may be, for example, that at least one valid SCT is available. To
 determine this, an SCT's timestamp and signature must be verified.
 This requires:
 
-=over
+=over 2
 
-=item * the public key of the log that issued the SCT
+=item *
 
-=item * the certificate that the SCT was issued for
+the public key of the log that issued the SCT
 
-=item * the issuer certificate (if the SCT was issued for a pre-certificate)
+=item *
 
-=item * the current time
+the certificate that the SCT was issued for
+
+=item *
+
+the issuer certificate (if the SCT was issued for a pre-certificate)
+
+=item *
+
+the current time
 
 =back
 
@@ -49,22 +57,30 @@ The above requirements are met using the setters described below.
 CT_POLICY_EVAL_CTX_new() creates an empty policy evaluation context. This
 should then be populated using:
 
-=over
+=over 2
 
-=item * CT_POLICY_EVAL_CTX_set1_cert() to provide the certificate the SCTs were issued for
+=item *
 
-Increments the reference count of the certificate.
-
-=item * CT_POLICY_EVAL_CTX_set1_issuer() to provide the issuer certificate
+CT_POLICY_EVAL_CTX_set1_cert() to provide the certificate the SCTs were issued for
 
 Increments the reference count of the certificate.
 
-=item * CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE() to provide a list of logs that are trusted as sources of SCTs
+=item *
+
+CT_POLICY_EVAL_CTX_set1_issuer() to provide the issuer certificate
+
+Increments the reference count of the certificate.
+
+=item *
+
+CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE() to provide a list of logs that are trusted as sources of SCTs
 
 Holds a pointer to the CTLOG_STORE, so the CTLOG_STORE must outlive the
 CT_POLICY_EVAL_CTX.
 
-=item * CT_POLICY_EVAL_CTX_set_time() to set the time SCTs should be compared with to determine if they are valid
+=item *
+
+CT_POLICY_EVAL_CTX_set_time() to set the time SCTs should be compared with to determine if they are valid
 
 The SCT timestamp will be compared to this time to check whether the SCT was
 issued in the future. RFC6962 states that "TLS clients MUST reject SCTs whose

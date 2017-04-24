@@ -124,7 +124,6 @@ Normally, this is found as the function I<algorithm>_ofb_encrypt().
 
 =over 2
 
-
 =item *
 
 a number of bits (j) <= 64 are enciphered at a time.
@@ -219,7 +218,6 @@ ecb mode.
 Normally, this is found as the function I<algorithm>_ede3_cbc_encrypt().
 
 =over 2
-
 
 =item *
 

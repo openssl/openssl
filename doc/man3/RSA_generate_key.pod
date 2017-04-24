@@ -32,7 +32,7 @@ progress of the key generation. If B<cb> is not B<NULL>, it
 will be called as follows using the BN_GENCB_call() function
 described on the L<BN_generate_prime(3)> page.
 
-=over 4
+=over 2
 
 =item *
 

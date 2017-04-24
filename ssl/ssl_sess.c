@@ -468,9 +468,10 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
     TICKET_RETURN r;
 
     if (SSL_IS_TLS13(s)) {
-        if (!tls_parse_extension(s, TLSEXT_IDX_psk_kex_modes, EXT_CLIENT_HELLO,
-                                 hello->pre_proc_exts, NULL, 0, al)
-                || !tls_parse_extension(s, TLSEXT_IDX_psk, EXT_CLIENT_HELLO,
+        if (!tls_parse_extension(s, TLSEXT_IDX_psk_kex_modes,
+                                 SSL_EXT_CLIENT_HELLO, hello->pre_proc_exts,
+                                 NULL, 0, al)
+                || !tls_parse_extension(s, TLSEXT_IDX_psk, SSL_EXT_CLIENT_HELLO,
                                         hello->pre_proc_exts, NULL, 0, al))
             return -1;
 

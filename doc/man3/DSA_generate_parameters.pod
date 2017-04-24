@@ -42,7 +42,7 @@ called as shown below. For information on the BN_GENCB structure and the
 BN_GENCB_call function discussed below, refer to
 L<BN_generate_prime(3)>.
 
-=over 4
+=over 2
 
 =item *
 

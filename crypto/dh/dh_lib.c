@@ -13,20 +13,6 @@
 #include "dh_locl.h"
 #include <openssl/engine.h>
 
-static const DH_METHOD *default_DH_method = NULL;
-
-void DH_set_default_method(const DH_METHOD *meth)
-{
-    default_DH_method = meth;
-}
-
-const DH_METHOD *DH_get_default_method(void)
-{
-    if (!default_DH_method)
-        default_DH_method = DH_OpenSSL();
-    return default_DH_method;
-}
-
 int DH_set_method(DH *dh, const DH_METHOD *meth)
 {
     /*

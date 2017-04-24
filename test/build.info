@@ -13,7 +13,7 @@ IF[{- !$disabled{tests} -}]
   PROGRAMS_NO_INST=\
           aborttest test_test \
           sanitytest exdatatest bntest \
-          ectest ecdsatest ecdhtest gmdifftest pbelutest ideatest \
+          ectest ecdsatest gmdifftest pbelutest ideatest \
           md2test \
           hmactest \
           rc2test rc4test rc5test \
@@ -28,13 +28,14 @@ IF[{- !$disabled{tests} -}]
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
-          pkey_meth_test uitest cipherbytes_test x509_time_test recordlentest
+          pkey_meth_test uitest cipherbytes_test asn1_encode_test \
+          x509_time_test x509_dup_cert_test recordlentest
 
   SOURCE[aborttest]=aborttest.c
   INCLUDE[aborttest]=../include
   DEPEND[aborttest]=../libcrypto
 
-  SOURCE[sanitytest]=sanitytest.c
+  SOURCE[sanitytest]=sanitytest.c testutil.c test_main.c
   INCLUDE[sanitytest]=../include
   DEPEND[sanitytest]=../libcrypto
 
@@ -42,7 +43,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[test_test]=.. ../include
   DEPEND[test_test]=../libcrypto
 
-  SOURCE[exdatatest]=exdatatest.c
+  SOURCE[exdatatest]=exdatatest.c testutil.c test_main.c
   INCLUDE[exdatatest]=../include
   DEPEND[exdatatest]=../libcrypto
 
@@ -54,83 +55,79 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[ectest]=.. ../include
   DEPEND[ectest]=../libcrypto
 
-  SOURCE[ecdsatest]=ecdsatest.c
+  SOURCE[ecdsatest]=ecdsatest.c testutil.c test_main.c
   INCLUDE[ecdsatest]=../include
   DEPEND[ecdsatest]=../libcrypto
 
-  SOURCE[ecdhtest]=ecdhtest.c
-  INCLUDE[ecdhtest]=../include
-  DEPEND[ecdhtest]=../libcrypto
-
-  SOURCE[gmdifftest]=gmdifftest.c
+  SOURCE[gmdifftest]=gmdifftest.c testutil.c test_main.c
   INCLUDE[gmdifftest]=../include
   DEPEND[gmdifftest]=../libcrypto
 
-  SOURCE[pbelutest]=pbelutest.c
+  SOURCE[pbelutest]=pbelutest.c testutil.c test_main.c
   INCLUDE[pbelutest]=../include
   DEPEND[pbelutest]=../libcrypto
 
-  SOURCE[ideatest]=ideatest.c
+  SOURCE[ideatest]=ideatest.c testutil.c test_main.c
   INCLUDE[ideatest]=../include
   DEPEND[ideatest]=../libcrypto
 
-  SOURCE[md2test]=md2test.c
+  SOURCE[md2test]=md2test.c testutil.c test_main.c
   INCLUDE[md2test]=../include
   DEPEND[md2test]=../libcrypto
 
-  SOURCE[hmactest]=hmactest.c
+  SOURCE[hmactest]=hmactest.c testutil.c test_main.c
   INCLUDE[hmactest]=../include
   DEPEND[hmactest]=../libcrypto
 
-  SOURCE[rc2test]=rc2test.c
+  SOURCE[rc2test]=rc2test.c testutil.c test_main.c
   INCLUDE[rc2test]=../include
   DEPEND[rc2test]=../libcrypto
 
-  SOURCE[rc4test]=rc4test.c
+  SOURCE[rc4test]=rc4test.c testutil.c test_main.c
   INCLUDE[rc4test]=../include
   DEPEND[rc4test]=../libcrypto
 
-  SOURCE[rc5test]=rc5test.c
+  SOURCE[rc5test]=rc5test.c testutil.c test_main.c
   INCLUDE[rc5test]=../include
   DEPEND[rc5test]=../libcrypto
 
-  SOURCE[destest]=destest.c
+  SOURCE[destest]=destest.c testutil.c test_main.c
   INCLUDE[destest]=../include
   DEPEND[destest]=../libcrypto
 
-  SOURCE[sha1test]=sha1test.c
+  SOURCE[sha1test]=sha1test.c testutil.c test_main.c
   INCLUDE[sha1test]=../include
   DEPEND[sha1test]=../libcrypto
 
-  SOURCE[sha256t]=sha256t.c
+  SOURCE[sha256t]=sha256t.c testutil.c test_main.c
   INCLUDE[sha256t]=../include
   DEPEND[sha256t]=../libcrypto
 
-  SOURCE[sha512t]=sha512t.c
+  SOURCE[sha512t]=sha512t.c testutil.c test_main.c
   INCLUDE[sha512t]=../include
   DEPEND[sha512t]=../libcrypto
 
-  SOURCE[mdc2test]=mdc2test.c
+  SOURCE[mdc2test]=mdc2test.c testutil.c test_main.c
   INCLUDE[mdc2test]=../include
   DEPEND[mdc2test]=../libcrypto
 
-  SOURCE[randtest]=randtest.c
+  SOURCE[randtest]=randtest.c testutil.c test_main.c
   INCLUDE[randtest]=../include
   DEPEND[randtest]=../libcrypto
 
-  SOURCE[dhtest]=dhtest.c
-  INCLUDE[dhtest]=../include
+  SOURCE[dhtest]=dhtest.c testutil.c test_main.c
+  INCLUDE[dhtest]=.. ../include
   DEPEND[dhtest]=../libcrypto
 
-  SOURCE[enginetest]=enginetest.c
+  SOURCE[enginetest]=enginetest.c testutil.c test_main.c
   INCLUDE[enginetest]=../include
   DEPEND[enginetest]=../libcrypto
 
-  SOURCE[casttest]=casttest.c
-  INCLUDE[casttest]=../include
+  SOURCE[casttest]=casttest.c testutil.c test_main.c
+  INCLUDE[casttest]=.. ../include
   DEPEND[casttest]=../libcrypto
 
-  SOURCE[bftest]=bftest.c
+  SOURCE[bftest]=bftest.c testutil.c test_main_custom.c
   INCLUDE[bftest]=../include
   DEPEND[bftest]=../libcrypto
 
@@ -138,15 +135,15 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[ssltest_old]=.. ../include
   DEPEND[ssltest_old]=../libcrypto ../libssl
 
-  SOURCE[dsatest]=dsatest.c
-  INCLUDE[dsatest]=../include
+  SOURCE[dsatest]=dsatest.c testutil.c test_main.c
+  INCLUDE[dsatest]=.. ../include
   DEPEND[dsatest]=../libcrypto
 
   SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include
   DEPEND[exptest]=../libcrypto
 
-  SOURCE[rsa_test]=rsa_test.c
+  SOURCE[rsa_test]=rsa_test.c testutil.c test_main.c
   INCLUDE[rsa_test]=.. ../include
   DEPEND[rsa_test]=../libcrypto
 
@@ -154,7 +151,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[evp_test]=../include
   DEPEND[evp_test]=../libcrypto
 
-  SOURCE[evp_extra_test]=evp_extra_test.c
+  SOURCE[evp_extra_test]=evp_extra_test.c testutil.c test_main.c
   INCLUDE[evp_extra_test]=../include
   DEPEND[evp_extra_test]=../libcrypto
 
@@ -162,15 +159,15 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[igetest]=.. ../include
   DEPEND[igetest]=../libcrypto
 
-  SOURCE[v3nametest]=v3nametest.c
-  INCLUDE[v3nametest]=../include
+  SOURCE[v3nametest]=v3nametest.c testutil.c test_main.c
+  INCLUDE[v3nametest]=.. ../include
   DEPEND[v3nametest]=../libcrypto
 
   SOURCE[crltest]=crltest.c testutil.c test_main.c
   INCLUDE[crltest]=../include
   DEPEND[crltest]=../libcrypto
 
-  SOURCE[v3ext]=v3ext.c
+  SOURCE[v3ext]=v3ext.c testutil.c test_main_custom.c
   INCLUDE[v3ext]=../include
   DEPEND[v3ext]=../libcrypto
 
@@ -178,11 +175,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[danetest]=../include
   DEPEND[danetest]=../libcrypto ../libssl
 
-  SOURCE[constant_time_test]=constant_time_test.c
+  SOURCE[constant_time_test]=constant_time_test.c testutil.c test_main.c
   INCLUDE[constant_time_test]=.. ../include
   DEPEND[constant_time_test]=../libcrypto
 
-  SOURCE[verify_extra_test]=verify_extra_test.c
+  SOURCE[verify_extra_test]=verify_extra_test.c testutil.c test_main_custom.c
   INCLUDE[verify_extra_test]=../include
   DEPEND[verify_extra_test]=../libcrypto
 
@@ -190,11 +187,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[clienthellotest]=../include
   DEPEND[clienthellotest]=../libcrypto ../libssl
 
-  SOURCE[bad_dtls_test]=bad_dtls_test.c
+  SOURCE[bad_dtls_test]=bad_dtls_test.c testutil.c test_main.c
   INCLUDE[bad_dtls_test]=../include
   DEPEND[bad_dtls_test]=../libcrypto ../libssl
 
-  SOURCE[packettest]=packettest.c
+  SOURCE[packettest]=packettest.c testutil.c test_main.c
   INCLUDE[packettest]=../include
   DEPEND[packettest]=../libcrypto
 
@@ -202,15 +199,15 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[asynctest]=.. ../include
   DEPEND[asynctest]=../libcrypto
 
-  SOURCE[secmemtest]=secmemtest.c
+  SOURCE[secmemtest]=secmemtest.c testutil.c test_main.c
   INCLUDE[secmemtest]=../include
   DEPEND[secmemtest]=../libcrypto
 
-  SOURCE[srptest]=srptest.c
+  SOURCE[srptest]=srptest.c testutil.c test_main.c
   INCLUDE[srptest]=../include
   DEPEND[srptest]=../libcrypto
 
-  SOURCE[memleaktest]=memleaktest.c
+  SOURCE[memleaktest]=memleaktest.c testutil.c
   INCLUDE[memleaktest]=../include
   DEPEND[memleaktest]=../libcrypto
 
@@ -230,11 +227,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[ct_test]=../crypto/include ../include
   DEPEND[ct_test]=../libcrypto
 
-  SOURCE[threadstest]=threadstest.c
+  SOURCE[threadstest]=threadstest.c testutil.c test_main.c
   INCLUDE[threadstest]=.. ../include
   DEPEND[threadstest]=../libcrypto
 
-  SOURCE[afalgtest]=afalgtest.c
+  SOURCE[afalgtest]=afalgtest.c testutil.c
   INCLUDE[afalgtest]=.. ../include
   DEPEND[afalgtest]=../libcrypto
 
@@ -259,16 +256,16 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[handshake_helper.o]=../include
   INCLUDE[ssltestlib.o]=.. ../include
 
-  SOURCE[x509aux]=x509aux.c
-  INCLUDE[x509aux]=../include
+  SOURCE[x509aux]=x509aux.c testutil.c test_main_custom.c
+  INCLUDE[x509aux]=.. ../include
   DEPEND[x509aux]=../libcrypto
 
-  SOURCE[asynciotest]=asynciotest.c ssltestlib.c
+  SOURCE[asynciotest]=asynciotest.c ssltestlib.c testutil.c test_main_custom.c
   INCLUDE[asynciotest]=../include
   DEPEND[asynciotest]=../libcrypto ../libssl
 
-  SOURCE[bioprinttest]=bioprinttest.c
-  INCLUDE[bioprinttest]=../include
+  SOURCE[bioprinttest]=bioprinttest.c testutil.c test_main_custom.c
+  INCLUDE[bioprinttest]=../ ../include
   DEPEND[bioprinttest]=../libcrypto
 
   SOURCE[sslapitest]=sslapitest.c ssltestlib.c testutil.c test_main_custom.c
@@ -279,7 +276,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[dtlstest]=../include .
   DEPEND[dtlstest]=../libcrypto ../libssl
 
-  SOURCE[sslcorrupttest]=sslcorrupttest.c ssltestlib.c testutil.c
+  SOURCE[sslcorrupttest]=sslcorrupttest.c ssltestlib.c testutil.c test_main_custom.c
   INCLUDE[sslcorrupttest]=../include .
   DEPEND[sslcorrupttest]=../libcrypto ../libssl
 
@@ -299,6 +296,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[recordlentest]=../include .
   DEPEND[recordlentest]=../libcrypto ../libssl
 
+  SOURCE[x509_dup_cert_test]=x509_dup_cert_test.c testutil.c test_main_custom.c
+  INCLUDE[x509_dup_cert_test]=../include
+  DEPEND[x509_dup_cert_test]=../libcrypto
+
   IF[{- !$disabled{psk} -}]
     PROGRAMS_NO_INST=dtls_mtu_test
     SOURCE[dtls_mtu_test]=dtls_mtu_test.c ssltestlib.c
@@ -314,7 +315,7 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- $disabled{shared} -}]
     PROGRAMS_NO_INST=cipher_overhead_test
-    SOURCE[cipher_overhead_test]=cipher_overhead_test.c
+    SOURCE[cipher_overhead_test]=cipher_overhead_test.c testutil.c test_main.c
     INCLUDE[cipher_overhead_test]=.. ../include
     DEPEND[cipher_overhead_test]=../libcrypto ../libssl
   ENDIF
@@ -324,9 +325,13 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[uitest]=.. ../include
   DEPEND[uitest]=../libcrypto ../libssl
 
-  SOURCE[cipherbytes_test]=cipherbytes_test.c
+  SOURCE[cipherbytes_test]=cipherbytes_test.c testutil.c test_main_custom.c
   INCLUDE[cipherbytes_test]=.. ../include
   DEPEND[cipherbytes_test]=../libcrypto ../libssl
+
+  SOURCE[asn1_encode_test]=asn1_encode_test.c testutil.c test_main.c
+  INCLUDE[asn1_encode_test]=../include
+  DEPEND[asn1_encode_test]=../libcrypto
 
   # Internal test programs.  These are essentially a collection of internal
   # test routines.  Some of them need to reach internal symbols that aren't
@@ -353,7 +358,7 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[poly1305_internal_test]=.. ../include ../crypto/include
     DEPEND[poly1305_internal_test]=../libcrypto.a
 
-    SOURCE[chacha_internal_test]=chacha_internal_test.c
+    SOURCE[chacha_internal_test]=chacha_internal_test.c testutil.c test_main.c
     INCLUDE[chacha_internal_test]=.. ../include ../crypto/include
     DEPEND[chacha_internal_test]=../libcrypto.a
 

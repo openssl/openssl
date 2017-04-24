@@ -780,7 +780,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
      * client's due to the network latency). Therefore we add 1000ms to our age
      * calculation to adjust for rounding errors.
      */
-    if (sess->timeout >= agesec
+    if (sess->timeout >= (long)agesec
             && agems / (uint32_t)1000 == agesec
             && ticket_age <= agems + 1000
             && ticket_age + TICKET_AGE_ALLOWANCE >= agems + 1000) {
@@ -1133,7 +1133,7 @@ int tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt, unsigned int context,
 int tls_construct_stoc_early_data(SSL *s, WPACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx, int *al)
 {
-    if (context == EXT_TLS1_3_NEW_SESSION_TICKET) {
+    if (context == SSL_EXT_TLS1_3_NEW_SESSION_TICKET) {
         if (s->max_early_data == 0)
             return 1;
 

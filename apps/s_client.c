@@ -547,7 +547,7 @@ typedef enum OPTION_choice {
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
     OPT_ASYNC, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
-    OPT_KEYLOG_FILE, OPT_EARLY_DATA,
+    OPT_KEYLOG_FILE, OPT_EARLY_DATA, OPT_REQCAFILE,
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
@@ -587,6 +587,8 @@ const OPTIONS s_client_options[] = {
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
+    {"requestCAfile", OPT_REQCAFILE, '<',
+      "PEM format file of CA names to send to the server"},
     {"dane_tlsa_domain", OPT_DANE_TLSA_DOMAIN, 's', "DANE TLSA base domain"},
     {"dane_tlsa_rrdata", OPT_DANE_TLSA_RRDATA, 's',
      "DANE TLSA rrdata presentation form"},
@@ -831,6 +833,7 @@ int s_client_main(int argc, char **argv)
     char *port = OPENSSL_strdup(PORT);
     char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
+    char *ReqCAfile = NULL;
     char *sess_in = NULL, *crl_file = NULL, *p;
     char *xmpphost = NULL;
     const char *ehlo = "mail.example.com";
@@ -1276,6 +1279,9 @@ int s_client_main(int argc, char **argv)
         case OPT_BUILD_CHAIN:
             build_chain = 1;
             break;
+        case OPT_REQCAFILE:
+            ReqCAfile = opt_arg();
+            break;
         case OPT_CAFILE:
             CAfile = opt_arg();
             break;
@@ -1576,6 +1582,17 @@ int s_client_main(int argc, char **argv)
         BIO_printf(bio_err, "Error loading store locations\n");
         ERR_print_errors(bio_err);
         goto end;
+    }
+    if (ReqCAfile != NULL) {
+        STACK_OF(X509_NAME) *nm = sk_X509_NAME_new_null();
+
+        if (nm == NULL || !SSL_add_file_cert_subjects_to_stack(nm, ReqCAfile)) {
+            sk_X509_NAME_pop_free(nm, X509_NAME_free);
+            BIO_printf(bio_err, "Error loading CA names\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        SSL_CTX_set0_CA_list(ctx, nm);
     }
 #ifndef OPENSSL_NO_ENGINE
     if (ssl_client_engine) {
@@ -2403,7 +2420,7 @@ int s_client_main(int argc, char **argv)
         else
             timeoutp = NULL;
 
-        if (SSL_in_init(con) && !SSL_total_renegotiations(con)
+        if (!SSL_is_init_finished(con) && SSL_total_renegotiations(con) == 0
                 && SSL_get_key_update_type(con) == SSL_KEY_UPDATE_NONE) {
             in_init = 1;
             tty_on = 0;
@@ -2804,9 +2821,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     X509 *peer = NULL;
     char buf[BUFSIZ];
     STACK_OF(X509) *sk;
-    STACK_OF(X509_NAME) *sk2;
     const SSL_CIPHER *c;
-    X509_NAME *xn;
     int i;
 #ifndef OPENSSL_NO_COMP
     const COMP_METHOD *comp, *expansion;
@@ -2848,21 +2863,10 @@ static void print_stuff(BIO *bio, SSL *s, int full)
             BIO_printf(bio, "subject=%s\n", buf);
             X509_NAME_oneline(X509_get_issuer_name(peer), buf, sizeof buf);
             BIO_printf(bio, "issuer=%s\n", buf);
-        } else
-            BIO_printf(bio, "no peer certificate available\n");
-
-        sk2 = SSL_get_client_CA_list(s);
-        if ((sk2 != NULL) && (sk_X509_NAME_num(sk2) > 0)) {
-            BIO_printf(bio, "---\nAcceptable client certificate CA names\n");
-            for (i = 0; i < sk_X509_NAME_num(sk2); i++) {
-                xn = sk_X509_NAME_value(sk2, i);
-                X509_NAME_oneline(xn, buf, sizeof(buf));
-                BIO_write(bio, buf, strlen(buf));
-                BIO_write(bio, "\n", 1);
-            }
         } else {
-            BIO_printf(bio, "---\nNo client certificate CA names sent\n");
+            BIO_printf(bio, "no peer certificate available\n");
         }
+        print_ca_names(bio, s);
 
         ssl_print_sigalgs(bio, s);
         ssl_print_tmp_key(bio, s);
@@ -2901,8 +2905,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #endif
 
         BIO_printf(bio,
-                   "---\nSSL handshake has read %" PRIu64
-                   " bytes and written %" PRIu64 " bytes\n",
+                   "---\nSSL handshake has read %ju bytes "
+                   "and written %ju bytes\n",
                    BIO_number_read(SSL_get_rbio(s)),
                    BIO_number_written(SSL_get_wbio(s)));
     }

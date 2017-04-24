@@ -691,6 +691,8 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
 
     /* Convert numerical OID string to an ASN1_OBJECT structure */
     tmpoid = OBJ_txt2obj(oid, 1);
+    if (tmpoid == NULL)
+        return 0;
 
     /* If NID is not NID_undef then object already exists */
     if (OBJ_obj2nid(tmpoid) != NID_undef) {

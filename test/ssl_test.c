@@ -195,54 +195,6 @@ static int check_nid(const char *name, int expected_nid, int nid)
     return 0;
 }
 
-static int check_tmp_key(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
-{
-    return check_nid("Tmp key", test_ctx->expected_tmp_key_type,
-                     result->tmp_key_type);
-}
-
-static int check_server_cert_type(HANDSHAKE_RESULT *result,
-                                  SSL_TEST_CTX *test_ctx)
-{
-    return check_nid("Server certificate", test_ctx->expected_server_cert_type,
-                     result->server_cert_type);
-}
-
-static int check_server_sign_hash(HANDSHAKE_RESULT *result,
-                                  SSL_TEST_CTX *test_ctx)
-{
-    return check_nid("Server signing hash", test_ctx->expected_server_sign_hash,
-                     result->server_sign_hash);
-}
-
-static int check_server_sign_type(HANDSHAKE_RESULT *result,
-                                  SSL_TEST_CTX *test_ctx)
-{
-    return check_nid("Server signing", test_ctx->expected_server_sign_type,
-                     result->server_sign_type);
-}
-
-static int check_client_cert_type(HANDSHAKE_RESULT *result,
-                                  SSL_TEST_CTX *test_ctx)
-{
-    return check_nid("Client certificate", test_ctx->expected_client_cert_type,
-                     result->client_cert_type);
-}
-
-static int check_client_sign_hash(HANDSHAKE_RESULT *result,
-                                  SSL_TEST_CTX *test_ctx)
-{
-    return check_nid("Client signing hash", test_ctx->expected_client_sign_hash,
-                     result->client_sign_hash);
-}
-
-static int check_client_sign_type(HANDSHAKE_RESULT *result,
-                                  SSL_TEST_CTX *test_ctx)
-{
-    return check_nid("Client signing", test_ctx->expected_client_sign_type,
-                     result->client_sign_type);
-}
-
 static void print_ca_names(STACK_OF(X509_NAME) *names)
 {
     BIO *err;
@@ -291,6 +243,62 @@ static int check_ca_names(const char *name,
     return 0;
 }
 
+static int check_tmp_key(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Tmp key", test_ctx->expected_tmp_key_type,
+                     result->tmp_key_type);
+}
+
+static int check_server_cert_type(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Server certificate", test_ctx->expected_server_cert_type,
+                     result->server_cert_type);
+}
+
+static int check_server_sign_hash(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Server signing hash", test_ctx->expected_server_sign_hash,
+                     result->server_sign_hash);
+}
+
+static int check_server_sign_type(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Server signing", test_ctx->expected_server_sign_type,
+                     result->server_sign_type);
+}
+
+static int check_server_ca_names(HANDSHAKE_RESULT *result,
+                                 SSL_TEST_CTX *test_ctx)
+{
+    return check_ca_names("Server CA names",
+                          test_ctx->expected_server_ca_names,
+                          result->server_ca_names);
+}
+
+static int check_client_cert_type(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Client certificate", test_ctx->expected_client_cert_type,
+                     result->client_cert_type);
+}
+
+static int check_client_sign_hash(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Client signing hash", test_ctx->expected_client_sign_hash,
+                     result->client_sign_hash);
+}
+
+static int check_client_sign_type(HANDSHAKE_RESULT *result,
+                                  SSL_TEST_CTX *test_ctx)
+{
+    return check_nid("Client signing", test_ctx->expected_client_sign_type,
+                     result->client_sign_type);
+}
+
 static int check_client_ca_names(HANDSHAKE_RESULT *result,
                                  SSL_TEST_CTX *test_ctx)
 {
@@ -324,6 +332,7 @@ static int check_test(HANDSHAKE_RESULT *result, SSL_TEST_CTX *test_ctx)
         ret &= check_server_cert_type(result, test_ctx);
         ret &= check_server_sign_hash(result, test_ctx);
         ret &= check_server_sign_type(result, test_ctx);
+        ret &= check_server_ca_names(result, test_ctx);
         ret &= check_client_cert_type(result, test_ctx);
         ret &= check_client_sign_hash(result, test_ctx);
         ret &= check_client_sign_type(result, test_ctx);

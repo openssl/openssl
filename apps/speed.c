@@ -1444,12 +1444,8 @@ int speed_main(int argc, char **argv)
             continue;
         }
 #ifndef OPENSSL_NO_RSA
-# ifndef RSA_NULL
-        if (strcmp(*argv, "openssl") == 0) {
-            RSA_set_default_method(RSA_PKCS1_OpenSSL());
+        if (strcmp(*argv, "openssl") == 0)
             continue;
-        }
-# endif
         if (strcmp(*argv, "rsa") == 0) {
             rsa_doit[R_RSA_512] = rsa_doit[R_RSA_1024] =
                 rsa_doit[R_RSA_2048] = rsa_doit[R_RSA_3072] =

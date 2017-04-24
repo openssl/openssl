@@ -34,6 +34,7 @@ void HANDSHAKE_RESULT_free(HANDSHAKE_RESULT *result)
     OPENSSL_free(result->server_npn_negotiated);
     OPENSSL_free(result->client_alpn_negotiated);
     OPENSSL_free(result->server_alpn_negotiated);
+    sk_X509_NAME_pop_free(result->server_ca_names, X509_NAME_free);
     sk_X509_NAME_pop_free(result->client_ca_names, X509_NAME_free);
     OPENSSL_free(result);
 }
@@ -412,7 +413,7 @@ static int server_alpn_cb(SSL *s, const unsigned char **out,
     *out = tmp_out;
     /* Unlike NPN, we don't tolerate a mismatch. */
     return ret == OPENSSL_NPN_NEGOTIATED ? SSL_TLSEXT_ERR_OK
-        : SSL_TLSEXT_ERR_NOACK;
+        : SSL_TLSEXT_ERR_ALERT_FATAL;
 }
 
 #ifndef OPENSSL_NO_SRP
@@ -1123,7 +1124,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     /* API dictates unsigned int rather than size_t. */
     unsigned int proto_len = 0;
     EVP_PKEY *tmp_key;
-    STACK_OF(X509_NAME) *names;
+    const STACK_OF(X509_NAME) *names;
 
     memset(&server_ctx_data, 0, sizeof(server_ctx_data));
     memset(&server2_ctx_data, 0, sizeof(server2_ctx_data));
@@ -1297,11 +1298,17 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     SSL_get_peer_signature_type_nid(client.ssl, &ret->server_sign_type);
     SSL_get_peer_signature_type_nid(server.ssl, &ret->client_sign_type);
 
-    names = SSL_get_client_CA_list(client.ssl);
+    names = SSL_get0_peer_CA_list(client.ssl);
     if (names == NULL)
         ret->client_ca_names = NULL;
     else
         ret->client_ca_names = SSL_dup_CA_list(names);
+
+    names = SSL_get0_peer_CA_list(server.ssl);
+    if (names == NULL)
+        ret->server_ca_names = NULL;
+    else
+        ret->server_ca_names = SSL_dup_CA_list(names);
 
     ret->server_cert_type = peer_pkey_type(client.ssl);
     ret->client_cert_type = peer_pkey_type(server.ssl);

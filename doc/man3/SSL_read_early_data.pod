@@ -19,7 +19,7 @@ SSL_get_early_data_status
  int SSL_CTX_set_max_early_data(SSL_CTX *ctx, uint32_t max_early_data);
  uint32_t SSL_CTX_get_max_early_data(const SSL_CTX *ctx);
  int SSL_set_max_early_data(SSL *s, uint32_t max_early_data);
- uint32_t SSL_get_max_early_data(const SSL_CTX *s);
+ uint32_t SSL_get_max_early_data(const SSL *s);
  uint32_t SSL_SESSION_get_max_early_data(const SSL_SESSION *s);
 
  int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written);

@@ -2704,6 +2704,7 @@ static void print_connection_info(SSL *con)
     ssl_print_point_formats(bio_s_out, con);
     ssl_print_groups(bio_s_out, con, 0);
 #endif
+    print_ca_names(bio_s_out, con);
     BIO_printf(bio_s_out, "CIPHER is %s\n", (str != NULL) ? str : "(NONE)");
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
@@ -2990,6 +2991,7 @@ static int www_body(int s, int stype, unsigned char *context)
 #ifndef OPENSSL_NO_EC
             ssl_print_groups(io, con, 0);
 #endif
+            print_ca_names(io, con);
             BIO_printf(io, (SSL_session_reused(con)
                             ? "---\nReused, " : "---\nNew, "));
             c = SSL_get_current_cipher(con);

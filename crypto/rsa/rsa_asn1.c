@@ -32,7 +32,7 @@ static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 }
 
 ASN1_SEQUENCE_cb(RSAPrivateKey, rsa_cb) = {
-        ASN1_SIMPLE(RSA, version, LONG),
+        ASN1_EMBED(RSA, version, INT32),
         ASN1_SIMPLE(RSA, n, BIGNUM),
         ASN1_SIMPLE(RSA, e, BIGNUM),
         ASN1_SIMPLE(RSA, d, CBIGNUM),

@@ -1018,7 +1018,7 @@ void SSL_free(SSL *s)
     OPENSSL_free(s->ext.tls13_cookie);
     OPENSSL_free(s->clienthello);
 
-    sk_X509_NAME_pop_free(s->client_CA, X509_NAME_free);
+    sk_X509_NAME_pop_free(s->ca_names, X509_NAME_free);
 
     sk_X509_pop_free(s->verified_chain, X509_free);
 
@@ -1799,7 +1799,7 @@ int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
 
 int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 {
-    int ret;
+    int ret, early_data_state;
 
     switch (s->early_data_state) {
     case SSL_EARLY_DATA_NONE:
@@ -1831,10 +1831,11 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 
     case SSL_EARLY_DATA_FINISHED_READING:
     case SSL_EARLY_DATA_READ_RETRY:
+        early_data_state = s->early_data_state;
         /* We are a server writing to an unauthenticated client */
         s->early_data_state = SSL_EARLY_DATA_UNAUTH_WRITING;
         ret = SSL_write_ex(s, buf, num, written);
-        s->early_data_state = SSL_EARLY_DATA_READ_RETRY;
+        s->early_data_state = early_data_state;
         return ret;
 
     default:
@@ -2691,7 +2692,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         goto err2;
     }
 
-    if ((ret->client_CA = sk_X509_NAME_new_null()) == NULL)
+    if ((ret->ca_names = sk_X509_NAME_new_null()) == NULL)
         goto err;
 
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data))
@@ -2813,7 +2814,7 @@ void SSL_CTX_free(SSL_CTX *a)
     sk_SSL_CIPHER_free(a->cipher_list);
     sk_SSL_CIPHER_free(a->cipher_list_by_id);
     ssl_cert_free(a->cert);
-    sk_X509_NAME_pop_free(a->client_CA, X509_NAME_free);
+    sk_X509_NAME_pop_free(a->ca_names, X509_NAME_free);
     sk_X509_pop_free(a->extra_certs, X509_free);
     a->comp_methods = NULL;
 #ifndef OPENSSL_NO_SRTP
@@ -3409,10 +3410,10 @@ SSL *SSL_dup(SSL *s)
             goto err;
 
     /* Dup the client_CA list */
-    if (s->client_CA != NULL) {
-        if ((sk = sk_X509_NAME_dup(s->client_CA)) == NULL)
+    if (s->ca_names != NULL) {
+        if ((sk = sk_X509_NAME_dup(s->ca_names)) == NULL)
             goto err;
-        ret->client_CA = sk;
+        ret->ca_names = sk;
         for (i = 0; i < sk_X509_NAME_num(sk); i++) {
             xn = sk_X509_NAME_value(sk, i);
             if (sk_X509_NAME_set(sk, i, X509_NAME_dup(xn)) == NULL) {
@@ -4360,7 +4361,8 @@ int ssl_validate_ct(SSL *s)
     CT_POLICY_EVAL_CTX_set1_cert(ctx, cert);
     CT_POLICY_EVAL_CTX_set1_issuer(ctx, issuer);
     CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(ctx, s->ctx->ctlog_store);
-    CT_POLICY_EVAL_CTX_set_time(ctx, SSL_SESSION_get_time(SSL_get0_session(s)));
+    CT_POLICY_EVAL_CTX_set_time(
+            ctx, (uint64_t)SSL_SESSION_get_time(SSL_get0_session(s)) * 1000);
 
     scts = SSL_get0_peer_scts(s);
 
@@ -4810,7 +4812,7 @@ int SSL_set_max_early_data(SSL *s, uint32_t max_early_data)
     return 1;
 }
 
-uint32_t SSL_get_max_early_data(const SSL_CTX *s)
+uint32_t SSL_get_max_early_data(const SSL *s)
 {
     return s->max_early_data;
 }

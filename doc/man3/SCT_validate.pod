@@ -31,20 +31,26 @@ SCT_get_validation_status().
 
 A CT_POLICY_EVAL_CTX must be provided that specifies:
 
-=over
+=over 2
 
-=item * The certificate the SCT was issued for.
+=item *
+
+The certificate the SCT was issued for.
 
 Failure to provide the certificate will result in the validation status being
 SCT_VALIDATION_STATUS_UNVERIFIED.
 
-=item * The issuer of that certificate.
+=item *
+
+The issuer of that certificate.
 
 This is only required if the SCT was issued for a pre-certificate
 (see RFC 6962). If it is required but not provided, the validation status will
 be SCT_VALIDATION_STATUS_UNVERIFIED.
 
-=item * A CTLOG_STORE that contains the CT log that issued this SCT.
+=item *
+
+A CTLOG_STORE that contains the CT log that issued this SCT.
 
 If the SCT was issued by a log that is not in this CTLOG_STORE, the validation
 status will be SCT_VALIDATION_STATUS_UNKNOWN_LOG.

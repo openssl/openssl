@@ -190,8 +190,16 @@ DECLARE_COMPARISON(char *, str, eq)
 DECLARE_COMPARISON(char *, str, ne)
 
 /*
+ * Same as above, but for strncmp.
+ */
+int test_strn_eq(const char *file, int line, const char *, const char *,
+                 const char *a, const char *b, size_t s);
+int test_strn_ne(const char *file, int line, const char *, const char *,
+                 const char *a, const char *b, size_t s);
+
+/*
  * Equality test for memory blocks where NULL is a legitimate value.
-* These calls return 1 if the two memory blocks compare true.
+ * These calls return 1 if the two memory blocks compare true.
  * Otherwise, they return 0 and pretty-print diagnostics.
  * These should not be called directly, use the TEST_xxx macros below instead.
  */
@@ -223,6 +231,12 @@ void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 /*
  * The following macros provide wrapper calls to the test functions with
  * a default description that indicates the file and line number of the error.
+ *
+ * The following macros guarantee to evaluate each argument exactly once.
+ * This allows constructs such as: if(!TEST_ptr(ptr = OPENSSL_malloc(..)))
+ * to produce better contextual output than:
+ *      ptr = OPENSSL_malloc(..);
+ *      if (!TEST_ptr(ptr))
  */
 # define TEST_int_eq(a, b)    test_int_eq(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_int_ne(a, b)    test_int_ne(__FILE__, __LINE__, #a, #b, a, b)
@@ -238,47 +252,47 @@ void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 # define TEST_int_gt(a, b)    test_int_gt(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_int_ge(a, b)    test_int_ge(__FILE__, __LINE__, #a, #b, a, b)
 
-# define TEST_uint_eq(a, b)    test_uint_eq(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_uint_ne(a, b)    test_uint_ne(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_uint_lt(a, b)    test_uint_lt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_uint_le(a, b)    test_uint_le(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_uint_gt(a, b)    test_uint_gt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_uint_ge(a, b)    test_uint_ge(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uint_eq(a, b)   test_uint_eq(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uint_ne(a, b)   test_uint_ne(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uint_lt(a, b)   test_uint_lt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uint_le(a, b)   test_uint_le(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uint_gt(a, b)   test_uint_gt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uint_ge(a, b)   test_uint_ge(__FILE__, __LINE__, #a, #b, a, b)
 
-# define TEST_char_eq(a, b)    test_char_eq(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_char_ne(a, b)    test_char_ne(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_char_lt(a, b)    test_char_lt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_char_le(a, b)    test_char_le(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_char_gt(a, b)    test_char_gt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_char_ge(a, b)    test_char_ge(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_char_eq(a, b)   test_char_eq(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_char_ne(a, b)   test_char_ne(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_char_lt(a, b)   test_char_lt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_char_le(a, b)   test_char_le(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_char_gt(a, b)   test_char_gt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_char_ge(a, b)   test_char_ge(__FILE__, __LINE__, #a, #b, a, b)
 
-# define TEST_uchar_eq(a, b)    test_uchar_eq(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_uchar_ne(a, b)    test_uchar_ne(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_uchar_lt(a, b)    test_uchar_lt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_uchar_le(a, b)    test_uchar_le(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_uchar_gt(a, b)    test_uchar_gt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_uchar_ge(a, b)    test_uchar_ge(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uchar_eq(a, b)  test_uchar_eq(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uchar_ne(a, b)  test_uchar_ne(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uchar_lt(a, b)  test_uchar_lt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uchar_le(a, b)  test_uchar_le(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uchar_gt(a, b)  test_uchar_gt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_uchar_ge(a, b)  test_uchar_ge(__FILE__, __LINE__, #a, #b, a, b)
 
-# define TEST_long_eq(a, b)    test_long_eq(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_long_ne(a, b)    test_long_ne(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_long_lt(a, b)    test_long_lt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_long_le(a, b)    test_long_le(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_long_gt(a, b)    test_long_gt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_long_ge(a, b)    test_long_ge(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_long_eq(a, b)   test_long_eq(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_long_ne(a, b)   test_long_ne(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_long_lt(a, b)   test_long_lt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_long_le(a, b)   test_long_le(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_long_gt(a, b)   test_long_gt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_long_ge(a, b)   test_long_ge(__FILE__, __LINE__, #a, #b, a, b)
 
-# define TEST_ulong_eq(a, b)    test_ulong_eq(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_ulong_ne(a, b)    test_ulong_ne(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_ulong_lt(a, b)    test_ulong_lt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_ulong_le(a, b)    test_ulong_le(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_ulong_gt(a, b)    test_ulong_gt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_ulong_ge(a, b)    test_ulong_ge(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_ulong_eq(a, b)  test_ulong_eq(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_ulong_ne(a, b)  test_ulong_ne(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_ulong_lt(a, b)  test_ulong_lt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_ulong_le(a, b)  test_ulong_le(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_ulong_gt(a, b)  test_ulong_gt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_ulong_ge(a, b)  test_ulong_ge(__FILE__, __LINE__, #a, #b, a, b)
 
-# define TEST_size_t_eq(a, b)    test_size_t_eq(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_size_t_ne(a, b)    test_size_t_ne(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_size_t_lt(a, b)    test_size_t_lt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_size_t_le(a, b)    test_size_t_le(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_size_t_gt(a, b)    test_size_t_gt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_size_t_ge(a, b)    test_size_t_ge(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_size_t_eq(a, b) test_size_t_eq(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_size_t_ne(a, b) test_size_t_ne(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_size_t_lt(a, b) test_size_t_lt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_size_t_le(a, b) test_size_t_le(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_size_t_gt(a, b) test_size_t_gt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_size_t_ge(a, b) test_size_t_ge(__FILE__, __LINE__, #a, #b, a, b)
 
 # define TEST_ptr_eq(a, b)    test_ptr_eq(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_ptr_ne(a, b)    test_ptr_ne(__FILE__, __LINE__, #a, #b, a, b)
@@ -287,12 +301,14 @@ void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 
 # define TEST_str_eq(a, b)    test_str_eq(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_str_ne(a, b)    test_str_ne(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_strn_eq(a, b, n) test_strn_eq(__FILE__, __LINE__, #a, #b, a, b, n)
+# define TEST_strn_ne(a, b, n) test_strn_ne(__FILE__, __LINE__, #a, #b, a, b, n)
 
 # define TEST_mem_eq(a, m, b, n) test_mem_eq(__FILE__, __LINE__, #a, #b, a, m, b, n)
 # define TEST_mem_ne(a, m, b, n) test_mem_ne(__FILE__, __LINE__, #a, #b, a, m, b, n)
 
-# define TEST_true(a)         test_true(__FILE__, __LINE__, #a, a)
-# define TEST_false(a)        test_false(__FILE__, __LINE__, #a, a)
+# define TEST_true(a)         test_true(__FILE__, __LINE__, #a, (a) != 0)
+# define TEST_false(a)        test_false(__FILE__, __LINE__, #a, (a) != 0)
 
 /*
  * TEST_error(desc, ...) prints an informative error message in the standard

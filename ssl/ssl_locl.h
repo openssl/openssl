@@ -542,7 +542,7 @@ struct ssl_session_st {
     /* This is the cert and type for the other end. */
     X509 *peer;
     int peer_type;
-    /* Certificate chain peer sent */
+    /* Certificate chain peer sent. */
     STACK_OF(X509) *peer_chain;
     /*
      * when app_verify_callback accepts a session where the peer's
@@ -790,8 +790,12 @@ struct ssl_ctx_st {
     /* used if SSL's info_callback is NULL */
     void (*info_callback) (const SSL *ssl, int type, int val);
 
-    /* what we put in client cert requests */
-    STACK_OF(X509_NAME) *client_CA;
+    /*
+     * What we put in certificate_authorities extension for TLS 1.3
+     * (ClientHello and CertificateRequest) or just client cert requests for
+     * earlier versions.
+     */
+    STACK_OF(X509_NAME) *ca_names;
 
     /*
      * Default values to use in SSL structures follow (these are copied by
@@ -1115,7 +1119,7 @@ struct ssl_st {
     /* extra application data */
     CRYPTO_EX_DATA ex_data;
     /* for server side, keep the list of CA_dn we can use */
-    STACK_OF(X509_NAME) *client_CA;
+    STACK_OF(X509_NAME) *ca_names;
     CRYPTO_REF_COUNT references;
     /* protocol behaviour */
     uint32_t options;
@@ -1371,7 +1375,8 @@ typedef struct ssl3_state_st {
         /* Certificate types in certificate request message. */
         uint8_t *ctype;
         size_t ctype_len;
-        STACK_OF(X509_NAME) *ca_names;
+        /* Certificate authorities list peer sent */
+        STACK_OF(X509_NAME) *peer_ca_names;
         size_t key_block_length;
         unsigned char *key_block;
         const EVP_CIPHER *new_sym_enc;
@@ -1611,17 +1616,27 @@ struct cert_pkey_st {
 # define SSL_CERT_FLAGS_CHECK_TLS_STRICT \
         (SSL_CERT_FLAG_SUITEB_128_LOS|SSL_CERT_FLAG_TLS_STRICT)
 
+typedef enum {
+    ENDPOINT_CLIENT = 0,
+    ENDPOINT_SERVER,
+    ENDPOINT_BOTH
+} ENDPOINT;
+
+
 typedef struct {
     unsigned short ext_type;
+    ENDPOINT role;
+    /* The context which this extension applies to */
+    unsigned int context;
     /*
      * Per-connection flags relating to this extension type: not used if
      * part of an SSL_CTX structure.
      */
     uint32_t ext_flags;
-    custom_ext_add_cb add_cb;
-    custom_ext_free_cb free_cb;
+    SSL_custom_ext_add_cb_ex add_cb;
+    SSL_custom_ext_free_cb_ex free_cb;
     void *add_arg;
-    custom_ext_parse_cb parse_cb;
+    SSL_custom_ext_parse_cb_ex parse_cb;
     void *parse_arg;
 } custom_ext_method;
 
@@ -1701,9 +1716,8 @@ typedef struct cert_st {
      */
     X509_STORE *chain_store;
     X509_STORE *verify_store;
-    /* Custom extension methods for server and client */
-    custom_ext_methods cli_ext;
-    custom_ext_methods srv_ext;
+    /* Custom extensions */
+    custom_ext_methods custext;
     /* Security callback */
     int (*sec_cb) (const SSL *s, const SSL_CTX *ctx, int op, int bits, int nid,
                    void *other, void *ex);
@@ -2431,15 +2445,19 @@ __owur int srp_generate_server_master_secret(SSL *s);
 __owur int srp_generate_client_master_secret(SSL *s);
 __owur int srp_verify_server_param(SSL *s, int *al);
 
-/* t1_ext.c */
+/* statem/extensions_cust.c */
+
+custom_ext_method *custom_ext_find(const custom_ext_methods *exts,
+                                   ENDPOINT role, unsigned int ext_type,
+                                   size_t *idx);
 
 void custom_ext_init(custom_ext_methods *meths);
 
-__owur int custom_ext_parse(SSL *s, int server,
-                            unsigned int ext_type,
+__owur int custom_ext_parse(SSL *s, unsigned int context, unsigned int ext_type,
                             const unsigned char *ext_data, size_t ext_size,
-                            int *al);
-__owur int custom_ext_add(SSL *s, int server, WPACKET *pkt, int *al);
+                            X509 *x, size_t chainidx, int *al);
+__owur int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x,
+                          size_t chainidx, int maxversion, int *al);
 
 __owur int custom_exts_copy(custom_ext_methods *dst,
                             const custom_ext_methods *src);

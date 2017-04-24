@@ -22,21 +22,20 @@ int main(int argc, char *argv[])
 # include <openssl/crypto.h>
 # include <openssl/engine.h>
 # include <openssl/err.h>
+# include "testutil.h"
+# include "test_main.h"
 
 static void display_engine_list(void)
 {
     ENGINE *h;
     int loop;
 
-    h = ENGINE_get_first();
     loop = 0;
-    printf("listing available engine types\n");
-    while (h) {
-        printf("engine %i, id = \"%s\", name = \"%s\"\n",
+    for (h = ENGINE_get_first(); h != NULL; h = ENGINE_get_next(h)) {
+        TEST_info("#%d: id = \"%s\", name = \"%s\"",
                loop++, ENGINE_get_id(h), ENGINE_get_name(h));
-        h = ENGINE_get_next(h);
     }
-    printf("end of list\n");
+
     /*
      * ENGINE_get_first() increases the struct_ref counter, so we must call
      * ENGINE_free() to decrease it again
@@ -44,161 +43,146 @@ static void display_engine_list(void)
     ENGINE_free(h);
 }
 
-int main(int argc, char *argv[])
+#define NUMTOADD 512
+
+static int test_engines(void)
 {
-    ENGINE *block[512];
+    ENGINE *block[NUMTOADD];
     char buf[256];
-    const char *id, *name, *p;
+    const char *id, *name;
     ENGINE *ptr;
     int loop;
-    int to_return = 1;
+    int to_return = 0;
     ENGINE *new_h1 = NULL;
     ENGINE *new_h2 = NULL;
     ENGINE *new_h3 = NULL;
     ENGINE *new_h4 = NULL;
 
-    p = getenv("OPENSSL_DEBUG_MEMORY");
-    if (p != NULL && strcmp(p, "on") == 0)
-        CRYPTO_set_mem_debug(1);
-
     memset(block, 0, sizeof(block));
-    if (((new_h1 = ENGINE_new()) == NULL) ||
-        !ENGINE_set_id(new_h1, "test_id0") ||
-        !ENGINE_set_name(new_h1, "First test item") ||
-        ((new_h2 = ENGINE_new()) == NULL) ||
-        !ENGINE_set_id(new_h2, "test_id1") ||
-        !ENGINE_set_name(new_h2, "Second test item") ||
-        ((new_h3 = ENGINE_new()) == NULL) ||
-        !ENGINE_set_id(new_h3, "test_id2") ||
-        !ENGINE_set_name(new_h3, "Third test item") ||
-        ((new_h4 = ENGINE_new()) == NULL) ||
-        !ENGINE_set_id(new_h4, "test_id3") ||
-        !ENGINE_set_name(new_h4, "Fourth test item")) {
-        printf("Couldn't set up test ENGINE structures\n");
+    if (!TEST_ptr(new_h1 = ENGINE_new())
+            || !TEST_true(ENGINE_set_id(new_h1, "test_id0"))
+            || !TEST_true(ENGINE_set_name(new_h1, "First test item"))
+            || !TEST_ptr(new_h2 = ENGINE_new())
+            || !TEST_true(ENGINE_set_id(new_h2, "test_id1"))
+            || !TEST_true(ENGINE_set_name(new_h2, "Second test item"))
+            || !TEST_ptr(new_h3 = ENGINE_new())
+            || !TEST_true(ENGINE_set_id(new_h3, "test_id2"))
+            || !TEST_true(ENGINE_set_name(new_h3, "Third test item"))
+            || !TEST_ptr(new_h4 = ENGINE_new())
+            || !TEST_true(ENGINE_set_id(new_h4, "test_id3"))
+            || !TEST_true(ENGINE_set_name(new_h4, "Fourth test item")))
         goto end;
-    }
-    printf("\nenginetest beginning\n\n");
+    TEST_info("Engines:");
     display_engine_list();
-    if (!ENGINE_add(new_h1)) {
-        printf("Add failed!\n");
+
+    if (!TEST_true(ENGINE_add(new_h1)))
         goto end;
-    }
+    TEST_info("Engines:");
     display_engine_list();
+
     ptr = ENGINE_get_first();
-    if (!ENGINE_remove(ptr)) {
-        printf("Remove failed!\n");
+    if (!TEST_true(ENGINE_remove(ptr)))
         goto end;
-    }
     ENGINE_free(ptr);
+    TEST_info("Engines:");
     display_engine_list();
-    if (!ENGINE_add(new_h3) || !ENGINE_add(new_h2)) {
-        printf("Add failed!\n");
+
+    if (!TEST_true(ENGINE_add(new_h3))
+            || !TEST_true(ENGINE_add(new_h2)))
         goto end;
-    }
+    TEST_info("Engines:");
     display_engine_list();
-    if (!ENGINE_remove(new_h2)) {
-        printf("Remove failed!\n");
+
+    if (!TEST_true(ENGINE_remove(new_h2)))
         goto end;
-    }
+    TEST_info("Engines:");
     display_engine_list();
-    if (!ENGINE_add(new_h4)) {
-        printf("Add failed!\n");
+
+    if (!TEST_true(ENGINE_add(new_h4)))
         goto end;
-    }
+    TEST_info("Engines:");
     display_engine_list();
-    if (ENGINE_add(new_h3)) {
-        printf("Add *should* have failed but didn't!\n");
+
+    /* Should fail. */
+    if (!TEST_false(ENGINE_add(new_h3)))
         goto end;
-    } else
-        printf("Add that should fail did.\n");
     ERR_clear_error();
-    if (ENGINE_remove(new_h2)) {
-        printf("Remove *should* have failed but didn't!\n");
+
+    /* Should fail. */
+    if (!TEST_false(ENGINE_remove(new_h2)))
         goto end;
-    } else
-        printf("Remove that should fail did.\n");
     ERR_clear_error();
-    if (!ENGINE_remove(new_h3)) {
-        printf("Remove failed!\n");
+
+    if (!TEST_true(ENGINE_remove(new_h3)))
         goto end;
-    }
+    TEST_info("Engines:");
     display_engine_list();
-    if (!ENGINE_remove(new_h4)) {
-        printf("Remove failed!\n");
+
+    if (!TEST_true(ENGINE_remove(new_h4)))
         goto end;
-    }
+    TEST_info("Engines:");
     display_engine_list();
+
     /*
      * Depending on whether there's any hardware support compiled in, this
      * remove may be destined to fail.
      */
-    ptr = ENGINE_get_first();
-    if (ptr)
+    if ((ptr = ENGINE_get_first()) != NULL) {
         if (!ENGINE_remove(ptr))
-            printf("Remove failed!i - probably no hardware "
-                   "support present.\n");
-    ENGINE_free(ptr);
-    display_engine_list();
-    if (!ENGINE_add(new_h1) || !ENGINE_remove(new_h1)) {
-        printf("Couldn't add and remove to an empty list!\n");
-        goto end;
-    } else
-        printf("Successfully added and removed to an empty list!\n");
-    printf("About to beef up the engine-type list\n");
-    for (loop = 0; loop < 512; loop++) {
-        sprintf(buf, "id%i", loop);
-        id = OPENSSL_strdup(buf);
-        sprintf(buf, "Fake engine type %i", loop);
-        name = OPENSSL_strdup(buf);
-        if (((block[loop] = ENGINE_new()) == NULL) ||
-            !ENGINE_set_id(block[loop], id) ||
-            !ENGINE_set_name(block[loop], name)) {
-            printf("Couldn't create block of ENGINE structures.\n"
-                   "I'll probably also core-dump now, damn.\n");
-            goto end;
-        }
+            TEST_info("Remove failed - probably no hardware support present");
     }
-    for (loop = 0; loop < 512; loop++) {
-        if (!ENGINE_add(block[loop])) {
-            printf("\nAdding stopped at %i, (%s,%s)\n",
+    ENGINE_free(ptr);
+    TEST_info("Engines:");
+    display_engine_list();
+
+    if (!TEST_true(ENGINE_add(new_h1))
+            || !TEST_true(ENGINE_remove(new_h1)))
+        goto end;
+
+    TEST_info("About to beef up the engine-type list");
+    for (loop = 0; loop < NUMTOADD; loop++) {
+        sprintf(buf, "id%d", loop);
+        id = OPENSSL_strdup(buf);
+        sprintf(buf, "Fake engine type %d", loop);
+        name = OPENSSL_strdup(buf);
+        if (!TEST_ptr(block[loop] = ENGINE_new())
+                || !TEST_true(ENGINE_set_id(block[loop], id))
+                || !TEST_true(ENGINE_set_name(block[loop], name)))
+            goto end;
+    }
+    for (loop = 0; loop < NUMTOADD; loop++) {
+        if (!TEST_true(ENGINE_add(block[loop]))) {
+            printf("Adding stopped at %d, (%s,%s)",
                    loop, ENGINE_get_id(block[loop]),
                    ENGINE_get_name(block[loop]));
             goto cleanup_loop;
-        } else
-            printf(".");
-        fflush(stdout);
+        }
     }
  cleanup_loop:
-    printf("\nAbout to empty the engine-type list\n");
+    TEST_info("About to empty the engine-type list");
     while ((ptr = ENGINE_get_first()) != NULL) {
-        if (!ENGINE_remove(ptr)) {
-            printf("\nRemove failed!\n");
+        if (!TEST_true(ENGINE_remove(ptr)))
             goto end;
-        }
         ENGINE_free(ptr);
-        printf(".");
-        fflush(stdout);
     }
-    for (loop = 0; loop < 512; loop++) {
+    for (loop = 0; loop < NUMTOADD; loop++) {
         OPENSSL_free((void *)ENGINE_get_id(block[loop]));
         OPENSSL_free((void *)ENGINE_get_name(block[loop]));
     }
-    printf("\nTests completed happily\n");
-    to_return = 0;
+    to_return = 1;
+
  end:
-    if (to_return)
-        ERR_print_errors_fp(stderr);
     ENGINE_free(new_h1);
     ENGINE_free(new_h2);
     ENGINE_free(new_h3);
     ENGINE_free(new_h4);
-    for (loop = 0; loop < 512; loop++)
+    for (loop = 0; loop < NUMTOADD; loop++)
         ENGINE_free(block[loop]);
-
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
-        to_return = 1;
-#endif
     return to_return;
+}
+
+void register_tests(void)
+{
+    ADD_TEST(test_engines);
 }
 #endif

@@ -40,7 +40,7 @@ Configure for fuzzing:
             --with-fuzzer-lib=../../svn-work/Fuzzer/libFuzzer \
             -DPEDANTIC enable-asan enable-ubsan no-shared \
             -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
-            -fsanitize-coverage=edge,indirect-calls,8bit-counters \
+            -fsanitize-coverage=trace-pc-guard,indirect-calls,trace-cmp \
             enable-ec_nistp_64_gcc_128 -fno-sanitize=alignment enable-tls1_3 \
             enable-weak-ssl-ciphers enable-rc5 enable-md2 \
             enable-ssl3 enable-ssl3-method enable-nextprotoneg \
@@ -117,3 +117,15 @@ Since the corpus depends on the default behaviour of the client and the server,
 changes in what they send by default will have an impact on the coverage. The
 corpus will need to be updated in that case.
 
+Updating the corpus
+===================
+
+The client and server corpus is generated with multiple config options:
+- The options as documented above
+- Without enable-ec_nistp_64_gcc_128 and without --debug
+- With no-asm
+- Using 32 bit
+- A default config, plus options needed to generate the fuzzer.
+
+The libfuzzer merge option is used to add the additional coverage
+from each config to the minimal set.

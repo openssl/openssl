@@ -47,12 +47,12 @@ int ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_l
 }
 
 typedef struct {
-    long num;
+    int32_t num;
     ASN1_OCTET_STRING *oct;
 } asn1_int_oct;
 
 ASN1_SEQUENCE(asn1_int_oct) = {
-        ASN1_SIMPLE(asn1_int_oct, num, LONG),
+        ASN1_EMBED(asn1_int_oct, num, INT32),
         ASN1_SIMPLE(asn1_int_oct, oct, ASN1_OCTET_STRING)
 } static_ASN1_SEQUENCE_END(asn1_int_oct)
 

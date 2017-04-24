@@ -267,7 +267,7 @@ int tls13_setup_key_block(SSL *s)
     return 1;
 }
 
-static int derive_secret_key_and_iv(SSL *s, int send, const EVP_MD *md,
+static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
                                     const EVP_CIPHER *ciph,
                                     const unsigned char *insecret,
                                     const unsigned char *hash,
@@ -312,7 +312,7 @@ static int derive_secret_key_and_iv(SSL *s, int send, const EVP_MD *md,
         goto err;
     }
 
-    if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL, send) <= 0
+    if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL, sending) <= 0
         || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
         || (taglen != 0 && !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG,
                                                 taglen, NULL))
@@ -323,7 +323,7 @@ static int derive_secret_key_and_iv(SSL *s, int send, const EVP_MD *md,
 
 #ifdef OPENSSL_SSL_TRACE_CRYPTO
     if (s->msg_callback) {
-        int wh = send ? TLS1_RT_CRYPTO_WRITE : 0;
+        int wh = sending ? TLS1_RT_CRYPTO_WRITE : 0;
 
         if (ciph->key_len)
             s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
@@ -557,7 +557,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     return ret;
 }
 
-int tls13_update_key(SSL *s, int send)
+int tls13_update_key(SSL *s, int sending)
 {
     static const unsigned char application_traffic[] =
         "application traffic secret";
@@ -568,12 +568,12 @@ int tls13_update_key(SSL *s, int send)
     EVP_CIPHER_CTX *ciph_ctx;
     int ret = 0;
 
-    if (s->server == send)
+    if (s->server == sending)
         insecret = s->server_app_traffic_secret;
     else
         insecret = s->client_app_traffic_secret;
 
-    if (send) {
+    if (sending) {
         iv = s->write_iv;
         ciph_ctx = s->enc_write_ctx;
         RECORD_LAYER_reset_write_sequence(&s->rlayer);
@@ -583,7 +583,7 @@ int tls13_update_key(SSL *s, int send)
         RECORD_LAYER_reset_read_sequence(&s->rlayer);
     }
 
-    if (!derive_secret_key_and_iv(s, send, ssl_handshake_md(s),
+    if (!derive_secret_key_and_iv(s, sending, ssl_handshake_md(s),
                                   s->s3->tmp.new_sym_enc, insecret, NULL,
                                   application_traffic,
                                   sizeof(application_traffic) - 1, secret, iv,

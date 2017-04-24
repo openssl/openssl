@@ -78,7 +78,9 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(IPAddressRange),
 #endif
     ASN1_ITEM_ref(ISSUING_DIST_POINT),
+#if OPENSSL_API_COMPAT < 0x10200000L
     ASN1_ITEM_ref(LONG),
+#endif
     ASN1_ITEM_ref(NAME_CONSTRAINTS),
     ASN1_ITEM_ref(NETSCAPE_CERT_SEQUENCE),
     ASN1_ITEM_ref(NETSCAPE_SPKAC),
@@ -159,5 +161,15 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(X509_SIG),
     ASN1_ITEM_ref(X509_VAL),
     ASN1_ITEM_ref(X509),
+#if OPENSSL_API_COMPAT < 0x10200000L
     ASN1_ITEM_ref(ZLONG),
+#endif
+    ASN1_ITEM_ref(INT32),
+    ASN1_ITEM_ref(UINT32),
+    ASN1_ITEM_ref(ZINT32),
+    ASN1_ITEM_ref(ZUINT32),
+    ASN1_ITEM_ref(INT64),
+    ASN1_ITEM_ref(UINT64),
+    ASN1_ITEM_ref(ZINT64),
+    ASN1_ITEM_ref(ZUINT64),
 };

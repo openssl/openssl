@@ -75,7 +75,7 @@ static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 }
 
 ASN1_SEQUENCE_cb(DSAPrivateKey, dsa_cb) = {
-        ASN1_SIMPLE(DSA, version, LONG),
+        ASN1_EMBED(DSA, version, INT32),
         ASN1_SIMPLE(DSA, p, BIGNUM),
         ASN1_SIMPLE(DSA, q, BIGNUM),
         ASN1_SIMPLE(DSA, g, BIGNUM),

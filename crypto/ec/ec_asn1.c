@@ -87,13 +87,13 @@ int EC_GROUP_get_pentanomial_basis(const EC_GROUP *group, unsigned int *k1,
 
 /* some structures needed for the asn1 encoding */
 typedef struct x9_62_pentanomial_st {
-    long k1;
-    long k2;
-    long k3;
+    int32_t k1;
+    int32_t k2;
+    int32_t k3;
 } X9_62_PENTANOMIAL;
 
 typedef struct x9_62_characteristic_two_st {
-    long m;
+    int32_t m;
     ASN1_OBJECT *type;
     union {
         char *ptr;
@@ -128,7 +128,7 @@ typedef struct x9_62_curve_st {
 } X9_62_CURVE;
 
 struct ec_parameters_st {
-    long version;
+    int32_t version;
     X9_62_FIELDID *fieldID;
     X9_62_CURVE *curve;
     ASN1_OCTET_STRING *base;
@@ -147,7 +147,7 @@ struct ecpk_parameters_st {
 
 /* SEC1 ECPrivateKey */
 typedef struct ec_privatekey_st {
-    long version;
+    int32_t version;
     ASN1_OCTET_STRING *privateKey;
     ECPKPARAMETERS *parameters;
     ASN1_BIT_STRING *publicKey;
@@ -155,9 +155,9 @@ typedef struct ec_privatekey_st {
 
 /* the OpenSSL ASN.1 definitions */
 ASN1_SEQUENCE(X9_62_PENTANOMIAL) = {
-        ASN1_SIMPLE(X9_62_PENTANOMIAL, k1, LONG),
-        ASN1_SIMPLE(X9_62_PENTANOMIAL, k2, LONG),
-        ASN1_SIMPLE(X9_62_PENTANOMIAL, k3, LONG)
+        ASN1_EMBED(X9_62_PENTANOMIAL, k1, INT32),
+        ASN1_EMBED(X9_62_PENTANOMIAL, k2, INT32),
+        ASN1_EMBED(X9_62_PENTANOMIAL, k3, INT32)
 } static_ASN1_SEQUENCE_END(X9_62_PENTANOMIAL)
 
 DECLARE_ASN1_ALLOC_FUNCTIONS(X9_62_PENTANOMIAL)
@@ -172,7 +172,7 @@ ASN1_ADB(X9_62_CHARACTERISTIC_TWO) = {
 } ASN1_ADB_END(X9_62_CHARACTERISTIC_TWO, 0, type, 0, &char_two_def_tt, NULL);
 
 ASN1_SEQUENCE(X9_62_CHARACTERISTIC_TWO) = {
-        ASN1_SIMPLE(X9_62_CHARACTERISTIC_TWO, m, LONG),
+        ASN1_EMBED(X9_62_CHARACTERISTIC_TWO, m, INT32),
         ASN1_SIMPLE(X9_62_CHARACTERISTIC_TWO, type, ASN1_OBJECT),
         ASN1_ADB_OBJECT(X9_62_CHARACTERISTIC_TWO)
 } static_ASN1_SEQUENCE_END(X9_62_CHARACTERISTIC_TWO)
@@ -199,7 +199,7 @@ ASN1_SEQUENCE(X9_62_CURVE) = {
 } static_ASN1_SEQUENCE_END(X9_62_CURVE)
 
 ASN1_SEQUENCE(ECPARAMETERS) = {
-        ASN1_SIMPLE(ECPARAMETERS, version, LONG),
+        ASN1_EMBED(ECPARAMETERS, version, INT32),
         ASN1_SIMPLE(ECPARAMETERS, fieldID, X9_62_FIELDID),
         ASN1_SIMPLE(ECPARAMETERS, curve, X9_62_CURVE),
         ASN1_SIMPLE(ECPARAMETERS, base, ASN1_OCTET_STRING),
@@ -221,7 +221,7 @@ DECLARE_ASN1_ENCODE_FUNCTIONS_const(ECPKPARAMETERS, ECPKPARAMETERS)
 IMPLEMENT_ASN1_FUNCTIONS_const(ECPKPARAMETERS)
 
 ASN1_SEQUENCE(EC_PRIVATEKEY) = {
-        ASN1_SIMPLE(EC_PRIVATEKEY, version, LONG),
+        ASN1_EMBED(EC_PRIVATEKEY, version, INT32),
         ASN1_SIMPLE(EC_PRIVATEKEY, privateKey, ASN1_OCTET_STRING),
         ASN1_EXP_OPT(EC_PRIVATEKEY, parameters, ECPKPARAMETERS, 0),
         ASN1_EXP_OPT(EC_PRIVATEKEY, publicKey, ASN1_BIT_STRING, 1)

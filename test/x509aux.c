@@ -16,35 +16,16 @@
 #include <openssl/pem.h>
 #include <openssl/conf.h>
 #include <openssl/err.h>
+#include "e_os.h"
+#include "test_main.h"
+#include "test_main_custom.h"
+#include "testutil.h"
 
-#include "../e_os.h"
 
-static const char *progname;
+/* List of files, from argv */
+static char **files;
 
-static void test_usage(void)
-{
-    fprintf(stderr, "usage: %s certfile\n", progname);
-}
-
-static void print_errors(void)
-{
-    unsigned long err;
-    char buffer[1024];
-    const char *file;
-    const char *data;
-    int line;
-    int flags;
-
-    while ((err = ERR_get_error_line_data(&file, &line, &data, &flags)) != 0) {
-        ERR_error_string_n(err, buffer, sizeof(buffer));
-        if (flags & ERR_TXT_STRING)
-            fprintf(stderr, "Error: %s:%s:%d:%s\n", buffer, file, line, data);
-        else
-            fprintf(stderr, "Error: %s:%s:%d\n", buffer, file, line);
-    }
-}
-
-static int test_certs(BIO *fp)
+static int test_certs(int num)
 {
     int count;
     char *name = 0;
@@ -54,6 +35,10 @@ static int test_certs(BIO *fp)
     typedef X509 *(*d2i_X509_t)(X509 **, const unsigned char **, long);
     typedef int (*i2d_X509_t)(X509 *, unsigned char **);
     int err = 0;
+    BIO *fp = BIO_new_file(files[num], "r");
+
+    if (!TEST_ptr(fp))
+        return 0;
 
     for (count = 0;
          !err && PEM_read_bio(fp, &name, &header, &data, &len);
@@ -163,6 +148,7 @@ static int test_certs(BIO *fp)
 	OPENSSL_free(header);
 	OPENSSL_free(data);
     }
+    BIO_free(fp);
 
     if (ERR_GET_REASON(ERR_peek_last_error()) == PEM_R_NO_START_LINE) {
         /* Reached end of PEM file */
@@ -173,59 +159,17 @@ static int test_certs(BIO *fp)
     }
 
     /* Some other PEM read error */
-    print_errors();
     return 0;
 }
 
-int main(int argc, char *argv[])
+int test_main(int argc, char *argv[])
 {
-    BIO *bio_err;
-    const char *p;
-    int ret = 1;
-
-    progname = argv[0];
     if (argc < 2) {
-        test_usage();
-        EXIT(ret);
+        TEST_error("usage: %s certfile...", argv[0]);
+        return 0;
     }
 
-    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    p = getenv("OPENSSL_DEBUG_MEMORY");
-    if (p != NULL && strcmp(p, "on") == 0)
-        CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-    argc--;
-    argv++;
-
-    while (argc >= 1) {
-        BIO *f = BIO_new_file(*argv, "r");
-        int ok;
-
-        if (f == NULL) {
-            fprintf(stderr, "%s: Error opening cert file: '%s': %s\n",
-                    progname, *argv, strerror(errno));
-            EXIT(ret);
-        }
-        ret = !(ok = test_certs(f));
-        BIO_free(f);
-
-        if (!ok) {
-            printf("%s ERROR\n", *argv);
-            ret = 1;
-            break;
-        }
-        printf("%s OK\n", *argv);
-
-        argc--;
-        argv++;
-    }
-
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks(bio_err) <= 0)
-        ret = 1;
-#endif
-    BIO_free(bio_err);
-    EXIT(ret);
+    files = &argv[1];
+    ADD_ALL_TESTS(test_certs, argc - 1);
+    return run_tests(argv[0]);
 }

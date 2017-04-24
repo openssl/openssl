@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -41,21 +41,21 @@
 #include <openssl/x509.h>
 
 typedef struct {
-    long version;
-    long ssl_version;
+    uint32_t version;
+    int32_t ssl_version;
     ASN1_OCTET_STRING *cipher;
     ASN1_OCTET_STRING *comp_id;
     ASN1_OCTET_STRING *master_key;
     ASN1_OCTET_STRING *session_id;
     ASN1_OCTET_STRING *key_arg;
-    long time;
-    long timeout;
+    int64_t time;
+    int64_t timeout;
     X509 *peer;
     ASN1_OCTET_STRING *session_id_context;
-    long verify_result;
+    int32_t verify_result;
     ASN1_OCTET_STRING *tlsext_hostname;
-    long tlsext_tick_lifetime_hint;
-    long tlsext_tick_age_add;
+    uint64_t tlsext_tick_lifetime_hint;
+    uint32_t tlsext_tick_age_add;
     ASN1_OCTET_STRING *tlsext_tick;
 #ifndef OPENSSL_NO_PSK
     ASN1_OCTET_STRING *psk_identity_hint;
@@ -64,37 +64,37 @@ typedef struct {
 #ifndef OPENSSL_NO_SRP
     ASN1_OCTET_STRING *srp_username;
 #endif
-    long flags;
+    uint64_t flags;
     uint32_t max_early_data;
     ASN1_OCTET_STRING *alpn_selected;
 } SSL_SESSION_ASN1;
 
 ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
-    ASN1_SIMPLE(SSL_SESSION_ASN1, version, LONG),
-    ASN1_SIMPLE(SSL_SESSION_ASN1, ssl_version, LONG),
+    ASN1_EMBED(SSL_SESSION_ASN1, version, UINT32),
+    ASN1_EMBED(SSL_SESSION_ASN1, ssl_version, INT32),
     ASN1_SIMPLE(SSL_SESSION_ASN1, cipher, ASN1_OCTET_STRING),
     ASN1_SIMPLE(SSL_SESSION_ASN1, session_id, ASN1_OCTET_STRING),
     ASN1_SIMPLE(SSL_SESSION_ASN1, master_key, ASN1_OCTET_STRING),
     ASN1_IMP_OPT(SSL_SESSION_ASN1, key_arg, ASN1_OCTET_STRING, 0),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, time, ZLONG, 1),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, timeout, ZLONG, 2),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, time, ZINT64, 1),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, timeout, ZINT64, 2),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, peer, X509, 3),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, session_id_context, ASN1_OCTET_STRING, 4),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, verify_result, ZLONG, 5),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, verify_result, ZINT32, 5),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, tlsext_hostname, ASN1_OCTET_STRING, 6),
 #ifndef OPENSSL_NO_PSK
     ASN1_EXP_OPT(SSL_SESSION_ASN1, psk_identity_hint, ASN1_OCTET_STRING, 7),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, psk_identity, ASN1_OCTET_STRING, 8),
 #endif
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, tlsext_tick_lifetime_hint, ZLONG, 9),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_tick_lifetime_hint, ZUINT64, 9),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, tlsext_tick, ASN1_OCTET_STRING, 10),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, comp_id, ASN1_OCTET_STRING, 11),
 #ifndef OPENSSL_NO_SRP
     ASN1_EXP_OPT(SSL_SESSION_ASN1, srp_username, ASN1_OCTET_STRING, 12),
 #endif
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, flags, ZLONG, 13),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, tlsext_tick_age_add, ZLONG, 14),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, max_early_data, ZLONG, 15),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, flags, ZUINT64, 13),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_tick_age_add, ZUINT32, 14),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, max_early_data, ZUINT32, 15),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, alpn_selected, ASN1_OCTET_STRING, 16)
 } static_ASN1_SEQUENCE_END(SSL_SESSION_ASN1)
 

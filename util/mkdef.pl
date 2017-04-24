@@ -114,6 +114,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "DEPRECATEDIN_0_9_8",
 			 "DEPRECATEDIN_1_0_0",
 			 "DEPRECATEDIN_1_1_0",
+			 "DEPRECATEDIN_1_2_0",
 			 # SCTP
 		 	 "SCTP",
 			 # SRTP
@@ -140,6 +141,14 @@ foreach (@known_algorithms) {
 }
 # disabled by default
 $disabled_algorithms{"STATIC_ENGINE"} = 1;
+
+my $apiv = sprintf "%x%02x%02x", split(/\./, $config{api});
+foreach (keys %disabled_algorithms) {
+	if (/^DEPRECATEDIN_(\d+)_(\d+)_(\d+)$/) {
+		my $depv = sprintf "%x%02x%02x", $1, $2, $3;
+		$disabled_algorithms{$_} = 1 if $apiv ge $depv;
+	}
+}
 
 my $zlib;
 
@@ -176,25 +185,9 @@ foreach (@ARGV, split(/ /, $config{options}))
 	$do_ctest=1 if $_ eq "ctest";
 	$do_ctestall=1 if $_ eq "ctestall";
 	$do_checkexist=1 if $_ eq "exist";
-	if (/^--api=(\d+)\.(\d+)\.(\d+)$/) {
-		my $apiv = sprintf "%x%02x%02x", $1, $2, $3;
-		foreach (keys %disabled_algorithms) {
-			if (/^DEPRECATEDIN_(\d+)_(\d+)_(\d+)$/) {
-				my $depv = sprintf "%x%02x%02x", $1, $2, $3;
-				$disabled_algorithms{$_} = 1 if $apiv ge $depv;
-			}
-		}
-	}
-	if (/^no-deprecated$/) {
-		foreach (keys %disabled_algorithms) {
-			if (/^DEPRECATEDIN_/) {
-				$disabled_algorithms{$_} = 1;
-			}
-		}
-	}
-	elsif (/^(enable|disable|no)-(.*)$/) {
+	if (/^(enable|disable|no)-(.*)$/) {
 		my $alg = uc $2;
-        $alg =~ tr/-/_/;
+		$alg =~ tr/-/_/;
 		if (exists $disabled_algorithms{$alg}) {
 			$disabled_algorithms{$alg} = $1 eq "enable" ? 0 : 1;
 		}
@@ -394,6 +387,7 @@ sub do_defs
 			(map { "OPENSSL_SYS_".$_ => 0 } @known_ossl_platforms),
 			(map { "OPENSSL_NO_".$_ => 0 } @known_algorithms),
 			(map { "OPENSSL_USE_".$_ => 0 } @known_algorithms),
+			(grep /^DEPRECATED_/, @known_algorithms),
 			NOPROTO		=> 0,
 			PERL5		=> 0,
 			_WINDLL		=> 0,
@@ -506,7 +500,22 @@ sub do_defs
 			s/{[^{}]*}//gs;                      # ignore {} blocks
 			print STDERR "DEBUG: \$def=\"$def\"\n" if $debug && $def ne "";
 			print STDERR "DEBUG: \$_=\"$_\"\n" if $debug;
-			if (/^\#\s*ifndef\s+(.*)/) {
+			if (/^\#\s*if\s+OPENSSL_API_COMPAT\s*(\S)\s*(0x[0-9a-fA-F]{8})L\s*$/) {
+				my $op = $1;
+				my $v = hex($2);
+				if ($op ne '<' && $op ne '>=') {
+				    die "$file unacceptable operator $op: $_\n";
+				}
+				my ($one, $major, $minor) =
+				    ( ($v >> 28) & 0xf,
+				      ($v >> 20) & 0xff,
+				      ($v >> 12) & 0xff );
+				my $t = "DEPRECATEDIN_${one}_${major}_${minor}";
+				push(@tag,"-");
+				push(@tag,$t);
+				$tag{$t}=($op eq '<' ? 1 : -1);
+				print STDERR "DEBUG: $file: found tag $t = $tag{$t}\n" if $debug;
+			} elsif (/^\#\s*ifndef\s+(.*)/) {
 				push(@tag,"-");
 				push(@tag,$1);
 				$tag{$1}=-1;
@@ -637,6 +646,9 @@ sub do_defs
 				    , grep(!/^$/,
 					 map { $tag{"OPENSSL_USE_".$_} == 1 ? $_ : "" }
 					 @known_algorithms);
+				push @current_algorithms,
+				    grep { /^DEPRECATEDIN_/ && $tag{$_} == 1 }
+				    @known_algorithms;
 				$def .=
 				    "#INFO:"
 					.join(',',@current_platforms).":"

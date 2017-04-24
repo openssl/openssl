@@ -4,9 +4,15 @@
 
  Changes between 1.1.0e and 1.1.1 [xx XXX xxxx]
 
-  *) Add the z modifier parsing to BIO_printf() et al formatting string,
-     to be used for size_t and ssize_t (ossl_ssize_t).
+  *) Add the ASN.1 types INT32, UINT32, INT64, UINT64 and variants prefixed
+     with Z.  These are meant to replace LONG and ZLONG and to be size safe.
+     The use of LONG and ZLONG is discouraged and scheduled for deprecation
+     in OpenSSL 1.2.0.
      [Richard Levitte]
+
+  *) Add the 'z' and 'j' modifiers to BIO_printf() et al formatting string,
+     'z' is to be used for [s]size_t, and 'j' - with [u]int64_t.
+     [Richard Levitte, Andy Polyakov]
 
   *) Add EC_KEY_get0_engine(), which does for EC_KEY what RSA_get0_engine()
      does for RSA, etc.
@@ -15,6 +21,12 @@
   *) Have 'config' recognise 64-bit mingw and choose 'mingw64' as the target
      platform rather than 'mingw'.
      [Richard Levitte]
+
+  *) The functions X509_STORE_add_cert and X509_STORE_add_crl return
+     success if they are asked to add an object which already exists
+     in the store. This change cascades to other functions which load
+     certificates and CRLs.
+     [Paul Dale]
 
   *) x86_64 assembly pack: annotate code with DWARF CFI directives to
      facilitate stack unwinding even from assembly subroutines.
@@ -56,6 +68,10 @@
 
   *) Support for SSL_OP_NO_ENCRYPT_THEN_MAC in SSL_CONF_cmd.
      [Emilia Käsper]
+
+  *) The RSA "null" method, which was partially supported to avoid patent
+     issues, has been replaced to always returns NULL.
+     [Rich Salz]
 
  Changes between 1.1.0d and 1.1.0e [16 Feb 2017]
 

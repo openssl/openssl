@@ -28,7 +28,13 @@
 #include <openssl/x509v3.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #include "fuzzer.h"
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+extern int rand_predictable;
+#endif
+#define ENTROPY_NEEDED 32
 
 static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(ACCESS_DESCRIPTION),
@@ -100,7 +106,9 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(IPAddressRange),
 #endif
     ASN1_ITEM_ref(ISSUING_DIST_POINT),
+#if OPENSSL_API_COMPAT < 0x10200000L
     ASN1_ITEM_ref(LONG),
+#endif
     ASN1_ITEM_ref(NAME_CONSTRAINTS),
     ASN1_ITEM_ref(NETSCAPE_CERT_SEQUENCE),
     ASN1_ITEM_ref(NETSCAPE_SPKAC),
@@ -180,7 +188,17 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(X509_REVOKED),
     ASN1_ITEM_ref(X509_SIG),
     ASN1_ITEM_ref(X509_VAL),
+#if OPENSSL_API_COMPAT < 0x10200000L
     ASN1_ITEM_ref(ZLONG),
+#endif
+    ASN1_ITEM_ref(INT32),
+    ASN1_ITEM_ref(ZINT32),
+    ASN1_ITEM_ref(UINT32),
+    ASN1_ITEM_ref(ZUINT32),
+    ASN1_ITEM_ref(INT64),
+    ASN1_ITEM_ref(ZINT64),
+    ASN1_ITEM_ref(UINT64),
+    ASN1_ITEM_ref(ZUINT64),
     NULL
 };
 
@@ -198,6 +216,12 @@ int FuzzerInitialize(int *argc, char ***argv)
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_get_state();
     CRYPTO_free_ex_index(0, -1);
+    RAND_add("", 1, ENTROPY_NEEDED);
+    RAND_status();
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    rand_predictable = 1;
+#endif
 
     return 1;
 }

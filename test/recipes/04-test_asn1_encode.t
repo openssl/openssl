@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -9,4 +9,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("test_ecdh", "ecdhtest", "ec");
+simple_test("test_asn1_encode", "asn1_encode_test");

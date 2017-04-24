@@ -9,7 +9,7 @@
 
 ##  Configure -- OpenSSL source tree configuration script
 
-require 5.10.0;
+use 5.10.0;
 use strict;
 use Config;
 use File::Basename;
@@ -742,6 +742,10 @@ while (@argvcopy)
 		elsif (/^-[lL](.*)$/ or /^-Wl,/)
 			{
 			$libs.=$_." ";
+			}
+		elsif (/^-framework$/)
+			{
+			$libs.=$_." ".shift(@argvcopy)." ";
 			}
 		elsif (/^-rpath$/ or /^-R$/)
 			# -rpath is the OSF1 rpath flag

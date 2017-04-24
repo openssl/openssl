@@ -75,7 +75,7 @@ B<list>, or B<no->I<XXX> itself.)
 
 =head2 Standard Commands
 
-=over 10
+=over 4
 
 =item L<B<asn1parse>|asn1parse(1)>
 
@@ -268,7 +268,7 @@ X.509 Certificate Data Management.
 
 =head2 Message Digest Commands
 
-=over 10
+=over 4
 
 =item B<md2>
 
@@ -314,7 +314,7 @@ SHA-512 Digest
 
 =head2 Encoding and Cipher Commands
 
-=over 10
+=over 4
 
 =item B<base64>
 
@@ -365,7 +365,7 @@ This section describes some common options with common behavior.
 
 =head2 Common Options
 
-=over 10
+=over 4
 
 =item B<-help>
 
@@ -383,7 +383,7 @@ password argument is given and a password is required then the user is
 prompted to enter one: this will typically be read from the current
 terminal with echoing turned off.
 
-=over 10
+=over 4
 
 =item B<pass:password>
 

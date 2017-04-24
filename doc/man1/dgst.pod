@@ -133,7 +133,7 @@ via B<-macopt> parameter.
 Passes options to MAC algorithm, specified by B<-mac> key.
 Following options are supported by both by B<HMAC> and B<gost-mac>:
 
-=over 8
+=over 4
 
 =item B<key:string>
 
