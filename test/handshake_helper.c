@@ -1006,11 +1006,16 @@ static handshake_status_t handshake_status(peer_status_t last_status,
                                            int client_spoke_last)
 {
     switch (last_status) {
+    case PEER_WAITING:
+        /* Shouldn't ever happen */
+        return INTERNAL_ERROR;
+
     case PEER_SUCCESS:
         switch (previous_status) {
         case PEER_SUCCESS:
             /* Both succeeded. */
             return HANDSHAKE_SUCCESS;
+        case PEER_WAITING:
         case PEER_RETRY:
             /* Let the first peer finish. */
             return HANDSHAKE_RETRY;
