@@ -25,7 +25,8 @@
 
 #define BN_print_var(v) bn_print_var(#v, v)
 
-static void bn_print_var(const char *var, const BIGNUM *bn) {
+static void bn_print_var(const char *var, const BIGNUM *bn)
+{
     fprintf(stderr, "%s (%3d) = ", var, BN_num_bits(bn));
     BN_print_fp(stderr, bn);
     fprintf(stderr, "\n");
@@ -36,7 +37,8 @@ static void bn_print_var(const char *var, const BIGNUM *bn) {
  * returns zero and prints debug output otherwise.
  */
 static int a_is_zero_mod_one(const char *method, const BIGNUM *r,
-                             const BIGNUM *a) {
+                             const BIGNUM *a)
+{
     if (!BN_is_zero(r)) {
         fprintf(stderr, "%s failed:\n", method);
         fprintf(stderr, "a ** 0 mod 1 = r (should be 0)\n");
@@ -58,15 +60,10 @@ static int test_mod_exp_zero()
     BN_CTX *ctx = BN_CTX_new();
     int ret = 1, failed = 0;
 
-    m = BN_new();
-    a = BN_new();
-    p = BN_new();
-    r = BN_new();
-
-    if (!TEST_ptr(m)
-        || !TEST_ptr(a)
-        || !TEST_ptr(p)
-        || !TEST_ptr(r))
+    if (!TEST_ptr(m = BN_new())
+        || !TEST_ptr(a = BN_new())
+        || !TEST_ptr(p = BN_new())
+        || !TEST_ptr(r = BN_new()))
         goto err;
 
     BN_one(m);
@@ -144,23 +141,16 @@ static int test_mod_exp(int round)
     BIGNUM *b = NULL;
     BIGNUM *m = NULL;
 
-    ctx = BN_CTX_new();
-    if (!TEST_ptr(ctx))
+    if (!TEST_ptr(ctx = BN_CTX_new()))
         goto err;
-    r_mont = BN_new();
-    r_mont_const = BN_new();
-    r_recp = BN_new();
-    r_simple = BN_new();
-    a = BN_new();
-    b = BN_new();
-    m = BN_new();
-    if (!TEST_ptr(r_mont)
-        || !TEST_ptr(r_mont_const)
-        || !TEST_ptr(r_recp)
-        || !TEST_ptr(r_simple)
-        || !TEST_ptr(a)
-        || !TEST_ptr(b)
-        || !TEST_ptr(m))
+
+    if (!TEST_ptr(r_mont = BN_new())
+        || !TEST_ptr(r_mont_const = BN_new())
+        || !TEST_ptr(r_recp = BN_new())
+        || !TEST_ptr(r_simple = BN_new())
+        || !TEST_ptr(a = BN_new())
+        || !TEST_ptr(b = BN_new())
+        || !TEST_ptr(m = BN_new()))
         goto err;
 
     RAND_bytes(&c, 1);
