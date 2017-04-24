@@ -668,8 +668,8 @@ int BIO_lookup(const char *host, const char *service,
                enum BIO_lookup_type lookup_type,
                int family, int socktype, BIO_ADDRINFO **res);
 int BIO_lookup_ex(const char *host, const char *service,
-                  enum BIO_lookup_type lookup_type,
-                  int family, int socktype, int protocol, BIO_ADDRINFO **res);
+                  int lookup_type, int family, int socktype, int protocol,
+                  BIO_ADDRINFO **res);
 int BIO_sock_error(int sock);
 int BIO_socket_ioctl(int fd, long type, void *arg);
 int BIO_socket_nbio(int fd, int mode);

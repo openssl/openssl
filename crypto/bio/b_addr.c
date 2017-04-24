@@ -638,8 +638,7 @@ int BIO_lookup(const char *host, const char *service,
  *
  * The return value is 1 on success or 0 in case of error.
  */
-int BIO_lookup_ex(const char *host, const char *service,
-                  enum BIO_lookup_type lookup_type,
+int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                   int family, int socktype, int protocol, BIO_ADDRINFO **res)
 {
     int ret = 0;                 /* Assume failure */
