@@ -35,7 +35,7 @@ The following bits are significant:
 :
 :
 
-=over
+=over 4
 
 =item #62 vector facility
 
@@ -43,7 +43,7 @@ The following bits are significant:
 
 .
 
-=over
+=over 4
 
 =item #60 KIMD-SHA-512
 
@@ -55,7 +55,7 @@ The following bits are significant:
 
 :
 
-=over
+=over 4
 
 =item #62 KIMD-GHASH
 
@@ -63,7 +63,7 @@ The following bits are significant:
 
 :
 
-=over
+=over 4
 
 =item #11 KM-XTS-AES-256
 
@@ -80,7 +80,7 @@ The following bits are significant:
 :
 :
 
-=over
+=over 4
 
 =item #43 KMC-AES-256
 
@@ -93,7 +93,7 @@ The following bits are significant:
 :
 :
 
-=over
+=over 4
 
 =item #43 KMAC-AES-256
 
@@ -108,7 +108,7 @@ The following bits are significant:
 :
 :
 
-=over
+=over 4
 
 =item #43 KMO-AES-256
 
@@ -121,7 +121,7 @@ The following bits are significant:
 :
 :
 
-=over
+=over 4
 
 =item #43 KMF-AES-256
 
@@ -134,7 +134,7 @@ The following bits are significant:
 :
 :
 
-=over
+=over 4
 
 =item #60 PRNO-SHA-512-DRNG
 
@@ -142,7 +142,7 @@ The following bits are significant:
 
 :
 
-=over
+=over 4
 
 =item #13 PRNO-TRNG
 
@@ -150,7 +150,7 @@ The following bits are significant:
 
 :
 
-=over
+=over 4
 
 =item #43 KMA-GCM-AES-256
 
