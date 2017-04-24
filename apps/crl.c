@@ -313,7 +313,7 @@ int crl_main(int argc, char **argv)
         goto end;
 
     if (text)
-        X509_CRL_print(out, x);
+        X509_CRL_print_ex(out, x, get_nameopt());
 
     if (noout) {
         ret = 0;
