@@ -184,9 +184,9 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   INCLUDE[v3ext]=../include
   DEPEND[v3ext]=../libcrypto libtestutil.a
 
-  SOURCE[danetest]=danetest.c testutil.c test_main_custom.c
+  SOURCE[danetest]=danetest.c
   INCLUDE[danetest]=.. ../include
-  DEPEND[danetest]=../libcrypto ../libssl
+  DEPEND[danetest]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[constant_time_test]=constant_time_test.c
   INCLUDE[constant_time_test]=.. ../include

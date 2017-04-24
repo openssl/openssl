@@ -23,7 +23,6 @@
 #include <openssl/engine.h>
 #endif
 #include "testutil.h"
-#include "test_main_custom.h"
 
 #include "e_os.h"
 
@@ -108,17 +107,16 @@ static STACK_OF(X509) *load_chain(BIO *fp, int nelem)
 
     for (count = 0;
          count < nelem && errtype == 0
-         && PEM_read_bio(fp, &name, &header, &data, &len);
+         && PEM_read_bio(fp, &name, &header, &data, &len) == 1;
          ++count) {
-        const unsigned char *p = data;
-
         if (strcmp(name, PEM_STRING_X509) == 0
-            || strcmp(name, PEM_STRING_X509_TRUSTED) == 0
-            || strcmp(name, PEM_STRING_X509_OLD) == 0) {
-            d2i_X509_t d = strcmp(name, PEM_STRING_X509_TRUSTED)
-                            ? d2i_X509_AUX : d2i_X509;
+                    || strcmp(name, PEM_STRING_X509_TRUSTED) == 0
+                    || strcmp(name, PEM_STRING_X509_OLD) == 0) {
+            d2i_X509_t d = strcmp(name, PEM_STRING_X509_TRUSTED) != 0
+                ? d2i_X509_AUX : d2i_X509;
             X509 *cert;
-            
+            const unsigned char *p = data;
+
             if (!TEST_ptr(cert = d(0, &p, len))
                     || !TEST_long_eq(p - data, len)) {
                 TEST_info("Certificate parsing error");
@@ -185,7 +183,7 @@ static ossl_ssize_t hexdecode(const char *in, void *result)
     uint8_t byte;
     int nibble = 0;
 
-    if (!TEST_ptr(ret = OPENSSL_malloc(strlen(in)/2)))
+    if (!TEST_ptr(ret = OPENSSL_malloc(strlen(in) / 2)))
         return -1;
     cp = ret;
 
@@ -370,7 +368,7 @@ static int test_tlsafile(SSL_CTX *ctx, const char *base_name,
             continue;
         }
         if (!TEST_false(want == 0 && ok == 0)) {
-            TEST_error("Verification failure in test %d: ok=0", testno);
+            TEST_info("Verification failure in test %d: ok=0", testno);
             ret = 0;
             continue;
         }
