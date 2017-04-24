@@ -244,9 +244,7 @@ sub expected_result {
 
     if ($c_min > $c_max) {
         # Client should fail to even send a hello.
-        # This results in an internal error since the server will be
-        # waiting for input that never arrives.
-        return ("InternalError", undef);
+        return ("ClientFail", undef);
     } elsif ($s_min > $s_max) {
         # Server has no protocols, should always fail.
         return ("ServerFail", undef);

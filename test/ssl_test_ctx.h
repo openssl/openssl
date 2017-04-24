@@ -198,6 +198,8 @@ typedef struct {
     int expected_client_sign_type;
     /* Expected CA names for client auth */
     STACK_OF(X509_NAME) *expected_client_ca_names;
+    /* Whether to use SCTP for the transport */
+    int use_sctp;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);
