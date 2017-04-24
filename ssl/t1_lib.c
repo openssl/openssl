@@ -1447,6 +1447,12 @@ static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
     /* DSA is not allowed in TLS 1.3 */
     if (SSL_IS_TLS13(s) && lu->sig == EVP_PKEY_DSA)
         return 0;
+    /* TODO(OpenSSL1.2) fully axe DSA/etc. in ClientHello per TLS 1.3 spec */
+    if (!s->server && !SSL_IS_DTLS(s) && s->s3->tmp.min_ver >= TLS1_3_VERSION
+        && (lu->sig == EVP_PKEY_DSA || lu->hash_idx == SSL_MD_SHA1_IDX
+            || lu->hash_idx == SSL_MD_MD5_IDX
+            || lu->hash_idx == SSL_MD_SHA224_IDX))
+        return 0;
     /* See if public key algorithm allowed */
     if (tls12_get_pkey_idx(lu->sig) == -1)
         return 0;
