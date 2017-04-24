@@ -95,7 +95,7 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 #  define _LHASH OPENSSL_LHASH
 #  define LHASH_NODE OPENSSL_LH_NODE
 #  define lh_error OPENSSL_LH_error
-#  define lh_new OPENSSL_lh_new
+#  define lh_new OPENSSL_LH_new
 #  define lh_free OPENSSL_LH_free
 #  define lh_insert OPENSSL_LH_insert
 #  define lh_delete OPENSSL_LH_delete
