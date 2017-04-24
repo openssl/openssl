@@ -15,29 +15,10 @@
 BIO *bio_out = NULL;
 BIO *bio_err = NULL;
 
-#ifdef OPENSSL_USE_APPLINK
-/*
- * Using BIO_new_fd() obligates the use of applinks on platforms where it's
- * relevant.  Because it becomes a module of the libtestutil library and would
- * be disregarded if not actively referred to, we have this dummy that does
- * exactly this.  For any module that uses the rest of the routines here,
- * OPENSSL_Applink should tag along for sure.
- */
-void Applink_dummy(void);
-void Applink_dummy(void)
-{
-    OPENSSL_EXTERN void OPENSSL_Applink(void);
-
-    OPENSSL_Applink();
-}
-/* Generate an error for anyone who tries to actually use this dummy */
-# define Applink_dummy "DON'T USE THIS"
-#endif
-
 void test_open_streams(void)
 {
-    bio_out = BIO_new_fd(1, 0);
-    bio_err = BIO_new_fd(2, 0);
+    bio_out = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
+    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
     OPENSSL_assert(bio_out != NULL);
     OPENSSL_assert(bio_err != NULL);
