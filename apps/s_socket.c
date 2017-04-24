@@ -75,11 +75,12 @@ int init_client(int *sock, const char *host, const char *port,
         /* Admittedly, these checks are quite paranoid, we should not get
          * anything in the BIO_ADDRINFO chain that we haven't
          * asked for. */
-        OPENSSL_assert((family == AF_UNSPEC || family == BIO_ADDRINFO_family(res))
-                       && (type == 0 || type == BIO_ADDRINFO_socktype(res)));
+        OPENSSL_assert((family == AF_UNSPEC
+                        || family == BIO_ADDRINFO_family(ai))
+                       && (type == 0 || type == BIO_ADDRINFO_socktype(ai)));
 
         *sock = BIO_socket(BIO_ADDRINFO_family(ai), BIO_ADDRINFO_socktype(ai),
-                           BIO_ADDRINFO_protocol(res), 0);
+                           BIO_ADDRINFO_protocol(ai), 0);
         if (*sock == INVALID_SOCKET) {
             /* Maybe the kernel doesn't support the socket family, even if
              * BIO_lookup() added it in the returned result...
