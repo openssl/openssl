@@ -81,7 +81,7 @@
   sub dependmagic {
       my $target = shift;
 
-      return "$target : build_generated\n\t\pipe $(MMS) depend && \$(MMS) _$target\n_$target";
+      return "$target : build_generated\n\t\pipe \$(MMS) depend && \$(MMS) _$target\n_$target";
   }
   #use Data::Dumper;
   #print STDERR "DEBUG: before:\n", Dumper($unified_info{before});
