@@ -58,8 +58,8 @@ static void client_keylog_callback(const SSL *ssl, const char *line)
     int line_length = strlen(line);
 
     /* If the log doesn't fit, error out. */
-    if (client_log_buffer_index + line_length > sizeof(client_log_buffer)) {
-        TEST_info("Log too full");
+    if (client_log_buffer_index + line_length > sizeof(client_log_buffer) - 1) {
+        TEST_info("Client log too full");
         error_writing_log = 1;
         return;
     }
@@ -74,8 +74,8 @@ static void server_keylog_callback(const SSL *ssl, const char *line)
     int line_length = strlen(line);
 
     /* If the log doesn't fit, error out. */
-    if (server_log_buffer_index + line_length > sizeof(server_log_buffer)) {
-        TEST_info("Log too full");
+    if (server_log_buffer_index + line_length > sizeof(server_log_buffer) - 1) {
+        TEST_info("Server og too full");
         error_writing_log = 1;
         return;
     }
@@ -122,7 +122,8 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
     unsigned int client_application_secret_count = 0;
     unsigned int server_application_secret_count = 0;
 
-    for (token = strtok(buffer, " \n"); token != NULL; ) {
+    for (token = strtok(buffer, " \n"); token != NULL;
+         token = strtok(NULL, " \n")) {
         if (strcmp(token, "RSA") == 0) {
             /*
              * Premaster secret. Tokens should be: 16 ASCII bytes of
@@ -157,8 +158,8 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
             if (!TEST_size_t_eq(strlen(token), 64))
                 return 0;
             if (!TEST_false(compare_hex_encoded_buffer(token, 64,
-                                           actual_client_random,
-                                           client_random_size)))
+                                                       actual_client_random,
+                                                       client_random_size)))
                 return 0;
 
             if (!TEST_ptr(token = strtok(NULL, " \n")))
@@ -169,8 +170,8 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
             if (!TEST_size_t_ne(master_key_size, 0))
                 return 0;
             if (!TEST_false(compare_hex_encoded_buffer(token, strlen(token),
-                                           actual_master_key,
-                                           master_key_size)))
+                                                       actual_master_key,
+                                                       master_key_size)))
                 return 0;
             master_secret_count++;
         } else if (strcmp(token, "CLIENT_HANDSHAKE_TRAFFIC_SECRET") == 0
@@ -189,7 +190,7 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
                 server_handshake_secret_count++;
             else if (strcmp(token, "CLIENT_TRAFFIC_SECRET_0") == 0)
                 client_application_secret_count++;
-            else
+            else if (strcmp(token, "SERVER_TRAFFIC_SECRET_0") == 0)
                 server_application_secret_count++;
 
             client_random_size = SSL_get_client_random(ssl,
@@ -203,8 +204,8 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
             if (!TEST_size_t_eq(strlen(token), 64))
                 return 0;
             if (!TEST_false(compare_hex_encoded_buffer(token, 64,
-                                           actual_client_random,
-                                           client_random_size)))
+                                                       actual_client_random,
+                                                       client_random_size)))
                 return 0;
 
             if (!TEST_ptr(token = strtok(NULL, " \n")))
@@ -217,8 +218,6 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
             TEST_info("Unexpected token %s\n", token);
             return 0;
         }
-
-        token = strtok(NULL, " \n");
     }
 
     /* Got what we expected? */
@@ -492,8 +491,8 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
      * test we need to have a message larger than that.
      */
     certlen = i2d_X509(chaincert, NULL);
-    if (!TEST_long_gt(certlen * NUM_EXTRA_CERTS,
-                      (SSL3_RT_MAX_PLAIN_LENGTH * 4) / 3))
+    OPENSSL_assert(certlen * NUM_EXTRA_CERTS >
+                   (SSL3_RT_MAX_PLAIN_LENGTH * 4) / 3);
         goto end;
     for (i = 0; i < NUM_EXTRA_CERTS; i++) {
         if (!X509_up_ref(chaincert))
