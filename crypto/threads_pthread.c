@@ -1,89 +1,87 @@
-/* ====================================================================
- * Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <openssl/crypto.h>
-#include "internal/threads.h"
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && !defined(OPENSSL_SYS_WINDOWS)
 
+# ifdef PTHREAD_RWLOCK_INITIALIZER
+#  define USE_RWLOCK
+# endif
+
 CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 {
+# ifdef USE_RWLOCK
     CRYPTO_RWLOCK *lock = OPENSSL_zalloc(sizeof(pthread_rwlock_t));
     if (lock == NULL)
         return NULL;
 
-    if (pthread_rwlock_init(lock, NULL) != 0)
+    if (pthread_rwlock_init(lock, NULL) != 0) {
+        OPENSSL_free(lock);
         return NULL;
+    }
+# else
+    pthread_mutexattr_t attr;
+    CRYPTO_RWLOCK *lock = OPENSSL_zalloc(sizeof(pthread_mutex_t));
+    if (lock == NULL)
+        return NULL;
+
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+
+    if (pthread_mutex_init(lock, &attr) != 0) {
+        pthread_mutexattr_destroy(&attr);
+        OPENSSL_free(lock);
+        return NULL;
+    }
+
+    pthread_mutexattr_destroy(&attr);
+# endif
 
     return lock;
 }
 
 int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 {
+# ifdef USE_RWLOCK
     if (pthread_rwlock_rdlock(lock) != 0)
         return 0;
+# else
+    if (pthread_mutex_lock(lock) != 0)
+        return 0;
+# endif
 
     return 1;
 }
 
 int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
+# ifdef USE_RWLOCK
     if (pthread_rwlock_wrlock(lock) != 0)
         return 0;
+# else
+    if (pthread_mutex_lock(lock) != 0)
+        return 0;
+# endif
 
     return 1;
 }
 
 int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock)
 {
+# ifdef USE_RWLOCK
     if (pthread_rwlock_unlock(lock) != 0)
         return 0;
+# else
+    if (pthread_mutex_unlock(lock) != 0)
+        return 0;
+# endif
 
     return 1;
 }
@@ -93,7 +91,11 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock)
     if (lock == NULL)
         return;
 
+# ifdef USE_RWLOCK
     pthread_rwlock_destroy(lock);
+# else
+    pthread_mutex_destroy(lock);
+# endif
     OPENSSL_free(lock);
 
     return;
@@ -148,9 +150,12 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b)
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 {
-#ifdef __ATOMIC_RELAXED
-    *ret = __atomic_add_fetch(val, amount, __ATOMIC_RELAXED);
-#else
+# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL)
+    if (__atomic_is_lock_free(sizeof(*val), val)) {
+        *ret = __atomic_add_fetch(val, amount, __ATOMIC_ACQ_REL);
+        return 1;
+    }
+# endif
     if (!CRYPTO_THREAD_write_lock(lock))
         return 0;
 
@@ -159,7 +164,6 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 
     if (!CRYPTO_THREAD_unlock(lock))
         return 0;
-#endif
 
     return 1;
 }

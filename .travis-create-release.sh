@@ -4,9 +4,8 @@
 
 ./Configure dist
 if [ "$1" == osx ]; then
-    make NAME='_srcdist' TARFLAGS='-n' TARFILE='_srcdist.tar' \
-	 TAR_COMMAND='$(TAR) $(TARFLAGS) -s "|^|$(NAME)/|" -T $(TARFILE).list -cvf -' \
-	 SHELL='sh -vx' tar
+    make NAME='_srcdist' TARFILE='_srcdist.tar' \
+         TAR_COMMAND='$(TAR) $(TARFLAGS) -cvf -' tar
 else
-    make TARFILE='_srcdist.tar' NAME='_srcdist' SHELL='sh -v' dist
+    make TARFILE='_srcdist.tar' NAME='_srcdist' dist
 fi

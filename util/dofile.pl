@@ -1,5 +1,11 @@
-#! /usr/bin/perl
+#! /usr/bin/env perl
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
 #
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 # Reads one or more template files and runs it through Text::Template
 #
 # It is assumed that this scripts is called with -Mconfigdata, a module
@@ -153,7 +159,11 @@ my @autowarntext = ("WARNING: do not edit!",
 my $prev_linecount = 0;
 my $text =
     @ARGV
-    ? join("", map { my $x = "{- output_reset_on() -}".Text::Template::_load_text($_);
+    ? join("", map { my $x = Text::Template::_load_text($_);
+                     if (!defined($x)) {
+                         die $Text::Template::ERROR, "\n";
+                     }
+                     $x = "{- output_reset_on() -}" . $x;
                      my $linecount = $x =~ tr/\n//;
                      $prev_linecount = ($linecount += $prev_linecount);
                      $lines{$linecount} = $_;

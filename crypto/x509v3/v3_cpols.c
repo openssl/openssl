@@ -1,59 +1,10 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 1999.
- */
-/* ====================================================================
- * Copyright (c) 1999-2004 The OpenSSL Project.  All rights reserved.
+ * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -71,7 +22,7 @@
 static int i2r_certpol(X509V3_EXT_METHOD *method, STACK_OF(POLICYINFO) *pol,
                        BIO *out, int indent);
 static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
-                                         X509V3_CTX *ctx, char *value);
+                                         X509V3_CTX *ctx, const char *value);
 static void print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals,
                              int indent);
 static void print_notice(BIO *out, USERNOTICE *notice, int indent);
@@ -80,6 +31,8 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
 static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
                                       STACK_OF(CONF_VALUE) *unot, int ia5org);
 static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos);
+static int displaytext_str2tag(const char *tagstr, unsigned int *tag_len);
+static int displaytext_get_tag_len(const char *tagstr);
 
 const X509V3_EXT_METHOD v3_cpols = {
     NID_certificate_policies, 0, ASN1_ITEM_ref(CERTIFICATEPOLICIES),
@@ -133,7 +86,7 @@ ASN1_SEQUENCE(NOTICEREF) = {
 IMPLEMENT_ASN1_FUNCTIONS(NOTICEREF)
 
 static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
-                                         X509V3_CTX *ctx, char *value)
+                                         X509V3_CTX *ctx, const char *value)
 {
     STACK_OF(POLICYINFO) *pols = NULL;
     char *pstr;
@@ -188,6 +141,7 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
             pol = POLICYINFO_new();
             if (pol == NULL) {
                 X509V3err(X509V3_F_R2I_CERTPOL, ERR_R_MALLOC_FAILURE);
+                ASN1_OBJECT_free(pobj);
                 goto err;
             }
             pol->policyid = pobj;
@@ -290,13 +244,48 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
 
 }
 
+static int displaytext_get_tag_len(const char *tagstr)
+{
+    char *colon = strchr(tagstr, ':');
+
+    return (colon == NULL) ? -1 : colon - tagstr;
+}
+
+static int displaytext_str2tag(const char *tagstr, unsigned int *tag_len)
+{
+    int len;
+
+    *tag_len = 0;
+    len = displaytext_get_tag_len(tagstr);
+
+    if (len == -1)
+        return V_ASN1_VISIBLESTRING;
+    *tag_len = len;
+    if (len == sizeof("UTF8") - 1 && strncmp(tagstr, "UTF8", len) == 0)
+        return V_ASN1_UTF8STRING;
+    if (len == sizeof("UTF8String") - 1 && strncmp(tagstr, "UTF8String", len) == 0)
+        return V_ASN1_UTF8STRING;
+    if (len == sizeof("BMP") - 1 && strncmp(tagstr, "BMP", len) == 0)
+        return V_ASN1_BMPSTRING;
+    if (len == sizeof("BMPSTRING") - 1 && strncmp(tagstr, "BMPSTRING", len) == 0)
+        return V_ASN1_BMPSTRING;
+    if (len == sizeof("VISIBLE") - 1 && strncmp(tagstr, "VISIBLE", len) == 0)
+        return V_ASN1_VISIBLESTRING;
+    if (len == sizeof("VISIBLESTRING") - 1 && strncmp(tagstr, "VISIBLESTRING", len) == 0)
+        return V_ASN1_VISIBLESTRING;
+    *tag_len = 0;
+    return V_ASN1_VISIBLESTRING;
+}
+
 static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
                                       STACK_OF(CONF_VALUE) *unot, int ia5org)
 {
-    int i, ret;
+    int i, ret, len, tag;
+    unsigned int tag_len;
     CONF_VALUE *cnf;
     USERNOTICE *not;
     POLICYQUALINFO *qual;
+    char *value = NULL;
 
     if ((qual = POLICYQUALINFO_new()) == NULL)
         goto merr;
@@ -309,11 +298,15 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
     qual->d.usernotice = not;
     for (i = 0; i < sk_CONF_VALUE_num(unot); i++) {
         cnf = sk_CONF_VALUE_value(unot, i);
+        value = cnf->value;
         if (strcmp(cnf->name, "explicitText") == 0) {
-            if ((not->exptext = ASN1_VISIBLESTRING_new()) == NULL)
+            tag = displaytext_str2tag(value, &tag_len);
+            if ((not->exptext = ASN1_STRING_type_new(tag)) == NULL)
                 goto merr;
-            if (!ASN1_STRING_set(not->exptext, cnf->value,
-                                 strlen(cnf->value)))
+            if (tag_len != 0)
+                value += tag_len + 1;
+            len = strlen(value);
+            if (!ASN1_STRING_set(not->exptext, value, len))
                 goto merr;
         } else if (strcmp(cnf->name, "organization") == 0) {
             NOTICEREF *nref;
@@ -343,6 +336,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
             if (!nos || !sk_CONF_VALUE_num(nos)) {
                 X509V3err(X509V3_F_NOTICE_SECTION, X509V3_R_INVALID_NUMBERS);
                 X509V3_conf_err(cnf);
+                sk_CONF_VALUE_pop_free(nos, X509V3_conf_free);
                 goto err;
             }
             ret = nref_nos(nref->noticenos, nos);
@@ -392,10 +386,10 @@ static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos)
     return 1;
 
  merr:
+    ASN1_INTEGER_free(aint);
     X509V3err(X509V3_F_NREF_NOS, ERR_R_MALLOC_FAILURE);
 
  err:
-    sk_ASN1_INTEGER_pop_free(nnums, ASN1_STRING_free);
     return 0;
 }
 
@@ -460,9 +454,15 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
             num = sk_ASN1_INTEGER_value(ref->noticenos, i);
             if (i)
                 BIO_puts(out, ", ");
-            tmp = i2s_ASN1_INTEGER(NULL, num);
-            BIO_puts(out, tmp);
-            OPENSSL_free(tmp);
+            if (num == NULL)
+                BIO_puts(out, "(null)");
+            else {
+                tmp = i2s_ASN1_INTEGER(NULL, num);
+                if (tmp == NULL)
+                    return;
+                BIO_puts(out, tmp);
+                OPENSSL_free(tmp);
+            }
         }
         BIO_puts(out, "\n");
     }

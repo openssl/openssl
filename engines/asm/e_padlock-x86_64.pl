@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -23,7 +30,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../crypto/perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-open OUT,"| \"$^X\" $xlate $flavour $output";
+open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\"";
 *STDOUT=*OUT;
 
 $code=".text\n";
@@ -528,7 +535,7 @@ $code.=<<___				if ($PADLOCK_PREFETCH{$mode});
 	sub	$len,%rsp
 	shr	\$3,$len
 	lea	(%rsp),$out
-	.byte	0xf3,0x48,0xa5		# rep movsq	
+	.byte	0xf3,0x48,0xa5		# rep movsq
 	lea	(%r8),$out
 	lea	(%rsp),$inp
 	mov	$chunk,$len

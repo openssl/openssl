@@ -1,72 +1,17 @@
 /*
- * Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
- * project.
- */
-
-/*
- * History: This file was originally part of ocsp.c and was transferred to
- * Richard Levitte from CertCo by Kathy Weinhold in mid-spring 2000 to be
- * included in OpenSSL or released as a patch kit.
- */
-
-/* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/ocsp.h>
 #include "ocsp_lcl.h"
+#include "internal/cryptlib.h"
 #include <openssl/pem.h>
 
 static int ocsp_certid_print(BIO *bp, OCSP_CERTID *a, int indent)
@@ -90,14 +35,16 @@ typedef struct {
     const char *m;
 } OCSP_TBLSTR;
 
-static const char *table2string(long s, const OCSP_TBLSTR *ts, int len)
+static const char *do_table2string(long s, const OCSP_TBLSTR *ts, size_t len)
 {
-    const OCSP_TBLSTR *p;
-    for (p = ts; p < ts + len; p++)
-        if (p->t == s)
-            return p->m;
+    size_t i;
+    for (i = 0; i < len; i++, ts++)
+        if (ts->t == s)
+            return ts->m;
     return "(UNKNOWN)";
 }
+
+#define table2string(s, tbl) do_table2string(s, tbl, OSSL_NELEM(tbl))
 
 const char *OCSP_response_status_str(long s)
 {
@@ -109,7 +56,7 @@ const char *OCSP_response_status_str(long s)
         {OCSP_RESPONSE_STATUS_SIGREQUIRED, "sigrequired"},
         {OCSP_RESPONSE_STATUS_UNAUTHORIZED, "unauthorized"}
     };
-    return table2string(s, rstat_tbl, 6);
+    return table2string(s, rstat_tbl);
 }
 
 const char *OCSP_cert_status_str(long s)
@@ -119,7 +66,7 @@ const char *OCSP_cert_status_str(long s)
         {V_OCSP_CERTSTATUS_REVOKED, "revoked"},
         {V_OCSP_CERTSTATUS_UNKNOWN, "unknown"}
     };
-    return table2string(s, cstat_tbl, 3);
+    return table2string(s, cstat_tbl);
 }
 
 const char *OCSP_crl_reason_str(long s)
@@ -134,7 +81,7 @@ const char *OCSP_crl_reason_str(long s)
         {OCSP_REVOKED_STATUS_CERTIFICATEHOLD, "certificateHold"},
         {OCSP_REVOKED_STATUS_REMOVEFROMCRL, "removeFromCRL"}
     };
-    return table2string(s, reason_tbl, 8);
+    return table2string(s, reason_tbl);
 }
 
 int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST *o, unsigned long flags)

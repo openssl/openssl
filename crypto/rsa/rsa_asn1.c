@@ -1,67 +1,18 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2000.
- */
-/* ====================================================================
- * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include <openssl/asn1t.h>
+#include "rsa_locl.h"
 
 /* Override the default free and new methods */
 static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
@@ -81,7 +32,7 @@ static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 }
 
 ASN1_SEQUENCE_cb(RSAPrivateKey, rsa_cb) = {
-        ASN1_SIMPLE(RSA, version, LONG),
+        ASN1_EMBED(RSA, version, INT32),
         ASN1_SIMPLE(RSA, n, BIGNUM),
         ASN1_SIMPLE(RSA, e, BIGNUM),
         ASN1_SIMPLE(RSA, d, CBIGNUM),
@@ -98,20 +49,42 @@ ASN1_SEQUENCE_cb(RSAPublicKey, rsa_cb) = {
         ASN1_SIMPLE(RSA, e, BIGNUM),
 } ASN1_SEQUENCE_END_cb(RSA, RSAPublicKey)
 
-ASN1_SEQUENCE(RSA_PSS_PARAMS) = {
+/* Free up maskHash */
+static int rsa_pss_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+                      void *exarg)
+{
+    if (operation == ASN1_OP_FREE_PRE) {
+        RSA_PSS_PARAMS *pss = (RSA_PSS_PARAMS *)*pval;
+        X509_ALGOR_free(pss->maskHash);
+    }
+    return 1;
+}
+
+ASN1_SEQUENCE_cb(RSA_PSS_PARAMS, rsa_pss_cb) = {
         ASN1_EXP_OPT(RSA_PSS_PARAMS, hashAlgorithm, X509_ALGOR,0),
         ASN1_EXP_OPT(RSA_PSS_PARAMS, maskGenAlgorithm, X509_ALGOR,1),
         ASN1_EXP_OPT(RSA_PSS_PARAMS, saltLength, ASN1_INTEGER,2),
         ASN1_EXP_OPT(RSA_PSS_PARAMS, trailerField, ASN1_INTEGER,3)
-} ASN1_SEQUENCE_END(RSA_PSS_PARAMS)
+} ASN1_SEQUENCE_END_cb(RSA_PSS_PARAMS, RSA_PSS_PARAMS)
 
 IMPLEMENT_ASN1_FUNCTIONS(RSA_PSS_PARAMS)
 
-ASN1_SEQUENCE(RSA_OAEP_PARAMS) = {
+/* Free up maskHash */
+static int rsa_oaep_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+                       void *exarg)
+{
+    if (operation == ASN1_OP_FREE_PRE) {
+        RSA_OAEP_PARAMS *oaep = (RSA_OAEP_PARAMS *)*pval;
+        X509_ALGOR_free(oaep->maskHash);
+    }
+    return 1;
+}
+
+ASN1_SEQUENCE_cb(RSA_OAEP_PARAMS, rsa_oaep_cb) = {
         ASN1_EXP_OPT(RSA_OAEP_PARAMS, hashFunc, X509_ALGOR, 0),
         ASN1_EXP_OPT(RSA_OAEP_PARAMS, maskGenFunc, X509_ALGOR, 1),
         ASN1_EXP_OPT(RSA_OAEP_PARAMS, pSourceFunc, X509_ALGOR, 2),
-} ASN1_SEQUENCE_END(RSA_OAEP_PARAMS)
+} ASN1_SEQUENCE_END_cb(RSA_OAEP_PARAMS, RSA_OAEP_PARAMS)
 
 IMPLEMENT_ASN1_FUNCTIONS(RSA_OAEP_PARAMS)
 

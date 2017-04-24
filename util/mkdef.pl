@@ -1,11 +1,18 @@
-#!/usr/local/bin/perl -w
+#! /usr/bin/env perl
+# Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # generate a .def file
 #
 # It does this by parsing the header files and looking for the
 # prototyped functions: it then prunes the output.
 #
-# Intermediary files are created, call libeay.num and ssleay.num,
+# Intermediary files are created, call libcrypto.num and libssl.num,
 # The format of these files is:
 #
 #	routine-name	nnnn	vers	info
@@ -17,7 +24,7 @@
 #	existence:platform:kind:algorithms
 #
 # - "existence" can be "EXIST" or "NOEXIST" depending on if the symbol is
-#   found somewhere in the source, 
+#   found somewhere in the source,
 # - "platforms" is empty if it exists on all platforms, otherwise it contains
 #   comma-separated list of the platform, just as they are if the symbol exists
 #   for those platforms, or prepended with a "!" if not.  This helps resolve
@@ -44,8 +51,8 @@ use File::Spec::Functions;
 
 my $debug=0;
 
-my $crypto_num= catfile($config{sourcedir},"util","libeay.num");
-my $ssl_num=    catfile($config{sourcedir},"util","ssleay.num");
+my $crypto_num= catfile($config{sourcedir},"util","libcrypto.num");
+my $ssl_num=    catfile($config{sourcedir},"util","libssl.num");
 my $libname;
 
 my $do_update = 0;
@@ -56,26 +63,24 @@ my $do_ctest = 0;
 my $do_ctestall = 0;
 my $do_checkexist = 0;
 
-my $VMSVAX=0;
-my $VMSNonVAX=0;
 my $VMS=0;
 my $W32=0;
 my $NT=0;
-my $OS2=0;
 my $linux=0;
 # Set this to make typesafe STACK definitions appear in DEF
 my $safe_stack_def = 0;
 
 my @known_platforms = ( "__FreeBSD__", "PERL5",
-			"EXPORT_VAR_AS_FUNCTION", "ZLIB"
+			"EXPORT_VAR_AS_FUNCTION", "ZLIB", "_WIN32"
 			);
 my @known_ossl_platforms = ( "VMS", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
 			 "SHA256", "SHA512", "RMD160",
 			 "MDC2", "WHIRLPOOL", "RSA", "DSA", "DH", "EC", "EC2M",
-			 "HMAC", "AES", "CAMELLIA", "SEED", "GOST",
-                         "SCRYPT", "CHACHA", "POLY1305",
+			 "HMAC", "AES", "CAMELLIA", "SEED", "GOST", "ARIA",
+                         "SCRYPT", "CHACHA", "POLY1305", "BLAKE2",
+			 "SIPHASH",
 			 # EC_NISTP_64_GCC_128
 			 "EC_NISTP_64_GCC_128",
 			 # Envelope "algorithms"
@@ -98,16 +103,18 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "PSK", "SRP", "HEARTBEATS",
 			 # CMS
 			 "CMS",
+                         "OCSP",
 			 # CryptoAPI Engine
 			 "CAPIENG",
-			 # SSL v3 method
-			 "SSL3_METHOD",
+			 # SSL methods
+			 "SSL3_METHOD", "TLS1_METHOD", "TLS1_1_METHOD", "TLS1_2_METHOD", "DTLS1_METHOD", "DTLS1_2_METHOD",
 			 # NEXTPROTONEG
 			 "NEXTPROTONEG",
 			 # Deprecated functions
 			 "DEPRECATEDIN_0_9_8",
 			 "DEPRECATEDIN_1_0_0",
 			 "DEPRECATEDIN_1_1_0",
+			 "DEPRECATEDIN_1_2_0",
 			 # SCTP
 		 	 "SCTP",
 			 # SRTP
@@ -116,8 +123,13 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 		 	 "SSL_TRACE",
 			 # Unit testing
 		 	 "UNIT_TEST",
+			 # User Interface
+			 "UI",
+			 #
+			 "TS",
 			 # OCB mode
 			 "OCB",
+			 "CMAC",
                          # APPLINK (win build feature?)
                          "APPLINK"
                      );
@@ -130,6 +142,14 @@ foreach (@known_algorithms) {
 # disabled by default
 $disabled_algorithms{"STATIC_ENGINE"} = 1;
 
+my $apiv = sprintf "%x%02x%02x", split(/\./, $config{api});
+foreach (keys %disabled_algorithms) {
+	if (/^DEPRECATEDIN_(\d+)_(\d+)_(\d+)$/) {
+		my $depv = sprintf "%x%02x%02x", $1, $2, $3;
+		$disabled_algorithms{$_} = 1 if $apiv ge $depv;
+	}
+}
+
 my $zlib;
 
 foreach (@ARGV, split(/ /, $config{options}))
@@ -141,30 +161,21 @@ foreach (@ARGV, split(/ /, $config{options}))
 		$W32 = 1;
 		$NT = 1;
 	}
-	if ($_ eq "VMS-VAX") {
-		$VMS=1;
-		$VMSVAX=1;
-	}
-	if ($_ eq "VMS-NonVAX") {
-		$VMS=1;
-		$VMSNonVAX=1;
-	}
 	if ($_ eq "linux") {
 		$linux=1;
 	}
-	$VMS=$VMSNonVAX=1 if $_ eq "VMS";
-	$OS2=1 if $_ eq "OS2";
+	$VMS=1 if $_ eq "VMS";
 	if ($_ eq "zlib" || $_ eq "enable-zlib" || $_ eq "zlib-dynamic"
 			 || $_ eq "enable-zlib-dynamic") {
 		$zlib = 1;
 	}
 
-	$do_ssl=1 if $_ eq "ssleay";
+	$do_ssl=1 if $_ eq "libssl";
 	if ($_ eq "ssl") {
-		$do_ssl=1; 
+		$do_ssl=1;
 		$libname=$_
 	}
-	$do_crypto=1 if $_ eq "libeay";
+	$do_crypto=1 if $_ eq "libcrypto";
 	if ($_ eq "crypto") {
 		$do_crypto=1;
 		$libname=$_;
@@ -174,25 +185,9 @@ foreach (@ARGV, split(/ /, $config{options}))
 	$do_ctest=1 if $_ eq "ctest";
 	$do_ctestall=1 if $_ eq "ctestall";
 	$do_checkexist=1 if $_ eq "exist";
-	if (/^--api=(\d+)\.(\d+)\.(\d+)$/) {
-		my $apiv = sprintf "%x%02x%02x", $1, $2, $3;
-		foreach (keys %disabled_algorithms) {
-			if (/^DEPRECATEDIN_(\d+)_(\d+)_(\d+)$/) {
-				my $depv = sprintf "%x%02x%02x", $1, $2, $3;
-				$disabled_algorithms{$_} = 1 if $apiv ge $depv;
-			}
-		}
-	}
-	if (/^no-deprecated$/) {
-		foreach (keys %disabled_algorithms) {
-			if (/^DEPRECATEDIN_/) {
-				$disabled_algorithms{$_} = 1;
-			}
-		}
-	}
-	elsif (/^(enable|disable|no)-(.*)$/) {
+	if (/^(enable|disable|no)-(.*)$/) {
 		my $alg = uc $2;
-        $alg =~ tr/-/_/;
+		$alg =~ tr/-/_/;
 		if (exists $disabled_algorithms{$alg}) {
 			$disabled_algorithms{$alg} = $1 eq "enable" ? 0 : 1;
 		}
@@ -200,21 +195,21 @@ foreach (@ARGV, split(/ /, $config{options}))
 
 	}
 
-if (!$libname) { 
+if (!$libname) {
 	if ($do_ssl) {
-		$libname="SSLEAY";
+		$libname="LIBSSL";
 	}
 	if ($do_crypto) {
-		$libname="LIBEAY";
+		$libname="LIBCRYPTO";
 	}
 }
 
 # If no platform is given, assume WIN32
-if ($W32 + $VMS + $OS2 + $linux == 0) {
+if ($W32 + $VMS + $linux == 0) {
 	$W32 = 1;
 }
 die "Please, only one platform at a time"
-    if ($W32 + $VMS + $OS2 + $linux > 1);
+    if ($W32 + $VMS + $linux > 1);
 
 if (!$do_ssl && !$do_crypto)
 	{
@@ -236,7 +231,7 @@ $ssl.=" include/openssl/srtp.h";
 my $crypto ="include/openssl/crypto.h";
 $crypto.=" include/internal/o_dir.h";
 $crypto.=" include/internal/o_str.h";
-$crypto.=" include/internal/threads.h";
+$crypto.=" include/internal/err.h";
 $crypto.=" include/openssl/des.h" ; # unless $no_des;
 $crypto.=" include/openssl/idea.h" ; # unless $no_idea;
 $crypto.=" include/openssl/rc4.h" ; # unless $no_rc4;
@@ -267,7 +262,7 @@ $crypto.=" include/openssl/engine.h"; # unless $no_engine;
 $crypto.=" include/openssl/stack.h" ; # unless $no_stack;
 $crypto.=" include/openssl/buffer.h" ; # unless $no_buffer;
 $crypto.=" include/openssl/bio.h" ; # unless $no_bio;
-$crypto.=" include/openssl/dso.h" ; # unless $no_dso;
+$crypto.=" include/internal/dso.h" ; # unless $no_dso;
 $crypto.=" include/openssl/lhash.h" ; # unless $no_lhash;
 $crypto.=" include/openssl/conf.h";
 $crypto.=" include/openssl/txt_db.h";
@@ -295,39 +290,40 @@ $crypto.=" include/openssl/srp.h";
 $crypto.=" include/openssl/modes.h";
 $crypto.=" include/openssl/async.h";
 $crypto.=" include/openssl/ct.h";
+$crypto.=" include/openssl/kdf.h";
 
 my $symhacks="include/openssl/symhacks.h";
 
-my @ssl_symbols = &do_defs("SSLEAY", $ssl, $symhacks);
-my @crypto_symbols = &do_defs("LIBEAY", $crypto, $symhacks);
+my @ssl_symbols = &do_defs("LIBSSL", $ssl, $symhacks);
+my @crypto_symbols = &do_defs("LIBCRYPTO", $crypto, $symhacks);
 
 if ($do_update) {
 
 if ($do_ssl == 1) {
 
-	&maybe_add_info("SSLEAY",*ssl_list,@ssl_symbols);
+	&maybe_add_info("LIBSSL",*ssl_list,@ssl_symbols);
 	if ($do_rewrite == 1) {
 		open(OUT, ">$ssl_num");
-		&rewrite_numbers(*OUT,"SSLEAY",*ssl_list,@ssl_symbols);
+		&rewrite_numbers(*OUT,"LIBSSL",*ssl_list,@ssl_symbols);
 	} else {
 		open(OUT, ">>$ssl_num");
 	}
-	&update_numbers(*OUT,"SSLEAY",*ssl_list,$max_ssl,@ssl_symbols);
+	&update_numbers(*OUT,"LIBSSL",*ssl_list,$max_ssl,@ssl_symbols);
 	close OUT;
 }
 
 if($do_crypto == 1) {
 
-	&maybe_add_info("LIBEAY",*crypto_list,@crypto_symbols);
+	&maybe_add_info("LIBCRYPTO",*crypto_list,@crypto_symbols);
 	if ($do_rewrite == 1) {
 		open(OUT, ">$crypto_num");
-		&rewrite_numbers(*OUT,"LIBEAY",*crypto_list,@crypto_symbols);
+		&rewrite_numbers(*OUT,"LIBCRYPTO",*crypto_list,@crypto_symbols);
 	} else {
 		open(OUT, ">>$crypto_num");
 	}
-	&update_numbers(*OUT,"LIBEAY",*crypto_list,$max_crypto,@crypto_symbols);
+	&update_numbers(*OUT,"LIBCRYPTO",*crypto_list,$max_crypto,@crypto_symbols);
 	close OUT;
-} 
+}
 
 } elsif ($do_checkexist) {
 	&check_existing(*ssl_list, @ssl_symbols)
@@ -345,10 +341,10 @@ if($do_crypto == 1) {
 int main()
 {
 EOF
-	&print_test_file(*STDOUT,"SSLEAY",*ssl_list,$do_ctestall,@ssl_symbols)
+	&print_test_file(*STDOUT,"LIBSSL",*ssl_list,$do_ctestall,@ssl_symbols)
 		if $do_ssl == 1;
 
-	&print_test_file(*STDOUT,"LIBEAY",*crypto_list,$do_ctestall,@crypto_symbols)
+	&print_test_file(*STDOUT,"LIBCRYPTO",*crypto_list,$do_ctestall,@crypto_symbols)
 		if $do_crypto == 1;
 
 	print "}\n";
@@ -391,6 +387,7 @@ sub do_defs
 			(map { "OPENSSL_SYS_".$_ => 0 } @known_ossl_platforms),
 			(map { "OPENSSL_NO_".$_ => 0 } @known_algorithms),
 			(map { "OPENSSL_USE_".$_ => 0 } @known_algorithms),
+			(grep /^DEPRECATED_/, @known_algorithms),
 			NOPROTO		=> 0,
 			PERL5		=> 0,
 			_WINDLL		=> 0,
@@ -503,7 +500,22 @@ sub do_defs
 			s/{[^{}]*}//gs;                      # ignore {} blocks
 			print STDERR "DEBUG: \$def=\"$def\"\n" if $debug && $def ne "";
 			print STDERR "DEBUG: \$_=\"$_\"\n" if $debug;
-			if (/^\#\s*ifndef\s+(.*)/) {
+			if (/^\#\s*if\s+OPENSSL_API_COMPAT\s*(\S)\s*(0x[0-9a-fA-F]{8})L\s*$/) {
+				my $op = $1;
+				my $v = hex($2);
+				if ($op ne '<' && $op ne '>=') {
+				    die "$file unacceptable operator $op: $_\n";
+				}
+				my ($one, $major, $minor) =
+				    ( ($v >> 28) & 0xf,
+				      ($v >> 20) & 0xff,
+				      ($v >> 12) & 0xff );
+				my $t = "DEPRECATEDIN_${one}_${major}_${minor}";
+				push(@tag,"-");
+				push(@tag,$t);
+				$tag{$t}=($op eq '<' ? 1 : -1);
+				print STDERR "DEBUG: $file: found tag $t = $tag{$t}\n" if $debug;
+			} elsif (/^\#\s*ifndef\s+(.*)/) {
 				push(@tag,"-");
 				push(@tag,$1);
 				$tag{$1}=-1;
@@ -634,6 +646,9 @@ sub do_defs
 				    , grep(!/^$/,
 					 map { $tag{"OPENSSL_USE_".$_} == 1 ? $_ : "" }
 					 @known_algorithms);
+				push @current_algorithms,
+				    grep { /^DEPRECATEDIN_/ && $tag{$_} == 1 }
+				    @known_algorithms;
 				$def .=
 				    "#INFO:"
 					.join(',',@current_platforms).":"
@@ -641,7 +656,8 @@ sub do_defs
 				next;
 			}
 			if ($tag{'TRUE'} != -1) {
-				if (/^\s*DECLARE_STACK_OF\s*\(\s*(\w*)\s*\)/) {
+				if (/^\s*DEFINE_STACK_OF\s*\(\s*(\w*)\s*\)/
+						|| /^\s*DEFINE_STACK_OF_CONST\s*\(\s*(\w*)\s*\)/) {
 					next;
 				} elsif (/^\s*DECLARE_ASN1_ENCODE_FUNCTIONS\s*\(\s*(\w*)\s*,\s*(\w*)\s*,\s*(\w*)\s*\)/) {
 					$def .= "int d2i_$3(void);";
@@ -802,7 +818,7 @@ sub do_defs
 					$def .=
 					    "#INFO:"
 						.join(',',@current_platforms).":"
-						    .join(',',@current_algorithms).";";
+						    .join(',',"STDIO",@current_algorithms).";";
 					$def .= "int PEM_read_$1(void);";
 					$def .= "int PEM_write_$1(void);";
 					$def .=
@@ -819,7 +835,7 @@ sub do_defs
 					$def .=
 					    "#INFO:"
 						.join(',',@current_platforms).":"
-						    .join(',',@current_algorithms).";";
+						    .join(',',"STDIO",@current_algorithms).";";
 					$def .= "int PEM_write_$1(void);";
 					$def .=
 					    "#INFO:"
@@ -833,12 +849,12 @@ sub do_defs
 					$def .=
 					    "#INFO:"
 						.join(',',@current_platforms).":"
-						    .join(',',@current_algorithms).";";
+						    .join(',',"STDIO",@current_algorithms).";";
 					$def .= "int PEM_read_$1(void);";
 					$def .=
 					    "#INFO:"
 						.join(',',@current_platforms).":"
-						    .join(',',@current_algorithms).";";
+						    .join(',',"STDIO",@current_algorithms).";";
 					# Things that are everywhere
 					$def .= "int PEM_read_bio_$1(void);";
 					next;
@@ -967,19 +983,6 @@ sub do_defs
 	$platform{"PEM_write_NS_CERT_SEQ"} = "VMS";
 	$platform{"PEM_read_P8_PRIV_KEY_INFO"} = "VMS";
 	$platform{"PEM_write_P8_PRIV_KEY_INFO"} = "VMS";
-	$platform{"EVP_sha384"} = "!VMSVAX";
-	$platform{"EVP_sha512"} = "!VMSVAX";
-	$platform{"SHA384_Init"} = "!VMSVAX";
-	$platform{"SHA384_Transform"} = "!VMSVAX";
-	$platform{"SHA384_Update"} = "!VMSVAX";
-	$platform{"SHA384_Final"} = "!VMSVAX";
-	$platform{"SHA384"} = "!VMSVAX";
-	$platform{"SHA512_Init"} = "!VMSVAX";
-	$platform{"SHA512_Transform"} = "!VMSVAX";
-	$platform{"SHA512_Update"} = "!VMSVAX";
-	$platform{"SHA512_Final"} = "!VMSVAX";
-	$platform{"SHA512"} = "!VMSVAX";
-
 
 	# Info we know about
 
@@ -1104,17 +1107,14 @@ sub is_valid
 
 		if ($platforms) {
 			# platforms
-			if ($keyword eq "VMSVAX" && $VMSVAX) { return 1; }
-			if ($keyword eq "VMSNonVAX" && $VMSNonVAX) { return 1; }
 			if ($keyword eq "VMS" && $VMS) { return 1; }
 			if ($keyword eq "WIN32" && $W32) { return 1; }
+			if ($keyword eq "_WIN32" && $W32) { return 1; }
 			if ($keyword eq "WINNT" && $NT) { return 1; }
-			if ($keyword eq "OS2" && $OS2) { return 1; }
 			# Special platforms:
 			# EXPORT_VAR_AS_FUNCTION means that global variables
-			# will be represented as functions.  This currently
-			# only happens on VMS-VAX.
-			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && ($VMSVAX || $W32)) {
+			# will be represented as functions.
+			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && $W32) {
 				return 1;
 			}
 			if ($keyword eq "ZLIB" && $zlib) { return 1; }
@@ -1198,22 +1198,8 @@ sub print_def_file
 
 	if ($W32)
 		{ $libname.="32"; }
-	elsif ($OS2)
-		{ # DLL names should not clash on the whole system.
-		  # However, they should not have any particular relationship
-		  # to the name of the static library.  Chose descriptive names
-		  # (must be at most 8 chars).
-		  my %translate = (ssl => 'open_ssl', crypto => 'cryptssl');
-		  $libname = $translate{$name} || $name;
-		  $liboptions = <<EOO;
-INITINSTANCE
-DATA MULTIPLE NONSHARED
-EOO
-		  # Vendor field can't contain colon, drat; so we omit http://
-		  $description = "\@#$http_vendor:$version#\@$what; DLL for library $name.  Build for EMX -Zmtd";
-		}
 
-        if ($W32 || $OS2)
+        if ($W32)
                 {
                 print OUT <<"EOF";
 ;
@@ -1325,12 +1311,12 @@ EOF
                                             }
                                             print OUT $symline;
                                             $symvtextcount += length($symline) - 2;
-					} elsif($v && !$OS2) {
-						printf OUT "    %s%-39s @%-8d DATA\n",
-								($W32)?"":"_",$s2,$n;
+					} elsif($v) {
+						printf OUT "    %s%-39s DATA\n",
+								($W32)?"":"_",$s2;
 					} else {
-						printf OUT "    %s%-39s @%d\n",
-								($W32||$OS2)?"":"_",$s2,$n;
+						printf OUT "    %s%s\n",
+								($W32)?"":"_",$s2;
 					}
 				}
 			}
@@ -1631,8 +1617,7 @@ sub check_version_lte()
 	if ($cvnums ne $tvnums) {
 		die "Invalid version number: $testversion "
 			."for current version $currversion\n"
-			if (substr($cvnums, -1) < substr($tvnums, -1)
-				|| substr($cvnums, 0, 4) ne substr($tvnums, 0, 4));
+			if (substr($cvnums, 0, 4) ne substr($tvnums, 0, 4));
 		return;
 	}
 	#If we get here then the base version (i.e. the numbers) are the same - they

@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -60,13 +12,11 @@
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
+#include "internal/bio.h"
 
 static int b64_write(BIO *h, const char *buf, int num);
 static int b64_read(BIO *h, char *buf, int size);
 static int b64_puts(BIO *h, const char *str);
-/*
- * static int b64_gets(BIO *h, char *str, int size);
- */
 static long b64_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int b64_new(BIO *h);
 static int b64_free(BIO *data);
@@ -93,9 +43,13 @@ typedef struct b64_struct {
     char tmp[B64_BLOCK_SIZE];
 } BIO_B64_CTX;
 
-static BIO_METHOD methods_b64 = {
+static const BIO_METHOD methods_b64 = {
     BIO_TYPE_BASE64, "base64 encoding",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     b64_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     b64_read,
     b64_puts,
     NULL,                       /* b64_gets, */
@@ -105,9 +59,10 @@ static BIO_METHOD methods_b64 = {
     b64_callback_ctrl,
 };
 
-BIO_METHOD *BIO_f_base64(void)
+
+const BIO_METHOD *BIO_f_base64(void)
 {
-    return (&methods_b64);
+    return &methods_b64;
 }
 
 static int b64_new(BIO *bi)
@@ -116,28 +71,38 @@ static int b64_new(BIO *bi)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
-        return (0);
+        return 0;
 
     ctx->cont = 1;
     ctx->start = 1;
     ctx->base64 = EVP_ENCODE_CTX_new();
-    bi->init = 1;
-    bi->ptr = (char *)ctx;
-    bi->flags = 0;
-    bi->num = 0;
-    return (1);
+    if (ctx->base64 == NULL) {
+        OPENSSL_free(ctx);
+        return 0;
+    }
+
+    BIO_set_data(bi, ctx);
+    BIO_set_init(bi, 1);
+
+    return 1;
 }
 
 static int b64_free(BIO *a)
 {
+    BIO_B64_CTX *ctx;
     if (a == NULL)
-        return (0);
-    EVP_ENCODE_CTX_free(((BIO_B64_CTX *)a->ptr)->base64);
-    OPENSSL_free(a->ptr);
-    a->ptr = NULL;
-    a->init = 0;
-    a->flags = 0;
-    return (1);
+        return 0;
+
+    ctx = BIO_get_data(a);
+    if (ctx == NULL)
+        return 0;
+
+    EVP_ENCODE_CTX_free(ctx->base64);
+    OPENSSL_free(ctx);
+    BIO_set_data(a, NULL);
+    BIO_set_init(a, 0);
+
+    return 1;
 }
 
 static int b64_read(BIO *b, char *out, int outl)
@@ -145,13 +110,15 @@ static int b64_read(BIO *b, char *out, int outl)
     int ret = 0, i, ii, j, k, x, n, num, ret_code = 0;
     BIO_B64_CTX *ctx;
     unsigned char *p, *q;
+    BIO *next;
 
     if (out == NULL)
         return (0);
-    ctx = (BIO_B64_CTX *)b->ptr;
+    ctx = (BIO_B64_CTX *)BIO_get_data(b);
 
-    if ((ctx == NULL) || (b->next_bio == NULL))
-        return (0);
+    next = BIO_next(b);
+    if ((ctx == NULL) || (next == NULL))
+        return 0;
 
     BIO_clear_retry_flags(b);
 
@@ -191,14 +158,14 @@ static int b64_read(BIO *b, char *out, int outl)
         if (ctx->cont <= 0)
             break;
 
-        i = BIO_read(b->next_bio, &(ctx->tmp[ctx->tmp_len]),
+        i = BIO_read(next, &(ctx->tmp[ctx->tmp_len]),
                      B64_BLOCK_SIZE - ctx->tmp_len);
 
         if (i <= 0) {
             ret_code = i;
 
             /* Should we continue next time we are called? */
-            if (!BIO_should_retry(b->next_bio)) {
+            if (!BIO_should_retry(next)) {
                 ctx->cont = i;
                 /* If buffer empty break */
                 if (ctx->tmp_len == 0)
@@ -354,8 +321,13 @@ static int b64_write(BIO *b, const char *in, int inl)
     int n;
     int i;
     BIO_B64_CTX *ctx;
+    BIO *next;
 
-    ctx = (BIO_B64_CTX *)b->ptr;
+    ctx = (BIO_B64_CTX *)BIO_get_data(b);
+    next = BIO_next(b);
+    if ((ctx == NULL) || (next == NULL))
+        return 0;
+
     BIO_clear_retry_flags(b);
 
     if (ctx->encode != B64_ENCODE) {
@@ -371,7 +343,7 @@ static int b64_write(BIO *b, const char *in, int inl)
     OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
     n = ctx->buf_len - ctx->buf_off;
     while (n > 0) {
-        i = BIO_write(b->next_bio, &(ctx->buf[ctx->buf_off]), n);
+        i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
         if (i <= 0) {
             BIO_copy_next_retry(b);
             return (i);
@@ -432,9 +404,10 @@ static int b64_write(BIO *b, const char *in, int inl)
                 ret += n;
             }
         } else {
-            EVP_EncodeUpdate(ctx->base64,
-                             (unsigned char *)ctx->buf, &ctx->buf_len,
-                             (unsigned char *)in, n);
+            if (!EVP_EncodeUpdate(ctx->base64,
+                                 (unsigned char *)ctx->buf, &ctx->buf_len,
+                                 (unsigned char *)in, n))
+                return ((ret == 0) ? -1 : ret);
             OPENSSL_assert(ctx->buf_len <= (int)sizeof(ctx->buf));
             OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
             ret += n;
@@ -445,7 +418,7 @@ static int b64_write(BIO *b, const char *in, int inl)
         ctx->buf_off = 0;
         n = ctx->buf_len;
         while (n > 0) {
-            i = BIO_write(b->next_bio, &(ctx->buf[ctx->buf_off]), n);
+            i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
             if (i <= 0) {
                 BIO_copy_next_retry(b);
                 return ((ret == 0) ? i : ret);
@@ -467,21 +440,25 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
     BIO_B64_CTX *ctx;
     long ret = 1;
     int i;
+    BIO *next;
 
-    ctx = (BIO_B64_CTX *)b->ptr;
+    ctx = (BIO_B64_CTX *)BIO_get_data(b);
+    next = BIO_next(b);
+    if ((ctx == NULL) || (next == NULL))
+        return 0;
 
     switch (cmd) {
     case BIO_CTRL_RESET:
         ctx->cont = 1;
         ctx->start = 1;
         ctx->encode = B64_NONE;
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_EOF:         /* More to read */
         if (ctx->cont <= 0)
             ret = 1;
         else
-            ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+            ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_WPENDING:    /* More to write in buffer */
         OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
@@ -490,13 +467,13 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
             && (EVP_ENCODE_CTX_num(ctx->base64) != 0))
             ret = 1;
         else if (ret <= 0)
-            ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+            ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_PENDING:     /* More to read in buffer */
         OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
         ret = ctx->buf_len - ctx->buf_off;
         if (ret <= 0)
-            ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+            ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_FLUSH:
         /* do a final write */
@@ -524,12 +501,12 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
             goto again;
         }
         /* Finally flush the underlying BIO */
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         break;
 
     case BIO_C_DO_STATE_MACHINE:
         BIO_clear_retry_flags(b);
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         BIO_copy_next_retry(b);
         break;
 
@@ -539,21 +516,22 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_GET:
     case BIO_CTRL_SET:
     default:
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static long b64_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 {
     long ret = 1;
+    BIO *next = BIO_next(b);
 
-    if (b->next_bio == NULL)
-        return (0);
+    if (next == NULL)
+        return 0;
     switch (cmd) {
     default:
-        ret = BIO_callback_ctrl(b->next_bio, cmd, fp);
+        ret = BIO_callback_ctrl(next, cmd, fp);
         break;
     }
     return (ret);

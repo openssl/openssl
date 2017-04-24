@@ -1,72 +1,15 @@
 /*
- * Written by Richard Levitte (richard@levitte.org) for the OpenSSL project
- * 2000.
- */
-/* ====================================================================
- * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/dso.h>
-#include "internal/dso_conf.h"
+#include "dso_locl.h"
 
-#ifndef DSO_DL
-DSO_METHOD *DSO_METHOD_dl(void)
-{
-    return NULL;
-}
-#else
+#ifdef DSO_DL
 
 # include <dl.h>
 
@@ -75,7 +18,6 @@ DSO_METHOD *DSO_METHOD_dl(void)
 
 static int dl_load(DSO *dso);
 static int dl_unload(DSO *dso);
-static void *dl_bind_var(DSO *dso, const char *symname);
 static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname);
 static char *dl_name_converter(DSO *dso, const char *filename);
 static char *dl_merger(DSO *dso, const char *filespec1,
@@ -87,7 +29,6 @@ static DSO_METHOD dso_meth_dl = {
     "OpenSSL 'dl' shared library method",
     dl_load,
     dl_unload,
-    dl_bind_var,
     dl_bind_func,
     NULL,                       /* ctrl */
     dl_name_converter,
@@ -98,9 +39,9 @@ static DSO_METHOD dso_meth_dl = {
     dl_globallookup
 };
 
-DSO_METHOD *DSO_METHOD_dl(void)
+DSO_METHOD *DSO_METHOD_openssl(void)
 {
-    return (&dso_meth_dl);
+    return &dso_meth_dl;
 }
 
 /*
@@ -127,8 +68,10 @@ static int dl_load(DSO *dso)
                    (dso->flags & DSO_FLAG_NO_NAME_TRANSLATION ? 0 :
                     DYNAMIC_PATH), 0L);
     if (ptr == NULL) {
+        char errbuf[160];
         DSOerr(DSO_F_DL_LOAD, DSO_R_LOAD_FAILED);
-        ERR_add_error_data(4, "filename(", filename, "): ", strerror(errno));
+        if (openssl_strerror_r(errno, errbuf, sizeof(errbuf)))
+            ERR_add_error_data(4, "filename(", filename, "): ", errbuf);
         goto err;
     }
     if (!sk_push(dso->meth_data, (char *)ptr)) {
@@ -172,32 +115,6 @@ static int dl_unload(DSO *dso)
     return (1);
 }
 
-static void *dl_bind_var(DSO *dso, const char *symname)
-{
-    shl_t ptr;
-    void *sym;
-
-    if ((dso == NULL) || (symname == NULL)) {
-        DSOerr(DSO_F_DL_BIND_VAR, ERR_R_PASSED_NULL_PARAMETER);
-        return (NULL);
-    }
-    if (sk_num(dso->meth_data) < 1) {
-        DSOerr(DSO_F_DL_BIND_VAR, DSO_R_STACK_ERROR);
-        return (NULL);
-    }
-    ptr = (shl_t) sk_value(dso->meth_data, sk_num(dso->meth_data) - 1);
-    if (ptr == NULL) {
-        DSOerr(DSO_F_DL_BIND_VAR, DSO_R_NULL_HANDLE);
-        return (NULL);
-    }
-    if (shl_findsym(&ptr, symname, TYPE_UNDEFINED, &sym) < 0) {
-        DSOerr(DSO_F_DL_BIND_VAR, DSO_R_SYM_FAILURE);
-        ERR_add_error_data(4, "symname(", symname, "): ", strerror(errno));
-        return (NULL);
-    }
-    return (sym);
-}
-
 static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname)
 {
     shl_t ptr;
@@ -217,8 +134,10 @@ static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname)
         return (NULL);
     }
     if (shl_findsym(&ptr, symname, TYPE_UNDEFINED, &sym) < 0) {
+        char errbuf[160];
         DSOerr(DSO_F_DL_BIND_FUNC, DSO_R_SYM_FAILURE);
-        ERR_add_error_data(4, "symname(", symname, "): ", strerror(errno));
+        if (openssl_strerror_r(errno, errbuf, sizeof(errbuf)))
+            ERR_add_error_data(4, "symname(", symname, "): ", errbuf);
         return (NULL);
     }
     return ((DSO_FUNC_TYPE)sym);

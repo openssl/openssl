@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -114,71 +66,74 @@ int ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y)
  * followed by optional zeros isn't padded.
  */
 
+/*
+ * If |pad| is zero, the operation is effectively reduced to memcpy,
+ * and if |pad| is 0xff, then it performs two's complement, ~dst + 1.
+ * Note that in latter case sequence of zeros yields itself, and so
+ * does 0x80 followed by any number of zeros. These properties are
+ * used elsewhere below...
+ */
+static void twos_complement(unsigned char *dst, const unsigned char *src,
+                            size_t len, unsigned char pad)
+{
+    unsigned int carry = pad & 1;
+
+    /* Begin at the end of the encoding */
+    dst += len;
+    src += len;
+    /* two's complement value: ~value + 1 */
+    while (len-- != 0) {
+        *(--dst) = (unsigned char)(carry += *(--src) ^ pad);
+        carry >>= 8;
+    }
+}
+
 static size_t i2c_ibuf(const unsigned char *b, size_t blen, int neg,
                        unsigned char **pp)
 {
-    int pad = 0;
+    unsigned int pad = 0;
     size_t ret, i;
     unsigned char *p, pb = 0;
-    const unsigned char *n;
 
-    if (b == NULL || blen == 0)
-        ret = 1;
-    else {
+    if (b != NULL && blen) {
         ret = blen;
         i = b[0];
-        if (ret == 1 && i == 0)
-            neg = 0;
         if (!neg && (i > 127)) {
             pad = 1;
             pb = 0;
         } else if (neg) {
+            pb = 0xFF;
             if (i > 128) {
                 pad = 1;
-                pb = 0xFF;
             } else if (i == 128) {
                 /*
-                 * Special case: if any other bytes non zero we pad:
-                 * otherwise we don't.
+                 * Special case [of minimal negative for given length]:
+                 * if any other bytes non zero we pad, otherwise we don't.
                  */
-                for (i = 1; i < blen; i++)
-                    if (b[i]) {
-                        pad = 1;
-                        pb = 0xFF;
-                        break;
-                    }
+                for (pad = 0, i = 1; i < blen; i++)
+                    pad |= b[i];
+                pb = pad != 0 ? 0xffU : 0;
+                pad = pb & 1;
             }
         }
         ret += pad;
+    } else {
+        ret = 1;
+        blen = 0;   /* reduce '(b == NULL || blen == 0)' to '(blen == 0)' */
     }
-    if (pp == NULL)
-        return ret;
-    p = *pp;
 
-    if (pad)
-        *(p++) = pb;
-    if (b == NULL || blen == 0)
-        *p = 0;
-    else if (!neg)
-        memcpy(p, b, blen);
-    else {
-        /* Begin at the end of the encoding */
-        n = b + blen - 1;
-        p += blen - 1;
-        i = blen;
-        /* Copy zeros to destination as long as source is zero */
-        while (!*n && i > 1) {
-            *(p--) = 0;
-            n--;
-            i--;
-        }
-        /* Complement and increment next octet */
-        *(p--) = ((*(n--)) ^ 0xff) + 1;
-        i--;
-        /* Complement any octets left */
-        for (; i > 0; i--)
-            *(p--) = *(n--) ^ 0xff;
-    }
+    if (pp == NULL || (p = *pp) == NULL)
+        return ret;
+
+    /*
+     * This magically handles all corner cases, such as '(b == NULL ||
+     * blen == 0)', non-negative value, "negative" zero, 0x80 followed
+     * by any number of zeros...
+     */
+    *p = pb;
+    p += pad;       /* yes, p[0] can be written twice, but it's little
+                     * price to pay for eliminated branches */
+    twos_complement(p, b, blen, pb);
 
     *pp += ret;
     return ret;
@@ -193,7 +148,6 @@ static size_t i2c_ibuf(const unsigned char *b, size_t blen, int neg,
 static size_t c2i_ibuf(unsigned char *b, int *pneg,
                        const unsigned char *p, size_t plen)
 {
-    size_t i;
     int neg, pad;
     /* Zero content length is illegal */
     if (plen == 0) {
@@ -205,7 +159,7 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
         *pneg = neg;
     /* Handle common case where length is 1 octet separately */
     if (plen == 1) {
-        if (b) {
+        if (b != NULL) {
             if (neg)
                 b[0] = (p[0] ^ 0xFF) + 1;
             else
@@ -222,46 +176,14 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
         ASN1err(ASN1_F_C2I_IBUF, ASN1_R_ILLEGAL_PADDING);
         return 0;
     }
-    /* If positive just copy across */
-    if (neg == 0) {
-        if (b)
-            memcpy(b, p + pad, plen - pad);
-        return plen - pad;
-    }
 
-    if (neg && pad) {
-        /* check is any following octets are non zero */
-        for (i = 1; i < plen; i++) {
-            if (p[i] != 0)
-                break;
-        }
-        /* if all bytes are zero handle as special case */
-        if (i == plen) {
-            if (b) {
-                b[0] = 1;
-                memset(b + 1, 0, plen - 1);
-            }
-            return plen;
-        }
-    }
-
+    /* skip over pad */
+    p += pad;
     plen -= pad;
-    /* Must be negative: calculate twos complement */
-    if (b) {
-        const unsigned char *from = p + plen - 1 + pad;
-        unsigned char *to = b + plen - 1;
-        i = plen;
-        while (*from == 0 && i) {
-            *to-- = 0;
-            i--;
-            from--;
-        }
-        *to-- = (*from-- ^ 0xff) + 1;
-        OPENSSL_assert(i != 0);
-        i--;
-        for (; i > 0; i--)
-            *to-- = *from-- ^ 0xff;
-    }
+
+    if (b != NULL)
+        twos_complement(b, p, plen, neg ? 0xffU : 0);
+
     return plen;
 }
 
@@ -274,56 +196,43 @@ int i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 static int asn1_get_uint64(uint64_t *pr, const unsigned char *b, size_t blen)
 {
     size_t i;
+    uint64_t r;
+
     if (blen > sizeof(*pr)) {
         ASN1err(ASN1_F_ASN1_GET_UINT64, ASN1_R_TOO_LARGE);
         return 0;
     }
-    *pr = 0;
     if (b == NULL)
         return 0;
-    for (i = 0; i < blen; i++) {
-        *pr <<= 8;
-        *pr |= b[i];
+    for (r = 0, i = 0; i < blen; i++) {
+        r <<= 8;
+        r |= b[i];
     }
+    *pr = r;
     return 1;
-}
-
-static size_t asn1_put_uint64(unsigned char *b, uint64_t r)
-{
-    if (r >= 0x100) {
-        unsigned char *p;
-        uint64_t rtmp = r;
-        size_t i = 0;
-
-        /* Work out how many bytes we need */
-        while (rtmp) {
-            rtmp >>= 8;
-            i++;
-        }
-
-        /* Copy from end to beginning */
-        p = b + i - 1;
-
-        do {
-            *p-- = r & 0xFF;
-            r >>= 8;
-        } while (p >= b);
-
-        return i;
-    }
-
-    b[0] = (unsigned char)r;
-    return 1;
-
 }
 
 /*
- * Absolute value of INT64_MIN: we can't just use -INT64_MIN as it produces
+ * Write uint64_t to big endian buffer and return offset to first
+ * written octet. In other words it returns offset in range from 0
+ * to 7, with 0 denoting 8 written octets and 7 - one.
+ */
+static size_t asn1_put_uint64(unsigned char b[sizeof(uint64_t)], uint64_t r)
+{
+    size_t off = sizeof(uint64_t);
+
+    do {
+        b[--off] = (unsigned char)r;
+    } while (r >>= 8);
+
+    return off;
+}
+
+/*
+ * Absolute value of INT64_MIN: we can't just use -INT64_MIN as gcc produces
  * overflow warnings.
  */
-
-#define ABS_INT64_MIN \
-    ((uint64_t)INT64_MAX + (uint64_t)(-(INT64_MIN + INT64_MAX)))
+#define ABS_INT64_MIN ((uint64_t)INT64_MAX + (-(INT64_MIN + INT64_MAX)))
 
 /* signed version of asn1_get_uint64 */
 static int asn1_get_int64(int64_t *pr, const unsigned char *b, size_t blen,
@@ -333,17 +242,25 @@ static int asn1_get_int64(int64_t *pr, const unsigned char *b, size_t blen,
     if (asn1_get_uint64(&r, b, blen) == 0)
         return 0;
     if (neg) {
-        if (r > ABS_INT64_MIN) {
+        if (r <= INT64_MAX) {
+            /* Most significant bit is guaranteed to be clear, negation
+             * is guaranteed to be meaningful in platform-neutral sense. */
+            *pr = -(int64_t)r;
+        } else if (r == ABS_INT64_MIN) {
+            /* This never happens if INT64_MAX == ABS_INT64_MIN, e.g.
+             * on ones'-complement system. */
+            *pr = (int64_t)(0 - r);
+        } else {
             ASN1err(ASN1_F_ASN1_GET_INT64, ASN1_R_TOO_SMALL);
             return 0;
         }
-        *pr = -(int64_t)r;
     } else {
-        if (r > INT64_MAX) {
+        if (r <= INT64_MAX) {
+            *pr = (int64_t)r;
+        } else {
             ASN1err(ASN1_F_ASN1_GET_INT64, ASN1_R_TOO_LARGE);
             return 0;
         }
-        *pr = (int64_t)r;
     }
     return 1;
 }
@@ -404,18 +321,22 @@ static int asn1_string_get_int64(int64_t *pr, const ASN1_STRING *a, int itype)
 static int asn1_string_set_int64(ASN1_STRING *a, int64_t r, int itype)
 {
     unsigned char tbuf[sizeof(r)];
-    size_t l;
+    size_t off;
+
     a->type = itype;
     if (r < 0) {
-        l = asn1_put_uint64(tbuf, -r);
+        /* Most obvious '-r' triggers undefined behaviour for most
+         * common INT64_MIN. Even though below '0 - (uint64_t)r' can
+         * appear two's-complement centric, it does produce correct/
+         * expected result even on one's-complement. This is because
+         * cast to unsigned has to change bit pattern... */
+        off = asn1_put_uint64(tbuf, 0 - (uint64_t)r);
         a->type |= V_ASN1_NEG;
     } else {
-        l = asn1_put_uint64(tbuf, r);
+        off = asn1_put_uint64(tbuf, r);
         a->type &= ~V_ASN1_NEG;
     }
-    if (l == 0)
-        return 0;
-    return ASN1_STRING_set(a, tbuf, l);
+    return ASN1_STRING_set(a, tbuf + off, sizeof(tbuf) - off);
 }
 
 static int asn1_string_get_uint64(uint64_t *pr, const ASN1_STRING *a,
@@ -439,12 +360,11 @@ static int asn1_string_get_uint64(uint64_t *pr, const ASN1_STRING *a,
 static int asn1_string_set_uint64(ASN1_STRING *a, uint64_t r, int itype)
 {
     unsigned char tbuf[sizeof(r)];
-    size_t l;
+    size_t off;
+
     a->type = itype;
-    l = asn1_put_uint64(tbuf, r);
-    if (l == 0)
-        return 0;
-    return ASN1_STRING_set(a, tbuf, l);
+    off = asn1_put_uint64(tbuf, r);
+    return ASN1_STRING_set(a, tbuf + off, sizeof(tbuf) - off);
 }
 
 /*
@@ -570,7 +490,7 @@ static BIGNUM *asn1_string_to_bn(const ASN1_INTEGER *ai, BIGNUM *bn,
     }
 
     ret = BN_bin2bn(ai->data, ai->length, bn);
-    if (ret == 0) {
+    if (ret == NULL) {
         ASN1err(ASN1_F_ASN1_STRING_TO_BN, ASN1_R_BN_LIB);
         return NULL;
     }
@@ -643,7 +563,7 @@ int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
     return ASN1_ENUMERATED_set_int64(a, v);
 }
 
-long ASN1_ENUMERATED_get(ASN1_ENUMERATED *a)
+long ASN1_ENUMERATED_get(const ASN1_ENUMERATED *a)
 {
     int i;
     int64_t r;
@@ -670,3 +590,30 @@ BIGNUM *ASN1_ENUMERATED_to_BN(const ASN1_ENUMERATED *ai, BIGNUM *bn)
 {
     return asn1_string_to_bn(ai, bn, V_ASN1_ENUMERATED);
 }
+
+/* Internal functions used by x_int64.c */
+int c2i_uint64_int(uint64_t *ret, int *neg, const unsigned char **pp, long len)
+{
+    unsigned char buf[sizeof(uint64_t)];
+    size_t buflen;
+
+    buflen = c2i_ibuf(NULL, NULL, *pp, len);
+    if (buflen == 0)
+        return 0;
+    if (buflen > sizeof(uint64_t)) {
+        ASN1err(ASN1_F_C2I_UINT64_INT, ASN1_R_TOO_LARGE);
+        return 0;
+    }
+    (void)c2i_ibuf(buf, neg, *pp, len);
+    return asn1_get_uint64(ret, buf, buflen);
+}
+
+int i2c_uint64_int(unsigned char *p, uint64_t r, int neg)
+{
+    unsigned char buf[sizeof(uint64_t)];
+    size_t off;
+
+    off = asn1_put_uint64(buf, r);
+    return i2c_ibuf(buf + off, sizeof(buf) - off, neg, &p);
+}
+

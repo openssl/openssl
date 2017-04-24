@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -16,7 +23,7 @@
 # [depending on key length, less for longer keys] on ARM920T, and
 # +115-80% on Intel IXP425. This is compared to pre-bn_mul_mont code
 # base and compiler generated code with in-lined umull and even umlal
-# instructions. The latter means that this code didn't really have an 
+# instructions. The latter means that this code didn't really have an
 # "advantage" of utilizing some "secret" instruction.
 #
 # The code is interoperable with Thumb ISA and is rather compact, less
@@ -48,8 +55,8 @@
 # Snapdragon S4.
 
 $flavour = shift;
-if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
-else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {} }
 
 if ($flavour && $flavour ne "void") {
     $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -121,7 +128,7 @@ bn_mul_mont:
 #ifdef	__APPLE__
 	ldr	r0,[r0]
 #endif
-	tst	r0,#1			@ NEON available?
+	tst	r0,#ARMV7_NEON		@ NEON available?
 	ldmia	sp, {r0,r2}
 	beq	.Lialu
 	add	sp,sp,#8

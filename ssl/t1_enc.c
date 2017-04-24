@@ -1,112 +1,12 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 /* ====================================================================
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -136,28 +36,25 @@
 
 #include <stdio.h>
 #include "ssl_locl.h"
-#ifndef OPENSSL_NO_COMP
-# include <openssl/comp.h>
-#endif
+#include <openssl/comp.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/rand.h>
 
 /* seed1 through seed5 are concatenated */
 static int tls1_PRF(SSL *s,
-                    const void *seed1, int seed1_len,
-                    const void *seed2, int seed2_len,
-                    const void *seed3, int seed3_len,
-                    const void *seed4, int seed4_len,
-                    const void *seed5, int seed5_len,
-                    const unsigned char *sec, int slen,
-                    unsigned char *out, int olen)
+                    const void *seed1, size_t seed1_len,
+                    const void *seed2, size_t seed2_len,
+                    const void *seed3, size_t seed3_len,
+                    const void *seed4, size_t seed4_len,
+                    const void *seed5, size_t seed5_len,
+                    const unsigned char *sec, size_t slen,
+                    unsigned char *out, size_t olen)
 {
     const EVP_MD *md = ssl_prf_md(s);
     EVP_PKEY_CTX *pctx = NULL;
 
     int ret = 0;
-    size_t outlen = olen;
 
     if (md == NULL) {
         /* Should never happen */
@@ -167,30 +64,30 @@ static int tls1_PRF(SSL *s,
     pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_TLS1_PRF, NULL);
     if (pctx == NULL || EVP_PKEY_derive_init(pctx) <= 0
         || EVP_PKEY_CTX_set_tls1_prf_md(pctx, md) <= 0
-        || EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, sec, slen) <= 0)
+        || EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, sec, (int)slen) <= 0)
         goto err;
 
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed1, seed1_len) <= 0)
+    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed1, (int)seed1_len) <= 0)
         goto err;
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed2, seed2_len) <= 0)
+    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed2, (int)seed2_len) <= 0)
         goto err;
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed3, seed3_len) <= 0)
+    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed3, (int)seed3_len) <= 0)
         goto err;
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed4, seed4_len) <= 0)
+    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed4, (int)seed4_len) <= 0)
         goto err;
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed5, seed5_len) <= 0)
+    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed5, (int)seed5_len) <= 0)
         goto err;
 
-    if (EVP_PKEY_derive(pctx, out, &outlen) <= 0)
+    if (EVP_PKEY_derive(pctx, out, &olen) <= 0)
         goto err;
     ret = 1;
 
-    err:
+ err:
     EVP_PKEY_CTX_free(pctx);
     return ret;
 }
 
-static int tls1_generate_key_block(SSL *s, unsigned char *km, int num)
+static int tls1_generate_key_block(SSL *s, unsigned char *km, size_t num)
 {
     int ret;
     ret = tls1_PRF(s,
@@ -218,10 +115,10 @@ int tls1_change_cipher_state(SSL *s, int which)
 #endif
     const EVP_MD *m;
     int mac_type;
-    int *mac_secret_size;
+    size_t *mac_secret_size;
     EVP_MD_CTX *mac_ctx;
     EVP_PKEY *mac_key;
-    int n, i, j, k, cl;
+    size_t n, i, j, k, cl;
     int reuse_dd = 0;
 
     c = s->s3->tmp.new_sym_enc;
@@ -232,6 +129,11 @@ int tls1_change_cipher_state(SSL *s, int which)
 #endif
 
     if (which & SSL3_CC_READ) {
+        if (s->ext.use_etm)
+            s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
+        else
+            s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
+
         if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
             s->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
         else
@@ -243,7 +145,7 @@ int tls1_change_cipher_state(SSL *s, int which)
             goto err;
         else
             /*
-             * make sure it's intialized in case we exit later with an error
+             * make sure it's initialised in case we exit later with an error
              */
             EVP_CIPHER_CTX_reset(s->enc_read_ctx);
         dd = s->enc_read_ctx;
@@ -260,8 +162,6 @@ int tls1_change_cipher_state(SSL *s, int which)
                        SSL_R_COMPRESSION_LIBRARY_ERROR);
                 goto err2;
             }
-            if (!RECORD_LAYER_setup_comp_buffer(&s->rlayer))
-                goto err;
         }
 #endif
         /*
@@ -272,6 +172,11 @@ int tls1_change_cipher_state(SSL *s, int which)
         mac_secret = &(s->s3->read_mac_secret[0]);
         mac_secret_size = &(s->s3->read_mac_secret_size);
     } else {
+        if (s->ext.use_etm)
+            s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE;
+        else
+            s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE;
+
         if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
             s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
         else
@@ -318,6 +223,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     p = s->s3->tmp.key_block;
     i = *mac_secret_size = s->s3->tmp.new_mac_secret_size;
 
+    /* TODO(size_t): convert me */
     cl = EVP_CIPHER_key_length(c);
     j = cl;
     /* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
@@ -354,10 +260,11 @@ int tls1_change_cipher_state(SSL *s, int which)
     memcpy(mac_secret, ms, i);
 
     if (!(EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
+        /* TODO(size_t): Convert this function */
         mac_key = EVP_PKEY_new_mac_key(mac_type, NULL,
-                                       mac_secret, *mac_secret_size);
+                                       mac_secret, (int)*mac_secret_size);
         if (mac_key == NULL
-                || EVP_DigestSignInit(mac_ctx, NULL, m, NULL, mac_key) <= 0) {
+            || EVP_DigestSignInit(mac_ctx, NULL, m, NULL, mac_key) <= 0) {
             EVP_PKEY_free(mac_key);
             SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
             goto err2;
@@ -367,7 +274,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 #ifdef SSL_DEBUG
     printf("which = %04X\nmac key=", which);
     {
-        int z;
+        size_t z;
         for (z = 0; z < i; z++)
             printf("%02X%c", ms[z], ((z + 1) % 16) ? ' ' : '\n');
     }
@@ -375,20 +282,22 @@ int tls1_change_cipher_state(SSL *s, int which)
 
     if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE) {
         if (!EVP_CipherInit_ex(dd, c, NULL, key, NULL, (which & SSL3_CC_WRITE))
-            || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GCM_SET_IV_FIXED, k, iv)) {
+            || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GCM_SET_IV_FIXED, (int)k,
+                                    iv)) {
             SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
             goto err2;
         }
     } else if (EVP_CIPHER_mode(c) == EVP_CIPH_CCM_MODE) {
         int taglen;
-        if (s->s3->tmp.new_cipher->algorithm_enc & (SSL_AES128CCM8|SSL_AES256CCM8))
-            taglen = 8;
+        if (s->s3->tmp.
+            new_cipher->algorithm_enc & (SSL_AES128CCM8 | SSL_AES256CCM8))
+            taglen = EVP_CCM8_TLS_TAG_LEN;
         else
-            taglen = 16;
+            taglen = EVP_CCM_TLS_TAG_LEN;
         if (!EVP_CipherInit_ex(dd, c, NULL, NULL, NULL, (which & SSL3_CC_WRITE))
             || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_IVLEN, 12, NULL)
             || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_TAG, taglen, NULL)
-            || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_CCM_SET_IV_FIXED, k, iv)
+            || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_CCM_SET_IV_FIXED, (int)k, iv)
             || !EVP_CipherInit_ex(dd, NULL, NULL, key, NULL, -1)) {
             SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
             goto err2;
@@ -402,7 +311,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     /* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
     if ((EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER) && *mac_secret_size
         && !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_MAC_KEY,
-                                *mac_secret_size, mac_secret)) {
+                                (int)*mac_secret_size, mac_secret)) {
         SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
         goto err2;
     }
@@ -435,7 +344,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     }
     printf("\niv=");
     {
-        int z;
+        size_t z;
         for (z = 0; z < k; z++)
             printf("%02X%c", iv[z], ((z + 1) % 16) ? ' ' : '\n');
     }
@@ -462,17 +371,16 @@ int tls1_setup_key_block(SSL *s)
     unsigned char *p;
     const EVP_CIPHER *c;
     const EVP_MD *hash;
-    int num;
     SSL_COMP *comp;
-    int mac_type = NID_undef, mac_secret_size = 0;
+    int mac_type = NID_undef;
+    size_t num, mac_secret_size = 0;
     int ret = 0;
 
     if (s->s3->tmp.key_block_length != 0)
         return (1);
 
-    if (!ssl_cipher_get_evp
-        (s->session, &c, &hash, &mac_type, &mac_secret_size, &comp,
-         SSL_USE_ETM(s))) {
+    if (!ssl_cipher_get_evp(s->session, &c, &hash, &mac_type, &mac_secret_size,
+                            &comp, s->ext.use_etm)) {
         SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
         return (0);
     }
@@ -481,8 +389,7 @@ int tls1_setup_key_block(SSL *s)
     s->s3->tmp.new_hash = hash;
     s->s3->tmp.new_mac_pkey_type = mac_type;
     s->s3->tmp.new_mac_secret_size = mac_secret_size;
-    num =
-        EVP_CIPHER_key_length(c) + mac_secret_size + EVP_CIPHER_iv_length(c);
+    num = EVP_CIPHER_key_length(c) + mac_secret_size + EVP_CIPHER_iv_length(c);
     num *= 2;
 
     ssl3_cleanup_key_block(s);
@@ -512,7 +419,7 @@ int tls1_setup_key_block(SSL *s)
     }
     printf("master key\n");
     {
-        int z;
+        size_t z;
         for (z = 0; z < s->session->master_key_length; z++)
             printf("%02X%c", s->session->master_key[z],
                    ((z + 1) % 16) ? ' ' : '\n');
@@ -523,7 +430,7 @@ int tls1_setup_key_block(SSL *s)
 #ifdef SSL_DEBUG
     printf("\nkey block\n");
     {
-        int z;
+        size_t z;
         for (z = 0; z < num; z++)
             printf("%02X%c", p[z], ((z + 1) % 16) ? ' ' : '\n');
     }
@@ -553,18 +460,16 @@ int tls1_setup_key_block(SSL *s)
     return (ret);
 }
 
-int tls1_final_finish_mac(SSL *s, const char *str, int slen,
-                          unsigned char *out)
+size_t tls1_final_finish_mac(SSL *s, const char *str, size_t slen,
+                             unsigned char *out)
 {
-    int hashlen;
+    size_t hashlen;
     unsigned char hash[EVP_MAX_MD_SIZE];
 
     if (!ssl3_digest_cached_records(s, 0))
         return 0;
 
-    hashlen = ssl_handshake_hash(s, hash, sizeof(hash));
-
-    if (hashlen == 0)
+    if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen))
         return 0;
 
     if (!tls1_PRF(s, str, slen, hash, hashlen, NULL, 0, NULL, 0, NULL, 0,
@@ -576,19 +481,20 @@ int tls1_final_finish_mac(SSL *s, const char *str, int slen,
 }
 
 int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
-                                int len)
+                                size_t len, size_t *secret_size)
 {
     if (s->session->flags & SSL_SESS_FLAG_EXTMS) {
         unsigned char hash[EVP_MAX_MD_SIZE * 2];
-        int hashlen;
-        /* Digest cached records keeping record buffer (if present):
-         * this wont affect client auth because we're freezing the buffer
-         * at the same point (after client key exchange and before certificate
-         * verify)
+        size_t hashlen;
+        /*
+         * Digest cached records keeping record buffer (if present): this wont
+         * affect client auth because we're freezing the buffer at the same
+         * point (after client key exchange and before certificate verify)
          */
         if (!ssl3_digest_cached_records(s, 1))
-            return -1;
-        hashlen = ssl_handshake_hash(s, hash, sizeof(hash));
+            return 0;
+        if(!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen))
+            return 0;
 #ifdef SSL_DEBUG
         fprintf(stderr, "Handshake hashes:\n");
         BIO_dump_fp(stderr, (char *)hash, hashlen);
@@ -640,7 +546,8 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
     }
 #endif
 
-    return (SSL3_MASTER_SECRET_SIZE);
+    *secret_size = SSL3_MASTER_SECRET_SIZE;
+    return 1;
 }
 
 int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
@@ -715,8 +622,7 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 
     goto ret;
  err1:
-    SSLerr(SSL_F_TLS1_EXPORT_KEYING_MATERIAL,
-           SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
+    SSLerr(SSL_F_TLS1_EXPORT_KEYING_MATERIAL, SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
     rv = 0;
     goto ret;
  err2:
@@ -792,6 +698,10 @@ int tls1_alert_code(int code)
         return (TLS1_AD_UNKNOWN_PSK_IDENTITY);
     case SSL_AD_INAPPROPRIATE_FALLBACK:
         return (TLS1_AD_INAPPROPRIATE_FALLBACK);
+    case SSL_AD_NO_APPLICATION_PROTOCOL:
+        return (TLS1_AD_NO_APPLICATION_PROTOCOL);
+    case SSL_AD_CERTIFICATE_REQUIRED:
+        return SSL_AD_HANDSHAKE_FAILURE;
     default:
         return (-1);
     }

@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -47,7 +54,7 @@
 #
 # Câmara, D.; Gouvêa, C. P. L.; López, J. & Dahab, R.: Fast Software
 # Polynomial Multiplication on ARM Processors using the NEON Engine.
-# 
+#
 # http://conradoplg.cryptoland.net/files/2010/12/mocrysen13.pdf
 
 # ====================================================================
@@ -72,8 +79,8 @@
 # example...
 
 $flavour = shift;
-if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
-else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {} }
 
 if ($flavour && $flavour ne "void") {
     $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -136,8 +143,10 @@ $code=<<___;
 #include "arm_arch.h"
 
 .text
-#if defined(__thumb2__)
+#if defined(__thumb2__) || defined(__clang__)
 .syntax	unified
+#endif
+#if defined(__thumb2__)
 .thumb
 #else
 .code	32
@@ -519,7 +528,7 @@ $code.=<<___;
 #ifdef __ARMEL__
 	vrev64.8	$Xl,$Xl
 #endif
-	sub		$Xi,#16	
+	sub		$Xi,#16
 	vst1.64		$Xl#hi,[$Xi]!		@ write out Xi
 	vst1.64		$Xl#lo,[$Xi]
 

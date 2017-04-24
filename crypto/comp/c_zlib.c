@@ -1,64 +1,20 @@
-/* ====================================================================
- * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/objects.h>
-#include <openssl/comp.h>
+#include "internal/comp.h"
 #include <openssl/err.h>
-#include <internal/cryptlib_int.h>
+#include "internal/cryptlib_int.h"
+#include "internal/bio.h"
 #include "comp_lcl.h"
 
 COMP_METHOD *COMP_zlib(void);
@@ -123,7 +79,7 @@ static COMP_METHOD zlib_stateful_method = {
                                  * OPENSSL_SYS_WIN32) */
 
 # ifdef ZLIB_SHARED
-#  include <openssl/dso.h>
+#  include "internal/dso.h"
 
 /* Function pointers */
 typedef int (*compress_ft) (Bytef *dest, uLongf * destLen,
@@ -255,12 +211,19 @@ COMP_METHOD *COMP_zlib(void)
     COMP_METHOD *meth = &zlib_method_nozlib;
 
 #ifdef ZLIB_SHARED
-    if (!zlib_loaded) {
-# if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
-        zlib_dso = DSO_load(NULL, "ZLIB1", NULL, 0);
-# else
-        zlib_dso = DSO_load(NULL, "z", NULL, 0);
+    /* LIBZ may be externally defined, and we should respect that value */
+# ifndef LIBZ
+#  if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
+#   define LIBZ "ZLIB1"
+#  elif defined(OPENSSL_SYS_VMS)
+#   define LIBZ "LIBZ"
+#  else
+#   define LIBZ "z"
+#  endif
 # endif
+
+    if (!zlib_loaded) {
+        zlib_dso = DSO_load(NULL, LIBZ, NULL, 0);
         if (zlib_dso != NULL) {
             p_compress = (compress_ft) DSO_bind_func(zlib_dso, "compress");
             p_inflateEnd
@@ -281,7 +244,7 @@ COMP_METHOD *COMP_zlib(void)
                 zlib_loaded++;
 
             if (!OPENSSL_init_crypto(OPENSSL_INIT_ZLIB, NULL)) {
-                COMP_zlib_cleanup();
+                comp_zlib_cleanup_int();
                 return meth;
             }
             if (zlib_loaded)
@@ -296,7 +259,7 @@ COMP_METHOD *COMP_zlib(void)
     return (meth);
 }
 
-void COMP_zlib_cleanup(void)
+void comp_zlib_cleanup_int(void)
 {
 #ifdef ZLIB_SHARED
     if (zlib_dso != NULL)
@@ -331,10 +294,14 @@ static int bio_zlib_write(BIO *b, const char *in, int inl);
 static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr);
 static long bio_zlib_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp);
 
-static BIO_METHOD bio_meth_zlib = {
+static const BIO_METHOD bio_meth_zlib = {
     BIO_TYPE_COMP,
     "zlib",
+    /* TODO: Convert to new style write function */
+    bwrite_conv,
     bio_zlib_write,
+    /* TODO: Convert to new style read function */
+    bread_conv,
     bio_zlib_read,
     NULL,
     NULL,
@@ -344,7 +311,7 @@ static BIO_METHOD bio_meth_zlib = {
     bio_zlib_callback_ctrl
 };
 
-BIO_METHOD *BIO_f_zlib(void)
+const BIO_METHOD *BIO_f_zlib(void)
 {
     return &bio_meth_zlib;
 }
@@ -371,9 +338,9 @@ static int bio_zlib_new(BIO *bi)
     ctx->zout.zalloc = Z_NULL;
     ctx->zout.zfree = Z_NULL;
     ctx->comp_level = Z_DEFAULT_COMPRESSION;
-    bi->init = 1;
-    bi->ptr = (char *)ctx;
-    bi->flags = 0;
+    BIO_set_init(bi, 1);
+    BIO_set_data(bi, ctx);
+
     return 1;
 }
 
@@ -382,7 +349,7 @@ static int bio_zlib_free(BIO *bi)
     BIO_ZLIB_CTX *ctx;
     if (!bi)
         return 0;
-    ctx = (BIO_ZLIB_CTX *) bi->ptr;
+    ctx = BIO_get_data(bi);
     if (ctx->ibuf) {
         /* Destroy decompress context */
         inflateEnd(&ctx->zin);
@@ -394,9 +361,9 @@ static int bio_zlib_free(BIO *bi)
         OPENSSL_free(ctx->obuf);
     }
     OPENSSL_free(ctx);
-    bi->ptr = NULL;
-    bi->init = 0;
-    bi->flags = 0;
+    BIO_set_data(bi, NULL);
+    BIO_set_init(bi, 0);
+
     return 1;
 }
 
@@ -405,9 +372,11 @@ static int bio_zlib_read(BIO *b, char *out, int outl)
     BIO_ZLIB_CTX *ctx;
     int ret;
     z_stream *zin;
+    BIO *next = BIO_next(b);
+
     if (!out || !outl)
         return 0;
-    ctx = (BIO_ZLIB_CTX *) b->ptr;
+    ctx = BIO_get_data(b);
     zin = &ctx->zin;
     BIO_clear_retry_flags(b);
     if (!ctx->ibuf) {
@@ -442,7 +411,7 @@ static int bio_zlib_read(BIO *b, char *out, int outl)
          * No data in input buffer try to read some in, if an error then
          * return the total data read.
          */
-        ret = BIO_read(b->next_bio, ctx->ibuf, ctx->ibufsize);
+        ret = BIO_read(next, ctx->ibuf, ctx->ibufsize);
         if (ret <= 0) {
             /* Total data read */
             int tot = outl - zin->avail_out;
@@ -461,9 +430,11 @@ static int bio_zlib_write(BIO *b, const char *in, int inl)
     BIO_ZLIB_CTX *ctx;
     int ret;
     z_stream *zout;
+    BIO *next = BIO_next(b);
+
     if (!in || !inl)
         return 0;
-    ctx = (BIO_ZLIB_CTX *) b->ptr;
+    ctx = BIO_get_data(b);
     if (ctx->odone)
         return 0;
     zout = &ctx->zout;
@@ -487,7 +458,7 @@ static int bio_zlib_write(BIO *b, const char *in, int inl)
     for (;;) {
         /* If data in output buffer write it first */
         while (ctx->ocount) {
-            ret = BIO_write(b->next_bio, ctx->optr, ctx->ocount);
+            ret = BIO_write(next, ctx->optr, ctx->ocount);
             if (ret <= 0) {
                 /* Total data written */
                 int tot = inl - zout->avail_in;
@@ -526,7 +497,9 @@ static int bio_zlib_flush(BIO *b)
     BIO_ZLIB_CTX *ctx;
     int ret;
     z_stream *zout;
-    ctx = (BIO_ZLIB_CTX *) b->ptr;
+    BIO *next = BIO_next(b);
+
+    ctx = BIO_get_data(b);
     /* If no data written or already flush show success */
     if (!ctx->obuf || (ctx->odone && !ctx->ocount))
         return 1;
@@ -538,7 +511,7 @@ static int bio_zlib_flush(BIO *b)
     for (;;) {
         /* If data in output buffer write it first */
         while (ctx->ocount) {
-            ret = BIO_write(b->next_bio, ctx->optr, ctx->ocount);
+            ret = BIO_write(next, ctx->optr, ctx->ocount);
             if (ret <= 0) {
                 BIO_copy_next_retry(b);
                 return ret;
@@ -573,9 +546,11 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
     BIO_ZLIB_CTX *ctx;
     int ret, *ip;
     int ibs, obs;
-    if (!b->next_bio)
+    BIO *next = BIO_next(b);
+
+    if (next == NULL)
         return 0;
-    ctx = (BIO_ZLIB_CTX *) b->ptr;
+    ctx = BIO_get_data(b);
     switch (cmd) {
 
     case BIO_CTRL_RESET:
@@ -587,7 +562,7 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_FLUSH:
         ret = bio_zlib_flush(b);
         if (ret > 0)
-            ret = BIO_flush(b->next_bio);
+            ret = BIO_flush(next);
         break;
 
     case BIO_C_SET_BUFF_SIZE:
@@ -620,12 +595,12 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
 
     case BIO_C_DO_STATE_MACHINE:
         BIO_clear_retry_flags(b);
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         BIO_copy_next_retry(b);
         break;
 
     default:
-        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        ret = BIO_ctrl(next, cmd, num, ptr);
         break;
 
     }
@@ -635,9 +610,10 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 static long bio_zlib_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 {
-    if (!b->next_bio)
+    BIO *next = BIO_next(b);
+    if (next == NULL)
         return 0;
-    return BIO_callback_ctrl(b->next_bio, cmd, fp);
+    return BIO_callback_ctrl(next, cmd, fp);
 }
 
 #endif

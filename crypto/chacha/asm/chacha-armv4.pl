@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -8,7 +15,7 @@
 # ====================================================================
 #
 # December 2014
-# 
+#
 # ChaCha20 for ARMv4.
 #
 # Performance in cycles per byte out of large buffer.
@@ -28,8 +35,8 @@
 #	20-25% worse;
 
 $flavour = shift;
-if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
-else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {} }
 
 if ($flavour && $flavour ne "void") {
     $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -214,7 +221,7 @@ ChaCha20_ctr32:
 # ifdef	__APPLE__
 	ldr	r4,[r4]
 # endif
-	tst	r4,#1
+	tst	r4,#ARMV7_NEON
 	bne	.LChaCha20_neon
 .Lshort:
 #endif
@@ -713,7 +720,7 @@ ChaCha20_neon:
 	vadd.i32	$d2,$d1,$t0		@ counter+2
 	str		@t[3], [sp,#4*(16+15)]
 	mov		@t[3],#10
-	add		@x[12],@x[12],#3	@ counter+3 
+	add		@x[12],@x[12],#3	@ counter+3
 	b		.Loop_neon
 
 .align	4
@@ -1127,7 +1134,7 @@ $code.=<<___;
 	ldrb		@t[1],[r12],#1		@ read input
 	subs		@t[3],@t[3],#1
 	eor		@t[0],@t[0],@t[1]
-	strb		@t[0],[r14],#1		@ store ouput
+	strb		@t[0],[r14],#1		@ store output
 	bne		.Loop_tail_neon
 
 .Ldone_neon:

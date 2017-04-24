@@ -1,55 +1,10 @@
-/* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #ifndef HEADER_E_OS2_H
@@ -68,12 +23,6 @@ extern "C" {
  **/
 
 # define OPENSSL_SYS_UNIX
-
-/* ---------------------- NetWare ----------------------------------------- */
-# if defined(NETWARE) && !defined(OPENSSL_SYS_NETWARE)
-#  undef OPENSSL_SYS_UNIX
-#  define OPENSSL_SYS_NETWARE
-# endif
 
 /* --------------------- Microsoft operating systems ---------------------- */
 
@@ -163,12 +112,6 @@ extern "C" {
 #  endif
 # endif
 
-/* -------------------------------- OS/2 ---------------------------------- */
-# if defined(__EMX__) || defined(__OS2__)
-#  undef OPENSSL_SYS_UNIX
-#  define OPENSSL_SYS_OS2
-# endif
-
 /* -------------------------------- Unix ---------------------------------- */
 # ifdef OPENSSL_SYS_UNIX
 #  if defined(linux) || defined(__linux__) && !defined(OPENSSL_SYS_LINUX)
@@ -204,36 +147,30 @@ extern "C" {
 # endif
 
 /*-
- * Definitions of OPENSSL_GLOBAL and OPENSSL_EXTERN, to define and declare
- * certain global symbols that, with some compilers under VMS, have to be
- * defined and declared explicitly with globaldef and globalref.
- * Definitions of OPENSSL_EXPORT and OPENSSL_IMPORT, to define and declare
- * DLL exports and imports for compilers under Win32.  These are a little
- * more complicated to use.  Basically, for any library that exports some
- * global variables, the following code must be present in the header file
- * that declares them, before OPENSSL_EXTERN is used:
+ * OPENSSL_EXTERN is normally used to declare a symbol with possible extra
+ * attributes to handle its presence in a shared library.
+ * OPENSSL_EXPORT is used to define a symbol with extra possible attributes
+ * to make it visible in a shared library.
+ * Care needs to be taken when a header file is used both to declare and
+ * define symbols.  Basically, for any library that exports some global
+ * variables, the following code must be present in the header file that
+ * declares them, before OPENSSL_EXTERN is used:
  *
  * #ifdef SOME_BUILD_FLAG_MACRO
  * # undef OPENSSL_EXTERN
  * # define OPENSSL_EXTERN OPENSSL_EXPORT
  * #endif
  *
- * The default is to have OPENSSL_EXPORT, OPENSSL_EXTERN and OPENSSL_GLOBAL
+ * The default is to have OPENSSL_EXPORT and OPENSSL_EXTERN
  * have some generally sensible values.
  */
 
-# if defined(OPENSSL_SYS_VMS_NODECC)
-#  define OPENSSL_EXPORT globalref
-#  define OPENSSL_EXTERN globalref
-#  define OPENSSL_GLOBAL globaldef
-# elif defined(OPENSSL_SYS_WINDOWS) && defined(OPENSSL_OPT_WINDLL)
+# if defined(OPENSSL_SYS_WINDOWS) && defined(OPENSSL_OPT_WINDLL)
 #  define OPENSSL_EXPORT extern __declspec(dllexport)
 #  define OPENSSL_EXTERN extern __declspec(dllimport)
-#  define OPENSSL_GLOBAL
 # else
 #  define OPENSSL_EXPORT extern
 #  define OPENSSL_EXTERN extern
-#  define OPENSSL_GLOBAL
 # endif
 
 /*-
@@ -254,7 +191,7 @@ extern "C" {
 #  define OPENSSL_DECLARE_GLOBAL(type,name) type *_shadow_##name(void)
 #  define OPENSSL_GLOBAL_REF(name) (*(_shadow_##name()))
 # else
-#  define OPENSSL_IMPLEMENT_GLOBAL(type,name,value) OPENSSL_GLOBAL type _shadow_##name=value;
+#  define OPENSSL_IMPLEMENT_GLOBAL(type,name,value) type _shadow_##name=value;
 #  define OPENSSL_DECLARE_GLOBAL(type,name) OPENSSL_EXPORT type _shadow_##name
 #  define OPENSSL_GLOBAL_REF(name) _shadow_##name
 # endif
@@ -269,14 +206,18 @@ extern "C" {
 #  endif
 # endif
 
-# if (defined(__ultrix) || defined(OPENSSL_SYS_UEFI)) && !defined(ssize_t)
-#  define ossl_ssize_t int
-#  define OSSL_SSIZE_MAX INT_MAX
+# if defined(OPENSSL_SYS_UEFI) && !defined(ossl_ssize_t)
+#  define ossl_ssize_t INTN
+#  define OSSL_SSIZE_MAX MAX_INTN
 # endif
 
 # ifndef ossl_ssize_t
 #  define ossl_ssize_t ssize_t
-#  define OSSL_SSIZE_MAX SSIZE_MAX
+#  if defined(SSIZE_MAX)
+#   define OSSL_SSIZE_MAX SSIZE_MAX
+#  elif defined(_POSIX_SSIZE_MAX)
+#   define OSSL_SSIZE_MAX _POSIX_SSIZE_MAX
+#  endif
 # endif
 
 # ifdef DEBUG_UNUSED
@@ -295,10 +236,9 @@ typedef INT32 int32_t;
 typedef UINT32 uint32_t;
 typedef INT64 int64_t;
 typedef UINT64 uint64_t;
-#  define PRIu64 "%Lu"
 # elif (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
      defined(__osf__) || defined(__sgi) || defined(__hpux) || \
-     defined(OPENSSL_SYS_VMS)
+     defined(OPENSSL_SYS_VMS) || defined (__OpenBSD__)
 #  include <inttypes.h>
 # elif defined(_MSC_VER) && _MSC_VER<=1500
 /*
@@ -315,18 +255,6 @@ typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 # else
 #  include <stdint.h>
-# endif
-
-/*
- * We need a format operator for some client tools for uint64_t.  If inttypes.h
- * isn't available or did not define it, just go with hard-coded.
- */
-# ifndef PRIu64
-#  ifdef SIXTY_FOUR_BIT_LONG
-#   define PRIu64 "lu"
-#  else
-#   define PRIu64 "llu"
-#  endif
 # endif
 
 /* ossl_inline: portable inline definition usable in public headers */
@@ -348,6 +276,14 @@ typedef unsigned __int64 uint64_t;
 #  endif
 # else
 #  define ossl_inline inline
+# endif
+
+# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#  define ossl_noreturn _Noreturn
+# elif defined(__GNUC__) && __GNUC__ >= 2
+#  define ossl_noreturn __attribute__((noreturn))
+# else
+#  define ossl_noreturn
 # endif
 
 #ifdef  __cplusplus

@@ -1,3 +1,12 @@
+/*
+ * Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,7 +32,7 @@
 #if defined(OPENSSL_SYS_VMS_DECC) || defined(OPENSSL_SYS_UEFI)
 static int obj_strcmp(const char *a, const char *b)
 {
-	return strcmp(a, b);
+    return strcmp(a, b);
 }
 #else
 #define obj_strcmp strcmp
@@ -67,8 +76,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
                        int (*cmp_func) (const char *, const char *),
                        void (*free_func) (const char *, int, const char *))
 {
-    int ret;
-    int i;
+    int ret, i, push;
     NAME_FUNCS *name_funcs;
 
     if (name_funcs_stack == NULL) {
@@ -90,11 +98,18 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
             OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
             return (0);
         }
-        name_funcs->hash_func = lh_strhash;
+        name_funcs->hash_func = OPENSSL_LH_strhash;
         name_funcs->cmp_func = obj_strcmp;
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
-        sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
+
+        push = sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
+
+        if (!push) {
+            OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
+            OPENSSL_free(name_funcs);
+            return 0;
+        }
     }
     name_funcs = sk_NAME_FUNCS_value(name_funcs_stack, ret);
     if (hash_func != NULL)
@@ -132,7 +147,7 @@ static unsigned long obj_name_hash(const OBJ_NAME *a)
             sk_NAME_FUNCS_value(name_funcs_stack,
                                 a->type)->hash_func(a->name);
     } else {
-        ret = lh_strhash(a->name);
+        ret = OPENSSL_LH_strhash(a->name);
     }
     ret ^= a->type;
     return (ret);
@@ -182,7 +197,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
     onp = OPENSSL_malloc(sizeof(*onp));
     if (onp == NULL) {
         /* ERROR */
-        return (0);
+        return 0;
     }
 
     onp->name = name;
@@ -207,10 +222,11 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
     } else {
         if (lh_OBJ_NAME_error(names_lh)) {
             /* ERROR */
-            return (0);
+            OPENSSL_free(onp);
+            return 0;
         }
     }
-    return (1);
+    return 1;
 }
 
 int OBJ_NAME_remove(const char *name, int type)

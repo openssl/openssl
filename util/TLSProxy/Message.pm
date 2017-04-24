@@ -1,55 +1,9 @@
-# Written by Matt Caswell for the OpenSSL project.
-# ====================================================================
-# Copyright (c) 1998-2015 The OpenSSL Project.  All rights reserved.
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in
-#    the documentation and/or other materials provided with the
-#    distribution.
-#
-# 3. All advertising materials mentioning features or use of this
-#    software must display the following acknowledgment:
-#    "This product includes software developed by the OpenSSL Project
-#    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
-#
-# 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
-#    endorse or promote products derived from this software without
-#    prior written permission. For written permission, please contact
-#    openssl-core@openssl.org.
-#
-# 5. Products derived from this software may not be called "OpenSSL"
-#    nor may "OpenSSL" appear in their names without prior written
-#    permission of the OpenSSL Project.
-#
-# 6. Redistributions of any form whatsoever must retain the following
-#    acknowledgment:
-#    "This product includes software developed by the OpenSSL Project
-#    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
-#
-# THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
-# EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
-# ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-# OF THE POSSIBILITY OF SUCH DAMAGE.
-# ====================================================================
-#
-# This product includes cryptographic software written by Eric Young
-# (eay@cryptsoft.com).  This product includes software written by Tim
-# Hudson (tjh@cryptsoft.com).
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
 
 use strict;
 
@@ -63,6 +17,8 @@ use constant {
     MT_CLIENT_HELLO => 1,
     MT_SERVER_HELLO => 2,
     MT_NEW_SESSION_TICKET => 4,
+    MT_HELLO_RETRY_REQUEST => 6,
+    MT_ENCRYPTED_EXTENSIONS => 8,
     MT_CERTIFICATE => 11,
     MT_SERVER_KEY_EXCHANGE => 12,
     MT_CERTIFICATE_REQUEST => 13,
@@ -82,7 +38,9 @@ use constant {
 
 #Alert descriptions
 use constant {
-    AL_DESC_CLOSE_NOTIFY => 0
+    AL_DESC_CLOSE_NOTIFY => 0,
+    AL_DESC_UNEXPECTED_MESSAGE => 10,
+    AL_DESC_NO_RENEGOTIATION => 100
 };
 
 my %message_type = (
@@ -90,6 +48,8 @@ my %message_type = (
     MT_CLIENT_HELLO, "ClientHello",
     MT_SERVER_HELLO, "ServerHello",
     MT_NEW_SESSION_TICKET, "NewSessionTicket",
+    MT_HELLO_RETRY_REQUEST, "HelloRetryRequest",
+    MT_ENCRYPTED_EXTENSIONS, "EncryptedExtensions",
     MT_CERTIFICATE, "Certificate",
     MT_SERVER_KEY_EXCHANGE, "ServerKeyExchange",
     MT_CERTIFICATE_REQUEST, "CertificateRequest",
@@ -102,13 +62,39 @@ my %message_type = (
 );
 
 use constant {
+    EXT_SERVER_NAME => 0,
     EXT_STATUS_REQUEST => 5,
+    EXT_SUPPORTED_GROUPS => 10,
+    EXT_EC_POINT_FORMATS => 11,
+    EXT_SRP => 12,
+    EXT_SIG_ALGS => 13,
+    EXT_USE_SRTP => 14,
+    EXT_ALPN => 16,
+    EXT_SCT => 18,
+    EXT_PADDING => 21,
     EXT_ENCRYPT_THEN_MAC => 22,
     EXT_EXTENDED_MASTER_SECRET => 23,
     EXT_SESSION_TICKET => 35,
-    # This extension does not exist and isn't recognised by OpenSSL.
-    # We use it to test handling of duplicate extensions.
-    EXT_DUPLICATE_EXTENSION => 1234
+    EXT_KEY_SHARE => 40,
+    EXT_PSK => 41,
+    EXT_SUPPORTED_VERSIONS => 43,
+    EXT_COOKIE => 44,
+    EXT_PSK_KEX_MODES => 45,
+    EXT_RENEGOTIATE => 65281,
+    EXT_NPN => 13172,
+    # This extension is an unofficial extension only ever written by OpenSSL
+    # (i.e. not read), and even then only when enabled. We use it to test
+    # handling of duplicate extensions.
+    EXT_DUPLICATE_EXTENSION => 0xfde8,
+    #Unknown extension that should appear last
+    EXT_FORCE_LAST => 0xffff
+};
+
+use constant {
+    CIPHER_DHE_RSA_AES_128_SHA => 0x0033,
+    CIPHER_ADH_AES_128_SHA => 0x0034,
+    CIPHER_TLS13_AES_128_GCM_SHA256 => 0x1301,
+    CIPHER_TLS13_AES_256_GCM_SHA384 => 0x1302
 };
 
 my $payload = "";
@@ -121,6 +107,7 @@ my $end = 0;
 my @message_rec_list = ();
 my @message_frag_lens = ();
 my $ciphersuite = 0;
+my $successondata = 0;
 
 sub clear
 {
@@ -130,6 +117,7 @@ sub clear
     $server = 0;
     $success = 0;
     $end = 0;
+    $successondata = 0;
     @message_rec_list = ();
     @message_frag_lens = ();
 }
@@ -156,9 +144,9 @@ sub get_messages
             die "CCS received before message data complete\n";
         }
         if ($server) {
-            TLSProxy::Record->server_ccs_seen(1);
+            TLSProxy::Record->server_encrypting(1);
         } else {
-            TLSProxy::Record->client_ccs_seen(1);
+            TLSProxy::Record->client_encrypting(1);
         }
     } elsif ($record->content_type == TLSProxy::Record::RT_HANDSHAKE) {
         if ($record->len == 0 || $record->len_real == 0) {
@@ -215,7 +203,7 @@ sub get_messages
                 $recoffset += 4;
                 $payload = "";
                 
-                if ($recoffset < $record->decrypt_len) {
+                if ($recoffset <= $record->decrypt_len) {
                     #Some payload data is present in this record
                     if ($record->decrypt_len - $recoffset >= $messlen) {
                         #We can complete the message with this record
@@ -241,16 +229,21 @@ sub get_messages
     } elsif ($record->content_type == TLSProxy::Record::RT_APPLICATION_DATA) {
         print "  [ENCRYPTED APPLICATION DATA]\n";
         print "  [".$record->decrypt_data."]\n";
+
+        if ($successondata) {
+            $success = 1;
+            $end = 1;
+        }
     } elsif ($record->content_type == TLSProxy::Record::RT_ALERT) {
         my ($alertlev, $alertdesc) = unpack('CC', $record->decrypt_data);
-        #All alerts end the test
-        $end = 1;
         #A CloseNotify from the client indicates we have finished successfully
         #(we assume)
-        if (!$server && $alertlev == AL_LEVEL_WARN
+        if (!$end && !$server && $alertlev == AL_LEVEL_WARN
             && $alertdesc == AL_DESC_CLOSE_NOTIFY) {
             $success = 1;
         }
+        #All alerts end the test
+        $end = 1;
     }
 
     return @messages;
@@ -274,8 +267,44 @@ sub create_message
             [@message_frag_lens]
         );
         $message->parse();
+    } elsif ($mt == MT_HELLO_RETRY_REQUEST) {
+        $message = TLSProxy::HelloRetryRequest->new(
+            $server,
+            $data,
+            [@message_rec_list],
+            $startoffset,
+            [@message_frag_lens]
+        );
+        $message->parse();
     } elsif ($mt == MT_SERVER_HELLO) {
         $message = TLSProxy::ServerHello->new(
+            $server,
+            $data,
+            [@message_rec_list],
+            $startoffset,
+            [@message_frag_lens]
+        );
+        $message->parse();
+    } elsif ($mt == MT_ENCRYPTED_EXTENSIONS) {
+        $message = TLSProxy::EncryptedExtensions->new(
+            $server,
+            $data,
+            [@message_rec_list],
+            $startoffset,
+            [@message_frag_lens]
+        );
+        $message->parse();
+    } elsif ($mt == MT_CERTIFICATE) {
+        $message = TLSProxy::Certificate->new(
+            $server,
+            $data,
+            [@message_rec_list],
+            $startoffset,
+            [@message_frag_lens]
+        );
+        $message->parse();
+    } elsif ($mt == MT_CERTIFICATE_VERIFY) {
+        $message = TLSProxy::CertificateVerify->new(
             $server,
             $data,
             [@message_rec_list],
@@ -363,7 +392,7 @@ sub ciphersuite
 }
 
 #Update all the underlying records with the modified data from this message
-#Note: Does not currently support re-encrypting
+#Note: Only supports re-encrypting for TLSv1.3
 sub repack
 {
     my $self = shift;
@@ -406,8 +435,14 @@ sub repack
         #  use an explicit override field instead.)
         $rec->decrypt_len(length($rec->decrypt_data));
         $rec->len($rec->len + length($msgdata) - $old_length);
-        # Don't support re-encryption.
-        $rec->data($rec->decrypt_data);
+        # Only support re-encryption for TLSv1.3.
+        if (TLSProxy::Proxy->is_tls13() && $rec->encrypted()) {
+            #Add content type (1 byte) and 16 tag bytes
+            $rec->data($rec->decrypt_data
+                .pack("C", TLSProxy::Record::RT_HANDSHAKE).("\0"x16));
+        } else {
+            $rec->data($rec->decrypt_data);
+        }
 
         #Update the fragment len in case we changed it above
         ${$self->message_frag_lens}[0] = length($msgdata)
@@ -496,5 +531,12 @@ sub encoded_length
     my $self = shift;
     return TLS_MESSAGE_HEADER_LENGTH + length($self->data);
 }
-
+sub successondata
+{
+    my $class = shift;
+    if (@_) {
+        $successondata = shift;
+    }
+    return $successondata;
+}
 1;

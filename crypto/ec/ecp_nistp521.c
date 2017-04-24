@@ -1,6 +1,12 @@
 /*
- * Written by Adam Langley (Google) for the OpenSSL project
+ * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
+
 /* Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1588,7 +1594,8 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
 /* Precomputation for the group generator. */
 struct nistp521_pre_comp_st {
     felem g_pre_comp[16][3];
-    int references;
+    CRYPTO_REF_COUNT references;
+    CRYPTO_RWLOCK *lock;
 };
 
 const EC_METHOD *EC_GFp_nistp521_method(void)
@@ -1603,6 +1610,7 @@ const EC_METHOD *EC_GFp_nistp521_method(void)
         ec_GFp_nistp521_group_set_curve,
         ec_GFp_simple_group_get_curve,
         ec_GFp_simple_group_get_degree,
+        ec_group_simple_order_bits,
         ec_GFp_simple_group_check_discriminant,
         ec_GFp_simple_point_init,
         ec_GFp_simple_point_finish,
@@ -1632,7 +1640,16 @@ const EC_METHOD *EC_GFp_nistp521_method(void)
         0 /* field_div */ ,
         0 /* field_encode */ ,
         0 /* field_decode */ ,
-        0                       /* field_set_to_one */
+        0,                      /* field_set_to_one */
+        ec_key_simple_priv2oct,
+        ec_key_simple_oct2priv,
+        0, /* set private */
+        ec_key_simple_generate_key,
+        ec_key_simple_check_key,
+        ec_key_simple_generate_public_key,
+        0, /* keycopy */
+        0, /* keyfinish */
+        ecdh_simple_compute_key
     };
 
     return &ret;
@@ -1651,22 +1668,40 @@ static NISTP521_PRE_COMP *nistp521_pre_comp_new()
         ECerr(EC_F_NISTP521_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
         return ret;
     }
+
     ret->references = 1;
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        ECerr(EC_F_NISTP521_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(ret);
+        return NULL;
+    }
     return ret;
 }
 
 NISTP521_PRE_COMP *EC_nistp521_pre_comp_dup(NISTP521_PRE_COMP *p)
 {
+    int i;
     if (p != NULL)
-        CRYPTO_add(&p->references, 1, CRYPTO_LOCK_EC_PRE_COMP);
+        CRYPTO_UP_REF(&p->references, &i, p->lock);
     return p;
 }
 
 void EC_nistp521_pre_comp_free(NISTP521_PRE_COMP *p)
 {
-    if (p == NULL
-            || CRYPTO_add(&p->references, -1, CRYPTO_LOCK_EC_PRE_COMP) > 0)
+    int i;
+
+    if (p == NULL)
         return;
+
+    CRYPTO_DOWN_REF(&p->references, &i, p->lock);
+    REF_PRINT_COUNT("EC_nistp521", x);
+    if (i > 0)
+        return;
+    REF_ASSERT_ISNT(i < 0);
+
+    CRYPTO_THREAD_lock_free(p->lock);
     OPENSSL_free(p);
 }
 

@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 # ====================================================================
 # [Re]written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -97,10 +104,12 @@
 # Sandy Bridge	8.8		6.2/+40%	5.1(**)/+73%
 # Ivy Bridge	7.2		4.8/+51%	4.7(**)/+53%
 # Haswell	6.5		4.3/+51%	4.1(**)/+58%
+# Skylake	6.4		4.1/+55%	4.1(**)/+55%
 # Bulldozer	11.6		6.0/+92%
 # VIA Nano	10.6		7.5/+41%
 # Atom		12.5		9.3(*)/+35%
 # Silvermont	14.5		9.9(*)/+46%
+# Goldmont	8.8		6.7/+30%	1.7(***)/+415%
 #
 # (*)	Loop is 1056 instructions long and expected result is ~8.25.
 #	The discrepancy is because of front-end limitations, so
@@ -108,10 +117,15 @@
 #	limited parallelism.
 #
 # (**)	As per above comment, the result is for AVX *plus* sh[rl]d.
+#
+# (***)	SHAEXT result
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
+
+$output=pop;
+open STDOUT,">$output";
 
 &asm_init($ARGV[0],"sha1-586.pl",$ARGV[$#ARGV] eq "386");
 
@@ -123,7 +137,7 @@ $ymm=1 if ($xmm &&
 			=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
 		$1>=2.19);	# first version supporting AVX
 
-$ymm=1 if ($xmm && !$ymm && $ARGV[0] eq "win32n" && 
+$ymm=1 if ($xmm && !$ymm && $ARGV[0] eq "win32n" &&
 		`nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/ &&
 		$1>=2.03);	# first version supporting AVX
 
@@ -647,7 +661,7 @@ my $_ror=sub { &ror(@_) };
 	&jmp	(&label("loop"));
 
 ######################################################################
-# SSE instruction sequence is first broken to groups of indepentent
+# SSE instruction sequence is first broken to groups of independent
 # instructions, independent in respect to their inputs and shifter
 # (not all architectures have more than one). Then IALU instructions
 # are "knitted in" between the SSE groups. Distance is maintained for
@@ -656,14 +670,14 @@ my $_ror=sub { &ror(@_) };
 #
 # Temporary registers usage. X[2] is volatile at the entry and at the
 # end is restored from backtrace ring buffer. X[3] is expected to
-# contain current K_XX_XX constant and is used to caclulate X[-1]+K
+# contain current K_XX_XX constant and is used to calculate X[-1]+K
 # from previous round, it becomes volatile the moment the value is
 # saved to stack for transfer to IALU. X[4] becomes volatile whenever
 # X[-4] is accumulated and offloaded to backtrace ring buffer, at the
 # end it is loaded with next K_XX_XX [which becomes X[3] in next
 # round]...
 #
-sub Xupdate_ssse3_16_31()		# recall that $Xi starts wtih 4
+sub Xupdate_ssse3_16_31()		# recall that $Xi starts with 4
 { use integer;
   my $body = shift;
   my @insns = (&$body,&$body,&$body,&$body);	# 40 instructions
@@ -1186,7 +1200,7 @@ my $_ror=sub { &shrd(@_[0],@_) };
 	&and	(@T[0],@T[1]);
 	&jmp	(&label("loop"));
 
-sub Xupdate_avx_16_31()		# recall that $Xi starts wtih 4
+sub Xupdate_avx_16_31()		# recall that $Xi starts with 4
 { use integer;
   my $body = shift;
   my @insns = (&$body,&$body,&$body,&$body);	# 40 instructions
@@ -1474,3 +1488,5 @@ sub Xtail_avx()
 &asciz("SHA1 block transform for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();
+
+close STDOUT;

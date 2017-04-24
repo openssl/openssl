@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -61,22 +13,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "../e_os.h"
-
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
 #include <openssl/bn.h>
+#include <openssl/dsa.h>
 
-#ifdef OPENSSL_NO_DSA
-int main(int argc, char *argv[])
-{
-    printf("No DSA support\n");
-    return (0);
-}
-#else
-# include <openssl/dsa.h>
+#include "test_main.h"
+#include "testutil.h"
+#include "e_os.h"
 
 static int dsa_cb(int p, int n, BN_GENCB *arg);
 
@@ -122,9 +66,7 @@ static const unsigned char str1[] = "12345678901234567890";
 static const char rnd_seed[] =
     "string to make the random number generator think it has entropy";
 
-static BIO *bio_err = NULL;
-
-int main(int argc, char **argv)
+static int dsa_test(void)
 {
     BN_GENCB *cb;
     DSA *dsa = NULL;
@@ -133,121 +75,70 @@ int main(int argc, char **argv)
     unsigned long h;
     unsigned char sig[256];
     unsigned int siglen;
-
-    if (bio_err == NULL)
-        bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+    const BIGNUM *p = NULL, *q = NULL, *g = NULL;
 
     RAND_seed(rnd_seed, sizeof rnd_seed);
 
-    BIO_printf(bio_err, "test generation of DSA parameters\n");
-
-    cb = BN_GENCB_new();
-    if (!cb)
+    if (!TEST_ptr(cb = BN_GENCB_new()))
         goto end;
 
-    BN_GENCB_set(cb, dsa_cb, bio_err);
-    if (((dsa = DSA_new()) == NULL) || !DSA_generate_parameters_ex(dsa, 512,
-                                                                   seed, 20,
-                                                                   &counter,
-                                                                   &h, cb))
+    BN_GENCB_set(cb, dsa_cb, NULL);
+    if (!TEST_ptr(dsa = DSA_new())
+        || !TEST_true(DSA_generate_parameters_ex(dsa, 512, seed, 20,
+                                                &counter, &h, cb)))
         goto end;
 
-    BIO_printf(bio_err, "seed\n");
-    for (i = 0; i < 20; i += 4) {
-        BIO_printf(bio_err, "%02X%02X%02X%02X ",
-                   seed[i], seed[i + 1], seed[i + 2], seed[i + 3]);
-    }
-    BIO_printf(bio_err, "\ncounter=%d h=%ld\n", counter, h);
-
-    DSA_print(bio_err, dsa, 0);
-    if (counter != 105) {
-        BIO_printf(bio_err, "counter should be 105\n");
+    if (!TEST_int_eq(counter, 105))
         goto end;
-    }
-    if (h != 2) {
-        BIO_printf(bio_err, "h should be 2\n");
+    if (!TEST_int_eq(h, 2))
         goto end;
-    }
 
-    i = BN_bn2bin(dsa->q, buf);
+    DSA_get0_pqg(dsa, &p, &q, &g);
+    i = BN_bn2bin(q, buf);
     j = sizeof(out_q);
-    if ((i != j) || (memcmp(buf, out_q, i) != 0)) {
-        BIO_printf(bio_err, "q value is wrong\n");
+    if (!TEST_int_eq(i, j) || !TEST_mem_eq(buf, i, out_q, i))
         goto end;
-    }
 
-    i = BN_bn2bin(dsa->p, buf);
+    i = BN_bn2bin(p, buf);
     j = sizeof(out_p);
-    if ((i != j) || (memcmp(buf, out_p, i) != 0)) {
-        BIO_printf(bio_err, "p value is wrong\n");
+    if (!TEST_int_eq(i, j) || !TEST_mem_eq(buf, i, out_p, i))
         goto end;
-    }
 
-    i = BN_bn2bin(dsa->g, buf);
+    i = BN_bn2bin(g, buf);
     j = sizeof(out_g);
-    if ((i != j) || (memcmp(buf, out_g, i) != 0)) {
-        BIO_printf(bio_err, "g value is wrong\n");
+    if (!TEST_int_eq(i, j) || !TEST_mem_eq(buf, i, out_g, i))
         goto end;
-    }
 
-    dsa->flags |= DSA_FLAG_NO_EXP_CONSTTIME;
     DSA_generate_key(dsa);
     DSA_sign(0, str1, 20, sig, &siglen, dsa);
-    if (DSA_verify(0, str1, 20, sig, siglen, dsa) == 1)
-        ret = 1;
-
-    dsa->flags &= ~DSA_FLAG_NO_EXP_CONSTTIME;
-    DSA_generate_key(dsa);
-    DSA_sign(0, str1, 20, sig, &siglen, dsa);
-    if (DSA_verify(0, str1, 20, sig, siglen, dsa) == 1)
+    if (TEST_true(DSA_verify(0, str1, 20, sig, siglen, dsa)))
         ret = 1;
 
  end:
-    if (!ret)
-        ERR_print_errors(bio_err);
     DSA_free(dsa);
     BN_GENCB_free(cb);
-
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks(bio_err) <= 0)
-        ret = 0;
-#endif
-    BIO_free(bio_err);
-    bio_err = NULL;
-# ifdef OPENSSL_SYS_NETWARE
-    if (!ret)
-        printf("ERROR\n");
-# endif
-    EXIT(!ret);
+    return ret;
 }
 
 static int dsa_cb(int p, int n, BN_GENCB *arg)
 {
-    char c = '*';
     static int ok = 0, num = 0;
 
-    if (p == 0) {
-        c = '.';
+    if (p == 0)
         num++;
-    };
-    if (p == 1)
-        c = '+';
-    if (p == 2) {
-        c = '*';
+    if (p == 2)
         ok++;
-    }
-    if (p == 3)
-        c = '\n';
-    BIO_write(BN_GENCB_get_arg(arg), &c, 1);
-    (void)BIO_flush(BN_GENCB_get_arg(arg));
 
     if (!ok && (p == 0) && (num > 1)) {
-        BIO_printf(BN_GENCB_get_arg(arg), "error in dsatest\n");
+        TEST_error("dsa_cb error");
         return 0;
     }
     return 1;
 }
+
+void register_tests(void)
+{
+#ifndef OPENSSL_NO_DSA
+    ADD_TEST(dsa_test);
 #endif
+}

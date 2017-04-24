@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -102,7 +109,7 @@ $shaext=1;	### set to zero if compiling for 1.0.1
 
 $stitched_decrypt=0;
 
-open OUT,"| \"$^X\" $xlate $flavour $output";
+open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\"";
 *STDOUT=*OUT;
 
 # void aesni_cbc_sha1_enc(const void *inp,
@@ -179,16 +186,24 @@ $code.=<<___;
 .type	aesni_cbc_sha1_enc_ssse3,\@function,6
 .align	32
 aesni_cbc_sha1_enc_ssse3:
+.cfi_startproc
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 	#shr	\$6,$len			# debugging artefact
 	#jz	.Lepilogue_ssse3		# debugging artefact
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	lea	`-104-($win64?10*16:0)`(%rsp),%rsp
+.cfi_adjust_cfa_offset	`104+($win64?10*16:0)`
 	#mov	$in0,$inp			# debugging artefact
 	#lea	64(%rsp),$ctx			# debugging artefact
 ___
@@ -300,7 +315,7 @@ ___
     $r++;	unshift(@rndkey,pop(@rndkey));
 };
 
-sub Xupdate_ssse3_16_31()		# recall that $Xi starts wtih 4
+sub Xupdate_ssse3_16_31()		# recall that $Xi starts with 4
 { use integer;
   my $body = shift;
   my @insns = (&$body,&$body,&$body,&$body);	# 40 instructions
@@ -714,15 +729,24 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	lea	`104+($win64?10*16:0)`(%rsp),%rsi
+.cfi_def_cfa	%rsi,56
 	mov	0(%rsi),%r15
+.cfi_restore	%r15
 	mov	8(%rsi),%r14
+.cfi_restore	%r14
 	mov	16(%rsi),%r13
+.cfi_restore	%r13
 	mov	24(%rsi),%r12
+.cfi_restore	%r12
 	mov	32(%rsi),%rbp
+.cfi_restore	%rbp
 	mov	40(%rsi),%rbx
+.cfi_restore	%rbx
 	lea	48(%rsi),%rsp
+.cfi_def_cfa	%rsp,8
 .Lepilogue_ssse3:
 	ret
+.cfi_endproc
 .size	aesni_cbc_sha1_enc_ssse3,.-aesni_cbc_sha1_enc_ssse3
 ___
 
@@ -786,7 +810,7 @@ sub body_00_19_dec () {	# ((c^d)&b)^d
 sub body_20_39_dec () {	# b^d^c
     # on entry @T[0]=b^d
     return &body_40_59_dec() if ($rx==39);
-  
+
     my @r=@body_20_39;
 
 	unshift (@r,@aes256_dec[$rx])	if (@aes256_dec[$rx]);
@@ -830,14 +854,22 @@ $code.=<<___;
 .type	aesni256_cbc_sha1_dec_ssse3,\@function,6
 .align	32
 aesni256_cbc_sha1_dec_ssse3:
+.cfi_startproc
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	lea	`-104-($win64?10*16:0)`(%rsp),%rsp
+.cfi_adjust_cfa_offset	`104+($win64?10*16:0)`
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,96+0(%rsp)
@@ -985,15 +1017,24 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	lea	`104+($win64?10*16:0)`(%rsp),%rsi
+.cfi_cfa_def	%rsi,56
 	mov	0(%rsi),%r15
+.cfi_restore	%r15
 	mov	8(%rsi),%r14
+.cfi_restore	%r14
 	mov	16(%rsi),%r13
+.cfi_restore	%r13
 	mov	24(%rsi),%r12
+.cfi_restore	%r12
 	mov	32(%rsi),%rbp
+.cfi_restore	%rbp
 	mov	40(%rsi),%rbx
+.cfi_restore	%rbx
 	lea	48(%rsi),%rsp
+.cfi_cfa_def	%rsp,8
 .Lepilogue_dec_ssse3:
 	ret
+.cfi_endproc
 .size	aesni256_cbc_sha1_dec_ssse3,.-aesni256_cbc_sha1_dec_ssse3
 ___
 						}}}
@@ -1019,16 +1060,24 @@ $code.=<<___;
 .type	aesni_cbc_sha1_enc_avx,\@function,6
 .align	32
 aesni_cbc_sha1_enc_avx:
+.cfi_startproc
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 	#shr	\$6,$len			# debugging artefact
 	#jz	.Lepilogue_avx			# debugging artefact
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	lea	`-104-($win64?10*16:0)`(%rsp),%rsp
+.cfi_adjust_cfa_offset	`104+($win64?10*16:0)`
 	#mov	$in0,$inp			# debugging artefact
 	#lea	64(%rsp),$ctx			# debugging artefact
 ___
@@ -1139,7 +1188,7 @@ ___
     $r++;	unshift(@rndkey,pop(@rndkey));
 };
 
-sub Xupdate_avx_16_31()		# recall that $Xi starts wtih 4
+sub Xupdate_avx_16_31()		# recall that $Xi starts with 4
 { use integer;
   my $body = shift;
   my @insns = (&$body,&$body,&$body,&$body);	# 40 instructions
@@ -1427,15 +1476,24 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	lea	`104+($win64?10*16:0)`(%rsp),%rsi
+.cfi_def_cfa	%rsi,56
 	mov	0(%rsi),%r15
+.cfi_restore	%r15
 	mov	8(%rsi),%r14
+.cfi_restore	%r14
 	mov	16(%rsi),%r13
+.cfi_restore	%r13
 	mov	24(%rsi),%r12
+.cfi_restore	%r12
 	mov	32(%rsi),%rbp
+.cfi_restore	%rbp
 	mov	40(%rsi),%rbx
+.cfi_restore	%rbx
 	lea	48(%rsi),%rsp
+.cfi_def_cfa	%rsp,8
 .Lepilogue_avx:
 	ret
+.cfi_endproc
 .size	aesni_cbc_sha1_enc_avx,.-aesni_cbc_sha1_enc_avx
 ___
 
@@ -1484,14 +1542,22 @@ $code.=<<___;
 .type	aesni256_cbc_sha1_dec_avx,\@function,6
 .align	32
 aesni256_cbc_sha1_dec_avx:
+.cfi_startproc
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 	lea	`-104-($win64?10*16:0)`(%rsp),%rsp
+.cfi_adjust_cfa_offset	`104+($win64?10*16:0)`
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,96+0(%rsp)
@@ -1638,15 +1704,24 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	lea	`104+($win64?10*16:0)`(%rsp),%rsi
+.cfi_def_cfa	%rsi,56
 	mov	0(%rsi),%r15
+.cfi_restore	%r15
 	mov	8(%rsi),%r14
+.cfi_restore	%r14
 	mov	16(%rsi),%r13
+.cfi_restore	%r13
 	mov	24(%rsi),%r12
+.cfi_restore	%r12
 	mov	32(%rsi),%rbp
+.cfi_restore	%rbp
 	mov	40(%rsi),%rbx
+.cfi_restore	%rbx
 	lea	48(%rsi),%rsp
+.cfi_def_cfa	%rsp,8
 .Lepilogue_dec_avx:
 	ret
+.cfi_endproc
 .size	aesni256_cbc_sha1_dec_avx,.-aesni256_cbc_sha1_dec_avx
 ___
 						}}}
@@ -1704,6 +1779,7 @@ $code.=<<___;
 	mov	240($key),$rounds
 	sub	$in0,$out
 	movups	($key),$rndkey0			# $key[0]
+	movups	($ivp),$iv			# load IV
 	movups	16($key),$rndkey[0]		# forward reference
 	lea	112($key),$key			# size optimization
 

@@ -1,59 +1,10 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2004.
- */
-/* ====================================================================
- * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
+ * Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -64,6 +15,7 @@
 #include <openssl/buffer.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "internal/x509_int.h"
 
 #include "x509_lcl.h"
 
@@ -127,32 +79,6 @@ static int int_x509_param_set_hosts(X509_VERIFY_PARAM *vpm, int mode,
     return 1;
 }
 
-static void x509_verify_param_zero(X509_VERIFY_PARAM *param)
-{
-    if (!param)
-        return;
-    param->name = NULL;
-    param->purpose = 0;
-    param->trust = X509_TRUST_DEFAULT;
-    /*
-     * param->inh_flags = X509_VP_FLAG_DEFAULT;
-     */
-    param->inh_flags = 0;
-    param->flags = 0;
-    param->depth = -1;
-    sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
-    param->policies = NULL;
-    sk_OPENSSL_STRING_pop_free(param->hosts, str_free);
-    param->hosts = NULL;
-    OPENSSL_free(param->peername);
-    param->peername = NULL;
-    OPENSSL_free(param->email);
-    param->email = NULL;
-    param->emaillen = 0;
-    OPENSSL_free(param->ip);
-    param->ip = NULL;
-    param->iplen = 0;
-}
 
 X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
 {
@@ -161,15 +87,25 @@ X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
     param = OPENSSL_zalloc(sizeof(*param));
     if (param == NULL)
         return NULL;
-    x509_verify_param_zero(param);
+    param->trust = X509_TRUST_DEFAULT;
+    /*
+     * param->inh_flags = X509_VP_FLAG_DEFAULT;
+     */
+    param->inh_flags = 0;
+    param->depth = -1;
+    param->auth_level = -1; /* -1 means unset, 0 is explicit */
     return param;
 }
 
 void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
 {
-    if (!param)
+    if (param == NULL)
         return;
-    x509_verify_param_zero(param);
+    sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
+    sk_OPENSSL_STRING_pop_free(param->hosts, str_free);
+    OPENSSL_free(param->peername);
+    OPENSSL_free(param->email);
+    OPENSSL_free(param->ip);
     OPENSSL_free(param);
 }
 
@@ -245,6 +181,7 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
     x509_verify_param_copy(purpose, 0);
     x509_verify_param_copy(trust, X509_TRUST_DEFAULT);
     x509_verify_param_copy(depth, -1);
+    x509_verify_param_copy(auth_level, -1);
 
     /* If overwrite or check time not set, copy across */
 
@@ -306,12 +243,11 @@ static int int_x509_param_set1(char **pdest, size_t *pdestlen,
 {
     void *tmp;
     if (src) {
-        if (srclen == 0) {
-            tmp = OPENSSL_strdup(src);
+        if (srclen == 0)
             srclen = strlen(src);
-        } else
-            tmp = OPENSSL_memdup(src, srclen);
-        if (!tmp)
+
+        tmp = OPENSSL_memdup(src, srclen);
+        if (tmp == NULL)
             return 0;
     } else {
         tmp = NULL;
@@ -319,7 +255,7 @@ static int int_x509_param_set1(char **pdest, size_t *pdestlen,
     }
     OPENSSL_free(*pdest);
     *pdest = tmp;
-    if (pdestlen)
+    if (pdestlen != NULL)
         *pdestlen = srclen;
     return 1;
 }
@@ -353,6 +289,17 @@ unsigned long X509_VERIFY_PARAM_get_flags(X509_VERIFY_PARAM *param)
     return param->flags;
 }
 
+uint32_t X509_VERIFY_PARAM_get_inh_flags(const X509_VERIFY_PARAM *param)
+{
+    return param->inh_flags;
+}
+
+int X509_VERIFY_PARAM_set_inh_flags(X509_VERIFY_PARAM *param, uint32_t flags)
+{
+    param->inh_flags = flags;
+    return 1;
+}
+
 int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose)
 {
     return X509_PURPOSE_set(&param->purpose, purpose);
@@ -366,6 +313,16 @@ int X509_VERIFY_PARAM_set_trust(X509_VERIFY_PARAM *param, int trust)
 void X509_VERIFY_PARAM_set_depth(X509_VERIFY_PARAM *param, int depth)
 {
     param->depth = depth;
+}
+
+void X509_VERIFY_PARAM_set_auth_level(X509_VERIFY_PARAM *param, int auth_level)
+{
+    param->auth_level = auth_level;
+}
+
+time_t X509_VERIFY_PARAM_get_time(const X509_VERIFY_PARAM *param)
+{
+    return param->check_time;
 }
 
 void X509_VERIFY_PARAM_set_time(X509_VERIFY_PARAM *param, time_t t)
@@ -493,6 +450,11 @@ int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param)
     return param->depth;
 }
 
+int X509_VERIFY_PARAM_get_auth_level(const X509_VERIFY_PARAM *param)
+{
+    return param->auth_level;
+}
+
 const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param)
 {
     return param->name;
@@ -515,6 +477,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      0,                         /* purpose */
      0,                         /* trust */
      100,                       /* depth */
+     -1,                        /* auth_level */
      NULL,                      /* policies */
      vpm_empty_id},
     {
@@ -525,6 +488,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      X509_PURPOSE_SMIME_SIGN,   /* purpose */
      X509_TRUST_EMAIL,          /* trust */
      -1,                        /* depth */
+     -1,                        /* auth_level */
      NULL,                      /* policies */
      vpm_empty_id},
     {
@@ -535,6 +499,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      X509_PURPOSE_SMIME_SIGN,   /* purpose */
      X509_TRUST_EMAIL,          /* trust */
      -1,                        /* depth */
+     -1,                        /* auth_level */
      NULL,                      /* policies */
      vpm_empty_id},
     {
@@ -545,6 +510,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      X509_PURPOSE_SSL_CLIENT,   /* purpose */
      X509_TRUST_SSL_CLIENT,     /* trust */
      -1,                        /* depth */
+     -1,                        /* auth_level */
      NULL,                      /* policies */
      vpm_empty_id},
     {
@@ -555,6 +521,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      X509_PURPOSE_SSL_SERVER,   /* purpose */
      X509_TRUST_SSL_SERVER,     /* trust */
      -1,                        /* depth */
+     -1,                        /* auth_level */
      NULL,                      /* policies */
      vpm_empty_id}
 };

@@ -1,59 +1,10 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2006.
- */
-/* ====================================================================
- * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
+ * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include "apps.h"
@@ -62,11 +13,12 @@
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 
+#define KEY_NONE        0
 #define KEY_PRIVKEY     1
 #define KEY_PUBKEY      2
 #define KEY_CERT        3
 
-static EVP_PKEY_CTX *init_ctx(int *pkeysize,
+static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
                               const int impl);
@@ -76,7 +28,7 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
-                    unsigned char *in, size_t inlen);
+                    const unsigned char *in, size_t inlen);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -84,10 +36,10 @@ typedef enum OPTION_choice {
     OPT_PUBIN, OPT_CERTIN, OPT_ASN1PARSE, OPT_HEXDUMP, OPT_SIGN,
     OPT_VERIFY, OPT_VERIFYRECOVER, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_DERIVE, OPT_SIGFILE, OPT_INKEY, OPT_PEERKEY, OPT_PASSIN,
-    OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT
+    OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_KDF, OPT_KDFLEN
 } OPTION_CHOICE;
 
-OPTIONS pkeyutl_options[] = {
+const OPTIONS pkeyutl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
@@ -103,10 +55,12 @@ OPTIONS pkeyutl_options[] = {
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt input data with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt input data with private key"},
     {"derive", OPT_DERIVE, '-', "Derive shared secret"},
+    {"kdf", OPT_KDF, 's', "Use KDF algorithm"},
+    {"kdflen", OPT_KDFLEN, 'p', "KDF algorithm output length"},
     {"sigfile", OPT_SIGFILE, '<', "Signature file (verify operation only)"},
     {"inkey", OPT_INKEY, 's', "Input private key file"},
     {"peerkey", OPT_PEERKEY, 's', "Peer key file used in key derivation"},
-    {"passin", OPT_PASSIN, 's', "Pass phrase source"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"peerform", OPT_PEERFORM, 'E', "Peer key format - default PEM"},
     {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
@@ -135,6 +89,8 @@ int pkeyutl_main(int argc, char **argv)
     size_t buf_outlen;
     const char *inkey = NULL;
     const char *peerkey = NULL;
+    const char *kdfalg = NULL;
+    int kdflen = 0;
     STACK_OF(OPENSSL_STRING) *pkeyopts = NULL;
 
     prog = opt_init(argc, argv, pkeyutl_options);
@@ -211,13 +167,21 @@ int pkeyutl_main(int argc, char **argv)
         case OPT_DERIVE:
             pkey_op = EVP_PKEY_OP_DERIVE;
             break;
+        case OPT_KDF:
+            pkey_op = EVP_PKEY_OP_DERIVE;
+            key_type = KEY_NONE;
+            kdfalg = opt_arg();
+            break;
+        case OPT_KDFLEN:
+            kdflen = atoi(opt_arg());
+            break;
         case OPT_REV:
             rev = 1;
             break;
         case OPT_PKEYOPT:
             if ((pkeyopts == NULL &&
                  (pkeyopts = sk_OPENSSL_STRING_new_null()) == NULL) ||
-                sk_OPENSSL_STRING_push(pkeyopts, *++argv) == 0) {
+                sk_OPENSSL_STRING_push(pkeyopts, opt_arg()) == 0) {
                 BIO_puts(bio_err, "out of memory\n");
                 goto end;
             }
@@ -228,11 +192,14 @@ int pkeyutl_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
-    if (inkey == NULL ||
-        (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE))
+    if (kdfalg != NULL) {
+        if (kdflen == 0)
+            goto opthelp;
+    } else if ((inkey == NULL)
+            || (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE)) {
         goto opthelp;
-
-    ctx = init_ctx(&keysize, inkey, keyform, key_type,
+    }
+    ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
                    passinarg, pkey_op, e, engine_impl);
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
@@ -326,15 +293,21 @@ int pkeyutl_main(int argc, char **argv)
             BIO_puts(out, "Signature Verification Failure\n");
         goto end;
     }
-    rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
-                  buf_in, (size_t)buf_inlen);
+    if (kdflen != 0) {
+        buf_outlen = kdflen;
+        rv = 1;
+    } else {
+        rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
+                      buf_in, (size_t)buf_inlen);
+    }
     if (rv > 0 && buf_outlen != 0) {
         buf_out = app_malloc(buf_outlen, "buffer output");
         rv = do_keyop(ctx, pkey_op,
                       buf_out, (size_t *)&buf_outlen,
                       buf_in, (size_t)buf_inlen);
     }
-    if (rv < 0) {
+    if (rv <= 0) {
+        BIO_puts(bio_err, "Public Key operation error\n");
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -350,6 +323,7 @@ int pkeyutl_main(int argc, char **argv)
 
  end:
     EVP_PKEY_CTX_free(ctx);
+    release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
     OPENSSL_free(buf_in);
@@ -359,7 +333,7 @@ int pkeyutl_main(int argc, char **argv)
     return ret;
 }
 
-static EVP_PKEY_CTX *init_ctx(int *pkeysize,
+static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
                               const int engine_impl)
@@ -372,7 +346,7 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
     X509 *x;
     if (((pkey_op == EVP_PKEY_OP_SIGN) || (pkey_op == EVP_PKEY_OP_DECRYPT)
          || (pkey_op == EVP_PKEY_OP_DERIVE))
-        && (key_type != KEY_PRIVKEY)) {
+        && (key_type != KEY_PRIVKEY && kdfalg == NULL)) {
         BIO_printf(bio_err, "A private key is needed for this operation\n");
         goto end;
     }
@@ -397,21 +371,28 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
         }
         break;
 
+    case KEY_NONE:
+        break;
+
     }
-
-    *pkeysize = EVP_PKEY_size(pkey);
-
-    if (!pkey)
-        goto end;
 
 #ifndef OPENSSL_NO_ENGINE
     if (engine_impl)
         impl = e;
 #endif
-    
-    ctx = EVP_PKEY_CTX_new(pkey, impl);
 
-    EVP_PKEY_free(pkey);
+    if (kdfalg) {
+        int kdfnid = OBJ_sn2nid(kdfalg);
+        if (kdfnid == NID_undef)
+            goto end;
+        ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
+    } else {
+        if (pkey == NULL)
+            goto end;
+        *pkeysize = EVP_PKEY_size(pkey);
+        ctx = EVP_PKEY_CTX_new(pkey, impl);
+        EVP_PKEY_free(pkey);
+    }
 
     if (ctx == NULL)
         goto end;
@@ -479,7 +460,7 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
-                    unsigned char *in, size_t inlen)
+                    const unsigned char *in, size_t inlen)
 {
     int rv = 0;
     switch (pkey_op) {

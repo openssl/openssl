@@ -1,4 +1,13 @@
 /*
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+/*
  * A minimal TLS server it ses SSL_CTX_config and a configuration file to
  * set most server parameters.
  */
@@ -18,17 +27,12 @@ int main(int argc, char *argv[])
     SSL_CTX *ctx;
     int ret = 1, i;
 
-    SSL_load_error_strings();
-
-    /* Add ciphers and message digests */
-    OpenSSL_add_ssl_algorithms();
+    ctx = SSL_CTX_new(TLS_server_method());
 
     if (CONF_modules_load_file("cmod.cnf", "testapp", 0) <= 0) {
         fprintf(stderr, "Error processing config file\n");
         goto err;
     }
-
-    ctx = SSL_CTX_new(TLS_server_method());
 
     if (SSL_CTX_config(ctx, "server") == 0) {
         fprintf(stderr, "Error configuring server.\n");

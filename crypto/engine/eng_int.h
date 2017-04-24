@@ -1,60 +1,12 @@
 /*
- * Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL project
- * 2000.
+ * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  * ECDH support in OpenSSL originally developed by
@@ -66,10 +18,14 @@
 
 # include "internal/cryptlib.h"
 # include <internal/engine.h>
+# include <internal/thread_once.h>
+# include "internal/refcount.h"
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+extern CRYPTO_RWLOCK *global_engine_lock;
 
 /*
  * If we compile with this symbol defined, then both reference counts in the
@@ -96,9 +52,9 @@ extern "C" {
 
 /*
  * Any code that will need cleanup operations should use these functions to
- * register callbacks. ENGINE_cleanup() will call all registered callbacks in
- * order. NB: both the "add" functions assume CRYPTO_LOCK_ENGINE to already be
- * held (in "write" mode).
+ * register callbacks. engine_cleanup_int() will call all registered
+ * callbacks in order. NB: both the "add" functions assume the engine lock to
+ * already be held (in "write" mode).
  */
 typedef void (ENGINE_CLEANUP_CB) (void);
 typedef struct st_engine_cleanup_item {
@@ -144,11 +100,11 @@ void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb,
 /*
  * Internal versions of API functions that have control over locking. These
  * are used between C files when functionality needs to be shared but the
- * caller may already be controlling of the CRYPTO_LOCK_ENGINE lock.
+ * caller may already be controlling of the engine lock.
  */
 int engine_unlocked_init(ENGINE *e);
 int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers);
-int engine_free_util(ENGINE *e, int locked);
+int engine_free_util(ENGINE *e, int not_locked);
 
 /*
  * This function will reset all "set"able values in an ENGINE to NULL. This
@@ -166,6 +122,10 @@ void engine_set_all_null(ENGINE *e);
 
 void engine_pkey_meths_free(ENGINE *e);
 void engine_pkey_asn1_meths_free(ENGINE *e);
+
+/* Once initialisation function */
+extern CRYPTO_ONCE engine_lock_init;
+DECLARE_RUN_ONCE(do_engine_lock_init)
 
 /*
  * This is a structure for storing implementations of various crypto
@@ -197,10 +157,10 @@ struct engine_st {
     const ENGINE_CMD_DEFN *cmd_defns;
     int flags;
     /* reference count on the structure itself */
-    int struct_ref;
+    CRYPTO_REF_COUNT struct_ref;
     /*
      * reference count on usability of the engine type. NB: This controls the
-     * loading and initialisation of any functionlity required by this
+     * loading and initialisation of any functionality required by this
      * engine, whereas the previous count is simply to cope with
      * (de)allocation of this structure. Hence, running_ref <= struct_ref at
      * all times.

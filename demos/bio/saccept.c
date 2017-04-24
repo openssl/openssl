@@ -1,3 +1,12 @@
+/*
+ * Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 /*-
  * A minimal program to serve an SSL connection.
  * It uses blocking.
@@ -17,7 +26,7 @@
 
 static int done = 0;
 
-void interrupt()
+void interrupt(int sig)
 {
     done = 1;
 }
@@ -48,11 +57,6 @@ int main(int argc, char *argv[])
         port = "*:4433";
     else
         port = argv[1];
-
-    SSL_load_error_strings();
-
-    /* Add ciphers and message digests */
-    OpenSSL_add_ssl_algorithms();
 
     ctx = SSL_CTX_new(TLS_server_method());
     if (!SSL_CTX_use_certificate_chain_file(ctx, CERT_FILE))

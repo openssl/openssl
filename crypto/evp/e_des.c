@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -105,7 +57,7 @@ static int des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
     BLOCK_CIPHER_ecb_loop()
         DES_ecb_encrypt((DES_cblock *)(in + i), (DES_cblock *)(out + i),
-                        EVP_CIPHER_CTX_cipher_data(ctx),
+                        EVP_CIPHER_CTX_get_cipher_data(ctx),
                         EVP_CIPHER_CTX_encrypting(ctx));
     return 1;
 }
@@ -116,7 +68,7 @@ static int des_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     while (inl >= EVP_MAXCHUNK) {
         int num = EVP_CIPHER_CTX_num(ctx);
         DES_ofb64_encrypt(in, out, (long)EVP_MAXCHUNK,
-                          EVP_CIPHER_CTX_cipher_data(ctx),
+                          EVP_CIPHER_CTX_get_cipher_data(ctx),
                           (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx), &num);
         EVP_CIPHER_CTX_set_num(ctx, num);
         inl -= EVP_MAXCHUNK;
@@ -125,7 +77,8 @@ static int des_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
     if (inl) {
         int num = EVP_CIPHER_CTX_num(ctx);
-        DES_ofb64_encrypt(in, out, (long)inl, EVP_CIPHER_CTX_cipher_data(ctx),
+        DES_ofb64_encrypt(in, out, (long)inl,
+                          EVP_CIPHER_CTX_get_cipher_data(ctx),
                           (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx), &num);
         EVP_CIPHER_CTX_set_num(ctx, num);
     }
@@ -135,7 +88,7 @@ static int des_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static int des_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                           const unsigned char *in, size_t inl)
 {
-    EVP_DES_KEY *dat = (EVP_DES_KEY *) EVP_CIPHER_CTX_cipher_data(ctx);
+    EVP_DES_KEY *dat = (EVP_DES_KEY *) EVP_CIPHER_CTX_get_cipher_data(ctx);
 
     if (dat->stream.cbc != NULL) {
         (*dat->stream.cbc) (in, out, inl, &dat->ks.ks,
@@ -144,7 +97,7 @@ static int des_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
     while (inl >= EVP_MAXCHUNK) {
         DES_ncbc_encrypt(in, out, (long)EVP_MAXCHUNK,
-                         EVP_CIPHER_CTX_cipher_data(ctx),
+                         EVP_CIPHER_CTX_get_cipher_data(ctx),
                          (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx),
                          EVP_CIPHER_CTX_encrypting(ctx));
         inl -= EVP_MAXCHUNK;
@@ -152,7 +105,8 @@ static int des_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         out += EVP_MAXCHUNK;
     }
     if (inl)
-        DES_ncbc_encrypt(in, out, (long)inl, EVP_CIPHER_CTX_cipher_data(ctx),
+        DES_ncbc_encrypt(in, out, (long)inl,
+                         EVP_CIPHER_CTX_get_cipher_data(ctx),
                          (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx),
                          EVP_CIPHER_CTX_encrypting(ctx));
     return 1;
@@ -164,7 +118,7 @@ static int des_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     while (inl >= EVP_MAXCHUNK) {
         int num = EVP_CIPHER_CTX_num(ctx);
         DES_cfb64_encrypt(in, out, (long)EVP_MAXCHUNK,
-                          EVP_CIPHER_CTX_cipher_data(ctx),
+                          EVP_CIPHER_CTX_get_cipher_data(ctx),
                           (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx), &num,
                           EVP_CIPHER_CTX_encrypting(ctx));
         EVP_CIPHER_CTX_set_num(ctx, num);
@@ -174,7 +128,8 @@ static int des_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
     if (inl) {
         int num = EVP_CIPHER_CTX_num(ctx);
-        DES_cfb64_encrypt(in, out, (long)inl, EVP_CIPHER_CTX_cipher_data(ctx),
+        DES_cfb64_encrypt(in, out, (long)inl,
+                          EVP_CIPHER_CTX_get_cipher_data(ctx),
                           (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx), &num,
                           EVP_CIPHER_CTX_encrypting(ctx));
         EVP_CIPHER_CTX_set_num(ctx, num);
@@ -198,7 +153,7 @@ static int des_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     while (inl && inl >= chunk) {
         for (n = 0; n < chunk * 8; ++n) {
             c[0] = (in[n / 8] & (1 << (7 - n % 8))) ? 0x80 : 0;
-            DES_cfb_encrypt(c, d, 1, 1, EVP_CIPHER_CTX_cipher_data(ctx),
+            DES_cfb_encrypt(c, d, 1, 1, EVP_CIPHER_CTX_get_cipher_data(ctx),
                             (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx),
                             EVP_CIPHER_CTX_encrypting(ctx));
             out[n / 8] =
@@ -220,7 +175,7 @@ static int des_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
     while (inl >= EVP_MAXCHUNK) {
         DES_cfb_encrypt(in, out, 8, (long)EVP_MAXCHUNK,
-                        EVP_CIPHER_CTX_cipher_data(ctx),
+                        EVP_CIPHER_CTX_get_cipher_data(ctx),
                         (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx),
                         EVP_CIPHER_CTX_encrypting(ctx));
         inl -= EVP_MAXCHUNK;
@@ -228,7 +183,8 @@ static int des_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         out += EVP_MAXCHUNK;
     }
     if (inl)
-        DES_cfb_encrypt(in, out, 8, (long)inl, EVP_CIPHER_CTX_cipher_data(ctx),
+        DES_cfb_encrypt(in, out, 8, (long)inl,
+                        EVP_CIPHER_CTX_get_cipher_data(ctx),
                         (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx),
                         EVP_CIPHER_CTX_encrypting(ctx));
     return 1;
@@ -250,7 +206,7 @@ static int des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc)
 {
     DES_cblock *deskey = (DES_cblock *)key;
-    EVP_DES_KEY *dat = (EVP_DES_KEY *) EVP_CIPHER_CTX_cipher_data(ctx);
+    EVP_DES_KEY *dat = (EVP_DES_KEY *) EVP_CIPHER_CTX_get_cipher_data(ctx);
 
     dat->stream.cbc = NULL;
 # if defined(SPARC_DES_CAPABLE)
@@ -264,7 +220,7 @@ static int des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         }
     }
 # endif
-    DES_set_key_unchecked(deskey, EVP_CIPHER_CTX_cipher_data(ctx));
+    DES_set_key_unchecked(deskey, EVP_CIPHER_CTX_get_cipher_data(ctx));
     return 1;
 }
 

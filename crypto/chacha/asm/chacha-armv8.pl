@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -8,7 +15,7 @@
 # ====================================================================
 #
 # June 2015
-# 
+#
 # ChaCha20 for ARMv8.
 #
 # Performance in cycles per byte out of large buffer.
@@ -20,6 +27,7 @@
 # Cortex-A57		8.06/+43%       4.90            4.43(**)
 # Denver		4.50/+82%       2.63		2.67(*)
 # X-Gene		9.50/+46%       8.82		8.89(*)
+# Mongoose		8.00/+44%	3.64		3.25
 #
 # (*)	it's expected that doubling interleave factor doesn't help
 #	all processors, only those with higher NEON latency and
@@ -193,7 +201,7 @@ ChaCha20_ctr32:
 	mov	$ctr,#10
 	subs	$len,$len,#64
 .Loop:
-	sub	$ctr,$ctr,#1	
+	sub	$ctr,$ctr,#1
 ___
 	foreach (&ROUND(0, 4, 8,12)) { eval; }
 	foreach (&ROUND(0, 5,10,15)) { eval; }
@@ -1124,3 +1132,4 @@ foreach (split("\n",$code)) {
 
 	print $_,"\n";
 }
+close STDOUT;	# flush

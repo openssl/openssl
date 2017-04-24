@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -8,7 +15,7 @@
 # ====================================================================
 #
 # October 2015
-# 
+#
 # ChaCha20 for PowerPC/AltiVec.
 #
 # Performance in cycles per byte out of large buffer.
@@ -16,7 +23,8 @@
 #			IALU/gcc-4.x    3xAltiVec+1xIALU
 #
 # Freescale e300	13.6/+115%	-
-# PPC74x0		6.81/+310%	4.66
+# PPC74x0/G4e		6.81/+310%	4.66
+# PPC970/G5		9.29/+160%	4.60
 # POWER7		8.62/+61%	4.27
 # POWER8		8.70/+51%	3.96
 
@@ -126,6 +134,7 @@ my ($a3,$b3,$c3,$d3)=map(($_&~3)+(($_+1)&3),($a2,$b2,$c2,$d2));
 
 $code.=<<___;
 .machine	"any"
+.text
 
 .globl	.ChaCha20_ctr32_int
 .align	5
@@ -477,7 +486,7 @@ $code.=<<___;
 	$PUSH	r29,`$FRAME-$SIZE_T*3`($sp)
 	$PUSH	r30,`$FRAME-$SIZE_T*2`($sp)
 	$PUSH	r31,`$FRAME-$SIZE_T*1`($sp)
-	li	12,-1
+	li	r12,-1
 	$PUSH	r0, `$FRAME+$LRSAVE`($sp)
 	mtspr	256,r12				# preserve all AltiVec registers
 
@@ -516,7 +525,7 @@ $code.=<<___;
 	lwz	@d[3],12($ctr)
 	vadduwm	@K[5],@K[4],@K[5]
 
-	vspltisw $twenty,-12			# synthesize constants 
+	vspltisw $twenty,-12			# synthesize constants
 	vspltisw $twelve,12
 	vspltisw $twenty5,-7
 	#vspltisw $seven,7			# synthesized in the loop
@@ -527,9 +536,11 @@ $code.=<<___;
 	?lvsl	$outperm,0,$out			# prepare for unaligned store
 	?vperm	$outmask,$outmask,$T0,$outperm
 
+	be?lvsl	$T0,0,@x[0]			# 0x00..0f
 	be?vspltisb $T1,3			# 0x03..03
-	be?vxor	$inpperm,$inpperm,$T1		# swap bytes within words
+	be?vxor	$T0,$T0,$T1			# swap bytes within words
 	be?vxor	$outperm,$outperm,$T1
+	be?vperm $inpperm,$inpperm,$inpperm,$T0
 
 	b	Loop_outer_vmx
 

@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -80,16 +32,23 @@
 static int set_hex(char *in, unsigned char *out, int size);
 static void show_ciphers(const OBJ_NAME *name, void *bio_);
 
+struct doall_enc_ciphers {
+    BIO *bio;
+    int n;
+};
+
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
+    OPT_LIST,
     OPT_E, OPT_IN, OPT_OUT, OPT_PASS, OPT_ENGINE, OPT_D, OPT_P, OPT_V,
     OPT_NOPAD, OPT_SALT, OPT_NOSALT, OPT_DEBUG, OPT_UPPER_P, OPT_UPPER_A,
     OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
     OPT_UPPER_S, OPT_IV, OPT_MD, OPT_CIPHER
 } OPTION_CHOICE;
 
-OPTIONS enc_options[] = {
+const OPTIONS enc_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"ciphers", OPT_LIST, '-', "List ciphers"},
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
     {"pass", OPT_PASS, 's', "Passphrase source"},
@@ -108,11 +67,11 @@ OPTIONS enc_options[] = {
      "Used with -[base64|a] to specify base64 buffer as a single line"},
     {"bufsize", OPT_BUFSIZE, 's', "Buffer size"},
     {"k", OPT_K, 's', "Passphrase"},
-    {"kfile", OPT_KFILE, '<', "Fead passphrase from file"},
+    {"kfile", OPT_KFILE, '<', "Read passphrase from file"},
     {"K", OPT_UPPER_K, 's', "Raw key, in hex"},
     {"S", OPT_UPPER_S, 's', "Salt, in hex"},
     {"iv", OPT_IV, 's', "IV in hex"},
-    {"md", OPT_MD, 's', "Use specified digest to create key from passphrase"},
+    {"md", OPT_MD, 's', "Use specified digest to create a key from the passphrase"},
     {"none", OPT_NONE, '-', "Don't encrypt"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 #ifdef ZLIB
@@ -128,6 +87,7 @@ int enc_main(int argc, char **argv)
 {
     static char buf[128];
     static const char magic[] = "Salted__";
+    ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL, *b64 = NULL, *benc = NULL, *rbio =
         NULL, *wbio = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
@@ -145,6 +105,7 @@ int enc_main(int argc, char **argv)
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
     unsigned char *buff = NULL, salt[PKCS5_SALT_LEN];
     long n;
+    struct doall_enc_ciphers dec;
 #ifdef ZLIB
     int do_zlib = 0;
     BIO *bzl = NULL;
@@ -177,10 +138,15 @@ int enc_main(int argc, char **argv)
         case OPT_HELP:
             opt_help(enc_options);
             ret = 0;
-            BIO_printf(bio_err, "Cipher Types\n");
+            goto end;
+        case OPT_LIST:
+            BIO_printf(bio_out, "Supported ciphers:\n");
+            dec.bio = bio_out;
+            dec.n = 0;
             OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH,
-                                   show_ciphers, bio_err);
-            BIO_printf(bio_err, "\n");
+                                   show_ciphers, &dec);
+            BIO_printf(bio_out, "\n");
+            ret = 0;
             goto end;
         case OPT_E:
             enc = 1;
@@ -195,7 +161,7 @@ int enc_main(int argc, char **argv)
             passarg = opt_arg();
             break;
         case OPT_ENGINE:
-            (void)setup_engine(opt_arg(), 0);
+            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_D:
             enc = 0;
@@ -291,8 +257,6 @@ int enc_main(int argc, char **argv)
             break;
         }
     }
-    argc = opt_num_rest();
-    argv = opt_rest();
 
     if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);
@@ -313,22 +277,18 @@ int enc_main(int argc, char **argv)
     if (verbose)
         BIO_printf(bio_err, "bufsize=%d\n", bsize);
 
-    if (base64) {
-        if (enc)
-            outformat = FORMAT_BASE64;
-        else
-            informat = FORMAT_BASE64;
-    }
+#ifdef ZLIB
+    if (!do_zlib)
+#endif
+        if (base64) {
+            if (enc)
+                outformat = FORMAT_BASE64;
+            else
+                informat = FORMAT_BASE64;
+        }
 
     strbuf = app_malloc(SIZE, "strbuf");
     buff = app_malloc(EVP_ENCODE_LENGTH(bsize), "evp buffer");
-
-    if (debug) {
-        BIO_set_callback(in, BIO_debug_callback);
-        BIO_set_callback(out, BIO_debug_callback);
-        BIO_set_callback_arg(in, (char *)bio_err);
-        BIO_set_callback_arg(out, (char *)bio_err);
-    }
 
     if (infile == NULL) {
         unbuffer(stdin);
@@ -347,32 +307,46 @@ int enc_main(int argc, char **argv)
     }
 
     if ((str == NULL) && (cipher != NULL) && (hkey == NULL)) {
-        for (;;) {
-            char prompt[200];
+        if (1) {
+#ifndef OPENSSL_NO_UI
+            for (;;) {
+                char prompt[200];
 
-            BIO_snprintf(prompt, sizeof prompt, "enter %s %s password:",
-                         OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
-                         (enc) ? "encryption" : "decryption");
-            strbuf[0] = '\0';
-            i = EVP_read_pw_string((char *)strbuf, SIZE, prompt, enc);
-            if (i == 0) {
-                if (strbuf[0] == '\0') {
-                    ret = 1;
+                BIO_snprintf(prompt, sizeof prompt, "enter %s %s password:",
+                             OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
+                             (enc) ? "encryption" : "decryption");
+                strbuf[0] = '\0';
+                i = EVP_read_pw_string((char *)strbuf, SIZE, prompt, enc);
+                if (i == 0) {
+                    if (strbuf[0] == '\0') {
+                        ret = 1;
+                        goto end;
+                    }
+                    str = strbuf;
+                    break;
+                }
+                if (i < 0) {
+                    BIO_printf(bio_err, "bad password read\n");
                     goto end;
                 }
-                str = strbuf;
-                break;
             }
-            if (i < 0) {
-                BIO_printf(bio_err, "bad password read\n");
-                goto end;
-            }
+        } else {
+#endif
+            BIO_printf(bio_err, "password required\n");
+            goto end;
         }
     }
 
     out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
+
+    if (debug) {
+        BIO_set_callback(in, BIO_debug_callback);
+        BIO_set_callback(out, BIO_debug_callback);
+        BIO_set_callback_arg(in, (char *)bio_err);
+        BIO_set_callback_arg(out, (char *)bio_err);
+    }
 
     rbio = in;
     wbio = out;
@@ -381,6 +355,10 @@ int enc_main(int argc, char **argv)
     if (do_zlib) {
         if ((bzl = BIO_new(BIO_f_zlib())) == NULL)
             goto end;
+        if (debug) {
+            BIO_set_callback(bzl, BIO_debug_callback);
+            BIO_set_callback_arg(bzl, (char *)bio_err);
+        }
         if (enc)
             wbio = BIO_push(bzl, wbio);
         else
@@ -414,6 +392,8 @@ int enc_main(int argc, char **argv)
              * output BIO. If decrypting read salt from input BIO.
              */
             unsigned char *sptr;
+            size_t str_len = strlen(str);
+
             if (nosalt)
                 sptr = NULL;
             else {
@@ -453,7 +433,7 @@ int enc_main(int argc, char **argv)
 
             if (!EVP_BytesToKey(cipher, dgst, sptr,
                                 (unsigned char *)str,
-                                strlen(str), 1, key, iv)) {
+                                str_len, 1, key, iv)) {
                 BIO_printf(bio_err, "EVP_BytesToKey failed\n");
                 goto end;
             }
@@ -464,7 +444,7 @@ int enc_main(int argc, char **argv)
             if (str == strbuf)
                 OPENSSL_cleanse(str, SIZE);
             else
-                OPENSSL_cleanse(str, strlen(str));
+                OPENSSL_cleanse(str, str_len);
         }
         if (hiv != NULL) {
             int siz = EVP_CIPHER_iv_length(cipher);
@@ -568,8 +548,8 @@ int enc_main(int argc, char **argv)
 
     ret = 0;
     if (verbose) {
-        BIO_printf(bio_err, "bytes read   :%8"PRIu64"\n", BIO_number_read(in));
-        BIO_printf(bio_err, "bytes written:%8"PRIu64"\n", BIO_number_written(out));
+        BIO_printf(bio_err, "bytes read   :%8ju\n", BIO_number_read(in));
+        BIO_printf(bio_err, "bytes written:%8ju\n", BIO_number_written(out));
     }
  end:
     ERR_print_errors(bio_err);
@@ -582,24 +562,32 @@ int enc_main(int argc, char **argv)
 #ifdef ZLIB
     BIO_free(bzl);
 #endif
+    release_engine(e);
     OPENSSL_free(pass);
     return (ret);
 }
 
-static void show_ciphers(const OBJ_NAME *name, void *bio_)
+static void show_ciphers(const OBJ_NAME *name, void *arg)
 {
-    BIO *bio = bio_;
-    static int n;
+    struct doall_enc_ciphers *dec = (struct doall_enc_ciphers *)arg;
+    const EVP_CIPHER *cipher;
 
     if (!islower((unsigned char)*name->name))
         return;
 
-    BIO_printf(bio, "-%-25s", name->name);
-    if (++n == 3) {
-        BIO_printf(bio, "\n");
-        n = 0;
+    /* Filter out ciphers that we cannot use */
+    cipher = EVP_get_cipherbyname(name->name);
+    if (cipher == NULL ||
+            (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0 ||
+            EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)
+        return;
+
+    BIO_printf(dec->bio, "-%-25s", name->name);
+    if (++dec->n == 3) {
+        BIO_printf(dec->bio, "\n");
+        dec->n = 0;
     } else
-        BIO_printf(bio, " ");
+        BIO_printf(dec->bio, " ");
 }
 
 static int set_hex(char *in, unsigned char *out, int size)
@@ -622,7 +610,7 @@ static int set_hex(char *in, unsigned char *out, int size)
             BIO_printf(bio_err, "non-hex digit\n");
             return (0);
         }
-        j = (unsigned char)app_hex(j);
+        j = (unsigned char)OPENSSL_hexchar2int(j);
         if (i & 1)
             out[i / 2] |= j;
         else

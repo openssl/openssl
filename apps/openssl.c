@@ -1,111 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
- */
-/* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -113,7 +12,6 @@
 #include <stdlib.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
-#include <openssl/rand.h>
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
 #include <openssl/x509.h>
@@ -123,9 +21,6 @@
 # include <openssl/engine.h>
 #endif
 #include <openssl/err.h>
-#ifdef OPENSSL_FIPS
-# include <openssl/fips.h>
-#endif
 #define USE_SOCKETS /* needed for the _O_BINARY defs in the MS world */
 #include "s_apps.h"
 /* Needed to get the other O_xxx flags. */
@@ -160,7 +55,6 @@ static void list_type(FUNC_TYPE ft);
 static void list_disabled(void);
 char *default_config_file = NULL;
 
-static CONF *config = NULL;
 BIO *bio_in = NULL;
 BIO *bio_out = NULL;
 BIO *bio_err = NULL;
@@ -176,14 +70,18 @@ static int apps_startup()
                              | OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
 
+#ifndef OPENSSL_NO_UI
     setup_ui_method();
+#endif
 
     return 1;
 }
 
 static void apps_shutdown()
 {
+#ifndef OPENSSL_NO_UI
     destroy_ui_method();
+#endif
 }
 
 static char *make_config_name()
@@ -207,59 +105,6 @@ static char *make_config_name()
     return p;
 }
 
-static void lock_dbg_cb(int mode, int type, const char *file, int line)
-{
-    static int modes[CRYPTO_NUM_LOCKS];
-    const char *errstr = NULL;
-    int rw = mode & (CRYPTO_READ | CRYPTO_WRITE);
-
-    if (rw != CRYPTO_READ && rw != CRYPTO_WRITE) {
-        errstr = "invalid mode";
-        goto err;
-    }
-
-    if (type < 0 || type >= CRYPTO_NUM_LOCKS) {
-        errstr = "type out of bounds";
-        goto err;
-    }
-
-    if (mode & CRYPTO_LOCK) {
-        if (modes[type]) {
-            errstr = "already locked";
-            /* must not happen in a single-threaded program --> deadlock! */
-            goto err;
-        }
-        modes[type] = rw;
-    } else if (mode & CRYPTO_UNLOCK) {
-        if (!modes[type]) {
-            errstr = "not locked";
-            goto err;
-        }
-
-        if (modes[type] != rw) {
-            errstr = (rw == CRYPTO_READ) ?
-                "CRYPTO_r_unlock on write lock" :
-                "CRYPTO_w_unlock on read lock";
-        }
-
-        modes[type] = 0;
-    } else {
-        errstr = "invalid mode";
-        goto err;
-    }
-
- err:
-    if (errstr) {
-        BIO_printf(bio_err,
-                   "openssl (lock_dbg_cb): %s (mode=%d, type=%d) at %s:%d\n",
-                   errstr, mode, type, file, line);
-    }
-}
-
-#if defined( OPENSSL_SYS_VMS)
-extern char **copy_argv(int *argc, char **argv);
-#endif
-
 int main(int argc, char *argv[])
 {
     FUNCTION f, *fp;
@@ -278,28 +123,25 @@ int main(int argc, char *argv[])
     default_config_file = make_config_name();
     bio_in = dup_bio_in(FORMAT_TEXT);
     bio_out = dup_bio_out(FORMAT_TEXT);
-    bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
+    bio_err = dup_bio_err(FORMAT_TEXT);
 
-#if defined( OPENSSL_SYS_VMS)
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
     copied_argv = argv = copy_argv(&argc, argv);
+#elif defined(_WIN32)
+    /*
+     * Replace argv[] with UTF-8 encoded strings.
+     */
+    win32_utf8argv(&argc, &argv);
 #endif
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)
         CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-    CRYPTO_set_locking_callback(lock_dbg_cb);
 
     if (getenv("OPENSSL_FIPS")) {
-#ifdef OPENSSL_FIPS
-        if (!FIPS_mode_set(1)) {
-            ERR_print_errors(bio_err);
-            return 1;
-        }
-#else
         BIO_printf(bio_err, "FIPS mode not supported.\n");
         return 1;
-#endif
     }
 
     if (!apps_startup())
@@ -355,7 +197,7 @@ int main(int argc, char *argv[])
                 extern void add_history(const char *cp);
                 char *text;
 
-                char *text = readline(prompt);
+                text = readline(prompt);
                 if (text == NULL)
                     goto end;
                 i = strlen(text);
@@ -395,8 +237,6 @@ int main(int argc, char *argv[])
  end:
     OPENSSL_free(copied_argv);
     OPENSSL_free(default_config_file);
-    NCONF_free(config);
-    config = NULL;
     lh_FUNCTION_free(prog);
     OPENSSL_free(arg.argv);
 
@@ -411,7 +251,7 @@ int main(int argc, char *argv[])
     EXIT(ret);
 }
 
-OPTIONS exit_options[] = {
+const OPTIONS exit_options[] = {
     {NULL}
 };
 
@@ -443,15 +283,33 @@ static void list_md_fn(const EVP_MD *m,
     }
 }
 
+static void list_missing_help(void)
+{
+    const FUNCTION *fp;
+    const OPTIONS *o;
+
+    for (fp = functions; fp->name != NULL; fp++) {
+        if ((o = fp->help) == NULL) {
+            BIO_printf(bio_out, "%s *\n", fp->name);
+            continue;
+        }
+        for ( ; o->name != NULL; o++) {
+            if (o->helpstr == NULL)
+                BIO_printf(bio_out, "%s %s\n", fp->name, o->name);
+        }
+    }
+}
+
+
 /* Unified enum for help and list commands. */
 typedef enum HELPLIST_CHOICE {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_COMMANDS, OPT_DIGEST_COMMANDS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
-    OPT_PK_ALGORITHMS, OPT_DISABLED
+    OPT_PK_ALGORITHMS, OPT_DISABLED, OPT_MISSING_HELP
 } HELPLIST_CHOICE;
 
-OPTIONS list_options[] = {
+const OPTIONS list_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"commands", OPT_COMMANDS, '-', "List of standard commands"},
     {"digest-commands", OPT_DIGEST_COMMANDS, '-',
@@ -465,6 +323,8 @@ OPTIONS list_options[] = {
      "List of public key algorithms"},
     {"disabled", OPT_DISABLED, '-',
      "List of disabled features"},
+    {"missing-help", OPT_MISSING_HELP, '-',
+     "List missing detailed help strings"},
     {NULL}
 };
 
@@ -505,6 +365,9 @@ int list_main(int argc, char **argv)
         case OPT_DISABLED:
             list_disabled();
             break;
+        case OPT_MISSING_HELP:
+            list_missing_help();
+            break;
         }
         done = 1;
     }
@@ -517,10 +380,15 @@ int list_main(int argc, char **argv)
     return 0;
 }
 
-OPTIONS help_options[] = {
-    {"help", OPT_HELP, '-', "Display this summary"},
+typedef enum HELP_CHOICE {
+    OPT_hERR = -1, OPT_hEOF = 0, OPT_hHELP
+} HELP_CHOICE;
+
+const OPTIONS help_options[] = {
+    {"help", OPT_hHELP, '-', "Display this summary"},
     {NULL}
 };
+
 
 int help_main(int argc, char **argv)
 {
@@ -528,23 +396,22 @@ int help_main(int argc, char **argv)
     int i, nl;
     FUNC_TYPE tp;
     char *prog;
-    HELPLIST_CHOICE o;
+    HELP_CHOICE o;
 
     prog = opt_init(argc, argv, help_options);
-    while ((o = opt_next()) != OPT_EOF) {
+    while ((o = opt_next()) != OPT_hEOF) {
         switch (o) {
-        default:
+        case OPT_hERR:
+        case OPT_hEOF:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             return 1;
-        case OPT_HELP:
+        case OPT_hHELP:
             opt_help(help_options);
             return 0;
         }
     }
-    argc = opt_num_rest();
-    argv = opt_rest();
 
-    if (argc != 0) {
+    if (opt_num_rest() != 0) {
         BIO_printf(bio_err, "Usage: %s\n", prog);
         return 1;
     }
@@ -678,7 +545,7 @@ static int function_cmp(const FUNCTION * a, const FUNCTION * b)
 
 static unsigned long function_hash(const FUNCTION * a)
 {
-    return lh_strhash(a->name);
+    return OPENSSL_LH_strhash(a->name);
 }
 
 static int SortFnByName(const void *_f1, const void *_f2)
@@ -694,11 +561,14 @@ static int SortFnByName(const void *_f1, const void *_f2)
 static void list_disabled(void)
 {
     BIO_puts(bio_out, "Disabled algorithms:\n");
-#ifdef OPENSSL_NO_AES
-    BIO_puts(bio_out, "AES\n");
+#ifdef OPENSSL_NO_ARIA
+    BIO_puts(bio_out, "ARIA\n");
 #endif
 #ifdef OPENSSL_NO_BF
     BIO_puts(bio_out, "BF\n");
+#endif
+#ifdef OPENSSL_NO_BLAKE2
+    BIO_puts(bio_out, "BLAKE2\n");
 #endif
 #ifdef OPENSSL_NO_CAMELLIA
     BIO_puts(bio_out, "CAMELLIA\n");
@@ -751,9 +621,6 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_HEARTBEATS
     BIO_puts(bio_out, "HEARTBEATS\n");
 #endif
-#ifdef OPENSSL_NO_HMAC
-    BIO_puts(bio_out, "HMAC\n");
-#endif
 #ifdef OPENSSL_NO_IDEA
     BIO_puts(bio_out, "IDEA\n");
 #endif
@@ -796,17 +663,11 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_SCRYPT
     BIO_puts(bio_out, "SCRYPT\n");
 #endif
-#ifdef OPENSSL_NO_SCT
-    BIO_puts(bio_out, "SCT\n");
-#endif
 #ifdef OPENSSL_NO_SCTP
     BIO_puts(bio_out, "SCTP\n");
 #endif
 #ifdef OPENSSL_NO_SEED
     BIO_puts(bio_out, "SEED\n");
-#endif
-#ifdef OPENSSL_NO_SHA
-    BIO_puts(bio_out, "SHA\n");
 #endif
 #ifdef OPENSSL_NO_SOCK
     BIO_puts(bio_out, "SOCK\n");
@@ -817,14 +678,8 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_SRTP
     BIO_puts(bio_out, "SRTP\n");
 #endif
-#ifdef OPENSSL_NO_SSL
-    BIO_puts(bio_out, "SSL\n");
-#endif
 #ifdef OPENSSL_NO_SSL3
     BIO_puts(bio_out, "SSL3\n");
-#endif
-#if defined(OPENSSL_NO_TLS)
-    BIO_puts(bio_out, "TLS\n");
 #endif
 #ifdef OPENSSL_NO_TLS1
     BIO_puts(bio_out, "TLS1\n");

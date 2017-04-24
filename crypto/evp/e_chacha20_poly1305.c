@@ -1,51 +1,10 @@
-/* ====================================================================
- * Copyright (c) 2014 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -168,7 +127,7 @@ static const EVP_CIPHER chacha20 = {
     1,                      /* block_size */
     CHACHA_KEY_SIZE,        /* key_len */
     CHACHA_CTR_SIZE,        /* iv_len, 128-bit counter in the context */
-    0,                      /* flags */
+    EVP_CIPH_CUSTOM_IV | EVP_CIPH_ALWAYS_CALL_INIT,
     chacha_init_key,
     chacha_cipher,
     NULL,
@@ -205,7 +164,6 @@ static int chacha20_poly1305_init_key(EVP_CIPHER_CTX *ctx,
                                       const unsigned char *iv, int enc)
 {
     EVP_CHACHA_AEAD_CTX *actx = aead_data(ctx);
-    unsigned char temp[CHACHA_CTR_SIZE];
 
     if (!inkey && !iv)
         return 1;
@@ -216,16 +174,21 @@ static int chacha20_poly1305_init_key(EVP_CIPHER_CTX *ctx,
     actx->mac_inited = 0;
     actx->tls_payload_length = NO_TLS_PAYLOAD_LENGTH;
 
-    /* pad on the left */
-    memset(temp, 0, sizeof(temp));
-    if (actx->nonce_len <= CHACHA_CTR_SIZE)
-        memcpy(temp + CHACHA_CTR_SIZE - actx->nonce_len, iv, actx->nonce_len);
+    if (iv != NULL) {
+        unsigned char temp[CHACHA_CTR_SIZE] = { 0 };
 
-    chacha_init_key(ctx, inkey, temp, enc);
+        /* pad on the left */
+        if (actx->nonce_len <= CHACHA_CTR_SIZE)
+            memcpy(temp + CHACHA_CTR_SIZE - actx->nonce_len, iv, actx->nonce_len);
 
-    actx->nonce[0] = actx->key.counter[1];
-    actx->nonce[1] = actx->key.counter[2];
-    actx->nonce[2] = actx->key.counter[3];
+        chacha_init_key(ctx, inkey, temp, enc);
+
+        actx->nonce[0] = actx->key.counter[1];
+        actx->nonce[1] = actx->key.counter[2];
+        actx->nonce[2] = actx->key.counter[3];
+    } else {
+        chacha_init_key(ctx, inkey, NULL, enc);
+    }
 
     return 1;
 }
@@ -336,7 +299,7 @@ static int chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 memcpy(out, actx->tag, POLY1305_BLOCK_SIZE);
             } else {
                 if (CRYPTO_memcmp(temp, in, POLY1305_BLOCK_SIZE)) {
-                    memset(out, 0, plen);
+                    memset(out - plen, 0, plen);
                     return -1;
                 }
             }
@@ -353,7 +316,7 @@ static int chacha20_poly1305_cleanup(EVP_CIPHER_CTX *ctx)
 {
     EVP_CHACHA_AEAD_CTX *actx = aead_data(ctx);
     if (actx)
-        OPENSSL_cleanse(ctx->cipher_data, sizeof(*ctx) + Poly1305_ctx_size());
+        OPENSSL_cleanse(ctx->cipher_data, sizeof(*actx) + Poly1305_ctx_size());
     return 1;
 }
 
@@ -382,9 +345,11 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
 
     case EVP_CTRL_COPY:
         if (actx) {
-            if ((((EVP_CIPHER_CTX *)ptr)->cipher_data =
-                   OPENSSL_memdup(actx,sizeof(*actx) + Poly1305_ctx_size()))
-                == NULL) {
+            EVP_CIPHER_CTX *dst = (EVP_CIPHER_CTX *)ptr;
+
+            dst->cipher_data =
+                   OPENSSL_memdup(actx, sizeof(*actx) + Poly1305_ctx_size());
+            if (dst->cipher_data == NULL) {
                 EVPerr(EVP_F_CHACHA20_POLY1305_CTRL, EVP_R_COPY_ERROR);
                 return 0;
             }
@@ -433,6 +398,8 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             len = aad[EVP_AEAD_TLS1_AAD_LEN - 2] << 8 |
                   aad[EVP_AEAD_TLS1_AAD_LEN - 1];
             if (!ctx->encrypt) {
+                if (len < POLY1305_BLOCK_SIZE)
+                    return 0;
                 len -= POLY1305_BLOCK_SIZE;     /* discount attached tag */
                 memcpy(temp, aad, EVP_AEAD_TLS1_AAD_LEN - 2);
                 aad = temp;
@@ -442,8 +409,7 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             actx->tls_payload_length = len;
 
             /*
-             * merge record sequence number as per
-             * draft-ietf-tls-chacha20-poly1305-03
+             * merge record sequence number as per RFC7905
              */
             actx->key.counter[1] = actx->nonce[0];
             actx->key.counter[2] = actx->nonce[1] ^ CHACHA_U8TOU32(aad);

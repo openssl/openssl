@@ -1,55 +1,9 @@
-# Written by Matt Caswell for the OpenSSL project.
-# ====================================================================
-# Copyright (c) 1998-2015 The OpenSSL Project.  All rights reserved.
+# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in
-#    the documentation and/or other materials provided with the
-#    distribution.
-#
-# 3. All advertising materials mentioning features or use of this
-#    software must display the following acknowledgment:
-#    "This product includes software developed by the OpenSSL Project
-#    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
-#
-# 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
-#    endorse or promote products derived from this software without
-#    prior written permission. For written permission, please contact
-#    openssl-core@openssl.org.
-#
-# 5. Products derived from this software may not be called "OpenSSL"
-#    nor may "OpenSSL" appear in their names without prior written
-#    permission of the OpenSSL Project.
-#
-# 6. Redistributions of any form whatsoever must retain the following
-#    acknowledgment:
-#    "This product includes software developed by the OpenSSL Project
-#    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
-#
-# THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
-# EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
-# ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-# OF THE POSSIBILITY OF SUCH DAMAGE.
-# ====================================================================
-#
-# This product includes cryptographic software written by Eric Young
-# (eay@cryptsoft.com).  This product includes software written by Tim
-# Hudson (tjh@cryptsoft.com).
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
 
 use strict;
 
@@ -91,24 +45,50 @@ sub parse
     my $self = shift;
     my $ptr = 2;
     my ($server_version) = unpack('n', $self->data);
+
+    # TODO(TLS1.3): Replace this reference to draft version before release
+    if ($server_version == TLSProxy::Record::VERS_TLS_1_3_DRAFT) {
+        $server_version = TLSProxy::Record::VERS_TLS_1_3;
+        TLSProxy::Proxy->is_tls13(1);
+    }
+
     my $random = substr($self->data, $ptr, 32);
     $ptr += 32;
-    my $session_id_len = unpack('C', substr($self->data, $ptr));
-    $ptr++;
-    my $session = substr($self->data, $ptr, $session_id_len);
-    $ptr += $session_id_len;
+    my $session_id_len = 0;
+    my $session = "";
+    if (!TLSProxy::Proxy->is_tls13()) {
+        $session_id_len = unpack('C', substr($self->data, $ptr));
+        $ptr++;
+        $session = substr($self->data, $ptr, $session_id_len);
+        $ptr += $session_id_len;
+    }
     my $ciphersuite = unpack('n', substr($self->data, $ptr));
     $ptr += 2;
-    my $comp_meth = unpack('C', substr($self->data, $ptr));
-    $ptr++;
+    my $comp_meth = 0;
+    if (!TLSProxy::Proxy->is_tls13()) {
+        $comp_meth = unpack('C', substr($self->data, $ptr));
+        $ptr++;
+    }
     my $extensions_len = unpack('n', substr($self->data, $ptr));
-    $ptr += 2;
+    if (!defined $extensions_len) {
+        $extensions_len = 0;
+    } else {
+        $ptr += 2;
+    }
     #For now we just deal with this as a block of data. In the future we will
     #want to parse this
-    my $extension_data = substr($self->data, $ptr);
+    my $extension_data;
+    if ($extensions_len != 0) {
+        $extension_data = substr($self->data, $ptr);
     
-    if (length($extension_data) != $extensions_len) {
-        die "Invalid extension length\n";
+        if (length($extension_data) != $extensions_len) {
+            die "Invalid extension length\n";
+        }
+    } else {
+        if (length($self->data) != $ptr) {
+            die "Invalid extension length\n";
+        }
+        $extension_data = "";
     }
     my %extensions = ();
     while (length($extension_data) >= 4) {
@@ -123,10 +103,16 @@ sub parse
     $self->session_id_len($session_id_len);
     $self->session($session);
     $self->ciphersuite($ciphersuite);
+    TLSProxy::Proxy->ciphersuite($ciphersuite);
     $self->comp_meth($comp_meth);
     $self->extension_data(\%extensions);
 
     $self->process_data();
+
+    if (TLSProxy::Proxy->is_tls13()) {
+        TLSProxy::Record->server_encrypting(1);
+        TLSProxy::Record->client_encrypting(1);
+    }
 
     print "    Server Version:".$server_version."\n";
     print "    Session ID Len:".$session_id_len."\n";
@@ -152,10 +138,14 @@ sub set_message_contents
 
     $data = pack('n', $self->server_version);
     $data .= $self->random;
-    $data .= pack('C', $self->session_id_len);
-    $data .= $self->session;
+    if (!TLSProxy::Proxy->is_tls13()) {
+        $data .= pack('C', $self->session_id_len);
+        $data .= $self->session;
+    }
     $data .= pack('n', $self->ciphersuite);
-    $data .= pack('C', $self->comp_meth);
+    if (!TLSProxy::Proxy->is_tls13()) {
+        $data .= pack('C', $self->comp_meth);
+    }
 
     foreach my $key (keys %{$self->extension_data}) {
         my $extdata = ${$self->extension_data}{$key};
@@ -179,9 +169,9 @@ sub server_version
 {
     my $self = shift;
     if (@_) {
-      $self->{client_version} = shift;
+      $self->{server_version} = shift;
     }
-    return $self->{client_version};
+    return $self->{server_version};
 }
 sub random
 {

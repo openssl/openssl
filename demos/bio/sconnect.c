@@ -1,3 +1,12 @@
+/*
+ * Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 /*-
  * A minimal program to do SSL to a passed host and port.
  * It is actually using non-blocking IO but in a very simple manner
@@ -46,11 +55,6 @@ char *argv[];
     sock_init();
 #endif
 
-    /* Lets get nice error messages */
-    SSL_load_error_strings();
-
-    /* Setup all the global SSL stuff */
-    OpenSSL_add_ssl_algorithms();
     ssl_ctx = SSL_CTX_new(TLS_client_method());
 
     /* Enable trust chain verification */

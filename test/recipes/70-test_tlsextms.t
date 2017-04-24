@@ -1,56 +1,10 @@
-#!/usr/bin/perl
-# Written by Stephen Henson for the OpenSSL project.
-# ====================================================================
-# Copyright (c) 1998-2015 The OpenSSL Project.  All rights reserved.
+#! /usr/bin/env perl
+# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in
-#    the documentation and/or other materials provided with the
-#    distribution.
-#
-# 3. All advertising materials mentioning features or use of this
-#    software must display the following acknowledgment:
-#    "This product includes software developed by the OpenSSL Project
-#    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
-#
-# 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
-#    endorse or promote products derived from this software without
-#    prior written permission. For written permission, please contact
-#    openssl-core@openssl.org.
-#
-# 5. Products derived from this software may not be called "OpenSSL"
-#    nor may "OpenSSL" appear in their names without prior written
-#    permission of the OpenSSL Project.
-#
-# 6. Redistributions of any form whatsoever must retain the following
-#    acknowledgment:
-#    "This product includes software developed by the OpenSSL Project
-#    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
-#
-# THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
-# EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
-# ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-# OF THE POSSIBILITY OF SUCH DAMAGE.
-# ====================================================================
-#
-# This product includes cryptographic software written by Eric Young
-# (eay@cryptsoft.com).  This product includes software written by Tim
-# Hudson (tjh@cryptsoft.com).
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
 
 use strict;
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
@@ -62,12 +16,17 @@ my $test_name = "test_tlsextms";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
-    if $^O =~ /^VMS$/;
+    if $^O =~ /^(VMS|MSWin32)$/;
 
 plan skip_all => "$test_name needs the dynamic engine feature enabled"
     if disabled("engine") || disabled("dynamic-engine");
 
-$ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
+plan skip_all => "$test_name needs the sock feature enabled"
+    if disabled("sock");
+
+plan skip_all => "$test_name needs TLSv1.0, TLSv1.1 or TLSv1.2 enabled"
+    if disabled("tls1") && disabled("tls1_1") && disabled("tls1_2");
+
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 sub checkmessages($$$$$);
@@ -82,12 +41,12 @@ my $fullhand = 0;
 
 my $proxy = TLSProxy::Proxy->new(
     \&extms_filter,
-    cmdstr(app(["openssl"])),
+    cmdstr(app(["openssl"]), display => 1),
     srctop_file("apps", "server.pem"),
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 9;
+#Note that EXTMS is only relevant for <TLS1.3
 
 #Test 1: By default server and client should send extended master secret
 # extension.
@@ -95,7 +54,11 @@ plan tests => 9;
 #                 Full handshake
 
 setrmextms(0, 0);
-$proxy->start();
+$proxy->clientflags("-no_tls1_3");
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+my $numtests = 9;
+$numtests++ if (!disabled("tls1_3"));
+plan tests => $numtests;
 checkmessages(1, "Default extended master secret test", 1, 1, 1);
 
 #Test 2: If client omits extended master secret extension, server should too.
@@ -104,6 +67,7 @@ checkmessages(1, "Default extended master secret test", 1, 1, 1);
 
 clearall();
 setrmextms(1, 0);
+$proxy->clientflags("-no_tls1_3");
 $proxy->start();
 checkmessages(2, "No client extension extended master secret test", 0, 0, 1);
 
@@ -111,7 +75,7 @@ checkmessages(2, "No client extension extended master secret test", 0, 0, 1);
 # Expected result: same as test 1.
 
 clearall();
-$proxy->clientflags("-no_ticket");
+$proxy->clientflags("-no_ticket -no_tls1_3");
 setrmextms(0, 0);
 $proxy->start();
 checkmessages(3, "No ticket extended master secret test", 1, 1, 1);
@@ -120,10 +84,10 @@ checkmessages(3, "No ticket extended master secret test", 1, 1, 1);
 # Expected result: same as test 2.
 
 clearall();
-$proxy->clientflags("-no_ticket");
+$proxy->clientflags("-no_ticket -no_tls1_3");
 setrmextms(1, 0);
 $proxy->start();
-checkmessages(2, "No ticket, no client extension extended master secret test", 0, 0, 1);
+checkmessages(4, "No ticket, no client extension extended master secret test", 0, 0, 1);
 
 #Test 5: Session resumption extended master secret test
 #
@@ -132,14 +96,15 @@ checkmessages(2, "No ticket, no client extension extended master secret test", 0
 
 clearall();
 setrmextms(0, 0);
-(my $fh, my $session) = tempfile();
+(undef, my $session) = tempfile();
 $proxy->serverconnects(2);
-$proxy->clientflags("-sess_out ".$session);
+$proxy->clientflags("-no_tls1_3 -sess_out ".$session);
 $proxy->start();
-$proxy->clear();
-$proxy->clientflags("-sess_in ".$session);
+$proxy->clearClient();
+$proxy->clientflags("-no_tls1_3 -sess_in ".$session);
 $proxy->clientstart();
 checkmessages(5, "Session resumption extended master secret test", 1, 1, 0);
+unlink $session;
 
 #Test 6: Session resumption extended master secret test original session
 # omits extension. Server must not resume session.
@@ -148,15 +113,16 @@ checkmessages(5, "Session resumption extended master secret test", 1, 1, 0);
 
 clearall();
 setrmextms(1, 0);
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(2);
-$proxy->clientflags("-sess_out ".$session);
+$proxy->clientflags("-no_tls1_3 -sess_out ".$session);
 $proxy->start();
-$proxy->clear();
-$proxy->clientflags("-sess_in ".$session);
+$proxy->clearClient();
+$proxy->clientflags("-no_tls1_3 -sess_in ".$session);
 setrmextms(0, 0);
 $proxy->clientstart();
 checkmessages(6, "Session resumption extended master secret test", 1, 1, 1);
+unlink $session;
 
 #Test 7: Session resumption extended master secret test resumed session
 # omits client extension. Server must abort connection.
@@ -164,15 +130,16 @@ checkmessages(6, "Session resumption extended master secret test", 1, 1, 1);
 
 clearall();
 setrmextms(0, 0);
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(2);
-$proxy->clientflags("-sess_out ".$session);
+$proxy->clientflags("-no_tls1_3 -sess_out ".$session);
 $proxy->start();
-$proxy->clear();
-$proxy->clientflags("-sess_in ".$session);
+$proxy->clearClient();
+$proxy->clientflags("-no_tls1_3 -sess_in ".$session);
 setrmextms(1, 0);
 $proxy->clientstart();
 ok(TLSProxy::Message->fail(), "Client inconsistent session resumption");
+unlink $session;
 
 #Test 8: Session resumption extended master secret test resumed session
 # omits server extension. Client must abort connection.
@@ -180,15 +147,16 @@ ok(TLSProxy::Message->fail(), "Client inconsistent session resumption");
 
 clearall();
 setrmextms(0, 0);
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(2);
-$proxy->clientflags("-sess_out ".$session);
+$proxy->clientflags("-no_tls1_3 -sess_out ".$session);
 $proxy->start();
-$proxy->clear();
-$proxy->clientflags("-sess_in ".$session);
+$proxy->clearClient();
+$proxy->clientflags("-no_tls1_3 -sess_in ".$session);
 setrmextms(0, 1);
 $proxy->clientstart();
 ok(TLSProxy::Message->fail(), "Server inconsistent session resumption 1");
+unlink $session;
 
 #Test 9: Session resumption extended master secret test initial session
 # omits server extension. Client must abort connection.
@@ -196,15 +164,28 @@ ok(TLSProxy::Message->fail(), "Server inconsistent session resumption 1");
 
 clearall();
 setrmextms(0, 1);
-($fh, $session) = tempfile();
+(undef, $session) = tempfile();
 $proxy->serverconnects(2);
-$proxy->clientflags("-sess_out ".$session);
+$proxy->clientflags("-no_tls1_3 -sess_out ".$session);
 $proxy->start();
-$proxy->clear();
-$proxy->clientflags("-sess_in ".$session);
+$proxy->clearClient();
+$proxy->clientflags("-no_tls1_3 -sess_in ".$session);
 setrmextms(0, 0);
 $proxy->clientstart();
 ok(TLSProxy::Message->fail(), "Server inconsistent session resumption 2");
+unlink $session;
+
+#Test 10: In TLS1.3 we should not negotiate extended master secret
+#Expected result: ClientHello extension seen; ServerHello extension not seen
+#                 TLS1.3 handshake (will appear as abbreviated handshake
+#                 because of no CKE message)
+if (!disabled("tls1_3")) {
+    clearall();
+    setrmextms(0, 0);
+    $proxy->start();
+    checkmessages(10, "TLS1.3 extended master secret test", 1, 0, 0);
+}
+
 
 sub extms_filter
 {

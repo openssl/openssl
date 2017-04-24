@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -164,9 +116,11 @@ int HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len)
     return 0;
 }
 
-size_t HMAC_size(HMAC_CTX *ctx)
+size_t HMAC_size(const HMAC_CTX *ctx)
 {
-    return EVP_MD_size((ctx)->md);
+    int size = EVP_MD_size((ctx)->md);
+
+    return (size < 0) ? 0 : size;
 }
 
 HMAC_CTX *HMAC_CTX_new(void)
@@ -189,7 +143,7 @@ static void hmac_ctx_cleanup(HMAC_CTX *ctx)
     EVP_MD_CTX_reset(ctx->md_ctx);
     ctx->md = NULL;
     ctx->key_length = 0;
-    memset(ctx->key, 0, sizeof(HMAC_MAX_MD_CBLOCK));
+    OPENSSL_cleanse(ctx->key, sizeof(ctx->key));
 }
 
 void HMAC_CTX_free(HMAC_CTX *ctx)
@@ -203,31 +157,36 @@ void HMAC_CTX_free(HMAC_CTX *ctx)
     }
 }
 
-int HMAC_CTX_reset(HMAC_CTX *ctx)
+static int hmac_ctx_alloc_mds(HMAC_CTX *ctx)
 {
-    hmac_ctx_cleanup(ctx);
     if (ctx->i_ctx == NULL)
         ctx->i_ctx = EVP_MD_CTX_new();
     if (ctx->i_ctx == NULL)
-        goto err;
+        return 0;
     if (ctx->o_ctx == NULL)
         ctx->o_ctx = EVP_MD_CTX_new();
     if (ctx->o_ctx == NULL)
-        goto err;
+        return 0;
     if (ctx->md_ctx == NULL)
         ctx->md_ctx = EVP_MD_CTX_new();
     if (ctx->md_ctx == NULL)
-        goto err;
-    ctx->md = NULL;
+        return 0;
     return 1;
- err:
+}
+
+int HMAC_CTX_reset(HMAC_CTX *ctx)
+{
     hmac_ctx_cleanup(ctx);
-    return 0;
+    if (!hmac_ctx_alloc_mds(ctx)) {
+        hmac_ctx_cleanup(ctx);
+        return 0;
+    }
+    return 1;
 }
 
 int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx)
 {
-    if (!HMAC_CTX_reset(dctx))
+    if (!hmac_ctx_alloc_mds(dctx))
         goto err;
     if (!EVP_MD_CTX_copy_ex(dctx->i_ctx, sctx->i_ctx))
         goto err;
@@ -280,4 +239,9 @@ void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags)
     EVP_MD_CTX_set_flags(ctx->i_ctx, flags);
     EVP_MD_CTX_set_flags(ctx->o_ctx, flags);
     EVP_MD_CTX_set_flags(ctx->md_ctx, flags);
+}
+
+const EVP_MD *HMAC_CTX_get_md(const HMAC_CTX *ctx)
+{
+    return ctx->md;
 }

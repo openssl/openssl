@@ -1,6 +1,10 @@
 /*
- * Written by Ulf Moeller. This software is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied.
+ * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 /* EME-OAEP as defined in RFC 2437 (PKCS #1 v2.0) */
@@ -21,10 +25,10 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+#include "rsa_locl.h"
 
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
                                const unsigned char *from, int flen,
@@ -74,11 +78,6 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     memcpy(db + emlen - flen - mdlen, from, (unsigned int)flen);
     if (RAND_bytes(seed, mdlen) <= 0)
         return 0;
-#ifdef PKCS_TESTVECT
-    memcpy(seed,
-           "\xaa\xfd\x12\xf6\x59\xca\xe6\x34\x89\xb4\x79\xe5\x07\x6d\xde\xc2\xf0\x6c\xb5\x8f",
-           20);
-#endif
 
     dbmask = OPENSSL_malloc(emlen - mdlen);
     if (dbmask == NULL) {
@@ -87,17 +86,21 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     }
 
     if (PKCS1_MGF1(dbmask, emlen - mdlen, seed, mdlen, mgf1md) < 0)
-        return 0;
+        goto err;
     for (i = 0; i < emlen - mdlen; i++)
         db[i] ^= dbmask[i];
 
     if (PKCS1_MGF1(seedmask, mdlen, db, emlen - mdlen, mgf1md) < 0)
-        return 0;
+        goto err;
     for (i = 0; i < mdlen; i++)
         seed[i] ^= seedmask[i];
 
     OPENSSL_free(dbmask);
     return 1;
+
+ err:
+    OPENSSL_free(dbmask);
+    return 0;
 }
 
 int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,

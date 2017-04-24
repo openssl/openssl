@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -17,7 +24,7 @@
 # single-process result on 8-core processor, or ~11GBps per 2.85GHz
 # socket.
 
-$output=shift;
+$output=pop;
 open STDOUT,">$output";
 
 use integer;
@@ -235,7 +242,7 @@ md5_block_asm_data_order:
 	ldd	[%o1 + 0x20], %f16
 	ldd	[%o1 + 0x28], %f18
 	ldd	[%o1 + 0x30], %f20
-	subcc	%o2, 1, %o2		! done yet? 
+	subcc	%o2, 1, %o2		! done yet?
 	ldd	[%o1 + 0x38], %f22
 	add	%o1, 0x40, %o1
 	prefetch [%o1 + 63], 20

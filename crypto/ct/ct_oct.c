@@ -1,59 +1,10 @@
 /*
- * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
- * (steve@openssl.org) for the OpenSSL project 2014.
- */
-/* ====================================================================
- * Copyright (c) 2014 The OpenSSL Project.  All rights reserved.
+ * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #ifdef OPENSSL_NO_CT
@@ -69,30 +20,6 @@
 #include <openssl/err.h>
 
 #include "ct_locl.h"
-
-#define n2s(c,s)        ((s=(((unsigned int)((c)[0]))<< 8)| \
-                            (((unsigned int)((c)[1]))    )),c+=2)
-
-#define s2n(s,c)        ((c[0]=(unsigned char)(((s)>> 8)&0xff), \
-                          c[1]=(unsigned char)(((s)    )&0xff)),c+=2)
-
-#define n2l8(c,l)       (l =((uint64_t)(*((c)++)))<<56, \
-                         l|=((uint64_t)(*((c)++)))<<48, \
-                         l|=((uint64_t)(*((c)++)))<<40, \
-                         l|=((uint64_t)(*((c)++)))<<32, \
-                         l|=((uint64_t)(*((c)++)))<<24, \
-                         l|=((uint64_t)(*((c)++)))<<16, \
-                         l|=((uint64_t)(*((c)++)))<< 8, \
-                         l|=((uint64_t)(*((c)++))))
-
-#define l2n8(l,c)       (*((c)++)=(unsigned char)(((l)>>56)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>48)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>40)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>32)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>24)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-                         *((c)++)=(unsigned char)(((l)    )&0xff))
 
 int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
 {
@@ -159,10 +86,14 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
     if (sct->version == SCT_VERSION_V1) {
         int sig_len;
         size_t len2;
-        /*
-         * Fixed-length header: struct { (1 byte) Version sct_version; (32
-         * bytes) log_id id; (8 bytes) uint64 timestamp; (2 bytes + ?)
-         * CtExtensions extensions;
+        /*-
+         * Fixed-length header:
+         *   struct {
+         *     Version sct_version;     (1 byte)
+         *     log_id id;               (32 bytes)
+         *     uint64 timestamp;        (8 bytes)
+         *     CtExtensions extensions; (2 bytes + ?)
+         *   }
          */
         if (len < 43) {
             CTerr(CT_F_O2I_SCT, CT_R_SCT_INVALID);
@@ -222,7 +153,7 @@ err:
 int i2o_SCT_signature(const SCT *sct, unsigned char **out)
 {
     size_t len;
-    unsigned char *p = NULL;
+    unsigned char *p = NULL, *pstart = NULL;
 
     if (!SCT_signature_is_complete(sct)) {
         CTerr(CT_F_I2O_SCT_SIGNATURE, CT_R_SCT_INVALID_SIGNATURE);
@@ -246,7 +177,7 @@ int i2o_SCT_signature(const SCT *sct, unsigned char **out)
             p = *out;
             *out += len;
         } else {
-            p = OPENSSL_malloc(len);
+            pstart = p = OPENSSL_malloc(len);
             if (p == NULL) {
                 CTerr(CT_F_I2O_SCT_SIGNATURE, ERR_R_MALLOC_FAILURE);
                 goto err;
@@ -262,14 +193,14 @@ int i2o_SCT_signature(const SCT *sct, unsigned char **out)
 
     return len;
 err:
-    OPENSSL_free(p);
+    OPENSSL_free(pstart);
     return -1;
 }
 
 int i2o_SCT(const SCT *sct, unsigned char **out)
 {
     size_t len;
-    unsigned char *p = NULL;
+    unsigned char *p = NULL, *pstart = NULL;
 
     if (!SCT_is_complete(sct)) {
         CTerr(CT_F_I2O_SCT, CT_R_SCT_NOT_SET);
@@ -293,7 +224,7 @@ int i2o_SCT(const SCT *sct, unsigned char **out)
         p = *out;
         *out += len;
     } else {
-        p = OPENSSL_malloc(len);
+        pstart = p = OPENSSL_malloc(len);
         if (p == NULL) {
             CTerr(CT_F_I2O_SCT, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -319,13 +250,8 @@ int i2o_SCT(const SCT *sct, unsigned char **out)
 
     return len;
 err:
-    OPENSSL_free(p);
+    OPENSSL_free(pstart);
     return -1;
-}
-
-void SCT_LIST_free(STACK_OF(SCT) *a)
-{
-    sk_SCT_pop_free(a, SCT_free);
 }
 
 STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
@@ -434,9 +360,9 @@ int i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp)
     if (pp != NULL) {
         p = *pp;
         s2n(len2 - 2, p);
+        if (!is_pp_new)
+            *pp += len2;
     }
-    if (!is_pp_new)
-        *pp += len2;
     return len2;
 
  err:
@@ -466,7 +392,7 @@ STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
     return sk;
 }
 
-int i2d_SCT_LIST(STACK_OF(SCT) *a, unsigned char **out)
+int i2d_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **out)
 {
     ASN1_OCTET_STRING oct;
     int len;

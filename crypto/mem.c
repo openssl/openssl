@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -60,6 +12,10 @@
 #include <limits.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
+#include "internal/cryptlib_int.h"
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
+# include <execinfo.h>
+#endif
 
 /*
  * the following pointers may be changed as long as 'allow_customize' is set
@@ -74,9 +30,21 @@ static void (*free_impl)(void *, const char *, int)
     = CRYPTO_free;
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
+static char *md_failstring;
+static long md_count;
+static int md_fail_percent = 0;
+static int md_tracefd = -1;
 static int call_malloc_debug = 1;
+
+static void parseit(void);
+static int shouldfail(void);
+
+# define FAILTEST() if (shouldfail()) return NULL
+
 #else
 static int call_malloc_debug = 0;
+
+# define FAILTEST() /* empty */
 #endif
 
 int CRYPTO_set_mem_functions(
@@ -116,6 +84,77 @@ void CRYPTO_get_mem_functions(
         *f = free_impl;
 }
 
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG
+/*
+ * Parse a "malloc failure spec" string.  This likes like a set of fields
+ * separated by semicolons.  Each field has a count and an optional failure
+ * percentage.  For example:
+ *          100@0;100@25;0@0
+ *    or    100;100@25;0
+ * This means 100 mallocs succeed, then next 100 fail 25% of the time, and
+ * all remaining (count is zero) succeed.
+ */
+static void parseit(void)
+{
+    char *semi = strchr(md_failstring, ';');
+    char *atsign;
+
+    if (semi != NULL)
+        *semi++ = '\0';
+
+    /* Get the count (atol will stop at the @ if there), and percentage */
+    md_count = atol(md_failstring);
+    atsign = strchr(md_failstring, '@');
+    md_fail_percent = atsign == NULL ? 0 : atoi(atsign + 1);
+
+    if (semi != NULL)
+        md_failstring = semi;
+}
+
+/*
+ * See if the current malloc should fail.
+ */
+static int shouldfail(void)
+{
+    int roll = (int)(random() % 100);
+    int shoulditfail = roll < md_fail_percent;
+    char buff[80];
+
+    if (md_tracefd > 0) {
+        BIO_snprintf(buff, sizeof(buff),
+                     "%c C%ld %%%d R%d\n",
+                     shoulditfail ? '-' : '+', md_count, md_fail_percent, roll);
+        write(md_tracefd, buff, strlen(buff));
+#ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
+        if (shoulditfail) {
+            void *addrs[30];
+            int num = backtrace(addrs, OSSL_NELEM(addrs));
+
+            backtrace_symbols_fd(addrs, num, md_tracefd);
+        }
+#endif
+    }
+
+    if (md_count) {
+        /* If we used up this one, go to the next. */
+        if (--md_count == 0)
+            parseit();
+    }
+
+    return shoulditfail;
+}
+
+void ossl_malloc_setup_failures(void)
+{
+    const char *cp = getenv("OPENSSL_MALLOC_FAILURES");
+
+    if (cp != NULL && (md_failstring = strdup(cp)) != NULL)
+        parseit();
+    if ((cp = getenv("OPENSSL_MALLOC_FD")) != NULL)
+        md_tracefd = atoi(cp);
+}
+#endif
+
 void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
     void *ret = NULL;
@@ -123,9 +162,10 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
     if (malloc_impl != NULL && malloc_impl != CRYPTO_malloc)
         return malloc_impl(num, file, line);
 
-    if (num <= 0)
+    if (num == 0)
         return NULL;
 
+    FAILTEST();
     allow_customize = 0;
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (call_malloc_debug) {
@@ -147,6 +187,7 @@ void *CRYPTO_zalloc(size_t num, const char *file, int line)
 {
     void *ret = CRYPTO_malloc(num, file, line);
 
+    FAILTEST();
     if (ret != NULL)
         memset(ret, 0, num);
     return ret;
@@ -157,6 +198,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     if (realloc_impl != NULL && realloc_impl != &CRYPTO_realloc)
         return realloc_impl(str, num, file, line);
 
+    FAILTEST();
     if (str == NULL)
         return CRYPTO_malloc(num, file, line);
 
@@ -196,14 +238,15 @@ void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
 
     /* Can't shrink the buffer since memcpy below copies |old_len| bytes. */
     if (num < old_len) {
-        memset((char*)str + num, 0, old_len - num);
+        OPENSSL_cleanse((char*)str + num, old_len - num);
         return str;
     }
 
     ret = CRYPTO_malloc(num, file, line);
-    if (ret)
+    if (ret != NULL) {
         memcpy(ret, str, old_len);
-    CRYPTO_clear_free(str, old_len, file, line);
+        CRYPTO_clear_free(str, old_len, file, line);
+    }
     return ret;
 }
 

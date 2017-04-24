@@ -1,58 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #ifndef HEADER_E_OS_H
@@ -72,17 +24,41 @@ extern "C" {
 
 /* Used to checking reference counts, most while doing perl5 stuff :-) */
 # if defined(OPENSSL_NO_STDIO)
-#  if defined(REF_DEBUG)
-#   error "REF_DEBUG requires stdio"
-#  endif
 #  if defined(REF_PRINT)
 #   error "REF_PRINT requires stdio"
 #  endif
 # endif
 
-# if defined(REF_DEBUG)
+/*
+ * Format specifier for printing size_t. Original conundrum was to
+ * get it working with -Wformat [-Werror], which can be considered
+ * overzelaous, especially in multi-platform context, but it's
+ * conscious choice...
+ */
+# if defined(_WIN64)
+#  define OSSLzu  "I64u"    /* One would expect _WIN{64|32} cases after
+                             * __STDC_VERSION__, but there are corner
+                             * cases of MinGW compilers that link with
+                             * non-compliant MSVCRT.DLL... */
+# elif defined(_WIN32)
+#  define OSSLzu  "u"
+# elif defined(__VMS)
+#  define OSSLzu  "u"       /* VMS suffers from similar problem as MinGW,
+                             * i.e. C RTL falling behind compiler. Recall
+                             * that sizeof(size_t)==4 even in LP64 case. */
+# elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#  define OSSLzu  "zu"
+# elif defined(__SIZEOF_SIZE_T__) && __SIZEOF_SIZE_T__==4
+#  define OSSLzu  "u"       /* 'lu' should have worked, but when generating
+                             * 32-bit code gcc still complains :-( */
+# else
+#  define OSSLzu  "lu"      /* To see that is works recall what does L
+                             * stand for in ILP32 and LP64 */
+# endif
+
+# if !defined(NDEBUG) && !defined(OPENSSL_NO_STDIO)
 #  define REF_ASSERT_ISNT(test) \
-    (void)((test) ? (OpenSSLDie(__FILE__, __LINE__, "refcount error"), 1) : 0)
+    (void)((test) ? (OPENSSL_die("refcount error", __FILE__, __LINE__), 1) : 0)
 # else
 #  define REF_ASSERT_ISNT(i)
 # endif
@@ -94,6 +70,7 @@ extern "C" {
 # endif
 
 # define osslargused(x)      (void)x
+# define OPENSSL_CONF        "openssl.cnf"
 
 # ifndef DEVRANDOM
 /*
@@ -111,7 +88,7 @@ extern "C" {
 #  define DEVRANDOM_EGD "/var/run/egd-pool","/dev/egd-pool","/etc/egd-pool","/etc/entropy"
 # endif
 
-# if defined(OPENSSL_SYS_VXWORKS)
+# if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
 #  define NO_SYS_PARAM_H
 #  define NO_CHMOD
 #  define NO_SYSLOG
@@ -153,6 +130,7 @@ extern "C" {
 #  define writesocket(s,b,n)      send((s),(b),(n),0)
 # elif defined(__DJGPP__)
 #  define WATT32
+#  define WATT32_NO_OLDIES
 #  define get_last_socket_error() errno
 #  define clear_socket_error()    errno=0
 #  define closesocket(s)          close_s(s)
@@ -172,25 +150,6 @@ extern "C" {
 #  define closesocket(s)              close(s)
 #  define readsocket(s,b,n)           read((s),(b),(n))
 #  define writesocket(s,b,n)          write((s),(char *)(b),(n))
-# elif defined(OPENSSL_SYS_NETWARE)
-#  if defined(NETWARE_BSDSOCK)
-#   define get_last_socket_error() errno
-#   define clear_socket_error()    errno=0
-#   define closesocket(s)          close(s)
-#   define ioctlsocket(a,b,c)      ioctl(a,b,c)
-#   if defined(NETWARE_LIBC)
-#    define readsocket(s,b,n)       recv((s),(b),(n),0)
-#    define writesocket(s,b,n)      send((s),(b),(n),0)
-#   else
-#    define readsocket(s,b,n)       recv((s),(char*)(b),(n),0)
-#    define writesocket(s,b,n)      send((s),(char*)(b),(n),0)
-#   endif
-#  else
-#   define get_last_socket_error() WSAGetLastError()
-#   define clear_socket_error()    WSASetLastError(0)
-#   define readsocket(s,b,n)               recv((s),(b),(n),0)
-#   define writesocket(s,b,n)              send((s),(b),(n),0)
-#  endif
 # else
 #  define get_last_socket_error() errno
 #  define clear_socket_error()    errno=0
@@ -206,11 +165,14 @@ extern "C" {
 #   include <unistd.h>
 #   include <sys/stat.h>
 #   include <sys/socket.h>
+#   include <sys/un.h>
 #   include <tcp.h>
 #   include <netdb.h>
 #   define _setmode setmode
 #   define _O_TEXT O_TEXT
 #   define _O_BINARY O_BINARY
+#   define HAS_LFN_SUPPORT(name)  (pathconf((name), _PC_NAME_MAX) > 12)
+#   undef DEVRANDOM_EGD  /*  Neither MS-DOS nor FreeDOS provide 'egd' sockets.  */
 #   undef DEVRANDOM
 #   define DEVRANDOM "/dev/urandom\x24"
 #  endif                        /* __DJGPP__ */
@@ -244,7 +206,7 @@ extern "C" {
         */
 #    define _WIN32_WINNT 0x0501
 #   endif
-#   if !defined(OPENSSL_NO_SOCK) && (defined(_WIN32_WINNT) || defined(_WIN32_WCE))
+#   if defined(_WIN32_WINNT) || defined(_WIN32_WCE)
        /*
         * Just like defining _WIN32_WINNT including winsock2.h implies
         * certain "discipline" for maintaining [broad] binary compatibility.
@@ -318,14 +280,6 @@ extern FILE *_imp___iob;
 #   define OPENSSL_NO_POSIX_IO
 #  endif
 
-#  if defined (__BORLANDC__)
-#   define _setmode setmode
-#   define _O_TEXT O_TEXT
-#   define _O_BINARY O_BINARY
-#   define _int64 __int64
-#   define _kbhit kbhit
-#  endif
-
 #  define EXIT(n) exit(n)
 #  define LIST_SEPARATOR_CHAR ';'
 #  ifndef X_OK
@@ -337,9 +291,6 @@ extern FILE *_imp___iob;
 #  ifndef R_OK
 #   define R_OK        4
 #  endif
-#  define OPENSSL_CONF  "openssl.cnf"
-#  define NUL_DEV       "nul"
-#  define RFILE         ".rnd"
 #  ifdef OPENSSL_SYS_WINCE
 #   define DEFAULT_HOME  ""
 #  else
@@ -369,10 +320,7 @@ extern FILE *_imp___iob;
 #   else
 #    include <unixlib.h>
 #   endif
-#   define OPENSSL_CONF        "openssl.cnf"
-#   define RFILE               ".rnd"
 #   define LIST_SEPARATOR_CHAR ','
-#   define NUL_DEV             "NLA0:"
   /* We don't have any well-defined random devices on VMS, yet... */
 #   undef DEVRANDOM
   /*-
@@ -404,28 +352,7 @@ extern FILE *_imp___iob;
 #   define NO_SYS_PARAM_H
 #   define NO_SYS_UN_H
 
-#  elif defined(OPENSSL_SYS_NETWARE)
-#   include <fcntl.h>
-#   include <unistd.h>
-#   define NO_SYS_TYPES_H
-#   undef  DEVRANDOM
-#   ifdef NETWARE_CLIB
-#    define getpid GetThreadID
-extern int GetThreadID(void);
-/* #      include <conio.h> */
-extern int kbhit(void);
-#   else
-#    include <screen.h>
-#   endif
-#   define NO_SYSLOG
-#   define _setmode setmode
-#   define _kbhit kbhit
-#   define _O_TEXT O_TEXT
-#   define _O_BINARY O_BINARY
-#   define OPENSSL_CONF   "openssl.cnf"
-#   define RFILE    ".rnd"
-#   define LIST_SEPARATOR_CHAR ';'
-#   define EXIT(n)  { if (n) printf("ERROR: %d\n", (int)n); exit(n); }
+#   define DEFAULT_HOME "SYS$LOGIN:"
 
 #  else
      /* !defined VMS */
@@ -442,33 +369,19 @@ extern int kbhit(void);
 #    include <fcntl.h>
 #   endif
 
-#   define OPENSSL_CONF        "openssl.cnf"
-#   define RFILE               ".rnd"
 #   define LIST_SEPARATOR_CHAR ':'
-#   define NUL_DEV             "/dev/null"
 #   define EXIT(n)             exit(n)
 #  endif
-
-#  define OpenSSL_getpid()       getpid()
 
 # endif
 
 /*************/
 
-# if defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_DGRAM)
-#  define OPENSSL_NO_DGRAM
-# endif
-
 # ifdef USE_SOCKETS
-#  if defined(WINDOWS) || defined(MSDOS)
+#  ifdef OPENSSL_NO_SOCK
+#  elif defined(WINDOWS) || defined(MSDOS)
       /* windows world */
-
-#   ifdef OPENSSL_NO_SOCK
-#    define OpenSSL_Write(a,b,c)       (-1)
-#    define OpenSSL_Read(a,b,c)        (-1)
-#    define SHUTDOWN(fd)              close(fd)
-#    define SHUTDOWN2(fd)             close(fd)
-#   elif !defined(__DJGPP__)
+#   if !defined(__DJGPP__)
 #    if defined(_WIN32_WCE) && _WIN32_WCE<410
 #     define getservbyname _masked_declaration_getservbyname
 #    endif
@@ -493,40 +406,8 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #     define socket(d,t,p)   ((int)socket(d,t,p))
 #     define accept(s,f,l)   ((int)accept(s,f,l))
 #    endif
-#    define OpenSSL_Write(a,b,c)       send((a),(b),(c),0)
-#    define OpenSSL_Read(a,b,c)        recv((a),(b),(c),0)
-#    define SHUTDOWN(fd)              { shutdown((fd),0); closesocket(fd); }
-#    define SHUTDOWN2(fd)             { shutdown((fd),2); closesocket(fd); }
 #   else
-#    define OpenSSL_Write(a,b,c)       write_s(a,b,c,0)
-#    define OpenSSL_Read(a,b,c)        read_s(a,b,c)
-#    define SHUTDOWN(fd)              close_s(fd)
-#    define SHUTDOWN2(fd)             close_s(fd)
 #   endif
-
-#  elif defined(OPENSSL_SYS_NETWARE)
-         /*
-          * NetWare uses the WinSock2 interfaces by default, but can be
-          * configured for BSD
-          */
-#   if defined(NETWARE_BSDSOCK)
-#    include <netdb.h>
-#    include <sys/socket.h>
-#    include <netinet/in.h>
-#    include <sys/time.h>
-#    if defined(NETWARE_CLIB)
-#     include <sys/bsdskt.h>
-#    else
-#     include <sys/select.h>
-#    endif
-#    define INVALID_SOCKET (int)(~0)
-#   else
-#    include <novsock2.h>
-#   endif
-#   define OpenSSL_Write(a,b,c)   send((a),(b),(c),0)
-#   define OpenSSL_Read(a,b,c) recv((a),(b),(c),0)
-#   define SHUTDOWN(fd)    { shutdown((fd),0); closesocket(fd); }
-#   define SHUTDOWN2(fd)      { shutdown((fd),2); closesocket(fd); }
 
 #  else
 
@@ -586,10 +467,6 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    endif
 #   endif
 
-#   define OpenSSL_Read(a,b,c)     read((a),(b),(c))
-#   define OpenSSL_Write(a,b,c)    write((a),(b),(c))
-#   define SHUTDOWN(fd)    { shutdown((fd),0); closesocket((fd)); }
-#   define SHUTDOWN2(fd)   { shutdown((fd),2); closesocket((fd)); }
 #   ifndef INVALID_SOCKET
 #    define INVALID_SOCKET      (-1)
 #   endif                       /* INVALID_SOCKET */
@@ -621,27 +498,17 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 # if defined(OPENSSL_SYS_WINDOWS)
 #  define strcasecmp _stricmp
 #  define strncasecmp _strnicmp
-# elif defined(OPENSSL_SYS_VMS)
-/* VMS below version 7.0 doesn't have strcasecmp() */
-#  include "internal/o_str.h"
-#  define strcasecmp OPENSSL_strcasecmp
-#  define strncasecmp OPENSSL_strncasecmp
-#  define OPENSSL_IMPLEMENTS_strncasecmp
-# elif defined(OPENSSL_SYS_OS2) && defined(__EMX__)
-#  define strcasecmp stricmp
-#  define strncasecmp strnicmp
-# elif defined(OPENSSL_SYS_NETWARE)
-#  include <string.h>
-#  if defined(NETWARE_CLIB)
-#   define strcasecmp stricmp
-#   define strncasecmp strnicmp
-#  endif                        /* NETWARE_CLIB */
-# endif
-
-# if defined(OPENSSL_SYS_OS2) && defined(__EMX__)
-#  include <io.h>
-#  include <fcntl.h>
-#  define NO_SYSLOG
+#  if (_MSC_VER >= 1310)
+#   define open _open
+#   define fdopen _fdopen
+#   define close _close
+#   ifndef strdup
+#    define strdup _strdup
+#   endif
+#   define unlink _unlink
+#  endif
+# else
+#  include <strings.h>
 # endif
 
 /* vxworks */
@@ -672,6 +539,10 @@ struct servent *getservbyname(const char *name, const char *proto);
 /* end vxworks */
 
 #define OSSL_NELEM(x)    (sizeof(x)/sizeof(x[0]))
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+# define CRYPTO_memcmp memcmp
+#endif
 
 #ifdef  __cplusplus
 }

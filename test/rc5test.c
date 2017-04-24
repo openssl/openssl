@@ -1,78 +1,19 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
- *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
- */
-
 /*
- * This has been a quickly hacked 'ideatest.c'.  When I add tests for other
- * RC5 modes, more of the code will be uncommented.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 
 #include "../e_os.h"
+#include "test_main.h"
+#include "testutil.h"
 
-#ifdef OPENSSL_NO_RC5
-int main(int argc, char *argv[])
-{
-    printf("No RC5 support\n");
-    return (0);
-}
-#else
+#ifndef OPENSSL_NO_RC5
 # include <openssl/rc5.h>
 
 static unsigned char RC5key[5][16] = {
@@ -235,90 +176,59 @@ static unsigned char rc5_cbc_iv[RC5_CBC_NUM][8] = {
     {0x7c, 0xb3, 0xf1, 0xdf, 0x34, 0xf9, 0x48, 0x11},
 };
 
-int main(int argc, char *argv[])
+static int test_rc5_ecb(int n)
 {
-    int i, n, err = 0;
+    int testresult = 1;
+    RC5_32_KEY key;
+    unsigned char buf[8], buf2[8];
+
+    RC5_32_set_key(&key, 16, &RC5key[n][0], 12);
+
+    RC5_32_ecb_encrypt(&RC5plain[n][0], buf, &key, RC5_ENCRYPT);
+    if (!TEST_mem_eq(&RC5cipher[n][0], sizeof(RC5cipher[0]), buf, sizeof(buf)))
+        testresult = 0;
+
+    RC5_32_ecb_encrypt(buf, buf2, &key, RC5_DECRYPT);
+    if (!TEST_mem_eq(&RC5plain[n][0], sizeof(RC5cipher[0]), buf2, sizeof(buf2)))
+        testresult = 0;
+
+    return testresult;
+}
+
+static int test_rc5_cbc(int n)
+{
+    int testresult = 1;
+    int i;
     RC5_32_KEY key;
     unsigned char buf[8], buf2[8], ivb[8];
 
-    for (n = 0; n < 5; n++) {
-        RC5_32_set_key(&key, 16, &(RC5key[n][0]), 12);
+    i = rc5_cbc_rounds[n];
+    if (i >= 8) {
+        RC5_32_set_key(&key, rc5_cbc_key[n][0], &rc5_cbc_key[n][1], i);
 
-        RC5_32_ecb_encrypt(&(RC5plain[n][0]), buf, &key, RC5_ENCRYPT);
-        if (memcmp(&(RC5cipher[n][0]), buf, 8) != 0) {
-            printf("ecb RC5 error encrypting (%d)\n", n + 1);
-            printf("got     :");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", buf[i]);
-            printf("\n");
-            printf("expected:");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", RC5cipher[n][i]);
-            err = 20;
-            printf("\n");
-        }
+        memcpy(ivb, &rc5_cbc_iv[n][0], 8);
+        RC5_32_cbc_encrypt(&rc5_cbc_plain[n][0], buf, 8,
+                           &key, &ivb[0], RC5_ENCRYPT);
 
-        RC5_32_ecb_encrypt(buf, buf2, &key, RC5_DECRYPT);
-        if (memcmp(&(RC5plain[n][0]), buf2, 8) != 0) {
-            printf("ecb RC5 error decrypting (%d)\n", n + 1);
-            printf("got     :");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", buf2[i]);
-            printf("\n");
-            printf("expected:");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", RC5plain[n][i]);
-            printf("\n");
-            err = 3;
-        }
+        if (!TEST_mem_eq(&rc5_cbc_cipher[n][0], sizeof(rc5_cbc_cipher[0]),
+                         buf, sizeof(buf)))
+            testresult = 0;
+
+        memcpy(ivb, &rc5_cbc_iv[n][0], 8);
+        RC5_32_cbc_encrypt(buf, buf2, 8, &key, &ivb[0], RC5_DECRYPT);
+        if (!TEST_mem_eq(&rc5_cbc_plain[n][0], sizeof(rc5_cbc_plain[0]),
+                         buf2, sizeof(buf2)) != 0)
+            testresult = 0;
     }
-    if (err == 0)
-        printf("ecb RC5 ok\n");
 
-    for (n = 0; n < RC5_CBC_NUM; n++) {
-        i = rc5_cbc_rounds[n];
-        if (i < 8)
-            continue;
-
-        RC5_32_set_key(&key, rc5_cbc_key[n][0], &(rc5_cbc_key[n][1]), i);
-
-        memcpy(ivb, &(rc5_cbc_iv[n][0]), 8);
-        RC5_32_cbc_encrypt(&(rc5_cbc_plain[n][0]), buf, 8,
-                           &key, &(ivb[0]), RC5_ENCRYPT);
-
-        if (memcmp(&(rc5_cbc_cipher[n][0]), buf, 8) != 0) {
-            printf("cbc RC5 error encrypting (%d)\n", n + 1);
-            printf("got     :");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", buf[i]);
-            printf("\n");
-            printf("expected:");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", rc5_cbc_cipher[n][i]);
-            err = 30;
-            printf("\n");
-        }
-
-        memcpy(ivb, &(rc5_cbc_iv[n][0]), 8);
-        RC5_32_cbc_encrypt(buf, buf2, 8, &key, &(ivb[0]), RC5_DECRYPT);
-        if (memcmp(&(rc5_cbc_plain[n][0]), buf2, 8) != 0) {
-            printf("cbc RC5 error decrypting (%d)\n", n + 1);
-            printf("got     :");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", buf2[i]);
-            printf("\n");
-            printf("expected:");
-            for (i = 0; i < 8; i++)
-                printf("%02X ", rc5_cbc_plain[n][i]);
-            printf("\n");
-            err = 3;
-        }
-    }
-    if (err == 0)
-        printf("cbc RC5 ok\n");
-
-    EXIT(err);
-    return (err);
+    return testresult;
 }
-
 #endif
+
+void register_tests(void)
+{
+#ifndef OPENSSL_NO_RC5
+    ADD_ALL_TESTS(test_rc5_ecb, OSSL_NELEM(RC5key));
+    ADD_ALL_TESTS(test_rc5_cbc, RC5_CBC_NUM);
+#endif
+}

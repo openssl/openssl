@@ -1,54 +1,10 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project.
- */
-/* ====================================================================
- * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
+ * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #ifndef HEADER_CMS_LCL_H
@@ -111,7 +67,7 @@ struct CMS_ContentInfo_st {
 DEFINE_STACK_OF(CMS_CertificateChoices)
 
 struct CMS_SignedData_st {
-    long version;
+    int32_t version;
     STACK_OF(X509_ALGOR) *digestAlgorithms;
     CMS_EncapsulatedContentInfo *encapContentInfo;
     STACK_OF(CMS_CertificateChoices) *certificates;
@@ -127,7 +83,7 @@ struct CMS_EncapsulatedContentInfo_st {
 };
 
 struct CMS_SignerInfo_st {
-    long version;
+    int32_t version;
     CMS_SignerIdentifier *sid;
     X509_ALGOR *digestAlgorithm;
     STACK_OF(X509_ATTRIBUTE) *signedAttrs;
@@ -151,7 +107,7 @@ struct CMS_SignerIdentifier_st {
 };
 
 struct CMS_EnvelopedData_st {
-    long version;
+    int32_t version;
     CMS_OriginatorInfo *originatorInfo;
     STACK_OF(CMS_RecipientInfo) *recipientInfos;
     CMS_EncryptedContentInfo *encryptedContentInfo;
@@ -189,7 +145,7 @@ struct CMS_RecipientInfo_st {
 typedef CMS_SignerIdentifier CMS_RecipientIdentifier;
 
 struct CMS_KeyTransRecipientInfo_st {
-    long version;
+    int32_t version;
     CMS_RecipientIdentifier *rid;
     X509_ALGOR *keyEncryptionAlgorithm;
     ASN1_OCTET_STRING *encryptedKey;
@@ -201,7 +157,7 @@ struct CMS_KeyTransRecipientInfo_st {
 };
 
 struct CMS_KeyAgreeRecipientInfo_st {
-    long version;
+    int32_t version;
     CMS_OriginatorIdentifierOrKey *originator;
     ASN1_OCTET_STRING *ukm;
     X509_ALGOR *keyEncryptionAlgorithm;
@@ -248,7 +204,7 @@ struct CMS_RecipientKeyIdentifier_st {
 };
 
 struct CMS_KEKRecipientInfo_st {
-    long version;
+    int32_t version;
     CMS_KEKIdentifier *kekid;
     X509_ALGOR *keyEncryptionAlgorithm;
     ASN1_OCTET_STRING *encryptedKey;
@@ -264,7 +220,7 @@ struct CMS_KEKIdentifier_st {
 };
 
 struct CMS_PasswordRecipientInfo_st {
-    long version;
+    int32_t version;
     X509_ALGOR *keyDerivationAlgorithm;
     X509_ALGOR *keyEncryptionAlgorithm;
     ASN1_OCTET_STRING *encryptedKey;
@@ -279,20 +235,20 @@ struct CMS_OtherRecipientInfo_st {
 };
 
 struct CMS_DigestedData_st {
-    long version;
+    int32_t version;
     X509_ALGOR *digestAlgorithm;
     CMS_EncapsulatedContentInfo *encapContentInfo;
     ASN1_OCTET_STRING *digest;
 };
 
 struct CMS_EncryptedData_st {
-    long version;
+    int32_t version;
     CMS_EncryptedContentInfo *encryptedContentInfo;
     STACK_OF(X509_ATTRIBUTE) *unprotectedAttrs;
 };
 
 struct CMS_AuthenticatedData_st {
-    long version;
+    int32_t version;
     CMS_OriginatorInfo *originatorInfo;
     STACK_OF(CMS_RecipientInfo) *recipientInfos;
     X509_ALGOR *macAlgorithm;
@@ -304,7 +260,7 @@ struct CMS_AuthenticatedData_st {
 };
 
 struct CMS_CompressedData_st {
-    long version;
+    int32_t version;
     X509_ALGOR *compressionAlgorithm;
     STACK_OF(CMS_RecipientInfo) *recipientInfos;
     CMS_EncapsulatedContentInfo *encapContentInfo;
@@ -376,14 +332,14 @@ struct CMS_ReceiptRequest_st {
 struct CMS_ReceiptsFrom_st {
     int type;
     union {
-        long allOrFirstTier;
+        int32_t allOrFirstTier;
         STACK_OF(GENERAL_NAMES) *receiptList;
     } d;
 };
 # endif
 
 struct CMS_Receipt_st {
-    long version;
+    int32_t version;
     ASN1_OBJECT *contentType;
     ASN1_OCTET_STRING *signedContentIdentifier;
     ASN1_OCTET_STRING *originatorSignatureValue;

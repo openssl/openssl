@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2014-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -28,6 +35,7 @@
 # Cortex-A53	1.01		8.39
 # Cortex-A57	1.17		7.61
 # Denver	0.71		6.02
+# Mongoose	1.10		8.06
 #
 # (*)	presented for reference/comparison purposes;
 
@@ -59,7 +67,11 @@ $code=<<___;
 .text
 ___
 $code.=".arch	armv8-a+crypto\n"	if ($flavour =~ /64/);
-$code.=".fpu	neon\n.code	32\n"	if ($flavour !~ /64/);
+$code.=<<___				if ($flavour !~ /64/);
+.fpu	neon
+.code	32
+#undef	__thumb2__
+___
 
 ################################################################################
 # void gcm_init_v8(u128 Htable[16],const u64 H[2]);

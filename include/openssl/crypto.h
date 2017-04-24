@@ -1,112 +1,12 @@
-/* ====================================================================
- * Copyright (c) 1998-2016 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
- *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
- */
+
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  * ECDH support in OpenSSL originally developed by
@@ -158,92 +58,16 @@ extern "C" {
 #  define SSLEAY_BUILT_ON         OPENSSL_BUILT_ON
 #  define SSLEAY_PLATFORM         OPENSSL_PLATFORM
 #  define SSLEAY_DIR              OPENSSL_DIR
-# endif /* OPENSSL_API_COMPAT */
 
 /*
- * When changing the CRYPTO_LOCK_* list, be sure to maintin the text lock
- * names in cryptlib.c
- */
-
-# define CRYPTO_LOCK_ERR                 1
-# define CRYPTO_LOCK_EX_DATA             2
-# define CRYPTO_LOCK_X509                3
-# define CRYPTO_LOCK_X509_INFO           4
-# define CRYPTO_LOCK_X509_PKEY           5
-# define CRYPTO_LOCK_X509_CRL            6
-# define CRYPTO_LOCK_X509_REQ            7
-# define CRYPTO_LOCK_DSA                 8
-# define CRYPTO_LOCK_RSA                 9
-# define CRYPTO_LOCK_EVP_PKEY            10
-# define CRYPTO_LOCK_X509_STORE          11
-# define CRYPTO_LOCK_SSL_CTX             12
-# define CRYPTO_LOCK_SSL_CERT            13
-# define CRYPTO_LOCK_SSL_SESSION         14
-# define CRYPTO_LOCK_SSL_SESS_CERT       15
-# define CRYPTO_LOCK_SSL                 16
-# define CRYPTO_LOCK_SSL_METHOD          17
-# define CRYPTO_LOCK_RAND                18
-# define CRYPTO_LOCK_RAND2               19
-# define CRYPTO_LOCK_MALLOC              20
-# define CRYPTO_LOCK_BIO                 21
-# define CRYPTO_LOCK_GETHOSTBYNAME       22
-# define CRYPTO_LOCK_GETSERVBYNAME       23
-# define CRYPTO_LOCK_READDIR             24
-# define CRYPTO_LOCK_RSA_BLINDING        25
-# define CRYPTO_LOCK_DH                  26
-# define CRYPTO_LOCK_MALLOC2             27
-# define CRYPTO_LOCK_DSO                 28
-# define CRYPTO_LOCK_DYNLOCK             29
-# define CRYPTO_LOCK_ENGINE              30
-# define CRYPTO_LOCK_UI                  31
-# define CRYPTO_LOCK_ECDSA               32
-# define CRYPTO_LOCK_EC                  33
-# define CRYPTO_LOCK_ECDH                34
-# define CRYPTO_LOCK_BN                  35
-# define CRYPTO_LOCK_EC_PRE_COMP         36
-# define CRYPTO_LOCK_STORE               37
-# define CRYPTO_LOCK_COMP                38
-# define CRYPTO_LOCK_FIPS                39
-# define CRYPTO_LOCK_FIPS2               40
-# define CRYPTO_LOCK_INIT                41
-# define CRYPTO_NUM_LOCKS                42
-
-# define CRYPTO_LOCK             1
-# define CRYPTO_UNLOCK           2
-# define CRYPTO_READ             4
-# define CRYPTO_WRITE            8
-
-# ifndef OPENSSL_NO_LOCKING
-#  ifndef CRYPTO_w_lock
-#   define CRYPTO_w_lock(type)     \
-        CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,OPENSSL_FILE,OPENSSL_LINE)
-#   define CRYPTO_w_unlock(type)   \
-        CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_WRITE,type,OPENSSL_FILE,OPENSSL_LINE)
-#   define CRYPTO_r_lock(type)     \
-        CRYPTO_lock(CRYPTO_LOCK|CRYPTO_READ,type,OPENSSL_FILE,OPENSSL_LINE)
-#   define CRYPTO_r_unlock(type)   \
-        CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_READ,type,OPENSSL_FILE,OPENSSL_LINE)
-#   define CRYPTO_add(addr,amount,type)    \
-        CRYPTO_add_lock(addr,amount,type,OPENSSL_FILE,OPENSSL_LINE)
-#  endif
-# else
-#  define CRYPTO_w_lock(a)
-#  define CRYPTO_w_unlock(a)
-#  define CRYPTO_r_lock(a)
-#  define CRYPTO_r_unlock(a)
-#  define CRYPTO_add(a,b,c)       ((*(a))+=(b))
-# endif
-
-/*
- * Some applications as well as some parts of OpenSSL need to allocate and
- * deallocate locks in a dynamic fashion.  The following typedef makes this
- * possible in a type-safe manner.
- * struct CRYPTO_dynlock_value has to be defined by the application.
+ * Old type for allocating dynamic locks. No longer used. Use the new thread
+ * API instead.
  */
 typedef struct {
-    int references;
-    struct CRYPTO_dynlock_value *data;
+    int dummy;
 } CRYPTO_dynlock;
+
+# endif /* OPENSSL_API_COMPAT */
 
 typedef void CRYPTO_RWLOCK;
 
@@ -263,9 +87,6 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
 # define CRYPTO_MEM_CHECK_ON      0x1   /* Control and mode bit */
 # define CRYPTO_MEM_CHECK_ENABLE  0x2   /* Control and mode bit */
 # define CRYPTO_MEM_CHECK_DISABLE 0x3   /* Control only */
-
-/* predec of the BIO type */
-typedef struct bio_st BIO_dummy;
 
 struct crypto_ex_data_st {
     STACK_OF(void) *sk;
@@ -288,8 +109,8 @@ DEFINE_STACK_OF(void)
 # define CRYPTO_EX_INDEX_ENGINE          10
 # define CRYPTO_EX_INDEX_UI              11
 # define CRYPTO_EX_INDEX_BIO             12
-# define CRYPTO_EX_INDEX_STORE           13
-# define CRYPTO_EX_INDEX_APP             14
+# define CRYPTO_EX_INDEX_APP             13
+# define CRYPTO_EX_INDEX_UI_METHOD       14
 # define CRYPTO_EX_INDEX__COUNT          15
 
 /*
@@ -332,6 +153,9 @@ int CRYPTO_mem_ctrl(int mode);
 size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strnlen(const char *str, size_t maxlen);
+char *OPENSSL_buf2hexstr(const unsigned char *buffer, long len);
+unsigned char *OPENSSL_hexstr2buf(const char *str, long *len);
+int OPENSSL_hexchar2int(unsigned char c);
 
 # define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
@@ -350,8 +174,8 @@ typedef void CRYPTO_EX_new (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                            int idx, long argl, void *argp);
 typedef void CRYPTO_EX_free (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                              int idx, long argl, void *argp);
-typedef int CRYPTO_EX_dup (CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from,
-                           void *srcp, int idx, long argl, void *argp);
+typedef int CRYPTO_EX_dup (CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
+                           void *from_d, int idx, long argl, void *argp);
 __owur int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
                             CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
                             CRYPTO_EX_free *free_func);
@@ -364,7 +188,7 @@ int CRYPTO_free_ex_index(int class_index, int idx);
  */
 int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
-                       CRYPTO_EX_DATA *from);
+                       const CRYPTO_EX_DATA *from);
 
 void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 
@@ -374,71 +198,67 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
  */
 int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val);
 void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
+
+# if OPENSSL_API_COMPAT < 0x10100000L
 /*
  * This function cleans up all "ex_data" state. It mustn't be called under
  * potential race-conditions.
  */
-void CRYPTO_cleanup_all_ex_data(void);
+# define CRYPTO_cleanup_all_ex_data() while(0) continue
 
-int CRYPTO_get_new_lockid(char *name);
+/*
+ * The old locking functions have been removed completely without compatibility
+ * macros. This is because the old functions either could not properly report
+ * errors, or the returned error values were not clearly documented.
+ * Replacing the locking functions with with no-ops would cause race condition
+ * issues in the affected applications. It is far better for them to fail at
+ * compile time.
+ * On the other hand, the locking callbacks are no longer used.  Consequently,
+ * the callback management functions can be safely replaced with no-op macros.
+ */
+#  define CRYPTO_num_locks()            (1)
+#  define CRYPTO_set_locking_callback(func)
+#  define CRYPTO_get_locking_callback()         (NULL)
+#  define CRYPTO_set_add_lock_callback(func)
+#  define CRYPTO_get_add_lock_callback()        (NULL)
 
-int CRYPTO_num_locks(void);     /* return CRYPTO_NUM_LOCKS (shared libs!) */
-void CRYPTO_lock(int mode, int type, const char *file, int line);
-void CRYPTO_set_locking_callback(void (*func) (int mode, int type,
-                                               const char *file, int line));
-void (*CRYPTO_get_locking_callback(void)) (int mode, int type,
-                                           const char *file, int line);
-void CRYPTO_set_add_lock_callback(int (*func)
-                                   (int *num, int mount, int type,
-                                    const char *file, int line));
-int (*CRYPTO_get_add_lock_callback(void)) (int *num, int mount, int type,
-                                           const char *file, int line);
+/*
+ * These defines where used in combination with the old locking callbacks,
+ * they are not called anymore, but old code that's not called might still
+ * use them.
+ */
+#  define CRYPTO_LOCK             1
+#  define CRYPTO_UNLOCK           2
+#  define CRYPTO_READ             4
+#  define CRYPTO_WRITE            8
 
-/* Don't use this structure directly. */
+/* This structure is no longer used */
 typedef struct crypto_threadid_st {
-    void *ptr;
-    unsigned long val;
+    int dummy;
 } CRYPTO_THREADID;
 /* Only use CRYPTO_THREADID_set_[numeric|pointer]() within callbacks */
-void CRYPTO_THREADID_set_numeric(CRYPTO_THREADID *id, unsigned long val);
-void CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr);
-int CRYPTO_THREADID_set_callback(void (*threadid_func) (CRYPTO_THREADID *));
-void (*CRYPTO_THREADID_get_callback(void)) (CRYPTO_THREADID *);
-void CRYPTO_THREADID_current(CRYPTO_THREADID *id);
-int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b);
-void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src);
-unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id);
-DEPRECATEDIN_1_0_0(void CRYPTO_set_id_callback(unsigned long (*func) (void)))
-DEPRECATEDIN_1_0_0(unsigned long (*CRYPTO_get_id_callback(void)) (void))
-DEPRECATEDIN_1_0_0(unsigned long CRYPTO_thread_id(void))
+#  define CRYPTO_THREADID_set_numeric(id, val)
+#  define CRYPTO_THREADID_set_pointer(id, ptr)
+#  define CRYPTO_THREADID_set_callback(threadid_func)   (0)
+#  define CRYPTO_THREADID_get_callback()                (NULL)
+#  define CRYPTO_THREADID_current(id)
+#  define CRYPTO_THREADID_cmp(a, b)                     (-1)
+#  define CRYPTO_THREADID_cpy(dest, src)
+#  define CRYPTO_THREADID_hash(id)                      (0UL)
 
-const char *CRYPTO_get_lock_name(int type);
-int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
-                    int line);
+#  if OPENSSL_API_COMPAT < 0x10000000L
+#   define CRYPTO_set_id_callback(func)
+#   define CRYPTO_get_id_callback()                     (NULL)
+#   define CRYPTO_thread_id()                           (0UL)
+#  endif /* OPENSSL_API_COMPAT < 0x10000000L */
 
-int CRYPTO_get_new_dynlockid(void);
-void CRYPTO_destroy_dynlockid(int i);
-struct CRYPTO_dynlock_value *CRYPTO_get_dynlock_value(int i);
-void CRYPTO_set_dynlock_create_callback(struct CRYPTO_dynlock_value
-                                        *(*dyn_create_function) (const char
-                                                                 *file,
-                                                                 int line));
-void CRYPTO_set_dynlock_lock_callback(void (*dyn_lock_function)
-                                       (int mode,
-                                        struct CRYPTO_dynlock_value *l,
-                                        const char *file, int line));
-void CRYPTO_set_dynlock_destroy_callback(void (*dyn_destroy_function)
-                                          (struct CRYPTO_dynlock_value *l,
-                                           const char *file, int line));
-struct CRYPTO_dynlock_value
-*(*CRYPTO_get_dynlock_create_callback(void)) (const char *file, int line);
-void (*CRYPTO_get_dynlock_lock_callback(void)) (int mode,
-                                                struct CRYPTO_dynlock_value
-                                                *l, const char *file,
-                                                int line);
-void (*CRYPTO_get_dynlock_destroy_callback(void)) (struct CRYPTO_dynlock_value
-                                                   *l, const char *file,
-                                                   int line);
+#  define CRYPTO_set_dynlock_create_callback(dyn_create_function)
+#  define CRYPTO_set_dynlock_lock_callback(dyn_lock_function)
+#  define CRYPTO_set_dynlock_destroy_callback(dyn_destroy_function)
+#  define CRYPTO_get_dynlock_create_callback()          (NULL)
+#  define CRYPTO_get_dynlock_lock_callback()            (NULL)
+#  define CRYPTO_get_dynlock_destroy_callback()         (NULL)
+# endif /* OPENSSL_API_COMPAT < 0x10100000L */
 
 int CRYPTO_set_mem_functions(
         void *(*m) (size_t, const char *, int),
@@ -462,7 +282,7 @@ void *CRYPTO_clear_realloc(void *addr, size_t old_num, size_t num,
                            const char *file, int line);
 
 int CRYPTO_secure_malloc_init(size_t sz, int minsize);
-void CRYPTO_secure_malloc_done(void);
+int CRYPTO_secure_malloc_done(void);
 void *CRYPTO_secure_malloc(size_t num, const char *file, int line);
 void *CRYPTO_secure_zalloc(size_t num, const char *file, int line);
 void CRYPTO_secure_free(void *ptr, const char *file, int line);
@@ -497,15 +317,17 @@ void CRYPTO_mem_debug_free(void *addr, int flag,
 #  ifndef OPENSSL_NO_STDIO
 int CRYPTO_mem_leaks_fp(FILE *);
 #  endif
-int CRYPTO_mem_leaks(struct bio_st *bio);
+int CRYPTO_mem_leaks(BIO *bio);
 # endif
 
 /* die if we have to */
-void OpenSSLDie(const char *file, int line, const char *assertion);
-# define OPENSSL_assert(e)       (void)((e) ? 0 : (OpenSSLDie(OPENSSL_FILE, OPENSSL_LINE, #e),1))
+ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line);
+# if OPENSSL_API_COMPAT < 0x10100000L
+#  define OpenSSLDie(f,l,a) OPENSSL_die((a),(f),(l))
+# endif
+# define OPENSSL_assert(e) \
+    (void)((e) ? 0 : (OPENSSL_die("assertion failed: " #e, OPENSSL_FILE, OPENSSL_LINE), 1))
 
-unsigned int *OPENSSL_ia32cap_loc(void);
-# define OPENSSL_ia32cap ((OPENSSL_ia32cap_loc())[0])
 int OPENSSL_isservice(void);
 
 int FIPS_mode(void);
@@ -525,9 +347,7 @@ int OPENSSL_gmtime_diff(int *pday, int *psec,
  * into a defined order as the return value when a != b is undefined, other
  * than to be non-zero.
  */
-int CRYPTO_memcmp(const volatile void * volatile in_a,
-                  const volatile void * volatile in_b,
-                  size_t len);
+int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len);
 
 /* Standard initialisation options */
 # define OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS 0x00000001L
@@ -545,7 +365,7 @@ int CRYPTO_memcmp(const volatile void * volatile in_a,
 # define OPENSSL_INIT_ENGINE_CRYPTODEV       0x00001000L
 # define OPENSSL_INIT_ENGINE_CAPI            0x00002000L
 # define OPENSSL_INIT_ENGINE_PADLOCK         0x00004000L
-# define OPENSSL_INIT_ENGINE_DASYNC          0x00008000L
+# define OPENSSL_INIT_ENGINE_AFALG           0x00008000L
 /* OPENSSL_INIT flag 0x00010000 reserved for internal use */
 /* OPENSSL_INIT flag range 0xfff00000 reserved for OPENSSL_init_ssl() */
 /* Max OPENSSL_INIT flag value is 0x80000000 */
@@ -565,16 +385,56 @@ void OPENSSL_thread_stop(void);
 
 /* Low-level control of initialization */
 OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
-void OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *settings,
-                                      const char *config_file);
+# ifndef OPENSSL_NO_STDIO
+int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *settings,
+                                    const char *config_file);
+# endif
 void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *settings);
+
+# if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+#  if defined(_WIN32)
+#   if defined(BASETYPES) || defined(_WINDEF_H)
+/* application has to include <windows.h> in order to use this */
+typedef DWORD CRYPTO_THREAD_LOCAL;
+typedef DWORD CRYPTO_THREAD_ID;
+
+typedef LONG CRYPTO_ONCE;
+#    define CRYPTO_ONCE_STATIC_INIT 0
+#   endif
+#  else
+#   include <pthread.h>
+typedef pthread_once_t CRYPTO_ONCE;
+typedef pthread_key_t CRYPTO_THREAD_LOCAL;
+typedef pthread_t CRYPTO_THREAD_ID;
+
+#   define CRYPTO_ONCE_STATIC_INIT PTHREAD_ONCE_INIT
+#  endif
+# endif
+
+# if !defined(CRYPTO_ONCE_STATIC_INIT)
+typedef unsigned int CRYPTO_ONCE;
+typedef unsigned int CRYPTO_THREAD_LOCAL;
+typedef unsigned int CRYPTO_THREAD_ID;
+#  define CRYPTO_ONCE_STATIC_INIT 0
+# endif
+
+int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void));
+
+int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *));
+void *CRYPTO_THREAD_get_local(CRYPTO_THREAD_LOCAL *key);
+int CRYPTO_THREAD_set_local(CRYPTO_THREAD_LOCAL *key, void *val);
+int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key);
+
+CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
+int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 
 /* BEGIN ERROR CODES */
 /*
  * The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
  */
-void ERR_load_CRYPTO_strings(void);
+
+int ERR_load_CRYPTO_strings(void);
 
 /* Error codes for the CRYPTO functions. */
 
@@ -582,26 +442,21 @@ void ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_CRYPTO_DUP_EX_DATA                      110
 # define CRYPTO_F_CRYPTO_FREE_EX_DATA                     111
 # define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX                 100
-# define CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID                103
-# define CRYPTO_F_CRYPTO_GET_NEW_LOCKID                   101
 # define CRYPTO_F_CRYPTO_MEMDUP                           115
 # define CRYPTO_F_CRYPTO_NEW_EX_DATA                      112
 # define CRYPTO_F_CRYPTO_SET_EX_DATA                      102
-# define CRYPTO_F_DEF_ADD_INDEX                           104
-# define CRYPTO_F_DEF_GET_CLASS                           105
 # define CRYPTO_F_FIPS_MODE_SET                           109
 # define CRYPTO_F_GET_AND_LOCK                            113
-# define CRYPTO_F_INT_DUP_EX_DATA                         106
-# define CRYPTO_F_INT_FREE_EX_DATA                        107
-# define CRYPTO_F_INT_NEW_EX_DATA                         108
+# define CRYPTO_F_OPENSSL_BUF2HEXSTR                      117
+# define CRYPTO_F_OPENSSL_HEXSTR2BUF                      118
 # define CRYPTO_F_OPENSSL_INIT_CRYPTO                     116
-# define CRYPTO_F_OPENSSL_MEMDUP                          114
 
 /* Reason codes. */
 # define CRYPTO_R_FIPS_MODE_NOT_SUPPORTED                 101
-# define CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK              100
+# define CRYPTO_R_ILLEGAL_HEX_DIGIT                       102
+# define CRYPTO_R_ODD_NUMBER_OF_DIGITS                    103
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
 #endif

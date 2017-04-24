@@ -1,60 +1,12 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 1999.
+ * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
@@ -81,6 +33,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
                       const unsigned char *salt, int saltlen, int iter,
                       const EVP_MD *digest, int keylen, unsigned char *out)
 {
+    const char *empty = "";
     unsigned char digtmp[EVP_MAX_MD_SIZE], *p, itmp[4];
     int cplen, j, k, tkeylen, mdlen;
     unsigned long i = 1;
@@ -95,10 +48,12 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
         return 0;
     p = out;
     tkeylen = keylen;
-    if (!pass)
+    if (pass == NULL) {
+        pass = empty;
         passlen = 0;
-    else if (passlen == -1)
+    } else if (passlen == -1) {
         passlen = strlen(pass);
+    }
     if (!HMAC_Init_ex(hctx_tpl, pass, passlen, digest, NULL)) {
         HMAC_CTX_free(hctx_tpl);
         return 0;
@@ -133,7 +88,6 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
             HMAC_CTX_free(hctx_tpl);
             return 0;
         }
-        HMAC_CTX_reset(hctx);
         memcpy(p, digtmp, cplen);
         for (j = 1; j < iter; j++) {
             if (!HMAC_CTX_copy(hctx, hctx_tpl)) {
@@ -147,7 +101,6 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
                 HMAC_CTX_free(hctx_tpl);
                 return 0;
             }
-            HMAC_CTX_reset(hctx);
             for (k = 0; k < cplen; k++)
                 p[k] ^= digtmp[k];
         }
@@ -177,18 +130,6 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
                              keylen, out);
 }
 
-# ifdef DO_TEST
-main()
-{
-    unsigned char out[4];
-    unsigned char salt[] = { 0x12, 0x34, 0x56, 0x78 };
-    PKCS5_PBKDF2_HMAC_SHA1("password", -1, salt, 4, 5, 4, out);
-    fprintf(stderr, "Out %02X %02X %02X %02X\n",
-            out[0], out[1], out[2], out[3]);
-}
-
-# endif
-
 /*
  * Now the key derivation function itself. This is a bit evil because it has
  * to check the ASN1 parameters are valid: and there are quite a few of
@@ -213,7 +154,7 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
     /* See if we recognise the key derivation function */
     if (!EVP_PBE_find(EVP_PBE_TYPE_KDF, OBJ_obj2nid(pbe2->keyfunc->algorithm),
-			NULL, NULL, &kdf)) {
+                        NULL, NULL, &kdf)) {
         EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,
                EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION);
         goto err;

@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
@@ -48,8 +55,8 @@
 #					<ard.biesheuvel@linaro.org>
 
 $flavour = shift;
-if ($flavour=~/^\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
-else { while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {} }
+if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {} }
 
 if ($flavour && $flavour ne "void") {
     $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -84,7 +91,7 @@ my @s=@_[12..15];
 
 sub InBasisChange {
 # input in  lsb > [b0, b1, b2, b3, b4, b5, b6, b7] < msb
-# output in lsb > [b6, b5, b0, b3, b7, b1, b4, b2] < msb 
+# output in lsb > [b6, b5, b0, b3, b7, b1, b4, b2] < msb
 my @b=@_[0..7];
 $code.=<<___;
 	veor	@b[2], @b[2], @b[1]
@@ -1358,7 +1365,7 @@ bsaes_cbc_encrypt:
 	vmov	@XMM[4],@XMM[15]		@ just in case ensure that IV
 	vmov	@XMM[5],@XMM[0]			@ and input are preserved
 	bl	AES_decrypt
-	vld1.8	{@XMM[0]}, [$fp,:64]		@ load result
+	vld1.8	{@XMM[0]}, [$fp]		@ load result
 	veor	@XMM[0], @XMM[0], @XMM[4]	@ ^= IV
 	vmov	@XMM[15], @XMM[5]		@ @XMM[5] holds input
 	vst1.8	{@XMM[0]}, [$rounds]		@ write output
@@ -1832,8 +1839,6 @@ $code.=<<___;
 	b		.Lxts_enc_done
 .align	4
 .Lxts_enc_6:
-	vst1.64		{@XMM[14]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[4], @XMM[4], @XMM[12]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -1869,8 +1874,6 @@ $code.=<<___;
 
 .align	5
 .Lxts_enc_5:
-	vst1.64		{@XMM[13]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[3], @XMM[3], @XMM[11]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -1899,8 +1902,6 @@ $code.=<<___;
 	b		.Lxts_enc_done
 .align	4
 .Lxts_enc_4:
-	vst1.64		{@XMM[12]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[2], @XMM[2], @XMM[10]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -1926,8 +1927,6 @@ $code.=<<___;
 	b		.Lxts_enc_done
 .align	4
 .Lxts_enc_3:
-	vst1.64		{@XMM[11]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[1], @XMM[1], @XMM[9]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -1952,8 +1951,6 @@ $code.=<<___;
 	b		.Lxts_enc_done
 .align	4
 .Lxts_enc_2:
-	vst1.64		{@XMM[10]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[0], @XMM[0], @XMM[8]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -1976,7 +1973,7 @@ $code.=<<___;
 .align	4
 .Lxts_enc_1:
 	mov		r0, sp
-	veor		@XMM[0], @XMM[8]
+	veor		@XMM[0], @XMM[0], @XMM[8]
 	mov		r1, sp
 	vst1.8		{@XMM[0]}, [sp,:128]
 	mov		r2, $key
@@ -2288,8 +2285,6 @@ $code.=<<___;
 	b		.Lxts_dec_done
 .align	4
 .Lxts_dec_5:
-	vst1.64		{@XMM[13]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[3], @XMM[3], @XMM[11]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -2318,8 +2313,6 @@ $code.=<<___;
 	b		.Lxts_dec_done
 .align	4
 .Lxts_dec_4:
-	vst1.64		{@XMM[12]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[2], @XMM[2], @XMM[10]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -2345,8 +2338,6 @@ $code.=<<___;
 	b		.Lxts_dec_done
 .align	4
 .Lxts_dec_3:
-	vst1.64		{@XMM[11]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[1], @XMM[1], @XMM[9]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -2371,8 +2362,6 @@ $code.=<<___;
 	b		.Lxts_dec_done
 .align	4
 .Lxts_dec_2:
-	vst1.64		{@XMM[10]}, [r0,:128]		@ next round tweak
-
 	veor		@XMM[0], @XMM[0], @XMM[8]
 #ifndef	BSAES_ASM_EXTENDED_KEY
 	add		r4, sp, #0x90			@ pass key schedule
@@ -2395,12 +2384,12 @@ $code.=<<___;
 .align	4
 .Lxts_dec_1:
 	mov		r0, sp
-	veor		@XMM[0], @XMM[8]
+	veor		@XMM[0], @XMM[0], @XMM[8]
 	mov		r1, sp
 	vst1.8		{@XMM[0]}, [sp,:128]
+	mov		r5, $magic			@ preserve magic
 	mov		r2, $key
 	mov		r4, $fp				@ preserve fp
-	mov		r5, $magic			@ preserve magic
 
 	bl		AES_decrypt
 

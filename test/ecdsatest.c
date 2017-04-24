@@ -1,59 +1,12 @@
 /*
- * Written by Nils Larsch for the OpenSSL project.
+ * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
+
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -92,48 +45,39 @@ int main(int argc, char *argv[])
 # endif
 # include <openssl/err.h>
 # include <openssl/rand.h>
+# include "testutil.h"
+# include "test_main.h"
 
 static const char rnd_seed[] = "string to make the random number generator "
     "think it has entropy";
 
-/* declaration of the test functions */
-int x9_62_tests(BIO *);
-int x9_62_test_internal(BIO *out, int nid, const char *r, const char *s);
-int test_builtin(BIO *);
 
 /* functions to change the RAND_METHOD */
-int change_rand(void);
-int restore_rand(void);
-int fbytes(unsigned char *buf, int num);
+static int fbytes(unsigned char *buf, int num);
 
 static RAND_METHOD fake_rand;
 static const RAND_METHOD *old_rand;
 
-int change_rand(void)
+static int change_rand(void)
 {
     /* save old rand method */
-    if ((old_rand = RAND_get_rand_method()) == NULL)
+    if (!TEST_ptr(old_rand = RAND_get_rand_method()))
         return 0;
 
-    fake_rand.seed = old_rand->seed;
-    fake_rand.cleanup = old_rand->cleanup;
-    fake_rand.add = old_rand->add;
-    fake_rand.status = old_rand->status;
+    fake_rand = *old_rand;
     /* use own random function */
     fake_rand.bytes = fbytes;
-    fake_rand.pseudorand = old_rand->bytes;
     /* set new RAND_METHOD */
-    if (!RAND_set_rand_method(&fake_rand))
+    if (!TEST_true(RAND_set_rand_method(&fake_rand)))
         return 0;
     return 1;
 }
 
-int restore_rand(void)
+static int restore_rand(void)
 {
-    if (!RAND_set_rand_method(old_rand))
+    if (!TEST_true(RAND_set_rand_method(old_rand)))
         return 0;
-    else
-        return 1;
+    return 1;
 }
 
 static int fbytes_counter = 0, use_fake = 0;
@@ -152,9 +96,9 @@ static const char *numbers[8] = {
         "40041670216363"
 };
 
-int fbytes(unsigned char *buf, int num)
+static int fbytes(unsigned char *buf, int num)
 {
-    int ret;
+    int ret = 0;
     BIGNUM *tmp = NULL;
 
     if (use_fake == 0)
@@ -164,85 +108,77 @@ int fbytes(unsigned char *buf, int num)
 
     if (fbytes_counter >= 8)
         return 0;
-    tmp = BN_new();
-    if (!tmp)
+    if (!TEST_ptr(tmp = BN_new()))
         return 0;
-    if (!BN_dec2bn(&tmp, numbers[fbytes_counter])) {
+    if (!TEST_true(BN_dec2bn(&tmp, numbers[fbytes_counter]))) {
         BN_free(tmp);
         return 0;
     }
     fbytes_counter++;
-    if (num != BN_num_bytes(tmp) || !BN_bn2bin(tmp, buf))
-        ret = 0;
-    else
+    if (TEST_int_eq(BN_num_bytes(tmp), num)
+            && TEST_true(BN_bn2bin(tmp, buf)))
         ret = 1;
     BN_free(tmp);
     return ret;
 }
 
 /* some tests from the X9.62 draft */
-int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
+static int x9_62_test_internal(int nid, const char *r_in, const char *s_in)
 {
     int ret = 0;
     const char message[] = "abc";
     unsigned char digest[20];
     unsigned int dgst_len = 0;
-    EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
+    EVP_MD_CTX *md_ctx;
     EC_KEY *key = NULL;
     ECDSA_SIG *signature = NULL;
     BIGNUM *r = NULL, *s = NULL;
     BIGNUM *kinv = NULL, *rp = NULL;
-    BIGNUM *sig_r, *sig_s;
+    const BIGNUM *sig_r, *sig_s;
 
-    if (md_ctx == NULL)
+    if (!TEST_ptr(md_ctx = EVP_MD_CTX_new()))
         goto x962_int_err;
 
     /* get the message digest */
-    if (!EVP_DigestInit(md_ctx, EVP_sha1())
-        || !EVP_DigestUpdate(md_ctx, (const void *)message, 3)
-        || !EVP_DigestFinal(md_ctx, digest, &dgst_len))
+    if (!TEST_true(EVP_DigestInit(md_ctx, EVP_sha1()))
+        || !TEST_true(EVP_DigestUpdate(md_ctx, (const void *)message, 3))
+        || !TEST_true(EVP_DigestFinal(md_ctx, digest, &dgst_len)))
         goto x962_int_err;
 
-    BIO_printf(out, "testing %s: ", OBJ_nid2sn(nid));
+    TEST_info("testing %s", OBJ_nid2sn(nid));
+
     /* create the key */
-    if ((key = EC_KEY_new_by_curve_name(nid)) == NULL)
+    if (!TEST_ptr(key = EC_KEY_new_by_curve_name(nid)))
         goto x962_int_err;
     use_fake = 1;
-    if (!EC_KEY_generate_key(key))
+    if (!TEST_true(EC_KEY_generate_key(key)))
         goto x962_int_err;
-    BIO_printf(out, ".");
-    (void)BIO_flush(out);
+
     /* create the signature */
     use_fake = 1;
     /* Use ECDSA_sign_setup to avoid use of ECDSA nonces */
-    if (!ECDSA_sign_setup(key, NULL, &kinv, &rp))
+    if (!TEST_true(ECDSA_sign_setup(key, NULL, &kinv, &rp)))
         goto x962_int_err;
-    signature = ECDSA_do_sign_ex(digest, 20, kinv, rp, key);
-    if (signature == NULL)
+    if (!TEST_ptr(signature = ECDSA_do_sign_ex(digest, 20, kinv, rp, key)))
         goto x962_int_err;
-    BIO_printf(out, ".");
-    (void)BIO_flush(out);
-    /* compare the created signature with the expected signature */
-    if ((r = BN_new()) == NULL || (s = BN_new()) == NULL)
-        goto x962_int_err;
-    if (!BN_dec2bn(&r, r_in) || !BN_dec2bn(&s, s_in))
-        goto x962_int_err;
-    ECDSA_SIG_get0(&sig_r, &sig_s, signature);
-    if (BN_cmp(sig_r, r) || BN_cmp(sig_s, s))
-        goto x962_int_err;
-    BIO_printf(out, ".");
-    (void)BIO_flush(out);
-    /* verify the signature */
-    if (ECDSA_do_verify(digest, 20, signature, key) != 1)
-        goto x962_int_err;
-    BIO_printf(out, ".");
-    (void)BIO_flush(out);
 
-    BIO_printf(out, " ok\n");
+    /* compare the created signature with the expected signature */
+    if (!TEST_ptr(r = BN_new()) || !TEST_ptr(s = BN_new()))
+        goto x962_int_err;
+    if (!TEST_true(BN_dec2bn(&r, r_in)) || !TEST_true(BN_dec2bn(&s, s_in)))
+        goto x962_int_err;
+    ECDSA_SIG_get0(signature, &sig_r, &sig_s);
+    if (!TEST_int_eq(BN_cmp(sig_r, r), 0)
+            || !TEST_int_eq(BN_cmp(sig_s, s), 0))
+        goto x962_int_err;
+
+    /* verify the signature */
+    if (!TEST_int_eq(ECDSA_do_verify(digest, 20, signature, key), 1))
+        goto x962_int_err;
+
     ret = 1;
+
  x962_int_err:
-    if (!ret)
-        BIO_printf(out, " failed\n");
     EC_KEY_free(key);
     ECDSA_SIG_free(signature);
     BN_free(r);
@@ -253,100 +189,86 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
     return ret;
 }
 
-int x9_62_tests(BIO *out)
+static int x9_62_tests()
 {
     int ret = 0;
-
-    BIO_printf(out, "some tests from X9.62:\n");
 
     /* set own rand method */
     if (!change_rand())
         goto x962_err;
 
-    if (!x9_62_test_internal(out, NID_X9_62_prime192v1,
-                             "3342403536405981729393488334694600415596881826869351677613",
-                             "5735822328888155254683894997897571951568553642892029982342"))
+    if (!TEST_true(x9_62_test_internal(NID_X9_62_prime192v1,
+                 "3342403536405981729393488334694600415596881826869351677613",
+                 "5735822328888155254683894997897571951568553642892029982342")))
         goto x962_err;
-    if (!x9_62_test_internal(out, NID_X9_62_prime239v1,
-                             "3086361431751678114926225473006680188549593787585317781474"
+    if (!TEST_true(x9_62_test_internal(NID_X9_62_prime239v1,
+                 "3086361431751678114926225473006680188549593787585317781474"
                              "62058306432176",
-                             "3238135532097973577080787768312505059318910517550078427819"
-                             "78505179448783"))
+                 "3238135532097973577080787768312505059318910517550078427819"
+                             "78505179448783")))
         goto x962_err;
+
 # ifndef OPENSSL_NO_EC2M
-    if (!x9_62_test_internal(out, NID_X9_62_c2tnb191v1,
-                             "87194383164871543355722284926904419997237591535066528048",
-                             "308992691965804947361541664549085895292153777025772063598"))
+    if (!TEST_true(x9_62_test_internal(NID_X9_62_c2tnb191v1,
+                 "87194383164871543355722284926904419997237591535066528048",
+                 "308992691965804947361541664549085895292153777025772063598")))
         goto x962_err;
-    if (!x9_62_test_internal(out, NID_X9_62_c2tnb239v1,
-                             "2159633321041961198501834003903461262881815148684178964245"
+    if (!TEST_true(x9_62_test_internal(NID_X9_62_c2tnb239v1,
+                 "2159633321041961198501834003903461262881815148684178964245"
                              "5876922391552",
-                             "1970303740007316867383349976549972270528498040721988191026"
-                             "49413465737174"))
+                 "1970303740007316867383349976549972270528498040721988191026"
+                             "49413465737174")))
         goto x962_err;
 # endif
     ret = 1;
+
  x962_err:
-    if (!restore_rand())
+    if (!TEST_true(restore_rand()))
         ret = 0;
     return ret;
 }
 
-int test_builtin(BIO *out)
+static int test_builtin(void)
 {
     EC_builtin_curve *curves = NULL;
     size_t crv_len = 0, n = 0;
     EC_KEY *eckey = NULL, *wrong_eckey = NULL;
     EC_GROUP *group;
-    ECDSA_SIG *ecdsa_sig = NULL;
+    ECDSA_SIG *ecdsa_sig = NULL, *modified_sig = NULL;
     unsigned char digest[20], wrong_digest[20];
     unsigned char *signature = NULL;
     const unsigned char *sig_ptr;
     unsigned char *sig_ptr2;
     unsigned char *raw_buf = NULL;
-    BIGNUM *sig_r, *sig_s;
+    const BIGNUM *sig_r, *sig_s;
+    BIGNUM *modified_r = NULL, *modified_s = NULL;
+    BIGNUM *unmodified_r = NULL, *unmodified_s = NULL;
     unsigned int sig_len, degree, r_len, s_len, bn_len, buf_len;
     int nid, ret = 0;
 
     /* fill digest values with some random data */
-    if (RAND_bytes(digest, 20) <= 0 || RAND_bytes(wrong_digest, 20) <= 0) {
-        BIO_printf(out, "ERROR: unable to get random data\n");
+    if (!TEST_true(RAND_bytes(digest, 20))
+            || !TEST_true(RAND_bytes(wrong_digest, 20)))
         goto builtin_err;
-    }
 
-    /*
-     * create and verify a ecdsa signature with every availble curve (with )
-     */
-    BIO_printf(out, "\ntesting ECDSA_sign() and ECDSA_verify() "
-               "with some internal curves:\n");
-
+    /* create and verify a ecdsa signature with every available curve */
     /* get a list of all internal curves */
     crv_len = EC_get_builtin_curves(NULL, 0);
-    curves = OPENSSL_malloc(sizeof(*curves) * crv_len);
-    if (curves == NULL) {
-        BIO_printf(out, "malloc error\n");
+    if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
+            || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         goto builtin_err;
-    }
-
-    if (!EC_get_builtin_curves(curves, crv_len)) {
-        BIO_printf(out, "unable to get internal curves\n");
-        goto builtin_err;
-    }
 
     /* now create and verify a signature for every curve */
     for (n = 0; n < crv_len; n++) {
         unsigned char dirt, offset;
 
         nid = curves[n].nid;
-        if (nid == NID_ipsec4)
+        if (nid == NID_ipsec4 || nid == NID_X25519)
             continue;
         /* create new ecdsa key (== EC_KEY) */
-        if ((eckey = EC_KEY_new()) == NULL)
-            goto builtin_err;
-        group = EC_GROUP_new_by_curve_name(nid);
-        if (group == NULL)
-            goto builtin_err;
-        if (EC_KEY_set_group(eckey, group) == 0)
+        if (!TEST_ptr(eckey = EC_KEY_new())
+                || !TEST_ptr(group = EC_GROUP_new_by_curve_name(nid))
+                || !TEST_true(EC_KEY_set_group(eckey, group)))
             goto builtin_err;
         EC_GROUP_free(group);
         degree = EC_GROUP_get_degree(EC_KEY_get0_group(eckey));
@@ -356,73 +278,50 @@ int test_builtin(BIO *out)
             eckey = NULL;
             continue;
         }
-        BIO_printf(out, "%s: ", OBJ_nid2sn(nid));
+        TEST_info("testing %s", OBJ_nid2sn(nid));
+
         /* create key */
-        if (!EC_KEY_generate_key(eckey)) {
-            BIO_printf(out, " failed\n");
+        if (!TEST_true(EC_KEY_generate_key(eckey)))
             goto builtin_err;
-        }
         /* create second key */
-        if ((wrong_eckey = EC_KEY_new()) == NULL)
-            goto builtin_err;
-        group = EC_GROUP_new_by_curve_name(nid);
-        if (group == NULL)
-            goto builtin_err;
-        if (EC_KEY_set_group(wrong_eckey, group) == 0)
+        if (!TEST_ptr(wrong_eckey = EC_KEY_new())
+                || !TEST_ptr(group = EC_GROUP_new_by_curve_name(nid))
+                || !TEST_true(EC_KEY_set_group(wrong_eckey, group)))
             goto builtin_err;
         EC_GROUP_free(group);
-        if (!EC_KEY_generate_key(wrong_eckey)) {
-            BIO_printf(out, " failed\n");
+        if (!TEST_true(EC_KEY_generate_key(wrong_eckey)))
             goto builtin_err;
-        }
 
-        BIO_printf(out, ".");
-        (void)BIO_flush(out);
         /* check key */
-        if (!EC_KEY_check_key(eckey)) {
-            BIO_printf(out, " failed\n");
+        if (!TEST_true(EC_KEY_check_key(eckey)))
             goto builtin_err;
-        }
-        BIO_printf(out, ".");
-        (void)BIO_flush(out);
+
         /* create signature */
         sig_len = ECDSA_size(eckey);
-        if ((signature = OPENSSL_malloc(sig_len)) == NULL)
+        if (!TEST_ptr(signature = OPENSSL_malloc(sig_len))
+                || !TEST_true(ECDSA_sign(0, digest, 20, signature, &sig_len,
+                                         eckey)))
             goto builtin_err;
-        if (!ECDSA_sign(0, digest, 20, signature, &sig_len, eckey)) {
-            BIO_printf(out, " failed\n");
-            goto builtin_err;
-        }
-        BIO_printf(out, ".");
-        (void)BIO_flush(out);
+
         /* verify signature */
-        if (ECDSA_verify(0, digest, 20, signature, sig_len, eckey) != 1) {
-            BIO_printf(out, " failed\n");
+        if (!TEST_int_eq(ECDSA_verify(0, digest, 20, signature, sig_len,
+                                      eckey), 1))
             goto builtin_err;
-        }
-        BIO_printf(out, ".");
-        (void)BIO_flush(out);
+
         /* verify signature with the wrong key */
-        if (ECDSA_verify(0, digest, 20, signature, sig_len, wrong_eckey) == 1) {
-            BIO_printf(out, " failed\n");
+        if (!TEST_int_ne(ECDSA_verify(0, digest, 20, signature, sig_len,
+                                      wrong_eckey), 1))
             goto builtin_err;
-        }
-        BIO_printf(out, ".");
-        (void)BIO_flush(out);
+
         /* wrong digest */
-        if (ECDSA_verify(0, wrong_digest, 20, signature, sig_len, eckey) == 1) {
-            BIO_printf(out, " failed\n");
+        if (!TEST_int_ne(ECDSA_verify(0, wrong_digest, 20, signature,
+                                      sig_len, eckey), 1))
             goto builtin_err;
-        }
-        BIO_printf(out, ".");
-        (void)BIO_flush(out);
+
         /* wrong length */
-        if (ECDSA_verify(0, digest, 20, signature, sig_len - 1, eckey) == 1) {
-            BIO_printf(out, " failed\n");
+        if (!TEST_int_ne(ECDSA_verify(0, digest, 20, signature,
+                                      sig_len - 1, eckey), 1))
             goto builtin_err;
-        }
-        BIO_printf(out, ".");
-        (void)BIO_flush(out);
 
         /*
          * Modify a single byte of the signature: to ensure we don't garble
@@ -430,23 +329,20 @@ int test_builtin(BIO *out)
          * one of the bignums directly.
          */
         sig_ptr = signature;
-        if ((ecdsa_sig = d2i_ECDSA_SIG(NULL, &sig_ptr, sig_len)) == NULL) {
-            BIO_printf(out, " failed\n");
+        if (!TEST_ptr(ecdsa_sig = d2i_ECDSA_SIG(NULL, &sig_ptr, sig_len)))
             goto builtin_err;
-        }
 
-        ECDSA_SIG_get0(&sig_r, &sig_s, ecdsa_sig);
+        ECDSA_SIG_get0(ecdsa_sig, &sig_r, &sig_s);
 
         /* Store the two BIGNUMs in raw_buf. */
         r_len = BN_num_bytes(sig_r);
         s_len = BN_num_bytes(sig_s);
         bn_len = (degree + 7) / 8;
-        if ((r_len > bn_len) || (s_len > bn_len)) {
-            BIO_printf(out, " failed\n");
+        if (!TEST_false(r_len > bn_len)
+                || !TEST_false(s_len > bn_len))
             goto builtin_err;
-        }
         buf_len = 2 * bn_len;
-        if ((raw_buf = OPENSSL_zalloc(buf_len)) == NULL)
+        if (!TEST_ptr(raw_buf = OPENSSL_zalloc(buf_len)))
             goto builtin_err;
         BN_bn2bin(sig_r, raw_buf + bn_len - r_len);
         BN_bn2bin(sig_s, raw_buf + buf_len - s_len);
@@ -455,37 +351,42 @@ int test_builtin(BIO *out)
         offset = raw_buf[10] % buf_len;
         dirt = raw_buf[11] ? raw_buf[11] : 1;
         raw_buf[offset] ^= dirt;
+
         /* Now read the BIGNUMs back in from raw_buf. */
-        if ((BN_bin2bn(raw_buf, bn_len, sig_r) == NULL) ||
-            (BN_bin2bn(raw_buf + bn_len, bn_len, sig_s) == NULL))
+        if (!TEST_ptr(modified_sig = ECDSA_SIG_new()))
             goto builtin_err;
-
-        sig_ptr2 = signature;
-        sig_len = i2d_ECDSA_SIG(ecdsa_sig, &sig_ptr2);
-        if (ECDSA_verify(0, digest, 20, signature, sig_len, eckey) == 1) {
-            BIO_printf(out, " failed\n");
+        if (!TEST_ptr(modified_r = BN_bin2bn(raw_buf, bn_len, NULL))
+                || !TEST_ptr(modified_s = BN_bin2bn(raw_buf + bn_len,
+                                                    bn_len, NULL))
+                || !TEST_true(ECDSA_SIG_set0(modified_sig,
+                                             modified_r, modified_s))) {
+            BN_free(modified_r);
+            BN_free(modified_s);
             goto builtin_err;
         }
-        /*
-         * Sanity check: undo the modification and verify signature.
-         */
+        sig_ptr2 = signature;
+        sig_len = i2d_ECDSA_SIG(modified_sig, &sig_ptr2);
+        if (!TEST_false(ECDSA_verify(0, digest, 20, signature, sig_len, eckey)))
+            goto builtin_err;
+
+        /* Sanity check: undo the modification and verify signature. */
         raw_buf[offset] ^= dirt;
-        if ((BN_bin2bn(raw_buf, bn_len, sig_r) == NULL) ||
-            (BN_bin2bn(raw_buf + bn_len, bn_len, sig_s) == NULL))
-            goto builtin_err;
-
-        sig_ptr2 = signature;
-        sig_len = i2d_ECDSA_SIG(ecdsa_sig, &sig_ptr2);
-        if (ECDSA_verify(0, digest, 20, signature, sig_len, eckey) != 1) {
-            BIO_printf(out, " failed\n");
+        if (!TEST_ptr(unmodified_r = BN_bin2bn(raw_buf, bn_len, NULL))
+                || !TEST_ptr(unmodified_s = BN_bin2bn(raw_buf + bn_len,
+                                                       bn_len, NULL))
+                || !TEST_true(ECDSA_SIG_set0(modified_sig, unmodified_r,
+                                             unmodified_s))) {
+            BN_free(unmodified_r);
+            BN_free(unmodified_s);
             goto builtin_err;
         }
-        BIO_printf(out, ".");
-        (void)BIO_flush(out);
 
-        BIO_printf(out, " ok\n");
+        sig_ptr2 = signature;
+        sig_len = i2d_ECDSA_SIG(modified_sig, &sig_ptr2);
+        if (!TEST_true(ECDSA_verify(0, digest, 20, signature, sig_len, eckey)))
+            goto builtin_err;
+
         /* cleanup */
-        /* clean bogus errors */
         ERR_clear_error();
         OPENSSL_free(signature);
         signature = NULL;
@@ -495,6 +396,8 @@ int test_builtin(BIO *out)
         wrong_eckey = NULL;
         ECDSA_SIG_free(ecdsa_sig);
         ecdsa_sig = NULL;
+        ECDSA_SIG_free(modified_sig);
+        modified_sig = NULL;
         OPENSSL_free(raw_buf);
         raw_buf = NULL;
     }
@@ -504,6 +407,7 @@ int test_builtin(BIO *out)
     EC_KEY_free(eckey);
     EC_KEY_free(wrong_eckey);
     ECDSA_SIG_free(ecdsa_sig);
+    ECDSA_SIG_free(modified_sig);
     OPENSSL_free(signature);
     OPENSSL_free(raw_buf);
     OPENSSL_free(curves);
@@ -511,41 +415,11 @@ int test_builtin(BIO *out)
     return ret;
 }
 
-int main(void)
+void register_tests(void)
 {
-    int ret = 1;
-    BIO *out;
-    char *p;
-
-    out = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    p = getenv("OPENSSL_DEBUG_MEMORY");
-    if (p != NULL && strcmp(p, "on") == 0)
-        CRYPTO_set_mem_debug(1);
-
     /* initialize the prng */
     RAND_seed(rnd_seed, sizeof(rnd_seed));
-
-    /* the tests */
-    if (!x9_62_tests(out))
-        goto err;
-    if (!test_builtin(out))
-        goto err;
-
-    ret = 0;
- err:
-    if (ret)
-        BIO_printf(out, "\nECDSA test failed\n");
-    else
-        BIO_printf(out, "\nECDSA test passed\n");
-    if (ret)
-        ERR_print_errors(out);
-
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks(out) <= 0)
-        ret = 1;
-#endif
-    BIO_free(out);
-    return ret;
+    ADD_TEST(x9_62_tests);
+    ADD_TEST(test_builtin);
 }
 #endif

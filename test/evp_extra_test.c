@@ -1,69 +1,10 @@
-/* Copyright (c) 2014, Google Inc.
+/*
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
- * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
- * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-/* ====================================================================
- * Copyright (c) 1998-2015 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <stdio.h>
@@ -74,6 +15,8 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
+#include "testutil.h"
+#include "test_main.h"
 
 /*
  * kExampleRSAKeyDER is an RSA private key in ASN.1, DER format. Of course, you
@@ -245,6 +188,18 @@ static const unsigned char kExampleBadECKeyDER[] = {
 };
 #endif
 
+typedef struct APK_DATA_st {
+    const unsigned char *kder;
+    size_t size;
+    int evptype;
+} APK_DATA;
+
+static APK_DATA keydata[] = {
+    {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), EVP_PKEY_RSA},
+    {kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8), EVP_PKEY_RSA},
+    {kExampleECKeyDER, sizeof(kExampleECKeyDER), EVP_PKEY_EC}
+};
+
 static EVP_PKEY *load_example_rsa_key(void)
 {
     EVP_PKEY *ret = NULL;
@@ -252,19 +207,17 @@ static EVP_PKEY *load_example_rsa_key(void)
     EVP_PKEY *pkey = NULL;
     RSA *rsa = NULL;
 
-    if (!d2i_RSAPrivateKey(&rsa, &derp, sizeof(kExampleRSAKeyDER))) {
+    if (!TEST_true(d2i_RSAPrivateKey(&rsa, &derp, sizeof(kExampleRSAKeyDER))))
         return NULL;
-    }
 
-    pkey = EVP_PKEY_new();
-    if (pkey == NULL || !EVP_PKEY_set1_RSA(pkey, rsa)) {
-        goto out;
-    }
+    if (!TEST_ptr(pkey = EVP_PKEY_new())
+            || !TEST_true(EVP_PKEY_set1_RSA(pkey, rsa)))
+        goto end;
 
     ret = pkey;
     pkey = NULL;
 
- out:
+end:
     EVP_PKEY_free(pkey);
     RSA_free(rsa);
 
@@ -277,48 +230,37 @@ static int test_EVP_DigestSignInit(void)
     EVP_PKEY *pkey = NULL;
     unsigned char *sig = NULL;
     size_t sig_len = 0;
-    EVP_MD_CTX *md_ctx, *md_ctx_verify;
+    EVP_MD_CTX *md_ctx, *md_ctx_verify = NULL;
 
-    md_ctx = EVP_MD_CTX_new();
-    md_ctx_verify = EVP_MD_CTX_new();
-    if (md_ctx == NULL || md_ctx_verify == NULL)
+    if (!TEST_ptr(md_ctx = EVP_MD_CTX_new())
+            || !TEST_ptr(md_ctx_verify = EVP_MD_CTX_new())
+            || !TEST_ptr(pkey = load_example_rsa_key()))
         goto out;
 
-    pkey = load_example_rsa_key();
-    if (pkey == NULL ||
-        !EVP_DigestSignInit(md_ctx, NULL, EVP_sha256(), NULL, pkey) ||
-        !EVP_DigestSignUpdate(md_ctx, kMsg, sizeof(kMsg))) {
+    if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, EVP_sha256(), NULL, pkey))
+            || !TEST_true(EVP_DigestSignUpdate(md_ctx, kMsg, sizeof(kMsg))))
         goto out;
-    }
+
     /* Determine the size of the signature. */
-    if (!EVP_DigestSignFinal(md_ctx, NULL, &sig_len)) {
+    if (!TEST_true(EVP_DigestSignFinal(md_ctx, NULL, &sig_len))
+            || !TEST_size_t_eq(sig_len, (size_t)EVP_PKEY_size(pkey)))
         goto out;
-    }
-    /* Sanity check for testing. */
-    if (sig_len != (size_t)EVP_PKEY_size(pkey)) {
-        fprintf(stderr, "sig_len mismatch\n");
-        goto out;
-    }
 
-    sig = OPENSSL_malloc(sig_len);
-    if (sig == NULL || !EVP_DigestSignFinal(md_ctx, sig, &sig_len)) {
+    if (!TEST_ptr(sig = OPENSSL_malloc(sig_len))
+            || !TEST_true(EVP_DigestSignFinal(md_ctx, sig, &sig_len)))
         goto out;
-    }
 
     /* Ensure that the signature round-trips. */
-    if (!EVP_DigestVerifyInit(md_ctx_verify, NULL, EVP_sha256(), NULL, pkey)
-        || !EVP_DigestVerifyUpdate(md_ctx_verify, kMsg, sizeof(kMsg))
-        || !EVP_DigestVerifyFinal(md_ctx_verify, sig, sig_len)) {
+    if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, EVP_sha256(),
+                                        NULL, pkey))
+            || !TEST_true(EVP_DigestVerifyUpdate(md_ctx_verify,
+                                                 kMsg, sizeof(kMsg)))
+            || !TEST_true(EVP_DigestVerifyFinal(md_ctx_verify, sig, sig_len)))
         goto out;
-    }
 
     ret = 1;
 
  out:
-    if (!ret) {
-        ERR_print_errors_fp(stderr);
-    }
-
     EVP_MD_CTX_free(md_ctx);
     EVP_MD_CTX_free(md_ctx_verify);
     EVP_PKEY_free(pkey);
@@ -331,56 +273,44 @@ static int test_EVP_DigestVerifyInit(void)
 {
     int ret = 0;
     EVP_PKEY *pkey = NULL;
-    EVP_MD_CTX *md_ctx;
+    EVP_MD_CTX *md_ctx = NULL;
 
-    md_ctx = EVP_MD_CTX_new();
-
-    pkey = load_example_rsa_key();
-    if (pkey == NULL ||
-        !EVP_DigestVerifyInit(md_ctx, NULL, EVP_sha256(), NULL, pkey) ||
-        !EVP_DigestVerifyUpdate(md_ctx, kMsg, sizeof(kMsg)) ||
-        !EVP_DigestVerifyFinal(md_ctx, kSignature, sizeof(kSignature))) {
+    if (!TEST_ptr(md_ctx = EVP_MD_CTX_new())
+            || !TEST_ptr(pkey = load_example_rsa_key()))
         goto out;
-    }
+
+    if (!TEST_true(EVP_DigestVerifyInit(md_ctx, NULL, EVP_sha256(), NULL, pkey))
+            || !TEST_true(EVP_DigestVerifyUpdate(md_ctx, kMsg, sizeof(kMsg)))
+            || !TEST_true(EVP_DigestVerifyFinal(md_ctx, kSignature,
+                                                 sizeof(kSignature))))
+        goto out;
     ret = 1;
 
  out:
-    if (!ret) {
-        ERR_print_errors_fp(stderr);
-    }
-
     EVP_MD_CTX_free(md_ctx);
     EVP_PKEY_free(pkey);
-
     return ret;
 }
 
-static int test_d2i_AutoPrivateKey(const unsigned char *input,
-                                   size_t input_len, int expected_id)
+static int test_d2i_AutoPrivateKey(int i)
 {
     int ret = 0;
     const unsigned char *p;
     EVP_PKEY *pkey = NULL;
+    const APK_DATA *ak = &keydata[i];
+    const unsigned char *input = ak->kder;
+    size_t input_len = ak->size;
+    int expected_id = ak->evptype;
 
     p = input;
-    pkey = d2i_AutoPrivateKey(NULL, &p, input_len);
-    if (pkey == NULL || p != input + input_len) {
-        fprintf(stderr, "d2i_AutoPrivateKey failed\n");
+    if (!TEST_ptr(pkey = d2i_AutoPrivateKey(NULL, &p, input_len))
+            || !TEST_ptr_eq(p, input + input_len)
+            || !TEST_int_eq(EVP_PKEY_id(pkey), expected_id))
         goto done;
-    }
-
-    if (EVP_PKEY_id(pkey) != expected_id) {
-        fprintf(stderr, "Did not decode expected type\n");
-        goto done;
-    }
 
     ret = 1;
 
  done:
-    if (!ret) {
-        ERR_print_errors_fp(stderr);
-    }
-
     EVP_PKEY_free(pkey);
     return ret;
 }
@@ -394,18 +324,16 @@ static int test_EVP_PKCS82PKEY(void)
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
     EVP_PKEY *pkey = NULL;
 
-    p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, &derp, sizeof(kExampleBadECKeyDER));
-
-    if (!p8inf || derp != kExampleBadECKeyDER + sizeof(kExampleBadECKeyDER)) {
-        fprintf(stderr, "Failed to parse key\n");
+    if (!TEST_ptr(p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, &derp,
+                                              sizeof(kExampleBadECKeyDER))))
         goto done;
-    }
 
-    pkey = EVP_PKCS82PKEY(p8inf);
-    if (pkey) {
-        fprintf(stderr, "Imported invalid EC key\n");
+    if (!TEST_ptr_eq(derp,
+                     kExampleBadECKeyDER + sizeof(kExampleBadECKeyDER)))
         goto done;
-    }
+
+    if (!TEST_ptr_null(pkey = EVP_PKCS82PKEY(p8inf)))
+        goto done;
 
     ret = 1;
 
@@ -417,52 +345,13 @@ static int test_EVP_PKCS82PKEY(void)
 }
 #endif
 
-int main(void)
+void register_tests(void)
 {
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-
-    if (!test_EVP_DigestSignInit()) {
-        fprintf(stderr, "EVP_DigestSignInit failed\n");
-        return 1;
-    }
-
-    if (!test_EVP_DigestVerifyInit()) {
-        fprintf(stderr, "EVP_DigestVerifyInit failed\n");
-        return 1;
-    }
-
-    if (!test_d2i_AutoPrivateKey(kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER),
-                                 EVP_PKEY_RSA)) {
-        fprintf(stderr, "d2i_AutoPrivateKey(kExampleRSAKeyDER) failed\n");
-        return 1;
-    }
-
-    if (!test_d2i_AutoPrivateKey
-        (kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8), EVP_PKEY_RSA)) {
-        fprintf(stderr, "d2i_AutoPrivateKey(kExampleRSAKeyPKCS8) failed\n");
-        return 1;
-    }
-
+    ADD_TEST(test_EVP_DigestSignInit);
+    ADD_TEST(test_EVP_DigestVerifyInit);
+    ADD_ALL_TESTS(test_d2i_AutoPrivateKey,
+                  sizeof(keydata) / sizeof(keydata[0]));
 #ifndef OPENSSL_NO_EC
-    if (!test_d2i_AutoPrivateKey(kExampleECKeyDER, sizeof(kExampleECKeyDER),
-                                 EVP_PKEY_EC)) {
-        fprintf(stderr, "d2i_AutoPrivateKey(kExampleECKeyDER) failed\n");
-        return 1;
-    }
-
-    if (!test_EVP_PKCS82PKEY()) {
-        fprintf(stderr, "test_EVP_PKCS82PKEY failed\n");
-        return 1;
-    }
+    ADD_TEST(test_EVP_PKCS82PKEY);
 #endif
-
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
-        return 1;
-#endif
-
-    printf("PASS\n");
-    return 0;
 }

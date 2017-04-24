@@ -257,7 +257,10 @@ id-smime-ct 6		: id-smime-ct-contentInfo
 id-smime-ct 7		: id-smime-ct-DVCSRequestData
 id-smime-ct 8		: id-smime-ct-DVCSResponseData
 id-smime-ct 9		: id-smime-ct-compressedData
+id-smime-ct 19		: id-smime-ct-contentCollection
+id-smime-ct 23		: id-smime-ct-authEnvelopedData
 id-smime-ct 27		: id-ct-asciiTextWithCRLF
+id-smime-ct 28		: id-ct-xml
 
 # S/MIME Attributes
 id-smime-aa 1		: id-smime-aa-receiptRequest
@@ -670,6 +673,9 @@ algorithm 29		: RSA-SHA1-2		: sha1WithRSA
 
 1 3 36 3 2 1		: RIPEMD160		: ripemd160
 1 3 36 3 3 1 2		: RSA-RIPEMD160		: ripemd160WithRSA
+
+1 3 6 1 4 1 1722 12 2 1 16 : BLAKE2b512        : blake2b512
+1 3 6 1 4 1 1722 12 2 2 8  : BLAKE2s256        : blake2s256
 
 !Cname sxnet
 1 3 101 1 4 1		: SXNetID		: Strong Extranet ID
@@ -1357,6 +1363,41 @@ camellia 50		: CAMELLIA-256-CMAC		: camellia-256-cmac
 			: CAMELLIA-192-CFB8		: camellia-192-cfb8
 			: CAMELLIA-256-CFB8		: camellia-256-cfb8
 
+# Definitions for ARIA cipher
+
+!Alias aria 1 2 410 200046 1 1
+aria 1                  : ARIA-128-ECB                  : aria-128-ecb
+aria 2                  : ARIA-128-CBC                  : aria-128-cbc
+!Cname aria-128-cfb128
+aria 3                  : ARIA-128-CFB                  : aria-128-cfb
+!Cname aria-128-ofb128
+aria 4                  : ARIA-128-OFB                  : aria-128-ofb
+aria 5			: ARIA-128-CTR                  : aria-128-ctr
+
+aria 6                  : ARIA-192-ECB                  : aria-192-ecb
+aria 7                  : ARIA-192-CBC                  : aria-192-cbc
+!Cname aria-192-cfb128
+aria 8                  : ARIA-192-CFB                  : aria-192-cfb
+!Cname aria-192-ofb128
+aria 9                  : ARIA-192-OFB                  : aria-192-ofb
+aria 10                 : ARIA-192-CTR                  : aria-192-ctr
+
+aria 11                 : ARIA-256-ECB                  : aria-256-ecb
+aria 12                 : ARIA-256-CBC                  : aria-256-cbc
+!Cname aria-256-cfb128
+aria 13                 : ARIA-256-CFB                  : aria-256-cfb
+!Cname aria-256-ofb128
+aria 14                 : ARIA-256-OFB                  : aria-256-ofb
+aria 15                 : ARIA-256-CTR                  : aria-256-ctr
+
+# There are no OIDs for these ARIA modes...
+                        : ARIA-128-CFB1                 : aria-128-cfb1
+                        : ARIA-192-CFB1                 : aria-192-cfb1
+                        : ARIA-256-CFB1                 : aria-256-cfb1
+                        : ARIA-128-CFB8                 : aria-128-cfb8
+                        : ARIA-192-CFB8                 : aria-192-cfb8
+                        : ARIA-256-CFB8                 : aria-256-cfb8
+
 # Definitions for SEED cipher - ECB, CBC, OFB mode
 
 member-body 410 200004  : KISA          : kisa
@@ -1444,14 +1485,41 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 # NID for TLS1 PRF
                             : TLS1-PRF          : tls1-prf
 
+# NID for HKDF
+                            : HKDF              : hkdf
+
 # RFC 4556
 1 3 6 1 5 2 3 : id-pkinit
 id-pkinit 4                     : pkInitClientAuth      : PKINIT Client Auth
 id-pkinit 5                     : pkInitKDC             : Signing KDC Response
 
-# New curves from draft-josefsson-pkix-newcurves
+# New curves from draft-ietf-curdle-pkix-00
+1 3 101 110 : X25519
+1 3 101 111 : X448
 
-1 3 6 1 4 1 11591 15 1      : Curve25519
-1 3 6 1 4 1 11591 15 2      : Curve448
-1 3 6 1 4 1 11591 15 3      : Curve25519ph
-1 3 6 1 4 1 11591 15 4      : Curve448ph
+# NIDs for cipher key exchange
+                            : KxRSA        : kx-rsa
+                            : KxECDHE      : kx-ecdhe
+                            : KxDHE        : kx-dhe
+                            : KxECDHE-PSK  : kx-ecdhe-psk
+                            : KxDHE-PSK    : kx-dhe-psk
+                            : KxRSA_PSK    : kx-rsa-psk
+                            : KxPSK        : kx-psk
+                            : KxSRP        : kx-srp
+                            : KxGOST       : kx-gost
+                            : KxANY        : kx-any
+
+# NIDs for cipher authentication
+                            : AuthRSA      : auth-rsa
+                            : AuthECDSA    : auth-ecdsa
+                            : AuthPSK      : auth-psk
+                            : AuthDSS      : auth-dss
+                            : AuthGOST01   : auth-gost01
+                            : AuthGOST12   : auth-gost12
+                            : AuthSRP      : auth-srp
+                            : AuthNULL     : auth-null
+                            : AuthANY      : auth-any
+# NID for Poly1305
+                            : Poly1305     : poly1305
+# NID for SipHash
+                            : SipHash      : siphash

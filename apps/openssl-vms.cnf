@@ -233,11 +233,7 @@ subjectKeyIdentifier=hash
 
 authorityKeyIdentifier=keyid:always,issuer
 
-# This is what PKIX recommends but some broken software chokes on critical
-# extensions.
-#basicConstraints = critical,CA:true
-# So we do this instead.
-basicConstraints = CA:true
+basicConstraints = critical,CA:true
 
 # Key usage: this is typical for a CA certificate. However since it will
 # prevent it being used as an test self-signed certificate it is best

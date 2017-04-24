@@ -1,62 +1,17 @@
 /*
- * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
- * 2000.
+ * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-/* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    licensing@OpenSSL.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
-#ifndef OPENSSL_NO_OCSP
 
+#include <openssl/opensslconf.h>
+
+#ifdef OPENSSL_NO_OCSP
+NON_EMPTY_TRANSLATION_UNIT
+#else
 # ifdef OPENSSL_SYS_VMS
 #  define _XOPEN_SOURCE_EXTENDED/* So fd_set and friends get properly defined
                                  * on OpenVMS */
@@ -69,8 +24,9 @@
 # include <string.h>
 # include <time.h>
 # include <ctype.h>
-# include "apps.h"              /* needs to be included before the openssl
-                                 * headers! */
+
+/* Needs to be included before the openssl headers */
+# include "apps.h"
 # include <openssl/e_os2.h>
 # include <openssl/crypto.h>
 # include <openssl/err.h>
@@ -108,7 +64,7 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
                               STACK_OF(OCSP_CERTID) *ids, long nsec,
                               long maxage);
 static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
-                              CA_DB *db, X509 *ca, X509 *rcert,
+                              CA_DB *db, STACK_OF(X509) *ca, X509 *rcert,
                               EVP_PKEY *rkey, const EVP_MD *md,
                               STACK_OF(X509) *rother, unsigned long flags,
                               int nmin, int ndays, int badsig);
@@ -117,10 +73,13 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static BIO *init_responder(const char *port);
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio);
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp);
+
+# ifndef OPENSSL_NO_SOCK
 static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
                                       const char *path,
                                       const STACK_OF(CONF_VALUE) *headers,
                                       OCSP_REQUEST *req, int req_timeout);
+# endif
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -140,22 +99,23 @@ typedef enum OPTION_choice {
     OPT_MD
 } OPTION_CHOICE;
 
-OPTIONS ocsp_options[] = {
+const OPTIONS ocsp_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"out", OPT_OUTFILE, '>', "Output filename"},
     {"timeout", OPT_TIMEOUT, 'p',
      "Connection timeout (in seconds) to the OCSP responder"},
     {"url", OPT_URL, 's', "Responder URL"},
-    {"host", OPT_HOST, 's', "host:prot top to connect to"},
+    {"host", OPT_HOST, 's', "TCP/IP hostname:port to connect to"},
     {"port", OPT_PORT, 'p', "Port to run responder on"},
-    {"ignore_err", OPT_IGNORE_ERR, '-'},
+    {"ignore_err", OPT_IGNORE_ERR, '-',
+     "Ignore Error response from OCSP responder, and retry "},
     {"noverify", OPT_NOVERIFY, '-', "Don't verify response at all"},
     {"nonce", OPT_NONCE, '-', "Add OCSP nonce to request"},
     {"no_nonce", OPT_NO_NONCE, '-', "Don't add OCSP nonce to request"},
     {"resp_no_certs", OPT_RESP_NO_CERTS, '-',
      "Don't include any certificates in response"},
     {"resp_key_id", OPT_RESP_KEY_ID, '-',
-     "Identify reponse by signing certificate key ID"},
+     "Identify response by signing certificate key ID"},
     {"no_certs", OPT_NO_CERTS, '-',
      "Don't include any certificates in signed request"},
     {"no_signature_verify", OPT_NO_SIGNATURE_VERIFY, '-',
@@ -165,12 +125,14 @@ OPTIONS ocsp_options[] = {
     {"no_chain", OPT_NO_CHAIN, '-', "Don't chain verify response"},
     {"no_cert_checks", OPT_NO_CERT_CHECKS, '-',
      "Don't do additional checks on signing certificate"},
-    {"no_explicit", OPT_NO_EXPLICIT, '-'},
+    {"no_explicit", OPT_NO_EXPLICIT, '-',
+     "Do not explicitly check the chain, just verify the root"},
     {"trust_other", OPT_TRUST_OTHER, '-',
      "Don't verify additional certificates"},
     {"no_intern", OPT_NO_INTERN, '-',
      "Don't search certificates contained in response for signer"},
-    {"badsig", OPT_BADSIG, '-'},
+    {"badsig", OPT_BADSIG, '-',
+        "Corrupt last byte of loaded OSCP response signature (for test)"},
     {"text", OPT_TEXT, '-', "Print text form of request and response"},
     {"req_text", OPT_REQ_TEXT, '-', "Print text form of request"},
     {"resp_text", OPT_RESP_TEXT, '-', "Print text form of response"},
@@ -197,7 +159,7 @@ OPTIONS ocsp_options[] = {
     {"path", OPT_PATH, 's', "Path to use in OCSP request"},
     {"issuer", OPT_ISSUER, '<', "Issuer certificate"},
     {"cert", OPT_CERT, '<', "Certificate to check"},
-    {"serial", OPT_SERIAL, 's', "Nerial number to check"},
+    {"serial", OPT_SERIAL, 's', "Serial number to check"},
     {"index", OPT_INDEX, '<', "Certificate status index file"},
     {"CA", OPT_CA, '<', "CA certificate"},
     {"nmin", OPT_NMIN, 'p', "Number of minutes before next update"},
@@ -205,12 +167,12 @@ OPTIONS ocsp_options[] = {
      "Number of requests to accept (default unlimited)"},
     {"ndays", OPT_NDAYS, 'p', "Number of days before next update"},
     {"rsigner", OPT_RSIGNER, '<',
-     "Sesponder certificate to sign responses with"},
+     "Responder certificate to sign responses with"},
     {"rkey", OPT_RKEY, '<', "Responder key to sign responses with"},
     {"rother", OPT_ROTHER, '<', "Other certificates to include in response"},
-    {"rmd", OPT_RMD, 's'},
+    {"rmd", OPT_RMD, 's', "Digest Algorithm to use in signature of OCSP response"},
     {"header", OPT_HEADER, 's', "key=value header to add"},
-    {"", OPT_MD, '-', "Any supported digest"},
+    {"", OPT_MD, '-', "Any supported digest algorithm (sha1,sha256, ... )"},
     OPT_V_OPTIONS,
     {NULL}
 };
@@ -219,6 +181,7 @@ int ocsp_main(int argc, char **argv)
 {
     BIO *acbio = NULL, *cbio = NULL, *derbio = NULL, *out = NULL;
     const EVP_MD *cert_id_md = NULL, *rsign_md = NULL;
+    int trailing_md = 0;
     CA_DB *rdb = NULL;
     EVP_PKEY *key = NULL, *rkey = NULL;
     OCSP_BASICRESP *bs = NULL;
@@ -229,11 +192,13 @@ int ocsp_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *reqnames = NULL;
     STACK_OF(X509) *sign_other = NULL, *verify_other = NULL, *rother = NULL;
     STACK_OF(X509) *issuers = NULL;
-    X509 *issuer = NULL, *cert = NULL, *rca_cert = NULL;
+    X509 *issuer = NULL, *cert = NULL;
+    STACK_OF(X509) *rca_cert = NULL;
     X509 *signer = NULL, *rsigner = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
-    char *CAfile = NULL, *CApath = NULL, *header, *value;
+    const char *CAfile = NULL, *CApath = NULL;
+    char *header, *value;
     char *host = NULL, *port = NULL, *path = "/", *outfile = NULL;
     char *rca_filename = NULL, *reqin = NULL, *respin = NULL;
     char *reqout = NULL, *respout = NULL, *ridx_filename = NULL;
@@ -244,7 +209,10 @@ int ocsp_main(int argc, char **argv)
     int noCAfile = 0, noCApath = 0;
     int accept_count = -1, add_nonce = 1, noverify = 0, use_ssl = -1;
     int vpmtouched = 0, badsig = 0, i, ignore_err = 0, nmin = 0, ndays = -1;
-    int req_text = 0, resp_text = 0, req_timeout = -1, ret = 1;
+    int req_text = 0, resp_text = 0, ret = 1;
+#ifndef OPENSSL_NO_SOCK
+    int req_timeout = -1;
+#endif
     long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
     unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
     OPTION_CHOICE o;
@@ -275,7 +243,9 @@ int ocsp_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_TIMEOUT:
+#ifndef OPENSSL_NO_SOCK
             req_timeout = atoi(opt_arg());
+#endif
             break;
         case OPT_URL:
             OPENSSL_free(thost);
@@ -425,6 +395,7 @@ int ocsp_main(int argc, char **argv)
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
                 goto end;
+            trailing_md = 0;
             break;
         case OPT_SERIAL:
             if (cert_id_md == NULL)
@@ -433,6 +404,7 @@ int ocsp_main(int argc, char **argv)
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
                 goto end;
+            trailing_md = 0;
             break;
         case OPT_INDEX:
             ridx_filename = opt_arg();
@@ -460,7 +432,7 @@ int ocsp_main(int argc, char **argv)
         case OPT_ROTHER:
             rcertfile = opt_arg();
             break;
-        case OPT_RMD:
+        case OPT_RMD:   /* Response MessageDigest */
             if (!opt_md(opt_arg(), &rsign_md))
                 goto end;
             break;
@@ -476,7 +448,7 @@ int ocsp_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_MD:
-            if (cert_id_md != NULL) {
+            if (trailing_md) {
                 BIO_printf(bio_err,
                            "%s: Digest must be before -cert or -serial\n",
                            prog);
@@ -484,8 +456,15 @@ int ocsp_main(int argc, char **argv)
             }
             if (!opt_md(opt_unknown(), &cert_id_md))
                 goto opthelp;
+            trailing_md = 1;
             break;
         }
+    }
+
+    if (trailing_md) {
+        BIO_printf(bio_err, "%s: Digest must be before -cert or -serial\n",
+                   prog);
+        goto opthelp;
     }
     argc = opt_num_rest();
     if (argc != 0)
@@ -528,7 +507,9 @@ int ocsp_main(int argc, char **argv)
             BIO_printf(bio_err, "Error loading responder certificate\n");
             goto end;
         }
-        rca_cert = load_cert(rca_filename, FORMAT_PEM, "CA certificate");
+        if (!load_certs(rca_filename, &rca_cert, FORMAT_PEM,
+                        NULL, "CA certificate"))
+            goto end;
         if (rcertfile) {
             if (!load_certs(rcertfile, &rother, FORMAT_PEM, NULL,
                             "responder other certificates"))
@@ -747,7 +728,7 @@ int ocsp_main(int argc, char **argv)
     X509_free(cert);
     sk_X509_pop_free(issuers, X509_free);
     X509_free(rsigner);
-    X509_free(rca_cert);
+    sk_X509_pop_free(rca_cert, X509_free);
     free_index(rdb);
     BIO_free_all(cbio);
     BIO_free_all(acbio);
@@ -834,7 +815,7 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
                               long maxage)
 {
     OCSP_CERTID *id;
-    char *name;
+    const char *name;
     int i, status, reason;
     ASN1_GENERALIZEDTIME *rev, *thisupd, *nextupd;
 
@@ -886,13 +867,13 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 }
 
 static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
-                              CA_DB *db, X509 *ca, X509 *rcert,
+                              CA_DB *db, STACK_OF(X509) *ca, X509 *rcert,
                               EVP_PKEY *rkey, const EVP_MD *rmd,
                               STACK_OF(X509) *rother, unsigned long flags,
                               int nmin, int ndays, int badsig)
 {
     ASN1_TIME *thisupd = NULL, *nextupd = NULL;
-    OCSP_CERTID *cid, *ca_id = NULL;
+    OCSP_CERTID *cid;
     OCSP_BASICRESP *bs = NULL;
     int i, id_count;
 
@@ -914,6 +895,8 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
         OCSP_ONEREQ *one;
         ASN1_INTEGER *serial;
         char **inf;
+        int jj;
+        int found = 0;
         ASN1_OBJECT *cert_id_md_oid;
         const EVP_MD *cert_id_md;
         one = OCSP_request_onereq_get0(req, i);
@@ -927,11 +910,17 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
                                          NULL);
             goto end;
         }
-        OCSP_CERTID_free(ca_id);
-        ca_id = OCSP_cert_to_id(cert_id_md, NULL, ca);
+        for (jj = 0; jj < sk_X509_num(ca) && !found; jj++) {
+            X509 *ca_cert = sk_X509_value(ca, jj);
+            OCSP_CERTID *ca_id = OCSP_cert_to_id(cert_id_md, NULL, ca_cert);
 
-        /* Is this request about our CA? */
-        if (OCSP_id_issuer_cmp(ca_id, cid)) {
+            if (OCSP_id_issuer_cmp(ca_id, cid) == 0)
+                found = 1;
+
+            OCSP_CERTID_free(ca_id);
+        }
+
+        if (!found) {
             OCSP_basic_add1_status(bs, cid,
                                    V_OCSP_CERTSTATUS_UNKNOWN,
                                    0, NULL, thisupd, nextupd);
@@ -975,9 +964,8 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
     OCSP_basic_sign(bs, rcert, rkey, rmd, rother, flags);
 
     if (badsig) {
-        ASN1_OCTET_STRING *sig = OCSP_resp_get0_signature(bs);
-        unsigned char *sigptr = ASN1_STRING_data(sig);
-        sigptr[ASN1_STRING_length(sig) - 1] ^= 0x1;
+        const ASN1_OCTET_STRING *sig = OCSP_resp_get0_signature(bs);
+        corrupt_signature(sig);
     }
 
     *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, bs);
@@ -985,7 +973,6 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
  end:
     ASN1_TIME_free(thisupd);
     ASN1_TIME_free(nextupd);
-    OCSP_CERTID_free(ca_id);
     OCSP_BASICRESP_free(bs);
 }
 
@@ -1014,13 +1001,13 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
 
 static BIO *init_responder(const char *port)
 {
-    BIO *acbio = NULL, *bufbio = NULL;
-
 # ifdef OPENSSL_NO_SOCK
     BIO_printf(bio_err,
                "Error setting up accept BIO - sockets not supported.\n");
     return NULL;
-# endif
+# else
+    BIO *acbio = NULL, *bufbio = NULL;
+
     bufbio = BIO_new(BIO_f_buffer());
     if (bufbio == NULL)
         goto err;
@@ -1047,9 +1034,10 @@ static BIO *init_responder(const char *port)
     BIO_free_all(acbio);
     BIO_free(bufbio);
     return NULL;
+# endif
 }
 
-
+# ifndef OPENSSL_NO_SOCK
 /*
  * Decode %xx URL-decoding in-place. Ignores mal-formed sequences.
  */
@@ -1062,7 +1050,9 @@ static int urldecode(char *p)
         if (*p != '%')
             *out++ = *p;
         else if (isxdigit(_UC(p[1])) && isxdigit(_UC(p[2]))) {
-            *out++ = (app_hex(p[1]) << 4) | app_hex(p[2]);
+            /* Don't check, can't fail because of ixdigit() call. */
+            *out++ = (OPENSSL_hexchar2int(p[1]) << 4)
+                   | OPENSSL_hexchar2int(p[2]);
             p += 2;
         }
         else
@@ -1071,9 +1061,13 @@ static int urldecode(char *p)
     *out = '\0';
     return (int)(out - save);
 }
+# endif
 
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
 {
+# ifdef OPENSSL_NO_SOCK
+    return 0;
+# else
     int len;
     OCSP_REQUEST *req = NULL;
     char inbuf[2048], reqbuf[2048];
@@ -1154,7 +1148,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
     *preq = req;
 
     return 1;
-
+# endif
 }
 
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
@@ -1170,6 +1164,7 @@ static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
     return 1;
 }
 
+# ifndef OPENSSL_NO_SOCK
 static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
                                       const char *path,
                                       const STACK_OF(CONF_VALUE) *headers,
@@ -1300,5 +1295,6 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
     SSL_CTX_free(ctx);
     return resp;
 }
+# endif
 
 #endif

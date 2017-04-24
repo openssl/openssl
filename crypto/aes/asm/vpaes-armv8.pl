@@ -1,4 +1,11 @@
-#!/usr/bin/env perl
+#! /usr/bin/env perl
+# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 
 ######################################################################
 ## Constant-time SSSE3 AES core implementation.
@@ -22,6 +29,7 @@
 # X-Gene            45.9(**)    45.8/57.7(**)    [33.1/37.6(**)     ]
 # Denver(***)       16.6(**)    15.1/17.8(**)    [8.80/9.93         ]
 # Apple A7(***)     22.7(**)    10.9/14.3        [8.45/10.0         ]
+# Mongoose(***)     26.3(**)    21.0/25.0(**)    [13.3/16.8         ]
 #
 # (*)	ECB denotes approximate result for parallelizeable modes
 #	such as CBC decrypt, CTR, etc.;
@@ -30,7 +38,7 @@
 # (***)	presented for reference/comparison purposes;
 
 $flavour = shift;
-while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
@@ -761,7 +769,7 @@ _vpaes_schedule_core:
 	ld1	{v0.16b}, [$inp]		// vmovdqu	16(%rdi),%xmm0		# load key part 2 (unaligned)
 	bl	_vpaes_schedule_transform	// input transform
 	mov	$inp, #7			// mov	\$7, %esi
-	
+
 .Loop_schedule_256:
 	sub	$inp, $inp, #1			// dec	%esi
 	bl	_vpaes_schedule_mangle		// output low result
@@ -770,7 +778,7 @@ _vpaes_schedule_core:
 	// high round
 	bl	_vpaes_schedule_round
 	cbz 	$inp, .Lschedule_mangle_last
-	bl	_vpaes_schedule_mangle	
+	bl	_vpaes_schedule_mangle
 
 	// low round. swap xmm7 and xmm6
 	dup	v0.4s, v0.s[3]			// vpshufd	\$0xFF,	%xmm0,	%xmm0
@@ -779,7 +787,7 @@ _vpaes_schedule_core:
 	mov	v7.16b, v6.16b			// vmovdqa	%xmm6,	%xmm7
 	bl	_vpaes_schedule_low_round
 	mov	v7.16b, v5.16b			// vmovdqa	%xmm5,	%xmm7
-	
+
 	b	.Loop_schedule_256
 
 ##
@@ -806,7 +814,7 @@ _vpaes_schedule_core:
 
 .Lschedule_mangle_last_dec:
 	ld1	{v20.2d-v21.2d}, [x11]		// reload constants
-	sub	$out, $out, #16			// add	\$-16,	%rdx 
+	sub	$out, $out, #16			// add	\$-16,	%rdx
 	eor	v0.16b, v0.16b, v16.16b		// vpxor	.Lk_s63(%rip),	%xmm0,	%xmm0
 	bl	_vpaes_schedule_transform	// output transform
 	st1	{v0.2d}, [$out]			// vmovdqu	%xmm0,	(%rdx)		# save last key

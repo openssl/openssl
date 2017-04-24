@@ -1,14 +1,17 @@
-/* ====================================================================
- * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
- * ====================================================================
+/*
+ * Copyright 2004-2017 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include <openssl/sha.h>
 #include <openssl/evp.h>
-#include <openssl/crypto.h>
+
+#include "test_main.h"
+#include "testutil.h"
 
 static const unsigned char app_c1[SHA512_DIGEST_LENGTH] = {
     0xdd, 0xaf, 0x35, 0xa1, 0x93, 0x61, 0x7a, 0xba,
@@ -70,121 +73,118 @@ static const unsigned char app_d3[SHA384_DIGEST_LENGTH] = {
     0xae, 0x97, 0xdd, 0xd8, 0x7f, 0x3d, 0x89, 0x85
 };
 
-int main(int argc, char **argv)
+static int test_sha512_short(void)
 {
     unsigned char md[SHA512_DIGEST_LENGTH];
-    int i;
+
+    if (!TEST_true(EVP_Digest("abc", 3, md, NULL, EVP_sha512(), NULL)))
+        return 0;
+    return TEST_mem_eq(md, sizeof(md), app_c1, sizeof(app_c1));
+}
+
+static int test_sha512_long(void)
+{
+    unsigned char md[SHA512_DIGEST_LENGTH];
+
+    if (!TEST_true(EVP_Digest("abcdefgh" "bcdefghi" "cdefghij" "defghijk"
+                              "efghijkl" "fghijklm" "ghijklmn" "hijklmno"
+                              "ijklmnop" "jklmnopq" "klmnopqr" "lmnopqrs"
+                              "mnopqrst" "nopqrstu", 112, md, NULL,
+                              EVP_sha512(), NULL)))
+        return 0;
+    return TEST_mem_eq(md, sizeof(md), app_c2, sizeof(app_c2));
+}
+
+static int test_sha512_multi(void)
+{
+    unsigned char md[SHA512_DIGEST_LENGTH];
+    int i, testresult = 0;
     EVP_MD_CTX *evp;
-
-# ifdef OPENSSL_IA32_SSE2
-    /*
-     * Alternative to this is to call OpenSSL_add_all_algorithms... The below
-     * code is retained exclusively for debugging purposes.
-     */
-    {
-        char *env;
-
-        if ((env = getenv("OPENSSL_ia32cap")))
-            OPENSSL_ia32cap = strtoul(env, NULL, 0);
-    }
-# endif
-
-    fprintf(stdout, "Testing SHA-512 ");
-
-    EVP_Digest("abc", 3, md, NULL, EVP_sha512(), NULL);
-    if (memcmp(md, app_c1, sizeof(app_c1))) {
-        fflush(stdout);
-        fprintf(stderr, "\nTEST 1 of 3 failed.\n");
-        return 1;
-    } else
-        fprintf(stdout, ".");
-    fflush(stdout);
-
-    EVP_Digest("abcdefgh" "bcdefghi" "cdefghij" "defghijk"
-               "efghijkl" "fghijklm" "ghijklmn" "hijklmno"
-               "ijklmnop" "jklmnopq" "klmnopqr" "lmnopqrs"
-               "mnopqrst" "nopqrstu", 112, md, NULL, EVP_sha512(), NULL);
-    if (memcmp(md, app_c2, sizeof(app_c2))) {
-        fflush(stdout);
-        fprintf(stderr, "\nTEST 2 of 3 failed.\n");
-        return 1;
-    } else
-        fprintf(stdout, ".");
-    fflush(stdout);
+    static const char *updstr = "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                                "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                                "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                                "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                                "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                                "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                                "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                                "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                                "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa";
 
     evp = EVP_MD_CTX_new();
-    if (evp == NULL) {
-        fflush(stdout);
-        fprintf(stderr, "\nTEST 3 of 3 failed. (malloc failure)\n");
-        return 1;
-    }
-    EVP_DigestInit_ex(evp, EVP_sha512(), NULL);
+    if (!TEST_ptr(evp))
+        return 0;
+    if (!TEST_true(EVP_DigestInit_ex(evp, EVP_sha512(), NULL)))
+        goto end;
     for (i = 0; i < 1000000; i += 288)
-        EVP_DigestUpdate(evp, "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa",
-                         (1000000 - i) < 288 ? 1000000 - i : 288);
-    EVP_DigestFinal_ex(evp, md, NULL);
-    EVP_MD_CTX_reset(evp);
+        if (!TEST_true(EVP_DigestUpdate(evp, updstr,
+                                        (1000000 - i) < 288 ? 1000000 - i
+                                                            : 288)))
+            goto end;
+    if (!TEST_true(EVP_DigestFinal_ex(evp, md, NULL))
+        || !TEST_mem_eq(md, sizeof(md), app_c3, sizeof(app_c3)))
+        goto end;
 
-    if (memcmp(md, app_c3, sizeof(app_c3))) {
-        fflush(stdout);
-        fprintf(stderr, "\nTEST 3 of 3 failed.\n");
-        return 1;
-    } else
-        fprintf(stdout, ".");
-    fflush(stdout);
-
-    fprintf(stdout, " passed.\n");
-    fflush(stdout);
-
-    fprintf(stdout, "Testing SHA-384 ");
-
-    EVP_Digest("abc", 3, md, NULL, EVP_sha384(), NULL);
-    if (memcmp(md, app_d1, sizeof(app_d1))) {
-        fflush(stdout);
-        fprintf(stderr, "\nTEST 1 of 3 failed.\n");
-        return 1;
-    } else
-        fprintf(stdout, ".");
-    fflush(stdout);
-
-    EVP_Digest("abcdefgh" "bcdefghi" "cdefghij" "defghijk"
-               "efghijkl" "fghijklm" "ghijklmn" "hijklmno"
-               "ijklmnop" "jklmnopq" "klmnopqr" "lmnopqrs"
-               "mnopqrst" "nopqrstu", 112, md, NULL, EVP_sha384(), NULL);
-    if (memcmp(md, app_d2, sizeof(app_d2))) {
-        fflush(stdout);
-        fprintf(stderr, "\nTEST 2 of 3 failed.\n");
-        return 1;
-    } else
-        fprintf(stdout, ".");
-    fflush(stdout);
-
-    EVP_DigestInit_ex(evp, EVP_sha384(), NULL);
-    for (i = 0; i < 1000000; i += 64)
-        EVP_DigestUpdate(evp, "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
-                         "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa",
-                         (1000000 - i) < 64 ? 1000000 - i : 64);
-    EVP_DigestFinal_ex(evp, md, NULL);
+    testresult = 1;
+ end:
     EVP_MD_CTX_free(evp);
+    return testresult;
+}
 
-    if (memcmp(md, app_d3, sizeof(app_d3))) {
-        fflush(stdout);
-        fprintf(stderr, "\nTEST 3 of 3 failed.\n");
-        return 1;
-    } else
-        fprintf(stdout, ".");
-    fflush(stdout);
+static int test_sha384_short(void)
+{
+    unsigned char md[SHA384_DIGEST_LENGTH];
 
-    fprintf(stdout, " passed.\n");
-    fflush(stdout);
+    if (!TEST_true(EVP_Digest("abc", 3, md, NULL, EVP_sha384(), NULL)))
+        return 0;
+    return TEST_mem_eq(md, sizeof(md), app_d1, sizeof(app_d1));
+}
 
-    return 0;
+static int test_sha384_long(void)
+{
+    unsigned char md[SHA384_DIGEST_LENGTH];
+
+    if (!TEST_true(EVP_Digest("abcdefgh" "bcdefghi" "cdefghij" "defghijk"
+                              "efghijkl" "fghijklm" "ghijklmn" "hijklmno"
+                              "ijklmnop" "jklmnopq" "klmnopqr" "lmnopqrs"
+                              "mnopqrst" "nopqrstu", 112, md, NULL,
+                              EVP_sha384(), NULL)))
+        return 0;
+    return TEST_mem_eq(md, sizeof(md), app_d2, sizeof(app_d2));
+}
+
+static int test_sha384_multi(void)
+{
+    unsigned char md[SHA384_DIGEST_LENGTH];
+    int i, testresult = 0;
+    EVP_MD_CTX *evp;
+    static const char *updstr = "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa"
+                                "aaaaaaaa" "aaaaaaaa" "aaaaaaaa" "aaaaaaaa";
+
+    evp = EVP_MD_CTX_new();
+    if (!TEST_ptr(evp))
+        return 0;
+    if (!TEST_true(EVP_DigestInit_ex(evp, EVP_sha384(), NULL)))
+        goto end;
+    for (i = 0; i < 1000000; i += 64)
+        if (!TEST_true(EVP_DigestUpdate(evp, updstr,
+                                        (1000000 - i) < 64 ? 1000000 - i : 64)))
+            goto end;
+    if (!TEST_true(EVP_DigestFinal_ex(evp, md, NULL))
+        || !TEST_mem_eq(md, sizeof(md), app_d3, sizeof(app_d3)))
+        goto end;
+
+    testresult = 1;
+ end:
+    EVP_MD_CTX_free(evp);
+    return testresult;
+}
+
+void register_tests(void)
+{
+    ADD_TEST(test_sha512_short);
+    ADD_TEST(test_sha512_long);
+    ADD_TEST(test_sha512_multi);
+    ADD_TEST(test_sha384_short);
+    ADD_TEST(test_sha384_long);
+    ADD_TEST(test_sha384_multi);
 }

@@ -1,111 +1,10 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
- */
-/* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 /* callback functions used by s_client, s_server, and s_time */
@@ -127,12 +26,19 @@
 
 #define COOKIE_SECRET_LENGTH    16
 
-int verify_depth = 0;
-int verify_quiet = 0;
-int verify_error = X509_V_OK;
-int verify_return_error = 0;
+VERIFY_CB_ARGS verify_args = { 0, 0, X509_V_OK, 0 };
+
+#ifndef OPENSSL_NO_SOCK
 static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 static int cookie_initialized = 0;
+#endif
+static BIO *bio_keylog = NULL;
+static unsigned long nmflag = XN_FLAG_ONELINE;
+
+int set_nameopt(const char *arg)
+{
+  return set_name_ex(&nmflag, arg);
+}
 
 static const char *lookup(int val, const STRINT_PAIR* list, const char* def)
 {
@@ -151,12 +57,12 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     err = X509_STORE_CTX_get_error(ctx);
     depth = X509_STORE_CTX_get_error_depth(ctx);
 
-    if (!verify_quiet || !ok) {
+    if (!verify_args.quiet || !ok) {
         BIO_printf(bio_err, "depth=%d ", depth);
         if (err_cert) {
             X509_NAME_print_ex(bio_err,
                                X509_get_subject_name(err_cert),
-                               0, XN_FLAG_ONELINE);
+                               0, nmflag);
             BIO_puts(bio_err, "\n");
         } else
             BIO_puts(bio_err, "<no cert>\n");
@@ -164,42 +70,42 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     if (!ok) {
         BIO_printf(bio_err, "verify error:num=%d:%s\n", err,
                    X509_verify_cert_error_string(err));
-        if (verify_depth >= depth) {
-            if (!verify_return_error)
+        if (verify_args.depth >= depth) {
+            if (!verify_args.return_error)
                 ok = 1;
-            verify_error = err;
+            verify_args.error = err;
         } else {
             ok = 0;
-            verify_error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
+            verify_args.error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
         }
     }
     switch (err) {
     case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
         BIO_puts(bio_err, "issuer= ");
         X509_NAME_print_ex(bio_err, X509_get_issuer_name(err_cert),
-                           0, XN_FLAG_ONELINE);
+                           0, nmflag);
         BIO_puts(bio_err, "\n");
         break;
     case X509_V_ERR_CERT_NOT_YET_VALID:
     case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
         BIO_printf(bio_err, "notBefore=");
-        ASN1_TIME_print(bio_err, X509_get_notBefore(err_cert));
+        ASN1_TIME_print(bio_err, X509_get0_notBefore(err_cert));
         BIO_printf(bio_err, "\n");
         break;
     case X509_V_ERR_CERT_HAS_EXPIRED:
     case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
         BIO_printf(bio_err, "notAfter=");
-        ASN1_TIME_print(bio_err, X509_get_notAfter(err_cert));
+        ASN1_TIME_print(bio_err, X509_get0_notAfter(err_cert));
         BIO_printf(bio_err, "\n");
         break;
     case X509_V_ERR_NO_EXPLICIT_POLICY:
-        if (!verify_quiet)
+        if (!verify_args.quiet)
             policies_print(ctx);
         break;
     }
-    if (err == X509_V_OK && ok == 2 && !verify_quiet)
+    if (err == X509_V_OK && ok == 2 && !verify_args.quiet)
         policies_print(ctx);
-    if (ok && !verify_quiet)
+    if (ok && !verify_args.quiet)
         BIO_printf(bio_err, "verify return:%d\n", ok);
     return (ok);
 }
@@ -314,12 +220,32 @@ static void ssl_print_client_cert_types(BIO *bio, SSL *s)
     BIO_puts(bio, "\n");
 }
 
+static const char *get_sigtype(int nid)
+{
+    switch (nid) {
+    case EVP_PKEY_RSA:
+        return "RSA";
+
+    case EVP_PKEY_RSA_PSS:
+        return "RSA-PSS";
+
+    case EVP_PKEY_DSA:
+        return "DSA";
+
+     case EVP_PKEY_EC:
+        return "ECDSA";
+
+    default:
+        return NULL;
+    }
+}
+
 static int do_print_sigalgs(BIO *out, SSL *s, int shared)
 {
     int i, nsig, client;
     client = SSL_is_server(s) ? 0 : 1;
     if (shared)
-        nsig = SSL_get_shared_sigalgs(s, -1, NULL, NULL, NULL, NULL, NULL);
+        nsig = SSL_get_shared_sigalgs(s, 0, NULL, NULL, NULL, NULL, NULL);
     else
         nsig = SSL_get_sigalgs(s, -1, NULL, NULL, NULL, NULL, NULL);
     if (nsig == 0)
@@ -342,12 +268,7 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
             SSL_get_sigalgs(s, i, &sign_nid, &hash_nid, NULL, &rsign, &rhash);
         if (i)
             BIO_puts(out, ":");
-        if (sign_nid == EVP_PKEY_RSA)
-            sstr = "RSA";
-        else if (sign_nid == EVP_PKEY_DSA)
-            sstr = "DSA";
-        else if (sign_nid == EVP_PKEY_EC)
-            sstr = "ECDSA";
+        sstr = get_sigtype(sign_nid);
         if (sstr)
             BIO_printf(out, "%s+", sstr);
         else
@@ -363,13 +284,15 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
 
 int ssl_print_sigalgs(BIO *out, SSL *s)
 {
-    int mdnid;
+    int nid;
     if (!SSL_is_server(s))
         ssl_print_client_cert_types(out, s);
     do_print_sigalgs(out, s, 0);
     do_print_sigalgs(out, s, 1);
-    if (SSL_get_peer_signature_nid(s, &mdnid))
-        BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(mdnid));
+    if (SSL_get_peer_signature_nid(s, &nid))
+        BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(nid));
+    if (SSL_get_peer_signature_type_nid(s, &nid))
+        BIO_printf(out, "Peer signature type: %s\n", get_sigtype(nid));
     return 1;
 }
 
@@ -404,58 +327,56 @@ int ssl_print_point_formats(BIO *out, SSL *s)
 
         }
     }
-    if (nformats <= 0)
-        BIO_puts(out, "NONE");
     BIO_puts(out, "\n");
     return 1;
 }
 
-int ssl_print_curves(BIO *out, SSL *s, int noshared)
+int ssl_print_groups(BIO *out, SSL *s, int noshared)
 {
-    int i, ncurves, *curves, nid;
-    const char *cname;
+    int i, ngroups, *groups, nid;
+    const char *gname;
 
-    ncurves = SSL_get1_curves(s, NULL);
-    if (ncurves <= 0)
+    ngroups = SSL_get1_groups(s, NULL);
+    if (ngroups <= 0)
         return 1;
-    curves = app_malloc(ncurves * sizeof(int), "curves to print");
-    SSL_get1_curves(s, curves);
+    groups = app_malloc(ngroups * sizeof(int), "groups to print");
+    SSL_get1_groups(s, groups);
 
-    BIO_puts(out, "Supported Elliptic Curves: ");
-    for (i = 0; i < ncurves; i++) {
+    BIO_puts(out, "Supported Elliptic Groups: ");
+    for (i = 0; i < ngroups; i++) {
         if (i)
             BIO_puts(out, ":");
-        nid = curves[i];
+        nid = groups[i];
         /* If unrecognised print out hex version */
         if (nid & TLSEXT_nid_unknown)
             BIO_printf(out, "0x%04X", nid & 0xFFFF);
         else {
+            /* TODO(TLS1.3): Get group name here */
             /* Use NIST name for curve if it exists */
-            cname = EC_curve_nid2nist(nid);
-            if (!cname)
-                cname = OBJ_nid2sn(nid);
-            BIO_printf(out, "%s", cname);
+            gname = EC_curve_nid2nist(nid);
+            if (!gname)
+                gname = OBJ_nid2sn(nid);
+            BIO_printf(out, "%s", gname);
         }
     }
-    if (ncurves == 0)
-        BIO_puts(out, "NONE");
-    OPENSSL_free(curves);
+    OPENSSL_free(groups);
     if (noshared) {
         BIO_puts(out, "\n");
         return 1;
     }
-    BIO_puts(out, "\nShared Elliptic curves: ");
-    ncurves = SSL_get_shared_curve(s, -1);
-    for (i = 0; i < ncurves; i++) {
+    BIO_puts(out, "\nShared Elliptic groups: ");
+    ngroups = SSL_get_shared_group(s, -1);
+    for (i = 0; i < ngroups; i++) {
         if (i)
             BIO_puts(out, ":");
-        nid = SSL_get_shared_curve(s, i);
-        cname = EC_curve_nid2nist(nid);
-        if (!cname)
-            cname = OBJ_nid2sn(nid);
-        BIO_printf(out, "%s", cname);
+        nid = SSL_get_shared_group(s, i);
+        /* TODO(TLS1.3): Convert for DH groups */
+        gname = EC_curve_nid2nist(nid);
+        if (!gname)
+            gname = OBJ_nid2sn(nid);
+        BIO_printf(out, "%s", gname);
     }
-    if (ncurves == 0)
+    if (ngroups == 0)
         BIO_puts(out, "NONE");
     BIO_puts(out, "\n");
     return 1;
@@ -488,7 +409,11 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
                 cname = OBJ_nid2sn(nid);
             BIO_printf(out, "ECDH, %s, %d bits\n", cname, EVP_PKEY_bits(key));
         }
+    break;
 #endif
+    default:
+        BIO_printf(out, "%s, %d bits\n", OBJ_nid2sn(EVP_PKEY_id(key)),
+                   EVP_PKEY_bits(key));
     }
     EVP_PKEY_free(key);
     return 1;
@@ -505,12 +430,12 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp,
 
     if (cmd == (BIO_CB_READ | BIO_CB_RETURN)) {
         BIO_printf(out, "read from %p [%p] (%lu bytes => %ld (0x%lX))\n",
-                   (void *)bio, argp, (unsigned long)argi, ret, ret);
+                   (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
         BIO_dump(out, argp, (int)ret);
         return (ret);
     } else if (cmd == (BIO_CB_WRITE | BIO_CB_RETURN)) {
         BIO_printf(out, "write to %p [%p] (%lu bytes => %ld (0x%lX))\n",
-                   (void *)bio, argp, (unsigned long)argi, ret, ret);
+                   (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
         BIO_dump(out, argp, (int)ret);
     }
     return (ret);
@@ -554,12 +479,14 @@ static STRINT_PAIR ssl_versions[] = {
     {"TLS 1.0", TLS1_VERSION},
     {"TLS 1.1", TLS1_1_VERSION},
     {"TLS 1.2", TLS1_2_VERSION},
+    {"TLS 1.3", TLS1_3_VERSION},
     {"DTLS 1.0", DTLS1_VERSION},
     {"DTLS 1.0 (bad)", DTLS1_BAD_VER},
     {NULL}
 };
 static STRINT_PAIR alert_types[] = {
     {" close_notify", 0},
+    {" end_of_early_data", 1},
     {" unexpected_message", 10},
     {" bad_record_mac", 20},
     {" decryption_failed", 21},
@@ -580,33 +507,44 @@ static STRINT_PAIR alert_types[] = {
     {" protocol_version", 70},
     {" insufficient_security", 71},
     {" internal_error", 80},
+    {" inappropriate_fallback", 86},
     {" user_canceled", 90},
     {" no_renegotiation", 100},
+    {" missing_extension", 109},
     {" unsupported_extension", 110},
     {" certificate_unobtainable", 111},
     {" unrecognized_name", 112},
     {" bad_certificate_status_response", 113},
     {" bad_certificate_hash_value", 114},
     {" unknown_psk_identity", 115},
+    {" certificate_required", 116},
     {NULL}
 };
 
 static STRINT_PAIR handshakes[] = {
-    {", HelloRequest", 0},
-    {", ClientHello", 1},
-    {", ServerHello", 2},
-    {", HelloVerifyRequest", 3},
-    {", NewSessionTicket", 4},
-    {", Certificate", 11},
-    {", ServerKeyExchange", 12},
-    {", CertificateRequest", 13},
-    {", ServerHelloDone", 14},
-    {", CertificateVerify", 15},
-    {", ClientKeyExchange", 16},
-    {", Finished", 20},
+    {", HelloRequest", SSL3_MT_HELLO_REQUEST},
+    {", ClientHello", SSL3_MT_CLIENT_HELLO},
+    {", ServerHello", SSL3_MT_SERVER_HELLO},
+    {", HelloVerifyRequest", DTLS1_MT_HELLO_VERIFY_REQUEST},
+    {", NewSessionTicket", SSL3_MT_NEWSESSION_TICKET},
+    {", EndOfEarlyData", SSL3_MT_END_OF_EARLY_DATA},
+    {", HelloRetryRequest", SSL3_MT_HELLO_RETRY_REQUEST},
+    {", EncryptedExtensions", SSL3_MT_ENCRYPTED_EXTENSIONS},
+    {", Certificate", SSL3_MT_CERTIFICATE},
+    {", ServerKeyExchange", SSL3_MT_SERVER_KEY_EXCHANGE},
+    {", CertificateRequest", SSL3_MT_CERTIFICATE_REQUEST},
+    {", ServerHelloDone", SSL3_MT_SERVER_DONE},
+    {", CertificateVerify", SSL3_MT_CERTIFICATE_VERIFY},
+    {", ClientKeyExchange", SSL3_MT_CLIENT_KEY_EXCHANGE},
+    {", Finished", SSL3_MT_FINISHED},
     {", CertificateUrl", 21},
-    {", CertificateStatus", 22},
+    {", CertificateStatus", SSL3_MT_CERTIFICATE_STATUS},
     {", SupplementalData", 23},
+    {", KeyUpdate", SSL3_MT_KEY_UPDATE},
+#ifndef OPENSSL_NO_NEXTPROTONEG
+    {", NextProto", SSL3_MT_NEXT_PROTO},
+#endif
+    {", MessageHash", SSL3_MT_MESSAGE_HASH},
     {NULL}
 };
 
@@ -623,13 +561,14 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
         version == TLS1_VERSION ||
         version == TLS1_1_VERSION ||
         version == TLS1_2_VERSION ||
+        version == TLS1_3_VERSION ||
         version == DTLS1_VERSION || version == DTLS1_BAD_VER) {
         switch (content_type) {
         case 20:
-            str_content_type = "ChangeCipherSpec";
+            str_content_type = ", ChangeCipherSpec";
             break;
         case 21:
-            str_content_type = "Alert";
+            str_content_type = ", Alert";
             str_details1 = ", ???";
             if (len == 2) {
                 switch (bp[0]) {
@@ -644,13 +583,13 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             }
             break;
         case 22:
-            str_content_type = "Handshake";
+            str_content_type = ", Handshake";
             str_details1 = "???";
             if (len > 0)
                 str_details1 = lookup((int)bp[0], handshakes, "???");
             break;
         case 23:
-            str_content_type = "ApplicationData";
+            str_content_type = ", ApplicationData";
             break;
 #ifndef OPENSSL_NO_HEARTBEATS
         case 24:
@@ -703,7 +642,7 @@ static STRINT_PAIR tlsext_types[] = {
     {"client authz", TLSEXT_TYPE_client_authz},
     {"server authz", TLSEXT_TYPE_server_authz},
     {"cert type", TLSEXT_TYPE_cert_type},
-    {"elliptic curves", TLSEXT_TYPE_elliptic_curves},
+    {"supported_groups", TLSEXT_TYPE_supported_groups},
     {"EC point formats", TLSEXT_TYPE_ec_point_formats},
     {"SRP", TLSEXT_TYPE_srp},
     {"signature algorithms", TLSEXT_TYPE_signature_algorithms},
@@ -711,6 +650,7 @@ static STRINT_PAIR tlsext_types[] = {
     {"heartbeat", TLSEXT_TYPE_heartbeat},
     {"session ticket", TLSEXT_TYPE_session_ticket},
     {"renegotiation info", TLSEXT_TYPE_renegotiate},
+    {"signed certificate timestamps", TLSEXT_TYPE_signed_certificate_timestamp},
     {"TLS padding", TLSEXT_TYPE_padding},
 #ifdef TLSEXT_TYPE_next_proto_neg
     {"next protocol", TLSEXT_TYPE_next_proto_neg},
@@ -725,6 +665,11 @@ static STRINT_PAIR tlsext_types[] = {
 #ifdef TLSEXT_TYPE_extended_master_secret
     {"extended master secret", TLSEXT_TYPE_extended_master_secret},
 #endif
+    {"key share", TLSEXT_TYPE_key_share},
+    {"supported versions", TLSEXT_TYPE_supported_versions},
+    {"psk", TLSEXT_TYPE_psk},
+    {"psk kex modes", TLSEXT_TYPE_psk_kex_modes},
+    {"certificate authorities", TLSEXT_TYPE_certificate_authorities},
     {NULL}
 };
 
@@ -740,6 +685,7 @@ void tlsext_cb(SSL *s, int client_server, int type,
     (void)BIO_flush(bio);
 }
 
+#ifndef OPENSSL_NO_SOCK
 int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len)
 {
@@ -802,6 +748,7 @@ int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
 
     return 0;
 }
+#endif
 
 /*
  * Example of extended certificate handling. Where the standard support of
@@ -889,7 +836,7 @@ static int set_cert_cb(SSL *ssl, void *arg)
         rv = SSL_check_chain(ssl, exc->cert, exc->key, exc->chain);
         BIO_printf(bio_err, "Checking cert chain %d:\nSubject: ", i);
         X509_NAME_print_ex(bio_err, X509_get_subject_name(exc->cert), 0,
-                           XN_FLAG_ONELINE);
+                           nmflag);
         BIO_puts(bio_err, "\n");
         print_chain_flags(ssl, rv);
         if (rv & CERT_PKEY_VALID) {
@@ -1020,6 +967,7 @@ int args_excert(int opt, SSL_EXCERT **pexc)
             BIO_printf(bio_err, "%s: Error adding xcert\n", opt_getprog());
             goto err;
         }
+        *pexc = exc;
         exc->certfile = opt_arg();
         break;
     case OPT_X_KEY:
@@ -1099,13 +1047,13 @@ static char *hexencode(const unsigned char *data, size_t len)
     int ilen = (int) outlen;
 
     if (outlen < len || ilen < 0 || outlen != (size_t)ilen) {
-        BIO_printf(bio_err, "%s: %" PRIu64 "-byte buffer too large to hexencode\n",
-                   opt_getprog(), (uint64_t)len);
+        BIO_printf(bio_err, "%s: %zu-byte buffer too large to hexencode\n",
+                   opt_getprog(), len);
         exit(1);
     }
     cp = out = app_malloc(ilen, "TLSA hex data buffer");
 
-    while (ilen-- > 0) {
+    while (len-- > 0) {
         *cp++ = hex[(*data >> 4) & 0x0f];
         *cp++ = hex[*data++ & 0x0f];
     }
@@ -1165,7 +1113,6 @@ void print_ssl_summary(SSL *s)
 {
     const SSL_CIPHER *c;
     X509 *peer;
-    /* const char *pnam = SSL_is_server(s) ? "client" : "server"; */
 
     BIO_printf(bio_err, "Protocol version: %s\n", SSL_get_version(s));
     print_raw_cipherlist(s);
@@ -1178,10 +1125,12 @@ void print_ssl_summary(SSL *s)
 
         BIO_puts(bio_err, "Peer certificate: ");
         X509_NAME_print_ex(bio_err, X509_get_subject_name(peer),
-                           0, XN_FLAG_ONELINE);
+                           0, nmflag);
         BIO_puts(bio_err, "\n");
         if (SSL_get_peer_signature_nid(s, &nid))
             BIO_printf(bio_err, "Hash used: %s\n", OBJ_nid2sn(nid));
+        if (SSL_get_peer_signature_type_nid(s, &nid))
+            BIO_printf(bio_err, "Signature type: %s\n", get_sigtype(nid));
         print_verify_detail(s, bio_err);
     } else
         BIO_puts(bio_err, "No peer certificate\n");
@@ -1189,7 +1138,7 @@ void print_ssl_summary(SSL *s)
 #ifndef OPENSSL_NO_EC
     ssl_print_point_formats(bio_err, s);
     if (SSL_is_server(s))
-        ssl_print_curves(bio_err, s, 1);
+        ssl_print_groups(bio_err, s, 1);
     else
         ssl_print_tmp_key(bio_err, s);
 #else
@@ -1284,7 +1233,7 @@ int ssl_load_stores(SSL_CTX *ctx,
 typedef struct {
     BIO *out;
     int verbose;
-    int (*old_cb) (SSL *s, SSL_CTX *ctx, int op, int bits, int nid,
+    int (*old_cb) (const SSL *s, const SSL_CTX *ctx, int op, int bits, int nid,
                    void *other, void *ex);
 } security_debug_ex;
 
@@ -1313,7 +1262,7 @@ static STRINT_PAIR callback_types[] = {
     {NULL}
 };
 
-static int security_callback_debug(SSL *s, SSL_CTX *ctx,
+static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
                                    int op, int bits, int nid,
                                    void *other, void *ex)
 {
@@ -1366,7 +1315,7 @@ static int security_callback_debug(SSL *s, SSL_CTX *ctx,
     case SSL_SECOP_OTHER_DH:
         {
             DH *dh = other;
-            BIO_printf(sdb->out, "%d", BN_num_bits(dh->p));
+            BIO_printf(sdb->out, "%d", DH_bits(dh));
             break;
         }
 #endif
@@ -1429,4 +1378,69 @@ void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose)
     sdb.old_cb = SSL_CTX_get_security_callback(ctx);
     SSL_CTX_set_security_callback(ctx, security_callback_debug);
     SSL_CTX_set0_security_ex_data(ctx, &sdb);
+}
+
+static void keylog_callback(const SSL *ssl, const char *line)
+{
+    if (bio_keylog == NULL) {
+        BIO_printf(bio_err, "Keylog callback is invoked without valid file!\n");
+        return;
+    }
+
+    /*
+     * There might be concurrent writers to the keylog file, so we must ensure
+     * that the given line is written at once.
+     */
+    BIO_printf(bio_keylog, "%s\n", line);
+    (void)BIO_flush(bio_keylog);
+}
+
+int set_keylog_file(SSL_CTX *ctx, const char *keylog_file)
+{
+    /* Close any open files */
+    BIO_free_all(bio_keylog);
+    bio_keylog = NULL;
+
+    if (ctx == NULL || keylog_file == NULL) {
+        /* Keylogging is disabled, OK. */
+        return 0;
+    }
+
+    /*
+     * Append rather than write in order to allow concurrent modification.
+     * Furthermore, this preserves existing keylog files which is useful when
+     * the tool is run multiple times.
+     */
+    bio_keylog = BIO_new_file(keylog_file, "a");
+    if (bio_keylog == NULL) {
+        BIO_printf(bio_err, "Error writing keylog file %s\n", keylog_file);
+        return 1;
+    }
+
+    /* Write a header for seekable, empty files (this excludes pipes). */
+    if (BIO_tell(bio_keylog) == 0) {
+        BIO_puts(bio_keylog,
+                 "# SSL/TLS secrets log file, generated by OpenSSL\n");
+        (void)BIO_flush(bio_keylog);
+    }
+    SSL_CTX_set_keylog_callback(ctx, keylog_callback);
+    return 0;
+}
+
+void print_ca_names(BIO *bio, SSL *s)
+{
+    const char *cs = SSL_is_server(s) ? "server" : "client";
+    const STACK_OF(X509_NAME) *sk = SSL_get0_peer_CA_list(s);
+    int i;
+
+    if (sk == NULL || sk_X509_NAME_num(sk) == 0) {
+        BIO_printf(bio, "---\nNo %s certificate CA names sent\n", cs);
+        return;
+    }
+
+    BIO_printf(bio, "---\nAcceptable %s certificate CA names\n",cs);
+    for (i = 0; i < sk_X509_NAME_num(sk); i++) {
+        X509_NAME_print_ex(bio, sk_X509_NAME_value(sk, i), 0, XN_FLAG_ONELINE);
+        BIO_write(bio, "\n", 1);
+    }
 }

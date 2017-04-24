@@ -1,164 +1,30 @@
-/* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
- * All rights reserved.
+/*
+ * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * This package is an SSL implementation written
- * by Eric Young (eay@cryptsoft.com).
- * The implementation was written so as to conform with Netscapes SSL.
- *
- * This library is free for commercial and non-commercial use as long as
- * the following conditions are aheared to.  The following conditions
- * apply to all code found in this distribution, be it the RC4, RSA,
- * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
- * included with this distribution is covered by the same copyright terms
- * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- *
- * Copyright remains Eric Young's, and as such any Copyright notices in
- * the code are not to be removed.
- * If this package is used in a product, Eric Young should be given attribution
- * as the author of the parts of the library used.
- * This can be in the form of a textual message at program startup or
- * in documentation (online or textual) provided with the package.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *    "This product includes cryptographic software written by
- *     Eric Young (eay@cryptsoft.com)"
- *    The word 'cryptographic' can be left out if the rouines from the library
- *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from
- *    the apps directory (application code) you must include an acknowledgement:
- *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- *
- * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * The licence and distribution terms for any publically available version or
- * derivative of this code cannot be changed.  i.e. this code cannot simply be
- * copied and put under another distribution licence
- * [including the GNU Public Licence.]
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #ifndef HEADER_RSA_H
 # define HEADER_RSA_H
 
 # include <openssl/opensslconf.h>
-# include <openssl/asn1.h>
 
+# ifndef OPENSSL_NO_RSA
+# include <openssl/asn1.h>
 # include <openssl/bio.h>
 # include <openssl/crypto.h>
 # include <openssl/ossl_typ.h>
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 # endif
-
-# ifdef OPENSSL_NO_RSA
-#  error RSA is disabled.
+# ifdef  __cplusplus
+extern "C" {
 # endif
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
-/* Declared already in ossl_typ.h */
-/* typedef struct rsa_st RSA; */
-/* typedef struct rsa_meth_st RSA_METHOD; */
-
-struct rsa_meth_st {
-    const char *name;
-    int (*rsa_pub_enc) (int flen, const unsigned char *from,
-                        unsigned char *to, RSA *rsa, int padding);
-    int (*rsa_pub_dec) (int flen, const unsigned char *from,
-                        unsigned char *to, RSA *rsa, int padding);
-    int (*rsa_priv_enc) (int flen, const unsigned char *from,
-                         unsigned char *to, RSA *rsa, int padding);
-    int (*rsa_priv_dec) (int flen, const unsigned char *from,
-                         unsigned char *to, RSA *rsa, int padding);
-    /* Can be null */
-    int (*rsa_mod_exp) (BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
-    /* Can be null */
-    int (*bn_mod_exp) (BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-                       const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-    /* called at new */
-    int (*init) (RSA *rsa);
-    /* called at free */
-    int (*finish) (RSA *rsa);
-    /* RSA_METHOD_FLAG_* things */
-    int flags;
-    /* may be needed! */
-    char *app_data;
-    /*
-     * New sign and verify functions: some libraries don't allow arbitrary
-     * data to be signed/verified: this allows them to be used. Note: for
-     * this to work the RSA_public_decrypt() and RSA_private_encrypt() should
-     * *NOT* be used RSA_sign(), RSA_verify() should be used instead.
-     */
-    int (*rsa_sign) (int type,
-                     const unsigned char *m, unsigned int m_length,
-                     unsigned char *sigret, unsigned int *siglen,
-                     const RSA *rsa);
-    int (*rsa_verify) (int dtype, const unsigned char *m,
-                       unsigned int m_length, const unsigned char *sigbuf,
-                       unsigned int siglen, const RSA *rsa);
-    /*
-     * If this callback is NULL, the builtin software RSA key-gen will be
-     * used. This is for behavioural compatibility whilst the code gets
-     * rewired, but one day it would be nice to assume there are no such
-     * things as "builtin software" implementations.
-     */
-    int (*rsa_keygen) (RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
-};
-
-struct rsa_st {
-    /*
-     * The first parameter is used to pickup errors where this is passed
-     * instead of aEVP_PKEY, it is set to 0
-     */
-    int pad;
-    long version;
-    const RSA_METHOD *meth;
-    /* functional reference if 'meth' is ENGINE-provided */
-    ENGINE *engine;
-    BIGNUM *n;
-    BIGNUM *e;
-    BIGNUM *d;
-    BIGNUM *p;
-    BIGNUM *q;
-    BIGNUM *dmp1;
-    BIGNUM *dmq1;
-    BIGNUM *iqmp;
-    /* be careful using this if the RSA structure is shared */
-    CRYPTO_EX_DATA ex_data;
-    int references;
-    int flags;
-    /* Used to cache montgomery values */
-    BN_MONT_CTX *_method_mod_n;
-    BN_MONT_CTX *_method_mod_p;
-    BN_MONT_CTX *_method_mod_q;
-    /*
-     * all BIGNUM values are actually in the following data, if it is not
-     * NULL
-     */
-    char *bignum_data;
-    BN_BLINDING *blinding;
-    BN_BLINDING *mt_blinding;
-};
+/* The types RSA and RSA_METHOD are defined in ossl_typ.h */
 
 # ifndef OPENSSL_RSA_MAX_MODULUS_BITS
 #  define OPENSSL_RSA_MAX_MODULUS_BITS   16384
@@ -200,18 +66,12 @@ struct rsa_st {
  * but other engines might not need it
  */
 # define RSA_FLAG_NO_BLINDING            0x0080
+# if OPENSSL_API_COMPAT < 0x10100000L
 /*
- * new with 0.9.8f; the built-in RSA
- * implementation now uses constant time
- * operations by default in private key operations,
- * e.g., constant time modular exponentiation,
- * modular inverse without leaking branches,
- * division without leaking branches. This
- * flag disables these constant time
- * operations and results in faster RSA
- * private key operations.
+ * Does nothing. Previously this switched off constant time behaviour.
  */
-# define RSA_FLAG_NO_CONSTTIME           0x0100
+#  define RSA_FLAG_NO_CONSTTIME           0x0000
+# endif
 # if OPENSSL_API_COMPAT < 0x00908000L
 /* deprecated name for the flag*/
 /*
@@ -226,46 +86,54 @@ struct rsa_st {
 # endif
 
 # define EVP_PKEY_CTX_set_rsa_padding(ctx, pad) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, -1, EVP_PKEY_CTRL_RSA_PADDING, \
-                                pad, NULL)
+        RSA_pkey_ctx_ctrl(ctx, -1, EVP_PKEY_CTRL_RSA_PADDING, pad, NULL)
 
 # define EVP_PKEY_CTX_get_rsa_padding(ctx, ppad) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, -1, \
-                                EVP_PKEY_CTRL_GET_RSA_PADDING, 0, ppad)
+        RSA_pkey_ctx_ctrl(ctx, -1, EVP_PKEY_CTRL_GET_RSA_PADDING, 0, ppad)
 
 # define EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, len) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, \
-                                (EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
-                                EVP_PKEY_CTRL_RSA_PSS_SALTLEN, \
-                                len, NULL)
+        RSA_pkey_ctx_ctrl(ctx, (EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
+                          EVP_PKEY_CTRL_RSA_PSS_SALTLEN, len, NULL)
+/* Salt length matches digest */
+# define RSA_PSS_SALTLEN_DIGEST -1
+/* Verify only: auto detect salt length */
+# define RSA_PSS_SALTLEN_AUTO   -2
+/* Set salt length to maximum possible */
+# define RSA_PSS_SALTLEN_MAX    -3
+/* Old compatible max salt length for sign only */
+# define RSA_PSS_SALTLEN_MAX_SIGN    -2
+
+# define EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(ctx, len) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN, \
+                          EVP_PKEY_CTRL_RSA_PSS_SALTLEN, len, NULL)
 
 # define EVP_PKEY_CTX_get_rsa_pss_saltlen(ctx, plen) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, \
-                                (EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
-                                EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN, \
-                                0, plen)
+        RSA_pkey_ctx_ctrl(ctx, (EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
+                          EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN, 0, plen)
 
 # define EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, bits) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN, \
-                                EVP_PKEY_CTRL_RSA_KEYGEN_BITS, bits, NULL)
+        RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN, \
+                          EVP_PKEY_CTRL_RSA_KEYGEN_BITS, bits, NULL)
 
 # define EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx, pubexp) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN, \
-                                EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, 0, pubexp)
+        RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN, \
+                          EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, 0, pubexp)
 
 # define  EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, md)  \
-                EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, \
-                        EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT, \
-                                EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)md)
+        RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT, \
+                          EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)md)
+
+# define  EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md(ctx, md)  \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN, \
+                          EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)md)
 
 # define  EVP_PKEY_CTX_set_rsa_oaep_md(ctx, md)  \
                 EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,  \
                                 EVP_PKEY_CTRL_RSA_OAEP_MD, 0, (void *)md)
 
 # define  EVP_PKEY_CTX_get_rsa_mgf1_md(ctx, pmd) \
-                EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, \
-                        EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT, \
-                                EVP_PKEY_CTRL_GET_RSA_MGF1_MD, 0, (void *)pmd)
+        RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT, \
+                          EVP_PKEY_CTRL_GET_RSA_MGF1_MD, 0, (void *)pmd)
 
 # define  EVP_PKEY_CTX_get_rsa_oaep_md(ctx, pmd) \
                 EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,  \
@@ -278,6 +146,11 @@ struct rsa_st {
 # define  EVP_PKEY_CTX_get0_rsa_oaep_label(ctx, l)       \
                 EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,  \
                                 EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL, 0, (void *)l)
+
+# define  EVP_PKEY_CTX_rsa_pss_keygen_md(ctx, md)  \
+                EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, \
+                                  EVP_PKEY_OP_TYPE_KEYGEN, EVP_PKEY_CTRL_MD, \
+                                  0, (void *)md)
 
 # define EVP_PKEY_CTRL_RSA_PADDING       (EVP_PKEY_ALG_CTRL + 1)
 # define EVP_PKEY_CTRL_RSA_PSS_SALTLEN   (EVP_PKEY_ALG_CTRL + 2)
@@ -315,6 +188,20 @@ int RSA_bits(const RSA *rsa);
 int RSA_size(const RSA *rsa);
 int RSA_security_bits(const RSA *rsa);
 
+int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d);
+int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q);
+int RSA_set0_crt_params(RSA *r,BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp);
+void RSA_get0_key(const RSA *r,
+                  const BIGNUM **n, const BIGNUM **e, const BIGNUM **d);
+void RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q);
+void RSA_get0_crt_params(const RSA *r,
+                         const BIGNUM **dmp1, const BIGNUM **dmq1,
+                         const BIGNUM **iqmp);
+void RSA_clear_flags(RSA *r, int flags);
+int RSA_test_flags(const RSA *r, int flags);
+void RSA_set_flags(RSA *r, int flags);
+ENGINE *RSA_get0_engine(const RSA *r);
+
 /* Deprecated version */
 DEPRECATEDIN_0_9_8(RSA *RSA_generate_key(int bits, unsigned long e, void
                                          (*callback) (int, int, void *),
@@ -349,16 +236,14 @@ int RSA_flags(const RSA *r);
 
 void RSA_set_default_method(const RSA_METHOD *meth);
 const RSA_METHOD *RSA_get_default_method(void);
+const RSA_METHOD *RSA_null_method(void);
 const RSA_METHOD *RSA_get_method(const RSA *rsa);
 int RSA_set_method(RSA *rsa, const RSA_METHOD *meth);
-
-/* This function needs the memory locking malloc callbacks to be installed */
-int RSA_memory_lock(RSA *r);
 
 /* these are the actual RSA functions */
 const RSA_METHOD *RSA_PKCS1_OpenSSL(void);
 
-const RSA_METHOD *RSA_null_method(void);
+int RSA_pkey_ctx_ctrl(EVP_PKEY_CTX *ctx, int optype, int cmd, int p1, void *p2);
 
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPublicKey)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPrivateKey)
@@ -368,6 +253,8 @@ typedef struct rsa_pss_params_st {
     X509_ALGOR *maskGenAlgorithm;
     ASN1_INTEGER *saltLength;
     ASN1_INTEGER *trailerField;
+    /* Decoded hash algorithm from maskGenAlgorithm */
+    X509_ALGOR *maskHash;
 } RSA_PSS_PARAMS;
 
 DECLARE_ASN1_FUNCTIONS(RSA_PSS_PARAMS)
@@ -376,6 +263,8 @@ typedef struct rsa_oaep_params_st {
     X509_ALGOR *hashFunc;
     X509_ALGOR *maskGenFunc;
     X509_ALGOR *pSourceFunc;
+    /* Decoded hash algorithm from maskGenFunc */
+    X509_ALGOR *maskHash;
 } RSA_OAEP_PARAMS;
 
 DECLARE_ASN1_FUNCTIONS(RSA_OAEP_PARAMS)
@@ -498,49 +387,129 @@ RSA *RSAPrivateKey_dup(RSA *rsa);
  */
 # define RSA_FLAG_CHECKED                        0x0800
 
+RSA_METHOD *RSA_meth_new(const char *name, int flags);
+void RSA_meth_free(RSA_METHOD *meth);
+RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth);
+const char *RSA_meth_get0_name(const RSA_METHOD *meth);
+int RSA_meth_set1_name(RSA_METHOD *meth, const char *name);
+int RSA_meth_get_flags(RSA_METHOD *meth);
+int RSA_meth_set_flags(RSA_METHOD *meth, int flags);
+void *RSA_meth_get0_app_data(const RSA_METHOD *meth);
+int RSA_meth_set0_app_data(RSA_METHOD *meth, void *app_data);
+int (*RSA_meth_get_pub_enc(const RSA_METHOD *meth))
+    (int flen, const unsigned char *from,
+     unsigned char *to, RSA *rsa, int padding);
+int RSA_meth_set_pub_enc(RSA_METHOD *rsa,
+                         int (*pub_enc) (int flen, const unsigned char *from,
+                                         unsigned char *to, RSA *rsa,
+                                         int padding));
+int (*RSA_meth_get_pub_dec(const RSA_METHOD *meth))
+    (int flen, const unsigned char *from,
+     unsigned char *to, RSA *rsa, int padding);
+int RSA_meth_set_pub_dec(RSA_METHOD *rsa,
+                         int (*pub_dec) (int flen, const unsigned char *from,
+                                         unsigned char *to, RSA *rsa,
+                                         int padding));
+int (*RSA_meth_get_priv_enc(const RSA_METHOD *meth))
+    (int flen, const unsigned char *from,
+     unsigned char *to, RSA *rsa, int padding);
+int RSA_meth_set_priv_enc(RSA_METHOD *rsa,
+                          int (*priv_enc) (int flen, const unsigned char *from,
+                                           unsigned char *to, RSA *rsa,
+                                           int padding));
+int (*RSA_meth_get_priv_dec(const RSA_METHOD *meth))
+    (int flen, const unsigned char *from,
+     unsigned char *to, RSA *rsa, int padding);
+int RSA_meth_set_priv_dec(RSA_METHOD *rsa,
+                          int (*priv_dec) (int flen, const unsigned char *from,
+                                           unsigned char *to, RSA *rsa,
+                                           int padding));
+int (*RSA_meth_get_mod_exp(const RSA_METHOD *meth))
+    (BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
+int RSA_meth_set_mod_exp(RSA_METHOD *rsa,
+                         int (*mod_exp) (BIGNUM *r0, const BIGNUM *I, RSA *rsa,
+                                         BN_CTX *ctx));
+int (*RSA_meth_get_bn_mod_exp(const RSA_METHOD *meth))
+    (BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+int RSA_meth_set_bn_mod_exp(RSA_METHOD *rsa,
+                            int (*bn_mod_exp) (BIGNUM *r,
+                                               const BIGNUM *a,
+                                               const BIGNUM *p,
+                                               const BIGNUM *m,
+                                               BN_CTX *ctx,
+                                               BN_MONT_CTX *m_ctx));
+int (*RSA_meth_get_init(const RSA_METHOD *meth)) (RSA *rsa);
+int RSA_meth_set_init(RSA_METHOD *rsa, int (*init) (RSA *rsa));
+int (*RSA_meth_get_finish(const RSA_METHOD *meth)) (RSA *rsa);
+int RSA_meth_set_finish(RSA_METHOD *rsa, int (*finish) (RSA *rsa));
+int (*RSA_meth_get_sign(const RSA_METHOD *meth))
+    (int type,
+     const unsigned char *m, unsigned int m_length,
+     unsigned char *sigret, unsigned int *siglen,
+     const RSA *rsa);
+int RSA_meth_set_sign(RSA_METHOD *rsa,
+                      int (*sign) (int type, const unsigned char *m,
+                                   unsigned int m_length,
+                                   unsigned char *sigret, unsigned int *siglen,
+                                   const RSA *rsa));
+int (*RSA_meth_get_verify(const RSA_METHOD *meth))
+    (int dtype, const unsigned char *m,
+     unsigned int m_length, const unsigned char *sigbuf,
+     unsigned int siglen, const RSA *rsa);
+int RSA_meth_set_verify(RSA_METHOD *rsa,
+                        int (*verify) (int dtype, const unsigned char *m,
+                                       unsigned int m_length,
+                                       const unsigned char *sigbuf,
+                                       unsigned int siglen, const RSA *rsa));
+int (*RSA_meth_get_keygen(const RSA_METHOD *meth))
+    (RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
+int RSA_meth_set_keygen(RSA_METHOD *rsa,
+                        int (*keygen) (RSA *rsa, int bits, BIGNUM *e,
+                                       BN_GENCB *cb));
+
 /* BEGIN ERROR CODES */
 /*
  * The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
  */
-void ERR_load_RSA_strings(void);
+
+int ERR_load_RSA_strings(void);
 
 /* Error codes for the RSA functions. */
 
 /* Function codes. */
 # define RSA_F_CHECK_PADDING_MD                           140
-# define RSA_F_DO_RSA_PRINT                               146
-# define RSA_F_FIPS_RSA_SIGN_DIGEST                       149
-# define RSA_F_FIPS_RSA_VERIFY                            150
-# define RSA_F_FIPS_RSA_VERIFY_DIGEST                     151
+# define RSA_F_ENCODE_PKCS1                               146
 # define RSA_F_INT_RSA_VERIFY                             145
-# define RSA_F_MEMORY_LOCK                                100
 # define RSA_F_OLD_RSA_PRIV_DECODE                        147
+# define RSA_F_PKEY_PSS_INIT                              165
 # define RSA_F_PKEY_RSA_CTRL                              143
 # define RSA_F_PKEY_RSA_CTRL_STR                          144
 # define RSA_F_PKEY_RSA_SIGN                              142
+# define RSA_F_PKEY_RSA_VERIFY                            149
 # define RSA_F_PKEY_RSA_VERIFYRECOVER                     141
 # define RSA_F_RSA_ALGOR_TO_MD                            156
 # define RSA_F_RSA_BUILTIN_KEYGEN                         129
 # define RSA_F_RSA_CHECK_KEY                              123
 # define RSA_F_RSA_CHECK_KEY_EX                           160
 # define RSA_F_RSA_CMS_DECRYPT                            159
-# define RSA_F_RSA_OSSL_PRIVATE_DECRYPT                   101
-# define RSA_F_RSA_OSSL_PRIVATE_ENCRYPT                   102
-# define RSA_F_RSA_OSSL_PUBLIC_DECRYPT                    103
-# define RSA_F_RSA_OSSL_PUBLIC_ENCRYPT                    104
-# define RSA_F_RSA_GENERATE_KEY                           105
+# define RSA_F_RSA_CMS_VERIFY                             158
 # define RSA_F_RSA_ITEM_VERIFY                            148
-# define RSA_F_RSA_MEMORY_LOCK                            130
+# define RSA_F_RSA_METH_DUP                               161
+# define RSA_F_RSA_METH_NEW                               162
+# define RSA_F_RSA_METH_SET1_NAME                         163
 # define RSA_F_RSA_MGF1_TO_MD                             157
 # define RSA_F_RSA_NEW_METHOD                             106
 # define RSA_F_RSA_NULL                                   124
-# define RSA_F_RSA_NULL_MOD_EXP                           131
 # define RSA_F_RSA_NULL_PRIVATE_DECRYPT                   132
 # define RSA_F_RSA_NULL_PRIVATE_ENCRYPT                   133
 # define RSA_F_RSA_NULL_PUBLIC_DECRYPT                    134
 # define RSA_F_RSA_NULL_PUBLIC_ENCRYPT                    135
-# define RSA_F_RSA_OAEP_TO_CTX                            158
+# define RSA_F_RSA_OSSL_PRIVATE_DECRYPT                   101
+# define RSA_F_RSA_OSSL_PRIVATE_ENCRYPT                   102
+# define RSA_F_RSA_OSSL_PUBLIC_DECRYPT                    103
+# define RSA_F_RSA_OSSL_PUBLIC_ENCRYPT                    104
 # define RSA_F_RSA_PADDING_ADD_NONE                       107
 # define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP                 121
 # define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1            154
@@ -557,10 +526,12 @@ void ERR_load_RSA_strings(void);
 # define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2             113
 # define RSA_F_RSA_PADDING_CHECK_SSLV23                   114
 # define RSA_F_RSA_PADDING_CHECK_X931                     128
+# define RSA_F_RSA_PARAM_DECODE                           164
 # define RSA_F_RSA_PRINT                                  115
 # define RSA_F_RSA_PRINT_FP                               116
-# define RSA_F_RSA_PRIV_DECODE                            137
+# define RSA_F_RSA_PRIV_DECODE                            150
 # define RSA_F_RSA_PRIV_ENCODE                            138
+# define RSA_F_RSA_PSS_GET_PARAM                          151
 # define RSA_F_RSA_PSS_TO_CTX                             155
 # define RSA_F_RSA_PUB_DECODE                             139
 # define RSA_F_RSA_SETUP_BLINDING                         136
@@ -585,6 +556,7 @@ void ERR_load_RSA_strings(void);
 # define RSA_R_DATA_TOO_SMALL                             111
 # define RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE                122
 # define RSA_R_DIGEST_DOES_NOT_MATCH                      158
+# define RSA_R_DIGEST_NOT_ALLOWED                         145
 # define RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY                 112
 # define RSA_R_DMP1_NOT_CONGRUENT_TO_D                    124
 # define RSA_R_DMQ1_NOT_CONGRUENT_TO_D                    125
@@ -594,7 +566,6 @@ void ERR_load_RSA_strings(void);
 # define RSA_R_INVALID_DIGEST                             157
 # define RSA_R_INVALID_DIGEST_LENGTH                      143
 # define RSA_R_INVALID_HEADER                             137
-# define RSA_R_INVALID_KEYBITS                            145
 # define RSA_R_INVALID_LABEL                              160
 # define RSA_R_INVALID_MESSAGE_LENGTH                     131
 # define RSA_R_INVALID_MGF1_MD                            156
@@ -609,6 +580,7 @@ void ERR_load_RSA_strings(void);
 # define RSA_R_IQMP_NOT_INVERSE_OF_Q                      126
 # define RSA_R_KEY_SIZE_TOO_SMALL                         120
 # define RSA_R_LAST_OCTET_INVALID                         134
+# define RSA_R_MGF1_DIGEST_NOT_ALLOWED                    152
 # define RSA_R_MODULUS_TOO_LARGE                          105
 # define RSA_R_NO_PUBLIC_EXPONENT                         140
 # define RSA_R_NULL_BEFORE_BLOCK_MISSING                  113
@@ -617,6 +589,7 @@ void ERR_load_RSA_strings(void);
 # define RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE   148
 # define RSA_R_PADDING_CHECK_FAILED                       114
 # define RSA_R_PKCS_DECODING_ERROR                        159
+# define RSA_R_PSS_SALTLEN_TOO_SMALL                      164
 # define RSA_R_P_NOT_PRIME                                128
 # define RSA_R_Q_NOT_PRIME                                129
 # define RSA_R_RSA_OPERATIONS_NOT_SUPPORTED               130
@@ -628,7 +601,6 @@ void ERR_load_RSA_strings(void);
 # define RSA_R_UNKNOWN_DIGEST                             166
 # define RSA_R_UNKNOWN_MASK_DIGEST                        151
 # define RSA_R_UNKNOWN_PADDING_TYPE                       118
-# define RSA_R_UNKNOWN_PSS_DIGEST                         152
 # define RSA_R_UNSUPPORTED_ENCRYPTION_TYPE                162
 # define RSA_R_UNSUPPORTED_LABEL_SOURCE                   163
 # define RSA_R_UNSUPPORTED_MASK_ALGORITHM                 153
@@ -637,7 +609,8 @@ void ERR_load_RSA_strings(void);
 # define RSA_R_VALUE_MISSING                              147
 # define RSA_R_WRONG_SIGNATURE_LENGTH                     119
 
-#ifdef  __cplusplus
+#  ifdef  __cplusplus
 }
-#endif
+#  endif
+# endif
 #endif

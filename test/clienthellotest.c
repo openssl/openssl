@@ -1,56 +1,10 @@
-/* Written by Matt Caswell for the OpenSSL Project */
-/* ====================================================================
- * Copyright (c) 1998-2015 The OpenSSL Project.  All rights reserved.
+/*
+ * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  */
 
 #include <string.h>
@@ -61,159 +15,215 @@
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <time.h>
 
+#include "../ssl/packet_locl.h"
+
+#include "testutil.h"
+#include "test_main_custom.h"
 
 #define CLIENT_VERSION_LEN      2
-#define SESSION_ID_LEN_LEN      1
-#define CIPHERS_LEN_LEN         2
-#define COMPRESSION_LEN_LEN     1
-#define EXTENSIONS_LEN_LEN      2
-#define EXTENSION_TYPE_LEN      2
-#define EXTENSION_SIZE_LEN      2
 
-
-#define TOTAL_NUM_TESTS                         2
-
-/*
- * Test that explicitly setting ticket data results in it appearing in the
- * ClientHello for TLS1.2
- */
-#define TEST_SET_SESSION_TICK_DATA_TLS_1_2      0
+#define TOTAL_NUM_TESTS                         4
 
 /*
  * Test that explicitly setting ticket data results in it appearing in the
  * ClientHello for a negotiated SSL/TLS version
  */
-#define TEST_SET_SESSION_TICK_DATA_VER_NEG      1
+#define TEST_SET_SESSION_TICK_DATA_VER_NEG      0
+/* Enable padding and make sure ClientHello is long enough to require it */
+#define TEST_ADD_PADDING                        1
+/* Enable padding and make sure ClientHello is short enough to not need it */
+#define TEST_PADDING_NOT_NEEDED                 2
+/*
+ * Enable padding and add a PSK to the ClientHello (this will also ensure the
+ * ClientHello is long enough to need padding)
+ */
+#define TEST_ADD_PADDING_AND_PSK                3
 
-int main(int argc, char *argv[])
+#define F5_WORKAROUND_MIN_MSG_LEN   0xff
+#define F5_WORKAROUND_MAX_MSG_LEN   0x200
+
+static const char *sessionfile = NULL;
+/* Dummy ALPN protocols used to pad out the size of the ClientHello */
+static const char alpn_prots[] =
+    "0123456789012345678901234567890123456789012345678901234567890123456789"
+    "0123456789012345678901234567890123456789012345678901234567890123456789";
+
+static int test_client_hello(int currtest)
 {
     SSL_CTX *ctx;
-    SSL *con;
+    SSL *con = NULL;
     BIO *rbio;
     BIO *wbio;
-    BIO *err;
     long len;
     unsigned char *data;
-    unsigned char *dataend;
+    PACKET pkt, pkt2, pkt3;
     char *dummytick = "Hello World!";
-    unsigned int tmplen;
-    unsigned int type;
-    unsigned int size;
+    unsigned int type = 0;
     int testresult = 0;
-    int currtest = 0;
+    size_t msglen;
+    BIO *sessbio = NULL;
+    SSL_SESSION *sess = NULL;
 
-    err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+#ifdef OPENSSL_NO_TLS1_3
+    if (currtest == TEST_ADD_PADDING_AND_PSK)
+        return 1;
+#endif
 
     /*
      * For each test set up an SSL_CTX and SSL and see what ClientHello gets
      * produced when we try to connect
      */
-    for (; currtest < TOTAL_NUM_TESTS; currtest++) {
-        testresult = 0;
-        if (currtest == TEST_SET_SESSION_TICK_DATA_TLS_1_2) {
-#ifndef OPENSSL_NO_TLS1_2
-            ctx = SSL_CTX_new(TLSv1_2_method());
-#else
-            continue;
-#endif
-        } else {
-            ctx = SSL_CTX_new(TLS_method());
-        }
-        con = SSL_new(ctx);
+    ctx = SSL_CTX_new(TLS_method());
+    if (!TEST_ptr(ctx))
+        goto end;
 
-        rbio = BIO_new(BIO_s_mem());
-        wbio = BIO_new(BIO_s_mem());
-        SSL_set_bio(con, rbio, wbio);
-        SSL_set_connect_state(con);
+    switch(currtest) {
+    case TEST_SET_SESSION_TICK_DATA_VER_NEG:
+        /* Testing for session tickets <= TLS1.2; not relevant for 1.3 */
+        if (!TEST_true(SSL_CTX_set_max_proto_version(ctx, TLS1_2_VERSION)))
+            goto end;
+        break;
 
-        if (currtest == TEST_SET_SESSION_TICK_DATA_TLS_1_2
-                || currtest == TEST_SET_SESSION_TICK_DATA_VER_NEG) {
-            if (!SSL_set_session_ticket_ext(con, dummytick, strlen(dummytick)))
-                goto end;
-        }
+    case TEST_ADD_PADDING_AND_PSK:
+    case TEST_ADD_PADDING:
+    case TEST_PADDING_NOT_NEEDED:
+        SSL_CTX_set_options(ctx, SSL_OP_TLSEXT_PADDING);
+        /*
+         * Add lots of ciphersuites so that the ClientHello is at least
+         * F5_WORKAROUND_MIN_MSG_LEN bytes long - meaning padding will be
+         * needed. Also add some dummy ALPN protocols in case we still don't
+         * have enough.
+         */
+        if (currtest == TEST_ADD_PADDING
+                && (!TEST_true(SSL_CTX_set_cipher_list(ctx, "ALL"))
+                    || !TEST_false(SSL_CTX_set_alpn_protos(ctx,
+                                               (unsigned char *)alpn_prots,
+                                               sizeof(alpn_prots) - 1))))
+            goto end;
 
-        if (SSL_connect(con) > 0) {
-            /* This shouldn't succeed because we don't have a server! */
+        break;
+
+    default:
+        goto end;
+    }
+
+    con = SSL_new(ctx);
+    if (!TEST_ptr(con))
+        goto end;
+
+    if (currtest == TEST_ADD_PADDING_AND_PSK) {
+        sessbio = BIO_new_file(sessionfile, "r");
+        if (!TEST_ptr(sessbio)) {
+            TEST_info("Unable to open session.pem");
             goto end;
         }
+        sess = PEM_read_bio_SSL_SESSION(sessbio, NULL, NULL, NULL);
+        if (!TEST_ptr(sess)) {
+            TEST_info("Unable to load SSL_SESSION");
+            goto end;
+        }
+        /*
+         * We reset the creation time so that we don't discard the session as
+         * too old.
+         */
+        if (!TEST_true(SSL_SESSION_set_time(sess, time(NULL)))
+                || !TEST_true(SSL_set_session(con, sess)))
+            goto end;
+    }
 
-        len = BIO_get_mem_data(wbio, (char **)&data);
-        dataend = data + len;
+    rbio = BIO_new(BIO_s_mem());
+    wbio = BIO_new(BIO_s_mem());
+    if (!TEST_ptr(rbio)|| !TEST_ptr(wbio)) {
+        BIO_free(rbio);
+        BIO_free(wbio);
+        goto end;
+    }
 
-        /* Skip the record header */
-        data += SSL3_RT_HEADER_LENGTH;
-        /* Skip the handshake message header */
-        data += SSL3_HM_HEADER_LENGTH;
-        /* Skip client version and random */
-        data += CLIENT_VERSION_LEN + SSL3_RANDOM_SIZE;
-        if (data + SESSION_ID_LEN_LEN > dataend)
+    SSL_set_bio(con, rbio, wbio);
+    SSL_set_connect_state(con);
+
+    if (currtest == TEST_SET_SESSION_TICK_DATA_VER_NEG) {
+        if (!TEST_true(SSL_set_session_ticket_ext(con, dummytick,
+                                                  strlen(dummytick))))
             goto end;
-        /* Skip session id */
-        tmplen = *data;
-        data += SESSION_ID_LEN_LEN + tmplen;
-        if (data + CIPHERS_LEN_LEN > dataend)
-            goto end;
-        /* Skip ciphers */
-        tmplen = ((*data) << 8) | *(data + 1);
-        data += CIPHERS_LEN_LEN + tmplen;
-        if (data + COMPRESSION_LEN_LEN > dataend)
-            goto end;
-        /* Skip compression */
-        tmplen = *data;
-        data += COMPRESSION_LEN_LEN + tmplen;
-        if (data + EXTENSIONS_LEN_LEN > dataend)
-            goto end;
-        /* Extensions len */
-        tmplen = ((*data) << 8) | *(data + 1);
-        data += EXTENSIONS_LEN_LEN;
-        if (data + tmplen > dataend)
+    }
+
+    if (!TEST_int_le(SSL_connect(con), 0)) {
+        /* This shouldn't succeed because we don't have a server! */
+        goto end;
+    }
+
+    len = BIO_get_mem_data(wbio, (char **)&data);
+    if (!TEST_true(PACKET_buf_init(&pkt, data, len))
+               /* Skip the record header */
+            || !PACKET_forward(&pkt, SSL3_RT_HEADER_LENGTH))
+        goto end;
+
+    msglen = PACKET_remaining(&pkt);
+
+    /* Skip the handshake message header */
+    if (!TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
+               /* Skip client version and random */
+            || !TEST_true(PACKET_forward(&pkt, CLIENT_VERSION_LEN
+                                               + SSL3_RANDOM_SIZE))
+               /* Skip session id */
+            || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &pkt2))
+               /* Skip ciphers */
+            || !TEST_true(PACKET_get_length_prefixed_2(&pkt, &pkt2))
+               /* Skip compression */
+            || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &pkt2))
+               /* Extensions len */
+            || !TEST_true(PACKET_as_length_prefixed_2(&pkt, &pkt2)))
+        goto end;
+
+    /* Loop through all extensions */
+    while (PACKET_remaining(&pkt2)) {
+
+        if (!TEST_true(PACKET_get_net_2(&pkt2, &type))
+                || !TEST_true(PACKET_get_length_prefixed_2(&pkt2, &pkt3)))
             goto end;
 
-        /* Loop through all extensions */
-        while (tmplen > EXTENSION_TYPE_LEN + EXTENSION_SIZE_LEN) {
-            type = ((*data) << 8) | *(data + 1);
-            data += EXTENSION_TYPE_LEN;
-            size = ((*data) << 8) | *(data + 1);
-            data += EXTENSION_SIZE_LEN;
-            if (data + size > dataend)
-                goto end;
-
-            if (type == TLSEXT_TYPE_session_ticket) {
-                if (currtest == TEST_SET_SESSION_TICK_DATA_TLS_1_2
-                        || currtest == TEST_SET_SESSION_TICK_DATA_VER_NEG) {
-                    if (size == strlen(dummytick)
-                            && memcmp(data, dummytick, size) == 0) {
-                        /* Ticket data is as we expected */
-                        testresult = 1;
-                    } else {
-                        printf("Received session ticket is not as expected\n");
-                    }
-                    break;
+        if (type == TLSEXT_TYPE_session_ticket) {
+            if (currtest == TEST_SET_SESSION_TICK_DATA_VER_NEG) {
+                if (TEST_true(PACKET_equal(&pkt3, dummytick,
+                                           strlen(dummytick)))) {
+                    /* Ticket data is as we expected */
+                    testresult = 1;
                 }
+                goto end;
             }
-
-            tmplen -= EXTENSION_TYPE_LEN + EXTENSION_SIZE_LEN + size;
-            data += size;
         }
-
- end:
-        SSL_free(con);
-        SSL_CTX_free(ctx);
-        if (!testresult) {
-            printf("ClientHello test: FAILED (Test %d)\n", currtest);
-            break;
+        if (type == TLSEXT_TYPE_padding) {
+            if (!TEST_false(currtest == TEST_PADDING_NOT_NEEDED))
+                goto end;
+            else if (TEST_true(currtest == TEST_ADD_PADDING
+                    || currtest == TEST_ADD_PADDING_AND_PSK))
+                testresult = TEST_true(msglen == F5_WORKAROUND_MAX_MSG_LEN);
         }
     }
 
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks(err) <= 0)
-        testresult = 0;
-#endif
-    BIO_free(err);
+    if (currtest == TEST_PADDING_NOT_NEEDED)
+        testresult = 1;
 
-    return testresult?0:1;
+end:
+    SSL_free(con);
+    SSL_CTX_free(ctx);
+    SSL_SESSION_free(sess);
+    BIO_free(sessbio);
+
+    return testresult;
+}
+
+int test_main(int argc, char *argv[])
+{
+    if (argc != 2)
+        return EXIT_FAILURE;
+
+    sessionfile = argv[1];
+
+    ADD_ALL_TESTS(test_client_hello, TOTAL_NUM_TESTS);
+
+    return run_tests(argv[0]);
 }
