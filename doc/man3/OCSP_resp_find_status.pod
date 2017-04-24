@@ -4,6 +4,7 @@
 
 OCSP_resp_get0_certs,
 OCSP_resp_get0_id,
+OCSP_resp_get1_id,
 OCSP_resp_get0_produced_at,
 OCSP_resp_find_status, OCSP_resp_count, OCSP_resp_get0, OCSP_resp_find,
 OCSP_single_get0_status, OCSP_check_validity
@@ -35,6 +36,9 @@ OCSP_single_get0_status, OCSP_check_validity
  int OCSP_resp_get0_id(const OCSP_BASICRESP *bs,
                        const ASN1_OCTET_STRING **pid,
                        const X509_NAME **pname);
+ int OCSP_resp_get1_id(const OCSP_BASICRESP *bs,
+                       ASN1_OCTET_STRING **pid,
+                       X509_NAME **pname);
 
  int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
                          ASN1_GENERALIZEDTIME *nextupd,
@@ -75,7 +79,10 @@ OCSP_resp_get0_certs() returns any certificates included in B<bs>.
 OCSP_resp_get0_id() gets the responder id of <bs>. If the responder ID is
 a name then <*pname> is set to the name and B<*pid> is set to NULL. If the
 responder ID is by key ID then B<*pid> is set to the key ID and B<*pname>
-is set to NULL.
+is set to NULL. OCSP_resp_get1_id() leaves ownership of B<*pid> and B<*pname>
+with the caller, who is responsible for freeing them. Both functions return 1
+in case of success and 0 in case of failure. If OCSP_resp_get1_id() returns 0,
+no freeing of the results is necessary.
 
 OCSP_check_validity() checks the validity of B<thisupd> and B<nextupd> values
 which will be typically obtained from OCSP_resp_find_status() or
