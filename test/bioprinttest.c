@@ -11,12 +11,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <openssl/e_os2.h>
-#ifdef OPENSSL_SYS_WINDOWS
-# include <winsock.h>
-#else
-# include OPENSSL_UNISTD
-#endif
 #include <openssl/bio.h>
 #include "internal/numbers.h"
 #include "testutil.h"
@@ -268,16 +262,21 @@ void test_close_streams(void)
 
 int test_puts_stdout(const char *str)
 {
-    return write(1, str, strlen(str));
+    return fputs(str, stdout);
 }
 
 int test_puts_stderr(const char *str)
 {
-    return write(2, str, strlen(str));
+    return fputs(str, stderr);
 }
 
 static char vprint_buf[10240];
 
+/*
+ * This works out as long as caller doesn't use any "fancy" formats.
+ * But we are caller's caller, and test_str_eq is the only one called,
+ * and it uses only "%s", which is not "fancy"...
+ */
 int test_vprintf_stdout(const char *fmt, va_list ap)
 {
     size_t len = vsnprintf(vprint_buf, sizeof(vprint_buf), fmt, ap);
@@ -298,10 +297,10 @@ int test_vprintf_stderr(const char *fmt, va_list ap)
 
 int test_flush_stdout(void)
 {
-    return 0;
+    return fflush(stdout);
 }
 
 int test_flush_stderr(void)
 {
-    return 0;
+    return fflush(stderr);
 }
