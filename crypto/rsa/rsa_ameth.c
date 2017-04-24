@@ -785,6 +785,41 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     return 2;
 }
 
+static int rsa_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *sigalg,
+                            const ASN1_STRING *sig)
+{
+    int rv = 0;
+    int mdnid, saltlen;
+    uint32_t flags;
+    const EVP_MD *mgf1md = NULL, *md = NULL;
+    RSA_PSS_PARAMS *pss;
+
+    /* Sanity check: make sure it is PSS */
+    if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS)
+        return 0;
+    /* Decode PSS parameters */
+    pss = rsa_pss_decode(sigalg);
+    if (!rsa_pss_get_param(pss, &md, &mgf1md, &saltlen))
+        goto err;
+    mdnid = EVP_MD_type(md);
+    /*
+     * For TLS need SHA256, SHA384 or SHA512, digest and MGF1 digest must
+     * match and salt length must equal digest size
+     */
+    if ((mdnid == NID_sha256 || mdnid == NID_sha384 || mdnid == NID_sha512)
+            && mdnid == EVP_MD_type(mgf1md) && saltlen == EVP_MD_size(md))
+        flags = X509_SIG_INFO_TLS;
+    else
+        flags = 0;
+    /* Note: security bits half number of digest bits */
+    X509_SIG_INFO_set(siginf, mdnid, EVP_PKEY_RSA_PSS, EVP_MD_size(md) * 4,
+                      flags);
+    rv = 1;
+    err:
+    RSA_PSS_PARAMS_free(pss);
+    return rv;
+}
+
 #ifndef OPENSSL_NO_CMS
 static RSA_OAEP_PARAMS *rsa_oaep_decode(const X509_ALGOR *alg)
 {
@@ -972,7 +1007,9 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
      old_rsa_priv_decode,
      old_rsa_priv_encode,
      rsa_item_verify,
-     rsa_item_sign},
+     rsa_item_sign,
+     rsa_sig_info_set
+    },
 
     {
      EVP_PKEY_RSA2,
