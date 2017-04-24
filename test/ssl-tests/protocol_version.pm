@@ -163,46 +163,51 @@ sub generate_resumption_tests {
                 $resumption_expected = "No";
             }
 
-            foreach my $ticket ("SessionTicket", "-SessionTicket") {
-                # Client is flexible, server upgrades/downgrades.
-                push @server_tests, {
-                    "name" => "resumption",
-                    "client" => { },
-                    "server" => {
-                        "MinProtocol" => $protocols[$original_protocol],
-                        "MaxProtocol" => $protocols[$original_protocol],
-                        "Options" => $ticket,
-                    },
-                    "resume_server" => {
-                        "MaxProtocol" => $protocols[$resume_protocol],
-                    },
-                    "test" => {
-                        "ExpectedProtocol" => $protocols[$resume_protocol],
-                        "Method" => $method,
-                        "HandshakeMode" => "Resume",
-                        "ResumptionExpected" => $resumption_expected,
-                    }
-                };
-                # Server is flexible, client upgrades/downgrades.
-                push @client_tests, {
-                    "name" => "resumption",
-                    "client" => {
-                        "MinProtocol" => $protocols[$original_protocol],
-                        "MaxProtocol" => $protocols[$original_protocol],
-                    },
-                    "server" => {
-                        "Options" => $ticket,
-                    },
-                    "resume_client" => {
-                        "MaxProtocol" => $protocols[$resume_protocol],
-                    },
-                    "test" => {
-                        "ExpectedProtocol" => $protocols[$resume_protocol],
-                        "Method" => $method,
-                        "HandshakeMode" => "Resume",
-                        "ResumptionExpected" => $resumption_expected,
-                    }
-                };
+            for (my $sctp = 0; $sctp < ($dtls && !disabled("sctp") ? 2 : 1);
+                 $sctp++) {
+                foreach my $ticket ("SessionTicket", "-SessionTicket") {
+                    # Client is flexible, server upgrades/downgrades.
+                    push @server_tests, {
+                        "name" => "resumption",
+                        "client" => { },
+                        "server" => {
+                            "MinProtocol" => $protocols[$original_protocol],
+                            "MaxProtocol" => $protocols[$original_protocol],
+                            "Options" => $ticket,
+                        },
+                        "resume_server" => {
+                            "MaxProtocol" => $protocols[$resume_protocol],
+                        },
+                        "test" => {
+                            "ExpectedProtocol" => $protocols[$resume_protocol],
+                            "Method" => $method,
+                            "HandshakeMode" => "Resume",
+                            "ResumptionExpected" => $resumption_expected,
+                        }
+                    };
+                    $server_tests[-1]{"test"}{"UseSCTP"} = "Yes" if $sctp;
+                    # Server is flexible, client upgrades/downgrades.
+                    push @client_tests, {
+                        "name" => "resumption",
+                        "client" => {
+                            "MinProtocol" => $protocols[$original_protocol],
+                            "MaxProtocol" => $protocols[$original_protocol],
+                        },
+                        "server" => {
+                            "Options" => $ticket,
+                        },
+                        "resume_client" => {
+                            "MaxProtocol" => $protocols[$resume_protocol],
+                        },
+                        "test" => {
+                            "ExpectedProtocol" => $protocols[$resume_protocol],
+                            "Method" => $method,
+                            "HandshakeMode" => "Resume",
+                            "ResumptionExpected" => $resumption_expected,
+                        }
+                    };
+                    $client_tests[-1]{"test"}{"UseSCTP"} = "Yes" if $sctp;
+                }
             }
         }
     }
