@@ -3201,8 +3201,6 @@ static int check_key_level(X509_STORE_CTX *ctx, X509 *cert)
  */
 static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert)
 {
-    int nid = X509_get_signature_nid(cert);
-    int mdnid = NID_undef;
     int secbits = -1;
     int level = ctx->param->auth_level;
 
@@ -3211,14 +3209,8 @@ static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert)
     if (level > NUM_AUTH_LEVELS)
         level = NUM_AUTH_LEVELS;
 
-    /* Lookup signature algorithm digest */
-    if (nid && OBJ_find_sigid_algs(nid, &mdnid, NULL)) {
-        const EVP_MD *md;
-
-        /* Assume 4 bits of collision resistance for each hash octet */
-        if (mdnid != NID_undef && (md = EVP_get_digestbynid(mdnid)) != NULL)
-            secbits = EVP_MD_size(md) * 4;
-    }
+    if (!X509_get_signature_info(cert, NULL, NULL, &secbits, NULL))
+        return 0;
 
     return secbits >= minbits_table[level - 1];
 }
