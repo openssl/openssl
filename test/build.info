@@ -292,9 +292,9 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   INCLUDE[sslcorrupttest]=../include .
   DEPEND[sslcorrupttest]=../libcrypto ../libssl libtestutil.a
 
-  SOURCE[bio_enc_test]=bio_enc_test.c testutil.c test_main.c
+  SOURCE[bio_enc_test]=bio_enc_test.c
   INCLUDE[bio_enc_test]=../include
-  DEPEND[bio_enc_test]=../libcrypto
+  DEPEND[bio_enc_test]=../libcrypto libtestutil.a
 
   SOURCE[pkey_meth_test]=pkey_meth_test.c
   INCLUDE[pkey_meth_test]=../include

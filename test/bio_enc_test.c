@@ -12,7 +12,6 @@
 #include <openssl/bio.h>
 #include <openssl/rand.h>
 
-#include "test_main.h"
 #include "testutil.h"
 
 #define ENCRYPT  1
