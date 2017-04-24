@@ -617,7 +617,7 @@ int BIO_lookup(const char *host, const char *service,
 }
 
 /*-
- * BIO_lookup - look up the node and service you want to connect to.
+ * BIO_lookup_ex - look up the node and service you want to connect to.
  * @node: the node you want to connect to.
  * @service: the service you want to connect to.
  * @lookup_type: declare intent with the result, client or server.
