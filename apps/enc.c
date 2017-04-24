@@ -291,7 +291,6 @@ int enc_main(int argc, char **argv)
     buff = app_malloc(EVP_ENCODE_LENGTH(bsize), "evp buffer");
 
     if (infile == NULL) {
-        unbuffer(stdin);
         in = dup_bio_in(informat);
     } else
         in = bio_open_default(infile, 'r', informat);
