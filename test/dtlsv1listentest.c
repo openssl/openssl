@@ -13,7 +13,7 @@
 #include <openssl/err.h>
 #include <openssl/conf.h>
 #ifndef OPENSSL_NO_ENGINE
- #include <openssl/engine.h>
+# include <openssl/engine.h>
 #endif
 #include "e_os.h"
 
