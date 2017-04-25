@@ -20,7 +20,6 @@
 
 #include "e_os.h"
 #include "testutil.h"
-#include "test_main_custom.h"
 
 static SSL_CTX *ctx;
 static SSL *s;

@@ -9,7 +9,6 @@
 
 #include <openssl/rand.h>
 #include "testutil.h"
-#include "test_main.h"
 
 /* some FIPS 140-1 random number test */
 /* some simple tests */

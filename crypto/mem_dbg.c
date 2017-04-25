@@ -443,7 +443,8 @@ void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num,
 }
 
 typedef struct mem_leak_st {
-    BIO *bio;
+    int (*print_cb) (const char *str, size_t len, void *u);
+    void *print_cb_arg;
     int chunks;
     long bytes;
 } MEM_LEAK;
@@ -486,7 +487,7 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
                  m->num, m->addr);
     bufp += strlen(bufp);
 
-    BIO_puts(l->bio, buf);
+    l->print_cb(buf, strlen(buf), l->print_cb_arg);
 
     l->chunks++;
     l->bytes += m->num;
@@ -520,7 +521,7 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
             }
             BIO_snprintf(buf + buf_len, sizeof buf - buf_len, "\"\n");
 
-            BIO_puts(l->bio, buf);
+            l->print_cb(buf, strlen(buf), l->print_cb_arg);
 
             amip = amip->next;
         }
@@ -541,15 +542,10 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 
 IMPLEMENT_LHASH_DOALL_ARG_CONST(MEM, MEM_LEAK);
 
-int CRYPTO_mem_leaks(BIO *b)
+int CRYPTO_mem_leaks_cb(int (*cb) (const char *str, size_t len, void *u),
+                        void *u)
 {
     MEM_LEAK ml;
-
-    /*
-     * OPENSSL_cleanup() will free the ex_data locks so we can't have any
-     * ex_data hanging around
-     */
-    bio_free_ex_data(b);
 
     /* Ensure all resources are released */
     OPENSSL_cleanup();
@@ -559,14 +555,19 @@ int CRYPTO_mem_leaks(BIO *b)
 
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
 
-    ml.bio = b;
+    ml.print_cb = cb;
+    ml.print_cb_arg = u;
     ml.bytes = 0;
     ml.chunks = 0;
     if (mh != NULL)
         lh_MEM_doall_MEM_LEAK(mh, print_leak, &ml);
 
     if (ml.chunks != 0) {
-        BIO_printf(b, "%ld bytes leaked in %d chunks\n", ml.bytes, ml.chunks);
+        char buf[256];
+
+        BIO_snprintf(buf, sizeof(buf), "%ld bytes leaked in %d chunks\n",
+                     ml.bytes, ml.chunks);
+        cb(buf, strlen(buf), u);
     } else {
         /*
          * Make sure that, if we found no leaks, memory-leak debugging itself
@@ -603,6 +604,22 @@ int CRYPTO_mem_leaks(BIO *b)
     return ml.chunks == 0 ? 1 : 0;
 }
 
+static int print_bio(const char *str, size_t len, void *b)
+{
+    return BIO_write((BIO *)b, str, len);
+}
+
+int CRYPTO_mem_leaks(BIO *b)
+{
+    /*
+     * OPENSSL_cleanup() will free the ex_data locks so we can't have any
+     * ex_data hanging around
+     */
+    bio_free_ex_data(b);
+
+    return CRYPTO_mem_leaks_cb(print_bio, b);
+}
+
 # ifndef OPENSSL_NO_STDIO
 int CRYPTO_mem_leaks_fp(FILE *fp)
 {
@@ -620,7 +637,7 @@ int CRYPTO_mem_leaks_fp(FILE *fp)
     if (b == NULL)
         return -1;
     BIO_set_fp(b, fp, BIO_NOCLOSE);
-    ret = CRYPTO_mem_leaks(b);
+    ret = CRYPTO_mem_leaks_cb(print_bio, b);
     BIO_free(b);
     return ret;
 }

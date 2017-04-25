@@ -15,7 +15,6 @@
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
 #include "testutil.h"
-#include "test_main.h"
 #include "e_os.h"
 
 typedef struct {

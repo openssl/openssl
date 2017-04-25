@@ -17,8 +17,6 @@
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include "e_os.h"
-#include "test_main.h"
-#include "test_main_custom.h"
 #include "testutil.h"
 
 

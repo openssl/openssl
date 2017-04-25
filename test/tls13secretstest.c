@@ -22,7 +22,6 @@
 #endif
 
 #include "testutil.h"
-#include "test_main.h"
 
 #define IVLEN   12
 #define KEYLEN  16

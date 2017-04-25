@@ -1732,12 +1732,24 @@ EOF
             }
 
             # Additionally, we set up sharednames for libraries that don't
-            # have any, as themselves.
-            foreach (keys %{$unified_info{libraries}}) {
+            # have any, as themselves.  Only for libraries that aren't
+            # explicitely static.
+            foreach (grep !/\.a$/, keys %{$unified_info{libraries}}) {
                 if (!defined $unified_info{sharednames}->{$_}) {
                     $unified_info{sharednames}->{$_} = $_
                 }
             }
+
+            # Check that we haven't defined any library as both shared and
+            # explicitely static.  That is forbidden.
+            my @doubles = ();
+            foreach (grep /\.a$/, keys %{$unified_info{libraries}}) {
+                (my $l = $_) =~ s/\.a$//;
+                push @doubles, $l if defined $unified_info{sharednames}->{$l};
+            }
+            die "these libraries are both explicitely static and shared:\n  ",
+                join(" ", @doubles), "\n"
+                if @doubles;
         }
 
         foreach (keys %ordinals) {

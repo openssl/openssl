@@ -13,7 +13,6 @@
 
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_CAST is defined */
 #include "e_os.h"
-#include "test_main.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_CAST

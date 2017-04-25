@@ -22,7 +22,6 @@
 #endif
 
 #include "testutil.h"
-#include "test_main_custom.h"
 
 const static unsigned char simple1[] = { 0xff };
 const static unsigned char simple2[] = { 0x01, 0xff };

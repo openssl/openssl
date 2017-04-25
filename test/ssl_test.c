@@ -17,7 +17,6 @@
 #include "handshake_helper.h"
 #include "ssl_test_ctx.h"
 #include "testutil.h"
-#include "test_main_custom.h"
 
 static CONF *conf = NULL;
 

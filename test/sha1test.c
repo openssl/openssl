@@ -11,7 +11,6 @@
 #include <string.h>
 
 #include "../e_os.h"
-#include "test_main.h"
 #include "testutil.h"
 
 #include <openssl/evp.h>

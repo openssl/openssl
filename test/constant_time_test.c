@@ -13,7 +13,6 @@
 #include "e_os.h"
 #include "internal/constant_time_locl.h"
 #include "testutil.h"
-#include "test_main.h"
 #include "internal/numbers.h"
 
 static const unsigned int CONSTTIME_TRUE = (unsigned)(~0);

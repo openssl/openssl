@@ -20,7 +20,6 @@
 #include "../ssl/packet_locl.h"
 
 #include "testutil.h"
-#include "test_main_custom.h"
 
 #define CLIENT_VERSION_LEN      2
 

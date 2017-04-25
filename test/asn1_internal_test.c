@@ -15,7 +15,6 @@
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include "test_main.h"
 #include "testutil.h"
 #include "e_os.h"
 
