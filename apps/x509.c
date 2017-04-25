@@ -721,13 +721,10 @@ int x509_main(int argc, char **argv)
                 char *m;
                 int len;
 
-                BIO_printf(out, "/*\n"
-                                " * Subject: ");
-                X509_NAME_print_ex(out, X509_get_subject_name(x), 0, get_nameopt());
-                BIO_puts(out, "\n");
-                BIO_printf(out, " * Issuer:  ");
-                X509_NAME_print_ex(out, X509_get_issuer_name(x), 0, get_nameopt());
-                BIO_puts(out, "\n */\n");
+                print_name(out, "/*\n"
+                                " * Subject: ", X509_get_subject_name(x), get_nameopt());
+                print_name(out, " * Issuer:  ", X509_get_issuer_name(x), get_nameopt());
+                BIO_puts(out, " */\n");
 
                 len = i2d_X509(x, NULL);
                 m = app_malloc(len, "x509 name buffer");
