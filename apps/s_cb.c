@@ -33,12 +33,6 @@ static unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
 static int cookie_initialized = 0;
 #endif
 static BIO *bio_keylog = NULL;
-static unsigned long nmflag = XN_FLAG_ONELINE;
-
-int set_nameopt(const char *arg)
-{
-  return set_name_ex(&nmflag, arg);
-}
 
 static const char *lookup(int val, const STRINT_PAIR* list, const char* def)
 {
@@ -62,7 +56,7 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
         if (err_cert) {
             X509_NAME_print_ex(bio_err,
                                X509_get_subject_name(err_cert),
-                               0, nmflag);
+                               0, get_nameopt());
             BIO_puts(bio_err, "\n");
         } else
             BIO_puts(bio_err, "<no cert>\n");
@@ -83,7 +77,7 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
         BIO_puts(bio_err, "issuer= ");
         X509_NAME_print_ex(bio_err, X509_get_issuer_name(err_cert),
-                           0, nmflag);
+                           0, get_nameopt());
         BIO_puts(bio_err, "\n");
         break;
     case X509_V_ERR_CERT_NOT_YET_VALID:
@@ -836,7 +830,7 @@ static int set_cert_cb(SSL *ssl, void *arg)
         rv = SSL_check_chain(ssl, exc->cert, exc->key, exc->chain);
         BIO_printf(bio_err, "Checking cert chain %d:\nSubject: ", i);
         X509_NAME_print_ex(bio_err, X509_get_subject_name(exc->cert), 0,
-                           nmflag);
+                           get_nameopt());
         BIO_puts(bio_err, "\n");
         print_chain_flags(ssl, rv);
         if (rv & CERT_PKEY_VALID) {
@@ -1125,7 +1119,7 @@ void print_ssl_summary(SSL *s)
 
         BIO_puts(bio_err, "Peer certificate: ");
         X509_NAME_print_ex(bio_err, X509_get_subject_name(peer),
-                           0, nmflag);
+                           0, get_nameopt());
         BIO_puts(bio_err, "\n");
         if (SSL_get_peer_signature_nid(s, &nid))
             BIO_printf(bio_err, "Hash used: %s\n", OBJ_nid2sn(nid));
@@ -1440,7 +1434,7 @@ void print_ca_names(BIO *bio, SSL *s)
 
     BIO_printf(bio, "---\nAcceptable %s certificate CA names\n",cs);
     for (i = 0; i < sk_X509_NAME_num(sk); i++) {
-        X509_NAME_print_ex(bio, sk_X509_NAME_value(sk, i), 0, XN_FLAG_ONELINE);
+        X509_NAME_print_ex(bio, sk_X509_NAME_value(sk, i), 0, get_nameopt());
         BIO_write(bio, "\n", 1);
     }
 }
