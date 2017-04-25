@@ -758,6 +758,10 @@ static int serverinfoex_srv_add_cb(SSL *s, unsigned int ext_type,
     const unsigned char *serverinfo = NULL;
     size_t serverinfo_length = 0;
 
+    /* We only support extensions for the first Certificate */
+    if ((context & SSL_EXT_TLS1_3_CERTIFICATE) != 0 && chainidx > 0)
+        return 0;
+
     /* Is there serverinfo data for the chosen server cert? */
     if ((ssl_get_server_cert_serverinfo(s, &serverinfo,
                                         &serverinfo_length)) != 0) {
