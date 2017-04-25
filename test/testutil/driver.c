@@ -138,12 +138,22 @@ int run_tests(const char *test_prog_name)
     char *verdict = NULL;
     int i, j;
 
-    helper_printf_stdout("%*s%d..%d\n", level, "", 1, num_tests);
+    if (num_tests < 1)
+        helper_printf_stdout("%*s1..0 # Skipped: %s\n", level, "",
+                             test_prog_name);
+    else if (level > 0)
+        helper_printf_stdout("%*s1..%d # Subtest: %s\n", level, "", num_tests,
+                             test_prog_name);
+    else
+        helper_printf_stdout("%*s1..%d\n", level, "", num_tests);
     test_flush_stdout();
 
     for (i = 0; i != num_tests; ++i) {
         if (all_tests[i].num == -1) {
             int ret = all_tests[i].test_fn();
+
+            test_flush_stdout();
+            test_flush_stderr();
 
             verdict = "ok";
             if (!ret) {
@@ -168,6 +178,9 @@ int run_tests(const char *test_prog_name)
 
             for (j = 0; j < all_tests[i].num; j++) {
                 int ret = all_tests[i].param_test_fn(j);
+
+                test_flush_stdout();
+                test_flush_stderr();
 
                 if (!ret)
                     ++num_failed_inner;
