@@ -163,7 +163,7 @@ int pkcs7_main(int argc, char **argv)
             for (i = 0; i < sk_X509_CRL_num(crls); i++) {
                 crl = sk_X509_CRL_value(crls, i);
 
-                X509_CRL_print(out, crl);
+                X509_CRL_print_ex(out, crl, get_nameopt());
 
                 if (!noout)
                     PEM_write_bio_X509_CRL(out, crl);

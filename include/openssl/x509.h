@@ -773,6 +773,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflag,
                   unsigned long cflag);
 int X509_print(BIO *bp, X509 *x);
 int X509_ocspid_print(BIO *bp, X509 *x);
+int X509_CRL_print_ex(BIO *out, X509_CRL *x, unsigned long nmflag);
 int X509_CRL_print(BIO *bp, X509_CRL *x);
 int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflag,
                       unsigned long cflag);
