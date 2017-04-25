@@ -2125,11 +2125,11 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
     struct timeval *timeoutp;
 #endif
 #ifndef OPENSSL_NO_DTLS
- #ifndef OPENSSL_NO_SCTP
+# ifndef OPENSSL_NO_SCTP
     int isdtls = (stype == SOCK_DGRAM || prot == IPPROTO_SCTP);
- #else
+# else
     int isdtls = (stype == SOCK_DGRAM);
- #endif
+# endif
 #endif
 
     buf = app_malloc(bufsize, "server buffer");
@@ -2163,11 +2163,11 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
     }
 #ifndef OPENSSL_NO_DTLS
     if (isdtls) {
-#ifndef OPENSSL_NO_SCTP
+# ifndef OPENSSL_NO_SCTP
         if (prot == IPPROTO_SCTP)
             sbio = BIO_new_dgram_sctp(s, BIO_NOCLOSE);
         else
-#endif
+# endif
             sbio = BIO_new_dgram(s, BIO_NOCLOSE);
 
         if (enable_timeouts) {
