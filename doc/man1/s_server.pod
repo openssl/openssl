@@ -83,6 +83,7 @@ B<openssl> B<s_server>
 [B<-dtls>]
 [B<-dtls1>]
 [B<-dtls1_2>]
+[B<-sctp>]
 [B<-listen>]
 [B<-async>]
 [B<-split_send_frag>]
@@ -361,6 +362,12 @@ them or not.
 Any without a cookie will be responded to with a HelloVerifyRequest.
 If a ClientHello with a cookie is received then B<s_server> will connect to
 that peer and complete the handshake.
+
+=item B<-sctp>
+
+Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
+conjunction with B<-dtls>, B<-dtls1> or B<-dtls1_2>. This option is only
+available where OpenSSL has support for SCTP enabled.
 
 =item B<-async>
 
