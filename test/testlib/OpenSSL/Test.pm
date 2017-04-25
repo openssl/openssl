@@ -1158,9 +1158,11 @@ inspiration from Andy Polyakov E<lt>appro@openssl.org<gt>.
 
 no warnings 'redefine';
 sub subtest {
-    $level = $level + 1;
+    $level++;
 
     Test::More::subtest @_;
+
+    $level--;
 };
 
 1;
