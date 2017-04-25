@@ -34,7 +34,7 @@ int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
 
 int X509_CRL_print(BIO *out, X509_CRL *x)
 {
-  return X509_CRL_print_ex(out, x, XN_FLAG_ONELINE);
+  return X509_CRL_print_ex(out, x, XN_FLAG_COMPAT);
 }
 
 int X509_CRL_print_ex(BIO *out, X509_CRL *x, unsigned long nmflag)
