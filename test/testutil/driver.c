@@ -23,6 +23,9 @@ typedef struct test_info {
     int (*test_fn) ();
     int (*param_test_fn)(int idx);
     int num;
+
+    /* flags */
+    int subtest:1;
 } TEST_INFO;
 
 static TEST_INFO all_tests[1024];
@@ -45,12 +48,13 @@ void add_test(const char *test_case_name, int (*test_fn) ())
 }
 
 void add_all_tests(const char *test_case_name, int(*test_fn)(int idx),
-                   int num)
+                   int num, int subtest)
 {
     assert(num_tests != OSSL_NELEM(all_tests));
     all_tests[num_tests].test_case_name = test_case_name;
     all_tests[num_tests].param_test_fn = test_fn;
     all_tests[num_tests].num = num;
+    all_tests[num_tests].subtest = subtest;
     ++num_tests;
     num_test_cases += num;
 }
@@ -85,9 +89,11 @@ static int err_cb(const char *str, size_t len, void *u)
 
 void setup_test()
 {
+    char *TAP_levels = getenv("HARNESS_OSSL_LEVEL");
+
     test_open_streams();
 
-    level = 4 * atoi(getenv("HARNESS_OSSL_LEVEL"));
+    level = TAP_levels != NULL ? 4 * atoi(TAP_levels) : 0;
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (should_report_leaks()) {
@@ -152,23 +158,31 @@ int run_tests(const char *test_prog_name)
             int num_failed_inner = 0;
 
             level += 4;
-            helper_printf_stdout("%*s# Subtest: %s\n", level, "",
-                                 all_tests[i].test_case_name);
-            helper_printf_stdout("%*s%d..%d\n", level, "", 1,
-                                 all_tests[i].num);
-            test_flush_stdout();
+            if (all_tests[i].subtest) {
+                helper_printf_stdout("%*s# Subtest: %s\n", level, "",
+                                     all_tests[i].test_case_name);
+                helper_printf_stdout("%*s%d..%d\n", level, "", 1,
+                                     all_tests[i].num);
+                test_flush_stdout();
+            }
 
             for (j = 0; j < all_tests[i].num; j++) {
                 int ret = all_tests[i].param_test_fn(j);
 
-                verdict = "ok";
-                if (!ret) {
-                    verdict = "not ok";
+                if (!ret)
                     ++num_failed_inner;
-                }
-                helper_printf_stdout("%*s%s %d\n", level, "", verdict, j + 1);
-                test_flush_stdout();
+
                 finalize(ret);
+
+                if (all_tests[i].subtest) {
+                    verdict = "ok";
+                    if (!ret) {
+                        verdict = "not ok";
+                        ++num_failed_inner;
+                    }
+                    helper_printf_stdout("%*s%s %d\n", level, "", verdict, j + 1);
+                    test_flush_stdout();
+                }
             }
 
             level -= 4;
