@@ -55,13 +55,15 @@ my $no_ocsp = disabled("ocsp");
 # expectations dynamically based on the OpenSSL compile-time config.
 my %conf_dependent_tests = (
   "02-protocol-version.conf" => !$is_default_tls,
-  "04-client_auth.conf" => !$is_default_tls || !$is_default_dtls,
+  "04-client_auth.conf" => !$is_default_tls || !$is_default_dtls
+                           || !disabled("sctp"),
   "05-sni.conf" => disabled("tls1_1"),
-  "07-dtls-protocol-version.conf" => !$is_default_dtls,
+  "07-dtls-protocol-version.conf" => !$is_default_dtls || !disabled("sctp"),
   "10-resumption.conf" => !$is_default_tls,
-  "11-dtls_resumption.conf" => !$is_default_dtls,
+  "11-dtls_resumption.conf" => !$is_default_dtls || !disabled("sctp"),
+  "16-dtls-certstatus.conf" => !$is_default_dtls || !disabled("sctp"),
   "17-renegotiate.conf" => disabled("tls1_2"),
-  "18-dtls-renegotiate.conf" => disabled("dtls1_2"),
+  "18-dtls-renegotiate.conf" => disabled("dtls1_2") || !disabled("sctp"),
   "19-mac-then-encrypt.conf" => !$is_default_tls,
   "20-cert-select.conf" => !$is_default_tls || $no_dh || $no_dsa,
   "22-compression.conf" => !$is_default_tls,

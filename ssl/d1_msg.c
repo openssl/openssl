@@ -15,18 +15,7 @@ int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
 {
     int i;
 
-#ifndef OPENSSL_NO_SCTP
-    /*
-     * Check if we have to continue an interrupted handshake for reading
-     * belated app data with SCTP.
-     */
-    if ((SSL_in_init(s) && !ossl_statem_get_in_handshake(s)) ||
-        (BIO_dgram_is_sctp(SSL_get_wbio(s)) &&
-         ossl_statem_in_sctp_read_sock(s)))
-#else
-    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(s))
-#endif
-    {
+    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(s)) {
         i = s->handshake_func(s);
         if (i < 0)
             return (i);
