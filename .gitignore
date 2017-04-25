@@ -5,7 +5,6 @@
 /Makefile.orig
 /MINFO
 /TABLE
-/*.a
 /*.pc
 /rehash.time
 /inc.*
@@ -148,7 +147,8 @@ Makefile
 # Certificate symbolic links
 *.0
 
-# All kinds of executables
+# All kinds of libraries and executables
+*.a
 *.so
 *.so.*
 *.dylib
