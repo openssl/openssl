@@ -12,7 +12,7 @@ IF[{- !$disabled{tests} -}]
   SOURCE[libtestutil.a]=testutil/basic_output.c testutil/driver.c \
           testutil/tests.c testutil/test_main.c testutil/main.c \
           {- rebase_files("../apps", $target{apps_aux_src}) -}
-  INCLUDE[libtestutil.a]=../include
+  INCLUDE[libtestutil.a]=.. ../include
   DEPEND[libtestutil.a]=../libcrypto
 
   # Special hack for descrip.mms to include the MAIN object module
