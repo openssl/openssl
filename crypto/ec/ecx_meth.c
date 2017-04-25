@@ -428,6 +428,14 @@ static int ecd_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     return rv;
 }
 
+static int ecd_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
+                            const ASN1_STRING *sig)
+{
+    X509_SIG_INFO_set(siginf, NID_sha512, NID_ED25519, X25519_SECURITY_BITS,
+                      X509_SIG_INFO_TLS);
+    return 1;
+}
+
 const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     NID_ED25519,
     NID_ED25519,
@@ -457,7 +465,8 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     NULL,
     NULL,
     ecd_item_verify,
-    ecd_item_sign
+    ecd_item_sign,
+    ecd_sig_info_set
 };
 
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
