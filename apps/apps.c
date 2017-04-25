@@ -151,18 +151,10 @@ int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path)
 
 int dump_cert_text(BIO *out, X509 *x)
 {
-    char *p;
-
-    p = X509_NAME_oneline(X509_get_subject_name(x), NULL, 0);
-    BIO_puts(out, "subject=");
-    BIO_puts(out, p);
-    OPENSSL_free(p);
-
-    p = X509_NAME_oneline(X509_get_issuer_name(x), NULL, 0);
-    BIO_puts(out, "\nissuer=");
-    BIO_puts(out, p);
-    BIO_puts(out, "\n");
-    OPENSSL_free(p);
+    print_name(out, "subject=", X509_get_subject_name(x), get_nameopt());
+		BIO_puts(out, "\n");
+    print_name(out, "issuer=", X509_get_issuer_name(x), get_nameopt());
+		BIO_puts(out, "\n");
 
     return 0;
 }
@@ -965,6 +957,18 @@ int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
 
 #define X509_FLAG_CA (X509_FLAG_NO_ISSUER | X509_FLAG_NO_PUBKEY | \
                          X509_FLAG_NO_HEADER | X509_FLAG_NO_VERSION)
+
+static unsigned long nmflag = XN_FLAG_ONELINE;
+
+int set_nameopt(const char *arg)
+{
+  return set_name_ex(&nmflag, arg);
+}
+
+unsigned long get_nameopt()
+{
+  return nmflag;
+}
 
 int set_cert_ex(unsigned long *flags, const char *arg)
 {
