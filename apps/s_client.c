@@ -2858,12 +2858,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
             /* Redundant if we showed the whole chain */
             if (!(c_showcerts && got_a_chain))
                 PEM_write_bio_X509(bio, peer);
-            BIO_puts(bio, "subject=");
-            X509_NAME_print_ex(bio, X509_get_subject_name(peer), 0, get_nameopt());
-            BIO_puts(bio, "\n");
-            BIO_puts(bio, "issuer=");
-            X509_NAME_print_ex(bio, X509_get_issuer_name(peer), 0, get_nameopt());
-            BIO_puts(bio, "\n");
+            dump_cert_text(bio, peer);
         } else {
             BIO_printf(bio, "no peer certificate available\n");
         }
