@@ -543,6 +543,10 @@ case "$GUESSOS" in
         #fi
 	OUT="irix-mips3-$CC"
 	;;
+  mips32be-*-linux2)
+	OUT=linux-mips32be
+	options="$options threads shared zlib-dynamic"
+	;;
   ppc-apple-rhapsody) OUT="rhapsody-ppc-cc" ;;
   ppc-apple-darwin*)
 	ISA64=`(sysctl -n hw.optional.64bitops) 2>/dev/null`
