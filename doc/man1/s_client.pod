@@ -82,6 +82,7 @@ B<openssl> B<s_client>
 [B<-dtls>]
 [B<-dtls1>]
 [B<-dtls1_2>]
+[B<-sctp>]
 [B<-fallback_scsv>]
 [B<-async>]
 [B<-split_send_frag>]
@@ -386,6 +387,12 @@ These options make B<s_client> use DTLS protocols instead of TLS.
 With B<-dtls>, B<s_client> will negotiate any supported DTLS protocol version,
 whilst B<-dtls1> and B<-dtls1_2> will only support DTLS1.0 and DTLS1.2
 respectively.
+
+=item B<-sctp>
+
+Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
+conjunction with B<-dtls>, B<-dtls1> or B<-dtls1_2>. This option is only
+available where OpenSSL has support for SCTP enabled.
 
 =item B<-fallback_scsv>
 
