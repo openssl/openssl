@@ -2199,10 +2199,12 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
             /* want to do MTU discovery */
             BIO_ctrl(sbio, BIO_CTRL_DGRAM_MTU_DISCOVER, 0, NULL);
 
+# ifndef OPENSSL_NO_SCTP
         if (prot != IPPROTO_SCTP) {
             /* Turn on cookie exchange. Not necessary for SCTP */
             SSL_set_options(con, SSL_OP_COOKIE_EXCHANGE);
         }
+# endif
     } else
 #endif
         sbio = BIO_new_socket(s, BIO_NOCLOSE);
