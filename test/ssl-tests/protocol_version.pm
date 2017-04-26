@@ -129,6 +129,37 @@ sub generate_version_tests {
             }
         }
     }
+    return @tests if disabled("tls1_3") || disabled("tls1_2") || $dtls;
+
+    #Add some version/ciphersuite sanity check tests
+    push @tests, {
+        "name" => "ciphersuite-sanity-check-client",
+        "client" => {
+            #Offering only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
+            "CipherString" => "AES128-SHA",
+        },
+        "server" => {
+            "MaxProtocol" => "TLSv1.2"
+        },
+        "test" => {
+            "ExpectedResult" => "ClientFail",
+        }
+    };
+    push @tests, {
+        "name" => "ciphersuite-sanity-check-server",
+        "client" => {
+            "CipherString" => "AES128-SHA",
+            "MaxProtocol" => "TLSv1.2"
+        },
+        "server" => {
+            #Allowing only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
+            "CipherString" => "AES128-SHA",
+        },
+        "test" => {
+            "ExpectedResult" => "ServerFail",
+        }
+    };
+
     return @tests;
 }
 
