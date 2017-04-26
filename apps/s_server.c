@@ -2606,6 +2606,16 @@ static void close_accept_socket(void)
     }
 }
 
+static int is_retryable(SSL *con, int i)
+{
+    int err = SSL_get_error(con, i);
+
+    /* If it's not a fatal error, it must be retryable */
+    return (err != SSL_ERROR_SSL)
+           && (err != SSL_ERROR_SYSCALL)
+           && (err != SSL_ERROR_ZERO_RETURN);
+}
+
 static int init_ssl_connection(SSL *con)
 {
     int i;
@@ -2648,7 +2658,7 @@ static int init_ssl_connection(SSL *con)
         i = SSL_accept(con);
 
         if (i <= 0)
-            retry = !SSL_want_nothing(con);
+            retry = is_retryable(con, i);
 #ifdef CERT_CB_TEST_RETRY
         {
             while (i <= 0
@@ -2658,7 +2668,7 @@ static int init_ssl_connection(SSL *con)
                            "LOOKUP from certificate callback during accept\n");
                 i = SSL_accept(con);
                 if (i <= 0)
-                    retry = !SSL_want_nothing(con);
+                    retry = is_retryable(con, i);
             }
         }
 #endif
@@ -2679,7 +2689,7 @@ static int init_ssl_connection(SSL *con)
                 BIO_printf(bio_s_out, "LOOKUP not successful\n");
             i = SSL_accept(con);
             if (i <= 0)
-                retry = !SSL_want_nothing(con);
+                retry = is_retryable(con, i);
         }
 #endif
     } while (i < 0 && SSL_waiting_for_async(con));
