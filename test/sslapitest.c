@@ -264,16 +264,16 @@ static int test_keylog(void)
     if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "RSA")))
         goto end;
 
-    if (!TEST_ptr_null((void *)SSL_CTX_get_keylog_callback(cctx))
-            || !TEST_ptr_null((void *)SSL_CTX_get_keylog_callback(sctx)))
+    if (!TEST_true(SSL_CTX_get_keylog_callback(cctx) == NULL)
+            || !TEST_true(SSL_CTX_get_keylog_callback(sctx) == NULL))
         goto end;
     SSL_CTX_set_keylog_callback(cctx, client_keylog_callback);
-    if (!TEST_ptr_eq((void *)SSL_CTX_get_keylog_callback(cctx),
-                     (void *)client_keylog_callback))
+    if (!TEST_true(SSL_CTX_get_keylog_callback(cctx)
+                   == client_keylog_callback))
         goto end;
     SSL_CTX_set_keylog_callback(sctx, server_keylog_callback);
-    if (!TEST_ptr_eq((void *)SSL_CTX_get_keylog_callback(sctx),
-                     (void *)server_keylog_callback))
+    if (!TEST_true(SSL_CTX_get_keylog_callback(sctx)
+                   == server_keylog_callback))
         goto end;
 
     /* Now do a handshake and check that the logs have been written to. */
@@ -334,18 +334,18 @@ static int test_keylog_no_master_key(void)
                              &cctx, cert, privkey)))
         return 0;
 
-    if (!TEST_ptr_null((void *)SSL_CTX_get_keylog_callback(cctx))
-            || !TEST_ptr_null((void *)SSL_CTX_get_keylog_callback(sctx)))
+    if (!TEST_true(SSL_CTX_get_keylog_callback(cctx) == NULL)
+            || !TEST_true(SSL_CTX_get_keylog_callback(sctx) == NULL))
         goto end;
 
     SSL_CTX_set_keylog_callback(cctx, client_keylog_callback);
-    if (!TEST_ptr_eq((void *)SSL_CTX_get_keylog_callback(cctx),
-                     (void *)client_keylog_callback))
+    if (!TEST_true(SSL_CTX_get_keylog_callback(cctx)
+                   == client_keylog_callback))
         goto end;
 
     SSL_CTX_set_keylog_callback(sctx, server_keylog_callback);
-    if (!TEST_ptr_eq((void *)SSL_CTX_get_keylog_callback(sctx),
-                     (void *)server_keylog_callback))
+    if (!TEST_true(SSL_CTX_get_keylog_callback(sctx)
+                   == server_keylog_callback))
         goto end;
 
     /* Now do a handshake and check that the logs have been written to. */
