@@ -57,7 +57,7 @@ and session caching is enabled (see
 L<SSL_CTX_set_session_cache_mode(3)>).
 The new_session_cb() is passed the B<ssl> connection and the ssl session
 B<sess>. If the callback returns B<0>, the session will be immediately
-removed again. Note that in TLSv1.3 sessions are established after the main
+removed again. Note that in TLSv1.3, sessions are established after the main
 handshake has completed. The server decides when to send the client the session
 information and this may occur some time after the end of the handshake (or not
 at all). This means that applications should expect the new_session_cb()
