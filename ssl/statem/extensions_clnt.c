@@ -464,7 +464,7 @@ int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
         return 0;
     }
 
-    reason = ssl_get_client_min_max_version(s, &min_version, &max_version);
+    reason = ssl_get_min_max_version(s, &min_version, &max_version);
     if (reason != 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS, reason);
         return 0;

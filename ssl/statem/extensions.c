@@ -674,7 +674,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
     }
 
     if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
-        reason = ssl_get_client_min_max_version(s, &min_version, &max_version);
+        reason = ssl_get_min_max_version(s, &min_version, &max_version);
         if (reason != 0) {
             SSLerr(SSL_F_TLS_CONSTRUCT_EXTENSIONS, reason);
             goto err;
