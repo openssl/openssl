@@ -67,7 +67,8 @@ be established with a single connection. In these case the new_session_cb()
 function will be invoked multiple times.
 
 In TLSv1.3 it is recommended that each SSL_SESSION object is only used for
-resumption once.
+resumption once. One way of enforcing that is for applications to call
+L<SSL_CTX_remove_session(3)> after a session has been used.
 
 The remove_session_cb() is called, whenever the SSL engine removes a session
 from the internal cache. This happens when the session is removed because
