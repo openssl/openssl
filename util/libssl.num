@@ -440,3 +440,4 @@ SSL_get0_peer_CA_list                   440	1_1_1	EXIST::FUNCTION:
 SSL_CTX_add1_CA_list                    441	1_1_1	EXIST::FUNCTION:
 SSL_CTX_get0_CA_list                    442	1_1_1	EXIST::FUNCTION:
 SSL_CTX_add_custom_ext                  443	1_1_1	EXIST::FUNCTION:
+SSL_CTX_use_serverinfo_ex               444	1_1_1	EXIST::FUNCTION:

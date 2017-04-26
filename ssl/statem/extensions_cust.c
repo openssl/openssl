@@ -178,11 +178,10 @@ int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x, size_t chainidx,
 
         if ((context & (SSL_EXT_TLS1_2_SERVER_HELLO
                         | SSL_EXT_TLS1_3_SERVER_HELLO
-                        | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS)) != 0) {
-            /*
-             * For ServerHello/EncryptedExtensions only send extensions present
-             * in ClientHello.
-             */
+                        | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+                        | SSL_EXT_TLS1_3_CERTIFICATE
+                        | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST)) != 0) {
+            /* Only send extensions present in ClientHello. */
             if (!(meth->ext_flags & SSL_EXT_FLAG_RECEIVED))
                 continue;
         }
