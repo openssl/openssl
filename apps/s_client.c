@@ -906,7 +906,9 @@ int s_client_main(int argc, char **argv)
 #endif
     BIO *bio_c_msg = NULL;
     const char *keylog_file = NULL, *early_data_file = NULL;
+#ifndef OPENSSL_NO_DTLS
     int isdtls = 0;
+#endif
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
