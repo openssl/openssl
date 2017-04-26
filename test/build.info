@@ -151,9 +151,9 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   INCLUDE[dsatest]=.. ../include
   DEPEND[dsatest]=../libcrypto libtestutil.a
 
-  SOURCE[exptest]=exptest.c testutil.c test_main.c
+  SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include
-  DEPEND[exptest]=../libcrypto
+  DEPEND[exptest]=../libcrypto libtestutil.a
 
   SOURCE[rsa_test]=rsa_test.c
   INCLUDE[rsa_test]=.. ../include
