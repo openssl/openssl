@@ -478,15 +478,13 @@ static int idx;
 #define TIME_IMPL(t) { if (t != NULL) *t = FUZZTIME; return FUZZTIME; }
 
 /*
- * This might not in all cases and still get the current time
- * instead of the fixed time. This will just result in things
- * not being fully reproducible and have a slightly different
- * coverage.
+ * This might not work in all cases (and definitely not on Windows
+ * because of the way linkers are) and callees can still get the
+ * current time instead of the fixed time. This will just result
+ * in things not being fully reproducible and have a slightly
+ * different coverage.
  */
-#if defined(_WIN32) && defined(_TIME64_T_DEFINED)
-__time64_t _time64(__time64_t *t) TIME_IMPL(t)
-#endif
-#if !defined(_WIN32) || !defined(_MSC_VER)
+#if !defined(_WIN32)
 time_t time(time_t *t) TIME_IMPL(t)
 #endif
 
