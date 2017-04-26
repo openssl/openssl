@@ -242,7 +242,11 @@ sub expected_result {
     $c_max = min $c_max, $max_enabled;
     $s_max = min $s_max, $max_enabled;
 
-    if ($c_min > $c_max) {
+    if ($c_min > $c_max && $s_min > $s_max) {
+        # Client will fail to send a hello and server will fail to start. The
+        # client failed first so this is reported as ClientFail.
+        return ("ClientFail", undef);
+    } elsif ($c_min > $c_max) {
         # Client should fail to even send a hello.
         # This results in an internal error since the server will be
         # waiting for input that never arrives.

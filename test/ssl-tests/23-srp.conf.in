@@ -15,89 +15,93 @@ package ssltests;
 
 our @tests = (
     {
-	name => "srp",
-	server => {
-	    "CipherString" => "SRP",
-	    extra => {
-	       	"SRPUser" => "user",
-		"SRPPassword" => "password",
-	    },
+        name => "srp",
+        server => {
+            "CipherString" => "SRP",
+            "MaxProtocol" => "TLSv1.2",
+            extra => {
+                "SRPUser" => "user",
+                "SRPPassword" => "password",
+            },
         },
-	client => {
-	    "CipherString" => "SRP",
-	    "MaxProtocol" => "TLSv1.2",
-	    extra => {
-	        "SRPUser" => "user",
-		"SRPPassword" => "password",
-	    },
-	},
-	test => {
-	    "ExpectedResult" => "Success"
-	},
+        client => {
+            "CipherString" => "SRP",
+            "MaxProtocol" => "TLSv1.2",
+            extra => {
+                "SRPUser" => "user",
+                "SRPPassword" => "password",
+            },
+        },
+        test => {
+            "ExpectedResult" => "Success"
+        },
     },
     {
-	name => "srp-bad-password",
-	server => {
-	    "CipherString" => "SRP",
-	    extra => {
-	       	"SRPUser" => "user",
-		"SRPPassword" => "password",
-	    },
+        name => "srp-bad-password",
+        server => {
+            "CipherString" => "SRP",
+            "MaxProtocol" => "TLSv1.2",
+            extra => {
+                "SRPUser" => "user",
+                "SRPPassword" => "password",
+            },
         },
-	client => {
-	    "CipherString" => "SRP",
-	    "MaxProtocol" => "TLSv1.2",
-	    extra => {
-	        "SRPUser" => "user",
-		"SRPPassword" => "passw0rd",
-	    },
-	},
-	test => {
-	    # Server fails first with bad client Finished.
-	    "ExpectedResult" => "ServerFail"
-	},
+        client => {
+            "CipherString" => "SRP",
+            "MaxProtocol" => "TLSv1.2",
+            extra => {
+                "SRPUser" => "user",
+                "SRPPassword" => "passw0rd",
+            },
+        },
+        test => {
+            # Server fails first with bad client Finished.
+            "ExpectedResult" => "ServerFail"
+        },
     },
     {
-	name => "srp-auth",
-	server => {
-	    "CipherString" => "aSRP",
-	    extra => {
-	       	"SRPUser" => "user",
-		"SRPPassword" => "password",
-	    },
+        name => "srp-auth",
+        server => {
+            "CipherString" => "aSRP",
+            "MaxProtocol" => "TLSv1.2",
+            extra => {
+                "SRPUser" => "user",
+                "SRPPassword" => "password",
+            },
         },
-	client => {
-	    "CipherString" => "aSRP",
-	    "MaxProtocol" => "TLSv1.2",
-	    extra => {
-	        "SRPUser" => "user",
-		"SRPPassword" => "password",
-	    },
-	},
-	test => {
-	    "ExpectedResult" => "Success"
-	},
+        client => {
+            "CipherString" => "aSRP",
+            "MaxProtocol" => "TLSv1.2",
+            extra => {
+                "SRPUser" => "user",
+                "SRPPassword" => "password",
+            },
+        },
+        test => {
+            "ExpectedResult" => "Success"
+        },
     },
     {
-	name => "srp-auth-bad-password",
-	server => {
-	    "CipherString" => "aSRP",
-	    extra => {
-	       	"SRPUser" => "user",
-		"SRPPassword" => "password",
-	    },
+        name => "srp-auth-bad-password",
+        server => {
+            "CipherString" => "aSRP",
+            "MaxProtocol" => "TLSv1.2",
+            extra => {
+                "SRPUser" => "user",
+                "SRPPassword" => "password",
+            },
         },
-	client => {
-	    "CipherString" => "aSRP",
-	    "MaxProtocol" => "TLSv1.2",
-	    extra => {
-	        "SRPUser" => "user",
-		"SRPPassword" => "passw0rd",
-	    },
-	},
-	test => {
-	    # Server fails first with bad client Finished.
-	    "ExpectedResult" => "ServerFail"
-	},
+        client => {
+            "CipherString" => "aSRP",
+            "MaxProtocol" => "TLSv1.2",
+            extra => {
+                "SRPUser" => "user",
+                "SRPPassword" => "passw0rd",
+            },
+        },
+        test => {
+            # Server fails first with bad client Finished.
+            "ExpectedResult" => "ServerFail"
+        },
     },
 );
