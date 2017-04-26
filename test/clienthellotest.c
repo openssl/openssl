@@ -57,7 +57,7 @@ static int test_client_hello(int currtest)
     BIO *wbio;
     long len;
     unsigned char *data;
-    PACKET pkt, pkt2, pkt3;
+    PACKET pkt = {0}, pkt2 = {0}, pkt3 = {0};
     char *dummytick = "Hello World!";
     unsigned int type = 0;
     int testresult = 0;
