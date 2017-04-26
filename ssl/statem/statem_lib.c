@@ -78,6 +78,39 @@ int tls_setup_handshake(SSL *s)
         return 0;
 
     if (s->server) {
+        STACK_OF(SSL_CIPHER) *ciphers = SSL_get_ciphers(s);
+        int i, ver_min, ver_max, ok = 0;
+
+        /*
+         * Sanity check that the maximum version we accept has ciphers
+         * enabled. For clients we do this check during construction of the
+         * ClientHello.
+         */
+        if (ssl_get_min_max_version(s, &ver_min, &ver_max) != 0) {
+            SSLerr(SSL_F_TLS_SETUP_HANDSHAKE, ERR_R_INTERNAL_ERROR);
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+            return 0;
+        }
+        for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+            const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
+
+            if (SSL_IS_DTLS(s)) {
+                if (DTLS_VERSION_GE(ver_max, c->min_dtls) &&
+                        DTLS_VERSION_LE(ver_max, c->max_dtls))
+                    ok = 1;
+            } else if (ver_max >= c->min_tls && ver_max <= c->max_tls) {
+                ok = 1;
+            }
+            if (ok)
+                break;
+        }
+        if (!ok) {
+            SSLerr(SSL_F_TLS_SETUP_HANDSHAKE, SSL_R_NO_CIPHERS_AVAILABLE);
+            ERR_add_error_data(1, "No ciphers enabled for max supported "
+                                  "SSL/TLS version");
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+            return 0;
+        }
         if (SSL_IS_FIRST_HANDSHAKE(s)) {
             s->ctx->stats.sess_accept++;
         } else if (!s->s3->send_connection_binding &&
@@ -1714,7 +1747,7 @@ int ssl_choose_client_version(SSL *s, int version)
 }
 
 /*
- * ssl_get_client_min_max_version - get minimum and maximum client version
+ * ssl_get_min_max_version - get minimum and maximum protocol version
  * @s: The SSL connection
  * @min_version: The minimum supported version
  * @max_version: The maximum supported version
@@ -1732,8 +1765,7 @@ int ssl_choose_client_version(SSL *s, int version)
  * Returns 0 on success or an SSL error reason number on failure.  On failure
  * min_version and max_version will also be set to 0.
  */
-int ssl_get_client_min_max_version(const SSL *s, int *min_version,
-                                   int *max_version)
+int ssl_get_min_max_version(const SSL *s, int *min_version, int *max_version)
 {
     int version;
     int hole;
@@ -1827,7 +1859,7 @@ int ssl_set_client_hello_version(SSL *s)
 {
     int ver_min, ver_max, ret;
 
-    ret = ssl_get_client_min_max_version(s, &ver_min, &ver_max);
+    ret = ssl_get_min_max_version(s, &ver_min, &ver_max);
 
     if (ret != 0)
         return ret;
