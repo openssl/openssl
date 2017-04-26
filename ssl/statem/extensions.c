@@ -421,8 +421,9 @@ int extension_is_relevant(SSL *s, unsigned int extctx, unsigned int thisctx)
  * stored in |*res| on success. In the event of an error the alert type to use
  * is stored in |*al|. We don't actually process the content of the extensions
  * yet, except to check their types. This function also runs the initialiser
- * functions for all known extensions (whether we have collected them or not).
- * If successful the caller is responsible for freeing the contents of |*res|.
+ * functions for all known extensions if |init| is nonzero (whether we have
+ * collected them or not). If successful the caller is responsible for freeing
+ * the contents of |*res|.
  *
  * Per http://tools.ietf.org/html/rfc5246#section-7.4.1.4, there may not be
  * more than one extension of the same type in a ClientHello or ServerHello.
@@ -432,7 +433,8 @@ int extension_is_relevant(SSL *s, unsigned int extctx, unsigned int thisctx)
  * extensions that we know about. We ignore others.
  */
 int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
-                           RAW_EXTENSION **res, int *al, size_t *len)
+                           RAW_EXTENSION **res, int *al, size_t *len,
+                           int init)
 {
     PACKET extensions = *packet;
     size_t i = 0;
@@ -490,16 +492,19 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
         }
     }
 
-    /*
-     * Initialise all known extensions relevant to this context, whether we have
-     * found them or not
-     */
-    for (thisexd = ext_defs, i = 0; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
-        if(thisexd->init != NULL && (thisexd->context & context) != 0
+    if (init) {
+        /*
+         * Initialise all known extensions relevant to this context,
+         * whether we have found them or not
+         */
+        for (thisexd = ext_defs, i = 0; i < OSSL_NELEM(ext_defs);
+             i++, thisexd++) {
+            if (thisexd->init != NULL && (thisexd->context & context) != 0
                 && extension_is_relevant(s, thisexd->context, context)
                 && !thisexd->init(s, context)) {
-            *al = SSL_AD_INTERNAL_ERROR;
-            goto err;
+                *al = SSL_AD_INTERNAL_ERROR;
+                goto err;
+            }
         }
     }
 
@@ -578,14 +583,14 @@ int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
 
 /*
  * Parse all remaining extensions that have not yet been parsed. Also calls the
- * finalisation for all extensions at the end, whether we collected them or not.
- * Returns 1 for success or 0 for failure. If we are working on a Certificate
- * message then we also pass the Certificate |x| and its position in the
- * |chainidx|, with 0 being the first certificate. On failure, |*al| is
- * populated with a suitable alert code.
+ * finalisation for all extensions at the end if |fin| is nonzero, whether we
+ * collected them or not. Returns 1 for success or 0 for failure. If we are
+ * working on a Certificate message then we also pass the Certificate |x| and
+ * its position in the |chainidx|, with 0 being the first certificate. On
+ * failure, |*al| is populated with a suitable alert code.
  */
 int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, X509 *x,
-                             size_t chainidx, int *al)
+                             size_t chainidx, int *al, int fin)
 {
     size_t i, numexts = OSSL_NELEM(ext_defs);
     const EXTENSION_DEFINITION *thisexd;
@@ -599,15 +604,17 @@ int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, X509 *x,
             return 0;
     }
 
-    /*
-     * Finalise all known extensions relevant to this context, whether we have
-     * found them or not
-     */
-    for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
-        if(thisexd->final != NULL
-                && (thisexd->context & context) != 0
+    if (fin) {
+        /*
+         * Finalise all known extensions relevant to this context,
+         * whether we have found them or not
+         */
+        for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs);
+             i++, thisexd++) {
+            if (thisexd->final != NULL && (thisexd->context & context) != 0
                 && !thisexd->final(s, context, exts[i].present, al))
-            return 0;
+                return 0;
+        }
     }
 
     return 1;
