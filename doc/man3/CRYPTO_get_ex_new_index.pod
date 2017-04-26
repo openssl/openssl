@@ -17,8 +17,8 @@ CRYPTO_get_ex_data, CRYPTO_free_ex_data, CRYPTO_new_ex_data
                 CRYPTO_EX_dup *dup_func,
                 CRYPTO_EX_free *free_func);
 
- typedef int CRYPTO_EX_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-                           int idx, long argl, void *argp);
+ typedef void CRYPTO_EX_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
+                            int idx, long argl, void *argp);
  typedef void CRYPTO_EX_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                              int idx, long argl, void *argp);
  typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
@@ -128,7 +128,8 @@ initially registered via CRYPTO_get_ex_new_index() and can be used if
 the same callback handles different types of exdata.
 
 dup_func() is called when a structure is being copied.  This is only done
-for B<SSL> and B<SSL_SESSION> objects.  The B<to> and B<from> parameters
+for B<SSL>, B<SSL_SESSION>, B<EC_KEY> objects and B<BIO> chains via
+BIO_dup_chain().  The B<to> and B<from> parameters
 are pointers to the destination and source B<CRYPTO_EX_DATA> structures,
 respectively.  The B<from_d> parameter needs to be cast to a B<void **pptr>
 as the API has currently the wrong signature; that will be changed in a
