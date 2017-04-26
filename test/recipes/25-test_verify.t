@@ -12,6 +12,7 @@ use warnings;
 
 use File::Spec::Functions qw/canonpath/;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_verify");
 
@@ -341,6 +342,12 @@ ok(!verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_l
 ok(verify("ee-pss-sha256-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
     "PSS signature using SHA256 and auth level 2");
 
-# ED25519 certificate from draft-ietf-curdle-pkix-04
-ok(verify("ee-ed25519", "sslserver", ["root-ed25519"], []),
-   "ED25519 signature");
+SKIP: {
+    skip "Ed25519 is not supported by this OpenSSL build", 1
+	      if disabled("ec");
+
+    # ED25519 certificate from draft-ietf-curdle-pkix-04
+    ok(verify("ee-ed25519", "sslserver", ["root-ed25519"], []),
+       "ED25519 signature");
+
+}
