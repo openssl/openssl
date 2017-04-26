@@ -196,7 +196,9 @@ typedef struct APK_DATA_st {
 static APK_DATA keydata[] = {
     {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), EVP_PKEY_RSA},
     {kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8), EVP_PKEY_RSA},
+#ifndef OPENSSL_NO_EC
     {kExampleECKeyDER, sizeof(kExampleECKeyDER), EVP_PKEY_EC}
+#endif
 };
 
 static EVP_PKEY *load_example_rsa_key(void)
