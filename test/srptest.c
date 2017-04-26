@@ -8,22 +8,15 @@
  */
 
 #include <openssl/opensslconf.h>
+# include "testutil.h"
+
 #ifdef OPENSSL_NO_SRP
-
 # include <stdio.h>
-
-int main(int argc, char *argv[])
-{
-    printf("No SRP support\n");
-    return (0);
-}
-
 #else
 
 # include <openssl/srp.h>
 # include <openssl/rand.h>
 # include <openssl/err.h>
-# include "testutil.h"
 
 static void showbn(const char *name, const BIGNUM *bn)
 {
@@ -276,10 +269,14 @@ static int run_srp_tests(void)
 
     return 1;
 }
+#endif
 
 void register_tests(void)
 {
+#ifdef OPENSSL_NO_SRP
+    printf("No SRP support\n");
+#else
     ADD_TEST(run_srp_tests);
     ADD_TEST(run_srp_kat);
-}
 #endif
+}
