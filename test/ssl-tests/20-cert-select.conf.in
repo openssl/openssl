@@ -21,6 +21,7 @@ our @tests = (
         server => $server,
         client => {
             "CipherString" => "aECDSA",
+            "MaxProtocol" => "TLSv1.2",
             "RequestCAFile" => test_pem("root-cert.pem"),
         },
         test   => {
@@ -36,6 +37,7 @@ our @tests = (
         server => $server,
         client => {
             "CipherString" => "aRSA",
+            "MaxProtocol" => "TLSv1.2",
         },
         test   => {
             "ExpectedServerCertType" =>, "RSA",
@@ -49,7 +51,8 @@ our @tests = (
             "MaxProtocol" => "TLSv1.2"
         },
         client => {
-            "CipherString" => "aECDSA"
+            "CipherString" => "aECDSA",
+            "MaxProtocol" => "TLSv1.2"
         },
         test   => {
             "ExpectedResult" => "ServerFail"

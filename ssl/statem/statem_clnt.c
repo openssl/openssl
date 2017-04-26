@@ -3496,7 +3496,7 @@ int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, WPACKET *pkt)
 {
     int i;
-    size_t totlen = 0, len, maxlen;
+    size_t totlen = 0, len, maxlen, maxverok = 0;
     int empty_reneg_info_scsv = !s->renegotiate;
     /* Set disabled masks for this session */
     ssl_set_client_disabled(s);
@@ -3538,11 +3538,29 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, WPACKET *pkt)
             return 0;
         }
 
+        /* Sanity check that the maximum version we offer has ciphers enabled */
+        if (!maxverok) {
+            if (SSL_IS_DTLS(s)) {
+                if (DTLS_VERSION_GE(c->max_dtls, s->s3->tmp.max_ver)
+                        && DTLS_VERSION_LE(c->min_dtls, s->s3->tmp.max_ver))
+                    maxverok = 1;
+            } else {
+                if (c->max_tls >= s->s3->tmp.max_ver
+                        && c->min_tls <= s->s3->tmp.max_ver)
+                    maxverok = 1;
+            }
+        }
+
         totlen += len;
     }
 
-    if (totlen == 0) {
+    if (totlen == 0 || !maxverok) {
         SSLerr(SSL_F_SSL_CIPHER_LIST_TO_BYTES, SSL_R_NO_CIPHERS_AVAILABLE);
+
+        if (!maxverok)
+            ERR_add_error_data(1, "No ciphers enabled for max supported "
+                                  "SSL/TLS version");
+
         return 0;
     }
 
