@@ -114,10 +114,10 @@ our @tests_tls1_2 = (
         name => "renegotiate-aead-to-non-aead",
         server => {
             "Options" => "NoResumptionOnRenegotiation",
-            "MaxProtocol" => "TLSv1.2"
         },
         client => {
             "CipherString" => "AES128-GCM-SHA256",
+            "MaxProtocol" => "TLSv1.2",
             extra => {
                 "RenegotiateCiphers" => "AES128-SHA"
             }
@@ -133,10 +133,10 @@ our @tests_tls1_2 = (
         name => "renegotiate-non-aead-to-aead",
         server => {
             "Options" => "NoResumptionOnRenegotiation",
-            "MaxProtocol" => "TLSv1.2"
         },
         client => {
             "CipherString" => "AES128-SHA",
+            "MaxProtocol" => "TLSv1.2",
             extra => {
                 "RenegotiateCiphers" => "AES128-GCM-SHA256"
             }
@@ -152,10 +152,10 @@ our @tests_tls1_2 = (
         name => "renegotiate-non-aead-to-non-aead",
         server => {
             "Options" => "NoResumptionOnRenegotiation",
-            "MaxProtocol" => "TLSv1.2"
         },
         client => {
             "CipherString" => "AES128-SHA",
+            "MaxProtocol" => "TLSv1.2",
             extra => {
                 "RenegotiateCiphers" => "AES256-SHA"
             }
@@ -171,10 +171,10 @@ our @tests_tls1_2 = (
         name => "renegotiate-aead-to-aead",
         server => {
             "Options" => "NoResumptionOnRenegotiation",
-            "MaxProtocol" => "TLSv1.2"
         },
         client => {
             "CipherString" => "AES128-GCM-SHA256",
+            "MaxProtocol" => "TLSv1.2",
             extra => {
                 "RenegotiateCiphers" => "AES256-GCM-SHA384"
             }
