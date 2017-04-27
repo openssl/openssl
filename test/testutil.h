@@ -248,6 +248,7 @@ void test_error_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 void test_info(const char *file, int line, const char *desc, ...)
     PRINTF_FORMAT(3, 4);
 void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
+void test_openssl_errors(void);
 
 /*
  * The following macros provide wrapper calls to the test functions with
@@ -342,6 +343,7 @@ void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 #  define TEST_error(...)    test_error(__FILE__, __LINE__, __VA_ARGS__)
 #  define TEST_info(...)     test_info(__FILE__, __LINE__, __VA_ARGS__)
 # endif
+# define TEST_openssl_errors test_openssl_errors
 
 /*
  * For "impossible" conditions such as malloc failures or bugs in test code,
@@ -351,7 +353,7 @@ void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 # define TEST_check(condition)                  \
     do {                                        \
         if (!(condition)) {                     \
-            ERR_print_errors_fp(stderr);        \
+            TEST_openssl_errors();              \
             OPENSSL_assert(!#condition);        \
         }                                       \
     } while (0)
