@@ -2124,12 +2124,6 @@ int s_client_main(int argc, char **argv)
             if (in_init) {
                 in_init = 0;
 
-                if (servername != NULL && !SSL_session_reused(con)) {
-                    BIO_printf(bio_c_out,
-                               "Server did %sacknowledge servername extension.\n",
-                               tlsextcbp.ack ? "" : "not ");
-                }
-
                 if (sess_out) {
                     BIO *stmp = BIO_new_file(sess_out, "w");
                     if (stmp) {
