@@ -973,6 +973,9 @@ struct ssl_ctx_st {
 
     /* The maximum number of bytes that can be sent as early data */
     uint32_t max_early_data;
+
+    /* Callback for selecting a cipher, given a client's preference list */
+    SSL_choose_cipher_cb_func choose_cipher_cb;
 };
 
 struct ssl_st {
@@ -1290,6 +1293,9 @@ struct ssl_st {
     uint32_t early_data_count;
 
     CRYPTO_RWLOCK *lock;
+
+    /* Callback for selecting a cipher, given a client's preference list */
+    SSL_choose_cipher_cb_func choose_cipher_cb;
 };
 
 /*
