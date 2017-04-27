@@ -91,6 +91,33 @@ use constant {
     EXT_FORCE_LAST => 0xffff
 };
 
+# SignatureScheme of TLS 1.3, from
+# https://tools.ietf.org/html/draft-ietf-tls-tls13-20#appendix-B.3.1.3
+# TODO(TLS1.3) update link to IANA registry after publication
+# We have to manually grab the SHA224 equivalents from the old registry
+use constant {
+    SIG_ALG_RSA_PKCS1_SHA256 => 0x0401,
+    SIG_ALG_RSA_PKCS1_SHA384 => 0x0501,
+    SIG_ALG_RSA_PKCS1_SHA512 => 0x0601,
+    SIG_ALG_ECDSA_SECP256R1_SHA256 => 0x0403,
+    SIG_ALG_ECDSA_SECP384R1_SHA384 => 0x0503,
+    SIG_ALG_ECDSA_SECP521R1_SHA512 => 0x0603,
+    SIG_ALG_RSA_PSS_SHA256 => 0x0804,
+    SIG_ALG_RSA_PSS_SHA384 => 0x0805,
+    SIG_ALG_RSA_PSS_SHA512 => 0x0806,
+    SIG_ALG_ED25519 => 0x0807,
+    SIG_ALG_ED448 => 0x0808,
+    SIG_ALG_RSA_PKCS1_SHA1 => 0x0201,
+    SIG_ALG_ECDSA_SHA1 => 0x0203,
+    SIG_ALG_DSA_SHA1 => 0x0202,
+    SIG_ALG_DSA_SHA256 => 0x0402,
+    SIG_ALG_DSA_SHA384 => 0x0502,
+    SIG_ALG_DSA_SHA512 => 0x0602,
+    OSSL_SIG_ALG_RSA_PKCS1_SHA224 => 0x0301,
+    OSSL_SIG_ALG_DSA_SHA224 => 0x0302,
+    OSSL_SIG_ALG_ECDSA_SHA224 => 0x0303
+};
+
 use constant {
     CIPHER_DHE_RSA_AES_128_SHA => 0x0033,
     CIPHER_ADH_AES_128_SHA => 0x0034,
