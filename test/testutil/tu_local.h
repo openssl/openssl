@@ -8,3 +8,6 @@
  */
 
 int subtest_level(void);
+int test_printf_stdout(const char *fmt, ...);
+int test_printf_stderr(const char *fmt, ...);
+int openssl_error_cb(const char *str, size_t len, void *u);

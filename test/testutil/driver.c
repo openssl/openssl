@@ -83,11 +83,6 @@ static int should_report_leaks()
 }
 #endif
 
-static int err_cb(const char *str, size_t len, void *u)
-{
-    return test_puts_stderr(str);
-}
-
 void setup_test()
 {
     char *TAP_levels = getenv("HARNESS_OSSL_LEVEL");
@@ -107,7 +102,8 @@ void setup_test()
 int finish_test(int ret)
 {
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (should_report_leaks() && CRYPTO_mem_leaks_cb(err_cb, NULL) <= 0)
+    if (should_report_leaks()
+        && CRYPTO_mem_leaks_cb(openssl_error_cb, NULL) <= 0)
         return EXIT_FAILURE;
 #endif
 
@@ -121,16 +117,7 @@ static void finalize(int success)
     if (success)
         ERR_clear_error();
     else
-        ERR_print_errors_cb(err_cb, NULL);
-}
-
-static void helper_printf_stdout(const char *fmt, ...)
-{
-    va_list ap;
-
-    va_start(ap, fmt);
-    test_vprintf_stdout(fmt, ap);
-    va_end(ap);
+        ERR_print_errors_cb(openssl_error_cb, NULL);
 }
 
 int run_tests(const char *test_prog_name)
@@ -140,13 +127,13 @@ int run_tests(const char *test_prog_name)
     int i, j;
 
     if (num_tests < 1)
-        helper_printf_stdout("%*s1..0 # Skipped: %s\n", level, "",
-                             test_prog_name);
+        test_printf_stdout("%*s1..0 # Skipped: %s\n", level, "",
+                           test_prog_name);
     else if (level > 0)
-        helper_printf_stdout("%*s1..%d # Subtest: %s\n", level, "", num_tests,
-                             test_prog_name);
+        test_printf_stdout("%*s1..%d # Subtest: %s\n", level, "", num_tests,
+                           test_prog_name);
     else
-        helper_printf_stdout("%*s1..%d\n", level, "", num_tests);
+        test_printf_stdout("%*s1..%d\n", level, "", num_tests);
     test_flush_stdout();
 
     for (i = 0; i != num_tests; ++i) {
@@ -161,8 +148,8 @@ int run_tests(const char *test_prog_name)
                 verdict = "not ok";
                 ++num_failed;
             }
-            helper_printf_stdout("%*s%s %d - %s\n", level, "", verdict, i + 1,
-                                     all_tests[i].test_case_name);
+            test_printf_stdout("%*s%s %d - %s\n", level, "", verdict, i + 1,
+                               all_tests[i].test_case_name);
             test_flush_stdout();
             finalize(ret);
         } else {
@@ -170,10 +157,10 @@ int run_tests(const char *test_prog_name)
 
             level += 4;
             if (all_tests[i].subtest) {
-                helper_printf_stdout("%*s# Subtest: %s\n", level, "",
-                                     all_tests[i].test_case_name);
-                helper_printf_stdout("%*s%d..%d\n", level, "", 1,
-                                     all_tests[i].num);
+                test_printf_stdout("%*s# Subtest: %s\n", level, "",
+                                   all_tests[i].test_case_name);
+                test_printf_stdout("%*s%d..%d\n", level, "", 1,
+                                   all_tests[i].num);
                 test_flush_stdout();
             }
 
@@ -194,7 +181,7 @@ int run_tests(const char *test_prog_name)
                         verdict = "not ok";
                         ++num_failed_inner;
                     }
-                    helper_printf_stdout("%*s%s %d\n", level, "", verdict, j + 1);
+                    test_printf_stdout("%*s%s %d\n", level, "", verdict, j + 1);
                     test_flush_stdout();
                 }
             }
@@ -205,8 +192,8 @@ int run_tests(const char *test_prog_name)
                 verdict = "not ok";
                 ++num_failed;
             }
-            helper_printf_stdout("%*s%s %d - %s\n", level, "", verdict, i + 1,
-                                 all_tests[i].test_case_name);
+            test_printf_stdout("%*s%s %d - %s\n", level, "", verdict, i + 1,
+                               all_tests[i].test_case_name);
             test_flush_stdout();
         }
     }
