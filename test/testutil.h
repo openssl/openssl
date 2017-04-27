@@ -377,5 +377,3 @@ int test_flush_stderr(void);
 
 extern BIO *bio_out;
 extern BIO *bio_err;
-
-int subtest_level(void);

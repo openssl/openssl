@@ -8,6 +8,7 @@
  */
 
 #include "../testutil.h"
+#include "tu_local.h"
 
 #include <string.h>
 #include <assert.h>
