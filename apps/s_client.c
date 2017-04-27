@@ -2481,12 +2481,6 @@ int s_client_main(int argc, char **argv)
             if (in_init) {
                 in_init = 0;
 
-                if (!noservername && !SSL_session_reused(con)) {
-                    BIO_printf(bio_c_out,
-                               "Server did %sacknowledge servername extension.\n",
-                               tlsextcbp.ack ? "" : "not ");
-                }
-
                 if (c_brief) {
                     BIO_puts(bio_err, "CONNECTION ESTABLISHED\n");
                     print_ssl_summary(con);
