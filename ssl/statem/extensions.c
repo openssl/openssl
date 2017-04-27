@@ -784,6 +784,10 @@ static int final_server_name(SSL *s, unsigned int context, int sent,
     int ret = SSL_TLSEXT_ERR_NOACK;
     int altmp = SSL_AD_UNRECOGNIZED_NAME;
 
+    if (!sent) {
+        return 1;
+    }
+
     if (s->ctx != NULL && s->ctx->ext.servername_cb != 0)
         ret = s->ctx->ext.servername_cb(s, &altmp,
                                         s->ctx->ext.servername_arg);
