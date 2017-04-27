@@ -21,6 +21,7 @@
 #include "testutil.h"
 #include "e_os.h"
 
+#ifndef OPENSSL_NO_DSA
 static int dsa_cb(int p, int n, BN_GENCB *arg);
 
 /*
@@ -134,6 +135,7 @@ static int dsa_cb(int p, int n, BN_GENCB *arg)
     }
     return 1;
 }
+#endif /* OPENSSL_NO_DSA */
 
 void register_tests(void)
 {
