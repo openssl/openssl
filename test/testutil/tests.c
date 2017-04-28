@@ -111,6 +111,11 @@ void test_error(const char *file, int line, const char *desc, ...)
     va_end(ap);
 }
 
+void test_openssl_errors(void)
+{
+    ERR_print_errors_cb(openssl_error_cb, NULL);
+}
+
 /*
  * Define some comparisons between pairs of various types.
  * These functions return 1 if the test is true.
