@@ -261,18 +261,6 @@ void test_close_streams(void)
 {
 }
 
-int test_puts_stdout(const char *str)
-{
-    return fputs(str, stdout);
-}
-
-int test_puts_stderr(const char *str)
-{
-    return fputs(str, stderr);
-}
-
-static char vprint_buf[10240];
-
 /*
  * This works out as long as caller doesn't use any "fancy" formats.
  * But we are caller's caller, and test_str_eq is the only one called,
@@ -280,20 +268,12 @@ static char vprint_buf[10240];
  */
 int test_vprintf_stdout(const char *fmt, va_list ap)
 {
-    size_t len = vsnprintf(vprint_buf, sizeof(vprint_buf), fmt, ap);
-
-    if (len >= sizeof(vprint_buf))
-        return -1;
-    return test_puts_stdout(vprint_buf);
+    return vfprintf(stdout, fmt, ap);
 }
 
 int test_vprintf_stderr(const char *fmt, va_list ap)
 {
-    size_t len = vsnprintf(vprint_buf, sizeof(vprint_buf), fmt, ap);
-
-    if (len >= sizeof(vprint_buf))
-        return -1;
-    return test_puts_stderr(vprint_buf);
+    return vfprintf(stderr, fmt, ap);
 }
 
 int test_flush_stdout(void)
