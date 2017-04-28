@@ -15,7 +15,7 @@
 int test_main(int argc, char *argv[])
 {
     if (argc > 1)
-        test_puts_stderr("Warning: ignoring extra command-line arguments.\n");
+        test_printf_stderr("Warning: ignoring extra command-line arguments.\n");
 
     register_tests();
     return run_tests(argv[0]);
