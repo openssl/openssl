@@ -7,7 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdlib.h>              /* size_t */
+#include "output.h"
+#include "tu_local.h"
 
-int subtest_level(void);
-int openssl_error_cb(const char *str, size_t len, void *u);
+int openssl_error_cb(const char *str, size_t len, void *u)
+{
+    return test_printf_stderr("%*s# %s", subtest_level(), "", str);
+}
