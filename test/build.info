@@ -67,7 +67,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
 
   SOURCE[ectest]=ectest.c
   INCLUDE[ectest]=.. ../include
-  DEPEND[ectest]=../libcrypto
+  DEPEND[ectest]=../libcrypto libtestutil.a
 
   SOURCE[ecdsatest]=ecdsatest.c
   INCLUDE[ecdsatest]=../include
