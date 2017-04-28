@@ -14,6 +14,7 @@
 #include <openssl/bio.h>
 #include "internal/numbers.h"
 #include "testutil.h"
+#include "testutil/output.h"
 
 #define nelem(x) (int)(sizeof(x) / sizeof((x)[0]))
 

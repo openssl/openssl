@@ -8,6 +8,7 @@
  */
 
 #include "../testutil.h"
+#include "output.h"
 
 #include <stdio.h>
 
