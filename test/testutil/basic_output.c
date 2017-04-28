@@ -31,16 +31,6 @@ void test_close_streams(void)
     BIO_free(bio_err);
 }
 
-int test_puts_stdout(const char *str)
-{
-    return BIO_puts(bio_out, str);
-}
-
-int test_puts_stderr(const char *str)
-{
-    return BIO_puts(bio_err, str);
-}
-
 int test_vprintf_stdout(const char *fmt, va_list ap)
 {
     return BIO_vprintf(bio_out, fmt, ap);

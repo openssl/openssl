@@ -49,19 +49,17 @@ static void test_fail_message(const char *prefix, const char *file, int line,
 static void test_fail_message_va(const char *prefix, const char *file, int line,
                                  const char *type, const char *fmt, va_list ap)
 {
-    test_printf_stderr("%*s# ", subtest_level(), "");
-    test_puts_stderr(prefix != NULL ? prefix : "ERROR");
-    test_puts_stderr(":");
+    test_printf_stderr("%*s# %s: ", subtest_level(), "",
+                       prefix != NULL ? prefix : "ERROR");
     if (type)
-        test_printf_stderr(" (%s)", type);
+        test_printf_stderr("(%s)", type);
     if (fmt != NULL) {
-        test_puts_stderr(" ");
         test_vprintf_stderr(fmt, ap);
     }
     if (file != NULL) {
         test_printf_stderr(" @ %s:%d", file, line);
     }
-    test_puts_stderr("\n");
+    test_printf_stderr("\n");
     test_flush_stderr();
 }
 

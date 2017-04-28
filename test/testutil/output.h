@@ -19,8 +19,6 @@
 void test_open_streams(void);
 void test_close_streams(void);
 /* The following ALL return the number of characters written */
-int test_puts_stdout(const char *str);
-int test_puts_stderr(const char *str);
 int test_vprintf_stdout(const char *fmt, va_list ap);
 int test_vprintf_stderr(const char *fmt, va_list ap);
 /* These return failure or success */
