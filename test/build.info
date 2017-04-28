@@ -9,9 +9,10 @@
 -}
 IF[{- !$disabled{tests} -}]
   LIBS_NO_INST=libtestutil.a
-  SOURCE[libtestutil.a]=testutil/basic_output.c testutil/driver.c \
-          testutil/tests.c testutil/test_main.c testutil/main.c \
-          {- rebase_files("../apps", $target{apps_aux_src}) -}
+  SOURCE[libtestutil.a]=testutil/basic_output.c testutil/output_helpers.c \
+          testutil/driver.c testutil/tests.c \
+          {- rebase_files("../apps", $target{apps_aux_src}) -} \
+          testutil/test_main.c testutil/main.c
   INCLUDE[libtestutil.a]=.. ../include
   DEPEND[libtestutil.a]=../libcrypto
 
