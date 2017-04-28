@@ -27,4 +27,8 @@ int test_vprintf_stderr(const char *fmt, va_list ap);
 int test_flush_stdout(void);
 int test_flush_stderr(void);
 
+/* Commodity functions.  There's no need to override these */
+int test_printf_stdout(const char *fmt, ...);
+int test_printf_stderr(const char *fmt, ...);
+
 #endif                          /* HEADER_TU_OUTPUT_H */

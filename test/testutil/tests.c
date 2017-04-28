@@ -45,29 +45,21 @@
 static void test_fail_message(const char *prefix, const char *file, int line,
                               const char *type, const char *fmt, ...)
             PRINTF_FORMAT(5, 6);
-static void helper_printf_stderr(const char *fmt, ...)
-{
-    va_list ap;
-
-    va_start(ap, fmt);
-    test_vprintf_stderr(fmt, ap);
-    va_end(ap);
-}
 
 static void test_fail_message_va(const char *prefix, const char *file, int line,
                                  const char *type, const char *fmt, va_list ap)
 {
-    helper_printf_stderr("%*s# ", subtest_level(), "");
+    test_printf_stderr("%*s# ", subtest_level(), "");
     test_puts_stderr(prefix != NULL ? prefix : "ERROR");
     test_puts_stderr(":");
     if (type)
-        helper_printf_stderr(" (%s)", type);
+        test_printf_stderr(" (%s)", type);
     if (fmt != NULL) {
         test_puts_stderr(" ");
         test_vprintf_stderr(fmt, ap);
     }
     if (file != NULL) {
-        helper_printf_stderr(" @ %s:%d", file, line);
+        test_printf_stderr(" @ %s:%d", file, line);
     }
     test_puts_stderr("\n");
     test_flush_stderr();
