@@ -9,6 +9,7 @@
 
 #include "../testutil.h"
 #include "output.h"
+#include "tu_local.h"
 
 #include <string.h>
 #include "../../e_os.h"
@@ -44,8 +45,6 @@
 static void test_fail_message(const char *prefix, const char *file, int line,
                               const char *type, const char *fmt, ...)
             PRINTF_FORMAT(5, 6);
-int subtest_level(void);
-
 static void helper_printf_stderr(const char *fmt, ...)
 {
     va_list ap;

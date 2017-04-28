@@ -359,5 +359,4 @@ void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 extern BIO *bio_out;
 extern BIO *bio_err;
 
-int subtest_level(void);
 #endif                          /* HEADER_TESTUTIL_H */
