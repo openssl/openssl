@@ -355,25 +355,9 @@ void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
             OPENSSL_assert(!#condition);        \
         }                                       \
     } while (0)
-#endif                          /* HEADER_TESTUTIL_H */
-
-
-/*
- * The basic I/O functions used by the test framework.  These can be
- * overriden when needed. Note that if one is, then all must be.
- */
-void test_open_streams(void);
-void test_close_streams(void);
-/* The following ALL return the number of characters written */
-int test_puts_stdout(const char *str);
-int test_puts_stderr(const char *str);
-int test_vprintf_stdout(const char *fmt, va_list ap);
-int test_vprintf_stderr(const char *fmt, va_list ap);
-/* These return failure or success */
-int test_flush_stdout(void);
-int test_flush_stderr(void);
 
 extern BIO *bio_out;
 extern BIO *bio_err;
 
 int subtest_level(void);
+#endif                          /* HEADER_TESTUTIL_H */
