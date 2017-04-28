@@ -149,6 +149,8 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
                        const unsigned char *p, size_t plen)
 {
     int neg, pad;
+    size_t i;
+
     /* Zero content length is illegal */
     if (plen == 0) {
         ASN1err(ASN1_F_C2I_IBUF, ASN1_R_ILLEGAL_ZERO_CONTENT);
@@ -166,6 +168,22 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
                 b[0] = p[0];
         }
         return 1;
+    }
+    /* leading 0xFF is not a padding if all the following bytes are zero */
+    if (p[0] == 0xFF) {
+        /* check is any following octets are non zero */
+        for (i = 1; i < plen; i++) {
+            if (p[i] != 0)
+                break;
+        }
+        /* if all bytes are zero handle as special case */
+        if (i == plen) {
+            if (b != NULL) {
+                b[0] = 1;
+                memset(b + 1, 0, plen - 1);
+            }
+            return plen;
+        }
     }
     if (p[0] == 0 || p[0] == 0xFF)
         pad = 1;
