@@ -9,6 +9,7 @@
 
 #include "../testutil.h"
 #include "output.h"
+#include "tu_local.h"
 
 #include <string.h>
 #include <assert.h>
