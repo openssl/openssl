@@ -84,11 +84,6 @@ static int should_report_leaks()
 }
 #endif
 
-static int err_cb(const char *str, size_t len, void *u)
-{
-    return test_puts_stderr(str);
-}
-
 void setup_test()
 {
     char *TAP_levels = getenv("HARNESS_OSSL_LEVEL");
@@ -108,7 +103,8 @@ void setup_test()
 int finish_test(int ret)
 {
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (should_report_leaks() && CRYPTO_mem_leaks_cb(err_cb, NULL) <= 0)
+    if (should_report_leaks()
+        && CRYPTO_mem_leaks_cb(openssl_error_cb, NULL) <= 0)
         return EXIT_FAILURE;
 #endif
 
@@ -122,7 +118,7 @@ static void finalize(int success)
     if (success)
         ERR_clear_error();
     else
-        ERR_print_errors_cb(err_cb, NULL);
+        ERR_print_errors_cb(openssl_error_cb, NULL);
 }
 
 int run_tests(const char *test_prog_name)
