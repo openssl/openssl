@@ -171,6 +171,9 @@ sub start
         if ($self->serverflags ne "") {
             $execcmd .= " ".$self->serverflags;
         }
+        if ($self->debug) {
+            print STDERR "Server command: $execcmd\n";
+        }
         exec($execcmd);
     }
     $self->serverpid($pid);
@@ -231,6 +234,9 @@ sub clientstart
             }
             if (defined $self->sessionfile) {
                 $execcmd .= " -ign_eof";
+            }
+            if ($self->debug) {
+                print STDERR "Client command: $execcmd\n";
             }
             exec($execcmd);
         }
