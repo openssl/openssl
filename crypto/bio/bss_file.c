@@ -190,6 +190,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
     FILE *fp = (FILE *)b->ptr;
     FILE **fpp;
     char p[4];
+    int st;
 
     switch (cmd) {
     case BIO_C_FILE_SEEK:
@@ -317,10 +318,14 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->shutdown = (int)num;
         break;
     case BIO_CTRL_FLUSH:
-        if (b->flags & BIO_FLAGS_UPLINK)
-            UP_fflush(b->ptr);
-        else
-            fflush((FILE *)b->ptr);
+        st = b->flags & BIO_FLAGS_UPLINK
+                ? UP_fflush(b->ptr) : fflush((FILE *)b->ptr);
+        if (st == EOF) {
+            SYSerr(SYS_F_FFLUSH, get_last_sys_error());
+            ERR_add_error_data(1, "fflush()");
+            BIOerr(BIO_F_FILE_CTRL, ERR_R_SYS_LIB);
+            ret = 0;
+        }
         break;
     case BIO_CTRL_DUP:
         ret = 1;
