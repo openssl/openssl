@@ -57,9 +57,11 @@ The B<EVP> interface to digital signatures should almost always be used in
 preference to the low level interfaces. This is because the code then becomes
 transparent to the algorithm used and much more flexible.
 
-EVP_DigesVerify() is a single part operation which verifies a single block of
-data in one function. It is equivalent to calling EVP_DigestVerifyUpdate() and
-EVP_DigestVerifyFinal().
+EVP_DigesVerify() is a one shot operation which verifies a single block of
+data in one function. For algorithms that support streaming it is equivalent
+to calling EVP_DigestVerifyUpdate() and EVP_DigestVerifyFinal(). For
+algorithms which do not support streaming (e.g. PureEdDSA) it is the only way
+to verify data.
 
 In previous versions of OpenSSL there was a link between message digest types
 and public key algorithms. This meant that "clone" digests such as EVP_dss1()
