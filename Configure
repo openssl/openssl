@@ -141,17 +141,13 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
 my $clang_devteam_warn = ""
         . " -Qunused-arguments"
-        . " -Wextra"
-        . " -Wswitch -Wswitch-default"
-        . " -Wno-unused-parameter"
+        . " -Wswitch-default"
         . " -Wno-parentheses-equality"
-        . " -Wno-missing-field-initializers"
         . " -Wno-language-extension-token"
         . " -Wno-extended-offsetof"
         . " -Wconditional-uninitialized"
         . " -Wincompatible-pointer-types-discards-qualifiers"
         . " -Wmissing-variable-declarations"
-        . " -Wundef"
         ;
 
 # This adds backtrace information to the memory leak info.  Is only used
