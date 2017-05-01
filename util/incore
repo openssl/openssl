@@ -131,6 +131,9 @@
 		&& @sections[$st_secn]->{sh_type}	# not SHN_UNDEF
 		&& ($name=(split(chr(0),substr($strings,$elf_sym{st_name},128)))[0])
 		) {
+		if ($st_type==2 && $self->{e_machine} == 40) {
+		    $elf_sym{st_value} &= ~1;	# compensate for Thumb STT_FUNCs
+		}
 		# synthesize st_offset, ...
 	    	$elf_sym{st_offset}  = $elf_sym{st_value}
 				- @sections[$st_secn]->{sh_addr}
