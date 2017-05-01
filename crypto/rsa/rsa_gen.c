@@ -136,6 +136,10 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
         goto err;               /* q-1 */
     if (!BN_mul(r0, r1, r2, ctx))
         goto err;               /* (p-1)(q-1) */
+    if (!BN_gcd(r3, r1, r2, ctx))
+        goto err;               /* gcd(p-1, q-1) */
+    if (!BN_div(r0, NULL, r0, r3, ctx))
+        goto err;               /* LCM(p-1, q-1) */
     {
         BIGNUM *pr0 = BN_new();
 
