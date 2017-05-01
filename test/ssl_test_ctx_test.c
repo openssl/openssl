@@ -40,7 +40,9 @@ static int clientconf_eq(SSL_TEST_CLIENT_CONF *conf1,
             || !TEST_int_eq(conf1->servername, conf2->servername)
             || !TEST_str_eq(conf1->npn_protocols, conf2->npn_protocols)
             || !TEST_str_eq(conf1->alpn_protocols, conf2->alpn_protocols)
-            || !TEST_int_eq(conf1->ct_validation, conf2->ct_validation))
+            || !TEST_int_eq(conf1->ct_validation, conf2->ct_validation)
+            || !TEST_int_eq(conf1->max_fragment_len_mode,
+                            conf2->max_fragment_len_mode))
         return 0;
     return 1;
 }
@@ -178,6 +180,7 @@ static int test_good_configuration(void)
         OPENSSL_strdup("foo,bar");
     if (!TEST_ptr(fixture->expected_ctx->extra.client.npn_protocols))
         goto err;
+    fixture->expected_ctx->extra.client.max_fragment_len_mode = 0;
 
     fixture->expected_ctx->extra.server.servername_callback =
         SSL_TEST_SERVERNAME_IGNORE_MISMATCH;
@@ -215,6 +218,7 @@ static const char *bad_configurations[] = {
     "ssltest_unknown_handshake_mode",
     "ssltest_unknown_resumption_expected",
     "ssltest_unknown_ct_validation",
+    "ssltest_invalid_max_fragment_len",
 };
 
 static int test_bad_configuration(int idx)

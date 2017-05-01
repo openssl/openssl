@@ -97,6 +97,8 @@ typedef struct {
     ssl_verify_callback_t verify_callback;
     /* One of a number of predefined server names use by the client */
     ssl_servername_t servername;
+    /* Maximum Fragment Length extension mode */
+    int max_fragment_len_mode;
     /* Supported NPN and ALPN protocols. A comma-separated list. */
     char *npn_protocols;
     char *alpn_protocols;
@@ -223,6 +225,7 @@ const char *ssl_test_method_name(ssl_test_method_t method);
 const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode);
 const char *ssl_ct_validation_name(ssl_ct_validation_t mode);
 const char *ssl_certstatus_name(ssl_cert_status_t cert_status);
+const char *ssl_max_fragment_len_name(int MFL_mode);
 
 /*
  * Load the test case context from |conf|.
