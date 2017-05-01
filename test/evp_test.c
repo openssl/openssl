@@ -416,7 +416,8 @@ static int run_and_get_next(EVP_TEST *t, const EVP_TEST_METHOD *tmeth)
     if (t->meth) {
         t->ntests++;
         if (t->skip) {
-            TEST_info("Line %d skipped %s test", t->start_line, t->meth->name);
+            /*TEST_info("Line %d skipped %s test", t->start_line, t->meth->name);
+             */
             t->nskip++;
         } else {
             /* run the test */
@@ -425,8 +426,7 @@ static int run_and_get_next(EVP_TEST *t, const EVP_TEST_METHOD *tmeth)
                 return 0;
             }
             if (!check_test_error(t)) {
-                if (t->err)
-                    ERR_print_errors_fp(stderr);
+                test_openssl_errors();
                 t->errors++;
             }
         }
@@ -1265,10 +1265,13 @@ static int mac_test_run(EVP_TEST *t)
         t->err = "DIGESTSIGNFINAL_LENGTH_ERROR";
         goto err;
     }
-    if (!TEST_ptr(mac = OPENSSL_malloc(mac_len))
-            || !EVP_DigestSignFinal(mctx, mac, &mac_len)
-            || !TEST_mem_eq(mdata->output, mdata->output_len, mac, mac_len)) {
+    if (!TEST_ptr(mac = OPENSSL_malloc(mac_len))) {
         t->err = "TEST_FAILURE";
+        goto err;
+    }
+    if (!EVP_DigestSignFinal(mctx, mac, &mac_len)
+            || !TEST_mem_eq(mdata->output, mdata->output_len, mac, mac_len)) {
+        t->err = "TEST_MAC_ERR";
         goto err;
     }
 
