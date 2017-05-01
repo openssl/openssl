@@ -15,7 +15,7 @@
 #include "../../e_os.h"
 
 /* The size of memory buffers to display on failure */
-#define MEM_BUFFER_SIZE     (21)
+#define MEM_BUFFER_SIZE     (33)
 
 /*
  * A common routine to output test failure messages.  Generally this should not
@@ -267,23 +267,35 @@ int test_strn_ne(const char *file, int line, const char *st1, const char *st2,
 
 /*
  * We could use OPENSSL_buf2hexstr() to do this but trying to allocate memory
- * in a failure state isn't generally a great idea.
+ * in a failure state isn't generally a great idea and if it fails, we want a
+ * fall back position using caller supplied buffers.
+ *
+ * If the return value is different from the buffer supplied, it needs to be
+ * freed by the caller.
  */
-static const char *print_mem_maybe_null(const void *s, size_t n,
-                                        char out[MEM_BUFFER_SIZE])
+static char *print_mem_maybe_null(const void *s, size_t n,
+                                  char outbuf[MEM_BUFFER_SIZE])
 {
     size_t i;
     const unsigned char *p = (const unsigned char *)s;
-    int pad = 2*n >= MEM_BUFFER_SIZE;
+    char *out = outbuf;
+    int pad = 2 * n >= MEM_BUFFER_SIZE;
 
     if (s == NULL)
-        return "(NULL)";
-    if (pad)
-        n = MEM_BUFFER_SIZE-4;
-    
-    for (i=0; i<2*n; i++) {
-        unsigned char c = (i & 1) != 0 ? p[i / 2] & 15 : p[i / 2] >> 4;
-        out[i] = "0123456789abcdef"[c];
+        return strcpy(outbuf, "(NULL)");
+    if (pad) {
+        if ((out = OPENSSL_malloc(2 * n + 1)) == NULL) {
+            out = outbuf;
+            n = (MEM_BUFFER_SIZE - 4) / 2;
+        } else {
+            pad = 0;
+        }
+    }
+
+    for (i = 0; i < 2 * n; ) {
+        const unsigned char c = *p++;
+        out[i++] = "0123456789abcdef"[c >> 4];
+        out[i++] = "0123456789abcdef"[c & 15];
     }
     if (pad) {
         out[i++] = '.';
@@ -291,7 +303,7 @@ static const char *print_mem_maybe_null(const void *s, size_t n,
         out[i++] = '.';
     }
     out[i] = '\0';
-        
+
     return out;
 }
 
@@ -302,18 +314,17 @@ int test_mem_eq(const char *file, int line, const char *st1, const char *st2,
 
     if (s1 == NULL && s2 == NULL)
         return 1;
-    if (n1 != n2) {
+    if (n1 != n2 || s1 == NULL || s2 == NULL || memcmp(s1, s2, n1) != 0) {
+        char *m1 = print_mem_maybe_null(s1, n1, b1);
+        char *m2 = print_mem_maybe_null(s2, n2, b2);
+
         test_fail_message(NULL, file, line, "memory",
-                          "size mismatch %s %s [%zu] != %s %s [%zu]",
-                          st1, print_mem_maybe_null(s1, n1, b1), n1,
-                          st2, print_mem_maybe_null(s2, n2, b2), n2);
-        return 0;
-    }
-    if (s1 == NULL || s2 == NULL || memcmp(s1, s2, n1) != 0) {
-        test_fail_message(NULL, file, line, "memory",
-                          "%s %s [%zu] != %s %s [%zu]",
-                          st1, print_mem_maybe_null(s1, n1, b1), n1,
-                          st2, print_mem_maybe_null(s2, n2, b2), n2);
+                          "%s %s [%zu] == %s %s [%zu]",
+                          st1, m1, n1, st2, m2, n2);
+        if (m1 != b1)
+            OPENSSL_free(m1);
+        if (m2 != b2)
+            OPENSSL_free(m2);
         return 0;
     }
     return 1;
@@ -325,14 +336,20 @@ int test_mem_ne(const char *file, int line, const char *st1, const char *st2,
     char b1[MEM_BUFFER_SIZE], b2[MEM_BUFFER_SIZE];
 
     if ((s1 == NULL) ^ (s2 == NULL))
-      return 1;
+        return 1;
     if (n1 != n2)
         return 1;
     if (s1 == NULL || memcmp(s1, s2, n1) == 0) {
+        char *m1 = print_mem_maybe_null(s1, n1, b1);
+        char *m2 = print_mem_maybe_null(s2, n2, b2);
+
         test_fail_message(NULL, file, line, "memory",
                           "%s %s [%zu] != %s %s [%zu]",
-                          st1, print_mem_maybe_null(s1, n1, b1), n1,
-                          st2, print_mem_maybe_null(s2, n2, b2), n2);
+                          st1, m1, n1, st2, m2, n2);
+        if (m1 != b1)
+            OPENSSL_free(m1);
+        if (m2 != b2)
+            OPENSSL_free(m2);
         return 0;
     }
     return 1;
