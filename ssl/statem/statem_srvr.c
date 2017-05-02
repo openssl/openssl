@@ -1175,6 +1175,7 @@ int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt)
  *   SNI,
  *   elliptic_curves
  *   ec_point_formats
+ *   signature_algorithms (for TLSv1.2 only)
  *
  * We wish to fingerprint Safari because they broke ECDHE-ECDSA support in 10.8,
  * but they advertise support. So enabling ECDHE-ECDSA ciphers breaks them.
