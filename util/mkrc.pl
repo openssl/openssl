@@ -23,12 +23,16 @@ while (<FD>) {
         $v1      = ( $ver >> 28 );
         $v2      = ( $ver >> 20 ) & 0xff;
         $v3      = ( $ver >> 12 ) & 0xff;
-        $v4      = ( $ver >> 4 ) & 0xff;
+        $v4      = ( $ver >>  4 ) & 0xff;
         $beta    = $ver & 0xf;
         $version = "$v1.$v2.$v3";
-        if ( $beta == 0xf ) { $version .= chr( ord('a') + $v4 - 1 ) if ($v4); }
-        elsif ( $beta == 0 ) { $version .= "-dev"; }
-        else                 { $version .= "-beta$beta"; }
+        if ( $beta == 0xf ) {
+            $version .= chr( ord('a') + $v4 - 1 ) if ($v4);
+        } elsif ( $beta == 0 ) {
+            $version .= "-dev";
+        } else {
+            $version .= "-beta$beta";
+        }
         last;
     }
 }
