@@ -62,7 +62,8 @@ by the client in order to select an appropriate certificate to present,
 and make other configuration adjustments relevant to that server name
 and its configuration.  Such configuration changes can include swapping out
 the associated SSL_CTX pointer, modifying the server's list of permitted TLS
-versions, changing the server's cipher list, etc.
+versions, changing the server's cipher list in response to the client's
+cipher list, etc.
 
 It is also recommended that applications utilize an early callback and
 not use a servername callback, in order to avoid unexpected behavior that
@@ -89,7 +90,8 @@ SSL_early_get0_ext() returns 1 if the extension of type 'type' is present, and
 
 =head1 SEE ALSO
 
-L<ssl(7)>, L<SSL_CTX_set_tlsext_servername_callback(3)>
+L<ssl(7)>, L<SSL_CTX_set_tlsext_servername_callback(3)>,
+L<SSL_bytes_to_cipher_list>
 
 =head1 HISTORY
 
