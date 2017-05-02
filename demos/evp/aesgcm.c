@@ -11,6 +11,7 @@
  * Simple AES GCM test program, uses the same NIST data used for the FIPS
  * self test but uses the application level EVP APIs.
  */
+#include <string.h>
 #include <stdio.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
@@ -42,7 +43,7 @@ static const unsigned char gcm_ct[] = {
     0xb9, 0xf2, 0x17, 0x36
 };
 
-static const unsigned char gcm_tag[] = {
+static unsigned char gcm_tag[] = {
     0x67, 0xba, 0x05, 0x10, 0x26, 0x2a, 0xe4, 0x87, 0xd7, 0x37, 0xee, 0x62,
     0x98, 0xf7, 0x7e, 0x0c
 };
@@ -50,7 +51,7 @@ static const unsigned char gcm_tag[] = {
 void aes_gcm_encrypt(void)
 {
     EVP_CIPHER_CTX *ctx;
-    int outlen, tmplen;
+    int outlen, verifyCt, verifyTag;
     unsigned char outbuf[1024];
     printf("AES GCM Encrypt:\n");
     printf("Plaintext:\n");
@@ -59,7 +60,7 @@ void aes_gcm_encrypt(void)
     /* Set cipher type and mode */
     EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL);
     /* Set IV length if default 96 bits is not appropriate */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, sizeof(gcm_iv), NULL);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, sizeof(gcm_iv), NULL);
     /* Initialise key and IV */
     EVP_EncryptInit_ex(ctx, NULL, NULL, gcm_key, gcm_iv);
     /* Zero or more calls to specify any AAD */
@@ -69,20 +70,26 @@ void aes_gcm_encrypt(void)
     /* Output encrypted block */
     printf("Ciphertext:\n");
     BIO_dump_fp(stdout, outbuf, outlen);
+    /* Compare ciphertext against expected */
+    verifyCt = memcmp(gcm_ct, outbuf, sizeof(gcm_ct));
+    printf("Ciphertext Verify %s\n", verifyCt == 0 ? "Successful!" : "Failed!");
     /* Finalise: note get no output for GCM */
     EVP_EncryptFinal_ex(ctx, outbuf, &outlen);
     /* Get tag */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, outbuf);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, outbuf);
     /* Output tag */
     printf("Tag:\n");
     BIO_dump_fp(stdout, outbuf, 16);
+    /* Compare tag against expected */
+    verifyTag = memcmp(gcm_tag, outbuf, sizeof(gcm_ct));
+    printf("Encrypt Tag Verify %s\n", verifyTag == 0 ? "Successful!" : "Failed!");
     EVP_CIPHER_CTX_free(ctx);
 }
 
 void aes_gcm_decrypt(void)
 {
     EVP_CIPHER_CTX *ctx;
-    int outlen, tmplen, rv;
+    int outlen, verifyPt, verifyTag;
     unsigned char outbuf[1024];
     printf("AES GCM Derypt:\n");
     printf("Ciphertext:\n");
@@ -91,7 +98,7 @@ void aes_gcm_decrypt(void)
     /* Select cipher */
     EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL);
     /* Set IV length, omit for 96 bits */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, sizeof(gcm_iv), NULL);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, sizeof(gcm_iv), NULL);
     /* Specify key and IV */
     EVP_DecryptInit_ex(ctx, NULL, NULL, gcm_key, gcm_iv);
     /* Zero or more calls to specify any AAD */
@@ -101,15 +108,18 @@ void aes_gcm_decrypt(void)
     /* Output decrypted block */
     printf("Plaintext:\n");
     BIO_dump_fp(stdout, outbuf, outlen);
+    /* Compare plaintext against expected */
+    verifyPt = memcmp(gcm_pt, outbuf, sizeof(gcm_pt));
+    printf("Plaintext Verify %s\n", verifyPt == 0 ? "Successful!" : "Failed!");
     /* Set expected tag value. */
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(gcm_tag), gcm_tag);
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, sizeof(gcm_tag), gcm_tag);
     /* Finalise: note get no output for GCM */
-    rv = EVP_DecryptFinal_ex(ctx, outbuf, &outlen);
+    verifyTag = EVP_DecryptFinal_ex(ctx, outbuf, &outlen);
     /*
      * Print out return value. If this is not successful authentication
      * failed and plaintext is not trustworthy.
      */
-    printf("Tag Verify %s\n", rv > 0 ? "Successful!" : "Failed!");
+    printf("Decrypt Tag Verify %s\n", verifyTag > 0 ? "Successful!" : "Failed!");
     EVP_CIPHER_CTX_free(ctx);
 }
 
