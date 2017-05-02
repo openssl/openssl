@@ -26,7 +26,7 @@
 static int test_case(int expected, const char *test, int result)
 {
     if (result != expected) {
-        fprintf(stderr, "FATAL: %s != %d\n", test, expected);
+        fprintf(stderr, "# FATAL: %s != %d\n", test, expected);
         return 0;
     }
     return 1;
@@ -239,8 +239,13 @@ static int test_string(void)
     if (!TEST(1, TEST_str_eq(NULL, NULL))
         | !TEST(1, TEST_str_eq("abc", buf))
         | !TEST(0, TEST_str_eq("abc", NULL))
+        | !TEST(0, TEST_str_eq("abc", ""))
         | !TEST(0, TEST_str_eq(NULL, buf))
         | !TEST(0, TEST_str_ne(NULL, NULL))
+        | !TEST(0, TEST_str_eq("", NULL))
+        | !TEST(0, TEST_str_eq(NULL, ""))
+        | !TEST(0, TEST_str_ne("", ""))
+        | !TEST(0, TEST_str_eq("\1\2\3\4\5", "\1x\3\6\5"))
         | !TEST(0, TEST_str_ne("abc", buf))
         | !TEST(1, TEST_str_ne("abc", NULL))
         | !TEST(1, TEST_str_ne(NULL, buf)))
@@ -258,7 +263,11 @@ static int test_memory(void)
     if (!TEST(1, TEST_mem_eq(NULL, 0, NULL, 0))
         | !TEST(1, TEST_mem_eq(NULL, 1, NULL, 2))
         | !TEST(0, TEST_mem_eq(NULL, 0, "xyz", 3))
+        | !TEST(0, TEST_mem_eq(NULL, 7, "abc", 3))
+        | !TEST(0, TEST_mem_ne(NULL, 0, NULL, 0))
         | !TEST(0, TEST_mem_eq(NULL, 0, "", 0))
+        | !TEST(0, TEST_mem_eq("", 0, NULL, 0))
+        | !TEST(0, TEST_mem_ne("", 0, "", 0))
         | !TEST(0, TEST_mem_eq("xyz", 3, NULL, 0))
         | !TEST(0, TEST_mem_eq("xyz", 3, buf, sizeof(buf)))
         | !TEST(1, TEST_mem_eq("xyz", 4, buf, sizeof(buf))))
@@ -276,6 +285,24 @@ static int test_memory_overflow(void)
     const char *q = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     return TEST(0, TEST_mem_eq(p, strlen(p), q, strlen(q)));
+}
+
+static int test_long_output(void)
+{
+    const char *p = "1234567890123456789012345678901234567890123456789012";
+    const char *q = "1234567890klmnopqrs01234567890EFGHIJKLM0123456789XYZ";
+    const char *r = "1234567890123456789012345678901234567890123456789012"
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY+"
+                    "12345678901234567890123ABC78901234567890123456789012";
+    const char *s = "1234567890123456789012345678901234567890123456789012"
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY-"
+                    "1234567890123456789012345678901234567890123456789012"
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    return TEST(0, TEST_str_eq(p,  q))
+           & TEST(0, TEST_str_eq(q, r))
+           & TEST(0, TEST_str_eq(r, s))
+           & TEST(0, TEST_mem_eq(r, strlen(r), s, strlen(s)));
 }
 
 static int test_messages(void)
@@ -354,6 +381,7 @@ void register_tests(void)
     ADD_TEST(test_string);
     ADD_TEST(test_memory);
     ADD_TEST(test_memory_overflow);
+    ADD_TEST(test_long_output);
     ADD_TEST(test_messages);
     ADD_TEST(test_single_eval);
 }

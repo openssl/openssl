@@ -12,10 +12,30 @@
 #include "tu_local.h"
 
 #include <string.h>
+#include <ctype.h>
 #include "../../e_os.h"
 
 /* The size of memory buffers to display on failure */
 #define MEM_BUFFER_SIZE     (33)
+#define MAX_STRING_WIDTH    (80)
+
+/* Output a failed test first line */
+static void test_fail_message_prefix(const char *prefix, const char *file,
+                                     int line, const char *type,
+                                     const char *left, const char *right,
+                                     const char *op)
+{
+    test_printf_stderr("%*s# %s: ", subtest_level(), "",
+                       prefix != NULL ? prefix : "ERROR");
+    if (type)
+        test_printf_stderr("(%s) ", type);
+    if (op != NULL)
+        test_printf_stderr("%s %s %s", left, op, right);
+    if (file != NULL) {
+        test_printf_stderr(" @ %s:%d", file, line);
+    }
+    test_printf_stderr("\n");
+}
 
 /*
  * A common routine to output test failure messages.  Generally this should not
@@ -39,37 +59,241 @@
  *
  * calling test6(3, "oops") will return 0 and produce out along the lines of:
  *      FAIL oops: (int) value 3 is not 6\n
- *
- * It general, test_fail_message should not be called directly.
  */
 static void test_fail_message(const char *prefix, const char *file, int line,
-                              const char *type, const char *fmt, ...)
-            PRINTF_FORMAT(5, 6);
+                              const char *type, const char *left,
+                              const char *right, const char *op,
+                              const char *fmt, ...)
+            PRINTF_FORMAT(8, 9);
 
-static void test_fail_message_va(const char *prefix, const char *file, int line,
-                                 const char *type, const char *fmt, va_list ap)
+static void test_fail_message_va(const char *prefix, const char *file,
+                                 int line, const char *type,
+                                 const char *left, const char *right,
+                                 const char *op, const char *fmt, va_list ap)
 {
-    test_printf_stderr("%*s# %s: ", subtest_level(), "",
-                       prefix != NULL ? prefix : "ERROR");
-    if (type)
-        test_printf_stderr("(%s)", type);
+    test_fail_message_prefix(prefix, file, line, type, left, right, op);
     if (fmt != NULL) {
+        test_printf_stderr("%*s# ", subtest_level(), "");
         test_vprintf_stderr(fmt, ap);
-    }
-    if (file != NULL) {
-        test_printf_stderr(" @ %s:%d", file, line);
+        test_printf_stderr("\n");
     }
     test_printf_stderr("\n");
     test_flush_stderr();
 }
 
-static void test_fail_message(const char *prefix, const char *file, int line,
-                              const char *type, const char *fmt, ...)
+static void test_fail_string_message(const char *prefix, const char *file,
+                                     int line, const char *type,
+                                     const char *left, const char *right,
+                                     const char *op, const char *m1, size_t l1,
+                                     const char *m2, size_t l2)
+{
+    const int indent = subtest_level();
+    const size_t width = (MAX_STRING_WIDTH - indent - 12) / 16 * 16;
+    char b1[MAX_STRING_WIDTH + 1], b2[MAX_STRING_WIDTH + 1];
+    char bdiff[MAX_STRING_WIDTH + 1];
+    size_t n1, n2, i;
+    unsigned int cnt = 0, diff;
+
+    test_fail_message_prefix(prefix, file, line, type, left, right, op);
+    if (m1 == NULL)
+        l1 = 0;
+    if (m2 == NULL)
+        l2 = 0;
+    if (l1 == 0 && l2 == 0) {
+        if ((m1 == NULL) == (m2 == NULL)) {
+            test_printf_stderr("%*s# % 4s   %s\n", indent, "", "",
+                               m1 == NULL ? "NULL" : "''");
+        } else {
+            test_printf_stderr("%*s# % 4s - %s\n", indent, "", "",
+                               m1 == NULL ? "NULL" : "''");
+            test_printf_stderr("%*s# % 4s + %s\n", indent, "", "",
+                               m2 == NULL ? "NULL" : "''");
+        }
+        goto fin;
+    }
+
+    while (l1 > 0 || l2 > 0) {
+        n1 = n2 = 0;
+        if (l1 > 0) {
+            b1[n1 = l1 > width ? width : l1] = 0;
+            for (i = 0; i < n1; i++)
+                b1[i] = isprint(m1[i]) ? m1[i] : '.';
+        }
+        if (l2 > 0) {
+            b2[n2 = l2 > width ? width : l2] = 0;
+            for (i = 0; i < n2; i++)
+                b2[i] = isprint(m2[i]) ? m2[i] : '.';
+        }
+        diff = n1 != n2;
+        i = 0;
+        if (n1 > 0 && n2 > 0) {
+            const size_t j = n1 < n2 ? n1 : n2;
+            const size_t k = n1 > n2 ? n1 : n2;
+
+            for (; i < j; i++)
+                if (m1[i] == m2[i]) {
+                    bdiff[i] = ' ';
+                } else {
+                    bdiff[i] = '^';
+                    diff = 1;
+                }
+            for (; i < k; i++)
+                bdiff[i] = '^';
+            bdiff[i] = '\0';
+        }
+        if (!diff) {
+            test_printf_stderr("%*s# % 4u:  '%s'\n", indent, "", cnt, b1);
+        } else {
+            if (cnt == 0 && m1 == NULL)
+                test_printf_stderr("%*s# % 4s - NULL\n", indent, "", "");
+            else if (cnt == 0 && *m1 == '\0')
+                test_printf_stderr("%*s# % 4s - ''\n", indent, "", "");
+            else if (n1 > 0)
+                test_printf_stderr("%*s# % 4u:- '%s'\n", indent, "", cnt, b1);
+            if (cnt == 0 && m2 == NULL)
+                test_printf_stderr("%*s# % 4s + NULL\n", indent, "", "");
+            else if (cnt == 0 && *m2 == '\0')
+                test_printf_stderr("%*s# % 4s + ''\n", indent, "", "");
+            else if (n2 > 0)
+                test_printf_stderr("%*s# % 4u:+ '%s'\n", indent, "", cnt, b2);
+            if (i > 0)
+                test_printf_stderr("%*s# % 4s    %s\n", indent, "", "", bdiff);
+        }
+        m1 += n1;
+        m2 += n2;
+        l1 -= n1;
+        l2 -= n2;
+        cnt += width;
+    }
+fin:
+    test_printf_stderr("\n");
+    test_flush_stderr();
+}
+
+static void hex_convert_memory(const char *m, size_t n, char *b)
+{
+    size_t i;
+
+    for (i = 0; i < n; i++) {
+        const unsigned char c = *m++;
+
+        *b++ = "0123456789abcdef"[c >> 4];
+        *b++ = "0123456789abcdef"[c & 15];
+        if ((i % 8) == 7 && i != n - 1)
+            *b++ = ' ';
+    }
+    *b = '\0';
+}
+
+static void test_fail_memory_message(const char *prefix, const char *file,
+                                     int line, const char *type,
+                                     const char *left, const char *right,
+                                     const char *op, const char *m1, size_t l1,
+                                     const char *m2, size_t l2)
+{
+    const int indent = subtest_level();
+    const size_t bytes = (MAX_STRING_WIDTH - 9) / 17 * 8;
+    char b1[MAX_STRING_WIDTH + 1], b2[MAX_STRING_WIDTH + 1];
+    char *p, bdiff[MAX_STRING_WIDTH + 1];
+    size_t n1, n2, i;
+    unsigned int cnt = 0, diff;
+
+    test_fail_message_prefix(prefix, file, line, type, left, right, op);
+    if (m1 == NULL)
+        l1 = 0;
+    if (m2 == NULL)
+        l2 = 0;
+    if (l1 == 0 && l2 == 0) {
+        if ((m1 == NULL) == (m2 == NULL)) {
+            test_printf_stderr("%*s# %04s  %s\n", indent, "", "",
+                               m1 == NULL ? "NULL" : "empty");
+        } else {
+            test_printf_stderr("%*s# %04s -%s\n", indent, "", "",
+                               m1 == NULL ? "NULL" : "empty");
+            test_printf_stderr("%*s# %04s +%s\n", indent, "", "",
+                               m2 == NULL ? "NULL" : "empty");
+        }
+        goto fin;
+    }
+
+    while (l1 > 0 || l2 > 0) {
+        n1 = n2 = 0;
+        if (l1 > 0) {
+            n1 = l1 > bytes ? bytes : l1;
+            hex_convert_memory(m1, n1, b1);
+        }
+        if (l2 > 0) {
+            n2 = l2 > bytes ? bytes : l2;
+            hex_convert_memory(m2, n2, b2);
+        }
+
+        diff = n1 != n2;
+        i = 0;
+        p = bdiff;
+        if (n1 > 0 && n2 > 0) {
+            const size_t j = n1 < n2 ? n1 : n2;
+            const size_t k = n1 > n2 ? n1 : n2;
+
+            for (; i < j; i++) {
+                if (m1[i] == m2[i]) {
+                    *p++ = ' ';
+                    *p++ = ' ';
+                } else {
+                    *p++ = '^';
+                    *p++ = '^';
+                    diff = 1;
+                }
+                if ((i % 8) == 7 && (i != j - 1 || j != k))
+                    *p++ = ' ';
+            }
+
+            for (; i < k; i++) {
+                *p++ = '^';
+                *p++ = '^';
+                if ((i % 8) == 7 && i != k - 1)
+                    *p++ = ' ';
+            }
+            *p++ = '\0';
+        }
+
+        if (!diff) {
+            test_printf_stderr("%*s# %04x: %s\n", indent, "", cnt, b1);
+        } else {
+            if (cnt == 0 && m1 == NULL)
+                test_printf_stderr("%*s# %04s -NULL\n", indent, "", "");
+            else if (cnt == 0 && l1 == 0)
+                test_printf_stderr("%*s# %04s -empty\n", indent, "", "");
+            else if (n1 > 0)
+                test_printf_stderr("%*s# %04x:-%s\n", indent, "", cnt, b1);
+            if (cnt == 0 && m2 == NULL)
+                test_printf_stderr("%*s# %04s +NULL\n", indent, "", "");
+            else if (cnt == 0 && l2 == 0)
+                test_printf_stderr("%*s# %04s +empty\n", indent, "", "");
+            else if (n2 > 0)
+                test_printf_stderr("%*s# %04x:+%s\n", indent, "", cnt, b2);
+            if (i > 0)
+                test_printf_stderr("%*s# % 4s  %s\n", indent, "", "", bdiff);
+        }
+        m1 += n1;
+        m2 += n2;
+        l1 -= n1;
+        l2 -= n2;
+        cnt += bytes;
+    }
+fin:
+    test_printf_stderr("\n");
+    test_flush_stderr();
+}
+
+static void test_fail_message(const char *prefix, const char *file,
+                              int line, const char *type,
+                              const char *left, const char *right,
+                              const char *op, const char *fmt, ...)
 {
     va_list ap;
 
     va_start(ap, fmt);
-    test_fail_message_va(prefix, file, line, type, fmt, ap);
+    test_fail_message_va(prefix, file, line, type, left, right, op, fmt, ap);
     va_end(ap);
 }
 
@@ -78,7 +302,7 @@ void test_info_c90(const char *desc, ...)
     va_list ap;
 
     va_start(ap, desc);
-    test_fail_message_va("INFO", NULL, -1, NULL, desc, ap);
+    test_fail_message_va("INFO", NULL, -1, NULL, NULL, NULL, NULL, desc, ap);
     va_end(ap);
 }
 
@@ -87,7 +311,7 @@ void test_info(const char *file, int line, const char *desc, ...)
     va_list ap;
 
     va_start(ap, desc);
-    test_fail_message_va("INFO", file, line, NULL, desc, ap);
+    test_fail_message_va("INFO", file, line, NULL, NULL, NULL, NULL, desc, ap);
     va_end(ap);
 }
 
@@ -96,7 +320,7 @@ void test_error_c90(const char *desc, ...)
     va_list ap;
 
     va_start(ap, desc);
-    test_fail_message(NULL, NULL, -1, NULL, desc, ap);
+    test_fail_message(NULL, NULL, -1, NULL, NULL, NULL, NULL, desc, ap);
     va_end(ap);
 }
 
@@ -105,7 +329,7 @@ void test_error(const char *file, int line, const char *desc, ...)
     va_list ap;
 
     va_start(ap, desc);
-    test_fail_message_va(NULL, file, line, NULL, desc, ap);
+    test_fail_message_va(NULL, file, line, NULL, NULL, NULL, NULL, desc, ap);
     va_end(ap);
 }
 
@@ -143,9 +367,9 @@ void test_openssl_errors(void)
     {                                                                   \
         if (t1 op t2)                                                   \
             return 1;                                                   \
-        test_fail_message(NULL, file, line, #type,                      \
-                          "%s [" fmt "] " #op " %s [" fmt "]",          \
-                          s1, t1, s2, t2);                              \
+        test_fail_message(NULL, file, line, #type, s1, s2, #op,         \
+                          "[" fmt "] compared to [" fmt "]",            \
+                          t1, t2);                                      \
         return 0;                                                       \
     }
 
@@ -172,7 +396,7 @@ int test_ptr_null(const char *file, int line, const char *s, const void *p)
 {
     if (p == NULL)
         return 1;
-    test_fail_message(NULL, file, line, "ptr", "%s [%p] == NULL", s, p);
+    test_fail_message(NULL, file, line, "ptr", s, "NULL", "==", "%p", p);
     return 0;
 }
 
@@ -180,7 +404,7 @@ int test_ptr(const char *file, int line, const char *s, const void *p)
 {
     if (p != NULL)
         return 1;
-    test_fail_message(NULL, file, line, "ptr", "%s [%p] != NULL", s, p);
+    test_fail_message(NULL, file, line, "ptr", s, "NULL", "!=", "%p", p);
     return 0;
 }
 
@@ -188,7 +412,7 @@ int test_true(const char *file, int line, const char *s, int b)
 {
     if (b)
         return 1;
-    test_fail_message(NULL, file, line, "bool", "%s [false] == true", s);
+    test_fail_message(NULL, file, line, "bool", s, "true", "==", "false");
     return 0;
 }
 
@@ -196,13 +420,8 @@ int test_false(const char *file, int line, const char *s, int b)
 {
     if (!b)
         return 1;
-    test_fail_message(NULL, file, line, "bool", "%s [true] == false", s);
+    test_fail_message(NULL, file, line, "bool", s, "false", "==", "true");
     return 0;
-}
-
-static const char *print_string_maybe_null(const char *s)
-{
-    return s == NULL ? "(NULL)" : s;
 }
 
 int test_str_eq(const char *file, int line, const char *st1, const char *st2,
@@ -211,9 +430,9 @@ int test_str_eq(const char *file, int line, const char *st1, const char *st2,
     if (s1 == NULL && s2 == NULL)
       return 1;
     if (s1 == NULL || s2 == NULL || strcmp(s1, s2) != 0) {
-        test_fail_message(NULL, file, line, "string", "%s [%s] == %s [%s]",
-                          st1, print_string_maybe_null(s1),
-                          st2, print_string_maybe_null(s2));
+        test_fail_string_message(NULL, file, line, "string", st1, st2, "==",
+                                 s1, s1 == NULL ? 0 : strlen(s1),
+                                 s2, s2 == NULL ? 0 : strlen(s2));
         return 0;
     }
     return 1;
@@ -225,9 +444,9 @@ int test_str_ne(const char *file, int line, const char *st1, const char *st2,
     if ((s1 == NULL) ^ (s2 == NULL))
       return 1;
     if (s1 == NULL || strcmp(s1, s2) == 0) {
-        test_fail_message(NULL, file, line, "string", "%s [%s] != %s [%s]",
-                          st1, print_string_maybe_null(s1),
-                          st2, print_string_maybe_null(s2));
+        test_fail_string_message(NULL, file, line, "string", st1, st2, "!=",
+                                 s1, s1 == NULL ? 0 : strlen(s1),
+                                 s2, s2 == NULL ? 0 : strlen(s2));
         return 0;
     }
     return 1;
@@ -236,14 +455,12 @@ int test_str_ne(const char *file, int line, const char *st1, const char *st2,
 int test_strn_eq(const char *file, int line, const char *st1, const char *st2,
                  const char *s1, const char *s2, size_t len)
 {
-    int prec = (int)len;
-
     if (s1 == NULL && s2 == NULL)
       return 1;
     if (s1 == NULL || s2 == NULL || strncmp(s1, s2, len) != 0) {
-        test_fail_message(NULL, file, line, "string", "%.s [%.*s] == %s [%.*s]",
-                          st1, prec, print_string_maybe_null(s1),
-                          st2, prec, print_string_maybe_null(s2));
+        test_fail_string_message(NULL, file, line, "string", st1, st2, "==",
+                                 s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, len),
+                                 s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, len));
         return 0;
     }
     return 1;
@@ -252,79 +469,25 @@ int test_strn_eq(const char *file, int line, const char *st1, const char *st2,
 int test_strn_ne(const char *file, int line, const char *st1, const char *st2,
                  const char *s1, const char *s2, size_t len)
 {
-    int prec = (int)len;
-
     if ((s1 == NULL) ^ (s2 == NULL))
       return 1;
     if (s1 == NULL || strncmp(s1, s2, len) == 0) {
-        test_fail_message(NULL, file, line, "string", "%s [%.*s] != %s [%.*s]",
-                          st1, prec, print_string_maybe_null(s1),
-                          st2, prec, print_string_maybe_null(s2));
+        test_fail_string_message(NULL, file, line, "string", st1, st2, "!=",
+                                 s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, len),
+                                 s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, len));
         return 0;
     }
     return 1;
 }
 
-/*
- * We could use OPENSSL_buf2hexstr() to do this but trying to allocate memory
- * in a failure state isn't generally a great idea and if it fails, we want a
- * fall back position using caller supplied buffers.
- *
- * If the return value is different from the buffer supplied, it needs to be
- * freed by the caller.
- */
-static char *print_mem_maybe_null(const void *s, size_t n,
-                                  char outbuf[MEM_BUFFER_SIZE])
-{
-    size_t i;
-    const unsigned char *p = (const unsigned char *)s;
-    char *out = outbuf;
-    int pad = 2 * n >= MEM_BUFFER_SIZE;
-
-    if (s == NULL)
-        return strcpy(outbuf, "(NULL)");
-    if (pad) {
-        if ((out = OPENSSL_malloc(2 * n + 1)) == NULL) {
-            out = outbuf;
-            n = (MEM_BUFFER_SIZE - 4) / 2;
-        } else {
-            pad = 0;
-        }
-    }
-
-    for (i = 0; i < 2 * n; ) {
-        const unsigned char c = *p++;
-        out[i++] = "0123456789abcdef"[c >> 4];
-        out[i++] = "0123456789abcdef"[c & 15];
-    }
-    if (pad) {
-        out[i++] = '.';
-        out[i++] = '.';
-        out[i++] = '.';
-    }
-    out[i] = '\0';
-
-    return out;
-}
-
 int test_mem_eq(const char *file, int line, const char *st1, const char *st2,
                 const void *s1, size_t n1, const void *s2, size_t n2)
 {
-    char b1[MEM_BUFFER_SIZE], b2[MEM_BUFFER_SIZE];
-
     if (s1 == NULL && s2 == NULL)
         return 1;
     if (n1 != n2 || s1 == NULL || s2 == NULL || memcmp(s1, s2, n1) != 0) {
-        char *m1 = print_mem_maybe_null(s1, n1, b1);
-        char *m2 = print_mem_maybe_null(s2, n2, b2);
-
-        test_fail_message(NULL, file, line, "memory",
-                          "%s %s [%zu] == %s %s [%zu]",
-                          st1, m1, n1, st2, m2, n2);
-        if (m1 != b1)
-            OPENSSL_free(m1);
-        if (m2 != b2)
-            OPENSSL_free(m2);
+        test_fail_memory_message(NULL, file, line, "memory", st1, st2, "==",
+                                 s1, n1, s2, n2);
         return 0;
     }
     return 1;
@@ -333,23 +496,13 @@ int test_mem_eq(const char *file, int line, const char *st1, const char *st2,
 int test_mem_ne(const char *file, int line, const char *st1, const char *st2,
                 const void *s1, size_t n1, const void *s2, size_t n2)
 {
-    char b1[MEM_BUFFER_SIZE], b2[MEM_BUFFER_SIZE];
-
     if ((s1 == NULL) ^ (s2 == NULL))
         return 1;
     if (n1 != n2)
         return 1;
     if (s1 == NULL || memcmp(s1, s2, n1) == 0) {
-        char *m1 = print_mem_maybe_null(s1, n1, b1);
-        char *m2 = print_mem_maybe_null(s2, n2, b2);
-
-        test_fail_message(NULL, file, line, "memory",
-                          "%s %s [%zu] != %s %s [%zu]",
-                          st1, m1, n1, st2, m2, n2);
-        if (m1 != b1)
-            OPENSSL_free(m1);
-        if (m2 != b2)
-            OPENSSL_free(m2);
+        test_fail_memory_message(NULL, file, line, "memory", st1, st2, "!=",
+                                 s1, n1, s2, n2);
         return 0;
     }
     return 1;
