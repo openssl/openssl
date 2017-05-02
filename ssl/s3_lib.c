@@ -3672,6 +3672,10 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     int i, ii, ok;
     unsigned long alg_k = 0, alg_a = 0, mask_k, mask_a;
 
+    /* Let the consumer decide if they like */
+    if (s->choose_cipher_cb && s->choose_cipher_cb(s, clnt, &ret))
+        return ret;
+
     /* Let's see which ciphers we can support */
 
     /*

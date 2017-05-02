@@ -1952,6 +1952,18 @@ void SSL_set_not_resumable_session_callback(SSL *ssl,
                                             int (*cb) (SSL *ssl,
                                                        int
                                                        is_forward_secure));
+
+/* Cipher selection callback */
+
+typedef int (*SSL_choose_cipher_cb_func) (SSL *ssl, STACK_OF(SSL_CIPHER) *client,
+                                          const SSL_CIPHER **selected);
+
+void SSL_CTX_set_choose_cipher_callback(SSL_CTX *ctx, SSL_choose_cipher_cb_func cb);
+SSL_choose_cipher_cb_func SSL_CTX_get_choose_cipher_callback(SSL_CTX *ctx);
+
+void SSL_set_choose_cipher_callback(SSL *ssl, SSL_choose_cipher_cb_func cb);
+SSL_choose_cipher_cb_func SSL_get_choose_cipher_callback(SSL *ssl);
+
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  define SSL_cache_hit(s) SSL_session_reused(s)
 # endif

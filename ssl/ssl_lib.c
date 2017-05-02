@@ -576,6 +576,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     memcpy(&s->sid_ctx, &ctx->sid_ctx, sizeof(s->sid_ctx));
     s->verify_callback = ctx->default_verify_callback;
     s->generate_session_id = ctx->generate_session_id;
+    s->choose_cipher_cb = ctx->choose_cipher_cb;
 
     s->param = X509_VERIFY_PARAM_new();
     if (s->param == NULL)
@@ -4815,4 +4816,24 @@ int SSL_set_max_early_data(SSL *s, uint32_t max_early_data)
 uint32_t SSL_get_max_early_data(const SSL *s)
 {
     return s->max_early_data;
+}
+
+void SSL_CTX_set_choose_cipher_callback(SSL_CTX *ctx, SSL_choose_cipher_cb_func cb)
+{
+    ctx->choose_cipher_cb = cb;
+}
+
+SSL_choose_cipher_cb_func SSL_CTX_get_choose_cipher_callback(SSL_CTX *ctx)
+{
+    return ctx->choose_cipher_cb;
+}
+
+void SSL_set_choose_cipher_callback(SSL *ssl, SSL_choose_cipher_cb_func cb)
+{
+    ssl->choose_cipher_cb = cb;
+}
+
+SSL_choose_cipher_cb_func SSL_get_choose_cipher_callback(SSL *ssl)
+{
+    return ssl->choose_cipher_cb;
 }
