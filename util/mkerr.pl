@@ -359,7 +359,6 @@ foreach $file (@source) {
 
 		if(/(([A-Z0-9]+)_F_([A-Z0-9_]+))/) {
 			next unless exists $csrc{$2};
-			next if($1 eq "BIO_F_BUFFER_CTX");
 			$ufcodes{$1} = 1;
 			if(!exists $fcodes{$1}) {
 				$fcodes{$1} = "X";

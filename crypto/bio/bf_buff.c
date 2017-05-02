@@ -46,7 +46,7 @@ const BIO_METHOD *BIO_f_buffer(void)
 
 static int buffer_new(BIO *bi)
 {
-    BIO_F_BUFFER_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    BIO_FBUFFER_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
         return (0);
@@ -72,11 +72,11 @@ static int buffer_new(BIO *bi)
 
 static int buffer_free(BIO *a)
 {
-    BIO_F_BUFFER_CTX *b;
+    BIO_FBUFFER_CTX *b;
 
     if (a == NULL)
         return (0);
-    b = (BIO_F_BUFFER_CTX *)a->ptr;
+    b = (BIO_FBUFFER_CTX *)a->ptr;
     OPENSSL_free(b->ibuf);
     OPENSSL_free(b->obuf);
     OPENSSL_free(a->ptr);
@@ -89,11 +89,11 @@ static int buffer_free(BIO *a)
 static int buffer_read(BIO *b, char *out, int outl)
 {
     int i, num = 0;
-    BIO_F_BUFFER_CTX *ctx;
+    BIO_FBUFFER_CTX *ctx;
 
     if (out == NULL)
         return (0);
-    ctx = (BIO_F_BUFFER_CTX *)b->ptr;
+    ctx = (BIO_FBUFFER_CTX *)b->ptr;
 
     if ((ctx == NULL) || (b->next_bio == NULL))
         return (0);
@@ -160,11 +160,11 @@ static int buffer_read(BIO *b, char *out, int outl)
 static int buffer_write(BIO *b, const char *in, int inl)
 {
     int i, num = 0;
-    BIO_F_BUFFER_CTX *ctx;
+    BIO_FBUFFER_CTX *ctx;
 
     if ((in == NULL) || (inl <= 0))
         return (0);
-    ctx = (BIO_F_BUFFER_CTX *)b->ptr;
+    ctx = (BIO_FBUFFER_CTX *)b->ptr;
     if ((ctx == NULL) || (b->next_bio == NULL))
         return (0);
 
@@ -237,13 +237,13 @@ static int buffer_write(BIO *b, const char *in, int inl)
 static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     BIO *dbio;
-    BIO_F_BUFFER_CTX *ctx;
+    BIO_FBUFFER_CTX *ctx;
     long ret = 1;
     char *p1, *p2;
     int r, i, *ip;
     int ibs, obs;
 
-    ctx = (BIO_F_BUFFER_CTX *)b->ptr;
+    ctx = (BIO_FBUFFER_CTX *)b->ptr;
 
     switch (cmd) {
     case BIO_CTRL_RESET:
@@ -408,11 +408,11 @@ static long buffer_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 
 static int buffer_gets(BIO *b, char *buf, int size)
 {
-    BIO_F_BUFFER_CTX *ctx;
+    BIO_FBUFFER_CTX *ctx;
     int num = 0, i, flag;
     char *p;
 
-    ctx = (BIO_F_BUFFER_CTX *)b->ptr;
+    ctx = (BIO_FBUFFER_CTX *)b->ptr;
     size--;                     /* reserve space for a '\0' */
     BIO_clear_retry_flags(b);
 
