@@ -610,7 +610,7 @@ You could also look at the 'test' directory for more examples.
 
 =for comment foreign manuals: procmail(1), perl(1)
 
-=over 4
+=over 2
 
 =item *
 
