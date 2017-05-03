@@ -1187,7 +1187,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     EVP_MD_CTX *mctx = NULL;
     unsigned char hash[EVP_MAX_MD_SIZE], binderkey[EVP_MAX_MD_SIZE];
     unsigned char finishedkey[EVP_MAX_MD_SIZE], tmpbinder[EVP_MAX_MD_SIZE];
-    const char resumption_label[] = "resumption psk binder key";
+    const char resumption_label[] = "res binder";
     size_t bindersize, hashsize = EVP_MD_size(md);
     int ret = -1;
 
