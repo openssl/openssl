@@ -650,14 +650,15 @@ generate_crypto_asn1:
 	( cd $(SRCDIR); $(PERL) crypto/asn1/charmap.pl \
 			        > crypto/asn1/charmap.h )
 
+# Set to -force to force a rebuild
+ERROR_REBUILD=
 errors:
 	( cd $(SRCDIR); $(PERL) util/ck_errf.pl -strict */*.c */*/*.c )
-	( cd $(SRCDIR); $(PERL) util/mkerr.pl -recurse -write )
+	( cd $(SRCDIR); $(PERL) util/mkerr.pl $(ERROR_REBUILD) -internal )
 	( cd $(SRCDIR)/engines; \
-	  for e in *.ec; do \
-	      $(PERL) ../util/mkerr.pl -conf $$e \
-		      -nostatic -staticloader -write *.c; \
-	  done )
+          for E in *.ec ; do \
+              $(PERL) ../util/mkerr.pl -conf $$E `basename $$E .ec`.c ; \
+          done )
 
 ordinals:
 	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b util/mkdef.pl crypto update )
