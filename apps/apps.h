@@ -213,9 +213,9 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         OPT_S_NOTLS1_3, OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
         OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_STRICT, OPT_S_SIGALGS, \
-        OPT_S_CLIENTSIGALGS, OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
-        OPT_S_DHPARAM, OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
-        OPT_S__LAST
+        OPT_S_CLIENTSIGALGS, OPT_S_GROUPS, OPT_S_CURVES, OPT_S_NAMEDCURVE, \
+        OPT_S_CIPHER, OPT_S_DHPARAM, OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, \
+        OPT_S_COMP, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
         {"no_ssl3", OPT_S_NOSSL3, '-',"Just disable SSLv3" }, \
@@ -244,8 +244,10 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         {"client_sigalgs", OPT_S_CLIENTSIGALGS, 's', \
             "Signature algorithms to support for client certificate" \
             " authentication (colon-separated list)" }, \
+        {"groups", OPT_S_GROUPS, 's', \
+            "Groups to advertise (colon-separated list)" }, \
         {"curves", OPT_S_CURVES, 's', \
-            "Elliptic curves to advertise (colon-separated list)" }, \
+            "Groups to advertise (colon-separated list)" }, \
         {"named_curve", OPT_S_NAMEDCURVE, 's', \
             "Elliptic curve used for ECDHE (server-side only)" }, \
         {"cipher", OPT_S_CIPHER, 's', "Specify cipher list to be used"}, \
@@ -276,6 +278,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_STRICT: \
         case OPT_S_SIGALGS: \
         case OPT_S_CLIENTSIGALGS: \
+        case OPT_S_GROUPS: \
         case OPT_S_CURVES: \
         case OPT_S_NAMEDCURVE: \
         case OPT_S_CIPHER: \
