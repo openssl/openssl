@@ -35,7 +35,8 @@ consist of a 4-byte context, a 2-byte Extension Type, a 2-byte length, and then
 length bytes of extension_data. The context and type values have the same
 meaning as for L<SSL_CTX_add_custom_ext(3)>. If serverinfo is being loaded for
 extensions to be added to a Certificate message, then the extension will only
-be added for the first Certificate in the message.
+be added for the first certificate in the message (which is always the
+end-entity certificate).
 
 If B<version> is B<SSL_SERVERINFOV1> then the extensions in the array must
 consist of a 2-byte Extension Type, a 2-byte length, and then length bytes of
@@ -62,7 +63,7 @@ last certificate installed.  If e.g. the last item was a RSA certificate, the
 loaded serverinfo extension data will be loaded for that certificate.  To
 use the serverinfo extension for multiple certificates,
 SSL_CTX_use_serverinfo() needs to be called multiple times, once B<after>
-each time a certificate is loaded.
+each time a certificate is loaded via a call to SSL_CTX_use_certificate().
 
 =head1 RETURN VALUES
 
