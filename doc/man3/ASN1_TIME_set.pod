@@ -3,7 +3,7 @@
 =head1 NAME
 
 ASN1_TIME_set, ASN1_TIME_adj, ASN1_TIME_check, ASN1_TIME_set_string,
-ASN1_TIME_print, ASN1_TIME_diff - ASN.1 Time functions
+ASN1_TIME_print, ASN1_TIME_to_tm, ASN1_TIME_diff - ASN.1 Time functions
 
 =head1 SYNOPSIS
 
@@ -13,6 +13,7 @@ ASN1_TIME_print, ASN1_TIME_diff - ASN.1 Time functions
  int ASN1_TIME_set_string(ASN1_TIME *s, const char *str);
  int ASN1_TIME_check(const ASN1_TIME *t);
  int ASN1_TIME_print(BIO *b, const ASN1_TIME *s);
+ int ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm);
 
  int ASN1_TIME_diff(int *pday, int *psec,
                     const ASN1_TIME *from, const ASN1_TIME *to);
@@ -41,6 +42,11 @@ format. It will be of the format MMM DD HH:MM:SS YYYY [GMT], for example
 "Feb  3 00:55:52 2015 GMT" it does not include a newline. If the time
 structure has invalid format it prints out "Bad time value" and returns
 an error.
+
+ASN1_TIME_to_tm() converts the time B<s> to the standard B<tm> structure.
+If B<s> is NULL, then the current time is converted. The output time is GMT.
+Only the B<tm_sec>, B<tm_min>, B<tm_hour>, B<tm_mday>, B<tm_mon> and B<tm_year>
+fields are updated.
 
 ASN1_TIME_diff() sets B<*pday> and B<*psec> to the time difference between
 B<from> and B<to>. If B<to> represents a time later than B<from> then
@@ -123,12 +129,19 @@ otherwise.
 ASN1_TIME_print() returns 1 if the time is successfully printed out and 0 if
 an error occurred (I/O error or invalid time format).
 
+ASN1_TIME_to_tm() returns 1 if the time is successfully parsed and 0 if an
+error occured (invalid time format).
+
 ASN1_TIME_diff() returns 1 for success and 0 for failure. It can fail if the
 pass ASN1_TIME structure has invalid syntax for example.
 
+=head1 HISTORY
+
+The ASN1_TIME_to_tm() function was added in OpenSSL 1.1.1.
+
 =head1 COPYRIGHT
 
-Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
