@@ -345,7 +345,7 @@ end:
 #define SETUP_CT_TEST_FIXTURE() SETUP_TEST_FIXTURE(CT_TEST_FIXTURE, set_up)
 #define EXECUTE_CT_TEST() EXECUTE_TEST(execute_cert_test, tear_down)
 
-static int test_no_scts_in_certificate()
+static int test_no_scts_in_certificate(void)
 {
     SETUP_CT_TEST_FIXTURE();
     fixture.certs_dir = certs_dir;
@@ -355,7 +355,7 @@ static int test_no_scts_in_certificate()
     EXECUTE_CT_TEST();
 }
 
-static int test_one_sct_in_certificate()
+static int test_one_sct_in_certificate(void)
 {
     SETUP_CT_TEST_FIXTURE();
     fixture.certs_dir = certs_dir;
@@ -367,7 +367,7 @@ static int test_one_sct_in_certificate()
     EXECUTE_CT_TEST();
 }
 
-static int test_multiple_scts_in_certificate()
+static int test_multiple_scts_in_certificate(void)
 {
     SETUP_CT_TEST_FIXTURE();
     fixture.certs_dir = certs_dir;
@@ -379,7 +379,7 @@ static int test_multiple_scts_in_certificate()
     EXECUTE_CT_TEST();
 }
 
-static int test_verify_one_sct()
+static int test_verify_one_sct(void)
 {
     SETUP_CT_TEST_FIXTURE();
     fixture.certs_dir = certs_dir;
@@ -390,7 +390,7 @@ static int test_verify_one_sct()
     EXECUTE_CT_TEST();
 }
 
-static int test_verify_multiple_scts()
+static int test_verify_multiple_scts(void)
 {
     SETUP_CT_TEST_FIXTURE();
     fixture.certs_dir = certs_dir;
@@ -401,7 +401,7 @@ static int test_verify_multiple_scts()
     EXECUTE_CT_TEST();
 }
 
-static int test_verify_fails_for_future_sct()
+static int test_verify_fails_for_future_sct(void)
 {
     SETUP_CT_TEST_FIXTURE();
     fixture.epoch_time_in_ms = 1365094800000; /* Apr 4 17:00:00 2013 GMT */
@@ -414,7 +414,7 @@ static int test_verify_fails_for_future_sct()
     EXECUTE_CT_TEST();
 }
 
-static int test_decode_tls_sct()
+static int test_decode_tls_sct(void)
 {
     const unsigned char tls_sct_list[] = "\x00\x78" /* length of list */
         "\x00\x76"
@@ -442,7 +442,7 @@ static int test_decode_tls_sct()
     EXECUTE_CT_TEST();
 }
 
-static int test_encode_tls_sct()
+static int test_encode_tls_sct(void)
 {
     const char log_id[] = "3xwuwRUAlFJHqWFoMl3cXHlZ6PfG04j8AC4LvT9012Q=";
     const uint64_t timestamp = 1;
@@ -470,7 +470,7 @@ static int test_encode_tls_sct()
  * Tests that the CT_POLICY_EVAL_CTX default time is approximately now.
  * Allow +-10 minutes, as it may compensate for clock skew.
  */
-static int test_default_ct_policy_eval_ctx_time_is_now()
+static int test_default_ct_policy_eval_ctx_time_is_now(void)
 {
     int success = 0;
     CT_POLICY_EVAL_CTX *ct_policy_ctx = CT_POLICY_EVAL_CTX_new();
