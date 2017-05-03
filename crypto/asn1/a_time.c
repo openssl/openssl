@@ -130,20 +130,26 @@ int ASN1_TIME_set_string(ASN1_TIME *s, const char *str)
     return 1;
 }
 
-static int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *t)
+int ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm)
 {
-    if (t == NULL) {
+    if (s == NULL) {
         time_t now_t;
+
         time(&now_t);
+        memset(tm, 0, sizeof(*tm));
         if (OPENSSL_gmtime(&now_t, tm))
             return 1;
         return 0;
     }
 
-    if (t->type == V_ASN1_UTCTIME)
-        return asn1_utctime_to_tm(tm, t);
-    else if (t->type == V_ASN1_GENERALIZEDTIME)
-        return asn1_generalizedtime_to_tm(tm, t);
+    if (s->type == V_ASN1_UTCTIME) {
+        memset(tm, 0, sizeof(*tm));
+        return asn1_utctime_to_tm(tm, s);
+    }
+    if (s->type == V_ASN1_GENERALIZEDTIME) {
+        memset(tm, 0, sizeof(*tm));
+        return asn1_generalizedtime_to_tm(tm, s);
+    }
 
     return 0;
 }
@@ -152,9 +158,10 @@ int ASN1_TIME_diff(int *pday, int *psec,
                    const ASN1_TIME *from, const ASN1_TIME *to)
 {
     struct tm tm_from, tm_to;
-    if (!asn1_time_to_tm(&tm_from, from))
+
+    if (!ASN1_TIME_to_tm(from, &tm_from))
         return 0;
-    if (!asn1_time_to_tm(&tm_to, to))
+    if (!ASN1_TIME_to_tm(to, &tm_to))
         return 0;
     return OPENSSL_gmtime_diff(pday, psec, &tm_from, &tm_to);
 }

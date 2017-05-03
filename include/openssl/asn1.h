@@ -628,6 +628,7 @@ int ASN1_TIME_check(const ASN1_TIME *t);
 ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(const ASN1_TIME *t,
                                                    ASN1_GENERALIZEDTIME **out);
 int ASN1_TIME_set_string(ASN1_TIME *s, const char *str);
+int ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm);
 
 int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a);
 int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size);
