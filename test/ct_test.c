@@ -487,6 +487,20 @@ end:
     return success;
 }
 
+static int test_ctlog_from_base64(void)
+{
+    CTLOG *log = NULL;
+    const char notb64[] = "\01\02\03\04";
+    const char pad[] = "====";
+    const char name[] = "name";
+
+    /* We expect these to both fail! */
+    if (!TEST_true(!CTLOG_new_from_base64(&log, notb64, name))
+        || !TEST_true(!CTLOG_new_from_base64(&log, pad, name)))
+        return 0;
+    return 1;
+}
+
 int test_main(int argc, char *argv[])
 {
     if ((ct_dir = getenv("CT_DIR")) == NULL)
@@ -503,6 +517,7 @@ int test_main(int argc, char *argv[])
     ADD_TEST(test_decode_tls_sct);
     ADD_TEST(test_encode_tls_sct);
     ADD_TEST(test_default_ct_policy_eval_ctx_time_is_now);
+    ADD_TEST(test_ctlog_from_base64);
 
     return run_tests(argv[0]);
 }
