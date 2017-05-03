@@ -73,6 +73,26 @@ The B<value> argument is a colon separated list of curves. The curve can be
 either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name (e.g
 B<prime256v1>). Curve names are case sensitive.
 
+=item B<-groups>
+
+This sets the supported groups. For clients, the groups are
+sent using the supported groups extension. For servers, it is used
+to determine which group to use. This setting affects groups used for both
+signatures and key exchange, if applicable. It also affects the preferred
+key_share sent by a client in a TLSv1.3 compatible connection.
+
+The B<value> argument is a colon separated list of groups. The group can be
+either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
+applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g B<prime256v1>). Group
+names are case sensitive. The list should be in order of preference with the
+most preferred group first. The first listed group will be the one used for a
+key_share by a TLSv1.3 client.
+
+=item B<-curves>
+
+This is a synonym for the "-groups" command.
+
+
 =item B<-named_curve>
 
 This sets the temporary curve used for ephemeral ECDH modes. Only used by
@@ -273,16 +293,24 @@ used to determine which signature algorithm to with the client certificate.
 The syntax of B<value> is identical to B<SignatureAlgorithms>. If not set then
 the value set for B<SignatureAlgorithms> will be used instead.
 
+=item B<Groups>
+
+This sets the supported groups. For clients, the groups are
+sent using the supported groups extension. For servers, it is used
+to determine which group to use. This setting affects groups used for both
+signatures and key exchange, if applicable. It also affects the preferred
+key_share sent by a client in a TLSv1.3 compatible connection.
+
+The B<value> argument is a colon separated list of groups. The group can be
+either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
+applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g B<prime256v1>). Group
+names are case sensitive. The list should be in order of preference with the
+most preferred group first. The first listed group will be the one used for a
+key_share by a TLSv1.3 client.
+
 =item B<Curves>
 
-This sets the supported elliptic curves. For clients the curves are
-sent using the supported curves extension. For servers it is used
-to determine which curve to use. This setting affects curves used for both
-signatures and key exchange, if applicable.
-
-The B<value> argument is a colon separated list of curves. The curve can be
-either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name (e.g
-B<prime256v1>). Curve names are case sensitive.
+This is a synonym for the "Groups" command.
 
 =item B<MinProtocol>
 
