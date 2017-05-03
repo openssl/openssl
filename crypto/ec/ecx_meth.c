@@ -20,6 +20,8 @@
 #define X25519_BITS          253
 #define X25519_SECURITY_BITS 128
 
+#define ED25519_SIGSIZE      64
+
 typedef struct {
     unsigned char pubkey[X25519_KEYLEN];
     unsigned char *privkey;
@@ -32,10 +34,13 @@ typedef enum {
 } ecx_key_op_t;
 
 /* Setup EVP_PKEY using public, private or generation */
-static int ecx_key_op(EVP_PKEY *pkey, const X509_ALGOR *palg,
+static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
                       const unsigned char *p, int plen, ecx_key_op_t op)
 {
     X25519_KEY *xkey;
+
+    if (id == 0)
+        id = pkey->ameth->pkey_id;
 
     if (op != X25519_KEYGEN) {
         if (palg != NULL) {
@@ -76,16 +81,21 @@ static int ecx_key_op(EVP_PKEY *pkey, const X509_ALGOR *palg,
                 OPENSSL_free(xkey);
                 return 0;
             }
-            xkey->privkey[0] &= 248;
-            xkey->privkey[31] &= 127;
-            xkey->privkey[31] |= 64;
+            if (id == NID_X25519) {
+                xkey->privkey[0] &= 248;
+                xkey->privkey[31] &= 127;
+                xkey->privkey[31] |= 64;
+            }
         } else {
             memcpy(xkey->privkey, p, X25519_KEYLEN);
         }
-        X25519_public_from_private(xkey->pubkey, xkey->privkey);
+        if (id == NID_X25519)
+            X25519_public_from_private(xkey->pubkey, xkey->privkey);
+        else
+            ED25519_public_from_private(xkey->pubkey, xkey->privkey);
     }
 
-    EVP_PKEY_assign(pkey, NID_X25519, xkey);
+    EVP_PKEY_assign(pkey, id, xkey);
     return 1;
 }
 
@@ -105,8 +115,8 @@ static int ecx_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
         return 0;
     }
 
-    if (!X509_PUBKEY_set0_param(pk, OBJ_nid2obj(NID_X25519), V_ASN1_UNDEF,
-                                NULL, penc, X25519_KEYLEN)) {
+    if (!X509_PUBKEY_set0_param(pk, OBJ_nid2obj(pkey->ameth->pkey_id),
+                                V_ASN1_UNDEF, NULL, penc, X25519_KEYLEN)) {
         OPENSSL_free(penc);
         ECerr(EC_F_ECX_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -122,7 +132,7 @@ static int ecx_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 
     if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, &palg, pubkey))
         return 0;
-    return ecx_key_op(pkey, palg, p, pklen, X25519_PUBLIC);
+    return ecx_key_op(pkey, 0, palg, p, pklen, X25519_PUBLIC);
 }
 
 static int ecx_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
@@ -155,7 +165,7 @@ static int ecx_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
         plen = ASN1_STRING_length(oct);
     }
 
-    rv = ecx_key_op(pkey, palg, p, plen, X25519_PRIVATE);
+    rv = ecx_key_op(pkey, 0, palg, p, plen, X25519_PRIVATE);
     ASN1_OCTET_STRING_free(oct);
     return rv;
 }
@@ -182,7 +192,7 @@ static int ecx_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
         return 0;
     }
 
-    if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_X25519), 0,
+    if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(pkey->ameth->pkey_id), 0,
                          V_ASN1_UNDEF, NULL, penc, penclen)) {
         OPENSSL_clear_free(penc, penclen);
         ECerr(EC_F_ECX_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
@@ -227,13 +237,15 @@ static int ecx_key_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 {
     const X25519_KEY *xkey = pkey->pkey.ptr;
 
+    const char *nm = OBJ_nid2ln(pkey->ameth->pkey_id);
+
     if (op == X25519_PRIVATE) {
         if (xkey == NULL || xkey->privkey == NULL) {
             if (BIO_printf(bp, "%*s<INVALID PRIVATE KEY>\n", indent, "") <= 0)
                 return 0;
             return 1;
         }
-        if (BIO_printf(bp, "%*sX25519 Private-Key:\n", indent, "") <= 0)
+        if (BIO_printf(bp, "%*s%s Private-Key:\n", indent, "", nm) <= 0)
             return 0;
         if (BIO_printf(bp, "%*spriv:\n", indent, "") <= 0)
             return 0;
@@ -245,7 +257,7 @@ static int ecx_key_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                 return 0;
             return 1;
         }
-        if (BIO_printf(bp, "%*sX25519 Public-Key:\n", indent, "") <= 0)
+        if (BIO_printf(bp, "%*s%s Public-Key:\n", indent, "", nm) <= 0)
             return 0;
     }
     if (BIO_printf(bp, "%*spub:\n", indent, "") <= 0)
@@ -272,7 +284,7 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     switch (op) {
 
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return ecx_key_op(pkey, NULL, arg2, arg1, X25519_PUBLIC);
+        return ecx_key_op(pkey, NID_X25519, NULL, arg2, arg1, X25519_PUBLIC);
 
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
         if (pkey->pkey.ptr != NULL) {
@@ -324,9 +336,142 @@ const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     NULL
 };
 
+static int ecd_size(const EVP_PKEY *pkey)
+{
+    return ED25519_SIGSIZE;
+}
+
+static int ecd_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+{
+    if (op != ASN1_PKEY_CTRL_DEFAULT_MD_NID)
+        return -2;
+
+    *(int *)arg2 = NID_sha512;
+    return 2;
+}
+
+static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+                           X509_ALGOR *sigalg, ASN1_BIT_STRING *str,
+                           EVP_PKEY *pkey)
+{
+    const ASN1_OBJECT *obj;
+    int ptype;
+    unsigned char *der = NULL;
+    size_t derlen;
+    EVP_PKEY_CTX *pctx = NULL;
+    const unsigned char *sig = ASN1_STRING_get0_data(str);
+    size_t siglen = ASN1_STRING_length(str);
+    int rv = 0;
+
+    X509_ALGOR_get0(&obj, &ptype, NULL, sigalg);
+    /* Sanity check: make sure it is ED25519 with absent parameters */
+    if (OBJ_obj2nid(obj) != NID_ED25519 || ptype != V_ASN1_UNDEF) {
+        ECerr(EC_F_ECD_ITEM_VERIFY, EC_R_INVALID_ENCODING);
+        goto err;
+    }
+    /* Generate encoding of item to be verified */
+    derlen = ASN1_item_i2d(asn, &der, it);
+    pctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (der == NULL || pctx == NULL) {
+        ECerr(EC_F_ECD_ITEM_VERIFY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (!EVP_PKEY_verify_init(pctx))
+        goto err;
+    /* If verify OK don't continue normal verification process */
+    if (EVP_PKEY_verify(pctx, sig, siglen, der, derlen) > 0)
+        rv = 3;
+ err:
+    OPENSSL_clear_free(der, derlen);
+    EVP_PKEY_CTX_free(pctx);
+    return rv;
+}
+
+static int ecd_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+                         X509_ALGOR *alg1, X509_ALGOR *alg2,
+                         ASN1_BIT_STRING *str)
+{
+    unsigned char *der = NULL, *sig = NULL;
+    size_t derlen, siglen;
+    EVP_PKEY_CTX *pctx = EVP_MD_CTX_pkey_ctx(ctx);
+    int rv = 0;
+    /* Set algorithms identifiers */
+    X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_ED25519), V_ASN1_UNDEF, NULL);
+    if (alg2)
+        X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_ED25519), V_ASN1_UNDEF, NULL);
+    /* Generate encoding of item to sign */
+    derlen = ASN1_item_i2d(asn, &der, it);
+    if (der == NULL) {
+        ECerr(EC_F_ECD_ITEM_SIGN, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (!EVP_PKEY_sign_init(pctx) ||
+        !EVP_PKEY_sign(pctx, NULL, &siglen, der, derlen))
+        goto err;
+    sig = OPENSSL_malloc(siglen);
+    if (sig == NULL) {
+        ECerr(EC_F_ECD_ITEM_SIGN, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (!EVP_PKEY_sign(pctx, sig, &siglen, der, derlen))
+        goto err;
+    ASN1_STRING_set0(str, sig, siglen);
+    sig = NULL;
+    /* Set BIT STRING to 0 bits left */
+    str->flags &= ~0x07;
+    str->flags |= ASN1_STRING_FLAG_BITS_LEFT;
+    rv = 1;
+
+ err:
+    OPENSSL_clear_free(der, derlen);
+    OPENSSL_clear_free(sig, siglen);
+    return rv;
+}
+
+static int ecd_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
+                            const ASN1_STRING *sig)
+{
+    X509_SIG_INFO_set(siginf, NID_sha512, NID_ED25519, X25519_SECURITY_BITS,
+                      X509_SIG_INFO_TLS);
+    return 1;
+}
+
+const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
+    NID_ED25519,
+    NID_ED25519,
+    0,
+    "ED25519",
+    "OpenSSL ED25519 algorithm",
+
+    ecx_pub_decode,
+    ecx_pub_encode,
+    ecx_pub_cmp,
+    ecx_pub_print,
+
+    ecx_priv_decode,
+    ecx_priv_encode,
+    ecx_priv_print,
+
+    ecd_size,
+    ecx_bits,
+    ecx_security_bits,
+
+    0, 0, 0, 0,
+    ecx_cmp_parameters,
+    0, 0,
+
+    ecx_free,
+    ecd_ctrl,
+    NULL,
+    NULL,
+    ecd_item_verify,
+    ecd_item_sign,
+    ecd_sig_info_set
+};
+
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
-    return ecx_key_op(pkey, NULL, NULL, 0, X25519_KEYGEN);
+    return ecx_key_op(pkey, ctx->pmeth->pkey_id, NULL, NULL, 0, X25519_KEYGEN);
 }
 
 static int pkey_ecx_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
@@ -369,5 +514,64 @@ const EVP_PKEY_METHOD ecx25519_pkey_meth = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     pkey_ecx_derive,
     pkey_ecx_ctrl,
+    0
+};
+
+static int pkey_ecd_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
+                         const unsigned char *tbs, size_t tbslen)
+{
+    const X25519_KEY *edkey = ctx->pkey->pkey.ptr;
+
+    if (sig == NULL) {
+        *siglen = ED25519_SIGSIZE;
+        return 1;
+    }
+    if (*siglen < ED25519_SIGSIZE) {
+        ECerr(EC_F_PKEY_ECD_SIGN, EC_R_BUFFER_TOO_SMALL);
+        return 0;
+    }
+
+    if (ED25519_sign(sig, tbs, tbslen, edkey->pubkey, edkey->privkey) == 0)
+        return 0;
+    *siglen = ED25519_SIGSIZE;
+    return 1;
+}
+
+static int pkey_ecd_verify(EVP_PKEY_CTX *ctx,
+                           const unsigned char *sig, size_t siglen,
+                           const unsigned char *tbs, size_t tbslen)
+{
+    const X25519_KEY *edkey = ctx->pkey->pkey.ptr;
+
+    if (siglen != ED25519_SIGSIZE)
+        return 0;
+
+    return ED25519_verify(tbs, tbslen, sig, edkey->pubkey);
+}
+
+static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
+{
+    switch (type) {
+    case EVP_PKEY_CTRL_MD:
+        /* Only allow SHA512 as it has hard coded into the algorithm */
+        if (p2 == NULL || EVP_MD_type(p2) == NID_sha512)
+            return 1;
+        ECerr(EC_F_PKEY_ECD_CTRL, EC_R_INVALID_DIGEST_TYPE);
+        return 0;
+
+    case EVP_PKEY_CTRL_DIGESTINIT:
+        return 1;
+    }
+    return -2;
+}
+
+const EVP_PKEY_METHOD ed25519_pkey_meth = {
+    NID_ED25519,
+    0, 0, 0, 0, 0, 0, 0,
+    pkey_ecx_keygen,
+    0, pkey_ecd_sign,
+    0, pkey_ecd_verify,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    pkey_ecd_ctrl,
     0
 };
