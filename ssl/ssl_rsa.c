@@ -8,7 +8,6 @@
  */
 
 #include <stdio.h>
-#include <assert.h>
 #include "ssl_locl.h"
 #include "packet_locl.h"
 #include <openssl/bio.h>
@@ -904,7 +903,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     int ret = 0;
     BIO *bin = NULL;
     size_t num_extensions = 0, contextoff = 0;
-    unsigned int version = 0;
+    unsigned int version;
 
     if (ctx == NULL || file == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PASSED_NULL_PARAMETER);
@@ -1010,10 +1009,8 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
         extension = NULL;
     }
 
-    assert(version != 0);
-    if (version != 0)
-        ret = SSL_CTX_use_serverinfo_ex(ctx, version, serverinfo,
-                                        serverinfo_length);
+    ret = SSL_CTX_use_serverinfo_ex(ctx, version, serverinfo,
+                                    serverinfo_length);
  end:
     /* SSL_CTX_use_serverinfo makes a local copy of the serverinfo. */
     OPENSSL_free(name);
