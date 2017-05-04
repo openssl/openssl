@@ -246,6 +246,11 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     return NULL;
 }
 
+SSL_SESSION *SSL_SESSION_dup(SSL_SESSION *src)
+{
+    return ssl_session_dup(src, src->ext.tick != NULL ? 1 : 0);
+}
+
 const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)
 {
     if (len)

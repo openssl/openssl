@@ -3,14 +3,16 @@
 =head1 NAME
 
 SSL_SESSION_new,
+SSL_SESSION_dup,
 SSL_SESSION_up_ref,
-SSL_SESSION_free - create, free and manage SSL_SESSION structures
+SSL_SESSION_free - create, duplicate, free and manage SSL_SESSION structures
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
  SSL_SESSION *SSL_SESSION_new(void);
+ SSL_SESSION *SSL_SESSION_dup(SSL_SESSION *src);
  int SSL_SESSION_up_ref(SSL_SESSION *ses);
  void SSL_SESSION_free(SSL_SESSION *session);
 
@@ -26,6 +28,10 @@ SSL_SESSION_free() decrements the reference count of B<session> and removes
 the B<SSL_SESSION> structure pointed to by B<session> and frees up the allocated
 memory, if the reference count has reached 0.
 If B<session> is NULL nothing is done.
+
+SSL_SESSION_dup() returns a pointer to a clone of the passed in SSL_SESSION.
+The reference count on the returned object is set to 1.  The session returned
+is not referenced by any caches.
 
 =head1 NOTES
 
