@@ -19,10 +19,10 @@
 static int ssl_set_cert(CERT *c, X509 *x509);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
 
-static const unsigned int synthv1context = SSL_EXT_TLS1_2_AND_BELOW_ONLY
-                                           | SSL_EXT_CLIENT_HELLO
-                                           | SSL_EXT_TLS1_2_SERVER_HELLO
-                                           | SSL_EXT_IGNORE_ON_RESUMPTION;
+#define  SYNTHV1CONTEXT     (SSL_EXT_TLS1_2_AND_BELOW_ONLY \
+                             | SSL_EXT_CLIENT_HELLO \
+                             | SSL_EXT_TLS1_2_SERVER_HELLO \
+                             | SSL_EXT_IGNORE_ON_RESUMPTION)
 
 int SSL_use_certificate(SSL *ssl, X509 *x)
 {
@@ -838,7 +838,7 @@ static int serverinfo_process_buffer(unsigned int version,
          * also use the old API even if we have V2 serverinfo but the context
          * looks like an old style <= TLSv1.2 extension.
          */
-        if (version == SSL_SERVERINFOV1 || context == synthv1context) {
+        if (version == SSL_SERVERINFOV1 || context == SYNTHV1CONTEXT) {
             if (!SSL_CTX_add_server_custom_ext(ctx, ext_type,
                                                serverinfo_srv_add_cb,
                                                NULL, NULL,
@@ -920,7 +920,6 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     int ret = 0;
     BIO *bin = NULL;
     size_t num_extensions = 0, contextoff = 0;
-    unsigned int version;
 
     if (ctx == NULL || file == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, ERR_R_PASSED_NULL_PARAMETER);
@@ -938,6 +937,8 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     }
 
     for (num_extensions = 0;; num_extensions++) {
+        unsigned int version;
+
         if (PEM_read_bio(bin, &name, &header, &extension, &extension_length)
             == 0) {
             /*
@@ -1009,8 +1010,8 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
             /* We know this only uses the last 2 bytes */
             sinfo[0] = 0;
             sinfo[1] = 0;
-            sinfo[2] = (synthv1context >> 8) & 0xff;
-            sinfo[3] = synthv1context & 0xff;
+            sinfo[2] = (SYNTHV1CONTEXT >> 8) & 0xff;
+            sinfo[3] = SYNTHV1CONTEXT & 0xff;
         }
         memcpy(serverinfo + serverinfo_length + contextoff,
                extension, extension_length);
