@@ -18,6 +18,12 @@
 
 static int ssl_set_cert(CERT *c, X509 *x509);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
+
+static const unsigned int synthv1context = SSL_EXT_TLS1_2_AND_BELOW_ONLY
+                                           | SSL_EXT_CLIENT_HELLO
+                                           | SSL_EXT_TLS1_2_SERVER_HELLO
+                                           | SSL_EXT_IGNORE_ON_RESUMPTION;
+
 int SSL_use_certificate(SSL *ssl, X509 *x)
 {
     int rv;
@@ -813,7 +819,7 @@ static int serverinfo_process_buffer(unsigned int version,
         unsigned int ext_type = 0;
         PACKET data;
 
-        if (!PACKET_get_net_4(&pkt, &context)
+        if ((version == SSL_SERVERINFOV2 && !PACKET_get_net_4(&pkt, &context))
                 || !PACKET_get_net_2(&pkt, &ext_type)
                 || !PACKET_get_length_prefixed_2(&pkt, &data))
             return 0;
@@ -821,7 +827,18 @@ static int serverinfo_process_buffer(unsigned int version,
         if (ctx == NULL)
             continue;
 
-        if (version == SSL_SERVERINFOV1) {
+        /*
+         * The old style custom extensions API could be set separately for
+         * server/client, i.e. you could set one custom extension for a client,
+         * and *for the same extension in the same SSL_CTX* you could set a
+         * custom extension for the server as well. It seems quite weird to be
+         * setting a custom extension for both client and server in a single
+         * SSL_CTX - but theoretically possible. This isn't possible in the
+         * new API. Therefore, if we have V1 serverinfo we use the old API. We
+         * also use the old API even if we have V2 serverinfo but the context
+         * looks like an old style <= TLSv1.2 extension.
+         */
+        if (version == SSL_SERVERINFOV1 || context == synthv1context) {
             if (!SSL_CTX_add_server_custom_ext(ctx, ext_type,
                                                serverinfo_srv_add_cb,
                                                NULL, NULL,
@@ -987,15 +1004,13 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
         }
         serverinfo = tmp;
         if (contextoff > 0) {
-            unsigned int synthcontext = SSL_EXT_CLIENT_HELLO
-                                        | SSL_EXT_TLS1_2_SERVER_HELLO;
             unsigned char *sinfo = serverinfo + serverinfo_length;
 
             /* We know this only uses the last 2 bytes */
             sinfo[0] = 0;
             sinfo[1] = 0;
-            sinfo[2] = (synthcontext >> 8) & 0xff;
-            sinfo[3] = synthcontext & 0xff;
+            sinfo[2] = (synthv1context >> 8) & 0xff;
+            sinfo[3] = synthv1context & 0xff;
         }
         memcpy(serverinfo + serverinfo_length + contextoff,
                extension, extension_length);
@@ -1009,7 +1024,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
         extension = NULL;
     }
 
-    ret = SSL_CTX_use_serverinfo_ex(ctx, version, serverinfo,
+    ret = SSL_CTX_use_serverinfo_ex(ctx, SSL_SERVERINFOV2, serverinfo,
                                     serverinfo_length);
  end:
     /* SSL_CTX_use_serverinfo makes a local copy of the serverinfo. */
