@@ -111,7 +111,7 @@ matrix:
                       - llvm-toolchain-trusty-3.9
                       - ubuntu-toolchain-r-test
           compiler: clang-3.9
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 enable-aria no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 enable-aria no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -DOPENSSL_SMALL_FOOTPRINT"
         - os: linux
           addons:
               apt:
@@ -121,7 +121,7 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-aria -DPEDANTIC -DOPENSSL_SMALL_FOOTPRINT" OPENSSL_TEST_RAND_ORDER=0
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-aria -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
         - os: linux
           addons:
               apt:
