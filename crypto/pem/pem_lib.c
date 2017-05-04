@@ -228,20 +228,18 @@ static int check_pem(const char *nm, const char *name)
     return 0;
 }
 
-static void pem_flag_free(void *p, unsigned int flags)
-{
-    if (flags & PEM_FLAG_SECURE) {
-        OPENSSL_secure_free(p);
-        return;
-    }
-    OPENSSL_free(p);
-}
-
-static void *pem_flag_malloc(int num, unsigned int flags)
+static void pem_free(void *p, unsigned int flags)
 {
     if (flags & PEM_FLAG_SECURE)
-        return OPENSSL_secure_malloc(num);
-    return OPENSSL_malloc(num);
+        OPENSSL_secure_free(p);
+    else
+        OPENSSL_free(p);
+}
+
+static void *pem_malloc(int num, unsigned int flags)
+{
+    return (flags & PEM_FLAG_SECURE) ? OPENSSL_secure_malloc(num)
+                                     : OPENSSL_malloc(num);
 }
 
 static int pem_bytes_read_bio_flags(unsigned char **pdata, long *plen,
@@ -256,9 +254,9 @@ static int pem_bytes_read_bio_flags(unsigned char **pdata, long *plen,
     int ret = 0;
 
     do {
-        pem_flag_free(nm, flags);
-        pem_flag_free(header, flags);
-        pem_flag_free(data, flags);
+        pem_free(nm, flags);
+        pem_free(header, flags);
+        pem_free(data, flags);
         if (!PEM_read_bio_ex(bp, &nm, &header, &data, &len, flags)) {
             if (ERR_GET_REASON(ERR_peek_error()) == PEM_R_NO_START_LINE)
                 ERR_add_error_data(2, "Expecting: ", name);
@@ -280,10 +278,10 @@ static int pem_bytes_read_bio_flags(unsigned char **pdata, long *plen,
 
  err:
     if (!ret || pnm == NULL)
-        pem_flag_free(nm, flags);
-    pem_flag_free(header, flags);
+        pem_free(nm, flags);
+    pem_free(header, flags);
     if (!ret)
-        pem_flag_free(data, flags);
+        pem_free(data, flags);
     return ret;
 }
 
@@ -692,21 +690,7 @@ int PEM_read(FILE *fp, char **name, char **header, unsigned char **data,
 
 /* Some helpers for PEM_read_bio_ex(). */
 
-/* TODO Presumably this should be a table lookup, but are these the right ranges? */
-static int isb64(char c)
-{
-    if (c >= 'A' && c <= 'Z')
-        return 1;
-    if (c >= 'a' && c <= 'z')
-        return 1;
-    if (c >= '0' && c <= '9')
-        return 1;
-    if (c == '+' || c == '/')
-        return 1;
-    if (c == '=')
-        return 1;
-    return 0;
-}
+#define isb64(c) (isalnum(c) || (c) == '+' || (c) == '/' || (c) == '=')
 
 static int sanitize_line(char *linebuf, int len, unsigned int flags)
 {
@@ -743,9 +727,9 @@ static int sanitize_line(char *linebuf, int len, unsigned int flags)
 
 #define LINESIZE 255
 /* Note trailing spaces for begin and end. */
-static char const beginstr[] = "-----BEGIN ";
-static char const endstr[] = "-----END ";
-static char const tailstr[] = "-----\n";
+static const char beginstr[] = "-----BEGIN ";
+static const char endstr[] = "-----END ";
+static const char tailstr[] = "-----\n";
 #define BEGINLEN (sizeof(beginstr) - 1)
 #define ENDLEN (sizeof(endstr) - 1)
 #define TAILLEN (sizeof(tailstr) - 1)
@@ -759,7 +743,7 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
      * Need to hold trailing NUL (accounted for by BIO_gets() and the newline
      * that will be added by sanitize_line() (the extra '1').
      */
-    linebuf = pem_flag_malloc(LINESIZE + 1, flags);
+    linebuf = pem_malloc(LINESIZE + 1, flags);
     if (linebuf == NULL) {
         PEMerr(PEM_F_GET_NAME, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -777,11 +761,12 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
         len = sanitize_line(linebuf, len, flags & ~PEM_FLAG_ONLY_B64);
 
         /* Allow leading empty or non-matching lines. */
-    } while (strncmp(linebuf, beginstr, BEGINLEN) != 0 || len < TAILLEN ||
-             strncmp(linebuf + len - TAILLEN, tailstr, TAILLEN) != 0);
+    } while (strncmp(linebuf, beginstr, BEGINLEN) != 0
+             || len < TAILLEN
+             || strncmp(linebuf + len - TAILLEN, tailstr, TAILLEN) != 0);
     linebuf[len - TAILLEN] = '\0';
     len = len - BEGINLEN - TAILLEN + 1;
-    *name = pem_flag_malloc(len, flags);
+    *name = pem_malloc(len, flags);
     if (*name == NULL) {
         PEMerr(PEM_F_GET_NAME, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -790,9 +775,16 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
     ret = 1;
 
 err:
-    pem_flag_free(linebuf, flags);
+    pem_free(linebuf, flags);
     return ret;
 }
+
+/* Keep track of how much of a header we've seen. */
+enum header_status {
+    MAYBE_HEADER,
+    IN_HEADER,
+    POST_HEADER
+};
 
 /**
  * Extract the optional PEM header, with details on the type of content and
@@ -812,42 +804,42 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
     char *linebuf, *p;
     int len, line, ret = 0, end = 0;
     /* 0 if not seen (yet), 1 if reading header, 2 if finished header */
-    int got_header = 0;
+    enum header_status got_header = MAYBE_HEADER;
     unsigned int flags_mask;
     size_t namelen;
 
     /* Need to hold trailing NUL (accounted for by BIO_gets() and the newline
      * that will be added by sanitize_line() (the extra '1'). */
-    linebuf = pem_flag_malloc(LINESIZE + 1, flags);
+    linebuf = pem_malloc(LINESIZE + 1, flags);
     if (linebuf == NULL) {
         PEMerr(PEM_F_GET_HEADER_AND_DATA, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
-    for (line = 0;;line++) {
+    for (line = 0; ; line++) {
         flags_mask = ~0u;
         len = BIO_gets(bp, linebuf, LINESIZE);
-
         if (len <= 0) {
             PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_SHORT_HEADER);
             goto err;
         }
-        if (got_header == 0) {
+
+        if (got_header == MAYBE_HEADER) {
             if (memchr(linebuf, ':', len) != NULL)
-                got_header = 1;
+                got_header = IN_HEADER;
         }
-        if (!strncmp(linebuf, endstr, ENDLEN) || got_header == 1)
+        if (!strncmp(linebuf, endstr, ENDLEN) || got_header == IN_HEADER)
             flags_mask &= ~PEM_FLAG_ONLY_B64;
         len = sanitize_line(linebuf, len, flags & flags_mask);
 
         /* Check for end of header. */
         if (linebuf[0] == '\n') {
-            if (got_header == 2) {
+            if (got_header == POST_HEADER) {
                 /* Another blank line is an error. */
                 PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_BAD_END_LINE);
                 goto err;
             }
-            got_header = 2;
+            got_header = POST_HEADER;
             tmp = *data;
             continue;
         }
@@ -861,7 +853,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
                 PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_BAD_END_LINE);
                 goto err;
             }
-            if (got_header == 0) {
+            if (got_header == MAYBE_HEADER) {
                 *header = *data;
                 *data = tmp;
             }
@@ -879,7 +871,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
         /*
          * Only encrypted files need the line length check applied.
          */
-        if (got_header == 2) {
+        if (got_header == POST_HEADER) {
             /* 65 includes the trailing newline */
             if (len > 65)
                 goto err;
@@ -890,7 +882,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
 
     ret = 1;
 err:
-    pem_flag_free(linebuf, flags);
+    pem_free(linebuf, flags);
     return ret;
 }
 
@@ -922,46 +914,42 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     if ((flags & PEM_FLAG_EAY_COMPATIBLE) && (flags & PEM_FLAG_ONLY_B64)) {
         /* These two are mutually incompatible; bail out. */
         PEMerr(PEM_F_PEM_READ_BIO_EX, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+        goto end;
     }
-    if (flags & PEM_FLAG_SECURE)
-        bmeth = BIO_s_secmem();
-    else
-        bmeth = BIO_s_mem();
+    bmeth = (flags & PEM_FLAG_SECURE) ? BIO_s_secmem() : BIO_s_mem();
 
     headerB = BIO_new(bmeth);
     dataB = BIO_new(bmeth);
     if (headerB == NULL || dataB == NULL) {
         PEMerr(PEM_F_PEM_READ_BIO_EX, ERR_R_MALLOC_FAILURE);
-        goto cleanup;
+        goto end;
     }
 
     if (!get_name(bp, &name, flags))
-        goto cleanup;
+        goto end;
     if (!get_header_and_data(bp, &headerB, &dataB, name, flags))
-        goto cleanup;
+        goto end;
 
     EVP_DecodeInit(ctx);
-    /* Not sure which is more appropriate: BIO_get_mem_ptr() or BIO_get_mem_data() */
     BIO_get_mem_ptr(dataB, &buf_mem);
     len = buf_mem->length;
-    if (EVP_DecodeUpdate(ctx, (unsigned char*)buf_mem->data, &len, (unsigned char*)buf_mem->data, len) < 0 ||
-        EVP_DecodeFinal(ctx, (unsigned char*)&(buf_mem->data[len]), &taillen) < 0) {
+    if (EVP_DecodeUpdate(ctx, (unsigned char*)buf_mem->data, &len, (unsigned char*)buf_mem->data, len) < 0
+            || EVP_DecodeFinal(ctx, (unsigned char*)&(buf_mem->data[len]), &taillen) < 0) {
         PEMerr(PEM_F_PEM_READ_BIO_EX, PEM_R_BAD_BASE64_DECODE);
-        goto cleanup;
+        goto end;
     }
     len += taillen;
     buf_mem->length = len;
 
     if (len == 0)
-        goto cleanup;
+        goto end;
     headerlen = BIO_get_mem_data(headerB, NULL);
-    *header = pem_flag_malloc(headerlen + 1, flags);
-    *data = pem_flag_malloc(len, flags);
+    *header = pem_malloc(headerlen + 1, flags);
+    *data = pem_malloc(len, flags);
     if (*header == NULL || *data == NULL) {
-        pem_flag_free(*header, flags);
-        pem_flag_free(*data, flags);
-        goto cleanup;
+        pem_free(*header, flags);
+        pem_free(*data, flags);
+        goto end;
     }
     BIO_read(headerB, *header, headerlen);
     (*header)[headerlen] = '\0';
@@ -971,9 +959,9 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     name = NULL;
     ret = 1;
 
-cleanup:
+end:
     EVP_ENCODE_CTX_free(ctx);
-    pem_flag_free(name, flags);
+    pem_free(name, flags);
     BIO_free(headerB);
     BIO_free(dataB);
     return ret;
