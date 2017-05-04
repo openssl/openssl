@@ -47,9 +47,10 @@ static int ct_base64_decode(const char *in, unsigned char **out)
 
     /* Subtract padding bytes from |outlen|.  Any more than 2 is malformed. */
     i = 0;
-    while (in[--inlen] == '=' && i < 2) {
+    while (in[--inlen] == '=') {
         --outlen;
-        ++i;
+        if (++i > 2)
+            goto err;
     }
 
     *out = outbuf;
