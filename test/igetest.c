@@ -362,6 +362,7 @@ static int test_bi_ige_garble1(void)
     unsigned int n;
     size_t matches;
 
+    memcpy(iv, saved_iv, sizeof iv);
     AES_set_encrypt_key(rkey, 8 * sizeof rkey, &key);
     AES_set_encrypt_key(rkey2, 8 * sizeof rkey2, &key2);
     AES_ige_encrypt(plaintext, ciphertext, sizeof plaintext, &key, iv,
@@ -392,6 +393,7 @@ static int test_bi_ige_garble2(void)
     unsigned int n;
     size_t matches;
 
+    memcpy(iv, saved_iv, sizeof iv);
     AES_set_encrypt_key(rkey, 8 * sizeof rkey, &key);
     AES_set_encrypt_key(rkey2, 8 * sizeof rkey2, &key2);
     AES_ige_encrypt(plaintext, ciphertext, sizeof plaintext, &key, iv,
@@ -422,6 +424,7 @@ static int test_bi_ige_garble3(void)
     unsigned int n;
     size_t matches;
 
+    memcpy(iv, saved_iv, sizeof iv);
     AES_set_encrypt_key(rkey, 8 * sizeof rkey, &key);
     AES_set_encrypt_key(rkey2, 8 * sizeof rkey2, &key2);
     AES_ige_encrypt(plaintext, ciphertext, sizeof plaintext, &key, iv,
