@@ -384,7 +384,7 @@ sub do_defs
 		{
 		my $fn = catfile($config{sourcedir},$file);
 		print STDERR "DEBUG: starting on $fn:\n" if $debug;
-		open(IN,"<$fn") || die "unable to open $fn:$!\n";
+		open(IN,"<$fn") || die "Can't open $fn, $!,";
 		my $line = "", my $def= "";
 		my %tag = (
 			(map { $_ => 0 } @known_platforms),
