@@ -53,6 +53,21 @@ struct sslapitest_log_counts {
     unsigned int server_application_secret_count;
 };
 
+
+static unsigned char serverinfov1[] = {
+    0xff, 0xff, /* Dummy extension type */
+    0x00, 0x01, /* Extension length is 1 byte */
+    0xff        /* Dummy extension data */
+};
+
+static unsigned char serverinfov2[] = {
+    0x00, 0x00, 0x00,
+    (unsigned char)(SSL_EXT_CLIENT_HELLO & 0xff), /* Dummy context - 4 bytes */
+    0xff, 0xff, /* Dummy extension type */
+    0x00, 0x01, /* Extension length is 1 byte */
+    0xff        /* Dummy extension data */
+};
+
 static void client_keylog_callback(const SSL *ssl, const char *line)
 {
     int line_length = strlen(line);
@@ -2043,6 +2058,63 @@ end:
     return testresult;
 }
 
+/*
+ * Test loading of serverinfo data in various formats. test_sslmessages actually
+ * tests to make sure the extensions appear in the handshake
+ */
+static int test_serverinfo(int tst)
+{
+    unsigned int version;
+    unsigned char *sibuf;
+    size_t sibuflen;
+    int ret, expected, testresult = 0;
+    SSL_CTX *ctx;
+
+    ctx = SSL_CTX_new(TLS_method());
+    if (!TEST_ptr(ctx))
+        goto end;
+
+    if ((tst & 0x01) == 0x01)
+        version = SSL_SERVERINFOV2;
+    else
+        version = SSL_SERVERINFOV1;
+
+    if ((tst & 0x02) == 0x02) {
+        sibuf = serverinfov2;
+        sibuflen = sizeof(serverinfov2);
+        expected = (version == SSL_SERVERINFOV2);
+    } else {
+        sibuf = serverinfov1;
+        sibuflen = sizeof(serverinfov1);
+        expected = (version == SSL_SERVERINFOV1);
+    }
+
+    if ((tst & 0x04) == 0x04) {
+        ret = SSL_CTX_use_serverinfo_ex(ctx, version, sibuf, sibuflen);
+    } else {
+        ret = SSL_CTX_use_serverinfo(ctx, sibuf, sibuflen);
+
+        /*
+         * The version variable is irrelevant in this case - it's what is in the
+         * buffer that matters
+         */
+        if ((tst & 0x02) == 0x02)
+            expected = 0;
+        else
+            expected = 1;
+    }
+
+    if (!TEST_true(ret == expected))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_CTX_free(ctx);
+
+    return testresult;
+}
+
 int test_main(int argc, char *argv[])
 {
     int testresult = 1;
@@ -2093,6 +2165,7 @@ int test_main(int argc, char *argv[])
 #else
     ADD_ALL_TESTS(test_custom_exts, 2);
 #endif
+    ADD_ALL_TESTS(test_serverinfo, 8);
 
     testresult = run_tests(argv[0]);
 
