@@ -3930,7 +3930,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                 return (0);
         }
         sk_X509_push(ctx->extra_certs, (X509 *)parg);
-        
+        CRYPTO_add(&((X509 *)parg)->references, 1, CRYPTO_LOCK_X509);
         break;
 
     case SSL_CTRL_GET_EXTRA_CHAIN_CERTS:
