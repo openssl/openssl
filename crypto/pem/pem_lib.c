@@ -941,6 +941,7 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     len += taillen;
     buf_mem->length = len;
 
+    /* There was no data in the PEM file; avoid malloc(0). */
     if (len == 0)
         goto end;
     headerlen = BIO_get_mem_data(headerB, NULL);
