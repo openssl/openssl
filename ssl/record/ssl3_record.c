@@ -247,11 +247,6 @@ int ssl3_get_record(SSL *s)
                 }
             } else {
                 /* SSLv3+ style record */
-                /*
-                 * TODO(TLS1.3): This callback only provides the "outer" record
-                 * type to the callback. Somehow we need to pass the "inner"
-                 * record type
-                 */
                 if (s->msg_callback)
                     s->msg_callback(0, 0, SSL3_RT_HEADER, p, 5, s,
                                     s->msg_callback_arg);
@@ -643,6 +638,9 @@ int ssl3_get_record(SSL *s)
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
                 goto f_err;
             }
+            if (s->msg_callback)
+                s->msg_callback(0, s->version, SSL3_RT_INNER_CONTENT_TYPE,
+                                &thisrr->data[end], 1, s, s->msg_callback_arg);
         }
 
         if (thisrr->length > SSL3_RT_MAX_PLAIN_LENGTH) {

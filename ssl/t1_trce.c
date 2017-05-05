@@ -1494,6 +1494,12 @@ void SSL_trace(int write_p, int version, int content_type,
                        msg[msglen - 2] << 8 | msg[msglen - 1]);
         }
         break;
+
+    case SSL3_RT_INNER_CONTENT_TYPE:
+        BIO_printf(bio, "  Inner Content Type = %s (%d)",
+                   ssl_trace_str(msg[0], ssl_content_tbl), msg[0]);
+        break;
+
     case SSL3_RT_HANDSHAKE:
         if (!ssl_print_handshake(bio, ssl, ssl->server ? write_p : !write_p,
                                  msg, msglen, 4))
