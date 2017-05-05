@@ -1957,9 +1957,7 @@ int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
         return 0;
 
     for (i = 0; i < num_groups; i++, groups += 2) {
-        unsigned int share_id = (groups[0] << 8) | (groups[1]);
-
-        if (group_id == share_id
+        if (group_id == GET_GROUP_ID(groups, 0)
                 && (!checkallow
                     || tls_curve_allowed(s, groups, SSL_SECOP_CURVE_CHECK))) {
             return 1;

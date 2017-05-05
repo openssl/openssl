@@ -868,6 +868,63 @@ int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
 }
 #endif
 
+int tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
+                                        unsigned int context, X509 *x,
+                                        size_t chainidx, int *al)
+{
+    const unsigned char *groups;
+    size_t numgroups, i, first = 1;
+
+    /* s->s3->group_id is non zero if we accepted a key_share */
+    if (s->s3->group_id == 0)
+        return 1;
+
+    /* Get our list of supported groups */
+    if (!tls1_get_curvelist(s, 0, &groups, &numgroups) || numgroups == 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* Copy group ID if supported */
+    for (i = 0; i < numgroups; i++, groups += 2) {
+        if (tls_curve_allowed(s, groups, SSL_SECOP_CURVE_SUPPORTED)) {
+            if (first) {
+                /*
+                 * Check if the client is already using our preferred group. If
+                 * so we don't need to add this extension
+                 */
+                if (s->s3->group_id == GET_GROUP_ID(groups, 0))
+                    return 1;
+
+                /* Add extension header */
+                if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_groups)
+                           /* Sub-packet for supported_groups extension */
+                        || !WPACKET_start_sub_packet_u16(pkt)
+                        || !WPACKET_start_sub_packet_u16(pkt)) {
+                    SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS,
+                           ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+
+                first = 0;
+            }
+            if (!WPACKET_put_bytes_u8(pkt, groups[0])
+                || !WPACKET_put_bytes_u8(pkt, groups[1])) {
+                    SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS,
+                           ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+        }
+    }
+
+    if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
 int tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt,
                                       unsigned int context, X509 *x,
                                       size_t chainidx, int *al)
