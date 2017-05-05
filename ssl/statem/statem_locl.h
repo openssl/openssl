@@ -55,6 +55,9 @@ int statem_flush(SSL *s);
 
 typedef int (*confunc_f) (SSL *s, WPACKET *pkt);
 
+#define GET_GROUP_ID(group, idx) \
+    (unsigned int)(((group)[(idx) * 2] << 8) | (group)[((idx) * 2) + 1])
+
 int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
                   size_t num_groups, int checkallow);
 int create_synthetic_message_hash(SSL *s);
@@ -230,6 +233,9 @@ int tls_construct_stoc_early_data(SSL *s, WPACKET *pkt, unsigned int context,
 int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
                                      X509 *x, size_t chainidx, int *al);
 #endif
+int tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
+                                        unsigned int context, X509 *x,
+                                        size_t chainidx, int *al);
 int tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt,
                                       unsigned int context, X509 *x,
                                       size_t chainidx, int *al);
