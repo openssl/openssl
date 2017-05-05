@@ -398,6 +398,8 @@ static ERR_STRING_DATA SSL_str_functs[] = {
      "tls_construct_stoc_session_ticket"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_STOC_STATUS_REQUEST),
      "tls_construct_stoc_status_request"},
+    {ERR_FUNC(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS),
+     "tls_construct_stoc_supported_groups"},
     {ERR_FUNC(SSL_F_TLS_CONSTRUCT_STOC_USE_SRTP),
      "tls_construct_stoc_use_srtp"},
     {ERR_FUNC(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO),
