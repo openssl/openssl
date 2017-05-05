@@ -29,6 +29,7 @@ Makefile
 /crypto/include/internal/*_conf.h
 /openssl/include/opensslconf.h
 /util/domd
+/crypto/err/openssl.txt.old
 
 # Executables
 /apps/openssl
