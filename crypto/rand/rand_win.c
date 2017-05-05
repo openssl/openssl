@@ -129,6 +129,12 @@
 # define MAXDELAY 1000
 
 /*
+ * Common stringifying macros...
+ */
+# define STRINGIFY(s) #s
+# define STRINGIFY_MACRO(s) STRINGIFY(s)
+
+/*
  * Intel hardware RNG CSP -- available from
  * http://developer.intel.com/design/security/rng/redist_license.htm
  */
@@ -415,13 +421,13 @@ int RAND_poll(void)
             heaplist_next =
                 (HEAP32LIST) GetProcAddress(kernel, "Heap32ListNext");
             process_first =
-                (PROCESS32) GetProcAddress(kernel, "Process32First");
+                (PROCESS32) GetProcAddress(kernel, STRINGIFY_MACRO(Process32First));
             process_next =
-                (PROCESS32) GetProcAddress(kernel, "Process32Next");
+                (PROCESS32) GetProcAddress(kernel, STRINGIFY_MACRO(Process32Next));
             thread_first = (THREAD32) GetProcAddress(kernel, "Thread32First");
             thread_next = (THREAD32) GetProcAddress(kernel, "Thread32Next");
-            module_first = (MODULE32) GetProcAddress(kernel, "Module32First");
-            module_next = (MODULE32) GetProcAddress(kernel, "Module32Next");
+            module_first = (MODULE32) GetProcAddress(kernel, STRINGIFY_MACRO(Module32First));
+            module_next = (MODULE32) GetProcAddress(kernel, STRINGIFY_MACRO(Module32Next));
 
             if (snap && heap_first && heap_next && heaplist_first &&
                 heaplist_next && process_first && process_next &&
