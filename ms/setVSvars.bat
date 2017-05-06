@@ -2,34 +2,50 @@
 call:set_%1
 exit /b
 :set_universal10.0Win32
+	call:setVar _VS15VC VisualStudio15VC
+	if not "%_VS15VC%"=="" (
+		call "%_VS15VC%\vcvarsall" x86 store
+		call:setEnv
+		goto :eof
+	)
 	call:setVar _VS14VC VisualStudio14VC
 	call "%_VS14VC%vcvarsall" x86 store
-	set _VCPlatform=x86
-	set _VCLibPlat=
 	call:setEnv
 	goto :eof
 
 :set_universal10.0x64
+	call:setVar _VS15VC VisualStudio15VC
+	if not "%_VS15VC%"=="" (
+		call "%_VS15VC%\vcvarsall" x64 store
+		call:setEnv
+		goto :eof
+	)
 	call:setVar _VS14VC VisualStudio14VC
 	call "%_VS14VC%vcvarsall" x64 store
-	set _VCPlatform=x64
-	set _VCLibPlat=amd64
 	call:setEnv
 	goto :eof
 
 :set_universal10.0arm
+	call:setVar _VS15VC VisualStudio15VC
+	if not "%_VS15VC%"=="" (
+		call "%_VS15VC%\vcvarsall" x86_arm store
+		call:setEnv
+		goto :eof
+	)
 	call:setVar _VS14VC VisualStudio14VC
 	call "%_VS14VC%vcvarsall" x86_arm store
-	set _VCPlatform=ARM
-	set _VCLibPlat=ARM
 	call:setEnv
 	goto :eof
 
 :set_universal10.0arm64
+    call:setVar _VS15VC VisualStudio15VC
+    if not "%_VS15VC%"=="" (
+		call "%_VS15VC%\vcvarsall" x86_arm64 store
+		call:setEnv
+		goto :eof
+	)
 	call:setVar _VS14VC VisualStudio14VC
 	call "%_VS14VC%vcvarsall" x86_arm64 store
-	set _VCPlatform=ARM64
-	set _VCLibPlat=ARM64
 	call:setEnv
 	goto :eof
 
@@ -143,7 +159,18 @@ exit /b
 	if not "%_VS14VC%"=="" goto :eof
 	call:setAppend VS140COMNTOOLS \..\..\VC _VS14VC
 	goto :eof
-
+	
+:set_VS15VC
+	if not "%_VS15VC%"=="" goto :eof
+	for /f "usebackq tokens=1* delims=: " %%i in (`%~dp0\vswhere -latest -requires Microsoft.VisualStudio.Workload.Universal -requires Microsoft.VisualStudio.ComponentGroup.UWP.VC`) do (
+	if /i "%%i"=="installationPath" set _VS15VC=%%j\VC\Auxiliary\Build
+	)
+	if not "%_VS15VC%"=="" goto :eof
+	call:setAppend VSSDK150Install \..\VC _VS15VC
+	if not "%_VS15VC%"=="" goto :eof
+	call:setAppend VS150COMNTOOLS \..\..\VC _VS15VC
+	goto :eof
+	
 :set_WPKITS80
 	if not "%_WPKITS80%"=="" goto :eof
 	call:setRegVar "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\Windows Phone\v8.0" InstallationFolder _WPKITS80
@@ -177,9 +204,10 @@ exit /b
 
 :setEnv
 	call:setVar _VS14VC VisualStudio14VC
+	call:setVar _VS15VC VisualStudio15VC
 	call:setVar _WKITS10 WindowsKits10.0
-	set PATH=%_VS14VCBin%;%PATH%
-	set "LIBPATH=%_WKITS10%UnionMetadata\Facade;%_VS14VC%vcpackages;%_WKITS10%references\windows.foundation.foundationcontract\1.0.0.0\;%_WKITS10%references\windows.foundation.universalapicontract\1.0.0.0\"
+	call:setVar _WKITS10VER WindowsKits10Version
+	set LIBPATH=%LIBPATH%;%_WKITS10%\references\windows.foundation.foundationcontract\2.0.0.0\;%_WKITS10%\references\windows.foundation.universalapicontract\2.0.0.0\;%_WKITS10%\references\windows.foundation.foundationcontract\1.0.0.0\;%_WKITS10%\references\windows.foundation.universalapicontract\1.0.0.0\
 	goto :eof
 
 :end

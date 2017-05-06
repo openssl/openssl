@@ -3,10 +3,13 @@ my $projectname="NT-$ARGV[0]-$ARGV[1]-$ARGV[2]-$ARGV[3]";
 my $guid = "$ARGV[4]";
 my $testguid = "$ARGV[5]";
 my $winrtguid = "$ARGV[6]";
+my $Win10KitVersion = "$ARGV[6]";
+my $vsVersion = "$ARGV[7]";
 my $PlatformToolset="v120";
 my $ToolsVersion="12.0";
 my $vstoolversion="";
 my $winrt=1;
+
 if($ARGV[1]=="10.0")
 {
   $ToolsVersion="14.0";
@@ -41,6 +44,13 @@ else
     $PlatformToolset="v110";
     $vstoolversion.="ws8.0";
   }
+}
+
+#Update the tools for VS2017
+if($vsVersion eq "VS15")
+{
+  $ToolsVersion="15.0";
+  $PlatformToolset="v141";
 }
 
 sub replaceInFile {
@@ -83,7 +93,8 @@ sub replaceInFile {
   '<TargetFrameworkVersion>v8.0</TargetFrameworkVersion>' => "<TargetFrameworkVersion>v$ARGV[1]</TargetFrameworkVersion>",
   '<PlatformToolset>v120</PlatformToolset>' => "<PlatformToolset>$PlatformToolset</PlatformToolset>",
   '<PlatformToolset>v110_wp80</PlatformToolset>' => "<PlatformToolset>$PlatformToolset</PlatformToolset>",
-  'guid' => "$guid",
+  '<PlatformToolset>v140</PlatformToolset>' => "<PlatformToolset>$PlatformToolset</PlatformToolset>",
+  '<WindowsTargetPlatformVersion>10.0.10240.0</WindowsTargetPlatformVersion>' => "<WindowsTargetPlatformVersion>$Win10KitVersion</WindowsTargetPlatformVersion>",
   'testguid' => "$testguid",
   'winrtguid' => "$winrtguid",
   '<ApplicationTypeRevision>8.1</ApplicationTypeRevision>' => "<ApplicationTypeRevision>$ARGV[1]</ApplicationTypeRevision>"
