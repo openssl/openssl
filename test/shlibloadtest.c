@@ -15,28 +15,30 @@
 #include <openssl/ossl_typ.h>
 #include "testutil.h"
 
-#if !defined(DSO_DLFCN) && !defined(DSO_WIN32)
-int main(void)
-{
-    TEST_info("Not implemented on this platform\n");
-    return 0;
-}
-
-#else
-
 typedef const SSL_METHOD * (*TLS_method_t)(void);
 typedef SSL_CTX * (*SSL_CTX_new_t)(const SSL_METHOD *meth);
 typedef void (*SSL_CTX_free_t)(SSL_CTX *);
 typedef unsigned long (*ERR_get_error_t)(void);
 typedef unsigned long (*OpenSSL_version_num_t)(void);
 
+typedef enum test_types_en {
+    CRYPTO_FIRST,
+    SSL_FIRST,
+    JUST_CRYPTO
+} TEST_TYPE;
+
+static TEST_TYPE test_type;
+static const char *path_crypto;
+static const char *path_ssl;
+
 #ifdef DSO_DLFCN
 
 # include <dlfcn.h>
 
+# define SHLIB_INIT NULL
+
 typedef void *SHLIB;
 typedef void *SHLIB_SYM;
-# define SHLIB_INIT NULL
 
 static int shlib_load(const char *filename, SHLIB *lib)
 {
@@ -50,19 +52,22 @@ static int shlib_sym(SHLIB lib, const char *symname, SHLIB_SYM *sym)
     return *sym != NULL;
 }
 
+# ifdef OPENSSL_USE_NODELETE
 static int shlib_close(SHLIB lib)
 {
     return dlclose(lib) != 0 ? 0 : 1;
 }
+# endif
 #endif
 
 #ifdef DSO_WIN32
 
 # include <windows.h>
 
+# define SHLIB_INIT 0
+
 typedef HINSTANCE SHLIB;
 typedef void *SHLIB_SYM;
-# define SHLIB_INIT 0
 
 static int shlib_load(const char *filename, SHLIB *lib)
 {
@@ -76,21 +81,16 @@ static int shlib_sym(SHLIB lib, const char *symname, SHLIB_SYM *sym)
     return *sym != NULL;
 }
 
+# ifdef OPENSSL_USE_NODELETE
 static int shlib_close(SHLIB lib)
 {
     return FreeLibrary(lib) == 0 ? 0 : 1;
 }
+# endif
 #endif
 
-typedef enum test_types_en {
-    CRYPTO_FIRST,
-    SSL_FIRST,
-    JUST_CRYPTO
-} TEST_TYPE;
 
-static TEST_TYPE test_type;
-static const char *path_crypto;
-static const char *path_ssl;
+#if defined(DSO_DLFCN) || defined(DSO_WIN32)
 
 static int test_lib(void)
 {
@@ -148,6 +148,7 @@ static int test_lib(void)
     if (!TEST_int_eq(myOpenSSL_version_num(), OPENSSL_VERSION_NUMBER))
         goto end;
 
+#ifdef OPENSSL_USE_NODELETE
     switch (test_type) {
     case JUST_CRYPTO:
         if (!TEST_true(shlib_close(cryptolib)))
@@ -163,11 +164,14 @@ static int test_lib(void)
             goto end;
         break;
     }
+#endif
 
     result = 1;
 end:
     return result;
 }
+#endif
+
 
 int test_main(int argc, char **argv)
 {
@@ -189,7 +193,8 @@ int test_main(int argc, char **argv)
     path_crypto = argv[2];
     path_ssl = argv[3];
 
+#if defined(DSO_DLFCN) || defined(DSO_WIN32)
     ADD_TEST(test_lib);
+#endif
     return run_tests(argv[0]);
 }
-#endif
