@@ -14,7 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/conf.h>
-#include <openssl/conf_api.h>
+#include "e_os.h"
+#include "conf_lcl.h"
 
 static void value_free_hash(const CONF_VALUE *a, LHASH_OF(CONF_VALUE) *conf);
 static void value_free_stack_doall(CONF_VALUE *a);

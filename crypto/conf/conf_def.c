@@ -15,7 +15,7 @@
 #include "internal/o_dir.h"
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
-#include <openssl/conf_api.h>
+#include "conf_lcl.h"
 #include "conf_def.h"
 #include <openssl/buffer.h>
 #include <openssl/err.h>
