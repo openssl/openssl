@@ -13,9 +13,9 @@ use OpenSSL::Test qw/:DEFAULT data_file srctop_file/;
 
 setup("test_external_krb5");
 
-plan skip_all "No external tests in this configuration"
+plan skip_all => "No external tests in this configuration"
     if disabled("external-tests");
-plan skip_all "krb5 not available"
+plan skip_all => "krb5 not available"
     if ! -f srctop_file("krb5", "README");
 
 plan tests => 1;
