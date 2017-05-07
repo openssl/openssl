@@ -652,12 +652,13 @@ generate_crypto_asn1:
 
 errors:
 	( cd $(SRCDIR); $(PERL) util/ck_errf.pl -strict */*.c */*/*.c )
-	( cd $(SRCDIR); $(PERL) util/mkerr.pl -recurse -write )
+	( cd $(SRCDIR); $(PERL) util/mkerr.pl -internal )
 	( cd $(SRCDIR)/engines; \
-	  for e in *.ec; do \
-	      $(PERL) ../util/mkerr.pl -conf $$e \
-		      -nostatic -staticloader -write *.c; \
-	  done )
+          $(PERL) ../util/mkerr.pl -conf e_capi.ec e_capi.c ; \
+          $(PERL) ../util/mkerr.pl -conf e_dasync.ec e_dasync.c ; \
+          $(PERL) ../util/mkerr.pl -conf e_ossltest.ec e_ossltest.c ; \
+          cd afalg; \
+          $(PERL) ../../util/mkerr.pl -conf e_afalg.ec e_afalg.c )
 
 ordinals:
 	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b util/mkdef.pl crypto update )

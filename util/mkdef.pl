@@ -225,6 +225,7 @@ $max_crypto = $max_num;
 my $ssl="include/openssl/ssl.h";
 $ssl.=" include/openssl/tls1.h";
 $ssl.=" include/openssl/srtp.h";
+$ssl.=" include/openssl/sslerr.h";
 
 # We use headers found in include/openssl and include/internal only.
 # The latter is needed so libssl.so/.dll/.exe can link properly.
@@ -291,6 +292,9 @@ $crypto.=" include/openssl/modes.h";
 $crypto.=" include/openssl/async.h";
 $crypto.=" include/openssl/ct.h";
 $crypto.=" include/openssl/kdf.h";
+foreach my $errf ( <include/openssl/[a-z]err.h> ) {
+    $crypto.=" $errf";
+}
 
 my $symhacks="include/openssl/symhacks.h";
 
@@ -380,7 +384,7 @@ sub do_defs
 		{
 		my $fn = catfile($config{sourcedir},$file);
 		print STDERR "DEBUG: starting on $fn:\n" if $debug;
-		open(IN,"<$fn") || die "unable to open $fn:$!\n";
+		open(IN,"<$fn") || die "Can't open $fn, $!,";
 		my $line = "", my $def= "";
 		my %tag = (
 			(map { $_ => 0 } @known_platforms),

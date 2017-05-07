@@ -14,13 +14,14 @@
 #include <internal/err.h>
 #include <internal/err_int.h>
 #include <openssl/lhash.h>
+#include <openssl/err.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/opensslconf.h>
 #include <internal/thread_once.h>
 
-static void err_load_strings(int lib, ERR_STRING_DATA *str);
+static int err_load_strings(const ERR_STRING_DATA *str);
 
 static void ERR_STATE_free(ERR_STATE *s);
 #ifndef OPENSSL_NO_ERR
@@ -160,8 +161,7 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
     ERR_STRING_DATA *p = NULL;
 
     CRYPTO_THREAD_read_lock(err_string_lock);
-    if (int_error_hash != NULL)
-        p = lh_ERR_STRING_DATA_retrieve(int_error_hash, d);
+    p = lh_ERR_STRING_DATA_retrieve(int_error_hash, d);
     CRYPTO_THREAD_unlock(err_string_lock);
 
     return p;
@@ -198,7 +198,7 @@ static void build_SYS_str_reasons(void)
     for (i = 1; i <= NUM_SYS_STR_REASONS; i++) {
         ERR_STRING_DATA *str = &SYS_str_reasons[i - 1];
 
-        str->error = (unsigned long)i;
+        str->error = ERR_PACK(ERR_LIB_SYS, 0, i);
         if (str->string == NULL) {
             char (*dest)[LEN_SYS_STR_REASON] = &(strerror_tab[i - 1]);
             if (openssl_strerror_r(i, *dest, sizeof(*dest)))
@@ -216,6 +216,7 @@ static void build_SYS_str_reasons(void)
     init = 0;
 
     CRYPTO_THREAD_unlock(err_string_lock);
+    err_load_strings(SYS_str_reasons);
 }
 #endif
 
@@ -255,7 +256,9 @@ DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
     OPENSSL_init_crypto(0, NULL);
     err_string_lock = CRYPTO_THREAD_lock_new();
-    return err_string_lock != NULL;
+    int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
+                                            err_string_data_cmp);
+    return err_string_lock != NULL && int_error_hash != NULL;
 }
 
 void err_cleanup(void)
@@ -263,6 +266,32 @@ void err_cleanup(void)
     CRYPTO_THREAD_cleanup_local(&err_thread_local);
     CRYPTO_THREAD_lock_free(err_string_lock);
     err_string_lock = NULL;
+    lh_ERR_STRING_DATA_free(int_error_hash);
+    int_error_hash = NULL;
+}
+
+/*
+ * Legacy; pack in the library.
+ */
+static void err_patch(int lib, ERR_STRING_DATA *str)
+{
+    unsigned long plib = ERR_PACK(lib, 0, 0);
+
+    for (; str->error != 0; str++)
+        str->error |= plib;
+}
+
+/*
+ * Hash in |str| error strings. Assumes the URN_ONCE was done.
+ */
+static int err_load_strings(const ERR_STRING_DATA *str)
+{
+    CRYPTO_THREAD_write_lock(err_string_lock);
+    for (; str->error; str++)
+        (void)lh_ERR_STRING_DATA_insert(int_error_hash,
+                                       (ERR_STRING_DATA *)str);
+    CRYPTO_THREAD_unlock(err_string_lock);
+    return 1;
 }
 
 int ERR_load_ERR_strings(void)
@@ -271,36 +300,30 @@ int ERR_load_ERR_strings(void)
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
 
-    err_load_strings(0, ERR_str_libraries);
-    err_load_strings(0, ERR_str_reasons);
-    err_load_strings(ERR_LIB_SYS, ERR_str_functs);
+    err_load_strings(ERR_str_libraries);
+    err_load_strings(ERR_str_reasons);
+    err_patch(ERR_LIB_SYS, ERR_str_functs);
+    err_load_strings(ERR_str_functs);
     build_SYS_str_reasons();
-    err_load_strings(ERR_LIB_SYS, SYS_str_reasons);
 #endif
     return 1;
-}
-
-static void err_load_strings(int lib, ERR_STRING_DATA *str)
-{
-    CRYPTO_THREAD_write_lock(err_string_lock);
-    if (int_error_hash == NULL)
-        int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
-                                                err_string_data_cmp);
-    if (int_error_hash != NULL) {
-        for (; str->error; str++) {
-            if (lib)
-                str->error |= ERR_PACK(lib, 0, 0);
-            (void)lh_ERR_STRING_DATA_insert(int_error_hash, str);
-        }
-    }
-    CRYPTO_THREAD_unlock(err_string_lock);
 }
 
 int ERR_load_strings(int lib, ERR_STRING_DATA *str)
 {
     if (ERR_load_ERR_strings() == 0)
         return 0;
-    err_load_strings(lib, str);
+
+    err_patch(lib, str);
+    err_load_strings(str);
+    return 1;
+}
+
+int ERR_load_strings_const(const ERR_STRING_DATA *str)
+{
+    if (ERR_load_ERR_strings() == 0)
+        return 0;
+    err_load_strings(str);
     return 1;
 }
 
@@ -310,13 +333,12 @@ int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
         return 0;
 
     CRYPTO_THREAD_write_lock(err_string_lock);
-    if (int_error_hash != NULL) {
-        for (; str->error; str++) {
-            if (lib)
-                str->error |= ERR_PACK(lib, 0, 0);
-            (void)lh_ERR_STRING_DATA_delete(int_error_hash, str);
-        }
-    }
+    /*
+     * We don't need to ERR_PACK the lib, since that was done (to
+     * the table) when it was loaded.
+     */
+    for (; str->error; str++)
+        (void)lh_ERR_STRING_DATA_delete(int_error_hash, str);
     CRYPTO_THREAD_unlock(err_string_lock);
 
     return 1;
@@ -326,11 +348,6 @@ void err_free_strings_int(void)
 {
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return;
-
-    CRYPTO_THREAD_write_lock(err_string_lock);
-    lh_ERR_STRING_DATA_free(int_error_hash);
-    int_error_hash = NULL;
-    CRYPTO_THREAD_unlock(err_string_lock);
 }
 
 /********************************************************/
