@@ -908,8 +908,7 @@ int tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
 
                 first = 0;
             }
-            if (!WPACKET_put_bytes_u8(pkt, groups[0])
-                || !WPACKET_put_bytes_u8(pkt, groups[1])) {
+            if (!WPACKET_put_bytes_u16(pkt, GET_GROUP_ID(groups, 0))) {
                     SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS,
                            ERR_R_INTERNAL_ERROR);
                     return 0;
