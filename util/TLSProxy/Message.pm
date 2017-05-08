@@ -86,6 +86,7 @@ use constant {
     # (i.e. not read), and even then only when enabled. We use it to test
     # handling of duplicate extensions.
     EXT_DUPLICATE_EXTENSION => 0xfde8,
+    EXT_UNKNOWN => 0xfffe,
     #Unknown extension that should appear last
     EXT_FORCE_LAST => 0xffff
 };
