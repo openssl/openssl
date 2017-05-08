@@ -73,6 +73,9 @@ int main(int argc, char **argv)
     if (!SMIME_write_PKCS7(out, p7, in, flags))
         goto err;
 
+    printf("Successfully encrypted contents of file encr.txt into file"
+           " smencr.txt using certificate and private key from"
+           " file signer.pem\n");
     ret = 0;
 
  err:

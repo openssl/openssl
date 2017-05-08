@@ -77,6 +77,9 @@ int main(int argc, char **argv)
     if (!PEM_write_bio_CMS(out, cms))
         goto err;
 
+    printf("Successfully encrypted contents of file encr.txt into files"
+           " smencr.out and smencr.pem using certificate and private key from"
+           " file signer.pem\n");
     ret = 0;
 
  err:

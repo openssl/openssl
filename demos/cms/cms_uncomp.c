@@ -39,9 +39,11 @@ int main(int argc, char **argv)
         goto err;
 
     /* Uncompress S/MIME message */
-    if (!CMS_uncompress(cms, out, NULL, 0))
+    if (!CMS_uncompress(cms, NULL, out, CMS_STREAM))
         goto err;
 
+    printf("Successfully uncompressed contents of file smcomp.txt into file"
+           " smuncomp.txt\n");
     ret = 0;
 
  err:

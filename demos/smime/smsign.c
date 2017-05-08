@@ -69,6 +69,8 @@ int main(int argc, char **argv)
     if (!SMIME_write_PKCS7(out, p7, in, flags))
         goto err;
 
+    printf("Successfully signed contents of file sign.txt into file smout.txt"
+           " using signer certificate and private key from file signer.pem\n");
     ret = 0;
 
  err:

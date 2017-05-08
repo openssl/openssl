@@ -59,6 +59,9 @@ int main(int argc, char **argv)
     if (!CMS_decrypt(cms, rkey, rcert, NULL, out, 0))
         goto err;
 
+    printf("Successfully dencrypted contents of file smencr.txt into file "
+           "decout.txt using certificate and private key from file "
+           "signer.pem\n");
     ret = 0;
 
  err:

@@ -68,6 +68,9 @@ int main(int argc, char **argv)
     if (!CMS_decrypt(cms, rkey, rcert, dcont, out, 0))
         goto err;
 
+    printf("Successfully dencrypted contents of file smencr.pem"
+           " into file smencr.out and encrout.txt "
+           " using certificate and private key from file signer.pem\n");
     ret = 0;
 
  err:

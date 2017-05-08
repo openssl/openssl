@@ -59,6 +59,9 @@ int main(int argc, char **argv)
     if (!PKCS7_decrypt(p7, rkey, rcert, out, 0))
         goto err;
 
+    printf("Successfully dencrypted contents of file smencr.txt into file"
+           " encrout.txt using certificate and private key from file"
+           " signer.pem\n");
     ret = 0;
 
  err:

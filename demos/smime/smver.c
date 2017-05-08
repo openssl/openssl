@@ -65,7 +65,8 @@ int main(int argc, char **argv)
         goto err;
     }
 
-    fprintf(stderr, "Verification Successful\n");
+    printf("Successfully verified contents of file smout.txt into file"
+           " smver.txt using CA certificate in file cacert.pem\n");
 
     ret = 0;
 
