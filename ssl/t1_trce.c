@@ -547,21 +547,6 @@ static ssl_trace_tbl ssl_ctype_tbl[] = {
     {66, "ecdsa_fixed_ecdh"}
 };
 
-static ssl_trace_tbl ssl_crypto_tbl[] = {
-    {TLS1_RT_CRYPTO_PREMASTER, "Premaster Secret"},
-    {TLS1_RT_CRYPTO_CLIENT_RANDOM, "Client Random"},
-    {TLS1_RT_CRYPTO_SERVER_RANDOM, "Server Random"},
-    {TLS1_RT_CRYPTO_MASTER, "Master Secret"},
-    {TLS1_RT_CRYPTO_MAC | TLS1_RT_CRYPTO_WRITE, "Write Mac Secret"},
-    {TLS1_RT_CRYPTO_MAC | TLS1_RT_CRYPTO_READ, "Read Mac Secret"},
-    {TLS1_RT_CRYPTO_KEY | TLS1_RT_CRYPTO_WRITE, "Write Key"},
-    {TLS1_RT_CRYPTO_KEY | TLS1_RT_CRYPTO_READ, "Read Key"},
-    {TLS1_RT_CRYPTO_IV | TLS1_RT_CRYPTO_WRITE, "Write IV"},
-    {TLS1_RT_CRYPTO_IV | TLS1_RT_CRYPTO_READ, "Read IV"},
-    {TLS1_RT_CRYPTO_FIXED_IV | TLS1_RT_CRYPTO_WRITE, "Write IV (fixed part)"},
-    {TLS1_RT_CRYPTO_FIXED_IV | TLS1_RT_CRYPTO_READ, "Read IV (fixed part)"}
-};
-
 static void ssl_print_hex(BIO *bio, int indent, const char *name,
                           const unsigned char *msg, size_t msglen)
 {
@@ -1283,12 +1268,6 @@ void SSL_trace(int write_p, int version, int content_type,
     const unsigned char *msg = buf;
     BIO *bio = arg;
 
-    if (write_p == 2) {
-        BIO_puts(bio, "Session ");
-        ssl_print_hex(bio, 0,
-                      ssl_trace_str(content_type, ssl_crypto_tbl), msg, msglen);
-        return;
-    }
     switch (content_type) {
     case SSL3_RT_HEADER:
         {
