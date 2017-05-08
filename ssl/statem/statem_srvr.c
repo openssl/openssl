@@ -1755,9 +1755,22 @@ static int tls_early_post_process_client_hello(SSL *s, int *pal)
      * algorithms from the client, starting at q.
      */
     s->s3->tmp.new_compression = NULL;
+    if (SSL_IS_TLS13(s)) {
+        /*
+         * We already checked above that the NULL compression method appears in
+         * the list. Now we check there aren't any others (which is illegal in
+         * a TLSv1.3 ClientHello.
+         */
+        if (clienthello->compressions_len != 1) {
+            al = SSL_AD_ILLEGAL_PARAMETER;
+            SSLerr(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO,
+                   SSL_R_INVALID_COMPRESSION_ALGORITHM);
+            goto err;
+        }
+    }
 #ifndef OPENSSL_NO_COMP
     /* This only happens if we have a cache hit */
-    if (s->session->compress_meth != 0 && !SSL_IS_TLS13(s)) {
+    else if (s->session->compress_meth != 0) {
         int m, comp_id = s->session->compress_meth;
         unsigned int k;
         /* Perform sanity checks on resumed compression algorithm */
@@ -1793,8 +1806,7 @@ static int tls_early_post_process_client_hello(SSL *s, int *pal)
         }
     } else if (s->hit) {
         comp = NULL;
-    } else if (ssl_allow_compression(s) && s->ctx->comp_methods
-                   && !SSL_IS_TLS13(s)) {
+    } else if (ssl_allow_compression(s) && s->ctx->comp_methods) {
         /* See if we have a match */
         int m, nn, v, done = 0;
         unsigned int o;
