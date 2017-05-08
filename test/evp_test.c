@@ -20,6 +20,8 @@
 #include "internal/numbers.h"
 #include "testutil.h"
 
+static const char *current_test_file = "???";
+
 /*
  * Remove spaces from beginning and end of a string
  */
@@ -193,6 +195,14 @@ static int test_uint64(const char *value, uint64_t *pr)
     }
     return 1;
 }
+
+static int compare_mem(unsigned char *expected, size_t expected_len,
+                       unsigned char *got, size_t  got_len)
+{
+    if (!TEST_mem_eq(expected, expected_len, got, got_len))
+        return 0;
+    return 1;
+}
 #endif
 
 typedef struct evp_test_method_st EVP_TEST_METHOD;
@@ -223,11 +233,6 @@ typedef struct evp_test_st {
     int errors;
     /* Number of tests skipped */
     int nskip;
-    /* If output mismatch expected and got value */
-    unsigned char *out_received;
-    size_t out_received_len;
-    unsigned char *out_expected;
-    size_t out_expected_len;
     /* test specific data */
     void *data;
     /* Current test should be skipped */
@@ -301,16 +306,6 @@ static const EVP_TEST_METHOD *evp_find_test(const char *name)
     return NULL;
 }
 
-static void hex_print(const char *name, const unsigned char *buf, size_t len)
-{
-    size_t i;
-
-    fprintf(stderr, "%s ", name);
-    for (i = 0; i < len; i++)
-        fprintf(stderr, "%02X", buf[i]);
-    fputs("\n", stderr);
-}
-
 static void clear_test(EVP_TEST *t)
 {
     OPENSSL_free(t->expected_err);
@@ -319,23 +314,8 @@ static void clear_test(EVP_TEST *t)
     t->func = NULL;
     OPENSSL_free(t->reason);
     t->reason = NULL;
-    OPENSSL_free(t->out_expected);
-    t->out_expected = NULL;
-    t->out_expected_len = 0;
-    OPENSSL_free(t->out_received);
-    t->out_received = NULL;
-    t->out_received_len = 0;
-    /* Literals. */
+    /* Text literal. */
     t->err = NULL;
-}
-
-static void print_expected(EVP_TEST *t)
-{
-    if (t->out_expected == NULL && t->out_received == NULL)
-        return;
-    hex_print("Expected:", t->out_expected, t->out_expected_len);
-    hex_print("Got:     ", t->out_received, t->out_received_len);
-    clear_test(t);
 }
 
 /*
@@ -351,13 +331,15 @@ static int check_test_error(EVP_TEST *t)
         return 1;
     if (t->err != NULL && t->expected_err == NULL) {
         if (t->aux_err != NULL) {
-            TEST_info("Test line %d(%s): unexpected error %s",
-                      t->start_line, t->aux_err, t->err);
+            TEST_info("Above error from the test at %s:%d "
+                      "(%s) unexpected error %s",
+                      current_test_file, t->start_line, t->aux_err, t->err);
         } else {
-            TEST_info("Test line %d: unexpected error %s",
-                      t->start_line, t->err);
+            TEST_info("Above error from the test at %s:%d "
+                      "unexpected error %s",
+                      current_test_file, t->start_line, t->err);
         }
-        print_expected(t);
+        clear_test(t);
         return 0;
     }
     if (t->err == NULL && t->expected_err != NULL) {
@@ -712,7 +694,7 @@ static int digest_test_run(EVP_TEST *t)
         t->err = "DIGEST_LENGTH_MISMATCH";
         goto err;
     }
-    if (!TEST_mem_eq(mdata->output, mdata->output_len, md, md_len)) {
+    if (!compare_mem(mdata->output, mdata->output_len, md, md_len)) {
         t->err = "DIGEST_MISMATCH";
         goto err;
     }
@@ -1002,7 +984,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         t->err = "CIPHERFINAL_ERROR";
         goto err;
     }
-    if (!TEST_mem_eq(out, out_len, tmp + out_misalign, tmplen + tmpflen)) {
+    if (!compare_mem(out, out_len, tmp + out_misalign, tmplen + tmpflen)) {
         t->err = "VALUE_MISMATCH";
         goto err;
     }
@@ -1018,7 +1000,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
             t->err = "TAG_RETRIEVE_ERROR";
             goto err;
         }
-        if (!TEST_mem_eq(cdat->tag, cdat->tag_len, rtag, cdat->tag_len)) {
+        if (!compare_mem(cdat->tag, cdat->tag_len, rtag, cdat->tag_len)) {
             t->err = "TAG_VALUE_MISMATCH";
             goto err;
         }
@@ -1270,11 +1252,10 @@ static int mac_test_run(EVP_TEST *t)
         goto err;
     }
     if (!EVP_DigestSignFinal(mctx, mac, &mac_len)
-            || !TEST_mem_eq(mdata->output, mdata->output_len, mac, mac_len)) {
+            || !compare_mem(mdata->output, mdata->output_len, mac, mac_len)) {
         t->err = "TEST_MAC_ERR";
         goto err;
     }
-
     t->err = NULL;
  err:
     EVP_MD_CTX_free(mctx);
@@ -1427,7 +1408,7 @@ static int pkey_test_run(EVP_TEST *t)
         t->err = "KEYOP_ERROR";
         goto err;
     }
-    if (!TEST_mem_eq(kdata->output, kdata->output_len, out, out_len)) {
+    if (!compare_mem(kdata->output, kdata->output_len, out, out_len)) {
         t->err = "KEYOP_MISMATCH";
         goto err;
     }
@@ -1542,7 +1523,7 @@ static int pderive_test_run(EVP_TEST *t)
         t->err = "DERIVE_ERROR";
         goto err;
     }
-    if (!TEST_mem_eq(kdata->output, kdata->output_len, out, out_len)) {
+    if (!compare_mem(kdata->output, kdata->output_len, out, out_len)) {
         t->err = "SHARED_SECRET_MISMATCH";
         goto err;
     }
@@ -1738,7 +1719,7 @@ static int pbe_test_run(EVP_TEST *t)
             goto err;
         }
     }
-    if (!TEST_mem_eq(pdata->key, pdata->key_len, key, pdata->key_len)) {
+    if (!compare_mem(pdata->key, pdata->key_len, key, pdata->key_len)) {
         t->err = "KEY_MISMATCH";
         goto err;
     }
@@ -1846,7 +1827,7 @@ static int encode_test_run(EVP_TEST *t)
 
         EVP_ENCODE_CTX_free(encode_ctx);
 
-        if (!TEST_mem_eq(edata->output, edata->output_len,
+        if (!compare_mem(edata->output, edata->output_len,
                          encode_out, output_len)) {
             t->err = "BAD_ENCODING";
             goto err;
@@ -1872,7 +1853,7 @@ static int encode_test_run(EVP_TEST *t)
     output_len += chunk_len;
 
     if (edata->encoding != BASE64_INVALID_ENCODING
-            && !TEST_mem_eq(edata->input, edata->input_len,
+            && !compare_mem(edata->input, edata->input_len,
                             decode_out, output_len)) {
         t->err = "BAD_DECODING";
         goto err;
@@ -1959,7 +1940,7 @@ static int kdf_test_run(EVP_TEST *t)
         t->err = "KDF_DERIVE_ERROR";
         goto err;
     }
-    if (!TEST_mem_eq(kdata->output, kdata->output_len, out, out_len)) {
+    if (!compare_mem(kdata->output, kdata->output_len, out, out_len)) {
         t->err = "KDF_MISMATCH";
         goto err;
     }
@@ -2096,6 +2077,7 @@ static int do_test_file(const char *testfile)
     char buf[10240];
     EVP_TEST t;
 
+    current_test_file = testfile;
     if (!TEST_ptr(in = BIO_new_file(testfile, "rb")))
         return 0;
     memset(&t, 0, sizeof(t));
