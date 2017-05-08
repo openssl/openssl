@@ -1058,6 +1058,10 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
     if (!SSL_IS_TLS13(s))
         return 1;
 
+    /* Nothing to do for key_share in an HRR */
+    if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0)
+        return 1;
+
     /*
      * If
      *     we are a client
