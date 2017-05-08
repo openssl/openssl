@@ -236,6 +236,14 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *len,
 
 int PEM_read_bio(BIO *bp, char **name, char **header,
                  unsigned char **data, long *len);
+#   define PEM_FLAG_SECURE             0x1
+#   define PEM_FLAG_EAY_COMPATIBLE     0x2
+#   define PEM_FLAG_ONLY_B64           0x4
+int PEM_read_bio_ex(BIO *bp, char **name, char **header,
+                    unsigned char **data, long *len, unsigned int flags);
+int PEM_bytes_read_bio_secmem(unsigned char **pdata, long *plen, char **pnm,
+                              const char *name, BIO *bp, pem_password_cb *cb,
+                              void *u);
 int PEM_write_bio(BIO *bp, const char *name, const char *hdr,
                   const unsigned char *data, long len);
 int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm,
@@ -388,6 +396,8 @@ int ERR_load_PEM_strings(void);
 # define PEM_F_DO_PK8PKEY_FP                              125
 # define PEM_F_DO_PVK_BODY                                135
 # define PEM_F_DO_PVK_HEADER                              136
+# define PEM_F_GET_HEADER_AND_DATA                        143
+# define PEM_F_GET_NAME                                   144
 # define PEM_F_I2B_PVK                                    137
 # define PEM_F_I2B_PVK_BIO                                138
 # define PEM_F_LOAD_IV                                    101
@@ -401,6 +411,7 @@ int ERR_load_PEM_strings(void);
 # define PEM_F_PEM_READ                                   108
 # define PEM_F_PEM_READ_BIO                               109
 # define PEM_F_PEM_READ_BIO_DHPARAMS                      141
+# define PEM_F_PEM_READ_BIO_EX                            145
 # define PEM_F_PEM_READ_BIO_PARAMETERS                    140
 # define PEM_F_PEM_READ_BIO_PRIVATEKEY                    123
 # define PEM_F_PEM_READ_DHPARAMS                          142
