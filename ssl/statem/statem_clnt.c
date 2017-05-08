@@ -1609,7 +1609,11 @@ static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    if (!PACKET_as_length_prefixed_2(pkt, &extpkt)) {
+    if (!PACKET_as_length_prefixed_2(pkt, &extpkt)
+               /* Must have a non-empty extensions block */
+            || PACKET_remaining(&extpkt) == 0
+               /* Must be no trailing data after extensions */
+            || PACKET_remaining(pkt) != 0) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST, SSL_R_BAD_LENGTH);
         goto f_err;
@@ -1622,6 +1626,18 @@ static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
         goto f_err;
 
     OPENSSL_free(extensions);
+    extensions = NULL;
+
+    if (s->ext.tls13_cookie_len == 0 && s->s3->tmp.pkey != NULL) {
+        /*
+         * We didn't receive a cookie or a new key_share so the next
+         * ClientHello will not change
+         */
+        al = SSL_AD_ILLEGAL_PARAMETER;
+        SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST,
+               SSL_R_NO_CHANGE_FOLLOWING_HRR);
+        goto f_err;
+    }
 
     /*
      * Re-initialise the Transcript Hash. We're going to prepopulate it with

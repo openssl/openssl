@@ -2680,6 +2680,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_NO_CERTIFICATES_RETURNED                   176
 # define SSL_R_NO_CERTIFICATE_ASSIGNED                    177
 # define SSL_R_NO_CERTIFICATE_SET                         179
+# define SSL_R_NO_CHANGE_FOLLOWING_HRR                    205
 # define SSL_R_NO_CIPHERS_AVAILABLE                       181
 # define SSL_R_NO_CIPHERS_SPECIFIED                       183
 # define SSL_R_NO_CIPHER_MATCH                            185

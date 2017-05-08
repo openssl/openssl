@@ -646,6 +646,7 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_REASON(SSL_R_NO_CERTIFICATES_RETURNED), "no certificates returned"},
     {ERR_REASON(SSL_R_NO_CERTIFICATE_ASSIGNED), "no certificate assigned"},
     {ERR_REASON(SSL_R_NO_CERTIFICATE_SET), "no certificate set"},
+    {ERR_REASON(SSL_R_NO_CHANGE_FOLLOWING_HRR), "no change following hrr"},
     {ERR_REASON(SSL_R_NO_CIPHERS_AVAILABLE), "no ciphers available"},
     {ERR_REASON(SSL_R_NO_CIPHERS_SPECIFIED), "no ciphers specified"},
     {ERR_REASON(SSL_R_NO_CIPHER_MATCH), "no cipher match"},
