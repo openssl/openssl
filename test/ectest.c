@@ -345,7 +345,7 @@ static int prime_field_tests(void)
     /* G_y value taken from the standard: */
     if (!TEST_true(BN_hex2bn(&z,                         "23a62855"
                                  "3168947d59dcc912042351377ac5fb32"))
-        || !TEST_int_eq(0, BN_cmp(y, z))
+        || !TEST_BN_eq(y, z)
         || !TEST_int_eq(EC_GROUP_get_degree(group), 160)
         || !group_order_tests(group)
         || !TEST_ptr(P_160 = EC_GROUP_new(EC_GROUP_method_of(group)))
@@ -380,7 +380,7 @@ static int prime_field_tests(void)
     /* G_y value taken from the standard: */
     if (!TEST_true(BN_hex2bn(&z,                 "07192B95FFC8DA78"
                                  "631011ED6B24CDD573F977A11E794811"))
-        || !TEST_int_eq(0, BN_cmp(y, z))
+        || !TEST_BN_eq(y, z)
         || !TEST_true(BN_add(yplusone, y, BN_value_one()))
     /*
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
@@ -422,7 +422,7 @@ static int prime_field_tests(void)
     /* G_y value taken from the standard: */
     if (!TEST_true(BN_hex2bn(&z,         "BD376388B5F723FB4C22DFE6"
                                  "CD4375A05A07476444D5819985007E34"))
-        || !TEST_int_eq(0, BN_cmp(y, z))
+        || !TEST_BN_eq(y, z)
         || !TEST_true(BN_add(yplusone, y, BN_value_one()))
     /*
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
@@ -465,7 +465,7 @@ static int prime_field_tests(void)
     /* G_y value taken from the standard: */
     if (!TEST_true(BN_hex2bn(&z, "4FE342E2FE1A7F9B8EE7EB4A7C0F9E16"
                                  "2BCE33576B315ECECBB6406837BF51F5"))
-        || !TEST_int_eq(0, BN_cmp(y, z))
+        || !TEST_BN_eq(y, z)
         || !TEST_true(BN_add(yplusone, y, BN_value_one()))
     /*
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
@@ -514,7 +514,7 @@ static int prime_field_tests(void)
     if (!TEST_true(BN_hex2bn(&z, "3617DE4A96262C6F5D9E98BF9292DC29"
                                  "F8F41DBD289A147CE9DA3113B5F0B8C0"
                                  "0A60B1CE1D7E819D7A431D7C90EA0E5F"))
-        || !TEST_int_eq(0, BN_cmp(y, z))
+        || !TEST_BN_eq(y, z)
         || !TEST_true(BN_add(yplusone, y, BN_value_one()))
     /*
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
@@ -573,7 +573,7 @@ static int prime_field_tests(void)
                                  "98F54449579B446817AFBD17273E662C"
                                  "97EE72995EF42640C550B9013FAD0761"
                                  "353C7086A272C24088BE94769FD16650"))
-        || !TEST_int_eq(0, BN_cmp(y, z))
+        || !TEST_BN_eq(y, z)
         || !TEST_true(BN_add(yplusone, y, BN_value_one()))
     /*
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
@@ -607,7 +607,7 @@ static int prime_field_tests(void)
 
     if (!TEST_true(EC_GROUP_get_order(group, z, ctx))
         || !TEST_true(BN_add(y, z, BN_value_one()))
-        || !TEST_false(BN_is_odd(y))
+        || !TEST_BN_even(y)
         || !TEST_true(BN_rshift1(y, y)))
         goto err;
     scalars[0] = y;         /* (group order + 1)/2, so y*Q + y*Q = Q */
@@ -905,7 +905,7 @@ static int char2_curve_test(int n)
     BIO_printf(bio_out, "\n");
     /* G_y value taken from the standard: */
     if (!TEST_true(BN_hex2bn(&z, test->y))
-        || !TEST_int_eq(0, BN_cmp(y, z)))
+        || !TEST_BN_eq(y, z))
         goto err;
 # else
     /*
@@ -953,7 +953,7 @@ static int char2_curve_test(int n)
         points[2] = Q;
 
         if (!TEST_true(BN_add(y, z, BN_value_one()))
-            || !TEST_false(BN_is_odd(y))
+            || !TEST_BN_even(y)
             || !TEST_true(BN_rshift1(y, y)))
             goto err;
         scalars[0] = y;         /* (group order + 1)/2, so y*Q + y*Q = Q */
