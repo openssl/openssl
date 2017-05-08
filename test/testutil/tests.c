@@ -19,6 +19,9 @@
 #define MEM_BUFFER_SIZE     (33)
 #define MAX_STRING_WIDTH    (80)
 
+/* Special representation of -0 */
+static char BN_minus_zero[] = "-0";
+
 /* Output a failed test first line */
 static void test_fail_message_prefix(const char *prefix, const char *file,
                                      int line, const char *type,
@@ -168,6 +171,47 @@ static void test_fail_string_message(const char *prefix, const char *file,
 fin:
     test_printf_stderr("\n");
     test_flush_stderr();
+}
+
+static char *convertBN(const BIGNUM *b)
+{
+    if (b == NULL)
+        return NULL;
+    if (BN_is_zero(b) && BN_is_negative(b))
+        return BN_minus_zero;
+    return BN_bn2hex(b);
+}
+
+static void test_fail_bignum_message(const char *prefix, const char *file,
+                                     int line, const char *type,
+                                     const char *left, const char *right,
+                                     const char *op,
+                                     const BIGNUM *bn1, const BIGNUM *bn2)
+{
+    char *s1 = convertBN(bn1), *s2 = convertBN(bn2);
+    size_t l1 = s1 != NULL ? strlen(s1) : 0;
+    size_t l2 = s2 != NULL ? strlen(s2) : 0;
+
+    test_fail_string_message(prefix, file, line, type, left, right, op,
+                             s1, l1, s2, l2);
+    if (s1 != BN_minus_zero)
+        OPENSSL_free(s1);
+    if (s2 != BN_minus_zero)
+        OPENSSL_free(s2);
+}
+
+static void test_fail_bignum_mono_message(const char *prefix, const char *file,
+                                          int line, const char *type,
+                                          const char *left, const char *right,
+                                          const char *op, const BIGNUM *bn)
+{
+    char *s = convertBN(bn);
+    size_t l = s != NULL ? strlen(s) : 0;
+
+    test_fail_string_message(prefix, file, line, type, left, right, op,
+                             s, l, s, l);
+    if (s != BN_minus_zero)
+        OPENSSL_free(s);
 }
 
 static void hex_convert_memory(const char *m, size_t n, char *b)
@@ -506,4 +550,90 @@ int test_mem_ne(const char *file, int line, const char *st1, const char *st2,
         return 0;
     }
     return 1;
+}
+
+#define DEFINE_BN_COMPARISONS(opname, op, zero_cond)                    \
+    int test_BN_ ## opname(const char *file, int line,                  \
+                           const char *s1, const char *s2,              \
+                           const BIGNUM *t1, const BIGNUM *t2)          \
+    {                                                                   \
+        if (BN_cmp(t1, t2) op 0)                                        \
+            return 1;                                                   \
+        test_fail_bignum_message(NULL, file, line, "BIGNUM", s1, s2,    \
+                                 #op, t1, t2);                          \
+        return 0;                                                       \
+    }                                                                   \
+    int test_BN_ ## opname ## _zero(const char *file, int line,         \
+                                    const char *s, const BIGNUM *a)     \
+    {                                                                   \
+        if (a != NULL &&(zero_cond))                                    \
+            return 1;                                                   \
+        test_fail_bignum_mono_message(NULL, file, line, "BIGNUM",       \
+                                      s, "0", #op, a);                  \
+        return 0;                                                       \
+    }
+
+DEFINE_BN_COMPARISONS(eq, ==, BN_is_zero(a))
+DEFINE_BN_COMPARISONS(ne, !=, !BN_is_zero(a))
+DEFINE_BN_COMPARISONS(gt, >,  !BN_is_negative(a) && !BN_is_zero(a))
+DEFINE_BN_COMPARISONS(ge, >=, !BN_is_negative(a) || BN_is_zero(a))
+DEFINE_BN_COMPARISONS(lt, <,  BN_is_negative(a) && !BN_is_zero(a))
+DEFINE_BN_COMPARISONS(le, <=, BN_is_negative(a) || BN_is_zero(a))
+
+int test_BN_eq_one(const char *file, int line, const char *s, const BIGNUM *a)
+{
+    if (a != NULL && BN_is_one(a))
+        return 1;
+    test_fail_bignum_mono_message(NULL, file, line, "BIGNUM", s, "1", "==", a);
+    return 0;
+}
+
+int test_BN_odd(const char *file, int line, const char *s, const BIGNUM *a)
+{
+    if (a != NULL && BN_is_odd(a))
+        return 1;
+    test_fail_bignum_mono_message(NULL, file, line, "BIGNUM", "ODD(", ")", s,
+                                  a);
+    return 0;
+}
+
+int test_BN_even(const char *file, int line, const char *s, const BIGNUM *a)
+{
+    if (a != NULL && !BN_is_odd(a))
+        return 1;
+    test_fail_bignum_mono_message(NULL, file, line, "BIGNUM", "EVEN(", ")", s,
+                                  a);
+    return 0;
+}
+
+int test_BN_eq_word(const char *file, int line, const char *bns, const char *ws,
+                    const BIGNUM *a, BN_ULONG w)
+{
+    BIGNUM *bw;
+
+    if (a != NULL && BN_is_word(a, w))
+        return 1;
+    bw = BN_new();
+    BN_set_word(bw, w);
+    test_fail_bignum_message(NULL, file, line, "BIGNUM", bns, ws, "==", a, bw);
+    BN_free(bw);
+    return 0;
+}
+
+int test_BN_abs_eq_word(const char *file, int line, const char *bns,
+                        const char *ws, const BIGNUM *a, BN_ULONG w)
+{
+    BIGNUM *bw, *aa;
+
+    if (a != NULL && BN_abs_is_word(a, w))
+        return 1;
+    bw = BN_new();
+    aa = BN_new();
+    BN_copy(aa, a);
+    BN_set_negative(aa, 0);
+    BN_set_word(bw, w);
+    test_fail_bignum_message(NULL, file, line, "BIGNUM", bns, ws, "abs==",
+                             aa, bw);
+    BN_free(bw);
+    return 0;
 }

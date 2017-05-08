@@ -109,7 +109,7 @@ static int test_mod_exp_zero()
     if (!TEST_true(BN_mod_exp_mont_word(r, one_word, p, m, ctx, NULL)))
         goto err;
 
-    if (!TEST_true(BN_is_zero(r))) {
+    if (!TEST_BN_eq_zero(r)) {
         fprintf(stderr, "BN_mod_exp_mont_word failed:\n");
         fprintf(stderr, "1 ** 0 mod 1 = r (should be 0)\n");
         BN_print_var(r);
@@ -173,15 +173,15 @@ static int test_mod_exp(int round)
         || !TEST_true(BN_mod_exp_mont_consttime(r_mont_const, a, b, m, ctx, NULL)))
         goto err;
 
-    if (!TEST_int_eq(BN_cmp(r_simple, r_mont), 0)
-        || !TEST_int_eq(BN_cmp(r_simple, r_recp), 0)
-        || !TEST_int_eq(BN_cmp(r_simple, r_mont_const), 0)) {
+    if (!TEST_BN_eq(r_simple, r_mont)
+        || !TEST_BN_eq(r_simple, r_recp)
+        || !TEST_BN_eq(r_simple, r_mont_const)) {
         if (BN_cmp(r_simple, r_mont) != 0)
-            fprintf(stderr, "simple and mont results differ\n");
+            TEST_info("simple and mont results differ");
         if (BN_cmp(r_simple, r_mont_const) != 0)
-            fprintf(stderr, "simple and mont const time results differ\n");
+            TEST_info("simple and mont const time results differ");
         if (BN_cmp(r_simple, r_recp) != 0)
-            fprintf(stderr, "simple and recp results differ\n");
+            TEST_info("simple and recp results differ");
 
         BN_print_var(a);
         BN_print_var(b);
