@@ -321,20 +321,6 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
         goto err;
     }
 
-#ifdef OPENSSL_SSL_TRACE_CRYPTO
-    if (s->msg_callback) {
-        int wh = sending ? TLS1_RT_CRYPTO_WRITE : 0;
-
-        if (ciph->key_len)
-            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
-                            key, ciph->key_len, s, s->msg_callback_arg);
-
-        wh |= TLS1_RT_CRYPTO_IV;
-        s->msg_callback(2, s->version, wh, iv, ivlen, s,
-                        s->msg_callback_arg);
-    }
-#endif
-
     return 1;
  err:
     OPENSSL_cleanse(key, sizeof(key));

@@ -230,23 +230,6 @@ int ssl3_change_cipher_state(SSL *s, int which)
     if (!EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE)))
         goto err2;
 
-#ifdef OPENSSL_SSL_TRACE_CRYPTO
-    if (s->msg_callback) {
-
-        int wh = which & SSL3_CC_WRITE ?
-            TLS1_RT_CRYPTO_WRITE : TLS1_RT_CRYPTO_READ;
-        s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_MAC,
-                        mac_secret, EVP_MD_size(m), s, s->msg_callback_arg);
-        if (c->key_len)
-            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
-                            key, c->key_len, s, s->msg_callback_arg);
-        if (k) {
-            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_IV,
-                            iv, k, s, s->msg_callback_arg);
-        }
-    }
-#endif
-
     OPENSSL_cleanse(exp_key, sizeof(exp_key));
     OPENSSL_cleanse(exp_iv, sizeof(exp_iv));
     return (1);
@@ -470,9 +453,6 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     int i, ret = 1;
     unsigned int n;
-#ifdef OPENSSL_SSL_TRACE_CRYPTO
-    unsigned char *tmpout = out;
-#endif
     size_t ret_secret_size = 0;
 
     if (ctx == NULL) {
@@ -503,21 +483,6 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
     }
     EVP_MD_CTX_free(ctx);
 
-#ifdef OPENSSL_SSL_TRACE_CRYPTO
-    if (ret && s->msg_callback) {
-        s->msg_callback(2, s->version, TLS1_RT_CRYPTO_PREMASTER,
-                        p, len, s, s->msg_callback_arg);
-        s->msg_callback(2, s->version, TLS1_RT_CRYPTO_CLIENT_RANDOM,
-                        s->s3->client_random, SSL3_RANDOM_SIZE,
-                        s, s->msg_callback_arg);
-        s->msg_callback(2, s->version, TLS1_RT_CRYPTO_SERVER_RANDOM,
-                        s->s3->server_random, SSL3_RANDOM_SIZE,
-                        s, s->msg_callback_arg);
-        s->msg_callback(2, s->version, TLS1_RT_CRYPTO_MASTER,
-                        tmpout, SSL3_MASTER_SECRET_SIZE,
-                        s, s->msg_callback_arg);
-    }
-#endif
     OPENSSL_cleanse(buf, sizeof(buf));
     if (ret)
         *secret_size = ret_secret_size;
