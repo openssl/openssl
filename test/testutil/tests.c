@@ -628,12 +628,12 @@ int test_BN_abs_eq_word(const char *file, int line, const char *bns,
     if (a != NULL && BN_abs_is_word(a, w))
         return 1;
     bw = BN_new();
-    aa = BN_new();
-    BN_copy(aa, a);
+    aa = BN_dup(a);
     BN_set_negative(aa, 0);
     BN_set_word(bw, w);
     test_fail_bignum_message(NULL, file, line, "BIGNUM", bns, ws, "abs==",
                              aa, bw);
     BN_free(bw);
+    BN_free(aa);
     return 0;
 }
