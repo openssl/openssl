@@ -182,7 +182,7 @@ int run_tests(const char *test_prog_name)
                 verdict = "not ok";
                 ++num_failed;
             }
-            test_printf_stdout("%*s%s %d - %s\n", level, "", verdict, i + 1,
+            test_printf_stdout("%*s%s %d - %s\n", level, "", verdict, ii + 1,
                                all_tests[i].test_case_name);
             test_flush_stdout();
             finalize(ret);
@@ -226,7 +226,8 @@ int run_tests(const char *test_prog_name)
                         verdict = "not ok";
                         ++num_failed_inner;
                     }
-                    test_printf_stdout("%*s%s %d\n", level, "", verdict, j + 1);
+                    test_printf_stdout("%*s%s %d - iteration %d\n", level, "",
+                                       verdict, jj + 1, j + 1);
                     test_flush_stdout();
                 }
             }
@@ -237,7 +238,7 @@ int run_tests(const char *test_prog_name)
                 verdict = "not ok";
                 ++num_failed;
             }
-            test_printf_stdout("%*s%s %d - %s\n", level, "", verdict, i + 1,
+            test_printf_stdout("%*s%s %d - %s\n", level, "", verdict, ii + 1,
                                all_tests[i].test_case_name);
             test_flush_stdout();
         }
