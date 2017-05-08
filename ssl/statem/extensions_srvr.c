@@ -512,7 +512,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     if (!PACKET_as_length_prefixed_2(pkt, &key_share_list)) {
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
@@ -539,7 +539,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         if (!PACKET_get_net_2(&key_share_list, &group_id)
                 || !PACKET_get_length_prefixed_2(&key_share_list, &encoded_pt)
                 || PACKET_remaining(&encoded_pt) == 0) {
-            *al = SSL_AD_HANDSHAKE_FAILURE;
+            *al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
                    SSL_R_LENGTH_MISMATCH);
             return 0;
@@ -554,7 +554,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
         /* Check if this share is in supported_groups sent from client */
         if (!check_in_list(s, group_id, clntcurves, clnt_num_curves, 0)) {
-            *al = SSL_AD_HANDSHAKE_FAILURE;
+            *al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
             return 0;
         }
