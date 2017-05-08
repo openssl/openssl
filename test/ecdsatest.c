@@ -167,8 +167,8 @@ static int x9_62_test_internal(int nid, const char *r_in, const char *s_in)
     if (!TEST_true(BN_dec2bn(&r, r_in)) || !TEST_true(BN_dec2bn(&s, s_in)))
         goto x962_int_err;
     ECDSA_SIG_get0(signature, &sig_r, &sig_s);
-    if (!TEST_int_eq(BN_cmp(sig_r, r), 0)
-            || !TEST_int_eq(BN_cmp(sig_s, s), 0))
+    if (!TEST_BN_eq(sig_r, r)
+            || !TEST_BN_eq(sig_s, s))
         goto x962_int_err;
 
     /* verify the signature */
