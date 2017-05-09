@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -810,11 +810,12 @@ err:
 /*
  * Add the server's renegotiation binding
  */
-int tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt, unsigned int context,
-                                   X509 *x, size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt,
+                                          unsigned int context, X509 *x,
+                                          size_t chainidx, int *al)
 {
     if (!s->s3->send_connection_binding)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
             || !WPACKET_start_sub_packet_u16(pkt)
@@ -826,31 +827,33 @@ int tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt, unsigned int context,
             || !WPACKET_close(pkt)
             || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_RENEGOTIATE, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 
-int tls_construct_stoc_server_name(SSL *s, WPACKET *pkt, unsigned int context,
-                                   X509 *x, size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_server_name(SSL *s, WPACKET *pkt,
+                                          unsigned int context, X509 *x,
+                                          size_t chainidx, int *al)
 {
     if (s->hit || s->servername_done != 1
             || s->session->ext.hostname == NULL)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SERVER_NAME, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 
 #ifndef OPENSSL_NO_EC
-int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
-                                     X509 *x, size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt,
+                                            unsigned int context, X509 *x,
+                                            size_t chainidx, int *al)
 {
     unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
     unsigned long alg_a = s->s3->tmp.new_cipher->algorithm_auth;
@@ -860,7 +863,7 @@ int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
     size_t plistlen;
 
     if (!using_ecc)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     tls1_get_formatlist(s, &plist, &plistlen);
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ec_point_formats)
@@ -868,29 +871,29 @@ int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
             || !WPACKET_sub_memcpy_u8(pkt, plist, plistlen)
             || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_EC_PT_FORMATS, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 #endif
 
 #ifndef OPENSSL_NO_EC
-int tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
-                                        unsigned int context, X509 *x,
-                                        size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
+                                               unsigned int context, X509 *x,
+                                               size_t chainidx, int *al)
 {
     const unsigned char *groups;
     size_t numgroups, i, first = 1;
 
     /* s->s3->group_id is non zero if we accepted a key_share */
     if (s->s3->group_id == 0)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     /* Get our list of supported groups */
     if (!tls1_get_curvelist(s, 0, &groups, &numgroups) || numgroups == 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
     /* Copy group ID if supported */
@@ -902,7 +905,7 @@ int tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
                  * so we don't need to add this extension
                  */
                 if (s->s3->group_id == GET_GROUP_ID(groups, 0))
-                    return 1;
+                    return EXT_RETURN_NOT_SENT;
 
                 /* Add extension header */
                 if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_groups)
@@ -911,7 +914,7 @@ int tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
                         || !WPACKET_start_sub_packet_u16(pkt)) {
                     SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS,
                            ERR_R_INTERNAL_ERROR);
-                    return 0;
+                    return EXT_RETURN_FAIL;
                 }
 
                 first = 0;
@@ -919,53 +922,53 @@ int tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
             if (!WPACKET_put_bytes_u16(pkt, GET_GROUP_ID(groups, 0))) {
                     SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS,
                            ERR_R_INTERNAL_ERROR);
-                    return 0;
+                    return EXT_RETURN_FAIL;
                 }
         }
     }
 
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 #endif
 
-int tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt,
-                                      unsigned int context, X509 *x,
-                                      size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt,
+                                             unsigned int context, X509 *x,
+                                             size_t chainidx, int *al)
 {
     if (!s->ext.ticket_expected || !tls_use_ticket(s)) {
         s->ext.ticket_expected = 0;
-        return 1;
+        return EXT_RETURN_NOT_SENT;
     }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_session_ticket)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 
 #ifndef OPENSSL_NO_OCSP
-int tls_construct_stoc_status_request(SSL *s, WPACKET *pkt,
-                                      unsigned int context, X509 *x,
-                                      size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_status_request(SSL *s, WPACKET *pkt,
+                                             unsigned int context, X509 *x,
+                                             size_t chainidx, int *al)
 {
     if (!s->ext.status_expected)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     if (SSL_IS_TLS13(s) && chainidx != 0)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_status_request)
             || !WPACKET_start_sub_packet_u16(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
     /*
@@ -976,17 +979,17 @@ int tls_construct_stoc_status_request(SSL *s, WPACKET *pkt,
     if ((SSL_IS_TLS13(s) && !tls_construct_cert_status_body(s, pkt))
             || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 #endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-int tls_construct_stoc_next_proto_neg(SSL *s, WPACKET *pkt,
-                                      unsigned int context, X509 *x,
-                                      size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_next_proto_neg(SSL *s, WPACKET *pkt,
+                                             unsigned int context, X509 *x,
+                                             size_t chainidx, int *al)
 {
     const unsigned char *npa;
     unsigned int npalen;
@@ -995,7 +998,7 @@ int tls_construct_stoc_next_proto_neg(SSL *s, WPACKET *pkt,
 
     s->s3->npn_seen = 0;
     if (!npn_seen || s->ctx->ext.npn_advertised_cb == NULL)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     ret = s->ctx->ext.npn_advertised_cb(s, &npa, &npalen,
                                         s->ctx->ext.npn_advertised_cb_arg);
@@ -1004,20 +1007,20 @@ int tls_construct_stoc_next_proto_neg(SSL *s, WPACKET *pkt,
                 || !WPACKET_sub_memcpy_u16(pkt, npa, npalen)) {
             SSLerr(SSL_F_TLS_CONSTRUCT_STOC_NEXT_PROTO_NEG,
                    ERR_R_INTERNAL_ERROR);
-            return 0;
+            return EXT_RETURN_FAIL;
         }
         s->s3->npn_seen = 1;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 #endif
 
-int tls_construct_stoc_alpn(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
-                            size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_alpn(SSL *s, WPACKET *pkt, unsigned int context,
+                                   X509 *x, size_t chainidx, int *al)
 {
     if (s->s3->alpn_selected == NULL)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt,
                 TLSEXT_TYPE_application_layer_protocol_negotiation)
@@ -1028,18 +1031,19 @@ int tls_construct_stoc_alpn(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
             || !WPACKET_close(pkt)
             || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_ALPN, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 
 #ifndef OPENSSL_NO_SRTP
-int tls_construct_stoc_use_srtp(SSL *s, WPACKET *pkt, unsigned int context,
-                                X509 *x, size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_use_srtp(SSL *s, WPACKET *pkt,
+                                       unsigned int context, X509 *x,
+                                       size_t chainidx, int *al)
 {
     if (s->srtp_profile == NULL)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_use_srtp)
             || !WPACKET_start_sub_packet_u16(pkt)
@@ -1048,18 +1052,18 @@ int tls_construct_stoc_use_srtp(SSL *s, WPACKET *pkt, unsigned int context,
             || !WPACKET_put_bytes_u8(pkt, 0)
             || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_USE_SRTP, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 #endif
 
-int tls_construct_stoc_etm(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
-                           size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_etm(SSL *s, WPACKET *pkt, unsigned int context,
+                                  X509 *x, size_t chainidx, int *al)
 {
     if (!s->ext.use_etm)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     /*
      * Don't use encrypt_then_mac if AEAD or RC4 might want to disable
@@ -1070,35 +1074,36 @@ int tls_construct_stoc_etm(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
         || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT
         || s->s3->tmp.new_cipher->algorithm_enc == SSL_eGOST2814789CNT12) {
         s->ext.use_etm = 0;
-        return 1;
+        return EXT_RETURN_NOT_SENT;
     }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_encrypt_then_mac)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_ETM, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 
-int tls_construct_stoc_ems(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
-                           size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_ems(SSL *s, WPACKET *pkt, unsigned int context,
+                                  X509 *x, size_t chainidx, int *al)
 {
     if ((s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS) == 0)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_extended_master_secret)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_EMS, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 
-int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, unsigned int context,
-                                 X509 *x, size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
+                                        unsigned int context, X509 *x,
+                                        size_t chainidx, int *al)
 {
 #ifndef OPENSSL_NO_TLS1_3
     unsigned char *encodedPoint;
@@ -1114,32 +1119,32 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, unsigned int context,
                     || !WPACKET_close(pkt)) {
                 SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
                        ERR_R_INTERNAL_ERROR);
-                return 0;
+                return EXT_RETURN_FAIL;
             }
 
-            return 1;
+            return EXT_RETURN_SENT;
         }
 
         /* Must be resuming. */
         if (!s->hit || !tls13_generate_handshake_secret(s, NULL, 0)) {
             *al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-            return 0;
+            return EXT_RETURN_FAIL;
         }
-        return 1;
+        return EXT_RETURN_NOT_SENT;
     }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_put_bytes_u16(pkt, s->s3->group_id)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
     skey = ssl_generate_pkey(ckey);
     if (skey == NULL) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_MALLOC_FAILURE);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
     /* Generate encoding of server key */
@@ -1147,7 +1152,7 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, unsigned int context,
     if (encoded_pt_len == 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_EC_LIB);
         EVP_PKEY_free(skey);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
     if (!WPACKET_sub_memcpy_u16(pkt, encodedPoint, encoded_pt_len)
@@ -1155,7 +1160,7 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, unsigned int context,
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         EVP_PKEY_free(skey);
         OPENSSL_free(encodedPoint);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
     OPENSSL_free(encodedPoint);
 
@@ -1163,15 +1168,16 @@ int tls_construct_stoc_key_share(SSL *s, WPACKET *pkt, unsigned int context,
     s->s3->tmp.pkey = skey;
     if (ssl_derive(s, skey, ckey, 1) == 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 #endif
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 
-int tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt, unsigned int context,
-                                     X509 *x, size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt,
+                                            unsigned int context, X509 *x,
+                                            size_t chainidx, int *al)
 {
     const unsigned char cryptopro_ext[36] = {
         0xfd, 0xe8,         /* 65000 */
@@ -1185,60 +1191,61 @@ int tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt, unsigned int context,
     if (((s->s3->tmp.new_cipher->id & 0xFFFF) != 0x80
          && (s->s3->tmp.new_cipher->id & 0xFFFF) != 0x81)
             || (SSL_get_options(s) & SSL_OP_CRYPTOPRO_TLSEXT_BUG) == 0)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_memcpy(pkt, cryptopro_ext, sizeof(cryptopro_ext))) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_CRYPTOPRO_BUG, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 
-int tls_construct_stoc_early_data(SSL *s, WPACKET *pkt, unsigned int context,
-                                  X509 *x, size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_early_data(SSL *s, WPACKET *pkt,
+                                         unsigned int context, X509 *x,
+                                         size_t chainidx, int *al)
 {
     if (context == SSL_EXT_TLS1_3_NEW_SESSION_TICKET) {
         if (s->max_early_data == 0)
-            return 1;
+            return EXT_RETURN_NOT_SENT;
 
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_early_data)
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || !WPACKET_put_bytes_u32(pkt, s->max_early_data)
                 || !WPACKET_close(pkt)) {
             SSLerr(SSL_F_TLS_CONSTRUCT_STOC_EARLY_DATA, ERR_R_INTERNAL_ERROR);
-            return 0;
+            return EXT_RETURN_FAIL;
         }
 
-        return 1;
+        return EXT_RETURN_SENT;
     }
 
     if (s->ext.early_data != SSL_EARLY_DATA_ACCEPTED)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_early_data)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_EARLY_DATA, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 
-int tls_construct_stoc_psk(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
-                           size_t chainidx, int *al)
+EXT_RETURN tls_construct_stoc_psk(SSL *s, WPACKET *pkt, unsigned int context,
+                                  X509 *x, size_t chainidx, int *al)
 {
     if (!s->hit)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_put_bytes_u16(pkt, s->session->ext.tick_identity)
             || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_PSK, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
