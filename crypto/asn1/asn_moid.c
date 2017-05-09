@@ -60,46 +60,44 @@ void ASN1_add_oid_module(void)
 static int do_create(const char *value, const char *name)
 {
     int nid;
-    ASN1_OBJECT *oid;
-    const char *ln, *ostr, *p;
-    char *lntmp;
+    const char *ln, *ln_start, *ostr, *p;
+    char *lntmp = NULL;
+
     p = strrchr(value, ',');
-    if (!p) {
+    if (p == NULL) {
         ln = name;
         ostr = value;
     } else {
-        ln = NULL;
         ostr = p + 1;
         if (!*ostr)
             return 0;
         while (isspace((unsigned char)*ostr))
             ostr++;
-    }
 
-    nid = OBJ_create(ostr, name, ln);
-
-    if (nid == NID_undef)
-        return 0;
-
-    if (p) {
-        ln = value;
-        while (isspace((unsigned char)*ln))
-            ln++;
+        ln_start = value;
+        while (isspace((unsigned char)*ln_start))
+            ln_start++;
         p--;
         while (isspace((unsigned char)*p)) {
-            if (p == ln)
+            if (p == ln_start)
                 return 0;
             p--;
         }
         p++;
-        lntmp = OPENSSL_malloc((p - ln) + 1);
+        lntmp = OPENSSL_malloc(p - ln_start + 1);
         if (lntmp == NULL)
             return 0;
-        memcpy(lntmp, ln, p - ln);
-        lntmp[p - ln] = 0;
-        oid = OBJ_nid2obj(nid);
-        oid->ln = lntmp;
+        memcpy(lntmp, ln_start, p - ln_start);
+        lntmp[p - ln_start] = 0;
+        ln = lntmp;
     }
+
+    nid = OBJ_create(ostr, name, ln);
+
+    OPENSSL_free(lntmp);
+
+    if (nid == NID_undef)
+        return 0;
 
     return 1;
 }
