@@ -77,6 +77,9 @@ int tls_setup_handshake(SSL *s)
     if (!ssl3_init_finished_mac(s))
         return 0;
 
+    /* Reset any extension flags */
+    memset(s->ext.extflags, 0, sizeof(s->ext.extflags));
+
     if (s->server) {
         STACK_OF(SSL_CIPHER) *ciphers = SSL_get_ciphers(s);
         int i, ver_min, ver_max, ok = 0;
