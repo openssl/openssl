@@ -24,8 +24,8 @@ plan skip_all => "$test_name needs the dynamic engine feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
-plan skip_all => "$test_name needs TLSv1.3 enabled"
-    if disabled("tls1_3");
+plan skip_all => "$test_name needs TLSv1.3 or TLSv1.2 enabled"
+    if disabled("tls1_3") && disabled("tls1_2");
 
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
@@ -59,7 +59,6 @@ SKIP: {
 
     #Test 2: NULL compression method must be present in TLSv1.2
     $proxy->clear();
-    $proxy->filter(\&add_comp_filter);
     $proxy->clientflags("-no_tls1_3");
     $testtype = NON_NULL_COMPRESSION;
     $proxy->start();
@@ -76,10 +75,8 @@ SKIP: {
     $proxy->start();
     ok(TLSProxy::Message->fail(), "Non null compression (TLSv1.3)");
 
-    #Test 4: NULL compression method must be present in TLSv1.2
+    #Test 4: NULL compression method must be present in TLSv1.3
     $proxy->clear();
-    $proxy->filter(\&add_comp_filter);
-    $proxy->clientflags("-no_tls1_3");
     $testtype = NON_NULL_COMPRESSION;
     $proxy->start();
     ok(TLSProxy::Message->fail(), "NULL compression missing (TLSv1.3)");
@@ -104,7 +101,7 @@ sub add_comp_filter
         @comp = (
             0x00, #Null compression method
             0xff); #Unknown compression
-    } else {
+    } elsif ($testtype == NON_NULL_COMPRESSION) {
         @comp = (0xff); #Unknown compression
     }
     $message->comp_meths(\@comp);
