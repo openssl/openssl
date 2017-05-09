@@ -26,6 +26,14 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLS enabled"
     if alldisabled(available_protocols("tls"));
 
+use constant {
+    UNSOLICITED_SERVER_NAME => 0,
+    UNSOLICITED_SERVER_NAME_TLS13 => 1,
+    UNSOLICITED_SCT => 2
+};
+
+my $testtype;
+
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     \&extension_filter,
@@ -36,7 +44,7 @@ my $proxy = TLSProxy::Proxy->new(
 
 # Test 1: Sending a zero length extension block should pass
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 3;
+plan tests => 6;
 ok(TLSProxy::Message->success, "Zero extension length test");
 
 sub extension_filter
@@ -119,3 +127,63 @@ $proxy->clear();
 $proxy->filter(\&inject_duplicate_extension_serverhello);
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Duplicate ServerHello extension");
+
+sub inject_unsolicited_extension
+{
+    my $proxy = shift;
+    my $message;
+
+    # We're only interested in the initial ServerHello/EncryptedExtensions
+    if ($proxy->flight != 1) {
+        return;
+    }
+
+    if ($testtype == UNSOLICITED_SERVER_NAME_TLS13) {
+        $message = ${$proxy->message_list}[2];
+        die "Expecting EE message ".($message->mt).", ".${$proxy->message_list}[1]->mt.", ".${$proxy->message_list}[3]->mt if $message->mt != TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS;
+    } else {
+        $message = ${$proxy->message_list}[1];
+    }
+
+    my $ext = pack "C2",
+        0x00, 0x00; #Extension length
+
+    my $type;
+    if ($testtype == UNSOLICITED_SERVER_NAME
+            || $testtype == UNSOLICITED_SERVER_NAME_TLS13) {
+        $type = TLSProxy::Message::EXT_SERVER_NAME;
+    } elsif ($testtype == UNSOLICITED_SCT) {
+        $type = TLSProxy::Message::EXT_SCT;
+    }
+    $message->set_extension($type, $ext);
+    $message->repack();
+}
+
+SKIP: {
+    skip "TLS <= 1.2 disabled", 2 if alldisabled(("tls1", "tls1_1", "tls1_2"));
+    #Test 4: Inject an unsolicited extension (<= TLSv1.2)
+    $proxy->clear();
+    $proxy->filter(\&inject_unsolicited_extension);
+    $testtype = UNSOLICITED_SERVER_NAME;
+    $proxy->clientflags("-no_tls1_3 -noservername");
+    $proxy->start();
+    ok(TLSProxy::Message->fail(), "Unsolicited server name extension");
+
+    #Test 5: Same as above for the SCT extension which has special handling
+    $proxy->clear();
+    $testtype = UNSOLICITED_SCT;
+    $proxy->clientflags("-no_tls1_3");
+    $proxy->start();
+    ok(TLSProxy::Message->fail(), "Unsolicited sct extension");
+}
+
+SKIP: {
+    skip "TLS 1.3 disabled", 1 if disabled("tls1_3");
+    #Test 6: Inject an unsolicited extension (TLSv1.3)
+    $proxy->clear();
+    $proxy->filter(\&inject_unsolicited_extension);
+    $testtype = UNSOLICITED_SERVER_NAME_TLS13;
+    $proxy->clientflags("-noservername");
+    $proxy->start();
+    ok(TLSProxy::Message->fail(), "Unsolicited server name extension (TLSv1.3)");
+}
