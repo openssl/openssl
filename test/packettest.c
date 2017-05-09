@@ -420,7 +420,7 @@ static int test_PACKET_as_length_prefixed_1()
     unsigned char buf1[BUF_LEN];
     const size_t len = 16;
     unsigned int i;
-    PACKET pkt, exact_pkt, subpkt;
+    PACKET pkt, exact_pkt, subpkt = {0};
 
     buf1[0] = len;
     for (i = 1; i < BUF_LEN; i++)
@@ -443,7 +443,7 @@ static int test_PACKET_as_length_prefixed_2()
     unsigned char buf[1024];
     const size_t len = 516;  /* 0x0204 */
     unsigned int i;
-    PACKET pkt, exact_pkt, subpkt;
+    PACKET pkt, exact_pkt, subpkt = {0};
 
     for (i = 1; i <= 1024; i++)
         buf[i-1] = (i * 2) & 0xff;
