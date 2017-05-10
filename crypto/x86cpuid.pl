@@ -14,7 +14,7 @@ $output = pop;
 open OUT,">$output";
 *STDOUT=*OUT;
 
-&asm_init($ARGV[0],"x86cpuid");
+&asm_init($ARGV[0]);
 
 for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 

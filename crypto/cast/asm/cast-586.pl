@@ -21,7 +21,7 @@ require "cbc.pl";
 $output=pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],"cast-586.pl",$ARGV[$#ARGV] eq "386");
+&asm_init($ARGV[0],$ARGV[$#ARGV] eq "386");
 
 $CAST_ROUNDS=16;
 $L="edi";

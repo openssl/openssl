@@ -52,7 +52,7 @@ $OPENSSL=1;
 $output = pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],"cmll-586.pl",$ARGV[$#ARGV] eq "386");
+&asm_init($ARGV[0],$ARGV[$#ARGV] eq "386");
 
 @T=("eax","ebx","ecx","edx");
 $idx="esi";
