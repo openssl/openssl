@@ -125,6 +125,11 @@ Attempts to pad TLS 1.3 records so that they are a multiple of B<value> in
 length on send. A B<value> of 0 or 1 turns off padding. Otherwise, the
 B<value> must be >1 or <=16384.
 
+=item B<-no_renegotiation>
+
+Disables all attempts at renegotiation in TLSv1.2 and earlier, same as setting
+B<SSL_OP_NO_RENEGOTIATION>.
+
 =item B<-min_protocol>, B<-max_protocol>
 
 Sets the minimum and maximum supported protocol.
@@ -256,6 +261,11 @@ operations are permitted.
 Attempts to pad TLS 1.3 records so that they are a multiple of B<value> in
 length on send. A B<value> of 0 or 1 turns off padding. Otherwise, the
 B<value> must be >1 or <=16384.
+
+=item B<NoRenegotiation>
+
+Disables all attempts at renegotiation in TLSv1.2 and earlier, same as setting
+B<SSL_OP_NO_RENEGOTIATION>.
 
 =item B<SignatureAlgorithms>
 

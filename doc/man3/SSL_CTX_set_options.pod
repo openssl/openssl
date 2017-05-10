@@ -170,6 +170,11 @@ RFC7366 Encrypt-then-MAC option on TLS and DTLS connection.
 If this option is set, Encrypt-then-MAC is disabled. Clients will not
 propose, and servers will not accept the extension.
 
+=item SSL_OP_NO_RENEGOTIATION
+
+Disable all renegotiation in TLSv1.2 and earlier. Do not send HelloRequest
+messages, and ignore renegotiation requests via ClientHello.
+
 =back
 
 The following options no longer have any effect but their identifiers are

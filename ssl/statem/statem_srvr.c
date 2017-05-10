@@ -1246,6 +1246,10 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     }
     /* Check if this is actually an unexpected renegotiation ClientHello */
     if (s->renegotiate == 0 && !SSL_IS_FIRST_HANDSHAKE(s)) {
+        if ((s->options & SSL_OP_NO_RENEGOTIATION)) {
+            ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
+            goto err;
+        }
         s->renegotiate = 1;
         s->new_session = 1;
     }
