@@ -1312,7 +1312,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     if (!PACKET_get_net_2(pkt, &group_id)) {
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
@@ -1322,7 +1322,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         size_t i, num_curves;
 
         if (PACKET_remaining(pkt) != 0) {
-            *al = SSL_AD_HANDSHAKE_FAILURE;
+            *al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
             return 0;
         }
@@ -1364,7 +1364,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
          * This isn't for the group that we sent in the original
          * key_share!
          */
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
         return 0;
     }
@@ -1465,13 +1465,13 @@ int tls_parse_stoc_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     unsigned int identity;
 
     if (!PACKET_get_net_2(pkt, &identity) || PACKET_remaining(pkt) != 0) {
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PARSE_STOC_PSK, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
 
     if (s->session->ext.tick_identity != (int)identity) {
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PARSE_STOC_PSK, SSL_R_BAD_PSK_IDENTITY);
         return 0;
     }
