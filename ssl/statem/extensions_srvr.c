@@ -868,6 +868,7 @@ int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
 }
 #endif
 
+#ifndef OPENSSL_NO_EC
 int tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
                                         unsigned int context, X509 *x,
                                         size_t chainidx, int *al)
@@ -923,6 +924,7 @@ int tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
 
     return 1;
 }
+#endif
 
 int tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt,
                                       unsigned int context, X509 *x,
