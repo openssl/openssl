@@ -33,7 +33,7 @@ static void test_fail_message_prefix(const char *prefix, const char *file,
     if (type)
         test_printf_stderr("(%s) ", type);
     if (op != NULL)
-        test_printf_stderr("%s %s %s", left, op, right);
+        test_printf_stderr("'%s %s %s' failed", left, op, right);
     if (file != NULL) {
         test_printf_stderr(" @ %s:%d", file, line);
     }
