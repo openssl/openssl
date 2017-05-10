@@ -3454,6 +3454,11 @@ MSG_PROCESS_RETURN tls_process_hello_req(SSL *s, PACKET *pkt)
         return MSG_PROCESS_ERROR;
     }
 
+    if ((s->options & SSL_OP_NO_RENEGOTIATION)) {
+        ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
+        return MSG_PROCESS_FINISHED_READING;
+    }
+
     /*
      * This is a historical discrepancy (not in the RFC) maintained for
      * compatibility reasons. If a TLS client receives a HelloRequest it will

@@ -817,6 +817,7 @@ EXT_RETURN tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt,
     if (!s->s3->send_connection_binding)
         return EXT_RETURN_NOT_SENT;
 
+    /* Still add this even if SSL_OP_NO_RENEGOTIATION is set */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_start_sub_packet_u8(pkt)

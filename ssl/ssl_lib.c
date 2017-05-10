@@ -1922,9 +1922,12 @@ int SSL_renegotiate(SSL *s)
         return 0;
     }
 
-    if (s->renegotiate == 0)
-        s->renegotiate = 1;
+    if ((s->options & SSL_OP_NO_RENEGOTIATION)) {
+        SSLerr(SSL_F_SSL_RENEGOTIATE, SSL_R_NO_RENEGOTIATION);
+        return 0;
+    }
 
+    s->renegotiate = 1;
     s->new_session = 1;
 
     return (s->method->ssl_renegotiate(s));
@@ -1932,12 +1935,17 @@ int SSL_renegotiate(SSL *s)
 
 int SSL_renegotiate_abbreviated(SSL *s)
 {
-    if (SSL_IS_TLS13(s))
+    if (SSL_IS_TLS13(s)) {
+        SSLerr(SSL_F_SSL_RENEGOTIATE_ABBREVIATED, SSL_R_WRONG_SSL_VERSION);
         return 0;
+    }
 
-    if (s->renegotiate == 0)
-        s->renegotiate = 1;
+    if ((s->options & SSL_OP_NO_RENEGOTIATION)) {
+        SSLerr(SSL_F_SSL_RENEGOTIATE_ABBREVIATED, SSL_R_NO_RENEGOTIATION);
+        return 0;
+    }
 
+    s->renegotiate = 1;
     s->new_session = 0;
 
     return (s->method->ssl_renegotiate(s));
