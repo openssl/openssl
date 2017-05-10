@@ -996,6 +996,207 @@ static int test_set_sigalgs(int idx)
     return testresult;
 }
 
+static int clntaddcb = 0;
+static int clntparsecb = 0;
+static int srvaddcb = 0;
+static int srvparsecb = 0;
+static int snicb = 0;
+
+#define TEST_EXT_TYPE1  0xff00
+
+static int add_cb(SSL *s, unsigned int ext_type, const unsigned char **out,
+                  size_t *outlen, int *al, void *add_arg)
+{
+    int *server = (int *)add_arg;
+    unsigned char *data;
+
+    if (SSL_is_server(s))
+        srvaddcb++;
+    else
+        clntaddcb++;
+
+    if (*server != SSL_is_server(s)
+            || (data = OPENSSL_malloc(sizeof(*data))) == NULL)
+        return -1;
+
+    *data = 1;
+    *out = data;
+    *outlen = sizeof(char);
+    return 1;
+}
+
+static void free_cb(SSL *s, unsigned int ext_type, const unsigned char *out,
+                    void *add_arg)
+{
+    OPENSSL_free((unsigned char *)out);
+}
+
+static int parse_cb(SSL *s, unsigned int ext_type, const unsigned char *in,
+                    size_t inlen, int *al, void *parse_arg)
+{
+    int *server = (int *)parse_arg;
+
+    if (SSL_is_server(s))
+        srvparsecb++;
+    else
+        clntparsecb++;
+
+    if (*server != SSL_is_server(s)
+            || inlen != sizeof(char)
+            || *in != 1)
+        return -1;
+
+    return 1;
+}
+
+static int sni_cb(SSL *s, int *al, void *arg)
+{
+    SSL_CTX *ctx = (SSL_CTX *)arg;
+
+    if (SSL_set_SSL_CTX(s, ctx) == NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+    snicb++;
+    return SSL_TLSEXT_ERR_OK;
+}
+
+/*
+ * Custom call back tests.
+ * Test 0: callbacks in TLSv1.2
+ * Test 1: callbacks in TLSv1.2 with SNI
+ */
+static int test_custom_exts(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL, *sctx2 = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    static int server = 1;
+    static int client = 0;
+    SSL_SESSION *sess = NULL;
+
+    /* Reset callback counters */
+    clntaddcb = clntparsecb = srvaddcb = srvparsecb = 0;
+    snicb = 0;
+
+    if (!create_ssl_ctx_pair(TLS_server_method(),  TLS_client_method(), &sctx,
+                             &cctx, cert, privkey)) {
+        printf("Unable to create SSL_CTX pair\n");
+        goto end;
+    }
+
+    if (tst == 1
+            && !create_ssl_ctx_pair(TLS_server_method(), NULL, &sctx2, NULL,
+                                    cert, privkey)) {
+        printf("Unable to create SSL_CTX pair (2)\n");
+        goto end;
+    }
+
+    /* Create a client side custom extension */
+    if (!SSL_CTX_add_client_custom_ext(cctx, TEST_EXT_TYPE1, add_cb, free_cb,
+                                       &client, parse_cb, &client)) {
+        printf("Unable to add client custom extension\n");
+        goto end;
+    }
+
+    /* Should not be able to add duplicates */
+    if (SSL_CTX_add_client_custom_ext(cctx, TEST_EXT_TYPE1, add_cb, free_cb,
+                                      &client, parse_cb, &client)) {
+        printf("Unexpected success adding duplicate extension\n");
+        goto end;
+    }
+
+    /* Create a server side custom extension */
+    if (!SSL_CTX_add_server_custom_ext(sctx, TEST_EXT_TYPE1, add_cb, free_cb,
+                                       &server, parse_cb, &server)) {
+        printf("Unable to add server custom extension\n");
+        goto end;
+    }
+    if (sctx2 != NULL
+            && !SSL_CTX_add_server_custom_ext(sctx2, TEST_EXT_TYPE1,
+                                                        add_cb, free_cb,
+                                                        &server, parse_cb,
+                                                        &server)) {
+        printf("Unable to add server custom extension for SNI\n");
+        goto end;
+    }
+
+    /* Should not be able to add duplicates */
+    if (SSL_CTX_add_server_custom_ext(sctx, TEST_EXT_TYPE1, add_cb, free_cb,
+                                      &server, parse_cb, &server)) {
+        printf("Unexpected success adding duplicate extension (2)\n");
+        goto end;
+    }
+
+    if (tst == 1) {
+        /* Set up SNI */
+        if (!SSL_CTX_set_tlsext_servername_callback(sctx, sni_cb)
+                || !SSL_CTX_set_tlsext_servername_arg(sctx, sctx2)) {
+            printf("Cannot set SNI callbacks\n");
+            goto end;
+        }
+    }
+
+    if (!create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL)
+            || !create_ssl_connection(serverssl, clientssl)) {
+        printf("Cannot create SSL connection\n");
+        goto end;
+    }
+
+    if (clntaddcb != 1
+            || clntparsecb != 1
+            || srvaddcb != 1
+            || srvparsecb != 1
+            || (tst != 1 && snicb != 0)
+            || (tst == 1 && snicb != 1)) {
+        printf("Incorrect callback counts\n");
+        goto end;
+    }
+
+    sess = SSL_get1_session(clientssl);
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    if (tst == 1) {
+        /* We don't bother with the resumption aspects for this test */
+        testresult = 1;
+        goto end;
+    }
+
+    if (!create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL, NULL)
+            || !SSL_set_session(clientssl, sess)
+            || !create_ssl_connection(serverssl, clientssl)) {
+        printf("Cannot create resumption connection\n");
+        goto end;
+    }
+
+    /*
+     * For a resumed session we expect to add the ClientHello extension but we
+     * should ignore it on the server side.
+     */
+    if (clntaddcb != 2
+            || clntparsecb != 1
+            || srvaddcb != 1
+            || srvparsecb != 1) {
+        printf("Incorrect resumption callback counts\n");
+        goto end;
+    }
+
+    testresult = 1;
+
+end:
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx2);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 int main(int argc, char *argv[])
 {
     BIO *err = NULL;
@@ -1031,6 +1232,7 @@ int main(int argc, char *argv[])
     ADD_TEST(test_ssl_bio_change_rbio);
     ADD_TEST(test_ssl_bio_change_wbio);
     ADD_ALL_TESTS(test_set_sigalgs, OSSL_NELEM(testsigalgs) * 2);
+    ADD_ALL_TESTS(test_custom_exts, 2);
 
     testresult = run_tests(argv[0]);
 
