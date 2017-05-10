@@ -231,6 +231,26 @@ int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x, size_t chainidx,
     return 1;
 }
 
+/* Copy the flags from src to dst for any extensions that exist in both */
+int custom_exts_copy_flags(custom_ext_methods *dst,
+                           const custom_ext_methods *src)
+{
+    size_t i;
+    custom_ext_method *methsrc = src->meths;
+
+    for (i = 0; i < src->meths_count; i++, methsrc++) {
+        custom_ext_method *methdst = custom_ext_find(dst, methsrc->role,
+                                                     methsrc->ext_type, NULL);
+
+        if (methdst == NULL)
+            continue;
+
+        methdst->ext_flags = methsrc->ext_flags;
+    }
+
+    return 1;
+}
+
 /* Copy table of custom extensions */
 int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src)
 {
