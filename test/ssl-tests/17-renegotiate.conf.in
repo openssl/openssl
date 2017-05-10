@@ -185,6 +185,64 @@ our @tests_tls1_2 = (
             "ResumptionExpected" => "No",
             "ExpectedResult" => "Success"
         }
+    },
+    {
+        name => "no-renegotiation-server-by-client",
+        server => {
+            "Options" => "NoRenegotiation",
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => { },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "ClientFail"
+        }
+    },
+    {
+        name => "no-renegotiation-server-by-server",
+        server => {
+            "Options" => "NoRenegotiation",
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => { },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateServer",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "ServerFail"
+        }
+    },
+    {
+        name => "no-renegotiation-client-by-server",
+        server => {
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            "Options" => "NoRenegotiation",
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateServer",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "ServerFail"
+        }
+    },
+    {
+        name => "no-renegotiation-client-by-client",
+        server => {
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            "Options" => "NoRenegotiation",
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "ClientFail"
+        }
     }
 );
 

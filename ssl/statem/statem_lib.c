@@ -116,6 +116,10 @@ int tls_setup_handshake(SSL *s)
         }
         if (SSL_IS_FIRST_HANDSHAKE(s)) {
             s->ctx->stats.sess_accept++;
+        } else if ((s->options & SSL_OP_NO_RENEGOTIATION)) {
+            /* Renegotiation is disabled */
+            ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
+            return 0;
         } else if (!s->s3->send_connection_binding &&
                    !(s->options &
                      SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)) {
