@@ -16,7 +16,7 @@ require "x86asm.pl";
 $output=pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],"crypt586.pl");
+&asm_init($ARGV[0]);
 
 $L="edi";
 $R="esi";
