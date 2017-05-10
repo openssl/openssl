@@ -3194,6 +3194,9 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
         ssl->cert->alpn_proposed_len = ocert->alpn_proposed_len;
         ocert->alpn_proposed = NULL;
         ssl->cert->alpn_sent = ocert->alpn_sent;
+
+        if (!custom_exts_copy_flags(&ssl->cert->srv_ext, &ocert->srv_ext))
+            return NULL;
 #endif
         ssl_cert_free(ocert);
     }

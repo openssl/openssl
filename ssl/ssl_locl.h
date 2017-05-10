@@ -1482,6 +1482,8 @@ int custom_ext_add(SSL *s, int server,
                    unsigned char **pret, unsigned char *limit, int *al);
 
 int custom_exts_copy(custom_ext_methods *dst, const custom_ext_methods *src);
+int custom_exts_copy_flags(custom_ext_methods *dst,
+                           const custom_ext_methods *src);
 void custom_exts_free(custom_ext_methods *exts);
 
 # else
