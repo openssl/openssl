@@ -1793,6 +1793,11 @@ int SSL_shutdown(SSL *s)
 
 int SSL_renegotiate(SSL *s)
 {
+    if ((s->options & SSL_OP_NO_RENEGOTIATION)) {
+        SSLerr(SSL_F_SSL_RENEGOTIATE, SSL_R_NO_RENEGOTIATION);
+        return 0;
+    }
+
     if (s->renegotiate == 0)
         s->renegotiate = 1;
 
@@ -1803,6 +1808,11 @@ int SSL_renegotiate(SSL *s)
 
 int SSL_renegotiate_abbreviated(SSL *s)
 {
+    if ((s->options & SSL_OP_NO_RENEGOTIATION)) {
+        SSLerr(SSL_F_SSL_RENEGOTIATE_ABBREVIATED, SSL_R_NO_RENEGOTIATION);
+        return 0;
+    }
+
     if (s->renegotiate == 0)
         s->renegotiate = 1;
 

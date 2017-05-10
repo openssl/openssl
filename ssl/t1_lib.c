@@ -1489,6 +1489,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *buf,
     if (s->s3->send_connection_binding) {
         int el;
 
+        /* Still add this even if SSL_OP_NO_RENEGOTIATION is set */
         if (!ssl_add_serverhello_renegotiate_ext(s, 0, &el, 0)) {
             SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
             return NULL;

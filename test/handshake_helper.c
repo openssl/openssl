@@ -505,7 +505,11 @@ static void do_handshake_step(PEER *peer)
 {
     int ret;
 
-    TEST_check(peer->status == PEER_RETRY);
+    if (peer->status != PEER_RETRY) {
+        peer->status = PEER_ERROR;
+        return;
+    }
+
     ret = SSL_do_handshake(peer->ssl);
 
     if (ret == 1) {
@@ -587,6 +591,17 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
 {
     int ret;
     char buf;
+
+    if (peer->status == PEER_SUCCESS) {
+        /*
+         * We are a client that succeeded this step previously, but the server
+         * wanted to retry. Probably there is a no_renegotiation warning alert
+         * waiting for us. Attempt to continue the handshake.
+         */
+        peer->status = PEER_RETRY;
+        do_handshake_step(peer);
+        return;
+    }
 
     TEST_check(peer->status == PEER_RETRY);
     TEST_check(test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_SERVER
@@ -807,16 +822,8 @@ static handshake_status_t handshake_status(peer_status_t last_status,
         break;
 
     case PEER_RETRY:
-        if (previous_status == PEER_RETRY) {
-            /* Neither peer is done. */
-            return HANDSHAKE_RETRY;
-        } else {
-            /*
-             * Deadlock: second peer is waiting for more input while first
-             * peer thinks they're done (no more input is coming).
-             */
-            return INTERNAL_ERROR;
-        }
+        return HANDSHAKE_RETRY;
+
     case PEER_ERROR:
         switch (previous_status) {
         case PEER_SUCCESS:

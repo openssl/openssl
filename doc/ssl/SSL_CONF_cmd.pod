@@ -110,6 +110,11 @@ Attempts to use the file B<value> as the set of temporary DH parameters for
 the appropriate context. This option is only supported if certificate
 operations are permitted.
 
+=item B<-no_renegotiation>
+
+Disables all attempts at renegotiation in TLSv1.2 and earlier, same as setting
+B<SSL_OP_NO_RENEGOTIATION>.
+
 =item B<-min_protocol>, B<-max_protocol>
 
 Sets the minimum and maximum supported protocol.
@@ -226,6 +231,11 @@ function SSL_CTX_use_serverinfo_file.
 Attempts to use the file B<value> as the set of temporary DH parameters for
 the appropriate context. This option is only supported if certificate
 operations are permitted.
+
+=item B<NoRenegotiation>
+
+Disables all attempts at renegotiation in TLSv1.2 and earlier, same as setting
+B<SSL_OP_NO_RENEGOTIATION>.
 
 =item B<SignatureAlgorithms>
 
