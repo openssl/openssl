@@ -2575,6 +2575,9 @@ static int init_ssl_connection(SSL *con)
         BIO_printf(bio_s_out, "Reused session-id\n");
     BIO_printf(bio_s_out, "Secure Renegotiation IS%s supported\n",
                SSL_get_secure_renegotiation_support(con) ? "" : " NOT");
+    if ((SSL_get_options(con) & SSL_OP_NO_RENEGOTIATION))
+        BIO_printf(bio_s_out, "Renegotiation is DISABLED\n");
+
     if (keymatexportlabel != NULL) {
         BIO_printf(bio_s_out, "Keying material exporter:\n");
         BIO_printf(bio_s_out, "    Label: '%s'\n", keymatexportlabel);

@@ -1284,8 +1284,8 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
                             s->rlayer.handshake_fragment, 4, s,
                             s->msg_callback_arg);
-
         if (SSL_is_init_finished(s) &&
+            (s->options & SSL_OP_NO_RENEGOTIATION) == 0 &&
             !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
             !s->s3->renegotiate) {
             ssl3_renegotiate(s);
@@ -1319,7 +1319,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 SSL3_RECORD_set_read(rr);
             }
         } else {
-            /* Does this ever happen? */
+            ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
             SSL3_RECORD_set_read(rr);
         }
         /*
@@ -1334,12 +1334,14 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      */
     if (s->server
             && SSL_is_init_finished(s)
-            && !s->s3->send_connection_binding
             && s->version > SSL3_VERSION
             && s->rlayer.handshake_fragment_len >= SSL3_HM_HEADER_LENGTH
             && s->rlayer.handshake_fragment[0] == SSL3_MT_CLIENT_HELLO
             && s->s3->previous_client_finished_len != 0
-            && (s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION) == 0) {
+            && ((!s->s3->send_connection_binding
+                    && (s->options
+                        & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION) == 0)
+                || (s->options & SSL_OP_NO_RENEGOTIATION) != 0)) {
         SSL3_RECORD_set_length(rr, 0);
         SSL3_RECORD_set_read(rr);
         ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
