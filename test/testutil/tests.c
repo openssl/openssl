@@ -40,6 +40,13 @@ static void test_fail_message_prefix(const char *prefix, const char *file,
     test_printf_stderr("\n");
 }
 
+/* Output a diff header */
+static void test_diff_header(const char *left, const char *right)
+{
+    test_printf_stderr("%*s# --- %s\n", subtest_level(), "", left);
+    test_printf_stderr("%*s# +++ %s\n", subtest_level(), "", right);
+}
+
 /*
  * A common routine to output test failure messages.  Generally this should not
  * be called directly, rather it should be called by the following functions.
@@ -107,6 +114,7 @@ static void test_fail_string_message(const char *prefix, const char *file,
             test_printf_stderr("%*s# % 4s   %s\n", indent, "", "",
                                m1 == NULL ? "NULL" : "''");
         } else {
+            test_diff_header(left, right);
             test_printf_stderr("%*s# % 4s - %s\n", indent, "", "",
                                m1 == NULL ? "NULL" : "''");
             test_printf_stderr("%*s# % 4s + %s\n", indent, "", "",
@@ -114,6 +122,9 @@ static void test_fail_string_message(const char *prefix, const char *file,
         }
         goto fin;
     }
+
+    if (l1 != l2 || strcmp(m1, m2) != 0)
+        test_diff_header(left, right);
 
     while (l1 > 0 || l2 > 0) {
         n1 = n2 = 0;
@@ -252,6 +263,7 @@ static void test_fail_memory_message(const char *prefix, const char *file,
             test_printf_stderr("%*s# %04s  %s\n", indent, "", "",
                                m1 == NULL ? "NULL" : "empty");
         } else {
+            test_diff_header(left, right);
             test_printf_stderr("%*s# %04s -%s\n", indent, "", "",
                                m1 == NULL ? "NULL" : "empty");
             test_printf_stderr("%*s# %04s +%s\n", indent, "", "",
@@ -259,6 +271,9 @@ static void test_fail_memory_message(const char *prefix, const char *file,
         }
         goto fin;
     }
+
+    if (l1 != l2 || memcmp(m1, m2, l1) != 0)
+        test_diff_header(left, right);
 
     while (l1 > 0 || l2 > 0) {
         n1 = n2 = 0;
