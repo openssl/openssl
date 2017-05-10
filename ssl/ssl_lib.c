@@ -3596,6 +3596,12 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
     if (new_cert == NULL) {
         return NULL;
     }
+
+    if (!custom_exts_copy_flags(&new_cert->custext, &ssl->cert->custext)) {
+        ssl_cert_free(new_cert);
+        return NULL;
+    }
+
     ssl_cert_free(ssl->cert);
     ssl->cert = new_cert;
 
