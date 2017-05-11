@@ -600,7 +600,28 @@ void engine_load_devcrypto_int()
     if (!ENGINE_set_id(e, "devcrypto")
         || !ENGINE_set_name(e, "/dev/crypto engine")
         || !ENGINE_set_destroy_function(e, devcrypto_unload)
-#if 0                            /* Not supported yet */
+
+/*
+ * Asymmetric ciphers aren't well supported with /dev/crypto.  Among the BSD
+ * implementations, it seems to only exist in FreeBSD, and regarding the
+ * parameters in its crypt_kop, the manual crypto(4) has this to say:
+ *
+ *    The semantics of these arguments are currently undocumented.
+ *
+ * Reading through the FreeBSD source code doesn't give much more than
+ * their CRK_MOD_EXP implementation for ubsec.
+ *
+ * It doesn't look much better with cryptodev-linux.  They have the crypt_kop
+ * structure as well as the command (CRK_*) in cryptodev.h, but no support
+ * seems to be implemented at all for the moment.
+ *
+ * At the time of writing, it seems impossible to write proper support for
+ * FreeBSD's asym features without some very deep knowledge and access to
+ * specific kernel modules.
+ *
+ * /Richard Levitte, 2017-05-11
+ */
+#if 0
 # ifndef OPENSSL_NO_RSA
         || !ENGINE_set_RSA(e, devcrypto_rsa)
 # endif
