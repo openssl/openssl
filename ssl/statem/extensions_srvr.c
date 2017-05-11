@@ -524,14 +524,21 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    /*
-     * Get the clients list of supported curves.
-     * TODO(TLS1.3): We should validate that we actually received
-     * supported_groups!
-     */
+    /* Get the clients list of supported curves. */
     if (!tls1_get_curvelist(s, 1, &clntcurves, &clnt_num_curves)) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (clnt_num_curves == 0) {
+        /*
+         * This can only happen if the supported_groups extension was not sent,
+         * because we verify that the length is non-zero when we process that
+         * extension.
+         */
+        *al = SSL_AD_MISSING_EXTENSION;
+        SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
+               SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION);
         return 0;
     }
 
