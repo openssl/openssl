@@ -2077,6 +2077,7 @@ static int do_test_file(const char *testfile)
     char buf[10240];
     EVP_TEST t;
 
+    set_test_title(testfile);
     current_test_file = testfile;
     if (!TEST_ptr(in = BIO_new_file(testfile, "rb")))
         return 0;
