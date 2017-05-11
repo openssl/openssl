@@ -19,6 +19,7 @@
 #include <openssl/kdf.h>
 #include "internal/numbers.h"
 #include "testutil.h"
+#include "evp_test.h"
 
 static const char *current_test_file = "???";
 
@@ -168,6 +169,131 @@ static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
     *buflen = len;
     return 1;
 }
+
+/*
+ * Structure used to hold a list of blocks of memory to test
+ * calls to "update" like functions.
+ */
+
+struct evp_test_buffer_st {
+    unsigned char *buf;
+    size_t buflen;
+    size_t count;
+    int count_set;
+};
+
+static void evp_test_buffer_free(EVP_TEST_BUFFER *db)
+{
+    if (db != NULL) {
+        OPENSSL_free(db->buf);
+        OPENSSL_free(db);
+    }
+}
+
+/* append buffer to a list */
+
+static int evp_test_buffer_append(const char *value,
+                                  STACK_OF(EVP_TEST_BUFFER) **sk)
+{
+    EVP_TEST_BUFFER *db = NULL;
+
+    if (!TEST_ptr(db = OPENSSL_malloc(sizeof(*db))))
+        goto err;
+
+    if (!test_bin(value, &db->buf, &db->buflen))
+        goto err;
+    db->count = 1;
+    db->count_set = 0;
+
+    if (*sk == NULL && !TEST_ptr(*sk = sk_EVP_TEST_BUFFER_new_null()))
+            goto err;
+
+    if (!sk_EVP_TEST_BUFFER_push(*sk, db))
+        goto err;
+
+    return 1;
+
+    err:
+    evp_test_buffer_free(db);
+
+    return 0;
+}
+
+/*
+ * replace last buffer in list with copies of itself
+ */
+static int evp_test_buffer_ncopy(const char *value,
+                                 STACK_OF(EVP_TEST_BUFFER) *sk)
+{
+    EVP_TEST_BUFFER *db;
+    unsigned char *tbuf, *p;
+    size_t tbuflen;
+    int ncopy = atoi(value);
+    int i;
+
+    if (ncopy <= 0)
+        return 0;
+    if (sk == NULL || sk_EVP_TEST_BUFFER_num(sk) == 0)
+        return 0;
+    db = sk_EVP_TEST_BUFFER_value(sk, sk_EVP_TEST_BUFFER_num(sk) - 1);
+
+    tbuflen = db->buflen * ncopy;
+    if (!TEST_ptr(tbuf = OPENSSL_malloc(tbuflen)))
+        return 0;
+    for (i = 0, p = tbuf; i < ncopy; i++, p += db->buflen)
+        memcpy(p, db->buf, db->buflen);
+
+    OPENSSL_free(db->buf);
+    db->buf = tbuf;
+    db->buflen = tbuflen;
+    return 1;
+}
+
+/* set repeat count for last buffer in list */
+static int evp_test_buffer_set_count(const char *value,
+                                     STACK_OF(EVP_TEST_BUFFER) *sk)
+{
+    EVP_TEST_BUFFER *db;
+    int count = atoi(value);
+
+    if (count <= 0)
+        return 0;
+
+    if (sk == NULL || sk_EVP_TEST_BUFFER_num(sk) == 0)
+        return 0;
+
+    db = sk_EVP_TEST_BUFFER_value(sk, sk_EVP_TEST_BUFFER_num(sk) - 1);
+    if (db->count_set)
+        return 0;
+
+    db->count = (size_t)count;
+    db->count_set = 1;
+    return 1;
+}
+
+/*
+ * call "fn" with each element of the list in turn
+ */
+static int evp_test_buffer_do(STACK_OF(EVP_TEST_BUFFER) *sk,
+                              int (*fn)(void *ctx,
+                                        const unsigned char *buf,
+                                        size_t buflen),
+                              void *ctx)
+{
+    int i;
+
+    for (i = 0; i < sk_EVP_TEST_BUFFER_num(sk); i++) {
+        EVP_TEST_BUFFER *tb = sk_EVP_TEST_BUFFER_value(sk, i);
+        size_t j;
+
+        for (j = 0; j < tb->count; j++) {
+            if (fn(ctx, tb->buf, tb->buflen) <= 0)
+                return 0;
+        }
+    }
+    return 1;
+}
+
 #ifndef OPENSSL_NO_SCRYPT
 /* Currently only used by scrypt tests */
 /* Parse unsigned decimal 64 bit integer value */
@@ -611,10 +737,7 @@ typedef struct digest_data_st {
     /* Digest this test is for */
     const EVP_MD *digest;
     /* Input to digest */
-    unsigned char *input;
-    size_t input_len;
-    /* Repeat count for input */
-    size_t nrpt;
+    STACK_OF(EVP_TEST_BUFFER) *input;
     /* Expected output */
     unsigned char *output;
     size_t output_len;
@@ -636,7 +759,6 @@ static int digest_test_init(EVP_TEST *t, const char *alg)
     }
     mdat = OPENSSL_zalloc(sizeof(*mdat));
     mdat->digest = digest;
-    mdat->nrpt = 1;
     t->data = mdat;
     return 1;
 }
@@ -645,7 +767,7 @@ static void digest_test_cleanup(EVP_TEST *t)
 {
     DIGEST_DATA *mdat = t->data;
 
-    OPENSSL_free(mdat->input);
+    sk_EVP_TEST_BUFFER_pop_free(mdat->input, evp_test_buffer_free);
     OPENSSL_free(mdat->output);
 }
 
@@ -655,23 +777,24 @@ static int digest_test_parse(EVP_TEST *t,
     DIGEST_DATA *mdata = t->data;
 
     if (strcmp(keyword, "Input") == 0)
-        return test_bin(value, &mdata->input, &mdata->input_len);
+        return evp_test_buffer_append(value, &mdata->input);
     if (strcmp(keyword, "Output") == 0)
         return test_bin(value, &mdata->output, &mdata->output_len);
-    if (strcmp(keyword, "Count") == 0) {
-        long nrpt = atoi(value);
-        if (nrpt <= 0)
-            return 0;
-        mdata->nrpt = (size_t)nrpt;
-        return 1;
-    }
+    if (strcmp(keyword, "Count") == 0)
+        return evp_test_buffer_set_count(value, mdata->input);
+    if (strcmp(keyword, "Ncopy") == 0)
+        return evp_test_buffer_ncopy(value, mdata->input);
     return 0;
+}
+
+static int digest_update_fn(void *ctx, const unsigned char *buf, size_t buflen)
+{
+    return EVP_DigestUpdate(ctx, buf, buflen);
 }
 
 static int digest_test_run(EVP_TEST *t)
 {
     DIGEST_DATA *mdata = t->data;
-    size_t i;
     EVP_MD_CTX *mctx;
     unsigned char md[EVP_MAX_MD_SIZE];
     unsigned int md_len;
@@ -684,11 +807,11 @@ static int digest_test_run(EVP_TEST *t)
         t->err = "DIGESTINIT_ERROR";
         goto err;
     }
-    for (i = 0; i < mdata->nrpt; i++)
-        if (!EVP_DigestUpdate(mctx, mdata->input, mdata->input_len)) {
-            t->err = "DIGESTUPDATE_ERROR";
-            goto err;
-        }
+    if (!evp_test_buffer_do(mdata->input, digest_update_fn, mctx)) {
+        t->err = "DIGESTUPDATE_ERROR";
+        goto err;
+    }
+
     if (!EVP_DigestFinal(mctx, md, &md_len)) {
         t->err = "DIGESTFINAL_ERROR";
         goto err;
@@ -1962,7 +2085,7 @@ static const EVP_TEST_METHOD kdf_test_method = {
     kdf_test_run
 };
 
-typedef struct keypair_test_data_st {
+typedef struct keypair_test_buffer_st {
     EVP_PKEY *privk;
     EVP_PKEY *pubk;
 } KEYPAIR_TEST_DATA;
