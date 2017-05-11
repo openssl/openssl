@@ -589,6 +589,10 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
         goto err;
     }
 
+    /*
+     * There are only two defined key update types. Fail if we get a value we
+     * didn't recognise.
+     */
     if (updatetype != SSL_KEY_UPDATE_NOT_REQUESTED
             && updatetype != SSL_KEY_UPDATE_REQUESTED) {
         al = SSL_AD_ILLEGAL_PARAMETER;
