@@ -121,6 +121,13 @@ static void finalize(int success)
         ERR_print_errors_cb(openssl_error_cb, NULL);
 }
 
+static const char *test_title = NULL;
+
+void set_test_title(const char *title)
+{
+    test_title = title;
+}
+
 int run_tests(const char *test_prog_name)
 {
     int num_failed = 0;
@@ -139,7 +146,10 @@ int run_tests(const char *test_prog_name)
 
     for (i = 0; i != num_tests; ++i) {
         if (all_tests[i].num == -1) {
-            int ret = all_tests[i].test_fn();
+            int ret = 0;
+
+            set_test_title(all_tests[i].test_case_name);
+            ret = all_tests[i].test_fn();
 
             test_flush_stdout();
             test_flush_stderr();
@@ -150,7 +160,7 @@ int run_tests(const char *test_prog_name)
                 ++num_failed;
             }
             test_printf_stdout("%*s%s %d - %s\n", level, "", verdict, i + 1,
-                               all_tests[i].test_case_name);
+                               test_title);
             test_flush_stdout();
             finalize(ret);
         } else {
@@ -166,7 +176,10 @@ int run_tests(const char *test_prog_name)
             }
 
             for (j = 0; j < all_tests[i].num; j++) {
-                int ret = all_tests[i].param_test_fn(j);
+                int ret = 0;
+
+                set_test_title(NULL);
+                ret = all_tests[i].param_test_fn(j);
 
                 test_flush_stdout();
                 test_flush_stderr();
@@ -182,7 +195,12 @@ int run_tests(const char *test_prog_name)
                         verdict = "not ok";
                         ++num_failed_inner;
                     }
-                    test_printf_stdout("%*s%s %d\n", level, "", verdict, j + 1);
+                    if (test_title != NULL)
+                        test_printf_stdout("%*s%s %d - %s\n", level, "", verdict,
+                                           j + 1, test_title);
+                    else
+                        test_printf_stdout("%*s%s %d\n", level, "", verdict,
+                                           j + 1);
                     test_flush_stdout();
                 }
             }
