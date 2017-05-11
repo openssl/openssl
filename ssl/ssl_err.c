@@ -641,6 +641,8 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_REASON(SSL_R_MISSING_SIGALGS_EXTENSION),
      "missing sigalgs extension"},
     {ERR_REASON(SSL_R_MISSING_SRP_PARAM), "can't find SRP server param"},
+    {ERR_REASON(SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION),
+     "missing supported groups extension"},
     {ERR_REASON(SSL_R_MISSING_TMP_DH_KEY), "missing tmp dh key"},
     {ERR_REASON(SSL_R_MISSING_TMP_ECDH_KEY), "missing tmp ecdh key"},
     {ERR_REASON(SSL_R_NOT_ON_RECORD_BOUNDARY), "not on record boundary"},

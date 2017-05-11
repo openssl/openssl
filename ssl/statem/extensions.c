@@ -1151,7 +1151,10 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
         if (!s->hit
                 || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0) {
             /* Nothing left we can do - just fail */
-            *al = SSL_AD_HANDSHAKE_FAILURE;
+            if (!sent)
+                *al = SSL_AD_MISSING_EXTENSION;
+            else
+                *al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_FINAL_KEY_SHARE, SSL_R_NO_SUITABLE_KEY_SHARE);
             return 0;
         }
