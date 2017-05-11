@@ -644,6 +644,10 @@ int ssl3_get_record(SSL *s)
                                 &thisrr->data[end], 1, s, s->msg_callback_arg);
         }
 
+        /*
+         * TLSv1.3 alert and handshake records are required to be non-zero in
+         * length.
+         */
         if (SSL_IS_TLS13(s)
                 && (thisrr->type == SSL3_RT_HANDSHAKE
                     || thisrr->type == SSL3_RT_ALERT)
