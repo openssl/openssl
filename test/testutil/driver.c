@@ -127,14 +127,14 @@ int run_tests(const char *test_prog_name)
     char *verdict = NULL;
     int i, j;
 
-    if (num_tests < 1)
+    if (num_tests < 1) {
         test_printf_stdout("%*s1..0 # Skipped: %s\n", level, "",
                            test_prog_name);
-    else if (level > 0)
-        test_printf_stdout("%*s1..%d # Subtest: %s\n", level, "", num_tests,
-                           test_prog_name);
-    else
+    } else {
+        if (level > 0)
+            test_printf_stdout("%*s# Subtest: %s\n", level, "", test_prog_name);
         test_printf_stdout("%*s1..%d\n", level, "", num_tests);
+    }
     test_flush_stdout();
 
     for (i = 0; i != num_tests; ++i) {
