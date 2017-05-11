@@ -583,10 +583,15 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
     }
 
     if (!PACKET_get_1(pkt, &updatetype)
-            || PACKET_remaining(pkt) != 0
-            || (updatetype != SSL_KEY_UPDATE_NOT_REQUESTED
-                && updatetype != SSL_KEY_UPDATE_REQUESTED)) {
+            || PACKET_remaining(pkt) != 0) {
         al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_UPDATE, SSL_R_BAD_KEY_UPDATE);
+        goto err;
+    }
+
+    if (updatetype != SSL_KEY_UPDATE_NOT_REQUESTED
+            && updatetype != SSL_KEY_UPDATE_REQUESTED) {
+        al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PROCESS_KEY_UPDATE, SSL_R_BAD_KEY_UPDATE);
         goto err;
     }
