@@ -1422,6 +1422,20 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             if (SSL3_RECORD_get_length(rr) == 0)
                 SSL3_RECORD_set_read(rr);
 
+            if (SSL_IS_TLS13(s)
+                    && SSL3_RECORD_get_type(rr) == SSL3_RT_ALERT) {
+                if (*dest_len < dest_maxlen
+                        || SSL3_RECORD_get_length(rr) != 0) {
+                    /*
+                     * TLSv1.3 forbids fragmented alerts, and only one alert
+                     * may be present in a record
+                     */
+                    al = SSL_AD_UNEXPECTED_MESSAGE;
+                    SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_INVALID_ALERT);
+                    goto f_err;
+                }
+            }
+
             if (*dest_len < dest_maxlen)
                 goto start;     /* fragment was too small */
         }
