@@ -2650,7 +2650,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_INAPPROPRIATE_FALLBACK                     373
 # define SSL_R_INCONSISTENT_COMPRESSION                   340
 # define SSL_R_INCONSISTENT_EXTMS                         104
-# define SSL_R_INVALID_ALERT                              205
+# define SSL_R_INVALID_ALERT                              209
 # define SSL_R_INVALID_COMMAND                            280
 # define SSL_R_INVALID_COMPRESSION_ALGORITHM              341
 # define SSL_R_INVALID_CONFIGURATION_NAME                 113
@@ -2675,7 +2675,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_MISSING_RSA_SIGNING_CERT                   170
 # define SSL_R_MISSING_SIGALGS_EXTENSION                  112
 # define SSL_R_MISSING_SRP_PARAM                          358
-# define SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION         209
+# define SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION         214
 # define SSL_R_MISSING_TMP_DH_KEY                         171
 # define SSL_R_MISSING_TMP_ECDH_KEY                       311
 # define SSL_R_NOT_ON_RECORD_BOUNDARY                     182
