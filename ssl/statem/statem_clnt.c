@@ -1365,7 +1365,8 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     /* TLS extensions */
     if (PACKET_remaining(pkt) == 0) {
         PACKET_null_init(&extpkt);
-    } else if (!PACKET_as_length_prefixed_2(pkt, &extpkt)) {
+    } else if (!PACKET_as_length_prefixed_2(pkt, &extpkt)
+               || PACKET_remaining(pkt) != 0) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_BAD_LENGTH);
         goto f_err;
@@ -2517,6 +2518,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         PACKET extpkt;
 
         if (!PACKET_as_length_prefixed_2(pkt, &extpkt)
+                || PACKET_remaining(pkt) != 0
                 || !tls_collect_extensions(s, &extpkt,
                                            SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
                                            &exts, &al, NULL, 1)
@@ -3474,7 +3476,8 @@ static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt)
     PACKET extensions;
     RAW_EXTENSION *rawexts = NULL;
 
-    if (!PACKET_as_length_prefixed_2(pkt, &extensions)) {
+    if (!PACKET_as_length_prefixed_2(pkt, &extensions)
+            || PACKET_remaining(pkt) != 0) {
         al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_ENCRYPTED_EXTENSIONS, SSL_R_LENGTH_MISMATCH);
         goto err;
