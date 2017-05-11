@@ -618,7 +618,8 @@ int ssl3_get_record(SSL *s)
         if (SSL_IS_TLS13(s) && s->enc_read_ctx != NULL) {
             size_t end;
 
-            if (thisrr->length == 0) {
+            if (thisrr->length == 0
+                    || thisrr->type != SSL3_RT_APPLICATION_DATA) {
                 al = SSL_AD_UNEXPECTED_MESSAGE;
                 SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
                 goto f_err;
