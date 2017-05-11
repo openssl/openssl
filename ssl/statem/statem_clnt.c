@@ -517,7 +517,8 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
              */
             return WRITE_TRAN_FINISHED;
         }
-        /* Renegotiation - fall through */
+        /* Renegotiation */
+        /* fall thru */
     case TLS_ST_BEFORE:
         st->hand_state = TLS_ST_CW_CLNT_HELLO;
         return WRITE_TRAN_CONTINUE;
