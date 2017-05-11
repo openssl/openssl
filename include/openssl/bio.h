@@ -20,11 +20,7 @@
 # include <openssl/crypto.h>
 
 # ifndef OPENSSL_NO_SCTP
-#  ifndef OPENSSL_SYS_VMS
-#   include <stdint.h>
-#  else
-#   include <inttypes.h>
-#  endif
+#  include <openssl/e_os2.h>
 # endif
 
 #ifdef  __cplusplus
