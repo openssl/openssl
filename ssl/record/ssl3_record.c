@@ -644,6 +644,15 @@ int ssl3_get_record(SSL *s)
                                 &thisrr->data[end], 1, s, s->msg_callback_arg);
         }
 
+        if (SSL_IS_TLS13(s)
+                && (thisrr->type == SSL3_RT_HANDSHAKE
+                    || thisrr->type == SSL3_RT_ALERT)
+                && thisrr->length == 0) {
+            al = SSL_AD_UNEXPECTED_MESSAGE;
+            SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_LENGTH);
+            goto f_err;
+        }
+
         if (thisrr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
             al = SSL_AD_RECORD_OVERFLOW;
             SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_DATA_LENGTH_TOO_LONG);
