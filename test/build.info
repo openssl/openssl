@@ -30,8 +30,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           md2test \
           hmactest \
           rc2test rc4test rc5test \
-          destest sha1test sha256t sha512t \
-          mdc2test \
+          destest mdc2test \
           randtest dhtest enginetest casttest \
           bftest ssltest_old dsatest exptest rsa_test \
           evp_test evp_extra_test igetest v3nametest v3ext \
@@ -108,18 +107,6 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[destest]=destest.c
   INCLUDE[destest]=../include
   DEPEND[destest]=../libcrypto libtestutil.a
-
-  SOURCE[sha1test]=sha1test.c
-  INCLUDE[sha1test]=../include
-  DEPEND[sha1test]=../libcrypto libtestutil.a
-
-  SOURCE[sha256t]=sha256t.c
-  INCLUDE[sha256t]=../include
-  DEPEND[sha256t]=../libcrypto libtestutil.a
-
-  SOURCE[sha512t]=sha512t.c
-  INCLUDE[sha512t]=../include
-  DEPEND[sha512t]=../libcrypto libtestutil.a
 
   SOURCE[mdc2test]=mdc2test.c
   INCLUDE[mdc2test]=../include
