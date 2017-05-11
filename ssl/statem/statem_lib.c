@@ -1616,6 +1616,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
          * Fall through if we are TLSv1.3 already (this means we must be after
          * a HelloRetryRequest
          */
+        /* fall thru */
     case TLS_ANY_VERSION:
         table = tls_version_table;
         break;

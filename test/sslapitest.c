@@ -1528,7 +1528,7 @@ static int test_early_data_skip(int idx)
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
-    SSL_SESSION *sess;
+    SSL_SESSION *sess = NULL;
     unsigned char buf[20];
     size_t readbytes, written;
 
@@ -1588,7 +1588,7 @@ static int test_early_data_not_sent(int idx)
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
-    SSL_SESSION *sess;
+    SSL_SESSION *sess = NULL;
     unsigned char buf[20];
     size_t readbytes, written;
 
@@ -1654,7 +1654,7 @@ static int test_early_data_not_expected(int idx)
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
-    SSL_SESSION *sess;
+    SSL_SESSION *sess = NULL;
     unsigned char buf[20];
     size_t readbytes, written;
 
