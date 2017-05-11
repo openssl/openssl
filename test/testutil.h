@@ -140,6 +140,7 @@ void add_test(const char *test_case_name, int (*test_fn) ());
 void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num,
                    int subtest);
 __owur int run_tests(const char *test_prog_name);
+void set_test_title(const char *title);
 
 /*
  * Declarations for user defined functions
