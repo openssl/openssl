@@ -1353,7 +1353,7 @@ $code.=<<___;
 	std	$t3,-16($tp)		; tp[j-1]
 	std	$t5,-8($tp)		; tp[j]
 
-	add	$carry,$carry,$ovf	; comsume upmost overflow
+	add	$carry,$carry,$ovf	; consume upmost overflow
 	add	$t6,$t6,$carry		; can not overflow
 	srdi	$carry,$t6,16
 	add	$t7,$t7,$carry
