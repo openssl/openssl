@@ -764,6 +764,17 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
     int ret;
     char buf;
 
+    if (peer->status == PEER_SUCCESS) {
+        /*
+         * We are a client that succeeded this step previously, but the server
+         * wanted to retry. Probably there is a no_renegotiation warning alert
+         * waiting for us. Attempt to continue the handshake.
+         */
+        peer->status = PEER_RETRY;
+        do_handshake_step(peer);
+        return;
+    }
+    
     TEST_check(peer->status == PEER_RETRY);
     TEST_check(test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_SERVER
                 || test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_CLIENT
