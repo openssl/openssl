@@ -15,6 +15,7 @@
 # SIPHASH tests - default values: 2,4 rounds, 16-byte mac
 # There are no official test vectors, they are simple vectors 1, 2, 3, etc
 
+Title = SIPHASH tests
 MAC = SipHash
 Key = 000102030405060708090A0B0C0D0E0F
 Input =

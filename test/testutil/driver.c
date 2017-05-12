@@ -121,11 +121,12 @@ static void finalize(int success)
         ERR_print_errors_cb(openssl_error_cb, NULL);
 }
 
-static const char *test_title = NULL;
+static char *test_title = NULL;
 
 void set_test_title(const char *title)
 {
-    test_title = title;
+    free(test_title);
+    test_title = title == NULL ? NULL : strdup(title);
 }
 
 int run_tests(const char *test_prog_name)

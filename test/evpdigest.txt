@@ -17,6 +17,7 @@
 # Which is currently unsupported by OpenSSL.  They were generated using the
 # reference implementation.  RFC7693 also mentions the 616263 / "abc" values.
 
+Title = BLAKE2s256 Tests
 Digest = BLAKE2s256
 Input = 
 Output = 69217a3079908094e11121d042354a7c1f55b6482ca1a51e1b250dfd1ed0eef9
