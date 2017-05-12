@@ -75,12 +75,31 @@ static int test_sec_mem(void)
     TEST_ptr_null(OPENSSL_secure_malloc((size_t)-1));
     TEST_true(CRYPTO_secure_malloc_done());
 
+    /*-
+     * There was also a possible infinite loop when the number of
+     * elements was 1<<31, as |int i| was set to that, which is a
+     * negative number. However, it requires minimum input values:
+     *
+     * CRYPTO_secure_malloc_init((size_t)1<<34, (size_t)1<<4);
+     *
+     * Which really only works on 64-bit systems, and even then the
+     * code attempts to allocate 16 GB secure memory arena. Linux
+     * can deal with this better than other Unixy OS's (e.g. MacOS)
+     * but we don't want to push the system too hard during a unit
+     * test. In addition, trying to allocate 16GB will cause the
+     * mlock() call to fail, so that was at least changed to no
+     * longer be an assert. If the reader of this comment really
+     * wants to make sure that infinite loop is fixed, they can
+     * enable the code below.
+     */
+# if 0
+    /* This test should only be run under Linux... runner beware */
     if (sizeof(size_t) > 4) {
         TEST_info("Possible infinite loop: 1<<31 limit");
-        if (!TEST_true(CRYPTO_secure_malloc_init((size_t)1<<34, (size_t)1<<4) != 0))
-            goto end;
-        TEST_true(CRYPTO_secure_malloc_done());
+        if (TEST_true(CRYPTO_secure_malloc_init((size_t)1<<34, (size_t)1<<4) != 0))
+            TEST_true(CRYPTO_secure_malloc_done());
     }
+# endif
     
     /* this can complete - it was not really secure */
     testresult = 1;
