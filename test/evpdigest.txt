@@ -89,10 +89,80 @@ Digest = BLAKE2b512
 Input = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B3C3D3E3F404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F606162636465666768696A6B6C6D6E6F707172737475767778797A7B7C7D7E7F8081
 Output = DF0A9D0C212843A6A934E3902B2DD30D17FBA5F969D2030B12A546D8A6A45E80CF5635F071F0452E9C919275DA99BED51EB1173C1AF0518726B75B0EC3BAE2B5
 
-# SHA(1) tests (from shatest.c)
+# SHA tests from RFC6234 section 8.5
 Digest = SHA1
-Input = 616263
+Input = "abc"
 Output = a9993e364706816aba3e25717850c26c9cd0d89d
+
+Digest = SHA1
+Input = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+Output = 84983e441c3bd26ebaae4aa1f95129e5e54670f1
+
+Digest = SHA1
+Input = "a"
+Ncopy = 1000
+Count = 1000
+Output = 34aa973cd4c4daa4f61eeb2bdbad27316534016f
+
+Digest = SHA224
+Input = "abc"
+Output = 23097d223405d8228642a477bda255b32aadbce4bda0b3f7e36c9da7
+
+Digest = SHA224
+Input = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+Output = 75388b16512776cc5dba5da1fd890150b0c6455cb4f58b1952522525
+
+Digest = SHA224
+Input = "a"
+Ncopy = 64
+Count = 15625
+Output = 20794655980c91d8bbb4c1ea97618a4bf03f42581948b2ee4ee7ad67
+
+Digest = SHA256
+Input = "abc"
+Output = ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+
+Digest = SHA256
+Input = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+Output = 248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1
+
+Digest = SHA256
+Input = "a"
+Ncopy = 288
+Count = 3472
+Input = "a"
+Ncopy = 64
+Output = cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0
+
+Digest = SHA384
+Input = "abc"
+Output = cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7
+
+Digest = SHA384
+Input = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"
+Output = 09330c33f71147e83d192fc782cd1b4753111b173b3b05d22fa08086e3b0f712fcc7c71a557e2db966c3e9fa91746039
+
+Digest = SHA384
+Input = "a"
+Ncopy = 64
+Count = 15625
+Output = 9d0e1809716474cb086e834e310a4a1ced149e9c00f248527972cec5704c2a5b07b8b3dc38ecc4ebae97ddd87f3d8985
+
+Digest = SHA512
+Input = "abc"
+Output = ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f
+
+Digest = SHA512
+Input = "abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"
+Output = 8e959b75dae313da8cf4f72814fc143f8f7779c6eb9f7fa17299aeadb6889018501d289e4900f7e4331b99dec4b5433ac7d329eeb6dd26545e96e55b874be909
+
+Digest = SHA512
+Input = "a"
+Ncopy = 288
+Count = 3472
+Input = "a"
+Ncopy = 64
+Output = e718483d0ce769644e2e42c7bc15b4638e1f98b13b2044285632a803afa973ebde0ff244877ea60a4cb0432ce577c31beb009c5c2c49aa2e4eadb217ad8cc09b
 
 # MD5 tests
 Digest = MD5
