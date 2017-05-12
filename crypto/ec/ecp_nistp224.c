@@ -79,7 +79,7 @@ typedef limb felem[4];
 typedef widelimb widefelem[7];
 
 /*
- * Field element represented as a byte arrary. 28*8 = 224 bits is also the
+ * Field element represented as a byte array. 28*8 = 224 bits is also the
  * group order size for the elliptic curve, and we also use this type for
  * scalars for point multiplication.
  */
