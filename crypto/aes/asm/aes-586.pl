@@ -159,7 +159,7 @@
 # combinations then attack becomes infeasible. This is why revised
 # AES_cbc_encrypt "dares" to switch to larger S-box when larger chunk
 # of data is to be processed in one stroke. The current size limit of
-# 512 bytes is chosen to provide same [diminishigly low] probability
+# 512 bytes is chosen to provide same [diminishingly low] probability
 # for cache-line to remain untouched in large chunk operation with
 # large S-box as for single block operation with compact S-box and
 # surely needs more careful consideration...
