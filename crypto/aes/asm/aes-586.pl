@@ -174,7 +174,7 @@
 # effectively slow down the operation by several *orders* of magnitute,
 # by ratio of time slice to duration of handful of AES rounds, which
 # unlikely to remain unnoticed. Not to mention that this also means
-# that he would spend correspondigly more time to collect enough
+# that he would spend correspondingly more time to collect enough
 # statistical data to mount the attack. It's probably appropriate to
 # say that if adversary reckons that this attack is beneficial and
 # risks to be noticed, you probably have larger problems having him
