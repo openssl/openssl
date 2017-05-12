@@ -4899,7 +4899,7 @@
 
   *) Disable the padding bug check when compression is in use. The padding
      bug check assumes the first packet is of even length, this is not
-     necessarily true if compresssion is enabled and can result in false
+     necessarily true if compression is enabled and can result in false
      positives causing handshake failure. The actual bug test is ancient
      code so it is hoped that implementations will either have fixed it by
      now or any which still have the bug do not support compression.
