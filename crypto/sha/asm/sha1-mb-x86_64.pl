@@ -1508,10 +1508,10 @@ avx2_handler:
 	mov	-48(%rax),%r15
 	mov	%rbx,144($context)	# restore context->Rbx
 	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore cotnext->R12
-	mov	%r13,224($context)	# restore cotnext->R13
-	mov	%r14,232($context)	# restore cotnext->R14
-	mov	%r15,240($context)	# restore cotnext->R15
+	mov	%r12,216($context)	# restore context->R12
+	mov	%r13,224($context)	# restore context->R13
+	mov	%r14,232($context)	# restore context->R14
+	mov	%r15,240($context)	# restore context->R15
 
 	lea	-56-10*16(%rax),%rsi
 	lea	512($context),%rdi	# &context.Xmm6
