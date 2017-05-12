@@ -37,7 +37,7 @@ operation.
 
 BIO_set_callback() and BIO_get_callback() set and retrieve the old format BIO
 callback. New code should not use these functions, but they are retained for
-backwards compatbility. Any callback set via BIO_set_callback_ex() will get
+backwards compatibility. Any callback set via BIO_set_callback_ex() will get
 called in preference to any set by BIO_set_callback().
 
 BIO_set_callback_arg() and BIO_get_callback_arg() are macros which can be
