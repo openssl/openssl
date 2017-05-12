@@ -1856,7 +1856,7 @@ $code.=<<___;
 	lea	`16*6`($inp),$inp
 	pxor	$twmask,$inout5
 
-	 pxor	$twres,@tweak[0]		# calclulate tweaks^round[last]
+	 pxor	$twres,@tweak[0]		# calculate tweaks^round[last]
 	aesenc		$rndkey1,$inout4
 	 pxor	$twres,@tweak[1]
 	 movdqa	@tweak[0],`16*0`(%rsp)		# put aside tweaks^round[last]
@@ -2342,7 +2342,7 @@ $code.=<<___;
 	lea	`16*6`($inp),$inp
 	pxor	$twmask,$inout5
 
-	 pxor	$twres,@tweak[0]		# calclulate tweaks^round[last]
+	 pxor	$twres,@tweak[0]		# calculate tweaks^round[last]
 	aesdec		$rndkey1,$inout4
 	 pxor	$twres,@tweak[1]
 	 movdqa	@tweak[0],`16*0`(%rsp)		# put aside tweaks^last round key
