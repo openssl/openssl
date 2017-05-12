@@ -125,7 +125,7 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
                       EC_R_INVALID_COMPRESSION_BIT);
             else
                 /*
-                 * BN_mod_sqrt() should have cought this error (not a square)
+                 * BN_mod_sqrt() should have caught this error (not a square)
                  */
                 ECerr(EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES,
                       EC_R_INVALID_COMPRESSED_POINT);
