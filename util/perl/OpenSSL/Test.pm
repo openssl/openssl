@@ -707,7 +707,7 @@ sub with {
 C<cmdstr> takes a CODEREF from C<app> or C<test> and simply returns the
 command as a string.
 
-C<cmdstr> takes some additiona options OPTS that affect the string returned:
+C<cmdstr> takes some additional options OPTS that affect the string returned:
 
 =over 4
 
