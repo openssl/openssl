@@ -5,7 +5,7 @@
 testapp = test_sect
 
 [test_sect]
-# list of confuration modules
+# list of configuration modules
 
 # SSL configuration module
 ssl_conf = ssl_sect
