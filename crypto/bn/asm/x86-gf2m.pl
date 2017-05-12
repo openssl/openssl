@@ -152,7 +152,7 @@ $R="mm0";
 	 &xor	($a4,$a2);		# a2=a4^a2^a4
 	 &mov	(&DWP(5*4,"esp"),$a1);	# a1^a4
 	 &xor	($a4,$a1);		# a1^a2^a4
-	&sar	(@i[1],31);		# broardcast 30th bit
+	&sar	(@i[1],31);		# broadcast 30th bit
 	&and	($lo,$b);
 	 &mov	(&DWP(6*4,"esp"),$a2);	# a2^a4
 	&and	(@i[1],$b);

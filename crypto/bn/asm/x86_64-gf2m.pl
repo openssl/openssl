@@ -68,7 +68,7 @@ _mul_1x1:
 	sar	\$63,$i0		# broadcast 62nd bit
 	lea	(,$a1,4),$a4
 	and	$b,$a
-	sar	\$63,$i1		# boardcast 61st bit
+	sar	\$63,$i1		# broadcast 61st bit
 	mov	$a,$hi			# $a is $lo
 	shl	\$63,$lo
 	and	$b,$i0
