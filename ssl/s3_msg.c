@@ -105,12 +105,10 @@ int ssl3_dispatch_alert(SSL *s)
         s->s3->alert_dispatch = 1;
     } else {
         /*
-         * Alert sent to BIO.  If it is important, flush it now. If the
-         * message does not get sent due to non-blocking IO, we will not
-         * worry too much.
+         * Alert sent to BIO - now flush. If the message does not get sent due
+         * to non-blocking IO, we will not worry too much.
          */
-        if (s->s3->send_alert[0] == SSL3_AL_FATAL)
-            (void)BIO_flush(s->wbio);
+        (void)BIO_flush(s->wbio);
 
         if (s->msg_callback)
             s->msg_callback(1, s->version, SSL3_RT_ALERT, s->s3->send_alert,
