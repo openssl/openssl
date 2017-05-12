@@ -15,7 +15,6 @@ setup("test_external_boringssl");
 
 plan skip_all => "No external tests in this configuration"
     if disabled("external-tests");
-
 plan skip_all => "BoringSSL runner not detected"
     if !$ENV{BORING_RUNNER_DIR};
 

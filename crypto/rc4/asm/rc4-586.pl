@@ -73,7 +73,7 @@ require "x86asm.pl";
 $output=pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],"rc4-586.pl",$x86only = $ARGV[$#ARGV] eq "386");
+&asm_init($ARGV[0],$x86only = $ARGV[$#ARGV] eq "386");
 
 $xx="eax";
 $yy="ebx";

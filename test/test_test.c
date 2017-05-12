@@ -17,33 +17,39 @@
 #include <openssl/opensslconf.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
+#include <openssl/bn.h>
 
 #include "e_os.h"
-#include "test_main.h"
 #include "testutil.h"
 
-#define C(l, b, t)                                      \
-    if ((t) != b) {                                     \
-        fprintf(stderr, "FATAL : %s != %d\n", #t, b);   \
-        goto l;                                         \
+#define TEST(expected, test) test_case((expected), #test, (test))
+
+static int test_case(int expected, const char *test, int result)
+{
+    if (result != expected) {
+        fprintf(stderr, "# FATAL: %s != %d\n", test, expected);
+        return 0;
     }
+    return 1;
+}
 
 static int test_int(void)
 {
-    C(err, 1, TEST_int_eq(1, 1));
-    C(err, 0, TEST_int_eq(1, -1));
-    C(err, 1, TEST_int_ne(1, 2));
-    C(err, 0, TEST_int_ne(3, 3));
-    C(err, 1, TEST_int_lt(4, 9));
-    C(err, 0, TEST_int_lt(9, 4));
-    C(err, 1, TEST_int_le(4, 9));
-    C(err, 1, TEST_int_le(5, 5));
-    C(err, 0, TEST_int_le(9, 4));
-    C(err, 1, TEST_int_gt(8, 5));
-    C(err, 0, TEST_int_gt(5, 8));
-    C(err, 1, TEST_int_ge(8, 5));
-    C(err, 1, TEST_int_ge(6, 6));
-    C(err, 0, TEST_int_ge(5, 8));
+    if (!TEST(1, TEST_int_eq(1, 1))
+        | !TEST(0, TEST_int_eq(1, -1))
+        | !TEST(1, TEST_int_ne(1, 2))
+        | !TEST(0, TEST_int_ne(3, 3))
+        | !TEST(1, TEST_int_lt(4, 9))
+        | !TEST(0, TEST_int_lt(9, 4))
+        | !TEST(1, TEST_int_le(4, 9))
+        | !TEST(1, TEST_int_le(5, 5))
+        | !TEST(0, TEST_int_le(9, 4))
+        | !TEST(1, TEST_int_gt(8, 5))
+        | !TEST(0, TEST_int_gt(5, 8))
+        | !TEST(1, TEST_int_ge(8, 5))
+        | !TEST(1, TEST_int_ge(6, 6))
+        | !TEST(0, TEST_int_ge(5, 8)))
+        goto err;
     return 1;
 
 err:
@@ -52,20 +58,21 @@ err:
 
 static int test_uint(void)
 {
-    C(err, 1, TEST_uint_eq(3u, 3u));
-    C(err, 0, TEST_uint_eq(3u, 5u));
-    C(err, 1, TEST_uint_ne(4u, 2u));
-    C(err, 0, TEST_uint_ne(6u, 6u));
-    C(err, 1, TEST_uint_lt(5u, 9u));
-    C(err, 0, TEST_uint_lt(9u, 5u));
-    C(err, 1, TEST_uint_le(5u, 9u));
-    C(err, 1, TEST_uint_le(7u, 7u));
-    C(err, 0, TEST_uint_le(9u, 5u));
-    C(err, 1, TEST_uint_gt(11u, 1u));
-    C(err, 0, TEST_uint_gt(1u, 11u));
-    C(err, 1, TEST_uint_ge(11u, 1u));
-    C(err, 1, TEST_uint_ge(6u, 6u));
-    C(err, 0, TEST_uint_ge(1u, 11u));
+    if (!TEST(1, TEST_uint_eq(3u, 3u))
+        | !TEST(0, TEST_uint_eq(3u, 5u))
+        | !TEST(1, TEST_uint_ne(4u, 2u))
+        | !TEST(0, TEST_uint_ne(6u, 6u))
+        | !TEST(1, TEST_uint_lt(5u, 9u))
+        | !TEST(0, TEST_uint_lt(9u, 5u))
+        | !TEST(1, TEST_uint_le(5u, 9u))
+        | !TEST(1, TEST_uint_le(7u, 7u))
+        | !TEST(0, TEST_uint_le(9u, 5u))
+        | !TEST(1, TEST_uint_gt(11u, 1u))
+        | !TEST(0, TEST_uint_gt(1u, 11u))
+        | !TEST(1, TEST_uint_ge(11u, 1u))
+        | !TEST(1, TEST_uint_ge(6u, 6u))
+        | !TEST(0, TEST_uint_ge(1u, 11u)))
+        goto err;
     return 1;
 
 err:
@@ -74,20 +81,21 @@ err:
 
 static int test_char(void)
 {
-    C(err, 1, TEST_char_eq('a', 'a'));
-    C(err, 0, TEST_char_eq('a', 'A'));
-    C(err, 1, TEST_char_ne('a', 'c'));
-    C(err, 0, TEST_char_ne('e', 'e'));
-    C(err, 1, TEST_char_lt('i', 'x'));
-    C(err, 0, TEST_char_lt('x', 'i'));
-    C(err, 1, TEST_char_le('i', 'x'));
-    C(err, 1, TEST_char_le('n', 'n'));
-    C(err, 0, TEST_char_le('x', 'i'));
-    C(err, 1, TEST_char_gt('w', 'n'));
-    C(err, 0, TEST_char_gt('n', 'w'));
-    C(err, 1, TEST_char_ge('w', 'n'));
-    C(err, 1, TEST_char_ge('p', 'p'));
-    C(err, 0, TEST_char_ge('n', 'w'));
+    if (!TEST(1, TEST_char_eq('a', 'a'))
+        | !TEST(0, TEST_char_eq('a', 'A'))
+        | !TEST(1, TEST_char_ne('a', 'c'))
+        | !TEST(0, TEST_char_ne('e', 'e'))
+        | !TEST(1, TEST_char_lt('i', 'x'))
+        | !TEST(0, TEST_char_lt('x', 'i'))
+        | !TEST(1, TEST_char_le('i', 'x'))
+        | !TEST(1, TEST_char_le('n', 'n'))
+        | !TEST(0, TEST_char_le('x', 'i'))
+        | !TEST(1, TEST_char_gt('w', 'n'))
+        | !TEST(0, TEST_char_gt('n', 'w'))
+        | !TEST(1, TEST_char_ge('w', 'n'))
+        | !TEST(1, TEST_char_ge('p', 'p'))
+        | !TEST(0, TEST_char_ge('n', 'w')))
+        goto err;
     return 1;
 
 err:
@@ -96,20 +104,21 @@ err:
 
 static int test_uchar(void)
 {
-    C(err, 1, TEST_uchar_eq(49, 49));
-    C(err, 0, TEST_uchar_eq(49, 60));
-    C(err, 1, TEST_uchar_ne(50, 2));
-    C(err, 0, TEST_uchar_ne(66, 66));
-    C(err, 1, TEST_uchar_lt(60, 80));
-    C(err, 0, TEST_uchar_lt(80, 60));
-    C(err, 1, TEST_uchar_le(60, 80));
-    C(err, 1, TEST_uchar_le(78, 78));
-    C(err, 0, TEST_uchar_le(80, 60));
-    C(err, 1, TEST_uchar_gt(88, 37));
-    C(err, 0, TEST_uchar_gt(37, 88));
-    C(err, 1, TEST_uchar_ge(88, 37));
-    C(err, 1, TEST_uchar_ge(66, 66));
-    C(err, 0, TEST_uchar_ge(37, 88));
+    if (!TEST(1, TEST_uchar_eq(49, 49))
+        | !TEST(0, TEST_uchar_eq(49, 60))
+        | !TEST(1, TEST_uchar_ne(50, 2))
+        | !TEST(0, TEST_uchar_ne(66, 66))
+        | !TEST(1, TEST_uchar_lt(60, 80))
+        | !TEST(0, TEST_uchar_lt(80, 60))
+        | !TEST(1, TEST_uchar_le(60, 80))
+        | !TEST(1, TEST_uchar_le(78, 78))
+        | !TEST(0, TEST_uchar_le(80, 60))
+        | !TEST(1, TEST_uchar_gt(88, 37))
+        | !TEST(0, TEST_uchar_gt(37, 88))
+        | !TEST(1, TEST_uchar_ge(88, 37))
+        | !TEST(1, TEST_uchar_ge(66, 66))
+        | !TEST(0, TEST_uchar_ge(37, 88)))
+        goto err;
     return 1;
 
 err:
@@ -118,20 +127,21 @@ err:
 
 static int test_long(void)
 {
-    C(err, 1, TEST_long_eq(123l, 123l));
-    C(err, 0, TEST_long_eq(123l, -123l));
-    C(err, 1, TEST_long_ne(123l, 500l));
-    C(err, 0, TEST_long_ne(1000l, 1000l));
-    C(err, 1, TEST_long_lt(-8923l, 102934563l));
-    C(err, 0, TEST_long_lt(102934563l, -8923l));
-    C(err, 1, TEST_long_le(-8923l, 102934563l));
-    C(err, 1, TEST_long_le(12345l, 12345l));
-    C(err, 0, TEST_long_le(102934563l, -8923l));
-    C(err, 1, TEST_long_gt(84325677l, 12345l));
-    C(err, 0, TEST_long_gt(12345l, 84325677l));
-    C(err, 1, TEST_long_ge(84325677l, 12345l));
-    C(err, 1, TEST_long_ge(465869l, 465869l));
-    C(err, 0, TEST_long_ge(12345l, 84325677l));
+    if (!TEST(1, TEST_long_eq(123l, 123l))
+        | !TEST(0, TEST_long_eq(123l, -123l))
+        | !TEST(1, TEST_long_ne(123l, 500l))
+        | !TEST(0, TEST_long_ne(1000l, 1000l))
+        | !TEST(1, TEST_long_lt(-8923l, 102934563l))
+        | !TEST(0, TEST_long_lt(102934563l, -8923l))
+        | !TEST(1, TEST_long_le(-8923l, 102934563l))
+        | !TEST(1, TEST_long_le(12345l, 12345l))
+        | !TEST(0, TEST_long_le(102934563l, -8923l))
+        | !TEST(1, TEST_long_gt(84325677l, 12345l))
+        | !TEST(0, TEST_long_gt(12345l, 84325677l))
+        | !TEST(1, TEST_long_ge(84325677l, 12345l))
+        | !TEST(1, TEST_long_ge(465869l, 465869l))
+        | !TEST(0, TEST_long_ge(12345l, 84325677l)))
+        goto err;
     return 1;
 
 err:
@@ -140,20 +150,21 @@ err:
 
 static int test_ulong(void)
 {
-    C(err, 1, TEST_ulong_eq(919ul, 919ul));
-    C(err, 0, TEST_ulong_eq(919ul, 10234ul));
-    C(err, 1, TEST_ulong_ne(8190ul, 66ul));
-    C(err, 0, TEST_ulong_ne(10555ul, 10555ul));
-    C(err, 1, TEST_ulong_lt(10234ul, 1000000ul));
-    C(err, 0, TEST_ulong_lt(1000000ul, 10234ul));
-    C(err, 1, TEST_ulong_le(10234ul, 1000000ul));
-    C(err, 1, TEST_ulong_le(100000ul, 100000ul));
-    C(err, 0, TEST_ulong_le(1000000ul, 10234ul));
-    C(err, 1, TEST_ulong_gt(100000000ul, 22ul));
-    C(err, 0, TEST_ulong_gt(22ul, 100000000ul));
-    C(err, 1, TEST_ulong_ge(100000000ul, 22ul));
-    C(err, 1, TEST_ulong_ge(10555ul, 10555ul));
-    C(err, 0, TEST_ulong_ge(22ul, 100000000ul));
+    if (!TEST(1, TEST_ulong_eq(919ul, 919ul))
+        | !TEST(0, TEST_ulong_eq(919ul, 10234ul))
+        | !TEST(1, TEST_ulong_ne(8190ul, 66ul))
+        | !TEST(0, TEST_ulong_ne(10555ul, 10555ul))
+        | !TEST(1, TEST_ulong_lt(10234ul, 1000000ul))
+        | !TEST(0, TEST_ulong_lt(1000000ul, 10234ul))
+        | !TEST(1, TEST_ulong_le(10234ul, 1000000ul))
+        | !TEST(1, TEST_ulong_le(100000ul, 100000ul))
+        | !TEST(0, TEST_ulong_le(1000000ul, 10234ul))
+        | !TEST(1, TEST_ulong_gt(100000000ul, 22ul))
+        | !TEST(0, TEST_ulong_gt(22ul, 100000000ul))
+        | !TEST(1, TEST_ulong_ge(100000000ul, 22ul))
+        | !TEST(1, TEST_ulong_ge(10555ul, 10555ul))
+        | !TEST(0, TEST_ulong_ge(22ul, 100000000ul)))
+        goto err;
     return 1;
 
 err:
@@ -162,20 +173,21 @@ err:
 
 static int test_size_t(void)
 {
-    C(err, 1, TEST_int_eq((size_t)10, (size_t)10));
-    C(err, 0, TEST_int_eq((size_t)10, (size_t)12));
-    C(err, 1, TEST_int_ne((size_t)10, (size_t)12));
-    C(err, 0, TEST_int_ne((size_t)24, (size_t)24));
-    C(err, 1, TEST_int_lt((size_t)30, (size_t)88));
-    C(err, 0, TEST_int_lt((size_t)88, (size_t)30));
-    C(err, 1, TEST_int_le((size_t)30, (size_t)88));
-    C(err, 1, TEST_int_le((size_t)33, (size_t)33));
-    C(err, 0, TEST_int_le((size_t)88, (size_t)30));
-    C(err, 1, TEST_int_gt((size_t)52, (size_t)33));
-    C(err, 0, TEST_int_gt((size_t)33, (size_t)52));
-    C(err, 1, TEST_int_ge((size_t)52, (size_t)33));
-    C(err, 1, TEST_int_ge((size_t)38, (size_t)38));
-    C(err, 0, TEST_int_ge((size_t)33, (size_t)52));
+    if (!TEST(1, TEST_int_eq((size_t)10, (size_t)10))
+        | !TEST(0, TEST_int_eq((size_t)10, (size_t)12))
+        | !TEST(1, TEST_int_ne((size_t)10, (size_t)12))
+        | !TEST(0, TEST_int_ne((size_t)24, (size_t)24))
+        | !TEST(1, TEST_int_lt((size_t)30, (size_t)88))
+        | !TEST(0, TEST_int_lt((size_t)88, (size_t)30))
+        | !TEST(1, TEST_int_le((size_t)30, (size_t)88))
+        | !TEST(1, TEST_int_le((size_t)33, (size_t)33))
+        | !TEST(0, TEST_int_le((size_t)88, (size_t)30))
+        | !TEST(1, TEST_int_gt((size_t)52, (size_t)33))
+        | !TEST(0, TEST_int_gt((size_t)33, (size_t)52))
+        | !TEST(1, TEST_int_ge((size_t)52, (size_t)33))
+        | !TEST(1, TEST_int_ge((size_t)38, (size_t)38))
+        | !TEST(0, TEST_int_ge((size_t)33, (size_t)52)))
+        goto err;
     return 1;
 
 err:
@@ -187,20 +199,21 @@ static int test_pointer(void)
     int x = 0;
     char y = 1;
 
-    C(err, 1, TEST_ptr(&y));
-    C(err, 0, TEST_ptr(NULL));
-    C(err, 0, TEST_ptr_null(&y));
-    C(err, 1, TEST_ptr_null(NULL));
-    C(err, 1, TEST_ptr_eq(NULL, NULL));
-    C(err, 0, TEST_ptr_eq(NULL, &y));
-    C(err, 0, TEST_ptr_eq(&y, NULL));
-    C(err, 0, TEST_ptr_eq(&y, &x));
-    C(err, 1, TEST_ptr_eq(&x, &x));
-    C(err, 0, TEST_ptr_ne(NULL, NULL));
-    C(err, 1, TEST_ptr_ne(NULL, &y));
-    C(err, 1, TEST_ptr_ne(&y, NULL));
-    C(err, 1, TEST_ptr_ne(&y, &x));
-    C(err, 0, TEST_ptr_ne(&x, &x));
+    if (!TEST(1, TEST_ptr(&y))
+        | !TEST(0, TEST_ptr(NULL))
+        | !TEST(0, TEST_ptr_null(&y))
+        | !TEST(1, TEST_ptr_null(NULL))
+        | !TEST(1, TEST_ptr_eq(NULL, NULL))
+        | !TEST(0, TEST_ptr_eq(NULL, &y))
+        | !TEST(0, TEST_ptr_eq(&y, NULL))
+        | !TEST(0, TEST_ptr_eq(&y, &x))
+        | !TEST(1, TEST_ptr_eq(&x, &x))
+        | !TEST(0, TEST_ptr_ne(NULL, NULL))
+        | !TEST(1, TEST_ptr_ne(NULL, &y))
+        | !TEST(1, TEST_ptr_ne(&y, NULL))
+        | !TEST(1, TEST_ptr_ne(&y, &x))
+        | !TEST(0, TEST_ptr_ne(&x, &x)))
+        goto err;
     return 1;
 
 err:
@@ -209,10 +222,11 @@ err:
 
 static int test_bool(void)
 {
-    C(err, 0, TEST_true(0));
-    C(err, 1, TEST_true(1));
-    C(err, 1, TEST_false(0));
-    C(err, 0, TEST_false(1));
+    if (!TEST(0, TEST_true(0))
+        | !TEST(1, TEST_true(1))
+        | !TEST(1, TEST_false(0))
+        | !TEST(0, TEST_false(1)))
+        goto err;
     return 1;
 
 err:
@@ -222,14 +236,21 @@ err:
 static int test_string(void)
 {
     static char buf[] = "abc";
-    C(err, 1, TEST_str_eq(NULL, NULL));
-    C(err, 1, TEST_str_eq("abc", buf));
-    C(err, 0, TEST_str_eq("abc", NULL));
-    C(err, 0, TEST_str_eq(NULL, buf));
-    C(err, 0, TEST_str_ne(NULL, NULL));
-    C(err, 0, TEST_str_ne("abc", buf));
-    C(err, 1, TEST_str_ne("abc", NULL));
-    C(err, 1, TEST_str_ne(NULL, buf));
+
+    if (!TEST(1, TEST_str_eq(NULL, NULL))
+        | !TEST(1, TEST_str_eq("abc", buf))
+        | !TEST(0, TEST_str_eq("abc", NULL))
+        | !TEST(0, TEST_str_eq("abc", ""))
+        | !TEST(0, TEST_str_eq(NULL, buf))
+        | !TEST(0, TEST_str_ne(NULL, NULL))
+        | !TEST(0, TEST_str_eq("", NULL))
+        | !TEST(0, TEST_str_eq(NULL, ""))
+        | !TEST(0, TEST_str_ne("", ""))
+        | !TEST(0, TEST_str_eq("\1\2\3\4\5", "\1x\3\6\5"))
+        | !TEST(0, TEST_str_ne("abc", buf))
+        | !TEST(1, TEST_str_ne("abc", NULL))
+        | !TEST(1, TEST_str_ne(NULL, buf)))
+        goto err;
     return 1;
 
 err:
@@ -239,17 +260,118 @@ err:
 static int test_memory(void)
 {
     static char buf[] = "xyz";
-    C(err, 1, TEST_mem_eq(NULL, 0, NULL, 0));
-    C(err, 1, TEST_mem_eq(NULL, 1, NULL, 2));
-    C(err, 0, TEST_mem_eq(NULL, 0, "xyz", 3));
-    C(err, 0, TEST_mem_eq(NULL, 0, "", 0));
-    C(err, 0, TEST_mem_eq("xyz", 3, NULL, 0));
-    C(err, 0, TEST_mem_eq("xyz", 3, buf, sizeof(buf)));
-    C(err, 1, TEST_mem_eq("xyz", 4, buf, sizeof(buf)));
+
+    if (!TEST(1, TEST_mem_eq(NULL, 0, NULL, 0))
+        | !TEST(1, TEST_mem_eq(NULL, 1, NULL, 2))
+        | !TEST(0, TEST_mem_eq(NULL, 0, "xyz", 3))
+        | !TEST(0, TEST_mem_eq(NULL, 7, "abc", 3))
+        | !TEST(0, TEST_mem_ne(NULL, 0, NULL, 0))
+        | !TEST(0, TEST_mem_eq(NULL, 0, "", 0))
+        | !TEST(0, TEST_mem_eq("", 0, NULL, 0))
+        | !TEST(0, TEST_mem_ne("", 0, "", 0))
+        | !TEST(0, TEST_mem_eq("xyz", 3, NULL, 0))
+        | !TEST(0, TEST_mem_eq("xyz", 3, buf, sizeof(buf)))
+        | !TEST(1, TEST_mem_eq("xyz", 4, buf, sizeof(buf))))
+        goto err;
     return 1;
 
 err:
     return 0;
+}
+
+static int test_memory_overflow(void)
+{
+    /* Verify that the memory printing overflows without walking the stack */
+    const char *p = "1234567890123456789012345678901234567890123456789012";
+    const char *q = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    return TEST(0, TEST_mem_eq(p, strlen(p), q, strlen(q)));
+}
+
+static int test_bignum(void)
+{
+    BIGNUM *a = NULL, *b = NULL, *c = NULL;
+    int r = 0;
+
+    if (!TEST(1, TEST_int_eq(BN_dec2bn(&a, "0"), 1))
+        | !TEST(1, TEST_BN_eq_word(a, 0))
+        | !TEST(0, TEST_BN_eq_word(a, 30))
+        | !TEST(1, TEST_BN_abs_eq_word(a, 0))
+        | !TEST(0, TEST_BN_eq_one(a))
+        | !TEST(1, TEST_BN_eq_zero(a))
+        | !TEST(0, TEST_BN_ne_zero(a))
+        | !TEST(1, TEST_BN_le_zero(a))
+        | !TEST(0, TEST_BN_lt_zero(a))
+        | !TEST(1, TEST_BN_ge_zero(a))
+        | !TEST(0, TEST_BN_gt_zero(a))
+        | !TEST(1, TEST_BN_even(a))
+        | !TEST(0, TEST_BN_odd(a))
+        | !TEST(1, TEST_int_eq(BN_dec2bn(&b, "1"), 1))
+        | !TEST(1, TEST_BN_eq_word(b, 1))
+        | !TEST(1, TEST_BN_eq_one(b))
+        | !TEST(0, TEST_BN_abs_eq_word(b, 0))
+        | !TEST(1, TEST_BN_abs_eq_word(b, 1))
+        | !TEST(0, TEST_BN_eq_zero(b))
+        | !TEST(1, TEST_BN_ne_zero(b))
+        | !TEST(0, TEST_BN_le_zero(b))
+        | !TEST(0, TEST_BN_lt_zero(b))
+        | !TEST(1, TEST_BN_ge_zero(b))
+        | !TEST(1, TEST_BN_gt_zero(b))
+        | !TEST(0, TEST_BN_even(b))
+        | !TEST(1, TEST_BN_odd(b))
+        | !TEST(1, TEST_int_eq(BN_dec2bn(&c, "-334739439"), 10))
+        | !TEST(0, TEST_BN_eq_word(c, 334739439))
+        | !TEST(1, TEST_BN_abs_eq_word(c, 334739439))
+        | !TEST(0, TEST_BN_eq_zero(c))
+        | !TEST(1, TEST_BN_ne_zero(c))
+        | !TEST(1, TEST_BN_le_zero(c))
+        | !TEST(1, TEST_BN_lt_zero(c))
+        | !TEST(0, TEST_BN_ge_zero(c))
+        | !TEST(0, TEST_BN_gt_zero(c))
+        | !TEST(0, TEST_BN_even(c))
+        | !TEST(1, TEST_BN_odd(c))
+        | !TEST(1, TEST_BN_eq(a, a))
+        | !TEST(0, TEST_BN_ne(a, a))
+        | !TEST(0, TEST_BN_eq(a, b))
+        | !TEST(1, TEST_BN_ne(a, b))
+        | !TEST(0, TEST_BN_lt(a, c))
+        | !TEST(1, TEST_BN_lt(c, b))
+        | !TEST(0, TEST_BN_lt(b, c))
+        | !TEST(0, TEST_BN_le(a, c))
+        | !TEST(1, TEST_BN_le(c, b))
+        | !TEST(0, TEST_BN_le(b, c))
+        | !TEST(1, TEST_BN_gt(a, c))
+        | !TEST(0, TEST_BN_gt(c, b))
+        | !TEST(1, TEST_BN_gt(b, c))
+        | !TEST(1, TEST_BN_ge(a, c))
+        | !TEST(0, TEST_BN_ge(c, b))
+        | !TEST(1, TEST_BN_ge(b, c)))
+        goto err;
+
+    r = 1;
+err:
+    BN_free(a);
+    BN_free(b);
+    BN_free(c);
+    return r;
+}
+
+static int test_long_output(void)
+{
+    const char *p = "1234567890123456789012345678901234567890123456789012";
+    const char *q = "1234567890klmnopqrs01234567890EFGHIJKLM0123456789XYZ";
+    const char *r = "1234567890123456789012345678901234567890123456789012"
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY+"
+                    "12345678901234567890123ABC78901234567890123456789012";
+    const char *s = "1234567890123456789012345678901234567890123456789012"
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY-"
+                    "1234567890123456789012345678901234567890123456789012"
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    return TEST(0, TEST_str_eq(p,  q))
+           & TEST(0, TEST_str_eq(q, r))
+           & TEST(0, TEST_str_eq(r, s))
+           & TEST(0, TEST_mem_eq(r, strlen(r), s, strlen(s)));
 }
 
 static int test_messages(void)
@@ -327,6 +449,9 @@ void register_tests(void)
     ADD_TEST(test_bool);
     ADD_TEST(test_string);
     ADD_TEST(test_memory);
+    ADD_TEST(test_memory_overflow);
+    ADD_TEST(test_bignum);
+    ADD_TEST(test_long_output);
     ADD_TEST(test_messages);
     ADD_TEST(test_single_eval);
 }

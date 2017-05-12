@@ -135,7 +135,6 @@ typedef struct bio_dgram_sctp_data_st {
     int ccs_sent;
     int save_shutdown;
     int peer_auth_tested;
-    bio_dgram_sctp_save_message saved_message;
 } bio_dgram_sctp_data;
 # endif
 
@@ -842,6 +841,8 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
                    sizeof(struct sctp_authchunk));
     if (ret < 0) {
         BIO_vfree(bio);
+        BIOerr(BIO_F_BIO_NEW_DGRAM_SCTP, ERR_R_SYS_LIB);
+        ERR_add_error_data(1, "Ensure SCTP AUTH chunks are enabled in kernel");
         return (NULL);
     }
     auth.sauth_chunk = OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE;
@@ -850,13 +851,16 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
                    sizeof(struct sctp_authchunk));
     if (ret < 0) {
         BIO_vfree(bio);
+        BIOerr(BIO_F_BIO_NEW_DGRAM_SCTP, ERR_R_SYS_LIB);
+        ERR_add_error_data(1, "Ensure SCTP AUTH chunks are enabled in kernel");
         return (NULL);
     }
 
     /*
      * Test if activation was successful. When using accept(), SCTP-AUTH has
      * to be activated for the listening socket already, otherwise the
-     * connected socket won't use it.
+     * connected socket won't use it. Similarly with connect(): the socket
+     * prior to connection must be activated for SCTP-AUTH
      */
     sockopt_len = (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
     authchunks = OPENSSL_zalloc(sockopt_len);
@@ -883,8 +887,14 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 
     OPENSSL_free(authchunks);
 
-    OPENSSL_assert(auth_data);
-    OPENSSL_assert(auth_forward);
+    if (!auth_data || !auth_forward) {
+        BIO_vfree(bio);
+        BIOerr(BIO_F_BIO_NEW_DGRAM_SCTP, ERR_R_SYS_LIB);
+        ERR_add_error_data(1,
+                           "Ensure SCTP AUTH chunks are enabled on the "
+                           "underlying socket");
+        return NULL;
+    }
 
 #  ifdef SCTP_AUTHENTICATION_EVENT
 #   ifdef SCTP_EVENT
@@ -967,10 +977,8 @@ static int dgram_sctp_free(BIO *a)
         return 0;
 
     data = (bio_dgram_sctp_data *) a->ptr;
-    if (data != NULL) {
-        OPENSSL_free(data->saved_message.data);
+    if (data != NULL)
         OPENSSL_free(data);
-    }
 
     return (1);
 }
@@ -1072,22 +1080,6 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
                     struct sctp_event_subscribe event;
                     socklen_t eventsize;
 #  endif
-                    /*
-                     * If a message has been delayed until the socket is dry,
-                     * it can be sent now.
-                     */
-                    if (data->saved_message.length > 0) {
-                        i = dgram_sctp_write(data->saved_message.bio,
-                                         data->saved_message.data,
-                                         data->saved_message.length);
-                        if (i < 0) {
-                            ret = i;
-                            break;
-                        }
-                        OPENSSL_free(data->saved_message.data);
-                        data->saved_message.data = NULL;
-                        data->saved_message.length = 0;
-                    }
 
                     /* disable sender dry event */
 #  ifdef SCTP_EVENT
@@ -1270,27 +1262,15 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
         sinfo = &handshake_sinfo;
     }
 
-    /*
-     * If we have to send a shutdown alert message and the socket is not dry
-     * yet, we have to save it and send it as soon as the socket gets dry.
-     */
+    /* We can only send a shutdown alert if the socket is dry */
     if (data->save_shutdown) {
         ret = BIO_dgram_sctp_wait_for_dry(b);
-        if (ret < 0) {
+        if (ret < 0)
             return -1;
-        }
         if (ret == 0) {
-            char *tmp;
-            data->saved_message.bio = b;
-            if ((tmp = OPENSSL_malloc(inl)) == NULL) {
-                BIOerr(BIO_F_DGRAM_SCTP_WRITE, ERR_R_MALLOC_FAILURE);
-                return -1;
-            }
-            OPENSSL_free(data->saved_message.data);
-            data->saved_message.data = tmp;
-            memcpy(data->saved_message.data, in, inl);
-            data->saved_message.length = inl;
-            return inl;
+            BIO_clear_retry_flags(b);
+            BIO_set_retry_write(b);
+            return -1;
         }
     }
 

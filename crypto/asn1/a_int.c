@@ -167,10 +167,21 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
         }
         return 1;
     }
-    if (p[0] == 0 || p[0] == 0xFF)
+
+    pad = 0;
+    if (p[0] == 0) {
         pad = 1;
-    else
-        pad = 0;
+    } else if (p[0] == 0xFF) {
+        size_t i;
+
+        /*
+         * Special case [of "one less minimal negative" for given length]:
+         * if any other bytes non zero it was padded, otherwise not.
+         */
+        for (pad = 0, i = 1; i < plen; i++)
+            pad |= p[i];
+        pad = pad != 0 ? 1 : 0;
+    }
     /* reject illegal padding: first two octets MSB can't match */
     if (pad && (neg == (p[1] & 0x80))) {
         ASN1err(ASN1_F_C2I_IBUF, ASN1_R_ILLEGAL_PADDING);

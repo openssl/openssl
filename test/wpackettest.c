@@ -22,17 +22,16 @@
 #endif
 
 #include "testutil.h"
-#include "test_main_custom.h"
 
-const static unsigned char simple1[] = { 0xff };
-const static unsigned char simple2[] = { 0x01, 0xff };
-const static unsigned char simple3[] = { 0x00, 0x00, 0x00, 0x01, 0xff };
-const static unsigned char nestedsub[] = { 0x03, 0xff, 0x01, 0xff };
-const static unsigned char seqsub[] = { 0x01, 0xff, 0x01, 0xff };
-const static unsigned char empty[] = { 0x00 };
-const static unsigned char alloc[] = { 0x02, 0xfe, 0xff };
-const static unsigned char submem[] = { 0x03, 0x02, 0xfe, 0xff };
-const static unsigned char fixed[] = { 0xff, 0xff, 0xff };
+static const unsigned char simple1[] = { 0xff };
+static const unsigned char simple2[] = { 0x01, 0xff };
+static const unsigned char simple3[] = { 0x00, 0x00, 0x00, 0x01, 0xff };
+static const unsigned char nestedsub[] = { 0x03, 0xff, 0x01, 0xff };
+static const unsigned char seqsub[] = { 0x01, 0xff, 0x01, 0xff };
+static const unsigned char empty[] = { 0x00 };
+static const unsigned char alloc[] = { 0x02, 0xfe, 0xff };
+static const unsigned char submem[] = { 0x03, 0x02, 0xfe, 0xff };
+static const unsigned char fixed[] = { 0xff, 0xff, 0xff };
 
 static BUF_MEM *buf;
 

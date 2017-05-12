@@ -23,7 +23,6 @@
 #endif
 
 #include "testutil.h"
-#include "test_main.h"
 
 /*
  * Based on the test vectors provided in:
@@ -358,21 +357,21 @@ static int test_tls13_encryption(void)
 
         /* Encrypt it */
         if (!TEST_size_t_eq(tls13_enc(s, &rec, 1, 1), 1)) {
-            TEST_info("Failed to encrypt record %"OSSLzu"", ctr);
+            TEST_info("Failed to encrypt record %zu", ctr);
             goto err;
         }
         if (!TEST_true(test_record(&rec, &refdata[ctr], 1))) {
-            TEST_info("Record %"OSSLzu" encryption test failed", ctr);
+            TEST_info("Record %zu encryption test failed", ctr);
             goto err;
         }
 
         /* Decrypt it */
         if (!TEST_int_eq(tls13_enc(s, &rec, 1, 0), 1)) {
-            TEST_info("Failed to decrypt record %"OSSLzu"", ctr);
+            TEST_info("Failed to decrypt record %zu", ctr);
             goto err;
         }
         if (!TEST_true(test_record(&rec, &refdata[ctr], 0))) {
-            TEST_info("Record %"OSSLzu" decryption test failed", ctr);
+            TEST_info("Record %zu decryption test failed", ctr);
             goto err;
         }
 

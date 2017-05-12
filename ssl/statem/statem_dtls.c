@@ -214,6 +214,9 @@ int dtls1_do_write(SSL *s, int type)
         else
             len = s->init_num;
 
+        if (len > s->max_send_fragment)
+            len = s->max_send_fragment;
+
         /*
          * XDTLS: this function is too long.  split out the CCS part
          */

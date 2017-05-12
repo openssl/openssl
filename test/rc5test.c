@@ -10,7 +10,6 @@
 #include <string.h>
 
 #include "../e_os.h"
-#include "test_main.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_RC5
@@ -217,7 +216,7 @@ static int test_rc5_cbc(int n)
         memcpy(ivb, &rc5_cbc_iv[n][0], 8);
         RC5_32_cbc_encrypt(buf, buf2, 8, &key, &ivb[0], RC5_DECRYPT);
         if (!TEST_mem_eq(&rc5_cbc_plain[n][0], sizeof(rc5_cbc_plain[0]),
-                         buf2, sizeof(buf2)) != 0)
+                         buf2, sizeof(buf2)))
             testresult = 0;
     }
 

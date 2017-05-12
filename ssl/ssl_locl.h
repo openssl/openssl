@@ -973,6 +973,11 @@ struct ssl_ctx_st {
 
     /* The maximum number of bytes that can be sent as early data */
     uint32_t max_early_data;
+
+    /* TLS1.3 padding callback */
+    size_t (*record_padding_cb)(SSL *s, int type, size_t len, void *arg);
+    void *record_padding_arg;
+    size_t block_padding;
 };
 
 struct ssl_st {
@@ -1288,6 +1293,11 @@ struct ssl_st {
      * this is a count of the ciphertext bytes.
      */
     uint32_t early_data_count;
+
+    /* TLS1.3 padding callback */
+    size_t (*record_padding_cb)(SSL *s, int type, size_t len, void *arg);
+    void *record_padding_arg;
+    size_t block_padding;
 
     CRYPTO_RWLOCK *lock;
 };
@@ -2194,8 +2204,7 @@ __owur int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello,
                                      DOWNGRADE *dgrd);
 __owur int ssl_choose_client_version(SSL *s, int version, int checkdgrd,
                                      int *al);
-int ssl_get_client_min_max_version(const SSL *s, int *min_version,
-                                   int *max_version);
+int ssl_get_min_max_version(const SSL *s, int *min_version, int *max_version);
 
 __owur long tls1_default_timeout(void);
 __owur int dtls1_do_write(SSL *s, int type);
@@ -2394,7 +2403,7 @@ __owur int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey);
 __owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs);
 __owur int tls12_check_peer_sigalg(SSL *s, uint16_t, EVP_PKEY *pkey);
 void ssl_set_client_disabled(SSL *s);
-__owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op);
+__owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op, int echde);
 
 __owur int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
                                  size_t *hashlen);
@@ -2461,6 +2470,8 @@ __owur int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x,
 
 __owur int custom_exts_copy(custom_ext_methods *dst,
                             const custom_ext_methods *src);
+__owur int custom_exts_copy_flags(custom_ext_methods *dst,
+                                  const custom_ext_methods *src);
 void custom_exts_free(custom_ext_methods *exts);
 
 void ssl_comp_free_compression_methods_int(void);

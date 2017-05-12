@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <openssl/crypto.h>
 
-#include "test_main.h"
 #include "testutil.h"
 
 static long saved_argl;

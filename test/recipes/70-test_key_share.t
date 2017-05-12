@@ -24,7 +24,8 @@ use constant {
     KEX_LEN_MISMATCH => 8,
     ZERO_LEN_KEX_DATA => 9,
     TRAILING_DATA => 10,
-    SELECT_X25519 => 11
+    SELECT_X25519 => 11,
+    NO_KEY_SHARES_IN_HRR => 12
 };
 
 use constant {
@@ -75,7 +76,7 @@ $direction = CLIENT_TO_SERVER;
 $proxy->filter(\&modify_key_shares_filter);
 $proxy->serverflags("-curves P-256");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 21;
+plan tests => 22;
 ok(TLSProxy::Message->success(), "Success after HRR");
 
 #Test 2: The server sending an HRR requesting a group the client already sent
@@ -219,12 +220,21 @@ $proxy->serverflags("-no_tls1_3");
 $proxy->start();
 ok(TLSProxy::Message->success(), "Ignore key_share for TLS<=1.2 server");
 
+#Test 22: The server sending an HRR but not requesting a new key_share should
+#         fail
+$proxy->clear();
+$testtype = NO_KEY_SHARES_IN_HRR;
+$proxy->serverflags("-curves X25519");
+$proxy->start();
+ok(TLSProxy::Message->fail(), "Server sends HRR with no key_shares");
+
 sub modify_key_shares_filter
 {
     my $proxy = shift;
 
     # We're only interested in the initial ClientHello
-    if (($direction == CLIENT_TO_SERVER && $proxy->flight != 0)
+    if (($direction == CLIENT_TO_SERVER && $proxy->flight != 0
+                && ($proxy->flight != 1 || $testtype != NO_KEY_SHARES_IN_HRR))
             || ($direction == SERVER_TO_CLIENT && $proxy->flight != 1)) {
         return;
     }
@@ -296,9 +306,18 @@ sub modify_key_shares_filter
                     "155155B95269ED5C87EAA99C2EF5A593".
                     "EDF83495E80380089F831B94D14B1421", #key_exchange data
                     0x00; #Trailing garbage
+            } elsif ($testtype == NO_KEY_SHARES_IN_HRR) {
+                #We trick the server into thinking we sent a P-256 key_share -
+                #but the client actually sent X25519
+                $ext = pack "C7",
+                    0x00, 0x05, #List Length
+                    0x00, 0x17, #P-256
+                    0x00, 0x01, #key_exchange data length
+                    0xff;       #Dummy key_share data
             }
 
-            if ($testtype != EMPTY_EXTENSION) {
+            if ($testtype != EMPTY_EXTENSION
+                    && $testtype != NO_KEY_SHARES_IN_HRR) {
                 $message->set_extension(
                     TLSProxy::Message::EXT_SUPPORTED_GROUPS, $suppgroups);
             }
@@ -351,7 +370,12 @@ sub modify_key_shares_filter
             $message->set_extension(TLSProxy::Message::EXT_KEY_SHARE, $ext);
 
             $message->repack();
-        }
+        } elsif ($message->mt == TLSProxy::Message::MT_HELLO_RETRY_REQUEST
+                 && $testtype == NO_KEY_SHARES_IN_HRR) {
+            $message->delete_extension(TLSProxy::Message::EXT_KEY_SHARE);
+            $message->set_extension(TLSProxy::Message::EXT_UNKNOWN, "");
+            $message->repack();
+         }
     }
 }
 

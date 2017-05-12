@@ -73,8 +73,12 @@ int CRYPTO_secure_malloc_init(size_t size, int minsize)
         sec_malloc_lock = CRYPTO_THREAD_lock_new();
         if (sec_malloc_lock == NULL)
             return 0;
-        ret = sh_init(size, minsize);
-        secure_mem_initialized = 1;
+        if ((ret = sh_init(size, minsize)) != 0) {
+            secure_mem_initialized = 1;
+        } else {
+            CRYPTO_THREAD_lock_free(sec_malloc_lock);
+            sec_malloc_lock = NULL;
+        }
     }
 
     return ret;
@@ -90,6 +94,7 @@ int CRYPTO_secure_malloc_done()
         sh_done();
         secure_mem_initialized = 0;
         CRYPTO_THREAD_lock_free(sec_malloc_lock);
+        sec_malloc_lock = NULL;
         return 1;
     }
 #endif /* IMPLEMENTED */
@@ -341,7 +346,8 @@ static void sh_remove_from_list(char *ptr)
 
 static int sh_init(size_t size, int minsize)
 {
-    int i, ret;
+    int ret;
+    size_t i;
     size_t pgsize;
     size_t aligned;
 
@@ -497,6 +503,9 @@ static void *sh_malloc(size_t size)
     ossl_ssize_t list, slist;
     size_t i;
     char *chunk;
+
+    if (size > sh.arena_size)
+        return NULL;
 
     list = sh.freelist_size - 1;
     for (i = sh.minsize; i < size; i <<= 1)

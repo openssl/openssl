@@ -10,7 +10,6 @@
 #include <openssl/e_os2.h>
 #include <string.h>
 
-#include "test_main.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_DES

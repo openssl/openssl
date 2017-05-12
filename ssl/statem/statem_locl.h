@@ -55,6 +55,9 @@ int statem_flush(SSL *s);
 
 typedef int (*confunc_f) (SSL *s, WPACKET *pkt);
 
+#define GET_GROUP_ID(group, idx) \
+    (unsigned int)(((group)[(idx) * 2] << 8) | (group)[((idx) * 2) + 1])
+
 int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
                   size_t num_groups, int checkallow);
 int create_synthetic_message_hash(SSL *s);
@@ -156,12 +159,13 @@ MSG_PROCESS_RETURN tls_process_end_of_early_data(SSL *s, PACKET *pkt);
 __owur int extension_is_relevant(SSL *s, unsigned int extctx,
                                  unsigned int thisctx);
 __owur int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
-                                  RAW_EXTENSION **res, int *al, size_t *len);
+                                  RAW_EXTENSION **res, int *al, size_t *len,
+                                  int init);
 __owur int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
                                RAW_EXTENSION *exts,  X509 *x, size_t chainidx,
                                int *al);
 __owur int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts,
-                                    X509 *x, size_t chainidx, int *al);
+                                    X509 *x, size_t chainidx, int *al, int fin);
 __owur int should_add_extension(SSL *s, unsigned int extctx,
                                 unsigned int thisctx, int max_version);
 __owur int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
@@ -229,6 +233,9 @@ int tls_construct_stoc_early_data(SSL *s, WPACKET *pkt, unsigned int context,
 int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
                                      X509 *x, size_t chainidx, int *al);
 #endif
+int tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
+                                        unsigned int context, X509 *x,
+                                        size_t chainidx, int *al);
 int tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt,
                                       unsigned int context, X509 *x,
                                       size_t chainidx, int *al);

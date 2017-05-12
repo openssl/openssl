@@ -107,13 +107,15 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 # else
     /*
      * Deliberately leak a reference to ourselves. This will force the library
-     * to remain loaded until the atexit() handler is run a process exit.
+     * to remain loaded until the atexit() handler is run at process exit.
      */
     {
         DSO *dso = NULL;
 
+        ERR_set_mark();
         dso = DSO_dsobyaddr(&base_inited, DSO_FLAG_NO_UNLOAD_ON_FREE);
         DSO_free(dso);
+        ERR_pop_to_mark();
     }
 # endif
 #endif
@@ -648,8 +650,10 @@ int OPENSSL_atexit(void (*handler)(void))
         {
             DSO *dso = NULL;
 
+            ERR_set_mark();
             dso = DSO_dsobyaddr(handlersym.sym, DSO_FLAG_NO_UNLOAD_ON_FREE);
             DSO_free(dso);
+            ERR_pop_to_mark();
         }
 # endif
     }

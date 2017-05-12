@@ -41,7 +41,6 @@
 #include "../ssl/packet_locl.h"
 #include "../e_os.h" /* for OSSL_NELEM() */
 
-#include "test_main.h"
 #include "testutil.h"
 
 /* For DTLS1_BAD_VER packets the MAC doesn't include the handshake header */

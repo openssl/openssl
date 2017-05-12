@@ -10,7 +10,6 @@
 #include <openssl/sha.h>
 #include <openssl/evp.h>
 
-#include "test_main.h"
 #include "testutil.h"
 
 static const unsigned char app_c1[SHA512_DIGEST_LENGTH] = {

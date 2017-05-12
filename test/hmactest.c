@@ -23,7 +23,6 @@
 #  include <openssl/ebcdic.h>
 # endif
 
-#include "test_main.h"
 #include "testutil.h"
 
 # ifndef OPENSSL_NO_MD5

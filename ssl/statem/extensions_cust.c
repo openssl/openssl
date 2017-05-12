@@ -64,6 +64,9 @@ static int custom_ext_parse_old_cb_wrap(SSL *s, unsigned int ext_type,
     custom_ext_parse_cb_wrap *parse_cb_wrap =
         (custom_ext_parse_cb_wrap *)parse_arg;
 
+    if (parse_cb_wrap->parse_cb == NULL)
+        return 1;
+
     return parse_cb_wrap->parse_cb(s, ext_type, in, inlen, al,
                                    parse_cb_wrap->parse_arg);
 }
@@ -178,11 +181,10 @@ int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x, size_t chainidx,
 
         if ((context & (SSL_EXT_TLS1_2_SERVER_HELLO
                         | SSL_EXT_TLS1_3_SERVER_HELLO
-                        | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS)) != 0) {
-            /*
-             * For ServerHello/EncryptedExtensions only send extensions present
-             * in ClientHello.
-             */
+                        | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+                        | SSL_EXT_TLS1_3_CERTIFICATE
+                        | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST)) != 0) {
+            /* Only send extensions present in ClientHello. */
             if (!(meth->ext_flags & SSL_EXT_FLAG_RECEIVED))
                 continue;
         }
@@ -226,6 +228,26 @@ int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x, size_t chainidx,
         if (meth->free_cb != NULL)
             meth->free_cb(s, meth->ext_type, context, out, meth->add_arg);
     }
+    return 1;
+}
+
+/* Copy the flags from src to dst for any extensions that exist in both */
+int custom_exts_copy_flags(custom_ext_methods *dst,
+                           const custom_ext_methods *src)
+{
+    size_t i;
+    custom_ext_method *methsrc = src->meths;
+
+    for (i = 0; i < src->meths_count; i++, methsrc++) {
+        custom_ext_method *methdst = custom_ext_find(dst, methsrc->role,
+                                                     methsrc->ext_type, NULL);
+
+        if (methdst == NULL)
+            continue;
+
+        methdst->ext_flags = methsrc->ext_flags;
+    }
+
     return 1;
 }
 

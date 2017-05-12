@@ -503,6 +503,11 @@ be included in the SigningCertificate signed attribute. If this
 variable is set to no, only the signing certificate identifier is
 included. Default is no. (Optional)
 
+=item B<ess_cert_id_alg>
+
+This option specifies the hash function to be used to calculate the TSA's
+public key certificate identifier. Default is sha1. (Optional)
+
 =back
 
 =head1 EXAMPLES
@@ -604,9 +609,6 @@ You could also look at the 'test' directory for more examples.
 =head1 BUGS
 
 =for comment foreign manuals: procmail(1), perl(1)
-
-If you find any bugs or you have suggestions please write to
-Zoltan Glozik <zglozik@opentsa.org>. Known issues:
 
 =over 2
 

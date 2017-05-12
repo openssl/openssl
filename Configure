@@ -119,6 +119,9 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
         . " -Wswitch"
         . " -DPEDANTIC -pedantic -Wno-long-long"
         . " -Wall"
+        . " -Wextra"
+        . " -Wno-unused-parameter"
+        . " -Wno-missing-field-initializers"
         . " -Wsign-compare"
         . " -Wmissing-prototypes"
         . " -Wshadow"
@@ -138,17 +141,13 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
 my $clang_devteam_warn = ""
         . " -Qunused-arguments"
-        . " -Wextra"
-        . " -Wswitch -Wswitch-default"
-        . " -Wno-unused-parameter"
+        . " -Wswitch-default"
         . " -Wno-parentheses-equality"
-        . " -Wno-missing-field-initializers"
         . " -Wno-language-extension-token"
         . " -Wno-extended-offsetof"
         . " -Wconditional-uninitialized"
         . " -Wincompatible-pointer-types-discards-qualifiers"
         . " -Wmissing-variable-declarations"
-        . " -Wundef"
         ;
 
 # This adds backtrace information to the memory leak info.  Is only used
@@ -1732,12 +1731,24 @@ EOF
             }
 
             # Additionally, we set up sharednames for libraries that don't
-            # have any, as themselves.
-            foreach (keys %{$unified_info{libraries}}) {
+            # have any, as themselves.  Only for libraries that aren't
+            # explicitely static.
+            foreach (grep !/\.a$/, keys %{$unified_info{libraries}}) {
                 if (!defined $unified_info{sharednames}->{$_}) {
                     $unified_info{sharednames}->{$_} = $_
                 }
             }
+
+            # Check that we haven't defined any library as both shared and
+            # explicitely static.  That is forbidden.
+            my @doubles = ();
+            foreach (grep /\.a$/, keys %{$unified_info{libraries}}) {
+                (my $l = $_) =~ s/\.a$//;
+                push @doubles, $l if defined $unified_info{sharednames}->{$l};
+            }
+            die "these libraries are both explicitely static and shared:\n  ",
+                join(" ", @doubles), "\n"
+                if @doubles;
         }
 
         foreach (keys %ordinals) {

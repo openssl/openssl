@@ -7,13 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define TESTUTIL_NO_size_t_COMPARISON
+
 #include <stdio.h>
 #include <string.h>
 #include <openssl/bio.h>
 #include "internal/numbers.h"
 #include "testutil.h"
-#include "test_main.h"
-#include "test_main_custom.h"
+#include "testutil/output.h"
 
 #define nelem(x) (int)(sizeof(x) / sizeof((x)[0]))
 
@@ -246,4 +247,41 @@ int test_main(int argc, char **argv)
     ADD_ALL_TESTS(test_j, nelem(jf_data));
 
     return run_tests(argv[0]);
+}
+
+/*
+ * Replace testutil output routines.  We do this to eliminate possible sources
+ * of BIO error
+ */
+void test_open_streams(void)
+{
+}
+
+void test_close_streams(void)
+{
+}
+
+/*
+ * This works out as long as caller doesn't use any "fancy" formats.
+ * But we are caller's caller, and test_str_eq is the only one called,
+ * and it uses only "%s", which is not "fancy"...
+ */
+int test_vprintf_stdout(const char *fmt, va_list ap)
+{
+    return vfprintf(stdout, fmt, ap);
+}
+
+int test_vprintf_stderr(const char *fmt, va_list ap)
+{
+    return vfprintf(stderr, fmt, ap);
+}
+
+int test_flush_stdout(void)
+{
+    return fflush(stdout);
+}
+
+int test_flush_stderr(void)
+{
+    return fflush(stderr);
 }

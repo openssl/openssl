@@ -83,8 +83,10 @@ B<openssl> B<s_server>
 [B<-dtls>]
 [B<-dtls1>]
 [B<-dtls1_2>]
+[B<-sctp>]
 [B<-listen>]
 [B<-async>]
+[B<-max_send_frag>]
 [B<-split_send_frag>]
 [B<-max_pipelines>]
 [B<-read_buf>]
@@ -362,12 +364,23 @@ Any without a cookie will be responded to with a HelloVerifyRequest.
 If a ClientHello with a cookie is received then B<s_server> will connect to
 that peer and complete the handshake.
 
+=item B<-sctp>
+
+Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
+conjunction with B<-dtls>, B<-dtls1> or B<-dtls1_2>. This option is only
+available where OpenSSL has support for SCTP enabled.
+
 =item B<-async>
 
 Switch on asynchronous mode. Cryptographic operations will be performed
 asynchronously. This will only have an effect if an asynchronous capable engine
 is also used via the B<-engine> option. For test purposes the dummy async engine
 (dasync) can be used (if available).
+
+=item B<-max_send_frag int>
+
+The maximum size of data fragment to send.
+See L<SSL_CTX_set_max_send_fragment(3)> for further information.
 
 =item B<-split_send_frag int>
 
@@ -631,8 +644,9 @@ unknown cipher suites a client says it supports.
 
 =head1 SEE ALSO
 
-L<SSL_CONF_cmd(3)>,
-L<sess_id(1)>, L<s_client(1)>, L<ciphers(1)>
+L<SSL_CONF_cmd(3)>, L<sess_id(1)>, L<s_client(1)>, L<ciphers(1)>
+L<SSL_CTX_set_max_send_fragment(3)>, L<SSL_CTX_set_split_send_fragment(3)>
+L<SSL_CTX_set_max_pipelines(3)> 
 
 =head1 HISTORY
 

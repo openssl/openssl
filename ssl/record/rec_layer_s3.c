@@ -860,15 +860,47 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         }
 
         if (SSL_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL) {
+            size_t rlen;
+
             if (!WPACKET_put_bytes_u8(thispkt, type)) {
                 SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             SSL3_RECORD_add_length(thiswr, 1);
-            /*
-             * TODO(TLS1.3): Padding goes here. Do we need an API to add this?
-             * For now, use no padding
-             */
+
+            /* Add TLS1.3 padding */
+            rlen = SSL3_RECORD_get_length(thiswr);
+            if (rlen < SSL3_RT_MAX_PLAIN_LENGTH) {
+                size_t padding = 0;
+                size_t max_padding = SSL3_RT_MAX_PLAIN_LENGTH - rlen;
+                if (s->record_padding_cb != NULL) {
+                    padding = s->record_padding_cb(s, type, rlen, s->record_padding_arg);
+                } else if (s->block_padding > 0) {
+                    size_t mask = s->block_padding - 1;
+                    size_t remainder;
+
+                    /* optimize for power of 2 */
+                    if ((s->block_padding & mask) == 0)
+                        remainder = rlen & mask;
+                    else
+                        remainder = rlen % s->block_padding;
+                    /* don't want to add a block of padding if we don't have to */
+                    if (remainder == 0)
+                        padding = 0;
+                    else
+                        padding = s->block_padding - remainder;
+                }
+                if (padding > 0) {
+                    /* do not allow the record to exceed max plaintext length */
+                    if (padding > max_padding)
+                        padding = max_padding;
+                    if (!WPACKET_memset(thispkt, 0, padding)) {
+                        SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+                        goto err;
+                    }
+                    SSL3_RECORD_add_length(thiswr, padding);
+                }
+            }
         }
 
         /*
@@ -963,6 +995,13 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             s->msg_callback(1, 0, SSL3_RT_HEADER, recordstart,
                             SSL3_RT_HEADER_LENGTH, s,
                             s->msg_callback_arg);
+
+            if (SSL_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL) {
+                unsigned char ctype = type;
+
+                s->msg_callback(1, s->version, SSL3_RT_INNER_CONTENT_TYPE,
+                                &ctype, 1, s, s->msg_callback_arg);
+            }
         }
 
         if (!WPACKET_finish(thispkt)) {
@@ -1383,6 +1422,20 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             if (SSL3_RECORD_get_length(rr) == 0)
                 SSL3_RECORD_set_read(rr);
 
+            if (SSL_IS_TLS13(s)
+                    && SSL3_RECORD_get_type(rr) == SSL3_RT_ALERT) {
+                if (*dest_len < dest_maxlen
+                        || SSL3_RECORD_get_length(rr) != 0) {
+                    /*
+                     * TLSv1.3 forbids fragmented alerts, and only one alert
+                     * may be present in a record
+                     */
+                    al = SSL_AD_UNEXPECTED_MESSAGE;
+                    SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_INVALID_ALERT);
+                    goto f_err;
+                }
+            }
+
             if (*dest_len < dest_maxlen)
                 goto start;     /* fragment was too small */
         }
@@ -1450,6 +1503,15 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 return 0;
             }
             /*
+             * Apart from close_notify the only other warning alert in TLSv1.3
+             * is user_cancelled - which we just ignore.
+             */
+            if (SSL_IS_TLS13(s) && alert_descr != SSL_AD_USER_CANCELLED) {
+                al = SSL_AD_ILLEGAL_PARAMETER;
+                SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_UNKNOWN_ALERT_TYPE);
+                goto f_err;
+            }
+            /*
              * This is a warning but we receive it if we requested
              * renegotiation and the peer denied it. Terminate with a fatal
              * alert because if application tried to renegotiate it
@@ -1457,7 +1519,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
              * future we might have a renegotiation where we don't care if
              * the peer refused it where we carry on.
              */
-            else if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
+            if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
                 al = SSL_AD_HANDSHAKE_FAILURE;
                 SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_NO_RENEGOTIATION);
                 goto f_err;

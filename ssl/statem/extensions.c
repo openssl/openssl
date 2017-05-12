@@ -151,7 +151,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_supported_groups,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
         NULL, tls_parse_ctos_supported_groups, NULL,
-        NULL /* TODO(TLS1.3): Need to add this */,
+        tls_construct_stoc_supported_groups,
         tls_construct_ctos_supported_groups, NULL
     },
 #else
@@ -421,8 +421,9 @@ int extension_is_relevant(SSL *s, unsigned int extctx, unsigned int thisctx)
  * stored in |*res| on success. In the event of an error the alert type to use
  * is stored in |*al|. We don't actually process the content of the extensions
  * yet, except to check their types. This function also runs the initialiser
- * functions for all known extensions (whether we have collected them or not).
- * If successful the caller is responsible for freeing the contents of |*res|.
+ * functions for all known extensions if |init| is nonzero (whether we have
+ * collected them or not). If successful the caller is responsible for freeing
+ * the contents of |*res|.
  *
  * Per http://tools.ietf.org/html/rfc5246#section-7.4.1.4, there may not be
  * more than one extension of the same type in a ClientHello or ServerHello.
@@ -432,7 +433,8 @@ int extension_is_relevant(SSL *s, unsigned int extctx, unsigned int thisctx)
  * extensions that we know about. We ignore others.
  */
 int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
-                           RAW_EXTENSION **res, int *al, size_t *len)
+                           RAW_EXTENSION **res, int *al, size_t *len,
+                           int init)
 {
     PACKET extensions = *packet;
     size_t i = 0;
@@ -490,16 +492,19 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
         }
     }
 
-    /*
-     * Initialise all known extensions relevant to this context, whether we have
-     * found them or not
-     */
-    for (thisexd = ext_defs, i = 0; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
-        if(thisexd->init != NULL && (thisexd->context & context) != 0
+    if (init) {
+        /*
+         * Initialise all known extensions relevant to this context,
+         * whether we have found them or not
+         */
+        for (thisexd = ext_defs, i = 0; i < OSSL_NELEM(ext_defs);
+             i++, thisexd++) {
+            if (thisexd->init != NULL && (thisexd->context & context) != 0
                 && extension_is_relevant(s, thisexd->context, context)
                 && !thisexd->init(s, context)) {
-            *al = SSL_AD_INTERNAL_ERROR;
-            goto err;
+                *al = SSL_AD_INTERNAL_ERROR;
+                goto err;
+            }
         }
     }
 
@@ -578,14 +583,14 @@ int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
 
 /*
  * Parse all remaining extensions that have not yet been parsed. Also calls the
- * finalisation for all extensions at the end, whether we collected them or not.
- * Returns 1 for success or 0 for failure. If we are working on a Certificate
- * message then we also pass the Certificate |x| and its position in the
- * |chainidx|, with 0 being the first certificate. On failure, |*al| is
- * populated with a suitable alert code.
+ * finalisation for all extensions at the end if |fin| is nonzero, whether we
+ * collected them or not. Returns 1 for success or 0 for failure. If we are
+ * working on a Certificate message then we also pass the Certificate |x| and
+ * its position in the |chainidx|, with 0 being the first certificate. On
+ * failure, |*al| is populated with a suitable alert code.
  */
 int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, X509 *x,
-                             size_t chainidx, int *al)
+                             size_t chainidx, int *al, int fin)
 {
     size_t i, numexts = OSSL_NELEM(ext_defs);
     const EXTENSION_DEFINITION *thisexd;
@@ -599,15 +604,17 @@ int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, X509 *x,
             return 0;
     }
 
-    /*
-     * Finalise all known extensions relevant to this context, whether we have
-     * found them or not
-     */
-    for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
-        if(thisexd->final != NULL
-                && (thisexd->context & context) != 0
+    if (fin) {
+        /*
+         * Finalise all known extensions relevant to this context,
+         * whether we have found them or not
+         */
+        for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs);
+             i++, thisexd++) {
+            if (thisexd->final != NULL && (thisexd->context & context) != 0
                 && !thisexd->final(s, context, exts[i].present, al))
-            return 0;
+                return 0;
+        }
     }
 
     return 1;
@@ -674,7 +681,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
     }
 
     if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
-        reason = ssl_get_client_min_max_version(s, &min_version, &max_version);
+        reason = ssl_get_min_max_version(s, &min_version, &max_version);
         if (reason != 0) {
             SSLerr(SSL_F_TLS_CONSTRUCT_EXTENSIONS, reason);
             goto err;
@@ -1051,6 +1058,10 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
     if (!SSL_IS_TLS13(s))
         return 1;
 
+    /* Nothing to do for key_share in an HRR */
+    if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0)
+        return 1;
+
     /*
      * If
      *     we are a client
@@ -1140,7 +1151,10 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
         if (!s->hit
                 || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0) {
             /* Nothing left we can do - just fail */
-            *al = SSL_AD_HANDSHAKE_FAILURE;
+            if (!sent)
+                *al = SSL_AD_MISSING_EXTENSION;
+            else
+                *al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_FINAL_KEY_SHARE, SSL_R_NO_SUITABLE_KEY_SHARE);
             return 0;
         }
@@ -1180,7 +1194,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     EVP_MD_CTX *mctx = NULL;
     unsigned char hash[EVP_MAX_MD_SIZE], binderkey[EVP_MAX_MD_SIZE];
     unsigned char finishedkey[EVP_MAX_MD_SIZE], tmpbinder[EVP_MAX_MD_SIZE];
-    const char resumption_label[] = "resumption psk binder key";
+    const char resumption_label[] = "res binder";
     size_t bindersize, hashsize = EVP_MD_size(md);
     int ret = -1;
 

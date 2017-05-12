@@ -8,7 +8,6 @@
  */
 
 #include "../e_os.h"
-#include "test_main.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_RC2

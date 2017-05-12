@@ -13,7 +13,6 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
-#include "test_main_custom.h"
 #include "testutil.h"
 
 static const char *infile;

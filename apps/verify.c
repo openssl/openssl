@@ -22,7 +22,6 @@ static int check(X509_STORE *ctx, const char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
                  STACK_OF(X509_CRL) *crls, int show_chain);
 static int v_verbose = 0, vflags = 0;
-static unsigned long nmflag = 0;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -70,7 +69,6 @@ int verify_main(int argc, char **argv)
     const char *prog, *CApath = NULL, *CAfile = NULL;
     int noCApath = 0, noCAfile = 0;
     int vpmtouched = 0, crl_download = 0, show_chain = 0, i = 0, ret = 1;
-    char nmflag_set = 0;
     OPTION_CHOICE o;
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
@@ -153,8 +151,7 @@ int verify_main(int argc, char **argv)
             show_chain = 1;
             break;
         case OPT_NAMEOPT:
-            nmflag_set = 1;
-            if (!set_name_ex(&nmflag, opt_arg()))
+            if (!set_nameopt(opt_arg()))
                 goto end;
             break;
         case OPT_VERBOSE:
@@ -170,9 +167,6 @@ int verify_main(int argc, char **argv)
                    prog);
         goto end;
     }
-
-    if (!nmflag_set)
-        nmflag = XN_FLAG_ONELINE;
 
     if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath)) == NULL)
         goto end;
@@ -253,7 +247,7 @@ static int check(X509_STORE *ctx, const char *file,
                 printf("depth=%d: ", j);
                 X509_NAME_print_ex_fp(stdout,
                                       X509_get_subject_name(cert),
-                                      0, nmflag);
+                                      0, get_nameopt());
                 if (j < num_untrusted)
                     printf(" (untrusted)");
                 printf("\n");
@@ -282,7 +276,7 @@ static int cb(int ok, X509_STORE_CTX *ctx)
         if (current_cert) {
             X509_NAME_print_ex(bio_err,
                             X509_get_subject_name(current_cert),
-                            0, nmflag);
+                            0, get_nameopt());
             BIO_printf(bio_err, "\n");
         }
         BIO_printf(bio_err, "%serror %d at %d depth lookup: %s\n",
@@ -293,6 +287,7 @@ static int cb(int ok, X509_STORE_CTX *ctx)
         switch (cert_error) {
         case X509_V_ERR_NO_EXPLICIT_POLICY:
             policies_print(ctx);
+            /* fall thru */
         case X509_V_ERR_CERT_HAS_EXPIRED:
 
             /*

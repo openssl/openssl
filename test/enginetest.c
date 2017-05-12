@@ -23,7 +23,6 @@ int main(int argc, char *argv[])
 # include <openssl/engine.h>
 # include <openssl/err.h>
 # include "testutil.h"
-# include "test_main.h"
 
 static void display_engine_list(void)
 {

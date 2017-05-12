@@ -26,7 +26,30 @@ count of the B<SSL_SESSION> is incremented by one.
 =head1 NOTES
 
 The ssl session contains all information required to re-establish the
-connection without a new handshake.
+connection without a full handshake for SSL versions up to and including
+TLSv1.2. In TLSv1.3 the same is true, but sessions are established after the
+main handshake has occurred. The server will send the session information to the
+client at a time of its choosing, which may be some while after the initial
+connection is established (or never). Calling these functions on the client side
+in TLSv1.3 before the session has been established will still return an
+SSL_SESSION object but that object cannot be used for resuming the session. See
+L<SSL_SESSION_is_resumable(3)> for information on how to determine whether an
+SSL_SESSION object can be used for resumption or not.
+
+Additionally, in TLSv1.3, a server can send multiple messages that establish a
+session for a single connection. In that case the above functions will only
+return information on the last session that was received.
+
+The preferred way for applications to obtain a resumable SSL_SESSION object is
+to use a new session callback as described in L<SSL_CTX_sess_set_new_cb(3)>.
+The new session callback is only invoked when a session is actually established,
+so this avoids the problem described above where an application obtains an
+SSL_SESSION object that cannot be used for resumption in TLSv1.3. It also
+enables applications to obtain information about all sessions sent by the
+server.
+
+In TLSv1.3 it is recommended that each SSL_SESSION object is only used for
+resumption once.
 
 SSL_get0_session() returns a pointer to the actual session. As the
 reference counter is not incremented, the pointer is only valid while

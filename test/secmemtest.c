@@ -9,7 +9,6 @@
 
 #include <openssl/crypto.h>
 
-#include "test_main.h"
 #include "testutil.h"
 
 static int test_sec_mem(void)
@@ -62,6 +61,27 @@ static int test_sec_mem(void)
         || !TEST_true(CRYPTO_secure_malloc_done())
         || !TEST_false(CRYPTO_secure_malloc_initialized()))
         goto end;
+
+    TEST_info("Possible infinite loop: allocate more than available");
+    if (!TEST_true(CRYPTO_secure_malloc_init(32768, 16)))
+        goto end;
+    TEST_ptr_null(OPENSSL_secure_malloc((size_t)-1));
+    TEST_true(CRYPTO_secure_malloc_done());
+
+    TEST_info("Possible infinite loop: small arena");
+    if (!TEST_false(CRYPTO_secure_malloc_init(16, 16)))
+        goto end;
+    TEST_false(CRYPTO_secure_malloc_initialized());
+    TEST_ptr_null(OPENSSL_secure_malloc((size_t)-1));
+    TEST_true(CRYPTO_secure_malloc_done());
+
+    if (sizeof(size_t) > 4) {
+        TEST_info("Possible infinite loop: 1<<31 limit");
+        if (!TEST_true(CRYPTO_secure_malloc_init((size_t)1<<34, (size_t)1<<4) != 0))
+            goto end;
+        TEST_true(CRYPTO_secure_malloc_done());
+    }
+    
     /* this can complete - it was not really secure */
     testresult = 1;
  end:

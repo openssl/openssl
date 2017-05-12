@@ -28,7 +28,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
                              const unsigned char *hash,
                              unsigned char *out, size_t outlen)
 {
-    const unsigned char label_prefix[] = "TLS 1.3, ";
+    const unsigned char label_prefix[] = "tls13 ";
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
     int ret;
     size_t hkdflabellen;
@@ -124,7 +124,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     size_t mdlen, prevsecretlen;
     int ret;
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
-    static const char derived_secret_label[] = "derived secret";
+    static const char derived_secret_label[] = "derived";
     unsigned char preextractsec[EVP_MAX_MD_SIZE];
 
     if (pctx == NULL)
@@ -321,20 +321,6 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
         goto err;
     }
 
-#ifdef OPENSSL_SSL_TRACE_CRYPTO
-    if (s->msg_callback) {
-        int wh = sending ? TLS1_RT_CRYPTO_WRITE : 0;
-
-        if (ciph->key_len)
-            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
-                            key, ciph->key_len, s, s->msg_callback_arg);
-
-        wh |= TLS1_RT_CRYPTO_IV;
-        s->msg_callback(2, s->version, wh, iv, ivlen, s,
-                        s->msg_callback_arg);
-    }
-#endif
-
     return 1;
  err:
     OPENSSL_cleanse(key, sizeof(key));
@@ -343,18 +329,12 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
 
 int tls13_change_cipher_state(SSL *s, int which)
 {
-    static const unsigned char client_early_traffic[] =
-        "client early traffic secret";
-    static const unsigned char client_handshake_traffic[] =
-        "client handshake traffic secret";
-    static const unsigned char client_application_traffic[] =
-        "client application traffic secret";
-    static const unsigned char server_handshake_traffic[] =
-        "server handshake traffic secret";
-    static const unsigned char server_application_traffic[] =
-        "server application traffic secret";
-    static const unsigned char resumption_master_secret[] =
-        "resumption master secret";
+    static const unsigned char client_early_traffic[] = "c e traffic";
+    static const unsigned char client_handshake_traffic[] = "c hs traffic";
+    static const unsigned char client_application_traffic[] = "c ap traffic";
+    static const unsigned char server_handshake_traffic[] = "s hs traffic";
+    static const unsigned char server_application_traffic[] = "s ap traffic";
+    static const unsigned char resumption_master_secret[] = "res master";
     unsigned char *iv;
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char hashval[EVP_MAX_MD_SIZE];
@@ -559,8 +539,7 @@ int tls13_change_cipher_state(SSL *s, int which)
 
 int tls13_update_key(SSL *s, int sending)
 {
-    static const unsigned char application_traffic[] =
-        "application traffic secret";
+    static const unsigned char application_traffic[] = "traffic upd";
     const EVP_MD *md = ssl_handshake_md(s);
     size_t hashlen = EVP_MD_size(md);
     unsigned char *insecret, *iv;

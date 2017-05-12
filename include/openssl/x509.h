@@ -39,6 +39,13 @@
 extern "C" {
 #endif
 
+
+/* Flags for X509_get_signature_info() */
+/* Signature info is valid */
+# define X509_SIG_INFO_VALID     0x1
+/* Signature is suitable for TLS use */
+# define X509_SIG_INFO_TLS       0x2
+
 # define X509_FILETYPE_PEM       1
 # define X509_FILETYPE_ASN1      2
 # define X509_FILETYPE_DEFAULT   3
@@ -549,6 +556,14 @@ X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length);
 
 int i2d_re_X509_tbs(X509 *x, unsigned char **pp);
 
+int X509_SIG_INFO_get(const X509_SIG_INFO *siginf, int *mdnid, int *pknid,
+                      int *secbits, uint32_t *flags);
+void X509_SIG_INFO_set(X509_SIG_INFO *siginf, int mdnid, int pknid,
+                       int secbits, uint32_t flags);
+
+int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
+                            uint32_t *flags);
+
 void X509_get0_signature(const ASN1_BIT_STRING **psig,
                          const X509_ALGOR **palg, const X509 *x);
 int X509_get_signature_nid(const X509 *x);
@@ -773,6 +788,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflag,
                   unsigned long cflag);
 int X509_print(BIO *bp, X509 *x);
 int X509_ocspid_print(BIO *bp, X509 *x);
+int X509_CRL_print_ex(BIO *out, X509_CRL *x, unsigned long nmflag);
 int X509_CRL_print(BIO *bp, X509_CRL *x);
 int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflag,
                       unsigned long cflag);

@@ -42,8 +42,18 @@
 
   # Because we need to make two computations of these data,
   # we store them in arrays for reuse
-  our @shlibs = map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}};
-  our @install_shlibs = map { $unified_info{sharednames}->{$_} || () } @{$unified_info{install}->{libraries}};
+  our @libs =
+      map { (my $x = $_) =~ s/\.a$//; $x }
+      @{$unified_info{libraries}};
+  our @shlibs =
+      map { $unified_info{sharednames}->{$_} || () }
+      grep(!/\.a$/, @{$unified_info{libraries}});
+  our @install_libs =
+      map { (my $x = $_) =~ s/\.a$//; $x }
+      @{$unified_info{install}->{libraries}};
+  our @install_shlibs =
+      map { $unified_info{sharednames}->{$_} || () }
+      grep(!/\.a$/, @{$unified_info{install}->{libraries}});
   our @generated = ( ( map { (my $x = $_) =~ s|\.S$|\.s|; $x }
                        grep { defined $unified_info{generate}->{$_} }
                        map { @{$unified_info{sources}->{$_}} }
@@ -81,7 +91,7 @@
   sub dependmagic {
       my $target = shift;
 
-      return "$target : build_generated\n\t\pipe $(MMS) depend && \$(MMS) _$target\n_$target";
+      return "$target : build_generated\n\t\pipe \$(MMS) depend && \$(MMS) _$target\n_$target";
   }
   #use Data::Dumper;
   #print STDERR "DEBUG: before:\n", Dumper($unified_info{before});
@@ -113,7 +123,7 @@ SHLIB_EXT=.EXE
 OBJ_EXT=.OBJ
 DEP_EXT=.D
 
-LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @{$unified_info{libraries}}) -}
+LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @libs) -}
 SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @shlibs) -}
 ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{engines}}) -}
 PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{programs}}) -}
@@ -127,7 +137,7 @@ DEPS={- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
 GENERATED_MANDATORY={- join(", ", map { "-\n\t".$_ } @{$unified_info{depends}->{""}} ) -}
 GENERATED={- join(", ", map { "-\n\t".$_ } @generated) -}
 
-INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @{$unified_info{install}->{libraries}}) -}
+INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @install_libs) -}
 INSTALL_SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @install_shlibs) -}
 INSTALL_ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{install}->{engines}}) -}
 INSTALL_PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{install}->{programs}}) -}
@@ -230,10 +240,10 @@ NODEBUG=@
         $(NODEBUG) ! Set up logical names for the libraries, so LINK and
         $(NODEBUG) ! running programs can use them.
         $(NODEBUG) !
-        $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEFINE ".uc($_)." 'F\$ENV(\"DEFAULT\")'".uc($_)."\$(SHLIB_EXT)" } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) || "!" -}
+        $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEFINE ".uc($_)." 'F\$ENV(\"DEFAULT\")'".uc($_)."\$(SHLIB_EXT)" } @shlibs) || "!" -}
 
 .LAST :
-        $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEASSIGN ".uc($_) } map { $unified_info{sharednames}->{$_} || () } @{$unified_info{libraries}}) || "!" -}
+        $(NODEBUG) {- join("\n\t\$(NODEBUG) ", map { "DEASSIGN ".uc($_) } @shlibs) || "!" -}
         $(NODEBUG) DEASSIGN ossl_dataroot
         $(NODEBUG) DEASSIGN ossl_installroot
         $(NODEBUG) DEASSIGN internal
@@ -317,7 +327,7 @@ uninstall : uninstall_docs uninstall_sw
 # Because VMS wants the generation number (or *) to delete files, we can't
 # use $(LIBS), $(PROGRAMS), $(GENERATED) and $(ENGINES)directly.
 libclean :
-        {- join("\n\t", map { "- DELETE $_.OLB;*" } @{$unified_info{libraries}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.OLB;*" } @libs) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_.EXE;*,$_.MAP;*,$_.OPT;*" } @shlibs) || "@ !" -}
 
 clean : libclean
@@ -407,7 +417,7 @@ _install_dev_ns : check_INSTALLTOP
         - CREATE/DIR ossl_installroot:[LIB.'arch']
         {- join("\n        ",
                 map { "COPY/PROT=W:R $_.OLB ossl_installroot:[LIB.'arch']" }
-                @{$unified_info{install}->{libraries}}) -}
+                @install_libs) -}
 
 install_dev : install_shared _install_dev_ns
 
@@ -729,7 +739,7 @@ EOF
   }
   sub obj2lib {
       my %args = @_;
-      my $lib = $args{lib};
+      (my $lib = $args{lib}) =~ s/\.a$//;
       my $objs = join(", -\n\t\t", map { $_.".OBJ" } (@{$args{objs}}));
       my $fill_lib = join("\n\t", (map { "LIBRARY/REPLACE $lib.OLB $_.OBJ" }
                                     @{$args{objs}}));
@@ -746,21 +756,38 @@ EOF
       my $bind = dirname($bin);
       my $binn = basename($bin);
       my @objs = map { "$_.OBJ" } @{$args{objs}};
+      my $objs = join(",", @objs);
       my @deps = compute_lib_depends(@{$args{deps}});
       my $deps = join(", -\n\t\t", @objs, @deps);
+
+      my $olb_count = scalar grep(m|\.OLB$|, @deps);
+      my $analyse_objs = "@ !";
+      if ($olb_count > 0) {
+          my $analyse_quals =
+              $config{target} =~ m|alpha| ? "/GSD" : "/SECTIONS=SYMTAB";
+          $analyse_objs = "- pipe ANALYSE/OBJECT$analyse_quals $objs | SEARCH SYS\$INPUT \"\"\"main\"\"\" ; nomain = \$severity .NE. 1"
+      }
       # The "[]" hack is because in .OPT files, each line inherits the
       # previous line's file spec as default, so if no directory spec
       # is present in the current line and the previous line has one that
       # doesn't apply, you're in for a surprise.
       my $write_opt1 =
           join(",-\"\n\t", map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
-                                 "WRITE OPT_FILE \"$x" } @objs).
+                                 "\@ WRITE OPT_FILE \"$x" } @objs).
           "\"";
       my $write_opt2 =
-          join("\n\t", map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
-                             $x =~ s|(\.EXE)|$1/SHARE|;
-                             $x =~ s|(\.OLB)|$1/LIB|;
-                             "WRITE OPT_FILE \"$x\"" } @deps)
+          join("\n\t", map { my @lines = ();
+                             my $x = $_ =~ /\[/ ? $_ : "[]".$_;
+                             if ($x =~ m|\.EXE$|) {
+                                 push @lines, "\@ WRITE OPT_FILE \"$x/SHARE\"";
+                             } elsif ($x =~ m|\.OLB$|) {
+                                 (my $l = $x) =~ s/\W/_/g;
+                                 push @lines, 
+                                     "\@ IF nomain THEN WRITE OPT_FILE \"$x/LIB\$(INCLUDE_MAIN_$l)\"",
+                                     "\@ IF .NOT. nomain THEN WRITE OPT_FILE \"$x/LIB\""
+                             }
+                             @lines
+                           } @deps)
           || "\@ !";
       # The linking commands looks a bit complex, but it's for good reason.
       # When you link, say, foo.obj, bar.obj and libsomething.exe/share, and
@@ -782,10 +809,12 @@ EOF
       # and let it break the build.
       return <<"EOF"
 $bin.EXE : $deps
-        OPEN/WRITE/SHARE=READ OPT_FILE $bin.OPT
+        $analyse_objs
+        @ OPEN/WRITE/SHARE=READ OPT_FILE $bin.OPT
         $write_opt1
         $write_opt2
-        CLOSE OPT_FILE
+        @ CLOSE OPT_FILE
+        TYPE $bin.opt ! For debugging
         - pipe SPAWN/WAIT/NOLOG/OUT=$bin.LINKLOG -
                     LINK \$(LDFLAGS)/EXEC=\$\@ $bin.OPT/OPT \$(EX_LIBS) ; -
                link_status = \$status ; link_severity = link_status .AND. 7
@@ -807,7 +836,7 @@ $bin.EXE : $deps
         @ IF .NOT. link_severity THEN SPAWN/WAIT/NOLOG EXIT 'link_status'
         - PURGE $bin.EXE,$bin.OPT
 EOF
-        . ($config{target} =~ m|alpha| ? "" : <<"EOF"
+      . ($config{target} =~ m|alpha| ? "" : <<"EOF"
         SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
 EOF
         );

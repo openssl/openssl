@@ -14,6 +14,7 @@ B<openssl> B<s_client>
 [B<-4>]
 [B<-6>]
 [B<-servername name>]
+[B<-noservername>]
 [B<-verify depth>]
 [B<-verify_return_error>]
 [B<-cert filename>]
@@ -82,8 +83,10 @@ B<openssl> B<s_client>
 [B<-dtls>]
 [B<-dtls1>]
 [B<-dtls1_2>]
+[B<-sctp>]
 [B<-fallback_scsv>]
 [B<-async>]
+[B<-max_send_frag>]
 [B<-split_send_frag>]
 [B<-max_pipelines>]
 [B<-read_buf>]
@@ -155,7 +158,17 @@ Use IPv6 only.
 
 =item B<-servername name>
 
-Set the TLS SNI (Server Name Indication) extension in the ClientHello message.
+Set the TLS SNI (Server Name Indication) extension in the ClientHello message to
+the given value.
+
+=item B<-noservername>
+
+Suppresses sending of the SNI (Server Name Indication) extension in the
+ClientHello message. Cannot be used in conjunction with the B<-servername> or
+<-dane_tlsa_domain> options. If this option is not given then the hostname
+provided to the B<-connect> option is used in the SNI extension, or "localhost"
+if B<-connect> has not been supplied. Note that an SNI name should normally be a
+DNS name and not an IP address.
 
 =item B<-cert certname>
 
@@ -387,6 +400,12 @@ With B<-dtls>, B<s_client> will negotiate any supported DTLS protocol version,
 whilst B<-dtls1> and B<-dtls1_2> will only support DTLS1.0 and DTLS1.2
 respectively.
 
+=item B<-sctp>
+
+Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
+conjunction with B<-dtls>, B<-dtls1> or B<-dtls1_2>. This option is only
+available where OpenSSL has support for SCTP enabled.
+
 =item B<-fallback_scsv>
 
 Send TLS_FALLBACK_SCSV in the ClientHello.
@@ -397,6 +416,11 @@ Switch on asynchronous mode. Cryptographic operations will be performed
 asynchronously. This will only have an effect if an asynchronous capable engine
 is also used via the B<-engine> option. For test purposes the dummy async engine
 (dasync) can be used (if available).
+
+=item B<-max_send_frag int>
+
+The maximum size of data fragment to send.
+See L<SSL_CTX_set_max_send_fragment(3)> for further information.
 
 =item B<-split_send_frag int>
 
@@ -625,8 +649,9 @@ information whenever a session is renegotiated.
 
 =head1 SEE ALSO
 
-L<SSL_CONF_cmd(3)>,
-L<sess_id(1)>, L<s_server(1)>, L<ciphers(1)>
+L<SSL_CONF_cmd(3)>, L<sess_id(1)>, L<s_server(1)>, L<ciphers(1)>,
+L<SSL_CTX_set_max_send_fragment(3)>, L<SSL_CTX_set_split_send_fragment(3)>
+L<SSL_CTX_set_max_pipelines(3)> 
 
 =head1 HISTORY
 

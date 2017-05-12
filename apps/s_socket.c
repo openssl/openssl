@@ -44,6 +44,7 @@ typedef unsigned int u_int;
  * @family: desired socket family, may be AF_INET, AF_INET6, AF_UNIX or
  *  AF_UNSPEC
  * @type: socket type, must be SOCK_STREAM or SOCK_DGRAM
+ * @protocol: socket protocol, e.g. IPPROTO_TCP or IPPROTO_UDP (or 0 for any)
  *
  * This will create a socket and use it to connect to a host:port, or if
  * family == AF_UNIX, to the path found in host.
@@ -55,7 +56,7 @@ typedef unsigned int u_int;
  * Returns 1 on success, 0 on failure.
  */
 int init_client(int *sock, const char *host, const char *port,
-                int family, int type)
+                int family, int type, int protocol)
 {
     BIO_ADDRINFO *res = NULL;
     const BIO_ADDRINFO *ai = NULL;
@@ -64,7 +65,8 @@ int init_client(int *sock, const char *host, const char *port,
     if (!BIO_sock_init())
         return 0;
 
-    ret = BIO_lookup(host, port, BIO_LOOKUP_CLIENT, family, type, &res);
+    ret = BIO_lookup_ex(host, port, BIO_LOOKUP_CLIENT, family, type, protocol,
+                        &res);
     if (ret == 0) {
         ERR_print_errors(bio_err);
         return 0;
@@ -75,17 +77,39 @@ int init_client(int *sock, const char *host, const char *port,
         /* Admittedly, these checks are quite paranoid, we should not get
          * anything in the BIO_ADDRINFO chain that we haven't
          * asked for. */
-        OPENSSL_assert((family == AF_UNSPEC || family == BIO_ADDRINFO_family(res))
-                       && (type == 0 || type == BIO_ADDRINFO_socktype(res)));
+        OPENSSL_assert((family == AF_UNSPEC
+                        || family == BIO_ADDRINFO_family(ai))
+                       && (type == 0 || type == BIO_ADDRINFO_socktype(ai))
+                       && (protocol == 0
+                           || protocol == BIO_ADDRINFO_protocol(ai)));
 
         *sock = BIO_socket(BIO_ADDRINFO_family(ai), BIO_ADDRINFO_socktype(ai),
-                           BIO_ADDRINFO_protocol(res), 0);
+                           BIO_ADDRINFO_protocol(ai), 0);
         if (*sock == INVALID_SOCKET) {
             /* Maybe the kernel doesn't support the socket family, even if
              * BIO_lookup() added it in the returned result...
              */
             continue;
         }
+
+#ifndef OPENSSL_NO_SCTP
+        if (protocol == IPPROTO_SCTP) {
+            /*
+             * For SCTP we have to set various options on the socket prior to
+             * connecting. This is done automatically by BIO_new_dgram_sctp().
+             * We don't actually need the created BIO though so we free it again
+             * immediately.
+             */
+            BIO *tmpbio = BIO_new_dgram_sctp(*sock, BIO_NOCLOSE);
+
+            if (tmpbio == NULL) {
+                ERR_print_errors(bio_err);
+                return 0;
+            }
+            BIO_free(tmpbio);
+        }
+#endif
+
         if (!BIO_connect(*sock, BIO_ADDRINFO_address(ai), 0)) {
             BIO_closesocket(*sock);
             *sock = INVALID_SOCKET;
@@ -128,7 +152,7 @@ int init_client(int *sock, const char *host, const char *port,
  * 0 on failure, something other on success.
  */
 int do_server(int *accept_sock, const char *host, const char *port,
-              int family, int type, do_server_cb cb,
+              int family, int type, int protocol, do_server_cb cb,
               unsigned char *context, int naccept)
 {
     int asock = 0;
@@ -140,7 +164,8 @@ int do_server(int *accept_sock, const char *host, const char *port,
     if (!BIO_sock_init())
         return 0;
 
-    if (!BIO_lookup(host, port, BIO_LOOKUP_SERVER, family, type, &res)) {
+    if (!BIO_lookup_ex(host, port, BIO_LOOKUP_SERVER, family, type, protocol,
+                       &res)) {
         ERR_print_errors(bio_err);
         return 0;
     }
@@ -148,7 +173,8 @@ int do_server(int *accept_sock, const char *host, const char *port,
     /* Admittedly, these checks are quite paranoid, we should not get
      * anything in the BIO_ADDRINFO chain that we haven't asked for */
     OPENSSL_assert((family == AF_UNSPEC || family == BIO_ADDRINFO_family(res))
-                   && (type == 0 || type == BIO_ADDRINFO_socktype(res)));
+                   && (type == 0 || type == BIO_ADDRINFO_socktype(res))
+                   && (protocol == 0 || protocol == BIO_ADDRINFO_protocol(res)));
 
     asock = BIO_socket(BIO_ADDRINFO_family(res), BIO_ADDRINFO_socktype(res),
                        BIO_ADDRINFO_protocol(res), 0);
@@ -160,6 +186,25 @@ int do_server(int *accept_sock, const char *host, const char *port,
             BIO_closesocket(asock);
         goto end;
     }
+
+#ifndef OPENSSL_NO_SCTP
+    if (protocol == IPPROTO_SCTP) {
+        /*
+         * For SCTP we have to set various options on the socket prior to
+         * accepting. This is done automatically by BIO_new_dgram_sctp().
+         * We don't actually need the created BIO though so we free it again
+         * immediately.
+         */
+        BIO *tmpbio = BIO_new_dgram_sctp(asock, BIO_NOCLOSE);
+
+        if (tmpbio == NULL) {
+            BIO_closesocket(asock);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        BIO_free(tmpbio);
+    }
+#endif
 
     BIO_ADDRINFO_free(res);
     res = NULL;
@@ -176,10 +221,10 @@ int do_server(int *accept_sock, const char *host, const char *port,
                 BIO_closesocket(asock);
                 break;
             }
-            i = (*cb)(sock, type, context);
+            i = (*cb)(sock, type, protocol, context);
             BIO_closesocket(sock);
         } else {
-            i = (*cb)(asock, type, context);
+            i = (*cb)(asock, type, protocol, context);
         }
 
         if (naccept != -1)

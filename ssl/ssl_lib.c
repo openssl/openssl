@@ -571,6 +571,9 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->msg_callback_arg = ctx->msg_callback_arg;
     s->verify_mode = ctx->verify_mode;
     s->not_resumable_session_cb = ctx->not_resumable_session_cb;
+    s->record_padding_cb = ctx->record_padding_cb;
+    s->record_padding_arg = ctx->record_padding_arg;
+    s->block_padding = ctx->block_padding;
     s->sid_ctx_length = ctx->sid_ctx_length;
     OPENSSL_assert(s->sid_ctx_length <= sizeof s->sid_ctx);
     memcpy(&s->sid_ctx, &ctx->sid_ctx, sizeof(s->sid_ctx));
@@ -2229,7 +2232,7 @@ STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s)
     ssl_set_client_disabled(s);
     for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
         const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
-        if (!ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED)) {
+        if (!ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0)) {
             if (!sk)
                 sk = sk_SSL_CIPHER_new_null();
             if (!sk)
@@ -3593,6 +3596,12 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
     if (new_cert == NULL) {
         return NULL;
     }
+
+    if (!custom_exts_copy_flags(&new_cert->custext, &ssl->cert->custext)) {
+        ssl_cert_free(new_cert);
+        return NULL;
+    }
+
     ssl_cert_free(ssl->cert);
     ssl->cert = new_cert;
 
@@ -3887,6 +3896,64 @@ void SSL_set_not_resumable_session_callback(SSL *ssl,
 {
     SSL_callback_ctrl(ssl, SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB,
                       (void (*)(void))cb);
+}
+
+void SSL_CTX_set_record_padding_callback(SSL_CTX *ctx,
+                                         size_t (*cb) (SSL *ssl, int type,
+                                                       size_t len, void *arg))
+{
+    ctx->record_padding_cb = cb;
+}
+
+void SSL_CTX_set_record_padding_callback_arg(SSL_CTX *ctx, void *arg)
+{
+    ctx->record_padding_arg = arg;
+}
+
+void *SSL_CTX_get_record_padding_callback_arg(SSL_CTX *ctx)
+{
+    return ctx->record_padding_arg;
+}
+
+int SSL_CTX_set_block_padding(SSL_CTX *ctx, size_t block_size)
+{
+    /* block size of 0 or 1 is basically no padding */
+    if (block_size == 1)
+        ctx->block_padding = 0;
+    else if (block_size <= SSL3_RT_MAX_PLAIN_LENGTH)
+        ctx->block_padding = block_size;
+    else
+        return 0;
+    return 1;
+}
+
+void SSL_set_record_padding_callback(SSL *ssl,
+                                     size_t (*cb) (SSL *ssl, int type,
+                                                   size_t len, void *arg))
+{
+    ssl->record_padding_cb = cb;
+}
+
+void SSL_set_record_padding_callback_arg(SSL *ssl, void *arg)
+{
+    ssl->record_padding_arg = arg;
+}
+
+void *SSL_get_record_padding_callback_arg(SSL *ssl)
+{
+    return ssl->record_padding_arg;
+}
+
+int SSL_set_block_padding(SSL *ssl, size_t block_size)
+{
+    /* block size of 0 or 1 is basically no padding */
+    if (block_size == 1)
+        ssl->block_padding = 0;
+    else if (block_size <= SSL3_RT_MAX_PLAIN_LENGTH)
+        ssl->block_padding = block_size;
+    else
+        return 0;
+    return 1;
 }
 
 /*

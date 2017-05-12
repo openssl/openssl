@@ -91,9 +91,9 @@ typedef unsigned int u_int;
 #endif
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
-static int sv_body(int s, int stype, unsigned char *context);
-static int www_body(int s, int stype, unsigned char *context);
-static int rev_body(int s, int stype, unsigned char *context);
+static int sv_body(int s, int stype, int prot, unsigned char *context);
+static int www_body(int s, int stype, int prot, unsigned char *context);
+static int rev_body(int s, int stype, int prot, unsigned char *context);
 static void close_accept_socket(void);
 static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp, SSL_CTX *ctx);
@@ -717,9 +717,10 @@ typedef enum OPTION_choice {
     OPT_CRLF, OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
     OPT_NO_RESUME_EPHEMERAL, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
-    OPT_SSL_CONFIG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
+    OPT_SSL_CONFIG, 
+    OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_SSL3, OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
-    OPT_DTLS1_2, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN,
+    OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN,
     OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
@@ -856,11 +857,12 @@ const OPTIONS s_server_options[] = {
     {"async", OPT_ASYNC, '-', "Operate in asynchronous mode"},
     {"ssl_config", OPT_SSL_CONFIG, 's',
      "Configure SSL_CTX using the configuration 'val'"},
-    {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'n',
+    {"max_send_frag", OPT_MAX_SEND_FRAG, 'p', "Maximum Size of send frames "},
+    {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'p',
      "Size used to split data for encrypt pipelines"},
-    {"max_pipelines", OPT_MAX_PIPELINES, 'n',
+    {"max_pipelines", OPT_MAX_PIPELINES, 'p',
      "Maximum number of encrypt/decrypt pipelines to be used"},
-    {"read_buf", OPT_READ_BUF, 'n',
+    {"read_buf", OPT_READ_BUF, 'p',
      "Default read buffer size to be used for connections"},
     OPT_S_OPTIONS,
     OPT_V_OPTIONS,
@@ -902,6 +904,9 @@ const OPTIONS s_server_options[] = {
 #endif
 #ifndef OPENSSL_NO_DTLS1_2
     {"dtls1_2", OPT_DTLS1_2, '-', "Just talk DTLSv1.2"},
+#endif
+#ifndef OPENSSL_NO_SCTP
+    {"sctp", OPT_SCTP, '-', "Use SCTP"},
 #endif
 #ifndef OPENSSL_NO_DH
     {"no_dhe", OPT_NO_DHE, '-', "Disable ephemeral DH"},
@@ -960,7 +965,7 @@ int s_server_main(int argc, char *argv[])
     int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
     int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
     int rev = 0, naccept = -1, sdebug = 0;
-    int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM;
+    int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM, protocol = 0;
     int state = 0, crl_format = FORMAT_PEM, crl_download = 0;
     char *host = NULL;
     char *port = BUF_strdup(PORT);
@@ -996,6 +1001,7 @@ int s_server_main(int argc, char *argv[])
     int s_tlsextstatus = 0;
 #endif
     int no_resume_ephemeral = 0;
+    unsigned int max_send_fragment = 0;
     unsigned int split_send_fragment = 0, max_pipelines = 0;
     const char *s_serverinfo_file = NULL;
     const char *keylog_file = NULL;
@@ -1431,6 +1437,11 @@ int s_server_main(int argc, char *argv[])
             socket_type = SOCK_DGRAM;
 #endif
             break;
+        case OPT_SCTP:
+#ifndef OPENSSL_NO_SCTP
+            protocol = IPPROTO_SCTP;
+#endif
+            break;
         case OPT_TIMEOUT:
 #ifndef OPENSSL_NO_DTLS
             enable_timeouts = 1;
@@ -1489,15 +1500,11 @@ int s_server_main(int argc, char *argv[])
         case OPT_ASYNC:
             async = 1;
             break;
+        case OPT_MAX_SEND_FRAG:
+            max_send_fragment = atoi(opt_arg());
+            break;
         case OPT_SPLIT_SEND_FRAG:
             split_send_fragment = atoi(opt_arg());
-            if (split_send_fragment == 0) {
-                /*
-                 * Not allowed - set to a deliberately bad value so we get an
-                 * error message below
-                 */
-                split_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH + 1;
-            }
             break;
         case OPT_MAX_PIPELINES:
             max_pipelines = atoi(opt_arg());
@@ -1543,15 +1550,16 @@ int s_server_main(int argc, char *argv[])
     }
 #endif
 
-    if (split_send_fragment > SSL3_RT_MAX_PLAIN_LENGTH) {
-        BIO_printf(bio_err, "Bad split send fragment size\n");
-        goto end;
+#ifndef OPENSSL_NO_SCTP
+    if (protocol == IPPROTO_SCTP) {
+        if (socket_type != SOCK_DGRAM) {
+            BIO_printf(bio_err, "Can't use -sctp without DTLS\n");
+            goto end;
+        }
+        /* SCTP is unusual. It uses DTLS over a SOCK_STREAM protocol */
+        socket_type = SOCK_STREAM;
     }
-
-    if (max_pipelines > SSL_MAX_PIPELINES) {
-        BIO_printf(bio_err, "Bad max pipelines value\n");
-        goto end;
-    }
+#endif
 
     if (!app_passwd(passarg, dpassarg, &pass, &dpass)) {
         BIO_printf(bio_err, "Error getting password\n");
@@ -1741,11 +1749,25 @@ int s_server_main(int argc, char *argv[])
     if (async) {
         SSL_CTX_set_mode(ctx, SSL_MODE_ASYNC);
     }
-    if (split_send_fragment > 0) {
-        SSL_CTX_set_split_send_fragment(ctx, split_send_fragment);
+
+    if (max_send_fragment > 0
+        && !SSL_CTX_set_max_send_fragment(ctx, max_send_fragment)) {
+        BIO_printf(bio_err, "%s: Max send fragment size %u is out of permitted range\n",
+                   prog, max_send_fragment);
+        goto end;
     }
-    if (max_pipelines > 0) {
-        SSL_CTX_set_max_pipelines(ctx, max_pipelines);
+
+    if (split_send_fragment > 0
+        && !SSL_CTX_set_split_send_fragment(ctx, split_send_fragment)) {
+        BIO_printf(bio_err, "%s: Split send fragment size %u is out of permitted range\n",
+                   prog, split_send_fragment);
+        goto end;
+    }
+    if (max_pipelines > 0
+        && !SSL_CTX_set_max_pipelines(ctx, max_pipelines)) {
+        BIO_printf(bio_err, "%s: Max pipelines %u is out of permitted range\n",
+                   prog, max_pipelines);
+        goto end;
     }
 
     if (read_buf_len > 0) {
@@ -2018,7 +2040,7 @@ int s_server_main(int argc, char *argv[])
         && unlink_unix_path)
         unlink(host);
 #endif
-    do_server(&accept_socket, host, port, socket_family, socket_type,
+    do_server(&accept_socket, host, port, socket_family, socket_type, protocol,
               server_cb, context, naccept);
     print_stats(bio_s_out, ctx);
     ret = 0;
@@ -2090,7 +2112,7 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
                SSL_CTX_sess_get_cache_size(ssl_ctx));
 }
 
-static int sv_body(int s, int stype, unsigned char *context)
+static int sv_body(int s, int stype, int prot, unsigned char *context)
 {
     char *buf = NULL;
     fd_set readfds;
@@ -2104,6 +2126,13 @@ static int sv_body(int s, int stype, unsigned char *context)
     struct timeval tv;
 #else
     struct timeval *timeoutp;
+#endif
+#ifndef OPENSSL_NO_DTLS
+# ifndef OPENSSL_NO_SCTP
+    int isdtls = (stype == SOCK_DGRAM || prot == IPPROTO_SCTP);
+# else
+    int isdtls = (stype == SOCK_DGRAM);
+# endif
 #endif
 
     buf = app_malloc(bufsize, "server buffer");
@@ -2136,9 +2165,13 @@ static int sv_body(int s, int stype, unsigned char *context)
         goto err;
     }
 #ifndef OPENSSL_NO_DTLS
-    if (stype == SOCK_DGRAM) {
-
-        sbio = BIO_new_dgram(s, BIO_NOCLOSE);
+    if (isdtls) {
+# ifndef OPENSSL_NO_SCTP
+        if (prot == IPPROTO_SCTP)
+            sbio = BIO_new_dgram_sctp(s, BIO_NOCLOSE);
+        else
+# endif
+            sbio = BIO_new_dgram(s, BIO_NOCLOSE);
 
         if (enable_timeouts) {
             timeout.tv_sec = 0;
@@ -2169,11 +2202,21 @@ static int sv_body(int s, int stype, unsigned char *context)
             /* want to do MTU discovery */
             BIO_ctrl(sbio, BIO_CTRL_DGRAM_MTU_DISCOVER, 0, NULL);
 
-        /* turn on cookie exchange */
-        SSL_set_options(con, SSL_OP_COOKIE_EXCHANGE);
+# ifndef OPENSSL_NO_SCTP
+        if (prot != IPPROTO_SCTP) {
+            /* Turn on cookie exchange. Not necessary for SCTP */
+            SSL_set_options(con, SSL_OP_COOKIE_EXCHANGE);
+        }
+# endif
     } else
 #endif
         sbio = BIO_new_socket(s, BIO_NOCLOSE);
+
+    if (sbio == NULL) {
+        BIO_printf(bio_err, "Unable to create BIO\n");
+        ERR_print_errors(bio_err);
+        goto err;
+    }
 
     if (s_nbio_test) {
         BIO *test;
@@ -2566,6 +2609,16 @@ static void close_accept_socket(void)
     }
 }
 
+static int is_retryable(SSL *con, int i)
+{
+    int err = SSL_get_error(con, i);
+
+    /* If it's not a fatal error, it must be retryable */
+    return (err != SSL_ERROR_SSL)
+           && (err != SSL_ERROR_SYSCALL)
+           && (err != SSL_ERROR_ZERO_RETURN);
+}
+
 static int init_ssl_connection(SSL *con)
 {
     int i;
@@ -2608,7 +2661,7 @@ static int init_ssl_connection(SSL *con)
         i = SSL_accept(con);
 
         if (i <= 0)
-            retry = BIO_sock_should_retry(i);
+            retry = is_retryable(con, i);
 #ifdef CERT_CB_TEST_RETRY
         {
             while (i <= 0
@@ -2618,7 +2671,7 @@ static int init_ssl_connection(SSL *con)
                            "LOOKUP from certificate callback during accept\n");
                 i = SSL_accept(con);
                 if (i <= 0)
-                    retry = BIO_sock_should_retry(i);
+                    retry = is_retryable(con, i);
             }
         }
 #endif
@@ -2639,7 +2692,7 @@ static int init_ssl_connection(SSL *con)
                 BIO_printf(bio_s_out, "LOOKUP not successful\n");
             i = SSL_accept(con);
             if (i <= 0)
-                retry = BIO_sock_should_retry(i);
+                retry = is_retryable(con, i);
         }
 #endif
     } while (i < 0 && SSL_waiting_for_async(con));
@@ -2688,10 +2741,7 @@ static void print_connection_info(SSL *con)
     if (peer != NULL) {
         BIO_printf(bio_s_out, "Client certificate\n");
         PEM_write_bio_X509(bio_s_out, peer);
-        X509_NAME_oneline(X509_get_subject_name(peer), buf, sizeof buf);
-        BIO_printf(bio_s_out, "subject=%s\n", buf);
-        X509_NAME_oneline(X509_get_issuer_name(peer), buf, sizeof buf);
-        BIO_printf(bio_s_out, "issuer=%s\n", buf);
+        dump_cert_text(bio_s_out, peer);
         X509_free(peer);
         peer = NULL;
     }
@@ -2767,7 +2817,7 @@ static DH *load_dh_param(const char *dhfile)
 }
 #endif
 
-static int www_body(int s, int stype, unsigned char *context)
+static int www_body(int s, int stype, int prot, unsigned char *context)
 {
     char *buf = NULL;
     int ret = 1;
@@ -3153,7 +3203,7 @@ static int www_body(int s, int stype, unsigned char *context)
     return (ret);
 }
 
-static int rev_body(int s, int stype, unsigned char *context)
+static int rev_body(int s, int stype, int prot, unsigned char *context)
 {
     char *buf = NULL;
     int i;

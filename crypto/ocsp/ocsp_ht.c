@@ -298,10 +298,12 @@ int OCSP_REQ_CTX_nbio(OCSP_REQ_CTX *rctx)
         }
         rctx->state = OHS_ASN1_WRITE_INIT;
 
+        /* fall thru */
     case OHS_ASN1_WRITE_INIT:
         rctx->asn1_len = BIO_get_mem_data(rctx->mem, NULL);
         rctx->state = OHS_ASN1_WRITE;
 
+        /* fall thru */
     case OHS_ASN1_WRITE:
         n = BIO_get_mem_data(rctx->mem, &p);
 
@@ -323,6 +325,7 @@ int OCSP_REQ_CTX_nbio(OCSP_REQ_CTX *rctx)
 
         (void)BIO_reset(rctx->mem);
 
+        /* fall thru */
     case OHS_ASN1_FLUSH:
 
         i = BIO_flush(rctx->io);

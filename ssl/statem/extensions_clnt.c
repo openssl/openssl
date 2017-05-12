@@ -464,7 +464,7 @@ int tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
         return 0;
     }
 
-    reason = ssl_get_client_min_max_version(s, &min_version, &max_version);
+    reason = ssl_get_min_max_version(s, &min_version, &max_version);
     if (reason != 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS, reason);
         return 0;
@@ -530,14 +530,26 @@ int tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt, unsigned int context,
 #ifndef OPENSSL_NO_TLS1_3
 static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
 {
-    unsigned char *encoded_point;
-    EVP_PKEY *key_share_key;
+    unsigned char *encoded_point = NULL;
+    EVP_PKEY *key_share_key = NULL;
     size_t encodedlen;
 
-    key_share_key = ssl_generate_pkey_curve(curve_id);
-    if (key_share_key == NULL) {
-        SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_EVP_LIB);
-        return 0;
+    if (s->s3->tmp.pkey != NULL) {
+        assert(s->hello_retry_request);
+        if (!s->hello_retry_request) {
+            SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        /*
+         * Could happen if we got an HRR that wasn't requesting a new key_share
+         */
+        key_share_key = s->s3->tmp.pkey;
+    } else {
+        key_share_key = ssl_generate_pkey_curve(curve_id);
+        if (key_share_key == NULL) {
+            SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_EVP_LIB);
+            return 0;
+        }
     }
 
     /* Encode the public key. */
@@ -545,17 +557,14 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
                                                 &encoded_point);
     if (encodedlen == 0) {
         SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_EC_LIB);
-        EVP_PKEY_free(key_share_key);
-        return 0;
+        goto err;
     }
 
     /* Create KeyShareEntry */
     if (!WPACKET_put_bytes_u16(pkt, curve_id)
             || !WPACKET_sub_memcpy_u16(pkt, encoded_point, encodedlen)) {
         SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-        EVP_PKEY_free(key_share_key);
-        OPENSSL_free(encoded_point);
-        return 0;
+        goto err;
     }
 
     /*
@@ -568,6 +577,11 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
     OPENSSL_free(encoded_point);
 
     return 1;
+ err:
+    if (s->s3->tmp.pkey == NULL)
+        EVP_PKEY_free(key_share_key);
+    OPENSSL_free(encoded_point);
+    return 0;
 }
 #endif
 
@@ -590,12 +604,6 @@ int tls_construct_ctos_key_share(SSL *s, WPACKET *pkt, unsigned int context,
     }
 
     if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
-    if (s->s3->tmp.pkey != NULL) {
-        /* Shouldn't happen! */
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -1304,7 +1312,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     if (!PACKET_get_net_2(pkt, &group_id)) {
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
@@ -1314,7 +1322,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         size_t i, num_curves;
 
         if (PACKET_remaining(pkt) != 0) {
-            *al = SSL_AD_HANDSHAKE_FAILURE;
+            *al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
             return 0;
         }
@@ -1356,7 +1364,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
          * This isn't for the group that we sent in the original
          * key_share!
          */
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
         return 0;
     }
@@ -1457,13 +1465,13 @@ int tls_parse_stoc_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     unsigned int identity;
 
     if (!PACKET_get_net_2(pkt, &identity) || PACKET_remaining(pkt) != 0) {
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PARSE_STOC_PSK, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
 
     if (s->session->ext.tick_identity != (int)identity) {
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PARSE_STOC_PSK, SSL_R_BAD_PSK_IDENTITY);
         return 0;
     }
