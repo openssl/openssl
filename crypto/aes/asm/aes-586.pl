@@ -176,7 +176,7 @@
 # unlikely to remain unnoticed. Not to mention that this also means
 # that he would spend correspondigly more time to collect enough
 # statistical data to mount the attack. It's probably appropriate to
-# say that if adeversary reckons that this attack is beneficial and
+# say that if adversary reckons that this attack is beneficial and
 # risks to be noticed, you probably have larger problems having him
 # mere opportunity. In other words suggested code design expects you
 # to preclude/mitigate this attack by overall system security design.
