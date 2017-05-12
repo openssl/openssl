@@ -20,8 +20,8 @@ BIO_callback_fn_ex, BIO_callback_fn
  void BIO_set_callback_ex(BIO *b, BIO_callback_fn_ex callback);
  BIO_callback_fn_ex BIO_get_callback_ex(const BIO *b);
 
- void BIO_set_callback(BIO *b, BIO_callack_fn cb);
- BIO_callack_fn BIO_get_callback(BIO *b);
+ void BIO_set_callback(BIO *b, BIO_callback_fn cb);
+ BIO_callback_fn BIO_get_callback(BIO *b);
  void BIO_set_callback_arg(BIO *b, char *arg);
  char *BIO_get_callback_arg(const BIO *b);
 
