@@ -564,8 +564,11 @@ static int parse_test_line(EVP_TEST *t, char *buf)
     }
     if (t->skip)
         return 1;
-    if (strcmp(keyword, "Result") == 0) {
-        if (t->expected_err) {
+    if (strcmp(keyword, "Title") == 0) {
+        TEST_info("Starting %s tests", value);
+        set_test_title(value);
+    } else if (strcmp(keyword, "Result") == 0) {
+        if (t->expected_err != NULL) {
             TEST_info("Line %d: multiple result lines", t->line);
             return 0;
         }

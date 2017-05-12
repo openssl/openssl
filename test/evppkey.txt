@@ -128,8 +128,7 @@ SzJw2oHciIOt+UU=
 PrivPubKeyPair = DSA-1024:DSA-1024-PUBLIC
 
 
-# RSA tests
-
+Title = RSA tests
 Sign = RSA-2048
 Ctrl = digest:SHA1
 Input = "0123456789ABCDEF1234"
@@ -377,15 +376,14 @@ Result = KEYOP_INIT_ERROR
 Function = EVP_PKEY_derive_init
 Reason = operation not supported for this keytype
 
-# Invalid ctrl
+Title = Invalid ctrl
 Sign = RSA-2048
 Ctrl = rsa_mgf1_md:sha1
 Result = PKEY_CTRL_INVALID
 Function = pkey_rsa_ctrl
 Reason = invalid mgf1 md
 
-# EC tests
-
+Title = EC tests
 Verify = P-256
 Ctrl = digest:SHA1
 Input = "0123456789ABCDEF1234"
