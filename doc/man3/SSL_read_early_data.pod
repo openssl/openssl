@@ -152,7 +152,7 @@ connection immediately without further need to call a function such as
 L<SSL_accept(3)>. This can happen if the client is using a protocol version less
 than TLSv1.3. Applications can test for this by calling
 L<SSL_is_init_finished(3)>. Alternatively, applications may choose to call
-L<SSL_accept(3)> anway. Such a call will successfully return immediately with no
+L<SSL_accept(3)> anyway. Such a call will successfully return immediately with no
 further action taken.
 
 When a session is created between a server and a client the server will specify
