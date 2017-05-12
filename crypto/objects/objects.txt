@@ -852,7 +852,7 @@ internet 6		: snmpv2		: SNMPv2
 # Documents refer to "internet 7" as "mail". This however leads to ambiguities
 # with RFC2798, Section 9.1.3, where "mail" is defined as the short name for
 # rfc822Mailbox. The short name is therefore here left out for a reason.
-# Subclasses of "mail", e.g. "MIME MHS" don't consitute a problem, as
+# Subclasses of "mail", e.g. "MIME MHS" don't constitute a problem, as
 # references are realized via long name "Mail" (with capital M).
 internet 7		:			: Mail
 
