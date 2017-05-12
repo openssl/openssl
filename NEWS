@@ -855,7 +855,7 @@
       o Added BIO proxy and filtering functionality
       o Extended Big Number (BN) library
       o Added RIPE MD160 message digest
-      o Addeed support for RC2/64bit cipher
+      o Added support for RC2/64bit cipher
       o Extended ASN.1 parser routines
       o Adjustations of the source tree for CVS
       o Support for various new platforms
