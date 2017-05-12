@@ -531,7 +531,7 @@ my %globals;
 	);
 
     # Following constants are defined in x86_64 ABI supplement, for
-    # example avaiable at https://www.uclibc.org/docs/psABI-x86_64.pdf,
+    # example available at https://www.uclibc.org/docs/psABI-x86_64.pdf,
     # see section 3.7 "Stack Unwind Algorithm".
     my %DW_reg_idx = (
 	"%rax"=>0,  "%rdx"=>1,  "%rcx"=>2,  "%rbx"=>3,
