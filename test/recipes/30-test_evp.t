@@ -17,7 +17,7 @@ setup("test_evp");
 my @files = ( "evpciph.txt", "evpdigest.txt", "evpencod.txt", "evpkdf.txt",
     "evpmac.txt", "evppbe.txt", "evppkey.txt" );
 
-plan tests => length(@files);
+plan tests => scalar(@files);
 
 foreach my $f ( @files ) {
     ok(run(test(["evp_test", srctop_file("test", "$f")])),
