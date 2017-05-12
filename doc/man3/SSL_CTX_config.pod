@@ -40,7 +40,7 @@ If the file "config.cnf" contains the following:
  testapp = test_sect
 
  [test_sect]
- # list of confuration modules
+ # list of configuration modules
 
  ssl_conf = ssl_sect
 
