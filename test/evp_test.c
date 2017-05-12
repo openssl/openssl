@@ -404,6 +404,8 @@ static const EVP_TEST_METHOD pbe_test_method;
 static const EVP_TEST_METHOD encode_test_method;
 static const EVP_TEST_METHOD kdf_test_method;
 static const EVP_TEST_METHOD keypair_test_method;
+static const EVP_TEST_METHOD digestsign_test_method;
+static const EVP_TEST_METHOD digestverify_test_method;
 
 static const EVP_TEST_METHOD *evp_test_list[] = {
     &digest_test_method,
@@ -418,6 +420,8 @@ static const EVP_TEST_METHOD *evp_test_list[] = {
     &encode_test_method,
     &kdf_test_method,
     &keypair_test_method,
+    &digestsign_test_method,
+    &digestverify_test_method,
     NULL
 };
 
@@ -2195,6 +2199,189 @@ static const EVP_TEST_METHOD keypair_test_method = {
     keypair_test_cleanup,
     void_test_parse,
     keypair_test_run
+};
+
+typedef struct {
+    int is_verify;
+    /* Digest to use */
+    const EVP_MD *md;
+    /* Digest context */
+    EVP_MD_CTX *ctx;
+    EVP_PKEY_CTX *pctx;
+    /* Input data */
+    STACK_OF(EVP_TEST_BUFFER) *input;
+    /* Expected output */
+    unsigned char *output;
+    size_t output_len;
+} DIGESTSIGN_DATA;
+
+static int digestsigver_test_init(EVP_TEST *t, const char *alg, int is_verify)
+{
+    const EVP_MD *md = NULL;
+    DIGESTSIGN_DATA *mdat;
+
+    if (strcmp(alg, "NULL") != 0) {
+        if ((md = EVP_get_digestbyname(alg)) == NULL) {
+            /* If alg has an OID assume disabled algorithm */
+            if (OBJ_sn2nid(alg) != NID_undef || OBJ_ln2nid(alg) != NID_undef) {
+                t->skip = 1;
+                return 1;
+            }
+            return 0;
+        }
+    }
+    if (!TEST_ptr(mdat = OPENSSL_zalloc(sizeof(*mdat))))
+        return 0;
+    mdat->md = md;
+    if (!TEST_ptr(mdat->ctx = EVP_MD_CTX_new())) {
+        OPENSSL_free(mdat);
+        return 0;
+    }
+    mdat->is_verify = is_verify;
+    t->data = mdat;
+    return 1;
+}
+
+static int digestsign_test_init(EVP_TEST *t, const char *alg)
+{
+    return digestsigver_test_init(t, alg, 0);
+}
+
+static void digestsigver_test_cleanup(EVP_TEST *t)
+{
+    DIGESTSIGN_DATA *mdata = t->data;
+
+    EVP_MD_CTX_free(mdata->ctx);
+    sk_EVP_TEST_BUFFER_pop_free(mdata->input, evp_test_buffer_free);
+    OPENSSL_free(mdata->output);
+    OPENSSL_free(mdata);
+    t->data = NULL;
+}
+
+static int digestsigver_test_parse(EVP_TEST *t,
+                                   const char *keyword, const char *value)
+{
+    DIGESTSIGN_DATA *mdata = t->data;
+
+    if (strcmp(keyword, "Key") == 0) {
+        EVP_PKEY *pkey = NULL;
+        int rv = 0;
+
+        if (mdata->is_verify)
+            rv = find_key(&pkey, value, public_keys);
+        if (rv == 0)
+            rv = find_key(&pkey, value, private_keys);
+        if (rv == 0 || pkey == NULL) {
+            t->skip = 1;
+            return 1;
+        }
+        if (mdata->is_verify) {
+            if (!EVP_DigestVerifyInit(mdata->ctx, &mdata->pctx, mdata->md,
+                                      NULL, pkey))
+                t->err = "DIGESTVERIFYINIT_ERROR";
+            return 1;
+        }
+        if (!EVP_DigestSignInit(mdata->ctx, &mdata->pctx, mdata->md, NULL,
+                                pkey))
+            t->err = "DIGESTSIGNINIT_ERROR";
+        return 1;
+    }
+
+    if (strcmp(keyword, "Input") == 0)
+        return evp_test_buffer_append(value, &mdata->input);
+    if (strcmp(keyword, "Output") == 0)
+        return test_bin(value, &mdata->output, &mdata->output_len);
+    if (strcmp(keyword, "Count") == 0)
+        return evp_test_buffer_set_count(value, mdata->input);
+    if (strcmp(keyword, "Ncopy") == 0)
+        return evp_test_buffer_ncopy(value, mdata->input);
+    if (strcmp(keyword, "Ctrl") == 0) {
+        if (mdata->pctx == NULL)
+            return 0;
+        return pkey_test_ctrl(t, mdata->pctx, value);
+    }
+    return 0;
+}
+
+static int digestsign_update_fn(void *ctx, const unsigned char *buf,
+                                size_t buflen)
+{
+    return EVP_DigestSignUpdate(ctx, buf, buflen);
+}
+
+static int digestsign_test_run(EVP_TEST *t)
+{
+    DIGESTSIGN_DATA *mdata = t->data;
+    unsigned char *buf = NULL;
+    size_t buflen;
+
+    if (!evp_test_buffer_do(mdata->input, digestsign_update_fn, mdata->ctx)) {
+        t->err = "DIGESTUPDATE_ERROR";
+        goto err;
+    }
+
+    if (!EVP_DigestSignFinal(mdata->ctx, NULL, &buflen)) {
+        t->err = "DIGESTSIGNFINAL_LENGTH_ERROR";
+        goto err;
+    }
+    if (!TEST_ptr(buf = OPENSSL_malloc(buflen))) {
+        t->err = "MALLOC_FAILURE";
+        goto err;
+    }
+    if (!EVP_DigestSignFinal(mdata->ctx, buf, &buflen)) {
+        t->err = "DIGESTSIGNFINAL_ERROR";
+        goto err;
+    }
+    if (!compare_mem(mdata->output, mdata->output_len, buf, buflen)) {
+        t->err = "SIGNATURE_MISMATCH";
+        goto err;
+    }
+
+ err:
+    OPENSSL_free(buf);
+    return 1;
+}
+
+static const EVP_TEST_METHOD digestsign_test_method = {
+    "DigestSign",
+    digestsign_test_init,
+    digestsigver_test_cleanup,
+    digestsigver_test_parse,
+    digestsign_test_run
+};
+
+static int digestverify_test_init(EVP_TEST *t, const char *alg)
+{
+    return digestsigver_test_init(t, alg, 1);
+}
+
+static int digestverify_update_fn(void *ctx, const unsigned char *buf,
+                                  size_t buflen)
+{
+    return EVP_DigestVerifyUpdate(ctx, buf, buflen);
+}
+
+static int digestverify_test_run(EVP_TEST *t)
+{
+    DIGESTSIGN_DATA *mdata = t->data;
+
+    if (!evp_test_buffer_do(mdata->input, digestverify_update_fn, mdata->ctx)) {
+        t->err = "DIGESTUPDATE_ERROR";
+        return 1;
+    }
+
+    if (EVP_DigestVerifyFinal(mdata->ctx, mdata->output,
+                              mdata->output_len) <= 0)
+        t->err = "VERIFY_ERROR";
+    return 1;
+}
+
+static const EVP_TEST_METHOD digestverify_test_method = {
+    "DigestVerify",
+    digestverify_test_init,
+    digestsigver_test_cleanup,
+    digestsigver_test_parse,
+    digestverify_test_run
 };
 
 static int do_test_file(const char *testfile)
