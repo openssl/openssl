@@ -1977,7 +1977,7 @@ $code.=<<___;
 	 srlx	$acc0,32,$t1
 	addxccc	$acc3,$t2,$acc2		! +=acc[0]*0xFFFFFFFF00000001
 	 sub	$acc0,$t0,$t2		! acc0*0xFFFFFFFF00000001, low part
-	addxc	%g0,$t3,$acc3		! cant't overflow
+	addxc	%g0,$t3,$acc3		! can't overflow
 ___
 }
 $code.=<<___;
