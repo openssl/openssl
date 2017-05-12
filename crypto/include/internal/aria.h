@@ -22,7 +22,7 @@
 # define ARIA_ENCRYPT     1
 # define ARIA_DECRYPT     0
 
-# define ARIA_BLOCK_SIZE    16  /* Size of each encryption/decription block */
+# define ARIA_BLOCK_SIZE    16  /* Size of each encryption/decryption block */
 # define ARIA_MAX_KEYS      17  /* Number of keys needed in the worst case  */
 
 # ifdef  __cplusplus

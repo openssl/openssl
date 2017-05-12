@@ -1517,7 +1517,7 @@ DES_ncbc_encrypt:
 	! parameter 7  1 for mov in1 to in3
 	! parameter 8  1 for mov in3 to in4
 
-	ip_macro(in5, out5, out5, in5, in4, 2, 0, 1) ! include decryprion  ks in4
+	ip_macro(in5, out5, out5, in5, in4, 2, 0, 1) ! include decryption  ks in4
 
 	fp_macro(out5, in5, 0, 1) ! 1 for input and output address to local5/7
 
