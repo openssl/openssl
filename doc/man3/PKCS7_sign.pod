@@ -46,7 +46,7 @@ required by the S/MIME specifications) if B<PKCS7_BINARY> is set no translation
 occurs. This option should be used if the supplied data is in binary format
 otherwise the translation will corrupt it.
 
-The signedData structure includes several PKCS#7 autenticatedAttributes
+The signedData structure includes several PKCS#7 authenticatedAttributes
 including the signing time, the PKCS#7 content type and the supported list of
 ciphers in an SMIMECapabilities attribute. If B<PKCS7_NOATTR> is set then no
 authenticatedAttributes will be used. If B<PKCS7_NOSMIMECAP> is set then just
