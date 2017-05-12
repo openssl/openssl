@@ -425,7 +425,6 @@ static int sh_init(size_t size, int minsize)
             close(fd);
         }
     }
-    OPENSSL_assert(sh.map_result != MAP_FAILED);
     if (sh.map_result == MAP_FAILED)
         goto err;
     sh.arena = (char *)(sh.map_result + pgsize);
