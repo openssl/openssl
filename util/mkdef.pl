@@ -526,7 +526,7 @@ sub do_defs
 				while($tag[$tag_i] ne "-") {
 					if ($tag[$tag_i] eq "OPENSSL_NO_".$1) {
 						$tag{$tag[$tag_i]}=2;
-						print STDERR "DEBUG: $file: chaged tag $1 = 2\n" if $debug;
+						print STDERR "DEBUG: $file: changed tag $1 = 2\n" if $debug;
 					}
 					$tag_i--;
 				}
