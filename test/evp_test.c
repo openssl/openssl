@@ -21,160 +21,71 @@
 #include "testutil.h"
 #include "evp_test.h"
 
+
+typedef struct evp_test_method_st EVP_TEST_METHOD;
+
+/*
+ * Structure holding test information
+ */
+typedef struct evp_test_st {
+    BIO *in;                      /* file being read */
+    int line;                     /* current line being processed */
+    int start_line;               /* start line of current test */
+    int ntests;                   /* Number of tests */
+    int errors;                   /* Error count */
+    int skip;                     /* Current test should be skipped */
+    int nskip;                    /* Number of tests skipped */
+    char buf[10240];              /* Input buffer */
+    BIO *key;                     /* temp memory BIO for reading in keys */
+    const EVP_TEST_METHOD *meth;  /* method for this test */
+    const char *err, *aux_err;    /* Error string for test */
+    char *expected_err;           /* Expected error value of test */
+    char *func;                   /* Expected error function string */
+    char *reason;                 /* Expected error reason string */
+    void *data;                   /* test specific data */
+} EVP_TEST;
+
+/*
+ * Test method structure
+ */
+struct evp_test_method_st {
+    /* Name of test as it appears in file */
+    const char *name;
+    /* Initialise test for "alg" */
+    int (*init) (EVP_TEST * t, const char *alg);
+    /* Clean up method */
+    void (*cleanup) (EVP_TEST * t);
+    /* Test specific name value pair processing */
+    int (*parse) (EVP_TEST * t, const char *name, const char *value);
+    /* Run the test itself */
+    int (*run_test) (EVP_TEST * t);
+};
+
+
+/*
+ * Linked list of named keys.
+ */
+typedef struct key_list_st {
+    char *name;
+    EVP_PKEY *key;
+    struct key_list_st *next;
+} KEY_LIST;
+
+/*
+ * List of public and private keys
+ */
+static KEY_LIST *private_keys;
+static KEY_LIST *public_keys;
+static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst);
+
+static int parse_bin(const char *value, unsigned char **buf, size_t *buflen);
+
 static const char *current_test_file = "???";
-
-/*
- * Remove spaces from beginning and end of a string
- */
-static void remove_space(char **pval)
-{
-    unsigned char *p = (unsigned char *)*pval, *beginning;
-
-    while (isspace(*p))
-        p++;
-
-    *pval = (char *)(beginning = p);
-
-    p = p + strlen(*pval) - 1;
-
-    /* Remove trailing space */
-    while (p >= beginning && isspace(*p))
-        *p-- = 0;
-}
-
-/*
- * Given a line of the form:
- *      name = value # comment
- * extract name and value. NB: modifies |linebuf|.
- */
-static int parse_line(char **pkw, char **pval, char *linebuf)
-{
-    char *p = linebuf + strlen(linebuf) - 1;
-
-    if (*p != '\n') {
-        TEST_error("FATAL: missing EOL");
-        return 0;
-    }
-
-    /* Look for # */
-    p = strchr(linebuf, '#');
-    if (p != NULL)
-        *p = '\0';
-
-    /* Look for = sign */
-    if ((p = strchr(linebuf, '=')) == NULL)
-        return 0;
-    *p++ = '\0';
-
-    *pkw = linebuf;
-    *pval = p;
-    remove_space(pkw);
-    remove_space(pval);
-    return 1;
-}
-
-/*
- * Unescape some escape sequences in string literals.
- * Return the result in a newly allocated buffer.
- * Currently only supports '\n'.
- * If the input length is 0, returns a valid 1-byte buffer, but sets
- * the length to 0.
- */
-static unsigned char* unescape(const char *input, size_t input_len,
-                               size_t *out_len)
-{
-    unsigned char *ret, *p;
-    size_t i;
-
-    if (input_len == 0) {
-        *out_len = 0;
-        return OPENSSL_zalloc(1);
-    }
-
-    /* Escaping is non-expanding; over-allocate original size for simplicity. */
-    ret = p = OPENSSL_malloc(input_len);
-    if (ret == NULL)
-        return NULL;
-
-    for (i = 0; i < input_len; i++) {
-        if (input[i] == '\\') {
-            if (i == input_len - 1 || input[i+1] != 'n')
-                goto err;
-            *p++ = '\n';
-            i++;
-        } else {
-            *p++ = input[i];
-        }
-    }
-
-    *out_len = p - ret;
-    return ret;
-
- err:
-    OPENSSL_free(ret);
-    return NULL;
-}
-
-/* For a hex string "value" convert to a binary allocated buffer */
-static int test_bin(const char *value, unsigned char **buf, size_t *buflen)
-{
-    long len;
-
-    *buflen = 0;
-
-    /* Check for empty value */
-    if (!*value) {
-        /*
-         * Don't return NULL for zero length buffer.
-         * This is needed for some tests with empty keys: HMAC_Init_ex() expects
-         * a non-NULL key buffer even if the key length is 0, in order to detect
-         * key reset.
-         */
-        *buf = OPENSSL_malloc(1);
-        if (!*buf)
-            return 0;
-        **buf = 0;
-        *buflen = 0;
-        return 1;
-    }
-
-    /* Check for NULL literal */
-    if (strcmp(value, "NULL") == 0) {
-        *buf = NULL;
-        *buflen = 0;
-        return 1;
-    }
-
-    /* Check for string literal */
-    if (value[0] == '"') {
-        size_t vlen;
-        value++;
-        vlen = strlen(value);
-        if (value[vlen - 1] != '"')
-            return 0;
-        vlen--;
-        *buf = unescape(value, vlen, buflen);
-        if (*buf == NULL)
-            return 0;
-        return 1;
-    }
-
-    /* Otherwise assume as hex literal and convert it to binary buffer */
-    if (!TEST_ptr(*buf = OPENSSL_hexstr2buf(value, &len))) {
-        TEST_info("Cannot convert %s", value);
-        ERR_print_errors(bio_err);
-        return -1;
-    }
-    /* Size of input buffer means we'll never overflow */
-    *buflen = len;
-    return 1;
-}
 
 /*
  * Structure used to hold a list of blocks of memory to test
  * calls to "update" like functions.
  */
-
 struct evp_test_buffer_st {
     unsigned char *buf;
     size_t buflen;
@@ -190,8 +101,9 @@ static void evp_test_buffer_free(EVP_TEST_BUFFER *db)
     }
 }
 
-/* append buffer to a list */
-
+/*
+ * append buffer to a list
+ */
 static int evp_test_buffer_append(const char *value,
                                   STACK_OF(EVP_TEST_BUFFER) **sk)
 {
@@ -200,22 +112,20 @@ static int evp_test_buffer_append(const char *value,
     if (!TEST_ptr(db = OPENSSL_malloc(sizeof(*db))))
         goto err;
 
-    if (!test_bin(value, &db->buf, &db->buflen))
+    if (!parse_bin(value, &db->buf, &db->buflen))
         goto err;
     db->count = 1;
     db->count_set = 0;
 
     if (*sk == NULL && !TEST_ptr(*sk = sk_EVP_TEST_BUFFER_new_null()))
-            goto err;
-
+        goto err;
     if (!sk_EVP_TEST_BUFFER_push(*sk, db))
         goto err;
 
     return 1;
 
-    err:
+err:
     evp_test_buffer_free(db);
-
     return 0;
 }
 
@@ -249,7 +159,9 @@ static int evp_test_buffer_ncopy(const char *value,
     return 1;
 }
 
-/* set repeat count for last buffer in list */
+/*
+ * set repeat count for last buffer in list
+ */
 static int evp_test_buffer_set_count(const char *value,
                                      STACK_OF(EVP_TEST_BUFFER) *sk)
 {
@@ -263,7 +175,7 @@ static int evp_test_buffer_set_count(const char *value,
         return 0;
 
     db = sk_EVP_TEST_BUFFER_value(sk, sk_EVP_TEST_BUFFER_num(sk) - 1);
-    if (db->count_set)
+    if (db->count_set != 0)
         return 0;
 
     db->count = (size_t)count;
@@ -294,34 +206,6 @@ static int evp_test_buffer_do(STACK_OF(EVP_TEST_BUFFER) *sk,
     return 1;
 }
 
-#ifndef OPENSSL_NO_SCRYPT
-/* Currently only used by scrypt tests */
-/* Parse unsigned decimal 64 bit integer value */
-static int test_uint64(const char *value, uint64_t *pr)
-{
-    const char *p = value;
-
-    if (!TEST_true(*p)) {
-        TEST_info("Invalid empty integer value");
-        return -1;
-    }
-    *pr = 0;
-    while (*p) {
-        if (*pr > UINT64_MAX / 10) {
-            TEST_error("Integer overflow in string %s", value);
-            return -1;
-        }
-        *pr *= 10;
-        if (!TEST_true(isdigit(*p))) {
-            TEST_error("Invalid character in string %s", value);
-            return -1;
-        }
-        *pr += *p - '0';
-        p++;
-    }
-    return 1;
-}
-
 static int compare_mem(unsigned char *expected, size_t expected_len,
                        unsigned char *got, size_t  got_len)
 {
@@ -329,417 +213,105 @@ static int compare_mem(unsigned char *expected, size_t expected_len,
         return 0;
     return 1;
 }
-#endif
-
-typedef struct evp_test_method_st EVP_TEST_METHOD;
-
-/* Structure holding test information */
-typedef struct evp_test_st {
-    /* file being read */
-    BIO *in;
-    /* temp memory BIO for reading in keys */
-    BIO *key;
-    /* method for this test */
-    const EVP_TEST_METHOD *meth;
-    /* current line being processed */
-    unsigned int line;
-    /* start line of current test */
-    unsigned int start_line;
-    /* Error string for test */
-    const char *err, *aux_err;
-    /* Expected error value of test */
-    char *expected_err;
-    /* Expected error function string */
-    char *func;
-    /* Expected error reason string */
-    char *reason;
-    /* Number of tests */
-    int ntests;
-    /* Error count */
-    int errors;
-    /* Number of tests skipped */
-    int nskip;
-    /* test specific data */
-    void *data;
-    /* Current test should be skipped */
-    int skip;
-} EVP_TEST;
 
 /*
- * Linked list of named keys.
+ * Unescape some sequences in string literals (only \n for now).
+ * Return an allocated buffer, set |out_len|.  If |input_len|
+ * is zero, get an empty buffer but set length to zero.
  */
-typedef struct key_list_st {
-    char *name;
-    EVP_PKEY *key;
-    struct key_list_st *next;
-} KEY_LIST;
-
-/* List of public and private keys */
-static KEY_LIST *private_keys;
-static KEY_LIST *public_keys;
-
-/*
- * Test method structure
- */
-struct evp_test_method_st {
-    /* Name of test as it appears in file */
-    const char *name;
-    /* Initialise test for "alg" */
-    int (*init) (EVP_TEST * t, const char *alg);
-    /* Clean up method */
-    void (*cleanup) (EVP_TEST * t);
-    /* Test specific name value pair processing */
-    int (*parse) (EVP_TEST * t, const char *name, const char *value);
-    /* Run the test itself */
-    int (*run_test) (EVP_TEST * t);
-};
-
-static const EVP_TEST_METHOD digest_test_method, cipher_test_method;
-static const EVP_TEST_METHOD mac_test_method;
-static const EVP_TEST_METHOD psign_test_method, pverify_test_method;
-static const EVP_TEST_METHOD pdecrypt_test_method;
-static const EVP_TEST_METHOD pverify_recover_test_method;
-static const EVP_TEST_METHOD pderive_test_method;
-static const EVP_TEST_METHOD pbe_test_method;
-static const EVP_TEST_METHOD encode_test_method;
-static const EVP_TEST_METHOD kdf_test_method;
-static const EVP_TEST_METHOD keypair_test_method;
-static const EVP_TEST_METHOD digestsign_test_method;
-static const EVP_TEST_METHOD digestverify_test_method;
-static const EVP_TEST_METHOD oneshot_digestsign_test_method;
-static const EVP_TEST_METHOD oneshot_digestverify_test_method;
-
-static const EVP_TEST_METHOD *evp_test_list[] = {
-    &digest_test_method,
-    &cipher_test_method,
-    &mac_test_method,
-    &psign_test_method,
-    &pverify_test_method,
-    &pdecrypt_test_method,
-    &pverify_recover_test_method,
-    &pderive_test_method,
-    &pbe_test_method,
-    &encode_test_method,
-    &kdf_test_method,
-    &keypair_test_method,
-    &digestsign_test_method,
-    &digestverify_test_method,
-    &oneshot_digestsign_test_method,
-    &oneshot_digestverify_test_method,
-    NULL
-};
-
-static const EVP_TEST_METHOD *evp_find_test(const char *name)
+static unsigned char* unescape(const char *input, size_t input_len,
+                               size_t *out_len)
 {
-    const EVP_TEST_METHOD **tt;
+    unsigned char *ret, *p;
+    size_t i;
 
-    for (tt = evp_test_list; *tt; tt++) {
-        if (strcmp(name, (*tt)->name) == 0)
-            return *tt;
+    if (input_len == 0) {
+        *out_len = 0;
+        return OPENSSL_zalloc(1);
     }
+
+    /* Escaping is non-expanding; over-allocate original size for simplicity. */
+    if (!TEST_ptr(ret = p = OPENSSL_malloc(input_len)))
+        return NULL;
+
+    for (i = 0; i < input_len; i++) {
+        if (*input == '\\') {
+            if (i == input_len - 1 || *++input != 'n') {
+                TEST_error("Bad escape sequence in file");
+                goto err;
+            }
+            *p++ = '\n';
+            i++;
+            input++;
+        } else {
+            *p++ = *input++;
+        }
+    }
+
+    *out_len = p - ret;
+    return ret;
+
+ err:
+    OPENSSL_free(ret);
     return NULL;
 }
 
-static void clear_test(EVP_TEST *t)
-{
-    OPENSSL_free(t->expected_err);
-    t->expected_err = NULL;
-    OPENSSL_free(t->func);
-    t->func = NULL;
-    OPENSSL_free(t->reason);
-    t->reason = NULL;
-    /* Text literal. */
-    t->err = NULL;
-}
-
 /*
- * Check for errors in the test structure; return 1 if okay, else 0.
+ * For a hex string "value" convert to a binary allocated buffer.
+ * Return 1 on success or 0 on failure.
  */
-static int check_test_error(EVP_TEST *t)
+static int parse_bin(const char *value, unsigned char **buf, size_t *buflen)
 {
-    unsigned long err;
-    const char *func;
-    const char *reason;
+    long len;
 
-    if (t->err == NULL && t->expected_err == NULL)
-        return 1;
-    if (t->err != NULL && t->expected_err == NULL) {
-        if (t->aux_err != NULL) {
-            TEST_info("Above error from the test at %s:%d "
-                      "(%s) unexpected error %s",
-                      current_test_file, t->start_line, t->aux_err, t->err);
-        } else {
-            TEST_info("Above error from the test at %s:%d "
-                      "unexpected error %s",
-                      current_test_file, t->start_line, t->err);
-        }
-        clear_test(t);
-        return 0;
-    }
-    if (t->err == NULL && t->expected_err != NULL) {
-        TEST_info("Test line %d: succeeded expecting %s",
-                  t->start_line, t->expected_err);
-        return 0;
-    }
-
-    if (strcmp(t->err, t->expected_err) != 0) {
-        TEST_info("Test line %d: expecting %s got %s",
-                  t->start_line, t->expected_err, t->err);
-        return 0;
-    }
-
-    if (t->func == NULL && t->reason == NULL)
-        return 1;
-
-    if (t->func == NULL || t->reason == NULL) {
-        TEST_info("Test line %d: missing function or reason code",
-                  t->start_line);
-        return 0;
-    }
-
-    err = ERR_peek_error();
-    if (err == 0) {
-        TEST_info("Test line %d, expected error \"%s:%s\" not set",
-                  t->start_line, t->func, t->reason);
-        return 0;
-    }
-
-    func = ERR_func_error_string(err);
-    reason = ERR_reason_error_string(err);
-    if (func == NULL && reason == NULL) {
-        TEST_info("Test line %d: expected error \"%s:%s\","
-                  " no strings available.  Skipping...\n",
-                  t->start_line, t->func, t->reason);
+    /* Check for NULL literal */
+    if (strcmp(value, "NULL") == 0) {
+        *buf = NULL;
+        *buflen = 0;
         return 1;
     }
 
-    if (strcmp(func, t->func) == 0 && strcmp(reason, t->reason) == 0)
+    /* Check for empty value */
+    if (*value == '\0') {
+        /*
+         * Don't return NULL for zero length buffer. This is needed for
+         * some tests with empty keys: HMAC_Init_ex() expects a non-NULL key
+         * buffer even if the key length is 0, in order to detect key reset.
+         */
+        *buf = OPENSSL_malloc(1);
+        if (*buf == NULL)
+            return 0;
+        **buf = 0;
+        *buflen = 0;
         return 1;
-
-    TEST_info("Test line %d: expected error \"%s:%s\", got \"%s:%s\"",
-              t->start_line, t->func, t->reason, func, reason);
-
-    return 0;
-}
-
-/*
- * Setup a new test, run any existing test. Log a message and return 0
- * on error.
- */
-static int run_and_get_next(EVP_TEST *t, const EVP_TEST_METHOD *tmeth)
-{
-    /* If we already have a test set up run it */
-    if (t->meth) {
-        t->ntests++;
-        if (t->skip) {
-            /*TEST_info("Line %d skipped %s test", t->start_line, t->meth->name);
-             */
-            t->nskip++;
-        } else {
-            /* run the test */
-            if (t->err == NULL && t->meth->run_test(t) != 1) {
-                TEST_info("Line %d error %s", t->start_line, t->meth->name);
-                return 0;
-            }
-            if (!check_test_error(t)) {
-                test_openssl_errors();
-                t->errors++;
-            }
-        }
-        /* clean it up */
-        ERR_clear_error();
-        if (t->data != NULL) {
-            t->meth->cleanup(t);
-            OPENSSL_free(t->data);
-            t->data = NULL;
-        }
-        clear_test(t);
     }
-    t->meth = tmeth;
+
+    /* Check for string literal */
+    if (value[0] == '"') {
+        size_t vlen = strlen(++value);
+
+        if (vlen == 0 || value[vlen - 1] != '"')
+            return 0;
+        vlen--;
+        *buf = unescape(value, vlen, buflen);
+        return *buf == NULL ? 0 : 1;
+    }
+
+    /* Otherwise assume as hex literal and convert it to binary buffer */
+    if (!TEST_ptr(*buf = OPENSSL_hexstr2buf(value, &len))) {
+        TEST_info("Can't convert %s", value);
+        ERR_print_errors(bio_err);
+        return -1;
+    }
+    /* Size of input buffer means we'll never overflow */
+    *buflen = len;
     return 1;
 }
 
-static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst)
-{
-    for (; lst; lst = lst->next) {
-        if (strcmp(lst->name, name) == 0) {
-            if (ppk)
-                *ppk = lst->key;
-            return 1;
-        }
-    }
-    return 0;
-}
 
-static void free_key_list(KEY_LIST *lst)
-{
-    while (lst != NULL) {
-        KEY_LIST *ltmp;
-
-        EVP_PKEY_free(lst->key);
-        OPENSSL_free(lst->name);
-        ltmp = lst->next;
-        OPENSSL_free(lst);
-        lst = ltmp;
-    }
-}
-
-static int check_unsupported()
-{
-    long err = ERR_peek_error();
-
-    if (ERR_GET_LIB(err) == ERR_LIB_EVP
-            && ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_ALGORITHM) {
-        ERR_clear_error();
-        return 1;
-    }
-#ifndef OPENSSL_NO_EC
-    /*
-     * If EC support is enabled we should catch also EC_R_UNKNOWN_GROUP as an
-     * hint to an unsupported algorithm/curve (e.g. if binary EC support is
-     * disabled).
-     */
-    if (ERR_GET_LIB(err) == ERR_LIB_EC
-        && ERR_GET_REASON(err) == EC_R_UNKNOWN_GROUP) {
-        ERR_clear_error();
-        return 1;
-    }
-#endif /* OPENSSL_NO_EC */
-    return 0;
-}
-
-
-static int read_key(EVP_TEST *t)
-{
-    char tmpbuf[80];
-
-    if (t->key == NULL) {
-        if (!TEST_ptr(t->key = BIO_new(BIO_s_mem())))
-            return 0;
-    } else if (!TEST_int_gt(BIO_reset(t->key), 0)) {
-        return 0;
-    }
-
-    /* Read to PEM end line and place content in memory BIO */
-    while (BIO_gets(t->in, tmpbuf, sizeof(tmpbuf))) {
-        t->line++;
-        if (!TEST_int_gt(BIO_puts(t->key, tmpbuf), 0))
-            return 0;
-        if (strncmp(tmpbuf, "-----END", 8) == 0)
-            return 1;
-    }
-    TEST_error("Can't find key end");
-    return 0;
-}
-
-/*
- * Parse a line into the current test |t|.  Return 0 on error.
- */
-static int parse_test_line(EVP_TEST *t, char *buf)
-{
-    char *keyword = NULL, *value = NULL;
-    int add_key = 0;
-    KEY_LIST **lst = NULL, *key = NULL;
-    EVP_PKEY *pk = NULL;
-    const EVP_TEST_METHOD *tmeth = NULL;
-
-    if (!parse_line(&keyword, &value, buf))
-        return 1;
-    if (strcmp(keyword, "PrivateKey") == 0) {
-        if (!read_key(t))
-            return 0;
-        pk = PEM_read_bio_PrivateKey(t->key, NULL, 0, NULL);
-        if (pk == NULL && !check_unsupported()) {
-            TEST_info("Error reading private key %s", value);
-            ERR_print_errors_fp(stderr);
-            return 0;
-        }
-        lst = &private_keys;
-        add_key = 1;
-    }
-    if (strcmp(keyword, "PublicKey") == 0) {
-        if (!read_key(t))
-            return 0;
-        pk = PEM_read_bio_PUBKEY(t->key, NULL, 0, NULL);
-        if (pk == NULL && !check_unsupported()) {
-            TEST_info("Error reading public key %s", value);
-            ERR_print_errors_fp(stderr);
-            return 0;
-        }
-        lst = &public_keys;
-        add_key = 1;
-    }
-    /* If we have a key add to list */
-    if (add_key) {
-        if (find_key(NULL, value, *lst)) {
-            TEST_info("Duplicate key %s", value);
-            return 0;
-        }
-        if (!TEST_ptr(key = OPENSSL_malloc(sizeof(*key)))
-                || !TEST_ptr(key->name = OPENSSL_strdup(value)))
-            return 0;
-        key->key = pk;
-        key->next = *lst;
-        *lst = key;
-        return 1;
-    }
-
-    /* See if keyword corresponds to a test start */
-    if ((tmeth = evp_find_test(keyword)) != NULL) {
-        if (!run_and_get_next(t, tmeth))
-            return 0;
-        t->start_line = t->line;
-        t->skip = 0;
-        if (!tmeth->init(t, value)) {
-            TEST_info("Unknown %s: %s", keyword, value);
-            return 0;
-        }
-        return 1;
-    }
-    if (t->skip)
-        return 1;
-    if (strcmp(keyword, "Title") == 0) {
-        TEST_info("Starting %s tests", value);
-        set_test_title(value);
-    } else if (strcmp(keyword, "Result") == 0) {
-        if (t->expected_err != NULL) {
-            TEST_info("Line %d: multiple result lines", t->line);
-            return 0;
-        }
-        if (!TEST_ptr(t->expected_err = OPENSSL_strdup(value)))
-            return 0;
-    } else if (strcmp(keyword, "Function") == 0) {
-        if (t->func != NULL) {
-            TEST_info("Line %d: multiple function lines\n", t->line);
-            return 0;
-        }
-        if (!TEST_ptr(t->func = OPENSSL_strdup(value)))
-            return 0;
-    } else if (strcmp(keyword, "Reason") == 0) {
-        if (t->reason != NULL) {
-            TEST_info("Line %d: multiple reason lines", t->line);
-            return 0;
-        }
-        if (!TEST_ptr(t->reason = OPENSSL_strdup(value)))
-            return 0;
-    } else {
-        /* Must be test specific line: try to parse it */
-        int rv = t->meth == NULL ? 0 : t->meth->parse(t, keyword, value);
-
-        if (rv == 0) {
-            TEST_info("Line %d: unknown keyword %s", t->line, keyword);
-            return 0;
-        }
-        if (rv < 0) {
-            TEST_info("Line %d: error processing keyword %s\n",
-                      t->line, keyword);
-            return 0;
-        }
-    }
-    return 1;
-}
-
-/* Message digest tests */
+/**
+***  MESSAGE DIGEST TESTS
+**/
 
 typedef struct digest_data_st {
     /* Digest this test is for */
@@ -753,11 +325,10 @@ typedef struct digest_data_st {
 
 static int digest_test_init(EVP_TEST *t, const char *alg)
 {
-    const EVP_MD *digest;
     DIGEST_DATA *mdat;
+    const EVP_MD *digest;
 
-    digest = EVP_get_digestbyname(alg);
-    if (!digest) {
+    if ((digest = EVP_get_digestbyname(alg)) == NULL) {
         /* If alg has an OID assume disabled algorithm */
         if (OBJ_sn2nid(alg) != NID_undef || OBJ_ln2nid(alg) != NID_undef) {
             t->skip = 1;
@@ -765,9 +336,10 @@ static int digest_test_init(EVP_TEST *t, const char *alg)
         }
         return 0;
     }
-    mdat = OPENSSL_zalloc(sizeof(*mdat));
-    mdat->digest = digest;
+    if (!TEST_ptr(mdat = OPENSSL_zalloc(sizeof(*mdat))))
+        return 0;
     t->data = mdat;
+    mdat->digest = digest;
     return 1;
 }
 
@@ -787,7 +359,7 @@ static int digest_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "Input") == 0)
         return evp_test_buffer_append(value, &mdata->input);
     if (strcmp(keyword, "Output") == 0)
-        return test_bin(value, &mdata->output, &mdata->output_len);
+        return parse_bin(value, &mdata->output, &mdata->output_len);
     if (strcmp(keyword, "Count") == 0)
         return evp_test_buffer_set_count(value, mdata->input);
     if (strcmp(keyword, "Ncopy") == 0)
@@ -847,7 +419,11 @@ static const EVP_TEST_METHOD digest_test_method = {
     digest_test_run
 };
 
-/* Cipher tests */
+
+/**
+***  CIPHER TESTS
+**/
+
 typedef struct cipher_data_st {
     const EVP_CIPHER *cipher;
     int enc;
@@ -871,10 +447,10 @@ typedef struct cipher_data_st {
 static int cipher_test_init(EVP_TEST *t, const char *alg)
 {
     const EVP_CIPHER *cipher;
-    CIPHER_DATA *cdat = t->data;
+    CIPHER_DATA *cdat;
+    int m;
 
-    cipher = EVP_get_cipherbyname(alg);
-    if (!cipher) {
+    if ((cipher = EVP_get_cipherbyname(alg)) == NULL) {
         /* If alg has an OID assume disabled algorithm */
         if (OBJ_sn2nid(alg) != NID_undef || OBJ_ln2nid(alg) != NID_undef) {
             t->skip = 1;
@@ -882,25 +458,20 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
         }
         return 0;
     }
-    cdat = OPENSSL_malloc(sizeof(*cdat));
+    cdat = OPENSSL_zalloc(sizeof(*cdat));
     cdat->cipher = cipher;
     cdat->enc = -1;
-    cdat->key = NULL;
-    cdat->iv = NULL;
-    cdat->ciphertext = NULL;
-    cdat->plaintext = NULL;
-    cdat->aad = NULL;
-    cdat->tag = NULL;
-    t->data = cdat;
-    if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE
-        || EVP_CIPHER_mode(cipher) == EVP_CIPH_OCB_MODE
-        || EVP_CIPHER_mode(cipher) == EVP_CIPH_CCM_MODE)
+    m = EVP_CIPHER_mode(cipher);
+    if (m == EVP_CIPH_GCM_MODE
+            || m == EVP_CIPH_OCB_MODE
+            || m == EVP_CIPH_CCM_MODE)
         cdat->aead = EVP_CIPHER_mode(cipher);
     else if (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
         cdat->aead = -1;
     else
         cdat->aead = 0;
 
+    t->data = cdat;
     return 1;
 }
 
@@ -922,18 +493,18 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
     CIPHER_DATA *cdat = t->data;
 
     if (strcmp(keyword, "Key") == 0)
-        return test_bin(value, &cdat->key, &cdat->key_len);
+        return parse_bin(value, &cdat->key, &cdat->key_len);
     if (strcmp(keyword, "IV") == 0)
-        return test_bin(value, &cdat->iv, &cdat->iv_len);
+        return parse_bin(value, &cdat->iv, &cdat->iv_len);
     if (strcmp(keyword, "Plaintext") == 0)
-        return test_bin(value, &cdat->plaintext, &cdat->plaintext_len);
+        return parse_bin(value, &cdat->plaintext, &cdat->plaintext_len);
     if (strcmp(keyword, "Ciphertext") == 0)
-        return test_bin(value, &cdat->ciphertext, &cdat->ciphertext_len);
+        return parse_bin(value, &cdat->ciphertext, &cdat->ciphertext_len);
     if (cdat->aead) {
         if (strcmp(keyword, "AAD") == 0)
-            return test_bin(value, &cdat->aad, &cdat->aad_len);
+            return parse_bin(value, &cdat->aad, &cdat->aad_len);
         if (strcmp(keyword, "Tag") == 0)
-            return test_bin(value, &cdat->tag, &cdat->tag_len);
+            return parse_bin(value, &cdat->tag, &cdat->tag_len);
     }
 
     if (strcmp(keyword, "Operation") == 0) {
@@ -1233,6 +804,11 @@ static const EVP_TEST_METHOD cipher_test_method = {
     cipher_test_run
 };
 
+
+/**
+***  MAC TESTS
+**/
+
 typedef struct mac_data_st {
     /* MAC type */
     int type;
@@ -1302,7 +878,7 @@ static int mac_test_parse(EVP_TEST *t,
     MAC_DATA *mdata = t->data;
 
     if (strcmp(keyword, "Key") == 0)
-        return test_bin(value, &mdata->key, &mdata->key_len);
+        return parse_bin(value, &mdata->key, &mdata->key_len);
     if (strcmp(keyword, "Algorithm") == 0) {
         mdata->alg = OPENSSL_strdup(value);
         if (!mdata->alg)
@@ -1310,9 +886,9 @@ static int mac_test_parse(EVP_TEST *t,
         return 1;
     }
     if (strcmp(keyword, "Input") == 0)
-        return test_bin(value, &mdata->input, &mdata->input_len);
+        return parse_bin(value, &mdata->input, &mdata->input_len);
     if (strcmp(keyword, "Output") == 0)
-        return test_bin(value, &mdata->output, &mdata->output_len);
+        return parse_bin(value, &mdata->output, &mdata->output_len);
     return 0;
 }
 
@@ -1407,10 +983,11 @@ static const EVP_TEST_METHOD mac_test_method = {
     mac_test_run
 };
 
-/*
- * Public key operations. These are all very similar and can share
- * a lot of common code.
- */
+
+/**
+***  PUBLIC KEY TESTS
+***  These are all very similar and share much common code.
+**/
 
 typedef struct pkey_data_st {
     /* Context for this operation */
@@ -1434,11 +1011,10 @@ typedef struct pkey_data_st {
 static int pkey_test_init(EVP_TEST *t, const char *name,
                           int use_public,
                           int (*keyopinit) (EVP_PKEY_CTX *ctx),
-                          int (*keyop) (EVP_PKEY_CTX *ctx,
-                                        unsigned char *sig, size_t *siglen,
-                                        const unsigned char *tbs,
-                                        size_t tbslen)
-    )
+                          int (*keyop)(EVP_PKEY_CTX *ctx,
+                                       unsigned char *sig, size_t *siglen,
+                                       const unsigned char *tbs,
+                                       size_t tbslen))
 {
     PKEY_DATA *kdata;
     EVP_PKEY *pkey = NULL;
@@ -1453,19 +1029,16 @@ static int pkey_test_init(EVP_TEST *t, const char *name,
         return 1;
     }
 
-    if (!TEST_ptr(kdata = OPENSSL_malloc(sizeof(*kdata)))) {
+    if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata)))) {
         EVP_PKEY_free(pkey);
         return 0;
     }
-    kdata->ctx = NULL;
-    kdata->input = NULL;
-    kdata->output = NULL;
     kdata->keyop = keyop;
-    t->data = kdata;
     if (!TEST_ptr(kdata->ctx = EVP_PKEY_CTX_new(pkey, NULL)))
         return 0;
     if (keyopinit(kdata->ctx) <= 0)
         t->err = "KEYOP_INIT_ERROR";
+    t->data = kdata;
     return 1;
 }
 
@@ -1488,7 +1061,7 @@ static int pkey_test_ctrl(EVP_TEST *t, EVP_PKEY_CTX *pctx,
         return 0;
     p = strchr(tmpval, ':');
     if (p != NULL)
-        *p++ = 0;
+        *p++ = '\0';
     rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
     if (rv == -2) {
         t->err = "PKEY_CTRL_INVALID";
@@ -1499,8 +1072,9 @@ static int pkey_test_ctrl(EVP_TEST *t, EVP_PKEY_CTX *pctx,
 
         if (nid == NID_undef)
              nid = OBJ_ln2nid(p);
-        if ((nid != NID_undef) && EVP_get_digestbynid(nid) == NULL &&
-            EVP_get_cipherbynid(nid) == NULL) {
+        if (nid != NID_undef
+                && EVP_get_digestbynid(nid) == NULL
+                && EVP_get_cipherbynid(nid) == NULL) {
             t->skip = 1;
             rv = 1;
         } else {
@@ -1517,9 +1091,9 @@ static int pkey_test_parse(EVP_TEST *t,
 {
     PKEY_DATA *kdata = t->data;
     if (strcmp(keyword, "Input") == 0)
-        return test_bin(value, &kdata->input, &kdata->input_len);
+        return parse_bin(value, &kdata->input, &kdata->input_len);
     if (strcmp(keyword, "Output") == 0)
-        return test_bin(value, &kdata->output, &kdata->output_len);
+        return parse_bin(value, &kdata->output, &kdata->output_len);
     if (strcmp(keyword, "Ctrl") == 0)
         return pkey_test_ctrl(t, kdata->ctx, value);
     return 0;
@@ -1636,7 +1210,7 @@ static int pderive_test_parse(EVP_TEST *t,
         return 1;
     }
     if (strcmp(keyword, "SharedSecret") == 0)
-        return test_bin(value, &kdata->output, &kdata->output_len);
+        return parse_bin(value, &kdata->output, &kdata->output_len);
     if (strcmp(keyword, "Ctrl") == 0)
         return pkey_test_ctrl(t, kdata->ctx, value);
     return 0;
@@ -1676,14 +1250,18 @@ static const EVP_TEST_METHOD pderive_test_method = {
     pderive_test_run
 };
 
-/* PBE tests */
 
-#define PBE_TYPE_SCRYPT 1
-#define PBE_TYPE_PBKDF2 2
-#define PBE_TYPE_PKCS12 3
+/**
+***  PBE TESTS
+**/
+
+typedef enum pbe_type_enum {
+    PBE_TYPE_INVALID = 0,
+    PBE_TYPE_SCRYPT, PBE_TYPE_PBKDF2, PBE_TYPE_PKCS12
+} PBE_TYPE;
 
 typedef struct pbe_data_st {
-    int pbe_type;
+    PBE_TYPE pbe_type;
         /* scrypt parameters */
     uint64_t N, r, p, maxmem;
         /* PKCS#12 parameters */
@@ -1701,19 +1279,46 @@ typedef struct pbe_data_st {
 } PBE_DATA;
 
 #ifndef OPENSSL_NO_SCRYPT
+/*
+ * Parse unsigned decimal 64 bit integer value
+ */
+static int parse_uint64(const char *value, uint64_t *pr)
+{
+    const char *p = value;
+
+    if (!TEST_true(*p)) {
+        TEST_info("Invalid empty integer value");
+        return -1;
+    }
+    for (*pr = 0; *p; ) {
+        if (*pr > UINT64_MAX / 10) {
+            TEST_error("Integer overflow in string %s", value);
+            return -1;
+        }
+        *pr *= 10;
+        if (!TEST_true(isdigit(*p))) {
+            TEST_error("Invalid character in string %s", value);
+            return -1;
+        }
+        *pr += *p - '0';
+        p++;
+    }
+    return 1;
+}
+
 static int scrypt_test_parse(EVP_TEST *t,
                              const char *keyword, const char *value)
 {
     PBE_DATA *pdata = t->data;
 
     if (strcmp(keyword, "N") == 0)
-        return test_uint64(value, &pdata->N);
+        return parse_uint64(value, &pdata->N);
     if (strcmp(keyword, "p") == 0)
-        return test_uint64(value, &pdata->p);
+        return parse_uint64(value, &pdata->p);
     if (strcmp(keyword, "r") == 0)
-        return test_uint64(value, &pdata->r);
+        return parse_uint64(value, &pdata->r);
     if (strcmp(keyword, "maxmem") == 0)
-        return test_uint64(value, &pdata->maxmem);
+        return parse_uint64(value, &pdata->maxmem);
     return 0;
 }
 #endif
@@ -1726,13 +1331,13 @@ static int pbkdf2_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "iter") == 0) {
         pdata->iter = atoi(value);
         if (pdata->iter <= 0)
-            return 0;
+            return -1;
         return 1;
     }
     if (strcmp(keyword, "MD") == 0) {
         pdata->md = EVP_get_digestbyname(value);
         if (pdata->md == NULL)
-            return 0;
+            return -1;
         return 1;
     }
     return 0;
@@ -1746,7 +1351,7 @@ static int pkcs12_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "id") == 0) {
         pdata->id = atoi(value);
         if (pdata->id <= 0)
-            return 0;
+            return -1;
         return 1;
     }
     return pbkdf2_test_parse(t, keyword, value);
@@ -1755,7 +1360,7 @@ static int pkcs12_test_parse(EVP_TEST *t,
 static int pbe_test_init(EVP_TEST *t, const char *alg)
 {
     PBE_DATA *pdat;
-    int pbe_type = 0;
+    PBE_TYPE pbe_type = PBE_TYPE_INVALID;
 
     if (strcmp(alg, "scrypt") == 0) {
 #ifndef OPENSSL_NO_SCRYPT
@@ -1771,17 +1376,8 @@ static int pbe_test_init(EVP_TEST *t, const char *alg)
     } else {
         TEST_error("Unknown pbe algorithm %s", alg);
     }
-    pdat = OPENSSL_malloc(sizeof(*pdat));
+    pdat = OPENSSL_zalloc(sizeof(*pdat));
     pdat->pbe_type = pbe_type;
-    pdat->pass = NULL;
-    pdat->salt = NULL;
-    pdat->N = 0;
-    pdat->r = 0;
-    pdat->p = 0;
-    pdat->maxmem = 0;
-    pdat->id = 0;
-    pdat->iter = 0;
-    pdat->md = NULL;
     t->data = pdat;
     return 1;
 }
@@ -1801,11 +1397,11 @@ static int pbe_test_parse(EVP_TEST *t,
     PBE_DATA *pdata = t->data;
 
     if (strcmp(keyword, "Password") == 0)
-        return test_bin(value, &pdata->pass, &pdata->pass_len);
+        return parse_bin(value, &pdata->pass, &pdata->pass_len);
     if (strcmp(keyword, "Salt") == 0)
-        return test_bin(value, &pdata->salt, &pdata->salt_len);
+        return parse_bin(value, &pdata->salt, &pdata->salt_len);
     if (strcmp(keyword, "Key") == 0)
-        return test_bin(value, &pdata->key, &pdata->key_len);
+        return parse_bin(value, &pdata->key, &pdata->key_len);
     if (pdata->pbe_type == PBE_TYPE_PBKDF2)
         return pbkdf2_test_parse(t, keyword, value);
     else if (pdata->pbe_type == PBE_TYPE_PKCS12)
@@ -1871,7 +1467,10 @@ static const EVP_TEST_METHOD pbe_test_method = {
     pbe_test_run
 };
 
-/* Base64 tests */
+
+/**
+***  BASE64 TESTS
+**/
 
 typedef enum {
     BASE64_CANONICAL_ENCODING = 0,
@@ -1891,20 +1490,22 @@ typedef struct encode_data_st {
 
 static int encode_test_init(EVP_TEST *t, const char *encoding)
 {
-    ENCODE_DATA *edata = OPENSSL_zalloc(sizeof(*edata));
+    ENCODE_DATA *edata;
 
+    if (!TEST_ptr(edata = OPENSSL_zalloc(sizeof(*edata))))
+        return 0;
     if (strcmp(encoding, "canonical") == 0) {
         edata->encoding = BASE64_CANONICAL_ENCODING;
     } else if (strcmp(encoding, "valid") == 0) {
         edata->encoding = BASE64_VALID_ENCODING;
     } else if (strcmp(encoding, "invalid") == 0) {
         edata->encoding = BASE64_INVALID_ENCODING;
-        t->expected_err = OPENSSL_strdup("DECODE_ERROR");
-        if (t->expected_err == NULL)
+        if (!TEST_ptr(t->expected_err = OPENSSL_strdup("DECODE_ERROR")))
             return 0;
     } else {
-        TEST_info("Bad encoding: %s. Should be one of "
-                  "{canonical, valid, invalid}", encoding);
+        TEST_error("Bad encoding: %s."
+                   " Should be one of {canonical, valid, invalid}",
+                   encoding);
         return 0;
     }
     t->data = edata;
@@ -1924,10 +1525,11 @@ static int encode_test_parse(EVP_TEST *t,
                              const char *keyword, const char *value)
 {
     ENCODE_DATA *edata = t->data;
+
     if (strcmp(keyword, "Input") == 0)
-        return test_bin(value, &edata->input, &edata->input_len);
+        return parse_bin(value, &edata->input, &edata->input_len);
     if (strcmp(keyword, "Output") == 0)
-        return test_bin(value, &edata->output, &edata->output_len);
+        return parse_bin(value, &edata->output, &edata->output_len);
     return 0;
 }
 
@@ -2009,7 +1611,9 @@ static const EVP_TEST_METHOD encode_test_method = {
     encode_test_run,
 };
 
-/* KDF operations */
+/**
+***  KDF TESTS
+**/
 
 typedef struct kdf_data_st {
     /* Context for this operation */
@@ -2027,17 +1631,14 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
 {
     KDF_DATA *kdata;
 
-    kdata = OPENSSL_malloc(sizeof(*kdata));
-    if (kdata == NULL)
+    if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
         return 0;
-    kdata->ctx = NULL;
-    kdata->output = NULL;
-    t->data = kdata;
     kdata->ctx = EVP_PKEY_CTX_new_id(OBJ_sn2nid(name), NULL);
     if (kdata->ctx == NULL)
         return 0;
     if (EVP_PKEY_derive_init(kdata->ctx) <= 0)
         return 0;
+    t->data = kdata;
     return 1;
 }
 
@@ -2054,7 +1655,7 @@ static int kdf_test_parse(EVP_TEST *t,
     KDF_DATA *kdata = t->data;
 
     if (strcmp(keyword, "Output") == 0)
-        return test_bin(value, &kdata->output, &kdata->output_len);
+        return parse_bin(value, &kdata->output, &kdata->output_len);
     if (strncmp(keyword, "Ctrl", 4) == 0)
         return pkey_test_ctrl(t, kdata->ctx, value);
     return 0;
@@ -2093,32 +1694,38 @@ static const EVP_TEST_METHOD kdf_test_method = {
     kdf_test_run
 };
 
-typedef struct keypair_test_buffer_st {
+
+/**
+***  KEYPAIR TESTS
+**/
+
+typedef struct keypair_test_data_st {
     EVP_PKEY *privk;
     EVP_PKEY *pubk;
 } KEYPAIR_TEST_DATA;
 
 static int keypair_test_init(EVP_TEST *t, const char *pair)
 {
+    KEYPAIR_TEST_DATA *data;
     int rv = 0;
     EVP_PKEY *pk = NULL, *pubk = NULL;
     char *pub, *priv = NULL;
-    KEYPAIR_TEST_DATA *data;
 
+    /* Split private and public names. */
     if (!TEST_ptr(priv = OPENSSL_strdup(pair))
             || !TEST_ptr(pub = strchr(priv, ':'))) {
         t->err = "PARSING_ERROR";
         goto end;
     }
-    *pub++ = 0; /* split priv and pub strings */
+    *pub++ = '\0';
 
     if (!TEST_true(find_key(&pk, priv, private_keys))) {
-        TEST_info("Cannot find private key: %s", priv);
+        TEST_info("Can't find private key: %s", priv);
         t->err = "MISSING_PRIVATE_KEY";
         goto end;
     }
     if (!TEST_true(find_key(&pubk, pub, public_keys))) {
-        TEST_info("Cannot find public key: %s", pub);
+        TEST_info("Can't find public key: %s", pub);
         t->err = "MISSING_PUBLIC_KEY";
         goto end;
     }
@@ -2132,7 +1739,6 @@ static int keypair_test_init(EVP_TEST *t, const char *pair)
 
     if (!TEST_ptr(data = OPENSSL_malloc(sizeof(*data))))
         goto end;
-
     data->privk = pk;
     data->pubk = pubk;
     t->data = data;
@@ -2150,8 +1756,8 @@ static void keypair_test_cleanup(EVP_TEST *t)
     t->data = NULL;
 }
 
-/* For test that do not accept any custom keyword:
- *      return 0 if called
+/*
+ * For tests that do not accept any custom keywords.
  */
 static int void_test_parse(EVP_TEST *t, const char *keyword, const char *value)
 {
@@ -2204,6 +1810,11 @@ static const EVP_TEST_METHOD keypair_test_method = {
     void_test_parse,
     keypair_test_run
 };
+
+
+/**
+***  DIGEST SIGN+VERIFY TESTS
+**/
 
 typedef struct {
     int is_verify; /* Set to 1 if verifying */
@@ -2295,11 +1906,11 @@ static int digestsigver_test_parse(EVP_TEST *t,
 
     if (strcmp(keyword, "Input") == 0) {
         if (mdata->is_oneshot)
-            return test_bin(value, &mdata->osin, &mdata->osin_len);
+            return parse_bin(value, &mdata->osin, &mdata->osin_len);
         return evp_test_buffer_append(value, &mdata->input);
     }
     if (strcmp(keyword, "Output") == 0)
-        return test_bin(value, &mdata->output, &mdata->output_len);
+        return parse_bin(value, &mdata->output, &mdata->output_len);
 
     if (!mdata->is_oneshot) {
         if (strcmp(keyword, "Count") == 0)
@@ -2462,28 +2073,464 @@ static const EVP_TEST_METHOD oneshot_digestverify_test_method = {
     oneshot_digestverify_test_run
 };
 
+
+/**
+***  PARSING AND DISPATCH
+**/
+
+static const EVP_TEST_METHOD *evp_test_list[] = {
+    &cipher_test_method,
+    &digest_test_method,
+    &digestsign_test_method,
+    &digestverify_test_method,
+    &encode_test_method,
+    &kdf_test_method,
+    &keypair_test_method,
+    &mac_test_method,
+    &oneshot_digestsign_test_method,
+    &oneshot_digestverify_test_method,
+    &pbe_test_method,
+    &pdecrypt_test_method,
+    &pderive_test_method,
+    &psign_test_method,
+    &pverify_recover_test_method,
+    &pverify_test_method,
+    NULL
+};
+
+static const EVP_TEST_METHOD *find_test(const char *name)
+{
+    const EVP_TEST_METHOD **tt;
+
+    for (tt = evp_test_list; *tt; tt++) {
+        if (strcmp(name, (*tt)->name) == 0)
+            return *tt;
+    }
+    return NULL;
+}
+
+static void clear_test(EVP_TEST *t)
+{
+    ERR_clear_error();
+    if (t->data != NULL) {
+        if (t->meth != NULL)
+            t->meth->cleanup(t);
+        OPENSSL_free(t->data);
+        t->data = NULL;
+    }
+    OPENSSL_free(t->expected_err);
+    t->expected_err = NULL;
+    OPENSSL_free(t->func);
+    t->func = NULL;
+    OPENSSL_free(t->reason);
+    t->reason = NULL;
+    /* Text literal. */
+    t->err = NULL;
+    t->skip = 0;
+    t->meth = NULL;
+}
+
+/*
+ * Check for errors in the test structure; return 1 if okay, else 0.
+ */
+static int check_test_error(EVP_TEST *t)
+{
+    unsigned long err;
+    const char *func;
+    const char *reason;
+
+    if (t->err == NULL && t->expected_err == NULL)
+        return 1;
+    if (t->err != NULL && t->expected_err == NULL) {
+        if (t->aux_err != NULL) {
+            TEST_info("Above error from the test at %s:%d "
+                      "(%s) unexpected error %s",
+                      current_test_file, t->start_line, t->aux_err, t->err);
+        } else {
+            TEST_info("Above error from the test at %s:%d "
+                      "unexpected error %s",
+                      current_test_file, t->start_line, t->err);
+        }
+        return 0;
+    }
+    if (t->err == NULL && t->expected_err != NULL) {
+        TEST_info("Test line %d: succeeded but was expecting %s",
+                  t->start_line, t->expected_err);
+        return 0;
+    }
+
+    if (strcmp(t->err, t->expected_err) != 0) {
+        TEST_info("Test line %d: expecting %s got %s",
+                  t->start_line, t->expected_err, t->err);
+        return 0;
+    }
+
+    if (t->func == NULL && t->reason == NULL)
+        return 1;
+
+    if (t->func == NULL || t->reason == NULL) {
+        TEST_info("Test line %d: missing function or reason code",
+                  t->start_line);
+        return 0;
+    }
+
+    err = ERR_peek_error();
+    if (err == 0) {
+        TEST_info("Test line %d, expected error \"%s:%s\" not set",
+                  t->start_line, t->func, t->reason);
+        return 0;
+    }
+
+    func = ERR_func_error_string(err);
+    reason = ERR_reason_error_string(err);
+    if (func == NULL && reason == NULL) {
+        TEST_info("Test line %d: expected error \"%s:%s\","
+                  " no strings available.  Skipping...\n",
+                  t->start_line, t->func, t->reason);
+        return 1;
+    }
+
+    if (strcmp(func, t->func) == 0 && strcmp(reason, t->reason) == 0)
+        return 1;
+
+    TEST_info("Test line %d: expected error \"%s:%s\", got \"%s:%s\"",
+              t->start_line, t->func, t->reason, func, reason);
+
+    return 0;
+}
+
+/*
+ * Run a parsed test. Log a message and return 0 on error.
+ */
+static int run_test(EVP_TEST *t)
+{
+    if (t->meth == NULL)
+        return 1;
+    t->ntests++;
+    if (t->skip) {
+        t->nskip++;
+    } else {
+        /* run the test */
+        if (t->err == NULL && t->meth->run_test(t) != 1) {
+            TEST_info("Line %d error %s", t->start_line, t->meth->name);
+            return 0;
+        }
+        if (!check_test_error(t)) {
+            test_openssl_errors();
+            t->errors++;
+        }
+    }
+
+    /* clean it up */
+    return 1;
+}
+
+static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst)
+{
+    for (; lst != NULL; lst = lst->next) {
+        if (strcmp(lst->name, name) == 0) {
+            if (ppk != NULL)
+                *ppk = lst->key;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void free_key_list(KEY_LIST *lst)
+{
+    while (lst != NULL) {
+        KEY_LIST *next = lst->next;
+
+        EVP_PKEY_free(lst->key);
+        OPENSSL_free(lst->name);
+        OPENSSL_free(lst);
+        lst = next;
+    }
+}
+
+
+/*
+ * Read a line, remove the newline, return EOF or first char.
+ * Comment lines are treated like empty lines.
+ */
+static int read_line(EVP_TEST *t)
+{
+    char *p;
+
+    if (!BIO_gets(t->in, t->buf, sizeof(t->buf)))
+        return EOF;
+    t->line++;
+    if ((p = strchr(t->buf, '\n')) != NULL)
+        *p = '\0';
+    if (t->buf[0] == '#')
+        t->buf[0] = '\0';
+    return t->buf[0];
+}
+
+/*
+ * Skip leading spaces and remove trailing spaces from string.
+ */
+static char *strip_spaces(char *pval)
+{
+    char *p, *start;
+
+    for (start = pval; isspace(*start); )
+        start++;
+    if (*start == '\0')
+        return start;
+
+    for (p = start + strlen(start); --p >= start && isspace(*p); )
+        *p = '\0';
+    return start;
+}
+
+/*
+ * Split line into 'key = value'; return 1 if okay, 0 on error.
+ */
+static int split_line(EVP_TEST *t, char **keyword, char **value)
+{
+    char *p;
+
+    /* Look for = sign */
+    if ((p = strchr(t->buf, '=')) == NULL) {
+        TEST_error("Line %d: Missing '=' in test file", t->line);
+        return 0;
+    }
+    *p++ = '\0';
+    *keyword = strip_spaces(t->buf);
+    *value = strip_spaces(p);
+    if (**keyword == '\0') {
+        TEST_error("Line %d: Missing key; malformed input line", t->line);
+        return 0;
+    }
+    return 1;
+}
+
+/*
+ * Read a PEM block.  Return 1 if okay, 0 on error.
+ */
+static int read_key(EVP_TEST *t)
+{
+    char tmpbuf[128];
+
+    if (t->key == NULL) {
+        if (!TEST_ptr(t->key = BIO_new(BIO_s_mem())))
+            return 0;
+    } else if (!TEST_int_gt(BIO_reset(t->key), 0)) {
+        return 0;
+    }
+
+    /* Read to PEM end line and place content in memory BIO */
+    while (BIO_gets(t->in, tmpbuf, sizeof(tmpbuf))) {
+        t->line++;
+        if (!TEST_int_gt(BIO_puts(t->key, tmpbuf), 0))
+            return 0;
+        if (strncmp(tmpbuf, "-----END", 8) == 0)
+            return 1;
+    }
+    TEST_error("Can't find key end");
+    return 0;
+}
+
+/*
+ * Is the key type an unsupported algorithm?
+ */
+static int key_unsupported()
+{
+    long err = ERR_peek_error();
+
+    if (ERR_GET_LIB(err) == ERR_LIB_EVP
+            && ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_ALGORITHM) {
+        ERR_clear_error();
+        return 1;
+    }
+#ifndef OPENSSL_NO_EC
+    /*
+     * If EC support is enabled we should catch also EC_R_UNKNOWN_GROUP as an
+     * hint to an unsupported algorithm/curve (e.g. if binary EC support is
+     * disabled).
+     */
+    if (ERR_GET_LIB(err) == ERR_LIB_EC
+        && ERR_GET_REASON(err) == EC_R_UNKNOWN_GROUP) {
+        ERR_clear_error();
+        return 1;
+    }
+#endif /* OPENSSL_NO_EC */
+    return 0;
+}
+
+/*
+ * Read, parse, and execute one test.  Return EOF; 0 if failure, 1 if okay.
+ */
+static int read_stanza(EVP_TEST *t)
+{
+    int c;
+    char *keyword, *value;
+    KEY_LIST **klist, *key;
+    EVP_PKEY *pkey;
+
+    clear_test(t);
+top:
+    /* Find the first line of a stanza. */
+    for ( ; ; ) {
+        c = read_line(t);
+        if (c == EOF)
+            return EOF;
+        if (c == '\0')
+            continue;
+        break;
+    }
+    if (!split_line(t, &keyword, &value))
+        return 0;
+
+    /* Handle a few special cases here. */
+    if (strcmp(keyword, "Title") == 0) {
+        TEST_info("Starting \"%s\" tests", value);
+        goto top;
+    }
+
+    klist = NULL;
+    pkey = NULL;
+    if (strcmp(keyword, "PrivateKey") == 0) {
+        if (!read_key(t))
+            return 0;
+        pkey = PEM_read_bio_PrivateKey(t->key, NULL, 0, NULL);
+        if (pkey == NULL && !key_unsupported()) {
+            TEST_info("Can't read private key %s", value);
+            ERR_print_errors_fp(stderr);
+            return 0;
+        }
+        klist = &private_keys;
+    }
+    else if (strcmp(keyword, "PublicKey") == 0) {
+        if (!read_key(t))
+            return 0;
+        pkey = PEM_read_bio_PUBKEY(t->key, NULL, 0, NULL);
+        if (pkey == NULL && !key_unsupported()) {
+            TEST_info("Can't read public key %s", value);
+            ERR_print_errors_fp(stderr);
+            return 0;
+        }
+        klist = &public_keys;
+    }
+
+    /* If we have a key add to list */
+    if (klist != NULL) {
+        if (find_key(NULL, value, *klist)) {
+            TEST_info("Duplicate key %s", value);
+            return 0;
+        }
+        if (!TEST_ptr(key = OPENSSL_malloc(sizeof(*key)))
+                || !TEST_ptr(key->name = OPENSSL_strdup(value)))
+            return 0;
+        key->key = pkey;
+        key->next = *klist;
+        *klist = key;
+
+        /* Go back and start a new stanza. */
+        goto top;
+    }
+
+    /* Start of a new text.  Look it up. */
+    if (!TEST_ptr(t->meth = find_test(keyword)))
+        goto skiptoend;
+    t->start_line = t->line;
+    if (!t->meth->init(t, value)) {
+        TEST_error("unknown %s: %s\n", keyword, value);
+        goto skiptoend;
+    }
+    if (t->skip == 1) {
+        /* TEST_info("skipping %s %s", keyword, value); */
+        goto skiptoend;
+    }
+
+    /* Read rest of stanza. */
+    for ( ; ; ) {
+        c = read_line(t);
+        if (c == EOF)
+            return c;
+        if (c == '\0')
+            break;
+        if (!split_line(t, &keyword, &value))
+            goto skiptoend;
+        if (strcmp(keyword, "Result") == 0) {
+            if (t->expected_err != NULL) {
+                TEST_info("Line %d: multiple result lines", t->line);
+                goto skiptoend;
+            }
+            if (!TEST_ptr(t->expected_err = OPENSSL_strdup(value)))
+                goto skiptoend;
+        } else if (strcmp(keyword, "Function") == 0) {
+            if (t->func != NULL) {
+                TEST_info("Line %d: multiple function lines\n", t->line);
+                goto skiptoend;
+            }
+            if (!TEST_ptr(t->func = OPENSSL_strdup(value)))
+                goto skiptoend;
+        } else if (strcmp(keyword, "Reason") == 0) {
+            if (t->reason != NULL) {
+                TEST_info("Line %d: multiple reason lines", t->line);
+                goto skiptoend;
+            }
+            if (!TEST_ptr(t->reason = OPENSSL_strdup(value)))
+                goto skiptoend;
+        } else {
+            /* Must be test specific line: try to parse it */
+            int rv = t->meth->parse(t, keyword, value);
+
+            if (rv == 0) {
+                TEST_info("Line %d: unknown keyword %s", t->line, keyword);
+                goto skiptoend;
+            }
+            if (rv < 0) {
+                TEST_info("Line %d: error processing keyword %s\n",
+                        t->line, keyword);
+                goto skiptoend;
+            }
+        }
+    }
+
+    return 1;
+
+skiptoend:
+    /* Read to end of stanza and return failure */
+    for ( ; ; ) {
+        c = read_line(t);
+        if (c == EOF)
+            return EOF;
+        if (c == '\0')
+            break;
+    }
+    return 0;
+}
+
 static int do_test_file(const char *testfile)
 {
     BIO *in;
-    char buf[10240];
     EVP_TEST t;
+    int c;
 
     set_test_title(testfile);
     current_test_file = testfile;
     if (!TEST_ptr(in = BIO_new_file(testfile, "rb")))
         return 0;
     memset(&t, 0, sizeof(t));
-    t.start_line = -1;
     t.in = in;
-    t.err = NULL;
-    while (BIO_gets(in, buf, sizeof(buf))) {
-        t.line++;
-        if (!TEST_true(parse_test_line(&t, buf)))
-            return 0;
+
+    TEST_info("Reading %s", testfile);
+    for ( ; ; ) {
+        c = read_stanza(&t);
+        if (t.skip)
+            continue;
+        if (c == 0 || !run_test(&t)) {
+            t.errors++;
+            break;
+        }
+        if (c == EOF)
+            break;
     }
-    /* Run any final test we have */
-    if (!run_and_get_next(&t, NULL))
-        return 0;
+    clear_test(&t);
 
     TEST_info("Completed %d tests with %d errors and %d skipped",
               t.ntests, t.errors, t.nskip);
