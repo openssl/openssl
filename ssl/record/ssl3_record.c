@@ -1832,8 +1832,7 @@ int dtls1_get_record(SSL *s)
         }
 
         /* If received packet overflows own-client Max Fragment Length setting */
-        if (!s->server
-                && s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
+        if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
                 && rr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
             /* record too long, silently discard it */
             rr->length = 0;

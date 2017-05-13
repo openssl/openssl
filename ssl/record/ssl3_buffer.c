@@ -107,6 +107,11 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
     for (currpipe = 0; currpipe < numwpipes; currpipe++) {
         SSL3_BUFFER *thiswb = &wb[currpipe];
 
+        if (thiswb->buf != NULL && thiswb->len != len) {
+            OPENSSL_free(thiswb->buf);
+            thiswb->buf = NULL;         /* force reallocation */
+        }
+
         if (thiswb->buf == NULL) {
             p = OPENSSL_malloc(len);
             if (p == NULL) {

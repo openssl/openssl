@@ -1487,17 +1487,22 @@ static int final_early_data(SSL *s, unsigned int context, int sent, int *al)
 
 static int final_maxfragmentlen(SSL *ssl, unsigned int context, int sent, int *al)
 {
-    if (!ssl->server)
-        return 1;
-
     /*
      * Session resumption on server-side with MFL extension active
      *  BUT MFL extension packet not resent
      */
-    if (ssl->hit && USE_MAX_FRAGMENT_LENGTH_EXT(ssl->session)
+    if (ssl->server && ssl->hit && USE_MAX_FRAGMENT_LENGTH_EXT(ssl->session)
             && !sent ) {
         *al = SSL_AD_MISSING_EXTENSION;
         return 0;
+    }
+
+    /* Current SSL buffer is lower than requested MFL */
+    if (ssl->session && USE_MAX_FRAGMENT_LENGTH_EXT(ssl->session) 
+            && ssl->max_send_fragment < GET_MAX_FRAGMENT_LENGTH(ssl->session)) {
+
+        if (!ssl3_setup_buffers(ssl))   /* trigger a larger buffer allocation */
+            return 0;
     }
     return 1;
 }
