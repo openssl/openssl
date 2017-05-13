@@ -754,6 +754,7 @@ typedef enum PROTOCOL_choice {
     PROTO_XMPP_SERVER,
     PROTO_CONNECT,
     PROTO_IRC,
+    PROTO_MYSQL,
     PROTO_POSTGRES,
     PROTO_LMTP,
     PROTO_NNTP,
@@ -770,6 +771,7 @@ static const OPT_PAIR services[] = {
     {"xmpp-server", PROTO_XMPP_SERVER},
     {"telnet", PROTO_TELNET},
     {"irc", PROTO_IRC},
+    {"mysql", PROTO_MYSQL},
     {"postgres", PROTO_POSTGRES},
     {"lmtp", PROTO_LMTP},
     {"nntp", PROTO_NNTP},
@@ -2255,6 +2257,87 @@ int s_client_main(int argc, char **argv)
                 ret = 1;
                 goto shut;
             }
+        }
+        break;
+    case PROTO_MYSQL:
+        {
+            /* SSL request packet */
+            static const unsigned char ssl_req[] = {
+                /* payload_length,   sequence_id */
+                   0x20, 0x00, 0x00, 0x01,
+                /* payload */
+                /* capability flags, CLIENT_SSL always set */
+                   0x85, 0xae, 0x7f, 0x00,
+                /* max-packet size */
+                   0x00, 0x00, 0x00, 0x01,
+                /* character set */
+                   0x21,
+                /* string[23] reserved (all [0]) */
+                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+            };
+            int bytes = 0;
+            int ssl_flg = 0x800;
+            int pos;
+            const unsigned char *packet = (const unsigned char *)sbuf;
+
+            /* Receiving Initial Handshake packet. */
+            bytes = BIO_read(sbio, (void *)packet, BUFSIZZ);
+            if (bytes < 0) {
+                BIO_printf(bio_err, "BIO_read failed\n");
+                goto shut;
+            /* Packet length[3], Packet number[1] + minimum payload[17] */
+            } else if (bytes < 21) {
+                BIO_printf(bio_err, "MySQL packet too short.\n");
+                goto shut;
+            } else if (bytes != (4 + packet[0] +
+                                 (packet[1] << 8) +
+                                 (packet[2] << 16))) {
+                BIO_printf(bio_err, "MySQL packet length does not match.\n");
+                goto shut;
+            /* protocol version[1] */
+            } else if (packet[4] != 0xA) {
+                BIO_printf(bio_err,
+                           "Only MySQL protocol version 10 is supported.\n");
+                goto shut;
+            }
+
+            pos = 5;
+            /* server version[string+NULL] */
+            for (;;) {
+                if (pos >= bytes) {
+                    BIO_printf(bio_err, "Cannot confirm server version. ");
+                    goto shut;
+                } else if (packet[pos++] == '\0') {
+                    break;
+                }
+                pos++;
+            }
+
+            /* make sure we have more 15 bytes left in the packet */
+            if (pos + 15 > bytes) {
+                BIO_printf(bio_err,
+                           "MySQL server handshake packet is broken.\n");
+                goto shut;
+            }
+
+            pos += 12; /* skip over conn id[4] + SALT[8] */
+            if (packet[pos++] != '\0') { /* verify filler */
+                BIO_printf(bio_err,
+                           "MySQL packet is broken.\n");
+                goto shut;
+            }
+
+            /* capability flags[2] */
+            if (!((packet[pos] + (packet[pos + 1] << 8)) & ssl_flg)) {
+                BIO_printf(bio_err, "MySQL server does not support SSL.\n");
+                goto shut;
+            }
+
+            /* Sending SSL Handshake packet. */
+            BIO_write(sbio, ssl_req, sizeof(ssl_req));
+            (void)BIO_flush(sbio);
         }
         break;
     case PROTO_POSTGRES:
