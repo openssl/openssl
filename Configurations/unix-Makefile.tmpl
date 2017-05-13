@@ -1029,7 +1029,7 @@ $bin$exeext: $objs $deps
 		APPNAME=$bin$exeext OBJECTS="$objs" \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
 		CC='$cc' CFLAGS='$cflags' \\
-		LDFLAGS='\$(LDFLAGS)' \\
+		LDFLAGS='\$(LDFLAGS) -Wl,-rpath \$(LIBRPATH)' \\
 		link_app.$shlib_target
 EOF
   }
