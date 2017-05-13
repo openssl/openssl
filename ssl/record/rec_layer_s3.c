@@ -855,7 +855,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         }
 
         if (SSL_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL) {
-            size_t rlen;
+            size_t rlen, max_send_fragment;
 
             if (!WPACKET_put_bytes_u8(thispkt, type)) {
                 SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
@@ -864,10 +864,11 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             SSL3_RECORD_add_length(thiswr, 1);
 
             /* Add TLS1.3 padding */
+            max_send_fragment = ssl_get_max_send_fragment(s);
             rlen = SSL3_RECORD_get_length(thiswr);
-            if (rlen < SSL3_RT_MAX_PLAIN_LENGTH) {
+            if (rlen < max_send_fragment) {
                 size_t padding = 0;
-                size_t max_padding = SSL3_RT_MAX_PLAIN_LENGTH - rlen;
+                size_t max_padding = max_send_fragment - rlen;
                 if (s->record_padding_cb != NULL) {
                     padding = s->record_padding_cb(s, type, rlen, s->record_padding_arg);
                 } else if (s->block_padding > 0) {
