@@ -413,7 +413,7 @@ __ecp_nistz256_add:
 	! if a+b >= modulus, subtract modulus.
 	!
 	! But since comparison implies subtraction, we subtract
-	! modulus and then add it back if subraction borrowed.
+	! modulus and then add it back if subtraction borrowed.
 
 	subcc	@acc[0],-1,@acc[0]
 	subccc	@acc[1],-1,@acc[1]
