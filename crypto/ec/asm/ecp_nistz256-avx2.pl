@@ -137,7 +137,7 @@ ___
 
 {
 # This function receives a pointer to an array of four affine points
-# (X, Y, <1>) and rearanges the data for AVX2 execution, while
+# (X, Y, <1>) and rearranges the data for AVX2 execution, while
 # converting it to 2^29 radix redundant form
 
 my ($X0,$X1,$X2,$X3, $Y0,$Y1,$Y2,$Y3,
@@ -289,7 +289,7 @@ ___
 {
 ################################################################################
 # This function receives a pointer to an array of four AVX2 formatted points
-# (X, Y, Z) convert the data to normal representation, and rearanges the data
+# (X, Y, Z) convert the data to normal representation, and rearranges the data
 
 my ($D0,$D1,$D2,$D3, $D4,$D5,$D6,$D7, $D8)=map("%ymm$_",(0..8));
 my ($T0,$T1,$T2,$T3, $T4,$T5,$T6)=map("%ymm$_",(9..15));
