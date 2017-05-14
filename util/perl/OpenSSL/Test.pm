@@ -1015,7 +1015,7 @@ sub __cwd {
     }
 
     # We put back new values carefully.  Doing the obvious
-    # %directories = ( %tmp_irectories )
+    # %directories = ( %tmp_directories )
     # will clear out any value that happens to be an absolute path
     foreach (keys %tmp_directories) {
         $directories{$_} = $tmp_directories{$_};
