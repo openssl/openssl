@@ -44,7 +44,7 @@
 # minimize/avoid Address Generation Interlock hazard and to favour
 # dual-issue z10 pipeline. This gave ~25% improvement on z10 and
 # almost 50% on z9. The gain is smaller on z10, because being dual-
-# issue z10 makes it improssible to eliminate the interlock condition:
+# issue z10 makes it impossible to eliminate the interlock condition:
 # critial path is not long enough. Yet it spends ~24 cycles per byte
 # processed with 128-bit key.
 #
