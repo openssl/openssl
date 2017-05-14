@@ -204,7 +204,7 @@ exists) - the idea of providing an ENGINE_cpy() function probably wasn't a good
 one and now certainly doesn't make sense in any generalised way. Some of the
 RSA, DSA, DH, and RAND functions that were fiddled during the original ENGINE
 changes have now, as a consequence, been reverted back. This is because the
-hooking of ENGINE is now automatic (and passive, it can interally use a NULL
+hooking of ENGINE is now automatic (and passive, it can internally use a NULL
 ENGINE pointer to simply ignore ENGINE from then on).
 
 Hell, that should be enough for now ... comments welcome.

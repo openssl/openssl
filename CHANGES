@@ -3586,7 +3586,7 @@
 
      SSL_set_tlsext_opaque_prf_input(ssl, src, len) is used to set the
      opaque PRF input value to use in the handshake.  This will create
-     an interal copy of the length-'len' string at 'src', and will
+     an internal copy of the length-'len' string at 'src', and will
      return non-zero for success.
 
      To get more control and flexibility, provide a callback function
