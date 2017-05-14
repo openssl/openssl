@@ -731,7 +731,7 @@ define(fp_ip_macro, {
 	sll	$4, 3, local2
 	xor	local4, temp2, $2
 
-	! reload since used as temporar:
+	! reload since used as temporary:
 
 	ld	[out2+280], out4          ! loop counter
 
@@ -753,7 +753,7 @@ define(fp_ip_macro, {
 ! parameter 1  address
 ! parameter 2  destination left
 ! parameter 3  destination right
-! parameter 4  temporar
+! parameter 4  temporary
 ! parameter 5  label
 
 define(load_little_endian, {
@@ -802,7 +802,7 @@ $5a:
 ! parameter 1  address
 ! parameter 2  destination left
 ! parameter 3  destination right
-! parameter 4  temporar
+! parameter 4  temporary
 ! parameter 4  label
 !
 ! adds 8 to address
@@ -927,7 +927,7 @@ $7.jmp.table:
 ! parameter 1  address
 ! parameter 2  source left
 ! parameter 3  source right
-! parameter 4  temporar
+! parameter 4  temporary
 
 define(store_little_endian, {
 
