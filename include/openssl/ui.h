@@ -181,7 +181,7 @@ int UI_get_result_length(UI *ui, int i);
 int UI_process(UI *ui);
 
 /*
- * Give a user interface parametrised control commands.  This can be used to
+ * Give a user interface parameterised control commands.  This can be used to
  * send down an integer, a data pointer or a function pointer, as well as be
  * used to get information from a UI.
  */

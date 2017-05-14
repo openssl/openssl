@@ -401,7 +401,7 @@ int ENGINE_register_complete(ENGINE *e);
 int ENGINE_register_all_complete(void);
 
 /*
- * Send parametrised control commands to the engine. The possibilities to
+ * Send parameterised control commands to the engine. The possibilities to
  * send down an integer, a pointer to data or a function pointer are
  * provided. Any of the parameters may or may not be NULL, depending on the
  * command number. In actuality, this function only requires a structural
