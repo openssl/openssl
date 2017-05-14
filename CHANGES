@@ -7799,7 +7799,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Steve Henson]
 
   *) Enhance mkdef.pl to be more accepting about spacing in C preprocessor
-     lines, recognice more "algorithms" that can be deselected, and make
+     lines, recognize more "algorithms" that can be deselected, and make
      it complain about algorithm deselection that isn't recognised.
      [Richard Levitte]
 
