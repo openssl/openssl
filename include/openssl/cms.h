@@ -331,6 +331,8 @@ int CMS_SharedInfo_encode(unsigned char **pder, X509_ALGOR *kekalg,
 
 /* Compat for: CMS_R_UNKNOWN_DIGEST_ALGORITHM */
 # define CMS_R_UNKNOWN_DIGEST_ALGORITM                    149
+/* Compat for: CMS_R_UNSUPPORTED_RECIPIENTINFO_TYPE */
+# define CMS_R_UNSUPPORTED_RECPIENTINFO_TYPE              155
 
 /* BEGIN ERROR CODES */
 /*
@@ -501,7 +503,7 @@ int ERR_load_CMS_strings(void);
 # define CMS_R_UNSUPPORTED_KEK_ALGORITHM                  153
 # define CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM       179
 # define CMS_R_UNSUPPORTED_RECIPIENT_TYPE                 154
-# define CMS_R_UNSUPPORTED_RECPIENTINFO_TYPE              155
+# define CMS_R_UNSUPPORTED_RECIPIENTINFO_TYPE             155
 # define CMS_R_UNSUPPORTED_TYPE                           156
 # define CMS_R_UNWRAP_ERROR                               157
 # define CMS_R_UNWRAP_FAILURE                             180
