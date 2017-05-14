@@ -370,7 +370,7 @@ if ($flavour =~ /64/) {			######## 64-bit code
 	s/\bq([0-9]+)\b/"v".($1<8?$1:$1+8).".16b"/geo;	# old->new registers
 	s/@\s/\/\//o;				# old->new style commentary
 
-	# fix up remainig legacy suffixes
+	# fix up remaining legacy suffixes
 	s/\.[ui]?8(\s)/$1/o;
 	s/\.[uis]?32//o and s/\.16b/\.4s/go;
 	m/\.p64/o and s/\.16b/\.1q/o;		# 1st pmull argument
@@ -410,7 +410,7 @@ if ($flavour =~ /64/) {			######## 64-bit code
 	s/\bv([0-9])\.[12468]+[bsd]\b/q$1/go;	# new->old registers
 	s/\/\/\s?/@ /o;				# new->old style commentary
 
-	# fix up remainig new-style suffixes
+	# fix up remaining new-style suffixes
 	s/\],#[0-9]+/]!/o;
 
 	s/cclr\s+([^,]+),\s*([a-z]+)/mov$2	$1,#0/o			or

@@ -1550,7 +1550,7 @@ $code.=<<___;
 	sub	\$8,$len
 	jnc	.Lctr32_loop8			# loop if $len-=8 didn't borrow
 
-	add	\$8,$len			# restore real remainig $len
+	add	\$8,$len			# restore real remaining $len
 	jz	.Lctr32_done			# done if ($len==0)
 	lea	-0x80($key),$key
 
@@ -4515,7 +4515,7 @@ __aesni_set_encrypt_key:
 
 .align	16
 .L14rounds:
-	movups	16($inp),%xmm2			# remaning half of *userKey
+	movups	16($inp),%xmm2			# remaining half of *userKey
 	mov	\$13,$bits			# 14 rounds for 256
 	lea	16(%rax),%rax
 	cmp	\$`1<<28`,%r10d			# AVX, but no XOP
