@@ -4148,7 +4148,7 @@
 
  Changes between 0.9.8l and 0.9.8m [25 Feb 2010]
 
-  *) Always check bn_wexpend() return values for failure.  (CVE-2009-3245)
+  *) Always check bn_wexpand() return values for failure.  (CVE-2009-3245)
      [Martin Olsson, Neel Mehta]
 
   *) Fix X509_STORE locking: Every 'objs' access requires a lock (to
