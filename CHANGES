@@ -4281,7 +4281,7 @@
      is already buffered was missing. For every new message was memory
      allocated, allowing an attacker to perform an denial of service attack
      with sending out of seq handshake messages until there is no memory
-     left. Additionally every future messege was buffered, even if the
+     left. Additionally every future message was buffered, even if the
      sequence number made no sense and would be part of another handshake.
      So only messages with sequence numbers less than 10 in advance will be
      buffered.  (CVE-2009-1378)
