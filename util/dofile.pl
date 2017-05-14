@@ -106,7 +106,7 @@ sub quotify1 {
 
 # quotify_l LIST
 # For each defined element in LIST (i.e. elements that aren't undef), have
-# it quotified with 'quotofy1'
+# it quotified with 'quotify1'
 sub quotify_l {
     map {
         if (!defined($_)) {
