@@ -2018,7 +2018,7 @@ AES_cbc_encrypt:
 	lea	($key,%rax),%rax
 	mov	%rax,$keyend
 
-	# pick Te4 copy which can't "overlap" with stack frame or key scdedule
+	# pick Te4 copy which can't "overlap" with stack frame or key schedule
 	lea	2048($sbox),$sbox
 	lea	768-8(%rsp),%rax
 	sub	$sbox,%rax
