@@ -20,7 +20,7 @@
 // disclaimed.
 // ====================================================================
 //
-// Version 2.x is Itanium2 re-tune. Few words about how Itanum2 is
+// Version 2.x is Itanium2 re-tune. Few words about how Itanium2 is
 // different from Itanium to this module viewpoint. Most notably, is it
 // "wider" than Itanium? Can you experience loop scalability as
 // discussed in commentary sections? Not really:-( Itanium2 has 6
@@ -162,7 +162,7 @@
 //
 // bn_[add|sub]_words routines.
 //
-// Loops are spinning in 2*(n+5) ticks on Itanuim (provided that the
+// Loops are spinning in 2*(n+5) ticks on Itanium (provided that the
 // data reside in L1 cache, i.e. 2 ticks away). It's possible to
 // compress the epilogue and get down to 2*n+6, but at the cost of
 // scalability (the neat feature of this implementation is that it
