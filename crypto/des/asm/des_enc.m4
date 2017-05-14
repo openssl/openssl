@@ -528,7 +528,7 @@ $4:
 !  parameter 3   1 for optional store to [in0]
 !  parameter 4   1 for load input/output address to local5/7
 !
-!  The final permutation logic switches the halfes, meaning that
+!  The final permutation logic switches the halves, meaning that
 !  left and right ends up the the registers originally used.
 
 define(fp_macro, {
