@@ -500,7 +500,7 @@ bn_sqr_words:
 // possible to compress the epilogue (I'm getting tired to write this
 // comment over and over) and get down to 2*n+16 at the cost of
 // scalability. The decision will very likely be reconsidered after the
-// benchmark program is profiled. I.e. if perfomance gain on Itanium
+// benchmark program is profiled. I.e. if performance gain on Itanium
 // will appear larger than loss on "wider" IA-64, then the loop should
 // be explicitly split and the epilogue compressed.
 .L_bn_sqr_words_ctop:
