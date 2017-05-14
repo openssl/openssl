@@ -790,7 +790,7 @@ static int pkey_pss_init(EVP_PKEY_CTX *ctx)
     if (!rsa_pss_get_param(rsa->pss, &md, &mgf1md, &min_saltlen))
         return 0;
 
-    /* See if minumum salt length exceeds maximum possible */
+    /* See if minimum salt length exceeds maximum possible */
     max_saltlen = RSA_size(rsa) - EVP_MD_size(md);
     if ((RSA_bits(rsa) & 0x7) == 1)
         max_saltlen--;
