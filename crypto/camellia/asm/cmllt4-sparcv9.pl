@@ -17,7 +17,7 @@
 # Camellia for SPARC T4.
 #
 # As with AES below results [for aligned data] are virtually identical
-# to critical path lenths for 3-cycle instruction latency:
+# to critical path lengths for 3-cycle instruction latency:
 #
 #		128-bit key	192/256-
 # CBC encrypt	4.14/4.21(*)	5.46/5.52
