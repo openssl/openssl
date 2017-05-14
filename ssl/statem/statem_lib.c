@@ -249,8 +249,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    if (EVP_DigestSignInit(mctx, &pctx, md, NULL, pkey) <= 0
-            || EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0) {
+    if (EVP_DigestSignInit(mctx, &pctx, md, NULL, pkey) <= 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
         goto err;
     }
@@ -271,7 +270,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         }
     }
 
-    if (EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
+    if (EVP_DigestSign(mctx, sig, &siglen, hdata, hdatalen) <= 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
         goto err;
     }
@@ -409,8 +408,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 #ifdef SSL_DEBUG
     fprintf(stderr, "Using client verify alg %s\n", EVP_MD_name(md));
 #endif
-    if (EVP_DigestVerifyInit(mctx, &pctx, md, NULL, pkey) <= 0
-            || EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0) {
+    if (EVP_DigestVerifyInit(mctx, &pctx, md, NULL, pkey) <= 0) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
         goto f_err;
     }
@@ -445,7 +443,12 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    if (EVP_DigestVerifyFinal(mctx, data, len) <= 0) {
+    j = EVP_DigestVerify(mctx, data, len, hdata, hdatalen);
+
+    if (j < 0) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
+        goto f_err;
+    } else if (j == 0) {
         al = SSL_AD_DECRYPT_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
         goto f_err;
@@ -580,10 +583,19 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
     }
 
     if (!PACKET_get_1(pkt, &updatetype)
-            || PACKET_remaining(pkt) != 0
-            || (updatetype != SSL_KEY_UPDATE_NOT_REQUESTED
-                && updatetype != SSL_KEY_UPDATE_REQUESTED)) {
+            || PACKET_remaining(pkt) != 0) {
         al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_UPDATE, SSL_R_BAD_KEY_UPDATE);
+        goto err;
+    }
+
+    /*
+     * There are only two defined key update types. Fail if we get a value we
+     * didn't recognise.
+     */
+    if (updatetype != SSL_KEY_UPDATE_NOT_REQUESTED
+            && updatetype != SSL_KEY_UPDATE_REQUESTED) {
+        al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PROCESS_KEY_UPDATE, SSL_R_BAD_KEY_UPDATE);
         goto err;
     }
@@ -1604,6 +1616,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
          * Fall through if we are TLSv1.3 already (this means we must be after
          * a HelloRetryRequest
          */
+        /* fall thru */
     case TLS_ANY_VERSION:
         table = tls_version_table;
         break;
@@ -1957,9 +1970,7 @@ int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
         return 0;
 
     for (i = 0; i < num_groups; i++, groups += 2) {
-        unsigned int share_id = (groups[0] << 8) | (groups[1]);
-
-        if (group_id == share_id
+        if (group_id == GET_GROUP_ID(groups, 0)
                 && (!checkallow
                     || tls_curve_allowed(s, groups, SSL_SECOP_CURVE_CHECK))) {
             return 1;

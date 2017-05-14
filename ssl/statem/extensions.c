@@ -151,7 +151,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_supported_groups,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
         NULL, tls_parse_ctos_supported_groups, NULL,
-        NULL /* TODO(TLS1.3): Need to add this */,
+        tls_construct_stoc_supported_groups,
         tls_construct_ctos_supported_groups, NULL
     },
 #else
@@ -1058,6 +1058,10 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
     if (!SSL_IS_TLS13(s))
         return 1;
 
+    /* Nothing to do for key_share in an HRR */
+    if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0)
+        return 1;
+
     /*
      * If
      *     we are a client
@@ -1147,7 +1151,10 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
         if (!s->hit
                 || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0) {
             /* Nothing left we can do - just fail */
-            *al = SSL_AD_HANDSHAKE_FAILURE;
+            if (!sent)
+                *al = SSL_AD_MISSING_EXTENSION;
+            else
+                *al = SSL_AD_HANDSHAKE_FAILURE;
             SSLerr(SSL_F_FINAL_KEY_SHARE, SSL_R_NO_SUITABLE_KEY_SHARE);
             return 0;
         }

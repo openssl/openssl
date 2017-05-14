@@ -43,7 +43,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
           pkey_meth_test uitest cipherbytes_test asn1_encode_test \
           x509_time_test x509_dup_cert_test recordlentest \
-          time_offset_test
+          time_offset_test pemtest
 
   SOURCE[aborttest]=aborttest.c
   INCLUDE[aborttest]=../include
@@ -67,7 +67,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
 
   SOURCE[ectest]=ectest.c
   INCLUDE[ectest]=.. ../include
-  DEPEND[ectest]=../libcrypto
+  DEPEND[ectest]=../libcrypto libtestutil.a
 
   SOURCE[ecdsatest]=ecdsatest.c
   INCLUDE[ecdsatest]=../include
@@ -163,7 +163,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
 
   SOURCE[evp_test]=evp_test.c
   INCLUDE[evp_test]=../include
-  DEPEND[evp_test]=../libcrypto
+  DEPEND[evp_test]=../libcrypto libtestutil.a
 
   SOURCE[evp_extra_test]=evp_extra_test.c
   INCLUDE[evp_extra_test]=../include
@@ -313,6 +313,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[x509_dup_cert_test]=x509_dup_cert_test.c
   INCLUDE[x509_dup_cert_test]=../include
   DEPEND[x509_dup_cert_test]=../libcrypto libtestutil.a
+
+  SOURCE[pemtest]=pemtest.c
+  INCLUDE[pemtest]=../include .
+  DEPEND[pemtest]=../libcrypto libtestutil.a
 
   IF[{- !$disabled{psk} -}]
     PROGRAMS_NO_INST=dtls_mtu_test

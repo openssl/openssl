@@ -91,7 +91,7 @@ require "x86asm.pl";
 $output = pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],"via-mont.pl");
+&asm_init($ARGV[0]);
 
 # int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num);
 $func="bn_mul_mont_padlock";

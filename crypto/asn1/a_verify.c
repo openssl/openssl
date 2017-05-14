@@ -89,7 +89,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 {
     EVP_MD_CTX *ctx = NULL;
     unsigned char *buf_in = NULL;
-    int ret = -1, inl;
+    int ret = -1, inl = 0;
 
     int mdnid, pknid;
 
@@ -159,24 +159,15 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
         goto err;
     }
 
-    ret = EVP_DigestVerifyUpdate(ctx, buf_in, inl);
-
-    OPENSSL_clear_free(buf_in, (unsigned int)inl);
-
-    if (!ret) {
+    ret = EVP_DigestVerify(ctx, signature->data, (size_t)signature->length,
+                           buf_in, inl);
+    if (ret <= 0) {
         ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_EVP_LIB);
-        goto err;
-    }
-    ret = -1;
-
-    if (EVP_DigestVerifyFinal(ctx, signature->data,
-                              (size_t)signature->length) <= 0) {
-        ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_EVP_LIB);
-        ret = 0;
         goto err;
     }
     ret = 1;
  err:
+    OPENSSL_clear_free(buf_in, (unsigned int)inl);
     EVP_MD_CTX_free(ctx);
-    return (ret);
+    return ret;
 }

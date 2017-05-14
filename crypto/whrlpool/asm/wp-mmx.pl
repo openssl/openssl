@@ -59,7 +59,7 @@ require "x86asm.pl";
 $output=pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],"wp-mmx.pl");
+&asm_init($ARGV[0]);
 
 sub L()  { &data_byte(@_); }
 sub LL()

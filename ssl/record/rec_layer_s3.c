@@ -995,6 +995,13 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             s->msg_callback(1, 0, SSL3_RT_HEADER, recordstart,
                             SSL3_RT_HEADER_LENGTH, s,
                             s->msg_callback_arg);
+
+            if (SSL_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL) {
+                unsigned char ctype = type;
+
+                s->msg_callback(1, s->version, SSL3_RT_INNER_CONTENT_TYPE,
+                                &ctype, 1, s, s->msg_callback_arg);
+            }
         }
 
         if (!WPACKET_finish(thispkt)) {
@@ -1415,6 +1422,20 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             if (SSL3_RECORD_get_length(rr) == 0)
                 SSL3_RECORD_set_read(rr);
 
+            if (SSL_IS_TLS13(s)
+                    && SSL3_RECORD_get_type(rr) == SSL3_RT_ALERT) {
+                if (*dest_len < dest_maxlen
+                        || SSL3_RECORD_get_length(rr) != 0) {
+                    /*
+                     * TLSv1.3 forbids fragmented alerts, and only one alert
+                     * may be present in a record
+                     */
+                    al = SSL_AD_UNEXPECTED_MESSAGE;
+                    SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_INVALID_ALERT);
+                    goto f_err;
+                }
+            }
+
             if (*dest_len < dest_maxlen)
                 goto start;     /* fragment was too small */
         }
@@ -1482,6 +1503,15 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 return 0;
             }
             /*
+             * Apart from close_notify the only other warning alert in TLSv1.3
+             * is user_cancelled - which we just ignore.
+             */
+            if (SSL_IS_TLS13(s) && alert_descr != SSL_AD_USER_CANCELLED) {
+                al = SSL_AD_ILLEGAL_PARAMETER;
+                SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_UNKNOWN_ALERT_TYPE);
+                goto f_err;
+            }
+            /*
              * This is a warning but we receive it if we requested
              * renegotiation and the peer denied it. Terminate with a fatal
              * alert because if application tried to renegotiate it
@@ -1489,7 +1519,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
              * future we might have a renegotiation where we don't care if
              * the peer refused it where we carry on.
              */
-            else if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
+            if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
                 al = SSL_AD_HANDSHAKE_FAILURE;
                 SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_NO_RENEGOTIATION);
                 goto f_err;

@@ -512,7 +512,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     if (!PACKET_as_length_prefixed_2(pkt, &key_share_list)) {
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
@@ -524,14 +524,21 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    /*
-     * Get the clients list of supported curves.
-     * TODO(TLS1.3): We should validate that we actually received
-     * supported_groups!
-     */
+    /* Get the clients list of supported curves. */
     if (!tls1_get_curvelist(s, 1, &clntcurves, &clnt_num_curves)) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (clnt_num_curves == 0) {
+        /*
+         * This can only happen if the supported_groups extension was not sent,
+         * because we verify that the length is non-zero when we process that
+         * extension.
+         */
+        *al = SSL_AD_MISSING_EXTENSION;
+        SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
+               SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION);
         return 0;
     }
 
@@ -539,7 +546,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         if (!PACKET_get_net_2(&key_share_list, &group_id)
                 || !PACKET_get_length_prefixed_2(&key_share_list, &encoded_pt)
                 || PACKET_remaining(&encoded_pt) == 0) {
-            *al = SSL_AD_HANDSHAKE_FAILURE;
+            *al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
                    SSL_R_LENGTH_MISMATCH);
             return 0;
@@ -554,7 +561,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
         /* Check if this share is in supported_groups sent from client */
         if (!check_in_list(s, group_id, clntcurves, clnt_num_curves, 0)) {
-            *al = SSL_AD_HANDSHAKE_FAILURE;
+            *al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
             return 0;
         }
@@ -861,6 +868,64 @@ int tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt, unsigned int context,
             || !WPACKET_sub_memcpy_u8(pkt, plist, plistlen)
             || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_EC_PT_FORMATS, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
+#ifndef OPENSSL_NO_EC
+int tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
+                                        unsigned int context, X509 *x,
+                                        size_t chainidx, int *al)
+{
+    const unsigned char *groups;
+    size_t numgroups, i, first = 1;
+
+    /* s->s3->group_id is non zero if we accepted a key_share */
+    if (s->s3->group_id == 0)
+        return 1;
+
+    /* Get our list of supported groups */
+    if (!tls1_get_curvelist(s, 0, &groups, &numgroups) || numgroups == 0) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* Copy group ID if supported */
+    for (i = 0; i < numgroups; i++, groups += 2) {
+        if (tls_curve_allowed(s, groups, SSL_SECOP_CURVE_SUPPORTED)) {
+            if (first) {
+                /*
+                 * Check if the client is already using our preferred group. If
+                 * so we don't need to add this extension
+                 */
+                if (s->s3->group_id == GET_GROUP_ID(groups, 0))
+                    return 1;
+
+                /* Add extension header */
+                if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_groups)
+                           /* Sub-packet for supported_groups extension */
+                        || !WPACKET_start_sub_packet_u16(pkt)
+                        || !WPACKET_start_sub_packet_u16(pkt)) {
+                    SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS,
+                           ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+
+                first = 0;
+            }
+            if (!WPACKET_put_bytes_u16(pkt, GET_GROUP_ID(groups, 0))) {
+                    SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS,
+                           ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+        }
+    }
+
+    if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 

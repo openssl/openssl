@@ -568,21 +568,6 @@ static ssl_trace_tbl ssl_psk_kex_modes_tbl[] = {
     {TLSEXT_KEX_MODE_KE_DHE, "psk_dhe_ke"}
 };
 
-static ssl_trace_tbl ssl_crypto_tbl[] = {
-    {TLS1_RT_CRYPTO_PREMASTER, "Premaster Secret"},
-    {TLS1_RT_CRYPTO_CLIENT_RANDOM, "Client Random"},
-    {TLS1_RT_CRYPTO_SERVER_RANDOM, "Server Random"},
-    {TLS1_RT_CRYPTO_MASTER, "Master Secret"},
-    {TLS1_RT_CRYPTO_MAC | TLS1_RT_CRYPTO_WRITE, "Write Mac Secret"},
-    {TLS1_RT_CRYPTO_MAC | TLS1_RT_CRYPTO_READ, "Read Mac Secret"},
-    {TLS1_RT_CRYPTO_KEY | TLS1_RT_CRYPTO_WRITE, "Write Key"},
-    {TLS1_RT_CRYPTO_KEY | TLS1_RT_CRYPTO_READ, "Read Key"},
-    {TLS1_RT_CRYPTO_IV | TLS1_RT_CRYPTO_WRITE, "Write IV"},
-    {TLS1_RT_CRYPTO_IV | TLS1_RT_CRYPTO_READ, "Read IV"},
-    {TLS1_RT_CRYPTO_FIXED_IV | TLS1_RT_CRYPTO_WRITE, "Write IV (fixed part)"},
-    {TLS1_RT_CRYPTO_FIXED_IV | TLS1_RT_CRYPTO_READ, "Read IV (fixed part)"}
-};
-
 static ssl_trace_tbl ssl_key_update_tbl[] = {
     {SSL_KEY_UPDATE_NOT_REQUESTED, "update_not_requested"},
     {SSL_KEY_UPDATE_REQUESTED, "update_requested"}
@@ -1489,12 +1474,6 @@ void SSL_trace(int write_p, int version, int content_type,
     const unsigned char *msg = buf;
     BIO *bio = arg;
 
-    if (write_p == 2) {
-        BIO_puts(bio, "Session ");
-        ssl_print_hex(bio, 0,
-                      ssl_trace_str(content_type, ssl_crypto_tbl), msg, msglen);
-        return;
-    }
     switch (content_type) {
     case SSL3_RT_HEADER:
         {
@@ -1515,6 +1494,12 @@ void SSL_trace(int write_p, int version, int content_type,
                        msg[msglen - 2] << 8 | msg[msglen - 1]);
         }
         break;
+
+    case SSL3_RT_INNER_CONTENT_TYPE:
+        BIO_printf(bio, "  Inner Content Type = %s (%d)",
+                   ssl_trace_str(msg[0], ssl_content_tbl), msg[0]);
+        break;
+
     case SSL3_RT_HANDSHAKE:
         if (!ssl_print_handshake(bio, ssl, ssl->server ? write_p : !write_p,
                                  msg, msglen, 4))

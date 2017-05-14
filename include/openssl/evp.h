@@ -603,8 +603,16 @@ __owur int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm,
 __owur int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s,
                          EVP_PKEY *pkey);
 
+__owur int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret,
+                          size_t *siglen, const unsigned char *tbs,
+                          size_t tbslen);
+
 __owur int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
                            unsigned int siglen, EVP_PKEY *pkey);
+
+__owur int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
+                            size_t siglen, const unsigned char *tbs,
+                            size_t tbslen);
 
 /*__owur*/ int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                   const EVP_MD *type, ENGINE *e,

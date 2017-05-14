@@ -20,7 +20,7 @@ require("x86/comba.pl");
 $output = pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],$0);
+&asm_init($ARGV[0]);
 
 &bn_mul_add_words("bn_mul_add_words");
 &bn_mul_words("bn_mul_words");

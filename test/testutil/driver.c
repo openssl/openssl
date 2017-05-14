@@ -142,6 +142,14 @@ static void finalize(int success)
         ERR_print_errors_cb(openssl_error_cb, NULL);
 }
 
+static char *test_title = NULL;
+
+void set_test_title(const char *title)
+{
+    free(test_title);
+    test_title = title == NULL ? NULL : strdup(title);
+}
+
 int run_tests(const char *test_prog_name)
 {
     int num_failed = 0;
@@ -149,14 +157,14 @@ int run_tests(const char *test_prog_name)
     int ii, i, jj, j, jstep;
     int permute[OSSL_NELEM(all_tests)];
 
-    if (num_tests < 1)
+    if (num_tests < 1) {
         test_printf_stdout("%*s1..0 # Skipped: %s\n", level, "",
                            test_prog_name);
-    else if (level > 0)
-        test_printf_stdout("%*s1..%d # Subtest: %s\n", level, "", num_tests,
-                           test_prog_name);
-    else
+    } else {
+        if (level > 0)
+            test_printf_stdout("%*s# Subtest: %s\n", level, "", test_prog_name);
         test_printf_stdout("%*s1..%d\n", level, "", num_tests);
+    }
     test_flush_stdout();
 
     for (i = 0; i < num_tests; i++)
@@ -172,7 +180,10 @@ int run_tests(const char *test_prog_name)
     for (ii = 0; ii != num_tests; ++ii) {
         i = permute[ii];
         if (all_tests[i].num == -1) {
-            int ret = all_tests[i].test_fn();
+            int ret = 0;
+
+            set_test_title(all_tests[i].test_case_name);
+            ret = all_tests[i].test_fn();
 
             test_flush_stdout();
             test_flush_stderr();
@@ -183,7 +194,7 @@ int run_tests(const char *test_prog_name)
                 ++num_failed;
             }
             test_printf_stdout("%*s%s %d - %s\n", level, "", verdict, ii + 1,
-                               all_tests[i].test_case_name);
+                               test_title);
             test_flush_stdout();
             finalize(ret);
         } else {
@@ -209,7 +220,9 @@ int run_tests(const char *test_prog_name)
             for (jj = 0; jj < all_tests[i].num; jj++) {
                 int ret;
 
+                set_test_title(NULL);
                 j = (j + jstep) % all_tests[i].num;
+
                 ret = all_tests[i].param_test_fn(j);
 
                 test_flush_stdout();
@@ -226,8 +239,12 @@ int run_tests(const char *test_prog_name)
                         verdict = "not ok";
                         ++num_failed_inner;
                     }
-                    test_printf_stdout("%*s%s %d - iteration %d\n", level, "",
-                                       verdict, jj + 1, j + 1);
+                    if (test_title != NULL)
+                        test_printf_stdout("%*s%s %d - %s\n", level, "", verdict,
+                                           jj + 1, test_title);
+                    else
+                        test_printf_stdout("%*s%s %d - iteration %d\n", level, "", verdict,
+                                           jj + 1, j + 1);
                     test_flush_stdout();
                 }
             }
