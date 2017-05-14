@@ -35,7 +35,7 @@
 # P4		+85%(!)			+45%
 #
 # As you can see Pentium came out as looser:-( Yet I reckoned that
-# improvement on P4 outweights the loss and incorporate this
+# improvement on P4 outweighs the loss and incorporate this
 # re-tuned code to 0.9.7 and later.
 # ----------------------------------------------------------------
 
