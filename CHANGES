@@ -3696,7 +3696,7 @@
      most recently disabled ciphersuites when "HIGH" is parsed).
 
      Also, change ssl_create_cipher_list() (using this new
-     funcionality) such that between otherwise identical
+     functionality) such that between otherwise identical
      ciphersuites, ephemeral ECDH is preferred over ephemeral DH in
      the default order.
      [Bodo Moeller]
