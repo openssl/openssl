@@ -42,7 +42,7 @@ if (eval { require Win32::API; 1; }) {
         $pass = Encode::encode("cp1253",Encode::decode("utf-8",$pass));
     }
 } else {
-    # Running MinGW tests transparenly under Wine apparently requires
+    # Running MinGW tests transparently under Wine apparently requires
     # UTF-8 locale...
 
     foreach(`locale -a`) {
