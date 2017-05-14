@@ -544,7 +544,7 @@ my %globals;
 
     # [us]leb128 format is variable-length integer representation base
     # 2^128, with most significant bit of each byte being 0 denoting
-    # *last* most significat digit. See "Variable Length Data" in the
+    # *last* most significant digit. See "Variable Length Data" in the
     # DWARF specification, numbered 7.6 at least in versions 3 and 4.
     sub sleb128 {
 	use integer;	# get right shift extend sign
