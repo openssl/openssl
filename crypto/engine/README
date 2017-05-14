@@ -161,7 +161,7 @@ actually qualitatively different depending on 'nid' (the "des_cbc" EVP_CIPHER is
 not an interoperable implementation of "aes_256_cbc"), RSA_METHODs are
 necessarily interoperable and don't have different flavours, only different
 implementations. In other words, the ENGINE_TABLE for RSA will either be empty,
-or will have a single ENGING_PILE hashed to by the 'nid' 1 and that pile
+or will have a single ENGINE_PILE hashed to by the 'nid' 1 and that pile
 represents ENGINEs that implement the single "type" of RSA there is.
 
 Cleanup - the registration and unregistration may pose questions about how
