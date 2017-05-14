@@ -374,6 +374,45 @@ static int test_long_output(void)
            & TEST(0, TEST_mem_eq(r, strlen(r), s, strlen(s)));
 }
 
+static int test_long_bignum(void)
+{
+    int r;
+    BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL;
+    const char as[] = "1234567890123456789012345678901234567890123456789012"
+                     "1234567890123456789012345678901234567890123456789012"
+                     "1234567890123456789012345678901234567890123456789012"
+                     "1234567890123456789012345678901234567890123456789012"
+                     "1234567890123456789012345678901234567890123456789012"
+                     "1234567890123456789012345678901234567890123456789012"
+                     "FFFFFF";
+    const char bs[] = "1234567890123456789012345678901234567890123456789012"
+                     "1234567890123456789012345678901234567890123456789013"
+                     "987657";
+    const char cs[] = "-"        /* 64 characters plus sign */
+                      "123456789012345678901234567890"
+                      "123456789012345678901234567890"
+                      "ABCD";
+    const char ds[] = "-"        /* 63 characters plus sign */
+                      "23456789A123456789B123456789C"
+                      "123456789D123456789E123456789F"
+                      "ABCD";
+    BN_hex2bn(&a, as);
+    BN_hex2bn(&b, bs);
+    BN_hex2bn(&c, cs);
+    BN_hex2bn(&d, ds);
+    r = TEST(0, TEST_BN_eq(a, b))
+        | TEST(0, TEST_BN_eq(b, a))
+        | TEST(0, TEST_BN_eq(b, NULL))
+        | TEST(0, TEST_BN_eq(NULL, a))
+        | TEST(1, TEST_BN_ne(a, NULL))
+        | TEST(0, TEST_BN_eq(c, d));
+    BN_free(a);
+    BN_free(b);
+    BN_free(c);
+    BN_free(d);
+    return r;
+}
+
 static int test_messages(void)
 {
     TEST_info("This is an %s message.", "info");
@@ -452,6 +491,7 @@ void register_tests(void)
     ADD_TEST(test_memory_overflow);
     ADD_TEST(test_bignum);
     ADD_TEST(test_long_output);
+    ADD_TEST(test_long_bignum);
     ADD_TEST(test_messages);
     ADD_TEST(test_single_eval);
 }

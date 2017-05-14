@@ -16,11 +16,8 @@
 #include "../../e_os.h"
 
 /* The size of memory buffers to display on failure */
-#define MEM_BUFFER_SIZE     (33)
+#define MEM_BUFFER_SIZE     (2000)
 #define MAX_STRING_WIDTH    (80)
-
-/* Special representation of -0 */
-static char BN_minus_zero[] = "-0";
 
 /* Output a failed test first line */
 static void test_fail_message_prefix(const char *prefix, const char *file,
@@ -184,48 +181,8 @@ fin:
     test_flush_stderr();
 }
 
-static char *convertBN(const BIGNUM *b)
-{
-    if (b == NULL)
-        return NULL;
-    if (BN_is_zero(b) && BN_is_negative(b))
-        return BN_minus_zero;
-    return BN_bn2hex(b);
-}
-
-static void test_fail_bignum_message(const char *prefix, const char *file,
-                                     int line, const char *type,
-                                     const char *left, const char *right,
-                                     const char *op,
-                                     const BIGNUM *bn1, const BIGNUM *bn2)
-{
-    char *s1 = convertBN(bn1), *s2 = convertBN(bn2);
-    size_t l1 = s1 != NULL ? strlen(s1) : 0;
-    size_t l2 = s2 != NULL ? strlen(s2) : 0;
-
-    test_fail_string_message(prefix, file, line, type, left, right, op,
-                             s1, l1, s2, l2);
-    if (s1 != BN_minus_zero)
-        OPENSSL_free(s1);
-    if (s2 != BN_minus_zero)
-        OPENSSL_free(s2);
-}
-
-static void test_fail_bignum_mono_message(const char *prefix, const char *file,
-                                          int line, const char *type,
-                                          const char *left, const char *right,
-                                          const char *op, const BIGNUM *bn)
-{
-    char *s = convertBN(bn);
-    size_t l = s != NULL ? strlen(s) : 0;
-
-    test_fail_string_message(prefix, file, line, type, left, right, op,
-                             s, l, s, l);
-    if (s != BN_minus_zero)
-        OPENSSL_free(s);
-}
-
-static void hex_convert_memory(const char *m, size_t n, char *b)
+static void hex_convert_memory(const unsigned char *m, size_t n, char *b,
+                               size_t width)
 {
     size_t i;
 
@@ -234,17 +191,215 @@ static void hex_convert_memory(const char *m, size_t n, char *b)
 
         *b++ = "0123456789abcdef"[c >> 4];
         *b++ = "0123456789abcdef"[c & 15];
-        if ((i % 8) == 7 && i != n - 1)
+        if (i % width == width - 1 && i != n - 1)
             *b++ = ' ';
     }
     *b = '\0';
 }
 
+static const int bn_bytes = (MAX_STRING_WIDTH - 9) / (BN_BYTES * 2 + 1)
+                            * BN_BYTES;
+static const int bn_chars = (MAX_STRING_WIDTH - 9) / (BN_BYTES * 2 + 1)
+                            * (BN_BYTES * 2 + 1) - 1;
+
+static void test_bignum_header_line(void)
+{
+    test_printf_stderr("%*s#  %*soffset\n", subtest_level(), "", bn_chars, "");
+}
+
+static void test_bignum_zero_print(const BIGNUM *bn, char sep)
+{
+    const char *v = "NULL", *suf = "";
+    if (bn != NULL) {
+        suf = ":    0";
+        v = BN_is_negative(bn) ? "-0" : "0";
+    }
+    test_printf_stderr("%*s# %c%*s%s\n", subtest_level(), "", sep, bn_chars,
+                       v, suf);
+}
+
+static int convert_bn_memory(const unsigned char *in, size_t bytes,
+                             char *out, int *lz, const BIGNUM *bn)
+{
+    int n = bytes * 2, i;
+    char *p = out, *q = NULL;
+
+    if (in != NULL) {
+        hex_convert_memory(in, bytes, out, BN_BYTES);
+        if (*lz) {
+            for (; *p == '0' || *p == ' '; p++)
+                if (*p == '0') {
+                    q = p;
+                    *p = ' ';
+                    n--;
+                }
+            if (*p == '\0') {
+                /*
+                 * in[bytes] is defined because we're converting a non-zero
+                 * number and we've not seen a non-zero yet.
+                 */
+                if ((in[bytes] & 0xf0) != 0 && BN_is_negative(bn)) {
+                    *lz = 0;
+                    *q = '-';
+                    n++;
+                }
+            } else {
+                *lz = 0;
+                if (BN_is_negative(bn)) {
+                    /*
+                     * This is valid because we always convert more digits than
+                     * the number holds.
+                     */
+                    *q = '-';
+                    n++;
+                }
+            }
+        }
+       return n;
+    }
+
+    for (i = 0; i < n; i++) {
+        *p++ = '@';
+        if (i % (2 *BN_BYTES) == 2 * BN_BYTES - 1 && i != n - 1)
+            *p++ = ' ';
+    }
+    *p = '\0';
+    return 0;
+}
+
+static void test_fail_bignum_common(const char *prefix, const char *file,
+                                    int line, const char *type,
+                                    const char *left, const char *right,
+                                    const char *op,
+                                    const BIGNUM *bn1, const BIGNUM *bn2)
+{
+    const int indent = subtest_level();
+    const size_t bytes = bn_bytes;
+    char b1[MAX_STRING_WIDTH + 1], b2[MAX_STRING_WIDTH + 1];
+    char *p, bdiff[MAX_STRING_WIDTH + 1];
+    size_t l1, l2, n1, n2, i, len;
+    unsigned int cnt, diff;
+    unsigned char *m1 = NULL, *m2 = NULL;
+    int lz1 = 1, lz2 = 1;
+    unsigned char buffer[MEM_BUFFER_SIZE * 2], *bufp = buffer;
+
+    l1 = bn1 == NULL ? 0 : (BN_num_bytes(bn1) + (BN_is_negative(bn1) ? 1 : 0));
+    l2 = bn2 == NULL ? 0 : (BN_num_bytes(bn2) + (BN_is_negative(bn2) ? 1 : 0));
+    if (l1 == 0 && l2 == 0) {
+        if ((bn1 == NULL) == (bn2 == NULL)) {
+            test_bignum_header_line();
+            test_bignum_zero_print(bn1, ' ');
+        } else {
+            test_diff_header(left, right);
+            test_bignum_header_line();
+            test_bignum_zero_print(bn1, '-');
+            test_bignum_zero_print(bn2, '+');
+        }
+        goto fin;
+    }
+
+    if (l1 != l2 || bn1 == NULL || bn2 == NULL || BN_cmp(bn1, bn2) != 0)
+        test_diff_header(left, right);
+    test_bignum_header_line();
+
+    len = ((l1 > l2 ? l1 : l2) + bytes - 1) / bytes * bytes;
+
+    if (len > MEM_BUFFER_SIZE && (bufp = OPENSSL_malloc(len * 2)) == NULL) {
+        bufp = buffer;
+        len = MEM_BUFFER_SIZE;
+        test_printf_stderr("%*s# WARNING: these BIGNUMs have been truncated",
+                           indent, "");
+    }
+
+    if (bn1 != NULL) {
+        m1 = bufp;
+        BN_bn2binpad(bn1, m1, len);
+    }
+    if (bn2 != NULL) {
+        m2 = bufp + len;
+        BN_bn2binpad(bn2, m2, len);
+    }
+
+    while (len > 0) {
+        cnt = len - bytes;
+        n1 = convert_bn_memory(m1, bytes, b1, &lz1, bn1);
+        n2 = convert_bn_memory(m2, bytes, b2, &lz2, bn2);
+
+        diff = n1 != n2;
+        i = 0;
+        p = bdiff;
+        for (i=0; b1[i] != '\0'; i++)
+            if (b1[i] == b2[i]) { 
+                *p++ = ' ';
+            } else {
+                *p++ = '^';
+                diff = 1;
+            }
+        *p++ = '\0';
+
+        if (!diff) {
+            test_printf_stderr("%*s#  %s:% 5d\n", indent, "", b1, cnt);
+        } else {
+            if (cnt == 0 && l1 == 0)
+                test_bignum_zero_print(bn1, '-');
+            else if (n1 > 0)
+                test_printf_stderr("%*s# -%s:% 5d\n", indent, "", b1, cnt);
+            if (cnt == 0 && l2 == 0)
+                test_bignum_zero_print(bn2, '+');
+            else if (n2 > 0)
+                test_printf_stderr("%*s# +%s:% 5d\n", indent, "", b2, cnt);
+            if (i > 0 && (cnt == 0 || (n1 > 0 && n2 > 0)))
+                test_printf_stderr("%*s#  %s\n", indent, "", bdiff);
+        }
+        if (m1 != NULL)
+            m1 += bytes;
+        if (m2 != NULL)
+            m2 += bytes;
+        len -= bytes;
+    }
+fin:
+    test_printf_stderr("\n");
+    test_flush_stderr();
+    if (bufp != buffer)
+        OPENSSL_free(bufp);
+}
+
+static void test_fail_bignum_message(const char *prefix, const char *file,
+                                     int line, const char *type,
+                                     const char *left, const char *right,
+                                     const char *op,
+                                     const BIGNUM *bn1, const BIGNUM *bn2)
+{
+    test_fail_message_prefix(prefix, file, line, type, left, right, op);
+    test_fail_bignum_common(prefix, file, line, type, left, right, op, bn1, bn2);
+}
+
+static void test_fail_bignum_mono_message(const char *prefix, const char *file,
+                                          int line, const char *type,
+                                          const char *left, const char *right,
+                                          const char *op, const BIGNUM *bn,
+                                          int all_neg)
+{
+    const int indent = subtest_level();
+
+    test_fail_message_prefix(prefix, file, line, type, left, right, op);
+    if (bn != NULL && BN_is_negative(bn)) {
+        if (all_neg)
+            test_printf_stderr("%*s# %s %s %s is negative\n", indent, "",
+                               left, op, right);
+        else
+            test_printf_stderr("%*s# %s is negative\n", indent, "",
+                               left);
+    }
+    test_fail_bignum_common(prefix, file, line, type, left, right, op, bn, bn);
+}
+
 static void test_fail_memory_message(const char *prefix, const char *file,
                                      int line, const char *type,
                                      const char *left, const char *right,
-                                     const char *op, const char *m1, size_t l1,
-                                     const char *m2, size_t l2)
+                                     const char *op,
+                                     const unsigned char *m1, size_t l1,
+                                     const unsigned char *m2, size_t l2)
 {
     const int indent = subtest_level();
     const size_t bytes = (MAX_STRING_WIDTH - 9) / 17 * 8;
@@ -279,11 +434,11 @@ static void test_fail_memory_message(const char *prefix, const char *file,
         n1 = n2 = 0;
         if (l1 > 0) {
             n1 = l1 > bytes ? bytes : l1;
-            hex_convert_memory(m1, n1, b1);
+            hex_convert_memory(m1, n1, b1, 8);
         }
         if (l2 > 0) {
             n2 = l2 > bytes ? bytes : l2;
-            hex_convert_memory(m2, n2, b2);
+            hex_convert_memory(m2, n2, b2, 8);
         }
 
         diff = n1 != n2;
@@ -584,7 +739,7 @@ int test_mem_ne(const char *file, int line, const char *st1, const char *st2,
         if (a != NULL &&(zero_cond))                                    \
             return 1;                                                   \
         test_fail_bignum_mono_message(NULL, file, line, "BIGNUM",       \
-                                      s, "0", #op, a);                  \
+                                      s, "0", #op, a, 0);               \
         return 0;                                                       \
     }
 
@@ -599,7 +754,8 @@ int test_BN_eq_one(const char *file, int line, const char *s, const BIGNUM *a)
 {
     if (a != NULL && BN_is_one(a))
         return 1;
-    test_fail_bignum_mono_message(NULL, file, line, "BIGNUM", s, "1", "==", a);
+    test_fail_bignum_mono_message(NULL, file, line, "BIGNUM", s, "1", "==",
+                                  a, 0);
     return 0;
 }
 
@@ -608,7 +764,7 @@ int test_BN_odd(const char *file, int line, const char *s, const BIGNUM *a)
     if (a != NULL && BN_is_odd(a))
         return 1;
     test_fail_bignum_mono_message(NULL, file, line, "BIGNUM", "ODD(", ")", s,
-                                  a);
+                                  a, 1);
     return 0;
 }
 
@@ -617,7 +773,7 @@ int test_BN_even(const char *file, int line, const char *s, const BIGNUM *a)
     if (a != NULL && !BN_is_odd(a))
         return 1;
     test_fail_bignum_mono_message(NULL, file, line, "BIGNUM", "EVEN(", ")", s,
-                                  a);
+                                  a, 1);
     return 0;
 }
 
