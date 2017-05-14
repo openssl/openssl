@@ -1811,7 +1811,7 @@ DES_ede3_cbc_encrypt:
 	.byte  240, 240, 240, 240, 244, 244, 244, 244
 	.byte  248, 248, 248, 248, 252, 252, 252, 252
 
-	! 5 numbers for initil/final permutation
+	! 5 numbers for initial/final permutation
 
 	.word   0x0f0f0f0f                ! offset 256
 	.word	0x0000ffff                ! 260
