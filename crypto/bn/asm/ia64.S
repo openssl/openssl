@@ -141,7 +141,7 @@
 //	User Mask I want to excuse the kernel from preserving upper
 //	(f32-f128) FP register bank over process context switch, thus
 //	minimizing bus bandwidth consumption during the switch (i.e.
-//	after PKI opration completes and the program is off doing
+//	after PKI operation completes and the program is off doing
 //	something else like bulk symmetric encryption). Having said
 //	this, I also want to point out that it might be good idea
 //	to compile the whole toolkit (as well as majority of the
