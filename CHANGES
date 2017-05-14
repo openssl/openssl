@@ -10054,7 +10054,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) ./config recognizes MacOS X now.
      [Andy Polyakov]
 
-  *) Bug fix for BN_div() when the first words of num and divsor are
+  *) Bug fix for BN_div() when the first words of num and divisor are
      equal (it gave wrong results if (rem=(n1-q*d0)&BN_MASK2) < d0).
      [Ulf Möller]
 
