@@ -212,7 +212,7 @@ $code.=<<___;
 						@ increment for input pointer;
 						@ as loop is modulo-scheduled
 						@ $inc is zeroed just in time
-						@ to preclude oversteping
+						@ to preclude overstepping
 						@ inp[len], which means that
 						@ last block[s] are actually
 						@ loaded twice, but last
