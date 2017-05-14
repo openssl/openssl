@@ -514,7 +514,7 @@ static int TerminalDeviceAst (int astparm)
     strcat (TerminalDeviceBuff, "\n");
 
     /*
-    ** Send the data read from the terminal device throught the socket pair
+    ** Send the data read from the terminal device through the socket pair
     */
     send (TerminalSocketPair[0], TerminalDeviceBuff,
           TerminalDeviceIosb.iosb$w_bcnt + 1, 0);
