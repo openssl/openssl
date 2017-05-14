@@ -35,7 +35,7 @@
 # key lengths. As it's obviously inappropriate as "best all-round"
 # alternative, it has to be complemented with run-time CPU family
 # detection. Oh! It should also be noted that unlike other PowerPC
-# implementation IALU ppc-mont.pl module performs *suboptimaly* on
+# implementation IALU ppc-mont.pl module performs *suboptimally* on
 # >=1024-bit key lengths on Power 6. It should also be noted that
 # *everything* said so far applies to 64-bit builds! As far as 32-bit
 # application executed on 64-bit CPU goes, this module is likely to
