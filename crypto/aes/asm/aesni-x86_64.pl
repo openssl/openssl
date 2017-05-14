@@ -150,7 +150,7 @@
 # a tad too high for out-of-order logic to cope with, and AES unit
 # remains underutilized... As you can see 8x interleave is hardly
 # justifiable, so there no need to feel bad that 32-bit aesni-x86.pl
-# utilizies 6x interleave because of limited register bank capacity.
+# utilizes 6x interleave because of limited register bank capacity.
 #
 # Higher interleave factors do have negative impact on Westmere
 # performance. While for ECB mode it's negligible ~1.5%, other
