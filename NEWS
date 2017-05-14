@@ -773,7 +773,7 @@
       o Automation of 'req' application
       o Fixes to make s_client, s_server work under Windows
       o Support for multiple fieldnames in SPKACs
-      o New SPKAC command line utilty and associated library functions
+      o New SPKAC command line utility and associated library functions
       o Options to allow passwords to be obtained from various sources
       o New public key PEM format and options to handle it
       o Many other fixes and enhancements to command line utilities
