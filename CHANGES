@@ -8197,7 +8197,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
  Changes between 0.9.6h and 0.9.6i  [19 Feb 2003]
 
   *) In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
-     via timing by performing a MAC computation even if incorrrect
+     via timing by performing a MAC computation even if incorrect
      block cipher padding has been found.  This is a countermeasure
      against active attacks where the attacker has to distinguish
      between bad padding and a MAC verification error. (CVE-2003-0078)
