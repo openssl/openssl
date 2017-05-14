@@ -1427,6 +1427,6 @@ close STDOUT;
 #
 # (*)	Note that we're talking about run-time, not debug-time. Lack of
 #	unwind information makes debugging hard on both Windows and
-#	Unix. "Unlike" referes to the fact that on Unix signal handler
+#	Unix. "Unlike" refers to the fact that on Unix signal handler
 #	will always be invoked, core dumped and appropriate exit code
 #	returned to parent (for user notification).
