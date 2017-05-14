@@ -1667,7 +1667,7 @@ $code.=<<___;
 	movups	$inout2,0x20($out)		# $len was 3, stop store
 
 .Lctr32_done:
-	xorps	%xmm0,%xmm0			# clear regiser bank
+	xorps	%xmm0,%xmm0			# clear register bank
 	xor	$key0,$key0
 	pxor	%xmm1,%xmm1
 	pxor	%xmm2,%xmm2
