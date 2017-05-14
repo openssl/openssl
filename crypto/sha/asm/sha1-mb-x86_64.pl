@@ -444,7 +444,7 @@ for(;$i<80;$i++)	{ &BODY_20_39($i,@V); unshift(@V,pop(@V)); }
 $code.=<<___;
 	movdqa	(%rbx),@Xi[0]			# pull counters
 	mov	\$1,%ecx
-	cmp	4*0(%rbx),%ecx			# examinte counters
+	cmp	4*0(%rbx),%ecx			# examine counters
 	pxor	$t2,$t2
 	cmovge	$Tbl,@ptr[0]			# cancel input
 	cmp	4*1(%rbx),%ecx
