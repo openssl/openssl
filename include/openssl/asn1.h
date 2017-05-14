@@ -40,7 +40,7 @@ extern "C" {
 
 # define V_ASN1_CONSTRUCTED              0x20
 # define V_ASN1_PRIMITIVE_TAG            0x1f
-# define V_ASN1_PRIMATIVE_TAG            0x1f
+# define V_ASN1_PRIMATIVE_TAG /*compat*/ V_ASN1_PRIMITIVE_TAG
 
 # define V_ASN1_APP_CHOOSE               -2/* let the recipient choose */
 # define V_ASN1_OTHER                    -3/* used in ASN1_TYPE */
