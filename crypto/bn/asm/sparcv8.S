@@ -159,12 +159,12 @@ bn_mul_add_words:
  */
 bn_mul_words:
 	cmp	%o2,0
-	bg,a	.L_bn_mul_words_proceeed
+	bg,a	.L_bn_mul_words_proceed
 	ld	[%o1],%g2
 	retl
 	clr	%o0
 
-.L_bn_mul_words_proceeed:
+.L_bn_mul_words_proceed:
 	andcc	%o2,-4,%g0
 	bz	.L_bn_mul_words_tail
 	clr	%o5
@@ -251,12 +251,12 @@ bn_mul_words:
  */
 bn_sqr_words:
 	cmp	%o2,0
-	bg,a	.L_bn_sqr_words_proceeed
+	bg,a	.L_bn_sqr_words_proceed
 	ld	[%o1],%g2
 	retl
 	clr	%o0
 
-.L_bn_sqr_words_proceeed:
+.L_bn_sqr_words_proceed:
 	andcc	%o2,-4,%g0
 	bz	.L_bn_sqr_words_tail
 	clr	%o5
