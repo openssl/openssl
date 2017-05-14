@@ -4089,7 +4089,7 @@
 
   *) New option SSL_OP_NO_COMP to disable use of compression selectively
      in SSL structures. New SSL ctrl to set maximum send fragment size.
-     Save memory by seeting the I/O buffer sizes dynamically instead of
+     Save memory by setting the I/O buffer sizes dynamically instead of
      using the maximum available value.
      [Steve Henson]
 
