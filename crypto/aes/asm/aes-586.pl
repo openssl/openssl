@@ -1606,7 +1606,7 @@ sub decstep()
 	# no instructions are reordered, as performance appears
 	# optimal... or rather that all attempts to reorder didn't
 	# result in better performance [which by the way is not a
-	# bit lower than ecryption].
+	# bit lower than encryption].
 	if($i==3)   {	&mov	($key,$__key);			}
 	else        {	&mov	($out,$s[0]);			}
 			&and	($out,0xFF);
