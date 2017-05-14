@@ -2818,7 +2818,7 @@
      in unlike event, limit maximum offered version to TLS 1.0 [see below].
      [Steve Henson]
 
-  *) In order to ensure interoperabilty SSL_OP_NO_protocolX does not
+  *) In order to ensure interoperability SSL_OP_NO_protocolX does not
      disable just protocol X, but all protocols above X *if* there are
      protocols *below* X still enabled. In more practical terms it means
      that if application wants to disable TLS1.0 in favor of TLS1.1 and
