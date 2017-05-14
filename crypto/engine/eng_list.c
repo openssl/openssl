@@ -18,8 +18,8 @@
 /*
  * The linked-list of pointers to engine types. engine_list_head incorporates
  * an implicit structural reference but engine_list_tail does not - the
- * latter is a computational niceity and only points to something that is
- * already pointed to by its predecessor in the list (or engine_list_head
+ * latter is a computational optimization and only points to something that
+ * is already pointed to by its predecessor in the list (or engine_list_head
  * itself). In the same way, the use of the "prev" pointer in each ENGINE is
  * to save excessive list iteration, it doesn't correspond to an extra
  * structural reference. Hence, engine_list_head, and each non-null "next"
