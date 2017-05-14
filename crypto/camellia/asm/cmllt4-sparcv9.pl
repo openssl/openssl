@@ -25,7 +25,7 @@
 #			     misaligned data.
 #
 # As with Intel AES-NI, question is if it's possible to improve
-# performance of parallelizeable modes by interleaving round
+# performance of parallelizable modes by interleaving round
 # instructions. In Camellia every instruction is dependent on
 # previous, which means that there is place for 2 additional ones
 # in between two dependent. Can we expect 3x performance improvement?

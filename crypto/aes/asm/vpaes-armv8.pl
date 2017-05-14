@@ -31,7 +31,7 @@
 # Apple A7(***)     22.7(**)    10.9/14.3        [8.45/10.0         ]
 # Mongoose(***)     26.3(**)    21.0/25.0(**)    [13.3/16.8         ]
 #
-# (*)	ECB denotes approximate result for parallelizeable modes
+# (*)	ECB denotes approximate result for parallelizable modes
 #	such as CBC decrypt, CTR, etc.;
 # (**)	these results are worse than scalar compiler-generated
 #	code, but it's constant-time and therefore preferred;
