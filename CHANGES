@@ -5128,7 +5128,7 @@
      we can fix the problem directly in the 'ca' utility.)
      [Steve Henson]
 
-  *) Reduced header interdepencies by declaring more opaque objects in
+  *) Reduced header interdependencies by declaring more opaque objects in
      ossl_typ.h. As a consequence, including some headers (eg. engine.h) will
      give fewer recursive includes, which could break lazy source code - so
      this change is covered by the OPENSSL_NO_DEPRECATED symbol. As always,
