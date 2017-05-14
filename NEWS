@@ -487,7 +487,7 @@
         affected functions.
       o Improved platform support for PowerPC.
       o New FIPS 180-2 algorithms (SHA-224, -256, -384 and -512).
-      o New X509_VERIFY_PARAM structure to support parametrisation
+      o New X509_VERIFY_PARAM structure to support parameterisation
         of X.509 path validation.
       o Major overhaul of RC4 performance on Intel P4, IA-64 and
         AMD64.
