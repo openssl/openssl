@@ -137,7 +137,7 @@ _vpaes_consts:
 	.quad	0x07E4A34047A4E300, 0x1DFEB95A5DBEF91A
 	.quad	0x5F36B5DC83EA6900, 0x2841C2ABF49D1E77
 
-.asciz  "Vector Permutaion AES for ARMv8, Mike Hamburg (Stanford University)"
+.asciz  "Vector Permutation AES for ARMv8, Mike Hamburg (Stanford University)"
 .size	_vpaes_consts,.-_vpaes_consts
 .align	6
 ___
