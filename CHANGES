@@ -5352,7 +5352,7 @@
      named like the index file with '.attr' appended to the name.
      [Richard Levitte]
 
-  *) Generate muti valued AVAs using '+' notation in config files for
+  *) Generate multi-valued AVAs using '+' notation in config files for
      req and dirName.
      [Steve Henson]
 
