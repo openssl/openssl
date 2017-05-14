@@ -41,7 +41,7 @@ call is successful the signature is written to B<sig> and the amount of data
 written to B<siglen>.
 
 EVP_DigestSign() signs B<tbslen> bytes of data at B<tbs> and places the
-signature in B<sig> and its length in B<siglen> in a simiilar way to
+signature in B<sig> and its length in B<siglen> in a similar way to
 EVP_DigestSignFinal().
 
 =head1 RETURN VALUES
