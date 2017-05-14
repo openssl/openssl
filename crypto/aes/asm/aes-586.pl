@@ -240,7 +240,7 @@ $small_footprint=1;	# $small_footprint=1 code is ~5% slower [on
 			# contention and in hope to "collect" 5% back
 			# in real-life applications...
 
-$vertical_spin=0;	# shift "verticaly" defaults to 0, because of
+$vertical_spin=0;	# shift "vertically" defaults to 0, because of
 			# its proof-of-concept status...
 # Note that there is no decvert(), as well as last encryption round is
 # performed with "horizontal" shifts. This is because this "vertical"
