@@ -221,7 +221,7 @@ $proxy->reneg(1);
 $proxy->start();
 checkhandshake($proxy, checkhandshake::RENEG_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
-               "Rengotiation handshake test");
+               "Renegotiation handshake test");
 
 #Test 8: Server name handshake (no client request)
 $proxy->clear();
