@@ -661,7 +661,7 @@ sub pipe {
 
 =item B<with HASHREF, CODEREF>
 
-C<with> will temporarly install hooks given by the HASHREF and then execute
+C<with> will temporarily install hooks given by the HASHREF and then execute
 the given CODEREF.  Hooks are usually expected to have a coderef as value.
 
 The currently available hoosk are:
