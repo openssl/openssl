@@ -171,7 +171,7 @@
 # yield execution to process performing AES just before timer fires
 # off the scheduler, immediately regain control of CPU and analyze the
 # cache state. For this attack to be efficient attacker would have to
-# effectively slow down the operation by several *orders* of magnitute,
+# effectively slow down the operation by several *orders* of magnitude,
 # by ratio of time slice to duration of handful of AES rounds, which
 # unlikely to remain unnoticed. Not to mention that this also means
 # that he would spend correspondingly more time to collect enough
