@@ -6795,7 +6795,7 @@
   *) Major restructuring to the underlying ENGINE code. This includes
      reduction of linker bloat, separation of pure "ENGINE" manipulation
      (initialisation, etc) from functionality dealing with implementations
-     of specific crypto iterfaces. This change also introduces integrated
+     of specific crypto interfaces. This change also introduces integrated
      support for symmetric ciphers and digest implementations - so ENGINEs
      can now accelerate these by providing EVP_CIPHER and EVP_MD
      implementations of their own. This is detailed in crypto/engine/README
