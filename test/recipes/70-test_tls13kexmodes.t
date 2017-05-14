@@ -246,7 +246,7 @@ checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
                | checkhandshake::PSK_SRV_EXTENSION,
                "Resume with both kex modes and HRR");
 
-#Test 9: Attempt a resume with dhe kex mode only and an unnacceptable initial
+#Test 9: Attempt a resume with dhe kex mode only and an unacceptable initial
 #        key_share. Should resume with a key_share following an HRR
 $proxy->clear();
 $proxy->clientflags("-sess_in ".$session);
