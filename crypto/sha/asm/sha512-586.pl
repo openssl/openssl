@@ -42,7 +42,7 @@
 # (*)	whichever best applicable.
 # (**)	x86_64 assembler performance is presented for reference
 #	purposes, the results are for integer-only code.
-# (***)	paddq is increadibly slow on Atom.
+# (***)	paddq is incredibly slow on Atom.
 #
 # IALU code-path is optimized for elder Pentiums. On vanilla Pentium
 # performance improvement over compiler generated code reaches ~60%,
