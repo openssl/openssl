@@ -275,7 +275,7 @@ id-smime-aa 7		: id-smime-aa-contentIdentifier
 id-smime-aa 8		: id-smime-aa-macValue
 id-smime-aa 9		: id-smime-aa-equivalentLabels
 id-smime-aa 10		: id-smime-aa-contentReference
-id-smime-aa 11		: id-smime-aa-encrypKeyPref
+id-smime-aa 11		: id-smime-aa-encryptKeyPref
 id-smime-aa 12		: id-smime-aa-signingCertificate
 id-smime-aa 13		: id-smime-aa-smimeEncryptCerts
 id-smime-aa 14		: id-smime-aa-timeStampToken

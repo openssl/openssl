@@ -219,7 +219,7 @@ id_smime_aa_contentIdentifier		218
 id_smime_aa_macValue		219
 id_smime_aa_equivalentLabels		220
 id_smime_aa_contentReference		221
-id_smime_aa_encrypKeyPref		222
+id_smime_aa_encryptKeyPref		222
 id_smime_aa_signingCertificate		223
 id_smime_aa_smimeEncryptCerts		224
 id_smime_aa_timeStampToken		225
