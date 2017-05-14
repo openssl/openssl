@@ -298,7 +298,7 @@ poly1305_emit:
 	mov	%r9,%rcx
 	adc	\$0,%r9
 	adc	\$0,%r10
-	shr	\$2,%r10	# did 130-bit value overfow?
+	shr	\$2,%r10	# did 130-bit value overflow?
 	cmovnz	%r8,%rax
 	cmovnz	%r9,%rcx
 
@@ -1403,7 +1403,7 @@ poly1305_emit_avx:
 	mov	%r9,%rcx
 	adc	\$0,%r9
 	adc	\$0,%r10
-	shr	\$2,%r10	# did 130-bit value overfow?
+	shr	\$2,%r10	# did 130-bit value overflow?
 	cmovnz	%r8,%rax
 	cmovnz	%r9,%rcx
 
@@ -3734,7 +3734,7 @@ poly1305_emit_base2_44:
 	mov	%r9,%rcx
 	adc	\$0,%r9
 	adc	\$0,%r10
-	shr	\$2,%r10	# did 130-bit value overfow?
+	shr	\$2,%r10	# did 130-bit value overflow?
 	cmovnz	%r8,%rax
 	cmovnz	%r9,%rcx
 
