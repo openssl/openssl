@@ -6536,9 +6536,9 @@
   *) Add an "init" command to the ENGINE config module and auto initialize
      ENGINEs. Without any "init" command the ENGINE will be initialized
      after all ctrl commands have been executed on it. If init=1 the
-     ENGINE is initailized at that point (ctrls before that point are run
+     ENGINE is initialized at that point (ctrls before that point are run
      on the uninitialized ENGINE and after on the initialized one). If
-     init=0 then the ENGINE will not be iniatialized at all.
+     init=0 then the ENGINE will not be initialized at all.
      [Steve Henson]
 
   *) Fix the 'app_verify_callback' interface so that the user-defined
