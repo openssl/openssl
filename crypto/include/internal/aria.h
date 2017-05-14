@@ -8,7 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
- /* Copyright (c) 2017 National Security Resarch Institute.  All rights reserved. */
+ /* Copyright (c) 2017 National Security Research Institute.  All rights reserved. */
 
 #ifndef HEADER_ARIA_H
 # define HEADER_ARIA_H
