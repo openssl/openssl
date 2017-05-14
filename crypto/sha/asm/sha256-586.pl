@@ -18,7 +18,7 @@
 #
 # Performance improvement over compiler generated code varies from
 # 10% to 40% [see below]. Not very impressive on some µ-archs, but
-# it's 5 times smaller and optimizies amount of writes.
+# it's 5 times smaller and optimizes amount of writes.
 #
 # May 2012.
 #
