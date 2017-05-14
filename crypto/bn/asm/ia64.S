@@ -936,7 +936,7 @@ bn_mul_comba8:
 		xma.hu	f118=f39,f127,f117	}
 { .mfi;		xma.lu	f117=f39,f127,f117	};;//
 //-------------------------------------------------//
-// Leaving muliplier's heaven... Quite a ride, huh?
+// Leaving multiplier's heaven... Quite a ride, huh?
 
 { .mii;	getf.sig	r31=f47
 	add		r25=r25,r24
