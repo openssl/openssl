@@ -319,7 +319,7 @@ $code.=<<___;
 	mov	%rax,($rp,$i,8)		# rp[i]=tp[i]-np[i]
 	mov	8($ap,$i,8),%rax	# tp[i+1]
 	lea	1($i),$i		# i++
-	dec	$j			# doesnn't affect CF!
+	dec	$j			# doesn't affect CF!
 	jnz	.Lsub
 
 	sbb	\$0,%rax		# handle upmost overflow bit
@@ -750,7 +750,7 @@ $code.=<<___;
 	mov	56($ap,$i,8),@ri[3]
 	sbb	40($np,$i,8),@ri[1]
 	lea	4($i),$i		# i++
-	dec	$j			# doesnn't affect CF!
+	dec	$j			# doesn't affect CF!
 	jnz	.Lsub4x
 
 	mov	@ri[0],0($rp,$i,8)	# rp[i]=tp[i]-np[i]
