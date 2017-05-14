@@ -1592,7 +1592,7 @@ ___
 ########################################################################
 # Following subroutines are VIS3 counterparts of those above that
 # implement ones found in ecp_nistz256.c. Key difference is that they
-# use 128-bit muliplication and addition with 64-bit carry, and in order
+# use 128-bit multiplication and addition with 64-bit carry, and in order
 # to do that they perform conversion from uin32_t[8] to uint64_t[4] upon
 # entry and vice versa on return.
 #
