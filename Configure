@@ -794,7 +794,7 @@ while (@argvcopy)
 		}
 	unless ($_ eq $target || /^no-/ || /^disable-/)
 		{
-		# "no-..." follows later after implied disactivations
+		# "no-..." follows later after implied deactivations
 		# have been derived.  (Don't take this too seriously,
 		# we really only write OPTIONS to the Makefile out of
 		# nostalgia.)
