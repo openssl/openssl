@@ -80,7 +80,7 @@ my @testlists = (
     [ "4.4.7", "Valid Two CRLs Test7",              0 ],
 
     # The test document suggests these should return certificate revoked...
-    # Subsquent discussion has concluded they should not due to unhandle
+    # Subsequent discussion has concluded they should not due to unhandle
     # critical CRL extensions.
     [ "4.4.8", "Invalid Unknown CRL Entry Extension Test8", 36 ],
     [ "4.4.9", "Invalid Unknown CRL Extension Test9",       36 ],
