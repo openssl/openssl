@@ -515,7 +515,7 @@
                    with rmd160.
 
   -Dxxx, lxxx, -Lxxx, -Wl, -rpath, -R, -framework, -static
-                   These system specific options will be recocognised and
+                   These system specific options will be recognised and
                    passed through to the compiler to allow you to define
                    preprocessor symbols, specify additional libraries, library
                    directories or other compiler options. It might be worth
