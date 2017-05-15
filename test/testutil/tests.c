@@ -224,7 +224,7 @@ static int convert_bn_memory(const unsigned char *in, size_t bytes,
     int n = bytes * 2, i;
     char *p = out, *q = NULL;
 
-    if (in != NULL) {
+    if (bn != NULL && !BN_is_zero(bn)) {
         hex_convert_memory(in, bytes, out, BN_BYTES);
         if (*lz) {
             for (; *p == '0' || *p == ' '; p++)
@@ -259,11 +259,16 @@ static int convert_bn_memory(const unsigned char *in, size_t bytes,
     }
 
     for (i = 0; i < n; i++) {
-        *p++ = '@';
+        *p++ = ' ';
         if (i % (2 *BN_BYTES) == 2 * BN_BYTES - 1 && i != n - 1)
             *p++ = ' ';
     }
     *p = '\0';
+    if (bn == NULL)
+        q = "NULL";
+    else
+        q = BN_is_negative(bn) ? "-0" : "0";
+    strcpy(p - strlen(q), q);
     return 0;
 }
 
@@ -329,24 +334,19 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
         i = 0;
         p = bdiff;
         for (i=0; b1[i] != '\0'; i++)
-            if (b1[i] == b2[i]) { 
+            if (b1[i] == b2[i] || b1[i] == ' ' || b2[i] == ' ') { 
                 *p++ = ' ';
             } else {
                 *p++ = '^';
                 diff = 1;
             }
         *p++ = '\0';
-
         if (!diff) {
             test_printf_stderr("%*s#  %s:% 5d\n", indent, "", b1, cnt);
         } else {
-            if (cnt == 0 && l1 == 0)
-                test_bignum_zero_print(bn1, '-');
-            else if (n1 > 0)
+            if (cnt == 0 || n1 > 0)
                 test_printf_stderr("%*s# -%s:% 5d\n", indent, "", b1, cnt);
-            if (cnt == 0 && l2 == 0)
-                test_bignum_zero_print(bn2, '+');
-            else if (n2 > 0)
+            if (cnt == 0 || n2 > 0)
                 test_printf_stderr("%*s# +%s:% 5d\n", indent, "", b2, cnt);
             if (i > 0 && (cnt == 0 || (n1 > 0 && n2 > 0)))
                 test_printf_stderr("%*s#  %s\n", indent, "", bdiff);
