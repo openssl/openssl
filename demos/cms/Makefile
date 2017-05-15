@@ -15,13 +15,11 @@
 #    LD_LIBRARY_PATH=../.. ./cms_dec
 #    LD_LIBRARY_PATH=../.. ./cms_denc
 #    LD_LIBRARY_PATH=../.. ./cms_ddec
-#
-#    This certificate has expired so it is not working currently
 #    LD_LIBRARY_PATH=../.. ./cms_ver
 
 OPENSSL_INCS_LOCATION=-I../../include 
 OPENSSL_LIBS_LOCATION=-L../..
-CFLAGS = $(OPENSSL_INCS_LOCATION)
+CFLAGS =  $(OPENSSL_INCS_LOCATION)
 LDFLAGS = $(OPENSSL_LIBS_LOCATION) -lssl -lcrypto
 
 all: cms_comp cms_ddec cms_dec cms_denc cms_enc cms_sign cms_sign2 cms_uncomp cms_ver
@@ -41,3 +39,8 @@ cms_comp cms_uncomp:
 
 cms_ddec cms_dec cms_denc cms_enc cms_sign cms_sign2 cms_ver:
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+
+clean:
+	$(RM) cms_comp.o cms_ddec.o cms_dec.o cms_denc.o cms_enc.o cms_sign.o cms_sign2.o cms_uncomp.o cms_ver.o
+	$(RM) cms_comp cms_ddec cms_dec cms_denc cms_enc cms_sign cms_sign2 cms_uncomp cms_ver
+

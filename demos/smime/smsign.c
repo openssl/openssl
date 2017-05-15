@@ -31,7 +31,7 @@ int main(int argc, char **argv)
     ERR_load_crypto_strings();
 
     /* Read in signer certificate and private key */
-    tbio = BIO_new_file("signer.pem", "r");
+    tbio = BIO_new_file("../../test/smime-certs/smrsa1.pem", "r");
 
     if (!tbio)
         goto err;
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
         goto err;
 
     printf("Successfully signed contents of file sign.txt into file smout.txt"
-           " using signer certificate and private key from file signer.pem\n");
+           " using signer certificate and private key from file smrsa1.pem\n");
     ret = 0;
 
  err:

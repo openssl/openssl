@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     ERR_load_crypto_strings();
 
     /* Read in recipient certificate and private key */
-    tbio = BIO_new_file("signer.pem", "r");
+    tbio = BIO_new_file("../../test/smime-certs/smrsa1.pem", "r");
 
     if (!tbio)
         goto err;
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 
     printf("Successfully dencrypted contents of file smencr.txt into file "
            "decout.txt using certificate and private key from file "
-           "signer.pem\n");
+           "smrsa1.pem\n");
     ret = 0;
 
  err:

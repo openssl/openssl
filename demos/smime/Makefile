@@ -9,8 +9,6 @@
 #    LD_LIBRARY_PATH=../.. ./smdec
 #    LD_LIBRARY_PATH=../.. ./smsign
 #    LD_LIBRARY_PATH=../.. ./smsign2
-#
-#    This certificate has expired so it is not working currently
 #    LD_LIBRARY_PATH=../.. ./smver
 
 OPENSSL_INCS_LOCATION=-I../../include 
@@ -28,3 +26,7 @@ smver: smver.o
 
 smdec smenc smsign smsign2 smver:
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+
+clean:
+	$(RM) smdec smenc smsign smsign2 smver
+	$(RM) smdec.o smenc.o smsign.o smsign2.o smver.o

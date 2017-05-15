@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     st = X509_STORE_new();
 
     /* Read in signer certificate and private key */
-    tbio = BIO_new_file("cacert.pem", "r");
+    tbio = BIO_new_file("../../test/smime-certs/smroot.pem", "r");
 
     if (!tbio)
         goto err;
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
     }
 
     printf("Successfully verified contents of file smout.txt into file"
-           " smver.txt using CA certificate in file cacert.pem\n");
+           " smver.txt using CA certificate in file smroot.pem\n");
 
     ret = 0;
 

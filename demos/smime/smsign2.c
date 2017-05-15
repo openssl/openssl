@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     OpenSSL_add_all_algorithms();
     ERR_load_crypto_strings();
 
-    tbio = BIO_new_file("signer.pem", "r");
+    tbio = BIO_new_file("../../test/smime-certs/smrsa1.pem", "r");
 
     if (!tbio)
         goto err;
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 
     BIO_free(tbio);
 
-    tbio = BIO_new_file("signer2.pem", "r");
+    tbio = BIO_new_file("../../test/smime-certs/smrsa2.pem", "r");
 
     if (!tbio)
         goto err;
@@ -78,8 +78,8 @@ int main(int argc, char **argv)
         goto err;
 
     printf("Successfully signed contents of file sign.txt into file smout.txt"
-           " using signer certificate and private key from files signer.pem"
-           " and signer2.pem\n");
+           " using signer certificate and private key from files smrsa1.pem"
+           " and smrsa2.pem\n");
     ret = 0;
 
  err:
