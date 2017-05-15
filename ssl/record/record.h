@@ -111,14 +111,6 @@ typedef struct dtls_record_layer_st {
      * loss.
      */
     record_pqueue buffered_app_data;
-    /*
-     * storage for Alert/Handshake protocol data received but not yet
-     * processed by ssl3_read_bytes:
-     */
-    unsigned char alert_fragment[DTLS1_AL_HEADER_LENGTH];
-    size_t alert_fragment_len;
-    unsigned char handshake_fragment[DTLS1_HM_HEADER_LENGTH];
-    size_t handshake_fragment_len;
     /* save last and current sequence numbers for retransmissions */
     unsigned char last_write_sequence[8];
     unsigned char curr_write_sequence[8];
@@ -157,12 +149,6 @@ typedef struct record_layer_st {
     size_t packet_length;
     /* number of bytes sent so far */
     size_t wnum;
-    /*
-     * storage for Alert/Handshake protocol data received but not yet
-     * processed by ssl3_read_bytes:
-     */
-    unsigned char alert_fragment[2];
-    size_t alert_fragment_len;
     unsigned char handshake_fragment[4];
     size_t handshake_fragment_len;
     /* The number of consecutive empty records we have received */

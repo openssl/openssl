@@ -59,14 +59,14 @@ $proxy->serverflags("-tls1_2");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Too many in context empty records test");
 
-#Test 4: Injecting a fragmented fatal alert should fail. We actually expect no
-#        alerts to be sent from either side because *we* injected the fatal
-#        alert, i.e. this will look like a disorderly close
+#Test 4: Injecting a fragmented fatal alert should fail. We expect the server to
+#        send back an alert of its own because it cannot handle fragmented
+#        alerts
 $proxy->clear();
 $proxy->filter(\&add_frag_alert_filter);
 $proxy->serverflags("-tls1_2");
 $proxy->start();
-ok(!TLSProxy::Message->end(), "Fragmented alert records test");
+ok(TLSProxy::Message->fail(), "Fragmented alert records test");
 
 #Run some SSLv2 ClientHello tests
 

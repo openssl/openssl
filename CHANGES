@@ -4,6 +4,16 @@
 
  Changes between 1.1.0e and 1.1.1 [xx XXX xxxx]
 
+  *) Fragmented SSL/TLS alerts are no longer accepted. An alert message is 2
+     bytes long. In theory it is permissible in SSLv3 - TLSv1.2 to fragment such
+     alerts across multiple records (some of which could be empty). In practice
+     it make no sense to send an empty alert record, or to fragment one. TLSv1.3
+     prohibts this altogether and other libraries (BoringSSL, NSS) do not
+     support this at all. Supporting it adds significant complexity to the
+     record layer, and its removal is unlikely to cause inter-operability
+     issues.
+     [Matt Caswell]
+
   *) Add the ASN.1 types INT32, UINT32, INT64, UINT64 and variants prefixed
      with Z.  These are meant to replace LONG and ZLONG and to be size safe.
      The use of LONG and ZLONG is discouraged and scheduled for deprecation
