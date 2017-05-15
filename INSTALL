@@ -485,16 +485,21 @@
                    rc2, rc4, rmd160, scrypt, seed or whirlpool. The "ripemd"
                    algorithm is deprecated and if used is synonymous with rmd160.
 
-  -Dxxx, -lxxx, -Lxxx, -fxxx, -mXXX, -Kxxx
-                   These system specific options will be passed through to the
-                   compiler to allow you to define preprocessor symbols, specify
-                   additional libraries, library directories or other compiler
-                   options. It might be worth noting that some compilers
-                   generate code specifically for processor the compiler
-                   currently executes on. This is not necessarily what you might
-                   have in mind, since it might be unsuitable for execution on
-                   other, typically older, processor. Consult your compiler
-                   documentation.
+  -Dxxx, lxxx, -Lxxx, -Wl, -rpath, -R, -framework, -static
+                   These system specific options will be recocognised and
+                   passed through to the compiler to allow you to define
+                   preprocessor symbols, specify additional libraries, library
+                   directories or other compiler options. It might be worth
+                   noting that some compilers generate code specifically for
+                   processor the compiler currently executes on. This is not
+                   necessarily what you might have in mind, since it might be
+                   unsuitable for execution on other, typically older,
+                   processor. Consult your compiler documentation.
+
+  -xxx, +xxx
+                   Additional options that are not otherwise recognised are
+                   passed through as they are to the compiler as well.  Again,
+                   consult your compiler documentation.
 
 
  Installation in Detail
