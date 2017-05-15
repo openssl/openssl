@@ -17,6 +17,7 @@
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include "record_locl.h"
+#include "../packet_locl.h"
 
 #if     defined(OPENSSL_SMALL_FOOTPRINT) || \
         !(      defined(AES_ASM) &&     ( \
@@ -47,8 +48,6 @@ void RECORD_LAYER_clear(RECORD_LAYER *rl)
     rl->packet = NULL;
     rl->packet_length = 0;
     rl->wnum = 0;
-    memset(rl->alert_fragment, 0, sizeof(rl->alert_fragment));
-    rl->alert_fragment_len = 0;
     memset(rl->handshake_fragment, 0, sizeof(rl->handshake_fragment));
     rl->handshake_fragment_len = 0;
     rl->wpend_tot = 0;
@@ -1402,10 +1401,6 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             dest_maxlen = sizeof s->rlayer.handshake_fragment;
             dest = s->rlayer.handshake_fragment;
             dest_len = &s->rlayer.handshake_fragment_len;
-        } else if (SSL3_RECORD_get_type(rr) == SSL3_RT_ALERT) {
-            dest_maxlen = sizeof s->rlayer.alert_fragment;
-            dest = s->rlayer.alert_fragment;
-            dest_len = &s->rlayer.alert_fragment_len;
         }
 
         if (dest_maxlen > 0) {
@@ -1422,20 +1417,6 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             if (SSL3_RECORD_get_length(rr) == 0)
                 SSL3_RECORD_set_read(rr);
 
-            if (SSL_IS_TLS13(s)
-                    && SSL3_RECORD_get_type(rr) == SSL3_RT_ALERT) {
-                if (*dest_len < dest_maxlen
-                        || SSL3_RECORD_get_length(rr) != 0) {
-                    /*
-                     * TLSv1.3 forbids fragmented alerts, and only one alert
-                     * may be present in a record
-                     */
-                    al = SSL_AD_UNEXPECTED_MESSAGE;
-                    SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_INVALID_ALERT);
-                    goto f_err;
-                }
-            }
-
             if (*dest_len < dest_maxlen)
                 goto start;     /* fragment was too small */
         }
@@ -1443,7 +1424,6 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
     /*-
      * s->rlayer.handshake_fragment_len == 4  iff  rr->type == SSL3_RT_HANDSHAKE;
-     * s->rlayer.alert_fragment_len == 2      iff  rr->type == SSL3_RT_ALERT.
      * (Possibly rr is 'empty' now, i.e. rr->length may be 0.)
      */
 
@@ -1466,15 +1446,23 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
         goto start;
     }
-    if (s->rlayer.alert_fragment_len >= 2) {
-        int alert_level = s->rlayer.alert_fragment[0];
-        int alert_descr = s->rlayer.alert_fragment[1];
+    if (SSL3_RECORD_get_type(rr) == SSL3_RT_ALERT) {
+        unsigned int alert_level, alert_descr;
+        unsigned char *alert_bytes = SSL3_RECORD_get_data(rr)
+                                     + SSL3_RECORD_get_off(rr);
+        PACKET alert;
 
-        s->rlayer.alert_fragment_len = 0;
+        if (!PACKET_buf_init(&alert, alert_bytes, SSL3_RECORD_get_length(rr))
+                || !PACKET_get_1(&alert, &alert_level)
+                || !PACKET_get_1(&alert, &alert_descr)
+                || PACKET_remaining(&alert) != 0) {
+            al = SSL_AD_UNEXPECTED_MESSAGE;
+            SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_INVALID_ALERT);
+            goto f_err;
+        }
 
         if (s->msg_callback)
-            s->msg_callback(0, s->version, SSL3_RT_ALERT,
-                            s->rlayer.alert_fragment, 2, s,
+            s->msg_callback(0, s->version, SSL3_RT_ALERT, alert_bytes, 2, s,
                             s->msg_callback_arg);
 
         if (s->info_callback != NULL)
