@@ -16,7 +16,13 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_bn");
 
-plan tests => 1;
+my @files = (
+    "bnexp.txt", "bnmod.txt", "bnmul.txt", "bnshift.txt", "bnsum.txt"
+    );
+plan tests => 1 + scalar(@files);
 
-ok(run(test(["bntest", srctop_file("test", "bntests.txt")])),
-   "running bntest bntests.txt");
+foreach my $f ( @files ) {
+    ok(run(test(["bntest", srctop_file("test", $f)])),
+        "running bntest $f");
+}
+ok(run(test(["bntest"])), "running bntest");
