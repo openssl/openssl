@@ -22,8 +22,6 @@
 # cp ../../test/smime-certs/smrsa2.pem .
 # cp ../../test/smime-certs/smroot.pem .
 #
-OPENSSL_INCS_LOCATION=-I../../include 
-OPENSSL_LIBS_LOCATION=-L../..
 CFLAGS =  $(OPENSSL_INCS_LOCATION)
 LDFLAGS = $(OPENSSL_LIBS_LOCATION) -lssl -lcrypto
 
