@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     }
     if (cert) {
         fprintf(fp, "***User Certificate***\n");
-        PEM_write_X509_AUX(fp, cert);
+        PEM_write_X509(fp, cert);
     }
     if (ca && sk_X509_num(ca)) {
         fprintf(fp, "***Other Certificates***\n");

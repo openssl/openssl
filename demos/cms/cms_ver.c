@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     st = X509_STORE_new();
 
     /* Read in CA certificate */
-    tbio = BIO_new_file("../../test/smime-certs/smroot.pem", "r");
+    tbio = BIO_new_file("smroot.pem", "r");
 
     if (!tbio)
         goto err;

@@ -17,6 +17,11 @@
 #    LD_LIBRARY_PATH=../.. ./cms_ddec
 #    LD_LIBRARY_PATH=../.. ./cms_ver
 
+# Certificates used for this were copied using these commands :
+# cp ../../test/smime-certs/smrsa1.pem .
+# cp ../../test/smime-certs/smrsa2.pem .
+# cp ../../test/smime-certs/smroot.pem .
+#
 OPENSSL_INCS_LOCATION=-I../../include 
 OPENSSL_LIBS_LOCATION=-L../..
 CFLAGS =  $(OPENSSL_INCS_LOCATION)

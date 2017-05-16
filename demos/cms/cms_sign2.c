@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     OpenSSL_add_all_algorithms();
     ERR_load_crypto_strings();
 
-    tbio = BIO_new_file("../../test/smime-certs/smrsa1.pem", "r");
+    tbio = BIO_new_file("smrsa1.pem", "r");
 
     if (!tbio)
         goto err;
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 
     BIO_free(tbio);
 
-    tbio = BIO_new_file("../../test/smime-certs/smrsa2.pem", "r");
+    tbio = BIO_new_file("smrsa2.pem", "r");
 
     if (!tbio)
         goto err;

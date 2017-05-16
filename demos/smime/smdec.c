@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     ERR_load_crypto_strings();
 
     /* Read in recipient certificate and private key */
-    tbio = BIO_new_file("../../test/smime-certs/smrsa1.pem", "r");
+    tbio = BIO_new_file("smrsa1.pem", "r");
 
     if (!tbio)
         goto err;
