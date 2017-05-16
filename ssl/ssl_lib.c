@@ -4753,7 +4753,7 @@ int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format,
                                               TLS_CIPHER_LEN))
                     || (leadbyte != 0
                         && !PACKET_forward(&sslv2ciphers, TLS_CIPHER_LEN))) {
-                *al = SSL_AD_INTERNAL_ERROR;
+                *al = SSL_AD_DECODE_ERROR;
                 OPENSSL_free(s->s3->tmp.ciphers_raw);
                 s->s3->tmp.ciphers_raw = NULL;
                 s->s3->tmp.ciphers_rawlen = 0;
@@ -4840,8 +4840,8 @@ int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
         }
     }
     if (PACKET_remaining(cipher_suites) > 0) {
-        *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, ERR_R_INTERNAL_ERROR);
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, SSL_R_BAD_LENGTH);
         goto err;
     }
 

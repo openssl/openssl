@@ -209,7 +209,7 @@ int ssl3_get_record(SSL *s)
             sslv2pkt = pkt;
             if (!PACKET_get_net_2_len(&sslv2pkt, &sslv2len)
                     || !PACKET_get_1(&sslv2pkt, &type)) {
-                al = SSL_AD_INTERNAL_ERROR;
+                al = SSL_AD_DECODE_ERROR;
                 SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
                 goto f_err;
             }
@@ -241,7 +241,7 @@ int ssl3_get_record(SSL *s)
                 }
 
                 if (thisrr->length < MIN_SSL2_RECORD_LEN) {
-                    al = SSL_AD_HANDSHAKE_FAILURE;
+                    al = SSL_AD_DECODE_ERROR;
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_LENGTH_TOO_SHORT);
                     goto f_err;
                 }
@@ -255,7 +255,7 @@ int ssl3_get_record(SSL *s)
                 if (!PACKET_get_1(&pkt, &type)
                         || !PACKET_get_net_2(&pkt, &version)
                         || !PACKET_get_net_2_len(&pkt, &thisrr->length)) {
-                    al = SSL_AD_INTERNAL_ERROR;
+                    al = SSL_AD_DECODE_ERROR;
                     SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
                     goto f_err;
                 }
