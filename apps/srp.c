@@ -119,32 +119,35 @@ static char *srp_verify_user(const char *user, const char *srp_verifier,
                              char *srp_usersalt, const char *g, const char *N,
                              const char *passin, int verbose)
 {
-    char password[1024];
+    char password[1025];
     PW_CB_DATA cb_tmp;
     char *verifier = NULL;
     char *gNid = NULL;
+    int len;
 
     cb_tmp.prompt_info = user;
     cb_tmp.password = passin;
 
-    if (password_callback(password, sizeof(password), 0, &cb_tmp) > 0) {
+    len = password_callback(password, sizeof(password)-1, 0, &cb_tmp);
+    if (len > 0) {
+        password[len] = 0;
         if (verbose)
             BIO_printf(bio_err,
                        "Validating\n   user=\"%s\"\n srp_verifier=\"%s\"\n srp_usersalt=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
                        user, srp_verifier, srp_usersalt, g, N);
-        BIO_printf(bio_err, "Pass %s\n", password);
+        if (verbose > 1)
+            BIO_printf(bio_err, "Pass %s\n", password);
 
         OPENSSL_assert(srp_usersalt != NULL);
-        if (!
-            (gNid =
-             SRP_create_verifier(user, password, &srp_usersalt, &verifier, N,
-                                 g))) {
+        if (!(gNid = SRP_create_verifier(user, password, &srp_usersalt,
+                                         &verifier, N, g)) ) {
             BIO_printf(bio_err, "Internal error validating SRP verifier\n");
         } else {
             if (strcmp(verifier, srp_verifier))
                 gNid = NULL;
             OPENSSL_free(verifier);
         }
+        OPENSSL_cleanse(password, len);
     }
     return gNid;
 }
@@ -153,27 +156,30 @@ static char *srp_create_user(char *user, char **srp_verifier,
                              char **srp_usersalt, char *g, char *N,
                              char *passout, int verbose)
 {
-    char password[1024];
+    char password[1025];
     PW_CB_DATA cb_tmp;
     char *gNid = NULL;
     char *salt = NULL;
+    int len;
     cb_tmp.prompt_info = user;
     cb_tmp.password = passout;
 
-    if (password_callback(password, sizeof(password), 1, &cb_tmp) > 0) {
+    len = password_callback(password, sizeof(password)-1, 1, &cb_tmp);
+    if (len > 0) {
+        password[len] = 0;
         if (verbose)
             BIO_printf(bio_err, "Creating\n user=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
                        user, g, N);
-        if (!
-            (gNid =
-             SRP_create_verifier(user, password, &salt, srp_verifier, N,
-                                 g))) {
+        if (!(gNid = SRP_create_verifier(user, password, &salt,
+                                         srp_verifier, N, g)) ) {
             BIO_printf(bio_err, "Internal error creating SRP verifier\n");
-        } else
+        } else {
             *srp_usersalt = salt;
+        }
+        OPENSSL_cleanse(password, len);
         if (verbose > 1)
-            BIO_printf(bio_err, "gNid=%s salt =\"%s\"\n verifier =\"%s\"\n", gNid,
-                       salt, *srp_verifier);
+            BIO_printf(bio_err, "gNid=%s salt =\"%s\"\n verifier =\"%s\"\n",
+                       gNid, salt, *srp_verifier);
 
     }
     return gNid;
@@ -251,7 +257,7 @@ int srp_main(int argc, char **argv)
         case OPT_LIST:
             if (mode != OPT_ERR) {
                 BIO_printf(bio_err,
-                           "%s: Only one of -add/delete-modify/-list\n",
+                           "%s: Only one of -add/-delete/-modify/-list\n",
                            prog);
                 goto opthelp;
             }
@@ -293,7 +299,7 @@ int srp_main(int argc, char **argv)
                    "Need at least one user for options -add, -delete, -modify. \n");
         goto opthelp;
     }
-    if ((passin || passout) && argc != 1) {
+    if ((passinarg || passoutarg) && argc != 1) {
         BIO_printf(bio_err,
                    "-passin, -passout arguments only valid with one user.\n");
         goto opthelp;
