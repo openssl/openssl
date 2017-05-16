@@ -42,15 +42,15 @@ use constant {
     ILLEGAL_EXT_SECOND_CH => 1
 };
 
-#Most PSK tests are done in test_ssl_new. This just checks sending a PSK
-#extension when it isn't in the last place in a ClientHello
+#Most PSK tests are done in test_ssl_new. This tests various failure scenarios
+#around PSK
 
 #Test 1: First get a session
 (undef, my $session) = tempfile();
 $proxy->clientflags("-sess_out ".$session);
 $proxy->sessionfile($session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 4;
+plan tests => 5;
 ok(TLSProxy::Message->success(), "Initial connection");
 
 #Test 2: Attempt a resume with PSK not in last place. Should fail
@@ -94,6 +94,13 @@ $pskseen = $ch2seen
            && defined ${$ch2->extension_data}{TLSProxy::Message::EXT_PSK};
 ok($ch2seen && !$pskseen, "PSK hash does not match");
 
+#Test 5: Attempt a resume without a sig agls extension. Should succeed because
+#        sig algs is not needed in a resumption.
+$proxy->clear();
+$proxy->clientflags("-sess_in ".$session);
+$proxy->filter(\&remove_sig_algs_filter);
+$proxy->start();
+ok(TLSProxy::Message->success(), "Remove sig algs");
 
 unlink $session;
 
@@ -127,5 +134,18 @@ sub modify_psk_filter
         #Deliberately break the connection
         $message->set_extension(TLSProxy::Message::EXT_SUPPORTED_GROUPS, "");
     }
+    $message->repack();
+}
+
+sub remove_sig_algs_filter
+{
+    my $proxy = shift;
+    my $message;
+
+    # Only look at the first ClientHello
+    return if $proxy->flight != 0;
+
+    $message = ${$proxy->message_list}[0];
+    $message->delete_extension(TLSProxy::Message::EXT_SIG_ALGS);
     $message->repack();
 }
