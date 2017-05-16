@@ -1551,7 +1551,7 @@ int ssl3_send_server_hello(SSL *s)
         p += sl;
 
         /* put the cipher */
-        i = ssl3_put_cipher_by_char(s->s3->tmp.new_cipher, p);
+        i = s->method->put_cipher_by_char(s->s3->tmp.new_cipher, p);
         p += i;
 
         /* put the compression method */
