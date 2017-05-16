@@ -1043,7 +1043,7 @@ static int init_srtp(SSL *s, unsigned int context)
 
 static int final_sig_algs(SSL *s, unsigned int context, int sent, int *al)
 {
-    if (!sent && SSL_IS_TLS13(s)) {
+    if (!sent && SSL_IS_TLS13(s) && !s->hit) {
         *al = TLS13_AD_MISSING_EXTENSION;
         SSLerr(SSL_F_FINAL_SIG_ALGS, SSL_R_MISSING_SIGALGS_EXTENSION);
         return 0;
