@@ -11,6 +11,7 @@ B<openssl> B<spkac>
 [B<-in filename>]
 [B<-out filename>]
 [B<-key keyfile>]
+[B<-keyform PEM|DER|ENGINE>]
 [B<-passin arg>]
 [B<-challenge string>]
 [B<-pubkey>]
@@ -49,6 +50,11 @@ default.
 Create an SPKAC file using the private key in B<keyfile>. The
 B<-in>, B<-noout>, B<-spksect> and B<-verify> options are ignored if
 present.
+
+=item B<-keyform PEM|DER|ENGINE>
+
+Whether the key format is PEM, DER, or an engine-backed key.
+The default is PEM.
 
 =item B<-passin password>
 
