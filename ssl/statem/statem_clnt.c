@@ -1183,7 +1183,6 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
 
     /* TLS extensions */
     if (!tls_construct_extensions(s, pkt, SSL_EXT_CLIENT_HELLO, NULL, 0, &al)) {
-        ssl3_send_alert(s, SSL3_AL_FATAL, al);
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -1928,7 +1927,6 @@ static int tls_process_ske_srp(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
     }
 
     if (!srp_verify_server_param(s, al)) {
-        *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_SKE_SRP, SSL_R_BAD_SRP_PARAMETERS);
         return 0;
     }
@@ -1987,7 +1985,7 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
 
     /* test non-zero pubkey */
     if (BN_is_zero(bnpub_key)) {
-        *al = SSL_AD_DECODE_ERROR;
+        *al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PROCESS_SKE_DHE, SSL_R_BAD_DH_VALUE);
         goto err;
     }
@@ -2000,7 +1998,7 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
     p = g = NULL;
 
     if (DH_check_params(dh, &check_bits) == 0 || check_bits != 0) {
-        *al = SSL_AD_DECODE_ERROR;
+        *al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PROCESS_SKE_DHE, SSL_R_BAD_DH_VALUE);
         goto err;
     }
@@ -2075,7 +2073,7 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
      * invalid curve. ECParameters is 3 bytes.
      */
     if (!tls1_check_curve(s, ecparams, 3)) {
-        *al = SSL_AD_DECODE_ERROR;
+        *al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PROCESS_SKE_ECDHE, SSL_R_WRONG_CURVE);
         return 0;
     }
@@ -2124,7 +2122,7 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
     if (!EVP_PKEY_set1_tls_encodedpoint(s->s3->peer_tmp,
                                         PACKET_data(&encoded_pt),
                                         PACKET_remaining(&encoded_pt))) {
-        *al = SSL_AD_DECODE_ERROR;
+        *al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PROCESS_SKE_ECDHE, SSL_R_BAD_ECPOINT);
         return 0;
     }
@@ -2201,7 +2199,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         if (!PACKET_get_sub_packet(&save_param_start, &params,
                                    PACKET_remaining(&save_param_start) -
                                    PACKET_remaining(pkt))) {
-            al = SSL_AD_INTERNAL_ERROR;
+            al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -2750,7 +2748,7 @@ static int tls_construct_cke_psk_preamble(SSL *s, WPACKET *pkt, int *al)
     identitylen = strlen(identity);
     if (identitylen > PSK_MAX_IDENTITY_LEN) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_PSK_PREAMBLE, ERR_R_INTERNAL_ERROR);
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_INTERNAL_ERROR;
         goto err;
     }
 
@@ -3137,7 +3135,7 @@ int tls_construct_client_key_exchange(SSL *s, WPACKET *pkt)
         if (!tls_construct_cke_srp(s, pkt, &al))
             goto err;
     } else if (!(alg_k & SSL_kPSK)) {
-        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
         goto err;
     }

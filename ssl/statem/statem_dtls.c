@@ -770,7 +770,7 @@ static int dtls_get_reassembled_message(SSL *s, int *errtype, size_t *len)
      * Fragments must not span records.
      */
     if (frag_len > RECORD_LAYER_get_rrec_length(&s->rlayer)) {
-        al = SSL3_AD_ILLEGAL_PARAMETER;
+        al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_DTLS_GET_REASSEMBLED_MESSAGE, SSL_R_BAD_LENGTH);
         goto f_err;
     }
@@ -845,8 +845,8 @@ static int dtls_get_reassembled_message(SSL *s, int *errtype, size_t *len)
      * to fail
      */
     if (readbytes != frag_len) {
-        al = SSL3_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_DTLS_GET_REASSEMBLED_MESSAGE, SSL3_AD_ILLEGAL_PARAMETER);
+        al = SSL_AD_ILLEGAL_PARAMETER;
+        SSLerr(SSL_F_DTLS_GET_REASSEMBLED_MESSAGE, SSL_R_BAD_LENGTH);
         goto f_err;
     }
 

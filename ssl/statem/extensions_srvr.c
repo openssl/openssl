@@ -25,7 +25,7 @@ int tls_parse_ctos_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
         || !PACKET_get_bytes(pkt, &data, ilen)) {
         SSLerr(SSL_F_TLS_PARSE_CTOS_RENEGOTIATE,
                SSL_R_RENEGOTIATION_ENCODING_ERR);
-        *al = SSL_AD_ILLEGAL_PARAMETER;
+        *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
 
@@ -154,7 +154,7 @@ int tls_parse_ctos_srp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
      * upon resumption. Instead, we MUST ignore the login.
      */
     if (!PACKET_strndup(&srp_I, &s->srp_ctx.login)) {
-        *al = TLS1_AD_INTERNAL_ERROR;
+        *al = SSL_AD_INTERNAL_ERROR;
         return 0;
     }
 
@@ -178,7 +178,7 @@ int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
         if (!PACKET_memdup(&ec_point_format_list,
                            &s->session->ext.ecpointformats,
                            &s->session->ext.ecpointformats_len)) {
-            *al = TLS1_AD_INTERNAL_ERROR;
+            *al = SSL_AD_INTERNAL_ERROR;
             return 0;
         }
     }
@@ -194,7 +194,7 @@ int tls_parse_ctos_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
             !s->ext.session_ticket_cb(s, PACKET_data(pkt),
                                   PACKET_remaining(pkt),
                                   s->ext.session_ticket_cb_arg)) {
-        *al = TLS1_AD_INTERNAL_ERROR;
+        *al = SSL_AD_INTERNAL_ERROR;
         return 0;
     }
 
@@ -213,7 +213,7 @@ int tls_parse_ctos_sig_algs(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     if (!s->hit && !tls1_save_sigalgs(s, &supported_sig_algs)) {
-        *al = TLS1_AD_DECODE_ERROR;
+        *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
 
@@ -368,7 +368,7 @@ int tls_parse_ctos_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     s->s3->alpn_proposed_len = 0;
     if (!PACKET_memdup(&save_protocol_list,
                        &s->s3->alpn_proposed, &s->s3->alpn_proposed_len)) {
-        *al = TLS1_AD_INTERNAL_ERROR;
+        *al = SSL_AD_INTERNAL_ERROR;
         return 0;
     }
 
@@ -614,7 +614,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         if (!EVP_PKEY_set1_tls_encodedpoint(s->s3->peer_tmp,
                 PACKET_data(&encoded_pt),
                 PACKET_remaining(&encoded_pt))) {
-            *al = SSL_AD_DECODE_ERROR;
+            *al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, SSL_R_BAD_ECPOINT);
             return 0;
         }
@@ -646,7 +646,7 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
     if (!PACKET_memdup(&supported_groups_list,
                        &s->session->ext.supportedgroups,
                        &s->session->ext.supportedgroups_len)) {
-        *al = SSL_AD_DECODE_ERROR;
+        *al = SSL_AD_INTERNAL_ERROR;
         return 0;
     }
 
