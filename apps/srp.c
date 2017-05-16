@@ -205,15 +205,17 @@ static char *srp_verify_user(const char *user, const char *srp_verifier,
                              char *srp_usersalt, const char *g, const char *N,
                              const char *passin, BIO *bio, int verbose)
 {
-    char password[1024];
+    char password[1025];
     PW_CB_DATA cb_tmp;
     char *verifier = NULL;
     char *gNid = NULL;
+    int len;
 
     cb_tmp.prompt_info = user;
     cb_tmp.password = passin;
 
-    if (password_callback(password, 1024, 0, &cb_tmp) > 0) {
+    if ((len = password_callback(password, sizeof(password)-1, 0, &cb_tmp)) > 0) {
+        password[len] = 0;
         VERBOSE BIO_printf(bio,
                            "Validating\n   user=\"%s\"\n srp_verifier=\"%s\"\n srp_usersalt=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
                            user, srp_verifier, srp_usersalt, g, N);
@@ -237,14 +239,16 @@ static char *srp_create_user(char *user, char **srp_verifier,
                              char **srp_usersalt, char *g, char *N,
                              char *passout, BIO *bio, int verbose)
 {
-    char password[1024];
+    char password[1025];
     PW_CB_DATA cb_tmp;
     char *gNid = NULL;
     char *salt = NULL;
+    int len;
     cb_tmp.prompt_info = user;
     cb_tmp.password = passout;
 
-    if (password_callback(password, 1024, 1, &cb_tmp) > 0) {
+    if ((len = password_callback(password, sizeof(password)-1, 1, &cb_tmp)) > 0) {
+        password[len] = 0;
         VERBOSE BIO_printf(bio,
                            "Creating\n user=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
                            user, g, N);
