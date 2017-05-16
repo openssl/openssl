@@ -306,6 +306,9 @@ static int test_bignum(void)
         | !TEST(0, TEST_BN_gt_zero(a))
         | !TEST(1, TEST_BN_even(a))
         | !TEST(0, TEST_BN_odd(a))
+        | !TEST(1, TEST_BN_eq(b, c))
+        | !TEST(0, TEST_BN_eq(a, b))
+        | !TEST(1, TEST_BN_ne(NULL, c))
         | !TEST(1, TEST_int_eq(BN_dec2bn(&b, "1"), 1))
         | !TEST(1, TEST_BN_eq_word(b, 1))
         | !TEST(1, TEST_BN_eq_one(b))
@@ -379,15 +382,15 @@ static int test_long_bignum(void)
     int r;
     BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL;
     const char as[] = "1234567890123456789012345678901234567890123456789012"
-                     "1234567890123456789012345678901234567890123456789012"
-                     "1234567890123456789012345678901234567890123456789012"
-                     "1234567890123456789012345678901234567890123456789012"
-                     "1234567890123456789012345678901234567890123456789012"
-                     "1234567890123456789012345678901234567890123456789012"
-                     "FFFFFF";
+                      "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "FFFFFF";
     const char bs[] = "1234567890123456789012345678901234567890123456789012"
-                     "1234567890123456789012345678901234567890123456789013"
-                     "987657";
+                      "1234567890123456789012345678901234567890123456789013"
+                      "987657";
     const char cs[] = "-"        /* 64 characters plus sign */
                       "123456789012345678901234567890"
                       "123456789012345678901234567890"
@@ -396,16 +399,17 @@ static int test_long_bignum(void)
                       "23456789A123456789B123456789C"
                       "123456789D123456789E123456789F"
                       "ABCD";
-    BN_hex2bn(&a, as);
-    BN_hex2bn(&b, bs);
-    BN_hex2bn(&c, cs);
-    BN_hex2bn(&d, ds);
-    r = TEST(0, TEST_BN_eq(a, b))
-        | TEST(0, TEST_BN_eq(b, a))
-        | TEST(0, TEST_BN_eq(b, NULL))
-        | TEST(0, TEST_BN_eq(NULL, a))
-        | TEST(1, TEST_BN_ne(a, NULL))
-        | TEST(0, TEST_BN_eq(c, d));
+
+    r = TEST_true(BN_hex2bn(&a, as))
+        && TEST_true(BN_hex2bn(&b, bs))
+        && TEST_true(BN_hex2bn(&c, cs))
+        && TEST_true(BN_hex2bn(&d, ds))
+        && (TEST(0, TEST_BN_eq(a, b))
+            & TEST(0, TEST_BN_eq(b, a))
+            & TEST(0, TEST_BN_eq(b, NULL))
+            & TEST(0, TEST_BN_eq(NULL, a))
+            & TEST(1, TEST_BN_ne(a, NULL))
+            & TEST(0, TEST_BN_eq(c, d)));
     BN_free(a);
     BN_free(b);
     BN_free(c);

@@ -204,7 +204,8 @@ static const int bn_chars = (MAX_STRING_WIDTH - 9) / (BN_BYTES * 2 + 1)
 
 static void test_bignum_header_line(void)
 {
-    test_printf_stderr("%*s#  %*soffset\n", subtest_level(), "", bn_chars, "");
+    test_printf_stderr("%*s#  %*s\n", subtest_level(), "", bn_chars + 6,
+                       "bit position");
 }
 
 static void test_bignum_zero_print(const BIGNUM *bn, char sep)
@@ -326,11 +327,11 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
     }
 
     while (len > 0) {
-        cnt = len - bytes;
+        cnt = 8 * (len - bytes);
         n1 = convert_bn_memory(m1, bytes, b1, &lz1, bn1);
         n2 = convert_bn_memory(m2, bytes, b2, &lz2, bn2);
 
-        diff = n1 != n2;
+        diff = 0;/*n1 != n2;*/
         i = 0;
         p = bdiff;
         for (i=0; b1[i] != '\0'; i++)
@@ -344,11 +345,16 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
         if (!diff) {
             test_printf_stderr("%*s#  %s:% 5d\n", indent, "", b1, cnt);
         } else {
-            if (cnt == 0 || n1 > 0)
+            if (cnt == 0 && bn1 == NULL)
+                test_printf_stderr("%*s# -%s\n", indent, "", b1);
+            else if (cnt == 0 || n1 > 0)
                 test_printf_stderr("%*s# -%s:% 5d\n", indent, "", b1, cnt);
-            if (cnt == 0 || n2 > 0)
+            if (cnt == 0 && bn2 == NULL)
+                test_printf_stderr("%*s# -%s\n", indent, "", b2);
+            else if (cnt == 0 || n2 > 0)
                 test_printf_stderr("%*s# +%s:% 5d\n", indent, "", b2, cnt);
-            if (i > 0 && (cnt == 0 || (n1 > 0 && n2 > 0)))
+            if (i > 0 && (cnt == 0 || (n1 > 0 && n2 > 0))
+                    && bn1 != NULL && bn2 != NULL)
                 test_printf_stderr("%*s#  %s\n", indent, "", bdiff);
         }
         if (m1 != NULL)
@@ -377,20 +383,9 @@ static void test_fail_bignum_message(const char *prefix, const char *file,
 static void test_fail_bignum_mono_message(const char *prefix, const char *file,
                                           int line, const char *type,
                                           const char *left, const char *right,
-                                          const char *op, const BIGNUM *bn,
-                                          int all_neg)
+                                          const char *op, const BIGNUM *bn)
 {
-    const int indent = subtest_level();
-
     test_fail_message_prefix(prefix, file, line, type, left, right, op);
-    if (bn != NULL && BN_is_negative(bn)) {
-        if (all_neg)
-            test_printf_stderr("%*s# %s %s %s is negative\n", indent, "",
-                               left, op, right);
-        else
-            test_printf_stderr("%*s# %s is negative\n", indent, "",
-                               left);
-    }
     test_fail_bignum_common(prefix, file, line, type, left, right, op, bn, bn);
 }
 
@@ -739,7 +734,7 @@ int test_mem_ne(const char *file, int line, const char *st1, const char *st2,
         if (a != NULL &&(zero_cond))                                    \
             return 1;                                                   \
         test_fail_bignum_mono_message(NULL, file, line, "BIGNUM",       \
-                                      s, "0", #op, a, 0);               \
+                                      s, "0", #op, a);                  \
         return 0;                                                       \
     }
 
@@ -754,8 +749,7 @@ int test_BN_eq_one(const char *file, int line, const char *s, const BIGNUM *a)
 {
     if (a != NULL && BN_is_one(a))
         return 1;
-    test_fail_bignum_mono_message(NULL, file, line, "BIGNUM", s, "1", "==",
-                                  a, 0);
+    test_fail_bignum_mono_message(NULL, file, line, "BIGNUM", s, "1", "==", a);
     return 0;
 }
 
@@ -763,8 +757,7 @@ int test_BN_odd(const char *file, int line, const char *s, const BIGNUM *a)
 {
     if (a != NULL && BN_is_odd(a))
         return 1;
-    test_fail_bignum_mono_message(NULL, file, line, "BIGNUM", "ODD(", ")", s,
-                                  a, 1);
+    test_fail_bignum_mono_message(NULL, file, line, "BIGNUM", "ODD(", ")", s, a);
     return 0;
 }
 
@@ -773,7 +766,7 @@ int test_BN_even(const char *file, int line, const char *s, const BIGNUM *a)
     if (a != NULL && !BN_is_odd(a))
         return 1;
     test_fail_bignum_mono_message(NULL, file, line, "BIGNUM", "EVEN(", ")", s,
-                                  a, 1);
+                                  a);
     return 0;
 }
 
