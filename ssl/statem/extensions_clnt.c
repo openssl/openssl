@@ -930,7 +930,7 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
     if (!PACKET_get_1_len(pkt, &ilen)) {
         SSLerr(SSL_F_TLS_PARSE_STOC_RENEGOTIATE,
                SSL_R_RENEGOTIATION_ENCODING_ERR);
-        *al = SSL_AD_ILLEGAL_PARAMETER;
+        *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
 
@@ -938,7 +938,7 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
     if (PACKET_remaining(pkt) != ilen) {
         SSLerr(SSL_F_TLS_PARSE_STOC_RENEGOTIATE,
                SSL_R_RENEGOTIATION_ENCODING_ERR);
-        *al = SSL_AD_ILLEGAL_PARAMETER;
+        *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
 
@@ -946,7 +946,7 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
     if (ilen != expected_len) {
         SSLerr(SSL_F_TLS_PARSE_STOC_RENEGOTIATE,
                SSL_R_RENEGOTIATION_MISMATCH);
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;
     }
 
@@ -955,7 +955,7 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
                   s->s3->previous_client_finished_len) != 0) {
         SSLerr(SSL_F_TLS_PARSE_STOC_RENEGOTIATE,
                SSL_R_RENEGOTIATION_MISMATCH);
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;
     }
 
@@ -975,8 +975,13 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, unsigned int context,
                                X509 *x, size_t chainidx, int *al)
 {
-    if (s->ext.hostname == NULL || PACKET_remaining(pkt) > 0) {
-        *al = SSL_AD_UNRECOGNIZED_NAME;
+    if (s->ext.hostname == NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        return 0;
+    }
+
+    if (PACKET_remaining(pkt) > 0) {
+        *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
 
@@ -1042,8 +1047,12 @@ int tls_parse_stoc_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
-    if (!tls_use_ticket(s) || PACKET_remaining(pkt) > 0) {
+    if (!tls_use_ticket(s)) {
         *al = SSL_AD_UNSUPPORTED_EXTENSION;
+        return 0;
+    }
+    if (PACKET_remaining(pkt) > 0) {
+        *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
 
@@ -1060,9 +1069,12 @@ int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, unsigned int context,
      * MUST only be sent if we've requested a status
      * request message. In TLS <= 1.2 it must also be empty.
      */
-    if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp
-            || (!SSL_IS_TLS13(s) && PACKET_remaining(pkt) > 0)) {
+    if (s->ext.status_type != TLSEXT_STATUSTYPE_ocsp) {
         *al = SSL_AD_UNSUPPORTED_EXTENSION;
+        return 0;
+    }
+    if (!SSL_IS_TLS13(s) && PACKET_remaining(pkt) > 0) {
+        *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
 
@@ -1407,7 +1419,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
     if (!EVP_PKEY_set1_tls_encodedpoint(skey, PACKET_data(&encoded_pt),
                                         PACKET_remaining(&encoded_pt))) {
-        *al = SSL_AD_DECODE_ERROR;
+        *al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_BAD_ECPOINT);
         EVP_PKEY_free(skey);
         return 0;

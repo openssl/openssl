@@ -333,10 +333,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 
     peer = s->session->peer;
     pkey = X509_get0_pubkey(peer);
-    if (pkey == NULL) {
-        al = SSL_AD_INTERNAL_ERROR;
+    if (pkey == NULL)
         goto f_err;
-    }
 
     type = X509_certificate_type(peer, pkey);
 
@@ -670,14 +668,14 @@ MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
              && remain != DTLS1_CCS_HEADER_LENGTH + 1)
             || (s->version != DTLS1_BAD_VER
                 && remain != DTLS1_CCS_HEADER_LENGTH - 1)) {
-            al = SSL_AD_ILLEGAL_PARAMETER;
+            al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
                    SSL_R_BAD_CHANGE_CIPHER_SPEC);
             goto f_err;
         }
     } else {
         if (remain != 0) {
-            al = SSL_AD_ILLEGAL_PARAMETER;
+            al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
                    SSL_R_BAD_CHANGE_CIPHER_SPEC);
             goto f_err;
