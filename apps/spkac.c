@@ -24,7 +24,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_NOOUT, OPT_PUBKEY, OPT_VERIFY, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_KEY, OPT_CHALLENGE, OPT_PASSIN, OPT_SPKAC,
-    OPT_SPKSECT
+    OPT_SPKSECT, OPT_KEYFORM
 } OPTION_CHOICE;
 
 const OPTIONS spkac_options[] = {
@@ -32,6 +32,7 @@ const OPTIONS spkac_options[] = {
     {"in", OPT_IN, '<', "Input file"},
     {"out", OPT_OUT, '>', "Output file"},
     {"key", OPT_KEY, '<', "Create SPKAC using private key"},
+    {"keyform", OPT_KEYFORM, 'f', "Private key file format - default PEM (PEM, DER, or ENGINE)"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"challenge", OPT_CHALLENGE, 's', "Challenge string"},
     {"spkac", OPT_SPKAC, 's', "Alternative SPKAC name"},
@@ -58,6 +59,7 @@ int spkac_main(int argc, char **argv)
     char *spkstr = NULL, *prog;
     const char *spkac = "SPKAC", *spksect = "default";
     int i, ret = 1, verify = 0, noout = 0, pubkey = 0;
+    int keyformat = FORMAT_PEM;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, spkac_options);
@@ -93,6 +95,10 @@ int spkac_main(int argc, char **argv)
         case OPT_KEY:
             keyfile = opt_arg();
             break;
+        case OPT_KEYFORM:
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyformat))
+                goto opthelp;
+	    break;
         case OPT_CHALLENGE:
             challenge = opt_arg();
             break;
@@ -118,7 +124,7 @@ int spkac_main(int argc, char **argv)
 
     if (keyfile) {
         pkey = load_key(strcmp(keyfile, "-") ? keyfile : NULL,
-                        FORMAT_PEM, 1, passin, e, "private key");
+                        keyformat, 1, passin, e, "private key");
         if (!pkey) {
             goto end;
         }
