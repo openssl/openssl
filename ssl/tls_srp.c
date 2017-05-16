@@ -29,22 +29,8 @@ int SSL_CTX_SRP_CTX_free(struct ssl_ctx_st *ctx)
     BN_free(ctx->srp_ctx.a);
     BN_free(ctx->srp_ctx.b);
     BN_free(ctx->srp_ctx.v);
-    ctx->srp_ctx.TLS_ext_srp_username_callback = NULL;
-    ctx->srp_ctx.SRP_cb_arg = NULL;
-    ctx->srp_ctx.SRP_verify_param_callback = NULL;
-    ctx->srp_ctx.SRP_give_srp_client_pwd_callback = NULL;
-    ctx->srp_ctx.N = NULL;
-    ctx->srp_ctx.g = NULL;
-    ctx->srp_ctx.s = NULL;
-    ctx->srp_ctx.B = NULL;
-    ctx->srp_ctx.A = NULL;
-    ctx->srp_ctx.a = NULL;
-    ctx->srp_ctx.b = NULL;
-    ctx->srp_ctx.v = NULL;
-    ctx->srp_ctx.login = NULL;
-    ctx->srp_ctx.info = NULL;
+    memset(&ctx->srp_ctx, 0, sizeof(ctx->srp_ctx));
     ctx->srp_ctx.strength = SRP_MINIMAL_N;
-    ctx->srp_ctx.srp_Mask = 0;
     return (1);
 }
 
@@ -62,22 +48,8 @@ int SSL_SRP_CTX_free(struct ssl_st *s)
     BN_free(s->srp_ctx.a);
     BN_free(s->srp_ctx.b);
     BN_free(s->srp_ctx.v);
-    s->srp_ctx.TLS_ext_srp_username_callback = NULL;
-    s->srp_ctx.SRP_cb_arg = NULL;
-    s->srp_ctx.SRP_verify_param_callback = NULL;
-    s->srp_ctx.SRP_give_srp_client_pwd_callback = NULL;
-    s->srp_ctx.N = NULL;
-    s->srp_ctx.g = NULL;
-    s->srp_ctx.s = NULL;
-    s->srp_ctx.B = NULL;
-    s->srp_ctx.A = NULL;
-    s->srp_ctx.a = NULL;
-    s->srp_ctx.b = NULL;
-    s->srp_ctx.v = NULL;
-    s->srp_ctx.login = NULL;
-    s->srp_ctx.info = NULL;
+    memset(&s->srp_ctx, 0, sizeof(s->srp_ctx));
     s->srp_ctx.strength = SRP_MINIMAL_N;
-    s->srp_ctx.srp_Mask = 0;
     return (1);
 }
 
@@ -87,6 +59,9 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
 
     if ((s == NULL) || ((ctx = s->ctx) == NULL))
         return 0;
+
+    memset(&s->srp_ctx, 0, sizeof(s->srp_ctx));
+
     s->srp_ctx.SRP_cb_arg = ctx->srp_ctx.SRP_cb_arg;
     /* set client Hello login callback */
     s->srp_ctx.TLS_ext_srp_username_callback =
@@ -98,16 +73,6 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
     s->srp_ctx.SRP_give_srp_client_pwd_callback =
         ctx->srp_ctx.SRP_give_srp_client_pwd_callback;
 
-    s->srp_ctx.N = NULL;
-    s->srp_ctx.g = NULL;
-    s->srp_ctx.s = NULL;
-    s->srp_ctx.B = NULL;
-    s->srp_ctx.A = NULL;
-    s->srp_ctx.a = NULL;
-    s->srp_ctx.b = NULL;
-    s->srp_ctx.v = NULL;
-    s->srp_ctx.login = NULL;
-    s->srp_ctx.info = NULL;
     s->srp_ctx.strength = ctx->srp_ctx.strength;
 
     if (((ctx->srp_ctx.N != NULL) &&
@@ -153,6 +118,7 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
     BN_free(s->srp_ctx.a);
     BN_free(s->srp_ctx.b);
     BN_free(s->srp_ctx.v);
+    memset(&s->srp_ctx, 0, sizeof(s->srp_ctx));
     return (0);
 }
 
@@ -161,25 +127,7 @@ int SSL_CTX_SRP_CTX_init(struct ssl_ctx_st *ctx)
     if (ctx == NULL)
         return 0;
 
-    ctx->srp_ctx.SRP_cb_arg = NULL;
-    /* set client Hello login callback */
-    ctx->srp_ctx.TLS_ext_srp_username_callback = NULL;
-    /* set SRP N/g param callback for verification */
-    ctx->srp_ctx.SRP_verify_param_callback = NULL;
-    /* set SRP client passwd callback */
-    ctx->srp_ctx.SRP_give_srp_client_pwd_callback = NULL;
-
-    ctx->srp_ctx.N = NULL;
-    ctx->srp_ctx.g = NULL;
-    ctx->srp_ctx.s = NULL;
-    ctx->srp_ctx.B = NULL;
-    ctx->srp_ctx.A = NULL;
-    ctx->srp_ctx.a = NULL;
-    ctx->srp_ctx.b = NULL;
-    ctx->srp_ctx.v = NULL;
-    ctx->srp_ctx.login = NULL;
-    ctx->srp_ctx.srp_Mask = 0;
-    ctx->srp_ctx.info = NULL;
+    memset(&ctx->srp_ctx, 0, sizeof(ctx->srp_ctx));
     ctx->srp_ctx.strength = SRP_MINIMAL_N;
 
     return (1);
