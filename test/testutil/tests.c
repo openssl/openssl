@@ -343,7 +343,8 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
             }
         *p++ = '\0';
         if (!diff) {
-            test_printf_stderr("%*s#  %s:% 5d\n", indent, "", b1, cnt);
+            test_printf_stderr("%*s#  %s:% 5d\n", indent, "",
+                               n2 > n1 ? b2 : b1, cnt);
         } else {
             if (cnt == 0 && bn1 == NULL)
                 test_printf_stderr("%*s# -%s\n", indent, "", b1);
