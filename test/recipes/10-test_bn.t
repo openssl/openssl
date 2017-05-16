@@ -12,7 +12,7 @@ use warnings;
 
 use Math::BigInt;
 
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT data_file/;
 
 setup("test_bn");
 
@@ -22,7 +22,7 @@ my @files = (
 plan tests => 1 + scalar(@files);
 
 foreach my $f ( @files ) {
-    ok(run(test(["bntest", srctop_file("test", $f)])),
+    ok(run(test(["bntest", data_file($f)])),
         "running bntest $f");
 }
 ok(run(test(["bntest"])), "running bntest");
