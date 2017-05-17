@@ -156,7 +156,7 @@ MSG_PROCESS_RETURN tls_process_end_of_early_data(SSL *s, PACKET *pkt);
 
 /* Extension processing */
 
-typedef enum {
+typedef enum ext_return_en {
     EXT_RETURN_FAIL,
     EXT_RETURN_SENT,
     EXT_RETURN_NOT_SENT
