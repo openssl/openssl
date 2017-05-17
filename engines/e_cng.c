@@ -36,6 +36,11 @@
 # include "e_cng_err.h"
 # include "e_cng_err.c"
 
+/* Mingw seems to lack this one */
+# ifndef NTE_NO_MORE_ITEMS
+#  define NTE_NO_MORE_ITEMS 0x8009002A
+# endif
+
 static const char *cng_id = "cng";
 static const char *cng_name = "NCrypt ENGINE";
 static const char cng_scheme[] = "cng";
@@ -210,6 +215,111 @@ static const struct store_lookup_fns_st cng_store_get_keys = {
     cng_store_get_keys_eof,
     cng_store_get_keys_error,
     cng_store_get_keys_clean
+};
+
+/* Key enumerator */
+struct store_key_lookup_st {
+    struct store_lookup_info_st info;
+    int errcnt;
+    int eof_reached;
+    NCRYPT_PROV_HANDLE phandle;
+    void *enum_state;
+};
+static void *cng_store_enum_keys_init(STORE_LOADER_CTX *ctx)
+{
+    struct store_key_lookup_st *ret = NULL;
+    void *provider = NULL;
+
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL
+        || (provider = to_wide(ctx->info.provider)) == NULL) {
+        goto err;
+    }
+    if (NCryptOpenStorageProvider(&ret->phandle, provider, 0)
+        != ERROR_SUCCESS) {
+        int err = GetLastError();
+
+        CNGerr(CNG_F_CNG_STORE_ENUM_KEYS_INIT,
+               CNG_R_NCRYPTOPENSTORAGEPROVIDER_ERROR);
+        cng_adderror(err);
+        goto err;
+    }
+    OPENSSL_free(provider);
+
+    ret->info = ctx->info;
+
+    return ret;
+ err:
+    OPENSSL_free(ret);
+    OPENSSL_free(provider);
+    return NULL;
+}
+static int cng_store_enum_keys_eof(void *lookup_ctx)
+{
+    struct store_key_lookup_st *lctx = lookup_ctx;
+
+    return lctx->eof_reached;
+}
+static int cng_store_enum_keys_error(void *lookup_ctx)
+{
+    struct store_key_lookup_st *lctx = lookup_ctx;
+
+    return lctx->errcnt > 0;
+}
+static STORE_INFO *cng_store_enum_keys_load(void *lookup_ctx)
+{
+    struct store_key_lookup_st *lctx = lookup_ctx;
+    NCryptKeyName *keyname = NULL;
+    char *name = NULL;
+    STORE_INFO *ret = NULL;
+
+    if (cng_store_enum_keys_error(lctx) || cng_store_enum_keys_eof(lctx))
+        return NULL;
+
+    switch (NCryptEnumKeys(lctx->phandle, NULL, &keyname, &lctx->enum_state,
+                           0)) {
+    case ERROR_SUCCESS:
+        break;
+    case NTE_NO_MORE_ITEMS:
+        NCryptFreeBuffer(lctx->enum_state);
+        lctx->eof_reached = 1;
+        return NULL;
+    default:
+        {
+            int err = GetLastError();
+
+            CNGerr(CNG_F_CNG_STORE_ENUM_KEYS_LOAD, CNG_R_NCRYPTENUMKEYS_ERROR);
+            cng_adderror(err);
+        }
+        lctx->errcnt++;
+        goto err;
+    }
+
+    if ((name = url_encode(to_asc(keyname->pszName), 1)) == NULL
+        || (ret = STORE_INFO_new_NAME(name)) == NULL) {
+        CNGerr(CNG_F_CNG_STORE_ENUM_KEYS_LOAD, ERR_R_MALLOC_FAILURE);
+        lctx->errcnt++;
+        goto err;
+    }
+
+    NCryptFreeBuffer(keyname);
+    return ret;
+ err:
+    return NULL;
+}
+static int cng_store_enum_keys_clean(void *lookup_ctx)
+{
+    struct store_key_lookup_st *lctx = lookup_ctx;
+
+    NCryptFreeObject(lctx->phandle);
+    OPENSSL_free(lookup_ctx);
+    return 1;
+}
+static const struct store_lookup_fns_st cng_store_enum_keys = {
+    cng_store_enum_keys_init,
+    cng_store_enum_keys_load,
+    cng_store_enum_keys_eof,
+    cng_store_enum_keys_error,
+    cng_store_enum_keys_clean
 };
 
 /* Provider enumerator */
@@ -561,9 +671,7 @@ static STORE_LOADER_CTX *cng_store_open(const STORE_LOADER *loader,
         if (ctx->info.keyname != NULL) {
             sk_STORE_LOOKUP_FNS_push(ctx->meths, &cng_store_get_keys);
         } else {
-# if 0                           /* To be supported */
             sk_STORE_LOOKUP_FNS_push(ctx->meths, &cng_store_enum_keys);
-# endif
         }
     } else {
         if (ctx->info.keyname != NULL) {

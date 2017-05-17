@@ -31,6 +31,8 @@ static void ERR_CNG_error(int function, int reason, char *file, int line);
 # define CNG_F_ACCUMULATE_SYSTEM_STORES                   100
 # define CNG_F_BIND_CNG                                   101
 # define CNG_F_CNG_GET_PKEY                               104
+# define CNG_F_CNG_STORE_ENUM_KEYS_INIT                   115
+# define CNG_F_CNG_STORE_ENUM_KEYS_LOAD                   116
 # define CNG_F_CNG_STORE_ENUM_PROVIDERS_INIT              110
 # define CNG_F_CNG_STORE_ENUM_PROVIDERS_LOAD              111
 # define CNG_F_CNG_STORE_ENUM_STORES_INIT                 112
@@ -54,6 +56,7 @@ static void ERR_CNG_error(int function, int reason, char *file, int line);
 # define CNG_R_FAILED_OPENING_STORE                       104
 # define CNG_R_INIT_FAILED                                105
 # define CNG_R_MULTIBYTETOWIDECHAR_ERROR                  120
+# define CNG_R_NCRYPTENUMKEYS_ERROR                       123
 # define CNG_R_NCRYPTENUMSTORAGEPROVIDERS_ERROR           122
 # define CNG_R_NCRYPTEXPORTKEY_ERROR                      114
 # define CNG_R_NCRYPTOPENKEY_ERROR                        115
