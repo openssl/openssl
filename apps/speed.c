@@ -725,6 +725,7 @@ int MAIN(int argc, char **argv)
                 BIO_printf(bio_err, "no EVP given\n");
                 goto end;
             }
+            evp_md = NULL;
             evp_cipher = EVP_get_cipherbyname(*argv);
             if (!evp_cipher) {
                 evp_md = EVP_get_digestbyname(*argv);
