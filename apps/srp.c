@@ -553,6 +553,8 @@ int srp_main(int argc, char **argv)
             user = *(argv++);
         else {
             user = NULL;
+            if (mode == OPT_LIST)
+                break;
         }
     }
 
