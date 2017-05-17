@@ -18,6 +18,7 @@
 /* The size of memory buffers to display on failure */
 #define MEM_BUFFER_SIZE     (2000)
 #define MAX_STRING_WIDTH    (80)
+#define BN_OUTPUT_SIZE      (8)
 
 /* Output a failed test first line */
 static void test_fail_message_prefix(const char *prefix, const char *file,
@@ -197,10 +198,10 @@ static void hex_convert_memory(const unsigned char *m, size_t n, char *b,
     *b = '\0';
 }
 
-static const int bn_bytes = (MAX_STRING_WIDTH - 9) / (BN_BYTES * 2 + 1)
-                            * BN_BYTES;
-static const int bn_chars = (MAX_STRING_WIDTH - 9) / (BN_BYTES * 2 + 1)
-                            * (BN_BYTES * 2 + 1) - 1;
+static const int bn_bytes = (MAX_STRING_WIDTH - 9) / (BN_OUTPUT_SIZE * 2 + 1)
+                            * BN_OUTPUT_SIZE;
+static const int bn_chars = (MAX_STRING_WIDTH - 9) / (BN_OUTPUT_SIZE * 2 + 1)
+                            * (BN_OUTPUT_SIZE * 2 + 1) - 1;
 
 static void test_bignum_header_line(void)
 {
@@ -226,7 +227,7 @@ static int convert_bn_memory(const unsigned char *in, size_t bytes,
     char *p = out, *q = NULL;
 
     if (bn != NULL && !BN_is_zero(bn)) {
-        hex_convert_memory(in, bytes, out, BN_BYTES);
+        hex_convert_memory(in, bytes, out, BN_OUTPUT_SIZE);
         if (*lz) {
             for (; *p == '0' || *p == ' '; p++)
                 if (*p == '0') {
@@ -261,7 +262,7 @@ static int convert_bn_memory(const unsigned char *in, size_t bytes,
 
     for (i = 0; i < n; i++) {
         *p++ = ' ';
-        if (i % (2 *BN_BYTES) == 2 * BN_BYTES - 1 && i != n - 1)
+        if (i % (2 * BN_OUTPUT_SIZE) == 2 * BN_OUTPUT_SIZE - 1 && i != n - 1)
             *p++ = ' ';
     }
     *p = '\0';
@@ -351,7 +352,7 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
             else if (cnt == 0 || n1 > 0)
                 test_printf_stderr("%*s# -%s:% 5d\n", indent, "", b1, cnt);
             if (cnt == 0 && bn2 == NULL)
-                test_printf_stderr("%*s# -%s\n", indent, "", b2);
+                test_printf_stderr("%*s# +%s\n", indent, "", b2);
             else if (cnt == 0 || n2 > 0)
                 test_printf_stderr("%*s# +%s:% 5d\n", indent, "", b2, cnt);
             if (i > 0 && (cnt == 0 || (n1 > 0 && n2 > 0))
