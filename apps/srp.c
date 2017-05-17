@@ -37,13 +37,14 @@ static int get_index(CA_DB *db, char *id, char type)
     int i;
     if (id == NULL)
         return -1;
-    if (type == DB_SRP_INDEX)
+    if (type == DB_SRP_INDEX) {
         for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
             pp = sk_OPENSSL_PSTRING_value(db->db->data, i);
             if (pp[DB_srptype][0] == DB_SRP_INDEX
                 && strcmp(id, pp[DB_srpid]) == 0)
                 return i;
-    } else
+        }
+    } else {
         for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
             pp = sk_OPENSSL_PSTRING_value(db->db->data, i);
 
@@ -51,6 +52,7 @@ static int get_index(CA_DB *db, char *id, char type)
                 && strcmp(id, pp[DB_srpid]) == 0)
                 return i;
         }
+    }
 
     return -1;
 }
@@ -549,10 +551,11 @@ int srp_main(int argc, char **argv)
                 doupdatedb = 1;
             }
         }
-        if (--argc > 0)
+        if (--argc > 0) {
             user = *(argv++);
-        else {
-            user = NULL;
+        } else {
+            /* no more processing in any mode if no users left */
+            break;
         }
     }
 
