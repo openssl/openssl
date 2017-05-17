@@ -510,7 +510,7 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
                 && type != TLSEXT_TYPE_renegotiate
                 && type != TLSEXT_TYPE_signed_certificate_timestamp
                 && (s->ext.extflags[idx] & SSL_EXT_FLAG_SENT) == 0) {
-            SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, SSL_R_BAD_EXTENSION);
+            SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, SSL_R_UNSOLICITED_EXTENSION);
             *al = SSL_AD_UNSUPPORTED_EXTENSION;
             goto err;
         }

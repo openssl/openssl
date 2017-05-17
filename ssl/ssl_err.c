@@ -843,6 +843,7 @@ static ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_REASON(SSL_R_UNKNOWN_STATE), "unknown state"},
     {ERR_REASON(SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED),
      "unsafe legacy renegotiation disabled"},
+    {ERR_REASON(SSL_R_UNSOLICITED_EXTENSION), "unsolicited extension"},
     {ERR_REASON(SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM),
      "unsupported compression algorithm"},
     {ERR_REASON(SSL_R_UNSUPPORTED_ELLIPTIC_CURVE),
