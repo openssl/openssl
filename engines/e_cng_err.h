@@ -31,6 +31,8 @@ static void ERR_CNG_error(int function, int reason, char *file, int line);
 # define CNG_F_ACCUMULATE_SYSTEM_STORES                   100
 # define CNG_F_BIND_CNG                                   101
 # define CNG_F_CNG_GET_PKEY                               104
+# define CNG_F_CNG_STORE_ENUM_CERTS_INIT                  117
+# define CNG_F_CNG_STORE_ENUM_CERTS_LOAD                  118
 # define CNG_F_CNG_STORE_ENUM_KEYS_INIT                   115
 # define CNG_F_CNG_STORE_ENUM_KEYS_LOAD                   116
 # define CNG_F_CNG_STORE_ENUM_PROVIDERS_INIT              110
@@ -49,6 +51,8 @@ static void ERR_CNG_error(int function, int reason, char *file, int line);
 /* Reason codes. */
 # define CNG_R_BAD_URL_ENCODING                           112
 # define CNG_R_BIND_FAILED                                119
+# define CNG_R_CERTGETCERTIFICATECONTEXTPROPERTY_ERROR    124
+# define CNG_R_CERTOPENSTORE_ERROR                        125
 # define CNG_R_DUPLICATE_KEY                              100
 # define CNG_R_EMPTY_KEY                                  101
 # define CNG_R_EMPTY_URI                                  102

@@ -22,6 +22,8 @@ static ERR_STRING_DATA CNG_str_functs[] = {
     {ERR_FUNC(CNG_F_ACCUMULATE_SYSTEM_STORES), "accumulate_system_stores"},
     {ERR_FUNC(CNG_F_BIND_CNG), "bind_cng"},
     {ERR_FUNC(CNG_F_CNG_GET_PKEY), "cng_get_pkey"},
+    {ERR_FUNC(CNG_F_CNG_STORE_ENUM_CERTS_INIT), "cng_store_enum_certs_init"},
+    {ERR_FUNC(CNG_F_CNG_STORE_ENUM_CERTS_LOAD), "cng_store_enum_certs_load"},
     {ERR_FUNC(CNG_F_CNG_STORE_ENUM_KEYS_INIT), "cng_store_enum_keys_init"},
     {ERR_FUNC(CNG_F_CNG_STORE_ENUM_KEYS_LOAD), "cng_store_enum_keys_load"},
     {ERR_FUNC(CNG_F_CNG_STORE_ENUM_PROVIDERS_INIT),
@@ -46,6 +48,9 @@ static ERR_STRING_DATA CNG_str_functs[] = {
 static ERR_STRING_DATA CNG_str_reasons[] = {
     {ERR_REASON(CNG_R_BAD_URL_ENCODING), "bad url encoding"},
     {ERR_REASON(CNG_R_BIND_FAILED), "bind failed"},
+    {ERR_REASON(CNG_R_CERTGETCERTIFICATECONTEXTPROPERTY_ERROR),
+     "certgetcertificatecontextproperty error"},
+    {ERR_REASON(CNG_R_CERTOPENSTORE_ERROR), "certopenstore error"},
     {ERR_REASON(CNG_R_DUPLICATE_KEY), "duplicate key"},
     {ERR_REASON(CNG_R_EMPTY_KEY), "empty key"},
     {ERR_REASON(CNG_R_EMPTY_URI), "empty uri"},
