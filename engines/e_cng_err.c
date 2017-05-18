@@ -34,6 +34,8 @@ static ERR_STRING_DATA CNG_str_functs[] = {
      "cng_store_enum_stores_init"},
     {ERR_FUNC(CNG_F_CNG_STORE_ENUM_STORES_LOAD),
      "cng_store_enum_stores_load"},
+    {ERR_FUNC(CNG_F_CNG_STORE_GET_CERTS_INIT), "cng_store_get_certs_init"},
+    {ERR_FUNC(CNG_F_CNG_STORE_GET_CERTS_LOAD), "cng_store_get_certs_load"},
     {ERR_FUNC(CNG_F_CNG_STORE_GET_KEYS_INIT), "cng_store_get_keys_init"},
     {ERR_FUNC(CNG_F_CNG_STORE_GET_KEYS_LOAD), "cng_store_get_keys_load"},
     {ERR_FUNC(CNG_F_CNG_STORE_LOAD), "cng_store_load"},
@@ -46,8 +48,11 @@ static ERR_STRING_DATA CNG_str_functs[] = {
 };
 
 static ERR_STRING_DATA CNG_str_reasons[] = {
+    {ERR_REASON(CNG_R_BAD_CERT_ID), "bad cert id"},
     {ERR_REASON(CNG_R_BAD_URL_ENCODING), "bad url encoding"},
     {ERR_REASON(CNG_R_BIND_FAILED), "bind failed"},
+    {ERR_REASON(CNG_R_CAN_NOT_PARSE_CERTIFICATE),
+     "can not parse certificate"},
     {ERR_REASON(CNG_R_CERTGETCERTIFICATECONTEXTPROPERTY_ERROR),
      "certgetcertificatecontextproperty error"},
     {ERR_REASON(CNG_R_CERTOPENSTORE_ERROR), "certopenstore error"},

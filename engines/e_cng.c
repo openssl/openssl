@@ -425,6 +425,120 @@ static const struct store_lookup_fns_st cng_store_enum_providers = {
     cng_store_enum_providers_clean
 };
 
+/* Cert loader */
+struct store_cert_data_st {
+    struct store_lookup_info_st info;
+    int errcnt;
+    int eof_reached;
+    HCERTSTORE shandle;
+    PCCERT_CONTEXT cert_ctx;
+    CERT_ID criterium;
+};
+static void *cng_store_get_certs_init(STORE_LOADER_CTX *ctx)
+{
+    struct store_cert_data_st *ret = NULL;
+
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+        CNGerr(CNG_F_CNG_STORE_GET_CERTS_INIT, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if ((ret->shandle = CertOpenStore(CERT_STORE_PROV_SYSTEM_A, 0, 0,
+                                      CERT_SYSTEM_STORE_CURRENT_USER,
+                                      ctx->info.store)) == NULL
+        && (ret->shandle = CertOpenStore(CERT_STORE_PROV_SYSTEM_A, 0, 0,
+                                         CERT_SYSTEM_STORE_LOCAL_MACHINE,
+                                         ctx->info.store)) == NULL) {
+        int err = GetLastError();
+
+        CNGerr(CNG_F_CNG_STORE_GET_CERTS_INIT, CNG_R_CERTOPENSTORE_ERROR);
+        cng_adderror(err);
+        goto err;
+    }
+
+    ret->info = ctx->info;
+    ret->criterium.HashId.pbData =
+        OPENSSL_hexstr2buf(ctx->info.certid,
+                           (long *)&ret->criterium.HashId.cbData);
+    if (ret->criterium.HashId.pbData == NULL
+        || ret->criterium.HashId.cbData != 20) {
+        CNGerr(CNG_F_CNG_STORE_GET_CERTS_INIT, CNG_R_BAD_CERT_ID);
+        goto err;
+    }
+    ret->criterium.dwIdChoice = CERT_ID_SHA1_HASH;
+
+    return ret;
+ err:
+    if (ret != NULL)
+        OPENSSL_free(ret->criterium.HashId.pbData);
+    OPENSSL_free(ret);
+    return NULL;
+}
+static int cng_store_get_certs_eof(void *lookup_ctx)
+{
+    struct store_cert_data_st *lctx = lookup_ctx;
+
+    return lctx->eof_reached;
+}
+static int cng_store_get_certs_error(void *lookup_ctx)
+{
+    struct store_cert_data_st *lctx = lookup_ctx;
+
+    return lctx->errcnt > 0;
+}
+static STORE_INFO *cng_store_get_certs_load(void *lookup_ctx)
+{
+    struct store_cert_data_st *lctx = lookup_ctx;
+    X509 *x = NULL;
+    const unsigned char *p;
+    STORE_INFO *ret = NULL;
+
+    if (cng_store_get_certs_error(lctx) || cng_store_get_certs_eof(lctx))
+        return NULL;
+
+    lctx->cert_ctx = CertFindCertificateInStore(lctx->shandle,
+                                                X509_ASN_ENCODING, 0,
+                                                CERT_FIND_CERT_ID,
+                                                &lctx->criterium,
+                                                lctx->cert_ctx);
+
+    if (lctx->cert_ctx == NULL) {
+        lctx->eof_reached = 1;
+        return NULL;
+    }
+
+    p = lctx->cert_ctx->pbCertEncoded;
+    if ((x = d2i_X509(NULL, &p, lctx->cert_ctx->cbCertEncoded)) == NULL) {
+        CNGerr(CNG_F_CNG_STORE_GET_CERTS_LOAD, CNG_R_CAN_NOT_PARSE_CERTIFICATE);
+        goto err;
+    }
+
+    if ((ret = STORE_INFO_new_CERT(x)) == NULL) {
+        CNGerr(CNG_F_CNG_STORE_GET_CERTS_LOAD, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    return ret;
+ err:
+    lctx->errcnt++;
+    X509_free(x);
+    return NULL;
+}
+static int cng_store_get_certs_clean(void *lookup_ctx)
+{
+    struct store_cert_data_st *lctx = lookup_ctx;
+
+    OPENSSL_free(lctx->criterium.HashId.pbData);
+    OPENSSL_free(lookup_ctx);
+    return 1;
+}
+static const struct store_lookup_fns_st cng_store_get_certs = {
+    cng_store_get_certs_init,
+    cng_store_get_certs_load,
+    cng_store_get_certs_eof,
+    cng_store_get_certs_error,
+    cng_store_get_certs_clean
+};
+
 /* Cert enumerator */
 struct store_cert_lookup_st {
     struct store_lookup_info_st info;
@@ -818,9 +932,7 @@ static STORE_LOADER_CTX *cng_store_open(const STORE_LOADER *loader,
     }
     if (ctx->info.store != NULL) {
         if (ctx->info.certid != NULL) {
-# if 0                           /* To be supported */
             sk_STORE_LOOKUP_FNS_push(ctx->meths, &cng_store_get_certs);
-# endif
         } else {
             sk_STORE_LOOKUP_FNS_push(ctx->meths, &cng_store_enum_certs);
         }
