@@ -554,8 +554,8 @@ int srp_main(int argc, char **argv)
         if (--argc > 0) {
             user = *(argv++);
         } else {
-            if (mode == OPT_LIST)
-                break;
+            /* no more processing in any mode if no users left */
+            break;
         }
     }
 
