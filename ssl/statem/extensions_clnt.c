@@ -544,7 +544,7 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
         assert(s->hello_retry_request);
         if (!s->hello_retry_request) {
             SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
+            return 0;
         }
         /*
          * Could happen if we got an HRR that wasn't requesting a new key_share
@@ -554,7 +554,7 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
         key_share_key = ssl_generate_pkey_curve(curve_id);
         if (key_share_key == NULL) {
             SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_EVP_LIB);
-            return EXT_RETURN_FAIL;
+            return 0;
         }
     }
 
@@ -582,12 +582,12 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
     s->s3->group_id = curve_id;
     OPENSSL_free(encoded_point);
 
-    return EXT_RETURN_SENT;
+    return 1;
  err:
     if (s->s3->tmp.pkey == NULL)
         EVP_PKEY_free(key_share_key);
     OPENSSL_free(encoded_point);
-    return EXT_RETURN_FAIL;
+    return 0;
 }
 #endif
 
