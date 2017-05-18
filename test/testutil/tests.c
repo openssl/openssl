@@ -285,7 +285,7 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
     char b1[MAX_STRING_WIDTH + 1], b2[MAX_STRING_WIDTH + 1];
     char *p, bdiff[MAX_STRING_WIDTH + 1];
     size_t l1, l2, n1, n2, i, len;
-    unsigned int cnt, diff;
+    unsigned int cnt, diff, real_diff;
     unsigned char *m1 = NULL, *m2 = NULL;
     int lz1 = 1, lz2 = 1;
     unsigned char buffer[MEM_BUFFER_SIZE * 2], *bufp = buffer;
@@ -332,15 +332,16 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
         n1 = convert_bn_memory(m1, bytes, b1, &lz1, bn1);
         n2 = convert_bn_memory(m2, bytes, b2, &lz2, bn2);
 
-        diff = 0;/*n1 != n2;*/
+        diff = real_diff = 0;
         i = 0;
         p = bdiff;
         for (i=0; b1[i] != '\0'; i++)
-            if (b1[i] == b2[i] || b1[i] == ' ' || b2[i] == ' ') { 
+            if (b1[i] == b2[i] || b1[i] == ' ' || b2[i] == ' ') {
                 *p++ = ' ';
+                diff |= b1[i] != b2[i];
             } else {
                 *p++ = '^';
-                diff = 1;
+                real_diff = diff = 1;
             }
         *p++ = '\0';
         if (!diff) {
@@ -355,7 +356,7 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
                 test_printf_stderr("%*s# +%s\n", indent, "", b2);
             else if (cnt == 0 || n2 > 0)
                 test_printf_stderr("%*s# +%s:% 5d\n", indent, "", b2, cnt);
-            if (i > 0 && (cnt == 0 || (n1 > 0 && n2 > 0))
+            if (real_diff && (cnt == 0 || (n1 > 0 && n2 > 0))
                     && bn1 != NULL && bn2 != NULL)
                 test_printf_stderr("%*s#  %s\n", indent, "", bdiff);
         }
