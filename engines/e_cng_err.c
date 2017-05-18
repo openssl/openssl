@@ -22,6 +22,7 @@ static ERR_STRING_DATA CNG_str_functs[] = {
     {ERR_FUNC(CNG_F_ACCUMULATE_SYSTEM_STORES), "accumulate_system_stores"},
     {ERR_FUNC(CNG_F_BIND_CNG), "bind_cng"},
     {ERR_FUNC(CNG_F_CNG_GET_PKEY), "cng_get_pkey"},
+    {ERR_FUNC(CNG_F_CNG_RSA_METHOD), "cng_rsa_method"},
     {ERR_FUNC(CNG_F_CNG_STORE_ENUM_CERTS_INIT), "cng_store_enum_certs_init"},
     {ERR_FUNC(CNG_F_CNG_STORE_ENUM_CERTS_LOAD), "cng_store_enum_certs_load"},
     {ERR_FUNC(CNG_F_CNG_STORE_ENUM_KEYS_INIT), "cng_store_enum_keys_init"},

@@ -1045,18 +1045,152 @@ static void cng_store_free(STORE_LOADER *loader)
 }
 
 /*-
+ * RSA key method
+ * --------------
+ */
+
+static CRYPTO_REF_COUNT rsa_cnt = 0;
+static CRYPTO_RWLOCK *rsa_cnt_lock = NULL;
+static CRYPTO_ONCE rsa_cnt_init = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(do_rsa_cnt_init)
+{
+    OPENSSL_init_crypto(0, NULL);
+    rsa_cnt_lock = CRYPTO_THREAD_lock_new();
+    return rsa_cnt_lock != NULL;
+}
+
+static int ossl_to_cng_rsa_padding(int ossl_padding)
+{
+    switch (ossl_padding) {
+    case RSA_PKCS1_PADDING:
+        return NCRYPT_PAD_PKCS1_FLAG;
+    case RSA_NO_PADDING:
+        return NCRYPT_NO_PADDING_FLAG;
+# if 0                           /* Currently unsupported */
+    case RSA_PKCS1_OAEP_PADDING:
+        return NCRYPT_PAD_OAEP_FLAG;
+# endif
+    default:
+        break;
+    }
+    return -1;
+}
+
+static int cng_rsa_priv_enc(int flen, const unsigned char *from,
+                            unsigned char *to, RSA *rsa, int padding)
+{
+    CNG_CTX *ctx = RSA_get_ex_data(rsa, rsa_idx);
+    int pad = ossl_to_cng_rsa_padding(padding);
+    DWORD len;
+
+    if (pad == -1) {
+        char errstr[10];
+        BIO_snprintf(errstr, 10, "%d", padding);
+        CNGerr(CNG_F_CNG_RSA_PRIV_ENC, CNG_R_UNSUPPORTED_PADDING);
+        ERR_add_error_data(2, "padding=", errstr);
+        return -1;
+    }
+
+    if (NCryptEncrypt(ctx->khandle, (PBYTE)from, flen, NULL, to, flen, &len,
+                      pad) != ERROR_SUCCESS) {
+        CNGerr(CNG_F_CNG_RSA_PRIV_ENC, CNG_R_DECRYPT_ERROR);
+        capi_adderror(GetLastError());
+        return -1;
+    }
+    return flen;
+}
+static int cng_rsa_priv_dec(int flen, const unsigned char *from,
+                            unsigned char *to, RSA *rsa, int padding)
+{
+    CNG_CTX *ctx = RSA_get_ex_data(rsa, rsa_idx);
+    int pad = ossl_to_cng_rsa_padding(padding);
+    DWORD len;
+
+    if (pad == -1) {
+        char errstr[10];
+        BIO_snprintf(errstr, 10, "%d", padding);
+        CNGerr(CNG_F_CNG_RSA_PRIV_DEC, CNG_R_UNSUPPORTED_PADDING);
+        ERR_add_error_data(2, "padding=", errstr);
+        return -1;
+    }
+
+    if (NCryptDecrypt(ctx->khandle, (PBYTE)from, flen, NULL, to, flen, &len,
+                      pad) != ERROR_SUCCESS) {
+        CNGerr(CNG_F_CNG_RSA_PRIV_DEC, CNG_R_DECRYPT_ERROR);
+        capi_adderror(GetLastError());
+        return -1;
+    }
+    return flen;
+}
+static int cng_rsa_init(RSA *rsa)
+{
+    CRYPTO_UP_REF(&rsa_cnt, NULL, rsa_cnt_lock);
+    return 1;
+}
+static int cng_rsa_finish(RSA *rsa)
+{
+    CNG_CTX *ctx = RSA_get_ex_data(rsa, rsa_idx);
+    cng_ctx_free(ctx);
+    RSA_set_ex_data(rsa, rsa_idx, 0);
+    CRYPTO_DOWN_REF(&rsa_cnt, NULL, rsa_cnt_lock);
+    return 1;
+}
+
+static RSA_METHOD *rsa_meth = NULL;
+static int cng_create_rsa_method(void)
+{
+    if (rsa_meth == NULL) {
+        if ((rsa_meth = RSA_meth_dup(RSA_PKCS1_OpenSSL())) == NULL
+            || !RSA_meth_set1_name(rsa_meth, "CNG RSA")
+            || !RSA_meth_set_flags(rsa_meth, 0)
+            || !RSA_meth_set0_app_data(rsa_meth, NULL)
+            || !RSA_meth_set_priv_enc(rsa_meth, cng_rsa_priv_enc)
+            || !RSA_meth_set_priv_dec(rsa_meth, cng_rsa_priv_dec)
+            || !RSA_meth_set_init(rsa_meth, cng_rsa_init)
+            || !RSA_meth_set_finish(rsa_meth, cng_rsa_finish)) {
+            CNGerr(CNG_F_CNG_RSA_METHOD, ERR_R_MALLOC_FAILURE);
+            RSA_meth_free(rsa_meth);
+            rsa_meth = NULL;
+        }
+    }
+    return rsa_meth != NULL;
+}
+static int cng_destroy_rsa_method(void)
+{
+    RSA_meth_free(rsa_meth);
+    rsa_meth = NULL;
+    return 1;
+}
+
+/*-
  * INIT / FINISH
  * -------------
  */
 
+/*
+ * To make sure this engine is never freed if there's a key refering to it
+ * through our method, we add a reference for every ENGINE_init() and remove
+ * it for every functional ENGINE_free().
+ * This construct helps us avoid the use of ENGINE_set_RSA().
+ */
+
 static int cng_init(ENGINE *e)
 {
+    CRYPTO_UP_REF(&rsa_cnt, NULL, rsa_cnt_lock);
     return 1;
 }
 
 static int cng_finish(ENGINE *e)
 {
-    return 1;
+    int i;
+
+    CRYPTO_DOWN_REF(&rsa_cnt, &i, rsa_cnt_lock);
+    if (i == 0)
+        return 1;
+
+    /* Maintain the reference count */
+    CRYPTO_UP_REF(&rsa_cnt, NULL, rsa_cnt_lock);
+    return 0;
 }
 
 /*-
@@ -1070,9 +1204,13 @@ static int cng_destroy(ENGINE *e)
 
     STORE_unregister_loader(cng_scheme);
     cng_store_free(loader);
-    /* Why is there no ENGINE_free_ex_index() et al??? */
+    /* Why is there no ENGINE_free_ex_index()??? */
     CRYPTO_free_ex_index(CRYPTO_EX_INDEX_ENGINE, loader_idx);
+    cng_destroy_rsa_method();
+    /* Why is there no RSA_free_ex_index()??? */
     CRYPTO_free_ex_index(CRYPTO_EX_INDEX_RSA, rsa_idx);
+    CRYPTO_THREAD_lock_free(rsa_cnt_lock);
+    rsa_cnt_lock = NULL;
     ERR_unload_CNG_strings();
     return 1;
 }
@@ -1088,8 +1226,10 @@ static int bind_cng(ENGINE *e)
         || !ENGINE_set_destroy_function(e, cng_destroy)
         || !ENGINE_set_init_function(e, cng_init)
         || !ENGINE_set_finish_function(e, cng_finish)
-        || (loader_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0)) < 0
+        || !RUN_ONCE(&rsa_cnt_init, do_rsa_cnt_init)
         || (rsa_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0)) < 0
+        || !cng_create_rsa_method()
+        || (loader_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0)) < 0
         || (loader = cng_store_new(e)) == NULL
         || !STORE_register_loader(loader)) {
         CNGerr(CNG_F_BIND_CNG, CNG_R_BIND_FAILED);

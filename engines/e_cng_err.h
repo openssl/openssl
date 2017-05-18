@@ -31,6 +31,7 @@ static void ERR_CNG_error(int function, int reason, char *file, int line);
 # define CNG_F_ACCUMULATE_SYSTEM_STORES                   100
 # define CNG_F_BIND_CNG                                   101
 # define CNG_F_CNG_GET_PKEY                               104
+# define CNG_F_CNG_RSA_METHOD                             121
 # define CNG_F_CNG_STORE_ENUM_CERTS_INIT                  117
 # define CNG_F_CNG_STORE_ENUM_CERTS_LOAD                  118
 # define CNG_F_CNG_STORE_ENUM_KEYS_INIT                   115
