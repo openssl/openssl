@@ -32,7 +32,6 @@ my @generated_files =
      "testcrl.der",
 
      ### generated locally
-     ### These examples were pilfered from OpenConnect's test suite
 
      "rsa-key-pkcs1.pem", "rsa-key-pkcs1.der",
      "rsa-key-pkcs1-aes128.pem",
