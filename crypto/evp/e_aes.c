@@ -17,6 +17,7 @@
 #include "internal/evp_int.h"
 #include "modes_lcl.h"
 #include <openssl/rand.h>
+#include <openssl/cmac.h>
 #include "evp_locl.h"
 
 typedef struct {
@@ -540,7 +541,8 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 # define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,mode,MODE,flags) \
 static const EVP_CIPHER aesni_##keylen##_##mode = { \
         nid##_##keylen##_##mode,blocksize, \
-        (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE?2:1)*keylen/8, ivlen, \
+        (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE?2:1)*keylen/8, \
+        ivlen,                          \
         flags|EVP_CIPH_##MODE##_MODE,   \
         aesni_##mode##_init_key,        \
         aesni_##mode##_cipher,          \
@@ -549,7 +551,8 @@ static const EVP_CIPHER aesni_##keylen##_##mode = { \
         NULL,NULL,aes_##mode##_ctrl,NULL }; \
 static const EVP_CIPHER aes_##keylen##_##mode = { \
         nid##_##keylen##_##mode,blocksize, \
-        (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE?2:1)*keylen/8, ivlen, \
+        (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE?2:1)*keylen/8, \
+        ivlen,                          \
         flags|EVP_CIPH_##MODE##_MODE,   \
         aes_##mode##_init_key,          \
         aes_##mode##_cipher,            \
@@ -948,7 +951,8 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 # define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,mode,MODE,flags) \
 static const EVP_CIPHER aes_t4_##keylen##_##mode = { \
         nid##_##keylen##_##mode,blocksize, \
-        (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE?2:1)*keylen/8, ivlen, \
+        (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE?2:1)*keylen/8, \
+        ivlen,                          \
         flags|EVP_CIPH_##MODE##_MODE,   \
         aes_t4_##mode##_init_key,       \
         aes_t4_##mode##_cipher,         \
@@ -957,7 +961,8 @@ static const EVP_CIPHER aes_t4_##keylen##_##mode = { \
         NULL,NULL,aes_##mode##_ctrl,NULL }; \
 static const EVP_CIPHER aes_##keylen##_##mode = { \
         nid##_##keylen##_##mode,blocksize, \
-        (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE?2:1)*keylen/8, ivlen, \
+        (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE?2:1)*keylen/8, \
+        ivlen,                          \
         flags|EVP_CIPH_##MODE##_MODE,   \
         aes_##mode##_init_key,          \
         aes_##mode##_cipher,            \
@@ -2512,7 +2517,8 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 # define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,mode,MODE,flags) \
 static const EVP_CIPHER aes_##keylen##_##mode = { \
         nid##_##keylen##_##mode,blocksize, \
-        (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE?2:1)*keylen/8, ivlen, \
+        (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE?2:1)*keylen/8, \
+        ivlen,                          \
         flags|EVP_CIPH_##MODE##_MODE,   \
         aes_##mode##_init_key,          \
         aes_##mode##_cipher,            \
@@ -4263,3 +4269,114 @@ BLOCK_CIPHER_custom(NID_aes, 192, 16, 12, ocb, OCB,
 BLOCK_CIPHER_custom(NID_aes, 256, 16, 12, ocb, OCB,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
 #endif                         /* OPENSSL_NO_OCB */
+
+/* AES-SIV mode */
+#ifndef OPENSSL_NO_SIV
+
+typedef SIV128_CONTEXT EVP_AES_SIV_CTX;
+
+#define aesni_siv_init_key aes_siv_init_key
+static int aes_siv_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+                            const unsigned char *iv, int enc)
+{
+    const EVP_CIPHER *ctr;
+    const EVP_CIPHER *cbc;
+    SIV128_CONTEXT *sctx = EVP_C_DATA(SIV128_CONTEXT, ctx);
+    int klen = EVP_CIPHER_CTX_key_length(ctx) / 2;
+
+    if (key == NULL)
+        return 1;
+
+    switch (klen) {
+    case 16:
+        cbc = EVP_aes_128_cbc();
+        ctr = EVP_aes_128_ctr();
+        break;
+    case 24:
+        cbc = EVP_aes_192_cbc();
+        ctr = EVP_aes_192_ctr();
+        break;
+    case 32:
+        cbc = EVP_aes_256_cbc();
+        ctr = EVP_aes_256_ctr();
+        break;
+    default:
+        return 0;
+    }
+
+    /* klen is the length of the underlying cipher, not the input key,
+       which should be twice as long */
+    return CRYPTO_siv128_init(sctx, key, klen, cbc, ctr);
+}
+
+#define aesni_siv_cipher aes_siv_cipher
+static int aes_siv_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                          const unsigned char *in, size_t len)
+{
+    SIV128_CONTEXT *sctx = EVP_C_DATA(SIV128_CONTEXT, ctx);
+
+    /* EncryptFinal or DecryptFinal */
+    if (in == NULL)
+        return CRYPTO_siv128_finish(sctx);
+
+    /* Deal with associated data */
+    if (out == NULL)
+        return CRYPTO_siv128_aad(sctx, in, len);
+
+    if (EVP_CIPHER_CTX_encrypting(ctx))
+        return CRYPTO_siv128_encrypt(sctx, in, out, len);
+
+    return CRYPTO_siv128_decrypt(sctx, in, out, len);
+}
+
+#define aesni_siv_cleanup aes_siv_cleanup
+static int aes_siv_cleanup(EVP_CIPHER_CTX *c)
+{
+    SIV128_CONTEXT *sctx = EVP_C_DATA(SIV128_CONTEXT, c);
+
+    return CRYPTO_siv128_cleanup(sctx);
+}
+
+
+#define aesni_siv_ctrl aes_siv_ctrl
+static int aes_siv_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
+{
+    SIV128_CONTEXT *sctx = EVP_C_DATA(SIV128_CONTEXT, c);
+    SIV128_CONTEXT *sctx_out;
+
+    switch (type) {
+    case EVP_CTRL_INIT:
+        return CRYPTO_siv128_cleanup(sctx);
+
+    case EVP_CTRL_SET_SPEED:
+        return CRYPTO_siv128_speed(sctx, arg);
+
+    case EVP_CTRL_AEAD_SET_TAG:
+        if (!EVP_CIPHER_CTX_encrypting(c))
+            return CRYPTO_siv128_set_tag(sctx, ptr, arg);
+        return 1;
+
+    case EVP_CTRL_AEAD_GET_TAG:
+        if (!EVP_CIPHER_CTX_encrypting(c))
+            return 0;
+        return CRYPTO_siv128_get_tag(sctx, ptr, arg);
+
+    case EVP_CTRL_COPY:
+        sctx_out = EVP_C_DATA(SIV128_CONTEXT, (EVP_CIPHER_CTX*)ptr);
+        return CRYPTO_siv128_copy_ctx(sctx_out, sctx);
+
+    default:
+        return -1;
+
+    }
+}
+
+#define SIV_FLAGS    (EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_FLAG_DEFAULT_ASN1 \
+                      | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER \
+                      | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CUSTOM_COPY \
+                      | EVP_CIPH_CTRL_INIT)
+
+BLOCK_CIPHER_custom(NID_aes, 128, 1, 0, siv, SIV, SIV_FLAGS)
+BLOCK_CIPHER_custom(NID_aes, 192, 1, 0, siv, SIV, SIV_FLAGS)
+BLOCK_CIPHER_custom(NID_aes, 256, 1, 0, siv, SIV, SIV_FLAGS)
+#endif

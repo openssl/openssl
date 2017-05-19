@@ -391,6 +391,7 @@ my @disablables = (
     "seed",
     "shared",
     "siphash",
+    "siv",
     "sm2",
     "sm3",
     "sm4",
@@ -498,6 +499,8 @@ my @disable_cascades = (
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
 
     sub { !$disabled{"msan"} } => [ "asm" ],
+
+    sub { $disabled{cmac}; } => [ "siv" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version

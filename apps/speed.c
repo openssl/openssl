@@ -2657,6 +2657,10 @@ int speed_main(int argc, char **argv)
                     EVP_CipherInit_ex(loopargs[k].ctx, NULL, NULL,
                                       loopargs[k].key, NULL, -1);
                     OPENSSL_clear_free(loopargs[k].key, keylen);
+
+                    /* SIV mode only allows for a single Update operation */
+                    if (EVP_CIPHER_mode(evp_cipher) == EVP_CIPH_SIV_MODE)
+                        EVP_CIPHER_CTX_ctrl(loopargs[k].ctx, EVP_CTRL_SET_SPEED, 1, NULL);
                 }
 
                 Time_F(START);

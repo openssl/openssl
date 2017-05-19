@@ -21,6 +21,7 @@
 #include "testutil.h"
 #include "evp_test.h"
 
+#define AAD_NUM 4
 
 typedef struct evp_test_method_st EVP_TEST_METHOD;
 
@@ -457,9 +458,9 @@ typedef struct cipher_data_st {
     size_t plaintext_len;
     unsigned char *ciphertext;
     size_t ciphertext_len;
-    /* GCM, CCM and OCB only */
-    unsigned char *aad;
-    size_t aad_len;
+    /* GCM, CCM, OCB and SIV only */
+    unsigned char *aad[AAD_NUM];
+    size_t aad_len[AAD_NUM];
     unsigned char *tag;
     size_t tag_len;
 } CIPHER_DATA;
@@ -484,6 +485,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     m = EVP_CIPHER_mode(cipher);
     if (m == EVP_CIPH_GCM_MODE
             || m == EVP_CIPH_OCB_MODE
+            || m == EVP_CIPH_SIV_MODE
             || m == EVP_CIPH_CCM_MODE)
         cdat->aead = m;
     else if (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
@@ -497,13 +499,15 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
 
 static void cipher_test_cleanup(EVP_TEST *t)
 {
+    int i;
     CIPHER_DATA *cdat = t->data;
 
     OPENSSL_free(cdat->key);
     OPENSSL_free(cdat->iv);
     OPENSSL_free(cdat->ciphertext);
     OPENSSL_free(cdat->plaintext);
-    OPENSSL_free(cdat->aad);
+    for (i = 0; i < AAD_NUM; i++)
+        OPENSSL_free(cdat->aad[i]);
     OPENSSL_free(cdat->tag);
 }
 
@@ -511,6 +515,7 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
                              const char *value)
 {
     CIPHER_DATA *cdat = t->data;
+    int i;
 
     if (strcmp(keyword, "Key") == 0)
         return parse_bin(value, &cdat->key, &cdat->key_len);
@@ -521,8 +526,13 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
     if (strcmp(keyword, "Ciphertext") == 0)
         return parse_bin(value, &cdat->ciphertext, &cdat->ciphertext_len);
     if (cdat->aead) {
-        if (strcmp(keyword, "AAD") == 0)
-            return parse_bin(value, &cdat->aad, &cdat->aad_len);
+        if (strcmp(keyword, "AAD") == 0) {
+            for (i = 0; i < AAD_NUM; i++) {
+                if (cdat->aad[i] == NULL)
+                    return parse_bin(value, &cdat->aad[i], &cdat->aad_len[i]);
+            }
+            return 0;
+        }
         if (strcmp(keyword, "Tag") == 0)
             return parse_bin(value, &cdat->tag, &cdat->tag_len);
     }
@@ -545,7 +555,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     CIPHER_DATA *expected = t->data;
     unsigned char *in, *expected_out, *tmp = NULL;
     size_t in_len, out_len, donelen = 0;
-    int ok = 0, tmplen, chunklen, tmpflen;
+    int ok = 0, tmplen, chunklen, tmpflen, i;
     EVP_CIPHER_CTX *ctx = NULL;
 
     t->err = "TEST_FAILURE";
@@ -647,32 +657,36 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
             goto err;
         }
     }
-    if (expected->aad) {
+    if (expected->aad[0] != NULL) {
         t->err = "AAD_SET_ERROR";
         if (!frag) {
-            if (!EVP_CipherUpdate(ctx, NULL, &chunklen, expected->aad,
-                                  expected->aad_len))
-                goto err;
+            for (i = 0; expected->aad[i] != NULL; i++) {
+                if (!EVP_CipherUpdate(ctx, NULL, &chunklen, expected->aad[i],
+                                      expected->aad_len[i]))
+                    goto err;
+            }
         } else {
             /*
              * Supply the AAD in chunks less than the block size where possible
              */
-            if (expected->aad_len > 0) {
-                if (!EVP_CipherUpdate(ctx, NULL, &chunklen, expected->aad, 1))
-                    goto err;
-                donelen++;
-            }
-            if (expected->aad_len > 2) {
-                if (!EVP_CipherUpdate(ctx, NULL, &chunklen,
-                                      expected->aad + donelen,
-                                      expected->aad_len - 2))
-                    goto err;
-                donelen += expected->aad_len - 2;
-            }
-            if (expected->aad_len > 1
+            for (i = 0; expected->aad[i] != NULL; i++) {
+                if (expected->aad_len[i] > 0) {
+                    if (!EVP_CipherUpdate(ctx, NULL, &chunklen, expected->aad[i], 1))
+                        goto err;
+                    donelen++;
+                }
+                if (expected->aad_len[i] > 2) {
+                    if (!EVP_CipherUpdate(ctx, NULL, &chunklen,
+                                          expected->aad[i] + donelen,
+                                          expected->aad_len[i] - 2))
+                        goto err;
+                    donelen += expected->aad_len[i] - 2;
+                }
+                if (expected->aad_len[i] > 1
                     && !EVP_CipherUpdate(ctx, NULL, &chunklen,
-                                         expected->aad + donelen, 1))
-                goto err;
+                                         expected->aad[i] + donelen, 1))
+                    goto err;
+            }
         }
     }
     EVP_CIPHER_CTX_set_padding(ctx, 0);
@@ -798,10 +812,11 @@ static int cipher_test_run(EVP_TEST *t)
 
         if (out_misalign == 1 && frag == 0) {
             /*
-             * XTS, CCM and Wrap modes have special requirements about input
+             * XTS, SIV, CCM and Wrap modes have special requirements about input
              * lengths so we don't fragment for those
              */
             if (cdat->aead == EVP_CIPH_CCM_MODE
+                    || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
                     || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
                     || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE)
                 break;
