@@ -308,7 +308,7 @@ static int test_bignum(void)
         | !TEST(0, TEST_BN_odd(a))
         | !TEST(1, TEST_BN_eq(b, c))
         | !TEST(0, TEST_BN_eq(a, b))
-        | !TEST(1, TEST_BN_ne(NULL, c))
+        | !TEST(0, TEST_BN_ne(NULL, c))
         | !TEST(1, TEST_int_eq(BN_dec2bn(&b, "1"), 1))
         | !TEST(1, TEST_BN_eq_word(b, 1))
         | !TEST(1, TEST_BN_eq_one(b))
@@ -494,8 +494,8 @@ void register_tests(void)
     ADD_TEST(test_memory);
     ADD_TEST(test_memory_overflow);
     ADD_TEST(test_bignum);
-    ADD_TEST(test_long_output);
     ADD_TEST(test_long_bignum);
+    ADD_TEST(test_long_output);
     ADD_TEST(test_messages);
     ADD_TEST(test_single_eval);
 }
