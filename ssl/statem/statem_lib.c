@@ -522,19 +522,23 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
      */
     if (!SSL_IS_TLS13(s) && !ssl_log_secret(s, MASTER_SECRET_LABEL,
                                             s->session->master_key,
-                                            s->session->master_key_length))
-        return 0;
+                                            s->session->master_key_length)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     /*
      * Copy the finished so we can use it for renegotiation checks
      */
+    if (!ossl_assert(finish_md_len <= EVP_MAX_MD_SIZE)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     if (!s->server) {
-        OPENSSL_assert(finish_md_len <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_client_finished, s->s3->tmp.finish_md,
                finish_md_len);
         s->s3->previous_client_finished_len = finish_md_len;
     } else {
-        OPENSSL_assert(finish_md_len <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_server_finished, s->s3->tmp.finish_md,
                finish_md_len);
         s->s3->previous_server_finished_len = finish_md_len;
@@ -765,13 +769,16 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
     /*
      * Copy the finished so we can use it for renegotiation checks
      */
+    if (!ossl_assert(md_len <= EVP_MAX_MD_SIZE)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
     if (s->server) {
-        OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_client_finished, s->s3->tmp.peer_finish_md,
                md_len);
         s->s3->previous_client_finished_len = md_len;
     } else {
-        OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_server_finished, s->s3->tmp.peer_finish_md,
                md_len);
         s->s3->previous_server_finished_len = md_len;
