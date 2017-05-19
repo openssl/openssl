@@ -222,7 +222,7 @@ static ERR_STRING_DATA CMS_str_reasons[] = {
     {ERR_REASON(CMS_R_UNABLE_TO_FINALIZE_CONTEXT),
      "unable to finalize context"},
     {ERR_REASON(CMS_R_UNKNOWN_CIPHER), "unknown cipher"},
-    {ERR_REASON(CMS_R_UNKNOWN_DIGEST_ALGORIHM), "unknown digest algorihm"},
+    {ERR_REASON(CMS_R_UNKNOWN_DIGEST_ALGORITHM), "unknown digest algorithm"},
     {ERR_REASON(CMS_R_UNKNOWN_ID), "unknown id"},
     {ERR_REASON(CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM),
      "unsupported compression algorithm"},
