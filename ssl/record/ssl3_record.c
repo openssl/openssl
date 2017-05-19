@@ -1225,7 +1225,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
                                    ssl->s3->read_mac_secret,
                                    ssl->s3->read_mac_secret_size, 0) <= 0) {
             EVP_MD_CTX_free(hmac);
-            return -1;
+            return 0;
         }
     } else {
         /* TODO(size_t): Convert these calls */
