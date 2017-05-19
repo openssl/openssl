@@ -28,7 +28,7 @@ but with some restrictions described below.
 
 =head1 SIGNING AND VERIFICATION
 
-Siging and verification is similar to the B<RSA> algorithm except the
+Signing and verification is similar to the B<RSA> algorithm except the
 padding mode is always PSS. If the key in use has parameter restrictions then
 the corresponding signature parameters are set to the restrictions:
 for example, if the key can only be used with digest SHA256, MGF1 SHA256

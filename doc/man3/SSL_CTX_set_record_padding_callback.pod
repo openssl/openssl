@@ -54,7 +54,7 @@ or SSL_set_record_padding_callback_arg().
 =head1 RETURN VALUES
 
 The SSL_CTX_get_record_padding_callback_arg() and SSL_get_record_padding_callback_arg()
-functions return the B<arg> value assignd in the corresponding set functions.
+functions return the B<arg> value assigned in the corresponding set functions.
 
 The SSL_CTX_set_block_padding() and SSL_set_block_padding() functions return 1 on success
 or 0 if B<block_size> is too large.
