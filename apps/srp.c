@@ -214,17 +214,16 @@ static char *srp_verify_user(const char *user, const char *srp_verifier,
     cb_tmp.prompt_info = user;
     cb_tmp.password = passin;
 
-    if ((len = password_callback(password, sizeof(password)-1, 0, &cb_tmp)) > 0) {
+    len = password_callback(password, sizeof(password)-1, 0, &cb_tmp);
+    if (len > 0) {
         password[len] = 0;
         VERBOSE BIO_printf(bio,
                            "Validating\n   user=\"%s\"\n srp_verifier=\"%s\"\n srp_usersalt=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
                            user, srp_verifier, srp_usersalt, g, N);
         BIO_printf(bio, "Pass %s\n", password);
 
-        if (!
-            (gNid =
-             SRP_create_verifier(user, password, &srp_usersalt, &verifier, N,
-                                 g))) {
+        if (!(gNid = SRP_create_verifier(user, password, &srp_usersalt,
+                                         &verifier, N, g))) {
             BIO_printf(bio, "Internal error validating SRP verifier\n");
         } else {
             if (strcmp(verifier, srp_verifier))
@@ -247,18 +246,18 @@ static char *srp_create_user(char *user, char **srp_verifier,
     cb_tmp.prompt_info = user;
     cb_tmp.password = passout;
 
-    if ((len = password_callback(password, sizeof(password)-1, 1, &cb_tmp)) > 0) {
+    len = password_callback(password, sizeof(password)-1, 1, &cb_tmp);
+    if (len > 0) {
         password[len] = 0;
         VERBOSE BIO_printf(bio,
                            "Creating\n user=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
                            user, g, N);
-        if (!
-            (gNid =
-             SRP_create_verifier(user, password, &salt, srp_verifier, N,
-                                 g))) {
+        if (!(gNid = SRP_create_verifier(user, password, &salt,
+                                         srp_verifier, N, g))) {
             BIO_printf(bio, "Internal error creating SRP verifier\n");
-        } else
+        } else {
             *srp_usersalt = salt;
+        }
         VVERBOSE BIO_printf(bio, "gNid=%s salt =\"%s\"\n verifier =\"%s\"\n",
                             gNid, salt, *srp_verifier);
 
