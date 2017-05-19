@@ -220,7 +220,7 @@ static char *srp_verify_user(const char *user, const char *srp_verifier,
         VERBOSE BIO_printf(bio,
                            "Validating\n   user=\"%s\"\n srp_verifier=\"%s\"\n srp_usersalt=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
                            user, srp_verifier, srp_usersalt, g, N);
-        BIO_printf(bio, "Pass %s\n", password);
+        VVERBOSE BIO_printf(bio, "Pass %s\n", password);
 
         if (!(gNid = SRP_create_verifier(user, password, &srp_usersalt,
                                          &verifier, N, g))) {
