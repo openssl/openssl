@@ -207,7 +207,7 @@ exit /b
 	call:setVar _VS15VC VisualStudio15VC
 	call:setVar _WKITS10 WindowsKits10.0
 	call:setVar _WKITS10VER WindowsKits10Version
-	set LIBPATH=%LIBPATH%;%_WKITS10%\references\windows.foundation.foundationcontract\2.0.0.0\;%_WKITS10%\references\windows.foundation.universalapicontract\2.0.0.0\;%_WKITS10%\references\windows.foundation.foundationcontract\1.0.0.0\;%_WKITS10%\references\windows.foundation.universalapicontract\1.0.0.0\
+	set LIBPATH=%LIBPATH%;%_WKITS10%\references\%_WKITS10VER%.0\windows.foundation.foundationcontract\2.0.0.0\;%_WKITS10%references\%_WKITS10VER%.0\windows.foundation.foundationcontract\3.0.0.0\;%_WKITS10%\references\%_WKITS10VER%.0\windows.foundation.universalapicontract\2.0.0.0\;%_WKITS10%\references\%_WKITS10VER%.0\windows.foundation.foundationcontract\1.0.0.0\;%_WKITS10%\references\%_WKITS10VER%.0\windows.foundation.universalapicontract\4.0.0.0\;%_WKITS10%\references\%_WKITS10VER%.0\windows.foundation.universalapicontract\3.0.0.0\;%_WKITS10%\references\%_WKITS10VER%.0\windows.foundation.universalapicontract\2.0.0.0\;%_WKITS10%\references\%_WKITS10VER%.0\windows.foundation.universalapicontract\1.0.0.0\
 	goto :eof
 
 :end
