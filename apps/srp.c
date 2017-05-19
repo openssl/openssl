@@ -391,7 +391,7 @@ int MAIN(int argc, char **argv)
                    "Need at least one user for options -add, -delete, -modify. \n");
         badops = 1;
     }
-    if ((passin || passout) && argc != 1) {
+    if ((passargin || passargout) && argc != 1) {
         BIO_printf(bio_err,
                    "-passin, -passout arguments only valid with one user.\n");
         badops = 1;
