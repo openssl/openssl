@@ -1593,6 +1593,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_PKEY_SET_TYPE                              158
 # define EVP_F_RC2_MAGIC_TO_METH                          109
 # define EVP_F_RC5_CTRL                                   125
+# define EVP_F_UPDATE                                     173
 
 /* Reason codes. */
 # define EVP_R_AES_KEY_SETUP_FAILED                       143
@@ -1637,6 +1638,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_NO_DIGEST_SET                              139
 # define EVP_R_NO_KEY_SET                                 154
 # define EVP_R_NO_OPERATION_SET                           149
+# define EVP_R_ONLY_ONESHOT_SUPPORTED                     177
 # define EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE   150
 # define EVP_R_OPERATON_NOT_INITIALIZED                   151
 # define EVP_R_PARTIALLY_OVERLAPPING                      162
