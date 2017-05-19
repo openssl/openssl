@@ -85,11 +85,11 @@ of CMS_decrypt() is not appropriate.
 
 In typical usage and application will retrieve all CMS_RecipientInfo structures
 using CMS_get0_RecipientInfos() and check the type of each using
-CMS_RecpientInfo_type(). Depending on the type the CMS_RecipientInfo structure
+CMS_RecipientInfo_type(). Depending on the type the CMS_RecipientInfo structure
 can be ignored or its key identifier data retrieved using an appropriate
 function. Then if the corresponding secret or private key can be obtained by
 any appropriate means it can then associated with the structure and
-CMS_RecpientInfo_decrypt() called. If successful CMS_decrypt() can be called
+CMS_RecipientInfo_decrypt() called. If successful CMS_decrypt() can be called
 with a NULL key to decrypt the enveloped content.
 
 The CMS_RecipientInfo_encrypt() can be used to add a new recipient to an

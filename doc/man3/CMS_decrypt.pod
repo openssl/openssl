@@ -46,7 +46,7 @@ in advance using the CMS utility functions such as CMS_set1_pkey(). In this
 case both B<cert> and B<pkey> should be set to NULL.
 
 To process KEKRecipientInfo types CMS_set1_key() or CMS_RecipientInfo_set0_key()
-and CMS_ReceipientInfo_decrypt() should be called before CMS_decrypt() and
+and CMS_RecipientInfo_decrypt() should be called before CMS_decrypt() and
 B<cert> and B<pkey> set to NULL.
 
 The following flags can be passed in the B<flags> parameter.
