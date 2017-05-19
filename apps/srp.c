@@ -230,6 +230,7 @@ static char *srp_verify_user(const char *user, const char *srp_verifier,
                 gNid = NULL;
             OPENSSL_free(verifier);
         }
+        OPENSSL_cleanse(password, len);
     }
     return gNid;
 }
@@ -258,6 +259,7 @@ static char *srp_create_user(char *user, char **srp_verifier,
         } else {
             *srp_usersalt = salt;
         }
+        OPENSSL_cleanse(password, len);
         VVERBOSE BIO_printf(bio, "gNid=%s salt =\"%s\"\n verifier =\"%s\"\n",
                             gNid, salt, *srp_verifier);
 
