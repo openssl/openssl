@@ -206,7 +206,7 @@ $code.=<<___;
 						@ loaded value would have
 						@ to be rotated in order to
 						@ make it appear as in
-						@ alorithm specification
+						@ algorithm specification
 	subs		$len,$len,#32		@ see if $len is 32 or larger
 	mov		$inc,#16		@ $inc is used as post-
 						@ increment for input pointer;
