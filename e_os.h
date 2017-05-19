@@ -13,6 +13,7 @@
 # include <openssl/opensslconf.h>
 
 # include <openssl/e_os2.h>
+# include <openssl/crypto.h>
 /*
  * <openssl/e_os2.h> contains what we can justify to make visible to the
  * outside; this file e_os.h is not part of the exported interface.
@@ -542,6 +543,23 @@ struct servent *getservbyname(const char *name, const char *proto);
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 # define CRYPTO_memcmp memcmp
+#endif
+
+#ifdef NDEBUG
+# define ossl_assert(x) (int)(x)
+#else
+__owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
+                                              const char *file, int line)
+{
+    if (!expr)
+        OPENSSL_die(exprstr, file, line);
+
+    return expr;
+}
+
+# define ossl_assert(x) ossl_assert_int((int)(x), "Assertion failed: "#x, \
+                                         __FILE__, __LINE__)
+
 #endif
 
 #ifdef  __cplusplus
