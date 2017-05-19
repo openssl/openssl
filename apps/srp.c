@@ -294,7 +294,7 @@ int srp_main(int argc, char **argv)
                    "Need at least one user for options -add, -delete, -modify. \n");
         goto opthelp;
     }
-    if ((passin || passout) && argc != 1) {
+    if ((passinarg || passoutarg) && argc != 1) {
         BIO_printf(bio_err,
                    "-passin, -passout arguments only valid with one user.\n");
         goto opthelp;
