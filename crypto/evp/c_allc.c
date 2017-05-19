@@ -190,7 +190,11 @@ void openssl_add_all_ciphers_int(void)
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha1());
     EVP_add_cipher(EVP_aes_128_cbc_hmac_sha256());
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha256());
-
+#ifndef OPENSSL_NO_SIV
+    EVP_add_cipher(EVP_aes_128_siv());
+    EVP_add_cipher(EVP_aes_192_siv());
+    EVP_add_cipher(EVP_aes_256_siv());
+#endif
 #ifndef OPENSSL_NO_ARIA
     EVP_add_cipher(EVP_aria_128_ecb());
     EVP_add_cipher(EVP_aria_128_cbc());

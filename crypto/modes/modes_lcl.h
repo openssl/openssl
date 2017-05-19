@@ -188,3 +188,28 @@ struct ocb128_context {
     } sess;
 };
 #endif                          /* OPENSSL_NO_OCB */
+
+#ifndef OPENSSL_NO_SIV
+
+#include <openssl/cmac.h>
+
+#define SIV_LEN 16
+
+typedef union siv_block_u {
+    uint64_t word[SIV_LEN/sizeof(uint64_t)];
+    unsigned char byte[SIV_LEN];
+} SIV_BLOCK;
+
+struct siv128_context {
+    /* d stores intermediate results of S2V; it corresponds to D from the
+       pseudocode in section 2.4 of RFC 5297. */
+    SIV_BLOCK d;
+    SIV_BLOCK tag;
+    EVP_CIPHER_CTX *cipher_ctx;
+    CMAC_CTX *cmac_ctx_init;
+    CMAC_CTX *cmac_ctx;
+    int final_ret;
+    int crypto_ok;
+};
+
+#endif /* OPENSSL_NO_SIV */

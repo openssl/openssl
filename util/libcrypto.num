@@ -4606,3 +4606,17 @@ OPENSSL_version_minor                   4561	3_0_0	EXIST::FUNCTION:
 OPENSSL_version_patch                   4562	3_0_0	EXIST::FUNCTION:
 OPENSSL_version_pre_release             4563	3_0_0	EXIST::FUNCTION:
 OPENSSL_version_build_metadata          4564	3_0_0	EXIST::FUNCTION:
+EVP_aes_128_siv                         4565	3_0_0	EXIST::FUNCTION:SIV
+EVP_aes_192_siv                         4566	3_0_0	EXIST::FUNCTION:SIV
+EVP_aes_256_siv                         4567	3_0_0	EXIST::FUNCTION:SIV
+CRYPTO_siv128_new                       4568	3_0_0	EXIST::FUNCTION:SIV
+CRYPTO_siv128_init                      4569	3_0_0	EXIST::FUNCTION:SIV
+CRYPTO_siv128_copy_ctx                  4570	3_0_0	EXIST::FUNCTION:SIV
+CRYPTO_siv128_aad                       4571	3_0_0	EXIST::FUNCTION:SIV
+CRYPTO_siv128_encrypt                   4572	3_0_0	EXIST::FUNCTION:SIV
+CRYPTO_siv128_decrypt                   4573	3_0_0	EXIST::FUNCTION:SIV
+CRYPTO_siv128_finish                    4574	3_0_0	EXIST::FUNCTION:SIV
+CRYPTO_siv128_set_tag                   4575	3_0_0	EXIST::FUNCTION:SIV
+CRYPTO_siv128_get_tag                   4576	3_0_0	EXIST::FUNCTION:SIV
+CRYPTO_siv128_cleanup                   4577	3_0_0	EXIST::FUNCTION:SIV
+CRYPTO_siv128_speed                     4578	3_0_0	EXIST::FUNCTION:SIV

@@ -36,6 +36,9 @@
        and retain API/ABI compatibility.
      [Richard Levitte]
 
+  *) Add support for RFC5297 SIV mode (siv128), including AES-SIV.
+     [Todd Short]
+
   *) Remove the 'dist' target and add a tarball building script.  The
      'dist' target has fallen out of use, and it shouldn't be
      necessary to configure just to create a source distribution.

@@ -245,6 +245,7 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CIPH_XTS_MODE               0x10001
 # define         EVP_CIPH_WRAP_MODE              0x10002
 # define         EVP_CIPH_OCB_MODE               0x10003
+# define         EVP_CIPH_SIV_MODE               0x10004
 # define         EVP_CIPH_MODE                   0xF0007
 /* Set if variable length cipher */
 # define         EVP_CIPH_VARIABLE_LENGTH        0x8
@@ -352,6 +353,8 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CTRL_SET_PIPELINE_INPUT_LENS        0x24
 /* Get the IV used by the cipher */
 # define         EVP_CTRL_GET_IV                         0x25
+/* Tell the cipher it's doing a speed test (SIV disallows multiple ops) */
+# define         EVP_CTRL_SET_SPEED                      0x26
 
 /* Padding modes */
 #define EVP_PADDING_PKCS7       1
@@ -858,6 +861,11 @@ const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1(void);
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha256(void);
 const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha256(void);
+# ifndef OPENSSL_NO_SIV
+const EVP_CIPHER *EVP_aes_128_siv(void);
+const EVP_CIPHER *EVP_aes_192_siv(void);
+const EVP_CIPHER *EVP_aes_256_siv(void);
+# endif
 # ifndef OPENSSL_NO_ARIA
 const EVP_CIPHER *EVP_aria_128_ecb(void);
 const EVP_CIPHER *EVP_aria_128_cbc(void);
