@@ -2206,23 +2206,16 @@ static const EVP_TEST_METHOD keypair_test_method = {
 };
 
 typedef struct {
-    /* Set to 1 if verifying */
-    int is_verify;
-    /* Set to 1 for one shot operation */
-    int is_oneshot;
-    /* Digest to use */
-    const EVP_MD *md;
-    /* Digest context */
-    EVP_MD_CTX *ctx;
+    int is_verify; /* Set to 1 if verifying */
+    int is_oneshot; /* Set to 1 for one shot operation */
+    const EVP_MD *md; /* Digest to use */
+    EVP_MD_CTX *ctx; /* Digest context */
     EVP_PKEY_CTX *pctx;
-    /* Input data: streaming */
-    STACK_OF(EVP_TEST_BUFFER) *input;
-    /* Input data if one shot */
-    unsigned char *osin;
-    size_t osin_len;
-    /* Expected output */
-    unsigned char *output;
-    size_t output_len;
+    STACK_OF(EVP_TEST_BUFFER) *input; /* Input data: streaming */
+    unsigned char *osin; /* Input data if one shot */
+    size_t osin_len; /* Input length data if one shot */
+    unsigned char *output; /* Expected output */
+    size_t output_len; /* Expected output length */
 } DIGESTSIGN_DATA;
 
 static int digestsigver_test_init(EVP_TEST *t, const char *alg, int is_verify,
