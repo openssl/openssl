@@ -133,7 +133,8 @@ static char *srp_verify_user(const char *user, const char *srp_verifier,
             BIO_printf(bio_err,
                        "Validating\n   user=\"%s\"\n srp_verifier=\"%s\"\n srp_usersalt=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
                        user, srp_verifier, srp_usersalt, g, N);
-        BIO_printf(bio_err, "Pass %s\n", password);
+        if (verbose > 1)
+            BIO_printf(bio_err, "Pass %s\n", password);
 
         OPENSSL_assert(srp_usersalt != NULL);
         if (!(gNid = SRP_create_verifier(user, password, &srp_usersalt,
