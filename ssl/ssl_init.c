@@ -96,7 +96,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
     SSL_COMP_get_compression_methods();
 #endif
     /* initialize cipher/digest methods table */
-    ssl_load_ciphers();
+    if (!ssl_load_ciphers())
+        return 0;
 
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_ssl_base: "
