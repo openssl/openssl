@@ -465,7 +465,7 @@ Represents a PKCS#1 RSA public key structure.
 
 =item B<X509_ALGOR>
 
-Represents an B<AlogrithmIdentifier> structure as used in IETF RFC 6960 and
+Represents an B<AlgorithmIdentifier> structure as used in IETF RFC 6960 and
 elsewhere.
 
 =item B<X509_Name>

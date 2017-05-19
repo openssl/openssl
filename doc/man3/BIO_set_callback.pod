@@ -20,8 +20,8 @@ BIO_callback_fn_ex, BIO_callback_fn
  void BIO_set_callback_ex(BIO *b, BIO_callback_fn_ex callback);
  BIO_callback_fn_ex BIO_get_callback_ex(const BIO *b);
 
- void BIO_set_callback(BIO *b, BIO_callack_fn cb);
- BIO_callack_fn BIO_get_callback(BIO *b);
+ void BIO_set_callback(BIO *b, BIO_callback_fn cb);
+ BIO_callback_fn BIO_get_callback(BIO *b);
  void BIO_set_callback_arg(BIO *b, char *arg);
  char *BIO_get_callback_arg(const BIO *b);
 
@@ -37,7 +37,7 @@ operation.
 
 BIO_set_callback() and BIO_get_callback() set and retrieve the old format BIO
 callback. New code should not use these functions, but they are retained for
-backwards compatbility. Any callback set via BIO_set_callback_ex() will get
+backwards compatibility. Any callback set via BIO_set_callback_ex() will get
 called in preference to any set by BIO_set_callback().
 
 BIO_set_callback_arg() and BIO_get_callback_arg() are macros which can be

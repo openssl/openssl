@@ -30,7 +30,7 @@ SSL_get_early_data_status
 
 =head1 DESCRIPTION
 
-These functions are used to send and recieve early data where TLSv1.3 has been
+These functions are used to send and receive early data where TLSv1.3 has been
 negotiated. Early data can be sent by the client immediately after its initial
 ClientHello without having to wait for the server to complete the handshake.
 Early data can only be sent if a session has previously been established with
@@ -152,7 +152,7 @@ connection immediately without further need to call a function such as
 L<SSL_accept(3)>. This can happen if the client is using a protocol version less
 than TLSv1.3. Applications can test for this by calling
 L<SSL_is_init_finished(3)>. Alternatively, applications may choose to call
-L<SSL_accept(3)> anway. Such a call will successfully return immediately with no
+L<SSL_accept(3)> anyway. Such a call will successfully return immediately with no
 further action taken.
 
 When a session is created between a server and a client the server will specify

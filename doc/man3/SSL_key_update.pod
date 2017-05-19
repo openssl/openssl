@@ -74,7 +74,7 @@ new handshake. For historical reasons, DTLS clients will not attempt to resume
 the session in the new handshake.
 
 The SSL_renegotiate_pending() function returns 1 if a renegotiation or
-rengotiation request has been scheduled but not yet acted on, or 0 otherwise.
+renegotiation request has been scheduled but not yet acted on, or 0 otherwise.
 
 =head1 RETURN VALUES
 
@@ -84,7 +84,7 @@ on success or 0 on error.
 SSL_get_key_update_type() returns the update type of the pending key update
 operation or SSL_KEY_UPDATE_NONE if there is none.
 
-SSL_renegotiate_pending() returns 1 if a renegotiation or rengotiation request
+SSL_renegotiate_pending() returns 1 if a renegotiation or renegotiation request
 has been scheduled but not yet acted on, or 0 otherwise.
 
 =head1 SEE ALSO
