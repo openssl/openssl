@@ -371,7 +371,7 @@ static uint32_t disabled_mac_mask;
 static uint32_t disabled_mkey_mask;
 static uint32_t disabled_auth_mask;
 
-void ssl_load_ciphers(void)
+int ssl_load_ciphers(void)
 {
     size_t i;
     const ssl_cipher_table *t;
@@ -396,13 +396,16 @@ void ssl_load_ciphers(void)
             disabled_mac_mask |= t->mask;
         } else {
             int tmpsize = EVP_MD_size(md);
-            OPENSSL_assert(tmpsize >= 0);
+            if (!ossl_assert(tmpsize >= 0))
+                return 0;
             ssl_mac_secret_size[i] = tmpsize;
         }
     }
     /* Make sure we can access MD5 and SHA1 */
-    OPENSSL_assert(ssl_digest_methods[SSL_MD_MD5_IDX] != NULL);
-    OPENSSL_assert(ssl_digest_methods[SSL_MD_SHA1_IDX] != NULL);
+    if (!ossl_assert(ssl_digest_methods[SSL_MD_MD5_IDX] != NULL))
+        return 0;
+    if (!ossl_assert(ssl_digest_methods[SSL_MD_SHA1_IDX] != NULL))
+        return 0;
 
     disabled_mkey_mask = 0;
     disabled_auth_mask = 0;
@@ -460,6 +463,8 @@ void ssl_load_ciphers(void)
     if ((disabled_auth_mask & (SSL_aGOST01 | SSL_aGOST12)) ==
         (SSL_aGOST01 | SSL_aGOST12))
         disabled_mkey_mask |= SSL_kGOST;
+
+    return 1;
 }
 
 #ifndef OPENSSL_NO_COMP

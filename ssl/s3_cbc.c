@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include "internal/constant_time_locl.h"
 #include "ssl_locl.h"
 
@@ -165,7 +166,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
      * This is a, hopefully redundant, check that allows us to forget about
      * many possible overflows later in this function.
      */
-    OPENSSL_assert(data_plus_mac_plus_padding_size < 1024 * 1024);
+    if (!ossl_assert(data_plus_mac_plus_padding_size < 1024 * 1024))
+        return 0;
 
     switch (EVP_MD_CTX_type(ctx)) {
     case NID_md5:
@@ -227,15 +229,16 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
          * ssl3_cbc_record_digest_supported should have been called first to
          * check that the hash function is supported.
          */
-        OPENSSL_assert(0);
+        assert(0);
         if (md_out_size)
             *md_out_size = 0;
         return 0;
     }
 
-    OPENSSL_assert(md_length_size <= MAX_HASH_BIT_COUNT_BYTES);
-    OPENSSL_assert(md_block_size <= MAX_HASH_BLOCK_SIZE);
-    OPENSSL_assert(md_size <= EVP_MAX_MD_SIZE);
+    if (!ossl_assert(md_length_size <= MAX_HASH_BIT_COUNT_BYTES
+                    && md_block_size <= MAX_HASH_BLOCK_SIZE
+                    && md_size <= EVP_MAX_MD_SIZE))
+        return 0;
 
     header_length = 13;
     if (is_sslv3) {
@@ -331,7 +334,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
          */
         bits += 8 * md_block_size;
         memset(hmac_pad, 0, md_block_size);
-        OPENSSL_assert(mac_secret_length <= sizeof(hmac_pad));
+        if (!ossl_assert(mac_secret_length <= sizeof(hmac_pad)))
+            return 0;
         memcpy(hmac_pad, mac_secret, mac_secret_length);
         for (i = 0; i < md_block_size; i++)
             hmac_pad[i] ^= 0x36;

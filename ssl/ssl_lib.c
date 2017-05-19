@@ -575,7 +575,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->record_padding_arg = ctx->record_padding_arg;
     s->block_padding = ctx->block_padding;
     s->sid_ctx_length = ctx->sid_ctx_length;
-    OPENSSL_assert(s->sid_ctx_length <= sizeof s->sid_ctx);
+    if (!ossl_assert(s->sid_ctx_length <= sizeof s->sid_ctx))
+        goto err;
     memcpy(&s->sid_ctx, &ctx->sid_ctx, sizeof(s->sid_ctx));
     s->verify_callback = ctx->default_verify_callback;
     s->generate_session_id = ctx->generate_session_id;
@@ -3609,7 +3610,8 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
      * Program invariant: |sid_ctx| has fixed size (SSL_MAX_SID_CTX_LENGTH),
      * so setter APIs must prevent invalid lengths from entering the system.
      */
-    OPENSSL_assert(ssl->sid_ctx_length <= sizeof(ssl->sid_ctx));
+    if (!ossl_assert(ssl->sid_ctx_length <= sizeof(ssl->sid_ctx)))
+        return NULL;
 
     /*
      * If the session ID context matches that of the parent SSL_CTX,
