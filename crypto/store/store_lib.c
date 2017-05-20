@@ -14,7 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/store.h>
 #include "internal/thread_once.h"
-#include "store_local.h"
+#include "store_locl.h"
 
 struct store_ctx_st {
     const STORE_LOADER *loader;
