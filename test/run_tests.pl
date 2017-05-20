@@ -82,7 +82,10 @@ foreach my $arg (@ARGV ? @ARGV : ('alltests')) {
 }
 
 my $harness = $TAP_Harness->new(\%tapargs);
-$harness->runtests(map { abs2rel($_, rel2abs(curdir())); } sort keys %tests);
+my $ret = $harness->runtests(map { abs2rel($_, rel2abs(curdir())); }
+                                 sort keys %tests);
+
+exit $ret->has_errors if (ref($ret) eq "TAP::Parser::Aggregator");
 
 sub find_matching_tests {
     my ($glob) = @_;
