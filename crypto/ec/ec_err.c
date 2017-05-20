@@ -34,6 +34,7 @@ static ERR_STRING_DATA EC_str_functs[] = {
     {ERR_FUNC(EC_F_ECDSA_SIGN_SETUP), "ECDSA_sign_setup"},
     {ERR_FUNC(EC_F_ECDSA_SIG_NEW), "ECDSA_SIG_new"},
     {ERR_FUNC(EC_F_ECDSA_VERIFY), "ECDSA_verify"},
+    {ERR_FUNC(EC_F_ECD_ITEM_VERIFY), "ecd_item_verify"},
     {ERR_FUNC(EC_F_ECKEY_PARAM2TYPE), "eckey_param2type"},
     {ERR_FUNC(EC_F_ECKEY_PARAM_DECODE), "eckey_param_decode"},
     {ERR_FUNC(EC_F_ECKEY_PRIV_DECODE), "eckey_priv_decode"},
