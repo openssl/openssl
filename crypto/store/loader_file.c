@@ -21,7 +21,7 @@
 #include <openssl/ui.h>
 #include <openssl/x509.h>        /* For the PKCS8 stuff o.O */
 #include "internal/asn1_int.h"
-#include "store_local.h"
+#include "store_locl.h"
 
 #include "e_os.h"
 
