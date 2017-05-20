@@ -147,7 +147,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     type = EVP_MD_CTX_md(ctx);
     pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
 
-    if (type == NULL || pkey == NULL) {
+    if (pkey == NULL) {
         ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ASN1_R_CONTEXT_NOT_INITIALISED);
         goto err;
     }
@@ -172,10 +172,15 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
             ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_EVP_LIB);
         if (rv <= 1)
             goto err;
-    } else
+    } else {
         rv = 2;
+    }
 
     if (rv == 2) {
+        if (type == NULL) {
+            ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ASN1_R_CONTEXT_NOT_INITIALISED);
+            goto err;
+        }
         if (!OBJ_find_sigid_by_algs(&signid,
                                     EVP_MD_nid(type),
                                     pkey->ameth->pkey_id)) {
