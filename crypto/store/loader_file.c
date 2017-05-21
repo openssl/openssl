@@ -25,11 +25,9 @@
 
 #include "e_os.h"
 
-/******************************************************************************
- *
+/*
  *  Password prompting
- *
- *****/
+ */
 
 static char *file_get_pass(const UI_METHOD *ui_method, char *pass,
                            size_t maxsize, const char *prompt_info, void *data)
@@ -99,13 +97,11 @@ static int file_get_pem_pass(char *buf, int num, int w, void *data)
     return pass == NULL ? 0 : strlen(pass);
 }
 
-/******************************************************************************
- *
- *  The file scheme handlers
- *
- *****/
-
 /*
+ *  The file scheme handlers
+ */
+
+/*-
  * The try_decode function is called to check if the blob of data can
  * be used by this handler, and if it can, decodes it into a supported
  * OpenSSL type and returns a STORE_INFO with the decoded data.
@@ -341,11 +337,9 @@ static const STORE_FILE_HANDLER *file_handlers[] = {
 };
 
 
-/******************************************************************************
- *
+/*
  *  The loader itself
- *
- *****/
+ */
 
 struct store_loader_ctx_st {
     BIO *file;
