@@ -62,7 +62,9 @@ if ($list_mode) {
     @tests = map { abs2rel($_, rel2abs(curdir())); } @tests;
 
     my $harness = $TAP_Harness->new(\%tapargs);
-    $harness->runtests(sort @tests);
+    my $ret = $harness->runtests(sort @tests);
+
+    exit $ret->has_errors if (ref($ret) eq "TAP::Parser::Aggregator");
 }
 
 
