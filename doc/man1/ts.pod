@@ -27,7 +27,7 @@ B<-reply>
 [B<-queryfile> request.tsq]
 [B<-passin> password_src]
 [B<-signer> tsa_cert.pem]
-[B<-inkey> private.pem]
+[B<-inkey> file_or_id]
 [B<-sha1|-sha224|-sha256|-sha384|-sha512>]
 [B<-chain> certs_file.pem]
 [B<-tspolicy> object_id]
@@ -243,10 +243,12 @@ timeStamping. The extended key usage must also be critical, otherwise
 the certificate is going to be refused. Overrides the B<signer_cert>
 variable of the config file. (Optional)
 
-=item B<-inkey> private.pem
+=item B<-inkey> file_or_id
 
 The signer private key of the TSA in PEM format. Overrides the
 B<signer_key> config file option. (Optional)
+If no engine is used, the argument is taken as a file; if an engine is
+specified, the argument is given to the engine as a key identifier.
 
 =item B<-sha1|-sha224|-sha256|-sha384|-sha512>
 
