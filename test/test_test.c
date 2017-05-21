@@ -249,7 +249,8 @@ static int test_string(void)
         | !TEST(0, TEST_str_eq("\1\2\3\4\5", "\1x\3\6\5"))
         | !TEST(0, TEST_str_ne("abc", buf))
         | !TEST(1, TEST_str_ne("abc", NULL))
-        | !TEST(1, TEST_str_ne(NULL, buf)))
+        | !TEST(1, TEST_str_ne(NULL, buf))
+        | !TEST(0, TEST_str_eq("abcdef", "abcdefghijk")))
         goto err;
     return 1;
 
