@@ -15,11 +15,10 @@
 #include <openssl/x509.h>
 #include <openssl/store.h>
 
-/******************************************************************************
- *
- * STORE_INFO stuff
- *
- *****/
+/*-
+ *  STORE_INFO stuff
+ *  ----------------
+ */
 
 struct store_info_st {
     int type;
@@ -39,11 +38,10 @@ struct store_info_st {
 
 DEFINE_STACK_OF(STORE_INFO)
 
-/******************************************************************************
- *
- * STORE_LOADER stuff
- *
- *****/
+/*-
+ *  STORE_LOADER stuff
+ *  ------------------
+ */
 
 int store_register_loader_int(STORE_LOADER *loader);
 STORE_LOADER *store_unregister_loader_int(const char *scheme);
@@ -62,10 +60,9 @@ DEFINE_LHASH_OF(STORE_LOADER);
 const STORE_LOADER *store_get0_loader_int(const char *scheme);
 void destroy_loaders_int(void);
 
-/******************************************************************************
- *
- * STORE init stuff
- *
- *****/
+/*-
+ *  STORE init stuff
+ *  ----------------
+ */
 
 int store_init_once(void);

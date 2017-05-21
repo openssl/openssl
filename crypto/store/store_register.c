@@ -24,11 +24,9 @@ DEFINE_RUN_ONCE_STATIC(do_registry_init)
     return registry_lock != NULL;
 }
 
-/******************************************************************************
- *
+/*
  *  Functions for manipulating STORE_LOADERs
- *
- *****/
+ */
 
 STORE_LOADER *STORE_LOADER_new(const char *scheme)
 {
@@ -97,11 +95,9 @@ void STORE_LOADER_free(STORE_LOADER *loader)
     OPENSSL_free(loader);
 }
 
-/******************************************************************************
- *
+/*
  *  Functions for registering STORE_LOADERs
- *
- *****/
+ */
 
 static unsigned long store_loader_hash(const STORE_LOADER *v)
 {

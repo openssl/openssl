@@ -18,13 +18,14 @@
 extern "C" {
 # endif
 
-/******************************************************************************
+/*-
+ *  The main STORE functions.
+ *  -------------------------
  *
- *  The main STORE functions.  It allows applications to open a channel
- *  to a resource with supported data (keys, certs, crls, ...), read the
- *  data a piece at a time and decide what to do with it, and finally close.
- *
- *****/
+ *  These allow applications to open a channel to a resource with supported
+ *  data (keys, certs, crls, ...), read the data a piece at a time and decide
+ *  what to do with it, and finally close.
+ */
 
 typedef struct store_ctx_st STORE_CTX;
 
@@ -83,11 +84,10 @@ int STORE_eof(STORE_CTX *ctx);
 int STORE_close(STORE_CTX *ctx);
 
 
-/******************************************************************************
- *
+/*-
  *  Extracting OpenSSL types from STORE_INFOs and creating new STORE_INFOs
- *
- *****/
+ *  ----------------------------------------------------------------------
+ */
 
 /*
  * Types of data that can be stored in a STORE_INFO.
@@ -148,13 +148,13 @@ const char *STORE_INFO_type_string(int type);
 void STORE_INFO_free(STORE_INFO *store_info);
 
 
-/******************************************************************************
- *
+/*-
  *  Function to register a loader for the given URI scheme.
+ *  -------------------------------------------------------
+ *
  *  The loader receives all the main components of an URI except for the
  *  scheme.
- *
- *****/
+ */
 
 typedef struct store_loader_st STORE_LOADER;
 STORE_LOADER *STORE_LOADER_new(const char *scheme);
