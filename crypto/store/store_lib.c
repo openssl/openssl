@@ -59,13 +59,14 @@ STORE_CTX *STORE_open(const char *uri, const UI_METHOD *ui_method,
     ctx->post_process_data = post_process_data;
 
  done:
-    if (loader_ctx != NULL)
+    if (loader_ctx != NULL) {
         /*
          * We ignore a returned error because we will return NULL anyway in
          * this case, so if something goes wrong when closing, that'll simply
          * just add another entry on the error stack.
          */
         (void)loader->close(loader_ctx);
+    }
     return ctx;
 }
 
