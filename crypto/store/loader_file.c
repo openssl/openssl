@@ -638,9 +638,9 @@ static STORE_INFO *file_load_try_decode(STORE_LOADER_CTX *ctx,
     BUF_MEM_free(new_mem);
 
     if (result != NULL
-        && (t = STORE_INFO_get_type(result)) == STORE_INFO_DECODED) {
-        pem_name = new_pem_name = store_info_get0_DECODED_pem_name(result);
-        new_mem = store_info_get0_DECODED_buffer(result);
+        && (t = STORE_INFO_get_type(result)) == STORE_INFO_EMBEDDED) {
+        pem_name = new_pem_name = store_info_get0_EMBEDDED_pem_name(result);
+        new_mem = store_info_get0_EMBEDDED_buffer(result);
         data = (unsigned char *)new_mem->data;
         len = new_mem->length;
         OPENSSL_free(result);
