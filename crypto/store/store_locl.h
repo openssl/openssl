@@ -28,7 +28,7 @@ struct store_info_st {
         struct {
             BUF_MEM *blob;
             char *pem_name;
-        } decoded;               /* when type == STORE_INFO_DECODED */
+        } embedded;              /* when type == STORE_INFO_EMBEDDED */
 
         struct {
             char *name;
@@ -45,7 +45,7 @@ struct store_info_st {
 DEFINE_STACK_OF(STORE_INFO)
 
 /*
- * DECODED is a special type of STORE_INFO, specially for the file handlers.
+ * EMBEDDED is a special type of STORE_INFO, specially for the file handlers.
  * It should never reach a calling application or any engine.  However, it
  * can be used by a STORE_FILE_HANDLER's try_decode function to signal that
  * it has decoded the incoming blob into a new blob, and that the attempted
@@ -56,10 +56,11 @@ DEFINE_STACK_OF(STORE_INFO)
  * Because this is an internal type, we don't make it part of the enum that
  * applications and engines will see.
  */
-#define STORE_INFO_DECODED     -1
-STORE_INFO *store_info_new_DECODED(const char *new_pem_name, BUF_MEM *decoded);
-BUF_MEM *store_info_get0_DECODED_buffer(STORE_INFO *store_info);
-char *store_info_get0_DECODED_pem_name(STORE_INFO *store_info);
+#define STORE_INFO_EMBEDDED     -1
+STORE_INFO *store_info_new_EMBEDDED(const char *new_pem_name,
+                                    BUF_MEM *embedded);
+BUF_MEM *store_info_get0_EMBEDDED_buffer(STORE_INFO *store_info);
+char *store_info_get0_EMBEDDED_pem_name(STORE_INFO *store_info);
 
 /*-
  *  STORE_LOADER stuff
