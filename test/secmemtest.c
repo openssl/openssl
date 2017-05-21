@@ -68,12 +68,15 @@ static int test_sec_mem(void)
     TEST_ptr_null(OPENSSL_secure_malloc((size_t)-1));
     TEST_true(CRYPTO_secure_malloc_done());
 
-    TEST_info("Possible infinite loop: small arena");
-    if (!TEST_false(CRYPTO_secure_malloc_init(16, 16)))
+    /*
+     * If init fails, then initialized should be false, if not, this
+     * could cause an infinite loop secure_malloc, but we don't test it
+     */
+    if (TEST_false(CRYPTO_secure_malloc_init(16, 16)) &&
+        !TEST_false(CRYPTO_secure_malloc_initialized())) {
+        TEST_true(CRYPTO_secure_malloc_done());
         goto end;
-    TEST_false(CRYPTO_secure_malloc_initialized());
-    TEST_ptr_null(OPENSSL_secure_malloc((size_t)-1));
-    TEST_true(CRYPTO_secure_malloc_done());
+    }
 
     /*-
      * There was also a possible infinite loop when the number of
@@ -100,7 +103,7 @@ static int test_sec_mem(void)
             TEST_true(CRYPTO_secure_malloc_done());
     }
 # endif
-    
+
     /* this can complete - it was not really secure */
     testresult = 1;
  end:
