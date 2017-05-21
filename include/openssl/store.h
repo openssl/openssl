@@ -186,11 +186,10 @@ void STORE_LOADER_free(STORE_LOADER *store_loader);
 int STORE_register_loader(STORE_LOADER *loader);
 STORE_LOADER *STORE_unregister_loader(const char *scheme);
 
-/******************************************************************************
- *
+/*-
  *  Functions to list STORE loaders
- *
- *****/
+ *  -------------------------------
+ */
 int STORE_do_all_loaders(void (*do_function) (const STORE_LOADER *loader,
                                               void *do_arg),
                          void *do_arg);

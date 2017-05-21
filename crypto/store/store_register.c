@@ -248,11 +248,10 @@ void destroy_loaders_int(void)
     registry_lock = NULL;
 }
 
-/******************************************************************************
- *
+/*
  *  Functions to list STORE loaders
- *
- *****/
+ */
+
 IMPLEMENT_LHASH_DOALL_ARG_CONST(STORE_LOADER, void);
 int STORE_do_all_loaders(void (*do_function) (const STORE_LOADER *loader,
                                               void *do_arg),
