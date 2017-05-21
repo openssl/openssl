@@ -392,6 +392,14 @@ static void test_fail_bignum_mono_message(const char *prefix, const char *file,
     test_fail_bignum_common(prefix, file, line, type, left, right, op, bn, bn);
 }
 
+static void test_memory_null_empty(const unsigned char *m, int indent, char c)
+{
+    if (m == NULL)
+        test_printf_stderr("%*s# % 4s %c%s\n", indent, "", "", c, "NULL");
+    else
+        test_printf_stderr("%*s# %04x %c%s\n", indent, "", 0u, c, "empty");
+}
+
 static void test_fail_memory_message(const char *prefix, const char *file,
                                      int line, const char *type,
                                      const char *left, const char *right,
@@ -413,14 +421,11 @@ static void test_fail_memory_message(const char *prefix, const char *file,
         l2 = 0;
     if (l1 == 0 && l2 == 0) {
         if ((m1 == NULL) == (m2 == NULL)) {
-            test_printf_stderr("%*s# %04s  %s\n", indent, "", "",
-                               m1 == NULL ? "NULL" : "empty");
+            test_memory_null_empty(m1, indent, ' ');
         } else {
             test_diff_header(left, right);
-            test_printf_stderr("%*s# %04s -%s\n", indent, "", "",
-                               m1 == NULL ? "NULL" : "empty");
-            test_printf_stderr("%*s# %04s +%s\n", indent, "", "",
-                               m2 == NULL ? "NULL" : "empty");
+            test_memory_null_empty(m1, indent, '-');
+            test_memory_null_empty(m2, indent, '+');
         }
         goto fin;
     }
@@ -439,12 +444,11 @@ static void test_fail_memory_message(const char *prefix, const char *file,
             hex_convert_memory(m2, n2, b2, 8);
         }
 
-        diff = n1 != n2;
+        diff = 0;
         i = 0;
         p = bdiff;
         if (n1 > 0 && n2 > 0) {
             const size_t j = n1 < n2 ? n1 : n2;
-            const size_t k = n1 > n2 ? n1 : n2;
 
             for (; i < j; i++) {
                 if (m1[i] == m2[i]) {
@@ -455,35 +459,24 @@ static void test_fail_memory_message(const char *prefix, const char *file,
                     *p++ = '^';
                     diff = 1;
                 }
-                if ((i % 8) == 7 && (i != j - 1 || j != k))
-                    *p++ = ' ';
-            }
-
-            for (; i < k; i++) {
-                *p++ = '^';
-                *p++ = '^';
-                if ((i % 8) == 7 && i != k - 1)
+                if (i % 8 == 7 && i != j - 1)
                     *p++ = ' ';
             }
             *p++ = '\0';
         }
 
-        if (!diff) {
+        if (n1 == n2 && !diff) {
             test_printf_stderr("%*s# %04x: %s\n", indent, "", cnt, b1);
         } else {
-            if (cnt == 0 && m1 == NULL)
-                test_printf_stderr("%*s# %04s -NULL\n", indent, "", "");
-            else if (cnt == 0 && l1 == 0)
-                test_printf_stderr("%*s# %04s -empty\n", indent, "", "");
+            if (cnt == 0 && (m1 == NULL || l1 == 0))
+                test_memory_null_empty(m1, indent, '-');
             else if (n1 > 0)
                 test_printf_stderr("%*s# %04x:-%s\n", indent, "", cnt, b1);
-            if (cnt == 0 && m2 == NULL)
-                test_printf_stderr("%*s# %04s +NULL\n", indent, "", "");
-            else if (cnt == 0 && l2 == 0)
-                test_printf_stderr("%*s# %04s +empty\n", indent, "", "");
+            if (cnt == 0 && (m2 == NULL || l2 == 0))
+                test_memory_null_empty(m2, indent, '+');
             else if (n2 > 0)
                 test_printf_stderr("%*s# %04x:+%s\n", indent, "", cnt, b2);
-            if (i > 0)
+            if (diff && i > 0)
                 test_printf_stderr("%*s# % 4s  %s\n", indent, "", "", bdiff);
         }
         m1 += n1;
