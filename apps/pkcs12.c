@@ -91,7 +91,7 @@ const OPTIONS pkcs12_options[] = {
     {"keypbe", OPT_KEYPBE, 's', "Private key PBE algorithm (default 3DES)"},
     {"rand", OPT_RAND, 's',
      "Load the file(s) into the random number generator"},
-    {"inkey", OPT_INKEY, '<', "Private key if not infile"},
+    {"inkey", OPT_INKEY, 's', "Private key if not infile"},
     {"certfile", OPT_CERTFILE, '<', "Load certs from file"},
     {"name", OPT_NAME, 's', "Use name as friendly name"},
     {"CSP", OPT_CSP, 's', "Microsoft CSP name"},
