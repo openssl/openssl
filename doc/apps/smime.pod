@@ -54,7 +54,7 @@ B<openssl> B<smime>
 [B<-recip  file>]
 [B<-inform SMIME|PEM|DER>]
 [B<-passin arg>]
-[B<-inkey file>]
+[B<-inkey file_or_id>]
 [B<-out file>]
 [B<-outform SMIME|PEM|DER>]
 [B<-content file>]
@@ -280,13 +280,15 @@ verification was successful.
 the recipients certificate when decrypting a message. This certificate
 must match one of the recipients of the message or an error occurs.
 
-=item B<-inkey file>
+=item B<-inkey file_or_id>
 
 the private key to use when signing or decrypting. This must match the
 corresponding certificate. If this option is not specified then the
 private key must be included in the certificate file specified with
 the B<-recip> or B<-signer> file. When signing this option can be used
 multiple times to specify successive keys.
+If no engine is used, the argument is taken as a file; if an engine is
+specified, the argument is given to the engine as a key identifier.
 
 =item B<-passin arg>
 

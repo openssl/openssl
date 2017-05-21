@@ -10,7 +10,7 @@ B<openssl> B<pkcs12>
 [B<-help>]
 [B<-export>]
 [B<-chain>]
-[B<-inkey filename>]
+[B<-inkey file_or_id>]
 [B<-certfile filename>]
 [B<-name name>]
 [B<-caname name>]
@@ -173,10 +173,12 @@ default.  They must all be in PEM format. The order doesn't matter but one
 private key and its corresponding certificate should be present. If additional
 certificates are present they will also be included in the PKCS#12 file.
 
-=item B<-inkey filename>
+=item B<-inkey file_or_id>
 
 file to read private key from. If not present then a private key must be present
 in the input file.
+If no engine is used, the argument is taken as a file; if an engine is
+specified, the argument is given to the engine as a key identifier.
 
 =item B<-name friendlyname>
 
