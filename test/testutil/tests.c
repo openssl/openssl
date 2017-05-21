@@ -89,6 +89,14 @@ static void test_fail_message_va(const char *prefix, const char *file,
     test_flush_stderr();
 }
 
+static void test_string_null_empty(const char *m, int indent, char c)
+{
+    if (m == NULL)
+        test_printf_stderr("%*s# % 4s %c NULL\n", indent, "", "", c);
+    else
+        test_printf_stderr("%*s# % 4u:%c ''\n", indent, "", 0u, c);
+}
+
 static void test_fail_string_message(const char *prefix, const char *file,
                                      int line, const char *type,
                                      const char *left, const char *right,
@@ -109,14 +117,11 @@ static void test_fail_string_message(const char *prefix, const char *file,
         l2 = 0;
     if (l1 == 0 && l2 == 0) {
         if ((m1 == NULL) == (m2 == NULL)) {
-            test_printf_stderr("%*s# % 4s   %s\n", indent, "", "",
-                               m1 == NULL ? "NULL" : "''");
+            test_string_null_empty(m1, indent, ' ');
         } else {
             test_diff_header(left, right);
-            test_printf_stderr("%*s# % 4s - %s\n", indent, "", "",
-                               m1 == NULL ? "NULL" : "''");
-            test_printf_stderr("%*s# % 4s + %s\n", indent, "", "",
-                               m2 == NULL ? "NULL" : "''");
+            test_string_null_empty(m1, indent, '-');
+            test_string_null_empty(m2, indent, '+');
         }
         goto fin;
     }
@@ -136,11 +141,10 @@ static void test_fail_string_message(const char *prefix, const char *file,
             for (i = 0; i < n2; i++)
                 b2[i] = isprint(m2[i]) ? m2[i] : '.';
         }
-        diff = n1 != n2;
+        diff = 0;
         i = 0;
         if (n1 > 0 && n2 > 0) {
             const size_t j = n1 < n2 ? n1 : n2;
-            const size_t k = n1 > n2 ? n1 : n2;
 
             for (; i < j; i++)
                 if (m1[i] == m2[i]) {
@@ -149,26 +153,21 @@ static void test_fail_string_message(const char *prefix, const char *file,
                     bdiff[i] = '^';
                     diff = 1;
                 }
-            for (; i < k; i++)
-                bdiff[i] = '^';
             bdiff[i] = '\0';
         }
-        if (!diff) {
-            test_printf_stderr("%*s# % 4u:  '%s'\n", indent, "", cnt, b1);
+        if (n1 == n2 && !diff) {
+            test_printf_stderr("%*s# % 4u:  '%s'\n", indent, "", cnt,
+                               n2 > n1 ? b2 : b1);
         } else {
-            if (cnt == 0 && m1 == NULL)
-                test_printf_stderr("%*s# % 4s - NULL\n", indent, "", "");
-            else if (cnt == 0 && *m1 == '\0')
-                test_printf_stderr("%*s# % 4s - ''\n", indent, "", "");
+            if (cnt == 0 && (m1 == NULL || *m1 == '\0'))
+                test_string_null_empty(m1, indent, '-');
             else if (n1 > 0)
                 test_printf_stderr("%*s# % 4u:- '%s'\n", indent, "", cnt, b1);
-            if (cnt == 0 && m2 == NULL)
-                test_printf_stderr("%*s# % 4s + NULL\n", indent, "", "");
-            else if (cnt == 0 && *m2 == '\0')
-                test_printf_stderr("%*s# % 4s + ''\n", indent, "", "");
+            if (cnt == 0 && (m2 == NULL || *m2 == '\0'))
+               test_string_null_empty(m2, indent, '+');
             else if (n2 > 0)
                 test_printf_stderr("%*s# % 4u:+ '%s'\n", indent, "", cnt, b2);
-            if (i > 0)
+            if (diff && i > 0)
                 test_printf_stderr("%*s# % 4s    %s\n", indent, "", "", bdiff);
         }
         m1 += n1;
