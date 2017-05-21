@@ -315,7 +315,7 @@ static STORE_INFO *try_decode_PKCS8Encrypted(const char *pem_name,
     mem->max = mem->length = (size_t)new_data_len;
     X509_SIG_free(p8);
 
-    store_info = store_info_new_DECODED(PEM_STRING_PKCS8INF, mem);
+    store_info = store_info_new_EMBEDDED(PEM_STRING_PKCS8INF, mem);
     if (store_info == NULL) {
         STOREerr(STORE_F_TRY_DECODE_PKCS8ENCRYPTED,
                  ERR_R_MALLOC_FAILURE);
