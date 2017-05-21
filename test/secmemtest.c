@@ -82,18 +82,23 @@ static int test_sec_mem(void)
      *
      * CRYPTO_secure_malloc_init((size_t)1<<34, (size_t)1<<4);
      *
-     * Which really only works on 64-bit systems, and even then the
-     * code attempts to allocate 16 GB secure memory arena. Linux
-     * can deal with this better than other Unixy OS's (e.g. MacOS)
-     * but we don't want to push the system too hard during a unit
-     * test. In addition, trying to allocate 16GB will cause the
-     * mlock() call to fail, so that was at least changed to no
-     * longer be an assert. If the reader of this comment really
-     * wants to make sure that infinite loop is fixed, they can
-     * enable the code below.
+     * Which really only works on 64-bit systems, since it took 16 GB
+     * secure memory arena to trigger the problem. It naturally takes
+     * corresponding amount of available virtual and physical memory
+     * for test to be feasible/representative. Since we can't assume
+     * that every system is equipped with that much memory, the test
+     * remains disabled. If the reader of this comment really wants
+     * to make sure that infinite loop is fixed, they can enable the
+     * code below.
      */
 # if 0
-    /* This test should only be run under Linux... runner beware */
+    /*-
+     * On Linux and BSD this test has a chance to complete in minimal
+     * time and with minimum side effects, because mlock is likely to
+     * fail because of RLIMIT_MEMLOCK, which is customarily [much]
+     * smaller than 16GB. In other words Linux and BSD users can be
+     * limited by virtual space alone...
+     */
     if (sizeof(size_t) > 4) {
         TEST_info("Possible infinite loop: 1<<31 limit");
         if (TEST_true(CRYPTO_secure_malloc_init((size_t)1<<34, (size_t)1<<4) != 0))
