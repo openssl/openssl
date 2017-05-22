@@ -249,7 +249,8 @@ static int test_string(void)
         | !TEST(0, TEST_str_eq("\1\2\3\4\5", "\1x\3\6\5"))
         | !TEST(0, TEST_str_ne("abc", buf))
         | !TEST(1, TEST_str_ne("abc", NULL))
-        | !TEST(1, TEST_str_ne(NULL, buf)))
+        | !TEST(1, TEST_str_ne(NULL, buf))
+        | !TEST(0, TEST_str_eq("abcdef", "abcdefghijk")))
         goto err;
     return 1;
 
@@ -306,6 +307,9 @@ static int test_bignum(void)
         | !TEST(0, TEST_BN_gt_zero(a))
         | !TEST(1, TEST_BN_even(a))
         | !TEST(0, TEST_BN_odd(a))
+        | !TEST(1, TEST_BN_eq(b, c))
+        | !TEST(0, TEST_BN_eq(a, b))
+        | !TEST(0, TEST_BN_ne(NULL, c))
         | !TEST(1, TEST_int_eq(BN_dec2bn(&b, "1"), 1))
         | !TEST(1, TEST_BN_eq_word(b, 1))
         | !TEST(1, TEST_BN_eq_one(b))
@@ -372,6 +376,46 @@ static int test_long_output(void)
            & TEST(0, TEST_str_eq(q, r))
            & TEST(0, TEST_str_eq(r, s))
            & TEST(0, TEST_mem_eq(r, strlen(r), s, strlen(s)));
+}
+
+static int test_long_bignum(void)
+{
+    int r;
+    BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL;
+    const char as[] = "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "FFFFFF";
+    const char bs[] = "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789013"
+                      "987657";
+    const char cs[] = "-"        /* 64 characters plus sign */
+                      "123456789012345678901234567890"
+                      "123456789012345678901234567890"
+                      "ABCD";
+    const char ds[] = "-"        /* 63 characters plus sign */
+                      "23456789A123456789B123456789C"
+                      "123456789D123456789E123456789F"
+                      "ABCD";
+
+    r = TEST_true(BN_hex2bn(&a, as))
+        && TEST_true(BN_hex2bn(&b, bs))
+        && TEST_true(BN_hex2bn(&c, cs))
+        && TEST_true(BN_hex2bn(&d, ds))
+        && (TEST(0, TEST_BN_eq(a, b))
+            & TEST(0, TEST_BN_eq(b, a))
+            & TEST(0, TEST_BN_eq(b, NULL))
+            & TEST(0, TEST_BN_eq(NULL, a))
+            & TEST(1, TEST_BN_ne(a, NULL))
+            & TEST(0, TEST_BN_eq(c, d)));
+    BN_free(a);
+    BN_free(b);
+    BN_free(c);
+    BN_free(d);
+    return r;
 }
 
 static int test_messages(void)
@@ -451,6 +495,7 @@ void register_tests(void)
     ADD_TEST(test_memory);
     ADD_TEST(test_memory_overflow);
     ADD_TEST(test_bignum);
+    ADD_TEST(test_long_bignum);
     ADD_TEST(test_long_output);
     ADD_TEST(test_messages);
     ADD_TEST(test_single_eval);

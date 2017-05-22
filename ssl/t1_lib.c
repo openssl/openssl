@@ -101,9 +101,11 @@ long tls1_default_timeout(void)
 int tls1_new(SSL *s)
 {
     if (!ssl3_new(s))
-        return (0);
-    s->method->ssl_clear(s);
-    return (1);
+        return 0;
+    if (!s->method->ssl_clear(s))
+        return 0;
+
+    return 1;
 }
 
 void tls1_free(SSL *s)
@@ -112,13 +114,17 @@ void tls1_free(SSL *s)
     ssl3_free(s);
 }
 
-void tls1_clear(SSL *s)
+int tls1_clear(SSL *s)
 {
-    ssl3_clear(s);
+    if (!ssl3_clear(s))
+        return 0;
+
     if (s->method->version == TLS_ANY_VERSION)
         s->version = TLS_MAX_VERSION;
     else
         s->version = s->method->version;
+
+    return 1;
 }
 
 #ifndef OPENSSL_NO_EC
@@ -1117,9 +1123,9 @@ int tls1_set_server_sigalgs(SSL *s)
     }
     if (s->cert->shared_sigalgs != NULL)
         return 1;
-    /* Fatal error is no shared signature algorithms */
+    /* Fatal error if no shared signature algorithms */
     SSLerr(SSL_F_TLS1_SET_SERVER_SIGALGS, SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS);
-    al = SSL_AD_ILLEGAL_PARAMETER;
+    al = SSL_AD_HANDSHAKE_FAILURE;
  err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
     return 0;
@@ -2408,7 +2414,7 @@ int tls_choose_sigalg(SSL *s, int *al)
                     if (al == NULL)
                         return 1;
                     SSLerr(SSL_F_TLS_CHOOSE_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
-                    *al = SSL_AD_HANDSHAKE_FAILURE;
+                    *al = SSL_AD_ILLEGAL_PARAMETER;
                     return 0;
                 }
             }

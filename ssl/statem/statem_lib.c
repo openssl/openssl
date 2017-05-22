@@ -77,6 +77,9 @@ int tls_setup_handshake(SSL *s)
     if (!ssl3_init_finished_mac(s))
         return 0;
 
+    /* Reset any extension flags */
+    memset(s->ext.extflags, 0, sizeof(s->ext.extflags));
+
     if (s->server) {
         STACK_OF(SSL_CIPHER) *ciphers = SSL_get_ciphers(s);
         int i, ver_min, ver_max, ok = 0;
@@ -330,10 +333,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 
     peer = s->session->peer;
     pkey = X509_get0_pubkey(peer);
-    if (pkey == NULL) {
-        al = SSL_AD_INTERNAL_ERROR;
+    if (pkey == NULL)
         goto f_err;
-    }
 
     type = X509_certificate_type(peer, pkey);
 
@@ -521,19 +522,23 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
      */
     if (!SSL_IS_TLS13(s) && !ssl_log_secret(s, MASTER_SECRET_LABEL,
                                             s->session->master_key,
-                                            s->session->master_key_length))
-        return 0;
+                                            s->session->master_key_length)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     /*
      * Copy the finished so we can use it for renegotiation checks
      */
+    if (!ossl_assert(finish_md_len <= EVP_MAX_MD_SIZE)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     if (!s->server) {
-        OPENSSL_assert(finish_md_len <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_client_finished, s->s3->tmp.finish_md,
                finish_md_len);
         s->s3->previous_client_finished_len = finish_md_len;
     } else {
-        OPENSSL_assert(finish_md_len <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_server_finished, s->s3->tmp.finish_md,
                finish_md_len);
         s->s3->previous_server_finished_len = finish_md_len;
@@ -667,14 +672,14 @@ MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
              && remain != DTLS1_CCS_HEADER_LENGTH + 1)
             || (s->version != DTLS1_BAD_VER
                 && remain != DTLS1_CCS_HEADER_LENGTH - 1)) {
-            al = SSL_AD_ILLEGAL_PARAMETER;
+            al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
                    SSL_R_BAD_CHANGE_CIPHER_SPEC);
             goto f_err;
         }
     } else {
         if (remain != 0) {
-            al = SSL_AD_ILLEGAL_PARAMETER;
+            al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
                    SSL_R_BAD_CHANGE_CIPHER_SPEC);
             goto f_err;
@@ -764,13 +769,16 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
     /*
      * Copy the finished so we can use it for renegotiation checks
      */
+    if (!ossl_assert(md_len <= EVP_MAX_MD_SIZE)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
     if (s->server) {
-        OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_client_finished, s->s3->tmp.peer_finish_md,
                md_len);
         s->s3->previous_client_finished_len = md_len;
     } else {
-        OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_server_finished, s->s3->tmp.peer_finish_md,
                md_len);
         s->s3->previous_server_finished_len = md_len;
@@ -987,7 +995,8 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
             BUF_MEM_free(s->init_buf);
             s->init_buf = NULL;
         }
-        ssl_free_wbio_buffer(s);
+        if (!ssl_free_wbio_buffer(s))
+            return WORK_ERROR;
         s->init_num = 0;
     }
 

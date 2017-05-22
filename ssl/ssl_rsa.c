@@ -775,7 +775,7 @@ static int serverinfoex_srv_add_cb(SSL *s, unsigned int ext_type,
         int retval = serverinfo_find_extension(serverinfo, serverinfo_length,
                                                ext_type, out, outlen);
         if (retval == -1) {
-            *al = SSL_AD_DECODE_ERROR;
+            *al = SSL_AD_INTERNAL_ERROR;
             return -1;          /* Error */
         }
         if (retval == 0)

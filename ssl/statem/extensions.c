@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -31,9 +31,11 @@ static int init_alpn(SSL *s, unsigned int context);
 static int final_alpn(SSL *s, unsigned int context, int sent, int *al);
 static int init_sig_algs(SSL *s, unsigned int context);
 static int init_certificate_authorities(SSL *s, unsigned int context);
-static int tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
-                                                 unsigned int context, X509 *x,
-                                                 size_t chainidx, int *al);
+static EXT_RETURN tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
+                                                        unsigned int context,
+                                                        X509 *x,
+                                                        size_t chainidx,
+                                                        int *al);
 static int tls_parse_certificate_authorities(SSL *s, PACKET *pkt,
                                              unsigned int context, X509 *x,
                                              size_t chainidx, int *al);
@@ -74,11 +76,11 @@ typedef struct extensions_definition_st {
     int (*parse_stoc)(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                       size_t chainidx, int *al);
     /* Construct extension sent from server to client */
-    int (*construct_stoc)(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
-                          size_t chainidx, int *al);
+    EXT_RETURN (*construct_stoc)(SSL *s, WPACKET *pkt, unsigned int context,
+                                 X509 *x, size_t chainidx, int *al);
     /* Construct extension sent from client to server */
-    int (*construct_ctos)(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
-                          size_t chainidx, int *al);
+    EXT_RETURN (*construct_ctos)(SSL *s, WPACKET *pkt, unsigned int context,
+                                 X509 *x, size_t chainidx, int *al);
     /*
      * Finalise extension after parsing. Always called where an extensions was
      * initialised even if the extension was not present. |sent| is set to 1 if
@@ -461,7 +463,7 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
     }
 
     while (PACKET_remaining(&extensions) > 0) {
-        unsigned int type;
+        unsigned int type, idx;
         PACKET extension;
         RAW_EXTENSION *thisex;
 
@@ -483,6 +485,33 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
                     && PACKET_remaining(&extensions) != 0)) {
             SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, SSL_R_BAD_EXTENSION);
             *al = SSL_AD_ILLEGAL_PARAMETER;
+            goto err;
+        }
+        idx = thisex - raw_extensions;
+        /*-
+         * Check that we requested this extension (if appropriate). Requests can
+         * be sent in the ClientHello and CertificateRequest. Unsolicited
+         * extensions can be sent in the NewSessionTicket. We only do this for
+         * the built-in extensions. Custom extensions have a different but
+         * similar check elsewhere.
+         * Special cases:
+         * - The HRR cookie extension is unsolicited
+         * - The renegotiate extension is unsolicited (the client signals
+         *   support via an SCSV)
+         * - The signed_certificate_timestamp extension can be provided by a
+         * custom extension or by the built-in version. We let the extension
+         * itself handle unsolicited response checks.
+         */
+        if (idx < OSSL_NELEM(ext_defs)
+                && (context & (SSL_EXT_CLIENT_HELLO
+                               | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST
+                               | SSL_EXT_TLS1_3_NEW_SESSION_TICKET)) == 0
+                && type != TLSEXT_TYPE_cookie
+                && type != TLSEXT_TYPE_renegotiate
+                && type != TLSEXT_TYPE_signed_certificate_timestamp
+                && (s->ext.extflags[idx] & SSL_EXT_FLAG_SENT) == 0) {
+            SSLerr(SSL_F_TLS_COLLECT_EXTENSIONS, SSL_R_UNSOLICITED_EXTENSION);
+            *al = SSL_AD_UNSUPPORTED_EXTENSION;
             goto err;
         }
         if (thisex != NULL) {
@@ -699,8 +728,9 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
     }
 
     for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs); i++, thisexd++) {
-        int (*construct)(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
-                         size_t chainidx, int *al);
+        EXT_RETURN (*construct)(SSL *s, WPACKET *pkt, unsigned int context,
+                                X509 *x, size_t chainidx, int *al);
+        EXT_RETURN ret;
 
         /* Skip if not relevant for our context */
         if (!should_add_extension(s, thisexd->context, context, max_version))
@@ -712,8 +742,14 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
         if (construct == NULL)
             continue;
 
-        if (!construct(s, pkt, context, x, chainidx, &tmpal))
+        ret = construct(s, pkt, context, x, chainidx, &tmpal);
+        if (ret == EXT_RETURN_FAIL)
             goto err;
+        if (ret == EXT_RETURN_SENT
+                && (context & (SSL_EXT_CLIENT_HELLO
+                               | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST
+                               | SSL_EXT_TLS1_3_NEW_SESSION_TICKET)) != 0)
+            s->ext.extflags[i] |= SSL_EXT_FLAG_SENT;
     }
 
     if (!WPACKET_close(pkt)) {
@@ -997,14 +1033,16 @@ static int init_certificate_authorities(SSL *s, unsigned int context)
     return 1;
 }
 
-static int tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
-                                                 unsigned int context, X509 *x,
-                                                 size_t chainidx, int *al)
+static EXT_RETURN tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
+                                                        unsigned int context,
+                                                        X509 *x,
+                                                        size_t chainidx,
+                                                        int *al)
 {
     const STACK_OF(X509_NAME) *ca_sk = SSL_get0_CA_list(s);
 
     if (ca_sk == NULL || sk_X509_NAME_num(ca_sk) == 0)
-        return 1;
+        return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_certificate_authorities)
         || !WPACKET_start_sub_packet_u16(pkt)
@@ -1012,10 +1050,10 @@ static int tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
         || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_AUTHORITIES,
                ERR_R_INTERNAL_ERROR);
-        return 0;
+        return EXT_RETURN_FAIL;
     }
 
-    return 1;
+    return EXT_RETURN_SENT;
 }
 
 static int tls_parse_certificate_authorities(SSL *s, PACKET *pkt,
@@ -1043,7 +1081,7 @@ static int init_srtp(SSL *s, unsigned int context)
 
 static int final_sig_algs(SSL *s, unsigned int context, int sent, int *al)
 {
-    if (!sent && SSL_IS_TLS13(s)) {
+    if (!sent && SSL_IS_TLS13(s) && !s->hit) {
         *al = TLS13_AD_MISSING_EXTENSION;
         SSLerr(SSL_F_FINAL_SIG_ALGS, SSL_R_MISSING_SIGALGS_EXTENSION);
         return 0;
@@ -1078,7 +1116,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
             && (!s->hit
                 || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE) == 0)) {
         /* Nothing left we can do - just fail */
-        *al = SSL_AD_HANDSHAKE_FAILURE;
+        *al = SSL_AD_MISSING_EXTENSION;
         SSLerr(SSL_F_FINAL_KEY_SHARE, SSL_R_NO_SUITABLE_KEY_SHARE);
         return 0;
     }

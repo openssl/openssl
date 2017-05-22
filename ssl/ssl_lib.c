@@ -39,7 +39,6 @@
  * OTHERWISE.
  */
 
-#include <assert.h>
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/objects.h>
@@ -443,7 +442,7 @@ int SSL_clear(SSL *s)
 {
     if (s->method == NULL) {
         SSLerr(SSL_F_SSL_CLEAR, SSL_R_NO_METHOD_SPECIFIED);
-        return (0);
+        return 0;
     }
 
     if (ssl_clear_bad_session(s)) {
@@ -492,13 +491,15 @@ int SSL_clear(SSL *s)
         s->method->ssl_free(s);
         s->method = s->ctx->method;
         if (!s->method->ssl_new(s))
-            return (0);
-    } else
-        s->method->ssl_clear(s);
+            return 0;
+    } else {
+        if (!s->method->ssl_clear(s))
+            return 0;
+    }
 
     RECORD_LAYER_clear(&s->rlayer);
 
-    return (1);
+    return 1;
 }
 
 /** Used to change an SSL_CTXs default SSL method type */
@@ -575,7 +576,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->record_padding_arg = ctx->record_padding_arg;
     s->block_padding = ctx->block_padding;
     s->sid_ctx_length = ctx->sid_ctx_length;
-    OPENSSL_assert(s->sid_ctx_length <= sizeof s->sid_ctx);
+    if (!ossl_assert(s->sid_ctx_length <= sizeof s->sid_ctx))
+        goto err;
     memcpy(&s->sid_ctx, &ctx->sid_ctx, sizeof(s->sid_ctx));
     s->verify_callback = ctx->default_verify_callback;
     s->generate_session_id = ctx->generate_session_id;
@@ -980,6 +982,7 @@ void SSL_free(SSL *s)
     dane_final(&s->dane);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
 
+    /* Ignore return value */
     ssl_free_wbio_buffer(s);
 
     BIO_free_all(s->wbio);
@@ -3528,16 +3531,19 @@ int ssl_init_wbio_buffer(SSL *s)
     return 1;
 }
 
-void ssl_free_wbio_buffer(SSL *s)
+int ssl_free_wbio_buffer(SSL *s)
 {
     /* callers ensure s is never null */
     if (s->bbio == NULL)
-        return;
+        return 1;
 
     s->wbio = BIO_pop(s->wbio);
-    assert(s->wbio != NULL);
+    if (!ossl_assert(s->wbio != NULL))
+        return 0;
     BIO_free(s->bbio);
     s->bbio = NULL;
+
+    return 1;
 }
 
 void SSL_CTX_set_quiet_shutdown(SSL_CTX *ctx, int mode)
@@ -3609,7 +3615,8 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
      * Program invariant: |sid_ctx| has fixed size (SSL_MAX_SID_CTX_LENGTH),
      * so setter APIs must prevent invalid lengths from entering the system.
      */
-    OPENSSL_assert(ssl->sid_ctx_length <= sizeof(ssl->sid_ctx));
+    if (!ossl_assert(ssl->sid_ctx_length <= sizeof(ssl->sid_ctx)))
+        return NULL;
 
     /*
      * If the session ID context matches that of the parent SSL_CTX,
@@ -4015,7 +4022,7 @@ int SSL_session_reused(SSL *s)
     return s->hit;
 }
 
-int SSL_is_server(SSL *s)
+int SSL_is_server(const SSL *s)
 {
     return s->server;
 }
@@ -4753,7 +4760,7 @@ int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format,
                                               TLS_CIPHER_LEN))
                     || (leadbyte != 0
                         && !PACKET_forward(&sslv2ciphers, TLS_CIPHER_LEN))) {
-                *al = SSL_AD_INTERNAL_ERROR;
+                *al = SSL_AD_DECODE_ERROR;
                 OPENSSL_free(s->s3->tmp.ciphers_raw);
                 s->s3->tmp.ciphers_raw = NULL;
                 s->s3->tmp.ciphers_rawlen = 0;
@@ -4840,8 +4847,8 @@ int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
         }
     }
     if (PACKET_remaining(cipher_suites) > 0) {
-        *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, ERR_R_INTERNAL_ERROR);
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, SSL_R_BAD_LENGTH);
         goto err;
     }
 

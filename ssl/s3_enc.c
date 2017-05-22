@@ -120,7 +120,10 @@ int ssl3_change_cipher_state(SSL *s, int which)
     c = s->s3->tmp.new_sym_enc;
     m = s->s3->tmp.new_hash;
     /* m == NULL will lead to a crash later */
-    OPENSSL_assert(m);
+    if (!ossl_assert(m != NULL)) {
+        SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+        goto err2;
+    }
 #ifndef OPENSSL_NO_COMP
     if (s->s3->tmp.new_compression == NULL)
         comp = NULL;

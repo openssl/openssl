@@ -67,7 +67,7 @@ typedef struct mpitest_st {
 
 static const int NUM0 = 100;           /* number of tests */
 static const int NUM1 = 50;            /* additional tests for some functions */
-static FILE *fp;
+static BIO *fp;
 static BN_CTX *ctx;
 
 /*
@@ -2011,7 +2011,7 @@ static int readstanza(STANZA *s, int *linesread)
     char *p, *equals, *key, *value;
     char buff[1024];
 
-    while (fgets(buff, sizeof(buff), fp) != NULL) {
+    while (BIO_gets(fp, buff, sizeof(buff))) {
         (*linesread)++;
         if (!TEST_ptr(p = strchr(buff, '\n'))) {
             TEST_info("Line %d too long", s->start);
@@ -2089,14 +2089,20 @@ static int file_test_run(STANZA *s)
     return 0;
 }
 
-static int file_tests()
+static char * const *testfiles;
+
+static int run_file_tests(int i)
 {
     STANZA s;
     int linesread = 0, errcnt = 0;
 
+    if (!TEST_ptr(fp = BIO_new_file(testfiles[i], "rb")))
+        return 0;
+
     /* Read test file. */
+    set_test_title(testfiles[i]);
     memset(&s, 0, sizeof(s));
-    while (!feof(fp) && readstanza(&s, &linesread)) {
+    while (!BIO_eof(fp) && readstanza(&s, &linesread)) {
         if (s.numpairs == 0)
             continue;
         if (!file_test_run(&s)) {
@@ -2105,58 +2111,57 @@ static int file_tests()
         clearstanza(&s);
         s.start = linesread;
     }
+    BIO_free(fp);
 
     return errcnt == 0;
 }
+
 
 int test_main(int argc, char *argv[])
 {
     static const char rnd_seed[] =
         "If not seeded, BN_generate_prime might fail";
-    int result = 0;
+    int result = EXIT_FAILURE;
 
-    if (argc != 2) {
-        TEST_error("%s TEST_FILE", argv[0]);
-        return 0;
-    }
-
-    ADD_TEST(test_sub);
-    ADD_TEST(test_div_recip);
-    ADD_TEST(test_mod);
-    ADD_TEST(test_modexp_mont5);
-    ADD_TEST(test_kronecker);
-    ADD_TEST(test_rand);
-    ADD_TEST(test_bn2padded);
-    ADD_TEST(test_dec2bn);
-    ADD_TEST(test_hex2bn);
-    ADD_TEST(test_asc2bn);
-    ADD_ALL_TESTS(test_mpi, (int)OSSL_NELEM(kMPITests));
-    ADD_TEST(test_negzero);
-    ADD_TEST(test_badmod);
-    ADD_TEST(test_expmodzero);
-    ADD_TEST(test_smallprime);
-#ifndef OPENSSL_NO_EC2M
-    ADD_TEST(test_gf2m_add);
-    ADD_TEST(test_gf2m_mod);
-    ADD_TEST(test_gf2m_mul);
-    ADD_TEST(test_gf2m_sqr);
-    ADD_TEST(test_gf2m_modinv);
-    ADD_TEST(test_gf2m_moddiv);
-    ADD_TEST(test_gf2m_modexp);
-    ADD_TEST(test_gf2m_modsqrt);
-    ADD_TEST(test_gf2m_modsolvequad);
-#endif
-    ADD_TEST(test_3_is_prime);
-    ADD_TEST(file_tests);
 
     RAND_seed(rnd_seed, sizeof rnd_seed);
-    ctx = BN_CTX_new();
-    TEST_check(ctx != NULL);
-
-    if (!TEST_ptr(fp = fopen(argv[1], "r")))
+    if (!TEST_ptr(ctx = BN_CTX_new()))
         goto end;
+
+    if (argc < 2) {
+        ADD_TEST(test_sub);
+        ADD_TEST(test_div_recip);
+        ADD_TEST(test_mod);
+        ADD_TEST(test_modexp_mont5);
+        ADD_TEST(test_kronecker);
+        ADD_TEST(test_rand);
+        ADD_TEST(test_bn2padded);
+        ADD_TEST(test_dec2bn);
+        ADD_TEST(test_hex2bn);
+        ADD_TEST(test_asc2bn);
+        ADD_ALL_TESTS(test_mpi, (int)OSSL_NELEM(kMPITests));
+        ADD_TEST(test_negzero);
+        ADD_TEST(test_badmod);
+        ADD_TEST(test_expmodzero);
+        ADD_TEST(test_smallprime);
+#ifndef OPENSSL_NO_EC2M
+        ADD_TEST(test_gf2m_add);
+        ADD_TEST(test_gf2m_mod);
+        ADD_TEST(test_gf2m_mul);
+        ADD_TEST(test_gf2m_sqr);
+        ADD_TEST(test_gf2m_modinv);
+        ADD_TEST(test_gf2m_moddiv);
+        ADD_TEST(test_gf2m_modexp);
+        ADD_TEST(test_gf2m_modsqrt);
+        ADD_TEST(test_gf2m_modsolvequad);
+#endif
+        ADD_TEST(test_3_is_prime);
+    } else {
+        testfiles = &argv[1];
+        ADD_ALL_TESTS(run_file_tests, argc - 1);
+    }
+
     result = run_tests(argv[0]);
-    fclose(fp);
 
 end:
     BN_CTX_free(ctx);

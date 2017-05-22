@@ -68,20 +68,47 @@ static int test_sec_mem(void)
     TEST_ptr_null(OPENSSL_secure_malloc((size_t)-1));
     TEST_true(CRYPTO_secure_malloc_done());
 
-    TEST_info("Possible infinite loop: small arena");
-    if (!TEST_false(CRYPTO_secure_malloc_init(16, 16)))
+    /*
+     * If init fails, then initialized should be false, if not, this
+     * could cause an infinite loop secure_malloc, but we don't test it
+     */
+    if (TEST_false(CRYPTO_secure_malloc_init(16, 16)) &&
+        !TEST_false(CRYPTO_secure_malloc_initialized())) {
+        TEST_true(CRYPTO_secure_malloc_done());
         goto end;
-    TEST_false(CRYPTO_secure_malloc_initialized());
-    TEST_ptr_null(OPENSSL_secure_malloc((size_t)-1));
-    TEST_true(CRYPTO_secure_malloc_done());
+    }
 
+    /*-
+     * There was also a possible infinite loop when the number of
+     * elements was 1<<31, as |int i| was set to that, which is a
+     * negative number. However, it requires minimum input values:
+     *
+     * CRYPTO_secure_malloc_init((size_t)1<<34, (size_t)1<<4);
+     *
+     * Which really only works on 64-bit systems, since it took 16 GB
+     * secure memory arena to trigger the problem. It naturally takes
+     * corresponding amount of available virtual and physical memory
+     * for test to be feasible/representative. Since we can't assume
+     * that every system is equipped with that much memory, the test
+     * remains disabled. If the reader of this comment really wants
+     * to make sure that infinite loop is fixed, they can enable the
+     * code below.
+     */
+# if 0
+    /*-
+     * On Linux and BSD this test has a chance to complete in minimal
+     * time and with minimum side effects, because mlock is likely to
+     * fail because of RLIMIT_MEMLOCK, which is customarily [much]
+     * smaller than 16GB. In other words Linux and BSD users can be
+     * limited by virtual space alone...
+     */
     if (sizeof(size_t) > 4) {
         TEST_info("Possible infinite loop: 1<<31 limit");
-        if (!TEST_true(CRYPTO_secure_malloc_init((size_t)1<<34, (size_t)1<<4) != 0))
-            goto end;
-        TEST_true(CRYPTO_secure_malloc_done());
+        if (TEST_true(CRYPTO_secure_malloc_init((size_t)1<<34, (size_t)1<<4) != 0))
+            TEST_true(CRYPTO_secure_malloc_done());
     }
-    
+# endif
+
     /* this can complete - it was not really secure */
     testresult = 1;
  end:

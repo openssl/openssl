@@ -116,6 +116,11 @@
 
     $ @config --prefix=PROGRAM:[INSTALLS] --openssldir=SYS$MANAGER:[OPENSSL]
 
+ (Note: if you do add options to the configuration command, please make sure
+ you've read more than just this Quick Start, such as relevant NOTES.* files,
+ the options outline below, as configuration options may change the outcome
+ in otherwise unexpected ways)
+
 
  Configuration Options
  ---------------------

@@ -262,6 +262,7 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
 
     if (fixture.certificate_file != NULL) {
         int sct_extension_index;
+        int i;
         X509_EXTENSION *sct_extension = NULL;
 
         if (!TEST_ptr(cert = load_pem_cert(fixture.certs_dir,
@@ -289,18 +290,16 @@ static int execute_cert_test(CT_TEST_FIXTURE fixture)
                                                expected_sct_text))
                     goto end;
 
-            if (fixture.test_validity) {
-                int i;
+            scts = X509V3_EXT_d2i(sct_extension);
+            for (i = 0; i < sk_SCT_num(scts); ++i) {
+                SCT *sct_i = sk_SCT_value(scts, i);
 
-                scts = X509V3_EXT_d2i(sct_extension);
-                for (i = 0; i < sk_SCT_num(scts); ++i) {
-                    SCT *sct_i = sk_SCT_value(scts, i);
-
-                    if (!TEST_true(SCT_set_source(sct_i,
-                                                  SCT_SOURCE_X509V3_EXTENSION)))
-                        goto end;
+                if (!TEST_int_eq(SCT_get_source(sct_i), SCT_SOURCE_X509V3_EXTENSION)) {
+                    goto end;
                 }
+            }
 
+            if (fixture.test_validity) {
                 if (!assert_validity(fixture, scts, ct_policy_ctx))
                     goto end;
             }
