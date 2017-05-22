@@ -518,7 +518,7 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
     SSL_CTX *clientctx = NULL;
 
     if (!TEST_ptr(serverctx = SSL_CTX_new(sm))
-            || !TEST_ptr(clientctx = SSL_CTX_new(cm)))
+            || (cctx != NULL && !TEST_ptr(clientctx = SSL_CTX_new(cm))))
         goto err;
 
     if (!TEST_int_eq(SSL_CTX_use_certificate_file(serverctx, certfile,
@@ -533,7 +533,8 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
 #endif
 
     *sctx = serverctx;
-    *cctx = clientctx;
+    if (cctx != NULL)
+        *cctx = clientctx;
     return 1;
 
  err:

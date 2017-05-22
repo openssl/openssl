@@ -62,16 +62,25 @@ If a server does not request a certificate this option has no effect.
 The syntax of B<value> is identical to B<-sigalgs>. If not set then
 the value set for B<-sigalgs> will be used instead.
 
+=item B<-groups>
+
+This sets the supported groups. For clients, the groups are
+sent using the supported groups extension. For servers, it is used
+to determine which group to use. This setting affects groups used for both
+signatures and key exchange, if applicable. It also affects the preferred
+key_share sent by a client in a TLSv1.3 compatible connection.
+
+The B<value> argument is a colon separated list of groups. The group can be
+either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
+applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g B<prime256v1>). Group
+names are case sensitive. The list should be in order of preference with the
+most preferred group first. The first listed group will be the one used for a
+key_share by a TLSv1.3 client.
+
 =item B<-curves>
 
-This sets the supported elliptic curves. For clients the curves are
-sent using the supported curves extension. For servers it is used
-to determine which curve to use. This setting affects curves used for both
-signatures and key exchange, if applicable.
+This is a synonym for the "-groups" command.
 
-The B<value> argument is a colon separated list of curves. The curve can be
-either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name (e.g
-B<prime256v1>). Curve names are case sensitive.
 
 =item B<-named_curve>
 
@@ -109,6 +118,12 @@ not loaded unless the flag B<SSL_CONF_FLAG_REQUIRE_PRIVATE> is set.
 Attempts to use the file B<value> as the set of temporary DH parameters for
 the appropriate context. This option is only supported if certificate
 operations are permitted.
+
+=item B<-record_padding>
+
+Attempts to pad TLS 1.3 records so that they are a multiple of B<value> in
+length on send. A B<value> of 0 or 1 turns off padding. Otherwise, the
+B<value> must be >1 or <=16384.
 
 =item B<-min_protocol>, B<-max_protocol>
 
@@ -236,6 +251,12 @@ Attempts to use the file B<value> as the set of temporary DH parameters for
 the appropriate context. This option is only supported if certificate
 operations are permitted.
 
+=item B<RecordPadding>
+
+Attempts to pad TLS 1.3 records so that they are a multiple of B<value> in
+length on send. A B<value> of 0 or 1 turns off padding. Otherwise, the
+B<value> must be >1 or <=16384.
+
 =item B<SignatureAlgorithms>
 
 This sets the supported signature algorithms for TLS v1.2. For clients this
@@ -261,16 +282,24 @@ used to determine which signature algorithm to with the client certificate.
 The syntax of B<value> is identical to B<SignatureAlgorithms>. If not set then
 the value set for B<SignatureAlgorithms> will be used instead.
 
+=item B<Groups>
+
+This sets the supported groups. For clients, the groups are
+sent using the supported groups extension. For servers, it is used
+to determine which group to use. This setting affects groups used for both
+signatures and key exchange, if applicable. It also affects the preferred
+key_share sent by a client in a TLSv1.3 compatible connection.
+
+The B<value> argument is a colon separated list of groups. The group can be
+either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
+applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g B<prime256v1>). Group
+names are case sensitive. The list should be in order of preference with the
+most preferred group first. The first listed group will be the one used for a
+key_share by a TLSv1.3 client.
+
 =item B<Curves>
 
-This sets the supported elliptic curves. For clients the curves are
-sent using the supported curves extension. For servers it is used
-to determine which curve to use. This setting affects curves used for both
-signatures and key exchange, if applicable.
-
-The B<value> argument is a colon separated list of curves. The curve can be
-either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name (e.g
-B<prime256v1>). Curve names are case sensitive.
+This is a synonym for the "Groups" command.
 
 =item B<MinProtocol>
 

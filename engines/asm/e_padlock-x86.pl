@@ -45,7 +45,7 @@ require "x86asm.pl";
 $output=pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],$0);
+&asm_init($ARGV[0]);
 
 %PADLOCK_PREFETCH=(ecb=>128, cbc=>64);	# prefetch errata
 $PADLOCK_CHUNK=512;	# Must be a power of 2 larger than 16

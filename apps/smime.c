@@ -70,7 +70,7 @@ const OPTIONS smime_options[] = {
     {"recip", OPT_RECIP, '<', "Recipient certificate file for decryption"},
     {"in", OPT_IN, '<', "Input file"},
     {"inform", OPT_INFORM, 'c', "Input format SMIME (default), PEM or DER"},
-    {"inkey", OPT_INKEY, '<',
+    {"inkey", OPT_INKEY, 's',
      "Input private key (if not signer or recipient)"},
     {"keyform", OPT_KEYFORM, 'f', "Input private key format (PEM or ENGINE)"},
     {"out", OPT_OUT, '>', "Output file"},

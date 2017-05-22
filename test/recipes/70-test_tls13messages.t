@@ -123,9 +123,13 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
         checkhandshake::SERVER_NAME_SRV_EXTENSION],
     [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_ALPN,
         checkhandshake::ALPN_SRV_EXTENSION],
+    [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
+        checkhandshake::SUPPORTED_GROUPS_SRV_EXTENSION],
 
     [TLSProxy::Message::MT_CERTIFICATE, TLSProxy::Message::EXT_STATUS_REQUEST,
         checkhandshake::STATUS_REQUEST_SRV_EXTENSION],
+    [TLSProxy::Message::MT_CERTIFICATE, TLSProxy::Message::EXT_SCT,
+        checkhandshake::SCT_SRV_EXTENSION],
 
     [0,0,0]
 );
@@ -143,7 +147,7 @@ $proxy->serverconnects(2);
 $proxy->clientflags("-sess_out ".$session);
 $proxy->sessionfile($session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 15;
+plan tests => 16;
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
                "Default handshake test");
@@ -257,25 +261,29 @@ checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                | checkhandshake::ALPN_SRV_EXTENSION,
                "ALPN handshake test");
 
-#Test 13: SCT handshake (client request only)
-#TODO(TLS1.3): This only checks that the client side extension appears. The
-#SCT extension is unusual in that we have no built-in server side implementation
-#The server side implementation can nomrally be added using the custom
-#extensions framework (e.g. by using the "-serverinfo" s_server option). However
-#currently we only support <= TLS1.2 for custom extensions because the existing
-#framework and API has no knowledge of the TLS1.3 messages
-$proxy->clear();
-#Note: -ct also sends status_request
-$proxy->clientflags("-ct");
-$proxy->serverflags("-status_file "
-                    .srctop_file("test", "recipes", "ocsp-response.der"));
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::SCT_CLI_EXTENSION
-               | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
-               | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
-               "SCT handshake test");
+SKIP: {
+    skip "No CT, EC or OCSP support in this OpenSSL build", 1
+        if disabled("ct") || disabled("ec") || disabled("ocsp");
+
+    #Test 13: SCT handshake (client request only)
+    $proxy->clear();
+    #Note: -ct also sends status_request
+    $proxy->clientflags("-ct");
+    $proxy->serverflags("-status_file "
+                        .srctop_file("test", "recipes", "ocsp-response.der")
+                        ." -serverinfo ".srctop_file("test", "serverinfo2.pem"));
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS
+                   | checkhandshake::SCT_CLI_EXTENSION
+                   | checkhandshake::SCT_SRV_EXTENSION
+                   | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
+                   | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
+                   "SCT handshake test");
+}
+
+
+
 
 #Test 14: HRR Handshake
 $proxy->clear();
@@ -297,4 +305,14 @@ checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
                | checkhandshake::PSK_CLI_EXTENSION
                | checkhandshake::PSK_SRV_EXTENSION,
                "Resumption handshake with HRR test");
+
+#Test 16: Acceptable but non preferred key_share
+$proxy->clear();
+$proxy->clientflags("-curves P-256");
+$proxy->start();
+checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+               checkhandshake::DEFAULT_EXTENSIONS
+               | checkhandshake::SUPPORTED_GROUPS_SRV_EXTENSION,
+               "Default handshake test");
+
 unlink $session;

@@ -571,6 +571,9 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->msg_callback_arg = ctx->msg_callback_arg;
     s->verify_mode = ctx->verify_mode;
     s->not_resumable_session_cb = ctx->not_resumable_session_cb;
+    s->record_padding_cb = ctx->record_padding_cb;
+    s->record_padding_arg = ctx->record_padding_arg;
+    s->block_padding = ctx->block_padding;
     s->sid_ctx_length = ctx->sid_ctx_length;
     OPENSSL_assert(s->sid_ctx_length <= sizeof s->sid_ctx);
     memcpy(&s->sid_ctx, &ctx->sid_ctx, sizeof(s->sid_ctx));
@@ -3593,6 +3596,12 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
     if (new_cert == NULL) {
         return NULL;
     }
+
+    if (!custom_exts_copy_flags(&new_cert->custext, &ssl->cert->custext)) {
+        ssl_cert_free(new_cert);
+        return NULL;
+    }
+
     ssl_cert_free(ssl->cert);
     ssl->cert = new_cert;
 
@@ -3889,6 +3898,64 @@ void SSL_set_not_resumable_session_callback(SSL *ssl,
                       (void (*)(void))cb);
 }
 
+void SSL_CTX_set_record_padding_callback(SSL_CTX *ctx,
+                                         size_t (*cb) (SSL *ssl, int type,
+                                                       size_t len, void *arg))
+{
+    ctx->record_padding_cb = cb;
+}
+
+void SSL_CTX_set_record_padding_callback_arg(SSL_CTX *ctx, void *arg)
+{
+    ctx->record_padding_arg = arg;
+}
+
+void *SSL_CTX_get_record_padding_callback_arg(SSL_CTX *ctx)
+{
+    return ctx->record_padding_arg;
+}
+
+int SSL_CTX_set_block_padding(SSL_CTX *ctx, size_t block_size)
+{
+    /* block size of 0 or 1 is basically no padding */
+    if (block_size == 1)
+        ctx->block_padding = 0;
+    else if (block_size <= SSL3_RT_MAX_PLAIN_LENGTH)
+        ctx->block_padding = block_size;
+    else
+        return 0;
+    return 1;
+}
+
+void SSL_set_record_padding_callback(SSL *ssl,
+                                     size_t (*cb) (SSL *ssl, int type,
+                                                   size_t len, void *arg))
+{
+    ssl->record_padding_cb = cb;
+}
+
+void SSL_set_record_padding_callback_arg(SSL *ssl, void *arg)
+{
+    ssl->record_padding_arg = arg;
+}
+
+void *SSL_get_record_padding_callback_arg(SSL *ssl)
+{
+    return ssl->record_padding_arg;
+}
+
+int SSL_set_block_padding(SSL *ssl, size_t block_size)
+{
+    /* block size of 0 or 1 is basically no padding */
+    if (block_size == 1)
+        ssl->block_padding = 0;
+    else if (block_size <= SSL3_RT_MAX_PLAIN_LENGTH)
+        ssl->block_padding = block_size;
+    else
+        return 0;
+    return 1;
+}
+
 /*
  * Allocates new EVP_MD_CTX and sets pointer to it into given pointer
  * variable, freeing EVP_MD_CTX previously stored in that variable, if any.
@@ -3948,7 +4015,7 @@ int SSL_session_reused(SSL *s)
     return s->hit;
 }
 
-int SSL_is_server(SSL *s)
+int SSL_is_server(const SSL *s)
 {
     return s->server;
 }
@@ -4686,7 +4753,7 @@ int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format,
                                               TLS_CIPHER_LEN))
                     || (leadbyte != 0
                         && !PACKET_forward(&sslv2ciphers, TLS_CIPHER_LEN))) {
-                *al = SSL_AD_INTERNAL_ERROR;
+                *al = SSL_AD_DECODE_ERROR;
                 OPENSSL_free(s->s3->tmp.ciphers_raw);
                 s->s3->tmp.ciphers_raw = NULL;
                 s->s3->tmp.ciphers_rawlen = 0;
@@ -4773,8 +4840,8 @@ int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
         }
     }
     if (PACKET_remaining(cipher_suites) > 0) {
-        *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, ERR_R_INTERNAL_ERROR);
+        *al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, SSL_R_BAD_LENGTH);
         goto err;
     }
 

@@ -30,8 +30,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           md2test \
           hmactest \
           rc2test rc4test rc5test \
-          destest sha1test sha256t sha512t \
-          mdc2test \
+          destest mdc2test \
           randtest dhtest enginetest casttest \
           bftest ssltest_old dsatest exptest rsa_test \
           evp_test evp_extra_test igetest v3nametest v3ext \
@@ -42,7 +41,8 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
           pkey_meth_test uitest cipherbytes_test asn1_encode_test \
-          x509_time_test x509_dup_cert_test recordlentest
+          x509_time_test x509_dup_cert_test recordlentest \
+          time_offset_test pemtest
 
   SOURCE[aborttest]=aborttest.c
   INCLUDE[aborttest]=../include
@@ -66,7 +66,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
 
   SOURCE[ectest]=ectest.c
   INCLUDE[ectest]=.. ../include
-  DEPEND[ectest]=../libcrypto
+  DEPEND[ectest]=../libcrypto libtestutil.a
 
   SOURCE[ecdsatest]=ecdsatest.c
   INCLUDE[ecdsatest]=../include
@@ -107,18 +107,6 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[destest]=destest.c
   INCLUDE[destest]=../include
   DEPEND[destest]=../libcrypto libtestutil.a
-
-  SOURCE[sha1test]=sha1test.c
-  INCLUDE[sha1test]=../include
-  DEPEND[sha1test]=../libcrypto libtestutil.a
-
-  SOURCE[sha256t]=sha256t.c
-  INCLUDE[sha256t]=../include
-  DEPEND[sha256t]=../libcrypto libtestutil.a
-
-  SOURCE[sha512t]=sha512t.c
-  INCLUDE[sha512t]=../include
-  DEPEND[sha512t]=../libcrypto libtestutil.a
 
   SOURCE[mdc2test]=mdc2test.c
   INCLUDE[mdc2test]=../include
@@ -162,7 +150,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
 
   SOURCE[evp_test]=evp_test.c
   INCLUDE[evp_test]=../include
-  DEPEND[evp_test]=../libcrypto
+  DEPEND[evp_test]=../libcrypto libtestutil.a
 
   SOURCE[evp_extra_test]=evp_extra_test.c
   INCLUDE[evp_extra_test]=../include
@@ -170,7 +158,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
 
   SOURCE[igetest]=igetest.c
   INCLUDE[igetest]=.. ../include
-  DEPEND[igetest]=../libcrypto
+  DEPEND[igetest]=../libcrypto libtestutil.a
 
   SOURCE[v3nametest]=v3nametest.c
   INCLUDE[v3nametest]=.. ../include
@@ -185,8 +173,8 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   DEPEND[v3ext]=../libcrypto libtestutil.a
 
   SOURCE[danetest]=danetest.c
-  INCLUDE[danetest]=../include
-  DEPEND[danetest]=../libcrypto ../libssl
+  INCLUDE[danetest]=.. ../include
+  DEPEND[danetest]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[constant_time_test]=constant_time_test.c
   INCLUDE[constant_time_test]=.. ../include
@@ -313,6 +301,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   INCLUDE[x509_dup_cert_test]=../include
   DEPEND[x509_dup_cert_test]=../libcrypto libtestutil.a
 
+  SOURCE[pemtest]=pemtest.c
+  INCLUDE[pemtest]=../include .
+  DEPEND[pemtest]=../libcrypto libtestutil.a
+
   IF[{- !$disabled{psk} -}]
     PROGRAMS_NO_INST=dtls_mtu_test
     SOURCE[dtls_mtu_test]=dtls_mtu_test.c ssltestlib.c
@@ -324,6 +316,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     PROGRAMS_NO_INST=shlibloadtest
     SOURCE[shlibloadtest]=shlibloadtest.c
     INCLUDE[shlibloadtest]=../include
+    DEPEND[shlibloadtest]=libtestutil.a
   ENDIF
 
   IF[{- $disabled{shared} -}]
@@ -344,6 +337,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[asn1_encode_test]=asn1_encode_test.c
   INCLUDE[asn1_encode_test]=../include
   DEPEND[asn1_encode_test]=../libcrypto libtestutil.a
+
+  SOURCE[time_offset_test]=time_offset_test.c
+  INCLUDE[time_offset_test]=.. ../include
+  DEPEND[time_offset_test]=../libcrypto libtestutil.a
 
   # Internal test programs.  These are essentially a collection of internal
   # test routines.  Some of them need to reach internal symbols that aren't

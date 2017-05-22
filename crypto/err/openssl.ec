@@ -37,12 +37,11 @@ L ASYNC		include/openssl/async.h		crypto/async/async_err.c
 L KDF		include/openssl/kdf.h		crypto/kdf/kdf_err.c
 
 # additional header files to be scanned for function names
-L NONE		crypto/x509/x509_vfy.h		NONE
+L NONE		include/openssl/x509_vfy.h	NONE
 L NONE		crypto/ec/ec_lcl.h		NONE
-L NONE		crypto/asn1/asn_lcl.h		NONE
 L NONE		crypto/cms/cms_lcl.h		NONE
 L NONE		crypto/ct/ct_locl.h		NONE
-L NONE		fips/rand/fips_rand.h		NONE
+#L NONE		fips/rand/fips_rand.h		NONE
 L NONE		ssl/ssl_locl.h			NONE
 
 F RSAREF_F_RSA_BN2BIN

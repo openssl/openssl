@@ -23,7 +23,7 @@ require "desboth.pl";
 $output=pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],"des-586.pl");
+&asm_init($ARGV[0]);
 
 $L="edi";
 $R="esi";

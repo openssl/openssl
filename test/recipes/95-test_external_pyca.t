@@ -15,18 +15,14 @@ setup("test_external");
 
 plan skip_all => "No external tests in this configuration"
     if disabled("external-tests");
+plan skip_all => "PYCA tests not available on Windows or VMS"
+    if $^O =~ /^(VMS|MSWin32)$/;
+plan skip_all => "PYCA Cryptography not available"
+    if ! -f srctop_file("pyca-cryptography", "setup.py");
+plan skip_all => "PYCA tests only available in a shared build"
+    if disabled("shared");
 
 plan tests => 1;
 
-SKIP: {
-    skip "PYCA Cryptography not available", 1
-        if ! -f srctop_file("pyca-cryptography", "setup.py");
-    skip "PYCA tests not available on Windows or VMS", 1
-        if $^O =~ /^(VMS|MSWin32)$/;
-    skip "PYCA tests only available in a shared build", 1
-        if disabled("shared");
-
-    ok(run(cmd(["sh", data_file("cryptography.sh")])),
-        "running Python Cryptography tests");
-}
-
+ok(run(cmd(["sh", data_file("cryptography.sh")])),
+   "running Python Cryptography tests");

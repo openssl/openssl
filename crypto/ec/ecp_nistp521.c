@@ -31,16 +31,10 @@
  * work which got its smarts from Daniel J. Bernstein's work on the same.
  */
 
-#include <openssl/opensslconf.h>
+#include <openssl/e_os2.h>
 #ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
 NON_EMPTY_TRANSLATION_UNIT
 #else
-
-# ifndef OPENSSL_SYS_VMS
-#  include <stdint.h>
-# else
-#  include <inttypes.h>
-# endif
 
 # include <string.h>
 # include <openssl/err.h>

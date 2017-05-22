@@ -686,6 +686,38 @@ typedef struct {
     RAW_EXTENSION *pre_proc_exts;
 } CLIENTHELLO_MSG;
 
+/*
+ * Extension index values NOTE: Any updates to these defines should be mirrored
+ * with equivalent updates to ext_defs in extensions.c
+ */
+typedef enum tlsext_index_en {
+    TLSEXT_IDX_renegotiate,
+    TLSEXT_IDX_server_name,
+    TLSEXT_IDX_srp,
+    TLSEXT_IDX_ec_point_formats,
+    TLSEXT_IDX_supported_groups,
+    TLSEXT_IDX_session_ticket,
+    TLSEXT_IDX_signature_algorithms,
+    TLSEXT_IDX_status_request,
+    TLSEXT_IDX_next_proto_neg,
+    TLSEXT_IDX_application_layer_protocol_negotiation,
+    TLSEXT_IDX_use_srtp,
+    TLSEXT_IDX_encrypt_then_mac,
+    TLSEXT_IDX_signed_certificate_timestamp,
+    TLSEXT_IDX_extended_master_secret,
+    TLSEXT_IDX_supported_versions,
+    TLSEXT_IDX_psk_kex_modes,
+    TLSEXT_IDX_key_share,
+    TLSEXT_IDX_cookie,
+    TLSEXT_IDX_cryptopro_bug,
+    TLSEXT_IDX_early_data,
+    TLSEXT_IDX_certificate_authorities,
+    TLSEXT_IDX_padding,
+    TLSEXT_IDX_psk,
+    /* Dummy index - must always be the last entry */
+    TLSEXT_IDX_num_builtins
+} TLSEXT_INDEX;
+
 DEFINE_LHASH_OF(SSL_SESSION);
 /* Needed in ssl_cert.c */
 DEFINE_LHASH_OF(X509_NAME);
@@ -973,6 +1005,11 @@ struct ssl_ctx_st {
 
     /* The maximum number of bytes that can be sent as early data */
     uint32_t max_early_data;
+
+    /* TLS1.3 padding callback */
+    size_t (*record_padding_cb)(SSL *s, int type, size_t len, void *arg);
+    void *record_padding_arg;
+    size_t block_padding;
 };
 
 struct ssl_st {
@@ -1148,6 +1185,8 @@ struct ssl_st {
     size_t max_pipelines;
 
     struct {
+        /* Built-in extension flags */
+        uint8_t extflags[TLSEXT_IDX_num_builtins];
         /* TLS extension debug callback */
         void (*debug_cb)(SSL *s, int client_server, int type,
                          const unsigned char *data, int len, void *arg);
@@ -1288,6 +1327,11 @@ struct ssl_st {
      * this is a count of the ciphertext bytes.
      */
     uint32_t early_data_count;
+
+    /* TLS1.3 padding callback */
+    size_t (*record_padding_cb)(SSL *s, int type, size_t len, void *arg);
+    void *record_padding_arg;
+    size_t block_padding;
 
     CRYPTO_RWLOCK *lock;
 };
@@ -1802,36 +1846,6 @@ typedef enum downgrade_en {
     DOWNGRADE_TO_1_2,
     DOWNGRADE_TO_1_1
 } DOWNGRADE;
-
-/*
- * Extension index values NOTE: Any updates to these defines should be mirrored
- * with equivalent updates to ext_defs in extensions.c
- */
-typedef enum tlsext_index_en {
-    TLSEXT_IDX_renegotiate,
-    TLSEXT_IDX_server_name,
-    TLSEXT_IDX_srp,
-    TLSEXT_IDX_ec_point_formats,
-    TLSEXT_IDX_supported_groups,
-    TLSEXT_IDX_session_ticket,
-    TLSEXT_IDX_signature_algorithms,
-    TLSEXT_IDX_status_request,
-    TLSEXT_IDX_next_proto_neg,
-    TLSEXT_IDX_application_layer_protocol_negotiation,
-    TLSEXT_IDX_use_srtp,
-    TLSEXT_IDX_encrypt_then_mac,
-    TLSEXT_IDX_signed_certificate_timestamp,
-    TLSEXT_IDX_extended_master_secret,
-    TLSEXT_IDX_supported_versions,
-    TLSEXT_IDX_psk_kex_modes,
-    TLSEXT_IDX_key_share,
-    TLSEXT_IDX_cookie,
-    TLSEXT_IDX_cryptopro_bug,
-    TLSEXT_IDX_early_data,
-    TLSEXT_IDX_certificate_authorities,
-    TLSEXT_IDX_padding,
-    TLSEXT_IDX_psk
-} TLSEXT_INDEX;
 
 /*
  * Dummy status type for the status_type extension. Indicates no status type
@@ -2460,6 +2474,8 @@ __owur int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x,
 
 __owur int custom_exts_copy(custom_ext_methods *dst,
                             const custom_ext_methods *src);
+__owur int custom_exts_copy_flags(custom_ext_methods *dst,
+                                  const custom_ext_methods *src);
 void custom_exts_free(custom_ext_methods *exts);
 
 void ssl_comp_free_compression_methods_int(void);

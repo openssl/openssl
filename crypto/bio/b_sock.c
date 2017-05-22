@@ -167,8 +167,6 @@ void bio_sock_cleanup_int(void)
 # endif
 }
 
-# if !defined(OPENSSL_SYS_VMS) || __VMS_VER >= 70000000
-
 int BIO_socket_ioctl(int fd, long type, void *arg)
 {
     int i;
@@ -206,7 +204,6 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
         SYSerr(SYS_F_IOCTLSOCKET, get_last_socket_error());
     return (i);
 }
-# endif                         /* __VMS_VER */
 
 # if OPENSSL_API_COMPAT < 0x10100000L
 int BIO_get_accept_socket(char *host, int bind_mode)

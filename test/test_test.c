@@ -17,6 +17,7 @@
 #include <openssl/opensslconf.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
+#include <openssl/bn.h>
 
 #include "e_os.h"
 #include "testutil.h"
@@ -26,7 +27,7 @@
 static int test_case(int expected, const char *test, int result)
 {
     if (result != expected) {
-        fprintf(stderr, "FATAL: %s != %d\n", test, expected);
+        fprintf(stderr, "# FATAL: %s != %d\n", test, expected);
         return 0;
     }
     return 1;
@@ -239,8 +240,13 @@ static int test_string(void)
     if (!TEST(1, TEST_str_eq(NULL, NULL))
         | !TEST(1, TEST_str_eq("abc", buf))
         | !TEST(0, TEST_str_eq("abc", NULL))
+        | !TEST(0, TEST_str_eq("abc", ""))
         | !TEST(0, TEST_str_eq(NULL, buf))
         | !TEST(0, TEST_str_ne(NULL, NULL))
+        | !TEST(0, TEST_str_eq("", NULL))
+        | !TEST(0, TEST_str_eq(NULL, ""))
+        | !TEST(0, TEST_str_ne("", ""))
+        | !TEST(0, TEST_str_eq("\1\2\3\4\5", "\1x\3\6\5"))
         | !TEST(0, TEST_str_ne("abc", buf))
         | !TEST(1, TEST_str_ne("abc", NULL))
         | !TEST(1, TEST_str_ne(NULL, buf)))
@@ -258,7 +264,11 @@ static int test_memory(void)
     if (!TEST(1, TEST_mem_eq(NULL, 0, NULL, 0))
         | !TEST(1, TEST_mem_eq(NULL, 1, NULL, 2))
         | !TEST(0, TEST_mem_eq(NULL, 0, "xyz", 3))
+        | !TEST(0, TEST_mem_eq(NULL, 7, "abc", 3))
+        | !TEST(0, TEST_mem_ne(NULL, 0, NULL, 0))
         | !TEST(0, TEST_mem_eq(NULL, 0, "", 0))
+        | !TEST(0, TEST_mem_eq("", 0, NULL, 0))
+        | !TEST(0, TEST_mem_ne("", 0, "", 0))
         | !TEST(0, TEST_mem_eq("xyz", 3, NULL, 0))
         | !TEST(0, TEST_mem_eq("xyz", 3, buf, sizeof(buf)))
         | !TEST(1, TEST_mem_eq("xyz", 4, buf, sizeof(buf))))
@@ -276,6 +286,135 @@ static int test_memory_overflow(void)
     const char *q = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     return TEST(0, TEST_mem_eq(p, strlen(p), q, strlen(q)));
+}
+
+static int test_bignum(void)
+{
+    BIGNUM *a = NULL, *b = NULL, *c = NULL;
+    int r = 0;
+
+    if (!TEST(1, TEST_int_eq(BN_dec2bn(&a, "0"), 1))
+        | !TEST(1, TEST_BN_eq_word(a, 0))
+        | !TEST(0, TEST_BN_eq_word(a, 30))
+        | !TEST(1, TEST_BN_abs_eq_word(a, 0))
+        | !TEST(0, TEST_BN_eq_one(a))
+        | !TEST(1, TEST_BN_eq_zero(a))
+        | !TEST(0, TEST_BN_ne_zero(a))
+        | !TEST(1, TEST_BN_le_zero(a))
+        | !TEST(0, TEST_BN_lt_zero(a))
+        | !TEST(1, TEST_BN_ge_zero(a))
+        | !TEST(0, TEST_BN_gt_zero(a))
+        | !TEST(1, TEST_BN_even(a))
+        | !TEST(0, TEST_BN_odd(a))
+        | !TEST(1, TEST_BN_eq(b, c))
+        | !TEST(0, TEST_BN_eq(a, b))
+        | !TEST(0, TEST_BN_ne(NULL, c))
+        | !TEST(1, TEST_int_eq(BN_dec2bn(&b, "1"), 1))
+        | !TEST(1, TEST_BN_eq_word(b, 1))
+        | !TEST(1, TEST_BN_eq_one(b))
+        | !TEST(0, TEST_BN_abs_eq_word(b, 0))
+        | !TEST(1, TEST_BN_abs_eq_word(b, 1))
+        | !TEST(0, TEST_BN_eq_zero(b))
+        | !TEST(1, TEST_BN_ne_zero(b))
+        | !TEST(0, TEST_BN_le_zero(b))
+        | !TEST(0, TEST_BN_lt_zero(b))
+        | !TEST(1, TEST_BN_ge_zero(b))
+        | !TEST(1, TEST_BN_gt_zero(b))
+        | !TEST(0, TEST_BN_even(b))
+        | !TEST(1, TEST_BN_odd(b))
+        | !TEST(1, TEST_int_eq(BN_dec2bn(&c, "-334739439"), 10))
+        | !TEST(0, TEST_BN_eq_word(c, 334739439))
+        | !TEST(1, TEST_BN_abs_eq_word(c, 334739439))
+        | !TEST(0, TEST_BN_eq_zero(c))
+        | !TEST(1, TEST_BN_ne_zero(c))
+        | !TEST(1, TEST_BN_le_zero(c))
+        | !TEST(1, TEST_BN_lt_zero(c))
+        | !TEST(0, TEST_BN_ge_zero(c))
+        | !TEST(0, TEST_BN_gt_zero(c))
+        | !TEST(0, TEST_BN_even(c))
+        | !TEST(1, TEST_BN_odd(c))
+        | !TEST(1, TEST_BN_eq(a, a))
+        | !TEST(0, TEST_BN_ne(a, a))
+        | !TEST(0, TEST_BN_eq(a, b))
+        | !TEST(1, TEST_BN_ne(a, b))
+        | !TEST(0, TEST_BN_lt(a, c))
+        | !TEST(1, TEST_BN_lt(c, b))
+        | !TEST(0, TEST_BN_lt(b, c))
+        | !TEST(0, TEST_BN_le(a, c))
+        | !TEST(1, TEST_BN_le(c, b))
+        | !TEST(0, TEST_BN_le(b, c))
+        | !TEST(1, TEST_BN_gt(a, c))
+        | !TEST(0, TEST_BN_gt(c, b))
+        | !TEST(1, TEST_BN_gt(b, c))
+        | !TEST(1, TEST_BN_ge(a, c))
+        | !TEST(0, TEST_BN_ge(c, b))
+        | !TEST(1, TEST_BN_ge(b, c)))
+        goto err;
+
+    r = 1;
+err:
+    BN_free(a);
+    BN_free(b);
+    BN_free(c);
+    return r;
+}
+
+static int test_long_output(void)
+{
+    const char *p = "1234567890123456789012345678901234567890123456789012";
+    const char *q = "1234567890klmnopqrs01234567890EFGHIJKLM0123456789XYZ";
+    const char *r = "1234567890123456789012345678901234567890123456789012"
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY+"
+                    "12345678901234567890123ABC78901234567890123456789012";
+    const char *s = "1234567890123456789012345678901234567890123456789012"
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXY-"
+                    "1234567890123456789012345678901234567890123456789012"
+                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    return TEST(0, TEST_str_eq(p,  q))
+           & TEST(0, TEST_str_eq(q, r))
+           & TEST(0, TEST_str_eq(r, s))
+           & TEST(0, TEST_mem_eq(r, strlen(r), s, strlen(s)));
+}
+
+static int test_long_bignum(void)
+{
+    int r;
+    BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL;
+    const char as[] = "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789012"
+                      "FFFFFF";
+    const char bs[] = "1234567890123456789012345678901234567890123456789012"
+                      "1234567890123456789012345678901234567890123456789013"
+                      "987657";
+    const char cs[] = "-"        /* 64 characters plus sign */
+                      "123456789012345678901234567890"
+                      "123456789012345678901234567890"
+                      "ABCD";
+    const char ds[] = "-"        /* 63 characters plus sign */
+                      "23456789A123456789B123456789C"
+                      "123456789D123456789E123456789F"
+                      "ABCD";
+
+    r = TEST_true(BN_hex2bn(&a, as))
+        && TEST_true(BN_hex2bn(&b, bs))
+        && TEST_true(BN_hex2bn(&c, cs))
+        && TEST_true(BN_hex2bn(&d, ds))
+        && (TEST(0, TEST_BN_eq(a, b))
+            & TEST(0, TEST_BN_eq(b, a))
+            & TEST(0, TEST_BN_eq(b, NULL))
+            & TEST(0, TEST_BN_eq(NULL, a))
+            & TEST(1, TEST_BN_ne(a, NULL))
+            & TEST(0, TEST_BN_eq(c, d)));
+    BN_free(a);
+    BN_free(b);
+    BN_free(c);
+    BN_free(d);
+    return r;
 }
 
 static int test_messages(void)
@@ -354,6 +493,9 @@ void register_tests(void)
     ADD_TEST(test_string);
     ADD_TEST(test_memory);
     ADD_TEST(test_memory_overflow);
+    ADD_TEST(test_bignum);
+    ADD_TEST(test_long_bignum);
+    ADD_TEST(test_long_output);
     ADD_TEST(test_messages);
     ADD_TEST(test_single_eval);
 }
