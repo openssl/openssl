@@ -9,7 +9,9 @@
 
  Changes between 1.1.0f and 1.1.0g [xx XXX xxxx]
 
-  *)
+  *) Ignore the '-named_curve auto' value for compatibility of applications
+     with OpenSSL 1.0.2.
+     [Tomas Mraz <tmraz@fedoraproject.org>]
 
  Changes between 1.1.0e and 1.1.0f [25 May 2017]
 
