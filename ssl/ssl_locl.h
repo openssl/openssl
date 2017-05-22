@@ -452,7 +452,7 @@ struct ssl_method_st {
     unsigned flags;
     unsigned long mask;
     int (*ssl_new) (SSL *s);
-    void (*ssl_clear) (SSL *s);
+    int (*ssl_clear) (SSL *s);
     void (*ssl_free) (SSL *s);
     int (*ssl_accept) (SSL *s);
     int (*ssl_connect) (SSL *s);
@@ -2181,7 +2181,7 @@ __owur int ssl3_read(SSL *s, void *buf, size_t len, size_t *readbytes);
 __owur int ssl3_peek(SSL *s, void *buf, size_t len, size_t *readbytes);
 __owur int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written);
 __owur int ssl3_shutdown(SSL *s);
-void ssl3_clear(SSL *s);
+int ssl3_clear(SSL *s);
 __owur long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur long ssl3_ctx_ctrl(SSL_CTX *s, int cmd, long larg, void *parg);
 __owur long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
@@ -2246,20 +2246,20 @@ __owur int dtls1_query_mtu(SSL *s);
 
 __owur int tls1_new(SSL *s);
 void tls1_free(SSL *s);
-void tls1_clear(SSL *s);
+int tls1_clear(SSL *s);
 long tls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 long tls1_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
 
 __owur int dtls1_new(SSL *s);
 void dtls1_free(SSL *s);
-void dtls1_clear(SSL *s);
+int dtls1_clear(SSL *s);
 long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur int dtls1_shutdown(SSL *s);
 
 __owur int dtls1_dispatch_alert(SSL *s);
 
 __owur int ssl_init_wbio_buffer(SSL *s);
-void ssl_free_wbio_buffer(SSL *s);
+int ssl_free_wbio_buffer(SSL *s);
 
 __owur int tls1_change_cipher_state(SSL *s, int which);
 __owur int tls1_setup_key_block(SSL *s);

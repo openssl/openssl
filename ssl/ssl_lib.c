@@ -39,7 +39,6 @@
  * OTHERWISE.
  */
 
-#include <assert.h>
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/objects.h>
@@ -493,8 +492,10 @@ int SSL_clear(SSL *s)
         s->method = s->ctx->method;
         if (!s->method->ssl_new(s))
             return 0;
-    } else
-        s->method->ssl_clear(s);
+    } else {
+        if (!s->method->ssl_clear(s))
+            return 0;
+    }
 
     RECORD_LAYER_clear(&s->rlayer);
 
@@ -981,6 +982,7 @@ void SSL_free(SSL *s)
     dane_final(&s->dane);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
 
+    /* Ignore return value */
     ssl_free_wbio_buffer(s);
 
     BIO_free_all(s->wbio);
@@ -3529,16 +3531,19 @@ int ssl_init_wbio_buffer(SSL *s)
     return 1;
 }
 
-void ssl_free_wbio_buffer(SSL *s)
+int ssl_free_wbio_buffer(SSL *s)
 {
     /* callers ensure s is never null */
     if (s->bbio == NULL)
-        return;
+        return 1;
 
     s->wbio = BIO_pop(s->wbio);
-    assert(s->wbio != NULL);
+    if (!ossl_assert(s->wbio != NULL))
+        return 0;
     BIO_free(s->bbio);
     s->bbio = NULL;
+
+    return 1;
 }
 
 void SSL_CTX_set_quiet_shutdown(SSL_CTX *ctx, int mode)
