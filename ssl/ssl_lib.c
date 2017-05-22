@@ -443,7 +443,7 @@ int SSL_clear(SSL *s)
 {
     if (s->method == NULL) {
         SSLerr(SSL_F_SSL_CLEAR, SSL_R_NO_METHOD_SPECIFIED);
-        return (0);
+        return 0;
     }
 
     if (ssl_clear_bad_session(s)) {
@@ -492,13 +492,13 @@ int SSL_clear(SSL *s)
         s->method->ssl_free(s);
         s->method = s->ctx->method;
         if (!s->method->ssl_new(s))
-            return (0);
+            return 0;
     } else
         s->method->ssl_clear(s);
 
     RECORD_LAYER_clear(&s->rlayer);
 
-    return (1);
+    return 1;
 }
 
 /** Used to change an SSL_CTXs default SSL method type */
