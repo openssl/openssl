@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <assert.h>
 #include <openssl/ocsp.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
@@ -541,8 +540,7 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
     size_t encodedlen;
 
     if (s->s3->tmp.pkey != NULL) {
-        assert(s->hello_retry_request);
-        if (!s->hello_retry_request) {
+        if (!ossl_assert(s->hello_retry_request)) {
             SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -923,8 +921,13 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
     const unsigned char *data;
 
     /* Check for logic errors */
-    assert(expected_len == 0 || s->s3->previous_client_finished_len != 0);
-    assert(expected_len == 0 || s->s3->previous_server_finished_len != 0);
+    if (!ossl_assert(expected_len == 0
+                     || s->s3->previous_client_finished_len != 0)
+        || !ossl_assert(expected_len == 0
+                        || s->s3->previous_server_finished_len != 0)) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        return 0;
+    }
 
     /* Parse the length byte */
     if (!PACKET_get_1_len(pkt, &ilen)) {

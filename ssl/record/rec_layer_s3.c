@@ -8,7 +8,6 @@
  */
 
 #include <stdio.h>
-#include <assert.h>
 #include <limits.h>
 #include <errno.h>
 #define USE_SOCKETS

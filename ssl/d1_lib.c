@@ -104,7 +104,10 @@ int dtls1_new(SSL *s)
     }
 
     s->d1 = d1;
-    s->method->ssl_clear(s);
+
+    if (!s->method->ssl_clear(s))
+        return 0;
+
     return 1;
 }
 
@@ -154,7 +157,7 @@ void dtls1_free(SSL *s)
     s->d1 = NULL;
 }
 
-void dtls1_clear(SSL *s)
+int dtls1_clear(SSL *s)
 {
     pqueue *buffered_messages;
     pqueue *sent_messages;
@@ -186,7 +189,8 @@ void dtls1_clear(SSL *s)
         s->d1->sent_messages = sent_messages;
     }
 
-    ssl3_clear(s);
+    if (!ssl3_clear(s))
+        return 0;
 
     if (s->method->version == DTLS_ANY_VERSION)
         s->version = DTLS_MAX_VERSION;
@@ -196,6 +200,8 @@ void dtls1_clear(SSL *s)
 #endif
     else
         s->version = s->method->version;
+
+    return 1;
 }
 
 long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)

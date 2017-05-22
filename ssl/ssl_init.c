@@ -12,7 +12,6 @@
 #include "internal/err.h"
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
-#include <assert.h>
 #include "ssl_locl.h"
 #include "internal/thread_once.h"
 

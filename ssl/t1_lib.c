@@ -101,9 +101,11 @@ long tls1_default_timeout(void)
 int tls1_new(SSL *s)
 {
     if (!ssl3_new(s))
-        return (0);
-    s->method->ssl_clear(s);
-    return (1);
+        return 0;
+    if (!s->method->ssl_clear(s))
+        return 0;
+
+    return 1;
 }
 
 void tls1_free(SSL *s)
@@ -112,13 +114,17 @@ void tls1_free(SSL *s)
     ssl3_free(s);
 }
 
-void tls1_clear(SSL *s)
+int tls1_clear(SSL *s)
 {
-    ssl3_clear(s);
+    if (!ssl3_clear(s))
+        return 0;
+
     if (s->method->version == TLS_ANY_VERSION)
         s->version = TLS_MAX_VERSION;
     else
         s->version = s->method->version;
+
+    return 1;
 }
 
 #ifndef OPENSSL_NO_EC

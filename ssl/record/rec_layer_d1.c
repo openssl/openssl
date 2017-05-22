@@ -14,7 +14,6 @@
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
 #include "record_locl.h"
-#include <assert.h>
 #include "../packet_locl.h"
 
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
@@ -645,8 +644,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * (which is tested for at the top of this function) then init must be
          * finished
          */
-        assert(SSL_is_init_finished(s));
-        if (!SSL_is_init_finished(s)) {
+        if (!ossl_assert(SSL_is_init_finished(s))) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_DTLS1_READ_BYTES, ERR_R_INTERNAL_ERROR);
             goto f_err;

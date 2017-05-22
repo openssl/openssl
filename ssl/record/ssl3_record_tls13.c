@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <assert.h>
 #include "../ssl_locl.h"
 #include "record_locl.h"
 
@@ -64,8 +63,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
          * To get here we must have selected a ciphersuite - otherwise ctx would
          * be NULL
          */
-        assert(s->s3->tmp.new_cipher != NULL);
-        if (s->s3->tmp.new_cipher == NULL)
+        if (!ossl_assert(s->s3->tmp.new_cipher != NULL))
             return -1;
         alg_enc = s->s3->tmp.new_cipher->algorithm_enc;
     }

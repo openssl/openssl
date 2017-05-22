@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <assert.h>
 #include "internal/constant_time_locl.h"
 #include "ssl_locl.h"
 
@@ -229,15 +228,14 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
          * ssl3_cbc_record_digest_supported should have been called first to
          * check that the hash function is supported.
          */
-        assert(0);
-        if (md_out_size)
+        if (md_out_size != NULL)
             *md_out_size = 0;
-        return 0;
+        return ossl_assert(0);
     }
 
-    if (!ossl_assert(md_length_size <= MAX_HASH_BIT_COUNT_BYTES
-                    && md_block_size <= MAX_HASH_BLOCK_SIZE
-                    && md_size <= EVP_MAX_MD_SIZE))
+    if (!ossl_assert(md_length_size <= MAX_HASH_BIT_COUNT_BYTES)
+            || !ossl_assert(md_block_size <= MAX_HASH_BLOCK_SIZE)
+            || !ossl_assert(md_size <= EVP_MAX_MD_SIZE))
         return 0;
 
     header_length = 13;
