@@ -9,7 +9,6 @@
 
 /* Custom extension utility functions */
 
-#include <assert.h>
 #include <openssl/ct.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
@@ -217,7 +216,10 @@ int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x, size_t chainidx,
             /*
              * We can't send duplicates: code logic should prevent this.
              */
-            assert((meth->ext_flags & SSL_EXT_FLAG_SENT) == 0);
+            if (!ossl_assert((meth->ext_flags & SSL_EXT_FLAG_SENT) == 0)) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                return 0;
+            }
             /*
              * Indicate extension has been sent: this is both a sanity check to
              * ensure we don't send duplicate extensions and indicates that it
