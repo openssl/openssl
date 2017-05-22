@@ -549,7 +549,7 @@ Encrypt a string using IDEA:
         unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
         unsigned char iv[] = {1,2,3,4,5,6,7,8};
         char intext[] = "Some Crypto Text";
-        EVP_CIPHER_CTX ctx;
+        EVP_CIPHER_CTX *ctx;
         FILE *out;
 
         ctx = EVP_CIPHER_CTX_new();
