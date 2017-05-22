@@ -79,10 +79,10 @@ int dtls1_new(SSL *s)
     }
 
     if (!ssl3_new(s))
-        return (0);
+        return 0;
     if ((d1 = OPENSSL_zalloc(sizeof(*d1))) == NULL) {
         ssl3_free(s);
-        return (0);
+        return 0;
     }
 
     d1->buffered_messages = pqueue_new();
@@ -100,12 +100,12 @@ int dtls1_new(SSL *s)
         pqueue_free(d1->sent_messages);
         OPENSSL_free(d1);
         ssl3_free(s);
-        return (0);
+        return 0;
     }
 
     s->d1 = d1;
     s->method->ssl_clear(s);
-    return (1);
+    return 1;
 }
 
 static void dtls1_clear_queues(SSL *s)
