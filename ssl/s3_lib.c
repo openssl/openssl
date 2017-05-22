@@ -2915,9 +2915,9 @@ int ssl3_new(SSL *s)
         goto err;
 #endif
     s->method->ssl_clear(s);
-    return (1);
+    return 1;
  err:
-    return (0);
+    return 0;
 }
 
 void ssl3_free(SSL *s)
