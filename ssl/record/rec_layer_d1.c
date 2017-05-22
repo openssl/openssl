@@ -732,8 +732,10 @@ int dtls1_write_bytes(SSL *s, int type, const void *buf, size_t len,
 {
     int i;
 
-    if (!ossl_assert(len <= SSL3_RT_MAX_PLAIN_LENGTH))
+    if (!ossl_assert(len <= SSL3_RT_MAX_PLAIN_LENGTH)) {
+        SSLerr(SSL_F_DTLS1_WRITE_BYTES, ERR_R_INTERNAL_ERROR);
         return -1;
+    }
     s->rwstate = SSL_NOTHING;
     i = do_dtls1_write(s, type, buf, len, 0, written);
     return i;
