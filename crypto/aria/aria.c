@@ -914,12 +914,12 @@ static const ARIA_u128 c3 = {{
  * Exclusive or two 128 bit values into the result.
  * It is safe for the result to be the same as the either input.
  */
-static void xor128(ARIA_u128 *o, const ARIA_u128 *x, const ARIA_u128 *y)
+static void xor128(ARIA_c128 o, const ARIA_c128 x, const ARIA_u128 *y)
 {
     int i;
 
     for (i = 0; i < ARIA_BLOCK_SIZE; i++)
-        o->c[i] = x->c[i] ^ y->c[i];
+        o[i] = x[i] ^ y->c[i];
 }
 
 /*
@@ -1005,14 +1005,14 @@ static void sl1(ARIA_u128 *o, const ARIA_u128 *x, const ARIA_u128 *y)
  * Second substitution and xor layer, used for even steps.
  * It is safe for the input and output to be the same.
  */
-static void sl2(ARIA_u128 *o, const ARIA_u128 *x, const ARIA_u128 *y)
+static void sl2(ARIA_c128 o, const ARIA_u128 *x, const ARIA_u128 *y)
 {
     unsigned int i;
     for (i = 0; i < ARIA_BLOCK_SIZE; i += 4) {
-        o->c[i    ] = sb3[x->c[i    ] ^ y->c[i    ]];
-        o->c[i + 1] = sb4[x->c[i + 1] ^ y->c[i + 1]];
-        o->c[i + 2] = sb1[x->c[i + 2] ^ y->c[i + 2]];
-        o->c[i + 3] = sb2[x->c[i + 3] ^ y->c[i + 3]];
+        o[i    ] = sb3[x->c[i	 ] ^ y->c[i    ]];
+        o[i + 1] = sb4[x->c[i + 1] ^ y->c[i + 1]];
+        o[i + 2] = sb1[x->c[i + 2] ^ y->c[i + 2]];
+        o[i + 3] = sb2[x->c[i + 3] ^ y->c[i + 3]];
     }
 }
 
@@ -1080,7 +1080,7 @@ static ossl_inline void FE(ARIA_u128 *o, const ARIA_u128 *d,
 {
     ARIA_u128 y;
 
-    sl2(&y, d, rk);
+    sl2(y.c, d, rk);
     a(o, &y);
 }
 
@@ -1092,7 +1092,6 @@ static void do_encrypt(unsigned char *o, const unsigned char *pin,
                        unsigned int rounds, const ARIA_u128 *keys)
 {
     ARIA_u128 p;
-    ARIA_u128 *o128 = (ARIA_u128 *)o;
     unsigned int i;
 
     memcpy(&p, pin, sizeof(p));
@@ -1101,8 +1100,8 @@ static void do_encrypt(unsigned char *o, const unsigned char *pin,
         FE(&p, &p, &keys[i + 1]);
     }
     FO(&p, &p, &keys[rounds - 2]);
-    sl2(o128, &p, &keys[rounds - 1]);
-    xor128(o128, o128, &keys[rounds]);
+    sl2(o, &p, &keys[rounds - 1]);
+    xor128(o, o, &keys[rounds]);
 }
 
 /*
@@ -1160,9 +1159,9 @@ int aria_set_encrypt_key(const unsigned char *userKey, const int bits,
         break;
     }
 
-    FO(&w3, &w0, ck1);    xor128(&w1, &w3, &kr);
-    FE(&w3, &w1, ck2);    xor128(&w2, &w3, &w0);
-    FO(&kr, &w2, ck3);    xor128(&w3, &kr, &w1);
+    FO(&w3, &w0, ck1);    xor128(w1.c, w3.c, &kr);
+    FE(&w3, &w1, ck2);    xor128(w2.c, w3.c, &w0);
+    FO(&kr, &w2, ck3);    xor128(w3.c, kr.c, &w1);
 
     rot19r(&key->rd_key[ 0], &w0, &w1);
     rot19r(&key->rd_key[ 1], &w1, &w2);
