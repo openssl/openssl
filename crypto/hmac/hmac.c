@@ -37,7 +37,8 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
     if (key != NULL) {
         reset = 1;
         j = EVP_MD_block_size(md);
-        OPENSSL_assert(j <= (int)sizeof(ctx->key));
+        if (!ossl_assert(j <= (int)sizeof(ctx->key)))
+            goto err;
         if (j < len) {
             if (!EVP_DigestInit_ex(ctx->md_ctx, md, impl))
                 goto err;
