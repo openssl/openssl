@@ -95,6 +95,9 @@ extern "C" {
 # define OPENSSL_API_COMPAT OPENSSL_MIN_API
 #endif
 
+/* Functions may be flagged for future deprecation */
+#define DEPRECATEDIN_1_2_0(f)   f;
+
 #if OPENSSL_API_COMPAT < 0x10100000L
 # define DEPRECATEDIN_1_1_0(f)   DECLARE_DEPRECATED(f)
 #else
