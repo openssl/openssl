@@ -132,11 +132,13 @@ static int b64_read(BIO *b, char *out, int outl)
 
     /* First check if there are bytes decoded/encoded */
     if (ctx->buf_len > 0) {
-        OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
+        if (!ossl_assert(ctx->buf_len >= ctx->buf_off))
+            return 0;
         i = ctx->buf_len - ctx->buf_off;
         if (i > outl)
             i = outl;
-        OPENSSL_assert(ctx->buf_off + i < (int)sizeof(ctx->buf));
+        if (!ossl_assert(ctx->buf_off + i < (int)sizeof(ctx->buf)))
+            return 0;
         memcpy(out, &(ctx->buf[ctx->buf_off]), i);
         ret = i;
         out += i;
@@ -338,9 +340,10 @@ static int b64_write(BIO *b, const char *in, int inl)
         EVP_EncodeInit(ctx->base64);
     }
 
-    OPENSSL_assert(ctx->buf_off < (int)sizeof(ctx->buf));
-    OPENSSL_assert(ctx->buf_len <= (int)sizeof(ctx->buf));
-    OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
+    if (!ossl_assert(ctx->buf_off < (int)sizeof(ctx->buf))
+            || !ossl_assert(ctx->buf_len <= (int)sizeof(ctx->buf))
+            || !ossl_assert(ctx->buf_len >= ctx->buf_off))
+        return 0;
     n = ctx->buf_len - ctx->buf_off;
     while (n > 0) {
         i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
@@ -348,10 +351,12 @@ static int b64_write(BIO *b, const char *in, int inl)
             BIO_copy_next_retry(b);
             return (i);
         }
-        OPENSSL_assert(i <= n);
+        if (!ossl_assert(i <= n))
+            return 0;
         ctx->buf_off += i;
-        OPENSSL_assert(ctx->buf_off <= (int)sizeof(ctx->buf));
-        OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
+        if (!ossl_assert(ctx->buf_off <= (int)sizeof(ctx->buf))
+                || !ossl_assert(ctx->buf_len >= ctx->buf_off))
+            return 0;
         n -= i;
     }
     /* at this point all pending data has been written */
@@ -366,7 +371,8 @@ static int b64_write(BIO *b, const char *in, int inl)
 
         if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL) {
             if (ctx->tmp_len > 0) {
-                OPENSSL_assert(ctx->tmp_len <= 3);
+                if (!ossl_assert(ctx->tmp_len <= 3))
+                    return 0;
                 n = 3 - ctx->tmp_len;
                 /*
                  * There's a theoretical possibility for this
@@ -381,8 +387,9 @@ static int b64_write(BIO *b, const char *in, int inl)
                 ctx->buf_len =
                     EVP_EncodeBlock((unsigned char *)ctx->buf,
                                     (unsigned char *)ctx->tmp, ctx->tmp_len);
-                OPENSSL_assert(ctx->buf_len <= (int)sizeof(ctx->buf));
-                OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
+                if (!ossl_assert(ctx->buf_len <= (int)sizeof(ctx->buf))
+                        || !ossl_assert(ctx->buf_len >= ctx->buf_off))
+                    return 0;
                 /*
                  * Since we're now done using the temporary buffer, the
                  * length should be 0'd
@@ -399,8 +406,9 @@ static int b64_write(BIO *b, const char *in, int inl)
                 ctx->buf_len =
                     EVP_EncodeBlock((unsigned char *)ctx->buf,
                                     (const unsigned char *)in, n);
-                OPENSSL_assert(ctx->buf_len <= (int)sizeof(ctx->buf));
-                OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
+                if (!ossl_assert(ctx->buf_len <= (int)sizeof(ctx->buf))
+                        || !ossl_assert(ctx->buf_len >= ctx->buf_off))
+                    return 0;
                 ret += n;
             }
         } else {
@@ -408,8 +416,9 @@ static int b64_write(BIO *b, const char *in, int inl)
                                  (unsigned char *)ctx->buf, &ctx->buf_len,
                                  (unsigned char *)in, n))
                 return ((ret == 0) ? -1 : ret);
-            OPENSSL_assert(ctx->buf_len <= (int)sizeof(ctx->buf));
-            OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
+            if (!ossl_assert(ctx->buf_len <= (int)sizeof(ctx->buf))
+                    || !ossl_assert(ctx->buf_len >= ctx->buf_off))
+                return 0;
             ret += n;
         }
         inl -= n;
@@ -423,11 +432,13 @@ static int b64_write(BIO *b, const char *in, int inl)
                 BIO_copy_next_retry(b);
                 return ((ret == 0) ? i : ret);
             }
-            OPENSSL_assert(i <= n);
+            if (!ossl_assert(i <= n))
+                return 0;
             n -= i;
             ctx->buf_off += i;
-            OPENSSL_assert(ctx->buf_off <= (int)sizeof(ctx->buf));
-            OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
+            if (!ossl_assert(ctx->buf_off <= (int)sizeof(ctx->buf))
+                    || !ossl_assert(ctx->buf_len >= ctx->buf_off))
+                return 0;
         }
         ctx->buf_len = 0;
         ctx->buf_off = 0;
@@ -461,7 +472,8 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_WPENDING:    /* More to write in buffer */
-        OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
+        if (!ossl_assert(ctx->buf_len >= ctx->buf_off))
+            return 0;
         ret = ctx->buf_len - ctx->buf_off;
         if ((ret == 0) && (ctx->encode != B64_NONE)
             && (EVP_ENCODE_CTX_num(ctx->base64) != 0))
@@ -470,7 +482,8 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_PENDING:     /* More to read in buffer */
-        OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
+        if (!ossl_assert(ctx->buf_len >= ctx->buf_off))
+            return 0;
         ret = ctx->buf_len - ctx->buf_off;
         if (ret <= 0)
             ret = BIO_ctrl(next, cmd, num, ptr);

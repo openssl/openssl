@@ -86,9 +86,13 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
         if (!EVP_DigestFinal_ex(ctx, md_tmp, NULL))
             goto err;
     }
-    OPENSSL_assert(EVP_CIPHER_key_length(cipher) <= (int)sizeof(md_tmp));
+    if (!ossl_assert(EVP_CIPHER_key_length(cipher) <= (int)sizeof(md_tmp))) {
+        EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     memcpy(key, md_tmp, EVP_CIPHER_key_length(cipher));
-    OPENSSL_assert(EVP_CIPHER_iv_length(cipher) <= 16);
+    if (!ossl_assert(EVP_CIPHER_iv_length(cipher) <= 16))
+        goto err;
     memcpy(iv, md_tmp + (16 - EVP_CIPHER_iv_length(cipher)),
            EVP_CIPHER_iv_length(cipher));
     if (!EVP_CipherInit_ex(cctx, cipher, NULL, key, iv, en_de))

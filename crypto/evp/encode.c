@@ -131,7 +131,8 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     *outl = 0;
     if (inl <= 0)
         return 0;
-    OPENSSL_assert(ctx->length <= (int)sizeof(ctx->enc_data));
+    if (!ossl_assert(ctx->length <= (int)sizeof(ctx->enc_data)))
+        return 0;
     if (ctx->length - ctx->num > inl) {
         memcpy(&(ctx->enc_data[ctx->num]), in, inl);
         ctx->num += inl;
@@ -302,7 +303,10 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
                 rv = -1;
                 goto end;
             }
-            OPENSSL_assert(n < (int)sizeof(ctx->enc_data));
+            if(!ossl_assert(n < (int)sizeof(ctx->enc_data))) {
+                rv = -1;
+                goto end;
+            }
             d[n++] = tmp;
         }
 
