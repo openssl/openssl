@@ -12,7 +12,8 @@
 # and continue until a blank line.  Lines starting with a pound sign,
 # like this prolog, are ignored.
 
-Title = scrypt tests from draft-josefsson-scrypt-kdf-03
+Title = scrypt tests (from draft-josefsson-scrypt-kdf-03 and others)
+
 PBE = scrypt
 Password = ""
 Salt = ""
@@ -48,10 +49,11 @@ N = 1048576
 r = 8
 p = 1
 Key = 2101cb9b6a511aaeaddbbe09cf70f881ec568d574a2ffd4dabe5ee9820adaa478e56fd8f4ba5d09ffa1c6d927c40f4c337304049e8a952fbcbf45c6fa77a41a4
-#maxmem = 10000000000
 Result = SCRYPT_ERROR
+#maxmem = 10000000000
 
-Title = PKCS#12 tests
+Title = PKCS12 tests
+
 PBE = pkcs12
 id = 1
 iter = 1
@@ -70,7 +72,7 @@ Key = 79993DFE048D3B76
 
 PBE = pkcs12
 id = 3
-iter 1
+iter = 1
 MD = SHA1
 Password = 0073006D006500670000
 Salt = 3D83C0E4546AC140
@@ -101,6 +103,7 @@ Salt = 263216FCC2FAB31C
 Key = 5EC4C7A80DF652294C3925B6489A7AB857C83476
 
 Title = PBKDF2 tests
+
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -207,6 +210,7 @@ MD = sha512
 Key = 9d9e9c4cd21fe4be24d5b8244c759665
 
 Title = PBKDF2 tests for empty and NULL inputs
+
 PBE = pbkdf2
 Password = ""
 Salt = "salt"
