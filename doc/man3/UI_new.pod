@@ -94,10 +94,13 @@ this UI, it should be freed using UI_free().
 UI_new_method() creates a new UI using the given UI method.  When done with
 this UI, it should be freed using UI_free().
 
-UI_OpenSSL() returns the built-in UI method (note: not the default one,
-since the default can be changed.  See further on).  This method is the
-most machine/OS dependent part of OpenSSL and normally generates the
-most problems when porting.
+UI_OpenSSL() returns the built-in UI method (note: not necessarely the
+default one, since the default can be changed.  See further on).  This
+method is the most machine/OS dependent part of OpenSSL and normally
+generates the most problems when porting.
+
+UI_null() returns a UI method that does nothing.  Its use is to avoid
+getting internal defaults for passed UI_METHOD pointers.
 
 UI_free() removes a UI from memory, along with all other pieces of memory
 that's connected to it, like duplicated input strings, results and others.
@@ -177,11 +180,15 @@ UI_get_method() returns the UI method associated with a given UI.
 
 UI_set_method() changes the UI method associated with a given UI.
 
-UI_OpenSSL() is the default OpenSSL UI method for prompting
-passphrases on the command line.
+=head1 NOTES
 
-UI_null() is a UI method that does nothing.  Its use is to avoid
-getting internal defaults for passed UI_METHOD pointers.
+The resulting strings that the built in method UI_OpenSSL() generate
+are encoded according to the current locale or (forWindows) code page.
+For applications having different demands, these strings need to be
+converted appropriately by the caller.
+For Windows, it's possible to get an UTF8 encoded string by defining
+the environment variable C<OPENSSL_WIN32_UTF8> prior to calling
+UI_process() (one way is to define it before calling the application).
 
 =head1 COPYRIGHT
 

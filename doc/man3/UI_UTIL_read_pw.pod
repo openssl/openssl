@@ -34,6 +34,24 @@ passphrase entry without (0) or with (1) verification.
 When not used any more, the returned method should be freed with
 UI_destroy_method().
 
+=head1 NOTES
+
+UI_UTIL_read_pw_string() and UI_UTIL_read_pw() use default
+B<UI_METHOD>.
+See L<UI_get_default_method(3)> and friends for more information.
+
+The result from the B<UI_METHOD> created by
+UI_UTIL_wrap_read_pem_callback() will generate password strings in the
+encoding that the given password callback generates.
+The default password prompting functions (apart from
+UI_UTIL_read_pw_string() and UI_UTIL_read_pw(), there is
+PEM_def_callback(), EVP_read_pw_string() and EVP_read_pw_string_min())
+all use the default B<UI_METHOD>.
+
+=head1 SEE ALSO
+
+L<UI_get_default_method(3)>
+
 =head1 COPYRIGHT
 
 Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
