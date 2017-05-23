@@ -47,7 +47,10 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
             BIO_ADDR_rawaddress(BIO_ADDRINFO_address(res), NULL, &l);
             /* Because only AF_INET addresses will reach this far,
                we can assert that l should be 4 */
-            OPENSSL_assert(l == 4);
+            if (!ossl_assert(l == 4)) {
+                BIO_ADDRINFO_free(res);
+                return 0;
+            }
 
             BIO_ADDR_rawaddress(BIO_ADDRINFO_address(res), ip, &l);
             ret = 1;
