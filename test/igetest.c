@@ -170,9 +170,9 @@ static int test_ige_vectors(int n)
     else
         AES_set_decrypt_key(v->key, 8 * sizeof v->key, &key);
     memcpy(iv, v->iv, sizeof iv);
-    AES_ige_encrypt(v->in, buf, v->length, &key, iv, v->encrypt);
-
-    if (!TEST_mem_eq(v->out, v->length, buf, v->length)) {
+    if (!TEST_true(AES_ige_encrypt_ex(v->in, buf, v->length, &key, iv,
+                                      v->encrypt))
+            || !TEST_mem_eq(v->out, v->length, buf, v->length)) {
         TEST_info("IGE test vector %d failed", n);
         hexdump(stderr, "key", v->key, sizeof v->key);
         hexdump(stderr, "iv", v->iv, sizeof v->iv);
@@ -183,9 +183,9 @@ static int test_ige_vectors(int n)
     /* try with in == out */
     memcpy(iv, v->iv, sizeof iv);
     memcpy(buf, v->in, v->length);
-    AES_ige_encrypt(buf, buf, v->length, &key, iv, v->encrypt);
-
-    if (!TEST_mem_eq(v->out, v->length, buf, v->length)) {
+    if (!TEST_true(AES_ige_encrypt_ex(buf, buf, v->length, &key, iv,
+                                      v->encrypt))
+            || !TEST_mem_eq(v->out, v->length, buf, v->length)) {
         TEST_info("IGE test vector %d failed (with in == out)", n);
         hexdump(stderr, "key", v->key, sizeof v->key);
         hexdump(stderr, "iv", v->iv, sizeof v->iv);
@@ -214,8 +214,9 @@ static int test_bi_ige_vectors(int n)
         AES_set_decrypt_key(v->key2, 8 * v->keysize, &key2);
     }
 
-    AES_bi_ige_encrypt(v->in, buf, v->length, &key1, &key2, v->iv,
-                       v->encrypt);
+    if (!TEST_true(AES_bi_ige_encrypt_ex(v->in, buf, v->length, &key1, &key2,
+                                         v->iv, v->encrypt)))
+        return 0;
 
     if (!TEST_mem_eq(v->out, v->length, buf, v->length)) {
         hexdump(stderr, "key 1", v->key1, sizeof v->key1);
@@ -237,11 +238,15 @@ static int test_ige_enc_dec(void)
 
     memcpy(iv, saved_iv, sizeof iv);
     AES_set_encrypt_key(rkey, 8 * sizeof rkey, &key);
-    AES_ige_encrypt(plaintext, ciphertext, TEST_SIZE, &key, iv, AES_ENCRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(plaintext, ciphertext, TEST_SIZE, &key,
+                                      iv, AES_ENCRYPT)))
+        return 0;
 
     AES_set_decrypt_key(rkey, 8 * sizeof rkey, &key);
     memcpy(iv, saved_iv, sizeof iv);
-    AES_ige_encrypt(ciphertext, checktext, TEST_SIZE, &key, iv, AES_DECRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(ciphertext, checktext, TEST_SIZE, &key,
+                                      iv, AES_DECRYPT)))
+        return 0;
 
     return TEST_mem_eq(checktext, TEST_SIZE, plaintext, TEST_SIZE);
 }
@@ -255,15 +260,19 @@ static int test_ige_enc_chaining(void)
 
     AES_set_encrypt_key(rkey, 8 * sizeof rkey, &key);
     memcpy(iv, saved_iv, sizeof iv);
-    AES_ige_encrypt(plaintext, ciphertext, TEST_SIZE / 2, &key, iv,
-                    AES_ENCRYPT);
-    AES_ige_encrypt(plaintext + TEST_SIZE / 2,
-                    ciphertext + TEST_SIZE / 2, TEST_SIZE / 2,
-                    &key, iv, AES_ENCRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(plaintext, ciphertext, TEST_SIZE / 2,
+                                      &key, iv, AES_ENCRYPT))
+            || !TEST_true(AES_ige_encrypt_ex(plaintext + TEST_SIZE / 2,
+                                             ciphertext + TEST_SIZE / 2,
+                                             TEST_SIZE / 2, &key, iv,
+                                             AES_ENCRYPT)))
+        return 0;
 
     AES_set_decrypt_key(rkey, 8 * sizeof rkey, &key);
     memcpy(iv, saved_iv, sizeof iv);
-    AES_ige_encrypt(ciphertext, checktext, TEST_SIZE, &key, iv, AES_DECRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(ciphertext, checktext, TEST_SIZE, &key,
+                                      iv, AES_DECRYPT)))
+        return 0;
 
     return TEST_mem_eq(checktext, TEST_SIZE, plaintext, TEST_SIZE);
 }
@@ -277,19 +286,23 @@ static int test_ige_dec_chaining(void)
 
     AES_set_encrypt_key(rkey, 8 * sizeof rkey, &key);
     memcpy(iv, saved_iv, sizeof iv);
-    AES_ige_encrypt(plaintext, ciphertext, TEST_SIZE / 2, &key, iv,
-                    AES_ENCRYPT);
-    AES_ige_encrypt(plaintext + TEST_SIZE / 2,
-                    ciphertext + TEST_SIZE / 2, TEST_SIZE / 2,
-                    &key, iv, AES_ENCRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(plaintext, ciphertext, TEST_SIZE / 2,
+                                      &key, iv, AES_ENCRYPT))
+            || !TEST_true(AES_ige_encrypt_ex(plaintext + TEST_SIZE / 2,
+                                             ciphertext + TEST_SIZE / 2,
+                                             TEST_SIZE / 2,
+                                             &key, iv, AES_ENCRYPT)))
+        return 0;
 
     AES_set_decrypt_key(rkey, 8 * sizeof rkey, &key);
     memcpy(iv, saved_iv, sizeof iv);
-    AES_ige_encrypt(ciphertext, checktext, TEST_SIZE / 2, &key, iv,
-                    AES_DECRYPT);
-    AES_ige_encrypt(ciphertext + TEST_SIZE / 2,
-                    checktext + TEST_SIZE / 2, TEST_SIZE / 2, &key, iv,
-                    AES_DECRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(ciphertext, checktext, TEST_SIZE / 2, &key, iv,
+                                      AES_DECRYPT))
+            || !TEST_true(AES_ige_encrypt_ex(ciphertext + TEST_SIZE / 2,
+                                             checktext + TEST_SIZE / 2,
+                                             TEST_SIZE / 2, &key, iv,
+                                             AES_DECRYPT)))
+        return 0;
 
     return TEST_mem_eq(checktext, TEST_SIZE, plaintext, TEST_SIZE);
 }
@@ -307,15 +320,17 @@ static int test_ige_garble_forwards(void)
 
     AES_set_encrypt_key(rkey, 8 * sizeof rkey, &key);
     memcpy(iv, saved_iv, sizeof iv);
-    AES_ige_encrypt(plaintext, ciphertext, sizeof plaintext, &key, iv,
-                    AES_ENCRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(plaintext, ciphertext, sizeof plaintext,
+                                      &key, iv, AES_ENCRYPT)))
+        return 0;
 
     /* corrupt halfway through */
     ++ciphertext[sizeof ciphertext / 2];
     AES_set_decrypt_key(rkey, 8 * sizeof rkey, &key);
     memcpy(iv, saved_iv, sizeof iv);
-    AES_ige_encrypt(ciphertext, checktext, sizeof checktext, &key, iv,
-                    AES_DECRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(ciphertext, checktext, sizeof checktext,
+                                      &key, iv, AES_DECRYPT)))
+        return 0;
 
     matches = 0;
     for (n = 0; n < sizeof checktext; ++n)
@@ -342,13 +357,15 @@ static int test_bi_ige_enc_dec(void)
     memcpy(iv, saved_iv, sizeof iv);
     AES_set_encrypt_key(rkey, 8 * sizeof rkey, &key);
     AES_set_encrypt_key(rkey2, 8 * sizeof rkey2, &key2);
-    AES_bi_ige_encrypt(plaintext, ciphertext, TEST_SIZE, &key, &key2, iv,
-                       AES_ENCRYPT);
+    if (!TEST_true(AES_bi_ige_encrypt_ex(plaintext, ciphertext, TEST_SIZE, &key,
+                                         &key2, iv, AES_ENCRYPT)))
+        return 0;
 
     AES_set_decrypt_key(rkey, 8 * sizeof rkey, &key);
     AES_set_decrypt_key(rkey2, 8 * sizeof rkey2, &key2);
-    AES_bi_ige_encrypt(ciphertext, checktext, TEST_SIZE, &key, &key2, iv,
-                       AES_DECRYPT);
+    if (!TEST_true(AES_bi_ige_encrypt_ex(ciphertext, checktext, TEST_SIZE, &key,
+                                         &key2, iv, AES_DECRYPT)))
+        return 0;
 
     return TEST_mem_eq(checktext, TEST_SIZE, plaintext, TEST_SIZE);
 }
@@ -365,15 +382,17 @@ static int test_bi_ige_garble1(void)
     memcpy(iv, saved_iv, sizeof iv);
     AES_set_encrypt_key(rkey, 8 * sizeof rkey, &key);
     AES_set_encrypt_key(rkey2, 8 * sizeof rkey2, &key2);
-    AES_ige_encrypt(plaintext, ciphertext, sizeof plaintext, &key, iv,
-                    AES_ENCRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(plaintext, ciphertext, sizeof plaintext,
+                                     &key, iv, AES_ENCRYPT)))
+        return 0;
 
     /* corrupt halfway through */
     ++ciphertext[sizeof ciphertext / 2];
     AES_set_decrypt_key(rkey, 8 * sizeof rkey, &key);
     AES_set_decrypt_key(rkey2, 8 * sizeof rkey2, &key2);
-    AES_ige_encrypt(ciphertext, checktext, sizeof checktext, &key, iv,
-                    AES_DECRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(ciphertext, checktext, sizeof checktext,
+                                      &key, iv, AES_DECRYPT)))
+        return 0;
 
     matches = 0;
     for (n = 0; n < sizeof checktext; ++n)
@@ -396,15 +415,17 @@ static int test_bi_ige_garble2(void)
     memcpy(iv, saved_iv, sizeof iv);
     AES_set_encrypt_key(rkey, 8 * sizeof rkey, &key);
     AES_set_encrypt_key(rkey2, 8 * sizeof rkey2, &key2);
-    AES_ige_encrypt(plaintext, ciphertext, sizeof plaintext, &key, iv,
-                    AES_ENCRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(plaintext, ciphertext, sizeof plaintext,
+                                      &key, iv, AES_ENCRYPT)))
+        return 0;
 
     /* corrupt right at the end */
     ++ciphertext[sizeof ciphertext - 1];
     AES_set_decrypt_key(rkey, 8 * sizeof rkey, &key);
     AES_set_decrypt_key(rkey2, 8 * sizeof rkey2, &key2);
-    AES_ige_encrypt(ciphertext, checktext, sizeof checktext, &key, iv,
-                    AES_DECRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(ciphertext, checktext, sizeof checktext,
+                                      &key, iv, AES_DECRYPT)))
+        return 0;
 
     matches = 0;
     for (n = 0; n < sizeof checktext; ++n)
@@ -427,15 +448,17 @@ static int test_bi_ige_garble3(void)
     memcpy(iv, saved_iv, sizeof iv);
     AES_set_encrypt_key(rkey, 8 * sizeof rkey, &key);
     AES_set_encrypt_key(rkey2, 8 * sizeof rkey2, &key2);
-    AES_ige_encrypt(plaintext, ciphertext, sizeof plaintext, &key, iv,
-                    AES_ENCRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(plaintext, ciphertext, sizeof plaintext,
+                                      &key, iv, AES_ENCRYPT)))
+        return 0;
 
     /* corrupt right at the start */
     ++ciphertext[0];
     AES_set_decrypt_key(rkey, 8 * sizeof rkey, &key);
     AES_set_decrypt_key(rkey2, 8 * sizeof rkey2, &key2);
-    AES_ige_encrypt(ciphertext, checktext, sizeof checktext, &key, iv,
-                    AES_DECRYPT);
+    if (!TEST_true(AES_ige_encrypt_ex(ciphertext, checktext, sizeof checktext,
+                                      &key, iv, AES_DECRYPT)))
+        return 0;
 
     matches = 0;
     for (n = 0; n < sizeof checktext; ++n)

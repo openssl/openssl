@@ -4292,3 +4292,5 @@ PEM_read_bio_ex                         4234	1_1_1	EXIST::FUNCTION:
 PEM_bytes_read_bio_secmem               4235	1_1_1	EXIST::FUNCTION:
 EVP_DigestSign                          4236	1_1_1	EXIST::FUNCTION:
 EVP_DigestVerify                        4237	1_1_1	EXIST::FUNCTION:
+AES_ige_encrypt_ex                      4238	1_1_1	EXIST::FUNCTION:
+AES_bi_ige_encrypt_ex                   4239	1_1_1	EXIST::FUNCTION:
