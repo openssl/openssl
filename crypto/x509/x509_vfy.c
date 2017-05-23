@@ -2843,7 +2843,11 @@ static int build_chain(X509_STORE_CTX *ctx)
     int i;
 
     /* Our chain starts with a single untrusted element. */
-    OPENSSL_assert(num == 1 && ctx->num_untrusted == num);
+    if (!ossl_assert(num == 1 && ctx->num_untrusted == num))  {
+        X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+        ctx->error = X509_V_ERR_UNSPECIFIED;
+        return 0;
+    }
 
 #define S_DOUNTRUSTED      (1 << 0)     /* Search untrusted chain */
 #define S_DOTRUSTED        (1 << 1)     /* Search trusted store */
@@ -2980,7 +2984,14 @@ static int build_chain(X509_STORE_CTX *ctx)
                  * certificate among the ones from the trust store.
                  */
                 if ((search & S_DOALTERNATE) != 0) {
-                    OPENSSL_assert(num > i && i > 0 && ss == 0);
+                    if (!ossl_assert(num > i && i > 0 && ss == 0)) {
+                        X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                        X509_free(xtmp);
+                        trust = X509_TRUST_REJECTED;
+                        ctx->error = X509_V_ERR_UNSPECIFIED;
+                        search = 0;
+                        continue;
+                    }
                     search &= ~S_DOALTERNATE;
                     for (; num > i; --num)
                         X509_free(sk_X509_pop(ctx->chain));
@@ -3043,7 +3054,13 @@ static int build_chain(X509_STORE_CTX *ctx)
                  * certificate with ctx->num_untrusted <= num.
                  */
                 if (ok) {
-                    OPENSSL_assert(ctx->num_untrusted <= num);
+                    if (!ossl_assert(ctx->num_untrusted <= num)) {
+                        X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                        trust = X509_TRUST_REJECTED;
+                        ctx->error = X509_V_ERR_UNSPECIFIED;
+                        search = 0;
+                        continue;
+                    }
                     search &= ~S_DOUNTRUSTED;
                     switch (trust = check_trust(ctx, num)) {
                     case X509_TRUST_TRUSTED:
@@ -3082,7 +3099,13 @@ static int build_chain(X509_STORE_CTX *ctx)
          */
         if ((search & S_DOUNTRUSTED) != 0) {
             num = sk_X509_num(ctx->chain);
-            OPENSSL_assert(num == ctx->num_untrusted);
+            if (!ossl_assert(num == ctx->num_untrusted)) {
+                X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                trust = X509_TRUST_REJECTED;
+                ctx->error = X509_V_ERR_UNSPECIFIED;
+                search = 0;
+                continue;
+            }
             x = sk_X509_value(ctx->chain, num-1);
 
             /*
