@@ -49,7 +49,8 @@ typedef struct pair_st {
 } PAIR;
 
 typedef struct stanza_st {
-    int start;
+    int curr;                           /* Current line in file */
+    int start;                          /* Line where test starts */
     int numpairs;
     PAIR pairs[MAXPAIRS];
 } STANZA;
@@ -2005,16 +2006,16 @@ static char *strip_spaces(char *p)
 /*
  * Read next test stanza; return 1 if found, 0 on EOF or error.
  */
-static int readstanza(STANZA *s, int *linesread)
+static int readstanza(STANZA *s)
 {
     PAIR *pp = s->pairs;
     char *p, *equals, *key, *value;
     char buff[1024];
 
     while (BIO_gets(fp, buff, sizeof(buff))) {
-        (*linesread)++;
+        s->curr++;
         if (!TEST_ptr(p = strchr(buff, '\n'))) {
-            TEST_info("Line %d too long", s->start);
+            TEST_info("Line %d too long", s->curr);
             return 0;
         }
         *p = '\0';
@@ -2027,9 +2028,13 @@ static int readstanza(STANZA *s, int *linesread)
         if (buff[0] == '#')
             continue;
 
-        if (!TEST_ptr(equals = strchr(buff, '=')))
+        if (!TEST_ptr(equals = strchr(buff, '='))) {
+            TEST_info("Missing = at line %d\n", s->curr);
             return 0;
+        }
         *equals++ = '\0';
+        if (s->numpairs == 0)
+            s->start = s->curr;
 
         if (!TEST_ptr(key = strip_spaces(buff))
                 || !TEST_ptr(value = strip_spaces(equals))
@@ -2049,12 +2054,14 @@ static void clearstanza(STANZA *s)
     PAIR *pp = s->pairs;
     int i = s->numpairs;
     int start = s->start;
+    int curr = s->curr;
 
     for ( ; --i >= 0; pp++) {
         OPENSSL_free(pp->key);
         OPENSSL_free(pp->value);
     }
     memset(s, 0, sizeof(*s));
+    s->curr = curr;
     s->start = start;
 }
 
@@ -2094,7 +2101,7 @@ static char * const *testfiles;
 static int run_file_tests(int i)
 {
     STANZA s;
-    int linesread = 0, errcnt = 0;
+    int errcnt = 0;
 
     if (!TEST_ptr(fp = BIO_new_file(testfiles[i], "rb")))
         return 0;
@@ -2102,14 +2109,13 @@ static int run_file_tests(int i)
     /* Read test file. */
     set_test_title(testfiles[i]);
     memset(&s, 0, sizeof(s));
-    while (!BIO_eof(fp) && readstanza(&s, &linesread)) {
+    while (!BIO_eof(fp) && readstanza(&s)) {
         if (s.numpairs == 0)
             continue;
         if (!file_test_run(&s)) {
             errcnt++;
         }
         clearstanza(&s);
-        s.start = linesread;
     }
     BIO_free(fp);
 
