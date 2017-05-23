@@ -264,16 +264,18 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
             SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
             goto err;
         }
-    } else if (s->version == SSL3_VERSION) {
-        if (!EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                             (int)s->session->master_key_length,
-                             s->session->master_key)) {
+    }
+    if (s->version == SSL3_VERSION) {
+        if (EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0
+            || !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                                (int)s->session->master_key_length,
+                                s->session->master_key)
+            || EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
+
             SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
             goto err;
         }
-    }
-
-    if (EVP_DigestSign(mctx, sig, &siglen, hdata, hdatalen) <= 0) {
+    } else if (EVP_DigestSign(mctx, sig, &siglen, hdata, hdatalen) <= 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
         goto err;
     }
@@ -436,23 +438,30 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
             SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
             goto f_err;
         }
-    } else if (s->version == SSL3_VERSION
-        && !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                            (int)s->session->master_key_length,
-                            s->session->master_key)) {
-        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
-        goto f_err;
     }
-
-    j = EVP_DigestVerify(mctx, data, len, hdata, hdatalen);
-
-    if (j < 0) {
-        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
-        goto f_err;
-    } else if (j == 0) {
-        al = SSL_AD_DECRYPT_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
-        goto f_err;
+    if (s->version == SSL3_VERSION) {
+        if (EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0
+                || !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                                    (int)s->session->master_key_length,
+                                    s->session->master_key)) {
+            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
+            goto f_err;
+        }
+        if (EVP_DigestVerifyFinal(mctx, data, len) <= 0) {
+            al = SSL_AD_DECRYPT_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
+            goto f_err;
+        }
+    } else {
+        j = EVP_DigestVerify(mctx, data, len, hdata, hdatalen);
+        if (j < 0) {
+            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
+            goto f_err;
+        } else if (j == 0) {
+            al = SSL_AD_DECRYPT_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
+            goto f_err;
+        }
     }
 
     ret = MSG_PROCESS_CONTINUE_READING;
