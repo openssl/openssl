@@ -13,6 +13,7 @@
 # like this prolog, are ignored.
 
 Title = Base64 tests
+
 Encoding = canonical
 Input = ""
 Output = ""
