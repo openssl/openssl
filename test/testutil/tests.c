@@ -524,7 +524,7 @@ void test_error_c90(const char *desc, ...)
     va_list ap;
 
     va_start(ap, desc);
-    test_fail_message(NULL, NULL, -1, NULL, NULL, NULL, NULL, desc, ap);
+    test_fail_message_va(NULL, NULL, -1, NULL, NULL, NULL, NULL, desc, ap);
     va_end(ap);
 }
 
