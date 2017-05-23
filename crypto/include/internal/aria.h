@@ -37,6 +37,8 @@ typedef union {
     unsigned int u[ARIA_BLOCK_SIZE / sizeof(unsigned int)];
 } ARIA_u128;
 
+typedef unsigned char ARIA_c128[ARIA_BLOCK_SIZE];
+
 struct aria_key_st {
     ARIA_u128 rd_key[ARIA_MAX_KEYS];
     unsigned int rounds;
