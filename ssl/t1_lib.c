@@ -798,7 +798,8 @@ static const uint16_t tls_default_sigalg[] = {
     TLSEXT_SIGALG_ecdsa_sha1, /* SSL_PKEY_ECC */
     TLSEXT_SIGALG_gostr34102001_gostr3411, /* SSL_PKEY_GOST01 */
     TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, /* SSL_PKEY_GOST12_256 */
-    TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512 /* SSL_PKEY_GOST12_512 */
+    TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, /* SSL_PKEY_GOST12_512 */
+    0 /* SSL_PKEY_ED25519 */
 };
 
 /* Lookup TLS signature algorithm */
@@ -1394,6 +1395,8 @@ static int tls12_get_pkey_idx(int sig_nid)
 #ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC:
         return SSL_PKEY_ECC;
+    case NID_ED25519:
+        return SSL_PKEY_ED25519;
 #endif
 #ifndef OPENSSL_NO_GOST
     case NID_id_GostR3410_2001:
