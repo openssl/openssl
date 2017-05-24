@@ -1318,9 +1318,9 @@ typedef struct sigalg_lookup_st {
     const char *name;
     /* Raw value used in extension */
     uint16_t sigalg;
-    /* NID of hash algorithm */
+    /* NID of hash algorithm or NID_undef if no hash */
     int hash;
-    /* Index of hash algorithm */
+    /* Index of hash algorithm or -1 if no hash algorithm */
     int hash_idx;
     /* NID of signature algorithm */
     int sig;
@@ -1848,6 +1848,8 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256       0xeeee
 #define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512       0xefef
 #define TLSEXT_SIGALG_gostr34102001_gostr3411                   0xeded
+
+#define TLSEXT_SIGALG_ed25519                                   0x0807
 
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE                                      0x00
