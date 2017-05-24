@@ -183,12 +183,12 @@ UI_set_method() changes the UI method associated with a given UI.
 =head1 NOTES
 
 The resulting strings that the built in method UI_OpenSSL() generate
-are encoded according to the current locale or (forWindows) code page.
+are encoded according to the current locale or (for Windows) code
+page.
 For applications having different demands, these strings need to be
 converted appropriately by the caller.
-For Windows, it's possible to get an UTF8 encoded string by defining
-the environment variable C<OPENSSL_WIN32_UTF8> prior to calling
-UI_process() (one way is to define it before calling the application).
+For Windows, if the OPENSSL_WIN32_UTF8 environment variable is set,
+the built-in method UI_OpenSSL() will produce UTF-8 encoded strings.
 
 =head1 COPYRIGHT
 
