@@ -1248,6 +1248,8 @@ int ssl_cert_type(const X509 *x, const EVP_PKEY *pk)
 #ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC:
         return SSL_PKEY_ECC;
+    case NID_ED25519:
+        return SSL_PKEY_ED25519;
 #endif
 #ifndef OPENSSL_NO_GOST
     case NID_id_GostR3410_2001:

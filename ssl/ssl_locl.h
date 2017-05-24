@@ -364,7 +364,8 @@
 # define SSL_PKEY_GOST01         3
 # define SSL_PKEY_GOST12_256     4
 # define SSL_PKEY_GOST12_512     5
-# define SSL_PKEY_NUM            6
+# define SSL_PKEY_ED25519        6
+# define SSL_PKEY_NUM            7
 /*
  * Pseudo-constant. GOST cipher suites can use different certs for 1
  * SSL_CIPHER. So let's see which one we have in fact.
