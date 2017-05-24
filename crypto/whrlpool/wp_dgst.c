@@ -174,7 +174,7 @@ void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c, const void *_inp, size_t bits)
                 goto reconsider;
             } else
 #endif
-            if (bits >= 8) {
+            if (bits > 8) {
                 b = ((inp[0] << inpgap) | (inp[1] >> (8 - inpgap)));
                 b &= 0xff;
                 if (bitrem)
