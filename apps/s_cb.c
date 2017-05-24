@@ -230,6 +230,9 @@ static const char *get_sigtype(int nid)
      case EVP_PKEY_EC:
         return "ECDSA";
 
+     case NID_ED25519:
+        return "Ed25519";
+
     default:
         return NULL;
     }
@@ -265,13 +268,13 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
             BIO_puts(out, ":");
         sstr = get_sigtype(sign_nid);
         if (sstr)
-            BIO_printf(out, "%s+", sstr);
+            BIO_printf(out, "%s", sstr);
         else
-            BIO_printf(out, "0x%02X+", (int)rsign);
+            BIO_printf(out, "0x%02X", (int)rsign);
         if (hash_nid != NID_undef)
-            BIO_printf(out, "%s", OBJ_nid2sn(hash_nid));
-        else
-            BIO_printf(out, "0x%02X", (int)rhash);
+            BIO_printf(out, "+%s", OBJ_nid2sn(hash_nid));
+        else if (sstr == NULL)
+            BIO_printf(out, "+0x%02X", (int)rhash);
     }
     BIO_puts(out, "\n");
     return 1;
@@ -284,7 +287,7 @@ int ssl_print_sigalgs(BIO *out, SSL *s)
         ssl_print_client_cert_types(out, s);
     do_print_sigalgs(out, s, 0);
     do_print_sigalgs(out, s, 1);
-    if (SSL_get_peer_signature_nid(s, &nid))
+    if (SSL_get_peer_signature_nid(s, &nid) && nid != NID_undef)
         BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(nid));
     if (SSL_get_peer_signature_type_nid(s, &nid))
         BIO_printf(out, "Peer signature type: %s\n", get_sigtype(nid));
