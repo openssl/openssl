@@ -934,7 +934,7 @@
 
 #define SN_id_smime_aa_signingCertificateV2             "id-smime-aa-signingCertificateV2"
 #define NID_id_smime_aa_signingCertificateV2            1086
-#define OBJ_id_smime_aa_signingCertificateV2            OBJ_id_smime_aa,30L
+#define OBJ_id_smime_aa_signingCertificateV2            OBJ_id_smime_aa,47L
 
 #define SN_id_smime_alg_ESDHwith3DES            "id-smime-alg-ESDHwith3DES"
 #define NID_id_smime_alg_ESDHwith3DES           241
