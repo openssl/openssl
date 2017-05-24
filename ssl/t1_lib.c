@@ -673,6 +673,7 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
     TLSEXT_SIGALG_ecdsa_secp384r1_sha384,
     TLSEXT_SIGALG_ecdsa_secp521r1_sha512,
+    TLSEXT_SIGALG_ed25519,
 #endif
 
     TLSEXT_SIGALG_rsa_pss_sha256,
@@ -2136,6 +2137,7 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST01);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST12_256);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST12_512);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ED25519);
 }
 
 /* User level utility function to check a chain is suitable */
