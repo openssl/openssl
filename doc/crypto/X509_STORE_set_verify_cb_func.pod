@@ -30,7 +30,7 @@ X509_STORE_get_verify_cb,
 X509_STORE_set_verify_cb_func, X509_STORE_set_verify_cb,
 X509_STORE_CTX_cert_crl_fn, X509_STORE_CTX_check_crl_fn,
 X509_STORE_CTX_check_issued_fn, X509_STORE_CTX_check_policy_fn,
-X509_STORE_CTX_check_revocation_fn, X509_STORE_CTX_cleanup_fn
+X509_STORE_CTX_check_revocation_fn, X509_STORE_CTX_cleanup_fn,
 X509_STORE_CTX_get_crl_fn, X509_STORE_CTX_get_issuer_fn,
 X509_STORE_CTX_lookup_certs_fn, X509_STORE_CTX_lookup_crls_fn
 - set verification callback
