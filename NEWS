@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.0.2k and OpenSSL 1.0.2l [under development]
 
-      o
+      o config now recognises 64-bit mingw and chooses mingw64 instead of mingw
 
   Major changes between OpenSSL 1.0.2j and OpenSSL 1.0.2k [26 Jan 2017]
 
