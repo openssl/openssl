@@ -4599,7 +4599,9 @@ int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
   uint8_t hram[SHA512_DIGEST_LENGTH];
   SHA512_CTX hash_ctx;
 
-  SHA512(private_key, 32, az);
+  SHA512_Init(&hash_ctx);
+  SHA512_Update(&hash_ctx, private_key, 32);
+  SHA512_Final(az, &hash_ctx);
 
   az[0] &= 248;
   az[31] &= 63;
@@ -4622,6 +4624,10 @@ int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
 
   x25519_sc_reduce(hram);
   sc_muladd(out_sig + 32, hram, az, nonce);
+
+  OPENSSL_cleanse(&hash_ctx, sizeof(hash_ctx));
+  OPENSSL_cleanse(nonce, sizeof(nonce));
+  OPENSSL_cleanse(az, sizeof(az));
 
   return 1;
 }
