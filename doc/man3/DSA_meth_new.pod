@@ -10,7 +10,7 @@ DSA_meth_get_verify, DSA_meth_set_verify, DSA_meth_get_mod_exp,
 DSA_meth_set_mod_exp, DSA_meth_get_bn_mod_exp, DSA_meth_set_bn_mod_exp,
 DSA_meth_get_init, DSA_meth_set_init, DSA_meth_get_finish, DSA_meth_set_finish,
 DSA_meth_get_paramgen, DSA_meth_set_paramgen, DSA_meth_get_keygen,
-DSA_meth_set_keygen  - Routines to build up DSA methods
+DSA_meth_set_keygen - Routines to build up DSA methods
 
 =head1 SYNOPSIS
 
