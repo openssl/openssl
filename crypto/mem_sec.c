@@ -266,7 +266,7 @@ static size_t sh_getlist(char *ptr)
     for (; bit; bit >>= 1, list--) {
         if (TESTBIT(sh.bittable, bit))
             break;
-        OPENSSL_assert((bit & 1) == 0);
+        assert((bit & 1) == 0);
     }
 
     return list;
@@ -277,58 +277,73 @@ static int sh_testbit(char *ptr, int list, unsigned char *table)
 {
     size_t bit;
 
-    OPENSSL_assert(list >= 0 && list < sh.freelist_size);
-    OPENSSL_assert(((ptr - sh.arena) & ((sh.arena_size >> list) - 1)) == 0);
+    assert(list >= 0 && list < sh.freelist_size);
+    assert(((ptr - sh.arena) & ((sh.arena_size >> list) - 1)) == 0);
     bit = (ONE << list) + ((ptr - sh.arena) / (sh.arena_size >> list));
-    OPENSSL_assert(bit > 0 && bit < sh.bittable_size);
+    assert(bit > 0 && bit < sh.bittable_size);
     return TESTBIT(table, bit);
 }
 
-static void sh_clearbit(char *ptr, int list, unsigned char *table)
+static int sh_clearbit(char *ptr, int list, unsigned char *table)
 {
     size_t bit;
 
-    OPENSSL_assert(list >= 0 && list < sh.freelist_size);
-    OPENSSL_assert(((ptr - sh.arena) & ((sh.arena_size >> list) - 1)) == 0);
+    if (!ossl_assert(list >= 0 && list < sh.freelist_size)
+            || !ossl_assert(((ptr - sh.arena) & ((sh.arena_size >> list) - 1))
+                            == 0))
+        return 0;
     bit = (ONE << list) + ((ptr - sh.arena) / (sh.arena_size >> list));
-    OPENSSL_assert(bit > 0 && bit < sh.bittable_size);
-    OPENSSL_assert(TESTBIT(table, bit));
+    if (!ossl_assert(bit > 0 && bit < sh.bittable_size)
+            || !ossl_assert(TESTBIT(table, bit)))
+        return 0;
     CLEARBIT(table, bit);
+
+    return 1;
 }
 
-static void sh_setbit(char *ptr, int list, unsigned char *table)
+static int sh_setbit(char *ptr, int list, unsigned char *table)
 {
     size_t bit;
 
-    OPENSSL_assert(list >= 0 && list < sh.freelist_size);
-    OPENSSL_assert(((ptr - sh.arena) & ((sh.arena_size >> list) - 1)) == 0);
+    if (!ossl_assert(list >= 0 && list < sh.freelist_size)
+            || !ossl_assert(((ptr - sh.arena) & ((sh.arena_size >> list) - 1))
+                            == 0))
+        return 0;
     bit = (ONE << list) + ((ptr - sh.arena) / (sh.arena_size >> list));
-    OPENSSL_assert(bit > 0 && bit < sh.bittable_size);
-    OPENSSL_assert(!TESTBIT(table, bit));
+    if (!ossl_assert(bit > 0 && bit < sh.bittable_size)
+            || !ossl_assert(!TESTBIT(table, bit)))
+        return 0;
     SETBIT(table, bit);
+
+    return 1;
 }
 
-static void sh_add_to_list(char **list, char *ptr)
+static int sh_add_to_list(char **list, char *ptr)
 {
     SH_LIST *temp;
 
-    OPENSSL_assert(WITHIN_FREELIST(list));
-    OPENSSL_assert(WITHIN_ARENA(ptr));
+    if (!ossl_assert(WITHIN_FREELIST(list))
+            || !ossl_assert(WITHIN_ARENA(ptr)))
+        return 0;
 
     temp = (SH_LIST *)ptr;
     temp->next = *(SH_LIST **)list;
-    OPENSSL_assert(temp->next == NULL || WITHIN_ARENA(temp->next));
+    if (!ossl_assert(temp->next == NULL || WITHIN_ARENA(temp->next)))
+        return 0;
     temp->p_next = (SH_LIST **)list;
 
     if (temp->next != NULL) {
-        OPENSSL_assert((char **)temp->next->p_next == list);
+        if (!ossl_assert((char **)temp->next->p_next == list))
+            return 0;
         temp->next->p_next = &(temp->next);
     }
 
     *list = ptr;
+
+    return 1;
 }
 
-static void sh_remove_from_list(char *ptr)
+static int sh_remove_from_list(char *ptr)
 {
     SH_LIST *temp, *temp2;
 
@@ -337,10 +352,14 @@ static void sh_remove_from_list(char *ptr)
         temp->next->p_next = temp->p_next;
     *temp->p_next = temp->next;
     if (temp->next == NULL)
-        return;
+        return 1;
 
     temp2 = temp->next;
-    OPENSSL_assert(WITHIN_FREELIST(temp2->p_next) || WITHIN_ARENA(temp2->p_next));
+    if (!ossl_assert(WITHIN_FREELIST(temp2->p_next)
+                     || WITHIN_ARENA(temp2->p_next)))
+        return 0;
+
+    return 1;
 }
 
 
@@ -354,10 +373,6 @@ static int sh_init(size_t size, int minsize)
     memset(&sh, 0, sizeof sh);
 
     /* make sure size and minsize are powers of 2 */
-    OPENSSL_assert(size > 0);
-    OPENSSL_assert((size & (size - 1)) == 0);
-    OPENSSL_assert(minsize > 0);
-    OPENSSL_assert((minsize & (minsize - 1)) == 0);
     if (size <= 0 || (size & (size - 1)) != 0)
         goto err;
     if (minsize <= 0 || (minsize & (minsize - 1)) != 0)
@@ -379,17 +394,14 @@ static int sh_init(size_t size, int minsize)
         sh.freelist_size++;
 
     sh.freelist = OPENSSL_zalloc(sh.freelist_size * sizeof (char *));
-    OPENSSL_assert(sh.freelist != NULL);
     if (sh.freelist == NULL)
         goto err;
 
     sh.bittable = OPENSSL_zalloc(sh.bittable_size >> 3);
-    OPENSSL_assert(sh.bittable != NULL);
     if (sh.bittable == NULL)
         goto err;
 
     sh.bitmalloc = OPENSSL_zalloc(sh.bittable_size >> 3);
-    OPENSSL_assert(sh.bitmalloc != NULL);
     if (sh.bitmalloc == NULL)
         goto err;
 
@@ -428,8 +440,9 @@ static int sh_init(size_t size, int minsize)
     if (sh.map_result == MAP_FAILED)
         goto err;
     sh.arena = (char *)(sh.map_result + pgsize);
-    sh_setbit(sh.arena, 0, sh.bittable);
-    sh_add_to_list(&sh.freelist[0], sh.arena);
+    if (!sh_setbit(sh.arena, 0, sh.bittable)
+            || !sh_add_to_list(&sh.freelist[0], sh.arena))
+        goto err;
 
     /* Now try to add guard pages and lock into memory. */
     ret = 1;
@@ -524,37 +537,47 @@ static void *sh_malloc(size_t size)
         char *temp = sh.freelist[slist];
 
         /* remove from bigger list */
-        OPENSSL_assert(!sh_testbit(temp, slist, sh.bitmalloc));
-        sh_clearbit(temp, slist, sh.bittable);
-        sh_remove_from_list(temp);
-        OPENSSL_assert(temp != sh.freelist[slist]);
+        if (!ossl_assert(!sh_testbit(temp, slist, sh.bitmalloc))
+                || !sh_clearbit(temp, slist, sh.bittable)
+                || !sh_remove_from_list(temp)
+                || !ossl_assert(temp != sh.freelist[slist]))
+            return NULL;
 
         /* done with bigger list */
         slist++;
 
         /* add to smaller list */
-        OPENSSL_assert(!sh_testbit(temp, slist, sh.bitmalloc));
-        sh_setbit(temp, slist, sh.bittable);
-        sh_add_to_list(&sh.freelist[slist], temp);
-        OPENSSL_assert(sh.freelist[slist] == temp);
+        if (!ossl_assert(!sh_testbit(temp, slist, sh.bitmalloc)))
+            return NULL;
+        if (!sh_setbit(temp, slist, sh.bittable)
+                || !sh_add_to_list(&sh.freelist[slist], temp)
+                || !ossl_assert(sh.freelist[slist] == temp))
+            return NULL;
 
         /* split in 2 */
         temp += sh.arena_size >> slist;
-        OPENSSL_assert(!sh_testbit(temp, slist, sh.bitmalloc));
-        sh_setbit(temp, slist, sh.bittable);
-        sh_add_to_list(&sh.freelist[slist], temp);
-        OPENSSL_assert(sh.freelist[slist] == temp);
+        if (!ossl_assert(!sh_testbit(temp, slist, sh.bitmalloc)))
+            return NULL;
+        if (!sh_setbit(temp, slist, sh.bittable)
+                || !sh_add_to_list(&sh.freelist[slist], temp)
+                || !ossl_assert(sh.freelist[slist] == temp))
+            return NULL;
 
-        OPENSSL_assert(temp-(sh.arena_size >> slist) == sh_find_my_buddy(temp, slist));
+        if (!ossl_assert(temp - (sh.arena_size >> slist)
+                         == sh_find_my_buddy(temp, slist)))
+            return NULL;
     }
 
     /* peel off memory to hand back */
     chunk = sh.freelist[list];
-    OPENSSL_assert(sh_testbit(chunk, list, sh.bittable));
-    sh_setbit(chunk, list, sh.bitmalloc);
-    sh_remove_from_list(chunk);
+    if (!ossl_assert(sh_testbit(chunk, list, sh.bittable)))
+        return NULL;
+    if (!sh_setbit(chunk, list, sh.bitmalloc)
+            || !sh_remove_from_list(chunk))
+        return NULL;
 
-    OPENSSL_assert(WITHIN_ARENA(chunk));
+    if (!ossl_assert(WITHIN_ARENA(chunk)))
+        return NULL;
 
     return chunk;
 }
@@ -566,35 +589,39 @@ static void sh_free(void *ptr)
 
     if (ptr == NULL)
         return;
-    OPENSSL_assert(WITHIN_ARENA(ptr));
     if (!WITHIN_ARENA(ptr))
         return;
 
     list = sh_getlist(ptr);
-    OPENSSL_assert(sh_testbit(ptr, list, sh.bittable));
-    sh_clearbit(ptr, list, sh.bitmalloc);
-    sh_add_to_list(&sh.freelist[list], ptr);
+
+    if (!ossl_assert(sh_testbit(ptr, list, sh.bittable))
+            || !sh_clearbit(ptr, list, sh.bitmalloc)
+            || !sh_add_to_list(&sh.freelist[list], ptr))
+        return;
 
     /* Try to coalesce two adjacent free areas. */
     while ((buddy = sh_find_my_buddy(ptr, list)) != NULL) {
-        OPENSSL_assert(ptr == sh_find_my_buddy(buddy, list));
-        OPENSSL_assert(ptr != NULL);
-        OPENSSL_assert(!sh_testbit(ptr, list, sh.bitmalloc));
-        sh_clearbit(ptr, list, sh.bittable);
-        sh_remove_from_list(ptr);
-        OPENSSL_assert(!sh_testbit(ptr, list, sh.bitmalloc));
-        sh_clearbit(buddy, list, sh.bittable);
-        sh_remove_from_list(buddy);
+        if (!ossl_assert(ptr == sh_find_my_buddy(buddy, list))
+                || !ossl_assert(ptr != NULL)
+                || !ossl_assert(!sh_testbit(ptr, list, sh.bitmalloc))
+                || !sh_clearbit(ptr, list, sh.bittable)
+                || !sh_remove_from_list(ptr)
+                || !ossl_assert(!sh_testbit(ptr, list, sh.bitmalloc))
+                || !sh_clearbit(buddy, list, sh.bittable)
+                || !sh_remove_from_list(buddy))
+            return;
 
         list--;
 
         if (ptr > buddy)
             ptr = buddy;
 
-        OPENSSL_assert(!sh_testbit(ptr, list, sh.bitmalloc));
-        sh_setbit(ptr, list, sh.bittable);
-        sh_add_to_list(&sh.freelist[list], ptr);
-        OPENSSL_assert(sh.freelist[list] == ptr);
+        if (!ossl_assert(!sh_testbit(ptr, list, sh.bitmalloc)))
+            return;
+        if (!sh_setbit(ptr, list, sh.bittable)
+                || !sh_add_to_list(&sh.freelist[list], ptr)
+                || !ossl_assert(sh.freelist[list] == ptr))
+            return;
     }
 }
 
@@ -602,11 +629,11 @@ static size_t sh_actual_size(char *ptr)
 {
     int list;
 
-    OPENSSL_assert(WITHIN_ARENA(ptr));
-    if (!WITHIN_ARENA(ptr))
+    if (!ossl_assert(WITHIN_ARENA(ptr)))
         return 0;
     list = sh_getlist(ptr);
-    OPENSSL_assert(sh_testbit(ptr, list, sh.bittable));
+    if (!ossl_assert(sh_testbit(ptr, list, sh.bittable)))
+        return 0;
     return sh.arena_size / (ONE << list);
 }
 #endif /* IMPLEMENTED */
