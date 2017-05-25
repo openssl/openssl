@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.2l and 1.0.2m [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.2k and 1.0.2l [25 May 2017]
 
   *) Have 'config' recognise 64-bit mingw and choose 'mingw64' as the target
