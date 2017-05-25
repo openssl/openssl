@@ -1239,13 +1239,21 @@ int main(int argc, char *argv[])
         } else if (strcmp(*argv, "-time") == 0) {
             print_time = 1;
         }
-#ifndef OPENSSL_NO_COMP
         else if (strcmp(*argv, "-zlib") == 0) {
+#ifndef OPENSSL_NO_COMP
             comp = COMP_ZLIB;
-        } else if (strcmp(*argv, "-rle") == 0) {
-            comp = COMP_RLE;
-        }
+#else
+            fprintf(stderr,
+                    "ignoring -zlib, since I'm compiled without COMP\n");
 #endif
+        } else if (strcmp(*argv, "-rle") == 0) {
+#ifndef OPENSSL_NO_COMP
+            comp = COMP_RLE;
+#else
+            fprintf(stderr,
+                    "ignoring -rle, since I'm compiled without COMP\n");
+#endif
+        }
         else if (strcmp(*argv, "-named_curve") == 0) {
             if (--argc < 1)
                 goto bad;
