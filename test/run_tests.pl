@@ -19,7 +19,7 @@ use File::Basename;
 use if $^O ne "VMS", 'File::Glob' => qw/glob/;
 use Module::Load::Conditional qw(can_load);
 
-my $TAP_Harness = can_load({modules => [ 'TAP::Harness' ]})
+my $TAP_Harness = can_load(modules => { 'TAP::Harness' => undef }) 
     ? 'TAP::Harness' : 'OpenSSL::TAP::Harness';
 
 my $srctop = $ENV{SRCTOP} || $ENV{TOP};
