@@ -31,7 +31,7 @@ EVP_aes_256_cbc, EVP_aes_256_ecb, EVP_aes_256_cfb, EVP_aes_256_ofb,
 EVP_aes_128_gcm, EVP_aes_192_gcm, EVP_aes_256_gcm,
 EVP_aes_128_ccm, EVP_aes_192_ccm, EVP_aes_256_ccm,
 EVP_aes_128_cbc_hmac_sha1, EVP_aes_256_cbc_hmac_sha1,
-EVP_aes_128_cbc_hmac_sha256, EVP_aes_256_cbc_hmac_sha256
+EVP_aes_128_cbc_hmac_sha256, EVP_aes_256_cbc_hmac_sha256,
 EVP_chacha20, EVP_chacha20_poly1305 - EVP cipher routines
 
 =head1 SYNOPSIS
