@@ -206,14 +206,6 @@ static int evp_test_buffer_do(STACK_OF(EVP_TEST_BUFFER) *sk,
     return 1;
 }
 
-static int compare_mem(unsigned char *expected, size_t expected_len,
-                       unsigned char *got, size_t  got_len)
-{
-    if (!TEST_mem_eq(expected, expected_len, got, got_len))
-        return 0;
-    return 1;
-}
-
 /*
  * Unescape some sequences in string literals (only \n for now).
  * Return an allocated buffer, set |out_len|.  If |input_len|
@@ -374,33 +366,33 @@ static int digest_update_fn(void *ctx, const unsigned char *buf, size_t buflen)
 
 static int digest_test_run(EVP_TEST *t)
 {
-    DIGEST_DATA *mdata = t->data;
+    DIGEST_DATA *expected = t->data;
     EVP_MD_CTX *mctx;
-    unsigned char md[EVP_MAX_MD_SIZE];
-    unsigned int md_len;
+    unsigned char got[EVP_MAX_MD_SIZE];
+    unsigned int got_len;
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
         goto err;
 
-    if (!EVP_DigestInit_ex(mctx, mdata->digest, NULL)) {
+    if (!EVP_DigestInit_ex(mctx, expected->digest, NULL)) {
         t->err = "DIGESTINIT_ERROR";
         goto err;
     }
-    if (!evp_test_buffer_do(mdata->input, digest_update_fn, mctx)) {
+    if (!evp_test_buffer_do(expected->input, digest_update_fn, mctx)) {
         t->err = "DIGESTUPDATE_ERROR";
         goto err;
     }
 
-    if (!EVP_DigestFinal(mctx, md, &md_len)) {
+    if (!EVP_DigestFinal(mctx, got, &got_len)) {
         t->err = "DIGESTFINAL_ERROR";
         goto err;
     }
-    if (md_len != mdata->output_len) {
+    if (!TEST_int_eq(expected->output_len, got_len)) {
         t->err = "DIGEST_LENGTH_MISMATCH";
         goto err;
     }
-    if (!compare_mem(mdata->output, mdata->output_len, md, md_len)) {
+    if (!TEST_mem_eq(expected->output, expected->output_len, got, got_len)) {
         t->err = "DIGEST_MISMATCH";
         goto err;
     }
@@ -522,8 +514,8 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
 static int cipher_test_enc(EVP_TEST *t, int enc,
                            size_t out_misalign, size_t inp_misalign, int frag)
 {
-    CIPHER_DATA *cdat = t->data;
-    unsigned char *in, *out, *tmp = NULL;
+    CIPHER_DATA *expected = t->data;
+    unsigned char *in, *expected_out, *tmp = NULL;
     size_t in_len, out_len, donelen = 0;
     int ok = 0, tmplen, chunklen, tmpflen;
     EVP_CIPHER_CTX *ctx = NULL;
@@ -533,15 +525,15 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         goto err;
     EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
     if (enc) {
-        in = cdat->plaintext;
-        in_len = cdat->plaintext_len;
-        out = cdat->ciphertext;
-        out_len = cdat->ciphertext_len;
+        in = expected->plaintext;
+        in_len = expected->plaintext_len;
+        expected_out = expected->ciphertext;
+        out_len = expected->ciphertext_len;
     } else {
-        in = cdat->ciphertext;
-        in_len = cdat->ciphertext_len;
-        out = cdat->plaintext;
-        out_len = cdat->plaintext_len;
+        in = expected->ciphertext;
+        in_len = expected->ciphertext_len;
+        expected_out = expected->plaintext;
+        out_len = expected->plaintext_len;
     }
     if (inp_misalign == (size_t)-1) {
         /*
@@ -568,89 +560,90 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         in = memcpy(tmp + out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH +
                     inp_misalign, in, in_len);
     }
-    if (!EVP_CipherInit_ex(ctx, cdat->cipher, NULL, NULL, NULL, enc)) {
+    if (!EVP_CipherInit_ex(ctx, expected->cipher, NULL, NULL, NULL, enc)) {
         t->err = "CIPHERINIT_ERROR";
         goto err;
     }
-    if (cdat->iv) {
-        if (cdat->aead) {
+    if (expected->iv) {
+        if (expected->aead) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
-                                     cdat->iv_len, 0)) {
+                                     expected->iv_len, 0)) {
                 t->err = "INVALID_IV_LENGTH";
                 goto err;
             }
-        } else if (cdat->iv_len != (size_t)EVP_CIPHER_CTX_iv_length(ctx)) {
+        } else if (expected->iv_len != (size_t)EVP_CIPHER_CTX_iv_length(ctx)) {
             t->err = "INVALID_IV_LENGTH";
             goto err;
         }
     }
-    if (cdat->aead) {
+    if (expected->aead) {
         unsigned char *tag;
         /*
          * If encrypting or OCB just set tag length initially, otherwise
          * set tag length and value.
          */
-        if (enc || cdat->aead == EVP_CIPH_OCB_MODE) {
+        if (enc || expected->aead == EVP_CIPH_OCB_MODE) {
             t->err = "TAG_LENGTH_SET_ERROR";
             tag = NULL;
         } else {
             t->err = "TAG_SET_ERROR";
-            tag = cdat->tag;
+            tag = expected->tag;
         }
-        if (tag || cdat->aead != EVP_CIPH_GCM_MODE) {
+        if (tag || expected->aead != EVP_CIPH_GCM_MODE) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                     cdat->tag_len, tag))
+                                     expected->tag_len, tag))
                 goto err;
         }
     }
 
-    if (!EVP_CIPHER_CTX_set_key_length(ctx, cdat->key_len)) {
+    if (!EVP_CIPHER_CTX_set_key_length(ctx, expected->key_len)) {
         t->err = "INVALID_KEY_LENGTH";
         goto err;
     }
-    if (!EVP_CipherInit_ex(ctx, NULL, NULL, cdat->key, cdat->iv, -1)) {
+    if (!EVP_CipherInit_ex(ctx, NULL, NULL, expected->key, expected->iv, -1)) {
         t->err = "KEY_SET_ERROR";
         goto err;
     }
 
-    if (!enc && cdat->aead == EVP_CIPH_OCB_MODE) {
+    if (!enc && expected->aead == EVP_CIPH_OCB_MODE) {
         if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                 cdat->tag_len, cdat->tag)) {
+                                 expected->tag_len, expected->tag)) {
             t->err = "TAG_SET_ERROR";
             goto err;
         }
     }
 
-    if (cdat->aead == EVP_CIPH_CCM_MODE) {
+    if (expected->aead == EVP_CIPH_CCM_MODE) {
         if (!EVP_CipherUpdate(ctx, NULL, &tmplen, NULL, out_len)) {
             t->err = "CCM_PLAINTEXT_LENGTH_SET_ERROR";
             goto err;
         }
     }
-    if (cdat->aad) {
+    if (expected->aad) {
         t->err = "AAD_SET_ERROR";
         if (!frag) {
-            if (!EVP_CipherUpdate(ctx, NULL, &chunklen, cdat->aad,
-                                  cdat->aad_len))
+            if (!EVP_CipherUpdate(ctx, NULL, &chunklen, expected->aad,
+                                  expected->aad_len))
                 goto err;
         } else {
             /*
              * Supply the AAD in chunks less than the block size where possible
              */
-            if (cdat->aad_len > 0) {
-                if (!EVP_CipherUpdate(ctx, NULL, &chunklen, cdat->aad, 1))
+            if (expected->aad_len > 0) {
+                if (!EVP_CipherUpdate(ctx, NULL, &chunklen, expected->aad, 1))
                     goto err;
                 donelen++;
             }
-            if (cdat->aad_len > 2) {
-                if (!EVP_CipherUpdate(ctx, NULL, &chunklen, cdat->aad + donelen,
-                                      cdat->aad_len - 2))
+            if (expected->aad_len > 2) {
+                if (!EVP_CipherUpdate(ctx, NULL, &chunklen,
+                                      expected->aad + donelen,
+                                      expected->aad_len - 2))
                     goto err;
-                donelen += cdat->aad_len - 2;
+                donelen += expected->aad_len - 2;
             }
-            if (cdat->aad_len > 1
+            if (expected->aad_len > 1
                     && !EVP_CipherUpdate(ctx, NULL, &chunklen,
-                                         cdat->aad + donelen, 1))
+                                         expected->aad + donelen, 1))
                 goto err;
         }
     }
@@ -689,23 +682,25 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         t->err = "CIPHERFINAL_ERROR";
         goto err;
     }
-    if (!compare_mem(out, out_len, tmp + out_misalign, tmplen + tmpflen)) {
+    if (!TEST_mem_eq(expected_out, out_len,
+                     tmp + out_misalign, tmplen + tmpflen)) {
         t->err = "VALUE_MISMATCH";
         goto err;
     }
-    if (enc && cdat->aead) {
+    if (enc && expected->aead) {
         unsigned char rtag[16];
 
-        if (cdat->tag_len > sizeof(rtag)) {
+        if (!TEST_size_t_le(expected->tag_len, sizeof(rtag))) {
             t->err = "TAG_LENGTH_INTERNAL_ERROR";
             goto err;
         }
         if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
-                                 cdat->tag_len, rtag)) {
+                                 expected->tag_len, rtag)) {
             t->err = "TAG_RETRIEVE_ERROR";
             goto err;
         }
-        if (!compare_mem(cdat->tag, cdat->tag_len, rtag, cdat->tag_len)) {
+        if (!TEST_mem_eq(expected->tag, expected->tag_len,
+                         rtag, expected->tag_len)) {
             t->err = "TAG_VALUE_MISMATCH";
             goto err;
         }
@@ -783,7 +778,7 @@ static int cipher_test_run(EVP_TEST *t)
              */
             if (cdat->aead == EVP_CIPH_CCM_MODE
                     || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
-                     || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE)
+                    || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE)
                 break;
             out_misalign = 0;
             frag++;
@@ -894,23 +889,23 @@ static int mac_test_parse(EVP_TEST *t,
 
 static int mac_test_run(EVP_TEST *t)
 {
-    MAC_DATA *mdata = t->data;
+    MAC_DATA *expected = t->data;
     EVP_MD_CTX *mctx = NULL;
     EVP_PKEY_CTX *pctx = NULL, *genctx = NULL;
     EVP_PKEY *key = NULL;
     const EVP_MD *md = NULL;
-    unsigned char *mac = NULL;
-    size_t mac_len;
+    unsigned char *got = NULL;
+    size_t got_len;
 
 #ifdef OPENSSL_NO_DES
-    if (mdata->alg != NULL && strstr(mdata->alg, "DES") != NULL) {
+    if (expected->alg != NULL && strstr(expected->alg, "DES") != NULL) {
         /* Skip DES */
         t->err = NULL;
         goto err;
     }
 #endif
 
-    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_id(mdata->type, NULL))) {
+    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_id(expected->type, NULL))) {
         t->err = "MAC_PKEY_CTX_ERROR";
         goto err;
     }
@@ -919,13 +914,14 @@ static int mac_test_run(EVP_TEST *t)
         t->err = "MAC_KEYGEN_INIT_ERROR";
         goto err;
     }
-    if (mdata->type == EVP_PKEY_CMAC
-             && EVP_PKEY_CTX_ctrl_str(genctx, "cipher", mdata->alg) <= 0) {
+    if (expected->type == EVP_PKEY_CMAC
+             && EVP_PKEY_CTX_ctrl_str(genctx, "cipher", expected->alg) <= 0) {
         t->err = "MAC_ALGORITHM_SET_ERROR";
         goto err;
     }
 
-    if (EVP_PKEY_CTX_set_mac_key(genctx, mdata->key, mdata->key_len) <= 0) {
+    if (EVP_PKEY_CTX_set_mac_key(genctx, expected->key,
+                                 expected->key_len) <= 0) {
         t->err = "MAC_KEY_SET_ERROR";
         goto err;
     }
@@ -934,8 +930,8 @@ static int mac_test_run(EVP_TEST *t)
         t->err = "MAC_KEY_GENERATE_ERROR";
         goto err;
     }
-    if (mdata->type == EVP_PKEY_HMAC) {
-        if (!TEST_ptr(md = EVP_get_digestbyname(mdata->alg))) {
+    if (expected->type == EVP_PKEY_HMAC) {
+        if (!TEST_ptr(md = EVP_get_digestbyname(expected->alg))) {
             t->err = "MAC_ALGORITHM_SET_ERROR";
             goto err;
         }
@@ -949,27 +945,28 @@ static int mac_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (!EVP_DigestSignUpdate(mctx, mdata->input, mdata->input_len)) {
+    if (!EVP_DigestSignUpdate(mctx, expected->input, expected->input_len)) {
         t->err = "DIGESTSIGNUPDATE_ERROR";
         goto err;
     }
-    if (!EVP_DigestSignFinal(mctx, NULL, &mac_len)) {
+    if (!EVP_DigestSignFinal(mctx, NULL, &got_len)) {
         t->err = "DIGESTSIGNFINAL_LENGTH_ERROR";
         goto err;
     }
-    if (!TEST_ptr(mac = OPENSSL_malloc(mac_len))) {
+    if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
         t->err = "TEST_FAILURE";
         goto err;
     }
-    if (!EVP_DigestSignFinal(mctx, mac, &mac_len)
-            || !compare_mem(mdata->output, mdata->output_len, mac, mac_len)) {
+    if (!EVP_DigestSignFinal(mctx, got, &got_len)
+            || !TEST_mem_eq(expected->output, expected->output_len,
+                            got, got_len)) {
         t->err = "TEST_MAC_ERR";
         goto err;
     }
     t->err = NULL;
  err:
     EVP_MD_CTX_free(mctx);
-    OPENSSL_free(mac);
+    OPENSSL_free(got);
     EVP_PKEY_CTX_free(genctx);
     EVP_PKEY_free(key);
     return 1;
@@ -1101,28 +1098,28 @@ static int pkey_test_parse(EVP_TEST *t,
 
 static int pkey_test_run(EVP_TEST *t)
 {
-    PKEY_DATA *kdata = t->data;
-    unsigned char *out = NULL;
-    size_t out_len;
+    PKEY_DATA *expected = t->data;
+    unsigned char *got = NULL;
+    size_t got_len;
 
-    if (kdata->keyop(kdata->ctx, NULL, &out_len, kdata->input,
-                     kdata->input_len) <= 0
-            || !TEST_ptr(out = OPENSSL_malloc(out_len))) {
+    if (expected->keyop(expected->ctx, NULL, &got_len,
+                        expected->input, expected->input_len) <= 0
+            || !TEST_ptr(got = OPENSSL_malloc(got_len))) {
         t->err = "KEYOP_LENGTH_ERROR";
         goto err;
     }
-    if (kdata->keyop(kdata->ctx, out,
-                     &out_len, kdata->input, kdata->input_len) <= 0) {
+    if (expected->keyop(expected->ctx, got, &got_len,
+                        expected->input, expected->input_len) <= 0) {
         t->err = "KEYOP_ERROR";
         goto err;
     }
-    if (!compare_mem(kdata->output, kdata->output_len, out, out_len)) {
+    if (!TEST_mem_eq(expected->output, expected->output_len, got, got_len)) {
         t->err = "KEYOP_MISMATCH";
         goto err;
     }
     t->err = NULL;
  err:
-    OPENSSL_free(out);
+    OPENSSL_free(got);
     return 1;
 }
 
@@ -1218,27 +1215,27 @@ static int pderive_test_parse(EVP_TEST *t,
 
 static int pderive_test_run(EVP_TEST *t)
 {
-    PKEY_DATA *kdata = t->data;
-    unsigned char *out = NULL;
-    size_t out_len;
+    PKEY_DATA *expected = t->data;
+    unsigned char *got = NULL;
+    size_t got_len;
 
-    out_len = kdata->output_len;
-    if (!TEST_ptr(out = OPENSSL_malloc(out_len))) {
+    got_len = expected->output_len;
+    if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
         t->err = "DERIVE_ERROR";
         goto err;
     }
-    if (EVP_PKEY_derive(kdata->ctx, out, &out_len) <= 0) {
+    if (EVP_PKEY_derive(expected->ctx, got, &got_len) <= 0) {
         t->err = "DERIVE_ERROR";
         goto err;
     }
-    if (!compare_mem(kdata->output, kdata->output_len, out, out_len)) {
+    if (!TEST_mem_eq(expected->output, expected->output_len, got, got_len)) {
         t->err = "SHARED_SECRET_MISMATCH";
         goto err;
     }
 
     t->err = NULL;
  err:
-    OPENSSL_free(out);
+    OPENSSL_free(got);
     return 1;
 }
 
@@ -1415,41 +1412,42 @@ static int pbe_test_parse(EVP_TEST *t,
 
 static int pbe_test_run(EVP_TEST *t)
 {
-    PBE_DATA *pdata = t->data;
+    PBE_DATA *expected = t->data;
     unsigned char *key;
 
-    if (!TEST_ptr(key = OPENSSL_malloc(pdata->key_len))) {
+    if (!TEST_ptr(key = OPENSSL_malloc(expected->key_len))) {
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    if (pdata->pbe_type == PBE_TYPE_PBKDF2) {
-        if (PKCS5_PBKDF2_HMAC((char *)pdata->pass, pdata->pass_len,
-                              pdata->salt, pdata->salt_len,
-                              pdata->iter, pdata->md,
-                              pdata->key_len, key) == 0) {
+    if (expected->pbe_type == PBE_TYPE_PBKDF2) {
+        if (PKCS5_PBKDF2_HMAC((char *)expected->pass, expected->pass_len,
+                              expected->salt, expected->salt_len,
+                              expected->iter, expected->md,
+                              expected->key_len, key) == 0) {
             t->err = "PBKDF2_ERROR";
             goto err;
         }
 #ifndef OPENSSL_NO_SCRYPT
-    } else if (pdata->pbe_type == PBE_TYPE_SCRYPT) {
-        if (EVP_PBE_scrypt((const char *)pdata->pass, pdata->pass_len,
-                           pdata->salt, pdata->salt_len,
-                           pdata->N, pdata->r, pdata->p, pdata->maxmem,
-                           key, pdata->key_len) == 0) {
+    } else if (expected->pbe_type == PBE_TYPE_SCRYPT) {
+        if (EVP_PBE_scrypt((const char *)expected->pass, expected->pass_len,
+                           expected->salt, expected->salt_len, expected->N,
+                           expected->r, expected->p, expected->maxmem,
+                           key, expected->key_len) == 0) {
             t->err = "SCRYPT_ERROR";
             goto err;
         }
 #endif
-    } else if (pdata->pbe_type == PBE_TYPE_PKCS12) {
-        if (PKCS12_key_gen_uni(pdata->pass, pdata->pass_len,
-                               pdata->salt, pdata->salt_len,
-                               pdata->id, pdata->iter, pdata->key_len,
-                               key, pdata->md) == 0) {
+    } else if (expected->pbe_type == PBE_TYPE_PKCS12) {
+        if (PKCS12_key_gen_uni(expected->pass, expected->pass_len,
+                               expected->salt, expected->salt_len,
+                               expected->id, expected->iter, expected->key_len,
+                               key, expected->md) == 0) {
             t->err = "PKCS12_ERROR";
             goto err;
         }
     }
-    if (!compare_mem(pdata->key, pdata->key_len, key, pdata->key_len)) {
+    if (!TEST_mem_eq(expected->key, expected->key_len,
+                     key, expected->key_len)) {
         t->err = "KEY_MISMATCH";
         goto err;
     }
@@ -1535,7 +1533,7 @@ static int encode_test_parse(EVP_TEST *t,
 
 static int encode_test_run(EVP_TEST *t)
 {
-    ENCODE_DATA *edata = t->data;
+    ENCODE_DATA *expected = t->data;
     unsigned char *encode_out = NULL, *decode_out = NULL;
     int output_len, chunk_len;
     EVP_ENCODE_CTX *decode_ctx;
@@ -1545,17 +1543,17 @@ static int encode_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (edata->encoding == BASE64_CANONICAL_ENCODING) {
+    if (expected->encoding == BASE64_CANONICAL_ENCODING) {
         EVP_ENCODE_CTX *encode_ctx;
 
         if (!TEST_ptr(encode_ctx = EVP_ENCODE_CTX_new())
                 || !TEST_ptr(encode_out =
-                        OPENSSL_malloc(EVP_ENCODE_LENGTH(edata->input_len))))
+                        OPENSSL_malloc(EVP_ENCODE_LENGTH(expected->input_len))))
             goto err;
 
         EVP_EncodeInit(encode_ctx);
         EVP_EncodeUpdate(encode_ctx, encode_out, &chunk_len,
-                         edata->input, edata->input_len);
+                         expected->input, expected->input_len);
         output_len = chunk_len;
 
         EVP_EncodeFinal(encode_ctx, encode_out + chunk_len, &chunk_len);
@@ -1563,7 +1561,7 @@ static int encode_test_run(EVP_TEST *t)
 
         EVP_ENCODE_CTX_free(encode_ctx);
 
-        if (!compare_mem(edata->output, edata->output_len,
+        if (!TEST_mem_eq(expected->output, expected->output_len,
                          encode_out, output_len)) {
             t->err = "BAD_ENCODING";
             goto err;
@@ -1571,12 +1569,12 @@ static int encode_test_run(EVP_TEST *t)
     }
 
     if (!TEST_ptr(decode_out =
-                OPENSSL_malloc(EVP_DECODE_LENGTH(edata->output_len))))
+                OPENSSL_malloc(EVP_DECODE_LENGTH(expected->output_len))))
         goto err;
 
     EVP_DecodeInit(decode_ctx);
-    if (EVP_DecodeUpdate(decode_ctx, decode_out, &chunk_len, edata->output,
-                         edata->output_len) < 0) {
+    if (EVP_DecodeUpdate(decode_ctx, decode_out, &chunk_len, expected->output,
+                         expected->output_len) < 0) {
         t->err = "DECODE_ERROR";
         goto err;
     }
@@ -1588,8 +1586,8 @@ static int encode_test_run(EVP_TEST *t)
     }
     output_len += chunk_len;
 
-    if (edata->encoding != BASE64_INVALID_ENCODING
-            && !compare_mem(edata->input, edata->input_len,
+    if (expected->encoding != BASE64_INVALID_ENCODING
+            && !TEST_mem_eq(expected->input, expected->input_len,
                             decode_out, output_len)) {
         t->err = "BAD_DECODING";
         goto err;
@@ -1663,26 +1661,26 @@ static int kdf_test_parse(EVP_TEST *t,
 
 static int kdf_test_run(EVP_TEST *t)
 {
-    KDF_DATA *kdata = t->data;
-    unsigned char *out = NULL;
-    size_t out_len = kdata->output_len;
+    KDF_DATA *expected = t->data;
+    unsigned char *got = NULL;
+    size_t got_len = expected->output_len;
 
-    if (!TEST_ptr(out = OPENSSL_malloc(out_len))) {
+    if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    if (EVP_PKEY_derive(kdata->ctx, out, &out_len) <= 0) {
+    if (EVP_PKEY_derive(expected->ctx, got, &got_len) <= 0) {
         t->err = "KDF_DERIVE_ERROR";
         goto err;
     }
-    if (!compare_mem(kdata->output, kdata->output_len, out, out_len)) {
+    if (!TEST_mem_eq(expected->output, expected->output_len, got, got_len)) {
         t->err = "KDF_MISMATCH";
         goto err;
     }
     t->err = NULL;
 
  err:
-    OPENSSL_free(out);
+    OPENSSL_free(got);
     return 1;
 }
 
@@ -1934,34 +1932,35 @@ static int digestsign_update_fn(void *ctx, const unsigned char *buf,
 
 static int digestsign_test_run(EVP_TEST *t)
 {
-    DIGESTSIGN_DATA *mdata = t->data;
-    unsigned char *buf = NULL;
-    size_t buflen;
+    DIGESTSIGN_DATA *expected = t->data;
+    unsigned char *got = NULL;
+    size_t got_len;
 
-    if (!evp_test_buffer_do(mdata->input, digestsign_update_fn, mdata->ctx)) {
+    if (!evp_test_buffer_do(expected->input, digestsign_update_fn,
+                            expected->ctx)) {
         t->err = "DIGESTUPDATE_ERROR";
         goto err;
     }
 
-    if (!EVP_DigestSignFinal(mdata->ctx, NULL, &buflen)) {
+    if (!EVP_DigestSignFinal(expected->ctx, NULL, &got_len)) {
         t->err = "DIGESTSIGNFINAL_LENGTH_ERROR";
         goto err;
     }
-    if (!TEST_ptr(buf = OPENSSL_malloc(buflen))) {
+    if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
         t->err = "MALLOC_FAILURE";
         goto err;
     }
-    if (!EVP_DigestSignFinal(mdata->ctx, buf, &buflen)) {
+    if (!EVP_DigestSignFinal(expected->ctx, got, &got_len)) {
         t->err = "DIGESTSIGNFINAL_ERROR";
         goto err;
     }
-    if (!compare_mem(mdata->output, mdata->output_len, buf, buflen)) {
+    if (!TEST_mem_eq(expected->output, expected->output_len, got, got_len)) {
         t->err = "SIGNATURE_MISMATCH";
         goto err;
     }
 
  err:
-    OPENSSL_free(buf);
+    OPENSSL_free(got);
     return 1;
 }
 
@@ -2014,31 +2013,31 @@ static int oneshot_digestsign_test_init(EVP_TEST *t, const char *alg)
 
 static int oneshot_digestsign_test_run(EVP_TEST *t)
 {
-    DIGESTSIGN_DATA *mdata = t->data;
-    unsigned char *buf = NULL;
-    size_t buflen;
+    DIGESTSIGN_DATA *expected = t->data;
+    unsigned char *got = NULL;
+    size_t got_len;
 
-    if (!EVP_DigestSign(mdata->ctx, NULL, &buflen, mdata->osin,
-                        mdata->osin_len)) {
+    if (!EVP_DigestSign(expected->ctx, NULL, &got_len,
+                        expected->osin, expected->osin_len)) {
         t->err = "DIGESTSIGN_LENGTH_ERROR";
         goto err;
     }
-    if (!TEST_ptr(buf = OPENSSL_malloc(buflen))) {
+    if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
         t->err = "MALLOC_FAILURE";
         goto err;
     }
-    if (!EVP_DigestSign(mdata->ctx, buf, &buflen, mdata->osin,
-                        mdata->osin_len)) {
+    if (!EVP_DigestSign(expected->ctx, got, &got_len,
+                        expected->osin, expected->osin_len)) {
         t->err = "DIGESTSIGN_ERROR";
         goto err;
     }
-    if (!compare_mem(mdata->output, mdata->output_len, buf, buflen)) {
+    if (!TEST_mem_eq(expected->output, expected->output_len, got, got_len)) {
         t->err = "SIGNATURE_MISMATCH";
         goto err;
     }
 
  err:
-    OPENSSL_free(buf);
+    OPENSSL_free(got);
     return 1;
 }
 
