@@ -11,7 +11,7 @@ SCT_get_signature_nid, SCT_set_signature_nid,
 SCT_get0_signature, SCT_set0_signature, SCT_set1_signature,
 SCT_get0_extensions, SCT_set0_extensions, SCT_set1_extensions,
 SCT_get_source, SCT_set_source
- - A Certificate Transparency Signed Certificate Timestamp
+- A Certificate Transparency Signed Certificate Timestamp
 
 =head1 SYNOPSIS
 
