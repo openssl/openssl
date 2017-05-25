@@ -5,9 +5,13 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.1.0e and OpenSSL 1.1.1 [under development]
+  Major changes between OpenSSL 1.1.0f and OpenSSL 1.1.1 [under development]
 
       o
+
+  Major changes between OpenSSL 1.1.0e and OpenSSL 1.1.0f [25 May 2017]
+
+      o config now recognises 64-bit mingw and chooses mingw64 instead of mingw
 
   Major changes between OpenSSL 1.1.0d and OpenSSL 1.1.0e [16 Feb 2017]
 
