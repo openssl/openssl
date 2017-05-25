@@ -9,7 +9,7 @@ BIO_meth_set_write, BIO_meth_get_read, BIO_meth_set_read, BIO_meth_get_puts,
 BIO_meth_set_puts, BIO_meth_get_gets, BIO_meth_set_gets, BIO_meth_get_ctrl,
 BIO_meth_set_ctrl, BIO_meth_get_create, BIO_meth_set_create,
 BIO_meth_get_destroy, BIO_meth_set_destroy, BIO_meth_get_callback_ctrl,
-BIO_meth_set_callback_ctrl  - Routines to build up BIO methods
+BIO_meth_set_callback_ctrl - Routines to build up BIO methods
 
 =head1 SYNOPSIS
 
