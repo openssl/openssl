@@ -4,8 +4,6 @@
 
  Changes between 1.0.2k and 1.0.2l [xx XXX xxxx]
 
-  *)
-
   *) Have 'config' recognise 64-bit mingw and choose 'mingw64' as the target
      platform rather than 'mingw'.
      [Richard Levitte]
