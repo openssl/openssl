@@ -5,7 +5,7 @@
 X509_digest, X509_CRL_digest,
 X509_pubkey_digest,
 X509_NAME_digest,
-X509_REQ_digest
+X509_REQ_digest,
 PKCS7_ISSUER_AND_SERIAL_digest
 - get digest of various objects
 
