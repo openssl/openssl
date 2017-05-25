@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.1.0e and 1.1.0f [xx XXX xxxx]
+ Changes between 1.1.0e and 1.1.0f [25 May 2017]
 
   *) Have 'config' recognise 64-bit mingw and choose 'mingw64' as the target
      platform rather than 'mingw'.
