@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.1.0e and OpenSSL 1.1.0f [under development]
 
-      o
+      o config now recognises 64-bit mingw and chooses mingw64 instead of mingw
 
   Major changes between OpenSSL 1.1.0d and OpenSSL 1.1.0e [16 Feb 2017]
 
