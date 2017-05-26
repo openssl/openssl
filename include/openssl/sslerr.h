@@ -403,6 +403,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_CERTIFICATE_VERIFY_FAILED                  134
 # define SSL_R_CERT_CB_ERROR                              377
 # define SSL_R_CERT_LENGTH_MISMATCH                       135
+# define SSL_R_CIPHERSUITE_DIGEST_HAS_CHANGED             218
 # define SSL_R_CIPHER_CODE_WRONG_LENGTH                   137
 # define SSL_R_CIPHER_OR_HASH_UNAVAILABLE                 138
 # define SSL_R_CLIENTHELLO_TLSEXT                         226
