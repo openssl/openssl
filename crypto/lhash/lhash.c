@@ -29,9 +29,11 @@ OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
     OPENSSL_LHASH *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
-        goto err0;
+        return NULL;
     if ((ret->b = OPENSSL_zalloc(sizeof(*ret->b) * MIN_NODES)) == NULL)
-        goto err1;
+        goto err;
+    if ((ret->retrieve_stats_lock = CRYPTO_THREAD_lock_new()) == NULL) 
+        goto err;
     ret->comp = ((c == NULL) ? (OPENSSL_LH_COMPFUNC)strcmp : c);
     ret->hash = ((h == NULL) ? (OPENSSL_LH_HASHFUNC)OPENSSL_LH_strhash : h);
     ret->num_nodes = MIN_NODES / 2;
@@ -41,10 +43,10 @@ OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
     ret->down_load = DOWN_LOAD;
     return (ret);
 
- err1:
+err:
+    OPENSSL_free(ret->b);
     OPENSSL_free(ret);
- err0:
-    return (NULL);
+    return NULL;
 }
 
 void OPENSSL_LH_free(OPENSSL_LHASH *lh)
@@ -63,6 +65,7 @@ void OPENSSL_LH_free(OPENSSL_LHASH *lh)
             n = nn;
         }
     }
+    CRYPTO_THREAD_lock_free(lh->retrieve_stats_lock);
     OPENSSL_free(lh->b);
     OPENSSL_free(lh);
 }
@@ -133,18 +136,19 @@ void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data)
     unsigned long hash;
     OPENSSL_LH_NODE **rn;
     void *ret;
+    int scratch;
 
     lh->error = 0;
     rn = getrn(lh, data, &hash);
 
     if (*rn == NULL) {
-        lh->num_retrieve_miss++;
-        return (NULL);
+        CRYPTO_atomic_add(&lh->num_retrieve_miss, 1, &scratch, lh->retrieve_stats_lock);
+        return NULL;
     } else {
         ret = (*rn)->data;
-        lh->num_retrieve++;
+        CRYPTO_atomic_add(&lh->num_retrieve, 1, &scratch, lh->retrieve_stats_lock);
     }
-    return (ret);
+    return ret;
 }
 
 static void doall_util_fn(OPENSSL_LHASH *lh, int use_arg,
@@ -270,9 +274,10 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
     OPENSSL_LH_NODE **ret, *n1;
     unsigned long hash, nn;
     OPENSSL_LH_COMPFUNC cf;
+    int scratch;
 
     hash = (*(lh->hash)) (data);
-    lh->num_hash_calls++;
+    CRYPTO_atomic_add(&lh->num_hash_calls, 1, &scratch, lh->retrieve_stats_lock);
     *rhash = hash;
 
     nn = hash % lh->pmax;
@@ -282,12 +287,12 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
     cf = lh->comp;
     ret = &(lh->b[(int)nn]);
     for (n1 = *ret; n1 != NULL; n1 = n1->next) {
-        lh->num_hash_comps++;
+        CRYPTO_atomic_add(&lh->num_hash_comps, 1, &scratch, lh->retrieve_stats_lock);
         if (n1->hash != hash) {
             ret = &(n1->next);
             continue;
         }
-        lh->num_comp_calls++;
+        CRYPTO_atomic_add(&lh->num_comp_calls, 1, &scratch, lh->retrieve_stats_lock);
         if (cf(n1->data, data) == 0)
             break;
         ret = &(n1->next);

@@ -180,7 +180,7 @@ const char *OBJ_NAME_get(const char *name, int type)
         return NULL;
     if (!OBJ_NAME_init())
         return NULL;
-    CRYPTO_THREAD_write_lock(lock);
+    CRYPTO_THREAD_read_lock(lock);
 
     alias = type & OBJ_NAME_ALIAS;
     type &= ~OBJ_NAME_ALIAS;
