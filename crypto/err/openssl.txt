@@ -2158,6 +2158,7 @@ SSL_R_CCS_RECEIVED_EARLY:133:ccs received early
 SSL_R_CERTIFICATE_VERIFY_FAILED:134:certificate verify failed
 SSL_R_CERT_CB_ERROR:377:cert cb error
 SSL_R_CERT_LENGTH_MISMATCH:135:cert length mismatch
+SSL_R_CIPHERSUITE_DIGEST_HAS_CHANGED:218:ciphersuite digest has changed
 SSL_R_CIPHER_CODE_WRONG_LENGTH:137:cipher code wrong length
 SSL_R_CIPHER_OR_HASH_UNAVAILABLE:138:cipher or hash unavailable
 SSL_R_CLIENTHELLO_TLSEXT:226:clienthello tlsext
