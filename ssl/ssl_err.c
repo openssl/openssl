@@ -622,6 +622,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CERT_CB_ERROR), "cert cb error"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CERT_LENGTH_MISMATCH),
     "cert length mismatch"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CIPHERSUITE_DIGEST_HAS_CHANGED),
+    "ciphersuite digest has changed"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CIPHER_CODE_WRONG_LENGTH),
     "cipher code wrong length"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CIPHER_OR_HASH_UNAVAILABLE),

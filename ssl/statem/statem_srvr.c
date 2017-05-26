@@ -1647,8 +1647,12 @@ static int tls_early_post_process_client_hello(SSL *s, int *pal)
         }
     }
 
-    /* If it is a hit, check that the cipher is in the list */
-    if (s->hit) {
+    /*
+     * If it is a hit, check that the cipher is in the list. In TLSv1.3 we can
+     * resume with a differnt cipher as long as the hash is the same so this
+     * check does not apply.
+     */
+    if (!SSL_IS_TLS13(s) && s->hit) {
         j = 0;
         id = s->session->cipher->id;
 
@@ -1850,7 +1854,7 @@ static int tls_early_post_process_client_hello(SSL *s, int *pal)
      * Given s->session->ciphers and SSL_get_ciphers, we must pick a cipher
      */
 
-    if (!s->hit || s->hello_retry_request) {
+    if (!s->hit || SSL_IS_TLS13(s)) {
         sk_SSL_CIPHER_free(s->session->ciphers);
         s->session->ciphers = ciphers;
         if (ciphers == NULL) {
@@ -1956,7 +1960,7 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
         wst = WORK_MORE_B;
     }
     if (wst == WORK_MORE_B) {
-        if (!s->hit || s->hello_retry_request) {
+        if (!s->hit || SSL_IS_TLS13(s)) {
             /* Let cert callback update server certificates if required */
             if (s->cert->cert_cb) {
                 int rv = s->cert->cert_cb(s, s->cert->cert_cb_arg);
@@ -1980,7 +1984,7 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
                        SSL_R_NO_SHARED_CIPHER);
                 goto f_err;
             }
-            if (SSL_IS_TLS13(s) && s->s3->tmp.new_cipher != NULL
+            if (s->hello_retry_request && s->s3->tmp.new_cipher != NULL
                     && s->s3->tmp.new_cipher->id != cipher->id) {
                 /*
                  * A previous HRR picked a different ciphersuite to the one we
