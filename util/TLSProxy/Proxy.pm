@@ -42,6 +42,7 @@ sub new
         clientflags => "",
         serverconnects => 1,
         serverpid => 0,
+        clientpid => 0,
         reneg => 0,
 
         #Public read
@@ -104,6 +105,7 @@ sub clearClient
     $self->{record_list} = [];
     $self->{message_list} = [];
     $self->{clientflags} = "";
+    $self->{clientpid} = 0;
 
     TLSProxy::Message->clear();
     TLSProxy::Record->clear();
@@ -225,6 +227,7 @@ sub clientstart
             }
             exec($execcmd);
         }
+        $self->clientpid($pid);
     }
 
     # Wait for incoming connection from client
@@ -315,6 +318,10 @@ sub clientstart
         waitpid( $self->serverpid, 0);
         die "exit code $? from server process\n" if $? != 0;
     }
+    die "clientpid is zero\n" if $self->clientpid == 0;
+    print "Waiting for client process to close: ".$self->clientpid."\n";
+    waitpid($self->clientpid, 0);
+
     return 1;
 }
 
@@ -507,6 +514,14 @@ sub serverpid
       $self->{serverpid} = shift;
     }
     return $self->{serverpid};
+}
+sub clientpid
+{
+    my $self = shift;
+    if (@_) {
+        $self->{clientpid} = shift;
+    }
+    return $self->{clientpid};
 }
 
 sub fill_known_data
