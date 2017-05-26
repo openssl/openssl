@@ -30,19 +30,16 @@ int main(int argc, char **argv)
 
     /* Read in recipient certificate */
     tbio = BIO_new_file("smrsa1.pem", "r");
-
-    if (!tbio)
+    if (tbio == NULL)
         goto err;
 
     rcert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
-
-    if (!rcert)
+    if (rcert == NULL)
         goto err;
 
     /* Create recipient STACK and add recipient cert to it */
     recips = sk_X509_new_null();
-
-    if (!recips || !sk_X509_push(recips, rcert))
+    if ((recips == NULL) || (!sk_X509_push(recips, rcert)))
         goto err;
 
     /*
@@ -54,20 +51,20 @@ int main(int argc, char **argv)
     /* Open content being encrypted */
 
     in = BIO_new_file("encr.txt", "r");
+    if (in == NULL)
+        goto err;
 
     dout = BIO_new_file("smencr.out", "wb");
-
-    if (!in)
+    if (dout == NULL)
         goto err;
 
     /* encrypt content */
     cms = CMS_encrypt(recips, in, EVP_des_ede3_cbc(), flags);
-
-    if (!cms)
+    if (cms == NULL)
         goto err;
 
     out = BIO_new_file("smencr.pem", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     if (!CMS_final(cms, in, dout, flags))
@@ -77,9 +74,9 @@ int main(int argc, char **argv)
     if (!PEM_write_bio_CMS(out, cms))
         goto err;
 
-    printf("Successfully encrypted contents of file encr.txt into files"
-           " smencr.out and smencr.pem using certificate and private key from"
-           " file smrsa1.pem\n");
+    printf("Successfully encrypted contents of file encr.txt into files\n"
+           "smencr.out and smencr.pem using certificate and private key\n"
+           "from file smrsa1.pem\n");
     ret = 0;
 
  err:

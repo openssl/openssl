@@ -25,43 +25,41 @@ int main(int argc, char **argv)
 
     /* Read in recipient certificate and private key */
     tbio = BIO_new_file("smrsa1.pem", "r");
-
-    if (!tbio)
+    if (tbio == NULL)
         goto err;
 
     rcert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
+    if (rcert == NULL)
+        goto err;
 
     BIO_reset(tbio);
 
     rkey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
-
-    if (!rcert || !rkey)
+    if (rkey == NULL)
         goto err;
 
     /* Open S/MIME message to decrypt */
 
     in = BIO_new_file("smencr.txt", "r");
-
-    if (!in)
+    if (in == NULL)
         goto err;
 
     /* Parse message */
     cms = SMIME_read_CMS(in, NULL);
-
-    if (!cms)
+    if (cms == NULL)
         goto err;
 
     out = BIO_new_file("decout.txt", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     /* Decrypt S/MIME message */
     if (!CMS_decrypt(cms, rkey, rcert, NULL, out, 0))
         goto err;
 
-    printf("Successfully dencrypted contents of file smencr.txt into file "
-           "decout.txt using certificate and private key from file "
-           "smrsa1.pem\n");
+    printf("Successfully decrypted contents of file smencr.txt into file"
+           "\ndecout.txt using certificate and private key from file"
+           "\nsmrsa1.pem\n");
     ret = 0;
 
  err:

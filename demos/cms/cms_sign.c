@@ -32,34 +32,32 @@ int main(int argc, char **argv)
 
     /* Read in signer certificate and private key */
     tbio = BIO_new_file("smrsa1.pem", "r");
-
-    if (!tbio)
+    if (tbio == NULL)
         goto err;
 
     scert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
+    if (scert == NULL)
+        goto err;
 
     BIO_reset(tbio);
 
     skey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
-
-    if (!scert || !skey)
+    if (skey == NULL)
         goto err;
 
     /* Open content being signed */
 
     in = BIO_new_file("sign.txt", "r");
-
-    if (!in)
+    if (in == NULL)
         goto err;
 
     /* Sign content */
     cms = CMS_sign(scert, skey, NULL, in, flags);
-
-    if (!cms)
+    if (cms == NULL)
         goto err;
 
     out = BIO_new_file("smout.txt", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     if (!(flags & CMS_STREAM))
@@ -70,7 +68,7 @@ int main(int argc, char **argv)
         goto err;
 
     printf("Successfully signed contents of file sign.txt into file smout.txt"
-           " using certificate and private key from file smrsa1.pem\n");
+           "\nusing certificate and private key from file smrsa1.pem\n");
     ret = 0;
 
  err:

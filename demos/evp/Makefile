@@ -21,3 +21,4 @@ aesccm aesgcm:
 
 clean:
 	$(RM) aesccm.o aesgcm.o aesccm aesgcm
+

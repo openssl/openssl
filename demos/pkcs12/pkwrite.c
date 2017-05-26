@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     pkey = PEM_read_PrivateKey(fp, NULL, NULL, NULL);
     fclose(fp);
     p12 = PKCS12_create(argv[2], argv[3], pkey, cert, NULL, 0, 0, 0, 0, 0);
-    if (!p12) {
+    if (p12 == NULL) {
         fprintf(stderr, "Error creating PKCS#12 structure\n");
         ERR_print_errors_fp(stderr);
         exit(1);

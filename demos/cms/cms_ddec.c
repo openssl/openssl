@@ -28,49 +28,46 @@ int main(int argc, char **argv)
 
     /* Read in recipient certificate and private key */
     tbio = BIO_new_file("smrsa1.pem", "r");
-
-    if (!tbio)
+    if (tbio == NULL)
         goto err;
 
     rcert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
+    if (rcert == NULL)
+        goto err;
 
     BIO_reset(tbio);
 
     rkey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
-
-    if (!rcert || !rkey)
+    if (rkey == NULL)
         goto err;
 
     /* Open PEM file containing enveloped data */
 
     in = BIO_new_file("smencr.pem", "r");
-
-    if (!in)
+    if (in == NULL)
         goto err;
 
     /* Parse PEM content */
     cms = PEM_read_bio_CMS(in, NULL, 0, NULL);
-
-    if (!cms)
+    if (cms == NULL)
         goto err;
 
     /* Open file containing detached content */
     dcont = BIO_new_file("smencr.out", "rb");
-
-    if (!in)
+    if (dcont == NULL)
         goto err;
 
     out = BIO_new_file("encrout.txt", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     /* Decrypt S/MIME message */
     if (!CMS_decrypt(cms, rkey, rcert, dcont, out, 0))
         goto err;
 
-    printf("Successfully dencrypted contents of file smencr.pem"
-           " into file smencr.out and encrout.txt "
-           " using certificate and private key from file smrsa1.pem\n");
+    printf("Successfully decrypted contents of file smencr.pem into file"
+           "\nsmencr.out and encrout.txt using certificate and private"
+           "\nkey from file smrsa1.pem\n");
     ret = 0;
 
  err:

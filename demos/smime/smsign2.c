@@ -24,40 +24,41 @@ int main(int argc, char **argv)
     ERR_load_crypto_strings();
 
     tbio = BIO_new_file("smrsa1.pem", "r");
-
-    if (!tbio)
+    if (tbio == NULL)
         goto err;
 
     scert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
+    if (scert == NULL)
+        goto err;
 
     BIO_reset(tbio);
 
     skey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
+    if (skey == NULL)
+        goto err;
 
     BIO_free(tbio);
 
     tbio = BIO_new_file("smrsa2.pem", "r");
-
-    if (!tbio)
+    if (tbio == NULL)
         goto err;
 
     scert2 = PEM_read_bio_X509(tbio, NULL, 0, NULL);
+    if (scert2 == NULL)
+        goto err;
 
     BIO_reset(tbio);
 
     skey2 = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
-
-    if (!scert2 || !skey2)
+    if (skey2 == NULL)
         goto err;
 
     in = BIO_new_file("sign.txt", "r");
-
-    if (!in)
+    if (in == NULL)
         goto err;
 
     p7 = PKCS7_sign(NULL, NULL, NULL, in, PKCS7_STREAM | PKCS7_PARTIAL);
-
-    if (!p7)
+    if (p7 == NULL)
         goto err;
 
     /* Add each signer in turn */
@@ -69,7 +70,7 @@ int main(int argc, char **argv)
         goto err;
 
     out = BIO_new_file("smout.txt", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     /* NB: content included and finalized by SMIME_write_PKCS7 */
@@ -78,8 +79,8 @@ int main(int argc, char **argv)
         goto err;
 
     printf("Successfully signed contents of file sign.txt into file smout.txt"
-           " using signer certificate and private key from files smrsa1.pem"
-           " and smrsa2.pem\n");
+           "\nusing signer certificate and private key from files smrsa1.pem"
+           "\nand smrsa2.pem\n");
     ret = 0;
 
  err:

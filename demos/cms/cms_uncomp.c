@@ -24,26 +24,24 @@ int main(int argc, char **argv)
     /* Open compressed content */
 
     in = BIO_new_file("smcomp.txt", "r");
-
-    if (!in)
+    if (in == NULL)
         goto err;
 
     /* Sign content */
     cms = SMIME_read_CMS(in, NULL);
-
-    if (!cms)
+    if (cms == NULL)
         goto err;
 
     out = BIO_new_file("smuncomp.txt", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     /* Uncompress S/MIME message */
     if (!CMS_uncompress(cms, NULL, out, CMS_STREAM))
         goto err;
 
-    printf("Successfully uncompressed contents of file smcomp.txt into file"
-           " smuncomp.txt\n");
+    printf("Successfully uncompressed contents of file smcomp.txt\n"
+           "into file smuncomp.txt\n");
     ret = 0;
 
  err:

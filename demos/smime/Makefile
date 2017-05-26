@@ -33,3 +33,4 @@ smdec smenc smsign smsign2 smver:
 clean:
 	$(RM) smdec smenc smsign smsign2 smver
 	$(RM) smdec.o smenc.o smsign.o smsign2.o smver.o
+

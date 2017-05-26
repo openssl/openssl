@@ -25,8 +25,7 @@ int main(int argc, char **argv)
 
     /* Read in recipient certificate and private key */
     tbio = BIO_new_file("smrsa1.pem", "r");
-
-    if (!tbio)
+    if (tbio == NULL)
         goto err;
 
     rcert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
@@ -34,25 +33,22 @@ int main(int argc, char **argv)
     BIO_reset(tbio);
 
     rkey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
-
-    if (!rcert || !rkey)
+    if ((rcert == NULL) || (rkey == NULL))
         goto err;
 
     /* Open content being signed */
 
     in = BIO_new_file("smencr.txt", "r");
-
-    if (!in)
+    if (in == NULL)
         goto err;
 
     /* Sign content */
     p7 = SMIME_read_PKCS7(in, NULL);
-
-    if (!p7)
+    if (p7 == NULL)
         goto err;
 
     out = BIO_new_file("encrout.txt", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     /* Decrypt S/MIME message */
@@ -60,7 +56,7 @@ int main(int argc, char **argv)
         goto err;
 
     printf("Successfully dencrypted contents of file smencr.txt into file"
-           " encrout.txt using certificate and private key from file"
+           " encrout.txt \nusing certificate and private key from file"
            " smrsa1.pem\n");
     ret = 0;
 
