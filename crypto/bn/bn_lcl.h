@@ -170,7 +170,7 @@ extern "C" {
                 const BIGNUM *_bnum2 = (a); \
                 if (_bnum2 != NULL) { \
                         assert(((_bnum2->top == 0) && !_bnum2->neg) || \
-                                (_bnum2->top && (_bnum2->d[_bnum2->top - 1] != 0))); \
+                               (_bnum2->top && (_bnum2->d[_bnum2->top - 1] != 0))); \
                         bn_pollute(_bnum2); \
                 } \
         } while(0)
@@ -182,7 +182,7 @@ extern "C" {
         do { \
                 const BIGNUM *_bnum2 = (bn); \
                 assert((words) <= (_bnum2)->dmax && \
-                        (words) >= (_bnum2)->top); \
+                       (words) >= (_bnum2)->top); \
                 /* avoid unused variable warning with NDEBUG */ \
                 (void)(_bnum2); \
         } while(0)

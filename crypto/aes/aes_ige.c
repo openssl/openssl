@@ -36,9 +36,11 @@ typedef struct {
 
 void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
                      size_t length, const AES_KEY *key,
-                     unsigned char *ivec, const int enc) {
+                     unsigned char *ivec, const int enc)
+{
     /* Ignore the return value since we are void */
-    AES_ige_encrypt_ex(in, out, length, key, ivec, enc);
+    if (!ossl_assert(AES_ige_encrypt_ex(in, out, length, key, ivec, enc)))
+        return;
 }
 
 int AES_ige_encrypt_ex(const unsigned char *in, unsigned char *out,
@@ -186,8 +188,9 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
                         const AES_KEY *key2, const unsigned char *ivec,
                         const int enc)
 {
-    /* Ignore the return value since we are void */
-    AES_bi_ige_encrypt(in, out, length, key, key2, ivec, enc);
+    if (!ossl_assert(AES_bi_ige_encrypt_ex(in, out, length, key, key2, ivec,
+                     enc)))
+        return;
 }
 
 int AES_bi_ige_encrypt_ex(const unsigned char *in, unsigned char *out,
