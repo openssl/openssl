@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[6900] = {
+static const unsigned char so[6912] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -976,9 +976,13 @@ static const unsigned char so[6900] = {
     0x2A,0x83,0x1A,0x8C,0x9A,0x6E,0x01,0x01,0x0D,  /* [ 6872] OBJ_aria_256_cfb128 */
     0x2A,0x83,0x1A,0x8C,0x9A,0x6E,0x01,0x01,0x0E,  /* [ 6881] OBJ_aria_256_ofb128 */
     0x2A,0x83,0x1A,0x8C,0x9A,0x6E,0x01,0x01,0x0F,  /* [ 6890] OBJ_aria_256_ctr */
+    0x55,0x04,0x61,                                /* [ 6899] OBJ_organizationIdentifier */
+    0x55,0x04,0x62,                                /* [ 6902] OBJ_countryCode3c */
+    0x55,0x04,0x63,                                /* [ 6905] OBJ_countryCode3n */
+    0x55,0x04,0x64,                                /* [ 6908] OBJ_dnsName */
 };
 
-#define NUM_NID 1086
+#define NUM_NID 1090
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2066,9 +2070,13 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"ARIA-128-CFB8", "aria-128-cfb8", NID_aria_128_cfb8},
     {"ARIA-192-CFB8", "aria-192-cfb8", NID_aria_192_cfb8},
     {"ARIA-256-CFB8", "aria-256-cfb8", NID_aria_256_cfb8},
+    {"organizationIdentifier", "organizationIdentifier", NID_organizationIdentifier, 3, &so[6899]},
+    {"c3", "countryCode3c", NID_countryCode3c, 3, &so[6902]},
+    {"n3", "countryCode3n", NID_countryCode3n, 3, &so[6905]},
+    {"dnsName", "dnsName", NID_dnsName, 3, &so[6908]},
 };
 
-#define NUM_SN 1077
+#define NUM_SN 1081
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2388,6 +2396,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      696,    /* "c2tnb239v3" */
      701,    /* "c2tnb359v1" */
      703,    /* "c2tnb431r1" */
+    1087,    /* "c3" */
      881,    /* "cACertificate" */
      483,    /* "cNAMERecord" */
      179,    /* "caIssuers" */
@@ -2444,6 +2453,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      887,    /* "distinguishedName" */
      892,    /* "dmdName" */
      174,    /* "dnQualifier" */
+    1089,    /* "dnsName" */
      447,    /* "document" */
      471,    /* "documentAuthor" */
      468,    /* "documentIdentifier" */
@@ -2825,6 +2835,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      137,    /* "msSGC" */
      648,    /* "msSmartcardLogin" */
      649,    /* "msUPN" */
+    1088,    /* "n3" */
      481,    /* "nSRecord" */
      173,    /* "name" */
      666,    /* "nameConstraints" */
@@ -2843,6 +2854,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      139,    /* "nsSGC" */
       77,    /* "nsSslServerName" */
      681,    /* "onBasis" */
+    1086,    /* "organizationIdentifier" */
      491,    /* "organizationalStatus" */
      475,    /* "otherMailbox" */
      876,    /* "owner" */
@@ -3149,7 +3161,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      160,    /* "x509Crl" */
 };
 
-#define NUM_LN 1077
+#define NUM_LN 1081
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3496,6 +3508,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      513,    /* "content types" */
       50,    /* "contentType" */
       53,    /* "countersignature" */
+    1087,    /* "countryCode3c" */
+    1088,    /* "countryCode3n" */
       14,    /* "countryName" */
      153,    /* "crlBag" */
      884,    /* "crossCertificatePair" */
@@ -3545,6 +3559,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      887,    /* "distinguishedName" */
      892,    /* "dmdName" */
      174,    /* "dnQualifier" */
+    1089,    /* "dnsName" */
      447,    /* "document" */
      471,    /* "documentAuthor" */
      468,    /* "documentIdentifier" */
@@ -3905,6 +3920,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      173,    /* "name" */
      681,    /* "onBasis" */
      379,    /* "org" */
+    1086,    /* "organizationIdentifier" */
       17,    /* "organizationName" */
      491,    /* "organizationalStatus" */
       18,    /* "organizationalUnitName" */
@@ -4230,7 +4246,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 971
+#define NUM_OBJ 975
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -4311,6 +4327,10 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      892,    /* OBJ_dmdName                      2 5 4 54 */
      510,    /* OBJ_pseudonym                    2 5 4 65 */
      400,    /* OBJ_role                         2 5 4 72 */
+    1086,    /* OBJ_organizationIdentifier       2 5 4 97 */
+    1087,    /* OBJ_countryCode3c                2 5 4 98 */
+    1088,    /* OBJ_countryCode3n                2 5 4 99 */
+    1089,    /* OBJ_dnsName                      2 5 4 100 */
      769,    /* OBJ_subject_directory_attributes 2 5 29 9 */
       82,    /* OBJ_subject_key_identifier       2 5 29 14 */
       83,    /* OBJ_key_usage                    2 5 29 15 */

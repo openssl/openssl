@@ -737,6 +737,10 @@ X509 53			: 			: deltaRevocationList
 X509 54			: dmdName		:
 X509 65			:			: pseudonym
 X509 72			: role			: role
+X509 97			: 			: organizationIdentifier
+X509 98			: c3			: countryCode3c
+X509 99			: n3			: countryCode3n
+X509 100		:			: dnsName
 
 X500 8			: X500algorithms	: directory services - algorithms
 X500algorithms 1 1	: RSA			: rsa
