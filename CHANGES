@@ -9,6 +9,15 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Add a STORE module, which implements a uniform and URI based reader of
+     stores that can contain keys, certificates, CRLs and numerous other
+     objects.  The main API is loosely based on a few stdio functions,
+     and includes OSSL_STORE_open, OSSL_STORE_load, OSSL_STORE_eof,
+     OSSL_STORE_error and OSSL_STORE_close.
+     The implementation uses backends called "loaders" to implement arbitrary
+     URI schemes.  There is one built in "loader" for the 'file' scheme.
+     [Richard Levitte]
+
   *) Add devcrypto engine.  This has been implemented against cryptodev-linux,
      then adjusted to work on FreeBSD 8.4 as well.
      Enable by configuring with 'enable-devcryptoeng'.  This is done by default
