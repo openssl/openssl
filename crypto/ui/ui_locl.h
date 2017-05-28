@@ -38,6 +38,12 @@ struct ui_method_st {
     int (*ui_read_string) (UI *ui, UI_STRING *uis);
     int (*ui_close_session) (UI *ui);
     /*
+     * Duplicate the ui_data that often comes alongside a ui_method.  This
+     * allows some backends to save away UI information for later use.
+     */
+    void *(*ui_duplicate_data) (UI *ui, void *ui_data);
+    void (*ui_destroy_data) (UI *ui, void *ui_data);
+    /*
      * Construct a prompt in a user-defined manner.  object_desc is a textual
      * short description of the object, for example "pass phrase", and
      * object_name is the name of the object (might be a card name or a file
@@ -92,6 +98,7 @@ struct ui_st {
     void *user_data;
     CRYPTO_EX_DATA ex_data;
 # define UI_FLAG_REDOABLE        0x0001
+# define UI_FLAG_DUPL_DATA       0x0002 /* user_data was duplicated */
 # define UI_FLAG_PRINT_ERRORS    0x0100
     int flags;
 

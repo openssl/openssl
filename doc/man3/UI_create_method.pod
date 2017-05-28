@@ -5,9 +5,11 @@
 UI_METHOD,
 UI_create_method, UI_destroy_method, UI_method_set_opener,
 UI_method_set_writer, UI_method_set_flusher, UI_method_set_reader,
-UI_method_set_closer, UI_method_set_prompt_constructor,
-UI_method_set_ex_data, UI_method_get_opener, UI_method_get_writer,
-UI_method_get_flusher, UI_method_get_reader, UI_method_get_closer,
+UI_method_set_closer, UI_method_set_data_duplicator,
+UI_method_set_prompt_constructor, UI_method_set_ex_data,
+UI_method_get_opener, UI_method_get_writer, UI_method_get_flusher,
+UI_method_get_reader, UI_method_get_closer,
+UI_method_get_data_duplicator, UI_method_get_data_destructor,
 UI_method_get_prompt_constructor, UI_method_get_ex_data - user
 interface method creation and destruction
 
@@ -26,6 +28,9 @@ interface method creation and destruction
  int UI_method_set_reader(UI_METHOD *method,
                           int (*reader) (UI *ui, UI_STRING *uis));
  int UI_method_set_closer(UI_METHOD *method, int (*closer) (UI *ui));
+ int UI_method_set_data_duplicator(UI_METHOD *method,
+                                   void *(*duplicator) (UI *ui, void *ui_data),
+                                   void (*destructor)(UI *ui, void *ui_data));
  int UI_method_set_prompt_constructor(UI_METHOD *method,
                                       char *(*prompt_constructor) (UI *ui,
                                                                    const char
@@ -40,6 +45,8 @@ interface method creation and destruction
  int (*UI_method_get_closer(const UI_METHOD *method)) (UI *);
  char *(*UI_method_get_prompt_constructor(const UI_METHOD *method))
      (UI *, const char *, const char *);
+ void *(*UI_method_get_data_duplicator(const UI_METHOD *method)) (UI *, void *);
+ void (*UI_method_get_data_destructor(const UI_METHOD *method)) (UI *, void *);
  const void *UI_method_get_ex_data(const UI_METHOD *method, int idx);
 
 =head1 DESCRIPTION
@@ -148,6 +155,9 @@ UI_method_set_flusher(), UI_method_set_reader() and
 UI_method_set_closer() set the five main method function to the given
 function pointer.
 
+UI_method_set_data_duplicator() sets the user data duplicator and destructor.
+See L<UI_dup_user_data(3)>.
+
 UI_method_set_prompt_constructor() sets the prompt constructor.
 See L<UI_construct_prompt(3)>.
 
@@ -158,8 +168,9 @@ get that index.
 
 UI_method_get_opener(), UI_method_get_writer(),
 UI_method_get_flusher(), UI_method_get_reader(),
-UI_method_get_closer() and UI_method_get_prompt_constructor() return
-the different method functions.
+UI_method_get_closer(), UI_method_get_data_duplicator(),
+UI_method_get_data_destructor() and UI_method_get_prompt_constructor()
+return the different method functions.
 
 UI_method_get_ex_data() returns the application data previously stored
 with UI_method_set_ex_data().
@@ -171,17 +182,19 @@ error.
 
 UI_method_set_opener(), UI_method_set_writer(),
 UI_method_set_flusher(), UI_method_set_reader(),
-UI_method_set_closer() and UI_method_set_prompt_constructor() return
-0 on success, -1 if the given B<method> is NULL.
+UI_method_set_closer(), UI_method_set_data_duplicator() and
+UI_method_set_prompt_constructor()
+return 0 on success, -1 if the given B<method> is NULL.
 
 UI_method_set_ex_data() returns 1 on success and 0 on error (because
 CRYPTO_set_ex_data() does so).
 
 UI_method_get_opener(), UI_method_get_writer(),
 UI_method_get_flusher(), UI_method_get_reader(),
-UI_method_get_closer() and UI_method_get_prompt_constructor() return
-the requested function pointer if it's set in the method, otherwise
-NULL.
+UI_method_get_closer(), UI_method_get_data_duplicator(),
+UI_method_get_data_destructor() and UI_method_get_prompt_constructor()
+return the requested function pointer if it's set in the method,
+otherwise NULL.
 
 UI_method_get_ex_data() returns a pointer to the application specific
 data associated with the method.
@@ -189,6 +202,12 @@ data associated with the method.
 =head1 SEE ALSO
 
 L<UI(3)>, L<CRYPTO_get_ex_data(3)>, L<UI_STRING(3)>
+
+=head1 HISTORY
+
+UI_method_set_data_duplicator(), UI_method_get_data_duplicator() and
+UI_method_get_data_destructor()
+were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
