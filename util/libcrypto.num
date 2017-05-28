@@ -4292,3 +4292,7 @@ PEM_read_bio_ex                         4234	1_1_1	EXIST::FUNCTION:
 PEM_bytes_read_bio_secmem               4235	1_1_1	EXIST::FUNCTION:
 EVP_DigestSign                          4236	1_1_1	EXIST::FUNCTION:
 EVP_DigestVerify                        4237	1_1_1	EXIST::FUNCTION:
+UI_method_get_data_duplicator           4238	1_1_1	EXIST::FUNCTION:UI
+UI_method_set_data_duplicator           4239	1_1_1	EXIST::FUNCTION:UI
+UI_dup_user_data                        4240	1_1_1	EXIST::FUNCTION:UI
+UI_method_get_data_destructor           4241	1_1_1	EXIST::FUNCTION:UI

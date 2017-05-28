@@ -7,9 +7,9 @@ UI_new, UI_new_method, UI_free, UI_add_input_string, UI_dup_input_string,
 UI_add_verify_string, UI_dup_verify_string, UI_add_input_boolean,
 UI_dup_input_boolean, UI_add_info_string, UI_dup_info_string,
 UI_add_error_string, UI_dup_error_string, UI_construct_prompt,
-UI_add_user_data, UI_get0_user_data, UI_get0_result, UI_process,
-UI_ctrl, UI_set_default_method, UI_get_default_method, UI_get_method,
-UI_set_method, UI_OpenSSL, UI_null - user interface
+UI_add_user_data, UI_dup_user_data, UI_get0_user_data, UI_get0_result,
+UI_process, UI_ctrl, UI_set_default_method, UI_get_default_method,
+UI_get_method, UI_set_method, UI_OpenSSL, UI_null - user interface
 
 =head1 SYNOPSIS
 
@@ -44,6 +44,7 @@ UI_set_method, UI_OpenSSL, UI_null - user interface
         const char *object_desc, const char *object_name);
 
  void *UI_add_user_data(UI *ui, void *user_data);
+ int UI_dup_user_data(UI *ui, void *user_data);
  void *UI_get0_user_data(UI *ui);
 
  const char *UI_get0_result(UI *ui, int i);
@@ -76,15 +77,18 @@ carry out the actual prompting.
 The first thing to do is to create a UI with UI_new() or UI_new_method(),
 then add information to it with the UI_add or UI_dup functions.  Also,
 user-defined random data can be passed down to the underlying method
-through calls to UI_add_user_data.  The default UI method doesn't care
-about these data, but other methods might.  Finally, use UI_process()
-to actually perform the prompting and UI_get0_result() to find the result
-to the prompt.
+through calls to UI_add_user_data() or UI_dup_user_data().  The default
+UI method doesn't care about these data, but other methods might.  Finally,
+use UI_process() to actually perform the prompting and UI_get0_result()
+to find the result to the prompt.
 
 A UI can contain more than one prompt, which are performed in the given
 sequence.  Each prompt gets an index number which is returned by the
 UI_add and UI_dup functions, and has to be used to get the corresponding
 result with UI_get0_result().
+
+UI_process() can be called more than once on the same UI, thereby allowing
+a UI to have a long lifetime, but can just as well have a short lifetime.
 
 The functions are as follows:
 
@@ -149,13 +153,20 @@ description "pass phrase" and the file name "foo.key", that becomes
 string and may include encodings that will be processed by the other
 method functions.
 
-UI_add_user_data() adds a piece of memory for the method to use at any
+UI_add_user_data() adds a user data pointer for the method to use at any
 time.  The builtin UI method doesn't care about this info.  Note that several
 calls to this function doesn't add data, it replaces the previous blob
 with the one given as argument.
 
+UI_dup_user_data() duplicates the user data and works as an alternative
+to UI_add_user_data() when the user data needs to be preserved for a longer
+duration, perhaps even the lifetime of the application.  The UI object takes
+ownership of this duplicate and will free it whenever it gets replaced or
+the UI is destroyed.  UI_dup_user_data() returns 0 on success, or -1 on memory
+allocation failure or if the method doesn't have a duplicator function.
+
 UI_get0_user_data() retrieves the data that has last been given to the
-UI with UI_add_user_data().
+UI with UI_add_user_data() or UI_dup_user_data.
 
 UI_get0_result() returns a pointer to the result buffer associated with
 the information indexed by I<i>.
