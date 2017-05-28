@@ -22,12 +22,6 @@
 
 typedef _Atomic int CRYPTO_REF_COUNT;
 
-static ossl_inline int CRYPTO_GET_REF(_Atomic int *val, int *ret, void *lock)
-{
-    *ret = atomic_fetch_add_explicit(val, 0, memory_order_relaxed);
-    return 1;
-}
-
 static ossl_inline int CRYPTO_UP_REF(_Atomic int *val, int *ret, void *lock)
 {
     *ret = atomic_fetch_add_explicit(val, 1, memory_order_relaxed) + 1;
@@ -48,12 +42,6 @@ static ossl_inline int CRYPTO_DOWN_REF(_Atomic int *val, int *ret, void *lock)
 
 typedef int CRYPTO_REF_COUNT;
 
-static ossl_inline int CRYPTO_GET_REF(int *val, int *ret, void *lock)
-{
-    *ret = __atomic_fetch_add(val, 0, __ATOMIC_RELAXED);
-    return 1;
-}
-
 static ossl_inline int CRYPTO_UP_REF(int *val, int *ret, void *lock)
 {
     *ret = __atomic_fetch_add(val, 1, __ATOMIC_RELAXED) + 1;
@@ -72,7 +60,6 @@ static ossl_inline int CRYPTO_DOWN_REF(int *val, int *ret, void *lock)
 
 typedef int CRYPTO_REF_COUNT;
 
-# define CRYPTO_GET_REF(val, ret, lock) CRYPTO_atomic_add(val, 0, ret, lock)
 # define CRYPTO_UP_REF(val, ret, lock) CRYPTO_atomic_add(val, 1, ret, lock)
 # define CRYPTO_DOWN_REF(val, ret, lock) CRYPTO_atomic_add(val, -1, ret, lock)
 
