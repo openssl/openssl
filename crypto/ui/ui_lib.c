@@ -73,6 +73,9 @@ void UI_free(UI *ui)
 {
     if (ui == NULL)
         return;
+    if ((ui->flags & UI_FLAG_DUPL_DATA) != 0) {
+        ui->meth->ui_destroy_data(ui, ui->user_data);
+    }
     sk_UI_STRING_pop_free(ui->strings, free_string);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_UI, ui, &ui->ex_data);
     CRYPTO_THREAD_lock_free(ui->lock);
@@ -387,8 +390,36 @@ char *UI_construct_prompt(UI *ui, const char *object_desc,
 void *UI_add_user_data(UI *ui, void *user_data)
 {
     void *old_data = ui->user_data;
+
+    if ((ui->flags & UI_FLAG_DUPL_DATA) != 0) {
+        ui->meth->ui_destroy_data(ui, old_data);
+        old_data = NULL;
+    }
     ui->user_data = user_data;
+    ui->flags &= ~UI_FLAG_DUPL_DATA;
     return old_data;
+}
+
+int UI_dup_user_data(UI *ui, void *user_data)
+{
+    void *duplicate = NULL;
+
+    if (ui->meth->ui_duplicate_data == NULL
+        || ui->meth->ui_destroy_data == NULL) {
+        UIerr(UI_F_UI_DUP_USER_DATA, UI_R_USER_DATA_DUPLICATION_UNSUPPORTED);
+        return -1;
+    }
+
+    duplicate = ui->meth->ui_duplicate_data(ui, user_data);
+    if (duplicate == NULL) {
+        UIerr(UI_F_UI_DUP_USER_DATA, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
+
+    (void)UI_add_user_data(ui, duplicate);
+    ui->flags |= UI_FLAG_DUPL_DATA;
+
+    return 0;
 }
 
 void *UI_get0_user_data(UI *ui)
@@ -624,6 +655,18 @@ int UI_method_set_closer(UI_METHOD *method, int (*closer) (UI *ui))
     return -1;
 }
 
+int UI_method_set_data_duplicator(UI_METHOD *method,
+                                  void *(*duplicator) (UI *ui, void *ui_data),
+                                  void (*destructor)(UI *ui, void *ui_data))
+{
+    if (method != NULL) {
+        method->ui_duplicate_data = duplicator;
+        method->ui_destroy_data = destructor;
+        return 0;
+    }
+    return -1;
+}
+
 int UI_method_set_prompt_constructor(UI_METHOD *method,
                                      char *(*prompt_constructor) (UI *ui,
                                                                   const char
@@ -683,6 +726,20 @@ char *(*UI_method_get_prompt_constructor(const UI_METHOD *method))
 {
     if (method != NULL)
         return method->ui_construct_prompt;
+    return NULL;
+}
+
+void *(*UI_method_get_data_duplicator(const UI_METHOD *method)) (UI *, void *)
+{
+    if (method != NULL)
+        return method->ui_duplicate_data;
+    return NULL;
+}
+
+void (*UI_method_get_data_destructor(const UI_METHOD *method)) (UI *, void *)
+{
+    if (method != NULL)
+        return method->ui_destroy_data;
     return NULL;
 }
 

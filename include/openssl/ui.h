@@ -158,6 +158,12 @@ char *UI_construct_prompt(UI *ui_method,
  * methods may not, however.
  */
 void *UI_add_user_data(UI *ui, void *user_data);
+/*
+ * Alternatively, this function is used to duplicate the user data.
+ * This uses the duplicator method function.  The destroy function will
+ * be used to free the user data in this case.
+ */
+int UI_dup_user_data(UI *ui, void *user_data);
 /* We need a user data retrieving function as well.  */
 void *UI_get0_user_data(UI *ui);
 
@@ -285,6 +291,9 @@ int UI_method_set_flusher(UI_METHOD *method, int (*flusher) (UI *ui));
 int UI_method_set_reader(UI_METHOD *method,
                          int (*reader) (UI *ui, UI_STRING *uis));
 int UI_method_set_closer(UI_METHOD *method, int (*closer) (UI *ui));
+int UI_method_set_data_duplicator(UI_METHOD *method,
+                                  void *(*duplicator) (UI *ui, void *ui_data),
+                                  void (*destructor)(UI *ui, void *ui_data));
 int UI_method_set_prompt_constructor(UI_METHOD *method,
                                      char *(*prompt_constructor) (UI *ui,
                                                                   const char
@@ -299,6 +308,8 @@ int (*UI_method_get_reader(const UI_METHOD *method)) (UI *, UI_STRING *);
 int (*UI_method_get_closer(const UI_METHOD *method)) (UI *);
 char *(*UI_method_get_prompt_constructor(const UI_METHOD *method))
     (UI *, const char *, const char *);
+void *(*UI_method_get_data_duplicator(const UI_METHOD *method)) (UI *, void *);
+void (*UI_method_get_data_destructor(const UI_METHOD *method)) (UI *, void *);
 const void *UI_method_get_ex_data(const UI_METHOD *method, int idx);
 
 /*
@@ -335,7 +346,7 @@ int UI_UTIL_read_pw_string(char *buf, int length, const char *prompt,
                            int verify);
 int UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt,
                     int verify);
-    UI_METHOD *UI_UTIL_wrap_read_pem_callback(pem_password_cb *cb, int rwflag);
+UI_METHOD *UI_UTIL_wrap_read_pem_callback(pem_password_cb *cb, int rwflag);
 
 /* BEGIN ERROR CODES */
 /*
@@ -360,6 +371,7 @@ int ERR_load_UI_strings(void);
 # define UI_F_UI_DUP_INFO_STRING                          102
 # define UI_F_UI_DUP_INPUT_BOOLEAN                        110
 # define UI_F_UI_DUP_INPUT_STRING                         103
+# define UI_F_UI_DUP_USER_DATA                            118
 # define UI_F_UI_DUP_VERIFY_STRING                        106
 # define UI_F_UI_GET0_RESULT                              107
 # define UI_F_UI_NEW_METHOD                               104
@@ -379,6 +391,7 @@ int ERR_load_UI_strings(void);
 # define UI_R_SYSQIOW_ERROR                               111
 # define UI_R_UNKNOWN_CONTROL_COMMAND                     106
 # define UI_R_UNKNOWN_TTYGET_ERRNO_VALUE                  108
+# define UI_R_USER_DATA_DUPLICATION_UNSUPPORTED           112
 
 #  ifdef  __cplusplus
 }

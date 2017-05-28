@@ -4,6 +4,11 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) In the UI interface, make it possible to duplicate the user data.  This
+     can be used by engines that need to retain the data for a longer time
+     than just the call where this user data is passed.
+     [Richard Levitte]
+
   *) Fragmented SSL/TLS alerts are no longer accepted. An alert message is 2
      bytes long. In theory it is permissible in SSLv3 - TLSv1.2 to fragment such
      alerts across multiple records (some of which could be empty). In practice
