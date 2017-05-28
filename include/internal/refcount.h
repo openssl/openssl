@@ -48,7 +48,7 @@ static ossl_inline int CRYPTO_DOWN_REF(_Atomic int *val, int *ret, void *lock)
 
 typedef int CRYPTO_REF_COUNT;
 
-static ossl_inline int CRYPTO_GET_REF(_Atomic int *val, int *ret, void *lock)
+static ossl_inline int CRYPTO_GET_REF(int *val, int *ret, void *lock)
 {
     *ret = __atomic_fetch_add(val, 0, __ATOMIC_RELAXED);
     return 1;
