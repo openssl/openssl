@@ -33,6 +33,7 @@ X509_PUBKEY_get0_param - SubjectPublicKeyInfo public key functions
  int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
                             const unsigned char **pk, int *ppklen,
                             X509_ALGOR **pa, X509_PUBKEY *pub);
+ const X509_ALGOR *X509_PUBKEY_get0_algor(X509_PUBKEY *key)
 
 =head1 DESCRIPTION
 
@@ -79,6 +80,9 @@ parameters is not required it can be set to B<NULL>. All of the
 retrieved pointers are internal and must not be freed after the
 call.
 
+X509_PUBKEY_get0_algor() retrieves the algorithm used for B<key>. The returned
+value is an internal pointer which B<MUST NOT> be freed after use.
+
 =head1 NOTES
 
 The B<X509_PUBKEY> functions can be used to encode and decode public keys
@@ -101,6 +105,9 @@ structure or B<NULL> if an error occurs.
 
 X509_PUBKEY_set(), X509_PUBKEY_set0_param() and X509_PUBKEY_get0_param()
 return 1 for success and 0 if an error occurred.
+
+X509_PUBKEY_get0_algor() return a pointer to an B<X509_ALGOR>
+structure or B<NULL> if an error occurs.
 
 =head1 SEE ALSO
 
