@@ -930,7 +930,6 @@ int main(int argc, char *argv[])
     clock_t s_time = 0, c_time = 0;
 #ifndef OPENSSL_NO_COMP
     int n, comp = 0;
-    COMP_METHOD *cm = NULL;
     STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 #endif
     int no_protocol;
@@ -1318,21 +1317,6 @@ int main(int argc, char *argv[])
     }
 
 #ifndef OPENSSL_NO_COMP
-    if (comp == COMP_ZLIB)
-        cm = COMP_zlib();
-    if (cm != NULL) {
-        if (COMP_get_type(cm) != NID_undef) {
-            if (SSL_COMP_add_compression_method(comp, cm) != 0) {
-                fprintf(stderr, "Failed to add compression method\n");
-                ERR_print_errors_fp(stderr);
-            }
-        } else {
-            fprintf(stderr,
-                    "Warning: %s compression not supported\n",
-                    comp == COMP_ZLIB ? "zlib" : "unknown");
-            ERR_print_errors_fp(stderr);
-        }
-    }
     ssl_comp_methods = SSL_COMP_get_compression_methods();
     n = sk_SSL_COMP_num(ssl_comp_methods);
     if (n) {
