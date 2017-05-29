@@ -17,7 +17,7 @@
 
 void policy_data_free(X509_POLICY_DATA *data)
 {
-    if (!data)
+    if (data == NULL)
         return;
     ASN1_OBJECT_free(data->valid_policy);
     /* Don't free qualifiers if shared */
@@ -40,11 +40,11 @@ X509_POLICY_DATA *policy_data_new(POLICYINFO *policy,
 {
     X509_POLICY_DATA *ret;
     ASN1_OBJECT *id;
-    if (!policy && !cid)
+    if (policy == NULL && cid == NULL)
         return NULL;
     if (cid) {
         id = OBJ_dup(cid);
-        if (!id)
+        if (id == NULL)
             return NULL;
     } else
         id = NULL;
