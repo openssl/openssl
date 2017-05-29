@@ -123,13 +123,14 @@ static int get_index(CA_DB *db, char *id, char type)
     int i;
     if (id == NULL)
         return -1;
-    if (type == DB_SRP_INDEX)
+    if (type == DB_SRP_INDEX) {
         for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
             pp = sk_OPENSSL_PSTRING_value(db->db->data, i);
             if (pp[DB_srptype][0] == DB_SRP_INDEX
                 && !strcmp(id, pp[DB_srpid]))
                 return i;
-    } else
+        }
+    } else {
         for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
             pp = sk_OPENSSL_PSTRING_value(db->db->data, i);
 
@@ -137,6 +138,7 @@ static int get_index(CA_DB *db, char *id, char type)
                 && !strcmp(id, pp[DB_srpid]))
                 return i;
         }
+    }
 
     return -1;
 }
@@ -177,8 +179,8 @@ static int update_index(CA_DB *db, BIO *bio, char **row)
     char **irow;
     int i;
 
-    if ((irow =
-         (char **)OPENSSL_malloc(sizeof(char *) * (DB_NUMBER + 1))) == NULL) {
+    irow = (char **)OPENSSL_malloc(sizeof(char *) * (DB_NUMBER + 1));
+    if (irow == NULL) {
         BIO_printf(bio_err, "Memory allocation failure\n");
         return 0;
     }
@@ -319,9 +321,9 @@ int MAIN(int argc, char **argv)
     argc--;
     argv++;
     while (argc >= 1 && badops == 0) {
-        if (strcmp(*argv, "-verbose") == 0)
+        if (strcmp(*argv, "-verbose") == 0) {
             verbose++;
-        else if (strcmp(*argv, "-config") == 0) {
+        } else if (strcmp(*argv, "-config") == 0) {
             if (--argc < 1)
                 goto bad;
             configfile = *(++argv);
@@ -333,15 +335,15 @@ int MAIN(int argc, char **argv)
             if (--argc < 1)
                 goto bad;
             dbfile = *(++argv);
-        } else if (strcmp(*argv, "-add") == 0)
+        } else if (strcmp(*argv, "-add") == 0) {
             add_user = 1;
-        else if (strcmp(*argv, "-delete") == 0)
+        } else if (strcmp(*argv, "-delete") == 0) {
             delete_user = 1;
-        else if (strcmp(*argv, "-modify") == 0)
+        } else if (strcmp(*argv, "-modify") == 0) {
             modify_user = 1;
-        else if (strcmp(*argv, "-list") == 0)
+        } else if (strcmp(*argv, "-list") == 0) {
             list_user = 1;
-        else if (strcmp(*argv, "-gn") == 0) {
+        } else if (strcmp(*argv, "-gn") == 0) {
             if (--argc < 1)
                 goto bad;
             gN = *(++argv);
@@ -371,8 +373,9 @@ int MAIN(int argc, char **argv)
             BIO_printf(bio_err, "unknown option %s\n", *argv);
             badops = 1;
             break;
-        } else
+        } else {
             break;
+        }
 
         argc--;
         argv++;
@@ -711,9 +714,9 @@ int MAIN(int argc, char **argv)
                 doupdatedb = 1;
             }
         }
-        if (--argc > 0)
+        if (--argc > 0) {
             user = *(argv++);
-        else {
+        } else {
             user = NULL;
             list_user = 0;
         }
