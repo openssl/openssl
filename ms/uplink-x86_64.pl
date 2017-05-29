@@ -2,7 +2,7 @@
 
 $output=shift;
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
-open OUT,"| \"$^X\" ${dir}../crypto/perlasm/x86_64-xlate.pl $output";
+open OUT,"| \"$^X\" ${dir}/../crypto/perlasm/x86_64-xlate.pl $output";
 *STDOUT=*OUT;
 push(@INC,"${dir}.");
 
