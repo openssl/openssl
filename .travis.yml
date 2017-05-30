@@ -1,5 +1,5 @@
 dist: trusty
-sudo: required
+sudo: false
 
 language: c
 cache: ccache
