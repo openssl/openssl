@@ -242,6 +242,11 @@ int DH_meth_set_generate_params(DH_METHOD *dhm,
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_PARAMGEN, \
                         EVP_PKEY_CTRL_DH_RFC5114, gen, NULL)
 
+# define EVP_PKEY_CTX_set_dh_nid(ctx, nid) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, \
+                        EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN, \
+                        EVP_PKEY_CTRL_DH_NID, nid, NULL)
+
 # define EVP_PKEY_CTX_set_dh_kdf_type(ctx, kdf) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, \
                                 EVP_PKEY_OP_DERIVE, \
@@ -306,6 +311,7 @@ int DH_meth_set_generate_params(DH_METHOD *dhm,
 # define EVP_PKEY_CTRL_GET_DH_KDF_UKM            (EVP_PKEY_ALG_CTRL + 12)
 # define EVP_PKEY_CTRL_DH_KDF_OID                (EVP_PKEY_ALG_CTRL + 13)
 # define EVP_PKEY_CTRL_GET_DH_KDF_OID            (EVP_PKEY_ALG_CTRL + 14)
+# define EVP_PKEY_CTRL_DH_NID                    (EVP_PKEY_ALG_CTRL + 15)
 
 /* KDF types */
 # define EVP_PKEY_DH_KDF_NONE                            1
