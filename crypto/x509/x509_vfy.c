@@ -305,6 +305,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 /*
  * Given a STACK_OF(X509) find the issuer of cert (if any)
  */
+
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 {
     int i;
