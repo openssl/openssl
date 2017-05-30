@@ -13,7 +13,7 @@ open(IN, $mac_file) || die "Can't open $mac_file";
 
 while (<IN>)
 	{
-	chomp;
+	s/\s+$//;
 	my ($name, $num) = /^(\S+)\s+(\S+)$/;
 	$oid_tbl{$name} = $num;
 	}
@@ -25,7 +25,7 @@ my $ln = 1;
 
 while (<IN>)
 	{
-	chomp;
+	s/\s+$//;
 	s/#.*$//;
 	next if (/^\S*$/);
 	my ($xr, $p1, $p2) = /^(\S+)\s+(\S+)\s+(\S+)/;
