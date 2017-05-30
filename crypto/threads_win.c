@@ -78,8 +78,8 @@ int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
     do {
         result = InterlockedCompareExchange(lock, ONCE_ININIT, ONCE_UNINITED);
         if (result == ONCE_UNINITED) {
-            init();
             *lock = ONCE_DONE;
+            init();
             return 1;
         }
     } while (result == ONCE_ININIT);
