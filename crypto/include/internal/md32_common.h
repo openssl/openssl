@@ -253,7 +253,7 @@ int HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
     HASH_LONG l;
     size_t n;
 
-    if (len == 0)
+    if (data == NULL || len == 0)
         return 1;
 
     l = (c->Nl + (((HASH_LONG) len) << 3)) & 0xffffffffUL;
