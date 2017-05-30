@@ -40,7 +40,7 @@ All other functions described here return a digest of the DER representation
 of their entire B<data> objects.
 
 The B<type> parameter specifies the digest to
-be used, such as EVP_sha1(). The B<md> is a pointer to the buffer where the
+be used, such as EVP_sha256(). The B<md> is a pointer to the buffer where the
 digest will be copied and is assumed to be large enough; the constant
 B<EVP_MAX_MD_SIZE> is suggested. The B<len> parameter, if not NULL, points
 to a place where the digest size will be stored.
