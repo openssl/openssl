@@ -113,22 +113,25 @@ int ASYNC_WAIT_CTX_get_changed_fds(ASYNC_WAIT_CTX *ctx, OSSL_ASYNC_FD *addfd,
 {
     struct fd_lookup_st *curr;
 
-    *numaddfds = ctx->numadd;
-    *numdelfds = ctx->numdel;
-    if (addfd == NULL && delfd == NULL)
-        return 1;
-
+    *numaddfds = 0;
+    *numdelfds = 0;
     curr = ctx->fds;
 
     while (curr != NULL) {
         /* We ignore fds that have been marked as both added and deleted */
-        if (curr->del && !curr->add && (delfd != NULL)) {
-            *delfd = curr->fd;
-            delfd++;
+        if (curr->del && !curr->add) {
+            if (delfd != NULL) {
+                *delfd = curr->fd;
+                delfd++;
+            }
+            (*numdelfds)++;
         }
-        if (curr->add && !curr->del && (addfd != NULL)) {
-            *addfd = curr->fd;
-            addfd++;
+        if (curr->add && !curr->del) {
+            if (addfd != NULL) {
+                *addfd = curr->fd;
+                addfd++;
+            }
+            (*numaddfds)++;
         }
         curr = curr->next;
     }
