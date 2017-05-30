@@ -232,7 +232,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   INCLUDE[threadstest]=.. ../include
   DEPEND[threadstest]=../libcrypto libtestutil.a
 
-  SOURCE[afalgtest]=afalgtest.c
+  SOURCE[afalgtest]=afalgtest.c testutil.c
   INCLUDE[afalgtest]=.. ../include
   DEPEND[afalgtest]=../libcrypto libtestutil.a
 
