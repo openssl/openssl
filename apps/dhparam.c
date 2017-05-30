@@ -144,6 +144,10 @@ int dhparam_main(int argc, char **argv)
     if (g && !num)
         num = DEFBITS;
 
+    out = bio_open_default(outfile, 'w', outformat);
+    if (out == NULL)
+        goto end;
+
 # ifndef OPENSSL_NO_DSA
     if (dsaparam && g) {
         BIO_printf(bio_err,
@@ -265,10 +269,6 @@ int dhparam_main(int argc, char **argv)
 
         /* dh != NULL */
     }
-
-    out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
 
     if (text) {
         DHparams_print(out, dh);
