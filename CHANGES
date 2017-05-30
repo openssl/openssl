@@ -3697,7 +3697,7 @@
 
      Also, change ssl_create_cipher_list() (using this new
      funcionality) such that between otherwise identical
-     cihpersuites, ephemeral ECDH is preferred over ephemeral DH in
+     ciphersuites, ephemeral ECDH is preferred over ephemeral DH in
      the default order.
      [Bodo Moeller]
 
@@ -11727,7 +11727,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) Bugfix: In test/testenc, don't test "openssl <cipher>" for
      ciphers that were excluded, e.g. by -DNO_IDEA.  Also, test
-     all available cipers including rc5, which was forgotten until now.
+     all available ciphers including rc5, which was forgotten until now.
      In order to let the testing shell script know which algorithms
      are available, a new (up to now undocumented) command
      "openssl list-cipher-commands" is used.
