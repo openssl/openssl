@@ -352,8 +352,8 @@ void test_openssl_errors(void);
 # define TEST_mem_eq(a, m, b, n) test_mem_eq(__FILE__, __LINE__, #a, #b, a, m, b, n)
 # define TEST_mem_ne(a, m, b, n) test_mem_ne(__FILE__, __LINE__, #a, #b, a, m, b, n)
 
-# define TEST_true(a)         test_true(__FILE__, __LINE__, #a, (a) != 0)
-# define TEST_false(a)        test_false(__FILE__, __LINE__, #a, (a) != 0)
+# define TEST_true(a)  ((a) == 0 ? test_true(__FILE__, __LINE__, #a, 0), 0 : 1)
+# define TEST_false(a) ((a) != 0 ? test_false(__FILE__, __LINE__, #a, 1), 0 : 1)
 
 # define TEST_BN_eq(a, b)     test_BN_eq(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_BN_ne(a, b)     test_BN_ne(__FILE__, __LINE__, #a, #b, a, b)
