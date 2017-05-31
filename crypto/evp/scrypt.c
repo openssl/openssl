@@ -212,6 +212,11 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
 
     allocsize = (size_t)(Blen + Vlen);
 
+    /* check total allocated size fits in size_t */
+    allocsize = (size_t)(Blen + Vlen);
+    if ((Blen + Vlen) != allocsize)
+        return 0;
+
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;
 
