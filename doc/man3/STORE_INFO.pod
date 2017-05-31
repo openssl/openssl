@@ -1,0 +1,198 @@
+=pod
+
+=head1 NAME
+
+STORE_INFO, STORE_INFO_get_type, STORE_INFO_get0_NAME,
+STORE_INFO_get0_NAME_description, STORE_INFO_get0_PARAMS,
+STORE_INFO_get0_PKEY, STORE_INFO_get0_CERT, STORE_INFO_get0_CRL,
+STORE_INFO_get1_NAME, STORE_INFO_get1_NAME_description,
+STORE_INFO_get1_PARAMS, STORE_INFO_get1_PKEY, STORE_INFO_get1_CERT,
+STORE_INFO_get1_CRL, STORE_INFO_type_string, STORE_INFO_free, 
+STORE_INFO_new_NAME, STORE_INFO_set0_NAME_description,
+STORE_INFO_new_PARAMS, STORE_INFO_new_PKEY, STORE_INFO_new_CERT,
+STORE_INFO_new_CRL, STORE_INFO_new_ENDOFDATA
+- Functions to manipulate STORE_INFO objects 
+
+=head1 SYNOPSIS
+
+ #include <openssl/store.h>
+ 
+ typedef struct store_info_st STORE_INFO;
+
+ int STORE_INFO_get_type(const STORE_INFO *store_info);
+ const char *STORE_INFO_get0_NAME(const STORE_INFO *store_info);
+ char *STORE_INFO_get1_NAME(const STORE_INFO *store_info);
+ const char *STORE_INFO_get0_NAME_description(const STORE_INFO *store_info);
+ char *STORE_INFO_get1_NAME_description(const STORE_INFO *store_info);
+ EVP_PKEY *STORE_INFO_get0_PARAMS(const STORE_INFO *store_info);
+ EVP_PKEY *STORE_INFO_get1_PARAMS(const STORE_INFO *store_info);
+ EVP_PKEY *STORE_INFO_get0_PKEY(const STORE_INFO *store_info);
+ EVP_PKEY *STORE_INFO_get1_PKEY(const STORE_INFO *store_info);
+ X509 *STORE_INFO_get0_CERT(const STORE_INFO *store_info);
+ X509 *STORE_INFO_get1_CERT(const STORE_INFO *store_info);
+ X509_CRL *STORE_INFO_get0_CRL(const STORE_INFO *store_info);
+ X509_CRL *STORE_INFO_get1_CRL(const STORE_INFO *store_info);
+
+ const char *STORE_INFO_type_string(int type);
+
+ void STORE_INFO_free(STORE_INFO *store_info);
+
+ STORE_INFO *STORE_INFO_new_NAME(char *name);
+ int STORE_INFO_set0_NAME_description(STORE_INFO *info, char *desc);
+ STORE_INFO *STORE_INFO_new_PARAMS(DSA *dsa_params);
+ STORE_INFO *STORE_INFO_new_PKEY(EVP_PKEY *pkey);
+ STORE_INFO *STORE_INFO_new_CERT(X509 *x509);
+ STORE_INFO *STORE_INFO_new_CRL(X509_CRL *crl);
+
+ STORE_INFO *STORE_INFO_new_ENDOFDATA(void);
+
+=head1 DESCRIPTION
+
+These functions are primarly useful for applications to retrieve
+supported objects from B<STORE_INFO> objects and for scheme specific
+loaders to create B<STORE_INFO> holders.
+
+=head2 Types
+
+B<STORE_INFO> is an opaque type that's just an intermediary holder for
+the objects that have been retrieved by STORE_load() and similar
+functions.
+Supported OpenSSL type object can be extracted using one of
+STORE_INFO_get0_TYPE().
+The life time of this extracted object is as long as the life time of
+the B<STORE_INFO> it was extracted from, so care should be taken not
+to free the latter too early.
+As an alternative, STORE_INFO_get1_TYPE() extracts a duplicate (or the
+same object with its reference count increased), which can be used
+after the containing B<STORE_INFO> has been freed.
+The object returned by STORE_INFO_get1_TYPE() must be freed separately
+by the caller.
+See L</SUPPORTED OBJECTS> for more information on the types that are
+supported.
+
+=head2 Functions
+
+STORE_INFO_get_type() takes a B<STORE_INFO> and returns the STORE type
+number for the object inside.
+STORE_INFO_get_type_string() takes a STORE type number and returns a
+short string describing it.
+
+STORE_INFO_get0_NAME(), STORE_INFO_get0_NAME_description(),
+STORE_INFO_get0_PARAMS(), STORE_INFO_get0_PKEY(),
+STORE_INFO_get0_CERT() and STORE_INFO_get0_CRL() all take a
+B<STORE_INFO> and return the held object of the appropriate OpenSSL
+type provided that's what's held.
+
+STORE_INFO_get1_NAME(), STORE_INFO_get1_NAME_description(),
+STORE_INFO_get1_PARAMS(), STORE_INFO_get1_PKEY(),
+STORE_INFO_get1_CERT() and STORE_INFO_get1_CRL() all take a
+B<STORE_INFO> and return a duplicate of the held object of the
+appropriate OpenSSL type provided that's what's held.
+
+STORE_INFO_free() frees a B<STORE_INFO> and its contained type.
+
+STORE_INFO_new_NAME() , STORE_INFO_new_PARAMS(), STORE_INFO_new_PKEY(),
+STORE_INFO_new_CERT() and STORE_INFO_new_CRL() create a B<STORE_INFO>
+object to hold the given input object.
+Additionally, for B<STORE_INFO_NAME>` objects,
+STORE_INFO_set0_NAME_description() can be used to add an extra
+description.
+This description is meant to be human readable and should be used for
+information printout.
+
+STORE_INFO_new_ENDOFDATA() create a B<STORE_INFO> object that holds no
+data, and is exclusively used to tell the caller that there is no
+more data.
+
+=head1 SUPPORTED OBJECTS
+
+Currently supported object types are:
+
+=over 4
+
+=item STORE_INFO_NAME
+
+A name is exactly that, a name.
+It's like a name in a directory, but formatted as a complete URI.
+For example, the path in URI C<file:/foo/bar/> could include a file
+named C<cookie.pem>, and in that case, the returned B<STORE_INFO_NAME>
+object would have the URI C<file:/foo/bar/cookie.pem>, which can be
+used by the application to get the objects in that file.
+This can be applied to all schemes that can somehow support a listing
+of object URIs.
+
+For C<file:> URIs that are used without the explicit scheme, or paths
+given to L<STORE_open_file(3)>, the returned name will be the path of
+each object, so if C</foo/bar> was given and that path has the file
+C<cookie.pem>, the name C</foo/bar/cookie.pem> will be returned.
+
+At the discretion of the loader that was used to get these names, an
+extra description may be attached as well.
+
+=item STORE_INFO_PARAMS
+
+Key parameters.
+
+=item STORE_INFO_PKEY
+
+A private/public key of some sort.
+
+=item STORE_INFO_CERT
+
+An X.509 certificate.
+
+=item STORE_INFO_CRL
+
+A X.509 certificate reocation list.
+
+=back
+
+=head1 RETURN VALUES
+
+STORE_INFO_get_type() returns the STORE type number of the given
+B<STORE_INFO>.
+There is no error value.
+
+STORE_INFO_get0_NAME(), STORE_INFO_get0_NAME_description(),
+STORE_INFO_get0_PARAMS(), STORE_INFO_get0_PKEY(), STORE_INFO_get0_CERT()
+and STORE_INFO_get0_CRL() all return a pointer to the OpenSSL object
+on success, NULL otherwise.
+
+STORE_INFO_get0_NAME(), STORE_INFO_get0_NAME_description(),
+STORE_INFO_get0_PARAMS(), STORE_INFO_get0_PKEY(), STORE_INFO_get0_CERT()
+and STORE_INFO_get0_CRL() all return a pointer to a duplicate of the
+OpenSSL object on success, NULL otherwise.
+
+STORE_INFO_type_string() returns a string on success, or B<NULL> on
+failure.
+
+STORE_INFO_new_NAME(), STORE_INFO_new_PARAMS(), STORE_INFO_new_PKEY(),
+STORE_INFO_new_CERT() and STORE_INFO_new_CRL() return a B<STORE_INFO>
+pointer on success, or B<NULL> on failure.
+
+STORE_INFO_set0_NAME_description() returns 1 on success, or 0 on
+failure.
+
+=head1 SEE ALSO
+
+L<STORE_open(3)>, L<STORE_register_loader(3)>
+
+=head1 HISTORY
+
+STORE_INFO(), STORE_INFO_get_type(), STORE_INFO_get0_NAME(),
+STORE_INFO_get0_PARAMS(), STORE_INFO_get0_PKEY(), STORE_INFO_get0_CERT(),
+STORE_INFO_get0_CRL(), STORE_INFO_type_string(), STORE_INFO_free(),
+STORE_INFO_new_NAME(), STORE_INFO_new_PARAMS(), STORE_INFO_new_PKEY(),
+STORE_INFO_new_CERT(), STORE_INFO_new_CRL() and STORE_INFO_new_ENDOFDATA()
+were added to OpenSSL 1.1.1.
+
+=head1 COPYRIGHT
+
+Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

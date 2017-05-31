@@ -284,13 +284,13 @@ $crypto.=" include/openssl/rand.h";
 $crypto.=" include/openssl/comp.h" ; # unless $no_comp;
 $crypto.=" include/openssl/ocsp.h";
 $crypto.=" include/openssl/ui.h";
-#$crypto.=" include/openssl/store.h";
 $crypto.=" include/openssl/cms.h";
 $crypto.=" include/openssl/srp.h";
 $crypto.=" include/openssl/modes.h";
 $crypto.=" include/openssl/async.h";
 $crypto.=" include/openssl/ct.h";
 $crypto.=" include/openssl/kdf.h";
+$crypto.=" include/openssl/store.h";
 
 my $symhacks="include/openssl/symhacks.h";
 

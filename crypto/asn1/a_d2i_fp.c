@@ -13,8 +13,7 @@
 #include "internal/numbers.h"
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
-
-static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb);
+#include "internal/asn1_int.h"
 
 #ifndef NO_OLD_ASN1
 # ifndef OPENSSL_NO_STDIO
@@ -92,7 +91,7 @@ void *ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x)
 
 #define HEADER_SIZE   8
 #define ASN1_CHUNK_INITIAL_SIZE (16 * 1024)
-static int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
+int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 {
     BUF_MEM *b;
     unsigned char *p;
