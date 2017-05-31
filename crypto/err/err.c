@@ -122,6 +122,7 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
 #endif
 
 static CRYPTO_ONCE err_init = CRYPTO_ONCE_STATIC_INIT;
+static int set_err_thread_local;
 static CRYPTO_THREAD_LOCAL err_thread_local;
 
 static CRYPTO_ONCE err_string_init = CRYPTO_ONCE_STATIC_INIT;
@@ -260,7 +261,8 @@ DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 
 void err_cleanup(void)
 {
-    CRYPTO_THREAD_cleanup_local(&err_thread_local);
+    if (set_err_thread_local != 0)
+        CRYPTO_THREAD_cleanup_local(&err_thread_local);
     CRYPTO_THREAD_lock_free(err_string_lock);
     err_string_lock = NULL;
 }
@@ -639,6 +641,7 @@ void ERR_remove_state(unsigned long pid)
 
 DEFINE_RUN_ONCE_STATIC(err_do_init)
 {
+    set_err_thread_local = 1;
     return CRYPTO_THREAD_init_local(&err_thread_local, NULL);
 }
 
