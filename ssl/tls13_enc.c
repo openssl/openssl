@@ -28,7 +28,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
                              const unsigned char *hash,
                              unsigned char *out, size_t outlen)
 {
-    const unsigned char label_prefix[] = "TLS 1.3, ";
+    const unsigned char label_prefix[] = "tls13 ";
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
     int ret;
     size_t hkdflabellen;
@@ -124,7 +124,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     size_t mdlen, prevsecretlen;
     int ret;
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
-    static const char derived_secret_label[] = "derived secret";
+    static const char derived_secret_label[] = "derived";
     unsigned char preextractsec[EVP_MAX_MD_SIZE];
 
     if (pctx == NULL)
@@ -267,7 +267,7 @@ int tls13_setup_key_block(SSL *s)
     return 1;
 }
 
-static int derive_secret_key_and_iv(SSL *s, int send, const EVP_MD *md,
+static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
                                     const EVP_CIPHER *ciph,
                                     const unsigned char *insecret,
                                     const unsigned char *hash,
@@ -312,7 +312,7 @@ static int derive_secret_key_and_iv(SSL *s, int send, const EVP_MD *md,
         goto err;
     }
 
-    if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL, send) <= 0
+    if (EVP_CipherInit_ex(ciph_ctx, ciph, NULL, NULL, NULL, sending) <= 0
         || !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
         || (taglen != 0 && !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG,
                                                 taglen, NULL))
@@ -320,20 +320,6 @@ static int derive_secret_key_and_iv(SSL *s, int send, const EVP_MD *md,
         SSLerr(SSL_F_DERIVE_SECRET_KEY_AND_IV, ERR_R_EVP_LIB);
         goto err;
     }
-
-#ifdef OPENSSL_SSL_TRACE_CRYPTO
-    if (s->msg_callback) {
-        int wh = send ? TLS1_RT_CRYPTO_WRITE : 0;
-
-        if (ciph->key_len)
-            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
-                            key, ciph->key_len, s, s->msg_callback_arg);
-
-        wh |= TLS1_RT_CRYPTO_IV;
-        s->msg_callback(2, s->version, wh, iv, ivlen, s,
-                        s->msg_callback_arg);
-    }
-#endif
 
     return 1;
  err:
@@ -343,18 +329,12 @@ static int derive_secret_key_and_iv(SSL *s, int send, const EVP_MD *md,
 
 int tls13_change_cipher_state(SSL *s, int which)
 {
-    static const unsigned char client_early_traffic[] =
-        "client early traffic secret";
-    static const unsigned char client_handshake_traffic[] =
-        "client handshake traffic secret";
-    static const unsigned char client_application_traffic[] =
-        "client application traffic secret";
-    static const unsigned char server_handshake_traffic[] =
-        "server handshake traffic secret";
-    static const unsigned char server_application_traffic[] =
-        "server application traffic secret";
-    static const unsigned char resumption_master_secret[] =
-        "resumption master secret";
+    static const unsigned char client_early_traffic[] = "c e traffic";
+    static const unsigned char client_handshake_traffic[] = "c hs traffic";
+    static const unsigned char client_application_traffic[] = "c ap traffic";
+    static const unsigned char server_handshake_traffic[] = "s hs traffic";
+    static const unsigned char server_application_traffic[] = "s ap traffic";
+    static const unsigned char resumption_master_secret[] = "res master";
     unsigned char *iv;
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char hashval[EVP_MAX_MD_SIZE];
@@ -557,10 +537,9 @@ int tls13_change_cipher_state(SSL *s, int which)
     return ret;
 }
 
-int tls13_update_key(SSL *s, int send)
+int tls13_update_key(SSL *s, int sending)
 {
-    static const unsigned char application_traffic[] =
-        "application traffic secret";
+    static const unsigned char application_traffic[] = "traffic upd";
     const EVP_MD *md = ssl_handshake_md(s);
     size_t hashlen = EVP_MD_size(md);
     unsigned char *insecret, *iv;
@@ -568,12 +547,12 @@ int tls13_update_key(SSL *s, int send)
     EVP_CIPHER_CTX *ciph_ctx;
     int ret = 0;
 
-    if (s->server == send)
+    if (s->server == sending)
         insecret = s->server_app_traffic_secret;
     else
         insecret = s->client_app_traffic_secret;
 
-    if (send) {
+    if (sending) {
         iv = s->write_iv;
         ciph_ctx = s->enc_write_ctx;
         RECORD_LAYER_reset_write_sequence(&s->rlayer);
@@ -583,7 +562,7 @@ int tls13_update_key(SSL *s, int send)
         RECORD_LAYER_reset_read_sequence(&s->rlayer);
     }
 
-    if (!derive_secret_key_and_iv(s, send, ssl_handshake_md(s),
+    if (!derive_secret_key_and_iv(s, sending, ssl_handshake_md(s),
                                   s->s3->tmp.new_sym_enc, insecret, NULL,
                                   application_traffic,
                                   sizeof(application_traffic) - 1, secret, iv,

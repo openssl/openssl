@@ -476,8 +476,8 @@ void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data);
 # endif
 # define EVP_CIPHER_CTX_mode(c)         EVP_CIPHER_mode(EVP_CIPHER_CTX_cipher(c))
 
-# define EVP_ENCODE_LENGTH(l)    (((l+2)/3*4)+(l/48+1)*2+80)
-# define EVP_DECODE_LENGTH(l)    ((l+3)/4*3+80)
+# define EVP_ENCODE_LENGTH(l)    ((((l)+2)/3*4)+((l)/48+1)*2+80)
+# define EVP_DECODE_LENGTH(l)    (((l)+3)/4*3+80)
 
 # define EVP_SignInit_ex(a,b,c)          EVP_DigestInit_ex(a,b,c)
 # define EVP_SignInit(a,b)               EVP_DigestInit(a,b)
@@ -493,13 +493,16 @@ void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data);
 # ifdef CONST_STRICT
 void BIO_set_md(BIO *, const EVP_MD *md);
 # else
-#  define BIO_set_md(b,md)               BIO_ctrl(b,BIO_C_SET_MD,0,(char *)md)
+#  define BIO_set_md(b,md)          BIO_ctrl(b,BIO_C_SET_MD,0,(char *)(md))
 # endif
-# define BIO_get_md(b,mdp)               BIO_ctrl(b,BIO_C_GET_MD,0,(char *)mdp)
-# define BIO_get_md_ctx(b,mdcp)     BIO_ctrl(b,BIO_C_GET_MD_CTX,0,(char *)mdcp)
-# define BIO_set_md_ctx(b,mdcp)     BIO_ctrl(b,BIO_C_SET_MD_CTX,0,(char *)mdcp)
-# define BIO_get_cipher_status(b)        BIO_ctrl(b,BIO_C_GET_CIPHER_STATUS,0,NULL)
-# define BIO_get_cipher_ctx(b,c_pp)      BIO_ctrl(b,BIO_C_GET_CIPHER_CTX,0,(char *)c_pp)
+# define BIO_get_md(b,mdp)          BIO_ctrl(b,BIO_C_GET_MD,0,(char *)(mdp))
+# define BIO_get_md_ctx(b,mdcp)     BIO_ctrl(b,BIO_C_GET_MD_CTX,0, \
+                                             (char *)(mdcp))
+# define BIO_set_md_ctx(b,mdcp)     BIO_ctrl(b,BIO_C_SET_MD_CTX,0, \
+                                             (char *)(mdcp))
+# define BIO_get_cipher_status(b)   BIO_ctrl(b,BIO_C_GET_CIPHER_STATUS,0,NULL)
+# define BIO_get_cipher_ctx(b,c_pp) BIO_ctrl(b,BIO_C_GET_CIPHER_CTX,0, \
+                                             (char *)(c_pp))
 
 /*__owur*/ int EVP_Cipher(EVP_CIPHER_CTX *c,
                           unsigned char *out,
@@ -600,8 +603,16 @@ __owur int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm,
 __owur int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s,
                          EVP_PKEY *pkey);
 
+__owur int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret,
+                          size_t *siglen, const unsigned char *tbs,
+                          size_t tbslen);
+
 __owur int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
                            unsigned int siglen, EVP_PKEY *pkey);
+
+__owur int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
+                            size_t siglen, const unsigned char *tbs,
+                            size_t tbslen);
 
 /*__owur*/ int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                   const EVP_MD *type, ENGINE *e,
@@ -1195,15 +1206,15 @@ void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
 
 # define  EVP_PKEY_CTX_set_signature_md(ctx, md) \
                 EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_TYPE_SIG,  \
-                                        EVP_PKEY_CTRL_MD, 0, (void *)md)
+                                        EVP_PKEY_CTRL_MD, 0, (void *)(md))
 
 # define  EVP_PKEY_CTX_get_signature_md(ctx, pmd)        \
                 EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_TYPE_SIG,  \
-                                        EVP_PKEY_CTRL_GET_MD, 0, (void *)pmd)
+                                        EVP_PKEY_CTRL_GET_MD, 0, (void *)(pmd))
 
 # define  EVP_PKEY_CTX_set_mac_key(ctx, key, len)        \
                 EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_KEYGEN,  \
-                                  EVP_PKEY_CTRL_SET_MAC_KEY, len, (void *)key)
+                                  EVP_PKEY_CTRL_SET_MAC_KEY, len, (void *)(key))
 
 # define EVP_PKEY_CTRL_MD                1
 # define EVP_PKEY_CTRL_PEER_KEY          2
@@ -1582,6 +1593,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_PKEY_SET_TYPE                              158
 # define EVP_F_RC2_MAGIC_TO_METH                          109
 # define EVP_F_RC5_CTRL                                   125
+# define EVP_F_UPDATE                                     173
 
 /* Reason codes. */
 # define EVP_R_AES_KEY_SETUP_FAILED                       143
@@ -1626,6 +1638,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_NO_DIGEST_SET                              139
 # define EVP_R_NO_KEY_SET                                 154
 # define EVP_R_NO_OPERATION_SET                           149
+# define EVP_R_ONLY_ONESHOT_SUPPORTED                     177
 # define EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE   150
 # define EVP_R_OPERATON_NOT_INITIALIZED                   151
 # define EVP_R_PARTIALLY_OVERLAPPING                      162

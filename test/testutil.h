@@ -14,13 +14,11 @@
 
 #include <openssl/err.h>
 #include <openssl/e_os2.h>
+#include <openssl/bn.h>
 
 /*-
- * Simple unit tests should implement register_tests() from test_main.h
- * and link against test_main.c.
+ * Simple unit tests should implement register_tests().
  * To register tests, call ADD_TEST or ADD_ALL_TESTS:
- *
- * #include "test_main.h"
  *
  * void register_tests(void)
  * {
@@ -29,8 +27,7 @@
  * }
  *
  * Tests that need to perform custom setup or read command-line arguments should
- * implement test_main() from test_main_custom.h and link against
- * test_main_custom.c:
+ * implement test_main():
  *
  * int test_main(int argc, char *argv[])
  * {
@@ -57,7 +54,12 @@
  * Simple parameterized tests. Calls test_function(idx) for each 0 <= idx < num.
  */
 # define ADD_ALL_TESTS(test_function, num) \
-  add_all_tests(#test_function, test_function, num)
+    add_all_tests(#test_function, test_function, num, 1)
+/*
+ * A variant of the same without TAP output.
+ */
+# define ADD_ALL_TESTS_NOSUBTEST(test_function, num) \
+    add_all_tests(#test_function, test_function, num, 0)
 
 /*-
  * Test cases that share common setup should use the helper
@@ -135,17 +137,32 @@ void setup_test(void);
 __owur int finish_test(int ret);
 
 void add_test(const char *test_case_name, int (*test_fn) ());
-void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num);
+void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num,
+                   int subtest);
 __owur int run_tests(const char *test_prog_name);
+void set_test_title(const char *title);
+
+/*
+ * Declarations for user defined functions
+ */
+void register_tests(void);
+int test_main(int argc, char *argv[]);
+
 
 /*
  *  Test assumption verification helpers.
  */
 
-# if defined(__GNUC__)
-#define PRINTF_FORMAT(a, b)   __attribute__ ((format(printf, a, b)))
-# else
 #define PRINTF_FORMAT(a, b)
+#if defined(__GNUC__) && defined(__STDC_VERSION__)
+  /*
+   * Because we support the 'z' modifier, which made its appearance in C99,
+   * we can't use __attribute__ with pre C99 dialects.
+   */
+# if __STDC_VERSION__ >= 199901L
+#  undef PRINTF_FORMAT
+#  define PRINTF_FORMAT(a, b)   __attribute__ ((format(printf, a, b)))
+# endif
 #endif
 
 #  define DECLARE_COMPARISON(type, name, opname)                        \
@@ -167,7 +184,13 @@ DECLARE_COMPARISONS(char, char)
 DECLARE_COMPARISONS(unsigned char, uchar)
 DECLARE_COMPARISONS(long, long)
 DECLARE_COMPARISONS(unsigned long, ulong)
+/*
+ * Because this comparison uses a printf format specifier that's not
+ * universally known (yet), we provide an option to not have it declared.
+ */
+# ifndef TESTUTIL_NO_size_t_COMPARISON
 DECLARE_COMPARISONS(size_t, size_t)
+# endif
 
 /*
  * Pointer comparisons against other pointers and null.
@@ -218,6 +241,27 @@ int test_true(const char *file, int line, const char *s, int b);
 int test_false(const char *file, int line, const char *s, int b);
 
 /*
+ * Comparisons between BIGNUMs.
+ * BIGNUMS can be compared against other BIGNUMs or zero.
+ * Some additional equality tests against 1 & specific values are provided.
+ * Tests for parity are included as well.
+ */
+DECLARE_COMPARISONS(BIGNUM *, BN)
+int test_BN_eq_zero(const char *file, int line, const char *s, const BIGNUM *a);
+int test_BN_ne_zero(const char *file, int line, const char *s, const BIGNUM *a);
+int test_BN_lt_zero(const char *file, int line, const char *s, const BIGNUM *a);
+int test_BN_le_zero(const char *file, int line, const char *s, const BIGNUM *a);
+int test_BN_gt_zero(const char *file, int line, const char *s, const BIGNUM *a);
+int test_BN_ge_zero(const char *file, int line, const char *s, const BIGNUM *a);
+int test_BN_eq_one(const char *file, int line, const char *s, const BIGNUM *a);
+int test_BN_odd(const char *file, int line, const char *s, const BIGNUM *a);
+int test_BN_even(const char *file, int line, const char *s, const BIGNUM *a);
+int test_BN_eq_word(const char *file, int line, const char *bns, const char *ws,
+                    const BIGNUM *a, BN_ULONG w);
+int test_BN_abs_eq_word(const char *file, int line, const char *bns,
+                        const char *ws, const BIGNUM *a, BN_ULONG w);
+
+/*
  * Pretty print a failure message.
  * These should not be called directly, use the TEST_xxx macros below instead.
  */
@@ -227,6 +271,7 @@ void test_error_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 void test_info(const char *file, int line, const char *desc, ...)
     PRINTF_FORMAT(3, 4);
 void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
+void test_openssl_errors(void);
 
 /*
  * The following macros provide wrapper calls to the test functions with
@@ -310,6 +355,24 @@ void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 # define TEST_true(a)         test_true(__FILE__, __LINE__, #a, (a) != 0)
 # define TEST_false(a)        test_false(__FILE__, __LINE__, #a, (a) != 0)
 
+# define TEST_BN_eq(a, b)     test_BN_eq(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_BN_ne(a, b)     test_BN_ne(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_BN_lt(a, b)     test_BN_lt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_BN_gt(a, b)     test_BN_gt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_BN_le(a, b)     test_BN_le(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_BN_ge(a, b)     test_BN_ge(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_BN_eq_zero(a)   test_BN_eq_zero(__FILE__, __LINE__, #a, a)
+# define TEST_BN_ne_zero(a)   test_BN_ne_zero(__FILE__, __LINE__, #a, a)
+# define TEST_BN_lt_zero(a)   test_BN_lt_zero(__FILE__, __LINE__, #a, a)
+# define TEST_BN_gt_zero(a)   test_BN_gt_zero(__FILE__, __LINE__, #a, a)
+# define TEST_BN_le_zero(a)   test_BN_le_zero(__FILE__, __LINE__, #a, a)
+# define TEST_BN_ge_zero(a)   test_BN_ge_zero(__FILE__, __LINE__, #a, a)
+# define TEST_BN_eq_one(a)    test_BN_eq_one(__FILE__, __LINE__, #a, a)
+# define TEST_BN_eq_word(a, w) test_BN_eq_word(__FILE__, __LINE__, #a, #w, a, w)
+# define TEST_BN_abs_eq_word(a, w) test_BN_abs_eq_word(__FILE__, __LINE__, #a, #w, a, w)
+# define TEST_BN_odd(a)       test_BN_odd(__FILE__, __LINE__, #a, a)
+# define TEST_BN_even(a)      test_BN_even(__FILE__, __LINE__, #a, a)
+
 /*
  * TEST_error(desc, ...) prints an informative error message in the standard
  * format.  |desc| is a printf format string.
@@ -321,6 +384,7 @@ void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 #  define TEST_error(...)    test_error(__FILE__, __LINE__, __VA_ARGS__)
 #  define TEST_info(...)     test_info(__FILE__, __LINE__, __VA_ARGS__)
 # endif
+# define TEST_openssl_errors test_openssl_errors
 
 /*
  * For "impossible" conditions such as malloc failures or bugs in test code,
@@ -330,8 +394,12 @@ void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 # define TEST_check(condition)                  \
     do {                                        \
         if (!(condition)) {                     \
-            ERR_print_errors_fp(stderr);        \
+            TEST_openssl_errors();              \
             OPENSSL_assert(!#condition);        \
         }                                       \
     } while (0)
+
+extern BIO *bio_out;
+extern BIO *bio_err;
+
 #endif                          /* HEADER_TESTUTIL_H */

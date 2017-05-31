@@ -9,9 +9,17 @@
 
 #include "e_os.h"
 #include "testutil.h"
-#include "test_main.h"
+
+#ifdef __VMS
+# pragma names save
+# pragma names as_is,shortened
+#endif
 
 #include "../ssl/ssl_locl.h"
+
+#ifdef __VMS
+# pragma names restore
+#endif
 
 static int cipher_overhead(void)
 {
@@ -27,7 +35,7 @@ static int cipher_overhead(void)
             TEST_info("Failed getting %s", ciph->name);
             ret = 0;
         } else {
-            TEST_info("Cipher %s: %"OSSLzu" %"OSSLzu" %"OSSLzu" %"OSSLzu,
+            TEST_info("Cipher %s: %zu %zu %zu %zu",
                       ciph->name, mac, in, blk, ex);
         }
     }

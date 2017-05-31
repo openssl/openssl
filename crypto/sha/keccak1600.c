@@ -7,12 +7,71 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdint.h>
+#include <openssl/e_os2.h>
 #include <string.h>
 #include <assert.h>
 
-#define ROL64(a, offset) ((offset) ? (((a) << offset) | ((a) >> (64-offset))) \
-                                   : a)
+#define ROL32(a, offset) (((a) << (offset)) | ((a) >> ((32 - (offset)) & 31)))
+
+static uint64_t ROL64(uint64_t val, int offset)
+{
+    if (offset == 0) {
+        return val;
+    } else if (sizeof(void *) == 8) {
+        return (val << offset) | (val >> (64-offset));
+    } else {
+        uint32_t hi = (uint32_t)(val >> 32), lo = (uint32_t)val;
+
+        if (offset & 1) {
+            uint32_t tmp = hi;
+
+            offset >>= 1;
+            hi = ROL32(lo, offset);
+            lo = ROL32(tmp, offset + 1);
+        } else {
+            offset >>= 1;
+            lo = ROL32(lo, offset);
+            hi = ROL32(hi, offset);
+        }
+
+        return ((uint64_t)hi << 32) | lo;
+    }
+}
+
+static const unsigned char rhotates[5][5] = {
+    {  0,  1, 62, 28, 27 },
+    { 36, 44,  6, 55, 20 },
+    {  3, 10, 43, 25, 39 },
+    { 41, 45, 15, 21,  8 },
+    { 18,  2, 61, 56, 14 }
+};
+
+static const uint64_t iotas[] = {
+    sizeof(void *) == 8 ? 0x0000000000000001U : 0x0000000000000001U,
+    sizeof(void *) == 8 ? 0x0000000000008082U : 0x0000008900000000U,
+    sizeof(void *) == 8 ? 0x800000000000808aU : 0x8000008b00000000U,
+    sizeof(void *) == 8 ? 0x8000000080008000U : 0x8000808000000000U,
+    sizeof(void *) == 8 ? 0x000000000000808bU : 0x0000008b00000001U,
+    sizeof(void *) == 8 ? 0x0000000080000001U : 0x0000800000000001U,
+    sizeof(void *) == 8 ? 0x8000000080008081U : 0x8000808800000001U,
+    sizeof(void *) == 8 ? 0x8000000000008009U : 0x8000008200000001U,
+    sizeof(void *) == 8 ? 0x000000000000008aU : 0x0000000b00000000U,
+    sizeof(void *) == 8 ? 0x0000000000000088U : 0x0000000a00000000U,
+    sizeof(void *) == 8 ? 0x0000000080008009U : 0x0000808200000001U,
+    sizeof(void *) == 8 ? 0x000000008000000aU : 0x0000800300000000U,
+    sizeof(void *) == 8 ? 0x000000008000808bU : 0x0000808b00000001U,
+    sizeof(void *) == 8 ? 0x800000000000008bU : 0x8000000b00000001U,
+    sizeof(void *) == 8 ? 0x8000000000008089U : 0x8000008a00000001U,
+    sizeof(void *) == 8 ? 0x8000000000008003U : 0x8000008100000001U,
+    sizeof(void *) == 8 ? 0x8000000000008002U : 0x8000008100000000U,
+    sizeof(void *) == 8 ? 0x8000000000000080U : 0x8000000800000000U,
+    sizeof(void *) == 8 ? 0x000000000000800aU : 0x0000008300000000U,
+    sizeof(void *) == 8 ? 0x800000008000000aU : 0x8000800300000000U,
+    sizeof(void *) == 8 ? 0x8000000080008081U : 0x8000808800000001U,
+    sizeof(void *) == 8 ? 0x8000000000008080U : 0x8000008800000000U,
+    sizeof(void *) == 8 ? 0x0000000080000001U : 0x0000800000000001U,
+    sizeof(void *) == 8 ? 0x8000000080008008U : 0x8000808200000000U
+};
 
 #if defined(KECCAK_REF)
 /*
@@ -60,13 +119,6 @@ static void Theta(uint64_t A[5][5])
 
 static void Rho(uint64_t A[5][5])
 {
-    static const unsigned char rhotates[5][5] = {
-        {  0,  1, 62, 28, 27 },
-        { 36, 44,  6, 55, 20 },
-        {  3, 10, 43, 25, 39 },
-        { 41, 45, 15, 21,  8 },
-        { 18,  2, 61, 56, 14 }
-    };
     size_t y;
 
     for (y = 0; y < 5; y++) {
@@ -141,17 +193,6 @@ static void Chi(uint64_t A[5][5])
 
 static void Iota(uint64_t A[5][5], size_t i)
 {
-    static const uint64_t iotas[] = {
-        0x0000000000000001U, 0x0000000000008082U, 0x800000000000808aU,
-        0x8000000080008000U, 0x000000000000808bU, 0x0000000080000001U,
-        0x8000000080008081U, 0x8000000000008009U, 0x000000000000008aU,
-        0x0000000000000088U, 0x0000000080008009U, 0x000000008000000aU,
-        0x000000008000808bU, 0x800000000000008bU, 0x8000000000008089U,
-        0x8000000000008003U, 0x8000000000008002U, 0x8000000000000080U,
-        0x000000000000800aU, 0x800000008000000aU, 0x8000000080008081U,
-        0x8000000000008080U, 0x0000000080000001U, 0x8000000080008008U
-    };
-
     assert(i < (sizeof(iotas) / sizeof(iotas[0])));
     A[0][0] ^= iotas[i];
 }
@@ -183,23 +224,6 @@ void KeccakF1600(uint64_t A[5][5])
 static void Round(uint64_t A[5][5], size_t i)
 {
     uint64_t C[5], D[5], T[2][5];
-    static const unsigned char rhotates[5][5] = {
-        {  0,  1, 62, 28, 27 },
-        { 36, 44,  6, 55, 20 },
-        {  3, 10, 43, 25, 39 },
-        { 41, 45, 15, 21,  8 },
-        { 18,  2, 61, 56, 14 }
-    };
-    static const uint64_t iotas[] = {
-        0x0000000000000001U, 0x0000000000008082U, 0x800000000000808aU,
-        0x8000000080008000U, 0x000000000000808bU, 0x0000000080000001U,
-        0x8000000080008081U, 0x8000000000008009U, 0x000000000000008aU,
-        0x0000000000000088U, 0x0000000080008009U, 0x000000008000000aU,
-        0x000000008000808bU, 0x800000000000008bU, 0x8000000000008089U,
-        0x8000000000008003U, 0x8000000000008002U, 0x8000000000000080U,
-        0x000000000000800aU, 0x800000008000000aU, 0x8000000080008081U,
-        0x8000000000008080U, 0x0000000080000001U, 0x8000000080008008U
-    };
 
     assert(i < (sizeof(iotas) / sizeof(iotas[0])));
 
@@ -310,23 +334,6 @@ void KeccakF1600(uint64_t A[5][5])
 static void Round(uint64_t R[5][5], uint64_t A[5][5], size_t i)
 {
     uint64_t C[5], D[5];
-    static const unsigned char rhotates[5][5] = {
-        {  0,  1, 62, 28, 27 },
-        { 36, 44,  6, 55, 20 },
-        {  3, 10, 43, 25, 39 },
-        { 41, 45, 15, 21,  8 },
-        { 18,  2, 61, 56, 14 }
-    };
-    static const uint64_t iotas[] = {
-        0x0000000000000001U, 0x0000000000008082U, 0x800000000000808aU,
-        0x8000000080008000U, 0x000000000000808bU, 0x0000000080000001U,
-        0x8000000080008081U, 0x8000000000008009U, 0x000000000000008aU,
-        0x0000000000000088U, 0x0000000080008009U, 0x000000008000000aU,
-        0x000000008000808bU, 0x800000000000008bU, 0x8000000000008089U,
-        0x8000000000008003U, 0x8000000000008002U, 0x8000000000000080U,
-        0x000000000000800aU, 0x800000008000000aU, 0x8000000080008081U,
-        0x8000000000008080U, 0x0000000080000001U, 0x8000000080008008U
-    };
 
     assert(i < (sizeof(iotas) / sizeof(iotas[0])));
 
@@ -348,11 +355,19 @@ static void Round(uint64_t R[5][5], uint64_t A[5][5], size_t i)
     C[3] = ROL64(A[3][3] ^ D[3], rhotates[3][3]);
     C[4] = ROL64(A[4][4] ^ D[4], rhotates[4][4]);
 
+#ifdef KECCAK_COMPLEMENTING_TRANSFORM
+    R[0][0] = C[0] ^ ( C[1] | C[2]) ^ iotas[i];
+    R[0][1] = C[1] ^ (~C[2] | C[3]);
+    R[0][2] = C[2] ^ ( C[3] & C[4]);
+    R[0][3] = C[3] ^ ( C[4] | C[0]);
+    R[0][4] = C[4] ^ ( C[0] & C[1]);
+#else
     R[0][0] = C[0] ^ (~C[1] & C[2]) ^ iotas[i];
     R[0][1] = C[1] ^ (~C[2] & C[3]);
     R[0][2] = C[2] ^ (~C[3] & C[4]);
     R[0][3] = C[3] ^ (~C[4] & C[0]);
     R[0][4] = C[4] ^ (~C[0] & C[1]);
+#endif
 
     C[0] = ROL64(A[0][3] ^ D[3], rhotates[0][3]);
     C[1] = ROL64(A[1][4] ^ D[4], rhotates[1][4]);
@@ -360,11 +375,19 @@ static void Round(uint64_t R[5][5], uint64_t A[5][5], size_t i)
     C[3] = ROL64(A[3][1] ^ D[1], rhotates[3][1]);
     C[4] = ROL64(A[4][2] ^ D[2], rhotates[4][2]);
 
+#ifdef KECCAK_COMPLEMENTING_TRANSFORM
+    R[1][0] = C[0] ^ (C[1] |  C[2]);
+    R[1][1] = C[1] ^ (C[2] &  C[3]);
+    R[1][2] = C[2] ^ (C[3] | ~C[4]);
+    R[1][3] = C[3] ^ (C[4] |  C[0]);
+    R[1][4] = C[4] ^ (C[0] &  C[1]);
+#else
     R[1][0] = C[0] ^ (~C[1] & C[2]);
     R[1][1] = C[1] ^ (~C[2] & C[3]);
     R[1][2] = C[2] ^ (~C[3] & C[4]);
     R[1][3] = C[3] ^ (~C[4] & C[0]);
     R[1][4] = C[4] ^ (~C[0] & C[1]);
+#endif
 
     C[0] = ROL64(A[0][1] ^ D[1], rhotates[0][1]);
     C[1] = ROL64(A[1][2] ^ D[2], rhotates[1][2]);
@@ -372,11 +395,19 @@ static void Round(uint64_t R[5][5], uint64_t A[5][5], size_t i)
     C[3] = ROL64(A[3][4] ^ D[4], rhotates[3][4]);
     C[4] = ROL64(A[4][0] ^ D[0], rhotates[4][0]);
 
+#ifdef KECCAK_COMPLEMENTING_TRANSFORM
+    R[2][0] =  C[0] ^ ( C[1] | C[2]);
+    R[2][1] =  C[1] ^ ( C[2] & C[3]);
+    R[2][2] =  C[2] ^ (~C[3] & C[4]);
+    R[2][3] = ~C[3] ^ ( C[4] | C[0]);
+    R[2][4] =  C[4] ^ ( C[0] & C[1]);
+#else
     R[2][0] = C[0] ^ (~C[1] & C[2]);
     R[2][1] = C[1] ^ (~C[2] & C[3]);
     R[2][2] = C[2] ^ (~C[3] & C[4]);
     R[2][3] = C[3] ^ (~C[4] & C[0]);
     R[2][4] = C[4] ^ (~C[0] & C[1]);
+#endif
 
     C[0] = ROL64(A[0][4] ^ D[4], rhotates[0][4]);
     C[1] = ROL64(A[1][0] ^ D[0], rhotates[1][0]);
@@ -384,11 +415,19 @@ static void Round(uint64_t R[5][5], uint64_t A[5][5], size_t i)
     C[3] = ROL64(A[3][2] ^ D[2], rhotates[3][2]);
     C[4] = ROL64(A[4][3] ^ D[3], rhotates[4][3]);
 
+#ifdef KECCAK_COMPLEMENTING_TRANSFORM
+    R[3][0] =  C[0] ^ ( C[1] & C[2]);
+    R[3][1] =  C[1] ^ ( C[2] | C[3]);
+    R[3][2] =  C[2] ^ (~C[3] | C[4]);
+    R[3][3] = ~C[3] ^ ( C[4] & C[0]);
+    R[3][4] =  C[4] ^ ( C[0] | C[1]);
+#else
     R[3][0] = C[0] ^ (~C[1] & C[2]);
     R[3][1] = C[1] ^ (~C[2] & C[3]);
     R[3][2] = C[2] ^ (~C[3] & C[4]);
     R[3][3] = C[3] ^ (~C[4] & C[0]);
     R[3][4] = C[4] ^ (~C[0] & C[1]);
+#endif
 
     C[0] = ROL64(A[0][2] ^ D[2], rhotates[0][2]);
     C[1] = ROL64(A[1][3] ^ D[3], rhotates[1][3]);
@@ -396,11 +435,19 @@ static void Round(uint64_t R[5][5], uint64_t A[5][5], size_t i)
     C[3] = ROL64(A[3][0] ^ D[0], rhotates[3][0]);
     C[4] = ROL64(A[4][1] ^ D[1], rhotates[4][1]);
 
+#ifdef KECCAK_COMPLEMENTING_TRANSFORM
+    R[4][0] =  C[0] ^ (~C[1] & C[2]);
+    R[4][1] = ~C[1] ^ ( C[2] | C[3]);
+    R[4][2] =  C[2] ^ ( C[3] & C[4]);
+    R[4][3] =  C[3] ^ ( C[4] | C[0]);
+    R[4][4] =  C[4] ^ ( C[0] & C[1]);
+#else
     R[4][0] = C[0] ^ (~C[1] & C[2]);
     R[4][1] = C[1] ^ (~C[2] & C[3]);
     R[4][2] = C[2] ^ (~C[3] & C[4]);
     R[4][3] = C[3] ^ (~C[4] & C[0]);
     R[4][4] = C[4] ^ (~C[0] & C[1]);
+#endif
 }
 
 void KeccakF1600(uint64_t A[5][5])
@@ -408,10 +455,28 @@ void KeccakF1600(uint64_t A[5][5])
     uint64_t T[5][5];
     size_t i;
 
+#ifdef KECCAK_COMPLEMENTING_TRANSFORM
+    A[0][1] = ~A[0][1];
+    A[0][2] = ~A[0][2];
+    A[1][3] = ~A[1][3];
+    A[2][2] = ~A[2][2];
+    A[3][2] = ~A[3][2];
+    A[4][0] = ~A[4][0];
+#endif
+
     for (i = 0; i < 24; i += 2) {
         Round(T, A, i);
         Round(A, T, i + 1);
     }
+
+#ifdef KECCAK_COMPLEMENTING_TRANSFORM
+    A[0][1] = ~A[0][1];
+    A[0][2] = ~A[0][2];
+    A[1][3] = ~A[1][3];
+    A[2][2] = ~A[2][2];
+    A[3][2] = ~A[3][2];
+    A[4][0] = ~A[4][0];
+#endif
 }
 
 #else
@@ -425,23 +490,6 @@ void KeccakF1600(uint64_t A[5][5])
 static void FourRounds(uint64_t A[5][5], size_t i)
 {
     uint64_t B[5], C[5], D[5];
-    static const unsigned char rhotates[5][5] = {
-        {  0,  1, 62, 28, 27 },
-        { 36, 44,  6, 55, 20 },
-        {  3, 10, 43, 25, 39 },
-        { 41, 45, 15, 21,  8 },
-        { 18,  2, 61, 56, 14 }
-    };
-    static const uint64_t iotas[] = {
-        0x0000000000000001U, 0x0000000000008082U, 0x800000000000808aU,
-        0x8000000080008000U, 0x000000000000808bU, 0x0000000080000001U,
-        0x8000000080008081U, 0x8000000000008009U, 0x000000000000008aU,
-        0x0000000000000088U, 0x0000000080008009U, 0x000000008000000aU,
-        0x000000008000808bU, 0x800000000000008bU, 0x8000000000008089U,
-        0x8000000000008003U, 0x8000000000008002U, 0x8000000000000080U,
-        0x000000000000800aU, 0x800000008000000aU, 0x8000000080008081U,
-        0x8000000000008080U, 0x0000000080000001U, 0x8000000080008008U
-    };
 
     assert(i <= (sizeof(iotas) / sizeof(iotas[0]) - 4));
 
@@ -731,6 +779,39 @@ void KeccakF1600(uint64_t A[5][5])
 
 #endif
 
+static uint64_t BitInterleave(uint64_t Ai)
+{
+    if (sizeof(void *) < 8) {
+        uint32_t hi = 0, lo = 0;
+        int j;
+
+        for (j = 0; j < 32; j++) {
+            lo |= ((uint32_t)(Ai >> (2 * j))     & 1) << j;
+            hi |= ((uint32_t)(Ai >> (2 * j + 1)) & 1) << j;
+        }
+
+        Ai = ((uint64_t)hi << 32) | lo;
+    }
+
+    return Ai;
+}
+
+static uint64_t BitDeinterleave(uint64_t Ai)
+{
+    if (sizeof(void *) < 8) {
+        uint32_t hi = (uint32_t)(Ai >> 32), lo = (uint32_t)Ai;
+        int j;
+
+        Ai = 0;
+        for (j = 0; j < 32; j++) {
+            Ai |= (uint64_t)((lo >> j) & 1) << (2 * j);
+            Ai |= (uint64_t)((hi >> j) & 1) << (2 * j + 1);
+        }
+    }
+
+    return Ai;
+}
+
 /*
  * SHA3_absorb can be called multiple times, but at each invocation
  * largest multiple of |r| out of |len| bytes are processed. Then
@@ -751,11 +832,13 @@ size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
 
     while (len >= r) {
         for (i = 0; i < w; i++) {
-            A_flat[i] ^= (uint64_t)inp[0]       | (uint64_t)inp[1] << 8  |
-                         (uint64_t)inp[2] << 16 | (uint64_t)inp[3] << 24 |
-                         (uint64_t)inp[4] << 32 | (uint64_t)inp[5] << 40 |
-                         (uint64_t)inp[6] << 48 | (uint64_t)inp[7] << 56;
+            uint64_t Ai = (uint64_t)inp[0]       | (uint64_t)inp[1] << 8  |
+                          (uint64_t)inp[2] << 16 | (uint64_t)inp[3] << 24 |
+                          (uint64_t)inp[4] << 32 | (uint64_t)inp[5] << 40 |
+                          (uint64_t)inp[6] << 48 | (uint64_t)inp[7] << 56;
             inp += 8;
+
+            A_flat[i] ^= BitInterleave(Ai);
         }
         KeccakF1600(A);
         len -= r;
@@ -777,7 +860,7 @@ void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r)
 
     while (len >= r) {
         for (i = 0; i < w; i++) {
-            uint64_t Ai = A_flat[i];
+            uint64_t Ai = BitDeinterleave(A_flat[i]);
 
             out[0] = (unsigned char)(Ai);
             out[1] = (unsigned char)(Ai >> 8);
@@ -798,7 +881,7 @@ void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r)
     len /= 8;
 
     for (i = 0; i < len; i++) {
-        uint64_t Ai = A_flat[i];
+        uint64_t Ai = BitDeinterleave(A_flat[i]);
 
         out[0] = (unsigned char)(Ai);
         out[1] = (unsigned char)(Ai >> 8);
@@ -812,7 +895,7 @@ void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r)
     }
 
     if (rem) {
-        uint64_t Ai = A_flat[i];
+        uint64_t Ai = BitDeinterleave(A_flat[i]);
 
         for (i = 0; i < rem; i++) {
             *out++ = (unsigned char)Ai;

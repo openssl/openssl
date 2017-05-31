@@ -17,6 +17,18 @@ PKCS12_newpass() changes the password of a PKCS12 structure.
 B<p12> is a pointer to a PKCS12 structure. B<oldpass> is the existing password
 and B<newpass> is the new password.
 
+=head1 NOTES
+
+Each of B<oldpass> and B<newpass> is independently interpreted as a string in
+the UTF-8 encoding. If it is not valid UTF-8, it is assumed to be ISO8859-1
+instead.
+
+In particular, this means that passwords in the locale character set
+(or code page on Windows) must potentially be converted to UTF-8 before
+use. This may include passwords from local text files, or input from
+the terminal or command line. Refer to the documentation of
+L<UI_OpenSSL(3)>, for example.
+
 =head1 RETURN VALUES
 
 PKCS12_newpass() returns 1 on success or 0 on failure. Applications can

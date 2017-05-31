@@ -13,19 +13,7 @@
 #include <string.h>
 
 #include "testutil.h"
-#include "test_main_custom.h"
-
-#ifdef __VMS
-# pragma names save
-# pragma names as_is,shortened
-#endif
-
 #include "internal/poly1305.h"
-
-#ifdef __VMS
-# pragma names restore
-#endif
-
 #include "../crypto/poly1305/poly1305_local.h"
 #include "e_os.h"
 
@@ -1611,7 +1599,7 @@ static int test_poly1305(int idx)
             Poly1305_Final(&poly1305, out);
 
             if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
-                TEST_info("Poly1305 test #%d/%" OSSLzu "+%" OSSLzu " failed.",
+                TEST_info("Poly1305 test #%d/%zu+%zu failed.",
                           idx, half, inlen-half);
                 return 0;
             }

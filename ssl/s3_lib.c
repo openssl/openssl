@@ -48,7 +48,6 @@
  */
 
 #include <stdio.h>
-#include <assert.h>
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 #include <openssl/md5.h>
@@ -2914,10 +2913,13 @@ int ssl3_new(SSL *s)
     if (!SSL_SRP_CTX_init(s))
         goto err;
 #endif
-    s->method->ssl_clear(s);
-    return (1);
+
+    if (!s->method->ssl_clear(s))
+        return 0;
+
+    return 1;
  err:
-    return (0);
+    return 0;
 }
 
 void ssl3_free(SSL *s)
@@ -2950,7 +2952,7 @@ void ssl3_free(SSL *s)
     s->s3 = NULL;
 }
 
-void ssl3_clear(SSL *s)
+int ssl3_clear(SSL *s)
 {
     ssl3_cleanup_key_block(s);
     OPENSSL_free(s->s3->tmp.ctype);
@@ -2972,7 +2974,8 @@ void ssl3_clear(SSL *s)
     /* NULL/zero-out everything in the s3 struct */
     memset(s->s3, 0, sizeof(*s->s3));
 
-    ssl_free_wbio_buffer(s);
+    if (!ssl_free_wbio_buffer(s))
+        return 0;
 
     s->version = SSL3_VERSION;
 
@@ -2981,6 +2984,8 @@ void ssl3_clear(SSL *s)
     s->ext.npn = NULL;
     s->ext.npn_len = 0;
 #endif
+
+    return 1;
 }
 
 #ifndef OPENSSL_NO_SRP
@@ -4038,7 +4043,9 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
     }
 #ifndef OPENSSL_NO_TLS13DOWNGRADE
     if (ret) {
-        assert(sizeof(tls11downgrade) < len && sizeof(tls12downgrade) < len);
+        if (!ossl_assert(sizeof(tls11downgrade) < len)
+                || !ossl_assert(sizeof(tls12downgrade) < len))
+             return 0;
         if (dgrd == DOWNGRADE_TO_1_2)
             memcpy(result + len - sizeof(tls12downgrade), tls12downgrade,
                    sizeof(tls12downgrade));

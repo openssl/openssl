@@ -32,7 +32,6 @@
 
 #define RSMBLY_BITMASK_IS_COMPLETE(bitmask, msg_len, is_complete) { \
                         long ii; \
-                        OPENSSL_assert((msg_len) > 0); \
                         is_complete = 1; \
                         if (bitmask[(((msg_len) - 1) >> 3)] != bitmask_end_values[((msg_len) & 7)]) is_complete = 0; \
                         if (is_complete) for (ii = (((msg_len) - 1) >> 3) - 1; ii >= 0 ; ii--) \
@@ -122,9 +121,11 @@ int dtls1_do_write(SSL *s, int type)
         /* should have something reasonable now */
         return -1;
 
-    if (s->init_off == 0 && type == SSL3_RT_HANDSHAKE)
-        OPENSSL_assert(s->init_num ==
-                       s->d1->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH);
+    if (s->init_off == 0 && type == SSL3_RT_HANDSHAKE) {
+        if (!ossl_assert(s->init_num ==
+                         s->d1->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH))
+            return -1;
+    }
 
     if (s->write_hash) {
         if (s->enc_write_ctx
@@ -214,6 +215,9 @@ int dtls1_do_write(SSL *s, int type)
         else
             len = s->init_num;
 
+        if (len > s->max_send_fragment)
+            len = s->max_send_fragment;
+
         /*
          * XDTLS: this function is too long.  split out the CCS part
          */
@@ -251,7 +255,7 @@ int dtls1_do_write(SSL *s, int type)
                 } else
                     return -1;
             } else {
-                return (-1);
+                return -1;
             }
         } else {
 
@@ -259,7 +263,8 @@ int dtls1_do_write(SSL *s, int type)
              * bad if this assert fails, only part of the handshake message
              * got sent.  but why would this happen?
              */
-            OPENSSL_assert(len == written);
+            if (!ossl_assert(len == written))
+                return -1;
 
             if (type == SSL3_RT_HANDSHAKE && !s->d1->retransmitting) {
                 /*
@@ -575,6 +580,8 @@ dtls1_reassemble_fragment(SSL *s, const struct hm_header_st *msg_hdr)
     RSMBLY_BITMASK_MARK(frag->reassembly, (long)msg_hdr->frag_off,
                         (long)(msg_hdr->frag_off + frag_len));
 
+    if (!ossl_assert(msg_hdr->msg_len > 0))
+        goto err;
     RSMBLY_BITMASK_IS_COMPLETE(frag->reassembly, (long)msg_hdr->msg_len,
                                is_complete);
 
@@ -597,7 +604,8 @@ dtls1_reassemble_fragment(SSL *s, const struct hm_header_st *msg_hdr)
          * would have returned it and control would never have reached this
          * branch.
          */
-        OPENSSL_assert(item != NULL);
+        if (!ossl_assert(item != NULL))
+            goto err;
     }
 
     return DTLS1_HM_FRAGMENT_RETRY;
@@ -694,7 +702,8 @@ dtls1_process_out_of_seq_message(SSL *s, const struct hm_header_st *msg_hdr)
          * have been processed with |dtls1_reassemble_fragment|, above, or
          * the record will have been discarded.
          */
-        OPENSSL_assert(item != NULL);
+        if (!ossl_assert(item != NULL))
+            goto err;
     }
 
     return DTLS1_HM_FRAGMENT_RETRY;
@@ -767,7 +776,7 @@ static int dtls_get_reassembled_message(SSL *s, int *errtype, size_t *len)
      * Fragments must not span records.
      */
     if (frag_len > RECORD_LAYER_get_rrec_length(&s->rlayer)) {
-        al = SSL3_AD_ILLEGAL_PARAMETER;
+        al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_DTLS_GET_REASSEMBLED_MESSAGE, SSL_R_BAD_LENGTH);
         goto f_err;
     }
@@ -842,8 +851,8 @@ static int dtls_get_reassembled_message(SSL *s, int *errtype, size_t *len)
      * to fail
      */
     if (readbytes != frag_len) {
-        al = SSL3_AD_ILLEGAL_PARAMETER;
-        SSLerr(SSL_F_DTLS_GET_REASSEMBLED_MESSAGE, SSL3_AD_ILLEGAL_PARAMETER);
+        al = SSL_AD_ILLEGAL_PARAMETER;
+        SSLerr(SSL_F_DTLS_GET_REASSEMBLED_MESSAGE, SSL_R_BAD_LENGTH);
         goto f_err;
     }
 
@@ -978,7 +987,8 @@ int dtls1_buffer_message(SSL *s, int is_ccs)
      * this function is called immediately after a message has been
      * serialized
      */
-    OPENSSL_assert(s->init_off == 0);
+    if (!ossl_assert(s->init_off == 0))
+        return 0;
 
     frag = dtls1_hm_fragment_new(s->init_num, 0);
     if (frag == NULL)
@@ -988,13 +998,15 @@ int dtls1_buffer_message(SSL *s, int is_ccs)
 
     if (is_ccs) {
         /* For DTLS1_BAD_VER the header length is non-standard */
-        OPENSSL_assert(s->d1->w_msg_hdr.msg_len +
-                       ((s->version ==
-                         DTLS1_BAD_VER) ? 3 : DTLS1_CCS_HEADER_LENGTH)
-                       == (unsigned int)s->init_num);
+        if (!ossl_assert(s->d1->w_msg_hdr.msg_len +
+                         ((s->version ==
+                           DTLS1_BAD_VER) ? 3 : DTLS1_CCS_HEADER_LENGTH)
+                         == (unsigned int)s->init_num))
+            return 0;
     } else {
-        OPENSSL_assert(s->d1->w_msg_hdr.msg_len +
-                       DTLS1_HM_HEADER_LENGTH == (unsigned int)s->init_num);
+        if (!ossl_assert(s->d1->w_msg_hdr.msg_len +
+                         DTLS1_HM_HEADER_LENGTH == (unsigned int)s->init_num))
+            return 0;
     }
 
     frag->msg_header.msg_len = s->d1->w_msg_hdr.msg_len;
@@ -1041,11 +1053,6 @@ int dtls1_retransmit_message(SSL *s, unsigned short seq, int *found)
     unsigned long header_length;
     unsigned char seq64be[8];
     struct dtls1_retransmit_state saved_state;
-
-    /*-
-      OPENSSL_assert(s->init_num == 0);
-      OPENSSL_assert(s->init_off == 0);
-     */
 
     /* XDTLS:  the requested message ought to be found, otherwise error */
     memset(seq64be, 0, sizeof(seq64be));

@@ -77,7 +77,43 @@ int tls_setup_handshake(SSL *s)
     if (!ssl3_init_finished_mac(s))
         return 0;
 
+    /* Reset any extension flags */
+    memset(s->ext.extflags, 0, sizeof(s->ext.extflags));
+
     if (s->server) {
+        STACK_OF(SSL_CIPHER) *ciphers = SSL_get_ciphers(s);
+        int i, ver_min, ver_max, ok = 0;
+
+        /*
+         * Sanity check that the maximum version we accept has ciphers
+         * enabled. For clients we do this check during construction of the
+         * ClientHello.
+         */
+        if (ssl_get_min_max_version(s, &ver_min, &ver_max) != 0) {
+            SSLerr(SSL_F_TLS_SETUP_HANDSHAKE, ERR_R_INTERNAL_ERROR);
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+            return 0;
+        }
+        for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+            const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
+
+            if (SSL_IS_DTLS(s)) {
+                if (DTLS_VERSION_GE(ver_max, c->min_dtls) &&
+                        DTLS_VERSION_LE(ver_max, c->max_dtls))
+                    ok = 1;
+            } else if (ver_max >= c->min_tls && ver_max <= c->max_tls) {
+                ok = 1;
+            }
+            if (ok)
+                break;
+        }
+        if (!ok) {
+            SSLerr(SSL_F_TLS_SETUP_HANDSHAKE, SSL_R_NO_CIPHERS_AVAILABLE);
+            ERR_add_error_data(1, "No ciphers enabled for max supported "
+                                  "SSL/TLS version");
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+            return 0;
+        }
         if (SSL_IS_FIRST_HANDSHAKE(s)) {
             s->ctx->stats.sess_accept++;
         } else if (!s->s3->send_connection_binding &&
@@ -216,8 +252,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    if (EVP_DigestSignInit(mctx, &pctx, md, NULL, pkey) <= 0
-            || EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0) {
+    if (EVP_DigestSignInit(mctx, &pctx, md, NULL, pkey) <= 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
         goto err;
     }
@@ -229,16 +264,18 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
             SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
             goto err;
         }
-    } else if (s->version == SSL3_VERSION) {
-        if (!EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                             (int)s->session->master_key_length,
-                             s->session->master_key)) {
+    }
+    if (s->version == SSL3_VERSION) {
+        if (EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0
+            || !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                                (int)s->session->master_key_length,
+                                s->session->master_key)
+            || EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
+
             SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
             goto err;
         }
-    }
-
-    if (EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
+    } else if (EVP_DigestSign(mctx, sig, &siglen, hdata, hdatalen) <= 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_EVP_LIB);
         goto err;
     }
@@ -298,10 +335,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 
     peer = s->session->peer;
     pkey = X509_get0_pubkey(peer);
-    if (pkey == NULL) {
-        al = SSL_AD_INTERNAL_ERROR;
+    if (pkey == NULL)
         goto f_err;
-    }
 
     type = X509_certificate_type(peer, pkey);
 
@@ -376,8 +411,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 #ifdef SSL_DEBUG
     fprintf(stderr, "Using client verify alg %s\n", EVP_MD_name(md));
 #endif
-    if (EVP_DigestVerifyInit(mctx, &pctx, md, NULL, pkey) <= 0
-            || EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0) {
+    if (EVP_DigestVerifyInit(mctx, &pctx, md, NULL, pkey) <= 0) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
         goto f_err;
     }
@@ -404,24 +438,33 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
             SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
             goto f_err;
         }
-    } else if (s->version == SSL3_VERSION
-        && !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                            (int)s->session->master_key_length,
-                            s->session->master_key)) {
-        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
-        goto f_err;
+    }
+    if (s->version == SSL3_VERSION) {
+        if (EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0
+                || !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
+                                    (int)s->session->master_key_length,
+                                    s->session->master_key)) {
+            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
+            goto f_err;
+        }
+        if (EVP_DigestVerifyFinal(mctx, data, len) <= 0) {
+            al = SSL_AD_DECRYPT_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
+            goto f_err;
+        }
+    } else {
+        j = EVP_DigestVerify(mctx, data, len, hdata, hdatalen);
+        if (j < 0) {
+            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
+            goto f_err;
+        } else if (j == 0) {
+            al = SSL_AD_DECRYPT_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
+            goto f_err;
+        }
     }
 
-    if (EVP_DigestVerifyFinal(mctx, data, len) <= 0) {
-        al = SSL_AD_DECRYPT_ERROR;
-        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
-        goto f_err;
-    }
-
-    if (SSL_IS_TLS13(s))
-        ret = MSG_PROCESS_CONTINUE_READING;
-    else
-        ret = MSG_PROCESS_CONTINUE_PROCESSING;
+    ret = MSG_PROCESS_CONTINUE_READING;
     if (0) {
  f_err:
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -488,19 +531,23 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
      */
     if (!SSL_IS_TLS13(s) && !ssl_log_secret(s, MASTER_SECRET_LABEL,
                                             s->session->master_key,
-                                            s->session->master_key_length))
-        return 0;
+                                            s->session->master_key_length)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     /*
      * Copy the finished so we can use it for renegotiation checks
      */
+    if (!ossl_assert(finish_md_len <= EVP_MAX_MD_SIZE)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     if (!s->server) {
-        OPENSSL_assert(finish_md_len <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_client_finished, s->s3->tmp.finish_md,
                finish_md_len);
         s->s3->previous_client_finished_len = finish_md_len;
     } else {
-        OPENSSL_assert(finish_md_len <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_server_finished, s->s3->tmp.finish_md,
                finish_md_len);
         s->s3->previous_server_finished_len = finish_md_len;
@@ -550,10 +597,19 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
     }
 
     if (!PACKET_get_1(pkt, &updatetype)
-            || PACKET_remaining(pkt) != 0
-            || (updatetype != SSL_KEY_UPDATE_NOT_REQUESTED
-                && updatetype != SSL_KEY_UPDATE_REQUESTED)) {
+            || PACKET_remaining(pkt) != 0) {
         al = SSL_AD_DECODE_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_KEY_UPDATE, SSL_R_BAD_KEY_UPDATE);
+        goto err;
+    }
+
+    /*
+     * There are only two defined key update types. Fail if we get a value we
+     * didn't recognise.
+     */
+    if (updatetype != SSL_KEY_UPDATE_NOT_REQUESTED
+            && updatetype != SSL_KEY_UPDATE_REQUESTED) {
+        al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PROCESS_KEY_UPDATE, SSL_R_BAD_KEY_UPDATE);
         goto err;
     }
@@ -625,14 +681,14 @@ MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
              && remain != DTLS1_CCS_HEADER_LENGTH + 1)
             || (s->version != DTLS1_BAD_VER
                 && remain != DTLS1_CCS_HEADER_LENGTH - 1)) {
-            al = SSL_AD_ILLEGAL_PARAMETER;
+            al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
                    SSL_R_BAD_CHANGE_CIPHER_SPEC);
             goto f_err;
         }
     } else {
         if (remain != 0) {
-            al = SSL_AD_ILLEGAL_PARAMETER;
+            al = SSL_AD_DECODE_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
                    SSL_R_BAD_CHANGE_CIPHER_SPEC);
             goto f_err;
@@ -722,13 +778,16 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
     /*
      * Copy the finished so we can use it for renegotiation checks
      */
+    if (!ossl_assert(md_len <= EVP_MAX_MD_SIZE)) {
+        al = SSL_AD_INTERNAL_ERROR;
+        SSLerr(SSL_F_TLS_PROCESS_FINISHED, ERR_R_INTERNAL_ERROR);
+        goto f_err;
+    }
     if (s->server) {
-        OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_client_finished, s->s3->tmp.peer_finish_md,
                md_len);
         s->s3->previous_client_finished_len = md_len;
     } else {
-        OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
         memcpy(s->s3->previous_server_finished, s->s3->tmp.peer_finish_md,
                md_len);
         s->s3->previous_server_finished_len = md_len;
@@ -945,7 +1004,8 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
             BUF_MEM_free(s->init_buf);
             s->init_buf = NULL;
         }
-        ssl_free_wbio_buffer(s);
+        if (!ssl_free_wbio_buffer(s))
+            return WORK_ERROR;
         s->init_num = 0;
     }
 
@@ -1574,6 +1634,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
          * Fall through if we are TLSv1.3 already (this means we must be after
          * a HelloRetryRequest
          */
+        /* fall thru */
     case TLS_ANY_VERSION:
         table = tls_version_table;
         break;
@@ -1784,7 +1845,7 @@ int ssl_choose_client_version(SSL *s, int version, int checkdgrd, int *al)
 }
 
 /*
- * ssl_get_client_min_max_version - get minimum and maximum client version
+ * ssl_get_min_max_version - get minimum and maximum protocol version
  * @s: The SSL connection
  * @min_version: The minimum supported version
  * @max_version: The maximum supported version
@@ -1802,8 +1863,7 @@ int ssl_choose_client_version(SSL *s, int version, int checkdgrd, int *al)
  * Returns 0 on success or an SSL error reason number on failure.  On failure
  * min_version and max_version will also be set to 0.
  */
-int ssl_get_client_min_max_version(const SSL *s, int *min_version,
-                                   int *max_version)
+int ssl_get_min_max_version(const SSL *s, int *min_version, int *max_version)
 {
     int version;
     int hole;
@@ -1897,7 +1957,7 @@ int ssl_set_client_hello_version(SSL *s)
 {
     int ver_min, ver_max, ret;
 
-    ret = ssl_get_client_min_max_version(s, &ver_min, &ver_max);
+    ret = ssl_get_min_max_version(s, &ver_min, &ver_max);
 
     if (ret != 0)
         return ret;
@@ -1928,9 +1988,7 @@ int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
         return 0;
 
     for (i = 0; i < num_groups; i++, groups += 2) {
-        unsigned int share_id = (groups[0] << 8) | (groups[1]);
-
-        if (group_id == share_id
+        if (group_id == GET_GROUP_ID(groups, 0)
                 && (!checkallow
                     || tls_curve_allowed(s, groups, SSL_SECOP_CURVE_CHECK))) {
             return 1;

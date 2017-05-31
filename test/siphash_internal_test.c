@@ -14,19 +14,7 @@
 
 #include <openssl/bio.h>
 #include "testutil.h"
-#include "test_main_custom.h"
-
-#ifdef __VMS
-# pragma names save
-# pragma names as_is,shortened
-#endif
-
 #include "internal/siphash.h"
-
-#ifdef __VMS
-# pragma names restore
-#endif
-
 #include "../crypto/siphash/siphash_local.h"
 #include "e_os.h"
 
@@ -237,7 +225,7 @@ static int test_siphash(int idx)
 
     if (expectedlen != SIPHASH_MIN_DIGEST_SIZE &&
         expectedlen != SIPHASH_MAX_DIGEST_SIZE) {
-        TEST_info("size %" OSSLzu " vs %d and %d", expectedlen,
+        TEST_info("size %zu vs %d and %d", expectedlen,
                   SIPHASH_MIN_DIGEST_SIZE, SIPHASH_MAX_DIGEST_SIZE);
         return 0;
     }
@@ -297,7 +285,7 @@ static int test_siphash(int idx)
                 return 0;
 
             if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
-                TEST_info("SipHash test #%d/%" OSSLzu "+%" OSSLzu " failed.",
+                TEST_info("SipHash test #%d/%zu+%zu failed.",
                           idx, half, inlen-half);
                 return 0;
             }

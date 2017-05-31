@@ -68,9 +68,9 @@ extern "C" {
 # define TLS1_3_VERSION                  0x0304
 # define TLS_MAX_VERSION                 TLS1_3_VERSION
 
-/* TODO(TLS1.3) REMOVE ME: Version indicator for draft -19 */
-# define TLS1_3_VERSION_DRAFT            0x7f13
-# define TLS1_3_VERSION_DRAFT_TXT        "TLS 1.3 (draft 19)"
+/* TODO(TLS1.3) REMOVE ME: Version indicator for draft -20 */
+# define TLS1_3_VERSION_DRAFT            0x7f14
+# define TLS1_3_VERSION_DRAFT_TXT        "TLS 1.3 (draft 20)"
 
 /* Special value for method supporting multiple versions */
 # define TLS_ANY_VERSION                 0x10000
@@ -270,13 +270,14 @@ int SSL_get_shared_sigalgs(SSL *s, int idx,
 __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain);
 
 # define SSL_set_tlsext_host_name(s,name) \
-SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
+SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name, \
+         (char *)(name))
 
 # define SSL_set_tlsext_debug_callback(ssl, cb) \
-SSL_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_CB,(void (*)(void))cb)
+SSL_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_CB,(void (*)(void))(cb))
 
 # define SSL_set_tlsext_debug_arg(ssl, arg) \
-SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_ARG,0, (void *)arg)
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_ARG,0, (void *)(arg))
 
 # define SSL_get_tlsext_status_type(ssl) \
 SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE,0, NULL)
@@ -285,25 +286,26 @@ SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE,0, NULL)
 SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE,type, NULL)
 
 # define SSL_get_tlsext_status_exts(ssl, arg) \
-SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_EXTS,0, (void *)arg)
+SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_EXTS,0, (void *)(arg))
 
 # define SSL_set_tlsext_status_exts(ssl, arg) \
-SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_EXTS,0, (void *)arg)
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_EXTS,0, (void *)(arg))
 
 # define SSL_get_tlsext_status_ids(ssl, arg) \
-SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_IDS,0, (void *)arg)
+SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_IDS,0, (void *)(arg))
 
 # define SSL_set_tlsext_status_ids(ssl, arg) \
-SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS,0, (void *)arg)
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS,0, (void *)(arg))
 
 # define SSL_get_tlsext_status_ocsp_resp(ssl, arg) \
-SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP,0, (void *)arg)
+SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP,0, (void *)(arg))
 
 # define SSL_set_tlsext_status_ocsp_resp(ssl, arg, arglen) \
-SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP,arglen, (void *)arg)
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP,arglen, (void *)(arg))
 
 # define SSL_CTX_set_tlsext_servername_callback(ctx, cb) \
-SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,(void (*)(void))cb)
+SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB, \
+                      (void (*)(void))(cb))
 
 # define SSL_TLSEXT_ERR_OK 0
 # define SSL_TLSEXT_ERR_ALERT_WARNING 1
@@ -311,7 +313,7 @@ SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,(void (*)(void))cb)
 # define SSL_TLSEXT_ERR_NOACK 3
 
 # define SSL_CTX_set_tlsext_servername_arg(ctx, arg) \
-SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
+SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)(arg))
 
 # define SSL_CTX_get_tlsext_ticket_keys(ctx, keys, keylen) \
         SSL_CTX_ctrl((ctx),SSL_CTRL_GET_TLSEXT_TICKET_KEYS,(keylen),(keys))
@@ -319,14 +321,15 @@ SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
         SSL_CTX_ctrl((ctx),SSL_CTRL_SET_TLSEXT_TICKET_KEYS,(keylen),(keys))
 
 # define SSL_CTX_get_tlsext_status_cb(ssl, cb) \
-SSL_CTX_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB,0, (void (**)(void))cb)
+SSL_CTX_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB,0, (void (**)(void))(cb))
 # define SSL_CTX_set_tlsext_status_cb(ssl, cb) \
-SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB,(void (*)(void))cb)
+SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB, \
+                      (void (*)(void))(cb))
 
 # define SSL_CTX_get_tlsext_status_arg(ssl, arg) \
-SSL_CTX_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG,0, (void *)arg
+SSL_CTX_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_CB_ARG,0, (void *)(arg))
 # define SSL_CTX_set_tlsext_status_arg(ssl, arg) \
-SSL_CTX_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG,0, (void *)arg)
+SSL_CTX_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG,0, (void *)(arg))
 
 #define SSL_CTX_set_tlsext_status_type(ssl, type) \
         SSL_CTX_ctrl(ssl, SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE, type, NULL)
@@ -335,7 +338,8 @@ SSL_CTX_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG,0, (void *)arg)
         SSL_CTX_ctrl(ssl, SSL_CTRL_GET_TLSEXT_STATUS_REQ_TYPE, 0, NULL)
 
 # define SSL_CTX_set_tlsext_ticket_key_cb(ssl, cb) \
-SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
+SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB, \
+                      (void (*)(void))(cb))
 
 # ifndef OPENSSL_NO_HEARTBEATS
 #  define SSL_DTLSEXT_HB_ENABLED                   0x01

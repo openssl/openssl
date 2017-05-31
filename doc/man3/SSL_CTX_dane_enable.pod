@@ -3,10 +3,10 @@
 =head1 NAME
 
 SSL_CTX_dane_enable, SSL_CTX_dane_mtype_set, SSL_dane_enable,
-SSL_dane_tlsa_add, SSL_get0_dane_authority, SSL_get0_dane_tlsa
+SSL_dane_tlsa_add, SSL_get0_dane_authority, SSL_get0_dane_tlsa,
 SSL_CTX_dane_set_flags, SSL_CTX_dane_clear_flags,
-SSL_dane_set_flags, SSL_dane_clear_flags -
-enable DANE TLS authentication of the remote TLS server in the local
+SSL_dane_set_flags, SSL_dane_clear_flags
+- enable DANE TLS authentication of the remote TLS server in the local
 TLS client
 
 =head1 SYNOPSIS

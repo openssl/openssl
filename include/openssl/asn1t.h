@@ -44,7 +44,7 @@ extern "C" {
 # else
 
 /* Macro to obtain ASN1_ADB pointer from a type (only used internally) */
-#  define ASN1_ADB_ptr(iptr) ((const ASN1_ADB *)(iptr()))
+#  define ASN1_ADB_ptr(iptr) ((const ASN1_ADB *)((iptr)()))
 
 /* Macros for start and end of ASN1_ITEM definition */
 
@@ -325,10 +325,10 @@ extern "C" {
 /* implicit and explicit helper macros */
 
 # define ASN1_IMP_EX(stname, field, type, tag, ex) \
-                ASN1_EX_TYPE(ASN1_TFLG_IMPLICIT | ex, tag, stname, field, type)
+         ASN1_EX_TYPE(ASN1_TFLG_IMPLICIT | (ex), tag, stname, field, type)
 
 # define ASN1_EXP_EX(stname, field, type, tag, ex) \
-                ASN1_EX_TYPE(ASN1_TFLG_EXPLICIT | ex, tag, stname, field, type)
+         ASN1_EX_TYPE(ASN1_TFLG_EXPLICIT | (ex), tag, stname, field, type)
 
 /* Any defined by macros: the field used is in the table itself */
 
@@ -531,10 +531,10 @@ struct ASN1_ADB_TABLE_st {
 # define ASN1_TFLG_TAG_MASK      (0x3 << 3)
 
 /* context specific IMPLICIT */
-# define ASN1_TFLG_IMPLICIT      ASN1_TFLG_IMPTAG|ASN1_TFLG_CONTEXT
+# define ASN1_TFLG_IMPLICIT      (ASN1_TFLG_IMPTAG|ASN1_TFLG_CONTEXT)
 
 /* context specific EXPLICIT */
-# define ASN1_TFLG_EXPLICIT      ASN1_TFLG_EXPTAG|ASN1_TFLG_CONTEXT
+# define ASN1_TFLG_EXPLICIT      (ASN1_TFLG_EXPTAG|ASN1_TFLG_CONTEXT)
 
 /*
  * If tagging is in force these determine the type of tag to use. Otherwise

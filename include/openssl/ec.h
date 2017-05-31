@@ -1316,12 +1316,12 @@ void EC_KEY_METHOD_get_verify(EC_KEY_METHOD *meth,
 # define EVP_PKEY_CTX_set_ecdh_kdf_md(ctx, md) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
                                 EVP_PKEY_OP_DERIVE, \
-                                EVP_PKEY_CTRL_EC_KDF_MD, 0, (void *)md)
+                                EVP_PKEY_CTRL_EC_KDF_MD, 0, (void *)(md))
 
 # define EVP_PKEY_CTX_get_ecdh_kdf_md(ctx, pmd) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
                                 EVP_PKEY_OP_DERIVE, \
-                                EVP_PKEY_CTRL_GET_EC_KDF_MD, 0, (void *)pmd)
+                                EVP_PKEY_CTRL_GET_EC_KDF_MD, 0, (void *)(pmd))
 
 # define EVP_PKEY_CTX_set_ecdh_kdf_outlen(ctx, len) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
@@ -1331,17 +1331,18 @@ void EC_KEY_METHOD_get_verify(EC_KEY_METHOD *meth,
 # define EVP_PKEY_CTX_get_ecdh_kdf_outlen(ctx, plen) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
                                 EVP_PKEY_OP_DERIVE, \
-                        EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN, 0, (void *)plen)
+                                EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN, 0, \
+                                (void *)(plen))
 
 # define EVP_PKEY_CTX_set0_ecdh_kdf_ukm(ctx, p, plen) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
                                 EVP_PKEY_OP_DERIVE, \
-                                EVP_PKEY_CTRL_EC_KDF_UKM, plen, (void *)p)
+                                EVP_PKEY_CTRL_EC_KDF_UKM, plen, (void *)(p))
 
 # define EVP_PKEY_CTX_get0_ecdh_kdf_ukm(ctx, p) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
                                 EVP_PKEY_OP_DERIVE, \
-                                EVP_PKEY_CTRL_GET_EC_KDF_UKM, 0, (void *)p)
+                                EVP_PKEY_CTRL_GET_EC_KDF_UKM, 0, (void *)(p))
 
 # define EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID             (EVP_PKEY_ALG_CTRL + 1)
 # define EVP_PKEY_CTRL_EC_PARAM_ENC                      (EVP_PKEY_ALG_CTRL + 2)
@@ -1383,6 +1384,7 @@ int ERR_load_EC_strings(void);
 # define EC_F_ECDSA_SIGN_SETUP                            248
 # define EC_F_ECDSA_SIG_NEW                               265
 # define EC_F_ECDSA_VERIFY                                253
+# define EC_F_ECD_ITEM_VERIFY                             272
 # define EC_F_ECKEY_PARAM2TYPE                            223
 # define EC_F_ECKEY_PARAM_DECODE                          212
 # define EC_F_ECKEY_PRIV_DECODE                           213
@@ -1506,6 +1508,8 @@ int ERR_load_EC_strings(void);
 # define EC_F_OSSL_ECDH_COMPUTE_KEY                       247
 # define EC_F_OSSL_ECDSA_SIGN_SIG                         249
 # define EC_F_OSSL_ECDSA_VERIFY_SIG                       250
+# define EC_F_PKEY_ECD_CTRL                               270
+# define EC_F_PKEY_ECD_DIGESTSIGN                         271
 # define EC_F_PKEY_ECX_DERIVE                             269
 # define EC_F_PKEY_EC_CTRL                                197
 # define EC_F_PKEY_EC_CTRL_STR                            198

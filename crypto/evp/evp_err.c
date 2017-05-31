@@ -93,6 +93,7 @@ static ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_FUNC(EVP_F_PKEY_SET_TYPE), "pkey_set_type"},
     {ERR_FUNC(EVP_F_RC2_MAGIC_TO_METH), "rc2_magic_to_meth"},
     {ERR_FUNC(EVP_F_RC5_CTRL), "rc5_ctrl"},
+    {ERR_FUNC(EVP_F_UPDATE), "update"},
     {0, NULL}
 };
 
@@ -143,6 +144,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_REASON(EVP_R_NO_DIGEST_SET), "no digest set"},
     {ERR_REASON(EVP_R_NO_KEY_SET), "no key set"},
     {ERR_REASON(EVP_R_NO_OPERATION_SET), "no operation set"},
+    {ERR_REASON(EVP_R_ONLY_ONESHOT_SUPPORTED), "only oneshot supported"},
     {ERR_REASON(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE),
      "operation not supported for this keytype"},
     {ERR_REASON(EVP_R_OPERATON_NOT_INITIALIZED), "operaton not initialized"},

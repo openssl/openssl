@@ -101,9 +101,11 @@ long tls1_default_timeout(void)
 int tls1_new(SSL *s)
 {
     if (!ssl3_new(s))
-        return (0);
-    s->method->ssl_clear(s);
-    return (1);
+        return 0;
+    if (!s->method->ssl_clear(s))
+        return 0;
+
+    return 1;
 }
 
 void tls1_free(SSL *s)
@@ -112,13 +114,17 @@ void tls1_free(SSL *s)
     ssl3_free(s);
 }
 
-void tls1_clear(SSL *s)
+int tls1_clear(SSL *s)
 {
-    ssl3_clear(s);
+    if (!ssl3_clear(s))
+        return 0;
+
     if (s->method->version == TLS_ANY_VERSION)
         s->version = TLS_MAX_VERSION;
     else
         s->version = s->method->version;
+
+    return 1;
 }
 
 #ifndef OPENSSL_NO_EC
@@ -1013,7 +1019,7 @@ void ssl_set_client_disabled(SSL *s)
     s->s3->tmp.mask_a = 0;
     s->s3->tmp.mask_k = 0;
     ssl_set_sig_mask(&s->s3->tmp.mask_a, s, SSL_SECOP_SIGALG_MASK);
-    ssl_get_client_min_max_version(s, &s->s3->tmp.min_ver, &s->s3->tmp.max_ver);
+    ssl_get_min_max_version(s, &s->s3->tmp.min_ver, &s->s3->tmp.max_ver);
 #ifndef OPENSSL_NO_PSK
     /* with PSK there must be client callback set */
     if (!s->psk_client_callback) {
@@ -1034,19 +1040,31 @@ void ssl_set_client_disabled(SSL *s)
  * @s: SSL connection that you want to use the cipher on
  * @c: cipher to check
  * @op: Security check that you want to do
+ * @ecdhe: If set to 1 then TLSv1 ECDHE ciphers are also allowed in SSLv3
  *
  * Returns 1 when it's disabled, 0 when enabled.
  */
-int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op)
+int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op, int ecdhe)
 {
     if (c->algorithm_mkey & s->s3->tmp.mask_k
         || c->algorithm_auth & s->s3->tmp.mask_a)
         return 1;
     if (s->s3->tmp.max_ver == 0)
         return 1;
-    if (!SSL_IS_DTLS(s) && ((c->min_tls > s->s3->tmp.max_ver)
-                            || (c->max_tls < s->s3->tmp.min_ver)))
-        return 1;
+    if (!SSL_IS_DTLS(s)) {
+        int min_tls = c->min_tls;
+
+        /*
+         * For historical reasons we will allow ECHDE to be selected by a server
+         * in SSLv3 if we are a client
+         */
+        if (min_tls == TLS1_VERSION && ecdhe
+                && (c->algorithm_mkey & (SSL_kECDHE | SSL_kECDHEPSK)) != 0)
+            min_tls = SSL3_VERSION;
+
+        if ((min_tls > s->s3->tmp.max_ver) || (c->max_tls < s->s3->tmp.min_ver))
+            return 1;
+    }
     if (SSL_IS_DTLS(s) && (DTLS_VERSION_GT(c->min_dtls, s->s3->tmp.max_ver)
                            || DTLS_VERSION_LT(c->max_dtls, s->s3->tmp.min_ver)))
         return 1;
@@ -1105,9 +1123,9 @@ int tls1_set_server_sigalgs(SSL *s)
     }
     if (s->cert->shared_sigalgs != NULL)
         return 1;
-    /* Fatal error is no shared signature algorithms */
+    /* Fatal error if no shared signature algorithms */
     SSLerr(SSL_F_TLS1_SET_SERVER_SIGALGS, SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS);
-    al = SSL_AD_ILLEGAL_PARAMETER;
+    al = SSL_AD_HANDSHAKE_FAILURE;
  err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
     return 0;
@@ -2396,7 +2414,7 @@ int tls_choose_sigalg(SSL *s, int *al)
                     if (al == NULL)
                         return 1;
                     SSLerr(SSL_F_TLS_CHOOSE_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
-                    *al = SSL_AD_HANDSHAKE_FAILURE;
+                    *al = SSL_AD_ILLEGAL_PARAMETER;
                     return 0;
                 }
             }

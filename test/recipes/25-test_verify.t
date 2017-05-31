@@ -12,6 +12,7 @@ use warnings;
 
 use File::Spec::Functions qw/canonpath/;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_verify");
 
@@ -26,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 121;
+plan tests => 126;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -328,3 +329,25 @@ ok(!verify("badalt9-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cer
 
 ok(!verify("badalt10-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
    "Name constaints nested DNS name excluded");
+
+ok(verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], ),
+    "Certificate PSS signature using SHA1");
+
+ok(verify("ee-pss-sha256-cert", "sslserver", ["root-cert"], ["ca-cert"], ),
+    "CA with PSS signature using SHA256");
+
+ok(!verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
+    "Reject PSS signature using SHA1 and auth level 2");
+
+ok(verify("ee-pss-sha256-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
+    "PSS signature using SHA256 and auth level 2");
+
+SKIP: {
+    skip "Ed25519 is not supported by this OpenSSL build", 1
+	      if disabled("ec");
+
+    # ED25519 certificate from draft-ietf-curdle-pkix-04
+    ok(verify("ee-ed25519", "sslserver", ["root-ed25519"], []),
+       "ED25519 signature");
+
+}

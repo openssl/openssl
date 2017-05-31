@@ -14,7 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
 #include "record_locl.h"
-#include <assert.h>
+#include "../packet_locl.h"
 
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 {
@@ -113,9 +113,6 @@ void DTLS_RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, unsigned char *seq)
 {
     memcpy(rl->write_sequence, seq, SEQ_NUM_SIZE);
 }
-
-static size_t have_handshake_fragment(SSL *s, int type, unsigned char *buf,
-                                      size_t len);
 
 /* copy buffered record into SSL structure */
 static int dtls1_copy_record(SSL *s, pitem *item)
@@ -335,7 +332,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                      size_t len, int peek, size_t *readbytes)
 {
     int al, i, j, iret;
-    size_t ret, n;
+    size_t n;
     SSL3_RECORD *rr;
     void (*cb) (const SSL *ssl, int type2, int val) = NULL;
 
@@ -352,33 +349,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         return -1;
     }
 
-    /*
-     * check whether there's a handshake message (client hello?) waiting
-     */
-    ret = have_handshake_fragment(s, type, buf, len);
-    if (ret > 0) {
-        *recvd_type = SSL3_RT_HANDSHAKE;
-        *readbytes = ret;
-        return 1;
-    }
-
-    /*
-     * Now s->rlayer.d->handshake_fragment_len == 0 if
-     * type == SSL3_RT_HANDSHAKE.
-     */
-
-#ifndef OPENSSL_NO_SCTP
-    /*
-     * Continue handshake if it had to be interrupted to read app data with
-     * SCTP.
-     */
-    if ((!ossl_statem_get_in_handshake(s) && SSL_in_init(s)) ||
-        (BIO_dgram_is_sctp(SSL_get_rbio(s))
-         && ossl_statem_in_sctp_read_sock(s)
-         && s->s3->in_read_app_data != 2))
-#else
     if (!ossl_statem_get_in_handshake(s) && SSL_in_init(s))
-#endif
     {
         /* type == SSL3_RT_APPLICATION_DATA */
         i = s->handshake_func(s);
@@ -521,18 +492,6 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         }
 #ifndef OPENSSL_NO_SCTP
         /*
-         * We were about to renegotiate but had to read belated application
-         * data first, so retry.
-         */
-        if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
-            SSL3_RECORD_get_type(rr) == SSL3_RT_APPLICATION_DATA &&
-            ossl_statem_in_sctp_read_sock(s)) {
-            s->rwstate = SSL_READING;
-            BIO_clear_retry_flags(SSL_get_rbio(s));
-            BIO_set_retry_read(SSL_get_rbio(s));
-        }
-
-        /*
          * We might had to delay a close_notify alert because of reordered
          * app data. If there was an alert and there is no message to read
          * anymore, finally set shutdown.
@@ -553,82 +512,23 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * then it was unexpected (Hello Request or Client Hello).
      */
 
-    /*
-     * In case of record types for which we have 'fragment' storage, fill
-     * that so that we can process the data at a fixed place.
-     */
-    {
-        size_t k, dest_maxlen = 0;
-        unsigned char *dest = NULL;
-        size_t *dest_len = NULL;
+    if (SSL3_RECORD_get_type(rr) == SSL3_RT_ALERT) {
+        unsigned int alert_level, alert_descr;
+        unsigned char *alert_bytes = SSL3_RECORD_get_data(rr)
+                                     + SSL3_RECORD_get_off(rr);
+        PACKET alert;
 
-        if (SSL3_RECORD_get_type(rr) == SSL3_RT_HANDSHAKE) {
-            dest_maxlen = sizeof s->rlayer.d->handshake_fragment;
-            dest = s->rlayer.d->handshake_fragment;
-            dest_len = &s->rlayer.d->handshake_fragment_len;
-        } else if (SSL3_RECORD_get_type(rr) == SSL3_RT_ALERT) {
-            dest_maxlen = sizeof(s->rlayer.d->alert_fragment);
-            dest = s->rlayer.d->alert_fragment;
-            dest_len = &s->rlayer.d->alert_fragment_len;
-        }
-        /* else it's a CCS message, or application data or wrong */
-        else if (SSL3_RECORD_get_type(rr) != SSL3_RT_CHANGE_CIPHER_SPEC) {
-            /*
-             * Application data while renegotiating is allowed. Try again
-             * reading.
-             */
-            if (SSL3_RECORD_get_type(rr) == SSL3_RT_APPLICATION_DATA) {
-                BIO *bio;
-                s->s3->in_read_app_data = 2;
-                bio = SSL_get_rbio(s);
-                s->rwstate = SSL_READING;
-                BIO_clear_retry_flags(bio);
-                BIO_set_retry_read(bio);
-                return -1;
-            }
-
-            /* Not certain if this is the right error handling */
+        if (!PACKET_buf_init(&alert, alert_bytes, SSL3_RECORD_get_length(rr))
+                || !PACKET_get_1(&alert, &alert_level)
+                || !PACKET_get_1(&alert, &alert_descr)
+                || PACKET_remaining(&alert) != 0) {
             al = SSL_AD_UNEXPECTED_MESSAGE;
-            SSLerr(SSL_F_DTLS1_READ_BYTES, SSL_R_UNEXPECTED_RECORD);
+            SSLerr(SSL_F_DTLS1_READ_BYTES, SSL_R_INVALID_ALERT);
             goto f_err;
         }
 
-        if (dest_maxlen > 0) {
-            /*
-             * XDTLS: In a pathological case, the Client Hello may be
-             * fragmented--don't always expect dest_maxlen bytes
-             */
-            if (SSL3_RECORD_get_length(rr) < dest_maxlen) {
-                s->rlayer.rstate = SSL_ST_READ_HEADER;
-                SSL3_RECORD_set_length(rr, 0);
-                goto start;
-            }
-
-            /* now move 'n' bytes: */
-            for (k = 0; k < dest_maxlen; k++) {
-                dest[k] = SSL3_RECORD_get_data(rr)[SSL3_RECORD_get_off(rr)];
-                SSL3_RECORD_add_off(rr, 1);
-                SSL3_RECORD_add_length(rr, -1);
-            }
-            *dest_len = dest_maxlen;
-        }
-    }
-
-    /*-
-     * s->rlayer.d->handshake_fragment_len == 12  iff  rr->type == SSL3_RT_HANDSHAKE;
-     * s->rlayer.d->alert_fragment_len == 7      iff  rr->type == SSL3_RT_ALERT.
-     * (Possibly rr is 'empty' now, i.e. rr->length may be 0.)
-     */
-
-    if (s->rlayer.d->alert_fragment_len >= DTLS1_AL_HEADER_LENGTH) {
-        int alert_level = s->rlayer.d->alert_fragment[0];
-        int alert_descr = s->rlayer.d->alert_fragment[1];
-
-        s->rlayer.d->alert_fragment_len = 0;
-
         if (s->msg_callback)
-            s->msg_callback(0, s->version, SSL3_RT_ALERT,
-                            s->rlayer.d->alert_fragment, 2, s,
+            s->msg_callback(0, s->version, SSL3_RT_ALERT, alert_bytes, 2, s,
                             s->msg_callback_arg);
 
         if (s->info_callback != NULL)
@@ -709,16 +609,21 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     /*
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
-    if ((s->rlayer.d->handshake_fragment_len >= DTLS1_HM_HEADER_LENGTH) &&
-        !ossl_statem_get_in_handshake(s)) {
+    if ((SSL3_RECORD_get_type(rr) == SSL3_RT_HANDSHAKE) &&
+            !ossl_statem_get_in_handshake(s)) {
         struct hm_header_st msg_hdr;
 
-        /* this may just be a stale retransmit */
-        dtls1_get_message_header(rr->data, &msg_hdr);
-        if (SSL3_RECORD_get_epoch(rr) != s->rlayer.d->r_epoch) {
+        /*
+         * This may just be a stale retransmit. Also sanity check that we have
+         * at least enough record bytes for a message header
+         */
+        if (SSL3_RECORD_get_epoch(rr) != s->rlayer.d->r_epoch
+                || SSL3_RECORD_get_length(rr) < DTLS1_HM_HEADER_LENGTH) {
             SSL3_RECORD_set_length(rr, 0);
             goto start;
         }
+
+        dtls1_get_message_header(rr->data, &msg_hdr);
 
         /*
          * If we are server, we may have a repeated FINISHED of the client
@@ -739,8 +644,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * (which is tested for at the top of this function) then init must be
          * finished
          */
-        assert(SSL_is_init_finished(s));
-        if (!SSL_is_init_finished(s)) {
+        if (!ossl_assert(SSL_is_init_finished(s))) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_DTLS1_READ_BYTES, ERR_R_INTERNAL_ERROR);
             goto f_err;
@@ -779,11 +683,6 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
     switch (SSL3_RECORD_get_type(rr)) {
     default:
-        /* TLS just ignores unknown message types */
-        if (s->version == TLS1_VERSION) {
-            SSL3_RECORD_set_length(rr, 0);
-            goto start;
-        }
         al = SSL_AD_UNEXPECTED_MESSAGE;
         SSLerr(SSL_F_DTLS1_READ_BYTES, SSL_R_UNEXPECTED_RECORD);
         goto f_err;
@@ -825,39 +724,6 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 }
 
 /*
- * this only happens when a client hello is received and a handshake
- * is started.
- */
-static size_t have_handshake_fragment(SSL *s, int type, unsigned char *buf,
-                                      size_t len)
-{
-
-    if ((type == SSL3_RT_HANDSHAKE)
-        && (s->rlayer.d->handshake_fragment_len > 0))
-        /* (partially) satisfy request from storage */
-    {
-        unsigned char *src = s->rlayer.d->handshake_fragment;
-        unsigned char *dst = buf;
-        size_t k, n;
-
-        /* peek == 0 */
-        n = 0;
-        while ((len > 0) && (s->rlayer.d->handshake_fragment_len > 0)) {
-            *dst++ = *src++;
-            len--;
-            s->rlayer.d->handshake_fragment_len--;
-            n++;
-        }
-        /* move any remaining fragment bytes: */
-        for (k = 0; k < s->rlayer.d->handshake_fragment_len; k++)
-            s->rlayer.d->handshake_fragment[k] = *src++;
-        return n;
-    }
-
-    return 0;
-}
-
-/*
  * Call this to write data in records of type 'type' It will return <= 0 if
  * not all data has been sent or non-blocking IO.
  */
@@ -866,7 +732,10 @@ int dtls1_write_bytes(SSL *s, int type, const void *buf, size_t len,
 {
     int i;
 
-    OPENSSL_assert(len <= SSL3_RT_MAX_PLAIN_LENGTH);
+    if (!ossl_assert(len <= SSL3_RT_MAX_PLAIN_LENGTH)) {
+        SSLerr(SSL_F_DTLS1_WRITE_BYTES, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
     s->rwstate = SSL_NOTHING;
     i = do_dtls1_write(s, type, buf, len, 0, written);
     return i;
@@ -889,9 +758,9 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
      * first check if there is a SSL3_BUFFER still being written out.  This
      * will happen with non blocking IO
      */
-    if (SSL3_BUFFER_get_left(wb) != 0) {
-        OPENSSL_assert(0);      /* XDTLS: want to see if we ever get here */
-        return ssl3_write_pending(s, type, buf, len, written);
+    if (!ossl_assert(SSL3_BUFFER_get_left(wb) == 0)) {
+        SSLerr(SSL_F_DO_DTLS1_WRITE, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
 
     /* If we have an alert to send, lets send it */
@@ -904,6 +773,11 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 
     if (len == 0 && !create_empty_fragment)
         return 0;
+
+    if (len > s->max_send_fragment) {
+        SSLerr(SSL_F_DO_DTLS1_WRITE, SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
+        return 0;
+    }
 
     sess = s->session;
 

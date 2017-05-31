@@ -32,7 +32,8 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     int slen;
     EVP_PKEY *ret = NULL;
 
-    if (!PEM_bytes_read_bio(&data, &len, &nm, PEM_STRING_EVP_PKEY, bp, cb, u))
+    if (!PEM_bytes_read_bio_secmem(&data, &len, &nm, PEM_STRING_EVP_PKEY, bp,
+				   cb, u))
         return NULL;
     p = data;
 
@@ -85,8 +86,8 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     if (ret == NULL)
         PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY, ERR_R_ASN1_LIB);
  err:
-    OPENSSL_free(nm);
-    OPENSSL_clear_free(data, len);
+    OPENSSL_secure_free(nm);
+    OPENSSL_secure_free(data);
     return (ret);
 }
 

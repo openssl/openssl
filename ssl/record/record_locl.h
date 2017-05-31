@@ -106,7 +106,7 @@ void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);
 int ssl3_get_record(SSL *s);
 __owur int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr);
 __owur int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr);
-void ssl3_cbc_copy_mac(unsigned char *out,
+int ssl3_cbc_copy_mac(unsigned char *out,
                        const SSL3_RECORD *rec, size_t md_size);
 __owur int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
                                    size_t block_size, size_t mac_size);

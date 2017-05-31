@@ -121,7 +121,7 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-aria -DPEDANTIC"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-aria -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
         - os: linux
           addons:
               apt:

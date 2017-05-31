@@ -452,7 +452,7 @@ struct ssl_method_st {
     unsigned flags;
     unsigned long mask;
     int (*ssl_new) (SSL *s);
-    void (*ssl_clear) (SSL *s);
+    int (*ssl_clear) (SSL *s);
     void (*ssl_free) (SSL *s);
     int (*ssl_accept) (SSL *s);
     int (*ssl_connect) (SSL *s);
@@ -685,6 +685,38 @@ typedef struct {
     size_t pre_proc_exts_len;
     RAW_EXTENSION *pre_proc_exts;
 } CLIENTHELLO_MSG;
+
+/*
+ * Extension index values NOTE: Any updates to these defines should be mirrored
+ * with equivalent updates to ext_defs in extensions.c
+ */
+typedef enum tlsext_index_en {
+    TLSEXT_IDX_renegotiate,
+    TLSEXT_IDX_server_name,
+    TLSEXT_IDX_srp,
+    TLSEXT_IDX_ec_point_formats,
+    TLSEXT_IDX_supported_groups,
+    TLSEXT_IDX_session_ticket,
+    TLSEXT_IDX_signature_algorithms,
+    TLSEXT_IDX_status_request,
+    TLSEXT_IDX_next_proto_neg,
+    TLSEXT_IDX_application_layer_protocol_negotiation,
+    TLSEXT_IDX_use_srtp,
+    TLSEXT_IDX_encrypt_then_mac,
+    TLSEXT_IDX_signed_certificate_timestamp,
+    TLSEXT_IDX_extended_master_secret,
+    TLSEXT_IDX_supported_versions,
+    TLSEXT_IDX_psk_kex_modes,
+    TLSEXT_IDX_key_share,
+    TLSEXT_IDX_cookie,
+    TLSEXT_IDX_cryptopro_bug,
+    TLSEXT_IDX_early_data,
+    TLSEXT_IDX_certificate_authorities,
+    TLSEXT_IDX_padding,
+    TLSEXT_IDX_psk,
+    /* Dummy index - must always be the last entry */
+    TLSEXT_IDX_num_builtins
+} TLSEXT_INDEX;
 
 DEFINE_LHASH_OF(SSL_SESSION);
 /* Needed in ssl_cert.c */
@@ -973,6 +1005,11 @@ struct ssl_ctx_st {
 
     /* The maximum number of bytes that can be sent as early data */
     uint32_t max_early_data;
+
+    /* TLS1.3 padding callback */
+    size_t (*record_padding_cb)(SSL *s, int type, size_t len, void *arg);
+    void *record_padding_arg;
+    size_t block_padding;
 };
 
 struct ssl_st {
@@ -1148,6 +1185,8 @@ struct ssl_st {
     size_t max_pipelines;
 
     struct {
+        /* Built-in extension flags */
+        uint8_t extflags[TLSEXT_IDX_num_builtins];
         /* TLS extension debug callback */
         void (*debug_cb)(SSL *s, int client_server, int type,
                          const unsigned char *data, int len, void *arg);
@@ -1288,6 +1327,11 @@ struct ssl_st {
      * this is a count of the ciphertext bytes.
      */
     uint32_t early_data_count;
+
+    /* TLS1.3 padding callback */
+    size_t (*record_padding_cb)(SSL *s, int type, size_t len, void *arg);
+    void *record_padding_arg;
+    size_t block_padding;
 
     CRYPTO_RWLOCK *lock;
 };
@@ -1804,36 +1848,6 @@ typedef enum downgrade_en {
 } DOWNGRADE;
 
 /*
- * Extension index values NOTE: Any updates to these defines should be mirrored
- * with equivalent updates to ext_defs in extensions.c
- */
-typedef enum tlsext_index_en {
-    TLSEXT_IDX_renegotiate,
-    TLSEXT_IDX_server_name,
-    TLSEXT_IDX_srp,
-    TLSEXT_IDX_ec_point_formats,
-    TLSEXT_IDX_supported_groups,
-    TLSEXT_IDX_session_ticket,
-    TLSEXT_IDX_signature_algorithms,
-    TLSEXT_IDX_status_request,
-    TLSEXT_IDX_next_proto_neg,
-    TLSEXT_IDX_application_layer_protocol_negotiation,
-    TLSEXT_IDX_use_srtp,
-    TLSEXT_IDX_encrypt_then_mac,
-    TLSEXT_IDX_signed_certificate_timestamp,
-    TLSEXT_IDX_extended_master_secret,
-    TLSEXT_IDX_supported_versions,
-    TLSEXT_IDX_psk_kex_modes,
-    TLSEXT_IDX_key_share,
-    TLSEXT_IDX_cookie,
-    TLSEXT_IDX_cryptopro_bug,
-    TLSEXT_IDX_early_data,
-    TLSEXT_IDX_certificate_authorities,
-    TLSEXT_IDX_padding,
-    TLSEXT_IDX_psk
-} TLSEXT_INDEX;
-
-/*
  * Dummy status type for the status_type extension. Indicates no status type
  * set
  */
@@ -2122,7 +2136,7 @@ void ssl_set_masks(SSL *s);
 __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 __owur int ssl_verify_alarm_type(long type);
 void ssl_sort_cipher_list(void);
-void ssl_load_ciphers(void);
+int ssl_load_ciphers(void);
 __owur int ssl_fill_hello_random(SSL *s, int server, unsigned char *field,
                                  size_t len, DOWNGRADE dgrd);
 __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
@@ -2167,7 +2181,7 @@ __owur int ssl3_read(SSL *s, void *buf, size_t len, size_t *readbytes);
 __owur int ssl3_peek(SSL *s, void *buf, size_t len, size_t *readbytes);
 __owur int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written);
 __owur int ssl3_shutdown(SSL *s);
-void ssl3_clear(SSL *s);
+int ssl3_clear(SSL *s);
 __owur long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur long ssl3_ctx_ctrl(SSL_CTX *s, int cmd, long larg, void *parg);
 __owur long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
@@ -2194,8 +2208,7 @@ __owur int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello,
                                      DOWNGRADE *dgrd);
 __owur int ssl_choose_client_version(SSL *s, int version, int checkdgrd,
                                      int *al);
-int ssl_get_client_min_max_version(const SSL *s, int *min_version,
-                                   int *max_version);
+int ssl_get_min_max_version(const SSL *s, int *min_version, int *max_version);
 
 __owur long tls1_default_timeout(void);
 __owur int dtls1_do_write(SSL *s, int type);
@@ -2233,20 +2246,20 @@ __owur int dtls1_query_mtu(SSL *s);
 
 __owur int tls1_new(SSL *s);
 void tls1_free(SSL *s);
-void tls1_clear(SSL *s);
+int tls1_clear(SSL *s);
 long tls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 long tls1_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
 
 __owur int dtls1_new(SSL *s);
 void dtls1_free(SSL *s);
-void dtls1_clear(SSL *s);
+int dtls1_clear(SSL *s);
 long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg);
 __owur int dtls1_shutdown(SSL *s);
 
 __owur int dtls1_dispatch_alert(SSL *s);
 
 __owur int ssl_init_wbio_buffer(SSL *s);
-void ssl_free_wbio_buffer(SSL *s);
+int ssl_free_wbio_buffer(SSL *s);
 
 __owur int tls1_change_cipher_state(SSL *s, int which);
 __owur int tls1_setup_key_block(SSL *s);
@@ -2394,7 +2407,7 @@ __owur int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey);
 __owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs);
 __owur int tls12_check_peer_sigalg(SSL *s, uint16_t, EVP_PKEY *pkey);
 void ssl_set_client_disabled(SSL *s);
-__owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op);
+__owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op, int echde);
 
 __owur int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
                                  size_t *hashlen);
@@ -2461,6 +2474,8 @@ __owur int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x,
 
 __owur int custom_exts_copy(custom_ext_methods *dst,
                             const custom_ext_methods *src);
+__owur int custom_exts_copy_flags(custom_ext_methods *dst,
+                                  const custom_ext_methods *src);
 void custom_exts_free(custom_ext_methods *exts);
 
 void ssl_comp_free_compression_methods_int(void);

@@ -12,7 +12,6 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "testutil.h"
-#include "test_main.h"
 
 static const char *const names[] = {
     "a", "b", ".", "*", "@",
@@ -252,7 +251,7 @@ static X509 *make_cert()
 
     if (!TEST_ptr(crt = X509_new()))
         return NULL;
-    if (!TEST_true(X509_set_version(crt, 3))) {
+    if (!TEST_true(X509_set_version(crt, 2))) {
         X509_free(crt);
         return NULL;
     }

@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_BF is defined */
 
-#include "test_main_custom.h"
 #include "testutil.h"
 
 #include "../e_os.h"

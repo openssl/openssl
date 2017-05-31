@@ -148,6 +148,7 @@ static long fd_ctrl(BIO *b, int cmd, long num, void *ptr)
     switch (cmd) {
     case BIO_CTRL_RESET:
         num = 0;
+        /* fall thru */
     case BIO_C_FILE_SEEK:
         ret = (long)UP_lseek(b->num, num, 0);
         break;
@@ -206,8 +207,10 @@ static int fd_gets(BIO *bp, char *buf, int size)
     char *ptr = buf;
     char *end = buf + size - 1;
 
-    while ((ptr < end) && (fd_read(bp, ptr, 1) > 0) && (ptr[0] != '\n'))
-        ptr++;
+    while (ptr < end && fd_read(bp, ptr, 1) > 0) {
+        if (*ptr++ == '\n')
+           break;
+    }
 
     ptr[0] = '\0';
 

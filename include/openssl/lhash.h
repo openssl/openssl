@@ -95,7 +95,7 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 #  define _LHASH OPENSSL_LHASH
 #  define LHASH_NODE OPENSSL_LH_NODE
 #  define lh_error OPENSSL_LH_error
-#  define lh_new OPENSSL_lh_new
+#  define lh_new OPENSSL_LH_new
 #  define lh_free OPENSSL_LH_free
 #  define lh_insert OPENSSL_LH_insert
 #  define lh_delete OPENSSL_LH_delete
@@ -195,7 +195,20 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
     LHASH_OF(type)
 
 DEFINE_LHASH_OF(OPENSSL_STRING);
+# ifdef _MSC_VER
+/*
+ * push and pop this warning:
+ *   warning C4090: 'function': different 'const' qualifiers
+ */
+#  pragma warning (push)
+#  pragma warning (disable: 4090)
+# endif
+
 DEFINE_LHASH_OF(OPENSSL_CSTRING);
+
+# ifdef _MSC_VER
+#  pragma warning (pop)
+# endif
 
 #ifdef  __cplusplus
 }

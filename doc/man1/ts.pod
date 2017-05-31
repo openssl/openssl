@@ -27,7 +27,7 @@ B<-reply>
 [B<-queryfile> request.tsq]
 [B<-passin> password_src]
 [B<-signer> tsa_cert.pem]
-[B<-inkey> private.pem]
+[B<-inkey> file_or_id]
 [B<-sha1|-sha224|-sha256|-sha384|-sha512>]
 [B<-chain> certs_file.pem]
 [B<-tspolicy> object_id]
@@ -243,10 +243,12 @@ timeStamping. The extended key usage must also be critical, otherwise
 the certificate is going to be refused. Overrides the B<signer_cert>
 variable of the config file. (Optional)
 
-=item B<-inkey> private.pem
+=item B<-inkey> file_or_id
 
 The signer private key of the TSA in PEM format. Overrides the
 B<signer_key> config file option. (Optional)
+If no engine is used, the argument is taken as a file; if an engine is
+specified, the argument is given to the engine as a key identifier.
 
 =item B<-sha1|-sha224|-sha256|-sha384|-sha512>
 
@@ -503,6 +505,11 @@ be included in the SigningCertificate signed attribute. If this
 variable is set to no, only the signing certificate identifier is
 included. Default is no. (Optional)
 
+=item B<ess_cert_id_alg>
+
+This option specifies the hash function to be used to calculate the TSA's
+public key certificate identifier. Default is sha1. (Optional)
+
 =back
 
 =head1 EXAMPLES
@@ -604,9 +611,6 @@ You could also look at the 'test' directory for more examples.
 =head1 BUGS
 
 =for comment foreign manuals: procmail(1), perl(1)
-
-If you find any bugs or you have suggestions please write to
-Zoltan Glozik <zglozik@opentsa.org>. Known issues:
 
 =over 2
 

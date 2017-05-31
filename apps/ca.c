@@ -258,7 +258,7 @@ int ca_main(int argc, char **argv)
     int ret = 1, email_dn = 1, req = 0, verbose = 0, gencrl = 0, dorevoke = 0;
     int i, j, selfsign = 0;
     long crldays = 0, crlhours = 0, crlsec = 0, days = 0;
-    unsigned long chtype = MBSTRING_ASC, nameopt = 0, certopt = 0;
+    unsigned long chtype = MBSTRING_ASC, certopt = 0;
     X509 *x509 = NULL, *x509p = NULL, *x = NULL;
     REVINFO_TYPE rev_type = REV_NONE;
     X509_REVOKED *r = NULL;
@@ -569,14 +569,11 @@ end_of_options:
     f = NCONF_get_string(conf, section, ENV_NAMEOPT);
 
     if (f) {
-        if (!set_name_ex(&nameopt, f)) {
+        if (!set_nameopt(f)) {
             BIO_printf(bio_err, "Invalid name options: \"%s\"\n", f);
             goto end;
         }
         default_op = 0;
-    } else {
-        nameopt = XN_FLAG_ONELINE;
-        ERR_clear_error();
     }
 
     f = NCONF_get_string(conf, section, ENV_CERTOPT);
@@ -866,7 +863,7 @@ end_of_options:
             j = certify_spkac(&x, spkac_file, pkey, x509, dgst, sigopts,
                               attribs, db, serial, subj, chtype, multirdn,
                               email_dn, startdate, enddate, days, extensions,
-                              conf, verbose, certopt, nameopt, default_op,
+                              conf, verbose, certopt, get_nameopt(), default_op,
                               ext_copy);
             if (j < 0)
                 goto end;
@@ -891,7 +888,7 @@ end_of_options:
                              attribs,
                              db, serial, subj, chtype, multirdn, email_dn,
                              startdate, enddate, days, batch, extensions,
-                             conf, verbose, certopt, nameopt, default_op,
+                             conf, verbose, certopt, get_nameopt(), default_op,
                              ext_copy);
             if (j < 0)
                 goto end;
@@ -911,7 +908,7 @@ end_of_options:
             j = certify(&x, infile, pkey, x509p, dgst, sigopts, attribs, db,
                         serial, subj, chtype, multirdn, email_dn, startdate,
                         enddate, days, batch, extensions, conf, verbose,
-                        certopt, nameopt, default_op, ext_copy, selfsign);
+                        certopt, get_nameopt(), default_op, ext_copy, selfsign);
             if (j < 0)
                 goto end;
             if (j > 0) {
@@ -930,7 +927,7 @@ end_of_options:
             j = certify(&x, argv[i], pkey, x509p, dgst, sigopts, attribs, db,
                         serial, subj, chtype, multirdn, email_dn, startdate,
                         enddate, days, batch, extensions, conf, verbose,
-                        certopt, nameopt, default_op, ext_copy, selfsign);
+                        certopt, get_nameopt(), default_op, ext_copy, selfsign);
             if (j < 0)
                 goto end;
             if (j > 0) {
@@ -1272,7 +1269,7 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
         goto end;
     }
     if (verbose)
-        X509_REQ_print(bio_err, req);
+        X509_REQ_print_ex(bio_err, req, nameopt, X509_FLAG_COMPAT);
 
     BIO_printf(bio_err, "Check that the request matches the signature\n");
 

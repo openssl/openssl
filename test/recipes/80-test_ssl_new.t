@@ -29,7 +29,7 @@ map { s/\^// } @conf_files if $^O eq "VMS";
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 23;  # = scalar @conf_srcs
+plan tests => 24;  # = scalar @conf_srcs
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
@@ -55,13 +55,15 @@ my $no_ocsp = disabled("ocsp");
 # expectations dynamically based on the OpenSSL compile-time config.
 my %conf_dependent_tests = (
   "02-protocol-version.conf" => !$is_default_tls,
-  "04-client_auth.conf" => !$is_default_tls || !$is_default_dtls,
+  "04-client_auth.conf" => !$is_default_tls || !$is_default_dtls
+                           || !disabled("sctp"),
   "05-sni.conf" => disabled("tls1_1"),
-  "07-dtls-protocol-version.conf" => !$is_default_dtls,
+  "07-dtls-protocol-version.conf" => !$is_default_dtls || !disabled("sctp"),
   "10-resumption.conf" => !$is_default_tls,
-  "11-dtls_resumption.conf" => !$is_default_dtls,
+  "11-dtls_resumption.conf" => !$is_default_dtls || !disabled("sctp"),
+  "16-dtls-certstatus.conf" => !$is_default_dtls || !disabled("sctp"),
   "17-renegotiate.conf" => disabled("tls1_2"),
-  "18-dtls-renegotiate.conf" => disabled("dtls1_2"),
+  "18-dtls-renegotiate.conf" => disabled("dtls1_2") || !disabled("sctp"),
   "19-mac-then-encrypt.conf" => !$is_default_tls,
   "20-cert-select.conf" => !$is_default_tls || $no_dh || $no_dsa,
   "22-compression.conf" => !$is_default_tls,
@@ -92,6 +94,7 @@ my %skip = (
   "22-compression.conf" => disabled("zlib") || $no_tls,
   "23-srp.conf" => (disabled("tls1") && disabled ("tls1_1")
                     && disabled("tls1_2")) || disabled("srp"),
+  "24-padding.conf" => disabled("tls1_3"),
 );
 
 foreach my $conf (@conf_files) {

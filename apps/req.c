@@ -163,8 +163,7 @@ int req_main(int argc, char **argv)
     int modulus = 0, multirdn = 0, verify = 0, noout = 0, text = 0;
     int nodes = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0;
     long newkey = -1;
-    unsigned long chtype = MBSTRING_ASC, nmflag = 0, reqflag = 0;
-    char nmflag_set = 0;
+    unsigned long chtype = MBSTRING_ASC, reqflag = 0;
 
 #ifndef OPENSSL_NO_DES
     cipher = EVP_des_ede3_cbc();
@@ -277,8 +276,7 @@ int req_main(int argc, char **argv)
             chtype = MBSTRING_UTF8;
             break;
         case OPT_NAMEOPT:
-            nmflag_set = 1;
-            if (!set_name_ex(&nmflag, opt_arg()))
+            if (!set_nameopt(opt_arg()))
                 goto opthelp;
             break;
         case OPT_REQOPT:
@@ -290,7 +288,6 @@ int req_main(int argc, char **argv)
             break;
         case OPT_X509:
             x509 = 1;
-            newreq = 1;
             break;
         case OPT_DAYS:
             days = atoi(opt_arg());
@@ -333,8 +330,8 @@ int req_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
-    if (!nmflag_set)
-        nmflag = XN_FLAG_ONELINE;
+    if (x509 && infile == NULL)
+        newreq = 1;
 
     /* TODO: simplify this as pkey is still always NULL here */
     private = newreq && (pkey == NULL) ? 1 : 0;
@@ -587,7 +584,7 @@ int req_main(int argc, char **argv)
         }
     }
 
-    if (newreq) {
+    if (newreq || x509) {
         if (pkey == NULL) {
             BIO_printf(bio_err, "you need to specify a private key\n");
             goto end;
@@ -695,7 +692,7 @@ int req_main(int argc, char **argv)
         if (verbose) {
             BIO_printf(bio_err, "Modifying Request's Subject\n");
             print_name(bio_err, "old subject=",
-                       X509_REQ_get_subject_name(req), nmflag);
+                       X509_REQ_get_subject_name(req), get_nameopt());
         }
 
         if (build_subject(req, subj, chtype, multirdn) == 0) {
@@ -706,7 +703,7 @@ int req_main(int argc, char **argv)
 
         if (verbose) {
             print_name(bio_err, "new subject=",
-                       X509_REQ_get_subject_name(req), nmflag);
+                       X509_REQ_get_subject_name(req), get_nameopt());
         }
     }
 
@@ -755,18 +752,18 @@ int req_main(int argc, char **argv)
 
     if (text) {
         if (x509)
-            X509_print_ex(out, x509ss, nmflag, reqflag);
+            X509_print_ex(out, x509ss, get_nameopt(), reqflag);
         else
-            X509_REQ_print_ex(out, req, nmflag, reqflag);
+            X509_REQ_print_ex(out, req, get_nameopt(), reqflag);
     }
 
     if (subject) {
         if (x509)
             print_name(out, "subject=", X509_get_subject_name(x509ss),
-                       nmflag);
+                       get_nameopt());
         else
             print_name(out, "subject=", X509_REQ_get_subject_name(req),
-                       nmflag);
+                       get_nameopt());
     }
 
     if (modulus) {

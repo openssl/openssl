@@ -20,7 +20,6 @@
 #include <openssl/crypto.h>
 
 #include "e_os.h"
-#include "test_main.h"
 #include "testutil.h"
 
 /*

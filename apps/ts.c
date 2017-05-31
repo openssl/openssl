@@ -106,7 +106,7 @@ const OPTIONS ts_options[] = {
     {"reply", OPT_REPLY, '-', "Generate a TS reply"},
     {"queryfile", OPT_QUERYFILE, '<', "File containing a TS query"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"inkey", OPT_INKEY, '<', "File with private key for reply"},
+    {"inkey", OPT_INKEY, 's', "File with private key for reply"},
     {"signer", OPT_SIGNER, 's', "Signer certificate file"},
     {"chain", OPT_CHAIN, '<', "File with signer CA chain"},
     {"verify", OPT_VERIFY, '-', "Verify a TS response"},
@@ -709,6 +709,8 @@ static TS_RESP *create_response(CONF *conf, const char *section, const char *eng
             goto end;
     }
 
+    if (!TS_CONF_set_ess_cert_id_digest(conf, section, resp_ctx))
+        goto end;
     if (!TS_CONF_set_def_policy(conf, section, policy, resp_ctx))
         goto end;
     if (!TS_CONF_set_policies(conf, section, resp_ctx))

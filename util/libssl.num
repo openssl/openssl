@@ -440,3 +440,13 @@ SSL_get0_peer_CA_list                   440	1_1_1	EXIST::FUNCTION:
 SSL_CTX_add1_CA_list                    441	1_1_1	EXIST::FUNCTION:
 SSL_CTX_get0_CA_list                    442	1_1_1	EXIST::FUNCTION:
 SSL_CTX_add_custom_ext                  443	1_1_1	EXIST::FUNCTION:
+SSL_SESSION_is_resumable                444	1_1_1	EXIST::FUNCTION:
+SSL_CTX_set_record_padding_callback     445	1_1_1	EXIST::FUNCTION:
+SSL_set_record_padding_callback         446	1_1_1	EXIST::FUNCTION:
+SSL_CTX_set_block_padding               447	1_1_1	EXIST::FUNCTION:
+SSL_CTX_get_record_padding_callback_arg 448	1_1_1	EXIST::FUNCTION:
+SSL_get_record_padding_callback_arg     449	1_1_1	EXIST::FUNCTION:
+SSL_set_block_padding                   450	1_1_1	EXIST::FUNCTION:
+SSL_set_record_padding_callback_arg     451	1_1_1	EXIST::FUNCTION:
+SSL_CTX_set_record_padding_callback_arg 452	1_1_1	EXIST::FUNCTION:
+SSL_CTX_use_serverinfo_ex               453	1_1_1	EXIST::FUNCTION:

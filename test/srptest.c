@@ -8,23 +8,15 @@
  */
 
 #include <openssl/opensslconf.h>
+# include "testutil.h"
+
 #ifdef OPENSSL_NO_SRP
-
 # include <stdio.h>
-
-int main(int argc, char *argv[])
-{
-    printf("No SRP support\n");
-    return (0);
-}
-
 #else
 
 # include <openssl/srp.h>
 # include <openssl/rand.h>
 # include <openssl/err.h>
-# include "testutil.h"
-# include "test_main.h"
 
 static void showbn(const char *name, const BIGNUM *bn)
 {
@@ -78,7 +70,7 @@ static int run_srp(const char *username, const char *client_pass,
     /* Server random */
     RAND_bytes(rand_tmp, sizeof(rand_tmp));
     b = BN_bin2bn(rand_tmp, sizeof(rand_tmp), NULL);
-    if (!TEST_false(BN_is_zero(b)))
+    if (!TEST_BN_ne_zero(b))
         goto end;
     showbn("b", b);
 
@@ -92,7 +84,7 @@ static int run_srp(const char *username, const char *client_pass,
     /* Client random */
     RAND_bytes(rand_tmp, sizeof(rand_tmp));
     a = BN_bin2bn(rand_tmp, sizeof(rand_tmp), NULL);
-    if (!TEST_false(BN_is_zero(a)))
+    if (!TEST_BN_ne_zero(a))
         goto end;
     showbn("a", a);
 
@@ -115,7 +107,7 @@ static int run_srp(const char *username, const char *client_pass,
     Kserver = SRP_Calc_server_key(Apub, v, u, b, GN->N);
     showbn("Server's key", Kserver);
 
-    if (!TEST_int_eq(BN_cmp(Kclient, Kserver), 0))
+    if (!TEST_BN_eq(Kclient, Kserver))
         goto end;
 
     ret = 1;
@@ -138,19 +130,16 @@ end:
 static int check_bn(const char *name, const BIGNUM *bn, const char *hexbn)
 {
     BIGNUM *tmp = NULL;
+    int r;
 
     if (!TEST_true(BN_hex2bn(&tmp, hexbn)))
         return 0;
 
-    if (!TEST_int_eq(BN_cmp(bn, tmp), 0)) {
-        TEST_info("Unexpected %s value", name);
-        showbn("expecting", tmp);
-        showbn("received", bn);
-        BN_free(tmp);
-        return 0;
-    }
+    if (BN_cmp(bn, tmp) != 0)
+        TEST_error("unexpected %s value", name);
+    r = TEST_BN_eq(bn, tmp);
     BN_free(tmp);
-    return 1;
+    return r;
 }
 
 /* SRP test vectors from RFC5054 */
@@ -277,10 +266,14 @@ static int run_srp_tests(void)
 
     return 1;
 }
+#endif
 
 void register_tests(void)
 {
+#ifdef OPENSSL_NO_SRP
+    printf("No SRP support\n");
+#else
     ADD_TEST(run_srp_tests);
     ADD_TEST(run_srp_kat);
-}
 #endif
+}

@@ -20,9 +20,9 @@
 #define PORT            "4433"
 #define PROTOCOL        "tcp"
 
-typedef int (*do_server_cb)(int s, int stype, unsigned char *context);
+typedef int (*do_server_cb)(int s, int stype, int prot, unsigned char *context);
 int do_server(int *accept_sock, const char *host, const char *port,
-              int family, int type,
+              int family, int type, int protocol,
               do_server_cb cb,
               unsigned char *context, int naccept);
 #ifdef HEADER_X509_H
@@ -38,13 +38,11 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared);
 #endif
 int ssl_print_tmp_key(BIO *out, SSL *s);
 int init_client(int *sock, const char *host, const char *port,
-                int family, int type);
+                int family, int type, int protocol);
 int should_retry(int i);
 
 long bio_dump_callback(BIO *bio, int cmd, const char *argp,
                        int argi, long argl, long ret);
-
-int set_nameopt(const char *arg);
 
 #ifdef HEADER_SSL_H
 void apps_ssl_info_callback(const SSL *s, int where, int ret);

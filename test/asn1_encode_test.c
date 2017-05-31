@@ -13,7 +13,6 @@
 #include <openssl/rand.h>
 #include <openssl/asn1t.h>
 #include "internal/numbers.h"
-#include "test_main.h"
 #include "testutil.h"
 
 #ifdef __GNUC__
@@ -41,6 +40,9 @@ static unsigned char t_one[] = {
 };
 static unsigned char t_one_neg[] = {
     0xff
+};
+static unsigned char t_minus_256[] = {
+    0xff, 0x00
 };
 static unsigned char t_longundef[] = {
     0x7f, 0xff, 0xff, 0xff
@@ -100,6 +102,7 @@ static TEST_CUSTOM_DATA test_custom_data[] = {
     CUSTOM_DATA(t_longundef),
     CUSTOM_DATA(t_one),
     CUSTOM_DATA(t_one_neg),
+    CUSTOM_DATA(t_minus_256),
     CUSTOM_DATA(t_9bytes_1),
     CUSTOM_DATA(t_8bytes_1),
     CUSTOM_DATA(t_8bytes_2),
@@ -201,6 +204,7 @@ static ASN1_LONG_DATA long_expected_32bit[] = {
     { 0, 0, 0 }, { 0xff, 1, 0x7fffffff }, /* t_longundef */
     CUSTOM_EXPECTED_SUCCESS(1, 1), /* t_one */
     CUSTOM_EXPECTED_SUCCESS(-1, -1), /* t_one_neg */
+    CUSTOM_EXPECTED_SUCCESS(-256, -256), /* t_minus_256 */
     CUSTOM_EXPECTED_FAILURE,     /* t_9bytes_1 */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_1 */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_2 */
@@ -236,6 +240,7 @@ static ASN1_LONG_DATA long_expected_64bit[] = {
     { 0, 0, 0 }, { 0xff, 1, 0x7fffffff }, /* t_longundef */
     CUSTOM_EXPECTED_SUCCESS(1, 1), /* t_one */
     CUSTOM_EXPECTED_SUCCESS(-1, -1), /* t_one_neg */
+    CUSTOM_EXPECTED_SUCCESS(-256, -256), /* t_minus_256 */
     CUSTOM_EXPECTED_FAILURE,     /* t_9bytes_1 */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_1 */
     CUSTOM_EXPECTED_SUCCESS(LONG_MAX, LONG_MAX), /* t_8bytes_2 */
@@ -288,6 +293,7 @@ static ASN1_INT32_DATA int32_expected[] = {
     CUSTOM_EXPECTED_SUCCESS(ASN1_LONG_UNDEF, ASN1_LONG_UNDEF), /* t_zero */
     CUSTOM_EXPECTED_SUCCESS(1, 1), /* t_one */
     CUSTOM_EXPECTED_SUCCESS(-1, -1), /* t_one_neg */
+    CUSTOM_EXPECTED_SUCCESS(-256, -256), /* t_minus_256 */
     CUSTOM_EXPECTED_FAILURE,     /* t_9bytes_1 */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_1 */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_2 */
@@ -335,6 +341,7 @@ static ASN1_UINT32_DATA uint32_expected[] = {
     CUSTOM_EXPECTED_SUCCESS(ASN1_LONG_UNDEF, ASN1_LONG_UNDEF), /* t_zero */
     CUSTOM_EXPECTED_SUCCESS(1, 1), /* t_one */
     CUSTOM_EXPECTED_FAILURE,     /* t_one_neg (illegal negative value) */
+    CUSTOM_EXPECTED_FAILURE,     /* t_minus_256 (illegal negative value) */
     CUSTOM_EXPECTED_FAILURE,     /* t_9bytes_1 */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_1 */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_2 */
@@ -382,6 +389,7 @@ static ASN1_INT64_DATA int64_expected[] = {
     CUSTOM_EXPECTED_SUCCESS(ASN1_LONG_UNDEF, ASN1_LONG_UNDEF), /* t_zero */
     CUSTOM_EXPECTED_SUCCESS(1, 1), /* t_one */
     CUSTOM_EXPECTED_SUCCESS(-1, -1), /* t_one_neg */
+    CUSTOM_EXPECTED_SUCCESS(-256, -256), /* t_minus_256 */
     CUSTOM_EXPECTED_FAILURE,     /* t_9bytes_1 */
     CUSTOM_EXPECTED_FAILURE,     /* t_8bytes_1 (too large positive) */
     CUSTOM_EXPECTED_SUCCESS(INT64_MAX, INT64_MAX), /* t_8bytes_2 */
@@ -430,6 +438,7 @@ static ASN1_UINT64_DATA uint64_expected[] = {
     CUSTOM_EXPECTED_SUCCESS(ASN1_LONG_UNDEF, ASN1_LONG_UNDEF), /* t_zero */
     CUSTOM_EXPECTED_SUCCESS(1, 1), /* t_one */
     CUSTOM_EXPECTED_FAILURE,     /* t_one_neg (illegal negative value) */
+    CUSTOM_EXPECTED_FAILURE,     /* t_minus_256 (illegal negative value) */
     CUSTOM_EXPECTED_FAILURE,     /* t_9bytes_1 */
     CUSTOM_EXPECTED_SUCCESS((uint64_t)INT64_MAX+1, (uint64_t)INT64_MAX+1),
                                  /* t_8bytes_1 */

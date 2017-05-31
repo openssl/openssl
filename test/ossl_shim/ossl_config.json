@@ -256,7 +256,7 @@
         ":UNEXPECTED_RECORD:":"unexpected message",
         ":TLSV1_ALERT_RECORD_OVERFLOW:":"tlsv1 alert record overflow",
         ":WRONG_SSL_VERSION:":"no protocols available",
-        ":BAD_ALERT:":"tlsv1 alert record overflow",
+        ":BAD_ALERT:":"invalid alert",
         ":HTTP_REQUEST:":"http request",
         ":HTTPS_PROXY_REQUEST:":"https proxy request",
         ":WRONG_CERTIFICATE_TYPE:":"wrong certificate type",

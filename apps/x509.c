@@ -160,7 +160,7 @@ int x509_main(int argc, char **argv)
     char *checkhost = NULL, *checkemail = NULL, *checkip = NULL;
     char *extsect = NULL, *extfile = NULL, *passin = NULL, *passinarg = NULL;
     char *infile = NULL, *outfile = NULL, *keyfile = NULL, *CAfile = NULL;
-    char buf[256], *prog;
+    char *prog;
     int x509req = 0, days = DEF_DAYS, modulus = 0, pubkey = 0, pprint = 0;
     int C = 0, CAformat = FORMAT_PEM, CAkeyformat = FORMAT_PEM;
     int fingerprint = 0, reqfile = 0, need_rand = 0, checkend = 0;
@@ -172,8 +172,7 @@ int x509_main(int argc, char **argv)
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0;
     int enddate = 0;
     time_t checkoffset = 0;
-    unsigned long nmflag = 0, certflag = 0;
-    char nmflag_set = 0;
+    unsigned long certflag = 0;
     OPTION_CHOICE o;
     ENGINE *e = NULL;
 #ifndef OPENSSL_NO_MD5
@@ -308,8 +307,7 @@ int x509_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_NAMEOPT:
-            nmflag_set = 1;
-            if (!set_name_ex(&nmflag, opt_arg()))
+            if (!set_nameopt(opt_arg()))
                 goto opthelp;
             break;
         case OPT_ENGINE:
@@ -447,9 +445,6 @@ int x509_main(int argc, char **argv)
         goto opthelp;
     }
 
-    if (!nmflag_set)
-        nmflag = XN_FLAG_ONELINE;
-
     out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
@@ -539,7 +534,7 @@ int x509_main(int argc, char **argv)
             BIO_printf(bio_err, "Signature ok\n");
 
         print_name(bio_err, "subject=", X509_REQ_get_subject_name(req),
-                   nmflag);
+                   get_nameopt());
 
         if ((x = X509_new()) == NULL)
             goto end;
@@ -618,10 +613,10 @@ int x509_main(int argc, char **argv)
     if (num) {
         for (i = 1; i <= num; i++) {
             if (issuer == i) {
-                print_name(out, "issuer=", X509_get_issuer_name(x), nmflag);
+                print_name(out, "issuer=", X509_get_issuer_name(x), get_nameopt());
             } else if (subject == i) {
                 print_name(out, "subject=",
-                           X509_get_subject_name(x), nmflag);
+                           X509_get_subject_name(x), get_nameopt());
             } else if (serial == i) {
                 BIO_printf(out, "serial=");
                 i2a_ASN1_INTEGER(out, X509_get_serialNumber(x));
@@ -726,13 +721,10 @@ int x509_main(int argc, char **argv)
                 char *m;
                 int len;
 
-                X509_NAME_oneline(X509_get_subject_name(x), buf, sizeof buf);
-                BIO_printf(out, "/*\n"
-                                " * Subject: %s\n", buf);
-
-                X509_NAME_oneline(X509_get_issuer_name(x), buf, sizeof buf);
-                BIO_printf(out, " * Issuer:  %s\n"
-                                " */\n", buf);
+                print_name(out, "/*\n"
+                                " * Subject: ", X509_get_subject_name(x), get_nameopt());
+                print_name(out, " * Issuer:  ", X509_get_issuer_name(x), get_nameopt());
+                BIO_puts(out, " */\n");
 
                 len = i2d_X509(x, NULL);
                 m = app_malloc(len, "x509 name buffer");
@@ -747,7 +739,7 @@ int x509_main(int argc, char **argv)
                 print_array(out, "the_certificate", len, (unsigned char *)m);
                 OPENSSL_free(m);
             } else if (text == i) {
-                X509_print_ex(out, x, nmflag, certflag);
+                X509_print_ex(out, x, get_nameopt(), certflag);
             } else if (startdate == i) {
                 BIO_puts(out, "notBefore=");
                 ASN1_TIME_print(out, X509_get0_notBefore(x));
@@ -828,7 +820,7 @@ int x509_main(int argc, char **argv)
                     goto end;
                 }
                 if (!noout) {
-                    X509_REQ_print(out, rq);
+                    X509_REQ_print_ex(out, rq, get_nameopt(), X509_FLAG_COMPAT);
                     PEM_write_bio_X509_REQ(out, rq);
                 }
                 noout = 1;

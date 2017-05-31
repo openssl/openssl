@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_DigestSignInit, EVP_DigestSignUpdate, EVP_DigestSignFinal - EVP signing functions
+EVP_DigestSignInit, EVP_DigestSignUpdate, EVP_DigestSignFinal,
+EVP_DigestSign - EVP signing functions
 
 =head1 SYNOPSIS
 
@@ -12,6 +13,10 @@ EVP_DigestSignInit, EVP_DigestSignUpdate, EVP_DigestSignFinal - EVP signing func
                         const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
  int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
  int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen);
+
+ int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret,
+                    size_t *siglen, const unsigned char *tbs,
+                    size_t tbslen);
 
 =head1 DESCRIPTION
 
@@ -35,12 +40,16 @@ B<siglen> parameter should contain the length of the B<sig> buffer, if the
 call is successful the signature is written to B<sig> and the amount of data
 written to B<siglen>.
 
+EVP_DigestSign() signs B<tbslen> bytes of data at B<tbs> and places the
+signature in B<sig> and its length in B<siglen> in a simiilar way to
+EVP_DigestSignFinal().
+
 =head1 RETURN VALUES
 
-EVP_DigestSignInit() EVP_DigestSignUpdate() and EVP_DigestSignaFinal() return
-1 for success and 0 or a negative value for failure. In particular a return
-value of -2 indicates the operation is not supported by the public key
-algorithm.
+EVP_DigestSignInit(), EVP_DigestSignUpdate(), EVP_DigestSignaFinal() and
+EVP_DigestSign() return 1 for success and 0 or a negative value for failure. In
+particular a return value of -2 indicates the operation is not supported by the
+public key algorithm.
 
 The error codes can be obtained from L<ERR_get_error(3)>.
 
@@ -49,6 +58,11 @@ The error codes can be obtained from L<ERR_get_error(3)>.
 The B<EVP> interface to digital signatures should almost always be used in
 preference to the low level interfaces. This is because the code then becomes
 transparent to the algorithm used and much more flexible.
+
+EVP_DigestSign() is a one shot operation which signs a single block of data
+in one function. For algorithms that support streaming it is equivalent to
+calling EVP_DigestSignUpdate() and EVP_DigestSignFinal(). For algorithms which
+do not support streaming (e.g. PureEdDSA) it is the only way to sign data.
 
 In previous versions of OpenSSL there was a link between message digest types
 and public key algorithms. This meant that "clone" digests such as EVP_dss1()

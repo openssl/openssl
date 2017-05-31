@@ -31,14 +31,20 @@
  $win_commonroot = $ENV{$win_commonroot};
 
  sub shlib {
-     return () if $disabled{shared};
      my $lib = shift;
+     return () if $disabled{shared} || $lib =~ /\.a$/;
+     return () unless defined $unified_info{sharednames}->{$lib};
      return $unified_info{sharednames}->{$lib} . $shlibext;
  }
 
+ sub lib {
+     (my $lib = shift) =~ s/\.a$//;
+     return $lib . $libext;
+ }
+
  sub shlib_import {
-     return () if $disabled{shared};
      my $lib = shift;
+     return () if $disabled{shared} || $lib =~ /\.a$/;
      return $lib . $shlibextimport;
  }
 
@@ -46,6 +52,13 @@
      my $dso = shift;
 
      return $dso . $dsoext;
+ }
+ # This makes sure things get built in the order they need
+ # to. You're welcome.
+ sub dependmagic {
+     my $target = shift;
+
+     return "$target: build_generated\n\t\$(MAKE) depend && \$(MAKE) _$target\n_$target";
  }
  '';
 -}
@@ -60,7 +73,7 @@ MINOR={- $config{minor} -}
 
 SHLIB_VERSION_NUMBER={- $config{shlib_version_number} -}
 
-LIBS={- join(" ", map { $_.$libext } @{$unified_info{libraries}}) -}
+LIBS={- join(" ", map { lib($_) } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}
 SHLIBPDBS={- join(" ", map { local $shlibext = ".pdb"; shlib($_) } @{$unified_info{libraries}}) -}
 ENGINES={- join(" ", map { dso($_) } @{$unified_info{engines}}) -}
@@ -81,7 +94,7 @@ GENERATED={- join(" ",
                     grep { /\.o$/ } keys %{$unified_info{sources}} ),
                   ( grep { /\.h$/ } keys %{$unified_info{generate}} )) -}
 
-INSTALL_LIBS={- join(" ", map { $_.$libext } @{$unified_info{install}->{libraries}}) -}
+INSTALL_LIBS={- join(" ", map { lib($_) } @{$unified_info{install}->{libraries}}) -}
 INSTALL_SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{install}->{libraries}}) -}
 INSTALL_SHLIBPDBS={- join(" ", map { local $shlibext = ".pdb"; shlib($_) } @{$unified_info{install}->{libraries}}) -}
 INSTALL_ENGINES={- join(" ", map { dso($_) } @{$unified_info{install}->{engines}}) -}
@@ -177,23 +190,21 @@ PROCESSOR= {- $config{processor} -}
 
 # The main targets ###################################################
 
-all: build_generated \
-     build_libs_nodep build_engines_nodep build_programs_nodep depend
-
-build_libs: build_generated build_libs_nodep depend
-build_libs_nodep: $(LIBS) {- join(" ",map { shlib_import($_) } @{$unified_info{libraries}}) -}
-build_engines: build_generated build_engines_nodep depend
-build_engines_nodep: $(ENGINES)
-build_programs: build_generated build_programs_nodep depend
-build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
+{- dependmagic('all'); -}: build_libs_nodep build_engines_nodep build_programs_nodep
+{- dependmagic('build_libs'); -}: build_libs_nodep
+{- dependmagic('build_engines'); -}: build_engines_nodep
+{- dependmagic('build_programs'); -}: build_programs_nodep
 
 build_generated: $(GENERATED_MANDATORY)
+build_libs_nodep: $(LIBS) {- join(" ",map { shlib_import($_) } @{$unified_info{libraries}}) -}
+build_engines_nodep: $(ENGINES)
+build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
 
 # Kept around for backward compatibility
 build_apps build_tests: build_programs
 
 test: tests
-tests: build_generated build_programs_nodep build_engines_nodep depend
+{- dependmagic('tests'); -}: build_programs_nodep build_engines_nodep
 	@rem {- output_off() if $disabled{tests}; "" -}
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
@@ -347,11 +358,14 @@ configdata.pm: "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{b
  # It takes a list of library names and outputs a list of dependencies
  sub compute_lib_depends {
      if ($disabled{shared}) {
-	 return map { $_ =~ /\.a$/ ? $`.$libext : $_.$libext } @_;
+	 return map { lib($_) } @_;
      }
-     die "Linking with static OpenSSL libraries is not supported in this configuration\n"
-         if grep /\.a$/, @_;
-     return map { shlib_import($_) } @_;
+     foreach (@_) {
+         (my $l = $_) =~ s/\.a$//;
+         die "Linking with static variants of shared libraries is not supported in this configuration\n"
+             if $l ne $_ && shlib($l);
+     }
+     return map { shlib_import($_) or lib($_) } @_;
  }
 
   sub generatesrc {
@@ -525,13 +539,15 @@ $objs$linklibs \$(EX_LIBS)
 EOF
  }
  sub obj2lib {
+     my %args = @_;
+     my $lib = $args{lib};
+
      # Because static libs and import libs are both named the same in native
      # Windows, we can't have both.  We skip the static lib in that case,
      # as the shared libs are what we use anyway.
-     return "" unless $disabled{"shared"};
+     return "" unless $disabled{"shared"} || $lib =~ /\.a$/;
 
-     my %args = @_;
-     my $lib = $args{lib};
+     $lib =~ s/\.a$//;
      my $objs = join("\n", map { $_.$objext } @{$args{objs}});
      my $deps = join(" ", map { $_.$objext } @{$args{objs}});
      return <<"EOF";

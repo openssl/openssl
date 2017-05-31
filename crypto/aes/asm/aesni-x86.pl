@@ -80,7 +80,7 @@ $output = pop;
 open OUT,">$output";
 *STDOUT=*OUT;
 
-&asm_init($ARGV[0],$0);
+&asm_init($ARGV[0]);
 
 &external_label("OPENSSL_ia32cap_P");
 &static_label("key_const");

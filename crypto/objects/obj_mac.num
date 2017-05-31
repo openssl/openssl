@@ -1083,7 +1083,10 @@ aria_256_cfb1		1082
 aria_128_cfb8		1083
 aria_192_cfb8		1084
 aria_256_cfb8		1085
-organizationIdentifier		1086
-countryCode3c		1087
-countryCode3n		1088
-dnsName		1089
+id_smime_aa_signingCertificateV2		1086
+ED25519		1087
+ED448		1088
+organizationIdentifier		1089
+countryCode3c		1090
+countryCode3n		1091
+dnsName		1092

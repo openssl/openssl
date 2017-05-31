@@ -70,6 +70,11 @@ struct evp_pkey_method_st {
     int (*derive) (EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
     int (*ctrl) (EVP_PKEY_CTX *ctx, int type, int p1, void *p2);
     int (*ctrl_str) (EVP_PKEY_CTX *ctx, const char *type, const char *value);
+    int (*digestsign) (EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
+                       const unsigned char *tbs, size_t tbslen);
+    int (*digestverify) (EVP_MD_CTX *ctx, const unsigned char *sig,
+                         size_t siglen, const unsigned char *tbs,
+                         size_t tbslen);
 } /* EVP_PKEY_METHOD */ ;
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_METHOD)
@@ -82,6 +87,7 @@ extern const EVP_PKEY_METHOD dhx_pkey_meth;
 extern const EVP_PKEY_METHOD dsa_pkey_meth;
 extern const EVP_PKEY_METHOD ec_pkey_meth;
 extern const EVP_PKEY_METHOD ecx25519_pkey_meth;
+extern const EVP_PKEY_METHOD ed25519_pkey_meth;
 extern const EVP_PKEY_METHOD hmac_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pss_pkey_meth;

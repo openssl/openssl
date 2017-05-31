@@ -2,7 +2,17 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.1.0e and 1.1.1 [xx XXX xxxx]
+ Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
+
+  *) Fragmented SSL/TLS alerts are no longer accepted. An alert message is 2
+     bytes long. In theory it is permissible in SSLv3 - TLSv1.2 to fragment such
+     alerts across multiple records (some of which could be empty). In practice
+     it make no sense to send an empty alert record, or to fragment one. TLSv1.3
+     prohibts this altogether and other libraries (BoringSSL, NSS) do not
+     support this at all. Supporting it adds significant complexity to the
+     record layer, and its removal is unlikely to cause inter-operability
+     issues.
+     [Matt Caswell]
 
   *) Add the ASN.1 types INT32, UINT32, INT64, UINT64 and variants prefixed
      with Z.  These are meant to replace LONG and ZLONG and to be size safe.
@@ -21,6 +31,12 @@
   *) Have 'config' recognise 64-bit mingw and choose 'mingw64' as the target
      platform rather than 'mingw'.
      [Richard Levitte]
+
+  *) The functions X509_STORE_add_cert and X509_STORE_add_crl return
+     success if they are asked to add an object which already exists
+     in the store. This change cascades to other functions which load
+     certificates and CRLs.
+     [Paul Dale]
 
   *) x86_64 assembly pack: annotate code with DWARF CFI directives to
      facilitate stack unwinding even from assembly subroutines.
@@ -42,6 +58,12 @@
 
   *) Add support for ARIA
      [Paul Dale]
+
+  *) s_client will now send the Server Name Indication (SNI) extension by
+     default unless the new "-noservername" option is used. The server name is
+     based on the host provided to the "-connect" option unless overridden by
+     using "-servername".
+     [Matt Caswell]
 
   *) Add support for SipHash
      [Todd Short]
@@ -66,6 +88,17 @@
   *) The RSA "null" method, which was partially supported to avoid patent
      issues, has been replaced to always returns NULL.
      [Rich Salz]
+
+ Changes between 1.1.0e and 1.1.0f [25 May 2017]
+
+  *) Have 'config' recognise 64-bit mingw and choose 'mingw64' as the target
+     platform rather than 'mingw'.
+     [Richard Levitte]
+
+  *) Remove the VMS-specific reimplementation of gmtime from crypto/o_times.c.
+     VMS C's RTL has a fully up to date gmtime() and gmtime_r() since V7.1,
+     which is the minimum version we support.
+     [Richard Levitte]
 
  Changes between 1.1.0d and 1.1.0e [16 Feb 2017]
 

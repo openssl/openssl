@@ -149,20 +149,30 @@ int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path)
 
 #endif
 
+static unsigned long nmflag = 0;
+static char nmflag_set = 0;
+
+int set_nameopt(const char *arg)
+{
+    int ret = set_name_ex(&nmflag, arg);
+
+    if (ret)
+        nmflag_set = 1;
+
+    return ret;
+}
+
+unsigned long get_nameopt(void)
+{
+    return (nmflag_set) ? nmflag : XN_FLAG_ONELINE;
+}
+
 int dump_cert_text(BIO *out, X509 *x)
 {
-    char *p;
-
-    p = X509_NAME_oneline(X509_get_subject_name(x), NULL, 0);
-    BIO_puts(out, "subject=");
-    BIO_puts(out, p);
-    OPENSSL_free(p);
-
-    p = X509_NAME_oneline(X509_get_issuer_name(x), NULL, 0);
-    BIO_puts(out, "\nissuer=");
-    BIO_puts(out, p);
+    print_name(out, "subject=", X509_get_subject_name(x), get_nameopt());
     BIO_puts(out, "\n");
-    OPENSSL_free(p);
+    print_name(out, "issuer=", X509_get_issuer_name(x), get_nameopt());
+    BIO_puts(out, "\n");
 
     return 0;
 }

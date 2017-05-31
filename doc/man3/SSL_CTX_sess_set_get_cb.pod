@@ -57,7 +57,18 @@ and session caching is enabled (see
 L<SSL_CTX_set_session_cache_mode(3)>).
 The new_session_cb() is passed the B<ssl> connection and the ssl session
 B<sess>. If the callback returns B<0>, the session will be immediately
-removed again.
+removed again. Note that in TLSv1.3, sessions are established after the main
+handshake has completed. The server decides when to send the client the session
+information and this may occur some time after the end of the handshake (or not
+at all). This means that applications should expect the new_session_cb()
+function to be invoked during the handshake (for <= TLSv1.2) or after the
+handshake (for TLSv1.3). It is also possible in TLSv1.3 for multiple sessions to
+be established with a single connection. In these case the new_session_cb()
+function will be invoked multiple times.
+
+In TLSv1.3 it is recommended that each SSL_SESSION object is only used for
+resumption once. One way of enforcing that is for applications to call
+L<SSL_CTX_remove_session(3)> after a session has been used.
 
 The remove_session_cb() is called, whenever the SSL engine removes a session
 from the internal cache. This happens when the session is removed because
