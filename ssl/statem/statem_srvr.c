@@ -2692,17 +2692,6 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    /* Check for broken implementations of GOST ciphersuites */
-    /*
-     * If key is GOST and n is exactly 64, it is bare signature without
-     * length field (CryptoPro implementations at least till CSP 4.0)
-     */
-#ifndef OPENSSL_NO_GOST
-    if (PACKET_remaining(pkt) == 64
-        && EVP_PKEY_id(pkey) == NID_id_GostR3410_2001) {
-        len = 64;
-    } else
-#endif
     {
         if (SSL_USE_SIGALGS(s)) {
             int rv;
@@ -2733,6 +2722,20 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
             }
         }
 
+        /* Check for broken implementations of GOST ciphersuites */
+        /*
+         * If key is GOST and len is exactly 64 or 128, it is signature without
+         * length field (CryptoPro implementations at least till TLS 1.2)
+         */
+#ifndef OPENSSL_NO_GOST
+        if ((PACKET_remaining(pkt) == 64
+             && (EVP_PKEY_id(pkey) == NID_id_GostR3410_2001
+                 || EVP_PKEY_id(pkey) == NID_id_GostR3410_2012_256))
+            || (PACKET_remaining(pkt) == 128
+                && EVP_PKEY_id(pkey) == NID_id_GostR3410_2012_512)){
+            len = PACKET_remaining(pkt);
+        } else
+#endif
         if (!PACKET_get_net_2(pkt, &len)) {
             SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_LENGTH_MISMATCH);
             al = SSL_AD_DECODE_ERROR;
