@@ -223,7 +223,8 @@ void KeccakF1600(uint64_t A[5][5])
  */
 static void Round(uint64_t A[5][5], size_t i)
 {
-    uint64_t C[5], D[5], T[2][5];
+    uint64_t C[5], E[2];        /* registers */
+    uint64_t D[5], T[2][5];     /* memory    */
 
     assert(i < (sizeof(iotas) / sizeof(iotas[0])));
 
@@ -233,17 +234,30 @@ static void Round(uint64_t A[5][5], size_t i)
     C[3] = A[0][3] ^ A[1][3] ^ A[2][3] ^ A[3][3] ^ A[4][3];
     C[4] = A[0][4] ^ A[1][4] ^ A[2][4] ^ A[3][4] ^ A[4][4];
 
+#if defined(__arm__)
+    D[1] = E[0] = ROL64(C[2], 1) ^ C[0];
+    D[4] = E[1] = ROL64(C[0], 1) ^ C[3];
+    D[0] = C[0] = ROL64(C[1], 1) ^ C[4];
+    D[2] = C[1] = ROL64(C[3], 1) ^ C[1];
+    D[3] = C[2] = ROL64(C[4], 1) ^ C[2];
+
+    T[0][0] = A[3][0] ^ C[0]; /* borrow T[0][0] */
+    T[0][1] = A[0][1] ^ E[0]; /* D[1] */
+    T[0][2] = A[0][2] ^ C[1]; /* D[2] */
+    T[0][3] = A[0][3] ^ C[2]; /* D[3] */
+    T[0][4] = A[0][4] ^ E[1]; /* D[4] */
+
+    C[3] = ROL64(A[3][3] ^ C[2], rhotates[3][3]);   /* D[3] */
+    C[4] = ROL64(A[4][4] ^ E[1], rhotates[4][4]);   /* D[4] */
+    C[0] =       A[0][0] ^ C[0]; /* rotate by 0 */  /* D[0] */
+    C[2] = ROL64(A[2][2] ^ C[1], rhotates[2][2]);   /* D[2] */
+    C[1] = ROL64(A[1][1] ^ E[0], rhotates[1][1]);   /* D[1] */
+#else
     D[0] = ROL64(C[1], 1) ^ C[4];
     D[1] = ROL64(C[2], 1) ^ C[0];
     D[2] = ROL64(C[3], 1) ^ C[1];
     D[3] = ROL64(C[4], 1) ^ C[2];
     D[4] = ROL64(C[0], 1) ^ C[3];
-
-    C[0] =       A[0][0] ^ D[0]; /* rotate by 0 */
-    C[1] = ROL64(A[1][1] ^ D[1], rhotates[1][1]);
-    C[2] = ROL64(A[2][2] ^ D[2], rhotates[2][2]);
-    C[3] = ROL64(A[3][3] ^ D[3], rhotates[3][3]);
-    C[4] = ROL64(A[4][4] ^ D[4], rhotates[4][4]);
 
     T[0][0] = A[3][0] ^ D[0]; /* borrow T[0][0] */
     T[0][1] = A[0][1] ^ D[1];
@@ -251,23 +265,29 @@ static void Round(uint64_t A[5][5], size_t i)
     T[0][3] = A[0][3] ^ D[3];
     T[0][4] = A[0][4] ^ D[4];
 
+    C[0] =       A[0][0] ^ D[0]; /* rotate by 0 */
+    C[1] = ROL64(A[1][1] ^ D[1], rhotates[1][1]);
+    C[2] = ROL64(A[2][2] ^ D[2], rhotates[2][2]);
+    C[3] = ROL64(A[3][3] ^ D[3], rhotates[3][3]);
+    C[4] = ROL64(A[4][4] ^ D[4], rhotates[4][4]);
+#endif
     A[0][0] = C[0] ^ (~C[1] & C[2]) ^ iotas[i];
     A[0][1] = C[1] ^ (~C[2] & C[3]);
     A[0][2] = C[2] ^ (~C[3] & C[4]);
     A[0][3] = C[3] ^ (~C[4] & C[0]);
     A[0][4] = C[4] ^ (~C[0] & C[1]);
 
-    C[0] = ROL64(T[0][3],        rhotates[0][3]);
-    C[1] = ROL64(A[1][4] ^ D[4], rhotates[1][4]);
-    C[2] = ROL64(A[2][0] ^ D[0], rhotates[2][0]);
-    C[3] = ROL64(A[3][1] ^ D[1], rhotates[3][1]);
-    C[4] = ROL64(A[4][2] ^ D[2], rhotates[4][2]);
+    T[1][0] = A[1][0] ^ (C[3] = D[0]);
+    T[1][1] = A[2][1] ^ (C[4] = D[1]); /* borrow T[1][1] */
+    T[1][2] = A[1][2] ^ (E[0] = D[2]);
+    T[1][3] = A[1][3] ^ (E[1] = D[3]);
+    T[1][4] = A[2][4] ^ (C[2] = D[4]); /* borrow T[1][4] */
 
-    T[1][0] = A[1][0] ^ D[0];
-    T[1][1] = A[2][1] ^ D[1]; /* borrow T[1][1] */
-    T[1][2] = A[1][2] ^ D[2];
-    T[1][3] = A[1][3] ^ D[3];
-    T[1][4] = A[2][4] ^ D[4]; /* borrow T[1][4] */
+    C[0] = ROL64(T[0][3],        rhotates[0][3]);
+    C[1] = ROL64(A[1][4] ^ C[2], rhotates[1][4]);   /* D[4] */
+    C[2] = ROL64(A[2][0] ^ C[3], rhotates[2][0]);   /* D[0] */
+    C[3] = ROL64(A[3][1] ^ C[4], rhotates[3][1]);   /* D[1] */
+    C[4] = ROL64(A[4][2] ^ E[0], rhotates[4][2]);   /* D[2] */
 
     A[1][0] = C[0] ^ (~C[1] & C[2]);
     A[1][1] = C[1] ^ (~C[2] & C[3]);
@@ -815,10 +835,10 @@ static uint64_t BitDeinterleave(uint64_t Ai)
 /*
  * SHA3_absorb can be called multiple times, but at each invocation
  * largest multiple of |r| out of |len| bytes are processed. Then
- * remaining amount of bytes are returned. This is done to spare caller
- * trouble of calculating the largest multiple of |r|, effectively the
- * blocksize. It is commonly (1600 - 256*n)/8, e.g. 168, 136, 104, 72,
- * but can also be (1600 - 448)/8 = 144. All this means that message
+ * remaining amount of bytes is returned. This is done to spare caller
+ * trouble of calculating the largest multiple of |r|. |r| can be viewed
+ * as blocksize. It is commonly (1600 - 256*n)/8, e.g. 168, 136, 104,
+ * 72, but can also be (1600 - 448)/8 = 144. All this means that message
  * padding and intermediate sub-block buffering, byte- or bitwise, is
  * caller's reponsibility.
  */
