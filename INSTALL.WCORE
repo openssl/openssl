@@ -1,0 +1,37 @@
+ 
+ INSTALLATION FOR THE WINDOWS IoT CORE PLATFORM
+ ----------------------------------------------
+
+ Building OpenSSL for Windows IoT Core
+  
+ Windows 10 IoT Core comes out with a limitted API. To build a compatible 
+ OpenSSL's deliverables one must link it against mincore.lib that comes with
+ a proper Windows Kit and a proper C runtime. Following steps were tested on CRT
+ that came with VS2015 installer and Windows Kit ver. 8.1.
+
+ CRT version prior to that one installed with VS2015 has additional dependencies 
+ consumed by the code thus, kernel32.lib/dll has to be linked as well.
+   
+
+ Building
+ --------
+
+ 1. Configure with one of the following:
+ 1.a. > perl Configure VC-CORE32 no-asm  (in case to bypass assembler code)
+ 1.b. > perl Configure VC-CORE32         (to include assembler code)
+ 1.c. > perl Configure VC-CORE64A        (configure for 64bits)
+                   
+
+ 2. Generate makefiles
+
+ 2.a. > ms\do_core.bat  	(bypassing assembler code)
+ 2.b. > ms\do_core-nasm.bat 	(including assembler code - nasm is prefered compiler)
+ 2.c. > ms\do_core64a.bat	(64 bits)
+
+ 
+ 3. Compile and link
+
+   > nmake -f ms\nt.mak		(link code to static library)
+   > nmake -f ms\ntdll.mak	(link to DLL)
+
+

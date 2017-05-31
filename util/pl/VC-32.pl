@@ -135,6 +135,39 @@ else	# Win32
     $opt_cflags=$f.' /Ox /O2 /Ob2';
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /subsystem:console /opt:ref";
+    if ($FLAVOR =~ /CORE/)
+        {
+        $lflags="/NODEFAULTLIB:kernel32.lib /NODEFAULTLIB:ws2_32.lib /NODEFAULTLIB:gdi32.lib /NODEFAULTLIB:advapi32.lib /NODEFAULTLIB:crypt32.lib /NODEFAULTLIB:user32.lib /nologo /subsystem:console /opt:ref /NXCOMPAT /DYNAMICBASE";
+		$base_cflags.=" -DOPENSSL_NO_CAPIENG";
+		if($FLAVOR =~ /CORE32/)
+			{
+				$base_cflags.=" -Dx86 -D_X86_ -D_i386_ -Di_386_";
+				$base_cflags.=" /arch:IA32";
+				$lflags.=" /machine:X86";
+				$lflags.=" /SAFESEH";
+			}
+		else	#core64
+			{
+				$base_cflags.=" /arch:AVX";
+				$lflags.=" /machine:X64";
+				*::perlasm_compile_target = sub {
+					my ($target,$source,$bname)=@_;
+					my $ret;
+
+					$bname =~ s/(.*)\.[^\.]$/$1/;
+					$ret=<<___;
+\$(TMP_D)$o$bname.asm: $source
+	set ASM=\$(ASM)
+	\$(PERL) $source \$\@
+
+$target: \$(TMP_D)$o$bname.asm
+	\$(ASM) $afile\$\@ \$(TMP_D)$o$bname.asm
+
+___
+	}
+			}
+		$base
+        }
     }
 $lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
 $mlflags='';
@@ -189,6 +222,10 @@ if ($FLAVOR =~ /CE/)
 		}
 	$ex_libs.=' $(PORTSDK_LIBPATH)/portlib.lib'	if (defined($ENV{'PORTSDK_LIBPATH'}));
 	$ex_libs.=' /nodefaultlib coredll.lib corelibc.lib' if ($ENV{'TARGETCPU'} eq "X86");
+	} 
+elsif ($FLAVOR =~ /CORE/)
+	{
+	$ex_libs='mincore.lib';
 	}
 else
 	{
@@ -227,7 +264,18 @@ if ($FLAVOR =~ /WIN64A/) {
 	$asm=($ver ge $vew?"nasm":"nasmw")." -f win32";
 	$asmtype="win32n";
 	$afile='-o ';
-} else {
+}
+elsif ($FLAVOR =~/CORE64A/) {
+	if (`nasm -v 2>NUL` =~ /NASM version ([0-9]+\.[0-9]+)/ && $1 >= 2.0) {
+		$asm='nasm -f win64 -DNEAR -Ox -g';
+		$asmtype="nasm";
+		$afile='-o ';
+	} else {
+		$asm='ml64 /c /Cp /Cx /Zi';
+		$afile='/Fo';
+	}
+}
+else {
 	$asm='ml /nologo /Cp /coff /c /Cx /Zi';
 	$afile='/Fo';
 	$asmtype="win32";
@@ -260,6 +308,11 @@ if (!$no_asm)
 if ($shlib && $FLAVOR !~ /CE/)
 	{
 	$mlflags.=" $lflags /dll";
+
+	if($FLAVOR !~ /CORE/)
+	{
+		$mlflags="/nologo /subsystem:console /opt:ref /debug /dll ";
+	}
 	$lib_cflag.=" -D_WINDLL";
 	#
 	# Engage Applink...
@@ -282,7 +335,7 @@ EXHEADER= $(EXHEADER) $(INCO_D)\applink.c
 LIBS_DEP=$(LIBS_DEP) $(OBJ_D)\applink.obj
 CRYPTOOBJ=$(OBJ_D)\uplink.obj $(CRYPTOOBJ)
 ___
-	$banner.=<<'___' if ($FLAVOR =~ /WIN64/);
+	$banner.=<<'___' if ($FLAVOR =~ /WIN64/) || ($FLAVOR =~ /CORE64/);
 CRYPTOOBJ=ms\uptable.obj $(CRYPTOOBJ)
 ___
 	}
