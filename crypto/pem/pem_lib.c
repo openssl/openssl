@@ -370,7 +370,8 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
             kstr = (unsigned char *)buf;
         }
         RAND_add(data, i, 0);   /* put in the RSA key. */
-        OPENSSL_assert(EVP_CIPHER_iv_length(enc) <= (int)sizeof(iv));
+        if (!ossl_assert(EVP_CIPHER_iv_length(enc) <= (int)sizeof(iv)))
+            goto err;
         if (RAND_bytes(iv, EVP_CIPHER_iv_length(enc)) <= 0) /* Generate a salt */
             goto err;
         /*
@@ -383,8 +384,9 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
         if (kstr == (unsigned char *)buf)
             OPENSSL_cleanse(buf, PEM_BUFSIZE);
 
-        OPENSSL_assert(strlen(objstr) + 23 + 2 * EVP_CIPHER_iv_length(enc) + 13
-                       <= sizeof buf);
+        if (!ossl_assert(strlen(objstr) + 23 + 2 * EVP_CIPHER_iv_length(enc)
+                         + 13 <= sizeof buf))
+            goto err;
 
         buf[0] = '\0';
         PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);

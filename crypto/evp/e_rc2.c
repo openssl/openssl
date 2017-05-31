@@ -127,7 +127,8 @@ static int rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
     if (type != NULL) {
         l = EVP_CIPHER_CTX_iv_length(c);
-        OPENSSL_assert(l <= sizeof(iv));
+        if (!ossl_assert(l <= sizeof(iv)))
+            return -1;
         i = ASN1_TYPE_get_int_octetstring(type, &num, iv, l);
         if (i != (int)l)
             return -1;

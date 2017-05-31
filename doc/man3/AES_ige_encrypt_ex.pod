@@ -1,0 +1,96 @@
+=pod
+
+=head1 NAME
+
+AES_ige_encrypt_ex, AES_bi_ige_encrypt_ex, AES_ige_encrypt, AES_bi_ige_encrypt
+- AES IGE encryption routines
+
+=head1 SYNOPSIS
+
+ int AES_ige_encrypt_ex(const unsigned char *in, unsigned char *out,
+                        size_t length, const AES_KEY *key,
+                        unsigned char *ivec, const int enc);
+
+ int AES_bi_ige_encrypt_ex(const unsigned char *in, unsigned char *out,
+                           size_t length, const AES_KEY *key,
+                           const AES_KEY *key2, const unsigned char *ivec,
+                           const int enc);
+
+Scheduled for future deprecation:
+
+ #if OPENSSL_API_COMPAT < 0x10200000L
+
+ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
+                      size_t length, const AES_KEY *key, unsigned, char *ivec,
+                      const int enc))
+
+ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
+                         size_t length, const AES_KEY *key, const AES_KEY *key2,
+                         const unsigned char *ivec, const int enc))
+
+ #endif
+
+=head1 DESCRIPTION
+
+AES_ige_encrypt_ex() encrypts or decrypts the data pointed to by B<in> and puts
+the output in the buffer at B<out> using AES as the block cipher in IGE mode.
+
+IGE (Infinite Garble Extension) mode has the property that errors are propagated
+forward in the stream indefinitely, i.e. a change in the ciphertext at a
+particular point in the stream will cause all plaintext after that point to be
+corrupted. Bi-directional IGE has the additional property that a change in the
+ciphertext at a particular point will cause all the plaintext to be corrupted.  
+
+The input buffer is expected to be B<length> bytes long and must be a multiple
+of AES_BLOCK_SIZE. The output buffer B<out> must also be at least B<length>
+bytes long.
+
+IGE mode expects an IV of twice the block size (i.e. 2 * AES_BLOCK_SIZE) to be
+stored in the location pointed to by B<ivec>. The key pointed to by B<key>
+should have been previously initialised via a call to L<AES_set_encrypt_key(3)>
+or L<AES_set_decrypt_key(3)> as appropriate. The value of B<enc> should either
+be AES_ENCRYPT or AES_DECRYPT depending on whether encryption or decryption is
+required.
+
+On successful completion of the function the contents of the buffer pointed to
+by B<ivec> will be updated with a new Initialisation Vector suitable for any
+further data in the same stream. In this way AES_ige_encrypt_ex() can be called
+repeatedly on successive chunks of the data stream.
+
+AES_bi_ige_encrypt_ex() works in the same way as AES_ige_encrypt_ex() except
+that it uses AES in bi-directional IGE mode. The parameters for this function
+have the same meanings as for AES_ige_encrypt_ex() except that bi-directional
+IGE mode expects the IV at B<ivec> to be four times the block size (i.e.
+4 * AES_BLOCK_SIZE). Additionally a second key is required and is provided by
+B<key2>. Finally AES_bi_ige_encrypt_ex() does not update the value in B<ivec>
+for streaming operation on successful completion. Calls to
+AES_bi_ige_encrypt_ex() must fully encrypt or decrypt the data in a single pass.
+
+AES_ige_encrypt() is exactly the same as AES_ige_encrypt_ex() except that errors
+are silently ignored. For this reason AES_ige_encrypt_ex() should be used in
+preference. Similarly AES_bi_ige_encrypt() is exactly the same as
+AES_bi_ige_encrypt_ex() and also silently ignores errors, so
+AES_bi_ige_encrypt_ex() should be used in preference.
+
+=head1 RETURN VALUES
+
+AES_ige_encrypt_ex() and AES_bi_ige_encrypt_ex() return 1 on success or 0 on
+failure.
+
+=head1 HISTORY
+
+AES_ige_encrypt_ex() and AES_bi_ige_encrypt_ex() were added in OpenSSL 1.1.1.
+
+AES_ige_encrypt() and AES_bi_ige_encrypt() are scheduled for deprecation from
+OpenSSL 1.2.0.
+
+=head1 COPYRIGHT
+
+Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

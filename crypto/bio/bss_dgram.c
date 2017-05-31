@@ -193,7 +193,7 @@ static int dgram_clear(BIO *a)
     return (1);
 }
 
-static void dgram_adjust_rcv_timeout(BIO *b)
+static int dgram_adjust_rcv_timeout(BIO *b)
 {
 # if defined(SO_RCVTIMEO)
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
@@ -225,8 +225,10 @@ static void dgram_adjust_rcv_timeout(BIO *b)
         if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
                        &(data->socket_timeout), (void *)&sz) < 0) {
             perror("getsockopt");
-        } else if (sizeof(sz.s) != sizeof(sz.i) && sz.i == 0)
-            OPENSSL_assert(sz.s <= sizeof(data->socket_timeout));
+        } else if (sizeof(sz.s) != sizeof(sz.i) && sz.i == 0) {
+            if (!ossl_assert(sz.s <= sizeof(data->socket_timeout)))
+                return 0;
+        }
 #  endif
 
         /* Get current time */
@@ -271,6 +273,7 @@ static void dgram_adjust_rcv_timeout(BIO *b)
         }
     }
 # endif
+    return 1;
 }
 
 static void dgram_reset_rcv_timeout(BIO *b)
@@ -310,7 +313,8 @@ static int dgram_read(BIO *b, char *out, int outl)
     if (out != NULL) {
         clear_socket_error();
         memset(&peer, 0, sizeof(peer));
-        dgram_adjust_rcv_timeout(b);
+        if (!dgram_adjust_rcv_timeout(b))
+            return 0;
         if (data->peekmode)
             flags = MSG_PEEK;
         ret = recvfrom(b->num, out, outl, flags,
@@ -641,7 +645,10 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                 perror("getsockopt");
                 ret = -1;
             } else if (sizeof(sz.s) != sizeof(sz.i) && sz.i == 0) {
-                OPENSSL_assert(sz.s <= sizeof(struct timeval));
+                if (!ossl_assert(sz.s <= sizeof(struct timeval))) {
+                    ret = -1;
+                    break;
+                }
                 ret = (int)sz.s;
             } else
                 ret = sz.i;
@@ -698,7 +705,10 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                 perror("getsockopt");
                 ret = -1;
             } else if (sizeof(sz.s) != sizeof(sz.i) && sz.i == 0) {
-                OPENSSL_assert(sz.s <= sizeof(struct timeval));
+                if (!ossl_assert(sz.s <= sizeof(struct timeval))) {
+                    ret = -1;
+                    break;
+                }
                 ret = (int)sz.s;
             } else
                 ret = sz.i;
@@ -1139,29 +1149,36 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
                 return -1;
 
             /*
-             * Test if socket buffer can handle max record size (2^14 + 2048
-             * + 13)
+             * Test if socket buffer can handle max record size
+             * (SSL3_RT_MAX_PLAIN_LENGTH
+             * + 2048 (where does this value come from?)
+             * + DTLS1_RT_HEADER_LENGTH)
              */
             optlen = (socklen_t) sizeof(int);
             ret = getsockopt(b->num, SOL_SOCKET, SO_RCVBUF, &optval, &optlen);
-            if (ret >= 0)
-                OPENSSL_assert(optval >= 18445);
+            if (ret >= 0 && optval < SSL3_RT_MAX_PLAIN_LENGTH + 2048
+                                     + DTLS1_RT_HEADER_LENGTH)
+                return -1;
 
             /*
              * Test if SCTP doesn't partially deliver below max record size
-             * (2^14 + 2048 + 13)
+             * (SSL3_RT_MAX_PLAIN_LENGTH
+             * + 2048 (where does this value come from?)
+             * + DTLS1_RT_HEADER_LENGTH)
              */
             optlen = (socklen_t) sizeof(int);
             ret =
                 getsockopt(b->num, IPPROTO_SCTP, SCTP_PARTIAL_DELIVERY_POINT,
                            &optval, &optlen);
-            if (ret >= 0)
-                OPENSSL_assert(optval >= 18445);
+            if (ret >= 0 && optval < SSL3_RT_MAX_PLAIN_LENGTH + 2048
+                                     + DTLS1_RT_HEADER_LENGTH)
+                return -1;
 
             /*
              * Partially delivered notification??? Probably a bug....
              */
-            OPENSSL_assert(!(msg.msg_flags & MSG_NOTIFICATION));
+            if (!ossl_assert(!(msg.msg_flags & MSG_NOTIFICATION)))
+                return -1;
 
             /*
              * Everything seems ok till now, so it's most likely a message

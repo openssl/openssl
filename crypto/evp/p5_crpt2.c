@@ -201,7 +201,10 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
         goto err;
     }
     keylen = EVP_CIPHER_CTX_key_length(ctx);
-    OPENSSL_assert(keylen <= sizeof key);
+    if (!ossl_assert(keylen <= sizeof key)) {
+        EVPerr(EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     /* Decode parameter */
 

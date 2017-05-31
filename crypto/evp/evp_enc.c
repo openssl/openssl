@@ -150,9 +150,12 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
  skip_to_init:
 #endif
     /* we assume block size is a power of 2 in *cryptUpdate */
-    OPENSSL_assert(ctx->cipher->block_size == 1
-                   || ctx->cipher->block_size == 8
-                   || ctx->cipher->block_size == 16);
+    if (!ossl_assert(ctx->cipher->block_size == 1
+                     || ctx->cipher->block_size == 8
+                     || ctx->cipher->block_size == 16)) {
+        EVPerr(EVP_F_EVP_CIPHERINIT_EX, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
 
     if (!(ctx->flags & EVP_CIPHER_CTX_FLAG_WRAP_ALLOW)
         && EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_WRAP_MODE) {
@@ -174,9 +177,11 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
             /* fall-through */
 
         case EVP_CIPH_CBC_MODE:
-
-            OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) <=
-                           (int)sizeof(ctx->iv));
+            if (!ossl_assert(EVP_CIPHER_CTX_iv_length(ctx) <=
+                             (int)sizeof(ctx->iv))) {
+                EVPerr(EVP_F_EVP_CIPHERINIT_EX, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
             if (iv)
                 memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
             memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
@@ -336,7 +341,10 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         }
     }
     i = ctx->buf_len;
-    OPENSSL_assert(bl <= (int)sizeof(ctx->buf));
+    if (!ossl_assert(bl <= (int)sizeof(ctx->buf))) {
+        EVPerr(EVP_F_EVP_ENCRYPTUPDATE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
     if (i != 0) {
         if (bl - i > inl) {
             memcpy(&(ctx->buf[i]), in, inl);
@@ -391,7 +399,10 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     }
 
     b = ctx->cipher->block_size;
-    OPENSSL_assert(b <= sizeof ctx->buf);
+    if (!ossl_assert(b <= sizeof ctx->buf)) {
+        EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
     if (b == 1) {
         *outl = 0;
         return 1;
@@ -452,7 +463,10 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     if (ctx->flags & EVP_CIPH_NO_PADDING)
         return EVP_EncryptUpdate(ctx, out, outl, in, inl);
 
-    OPENSSL_assert(b <= sizeof ctx->final);
+    if (!ossl_assert(b <= sizeof ctx->final)) {
+        EVPerr(EVP_F_EVP_DECRYPTUPDATE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
 
     if (ctx->final_used) {
         /* see comment about PTRDIFF_T comparison above */
@@ -524,7 +538,10 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
             EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_WRONG_FINAL_BLOCK_LENGTH);
             return (0);
         }
-        OPENSSL_assert(b <= sizeof ctx->final);
+        if (!ossl_assert(b <= sizeof ctx->final)) {
+            EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
 
         /*
          * The following assumes that the ciphertext has been authenticated.

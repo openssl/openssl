@@ -38,15 +38,30 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
                      size_t length, const AES_KEY *key,
                      unsigned char *ivec, const int enc)
 {
+    /* Ignore the return value since we are void */
+    if (!ossl_assert(AES_ige_encrypt_ex(in, out, length, key, ivec, enc)))
+        return;
+}
+
+int AES_ige_encrypt_ex(const unsigned char *in, unsigned char *out,
+                       size_t length, const AES_KEY *key,
+                       unsigned char *ivec, const int enc)
+{
     size_t n;
     size_t len = length;
 
+    /* Nothing to do */
     if (length == 0)
-        return;
+        return 1;
 
-    OPENSSL_assert(in && out && key && ivec);
-    OPENSSL_assert((AES_ENCRYPT == enc) || (AES_DECRYPT == enc));
-    OPENSSL_assert((length % AES_BLOCK_SIZE) == 0);
+    if (in == NULL || out == NULL || key == NULL || ivec == NULL)
+        return 0;
+
+    if ((AES_ENCRYPT != enc) && (AES_DECRYPT != enc))
+        return 0;
+
+    if ((length % AES_BLOCK_SIZE) != 0)
+        return 0;
 
     len = length / AES_BLOCK_SIZE;
 
@@ -157,6 +172,8 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
             memcpy(ivec + AES_BLOCK_SIZE, iv2.data, AES_BLOCK_SIZE);
         }
     }
+
+    return 1;
 }
 
 /*
@@ -171,6 +188,16 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
                         const AES_KEY *key2, const unsigned char *ivec,
                         const int enc)
 {
+    if (!ossl_assert(AES_bi_ige_encrypt_ex(in, out, length, key, key2, ivec,
+                     enc)))
+        return;
+}
+
+int AES_bi_ige_encrypt_ex(const unsigned char *in, unsigned char *out,
+                          size_t length, const AES_KEY *key,
+                          const AES_KEY *key2, const unsigned char *ivec,
+                          const int enc)
+{
     size_t n;
     size_t len = length;
     unsigned char tmp[AES_BLOCK_SIZE];
@@ -180,9 +207,14 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
     const unsigned char *iv;
     const unsigned char *iv2;
 
-    OPENSSL_assert(in && out && key && ivec);
-    OPENSSL_assert((AES_ENCRYPT == enc) || (AES_DECRYPT == enc));
-    OPENSSL_assert((length % AES_BLOCK_SIZE) == 0);
+    if (in == NULL || out == NULL || key == NULL || ivec == NULL)
+        return 0;
+
+    if ((AES_ENCRYPT != enc) && (AES_DECRYPT != enc))
+        return 0;
+
+    if ((length % AES_BLOCK_SIZE) != 0)
+        return 0;
 
     if (AES_ENCRYPT == enc) {
         /*
@@ -281,4 +313,6 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
             out += AES_BLOCK_SIZE;
         }
     }
+
+    return 1;
 }

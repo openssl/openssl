@@ -23,7 +23,6 @@ TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)
 
 void TS_VERIFY_CTX_init(TS_VERIFY_CTX *ctx)
 {
-    OPENSSL_assert(ctx != NULL);
     memset(ctx, 0, sizeof(*ctx));
 }
 
@@ -106,7 +105,6 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
     ASN1_OCTET_STRING *msg;
     const ASN1_INTEGER *nonce;
 
-    OPENSSL_assert(req != NULL);
     if (ret)
         TS_VERIFY_CTX_cleanup(ret);
     else if ((ret = TS_VERIFY_CTX_new()) == NULL)
