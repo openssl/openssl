@@ -1086,3 +1086,7 @@ aria_256_cfb8		1085
 id_smime_aa_signingCertificateV2		1086
 ED25519		1087
 ED448		1088
+organizationIdentifier		1089
+countryCode3c		1090
+countryCode3n		1091
+dnsName		1092
