@@ -203,6 +203,12 @@ data associated with the method.
 
 L<UI(3)>, L<CRYPTO_get_ex_data(3)>, L<UI_STRING(3)>
 
+=head1 HISTORY
+
+UI_method_set_data_duplicator(), UI_method_get_data_duplicator() and
+UI_method_get_data_destructor()
+were added in OpenSSL 1.1.1.
+
 =head1 COPYRIGHT
 
 Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
