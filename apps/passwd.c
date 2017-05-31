@@ -100,9 +100,9 @@ int passwd_main(int argc, char **argv)
     char *salt_malloc = NULL, *passwd_malloc = NULL, *prog;
     OPTION_CHOICE o;
     int in_stdin = 0, pw_source_defined = 0;
-#ifndef OPENSSL_NO_UI
+# ifndef OPENSSL_NO_UI
     int in_noverify = 0;
-#endif
+# endif
     int passed_salt = 0, quiet = 0, table = 0, reverse = 0;
     int ret = 1;
     passwd_modes mode = passwd_unset;
@@ -129,9 +129,9 @@ int passwd_main(int argc, char **argv)
             pw_source_defined = 1;
             break;
         case OPT_NOVERIFY:
-#ifndef OPENSSL_NO_UI
+# ifndef OPENSSL_NO_UI
             in_noverify = 1;
-#endif
+# endif
             break;
         case OPT_QUIET:
             quiet = 1;
@@ -240,25 +240,30 @@ int passwd_main(int argc, char **argv)
     }
 
     if ((in == NULL) && (passwds == NULL)) {
+        /*
+         * we use the following method to make sure what
+         * in the 'else' section is always compiled, to
+         * avoid rot of not-frequently-used code.
+         */
         if (1) {
-#ifndef OPENSSL_NO_UI
+# ifndef OPENSSL_NO_UI
             /* build a null-terminated list */
             static char *passwds_static[2] = { NULL, NULL };
 
             passwds = passwds_static;
-            if (in == NULL)
+            if (in == NULL) {
                 if (EVP_read_pw_string
                     (passwd_malloc, passwd_malloc_size, "Password: ",
                      !(passed_salt || in_noverify)) != 0)
                     goto end;
+            }
             passwds[0] = passwd_malloc;
         } else {
-#endif
+# endif
             BIO_printf(bio_err, "password required\n");
             goto end;
         }
     }
-
 
     if (in == NULL) {
         assert(passwds != NULL);
@@ -269,11 +274,9 @@ int passwd_main(int argc, char **argv)
             if (!do_passwd(passed_salt, &salt, &salt_malloc, passwd, bio_out,
                            quiet, table, reverse, pw_maxlen, mode))
                 goto end;
-        }
-        while (*passwds != NULL);
-    } else
+        } while (*passwds != NULL);
+    } else {
         /* in != NULL */
-    {
         int done;
 
         assert(passwd != NULL);
@@ -281,9 +284,9 @@ int passwd_main(int argc, char **argv)
             int r = BIO_gets(in, passwd, pw_maxlen + 1);
             if (r > 0) {
                 char *c = (strchr(passwd, '\n'));
-                if (c != NULL)
+                if (c != NULL) {
                     *c = 0;     /* truncate at newline */
-                else {
+                } else {
                     /* ignore rest of line */
                     char trash[BUFSIZ];
                     do
@@ -297,8 +300,7 @@ int passwd_main(int argc, char **argv)
                     goto end;
             }
             done = (r <= 0);
-        }
-        while (!done);
+        } while (!done);
     }
     ret = 0;
 
@@ -484,13 +486,13 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     /* Prefix for optional rounds specification.  */
     static const char rounds_prefix[] = "rounds=";
     /* Maximum salt string length.  */
-#define SALT_LEN_MAX 16
+#  define SALT_LEN_MAX 16
     /* Default number of rounds if not explicitly specified.  */
-#define ROUNDS_DEFAULT 5000
+#  define ROUNDS_DEFAULT 5000
     /* Minimum number of rounds.  */
-#define ROUNDS_MIN 1000
+#  define ROUNDS_MIN 1000
     /* Maximum number of rounds.  */
-#define ROUNDS_MAX 999999999
+#  define ROUNDS_MAX 999999999
 
     /* "$6$rounds=<N>$......salt......$...shahash(up to 86 chars)...\0" */
     static char out_buf[3 + 17 + 17 + 86 + 1];
@@ -668,7 +670,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     cp = out_buf + strlen(out_buf);
     *cp++ = '$';
 
-#define b64_from_24bit(B2, B1, B0, N)                                   \
+#  define b64_from_24bit(B2, B1, B0, N)                                   \
     do {                                                                \
         unsigned int w = ((B2) << 16) | ((B1) << 8) | (B0);             \
         int i = (N);                                                    \
@@ -746,9 +748,8 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
     if (!passed_salt) {
 # ifndef OPENSSL_NO_DES
         if (mode == passwd_crypt) {
-            if (*salt_malloc_p == NULL) {
+            if (*salt_malloc_p == NULL)
                 *salt_p = *salt_malloc_p = app_malloc(3, "salt buffer");
-            }
             if (RAND_bytes((unsigned char *)*salt_p, 2) <= 0)
                 goto end;
             (*salt_p)[0] = cov_2char[(*salt_p)[0] & 0x3f]; /* 6 bits */
@@ -765,9 +766,8 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
         if (mode == passwd_md5 || mode == passwd_apr1 || mode == passwd_aixmd5) {
             int i;
 
-            if (*salt_malloc_p == NULL) {
+            if (*salt_malloc_p == NULL)
                 *salt_p = *salt_malloc_p = app_malloc(9, "salt buffer");
-            }
             if (RAND_bytes((unsigned char *)*salt_p, 8) <= 0)
                 goto end;
 
@@ -781,9 +781,8 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
         if (mode == passwd_sha256 || mode == passwd_sha512) {
             int i;
 
-            if (*salt_malloc_p == NULL) {
+            if (*salt_malloc_p == NULL)
                 *salt_p = *salt_malloc_p = app_malloc(17, "salt buffer");
-            }
             if (RAND_bytes((unsigned char *)*salt_p, 16) <= 0)
                 goto end;
 
