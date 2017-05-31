@@ -28,15 +28,9 @@ typedef struct evp_test_method_st EVP_TEST_METHOD;
  * Structure holding test information
  */
 typedef struct evp_test_st {
-    BIO *in;                      /* file being read */
-    int line;                     /* current line being processed */
-    int start_line;               /* start line of current test */
-    int ntests;                   /* Number of tests */
-    int errors;                   /* Error count */
+    STANZA s;                     /* Common test stanza */
+    char *name;
     int skip;                     /* Current test should be skipped */
-    int nskip;                    /* Number of tests skipped */
-    char buf[10240];              /* Input buffer */
-    BIO *key;                     /* temp memory BIO for reading in keys */
     const EVP_TEST_METHOD *meth;  /* method for this test */
     const char *err, *aux_err;    /* Error string for test */
     char *expected_err;           /* Expected error value of test */
@@ -79,8 +73,6 @@ static KEY_LIST *public_keys;
 static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst);
 
 static int parse_bin(const char *value, unsigned char **buf, size_t *buflen);
-
-static const char *current_test_file = "???";
 
 /*
  * Structure used to hold a list of blocks of memory to test
@@ -2110,6 +2102,7 @@ static const EVP_TEST_METHOD *find_test(const char *name)
 
 static void clear_test(EVP_TEST *t)
 {
+    test_clearstanza(&t->s);
     ERR_clear_error();
     if (t->data != NULL) {
         if (t->meth != NULL)
@@ -2123,6 +2116,7 @@ static void clear_test(EVP_TEST *t)
     t->func = NULL;
     OPENSSL_free(t->reason);
     t->reason = NULL;
+
     /* Text literal. */
     t->err = NULL;
     t->skip = 0;
@@ -2144,23 +2138,23 @@ static int check_test_error(EVP_TEST *t)
         if (t->aux_err != NULL) {
             TEST_info("Above error from the test at %s:%d "
                       "(%s) unexpected error %s",
-                      current_test_file, t->start_line, t->aux_err, t->err);
+                      t->s.test_file, t->s.start, t->aux_err, t->err);
         } else {
             TEST_info("Above error from the test at %s:%d "
                       "unexpected error %s",
-                      current_test_file, t->start_line, t->err);
+                      t->s.test_file, t->s.start, t->err);
         }
         return 0;
     }
     if (t->err == NULL && t->expected_err != NULL) {
         TEST_info("Test line %d: succeeded but was expecting %s",
-                  t->start_line, t->expected_err);
+                  t->s.start, t->expected_err);
         return 0;
     }
 
     if (strcmp(t->err, t->expected_err) != 0) {
         TEST_info("Test line %d: expecting %s got %s",
-                  t->start_line, t->expected_err, t->err);
+                  t->s.start, t->expected_err, t->err);
         return 0;
     }
 
@@ -2169,14 +2163,14 @@ static int check_test_error(EVP_TEST *t)
 
     if (t->func == NULL || t->reason == NULL) {
         TEST_info("Test line %d: missing function or reason code",
-                  t->start_line);
+                  t->s.start);
         return 0;
     }
 
     err = ERR_peek_error();
     if (err == 0) {
         TEST_info("Test line %d, expected error \"%s:%s\" not set",
-                  t->start_line, t->func, t->reason);
+                  t->s.start, t->func, t->reason);
         return 0;
     }
 
@@ -2185,7 +2179,7 @@ static int check_test_error(EVP_TEST *t)
     if (func == NULL && reason == NULL) {
         TEST_info("Test line %d: expected error \"%s:%s\","
                   " no strings available.  Skipping...\n",
-                  t->start_line, t->func, t->reason);
+                  t->s.start, t->func, t->reason);
         return 1;
     }
 
@@ -2193,7 +2187,7 @@ static int check_test_error(EVP_TEST *t)
         return 1;
 
     TEST_info("Test line %d: expected error \"%s:%s\", got \"%s:%s\"",
-              t->start_line, t->func, t->reason, func, reason);
+              t->s.start, t->func, t->reason, func, reason);
 
     return 0;
 }
@@ -2205,18 +2199,18 @@ static int run_test(EVP_TEST *t)
 {
     if (t->meth == NULL)
         return 1;
-    t->ntests++;
+    t->s.numtests++;
     if (t->skip) {
-        t->nskip++;
+        t->s.numskip++;
     } else {
         /* run the test */
         if (t->err == NULL && t->meth->run_test(t) != 1) {
-            TEST_info("Line %d error %s", t->start_line, t->meth->name);
+            TEST_info("Line %d error %s", t->s.start, t->meth->name);
             return 0;
         }
         if (!check_test_error(t)) {
             test_openssl_errors();
-            t->errors++;
+            t->s.errors++;
         }
     }
 
@@ -2248,90 +2242,6 @@ static void free_key_list(KEY_LIST *lst)
     }
 }
 
-
-/*
- * Read a line, remove the newline, return EOF or first char.
- * Comment lines are treated like empty lines.
- */
-static int read_line(EVP_TEST *t)
-{
-    char *p;
-
-    if (!BIO_gets(t->in, t->buf, sizeof(t->buf)))
-        return EOF;
-    t->line++;
-    if ((p = strchr(t->buf, '\n')) != NULL)
-        *p = '\0';
-    if (t->buf[0] == '#')
-        t->buf[0] = '\0';
-    return t->buf[0];
-}
-
-/*
- * Skip leading spaces and remove trailing spaces from string.
- */
-static char *strip_spaces(char *pval)
-{
-    char *p, *start;
-
-    for (start = pval; isspace(*start); )
-        start++;
-    if (*start == '\0')
-        return start;
-
-    for (p = start + strlen(start); --p >= start && isspace(*p); )
-        *p = '\0';
-    return start;
-}
-
-/*
- * Split line into 'key = value'; return 1 if okay, 0 on error.
- */
-static int split_line(EVP_TEST *t, char **keyword, char **value)
-{
-    char *p;
-
-    /* Look for = sign */
-    if ((p = strchr(t->buf, '=')) == NULL) {
-        TEST_error("Line %d: Missing '=' in test file", t->line);
-        return 0;
-    }
-    *p++ = '\0';
-    *keyword = strip_spaces(t->buf);
-    *value = strip_spaces(p);
-    if (**keyword == '\0') {
-        TEST_error("Line %d: Missing key; malformed input line", t->line);
-        return 0;
-    }
-    return 1;
-}
-
-/*
- * Read a PEM block.  Return 1 if okay, 0 on error.
- */
-static int read_key(EVP_TEST *t)
-{
-    char tmpbuf[128];
-
-    if (t->key == NULL) {
-        if (!TEST_ptr(t->key = BIO_new(BIO_s_mem())))
-            return 0;
-    } else if (!TEST_int_gt(BIO_reset(t->key), 0)) {
-        return 0;
-    }
-
-    /* Read to PEM end line and place content in memory BIO */
-    while (BIO_gets(t->in, tmpbuf, sizeof(tmpbuf))) {
-        t->line++;
-        if (!TEST_int_gt(BIO_puts(t->key, tmpbuf), 0))
-            return 0;
-        if (strncmp(tmpbuf, "-----END", 8) == 0)
-            return 1;
-    }
-    TEST_error("Can't find key end");
-    return 0;
-}
-
 /*
  * Is the key type an unsupported algorithm?
  */
@@ -2360,54 +2270,52 @@ static int key_unsupported()
 }
 
 /*
- * Read, parse, and execute one test.  Return EOF; 0 if failure, 1 if okay.
+ * NULL out the value from |pp| but return it.  This "steals" a pointer.
  */
-static int read_stanza(EVP_TEST *t)
+static char *take_value(PAIR *pp)
 {
-    int c;
-    char *keyword, *value;
-    KEY_LIST **klist, *key;
+    char *p = pp->value;
+
+    pp->value = NULL;
+    return p;
+}
+
+/*
+ * Read and parse one test.  Return 0 if failure, 1 if okay.
+ */
+static int parse(EVP_TEST *t)
+{
+    KEY_LIST *key, **klist;
     EVP_PKEY *pkey;
+    PAIR *pp;
+    int i;
 
-    clear_test(t);
 top:
-    /* Find the first line of a stanza. */
-    for ( ; ; ) {
-        c = read_line(t);
-        if (c == EOF)
+    do {
+        if (BIO_eof(t->s.fp))
             return EOF;
-        if (c == '\0')
-            continue;
-        break;
-    }
-    if (!split_line(t, &keyword, &value))
-        return 0;
+        clear_test(t);
+        if (!test_readstanza(&t->s))
+            return 0;
+    } while (t->s.numpairs == 0);
+    pp = &t->s.pairs[0];
 
-    /* Handle a few special cases here. */
-    if (strcmp(keyword, "Title") == 0) {
-        TEST_info("Starting \"%s\" tests", value);
-        goto top;
-    }
-
+    /* Are we adding a key? */
     klist = NULL;
     pkey = NULL;
-    if (strcmp(keyword, "PrivateKey") == 0) {
-        if (!read_key(t))
-            return 0;
-        pkey = PEM_read_bio_PrivateKey(t->key, NULL, 0, NULL);
+    if (strcmp(pp->key, "PrivateKey") == 0) {
+        pkey = PEM_read_bio_PrivateKey(t->s.key, NULL, 0, NULL);
         if (pkey == NULL && !key_unsupported()) {
-            TEST_info("Can't read private key %s", value);
+            TEST_info("Can't read private key %s", pp->value);
             ERR_print_errors_fp(stderr);
             return 0;
         }
         klist = &private_keys;
     }
-    else if (strcmp(keyword, "PublicKey") == 0) {
-        if (!read_key(t))
-            return 0;
-        pkey = PEM_read_bio_PUBKEY(t->key, NULL, 0, NULL);
+    else if (strcmp(pp->key, "PublicKey") == 0) {
+        pkey = PEM_read_bio_PUBKEY(t->s.key, NULL, 0, NULL);
         if (pkey == NULL && !key_unsupported()) {
-            TEST_info("Can't read public key %s", value);
+            TEST_info("Can't read public key %s", pp->value);
             ERR_print_errors_fp(stderr);
             return 0;
         }
@@ -2416,135 +2324,105 @@ top:
 
     /* If we have a key add to list */
     if (klist != NULL) {
-        if (find_key(NULL, value, *klist)) {
-            TEST_info("Duplicate key %s", value);
+        if (find_key(NULL, pp->value, *klist)) {
+            TEST_info("Duplicate key %s", pp->value);
             return 0;
         }
-        if (!TEST_ptr(key = OPENSSL_malloc(sizeof(*key)))
-                || !TEST_ptr(key->name = OPENSSL_strdup(value)))
+        if (!TEST_ptr(key = OPENSSL_malloc(sizeof(*key))))
             return 0;
+        key->name = take_value(pp);
         key->key = pkey;
         key->next = *klist;
         *klist = key;
 
         /* Go back and start a new stanza. */
+        if (t->s.numpairs != 1)
+            TEST_info("Line %d: missing blank line\n", t->s.curr);
         goto top;
     }
 
-    /* Start of a new text.  Look it up. */
-    if (!TEST_ptr(t->meth = find_test(keyword)))
-        goto skiptoend;
-    t->start_line = t->line;
-    if (!t->meth->init(t, value)) {
-        TEST_error("unknown %s: %s\n", keyword, value);
-        goto skiptoend;
+    /* Find the test, based on first keyword. */
+    if (!TEST_ptr(t->meth = find_test(pp->key)))
+        return 0;
+    if (!t->meth->init(t, pp->value)) {
+        TEST_error("unknown %s: %s\n", pp->key, pp->value);
+        return 0;
     }
     if (t->skip == 1) {
-        /* TEST_info("skipping %s %s", keyword, value); */
-        goto skiptoend;
+        /* TEST_info("skipping %s %s", pp->key, pp->value); */
+        return 0;
     }
 
-    /* Read rest of stanza. */
-    for ( ; ; ) {
-        c = read_line(t);
-        if (c == EOF)
-            return c;
-        if (c == '\0')
-            break;
-        if (!split_line(t, &keyword, &value))
-            goto skiptoend;
-        if (strcmp(keyword, "Result") == 0) {
+    for (pp++, i = 1; i < t->s.numpairs; pp++, i++) {
+        if (strcmp(pp->key, "Result") == 0) {
             if (t->expected_err != NULL) {
-                TEST_info("Line %d: multiple result lines", t->line);
-                goto skiptoend;
+                TEST_info("Line %d: multiple result lines", t->s.curr);
+                return 0;
             }
-            if (!TEST_ptr(t->expected_err = OPENSSL_strdup(value)))
-                goto skiptoend;
-        } else if (strcmp(keyword, "Function") == 0) {
+            t->expected_err = take_value(pp);
+        } else if (strcmp(pp->key, "Function") == 0) {
             if (t->func != NULL) {
-                TEST_info("Line %d: multiple function lines\n", t->line);
-                goto skiptoend;
+                TEST_info("Line %d: multiple function lines\n", t->s.curr);
+                return 0;
             }
-            if (!TEST_ptr(t->func = OPENSSL_strdup(value)))
-                goto skiptoend;
-        } else if (strcmp(keyword, "Reason") == 0) {
+            t->func = take_value(pp);
+        } else if (strcmp(pp->key, "Reason") == 0) {
             if (t->reason != NULL) {
-                TEST_info("Line %d: multiple reason lines", t->line);
-                goto skiptoend;
+                TEST_info("Line %d: multiple reason lines", t->s.curr);
+                return 0;
             }
-            if (!TEST_ptr(t->reason = OPENSSL_strdup(value)))
-                goto skiptoend;
+            t->reason = take_value(pp);
         } else {
             /* Must be test specific line: try to parse it */
-            int rv = t->meth->parse(t, keyword, value);
+            int rv = t->meth->parse(t, pp->key, pp->value);
 
             if (rv == 0) {
-                TEST_info("Line %d: unknown keyword %s", t->line, keyword);
-                goto skiptoend;
+                TEST_info("Line %d: unknown keyword %s", t->s.curr, pp->key);
+                return 0;
             }
             if (rv < 0) {
                 TEST_info("Line %d: error processing keyword %s\n",
-                        t->line, keyword);
-                goto skiptoend;
+                        t->s.curr, pp->key);
+                return 0;
             }
         }
     }
 
     return 1;
-
-skiptoend:
-    /* Read to end of stanza and return failure */
-    for ( ; ; ) {
-        c = read_line(t);
-        if (c == EOF)
-            return EOF;
-        if (c == '\0')
-            break;
-    }
-    return 0;
-}
-
-static int do_test_file(const char *testfile)
-{
-    BIO *in;
-    EVP_TEST t;
-    int c;
-
-    set_test_title(testfile);
-    current_test_file = testfile;
-    if (!TEST_ptr(in = BIO_new_file(testfile, "rb")))
-        return 0;
-    memset(&t, 0, sizeof(t));
-    t.in = in;
-
-    TEST_info("Reading %s", testfile);
-    for ( ; ; ) {
-        c = read_stanza(&t);
-        if (t.skip)
-            continue;
-        if (c == 0 || !run_test(&t)) {
-            t.errors++;
-            break;
-        }
-        if (c == EOF)
-            break;
-    }
-    clear_test(&t);
-
-    TEST_info("Completed %d tests with %d errors and %d skipped",
-              t.ntests, t.errors, t.nskip);
-    free_key_list(public_keys);
-    free_key_list(private_keys);
-    BIO_free(t.key);
-    BIO_free(in);
-    return t.errors == 0;
 }
 
 static char * const *testfiles;
 
 static int run_file_tests(int i)
 {
-    return do_test_file(testfiles[i]);
+    EVP_TEST *t;
+    int c;
+
+    if (!TEST_ptr(t = OPENSSL_zalloc(sizeof(*t))))
+        return 0;
+    if (!test_start_file(&t->s, testfiles[i])) {
+        OPENSSL_free(t);
+        return 0;
+    }
+
+    while (!BIO_eof(t->s.fp)) {
+        c = parse(t);
+        if (t->skip)
+            continue;
+        if (c == 0 || !run_test(t)) {
+            t->s.errors++;
+            break;
+        }
+    }
+    test_end_file(&t->s);
+    clear_test(t);
+
+    free_key_list(public_keys);
+    free_key_list(private_keys);
+    BIO_free(t->s.key);
+    c = t->s.errors;
+    OPENSSL_free(t);
+    return c == 0;
 }
 
 int test_main(int argc, char *argv[])

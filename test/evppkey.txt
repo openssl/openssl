@@ -129,7 +129,6 @@ PrivPubKeyPair = DSA-1024:DSA-1024-PUBLIC
 
 
 Title = RSA tests
-
 Sign = RSA-2048
 Ctrl = digest:SHA1
 Input = "0123456789ABCDEF1234"
@@ -588,7 +587,6 @@ Reason = invalid salt length
 
 
 Title = EC tests
-
 Verify = P-256
 Ctrl = digest:SHA1
 Input = "0123456789ABCDEF1234"
@@ -650,7 +648,6 @@ PeerKey=P-256-PUBLIC
 SharedSecret=E3CC07DFBDDE76A1139811DB9FF5FAF9D17EF39944F1E77D1F6A208524BF7B1B
 
 Title = DSA tests
-
 Verify = DSA-1024
 Ctrl = digest:SHA1
 Input = "0123456789ABCDEF1234"
@@ -703,11 +700,11 @@ Output = 3080021500942b8c5850e05b59e24495116b1e8559e51b610e0214237aedf272d91f239
 Result = VERIFY_ERROR
 
 Title = X25519 test vectors (from RFC7748 6.1)
-
 PrivateKey=Alice-25519
 -----BEGIN PRIVATE KEY-----
 MC4CAQAwBQYDK2VuBCIEIHcHbQpzGKV9PBbBclGyZkXfTC+H68CZKrF3+6UduSwq
 -----END PRIVATE KEY-----
+
 PublicKey=Alice-25519-PUBLIC
 -----BEGIN PUBLIC KEY-----
 MCowBQYDK2VuAyEAhSDwCYkwp1R0i33ctD73Wg2/Og0mOBr066SpjqqbTmo=
@@ -719,6 +716,7 @@ PrivateKey=Bob-25519
 -----BEGIN PRIVATE KEY-----
 MC4CAQAwBQYDK2VuBCIEIF2rCH5iSopLeeF/i4OADuZvO7EpJhi2/Rwviyf/iODr
 -----END PRIVATE KEY-----
+
 PublicKey=Bob-25519-PUBLIC
 -----BEGIN PUBLIC KEY-----
 MCowBQYDK2VuAyEA3p7bfXt9wbTTW2HC7OQ1Nz+DQ8hbeGdNrfx+FG+IK08=
@@ -747,10 +745,9 @@ Function = EVP_PKEY_verify_init
 Reason = operation not supported for this keytype
 
 
-Title = RSA PSS/OAEP (from RSASecurity FTP)
 # Additional RSA-PSS and RSA-OAEP tests converted from
 # ftp://ftp.rsasecurity.com/pub/pkcs/pkcs-1/pkcs-1v2-1-vec.zip
-
+Title = RSA PSS/OAEP (from RSASecurity FTP)
 PublicKey=RSA-PSS-1
 -----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQClbkoOcBAXWJpRh9x+qEHRVvLs
@@ -1755,7 +1752,6 @@ Output=eaf1a73a1b0c4609537de69cd9228bbcfb9a8ca8c6c3efaf056fe4a7f4634ed00b7c39ec6
 
 
 Title = ECDH tests (with random keys)
-
 # TEST CURVE secp112r1
 
 PrivateKey=ALICE_secp112r1
@@ -5310,7 +5306,6 @@ SharedSecret=0afecb44d108c9bf2bc159fcc613a1429e3906d5d201d579adc2167058e972ef85f
 
 
 Title = ECDH KATs (from RFC 5114, 5903, 7027)
-
 # Keys and shared secrets from RFC 5114
 PrivateKey=PRIME192V1_RFC5114
 -----BEGIN PRIVATE KEY-----
@@ -5810,8 +5805,6 @@ SharedSecret=A7927098655F1F9976FA50A9D566865DC530331846381C87256BAF3226244B76D36
 # sha256sum(KAS_ECC_CDH_PrimitiveTest.txt) =                           #
 #     456068d3f8aad8ac62a03d19ed3173f00ad51f42b51aeab4753c20f30c01cf23 #
 Title = ECDH KATs (from NIST SP800-56A co-factor ECDH KATs
-
-
 PrivateKey=KAS-ECC-CDH_P-192_C0
 -----BEGIN PRIVATE KEY-----
 MG8CAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQEEVTBTAgEBBBjxfT/qNnt000CFHKQn
@@ -17164,7 +17157,6 @@ SharedSecret=02da266a269bdc8d8b2a0c6bb5762f102fc801c8d5394a9271539136bd81d4b69cf
 
 
 Title = Test keypair mistmatches
-
 PrivPubKeyPair = Alice-25519:Bob-25519-PUBLIC
 Result = KEYPAIR_MISMATCH
 
@@ -17262,7 +17254,6 @@ PrivPubKeyPair = DSA-1024-BIS:DSA-1024-PUBLIC
 Result = KEYPAIR_MISMATCH
 
 Title = DigestSign and DigestVerify
-
 DigestSign = SHA1
 Key = RSA-2048
 Input = "Hello World"
@@ -17327,18 +17318,22 @@ PrivateKey=ED25519-1
 -----BEGIN PRIVATE KEY-----
 MC4CAQAwBQYDK2VwBCIEIJ1hsZ3v/VpguoRK9JLsLMREScVpezJpGXA7rAMcrn9g
 -----END PRIVATE KEY-----
+
 PrivateKey=ED25519-2
 -----BEGIN PRIVATE KEY-----
 MC4CAQAwBQYDK2VwBCIEIEzNCJso/5banbbDRuwRTg9bijGfNaumJNqM9u1PuKb7
 -----END PRIVATE KEY-----
+
 PrivateKey=ED25519-3
 -----BEGIN PRIVATE KEY-----
 MC4CAQAwBQYDK2VwBCIEIMWqjfQ/n4N77bdELzHct7Fm04U1B28JS4XOOi4LRFj3
 -----END PRIVATE KEY-----
+
 PrivateKey=ED25519-4
 -----BEGIN PRIVATE KEY-----
 MC4CAQAwBQYDK2VwBCIEIPXldnzxUzGVF2MPImh2uGyBYMxYO8ATdExr8lX1zA7l
 -----END PRIVATE KEY-----
+
 PrivateKey=ED25519-5
 -----BEGIN PRIVATE KEY-----
 MC4CAQAwBQYDK2VwBCIEIIM/5iQJI3udYux3WHUgkR6adZzsHRl1W32pAbltyj1C
@@ -17348,18 +17343,22 @@ PublicKey=ED25519-1-PUBLIC
 -----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEA11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=
 -----END PUBLIC KEY-----
+
 PublicKey=ED25519-2-PUBLIC
 -----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEAPUAXw+hDiVqStwqnTRt+vJyYLM8uxJaMwM1V8Sr0Zgw=
 -----END PUBLIC KEY-----
+
 PublicKey=ED25519-3-PUBLIC
 -----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEA/FHNjmIYoaONpH7QAjDwWAgW7RO6MwOsXeuRFUiQgCU=
 -----END PUBLIC KEY-----
+
 PublicKey=ED25519-4-PUBLIC
 -----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEAJ4EX/BRMcjQPZ9DyMW6Dhs7/vyskKMnFH+98WX8dQm4=
 -----END PUBLIC KEY-----
+
 PublicKey=ED25519-5-PUBLIC
 -----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEA7Bcrk61eVjv0kyxw4SRQNMNUZ+8u/U1k6/gZaDRn4r8=

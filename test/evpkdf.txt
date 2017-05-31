@@ -13,7 +13,6 @@
 # like this prolog, are ignored.
 
 Title = TLS1 PRF tests (from NIST test vectors)
-
 KDF=TLS1-PRF
 Ctrl.md = md:MD5-SHA1
 Ctrl.Secret = hexsecret:bded7fa5c1699c010be23dd06ada3a48349f21e5f86263d512c0c5cc379f0e780ec55d9844b2f1db02a96453513568d0
@@ -61,7 +60,6 @@ Output = 03
 Result = KDF_DERIVE_ERROR
 
 Title = HKDF tests (from RFC5869 test vectors)
-
 KDF = HKDF
 Ctrl.md = md:SHA256
 Ctrl.IKM = hexkey:0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b
