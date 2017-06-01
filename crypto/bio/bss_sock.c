@@ -11,6 +11,7 @@
 #include <errno.h>
 #include "bio_lcl.h"
 #include "internal/cryptlib.h"
+#include "internal/ktls.h"
 
 #ifndef OPENSSL_NO_SOCK
 
@@ -64,6 +65,17 @@ BIO *BIO_new_socket(int fd, int close_flag)
     if (ret == NULL)
         return NULL;
     BIO_set_fd(ret, fd, close_flag);
+# ifndef OPENSSL_NO_KTLS
+    {
+        /*
+         * The new socket is created successfully regardless of ktls_enable.
+         * ktls_enable doesn't change any functionality of the socket, except
+         * changing the setsockopt to enable the processing of ktls_start.
+         * Thus, it is not a problem to call it for non-TLS sockets.
+         */
+        ktls_enable(fd);
+    }
+# endif
     return ret;
 }
 
@@ -108,10 +120,20 @@ static int sock_read(BIO *b, char *out, int outl)
 
 static int sock_write(BIO *b, const char *in, int inl)
 {
-    int ret;
+    int ret = 0;
 
     clear_socket_error();
-    ret = writesocket(b->num, in, inl);
+# ifndef OPENSSL_NO_KTLS
+    if (BIO_should_ktls_ctrl_msg_flag(b)) {
+        unsigned char record_type = (intptr_t)b->ptr;
+        ret = ktls_send_ctrl_message(b->num, record_type, in, inl);
+        if (ret >= 0) {
+            ret = inl;
+            BIO_clear_ktls_ctrl_msg_flag(b);
+        }
+    } else
+# endif
+        ret = writesocket(b->num, in, inl);
     BIO_clear_retry_flags(b);
     if (ret <= 0) {
         if (BIO_sock_should_retry(ret))
@@ -124,6 +146,9 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     long ret = 1;
     int *ip;
+# ifndef OPENSSL_NO_KTLS
+    struct tls12_crypto_info_aes_gcm_128 *crypto_info;
+# endif
 
     switch (cmd) {
     case BIO_C_SET_FD:
@@ -151,6 +176,25 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_FLUSH:
         ret = 1;
         break;
+# ifndef OPENSSL_NO_KTLS
+    case BIO_CTRL_SET_KTLS_SEND:
+        crypto_info = (struct tls12_crypto_info_aes_gcm_128 *)ptr;
+        ret = ktls_start(b->num, crypto_info, sizeof(*crypto_info), num);
+        if (ret)
+            BIO_set_ktls_flag(b);
+        break;
+    case BIO_CTRL_GET_KTLS_SEND:
+        return BIO_should_ktls_flag(b);
+    case BIO_CTRL_SET_KTLS_SEND_CTRL_MSG:
+        BIO_set_ktls_ctrl_msg_flag(b);
+        b->ptr = (void *)num;
+        ret = 0;
+        break;
+    case BIO_CTRL_CLEAR_KTLS_CTRL_MSG:
+        BIO_clear_ktls_ctrl_msg_flag(b);
+        ret = 0;
+        break;
+# endif
     default:
         ret = 0;
         break;
