@@ -2728,11 +2728,12 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
          * length field (CryptoPro implementations at least till TLS 1.2)
          */
 #ifndef OPENSSL_NO_GOST
-        if ((PACKET_remaining(pkt) == 64
-             && (EVP_PKEY_id(pkey) == NID_id_GostR3410_2001
-                 || EVP_PKEY_id(pkey) == NID_id_GostR3410_2012_256))
-            || (PACKET_remaining(pkt) == 128
-                && EVP_PKEY_id(pkey) == NID_id_GostR3410_2012_512)){
+        if (!SSL_USE_SIGALGS(s)
+            && ((PACKET_remaining(pkt) == 64
+                 && (EVP_PKEY_id(pkey) == NID_id_GostR3410_2001
+                     || EVP_PKEY_id(pkey) == NID_id_GostR3410_2012_256))
+                || (PACKET_remaining(pkt) == 128
+                    && EVP_PKEY_id(pkey) == NID_id_GostR3410_2012_512))) {
             len = PACKET_remaining(pkt);
         } else
 #endif
