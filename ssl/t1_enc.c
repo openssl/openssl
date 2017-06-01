@@ -41,6 +41,10 @@
 #include <openssl/kdf.h>
 #include <openssl/rand.h>
 
+#ifdef OPENSSL_LINUX_TLS
+#  include "netinet/tcp.h" // Add TLS stuff here..
+#endif
+
 /* seed1 through seed5 are concatenated */
 static int tls1_PRF(SSL *s,
                     const void *seed1, int seed1_len,
@@ -121,6 +125,11 @@ int tls1_change_cipher_state(SSL *s, int which)
     EVP_PKEY *mac_key;
     int n, i, j, k, cl;
     int reuse_dd = 0;
+#ifdef OPENSSL_LINUX_TLS
+    struct tls12_crypto_info_aes_gcm_128 crypto_info;
+    BIO *wbio;
+    unsigned char geniv[12];
+#endif
 
     c = s->s3->tmp.new_sym_enc;
     m = s->s3->tmp.new_hash;
@@ -313,6 +322,85 @@ int tls1_change_cipher_state(SSL *s, int which)
         SSLerr(SSL_F_TLS1_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
         goto err2;
     }
+
+#ifdef OPENSSL_LINUX_TLS
+    if (!(which & SSL3_CC_WRITE)) {
+#ifdef SSL_DEBUG
+        printf("\nSkipping offload for non-write context\n");
+#endif // SSL_DEBUG
+        goto skip_offload;
+    }
+    memset(&crypto_info, 0, sizeof(crypto_info));
+
+    /* check that cipher is AES_GCM_128 */
+    if (EVP_CIPHER_mode(c) != EVP_CIPH_GCM_MODE) {
+#ifdef SSL_DEBUG
+        printf("\nGot mode %08lx != GCM, skipping offload\n",
+               EVP_CIPHER_mode(c));
+#endif // SSL_DEBUG
+        goto skip_offload;
+    }
+    crypto_info.info.cipher_type = TLS_CIPHER_AES_GCM_128;
+
+    /* check version is 1.2 */
+    if (s->version != TLS1_2_VERSION) {
+#ifdef SSL_DEBUG
+        printf("\nVersion mismatch got %08x, skipping offload\n", s->version);
+#endif // SSL_DEBUG
+        goto skip_offload;
+    }
+
+    if (EVP_CIPHER_key_length(c) != TLS_CIPHER_AES_GCM_128_KEY_SIZE) {
+#ifdef SSL_DEBUG
+        printf("\nUnexpected key length %d, skipping offload\n",
+               EVP_CIPHER_key_length(c));
+#endif // SSL_DEBUG
+        goto skip_offload;
+    }
+
+    crypto_info.info.version = s->version;
+
+    /* This is not the IV that is used by OpenSSL, but rather the sequence
+     * number. We should actually provide both iv and sequence.
+     */
+    EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GCM_GET_IV, 12, geniv);
+    memcpy(crypto_info.iv, geniv + 4, TLS_CIPHER_AES_GCM_128_IV_SIZE);
+    memcpy(crypto_info.salt, geniv, TLS_CIPHER_AES_GCM_128_SALT_SIZE);
+    memcpy(crypto_info.key, key, EVP_CIPHER_key_length(c));
+    memcpy(crypto_info.rec_seq, &s->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+
+    wbio = s->wbio;
+    if (!wbio) {
+        goto skip_offload;
+    }
+
+    (void)BIO_flush(wbio);
+
+    BIO_set_offload_tx(wbio, &crypto_info);
+
+skip_offload:
+#endif // OPENSSL_LINUX_TLS
+
+#ifdef OPENSSL_SSL_TRACE_CRYPTO
+    if (s->msg_callback) {
+        int wh = which & SSL3_CC_WRITE ? TLS1_RT_CRYPTO_WRITE : 0;
+        if (*mac_secret_size)
+            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_MAC,
+                            mac_secret, *mac_secret_size,
+                            s, s->msg_callback_arg);
+        if (c->key_len)
+            s->msg_callback(2, s->version, wh | TLS1_RT_CRYPTO_KEY,
+                            key, c->key_len, s, s->msg_callback_arg);
+        if (k) {
+            if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
+                wh |= TLS1_RT_CRYPTO_FIXED_IV;
+            else
+                wh |= TLS1_RT_CRYPTO_IV;
+            s->msg_callback(2, s->version, wh, iv, k, s, s->msg_callback_arg);
+        }
+    }
+#endif
 
 #ifdef SSL_DEBUG
     printf("which = %04X\nkey=", which);
