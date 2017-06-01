@@ -493,6 +493,10 @@ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
  * Support Asynchronous operation
  */
 # define SSL_MODE_ASYNC 0x00000100U
+/*
+ * Use the kernel TLS transmission data-path.
+ */
+# define SSL_MODE_NO_KTLS_TX 0x00000200U
 
 /* Cert related flags */
 /*

@@ -10,10 +10,14 @@
 
 #include <stdio.h>
 #include "ssl_locl.h"
+#include "record/record_locl.h"
+#include "internal/ktls.h"
+#include "internal/cryptlib.h"
 #include <openssl/comp.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/rand.h>
+#include <openssl/obj_mac.h>
 
 /* seed1 through seed5 are concatenated */
 static int tls1_PRF(SSL *s,
@@ -98,6 +102,11 @@ int tls1_change_cipher_state(SSL *s, int which)
     EVP_PKEY *mac_key;
     size_t n, i, j, k, cl;
     int reuse_dd = 0;
+#ifndef OPENSSL_NO_KTLS
+    struct tls12_crypto_info_aes_gcm_128 crypto_info;
+    BIO *wbio;
+    unsigned char geniv[12];
+#endif
 
     c = s->s3->tmp.new_sym_enc;
     m = s->s3->tmp.new_hash;
@@ -319,6 +328,68 @@ int tls1_change_cipher_state(SSL *s, int which)
                  ERR_R_INTERNAL_ERROR);
         goto err;
     }
+#ifndef OPENSSL_NO_KTLS
+    if (s->compress)
+        goto skip_ktls;
+
+    if ((which & SSL3_CC_READ) ||
+        ((which & SSL3_CC_WRITE) && (s->mode & SSL_MODE_NO_KTLS_TX)))
+        goto skip_ktls;
+
+    /* ktls supports only the maximum fragment size */
+    if (ssl_get_max_send_fragment(s) != SSL3_RT_MAX_PLAIN_LENGTH)
+        goto skip_ktls;
+
+    /* check that cipher is AES_GCM_128 */
+    if (EVP_CIPHER_nid(c) != NID_aes_128_gcm
+        || EVP_CIPHER_mode(c) != EVP_CIPH_GCM_MODE
+        || EVP_CIPHER_key_length(c) != TLS_CIPHER_AES_GCM_128_KEY_SIZE)
+        goto skip_ktls;
+
+    /* check version is 1.2 */
+    if (s->version != TLS1_2_VERSION)
+        goto skip_ktls;
+
+    wbio = s->wbio;
+    if (!ossl_assert(wbio != NULL)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /* All future data will get encrypted by ktls. Flush the BIO or skip ktls */
+    if (BIO_flush(wbio) <= 0)
+        goto skip_ktls;
+
+    /* ktls doesn't support renegotiation */
+    if (BIO_get_ktls_send(s->wbio)) {
+        SSLfatal(s, SSL_AD_NO_RENEGOTIATION, SSL_F_TLS1_CHANGE_CIPHER_STATE,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    memset(&crypto_info, 0, sizeof(crypto_info));
+    crypto_info.info.cipher_type = TLS_CIPHER_AES_GCM_128;
+    crypto_info.info.version = s->version;
+
+    EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GET_IV,
+                        EVP_GCM_TLS_FIXED_IV_LEN + EVP_GCM_TLS_EXPLICIT_IV_LEN,
+                        geniv);
+    memcpy(crypto_info.iv, geniv + EVP_GCM_TLS_FIXED_IV_LEN,
+           TLS_CIPHER_AES_GCM_128_IV_SIZE);
+    memcpy(crypto_info.salt, geniv, TLS_CIPHER_AES_GCM_128_SALT_SIZE);
+    memcpy(crypto_info.key, key, EVP_CIPHER_key_length(c));
+    memcpy(crypto_info.rec_seq, &s->rlayer.write_sequence,
+           TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+
+    /* ktls works with user provided buffers directly */
+    if (BIO_set_ktls(wbio, &crypto_info, which & SSL3_CC_WRITE)) {
+        ssl3_release_write_buffer(s);
+        SSL_set_options(s, SSL_OP_NO_RENEGOTIATION);
+    }
+
+ skip_ktls:
+#endif                          /* OPENSSL_NO_KTLS */
     s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
 
 #ifdef SSL_DEBUG
