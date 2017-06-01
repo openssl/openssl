@@ -2866,6 +2866,14 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         memcpy(ptr, c->buf, arg);
         return 1;
 
+    case EVP_CTRL_GET_IV:
+        if (gctx->iv_gen != 1)
+            return 0;
+        if (gctx->ivlen != arg)
+            return 0;
+        memcpy(ptr, gctx->iv, arg);
+        return 1;
+
     case EVP_CTRL_GCM_SET_IV_FIXED:
         /* Special case: -1 length restores whole IV */
         if (arg == -1) {

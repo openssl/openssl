@@ -350,6 +350,8 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CTRL_SET_PIPELINE_INPUT_BUFS        0x23
 /* Set the input buffer lengths to use for a pipelined operation */
 # define         EVP_CTRL_SET_PIPELINE_INPUT_LENS        0x24
+/* Get the IV used by the cipher */
+# define         EVP_CTRL_GET_IV                         0x25
 
 /* Padding modes */
 #define EVP_PADDING_PKCS7       1
