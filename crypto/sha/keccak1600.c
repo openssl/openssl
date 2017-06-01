@@ -11,6 +11,8 @@
 #include <string.h>
 #include <assert.h>
 
+#ifndef KECCAK1600_ASM
+
 #define ROL32(a, offset) (((a) << (offset)) | ((a) >> ((32 - (offset)) & 31)))
 
 static uint64_t ROL64(uint64_t val, int offset)
@@ -1066,6 +1068,11 @@ void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r)
         }
     }
 }
+#else
+size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
+                   size_t r);
+void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r);
+#endif
 
 #ifdef SELFTEST
 /*
