@@ -111,23 +111,27 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
     for (currpipe = 0; currpipe < numwpipes; currpipe++) {
         SSL3_BUFFER *thiswb = &wb[currpipe];
 
-        if (thiswb->buf != NULL && thiswb->len != len) {
+        if (thiswb->len != len) {
             OPENSSL_free(thiswb->buf);
             thiswb->buf = NULL;         /* force reallocation */
         }
 
         if (thiswb->buf == NULL) {
-            p = OPENSSL_malloc(len);
-            if (p == NULL) {
-                s->rlayer.numwpipes = currpipe;
-                /*
-                 * We've got a malloc failure, and we're still initialising
-                 * buffers. We assume we're so doomed that we won't even be able
-                 * to send an alert.
-                 */
-                SSLfatal(s, SSL_AD_NO_ALERT,
-                         SSL_F_SSL3_SETUP_WRITE_BUFFER, ERR_R_MALLOC_FAILURE);
-                return 0;
+            if (s->wbio == NULL || !BIO_get_ktls_send(s->wbio)) {
+                p = OPENSSL_malloc(len);
+                if (p == NULL) {
+                    s->rlayer.numwpipes = currpipe;
+                    /*
+                     * We've got a malloc failure, and we're still initialising
+                     * buffers. We assume we're so doomed that we won't even be able
+                     * to send an alert.
+                     */
+                    SSLfatal(s, SSL_AD_NO_ALERT,
+                            SSL_F_SSL3_SETUP_WRITE_BUFFER, ERR_R_MALLOC_FAILURE);
+                    return 0;
+                }
+            } else {
+                p = NULL;
             }
             memset(thiswb, 0, sizeof(SSL3_BUFFER));
             thiswb->buf = p;
@@ -160,7 +164,8 @@ int ssl3_release_write_buffer(SSL *s)
     while (pipes > 0) {
         wb = &RECORD_LAYER_get_wbuf(&s->rlayer)[pipes - 1];
 
-        OPENSSL_free(wb->buf);
+        if (s->wbio == NULL || !BIO_get_ktls_send(s->wbio))
+            OPENSSL_free(wb->buf);
         wb->buf = NULL;
         pipes--;
     }

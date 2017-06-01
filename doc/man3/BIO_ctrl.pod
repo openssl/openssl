@@ -5,7 +5,7 @@
 BIO_ctrl, BIO_callback_ctrl, BIO_ptr_ctrl, BIO_int_ctrl, BIO_reset,
 BIO_seek, BIO_tell, BIO_flush, BIO_eof, BIO_set_close, BIO_get_close,
 BIO_pending, BIO_wpending, BIO_ctrl_pending, BIO_ctrl_wpending,
-BIO_get_info_callback, BIO_set_info_callback, BIO_info_cb
+BIO_get_info_callback, BIO_set_info_callback, BIO_info_cb, BIO_get_ktls_send
 - BIO control operations
 
 =head1 SYNOPSIS
@@ -33,6 +33,8 @@ BIO_get_info_callback, BIO_set_info_callback, BIO_info_cb
 
  int BIO_get_info_callback(BIO *b, BIO_info_cb **cbp);
  int BIO_set_info_callback(BIO *b, BIO_info_cb *cb);
+
+ int BIO_get_ktls_send(BIO *b);
 
 =head1 DESCRIPTION
 
@@ -72,6 +74,9 @@ Not all BIOs support these calls. BIO_ctrl_pending() and BIO_ctrl_wpending()
 return a size_t type and are functions, BIO_pending() and BIO_wpending() are
 macros which call BIO_ctrl().
 
+BIO_get_ktls_send() return 1 if the BIO is using the Kernel TLS data-path for
+sending. Otherwise, it returns zero.
+
 =head1 RETURN VALUES
 
 BIO_reset() normally returns 1 for success and 0 or -1 for failure. File
@@ -91,6 +96,9 @@ BIO_get_close() returns the close flag value: BIO_CLOSE or BIO_NOCLOSE.
 
 BIO_pending(), BIO_ctrl_pending(), BIO_wpending() and BIO_ctrl_wpending()
 return the amount of pending data.
+
+BIO_get_ktls_send() return 1 if the BIO is using the Kernel TLS data-path for
+sending. Otherwise, it returns zero.
 
 =head1 NOTES
 
@@ -123,6 +131,10 @@ Some of the return values are ambiguous and care should be taken. In
 particular a return value of 0 can be returned if an operation is not
 supported, if an error occurred, if EOF has not been reached and in
 the case of BIO_seek() on a file BIO for a successful operation.
+
+=head1 HISTORY
+
+The BIO_get_ktls_send() function was added in OpenSSL 3.0.0.
 
 =head1 COPYRIGHT
 
