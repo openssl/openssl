@@ -289,6 +289,7 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CTRL_GCM_SET_TAG            EVP_CTRL_AEAD_SET_TAG
 # define         EVP_CTRL_GCM_SET_IV_FIXED       EVP_CTRL_AEAD_SET_IV_FIXED
 # define         EVP_CTRL_GCM_IV_GEN             0x13
+# define         EVP_CTRL_GCM_GET_IV             0x14
 # define         EVP_CTRL_CCM_SET_IVLEN          EVP_CTRL_AEAD_SET_IVLEN
 # define         EVP_CTRL_CCM_GET_TAG            EVP_CTRL_AEAD_GET_TAG
 # define         EVP_CTRL_CCM_SET_TAG            EVP_CTRL_AEAD_SET_TAG
