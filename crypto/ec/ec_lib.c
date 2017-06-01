@@ -294,6 +294,7 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
     } else
         BN_zero(group->cofactor);
 
+ 
     /*
      * Some groups have an order with
      * factors of two, which makes the Montgomery setup fail.
