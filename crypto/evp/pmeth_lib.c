@@ -14,6 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509v3.h>
 #include "internal/asn1_int.h"
+#include <openssl/evp.h>
 #include "internal/evp_int.h"
 #include "internal/numbers.h"
 
