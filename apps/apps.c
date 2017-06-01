@@ -301,9 +301,9 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
         /* We know that there is no previous user data to return to us */
         (void)UI_add_user_data(ui, cb_data);
 
-        if (ok >= 0)
-            ok = UI_add_input_string(ui, prompt, ui_flags, buf,
-                                     PW_MIN_LENGTH, bufsiz - 1);
+        ok = UI_add_input_string(ui, prompt, ui_flags, buf,
+                                 PW_MIN_LENGTH, bufsiz - 1);
+
         if (ok >= 0 && verify) {
             buff = app_malloc(bufsiz, "password buffer");
             ok = UI_add_verify_string(ui, prompt, ui_flags, buff,
