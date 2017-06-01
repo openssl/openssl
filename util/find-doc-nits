@@ -24,6 +24,7 @@ our($opt_u);
 our($opt_h);
 our($opt_n);
 our($opt_l);
+our($opt_p);
 
 sub help()
 {
@@ -32,6 +33,7 @@ Find small errors (nits) in documentation.  Options:
     -l Print bogus links
     -n Print nits in POD pages
     -s Also print missing sections in POD pages (implies -n)
+    -p Warn if non-public name documented (implies -n)
     -u List undocumented functions
     -h Print this help message
 EOF
@@ -40,6 +42,7 @@ EOF
 
 my $temp = '/tmp/docnits.txt';
 my $OUT;
+my %public;
 
 my %mandatory_sections =
     ( '*'    => [ 'NAME', 'DESCRIPTION', 'COPYRIGHT' ],
@@ -80,8 +83,10 @@ sub name_synopsis()
     print "$id the following exist as other .pod files:\n",
         join(" ", sort keys %foundfilenames), "\n"
         if %foundfilenames;
-    print "$id $simplename (filename) missing from NAME section\n",
+    print "$id $simplename (filename) missing from NAME section\n"
         unless $foundfilename;
+    print "$id $simplename is not public\n"
+        if $opt_p and !defined $public{$simplename};
 
     # Find all functions in SYNOPSIS
     return unless $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms;
@@ -222,6 +227,7 @@ sub parsenum()
         or die "Can't open $file, $!, stopped";
 
     while ( <$IN> ) {
+        next if /^#/;
         next if /\bNOEXIST\b/;
         next if /\bEXPORT_VAR_AS_FUNC\b/;
         push @apis, $1 if /([^\s]+).\s/;
@@ -229,7 +235,7 @@ sub parsenum()
 
     close $IN;
 
-    print "# Found ", scalar(@apis), " in $file\n";
+    print "# Found ", scalar(@apis), " in $file\n" unless $opt_p;
     return sort @apis;
 }
 
@@ -346,14 +352,29 @@ sub checklinks {
     }
 }
 
-getopts('lnshu');
+sub publicize() {
+    foreach my $name ( &parsenum('util/libcrypto.num') ) {
+        $public{$name} = 1;
+    }
+    foreach my $name ( &parsenum('util/libssl.num') ) {
+        $public{$name} = 1;
+    }
+    foreach my $name ( &parsenum('util/private.num') ) {
+        $public{$name} = 1;
+    }
+}
 
-&help() if ( $opt_h );
+getopts('lnsphu');
 
-die "Need one of -l -n -s or -u flags.\n"
-    unless $opt_l or $opt_n or $opt_s or $opt_u;
+&help() if $opt_h;
 
-if ( $opt_n or $opt_s ) {
+die "Need one of -l -n -s -p or -u flags.\n"
+    unless $opt_l or $opt_n or $opt_s or $opt_p or $opt_u;
+
+$opt_n = 1 if $opt_s or $opt_p;
+
+if ( $opt_n ) {
+    &publicize() if $opt_p;
     foreach (@ARGV ? @ARGV : glob('doc/*/*.pod')) {
         &check($_);
     }
