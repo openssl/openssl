@@ -227,7 +227,7 @@ sub parsenum()
         or die "Can't open $file, $!, stopped";
 
     while ( <$IN> ) {
-	next if /^#/;
+        next if /^#/;
         next if /\bNOEXIST\b/;
         next if /\bEXPORT_VAR_AS_FUNC\b/;
         push @apis, $1 if /([^\s]+).\s/;
