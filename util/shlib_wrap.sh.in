@@ -1,4 +1,4 @@
-#!/bin/sh
+#!{- $config{hashbangsh} -}
 
 [ $# -ne 0 ] || set -x		# debug mode without arguments:-)
 
