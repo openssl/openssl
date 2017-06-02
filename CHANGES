@@ -2,6 +2,11 @@
  OpenSSL CHANGES
  _______________
 
+ This is a high-level summary of the most important changes.
+ For a full list of changes, see the git commit log; for example,
+ https://github.com/openssl/openssl/commits/ and pick the appropriate
+ release branch.
+
  Changes between 1.0.2l and 1.0.2m [xx XXX xxxx]
 
   *)
