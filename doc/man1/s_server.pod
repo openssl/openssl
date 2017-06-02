@@ -333,6 +333,12 @@ Inhibit printing of session and certificate information.
 
 Use the PSK identity hint B<hint> when using a PSK cipher suite.
 
+=item B<-psk_identity identity>
+
+Expect the client to send PSK identity B<identity> when using a PSK
+cipher suite, and warn if they do not.  By default, the expected PSK
+identity is the string "Client_identity".
+
 =item B<-psk key>
 
 Use the PSK key B<key> when using a PSK cipher suite. The key is
