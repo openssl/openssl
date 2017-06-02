@@ -149,7 +149,7 @@ static int dtlslisten = 0;
 static int early_data = 0;
 
 #ifndef OPENSSL_NO_PSK
-static const char psk_identity[] = "Client_identity";
+static char *psk_identity = "Client_identity";
 char *psk_key = NULL;           /* by default PSK is not used */
 
 static unsigned int psk_server_cb(SSL *ssl, const char *identity,
@@ -171,12 +171,12 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
 
     /* here we could lookup the given identity e.g. from a database */
     if (strcmp(identity, psk_identity) != 0) {
-        BIO_printf(bio_s_out, "PSK error: client identity not found"
+        BIO_printf(bio_s_out, "PSK warning: client identity not what we expected"
                    " (got '%s' expected '%s')\n", identity, psk_identity);
-        goto out_err;
-    }
-    if (s_debug)
+    } else {
+      if (s_debug)
         BIO_printf(bio_s_out, "PSK client identity found\n");
+    }
 
     /* convert the PSK key to binary */
     key = OPENSSL_hexstr2buf(psk_key, &key_len);
@@ -715,7 +715,7 @@ typedef enum OPTION_choice {
     OPT_STATUS_TIMEOUT, OPT_STATUS_URL, OPT_STATUS_FILE, OPT_MSG, OPT_MSGFILE,
     OPT_TRACE, OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE,
     OPT_CRLF, OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
-    OPT_NO_RESUME_EPHEMERAL, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
+    OPT_NO_RESUME_EPHEMERAL, OPT_PSK_IDENTITY, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
     OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
     OPT_SSL_CONFIG, 
     OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
@@ -869,6 +869,7 @@ const OPTIONS s_server_options[] = {
     OPT_X_OPTIONS,
     {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
 #ifndef OPENSSL_NO_PSK
+    {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity to expect"},
     {"psk_hint", OPT_PSK_HINT, 's', "PSK identity hint to use"},
     {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
 #endif
@@ -1350,6 +1351,11 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_NO_RESUME_EPHEMERAL:
             no_resume_ephemeral = 1;
+            break;
+        case OPT_PSK_IDENTITY:
+#ifndef OPENSSL_NO_PSK
+            psk_identity = opt_arg();
+#endif
             break;
         case OPT_PSK_HINT:
 #ifndef OPENSSL_NO_PSK
