@@ -633,6 +633,7 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
     APP_INFO *amip;
     int ami_cnt;
     struct tm *lcl = NULL;
+    struct tm result = {0};
     CRYPTO_THREADID ti;
 
 #define BUF_REMAIN (sizeof(buf) - (size_t)(bufp - buf))
@@ -641,8 +642,13 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
         return;
 
     if (options & V_CRYPTO_MDEBUG_TIME) {
+# if defined(OPENSSL_THREADS) && !defined(OPENSSL_SYS_WIN32) && \
+            !defined(OPENSSL_SYS_OS2) && !defined(OPENSSL_SYS_SUNOS) && \
+            (!defined(OPENSSL_SYS_VMS) || defined(localtime_r))
+        lcl = localtime_r(&m->time, &result);
+# else
         lcl = localtime(&m->time);
-
+# endif
         BIO_snprintf(bufp, BUF_REMAIN, "[%02d:%02d:%02d] ",
                      lcl->tm_hour, lcl->tm_min, lcl->tm_sec);
         bufp += strlen(bufp);
