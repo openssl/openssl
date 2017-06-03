@@ -254,6 +254,7 @@ void CRYPTO_free(void *str, const char *file, int line)
 {
     if (free_impl != NULL && free_impl != &CRYPTO_free) {
         free_impl(str, file, line);
+        free(str);
         return;
     }
 
@@ -265,8 +266,10 @@ void CRYPTO_free(void *str, const char *file, int line)
     } else {
         free(str);
     }
+    str = NULL;
 #else
     free(str);
+    str = NULL;
 #endif
 }
 
