@@ -180,11 +180,13 @@ static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
  * FIPS mode.
  */
 
-static int pkey_fips_check_ctx(EVP_PKEY_CTX *ctx)
+static int pkey_fips_check_ctx(EVP_PKEY_CTX *ctx, const EVP_MD **md, const EVP_MD **mgf1md)
 {
     RSA_PKEY_CTX *rctx = ctx->data;
     RSA *rsa = ctx->pkey->pkey.rsa;
     int rv = -1;
+    *md = rctx->md;
+    *mgf1md = rctx->mgf1md;
     if (!FIPS_mode())
         return 0;
     if (rsa->flags & RSA_FLAG_NON_FIPS_ALLOW)
@@ -196,12 +198,14 @@ static int pkey_fips_check_ctx(EVP_PKEY_CTX *ctx)
         fmd = FIPS_get_digestbynid(EVP_MD_type(rctx->md));
         if (!fmd || !(fmd->flags & EVP_MD_FLAG_FIPS))
             return rv;
+        *md = fmd;
     }
     if (rctx->mgf1md && !(rctx->mgf1md->flags & EVP_MD_FLAG_FIPS)) {
         const EVP_MD *fmd;
         fmd = FIPS_get_digestbynid(EVP_MD_type(rctx->mgf1md));
         if (!fmd || !(fmd->flags & EVP_MD_FLAG_FIPS))
             return rv;
+        *mgf1md = fmd;
     }
     return 1;
 }
@@ -216,7 +220,8 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
     RSA *rsa = ctx->pkey->pkey.rsa;
 
 #ifdef OPENSSL_FIPS
-    ret = pkey_fips_check_ctx(ctx);
+    const EVP_MD *md, *mgf1md;
+    ret = pkey_fips_check_ctx(ctx, &md, &mgf1md);
     if (ret < 0) {
         RSAerr(RSA_F_PKEY_RSA_SIGN, RSA_R_OPERATION_NOT_ALLOWED_IN_FIPS_MODE);
         return -1;
@@ -231,10 +236,10 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
 #ifdef OPENSSL_FIPS
         if (ret > 0) {
             unsigned int slen;
-            ret = FIPS_rsa_sign_digest(rsa, tbs, tbslen, rctx->md,
+            ret = FIPS_rsa_sign_digest(rsa, tbs, tbslen, md,
                                        rctx->pad_mode,
                                        rctx->saltlen,
-                                       rctx->mgf1md, sig, &slen);
+                                       mgf1md, sig, &slen);
             if (ret > 0)
                 *siglen = slen;
             else
@@ -351,7 +356,8 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
     size_t rslen;
 #ifdef OPENSSL_FIPS
     int rv;
-    rv = pkey_fips_check_ctx(ctx);
+    const EVP_MD *md, *mgf1md;
+    rv = pkey_fips_check_ctx(ctx, &md, &mgf1md);
     if (rv < 0) {
         RSAerr(RSA_F_PKEY_RSA_VERIFY,
                RSA_R_OPERATION_NOT_ALLOWED_IN_FIPS_MODE);
@@ -363,10 +369,10 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
         if (rv > 0) {
             return FIPS_rsa_verify_digest(rsa,
                                           tbs, tbslen,
-                                          rctx->md,
+                                          md,
                                           rctx->pad_mode,
                                           rctx->saltlen,
-                                          rctx->mgf1md, sig, siglen);
+                                          mgf1md, sig, siglen);
 
         }
 #endif
