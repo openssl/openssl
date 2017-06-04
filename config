@@ -720,6 +720,8 @@ case "$GUESSOS" in
 			*ELF*)	OUT="BSD-x86-elf" ;;
 			*)	OUT="BSD-x86"; options="$options no-sse2" ;;
 			esac ;;
+  x86_64-*-haiku)	OUT="haiku-x86_64" ;;
+  *-*-haiku)		OUT="haiku-x86" ;;
   *-*-*bsd*)		OUT="BSD-generic32" ;;
 
   x86_64-*-haiku)	OUT="haiku-x86_64" ;;
