@@ -27,7 +27,7 @@ static int test_x509_check_cert_pkey(const char *c, const char *k,
     X509 *x509 = NULL;
     X509_REQ *x509_req = NULL;
     EVP_PKEY *pkey = NULL;
-    int ret = 0, type = 0, expected = 0, result;
+    int ret = 0, type = 0, expected = 0, result = 0;
 
     /*
      * we check them first thus if fails we don't need to do
