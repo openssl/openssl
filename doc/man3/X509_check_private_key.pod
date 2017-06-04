@@ -4,7 +4,7 @@
 
 X509_check_private_key, X509_REQ_check_private_key - check the consistency
 of a private key with the public key in an X509 certificate or certificate
-request.
+request
 
 =head1 SYNOPSIS
 
