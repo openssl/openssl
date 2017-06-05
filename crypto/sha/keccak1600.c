@@ -345,9 +345,9 @@ void KeccakF1600(uint64_t A[5][5])
 
 #elif defined(KECCAK_1X_ALT)
 /*
- * This is variant of above KECCAK_1X that presses temporary storage
- * even further, but at cost of more write references to A[5][5].
- * It's less suitable if A[5][5] is memory bound, but better if it's
+ * This is variant of above KECCAK_1X that reduces requirement for
+ * temporary storage even further, but at cost of more updates to A[][].
+ * It's less suitable if A[][] is memory bound, but better if it's
  * register bound.
  */
 
