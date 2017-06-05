@@ -5,9 +5,9 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# LShift1 tests.
-#
 # These test vectors satisfy A * 2 = LShift1
+
+Title = Lshift1 tests
 
 LShift1 = 0
 A = 0
@@ -1213,9 +1213,9 @@ LShift1 = -ab4e80e4b56556d99108eb3cb35f17d1ae83da33b4138619070000000000000000000
 A = -55a740725ab2ab6cc884759e59af8be8d741ed19da09c30c838000000000000000000000000
 
 
-# LShift tests
-#
 # These test vectors satisfy A * 2^N = LShift.
+
+Title = LShift tests
 
 LShift = 18c9e860855d594dcb06d00b7d1933608ba906d85fa2d92c9e0
 A = c64f43042aeaca6e5836805be8c99b045d4836c2fd16c964f0
@@ -2018,9 +2018,9 @@ A = e8e7c5ae65d7333de82bcbfdd7cea60ffb11e600aa3088ec8e
 N = 64
 
 
-# RShift tests
-#
 # These test vectors satisfy A / 2^N = RShift, rounding towards zero.
+
+Title = RShift tests
 
 Rshift = 0
 A = -1

@@ -402,4 +402,48 @@ void test_openssl_errors(void);
 extern BIO *bio_out;
 extern BIO *bio_err;
 
+/*
+ * Utilities to parse a test file.
+ */
+#define TESTMAXPAIRS        20
+
+typedef struct pair_st {
+    char *key;
+    char *value;
+} PAIR;
+
+typedef struct stanza_st {
+    const char *test_file;      /* Input file name */
+    BIO *fp;                    /* Input file */
+    int curr;                   /* Current line in file */
+    int start;                  /* Line where test starts */
+    int errors;                 /* Error count */
+    int numtests;               /* Number of tests */
+    int numskip;                /* Number of skipped tests */
+    int numpairs;
+    PAIR pairs[TESTMAXPAIRS];
+    BIO *key;                   /* temp memory BIO for reading in keys */
+    char buff[4096];            /* Input buffer for a single key/value */
+} STANZA;
+
+/*
+ * Prepare to start reading the file |testfile| as input.
+ */
+int test_start_file(STANZA *s, const char *testfile);
+int test_end_file(STANZA *s);
+
+/*
+ * Read a stanza from the test file.  A stanza consists of a block
+ * of lines of the form 
+ *      key = value
+ * The block is terminated by EOF or a blank line.
+ * Return 1 if found, 0 on EOF or error.
+ */
+int test_readstanza(STANZA *s);
+
+/*
+ * Clear a stanza, release all allocated memory.
+ */
+void test_clearstanza(STANZA *s);
+
 #endif                          /* HEADER_TESTUTIL_H */
