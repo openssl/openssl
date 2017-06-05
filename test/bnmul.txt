@@ -8,6 +8,7 @@
 # These test vectors satisfy A^2 = Square.
 
 Title = Square tests.
+
 # Regression test for a BN_sqr overflow bug.
 Square = 4000000000000000800000000000000240000000000000000000000000000001fffffffffffffff8000000000000000400000000000000000000000000000000
 A = 80000000000000008000000000000001fffffffffffffffe0000000000000000
@@ -320,6 +321,7 @@ A = -3dcb44be1e54c5a5d7db48055ca9afa1ebe2ae648aa6e16ac497502a7deee09ffa124720fad
 # These test vectors satisfy A * B = Product.
 
 Title = Product tests
+
 Product = 5befab3320f8f90542f3120235abd926aac3805a19e343f690
 A = b057af553afb120db6b7764f8
 B = 857734c4c27a1d17f7cf59dee

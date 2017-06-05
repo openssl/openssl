@@ -13,6 +13,7 @@
 # like this prolog, are ignored.
 
 Title = scrypt tests (from draft-josefsson-scrypt-kdf-03 and others)
+
 PBE = scrypt
 Password = ""
 Salt = ""
@@ -52,6 +53,7 @@ Result = SCRYPT_ERROR
 #maxmem = 10000000000
 
 Title = PKCS12 tests
+
 PBE = pkcs12
 id = 1
 iter = 1
@@ -101,6 +103,7 @@ Salt = 263216FCC2FAB31C
 Key = 5EC4C7A80DF652294C3925B6489A7AB857C83476
 
 Title = PBKDF2 tests
+
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -207,6 +210,7 @@ MD = sha512
 Key = 9d9e9c4cd21fe4be24d5b8244c759665
 
 Title = PBKDF2 tests for empty and NULL inputs
+
 PBE = pbkdf2
 Password = ""
 Salt = "salt"
