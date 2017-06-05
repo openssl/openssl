@@ -98,7 +98,7 @@ static BIGNUM *getBN(STANZA *s, const char *attribute)
     BIGNUM *ret = NULL;
 
     if ((hex = findattr(s, attribute)) == NULL) {
-        TEST_error("Can't find %s in test at line %d", attribute, s->start);
+        TEST_error("%s:%d: Can't find %s", s->test_file, s->start, attribute);
         return NULL;
     }
 
@@ -1992,13 +1992,14 @@ static int file_test_run(STANZA *s)
     for ( ; --numtests >= 0; tp++) {
         if (findattr(s, tp->name) != NULL) {
             if (!tp->func(s)) {
-                TEST_info("Failed %s test at %d", tp->name, s->start);
+                TEST_info("%s:%d: Failed %s test",
+                          s->test_file, s->start, tp->name);
                 return 0;
             }
             return 1;
         }
     }
-    TEST_info("Unknown test at %d", s->start);
+    TEST_info("%s:%d: Unknown test", s->test_file, s->start);
     return 0;
 }
 

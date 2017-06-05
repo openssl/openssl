@@ -2136,25 +2136,23 @@ static int check_test_error(EVP_TEST *t)
         return 1;
     if (t->err != NULL && t->expected_err == NULL) {
         if (t->aux_err != NULL) {
-            TEST_info("Above error from the test at %s:%d "
-                      "(%s) unexpected error %s",
+            TEST_info("%s:%d: Source of above error (%s); unexpected error %s",
                       t->s.test_file, t->s.start, t->aux_err, t->err);
         } else {
-            TEST_info("Above error from the test at %s:%d "
-                      "unexpected error %s",
+            TEST_info("%s:%d: Source of above error; unexpected error %s",
                       t->s.test_file, t->s.start, t->err);
         }
         return 0;
     }
     if (t->err == NULL && t->expected_err != NULL) {
-        TEST_info("Test line %d: succeeded but was expecting %s",
-                  t->s.start, t->expected_err);
+        TEST_info("%s:%d: Succeeded but was expecting %s",
+                  t->s.test_file, t->s.start, t->expected_err);
         return 0;
     }
 
     if (strcmp(t->err, t->expected_err) != 0) {
-        TEST_info("Test line %d: expecting %s got %s",
-                  t->s.start, t->expected_err, t->err);
+        TEST_info("%s:%d: Expected %s got %s",
+                  t->s.test_file, t->s.start, t->expected_err, t->err);
         return 0;
     }
 
@@ -2162,32 +2160,32 @@ static int check_test_error(EVP_TEST *t)
         return 1;
 
     if (t->func == NULL || t->reason == NULL) {
-        TEST_info("Test line %d: missing function or reason code",
-                  t->s.start);
+        TEST_info("%s:%d: Test is missing function or reason code",
+                  t->s.test_file, t->s.start);
         return 0;
     }
 
     err = ERR_peek_error();
     if (err == 0) {
-        TEST_info("Test line %d, expected error \"%s:%s\" not set",
-                  t->s.start, t->func, t->reason);
+        TEST_info("%s:%d: Expected error \"%s:%s\" not set",
+                  t->s.test_file, t->s.start, t->func, t->reason);
         return 0;
     }
 
     func = ERR_func_error_string(err);
     reason = ERR_reason_error_string(err);
     if (func == NULL && reason == NULL) {
-        TEST_info("Test line %d: expected error \"%s:%s\","
-                  " no strings available.  Skipping...\n",
-                  t->s.start, t->func, t->reason);
+        TEST_info("%s:%d: Expected error \"%s:%s\", no strings available."
+                  " Assuming ok.",
+                  t->s.test_file, t->s.start, t->func, t->reason);
         return 1;
     }
 
     if (strcmp(func, t->func) == 0 && strcmp(reason, t->reason) == 0)
         return 1;
 
-    TEST_info("Test line %d: expected error \"%s:%s\", got \"%s:%s\"",
-              t->s.start, t->func, t->reason, func, reason);
+    TEST_info("%s:%d: Expected error \"%s:%s\", got \"%s:%s\"",
+              t->s.test_file, t->s.start, t->func, t->reason, func, reason);
 
     return 0;
 }
@@ -2205,7 +2203,8 @@ static int run_test(EVP_TEST *t)
     } else {
         /* run the test */
         if (t->err == NULL && t->meth->run_test(t) != 1) {
-            TEST_info("Line %d error %s", t->s.start, t->meth->name);
+            TEST_info("%s:%d %s error",
+                      t->s.test_file, t->s.start, t->meth->name);
             return 0;
         }
         if (!check_test_error(t)) {
