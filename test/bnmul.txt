@@ -5,9 +5,9 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Square tests.
-#
 # These test vectors satisfy A^2 = Square.
+
+Title = Square tests.
 
 # Regression test for a BN_sqr overflow bug.
 Square = 4000000000000000800000000000000240000000000000000000000000000001fffffffffffffff8000000000000000400000000000000000000000000000000
@@ -318,9 +318,9 @@ Square = eea8028b26e0df090504d54da714a6f5f2695202e53cff479c78aedd47a8dc676243ec5
 A = -3dcb44be1e54c5a5d7db48055ca9afa1ebe2ae648aa6e16ac497502a7deee09ffa124720fad0ab163ce8b3ea6a90f110ea52b67dbc424d0cf1e8c9726dfd9e45bebcefaa5cd5706edeed27896525f31c6bbea3d67ee97badefabf3e2532470b66e3ae3100f66ddf50cf02fc3a8e3f44c304251d3b6a7ca3a6e4bd5d16a41bd97a4
 
 
-# Product tests.
-#
 # These test vectors satisfy A * B = Product.
+
+Title = Product tests
 
 Product = 5befab3320f8f90542f3120235abd926aac3805a19e343f690
 A = b057af553afb120db6b7764f8

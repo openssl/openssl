@@ -5,11 +5,10 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Modulus tests.
-
-# ModMul tests.
-#
 # These test vectors satisfy A * B = ModMul (mod M) and 0 <= ModMul < M.
+
+Title = ModMul tests
+
 
 ModMul = ae2ca2ce7addaee2e2b7752e286b2bb6a58b51cfbed5c924f00398e59ec36fe6341cd83da43a33a12410f45f6228079c4aeb3912be87e2e81fa1799151bfa0fea29873097475b2c3efa312145d0bf7e51b2a7c9bc961a4f4dcf0c883ff90b919b87c21099fba40257645be31f95a3a277
 A = 6b18497fed9befdf22a01d988d34213f6687d8a96e86c188dea4172e7c6095a0d18d3c86c0f5a1af9c6e3aaeb6baac2a510930b3ed06ec78ec2e12b
@@ -2012,9 +2011,9 @@ B = 8bdfa8fe5ef3b2ad02bc63c4d
 M = 84daecf412b8c50ad6dfdb546c3eb783dcc6f32003eda914bb
 
 
-# ModExp tests.
-#
 # These test vectors satisfy A ^ E = ModExp (mod M) and 0 <= ModExp < M.
+
+Title = ModExp tests
 
 # Regression test for carry propagation bug in sqr8x_reduction.
 ModExp = 19324b647d967d644b3219
@@ -2476,10 +2475,10 @@ E = d7e6df5d755284929b986cd9b61c9c2c8843f24c711fbdbae1a468edcae15940094372557072
 M = e4e784aa1fa88625a43ba0185a153a929663920be7fe674a4d33c943d3b898cff051482e7050a070cede53be5e89f31515772c7aea637576f99f82708f89d9e244f6ad3a24a02cbe5c0ff7bcf2dad5491f53db7c3f2698a7c41b44f086652f17bb05fe4c5c0a92433c34086b49d7e1825b28bab6c5a9bd0bc95b53d659afa0d7
 
 
-# ModSqrt tests.
-#
 # These test vectors satisfy (ModSqrt * ModSqrt) mod P = A mod P with P a prime.
 # ModSqrt is in [0, (P-1)/2].
+
+Title = ModSqrt
 
 ModSqrt = 1
 A = 1
