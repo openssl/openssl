@@ -45,85 +45,61 @@ static int test_x509_check_cert_pkey(const char *c, const char *k,
     if (strcmp(e, "ok") == 0) {
         expected = 1;
     } else if (strcmp(e, "failed") == 0) {
-        expected = 2;
+        expected = 0;
     } else {
         TEST_error("invalid 'expected'");
         goto failed;
     }
 
     /* process private key */
-    bio = BIO_new_file(k, "r");
-    if (bio == NULL) {
-        TEST_error("create BIO for private key failed");
+    if (!TEST_ptr(bio = BIO_new_file(k, "r")))
         goto failed;
-    }
 
-    pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
-    if (pkey == NULL) {
-        TEST_error("read PEM private key failed");
+    if (!TEST_ptr(pkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL)))
         goto failed;
-    }
 
     BIO_free(bio);
 
     /* process cert or cert request, use the same local var */
-    bio = BIO_new_file(c, "r");
-    if (bio == NULL) {
-        TEST_error("create BIO for cert or cert req failed");
+    if (!TEST_ptr(bio = BIO_new_file(c, "r")))
+        goto failed;
+
+    switch (type) {
+    case 1:
+        x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+        if (x509 == NULL) {
+            TEST_error("read PEM x509 failed");
+            goto failed;
+        }
+
+        result = X509_check_private_key(x509, pkey);
+        break;
+    case 2:
+        x509_req = PEM_read_bio_X509_REQ(bio, NULL, NULL, NULL);
+        if (x509_req == NULL) {
+            TEST_error("read PEM x509 req failed");
+            goto failed;
+        }
+
+        result = X509_REQ_check_private_key(x509_req, pkey);
+        break;
+    default:
+        /* should never be here */
+        break;
+    }
+
+    if (!TEST_int_eq(result, expected)) {
+        TEST_error("check private key: expected: %d, got: %d", expected, result);
         goto failed;
     }
 
-    switch (type) {
-        case 1:
-            x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
-            if (x509 == NULL) {
-                TEST_error("read PEM x509 failed");
-                goto failed;
-            }
-
-            result = X509_check_private_key(x509, pkey);
-            break;
-        case 2:
-            x509_req = PEM_read_bio_X509_REQ(bio, NULL, NULL, NULL);
-            if (x509_req == NULL) {
-                TEST_error("read PEM x509 req failed");
-                goto failed;
-            }
-
-            result = X509_REQ_check_private_key(x509_req, pkey);
-            break;
-        default:
-            /* should never be here */
-            break;
-    }
-
-    if (expected == 1) {
-        /* expected == 1 means we expect an "ok" */
-        if (!TEST_int_eq(result, 1)) {
-            TEST_error("check private key: expected: 1, got: %d", result);
-            goto failed;
-        }
-    } else {
-        if (!TEST_int_eq(result, 0)) {
-            TEST_error("check private key: expected: 0, got: %d", result);
-            goto failed;
-        }
-    }
-
-out:
-    if (bio)
-        BIO_free(bio);
-    if (x509)
-        X509_free(x509);
-    if (x509_req)
-        X509_REQ_free(x509_req);
-    if (pkey)
-        EVP_PKEY_free(pkey);
-    return ret;
-
-failed:
     ret = 1;
-    goto out;
+failed:
+    BIO_free(bio);
+    X509_free(x509);
+    X509_REQ_free(x509_req);
+    EVP_PKEY_free(pkey);
+    return ret;
 }
 
 int test_main(int argc, char **argv)
@@ -134,5 +110,5 @@ int test_main(int argc, char **argv)
         return 1;
     }
 
-    return test_x509_check_cert_pkey(argv[1], argv[2], argv[3], argv[4]);
+    return !test_x509_check_cert_pkey(argv[1], argv[2], argv[3], argv[4]);
 }
