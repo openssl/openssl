@@ -387,6 +387,11 @@ typedef struct srtp_protection_profile_st {
 
 DECLARE_STACK_OF(SRTP_PROTECTION_PROFILE)
 
+/* section 4.1.1 - RFC 5764 */
+typedef struct srtp_mki_param_st {
+	unsigned char mki_length;
+	unsigned char mki_value[255]; /*max lenght of mki value is 255 bytes*/
+} SRTP_MKI_PARAM;
 typedef int (*tls_session_ticket_ext_cb_fn) (SSL *s,
                                              const unsigned char *data,
                                              int len, void *arg);
@@ -1143,6 +1148,11 @@ struct ssl_ctx_st {
 #   endif
     /* SRTP profiles we are willing to do from RFC 5764 */
     STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
+	/* Refer section 4.1.1 from RFC 5764
+	   The srtp_mki field is associated
+		with the SRTP master keys derived from the dtls handshake*/
+	unsigned char mki_length;
+	unsigned char mki_value[255];
 
     /*
      * ALPN information (we are in the process of transitioning from NPN to

@@ -132,11 +132,13 @@ extern "C" {
 
 # ifndef OPENSSL_NO_SRTP
 
-int SSL_CTX_set_tlsext_use_srtp(SSL_CTX *ctx, const char *profiles);
+int SSL_CTX_set_tlsext_use_srtp(SSL_CTX *ctx, const char *profiles, SRTP_MKI_PARAM *srtp_mki_param);
 int SSL_set_tlsext_use_srtp(SSL *ctx, const char *profiles);
 
 STACK_OF(SRTP_PROTECTION_PROFILE) *SSL_get_srtp_profiles(SSL *ssl);
 SRTP_PROTECTION_PROFILE *SSL_get_selected_srtp_profile(SSL *s);
+int SSL_get_srtp_mki_param(SSL *s, SRTP_MKI_PARAM *srtp_mki_param);
+
 
 # endif
 

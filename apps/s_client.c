@@ -1304,7 +1304,7 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_SRTP
     if (srtp_profiles != NULL)
-        SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles);
+        SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles, NULL);
 #endif
     if (exc)
         ssl_ctx_set_excert(ctx, exc);

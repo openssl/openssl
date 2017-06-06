@@ -206,8 +206,14 @@ static int ssl_ctx_make_profiles(const char *profiles_string,
     return 0;
 }
 
-int SSL_CTX_set_tlsext_use_srtp(SSL_CTX *ctx, const char *profiles)
+int SSL_CTX_set_tlsext_use_srtp(SSL_CTX *ctx, const char *profiles, SRTP_MKI_PARAM *srtp_mki_param)
 {
+	memset(ctx->mki_value,0,255);
+	ctx->mki_length = 0;
+	if(srtp_mki_param != NULL){
+		memcpy(ctx->mki_value,srtp_mki_param->mki_value,srtp_mki_param->mki_length);
+		ctx->mki_length = srtp_mki_param->mki_length;
+	}
     return ssl_ctx_make_profiles(profiles, &ctx->srtp_profiles);
 }
 
@@ -227,11 +233,23 @@ STACK_OF(SRTP_PROTECTION_PROFILE) *SSL_get_srtp_profiles(SSL *s)
     }
 
     return NULL;
+
 }
 
 SRTP_PROTECTION_PROFILE *SSL_get_selected_srtp_profile(SSL *s)
 {
     return s->srtp_profile;
+}
+
+int SSL_get_srtp_mki_param(SSL *s, SRTP_MKI_PARAM *srtp_mki_param)
+{
+	if( srtp_mki_param ) {
+		memset(srtp_mki_param->mki_value, 0, 255);
+		memcpy(srtp_mki_param->mki_value, s->ctx->mki_value, s->ctx->mki_length);
+		srtp_mki_param->mki_length = s->ctx->mki_length;
+		return 0;
+	}
+	return 1 ;
 }
 
 /*
@@ -255,7 +273,7 @@ int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
             return 1;
         }
 
-        if ((2 + ct * 2 + 1) > maxlen) {
+       if ((2 + ct * 2 + 1 + s->ctx->mki_length) > maxlen) {
             SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_USE_SRTP_EXT,
                    SSL_R_SRTP_PROTECTION_PROFILE_LIST_TOO_LONG);
             return 1;
@@ -268,11 +286,14 @@ int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
             s2n(prof->id, p);
         }
 
-        /* Add an empty use_mki value */
-        *p++ = 0;
-    }
+        /* Add use_mki value */
+		*p++ = s->ctx->mki_length;
+		for(i = 0 ; i < s->ctx->mki_length ; i++) {
+			*p++ = s->ctx->mki_value[i];
+		}
+	}
 
-    *len = 2 + ct * 2 + 1;
+	*len = 2 + ct * 2 + 1 + s->ctx->mki_length;
 
     return 0;
 }
@@ -341,12 +362,15 @@ int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,
         }
     }
 
-    /*
-     * Now extract the MKI value as a sanity check, but discard it for now
+	/*
+     * Now extract the MKI value
      */
-    mki_len = *d;
-    d++;
-    len--;
+	mki_len = s->ctx->mki_length = *d++;
+	len--;
+	for(i = 0; i < len ; i++) {
+		s->ctx->mki_value[i] = *d++;
+	}
+
 
     if (mki_len != len) {
         SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_USE_SRTP_EXT,
@@ -361,8 +385,9 @@ int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,
 int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
                                      int maxlen)
 {
+	int i=0;
     if (p) {
-        if (maxlen < 5) {
+        if (maxlen < (5 + s->ctx->mki_length)) {
             SSLerr(SSL_F_SSL_ADD_SERVERHELLO_USE_SRTP_EXT,
                    SSL_R_SRTP_PROTECTION_PROFILE_LIST_TOO_LONG);
             return 1;
@@ -375,10 +400,13 @@ int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len,
         }
         s2n(2, p);
         s2n(s->srtp_profile->id, p);
-        *p++ = 0;
-    }
-    *len = 5;
 
+		*p++ = s->ctx->mki_length;
+		for( i = 0 ; i < s->ctx->mki_length ; i++) {
+			*p++ = s->ctx->mki_value[i];
+		}
+    }
+	*len = 5 + s->ctx->mki_length;
     return 0;
 }
 
@@ -388,11 +416,12 @@ int ssl_parse_serverhello_use_srtp_ext(SSL *s, unsigned char *d, int len,
     unsigned id;
     int i;
     int ct;
+	int mki_len;
 
     STACK_OF(SRTP_PROTECTION_PROFILE) *clnt;
     SRTP_PROTECTION_PROFILE *prof;
 
-    if (len != 5) {
+    if (len != (5 + s->ctx->mki_length)) {
         SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_USE_SRTP_EXT,
                SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
         *al = SSL_AD_DECODE_ERROR;
@@ -408,7 +437,11 @@ int ssl_parse_serverhello_use_srtp_ext(SSL *s, unsigned char *d, int len,
     }
 
     n2s(d, id);
-    if (*d) {                   /* Must be no MKI, since we never offer one */
+
+	mki_len = *d++;
+	if ((mki_len != s->ctx->mki_length ) ||
+		((mki_len > 0) &&  ( 0 != memcmp(s->ctx->mki_value,d,s->ctx->mki_length)))) {
+		/*  MKI length and value offered should match with answer */
         SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_USE_SRTP_EXT,
                SSL_R_BAD_SRTP_MKI_VALUE);
         *al = SSL_AD_ILLEGAL_PARAMETER;
@@ -424,6 +457,7 @@ int ssl_parse_serverhello_use_srtp_ext(SSL *s, unsigned char *d, int len,
         *al = SSL_AD_DECODE_ERROR;
         return 1;
     }
+
 
     /*
      * Check to see if the server gave us something we support (and
