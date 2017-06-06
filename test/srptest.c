@@ -22,7 +22,7 @@ static void showbn(const char *name, const BIGNUM *bn)
 {
     BIO *b;
     const char *text;
-    
+
     if (!TEST_ptr(b = BIO_new(BIO_s_mem())))
         return;
     BIO_write(b, name, strlen(name));
@@ -53,7 +53,7 @@ static int run_srp(const char *username, const char *client_pass,
     unsigned char rand_tmp[RANDOM_SIZE];
     /* use builtin 1024-bit params */
     const SRP_gN *GN;
-    
+
     if (!TEST_ptr(GN = SRP_get_default_gN("1024")))
         return 0;
 
@@ -158,7 +158,7 @@ static int run_srp_kat(void)
     BIGNUM *Kserver = NULL;
     /* use builtin 1024-bit params */
     const SRP_gN *GN;
-        
+
     if (!TEST_ptr(GN = SRP_get_default_gN("1024")))
         goto err;
     BN_hex2bn(&s, "BEB25379D1A8581EB5A727673A2441EE");

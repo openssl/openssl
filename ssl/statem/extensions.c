@@ -91,7 +91,7 @@ typedef struct extensions_definition_st {
 
 /*
  * Definitions of all built-in extensions. NOTE: Changes in the number or order
- * of these extensions should be mirrored with equivalent changes to the 
+ * of these extensions should be mirrored with equivalent changes to the
  * indexes ( TLSEXT_IDX_* ) defined in ssl_locl.h.
  * Each extension has an initialiser, a client and
  * server side parser and a finaliser. The initialiser is called (if the

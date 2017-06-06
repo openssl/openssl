@@ -199,7 +199,7 @@ static const char *bad_configurations[] = {
 static int test_bad_configuration(int idx)
 {
     SSL_TEST_CTX *ctx;
-    
+
     if (!TEST_ptr_null(ctx = SSL_TEST_CTX_create(conf,
                                                  bad_configurations[idx]))) {
         SSL_TEST_CTX_free(ctx);

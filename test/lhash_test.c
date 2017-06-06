@@ -80,7 +80,7 @@ static int test_int_lhash(void)
         { 999,      1 },
         { 37,       0 },
         { 1,        0 },
-        { 34,       1 }     
+        { 34,       1 }
     };
     const unsigned int n_dels = OSSL_NELEM(dels);
     LHASH_OF(int) *h = lh_int_new(&int_hash, &int_cmp);
@@ -133,7 +133,7 @@ static int test_int_lhash(void)
             TEST_info("lhash int doall %d", i);
             goto end;
         }
-    
+
     /* do_all_arg */
     memset(int_found, 0, sizeof(int_found));
     lh_int_doall_short(h, int_doall_arg, int_found);
@@ -142,7 +142,7 @@ static int test_int_lhash(void)
             TEST_info("lhash int doall arg %d", i);
             goto end;
         }
-    
+
     /* delete */
     for (i = 0; i < n_dels; i++) {
         const int b = lh_int_delete(h, &dels[i].data) == NULL;
