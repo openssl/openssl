@@ -1566,6 +1566,68 @@ static int tls_early_post_process_client_hello(SSL *s, int *pal)
 
     s->hit = 0;
 
+    if (!ssl_cache_cipherlist(s, &clienthello->ciphersuites,
+                              clienthello->isv2, &al) ||
+        !bytes_to_cipher_list(s, &clienthello->ciphersuites, &ciphers, &scsvs,
+                             clienthello->isv2, &al)) {
+        goto err;
+    }
+
+    s->s3->send_connection_binding = 0;
+    /* Check what signalling cipher-suite values were received. */
+    if (scsvs != NULL) {
+        for(i = 0; i < sk_SSL_CIPHER_num(scsvs); i++) {
+            c = sk_SSL_CIPHER_value(scsvs, i);
+            if (SSL_CIPHER_get_id(c) == SSL3_CK_SCSV) {
+                if (s->renegotiate) {
+                    /* SCSV is fatal if renegotiating */
+                    SSLerr(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO,
+                           SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING);
+                    al = SSL_AD_HANDSHAKE_FAILURE;
+                    goto err;
+                }
+                s->s3->send_connection_binding = 1;
+            } else if (SSL_CIPHER_get_id(c) == SSL3_CK_FALLBACK_SCSV &&
+                       !ssl_check_version_downgrade(s)) {
+                /*
+                 * This SCSV indicates that the client previously tried
+                 * a higher version.  We should fail if the current version
+                 * is an unexpected downgrade, as that indicates that the first
+                 * connection may have been tampered with in order to trigger
+                 * an insecure downgrade.
+                 */
+                SSLerr(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO,
+                       SSL_R_INAPPROPRIATE_FALLBACK);
+                al = SSL_AD_INAPPROPRIATE_FALLBACK;
+                goto err;
+            }
+        }
+    }
+
+    /* For TLSv1.3 we must select the ciphersuite *before* session resumption */
+    if (SSL_IS_TLS13(s)) {
+        const SSL_CIPHER *cipher =
+            ssl3_choose_cipher(s, ciphers, SSL_get_ciphers(s));
+
+        if (cipher == NULL) {
+            SSLerr(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO,
+                   SSL_R_NO_SHARED_CIPHER);
+            al = SSL_AD_HANDSHAKE_FAILURE;
+            goto err;
+        }
+        if (s->hello_retry_request && s->s3->tmp.new_cipher != NULL
+                && s->s3->tmp.new_cipher->id != cipher->id) {
+            /*
+             * A previous HRR picked a different ciphersuite to the one we
+             * just selected. Something must have changed.
+             */
+            al = SSL_AD_ILLEGAL_PARAMETER;
+            SSLerr(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO, SSL_R_BAD_CIPHER);
+            goto err;
+        }
+        s->s3->tmp.new_cipher = cipher;
+    }
+
     /* We need to do this before getting the session */
     if (!tls_parse_extension(s, TLSEXT_IDX_extended_master_secret,
                              SSL_EXT_CLIENT_HELLO,
@@ -1609,48 +1671,9 @@ static int tls_early_post_process_client_hello(SSL *s, int *pal)
         }
     }
 
-    if (!ssl_cache_cipherlist(s, &clienthello->ciphersuites,
-                              clienthello->isv2, &al) ||
-        !bytes_to_cipher_list(s, &clienthello->ciphersuites, &ciphers, &scsvs,
-                             clienthello->isv2, &al)) {
-        goto err;
-    }
-
-    s->s3->send_connection_binding = 0;
-    /* Check what signalling cipher-suite values were received. */
-    if (scsvs != NULL) {
-        for(i = 0; i < sk_SSL_CIPHER_num(scsvs); i++) {
-            c = sk_SSL_CIPHER_value(scsvs, i);
-            if (SSL_CIPHER_get_id(c) == SSL3_CK_SCSV) {
-                if (s->renegotiate) {
-                    /* SCSV is fatal if renegotiating */
-                    SSLerr(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO,
-                           SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING);
-                    al = SSL_AD_HANDSHAKE_FAILURE;
-                    goto err;
-                }
-                s->s3->send_connection_binding = 1;
-            } else if (SSL_CIPHER_get_id(c) == SSL3_CK_FALLBACK_SCSV &&
-                       !ssl_check_version_downgrade(s)) {
-                /*
-                 * This SCSV indicates that the client previously tried
-                 * a higher version.  We should fail if the current version
-                 * is an unexpected downgrade, as that indicates that the first
-                 * connection may have been tampered with in order to trigger
-                 * an insecure downgrade.
-                 */
-                SSLerr(SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO,
-                       SSL_R_INAPPROPRIATE_FALLBACK);
-                al = SSL_AD_INAPPROPRIATE_FALLBACK;
-                goto err;
-            }
-        }
-    }
-
     /*
-     * If it is a hit, check that the cipher is in the list. In TLSv1.3 we can
-     * resume with a differnt cipher as long as the hash is the same so this
-     * check does not apply.
+     * If it is a hit, check that the cipher is in the list. In TLSv1.3 we check
+     * ciphersuite compatibility with the session as part of resumption.
      */
     if (!SSL_IS_TLS13(s) && s->hit) {
         j = 0;
@@ -1720,7 +1743,11 @@ static int tls_early_post_process_client_hello(SSL *s, int *pal)
         }
     }
 
-    if (!s->hit && s->version >= TLS1_VERSION && s->ext.session_secret_cb) {
+    if (!s->hit
+            && s->version >= TLS1_VERSION
+            && !SSL_IS_TLS13(s)
+            && !SSL_IS_DTLS(s)
+            && s->ext.session_secret_cb) {
         const SSL_CIPHER *pref_cipher = NULL;
         /*
          * s->session->master_key_length is a size_t, but this is an int for
@@ -1962,7 +1989,7 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
     if (wst == WORK_MORE_B) {
         if (!s->hit || SSL_IS_TLS13(s)) {
             /* Let cert callback update server certificates if required */
-            if (s->cert->cert_cb) {
+            if (!s->hit && s->cert->cert_cb != NULL) {
                 int rv = s->cert->cert_cb(s, s->cert->cert_cb_arg);
                 if (rv == 0) {
                     al = SSL_AD_INTERNAL_ERROR;
@@ -1976,25 +2003,19 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
                 }
                 s->rwstate = SSL_NOTHING;
             }
-            cipher =
-                ssl3_choose_cipher(s, s->session->ciphers, SSL_get_ciphers(s));
 
-            if (cipher == NULL) {
-                SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
-                       SSL_R_NO_SHARED_CIPHER);
-                goto f_err;
+            /* In TLSv1.3 we selected the ciphersuite before resumption */
+            if (!SSL_IS_TLS13(s)) {
+                cipher =
+                    ssl3_choose_cipher(s, s->session->ciphers, SSL_get_ciphers(s));
+
+                if (cipher == NULL) {
+                    SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
+                           SSL_R_NO_SHARED_CIPHER);
+                    goto f_err;
+                }
+                s->s3->tmp.new_cipher = cipher;
             }
-            if (s->hello_retry_request && s->s3->tmp.new_cipher != NULL
-                    && s->s3->tmp.new_cipher->id != cipher->id) {
-                /*
-                 * A previous HRR picked a different ciphersuite to the one we
-                 * just selected. Something must have changed.
-                 */
-                al = SSL_AD_ILLEGAL_PARAMETER;
-                SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO, SSL_R_BAD_CIPHER);
-                goto f_err;
-            }
-            s->s3->tmp.new_cipher = cipher;
             if (!s->hit) {
                 if (!tls_choose_sigalg(s, &al))
                     goto f_err;

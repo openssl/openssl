@@ -3680,7 +3680,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     const SSL_CIPHER *c, *ret = NULL;
     STACK_OF(SSL_CIPHER) *prio, *allow;
     int i, ii, ok;
-    unsigned long alg_k = 0, alg_a = 0, mask_k, mask_a;
+    unsigned long alg_k = 0, alg_a = 0, mask_k = 0, mask_a = 0;
 
     /* Let's see which ciphers we can support */
 
@@ -3714,8 +3714,10 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         allow = srvr;
     }
 
-    tls1_set_cert_validity(s);
-    ssl_set_masks(s);
+    if (!SSL_IS_TLS13(s)) {
+        tls1_set_cert_validity(s);
+        ssl_set_masks(s);
+    }
 
     for (i = 0; i < sk_SSL_CIPHER_num(prio); i++) {
         c = sk_SSL_CIPHER_value(prio, i);
@@ -3729,23 +3731,11 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
              DTLS_VERSION_GT(s->version, c->max_dtls)))
             continue;
 
-        if (SSL_IS_TLS13(s)) {
-            /*
-             * We must choose a ciphersuite that has a digest compatible with
-             * the session, unless we're going to do an HRR in which case we
-             * will just choose our most preferred ciphersuite regardless of
-             * whether it is compatible with the session or not.
-             */
-            if (s->hit
-                    && !s->hello_retry_request
-                    && ssl_md(c->algorithm2)
-                       != ssl_md(s->session->cipher->algorithm2))
-                continue;
-        } else {
-            /*
-             * These tests do not apply to TLS 1.3 ciphersuites because they can
-             * be used with any auth or key exchange scheme.
-             */
+        /*
+         * Since TLS 1.3 ciphersuites can be used with any auth or
+         * key exchange scheme skip tests.
+         */
+        if (!SSL_IS_TLS13(s)) {
             mask_k = s->s3->tmp.mask_k;
             mask_a = s->s3->tmp.mask_a;
 #ifndef OPENSSL_NO_SRP

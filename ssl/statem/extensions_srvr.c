@@ -726,11 +726,8 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             continue;
 
         md = ssl_md(sess->cipher->algorithm2);
-        if (md == NULL) {
-            /*
-             * Don't recognise this cipher so we can't use the session.
-             * Ignore it
-             */
+        if (md != ssl_md(s->s3->tmp.new_cipher->algorithm2)) {
+            /* The ciphersuite is not compatible with this session. */
             SSL_SESSION_free(sess);
             sess = NULL;
             continue;

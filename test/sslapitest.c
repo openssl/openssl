@@ -1850,16 +1850,15 @@ static int test_ciphersuite_change(void)
 
     /*
      * Check attempting to resume a SHA-256 session with no SHA-256 ciphersuites
-     * fails.
+     * succeeds but does not resume.
      */
     if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "TLS13-AES-256-GCM-SHA384"))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
             || !TEST_true(SSL_set_session(clientssl, clntsess))
-            || !TEST_false(create_ssl_connection(serverssl, clientssl,
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_SSL))
-            || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
-                            SSL_R_NO_SHARED_CIPHER))
+            || !TEST_false(SSL_session_reused(clientssl)))
         goto end;
 
     SSL_SESSION_free(clntsess);
@@ -1887,6 +1886,8 @@ static int test_ciphersuite_change(void)
 
     if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
                    "TLS13-AES-128-GCM-SHA256:TLS13-AES-256-GCM-SHA384"))
+            || !TEST_true(SSL_CTX_set_cipher_list(sctx,
+                                                  "TLS13-AES-256-GCM-SHA384"))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
             || !TEST_true(SSL_set_session(clientssl, clntsess))
