@@ -5,7 +5,7 @@
 CRYPTO_secure_malloc_init, CRYPTO_secure_malloc_initialized,
 CRYPTO_secure_malloc_done, OPENSSL_secure_malloc, CRYPTO_secure_malloc,
 OPENSSL_secure_zalloc, CRYPTO_secure_zalloc, OPENSSL_secure_free,
-CRYPTO_secure_free, OPENSSL_secure_actual_size, OPENSSL_secure_allocated,
+CRYPTO_secure_free, OPENSSL_secure_actual_size,
 CRYPTO_secure_used - secure heap storage
 
 =head1 SYNOPSIS
@@ -28,7 +28,6 @@ CRYPTO_secure_used - secure heap storage
  void CRYPTO_secure_free(void *ptr, const char *, int);
 
  size_t OPENSSL_secure_actual_size(const void *ptr);
- int OPENSSL_secure_allocated(const void *ptr);
 
  size_t CRYPTO_secure_used();
 
@@ -77,8 +76,6 @@ It exists for consistency with OPENSSL_secure_malloc() , and
 is a macro that expands to CRYPTO_secure_free() and adds the C<__FILE__>
 and C<__LINE__> parameters..
 
-OPENSSL_secure_allocated() tells whether or not a pointer is within
-the secure heap.
 OPENSSL_secure_actual_size() tells the actual size allocated to the
 pointer; implementations may allocate more space than initially
 requested, in order to "round up" and reduce secure heap fragmentation.

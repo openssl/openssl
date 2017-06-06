@@ -120,22 +120,22 @@ BIO_write_filename                      define
 BN_mod                                  define
 BN_num_bytes                            define
 BN_one                                  define
-BN_zero                                 define
-CONF_modules_free                       define
+BN_zero                                 define deprecated 0.9.8
+CONF_modules_free                       define deprecated 1.1.0
 DES_ecb2_encrypt                        define
 DES_ede2_cbc_encrypt                    define
 DES_ede2_cfb64_encrypt                  define
 DES_ede2_ofb64_encrypt                  define
 DTLS_get_link_min_mtu                   define
 DTLS_set_link_mtu                       define
-ENGINE_cleanup                          define
+ENGINE_cleanup                          define deprecated 1.1.0
 ERR_FATAL_ERROR                         define
 ERR_GET_FUNC                            define
 ERR_GET_LIB                             define
 ERR_GET_REASON                          define
 ERR_PACK                                define
-ERR_free_strings                        define
-ERR_load_crypto_strings                 define
+ERR_free_strings                        define deprecated 1.1.0
+ERR_load_crypto_strings                 define deprecated 1.1.0
 EVP_DigestSignUpdate                    define
 EVP_DigestVerifyUpdate                  define
 EVP_MD_CTX_block_size                   define
@@ -170,10 +170,10 @@ EVP_SignUpdate                          define
 EVP_VerifyInit                          define
 EVP_VerifyInit_ex                       define
 EVP_VerifyUpdate                        define
-EVP_cleanup                             define
+EVP_cleanup                             define deprecated 1.1.0
 EVP_get_digestbynid                     define
 EVP_get_digestbyobj                     define
-OBJ_cleanup                             define
+OBJ_cleanup                             define deprecated 1.1.0
 OPENSSL_VERSION_NUMBER                  define
 OPENSSL_clear_free                      define
 OPENSSL_clear_realloc                   define
@@ -183,7 +183,7 @@ OPENSSL_malloc_init                     define
 OPENSSL_mem_debug_pop                   define
 OPENSSL_mem_debug_push                  define
 OPENSSL_memdup                          define
-OPENSSL_no_config                       define
+OPENSSL_no_config                       define deprecated 1.1.0
 OPENSSL_realloc                         define
 OPENSSL_secure_actual_size              define
 OPENSSL_secure_free                     define
@@ -192,16 +192,16 @@ OPENSSL_secure_zalloc                   define
 OPENSSL_strdup                          define
 OPENSSL_strndup                         define
 OPENSSL_zalloc                          define
-OpenSSL_add_all_algorithms              define
-OpenSSL_add_all_ciphers                 define
-OpenSSL_add_all_digests                 define
+OpenSSL_add_all_algorithms              define deprecated 1.1.0
+OpenSSL_add_all_ciphers                 define deprecated 1.1.0
+OpenSSL_add_all_digests                 define deprecated 1.1.0
 OpenSSL_add_ssl_algorithms              define
 PEM_FLAG_EAY_COMPATIBLE                 define
 PEM_FLAG_ONLY_B64                       define
 PEM_FLAG_SECURE                         define
-RAND_cleanup                            define
+RAND_cleanup                            define deprecated 1.1.0
 EVP_PKEY_CTX_set_rsa_keygen_bits        define
-SSL_COMP_free_compression_methods       define
+SSL_COMP_free_compression_methods       define deprecated 1.1.0
 SSL_CTX_add0_chain_cert                 define
 SSL_CTX_add1_chain_cert                 define
 SSL_CTX_add_extra_chain_cert            define
@@ -295,7 +295,7 @@ SSL_get_tlsext_status_type              define
 SSL_in_accept_init                      define
 SSL_in_connect_init                     define
 SSL_library_init                        define
-SSL_load_error_strings                  define
+SSL_load_error_strings                  define deprecated 1.1.0
 SSL_select_current_cert                 define
 SSL_set0_chain                          define
 SSL_set0_chain_cert_store               define
