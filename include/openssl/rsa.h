@@ -147,7 +147,7 @@ extern "C" {
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,  \
                           EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL, 0, (void *)(l))
 
-# define  EVP_PKEY_CTX_rsa_pss_keygen_md(ctx, md) \
+# define  EVP_PKEY_CTX_set_rsa_pss_keygen_md(ctx, md) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS,  \
                           EVP_PKEY_OP_TYPE_KEYGEN, EVP_PKEY_CTRL_MD,  \
                           0, (void *)(md))
