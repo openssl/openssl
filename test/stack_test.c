@@ -196,7 +196,7 @@ static int test_uchar_stack(void)
     sk_uchar_sort(r);
 
     /* pop */
-    for (i = 0; i < n; i++) 
+    for (i = 0; i < n; i++)
         if (!TEST_ptr_eq(sk_uchar_pop(s), v + i)) {
             TEST_info("uchar pop %d", i);
             goto end;

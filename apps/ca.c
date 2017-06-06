@@ -1573,7 +1573,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         BIO_printf(bio_err,
                    "The subject name appears to be ok, checking data base for clashes\n");
 
-    /* 
+    /*
      * Build the correct Subject if no e-mail is wanted in the subject.
      * And add it later on because of the method extensions are added (altName)
      */

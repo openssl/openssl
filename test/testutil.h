@@ -434,7 +434,7 @@ int test_end_file(STANZA *s);
 
 /*
  * Read a stanza from the test file.  A stanza consists of a block
- * of lines of the form 
+ * of lines of the form
  *      key = value
  * The block is terminated by EOF or a blank line.
  * Return 1 if found, 0 on EOF or error.
