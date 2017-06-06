@@ -297,7 +297,7 @@ static char *pt(const unsigned char *p, char buf[DATA_BUF_SIZE])
     ret[16] = '\0';
     return ret;
 }
- 
+
 static int test_des_ecb(int i)
 {
     DES_key_schedule ks;
