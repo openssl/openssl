@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-EVP_PKEY_CTX_set_rsa_pss_keygen_md, EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md,
-EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen - RSA PSS signature algorithm
+RSA-PSS - EVP_PKEY RSA-PSS algorithm support
 
 =head1 SYNOPSIS
 
@@ -18,10 +17,9 @@ EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen - RSA PSS signature algorithm
 
 =head1 DESCRIPTION
 
-The B<EVP_PKEY_RSA_PSS> algorithm implements the RSA PSS signature algorithm.
-It is a restricted version of the RSA algorithm which only supports signing,
-verification and key generation using PSS padding modes with optional
-parameter restrictions.
+The B<RSA-PSS> EVP_PKEY implementation is a restricted version of the RSA
+algorithm which only supports signing, verification and key generation
+using PSS padding modes with optional parameter restrictions.
 
 It has associated private key and public key formats.
 
@@ -57,7 +55,7 @@ similar to the B<RSA> versions.
 =head1 KEY GENERATION
 
 As with RSA key generation the EVP_PKEY_CTX_set_rsa_rsa_keygen_bits()
-and EVP_PKEY_CTX_set_rsa_keygen_pubexp() macros are supported for RSA PSS:
+and EVP_PKEY_CTX_set_rsa_keygen_pubexp() macros are supported for RSA-PSS:
 they have exactly the same meaning as for the RSA algorithm.
 
 Optional parameter restrictions can be specified when generating a PSS key. By
@@ -76,6 +74,18 @@ generated key can use to B<md>.
 
 EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen() restricts the minimum salt length
 to B<saltlen>.
+
+=head1 NOTES
+
+A context for the B<RSA-PSS> algorithm can be obtained by calling:
+
+ EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA_PSS, NULL);
+
+The public key format is documented in RFC4055.
+
+The PKCS#8 private key format used for RSA-PSS keys is similar to the RSA
+format except it uses the B<id-RSASSA-PSS> OID and the parameters field, if
+present, restricts the key parameters in the same way as the public key.
 
 =head1 RETURN VALUES
 
