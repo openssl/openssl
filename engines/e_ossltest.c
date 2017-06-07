@@ -25,7 +25,6 @@
 #include <openssl/aes.h>
 #include <openssl/crypto.h>
 
-#define OSSLTEST_LIB_NAME "OSSLTEST"
 #include "e_ossltest_err.c"
 
 /* Engine Id and Name */

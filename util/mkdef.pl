@@ -48,6 +48,8 @@
 use lib ".";
 use configdata;
 use File::Spec::Functions;
+use File::Basename;
+use if $^O ne "VMS", 'File::Glob' => qw/glob/;
 
 my $debug=0;
 
@@ -223,74 +225,29 @@ $max_ssl = $max_num;
 $max_crypto = $max_num;
 
 my $ssl="include/openssl/ssl.h";
+$ssl.=" include/openssl/sslerr.h";
 $ssl.=" include/openssl/tls1.h";
 $ssl.=" include/openssl/srtp.h";
 
+# When scanning include/openssl, skip all SSL files and some internal ones.
+my %skipthese;
+foreach my $f ( split(/\s+/, $ssl) ) {
+    $skipthese{$f} = 1;
+}
+$skipthese{'include/openssl/conf_api.h'} = 1;
+$skipthese{'include/openssl/ebcdic.h'} = 1;
+$skipthese{'include/openssl/opensslconf.h'} = 1;
+
 # We use headers found in include/openssl and include/internal only.
 # The latter is needed so libssl.so/.dll/.exe can link properly.
-my $crypto ="include/openssl/crypto.h";
+my $crypto ="include/internal/dso.h";
 $crypto.=" include/internal/o_dir.h";
 $crypto.=" include/internal/o_str.h";
 $crypto.=" include/internal/err.h";
-$crypto.=" include/openssl/des.h" ; # unless $no_des;
-$crypto.=" include/openssl/idea.h" ; # unless $no_idea;
-$crypto.=" include/openssl/rc4.h" ; # unless $no_rc4;
-$crypto.=" include/openssl/rc5.h" ; # unless $no_rc5;
-$crypto.=" include/openssl/rc2.h" ; # unless $no_rc2;
-$crypto.=" include/openssl/blowfish.h" ; # unless $no_bf;
-$crypto.=" include/openssl/cast.h" ; # unless $no_cast;
-$crypto.=" include/openssl/whrlpool.h" ;
-$crypto.=" include/openssl/md2.h" ; # unless $no_md2;
-$crypto.=" include/openssl/md4.h" ; # unless $no_md4;
-$crypto.=" include/openssl/md5.h" ; # unless $no_md5;
-$crypto.=" include/openssl/mdc2.h" ; # unless $no_mdc2;
-$crypto.=" include/openssl/sha.h" ; # unless $no_sha;
-$crypto.=" include/openssl/ripemd.h" ; # unless $no_ripemd;
-$crypto.=" include/openssl/aes.h" ; # unless $no_aes;
-$crypto.=" include/openssl/camellia.h" ; # unless $no_camellia;
-$crypto.=" include/openssl/seed.h"; # unless $no_seed;
-
-$crypto.=" include/openssl/bn.h";
-$crypto.=" include/openssl/rsa.h" ; # unless $no_rsa;
-$crypto.=" include/openssl/dsa.h" ; # unless $no_dsa;
-$crypto.=" include/openssl/dh.h" ; # unless $no_dh;
-$crypto.=" include/openssl/ec.h" ; # unless $no_ec;
-$crypto.=" include/openssl/hmac.h" ; # unless $no_hmac;
-$crypto.=" include/openssl/cmac.h" ;
-
-$crypto.=" include/openssl/engine.h"; # unless $no_engine;
-$crypto.=" include/openssl/stack.h" ; # unless $no_stack;
-$crypto.=" include/openssl/buffer.h" ; # unless $no_buffer;
-$crypto.=" include/openssl/bio.h" ; # unless $no_bio;
-$crypto.=" include/internal/dso.h" ; # unless $no_dso;
-$crypto.=" include/openssl/lhash.h" ; # unless $no_lhash;
-$crypto.=" include/openssl/conf.h";
-$crypto.=" include/openssl/txt_db.h";
-
-$crypto.=" include/openssl/evp.h" ; # unless $no_evp;
-$crypto.=" include/openssl/objects.h";
-$crypto.=" include/openssl/pem.h";
-#$crypto.=" include/openssl/meth.h";
-$crypto.=" include/openssl/asn1.h";
-$crypto.=" include/openssl/asn1t.h";
-$crypto.=" include/openssl/err.h" ; # unless $no_err;
-$crypto.=" include/openssl/pkcs7.h";
-$crypto.=" include/openssl/pkcs12.h";
-$crypto.=" include/openssl/x509.h";
-$crypto.=" include/openssl/x509_vfy.h";
-$crypto.=" include/openssl/x509v3.h";
-$crypto.=" include/openssl/ts.h";
-$crypto.=" include/openssl/rand.h";
-$crypto.=" include/openssl/comp.h" ; # unless $no_comp;
-$crypto.=" include/openssl/ocsp.h";
-$crypto.=" include/openssl/ui.h";
-#$crypto.=" include/openssl/store.h";
-$crypto.=" include/openssl/cms.h";
-$crypto.=" include/openssl/srp.h";
-$crypto.=" include/openssl/modes.h";
-$crypto.=" include/openssl/async.h";
-$crypto.=" include/openssl/ct.h";
-$crypto.=" include/openssl/kdf.h";
+foreach my $f ( glob(catfile($config{sourcedir},'include/openssl/*.h')) ) {
+    my $fn = "include/openssl/" . lc(basename($f));
+    $crypto .= " $fn" if !defined $skipthese{$fn} && $f !~ m@/[a-z]+err\.h$@;
+}
 
 my $symhacks="include/openssl/symhacks.h";
 
@@ -380,7 +337,7 @@ sub do_defs
 		{
 		my $fn = catfile($config{sourcedir},$file);
 		print STDERR "DEBUG: starting on $fn:\n" if $debug;
-		open(IN,"<$fn") || die "unable to open $fn:$!\n";
+		open(IN,"<$fn") || die "Can't open $fn, $!,";
 		my $line = "", my $def= "";
 		my %tag = (
 			(map { $_ => 0 } @known_platforms),
