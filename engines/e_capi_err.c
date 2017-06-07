@@ -32,7 +32,7 @@ static ERR_STRING_DATA CAPI_str_functs[] = {
     {ERR_PACK(0, CAPI_F_CAPI_RSA_SIGN, 0), "capi_rsa_sign"},
     {ERR_PACK(0, CAPI_F_CAPI_VTRACE, 0), "capi_vtrace"},
     {ERR_PACK(0, CAPI_F_CERT_SELECT_DIALOG, 0), "cert_select_dialog"},
-    {ERR_PACK(0, CAPI_F_CLIENT_CERT_SELECT, 0), "CLIENT_CERT_SELECT"},
+    {ERR_PACK(0, CAPI_F_CLIENT_CERT_SELECT, 0), ""},
     {ERR_PACK(0, CAPI_F_WIDE_TO_ASC, 0), "wide_to_asc"},
     {0, NULL}
 };
