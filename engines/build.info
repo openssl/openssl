@@ -8,7 +8,7 @@ IF[{- !$disabled{"engine"} -}]
       SOURCE[../libcrypto]=e_capi.c
     ENDIF
     IF[{- !$disabled{afalgeng} -}]
-      SOURCE[../libcrypto]=e_afalg.c e_afalg_err.c
+      SOURCE[../libcrypto]=e_afalg.c
     ENDIF
   ELSE
     ENGINES=padlock
@@ -23,7 +23,7 @@ IF[{- !$disabled{"engine"} -}]
     ENDIF
     IF[{- !$disabled{afalgeng} -}]
       ENGINES=afalg
-      SOURCE[afalg]=e_afalg.c e_afalg_err.c
+      SOURCE[afalg]=e_afalg.c
       DEPEND[afalg]=../libcrypto
       INCLUDE[afalg]= ../include
     ENDIF

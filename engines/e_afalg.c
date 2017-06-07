@@ -45,9 +45,7 @@ void engine_load_afalg_int(void)
 # include <errno.h>
 
 # include "e_afalg.h"
-
-# define AFALG_LIB_NAME "AFALG"
-# include "e_afalg_err.h"
+# include "e_afalg_err.c"
 
 # ifndef SOL_ALG
 #  define SOL_ALG 279

@@ -30,6 +30,13 @@ Makefile
 /openssl/include/opensslconf.h
 /util/domd
 
+# error code files
+/crypto/err/openssl.txt.old
+/engines/e_afalg.txt.old
+/engines/e_capi.txt.old
+/engines/e_dasync.txt.old
+/engines/e_ossltest.txt.old
+
 # Executables
 /apps/openssl
 /test/sha256t
