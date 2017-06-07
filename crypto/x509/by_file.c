@@ -42,7 +42,7 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp,
                         long argl, char **ret)
 {
     int ok = 0;
-    char *file;
+    const char *file;
 
     switch (cmd) {
     case X509_L_FILE_LOAD:
