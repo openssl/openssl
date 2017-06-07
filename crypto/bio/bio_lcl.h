@@ -89,7 +89,7 @@ union bio_addr_st {
 #include "internal/cryptlib.h"
 #include <internal/bio.h>
 
-typedef struct bio_f_buffer_ctx_struct {
+typedef struct bio_fbuffer_ctx_struct {
     /*-
      * Buffers are setup like this:
      *
@@ -110,7 +110,7 @@ typedef struct bio_f_buffer_ctx_struct {
     char *obuf;                 /* the char array */
     int obuf_len;               /* how many bytes are in it */
     int obuf_off;               /* write/read offset */
-} BIO_F_BUFFER_CTX;
+} BIO_FBUFFER_CTX;
 
 struct bio_st {
     const BIO_METHOD *method;
