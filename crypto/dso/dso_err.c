@@ -49,7 +49,7 @@ static const ERR_STRING_DATA DSO_str_functs[] = {
     {ERR_PACK(ERR_LIB_DSO, DSO_F_WIN32_MERGER, 0), "win32_merger"},
     {ERR_PACK(ERR_LIB_DSO, DSO_F_WIN32_NAME_CONVERTER, 0),
      "win32_name_converter"},
-    {ERR_PACK(ERR_LIB_DSO, DSO_F_WIN32_PATHBYADDR, 0), "win32_pathbyaddr"},
+    {ERR_PACK(ERR_LIB_DSO, DSO_F_WIN32_PATHBYADDR, 0), ""},
     {ERR_PACK(ERR_LIB_DSO, DSO_F_WIN32_SPLITTER, 0), "win32_splitter"},
     {ERR_PACK(ERR_LIB_DSO, DSO_F_WIN32_UNLOAD, 0), "win32_unload"},
     {0, NULL}

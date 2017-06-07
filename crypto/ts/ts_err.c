@@ -104,7 +104,7 @@ static const ERR_STRING_DATA TS_str_functs[] = {
     {ERR_PACK(ERR_LIB_TS, TS_F_TS_TST_INFO_SET_TIME, 0),
      "TS_TST_INFO_set_time"},
     {ERR_PACK(ERR_LIB_TS, TS_F_TS_TST_INFO_SET_TSA, 0), "TS_TST_INFO_set_tsa"},
-    {ERR_PACK(ERR_LIB_TS, TS_F_TS_VERIFY, 0), "TS_VERIFY"},
+    {ERR_PACK(ERR_LIB_TS, TS_F_TS_VERIFY, 0), ""},
     {ERR_PACK(ERR_LIB_TS, TS_F_TS_VERIFY_CERT, 0), "ts_verify_cert"},
     {ERR_PACK(ERR_LIB_TS, TS_F_TS_VERIFY_CTX_NEW, 0), "TS_VERIFY_CTX_new"},
     {0, NULL}
