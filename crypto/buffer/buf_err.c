@@ -15,8 +15,7 @@
 
 static const ERR_STRING_DATA BUF_str_functs[] = {
     {ERR_PACK(ERR_LIB_BUF, BUF_F_BUF_MEM_GROW, 0), "BUF_MEM_grow"},
-    {ERR_PACK(ERR_LIB_BUF, BUF_F_BUF_MEM_GROW_CLEAN, 0),
-     "BUF_MEM_grow_clean"},
+    {ERR_PACK(ERR_LIB_BUF, BUF_F_BUF_MEM_GROW_CLEAN, 0), "BUF_MEM_grow_clean"},
     {ERR_PACK(ERR_LIB_BUF, BUF_F_BUF_MEM_NEW, 0), "BUF_MEM_new"},
     {0, NULL}
 };

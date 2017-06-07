@@ -14,6 +14,16 @@
 # define OSSLTESTerr(f, r) ERR_OSSLTEST_error((f), (r), OPENSSL_FILE, OPENSSL_LINE)
 
 
+# ifdef  __cplusplus
+extern "C" {
+# endif
+int ERR_load_OSSLTEST_strings(void);
+void ERR_unload_OSSLTEST_strings(void);
+void ERR_OSSLTEST_error(int function, int reason, char *file, int line);
+# ifdef  __cplusplus
+}
+# endif
+
 /*
  * OSSLTEST function codes.
  */

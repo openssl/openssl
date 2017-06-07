@@ -17,8 +17,7 @@ static const ERR_STRING_DATA OBJ_str_functs[] = {
     {ERR_PACK(ERR_LIB_OBJ, OBJ_F_OBJ_ADD_OBJECT, 0), "OBJ_add_object"},
     {ERR_PACK(ERR_LIB_OBJ, OBJ_F_OBJ_CREATE, 0), "OBJ_create"},
     {ERR_PACK(ERR_LIB_OBJ, OBJ_F_OBJ_DUP, 0), "OBJ_dup"},
-    {ERR_PACK(ERR_LIB_OBJ, OBJ_F_OBJ_NAME_NEW_INDEX, 0),
-     "OBJ_NAME_new_index"},
+    {ERR_PACK(ERR_LIB_OBJ, OBJ_F_OBJ_NAME_NEW_INDEX, 0), "OBJ_NAME_new_index"},
     {ERR_PACK(ERR_LIB_OBJ, OBJ_F_OBJ_NID2LN, 0), "OBJ_nid2ln"},
     {ERR_PACK(ERR_LIB_OBJ, OBJ_F_OBJ_NID2OBJ, 0), "OBJ_nid2obj"},
     {ERR_PACK(ERR_LIB_OBJ, OBJ_F_OBJ_NID2SN, 0), "OBJ_nid2sn"},
@@ -26,10 +25,8 @@ static const ERR_STRING_DATA OBJ_str_functs[] = {
 };
 
 static const ERR_STRING_DATA OBJ_str_reasons[] = {
-    {ERR_PACK(ERR_LIB_OBJ, 0, OBJ_R_OID_EXISTS),
-    "oid exists"},
-    {ERR_PACK(ERR_LIB_OBJ, 0, OBJ_R_UNKNOWN_NID),
-    "unknown nid"},
+    {ERR_PACK(ERR_LIB_OBJ, 0, OBJ_R_OID_EXISTS), "oid exists"},
+    {ERR_PACK(ERR_LIB_OBJ, 0, OBJ_R_UNKNOWN_NID), "unknown nid"},
     {0, NULL}
 };
 

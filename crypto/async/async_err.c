@@ -18,12 +18,9 @@ static const ERR_STRING_DATA ASYNC_str_functs[] = {
     {ERR_PACK(ERR_LIB_ASYNC, ASYNC_F_ASYNC_INIT_THREAD, 0),
      "ASYNC_init_thread"},
     {ERR_PACK(ERR_LIB_ASYNC, ASYNC_F_ASYNC_JOB_NEW, 0), "async_job_new"},
-    {ERR_PACK(ERR_LIB_ASYNC, ASYNC_F_ASYNC_PAUSE_JOB, 0),
-     "ASYNC_pause_job"},
-    {ERR_PACK(ERR_LIB_ASYNC, ASYNC_F_ASYNC_START_FUNC, 0),
-     "async_start_func"},
-    {ERR_PACK(ERR_LIB_ASYNC, ASYNC_F_ASYNC_START_JOB, 0),
-     "ASYNC_start_job"},
+    {ERR_PACK(ERR_LIB_ASYNC, ASYNC_F_ASYNC_PAUSE_JOB, 0), "ASYNC_pause_job"},
+    {ERR_PACK(ERR_LIB_ASYNC, ASYNC_F_ASYNC_START_FUNC, 0), "async_start_func"},
+    {ERR_PACK(ERR_LIB_ASYNC, ASYNC_F_ASYNC_START_JOB, 0), "ASYNC_start_job"},
     {0, NULL}
 };
 
@@ -32,8 +29,7 @@ static const ERR_STRING_DATA ASYNC_str_reasons[] = {
     "failed to set pool"},
     {ERR_PACK(ERR_LIB_ASYNC, 0, ASYNC_R_FAILED_TO_SWAP_CONTEXT),
     "failed to swap context"},
-    {ERR_PACK(ERR_LIB_ASYNC, 0, ASYNC_R_INIT_FAILED),
-    "init failed"},
+    {ERR_PACK(ERR_LIB_ASYNC, 0, ASYNC_R_INIT_FAILED), "init failed"},
     {ERR_PACK(ERR_LIB_ASYNC, 0, ASYNC_R_INVALID_POOL_SIZE),
     "invalid pool size"},
     {0, NULL}

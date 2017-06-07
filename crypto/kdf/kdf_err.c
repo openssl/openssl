@@ -22,12 +22,9 @@ static const ERR_STRING_DATA KDF_str_functs[] = {
 };
 
 static const ERR_STRING_DATA KDF_str_reasons[] = {
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_DIGEST),
-    "invalid digest"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_PARAMETER),
-    "missing parameter"},
-    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_VALUE_MISSING),
-    "value missing"},
+    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_DIGEST), "invalid digest"},
+    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_PARAMETER), "missing parameter"},
+    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_VALUE_MISSING), "value missing"},
     {0, NULL}
 };
 

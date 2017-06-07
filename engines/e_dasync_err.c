@@ -29,16 +29,13 @@ static ERR_STRING_DATA DASYNC_str_functs[] = {
      "DASYNC_PRIVATE_DECRYPT"},
     {ERR_PACK(0, DASYNC_F_DASYNC_PRIVATE_ENCRYPT, 0),
      "DASYNC_PRIVATE_ENCRYPT"},
-    {ERR_PACK(0, DASYNC_F_DASYNC_PUBLIC_DECRYPT, 0),
-     "DASYNC_PUBLIC_DECRYPT"},
-    {ERR_PACK(0, DASYNC_F_DASYNC_PUBLIC_ENCRYPT, 0),
-     "DASYNC_PUBLIC_ENCRYPT"},
+    {ERR_PACK(0, DASYNC_F_DASYNC_PUBLIC_DECRYPT, 0), "DASYNC_PUBLIC_DECRYPT"},
+    {ERR_PACK(0, DASYNC_F_DASYNC_PUBLIC_ENCRYPT, 0), "DASYNC_PUBLIC_ENCRYPT"},
     {0, NULL}
 };
 
 static ERR_STRING_DATA DASYNC_str_reasons[] = {
-    {ERR_PACK(0, 0, DASYNC_R_INIT_FAILED),
-    "init failed"},
+    {ERR_PACK(0, 0, DASYNC_R_INIT_FAILED), "init failed"},
     {0, NULL}
 };
 
@@ -47,7 +44,7 @@ static ERR_STRING_DATA DASYNC_str_reasons[] = {
 static int lib_code = 0;
 static int error_loaded = 0;
 
-static int ERR_load_DASYNC_strings(void)
+int ERR_load_DASYNC_strings(void)
 {
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();
@@ -62,7 +59,7 @@ static int ERR_load_DASYNC_strings(void)
     return 1;
 }
 
-static void ERR_unload_DASYNC_strings(void)
+void ERR_unload_DASYNC_strings(void)
 {
     if (error_loaded) {
 #ifndef OPENSSL_NO_ERR
@@ -73,7 +70,7 @@ static void ERR_unload_DASYNC_strings(void)
     }
 }
 
-static void ERR_DASYNC_error(int function, int reason, char *file, int line)
+void ERR_DASYNC_error(int function, int reason, char *file, int line)
 {
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();
