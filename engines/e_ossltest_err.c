@@ -30,7 +30,7 @@ static ERR_STRING_DATA OSSLTEST_str_reasons[] = {
 static int lib_code = 0;
 static int error_loaded = 0;
 
-int ERR_load_OSSLTEST_strings(void)
+static int ERR_load_OSSLTEST_strings(void)
 {
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();
@@ -45,7 +45,7 @@ int ERR_load_OSSLTEST_strings(void)
     return 1;
 }
 
-void ERR_unload_OSSLTEST_strings(void)
+static void ERR_unload_OSSLTEST_strings(void)
 {
     if (error_loaded) {
 #ifndef OPENSSL_NO_ERR
@@ -56,7 +56,7 @@ void ERR_unload_OSSLTEST_strings(void)
     }
 }
 
-void ERR_OSSLTEST_error(int function, int reason, char *file, int line)
+static void ERR_OSSLTEST_error(int function, int reason, char *file, int line)
 {
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();

@@ -113,8 +113,7 @@ static const ERR_STRING_DATA TS_str_functs[] = {
 static const ERR_STRING_DATA TS_str_reasons[] = {
     {ERR_PACK(ERR_LIB_TS, 0, TS_R_BAD_PKCS7_TYPE), "bad pkcs7 type"},
     {ERR_PACK(ERR_LIB_TS, 0, TS_R_BAD_TYPE), "bad type"},
-    {ERR_PACK(ERR_LIB_TS, 0, TS_R_CANNOT_LOAD_CERT),
-    "cannot load certificate"},
+    {ERR_PACK(ERR_LIB_TS, 0, TS_R_CANNOT_LOAD_CERT), "cannot load certificate"},
     {ERR_PACK(ERR_LIB_TS, 0, TS_R_CANNOT_LOAD_KEY), "cannot load private key"},
     {ERR_PACK(ERR_LIB_TS, 0, TS_R_CERTIFICATE_VERIFY_ERROR),
     "certificate verify error"},

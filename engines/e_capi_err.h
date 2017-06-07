@@ -14,16 +14,6 @@
 # define CAPIerr(f, r) ERR_CAPI_error((f), (r), OPENSSL_FILE, OPENSSL_LINE)
 
 
-# ifdef  __cplusplus
-extern "C" {
-# endif
-int ERR_load_CAPI_strings(void);
-void ERR_unload_CAPI_strings(void);
-void ERR_CAPI_error(int function, int reason, char *file, int line);
-# ifdef  __cplusplus
-}
-# endif
-
 /*
  * CAPI function codes.
  */

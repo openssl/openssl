@@ -14,16 +14,6 @@
 # define AFALGerr(f, r) ERR_AFALG_error((f), (r), OPENSSL_FILE, OPENSSL_LINE)
 
 
-# ifdef  __cplusplus
-extern "C" {
-# endif
-int ERR_load_AFALG_strings(void);
-void ERR_unload_AFALG_strings(void);
-void ERR_AFALG_error(int function, int reason, char *file, int line);
-# ifdef  __cplusplus
-}
-# endif
-
 /*
  * AFALG function codes.
  */

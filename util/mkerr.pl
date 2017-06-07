@@ -559,7 +559,7 @@ EOF
         $fn = $1;
         $fn = $ftrans{$fn} if exists $ftrans{$fn};
         my $short = "    {ERR_PACK($pack_lib, $i, 0), \"$fn\"},";
-        if ( length($short) < 80 ) {
+        if ( length($short) <= 80 ) {
             print OUT "$short\n";
         } else {
             print OUT "    {ERR_PACK($pack_lib, $i, 0),\n     \"$fn\"},\n";
@@ -583,7 +583,7 @@ EOF
             $rn =~ tr/_[A-Z]/ [a-z]/;
         }
         my $short = "    {ERR_PACK($pack_lib, 0, $i), \"$rn\"},";
-        if ( length($short) < 80 ) {
+        if ( length($short) <= 80 ) {
             print OUT "$short\n";
         } else {
             print OUT "    {ERR_PACK($pack_lib, 0, $i),\n    \"$rn\"},\n";

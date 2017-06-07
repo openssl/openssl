@@ -38,8 +38,7 @@ static ERR_STRING_DATA CAPI_str_functs[] = {
 };
 
 static ERR_STRING_DATA CAPI_str_reasons[] = {
-    {ERR_PACK(0, 0, CAPI_R_CANT_CREATE_HASH_OBJECT),
-    "cant create hash object"},
+    {ERR_PACK(0, 0, CAPI_R_CANT_CREATE_HASH_OBJECT), "cant create hash object"},
     {ERR_PACK(0, 0, CAPI_R_CANT_FIND_CAPI_CONTEXT), "cant find capi context"},
     {ERR_PACK(0, 0, CAPI_R_CANT_GET_KEY), "cant get key"},
     {ERR_PACK(0, 0, CAPI_R_CANT_SET_HASH_VALUE), "cant set hash value"},
@@ -65,8 +64,7 @@ static ERR_STRING_DATA CAPI_str_reasons[] = {
     {ERR_PACK(0, 0, CAPI_R_INVALID_DSA_PUBLIC_KEY_BLOB_MAGIC_NUMBER),
     "invalid dsa public key blob magic number"},
     {ERR_PACK(0, 0, CAPI_R_INVALID_LOOKUP_METHOD), "invalid lookup method"},
-    {ERR_PACK(0, 0, CAPI_R_INVALID_PUBLIC_KEY_BLOB),
-    "invalid public key blob"},
+    {ERR_PACK(0, 0, CAPI_R_INVALID_PUBLIC_KEY_BLOB), "invalid public key blob"},
     {ERR_PACK(0, 0, CAPI_R_INVALID_RSA_PUBLIC_KEY_BLOB_MAGIC_NUMBER),
     "invalid rsa public key blob magic number"},
     {ERR_PACK(0, 0, CAPI_R_PUBKEY_EXPORT_ERROR), "pubkey export error"},
@@ -87,7 +85,7 @@ static ERR_STRING_DATA CAPI_str_reasons[] = {
 static int lib_code = 0;
 static int error_loaded = 0;
 
-int ERR_load_CAPI_strings(void)
+static int ERR_load_CAPI_strings(void)
 {
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();
@@ -102,7 +100,7 @@ int ERR_load_CAPI_strings(void)
     return 1;
 }
 
-void ERR_unload_CAPI_strings(void)
+static void ERR_unload_CAPI_strings(void)
 {
     if (error_loaded) {
 #ifndef OPENSSL_NO_ERR
@@ -113,7 +111,7 @@ void ERR_unload_CAPI_strings(void)
     }
 }
 
-void ERR_CAPI_error(int function, int reason, char *file, int line)
+static void ERR_CAPI_error(int function, int reason, char *file, int line)
 {
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();

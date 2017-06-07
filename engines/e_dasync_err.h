@@ -14,16 +14,6 @@
 # define DASYNCerr(f, r) ERR_DASYNC_error((f), (r), OPENSSL_FILE, OPENSSL_LINE)
 
 
-# ifdef  __cplusplus
-extern "C" {
-# endif
-int ERR_load_DASYNC_strings(void);
-void ERR_unload_DASYNC_strings(void);
-void ERR_DASYNC_error(int function, int reason, char *file, int line);
-# ifdef  __cplusplus
-}
-# endif
-
 /*
  * DASYNC function codes.
  */

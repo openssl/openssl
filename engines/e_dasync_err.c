@@ -19,16 +19,13 @@ static ERR_STRING_DATA DASYNC_str_functs[] = {
      "CIPHER_AES_128_CBC_CODE"},
     {ERR_PACK(0, DASYNC_F_DASYNC_AES128_CBC_HMAC_SHA1_INIT_KEY, 0),
      "dasync_aes128_cbc_hmac_sha1_init_key"},
-    {ERR_PACK(0, DASYNC_F_DASYNC_AES128_INIT_KEY, 0),
-     "dasync_aes128_init_key"},
+    {ERR_PACK(0, DASYNC_F_DASYNC_AES128_INIT_KEY, 0), "dasync_aes128_init_key"},
     {ERR_PACK(0, DASYNC_F_DASYNC_BN_MOD_EXP, 0), "DASYNC_BN_MOD_EXP"},
     {ERR_PACK(0, DASYNC_F_DASYNC_CIPHER_INIT_KEY_HELPER, 0),
      "dasync_cipher_init_key_helper"},
     {ERR_PACK(0, DASYNC_F_DASYNC_MOD_EXP, 0), "DASYNC_MOD_EXP"},
-    {ERR_PACK(0, DASYNC_F_DASYNC_PRIVATE_DECRYPT, 0),
-     "DASYNC_PRIVATE_DECRYPT"},
-    {ERR_PACK(0, DASYNC_F_DASYNC_PRIVATE_ENCRYPT, 0),
-     "DASYNC_PRIVATE_ENCRYPT"},
+    {ERR_PACK(0, DASYNC_F_DASYNC_PRIVATE_DECRYPT, 0), "DASYNC_PRIVATE_DECRYPT"},
+    {ERR_PACK(0, DASYNC_F_DASYNC_PRIVATE_ENCRYPT, 0), "DASYNC_PRIVATE_ENCRYPT"},
     {ERR_PACK(0, DASYNC_F_DASYNC_PUBLIC_DECRYPT, 0), "DASYNC_PUBLIC_DECRYPT"},
     {ERR_PACK(0, DASYNC_F_DASYNC_PUBLIC_ENCRYPT, 0), "DASYNC_PUBLIC_ENCRYPT"},
     {0, NULL}
@@ -44,7 +41,7 @@ static ERR_STRING_DATA DASYNC_str_reasons[] = {
 static int lib_code = 0;
 static int error_loaded = 0;
 
-int ERR_load_DASYNC_strings(void)
+static int ERR_load_DASYNC_strings(void)
 {
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();
@@ -59,7 +56,7 @@ int ERR_load_DASYNC_strings(void)
     return 1;
 }
 
-void ERR_unload_DASYNC_strings(void)
+static void ERR_unload_DASYNC_strings(void)
 {
     if (error_loaded) {
 #ifndef OPENSSL_NO_ERR
@@ -70,7 +67,7 @@ void ERR_unload_DASYNC_strings(void)
     }
 }
 
-void ERR_DASYNC_error(int function, int reason, char *file, int line)
+static void ERR_DASYNC_error(int function, int reason, char *file, int line)
 {
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();
