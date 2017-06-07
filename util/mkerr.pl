@@ -121,6 +121,7 @@ my %rcodes;     # reason-name -> value
 my %ftrans;     # old name -> #define-friendly name (all caps)
 my %fcodes;     # function-name -> value
 my $statefile;  # state file with assigned reason and function codes
+my %strings;    # define -> text
 
 # Read and parse the config file
 open(IN, "$config") || die "Can't open config file $config, $!,";
@@ -152,6 +153,7 @@ while ( <IN> ) {
 }
 close IN;
 
+my $statefile_prolog = '';
 if ( ! $statefile ) {
     $statefile = $config;
     $statefile =~ s/.ec/.txt/;
@@ -165,11 +167,28 @@ if ( ! $reindex && $statefile ) {
 
     # Scan function and reason codes and store them: keep a note of the
     # maximum code used.
+    my $collecting = 1;
     while ( <STATE> ) {
+        $statefile_prolog .= $_ if $collecting && ( /^#/ || /^$/ );
         next if /^#/ || /^$/;
-        die "Bad line in $statefile:\n$_\n" unless /(\S+)\s+(\d+)/;
-        my $name = $1;
-        my $code = $2;
+        my $name;
+        my $code;
+        if ( /^(.+):(\d+):\\$/ ) {
+            $name = $1;
+            $code = $2;
+            my $next = <STATE>;
+            $next =~ s/^\s*(.*)\s*$/$1/;
+            die "Duplicate define $name" if exists $strings{$name};
+            $strings{$name} = $next;
+        } elsif ( /^(\S+):(\d+):(.*)$/ ) {
+            $name = $1;
+            $code = $2;
+            die "Duplicate define $name" if exists $strings{$name};
+            $strings{$name} = $3;
+        } else {
+            die "Bad line in $statefile:\n$_\n";
+        }
+        $collecting = 0;
         my $lib = $name;
         $lib =~ s/_.*//;
         $lib = "SSL" if $lib =~ /TLS/;
@@ -299,8 +318,9 @@ while ( ( my $hdr, my $lib ) = each %libinc ) {
         # pretend as we didn't use curly braces: {} -> ()
         s/\{\}/\(\)/gs;
 
-        if ( /(\w+)\s*\(\).*/s ) {    # first token prior [first] () is
-            my $name = $1;          # a function name!
+        # Last token just before the first () is a function name.
+        if ( /(\w+)\s*\(\).*/s ) {
+            my $name = $1;
             $name =~ tr/[a-z]/[A-Z]/;
             $ftrans{$name} = $1;
         } elsif ( /[\(\)]/ and not(/=/) ) {
@@ -494,31 +514,7 @@ EOF
     # Rewrite the C source file containing the error details.
 
     # First, read any existing reason string definitions:
-    my %err_reason_strings;
     my $cfile = $errorfile{$lib};
-    if ( open( IN, "<$cfile" ) ) {
-        my $line = "";
-        while ( <IN> ) {
-            s|\R$||;    # Better chomp
-            $_    = $line . $_;
-            $line = "";
-            if ( /{ERR_(PACK|FUNC|REASON)\(/ ) {
-                if ( /\b(${lib}_R_\w*)\b.*\"(.*)\"/ ) {
-                    $err_reason_strings{$1} = $2;
-                } elsif ( /\b${lib}_F_(\w*)\b.*\"(.*)\"/ ) {
-                    if ( !exists $ftrans{$1} && $1 ne $2 ) {
-#                       Don't print warning, too noisy. :(
-#                       print STDERR "WARNING: Mismatched/unused function $2\n";
-                        $ftrans{$1} = $2;
-                    }
-                } else {
-                    $line = $_;
-                }
-            }
-        }
-        close(IN);
-    }
-
     my $pack_lib = $internal ? "ERR_LIB_${lib}" : "0";
     my $hincf = $hfile;
     $hincf =~ s|.*include/||;
@@ -555,9 +551,15 @@ EOF
     # Add each function code: if a function name is found then use it.
     foreach my $i ( @function ) {
         my $fn;
-        $i =~ /^${lib}_F_(\S+)$/;
-        $fn = $1;
-        $fn = $ftrans{$fn} if exists $ftrans{$fn};
+        if ( exists $strings{$i} and $strings{$i} ne '' ) {
+            $fn = $strings{$i};
+            $fn = "" if $fn eq '*';
+        } else {
+            $i =~ /^${lib}_F_(\S+)$/;
+            $fn = $1;
+            $fn = $ftrans{$fn} if exists $ftrans{$fn};
+            $strings{$i} = $fn;
+        }
         my $short = "    {ERR_PACK($pack_lib, $i, 0), \"$fn\"},";
         if ( length($short) <= 80 ) {
             print OUT "$short\n";
@@ -575,12 +577,14 @@ EOF
     # Add each reason code.
     foreach my $i ( @reasons ) {
         my $rn;
-        if ( exists $err_reason_strings{$i} ) {
-            $rn = $err_reason_strings{$i};
+        if ( exists $strings{$i} ) {
+            $rn = $strings{$i};
+            $rn = "" if $rn eq '*';
         } else {
             $i =~ /^${lib}_R_(\S+)$/;
             $rn = $1;
             $rn =~ tr/_[A-Z]/ [a-z]/;
+            $strings{$i} = $rn;
         }
         my $short = "    {ERR_PACK($pack_lib, 0, $i), \"$rn\"},";
         if ( length($short) <= 80 ) {
@@ -653,7 +657,6 @@ EOF
     }
 
     close OUT;
-    undef %err_reason_strings;
 }
 
 &phase("Ending");
@@ -687,11 +690,20 @@ die "Found $errors errors, quitting" if $errors;
 if ( $newstate )  {
     open(OUT, ">$statefile.new")
         || die "Can't write $statefile.new, $!";
+    print OUT $statefile_prolog;
+    print OUT "# Function codes\n";
     foreach my $i ( sort keys %fcodes ) {
-        print OUT "$i $fcodes{$i}\n";
+        my $short = "$i:$fcodes{$i}:";
+        my $t = exists $strings{$i} ? $strings{$i} : "";
+        $t = "\\\n\t" . $t if length($short) + length($t) > 80;
+        print OUT "$short$t\n";
     }
+    print OUT "\n#Reason codes\n";
     foreach my $i ( sort keys %rcodes ) {
-        print OUT "$i $rcodes{$i}\n" if !exists $rextra{$i};
+        my $short = "$i:$rcodes{$i}:";
+        my $t = exists $strings{$i} ? "$strings{$i}" : "";
+        $t = "\\\n\t" . $t if length($short) + length($t) > 80;
+        print OUT "$short$t\n" if !exists $rextra{$i};
     }
     close(OUT);
     if ( $skippedstate ) {
@@ -703,4 +715,5 @@ if ( $newstate )  {
             || die "Can't rename $statefile to $statefile.new, $!";
     }
 }
+
 exit;
