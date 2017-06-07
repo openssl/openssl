@@ -203,7 +203,7 @@ static const unsigned char so[6929] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x02,0x08,  /* [ 1452] OBJ_id_smime_aa_macValue */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x02,0x09,  /* [ 1463] OBJ_id_smime_aa_equivalentLabels */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x02,0x0A,  /* [ 1474] OBJ_id_smime_aa_contentReference */
-    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x02,0x0B,  /* [ 1485] OBJ_id_smime_aa_encrypKeyPref */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x02,0x0B,  /* [ 1485] OBJ_id_smime_aa_encryptKeyPref */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x02,0x0C,  /* [ 1496] OBJ_id_smime_aa_signingCertificate */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x02,0x0D,  /* [ 1507] OBJ_id_smime_aa_smimeEncryptCerts */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x02,0x0E,  /* [ 1518] OBJ_id_smime_aa_timeStampToken */
@@ -1209,7 +1209,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-smime-aa-macValue", "id-smime-aa-macValue", NID_id_smime_aa_macValue, 11, &so[1452]},
     {"id-smime-aa-equivalentLabels", "id-smime-aa-equivalentLabels", NID_id_smime_aa_equivalentLabels, 11, &so[1463]},
     {"id-smime-aa-contentReference", "id-smime-aa-contentReference", NID_id_smime_aa_contentReference, 11, &so[1474]},
-    {"id-smime-aa-encrypKeyPref", "id-smime-aa-encrypKeyPref", NID_id_smime_aa_encrypKeyPref, 11, &so[1485]},
+    {"id-smime-aa-encryptKeyPref", "id-smime-aa-encryptKeyPref", NID_id_smime_aa_encryptKeyPref, 11, &so[1485]},
     {"id-smime-aa-signingCertificate", "id-smime-aa-signingCertificate", NID_id_smime_aa_signingCertificate, 11, &so[1496]},
     {"id-smime-aa-smimeEncryptCerts", "id-smime-aa-smimeEncryptCerts", NID_id_smime_aa_smimeEncryptCerts, 11, &so[1507]},
     {"id-smime-aa-timeStampToken", "id-smime-aa-timeStampToken", NID_id_smime_aa_timeStampToken, 11, &so[1518]},
@@ -2708,7 +2708,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      221,    /* "id-smime-aa-contentReference" */
      240,    /* "id-smime-aa-dvcs-dvc" */
      217,    /* "id-smime-aa-encapContentType" */
-     222,    /* "id-smime-aa-encrypKeyPref" */
+     222,    /* "id-smime-aa-encryptKeyPref" */
      220,    /* "id-smime-aa-equivalentLabels" */
      232,    /* "id-smime-aa-ets-CertificateRefs" */
      233,    /* "id-smime-aa-ets-RevocationRefs" */
@@ -3790,7 +3790,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      221,    /* "id-smime-aa-contentReference" */
      240,    /* "id-smime-aa-dvcs-dvc" */
      217,    /* "id-smime-aa-encapContentType" */
-     222,    /* "id-smime-aa-encrypKeyPref" */
+     222,    /* "id-smime-aa-encryptKeyPref" */
      220,    /* "id-smime-aa-equivalentLabels" */
      232,    /* "id-smime-aa-ets-CertificateRefs" */
      233,    /* "id-smime-aa-ets-RevocationRefs" */
@@ -5188,7 +5188,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      219,    /* OBJ_id_smime_aa_macValue         1 2 840 113549 1 9 16 2 8 */
      220,    /* OBJ_id_smime_aa_equivalentLabels 1 2 840 113549 1 9 16 2 9 */
      221,    /* OBJ_id_smime_aa_contentReference 1 2 840 113549 1 9 16 2 10 */
-     222,    /* OBJ_id_smime_aa_encrypKeyPref    1 2 840 113549 1 9 16 2 11 */
+     222,    /* OBJ_id_smime_aa_encryptKeyPref    1 2 840 113549 1 9 16 2 11 */
      223,    /* OBJ_id_smime_aa_signingCertificate 1 2 840 113549 1 9 16 2 12 */
      224,    /* OBJ_id_smime_aa_smimeEncryptCerts 1 2 840 113549 1 9 16 2 13 */
      225,    /* OBJ_id_smime_aa_timeStampToken   1 2 840 113549 1 9 16 2 14 */

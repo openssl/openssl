@@ -856,9 +856,9 @@
 #define NID_id_smime_aa_contentReference                221
 #define OBJ_id_smime_aa_contentReference                OBJ_id_smime_aa,10L
 
-#define SN_id_smime_aa_encrypKeyPref            "id-smime-aa-encrypKeyPref"
-#define NID_id_smime_aa_encrypKeyPref           222
-#define OBJ_id_smime_aa_encrypKeyPref           OBJ_id_smime_aa,11L
+#define SN_id_smime_aa_encryptKeyPref            "id-smime-aa-encryptKeyPref"
+#define NID_id_smime_aa_encryptKeyPref           222
+#define OBJ_id_smime_aa_encryptKeyPref           OBJ_id_smime_aa,11L
 
 #define SN_id_smime_aa_signingCertificate               "id-smime-aa-signingCertificate"
 #define NID_id_smime_aa_signingCertificate              223
