@@ -6,7 +6,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-
+#include <openssl/crypto.h>
 
 struct lhash_node_st {
     void *data;
@@ -18,6 +18,13 @@ struct lhash_st {
     OPENSSL_LH_NODE **b;
     OPENSSL_LH_COMPFUNC comp;
     OPENSSL_LH_HASHFUNC hash;
+    /*
+     * some stats are updated on lookup, which callers aren't expecting to have
+     * to take an exclusive lock around. This lock protects them on platforms
+     * without atomics, and their types are int rather than unsigned long below 
+     * so they can be adjusted with CRYPTO_atomic_add.
+     */
+    CRYPTO_RWLOCK *retrieve_stats_lock;
     unsigned int num_nodes;
     unsigned int num_alloc_nodes;
     unsigned int p;
@@ -29,14 +36,14 @@ struct lhash_st {
     unsigned long num_expand_reallocs;
     unsigned long num_contracts;
     unsigned long num_contract_reallocs;
-    unsigned long num_hash_calls;
-    unsigned long num_comp_calls;
+    int num_hash_calls;
+    int num_comp_calls;
     unsigned long num_insert;
     unsigned long num_replace;
     unsigned long num_delete;
     unsigned long num_no_delete;
-    unsigned long num_retrieve;
-    unsigned long num_retrieve_miss;
-    unsigned long num_hash_comps;
+    int num_retrieve;
+    int num_retrieve_miss;
+    int num_hash_comps;
     int error;
 };
