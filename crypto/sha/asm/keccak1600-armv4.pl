@@ -27,16 +27,16 @@
 #
 ########################################################################
 # Numbers are cycles per processed byte. Non-NEON results account even
-# for input bit interleaving [which takes ~1/4-1/3 of time].
+# for input bit interleaving.
 #
 #		r=1600(*),NEON		r=1088(**),NEON
 #
-# Cortex-A5	80/+220%, 24		110,       36
-# Cortex-A7	71/+180%, 23		99,        34
-# Cortex-A8	48/+290%, 20		67,        30
-# Cortex-A9	48/+290%, 17		66,        26
-# Cortex-A15	34/+210%, 12		47,        18
-# Snapdragon S4	44/+230%, 16		59,        24
+# Cortex-A5	67/+130%, 24		96,        36
+# Cortex-A7	60/+90%,  23		87,        34
+# Cortex-A8	39/+220%, 20		56,        30
+# Cortex-A9	41/+160%, 17		58,        26
+# Cortex-A15	30/+65%,  12		41,        18
+# Snapdragon S4	35/+120%, 16		50,        24
 #
 # (*)	Not used in real life, meaningful as estimate for single absorb
 #	operation performance. Percentage after slash is improvement
@@ -614,7 +614,7 @@ KeccakF1600:
 	ldmia	sp!,{r4-r11,pc}
 .size	KeccakF1600,.-KeccakF1600
 ___
-{ my ($hi,$lo,$i,$A_flat, $len,$bsz,$inp) = map("r$_",(5..8, 10..12));
+{ my ($A_flat,$inp,$len,$bsz) = map("r$_",(10..12,14));
 
 ########################################################################
 # Stack layout
@@ -623,14 +623,22 @@ ___
 #       | ...                   |
 #       | ...                   |
 # +336->+-----------------------+
-#       | uint64_t *A           |
+#       | 0x55555555            |
 # +340->+-----------------------+
-#       | const void *inp       |
+#       | 0x33333333            |
 # +344->+-----------------------+
-#       | size_t len            |
+#       | 0x0f0f0f0f            |
 # +348->+-----------------------+
-#       | size_t bs             |
+#       | 0x00ff00ff            |
 # +352->+-----------------------+
+#       | uint64_t *A           |
+# +356->+-----------------------+
+#       | const void *inp       |
+# +360->+-----------------------+
+#       | size_t len            |
+# +364->+-----------------------+
+#       | size_t bs             |
+# +368->+-----------------------+
 #       | ....
 
 $code.=<<___;
@@ -639,162 +647,295 @@ $code.=<<___;
 .align	5
 SHA3_absorb:
 	stmdb	sp!,{r0-r12,lr}
-	sub	sp,sp,#320+16
+	sub	sp,sp,#336+16
 
-	mov	r12,r0
-	add	r14,sp,#0
+	add	$A_flat,r0,#$A[1][0]
+	@ mov	$inp,r1
 	mov	$len,r2
 	mov	$bsz,r3
+	cmp	r2,r3
+	blo	.Labsorb_abort
 
-	ldmia	r12!,{@C[0]-@C[9]}	@ copy A[5][5] to stack
-	stmia	r14!,{@C[0]-@C[9]}
-	ldmia	r12!,{@C[0]-@C[9]}
-	stmia	r14!,{@C[0]-@C[9]}
-	ldmia	r12!,{@C[0]-@C[9]}
-	stmia	r14!,{@C[0]-@C[9]}
-	ldmia	r12!,{@C[0]-@C[9]}
-	stmia	r14!,{@C[0]-@C[9]}
-	ldmia	r12, {@C[0]-@C[9]}
-	stmia	r14, {@C[0]-@C[9]}
+	add	$inp,sp,#0
+	ldmia	r0,      {@C[0]-@C[9]}	@ copy A[5][5] to stack
+	stmia	$inp!,   {@C[0]-@C[9]}
+	ldmia	$A_flat!,{@C[0]-@C[9]}
+	stmia	$inp!,   {@C[0]-@C[9]}
+	ldmia	$A_flat!,{@C[0]-@C[9]}
+	stmia	$inp!,   {@C[0]-@C[9]}
+	ldmia	$A_flat!,{@C[0]-@C[9]}
+	stmia	$inp!,   {@C[0]-@C[9]}
+	ldmia	$A_flat!,{@C[0]-@C[9]}
+	stmia	$inp,    {@C[0]-@C[9]}
 
-	ldr	$inp,[sp,#340]
+	ldr	$inp,[sp,#356]		@ restore $inp
+#ifdef	__thumb2__
+	mov	r9,#0x00ff00ff
+	mov	r8,#0x0f0f0f0f
+	mov	r7,#0x33333333
+	mov	r6,#0x55555555
+#else
+	mov	r6,#0x11		@ compose constants
+	mov	r8,#0x0f
+	mov	r9,#0xff
+	orr	r6,r6,r6,lsl#8
+	orr	r8,r8,r8,lsl#8
+	orr	r6,r6,r6,lsl#16		@ 0x11111111
+	orr	r9,r9,r9,lsl#16		@ 0x00ff00ff
+	orr	r8,r8,r8,lsl#16		@ 0x0f0f0f0f
+	orr	r7,r6,r6,lsl#1		@ 0x33333333
+	orr	r6,r6,r6,lsl#2		@ 0x55555555
+#endif
+	str	r9,[sp,#348]
+	str	r8,[sp,#344]
+	str	r7,[sp,#340]
+	str	r6,[sp,#336]
+	b	.Loop_absorb
 
+.align	4
 .Loop_absorb:
 	subs	r0,$len,$bsz
 	blo	.Labsorbed
 	add	$A_flat,sp,#0
-	str	r0,[sp,#344]		@ save len - bsz
+	str	r0,[sp,#360]		@ save len - bsz
 
+.align	4
 .Loop_block:
-	ldmia	$A_flat,{r2-r3}		@ A_flat[i]
-	ldrb	r0,[$inp,#7]!		@ inp[7]
-	mov	$i,#8
+	ldrb	r0,[$inp],#1
+	ldrb	r1,[$inp],#1
+	ldrb	r2,[$inp],#1
+	ldrb	r3,[$inp],#1
+	ldrb	r4,[$inp],#1
+	orr	r0,r0,r1,lsl#8
+	ldrb	r1,[$inp],#1
+	orr	r0,r0,r2,lsl#16
+	ldrb	r2,[$inp],#1
+	orr	r0,r0,r3,lsl#24		@ lo
+	ldrb	r3,[$inp],#1
+	orr	r1,r4,r1,lsl#8
+	orr	r1,r1,r2,lsl#16
+	orr	r1,r1,r3,lsl#24		@ hi
 
-.Lane_loop:
-	subs	$i,$i,#1
-	lsl	r1,r0,#24
-	blo	.Lane_done
-#ifdef	__thumb2__
-	it	ne
-	ldrbne	r0,[$inp,#-1]!
-#else
-	ldrneb	r0,[$inp,#-1]!
-#endif
-	adds	r1,r1,r1		@ sip through carry flag
-	adc	$hi,$hi,$hi
-	adds	r1,r1,r1
-	adc	$lo,$lo,$lo
-	adds	r1,r1,r1
-	adc	$hi,$hi,$hi
-	adds	r1,r1,r1
-	adc	$lo,$lo,$lo
-	adds	r1,r1,r1
-	adc	$hi,$hi,$hi
-	adds	r1,r1,r1
-	adc	$lo,$lo,$lo
-	adds	r1,r1,r1
-	adc	$hi,$hi,$hi
-	adds	r1,r1,r1
-	adc	$lo,$lo,$lo
-	b	.Lane_loop
+	and	r2,r0,r6		@ &=0x55555555
+	and	r0,r0,r6,lsl#1		@ &=0xaaaaaaaa
+	and	r3,r1,r6		@ &=0x55555555
+	and	r1,r1,r6,lsl#1		@ &=0xaaaaaaaa
+	orr	r2,r2,r2,lsr#1
+	orr	r0,r0,r0,lsl#1
+	orr	r3,r3,r3,lsr#1
+	orr	r1,r1,r1,lsl#1
+	and	r2,r2,r7		@ &=0x33333333
+	and	r0,r0,r7,lsl#2		@ &=0xcccccccc
+	and	r3,r3,r7		@ &=0x33333333
+	and	r1,r1,r7,lsl#2		@ &=0xcccccccc
+	orr	r2,r2,r2,lsr#2
+	orr	r0,r0,r0,lsl#2
+	orr	r3,r3,r3,lsr#2
+	orr	r1,r1,r1,lsl#2
+	and	r2,r2,r8		@ &=0x0f0f0f0f
+	and	r0,r0,r8,lsl#4		@ &=0xf0f0f0f0
+	and	r3,r3,r8		@ &=0x0f0f0f0f
+	and	r1,r1,r8,lsl#4		@ &=0xf0f0f0f0
+	ldmia	$A_flat,{r4-r5}		@ A_flat[i]
+	orr	r2,r2,r2,lsr#4
+	orr	r0,r0,r0,lsl#4
+	orr	r3,r3,r3,lsr#4
+	orr	r1,r1,r1,lsl#4
+	and	r2,r2,r9		@ &=0x00ff00ff
+	and	r0,r0,r9,lsl#8		@ &=0xff00ff00
+	and	r3,r3,r9		@ &=0x00ff00ff
+	and	r1,r1,r9,lsl#8		@ &=0xff00ff00
+	orr	r2,r2,r2,lsr#8
+	orr	r0,r0,r0,lsl#8
+	orr	r3,r3,r3,lsr#8
+	orr	r1,r1,r1,lsl#8
 
-.Lane_done:
-	eor	r2,r2,$lo
-	eor	r3,r3,$hi
-	add	$inp,$inp,#8
-	stmia	$A_flat!,{r2-r3}	@ A_flat[i++] ^= BitInterleave(inp[0..7])
+	lsl	r2,r2,#16
+	lsr	r1,r1,#16
+	eor	r4,r4,r3,lsl#16
+	eor	r5,r5,r0,lsr#16
+	eor	r4,r4,r2,lsr#16
+	eor	r5,r5,r1,lsl#16
+	stmia	$A_flat!,{r4-r5}	@ A_flat[i++] ^= BitInterleave(inp[0..7])
+
 	subs	$bsz,$bsz,#8
 	bhi	.Loop_block
 
-	str	$inp,[sp,#340]
+	str	$inp,[sp,#356]
 
 	bl	KeccakF1600_int
 
-	ldr	$inp,[sp,#340]
-	ldr	$len,[sp,#344]
-	ldr	$bsz,[sp,#348]
+	add	r14,sp,#336
+	ldmia	r14,{r6-r12,r14}	@ restore constants and variables
 	b	.Loop_absorb
 
 .align	4
 .Labsorbed:
-	add	r12,sp,#$A[1][0]
-	ldr	r14, [sp,#336]		@ pull pointer to A[5][5]
-	ldmia	sp,  {@C[0]-@C[9]}
-	stmia	r14!,{@C[0]-@C[9]}	@ return A[5][5]
-	ldmia	r12!,{@C[0]-@C[9]}
-	stmia	r14!,{@C[0]-@C[9]}
-	ldmia	r12!,{@C[0]-@C[9]}
-	stmia	r14!,{@C[0]-@C[9]}
-	ldmia	r12!,{@C[0]-@C[9]}
-	stmia	r14!,{@C[0]-@C[9]}
-	ldmia	r12, {@C[0]-@C[9]}
-	stmia	r14, {@C[0]-@C[9]}
+	add	$inp,sp,#$A[1][0]
+	ldmia	sp,      {@C[0]-@C[9]}
+	stmia	$A_flat!,{@C[0]-@C[9]}	@ return A[5][5]
+	ldmia	$inp!,   {@C[0]-@C[9]}
+	stmia	$A_flat!,{@C[0]-@C[9]}
+	ldmia	$inp!,   {@C[0]-@C[9]}
+	stmia	$A_flat!,{@C[0]-@C[9]}
+	ldmia	$inp!,   {@C[0]-@C[9]}
+	stmia	$A_flat!,{@C[0]-@C[9]}
+	ldmia	$inp,    {@C[0]-@C[9]}
+	stmia	$A_flat, {@C[0]-@C[9]}
 
-	add	sp,sp,#320+32
+.Labsorb_abort:
+	add	sp,sp,#336+32
 	mov	r0,$len			@ return value
 	ldmia	sp!,{r4-r12,pc}
 .size	SHA3_absorb,.-SHA3_absorb
 ___
 }
-{ my ($A_flat,$out,$len,$bsz, $byte,$shl) = map("r$_", (4..9));
+{ my ($out,$len,$A_flat,$bsz) = map("r$_", (4,5,10,12));
 
 $code.=<<___;
 .global	SHA3_squeeze
 .type	SHA3_squeeze,%function
 .align	5
 SHA3_squeeze:
-	stmdb	sp!,{r4-r10,lr}
-	mov	r12,r0
+	stmdb	sp!,{r0,r3-r10,lr}
+
 	mov	$A_flat,r0
 	mov	$out,r1
 	mov	$len,r2
 	mov	$bsz,r3
-	mov	r14,r3
+
+#ifdef	__thumb2__
+	mov	r9,#0x00ff00ff
+	mov	r8,#0x0f0f0f0f
+	mov	r7,#0x33333333
+	mov	r6,#0x55555555
+#else
+	mov	r6,#0x11		@ compose constants
+	mov	r8,#0x0f
+	mov	r9,#0xff
+	orr	r6,r6,r6,lsl#8
+	orr	r8,r8,r8,lsl#8
+	orr	r6,r6,r6,lsl#16		@ 0x11111111
+	orr	r9,r9,r9,lsl#16		@ 0x00ff00ff
+	orr	r8,r8,r8,lsl#16		@ 0x0f0f0f0f
+	orr	r7,r6,r6,lsl#1		@ 0x33333333
+	orr	r6,r6,r6,lsl#2		@ 0x55555555
+#endif
+	stmdb	sp!,{r6-r9}
+
+	mov	r14,$A_flat
 	b	.Loop_squeeze
 
 .align	4
 .Loop_squeeze:
-	ldmia	r12!,{r0,r1}		@ A_flat[i++]
-	mov	$shl,#28
+	ldmia	$A_flat!,{r0,r1}	@ A_flat[i++]
 
-.Lane_squeeze:
-	lsl	r2,r0,$shl
-	lsl	r3,r1,$shl
-	eor	$byte,$byte,$byte
-	adds	r3,r3,r3		@ sip through carry flag
-	adc	$byte,$byte,$byte
-	adds	r2,r2,r2
-	adc	$byte,$byte,$byte
-	adds	r3,r3,r3
-	adc	$byte,$byte,$byte
-	adds	r2,r2,r2
-	adc	$byte,$byte,$byte
-	adds	r3,r3,r3
-	adc	$byte,$byte,$byte
-	adds	r2,r2,r2
-	adc	$byte,$byte,$byte
-	adds	r3,r3,r3
-	adc	$byte,$byte,$byte
-	adds	r2,r2,r2
-	adc	$byte,$byte,$byte
-	subs	$len,$len,#1		@ len -= 1
-	str	$byte,[$out],#1
+	lsl	r2,r0,#16
+	lsl	r3,r1,#16		@ r3 = r1 << 16
+	lsr	r2,r2,#16		@ r2 = r0 & 0x0000ffff
+	lsr	r1,r1,#16
+	lsr	r0,r0,#16		@ r0 = r0 >> 16
+	lsl	r1,r1,#16		@ r1 = r1 & 0xffff0000
+
+	orr	r2,r2,r2,lsl#8
+	orr	r3,r3,r3,lsr#8
+	orr	r0,r0,r0,lsl#8
+	orr	r1,r1,r1,lsr#8
+	and	r2,r2,r9		@ &=0x00ff00ff
+	and	r3,r3,r9,lsl#8		@ &=0xff00ff00
+	and	r0,r0,r9		@ &=0x00ff00ff
+	and	r1,r1,r9,lsl#8		@ &=0xff00ff00
+	orr	r2,r2,r2,lsl#4
+	orr	r3,r3,r3,lsr#4
+	orr	r0,r0,r0,lsl#4
+	orr	r1,r1,r1,lsr#4
+	and	r2,r2,r8		@ &=0x0f0f0f0f
+	and	r3,r3,r8,lsl#4		@ &=0xf0f0f0f0
+	and	r0,r0,r8		@ &=0x0f0f0f0f
+	and	r1,r1,r8,lsl#4		@ &=0xf0f0f0f0
+	orr	r2,r2,r2,lsl#2
+	orr	r3,r3,r3,lsr#2
+	orr	r0,r0,r0,lsl#2
+	orr	r1,r1,r1,lsr#2
+	and	r2,r2,r7		@ &=0x33333333
+	and	r3,r3,r7,lsl#2		@ &=0xcccccccc
+	and	r0,r0,r7		@ &=0x33333333
+	and	r1,r1,r7,lsl#2		@ &=0xcccccccc
+	orr	r2,r2,r2,lsl#1
+	orr	r3,r3,r3,lsr#1
+	orr	r0,r0,r0,lsl#1
+	orr	r1,r1,r1,lsr#1
+	and	r2,r2,r6		@ &=0x55555555
+	and	r3,r3,r6,lsl#1		@ &=0xaaaaaaaa
+	and	r0,r0,r6		@ &=0x55555555
+	and	r1,r1,r6,lsl#1		@ &=0xaaaaaaaa
+
+	orr	r2,r2,r3
+	orr	r0,r0,r1
+
+	cmp	$len,#8
+	blo	.Lsqueeze_tail
+	lsr	r1,r2,#8
+	strb	r2,[$out],#1
+	lsr	r3,r2,#16
+	strb	r1,[$out],#1
+	lsr	r2,r2,#24
+	strb	r3,[$out],#1
+	strb	r2,[$out],#1
+
+	lsr	r1,r0,#8
+	strb	r0,[$out],#1
+	lsr	r3,r0,#16
+	strb	r1,[$out],#1
+	lsr	r0,r0,#24
+	strb	r3,[$out],#1
+	strb	r0,[$out],#1
+	subs	$len,$len,#8
 	beq	.Lsqueeze_done
-	subs	$shl,$shl,#4
-	bhs	.Lane_squeeze
 
-	subs	r14,r14,#8		@ bsz -= 8
+	subs	$bsz,$bsz,#8		@ bsz -= 8
 	bhi	.Loop_squeeze
 
-	mov	r0,$A_flat
+	mov	r0,r14			@ original $A_flat
 
 	bl	KeccakF1600
 
-	mov	r12,$A_flat
-	mov	r14,$bsz
+	ldmia	sp,{r6-r10,r12}		@ restore constants and variables
+	mov	r14,$A_flat
 	b	.Loop_squeeze
 
+.align	4
+.Lsqueeze_tail:
+	strb	r2,[$out],#1
+	lsr	r2,r2,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done
+	strb	r2,[$out],#1
+	lsr	r2,r2,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done
+	strb	r2,[$out],#1
+	lsr	r2,r2,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done
+	strb	r2,[$out],#1
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done
+
+	strb	r0,[$out],#1
+	lsr	r0,r0,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done
+	strb	r0,[$out],#1
+	lsr	r0,r0,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done
+	strb	r0,[$out]
+	b	.Lsqueeze_done
+
+.align	4
 .Lsqueeze_done:
+	add	sp,sp,#24
 	ldmia	sp!,{r4-r10,pc}
 .size	SHA3_squeeze,.-SHA3_squeeze
 ___
