@@ -13,13 +13,26 @@
 
 #ifndef KECCAK1600_ASM
 
+#if defined(__x86_64__) || defined(__aarch64__) || \
+    defined(__mips64) || defined(__ia64) || \
+    (defined(__VMS) && !defined(__vax))
+/*
+ * These are available even in ILP32 flavours, but even then they are
+ * capable of performing 64-bit operations as efficiently as in *P64.
+ * Since it's not given that we can use sizeof(void *), just shunt it.
+ */
+# define BIT_INTERLEAVE (0)
+#else
+# define BIT_INTERLEAVE (sizeof(void *) < 8)
+#endif
+
 #define ROL32(a, offset) (((a) << (offset)) | ((a) >> ((32 - (offset)) & 31)))
 
 static uint64_t ROL64(uint64_t val, int offset)
 {
     if (offset == 0) {
         return val;
-    } else if (sizeof(void *) == 8) {
+    } else if (!BIT_INTERLEAVE) {
         return (val << offset) | (val >> (64-offset));
     } else {
         uint32_t hi = (uint32_t)(val >> 32), lo = (uint32_t)val;
@@ -49,30 +62,30 @@ static const unsigned char rhotates[5][5] = {
 };
 
 static const uint64_t iotas[] = {
-    sizeof(void *) == 8 ? 0x0000000000000001U : 0x0000000000000001U,
-    sizeof(void *) == 8 ? 0x0000000000008082U : 0x0000008900000000U,
-    sizeof(void *) == 8 ? 0x800000000000808aU : 0x8000008b00000000U,
-    sizeof(void *) == 8 ? 0x8000000080008000U : 0x8000808000000000U,
-    sizeof(void *) == 8 ? 0x000000000000808bU : 0x0000008b00000001U,
-    sizeof(void *) == 8 ? 0x0000000080000001U : 0x0000800000000001U,
-    sizeof(void *) == 8 ? 0x8000000080008081U : 0x8000808800000001U,
-    sizeof(void *) == 8 ? 0x8000000000008009U : 0x8000008200000001U,
-    sizeof(void *) == 8 ? 0x000000000000008aU : 0x0000000b00000000U,
-    sizeof(void *) == 8 ? 0x0000000000000088U : 0x0000000a00000000U,
-    sizeof(void *) == 8 ? 0x0000000080008009U : 0x0000808200000001U,
-    sizeof(void *) == 8 ? 0x000000008000000aU : 0x0000800300000000U,
-    sizeof(void *) == 8 ? 0x000000008000808bU : 0x0000808b00000001U,
-    sizeof(void *) == 8 ? 0x800000000000008bU : 0x8000000b00000001U,
-    sizeof(void *) == 8 ? 0x8000000000008089U : 0x8000008a00000001U,
-    sizeof(void *) == 8 ? 0x8000000000008003U : 0x8000008100000001U,
-    sizeof(void *) == 8 ? 0x8000000000008002U : 0x8000008100000000U,
-    sizeof(void *) == 8 ? 0x8000000000000080U : 0x8000000800000000U,
-    sizeof(void *) == 8 ? 0x000000000000800aU : 0x0000008300000000U,
-    sizeof(void *) == 8 ? 0x800000008000000aU : 0x8000800300000000U,
-    sizeof(void *) == 8 ? 0x8000000080008081U : 0x8000808800000001U,
-    sizeof(void *) == 8 ? 0x8000000000008080U : 0x8000008800000000U,
-    sizeof(void *) == 8 ? 0x0000000080000001U : 0x0000800000000001U,
-    sizeof(void *) == 8 ? 0x8000000080008008U : 0x8000808200000000U
+    BIT_INTERLEAVE ? 0x0000000000000001U : 0x0000000000000001U,
+    BIT_INTERLEAVE ? 0x0000008900000000U : 0x0000000000008082U,
+    BIT_INTERLEAVE ? 0x8000008b00000000U : 0x800000000000808aU,
+    BIT_INTERLEAVE ? 0x8000808000000000U : 0x8000000080008000U,
+    BIT_INTERLEAVE ? 0x0000008b00000001U : 0x000000000000808bU,
+    BIT_INTERLEAVE ? 0x0000800000000001U : 0x0000000080000001U,
+    BIT_INTERLEAVE ? 0x8000808800000001U : 0x8000000080008081U,
+    BIT_INTERLEAVE ? 0x8000008200000001U : 0x8000000000008009U,
+    BIT_INTERLEAVE ? 0x0000000b00000000U : 0x000000000000008aU,
+    BIT_INTERLEAVE ? 0x0000000a00000000U : 0x0000000000000088U,
+    BIT_INTERLEAVE ? 0x0000808200000001U : 0x0000000080008009U,
+    BIT_INTERLEAVE ? 0x0000800300000000U : 0x000000008000000aU,
+    BIT_INTERLEAVE ? 0x0000808b00000001U : 0x000000008000808bU,
+    BIT_INTERLEAVE ? 0x8000000b00000001U : 0x800000000000008bU,
+    BIT_INTERLEAVE ? 0x8000008a00000001U : 0x8000000000008089U,
+    BIT_INTERLEAVE ? 0x8000008100000001U : 0x8000000000008003U,
+    BIT_INTERLEAVE ? 0x8000008100000000U : 0x8000000000008002U,
+    BIT_INTERLEAVE ? 0x8000000800000000U : 0x8000000000000080U,
+    BIT_INTERLEAVE ? 0x0000008300000000U : 0x000000000000800aU,
+    BIT_INTERLEAVE ? 0x8000800300000000U : 0x800000008000000aU,
+    BIT_INTERLEAVE ? 0x8000808800000001U : 0x8000000080008081U,
+    BIT_INTERLEAVE ? 0x8000008800000000U : 0x8000000000008080U,
+    BIT_INTERLEAVE ? 0x0000800000000001U : 0x0000000080000001U,
+    BIT_INTERLEAVE ? 0x8000808200000000U : 0x8000000080008008U
 };
 
 #if defined(KECCAK_REF)
@@ -946,16 +959,35 @@ void KeccakF1600(uint64_t A[5][5])
 
 static uint64_t BitInterleave(uint64_t Ai)
 {
-    if (sizeof(void *) < 8) {
-        uint32_t hi = 0, lo = 0;
-        int j;
+    if (BIT_INTERLEAVE) {
+        uint32_t hi = (uint32_t)(Ai >> 32), lo = (uint32_t)Ai;
+        uint32_t t0, t1;
 
-        for (j = 0; j < 32; j++) {
-            lo |= ((uint32_t)(Ai >> (2 * j))     & 1) << j;
-            hi |= ((uint32_t)(Ai >> (2 * j + 1)) & 1) << j;
-        }
+        t0 = lo & 0x55555555;
+        t0 |= t0 >> 1;  t0 &= 0x33333333;
+        t0 |= t0 >> 2;  t0 &= 0x0f0f0f0f;
+        t0 |= t0 >> 4;  t0 &= 0x00ff00ff;
+        t0 |= t0 >> 8;  t0 &= 0x0000ffff;
 
-        Ai = ((uint64_t)hi << 32) | lo;
+        t1 = hi & 0x55555555;
+        t1 |= t1 >> 1;  t1 &= 0x33333333;
+        t1 |= t1 >> 2;  t1 &= 0x0f0f0f0f;
+        t1 |= t1 >> 4;  t1 &= 0x00ff00ff;
+        t1 |= t1 >> 8;  t1 <<= 16;
+
+        lo &= 0xaaaaaaaa;
+        lo |= lo << 1;  lo &= 0xcccccccc;
+        lo |= lo << 2;  lo &= 0xf0f0f0f0;
+        lo |= lo << 4;  lo &= 0xff00ff00;
+        lo |= lo << 8;  lo >>= 16;
+
+        hi &= 0xaaaaaaaa;
+        hi |= hi << 1;  hi &= 0xcccccccc;
+        hi |= hi << 2;  hi &= 0xf0f0f0f0;
+        hi |= hi << 4;  hi &= 0xff00ff00;
+        hi |= hi << 8;  hi &= 0xffff0000;
+
+        Ai = ((uint64_t)(hi | lo) << 32) | (t1 | t0);
     }
 
     return Ai;
@@ -963,15 +995,35 @@ static uint64_t BitInterleave(uint64_t Ai)
 
 static uint64_t BitDeinterleave(uint64_t Ai)
 {
-    if (sizeof(void *) < 8) {
+    if (BIT_INTERLEAVE) {
         uint32_t hi = (uint32_t)(Ai >> 32), lo = (uint32_t)Ai;
-        int j;
+        uint32_t t0, t1;
 
-        Ai = 0;
-        for (j = 0; j < 32; j++) {
-            Ai |= (uint64_t)((lo >> j) & 1) << (2 * j);
-            Ai |= (uint64_t)((hi >> j) & 1) << (2 * j + 1);
-        }
+        t0 = lo & 0x0000ffff;
+        t0 |= t0 << 8;  t0 &= 0x00ff00ff;
+        t0 |= t0 << 4;  t0 &= 0x0f0f0f0f;
+        t0 |= t0 << 2;  t0 &= 0x33333333;
+        t0 |= t0 << 1;  t0 &= 0x55555555;
+
+        t1 = hi << 16;
+        t1 |= t1 >> 8;  t1 &= 0xff00ff00;
+        t1 |= t1 >> 4;  t1 &= 0xf0f0f0f0;
+        t1 |= t1 >> 2;  t1 &= 0xcccccccc;
+        t1 |= t1 >> 1;  t1 &= 0xaaaaaaaa;
+
+        lo >>= 16;
+        lo |= lo << 8;  lo &= 0x00ff00ff;
+        lo |= lo << 4;  lo &= 0x0f0f0f0f;
+        lo |= lo << 2;  lo &= 0x33333333;
+        lo |= lo << 1;  lo &= 0x55555555;
+
+        hi &= 0xffff0000;
+        hi |= hi >> 8;  hi &= 0xff00ff00;
+        hi |= hi >> 4;  hi &= 0xf0f0f0f0;
+        hi |= hi >> 2;  hi &= 0xcccccccc;
+        hi |= hi >> 1;  hi &= 0xaaaaaaaa;
+
+        Ai = ((uint64_t)(hi | lo) << 32) | (t1 | t0);
     }
 
     return Ai;
