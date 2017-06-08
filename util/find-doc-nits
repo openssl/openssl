@@ -264,6 +264,34 @@ sub getdocced()
 
 my %docced;
 
+sub checkmacros()
+{
+    my $count = 0;
+
+    print "# Checking macros (approximate)\n";
+    foreach my $f ( glob('include/openssl/*.h') ) {
+        # Skip some internals we don't want to document yet.
+        next if $f eq 'include/openssl/asn1.h';
+        next if $f eq 'include/openssl/asn1t.h';
+        next if $f eq 'include/openssl/err.h';
+        open(IN, $f) || die "Can't open $f, $!";
+        while ( <IN> ) {
+            next unless /^#\s*define\s*(\S+)\(/;
+            my $macro = $1;
+            next if $docced{$macro};
+            next if $macro =~ /i2d_/
+                || $macro =~ /d2i_/
+                || $macro =~ /DEPRECATEDIN/
+                || $macro =~ /IMPLEMENT_/
+                || $macro =~ /DECLARE_/;
+            print "$f:$macro\n";
+            $count++;
+        }
+        close(IN);
+    }
+    print "# Found $count macros missing (not all should be documnted)\n"
+}
+
 sub printem()
 {
     my $libname = shift;
@@ -399,6 +427,7 @@ if ( $opt_u ) {
     }
     &printem('crypto', 'util/libcrypto.num');
     &printem('ssl', 'util/libssl.num');
+    &checkmacros();
 }
 
 exit;
