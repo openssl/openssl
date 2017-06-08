@@ -682,10 +682,6 @@ a web browser the command:
 
 can be used for example.
 
-Most web browsers (in particular Netscape and MSIE) only support RSA cipher
-suites, so they cannot connect to servers which don't use a certificate
-carrying an RSA key or a version of OpenSSL with RSA disabled.
-
 Although specifying an empty list of CAs when requesting a client certificate
 is strictly speaking a protocol violation, some SSL clients interpret this to
 mean any CA is acceptable. This is useful for debugging purposes.
