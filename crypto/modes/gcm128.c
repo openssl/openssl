@@ -818,6 +818,10 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
         ctx->gmult = gcm_gmult_4bit;
         CTX__GHASH(gcm_ghash_4bit);
     }
+# elif defined(GHASH_ASM)
+    gcm_init_4bit(ctx->Htable, ctx->H.u);
+    ctx->gmult = gcm_gmult_4bit;
+    CTX__GHASH(gcm_ghash_4bit);
 # else
     gcm_init_4bit(ctx->Htable, ctx->H.u);
 # endif

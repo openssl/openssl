@@ -102,7 +102,9 @@ if ($flavour =~ /3[12]/) {
 while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
-$softonly=0;	# allow hardware support
+# 0: Enable hardware support.
+# 1: Disable hardware support. Requires -DAES_SOFTONLY built.
+$softonly=0;
 
 $t0="%r0";	$mask="%r0";
 $t1="%r1";
@@ -821,13 +823,10 @@ $code.=<<___ if (!$softonly);
 	ar	%r5,%r0
 
 	larl	%r1,OPENSSL_s390xcap_P
-	lg	%r0,0(%r1)
-	tmhl	%r0,0x4000	# check for message-security assist
-	jz	.Lekey_internal
-
 	llihh	%r0,0x8000
 	srlg	%r0,%r0,0(%r5)
-	ng	%r0,48(%r1)	# check kmc capability vector
+	ng	%r0,40(%r1)	# check km capability vector
+	ng	%r0,56(%r1)	# check kmc capability vector
 	jz	.Lekey_internal
 
 	lmg	%r0,%r1,0($inp)	# just copy 128 bits...
@@ -1395,6 +1394,7 @@ $code.=<<___;
 .type	AES_ctr32_encrypt,\@function
 .align	16
 AES_ctr32_encrypt:
+.cfi_startproc
 	xgr	%r3,%r4		# flip %r3 and %r4, $out and $len
 	xgr	%r4,%r3
 	xgr	%r3,%r4
@@ -1406,7 +1406,45 @@ $code.=<<___ if (!$softonly);
 	clr	%r0,%r1
 	jl	.Lctr32_software
 
-	stm${g}	%r6,$s3,6*$SIZE_T($sp)
+	stm${g}	$s2,$s3,10*$SIZE_T($sp)
+	.cfi_rel_offset $s2,10*$SIZE_T
+	.cfi_rel_offset $s3,11*$SIZE_T
+	llgfr	$s2,%r0
+	larl	%r1,OPENSSL_s390xcap_P
+	llihh	%r0,0x8000	# check if kma supports the function code
+	srlg	%r0,%r0,0($s2)
+	ng	%r0,152(%r1)	# check kma capability vector
+	lgr	%r0,$s2
+	jz	.Lctr32_nokma
+
+	aghi	$sp,-112
+	.cfi_adjust_cfa_offset 112
+	lhi	%r1,0x0600
+	sllg	$len,$len,4
+	or	%r0,%r1		# set HS and LAAD flags
+	lmg	$s2,$s3,0($ivp)
+	la	%r1,0($sp)	# prepare parameter block
+	ahi	$s3,-1		# decrement counter
+	mvc	80(32,$sp),0($key)	# copy key
+	stmg	$s2,$s3,64($sp)	# copy iv
+	st	$s3,12($sp)	# copy counter
+	lghi	$s3,0		# no AAD
+
+	.long	0xb929a042	# kma $out,$s2,$inp
+	brc	1,.-4		# pay attention to "partial completion"
+
+	xc	80(32,$sp),80($sp)	# wipe key copy
+	la	$sp,112($sp)
+	.cfi_adjust_cfa_offset -112
+	lm${g}	$s2,$s3,10*$SIZE_T($sp)
+	.cfi_restore $s2
+	.cfi_restore $s3
+	br	$ra
+
+.align	16
+.Lctr32_nokma:
+
+	stm${g}	%r6,$s1,6*$SIZE_T($sp)
 
 	slgr	$out,$inp
 	la	%r1,0($key)	# %r1 is permanent copy of $key
@@ -1439,18 +1477,13 @@ $code.=<<___ if (!$softonly);
 
 .Lctr32_hw_switch:
 ___
-$code.=<<___ if (0);	######### kmctr code was measured to be ~12% slower
-	larl	$s0,OPENSSL_s390xcap_P
-	lg	$s0,8($s0)
-	tmhh	$s0,0x0004	# check for message_security-assist-4
-	jz	.Lctr32_km_loop
-
+$code.=<<___ if (!$softonly && 0);# kmctr code was measured to be ~12% slower
 	llgfr	$s0,%r0
 	lgr	$s1,%r1
 	larl	%r1,OPENSSL_s390xcap_P
 	llihh	%r0,0x8000	# check if kmctr supports the function code
 	srlg	%r0,%r0,0($s0)
-	ng	%r0,64(%r1)	# check kmctr capability vector
+	ng	%r0,88(%r1)	# check kmctr capability vector
 	lgr	%r0,$s0
 	lgr	%r1,$s1
 	jz	.Lctr32_km_loop
@@ -1488,7 +1521,7 @@ $code.=<<___ if (0);	######### kmctr code was measured to be ~12% slower
 	br	$ra
 .align	16
 ___
-$code.=<<___;
+$code.=<<___ if (!$softonly);
 .Lctr32_km_loop:
 	la	$s2,16($sp)
 	lgr	$s3,$fp
@@ -1570,6 +1603,7 @@ $code.=<<___;
 
 	lm${g}	%r6,$ra,6*$SIZE_T($sp)
 	br	$ra
+.cfi_endproc
 .size	AES_ctr32_encrypt,.-AES_ctr32_encrypt
 ___
 }
@@ -1600,7 +1634,7 @@ $code.=<<___ if(1);
 	larl	%r1,OPENSSL_s390xcap_P
 	llihh	%r0,0x8000
 	srlg	%r0,%r0,32($s1)		# check for 32+function code
-	ng	%r0,32(%r1)		# check km capability vector
+	ng	%r0,40(%r1)		# check km capability vector
 	lgr	%r0,$s0			# restore the function code
 	la	%r1,0($key1)		# restore $key1
 	jz	.Lxts_km_vanilla
@@ -2225,9 +2259,211 @@ $code.=<<___;
 .size	AES_xts_decrypt,.-AES_xts_decrypt
 ___
 }
+
+################
+# void s390x_aes_gcm_blocks(unsigned char *out, GCM128_CONTEXT *ctx,
+#                           const unsigned char *in, size_t len,
+#                           const unsigned char *aad, size_t alen,
+#                           const AES_KEY *key, int enc)
+{
+my ($out,$ctx,$in,$len,$aad,$alen,$key,$enc) = map("%r$_",(2..9));
+$code.=<<___ if (!$softonly);
+.globl	s390x_aes_gcm_blocks
+.type	s390x_aes_gcm_blocks,\@function
+.align	16
+s390x_aes_gcm_blocks:
+.cfi_startproc
+	stm$g	$alen,$enc,7*$SIZE_T($sp)
+	.cfi_rel_offset $alen,7*$SIZE_T
+	.cfi_rel_offset $key,8*$SIZE_T
+	.cfi_rel_offset $enc,9*$SIZE_T
+	lm$g	$alen,$enc,$stdframe($sp)
+
+	aghi	$sp,-112
+	.cfi_adjust_cfa_offset 112
+
+	lmg	%r0,%r1,0($ctx)
+	ahi	%r1,-1
+
+	mvc	16(32,$sp),64($ctx)	# copy Xi/H
+	#mvc	48(16,$sp),48($ctx)	# copy len
+	mvc	80(32,$sp),0($key)	# copy key
+	st	%r1,12($sp)		# copy Yi
+	stmg	%r0,%r1,64($sp)
+
+	lhi	%r1,128
+	l	%r0,240($key)	# kma capability vector checked by caller
+	sll	$enc,7
+	xr	$enc,%r1
+	or	%r0,$enc
+
+	la	%r1,0($sp)
+
+	.long	0xb9296024	# kma $out,$aad,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	l	%r0,12($sp)
+	mvc	64(16,$ctx),16($sp)	# update Xi
+	xc	0(112,$sp),0($sp)	# wipe stack
+
+	la	$sp,112($sp)
+	.cfi_adjust_cfa_offset -112
+	ahi	%r0,1
+	st	%r0,12($ctx)
+
+	lm$g	$alen,$enc,7*$SIZE_T($sp)
+	.cfi_restore $alen
+	.cfi_restore $key
+	.cfi_restore $enc
+	br	$ra
+.cfi_endproc
+.size	s390x_aes_gcm_blocks,.-s390x_aes_gcm_blocks
+___
+}
+
+################
+# void s390x_aes_ofb_blocks(unsigned char *out,
+#                           unsigned char iv[AES_BLOCK_SIZE],
+#                           const unsigned char *in, size_t len,
+#                           const AES_KEY *key)
+{
+my ($out,$iv,$in,$len,$key) = map("%r$_",(2..6));
+
+$code.=<<___ if (!$softonly);
+.globl	s390x_aes_ofb_blocks
+.type	s390x_aes_ofb_blocks,\@function
+.align	16
+s390x_aes_ofb_blocks:
+.cfi_startproc
+	aghi	$sp,-48
+	.cfi_adjust_cfa_offset 48
+	l	%r0,240($key)	# kmo capability vector checked by caller
+
+	mvc	0(16,$sp),0($iv)
+	mvc	16(32,$sp),0($key)
+	la	%r1,0($sp)
+
+	.long	0xb92b0024	# kmo $out,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	mvc	0(16,$iv),0($sp)
+	xc	0(48,$sp),0($sp)	# wipe iv,key
+	la	$sp,48($sp)
+	.cfi_adjust_cfa_offset -48
+	br	$ra
+.cfi_endproc
+.size	s390x_aes_ofb_blocks,.-s390x_aes_ofb_blocks
+___
+}
+
+################
+# void s390x_aes_ecb_blocks(unsigned char *out, const AES_KEY *key,
+#                           const unsigned char *in, size_t len)
+{
+my ($out,$key,$in,$len) = map("%r$_",(2..5));
+
+$code.=<<___ if (!$softonly);
+.globl	s390x_aes_ecb_blocks
+.type	s390x_aes_ecb_blocks,\@function
+.align	16
+s390x_aes_ecb_blocks:
+	l	%r0,240($key)	# km capability vector checked by caller
+	la	%r1,0($key)
+
+	.long	0xb92e0024	# km $out,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	br	$ra
+.size	s390x_aes_ecb_blocks,.-s390x_aes_ecb_blocks
+___
+}
+
+################
+# void s390x_aes_cfb_blocks(unsigned char *out,
+#                           unsigned char iv[AES_BLOCK_SIZE],
+#                           const unsigned char *in, size_t len,
+#                           const AES_KEY *key, int s, int enc)
+{
+my ($out,$iv,$in,$len,$key,$s,$enc) = map("%r$_",(2..8));
+$code.=<<___ if (!$softonly);
+.globl	s390x_aes_cfb_blocks
+.type	s390x_aes_cfb_blocks,\@function
+.align	16
+s390x_aes_cfb_blocks:
+.cfi_startproc
+	stm$g	$s,$enc,7*$SIZE_T($sp)
+	.cfi_rel_offset $s,7*$SIZE_T
+	.cfi_rel_offset $enc,8*$SIZE_T
+	lm$g	$s,$enc,$stdframe($sp)
+	aghi	$sp,-48
+	.cfi_adjust_cfa_offset 48
+	lhi	%r1,128
+
+	sllg	%r0,$s,24
+	sll	$enc,7
+	xr	$enc,%r1
+	o	%r0,240($key)	# kmf capability vector checked by caller
+	or	%r0,$enc
+
+	mvc	0(16,$sp),0($iv)
+	mvc	16(32,$sp),0($key)
+	la	%r1,0($sp)
+
+	.long	0xb92a0024	# kmf $out,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	mvc	0(16,$iv),0($sp)
+	xc	0(48,$sp),0($sp)	# wipe iv,key
+
+	la	$sp,48($sp)
+	.cfi_adjust_cfa_offset -48
+	lm$g	$s,$enc,7*$SIZE_T($sp)
+	.cfi_restore $s
+	.cfi_restore $enc
+	br	$ra
+.cfi_endproc
+.size	s390x_aes_cfb_blocks,.-s390x_aes_cfb_blocks
+___
+}
+
+################
+# void s390x_aes_cbc_mac_blocks(unsigned char mac[AES_BLOCK_SIZE],
+#                               const AES_KEY *key, const unsigned char *in,
+#                               size_t len)
+{
+my ($mac,$key,$in,$len) = map("%r$_",(2..6));
+$code.=<<___ if (!$softonly);
+.globl	s390x_aes_cbc_mac_blocks
+.type	s390x_aes_cbc_mac_blocks,\@function
+.align	16
+s390x_aes_cbc_mac_blocks:
+.cfi_startproc
+	aghi	$sp,-48
+	.cfi_adjust_cfa_offset 48
+	l	%r0,240($key)	# kmac capability vector checked by caller
+	nill	%r0,0xff7f	# clear "decrypt" bit
+
+	mvc	0(16,$sp),0($mac)
+	mvc	16(32,$sp),0($key)
+	la	%r1,0($sp)
+
+	.long	0xb91e0024	# kmac %r2,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	mvc	0(16,$mac),0($sp)
+	xc	0(48,$sp),0($sp)	# wipe mac,key
+
+	la	$sp,48($sp)
+	.cfi_adjust_cfa_offset -48
+	br	$ra
+.cfi_endproc
+.size	s390x_aes_cbc_mac_blocks,.-s390x_aes_cbc_mac_blocks
+___
+}
+
 $code.=<<___;
 .string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
-.comm	OPENSSL_s390xcap_P,80,8
+.comm	OPENSSL_s390xcap_P,168,8
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
