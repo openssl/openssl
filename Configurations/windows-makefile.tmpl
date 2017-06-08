@@ -72,7 +72,7 @@ SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}
 SHLIBPDBS={- join(" ", map { local $shlibext = ".pdb"; shlib($_) } @{$unified_info{libraries}}) -}
 ENGINES={- join(" ", map { dso($_) } @{$unified_info{engines}}) -}
 ENGINEPDBS={- join(" ", map { local $dsoext = ".pdb"; dso($_) } @{$unified_info{engines}}) -}
-PROGRAMS={- join(" ", map { $_.$exeext } @{$unified_info{programs}}) -}
+PROGRAMS={- our @PROGRAMS = map { $_.$exeext } @{$unified_info{programs}}; join(" ", @PROGRAMS) -}
 PROGRAMPDBS={- join(" ", map { $_.".pdb" } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
 {- output_off() if $disabled{makedepend}; "" -}
@@ -229,7 +229,9 @@ libclean:
 	-del /Q ossl_static.pdb
 
 clean: libclean
-	-del /Q /F $(PROGRAMS) $(ENGINES) $(SCRIPTS)
+	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
+	-del /Q /F $(ENGINES)
+	-del /Q /F $(SCRIPTS)
 	-del /Q /F $(GENERATED)
 	-del /Q /S /F *.d
 	-del /Q /S /F *.obj
