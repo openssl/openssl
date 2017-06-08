@@ -686,10 +686,13 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_rsa_pkcs1_sha512,
 
 #ifndef OPENSSL_NO_EC
+    TLSEXT_SIGALG_ecdsa_sha224,
     TLSEXT_SIGALG_ecdsa_sha1,
 #endif
+    TLSEXT_SIGALG_rsa_pkcs1_sha224,
     TLSEXT_SIGALG_rsa_pkcs1_sha1,
 #ifndef OPENSSL_NO_DSA
+    TLSEXT_SIGALG_dsa_sha224,
     TLSEXT_SIGALG_dsa_sha1,
 
     TLSEXT_SIGALG_dsa_sha256,
@@ -716,6 +719,9 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {"ecdsa_secp521r1_sha512", TLSEXT_SIGALG_ecdsa_secp521r1_sha512,
      NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA512, NID_secp521r1},
+    {NULL, TLSEXT_SIGALG_ecdsa_sha224,
+     NID_sha224, SSL_MD_SHA224_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
+     NID_ecdsa_with_SHA224, NID_undef},
     {NULL, TLSEXT_SIGALG_ecdsa_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA1, NID_undef},
@@ -738,6 +744,9 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {"rsa_pkcs1_sha512", TLSEXT_SIGALG_rsa_pkcs1_sha512,
      NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha512WithRSAEncryption, NID_undef},
+    {"rsa_pkcs1_sha224", TLSEXT_SIGALG_rsa_pkcs1_sha224,
+     NID_sha224, SSL_MD_SHA224_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
+     NID_sha224WithRSAEncryption, NID_undef},
     {"rsa_pkcs1_sha1", TLSEXT_SIGALG_rsa_pkcs1_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha1WithRSAEncryption, NID_undef},
@@ -750,6 +759,9 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_undef, NID_undef},
     {NULL, TLSEXT_SIGALG_dsa_sha512,
      NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_DSA, SSL_PKEY_DSA_SIGN,
+     NID_undef, NID_undef},
+    {NULL, TLSEXT_SIGALG_dsa_sha224,
+     NID_sha224, SSL_MD_SHA224_IDX, EVP_PKEY_DSA, SSL_PKEY_DSA_SIGN,
      NID_undef, NID_undef},
     {NULL, TLSEXT_SIGALG_dsa_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_DSA, SSL_PKEY_DSA_SIGN,
@@ -901,10 +913,11 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     }
     lu = tls1_lookup_sigalg(sig);
     /*
-     * Check sigalgs is known. Disallow SHA1 with TLS 1.3. Check key type is
-     * consistent with signature: RSA keys can be used for RSA-PSS
+     * Check sigalgs is known. Disallow SHA1/SHA224 with TLS 1.3. Check key type
+     * is consistent with signature: RSA keys can be used for RSA-PSS
      */
-    if (lu == NULL || (SSL_IS_TLS13(s) && lu->hash == NID_sha1)
+    if (lu == NULL
+        || (SSL_IS_TLS13(s) && (lu->hash == NID_sha1 || lu->hash == NID_sha224))
         || (pkeyid != lu->sig
         && (lu->sig != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA))) {
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
@@ -1489,10 +1502,12 @@ int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
             return 0;
         /*
          * If TLS 1.3 must have at least one valid TLS 1.3 message
-         * signing algorithm: i.e. neither RSA nor SHA1
+         * signing algorithm: i.e. neither RSA nor SHA1/SHA224
          */
         if (rv == 0 && (!SSL_IS_TLS13(s)
-            || (lu->sig != EVP_PKEY_RSA && lu->hash != NID_sha1)))
+            || (lu->sig != EVP_PKEY_RSA
+                && lu->hash != NID_sha1
+                && lu->hash != NID_sha224)))
             rv = 1;
     }
     if (rv == 0)
@@ -2279,8 +2294,10 @@ int tls_choose_sigalg(SSL *s, int *al)
         for (i = 0; i < s->cert->shared_sigalgslen; i++) {
             lu = s->cert->shared_sigalgs[i];
 
-            /* Skip SHA1, DSA and RSA if not PSS */
-            if (lu->hash == NID_sha1 || lu->sig == EVP_PKEY_DSA
+            /* Skip SHA1, SHA224, DSA and RSA if not PSS */
+            if (lu->hash == NID_sha1
+                || lu->hash == NID_sha224
+                || lu->sig == EVP_PKEY_DSA
                 || lu->sig == EVP_PKEY_RSA)
                 continue;
             if (ssl_md(lu->hash_idx) == NULL)
