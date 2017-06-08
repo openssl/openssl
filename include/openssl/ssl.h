@@ -429,7 +429,7 @@ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 # define SSL_OP_PKCS1_CHECK_1                            0x0
 /* Removed from OpenSSL 1.0.1. Was 0x10000000L */
 # define SSL_OP_PKCS1_CHECK_2                            0x0
-/* Removed from OpenSSL 1.1.0. Was 0x20000000L */ 
+/* Removed from OpenSSL 1.1.0. Was 0x20000000L */
 # define SSL_OP_NETSCAPE_CA_DN_BUG                       0x0
 /* Removed from OpenSSL 1.1.0. Was 0x40000000L */
 # define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG          0x0

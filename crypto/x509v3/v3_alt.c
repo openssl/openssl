@@ -317,7 +317,7 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
 
     if (ctx != NULL && ctx->flags == CTX_TEST)
         return 1;
-    if (ctx == NULL 
+    if (ctx == NULL
         || (ctx->subject_cert == NULL && ctx->subject_req == NULL)) {
         X509V3err(X509V3_F_COPY_EMAIL, X509V3_R_NO_SUBJECT_DETAILS);
         goto err;
