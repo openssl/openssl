@@ -85,8 +85,10 @@ sub name_synopsis()
         if %foundfilenames;
     print "$id $simplename (filename) missing from NAME section\n"
         unless $foundfilename;
-    print "$id $simplename is not public\n"
-        if $opt_p and !defined $public{$simplename};
+    foreach my $n ( keys %names ) {
+        print "$id $n is not public\n"
+            if $opt_p and !defined $public{$n};
+    }
 
     # Find all functions in SYNOPSIS
     return unless $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms;
@@ -230,7 +232,10 @@ sub parsenum()
         next if /^#/;
         next if /\bNOEXIST\b/;
         next if /\bEXPORT_VAR_AS_FUNC\b/;
-        push @apis, $1 if /([^\s]+).\s/;
+        my @fields = split();
+        die "Malformed line $_"
+            if scalar @fields != 2 && scalar @fields != 4;
+        push @apis, $fields[0];
     }
 
     close $IN;
