@@ -18,6 +18,10 @@
      with OpenSSL 1.0.2.
      [Tomas Mraz <tmraz@fedoraproject.org>]
 
+  *) Ignore the '-named_curve auto' value for compatibility of applications
+     with OpenSSL 1.0.2.
+     [Tomas Mraz <tmraz@fedoraproject.org>]
+
   *) Fragmented SSL/TLS alerts are no longer accepted. An alert message is 2
      bytes long. In theory it is permissible in SSLv3 - TLSv1.2 to fragment such
      alerts across multiple records (some of which could be empty). In practice
