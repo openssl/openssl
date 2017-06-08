@@ -2172,6 +2172,15 @@ int s_client_main(int argc, char **argv)
              * HTTP/d.d ddd Reason text\r\n
              */
             mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+            if (mbuf_len < (int)strlen("HTTP/1.0 200")) {
+                BIO_printf(bio_err,
+                           "%s: HTTP CONNECT failed, insufficient response "
+                           "from proxy (got %d octets)\n", prog, mbuf_len);
+                (void)BIO_flush(fbio);
+                BIO_pop(fbio);
+                BIO_free(fbio);
+                goto shut;
+            }
             if (mbuf[8] != ' ') {
                 BIO_printf(bio_err,
                            "%s: HTTP CONNECT failed, incorrect response "
