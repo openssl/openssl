@@ -87,7 +87,7 @@ $::code.=<<___;
 	srl		$omask, $ooff, $omask
 
 	alignaddrl	$out, %g0, $out
-	srlx		$len, 4, $len
+	srln		$len, 4, $len
 	prefetch	[$out], 22
 
 .L${bits}_cbc_enc_loop:
@@ -197,7 +197,7 @@ $::code.=<<___;
 	and	$blk_init, 63, $blk_init	! tail
 	sub	$len, $blk_init, $len
 	add	$blk_init, 15, $blk_init	! round up to 16n
-	srlx	$len, 4, $len
+	srln	$len, 4, $len
 	srl	$blk_init, 4, $blk_init
 
 .L${bits}_cbc_enc_blk_loop:
@@ -305,7 +305,7 @@ $::code.=<<___;
 	srl		$omask, $ooff, $omask
 
 	andcc		$len, 16, %g0		! is number of blocks even?
-	srlx		$len, 4, $len
+	srln		$len, 4, $len
 	alignaddrl	$out, %g0, $out
 	bz		%icc, .L${bits}_cbc_dec_loop2x
 	prefetch	[$out], 22
@@ -530,7 +530,7 @@ $::code.=<<___;
 	and	$blk_init, 63, $blk_init	! tail
 	sub	$len, $blk_init, $len
 	add	$blk_init, 15, $blk_init	! round up to 16n
-	srlx	$len, 4, $len
+	srln	$len, 4, $len
 	srl	$blk_init, 4, $blk_init
 	sub	$len, 1, $len
 	add	$blk_init, 1, $blk_init
@@ -662,7 +662,7 @@ ${alg}${bits}_t4_ctr32_encrypt:
 	andcc		$len, 16, %g0		! is number of blocks even?
 	alignaddrl	$out, %g0, $out
 	bz		%icc, .L${bits}_ctr32_loop2x
-	srlx		$len, 4, $len
+	srln		$len, 4, $len
 .L${bits}_ctr32_loop:
 	ldx		[$inp + 0], %o0
 	brz,pt		$ileft, 4f
@@ -833,7 +833,7 @@ $::code.=<<___;
 	and	$blk_init, 63, $blk_init	! tail
 	sub	$len, $blk_init, $len
 	add	$blk_init, 15, $blk_init	! round up to 16n
-	srlx	$len, 4, $len
+	srln	$len, 4, $len
 	srl	$blk_init, 4, $blk_init
 	sub	$len, 1, $len
 	add	$blk_init, 1, $blk_init
@@ -981,7 +981,7 @@ ___
 $code.=<<___;
 	alignaddrl	$out, %g0, $out
 	bz		%icc, .L${bits}_xts_${dir}loop2x
-	srlx		$len, 4, $len
+	srln		$len, 4, $len
 .L${bits}_xts_${dir}loop:
 	ldx		[$inp + 0], %o0
 	brz,pt		$ileft, 4f
@@ -1187,7 +1187,7 @@ $code.=<<___;
 	and	$blk_init, 63, $blk_init	! tail
 	sub	$len, $blk_init, $len
 	add	$blk_init, 15, $blk_init	! round up to 16n
-	srlx	$len, 4, $len
+	srln	$len, 4, $len
 	srl	$blk_init, 4, $blk_init
 	sub	$len, 1, $len
 	add	$blk_init, 1, $blk_init
