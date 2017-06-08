@@ -2,21 +2,18 @@
 
 =head1 NAME
 
-SSL_CTX_flush_sessions, SSL_flush_sessions - remove expired sessions
+SSL_CTX_flush_sessions - remove expired sessions
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
  void SSL_CTX_flush_sessions(SSL_CTX *ctx, long tm);
- void SSL_flush_sessions(SSL_CTX *ctx, long tm);
 
 =head1 DESCRIPTION
 
 SSL_CTX_flush_sessions() causes a run through the session cache of
 B<ctx> to remove sessions expired at time B<tm>.
-
-SSL_flush_sessions() is a synonym for SSL_CTX_flush_sessions().
 
 =head1 NOTES
 

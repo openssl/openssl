@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CONF_cmd_value_type, SSL_CONF_finish,
+SSL_CONF_cmd_value_type,
 SSL_CONF_cmd - send configuration command
 
 =head1 SYNOPSIS
@@ -11,7 +11,6 @@ SSL_CONF_cmd - send configuration command
 
  int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value);
  int SSL_CONF_cmd_value_type(SSL_CONF_CTX *cctx, const char *cmd);
- int SSL_CONF_finish(SSL_CONF_CTX *cctx);
 
 =head1 DESCRIPTION
 
@@ -21,10 +20,6 @@ configuration of B<SSL_CTX> or B<SSL> structures by providing a common
 framework for command line options or configuration files.
 
 SSL_CONF_cmd_value_type() returns the type of value that B<cmd> refers to.
-
-The function SSL_CONF_finish() must be called after all configuration
-operations have been completed. It is used to finalise any operations
-or to process defaults.
 
 =head1 SUPPORTED COMMAND LINE COMMANDS
 
@@ -568,8 +563,6 @@ A return code of 0 indicates that both B<cmd> and B<value> are valid but an
 error occurred attempting to perform the operation: for example due to an
 error in the syntax of B<value> in this case the error queue may provide
 additional information.
-
-SSL_CONF_finish() returns 1 for success and 0 for failure.
 
 =head1 SEE ALSO
 

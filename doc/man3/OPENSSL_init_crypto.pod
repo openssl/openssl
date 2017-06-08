@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OPENSSL_init_new, OPENSSL_INIT_set_config_appname, OPENSSL_INIT_free,
+OPENSSL_INIT_new, OPENSSL_INIT_set_config_appname, OPENSSL_INIT_free,
 OPENSSL_init_crypto, OPENSSL_cleanup,
 OPENSSL_atexit, OPENSSL_thread_stop - OpenSSL
 initialisation and deinitialisation functions
@@ -16,7 +16,7 @@ initialisation and deinitialisation functions
  int OPENSSL_atexit(void (*handler)(void));
  void OPENSSL_thread_stop(void);
 
- OPENSSL_INIT_SETTINGS *OPENSSL_init_new(void);
+ OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
  int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *init,
                                      const char* name);
  void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *init);
@@ -96,7 +96,7 @@ B<OPENSSL_INIT_ADD_ALL_DIGESTS> will be ignored.
 
 With this option an OpenSSL configuration file will be automatically loaded and
 used by calling OPENSSL_config(). This is not a default option.
-See the description of OPENSSL_init_new(), below.
+See the description of OPENSSL_INIT_new(), below.
 
 =item OPENSSL_INIT_NO_LOAD_CONFIG
 
@@ -192,7 +192,7 @@ described in the NOTES section below.
 The B<OPENSSL_INIT_LOAD_CONFIG> flag will load a default configuration
 file.  To specify a different file, an B<OPENSSL_INIT_SETTINGS> must
 be created and used. The routines
-OPENSSL_init_new() and OPENSSL_INIT_set_config_appname() can be used to
+OPENSSL_INIT_new() and OPENSSL_INIT_set_config_appname() can be used to
 allocate the object and set the application name, and then the
 object can be released with OPENSSL_INIT_free() when done.
 
@@ -230,7 +230,7 @@ L<OPENSSL_init_ssl(3)>
 =head1 HISTORY
 
 The OPENSSL_init_crypto(), OPENSSL_cleanup(), OPENSSL_atexit(),
-OPENSSL_thread_stop(), OPENSSL_init_new(), OPENSSL_INIT_set_config_appname()
+OPENSSL_thread_stop(), OPENSSL_INIT_new(), OPENSSL_INIT_set_config_appname()
 and OPENSSL_INIT_free() functions were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
