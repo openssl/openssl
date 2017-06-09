@@ -351,49 +351,52 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    /* Check for broken implementations of GOST ciphersuites */
-    /*
-     * If key is GOST and n is exactly 64, it is bare signature without
-     * length field (CryptoPro implementations at least till CSP 4.0)
-     */
-#ifndef OPENSSL_NO_GOST
-    if (PACKET_remaining(pkt) == 64
-        && EVP_PKEY_id(pkey) == NID_id_GostR3410_2001) {
-        len = 64;
-    } else
-#endif
-    {
-        if (SSL_USE_SIGALGS(s)) {
-            int rv;
-            unsigned int sigalg;
+    if (SSL_USE_SIGALGS(s)) {
+        int rv;
+        unsigned int sigalg;
 
-            if (!PACKET_get_net_2(pkt, &sigalg)) {
-                al = SSL_AD_DECODE_ERROR;
-                goto f_err;
-            }
-            rv = tls12_check_peer_sigalg(s, sigalg, pkey);
-            if (rv == -1) {
-                goto f_err;
-            } else if (rv == 0) {
-                al = SSL_AD_DECODE_ERROR;
-                goto f_err;
-            }
-#ifdef SSL_DEBUG
-            fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
-#endif
-        } else if (!tls1_set_peer_legacy_sigalg(s, pkey)) {
-                al = SSL_AD_INTERNAL_ERROR;
-                goto f_err;
-        }
-
-        md = ssl_md(s->s3->tmp.peer_sigalg->hash_idx);
-
-        if (!PACKET_get_net_2(pkt, &len)) {
-            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_LENGTH_MISMATCH);
+        if (!PACKET_get_net_2(pkt, &sigalg)) {
             al = SSL_AD_DECODE_ERROR;
             goto f_err;
         }
+        rv = tls12_check_peer_sigalg(s, sigalg, pkey);
+        if (rv == -1) {
+            goto f_err;
+        } else if (rv == 0) {
+            al = SSL_AD_DECODE_ERROR;
+            goto f_err;
+        }
+#ifdef SSL_DEBUG
+        fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
+#endif
+    } else if (!tls1_set_peer_legacy_sigalg(s, pkey)) {
+            al = SSL_AD_INTERNAL_ERROR;
+            goto f_err;
     }
+
+    md = ssl_md(s->s3->tmp.peer_sigalg->hash_idx);
+
+    /* Check for broken implementations of GOST ciphersuites */
+    /*
+     * If key is GOST and len is exactly 64 or 128, it is signature without
+     * length field (CryptoPro implementations at least till TLS 1.2)
+     */
+#ifndef OPENSSL_NO_GOST
+    if (!SSL_USE_SIGALGS(s)
+        && ((PACKET_remaining(pkt) == 64
+             && (EVP_PKEY_id(pkey) == NID_id_GostR3410_2001
+                 || EVP_PKEY_id(pkey) == NID_id_GostR3410_2012_256))
+            || (PACKET_remaining(pkt) == 128
+                && EVP_PKEY_id(pkey) == NID_id_GostR3410_2012_512))) {
+        len = PACKET_remaining(pkt);
+    } else
+#endif
+    if (!PACKET_get_net_2(pkt, &len)) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_LENGTH_MISMATCH);
+        al = SSL_AD_DECODE_ERROR;
+        goto f_err;
+    }
+
     j = EVP_PKEY_size(pkey);
     if (((int)len > j) || ((int)PACKET_remaining(pkt) > j)
         || (PACKET_remaining(pkt) == 0)) {
