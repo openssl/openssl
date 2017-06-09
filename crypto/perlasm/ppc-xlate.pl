@@ -233,7 +233,14 @@ my $vpmsumb	= sub { vcrypto_op(@_, 1032); };
 my $vpmsumd	= sub { vcrypto_op(@_, 1224); };
 my $vpmsubh	= sub { vcrypto_op(@_, 1096); };
 my $vpmsumw	= sub { vcrypto_op(@_, 1160); };
+# These are not really crypto, but one can use vcrypto_op
 my $vaddudm	= sub { vcrypto_op(@_, 192);  };
+my $vadduqm	= sub { vcrypto_op(@_, 256);  };
+my $vmuleuw	= sub { vcrypto_op(@_, 648);  };
+my $vmulouw	= sub { vcrypto_op(@_, 136);  };
+my $vrld	= sub { vcrypto_op(@_, 196);  };
+my $vsld	= sub { vcrypto_op(@_, 1476); };
+my $vsrd	= sub { vcrypto_op(@_, 1732); };
 
 my $mtsle	= sub {
     my ($f, $arg) = @_;
@@ -249,10 +256,23 @@ my $maddld = sub {
     my ($f, $rt, $ra, $rb, $rc) = @_;
     "	.long	".sprintf "0x%X",(4<<26)|($rt<<21)|($ra<<16)|($rb<<11)|($rc<<6)|51;
 };
-
 my $darn = sub {
     my ($f, $rt, $l) = @_;
     "	.long	".sprintf "0x%X",(31<<26)|($rt<<21)|($l<<16)|(755<<1);
+};
+my $iseleq = sub {
+    my ($f, $rt, $ra, $rb) = @_;
+    "	.long	".sprintf "0x%X",(31<<26)|($rt<<21)|($ra<<16)|($rb<<11)|(2<<6)|30;
+};
+
+# PowerISA 3.0B stuff
+my $addex = sub {
+    my ($f, $rt, $ra, $rb, $cy) = @_;	# only cy==0 is specified in 3.0B
+    "	.long	".sprintf "0x%X",(31<<26)|($rt<<21)|($ra<<16)|($rb<<11)|($cy<<9)|(170<<1);
+};
+my $vmsumudm = sub {
+    my ($f, $vrt, $vra, $vrb, $vrc) = @_;
+    "	.long	".sprintf "0x%X",(4<<26)|($vrt<<21)|($vra<<16)|($vrb<<11)|($vrc<<6)|35;
 };
 
 while($line=<>) {
