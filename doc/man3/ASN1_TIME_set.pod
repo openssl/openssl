@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-ASN1_TIME_set, ASN1_TIME_adj, ASN1_TIME_check, ASN1_TIME_set_string,
+ASN1_TIME_set, ASN1_TIME_adj, ASN1_TIME_check,
+ASN1_TIME_set_string, ASN1_TIME_set_string_X509,
 ASN1_TIME_print, ASN1_TIME_to_tm, ASN1_TIME_diff - ASN.1 Time functions
 
 =head1 SYNOPSIS
@@ -11,6 +12,7 @@ ASN1_TIME_print, ASN1_TIME_to_tm, ASN1_TIME_diff - ASN.1 Time functions
  ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s, time_t t,
                           int offset_day, long offset_sec);
  int ASN1_TIME_set_string(ASN1_TIME *s, const char *str);
+ int ASN1_TIME_set_string_X509(ASN1_TIME *s, const char *str);
  int ASN1_TIME_check(const ASN1_TIME *t);
  int ASN1_TIME_print(BIO *b, const ASN1_TIME *s);
  int ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm);
@@ -33,7 +35,15 @@ and returned.
 
 ASN1_TIME_set_string() sets ASN1_TIME structure B<s> to the time
 represented by string B<str> which must be in appropriate ASN.1 time
-format (for example YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ).
+format (for example YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ). If B<s> is NULL
+this function performs a format check on B<str> only.
+
+ASN1_TIME_set_string_X509() sets ASN1_TIME structure B<s> to the time
+represented by string B<str> which must be in appropriate time format
+that RFC 5280 requires, which means it only allows YYMMDDHHMMSSZ and
+YYYYMMDDHHMMSSZ (leap second is rejected), all other ASN.1 time format
+are not allowed. If B<s> is NULL this function performs a format check
+on B<str> only.
 
 ASN1_TIME_check() checks the syntax of ASN1_TIME structure B<s>.
 
@@ -121,8 +131,8 @@ Determine if one time is later or sooner than the current time:
 ASN1_TIME_set() and ASN1_TIME_adj() return a pointer to an ASN1_TIME structure
 or NULL if an error occurred.
 
-ASN1_TIME_set_string() returns 1 if the time value is successfully set and
-0 otherwise.
+ASN1_TIME_set_string() and ASN1_TIME_set_string_X509() return 1 if the time
+value is successfully set and 0 otherwise.
 
 ASN1_TIME_check() returns 1 if the structure is syntactically correct and 0
 otherwise.
@@ -139,6 +149,7 @@ pass ASN1_TIME structure has invalid syntax for example.
 =head1 HISTORY
 
 The ASN1_TIME_to_tm() function was added in OpenSSL 1.1.1.
+The ASN1_TIME_set_string_X509() function was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

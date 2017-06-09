@@ -22,7 +22,7 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
     static const int min[9] = { 0, 0, 1, 1, 0, 0, 0, 0, 0 };
     static const int max[9] = { 99, 99, 12, 31, 23, 59, 59, 12, 59 };
     char *a;
-    int n, i, l, o;
+    int n, i, l, o, min_l = 13, strict = 0;
 
     if (d->type != V_ASN1_GENERALIZEDTIME)
         return (0);
@@ -34,10 +34,26 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
      * as YYYY. This stuff treats everything as a two digit field so make
      * first two fields 00 to 99
      */
-    if (l < 13)
+
+    /*
+     * ASN1_STRING_FLAG_X509_TIME is used to enforce RFC 5280
+     * time string format, in which:
+     *
+     * 1. "seconds" is a 'MUST'
+     * 2. "Zulu" timezone is a 'MUST'
+     * 3. "+|-" is not allowed to indicate a time zone
+     * 4. fractional seconds are not allowed in GeneralizedTime
+     */
+
+    if (d->flags & ASN1_STRING_FLAG_X509_TIME) {
+        min_l = 15;
+        strict = 1;
+    }
+
+    if (l < min_l)
         goto err;
     for (i = 0; i < 7; i++) {
-        if ((i == 6) && ((a[o] == 'Z') || (a[o] == '+') || (a[o] == '-'))) {
+        if (!strict && (i == 6) && ((a[o] == 'Z') || (a[o] == '+') || (a[o] == '-'))) {
             i++;
             if (tm)
                 tm->tm_sec = 0;
@@ -88,6 +104,9 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
      * digits.
      */
     if (a[o] == '.') {
+        if (strict)
+            /* RFC 5280 forbids fractional seconds */
+            goto err;
         if (++o > l)
             goto err;
         i = o;
@@ -100,7 +119,7 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
 
     if (a[o] == 'Z')
         o++;
-    else if ((a[o] == '+') || (a[o] == '-')) {
+    else if (!strict && ((a[o] == '+') || (a[o] == '-'))) {
         int offsign = a[o] == '-' ? 1 : -1, offset = 0;
         o++;
         if (o + 4 > l)
@@ -146,6 +165,8 @@ int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str)
     t.type = V_ASN1_GENERALIZEDTIME;
     t.length = strlen(str);
     t.data = (unsigned char *)str;
+    t.flags = 0;
+
     if (ASN1_GENERALIZEDTIME_check(&t)) {
         if (s != NULL) {
             if (!ASN1_STRING_set((ASN1_STRING *)s, str, t.length))
