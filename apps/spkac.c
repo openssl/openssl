@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -116,19 +116,22 @@ int spkac_main(int argc, char **argv)
         goto end;
     }
 
-    if (keyfile) {
+    if (keyfile != NULL) {
         pkey = load_key(strcmp(keyfile, "-") ? keyfile : NULL,
                         FORMAT_PEM, 1, passin, e, "private key");
-        if (!pkey) {
+        if (pkey == NULL)
             goto end;
-        }
         spki = NETSCAPE_SPKI_new();
-        if (challenge)
+        if (spki == NULL)
+            goto end;
+        if (challenge != NULL)
             ASN1_STRING_set(spki->spkac->challenge,
                             challenge, (int)strlen(challenge));
         NETSCAPE_SPKI_set_pubkey(spki, pkey);
         NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
         spkstr = NETSCAPE_SPKI_b64_encode(spki);
+        if (spkstr == NULL)
+            goto end;
 
         out = bio_open_default(outfile, 'w', FORMAT_TEXT);
         if (out == NULL) {
@@ -154,7 +157,7 @@ int spkac_main(int argc, char **argv)
 
     spki = NETSCAPE_SPKI_b64_decode(spkstr, -1);
 
-    if (!spki) {
+    if (spki == NULL) {
         BIO_printf(bio_err, "Error loading SPKAC\n");
         ERR_print_errors(bio_err);
         goto end;
@@ -169,9 +172,9 @@ int spkac_main(int argc, char **argv)
     pkey = NETSCAPE_SPKI_get_pubkey(spki);
     if (verify) {
         i = NETSCAPE_SPKI_verify(spki, pkey);
-        if (i > 0)
+        if (i > 0) {
             BIO_printf(bio_err, "Signature OK\n");
-        else {
+        } else {
             BIO_printf(bio_err, "Signature Failure\n");
             ERR_print_errors(bio_err);
             goto end;
