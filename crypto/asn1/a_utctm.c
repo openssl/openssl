@@ -52,13 +52,15 @@ int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
         if ((a[o] < '0') || (a[o] > '9'))
             goto err;
         n = a[o] - '0';
-        if (++o > l)
+        /* incomplete 2-digital number */
+        if (++o == l)
             goto err;
 
         if ((a[o] < '0') || (a[o] > '9'))
             goto err;
         n = (n * 10) + a[o] - '0';
-        if (++o > l)
+        /* no more bytes to read, but we haven't seen time-zone yet */
+        if (++o == l)
             goto err;
 
         if ((n < min[i]) || (n > max[i]))
@@ -86,12 +88,18 @@ int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
             }
         }
     }
-    if (a[o] == 'Z')
+
+    /*
+     * 'o' will never point to '\0' at this point, the only chance
+     * 'o' can point th '\0' is either the subsequent if or the first
+     * else if is true.
+     */
+    if (a[o] == 'Z') {
         o++;
-    else if (!strict && ((a[o] == '+') || (a[o] == '-'))) {
+    } else if (!strict && ((a[o] == '+') || (a[o] == '-'))) {
         int offsign = a[o] == '-' ? 1 : -1, offset = 0;
         o++;
-        if (o + 4 > l)
+        if (o + 4 != l)
             goto err;
         for (i = 6; i < 8; i++) {
             if ((a[o] < '0') || (a[o] > '9'))

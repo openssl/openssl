@@ -62,13 +62,15 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
         if ((a[o] < '0') || (a[o] > '9'))
             goto err;
         n = a[o] - '0';
-        if (++o > l)
+        /* incomplete 2-digital number */
+        if (++o == l)
             goto err;
 
         if ((a[o] < '0') || (a[o] > '9'))
             goto err;
         n = (n * 10) + a[o] - '0';
-        if (++o > l)
+        /* no more bytes to read, but we haven't seen time-zone yet */
+        if (++o == l)
             goto err;
 
         if ((n < min[i]) || (n > max[i]))
@@ -107,22 +109,36 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
         if (strict)
             /* RFC 5280 forbids fractional seconds */
             goto err;
-        if (++o > l)
+        if (++o == l)
             goto err;
         i = o;
-        while ((a[o] >= '0') && (a[o] <= '9') && (o <= l))
+        while ((o < l) && (a[o] >= '0') && (a[o] <= '9'))
             o++;
         /* Must have at least one digit after decimal point */
         if (i == o)
             goto err;
+        /* no more bytes to read, but we haven't seen time-zone yet */
+        if (o == l)
+            goto err;
     }
 
-    if (a[o] == 'Z')
+    /*
+     * 'o' will never point to '\0' at this point, the only chance
+     * 'o' can point th '\0' is either the subsequent if or the first
+     * else if is true.
+     */
+    if (a[o] == 'Z') {
         o++;
-    else if (!strict && ((a[o] == '+') || (a[o] == '-'))) {
+    } else if (!strict && ((a[o] == '+') || (a[o] == '-'))) {
         int offsign = a[o] == '-' ? 1 : -1, offset = 0;
         o++;
-        if (o + 4 > l)
+        /*
+         * if not equal, no need to do subsequent checks
+         * since the following for-loop will add 'o' by 4
+         * and the final return statement will check if 'l'
+         * and 'o' are equal.
+         */
+        if (o + 4 != l)
             goto err;
         for (i = 7; i < 9; i++) {
             if ((a[o] < '0') || (a[o] > '9'))
