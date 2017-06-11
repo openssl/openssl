@@ -118,7 +118,7 @@ INSTALLTOP_dev={- # $prefix is used in the OPENSSLDIR perl snippet
 INSTALLTOP_dir={- $prefix_dir -}
 OPENSSLDIR_dev={- #
                   # The logic here is that if no --openssldir was given,
-                  # OPENSSLDIR will get the value from $prefix plus "/ssl".
+                  # OPENSSLDIR will get the value "$win_commonroot\\SSL".
                   # If --openssldir was given and the value is an absolute
                   # path, OPENSSLDIR will get its value without change.
                   # If the value from --openssldir is a relative path,
