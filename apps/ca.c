@@ -805,7 +805,7 @@ end_of_options:
             if (startdate == NULL)
                 ERR_clear_error();
         }
-        if (startdate && !ASN1_TIME_set_string(NULL, startdate)) {
+        if (startdate && !ASN1_TIME_set_string_X509(NULL, startdate)) {
             BIO_printf(bio_err,
                        "start date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ\n");
             goto end;
@@ -818,7 +818,7 @@ end_of_options:
             if (enddate == NULL)
                 ERR_clear_error();
         }
-        if (enddate && !ASN1_TIME_set_string(NULL, enddate)) {
+        if (enddate && !ASN1_TIME_set_string_X509(NULL, enddate)) {
             BIO_printf(bio_err,
                        "end date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ\n");
             goto end;

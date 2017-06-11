@@ -74,6 +74,7 @@ static int test_offset(int idx)
     at.data = (unsigned char*)testdata->data;
     at.length = strlen(testdata->data);
     at.type = testdata->type;
+    at.flags = 0;
 
     if (!TEST_true(ASN1_TIME_diff(&day, &sec, &the_asn1_time, &at))) {
         TEST_info("ASN1_TIME_diff() failed for %s\n", at.data);
