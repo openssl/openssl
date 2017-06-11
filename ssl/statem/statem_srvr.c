@@ -1444,7 +1444,8 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
  err:
     ossl_statem_set_error(s);
 
-    OPENSSL_free(clienthello->pre_proc_exts);
+    if (clienthello != NULL)
+        OPENSSL_free(clienthello->pre_proc_exts);
     OPENSSL_free(clienthello);
 
     return MSG_PROCESS_ERROR;
