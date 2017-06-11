@@ -2662,14 +2662,14 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         if (X509_gmtime_adj(X509_getm_notBefore(x), 0) == NULL)
             return 0;
     } else {
-        if (!ASN1_TIME_set_string(X509_getm_notBefore(x), startdate))
+        if (!ASN1_TIME_set_string_X509(X509_getm_notBefore(x), startdate))
             return 0;
     }
     if (enddate == NULL) {
         if (X509_time_adj_ex(X509_getm_notAfter(x), days, 0, NULL)
             == NULL)
             return 0;
-    } else if (!ASN1_TIME_set_string(X509_getm_notAfter(x), enddate)) {
+    } else if (!ASN1_TIME_set_string_X509(X509_getm_notAfter(x), enddate)) {
         return 0;
     }
     return 1;
