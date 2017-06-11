@@ -97,7 +97,7 @@ static unsigned long (*getauxval) (unsigned long) = NULL;
 
 void OPENSSL_cpuid_setup(void)
 {
-    char *e;
+    const char *e;
     struct sigaction ill_oact, ill_act;
     sigset_t oset;
     static int trigger = 0;
