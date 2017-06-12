@@ -2022,9 +2022,9 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
                 /* check whether we should disable session resumption */
                 if (s->not_resumable_session_cb != NULL)
                     s->session->not_resumable =
-                        s->not_resumable_session_cb(s, ((cipher->algorithm_mkey
-                                                        & (SSL_kDHE | SSL_kECDHE))
-                                                       != 0));
+                        s->not_resumable_session_cb(s,
+                            ((s->s3->tmp.new_cipher->algorithm_mkey
+                              & (SSL_kDHE | SSL_kECDHE)) != 0));
                 if (s->session->not_resumable)
                     /* do not send a session ticket */
                     s->ext.ticket_expected = 0;
