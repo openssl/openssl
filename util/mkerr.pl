@@ -17,6 +17,7 @@ my $rebuild      = 0;
 my $reindex      = 0;
 my $static       = 0;
 my $unref        = 0;
+my %modules         = ();
 
 my $errors       = 0;
 my @t            = localtime();
@@ -41,6 +42,13 @@ Options:
 
     -internal   Generate code that is to be built as part of OpenSSL itself.
                 Also scans internal list of files.
+
+    -module M   Only useful with -internal!
+                Only write files for library module M.  Whether files are
+                actually written or not depends on other options, such as
+                -rebuild.
+                Note: this option is cumulative.  If not given at all, all
+                internal modules will be considered.
 
     -nowrite    Do not write the header/source files, even if changed.
 
@@ -86,6 +94,9 @@ while ( @ARGV ) {
     } elsif ( $arg eq "-unref" ) {
         $unref = 1;
         $nowrite = 1;
+    } elsif ( $arg eq "-module" ) {
+        shift @ARGV;
+        $modules{uc $ARGV[0]} = 1;
     } elsif ( $arg =~ /-*h(elp)?/ ) {
         &help();
         exit;
@@ -102,6 +113,7 @@ if ( $internal ) {
     @source = ( glob('crypto/*.c'), glob('crypto/*/*.c'),
                 glob('ssl/*.c'), glob('ssl/*/*.c') );
 } else {
+    die "-module isn't useful without -internal\n" if scalar keys %modules > 0;
     @source = @ARGV;
 }
 
@@ -409,6 +421,7 @@ foreach my $lib ( keys %errorfile ) {
     if ( ! $fnew{$lib} && ! $rnew{$lib} ) {
         next unless $rebuild;
     }
+    next if scalar keys %modules > 0 && !$modules{$lib};
     next if $nowrite;
     print STDERR "$lib: $fnew{$lib} new functions\n" if $fnew{$lib};
     print STDERR "$lib: $rnew{$lib} new reasons\n" if $rnew{$lib};
