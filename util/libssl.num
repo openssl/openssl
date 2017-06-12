@@ -455,3 +455,4 @@ SSL_set_psk_find_session_callback       455	1_1_1	EXIST::FUNCTION:
 SSL_set_psk_use_session_callback        456	1_1_1	EXIST::FUNCTION:
 SSL_CTX_set_psk_use_session_callback    457	1_1_1	EXIST::FUNCTION:
 SSL_CTX_set_psk_find_session_callback   458	1_1_1	EXIST::FUNCTION:
+SSL_CIPHER_get_handshake_digest         459	1_1_1	EXIST::FUNCTION:
