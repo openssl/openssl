@@ -148,6 +148,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
                 || EVP_DigestInit_ex(mctx, md, NULL) <= 0
                 || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
             EVP_MD_CTX_free(mctx);
+            EVP_PKEY_CTX_free(pctx);
             return 0;
         }
         EVP_MD_CTX_free(mctx);
@@ -156,8 +157,10 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
         if (!tls13_hkdf_expand(s, md, prevsecret,
                                (unsigned char *)derived_secret_label,
                                sizeof(derived_secret_label) - 1, hash,
-                               preextractsec, mdlen))
+                               preextractsec, mdlen)) {
+            EVP_PKEY_CTX_free(pctx);
             return 0;
+        }
 
         prevsecret = preextractsec;
         prevsecretlen = mdlen;
