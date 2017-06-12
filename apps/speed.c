@@ -1595,9 +1595,9 @@ int speed_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_DSA
     for (i = 0; i < loopargs_len; i++) {
-        loopargs[i].dsa_key[0] = get_dsa512();
-        loopargs[i].dsa_key[1] = get_dsa1024();
-        loopargs[i].dsa_key[2] = get_dsa2048();
+        loopargs[i].dsa_key[0] = get_dsa(512);
+        loopargs[i].dsa_key[1] = get_dsa(1024);
+        loopargs[i].dsa_key[2] = get_dsa(2048);
     }
 #endif
 #ifndef OPENSSL_NO_DES
