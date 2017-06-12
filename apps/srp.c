@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -139,8 +139,8 @@ static char *srp_verify_user(const char *user, const char *srp_verifier,
             BIO_printf(bio_err, "Pass %s\n", password);
 
         OPENSSL_assert(srp_usersalt != NULL);
-        if (!(gNid = SRP_create_verifier(user, password, &srp_usersalt,
-                                         &verifier, N, g)) ) {
+        if ((gNid = SRP_create_verifier(user, password, &srp_usersalt,
+                                        &verifier, N, g)) == NULL) {
             BIO_printf(bio_err, "Internal error validating SRP verifier\n");
         } else {
             if (strcmp(verifier, srp_verifier))
@@ -170,8 +170,8 @@ static char *srp_create_user(char *user, char **srp_verifier,
         if (verbose)
             BIO_printf(bio_err, "Creating\n user=\"%s\"\n g=\"%s\"\n N=\"%s\"\n",
                        user, g, N);
-        if (!(gNid = SRP_create_verifier(user, password, &salt,
-                                         srp_verifier, N, g)) ) {
+        if ((gNid = SRP_create_verifier(user, password, &salt,
+                                        srp_verifier, N, g)) == NULL) {
             BIO_printf(bio_err, "Internal error creating SRP verifier\n");
         } else {
             *srp_usersalt = salt;
@@ -283,7 +283,7 @@ int srp_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (srpvfile && configfile) {
+    if (srpvfile != NULL && configfile != NULL) {
         BIO_printf(bio_err,
                    "-srpvfile and -configfile cannot be specified together.\n");
         goto end;
@@ -299,7 +299,7 @@ int srp_main(int argc, char **argv)
                    "Need at least one user for options -add, -delete, -modify. \n");
         goto opthelp;
     }
-    if ((passinarg || passoutarg) && argc != 1) {
+    if ((passinarg != NULL || passoutarg != NULL) && argc != 1) {
         BIO_printf(bio_err,
                    "-passin, -passout arguments only valid with one user.\n");
         goto opthelp;
@@ -310,8 +310,8 @@ int srp_main(int argc, char **argv)
         goto end;
     }
 
-    if (!srpvfile) {
-        if (!configfile)
+    if (srpvfile == NULL) {
+        if (configfile == NULL)
             configfile = default_config_file;
 
         if (verbose)
@@ -399,17 +399,15 @@ int srp_main(int argc, char **argv)
 
         if (user != NULL && verbose > 1)
             BIO_printf(bio_err, "Processing user \"%s\"\n", user);
-        if ((userindex = get_index(db, user, 'U')) >= 0) {
+        if ((userindex = get_index(db, user, 'U')) >= 0)
             print_user(db, userindex, (verbose > 0) || mode == OPT_LIST);
-        }
 
         if (mode == OPT_LIST) {
             if (user == NULL) {
                 BIO_printf(bio_err, "List all users\n");
 
-                for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
+                for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++)
                     print_user(db, i, 1);
-                }
             } else if (userindex < 0) {
                 BIO_printf(bio_err,
                            "user \"%s\" does not exist, ignored. t\n", user);
@@ -606,7 +604,7 @@ int srp_main(int argc, char **argv)
     OPENSSL_free(passout);
     if (ret)
         ERR_print_errors(bio_err);
-    if (randfile)
+    if (randfile != NULL)
         app_RAND_write_file(randfile);
     NCONF_free(conf);
     free_index(db);

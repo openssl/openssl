@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -131,7 +131,7 @@ int crl2pkcs7_main(int argc, char **argv)
         goto end;
     p7s->cert = cert_stack;
 
-    if (certflst)
+    if (certflst != NULL)
         for (i = 0; i < sk_OPENSSL_STRING_num(certflst); i++) {
             certfile = sk_OPENSSL_STRING_value(certflst, i);
             if (add_certs_from_file(cert_stack, certfile) < 0) {

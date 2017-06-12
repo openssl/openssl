@@ -113,13 +113,13 @@ int enc_main(int argc, char **argv)
 
     /* first check the program name */
     prog = opt_progname(argv[0]);
-    if (strcmp(prog, "base64") == 0)
+    if (strcmp(prog, "base64") == 0) {
         base64 = 1;
 #ifdef ZLIB
-    else if (strcmp(prog, "zlib") == 0)
+    } else if (strcmp(prog, "zlib") == 0) {
         do_zlib = 1;
 #endif
-    else {
+    } else {
         cipher = EVP_get_cipherbyname(prog);
         if (cipher == NULL && strcmp(prog, "enc") != 0) {
             BIO_printf(bio_err, "%s is not a known cipher\n", prog);
@@ -292,12 +292,13 @@ int enc_main(int argc, char **argv)
 
     if (infile == NULL) {
         in = dup_bio_in(informat);
-    } else
+    } else {
         in = bio_open_default(infile, 'r', informat);
+    }
     if (in == NULL)
         goto end;
 
-    if (!str && passarg) {
+    if (str == NULL && passarg != NULL) {
         if (!app_passwd(passarg, NULL, &pass, NULL)) {
             BIO_printf(bio_err, "Error getting password\n");
             goto end;
@@ -393,17 +394,18 @@ int enc_main(int argc, char **argv)
             unsigned char *sptr;
             size_t str_len = strlen(str);
 
-            if (nosalt)
+            if (nosalt) {
                 sptr = NULL;
-            else {
+            } else {
                 if (enc) {
                     if (hsalt) {
                         if (!set_hex(hsalt, salt, sizeof salt)) {
                             BIO_printf(bio_err, "invalid hex salt value\n");
                             goto end;
                         }
-                    } else if (RAND_bytes(salt, sizeof salt) <= 0)
+                    } else if (RAND_bytes(salt, sizeof salt) <= 0) {
                         goto end;
+                    }
                     /*
                      * If -P option then don't bother writing
                      */

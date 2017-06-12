@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -147,7 +147,7 @@ static int util_verbose(ENGINE *e, int verbose, BIO *out, const char *indent)
     }
 
     cmds = sk_OPENSSL_STRING_new_null();
-    if (!cmds)
+    if (cmds == NULL)
         goto err;
 
     do {
@@ -249,9 +249,9 @@ static void util_do_cmds(ENGINE *e, STACK_OF(OPENSSL_STRING) *cmds,
             if (!ENGINE_ctrl_cmd_string(e, buf, arg, 0))
                 res = 0;
         }
-        if (res)
+        if (res) {
             BIO_printf(out, "[Success]: %s\n", cmd);
-        else {
+        } else {
             BIO_printf(out, "[Failure]: %s\n", cmd);
             ERR_print_errors(out);
         }
@@ -380,7 +380,7 @@ int engine_main(int argc, char **argv)
                     goto end;
 
                 fn_c = ENGINE_get_ciphers(e);
-                if (!fn_c)
+                if (fn_c == NULL)
                     goto skip_ciphers;
                 n = fn_c(e, NULL, &nids, 0);
                 for (k = 0; k < n; ++k)
@@ -389,7 +389,7 @@ int engine_main(int argc, char **argv)
 
  skip_ciphers:
                 fn_d = ENGINE_get_digests(e);
-                if (!fn_d)
+                if (fn_d == NULL)
                     goto skip_digests;
                 n = fn_d(e, NULL, &nids, 0);
                 for (k = 0; k < n; ++k)
@@ -398,14 +398,14 @@ int engine_main(int argc, char **argv)
 
  skip_digests:
                 fn_pk = ENGINE_get_pkey_meths(e);
-                if (!fn_pk)
+                if (fn_pk == NULL)
                     goto skip_pmeths;
                 n = fn_pk(e, NULL, &nids, 0);
                 for (k = 0; k < n; ++k)
                     if (!append_buf(&cap_buf, &cap_size, OBJ_nid2sn(nids[k])))
                         goto end;
  skip_pmeths:
-                if (cap_buf && (*cap_buf != '\0'))
+                if (cap_buf != NULL && (*cap_buf != '\0'))
                     BIO_printf(out, " [%s]\n", cap_buf);
 
                 OPENSSL_free(cap_buf);

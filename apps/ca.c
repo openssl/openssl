@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -471,17 +471,17 @@ end_of_options:
     app_RAND_load_file(randfile, 0);
 
     f = NCONF_get_string(conf, section, STRING_MASK);
-    if (!f)
+    if (f == NULL)
         ERR_clear_error();
 
-    if (f && !ASN1_STRING_set_default_mask_asc(f)) {
+    if (f != NULL && !ASN1_STRING_set_default_mask_asc(f)) {
         BIO_printf(bio_err, "Invalid global string mask setting %s\n", f);
         goto end;
     }
 
     if (chtype != MBSTRING_UTF8) {
         f = NCONF_get_string(conf, section, UTF8_IN);
-        if (!f)
+        if (f == NULL)
             ERR_clear_error();
         else if (strcmp(f, "yes") == 0)
             chtype = MBSTRING_UTF8;
@@ -489,9 +489,9 @@ end_of_options:
 
     db_attr.unique_subject = 1;
     p = NCONF_get_string(conf, section, ENV_UNIQUE_SUBJECT);
-    if (p) {
+    if (p != NULL)
         db_attr.unique_subject = parse_yesno(p, 1);
-    } else
+    else
         ERR_clear_error();
 
     /*****************************************************************/
@@ -520,7 +520,7 @@ end_of_options:
         && (keyfile = lookup_conf(conf, section, ENV_PRIVATE_KEY)) == NULL)
         goto end;
 
-    if (!key) {
+    if (key == NULL) {
         free_key = 1;
         if (!app_passwd(passinarg, NULL, &key, NULL)) {
             BIO_printf(bio_err, "Error getting password\n");
@@ -528,12 +528,11 @@ end_of_options:
         }
     }
     pkey = load_key(keyfile, keyformat, 0, key, e, "CA private key");
-    if (key)
+    if (key != NULL)
         OPENSSL_cleanse(key, strlen(key));
-    if (pkey == NULL) {
+    if (pkey == NULL)
         /* load_key() has already printed an appropriate message */
         goto end;
-    }
 
     /*****************************************************************/
     /* we need a certificate */
@@ -568,7 +567,7 @@ end_of_options:
 
     f = NCONF_get_string(conf, section, ENV_NAMEOPT);
 
-    if (f) {
+    if (f != NULL) {
         if (!set_nameopt(f)) {
             BIO_printf(bio_err, "Invalid name options: \"%s\"\n", f);
             goto end;
@@ -578,24 +577,26 @@ end_of_options:
 
     f = NCONF_get_string(conf, section, ENV_CERTOPT);
 
-    if (f) {
+    if (f != NULL) {
         if (!set_cert_ex(&certopt, f)) {
             BIO_printf(bio_err, "Invalid certificate options: \"%s\"\n", f);
             goto end;
         }
         default_op = 0;
-    } else
+    } else {
         ERR_clear_error();
+    }
 
     f = NCONF_get_string(conf, section, ENV_EXTCOPY);
 
-    if (f) {
+    if (f != NULL) {
         if (!set_ext_copy(&ext_copy, f)) {
             BIO_printf(bio_err, "Invalid extension copy option: \"%s\"\n", f);
             goto end;
         }
-    } else
+    } else {
         ERR_clear_error();
+    }
 
     /*****************************************************************/
     /* lookup where to write new certificates */
@@ -774,17 +775,17 @@ end_of_options:
         if (serialfile == NULL)
             goto end;
 
-        if (!extconf) {
+        if (extconf == NULL) {
             /*
              * no '-extfile' option, so we look for extensions in the main
              * configuration file
              */
-            if (!extensions) {
+            if (extensions == NULL) {
                 extensions = NCONF_get_string(conf, section, ENV_EXTENSIONS);
-                if (!extensions)
+                if (extensions == NULL)
                     ERR_clear_error();
             }
-            if (extensions) {
+            if (extensions != NULL) {
                 /* Check syntax of file */
                 X509V3_CTX ctx;
                 X509V3_set_ctx_test(&ctx);
@@ -805,7 +806,7 @@ end_of_options:
             if (startdate == NULL)
                 ERR_clear_error();
         }
-        if (startdate && !ASN1_TIME_set_string_X509(NULL, startdate)) {
+        if (startdate != NULL && !ASN1_TIME_set_string_X509(NULL, startdate)) {
             BIO_printf(bio_err,
                        "start date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ\n");
             goto end;
@@ -818,7 +819,7 @@ end_of_options:
             if (enddate == NULL)
                 ERR_clear_error();
         }
-        if (enddate && !ASN1_TIME_set_string_X509(NULL, enddate)) {
+        if (enddate != NULL && !ASN1_TIME_set_string_X509(NULL, enddate)) {
             BIO_printf(bio_err,
                        "end date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ\n");
             goto end;
@@ -828,7 +829,7 @@ end_of_options:
             if (!NCONF_get_number(conf, section, ENV_DEFAULT_DAYS, &days))
                 days = 0;
         }
-        if (!enddate && (days == 0)) {
+        if (enddate == NULL && (days == 0)) {
             BIO_printf(bio_err,
                        "cannot lookup how many days to certify for\n");
             goto end;
@@ -839,9 +840,9 @@ end_of_options:
             goto end;
         }
         if (verbose) {
-            if (BN_is_zero(serial))
+            if (BN_is_zero(serial)) {
                 BIO_printf(bio_err, "next serial number is 00\n");
-            else {
+            } else {
                 if ((f = BN_bn2hex(serial)) == NULL)
                     goto end;
                 BIO_printf(bio_err, "next serial number is %s\n", f);
@@ -1045,12 +1046,12 @@ end_of_options:
     /*****************************************************************/
     if (gencrl) {
         int crl_v2 = 0;
-        if (!crl_ext) {
+        if (crl_ext == NULL) {
             crl_ext = NCONF_get_string(conf, section, ENV_CRLEXT);
-            if (!crl_ext)
+            if (crl_ext == NULL)
                 ERR_clear_error();
         }
-        if (crl_ext) {
+        if (crl_ext != NULL) {
             /* Check syntax of file */
             X509V3_CTX ctx;
             X509V3_set_ctx_test(&ctx);
@@ -1141,12 +1142,12 @@ end_of_options:
 
         /* Add any extensions asked for */
 
-        if (crl_ext || crlnumberfile != NULL) {
+        if (crl_ext != NULL || crlnumberfile != NULL) {
             X509V3_CTX crlctx;
             X509V3_set_ctx(&crlctx, x509, NULL, NULL, crl, 0);
             X509V3_set_nconf(&crlctx, conf);
 
-            if (crl_ext)
+            if (crl_ext != NULL)
                 if (!X509V3_EXT_CRL_add_nconf(conf, &crlctx, crl_ext, crl))
                     goto end;
             if (crlnumberfile != NULL) {
@@ -1160,7 +1161,7 @@ end_of_options:
                     goto end;
             }
         }
-        if (crl_ext || crl_v2) {
+        if (crl_ext != NULL || crl_v2) {
             if (!X509_CRL_set_version(crl, 1))
                 goto end;       /* version 2 CRL */
         }
@@ -1297,8 +1298,9 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
                    "Signature did not match the certificate request\n");
         ERR_print_errors(bio_err);
         goto end;
-    } else
+    } else {
         BIO_printf(bio_err, "Signature ok\n");
+    }
 
     ok = do_body(xret, pkey, x509, dgst, sigopts, policy, db, serial, subj,
                  chtype, multirdn, email_dn, startdate, enddate, days, batch,
@@ -1346,8 +1348,9 @@ static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x
         ok = 0;
         BIO_printf(bio_err, "Signature did not match the certificate\n");
         goto end;
-    } else
+    } else {
         BIO_printf(bio_err, "Signature ok\n");
+    }
 
     if ((rreq = X509_to_X509_REQ(req, NULL, NULL)) == NULL)
         goto end;
@@ -1502,8 +1505,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                                "The %s field needed to be supplied and was missing\n",
                                cv->name);
                     goto end;
-                } else
+                } else {
                     push = tne;
+                }
             } else if (strcmp(cv->value, "match") == 0) {
                 int last2;
 
@@ -1578,9 +1582,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
      * And add it later on because of the method extensions are added (altName)
      */
 
-    if (email_dn)
+    if (email_dn) {
         dn_subject = subject;
-    else {
+    } else {
         X509_NAME_ENTRY *tmpne;
         /*
          * Its best to dup the subject DN and then delete any email addresses
@@ -1718,7 +1722,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         else
             X509V3_set_ctx(&ctx, x509, ret, req, NULL, 0);
 
-        if (extconf) {
+        if (extconf != NULL) {
             if (verbose)
                 BIO_printf(bio_err, "Extra configuration file found\n");
 
@@ -2505,9 +2509,9 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
             goto end;
         }
 
-        if (reason_code == 7)
+        if (reason_code == 7) {
             reason_code = OCSP_REVOKED_STATUS_REMOVEFROMCRL;
-        else if (reason_code == 8) { /* Hold instruction */
+        } else if (reason_code == 8) { /* Hold instruction */
             if (!arg_str) {
                 BIO_printf(bio_err, "missing hold instruction\n");
                 goto end;

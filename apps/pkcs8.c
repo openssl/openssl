@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -196,7 +196,7 @@ int pkcs8_main(int argc, char **argv)
 
     if (topk8) {
         pkey = load_key(infile, informat, 1, passin, e, "key");
-        if (!pkey)
+        if (pkey == NULL)
             goto end;
         if ((p8inf = EVP_PKEY2PKCS8(pkey)) == NULL) {
             BIO_printf(bio_err, "Error converting key\n");
@@ -205,11 +205,11 @@ int pkcs8_main(int argc, char **argv)
         }
         if (nocrypt) {
             assert(private);
-            if (outformat == FORMAT_PEM)
+            if (outformat == FORMAT_PEM) {
                 PEM_write_bio_PKCS8_PRIV_KEY_INFO(out, p8inf);
-            else if (outformat == FORMAT_ASN1)
+            } else if (outformat == FORMAT_ASN1) {
                 i2d_PKCS8_PRIV_KEY_INFO_bio(out, p8inf);
-            else {
+            } else {
                 BIO_printf(bio_err, "Bad format specified for key\n");
                 goto end;
             }
@@ -232,9 +232,10 @@ int pkcs8_main(int argc, char **argv)
                 ERR_print_errors(bio_err);
                 goto end;
             }
-            if (passout)
+            if (passout != NULL) {
                 p8pass = passout;
-            else if (1) {
+            } else if (1) {
+                /* To avoid bit rot */
 #ifndef OPENSSL_NO_UI
                 p8pass = pass;
                 if (EVP_read_pw_string
@@ -272,32 +273,32 @@ int pkcs8_main(int argc, char **argv)
     }
 
     if (nocrypt) {
-        if (informat == FORMAT_PEM)
+        if (informat == FORMAT_PEM) {
             p8inf = PEM_read_bio_PKCS8_PRIV_KEY_INFO(in, NULL, NULL, NULL);
-        else if (informat == FORMAT_ASN1)
+        } else if (informat == FORMAT_ASN1) {
             p8inf = d2i_PKCS8_PRIV_KEY_INFO_bio(in, NULL);
-        else {
+        } else {
             BIO_printf(bio_err, "Bad format specified for key\n");
             goto end;
         }
     } else {
-        if (informat == FORMAT_PEM)
+        if (informat == FORMAT_PEM) {
             p8 = PEM_read_bio_PKCS8(in, NULL, NULL, NULL);
-        else if (informat == FORMAT_ASN1)
+        } else if (informat == FORMAT_ASN1) {
             p8 = d2i_PKCS8_bio(in, NULL);
-        else {
+        } else {
             BIO_printf(bio_err, "Bad format specified for key\n");
             goto end;
         }
 
-        if (!p8) {
+        if (p8 == NULL) {
             BIO_printf(bio_err, "Error reading key\n");
             ERR_print_errors(bio_err);
             goto end;
         }
-        if (passin)
+        if (passin != NULL) {
             p8pass = passin;
-        else if (1) {
+        } else if (1) {
 #ifndef OPENSSL_NO_UI
             p8pass = pass;
             if (EVP_read_pw_string(pass, sizeof pass, "Enter Password:", 0)) {
@@ -312,7 +313,7 @@ int pkcs8_main(int argc, char **argv)
         p8inf = PKCS8_decrypt(p8, p8pass, strlen(p8pass));
     }
 
-    if (!p8inf) {
+    if (p8inf == NULL) {
         BIO_printf(bio_err, "Error decrypting key\n");
         ERR_print_errors(bio_err);
         goto end;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -498,7 +498,7 @@ static int create_digest(BIO *input, const char *digest, const EVP_MD *md,
     if (md_value_len < 0)
         return 0;
 
-    if (input) {
+    if (input != NULL) {
         unsigned char buffer[4096];
         int length;
 
@@ -590,7 +590,7 @@ static int reply_command(CONF *conf, const char *section, const char *engine,
     } else {
         response = create_response(conf, section, engine, queryfile,
                                    passin, inkey, md, signer, chain, policy);
-        if (response)
+        if (response != NULL)
             BIO_printf(bio_err, "Response has been generated.\n");
         else
             BIO_printf(bio_err, "Response is not generated.\n");
@@ -746,13 +746,14 @@ static ASN1_INTEGER *serial_cb(TS_RESP_CTX *ctx, void *data)
     const char *serial_file = (const char *)data;
     ASN1_INTEGER *serial = next_serial(serial_file);
 
-    if (!serial) {
+    if (serial == NULL) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Error during serial number "
                                     "generation.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_ADD_INFO_NOT_AVAILABLE);
-    } else
+    } else {
         save_ts_serial(serial_file, serial);
+    }
 
     return serial;
 }
@@ -915,8 +916,9 @@ static TS_VERIFY_CTX *create_verify_ctx(const char *data, const char *digest,
             goto err;
         if ((ctx = TS_REQ_to_TS_VERIFY_CTX(request, NULL)) == NULL)
             goto err;
-    } else
+    } else {
         return NULL;
+    }
 
     /* Add the signature verification flag and arguments. */
     TS_VERIFY_CTX_add_flags(ctx, f | TS_VFY_SIGNATURE);
