@@ -863,6 +863,12 @@ const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSION *s)
     return s->cipher;
 }
 
+int SSL_SESSION_set_cipher(SSL_SESSION *s, const SSL_CIPHER *cipher)
+{
+    s->cipher = cipher;
+    return 1;
+}
+
 const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s)
 {
     return s->ext.hostname;
