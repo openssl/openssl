@@ -485,6 +485,8 @@ struct ssl_session_st {
                                  * in here? */
     size_t master_key_length;
 
+    /* TLSv1.3 early_secret used for external PSKs */
+    unsigned char early_secret[EVP_MAX_MD_SIZE];
     /*
      * For <=TLS1.2 this is the master_key. For TLS1.3 this is the resumption
      * master secret
@@ -953,6 +955,7 @@ struct ssl_ctx_st {
     SSL_psk_server_cb_func psk_server_callback;
 # endif
     SSL_psk_find_session_cb_func psk_find_session_cb;
+    SSL_psk_use_session_cb_func psk_use_session_cb;
 
 # ifndef OPENSSL_NO_SRP
     SRP_CTX srp_ctx;            /* ctx for SRP authentication */
@@ -1103,6 +1106,8 @@ struct ssl_st {
     unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
     /* This can also be in the session once a session is established */
     SSL_SESSION *session;
+    /* TLSv1.3 PSK session */
+    SSL_SESSION *psksession;
     /* Default generate session ID callback. */
     GEN_SESSION_CB generate_session_id;
     /* Used in SSL3 */
@@ -1124,6 +1129,7 @@ struct ssl_st {
     SSL_psk_server_cb_func psk_server_callback;
 # endif
     SSL_psk_find_session_cb_func psk_find_session_cb;
+    SSL_psk_use_session_cb_func psk_use_session_cb;
     SSL_CTX *ctx;
     /* Verified chain of peer */
     STACK_OF(X509) *verified_chain;

@@ -2137,6 +2137,7 @@ SSL_R_BAD_KEY_UPDATE:122:bad key update
 SSL_R_BAD_LENGTH:271:bad length
 SSL_R_BAD_PACKET_LENGTH:115:bad packet length
 SSL_R_BAD_PROTOCOL_VERSION_NUMBER:116:bad protocol version number
+SSL_R_BAD_PSK:219:bad psk
 SSL_R_BAD_PSK_IDENTITY:114:bad psk identity
 SSL_R_BAD_RECORD_TYPE:443:bad record type
 SSL_R_BAD_RSA_ENCRYPT:119:bad rsa encrypt

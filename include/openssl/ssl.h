@@ -767,6 +767,10 @@ typedef int (*SSL_psk_find_session_cb_func)(SSL *ssl,
                                             const unsigned char *identity,
                                             size_t identity_len,
                                             SSL_SESSION **sess);
+typedef int (*SSL_psk_use_session_cb_func)(SSL *ssl, const EVP_MD *md,
+                                           const unsigned char **id,
+                                           size_t *idlen,
+                                           SSL_SESSION **sess);
 void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx, SSL_psk_server_cb_func cb);
 void SSL_set_psk_server_callback(SSL *ssl, SSL_psk_server_cb_func cb);
 
