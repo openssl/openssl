@@ -117,6 +117,7 @@ static long socket_mtu;
 static int dtlslisten = 0;
 
 static int early_data = 0;
+static SSL_SESSION *psksess = NULL;
 
 #ifndef OPENSSL_NO_PSK
 static char *psk_identity = "Client_identity";
@@ -177,6 +178,19 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
     return 0;
 }
 #endif
+
+static int psk_find_session_cb(SSL *ssl, const unsigned char *identity,
+                               size_t identity_len, SSL_SESSION **sess)
+{
+    if (strlen(psk_identity) != identity_len
+            || memcmp(psk_identity, identity, identity_len) != 0)
+        return 0;
+
+    SSL_SESSION_up_ref(psksess);
+    *sess = psksess;
+
+    return 1;
+}
 
 #ifndef OPENSSL_NO_SRP
 /* This is a context that we pass to callbacks */
@@ -685,9 +699,9 @@ typedef enum OPTION_choice {
     OPT_STATUS_TIMEOUT, OPT_STATUS_URL, OPT_STATUS_FILE, OPT_MSG, OPT_MSGFILE,
     OPT_TRACE, OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE,
     OPT_CRLF, OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
-    OPT_NO_RESUME_EPHEMERAL, OPT_PSK_IDENTITY, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
-    OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
-    OPT_SSL_CONFIG,
+    OPT_NO_RESUME_EPHEMERAL, OPT_PSK_IDENTITY, OPT_PSK_HINT, OPT_PSK,
+    OPT_PSK_SESS, OPT_SRPVFILE, OPT_SRPUSERSEED, OPT_REV, OPT_WWW,
+    OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC, OPT_SSL_CONFIG,
     OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_SSL3, OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN,
@@ -843,6 +857,7 @@ const OPTIONS s_server_options[] = {
     {"psk_hint", OPT_PSK_HINT, 's', "PSK identity hint to use"},
     {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
 #endif
+    {"psk_session", OPT_PSK_SESS, '<', "File to read PSK SSL session from"},
 #ifndef OPENSSL_NO_SRP
     {"srpvfile", OPT_SRPVFILE, '<', "The verifier file for SRP"},
     {"srpuserseed", OPT_SRPUSERSEED, 's',
@@ -977,6 +992,7 @@ int s_server_main(int argc, char *argv[])
     const char *s_serverinfo_file = NULL;
     const char *keylog_file = NULL;
     int max_early_data = -1;
+    char *psksessf = NULL;
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1341,6 +1357,9 @@ int s_server_main(int argc, char *argv[])
                 goto end;
             }
 #endif
+            break;
+        case OPT_PSK_SESS:
+            psksessf = opt_arg();
             break;
         case OPT_SRPVFILE:
 #ifndef OPENSSL_NO_SRP
@@ -1940,6 +1959,23 @@ int s_server_main(int argc, char *argv[])
         goto end;
     }
 #endif
+    if (psksessf != NULL) {
+        BIO *stmp = BIO_new_file(psksessf, "r");
+
+        if (stmp == NULL) {
+            BIO_printf(bio_err, "Can't open PSK session file %s\n", psksessf);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        psksess = PEM_read_bio_SSL_SESSION(stmp, NULL, 0, NULL);
+        BIO_free(stmp);
+        if (psksess == NULL) {
+            BIO_printf(bio_err, "Can't read PSK session file %s\n", psksessf);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        SSL_CTX_set_psk_find_session_callback(ctx, psk_find_session_cb);
+    }
 
     SSL_CTX_set_verify(ctx, s_server_verify, verify_callback);
     if (!SSL_CTX_set_session_id_context(ctx,
