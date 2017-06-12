@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -462,7 +462,7 @@ int x509_main(int argc, char **argv)
         goto end;
     }
 
-    if (fkeyfile) {
+    if (fkeyfile != NULL) {
         fkey = load_pubkey(fkeyfile, keyformat, 0, NULL, e, "Forced key");
         if (fkey == NULL)
             goto end;
@@ -476,13 +476,13 @@ int x509_main(int argc, char **argv)
         goto end;
     }
 
-    if (extfile) {
+    if (extfile != NULL) {
         X509V3_CTX ctx2;
         if ((extconf = app_load_config(extfile)) == NULL)
             goto end;
-        if (!extsect) {
+        if (extsect == NULL) {
             extsect = NCONF_get_string(extconf, "default", "extensions");
-            if (!extsect) {
+            if (extsect == NULL) {
                 ERR_clear_error();
                 extsect = "default";
             }
@@ -530,8 +530,9 @@ int x509_main(int argc, char **argv)
             BIO_printf(bio_err,
                        "Signature did not match the certificate request\n");
             goto end;
-        } else
+        } else {
             BIO_printf(bio_err, "Signature ok\n");
+        }
 
         print_name(bio_err, "subject=", X509_REQ_get_subject_name(req),
                    get_nameopt());
@@ -547,8 +548,9 @@ int x509_main(int argc, char **argv)
                 goto end;
             ASN1_INTEGER_free(sno);
             sno = NULL;
-        } else if (!X509_set_serialNumber(x, sno))
+        } else if (!X509_set_serialNumber(x, sno)) {
             goto end;
+        }
 
         if (!X509_set_issuer_name(x, X509_REQ_get_subject_name(req)))
             goto end;
@@ -557,14 +559,15 @@ int x509_main(int argc, char **argv)
         if (!set_cert_times(x, NULL, NULL, days))
             goto end;
 
-        if (fkey)
+        if (fkey != NULL) {
             X509_set_pubkey(x, fkey);
-        else {
+        } else {
             pkey = X509_REQ_get0_pubkey(req);
             X509_set_pubkey(x, pkey);
         }
-    } else
+    } else {
         x = load_cert(infile, informat, "Certificate");
+    }
 
     if (x == NULL)
         goto end;
@@ -587,7 +590,7 @@ int x509_main(int argc, char **argv)
     if (clrreject)
         X509_reject_clear(x);
 
-    if (trust) {
+    if (trust != NULL) {
         for (i = 0; i < sk_ASN1_OBJECT_num(trust); i++) {
             objtmp = sk_ASN1_OBJECT_value(trust, i);
             X509_add1_trust_object(x, objtmp);
@@ -595,7 +598,7 @@ int x509_main(int argc, char **argv)
         objtmp = NULL;
     }
 
-    if (reject) {
+    if (reject != NULL) {
         for (i = 0; i < sk_ASN1_OBJECT_num(reject); i++) {
             objtmp = sk_ASN1_OBJECT_value(reject, i);
             X509_add1_reject_object(x, objtmp);
@@ -754,7 +757,7 @@ int x509_main(int argc, char **argv)
                 unsigned char md[EVP_MAX_MD_SIZE];
                 const EVP_MD *fdig = digest;
 
-                if (!fdig)
+                if (fdig == NULL)
                     fdig = EVP_sha1();
 
                 if (!X509_digest(x, fdig, md, &n)) {
@@ -850,9 +853,9 @@ int x509_main(int argc, char **argv)
         goto end;
     }
 
-    if (outformat == FORMAT_ASN1)
+    if (outformat == FORMAT_ASN1) {
         i = i2d_X509_bio(out, x);
-    else if (outformat == FORMAT_PEM) {
+    } else if (outformat == FORMAT_PEM) {
         if (trustout)
             i = PEM_write_bio_X509_AUX(out, x);
         else
@@ -910,8 +913,9 @@ static ASN1_INTEGER *x509_load_serial(const char *CAfile, const char *serialfile
                 break;
             }
         OPENSSL_strlcat(buf, POSTFIX, len);
-    } else
+    } else {
         OPENSSL_strlcpy(buf, serialfile, len);
+    }
 
     serial = load_serial(buf, create, NULL);
     if (serial == NULL)
@@ -988,7 +992,7 @@ static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *diges
             X509_delete_ext(x, 0);
     }
 
-    if (conf) {
+    if (conf != NULL) {
         X509V3_CTX ctx2;
         X509_set_version(x, 2); /* version 3 certificate */
         X509V3_set_ctx(&ctx2, xca, x, NULL, NULL, 0);
@@ -1057,7 +1061,7 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
         while (X509_get_ext_count(x) > 0)
             X509_delete_ext(x, 0);
     }
-    if (conf) {
+    if (conf != NULL) {
         X509V3_CTX ctx;
         X509_set_version(x, 2); /* version 3 certificate */
         X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);

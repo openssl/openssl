@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -228,9 +228,9 @@ static int check(X509_STORE *ctx, const char *file,
                (file == NULL) ? "stdin" : file);
         goto end;
     }
-    if (tchain)
+    if (tchain != NULL)
         X509_STORE_CTX_set0_trusted_stack(csc, tchain);
-    if (crls)
+    if (crls != NULL)
         X509_STORE_CTX_set0_crls(csc, crls);
     i = X509_verify_cert(csc);
     if (i > 0 && X509_STORE_CTX_get_error(csc) == X509_V_OK) {
@@ -273,7 +273,7 @@ static int cb(int ok, X509_STORE_CTX *ctx)
     X509 *current_cert = X509_STORE_CTX_get_current_cert(ctx);
 
     if (!ok) {
-        if (current_cert) {
+        if (current_cert != NULL) {
             X509_NAME_print_ex(bio_err,
                             X509_get_subject_name(current_cert),
                             0, get_nameopt());

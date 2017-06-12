@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -176,12 +176,14 @@ int rsa_main(int argc, char **argv)
                     tmpformat = FORMAT_PEMRSA;
                 else if (informat == FORMAT_ASN1)
                     tmpformat = FORMAT_ASN1RSA;
-            } else
+            } else {
                 tmpformat = informat;
+            }
 
             pkey = load_pubkey(infile, tmpformat, 1, passin, e, "Public Key");
-        } else
+        } else {
             pkey = load_key(infile, informat, 1, passin, e, "Private Key");
+        }
 
         if (pkey != NULL)
             rsa = EVP_PKEY_get1_RSA(pkey);
@@ -217,9 +219,9 @@ int rsa_main(int argc, char **argv)
     if (check) {
         int r = RSA_check_key(rsa);
 
-        if (r == 1)
+        if (r == 1) {
             BIO_printf(out, "RSA key ok\n");
-        else if (r == 0) {
+        } else if (r == 0) {
             unsigned long err;
 
             while ((err = ERR_peek_error()) != 0 &&
@@ -251,8 +253,7 @@ int rsa_main(int argc, char **argv)
             assert(private);
             i = i2d_RSAPrivateKey_bio(out, rsa);
         }
-    }
-    else if (outformat == FORMAT_PEM) {
+    } else if (outformat == FORMAT_PEM) {
         if (pubout || pubin) {
             if (pubout == 2)
                 i = PEM_write_bio_RSAPublicKey(out, rsa);
@@ -297,8 +298,9 @@ int rsa_main(int argc, char **argv)
     if (i <= 0) {
         BIO_printf(bio_err, "unable to write key\n");
         ERR_print_errors(bio_err);
-    } else
+    } else {
         ret = 0;
+    }
  end:
     release_engine(e);
     BIO_free_all(out);

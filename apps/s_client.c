@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -154,8 +154,9 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
         if (c_debug)
             BIO_printf(bio_c_out,
                        "NULL received PSK identity hint, continuing anyway\n");
-    } else if (c_debug)
+    } else if (c_debug) {
         BIO_printf(bio_c_out, "Received PSK identity hint '%s'\n", hint);
+    }
 
     /*
      * lookup PSK identity and PSK key based on the given identity hint here
@@ -1423,7 +1424,7 @@ int s_client_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
-    if (proxystr) {
+    if (proxystr != NULL) {
         int res;
         char *tmp_host = host, *tmp_port = port;
         if (connectstr == NULL) {
@@ -1496,7 +1497,7 @@ int s_client_main(int argc, char **argv)
     if (key_file == NULL)
         key_file = cert_file;
 
-    if (key_file) {
+    if (key_file != NULL) {
         key = load_key(key_file, key_format, 0, pass, e,
                        "client certificate private key file");
         if (key == NULL) {
@@ -1505,7 +1506,7 @@ int s_client_main(int argc, char **argv)
         }
     }
 
-    if (cert_file) {
+    if (cert_file != NULL) {
         cert = load_cert(cert_file, cert_format, "client certificate file");
         if (cert == NULL) {
             ERR_print_errors(bio_err);
@@ -1513,13 +1514,13 @@ int s_client_main(int argc, char **argv)
         }
     }
 
-    if (chain_file) {
+    if (chain_file != NULL) {
         if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL,
                         "client certificate chain"))
             goto end;
     }
 
-    if (crl_file) {
+    if (crl_file != NULL) {
         X509_CRL *crl;
         crl = load_crl(crl_file, crl_format);
         if (crl == NULL) {
@@ -1552,7 +1553,7 @@ int s_client_main(int argc, char **argv)
     if (bio_c_out == NULL) {
         if (c_quiet && !c_debug) {
             bio_c_out = BIO_new(BIO_s_null());
-            if (c_msg && !bio_c_msg)
+            if (c_msg && bio_c_msg == NULL)
                 bio_c_msg = dup_bio_out(FORMAT_TEXT);
         } else if (bio_c_out == NULL)
             bio_c_out = dup_bio_out(FORMAT_TEXT);
@@ -1573,7 +1574,7 @@ int s_client_main(int argc, char **argv)
     if (sdebug)
         ssl_ctx_security_debug(ctx, sdebug);
 
-    if (ssl_config) {
+    if (ssl_config != NULL) {
         if (SSL_CTX_config(ctx, ssl_config) == 0) {
             BIO_printf(bio_err, "Error using configuration \"%s\"\n",
                        ssl_config);
@@ -1672,11 +1673,11 @@ int s_client_main(int argc, char **argv)
     }
 #endif
 
-    if (exc)
+    if (exc != NULL)
         ssl_ctx_set_excert(ctx, exc);
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
-    if (next_proto.data)
+    if (next_proto.data != NULL)
         SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
 #endif
     if (alpn_in) {
@@ -1782,7 +1783,7 @@ int s_client_main(int argc, char **argv)
      * come at any time. Therefore we use a callback to write out the session
      * when we know about it. This approach works for < TLSv1.3 as well.
      */
-    if (sess_out) {
+    if (sess_out != NULL) {
         SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT
                                             | SSL_SESS_CACHE_NO_INTERNAL_STORE);
         SSL_CTX_sess_set_new_cb(ctx, new_session_cb);
@@ -1792,17 +1793,17 @@ int s_client_main(int argc, char **argv)
         goto end;
 
     con = SSL_new(ctx);
-    if (sess_in) {
+    if (sess_in != NULL) {
         SSL_SESSION *sess;
         BIO *stmp = BIO_new_file(sess_in, "r");
-        if (!stmp) {
+        if (stmp == NULL) {
             BIO_printf(bio_err, "Can't open session file %s\n", sess_in);
             ERR_print_errors(bio_err);
             goto end;
         }
         sess = PEM_read_bio_SSL_SESSION(stmp, NULL, 0, NULL);
         BIO_free(stmp);
-        if (!sess) {
+        if (sess == NULL) {
             BIO_printf(bio_err, "Can't open session file %s\n", sess_in);
             ERR_print_errors(bio_err);
             goto end;
@@ -1920,9 +1921,10 @@ int s_client_main(int argc, char **argv)
                 BIO_free(sbio);
                 goto shut;
             }
-        } else
+        } else {
             /* want to do MTU discovery */
             BIO_ctrl(sbio, BIO_CTRL_DGRAM_MTU_DISCOVER, 0, NULL);
+        }
     } else
 #endif /* OPENSSL_NO_DTLS */
         sbio = BIO_new_socket(s, BIO_NOCLOSE);
@@ -3170,12 +3172,12 @@ static int ocsp_resp_cb(SSL *s, void *arg)
     OCSP_RESPONSE *rsp;
     len = SSL_get_tlsext_status_ocsp_resp(s, &p);
     BIO_puts(arg, "OCSP response: ");
-    if (!p) {
+    if (p == NULL) {
         BIO_puts(arg, "no response sent\n");
         return 1;
     }
     rsp = d2i_OCSP_RESPONSE(NULL, &p, len);
-    if (!rsp) {
+    if (rsp == NULL) {
         BIO_puts(arg, "response parse error\n");
         BIO_dump_indent(arg, (char *)p, len, 4);
         return 0;

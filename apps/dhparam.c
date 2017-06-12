@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -138,7 +138,7 @@ int dhparam_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (argv[0] && (!opt_int(argv[0], &num) || num <= 0))
+    if (argv[0] != NULL && (!opt_int(argv[0], &num) || num <= 0))
         goto end;
 
     if (g && !num)
@@ -354,10 +354,11 @@ int dhparam_main(int argc, char **argv)
                 i = i2d_DHxparams_bio(out, dh);
             else
                 i = i2d_DHparams_bio(out, dh);
-        } else if (q != NULL)
+        } else if (q != NULL) {
             i = PEM_write_bio_DHxparams(out, dh);
-        else
+        } else {
             i = PEM_write_bio_DHparams(out, dh);
+        }
         if (!i) {
             BIO_printf(bio_err, "unable to write DH parameters\n");
             ERR_print_errors(bio_err);

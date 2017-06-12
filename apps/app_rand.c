@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,18 +19,19 @@ int app_RAND_load_file(const char *file, int dont_warn)
     int consider_randfile = (file == NULL);
     char buffer[200];
 
-    if (file == NULL)
+    if (file == NULL) {
         file = RAND_file_name(buffer, sizeof buffer);
 #ifndef OPENSSL_NO_EGD
-    else if (RAND_egd(file) > 0) {
+    } else if (RAND_egd(file) > 0) {
         /*
          * we try if the given filename is an EGD socket. if it is, we don't
          * write anything back to the file.
          */
         egdsocket = 1;
         return 1;
-    }
 #endif
+    }
+
     if (file == NULL || !RAND_load_file(file, -1)) {
         if (RAND_status() == 0) {
             if (!dont_warn) {

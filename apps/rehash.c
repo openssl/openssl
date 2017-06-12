@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -254,11 +254,11 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
         goto end;
     }
     x = sk_X509_INFO_value(inf, 0);
-    if (x->x509) {
+    if (x->x509 != NULL) {
         type = TYPE_CERT;
         name = X509_get_subject_name(x->x509);
         X509_digest(x->x509, evpmd, digest, NULL);
-    } else if (x->crl) {
+    } else if (x->crl != NULL) {
         type = TYPE_CRL;
         name = X509_CRL_get_issuer(x->crl);
         X509_CRL_digest(x->crl, evpmd, digest, NULL);
@@ -266,7 +266,7 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
         ++errs;
         goto end;
     }
-    if (name) {
+    if (name != NULL) {
         if ((h == HASH_NEW) || (h == HASH_BOTH))
             errs += add_entry(type, X509_NAME_hash(name), filename, digest, 1, ~0);
         if ((h == HASH_OLD) || (h == HASH_BOTH))
@@ -499,8 +499,8 @@ int rehash_main(int argc, char **argv)
     evpmd = EVP_sha1();
     evpmdsize = EVP_MD_size(evpmd);
 
-    if (*argv) {
-        while (*argv)
+    if (*argv != NULL) {
+        while (*argv != NULL)
             errs += do_dir(*argv++, h);
     } else if ((env = getenv("SSL_CERT_DIR")) != NULL) {
         m = OPENSSL_strdup(env);

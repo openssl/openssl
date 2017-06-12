@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -2640,7 +2640,7 @@ int speed_main(int argc, char **argv)
                 EVP_PKEY_CTX_free(pctx);
                 pctx = NULL;
             }
-            if (!kctx ||        /* keygen ctx is not null */
+            if (kctx == NULL ||      /* keygen ctx is not null */
                 !EVP_PKEY_keygen_init(kctx) /* init keygen ctx */ ) {
                 ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH keygen failure.\n");

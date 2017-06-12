@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -187,7 +187,7 @@ int passwd_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (*argv) {
+    if (*argv != NULL) {
         if (pw_source_defined)
             goto opthelp;
         pw_source_defined = 1;

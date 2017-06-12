@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -285,7 +285,7 @@ int pkcs12_main(int argc, char **argv)
 
     private = 1;
 
-    if (passarg) {
+    if (passarg != NULL) {
         if (export_cert)
             passoutarg = passarg;
         else
@@ -297,14 +297,14 @@ int pkcs12_main(int argc, char **argv)
         goto end;
     }
 
-    if (!cpass) {
+    if (cpass == NULL) {
         if (export_cert)
             cpass = passout;
         else
             cpass = passin;
     }
 
-    if (cpass) {
+    if (cpass != NULL) {
         mpass = cpass;
         noprompt = 1;
     } else {
@@ -312,7 +312,7 @@ int pkcs12_main(int argc, char **argv)
         mpass = macpass;
     }
 
-    if (export_cert || inrand) {
+    if (export_cert || inrand != NULL) {
         app_RAND_load_file(NULL, (inrand != NULL));
         if (inrand != NULL)
             BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
@@ -320,6 +320,7 @@ int pkcs12_main(int argc, char **argv)
     }
 
     if (twopass) {
+        /* To avoid bit rot */
         if (1) {
 #ifndef OPENSSL_NO_UI
             if (EVP_read_pw_string
@@ -353,7 +354,7 @@ int pkcs12_main(int argc, char **argv)
         if (!(options & NOKEYS)) {
             key = load_key(keyname ? keyname : infile,
                            FORMAT_PEM, 1, passin, e, "private key");
-            if (!key)
+            if (key == NULL)
                 goto export_end;
         }
 
@@ -363,7 +364,7 @@ int pkcs12_main(int argc, char **argv)
                             "certificates"))
                 goto export_end;
 
-            if (key) {
+            if (key != NULL) {
                 /* Look for matching private key */
                 for (i = 0; i < sk_X509_num(certs); i++) {
                     x = sk_X509_value(certs, i);
@@ -377,7 +378,7 @@ int pkcs12_main(int argc, char **argv)
                         break;
                     }
                 }
-                if (!ucert) {
+                if (ucert == NULL) {
                     BIO_printf(bio_err,
                                "No certificate matches private key\n");
                     goto export_end;
@@ -387,7 +388,7 @@ int pkcs12_main(int argc, char **argv)
         }
 
         /* Add any more certificates asked for */
-        if (certfile) {
+        if (certfile != NULL) {
             if (!load_certs(certfile, &certs, FORMAT_PEM, NULL,
                             "certificates from certfile"))
                 goto export_end;
@@ -429,15 +430,16 @@ int pkcs12_main(int argc, char **argv)
             X509_alias_set1(sk_X509_value(certs, i), catmp, -1);
         }
 
-        if (csp_name && key)
+        if (csp_name != NULL && key != NULL)
             EVP_PKEY_add1_attr_by_NID(key, NID_ms_csp_name,
                                       MBSTRING_ASC, (unsigned char *)csp_name,
                                       -1);
 
-        if (add_lmk && key)
+        if (add_lmk && key != NULL)
             EVP_PKEY_add1_attr_by_NID(key, NID_LocalKeySet, 0, NULL, -1);
 
         if (!noprompt) {
+            /* To avoid bit rot */
             if (1) {
 #ifndef OPENSSL_NO_UI
                 if (EVP_read_pw_string(pass, sizeof pass, "Enter Export Password:",
@@ -609,8 +611,9 @@ int dump_certs_keys_p12(BIO *out, const PKCS12 *p12, const char *pass,
                 alg_print(p7->d.encrypted->enc_data->algorithm);
             }
             bags = PKCS12_unpack_p7encdata(p7, pass, passlen);
-        } else
+        } else {
             continue;
+        }
         if (!bags)
             goto err;
         if (!dump_certs_pkeys_bags(out, bags, pass, passlen,
@@ -874,8 +877,9 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
         if (attr_nid == NID_undef) {
             i2a_ASN1_OBJECT(out, attr_obj);
             BIO_printf(out, ": ");
-        } else
+        } else {
             BIO_printf(out, "%s: ", OBJ_nid2ln(attr_nid));
+        }
 
         if (X509_ATTRIBUTE_count(attr)) {
             av = X509_ATTRIBUTE_get0_type(attr, 0);
@@ -903,8 +907,9 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
                 BIO_printf(out, "<Unsupported tag %d>\n", av->type);
                 break;
             }
-        } else
+        } else {
             BIO_printf(out, "<No Values>\n");
+        }
     }
     return 1;
 }
