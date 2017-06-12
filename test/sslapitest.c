@@ -404,6 +404,7 @@ static int full_early_callback(SSL *s, int *al, void *arg)
 {
     int *ctr = arg;
     const unsigned char *p;
+    int *exts;
     /* We only configure two ciphers, but the SCSV is added automatically. */
 #ifdef OPENSSL_NO_EC
     const unsigned char expected_ciphers[] = {0x00, 0x9d, 0x00, 0xff};
@@ -411,6 +412,11 @@ static int full_early_callback(SSL *s, int *al, void *arg)
     const unsigned char expected_ciphers[] = {0x00, 0x9d, 0xc0,
                                               0x2c, 0x00, 0xff};
 #endif
+    const int expected_extensions[] = {
+#ifndef OPENSSL_NO_EC
+                                       11, 10,
+#endif
+                                       35, 13, 22, 23};
     size_t len;
 
     /* Make sure we can defer processing and get called back. */
@@ -422,6 +428,15 @@ static int full_early_callback(SSL *s, int *al, void *arg)
             || !TEST_size_t_eq(SSL_early_get0_compression_methods(s, &p), 1)
             || !TEST_int_eq(*p, 0))
         return 0;
+    if (!SSL_early_get1_extensions_present(s, &exts, &len))
+        return 0;
+    if (len != OSSL_NELEM(expected_extensions) ||
+        memcmp(exts, expected_extensions, len * sizeof(*exts)) != 0) {
+        printf("Early callback expected ClientHello extensions mismatch\n");
+        OPENSSL_free(exts);
+        return 0;
+    }
+    OPENSSL_free(exts);
     return 1;
 }
 

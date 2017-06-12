@@ -1682,6 +1682,7 @@ size_t SSL_early_get0_random(SSL *s, const unsigned char **out);
 size_t SSL_early_get0_session_id(SSL *s, const unsigned char **out);
 size_t SSL_early_get0_ciphers(SSL *s, const unsigned char **out);
 size_t SSL_early_get0_compression_methods(SSL *s, const unsigned char **out);
+int SSL_early_get1_extensions_present(SSL *s, int **out, size_t *outlen);
 int SSL_early_get0_ext(SSL *s, unsigned int type, const unsigned char **out,
                        size_t *outlen);
 
