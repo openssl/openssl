@@ -22,14 +22,7 @@
 
 #define NUM_BITS        (BN_BITS2 * 4)
 
-#define BN_print_var(v) bn_print_var(#v, v)
-
-static void bn_print_var(const char *var, const BIGNUM *bn)
-{
-    fprintf(stderr, "%s (%3d) = ", var, BN_num_bits(bn));
-    BN_print_fp(stderr, bn);
-    fprintf(stderr, "\n");
-}
+#define BN_print_var(v) test_output_bignum(#v, v)
 
 /*
  * Test that r == 0 in test_exp_mod_zero(). Returns one on success,
@@ -39,8 +32,7 @@ static int a_is_zero_mod_one(const char *method, const BIGNUM *r,
                              const BIGNUM *a)
 {
     if (!BN_is_zero(r)) {
-        fprintf(stderr, "%s failed:\n", method);
-        fprintf(stderr, "a ** 0 mod 1 = r (should be 0)\n");
+        TEST_error("%s failed: a ** 0 mod 1 = r (should be 0)", method);
         BN_print_var(a);
         BN_print_var(r);
         return 0;
@@ -110,8 +102,8 @@ static int test_mod_exp_zero()
         goto err;
 
     if (!TEST_BN_eq_zero(r)) {
-        fprintf(stderr, "BN_mod_exp_mont_word failed:\n");
-        fprintf(stderr, "1 ** 0 mod 1 = r (should be 0)\n");
+        TEST_error("BN_mod_exp_mont_word failed: "
+                   "1 ** 0 mod 1 = r (should be 0)");
         BN_print_var(r);
         goto err;
     }

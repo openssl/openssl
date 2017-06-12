@@ -271,6 +271,7 @@ void test_error_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 void test_info(const char *file, int line, const char *desc, ...)
     PRINTF_FORMAT(3, 4);
 void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
+void test_note(const char *desc, ...) PRINTF_FORMAT(1, 2);
 void test_openssl_errors(void);
 
 /*
@@ -384,6 +385,7 @@ void test_openssl_errors(void);
 #  define TEST_error(...)    test_error(__FILE__, __LINE__, __VA_ARGS__)
 #  define TEST_info(...)     test_info(__FILE__, __LINE__, __VA_ARGS__)
 # endif
+# define TEST_note           test_note
 # define TEST_openssl_errors test_openssl_errors
 
 /*
@@ -401,6 +403,14 @@ void test_openssl_errors(void);
 
 extern BIO *bio_out;
 extern BIO *bio_err;
+
+/*
+ * Formatted output for strings, memory and bignums.
+ */
+void test_output_string(const char *name, const char *m, size_t l);
+void test_output_bignum(const char *name, const BIGNUM *bn);
+void test_output_memory(const char *name, const unsigned char *m, size_t l);
+
 
 /*
  * Utilities to parse a test file.
