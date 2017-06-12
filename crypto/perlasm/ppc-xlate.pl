@@ -216,6 +216,12 @@ my $lvdx_u	= sub {	vsxmem_op(@_, 588); };	# lxsdx
 my $stvdx_u	= sub {	vsxmem_op(@_, 716); };	# stxsdx
 my $lvx_4w	= sub { vsxmem_op(@_, 780); };	# lxvw4x
 my $stvx_4w	= sub { vsxmem_op(@_, 908); };	# stxvw4x
+my $lvx_splt	= sub { vsxmem_op(@_, 332); };	# lxvdsx
+my $vpermdi	= sub {				# xxpermdi
+    my ($f, $vrt, $vra, $vrb, $dm) = @_;
+    $dm = oct($dm) if ($dm =~ /^0/);
+    "	.long	".sprintf "0x%X",(60<<26)|($vrt<<21)|($vra<<16)|($vrb<<11)|($dm<<8)|(10<<3)|7;
+};
 
 # PowerISA 2.07 stuff
 sub vcrypto_op {
@@ -308,7 +314,7 @@ while($line=<>) {
 	my $f = $3;
 	my $opcode = eval("\$$mnemonic");
 	$line =~ s/\b(c?[rf]|v|vs)([0-9]+)\b/$2/g if ($c ne "." and $flavour !~ /osx/);
-	if (ref($opcode) eq 'CODE') { $line = &$opcode($f,split(',',$line)); }
+	if (ref($opcode) eq 'CODE') { $line = &$opcode($f,split(/,\s*/,$line)); }
 	elsif ($mnemonic)           { $line = $c.$mnemonic.$f."\t".$line; }
     }
 
