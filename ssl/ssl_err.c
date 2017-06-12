@@ -594,6 +594,7 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_PACKET_LENGTH), "bad packet length"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_PROTOCOL_VERSION_NUMBER),
     "bad protocol version number"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_PSK), "bad psk"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_PSK_IDENTITY), "bad psk identity"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_RECORD_TYPE), "bad record type"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_RSA_ENCRYPT), "bad rsa encrypt"},
