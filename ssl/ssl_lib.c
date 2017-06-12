@@ -419,6 +419,8 @@ int SSL_clear(SSL *s)
         SSL_SESSION_free(s->session);
         s->session = NULL;
     }
+    SSL_SESSION_free(s->psksession);
+    s->psksession = NULL;
 
     s->error = 0;
     s->hit = 0;
@@ -969,6 +971,7 @@ void SSL_free(SSL *s)
         ssl_clear_bad_session(s);
         SSL_SESSION_free(s->session);
     }
+    SSL_SESSION_free(s->psksession);
 
     clear_ciphers(s);
 

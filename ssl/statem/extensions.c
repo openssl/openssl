@@ -1234,6 +1234,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     EVP_MD_CTX *mctx = NULL;
     unsigned char hash[EVP_MAX_MD_SIZE], binderkey[EVP_MAX_MD_SIZE];
     unsigned char finishedkey[EVP_MAX_MD_SIZE], tmpbinder[EVP_MAX_MD_SIZE];
+    unsigned char *early_secret;
     const char resumption_label[] = "res binder";
     const char external_label[] = "ext binder";
     const char *label;
@@ -1248,10 +1249,19 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         labelsize = sizeof(resumption_label) - 1;
     }
 
-    /* Generate the early_secret */
+    /*
+     * Generate the early_secret. On the server side we've selected a PSK to
+     * resume with (internal or external) so we always do this. On the client
+     * side we do this for a non-external (i.e. resumption) PSK so that it
+     * is in place for sending early data. For client side external PSK we
+     * generate it but store it away for later use.
+     */
+    if (s->server || !external)
+        early_secret = (unsigned char *)s->early_secret;
+    else
+        early_secret = (unsigned char *)sess->early_secret;
     if (!tls13_generate_secret(s, md, NULL, sess->master_key,
-                               sess->master_key_length,
-                               (unsigned char *)&s->early_secret)) {
+                               sess->master_key_length, early_secret)) {
         SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -1269,7 +1279,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     }
 
     /* Generate the binder key */
-    if (!tls13_hkdf_expand(s, md, s->early_secret, (unsigned char *)label,
+    if (!tls13_hkdf_expand(s, md, early_secret, (unsigned char *)label,
                            labelsize, hash, binderkey, hashsize)) {
         SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
         goto err;
