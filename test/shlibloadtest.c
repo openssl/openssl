@@ -117,6 +117,7 @@ static int test_lib(void)
         if (!TEST_true(shlib_load(path_crypto, &cryptolib))
                 || !TEST_true(shlib_load(path_ssl, &ssllib)))
             goto end;
+        break;
     case SSL_FIRST:
         if (!TEST_true(shlib_load(path_ssl, &ssllib))
                 || !TEST_true(shlib_load(path_crypto, &cryptolib)))
