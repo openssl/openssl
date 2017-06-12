@@ -1931,6 +1931,16 @@ int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
     return ssl_cipher_table_auth[i].nid;
 }
 
+const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c)
+{
+    int idx = c->algorithm2;
+
+    idx &= SSL_HANDSHAKE_MAC_MASK;
+    if (idx < 0 || idx >= SSL_MD_NUM_IDX)
+        return NULL;
+    return ssl_digest_methods[idx];
+}
+
 int SSL_CIPHER_is_aead(const SSL_CIPHER *c)
 {
     return (c->algorithm_mac & SSL_AEAD) ? 1 : 0;
