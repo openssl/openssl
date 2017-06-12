@@ -952,6 +952,7 @@ struct ssl_ctx_st {
     SSL_psk_client_cb_func psk_client_callback;
     SSL_psk_server_cb_func psk_server_callback;
 # endif
+    SSL_psk_find_session_cb_func psk_find_session_cb;
 
 # ifndef OPENSSL_NO_SRP
     SRP_CTX srp_ctx;            /* ctx for SRP authentication */
@@ -1122,6 +1123,7 @@ struct ssl_st {
     SSL_psk_client_cb_func psk_client_callback;
     SSL_psk_server_cb_func psk_server_callback;
 # endif
+    SSL_psk_find_session_cb_func psk_find_session_cb;
     SSL_CTX *ctx;
     /* Verified chain of peer */
     STACK_OF(X509) *verified_chain;
