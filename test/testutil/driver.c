@@ -196,6 +196,7 @@ int run_tests(const char *test_prog_name)
             test_printf_stdout("%*s%s %d - %s\n", level, "", verdict, ii + 1,
                                test_title);
             test_flush_stdout();
+            test_flush_stderr();
             finalize(ret);
         } else {
             int num_failed_inner = 0;
