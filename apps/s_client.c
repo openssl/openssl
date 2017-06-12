@@ -65,6 +65,7 @@ static int keymatexportlen = 20;
 static BIO *bio_c_out = NULL;
 static int c_quiet = 0;
 static char *sess_out = NULL;
+static SSL_SESSION *psksess = NULL;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
 #ifndef OPENSSL_NO_OCSP
@@ -170,6 +171,27 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
     return 0;
 }
 #endif
+
+static int psk_use_session_cb(SSL *s, const EVP_MD *md,
+                              const unsigned char **id, size_t *idlen,
+                              SSL_SESSION **sess)
+{
+    const SSL_CIPHER *cipher = SSL_SESSION_get0_cipher(psksess);
+
+    if (cipher == NULL)
+        return 0;
+
+    if (md != NULL && SSL_CIPHER_get_handshake_digest(cipher) != md)
+        return 0;
+
+    SSL_SESSION_up_ref(psksess);
+    *sess = psksess;
+
+    *id = (unsigned char *)psk_identity;
+    *idlen = strlen(psk_identity);
+
+    return 1;
+}
 
 /* This is a context that we pass to callbacks */
 typedef struct tlsextctx_st {
@@ -508,6 +530,7 @@ typedef enum OPTION_choice {
 #ifndef OPENSSL_NO_PSK
     OPT_PSK_IDENTITY, OPT_PSK,
 #endif
+    OPT_PSK_SESS,
 #ifndef OPENSSL_NO_SRP
     OPT_SRPUSER, OPT_SRPPASS, OPT_SRP_STRENGTH, OPT_SRP_LATEUSER,
     OPT_SRP_MOREGROUPS,
@@ -690,6 +713,7 @@ const OPTIONS s_client_options[] = {
     {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity"},
     {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
 #endif
+    {"psk_session", OPT_PSK_SESS, '<', "File to read PSK SSL session from"},
 #ifndef OPENSSL_NO_SRP
     {"srpuser", OPT_SRPUSER, 's', "SRP authentication for 'user'"},
     {"srppass", OPT_SRPPASS, 's', "Password for 'user'"},
@@ -886,6 +910,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DTLS
     int isdtls = 0;
 #endif
+    char *psksessf = NULL;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1147,6 +1172,9 @@ int s_client_main(int argc, char **argv)
             }
             break;
 #endif
+        case OPT_PSK_SESS:
+            psksessf = opt_arg();
+            break;
 #ifndef OPENSSL_NO_SRP
         case OPT_SRPUSER:
             srp_arg.srplogin = opt_arg();
@@ -1656,6 +1684,23 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
     }
 #endif
+    if (psksessf != NULL) {
+        BIO *stmp = BIO_new_file(psksessf, "r");
+
+        if (stmp == NULL) {
+            BIO_printf(bio_err, "Can't open PSK session file %s\n", psksessf);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        psksess = PEM_read_bio_SSL_SESSION(stmp, NULL, 0, NULL);
+        BIO_free(stmp);
+        if (psksess == NULL) {
+            BIO_printf(bio_err, "Can't read PSK session file %s\n", psksessf);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        SSL_CTX_set_psk_use_session_callback(ctx, psk_use_session_cb);
+    }
 #ifndef OPENSSL_NO_SRTP
     if (srtp_profiles != NULL) {
         /* Returns 0 on success! */
