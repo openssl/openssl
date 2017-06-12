@@ -3725,6 +3725,19 @@ size_t SSL_SESSION_get_master_key(const SSL_SESSION *session,
     return outlen;
 }
 
+int SSL_SESSION_set1_master_key(SSL_SESSION *sess, unsigned char *in,
+                                size_t len)
+{
+    if (len > sizeof(sess->master_key))
+        return 0;
+
+    memcpy(sess->master_key, in, len);
+    sess->master_key_length = len;
+
+    return 1;
+}
+
+
 int SSL_set_ex_data(SSL *s, int idx, void *arg)
 {
     return (CRYPTO_set_ex_data(&s->ex_data, idx, arg));
