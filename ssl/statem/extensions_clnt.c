@@ -894,7 +894,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
     msgstart = WPACKET_get_curr(pkt) - msglen;
 
     if (tls_psk_do_binder(s, md, msgstart, binderoffset, NULL, binder,
-                          s->session, 1) != 1) {
+                          s->session, 1, 0) != 1) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
         goto err;
     }
