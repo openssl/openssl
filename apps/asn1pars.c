@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -194,9 +194,7 @@ int asn1parse_main(int argc, char **argv)
                 ERR_print_errors(bio_err);
                 goto end;
             }
-        }
-
-        else {
+        } else {
 
             if (informat == FORMAT_PEM) {
                 BIO *tmp;
@@ -273,7 +271,7 @@ int asn1parse_main(int argc, char **argv)
 
     if ((length == 0) || ((long)length > num))
         length = (unsigned int)num;
-    if (derout) {
+    if (derout != NULL) {
         if (BIO_write(derout, str + offset, length) != (int)length) {
             BIO_printf(bio_err, "Error writing output\n");
             ERR_print_errors(bio_err);
@@ -323,12 +321,12 @@ static int do_generate(char *genstr, const char *genconf, BUF_MEM *buf)
     unsigned char *p;
     ASN1_TYPE *atyp = NULL;
 
-    if (genconf) {
+    if (genconf != NULL) {
         if ((cnf = app_load_config(genconf)) == NULL)
             goto err;
-        if (!genstr)
+        if (genstr == NULL)
             genstr = NCONF_get_string(cnf, "default", "asn1");
-        if (!genstr) {
+        if (genstr == NULL) {
             BIO_printf(bio_err, "Can't find 'asn1' in '%s'\n", genconf);
             goto err;
         }
@@ -338,7 +336,7 @@ static int do_generate(char *genstr, const char *genconf, BUF_MEM *buf)
     NCONF_free(cnf);
     cnf = NULL;
 
-    if (!atyp)
+    if (atyp == NULL)
         return -1;
 
     len = i2d_ASN1_TYPE(atyp, NULL);

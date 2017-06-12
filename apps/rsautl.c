@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -190,14 +190,13 @@ int rsautl_main(int argc, char **argv)
         break;
     }
 
-    if (!pkey) {
+    if (pkey == NULL)
         return 1;
-    }
 
     rsa = EVP_PKEY_get1_RSA(pkey);
     EVP_PKEY_free(pkey);
 
-    if (!rsa) {
+    if (rsa == NULL) {
         BIO_printf(bio_err, "Error getting RSA key\n");
         ERR_print_errors(bio_err);
         goto end;
@@ -261,10 +260,11 @@ int rsautl_main(int argc, char **argv)
         if (!ASN1_parse_dump(out, rsa_out, rsa_outlen, 1, -1)) {
             ERR_print_errors(bio_err);
         }
-    } else if (hexdump)
+    } else if (hexdump) {
         BIO_dump(out, (char *)rsa_out, rsa_outlen);
-    else
+    } else {
         BIO_write(out, rsa_out, rsa_outlen);
+    }
  end:
     RSA_free(rsa);
     release_engine(e);

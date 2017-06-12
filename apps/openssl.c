@@ -258,12 +258,12 @@ const OPTIONS exit_options[] = {
 static void list_cipher_fn(const EVP_CIPHER *c,
                            const char *from, const char *to, void *arg)
 {
-    if (c)
+    if (c != NULL) {
         BIO_printf(arg, "%s\n", EVP_CIPHER_name(c));
-    else {
-        if (!from)
+    } else {
+        if (from == NULL)
             from = "<undefined>";
-        if (!to)
+        if (to == NULL)
             to = "<undefined>";
         BIO_printf(arg, "%s => %s\n", from, to);
     }
@@ -272,12 +272,12 @@ static void list_cipher_fn(const EVP_CIPHER *c,
 static void list_md_fn(const EVP_MD *m,
                        const char *from, const char *to, void *arg)
 {
-    if (m)
+    if (m != NULL) {
         BIO_printf(arg, "%s\n", EVP_MD_name(m));
-    else {
-        if (!from)
+    } else {
+        if (from == NULL)
             from = "<undefined>";
-        if (!to)
+        if (to == NULL)
             to = "<undefined>";
         BIO_printf((BIO *)arg, "%s => %s\n", from, to);
     }

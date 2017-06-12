@@ -244,20 +244,20 @@ int ec_main(int argc, char **argv)
 
     BIO_printf(bio_err, "writing EC key\n");
     if (outformat == FORMAT_ASN1) {
-        if (param_out)
+        if (param_out) {
             i = i2d_ECPKParameters_bio(out, group);
-        else if (pubin || pubout)
+        } else if (pubin || pubout) {
             i = i2d_EC_PUBKEY_bio(out, eckey);
-        else {
+        } else {
             assert(private);
             i = i2d_ECPrivateKey_bio(out, eckey);
         }
     } else {
-        if (param_out)
+        if (param_out) {
             i = PEM_write_bio_ECPKParameters(out, group);
-        else if (pubin || pubout)
+        } else if (pubin || pubout) {
             i = PEM_write_bio_EC_PUBKEY(out, eckey);
-        else {
+        } else {
             assert(private);
             i = PEM_write_bio_ECPrivateKey(out, eckey, enc,
                                            NULL, 0, NULL, passout);
@@ -267,8 +267,9 @@ int ec_main(int argc, char **argv)
     if (!i) {
         BIO_printf(bio_err, "unable to write private key\n");
         ERR_print_errors(bio_err);
-    } else
+    } else {
         ret = 0;
+    }
  end:
     BIO_free(in);
     BIO_free_all(out);

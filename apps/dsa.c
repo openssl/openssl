@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -161,7 +161,7 @@ int dsa_main(int argc, char **argv)
         else
             pkey = load_key(infile, informat, 1, passin, e, "Private Key");
 
-        if (pkey) {
+        if (pkey != NULL) {
             dsa = EVP_PKEY_get1_DSA(pkey);
             EVP_PKEY_free(pkey);
         }
@@ -199,16 +199,16 @@ int dsa_main(int argc, char **argv)
     }
     BIO_printf(bio_err, "writing DSA key\n");
     if (outformat == FORMAT_ASN1) {
-        if (pubin || pubout)
+        if (pubin || pubout) {
             i = i2d_DSA_PUBKEY_bio(out, dsa);
-        else {
+        } else {
             assert(private);
             i = i2d_DSAPrivateKey_bio(out, dsa);
         }
     } else if (outformat == FORMAT_PEM) {
-        if (pubin || pubout)
+        if (pubin || pubout) {
             i = PEM_write_bio_DSA_PUBKEY(out, dsa);
-        else {
+        } else {
             assert(private);
             i = PEM_write_bio_DSAPrivateKey(out, dsa, enc,
                                             NULL, 0, NULL, passout);
@@ -232,10 +232,9 @@ int dsa_main(int argc, char **argv)
 #  else
             i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
 #  endif
-        }
-        else if (pubin || pubout)
+        } else if (pubin || pubout) {
             i = i2b_PublicKey_bio(out, pk);
-        else {
+        } else {
             assert(private);
             i = i2b_PrivateKey_bio(out, pk);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -181,10 +181,10 @@ int opt_format_error(const char *s, unsigned long flags)
 {
     OPT_PAIR *ap;
 
-    if (flags == OPT_FMT_PEMDER)
+    if (flags == OPT_FMT_PEMDER) {
         BIO_printf(bio_err, "%s: Bad format \"%s\"; must be pem or der\n",
                    prog, s);
-    else {
+    } else {
         BIO_printf(bio_err, "%s: Bad format \"%s\"; must be one of:\n",
                    prog, s);
         for (ap = formats; ap->name; ap++)
@@ -264,8 +264,9 @@ int opt_format(const char *s, unsigned long flags, int *result)
             if ((flags & OPT_FMT_PKCS12) == 0)
                 return opt_format_error(s, flags);
             *result = FORMAT_PKCS12;
-        } else
+        } else {
             return 0;
+        }
         break;
     }
     return 1;
@@ -275,7 +276,7 @@ int opt_format(const char *s, unsigned long flags, int *result)
 int opt_cipher(const char *name, const EVP_CIPHER **cipherp)
 {
     *cipherp = EVP_get_cipherbyname(name);
-    if (*cipherp)
+    if (*cipherp != NULL)
         return 1;
     BIO_printf(bio_err, "%s: Unknown cipher %s\n", prog, name);
     return 0;
@@ -287,7 +288,7 @@ int opt_cipher(const char *name, const EVP_CIPHER **cipherp)
 int opt_md(const char *name, const EVP_MD **mdp)
 {
     *mdp = EVP_get_digestbyname(name);
-    if (*mdp)
+    if (*mdp != NULL)
         return 1;
     BIO_printf(bio_err, "%s: Unknown digest %s\n", prog, name);
     return 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -100,14 +100,14 @@ int sess_id_main(int argc, char **argv)
     }
     peer = SSL_SESSION_get0_peer(x);
 
-    if (context) {
+    if (context != NULL) {
         size_t ctx_len = strlen(context);
         if (ctx_len > SSL_MAX_SID_CTX_LENGTH) {
             BIO_printf(bio_err, "Context too long\n");
             goto end;
         }
         if (!SSL_SESSION_set1_id_context(x, (unsigned char *)context,
-                    ctx_len)) {
+                                         ctx_len)) {
             BIO_printf(bio_err, "Error setting id context\n");
             goto end;
         }
@@ -131,13 +131,13 @@ int sess_id_main(int argc, char **argv)
     }
 
     if (!noout && !cert) {
-        if (outformat == FORMAT_ASN1)
+        if (outformat == FORMAT_ASN1) {
             i = i2d_SSL_SESSION_bio(out, x);
-        else if (outformat == FORMAT_PEM)
+        } else if (outformat == FORMAT_PEM) {
             i = PEM_write_bio_SSL_SESSION(out, x);
-        else if (outformat == FORMAT_NSS)
+        } else if (outformat == FORMAT_NSS) {
             i = SSL_SESSION_print_keylog(out, x);
-        else {
+        } else {
             BIO_printf(bio_err, "bad output format specified for outfile\n");
             goto end;
         }
@@ -146,11 +146,11 @@ int sess_id_main(int argc, char **argv)
             goto end;
         }
     } else if (!noout && (peer != NULL)) { /* just print the certificate */
-        if (outformat == FORMAT_ASN1)
+        if (outformat == FORMAT_ASN1) {
             i = (int)i2d_X509_bio(out, peer);
-        else if (outformat == FORMAT_PEM)
+        } else if (outformat == FORMAT_PEM) {
             i = PEM_write_bio_X509(out, peer);
-        else {
+        } else {
             BIO_printf(bio_err, "bad output format specified for outfile\n");
             goto end;
         }

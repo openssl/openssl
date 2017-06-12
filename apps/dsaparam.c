@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -155,10 +155,11 @@ int dsaparam_main(int argc, char **argv)
             BIO_printf(bio_err, "Error, DSA key generation failed\n");
             goto end;
         }
-    } else if (informat == FORMAT_ASN1)
+    } else if (informat == FORMAT_ASN1) {
         dsa = d2i_DSAparams_bio(in, NULL);
-    else
+    } else {
         dsa = PEM_read_bio_DSAparams(in, NULL, NULL, NULL);
+    }
     if (dsa == NULL) {
         BIO_printf(bio_err, "unable to load DSA parameters\n");
         ERR_print_errors(bio_err);

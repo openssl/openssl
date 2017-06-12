@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -245,9 +245,9 @@ int s_time_main(int argc, char **argv)
         BIO_closesocket(SSL_get_fd(scon));
 
         nConn += 1;
-        if (SSL_session_reused(scon))
+        if (SSL_session_reused(scon)) {
             ver = 'r';
-        else {
+        } else {
             ver = SSL_version(scon);
             if (ver == TLS1_VERSION)
                 ver = 't';
@@ -318,7 +318,7 @@ int s_time_main(int argc, char **argv)
         if ((doConnection(scon, host, ctx)) == NULL)
             goto end;
 
-        if (www_path) {
+        if (www_path != NULL) {
             BIO_snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n",
                          www_path);
             if (SSL_write(scon, buf, strlen(buf)) <= 0)
@@ -334,9 +334,9 @@ int s_time_main(int argc, char **argv)
         BIO_closesocket(SSL_get_fd(scon));
 
         nConn += 1;
-        if (SSL_session_reused(scon))
+        if (SSL_session_reused(scon)) {
             ver = 'r';
-        else {
+        } else {
             ver = SSL_version(scon);
             if (ver == TLS1_VERSION)
                 ver = 't';

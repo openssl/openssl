@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -136,14 +136,14 @@ int pkey_main(int argc, char **argv)
         pkey = load_pubkey(infile, informat, 1, passin, e, "Public Key");
     else
         pkey = load_key(infile, informat, 1, passin, e, "key");
-    if (!pkey)
+    if (pkey == NULL)
         goto end;
 
     if (!noout) {
         if (outformat == FORMAT_PEM) {
-            if (pubout)
+            if (pubout) {
                 PEM_write_bio_PUBKEY(out, pkey);
-            else {
+            } else {
                 assert(private);
                 if (traditional)
                     PEM_write_bio_PrivateKey_traditional(out, pkey, cipher,
@@ -154,9 +154,9 @@ int pkey_main(int argc, char **argv)
                                              NULL, 0, NULL, passout);
             }
         } else if (outformat == FORMAT_ASN1) {
-            if (pubout)
+            if (pubout) {
                 i2d_PUBKEY_bio(out, pkey);
-            else {
+            } else {
                 assert(private);
                 i2d_PrivateKey_bio(out, pkey);
             }
@@ -164,13 +164,12 @@ int pkey_main(int argc, char **argv)
             BIO_printf(bio_err, "Bad format specified for key\n");
             goto end;
         }
-
     }
 
     if (text) {
-        if (pubtext)
+        if (pubtext) {
             EVP_PKEY_print_public(out, pkey, 0, NULL);
-        else {
+        } else {
             assert(private);
             EVP_PKEY_print_private(out, pkey, 0, NULL);
         }
