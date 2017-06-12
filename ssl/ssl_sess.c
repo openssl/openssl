@@ -858,6 +858,12 @@ int SSL_SESSION_get_protocol_version(const SSL_SESSION *s)
     return s->ssl_version;
 }
 
+int SSL_SESSION_set_protocol_version(SSL_SESSION *s, int version)
+{
+    s->ssl_version = version;
+    return 1;
+}
+
 const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSION *s)
 {
     return s->cipher;
