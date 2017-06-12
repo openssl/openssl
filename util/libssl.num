@@ -451,3 +451,7 @@ SSL_set_record_padding_callback_arg     451	1_1_1	EXIST::FUNCTION:
 SSL_CTX_set_record_padding_callback_arg 452	1_1_1	EXIST::FUNCTION:
 SSL_CTX_use_serverinfo_ex               453	1_1_1	EXIST::FUNCTION:
 SSL_early_get1_extensions_present       454	1_1_1	EXIST::FUNCTION:
+SSL_set_psk_find_session_callback       455	1_1_1	EXIST::FUNCTION:
+SSL_set_psk_use_session_callback        456	1_1_1	EXIST::FUNCTION:
+SSL_CTX_set_psk_use_session_callback    457	1_1_1	EXIST::FUNCTION:
+SSL_CTX_set_psk_find_session_callback   458	1_1_1	EXIST::FUNCTION:
