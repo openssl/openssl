@@ -123,8 +123,12 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                 r = EVP_DigestFinal_ex(ctx, md, &mdlen);
         } else {
             EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
-            if (tmp_ctx == NULL || !EVP_MD_CTX_copy_ex(tmp_ctx, ctx))
+            if (tmp_ctx == NULL)
                 return 0;
+            if (!EVP_MD_CTX_copy_ex(tmp_ctx, ctx)) {
+                EVP_MD_CTX_free(tmp_ctx);
+                return 0;
+            }
             if (sctx)
                 r = tmp_ctx->pctx->pmeth->signctx(tmp_ctx->pctx,
                                                   sigret, siglen, tmp_ctx);
@@ -178,8 +182,12 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
             r = EVP_DigestFinal_ex(ctx, md, &mdlen);
     } else {
         EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
-        if (tmp_ctx == NULL || !EVP_MD_CTX_copy_ex(tmp_ctx, ctx))
+        if (tmp_ctx == NULL)
             return -1;
+        if (!EVP_MD_CTX_copy_ex(tmp_ctx, ctx)) {
+            EVP_MD_CTX_free(tmp_ctx);
+            return -1;
+        }
         if (vctx) {
             r = tmp_ctx->pctx->pmeth->verifyctx(tmp_ctx->pctx,
                                                 sig, siglen, tmp_ctx);
