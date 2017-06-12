@@ -183,7 +183,7 @@ __owur int tls_psk_do_binder(SSL *s, const EVP_MD *md,
                              const unsigned char *msgstart,
                              size_t binderoffset, const unsigned char *binderin,
                              unsigned char *binderout,
-                             SSL_SESSION *sess, int sign);
+                             SSL_SESSION *sess, int sign, int external);
 
 /* Server Extension processing */
 int tls_parse_ctos_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
