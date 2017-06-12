@@ -1506,6 +1506,8 @@ __owur long SSL_SESSION_set_time(SSL_SESSION *s, long t);
 __owur long SSL_SESSION_get_timeout(const SSL_SESSION *s);
 __owur long SSL_SESSION_set_timeout(SSL_SESSION *s, long t);
 __owur int SSL_SESSION_get_protocol_version(const SSL_SESSION *s);
+__owur int SSL_SESSION_set_protocol_version(SSL_SESSION *s, int version);
+
 __owur const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s);
 __owur const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSION *s);
 __owur int SSL_SESSION_set_cipher(SSL_SESSION *s, const SSL_CIPHER *cipher);
