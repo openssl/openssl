@@ -165,7 +165,6 @@ while ( <IN> ) {
 }
 close IN;
 
-my $statefile_prolog = '';
 if ( ! $statefile ) {
     $statefile = $config;
     $statefile =~ s/.ec/.txt/;
@@ -179,9 +178,7 @@ if ( ! $reindex && $statefile ) {
 
     # Scan function and reason codes and store them: keep a note of the
     # maximum code used.
-    my $collecting = 1;
     while ( <STATE> ) {
-        $statefile_prolog .= $_ if $collecting && ( /^#/ || /^$/ );
         next if /^#/ || /^$/;
         my $name;
         my $code;
@@ -200,7 +197,6 @@ if ( ! $reindex && $statefile ) {
         } else {
             die "Bad line in $statefile:\n$_\n";
         }
-        $collecting = 0;
         my $lib = $name;
         $lib =~ s/_.*//;
         $lib = "SSL" if $lib =~ /TLS/;
@@ -703,8 +699,15 @@ die "Found $errors errors, quitting" if $errors;
 if ( $newstate )  {
     open(OUT, ">$statefile.new")
         || die "Can't write $statefile.new, $!";
-    print OUT $statefile_prolog;
-    print OUT "# Function codes\n";
+    print OUT <<"EOF";
+# Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+EOF
+    print OUT "\n# Function codes\n";
     foreach my $i ( sort keys %fcodes ) {
         my $short = "$i:$fcodes{$i}:";
         my $t = exists $strings{$i} ? $strings{$i} : "";
