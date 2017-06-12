@@ -46,7 +46,8 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
     const ASN1_AUX *aux = it->funcs;
     ASN1_aux_cb *asn1_cb;
     ASN1_VALUE **pseqval;
-    int i;
+    int i, err = ERR_R_MALLOC_FAILURE;
+
     if (aux && aux->asn1_cb)
         asn1_cb = aux->asn1_cb;
     else
@@ -100,7 +101,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         }
         asn1_set_choice_selector(pval, -1, it);
         if (asn1_cb && !asn1_cb(ASN1_OP_NEW_POST, pval, it, NULL))
-            goto auxerr2;
+            goto auxerr1;
         break;
 
     case ASN1_ITYPE_NDEF_SEQUENCE:
@@ -125,7 +126,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         }
         /* 0 : init. lock */
         if (asn1_do_lock(pval, 0, it) < 0)
-            goto memerr2;
+            goto memerr1;
         asn1_enc_init(pval, it);
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
             pseqval = asn1_get_field_ptr(pval, tt);
@@ -141,19 +142,27 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
 #endif
     return 1;
 
- memerr2:
-    ASN1_item_ex_free(pval, it);
- memerr:
-    ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ERR_R_MALLOC_FAILURE);
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    OPENSSL_mem_debug_pop();
-#endif
-    return 0;
-
- auxerr2:
-    ASN1_item_ex_free(pval, it);
  auxerr:
-    ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ASN1_R_AUX_ERROR);
+    err = ASN1_R_AUX_ERROR;
+    goto memerr;
+ auxerr1:
+    err = ASN1_R_AUX_ERROR;
+    goto memerr1;
+ auxerr2:
+    err = ASN1_R_AUX_ERROR;
+ memerr2:
+    for (tt = it->templates; i > 0; i--, tt++) {
+        pseqval = asn1_get_field_ptr(pval, tt);
+        asn1_template_free(pseqval, tt);
+    }
+    asn1_do_lock(pval, -1, it);
+ memerr1:
+    if (embed == 0) {
+        OPENSSL_free(*pval);
+        *pval = NULL;
+    }
+ memerr:
+    ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, err);
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     OPENSSL_mem_debug_pop();
 #endif
