@@ -636,6 +636,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->psk_client_callback = ctx->psk_client_callback;
     s->psk_server_callback = ctx->psk_server_callback;
 #endif
+    s->psk_find_session_cb = ctx->psk_find_session_cb;
+    s->psk_use_session_cb = ctx->psk_use_session_cb;
 
     s->job = NULL;
 
@@ -3857,6 +3859,28 @@ void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx, SSL_psk_server_cb_func cb)
     ctx->psk_server_callback = cb;
 }
 #endif
+
+void SSL_set_psk_find_session_callback(SSL *s, SSL_psk_find_session_cb_func cb)
+{
+    s->psk_find_session_cb = cb;
+}
+
+void SSL_CTX_set_psk_find_session_callback(SSL_CTX *ctx,
+                                           SSL_psk_find_session_cb_func cb)
+{
+    ctx->psk_find_session_cb = cb;
+}
+
+void SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb)
+{
+    s->psk_use_session_cb = cb;
+}
+
+void SSL_CTX_set_psk_use_session_callback(SSL_CTX *ctx,
+                                           SSL_psk_use_session_cb_func cb)
+{
+    ctx->psk_use_session_cb = cb;
+}
 
 void SSL_CTX_set_msg_callback(SSL_CTX *ctx,
                               void (*cb) (int write_p, int version,
