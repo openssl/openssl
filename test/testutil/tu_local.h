@@ -8,6 +8,36 @@
  */
 
 #include <stdlib.h>              /* size_t */
+#include <openssl/bn.h>
 
 int subtest_level(void);
 int openssl_error_cb(const char *str, size_t len, void *u);
+
+void test_fail_message_prefix(const char *prefix, const char *file,
+                              int line, const char *type,
+                              const char *left, const char *right,
+                              const char *op);
+
+void test_fail_string_message(const char *prefix, const char *file,
+                              int line, const char *type,
+                              const char *left, const char *right,
+                              const char *op, const char *m1, size_t l1,
+                              const char *m2, size_t l2);
+
+void test_fail_bignum_message(const char *prefix, const char *file,
+                              int line, const char *type,
+                              const char *left, const char *right,
+                              const char *op,
+                              const BIGNUM *bn1, const BIGNUM *bn2);
+void test_fail_bignum_mono_message(const char *prefix, const char *file,
+                                   int line, const char *type,
+                                   const char *left, const char *right,
+                                   const char *op, const BIGNUM *bn);
+
+void test_fail_memory_message(const char *prefix, const char *file,
+                              int line, const char *type,
+                              const char *left, const char *right,
+                              const char *op,
+                              const unsigned char *m1, size_t l1,
+                              const unsigned char *m2, size_t l2);
+
