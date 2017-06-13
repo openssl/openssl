@@ -1049,6 +1049,7 @@ SSL_F_SSL_SESSION_SET1_ID:423:SSL_SESSION_set1_id
 SSL_F_SSL_SESSION_SET1_ID_CONTEXT:312:SSL_SESSION_set1_id_context
 SSL_F_SSL_SET_ALPN_PROTOS:344:SSL_set_alpn_protos
 SSL_F_SSL_SET_CERT:191:ssl_set_cert
+SSL_F_SSL_SET_CERT_AND_KEY:547:ssl_set_cert_and_key
 SSL_F_SSL_SET_CIPHER_LIST:271:SSL_set_cipher_list
 SSL_F_SSL_SET_CT_VALIDATION_CALLBACK:399:SSL_set_ct_validation_callback
 SSL_F_SSL_SET_FD:192:SSL_set_fd
@@ -2235,6 +2236,7 @@ SSL_R_LIBRARY_BUG:274:library bug
 SSL_R_LIBRARY_HAS_NO_CIPHERS:161:library has no ciphers
 SSL_R_MISSING_DSA_SIGNING_CERT:165:missing dsa signing cert
 SSL_R_MISSING_ECDSA_SIGNING_CERT:381:missing ecdsa signing cert
+SSL_R_MISSING_PARAMETERS:218:missing parameters
 SSL_R_MISSING_RSA_CERTIFICATE:168:missing rsa certificate
 SSL_R_MISSING_RSA_ENCRYPTING_CERT:169:missing rsa encrypting cert
 SSL_R_MISSING_RSA_SIGNING_CERT:170:missing rsa signing cert
@@ -2281,6 +2283,7 @@ SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE:199:peer did not return a certificate
 SSL_R_PEM_NAME_BAD_PREFIX:391:pem name bad prefix
 SSL_R_PEM_NAME_TOO_SHORT:392:pem name too short
 SSL_R_PIPELINE_FAILURE:406:pipeline failure
+SSL_R_PRIVATE_KEY_MISMATCH:219:private key mismatch
 SSL_R_PROTOCOL_IS_SHUTDOWN:207:protocol is shutdown
 SSL_R_PSK_IDENTITY_NOT_FOUND:223:psk identity not found
 SSL_R_PSK_NO_CLIENT_CB:224:psk no client cb
