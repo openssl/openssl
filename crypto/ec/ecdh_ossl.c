@@ -66,6 +66,10 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
+    if (y == NULL) {
+        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
 
     priv_key = EC_KEY_get0_private_key(ecdh);
     if (priv_key == NULL) {
