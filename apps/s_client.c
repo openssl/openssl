@@ -651,7 +651,7 @@ const OPTIONS s_client_options[] = {
      "CA file for certificate verification (PEM format)"},
     {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
     {"servername", OPT_SERVERNAME, 's',
-     "Set TLS extension servername in ClientHello"},
+     "Set TLS extension servername (SNI) in ClientHello (default)"},
     {"noservername", OPT_NOSERVERNAME, '-',
      "Do not send the server name (SNI) extension in the ClientHello"},
     {"tlsextdebug", OPT_TLSEXTDEBUG, '-',
