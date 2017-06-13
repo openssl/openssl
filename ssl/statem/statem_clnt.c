@@ -3320,7 +3320,12 @@ int tls_construct_client_certificate(SSL *s, WPACKET *pkt)
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE,
                SSL_R_CANNOT_CHANGE_CIPHER);
-        goto err;
+        /*
+         * This is a fatal error, which leaves
+         * enc_write_ctx in an inconsistent state
+         * and thus ssl3_send_alert may crash.
+         */
+        return 0;
     }
 
     return 1;
