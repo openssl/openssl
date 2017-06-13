@@ -119,10 +119,10 @@ static int dtlslisten = 0;
 static int early_data = 0;
 static SSL_SESSION *psksess = NULL;
 
-#ifndef OPENSSL_NO_PSK
 static char *psk_identity = "Client_identity";
 char *psk_key = NULL;           /* by default PSK is not used */
 
+#ifndef OPENSSL_NO_PSK
 static unsigned int psk_server_cb(SSL *ssl, const char *identity,
                                   unsigned char *psk,
                                   unsigned int max_psk_len)
@@ -892,11 +892,11 @@ const OPTIONS s_server_options[] = {
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
     {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
-#ifndef OPENSSL_NO_PSK
     {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity to expect"},
+#ifndef OPENSSL_NO_PSK
     {"psk_hint", OPT_PSK_HINT, 's', "PSK identity hint to use"},
-    {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
 #endif
+    {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
     {"psk_session", OPT_PSK_SESS, '<', "File to read PSK SSL session from"},
 #ifndef OPENSSL_NO_SRP
     {"srpvfile", OPT_SRPVFILE, '<', "The verifier file for SRP"},
@@ -1011,8 +1011,8 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_PSK
     /* by default do not send a PSK identity hint */
     char *psk_identity_hint = NULL;
-    char *p;
 #endif
+    char *p;
 #ifndef OPENSSL_NO_SRP
     char *srpuserseed = NULL;
     char *srp_verifier_file = NULL;
@@ -1379,9 +1379,7 @@ int s_server_main(int argc, char *argv[])
             no_resume_ephemeral = 1;
             break;
         case OPT_PSK_IDENTITY:
-#ifndef OPENSSL_NO_PSK
             psk_identity = opt_arg();
-#endif
             break;
         case OPT_PSK_HINT:
 #ifndef OPENSSL_NO_PSK
@@ -1389,14 +1387,12 @@ int s_server_main(int argc, char *argv[])
 #endif
             break;
         case OPT_PSK:
-#ifndef OPENSSL_NO_PSK
             for (p = psk_key = opt_arg(); *p; p++) {
                 if (isxdigit(_UC(*p)))
                     continue;
                 BIO_printf(bio_err, "Not a hex number '%s'\n", *argv);
                 goto end;
             }
-#endif
             break;
         case OPT_PSK_SESS:
             psksessf = opt_arg();

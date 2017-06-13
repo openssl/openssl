@@ -763,14 +763,6 @@ typedef unsigned int (*SSL_psk_server_cb_func)(SSL *ssl,
                                                const char *identity,
                                                unsigned char *psk,
                                                unsigned int max_psk_len);
-typedef int (*SSL_psk_find_session_cb_func)(SSL *ssl,
-                                            const unsigned char *identity,
-                                            size_t identity_len,
-                                            SSL_SESSION **sess);
-typedef int (*SSL_psk_use_session_cb_func)(SSL *ssl, const EVP_MD *md,
-                                           const unsigned char **id,
-                                           size_t *idlen,
-                                           SSL_SESSION **sess);
 void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx, SSL_psk_server_cb_func cb);
 void SSL_set_psk_server_callback(SSL *ssl, SSL_psk_server_cb_func cb);
 
@@ -779,6 +771,15 @@ __owur int SSL_use_psk_identity_hint(SSL *s, const char *identity_hint);
 const char *SSL_get_psk_identity_hint(const SSL *s);
 const char *SSL_get_psk_identity(const SSL *s);
 # endif
+
+typedef int (*SSL_psk_find_session_cb_func)(SSL *ssl,
+                                            const unsigned char *identity,
+                                            size_t identity_len,
+                                            SSL_SESSION **sess);
+typedef int (*SSL_psk_use_session_cb_func)(SSL *ssl, const EVP_MD *md,
+                                           const unsigned char **id,
+                                           size_t *idlen,
+                                           SSL_SESSION **sess);
 
 void SSL_set_psk_find_session_callback(SSL *s, SSL_psk_find_session_cb_func cb);
 void SSL_CTX_set_psk_find_session_callback(SSL_CTX *ctx,
