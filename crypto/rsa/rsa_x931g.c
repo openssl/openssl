@@ -153,6 +153,8 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
     BN_CTX_start(ctx);
     Xp = BN_CTX_get(ctx);
     Xq = BN_CTX_get(ctx);
+    if (Xq == NULL)
+        goto error;
     if (!BN_X931_generate_Xpq(Xp, Xq, bits, ctx))
         goto error;
 
