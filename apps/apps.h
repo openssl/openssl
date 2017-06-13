@@ -515,9 +515,9 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts);
 int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts);
-# ifndef OPENSSL_NO_PSK
+
 extern char *psk_key;
-# endif
+
 
 unsigned char *next_protos_parse(size_t *outlen, const char *in);
 
