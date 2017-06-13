@@ -159,6 +159,7 @@ static int test_lib(void)
         if (!TEST_true(shlib_close(cryptolib))
                 || !TEST_true(shlib_close(ssllib)))
             goto end;
+        break;
     case SSL_FIRST:
         if (!TEST_true(shlib_close(ssllib))
                 || !TEST_true(shlib_close(cryptolib)))
