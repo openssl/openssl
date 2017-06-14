@@ -501,7 +501,12 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
             && (!s->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {
         SSLerr(SSL_F_TLS_CONSTRUCT_FINISHED, SSL_R_CANNOT_CHANGE_CIPHER);
-        goto err;
+        /*
+         * This is a fatal error, which leaves
+         * enc_write_ctx in an inconsistent state
+         * and thus ssl3_send_alert may crash.
+         */
+        return 0;
     }
 
     if (s->server) {
