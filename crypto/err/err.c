@@ -1022,7 +1022,6 @@ void ERR_remove_state(unsigned long pid)
 
 ERR_STATE *ERR_get_state(void)
 {
-    static ERR_STATE fallback;
     ERR_STATE *ret, tmp, *tmpp = NULL;
     int i;
     CRYPTO_THREADID tid;
@@ -1036,7 +1035,7 @@ ERR_STATE *ERR_get_state(void)
     if (ret == NULL) {
         ret = (ERR_STATE *)OPENSSL_malloc(sizeof(ERR_STATE));
         if (ret == NULL)
-            return (&fallback);
+            return NULL;
         CRYPTO_THREADID_cpy(&ret->tid, &tid);
         ret->top = 0;
         ret->bottom = 0;
@@ -1048,7 +1047,7 @@ ERR_STATE *ERR_get_state(void)
         /* To check if insertion failed, do a get. */
         if (ERRFN(thread_get_item) (ret) != ret) {
             ERR_STATE_free(ret); /* could not insert it */
-            return (&fallback);
+            return NULL;
         }
         /*
          * If a race occured in this function and we came second, tmpp is the
