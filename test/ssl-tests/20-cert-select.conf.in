@@ -12,6 +12,8 @@ use OpenSSL::Test::Utils;
 my $server = {
     "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
     "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+    "EdDSA.Certificate" => test_pem("server-ed25519-cert.pem"),
+    "EdDSA.PrivateKey" => test_pem("server-ed25519-key.pem"),
     "MaxProtocol" => "TLSv1.2"
 };
 
@@ -27,6 +29,23 @@ our @tests = (
         test   => {
             "ExpectedServerCertType" =>, "P-256",
             "ExpectedServerSignType" =>, "EC",
+            # Note: certificate_authorities not sent for TLS < 1.3
+            "ExpectedServerCANames" =>, "empty",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "Ed25519 CipherString and Signature Algorithm Selection",
+        server => $server,
+        client => {
+            "CipherString" => "aECDSA",
+            "MaxProtocol" => "TLSv1.2",
+            "SignatureAlgorithms" => "ed25519:ECDSA+SHA256",
+            "RequestCAFile" => test_pem("root-cert.pem"),
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "Ed25519",
+            "ExpectedServerSignType" =>, "Ed25519",
             # Note: certificate_authorities not sent for TLS < 1.3
             "ExpectedServerCANames" =>, "empty",
             "ExpectedResult" => "Success"
@@ -189,13 +208,33 @@ our @tests = (
             "ExpectedServerSignType" => "EC",
             "ExpectedResult" => "Success"
         },
-    }
+    },
+    {
+        name => "TLS 1.2 Ed25519 Client Auth",
+        server => {
+            "VerifyCAFile" => test_pem("root-cert.pem"),
+            "VerifyMode" => "Require"
+        },
+        client => {
+            "EdDSA.Certificate" => test_pem("client-ed25519-cert.pem"),
+            "EdDSA.PrivateKey" => test_pem("client-ed25519-key.pem"),
+            "MinProtocol" => "TLSv1.2",
+            "MaxProtocol" => "TLSv1.2"
+        },
+        test   => {
+            "ExpectedClientCertType" => "Ed25519",
+            "ExpectedClientSignType" => "Ed25519",
+            "ExpectedResult" => "Success"
+        },
+    },
 );
 
 
 my $server_tls_1_3 = {
     "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
     "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+    "EdDSA.Certificate" => test_pem("server-ed25519-cert.pem"),
+    "EdDSA.PrivateKey" => test_pem("server-ed25519-key.pem"),
     "MinProtocol" => "TLSv1.3",
     "MaxProtocol" => "TLSv1.3"
 };
@@ -314,6 +353,18 @@ my @tests_tls_1_3 = (
         },
     },
     {
+        name => "TLS 1.3 Ed25519 Signature Algorithm Selection",
+        server => $server_tls_1_3,
+        client => {
+            "SignatureAlgorithms" => "ed25519",
+        },
+        test   => {
+            "ExpectedServerCertType" => "Ed25519",
+            "ExpectedServerSignType" => "Ed25519",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
         name => "TLS 1.3 RSA Client Auth Signature Algorithm Selection",
         server => {
             "ClientSignatureAlgorithms" => "PSS+SHA256",
@@ -358,6 +409,24 @@ my @tests_tls_1_3 = (
             "ExpectedClientCertType" => "P-256",
             "ExpectedClientSignHash" => "SHA256",
             "ExpectedClientSignType" => "EC",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "TLS 1.3 Ed25519 Client Auth",
+        server => {
+            "VerifyCAFile" => test_pem("root-cert.pem"),
+            "VerifyMode" => "Require"
+        },
+        client => {
+            "EdDSA.Certificate" => test_pem("client-ed25519-cert.pem"),
+            "EdDSA.PrivateKey" => test_pem("client-ed25519-key.pem"),
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3"
+        },
+        test   => {
+            "ExpectedClientCertType" => "Ed25519",
+            "ExpectedClientSignType" => "Ed25519",
             "ExpectedResult" => "Success"
         },
     },
