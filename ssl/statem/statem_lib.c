@@ -221,9 +221,8 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         goto err;
     }
     pkey = s->s3->tmp.cert->privatekey;
-    md = ssl_md(lu->hash_idx);
 
-    if (pkey == NULL || md == NULL) {
+    if (pkey == NULL || !tls1_lookup_md(lu, &md)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -369,7 +368,11 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
             goto f_err;
     }
 
-    md = ssl_md(s->s3->tmp.peer_sigalg->hash_idx);
+    if (!tls1_lookup_md(s->s3->tmp.peer_sigalg, &md)) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+        al = SSL_AD_INTERNAL_ERROR;
+        goto f_err;
+    }
 
     /* Check for broken implementations of GOST ciphersuites */
     /*
