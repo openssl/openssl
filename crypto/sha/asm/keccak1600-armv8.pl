@@ -25,7 +25,7 @@
 # same processor. Even though it takes more scalar xor's and andn's,
 # it gets compensated by availability of rotate. Not to forget that
 # most processors achieve higher issue rate with scalar instructions.
-# 
+#
 ######################################################################
 # Numbers are cycles per processed byte.
 #
