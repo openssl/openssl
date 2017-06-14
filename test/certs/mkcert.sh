@@ -49,6 +49,7 @@ key() {
         ec)  args=("${args[@]}" -pkeyopt "ec_paramgen_curve:$bits")
                args=("${args[@]}" -pkeyopt ec_param_enc:named_curve);;
         dsa)  args=(-paramfile "$bits");;
+        ed25519)  ;;
         *) printf "Unsupported key algorithm: %s\n" "$alg" >&2; return 1;;
         esac
         stderr_onerror \
