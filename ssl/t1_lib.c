@@ -819,6 +819,25 @@ static const SIGALG_LOOKUP *tls1_lookup_sigalg(uint16_t sigalg)
     }
     return NULL;
 }
+/* Lookup hash: return 0 if invalid or not enabled */
+int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
+{
+    const EVP_MD *md;
+    if (lu == NULL)
+        return 0;
+    /* lu->hash == NID_undef means no associated digest */
+    if (lu->hash == NID_undef) {
+        md = NULL;
+    } else {
+        md = ssl_md(lu->hash_idx);
+        if (md == NULL)
+            return 0;
+    }
+    if (pmd)
+        *pmd = md;
+    return 1;
+}
+
 /*
  * Return a signature algorithm for TLS < 1.2 where the signature type
  * is fixed by the certificate type.
@@ -830,9 +849,8 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
     if (SSL_USE_SIGALGS(s) || idx != SSL_PKEY_RSA) {
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(tls_default_sigalg[idx]);
 
-        if (lu == NULL || ssl_md(lu->hash_idx) == NULL) {
+        if (!tls1_lookup_md(lu, NULL))
             return NULL;
-        }
         return lu;
     }
     return &legacy_rsa_sigalg;
@@ -990,22 +1008,23 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
-    md = ssl_md(lu->hash_idx);
-    if (md == NULL) {
-        SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_UNKNOWN_DIGEST);
-        return 0;
+    if (!tls1_lookup_md(lu, &md)) {
+            SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_UNKNOWN_DIGEST);
+            return 0;
     }
-    /*
-     * Make sure security callback allows algorithm. For historical reasons we
-     * have to pass the sigalg as a two byte char array.
-     */
-    sigalgstr[0] = (sig >> 8) & 0xff;
-    sigalgstr[1] = sig & 0xff;
-    if (!ssl_security(s, SSL_SECOP_SIGALG_CHECK,
-                      EVP_MD_size(md) * 4, EVP_MD_type(md),
-                      (void *)sigalgstr)) {
-        SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
-        return 0;
+    if (md != NULL) {
+        /*
+         * Make sure security callback allows algorithm. For historical
+         * reasons we have to pass the sigalg as a two byte char array.
+         */
+        sigalgstr[0] = (sig >> 8) & 0xff;
+        sigalgstr[1] = sig & 0xff;
+        if (!ssl_security(s, SSL_SECOP_SIGALG_CHECK,
+                    EVP_MD_size(md) * 4, EVP_MD_type(md),
+                    (void *)sigalgstr)) {
+            SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
+            return 0;
+        }
     }
     /* Store the sigalg the peer uses */
     s->s3->tmp.peer_sigalg = lu;
@@ -1423,7 +1442,7 @@ static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
     int secbits;
 
     /* See if sigalgs is recognised and if hash is enabled */
-    if (lu == NULL || ssl_md(lu->hash_idx) == NULL)
+    if (!tls1_lookup_md(lu, NULL))
         return 0;
     /* DSA is not allowed in TLS 1.3 */
     if (SSL_IS_TLS13(s) && lu->sig == EVP_PKEY_DSA)
@@ -1431,6 +1450,8 @@ static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
     /* See if public key algorithm allowed */
     if (tls12_get_pkey_idx(lu->sig) == -1)
         return 0;
+    if (lu->hash == NID_undef)
+        return 1;
     /* Security bits: half digest bits */
     secbits = EVP_MD_size(ssl_md(lu->hash_idx)) * 4;
     /* Finally see if security callback allows it */
@@ -1772,7 +1793,7 @@ static int sig_cb(const char *elem, int len, void *arg)
         get_sigorhash(&sig_alg, &hash_alg, p);
     }
 
-    if (sig_alg == NID_undef || hash_alg == NID_undef)
+    if (sig_alg == NID_undef || (p != NULL && hash_alg == NID_undef))
         return 0;
 
     for (i = 0; i < sarg->sigalgcnt; i += 2) {
@@ -2305,7 +2326,7 @@ int tls_choose_sigalg(SSL *s, int *al)
                 || lu->sig == EVP_PKEY_DSA
                 || lu->sig == EVP_PKEY_RSA)
                 continue;
-            if (ssl_md(lu->hash_idx) == NULL)
+            if (!tls1_lookup_md(lu, NULL))
                 continue;
             idx = lu->sig_idx;
             if (!ssl_has_cert(s, idx))
