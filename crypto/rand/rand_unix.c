@@ -121,24 +121,7 @@ int RAND_poll(void)
     }
     return 1;
 }
-# elif defined __OpenBSD__
-int RAND_poll(void)
-{
-    u_int32_t rnd = 0, i;
-    unsigned char buf[ENTROPY_NEEDED];
-
-    for (i = 0; i < sizeof(buf); i++) {
-        if (i % 4 == 0)
-            rnd = arc4random();
-        buf[i] = rnd;
-        rnd >>= 8;
-    }
-    RAND_add(buf, sizeof(buf), ENTROPY_NEEDED);
-    OPENSSL_cleanse(buf, sizeof(buf));
-
-    return 1;
-}
-# else                          /* !defined(__OpenBSD__) */
+# else
 int RAND_poll(void)
 {
     unsigned long l;
