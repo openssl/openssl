@@ -145,17 +145,6 @@ int RAND_load_file(const char *file, long bytes)
         goto err;
     RAND_add(&sb, sizeof(sb), 0.0);
 
-# if defined(S_ISBLK) && defined(S_ISCHR)
-    if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
-        /*
-         * this file is a device. we don't want read an infinite number of
-         * bytes from a random device, nor do we want to use buffered I/O
-         * because we will waste system entropy.
-         */
-        bytes = (bytes == -1) ? 2048 : bytes; /* ok, is 2048 enough? */
-        setbuf(in, NULL); /* don't do buffered reads */
-    }
-# endif
 #endif
     for (;;) {
         if (bytes > 0)
@@ -188,7 +177,6 @@ int RAND_write_file(const char *file)
     FILE *out = NULL;
     int n;
 #ifndef OPENSSL_NO_POSIX_IO
-    struct stat sb;
 
 # if defined(S_ISBLK) && defined(S_ISCHR)
 # ifdef _WIN32
@@ -197,18 +185,6 @@ int RAND_write_file(const char *file)
      * because driver paths are always ASCII.
      */
 # endif
-    i = stat(file, &sb);
-    if (i != -1) {
-        if (S_ISBLK(sb.st_mode) || S_ISCHR(sb.st_mode)) {
-            /*
-             * this file is a device. we don't write back to it. we
-             * "succeed" on the assumption this is some sort of random
-             * device. Otherwise attempting to write to and chmod the device
-             * causes problems.
-             */
-            return 1;
-        }
-    }
 # endif
 #endif
 
@@ -283,9 +259,6 @@ const char *RAND_file_name(char *buf, size_t size)
 {
     char *s = NULL;
     int use_randfile = 1;
-#ifdef __OpenBSD__
-    struct stat sb;
-#endif
 
 #if defined(_WIN32) && defined(CP_UTF8)
     DWORD len;
@@ -348,19 +321,5 @@ const char *RAND_file_name(char *buf, size_t size)
         buf[0] = '\0';      /* no file name */
     }
 
-#ifdef __OpenBSD__
-    /*
-     * given that all random loads just fail if the file can't be seen on a
-     * stat, we stat the file we're returning, if it fails, use /dev/arandom
-     * instead. this allows the user to use their own source for good random
-     * data, but defaults to something hopefully decent if that isn't
-     * available.
-     */
-
-    if (!buf[0] || stat(buf, &sb) == -1)
-        if (OPENSSL_strlcpy(buf, "/dev/arandom", size) >= size) {
-            return NULL;
-        }
-#endif
     return buf[0] ? buf : NULL;
 }
