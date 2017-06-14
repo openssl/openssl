@@ -757,20 +757,17 @@ void ERR_add_error_vdata(int num, va_list args)
     n = 0;
     for (i = 0; i < num; i++) {
         a = va_arg(args, char *);
-        /* ignore NULLs, thanks to Bob Beck <beck@obtuse.com> */
-        if (a != NULL) {
-            n += strlen(a);
-            if (n > s) {
-                s = n + 20;
-                p = OPENSSL_realloc(str, s + 1);
-                if (p == NULL) {
-                    OPENSSL_free(str);
-                    return;
-                }
-                str = p;
+        n += strlen(a);
+        if (n > s) {
+            s = n + 20;
+            p = OPENSSL_realloc(str, s + 1);
+            if (p == NULL) {
+                OPENSSL_free(str);
+                return;
             }
-            OPENSSL_strlcat(str, a, (size_t)s + 1);
+            str = p;
         }
+        OPENSSL_strlcat(str, a, (size_t)s + 1);
     }
     ERR_set_error_data(str, ERR_TXT_MALLOCED | ERR_TXT_STRING);
 }
