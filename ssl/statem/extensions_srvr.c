@@ -212,7 +212,8 @@ int tls_parse_ctos_sig_algs(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    if (!s->hit && !tls1_save_sigalgs(s, &supported_sig_algs)) {
+    if ((!s->hit || SSL_IS_TLS13(s))
+        && !tls1_save_sigalgs(s, &supported_sig_algs)) {
         *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
