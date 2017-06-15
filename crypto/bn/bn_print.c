@@ -77,7 +77,6 @@ char *BN_bn2dec(const BIGNUM *a)
     if ((t = BN_dup(a)) == NULL)
         goto err;
 
-#define BUF_REMAIN (num+3 - (size_t)(p - buf))
     p = buf;
     lp = bn_data;
     if (BN_is_zero(t)) {
@@ -101,12 +100,12 @@ char *BN_bn2dec(const BIGNUM *a)
          * the last one needs truncation. The blocks need to be reversed in
          * order.
          */
-        BIO_snprintf(p, BUF_REMAIN, BN_DEC_FMT1, *lp);
+        sprintf(p, BN_DEC_FMT1, *lp);
         while (*p)
             p++;
         while (lp != bn_data) {
             lp--;
-            BIO_snprintf(p, BUF_REMAIN, BN_DEC_FMT2, *lp);
+            sprintf(p, BN_DEC_FMT2, *lp);
             while (*p)
                 p++;
         }
@@ -332,11 +331,11 @@ char *BN_options(void)
     if (!init) {
         init++;
 #ifdef BN_LLONG
-        BIO_snprintf(data, sizeof data, "bn(%d,%d)",
-                     (int)sizeof(BN_ULLONG) * 8, (int)sizeof(BN_ULONG) * 8);
+        sprintf(data, "bn(%d,%d)",
+                (int)sizeof(BN_ULLONG) * 8, (int)sizeof(BN_ULONG) * 8);
 #else
-        BIO_snprintf(data, sizeof data, "bn(%d,%d)",
-                     (int)sizeof(BN_ULONG) * 8, (int)sizeof(BN_ULONG) * 8);
+        sprintf(data, "bn(%d,%d)",
+                (int)sizeof(BN_ULONG) * 8, (int)sizeof(BN_ULONG) * 8);
 #endif
     }
     return (data);
