@@ -54,36 +54,34 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
     if ((rows * dump_width) < len)
         rows++;
     for (i = 0; i < rows; i++) {
-        OPENSSL_strlcpy(buf, str, sizeof buf);
-        BIO_snprintf(tmp, sizeof tmp, "%04x - ", i * dump_width);
-        OPENSSL_strlcat(buf, tmp, sizeof buf);
+        strcpy(buf, str);
+        sprintf(tmp, "%04x - ", i * dump_width);
+        strcat(buf, tmp);
         for (j = 0; j < dump_width; j++) {
             if (((i * dump_width) + j) >= len) {
-                OPENSSL_strlcat(buf, "   ", sizeof buf);
+                strcat(buf, "   ");
             } else {
                 ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
-                BIO_snprintf(tmp, sizeof tmp, "%02x%c", ch,
-                             j == 7 ? '-' : ' ');
-                OPENSSL_strlcat(buf, tmp, sizeof buf);
+                sprintf(tmp, "%02x%c", ch, j == 7 ? '-' : ' ');
+                strcat(buf, tmp);
             }
         }
-        OPENSSL_strlcat(buf, "  ", sizeof buf);
+        strcat(buf, "  ");
         for (j = 0; j < dump_width; j++) {
             if (((i * dump_width) + j) >= len)
                 break;
             ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
 #ifndef CHARSET_EBCDIC
-            BIO_snprintf(tmp, sizeof tmp, "%c",
-                         ((ch >= ' ') && (ch <= '~')) ? ch : '.');
+            sprintf(tmp, "%c", ((ch >= ' ') && (ch <= '~')) ? ch : '.');
 #else
-            BIO_snprintf(tmp, sizeof tmp, "%c",
+            sprintf(tmp, "%c",
                          ((ch >= os_toascii[' ']) && (ch <= os_toascii['~']))
                          ? os_toebcdic[ch]
                          : '.');
 #endif
-            OPENSSL_strlcat(buf, tmp, sizeof buf);
+            strcat(buf, tmp);
         }
-        OPENSSL_strlcat(buf, "\n", sizeof buf);
+        strcat(buf, "\n");
         /*
          * if this is the last call then update the ddt_dump thing so that we
          * will move the selection point in the debug window
@@ -92,8 +90,7 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
     }
 #ifdef TRUNCATE
     if (trc > 0) {
-        BIO_snprintf(buf, sizeof buf, "%s%04x - <SPACES/NULS>\n", str,
-                     len + trc);
+        sprintf(buf, "%s%04x - <SPACES/NULS>\n", str, len + trc);
         ret += cb((void *)buf, strlen(buf), u);
     }
 #endif

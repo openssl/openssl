@@ -312,9 +312,9 @@ int enc_main(int argc, char **argv)
             for (;;) {
                 char prompt[200];
 
-                BIO_snprintf(prompt, sizeof prompt, "enter %s %s password:",
-                             OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
-                             (enc) ? "encryption" : "decryption");
+                sprintf(prompt, "enter %s %s password:",
+                        OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
+                        (enc) ? "encryption" : "decryption");
                 strbuf[0] = '\0';
                 i = EVP_read_pw_string((char *)strbuf, SIZE, prompt, enc);
                 if (i == 0) {

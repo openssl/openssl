@@ -173,7 +173,7 @@ int s_time_main(int argc, char **argv)
             break;
         case OPT_WWW:
             www_path = opt_arg();
-            buf_size = strlen(www_path) + sizeof(fmt_http_get_cmd) - 2;  /* 2 is for %s */
+            buf_size = strlen(www_path) + sizeof(fmt_http_get_cmd);
             if (buf_size > sizeof(buf)) {
                 BIO_printf(bio_err, "%s: -www option is too long\n", prog);
                 goto end;
@@ -230,8 +230,8 @@ int s_time_main(int argc, char **argv)
             goto end;
 
         if (www_path != NULL) {
-            buf_len = BIO_snprintf(buf, sizeof buf,
-                                   fmt_http_get_cmd, www_path);
+            sprintf(buf, fmt_http_get_cmd, www_path);
+            buf_len = strlen(buf);
             if (SSL_write(scon, buf, buf_len) <= 0)
                 goto end;
             while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
@@ -288,8 +288,8 @@ int s_time_main(int argc, char **argv)
     }
 
     if (www_path != NULL) {
-        buf_len = BIO_snprintf(buf, sizeof buf,
-                               fmt_http_get_cmd, www_path);
+        sprintf(buf, fmt_http_get_cmd, www_path);
+        buf_len = strlen(buf);
         if (SSL_write(scon, buf, buf_len) <= 0)
             goto end;
         while (SSL_read(scon, buf, sizeof(buf)) > 0)
@@ -319,8 +319,7 @@ int s_time_main(int argc, char **argv)
             goto end;
 
         if (www_path != NULL) {
-            BIO_snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n",
-                         www_path);
+            sprintf(buf, "GET %s HTTP/1.0\r\n\r\n", www_path);
             if (SSL_write(scon, buf, strlen(buf)) <= 0)
                 goto end;
             while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
