@@ -1529,9 +1529,8 @@ bn_div_words:
 // output:	f8 = (int)(a/b)
 // clobbered:	f8,f9,f10,f11,pred
 pred=p15
-// One can argue that this snippet is copyrighted to Intel
-// Corporation, as it's essentially identical to one of those
-// found in "Divide, Square Root and Remainder" section at
+// This snippet is based on text found in the "Divide, Square
+// Root and Remainder" section at
 // http://www.intel.com/software/products/opensource/libraries/num.htm.
 // Yes, I admit that the referred code was used as template,
 // but after I realized that there hardly is any other instruction
