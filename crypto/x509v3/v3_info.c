@@ -78,13 +78,13 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
         tret = tmp;
         vtmp = sk_CONF_VALUE_value(tret, i);
         i2t_ASN1_OBJECT(objtmp, sizeof objtmp, desc->method);
-        nlen = strlen(objtmp) + strlen(vtmp->name) + 5;
+        nlen = strlen(objtmp) + 3 + strlen(vtmp->name) + 1;
         ntmp = OPENSSL_malloc(nlen);
         if (ntmp == NULL)
             goto err;
-        OPENSSL_strlcpy(ntmp, objtmp, nlen);
-        OPENSSL_strlcat(ntmp, " - ", nlen);
-        OPENSSL_strlcat(ntmp, vtmp->name, nlen);
+        strcpy(ntmp, objtmp);
+        strcat(ntmp, " - ");
+        strcat(ntmp, vtmp->name);
         OPENSSL_free(vtmp->name);
         vtmp->name = ntmp;
 

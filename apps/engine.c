@@ -67,8 +67,8 @@ static int append_buf(char **buf, int *size, const char *s)
     }
 
     if (**buf != '\0')
-        OPENSSL_strlcat(*buf, ", ", *size);
-    OPENSSL_strlcat(*buf, s, *size);
+        strcat(*buf, ", ");
+    strcat(*buf, s);
 
     return 1;
 }

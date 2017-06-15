@@ -81,9 +81,9 @@ void PEM_proc_type(char *buf, int type)
     else
         str = "BAD-TYPE";
 
-    OPENSSL_strlcat(buf, "Proc-Type: 4,", PEM_BUFSIZE);
-    OPENSSL_strlcat(buf, str, PEM_BUFSIZE);
-    OPENSSL_strlcat(buf, "\n", PEM_BUFSIZE);
+    strcat(buf, "Proc-Type: 4,");
+    strcat(buf, str);
+    strcat(buf, "\n");
 }
 
 void PEM_dek_info(char *buf, const char *type, int len, char *str)
@@ -92,12 +92,10 @@ void PEM_dek_info(char *buf, const char *type, int len, char *str)
     long i;
     int j;
 
-    OPENSSL_strlcat(buf, "DEK-Info: ", PEM_BUFSIZE);
-    OPENSSL_strlcat(buf, type, PEM_BUFSIZE);
-    OPENSSL_strlcat(buf, ",", PEM_BUFSIZE);
+    strcat(buf, "DEK-Info: ");
+    strcat(buf, type);
+    strcat(buf, ",");
     j = strlen(buf);
-    if (j + (len * 2) + 1 > PEM_BUFSIZE)
-        return;
     for (i = 0; i < len; i++) {
         buf[j + i * 2] = map[(str[i] >> 4) & 0x0f];
         buf[j + i * 2 + 1] = map[(str[i]) & 0x0f];

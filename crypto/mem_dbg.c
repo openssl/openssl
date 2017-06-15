@@ -467,24 +467,19 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
     } tid;
     CRYPTO_THREAD_ID ti;
 
-#define BUF_REMAIN (sizeof buf - (size_t)(bufp - buf))
-
     lcl = localtime(&m->time);
-    BIO_snprintf(bufp, BUF_REMAIN, "[%02d:%02d:%02d] ",
-                 lcl->tm_hour, lcl->tm_min, lcl->tm_sec);
+    sprintf(bufp, "[%02d:%02d:%02d] ", lcl->tm_hour, lcl->tm_min, lcl->tm_sec);
     bufp += strlen(bufp);
 
-    BIO_snprintf(bufp, BUF_REMAIN, "%5lu file=%s, line=%d, ",
-                 m->order, m->file, m->line);
+    sprintf(bufp, "%5lu file=%s, line=%d, ", m->order, m->file, m->line);
     bufp += strlen(bufp);
 
     tid.ltid = 0;
     tid.tid = m->threadid;
-    BIO_snprintf(bufp, BUF_REMAIN, "thread=%lu, ", tid.ltid);
+    sprintf(bufp, "thread=%lu, ", tid.ltid);
     bufp += strlen(bufp);
 
-    BIO_snprintf(bufp, BUF_REMAIN, "number=%d, address=%p\n",
-                 m->num, m->addr);
+    sprintf(bufp, "number=%d, address=%p\n", m->num, m->addr);
     bufp += strlen(bufp);
 
     l->print_cb(buf, strlen(buf), l->print_cb_arg);
@@ -506,20 +501,18 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
             memset(buf, '>', ami_cnt);
             tid.ltid = 0;
             tid.tid = amip->threadid;
-            BIO_snprintf(buf + ami_cnt, sizeof buf - ami_cnt,
-                         " thread=%lu, file=%s, line=%d, info=\"",
-                         tid.ltid, amip->file,
-                         amip->line);
+            sprintf(buf + ami_cnt, " thread=%lu, file=%s, line=%d, info=\"",
+                    tid.ltid, amip->file, amip->line);
             buf_len = strlen(buf);
             info_len = strlen(amip->info);
             if (128 - buf_len - 3 < info_len) {
                 memcpy(buf + buf_len, amip->info, 128 - buf_len - 3);
                 buf_len = 128 - 3;
             } else {
-                OPENSSL_strlcpy(buf + buf_len, amip->info, sizeof buf - buf_len);
+                strcpy(buf + buf_len, amip->info);
                 buf_len = strlen(buf);
             }
-            BIO_snprintf(buf + buf_len, sizeof buf - buf_len, "\"\n");
+            sprintf(buf + buf_len, "\"\n");
 
             l->print_cb(buf, strlen(buf), l->print_cb_arg);
 

@@ -455,7 +455,7 @@ int pkcs12_main(int argc, char **argv)
         }
 
         if (!twopass)
-            OPENSSL_strlcpy(macpass, pass, sizeof macpass);
+            strcpy(macpass, pass);
 
         p12 = PKCS12_create(cpass, name, key, ucert, certs,
                             key_pbe, cert_pbe, iter, -1, keytype);

@@ -323,7 +323,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
-            OPENSSL_strlcpy(v->name, pname, strlen(pname) + 1);
+            strcpy(v->name, pname);
             if (!str_copy(conf, psection, &(v->value), start))
                 goto err;
 
@@ -353,7 +353,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
     OPENSSL_free(section);
     if (line != NULL)
         *line = eline;
-    BIO_snprintf(btmp, sizeof btmp, "%ld", eline);
+    sprintf(btmp, "%ld", eline);
     ERR_add_error_data(2, "line ", btmp);
     if (h != conf->data) {
         CONF_free(conf->data);
