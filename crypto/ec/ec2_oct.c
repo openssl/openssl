@@ -1,25 +1,11 @@
 /*
  * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
- */
-
-/* ====================================================================
- * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- *
- * The Elliptic Curve Public-Key Crypto Library (ECC Code) included
- * herein is developed by SUN MICROSYSTEMS, INC., and is contributed
- * to the OpenSSL project.
- *
- * The ECC Code is licensed pursuant to the OpenSSL open source
- * license provided below.
- *
- * The software is originally written by Sheueling Chang Shantz and
- * Douglas Stebila of Sun Microsystems Laboratories.
- *
  */
 
 #include <openssl/err.h>
