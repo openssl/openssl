@@ -1891,6 +1891,11 @@ static int test_ciphersuite_change(void)
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
             || !TEST_true(SSL_set_session(clientssl, clntsess))
+               /*
+                * We use SSL_ERROR_WANT_READ below so that we can pause the
+                * connection after the initial ClientHello has been sent to
+                * enable us to make some session changes.
+                */
             || !TEST_false(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_WANT_READ)))
         goto end;
@@ -1900,8 +1905,9 @@ static int test_ciphersuite_change(void)
     clntsess->cipher_id = clntsess->cipher->id;
 
     /*
-     * Server has selected a SHA-384 ciphersuite, but client thinks the session
-     * is for SHA-256, so it should bail out.
+     * Continue the previously started connection. Server has selected a SHA-384
+     * ciphersuite, but client thinks the session is for SHA-256, so it should
+     * bail out.
      */
     if (!TEST_false(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_SSL))
