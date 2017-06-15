@@ -8,12 +8,9 @@
  */
 
 /*
- * Copied from Richard Levitte's (richard@levitte.org) LP library.  All
- * symbol names have been changed, with permission from the author.
- */
-
-/* $LP: LPlib/source/LPdir.h,v 1.1 2004/06/14 08:56:04 _cvs_levitte Exp $ */
-/*
+ * This file is dual-licensed and is also avialable under the following
+ * terms:
+ *
  * Copyright (c) 2004, Richard Levitte <richard@levitte.org>
  * All rights reserved.
  *
