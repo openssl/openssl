@@ -1,5 +1,6 @@
 /*
  * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,10 +16,6 @@
  *     http://seed.kisa.or.kr/ (Korean)
  *
  * Public domain version is distributed above.
- */
-
-/* ====================================================================
- * Copyright (c) 2017 Oracle and/or its affiliates.  All rights reserved.
  */
 
 #include <openssl/e_os2.h>
