@@ -1,13 +1,18 @@
 #! /bin/bash
 #
+# Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2016 Viktor Dukhovni <openssl-users@dukhovni.org>.
 # All rights reserved.
 #
-# Contributed to the OpenSSL project under the terms of the OpenSSL license
-# included with the version of the OpenSSL software that includes this module.
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# This file is dual-licensed and is also available under other terms.
+# Please contact the author.
 
 # 100 years should be enough for now
-#
 if [ -z "$DAYS" ]; then
     DAYS=36525
 fi
