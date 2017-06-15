@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,24 +24,24 @@ int main(int argc, char **argv)
     /* Open compressed content */
 
     in = BIO_new_file("smcomp.txt", "r");
-
-    if (!in)
+    if (in == NULL)
         goto err;
 
     /* Sign content */
     cms = SMIME_read_CMS(in, NULL);
-
-    if (!cms)
+    if (cms == NULL)
         goto err;
 
     out = BIO_new_file("smuncomp.txt", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     /* Uncompress S/MIME message */
-    if (!CMS_uncompress(cms, out, NULL, 0))
+    if (!CMS_uncompress(cms, NULL, out, CMS_STREAM))
         goto err;
 
+    printf("Successfully uncompressed contents of file smcomp.txt\n"
+           "into file smuncomp.txt\n");
     ret = 0;
 
  err:

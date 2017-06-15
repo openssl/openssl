@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -30,23 +30,24 @@ int main(int argc, char **argv)
     /* Open content being compressed */
 
     in = BIO_new_file("comp.txt", "r");
-
-    if (!in)
+    if (in == NULL)
         goto err;
 
     /* compress content */
     cms = CMS_compress(in, NID_zlib_compression, flags);
-
-    if (!cms)
+    if (cms == NULL)
         goto err;
 
     out = BIO_new_file("smcomp.txt", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     /* Write out S/MIME message */
     if (!SMIME_write_CMS(out, cms, in, flags))
         goto err;
+
+    printf("Successfully compressed contents of file comp.txt into\n"
+           "file smcomp.txt\n");
 
     ret = 0;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,41 +23,42 @@ int main(int argc, char **argv)
     OpenSSL_add_all_algorithms();
     ERR_load_crypto_strings();
 
-    tbio = BIO_new_file("signer.pem", "r");
-
-    if (!tbio)
+    tbio = BIO_new_file("smrsa1.pem", "r");
+    if (tbio == NULL)
         goto err;
 
     scert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
+    if (scert == NULL)
+        goto err;
 
     BIO_reset(tbio);
 
     skey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
+    if (skey == NULL)
+        goto err;
 
     BIO_free(tbio);
 
-    tbio = BIO_new_file("signer2.pem", "r");
-
-    if (!tbio)
+    tbio = BIO_new_file("smrsa2.pem", "r");
+    if (tbio == NULL)
         goto err;
 
     scert2 = PEM_read_bio_X509(tbio, NULL, 0, NULL);
+    if (scert2 == NULL)
+        goto err;
 
     BIO_reset(tbio);
 
     skey2 = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
-
-    if (!scert2 || !skey2)
+    if (skey2 == NULL)
         goto err;
 
     in = BIO_new_file("sign.txt", "r");
-
-    if (!in)
+    if (in == NULL)
         goto err;
 
     cms = CMS_sign(NULL, NULL, NULL, in, CMS_STREAM | CMS_PARTIAL);
-
-    if (!cms)
+    if (cms == NULL)
         goto err;
 
     /* Add each signer in turn */
@@ -69,7 +70,7 @@ int main(int argc, char **argv)
         goto err;
 
     out = BIO_new_file("smout.txt", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     /* NB: content included and finalized by SMIME_write_CMS */
@@ -77,6 +78,9 @@ int main(int argc, char **argv)
     if (!SMIME_write_CMS(out, cms, in, CMS_STREAM))
         goto err;
 
+    printf("Successfully signed contents of file sign.txt into file smout.txt"
+           "\nusing certificate and private key from files smrsa1.pem and"
+           "\nsmrsa2.pem\n");
     ret = 0;
 
  err:

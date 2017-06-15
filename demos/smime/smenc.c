@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -30,20 +30,17 @@ int main(int argc, char **argv)
     ERR_load_crypto_strings();
 
     /* Read in recipient certificate */
-    tbio = BIO_new_file("signer.pem", "r");
-
-    if (!tbio)
+    tbio = BIO_new_file("smrsa1.pem", "r");
+    if (tbio == NULL)
         goto err;
 
     rcert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
-
-    if (!rcert)
+    if (rcert == NULL)
         goto err;
 
     /* Create recipient STACK and add recipient cert to it */
     recips = sk_X509_new_null();
-
-    if (!recips || !sk_X509_push(recips, rcert))
+    if ((recips == NULL) || !sk_X509_push(recips, rcert))
         goto err;
 
     /*
@@ -55,24 +52,25 @@ int main(int argc, char **argv)
     /* Open content being encrypted */
 
     in = BIO_new_file("encr.txt", "r");
-
-    if (!in)
+    if (in == NULL)
         goto err;
 
     /* encrypt content */
     p7 = PKCS7_encrypt(recips, in, EVP_des_ede3_cbc(), flags);
-
-    if (!p7)
+    if (p7 == NULL)
         goto err;
 
     out = BIO_new_file("smencr.txt", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     /* Write out S/MIME message */
     if (!SMIME_write_PKCS7(out, p7, in, flags))
         goto err;
 
+    printf("Successfully encrypted contents of file encr.txt into file"
+           " smencr.txt using \ncertificate and private key from"
+           " file smrsa1.pem\n");
     ret = 0;
 
  err:

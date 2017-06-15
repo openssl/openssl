@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     }
     p12 = d2i_PKCS12_fp(fp, NULL);
     fclose(fp);
-    if (!p12) {
+    if (p12 == NULL) {
         fprintf(stderr, "Error reading PKCS#12 file\n");
         ERR_print_errors_fp(stderr);
         exit(1);
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     }
     if (cert) {
         fprintf(fp, "***User Certificate***\n");
-        PEM_write_X509_AUX(fp, cert);
+        PEM_write_X509(fp, cert);
     }
     if (ca && sk_X509_num(ca)) {
         fprintf(fp, "***Other Certificates***\n");

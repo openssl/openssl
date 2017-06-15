@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,9 +24,8 @@ int main(int argc, char **argv)
     ERR_load_crypto_strings();
 
     /* Read in recipient certificate and private key */
-    tbio = BIO_new_file("signer.pem", "r");
-
-    if (!tbio)
+    tbio = BIO_new_file("smrsa1.pem", "r");
+    if (tbio == NULL)
         goto err;
 
     rcert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
@@ -34,31 +33,31 @@ int main(int argc, char **argv)
     BIO_reset(tbio);
 
     rkey = PEM_read_bio_PrivateKey(tbio, NULL, 0, NULL);
-
-    if (!rcert || !rkey)
+    if ((rcert == NULL) || (rkey == NULL))
         goto err;
 
     /* Open content being signed */
 
     in = BIO_new_file("smencr.txt", "r");
-
-    if (!in)
+    if (in == NULL)
         goto err;
 
     /* Sign content */
     p7 = SMIME_read_PKCS7(in, NULL);
-
-    if (!p7)
+    if (p7 == NULL)
         goto err;
 
     out = BIO_new_file("encrout.txt", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     /* Decrypt S/MIME message */
     if (!PKCS7_decrypt(p7, rkey, rcert, out, 0))
         goto err;
 
+    printf("Successfully dencrypted contents of file smencr.txt into file"
+           " encrout.txt \nusing certificate and private key from file"
+           " smrsa1.pem\n");
     ret = 0;
 
  err:

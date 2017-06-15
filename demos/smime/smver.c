@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,14 +29,12 @@ int main(int argc, char **argv)
     st = X509_STORE_new();
 
     /* Read in signer certificate and private key */
-    tbio = BIO_new_file("cacert.pem", "r");
-
-    if (!tbio)
+    tbio = BIO_new_file("smroot.pem", "r");
+    if (tbio == NULL)
         goto err;
 
     cacert = PEM_read_bio_X509(tbio, NULL, 0, NULL);
-
-    if (!cacert)
+    if (cacert == NULL)
         goto err;
 
     if (!X509_STORE_add_cert(st, cacert))
@@ -45,19 +43,17 @@ int main(int argc, char **argv)
     /* Open content being signed */
 
     in = BIO_new_file("smout.txt", "r");
-
-    if (!in)
+    if (in == NULL)
         goto err;
 
     /* Sign content */
     p7 = SMIME_read_PKCS7(in, &cont);
-
-    if (!p7)
+    if (p7 == NULL)
         goto err;
 
     /* File to output verified content to */
     out = BIO_new_file("smver.txt", "w");
-    if (!out)
+    if (out == NULL)
         goto err;
 
     if (!PKCS7_verify(p7, NULL, st, cont, out, 0)) {
@@ -65,7 +61,8 @@ int main(int argc, char **argv)
         goto err;
     }
 
-    fprintf(stderr, "Verification Successful\n");
+    printf("Successfully verified contents of file smout.txt into file"
+           "\nsmver.txt using CA certificate in file smroot.pem\n");
 
     ret = 0;
 

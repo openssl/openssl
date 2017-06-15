@@ -28,3 +28,8 @@ server-conf: server-conf.o
 
 client-arg client-conf saccept sconnect server-arg server-cmod server-conf:
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+
+clean:
+	$(RM) client-arg.o client-conf.o saccept.o sconnect.o server-arg.o server-cmod.o server-conf.o
+	$(RM) client-arg client-conf saccept sconnect server-arg server-cmod server-conf
+
