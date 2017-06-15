@@ -8,6 +8,7 @@
 
 
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_x509_check_cert_pkey");
 
@@ -26,9 +27,12 @@ ok(run(test(["x509_check_cert_pkey_test",
              srctop_file("test", "certs", "server-dsa-cert.pem"),
              srctop_file("test", "certs", "server-dsa-key.pem"), "cert", "ok"])));
 # ecc
-ok(run(test(["x509_check_cert_pkey_test",
-             srctop_file("test", "certs", "server-ecdsa-cert.pem"),
-             srctop_file("test", "certs", "server-ecdsa-key.pem"), "cert", "ok"])));
+SKIP: {
+    skip "EC disabled", 1 if disabled("ec");
+    ok(run(test(["x509_check_cert_pkey_test",
+                 srctop_file("test", "certs", "server-ecdsa-cert.pem"),
+                 srctop_file("test", "certs", "server-ecdsa-key.pem"), "cert", "ok"])));
+}
 # certificate request (rsa)
 ok(run(test(["x509_check_cert_pkey_test",
              srctop_file("test", "certs", "x509-check.csr"),

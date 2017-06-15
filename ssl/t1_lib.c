@@ -621,7 +621,6 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
     return rv;
 }
 
-# ifndef OPENSSL_NO_EC
 /*
  * tls1_check_ec_tmp_key - Check EC temporary key compatibility
  * @s: SSL connection
@@ -658,7 +657,6 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
         return 1;
     return 0;
 }
-# endif                         /* OPENSSL_NO_EC */
 
 #else
 
