@@ -184,7 +184,8 @@ script:
     - if [ -n "$DESTDIR" ]; then
           cd _build;
       fi
-    - $make update
+    - $make update;
+      git diff --quiet
     - if [ -n "$CHECKDOCS" ]; then
           $make doc-nits;
       fi
