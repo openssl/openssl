@@ -119,6 +119,9 @@ BIN_SCRIPTS=$(BLDDIR)/tools/c_rehash
 MISC_SCRIPTS=$(BLDDIR)/apps/CA.pl $(BLDDIR)/apps/tsget
 {- output_on() if $disabled{apps}; "" -}
 
+APPS_OPENSSL={- use File::Spec::Functions;
+                catfile("apps","openssl") -}
+
 # DESTDIR is for package builders so that they can configure for, say,
 # /usr/ and yet have everything installed to /tmp/somedir/usr/.
 # Normally it is left empty.
@@ -612,19 +615,9 @@ doc-nits:
 lint:
 	lint -DLINT $(INCLUDES) $(SRCS)
 
-{- # because the program apps/openssl has object files as sources, and
-   # they then have the corresponding C files as source, we need to chain
-   # the lookups in %unified_info
-   my $apps_openssl = catfile("apps","openssl");
-   our @openssl_source = map { @{$unified_info{sources}->{$_}} }
-                         @{$unified_info{sources}->{$apps_openssl}};
-   ""; -}
 generate_apps:
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
 				< apps/openssl.cnf > apps/openssl-vms.cnf )
-	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b apps/progs.pl \
-					{- join(" ", @openssl_source) -} \
-					> apps/progs.h )
 
 generate_crypto_bn:
 	( cd $(SRCDIR); $(PERL) crypto/bn/bn_prime.pl > crypto/bn/bn_prime.h )

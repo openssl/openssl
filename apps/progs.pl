@@ -11,12 +11,21 @@
 
 use strict;
 use warnings;
-use configdata qw/@disablables/;
+use lib '.';
+use configdata qw/@disablables %unified_info/;
 
 my %commands = ();
 my $cmdre = qr/^\s*int\s+([a-z_][a-z0-9_]*)_main\(\s*int\s+argc\s*,/;
 
-foreach my $filename (@ARGV) {
+my $apps_openssl = shift @ARGV;
+# because the program apps/openssl has object files as sources, and
+# they then have the corresponding C files as source, we need to chain
+# the lookups in %unified_info
+my @openssl_source =
+    map { @{$unified_info{sources}->{$_}} }
+    @{$unified_info{sources}->{$apps_openssl}};
+
+foreach my $filename (@openssl_source) {
 	open F, $filename or die "Coudn't open $_: $!\n";
 	foreach (grep /$cmdre/, <F>) {
 		my @foo = /$cmdre/;

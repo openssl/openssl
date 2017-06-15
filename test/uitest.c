@@ -11,7 +11,7 @@
 #include <string.h>
 #include <openssl/opensslconf.h>
 #include <openssl/err.h>
-#include "../apps/apps.h"
+#include "apps.h"
 #include "testutil.h"
 
 /* apps/apps.c depend on these */
