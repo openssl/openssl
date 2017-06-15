@@ -8,6 +8,9 @@
  */
 
 /*
+ * This file is dual-licensed and is also avialable under the following
+ * terms:
+ *
  * Copyright (c) 2004, Richard Levitte <richard@levitte.org>
  * All rights reserved.
  *
