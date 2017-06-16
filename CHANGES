@@ -9,6 +9,12 @@
 
  Changes between 1.1.0g and 1.1.0h [xx XXX xxxx]
 
+  *) Add a build target 'build_all_generated', to build all generated files
+     and only that.  This can be used to prepare everything that requires
+     things like perl for a system that lacks perl and then move everything
+     to that system and do the rest of the build there.
+     [Richard Levitte]
+
   *) Backport SSL_OP_NO_RENGOTIATION
 
      OpenSSL 1.0.2 and below had the ability to disable renegotiation using the

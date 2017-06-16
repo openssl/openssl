@@ -264,6 +264,10 @@ build_programs_nodep : $(PROGRAMS), $(SCRIPTS)
 # Kept around for backward compatibility
 build_apps build_tests : build_programs
 
+# Convenience target to prebuild all generated files, not just the mandatory
+# ones
+build_all_generated : $(GENERATED_MANDATORY) $(GENERATED)
+
 test : tests
 {- dependmagic('tests'); -} : build_programs_nodep, build_engines_nodep
         @ ! {- output_off() if $disabled{tests}; "" -}
