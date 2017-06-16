@@ -1498,6 +1498,7 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
             break;
 #endif
 #ifndef OPENSSL_NO_EC
+        case NID_ED25519:
         case EVP_PKEY_EC:
             if (!have_ecdsa && tls12_sigalg_allowed(s, op, lu))
                 have_ecdsa = 1;
@@ -2380,11 +2381,16 @@ int tls_choose_sigalg(SSL *s, int *al)
                     return 0;
                 }
             } else if (!ssl_has_cert(s, idx)) {
-                if (al == NULL)
-                    return 1;
-                *al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
-                return 0;
+                /* Allow Ed25519 if no EC certificate */
+                if (idx == SSL_PKEY_ECC && ssl_has_cert(s, SSL_PKEY_ED25519)) {
+                    idx = SSL_PKEY_ED25519;
+                } else {
+                    if (al == NULL)
+                        return 1;
+                    *al = SSL_AD_INTERNAL_ERROR;
+                    SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
             }
         } else {
             /* Find index for client certificate */
@@ -2421,6 +2427,10 @@ int tls_choose_sigalg(SSL *s, int *al)
                     if (lu->sig_idx == idx
                         && (curve == -1 || lu->curve == curve))
                         break;
+                    if (idx == SSL_PKEY_ECC && lu->sig == NID_ED25519) {
+                        idx = SSL_PKEY_ED25519;
+                        break;
+                    }
 #endif
                     if (idx == SSL_PKEY_RSA && lu->sig == EVP_PKEY_RSA_PSS)
                         break;
