@@ -786,7 +786,7 @@ void SSL_CTX_set_psk_find_session_callback(SSL_CTX *ctx,
                                            SSL_psk_find_session_cb_func cb);
 void SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb);
 void SSL_CTX_set_psk_use_session_callback(SSL_CTX *ctx,
-                                           SSL_psk_use_session_cb_func cb);
+                                          SSL_psk_use_session_cb_func cb);
 
 /* Register callbacks to handle custom TLS Extensions for client or server. */
 

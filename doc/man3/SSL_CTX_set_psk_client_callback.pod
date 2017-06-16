@@ -8,6 +8,11 @@ SSL_CTX_set_psk_client_callback, SSL_set_psk_client_callback - set PSK client ca
 
  #include <openssl/ssl.h>
 
+ typedef int (*SSL_psk_use_session_cb_func)(SSL *ssl, const EVP_MD *md,
+                                            const unsigned char **id,
+                                            size_t *idlen,
+                                            SSL_SESSION **sess);
+
  void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx,
      unsigned int (*callback)(SSL *ssl, const char *hint,
                               char *identity, unsigned int max_identity_len,
@@ -17,6 +22,8 @@ SSL_CTX_set_psk_client_callback, SSL_set_psk_client_callback - set PSK client ca
                               char *identity, unsigned int max_identity_len,
                               unsigned char *psk, unsigned int max_psk_len));
 
+ void SSL_CTX_set_psk_use_session_callback(SSL_CTX *ctx,
+                                           SSL_psk_use_session_cb_func cb);
 
 =head1 DESCRIPTION
 
