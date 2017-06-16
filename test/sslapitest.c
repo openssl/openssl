@@ -18,6 +18,7 @@
 #include "ssltestlib.h"
 #include "testutil.h"
 #include "e_os.h"
+#include "../ssl/ssl_locl.h"
 
 static char *cert = NULL;
 static char *privkey = NULL;
@@ -1797,8 +1798,136 @@ static int test_early_data_tls1_2(int idx)
 
     return testresult;
 }
-# endif
-#endif
+# endif /* OPENSSL_NO_TLS1_2 */
+
+static int test_ciphersuite_change(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_SESSION *clntsess = NULL;
+    int testresult = 0;
+    const SSL_CIPHER *aes_128_gcm_sha256 = NULL;
+
+    /* Create a session based on SHA-256 */
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(), &sctx,
+                                       &cctx, cert, privkey))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                  "TLS13-AES-128-GCM-SHA256"))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                          &clientssl, NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    clntsess = SSL_get1_session(clientssl);
+    /* Save for later */
+    aes_128_gcm_sha256 = SSL_SESSION_get0_cipher(clntsess);
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    /* Check we can resume a session with a different SHA-256 ciphersuite */
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                           "TLS13-CHACHA20-POLY1305-SHA256"))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl, clntsess))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE))
+            || !TEST_true(SSL_session_reused(clientssl)))
+        goto end;
+
+    SSL_SESSION_free(clntsess);
+    clntsess = SSL_get1_session(clientssl);
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    /*
+     * Check attempting to resume a SHA-256 session with no SHA-256 ciphersuites
+     * succeeds but does not resume.
+     */
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "TLS13-AES-256-GCM-SHA384"))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl, clntsess))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_SSL))
+            || !TEST_false(SSL_session_reused(clientssl)))
+        goto end;
+
+    SSL_SESSION_free(clntsess);
+    clntsess = NULL;
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    /* Create a session based on SHA384 */
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "TLS13-AES-256-GCM-SHA384"))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                          &clientssl, NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    clntsess = SSL_get1_session(clientssl);
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
+                   "TLS13-AES-128-GCM-SHA256:TLS13-AES-256-GCM-SHA384"))
+            || !TEST_true(SSL_CTX_set_cipher_list(sctx,
+                                                  "TLS13-AES-256-GCM-SHA384"))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl, clntsess))
+               /*
+                * We use SSL_ERROR_WANT_READ below so that we can pause the
+                * connection after the initial ClientHello has been sent to
+                * enable us to make some session changes.
+                */
+            || !TEST_false(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_WANT_READ)))
+        goto end;
+
+    /* Trick the client into thinking this session is for a different digest */
+    clntsess->cipher = aes_128_gcm_sha256;
+    clntsess->cipher_id = clntsess->cipher->id;
+
+    /*
+     * Continue the previously started connection. Server has selected a SHA-384
+     * ciphersuite, but client thinks the session is for SHA-256, so it should
+     * bail out.
+     */
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_SSL))
+            || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+                            SSL_R_CIPHERSUITE_DIGEST_HAS_CHANGED))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_SESSION_free(clntsess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+#endif /* OPENSSL_NO_TLS1_3 */
 
 static int clntaddoldcb = 0;
 static int clntparseoldcb = 0;
@@ -2222,6 +2351,7 @@ int test_main(int argc, char *argv[])
 # endif
 #endif
 #ifndef OPENSSL_NO_TLS1_3
+    ADD_TEST(test_ciphersuite_change);
     ADD_ALL_TESTS(test_custom_exts, 5);
 #else
     ADD_ALL_TESTS(test_custom_exts, 3);

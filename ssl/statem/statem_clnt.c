@@ -1268,9 +1268,26 @@ static int set_client_ciphersuite(SSL *s, const unsigned char *cipherchars)
     if (s->session->cipher != NULL)
         s->session->cipher_id = s->session->cipher->id;
     if (s->hit && (s->session->cipher_id != c->id)) {
-        SSLerr(SSL_F_SET_CLIENT_CIPHERSUITE,
-               SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
-        return 0;
+        if (SSL_IS_TLS13(s)) {
+            /*
+             * In TLSv1.3 it is valid for the server to select a different
+             * ciphersuite as long as the hash is the same.
+             */
+            if (ssl_md(c->algorithm2)
+                    != ssl_md(s->session->cipher->algorithm2)) {
+                SSLerr(SSL_F_SET_CLIENT_CIPHERSUITE,
+                       SSL_R_CIPHERSUITE_DIGEST_HAS_CHANGED);
+                return 0;
+            }
+        } else {
+            /*
+             * Prior to TLSv1.3 resuming a session always meant using the same
+             * ciphersuite.
+             */
+            SSLerr(SSL_F_SET_CLIENT_CIPHERSUITE,
+                   SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);
+            return 0;
+        }
     }
     s->s3->tmp.new_cipher = c;
 
