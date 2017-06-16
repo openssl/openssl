@@ -1615,8 +1615,9 @@ static int tls_early_post_process_client_hello(SSL *s, int *pal)
             al = SSL_AD_HANDSHAKE_FAILURE;
             goto err;
         }
-        if (s->hello_retry_request && s->s3->tmp.new_cipher != NULL
-                && s->s3->tmp.new_cipher->id != cipher->id) {
+        if (s->hello_retry_request
+                && (s->s3->tmp.new_cipher == NULL
+                    || s->s3->tmp.new_cipher->id != cipher->id)) {
             /*
              * A previous HRR picked a different ciphersuite to the one we
              * just selected. Something must have changed.
