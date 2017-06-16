@@ -1536,6 +1536,12 @@ int s_server_main(int argc, char *argv[])
     argc = opt_num_rest();
     argv = opt_rest();
 
+#ifndef OPENSSL_NO_NEXTPROTONEG
+    if (min_version == TLS1_3_VERSION && next_proto_neg_in != NULL) {
+        BIO_printf(bio_err, "Cannot supply -nextprotoneg with TLSv1.3\n");
+        goto opthelp;
+    }
+#endif
 #ifndef OPENSSL_NO_DTLS
     if (www && socket_type == SOCK_DGRAM) {
         BIO_printf(bio_err, "Can't use -HTTP, -www or -WWW with DTLS\n");

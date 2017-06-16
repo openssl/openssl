@@ -1424,6 +1424,12 @@ int s_client_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+#ifndef OPENSSL_NO_NEXTPROTONEG
+    if (min_version == TLS1_3_VERSION && next_proto_neg_in != NULL) {
+        BIO_printf(bio_err, "Cannot supply -nextprotoneg with TLSv1.3\n");
+        goto opthelp;
+    }
+#endif
     if (proxystr != NULL) {
         int res;
         char *tmp_host = host, *tmp_port = port;
