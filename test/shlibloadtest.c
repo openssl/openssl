@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -117,6 +117,7 @@ static int test_lib(void)
         if (!TEST_true(shlib_load(path_crypto, &cryptolib))
                 || !TEST_true(shlib_load(path_ssl, &ssllib)))
             goto end;
+        break;
     case SSL_FIRST:
         if (!TEST_true(shlib_load(path_ssl, &ssllib))
                 || !TEST_true(shlib_load(path_crypto, &cryptolib)))
@@ -158,6 +159,7 @@ static int test_lib(void)
         if (!TEST_true(shlib_close(cryptolib))
                 || !TEST_true(shlib_close(ssllib)))
             goto end;
+        break;
     case SSL_FIRST:
         if (!TEST_true(shlib_close(ssllib))
                 || !TEST_true(shlib_close(cryptolib)))
