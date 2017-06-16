@@ -161,7 +161,7 @@ static int prime_field_tests(void)
     const EC_POINT *points[4];
     const BIGNUM *scalars[4];
     unsigned char buf[100];
-    size_t i, len, r = 0;
+    size_t len, r = 0;
     int k;
 
     if (!TEST_ptr(ctx = BN_CTX_new())
@@ -187,15 +187,11 @@ static int prime_field_tests(void)
     if (!TEST_true(EC_GROUP_get_curve_GFp(group, p, a, b, ctx)))
         goto err;
 
-    BIO_printf(bio_out,
-            "Curve defined by Weierstrass equation\n"
-            "     y^2 = x^3 + a*x + b  (mod 0x");
-    BN_print(bio_out, p);
-    BIO_printf(bio_out, ")\n     a = 0x");
-    BN_print(bio_out, a);
-    BIO_printf(bio_out, "\n     b = 0x");
-    BN_print(bio_out, b);
-    BIO_printf(bio_out, "\n");
+    TEST_info("Curve defined by Weierstrass equation");
+    TEST_note("     y^2 = x^3 + a*x + b (mod p)");
+    test_output_bignum("a", a);
+    test_output_bignum("b", b);
+    test_output_bignum("p", p);
 
     buf[0] = 0;
     if (!TEST_ptr(P = EC_POINT_new(group))
@@ -219,32 +215,27 @@ static int prime_field_tests(void)
         if (!TEST_true(EC_POINT_get_affine_coordinates_GFp(group, Q, x, y,
                                                            ctx)))
             goto err;
-        BIO_printf(bio_err, "Point is not on curve: x = 0x");
-        BN_print_fp(stderr, x);
-        BIO_printf(bio_err, ", y = 0x");
-        BN_print_fp(stderr, y);
-        BIO_printf(bio_err, "\n");
+        TEST_info("Point is not on curve");
+        test_output_bignum("x", x);
+        test_output_bignum("y", y);
         goto err;
     }
 
-    BIO_printf(bio_out, "A cyclic subgroup:\n");
+    TEST_note("A cyclic subgroup:");
     k = 100;
     do {
         if (!TEST_int_ne(k--, 0))
             goto err;
 
         if (EC_POINT_is_at_infinity(group, P)) {
-            BIO_printf(bio_out, "     point at infinity\n");
+            TEST_note("     point at infinity");
         } else {
             if (!TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y,
                                                                ctx)))
                 goto err;
 
-            BIO_printf(bio_out, "     x = 0x");
-            BN_print(bio_out, x);
-            BIO_printf(bio_out, ", y = 0x");
-            BN_print(bio_out, y);
-            BIO_printf(bio_out, "\n");
+            test_output_bignum("x", x);
+            test_output_bignum("y", y);
         }
 
         if (!TEST_true(EC_POINT_copy(R, P))
@@ -264,9 +255,8 @@ static int prime_field_tests(void)
         || !TEST_true(EC_POINT_oct2point(group, P, buf, len, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, Q, ctx)))
         goto err;
-    BIO_printf(bio_out, "Generator as octet string, compressed form:\n     ");
-    for (i = 0; i < len; i++)
-        BIO_printf(bio_out, "%02X", buf[i]);
+    test_output_memory("Generator as octet string, compressed form:",
+                       buf, len);
 
     len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_UNCOMPRESSED,
                              buf, sizeof buf, ctx);
@@ -274,10 +264,8 @@ static int prime_field_tests(void)
         || !TEST_true(EC_POINT_oct2point(group, P, buf, len, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, Q, ctx)))
         goto err;
-    BIO_printf(bio_out, "\nGenerator as octet string, uncompressed form:\n"
-                        "     ");
-    for (i = 0; i < len; i++)
-        BIO_printf(bio_out, "%02X", buf[i]);
+    test_output_memory("Generator as octet string, uncompressed form:",
+                       buf, len);
 
     len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_HYBRID,
                              buf, sizeof buf, ctx);
@@ -285,23 +273,17 @@ static int prime_field_tests(void)
         || !TEST_true(EC_POINT_oct2point(group, P, buf, len, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, Q, ctx)))
         goto err;
-    BIO_printf(bio_out, "\nGenerator as octet string, hybrid form:\n     ");
-    for (i = 0; i < len; i++)
-        BIO_printf(bio_out, "%02X", buf[i]);
+    test_output_memory("Generator as octet string, hybrid form:",
+                       buf, len);
 
     if (!TEST_true(EC_POINT_get_Jprojective_coordinates_GFp(group, R, x, y, z,
                                                             ctx)))
         goto err;
-    BIO_printf(bio_out,
-               "\nA representation of the inverse of that generator in\n"
-               "Jacobian projective coordinates:\n"
-               "     X = 0x");
-    BN_print(bio_out, x);
-    BIO_printf(bio_out, ", Y = 0x");
-    BN_print(bio_out, y);
-    BIO_printf(bio_out, ", Z = 0x");
-    BN_print(bio_out, z);
-    BIO_printf(bio_out, "\n");
+    TEST_info("A representation of the inverse of that generator in");
+    TEST_note("Jacobian projective coordinates");
+    test_output_bignum("x", x);
+    test_output_bignum("y", y);
+    test_output_bignum("z", z);
 
     if (!TEST_true(EC_POINT_invert(group, P, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, R, ctx))
@@ -337,11 +319,9 @@ static int prime_field_tests(void)
         || !TEST_true(EC_GROUP_set_generator(group, P, z, BN_value_one()))
         || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx)))
         goto err;
-    BIO_printf(bio_out, "\nSEC2 curve secp160r1 -- Generator:\n     x = 0x");
-    BN_print(bio_out, x);
-    BIO_printf(bio_out, "\n     y = 0x");
-    BN_print(bio_out, y);
-    BIO_printf(bio_out, "\n");
+    TEST_info("SEC2 curve secp160r1 -- Generator");
+    test_output_bignum("x", x);
+    test_output_bignum("y", y);
     /* G_y value taken from the standard: */
     if (!TEST_true(BN_hex2bn(&z,                         "23a62855"
                                  "3168947d59dcc912042351377ac5fb32"))
@@ -372,11 +352,9 @@ static int prime_field_tests(void)
         || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx)))
         goto err;
 
-    BIO_printf(bio_out, "\nNIST curve P-192 -- Generator:\n     x = 0x");
-    BN_print(bio_out, x);
-    BIO_printf(bio_out, "\n     y = 0x");
-    BN_print(bio_out, y);
-    BIO_printf(bio_out, "\n");
+    TEST_info("NIST curve P-192 -- Generator");
+    test_output_bignum("x", x);
+    test_output_bignum("y", y);
     /* G_y value taken from the standard: */
     if (!TEST_true(BN_hex2bn(&z,                 "07192B95FFC8DA78"
                                  "631011ED6B24CDD573F977A11E794811"))
@@ -414,11 +392,9 @@ static int prime_field_tests(void)
         || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx)))
         goto err;
 
-    BIO_printf(bio_out, "\nNIST curve P-224 -- Generator:\n     x = 0x");
-    BN_print(bio_out, x);
-    BIO_printf(bio_out, "\n     y = 0x");
-    BN_print(bio_out, y);
-    BIO_printf(bio_out, "\n");
+    TEST_info("NIST curve P-224 -- Generator");
+    test_output_bignum("x", x);
+    test_output_bignum("y", y);
     /* G_y value taken from the standard: */
     if (!TEST_true(BN_hex2bn(&z,         "BD376388B5F723FB4C22DFE6"
                                  "CD4375A05A07476444D5819985007E34"))
@@ -457,11 +433,9 @@ static int prime_field_tests(void)
         || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx)))
         goto err;
 
-    BIO_printf(bio_out, "\nNIST curve P-256 -- Generator:\n     x = 0x");
-    BN_print(bio_out, x);
-    BIO_printf(bio_out, "\n     y = 0x");
-    BN_print(bio_out, y);
-    BIO_printf(bio_out, "\n");
+    TEST_info("NIST curve P-256 -- Generator");
+    test_output_bignum("x", x);
+    test_output_bignum("y", y);
     /* G_y value taken from the standard: */
     if (!TEST_true(BN_hex2bn(&z, "4FE342E2FE1A7F9B8EE7EB4A7C0F9E16"
                                  "2BCE33576B315ECECBB6406837BF51F5"))
@@ -505,11 +479,9 @@ static int prime_field_tests(void)
         || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx)))
         goto err;
 
-    BIO_printf(bio_out, "\nNIST curve P-384 -- Generator:\n     x = 0x");
-    BN_print(bio_out, x);
-    BIO_printf(bio_out, "\n     y = 0x");
-    BN_print(bio_out, y);
-    BIO_printf(bio_out, "\n");
+    TEST_info("NIST curve P-384 -- Generator");
+    test_output_bignum("x", x);
+    test_output_bignum("y", y);
     /* G_y value taken from the standard: */
     if (!TEST_true(BN_hex2bn(&z, "3617DE4A96262C6F5D9E98BF9292DC29"
                                  "F8F41DBD289A147CE9DA3113B5F0B8C0"
@@ -562,11 +534,9 @@ static int prime_field_tests(void)
         || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx)))
         goto err;
 
-    BIO_printf(bio_out, "\nNIST curve P-521 -- Generator:\n     x = 0x");
-    BN_print(bio_out, x);
-    BIO_printf(bio_out, "\n     y = 0x");
-    BN_print(bio_out, y);
-    BIO_printf(bio_out, "\n");
+    TEST_info("NIST curve P-521 -- Generator");
+    test_output_bignum("x", x);
+    test_output_bignum("y", y);
     /* G_y value taken from the standard: */
     if (!TEST_true(BN_hex2bn(&z,                              "118"
                                  "39296A789A3BC0045C8A5FB42C7D1BD9"
@@ -613,7 +583,7 @@ static int prime_field_tests(void)
     scalars[0] = y;         /* (group order + 1)/2, so y*Q + y*Q = Q */
     scalars[1] = y;
 
-    BIO_printf(bio_out, "combined multiplication ...");
+    TEST_note("combined multiplication ...");
 
     /* z is still the group order */
     if (!TEST_true(EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx))
@@ -646,7 +616,7 @@ static int prime_field_tests(void)
         || !TEST_true(EC_POINT_is_at_infinity(group, P)))
         goto err;
 
-    BIO_printf(bio_out, " ok\n\n");
+    TEST_note(" ok\n");
 
 
     r = 1;
@@ -898,11 +868,9 @@ static int char2_curve_test(int n)
         || !TEST_true(EC_POINT_get_affine_coordinates_GF2m(group, P, x, y,
                                                            ctx)))
         goto err;
-    BIO_printf(bio_out, "\n%s -- Generator:\n     x = 0x", test->name);
-    BN_print(bio_out, x);
-    BIO_printf(bio_out, "\n     y = 0x");
-    BN_print(bio_out, y);
-    BIO_printf(bio_out, "\n");
+    TEST_info("%s -- Generator", test->name);
+    test_output_bignum("x", x);
+    test_output_bignum("y", y);
     /* G_y value taken from the standard: */
     if (!TEST_true(BN_hex2bn(&z, test->y))
         || !TEST_BN_eq(y, z))
@@ -920,11 +888,9 @@ static int char2_curve_test(int n)
         || !TEST_true(BN_hex2bn(&cof, test->cof))
         || !TEST_true(EC_GROUP_set_generator(group, P, z, cof)))
         goto err;
-    BIO_printf(bio_out, "\n%s -- Generator:\n     x = 0x", test->name); \
-    BN_print(bio_out, x); \
-    BIO_printf(bio_out, "\n     y = 0x"); \
-    BN_print(bio_out, y); \
-    BIO_printf(bio_out, "\n");
+    TEST_info("%s -- Generator:", test->name);
+    test_output_bignum("x", x);
+    test_output_bignum("y", y);
 # endif
 
     if (!TEST_int_eq(EC_GROUP_get_degree(group), test->degree)
@@ -959,7 +925,7 @@ static int char2_curve_test(int n)
         scalars[0] = y;         /* (group order + 1)/2, so y*Q + y*Q = Q */
         scalars[1] = y;
 
-        BIO_printf(bio_out, "combined multiplication ...");
+        TEST_note("combined multiplication ...");
 
         /* z is still the group order */
         if (!TEST_true(EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx))
@@ -1019,7 +985,7 @@ static int char2_field_tests(void)
     EC_POINT *P = NULL, *Q = NULL, *R = NULL;
     BIGNUM *x = NULL, *y = NULL, *z = NULL, *cof = NULL, *yplusone = NULL;
     unsigned char buf[100];
-    size_t i, len;
+    size_t len;
     int k, r = 0;
 
     if (!TEST_ptr(ctx = BN_CTX_new())
@@ -1047,15 +1013,11 @@ static int char2_field_tests(void)
     if (!TEST_true(EC_GROUP_get_curve_GF2m(group, p, a, b, ctx)))
         goto err;
 
-    BIO_printf(bio_out,
-            "Curve defined by Weierstrass equation\n"
-            "     y^2 + x*y = x^3 + a*x^2 + b  (mod 0x");
-    BN_print(bio_out, p);
-    BIO_printf(bio_out, ")\n     a = 0x");
-    BN_print(bio_out, a);
-    BIO_printf(bio_out, "\n     b = 0x");
-    BN_print(bio_out, b);
-    BIO_printf(bio_out, "\n(0x... means binary polynomial)\n");
+    TEST_info("Curve defined by Weierstrass equation");
+    TEST_note("     y^2 + x*y = x^3 + a*x^2 + b (mod p)");
+    test_output_bignum("a", a);
+    test_output_bignum("b", b);
+    test_output_bignum("p", p);
 
      if (!TEST_ptr(P = EC_POINT_new(group))
         || !TEST_ptr(Q = EC_POINT_new(group))
@@ -1091,32 +1053,27 @@ static int char2_field_tests(void)
                                                             ctx)))
             goto err;
 #  endif
-        BIO_printf(bio_err, "Point is not on curve: x = 0x");
-        BN_print_fp(stderr, x);
-        BIO_printf(bio_err, ", y = 0x");
-        BN_print_fp(stderr, y);
-        BIO_printf(bio_err, "\n");
+        TEST_info("Point is not on curve");
+        test_output_bignum("x", x);
+        test_output_bignum("y", y);
         goto err;
     }
 
-    BIO_printf(bio_out, "A cyclic subgroup:\n");
+    TEST_note("A cyclic subgroup:");
     k = 100;
     do {
         if (!TEST_int_ne(k--, 0))
             goto err;
 
         if (EC_POINT_is_at_infinity(group, P))
-            BIO_printf(bio_out, "     point at infinity\n");
+            TEST_note("     point at infinity");
         else {
             if (!TEST_true(EC_POINT_get_affine_coordinates_GF2m(group, P, x, y,
                                                                 ctx)))
                 goto err;
 
-            BIO_printf(bio_out, "     x = 0x");
-            BN_print(bio_out, x);
-            BIO_printf(bio_out, ", y = 0x");
-            BN_print(bio_out, y);
-            BIO_printf(bio_out, "\n");
+            test_output_bignum("x", x);
+            test_output_bignum("y", y);
         }
 
         if (!TEST_true(EC_POINT_copy(R, P))
@@ -1137,9 +1094,8 @@ static int char2_field_tests(void)
         || !TEST_true(EC_POINT_oct2point(group, P, buf, len, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, Q, ctx)))
         goto err;
-    BIO_printf(bio_out, "Generator as octet string, compressed form:\n     ");
-    for (i = 0; i < len; i++)
-        BIO_printf(bio_out, "%02X", buf[i]);
+    test_output_memory("Generator as octet string, compressed form:",
+                       buf, len);
 #  endif
 
     len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_UNCOMPRESSED,
@@ -1148,10 +1104,8 @@ static int char2_field_tests(void)
         || !TEST_true(EC_POINT_oct2point(group, P, buf, len, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, Q, ctx)))
         goto err;
-    BIO_printf(bio_out, "\nGenerator as octet string, uncompressed form:\n"
-                        "     ");
-    for (i = 0; i < len; i++)
-        BIO_printf(bio_out, "%02X", buf[i]);
+    test_output_memory("Generator as octet string, uncompressed form:",
+                       buf, len);
 
 /* Change test based on whether binary point compression is enabled or not. */
 #  ifdef OPENSSL_EC_BIN_PT_COMP
@@ -1162,20 +1116,15 @@ static int char2_field_tests(void)
         || !TEST_true(EC_POINT_oct2point(group, P, buf, len, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, Q, ctx)))
         goto err;
-    BIO_printf(bio_out, "\nGenerator as octet string, hybrid form:\n     ");
-    for (i = 0; i < len; i++)
-        BIO_printf(bio_out, "%02X", buf[i]);
+    test_output_memory("Generator as octet string, hybrid form:",
+                       buf, len);
 #  endif
-    BIO_printf(bio_out, "\n");
 
     if (!TEST_true(EC_POINT_invert(group, P, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, R, ctx)))
         goto err;
 
-
-#if 0
-#endif
-    BIO_printf(bio_out, "\n\n");
+    TEST_note("\n");
 
     r = 1;
 err:
@@ -1352,8 +1301,8 @@ static int nistp_single_test(int idx)
     EC_POINT *G = NULL, *P = NULL, *Q = NULL, *Q_CHECK = NULL;
     int r = 0;
 
-    BIO_printf(bio_out, "\nNIST curve P-%d (optimised implementation):\n",
-            test->degree);
+    TEST_note("NIST curve P-%d (optimised implementation):",
+              test->degree);
     if (!TEST_ptr(ctx = BN_CTX_new())
         || !TEST_ptr(p = BN_new())
         || !TEST_ptr(a = BN_new())
@@ -1394,7 +1343,7 @@ static int nistp_single_test(int idx)
         || !TEST_int_eq(EC_GROUP_get_degree(NISTP), test->degree))
         goto err;
 
-    BIO_printf(bio_out, "NIST test vectors ... ");
+    TEST_note("NIST test vectors ... ");
     if (!TEST_true(BN_hex2bn(&n, test->d)))
         goto err;
     /* fixed point multiplication */

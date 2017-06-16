@@ -27,19 +27,6 @@ static unsigned char rkey2[16];
 static unsigned char plaintext[BIG_TEST_SIZE];
 static unsigned char saved_iv[AES_BLOCK_SIZE * 4];
 
-static void hexdump(FILE *f, const char *title, const unsigned char *s, int l)
-{
-    int n = 0;
-
-    fprintf(f, "%s", title);
-    for (; n < l; ++n) {
-        if ((n % 16) == 0)
-            fprintf(f, "\n%04x", n);
-        fprintf(f, " %02x", s[n]);
-    }
-    fprintf(f, "\n");
-}
-
 #define MAX_VECTOR_SIZE 64
 
 struct ige_test {
@@ -174,9 +161,9 @@ static int test_ige_vectors(int n)
 
     if (!TEST_mem_eq(v->out, v->length, buf, v->length)) {
         TEST_info("IGE test vector %d failed", n);
-        hexdump(stderr, "key", v->key, sizeof v->key);
-        hexdump(stderr, "iv", v->iv, sizeof v->iv);
-        hexdump(stderr, "in", v->in, v->length);
+        test_output_memory("key", v->key, sizeof v->key);
+        test_output_memory("iv", v->iv, sizeof v->iv);
+        test_output_memory("in", v->in, v->length);
         testresult = 0;
     }
 
@@ -187,9 +174,9 @@ static int test_ige_vectors(int n)
 
     if (!TEST_mem_eq(v->out, v->length, buf, v->length)) {
         TEST_info("IGE test vector %d failed (with in == out)", n);
-        hexdump(stderr, "key", v->key, sizeof v->key);
-        hexdump(stderr, "iv", v->iv, sizeof v->iv);
-        hexdump(stderr, "in", v->in, v->length);
+        test_output_memory("key", v->key, sizeof v->key);
+        test_output_memory("iv", v->iv, sizeof v->iv);
+        test_output_memory("in", v->in, v->length);
         testresult = 0;
     }
 
@@ -218,10 +205,10 @@ static int test_bi_ige_vectors(int n)
                        v->encrypt);
 
     if (!TEST_mem_eq(v->out, v->length, buf, v->length)) {
-        hexdump(stderr, "key 1", v->key1, sizeof v->key1);
-        hexdump(stderr, "key 2", v->key2, sizeof v->key2);
-        hexdump(stderr, "iv", v->iv, sizeof v->iv);
-        hexdump(stderr, "in", v->in, v->length);
+        test_output_memory("key 1", v->key1, sizeof v->key1);
+        test_output_memory("key 2", v->key2, sizeof v->key2);
+        test_output_memory("iv", v->iv, sizeof v->iv);
+        test_output_memory("in", v->in, v->length);
         return 0;
     }
 
