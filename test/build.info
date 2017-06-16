@@ -27,7 +27,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   PROGRAMS_NO_INST=\
           aborttest test_test \
           sanitytest exdatatest bntest \
-          ectest ecdsatest gmdifftest pbelutest ideatest \
+          ectest ecstresstest ecdsatest gmdifftest pbelutest ideatest \
           md2test \
           hmactest \
           rc2test rc4test rc5test \
@@ -68,6 +68,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[ectest]=ectest.c
   INCLUDE[ectest]=.. ../include
   DEPEND[ectest]=../libcrypto libtestutil.a
+
+  SOURCE[ecstresstest]=ecstresstest.c
+  INCLUDE[ecstresstest]=.. ../include
+  DEPEND[ecstresstest]=../libcrypto libtestutil.a
 
   SOURCE[ecdsatest]=ecdsatest.c
   INCLUDE[ecdsatest]=../include
