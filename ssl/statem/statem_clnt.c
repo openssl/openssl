@@ -1790,9 +1790,10 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     if (!SSL_IS_TLS13(s)) {
         exp_idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
         if (exp_idx >= 0 && i != exp_idx
-            && (exp_idx != SSL_PKEY_GOST_EC ||
-                (i != SSL_PKEY_GOST12_512 && i != SSL_PKEY_GOST12_256
-                 && i != SSL_PKEY_GOST01))) {
+                && (exp_idx != SSL_PKEY_ECC || i != SSL_PKEY_ED25519)
+                && (exp_idx != SSL_PKEY_GOST_EC ||
+                    (i != SSL_PKEY_GOST12_512 && i != SSL_PKEY_GOST12_256
+                    && i != SSL_PKEY_GOST01))) {
             x = NULL;
             al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
@@ -2210,7 +2211,10 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        md = ssl_md(s->s3->tmp.peer_sigalg->hash_idx);
+        if (!tls1_lookup_md(s->s3->tmp.peer_sigalg, &md)) {
+            al = SSL_AD_INTERNAL_ERROR;
+            goto err;
+        }
 
         if (!PACKET_get_length_prefixed_2(pkt, &signature)
             || PACKET_remaining(pkt) != 0) {
@@ -3352,7 +3356,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 
 #ifndef OPENSSL_NO_EC
     idx = s->session->peer_type;
-    if (idx == SSL_PKEY_ECC) {
+    if (idx == SSL_PKEY_ECC || idx == SSL_PKEY_ED25519) {
         if (ssl_check_srvr_ecc_cert_and_alg(s->session->peer, s) == 0) {
             /* check failed */
             SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, SSL_R_BAD_ECC_CERT);
