@@ -2170,6 +2170,9 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         PACKET params;
         int maxsig;
         const EVP_MD *md = NULL;
+        unsigned char *tbs;
+        size_t tbslen;
+        int rv;
 
         /*
          * |pkt| now points to the beginning of the signature, so the difference
@@ -2185,7 +2188,6 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
         if (SSL_USE_SIGALGS(s)) {
             unsigned int sigalg;
-            int rv;
 
             if (!PACKET_get_net_2(pkt, &sigalg)) {
                 al = SSL_AD_DECODE_ERROR;
@@ -2255,19 +2257,22 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                 goto err;
             }
         }
-        if (EVP_DigestVerifyUpdate(md_ctx, &(s->s3->client_random[0]),
-                                   SSL3_RANDOM_SIZE) <= 0
-                || EVP_DigestVerifyUpdate(md_ctx, &(s->s3->server_random[0]),
-                                          SSL3_RANDOM_SIZE) <= 0
-                || EVP_DigestVerifyUpdate(md_ctx, PACKET_data(&params),
-                                          PACKET_remaining(&params)) <= 0) {
+        tbslen = construct_key_exchange_tbs(s, &tbs, PACKET_data(&params),
+                                            PACKET_remaining(&params));
+        if (tbslen == 0) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+
+        rv = EVP_DigestVerify(md_ctx, PACKET_data(&signature),
+                              PACKET_remaining(&signature), tbs, tbslen);
+        OPENSSL_free(tbs);
+        if (rv < 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
             goto err;
-        }
-        if (EVP_DigestVerifyFinal(md_ctx, PACKET_data(&signature),
-                                  PACKET_remaining(&signature)) <= 0) {
-            /* bad signature */
+        } else if (rv == 0) {
             al = SSL_AD_DECRYPT_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_SIGNATURE);
             goto err;
