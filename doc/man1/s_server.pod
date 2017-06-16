@@ -609,6 +609,7 @@ The B<val> list is a comma-separated list of supported protocol
 names.  The list should contain the most desirable protocols first.
 Protocol names are printable ASCII strings, for example "http/1.1" or
 "spdy/3".
+The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
 
 =item B<-engine val>
 
