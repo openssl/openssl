@@ -2415,7 +2415,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         size_t siglen, tbslen;
         int rv;
 
-        if (pkey == NULL || md == NULL) {
+        if (pkey == NULL || !tls1_lookup_md(lu, &md)) {
             /* Should never happen */
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
