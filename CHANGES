@@ -9,6 +9,12 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Add a build target 'build_all_generated', to build all generated files
+     and only that.  This can be used to prepare everything that requires
+     things like perl for a system that lacks perl and then move everything
+     to that system and do the rest of the build there.
+     [Richard Levitte]
+
   *) In the UI interface, make it possible to duplicate the user data.  This
      can be used by engines that need to retain the data for a longer time
      than just the call where this user data is passed.
