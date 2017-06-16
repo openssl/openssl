@@ -203,6 +203,9 @@ static int psk_use_session_cb(SSL *s, const EVP_MD *md,
         if (cipher == NULL) {
             /* Doesn't look like a suitable TLSv1.3 key. Ignore it */
             OPENSSL_free(key);
+            *id = NULL;
+            *idlen = 0;
+            *sess = NULL;
             return 0;
         }
         usesess = SSL_SESSION_new();
@@ -221,13 +224,17 @@ static int psk_use_session_cb(SSL *s, const EVP_MD *md,
     if (cipher == NULL)
         goto err;
 
-    if (md != NULL && SSL_CIPHER_get_handshake_digest(cipher) != md)
-        goto err;
-
-    *sess = usesess;
-
-    *id = (unsigned char *)psk_identity;
-    *idlen = strlen(psk_identity);
+    if (md != NULL && SSL_CIPHER_get_handshake_digest(cipher) != md) {
+        /* PSK not usable, ignore it */
+        *id = NULL;
+        *idlen = 0;
+        *sess = NULL;
+        SSL_SESSION_free(usesess);
+    } else {
+        *sess = usesess;
+        *id = (unsigned char *)psk_identity;
+        *idlen = strlen(psk_identity);
+    }
 
     return 1;
 
