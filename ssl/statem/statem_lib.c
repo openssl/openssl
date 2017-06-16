@@ -2132,3 +2132,21 @@ int construct_ca_names(SSL *s, WPACKET *pkt)
 
     return 1;
 }
+
+/* Create a buffer containing data to be signed for server key exchange */
+size_t construct_key_exchange_tbs(const SSL *s, unsigned char **ptbs,
+                                  const void *param, size_t paramlen)
+{
+    size_t tbslen = 2 * SSL3_RANDOM_SIZE + paramlen;
+    unsigned char *tbs = OPENSSL_malloc(tbslen);
+
+    if (tbs == NULL)
+        return 0;
+    memcpy(tbs, s->s3->client_random, SSL3_RANDOM_SIZE);
+    memcpy(tbs + SSL3_RANDOM_SIZE, s->s3->server_random, SSL3_RANDOM_SIZE);
+
+    memcpy(tbs + SSL3_RANDOM_SIZE * 2, param, paramlen);
+
+    *ptbs = tbs;
+    return tbslen;
+}

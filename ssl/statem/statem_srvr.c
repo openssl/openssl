@@ -2410,9 +2410,10 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
     /* not anonymous */
     if (lu != NULL) {
         EVP_PKEY *pkey = s->s3->tmp.cert->privatekey;
-        const EVP_MD *md = ssl_md(lu->hash_idx);
-        unsigned char *sigbytes1, *sigbytes2;
-        size_t siglen;
+        const EVP_MD *md;
+        unsigned char *sigbytes1, *sigbytes2, *tbs;
+        size_t siglen, tbslen;
+        int rv;
 
         if (pkey == NULL || md == NULL) {
             /* Should never happen */
@@ -2456,15 +2457,17 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
                 goto f_err;
             }
         }
-        if (EVP_DigestSignUpdate(md_ctx, &(s->s3->client_random[0]),
-                                 SSL3_RANDOM_SIZE) <= 0
-            || EVP_DigestSignUpdate(md_ctx, &(s->s3->server_random[0]),
-                                        SSL3_RANDOM_SIZE) <= 0
-            || EVP_DigestSignUpdate(md_ctx,
-                                        s->init_buf->data + paramoffset,
-                                        paramlen) <= 0
-            || EVP_DigestSignFinal(md_ctx, sigbytes1, &siglen) <= 0
-            || !WPACKET_sub_allocate_bytes_u16(pkt, siglen, &sigbytes2)
+        tbslen = construct_key_exchange_tbs(s, &tbs,
+                                            s->init_buf->data + paramoffset,
+                                            paramlen);
+        if (tbslen == 0) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                   ERR_R_MALLOC_FAILURE);
+            goto f_err;
+        }
+        rv = EVP_DigestSign(md_ctx, sigbytes1, &siglen, tbs, tbslen);
+        OPENSSL_free(tbs);
+        if (rv <= 0 || !WPACKET_sub_allocate_bytes_u16(pkt, siglen, &sigbytes2)
             || sigbytes1 != sigbytes2) {
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                    ERR_R_INTERNAL_ERROR);
