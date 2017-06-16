@@ -2,33 +2,44 @@
 
 =head1 NAME
 
-SSL_CTX_set_psk_client_callback, SSL_set_psk_client_callback - set PSK client callback
+SSL_psk_client_cb_func,
+SSL_psk_use_session_cb_func,
+SSL_CTX_set_psk_client_callback,
+SSL_set_psk_client_callback,
+SSL_CTX_set_psk_use_session_callback,
+SSL_set_psk_use_session_callback
+- set PSK client callback
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
+ typedef unsigned int (*SSL_psk_client_cb_func)(SSL *ssl,
+                                                const char *hint,
+                                                char *identity,
+                                                unsigned int max_identity_len,
+                                                unsigned char *psk,
+                                                unsigned int max_psk_len);
  typedef int (*SSL_psk_use_session_cb_func)(SSL *ssl, const EVP_MD *md,
                                             const unsigned char **id,
                                             size_t *idlen,
                                             SSL_SESSION **sess);
 
- void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx,
-     unsigned int (*callback)(SSL *ssl, const char *hint,
-                              char *identity, unsigned int max_identity_len,
-                              unsigned char *psk, unsigned int max_psk_len));
- void SSL_set_psk_client_callback(SSL *ssl,
-     unsigned int (*callback)(SSL *ssl, const char *hint,
-                              char *identity, unsigned int max_identity_len,
-                              unsigned char *psk, unsigned int max_psk_len));
+ void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx, SSL_psk_client_cb_func cb);
+ void SSL_set_psk_client_callback(SSL *ssl, SSL_psk_client_cb_func cb);
 
  void SSL_CTX_set_psk_use_session_callback(SSL_CTX *ctx,
                                            SSL_psk_use_session_cb_func cb);
+ void SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb);
 
 =head1 DESCRIPTION
 
-A client application must provide a callback function which is called
-when the client is sending the ClientKeyExchange message to the server.
+TLSv1.3 Pre-Shared Keys (PSKs) and PSKs for TLSv1.2 and below are not
+compatible.
+
+A client application wishing to use PSK ciphersuites for TLSv1.2 and below must
+provide a callback function which is called when the client is sending the
+ClientKeyExchange message to the server.
 
 The purpose of the callback function is to select the PSK identity and
 the pre-shared key to use during the connection setup phase.
@@ -42,23 +53,86 @@ B<NULL>-terminated identity is to be stored, and a buffer B<psk> of
 length B<max_psk_len> bytes where the resulting pre-shared key is to
 be stored.
 
+A client application wishing to use TLSv1.3 PSKs must set a different callback
+using either SSL_CTX_set_psk_use_session_callback() or
+SSL_set_psk_use_session_callback() as appropriate.
+
+The callback function is given a reference to the SSL connection in B<ssl>.
+
+The first time the callback is called for a connection the B<md> parameter is
+NULL. In some circumstances the callback will be called a second time. In that
+case the server will have specified a ciphersuite to use already and the PSK
+must be compatible with the digest for that ciphersuite. The digest will be
+given in B<md>. The PSK returned by the callback is allowed to be different
+between the first and second time it is called.
+
+On successful completion the callback must store a pointer to an identifier for
+the PSK in B<*id>. The identifier length in bytes should be stored in B<*idlen>.
+The memory pointed to by B<*id> remains owned by the application and should
+be freed by it as required at any point after the handshake is complete.
+
+Additionally the callback should store a reference to an SSL_SESSION object in
+B<*sess>. This is used as the basis for the PSK, and should, at a minimum, have
+the following fields set:
+
+=over 4
+
+=item The master key
+
+This can be set via a call to L<SSL_SESSION_set1_master_key(3)>.
+
+=item A ciphersuite
+
+Only the handshake digest associated with the ciphersuite is relevant for the
+PSK (the server may go on to negotiate any ciphersuite which is compatible with
+the digest). The application can use any TLSv1.3 ciphersuite. Where B<md> is
+non-NULL the handshake digest for the ciphersuite should be the same.
+The ciphersuite can be set via a call to <SSL_SESSION_set_cipher(3)>. The
+handshake digest of an SSL_CIPHER object can be checked using
+<SSL_CIPHER_get_handshake_digest(3)>.
+
+=item The protocol version
+
+This can be set via a call to L<SSL_SESSION_set_protocol_version> and should be
+TLS1_3_VERSION.
+
+=back
+
+Alternatively an SSL_SESSION created from a previous non-PSK handshake may also
+be used as the basis for a PSK.
+
+Ownership of the SSL_SESSION object is passed to the OpenSSL library and so it
+should not be freed by the application.
+
+It is also possible for the callback to succeed but not supply a PSK. In this
+case no PSK will be sent to the server but the handshake will continue. To do
+this the callback should return successfully and ensure that the B<*sess> is
+NULL. The contents of B<*id> and B<*idlen> will be ignored.
+
 =head1 NOTES
 
 Note that parameter B<hint> given to the callback may be B<NULL>.
 
+A connection established via a TLSv1.3 PSK will appear as if session resumption
+has occurred so that L<SSL_session_reused(3)> will return true.
+
 =head1 RETURN VALUES
 
-Return values from the client callback are interpreted as follows:
+Return values from the SSL_psk_client_cb_func callback are interpreted as
+follows:
 
 On success (callback found a PSK identity and a pre-shared key to use)
 the length (> 0) of B<psk> in bytes is returned.
 
-Otherwise or on errors callback should return 0. In this case
+Otherwise or on errors the callback should return 0. In this case
 the connection setup fails.
+
+The SSL_psk_use_session_cb_func callback should return 1 on success or 0 on
+failure. In the event of failure the connection setup fails.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
