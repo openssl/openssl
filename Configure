@@ -61,8 +61,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #		library and will be loaded in run-time by the OpenSSL library.
 # sctp          include SCTP support
 # enable-weak-ssl-ciphers
-#               Enable weak ciphers that are disabled by default. This currently
-#               only includes RC4 based ciphers.
+#               Enable weak ciphers that are disabled by default.
 # 386           generate 80386 code in assembly modules
 # no-sse2       disables IA-32 SSE2 code in assembly modules, the above
 #               mentioned '386' option implies this one
