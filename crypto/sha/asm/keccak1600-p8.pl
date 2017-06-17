@@ -18,7 +18,7 @@
 # June 2017.
 #
 # This is straightforward KECCAK_1X_ALT SIMD implementation, but with
-# disjount Rho and Pi. The module is ABI-bitness- and endian-neutral.
+# disjoint Rho and Pi. The module is ABI-bitness- and endian-neutral.
 # POWER8 processor spends 9.8 cycles to process byte out of large
 # buffer for r=1088, which matches SHA3-256. This is 17% better than
 # scalar PPC64 code. It probably should be noted that if POWER8's
