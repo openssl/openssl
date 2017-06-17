@@ -401,6 +401,7 @@ dword_le_load:
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,1,0
+	.long	0
 .size	dword_le_load,.-dword_le_load
 
 .globl	SHA3_absorb
