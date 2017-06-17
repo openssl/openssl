@@ -137,11 +137,13 @@ void test_error(const char *file, int line, const char *desc, ...)
 
 void test_note(const char *fmt, ...)
 {
-    va_list ap;
-
     if (fmt != NULL) {
+        va_list ap;
+
         test_printf_stderr("%*s# ", subtest_level(), "");
+        va_start(ap, fmt);
         test_vprintf_stderr(fmt, ap);
+        va_end(ap);
         test_printf_stderr("\n");
     }
     test_flush_stderr();
