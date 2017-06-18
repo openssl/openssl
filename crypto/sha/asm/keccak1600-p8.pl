@@ -98,11 +98,11 @@ KeccakF1600_int:
 	vxor	v28,v2, v7		; A[0..1][2]^A[2..3][2]
 	vxor	v29,v3, v8		; A[0..1][3]^A[2..3][3]
 	vxor	v30,v4, v9		; A[0..1][4]^A[2..3][4]
-	vpermdi	v31,v26,v27,0b00
-	vpermdi	v26,v26,v27,0b11
-	vpermdi	v27,v28,v29,0b00
-	vpermdi	v28,v28,v29,0b11
-	vpermdi	v29,v30,v30,0b10
+	vpermdi	v31,v26,v27,0b00	; A[0][0..1]^A[2][0..1]
+	vpermdi	v26,v26,v27,0b11	; A[1][0..1]^A[3][0..1]
+	vpermdi	v27,v28,v29,0b00	; A[0][2..3]^A[2][2..3]
+	vpermdi	v28,v28,v29,0b11	; A[1][2..3]^A[3][2..3]
+	vpermdi	v29,v30,v30,0b10	; A[1..0][4]^A[3..2][4]
 	vxor	v26,v26,v31		; C[0..1]
 	vxor	v27,v27,v28		; C[2..3]
 	vxor	v28,v29,v30		; C[4..4]
