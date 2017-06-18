@@ -30,6 +30,15 @@
 # for sha1-ppc.pl - 73%. 100% means that multi-process result equals
 # to single-process one, given that all threads end up on the same
 # physical core.
+#
+######################################################################
+# Believed-to-be-accurate results in cycles per processed byte [on
+# little-endian system]. Numbers in square brackets are for 64-bit
+# build of sha512-ppc.pl, presented for reference.
+#
+#		POWER8
+# SHA256	9.9 [15.8]
+# SHA512	6.3 [10.3]
 
 $flavour=shift;
 $output =shift;
