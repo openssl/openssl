@@ -632,7 +632,7 @@ loop?:
 ||[A0]	ZERO	BSZ
 ||[A0]	LDW	*SP[1],A2			; pull A[][]
   [BSZ]	LDNDW	*INP++,A1:A0
-||[BSZ] SUB	LEN,8,LEN
+||[BSZ]	SUB	LEN,8,LEN
 ||[BSZ]	SUB	BSZ,1,BSZ
 	NOP	4
 ___
@@ -652,7 +652,7 @@ $code.=<<___;
 ||[!BSZ]STDW	LEN:INP,*SP[3]
 ||	DEAL	A0,A0
 	.endif
-  [BSZ] LDNDW	*INP++,A1:A0
+  [BSZ]	LDNDW	*INP++,A1:A0
 ||	DEAL	A1,A1
   [BSZ]	SUB	LEN,8,LEN
 ||[BSZ]	SUB	BSZ,1,BSZ
