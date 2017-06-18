@@ -930,17 +930,52 @@ aes 48			: id-aes256-wrap-pad
 			: DES-EDE3-CFB1		: des-ede3-cfb1
 			: DES-EDE3-CFB8		: des-ede3-cfb8
 
-# OIDs for SHA224, SHA256, SHA385 and SHA512, according to x9.84.
+# OIDs for SHA224, SHA256, SHA385 and SHA512, according to x9.84 and
+# http://csrc.nist.gov/groups/ST/crypto_apps_infra/csor/algorithms.html
+# "Middle" names are specified to be id-sha256, id-sha384, etc., but
+# we adhere to unprefixed capitals for backward compatibility...
 !Alias nist_hashalgs nistAlgorithms 2
 nist_hashalgs 1		: SHA256		: sha256
 nist_hashalgs 2		: SHA384		: sha384
 nist_hashalgs 3		: SHA512		: sha512
 nist_hashalgs 4		: SHA224		: sha224
+nist_hashalgs 5		: SHA512-224		: sha512-224
+nist_hashalgs 6		: SHA512-256		: sha512-256
+nist_hashalgs 7		: SHA3-224		: sha3-224
+nist_hashalgs 8		: SHA3-256		: sha3-256
+nist_hashalgs 9		: SHA3-384		: sha3-384
+nist_hashalgs 10	: SHA3-512		: sha3-512
+nist_hashalgs 11	: SHAKE128		: shake128
+nist_hashalgs 12	: SHAKE256		: shake256
+nist_hashalgs 13	: id-hmacWithSHA3-224	: hmac-sha3-224
+nist_hashalgs 14	: id-hmacWithSHA3-256	: hmac-sha3-256
+nist_hashalgs 15	: id-hmacWithSHA3-384	: hmac-sha3-384
+nist_hashalgs 16	: id-hmacWithSHA3-512	: hmac-sha3-512
+# Below two are incomplete OIDs, to be uncommented when we figure out
+# how to handle them...
+# nist_hashalgs 17	: id-shake128-len	: shake128-len
+# nist_hashalgs 18	: id-shake256-len	: shake256-len
 
 # OIDs for dsa-with-sha224 and dsa-with-sha256
 !Alias dsa_with_sha2 nistAlgorithms 3
 dsa_with_sha2 1		: dsa_with_SHA224
 dsa_with_sha2 2		: dsa_with_SHA256
+# Above two belong below, but kept as they are for backward compatibility
+!Alias sigAlgs nistAlgorithms 3
+sigAlgs 3	: id-dsa-with-sha384	: dsa_with_SHA384
+sigAlgs 4	: id-dsa-with-sha512	: dsa_with_SHA512
+sigAlgs 5	: id-dsa-with-sha3-224	: dsa_with_SHA3-224
+sigAlgs 6	: id-dsa-with-sha3-256	: dsa_with_SHA3-256
+sigAlgs 7	: id-dsa-with-sha3-384	: dsa_with_SHA3-384
+sigAlgs 8	: id-dsa-with-sha3-512	: dsa_with_SHA3-512
+sigAlgs 9	: id-ecdsa-with-sha3-224	: ecdsa_with_SHA3-224
+sigAlgs 10	: id-ecdsa-with-sha3-256	: ecdsa_with_SHA3-256
+sigAlgs 11	: id-ecdsa-with-sha3-384	: ecdsa_with_SHA3-384
+sigAlgs 12	: id-ecdsa-with-sha3-512	: ecdsa_with_SHA3-512
+sigAlgs 13	: id-rsassa-pkcs1-v1_5-with-sha3-224	: RSA-SHA3-224
+sigAlgs 14	: id-rsassa-pkcs1-v1_5-with-sha3-256	: RSA-SHA3-256
+sigAlgs 15	: id-rsassa-pkcs1-v1_5-with-sha3-384	: RSA-SHA3-284
+sigAlgs 16	: id-rsassa-pkcs1-v1_5-with-sha3-512	: RSA-SHA3-512
 
 # Hold instruction CRL entry extension
 !Cname hold-instruction-code
