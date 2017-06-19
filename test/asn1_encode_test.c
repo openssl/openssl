@@ -814,6 +814,7 @@ static int test_intern(const TEST_PACKAGE *package)
 
     if (!do_print_item(package)) {
         TEST_error("Printing of %s failed", package->name);
+        TEST_openssl_errors();
         fail++;
     }
 
