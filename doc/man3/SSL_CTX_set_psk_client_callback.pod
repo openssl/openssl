@@ -106,7 +106,7 @@ should not be freed by the application.
 
 It is also possible for the callback to succeed but not supply a PSK. In this
 case no PSK will be sent to the server but the handshake will continue. To do
-this the callback should return successfully and ensure that the B<*sess> is
+this the callback should return successfully and ensure that B<*sess> is
 NULL. The contents of B<*id> and B<*idlen> will be ignored.
 
 =head1 NOTES

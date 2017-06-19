@@ -77,6 +77,11 @@ case no PSK will be used but the handshake will continue. To do this the
 callback should return successfully and ensure that B<*sess> is
 NULL.
 
+=head1 NOTES
+
+A connection established via a TLSv1.3 PSK will appear as if session resumption
+has occurred so that L<SSL_session_reused(3)> will return true.
+
 =head1 RETURN VALUES
 
 SSL_CTX_use_psk_identity_hint() and SSL_use_psk_identity_hint() return
