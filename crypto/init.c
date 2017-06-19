@@ -43,7 +43,10 @@ static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
 
     if (local == NULL && alloc) {
         local = OPENSSL_zalloc(sizeof *local);
-        CRYPTO_THREAD_set_local(&threadstopkey, local);
+        if (local != NULL && !CRYPTO_THREAD_set_local(&threadstopkey, local)) {
+            OPENSSL_free(local);
+            return NULL;
+        }
     }
     if (!alloc) {
         CRYPTO_THREAD_set_local(&threadstopkey, NULL);
@@ -359,7 +362,12 @@ void OPENSSL_thread_stop(void)
 
 int ossl_init_thread_start(uint64_t opts)
 {
-    struct thread_local_inits_st *locals = ossl_init_get_thread_local(1);
+    struct thread_local_inits_st *locals;
+
+    if (!OPENSSL_init_crypto(0, NULL))
+        return 0;
+
+    locals = ossl_init_get_thread_local(1);
 
     if (locals == NULL)
         return 0;
