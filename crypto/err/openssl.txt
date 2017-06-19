@@ -2042,6 +2042,7 @@ PKCS7_R_UNSUPPORTED_CIPHER_TYPE:111:unsupported cipher type
 PKCS7_R_UNSUPPORTED_CONTENT_TYPE:112:unsupported content type
 PKCS7_R_WRONG_CONTENT_TYPE:113:wrong content type
 PKCS7_R_WRONG_PKCS7_TYPE:114:wrong pkcs7 type
+RAND_R_FUNC_NOT_IMPLEMENTED:101:Function not implemented
 RAND_R_PRNG_NOT_SEEDED:100:PRNG not seeded
 RSA_R_ALGORITHM_MISMATCH:100:algorithm mismatch
 RSA_R_BAD_E_VALUE:101:bad e value
