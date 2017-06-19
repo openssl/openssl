@@ -625,7 +625,7 @@ const char *ERR_reason_error_string(unsigned long e)
 
 void err_delete_thread_state(void)
 {
-    ERR_STATE *state = ERR_get_state();
+    ERR_STATE *state = CRYPTO_THREAD_get_local(&err_thread_local);
     if (state == NULL)
         return;
 
@@ -665,14 +665,14 @@ ERR_STATE *ERR_get_state(void)
         if (state == NULL)
             return NULL;
 
-        if (!CRYPTO_THREAD_set_local(&err_thread_local, state)) {
+        if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_ERR_STATE)
+            || !CRYPTO_THREAD_set_local(&err_thread_local, state)) {
             ERR_STATE_free(state);
             return NULL;
         }
 
         /* Ignore failures from these */
         OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-        ossl_init_thread_start(OPENSSL_INIT_THREAD_ERR_STATE);
     }
 
     return state;
