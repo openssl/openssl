@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,7 +22,7 @@
 
 #ifndef OPENSSL_NO_CT
 /* Used when declaring buffers to read text files into */
-#define CT_TEST_MAX_FILE_SIZE 8096
+# define CT_TEST_MAX_FILE_SIZE 8096
 
 static char *certs_dir = NULL;
 static char *ct_dir = NULL;
@@ -87,11 +87,11 @@ static void tear_down(CT_TEST_FIXTURE fixture)
 
 static char *mk_file_path(const char *dir, const char *file)
 {
-#ifndef OPENSSL_SYS_VMS
+# ifndef OPENSSL_SYS_VMS
     const char *sep = "/";
-#else
+# else
     const char *sep = "";
-#endif
+# endif
     size_t len = strlen(dir) + strlen(sep) + strlen(file) + 1;
     char *full_file = OPENSSL_zalloc(len);
 
@@ -341,8 +341,8 @@ end:
     return success;
 }
 
-#define SETUP_CT_TEST_FIXTURE() SETUP_TEST_FIXTURE(CT_TEST_FIXTURE, set_up)
-#define EXECUTE_CT_TEST() EXECUTE_TEST(execute_cert_test, tear_down)
+# define SETUP_CT_TEST_FIXTURE() SETUP_TEST_FIXTURE(CT_TEST_FIXTURE, set_up)
+# define EXECUTE_CT_TEST() EXECUTE_TEST(execute_cert_test, tear_down)
 
 static int test_no_scts_in_certificate(void)
 {
@@ -499,9 +499,11 @@ static int test_ctlog_from_base64(void)
         return 0;
     return 1;
 }
+#endif
 
 int test_main(int argc, char *argv[])
 {
+#ifndef OPENSSL_NO_CT
     if ((ct_dir = getenv("CT_DIR")) == NULL)
         ct_dir = "ct";
     if ((certs_dir = getenv("CERTS_DIR")) == NULL)
@@ -519,11 +521,8 @@ int test_main(int argc, char *argv[])
     ADD_TEST(test_ctlog_from_base64);
 
     return run_tests(argv[0]);
-}
 #else
-int test_main(int argc, char *argv[])
-{
     printf("No CT support\n");
-    return 0;
-}
+    return EXIT_SUCCESS;
 #endif
+}
