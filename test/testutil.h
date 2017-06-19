@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -273,6 +273,7 @@ void test_info(const char *file, int line, const char *desc, ...)
 void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 void test_note(const char *desc, ...) PRINTF_FORMAT(1, 2);
 void test_openssl_errors(void);
+void test_perror(const char *s);
 
 /*
  * The following macros provide wrapper calls to the test functions with
@@ -387,6 +388,7 @@ void test_openssl_errors(void);
 # endif
 # define TEST_note           test_note
 # define TEST_openssl_errors test_openssl_errors
+# define TEST_perror         test_perror
 
 /*
  * For "impossible" conditions such as malloc failures or bugs in test code,

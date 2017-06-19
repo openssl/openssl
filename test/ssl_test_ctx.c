@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -690,8 +690,8 @@ static int parse_client_options(SSL_TEST_CLIENT_CONF *client, const CONF *conf,
         for (j = 0; j < OSSL_NELEM(ssl_test_client_options); j++) {
             if (strcmp(option->name, ssl_test_client_options[j].name) == 0) {
                 if (!ssl_test_client_options[j].parse(client, option->value)) {
-                    fprintf(stderr, "Bad value %s for option %s\n",
-                            option->value, option->name);
+                    TEST_info("Bad value %s for option %s",
+                              option->value, option->name);
                     return 0;
                 }
                 found = 1;
@@ -699,7 +699,7 @@ static int parse_client_options(SSL_TEST_CLIENT_CONF *client, const CONF *conf,
             }
         }
         if (!found) {
-            fprintf(stderr, "Unknown test option: %s\n", option->name);
+            TEST_info("Unknown test option: %s", option->name);
             return 0;
         }
     }
@@ -723,8 +723,8 @@ static int parse_server_options(SSL_TEST_SERVER_CONF *server, const CONF *conf,
         for (j = 0; j < OSSL_NELEM(ssl_test_server_options); j++) {
             if (strcmp(option->name, ssl_test_server_options[j].name) == 0) {
                 if (!ssl_test_server_options[j].parse(server, option->value)) {
-                    fprintf(stderr, "Bad value %s for option %s\n",
-                            option->value, option->name);
+                    TEST_info("Bad value %s for option %s",
+                               option->value, option->name);
                     return 0;
                 }
                 found = 1;
@@ -732,7 +732,7 @@ static int parse_server_options(SSL_TEST_SERVER_CONF *server, const CONF *conf,
             }
         }
         if (!found) {
-            fprintf(stderr, "Unknown test option: %s\n", option->name);
+            TEST_info("Unknown test option: %s", option->name);
             return 0;
         }
     }
@@ -763,20 +763,20 @@ SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
                                       option->value))
                 goto err;
         } else if (strcmp(option->name, "server") == 0) {
-            if (!parse_server_options(&ctx->extra.server, conf,
-                                      option->value))
+            if (!TEST_true(parse_server_options(&ctx->extra.server, conf,
+                                                option->value)))
                 goto err;
         } else if (strcmp(option->name, "server2") == 0) {
-            if (!parse_server_options(&ctx->extra.server2, conf,
-                                      option->value))
+            if (!TEST_true(parse_server_options(&ctx->extra.server2, conf,
+                                                option->value)))
                 goto err;
         } else if (strcmp(option->name, "resume-client") == 0) {
-            if (!parse_client_options(&ctx->resume_extra.client, conf,
-                                      option->value))
+            if (!TEST_true(parse_client_options(&ctx->resume_extra.client, conf,
+                                                option->value)))
                 goto err;
         } else if (strcmp(option->name, "resume-server") == 0) {
-            if (!parse_server_options(&ctx->resume_extra.server, conf,
-                                      option->value))
+            if (!TEST_true(parse_server_options(&ctx->resume_extra.server, conf,
+                                                option->value)))
                 goto err;
         } else if (strcmp(option->name, "resume-server2") == 0) {
             if (!parse_server_options(&ctx->resume_extra.server2, conf,
@@ -787,8 +787,8 @@ SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
             for (j = 0; j < OSSL_NELEM(ssl_test_ctx_options); j++) {
                 if (strcmp(option->name, ssl_test_ctx_options[j].name) == 0) {
                     if (!ssl_test_ctx_options[j].parse(ctx, option->value)) {
-                        fprintf(stderr, "Bad value %s for option %s\n",
-                                option->value, option->name);
+                        TEST_info("Bad value %s for option %s",
+                                   option->value, option->name);
                         goto err;
                     }
                     found = 1;
@@ -796,7 +796,7 @@ SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
                 }
             }
             if (!found) {
-                fprintf(stderr, "Unknown test option: %s\n", option->name);
+                TEST_info("Unknown test option: %s", option->name);
                 goto err;
             }
         }
