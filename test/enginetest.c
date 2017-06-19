@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -151,9 +151,9 @@ static int test_engines(void)
     }
     for (loop = 0; loop < NUMTOADD; loop++) {
         if (!TEST_true(ENGINE_add(block[loop]))) {
-            printf("Adding stopped at %d, (%s,%s)",
-                   loop, ENGINE_get_id(block[loop]),
-                   ENGINE_get_name(block[loop]));
+            test_note("Adding stopped at %d, (%s,%s)",
+                      loop, ENGINE_get_id(block[loop]),
+                      ENGINE_get_name(block[loop]));
             goto cleanup_loop;
         }
     }

@@ -712,14 +712,12 @@ static int do_print_item(const TEST_PACKAGE *package)
     unsigned char buf[DATA_BUF_SIZE];
     const ASN1_ITEM *i = ASN1_ITEM_ptr(package->asn1_type);
     ASN1_VALUE *o = (ASN1_VALUE *)&buf;
-    BIO *bio = BIO_new_fp(stdout, 0);
     int ret;
 
     OPENSSL_assert(package->encode_expectations_elem_size <= DATA_BUF_SIZE);
 
     (void)RAND_bytes(buf, (int)package->encode_expectations_elem_size);
-    ret = ASN1_item_print(bio, o, 0, i, NULL);
-    BIO_free(bio);
+    ret = ASN1_item_print(bio_out, o, 0, i, NULL);
 
     return ret;
 }
@@ -745,18 +743,16 @@ static int test_intern(const TEST_PACKAGE *package)
                                                ->encode_expectations)[pos],
                                  &test_custom_data[i], package)) {
         case -1:
-            fprintf(stderr, "Failed custom encode round trip %u of %s\n",
-                    i, package->name);
-            ERR_print_errors_fp(stderr);
+            TEST_error("Failed custom encode round trip %u of %s",
+                       i, package->name);
+            TEST_openssl_errors();
             fail++;
-            ERR_clear_error();
             break;
         case 0:
-            fprintf(stderr, "Custom encode round trip %u of %s mismatch\n",
-                    i, package->name);
-            ERR_print_errors_fp(stderr);
+            TEST_error("Custom encode round trip %u of %s mismatch",
+                       i, package->name);
+            TEST_openssl_errors();
             fail++;
-            ERR_clear_error();
             break;
         case 1:
             break;
@@ -770,18 +766,16 @@ static int test_intern(const TEST_PACKAGE *package)
                                  package->encode_expectations_elem_size,
                                  package)) {
         case -1:
-            fprintf(stderr, "Failed custom decode round trip %u of %s\n",
-                    i, package->name);
-            ERR_print_errors_fp(stderr);
+            TEST_error("Failed custom decode round trip %u of %s",
+                       i, package->name);
+            TEST_openssl_errors();
             fail++;
-            ERR_clear_error();
             break;
         case 0:
-            fprintf(stderr, "Custom decode round trip %u of %s mismatch\n",
-                    i, package->name);
-            ERR_print_errors_fp(stderr);
+            TEST_error("Custom decode round trip %u of %s mismatch",
+                       i, package->name);
+            TEST_openssl_errors();
             fail++;
-            ERR_clear_error();
             break;
         case 1:
             break;
@@ -800,15 +794,14 @@ static int test_intern(const TEST_PACKAGE *package)
                            package->encdec_data_elem_size,
                            package)) {
         case -1:
-            fprintf(stderr, "Failed encode/decode round trip %u of %s\n",
-                    i, package->name);
-            ERR_print_errors_fp(stderr);
-            ERR_clear_error();
+            TEST_error("Failed encode/decode round trip %u of %s",
+                       i, package->name);
+            TEST_openssl_errors();
             fail++;
             break;
         case 0:
-            fprintf(stderr, "Encode/decode round trip %u of %s mismatch\n",
-                    i, package->name);
+            TEST_error("Encode/decode round trip %u of %s mismatch",
+                       i, package->name);
             fail++;
             break;
         case 1:
@@ -820,8 +813,8 @@ static int test_intern(const TEST_PACKAGE *package)
     }
 
     if (!do_print_item(package)) {
-        fprintf(stderr, "Printing of %s failed\n", package->name);
-        ERR_print_errors_fp(stderr);
+        TEST_error("Printing of %s failed", package->name);
+        TEST_openssl_errors();
         fail++;
     }
 

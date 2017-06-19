@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -40,14 +40,15 @@ static int test_tbl_standard()
         last_nid = tmp->nid;
     }
 
-    if (last_nid != 0) {
-        fprintf(stderr, "asn1 tbl_standard: Table order OK\n");
+    if (TEST_int_ne(last_nid, 0)) {
+        TEST_info("asn1 tbl_standard: Table order OK");
         return 1;
     }
 
+    TEST_info("asn1 tbl_standard: out of order");
     for (tmp = tbl_standard, i = 0; i < OSSL_NELEM(tbl_standard); i++, tmp++)
-        fprintf(stderr, "asn1 tbl_standard: Index %" OSSLzu ", NID %d, Name=%s\n",
-                i, tmp->nid, OBJ_nid2ln(tmp->nid));
+        TEST_note("asn1 tbl_standard: Index %zu, NID %d, Name=%s",
+                  i, tmp->nid, OBJ_nid2ln(tmp->nid));
 
     return 0;
 }
@@ -76,17 +77,16 @@ static int test_standard_methods()
         last_pkey_id = (*tmp)->pkey_id;
     }
 
-    if (last_pkey_id != 0) {
-        fprintf(stderr, "asn1 standard methods: Table order OK\n");
+    if (TEST_int_ne(last_pkey_id, 0)) {
+        TEST_info("asn1 standard methods: Table order OK");
         return 1;
     }
 
-    TEST_error("asn1 standard methods out of order");
+    TEST_note("asn1 standard methods: out of order");
     for (tmp = standard_methods, i = 0; i < OSSL_NELEM(standard_methods);
          i++, tmp++)
-        fprintf(stderr, "asn1 standard methods: Index %" OSSLzu
-                ", pkey ID %d, Name=%s\n", i, (*tmp)->pkey_id,
-                OBJ_nid2sn((*tmp)->pkey_id));
+        TEST_note("asn1 standard methods: Index %zu, pkey ID %d, Name=%s",
+                  i, (*tmp)->pkey_id, OBJ_nid2sn((*tmp)->pkey_id));
 
     return 0;
 }
