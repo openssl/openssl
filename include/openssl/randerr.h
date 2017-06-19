@@ -27,6 +27,7 @@ int ERR_load_RAND_strings(void);
 /*
  * RAND reason codes.
  */
+# define RAND_R_FUNC_NOT_IMPLEMENTED                      101
 # define RAND_R_PRNG_NOT_SEEDED                           100
 
 #endif

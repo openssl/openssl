@@ -137,6 +137,7 @@ int RAND_bytes(unsigned char *buf, int num)
     const RAND_METHOD *meth = RAND_get_rand_method();
     if (meth && meth->bytes)
         return meth->bytes(buf, num);
+    RANDerr(RAND_F_RAND_BYTES, RAND_R_FUNC_NOT_IMPLEMENTED);
     return (-1);
 }
 

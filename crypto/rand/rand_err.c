@@ -19,6 +19,8 @@ static const ERR_STRING_DATA RAND_str_functs[] = {
 };
 
 static const ERR_STRING_DATA RAND_str_reasons[] = {
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_FUNC_NOT_IMPLEMENTED),
+    "Function not implemented"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_PRNG_NOT_SEEDED), "PRNG not seeded"},
     {0, NULL}
 };
