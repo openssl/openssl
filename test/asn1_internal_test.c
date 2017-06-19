@@ -45,9 +45,9 @@ static int test_tbl_standard()
         return 1;
     }
 
-    TEST_error("asn1 tbl_standard: out of order");
+    TEST_info("asn1 tbl_standard: out of order");
     for (tmp = tbl_standard, i = 0; i < OSSL_NELEM(tbl_standard); i++, tmp++)
-        TEST_note("asn1 tbl_standard: Index %" OSSLzu ", NID %d, Name=%s",
+        TEST_note("asn1 tbl_standard: Index %zu, NID %d, Name=%s",
                   i, tmp->nid, OBJ_nid2ln(tmp->nid));
 
     return 0;
@@ -82,12 +82,11 @@ static int test_standard_methods()
         return 1;
     }
 
-    TEST_error("asn1 standard methods: out of order");
+    TEST_note("asn1 standard methods: out of order");
     for (tmp = standard_methods, i = 0; i < OSSL_NELEM(standard_methods);
          i++, tmp++)
-        TEST_note("asn1 standard methods: Index %" OSSLzu
-                  ", pkey ID %d, Name=%s", i, (*tmp)->pkey_id,
-                  OBJ_nid2sn((*tmp)->pkey_id));
+        TEST_note("asn1 standard methods: Index %zu, pkey ID %d, Name=%s",
+                  i, (*tmp)->pkey_id, OBJ_nid2sn((*tmp)->pkey_id));
 
     return 0;
 }
