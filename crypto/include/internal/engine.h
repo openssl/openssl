@@ -10,7 +10,6 @@
 #include <openssl/engine.h>
 
 void engine_load_openssl_int(void);
-void engine_load_cryptodev_int(void);
 void engine_load_rdrand_int(void);
 void engine_load_dynamic_int(void);
 void engine_load_padlock_int(void);
