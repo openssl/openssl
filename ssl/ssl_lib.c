@@ -442,7 +442,8 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
     if (min_version == DTLS1_BAD_VER
         || min_version >> 8 == DTLS1_VERSION_MAJOR)
         minisdtls = 1;
-    if (max_version >> 8 == DTLS1_VERSION_MAJOR)
+    if (max_version == DTLS1_BAD_VER
+        || max_version >> 8 == DTLS1_VERSION_MAJOR)
         maxisdtls = 1;
     /* A wildcard version of 0 could be DTLS or TLS. */
     if ((minisdtls && !maxisdtls && max_version != 0)
