@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -46,13 +46,9 @@ static int test_asn1_meths()
             EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, &info, NULL, ameth);
             if (info == NULL)
                 info = "<NO NAME>";
-            fprintf(stderr, "%d : %s : %s\n", pkey_id, OBJ_nid2ln(pkey_id),
-                    info);
+            TEST_note("%d : %s : %s", pkey_id, OBJ_nid2ln(pkey_id), info);
         }
-    } else {
-        fprintf(stderr, "Order OK\n");
     }
-
     return good;
 }
 

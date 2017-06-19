@@ -11,6 +11,7 @@
 #include "output.h"
 #include "tu_local.h"
 
+#include <errno.h>
 #include <string.h>
 #include <ctype.h>
 #include "../../e_os.h"
@@ -135,6 +136,15 @@ void test_error(const char *file, int line, const char *desc, ...)
     test_printf_stderr("\n");
 }
 
+void test_perror(const char *s)
+{
+    /*
+     * Using openssl_strerror_r causes linking issues since it isn't
+     * exported from libcrypto.so
+     */
+    TEST_error("%s: %s", s, strerror(errno));
+}
+
 void test_note(const char *fmt, ...)
 {
     if (fmt != NULL) {
@@ -152,6 +162,7 @@ void test_note(const char *fmt, ...)
 void test_openssl_errors(void)
 {
     ERR_print_errors_cb(openssl_error_cb, NULL);
+    ERR_clear_error();
 }
 
 /*
