@@ -326,6 +326,30 @@ int opt_int(const char *value, int *result)
     return 1;
 }
 
+static void opt_number_error(const char *v)
+{
+    size_t i = 0;
+    struct strstr_pair_st {
+        char *prefix;
+        char *name;
+    } b[] = {
+        {"0x", "a hexadecimal"},
+        {"0X", "a hexadecimal"},
+        {"0", "an octal"}
+    };
+
+    for (i = 0; i < OSSL_NELEM(b); i++) {
+        if (strncmp(v, b[i].prefix, strlen(b[i].prefix)) == 0) {
+            BIO_printf(bio_err,
+                       "%s: Can't parse \"%s\" as %s number\n",
+                       prog, v, b[i].name);
+            return;
+        }
+    }
+    BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n", prog, v);
+    return;
+}
+
 /* Parse a long, put it into *result; return 0 on failure, else 1. */
 int opt_long(const char *value, long *result)
 {
@@ -339,8 +363,7 @@ int opt_long(const char *value, long *result)
             || endp == value
             || ((l == LONG_MAX || l == LONG_MIN) && errno == ERANGE)
             || (l == 0 && errno != 0)) {
-        BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n",
-                   prog, value);
+        opt_number_error(value);
         errno = oerrno;
         return 0;
     }
@@ -365,8 +388,7 @@ int opt_imax(const char *value, intmax_t *result)
             || endp == value
             || ((m == INTMAX_MAX || m == INTMAX_MIN) && errno == ERANGE)
             || (m == 0 && errno != 0)) {
-        BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n",
-                   prog, value);
+        opt_number_error(value);
         errno = oerrno;
         return 0;
     }
@@ -388,8 +410,7 @@ int opt_umax(const char *value, uintmax_t *result)
             || endp == value
             || (m == UINTMAX_MAX && errno == ERANGE)
             || (m == 0 && errno != 0)) {
-        BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n",
-                   prog, value);
+        opt_number_error(value);
         errno = oerrno;
         return 0;
     }
@@ -414,8 +435,7 @@ int opt_ulong(const char *value, unsigned long *result)
             || endptr == value
             || ((l == ULONG_MAX) && errno == ERANGE)
             || (l == 0 && errno != 0)) {
-        BIO_printf(bio_err, "%s: Can't parse \"%s\" as an unsigned number\n",
-                   prog, value);
+        opt_number_error(value);
         errno = oerrno;
         return 0;
     }
