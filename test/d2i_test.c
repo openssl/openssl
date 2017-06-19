@@ -137,14 +137,14 @@ int test_main(int argc, char *argv[])
     item_type = ASN1_ITEM_lookup(test_type_name);
 
     if (item_type == NULL) {
-        TEST_error("Unknown type %s\n", test_type_name);
-        fprintf(stderr, "Supported types:\n");
+        TEST_error("Unknown type %s", test_type_name);
+        TEST_note("Supported types:");
         for (i = 0;; i++) {
             const ASN1_ITEM *it = ASN1_ITEM_get(i);
 
             if (it == NULL)
                 break;
-            fprintf(stderr, "\t%s\n", it->sname);
+            TEST_note("\t%s", it->sname);
         }
         return 1;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -385,7 +385,7 @@ static int test_tls13_encryption(void)
         seq = NULL;
     }
 
-    fprintf(stderr, "PASS: %"OSSLzu" records tested\n", ctr);
+    TEST_note("PASS: %"OSSLzu" records tested", ctr);
     ret = 1;
 
  err:

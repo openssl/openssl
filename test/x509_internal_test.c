@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -52,12 +52,8 @@ static int test_standard_exts()
         tmp = standard_exts;
         TEST_error("Extensions out of order!");
         for (i = 0; i < STANDARD_EXTENSION_COUNT; i++, tmp++)
-            fprintf(stderr, "%d : %s\n", (*tmp)->ext_nid,
-                    OBJ_nid2sn((*tmp)->ext_nid));
-    } else {
-        fprintf(stderr, "Order OK\n");
+            TEST_note("%d : %s", (*tmp)->ext_nid, OBJ_nid2sn((*tmp)->ext_nid));
     }
-
     return good;
 }
 

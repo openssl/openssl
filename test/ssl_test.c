@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -196,20 +196,17 @@ static int check_nid(const char *name, int expected_nid, int nid)
 
 static void print_ca_names(STACK_OF(X509_NAME) *names)
 {
-    BIO *err;
     int i;
 
     if (names == NULL || sk_X509_NAME_num(names) == 0) {
-        fprintf(stderr, "    <empty>\n");
+        TEST_note("    <empty>");
         return;
     }
-    err = BIO_new_fp(stderr, BIO_NOCLOSE);
     for (i = 0; i < sk_X509_NAME_num(names); i++) {
-        X509_NAME_print_ex(err, sk_X509_NAME_value(names, i), 4,
+        X509_NAME_print_ex(bio_err, sk_X509_NAME_value(names, i), 4,
                            XN_FLAG_ONELINE);
-        BIO_puts(err, "\n");
+        BIO_puts(bio_err, "\n");
     }
-    BIO_free(err);
 }
 
 static int check_ca_names(const char *name,
@@ -221,23 +218,25 @@ static int check_ca_names(const char *name,
     if (expected_names == NULL)
         return 1;
     if (names == NULL || sk_X509_NAME_num(names) == 0) {
-        if (sk_X509_NAME_num(expected_names) == 0)
+        if (TEST_int_eq(sk_X509_NAME_num(expected_names), 0))
             return 1;
         goto err;
     }
     if (sk_X509_NAME_num(names) != sk_X509_NAME_num(expected_names))
         goto err;
     for (i = 0; i < sk_X509_NAME_num(names); i++) {
-        if (X509_NAME_cmp(sk_X509_NAME_value(names, i),
-                          sk_X509_NAME_value(expected_names, i)) != 0) {
+        if (!TEST_int_eq(X509_NAME_cmp(sk_X509_NAME_value(names, i),
+                                       sk_X509_NAME_value(expected_names, i)),
+                         0)) {
             goto err;
         }
     }
     return 1;
-    err:
-    fprintf(stderr, "%s: list mismatch\nExpected Names:\n", name);
+err:
+    TEST_info("%s: list mismatch", name);
+    TEST_note("Expected Names:");
     print_ca_names(expected_names);
-    fprintf(stderr, "Received Names:\n");
+    TEST_note("Received Names:");
     print_ca_names(names);
     return 0;
 }

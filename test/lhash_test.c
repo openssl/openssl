@@ -189,10 +189,10 @@ static int test_stress(void)
     if (!TEST_int_eq(lh_int_num_items(h), n))
             goto end;
 
-    fprintf(stderr, "hash full statistics:\n");
-    OPENSSL_LH_stats((OPENSSL_LHASH *)h, stderr);
-    fprintf(stderr, "\nhash full node usage:\n");
-    OPENSSL_LH_node_usage_stats((OPENSSL_LHASH *)h, stderr);
+    TEST_info("hash full statistics:");
+    OPENSSL_LH_stats_bio((OPENSSL_LHASH *)h, bio_err);
+    TEST_note("hash full node usage:");
+    OPENSSL_LH_node_usage_stats_bio((OPENSSL_LHASH *)h, bio_err);
 
     /* delete in a different order */
     for (i = 0; i < n; i++) {
@@ -209,10 +209,10 @@ static int test_stress(void)
         OPENSSL_free(p);
     }
 
-    fprintf(stderr, "\nhash empty statistics:\n");
-    OPENSSL_LH_stats((OPENSSL_LHASH *)h, stderr);
-    fprintf(stderr, "\nhash empty node usage:\n");
-    OPENSSL_LH_node_usage_stats((OPENSSL_LHASH *)h, stderr);
+    TEST_info("hash empty statistics:");
+    OPENSSL_LH_stats_bio((OPENSSL_LHASH *)h, bio_err);
+    TEST_note("hash empty node usage:");
+    OPENSSL_LH_node_usage_stats_bio((OPENSSL_LHASH *)h, bio_err);
 
     testresult = 1;
 end:

@@ -284,7 +284,7 @@ static int parse_bin(const char *value, unsigned char **buf, size_t *buflen)
     /* Otherwise assume as hex literal and convert it to binary buffer */
     if (!TEST_ptr(*buf = OPENSSL_hexstr2buf(value, &len))) {
         TEST_info("Can't convert %s", value);
-        ERR_print_errors(bio_err);
+        TEST_openssl_errors();
         return -1;
     }
     /* Size of input buffer means we'll never overflow */
@@ -2208,7 +2208,7 @@ static int run_test(EVP_TEST *t)
             return 0;
         }
         if (!check_test_error(t)) {
-            test_openssl_errors();
+            TEST_openssl_errors();
             t->s.errors++;
         }
     }
@@ -2306,7 +2306,7 @@ top:
         pkey = PEM_read_bio_PrivateKey(t->s.key, NULL, 0, NULL);
         if (pkey == NULL && !key_unsupported()) {
             TEST_info("Can't read private key %s", pp->value);
-            ERR_print_errors_fp(stderr);
+            TEST_openssl_errors();
             return 0;
         }
         klist = &private_keys;
@@ -2315,7 +2315,7 @@ top:
         pkey = PEM_read_bio_PUBKEY(t->s.key, NULL, 0, NULL);
         if (pkey == NULL && !key_unsupported()) {
             TEST_info("Can't read public key %s", pp->value);
-            ERR_print_errors_fp(stderr);
+            TEST_openssl_errors();
             return 0;
         }
         klist = &public_keys;
