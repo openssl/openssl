@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[6929] = {
+static const unsigned char so[6934] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -983,9 +983,10 @@ static const unsigned char so[6929] = {
     0x55,0x04,0x62,                                /* [ 6919] OBJ_countryCode3c */
     0x55,0x04,0x63,                                /* [ 6922] OBJ_countryCode3n */
     0x55,0x04,0x64,                                /* [ 6925] OBJ_dnsName */
+    0x2B,0x24,0x08,0x03,0x03,                      /* [ 6928] OBJ_x509ExtAdmission */
 };
 
-#define NUM_NID 1093
+#define NUM_NID 1094
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2080,9 +2081,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"c3", "countryCode3c", NID_countryCode3c, 3, &so[6919]},
     {"n3", "countryCode3n", NID_countryCode3n, 3, &so[6922]},
     {"dnsName", "dnsName", NID_dnsName, 3, &so[6925]},
+    {"x509ExtAdmission", "Professional Information or basis for Admission", NID_x509ExtAdmission, 5, &so[6928]},
 };
 
-#define NUM_SN 1084
+#define NUM_SN 1085
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3168,9 +3170,10 @@ static const unsigned int sn_objs[NUM_SN] = {
      503,    /* "x500UniqueIdentifier" */
      158,    /* "x509Certificate" */
      160,    /* "x509Crl" */
+    1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1084
+#define NUM_LN 1085
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3288,6 +3291,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      164,    /* "Policy Qualifier CPS" */
      165,    /* "Policy Qualifier User Notice" */
      385,    /* "Private" */
+    1093,    /* "Professional Information or basis for Admission" */
      663,    /* "Proxy Certificate Information" */
        1,    /* "RSA Data Security, Inc." */
        2,    /* "RSA Data Security, Inc. PKCS" */
@@ -4258,7 +4262,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 978
+#define NUM_OBJ 979
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -4528,6 +4532,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
       70,    /* OBJ_dsaWithSHA1_2                1 3 14 3 2 27 */
      115,    /* OBJ_sha1WithRSA                  1 3 14 3 2 29 */
      117,    /* OBJ_ripemd160                    1 3 36 3 2 1 */
+    1093,    /* OBJ_x509ExtAdmission             1 3 36 8 3 3 */
      143,    /* OBJ_sxnet                        1 3 101 1 4 1 */
      721,    /* OBJ_sect163k1                    1 3 132 0 1 */
      722,    /* OBJ_sect163r1                    1 3 132 0 2 */

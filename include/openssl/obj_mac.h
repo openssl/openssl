@@ -54,6 +54,11 @@
 #define NID_hmac_sha1           781
 #define OBJ_hmac_sha1           OBJ_identified_organization,6L,1L,5L,5L,8L,1L,2L
 
+#define SN_x509ExtAdmission             "x509ExtAdmission"
+#define LN_x509ExtAdmission             "Professional Information or basis for Admission"
+#define NID_x509ExtAdmission            1093
+#define OBJ_x509ExtAdmission            OBJ_identified_organization,36L,8L,3L,3L
+
 #define SN_certicom_arc         "certicom-arc"
 #define NID_certicom_arc                677
 #define OBJ_certicom_arc                OBJ_identified_organization,132L

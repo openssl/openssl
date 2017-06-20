@@ -15,6 +15,9 @@ iso 3			: identified-organization
 identified-organization 6 1 5 5 8 1 1	: HMAC-MD5	: hmac-md5
 identified-organization 6 1 5 5 8 1 2	: HMAC-SHA1	: hmac-sha1
 
+# "1.3.36.8.3.3"
+identified-organization 36 8 3 3	: x509ExtAdmission	: Professional Information or basis for Admission
+
 identified-organization 132	: certicom-arc
 
 joint-iso-itu-t 23	: international-organizations	: International Organizations
