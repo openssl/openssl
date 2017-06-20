@@ -713,8 +713,15 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         }
 
         if (s->psk_find_session_cb != NULL
-                && s->psk_find_session_cb(s, PACKET_data(&identity),
-                                          PACKET_remaining(&identity), &sess)) {
+                && !s->psk_find_session_cb(s, PACKET_data(&identity),
+                                           PACKET_remaining(&identity),
+                                           &sess)) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            return 0;
+        }
+
+        if (sess != NULL) {
+            /* We found a PSK */
             SSL_SESSION *sesstmp = ssl_session_dup(sess, 0);
 
             if (sesstmp == NULL) {
