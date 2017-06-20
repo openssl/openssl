@@ -1865,8 +1865,8 @@ __owur size_t SSL_get_server_random(const SSL *ssl, unsigned char *out,
                                     size_t outlen);
 __owur size_t SSL_SESSION_get_master_key(const SSL_SESSION *ssl,
                                          unsigned char *out, size_t outlen);
-__owur int SSL_SESSION_set1_master_key(SSL_SESSION *sess, unsigned char *in,
-                                       size_t len);
+__owur int SSL_SESSION_set1_master_key(SSL_SESSION *sess,
+                                       const unsigned char *in, size_t len);
 
 #define SSL_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL, l, p, newf, dupf, freef)
