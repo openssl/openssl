@@ -125,11 +125,10 @@ extern "C" {
 
 # define BIO_CTRL_DGRAM_GET_MTU_OVERHEAD   49
 
-# define BIO_CTRL_DGRAM_SET_PEEK_MODE      50
-
+/* Deliberately outside of OPENSSL_NO_SCTP - used in bss_dgram.c */
+#  define BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE    50
 # ifndef OPENSSL_NO_SCTP
 /* SCTP stuff */
-#  define BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE    50
 #  define BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY                51
 #  define BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY               52
 #  define BIO_CTRL_DGRAM_SCTP_AUTH_CCS_RCVD               53
@@ -141,6 +140,8 @@ extern "C" {
 #  define BIO_CTRL_DGRAM_SCTP_SET_PRINFO                  65
 #  define BIO_CTRL_DGRAM_SCTP_SAVE_SHUTDOWN               70
 # endif
+
+# define BIO_CTRL_DGRAM_SET_PEEK_MODE      71
 
 /* modifiers */
 # define BIO_FP_READ             0x02
