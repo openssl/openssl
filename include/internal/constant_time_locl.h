@@ -21,17 +21,14 @@ extern "C" {
  * The boolean methods return a bitmask of all ones (0xff...f) for true
  * and 0 for false. This is useful for choosing a value based on the result
  * of a conditional in constant time. For example,
- *
- * if (a < b) {
- *   c = a;
- * } else {
- *   c = b;
- * }
- *
+ *      if (a < b) {
+ *        c = a;
+ *      } else {
+ *        c = b;
+ *      }
  * can be written as
- *
- * unsigned int lt = constant_time_lt(a, b);
- * c = constant_time_select(lt, a, b);
+ *      unsigned int lt = constant_time_lt(a, b);
+ *      c = constant_time_select(lt, a, b);
  */
 
 /*
@@ -41,35 +38,31 @@ extern "C" {
  * replace this with something else on odd CPUs.
  */
 static ossl_inline unsigned int constant_time_msb(unsigned int a);
+/* Convenience method for uint64_t. */
+static ossl_inline uint64_t constant_time_msb_64(uint64_t a);
 
-/*
- * Returns 0xff..f if a < b and 0 otherwise.
- */
+/* Returns 0xff..f if a < b and 0 otherwise. */
 static ossl_inline unsigned int constant_time_lt(unsigned int a,
                                                  unsigned int b);
 /* Convenience method for getting an 8-bit mask. */
 static ossl_inline unsigned char constant_time_lt_8(unsigned int a,
                                                     unsigned int b);
+/* Convenience method for uint64_t. */
+static ossl_inline uint64_t constant_time_lt_64(uint64_t a, uint64_t b);
 
-/*
- * Returns 0xff..f if a >= b and 0 otherwise.
- */
+/* Returns 0xff..f if a >= b and 0 otherwise. */
 static ossl_inline unsigned int constant_time_ge(unsigned int a,
                                                  unsigned int b);
 /* Convenience method for getting an 8-bit mask. */
 static ossl_inline unsigned char constant_time_ge_8(unsigned int a,
                                                     unsigned int b);
 
-/*
- * Returns 0xff..f if a == 0 and 0 otherwise.
- */
+/* Returns 0xff..f if a == 0 and 0 otherwise. */
 static ossl_inline unsigned int constant_time_is_zero(unsigned int a);
 /* Convenience method for getting an 8-bit mask. */
 static ossl_inline unsigned char constant_time_is_zero_8(unsigned int a);
 
-/*
- * Returns 0xff..f if a == b and 0 otherwise.
- */
+/* Returns 0xff..f if a == b and 0 otherwise. */
 static ossl_inline unsigned int constant_time_eq(unsigned int a,
                                                  unsigned int b);
 /* Convenience method for getting an 8-bit mask. */
@@ -94,13 +87,22 @@ static ossl_inline unsigned int constant_time_select(unsigned int mask,
 static ossl_inline unsigned char constant_time_select_8(unsigned char mask,
                                                         unsigned char a,
                                                         unsigned char b);
+/* Convenience method for uint64_t. */
+static ossl_inline uint64_t constant_time_select_64(uint64_t mask, uint64_t a,
+                                                    uint64_t b);
 /* Convenience method for signed integers. */
 static ossl_inline int constant_time_select_int(unsigned int mask, int a,
                                                 int b);
 
+
 static ossl_inline unsigned int constant_time_msb(unsigned int a)
 {
     return 0 - (a >> (sizeof(a) * 8 - 1));
+}
+
+static ossl_inline uint64_t constant_time_msb_64(uint64_t a)
+{
+    return 0 - (a >> 63);
 }
 
 static ossl_inline size_t constant_time_msb_s(size_t a)
@@ -123,6 +125,11 @@ static ossl_inline unsigned char constant_time_lt_8(unsigned int a,
                                                     unsigned int b)
 {
     return (unsigned char)(constant_time_lt(a, b));
+}
+
+static ossl_inline uint64_t constant_time_lt_64(uint64_t a, uint64_t b)
+{
+    return constant_time_msb_64(a ^ ((a ^ b) | ((a - b) ^ b)));
 }
 
 static ossl_inline unsigned int constant_time_ge(unsigned int a,
@@ -225,6 +232,12 @@ static ossl_inline int constant_time_select_int_s(size_t mask, int a, int b)
 {
     return (int)(constant_time_select((unsigned)mask, (unsigned)(a),
                                       (unsigned)(b)));
+}
+
+static ossl_inline uint64_t constant_time_select_64(uint64_t mask, uint64_t a,
+                                                    uint64_t b)
+{
+    return (mask & a) | (~mask & b);
 }
 
 #ifdef __cplusplus
