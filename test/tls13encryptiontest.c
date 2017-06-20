@@ -385,7 +385,7 @@ static int test_tls13_encryption(void)
         seq = NULL;
     }
 
-    TEST_note("PASS: %"OSSLzu" records tested", ctr);
+    TEST_note("PASS: %zu records tested", ctr);
     ret = 1;
 
  err:
