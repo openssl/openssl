@@ -898,7 +898,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
             goto err;
         }
 
-        if (s->hello_retry_request && mdres != handmd) {
+        if (s->hello_retry_request && mdpsk != handmd) {
             /*
              * Selected ciphersuite hash does not match the hash for the PSK
              * session. This is an application bug.
@@ -971,12 +971,15 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
 
     if (dores)
         s->session->ext.tick_identity = 0;
+    SSL_SESSION_free(s->psksession);
     s->psksession = psksess;
     if (psksess != NULL)
         s->psksession->ext.tick_identity = (dores ? 1 : 0);
+    psksess = NULL;
 
     ret = EXT_RETURN_SENT;
  err:
+    SSL_SESSION_free(psksess);
     return ret;
 #else
     return 1;
