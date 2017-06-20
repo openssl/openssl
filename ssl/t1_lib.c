@@ -169,7 +169,7 @@ static const tls_curve_info nid_list[] = {
     {NID_brainpoolP256r1, 128, TLS_CURVE_PRIME}, /* brainpoolP256r1 (26) */
     {NID_brainpoolP384r1, 192, TLS_CURVE_PRIME}, /* brainpoolP384r1 (27) */
     {NID_brainpoolP512r1, 256, TLS_CURVE_PRIME}, /* brainpool512r1 (28) */
-    {NID_X25519, 128, TLS_CURVE_CUSTOM}, /* X25519 (29) */
+    {EVP_PKEY_X25519, 128, TLS_CURVE_CUSTOM}, /* X25519 (29) */
 };
 
 static const unsigned char ecformats_default[] = {
@@ -719,7 +719,7 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA512, NID_secp521r1},
     {"ed25519", TLSEXT_SIGALG_ed25519,
-     NID_undef, -1, NID_ED25519, SSL_PKEY_ED25519,
+     NID_undef, -1, EVP_PKEY_ED25519, SSL_PKEY_ED25519,
      NID_undef, NID_undef},
     {NULL, TLSEXT_SIGALG_ecdsa_sha224,
      NID_sha224, SSL_MD_SHA224_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
@@ -1418,7 +1418,7 @@ static int tls12_get_pkey_idx(int sig_nid)
 #ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC:
         return SSL_PKEY_ECC;
-    case NID_ED25519:
+    case EVP_PKEY_ED25519:
         return SSL_PKEY_ED25519;
 #endif
 #ifndef OPENSSL_NO_GOST
@@ -1498,7 +1498,7 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
             break;
 #endif
 #ifndef OPENSSL_NO_EC
-        case NID_ED25519:
+        case EVP_PKEY_ED25519:
         case EVP_PKEY_EC:
             if (!have_ecdsa && tls12_sigalg_allowed(s, op, lu))
                 have_ecdsa = 1;
@@ -2427,7 +2427,7 @@ int tls_choose_sigalg(SSL *s, int *al)
                     if (lu->sig_idx == idx
                         && (curve == -1 || lu->curve == curve))
                         break;
-                    if (idx == SSL_PKEY_ECC && lu->sig == NID_ED25519) {
+                    if (idx == SSL_PKEY_ECC && lu->sig == EVP_PKEY_ED25519) {
                         idx = SSL_PKEY_ED25519;
                         break;
                     }
