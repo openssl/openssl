@@ -21,6 +21,8 @@ static const unsigned char CONSTTIME_TRUE_8 = 0xff;
 static const unsigned char CONSTTIME_FALSE_8 = 0;
 static const size_t CONSTTIME_TRUE_S = ~((size_t)0);
 static const size_t CONSTTIME_FALSE_S = 0;
+static uint64_t CONSTTIME_TRUE_64 = (uint64_t)(~(uint64_t)0);
+static uint64_t CONSTTIME_FALSE_64 = 0;
 
 static int test_binary_op(unsigned int (*op) (unsigned int a, unsigned int b),
                           const char *op_name, unsigned int a, unsigned int b,
@@ -55,6 +57,25 @@ static int test_binary_op_s(size_t (*op) (size_t a, size_t b),
         return 0;
     return 1;
 }
+
+static int test_binary_op_64(uint64_t (*op)(uint64_t a, uint64_t b),
+                             const char *op_name, uint64_t a, uint64_t b,
+                             int is_true)
+{
+    uint64_t c = op(a, b);
+
+    if (is_true && c != CONSTTIME_TRUE_64) {
+        TEST_error("TRUE %s op failed", op_name);
+        BIO_printf(bio_err, "a=%jx b=%jx\n", a, b);
+        return 0;
+    } else if (!is_true && c != CONSTTIME_FALSE_64) {
+        TEST_error("FALSE %s op failed", op_name);
+        BIO_printf(bio_err, "a=%jx b=%jx\n", a, b);
+        return 0;
+    }
+    return 1;
+}
+
 
 static int test_is_zero(unsigned int a)
 {
@@ -110,6 +131,23 @@ static int test_select_s(unsigned char a, unsigned char b)
     return 1;
 }
 
+static int test_select_64(uint64_t a, uint64_t b)
+{
+    uint64_t selected = constant_time_select_64(CONSTTIME_TRUE_64, a, b);
+
+    if (selected != a) {
+        TEST_error("test_select_64 TRUE failed");
+        BIO_printf(bio_err, "a=%jx b=%jx got %jx wanted a\n", a, b, selected);
+        return 0;
+    }
+    selected = constant_time_select_64(CONSTTIME_FALSE_64, a, b);
+    if (selected != b) {
+        BIO_printf(bio_err, "a=%jx b=%jx got %jx wanted b\n", a, b, selected);
+        return 0;
+    }
+    return 1;
+}
+
 static int test_select_int(int a, int b)
 {
     if (!TEST_int_eq(constant_time_select_int(CONSTTIME_TRUE, a, b), a))
@@ -146,24 +184,31 @@ static int test_eq_int(int a, int b)
     return 1;
 }
 
-static unsigned int test_values[] =
-    { 0, 1, 1024, 12345, 32000, UINT_MAX / 2 - 1,
+static unsigned int test_values[] = {
+    0, 1, 1024, 12345, 32000, UINT_MAX / 2 - 1,
     UINT_MAX / 2, UINT_MAX / 2 + 1, UINT_MAX - 1,
     UINT_MAX
 };
 
-static unsigned char test_values_8[] =
-    { 0, 1, 2, 20, 32, 127, 128, 129, 255 };
+static unsigned char test_values_8[] = {
+    0, 1, 2, 20, 32, 127, 128, 129, 255
+};
 
-static int signed_test_values[] = { 0, 1, -1, 1024, -1024, 12345, -12345,
+static int signed_test_values[] = {
+    0, 1, -1, 1024, -1024, 12345, -12345,
     32000, -32000, INT_MAX, INT_MIN, INT_MAX - 1,
     INT_MIN + 1
 };
 
-static size_t test_values_s[] =
-    { 0, 1, 1024, 12345, 32000, SIZE_MAX / 2 - 1,
+static size_t test_values_s[] = {
+    0, 1, 1024, 12345, 32000, SIZE_MAX / 2 - 1,
     SIZE_MAX / 2, SIZE_MAX / 2 + 1, SIZE_MAX - 1,
     SIZE_MAX
+};
+
+static uint64_t test_values_64[] = {
+    0, 1, 1024, 12345, 32000, 32000000, 32000000001, UINT64_MAX / 2,
+    UINT64_MAX / 2 + 1, UINT64_MAX - 1, UINT64_MAX
 };
 
 static int test_sizeofs(void)
@@ -264,6 +309,23 @@ static int test_8values(int i)
     return ret;
 }
 
+static int test_64values(int i)
+{
+    uint64_t g = test_values_64[i];
+    int j, ret = 1;
+
+    for (j = i + 1; j < (int)OSSL_NELEM(test_values_64); j++) {
+        uint64_t h = test_values_64[j];
+
+        if (!test_binary_op_64(&constant_time_lt_64, "constant_time_lt_64",
+                               g, h, g < h)
+                || !test_select_64(g, h)) {
+            TEST_info("test_64values failed i=%d j=%d", i, j);
+            ret = 0;
+        }
+    }
+    return ret;
+}
 
 void register_tests(void)
 {
@@ -271,4 +333,5 @@ void register_tests(void)
     ADD_ALL_TESTS(test_binops, OSSL_NELEM(test_values));
     ADD_ALL_TESTS(test_signed, OSSL_NELEM(signed_test_values));
     ADD_ALL_TESTS(test_8values, sizeof(test_values_8));
+    ADD_ALL_TESTS(test_64values, sizeof(test_values_64));
 }
