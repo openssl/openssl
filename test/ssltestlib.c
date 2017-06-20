@@ -661,3 +661,11 @@ int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
 
     return 1;
 }
+
+void shutdown_ssl_connection(SSL *serverssl, SSL *clientssl)
+{
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+}
