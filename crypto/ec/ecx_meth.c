@@ -78,7 +78,7 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
                 OPENSSL_free(xkey);
                 return 0;
             }
-            if (id == NID_X25519) {
+            if (id == EVP_PKEY_X25519) {
                 xkey->privkey[0] &= 248;
                 xkey->privkey[31] &= 127;
                 xkey->privkey[31] |= 64;
@@ -86,7 +86,7 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
         } else {
             memcpy(xkey->privkey, p, X25519_KEYLEN);
         }
-        if (id == NID_X25519)
+        if (id == EVP_PKEY_X25519)
             X25519_public_from_private(xkey->pubkey, xkey->privkey);
         else
             ED25519_public_from_private(xkey->pubkey, xkey->privkey);
@@ -282,7 +282,8 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     switch (op) {
 
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return ecx_key_op(pkey, NID_X25519, NULL, arg2, arg1, X25519_PUBLIC);
+        return ecx_key_op(pkey, EVP_PKEY_X25519, NULL, arg2, arg1,
+                          X25519_PUBLIC);
 
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
         if (pkey->pkey.ptr != NULL) {
@@ -305,8 +306,8 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 }
 
 const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
-    NID_X25519,
-    NID_X25519,
+    EVP_PKEY_X25519,
+    EVP_PKEY_X25519,
     0,
     "X25519",
     "OpenSSL X25519 algorithm",
@@ -380,8 +381,8 @@ static int ecd_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
 }
 
 const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
-    NID_ED25519,
-    NID_ED25519,
+    EVP_PKEY_ED25519,
+    EVP_PKEY_ED25519,
     0,
     "ED25519",
     "OpenSSL ED25519 algorithm",
@@ -451,7 +452,7 @@ static int pkey_ecx_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 }
 
 const EVP_PKEY_METHOD ecx25519_pkey_meth = {
-    NID_X25519,
+    EVP_PKEY_X25519,
     0, 0, 0, 0, 0, 0, 0,
     pkey_ecx_keygen,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -510,7 +511,7 @@ static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 }
 
 const EVP_PKEY_METHOD ed25519_pkey_meth = {
-    NID_ED25519, EVP_PKEY_FLAG_SIGCTX_CUSTOM,
+    EVP_PKEY_ED25519, EVP_PKEY_FLAG_SIGCTX_CUSTOM,
     0, 0, 0, 0, 0, 0,
     pkey_ecx_keygen,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

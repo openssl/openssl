@@ -19,7 +19,7 @@ performing key derivation.
 
 A context for the B<X25519> algorithm can be obtained by calling:
 
- EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
+ EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, NULL);
 
 =head1 EXAMPLE
 
@@ -30,7 +30,7 @@ output in PEM format:
  #include <openssl/pem.h>
  ...
  EVP_PKEY *pkey = NULL;
- EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
+ EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_X25519, NULL);
  EVP_PKEY_keygen_init(pctx);
  EVP_PKEY_keygen(pctx, &pkey);
  EVP_PKEY_CTX_free(pctx);
