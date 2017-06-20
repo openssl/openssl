@@ -3725,7 +3725,7 @@ size_t SSL_SESSION_get_master_key(const SSL_SESSION *session,
     return outlen;
 }
 
-int SSL_SESSION_set1_master_key(SSL_SESSION *sess, unsigned char *in,
+int SSL_SESSION_set1_master_key(SSL_SESSION *sess, const unsigned char *in,
                                 size_t len)
 {
     if (len > sizeof(sess->master_key))
