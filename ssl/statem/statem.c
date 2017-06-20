@@ -300,10 +300,10 @@ static int state_machine(SSL *s, int server)
             return -1;
     }
 #ifndef OPENSSL_NO_SCTP
-    if (SSL_IS_DTLS(s)) {
+    if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s))) {
         /*
          * Notify SCTP BIO socket to enter handshake mode and prevent stream
-         * identifier other than 0. Will be ignored if no SCTP is used.
+         * identifier other than 0.
          */
         BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE,
                  st->in_handshake, NULL);
@@ -421,10 +421,10 @@ static int state_machine(SSL *s, int server)
     st->in_handshake--;
 
 #ifndef OPENSSL_NO_SCTP
-    if (SSL_IS_DTLS(s)) {
+    if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s))) {
         /*
          * Notify SCTP BIO socket to leave handshake mode and allow stream
-         * identifier other than 0. Will be ignored if no SCTP is used.
+         * identifier other than 0.
          */
         BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE,
                  st->in_handshake, NULL);
