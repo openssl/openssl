@@ -9,9 +9,11 @@
 
 #include <stdlib.h>              /* size_t */
 #include <openssl/bn.h>
+#include <openssl/bio.h>
 
 int subtest_level(void);
 int openssl_error_cb(const char *str, size_t len, void *u);
+const BIO_METHOD *BIO_f_tap(void);
 
 void test_fail_message_prefix(const char *prefix, const char *file,
                               int line, const char *type,
