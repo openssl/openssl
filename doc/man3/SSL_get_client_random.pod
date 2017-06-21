@@ -39,10 +39,10 @@ can be dangerous if misused; see NOTES below.
 SSL_SESSION_set1_master_key() sets the master key value associated with the
 SSL_SESSION B<sess>. For example, this could be used to set up a session based
 PSK (see L<SSL_CTX_set_psk_use_session_callback(3)>). The master key of length
-B<len> should be provided at B<in>. A copy of the supplied master key is taken
-by the function, so the caller is responsible for freeing and cleaning any
-memory associated with B<in>. The caller must ensure that the length of the ke
-is suitable for the ciphersuite associated with the SSL_SESSION.
+B<len> should be provided at B<in>. The supplied master key is copied by the
+function, so the caller is responsible for freeing and cleaning any memory
+associated with B<in>. The caller must ensure that the length of the key is
+suitable for the ciphersuite associated with the SSL_SESSION.
 
 =head1 NOTES
 
