@@ -613,13 +613,17 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
  */
 int opt_next(void)
 {
-    char *p;
+    char *p, *estr;
     const OPTIONS *o;
     int ival;
     long lval;
     unsigned long ulval;
     ossl_intmax_t imval;
     ossl_uintmax_t umval;
+#if !defined(_WIN32) && !defined(__VMS)
+    char *c;
+    int oerrno;
+#endif
 
     /* Look at current arg; at end of the list? */
     arg = NULL;
@@ -676,13 +680,13 @@ int opt_next(void)
             /* Just a string. */
             break;
         case '/':
-            if (app_isdir(arg) >= 0)
+            if (app_isdir(arg) > 0)
                 break;
             BIO_printf(bio_err, "%s: Not a directory: %s\n", prog, arg);
             return -1;
         case '<':
             /* Input file. */
-            if (strcmp(arg, "-") == 0 || app_access(arg, R_OK) >= 0)
+            if (strcmp(arg, "-") == 0 || app_access(arg, R_OK) == 0)
                 break;
             BIO_printf(bio_err,
                        "%s: Cannot open input file %s, %s\n",
@@ -690,11 +694,38 @@ int opt_next(void)
             return -1;
         case '>':
             /* Output file. */
-            if (strcmp(arg, "-") == 0 || app_access(arg, W_OK) >= 0 || errno == ENOENT)
+#if !defined(_WIN32) && !defined(__VMS)
+            c = OPENSSL_strdup(arg);
+            if (c == NULL) {
+                BIO_printf(bio_err,
+                           "%s: Memory allocation failure\n", prog);
+                return -1;
+            }
+            oerrno = errno;
+            errno = 0;
+            if (strcmp(arg, "-") == 0
+                || (app_access(app_dirname(c), W_OK) == 0
+                    && app_isdir(arg) <= 0
+                    && (app_access(arg, W_OK) == 0 || errno == ENOENT))) {
+                OPENSSL_free(c);
                 break;
+            }
+            OPENSSL_free(c);
+            if (errno == 0)
+                /* only possible if 'arg' is a directory */
+                estr = "is a directory";
+            else
+                estr = strerror(errno);
+            errno = oerrno;
+#else
+            if (strcmp(arg, "-") == 0 || app_access(arg, W_OK) == 0
+                || errno == ENOENT)
+                break;
+            estr = strerror(errno);
+#endif
             BIO_printf(bio_err,
                        "%s: Cannot open output file %s, %s\n",
-                       prog, arg, strerror(errno));
+                       prog, arg, estr);
             return -1;
         case 'p':
         case 'n':
