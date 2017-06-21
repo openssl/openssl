@@ -22,8 +22,6 @@ RAND_bytes() puts B<num> cryptographically strong pseudo-random bytes
 into B<buf>. An error occurs if the PRNG has not been seeded with
 enough randomness to ensure an unpredictable byte sequence.
 
-RAND_pseudo_bytes() has been deprecated; use RAND_bytes() instead.
-
 =head1 RETURN VALUES
 
 RAND_bytes() returns 1 on success, -1 if not supported by the current
@@ -32,7 +30,7 @@ obtained by L<ERR_get_error(3)>.
 
 =head1 HISTORY
 
-RAND_pseudo_bytes() was deprecated in OpenSSL 1.1.0.
+RAND_pseudo_bytes() was deprecated in OpenSSL 1.1.0; use RAND_bytes() instead.
 
 =head1 SEE ALSO
 

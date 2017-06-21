@@ -577,7 +577,7 @@ static int prime_field_tests(void)
         || !TEST_true(EC_POINTs_mul(group, R, z, 2, points, scalars, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, R, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, R, Q, ctx))
-        || !TEST_true(BN_pseudo_rand(y, BN_num_bits(y), 0, 0))
+        || !TEST_true(BN_rand(y, BN_num_bits(y), 0, 0))
         || !TEST_true(BN_add(z, z, y)))
         goto err;
     BN_set_negative(z, 1);
@@ -586,7 +586,7 @@ static int prime_field_tests(void)
 
     if (!TEST_true(EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx))
         || !TEST_true(EC_POINT_is_at_infinity(group, P))
-        || !TEST_true(BN_pseudo_rand(x, BN_num_bits(y) - 1, 0, 0))
+        || !TEST_true(BN_rand(x, BN_num_bits(y) - 1, 0, 0))
         || !TEST_true(BN_add(z, x, y)))
         goto err;
     BN_set_negative(z, 1);
@@ -921,7 +921,7 @@ static int char2_curve_test(int n)
             || !TEST_int_eq(0, EC_POINT_cmp(group, R, Q, ctx)))
             goto err;
 
-        if (!TEST_true(BN_pseudo_rand(y, BN_num_bits(y), 0, 0))
+        if (!TEST_true(BN_rand(y, BN_num_bits(y), 0, 0))
             || !TEST_true(BN_add(z, z, y)))
             goto err;
         BN_set_negative(z, 1);
@@ -932,7 +932,7 @@ static int char2_curve_test(int n)
             || !TEST_true(EC_POINT_is_at_infinity(group, P)))
             goto err;
 
-        if (!TEST_true(BN_pseudo_rand(x, BN_num_bits(y) - 1, 0, 0))
+        if (!TEST_true(BN_rand(x, BN_num_bits(y) - 1, 0, 0))
             || !TEST_true(BN_add(z, x, y)))
             goto err;
         BN_set_negative(z, 1);
