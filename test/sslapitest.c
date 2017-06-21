@@ -1927,6 +1927,98 @@ static int test_ciphersuite_change(void)
     return testresult;
 }
 
+static int test_sigalg_change(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_SESSION *clntsess = NULL;
+    int sigalgs1[] = {NID_sha256, EVP_PKEY_RSA_PSS};
+    int sigalgs2[] = {NID_sha256, EVP_PKEY_EC};
+    int testresult = 0;
+
+    /* Create a session based on SHA-256/RSA-PSS */
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(), &sctx,
+                                       &cctx, cert, privkey))
+            || !TEST_true(SSL_CTX_set1_sigalgs(cctx, &sigalgs1, 2))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                          &clientssl, NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    clntsess = SSL_get1_session(clientssl);
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    /* Check we can resume a session with a different sigalg */
+    if (!TEST_true(SSL_CTX_set1_sigalgs(cctx, &sigalgs2, 2))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl, clntsess))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE))
+            || !TEST_true(SSL_session_reused(clientssl)))
+        goto end;
+
+    SSL_SESSION_free(clntsess);
+    clntsess = NULL;
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    /*
+     * Check that the same trick fails when tried on TLS 1.2.
+     */
+    if (!TEST_true(SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION))
+            || !TEST_true(SSL_CTX_set1_sigalgs(cctx, &sigalgs1, 2))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                          &clientssl, NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    clntsess = SSL_get1_session(clientssl);
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    /* Check if we can resume a session with a different sigalg */
+    if (!TEST_true(SSL_CTX_set1_sigalgs(cctx, &sigalgs2, 2))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl, clntsess))
+            || !TEST_false(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_SSL)))
+        goto end;
+
+    SSL_SESSION_free(clntsess);
+    clntsess = NULL;
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    testresult = 1;
+
+ end:
+    SSL_SESSION_free(clntsess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 #endif /* OPENSSL_NO_TLS1_3 */
 
 static int clntaddoldcb = 0;
@@ -2352,6 +2444,7 @@ int test_main(int argc, char *argv[])
 #endif
 #ifndef OPENSSL_NO_TLS1_3
     ADD_TEST(test_ciphersuite_change);
+    ADD_TEST(test_sigalg_change);
     ADD_ALL_TESTS(test_custom_exts, 5);
 #else
     ADD_ALL_TESTS(test_custom_exts, 3);
