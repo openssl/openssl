@@ -172,8 +172,8 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
 }
 #endif
 
-#define TLS13_AES_128_GCM_SHA256_BYTES  ((const unsigned char *)"\x13\x01")
-#define TLS13_AES_256_GCM_SHA384_BYTES  ((const unsigned char *)"\x13\x02")
+const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
+const unsigned char tls13_aes256gcmsha384_id[] = { 0x13, 0x02 };
 
 static int psk_use_session_cb(SSL *s, const EVP_MD *md,
                               const unsigned char **id, size_t *idlen,
@@ -196,9 +196,9 @@ static int psk_use_session_cb(SSL *s, const EVP_MD *md,
         }
 
         if (key_len == EVP_MD_size(EVP_sha256()))
-            cipher = SSL_CIPHER_find(s, TLS13_AES_128_GCM_SHA256_BYTES);
+            cipher = SSL_CIPHER_find(s, tls13_aes128gcmsha256_id);
         else if(key_len == EVP_MD_size(EVP_sha384()))
-            cipher = SSL_CIPHER_find(s, TLS13_AES_256_GCM_SHA384_BYTES);
+            cipher = SSL_CIPHER_find(s, tls13_aes256gcmsha384_id);
 
         if (cipher == NULL) {
             /* Doesn't look like a suitable TLSv1.3 key. Ignore it */
