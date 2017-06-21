@@ -117,11 +117,12 @@ static long socket_mtu;
 static int dtlslisten = 0;
 
 static int early_data = 0;
+static SSL_SESSION *psksess = NULL;
 
-#ifndef OPENSSL_NO_PSK
 static char *psk_identity = "Client_identity";
 char *psk_key = NULL;           /* by default PSK is not used */
 
+#ifndef OPENSSL_NO_PSK
 static unsigned int psk_server_cb(SSL *ssl, const char *identity,
                                   unsigned char *psk,
                                   unsigned int max_psk_len)
@@ -177,6 +178,59 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
     return 0;
 }
 #endif
+
+#define TLS13_AES_128_GCM_SHA256_BYTES  ((const unsigned char *)"\x13\x01")
+#define TLS13_AES_256_GCM_SHA384_BYTES  ((const unsigned char *)"\x13\x02")
+
+static int psk_find_session_cb(SSL *ssl, const unsigned char *identity,
+                               size_t identity_len, SSL_SESSION **sess)
+{
+    SSL_SESSION *tmpsess = NULL;
+    unsigned char *key;
+    long key_len;
+    const SSL_CIPHER *cipher = NULL;
+
+    if (strlen(psk_identity) != identity_len
+            || memcmp(psk_identity, identity, identity_len) != 0)
+        return 0;
+
+    if (psksess != NULL) {
+        SSL_SESSION_up_ref(psksess);
+        *sess = psksess;
+        return 1;
+    }
+
+    key = OPENSSL_hexstr2buf(psk_key, &key_len);
+    if (key == NULL) {
+        BIO_printf(bio_err, "Could not convert PSK key '%s' to buffer\n",
+                   psk_key);
+        return 0;
+    }
+
+    if (key_len == EVP_MD_size(EVP_sha256()))
+        cipher = SSL_CIPHER_find(ssl, tls13_aes128gcmsha256_id);
+    else if(key_len == EVP_MD_size(EVP_sha384()))
+        cipher = SSL_CIPHER_find(ssl, tls13_aes256gcmsha384_id);
+
+    if (cipher == NULL) {
+        /* Doesn't look like a suitable TLSv1.3 key. Ignore it */
+        OPENSSL_free(key);
+        return 0;
+    }
+
+    tmpsess = SSL_SESSION_new();
+    if (tmpsess == NULL
+            || !SSL_SESSION_set1_master_key(tmpsess, key, key_len)
+            || !SSL_SESSION_set_cipher(tmpsess, cipher)
+            || !SSL_SESSION_set_protocol_version(tmpsess, SSL_version(ssl))) {
+        OPENSSL_free(key);
+        return 0;
+    }
+    OPENSSL_free(key);
+    *sess = tmpsess;
+
+    return 1;
+}
 
 #ifndef OPENSSL_NO_SRP
 /* This is a context that we pass to callbacks */
@@ -685,9 +739,9 @@ typedef enum OPTION_choice {
     OPT_STATUS_TIMEOUT, OPT_STATUS_URL, OPT_STATUS_FILE, OPT_MSG, OPT_MSGFILE,
     OPT_TRACE, OPT_SECURITY_DEBUG, OPT_SECURITY_DEBUG_VERBOSE, OPT_STATE,
     OPT_CRLF, OPT_QUIET, OPT_BRIEF, OPT_NO_DHE,
-    OPT_NO_RESUME_EPHEMERAL, OPT_PSK_IDENTITY, OPT_PSK_HINT, OPT_PSK, OPT_SRPVFILE,
-    OPT_SRPUSERSEED, OPT_REV, OPT_WWW, OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC,
-    OPT_SSL_CONFIG,
+    OPT_NO_RESUME_EPHEMERAL, OPT_PSK_IDENTITY, OPT_PSK_HINT, OPT_PSK,
+    OPT_PSK_SESS, OPT_SRPVFILE, OPT_SRPUSERSEED, OPT_REV, OPT_WWW,
+    OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC, OPT_SSL_CONFIG,
     OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_SSL3, OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN,
@@ -838,11 +892,12 @@ const OPTIONS s_server_options[] = {
     OPT_V_OPTIONS,
     OPT_X_OPTIONS,
     {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
-#ifndef OPENSSL_NO_PSK
     {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity to expect"},
+#ifndef OPENSSL_NO_PSK
     {"psk_hint", OPT_PSK_HINT, 's', "PSK identity hint to use"},
-    {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
 #endif
+    {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
+    {"psk_session", OPT_PSK_SESS, '<', "File to read PSK SSL session from"},
 #ifndef OPENSSL_NO_SRP
     {"srpvfile", OPT_SRPVFILE, '<', "The verifier file for SRP"},
     {"srpuserseed", OPT_SRPUSERSEED, 's',
@@ -956,8 +1011,8 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_PSK
     /* by default do not send a PSK identity hint */
     char *psk_identity_hint = NULL;
-    char *p;
 #endif
+    char *p;
 #ifndef OPENSSL_NO_SRP
     char *srpuserseed = NULL;
     char *srp_verifier_file = NULL;
@@ -977,6 +1032,7 @@ int s_server_main(int argc, char *argv[])
     const char *s_serverinfo_file = NULL;
     const char *keylog_file = NULL;
     int max_early_data = -1;
+    char *psksessf = NULL;
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1323,9 +1379,7 @@ int s_server_main(int argc, char *argv[])
             no_resume_ephemeral = 1;
             break;
         case OPT_PSK_IDENTITY:
-#ifndef OPENSSL_NO_PSK
             psk_identity = opt_arg();
-#endif
             break;
         case OPT_PSK_HINT:
 #ifndef OPENSSL_NO_PSK
@@ -1333,14 +1387,15 @@ int s_server_main(int argc, char *argv[])
 #endif
             break;
         case OPT_PSK:
-#ifndef OPENSSL_NO_PSK
             for (p = psk_key = opt_arg(); *p; p++) {
                 if (isxdigit(_UC(*p)))
                     continue;
                 BIO_printf(bio_err, "Not a hex number '%s'\n", *argv);
                 goto end;
             }
-#endif
+            break;
+        case OPT_PSK_SESS:
+            psksessf = opt_arg();
             break;
         case OPT_SRPVFILE:
 #ifndef OPENSSL_NO_SRP
@@ -1940,6 +1995,26 @@ int s_server_main(int argc, char *argv[])
         goto end;
     }
 #endif
+    if (psksessf != NULL) {
+        BIO *stmp = BIO_new_file(psksessf, "r");
+
+        if (stmp == NULL) {
+            BIO_printf(bio_err, "Can't open PSK session file %s\n", psksessf);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        psksess = PEM_read_bio_SSL_SESSION(stmp, NULL, 0, NULL);
+        BIO_free(stmp);
+        if (psksess == NULL) {
+            BIO_printf(bio_err, "Can't read PSK session file %s\n", psksessf);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+
+    }
+
+    if (psk_key != NULL || psksess != NULL)
+        SSL_CTX_set_psk_find_session_callback(ctx, psk_find_session_cb);
 
     SSL_CTX_set_verify(ctx, s_server_verify, verify_callback);
     if (!SSL_CTX_set_session_id_context(ctx,

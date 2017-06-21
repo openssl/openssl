@@ -772,6 +772,22 @@ const char *SSL_get_psk_identity_hint(const SSL *s);
 const char *SSL_get_psk_identity(const SSL *s);
 # endif
 
+typedef int (*SSL_psk_find_session_cb_func)(SSL *ssl,
+                                            const unsigned char *identity,
+                                            size_t identity_len,
+                                            SSL_SESSION **sess);
+typedef int (*SSL_psk_use_session_cb_func)(SSL *ssl, const EVP_MD *md,
+                                           const unsigned char **id,
+                                           size_t *idlen,
+                                           SSL_SESSION **sess);
+
+void SSL_set_psk_find_session_callback(SSL *s, SSL_psk_find_session_cb_func cb);
+void SSL_CTX_set_psk_find_session_callback(SSL_CTX *ctx,
+                                           SSL_psk_find_session_cb_func cb);
+void SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb);
+void SSL_CTX_set_psk_use_session_callback(SSL_CTX *ctx,
+                                          SSL_psk_use_session_cb_func cb);
+
 /* Register callbacks to handle custom TLS Extensions for client or server. */
 
 __owur int SSL_CTX_has_client_custom_ext(const SSL_CTX *ctx,
@@ -1403,6 +1419,7 @@ __owur const char *SSL_CIPHER_get_name(const SSL_CIPHER *c);
 __owur uint32_t SSL_CIPHER_get_id(const SSL_CIPHER *c);
 __owur int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c);
 __owur int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c);
+__owur const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c);
 __owur int SSL_CIPHER_is_aead(const SSL_CIPHER *c);
 
 __owur int SSL_get_fd(const SSL *s);
@@ -1490,8 +1507,11 @@ __owur long SSL_SESSION_set_time(SSL_SESSION *s, long t);
 __owur long SSL_SESSION_get_timeout(const SSL_SESSION *s);
 __owur long SSL_SESSION_set_timeout(SSL_SESSION *s, long t);
 __owur int SSL_SESSION_get_protocol_version(const SSL_SESSION *s);
+__owur int SSL_SESSION_set_protocol_version(SSL_SESSION *s, int version);
+
 __owur const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s);
 __owur const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSION *s);
+__owur int SSL_SESSION_set_cipher(SSL_SESSION *s, const SSL_CIPHER *cipher);
 __owur int SSL_SESSION_has_ticket(const SSL_SESSION *s);
 __owur unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s);
 void SSL_SESSION_get0_ticket(const SSL_SESSION *s, const unsigned char **tick,
@@ -1845,6 +1865,8 @@ __owur size_t SSL_get_server_random(const SSL *ssl, unsigned char *out,
                                     size_t outlen);
 __owur size_t SSL_SESSION_get_master_key(const SSL_SESSION *ssl,
                                          unsigned char *out, size_t outlen);
+__owur int SSL_SESSION_set1_master_key(SSL_SESSION *sess,
+                                       const unsigned char *in, size_t len);
 
 #define SSL_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_SSL, l, p, newf, dupf, freef)

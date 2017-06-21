@@ -419,6 +419,8 @@ int SSL_clear(SSL *s)
         SSL_SESSION_free(s->session);
         s->session = NULL;
     }
+    SSL_SESSION_free(s->psksession);
+    s->psksession = NULL;
 
     s->error = 0;
     s->hit = 0;
@@ -634,6 +636,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->psk_client_callback = ctx->psk_client_callback;
     s->psk_server_callback = ctx->psk_server_callback;
 #endif
+    s->psk_find_session_cb = ctx->psk_find_session_cb;
+    s->psk_use_session_cb = ctx->psk_use_session_cb;
 
     s->job = NULL;
 
@@ -969,6 +973,7 @@ void SSL_free(SSL *s)
         ssl_clear_bad_session(s);
         SSL_SESSION_free(s->session);
     }
+    SSL_SESSION_free(s->psksession);
 
     clear_ciphers(s);
 
@@ -3720,6 +3725,18 @@ size_t SSL_SESSION_get_master_key(const SSL_SESSION *session,
     return outlen;
 }
 
+int SSL_SESSION_set1_master_key(SSL_SESSION *sess, const unsigned char *in,
+                                size_t len)
+{
+    if (len > sizeof(sess->master_key))
+        return 0;
+
+    memcpy(sess->master_key, in, len);
+    sess->master_key_length = len;
+    return 1;
+}
+
+
 int SSL_set_ex_data(SSL *s, int idx, void *arg)
 {
     return (CRYPTO_set_ex_data(&s->ex_data, idx, arg));
@@ -3854,6 +3871,28 @@ void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx, SSL_psk_server_cb_func cb)
     ctx->psk_server_callback = cb;
 }
 #endif
+
+void SSL_set_psk_find_session_callback(SSL *s, SSL_psk_find_session_cb_func cb)
+{
+    s->psk_find_session_cb = cb;
+}
+
+void SSL_CTX_set_psk_find_session_callback(SSL_CTX *ctx,
+                                           SSL_psk_find_session_cb_func cb)
+{
+    ctx->psk_find_session_cb = cb;
+}
+
+void SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb)
+{
+    s->psk_use_session_cb = cb;
+}
+
+void SSL_CTX_set_psk_use_session_callback(SSL_CTX *ctx,
+                                           SSL_psk_use_session_cb_func cb)
+{
+    ctx->psk_use_session_cb = cb;
+}
 
 void SSL_CTX_set_msg_callback(SSL_CTX *ctx,
                               void (*cb) (int write_p, int version,

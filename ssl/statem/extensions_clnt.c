@@ -791,10 +791,13 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
 {
 #ifndef OPENSSL_NO_TLS1_3
     uint32_t now, agesec, agems;
-    size_t hashsize, binderoffset, msglen;
-    unsigned char *binder = NULL, *msgstart = NULL;
-    const EVP_MD *md;
+    size_t reshashsize, pskhashsize, binderoffset, msglen, idlen;
+    unsigned char *resbinder = NULL, *pskbinder = NULL, *msgstart = NULL;
+    const unsigned char *id;
+    const EVP_MD *handmd = NULL, *mdres, *mdpsk;
     EXT_RETURN ret = EXT_RETURN_FAIL;
+    SSL_SESSION *psksess = NULL;
+    int dores = 0;
 
     s->session->ext.tick_identity = TLSEXT_PSK_BAD_IDENTITY;
 
@@ -809,76 +812,140 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
      * so don't add this extension.
      */
     if (s->session->ssl_version != TLS1_3_VERSION
-            || s->session->ext.ticklen == 0)
+            || (s->session->ext.ticklen == 0 && s->psk_use_session_cb == NULL))
         return EXT_RETURN_NOT_SENT;
 
-    if (s->session->cipher == NULL) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+    if (s->hello_retry_request)
+        handmd = ssl_handshake_md(s);
+
+    if (s->psk_use_session_cb != NULL
+            && !s->psk_use_session_cb(s, handmd, &id, &idlen, &psksess)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, SSL_R_BAD_PSK);
         goto err;
     }
 
-    md = ssl_md(s->session->cipher->algorithm2);
-    if (md == NULL) {
-        /* Don't recognize this cipher so we can't use the session. Ignore it */
-        return EXT_RETURN_NOT_SENT;
-    }
+    if (s->session->ext.ticklen != 0) {
+        /* Get the digest associated with the ciphersuite in the session */
+        if (s->session->cipher == NULL) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        mdres = ssl_md(s->session->cipher->algorithm2);
+        if (mdres == NULL) {
+            /*
+             * Don't recognize this cipher so we can't use the session.
+             * Ignore it
+             */
+            goto dopsksess;
+        }
 
-    if (s->hello_retry_request && md != ssl_handshake_md(s)) {
+        if (s->hello_retry_request && mdres != handmd) {
+            /*
+             * Selected ciphersuite hash does not match the hash for the session
+             * so we can't use it.
+             */
+            goto dopsksess;
+        }
+
         /*
-         * Selected ciphersuite hash does not match the hash for the session so
-         * we can't use it.
+         * Technically the C standard just says time() returns a time_t and says
+         * nothing about the encoding of that type. In practice most
+         * implementations follow POSIX which holds it as an integral type in
+         * seconds since epoch. We've already made the assumption that we can do
+         * this in multiple places in the code, so portability shouldn't be an
+         * issue.
          */
-        return EXT_RETURN_NOT_SENT;
-    }
+        now = (uint32_t)time(NULL);
+        agesec = now - (uint32_t)s->session->time;
 
-    /*
-     * Technically the C standard just says time() returns a time_t and says
-     * nothing about the encoding of that type. In practice most implementations
-     * follow POSIX which holds it as an integral type in seconds since epoch.
-     * We've already made the assumption that we can do this in multiple places
-     * in the code, so portability shouldn't be an issue.
-     */
-    now = (uint32_t)time(NULL);
-    agesec = now - (uint32_t)s->session->time;
+        if (s->session->ext.tick_lifetime_hint < agesec) {
+            /* Ticket is too old. Ignore it. */
+            goto dopsksess;
+        }
 
-    if (s->session->ext.tick_lifetime_hint < agesec) {
-        /* Ticket is too old. Ignore it. */
-        return EXT_RETURN_NOT_SENT;
-    }
-
-    /*
-     * Calculate age in ms. We're just doing it to nearest second. Should be
-     * good enough.
-     */
-    agems = agesec * (uint32_t)1000;
-
-    if (agesec != 0 && agems / (uint32_t)1000 != agesec) {
         /*
-         * Overflow. Shouldn't happen unless this is a *really* old session. If
-         * so we just ignore it.
+         * Calculate age in ms. We're just doing it to nearest second. Should be
+         * good enough.
          */
-        return EXT_RETURN_NOT_SENT;
+        agems = agesec * (uint32_t)1000;
+
+        if (agesec != 0 && agems / (uint32_t)1000 != agesec) {
+            /*
+             * Overflow. Shouldn't happen unless this is a *really* old session.
+             * If so we just ignore it.
+             */
+            goto dopsksess;
+        }
+
+        /*
+         * Obfuscate the age. Overflow here is fine, this addition is supposed
+         * to be mod 2^32.
+         */
+        agems += s->session->ext.tick_age_add;
+
+        reshashsize = EVP_MD_size(mdres);
+        dores = 1;
     }
 
-    /*
-     * Obfuscate the age. Overflow here is fine, this addition is supposed to
-     * be mod 2^32.
-     */
-    agems += s->session->ext.tick_age_add;
+ dopsksess:
+    if (!dores && psksess == NULL)
+        return EXT_RETURN_NOT_SENT;
 
-    hashsize = EVP_MD_size(md);
+    if (psksess != NULL) {
+        mdpsk = ssl_md(psksess->cipher->algorithm2);
+        if (mdpsk == NULL) {
+            /*
+             * Don't recognize this cipher so we can't use the session.
+             * If this happens it's an application bug.
+             */
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, SSL_R_BAD_PSK);
+            goto err;
+        }
+
+        if (s->hello_retry_request && mdpsk != handmd) {
+            /*
+             * Selected ciphersuite hash does not match the hash for the PSK
+             * session. This is an application bug.
+             */
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, SSL_R_BAD_PSK);
+            goto err;
+        }
+
+        pskhashsize = EVP_MD_size(mdpsk);
+    }
 
     /* Create the extension, but skip over the binder for now */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk)
             || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_sub_memcpy_u16(pkt, s->session->ext.tick,
-                                       s->session->ext.ticklen)
-            || !WPACKET_put_bytes_u32(pkt, agems)
-            || !WPACKET_close(pkt)
+            || !WPACKET_start_sub_packet_u16(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (dores) {
+        if (!WPACKET_sub_memcpy_u16(pkt, s->session->ext.tick,
+                                           s->session->ext.ticklen)
+                || !WPACKET_put_bytes_u32(pkt, agems)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    }
+
+    if (psksess != NULL) {
+        if (!WPACKET_sub_memcpy_u16(pkt, id, idlen)
+                || !WPACKET_put_bytes_u32(pkt, 0)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    }
+
+    if (!WPACKET_close(pkt)
             || !WPACKET_get_total_written(pkt, &binderoffset)
             || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_sub_allocate_bytes_u8(pkt, hashsize, &binder)
+            || (dores
+                && !WPACKET_sub_allocate_bytes_u8(pkt, reshashsize, &resbinder))
+            || (psksess != NULL
+                && !WPACKET_sub_allocate_bytes_u8(pkt, pskhashsize, &pskbinder))
             || !WPACKET_close(pkt)
             || !WPACKET_close(pkt)
             || !WPACKET_get_total_written(pkt, &msglen)
@@ -893,16 +960,31 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
 
     msgstart = WPACKET_get_curr(pkt) - msglen;
 
-    if (tls_psk_do_binder(s, md, msgstart, binderoffset, NULL, binder,
-                          s->session, 1) != 1) {
+    if (dores
+            && tls_psk_do_binder(s, mdres, msgstart, binderoffset, NULL,
+                                 resbinder, s->session, 1, 0) != 1) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    s->session->ext.tick_identity = 0;
+    if (psksess != NULL
+            && tls_psk_do_binder(s, mdpsk, msgstart, binderoffset, NULL,
+                                 pskbinder, psksess, 1, 1) != 1) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (dores)
+        s->session->ext.tick_identity = 0;
+    SSL_SESSION_free(s->psksession);
+    s->psksession = psksess;
+    if (psksess != NULL)
+        s->psksession->ext.tick_identity = (dores ? 1 : 0);
+    psksess = NULL;
 
     ret = EXT_RETURN_SENT;
  err:
+    SSL_SESSION_free(psksess);
     return ret;
 #else
     return 1;
@@ -1508,12 +1590,24 @@ int tls_parse_stoc_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    if (s->session->ext.tick_identity != (int)identity) {
+    if (s->session->ext.tick_identity == (int)identity) {
+        s->hit = 1;
+        SSL_SESSION_free(s->psksession);
+        s->psksession = NULL;
+        return 1;
+    }
+
+    if (s->psksession == NULL
+            || s->psksession->ext.tick_identity != (int)identity) {
         *al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PARSE_STOC_PSK, SSL_R_BAD_PSK_IDENTITY);
         return 0;
     }
 
+    SSL_SESSION_free(s->session);
+    s->session = s->psksession;
+    s->psksession = NULL;
+    memcpy(s->early_secret, s->session->early_secret, EVP_MAX_MD_SIZE);
     s->hit = 1;
 #endif
 

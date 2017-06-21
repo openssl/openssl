@@ -55,6 +55,8 @@ extern char *default_config_file;
 extern BIO *bio_in;
 extern BIO *bio_out;
 extern BIO *bio_err;
+extern const unsigned char tls13_aes128gcmsha256_id[];
+extern const unsigned char tls13_aes256gcmsha384_id[];
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
 BIO *dup_bio_err(int format);
@@ -515,9 +517,9 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts);
 int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts);
-# ifndef OPENSSL_NO_PSK
+
 extern char *psk_key;
-# endif
+
 
 unsigned char *next_protos_parse(size_t *outlen, const char *in);
 

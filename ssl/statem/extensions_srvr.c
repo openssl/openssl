@@ -686,9 +686,8 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     PACKET identities, binders, binder;
     size_t binderoffset, hashsize;
     SSL_SESSION *sess = NULL;
-    unsigned int id, i;
+    unsigned int id, i, ext = 0;
     const EVP_MD *md = NULL;
-    uint32_t ticket_age = 0, now, agesec, agems;
 
     /*
      * If we have no PSK kex mode that we recognise then we can't resume so
@@ -706,7 +705,6 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     for (id = 0; PACKET_remaining(&identities) != 0; id++) {
         PACKET identity;
         unsigned long ticket_agel;
-        int ret;
 
         if (!PACKET_get_length_prefixed_2(&identities, &identity)
                 || !PACKET_get_net_4(&identities, &ticket_agel)) {
@@ -714,16 +712,71 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             return 0;
         }
 
-        ticket_age = (uint32_t)ticket_agel;
-
-        ret = tls_decrypt_ticket(s, PACKET_data(&identity),
-                                 PACKET_remaining(&identity), NULL, 0, &sess);
-        if (ret == TICKET_FATAL_ERR_MALLOC || ret == TICKET_FATAL_ERR_OTHER) {
+        if (s->psk_find_session_cb != NULL
+                && !s->psk_find_session_cb(s, PACKET_data(&identity),
+                                           PACKET_remaining(&identity),
+                                           &sess)) {
             *al = SSL_AD_INTERNAL_ERROR;
             return 0;
         }
-        if (ret == TICKET_NO_DECRYPT)
-            continue;
+
+        if (sess != NULL) {
+            /* We found a PSK */
+            SSL_SESSION *sesstmp = ssl_session_dup(sess, 0);
+
+            if (sesstmp == NULL) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                return 0;
+            }
+            SSL_SESSION_free(sess);
+            sess = sesstmp;
+
+            /*
+             * We've just been told to use this session for this context so
+             * make sure the sid_ctx matches up.
+             */
+            memcpy(sess->sid_ctx, s->sid_ctx, s->sid_ctx_length);
+            sess->sid_ctx_length = s->sid_ctx_length;
+            ext = 1;
+        } else {
+            uint32_t ticket_age = 0, now, agesec, agems;
+            int ret = tls_decrypt_ticket(s, PACKET_data(&identity),
+                                         PACKET_remaining(&identity), NULL, 0,
+                                         &sess);
+
+            if (ret == TICKET_FATAL_ERR_MALLOC
+                    || ret == TICKET_FATAL_ERR_OTHER) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                return 0;
+            }
+            if (ret == TICKET_NO_DECRYPT)
+                continue;
+
+            ticket_age = (uint32_t)ticket_agel;
+            now = (uint32_t)time(NULL);
+            agesec = now - (uint32_t)sess->time;
+            agems = agesec * (uint32_t)1000;
+            ticket_age -= sess->ext.tick_age_add;
+
+            /*
+             * For simplicity we do our age calculations in seconds. If the
+             * client does it in ms then it could appear that their ticket age
+             * is longer than ours (our ticket age calculation should always be
+             * slightly longer than the client's due to the network latency).
+             * Therefore we add 1000ms to our age calculation to adjust for
+             * rounding errors.
+             */
+            if (sess->timeout >= (long)agesec
+                    && agems / (uint32_t)1000 == agesec
+                    && ticket_age <= agems + 1000
+                    && ticket_age + TICKET_AGE_ALLOWANCE >= agems + 1000) {
+                /*
+                 * Ticket age is within tolerance and not expired. We allow it
+                 * for early data
+                 */
+                s->ext.early_data_ok = 1;
+            }
+        }
 
         md = ssl_md(sess->cipher->algorithm2);
         if (md != ssl_md(s->s3->tmp.new_cipher->algorithm2)) {
@@ -732,12 +785,6 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             sess = NULL;
             continue;
         }
-
-        /*
-         * TODO(TLS1.3): Somehow we need to handle the case of a ticket renewal.
-         * Ignored for now
-         */
-
         break;
     }
 
@@ -763,38 +810,13 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             || tls_psk_do_binder(s, md,
                                  (const unsigned char *)s->init_buf->data,
                                  binderoffset, PACKET_data(&binder), NULL,
-                                 sess, 0) != 1) {
+                                 sess, 0, ext) != 1) {
         *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PARSE_CTOS_PSK, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
     sess->ext.tick_identity = id;
-
-    now = (uint32_t)time(NULL);
-    agesec = now - (uint32_t)sess->time;
-    agems = agesec * (uint32_t)1000;
-    ticket_age -= sess->ext.tick_age_add;
-
-
-    /*
-     * For simplicity we do our age calculations in seconds. If the client does
-     * it in ms then it could appear that their ticket age is longer than ours
-     * (our ticket age calculation should always be slightly longer than the
-     * client's due to the network latency). Therefore we add 1000ms to our age
-     * calculation to adjust for rounding errors.
-     */
-    if (sess->timeout >= (long)agesec
-            && agems / (uint32_t)1000 == agesec
-            && ticket_age <= agems + 1000
-            && ticket_age + TICKET_AGE_ALLOWANCE >= agems + 1000) {
-        /*
-         * Ticket age is within tolerance and not expired. We allow it for early
-         * data
-         */
-        s->ext.early_data_ok = 1;
-    }
-
 
     SSL_SESSION_free(s->session);
     s->session = sess;

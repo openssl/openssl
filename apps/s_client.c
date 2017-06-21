@@ -65,6 +65,7 @@ static int keymatexportlen = 20;
 static BIO *bio_c_out = NULL;
 static int c_quiet = 0;
 static char *sess_out = NULL;
+static SSL_SESSION *psksess = NULL;
 
 static void print_stuff(BIO *berr, SSL *con, int full);
 #ifndef OPENSSL_NO_OCSP
@@ -108,10 +109,10 @@ static void do_ssl_shutdown(SSL *ssl)
     } while (ret < 0);
 }
 
-#ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
 static char *psk_identity = "Client_identity";
 
+#ifndef OPENSSL_NO_PSK
 static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
                                   unsigned int max_identity_len,
                                   unsigned char *psk,
@@ -170,6 +171,76 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
     return 0;
 }
 #endif
+
+const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
+const unsigned char tls13_aes256gcmsha384_id[] = { 0x13, 0x02 };
+
+static int psk_use_session_cb(SSL *s, const EVP_MD *md,
+                              const unsigned char **id, size_t *idlen,
+                              SSL_SESSION **sess)
+{
+    SSL_SESSION *usesess = NULL;
+    const SSL_CIPHER *cipher = NULL;
+
+    if (psksess != NULL) {
+        SSL_SESSION_up_ref(psksess);
+        usesess = psksess;
+    } else {
+        long key_len;
+        unsigned char *key = OPENSSL_hexstr2buf(psk_key, &key_len);
+
+        if (key == NULL) {
+            BIO_printf(bio_err, "Could not convert PSK key '%s' to buffer\n",
+                       psk_key);
+            return 0;
+        }
+
+        if (key_len == EVP_MD_size(EVP_sha256()))
+            cipher = SSL_CIPHER_find(s, tls13_aes128gcmsha256_id);
+        else if(key_len == EVP_MD_size(EVP_sha384()))
+            cipher = SSL_CIPHER_find(s, tls13_aes256gcmsha384_id);
+
+        if (cipher == NULL) {
+            /* Doesn't look like a suitable TLSv1.3 key. Ignore it */
+            OPENSSL_free(key);
+            *id = NULL;
+            *idlen = 0;
+            *sess = NULL;
+            return 0;
+        }
+        usesess = SSL_SESSION_new();
+        if (usesess == NULL
+                || !SSL_SESSION_set1_master_key(usesess, key, key_len)
+                || !SSL_SESSION_set_cipher(usesess, cipher)
+                || !SSL_SESSION_set_protocol_version(usesess, TLS1_3_VERSION)) {
+            OPENSSL_free(key);
+            goto err;
+        }
+        OPENSSL_free(key);
+    }
+
+    cipher = SSL_SESSION_get0_cipher(usesess);
+    if (cipher == NULL)
+        goto err;
+
+    if (md != NULL && SSL_CIPHER_get_handshake_digest(cipher) != md) {
+        /* PSK not usable, ignore it */
+        *id = NULL;
+        *idlen = 0;
+        *sess = NULL;
+        SSL_SESSION_free(usesess);
+    } else {
+        *sess = usesess;
+        *id = (unsigned char *)psk_identity;
+        *idlen = strlen(psk_identity);
+    }
+
+    return 1;
+
+ err:
+    SSL_SESSION_free(usesess);
+    return 0;
+}
 
 /* This is a context that we pass to callbacks */
 typedef struct tlsextctx_st {
@@ -505,9 +576,7 @@ typedef enum OPTION_choice {
     OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_WDEBUG,
     OPT_MSG, OPT_MSGFILE, OPT_ENGINE, OPT_TRACE, OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE, OPT_SHOWCERTS, OPT_NBIO_TEST, OPT_STATE,
-#ifndef OPENSSL_NO_PSK
-    OPT_PSK_IDENTITY, OPT_PSK,
-#endif
+    OPT_PSK_IDENTITY, OPT_PSK, OPT_PSK_SESS,
 #ifndef OPENSSL_NO_SRP
     OPT_SRPUSER, OPT_SRPPASS, OPT_SRP_STRENGTH, OPT_SRP_LATEUSER,
     OPT_SRP_MOREGROUPS,
@@ -686,10 +755,9 @@ const OPTIONS s_client_options[] = {
     {"wdebug", OPT_WDEBUG, '-', "WATT-32 tcp debugging"},
 #endif
     {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
-#ifndef OPENSSL_NO_PSK
     {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity"},
     {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
-#endif
+    {"psk_session", OPT_PSK_SESS, '<', "File to read PSK SSL session from"},
 #ifndef OPENSSL_NO_SRP
     {"srpuser", OPT_SRPUSER, 's', "SRP authentication for 'user'"},
     {"srppass", OPT_SRPPASS, 's', "Password for 'user'"},
@@ -886,6 +954,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DTLS
     int isdtls = 0;
 #endif
+    char *psksessf = NULL;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1134,7 +1203,6 @@ int s_client_main(int argc, char **argv)
         case OPT_STATE:
             state = 1;
             break;
-#ifndef OPENSSL_NO_PSK
         case OPT_PSK_IDENTITY:
             psk_identity = opt_arg();
             break;
@@ -1146,7 +1214,9 @@ int s_client_main(int argc, char **argv)
                 goto end;
             }
             break;
-#endif
+        case OPT_PSK_SESS:
+            psksessf = opt_arg();
+            break;
 #ifndef OPENSSL_NO_SRP
         case OPT_SRPUSER:
             srp_arg.srplogin = opt_arg();
@@ -1656,6 +1726,25 @@ int s_client_main(int argc, char **argv)
         SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
     }
 #endif
+    if (psksessf != NULL) {
+        BIO *stmp = BIO_new_file(psksessf, "r");
+
+        if (stmp == NULL) {
+            BIO_printf(bio_err, "Can't open PSK session file %s\n", psksessf);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        psksess = PEM_read_bio_SSL_SESSION(stmp, NULL, 0, NULL);
+        BIO_free(stmp);
+        if (psksess == NULL) {
+            BIO_printf(bio_err, "Can't read PSK session file %s\n", psksessf);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
+    if (psk_key != NULL || psksess != NULL)
+        SSL_CTX_set_psk_use_session_callback(ctx, psk_use_session_cb);
+
 #ifndef OPENSSL_NO_SRTP
     if (srtp_profiles != NULL) {
         /* Returns 0 on success! */
