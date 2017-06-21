@@ -23,17 +23,17 @@
 # pointers to T[][] and A[][] and the end of round. Since number of
 # rounds is even last round writes to A[][] and everything works out.
 # It's argued that MMX is the only code path meaningful to implement
-# for x86. This is because non-MMX-capable processors is extincted
+# for x86. This is because non-MMX-capable processors is extinct
 # breed, and they as well can lurk executing compiler-generated code.
 # For reference gcc-5.x-generated KECCAK_2X code takes 89 cycles per
-# processed byte on Pentium. Which is fair result. But older compiler
-# is worse. On the other hand one can wonder why not 128-bit SSE2.
-# Well, SSE2 won't provide double improvement, rather far from that,
-# if any at all on some processors, because it will take permutations
-# and extra inter-bank data trasfers. Besides, contemporary CPUs are
-# better off executing 64-bit code, and it makes lesser sense to
-# invest into fancy 32-bit code. And the decision doesn't seem to be
-# inadequate if one compares below results to "64-bit platforms in
+# processed byte on Pentium. Which is fair result. But older compiler,
+# worse the result. On the other hand one can wonder why not 128-bit
+# SSE2? Well, SSE2 won't provide double improvement, rather far from
+# that, if any at all on some processors, because it will take extra
+# permutations and inter-bank data trasfers. Besides, contemporary
+# CPUs are better off executing 64-bit code, and it makes lesser sense
+# to invest into fancy 32-bit code. And the decision doesn't seem to
+# be inadequate, if one compares below results to "64-bit platforms in
 # 32-bit mode" SIMD data points available at
 # http://keccak.noekeon.org/sw_performance.html.
 #
