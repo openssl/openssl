@@ -14,7 +14,7 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
-static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
+static int bnrand(int testing, BIGNUM *rnd, int bits, int top, int bottom)
 {
     unsigned char *buf = NULL;
     int ret = 0, bit, bytes, mask;
@@ -46,7 +46,7 @@ static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
     if (RAND_bytes(buf, bytes) <= 0)
         goto err;
 
-    if (pseudorand == 2) {
+    if (testing) {
         /*
          * generate patterns that are more likely to trigger BN library bugs
          */
@@ -98,21 +98,14 @@ int BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
     return bnrand(0, rnd, bits, top, bottom);
 }
 
-int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom)
+int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
     return bnrand(1, rnd, bits, top, bottom);
 }
 
-int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom)
-{
-    return bnrand(2, rnd, bits, top, bottom);
-}
-
 /* random number r:  0 <= r < range */
-static int bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
+int BN_rand_range(BIGNUM *r, const BIGNUM *range)
 {
-    int (*bn_rand) (BIGNUM *, int, int, int) =
-        pseudo ? BN_pseudo_rand : BN_rand;
     int n;
     int count = 100;
 
@@ -133,7 +126,7 @@ static int bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
          * than range
          */
         do {
-            if (!bn_rand(r, n + 1, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
+            if (!BN_rand(r, n + 1, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
                 return 0;
             /*
              * If r < 3*range, use r := r MOD range (which is either r, r -
@@ -159,7 +152,7 @@ static int bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
     } else {
         do {
             /* range = 11..._2  or  range = 101..._2 */
-            if (!bn_rand(r, n, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
+            if (!BN_rand(r, n, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
                 return 0;
 
             if (!--count) {
@@ -174,14 +167,14 @@ static int bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
     return 1;
 }
 
-int BN_rand_range(BIGNUM *r, const BIGNUM *range)
+int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
-    return bn_rand_range(0, r, range);
+    return BN_rand(rnd, bits, top, bottom);
 }
 
 int BN_pseudo_rand_range(BIGNUM *r, const BIGNUM *range)
 {
-    return bn_rand_range(1, r, range);
+    return BN_rand_range(r, range);
 }
 
 /*

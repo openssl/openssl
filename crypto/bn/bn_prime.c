@@ -216,7 +216,7 @@ int BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
         goto err;
 
     for (i = 0; i < checks; i++) {
-        if (!BN_pseudo_rand_range(check, A1))
+        if (!BN_rand_range(check, A1))
             goto err;
         if (!BN_add_word(check, 1))
             goto err;
