@@ -145,7 +145,7 @@ extern "C" {
  */
 
 # ifdef BN_DEBUG
-
+#  include <assert.h>
 #  ifdef BN_DEBUG_RAND
 #   define bn_pollute(a) \
         do { \
@@ -169,8 +169,8 @@ extern "C" {
         do { \
                 const BIGNUM *_bnum2 = (a); \
                 if (_bnum2 != NULL) { \
-                        OPENSSL_assert(((_bnum2->top == 0) && !_bnum2->neg) || \
-                                (_bnum2->top && (_bnum2->d[_bnum2->top - 1] != 0))); \
+                        assert(((_bnum2->top == 0) && !_bnum2->neg) || \
+                               (_bnum2->top && (_bnum2->d[_bnum2->top - 1] != 0))); \
                         bn_pollute(_bnum2); \
                 } \
         } while(0)
@@ -181,8 +181,8 @@ extern "C" {
 #  define bn_wcheck_size(bn, words) \
         do { \
                 const BIGNUM *_bnum2 = (bn); \
-                OPENSSL_assert((words) <= (_bnum2)->dmax && \
-                        (words) >= (_bnum2)->top); \
+                assert((words) <= (_bnum2)->dmax && \
+                       (words) >= (_bnum2)->top); \
                 /* avoid unused variable warning with NDEBUG */ \
                 (void)(_bnum2); \
         } while(0)
