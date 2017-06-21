@@ -14,13 +14,7 @@
 
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
 
-#ifdef OPENSSL_NO_EC
-int main(int argc, char *argv[])
-{
-    puts("Elliptic curves are disabled.");
-    return 0;
-}
-#else
+#ifndef OPENSSL_NO_EC
 
 # include <openssl/crypto.h>
 # include <openssl/bio.h>
@@ -403,9 +397,13 @@ static int test_builtin(void)
 
 void register_tests(void)
 {
+#ifdef OPENSSL_NO_EC
+    TEST_note("Elliptic curves are disabled.");
+#else
     /* initialize the prng */
     RAND_seed(rnd_seed, sizeof(rnd_seed));
     ADD_TEST(x9_62_tests);
     ADD_TEST(test_builtin);
+#endif
 }
 #endif

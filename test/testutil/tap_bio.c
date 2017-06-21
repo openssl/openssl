@@ -11,11 +11,6 @@
 #include <string.h>
 #include "tu_local.h"
 
-typedef struct bio_tap_ctx_struct {
-    size_t newline;
-    size_t leadingspaces;
-} BIO_TAP_CTX;
-
 static int tap_write_ex(BIO *b, const char *buf, size_t size, size_t *in_size);
 static int tap_read_ex(BIO *b, char *buf, size_t size, size_t *out_size);
 static int tap_puts(BIO *b, const char *str);
@@ -47,13 +42,7 @@ const BIO_METHOD *BIO_f_tap(void)
 
 static int tap_new(BIO *b)
 {
-    BIO_TAP_CTX *ctx;
-
-    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL)
-        return 0;
-    ctx->newline = 1;
-    ctx->leadingspaces = 0;
-    BIO_set_data(b, ctx);
+    BIO_set_data(b, NULL);
     BIO_set_init(b, 1);
     return 1;
 }
@@ -62,7 +51,6 @@ static int tap_free(BIO *b)
 {
     if (b == NULL)
         return 0;
-    OPENSSL_free(BIO_get_data(b));
     BIO_set_data(b, NULL);
     BIO_set_init(b, 0);
     return 1;
@@ -90,109 +78,54 @@ static int write_string(BIO *b, const char *buf, size_t n)
 }
 
 /*
- * Output the specified number of spaces to the bio and return 1 if successful.
- */
-static int spaces(BIO *b, size_t n)
-{
-    size_t i;
-
-    for (i = 0; i < n; i++)
-        if (!write_string(b, " ", 1))
-            return 0;
-    return 1;
-}
-
-/*
  * Write some data.
  *
  * This function implements a simple state machine that detects new lines.
- * It indents the output and prefixes it with a '#' character if one isn't
- * already present.  Indentation after a '#' and at the beginning of a line
- * without a leading '#' is preserved.
+ * It indents the output and prefixes it with a '#' character.
  *
  * It returns the number of input characters that were output in in_size.
  * More characters than this will likely have been output however any calling
  * code will be unable to correctly assess the actual number of characters
  * emitted and would be prone to failure if the actual number were returned.
+ *
+ * The BIO_data field is used as our state.  If it is NULL, we've just
+ * seen a new line.  If it is not NULL, we're processing characters in a line.
  */
 static int tap_write_ex(BIO *b, const char *buf, size_t size, size_t *in_size)
 {
     BIO *next = BIO_next(b);
-    BIO_TAP_CTX *ctx = (BIO_TAP_CTX *)BIO_get_data(b);
-    const size_t indent = subtest_level();
-    const char *p = buf;
-    size_t i, m, n;
+    size_t i;
+    int j;
 
     for (i = 0; i < size; i++) {
-        if (ctx->newline) {
-            switch (buf[i]) {
-            case ' ':
-                ctx->leadingspaces++;
-                break;
-
-            case '\t':
-                ctx->leadingspaces = (8 + ctx->leadingspaces) & ~7;
-                break;
-
-            case '\n':
-                ctx->leadingspaces = 0;
-                if (!write_string(next, "\n", 1))
+        if (BIO_get_data(b) == NULL) {
+            BIO_set_data(b, "");
+            for (j = 0; j < subtest_level(); j++)
+                if (!write_string(next, " ", 1))
                     goto err;
-                break;
-
-            case '#':
-                if (!spaces(next, indent))
-                    goto err;
-                p = buf + i;
-                ctx->leadingspaces = ctx->newline = 0;
-                break;
-
-            default:
-                if (!spaces(next, indent) || !write_string(next, "# ", 2))
-                    goto err;
-                p = buf + i;
-                if (!spaces(next, ctx->leadingspaces))
-                    goto err;
-                ctx->leadingspaces = ctx->newline = 0;
-                break;
-            }
-        } else if (buf[i] == '\n') {
-            n = buf + i - p + 1;
-            if (BIO_write_ex(next, p, n, &m) == 0 || m != n) {
-                *in_size = p + m - buf;
-                return 0;
-            }
-            p = buf + i + 1;
-            ctx->leadingspaces = 0;
-            ctx->newline = 1;
+            if (!write_string(next, "# ", 2))
+                goto err;
         }
+        if (!write_string(next, buf + i, 1))
+            goto err;
+        if (buf[i] == '\n')
+            BIO_set_data(b, NULL);
     }
-
-    /* Output any residual characters from the end. */
-    if (!ctx->newline && p != buf + size - 1) {
-        n = buf + i - p;
-        if (BIO_write_ex(next, p, n, &m) == 0 || m != n) {
-            *in_size = p + m - buf;
-            return 0;
-        }
-    }
-    *in_size = size;
+    *in_size = i;
     return 1;
 
 err:
-    *in_size = p - buf;
+    *in_size = i;
     return 0;
 }
 
 static long tap_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     BIO *next = BIO_next(b);
-    BIO_TAP_CTX *ctx = (BIO_TAP_CTX *)BIO_get_data(b);
  
     switch (cmd) {
     case BIO_CTRL_RESET:
-        ctx->leadingspaces = 0;
-        ctx->newline = 1;
+        BIO_set_data(b, NULL);
         break;
 
     default:
