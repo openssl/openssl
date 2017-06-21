@@ -857,6 +857,44 @@ if ($target =~ m/^CygWin32(-.*)$/) {
     $target = "Cygwin".$1;
 }
 
+# Support for legacy targets having a name starting with 'debug-'
+my ($d, $t) = $target =~ m/^(debug-)?(.*)$/;
+if ($d) {
+    $config{build_type} = "debug";
+
+    # If we do not find debug-foo in the table, the target is set to foo.
+    if (!$table{$target}) {
+	$target = $t;
+    }
+}
+$config{target} = $target;
+my %target = resolve_config($target);
+
+&usage if (!%target || $target{template});
+
+my %conf_files = map { $_ => 1 } (@{$target{_conf_fname_int}});
+$config{conf_files} = [ sort keys %conf_files ];
+%target = ( %{$table{DEFAULTS}}, %target );
+
+foreach my $feature (@{$target{disable}}) {
+    if (exists $deprecated_disablables{$feature}) {
+        warn "***** config $target disables deprecated feature $feature\n";
+    } elsif (!grep { $feature eq $_ } @disablables) {
+        die "***** config $target disables unknown feature $feature\n";
+    }
+    $disabled{$feature} = 'config';
+}
+foreach my $feature (@{$target{enable}}) {
+    if ("default" eq ($disabled{$_} // "")) {
+        if (exists $deprecated_disablables{$feature}) {
+            warn "***** config $target enables deprecated feature $feature\n";
+        } elsif (!grep { $feature eq $_ } @disablables) {
+            die "***** config $target enables unknown feature $feature\n";
+        }
+        delete $disabled{$_};
+    }
+}
+
 foreach (sort (keys %disabled))
 	{
 	$config{options} .= " no-$_";
@@ -920,25 +958,6 @@ foreach (sort (keys %disabled))
 
 	print "\n";
 	}
-
-# Support for legacy targets having a name starting with 'debug-'
-my ($d, $t) = $target =~ m/^(debug-)?(.*)$/;
-if ($d) {
-    $config{build_type} = "debug";
-
-    # If we do not find debug-foo in the table, the target is set to foo.
-    if (!$table{$target}) {
-	$target = $t;
-    }
-}
-$config{target} = $target;
-my %target = resolve_config($target);
-
-&usage if (!%target || $target{template});
-
-my %conf_files = map { $_ => 1 } (@{$target{_conf_fname_int}});
-$config{conf_files} = [ sort keys %conf_files ];
-%target = ( %{$table{DEFAULTS}}, %target );
 
 $target{cxxflags}=$target{cflags} unless defined $target{cxxflags};
 $target{exe_extension}="";
