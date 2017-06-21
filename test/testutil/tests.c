@@ -27,8 +27,7 @@ void test_fail_message_prefix(const char *prefix, const char *file,
                               const char *left, const char *right,
                               const char *op)
 {
-    test_printf_stderr("%*s# %s: ", subtest_level(), "",
-                       prefix != NULL ? prefix : "ERROR");
+    test_printf_stderr("%s: ", prefix != NULL ? prefix : "ERROR");
     if (type)
         test_printf_stderr("(%s) ", type);
     if (op != NULL) {
@@ -79,7 +78,6 @@ static void test_fail_message_va(const char *prefix, const char *file,
 {
     test_fail_message_prefix(prefix, file, line, type, left, right, op);
     if (fmt != NULL) {
-        test_printf_stderr("%*s# ", subtest_level(), "");
         test_vprintf_stderr(fmt, ap);
         test_printf_stderr("\n");
     }
@@ -150,7 +148,6 @@ void test_note(const char *fmt, ...)
     if (fmt != NULL) {
         va_list ap;
 
-        test_printf_stderr("%*s# ", subtest_level(), "");
         va_start(ap, fmt);
         test_vprintf_stderr(fmt, ap);
         va_end(ap);

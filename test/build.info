@@ -11,7 +11,7 @@ IF[{- !$disabled{tests} -}]
   LIBS_NO_INST=libtestutil.a
   SOURCE[libtestutil.a]=testutil/basic_output.c testutil/output_helpers.c \
           testutil/driver.c testutil/tests.c testutil/cb.c testutil/stanza.c \
-          testutil/format_output.c \
+          testutil/format_output.c testutil/tap_bio.c \
           {- rebase_files("../apps", $target{apps_aux_src}) -} \
           testutil/test_main.c testutil/main.c
   INCLUDE[libtestutil.a]=.. ../include
