@@ -25,19 +25,22 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 
 int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 {
-    OPENSSL_assert(*(unsigned int *)lock == 1);
+    if (!ossl_assert(*(unsigned int *)lock == 1))
+        return 0;
     return 1;
 }
 
 int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
-    OPENSSL_assert(*(unsigned int *)lock == 1);
+    if (!ossl_assert(*(unsigned int *)lock == 1))
+        return 0;
     return 1;
 }
 
 int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock)
 {
-    OPENSSL_assert(*(unsigned int *)lock == 1);
+    if (!ossl_assert(*(unsigned int *)lock == 1))
+        return 0;
     return 1;
 }
 
