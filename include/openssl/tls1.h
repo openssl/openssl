@@ -226,12 +226,12 @@ __owur int SSL_get_servername_type(const SSL *s);
  * as specified in RFC 5705. It writes |olen| bytes to |out| given a label and
  * optional context. (Since a zero length context is allowed, the |use_context|
  * flag controls whether a context is included.) It returns 1 on success and
- * zero otherwise.
+ * 0 or -1 otherwise.
  */
 __owur int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
-                               const char *label, size_t llen,
-                               const unsigned char *p, size_t plen,
-                               int use_context);
+                                      const char *label, size_t llen,
+                                      const unsigned char *context,
+                                      size_t contextlen, int use_context);
 
 int SSL_get_sigalgs(SSL *s, int idx,
                     int *psign, int *phash, int *psignandhash,
