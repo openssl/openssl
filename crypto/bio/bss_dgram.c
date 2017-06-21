@@ -787,6 +787,15 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_GET_MTU_OVERHEAD:
         ret = dgram_get_mtu_overhead(data);
         break;
+
+    /*
+     * BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE is used here for compatibility
+     * reasons. When BIO_CTRL_DGRAM_SET_PEEK_MODE was first defined its value
+     * was incorrectly clashing with BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE. The
+     * value has been updated to a non-clashing value. However to preserve
+     * binary compatiblity we now respond to both the old value and the new one
+     */
+    case BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE:
     case BIO_CTRL_DGRAM_SET_PEEK_MODE:
         data->peekmode = (unsigned int)num;
         break;
