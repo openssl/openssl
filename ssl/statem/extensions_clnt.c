@@ -791,10 +791,10 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
 {
 #ifndef OPENSSL_NO_TLS1_3
     uint32_t now, agesec, agems;
-    size_t reshashsize, pskhashsize, binderoffset, msglen, idlen;
+    size_t reshashsize = 0, pskhashsize = 0, binderoffset, msglen, idlen;
     unsigned char *resbinder = NULL, *pskbinder = NULL, *msgstart = NULL;
     const unsigned char *id;
-    const EVP_MD *handmd = NULL, *mdres, *mdpsk;
+    const EVP_MD *handmd = NULL, *mdres = NULL, *mdpsk = NULL;
     EXT_RETURN ret = EXT_RETURN_FAIL;
     SSL_SESSION *psksess = NULL;
     int dores = 0;
