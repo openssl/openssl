@@ -52,6 +52,10 @@
 #include <openssl/async.h>
 #include <openssl/ct.h>
 
+#if defined(OPENSSL_LINUX_TLS)
+    #include "netinet/tcp.h"
+#endif
+
 const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
 
 SSL3_ENC_METHOD ssl3_undef_enc_method = {
@@ -1163,6 +1167,16 @@ int SSL_set_fd(SSL *s, int fd)
     }
     BIO_set_fd(bio, fd, BIO_NOCLOSE);
     SSL_set_bio(s, bio, bio);
+
+#ifdef OPENSSL_LINUX_TLS
+    ret = setsockopt(fd, SOL_TCP, TCP_ULP, "tls", sizeof("tls"));
+#ifdef SSL_DEBUG
+    if (ret) {
+        printf("setsockopt failed %d\n", errno);
+    }
+#endif
+#endif
+
     ret = 1;
  err:
     return (ret);
