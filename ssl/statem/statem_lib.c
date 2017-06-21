@@ -221,9 +221,8 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         goto err;
     }
     pkey = s->s3->tmp.cert->privatekey;
-    md = ssl_md(lu->hash_idx);
 
-    if (pkey == NULL || md == NULL) {
+    if (pkey == NULL || !tls1_lookup_md(lu, &md)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -369,7 +368,11 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
             goto f_err;
     }
 
-    md = ssl_md(s->s3->tmp.peer_sigalg->hash_idx);
+    if (!tls1_lookup_md(s->s3->tmp.peer_sigalg, &md)) {
+        SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+        al = SSL_AD_INTERNAL_ERROR;
+        goto f_err;
+    }
 
     /* Check for broken implementations of GOST ciphersuites */
     /*
@@ -1248,6 +1251,8 @@ int ssl_cert_type(const X509 *x, const EVP_PKEY *pk)
 #ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC:
         return SSL_PKEY_ECC;
+    case EVP_PKEY_ED25519:
+        return SSL_PKEY_ED25519;
 #endif
 #ifndef OPENSSL_NO_GOST
     case NID_id_GostR3410_2001:
@@ -2126,4 +2131,22 @@ int construct_ca_names(SSL *s, WPACKET *pkt)
         return 0;
 
     return 1;
+}
+
+/* Create a buffer containing data to be signed for server key exchange */
+size_t construct_key_exchange_tbs(const SSL *s, unsigned char **ptbs,
+                                  const void *param, size_t paramlen)
+{
+    size_t tbslen = 2 * SSL3_RANDOM_SIZE + paramlen;
+    unsigned char *tbs = OPENSSL_malloc(tbslen);
+
+    if (tbs == NULL)
+        return 0;
+    memcpy(tbs, s->s3->client_random, SSL3_RANDOM_SIZE);
+    memcpy(tbs + SSL3_RANDOM_SIZE, s->s3->server_random, SSL3_RANDOM_SIZE);
+
+    memcpy(tbs + SSL3_RANDOM_SIZE * 2, param, paramlen);
+
+    *ptbs = tbs;
+    return tbslen;
 }

@@ -364,7 +364,8 @@
 # define SSL_PKEY_GOST01         3
 # define SSL_PKEY_GOST12_256     4
 # define SSL_PKEY_GOST12_512     5
-# define SSL_PKEY_NUM            6
+# define SSL_PKEY_ED25519        6
+# define SSL_PKEY_NUM            7
 /*
  * Pseudo-constant. GOST cipher suites can use different certs for 1
  * SSL_CIPHER. So let's see which one we have in fact.
@@ -1317,9 +1318,9 @@ typedef struct sigalg_lookup_st {
     const char *name;
     /* Raw value used in extension */
     uint16_t sigalg;
-    /* NID of hash algorithm */
+    /* NID of hash algorithm or NID_undef if no hash */
     int hash;
-    /* Index of hash algorithm */
+    /* Index of hash algorithm or -1 if no hash algorithm */
     int hash_idx;
     /* NID of signature algorithm */
     int sig;
@@ -1847,6 +1848,8 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256       0xeeee
 #define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512       0xefef
 #define TLSEXT_SIGALG_gostr34102001_gostr3411                   0xeded
+
+#define TLSEXT_SIGALG_ed25519                                   0x0807
 
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE                                      0x00
@@ -2379,6 +2382,7 @@ __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
 __owur int tls1_save_sigalgs(SSL *s, PACKET *pkt);
 __owur int tls1_process_sigalgs(SSL *s);
 __owur int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey);
+__owur int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd);
 __owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs);
 __owur int tls12_check_peer_sigalg(SSL *s, uint16_t, EVP_PKEY *pkey);
 void ssl_set_client_disabled(SSL *s);

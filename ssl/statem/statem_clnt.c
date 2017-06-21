@@ -1790,9 +1790,10 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     if (!SSL_IS_TLS13(s)) {
         exp_idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
         if (exp_idx >= 0 && i != exp_idx
-            && (exp_idx != SSL_PKEY_GOST_EC ||
-                (i != SSL_PKEY_GOST12_512 && i != SSL_PKEY_GOST12_256
-                 && i != SSL_PKEY_GOST01))) {
+                && (exp_idx != SSL_PKEY_ECC || i != SSL_PKEY_ED25519)
+                && (exp_idx != SSL_PKEY_GOST_EC ||
+                    (i != SSL_PKEY_GOST12_512 && i != SSL_PKEY_GOST12_256
+                    && i != SSL_PKEY_GOST01))) {
             x = NULL;
             al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
@@ -2170,6 +2171,9 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         PACKET params;
         int maxsig;
         const EVP_MD *md = NULL;
+        unsigned char *tbs;
+        size_t tbslen;
+        int rv;
 
         /*
          * |pkt| now points to the beginning of the signature, so the difference
@@ -2185,7 +2189,6 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
         if (SSL_USE_SIGALGS(s)) {
             unsigned int sigalg;
-            int rv;
 
             if (!PACKET_get_net_2(pkt, &sigalg)) {
                 al = SSL_AD_DECODE_ERROR;
@@ -2208,7 +2211,10 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        md = ssl_md(s->s3->tmp.peer_sigalg->hash_idx);
+        if (!tls1_lookup_md(s->s3->tmp.peer_sigalg, &md)) {
+            al = SSL_AD_INTERNAL_ERROR;
+            goto err;
+        }
 
         if (!PACKET_get_length_prefixed_2(pkt, &signature)
             || PACKET_remaining(pkt) != 0) {
@@ -2255,19 +2261,22 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                 goto err;
             }
         }
-        if (EVP_DigestVerifyUpdate(md_ctx, &(s->s3->client_random[0]),
-                                   SSL3_RANDOM_SIZE) <= 0
-                || EVP_DigestVerifyUpdate(md_ctx, &(s->s3->server_random[0]),
-                                          SSL3_RANDOM_SIZE) <= 0
-                || EVP_DigestVerifyUpdate(md_ctx, PACKET_data(&params),
-                                          PACKET_remaining(&params)) <= 0) {
+        tbslen = construct_key_exchange_tbs(s, &tbs, PACKET_data(&params),
+                                            PACKET_remaining(&params));
+        if (tbslen == 0) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+
+        rv = EVP_DigestVerify(md_ctx, PACKET_data(&signature),
+                              PACKET_remaining(&signature), tbs, tbslen);
+        OPENSSL_free(tbs);
+        if (rv < 0) {
             al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
             goto err;
-        }
-        if (EVP_DigestVerifyFinal(md_ctx, PACKET_data(&signature),
-                                  PACKET_remaining(&signature)) <= 0) {
-            /* bad signature */
+        } else if (rv == 0) {
             al = SSL_AD_DECRYPT_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_SIGNATURE);
             goto err;
@@ -3347,7 +3356,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 
 #ifndef OPENSSL_NO_EC
     idx = s->session->peer_type;
-    if (idx == SSL_PKEY_ECC) {
+    if (idx == SSL_PKEY_ECC || idx == SSL_PKEY_ED25519) {
         if (ssl_check_srvr_ecc_cert_and_alg(s->session->peer, s) == 0) {
             /* check failed */
             SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, SSL_R_BAD_ECC_CERT);
