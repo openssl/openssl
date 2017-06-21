@@ -1933,9 +1933,8 @@ int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
 
 const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c)
 {
-    int idx = c->algorithm2;
+    int idx = c->algorithm2 & SSL_HANDSHAKE_MAC_MASK;
 
-    idx &= SSL_HANDSHAKE_MAC_MASK;
     if (idx < 0 || idx >= SSL_MD_NUM_IDX)
         return NULL;
     return ssl_digest_methods[idx];

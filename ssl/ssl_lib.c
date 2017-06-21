@@ -3733,7 +3733,6 @@ int SSL_SESSION_set1_master_key(SSL_SESSION *sess, const unsigned char *in,
 
     memcpy(sess->master_key, in, len);
     sess->master_key_length = len;
-
     return 1;
 }
 
