@@ -34,6 +34,13 @@ In each table entry, the following keys are significant:
         sys_id          => System identity for systems where that
                            is difficult to determine automatically.
 
+        enable          => Enable specific configuration features.
+                           This MUST be an array of words.
+        disable         => Disable specific configuration features.
+                           This MUST be an array of words.
+                           Note: if the same feature is both enabled
+                           and disabled, disable wins.
+
         cc              => The C compiler command, usually one of "cc",
                            "gcc" or "clang".  This command is normally
                            also used to link object files and
