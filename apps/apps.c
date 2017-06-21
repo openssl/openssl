@@ -1511,7 +1511,7 @@ int rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
     if (btmp == NULL)
         return 0;
 
-    if (!BN_pseudo_rand(btmp, SERIAL_RAND_BITS, 0, 0))
+    if (!BN_rand(btmp, SERIAL_RAND_BITS, 0, 0))
         goto error;
     if (ai && !BN_to_ASN1_INTEGER(btmp, ai))
         goto error;
