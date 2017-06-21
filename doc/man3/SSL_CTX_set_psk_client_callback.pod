@@ -38,8 +38,8 @@ TLSv1.3 Pre-Shared Keys (PSKs) and PSKs for TLSv1.2 and below are not
 compatible.
 
 A client application wishing to use PSK ciphersuites for TLSv1.2 and below must
-provide a callback function which is called when the client is sending the
-ClientKeyExchange message to the server.
+provide a callback function. This function will be called when the client is
+sending the ClientKeyExchange message to the server.
 
 The purpose of the callback function is to select the PSK identity and
 the pre-shared key to use during the connection setup phase.
@@ -57,7 +57,7 @@ A client application wishing to use TLSv1.3 PSKs must set a different callback
 using either SSL_CTX_set_psk_use_session_callback() or
 SSL_set_psk_use_session_callback() as appropriate.
 
-The callback function is given a reference to the SSL connection in B<ssl>.
+The callback function is given a pointer to the SSL connection in B<ssl>.
 
 The first time the callback is called for a connection the B<md> parameter is
 NULL. In some circumstances the callback will be called a second time. In that
@@ -71,7 +71,7 @@ the PSK in B<*id>. The identifier length in bytes should be stored in B<*idlen>.
 The memory pointed to by B<*id> remains owned by the application and should
 be freed by it as required at any point after the handshake is complete.
 
-Additionally the callback should store a reference to an SSL_SESSION object in
+Additionally the callback should store a pointer to an SSL_SESSION object in
 B<*sess>. This is used as the basis for the PSK, and should, at a minimum, have
 the following fields set:
 
@@ -85,16 +85,16 @@ This can be set via a call to L<SSL_SESSION_set1_master_key(3)>.
 
 Only the handshake digest associated with the ciphersuite is relevant for the
 PSK (the server may go on to negotiate any ciphersuite which is compatible with
-the digest). The application can use any TLSv1.3 ciphersuite. Where B<md> is
-non-NULL the handshake digest for the ciphersuite should be the same.
+the digest). The application can use any TLSv1.3 ciphersuite. If B<md> is
+not NULL the handshake digest for the ciphersuite should be the same.
 The ciphersuite can be set via a call to <SSL_SESSION_set_cipher(3)>. The
 handshake digest of an SSL_CIPHER object can be checked using
 <SSL_CIPHER_get_handshake_digest(3)>.
 
 =item The protocol version
 
-This can be set via a call to L<SSL_SESSION_set_protocol_version> and should be
-TLS1_3_VERSION.
+This can be set via a call to L<SSL_SESSION_set_protocol_version(3)> and should
+be TLS1_3_VERSION.
 
 =back
 
@@ -118,7 +118,7 @@ has occurred so that L<SSL_session_reused(3)> will return true.
 
 =head1 RETURN VALUES
 
-Return values from the SSL_psk_client_cb_func callback are interpreted as
+Return values from the B<SSL_psk_client_cb_func> callback are interpreted as
 follows:
 
 On success (callback found a PSK identity and a pre-shared key to use)

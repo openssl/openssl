@@ -43,8 +43,8 @@ compatible.
 
 Identity hints are not relevant for TLSv1.3. A server application wishing to use
 PSK ciphersuites for TLSv1.2 and below may call SSL_CTX_use_psk_identity_hint()
-to set the given B<NULL>-terminated PSK identity hint B<hint> for SSL context
-object B<ctx>. SSL_use_psk_identity_hint() sets the given B<NULL>-terminated PSK
+to set the given B<NUL>-terminated PSK identity hint B<hint> for SSL context
+object B<ctx>. SSL_use_psk_identity_hint() sets the given B<NUL>-terminated PSK
 identity hint B<hint> for the SSL connection object B<ssl>. If B<hint> is
 B<NULL> the current hint from B<ctx> or B<ssl> is deleted.
 
@@ -57,7 +57,7 @@ client. The purpose of the callback function is to validate the
 received PSK identity and to fetch the pre-shared key used during the
 connection setup phase. The callback is set using the functions
 SSL_CTX_set_psk_server_callback() or SSL_set_psk_server_callback(). The callback
-function is given the connection in parameter B<ssl>, B<NULL>-terminated PSK
+function is given the connection in parameter B<ssl>, B<NUL>-terminated PSK
 identity sent by the client in parameter B<identity>, and a buffer B<psk> of
 length B<max_psk_len> bytes where the pre-shared key is to be stored.
 
@@ -65,7 +65,7 @@ A client application wishing to use TLSv1.3 PSKs must set a different callback
 using either SSL_CTX_set_psk_use_session_callback() or
 SSL_set_psk_use_session_callback() as appropriate.
 
-The callback function is given a reference to the SSL connection in B<ssl> and
+The callback function is given a pointer to the SSL connection in B<ssl> and
 an identity in B<identity> of length B<identity_len>. The callback function
 should identify an SSL_SESSION object that provides the PSK details and store it
 in B<*sess>. The SSL_SESSION object should, as a minimum, set the master key,
@@ -84,7 +84,7 @@ has occurred so that L<SSL_session_reused(3)> will return true.
 
 =head1 RETURN VALUES
 
-SSL_CTX_use_psk_identity_hint() and SSL_use_psk_identity_hint() return
+B<SSL_CTX_use_psk_identity_hint()> and B<SSL_use_psk_identity_hint()> return
 1 on success, 0 otherwise.
 
 Return values from the TLSv1.2 and below server callback are interpreted as
@@ -112,7 +112,7 @@ completely.
 
 =back
 
-The SSL_psk_find_session_cb_func callback should return 1 on success or 0 on
+The B<SSL_psk_find_session_cb_func> callback should return 1 on success or 0 on
 failure. In the event of failure the connection setup fails.
 
 =head1 COPYRIGHT

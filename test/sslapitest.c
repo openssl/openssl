@@ -1938,19 +1938,23 @@ static int find_session_cb_cnt = 0;
 static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
                           size_t *idlen, SSL_SESSION **sess)
 {
-    use_session_cb_cnt++;
+    switch (++use_session_cb_cnt) {
+    case 1:
+        /* The first call should always have a NULL md */
+        if (md != NULL)
+            return 0;
+        break;
 
-    /* The first call should always have a NULL md */
-    if (use_session_cb_cnt == 1 && md != NULL)
-        return 0;
+    case 2:
+        /* The second call should always have an md */
+        if (md == NULL)
+            return 0;
+        break;
 
-    /* The second call should always have an md */
-    if (use_session_cb_cnt == 2 && md == NULL)
+    default:
+        /* We should only be called a maximum of twice */
         return 0;
-
-    /* We should only be called a maximum of twice */
-    if (use_session_cb_cnt == 3)
-        return 0;
+    }
 
     if (psk != NULL)
         SSL_SESSION_up_ref(psk);

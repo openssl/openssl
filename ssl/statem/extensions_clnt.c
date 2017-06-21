@@ -825,31 +825,35 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
     }
 
     if (s->session->ext.ticklen != 0) {
+        /* Get the digest associated with the ciphersuite in the session */
         if (s->session->cipher == NULL) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-
         mdres = ssl_md(s->session->cipher->algorithm2);
         if (mdres == NULL) {
-            /* Don't recognize this cipher so we can't use the session. Ignore it */
+            /*
+             * Don't recognize this cipher so we can't use the session.
+             * Ignore it
+             */
             goto dopsksess;
         }
 
         if (s->hello_retry_request && mdres != handmd) {
             /*
-             * Selected ciphersuite hash does not match the hash for the session so
-             * we can't use it.
+             * Selected ciphersuite hash does not match the hash for the session
+             * so we can't use it.
              */
             goto dopsksess;
         }
 
         /*
          * Technically the C standard just says time() returns a time_t and says
-         * nothing about the encoding of that type. In practice most implementations
-         * follow POSIX which holds it as an integral type in seconds since epoch.
-         * We've already made the assumption that we can do this in multiple places
-         * in the code, so portability shouldn't be an issue.
+         * nothing about the encoding of that type. In practice most
+         * implementations follow POSIX which holds it as an integral type in
+         * seconds since epoch. We've already made the assumption that we can do
+         * this in multiple places in the code, so portability shouldn't be an
+         * issue.
          */
         now = (uint32_t)time(NULL);
         agesec = now - (uint32_t)s->session->time;
@@ -867,15 +871,15 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
 
         if (agesec != 0 && agems / (uint32_t)1000 != agesec) {
             /*
-             * Overflow. Shouldn't happen unless this is a *really* old session. If
-             * so we just ignore it.
+             * Overflow. Shouldn't happen unless this is a *really* old session.
+             * If so we just ignore it.
              */
             goto dopsksess;
         }
 
         /*
-         * Obfuscate the age. Overflow here is fine, this addition is supposed to
-         * be mod 2^32.
+         * Obfuscate the age. Overflow here is fine, this addition is supposed
+         * to be mod 2^32.
          */
         agems += s->session->ext.tick_age_add;
 
@@ -956,15 +960,16 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
 
     msgstart = WPACKET_get_curr(pkt) - msglen;
 
-    if (dores && tls_psk_do_binder(s, mdres, msgstart, binderoffset, NULL,
-                                   resbinder, s->session, 1, 0) != 1) {
+    if (dores
+            && tls_psk_do_binder(s, mdres, msgstart, binderoffset, NULL,
+                                 resbinder, s->session, 1, 0) != 1) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    if (psksess != NULL && tls_psk_do_binder(s, mdpsk, msgstart,
-                                                binderoffset, NULL, pskbinder,
-                                                psksess, 1, 1) != 1) {
+    if (psksess != NULL
+            && tls_psk_do_binder(s, mdpsk, msgstart, binderoffset, NULL,
+                                 pskbinder, psksess, 1, 1) != 1) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK, ERR_R_INTERNAL_ERROR);
         goto err;
     }
