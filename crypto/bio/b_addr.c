@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <string.h>
 
 #include "bio_lcl.h"
@@ -565,7 +566,8 @@ static int addrinfo_wrap(int family, int socktype,
                          unsigned short port,
                          BIO_ADDRINFO **bai)
 {
-    OPENSSL_assert(bai != NULL);
+    if (bai == NULL)
+        return 0;
 
     *bai = OPENSSL_zalloc(sizeof(**bai));
     if (*bai == NULL)
@@ -760,8 +762,11 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                 he_fallback_address = INADDR_ANY;
                 break;
             default:
-                OPENSSL_assert(("We forgot to handle a lookup type!" == 0));
-                break;
+                /* We forgot to handle a lookup type! */
+                assert("We forgot to handle a lookup type!" == NULL);
+                BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_INTERNAL_ERROR);
+                ret = 0;
+                goto err;
             }
         } else {
             he = gethostbyname(host);
