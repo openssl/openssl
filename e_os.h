@@ -423,7 +423,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    endif
 #    include <netinet/in.h>
 #    include <arpa/inet.h>
-#    include <netinet/tcp.h>
+#    include "netinet/tcp.h" // Add TLS stuff here..
 #   endif
 
 #   ifdef OPENSSL_SYS_AIX
