@@ -145,7 +145,8 @@ static int i2d_x509_aux_internal(X509 *a, unsigned char **pp)
     int length, tmplen;
     unsigned char *start = pp != NULL ? *pp : NULL;
 
-    OPENSSL_assert(pp == NULL || *pp != NULL);
+    if (!ossl_assert(pp == NULL || *pp != NULL))
+        return -1;
 
     /*
      * This might perturb *pp on error, but fixing that belongs in i2d_X509()
