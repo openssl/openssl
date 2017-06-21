@@ -12,5 +12,5 @@
 
 int openssl_error_cb(const char *str, size_t len, void *u)
 {
-    return test_printf_stderr("%*s# %s", subtest_level(), "", str);
+    return test_printf_stderr("%s", str);
 }

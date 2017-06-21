@@ -1,3 +1,12 @@
+/*
+ * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 #include "../testutil.h"
 #include "output.h"
 #include "tu_local.h"
@@ -14,17 +23,17 @@
 /* Output a diff header */
 static void test_diff_header(const char *left, const char *right)
 {
-    test_printf_stderr("%*s# --- %s\n", subtest_level(), "", left);
-    test_printf_stderr("%*s# +++ %s\n", subtest_level(), "", right);
+    test_printf_stderr("--- %s\n", left);
+    test_printf_stderr("+++ %s\n", right);
 }
 
 /* Formatted string output routines */
 static void test_string_null_empty(const char *m, char c)
 {
     if (m == NULL)
-        test_printf_stderr("%*s# % 4s %c NULL\n", subtest_level(), "", "", c);
+        test_printf_stderr("% 4s %c NULL\n", "", c);
     else
-        test_printf_stderr("%*s# % 4u:%c ''\n", subtest_level(), "", 0u, c);
+        test_printf_stderr("% 4u:%c ''\n", 0u, c);
 }
 
 static void test_fail_string_common(const char *prefix, const char *file,
@@ -33,8 +42,7 @@ static void test_fail_string_common(const char *prefix, const char *file,
                                     const char *op, const char *m1, size_t l1,
                                     const char *m2, size_t l2)
 {
-    const int indent = subtest_level();
-    const size_t width = (MAX_STRING_WIDTH - indent - 12) / 16 * 16;
+    const size_t width = (MAX_STRING_WIDTH - subtest_level() - 12) / 16 * 16;
     char b1[MAX_STRING_WIDTH + 1], b2[MAX_STRING_WIDTH + 1];
     char bdiff[MAX_STRING_WIDTH + 1];
     size_t n1, n2, i;
@@ -86,19 +94,18 @@ static void test_fail_string_common(const char *prefix, const char *file,
             bdiff[i] = '\0';
         }
         if (n1 == n2 && !diff) {
-            test_printf_stderr("%*s# % 4u:  '%s'\n", indent, "", cnt,
-                               n2 > n1 ? b2 : b1);
+            test_printf_stderr("% 4u:  '%s'\n", cnt, n2 > n1 ? b2 : b1);
         } else {
             if (cnt == 0 && (m1 == NULL || *m1 == '\0'))
                 test_string_null_empty(m1, '-');
             else if (n1 > 0)
-                test_printf_stderr("%*s# % 4u:- '%s'\n", indent, "", cnt, b1);
+                test_printf_stderr("% 4u:- '%s'\n", cnt, b1);
             if (cnt == 0 && (m2 == NULL || *m2 == '\0'))
                test_string_null_empty(m2, '+');
             else if (n2 > 0)
-                test_printf_stderr("%*s# % 4u:+ '%s'\n", indent, "", cnt, b2);
+                test_printf_stderr("% 4u:+ '%s'\n", cnt, b2);
             if (diff && i > 0)
-                test_printf_stderr("%*s# % 4s    %s\n", indent, "", "", bdiff);
+                test_printf_stderr("% 4s    %s\n", "", bdiff);
         }
         m1 += n1;
         m2 += n2;
@@ -168,8 +175,7 @@ static const int bn_chars = (MAX_STRING_WIDTH - 9) / (BN_OUTPUT_SIZE * 2 + 1)
  */
 static void test_bignum_header_line(void)
 {
-    test_printf_stderr("%*s#  %*s\n", subtest_level(), "", bn_chars + 6,
-                       "bit position");
+    test_printf_stderr(" %*s\n", bn_chars + 6, "bit position");
 }
 
 static const char *test_bignum_zero_null(const BIGNUM *bn)
@@ -188,8 +194,7 @@ static void test_bignum_zero_print(const BIGNUM *bn, char sep)
     const char *v = test_bignum_zero_null(bn);
     const char *suf = bn != NULL ? ":    0" : "";
 
-    test_printf_stderr("%*s# %c%*s%s\n", subtest_level(), "", sep, bn_chars,
-                       v, suf);
+    test_printf_stderr("%c%*s%s\n", sep, bn_chars, v, suf);
 }
 
 /*
@@ -260,7 +265,6 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
                                     const char *op,
                                     const BIGNUM *bn1, const BIGNUM *bn2)
 {
-    const int indent = subtest_level();
     const size_t bytes = bn_bytes;
     char b1[MAX_STRING_WIDTH + 1], b2[MAX_STRING_WIDTH + 1];
     char *p, bdiff[MAX_STRING_WIDTH + 1];
@@ -295,8 +299,7 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
     if (len > MEM_BUFFER_SIZE && (bufp = OPENSSL_malloc(len * 2)) == NULL) {
         bufp = buffer;
         len = MEM_BUFFER_SIZE;
-        test_printf_stderr("%*s# WARNING: these BIGNUMs have been truncated",
-                           indent, "");
+        test_printf_stderr("WARNING: these BIGNUMs have been truncated");
     }
 
     if (bn1 != NULL) {
@@ -326,20 +329,19 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
             }
         *p++ = '\0';
         if (!diff) {
-            test_printf_stderr("%*s#  %s:% 5d\n", indent, "",
-                               n2 > n1 ? b2 : b1, cnt);
+            test_printf_stderr(" %s:% 5d\n", n2 > n1 ? b2 : b1, cnt);
         } else {
             if (cnt == 0 && bn1 == NULL)
-                test_printf_stderr("%*s# -%s\n", indent, "", b1);
+                test_printf_stderr("-%s\n", b1);
             else if (cnt == 0 || n1 > 0)
-                test_printf_stderr("%*s# -%s:% 5d\n", indent, "", b1, cnt);
+                test_printf_stderr("-%s:% 5d\n", b1, cnt);
             if (cnt == 0 && bn2 == NULL)
-                test_printf_stderr("%*s# +%s\n", indent, "", b2);
+                test_printf_stderr("+%s\n", b2);
             else if (cnt == 0 || n2 > 0)
-                test_printf_stderr("%*s# +%s:% 5d\n", indent, "", b2, cnt);
+                test_printf_stderr("+%s:% 5d\n", b2, cnt);
             if (real_diff && (cnt == 0 || (n1 > 0 && n2 > 0))
                     && bn1 != NULL && bn2 != NULL)
-                test_printf_stderr("%*s#  %s\n", indent, "", bdiff);
+                test_printf_stderr(" %s\n", bdiff);
         }
         if (m1 != NULL)
             m1 += bytes;
@@ -380,8 +382,8 @@ void test_fail_bignum_mono_message(const char *prefix, const char *file,
 void test_output_bignum(const char *name, const BIGNUM *bn)
 {
     if (bn == NULL || BN_is_zero(bn)) {
-        test_printf_stderr("%*s# bignum: '%s' = %s\n", subtest_level(), "",
-                           name, test_bignum_zero_null(bn));
+        test_printf_stderr("bignum: '%s' = %s", name,
+                           test_bignum_zero_null(bn));
     } else if (BN_num_bytes(bn) <= BN_OUTPUT_SIZE) {
         unsigned char buf[BN_OUTPUT_SIZE];
         char out[2 * sizeof(buf) + 1];
@@ -391,8 +393,8 @@ void test_output_bignum(const char *name, const BIGNUM *bn)
         hex_convert_memory(buf, n, p, BN_OUTPUT_SIZE);
         while (*p == '0' && *++p != '\0')
             ;
-        test_printf_stderr("%*s# bignum: '%s' = %s0x%s\n", subtest_level(), "",
-                           name, BN_is_negative(bn) ? "-" : "", p);
+        test_printf_stderr("bignum: '%s' = %s0x%s\n", name,
+                           BN_is_negative(bn) ? "-" : "", p);
     } else {
         test_fail_bignum_common("bignum", NULL, 0, NULL, NULL, NULL, name,
                                 bn, bn);
@@ -404,12 +406,12 @@ void test_output_bignum(const char *name, const BIGNUM *bn)
 /*
  * Handle zero length blocks of memory or NULL pointers to memory
  */
-static void test_memory_null_empty(const unsigned char *m, int indent, char c)
+static void test_memory_null_empty(const unsigned char *m, char c)
 {
     if (m == NULL)
-        test_printf_stderr("%*s# % 4s %c%s\n", indent, "", "", c, "NULL");
+        test_printf_stderr("% 4s %c%s\n", "", c, "NULL");
     else
-        test_printf_stderr("%*s# %04x %c%s\n", indent, "", 0u, c, "empty");
+        test_printf_stderr("%04x %c%s\n", 0u, c, "empty");
 }
 
 /*
@@ -422,7 +424,6 @@ static void test_fail_memory_common(const char *prefix, const char *file,
                                     const unsigned char *m1, size_t l1,
                                     const unsigned char *m2, size_t l2)
 {
-    const int indent = subtest_level();
     const size_t bytes = (MAX_STRING_WIDTH - 9) / 17 * 8;
     char b1[MAX_STRING_WIDTH + 1], b2[MAX_STRING_WIDTH + 1];
     char *p, bdiff[MAX_STRING_WIDTH + 1];
@@ -436,11 +437,11 @@ static void test_fail_memory_common(const char *prefix, const char *file,
         l2 = 0;
     if (l1 == 0 && l2 == 0) {
         if ((m1 == NULL) == (m2 == NULL)) {
-            test_memory_null_empty(m1, indent, ' ');
+            test_memory_null_empty(m1, ' ');
         } else {
             test_diff_header(left, right);
-            test_memory_null_empty(m1, indent, '-');
-            test_memory_null_empty(m2, indent, '+');
+            test_memory_null_empty(m1, '-');
+            test_memory_null_empty(m2, '+');
         }
         goto fin;
     }
@@ -481,18 +482,18 @@ static void test_fail_memory_common(const char *prefix, const char *file,
         }
 
         if (n1 == n2 && !diff) {
-            test_printf_stderr("%*s# %04x: %s\n", indent, "", cnt, b1);
+            test_printf_stderr("%04x: %s\n", cnt, b1);
         } else {
             if (cnt == 0 && (m1 == NULL || l1 == 0))
-                test_memory_null_empty(m1, indent, '-');
+                test_memory_null_empty(m1, '-');
             else if (n1 > 0)
-                test_printf_stderr("%*s# %04x:-%s\n", indent, "", cnt, b1);
+                test_printf_stderr("%04x:-%s\n", cnt, b1);
             if (cnt == 0 && (m2 == NULL || l2 == 0))
-                test_memory_null_empty(m2, indent, '+');
+                test_memory_null_empty(m2, '+');
             else if (n2 > 0)
-                test_printf_stderr("%*s# %04x:+%s\n", indent, "", cnt, b2);
+                test_printf_stderr("%04x:+%s\n", cnt, b2);
             if (diff && i > 0)
-                test_printf_stderr("%*s# % 4s  %s\n", indent, "", "", bdiff);
+                test_printf_stderr("% 4s  %s\n", "", bdiff);
         }
         m1 += n1;
         m2 += n2;

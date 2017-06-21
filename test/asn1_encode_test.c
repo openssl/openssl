@@ -717,7 +717,7 @@ static int do_print_item(const TEST_PACKAGE *package)
     OPENSSL_assert(package->encode_expectations_elem_size <= DATA_BUF_SIZE);
 
     (void)RAND_bytes(buf, (int)package->encode_expectations_elem_size);
-    ret = ASN1_item_print(bio_out, o, 0, i, NULL);
+    ret = ASN1_item_print(bio_err, o, 0, i, NULL);
 
     return ret;
 }
