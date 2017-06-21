@@ -73,7 +73,7 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
         goto end;
 
     if (debug)
-        printf("Channel established\n");
+        TEST_info("Channel established");
 
     /* For record MTU values between 500 and 539, call DTLS_get_data_mtu()
      * to query the payload MTU which will fit. */
@@ -104,7 +104,7 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
             goto end;
         reclen = BIO_read(sc_bio, buf, sizeof(buf));
         if (debug)
-            printf("record %"OSSLzu" for payload %"OSSLzu"\n", reclen, s);
+            TEST_info("record %zu for payload %zu", reclen, s);
 
         for (i = 0; i < 30; i++) {
             /* DTLS_get_data_mtu() with record MTU 500+i returned mtus[i] ... */
