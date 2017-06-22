@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -180,7 +180,7 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
     BN_CTX_start(ctx);
     t1 = BN_CTX_get(ctx);
     t2 = BN_CTX_get(ctx);
-    if (t1 == NULL || t2 == NULL)
+    if (t2 == NULL)
         goto err;
 
     if (!BN_copy(t1, a))
