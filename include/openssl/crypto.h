@@ -332,6 +332,11 @@ int FIPS_mode(void);
 int FIPS_mode_set(int r);
 
 void OPENSSL_init(void);
+# ifdef OPENSSL_SYS_UNIX
+void OPENSSL_fork_prepare(void);
+void OPENSSL_fork_parent(void);
+void OPENSSL_fork_child(void);
+# endif
 
 struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result);
 int OPENSSL_gmtime_adj(struct tm *tm, int offset_day, long offset_sec);
@@ -364,7 +369,8 @@ int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len);
 # define OPENSSL_INIT_ENGINE_CAPI            0x00002000L
 # define OPENSSL_INIT_ENGINE_PADLOCK         0x00004000L
 # define OPENSSL_INIT_ENGINE_AFALG           0x00008000L
-/* OPENSSL_INIT flag 0x00010000 reserved for internal use */
+# define OPENSSL_INIT_reserved_internal      0x00010000L
+# define OPENSSL_INIT_NO_ATFORK              0x00020000L
 /* OPENSSL_INIT flag range 0xfff00000 reserved for OPENSSL_init_ssl() */
 /* Max OPENSSL_INIT flag value is 0x80000000 */
 
