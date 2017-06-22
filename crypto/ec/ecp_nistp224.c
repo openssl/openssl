@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1285,9 +1285,10 @@ int ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p,
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
             return 0;
     BN_CTX_start(ctx);
-    if (((curve_p = BN_CTX_get(ctx)) == NULL) ||
-        ((curve_a = BN_CTX_get(ctx)) == NULL) ||
-        ((curve_b = BN_CTX_get(ctx)) == NULL))
+    curve_p = BN_CTX_get(ctx);
+    curve_a = BN_CTX_get(ctx);
+    curve_b = BN_CTX_get(ctx);
+    if (curve_b == NULL)
         goto err;
     BN_bin2bn(nistp224_curve_params[0], sizeof(felem_bytearray), curve_p);
     BN_bin2bn(nistp224_curve_params[1], sizeof(felem_bytearray), curve_a);
@@ -1417,10 +1418,11 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
             return 0;
     BN_CTX_start(ctx);
-    if (((x = BN_CTX_get(ctx)) == NULL) ||
-        ((y = BN_CTX_get(ctx)) == NULL) ||
-        ((z = BN_CTX_get(ctx)) == NULL) ||
-        ((tmp_scalar = BN_CTX_get(ctx)) == NULL))
+    x = BN_CTX_get(ctx);
+    y = BN_CTX_get(ctx);
+    z = BN_CTX_get(ctx);
+    tmp_scalar = BN_CTX_get(ctx);
+    if (tmp_scalar == NULL)
         goto err;
 
     if (scalar != NULL) {
@@ -1600,7 +1602,9 @@ int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
         if ((ctx = new_ctx = BN_CTX_new()) == NULL)
             return 0;
     BN_CTX_start(ctx);
-    if (((x = BN_CTX_get(ctx)) == NULL) || ((y = BN_CTX_get(ctx)) == NULL))
+    x = BN_CTX_get(ctx);
+    y = BN_CTX_get(ctx);
+    if (y == NULL)
         goto err;
     /* get the generator */
     if (group->generator == NULL)

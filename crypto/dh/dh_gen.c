@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -68,7 +68,7 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
     BN_CTX_start(ctx);
     t1 = BN_CTX_get(ctx);
     t2 = BN_CTX_get(ctx);
-    if (t1 == NULL || t2 == NULL)
+    if (t2 == NULL)
         goto err;
 
     /* Make sure 'ret' has the necessary elements */

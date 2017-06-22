@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -75,8 +75,6 @@ int DH_check(const DH *dh, int *ret)
         goto err;
     BN_CTX_start(ctx);
     t1 = BN_CTX_get(ctx);
-    if (t1 == NULL)
-        goto err;
     t2 = BN_CTX_get(ctx);
     if (t2 == NULL)
         goto err;
