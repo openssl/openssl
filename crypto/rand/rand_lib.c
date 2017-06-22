@@ -14,17 +14,19 @@
 #include "internal/rand.h"
 #include <openssl/engine.h>
 #include "internal/thread_once.h"
+#include "rand_lcl.h"
 
 #ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
-static ENGINE *funct_ref = NULL;
-static CRYPTO_RWLOCK *rand_engine_lock = NULL;
+static ENGINE *funct_ref;
+static CRYPTO_RWLOCK *rand_engine_lock;
 #endif
-static const RAND_METHOD *default_RAND_meth = NULL;
-static CRYPTO_RWLOCK *rand_meth_lock = NULL;
-static CRYPTO_ONCE rand_lock_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_RWLOCK *rand_meth_lock;
+static const RAND_METHOD *default_RAND_meth;
+static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
 
-DEFINE_RUN_ONCE_STATIC(do_rand_lock_init)
+
+DEFINE_RUN_ONCE_STATIC(do_rand_init)
 {
     int ret = 1;
 #ifndef OPENSSL_NO_ENGINE
@@ -36,9 +38,22 @@ DEFINE_RUN_ONCE_STATIC(do_rand_lock_init)
     return ret;
 }
 
+void rand_cleanup_int(void)
+{
+    const RAND_METHOD *meth = default_RAND_meth;
+
+    if (meth != NULL && meth->cleanup != NULL)
+        meth->cleanup();
+    RAND_set_rand_method(NULL);
+#ifndef OPENSSL_NO_ENGINE
+    CRYPTO_THREAD_lock_free(rand_engine_lock);
+#endif
+    CRYPTO_THREAD_lock_free(rand_meth_lock);
+}
+
 int RAND_set_rand_method(const RAND_METHOD *meth)
 {
-    if (!RUN_ONCE(&rand_lock_init, do_rand_lock_init))
+    if (!RUN_ONCE(&rand_init, do_rand_init))
         return 0;
 
     CRYPTO_THREAD_write_lock(rand_meth_lock);
@@ -55,25 +70,26 @@ const RAND_METHOD *RAND_get_rand_method(void)
 {
     const RAND_METHOD *tmp_meth = NULL;
 
-    if (!RUN_ONCE(&rand_lock_init, do_rand_lock_init))
+    if (!RUN_ONCE(&rand_init, do_rand_init))
         return NULL;
 
     CRYPTO_THREAD_write_lock(rand_meth_lock);
-    if (!default_RAND_meth) {
+    if (default_RAND_meth == NULL) {
 #ifndef OPENSSL_NO_ENGINE
-        ENGINE *e = ENGINE_get_default_RAND();
-        if (e) {
-            default_RAND_meth = ENGINE_get_RAND(e);
-            if (default_RAND_meth == NULL) {
-                ENGINE_finish(e);
-                e = NULL;
-            }
-        }
-        if (e)
+        ENGINE *e;
+
+        /* If we have an engine that can do RAND, use it. */
+        if ((e = ENGINE_get_default_RAND()) != NULL
+                && (tmp_meth = ENGINE_get_RAND(e)) != NULL) {
             funct_ref = e;
-        else
+            default_RAND_meth = tmp_meth;
+        } else {
+            ENGINE_finish(e);
+            default_RAND_meth = &openssl_rand_meth;
+        }
+#else
+        default_RAND_meth = &openssl_rand_meth;
 #endif
-            default_RAND_meth = RAND_OpenSSL();
     }
     tmp_meth = default_RAND_meth;
     CRYPTO_THREAD_unlock(rand_meth_lock);
@@ -85,10 +101,10 @@ int RAND_set_rand_engine(ENGINE *engine)
 {
     const RAND_METHOD *tmp_meth = NULL;
 
-    if (!RUN_ONCE(&rand_lock_init, do_rand_lock_init))
+    if (!RUN_ONCE(&rand_init, do_rand_init))
         return 0;
 
-    if (engine) {
+    if (engine != NULL) {
         if (!ENGINE_init(engine))
             return 0;
         tmp_meth = ENGINE_get_RAND(engine);
@@ -106,55 +122,48 @@ int RAND_set_rand_engine(ENGINE *engine)
 }
 #endif
 
-void rand_cleanup_int(void)
-{
-    const RAND_METHOD *meth = default_RAND_meth;
-    if (meth && meth->cleanup)
-        meth->cleanup();
-    RAND_set_rand_method(NULL);
-    CRYPTO_THREAD_lock_free(rand_meth_lock);
-#ifndef OPENSSL_NO_ENGINE
-    CRYPTO_THREAD_lock_free(rand_engine_lock);
-#endif
-}
-
 void RAND_seed(const void *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
-    if (meth && meth->seed)
+
+    if (meth->seed != NULL)
         meth->seed(buf, num);
 }
 
-void RAND_add(const void *buf, int num, double entropy)
+void RAND_add(const void *buf, int num, double randomness)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
-    if (meth && meth->add)
-        meth->add(buf, num, entropy);
+
+    if (meth->add != NULL)
+        meth->add(buf, num, randomness);
 }
 
 int RAND_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
-    if (meth && meth->bytes)
+
+    if (meth->bytes != NULL)
         return meth->bytes(buf, num);
     RANDerr(RAND_F_RAND_BYTES, RAND_R_FUNC_NOT_IMPLEMENTED);
-    return (-1);
+    return -1;
 }
 
 #if OPENSSL_API_COMPAT < 0x10100000L
 int RAND_pseudo_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
-    if (meth && meth->pseudorand)
+
+    if (meth->pseudorand != NULL)
         return meth->pseudorand(buf, num);
-    return (-1);
+    return -1;
 }
 #endif
 
 int RAND_status(void)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
-    if (meth && meth->status)
+
+    if (meth->status != NULL)
         return meth->status();
     return 0;
 }
