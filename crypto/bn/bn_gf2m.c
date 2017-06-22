@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -557,13 +557,11 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
     BN_CTX_start(ctx);
 
-    if ((b = BN_CTX_get(ctx)) == NULL)
-        goto err;
-    if ((c = BN_CTX_get(ctx)) == NULL)
-        goto err;
-    if ((u = BN_CTX_get(ctx)) == NULL)
-        goto err;
-    if ((v = BN_CTX_get(ctx)) == NULL)
+    b = BN_CTX_get(ctx);
+    c = BN_CTX_get(ctx);
+    u = BN_CTX_get(ctx);
+    v = BN_CTX_get(ctx);
+    if (v == NULL)
         goto err;
 
     if (!BN_GF2m_mod(u, a, p))

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -87,17 +87,11 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
     BIGNUM *a, *b, *d, *r;
 
     BN_CTX_start(ctx);
+    d = (dv != NULL) ? dv : BN_CTX_get(ctx);
+    r = (rem != NULL) ? rem : BN_CTX_get(ctx);
     a = BN_CTX_get(ctx);
     b = BN_CTX_get(ctx);
-    if (dv != NULL)
-        d = dv;
-    else
-        d = BN_CTX_get(ctx);
-    if (rem != NULL)
-        r = rem;
-    else
-        r = BN_CTX_get(ctx);
-    if (a == NULL || b == NULL || d == NULL || r == NULL)
+    if (b == NULL)
         goto err;
 
     if (BN_ucmp(m, &(recp->N)) < 0) {

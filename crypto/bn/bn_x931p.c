@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -62,10 +62,10 @@ int BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
         return 0;
 
     BN_CTX_start(ctx);
-    if (!p1)
+    if (p1 == NULL)
         p1 = BN_CTX_get(ctx);
 
-    if (!p2)
+    if (p2 == NULL)
         p2 = BN_CTX_get(ctx);
 
     t = BN_CTX_get(ctx);
