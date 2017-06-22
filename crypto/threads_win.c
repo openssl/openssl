@@ -133,4 +133,9 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
+int openssl_init_fork_handlers(void)
+{
+    return 0;
+}
+
 #endif
