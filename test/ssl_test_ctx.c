@@ -30,6 +30,7 @@ static int parse_boolean(const char *value, int *result)
         *result = 0;
         return 1;
     }
+    TEST_error("parse_boolean given: '%s'", value);
     return 0;
 }
 
@@ -44,8 +45,7 @@ static int parse_boolean(const char *value, int *result)
     {                                                                   \
         OPENSSL_free(ctx->field);                                       \
         ctx->field = OPENSSL_strdup(value);                             \
-        TEST_check(ctx->field != NULL);                                 \
-        return 1;                                                       \
+        return TEST_ptr(ctx->field);                                    \
     }
 
 #define IMPLEMENT_SSL_TEST_INT_OPTION(struct_type, name, field)        \
@@ -627,17 +627,15 @@ static const ssl_test_server_option ssl_test_server_options[] = {
     { "SRPPassword", &parse_server_srp_password },
 };
 
-/*
- * Since these methods are used to create tests, we use TEST_check liberally
- * for malloc failures and other internal errors.
- */
 SSL_TEST_CTX *SSL_TEST_CTX_new()
 {
     SSL_TEST_CTX *ret;
-    ret = OPENSSL_zalloc(sizeof(*ret));
-    TEST_check(ret != NULL);
-    ret->app_data_size = default_app_data_size;
-    ret->max_fragment_size = default_max_fragment_size;
+
+    /* The return code is checked by caller */
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) != NULL) {
+        ret->app_data_size = default_app_data_size;
+        ret->max_fragment_size = default_max_fragment_size;
+    }
     return ret;
 }
 
@@ -681,8 +679,8 @@ static int parse_client_options(SSL_TEST_CLIENT_CONF *client, const CONF *conf,
     int i;
     size_t j;
 
-    sk_conf = NCONF_get_section(conf, client_section);
-    TEST_check(sk_conf != NULL);
+    if (!TEST_ptr(sk_conf = NCONF_get_section(conf, client_section)))
+        return 0;
 
     for (i = 0; i < sk_CONF_VALUE_num(sk_conf); i++) {
         int found = 0;
@@ -714,8 +712,8 @@ static int parse_server_options(SSL_TEST_SERVER_CONF *server, const CONF *conf,
     int i;
     size_t j;
 
-    sk_conf = NCONF_get_section(conf, server_section);
-    TEST_check(sk_conf != NULL);
+    if (!TEST_ptr(sk_conf = NCONF_get_section(conf, server_section)))
+        return 0;
 
     for (i = 0; i < sk_CONF_VALUE_num(sk_conf); i++) {
         int found = 0;
@@ -742,16 +740,14 @@ static int parse_server_options(SSL_TEST_SERVER_CONF *server, const CONF *conf,
 
 SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
 {
-    STACK_OF(CONF_VALUE) *sk_conf;
-    SSL_TEST_CTX *ctx;
+    STACK_OF(CONF_VALUE) *sk_conf = NULL;
+    SSL_TEST_CTX *ctx = NULL;
     int i;
     size_t j;
 
-    sk_conf = NCONF_get_section(conf, test_section);
-    TEST_check(sk_conf != NULL);
-
-    ctx = SSL_TEST_CTX_new();
-    TEST_check(ctx != NULL);
+    if (!TEST_ptr(sk_conf = NCONF_get_section(conf, test_section))
+            || !TEST_ptr(ctx = SSL_TEST_CTX_new()))
+        goto err;
 
     for (i = 0; i < sk_CONF_VALUE_num(sk_conf); i++) {
         int found = 0;

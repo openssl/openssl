@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -101,6 +101,7 @@ static SSL_TEST_CTX_TEST_FIXTURE set_up(const char *const test_case_name)
 {
     SSL_TEST_CTX_TEST_FIXTURE fixture;
 
+    memset(&fixture, 0, sizeof(fixture));
     fixture.test_case_name = test_case_name;
     TEST_ptr(fixture.expected_ctx = SSL_TEST_CTX_new());
     return fixture;
@@ -162,7 +163,8 @@ static int test_good_configuration()
     fixture.expected_ctx->extra.client.servername = SSL_TEST_SERVERNAME_SERVER2;
     fixture.expected_ctx->extra.client.npn_protocols =
         OPENSSL_strdup("foo,bar");
-    TEST_check(fixture.expected_ctx->extra.client.npn_protocols != NULL);
+    if (!TEST_ptr(fixture.expected_ctx->extra.client.npn_protocols))
+        goto err;
 
     fixture.expected_ctx->extra.server.servername_callback =
         SSL_TEST_SERVERNAME_IGNORE_MISMATCH;
@@ -170,13 +172,17 @@ static int test_good_configuration()
 
     fixture.expected_ctx->resume_extra.server2.alpn_protocols =
         OPENSSL_strdup("baz");
-    TEST_check(
-        fixture.expected_ctx->resume_extra.server2.alpn_protocols != NULL);
+    if (!TEST_ptr(fixture.expected_ctx->resume_extra.server2.alpn_protocols))
+        goto err;
 
     fixture.expected_ctx->resume_extra.client.ct_validation =
         SSL_TEST_CT_VALIDATION_STRICT;
 
     EXECUTE_SSL_TEST_CTX_TEST();
+
+err:
+    tear_down(fixture);
+    return 0;
 }
 
 static const char *bad_configurations[] = {
