@@ -17,12 +17,6 @@ operations
  int BN_set_word(BIGNUM *a, unsigned long w);
  unsigned long BN_get_word(BIGNUM *a);
 
-Deprecated:
-
- #if OPENSSL_API_COMPAT < 0x00908000L
- int BN_zero(BIGNUM *a);
- #endif
-
 =head1 DESCRIPTION
 
 BN_zero(), BN_one() and BN_set_word() set B<a> to the values 0, 1 and
@@ -39,14 +33,11 @@ long.
 BN_get_word() returns the value B<a>, and 0xffffffffL if B<a> cannot
 be represented as an unsigned long.
 
-BN_one(), BN_set_word() and the deprecated version of BN_zero()
-return 1 on success, 0 otherwise.
+BN_one() and BN_set_word() return 1 on success, 0 otherwise.
 BN_value_one() returns the constant.
-The preferred version of BN_zero() never fails and returns no value.
+BN_zero() never fails and returns no value.
 
 =head1 BUGS
-
-Someone might change the constant.
 
 If a B<BIGNUM> is equal to 0xffffffffL it can be represented as an
 unsigned long but this value is also returned on error.
@@ -54,6 +45,11 @@ unsigned long but this value is also returned on error.
 =head1 SEE ALSO
 
 L<BN_bn2bin(3)>
+
+=head1 HISTORY
+
+In OpenSSL 0.9.8, BN_zero() was changed to not return a value; previous
+versions returned an int.
 
 =head1 COPYRIGHT
 

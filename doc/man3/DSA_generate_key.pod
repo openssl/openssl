@@ -25,7 +25,7 @@ The error codes can be obtained by L<ERR_get_error(3)>.
 =head1 SEE ALSO
 
 L<DSA_new(3)>, L<ERR_get_error(3)>, L<RAND_bytes(3)>,
-L<DSA_generate_parameters(3)>
+L<DSA_generate_parameters_ex(3)>
 
 =head1 COPYRIGHT
 

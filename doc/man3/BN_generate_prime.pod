@@ -108,13 +108,13 @@ after the j-th iteration (j = 0, 1, ...). B<ctx> is a
 pre-allocated B<BN_CTX> (to save the overhead of allocating and
 freeing the structure in a loop), or B<NULL>.
 
-BN_GENCB_call calls the callback function held in the B<BN_GENCB> structure
+BN_GENCB_call() calls the callback function held in the B<BN_GENCB> structure
 and passes the ints B<a> and B<b> as arguments. There are two types of
 B<BN_GENCB> structure that are supported: "new" style and "old" style. New
 programs should prefer the "new" style, whilst the "old" style is provided
 for backwards compatibility purposes.
 
-A BN_GENCB structure should be created through a call to BN_GENCB_new(),
+A B<BN_GENCB> structure should be created through a call to BN_GENCB_new(),
 and freed through a call to BN_GENCB_free().
 
 For "new" style callbacks a BN_GENCB structure should be initialised with a
@@ -131,12 +131,12 @@ style callbacks or B<callback(a, b, cb_arg)> for old style.
 It is possible to obtained the argument associated with a BN_GENCB structure
 (set via a call to BN_GENCB_set or BN_GENCB_set_old) using BN_GENCB_get_arg.
 
-BN_generate_prime (deprecated) works in the same way as
-BN_generate_prime_ex but expects an old style callback function
+BN_generate_prime() (deprecated) works in the same way as
+BN_generate_prime_ex() but expects an old-style callback function
 directly in the B<callback> parameter, and an argument to pass to it in
-the B<cb_arg>. Similarly BN_is_prime and BN_is_prime_fasttest are
-deprecated and can be compared to BN_is_prime_ex and
-BN_is_prime_fasttest_ex respectively.
+the B<cb_arg>. BN_is_prime() and BN_is_prime_fasttest()
+can similarly be compared to BN_is_prime_ex() and
+BN_is_prime_fasttest_ex(), respectively.
 
 =head1 RETURN VALUES
 
