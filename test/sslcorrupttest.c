@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -41,8 +41,8 @@ static int tls_corrupt_write(BIO *bio, const char *in, int inl)
     char *copy;
 
     if (docorrupt) {
-        copy = BUF_memdup(in, inl);
-        TEST_check(copy != NULL);
+        if (!TEST_ptr(copy = BUF_memdup(in, inl)))
+            return 0;
         /* corrupt last bit of application data */
         copy[inl-1] ^= 1;
         ret = BIO_write(next, copy, inl);
@@ -141,15 +141,13 @@ static int setup_cipher_list()
 {
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
-    static STACK_OF(SSL_CIPHER) *sk_ciphers = NULL;
-    int i, numciphers;
+    STACK_OF(SSL_CIPHER) *sk_ciphers = NULL;
+    int i, j, numciphers = 0;
 
-    ctx = SSL_CTX_new(TLS_server_method());
-    TEST_check(ctx != NULL);
-    ssl = SSL_new(ctx);
-    TEST_check(ssl != NULL);
-    sk_ciphers = SSL_get1_supported_ciphers(ssl);
-    TEST_check(sk_ciphers != NULL);
+    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_server_method()))
+            || !TEST_ptr(ssl = SSL_new(ctx))
+            || !TEST_ptr(sk_ciphers = SSL_get1_supported_ciphers(ssl)))
+        goto err;
 
     /*
      * The |cipher_list| will be filled only with names of RSA ciphers,
@@ -158,16 +156,19 @@ static int setup_cipher_list()
      */
     cipher_list = OPENSSL_malloc(sk_SSL_CIPHER_num(sk_ciphers) *
                                  sizeof(cipher_list[0]));
-    TEST_check(cipher_list != NULL);
+    if (!TEST_ptr(cipher_list))
+        goto err;
 
-    for (numciphers = 0, i = 0; i < sk_SSL_CIPHER_num(sk_ciphers); i++) {
+    for (j = 0, i = 0; i < sk_SSL_CIPHER_num(sk_ciphers); i++) {
         const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(sk_ciphers, i);
 
         if (SSL_CIPHER_get_auth_nid(cipher) == NID_auth_rsa)
-            cipher_list[numciphers++] = SSL_CIPHER_get_name(cipher);
+            cipher_list[j++] = SSL_CIPHER_get_name(cipher);
     }
-    TEST_check(numciphers != 0);
+    if (TEST_int_ne(j, 0))
+        numciphers = j;
 
+err:
     sk_SSL_CIPHER_free(sk_ciphers);
     SSL_free(ssl);
     SSL_CTX_free(ctx);
@@ -249,18 +250,20 @@ static int test_ssl_corrupt(int testidx)
 
 int test_main(int argc, char *argv[])
 {
-    int ret;
+    int ret = EXIT_FAILURE, n;
 
     if (argc != 3) {
-        TEST_error("Usage error");
-        return 0;
+        TEST_error("Usage error: require cert and private key files");
+        return ret;
     }
     cert = argv[1];
     privkey = argv[2];
 
-    ADD_ALL_TESTS(test_ssl_corrupt, setup_cipher_list());
-
-    ret = run_tests(argv[0]);
+    n = setup_cipher_list();
+    if (n > 0) {
+        ADD_ALL_TESTS(test_ssl_corrupt, n);
+        ret = run_tests(argv[0]);
+    }
     bio_f_tls_corrupt_filter_free();
     OPENSSL_free(cipher_list);
 

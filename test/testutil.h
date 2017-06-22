@@ -393,7 +393,7 @@ void test_perror(const char *s);
 /*
  * For "impossible" conditions such as malloc failures or bugs in test code,
  * where continuing the test would be meaningless. Note that OPENSSL_assert
- * is fatal, and is never compiled out.
+ * is fatal, and is never compiled out.  This macro should be avoided.
  */
 # define TEST_check(condition)                  \
     do {                                        \
