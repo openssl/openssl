@@ -91,7 +91,7 @@ int RAND_poll(void)
     RAND_add(&curr_uid, sizeof curr_uid, 1);
     curr_uid = 0;
 
-    for (i = 0; i < (ENTROPY_NEEDED * 4); i++) {
+    for (i = 0; i < (RANDOMNESS_NEEDED * 4); i++) {
         /*
          * burn some cpu; hope for interrupts, cache collisions, bus
          * interference, etc.
@@ -127,7 +127,7 @@ int RAND_poll(void)
     unsigned long l;
     pid_t curr_pid = getpid();
 #  if defined(DEVRANDOM) || (!defined(OPENSS_NO_EGD) && defined(DEVRANDOM_EGD))
-    unsigned char tmpbuf[ENTROPY_NEEDED];
+    unsigned char tmpbuf[RANDOMNESS_NEEDED];
     int n = 0;
 #  endif
 #  ifdef DEVRANDOM
@@ -144,12 +144,12 @@ int RAND_poll(void)
 #  ifdef DEVRANDOM
     memset(randomstats, 0, sizeof(randomstats));
     /*
-     * Use a random entropy pool device. Linux, FreeBSD and OpenBSD have
+     * Use a randomness device. Linux, FreeBSD and OpenBSD have
      * this. Use /dev/urandom if you can as /dev/random may block if it runs
      * out of random entries.
      */
 
-    for (i = 0; (i < OSSL_NELEM(randomfiles)) && (n < ENTROPY_NEEDED); i++) {
+    for (i = 0; (i < OSSL_NELEM(randomfiles)) && (n < RANDOMNESS_NEEDED); i++) {
         if ((fd = open(randomfiles[i], O_RDONLY
 #   ifdef O_NONBLOCK
                        | O_NONBLOCK
@@ -229,7 +229,7 @@ int RAND_poll(void)
 
                 if (try_read) {
                     r = read(fd, (unsigned char *)tmpbuf + n,
-                             ENTROPY_NEEDED - n);
+                             RANDOMNESS_NEEDED - n);
                     if (r > 0)
                         n += r;
                 } else
@@ -246,7 +246,7 @@ int RAND_poll(void)
             }
             while ((r > 0 ||
                     (errno == EINTR || errno == EAGAIN)) && usec != 0
-                   && n < ENTROPY_NEEDED);
+                   && n < RANDOMNESS_NEEDED);
 
             close(fd);
         }
@@ -255,16 +255,15 @@ int RAND_poll(void)
 
 #  if !defined(OPENSSL_NO_EGD) && defined(DEVRANDOM_EGD)
     /*
-     * Use an EGD socket to read entropy from an EGD or PRNGD entropy
-     * collecting daemon.
+     * Use an EGD socket to read randomness from the daemon.
      */
 
-    for (egdsocket = egdsockets; *egdsocket && n < ENTROPY_NEEDED;
+    for (egdsocket = egdsockets; *egdsocket && n < RANDOMNESS_NEEDED;
          egdsocket++) {
         int r;
 
         r = RAND_query_egd_bytes(*egdsocket, (unsigned char *)tmpbuf + n,
-                                 ENTROPY_NEEDED - n);
+                                 RANDOMNESS_NEEDED - n);
         if (r > 0)
             n += r;
     }
