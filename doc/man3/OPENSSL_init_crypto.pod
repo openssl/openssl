@@ -150,6 +150,11 @@ With this option the library will automatically load and initialise all the
 built in engines listed above with the exception of the openssl and dasync
 engines. This not a default option.
 
+=item OPENSSL_INIT_NO_ATFORK
+
+With this option the library will not register its fork handlers.
+See OPENSSL_fork_prepare(3) for details.
+
 =back
 
 Multiple options may be combined together in a single call to

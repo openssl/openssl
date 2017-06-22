@@ -8,6 +8,7 @@
  */
 
 #include <openssl/crypto.h>
+#include <internal/cryptlib.h>
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && !defined(OPENSSL_SYS_WINDOWS)
 
@@ -168,4 +169,13 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
+int openssl_init_fork_handlers(void)
+{
+# ifdef OPENSSL_SYS_UNIX
+    if (pthread_atfork(OPENSSL_fork_prepare,
+                       OPENSSL_fork_parent, OPENSSL_fork_child) == 0)
+        return 1;
+# endif
+    return 0;
+}
 #endif
