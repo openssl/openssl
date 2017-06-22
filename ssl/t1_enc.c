@@ -460,7 +460,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
                  hash, hashlen,
                  NULL, 0,
                  NULL, 0,
-                 NULL, 0, p, len, s->session->master_key,
+                 NULL, 0, p, len, out,
                  SSL3_MASTER_SECRET_SIZE);
         OPENSSL_cleanse(hash, hashlen);
     } else {
@@ -470,7 +470,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
                  s->s3->client_random, SSL3_RANDOM_SIZE,
                  NULL, 0,
                  s->s3->server_random, SSL3_RANDOM_SIZE,
-                 NULL, 0, p, len, s->session->master_key,
+                 NULL, 0, p, len, out,
                  SSL3_MASTER_SECRET_SIZE);
     }
 #ifdef SSL_DEBUG
