@@ -30,7 +30,7 @@ void test_open_streams(void)
 void test_close_streams(void)
 {
     BIO_free(bio_out);
-    BIO_free(bio_err);
+    BIO_free_all(bio_err);
 }
 
 int test_vprintf_stdout(const char *fmt, va_list ap)
