@@ -2272,11 +2272,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         rv = EVP_DigestVerify(md_ctx, PACKET_data(&signature),
                               PACKET_remaining(&signature), tbs, tbslen);
         OPENSSL_free(tbs);
-        if (rv < 0) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, ERR_R_EVP_LIB);
-            goto err;
-        } else if (rv == 0) {
+        if (rv <= 0) {
             al = SSL_AD_DECRYPT_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_KEY_EXCHANGE, SSL_R_BAD_SIGNATURE);
             goto err;
