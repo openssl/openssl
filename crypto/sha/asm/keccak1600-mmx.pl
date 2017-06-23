@@ -26,8 +26,8 @@
 # for x86. This is because non-MMX-capable processors is extinct
 # breed, and they as well can lurk executing compiler-generated code.
 # For reference gcc-5.x-generated KECCAK_2X code takes 89 cycles per
-# processed byte on Pentium. Which is fair result. But older compiler,
-# worse the result. On the other hand one can wonder why not 128-bit
+# processed byte on Pentium. Which is fair result. But older compilers
+# produce worse code. On the other hand one can wonder why not 128-bit
 # SSE2? Well, SSE2 won't provide double improvement, rather far from
 # that, if any at all on some processors, because it will take extra
 # permutations and inter-bank data trasfers. Besides, contemporary
