@@ -459,10 +459,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         }
     } else {
         j = EVP_DigestVerify(mctx, data, len, hdata, hdatalen);
-        if (j < 0) {
-            SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, ERR_R_EVP_LIB);
-            goto f_err;
-        } else if (j == 0) {
+        if (j <= 0) {
             al = SSL_AD_DECRYPT_ERROR;
             SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY, SSL_R_BAD_SIGNATURE);
             goto f_err;
