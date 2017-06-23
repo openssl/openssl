@@ -23,7 +23,7 @@
 # pointers to T[][] and A[][] and the end of round. Since number of
 # rounds is even, last round writes to A[][] and everything works out.
 # It's argued that MMX is the only code path meaningful to implement
-# for x86. This is because non-MMX-capable processors is extinct
+# for x86. This is because non-MMX-capable processors is an extinct
 # breed, and they as well can lurk executing compiler-generated code.
 # For reference gcc-5.x-generated KECCAK_2X code takes 89 cycles per
 # processed byte on Pentium. Which is fair result. But older compilers
