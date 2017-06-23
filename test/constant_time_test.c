@@ -332,6 +332,6 @@ void register_tests(void)
     ADD_TEST(test_sizeofs);
     ADD_ALL_TESTS(test_binops, OSSL_NELEM(test_values));
     ADD_ALL_TESTS(test_signed, OSSL_NELEM(signed_test_values));
-    ADD_ALL_TESTS(test_8values, sizeof(test_values_8));
-    ADD_ALL_TESTS(test_64values, sizeof(test_values_64));
+    ADD_ALL_TESTS(test_8values, OSSL_NELEM(test_values_8));
+    ADD_ALL_TESTS(test_64values, OSSL_NELEM(test_values_64));
 }
