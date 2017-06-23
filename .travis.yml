@@ -32,66 +32,24 @@ env:
 matrix:
     include:
         - os: linux
-          addons:
-              apt:
-                  packages:
-                      - clang-3.9
-                  sources:
-                      - llvm-toolchain-trusty-3.9
-                      - ubuntu-toolchain-r-test
           compiler: clang-3.9
           env: CONFIG_OPTS="--strict-warnings no-deprecated" BUILDONLY="yes"
         - os: linux
           compiler: gcc
           env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers" COVERALLS="yes"
         - os: linux
-          addons:
-              apt:
-                  packages:
-                      - clang-3.9
-                  sources:
-                      - llvm-toolchain-trusty-3.9
-                      - ubuntu-toolchain-r-test
           compiler: clang-3.9
           env: CONFIG_OPTS="enable-asan"
         - os: linux
-          addons:
-              apt:
-                  packages:
-                      - clang-3.9
-                  sources:
-                      - llvm-toolchain-trusty-3.9
-                      - ubuntu-toolchain-r-test
           compiler: clang-3.9
           env: CONFIG_OPTS="enable-msan"
         - os: linux
-          addons:
-              apt:
-                  packages:
-                      - clang-3.9
-                  sources:
-                      - llvm-toolchain-trusty-3.9
-                      - ubuntu-toolchain-r-test
           compiler: clang-3.9
           env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method -fno-sanitize=alignment"
         - os: linux
-          addons:
-              apt:
-                  packages:
-                      - clang-3.9
-                  sources:
-                      - llvm-toolchain-trusty-3.9
-                      - ubuntu-toolchain-r-test
           compiler: clang-3.9
           env: CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2"
         - os: linux
-          addons:
-              apt:
-                  packages:
-                      - clang-3.9
-                  sources:
-                      - llvm-toolchain-trusty-3.9
-                      - ubuntu-toolchain-r-test
           compiler: clang-3.9
           env: CONFIG_OPTS="no-stdio"
         - os: linux
@@ -160,7 +118,14 @@ before_script:
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           $srcdir/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
       else
-          if which ccache >/dev/null && [ "$CC" != clang-3.9 ]; then
+          if [ "$CC" == clang-3.9 ]; then
+              sudo cp .travis-apt-pin.preferences /etc/apt/preferences.d/no-ubuntu-clang;
+              curl -sSL "http://apt.llvm.org/llvm-snapshot.gpg.key" | sudo -E apt-key add -;
+              echo "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main" | sudo tee -a /etc/apt/sources.list > /dev/null;
+              sudo -E apt-add-repository -y "ppa:ubuntu-toolchain-r/test";
+              sudo -E apt-get -yq update;
+              sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install clang-3.9;
+          elif which ccache >/dev/null; then
               CC="ccache $CC";
           fi;
           $srcdir/config -v $CONFIG_OPTS;
