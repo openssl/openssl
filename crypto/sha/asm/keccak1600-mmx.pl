@@ -48,7 +48,7 @@
 # Core 2		19/+170%
 # Sandy Bridge(ii)	18/+140%
 # Atom			33/+180%
-# Silvermont(ii)	30/+160%
+# Silvermont(ii)	30/+180%
 # VIA Nano(ii)		43/+60%
 # Sledgehammer(ii)(iii)	24/+130%
 #
