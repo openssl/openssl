@@ -1135,7 +1135,7 @@ static int create_sctp_socks(int *ssock, int *csock)
     int ret = 0;
     int family = 0;
 
-    if (!BIO_sock_init())
+    if (BIO_sock_init() != 1)
         return 0;
 
     /*

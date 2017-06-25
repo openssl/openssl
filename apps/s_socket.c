@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -62,7 +62,7 @@ int init_client(int *sock, const char *host, const char *port,
     const BIO_ADDRINFO *ai = NULL;
     int ret;
 
-    if (!BIO_sock_init())
+    if (BIO_sock_init() != 1)
         return 0;
 
     ret = BIO_lookup_ex(host, port, BIO_LOOKUP_CLIENT, family, type, protocol,
@@ -161,7 +161,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
     BIO_ADDRINFO *res = NULL;
     int ret = 0;
 
-    if (!BIO_sock_init())
+    if (BIO_sock_init() != 1)
         return 0;
 
     if (!BIO_lookup_ex(host, port, BIO_LOOKUP_SERVER, family, type, protocol,
