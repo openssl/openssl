@@ -64,7 +64,7 @@ static unsigned char out_g[] = {
 static const unsigned char str1[] = "12345678901234567890";
 
 static const char rnd_seed[] =
-    "string to make the random number generator think it has entropy";
+    "string to make the random number generator think it has randomness";
 
 static int dsa_test(void)
 {

@@ -24,9 +24,6 @@ enough randomness to ensure an unpredictable byte sequence.
 
 RAND_pseudo_bytes() has been deprecated; use RAND_bytes() instead.
 
-The contents of B<buf> is mixed into the entropy pool before retrieving
-the new pseudo-random bytes unless disabled at compile time (see FAQ).
-
 =head1 RETURN VALUES
 
 RAND_bytes() returns 1 on success, -1 if not supported by the current
