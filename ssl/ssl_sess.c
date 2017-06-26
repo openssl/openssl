@@ -122,6 +122,7 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     dest->ext.supportedgroups = NULL;
 #endif
     dest->ext.tick = NULL;
+    dest->ext.alpn_selected = NULL;
 #ifndef OPENSSL_NO_SRP
     dest->srp_username = NULL;
 #endif
@@ -210,6 +211,15 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     } else {
         dest->ext.tick_lifetime_hint = 0;
         dest->ext.ticklen = 0;
+    }
+
+    if (src->ext.alpn_selected) {
+        dest->ext.alpn_selected =
+            (unsigned char*)OPENSSL_strndup((char*)src->ext.alpn_selected,
+                                            src->ext.alpn_selected_len);
+        if (dest->ext.alpn_selected == NULL) {
+            goto err;
+        }
     }
 
 #ifndef OPENSSL_NO_SRP
