@@ -352,15 +352,23 @@ $code.=<<___;
 .type	KeccakF1600,\@function
 .align	32
 KeccakF1600:
+.cfi_startproc
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 
 	lea	100(%rdi),%rdi		# size optimization
 	sub	\$200,%rsp
+.cfi_adjust_cfa_offset	200
 
 	notq	$A[0][1](%rdi)
 	notq	$A[0][2](%rdi)
@@ -383,14 +391,22 @@ KeccakF1600:
 	lea	-100(%rdi),%rdi		# preserve A[][]
 
 	add	\$200,%rsp
+.cfi_adjust_cfa_offset	-200
 
 	pop	%r15
+.cfi_pop	%r15
 	pop	%r14
+.cfi_pop	%r14
 	pop	%r13
+.cfi_pop	%r13
 	pop	%r12
+.cfi_pop	%r12
 	pop	%rbp
+.cfi_pop	%rbp
 	pop	%rbx
+.cfi_pop	%rbx
 	ret
+.cfi_endproc
 .size	KeccakF1600,.-KeccakF1600
 ___
 
@@ -401,15 +417,23 @@ $code.=<<___;
 .type	SHA3_absorb,\@function
 .align	32
 SHA3_absorb:
+.cfi_startproc
 	push	%rbx
+.cfi_push	%rbx
 	push	%rbp
+.cfi_push	%rbp
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
 
 	lea	100(%rdi),%rdi		# size optimization
 	sub	\$232,%rsp
+.cfi_adjust_cfa_offset	232
 
 	mov	%rsi,$inp
 	lea	100(%rsp),%rsi		# size optimization
@@ -461,14 +485,22 @@ SHA3_absorb:
 	notq	$A[4][0](%rdi)
 
 	add	\$232,%rsp
+.cfi_adjust_cfa_offset	-232
 
 	pop	%r15
+.cfi_pop	%r15
 	pop	%r14
+.cfi_pop	%r14
 	pop	%r13
+.cfi_pop	%r13
 	pop	%r12
+.cfi_pop	%r12
 	pop	%rbp
+.cfi_pop	%rbp
 	pop	%rbx
+.cfi_pop	%rbx
 	ret
+.cfi_endproc
 .size	SHA3_absorb,.-SHA3_absorb
 ___
 }
@@ -480,9 +512,13 @@ $code.=<<___;
 .type	SHA3_squeeze,\@function
 .align	32
 SHA3_squeeze:
+.cfi_startproc
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 
 	shr	\$3,%rcx
 	mov	$A_flat,%r8
@@ -519,9 +555,13 @@ SHA3_squeeze:
 
 .Ldone_squeeze:
 	pop	%r14
+.cfi_pop	%r14
 	pop	%r13
+.cfi_pop	%r13
 	pop	%r12
+.cfi_pop	%r13
 	ret
+.cfi_endproc
 .size	SHA3_squeeze,.-SHA3_squeeze
 ___
 }
