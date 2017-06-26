@@ -28,8 +28,8 @@
 # include <openssl/rand.h>
 # include "testutil.h"
 
-static const char rnd_seed[] = "string to make the random number generator "
-    "think it has entropy";
+static const char rnd_seed[] =
+    "string to make the random number generator think it has randomness";
 
 
 /* functions to change the RAND_METHOD */

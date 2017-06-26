@@ -16,7 +16,7 @@ OPENSSL_instrument_bus, OPENSSL_instrument_bus2 - instrument references to memor
 It was empirically found that timings of references to primary memory
 are subject to irregular, apparently non-deterministic variations. The
 subroutines in question instrument these references for purposes of
-gathering entropy for random number generator. In order to make it
+gathering randomness for random number generator. In order to make it
 bus-bound a 'flush cache line' instruction is used between probes. In
 addition probes are added to B<vector> elements in atomic or
 interlocked manner, which should contribute additional noise on

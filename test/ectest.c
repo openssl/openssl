@@ -1427,7 +1427,7 @@ static int parameter_test(void)
 }
 
 static const char rnd_seed[] =
-    "string to make the random number generator think it has entropy";
+    "string to make the random number generator think it has randomness";
 #endif
 
 int test_main(int argc, char *argv[])

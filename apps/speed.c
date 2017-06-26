@@ -249,7 +249,7 @@ static double ecdh_results[EC_NUM][1];
 
 #if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
 static const char rnd_seed[] =
-    "string to make the random number generator think it has entropy";
+    "string to make the random number generator think it has randomness";
 #endif
 
 #ifdef SIGALRM
