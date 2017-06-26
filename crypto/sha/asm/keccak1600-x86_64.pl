@@ -22,6 +22,36 @@
 # instead of actually unrolling the loop pair-wise I simply flip
 # pointers to T[][] and A[][] at the end of round. Since number of
 # rounds is even, last round writes to A[][] and everything works out.
+#
+########################################################################
+# Numbers are cycles per processed byte out of large message.
+#
+#			r=1088
+#
+# P4			45.8
+# Core 2		14.2
+# Sandy Bridge		13.0
+# Haswell		9.8
+# Skylake		9.4
+# Silvermont		22.4
+# Goldmont		18.0
+# VIA Nano		19.1
+# Sledgehammer		13.8
+# Bulldozer		16.7
+
+$flavour = shift;
+$output  = shift;
+if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
+
+$win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
+
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
+( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
+die "can't locate x86_64-xlate.pl";
+
+open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\"";
+*STDOUT=*OUT;
 
 my @A = map([ 8*$_-100, 8*($_+1)-100, 8*($_+2)-100,
               8*($_+3)-100, 8*($_+4)-100 ], (0,5,10,15,20));
@@ -78,30 +108,29 @@ __KeccakF1600:
 
 	mov	@C[2],@T[0]
 	rol	\$1,@C[2]
+	mov	$A[0][0](%rdi),@D[0]
 	xor	@C[0],@C[2]		# D[1] = ROL64(C[2], 1) ^ C[0]
 
 	rol	\$1,@C[0]
+	mov	$A[1][1](%rdi),@D[1]
 	xor	@C[3],@C[0]		# D[4] = ROL64(C[0], 1) ^ C[3]
 
 	rol	\$1,@C[3]
+	mov	$A[2][2](%rdi),@D[2]
 	xor	@C[1],@C[3]		# D[2] = ROL64(C[3], 1) ^ C[1]
 
 	rol	\$1,@C[1]
+	mov	$A[3][3](%rdi),@D[3]
 	xor	@C[4],@C[1]		# D[0] = ROL64(C[1], 1) ^ C[4]
 
 	rol	\$1,@C[4]
+	mov	$A[4][4](%rdi),@D[4]
 	xor	@T[0],@C[4]		# D[3] = ROL64(C[4], 1) ^ C[2]
 ___
 	my @E = @D;
 	@D = (@C[1],@C[2],@C[3],@C[4],@C[0]);
 	@C = @E;
 $code.=<<___;
-	mov	$A[0][0](%rdi),@C[0]
-	mov	$A[1][1](%rdi),@C[1]
-	mov	$A[2][2](%rdi),@C[2]
-	mov	$A[3][3](%rdi),@C[3]
-	mov	$A[4][4](%rdi),@C[4]
-
 	xor	@D[0],@C[0]
 	xor	@D[1],@C[1]
 	xor	@D[2],@C[2]
@@ -265,25 +294,21 @@ $code.=<<___;
 	mov	@C[0],$A[3][3](%rsi)	# R[3][3] = ~C[3] ^ ( C[0] & C[4])
 
 
-	mov	$A[0][2](%rdi),@C[0]
-	mov	$A[1][3](%rdi),@C[1]
-	mov	$A[2][4](%rdi),@C[2]
-	mov	$A[3][0](%rdi),@C[3]
-	mov	$A[4][1](%rdi),@C[4]
+	xor	$A[0][2](%rdi),@D[2]
+	xor	$A[1][3](%rdi),@D[3]
+	xor	$A[2][4](%rdi),@D[4]
+	xor	$A[3][0](%rdi),@D[0]
+	xor	$A[4][1](%rdi),@D[1]
 	xchg	%rsi,%rdi
 
-	xor	@D[2],@C[0]
-	xor	@D[3],@C[1]
-	xor	@D[4],@C[2]
-	xor	@D[0],@C[3]
-	xor	@D[1],@C[4]
-
-	rol	\$$rhotates[0][2],@C[0]
-	rol	\$$rhotates[1][3],@C[1]
-	rol	\$$rhotates[2][4],@C[2]
-	rol	\$$rhotates[3][0],@C[3]
-	rol	\$$rhotates[4][1],@C[4]
-
+	rol	\$$rhotates[0][2],@D[2]
+	rol	\$$rhotates[1][3],@D[3]
+	rol	\$$rhotates[2][4],@D[4]
+	rol	\$$rhotates[3][0],@D[0]
+	rol	\$$rhotates[4][1],@D[1]
+___
+	@C = (@D[2],@D[3],@D[4],@D[0],@D[1]);
+$code.=<<___;
 	mov	@C[0],@T[0]
 	and	@C[1],@C[0]
 	xor	@C[4],@C[0]		#            C[4] ^ ( C[0] & C[1])
@@ -307,11 +332,8 @@ $code.=<<___;
 	xor	@C[1],@C[3]		#           ~C[1] ^ ( C[2] | C[3])
 	mov	@C[3],$A[4][1](%rdi)	# R[4][1] = ~C[1] ^ ( C[2] | C[3])
 
-	mov	@C[2],@D[4]		# harmonize with the loop top
-	mov	@C[3],@D[0]
-	mov	@C[4],@D[1]
-	mov	@T[0],@D[2]
-	mov	@C[0],@D[3]
+	mov	@C[0],@C[1]		# harmonize with the loop top
+	mov	@T[0],@C[0]
 
 	test	\$255,$iotas
 	jnz	.Loop
