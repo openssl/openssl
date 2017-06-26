@@ -614,7 +614,7 @@ static char *cipher = NULL;
 static int verbose = 0;
 static int debug = 0;
 static const char rnd_seed[] =
-    "string to make the random number generator think it has entropy";
+    "string to make the random number generator think it has randomness";
 
 int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family,
                    long bytes, clock_t *s_time, clock_t *c_time);

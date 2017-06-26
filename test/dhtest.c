@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 static int cb(int p, int n, BN_GENCB *arg);
 
 static const char rnd_seed[] =
-    "string to make the random number generator think it has entropy";
+    "string to make the random number generator think it has randomness";
 
 static int dh_test(void)
 {

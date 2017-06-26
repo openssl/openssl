@@ -93,13 +93,14 @@ int app_RAND_write_file(const char *file)
 {
     char buffer[200];
 
-    if (egdsocket || !seeded)
+    if (egdsocket || !seeded) {
         /*
-         * If we did not manage to read the seed file, we should not write a
-         * low-entropy seed file back -- it would suppress a crucial warning
-         * the next time we want to use it.
+         * If we didn't manage to read the seed file, don't write a
+         * file out -- it would suppress a crucial warning the next
+         * time we want to use it.
          */
         return 0;
+    }
 
     if (file == NULL)
         file = RAND_file_name(buffer, sizeof buffer);

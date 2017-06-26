@@ -19,14 +19,11 @@
 extern "C" {
 #endif
 
-/* Already defined in ossl_typ.h */
-/* typedef struct rand_meth_st RAND_METHOD; */
-
 struct rand_meth_st {
     int (*seed) (const void *buf, int num);
     int (*bytes) (unsigned char *buf, int num);
     void (*cleanup) (void);
-    int (*add) (const void *buf, int num, double entropy);
+    int (*add) (const void *buf, int num, double randomness);
     int (*pseudorand) (unsigned char *buf, int num);
     int (*status) (void);
 };
@@ -50,7 +47,7 @@ void RAND_seed(const void *buf, int num);
 #if defined(__ANDROID__) && defined(__NDK_FPABI__)
 __NDK_FPABI__	/* __attribute__((pcs("aapcs"))) on ARM */
 #endif
-void RAND_add(const void *buf, int num, double entropy);
+void RAND_add(const void *buf, int num, double randomness);
 int RAND_load_file(const char *file, long max_bytes);
 int RAND_write_file(const char *file);
 const char *RAND_file_name(char *file, size_t num);
