@@ -117,6 +117,7 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_INTERNAL_ERROR, "internal error"},
     {ERR_R_DISABLED, "called a function that was disabled at compile-time"},
     {ERR_R_INIT_FAIL, "init fail"},
+    {ERR_R_OPERATION_FAIL, "operation fail"},
 
     {0, NULL},
 };
