@@ -198,14 +198,14 @@ if ( ! $reindex && $statefile ) {
             die "Bad line in $statefile:\n$_\n";
         }
         my $lib = $name;
-        $lib =~ s/_.*//;
+        $lib =~ s/^((?:OSSL_|OPENSSL_)?[^_]{2,}).*$/$1/;
         $lib = "SSL" if $lib =~ /TLS/;
         if ( !defined $errorfile{$lib} ) {
             print "Skipping $_";
             $skippedstate++;
             next;
         }
-        if ( $name =~ /^[A-Z0-9]+_R_/ ) {
+        if ( $name =~ /^(?:OSSL_|OPENSSL_)?[A-Z0-9]{2,}_R_/ ) {
             die "$lib reason code $code collision at $name\n"
                 if $rassigned{$lib} =~ /:$code:/;
             $rassigned{$lib} .= "$code:";
@@ -213,7 +213,7 @@ if ( ! $reindex && $statefile ) {
                 $rmax{$lib} = $code if $code > $rmax{$lib};
             }
             $rcodes{$name} = $code;
-        } elsif ( $name =~ /^[A-Z0-9]+_F_/ ) {
+        } elsif ( $name =~ /^(?:OSSL_|OPENSSL_)?[A-Z0-9]{2,}_F_/ ) {
             die "$lib function code $code collision at $name\n"
                 if $fassigned{$lib} =~ /:$code:/;
             $fassigned{$lib} .= "$code:";
@@ -378,7 +378,7 @@ foreach my $file ( @source ) {
             $func = $1;
         }
 
-        if ( /(([A-Z0-9]+)_F_([A-Z0-9_]+))/ ) {
+        if ( /(((?:OSSL_|OPENSSL_)?[A-Z0-9]{2,})_F_([A-Z0-9_]+))/ ) {
             next unless exists $errorfile{$2};
             next if $1 eq "BIO_F_BUFFER_CTX";
             $usedfuncs{$1} = 1;
@@ -395,7 +395,7 @@ foreach my $file ( @source ) {
             print STDERR "  Function $1 = $fcodes{$1}\n"
               if $debug;
         }
-        if ( /(([A-Z0-9]+)_R_[A-Z0-9_]+)/ ) {
+        if ( /(((?:OSSL_|OPENSSL_)?[A-Z0-9]{2,})_R_[A-Z0-9_]+)/ ) {
             next unless exists $errorfile{$2};
             $usedreasons{$1} = 1;
             if ( !exists $rcodes{$1} ) {
@@ -486,6 +486,7 @@ EOF
     print OUT "\n/*\n * $lib function codes.\n */\n";
     foreach my $i ( @function ) {
         my $z = 48 - length($i);
+        $z = 0 if $z < 0;
         if ( $fcodes{$i} eq "X" ) {
             $fassigned{$lib} =~ m/^:([^:]*):/;
             my $findcode = $1;
@@ -503,6 +504,7 @@ EOF
     print OUT "\n/*\n * $lib reason codes.\n */\n";
     foreach my $i ( @reasons ) {
         my $z = 48 - length($i);
+        $z = 0 if $z < 0;
         if ( $rcodes{$i} eq "X" ) {
             $rassigned{$lib} =~ m/^:([^:]*):/;
             my $findcode = $1;
