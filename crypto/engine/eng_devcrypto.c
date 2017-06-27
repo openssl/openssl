@@ -318,8 +318,7 @@ struct digest_ctx {
     struct session_op sess;
     int init;
 #if !defined(COP_FLAG_UPDATE) || !defined(COP_FLAG_FINAL)
-    void *saved_data;
-    size_t saved_data_len;
+    size_t update_count;
     unsigned char digest[HASH_MAX_LEN];
 #endif
 };
@@ -393,6 +392,9 @@ static int digest_init(EVP_MD_CTX *ctx)
     }
 
     digest_ctx->init = 1;
+#if !defined(COP_FLAG_UPDATE) || !defined(COP_FLAG_FINAL)
+    digest_ctx->update_count = 0;
+#endif
 
     memset(&digest_ctx->sess, 0, sizeof(digest_ctx->sess));
     digest_ctx->sess.mac = digest_d->devcryptoid;
@@ -428,25 +430,12 @@ static int digest_update(EVP_MD_CTX *ctx, const void *data, size_t count)
     int flags = 0;
 
 #if !defined(COP_FLAG_UPDATE) || !defined(COP_FLAG_FINAL)
-    if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_ONESHOT)) {
-        /*
-         * TODO: Should we limit the amount of bytes that can be processed
-         * with this method?  What if someone wants to hash a multi-GB file?
-         */
-        digest_ctx->saved_data = OPENSSL_realloc(digest_ctx->saved_data,
-                                                 digest_ctx->saved_data_len
-                                                 + count);
-        if (digest_ctx->saved_data == NULL) {
-            ENGINEerr(ENGINE_F_DIGEST_UPDATE, ERR_R_MALLOC_FAILURE);
-            return 0;
-        }
-
-        memcpy(digest_ctx->saved_data + digest_ctx->saved_data_len, data,
-               count);
-        digest_ctx->saved_data_len += count;
-        return 1;
+    if (digest_ctx->update_count != 0) {
+        ENGINEerr(ENGINE_F_DIGEST_UPDATE, ERR_R_OPERATION_FAIL);
+        return 0;
     }
 
+    digest_ctx->update_count = count;
     res = digest_ctx->digest;
 #else
     flags = COP_FLAG_UPDATE;
@@ -468,16 +457,10 @@ static int digest_final(EVP_MD_CTX *ctx, unsigned char *md)
     int flags = 0;
 
 #if !defined(COP_FLAG_UPDATE) || !defined(COP_FLAG_FINAL)
-    if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_ONESHOT)) {
-        memcpy(md, digest_ctx->digest, EVP_MD_CTX_size(ctx));
-        return 1;
-    }
-
-    data = digest_ctx->saved_data;
-    count = digest_ctx->saved_data_len;
+    memcpy(md, digest_ctx->digest, EVP_MD_CTX_size(ctx));
+    return 1;
 #else
     flags = COP_FLAG_FINAL;
-#endif
 
     if (digest_op(digest_ctx, data, count, md, flags) < 0) {
         SYSerr(SYS_F_IOCTL, errno);
@@ -487,6 +470,7 @@ static int digest_final(EVP_MD_CTX *ctx, unsigned char *md)
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
     }
+#endif
 
     return 1;
 }
@@ -496,9 +480,6 @@ static int digest_cleanup(EVP_MD_CTX *ctx)
     struct digest_ctx *digest_ctx =
         (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
 
-#if !defined(COP_FLAG_UPDATE) || !defined(COP_FLAG_FINAL)
-    OPENSSL_free(digest_ctx->saved_data);
-#endif
     if (close(digest_ctx->cfd) < 0) {
         SYSerr(SYS_F_CLOSE, errno);
         return 0;
