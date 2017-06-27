@@ -337,6 +337,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     static const unsigned char client_application_traffic[] = "c ap traffic";
     static const unsigned char server_handshake_traffic[] = "s hs traffic";
     static const unsigned char server_application_traffic[] = "s ap traffic";
+    static const unsigned char exporter_master_secret[] = "exp master";
     static const unsigned char resumption_master_secret[] = "res master";
     unsigned char *iv;
     unsigned char secret[EVP_MAX_MD_SIZE];
@@ -509,6 +510,15 @@ int tls13_change_cipher_state(SSL *s, int which)
             goto err;
         }
         s->session->master_key_length = hashlen;
+
+        /* Now we create the exporter master secret */
+        if (!tls13_hkdf_expand(s, ssl_handshake_md(s), insecret,
+                               exporter_master_secret,
+                               sizeof(exporter_master_secret) - 1,
+                               hash, s->exporter_master_secret, hashlen)) {
+            SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
     }
 
     if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, md, cipher,
@@ -586,4 +596,42 @@ int tls13_alert_code(int code)
         return code;
 
     return tls1_alert_code(code);
+}
+
+int tls13_export_keying_material(SSL *s, unsigned char *out, size_t olen,
+                                 const char *label, size_t llen,
+                                 const unsigned char *context,
+                                 size_t contextlen, int use_context)
+{
+    unsigned char exportsecret[EVP_MAX_MD_SIZE];
+    static const unsigned char exporterlabel[] = "exporter";
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    const EVP_MD *md = ssl_handshake_md(s);
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    unsigned int hashsize;
+    int ret = 0;
+
+    if (ctx == NULL)
+        goto err;
+
+    if (!SSL_is_init_finished(s))
+        goto err;
+
+    if (!use_context)
+        contextlen = 0;
+
+    if (EVP_DigestInit_ex(ctx, md, NULL) <= 0
+            || EVP_DigestUpdate(ctx, context, contextlen) <= 0
+            || EVP_DigestFinal_ex(ctx, hash, &hashsize) <= 0
+            || !tls13_hkdf_expand(s, md, s->exporter_master_secret,
+                                  (const unsigned char *)label, llen, NULL,
+                                  exportsecret, 0)
+            || !tls13_hkdf_expand(s, md, exportsecret, exporterlabel,
+                                  sizeof(exporterlabel) - 1, hash, out, olen))
+        goto err;
+
+    ret = 1;
+ err:
+    EVP_MD_CTX_free(ctx);
+    return ret;
 }
