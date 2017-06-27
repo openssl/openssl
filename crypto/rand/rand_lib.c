@@ -49,6 +49,7 @@ void rand_cleanup_int(void)
     CRYPTO_THREAD_lock_free(rand_engine_lock);
 #endif
     CRYPTO_THREAD_lock_free(rand_meth_lock);
+    rand_drbg_cleanup();
 }
 
 int RAND_set_rand_method(const RAND_METHOD *meth)
