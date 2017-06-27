@@ -77,7 +77,7 @@ effect. Alternatively you can reconfigure the toolkit with no-sse2
 option and recompile.
 
 Less intuitive is clearing bit #28, or ~0x10000000 in the "environment
-variable" terms. The truth is that it's not copied from CPUID output
+variable" terms. The truth is that it is not copied from CPUID output
 verbatim, but is adjusted to reflect whether or not the data cache is
 actually shared between logical cores. This in turn affects the decision
 on whether or not expensive countermeasures against cache-timing attacks
@@ -137,7 +137,7 @@ Even though AVX512 support was implemented in llvm 3.6, compilation of
 assembly modules apparently requires explicit -march flag. But then
 compiler generates processor-specific code, which in turn contradicts
 the mere idea of run-time switch execution facilitated by the variable
-in question. Till the limitation is lifted, it's possible to work around
+in question. Till the limitation is lifted, it is possible to work around
 the problem by making build procedure use following script:
 
    #!/bin/sh

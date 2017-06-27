@@ -27,7 +27,7 @@ X509_NAME (to express a certificate name), X509_ATTRIBUTE (to express
 a certificate attributes), X509_EXTENSION (to express a certificate
 extension) and a few more.
 
-Finally, there's the supertype X509_INFO, which can contain a CRL, a
+Finally, there is the supertype X509_INFO, which can contain a CRL, a
 certificate and a corresponding private key.
 
 B<X509_>I<...>, B<d2i_X509_>I<...> and B<i2d_X509_>I<...> handle X.509

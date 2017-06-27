@@ -115,7 +115,7 @@ Call L<SSL_get_error(3)> with the return value B<ret> to find out the reason.
 
 Old documentation indicated a difference between 0 and -1, and that -1 was
 retryable.
-You should instead call SSL_get_error() to find out if it's retryable.
+You should instead call SSL_get_error() to find out if it is retryable.
 
 =back
 

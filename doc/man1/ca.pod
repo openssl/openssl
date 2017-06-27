@@ -465,7 +465,7 @@ database must have unique subjects.  if the value B<no> is given,
 several valid certificate entries may have the exact same subject.
 The default value is B<yes>, to be compatible with older (pre 0.9.8)
 versions of OpenSSL.  However, to make CA certificate roll-over easier,
-it's recommended to use the value B<no>, especially if combined with
+it is recommended to use the value B<no>, especially if combined with
 the B<-selfsign> command line option.
 
 =item B<serial>

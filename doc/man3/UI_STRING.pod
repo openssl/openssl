@@ -83,7 +83,7 @@ For B<UIT_BOOLEAN> type UI strings, this sets the first character of
 the result retrievable with UI_get0_result_string() to the first
 B<ok_char> given with UI_add_input_boolean() or UI_dup_input_boolean()
 if the B<result> matched any of them, or the first of the
-B<cancel_chars> if the B<result> matched any of them, otherwise it's
+B<cancel_chars> if the B<result> matched any of them, otherwise it is
 set to the NUL char C<\0>.
 See L<UI_add_input_boolean(3)> for more information on B<ok_chars> and
 B<cancel_chars>.

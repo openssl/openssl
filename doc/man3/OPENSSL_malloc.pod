@@ -227,8 +227,8 @@ return 1 on success or 0 on failure.
 
 =head1 NOTES
 
-While it's permitted to swap out only a few and not all the functions
-with CRYPTO_set_mem_functions(), it's recommended to swap them all out
+While it is permitted to swap out only a few and not all the functions
+with CRYPTO_set_mem_functions(), it is recommended to swap them all out
 at once.  I<This applies specially if OpenSSL was built with the
 configuration option> C<crypto-mdebug> I<enabled.  In case, swapping out
 only, say, the malloc() implementation is outright dangerous.>

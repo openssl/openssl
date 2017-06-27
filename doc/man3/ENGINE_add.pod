@@ -194,7 +194,7 @@ that the structure can not be deallocated until the reference is released.
 
 However, a structural reference provides no guarantee that the ENGINE is
 initialised and able to use any of its cryptographic
-implementations. Indeed it's quite possible that most ENGINEs will not
+implementations. Indeed it is quite possible that most ENGINEs will not
 initialise at all in typical environments, as ENGINEs are typically used to
 support specialised hardware. To use an ENGINE's functionality, you need a
 B<functional> reference. This kind of reference can be considered a

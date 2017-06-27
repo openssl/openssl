@@ -215,14 +215,14 @@ by  L<B<pkeyutl>|pkeyutl(1)>.
 =item L<B<s_client>|s_client(1)>
 
 This implements a generic SSL/TLS client which can establish a transparent
-connection to a remote server speaking SSL/TLS. It's intended for testing
+connection to a remote server speaking SSL/TLS. It is intended for testing
 purposes only and provides only rudimentary interface functionality but
 internally uses mostly all functionality of the OpenSSL B<ssl> library.
 
 =item L<B<s_server>|s_server(1)>
 
 This implements a generic SSL/TLS server which accepts connections from remote
-clients speaking SSL/TLS. It's intended for testing purposes only and provides
+clients speaking SSL/TLS. It is intended for testing purposes only and provides
 only rudimentary interface functionality but internally uses mostly all
 functionality of the OpenSSL B<ssl> library.  It provides both an own command
 line oriented protocol for testing SSL functions and a simple HTTP response

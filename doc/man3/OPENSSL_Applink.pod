@@ -12,7 +12,7 @@ OPENSSL_Applink - glue between OpenSSL BIO and Win32 compiler run-time
 
 OPENSSL_Applink is application-side interface which provides a glue
 between OpenSSL BIO layer and Win32 compiler run-time environment.
-Even though it appears at application side, it's essentially OpenSSL
+Even though it appears at application side, it is essentially OpenSSL
 private interface. For this reason application developers are not
 expected to implement it, but to compile provided module with
 compiler of their choice and link it into the target application.
