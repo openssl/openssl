@@ -199,7 +199,7 @@ The following example demonstrates how to use most of the core async APIs:
      unsigned char *msg;
      int pipefds[2] = {0, 0};
      OSSL_ASYNC_FD *wptr;
-     char buf = 'X';
+     char buf = '!';
 
      currjob = ASYNC_get_current_job();
      if (currjob != NULL) {

@@ -388,7 +388,7 @@ terminal with echoing turned off.
 =item B<pass:password>
 
 The actual password is B<password>. Since the password is visible
-to utilities (like 'ps' under Unix) this form should only be used
+to utilities (like L<ps(1)> under Unix) this form should only be used
 where security is not important.
 
 =item B<env:var>

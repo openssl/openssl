@@ -137,7 +137,7 @@ The default is PEM.
 
 The password used to encrypt the private key. Since on some
 systems the command line arguments are visible (e.g. Unix with
-the 'ps' utility) this option should be used with caution.
+the L<ps(1)> utility) this option should be used with caution.
 
 =item B<-selfsign>
 
@@ -494,7 +494,7 @@ The same as B<-preserveDN>
 =item B<email_in_dn>
 
 The same as B<-noemailDN>. If you want the EMAIL field to be removed
-from the DN of the certificate simply set this to 'no'. If not present
+from the DN of the certificate simply set this to "no". If not present
 the default is to allow for the EMAIL filed in the certificate's DN.
 
 =item B<msie_hack>

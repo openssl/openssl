@@ -165,7 +165,7 @@ EVP_CipherInit_ex(), EVP_CipherUpdate() and EVP_CipherFinal_ex() are
 functions that can be used for decryption or encryption. The operation
 performed depends on the value of the B<enc> parameter. It should be set
 to 1 for encryption, 0 for decryption and -1 to leave the value unchanged
-(the actual value of 'enc' being supplied in a previous call).
+(the actual value of B<enc> being supplied in a previous call).
 
 EVP_CIPHER_CTX_reset() clears all information from a cipher context
 and free up any allocated memory associate with it, except the B<ctx>
@@ -537,7 +537,7 @@ Encrypt a string using IDEA:
      unsigned char outbuf[1024];
      int outlen, tmplen;
      /*
-      * Bogus key and IV: we'd normally set these from
+      * Bogus key and IV: we would normally set these from
       * another source.
       */
      unsigned char key[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
@@ -597,7 +597,7 @@ with a 128-bit key:
      int inlen, outlen;
      EVP_CIPHER_CTX *ctx;
      /*
-      * Bogus key and IV: we'd normally set these from
+      * Bogus key and IV: we would normally set these from
       * another source.
       */
      unsigned char key[] = "0123456789abcdeF";

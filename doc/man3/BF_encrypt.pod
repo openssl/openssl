@@ -87,7 +87,7 @@ the same way.
 BF_encrypt() and BF_decrypt() are the lowest level functions for Blowfish
 encryption.  They encrypt/decrypt the first 64 bits of the vector pointed by
 B<data>, using the key B<key>.  These functions should not be used unless you
-implement 'modes' of Blowfish.  The alternative is to use BF_ecb_encrypt().
+implement modes of Blowfish.  The alternative is to use BF_ecb_encrypt().
 If you still want to use these functions, you should be aware that they take
 each 32-bit chunk in host-byte order, which is little-endian on little-endian
 platforms and big-endian on big-endian ones.

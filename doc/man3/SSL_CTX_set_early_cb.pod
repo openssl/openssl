@@ -38,7 +38,7 @@ SSL_early_isv2() indicates whether the ClientHello was carried in a
 SSLv2 record and is in the SSLv2 format.  The SSLv2 format has substantial
 differences from the normal SSLv3 format, including using three bytes per
 cipher suite, and not allowing extensions.  Additionally, the SSLv2 format
-'challenge' field is exposed via SSL_early_get0_random(), padded to
+challenge field is exposed via SSL_early_get0_random(), padded to
 SSL3_RANDOM_SIZE bytes with zeros if needed.  For SSLv2 format ClientHellos,
 SSL_early_get0_compression_methods() returns a dummy list that only includes
 the null compression method, since the SSLv2 format does not include a

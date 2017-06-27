@@ -164,7 +164,7 @@ B<URI> a uniform resource indicator, B<DNS> (a DNS domain name), B<RID> (a
 registered ID: OBJECT IDENTIFIER), B<IP> (an IP address), B<dirName>
 (a distinguished name) and otherName.
 
-The email option include a special 'copy' value. This will automatically
+The email option include a special C<copy> value. This will automatically
 include any email addresses contained in the certificate subject name in
 the extension.
 
@@ -329,7 +329,7 @@ This section can include explicitText, organization and noticeNumbers
 options. explicitText and organization are text strings, noticeNumbers is a
 comma separated list of numbers. The organization and noticeNumbers options
 (if included) must BOTH be present. If you use the userNotice option with IE5
-then you need the 'ia5org' option at the top level to modify the encoding:
+then you need the C<ia5org> option at the top level to modify the encoding:
 otherwise it will not be interpreted properly.
 
 Example:

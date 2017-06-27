@@ -153,7 +153,7 @@ bytes for this implementation.
 This is only useful for CFB1 ciphers.
 
 =begin comment
-The FIPS flags seem to be unused, so I'm hiding them until I get an
+The FIPS flags seem to be unused, so I am hiding them until I get an
 explanation or they get removed.  /RL
 
 =item EVP_CIPH_FLAG_FIPS

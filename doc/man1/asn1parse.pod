@@ -173,11 +173,11 @@ Parse a DER file:
 
 Generate a simple UTF8String:
 
- openssl asn1parse -genstr 'UTF8:Hello World'
+ openssl asn1parse -genstr "UTF8:Hello World"
 
 Generate and write out a UTF8String, do not print parsed output:
 
- openssl asn1parse -genstr 'UTF8:Hello World' -noout -out utf8.der
+ openssl asn1parse -genstr "UTF8:Hello World" -noout -out utf8.der
 
 Generate using a config file:
 

@@ -193,7 +193,7 @@ SEQUENCE consisting of a BOOL an OID and a UTF8String:
 
 This example produces an RSAPrivateKey structure, this is the
 key contained in the file client.pem in all OpenSSL distributions
-(note: the field names such as 'coeff' are ignored and are present just
+(note: the field names such as "coeff" are ignored and are present just
 for clarity):
 
  asn1=SEQUENCE:private_key
