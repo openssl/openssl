@@ -134,7 +134,7 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     struct cipher_ctx *cipher_ctx =
         (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
     const struct cipher_data_st *cipher_d =
-        get_cipher_data(EVP_CIPHER_CTX_type(ctx));
+        get_cipher_data(EVP_CIPHER_CTX_nid(ctx));
 
     if ((cipher_ctx->cfd = open("/dev/crypto", O_RDWR, 0)) < 0) {
         SYSerr(SYS_F_OPEN, errno);
