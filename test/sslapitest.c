@@ -2486,6 +2486,145 @@ static int test_serverinfo(int tst)
     return testresult;
 }
 
+/*
+ * Test that SSL_export_keying_material() produces expected results. There are
+ * no test vectors so all we do is test that both sides of the communication
+ * produce the same results for different protocol versions.
+ */
+static int test_export_key_mat(int tst)
+{
+    int testresult = 0, proto;
+    SSL_CTX *cctx = NULL, *sctx = NULL, *sctx2 = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    const char label[] = "test label";
+    const unsigned char context[] = "context";
+    const unsigned char *emptycontext = NULL;
+    unsigned char ckeymat1[80], ckeymat2[80], ckeymat3[80];
+    unsigned char skeymat1[80], skeymat2[80], skeymat3[80];
+
+#ifdef OPENSSL_NO_TLS1
+    if (tst == 0)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_TLS1_1
+    if (tst == 1)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_TLS1_2
+    if (tst == 2)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_TLS1_3
+    if (tst == 3)
+        return 1;
+#endif
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(), &sctx,
+                                       &cctx, cert, privkey)))
+        goto end;
+
+    switch (tst) {
+    case 0:
+        proto = TLS1_VERSION;
+        break;
+
+    case 1:
+        proto = TLS1_1_VERSION;
+        break;
+
+    case 2:
+        proto = TLS1_2_VERSION;
+        break;
+
+    case 3:
+        proto = TLS1_3_VERSION;
+        break;
+
+    default:
+        goto end;
+    }
+    SSL_CTX_set_max_proto_version(cctx, proto);
+    SSL_CTX_set_min_proto_version(cctx, proto);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+                                      NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_export_keying_material(clientssl, ckeymat1,
+                                                sizeof(ckeymat1), label,
+                                                sizeof(label) - 1, context,
+                                                sizeof(context) - 1, 1), 1)
+            || !TEST_int_eq(SSL_export_keying_material(clientssl, ckeymat2,
+                                                       sizeof(ckeymat2), label,
+                                                       sizeof(label) - 1,
+                                                       emptycontext,
+                                                       0, 1), 1)
+            || !TEST_int_eq(SSL_export_keying_material(clientssl, ckeymat3,
+                                                       sizeof(ckeymat3), label,
+                                                       sizeof(label) - 1,
+                                                       NULL, 0, 0), 1)
+            || !TEST_int_eq(SSL_export_keying_material(serverssl, skeymat1,
+                                                       sizeof(skeymat1), label,
+                                                       sizeof(label) - 1,
+                                                       context,
+                                                       sizeof(context) -1, 1),
+                            1)
+            || !TEST_int_eq(SSL_export_keying_material(serverssl, skeymat2,
+                                                       sizeof(skeymat2), label,
+                                                       sizeof(label) - 1,
+                                                       emptycontext,
+                                                       0, 1), 1)
+            || !TEST_int_eq(SSL_export_keying_material(serverssl, skeymat3,
+                                                       sizeof(skeymat3), label,
+                                                       sizeof(label) - 1,
+                                                       NULL, 0, 0), 1)
+               /*
+                * Check that both sides created the same key material with the
+                * same context.
+                */
+            || !TEST_mem_eq(ckeymat1, sizeof(ckeymat1), skeymat1,
+                            sizeof(skeymat1))
+               /*
+                * Check that both sides created the same key material with an
+                * empty context.
+                */
+            || !TEST_mem_eq(ckeymat2, sizeof(ckeymat2), skeymat2,
+                            sizeof(skeymat2))
+               /*
+                * Check that both sides created the same key material without a
+                * context.
+                */
+            || !TEST_mem_eq(ckeymat3, sizeof(ckeymat3), skeymat3,
+                            sizeof(skeymat3))
+               /* Different contexts should produce different results */
+            || !TEST_mem_ne(ckeymat1, sizeof(ckeymat1), ckeymat2,
+                            sizeof(ckeymat2)))
+        goto end;
+
+    /*
+     * Check that an empty context and no context produce different results in
+     * protocols less than TLSv1.3. In TLSv1.3 they should be the same.
+     */
+    if ((tst != 3 && !TEST_mem_ne(ckeymat2, sizeof(ckeymat2), ckeymat3,
+                                  sizeof(ckeymat3)))
+            || (tst ==3 && !TEST_mem_eq(ckeymat2, sizeof(ckeymat2), ckeymat3,
+                                        sizeof(ckeymat3))))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx2);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 int test_main(int argc, char *argv[])
 {
     int testresult = 1;
@@ -2539,6 +2678,7 @@ int test_main(int argc, char *argv[])
     ADD_ALL_TESTS(test_custom_exts, 3);
 #endif
     ADD_ALL_TESTS(test_serverinfo, 8);
+    ADD_ALL_TESTS(test_export_key_mat, 4);
 
     testresult = run_tests(argv[0]);
 
