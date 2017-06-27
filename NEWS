@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.1.0f and OpenSSL 1.1.1 [under development]
 
-      o
+      o Claim the namespaces OSSL and OPENSSL, represented as symbol prefixes
 
   Major changes between OpenSSL 1.1.0e and OpenSSL 1.1.0f [25 May 2017]
 
