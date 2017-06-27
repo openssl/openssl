@@ -235,9 +235,28 @@ static EVP_CIPHER *known_cipher_methods[OSSL_NELEM(cipher_data)] = { NULL, };
 static void prepare_cipher_methods()
 {
     size_t i;
+    struct session_op sess;
+    int cfd;
+
+    if ((cfd = open("/dev/crypto", O_RDWR, 0)) < 0)
+        return;
+
+    memset(&sess, 0, sizeof(sess));
+    sess.key = (void *)"01234567890123456789012345678901234567890123456789";
 
     for (i = 0, known_cipher_nids_amount = 0;
-         i < OSSL_NELEM(cipher_data); i++)
+         i < OSSL_NELEM(cipher_data); i++) {
+
+        /*
+         * Check that the algo is really availably by trying to open and close
+         * a session.
+         */
+        sess.cipher = cipher_data[i].devcryptoid;
+        sess.keylen = cipher_data[i].keylen;
+        if (ioctl(cfd, CIOCGSESSION, &sess) < 0
+            || ioctl(cfd, CIOCFSESSION, &sess) < 0)
+            continue;
+
         if ((known_cipher_methods[i] =
                  EVP_CIPHER_meth_new(cipher_data[i].nid,
                                      cipher_data[i].blocksize,
@@ -260,6 +279,9 @@ static void prepare_cipher_methods()
             known_cipher_nids[known_cipher_nids_amount++] =
                 cipher_data[i].nid;
         }
+    }
+
+    close(cfd);
 }
 
 static const EVP_CIPHER *get_cipher_method(int nid)
@@ -501,8 +523,26 @@ static EVP_MD *known_digest_methods[OSSL_NELEM(digest_data)] = { NULL, };
 static void prepare_digest_methods()
 {
     size_t i;
+    struct session_op sess;
+    int cfd;
 
-    for (i = 0, known_digest_nids_amount = 0; i < OSSL_NELEM(digest_data); i++)
+    if ((cfd = open("/dev/crypto", O_RDWR, 0)) < 0)
+        return;
+
+    memset(&sess, 0, sizeof(sess));
+
+    for (i = 0, known_digest_nids_amount = 0; i < OSSL_NELEM(digest_data);
+         i++) {
+
+        /*
+         * Check that the algo is really availably by trying to open and close
+         * a session.
+         */
+        sess.mac = digest_data[i].devcryptoid;
+        if (ioctl(cfd, CIOCGSESSION, &sess) < 0
+            || ioctl(cfd, CIOCFSESSION, &sess) < 0)
+            continue;
+
         if ((known_digest_methods[i] = EVP_MD_meth_new(digest_data[i].nid,
                                                        NID_undef)) == NULL
             || !EVP_MD_meth_set_result_size(known_digest_methods[i],
@@ -522,6 +562,9 @@ static void prepare_digest_methods()
         } else {
             known_digest_nids[known_digest_nids_amount++] = digest_data[i].nid;
         }
+    }
+
+    close(cfd);
 }
 
 static const EVP_MD *get_digest_method(int nid)
