@@ -342,7 +342,7 @@ call ENGINE_cleanup() before the program exits.
 
 I<Using a specific ENGINE implementation>
 
-Here we'll assume an application has been configured by its user or admin
+Here we assume an application has been configured by its user or admin
 to want to use the "ACME" ENGINE if it is available in the version of
 OpenSSL the application was compiled with. If it is available, it should be
 used by default for all RSA, DSA, and symmetric cipher operations, otherwise
