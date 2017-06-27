@@ -117,7 +117,7 @@ int storeutl_main(int argc, char *argv[])
             if (OSSL_STORE_error(store_ctx)) {
                 ERR_print_errors(bio_err);
                 ret++;
-                break;
+                continue;
             }
 
             BIO_printf(bio_err,
