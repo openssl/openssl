@@ -486,6 +486,7 @@ EOF
     print OUT "\n/*\n * $lib function codes.\n */\n";
     foreach my $i ( @function ) {
         my $z = 48 - length($i);
+        $z = 0 if $z < 0;
         if ( $fcodes{$i} eq "X" ) {
             $fassigned{$lib} =~ m/^:([^:]*):/;
             my $findcode = $1;
@@ -503,6 +504,7 @@ EOF
     print OUT "\n/*\n * $lib reason codes.\n */\n";
     foreach my $i ( @reasons ) {
         my $z = 48 - length($i);
+        $z = 0 if $z < 0;
         if ( $rcodes{$i} eq "X" ) {
             $rassigned{$lib} =~ m/^:([^:]*):/;
             my $findcode = $1;
