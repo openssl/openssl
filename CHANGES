@@ -9,6 +9,17 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Module names can prefixed with OSSL_ or OPENSSL_.  This affects
+     util/mkerr.pl, which is adapted to allow those prefixes, leading to
+     error code calls like this:
+
+         OSSL_FOOerr(OSSL_FOO_F_SOMETHING, OSSL_FOO_R_WHATEVER);
+
+     With this change, we claim the namespaces OSSL and OPENSSL in a manner
+     that can be encoded in C.  For the foreseeable future, this will only
+     affect new modules.
+     [Richard Levitte and Tim Hudson]
+
   *) Removed BSD cryptodev engine.
      [Rich Salz]
 
