@@ -72,8 +72,8 @@ This option prevents output of the encoded version of the session.
 =item B<-context ID>
 
 This option can set the session id so the output session information uses the
-supplied ID. The ID can be any string of characters. This option won't normally
-be used.
+supplied ID. The ID can be any string of characters. This option will not
+normally be used.
 
 =back
 

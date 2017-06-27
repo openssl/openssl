@@ -568,7 +568,7 @@ Encrypt a string using IDEA:
      /*
       * Need binary mode for fopen because encrypted data is
       * binary data. Also cannot use strlen() on it because
-      * it won't be NUL terminated and may contain embedded
+      * it will not be NUL terminated and may contain embedded
       * NULs.
       */
      out = fopen(outfile, "wb");

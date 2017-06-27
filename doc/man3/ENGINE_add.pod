@@ -294,7 +294,7 @@ table trying to initialise each of them in turn, in case one of them is
 operational. If it returns a functional reference to an ENGINE, it will
 also cache another reference to speed up processing future queries (without
 needing to iterate across the table). Likewise, it will cache a NULL
-response if no ENGINE was available so that future queries won't repeat the
+response if no ENGINE was available so that future queries will not repeat the
 same iteration unless the state table changes. This behaviour can also be
 changed; if the ENGINE_TABLE_FLAG_NOINIT flag is set (using
 ENGINE_set_table_flags()), no attempted initialisations will take place,
