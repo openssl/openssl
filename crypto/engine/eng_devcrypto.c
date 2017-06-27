@@ -245,7 +245,8 @@ static void prepare_cipher_methods()
             || !EVP_CIPHER_meth_set_iv_length(known_cipher_methods[i],
                                               cipher_data[i].ivlen)
             || !EVP_CIPHER_meth_set_flags(known_cipher_methods[i],
-                                          cipher_data[i].flags)
+                                          cipher_data[i].flags
+                                          | EVP_CIPH_FLAG_DEFAULT_ASN1)
             || !EVP_CIPHER_meth_set_init(known_cipher_methods[i], cipher_init)
             || !EVP_CIPHER_meth_set_do_cipher(known_cipher_methods[i],
                                               cipher_do_cipher)
