@@ -18,7 +18,8 @@ SSL_export_keying_material - obtain keying material for application use
 During the creation of a TLS or DTLS connection shared keying material is
 established between the two endpoints. The function SSL_export_keying_material()
 enables an application to use some of this keying material for its own purposes
-in accordance with RFC5705.
+in accordance with RFC5705 (for TLSv1.2 and below) or RFCXXXX (for TLSv1.3).
+TODO(TLS1.3): Update the RFC number when the RFC is published.
 
 An application may need to securely establish the context within which this
 keying material will be used. For example this may include identifiers for the
@@ -32,8 +33,10 @@ pointed to by B<context> and should be B<contextlen> bytes long. Provision of
 a context is optional. If the context should be omitted entirely then
 B<use_context> should be set to 0. Otherwise it should be any other value. If
 B<use_context> is 0 then the values of B<context> and B<contextlen> are ignored.
-Note that a zero length context is treated differently to no context at all, and
-will result in different keying material being returned.
+Note that in TLSv1.2 and below a zero length context is treated differently to
+no context at all, and will result in different keying material being returned.
+In TLSv1.3 a zero length context is that same as no context at all and will
+result in the same keying material being returned.
 
 An application specific label should be provided in the location pointed to by
 B<label> and should be B<llen> bytes long. Typically this will be a value from
