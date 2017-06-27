@@ -99,8 +99,8 @@ Only the flusher or the reader are expected to return -1.
 If returned by another of the functions, it's treated as if 0 was
 returned.
 
-Regarding the writer and the reader, don't assume the former should
-only write and don't assume the latter should only read.
+Regarding the writer and the reader, do not assume the former should
+only write and do not assume the latter should only read.
 This depends on the needs of the method.
 
 For example, a typical tty reader wouldn't write the prompts in the

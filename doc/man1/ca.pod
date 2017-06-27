@@ -160,7 +160,7 @@ see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-notext>
 
-Don't output the text form of a certificate to the output file.
+Do not output the text form of a certificate to the output file.
 
 =item B<-startdate date>
 
@@ -631,11 +631,11 @@ A sample configuration file with the relevant sections for B<ca>:
  default_md     = md5                   # md to use
 
  policy         = policy_any            # default policy
- email_in_dn    = no                    # Don't add the email into cert DN
+ email_in_dn    = no                    # Do not add the email into cert DN
 
  name_opt       = ca_default            # Subject name display option
  cert_opt       = ca_default            # Certificate display option
- copy_extensions = none                 # Don't copy extensions from request
+ copy_extensions = none                 # Do not copy extensions from request
 
  [ policy_any ]
  countryName            = supplied

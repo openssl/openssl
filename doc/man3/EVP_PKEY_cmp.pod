@@ -53,7 +53,7 @@ These functions EVP_PKEY_copy_parameters() returns 1 for success and 0 for
 failure.
 
 The function EVP_PKEY_cmp_parameters() and EVP_PKEY_cmp() return 1 if the
-keys match, 0 if they don't match, -1 if the key types are different and
+keys match, 0 if they do not match, -1 if the key types are different and
 -2 if the operation is not supported.
 
 =head1 SEE ALSO

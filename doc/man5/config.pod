@@ -311,7 +311,7 @@ Simple OpenSSL library configuration example to enter FIPS mode:
 Note: in the above example you will get an error in non FIPS capable versions
 of OpenSSL.
 
-More complex OpenSSL library configuration. Add OID and don't enter FIPS mode:
+More complex OpenSSL library configuration. Add OID and do not enter FIPS mode:
 
  # Default appname: should match "appname" parameter (if any)
  # supplied to CONF_modules_load_file et al.

@@ -34,7 +34,7 @@ The size.
 =head1 NOTES
 
 Some have tried using BN_num_bits() on individual numbers in RSA keys,
-DH keys and DSA keys, and found that they don't always come up with
+DH keys and DSA keys, and found that they do not always come up with
 the number of bits they expected (something like 512, 1024, 2048,
 ...).  This is because generating a number with some specific number
 of bits doesn't always set the highest bits, thereby making the number

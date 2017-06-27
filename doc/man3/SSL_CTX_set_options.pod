@@ -64,7 +64,7 @@ The following B<bug workaround> options are available:
 
 =item SSL_OP_SAFARI_ECDHE_ECDSA_BUG
 
-Don't prefer ECDHE-ECDSA ciphers when the client appears to be Safari on OS X.
+Do not prefer ECDHE-ECDSA ciphers when the client appears to be Safari on OS X.
 OS X 10.8..10.8.3 has broken support for ECDHE-ECDSA ciphers.
 
 =item SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS

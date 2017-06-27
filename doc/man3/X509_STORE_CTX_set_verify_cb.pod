@@ -111,11 +111,11 @@ to continue after this error:
      /* Tolerate certificate expiration */
      if (X509_STORE_CTX_get_error(ctx) == X509_V_ERR_CERT_HAS_EXPIRED)
          return 1;
-     /* Otherwise don't override */
+     /* Otherwise do not override */
      return ok;
  }
 
-More complex example, we don't wish to continue after B<any> certificate has
+More complex example, we do not wish to continue after B<any> certificate has
 expired just one specific case:
 
  int verify_callback(int ok, X509_STORE_CTX *ctx)

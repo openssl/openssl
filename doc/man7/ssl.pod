@@ -96,13 +96,13 @@ Unused. Present for backwards compatibility only.
 =item B<ssl3.h>
 
 That's the sub header file dealing with the SSLv3 protocol only.
-I<Usually you don't have to include it explicitly because
+I<Usually you do not have to include it explicitly because
 it's already included by ssl.h>.
 
 =item B<tls1.h>
 
 That's the sub header file dealing with the TLSv1 protocol only.
-I<Usually you don't have to include it explicitly because
+I<Usually you do not have to include it explicitly because
 it's already included by ssl.h>.
 
 =back

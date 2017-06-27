@@ -78,7 +78,7 @@ SPKAC. The default is the default section.
 
 =item B<-noout>
 
-Don't output the text version of the SPKAC (not used if an
+Do not output the text version of the SPKAC (not used if an
 SPKAC is being created).
 
 =item B<-pubkey>

@@ -143,11 +143,11 @@ Use Camellia to encrypt private keys before outputting.
 
 =item B<-nodes>
 
-Don't encrypt the private keys at all.
+Do not encrypt the private keys at all.
 
 =item B<-nomacver>
 
-Don't attempt to verify the integrity MAC before reading the file.
+Do not attempt to verify the integrity MAC before reading the file.
 
 =item B<-twopass>
 
@@ -274,7 +274,7 @@ to be needed to use MAC iterations counts but they are now used by default.
 
 =item B<-nomac>
 
-Don't attempt to provide the MAC integrity.
+Do not attempt to provide the MAC integrity.
 
 =item B<-rand file...>
 
@@ -357,7 +357,7 @@ Output only client certificates to a file:
 
  openssl pkcs12 -in file.p12 -clcerts -out file.pem
 
-Don't encrypt the private key:
+Do not encrypt the private key:
 
  openssl pkcs12 -in file.p12 -out file.pem -nodes
 

@@ -105,7 +105,7 @@ This indicates an error.
 =head1 NOTES
 
 Session resumption shortcuts the TLS so that the client certificate
-negotiation don't occur. It makes up for this by storing client certificate
+negotiation do not occur. It makes up for this by storing client certificate
 an all other negotiated state information encrypted within the ticket. In a
 resumed session the applications will have all this state information available
 exactly as if a full negotiation had occurred.

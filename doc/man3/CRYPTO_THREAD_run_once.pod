@@ -26,7 +26,7 @@ CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free, CRYPTO_atomic_add - OpenSSL threa
 OpenSSL can be safely used in multi-threaded applications provided that
 support for the underlying OS threading API is built-in. Currently, OpenSSL
 supports the pthread and Windows APIs. OpenSSL can also be built without
-any multi-threading support, for example on platforms that don't provide
+any multi-threading support, for example on platforms that do not provide
 any threading support or that provide a threading API that is not yet
 supported by OpenSSL.
 

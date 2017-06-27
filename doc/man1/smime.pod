@@ -224,12 +224,12 @@ Do not verify the signers certificate of a signed message.
 
 =item B<-nochain>
 
-Do not do chain verification of signers certificates: that is don't
+Do not do chain verification of signers certificates: that is do not
 use the certificates in the signed message as untrusted CAs.
 
 =item B<-nosigs>
 
-Don't try to verify the signatures on the message.
+Do not try to verify the signatures on the message.
 
 =item B<-nocerts>
 

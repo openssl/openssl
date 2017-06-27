@@ -54,7 +54,7 @@ combined with the B<-strparse> option.
 
 =item B<-noout>
 
-Don't output the parsed version of the input file.
+Do not output the parsed version of the input file.
 
 =item B<-offset number>
 
@@ -175,7 +175,7 @@ Generate a simple UTF8String:
 
  openssl asn1parse -genstr 'UTF8:Hello World'
 
-Generate and write out a UTF8String, don't print parsed output:
+Generate and write out a UTF8String, do not print parsed output:
 
  openssl asn1parse -genstr 'UTF8:Hello World' -noout -out utf8.der
 

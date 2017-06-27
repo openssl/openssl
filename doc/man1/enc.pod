@@ -110,7 +110,7 @@ The default algorithm is sha-256.
 
 =item B<-nosalt>
 
-Don't use a salt in the key derivation routines. This option B<SHOULD NOT> be
+Do not use a salt in the key derivation routines. This option B<SHOULD NOT> be
 used except for test purposes or compatibility with ancient versions of
 OpenSSL.
 
@@ -145,7 +145,7 @@ Print out the key and IV used.
 
 =item B<-P>
 
-Print out the key and IV used then immediately exit: don't do any encryption
+Print out the key and IV used then immediately exit: do not do any encryption
 or decryption.
 
 =item B<-bufsize number>

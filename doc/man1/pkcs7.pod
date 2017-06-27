@@ -62,7 +62,7 @@ issuer names.
 
 =item B<-noout>
 
-Don't output the encoded version of the PKCS#7 structure (or certificates
+Do not output the encoded version of the PKCS#7 structure (or certificates
 is B<-print_certs> is set).
 
 =item B<-engine id>

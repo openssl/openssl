@@ -121,7 +121,7 @@ the key length in B<arg>.
 
 =item EVP_CIPH_NO_PADDING
 
-Don't use standard block padding.
+Do not use standard block padding.
 
 =item EVP_CIPH_RAND_KEY
 
