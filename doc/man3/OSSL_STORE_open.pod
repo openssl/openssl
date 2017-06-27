@@ -69,6 +69,8 @@ of data.
 
 OSSL_STORE_error() takes a B<OSSL_STORE_CTX> and checks if an error occured in
 the last OSSL_STORE_load() call.
+Note that it may still be meaningful to try and load more objects, unless
+OSSL_STORE_eof() shows that the end of data has been reached.
 
 OSSL_STORE_close() takes a B<OSSL_STORE_CTX>, closes the channel that was opened
 by OSSL_STORE_open() and frees all other information that was stored in the
@@ -105,8 +107,13 @@ should be taken or not.
 
 =head1 RETURN VALUES
 
-OSSL_STORE_open() and OSSL_STORE_load() return a pointer to a B<OSSL_STORE_CTX>
-on success, or B<NULL> on failure.
+OSSL_STORE_open() returns a pointer to a B<OSSL_STORE_CTX> on success, or
+B<NULL> on failure.
+
+OSSL_STORE_load() returns a pointer to a B<OSSL_STORE_INFO> on success, or
+B<NULL> on error or when end of data is reached.
+Use OSSL_STORE_error() and OSSL_STORE_eof() to determine the meaning of a
+returned B<NULL>.
 
 OSSL_STORE_eof() returns 1 if the end of data has been reached, otherwise
 0.
