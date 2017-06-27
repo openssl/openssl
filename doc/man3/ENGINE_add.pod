@@ -354,7 +354,7 @@ illustrates how to approach this;
  ENGINE_load_builtin_engines();
  e = ENGINE_by_id(engine_id);
  if (!e)
-     /* the engine isn't available */
+     /* the engine is not available */
      return;
  if (!ENGINE_init(e)) {
      /* the engine couldn't initialise, release 'e' */

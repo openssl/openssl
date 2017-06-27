@@ -624,7 +624,7 @@ This is followed some time later by...
 
 The first error message is the clue: it can't find the configuration
 file! Certain operations (like examining a certificate request) do not
-need a configuration file so its use isn't enforced. Generation of
+need a configuration file so its use is not enforced. Generation of
 certificates or requests however does need a configuration file. This
 could be regarded as a bug.
 

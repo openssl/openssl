@@ -194,7 +194,7 @@ can be used and the B<OPENSSL_CONF> environment variable changed to point to
 the correct path of the configuration file.
 
 The script is intended as a simple front end for the B<openssl> program for use
-by a beginner. Its behaviour isn't always what is wanted. For more control over the
+by a beginner. Its behaviour is not always what is wanted. For more control over the
 behaviour of the certificate commands call the B<openssl> command directly.
 
 =head1 SEE ALSO

@@ -121,13 +121,13 @@ This can be used with a subsequent B<-rand> flag.
 This option sets the PKCS#5 v2.0 algorithm.
 
 The B<alg> argument is the encryption algorithm to use, valid values include
-B<aes128>, B<aes256> and B<des3>. If this option isn't specified then B<aes256>
+B<aes128>, B<aes256> and B<des3>. If this option is not specified then B<aes256>
 is used.
 
 =item B<-v2prf alg>
 
 This option sets the PRF algorithm to use with PKCS#5 v2.0. A typical value
-value would be B<hmacWithSHA256>. If this option isn't set then the default
+value would be B<hmacWithSHA256>. If this option is not set then the default
 for the cipher is used or B<hmacWithSHA256> if there is no default.
 
 Some implementations may not support custom PRF algorithms and may require

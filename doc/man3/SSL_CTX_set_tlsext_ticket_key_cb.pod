@@ -138,7 +138,7 @@ Reference Implementation:
 
          key = currentkey(); /* something that you need to implement */
          if (key == NULL) {
-             /* current key does not exist or isn't valid */
+             /* current key does not exist or is not valid */
              key = createkey(); /*
                                  * Something that you need to implement.
                                  * createkey needs to initialise a name,

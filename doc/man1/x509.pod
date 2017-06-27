@@ -864,7 +864,7 @@ basicConstraints extension is absent.
 =item B<Netscape SSL Server>
 
 For Netscape SSL clients to connect to an SSL server it must have the
-keyEncipherment bit set if the keyUsage extension is present. This isn't
+keyEncipherment bit set if the keyUsage extension is present. This is not
 always valid because some cipher suites use the key for digital signing.
 Otherwise it is the same as a normal SSL server.
 

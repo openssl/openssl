@@ -289,9 +289,9 @@ default section both values can be looked up with B<TEMP> taking
 priority and B</tmp> used if neither is defined:
 
  TMP=/tmp
- # The above value is used if TMP isn't in the environment
+ # The above value is used if TMP is not in the environment
  TEMP=$ENV::TMP
- # The above value is used if TEMP isn't in the environment
+ # The above value is used if TEMP is not in the environment
  tmpfile=${ENV::TEMP}/tmp.filename
 
 Simple OpenSSL library configuration example to enter FIPS mode:
@@ -353,7 +353,7 @@ Currently there is no way to include characters using the octal B<\nnn>
 form. Strings are all null terminated so nulls cannot form part of
 the value.
 
-The escaping isn't quite right: if you want to use sequences like B<\n>
+The escaping is not quite right: if you want to use sequences like B<\n>
 you can't use any quote escaping on the same line.
 
 Files are loaded in a single pass. This means that an variable expansion
