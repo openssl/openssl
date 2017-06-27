@@ -352,7 +352,7 @@ Skeleton pass phrase callback:
      /* We'd probably do something else if 'rwflag' is 1 */
      printf("Enter pass phrase for \"%s\"\n", (char *)u);
 
-     /* get pass phrase, length 'len' into 'tmp' */
+     /* get pass phrase, length |len| into |tmp| */
      tmp = "hello";
      len = strlen(tmp);
      if (len <= 0)

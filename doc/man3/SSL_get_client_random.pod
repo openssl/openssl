@@ -46,7 +46,7 @@ suitable for the ciphersuite associated with the SSL_SESSION.
 
 =head1 NOTES
 
-You probably shouldn't use these functions.
+You probably should not use these functions.
 
 These functions expose internal values from the TLS handshake, for
 use in low-level protocols.  You probably should not use them, unless

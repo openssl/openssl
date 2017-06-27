@@ -145,7 +145,7 @@ Reference Implementation:
                                  * an aes_key, a hmac_key and optionally
                                  * an expire time.
                                  */
-             if (key == NULL) /* key couldn't be created */
+             if (key == NULL) /* key could not be created */
                  return 0;
          }
          memcpy(key_name, key->name, 16);

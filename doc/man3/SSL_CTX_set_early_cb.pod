@@ -94,7 +94,7 @@ and SSL_early_get0_compression_methods() return the length of the corresponding
 ClientHello fields.  If zero is returned, the output pointer should not be
 assumed to be valid.
 
-SSL_early_get0_ext() returns 1 if the extension of type 'type' is present, and
+SSL_early_get0_ext() returns 1 if the extension of type B<type> is present, and
 0 otherwise.
 
 SSL_early_get1_extensions_present() returns 1 on success and 0 on failure.

@@ -24,7 +24,7 @@ or a negative error code.
 
 If -2 is returned then an argument for a command is missing.
 
-If -1 is returned the command is recognised but couldn't be processed due
+If -1 is returned the command is recognised but could not be processed due
 to an error: for example a syntax error in the argument.
 
 =head1 SEE ALSO

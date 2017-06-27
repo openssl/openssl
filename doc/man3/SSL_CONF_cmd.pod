@@ -590,7 +590,7 @@ B<SSL_OP_NO_SSL2> does not have effect since 1.1.0, but the macro is retained
 for backwards compatibility.
 
 B<SSL_CONF_TYPE_NONE> was first added to OpenSSL 1.1.0. In earlier versions of
-OpenSSL passing a command which didn't take an argument would return
+OpenSSL passing a command which did not take an argument would return
 B<SSL_CONF_TYPE_UNKNOWN>.
 
 B<MinProtocol> and B<MaxProtocol> where added in OpenSSL 1.1.0.

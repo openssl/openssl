@@ -252,7 +252,7 @@ operational ENGINE for a given cryptographic purpose.
 
 To obtain a functional reference from an existing structural reference,
 call the ENGINE_init() function. This returns zero if the ENGINE was not
-already operational and couldn't be successfully initialised (eg. lack of
+already operational and could not be successfully initialised (eg. lack of
 system drivers, no special hardware attached, etc), otherwise it will
 return non-zero to indicate that the ENGINE is now operational and will
 have allocated a new B<functional> reference to the ENGINE. All functional
@@ -357,7 +357,7 @@ illustrates how to approach this;
      /* the engine is not available */
      return;
  if (!ENGINE_init(e)) {
-     /* the engine couldn't initialise, release 'e' */
+     /* the engine could not initialise, release 'e' */
      ENGINE_free(e);
      return;
  }

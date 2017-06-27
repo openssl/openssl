@@ -603,7 +603,7 @@ with a 128-bit key:
      unsigned char key[] = "0123456789abcdeF";
      unsigned char iv[] = "1234567887654321";
 
-     /* Don't set key or IV right away; we want to check lengths */
+     /* Do not set key or IV right away; we want to check lengths */
      ctx = EVP_CIPHER_CTX_new();
      EVP_CipherInit_ex(&ctx, EVP_aes_128_cbc(), NULL, NULL, NULL,
                        do_encrypt);

@@ -614,7 +614,7 @@ To verify a time stamp token against a message imprint:
   openssl ts -verify -digest b7e5d3f93198b38379852f2c04e78d73abdd0f4b \
          -in design2.tsr -CAfile cacert.pem
 
-You could also look at the 'test' directory for more examples.
+See the C<test> directory for more examples.
 
 =head1 BUGS
 

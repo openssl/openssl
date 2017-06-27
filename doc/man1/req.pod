@@ -647,7 +647,7 @@ for more information.
 
 OpenSSL's handling of T61Strings (aka TeletexStrings) is broken: it effectively
 treats them as ISO-8859-1 (Latin 1), Netscape and MSIE have similar behaviour.
-This can cause problems if you need characters that aren't available in
+This can cause problems if you need characters that are not available in
 PrintableStrings and you do not want to or cannot use BMPStrings.
 
 As a consequence of the T61String handling the only correct way to represent

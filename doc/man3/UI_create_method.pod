@@ -103,7 +103,7 @@ Regarding the writer and the reader, do not assume the former should
 only write and do not assume the latter should only read.
 This depends on the needs of the method.
 
-For example, a typical tty reader wouldn't write the prompts in the
+For example, a typical TTY reader would not write the prompts in the
 write, but would rather do so in the reader, because of the sequential
 nature of prompting on a tty.
 This is how the UI_OpenSSL() method does it.
