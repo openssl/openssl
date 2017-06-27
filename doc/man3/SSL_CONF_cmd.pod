@@ -457,7 +457,7 @@ The value is a directory name.
 
 =item B<SSL_CONF_TYPE_NONE>
 
-The value string is not used e.g. a command line option which doesn't take an
+The value string is not used e.g. a command line option which does not take an
 argument.
 
 =back
@@ -586,7 +586,7 @@ L<SSL_CTX_set_options(3)>
 
 SSL_CONF_cmd() was first added to OpenSSL 1.0.2
 
-B<SSL_OP_NO_SSL2> doesn't have effect since 1.1.0, but the macro is retained
+B<SSL_OP_NO_SSL2> does not have effect since 1.1.0, but the macro is retained
 for backwards compatibility.
 
 B<SSL_CONF_TYPE_NONE> was first added to OpenSSL 1.1.0. In earlier versions of

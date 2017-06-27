@@ -143,7 +143,7 @@ the problem by making build procedure use following script:
    #!/bin/sh
    exec clang -no-integrated-as "$@"
 
-instead of real clang. In which case it doesn't matter which clang
+instead of real clang. In which case it does not matter which clang
 version is used, as it is GNU assembler version that will be checked.
 
 =head1 COPYRIGHT

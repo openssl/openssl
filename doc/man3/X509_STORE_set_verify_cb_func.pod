@@ -187,7 +187,7 @@ function will be used instead.>
 
 X509_STORE_set_cleanup() sets the final cleanup function, which is
 called when the context (B<X509_STORE_CTX>) is being torn down.
-This function doesn't return any value.
+This function does not return any value.
 I<If no function to get the issuer is provided, the internal default
 function will be used instead.>
 

@@ -183,7 +183,7 @@ For example:
  dynamic_path = /some/path/fooengine.so
  # A foo specific ctrl.
  some_ctrl = some_value
- # Another ctrl that doesn't take a value.
+ # Another ctrl that does not take a value.
  other_ctrl = EMPTY
  # Supply all default algorithms
  default_algorithms = ALL
@@ -228,9 +228,9 @@ For example:
 
 =head1 NOTES
 
-If a configuration file attempts to expand a variable that doesn't exist
+If a configuration file attempts to expand a variable that does not exist
 then an error is flagged and the file will not load. This can happen
-if an attempt is made to expand an environment variable that doesn't
+if an attempt is made to expand an environment variable that does not
 exist. For example in a previous version of OpenSSL the default OpenSSL
 master configuration file used the value of B<HOME> which may not be
 defined on non Unix systems and would cause an error.
@@ -283,7 +283,7 @@ Suppose you want a variable called B<tmpfile> to refer to a
 temporary filename. The directory it is placed in can determined by
 the B<TEMP> or B<TMP> environment variables but they may not be
 set to any value at all. If you just include the environment variable
-names and the variable doesn't exist then this will cause an error when
+names and the variable does not exist then this will cause an error when
 an attempt is made to load the configuration file. By making use of the
 default section both values can be looked up with B<TEMP> taking
 priority and B</tmp> used if neither is defined:

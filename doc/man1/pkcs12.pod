@@ -174,7 +174,7 @@ by default.
 =item B<-in filename>
 
 The filename to read certificates and private keys from, standard input by
-default.  They must all be in PEM format. The order doesn't matter but one
+default.  They must all be in PEM format. The order does not matter but one
 private key and its corresponding certificate should be present. If additional
 certificates are present they will also be included in the PKCS#12 file.
 
@@ -264,7 +264,7 @@ By default both MAC and encryption iteration counts are set to 2048, using
 these options the MAC and encryption iteration counts can be set to 1, since
 this reduces the file security you should not use these options unless you
 really have to. Most software supports both MAC and key iteration counts.
-MSIE 4.0 doesn't support MAC iteration counts so it needs the B<-nomaciter>
+MSIE 4.0 does not support MAC iteration counts so it needs the B<-nomaciter>
 option.
 
 =item B<-maciter>

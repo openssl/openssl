@@ -29,7 +29,7 @@ and issuer names.
 X509_NAME_get_index_by_NID() and X509_NAME_get_index_by_OBJ() retrieve
 the next index matching B<nid> or B<obj> after B<lastpos>. B<lastpos>
 should initially be set to -1. If there are no more entries -1 is returned.
-If B<nid> is invalid (doesn't correspond to a valid OID) then -2 is returned.
+If B<nid> is invalid (does not correspond to a valid OID) then -2 is returned.
 
 X509_NAME_entry_count() returns the total number of entries in B<name>.
 

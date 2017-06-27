@@ -479,7 +479,7 @@ boolean success or failure.
 Note that ENGINE_ctrl_cmd_string() accepts a boolean argument that can
 relax the semantics of the function - if set non-zero it will only return
 failure if the ENGINE supported the given command name but failed while
-executing it, if the ENGINE doesn't support the command name it will simply
+executing it, if the ENGINE does not support the command name it will simply
 return success without doing anything. In this case we assume the user is
 only supplying commands specific to the given ENGINE so we set this to
 FALSE.

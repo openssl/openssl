@@ -188,7 +188,7 @@ This can be used with a subsequent B<-rand> flag.
 =head1 NOTES
 
 The program can be called either as B<openssl cipher> or
-B<openssl enc -cipher>. The first form doesn't work with
+B<openssl enc -cipher>. The first form does not work with
 engine-provided ciphers, because this form is processed before the
 configuration file is read and any ENGINEs loaded.
 Use the B<list> command to get a list of supported ciphers.
@@ -358,7 +358,7 @@ Decrypt some data using a supplied 40 bit RC4 key:
 
 =head1 BUGS
 
-The B<-A> option when used with large files doesn't work properly.
+The B<-A> option when used with large files does not work properly.
 
 There should be an option to allow an iteration count to be included.
 

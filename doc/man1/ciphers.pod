@@ -141,7 +141,7 @@ If B<-> is used then the ciphers are deleted from the list, but some or
 all of the ciphers can be added again by later options.
 
 If B<+> is used then the ciphers are moved to the end of the list. This
-option doesn't add any new ciphers it just moves matching existing ones.
+option does not add any new ciphers it just moves matching existing ones.
 
 If none of these characters is present then the string is just interpreted
 as a list of ciphers to be appended to the current preference list. If the

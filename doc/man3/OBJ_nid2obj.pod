@@ -151,7 +151,7 @@ Create a new object directly:
 
 =head1 BUGS
 
-OBJ_obj2txt() is awkward and messy to use: it doesn't follow the
+OBJ_obj2txt() is awkward and messy to use: it does not follow the
 convention of other OpenSSL functions where the buffer can be set
 to B<NULL> to determine the amount of data that should be written.
 Instead B<buf> must point to a valid buffer and B<buf_len> should

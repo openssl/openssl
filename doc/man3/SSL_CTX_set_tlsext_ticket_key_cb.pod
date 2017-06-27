@@ -40,7 +40,7 @@ ticket.
 Before the callback function is started I<ctx> and I<hctx> have been
 initialised with EVP_CIPHER_CTX_init and HMAC_CTX_init respectively.
 
-For new sessions tickets, when the client doesn't present a session ticket, or
+For new sessions tickets, when the client does not present a session ticket, or
 an attempted retrieval of the ticket failed, or a renew option was indicated,
 the callback function will be called with I<enc> equal to 1. The OpenSSL
 library expects that the function will set an arbitrary I<name>, initialize
@@ -138,7 +138,7 @@ Reference Implementation:
 
          key = currentkey(); /* something that you need to implement */
          if (key == NULL) {
-             /* current key doesn't exist or isn't valid */
+             /* current key does not exist or isn't valid */
              key = createkey(); /*
                                  * Something that you need to implement.
                                  * createkey needs to initialise a name,

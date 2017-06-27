@@ -19,7 +19,7 @@ EVP_PKEY_cmp - public key parameter and comparison functions
 
 The function EVP_PKEY_missing_parameters() returns 1 if the public key
 parameters of B<pkey> are missing and 0 if they are present or the algorithm
-doesn't use parameters.
+does not use parameters.
 
 The function EVP_PKEY_copy_parameters() copies the parameters from key
 B<from> to key B<to>. An error is returned if the parameters are missing in
@@ -47,7 +47,7 @@ a public key.
 
 The function EVP_PKEY_missing_parameters() returns 1 if the public key
 parameters of B<pkey> are missing and 0 if they are present or the algorithm
-doesn't use parameters.
+does not use parameters.
 
 These functions EVP_PKEY_copy_parameters() returns 1 for success and 0 for
 failure.
