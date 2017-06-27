@@ -332,7 +332,7 @@ the B<-nokeys -cacerts> options to just output CA certificates.
 
 The B<-keypbe> and B<-certpbe> algorithms allow the precise encryption
 algorithms for private keys and certificates to be specified. Normally
-the defaults are fine but occasionally software can't handle triple DES
+the defaults are fine but occasionally software cannot handle triple DES
 encrypted private keys, then the option B<-keypbe PBE-SHA1-RC2-40> can
 be used to reduce the private key encryption to 40 bit RC2. A complete
 description of all algorithms is contained in the B<pkcs8> manual page.

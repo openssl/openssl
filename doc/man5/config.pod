@@ -354,7 +354,7 @@ form. Strings are all null terminated so nulls cannot form part of
 the value.
 
 The escaping is not quite right: if you want to use sequences like B<\n>
-you can't use any quote escaping on the same line.
+you cannot use any quote escaping on the same line.
 
 Files are loaded in a single pass. This means that an variable expansion
 will only work if the variables referenced are defined earlier in the

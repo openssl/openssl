@@ -150,7 +150,7 @@ unencrypted example in L<BIO_s_connect(3)>.
  sbio = BIO_new_ssl_connect(ctx);
  BIO_get_ssl(sbio, &ssl);
  if (ssl == NULL) {
-     fprintf(stderr, "Can't locate SSL pointer\n");
+     fprintf(stderr, "Cannot locate SSL pointer\n");
      ERR_print_errors_fp(stderr);
      exit(1);
  }
@@ -215,7 +215,7 @@ a client and also echoes the request to standard output.
  sbio = BIO_new_ssl(ctx, 0);
  BIO_get_ssl(sbio, &ssl);
  if (ssl == NULL) {
-     fprintf(stderr, "Can't locate SSL pointer\n");
+     fprintf(stderr, "Cannot locate SSL pointer\n");
      ERR_print_errors_fp(stderr);
      exit(1);
  }

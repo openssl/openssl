@@ -346,7 +346,7 @@ Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
 The special value B<ALL> refers to all supported versions.
 
-This can't enable protocols that are disabled using B<MinProtocol>
+This cannot enable protocols that are disabled using B<MinProtocol>
 or B<MaxProtocol>, but can disable protocols that are still allowed
 by them.
 

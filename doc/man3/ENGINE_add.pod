@@ -363,7 +363,7 @@ illustrates how to approach this;
  }
  if (!ENGINE_set_default_RSA(e))
      /*
-      * This should only happen when 'e' can't initialise, but the previous
+      * This should only happen when 'e' cannot initialise, but the previous
       * statement suggests it did.
       */
      abort();

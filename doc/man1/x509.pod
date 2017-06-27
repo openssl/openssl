@@ -459,7 +459,7 @@ extension section format.
 
 When a certificate is created set its public key to B<key> instead of the
 key in the certificate or certificate request. This option is useful for
-creating certificates where the algorithm can't normally sign requests, for
+creating certificates where the algorithm cannot normally sign requests, for
 example DH.
 
 The format or B<key> can be specified using the B<-keyform> option.

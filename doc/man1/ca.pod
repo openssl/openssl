@@ -363,7 +363,7 @@ include. If no CRL extension section is present then a V1 CRL is
 created, if the CRL extension section is present (even if it is
 empty) then a V2 CRL is created. The CRL extensions specified are
 CRL extensions and B<not> CRL entry extensions.  It should be noted
-that some software (for example Netscape) can't handle V2 CRLs. See
+that some software (for example Netscape) cannot handle V2 CRLs. See
 L<x509v3_config(5)> manual page for details of the
 extension section format.
 
