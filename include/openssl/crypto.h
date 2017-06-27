@@ -107,7 +107,8 @@ DEFINE_STACK_OF(void)
 # define CRYPTO_EX_INDEX_BIO             12
 # define CRYPTO_EX_INDEX_APP             13
 # define CRYPTO_EX_INDEX_UI_METHOD       14
-# define CRYPTO_EX_INDEX__COUNT          15
+# define CRYPTO_EX_INDEX_DRBG            15
+# define CRYPTO_EX_INDEX__COUNT          16
 
 /*
  * This is the default callbacks, but we can have others as well: this is

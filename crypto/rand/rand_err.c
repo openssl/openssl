@@ -14,20 +14,58 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA RAND_str_functs[] = {
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_DRBG_BYTES, 0), "drbg_bytes"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_DRBG_GET_ENTROPY, 0), "drbg_get_entropy"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_GET_ENTROPY, 0), "get_entropy"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_BYTES, 0), "RAND_bytes"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_DRBG_GENERATE, 0),
+     "RAND_DRBG_generate"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_DRBG_INSTANTIATE, 0),
+     "RAND_DRBG_instantiate"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_DRBG_NEW, 0), "RAND_DRBG_new"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_DRBG_RESEED, 0), "RAND_DRBG_reseed"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_DRBG_SET, 0), "RAND_DRBG_set"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_LOAD_FILE, 0), "RAND_load_file"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_WRITE_FILE, 0), "RAND_write_file"},
     {0, NULL}
 };
 
 static const ERR_STRING_DATA RAND_str_reasons[] = {
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_ADDITIONAL_INPUT_TOO_LONG),
+    "additional input too long"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_ALREADY_INSTANTIATED),
+    "already instantiated"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_CANNOT_OPEN_FILE), "Cannot open file"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_DRBG_NOT_INITIALISED),
+    "drbg not initialised"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_ERROR_INITIALISING_DRBG),
+    "error initialising drbg"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_ERROR_INSTANTIATING_DRBG),
+    "error instantiating drbg"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_ERROR_RETRIEVING_ADDITIONAL_INPUT),
+    "error retrieving additional input"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_ERROR_RETRIEVING_ENTROPY),
+    "error retrieving entropy"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_ERROR_RETRIEVING_NONCE),
+    "error retrieving nonce"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_FUNC_NOT_IMPLEMENTED),
     "Function not implemented"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_FWRITE_ERROR), "Error writing file"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_GENERATE_ERROR), "generate error"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_INTERNAL_ERROR), "internal error"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_IN_ERROR_STATE), "in error state"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_NOT_A_REGULAR_FILE),
     "Not a regular file"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_NOT_INSTANTIATED), "not instantiated"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_PERSONALISATION_STRING_TOO_LONG),
+    "personalisation string too long"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_PRNG_NOT_SEEDED), "PRNG not seeded"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_REQUEST_TOO_LARGE_FOR_DRBG),
+    "request too large for drbg"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_RESEED_ERROR), "reseed error"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_SELFTEST_FAILURE), "selftest failure"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_UNSUPPORTED_DRBG_TYPE),
+    "unsupported drbg type"},
     {0, NULL}
 };
 
