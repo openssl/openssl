@@ -656,7 +656,7 @@ currently chokes on these. If you have to use accented characters with Netscape
 and MSIE then you currently need to use the invalid T61String form.
 
 The current prompting is not very friendly. It does not allow you to confirm what
-you've just entered. Other things like extensions in certificate requests are
+you have just entered. Other things like extensions in certificate requests are
 statically defined in the configuration file. Some of these: like an email
 address in subjectAltName should be input by the user.
 
