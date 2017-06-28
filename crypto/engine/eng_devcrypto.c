@@ -176,6 +176,7 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     cryp.flags = 0;
 
     if (EVP_CIPHER_CTX_iv_length(ctx) > 0) {
+        assert(inl >= EVP_CIPHER_CTX_iv_length(ctx));
         if (!EVP_CIPHER_CTX_encrypting(ctx)) {
             unsigned char *ivptr = in + inl - EVP_CIPHER_CTX_iv_length(ctx);
 
@@ -195,6 +196,7 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (EVP_CIPHER_CTX_iv_length(ctx) > 0) {
         unsigned char *ivptr = saved_iv;
 
+        assert(inl >= EVP_CIPHER_CTX_iv_length(ctx));
         if (!EVP_CIPHER_CTX_encrypting(ctx))
             ivptr = out + inl - EVP_CIPHER_CTX_iv_length(ctx);
 
