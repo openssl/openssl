@@ -528,7 +528,15 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             maxpad |= (255 - maxpad) >> (sizeof(maxpad) * 8 - 8);
             maxpad &= 255;
 
-            ret &= constant_time_ge(maxpad, pad);
+            mask = constant_time_ge(maxpad, pad);
+            ret &= mask;
+            /*
+             * If pad is invalid then we will fail the above test but we must
+             * continue anyway because we are in constant time code. However,
+             * we'll use the maxpad value instead of the supplied pad to make
+             * sure we perform well defined pointer arithmetic.
+             */
+            pad = constant_time_select(mask, pad, maxpad);
 
             inp_len = len - (SHA_DIGEST_LENGTH + pad + 1);
             mask = (0 - ((inp_len - len) >> (sizeof(inp_len) * 8 - 1)));
