@@ -3,8 +3,8 @@
 =head1 NAME
 
 SSL_CTX_set_tlsext_servername_callback, SSL_CTX_set_tlsext_servername_arg,
-SSL_get_servername_type, SSL_get_servername - handle server name indication
-(SNI)
+SSL_get_servername_type, SSL_get_servername,
+SSL_set_tlsext_host_name - handle server name indication (SNI)
 
 =head1 SYNOPSIS
 
@@ -16,6 +16,8 @@ SSL_get_servername_type, SSL_get_servername - handle server name indication
 
  const char *SSL_get_servername(const SSL *s, const int type);
  int SSL_get_servername_type(const SSL *s);
+
+ int SSL_set_tlsext_host_name(const SSL *s, const char *name);
 
 =head1 DESCRIPTION
 
@@ -39,16 +41,24 @@ SSL_get_servername_type() returns the servername type or -1 if no servername
 is present. Currently the only supported type (defined in RFC3546) is
 B<TLSEXT_NAMETYPE_host_name>.
 
+SSL_set_tlsext_host_name() sets the server name indication ClientHello extension
+to contain the value B<name>. The type of server name indication extension is set
+to B<TLSEXT_NAMETYPE_host_name> (defined in RFC3546).
+
 =head1 NOTES
 
 Several callbacks are executed during ClientHello processing, including
 the early, ALPN, and servername callbacks.  The early callback is executed
 first, then the servername callback, followed by the ALPN callback.
 
+The SSL_set_tlsext_host_name() function should only be called on SSL objects
+that will act as clients; otherwise the configured B<name> will be ignored.
+
 =head1 RETURN VALUES
 
 SSL_CTX_set_tlsext_servername_callback() and
 SSL_CTX_set_tlsext_servername_arg() both always return 1 indicating success.
+SSL_set_tlsext_host_name() returns 1 on success, 0 in case of error.
 
 =head1 SEE ALSO
 
