@@ -2493,7 +2493,7 @@ static int test_serverinfo(int tst)
  */
 static int test_export_key_mat(int tst)
 {
-    int testresult = 0, proto;
+    int testresult = 0;
     SSL_CTX *cctx = NULL, *sctx = NULL, *sctx2 = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     const char label[] = "test label";
@@ -2501,6 +2501,12 @@ static int test_export_key_mat(int tst)
     const unsigned char *emptycontext = NULL;
     unsigned char ckeymat1[80], ckeymat2[80], ckeymat3[80];
     unsigned char skeymat1[80], skeymat2[80], skeymat3[80];
+    const int protocols[] = {
+        TLS1_VERSION,
+        TLS1_1_VERSION,
+        TLS1_2_VERSION,
+        TLS1_3_VERSION
+    };
 
 #ifdef OPENSSL_NO_TLS1
     if (tst == 0)
@@ -2523,28 +2529,9 @@ static int test_export_key_mat(int tst)
                                        &cctx, cert, privkey)))
         goto end;
 
-    switch (tst) {
-    case 0:
-        proto = TLS1_VERSION;
-        break;
-
-    case 1:
-        proto = TLS1_1_VERSION;
-        break;
-
-    case 2:
-        proto = TLS1_2_VERSION;
-        break;
-
-    case 3:
-        proto = TLS1_3_VERSION;
-        break;
-
-    default:
-        goto end;
-    }
-    SSL_CTX_set_max_proto_version(cctx, proto);
-    SSL_CTX_set_min_proto_version(cctx, proto);
+    OPENSSL_assert(tst >= 0 && (size_t)tst < OSSL_NELEM(protocols));
+    SSL_CTX_set_max_proto_version(cctx, protocols[tst]);
+    SSL_CTX_set_min_proto_version(cctx, protocols[tst]);
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
                                       NULL))
