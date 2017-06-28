@@ -339,6 +339,7 @@ SSL_set_mtu                             define
 SSL_set_split_send_fragment             define
 SSL_set_time                            define
 SSL_set_timeout                         define
+SSL_set_tlsext_host_name                define
 SSL_set_tlsext_status_ocsp_resp         define
 SSL_set_tlsext_status_type              define
 SSL_set_tmp_dh                          define
