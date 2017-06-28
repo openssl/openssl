@@ -55,7 +55,6 @@ static RAND_METHOD rdrand_meth = {
     get_random_bytes,
     NULL,                       /* cleanup */
     NULL,                       /* add */
-    get_random_bytes,
     random_status,
 };
 
