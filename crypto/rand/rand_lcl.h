@@ -10,6 +10,8 @@
 #ifndef HEADER_RAND_LCL_H
 # define HEADER_RAND_LCL_H
 
+# include "internal/rand.h"
+
 # define ENTROPY_NEEDED 32      /* require 256 bits = 32 bytes of randomness */
 
 # if !defined(USE_MD5_RAND) && !defined(USE_SHA1_RAND) && !defined(USE_MDC2_RAND) && !defined(USE_MD2_RAND)
