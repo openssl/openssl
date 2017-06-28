@@ -611,10 +611,7 @@ int tls13_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     unsigned int hashsize;
     int ret = 0;
 
-    if (ctx == NULL)
-        goto err;
-
-    if (!SSL_is_init_finished(s))
+    if (ctx == NULL || !SSL_is_init_finished(s))
         goto err;
 
     if (!use_context)
