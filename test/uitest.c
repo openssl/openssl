@@ -24,7 +24,7 @@ char *default_config_file = NULL;
 static int test_pem_password_cb(char *buf, int size, int rwflag, void *userdata)
 {
     OPENSSL_strlcpy(buf, (char *)userdata, (size_t)size);
-    return 1;
+    return strlen(buf);
 }
 
 /*
