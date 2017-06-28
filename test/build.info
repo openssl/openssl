@@ -336,6 +336,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   ENDIF
 
   SOURCE[uitest]=uitest.c ../apps/apps.c ../apps/opt.c
+  DEPEND[uitest.o]=../apps/progs.h
   INCLUDE[uitest]=.. ../include ../apps
   DEPEND[uitest]=../libcrypto ../libssl libtestutil.a
 
