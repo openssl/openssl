@@ -1996,3 +1996,12 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
 
     return 1;
 }
+
+int ssl_cert_is_disabled(size_t idx)
+{
+    const SSL_CERT_LOOKUP *cl = ssl_cert_lookup_by_idx(idx);
+
+    if (cl == NULL || (cl->amask & disabled_auth_mask) != 0)
+        return 1;
+    return 0;
+}
