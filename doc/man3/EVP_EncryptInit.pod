@@ -552,6 +552,7 @@ Encrypt a string using IDEA:
 
      if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, intext, strlen(intext))) {
          /* Error */
+         EVP_CIPHER_CTX_free(ctx);
          return 0;
      }
      /*
@@ -560,6 +561,7 @@ Encrypt a string using IDEA:
       */
      if (!EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen)) {
          /* Error */
+         EVP_CIPHER_CTX_free(ctx);
          return 0;
      }
      outlen += tmplen;
@@ -571,6 +573,10 @@ Encrypt a string using IDEA:
       * NULs.
       */
      out = fopen(outfile, "wb");
+     if (out == NULL) {
+         /* Error */
+         return 0;
+     }
      fwrite(outbuf, 1, outlen, out);
      fclose(out);
      return 1;
