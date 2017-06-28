@@ -530,10 +530,6 @@ static void prepare_digest_methods()
                                                        NID_undef)) == NULL
             || !EVP_MD_meth_set_result_size(known_digest_methods[i],
                                             digest_data[i].digestlen)
-#if 0
-            || !EVP_MD_meth_set_flags(known_digest_methods[i],
-                                      digest_data[i].flags)
-#endif
             || !EVP_MD_meth_set_init(known_digest_methods[i], digest_init)
             || !EVP_MD_meth_set_update(known_digest_methods[i], digest_update)
             || !EVP_MD_meth_set_final(known_digest_methods[i], digest_final)
