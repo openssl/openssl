@@ -33,7 +33,7 @@ pointed to by B<context> and should be B<contextlen> bytes long. Provision of
 a context is optional. If the context should be omitted entirely then
 B<use_context> should be set to 0. Otherwise it should be any other value. If
 B<use_context> is 0 then the values of B<context> and B<contextlen> are ignored.
-Note that in TLSv1.2 and below a zero length context is treated differently to
+Note that in TLSv1.2 and below a zero length context is treated differently from
 no context at all, and will result in different keying material being returned.
 In TLSv1.3 a zero length context is that same as no context at all and will
 result in the same keying material being returned.
