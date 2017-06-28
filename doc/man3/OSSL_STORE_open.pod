@@ -33,7 +33,7 @@ from a given URI (see L</SUPPORTED SCHEMES> for more information on
 the supported URI schemes).
 The general method to do so is to "open" the URI using OSSL_STORE_open(),
 read each available and supported object using OSSL_STORE_load() as long as
-OSSL_STORE_eof() hasn't been reached, and finish it off with OSSL_STORE_close().
+OSSL_STORE_eof() has not been reached, and finish it off with OSSL_STORE_close().
 
 The retrieved information is stored in a B<OSSL_STORE_INFO>, which is further
 described in L<OSSL_STORE_INFO(3)>.

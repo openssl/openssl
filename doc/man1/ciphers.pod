@@ -723,36 +723,42 @@ listed here because some ciphers were excluded at compile time.
 
 =head1 EXAMPLES
 
+In the following examples, the cipher specifications listed in quotes
+may require some additional charcters to escape command-line shell behavior.
+For example, using the exclamation point requires the string to be
+put in single quotes for C<bash>, while C<tcsh> requires a backslash
+before it.
+
 Verbose listing of all OpenSSL ciphers including NULL ciphers:
 
- openssl ciphers -v "ALL:eNULL"
+ openssl ciphers -v 'ALL:eNULL'
 
 Include all ciphers except NULL and anonymous DH then sort by
 strength:
 
- openssl ciphers -v "ALL:!ADH:@STRENGTH"
+ openssl ciphers -v 'ALL:!ADH:@STRENGTH'
 
 Include all ciphers except ones with no encryption (eNULL) or no
 authentication (aNULL):
 
- openssl ciphers -v "ALL:!aNULL"
+ openssl ciphers -v 'ALL:!aNULL'
 
 Include only 3DES ciphers and then place RSA ciphers last:
 
- openssl ciphers -v "3DES:+RSA"
+ openssl ciphers -v '3DES:+RSA'
 
 Include all RC4 ciphers but leave out those without authentication:
 
- openssl ciphers -v "RC4:!COMPLEMENTOFDEFAULT"
+ openssl ciphers -v 'RC4:!COMPLEMENTOFDEFAULT'
 
 Include all ciphers with RSA authentication but leave out ciphers without
 encryption.
 
- openssl ciphers -v "RSA:!COMPLEMENTOFALL"
+ openssl ciphers -v 'RSA:!COMPLEMENTOFALL'
 
 Set security level to 2 and display all ciphers consistent with level 2:
 
- openssl ciphers -s -v "ALL:@SECLEVEL=2"
+ openssl ciphers -s -v 'ALL:@SECLEVEL=2'
 
 =head1 SEE ALSO
 

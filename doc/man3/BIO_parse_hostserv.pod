@@ -35,8 +35,8 @@ The syntax the BIO_parse_hostserv() recognises is:
  host
  service
 
-The host part can be a name or an IP address.  If it is a IPv6
-address, it MUST be enclosed in brackets, such as '[::1]'.
+The host part can be a name or an IP address.  If it is an IPv6
+address, it MUST be enclosed in brackets, such as "[::1]".
 
 The service part can  be a service name or its port number.
 
