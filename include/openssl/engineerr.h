@@ -22,6 +22,7 @@ int ERR_load_ENGINE_strings(void);
 /*
  * ENGINE function codes.
  */
+# define ENGINE_F_DIGEST_UPDATE                           198
 # define ENGINE_F_DYNAMIC_CTRL                            180
 # define ENGINE_F_DYNAMIC_GET_DATA_CTX                    181
 # define ENGINE_F_DYNAMIC_LOAD                            182

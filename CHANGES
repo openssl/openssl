@@ -9,6 +9,12 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Add devcrypto engine.  This has been implemented against cryptodev-linux,
+     then adjusted to work on FreeBSD 8.4 as well.
+     Enable by configuring with 'enable-devcryptoeng'.  This is done by default
+     on BSD implementations, as cryptodev.h is assumed to exist on all of them.
+     [Richard Levitte]
+
   *) Module names can prefixed with OSSL_ or OPENSSL_.  This affects
      util/mkerr.pl, which is adapted to allow those prefixes, leading to
      error code calls like this:

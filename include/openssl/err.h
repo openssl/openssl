@@ -160,6 +160,9 @@ typedef struct err_state_st {
 # define SYS_F_GETSOCKNAME       16
 # define SYS_F_GETHOSTBYNAME     17
 # define SYS_F_FFLUSH            18
+# define SYS_F_OPEN              19
+# define SYS_F_CLOSE             20
+# define SYS_F_IOCTL             21
 
 /* reasons */
 # define ERR_R_SYS_LIB   ERR_LIB_SYS/* 2 */
@@ -192,6 +195,7 @@ typedef struct err_state_st {
 # define ERR_R_DISABLED                          (5|ERR_R_FATAL)
 # define ERR_R_INIT_FAIL                         (6|ERR_R_FATAL)
 # define ERR_R_PASSED_INVALID_ARGUMENT           (7)
+# define ERR_R_OPERATION_FAIL                    (8|ERR_R_FATAL)
 
 /*
  * 99 is the maximum possible ERR_R_... code, higher values are reserved for
