@@ -1398,43 +1398,6 @@ TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     return ret;
 }
 
-static int tls12_get_pkey_idx(int sig_nid)
-{
-    switch (sig_nid) {
-#ifndef OPENSSL_NO_RSA
-    case EVP_PKEY_RSA:
-        return SSL_PKEY_RSA;
-    /*
-     * For now return RSA key for PSS. When we support PSS only keys
-     * this will need to be updated.
-     */
-    case EVP_PKEY_RSA_PSS:
-        return SSL_PKEY_RSA;
-#endif
-#ifndef OPENSSL_NO_DSA
-    case EVP_PKEY_DSA:
-        return SSL_PKEY_DSA_SIGN;
-#endif
-#ifndef OPENSSL_NO_EC
-    case EVP_PKEY_EC:
-        return SSL_PKEY_ECC;
-    case EVP_PKEY_ED25519:
-        return SSL_PKEY_ED25519;
-#endif
-#ifndef OPENSSL_NO_GOST
-    case NID_id_GostR3410_2001:
-        return SSL_PKEY_GOST01;
-
-    case NID_id_GostR3410_2012_256:
-        return SSL_PKEY_GOST12_256;
-
-    case NID_id_GostR3410_2012_512:
-        return SSL_PKEY_GOST12_512;
-#endif
-    }
-    return -1;
-}
-
 /* Check to see if a signature algorithm is allowed */
 static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
 {
@@ -1454,7 +1417,7 @@ static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
             || lu->hash_idx == SSL_MD_SHA224_IDX))
         return 0;
     /* See if public key algorithm allowed */
-    if (tls12_get_pkey_idx(lu->sig) == -1)
+    if (ssl_cert_is_disabled(lu->sig_idx))
         return 0;
     if (lu->hash == NID_undef)
         return 1;
@@ -1678,8 +1641,8 @@ int tls1_process_sigalgs(SSL *s)
         if (SSL_IS_TLS13(s) && sigptr->sig == EVP_PKEY_RSA)
             continue;
         /* If not disabled indicate we can explicitly sign */
-        if (pvalid[idx] == 0 && tls12_get_pkey_idx(sigptr->sig) != -1)
-            pvalid[sigptr->sig_idx] = CERT_PKEY_EXPLICIT_SIGN | CERT_PKEY_SIGN;
+        if (pvalid[idx] == 0 && !ssl_cert_is_disabled(idx))
+            pvalid[idx] = CERT_PKEY_EXPLICIT_SIGN | CERT_PKEY_SIGN;
     }
     return 1;
 }
