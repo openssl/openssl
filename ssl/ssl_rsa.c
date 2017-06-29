@@ -127,9 +127,9 @@ int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 {
-    int i;
-    i = ssl_cert_type(NULL, pkey);
-    if (i < 0) {
+    size_t i;
+
+    if (ssl_cert_lookup_by_pkey(pkey, &i) == NULL) {
         SSLerr(SSL_F_SSL_SET_PKEY, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return (0);
     }
@@ -167,8 +167,8 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
     EVP_PKEY_free(c->pkeys[i].privatekey);
     EVP_PKEY_up_ref(pkey);
     c->pkeys[i].privatekey = pkey;
-    c->key = &(c->pkeys[i]);
-    return (1);
+    c->key = &c->pkeys[i];
+    return 1;
 }
 
 #ifndef OPENSSL_NO_RSA
@@ -316,7 +316,7 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
 static int ssl_set_cert(CERT *c, X509 *x)
 {
     EVP_PKEY *pkey;
-    int i;
+    size_t i;
 
     pkey = X509_get0_pubkey(x);
     if (pkey == NULL) {
@@ -324,8 +324,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
         return (0);
     }
 
-    i = ssl_cert_type(x, pkey);
-    if (i < 0) {
+    if (ssl_cert_lookup_by_pkey(pkey, &i) == NULL) {
         SSLerr(SSL_F_SSL_SET_CERT, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return 0;
     }
