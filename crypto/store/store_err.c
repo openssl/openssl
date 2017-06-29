@@ -85,6 +85,8 @@ static const ERR_STRING_DATA OSSL_STORE_str_reasons[] = {
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_INVALID_SCHEME),
     "invalid scheme"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_IS_NOT_A), "is not a"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_LOADER_INCOMPLETE),
+    "loader incomplete"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_NOT_A_CERTIFICATE),
     "not a certificate"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_NOT_A_CRL), "not a crl"},
