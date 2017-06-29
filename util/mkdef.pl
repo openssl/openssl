@@ -1213,7 +1213,6 @@ EOF
 					if(!$do_update);
 			} else {
 				(my $n, my $symversion, my $dummy) = split /\\/, $nums{$s};
-				next if $symversion ne $thisversion;
 				my %pf = ();
 				my $p = ($i =~ /^[^:]*:([^:]*):/,$1);
 				my $a = ($i =~ /^[^:]*:[^:]*:[^:]*:([^:]*)/,$1);
@@ -1226,6 +1225,7 @@ EOF
 					}
 					$prev = $s2;	# To warn about duplicates...
 					if($linux) {
+						next if $symversion ne $thisversion;
 						if ($symversion ne $prevsymversion) {
 							if ($prevsymversion ne "") {
 								if ($prevprevsymversion ne "") {
@@ -1281,7 +1281,7 @@ EOF
 				}
 			}
 		}
-	} while ($thisversion ne $currversion);
+	} while ($linux && $thisversion ne $currversion);
 	if ($linux) {
 		if ($prevprevsymversion ne "") {
 			print OUT "    local: *;\n} OPENSSL_$prevprevsymversion;\n\n";
