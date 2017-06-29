@@ -2406,10 +2406,9 @@ int s_client_main(int argc, char **argv)
                 } else if (packet[pos++] == '\0') {
                     break;
                 }
-                pos++;
             }
 
-            /* make sure we have more 15 bytes left in the packet */
+            /* make sure we have at least 15 bytes left in the packet */
             if (pos + 15 > bytes) {
                 BIO_printf(bio_err,
                            "MySQL server handshake packet is broken.\n");
