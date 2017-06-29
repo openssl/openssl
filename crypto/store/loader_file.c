@@ -126,7 +126,7 @@ static int file_get_pem_pass(char *buf, int num, int w, void *data)
  *                  THIS CONTEXT APPROPRIATELY, i.e. create on first call
  *                  and destroy when about to return NULL.
  *    matchcount:   A pointer to an int to count matches for this data.
- *                  Usually becomes 0 (no patch) or 1 (match!), but may
+ *                  Usually becomes 0 (no match) or 1 (match!), but may
  *                  be higher in the (unlikely) event that the data matches
  *                  more than one possibility.  The int will always be
  *                  zero when the function is called.
@@ -393,12 +393,13 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
 
         for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
             EVP_PKEY *tmp_pkey = NULL;
+            const unsigned char *tmp_blob = blob;
 
             ameth = EVP_PKEY_asn1_get0(i);
             if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
                 continue;
 
-            tmp_pkey = d2i_PrivateKey(ameth->pkey_id, NULL, &blob, len);
+            tmp_pkey = d2i_PrivateKey(ameth->pkey_id, NULL, &tmp_blob, len);
             if (tmp_pkey != NULL) {
                 if (pkey != NULL)
                     EVP_PKEY_free(tmp_pkey);
@@ -493,13 +494,15 @@ static OSSL_STORE_INFO *try_decode_params(const char *pem_name,
         int i;
 
         for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
+            const unsigned char *tmp_blob = blob;
+
             ameth = EVP_PKEY_asn1_get0(i);
             if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
                 continue;
             if (EVP_PKEY_set_type(pkey, ameth->pkey_id)
                 && (ameth = EVP_PKEY_get0_asn1(pkey)) != NULL
                 && ameth->param_decode != NULL
-                && ameth->param_decode(pkey, &blob, len)) {
+                && ameth->param_decode(pkey, &tmp_blob, len)) {
                 (*matchcount)++;
                 ok = 1;
                 break;
