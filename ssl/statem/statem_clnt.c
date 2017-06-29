@@ -3335,62 +3335,39 @@ int tls_construct_client_certificate(SSL *s, WPACKET *pkt)
     return 0;
 }
 
-#define has_bits(i,m)   (((i)&(m)) == (m))
-
 int ssl3_check_cert_and_algorithm(SSL *s)
 {
-    int i;
-#ifndef OPENSSL_NO_EC
-    int idx;
-#endif
+    const SSL_CERT_LOOKUP *clu;
+    size_t idx;
     long alg_k, alg_a;
-    EVP_PKEY *pkey = NULL;
     int al = SSL_AD_HANDSHAKE_FAILURE;
 
     alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
     alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 
     /* we don't have a certificate */
-    if ((alg_a & SSL_aNULL) || (alg_k & SSL_kPSK))
-        return (1);
+    if (!(alg_a & SSL_aCERT))
+        return 1;
 
     /* This is the passed certificate */
+    clu = ssl_cert_lookup_by_pkey(X509_get0_pubkey(s->session->peer), &idx);
+
+    /* Check certificate is recognised and suitable for cipher */
+    if (clu == NULL || (alg_a & clu->amask) == 0) {
+        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, SSL_R_MISSING_SIGNING_CERT);
+        goto f_err;
+    }
 
 #ifndef OPENSSL_NO_EC
-    idx = s->session->peer_type;
-    if (idx == SSL_PKEY_ECC || idx == SSL_PKEY_ED25519) {
-        if (ssl_check_srvr_ecc_cert_and_alg(s->session->peer, s) == 0) {
-            /* check failed */
-            SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, SSL_R_BAD_ECC_CERT);
-            goto f_err;
-        } else {
+    if (clu->amask & SSL_aECDSA) {
+        if (ssl_check_srvr_ecc_cert_and_alg(s->session->peer, s))
             return 1;
-        }
-    } else if (alg_a & SSL_aECDSA) {
-        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-               SSL_R_MISSING_ECDSA_SIGNING_CERT);
-        goto f_err;
-    }
-#endif
-    pkey = X509_get0_pubkey(s->session->peer);
-    i = X509_certificate_type(s->session->peer, pkey);
-
-    /* Check that we have a certificate if we require one */
-    if ((alg_a & SSL_aRSA) && !has_bits(i, EVP_PK_RSA | EVP_PKT_SIGN)) {
-        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-               SSL_R_MISSING_RSA_SIGNING_CERT);
-        goto f_err;
-    }
-#ifndef OPENSSL_NO_DSA
-    else if ((alg_a & SSL_aDSS) && !has_bits(i, EVP_PK_DSA | EVP_PKT_SIGN)) {
-        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
-               SSL_R_MISSING_DSA_SIGNING_CERT);
+        SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM, SSL_R_BAD_ECC_CERT);
         goto f_err;
     }
 #endif
 #ifndef OPENSSL_NO_RSA
-    if (alg_k & (SSL_kRSA | SSL_kRSAPSK) &&
-        !has_bits(i, EVP_PK_RSA | EVP_PKT_ENC)) {
+    if (alg_k & (SSL_kRSA | SSL_kRSAPSK) && idx != SSL_PKEY_RSA) {
         SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
                SSL_R_MISSING_RSA_ENCRYPTING_CERT);
         goto f_err;
@@ -3404,10 +3381,10 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     }
 #endif
 
-    return (1);
+    return 1;
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    return (0);
+    return 0;
 }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
