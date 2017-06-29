@@ -844,6 +844,23 @@ int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
  */
 static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
 {
+    if (idx == -1) {
+        if (s->server) {
+            size_t i;
+
+            /* Work out index corresponding to ciphersuite */
+            for (i = 0; i < SSL_PKEY_NUM; i++) {
+                const SSL_CERT_LOOKUP *clu = ssl_cert_lookup_by_idx(i);
+
+                if (clu->amask & s->s3->tmp.new_cipher->algorithm_auth) {
+                    idx = i;
+                    break;
+                }
+            }
+        } else {
+            idx = s->cert->key - s->cert->pkeys;
+        }
+    }
     if (idx < 0 || idx >= (int)OSSL_NELEM(tls_default_sigalg))
         return NULL;
     if (SSL_USE_SIGALGS(s) || idx != SSL_PKEY_RSA) {
@@ -2262,6 +2279,22 @@ int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *x, int vfy)
 }
 
 /*
+ * For TLS 1.2 servers check if we have a certificate which can be used
+ * with the signature algorithm "lu".
+ */
+
+static int tls12_check_cert_sigalg(const SSL *s, const SIGALG_LOOKUP *lu)
+{
+    const SSL_CERT_LOOKUP *clu = ssl_cert_lookup_by_idx(lu->sig_idx);
+
+    /* If not recognised or not supported by cipher mask it is not suitable */
+    if (clu == NULL || !(clu->amask & s->s3->tmp.new_cipher->algorithm_auth))
+        return 0;
+
+    return s->s3->tmp.valid_flags[lu->sig_idx] & CERT_PKEY_VALID ? 1 : 0;
+}
+
+/*
  * Choose an appropriate signature algorithm based on available certificates
  * Sets chosen certificate and signature algorithm.
  *
@@ -2274,7 +2307,6 @@ int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *x, int vfy)
  */
 int tls_choose_sigalg(SSL *s, int *al)
 {
-    int idx = -1;
     const SIGALG_LOOKUP *lu = NULL;
 
     s->s3->tmp.cert = NULL;
@@ -2298,13 +2330,12 @@ int tls_choose_sigalg(SSL *s, int *al)
                 continue;
             if (!tls1_lookup_md(lu, NULL))
                 continue;
-            idx = lu->sig_idx;
-            if (!ssl_has_cert(s, idx))
+            if (!ssl_has_cert(s, lu->sig_idx))
                     continue;
             if (lu->sig == EVP_PKEY_EC) {
 #ifndef OPENSSL_NO_EC
                 if (curve == -1) {
-                    EC_KEY *ec = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[idx].privatekey);
+                    EC_KEY *ec = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
 
                     curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
                     if (EC_KEY_get_conv_form(ec)
@@ -2328,45 +2359,11 @@ int tls_choose_sigalg(SSL *s, int *al)
             return 0;
         }
     } else {
-        if (s->server) {
-            /* Find index corresponding to ciphersuite */
-            idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
-            /* If no certificate for ciphersuite return */
-            if (idx == -1)
+        /* If ciphersuite doesn't require a cert nothing to do */
+        if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aCERT))
+            return 1;
+        if (!s->server && !ssl_has_cert(s, s->cert->key - s->cert->pkeys))
                 return 1;
-            if (idx == SSL_PKEY_GOST_EC) {
-                /* Work out which GOST certificate is available */
-                if (ssl_has_cert(s, SSL_PKEY_GOST12_512)) {
-                    idx = SSL_PKEY_GOST12_512;
-                } else if (ssl_has_cert(s, SSL_PKEY_GOST12_256)) {
-                    idx = SSL_PKEY_GOST12_256;
-                } else if (ssl_has_cert(s, SSL_PKEY_GOST01)) {
-                    idx = SSL_PKEY_GOST01;
-                } else {
-                    if (al == NULL)
-                        return 1;
-                    *al = SSL_AD_INTERNAL_ERROR;
-                    SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
-                    return 0;
-                }
-            } else if (!ssl_has_cert(s, idx)) {
-                /* Allow Ed25519 if no EC certificate */
-                if (idx == SSL_PKEY_ECC && ssl_has_cert(s, SSL_PKEY_ED25519)) {
-                    idx = SSL_PKEY_ED25519;
-                } else {
-                    if (al == NULL)
-                        return 1;
-                    *al = SSL_AD_INTERNAL_ERROR;
-                    SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
-                    return 0;
-                }
-            }
-        } else {
-            /* Find index for client certificate */
-            idx = s->cert->key - s->cert->pkeys;
-            if (!ssl_has_cert(s, idx))
-                return 1;
-        }
 
         if (SSL_USE_SIGALGS(s)) {
             if (s->s3->tmp.peer_sigalgs != NULL) {
@@ -2376,7 +2373,7 @@ int tls_choose_sigalg(SSL *s, int *al)
 
                 /* For Suite B need to match signature algorithm to curve */
                 if (tls1_suiteb(s)) {
-                    EC_KEY *ec = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[idx].privatekey);
+                    EC_KEY *ec = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
                     curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
                 } else {
                     curve = -1;
@@ -2389,19 +2386,16 @@ int tls_choose_sigalg(SSL *s, int *al)
                  */
                 for (i = 0; i < s->cert->shared_sigalgslen; i++) {
                     lu = s->cert->shared_sigalgs[i];
-#ifdef OPENSSL_NO_EC
-                    if (lu->sig_idx == idx)
-                        break;
-#else
-                    if (lu->sig_idx == idx
-                        && (curve == -1 || lu->curve == curve))
-                        break;
-                    if (idx == SSL_PKEY_ECC && lu->sig == EVP_PKEY_ED25519) {
-                        idx = SSL_PKEY_ED25519;
-                        break;
+
+                    if (s->server) {
+                        if (!tls12_check_cert_sigalg(s, lu))
+                            continue;
+                    } else if (lu->sig_idx != s->cert->key - s->cert->pkeys) {
+                            continue;
                     }
+#ifndef OPENSSL_NO_EC
+                    if (curve == -1 || lu->curve == curve)
 #endif
-                    if (idx == SSL_PKEY_RSA && lu->sig == EVP_PKEY_RSA_PSS)
                         break;
                 }
                 if (i == s->cert->shared_sigalgslen) {
@@ -2418,7 +2412,7 @@ int tls_choose_sigalg(SSL *s, int *al)
                 const uint16_t *sent_sigs;
                 size_t sent_sigslen, i;
 
-                if ((lu = tls1_get_legacy_sigalg(s, idx)) == NULL) {
+                if ((lu = tls1_get_legacy_sigalg(s, -1)) == NULL) {
                     if (al == NULL)
                         return 1;
                     *al = SSL_AD_INTERNAL_ERROR;
@@ -2441,7 +2435,7 @@ int tls_choose_sigalg(SSL *s, int *al)
                 }
             }
         } else {
-            if ((lu = tls1_get_legacy_sigalg(s, idx)) == NULL) {
+            if ((lu = tls1_get_legacy_sigalg(s, -1)) == NULL) {
                 if (al == NULL)
                     return 1;
                 *al = SSL_AD_INTERNAL_ERROR;
@@ -2450,14 +2444,7 @@ int tls_choose_sigalg(SSL *s, int *al)
             }
         }
     }
-    if (idx == -1) {
-        if (al != NULL) {
-            *al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
-        }
-        return 0;
-    }
-    s->s3->tmp.cert = &s->cert->pkeys[idx];
+    s->s3->tmp.cert = &s->cert->pkeys[lu->sig_idx];
     s->cert->key = s->s3->tmp.cert;
     s->s3->tmp.sigalg = lu;
     return 1;
