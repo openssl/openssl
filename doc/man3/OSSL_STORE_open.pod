@@ -99,26 +99,14 @@ OSSL_STORE_register_loader().
 
 =head1 NOTES
 
-When unsure whether a given string contains a simple file or directory
-reference, or if it's a full blown URI, the question is how to figure
-that out.
-One way is to try OSSL_STORE_open_file() and if that fails, try
-OSSL_STORE_open().
-The other way is the other way around.
-Either way you choose, there are corner cases,
-F<file:/foo/bar/cookie.txt> might very will be a simple file reference
-on a system that supports the notion of volumes.
+A string without a scheme prefix (that is, a non-URI string) is
+implicitly interpreted as using the F<file:> scheme.
 
-This manual won't tell you which way is better, that's up to each
-application developer to decide on their own.
-However, there are some tools that can be used together with
+There are some tools that can be used together with
 OSSL_STORE_open() to determine if any failure is caused by an unparsable
 URI, or if it's a different error (such as memory allocation
 failures); if the URI was parsable but the scheme unregistered, the
 top error will have the reason C<OSSL_STORE_R_UNREGISTERED_SCHEME>.
-If you decide to use OSSL_STORE_open() with OSSL_STORE_open_file() as a
-fallback, those reasons can be good tools to decide if the fallback
-should be taken or not.
 
 =head1 RETURN VALUES
 
