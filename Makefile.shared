@@ -20,6 +20,7 @@ RC=windres
 SHARED_RCFLAGS=$(SHARED_RCFLAG)
 
 NM=nm
+ECHO=echo
 
 # LIBNAME contains just the name of the library, without prefix ("lib"
 # on Unix, "cyg" for certain forms under Cygwin...) or suffix (.a, .so,
@@ -84,7 +85,7 @@ SET_X=:
 #SET_X=set -x
 
 top:
-	echo "Trying to use this makefile interactively?  Don't."
+	echo "Trying to use this makefile interactively?  Don't." ; exit 1
 
 CALC_VERSIONS=	\
 	SHLIB_COMPAT=; SHLIB_SOVER=; \
@@ -106,7 +107,7 @@ LINK_APP=	\
     LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$${LDFLAGS:-$(CFLAGS) $(LDFLAGS)}"; \
     LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t' -e d | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
-    echo LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
+    $(ECHO) LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
         $${LDCMD} $${LDFLAGS} -o $${APPNAME:=$(APPNAME)} $(OBJECTS) $${LIBDEPS}; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $${LDCMD} $${LDFLAGS} -o $${APPNAME:=$(APPNAME)} $(OBJECTS) $${LIBDEPS} )
@@ -118,7 +119,7 @@ LINK_SO=	\
     SHAREDFLAGS="$${SHAREDFLAGS:-$(CFLAGS) $(SHARED_LDFLAGS)}"; \
     LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t' -e d | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
-    echo LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
+    $(ECHO) LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
          $${SHAREDCMD} $${SHAREDFLAGS} \
 	     -o $(DSTDIR)/$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
 	     $$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS; \
@@ -150,9 +151,9 @@ LINK_SO_DSO=	INHIBIT_SYMLINKS=yes; SHOBJECTS="$(LIBEXTRAS)"; $(LINK_SO)
 LINK_SO_SHLIB_VIA_O=	\
   SHOBJECTS=$(DSTDIR)/lib$(LIBNAME).o; \
   ALL=$$ALLSYMSFLAGS; ALLSYMSFLAGS=; NOALLSYMSFLAGS=; \
-  ( echo ld $(LDFLAGS) -r -o $$SHOBJECTS $$ALL lib$(LIBNAME).a $(LIBEXTRAS); \
+  ( $(ECHO) ld $(LDFLAGS) -r -o $$SHOBJECTS $$ALL lib$(LIBNAME).a $(LIBEXTRAS); \
     ld $(LDFLAGS) -r -o $$SHOBJECTS $$ALL $(DSTDIR)/lib$(LIBNAME).a $(LIBEXTRAS) ); \
-  $(LINK_SO) && ( echo rm -f $$SHOBJECTS; rm -f $$SHOBJECTS )
+  $(LINK_SO) && ( $(ECHO) rm -f $$SHOBJECTS; rm -f $$SHOBJECTS )
 
 LINK_SO_SHLIB_UNPACKED=	\
   UNPACKDIR=link_tmp.$$$$; rm -rf $$UNPACKDIR; mkdir $$UNPACKDIR; \
@@ -278,7 +279,7 @@ link_shlib.cygwin:
 	INHIBIT_SYMLINKS=yes; \
 	SHLIB=cyg$(LIBNAME); SHLIB_SOVER=-$(LIBVERSION); SHLIB_SUFFIX=.dll; \
 	dll_name=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
-	echo "$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name |" \
+	$(ECHO) "$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name |" \
 		     "$(RC) $(SHARED_RCFLAGS) -o rc.o"; \
 	$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name | \
 		$(RC) $(SHARED_RCFLAGS) -o rc.o; \
