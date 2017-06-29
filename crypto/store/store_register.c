@@ -123,11 +123,8 @@ static unsigned long store_loader_hash(const OSSL_STORE_LOADER *v)
 static int store_loader_cmp(const OSSL_STORE_LOADER *a,
                             const OSSL_STORE_LOADER *b)
 {
-    if (a->scheme != NULL && b->scheme != NULL)
-        return strcmp(a->scheme, b->scheme);
-    else if (a->scheme == b->scheme)
-        return 0;
-    return a->scheme == NULL ? -1 : 1;
+    assert(a->scheme != NULL && b->scheme != NULL);
+    return strcmp(a->scheme, b->scheme);
 }
 
 static LHASH_OF(OSSL_STORE_LOADER) *loader_register = NULL;
