@@ -316,7 +316,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     unsigned char *gost_data = NULL;
 #endif
     int al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
-    int type = 0, j;
+    int j;
     unsigned int len;
     X509 *peer;
     const EVP_MD *md = NULL;
@@ -336,9 +336,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     if (pkey == NULL)
         goto f_err;
 
-    type = X509_certificate_type(peer, pkey);
-
-    if (!(type & EVP_PKT_SIGN)) {
+    if (ssl_cert_lookup_by_pkey(pkey, NULL) == NULL) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY,
                SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE);
         al = SSL_AD_ILLEGAL_PARAMETER;
