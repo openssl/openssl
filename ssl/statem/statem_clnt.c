@@ -1651,14 +1651,15 @@ static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
 
 MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
 {
-    int al, i, ret = MSG_PROCESS_ERROR, exp_idx;
+    int al, i, ret = MSG_PROCESS_ERROR;
     unsigned long cert_list_len, cert_len;
     X509 *x = NULL;
     const unsigned char *certstart, *certbytes;
     STACK_OF(X509) *sk = NULL;
     EVP_PKEY *pkey = NULL;
-    size_t chainidx;
+    size_t chainidx, certidx;
     unsigned int context = 0;
+    const SSL_CERT_LOOKUP *clu;
 
     if ((sk = sk_X509_new_null()) == NULL) {
         SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE, ERR_R_MALLOC_FAILURE);
@@ -1774,8 +1775,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
-    i = ssl_cert_type(x, pkey);
-    if (i < 0) {
+    if ((clu = ssl_cert_lookup_by_pkey(pkey, &certidx)) == NULL) {
         x = NULL;
         al = SSL3_AL_FATAL;
         SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
@@ -1788,12 +1788,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
      * type.
      */
     if (!SSL_IS_TLS13(s)) {
-        exp_idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
-        if (exp_idx >= 0 && i != exp_idx
-                && (exp_idx != SSL_PKEY_ECC || i != SSL_PKEY_ED25519)
-                && (exp_idx != SSL_PKEY_GOST_EC ||
-                    (i != SSL_PKEY_GOST12_512 && i != SSL_PKEY_GOST12_256
-                    && i != SSL_PKEY_GOST01))) {
+        if ((clu->amask & s->s3->tmp.new_cipher->algorithm_auth) == 0) {
             x = NULL;
             al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
@@ -1801,7 +1796,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
             goto f_err;
         }
     }
-    s->session->peer_type = i;
+    s->session->peer_type = certidx;
 
     X509_free(s->session->peer);
     X509_up_ref(x);
