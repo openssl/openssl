@@ -149,7 +149,7 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
     if (*scheme != '\0') {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_REGISTER_LOADER_INT,
                       OSSL_STORE_R_INVALID_SCHEME);
-        ERR_add_error_data(4, "scheme=", loader->scheme);
+        ERR_add_error_data(2, "scheme=", loader->scheme);
         return 0;
     }
 
