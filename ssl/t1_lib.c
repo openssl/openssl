@@ -875,9 +875,12 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
 /* Set peer sigalg based key type */
 int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey)
 {
-    int idx = ssl_cert_type(NULL, pkey);
+    size_t idx;
+    const SIGALG_LOOKUP *lu;
 
-    const SIGALG_LOOKUP *lu = tls1_get_legacy_sigalg(s, idx);
+    if (ssl_cert_lookup_by_pkey(pkey, &idx) == NULL)
+        return 0;
+    lu = tls1_get_legacy_sigalg(s, idx);
     if (lu == NULL)
         return 0;
     s->s3->tmp.peer_sigalg = lu;
@@ -1923,11 +1926,14 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
         if (!x || !pk)
             goto end;
     } else {
+        size_t certidx;
+
         if (!x || !pk)
             return 0;
-        idx = ssl_cert_type(x, pk);
-        if (idx == -1)
+
+        if (ssl_cert_lookup_by_pkey(pk, &certidx) == NULL)
             return 0;
+        idx = certidx;
         pvalid = s->s3->tmp.valid_flags + idx;
 
         if (c->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)
