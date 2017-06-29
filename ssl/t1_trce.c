@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1468,11 +1468,6 @@ static int ssl_print_handshake(BIO *bio, SSL *ssl, int server,
         BIO_dump_indent(bio, (const char *)msg, msglen, indent + 4);
     }
     return 1;
-}
-
-const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c)
-{
-    return ssl_trace_str(c->id & 0xFFFF, ssl_ciphers_tbl);
 }
 
 void SSL_trace(int write_p, int version, int content_type,

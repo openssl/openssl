@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -188,112 +188,112 @@ typedef struct cipher_order_st {
 
 static const SSL_CIPHER cipher_aliases[] = {
     /* "ALL" doesn't include eNULL (must be specifically enabled) */
-    {0, SSL_TXT_ALL, 0, 0, 0, ~SSL_eNULL},
+    {0, SSL_TXT_ALL, NULL, 0, 0, 0, ~SSL_eNULL},
     /* "COMPLEMENTOFALL" */
-    {0, SSL_TXT_CMPALL, 0, 0, 0, SSL_eNULL},
+    {0, SSL_TXT_CMPALL, NULL, 0, 0, 0, SSL_eNULL},
 
     /*
      * "COMPLEMENTOFDEFAULT" (does *not* include ciphersuites not found in
      * ALL!)
      */
-    {0, SSL_TXT_CMPDEF, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_NOT_DEFAULT},
+    {0, SSL_TXT_CMPDEF, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_NOT_DEFAULT},
 
     /*
      * key exchange aliases (some of those using only a single bit here
      * combine multiple key exchange algs according to the RFCs, e.g. kDHE
      * combines DHE_DSS and DHE_RSA)
      */
-    {0, SSL_TXT_kRSA, 0, SSL_kRSA},
+    {0, SSL_TXT_kRSA, NULL, 0, SSL_kRSA},
 
-    {0, SSL_TXT_kEDH, 0, SSL_kDHE},
-    {0, SSL_TXT_kDHE, 0, SSL_kDHE},
-    {0, SSL_TXT_DH, 0, SSL_kDHE},
+    {0, SSL_TXT_kEDH, NULL, 0, SSL_kDHE},
+    {0, SSL_TXT_kDHE, NULL, 0, SSL_kDHE},
+    {0, SSL_TXT_DH, NULL, 0, SSL_kDHE},
 
-    {0, SSL_TXT_kEECDH, 0, SSL_kECDHE},
-    {0, SSL_TXT_kECDHE, 0, SSL_kECDHE},
-    {0, SSL_TXT_ECDH, 0, SSL_kECDHE},
+    {0, SSL_TXT_kEECDH, NULL, 0, SSL_kECDHE},
+    {0, SSL_TXT_kECDHE, NULL, 0, SSL_kECDHE},
+    {0, SSL_TXT_ECDH, NULL, 0, SSL_kECDHE},
 
-    {0, SSL_TXT_kPSK, 0, SSL_kPSK},
-    {0, SSL_TXT_kRSAPSK, 0, SSL_kRSAPSK},
-    {0, SSL_TXT_kECDHEPSK, 0, SSL_kECDHEPSK},
-    {0, SSL_TXT_kDHEPSK, 0, SSL_kDHEPSK},
-    {0, SSL_TXT_kSRP, 0, SSL_kSRP},
-    {0, SSL_TXT_kGOST, 0, SSL_kGOST},
+    {0, SSL_TXT_kPSK, NULL, 0, SSL_kPSK},
+    {0, SSL_TXT_kRSAPSK, NULL, 0, SSL_kRSAPSK},
+    {0, SSL_TXT_kECDHEPSK, NULL, 0, SSL_kECDHEPSK},
+    {0, SSL_TXT_kDHEPSK, NULL, 0, SSL_kDHEPSK},
+    {0, SSL_TXT_kSRP, NULL, 0, SSL_kSRP},
+    {0, SSL_TXT_kGOST, NULL, 0, SSL_kGOST},
 
     /* server authentication aliases */
-    {0, SSL_TXT_aRSA, 0, 0, SSL_aRSA},
-    {0, SSL_TXT_aDSS, 0, 0, SSL_aDSS},
-    {0, SSL_TXT_DSS, 0, 0, SSL_aDSS},
-    {0, SSL_TXT_aNULL, 0, 0, SSL_aNULL},
-    {0, SSL_TXT_aECDSA, 0, 0, SSL_aECDSA},
-    {0, SSL_TXT_ECDSA, 0, 0, SSL_aECDSA},
-    {0, SSL_TXT_aPSK, 0, 0, SSL_aPSK},
-    {0, SSL_TXT_aGOST01, 0, 0, SSL_aGOST01},
-    {0, SSL_TXT_aGOST12, 0, 0, SSL_aGOST12},
-    {0, SSL_TXT_aGOST, 0, 0, SSL_aGOST01 | SSL_aGOST12},
-    {0, SSL_TXT_aSRP, 0, 0, SSL_aSRP},
+    {0, SSL_TXT_aRSA, NULL, 0, 0, SSL_aRSA},
+    {0, SSL_TXT_aDSS, NULL, 0, 0, SSL_aDSS},
+    {0, SSL_TXT_DSS, NULL, 0, 0, SSL_aDSS},
+    {0, SSL_TXT_aNULL, NULL, 0, 0, SSL_aNULL},
+    {0, SSL_TXT_aECDSA, NULL, 0, 0, SSL_aECDSA},
+    {0, SSL_TXT_ECDSA, NULL, 0, 0, SSL_aECDSA},
+    {0, SSL_TXT_aPSK, NULL, 0, 0, SSL_aPSK},
+    {0, SSL_TXT_aGOST01, NULL, 0, 0, SSL_aGOST01},
+    {0, SSL_TXT_aGOST12, NULL, 0, 0, SSL_aGOST12},
+    {0, SSL_TXT_aGOST, NULL, 0, 0, SSL_aGOST01 | SSL_aGOST12},
+    {0, SSL_TXT_aSRP, NULL, 0, 0, SSL_aSRP},
 
     /* aliases combining key exchange and server authentication */
-    {0, SSL_TXT_EDH, 0, SSL_kDHE, ~SSL_aNULL},
-    {0, SSL_TXT_DHE, 0, SSL_kDHE, ~SSL_aNULL},
-    {0, SSL_TXT_EECDH, 0, SSL_kECDHE, ~SSL_aNULL},
-    {0, SSL_TXT_ECDHE, 0, SSL_kECDHE, ~SSL_aNULL},
-    {0, SSL_TXT_NULL, 0, 0, 0, SSL_eNULL},
-    {0, SSL_TXT_RSA, 0, SSL_kRSA, SSL_aRSA},
-    {0, SSL_TXT_ADH, 0, SSL_kDHE, SSL_aNULL},
-    {0, SSL_TXT_AECDH, 0, SSL_kECDHE, SSL_aNULL},
-    {0, SSL_TXT_PSK, 0, SSL_PSK},
-    {0, SSL_TXT_SRP, 0, SSL_kSRP},
+    {0, SSL_TXT_EDH, NULL, 0, SSL_kDHE, ~SSL_aNULL},
+    {0, SSL_TXT_DHE, NULL, 0, SSL_kDHE, ~SSL_aNULL},
+    {0, SSL_TXT_EECDH, NULL, 0, SSL_kECDHE, ~SSL_aNULL},
+    {0, SSL_TXT_ECDHE, NULL, 0, SSL_kECDHE, ~SSL_aNULL},
+    {0, SSL_TXT_NULL, NULL, 0, 0, 0, SSL_eNULL},
+    {0, SSL_TXT_RSA, NULL, 0, SSL_kRSA, SSL_aRSA},
+    {0, SSL_TXT_ADH, NULL, 0, SSL_kDHE, SSL_aNULL},
+    {0, SSL_TXT_AECDH, NULL, 0, SSL_kECDHE, SSL_aNULL},
+    {0, SSL_TXT_PSK, NULL, 0, SSL_PSK},
+    {0, SSL_TXT_SRP, NULL, 0, SSL_kSRP},
 
     /* symmetric encryption aliases */
-    {0, SSL_TXT_3DES, 0, 0, 0, SSL_3DES},
-    {0, SSL_TXT_RC4, 0, 0, 0, SSL_RC4},
-    {0, SSL_TXT_RC2, 0, 0, 0, SSL_RC2},
-    {0, SSL_TXT_IDEA, 0, 0, 0, SSL_IDEA},
-    {0, SSL_TXT_SEED, 0, 0, 0, SSL_SEED},
-    {0, SSL_TXT_eNULL, 0, 0, 0, SSL_eNULL},
-    {0, SSL_TXT_GOST, 0, 0, 0, SSL_eGOST2814789CNT | SSL_eGOST2814789CNT12},
-    {0, SSL_TXT_AES128, 0, 0, 0,
+    {0, SSL_TXT_3DES, NULL, 0, 0, 0, SSL_3DES},
+    {0, SSL_TXT_RC4, NULL, 0, 0, 0, SSL_RC4},
+    {0, SSL_TXT_RC2, NULL, 0, 0, 0, SSL_RC2},
+    {0, SSL_TXT_IDEA, NULL, 0, 0, 0, SSL_IDEA},
+    {0, SSL_TXT_SEED, NULL, 0, 0, 0, SSL_SEED},
+    {0, SSL_TXT_eNULL, NULL, 0, 0, 0, SSL_eNULL},
+    {0, SSL_TXT_GOST, NULL, 0, 0, 0, SSL_eGOST2814789CNT | SSL_eGOST2814789CNT12},
+    {0, SSL_TXT_AES128, NULL, 0, 0, 0,
      SSL_AES128 | SSL_AES128GCM | SSL_AES128CCM | SSL_AES128CCM8},
-    {0, SSL_TXT_AES256, 0, 0, 0,
+    {0, SSL_TXT_AES256, NULL, 0, 0, 0,
      SSL_AES256 | SSL_AES256GCM | SSL_AES256CCM | SSL_AES256CCM8},
-    {0, SSL_TXT_AES, 0, 0, 0, SSL_AES},
-    {0, SSL_TXT_AES_GCM, 0, 0, 0, SSL_AES128GCM | SSL_AES256GCM},
-    {0, SSL_TXT_AES_CCM, 0, 0, 0,
+    {0, SSL_TXT_AES, NULL, 0, 0, 0, SSL_AES},
+    {0, SSL_TXT_AES_GCM, NULL, 0, 0, 0, SSL_AES128GCM | SSL_AES256GCM},
+    {0, SSL_TXT_AES_CCM, NULL, 0, 0, 0,
      SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8},
-    {0, SSL_TXT_AES_CCM_8, 0, 0, 0, SSL_AES128CCM8 | SSL_AES256CCM8},
-    {0, SSL_TXT_CAMELLIA128, 0, 0, 0, SSL_CAMELLIA128},
-    {0, SSL_TXT_CAMELLIA256, 0, 0, 0, SSL_CAMELLIA256},
-    {0, SSL_TXT_CAMELLIA, 0, 0, 0, SSL_CAMELLIA},
-    {0, SSL_TXT_CHACHA20, 0, 0, 0, SSL_CHACHA20},
+    {0, SSL_TXT_AES_CCM_8, NULL, 0, 0, 0, SSL_AES128CCM8 | SSL_AES256CCM8},
+    {0, SSL_TXT_CAMELLIA128, NULL, 0, 0, 0, SSL_CAMELLIA128},
+    {0, SSL_TXT_CAMELLIA256, NULL, 0, 0, 0, SSL_CAMELLIA256},
+    {0, SSL_TXT_CAMELLIA, NULL, 0, 0, 0, SSL_CAMELLIA},
+    {0, SSL_TXT_CHACHA20, NULL, 0, 0, 0, SSL_CHACHA20},
 
     /* MAC aliases */
-    {0, SSL_TXT_MD5, 0, 0, 0, 0, SSL_MD5},
-    {0, SSL_TXT_SHA1, 0, 0, 0, 0, SSL_SHA1},
-    {0, SSL_TXT_SHA, 0, 0, 0, 0, SSL_SHA1},
-    {0, SSL_TXT_GOST94, 0, 0, 0, 0, SSL_GOST94},
-    {0, SSL_TXT_GOST89MAC, 0, 0, 0, 0, SSL_GOST89MAC | SSL_GOST89MAC12},
-    {0, SSL_TXT_SHA256, 0, 0, 0, 0, SSL_SHA256},
-    {0, SSL_TXT_SHA384, 0, 0, 0, 0, SSL_SHA384},
-    {0, SSL_TXT_GOST12, 0, 0, 0, 0, SSL_GOST12_256},
+    {0, SSL_TXT_MD5, NULL, 0, 0, 0, 0, SSL_MD5},
+    {0, SSL_TXT_SHA1, NULL, 0, 0, 0, 0, SSL_SHA1},
+    {0, SSL_TXT_SHA, NULL, 0, 0, 0, 0, SSL_SHA1},
+    {0, SSL_TXT_GOST94, NULL, 0, 0, 0, 0, SSL_GOST94},
+    {0, SSL_TXT_GOST89MAC, NULL, 0, 0, 0, 0, SSL_GOST89MAC | SSL_GOST89MAC12},
+    {0, SSL_TXT_SHA256, NULL, 0, 0, 0, 0, SSL_SHA256},
+    {0, SSL_TXT_SHA384, NULL, 0, 0, 0, 0, SSL_SHA384},
+    {0, SSL_TXT_GOST12, NULL, 0, 0, 0, 0, SSL_GOST12_256},
 
     /* protocol version aliases */
-    {0, SSL_TXT_SSLV3, 0, 0, 0, 0, 0, SSL3_VERSION},
-    {0, SSL_TXT_TLSV1, 0, 0, 0, 0, 0, TLS1_VERSION},
-    {0, "TLSv1.0", 0, 0, 0, 0, 0, TLS1_VERSION},
-    {0, SSL_TXT_TLSV1_2, 0, 0, 0, 0, 0, TLS1_2_VERSION},
+    {0, SSL_TXT_SSLV3, NULL, 0, 0, 0, 0, 0, SSL3_VERSION},
+    {0, SSL_TXT_TLSV1, NULL, 0, 0, 0, 0, 0, TLS1_VERSION},
+    {0, "TLSv1.0", NULL, 0, 0, 0, 0, 0, TLS1_VERSION},
+    {0, SSL_TXT_TLSV1_2, NULL, 0, 0, 0, 0, 0, TLS1_2_VERSION},
 
     /* strength classes */
-    {0, SSL_TXT_LOW, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_LOW},
-    {0, SSL_TXT_MEDIUM, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_MEDIUM},
-    {0, SSL_TXT_HIGH, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_HIGH},
+    {0, SSL_TXT_LOW, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_LOW},
+    {0, SSL_TXT_MEDIUM, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_MEDIUM},
+    {0, SSL_TXT_HIGH, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_HIGH},
     /* FIPS 140-2 approved ciphersuite */
-    {0, SSL_TXT_FIPS, 0, 0, 0, ~SSL_eNULL, 0, 0, 0, 0, 0, SSL_FIPS},
+    {0, SSL_TXT_FIPS, NULL, 0, 0, 0, ~SSL_eNULL, 0, 0, 0, 0, 0, SSL_FIPS},
 
     /* "EDH-" aliases to "DHE-" labels (for backward compatibility) */
-    {0, SSL3_TXT_EDH_DSS_DES_192_CBC3_SHA, 0,
+    {0, SSL3_TXT_EDH_DSS_DES_192_CBC3_SHA, NULL, 0,
      SSL_kDHE, SSL_aDSS, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS},
-    {0, SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA, 0,
+    {0, SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA, NULL, 0,
      SSL_kDHE, SSL_aRSA, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS},
 
 };
@@ -310,9 +310,8 @@ static int get_optional_pkey_id(const char *pkey_name)
     int pkey_id = 0;
     ameth = EVP_PKEY_asn1_find_str(NULL, pkey_name, -1);
     if (ameth && EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL,
-                                         ameth) > 0) {
+                                         ameth) > 0)
         return pkey_id;
-    }
     return 0;
 }
 
@@ -407,19 +406,17 @@ int ssl_load_ciphers(void)
      * present, disable appropriate auth and key exchange
      */
     ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] = get_optional_pkey_id("gost-mac");
-    if (ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX]) {
+    if (ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX])
         ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX] = 32;
-    } else {
+    else
         disabled_mac_mask |= SSL_GOST89MAC;
-    }
 
     ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX] =
         get_optional_pkey_id("gost-mac-12");
-    if (ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX]) {
+    if (ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX])
         ssl_mac_secret_size[SSL_MD_GOST89MAC12_IDX] = 32;
-    } else {
+    else
         disabled_mac_mask |= SSL_GOST89MAC12;
-    }
 
     if (!get_optional_pkey_id("gost2001"))
         disabled_auth_mask |= SSL_aGOST01 | SSL_aGOST12;
@@ -481,7 +478,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 
     c = s->cipher;
     if (c == NULL)
-        return (0);
+        return 0;
     if (comp != NULL) {
         SSL_COMP ctmp;
 #ifndef OPENSSL_NO_COMP
@@ -511,9 +508,9 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 
     i = ssl_cipher_info_lookup(ssl_cipher_table_cipher, c->algorithm_enc);
 
-    if (i == -1)
+    if (i == -1) {
         *enc = NULL;
-    else {
+    } else {
         if (i == SSL_ENC_NULL_IDX)
             *enc = EVP_enc_null();
         else
@@ -569,9 +566,10 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
                  c->algorithm_mac == SSL_SHA256 &&
                  (evp = EVP_get_cipherbyname("AES-256-CBC-HMAC-SHA256")))
             *enc = evp, *md = NULL;
-        return (1);
-    } else
-        return (0);
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 const EVP_MD *ssl_md(int idx)
@@ -920,7 +918,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
     number_uses = OPENSSL_zalloc(sizeof(int) * (max_strength_bits + 1));
     if (number_uses == NULL) {
         SSLerr(SSL_F_SSL_CIPHER_STRENGTH_SORT, ERR_R_MALLOC_FAILURE);
-        return (0);
+        return 0;
     }
 
     /*
@@ -942,7 +940,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
                                   tail_p);
 
     OPENSSL_free(number_uses);
-    return (1);
+    return 1;
 }
 
 static int ssl_cipher_process_rulestr(const char *rule_str,
@@ -959,7 +957,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 
     retval = 1;
     l = rule_str;
-    for (;;) {
+    for ( ; ; ) {
         ch = *l;
 
         if (ch == '\0')
@@ -1030,8 +1028,9 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
             if (ch == '+') {
                 multi = 1;
                 l++;
-            } else
+            } else {
                 multi = 0;
+            }
 
             /*
              * Now search for the cipher alias in the ca_list. Be careful
@@ -1065,8 +1064,9 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                         found = 0;
                         break;
                     }
-                } else
+                } else {
                     alg_mkey = ca_list[j]->algorithm_mkey;
+                }
             }
 
             if (ca_list[j]->algorithm_auth) {
@@ -1076,8 +1076,9 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                         found = 0;
                         break;
                     }
-                } else
+                } else {
                     alg_auth = ca_list[j]->algorithm_auth;
+                }
             }
 
             if (ca_list[j]->algorithm_enc) {
@@ -1087,8 +1088,9 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                         found = 0;
                         break;
                     }
-                } else
+                } else {
                     alg_enc = ca_list[j]->algorithm_enc;
+                }
             }
 
             if (ca_list[j]->algorithm_mac) {
@@ -1098,8 +1100,9 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                         found = 0;
                         break;
                     }
-                } else
+                } else {
                     alg_mac = ca_list[j]->algorithm_mac;
+                }
             }
 
             if (ca_list[j]->algo_strength & SSL_STRONG_MASK) {
@@ -1111,8 +1114,9 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                         found = 0;
                         break;
                     }
-                } else
+                } else {
                     algo_strength = ca_list[j]->algo_strength & SSL_STRONG_MASK;
+                }
             }
 
             if (ca_list[j]->algo_strength & SSL_DEFAULT_MASK) {
@@ -1124,9 +1128,10 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                         found = 0;
                         break;
                     }
-                } else
+                } else {
                     algo_strength |=
                         ca_list[j]->algo_strength & SSL_DEFAULT_MASK;
+                }
             }
 
             if (ca_list[j]->valid) {
@@ -1161,9 +1166,9 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
          */
         if (rule == CIPHER_SPECIAL) { /* special command */
             ok = 0;
-            if ((buflen == 8) && strncmp(buf, "STRENGTH", 8) == 0)
+            if ((buflen == 8) && strncmp(buf, "STRENGTH", 8) == 0) {
                 ok = ssl_cipher_strength_sort(head_p, tail_p);
-            else if (buflen == 10 && strncmp(buf, "SECLEVEL=", 9) == 0) {
+            } else if (buflen == 10 && strncmp(buf, "SECLEVEL=", 9) == 0) {
                 int level = buf[9] - '0';
                 if (level < 0 || level > 5) {
                     SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR,
@@ -1172,8 +1177,9 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                     c->sec_level = level;
                     ok = 1;
                 }
-            } else
+            } else {
                 SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR, SSL_R_INVALID_COMMAND);
+            }
             if (ok == 0)
                 retval = 0;
             /*
@@ -1197,7 +1203,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
             break;              /* done */
     }
 
-    return (retval);
+    return retval;
 }
 
 #ifndef OPENSSL_NO_EC
@@ -1219,8 +1225,9 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
     if (suiteb_flags) {
         c->cert_flags &= ~SSL_CERT_FLAG_SUITEB_128_LOS;
         c->cert_flags |= suiteb_flags;
-    } else
+    } else {
         suiteb_flags = c->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS;
+    }
 
     if (!suiteb_flags)
         return 1;
@@ -1297,7 +1304,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     co_list = OPENSSL_malloc(sizeof(*co_list) * num_of_ciphers);
     if (co_list == NULL) {
         SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
-        return (NULL);          /* Failure */
+        return NULL;          /* Failure */
     }
 
     ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers,
@@ -1415,7 +1422,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     if (ca_list == NULL) {
         OPENSSL_free(co_list);
         SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
-        return (NULL);          /* Failure */
+        return NULL;          /* Failure */
     }
     ssl_cipher_collect_aliases(ca_list, num_of_group_aliases,
                                disabled_mkey, disabled_auth, disabled_enc,
@@ -1442,7 +1449,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
 
     if (!ok) {                  /* Rule processing failure */
         OPENSSL_free(co_list);
-        return (NULL);
+        return NULL;
     }
 
     /*
@@ -1451,7 +1458,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
      */
     if ((cipherstack = sk_SSL_CIPHER_new_null()) == NULL) {
         OPENSSL_free(co_list);
-        return (NULL);
+        return NULL;
     }
 
     /*
@@ -1485,7 +1492,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     (void)sk_SSL_CIPHER_set_cmp_func(*cipher_list_by_id, ssl_cipher_ptr_id_cmp);
 
     sk_SSL_CIPHER_sort(*cipher_list_by_id);
-    return (cipherstack);
+    return cipherstack;
 }
 
 char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
@@ -1500,8 +1507,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         buf = OPENSSL_malloc(len);
         if (buf == NULL)
             return NULL;
-    } else if (len < 128)
+    } else if (len < 128) {
         return NULL;
+    }
 
     alg_mkey = cipher->algorithm_mkey;
     alg_auth = cipher->algorithm_auth;
@@ -1677,7 +1685,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
     BIO_snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac);
 
-    return (buf);
+    return buf;
 }
 
 const char *SSL_CIPHER_get_version(const SSL_CIPHER *c)
@@ -1698,8 +1706,27 @@ const char *SSL_CIPHER_get_version(const SSL_CIPHER *c)
 const char *SSL_CIPHER_get_name(const SSL_CIPHER *c)
 {
     if (c != NULL)
-        return (c->name);
-    return ("(NONE)");
+        return c->name;
+    return "(NONE)";
+}
+
+/* return the actual cipher being used in RFC standard name */
+const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c)
+{
+    if (c != NULL)
+        return c->stdname;
+    return "(NONE)";
+}
+
+/* return the OpenSSL name based on given RFC standard name */
+const char *OPENSSL_cipher_name(const char *stdname)
+{
+    const SSL_CIPHER *c;
+
+    if (stdname == NULL)
+        return "(NONE)";
+    c = ssl3_get_cipher_by_std_name(stdname);
+    return SSL_CIPHER_get_name(c);
 }
 
 /* number of bits for symmetric cipher */
@@ -1731,9 +1758,9 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
     for (i = 0; i < nn; i++) {
         ctmp = sk_SSL_COMP_value(sk, i);
         if (ctmp->id == n)
-            return (ctmp);
+            return ctmp;
     }
-    return (NULL);
+    return NULL;
 }
 
 #ifdef OPENSSL_NO_COMP
@@ -1757,7 +1784,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 {
     load_builtin_compressions();
-    return (ssl_comp_methods);
+    return ssl_comp_methods;
 }
 
 STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
@@ -1806,7 +1833,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
     if (comp == NULL) {
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
-        return (1);
+        return 1;
     }
 
     comp->id = id;
@@ -1817,16 +1844,16 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
                SSL_R_DUPLICATE_COMPRESSION_ID);
-        return (1);
+        return 1;
     }
     if (ssl_comp_methods == NULL || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {
         OPENSSL_free(comp);
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD, ERR_R_MALLOC_FAILURE);
-        return (1);
+        return 1;
     }
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
-    return (0);
+    return 0;
 }
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -401,6 +401,7 @@
 struct ssl_cipher_st {
     uint32_t valid;
     const char *name;           /* text name */
+    const char *stdname;        /* RFC name */
     uint32_t id;                /* id, 4 bytes, first is version */
     /*
      * changed in 1.0.0: these four used to be portions of a single value
@@ -2151,6 +2152,7 @@ __owur int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey,
 __owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);
 
 __owur const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id);
+__owur const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 __owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt,
                                    size_t *len);

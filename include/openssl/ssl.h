@@ -1434,6 +1434,8 @@ __owur const SSL_CIPHER *SSL_get_current_cipher(const SSL *s);
 __owur int SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits);
 __owur const char *SSL_CIPHER_get_version(const SSL_CIPHER *c);
 __owur const char *SSL_CIPHER_get_name(const SSL_CIPHER *c);
+__owur const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c);
+__owur const char *OPENSSL_cipher_name(const char *rfc_name);
 __owur uint32_t SSL_CIPHER_get_id(const SSL_CIPHER *c);
 __owur int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c);
 __owur int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c);
@@ -2034,7 +2036,6 @@ int SSL_CTX_config(SSL_CTX *ctx, const char *name);
 # ifndef OPENSSL_NO_SSL_TRACE
 void SSL_trace(int write_p, int version, int content_type,
                const void *buf, size_t len, SSL *ssl, void *arg);
-__owur const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c);
 # endif
 
 # ifndef OPENSSL_NO_SOCK
