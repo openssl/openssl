@@ -416,7 +416,7 @@ my @disablables = (
 foreach my $proto ((@tls, @dtls))
 	{
 	push(@disablables, $proto);
-	push(@disablables, "$proto-method");
+	push(@disablables, "$proto-method") unless $proto eq "tls1_3";
 	}
 
 my %deprecated_disablables = (
