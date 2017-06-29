@@ -86,7 +86,7 @@ SSL_CTX_set_cookie_verify_cb            86	1_1_0	EXIST::FUNCTION:
 SSL_get_shared_sigalgs                  87	1_1_0	EXIST::FUNCTION:
 SSL_config                              88	1_1_0	EXIST::FUNCTION:
 TLSv1_1_client_method                   89	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_1_METHOD
-SSL_CIPHER_standard_name                90	1_1_0	EXIST::FUNCTION:SSL_TRACE
+SSL_CIPHER_standard_name                90	1_1_0	EXIST::FUNCTION:
 SSL_CTX_get_verify_mode                 91	1_1_0	EXIST::FUNCTION:
 SSL_get_all_async_fds                   92	1_1_0	EXIST::FUNCTION:
 SSL_CTX_check_private_key               93	1_1_0	EXIST::FUNCTION:
@@ -459,3 +459,4 @@ SSL_CIPHER_get_handshake_digest         459	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_set1_master_key             460	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_set_cipher                  461	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_set_protocol_version        462	1_1_1	EXIST::FUNCTION:
+OPENSSL_cipher_name                     463	1_1_1	EXIST::FUNCTION:

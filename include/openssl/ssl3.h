@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -68,6 +68,18 @@ extern "C" {
 # define SSL3_CK_ADH_DES_40_CBC_SHA              0x03000019
 # define SSL3_CK_ADH_DES_64_CBC_SHA              0x0300001A
 # define SSL3_CK_ADH_DES_192_CBC_SHA             0x0300001B
+
+/* a bundle of RFC standard cipher names, generated from ssl3_ciphers[] */
+# define SSL3_RFC_RSA_NULL_MD5                   "SSL_RSA_WITH_NULL_MD5"
+# define SSL3_RFC_RSA_NULL_SHA                   "SSL_RSA_WITH_NULL_SHA"
+# define SSL3_RFC_RSA_DES_192_CBC3_SHA           "SSL_RSA_WITH_3DES_EDE_CBC_SHA"
+# define SSL3_RFC_DHE_DSS_DES_192_CBC3_SHA       "SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA"
+# define SSL3_RFC_DHE_RSA_DES_192_CBC3_SHA       "SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA"
+# define SSL3_RFC_ADH_DES_192_CBC_SHA            "SSL_DH_anon_WITH_3DES_EDE_CBC_SHA"
+# define SSL3_RFC_RSA_IDEA_128_SHA               "SSL_RSA_WITH_IDEA_CBC_SHA"
+# define SSL3_RFC_RSA_RC4_128_MD5                "SSL_RSA_WITH_RC4_128_MD5"
+# define SSL3_RFC_RSA_RC4_128_SHA                "SSL_RSA_WITH_RC4_128_SHA"
+# define SSL3_RFC_ADH_RC4_128_MD5                "SSL_DH_anon_WITH_RC4_128_MD5"
 
 # define SSL3_TXT_RSA_NULL_MD5                   "NULL-MD5"
 # define SSL3_TXT_RSA_NULL_SHA                   "NULL-SHA"
