@@ -153,6 +153,14 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
         return 0;
     }
 
+    /* Check that functions we absolutely require are present */
+    if (loader->open == NULL || loader->load == NULL || loader->eof == NULL
+        || loader->error == NULL || loader->close == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_REGISTER_LOADER_INT,
+                      OSSL_STORE_R_LOADER_INCOMPLETE);
+        return 0;
+    }
+
     if (!RUN_ONCE(&registry_init, do_registry_init)) {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_REGISTER_LOADER_INT,
                       ERR_R_MALLOC_FAILURE);
