@@ -123,11 +123,8 @@ static unsigned long store_loader_hash(const OSSL_STORE_LOADER *v)
 static int store_loader_cmp(const OSSL_STORE_LOADER *a,
                             const OSSL_STORE_LOADER *b)
 {
-    if (a->scheme != NULL && b->scheme != NULL)
-        return strcmp(a->scheme, b->scheme);
-    else if (a->scheme == b->scheme)
-        return 0;
-    return a->scheme == NULL ? -1 : 1;
+    assert(a->scheme != NULL && b->scheme != NULL);
+    return strcmp(a->scheme, b->scheme);
 }
 
 static LHASH_OF(OSSL_STORE_LOADER) *loader_register = NULL;
@@ -153,6 +150,14 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_REGISTER_LOADER_INT,
                       OSSL_STORE_R_INVALID_SCHEME);
         ERR_add_error_data(4, "scheme=", loader->scheme);
+        return 0;
+    }
+
+    /* Check that functions we absolutely require are present */
+    if (loader->open == NULL || loader->load == NULL || loader->eof == NULL
+        || loader->error == NULL || loader->close == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_REGISTER_LOADER_INT,
+                      OSSL_STORE_R_LOADER_INCOMPLETE);
         return 0;
     }
 
