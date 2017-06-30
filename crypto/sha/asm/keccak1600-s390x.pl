@@ -60,7 +60,7 @@ my @rhotates = ([  0,  1, 62, 28, 27 ],
                 [ 41, 45, 15, 21,  8 ],
                 [ 18,  2, 61, 56, 14 ]);
 
-{ my @C = @C;	# copy, because we mess the up...
+{ my @C = @C;	# copy, because we mess them up...
   my @D = @D;
 
 $code.=<<___;
@@ -75,6 +75,7 @@ __KeccakF1600:
 	lg	@C[2],$A[4][2]($src)
 	lg	@C[3],$A[4][3]($src)
 	lg	@C[4],$A[4][4]($src)
+	larl	$iotas,iotas
 	j	.Loop
 
 .align	16
@@ -125,9 +126,7 @@ __KeccakF1600:
 	rllg	@C[4],@C[4],1
 	xgr	@C[4],@T[0]		# D[3] = ROL64(C[4], 1) ^ C[2]
 ___
-	my @E = @D;
-	@D = (@C[1],@C[2],@C[3],@C[4],@C[0]);
-	@C = @E;
+	(@D[0..4], @C) = (@C[1..4,0], @D);
 $code.=<<___;
 	xgr	@C[1],@D[1]
 	xgr	@C[2],@D[2]
@@ -298,7 +297,7 @@ $code.=<<___;
 	xgr	$dst,$src
 	 rllg	@D[4],@D[4],$rhotates[2][4]
 ___
-	@C = (@D[2],@D[3],@D[4],@D[0],@D[1]);
+	@C = @D[2..4,0,1];
 $code.=<<___;
 	lgr	@T[0],@C[0]
 	ngr	@C[0],@C[1]
@@ -359,15 +358,13 @@ KeccakF1600:
 	xg	@D[3],$A[2][2]($src)
 	xg	@D[4],$A[3][2]($src)
 	xg	@T[0],$A[4][0]($src)
-	stg	@D[0],$A[0][1]($src)
-	stg	@D[1],$A[0][2]($src)
+	stmg	@D[0],@D[1],$A[0][1]($src)
 	stg	@D[2],$A[1][3]($src)
 	stg	@D[3],$A[2][2]($src)
 	stg	@D[4],$A[3][2]($src)
 	stg	@T[0],$A[4][0]($src)
 
 	la	$dst,$stdframe($sp)
-	larl	$iotas,iotas
 
 	bras	%r14,__KeccakF1600
 
@@ -383,8 +380,7 @@ KeccakF1600:
 	xg	@D[3],$A[2][2]($src)
 	xg	@D[4],$A[3][2]($src)
 	xg	@T[0],$A[4][0]($src)
-	stg	@D[0],$A[0][1]($src)
-	stg	@D[1],$A[0][2]($src)
+	stmg	@D[0],@D[1],$A[0][1]($src)
 	stg	@D[2],$A[1][3]($src)
 	stg	@D[3],$A[2][2]($src)
 	stg	@D[4],$A[3][2]($src)
@@ -420,8 +416,7 @@ SHA3_absorb:
 	xg	@D[3],$A[2][2]($src)
 	xg	@D[4],$A[3][2]($src)
 	xg	@T[0],$A[4][0]($src)
-	stg	@D[0],$A[0][1]($src)
-	stg	@D[1],$A[0][2]($src)
+	stmg	@D[0],@D[1],$A[0][1]($src)
 	stg	@D[2],$A[1][3]($src)
 	stg	@D[3],$A[2][2]($src)
 	stg	@D[4],$A[3][2]($src)
@@ -445,7 +440,6 @@ SHA3_absorb:
 
 	stm${g}	$inp,$len,$frame+3*$SIZE_T($sp)
 	la	$dst,$stdframe($sp)
-	larl	$iotas,iotas
 	bras	%r14,__KeccakF1600
 	lm${g}	$inp,$bsz,$frame+3*$SIZE_T($sp)
 	j	.Loop_absorb
@@ -464,8 +458,7 @@ SHA3_absorb:
 	xg	@D[3],$A[2][2]($src)
 	xg	@D[4],$A[3][2]($src)
 	xg	@T[0],$A[4][0]($src)
-	stg	@D[0],$A[0][1]($src)
-	stg	@D[1],$A[0][2]($src)
+	stmg	@D[0],@D[1],$A[0][1]($src)
 	stg	@D[2],$A[1][3]($src)
 	stg	@D[3],$A[2][2]($src)
 	stg	@D[4],$A[3][2]($src)
