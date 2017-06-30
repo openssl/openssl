@@ -71,9 +71,6 @@ void engine_load_padlock_int(void)
 static int padlock_available(void);
 static int padlock_init(ENGINE *e);
 
-/* RNG Stuff */
-static RAND_METHOD padlock_rand;
-
 /* Cipher Stuff */
 static int padlock_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                            const int **nids, int nid);
@@ -84,7 +81,6 @@ static char padlock_name[100];
 
 /* Available features */
 static int padlock_use_ace = 0; /* Advanced Cryptography Engine */
-static int padlock_use_rng = 0; /* Random Number Generator */
 
 /* ===== Engine "management" functions ===== */
 
@@ -94,24 +90,17 @@ static int padlock_bind_helper(ENGINE *e)
     /* Check available features */
     padlock_available();
 
-    /*
-     * RNG is currently disabled for reasons discussed in commentary just
-     * before padlock_rand_bytes function.
-     */
-    padlock_use_rng = 0;
-
     /* Generate a nice engine name with available features */
     BIO_snprintf(padlock_name, sizeof(padlock_name),
                  "VIA PadLock (%s, %s)",
-                 padlock_use_rng ? "RNG" : "no-RNG",
+                 "no-RNG",
                  padlock_use_ace ? "ACE" : "no-ACE");
 
     /* Register everything or return with an error */
     if (!ENGINE_set_id(e, padlock_id) ||
         !ENGINE_set_name(e, padlock_name) ||
         !ENGINE_set_init_function(e, padlock_init) ||
-        (padlock_use_ace && !ENGINE_set_ciphers(e, padlock_ciphers)) ||
-        (padlock_use_rng && !ENGINE_set_RAND(e, &padlock_rand))) {
+        (padlock_use_ace && !ENGINE_set_ciphers(e, padlock_ciphers))) {
         return 0;
     }
 
@@ -141,7 +130,7 @@ static ENGINE *ENGINE_padlock(void)
 /* Check availability of the engine */
 static int padlock_init(ENGINE *e)
 {
-    return (padlock_use_rng || padlock_use_ace);
+    return padlock_use_ace;
 }
 
 /*
@@ -230,9 +219,8 @@ static int padlock_available(void)
 
     /* Fill up some flags */
     padlock_use_ace = ((edx & (0x3 << 6)) == (0x3 << 6));
-    padlock_use_rng = ((edx & (0x3 << 2)) == (0x3 << 2));
 
-    return padlock_use_ace + padlock_use_rng;
+    return padlock_use_ace;
 }
 
 /* ===== AES encryption/decryption ===== */
@@ -662,70 +650,6 @@ padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
     return 1;
 }
-
-/* ===== Random Number Generator ===== */
-/*
- * This code is not engaged. The reason is that it does not comply
- * with recommendations for VIA RNG usage for secure applications
- * (posted at http://www.via.com.tw/en/viac3/c3.jsp) nor does it
- * provide meaningful error control...
- */
-/*
- * Wrapper that provides an interface between the API and the raw PadLock
- * RNG
- */
-static int padlock_rand_bytes(unsigned char *output, int count)
-{
-    unsigned int eax, buf;
-
-    while (count >= 8) {
-        eax = padlock_xstore(output, 0);
-        if (!(eax & (1 << 6)))
-            return 0;           /* RNG disabled */
-        /* this ---vv--- covers DC bias, Raw Bits and String Filter */
-        if (eax & (0x1F << 10))
-            return 0;
-        if ((eax & 0x1F) == 0)
-            continue;           /* no data, retry... */
-        if ((eax & 0x1F) != 8)
-            return 0;           /* fatal failure...  */
-        output += 8;
-        count -= 8;
-    }
-    while (count > 0) {
-        eax = padlock_xstore(&buf, 3);
-        if (!(eax & (1 << 6)))
-            return 0;           /* RNG disabled */
-        /* this ---vv--- covers DC bias, Raw Bits and String Filter */
-        if (eax & (0x1F << 10))
-            return 0;
-        if ((eax & 0x1F) == 0)
-            continue;           /* no data, retry... */
-        if ((eax & 0x1F) != 1)
-            return 0;           /* fatal failure...  */
-        *output++ = (unsigned char)buf;
-        count--;
-    }
-    OPENSSL_cleanse(&buf, sizeof(buf));
-
-    return 1;
-}
-
-/* Dummy but necessary function */
-static int padlock_rand_status(void)
-{
-    return 1;
-}
-
-/* Prepare structure for registration */
-static RAND_METHOD padlock_rand = {
-    NULL,                       /* seed */
-    padlock_rand_bytes,         /* bytes */
-    NULL,                       /* cleanup */
-    NULL,                       /* add */
-    padlock_rand_bytes,         /* pseudorand */
-    padlock_rand_status,        /* rand status */
-};
 
 #  endif                        /* COMPILE_HW_PADLOCK */
 # endif                         /* !OPENSSL_NO_HW_PADLOCK */

@@ -74,7 +74,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   DEPEND[ecstresstest]=../libcrypto libtestutil.a
 
   SOURCE[ecdsatest]=ecdsatest.c
-  INCLUDE[ecdsatest]=../include
+  INCLUDE[ecdsatest]=../include ../crypto/include
   DEPEND[ecdsatest]=../libcrypto libtestutil.a
 
   SOURCE[gmdifftest]=gmdifftest.c

@@ -33,23 +33,6 @@ RAND_get_default_method() returns a pointer to the current RAND_METHOD.
 However, the meaningfulness of this result is dependent on whether the ENGINE
 API is being used, so this function is no longer recommended.
 
-=head1 THE RAND_METHOD STRUCTURE
-
- typedef struct rand_meth_st
- {
-     void (*seed)(const void *buf, int num);
-     int (*bytes)(unsigned char *buf, int num);
-     void (*cleanup)(void);
-     void (*add)(const void *buf, int num, int randomness);
-     int (*pseudorand)(unsigned char *buf, int num);
-     int (*status)(void);
- } RAND_METHOD;
-
-The components point to method implementations used by (or called by), in order,
-RAND_seed(), RAND_bytes(), internal RAND cleanup, RAND_add(), RAND_pseudo_rand()
-and RAND_status().
-Each component may be NULL if the function is not implemented.
-
 =head1 RETURN VALUES
 
 RAND_set_rand_method() returns no value. RAND_get_rand_method() and
