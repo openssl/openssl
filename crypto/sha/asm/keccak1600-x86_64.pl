@@ -13,7 +13,7 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
-# Keccak-1600 for x86_86.
+# Keccak-1600 for x86_64.
 #
 # June 2017.
 #
@@ -22,9 +22,8 @@
 # instead of actually unrolling the loop pair-wise I simply flip
 # pointers to T[][] and A[][] at the end of round. Since number of
 # rounds is even, last round writes to A[][] and everything works out.
-# How does it compare to assembly module in Keccak Code Package? KCP
-# is faster on couple of processors, VIA Nano and Goldmont by 4-6%,
-# otherwise this module is either as fast or faster by up to 15%...
+# How does it compare to x86_64 assembly module in Keccak Code Package?
+# Depending on processor it's either as fast or faster by up to 15%...
 #
 ########################################################################
 # Numbers are cycles per processed byte out of large message.
@@ -32,16 +31,17 @@
 #			r=1088(*)
 #
 # P4			25.8
-# Core 2		13.0
+# Core 2		12.9
 # Westmere		13.7
 # Sandy Bridge		12.9(**)
-# Haswell		9.7
+# Haswell		9.6
 # Skylake		9.4
 # Silvermont		22.8
-# Goldmont		16.4
-# VIA Nano		18.0
+# Goldmont		15.8
+# VIA Nano		17.3
 # Sledgehammer		13.3
 # Bulldozer		16.5
+# Ryzen			8.8
 #
 # (*)	Corresponds to SHA3-256. Improvement over compiler-generate
 #	varies a lot, most commont coefficient is 15% in comparison to
@@ -138,9 +138,7 @@ __KeccakF1600:
 	rol	\$1,@C[4]
 	xor	@T[0],@C[4]		# D[3] = ROL64(C[4], 1) ^ C[2]
 ___
-	my @E = @D;
-	@D = (@C[1],@C[2],@C[3],@C[4],@C[0]);
-	@C = @E;
+	(@D[0..4], @C) = (@C[1..4,0], @D);
 $code.=<<___;
 	xor	@D[1],@C[1]
 	xor	@D[2],@C[2]
@@ -166,23 +164,22 @@ $code.=<<___;
 	mov	@C[4],$A[0][2](%rsi)	# R[0][2] = C[2] ^ ( C[4] & C[3])
 
 	or	@C[3],@C[2]
+	  mov	$A[4][2](%rdi),@C[4]
 	xor	@T[0],@C[2]		#           C[1] ^ (~C[2] | C[3])
 	mov	@C[2],$A[0][1](%rsi)	# R[0][1] = C[1] ^ (~C[2] | C[3])
 
 	and	@C[0],@T[0]
+	  mov	$A[1][4](%rdi),@C[1]
 	xor	@T[1],@T[0]		#           C[4] ^ ( C[1] & C[0])
+	  mov	$A[2][0](%rdi),@C[2]
 	mov	@T[0],$A[0][4](%rsi)	# R[0][4] = C[4] ^ ( C[1] & C[0])
 
 	or	@C[0],@T[1]
+	  mov	$A[0][3](%rdi),@C[0]
 	xor	@C[3],@T[1]		#           C[3] ^ ( C[4] | C[0])
+	  mov	$A[3][1](%rdi),@C[3]
 	mov	@T[1],$A[0][3](%rsi)	# R[0][3] = C[3] ^ ( C[4] | C[0])
 
-
-	mov	$A[0][3](%rdi),@C[0]
-	mov	$A[4][2](%rdi),@C[4]
-	mov	$A[3][1](%rdi),@C[3]
-	mov	$A[1][4](%rdi),@C[1]
-	mov	$A[2][0](%rdi),@C[2]
 
 	xor	@D[3],@C[0]
 	xor	@D[2],@C[4]
@@ -202,28 +199,27 @@ $code.=<<___;
 
 	mov	@C[1],@T[1]
 	and	@T[0],@C[1]
+	  mov	$A[0][1](%rdi),@C[0]
 	xor	@C[4],@C[1]		#           C[4] ^ (C[1] &  C[0])
 	not	@C[4]
 	mov	@C[1],$A[1][4](%rsi)	# R[1][4] = C[4] ^ (C[1] &  C[0])
 
 	or	@C[3],@C[4]
+	  mov	$A[1][2](%rdi),@C[1]
 	xor	@C[2],@C[4]		#           C[2] ^ (~C[4] | C[3])
 	mov	@C[4],$A[1][2](%rsi)	# R[1][2] = C[2] ^ (~C[4] | C[3])
 
 	and	@C[2],@C[3]
+	  mov	$A[4][0](%rdi),@C[4]
 	xor	@T[1],@C[3]		#           C[1] ^ (C[3] &  C[2])
 	mov	@C[3],$A[1][1](%rsi)	# R[1][1] = C[1] ^ (C[3] &  C[2])
 
 	or	@C[2],@T[1]
+	  mov	$A[2][3](%rdi),@C[2]
 	xor	@T[0],@T[1]		#           C[0] ^ (C[1] |  C[2])
+	  mov	$A[3][4](%rdi),@C[3]
 	mov	@T[1],$A[1][0](%rsi)	# R[1][0] = C[0] ^ (C[1] |  C[2])
 
-
-	mov	$A[2][3](%rdi),@C[2]
-	mov	$A[3][4](%rdi),@C[3]
-	mov	$A[1][2](%rdi),@C[1]
-	mov	$A[4][0](%rdi),@C[4]
-	mov	$A[0][1](%rdi),@C[0]
 
 	xor	@D[3],@C[2]
 	xor	@D[4],@C[3]
@@ -244,10 +240,12 @@ $code.=<<___;
 
 	mov	@C[4],@T[1]
 	and	@C[3],@C[4]
+	  mov	$A[2][1](%rdi),@C[2]
 	xor	@T[0],@C[4]		#            C[2] ^ ( C[4] & ~C[3])
 	mov	@C[4],$A[2][2](%rsi)	# R[2][2] =  C[2] ^ ( C[4] & ~C[3])
 
 	or	@C[1],@T[0]
+	  mov	$A[4][3](%rdi),@C[4]
 	xor	@C[0],@T[0]		#            C[0] ^ ( C[2] | C[1])
 	mov	@T[0],$A[2][0](%rsi)	# R[2][0] =  C[0] ^ ( C[2] | C[1])
 
@@ -255,15 +253,13 @@ $code.=<<___;
 	xor	@T[1],@C[1]		#            C[4] ^ ( C[1] & C[0])
 	mov	@C[1],$A[2][4](%rsi)	# R[2][4] =  C[4] ^ ( C[1] & C[0])
 
-	or	@T[1],@C[0]
-	xor	@C[3],@C[0]		#           ~C[3] ^ ( C[0] | C[4])
-	mov	@C[0],$A[2][3](%rsi)	# R[2][3] = ~C[3] ^ ( C[0] | C[4])
+	or	@C[0],@T[1]
+	  mov	$A[1][0](%rdi),@C[1]
+	xor	@C[3],@T[1]		#           ~C[3] ^ ( C[0] | C[4])
+	  mov	$A[3][2](%rdi),@C[3]
+	mov	@T[1],$A[2][3](%rsi)	# R[2][3] = ~C[3] ^ ( C[0] | C[4])
 
 
-	mov	$A[2][1](%rdi),@C[2]
-	mov	$A[3][2](%rdi),@C[3]
-	mov	$A[1][0](%rdi),@C[1]
-	mov	$A[4][3](%rdi),@C[4]
 	mov	$A[0][4](%rdi),@C[0]
 
 	xor	@D[1],@C[2]
@@ -313,7 +309,7 @@ $code.=<<___;
 	rol	\$$rhotates[2][4],@D[4]
 	rol	\$$rhotates[3][0],@D[0]
 ___
-	@C = (@D[2],@D[3],@D[4],@D[0],@D[1]);
+	@C = @D[2..4,0,1];
 $code.=<<___;
 	mov	@C[0],@T[0]
 	and	@C[1],@C[0]
@@ -599,9 +595,12 @@ iotas:
 ___
 
 foreach (split("\n",$code)) {
-	# Below replacement results in 11.3 on Sandy Bridge, 9.4 on
+	# Below replacement results in 11.2 on Sandy Bridge, 9.4 on
 	# Haswell, but it hurts other processors by up to 2-3-4x...
 	#s/rol\s+(\$[0-9]+),(%[a-z][a-z0-9]+)/shld\t$1,$2,$2/;
+	# Below replacement results in 9.3 on Haswell [as well as
+	# on Ryzen, i.e. it *hurts* Ryzen]...
+	#s/rol\s+\$([0-9]+),(%[a-z][a-z0-9]+)/rorx\t\$64-$1,$2,$2/;
 
 	print $_, "\n";
 }
