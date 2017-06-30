@@ -864,8 +864,8 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
         }
 
         ctx->_.file.file = BIO_push(buff, ctx->_.file.file);
-        if (BIO_buffer_peek(ctx->_.file.file, peekbuf, sizeof(peekbuf)-1) > 0) {
-            peekbuf[sizeof(peekbuf)-1] = '\0';
+        if (BIO_buffer_peek(ctx->_.file.file, peekbuf, sizeof(peekbuf) - 1) > 0) {
+            peekbuf[sizeof(peekbuf) - 1] = '\0';
             if (strstr(peekbuf, "-----BEGIN ") != NULL)
                 ctx->type = is_pem;
         }
