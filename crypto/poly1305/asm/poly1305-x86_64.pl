@@ -39,7 +39,7 @@
 # VIA Nano	1.82/+150%	-
 # Sledgehammer	1.38/+160%	-
 # Bulldozer	2.30/+130%	0.97
-# Ryzen		1.15/?		1.08		1.18
+# Ryzen		1.15/+200%	1.08		1.18
 #
 # (*)	improvement coefficients relative to clang are more modest and
 #	are ~50% on most processors, in both cases we are comparing to
