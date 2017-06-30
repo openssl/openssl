@@ -154,8 +154,13 @@ int main(int argc, char *argv[])
 #endif
     }
 
-    if (!apps_startup())
+    if (!apps_startup()) {
+        BIO_printf(bio_err,
+                   "FATAL: Startup failure (dev note: apps_startup() failed)\n");
+        ERR_print_errors(bio_err);
+        ret = 1;
         goto end;
+    }
 
     prog = prog_init();
     pname = opt_progname(argv[0]);
