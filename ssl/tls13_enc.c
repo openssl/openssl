@@ -622,7 +622,7 @@ int tls13_export_keying_material(SSL *s, unsigned char *out, size_t olen,
             || EVP_DigestFinal_ex(ctx, hash, &hashsize) <= 0
             || !tls13_hkdf_expand(s, md, s->exporter_master_secret,
                                   (const unsigned char *)label, llen, NULL,
-                                  exportsecret, 0)
+                                  exportsecret, hashsize)
             || !tls13_hkdf_expand(s, md, exportsecret, exporterlabel,
                                   sizeof(exporterlabel) - 1, hash, out, olen))
         goto err;
