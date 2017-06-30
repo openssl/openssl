@@ -503,30 +503,29 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
 }
 
 /*
- * Construct a psk_kex_modes extension. We only have two modes we know about
- * at this stage, so we send both.
+ * Construct a psk_kex_modes extension.
  */
 EXT_RETURN tls_construct_ctos_psk_kex_modes(SSL *s, WPACKET *pkt,
                                             unsigned int context, X509 *x,
                                             size_t chainidx, int *al)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    /*
-     * TODO(TLS1.3): Do we want this list to be configurable? For now we always
-     * just send both supported modes
-     */
+    int nodhe = s->options & SSL_OP_ALLOW_NO_DHE_KEX;
+
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_psk_kex_modes)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_start_sub_packet_u8(pkt)
             || !WPACKET_put_bytes_u8(pkt, TLSEXT_KEX_MODE_KE_DHE)
-            || !WPACKET_put_bytes_u8(pkt, TLSEXT_KEX_MODE_KE)
+            || (nodhe && !WPACKET_put_bytes_u8(pkt, TLSEXT_KEX_MODE_KE))
             || !WPACKET_close(pkt)
             || !WPACKET_close(pkt)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PSK_KEX_MODES, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
 
-    s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_KE | TLSEXT_KEX_MODE_FLAG_KE_DHE;
+    s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_KE_DHE;
+    if (nodhe)
+        s->ext.psk_kex_mode |= TLSEXT_KEX_MODE_FLAG_KE;
 #endif
 
     return EXT_RETURN_SENT;

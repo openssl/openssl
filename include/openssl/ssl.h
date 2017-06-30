@@ -282,6 +282,9 @@ typedef int (*SSL_custom_ext_parse_cb_ex) (SSL *s, unsigned int ext_type,
 /* Typedef for verification callback */
 typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 
+/* In TLSv1.3 allow a non-(ec)dhe based kex_mode */
+# define SSL_OP_ALLOW_NO_DHE_KEX                         0x00000001U
+
 /* Allow initial connection to servers that don't support RI */
 # define SSL_OP_LEGACY_SERVER_CONNECT                    0x00000004U
 # define SSL_OP_TLSEXT_PADDING                           0x00000010U
