@@ -367,6 +367,7 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
                      SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION),
         SSL_FLAG_TBL_INV("EncryptThenMac", SSL_OP_NO_ENCRYPT_THEN_MAC),
         SSL_FLAG_TBL("NoRenegotiation", SSL_OP_NO_RENEGOTIATION),
+        SSL_FLAG_TBL("AllowNoDHEKEX", SSL_OP_ALLOW_NO_DHE_KEX)
     };
     if (value == NULL)
         return -3;
@@ -585,6 +586,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_SWITCH("no_renegotiation", 0),
     SSL_CONF_CMD_SWITCH("no_resumption_on_reneg", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("no_legacy_server_connect", SSL_CONF_FLAG_SERVER),
+    SSL_CONF_CMD_SWITCH("allow_no_dhe_kex", 0),
     SSL_CONF_CMD_SWITCH("strict", 0),
     SSL_CONF_CMD_STRING(SignatureAlgorithms, "sigalgs", 0),
     SSL_CONF_CMD_STRING(ClientSignatureAlgorithms, "client_sigalgs", 0),
@@ -655,6 +657,8 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
     {SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION, 0},
     /* no_legacy_server_connect */
     {SSL_OP_LEGACY_SERVER_CONNECT, SSL_TFLAG_INV},
+    /* allow_no_dhe_kex */
+    {SSL_OP_ALLOW_NO_DHE_KEX, 0},
     {SSL_CERT_FLAG_TLS_STRICT, SSL_TFLAG_CERT}, /* strict */
 };
 
