@@ -171,7 +171,8 @@ ok(TLSProxy::Message->fail(), "Resume with empty kex modes");
 #Test 4: Attempt a resume with non-dhe kex mode only. Should resume without a
 #        key_share
 $proxy->clear();
-$proxy->clientflags("-sess_in ".$session);
+$proxy->clientflags("-allow_no_dhe_kex -sess_in ".$session);
+$proxy->serverflags("-allow_no_dhe_kex");
 $testtype = NON_DHE_KEX_MODE_ONLY;
 $proxy->start();
 checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
@@ -256,8 +257,8 @@ checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
 #         initial key_share and no overlapping groups. Should resume without a
 #         key_share
 $proxy->clear();
-$proxy->clientflags("-curves P-384 -sess_in ".$session);
-$proxy->serverflags("-curves P-256");
+$proxy->clientflags("-allow_no_dhe_kex -curves P-384 -sess_in ".$session);
+$proxy->serverflags("-allow_no_dhe_kex -curves P-256");
 $testtype = BOTH_KEX_MODES;
 $proxy->start();
 checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
