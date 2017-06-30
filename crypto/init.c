@@ -552,7 +552,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
             && !RUN_ONCE(&add_all_digests, ossl_init_add_all_digests))
         return 0;
 
-    if ((opts & OPENSSL_INIT_NO_ATFORK) == 0
+    if ((opts & OPENSSL_INIT_ATFORK)
             && !openssl_init_fork_handlers())
         return 0;
 
