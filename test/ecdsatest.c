@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
+# include "testutil.h"
 
 #ifndef OPENSSL_NO_EC
 
@@ -26,7 +27,6 @@
 # endif
 # include <openssl/err.h>
 # include <openssl/rand.h>
-# include "testutil.h"
 
 static const char rnd_seed[] =
     "string to make the random number generator think it has randomness";
@@ -394,6 +394,7 @@ static int test_builtin(void)
 
     return ret;
 }
+#endif
 
 void register_tests(void)
 {
@@ -406,4 +407,3 @@ void register_tests(void)
     ADD_TEST(test_builtin);
 #endif
 }
-#endif
