@@ -212,7 +212,7 @@ static void Iota(uint64_t A[5][5], size_t i)
     A[0][0] ^= iotas[i];
 }
 
-void KeccakF1600(uint64_t A[5][5])
+static void KeccakF1600(uint64_t A[5][5])
 {
     size_t i;
 
@@ -347,7 +347,7 @@ static void Round(uint64_t A[5][5], size_t i)
     A[4][4] = C[4] ^ (~C[0] & C[1]);
 }
 
-void KeccakF1600(uint64_t A[5][5])
+static void KeccakF1600(uint64_t A[5][5])
 {
     size_t i;
 
@@ -490,7 +490,7 @@ static void Round(uint64_t A[5][5], size_t i)
     A[0][0] ^= iotas[i];
 }
 
-void KeccakF1600(uint64_t A[5][5])
+static void KeccakF1600(uint64_t A[5][5])
 {
     size_t i;
 
@@ -628,7 +628,7 @@ static void Round(uint64_t R[5][5], uint64_t A[5][5], size_t i)
 #endif
 }
 
-void KeccakF1600(uint64_t A[5][5])
+static void KeccakF1600(uint64_t A[5][5])
 {
     uint64_t T[5][5];
     size_t i;
@@ -946,7 +946,7 @@ static void FourRounds(uint64_t A[5][5], size_t i)
     /* C[4] ^= */ A[4][4] = B[4] ^ (~B[0] & B[1]);
 }
 
-void KeccakF1600(uint64_t A[5][5])
+static void KeccakF1600(uint64_t A[5][5])
 {
     size_t i;
 
@@ -1071,13 +1071,21 @@ size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r)
 {
     uint64_t *A_flat = (uint64_t *)A;
-    size_t i, rem, w = r / 8;
+    size_t i, w = r / 8;
 
     assert(r < (25 * sizeof(A[0][0])) && (r % 8) == 0);
 
-    while (len >= r) {
-        for (i = 0; i < w; i++) {
+    while (len != 0) {
+        for (i = 0; i < w && len != 0; i++) {
             uint64_t Ai = BitDeinterleave(A_flat[i]);
+
+            if (len < 8) {
+                for (i = 0; i < len; i++) {
+                    *out++ = (unsigned char)Ai;
+                    Ai >>= 8;
+                }
+                return;
+            }
 
             out[0] = (unsigned char)(Ai);
             out[1] = (unsigned char)(Ai >> 8);
@@ -1088,36 +1096,10 @@ void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r)
             out[6] = (unsigned char)(Ai >> 48);
             out[7] = (unsigned char)(Ai >> 56);
             out += 8;
+            len -= 8;
         }
-        len -= r;
         if (len)
             KeccakF1600(A);
-    }
-
-    rem = len % 8;
-    len /= 8;
-
-    for (i = 0; i < len; i++) {
-        uint64_t Ai = BitDeinterleave(A_flat[i]);
-
-        out[0] = (unsigned char)(Ai);
-        out[1] = (unsigned char)(Ai >> 8);
-        out[2] = (unsigned char)(Ai >> 16);
-        out[3] = (unsigned char)(Ai >> 24);
-        out[4] = (unsigned char)(Ai >> 32);
-        out[5] = (unsigned char)(Ai >> 40);
-        out[6] = (unsigned char)(Ai >> 48);
-        out[7] = (unsigned char)(Ai >> 56);
-        out += 8;
-    }
-
-    if (rem) {
-        uint64_t Ai = BitDeinterleave(A_flat[i]);
-
-        for (i = 0; i < rem; i++) {
-            *out++ = (unsigned char)Ai;
-            Ai >>= 8;
-        }
     }
 }
 #else
