@@ -71,6 +71,7 @@ struct ui_string_st {
                                  * Otherwise, it may be allocated by the UI
                                  * routine, meaning result_minsize is going
                                  * to be overwritten. */
+    size_t result_len;
     union {
         struct {
             int result_minsize; /* Input: minimum required size of the

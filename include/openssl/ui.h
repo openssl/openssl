@@ -175,6 +175,7 @@ void *UI_get0_user_data(UI *ui);
 
 /* Return the result associated with a prompt given with the index i. */
 const char *UI_get0_result(UI *ui, int i);
+int UI_get_result_length(UI *ui, int i);
 
 /* When all strings have been added, process the whole thing. */
 int UI_process(UI *ui);
@@ -340,6 +341,7 @@ const char *UI_get0_output_string(UI_STRING *uis);
 const char *UI_get0_action_string(UI_STRING *uis);
 /* Return the result of a prompt */
 const char *UI_get0_result_string(UI_STRING *uis);
+int UI_get_result_string_length(UI_STRING *uis);
 /*
  * Return the string to test the result against.  Only useful with verifies.
  */
@@ -350,6 +352,7 @@ int UI_get_result_minsize(UI_STRING *uis);
 int UI_get_result_maxsize(UI_STRING *uis);
 /* Set the result of a UI_STRING. */
 int UI_set_result(UI *ui, UI_STRING *uis, const char *result);
+int UI_set_result_ex(UI *ui, UI_STRING *uis, const char *result, int len);
 
 /* A couple of popular utility functions */
 int UI_UTIL_read_pw_string(char *buf, int length, const char *prompt,
