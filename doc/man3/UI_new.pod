@@ -8,6 +8,7 @@ UI_add_verify_string, UI_dup_verify_string, UI_add_input_boolean,
 UI_dup_input_boolean, UI_add_info_string, UI_dup_info_string,
 UI_add_error_string, UI_dup_error_string, UI_construct_prompt,
 UI_add_user_data, UI_dup_user_data, UI_get0_user_data, UI_get0_result,
+UI_get_result_length,
 UI_process, UI_ctrl, UI_set_default_method, UI_get_default_method,
 UI_get_method, UI_set_method, UI_OpenSSL, UI_null - user interface
 
@@ -50,6 +51,7 @@ UI_get_method, UI_set_method, UI_OpenSSL, UI_null - user interface
  void *UI_get0_user_data(UI *ui);
 
  const char *UI_get0_result(UI *ui, int i);
+ int UI_get_result_length(UI *ui, int i);
 
  int UI_process(UI *ui);
 
@@ -82,12 +84,12 @@ user-defined random data can be passed down to the underlying method
 through calls to UI_add_user_data() or UI_dup_user_data().  The default
 UI method doesn't care about these data, but other methods might.  Finally,
 use UI_process() to actually perform the prompting and UI_get0_result()
-to find the result to the prompt.
+and UI_get_result_length() to find the result to the prompt and its length.
 
 A UI can contain more than one prompt, which are performed in the given
 sequence.  Each prompt gets an index number which is returned by the
 UI_add and UI_dup functions, and has to be used to get the corresponding
-result with UI_get0_result().
+result with UI_get0_result() and UI_get_result_length().
 
 UI_process() can be called more than once on the same UI, thereby allowing
 a UI to have a long lifetime, but can just as well have a short lifetime.
@@ -171,6 +173,9 @@ UI_get0_user_data() retrieves the data that has last been given to the
 UI with UI_add_user_data() or UI_dup_user_data.
 
 UI_get0_result() returns a pointer to the result buffer associated with
+the information indexed by I<i>.
+
+UI_get_result_length() returns the length of the result buffer associated with
 the information indexed by I<i>.
 
 UI_process() goes through the information given so far, does all the printing
