@@ -546,13 +546,11 @@ __owur int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
 __owur int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
                            unsigned int *s);
 
-#ifndef OPENSSL_NO_UI
 int EVP_read_pw_string(char *buf, int length, const char *prompt, int verify);
 int EVP_read_pw_string_min(char *buf, int minlen, int maxlen,
                            const char *prompt, int verify);
 void EVP_set_pw_prompt(const char *prompt);
 char *EVP_get_pw_prompt(void);
-#endif
 
 __owur int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
                           const unsigned char *salt,

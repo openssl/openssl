@@ -127,7 +127,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 # Unit testing
 		 	 "UNIT_TEST",
 			 # User Interface
-			 "UI",
+			 "UI_CONSOLE",
 			 #
 			 "TS",
 			 # OCB mode

@@ -406,7 +406,7 @@ my @disablables = (
     "tls13downgrade",
     "ts",
     "ubsan",
-    "ui",
+    "ui-console",
     "unit-test",
     "whirlpool",
     "weak-ssl-ciphers",
@@ -422,7 +422,8 @@ foreach my $proto ((@tls, @dtls))
 my %deprecated_disablables = (
     "ssl2" => undef,
     "buf-freelists" => undef,
-    "ripemd" => "rmd160"
+    "ripemd" => "rmd160",
+    "ui" => "ui-console",
     );
 
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
