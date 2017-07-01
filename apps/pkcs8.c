@@ -65,7 +65,7 @@ int pkcs8_main(int argc, char **argv)
     const EVP_CIPHER *cipher = NULL;
     char *infile = NULL, *outfile = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *prog;
-#ifndef OPENSSL_NO_UI
+#ifndef OPENSSL_NO_UI_CONSOLE
     char pass[APP_PASS_LEN];
 #endif
     char *passin = NULL, *passout = NULL, *p8pass = NULL;
@@ -236,7 +236,7 @@ int pkcs8_main(int argc, char **argv)
                 p8pass = passout;
             } else if (1) {
                 /* To avoid bit rot */
-#ifndef OPENSSL_NO_UI
+#ifndef OPENSSL_NO_UI_CONSOLE
                 p8pass = pass;
                 if (EVP_read_pw_string
                     (pass, sizeof pass, "Enter Encryption Password:", 1)) {
@@ -299,7 +299,7 @@ int pkcs8_main(int argc, char **argv)
         if (passin != NULL) {
             p8pass = passin;
         } else if (1) {
-#ifndef OPENSSL_NO_UI
+#ifndef OPENSSL_NO_UI_CONSOLE
             p8pass = pass;
             if (EVP_read_pw_string(pass, sizeof pass, "Enter Password:", 0)) {
                 BIO_printf(bio_err, "Can't read Password\n");

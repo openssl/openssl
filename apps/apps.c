@@ -56,9 +56,8 @@ typedef struct {
     unsigned long mask;
 } NAME_EX_TBL;
 
-#if !defined(OPENSSL_NO_UI) || !defined(OPENSSL_NO_ENGINE)
 static UI_METHOD *ui_method = NULL;
-#endif
+static const UI_METHOD *ui_fallback_method = NULL;
 
 static int set_table_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
@@ -176,14 +175,19 @@ int dump_cert_text(BIO *out, X509 *x)
     return 0;
 }
 
-#ifndef OPENSSL_NO_UI
 static int ui_open(UI *ui)
 {
-    return UI_method_get_opener(UI_OpenSSL())(ui);
+    int (*opener)(UI *ui) = UI_method_get_opener(ui_fallback_method);
+
+    if (opener)
+        return opener(ui);
+    return 1;
 }
 
 static int ui_read(UI *ui, UI_STRING *uis)
 {
+    int (*reader)(UI *ui, UI_STRING *uis) = NULL;
+
     if (UI_get_input_flags(uis) & UI_INPUT_FLAG_DEFAULT_PWD
         && UI_get0_user_data(ui)) {
         switch (UI_get_string_type(uis)) {
@@ -205,11 +209,17 @@ static int ui_read(UI *ui, UI_STRING *uis)
             break;
         }
     }
-    return UI_method_get_reader(UI_OpenSSL())(ui, uis);
+
+    reader = UI_method_get_reader(ui_fallback_method);
+    if (reader)
+        return reader(ui, uis);
+    return 1;
 }
 
 static int ui_write(UI *ui, UI_STRING *uis)
 {
+    int (*writer)(UI *ui, UI_STRING *uis) = NULL;
+
     if (UI_get_input_flags(uis) & UI_INPUT_FLAG_DEFAULT_PWD
         && UI_get0_user_data(ui)) {
         switch (UI_get_string_type(uis)) {
@@ -229,16 +239,28 @@ static int ui_write(UI *ui, UI_STRING *uis)
             break;
         }
     }
-    return UI_method_get_writer(UI_OpenSSL())(ui, uis);
+
+    writer = UI_method_get_reader(ui_fallback_method);
+    if (writer)
+        return writer(ui, uis);
+    return 1;
 }
 
 static int ui_close(UI *ui)
 {
-    return UI_method_get_closer(UI_OpenSSL())(ui);
+    int (*closer)(UI *ui) = UI_method_get_closer(ui_fallback_method);
+
+    if (closer)
+        return closer(ui);
+    return 1;
 }
 
 int setup_ui_method(void)
 {
+    ui_fallback_method = UI_null();
+#ifndef OPENSSL_NO_UI_CONSOLE
+    ui_fallback_method = UI_OpenSSL();
+#endif
     ui_method = UI_create_method("OpenSSL application user interface");
     UI_method_set_opener(ui_method, ui_open);
     UI_method_set_reader(ui_method, ui_read);
@@ -259,24 +281,13 @@ const UI_METHOD *get_ui_method(void)
 {
     return ui_method;
 }
-#endif
 
 int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
 {
     int res = 0;
-#ifndef OPENSSL_NO_UI
     UI *ui = NULL;
-#endif
     PW_CB_DATA *cb_data = (PW_CB_DATA *)cb_tmp;
 
-#ifdef OPENSSL_NO_UI
-    if (cb_data != NULL && cb_data->password != NULL) {
-        res = strlen(cb_data->password);
-        if (res > bufsiz)
-            res = bufsiz;
-        memcpy(buf, cb_data->password, res);
-    }
-#else
     ui = UI_new_method(ui_method);
     if (ui) {
         int ok = 0;
@@ -331,7 +342,6 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
         UI_free(ui);
         OPENSSL_free(prompt);
     }
-#endif
     return res;
 }
 

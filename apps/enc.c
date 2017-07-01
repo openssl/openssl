@@ -308,7 +308,7 @@ int enc_main(int argc, char **argv)
 
     if ((str == NULL) && (cipher != NULL) && (hkey == NULL)) {
         if (1) {
-#ifndef OPENSSL_NO_UI
+#ifndef OPENSSL_NO_UI_CONSOLE
             for (;;) {
                 char prompt[200];
 
