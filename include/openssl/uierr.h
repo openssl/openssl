@@ -37,9 +37,11 @@ int ERR_load_UI_strings(void);
 # define UI_F_UI_DUP_USER_DATA                            118
 # define UI_F_UI_DUP_VERIFY_STRING                        106
 # define UI_F_UI_GET0_RESULT                              107
+# define UI_F_UI_GET_RESULT_LENGTH                        119
 # define UI_F_UI_NEW_METHOD                               104
 # define UI_F_UI_PROCESS                                  113
 # define UI_F_UI_SET_RESULT                               105
+# define UI_F_UI_SET_RESULT_EX                            120
 
 /*
  * UI reason codes.
