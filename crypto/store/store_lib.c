@@ -90,6 +90,9 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
     OSSL_STORE_INFO *v = NULL;
 
  again:
+    if (OSSL_STORE_eof(ctx))
+        return NULL;
+
     v = ctx->loader->load(ctx->loader_ctx, ctx->ui_method, ctx->ui_data);
 
     if (ctx->post_process != NULL && v != NULL) {
