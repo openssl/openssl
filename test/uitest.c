@@ -17,8 +17,7 @@
 /* apps/apps.c depend on these */
 char *default_config_file = NULL;
 
-#ifndef OPENSSL_NO_UI
-# include <openssl/ui.h>
+#include <openssl/ui.h>
 
 /* Old style PEM password callback */
 static int test_pem_password_cb(char *buf, int size, int rwflag, void *userdata)
@@ -89,12 +88,8 @@ static int test_new_ui()
     return ok;
 }
 
-#endif
-
 void register_tests(void)
 {
-#ifndef OPENSSL_NO_UI
     ADD_TEST(test_old);
     ADD_TEST(test_new_ui);
-#endif
 }

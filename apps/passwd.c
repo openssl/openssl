@@ -100,7 +100,7 @@ int passwd_main(int argc, char **argv)
     char *salt_malloc = NULL, *passwd_malloc = NULL, *prog;
     OPTION_CHOICE o;
     int in_stdin = 0, pw_source_defined = 0;
-# ifndef OPENSSL_NO_UI
+# ifndef OPENSSL_NO_UI_CONSOLE
     int in_noverify = 0;
 # endif
     int passed_salt = 0, quiet = 0, table = 0, reverse = 0;
@@ -129,7 +129,7 @@ int passwd_main(int argc, char **argv)
             pw_source_defined = 1;
             break;
         case OPT_NOVERIFY:
-# ifndef OPENSSL_NO_UI
+# ifndef OPENSSL_NO_UI_CONSOLE
             in_noverify = 1;
 # endif
             break;
@@ -246,7 +246,7 @@ int passwd_main(int argc, char **argv)
          * avoid rot of not-frequently-used code.
          */
         if (1) {
-# ifndef OPENSSL_NO_UI
+# ifndef OPENSSL_NO_UI_CONSOLE
             /* build a null-terminated list */
             static char *passwds_static[2] = { NULL, NULL };
 

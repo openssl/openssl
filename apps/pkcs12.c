@@ -322,7 +322,7 @@ int pkcs12_main(int argc, char **argv)
     if (twopass) {
         /* To avoid bit rot */
         if (1) {
-#ifndef OPENSSL_NO_UI
+#ifndef OPENSSL_NO_UI_CONSOLE
             if (EVP_read_pw_string
                 (macpass, sizeof macpass, "Enter MAC Password:", export_cert)) {
                 BIO_printf(bio_err, "Can't read Password\n");
@@ -441,7 +441,7 @@ int pkcs12_main(int argc, char **argv)
         if (!noprompt) {
             /* To avoid bit rot */
             if (1) {
-#ifndef OPENSSL_NO_UI
+#ifndef OPENSSL_NO_UI_CONSOLE
                 if (EVP_read_pw_string(pass, sizeof pass, "Enter Export Password:",
                                        1)) {
                     BIO_printf(bio_err, "Can't read Password\n");
@@ -507,7 +507,7 @@ int pkcs12_main(int argc, char **argv)
 
     if (!noprompt) {
         if (1) {
-#ifndef OPENSSL_NO_UI
+#ifndef OPENSSL_NO_UI_CONSOLE
             if (EVP_read_pw_string(pass, sizeof pass, "Enter Import Password:",
                                    0)) {
                 BIO_printf(bio_err, "Can't read Password\n");
