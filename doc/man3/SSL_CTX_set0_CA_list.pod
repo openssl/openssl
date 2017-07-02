@@ -72,8 +72,6 @@ for failure.
 SSL_get0_peer_CA_list() returns a stack of CA names sent by the peer or
 B<NULL> or an empty stack if no list was sent.
 
-=back
-
 =head1 SEE ALSO
 
 L<ssl(7)>,

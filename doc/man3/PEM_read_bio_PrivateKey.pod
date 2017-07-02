@@ -170,8 +170,9 @@ EVP_PKEY structure. The write routines use PKCS#8 private key format and are
 equivalent to PEM_write_bio_PKCS8PrivateKey().The read functions transparently
 handle traditional and PKCS#8 format encrypted and unencrypted keys.
 
-PEM_write_bio_PrivateKey_traditional() writes out a private key in legacy
-"traditional" format.
+PEM_write_bio_PrivateKey_traditional() writes out a private key in the
+"traditional" format with a simple private key marker and should only
+be used for compatibility with legacy programs.
 
 PEM_write_bio_PKCS8PrivateKey() and PEM_write_PKCS8PrivateKey() write a private
 key in an EVP_PKEY structure in PKCS#8 EncryptedPrivateKeyInfo format using
@@ -459,7 +460,7 @@ The write routines return 1 for success or 0 for failure.
 =head1 HISTORY
 
 The old Netscape certificate sequences were no longer documented
-in OpenSSL 1.1; applications should use the PKCS7 standard instead
+in OpenSSL 1.1.0; applications should use the PKCS7 standard instead
 as they will be formally deprecated in a future releases.
 
 =head1 SEE ALSO

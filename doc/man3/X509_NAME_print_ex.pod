@@ -35,10 +35,11 @@ characters. Multiple lines are used if the output (including indent) exceeds
 
 =head1 NOTES
 
-The functions X509_NAME_oneline() and X509_NAME_print() are legacy functions which
+The functions X509_NAME_oneline() and X509_NAME_print()
 produce a non standard output form, they don't handle multi character fields and
-have various quirks and inconsistencies. Their use is strongly discouraged in new
-applications.
+have various quirks and inconsistencies.
+Their use is strongly discouraged in new applications and they could
+be deprecated in a future release.
 
 Although there are a large number of possible flags for most purposes
 B<XN_FLAG_ONELINE>, B<XN_FLAG_MULTILINE> or B<XN_FLAG_RFC2253> will suffice.

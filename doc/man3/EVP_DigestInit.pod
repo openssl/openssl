@@ -241,15 +241,13 @@ L<evp(7)>
 
 =head1 HISTORY
 
-B<EVP_MD_CTX> became opaque in OpenSSL 1.1.  Consequently, stack
-allocated B<EVP_MD_CTX>s are no longer supported.
-
 EVP_MD_CTX_create() and EVP_MD_CTX_destroy() were renamed to
-EVP_MD_CTX_new() and EVP_MD_CTX_free() in OpenSSL 1.1.
+EVP_MD_CTX_new() and EVP_MD_CTX_free() in OpenSSL 1.1.0.
 
 The link between digests and signing algorithms was fixed in OpenSSL 1.0 and
-later, so now EVP_sha1() can be used with RSA and DSA. The legacy EVP_dss1()
-was removed in OpenSSL 1.1.0
+later, so now EVP_sha1() can be used with RSA and DSA.
+
+EVP_dss1() was removed in OpenSSL 1.1.0
 
 =head1 COPYRIGHT
 

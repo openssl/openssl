@@ -143,8 +143,7 @@ will fail.
 
 =head1 RETURN VALUES
 
-CRYPTO_get_ex_new_index() returns a new index or -1 on failure; the
-value B<0> is reserved for the legacy "app_data" API's.
+CRYPTO_get_ex_new_index() returns a new index or -1 on failure.
 
 CRYPTO_free_ex_index() and
 CRYPTO_set_ex_data() return 1 on success or 0 on failure.
