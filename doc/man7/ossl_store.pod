@@ -89,6 +89,7 @@ only).
  OSSL_STORE_close(ctx);
 
 =head1 SEE ALSO
+
 L<OSSL_STORE_open(3)>, L<OSSL_STORE_INFO(3)>, L<OSSL_STORE_LOADER(3)>
 
 =head1 COPYRIGHT

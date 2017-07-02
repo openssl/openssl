@@ -30,7 +30,7 @@ RAND_bytes() returns 1 on success, -1 if not supported by the current
 RAND method, or 0 on other failure. The error code can be
 obtained by L<ERR_get_error(3)>.
 
-=head HISTORY
+=head1 HISTORY
 
 RAND_pseudo_bytes() was deprecated in OpenSSL 1.1.0.
 

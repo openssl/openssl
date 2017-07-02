@@ -20,7 +20,7 @@ B<uri> ...
 The B<storeutl> command can be used to display the contents (after decryption
 as the case may be) fetched from the given URIs.
 
-=head1 COMMAND OPTIONS
+=head1 OPTIONS
 
 =over 4
 

@@ -32,7 +32,8 @@ ASN1_tag2str() returns a human-readable name of the specified ASN.1 B<tag>.
 
 =head1 NOTES
 
-ASN1_STRING_print() is a legacy function which should be avoided in new applications.
+ASN1_STRING_print() is a deprecated function which should be avoided; use
+ASN1_STRING_print_ex() instead.
 
 Although there are a large number of options frequently B<ASN1_STRFLGS_RFC2253> is
 suitable, or on UTF8 terminals B<ASN1_STRFLGS_RFC2253 & ~ASN1_STRFLGS_ESC_MSB>.

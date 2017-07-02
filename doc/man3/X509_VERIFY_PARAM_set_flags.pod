@@ -292,8 +292,9 @@ of ORed.
 =head1 NOTES
 
 The above functions should be used to manipulate verification parameters
-instead of legacy functions which work in specific structures such as
-X509_STORE_CTX_set_flags().
+instead of functions which work in specific structures such as
+X509_STORE_CTX_set_flags() which are likely to be deprecated in a future
+release.
 
 =head1 BUGS
 
@@ -327,7 +328,7 @@ L<X509_check_ip(3)>
 =head1 HISTORY
 
 The B<X509_V_FLAG_NO_ALT_CHAINS> flag was added in OpenSSL 1.1.0
-The legacy B<X509_V_FLAG_CB_ISSUER_CHECK> flag is deprecated as of
+The flag B<X509_V_FLAG_CB_ISSUER_CHECK> was deprecated in
 OpenSSL 1.1.0, and has no effect.
 
 =head1 COPYRIGHT

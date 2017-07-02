@@ -174,34 +174,19 @@ sub check()
     print "$id Bad =over $1\n"
         if $contents =~ /=over([^ ][^24])/;
 
-    # Look for multiple consecutive openssl #include lines.
-    # Consecutive because of files like md5.pod. Sometimes it's okay
-    # or necessary, as in ssl/SSL_set1_host.pod
     if ( $contents !~ /=for comment multiple includes/ ) {
+        # Look for multiple consecutive openssl #include lines
+        # (non-consecutive lines are okay; see man3/MD5.pod).
         if ( $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms ) {
             my $count = 0;
             foreach my $line ( split /\n+/, $1 ) {
                 if ( $line =~ m@include <openssl/@ ) {
-                    if ( ++$count == 2 ) {
-                        print "$id has multiple includes\n";
-                    }
+                    print "$id has multiple includes\n" if ++$count == 2;
                 } else {
                     $count = 0;
                 }
             }
         }
-    }
-
-    return unless $opt_s;
-
-    # Find what section this page is in.  If run from "." assume
-    # section 3.
-    my $section = 3;
-    $section = $1 if $dirname =~ /man([1-9])/;
-
-    foreach ((@{$mandatory_sections{'*'}}, @{$mandatory_sections{$section}})) {
-        print "$id: missing $_ head1 section\n"
-            if $contents !~ /^=head1\s+${_}\s*$/m;
     }
 
     open my $OUT, '>', $temp
@@ -216,6 +201,17 @@ sub check()
     }
     close $OUT;
     unlink $temp || warn "Can't remove $temp, $!";
+
+    # Find what section this page is in; assume 3.
+    my $section = 3;
+    $section = $1 if $dirname =~ /man([1-9])/;
+
+    foreach ((@{$mandatory_sections{'*'}}, @{$mandatory_sections{$section}})) {
+        # Skip "return values" if not -s
+        next if $_ eq 'RETURN VALUES' and not $opt_s;
+        print "$id: missing $_ head1 section\n"
+            if $contents !~ /^=head1\s+${_}\s*$/m;
+    }
 }
 
 my %dups;
