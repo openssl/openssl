@@ -30,57 +30,63 @@ ownership of one reference. Therefore it may be necessary to increment the
 number of references available using L<BIO_up_ref(3)> before calling the set0
 functions.
 
-SSL_set_bio() does a similar job as SSL_set0_rbio() and SSL_set0_wbio() except
-that it connects both the B<rbio> and the B<wbio> at the same time. This
-function transfers the ownership of B<rbio> and B<wbio> to B<ssl> except that
-the rules for this are much more complex. For this reason this function is
-considered a legacy function and SSL_set0_rbio() and SSL_set0_wbio() should be
-used in preference. The ownership rules are as follows:
+SSL_set_bio() is similar to SSL_set0_rbio() and SSL_set0_wbio() except
+that it connects both the B<rbio> and the B<wbio> at the same time, and
+transfers the ownership of B<rbio> and B<wbio> to B<ssl> according to
+the following set of rules:
 
 =over 2
 
 =item *
 
-If neither the rbio or wbio have changed from their previous values then nothing
-is done.
+If neither the B<rbio> or B<wbio> have changed from their previous values
+then nothing is done.
 
 =item *
 
-If the rbio and wbio parameters are different and both are different to their
+If the B<rbio> and B<wbio> parameters are different and both are different
+to their
 previously set values then one reference is consumed for the rbio and one
 reference is consumed for the wbio.
 
 =item *
 
-If the rbio and wbio parameters are the same and the rbio is not the same as the
-previously set value then one reference is consumed.
+If the B<rbio> and B<wbio> parameters are the same and the B<rbio> is not
+the same as the previously set value then one reference is consumed.
 
 =item *
 
-If the rbio and wbio parameters are the same and the rbio is the same as the
-previously set value, then no additional references are consumed.
+If the B<rbio> and B<wbio> parameters are the same and the B<rbio> is the
+same as the previously set value, then no additional references are consumed.
 
 =item *
 
-If the rbio and wbio parameters are different and the rbio is the same as the
-previously set value then one reference is consumed for the wbio and no
-references are consumed for the rbio.
+If the B<rbio> and B<wbio> parameters are different and the B<rbio> is the
+same as the
+previously set value then one reference is consumed for the B<wbio> and no
+references are consumed for the B<rbio>.
 
 =item *
 
-If the rbio and wbio parameters are different and the wbio is the same as the
-previously set value and the old rbio and wbio values were the same as each
-other then one reference is consumed for the rbio and no references are consumed
-for the wbio.
+If the B<rbio> and B<wbio> parameters are different and the B<wbio> is the
+same as the previously set value and the old B<rbio> and B<wbio> values
+were the same as each other then one reference is consumed for the B<rbio>
+and no references are consumed for the B<wbio>.
 
 =item *
 
-If the rbio and wbio parameters are different and the wbio is the same as the
-previously set value and the old rbio and wbio values were different to each
-other then one reference is consumed for the rbio and one reference is consumed
-for the wbio.
+If the B<rbio> and B<wbio> parameters are different and the B<wbio>
+is the same as the
+previously set value and the old B<rbio> and B<wbio> values were different
+to each
+other then one reference is consumed for the B<rbio> and one reference
+is consumed
+for the B<wbio>.
 
 =back
+
+Because of this complexity, this function should be avoided;
+use SSL_set0_rbio() and SSL_set0_wbio() instead.
 
 =head1 RETURN VALUES
 
