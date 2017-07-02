@@ -677,7 +677,7 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
     const char *path = NULL;
 
     if (strncasecmp(uri, "file:", 5) == 0) {
-        if (strncmp(&uri[5], "//localhost/", 12) == 0) {
+        if (strncasecmp(&uri[5], "//localhost/", 12) == 0) {
             path = &uri[16];
         } else if (strncmp(&uri[5], "///", 3) == 0) {
             path = &uri[7];
