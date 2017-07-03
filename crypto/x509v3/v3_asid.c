@@ -168,8 +168,6 @@ int X509v3_asid_add_inherit(ASIdentifiers *asid, int which)
     if (*choice == NULL) {
         if ((*choice = ASIdentifierChoice_new()) == NULL)
             return 0;
-        if (!ossl_assert((*choice)->u.inherit == NULL))
-            return 0;
         if (((*choice)->u.inherit = ASN1_NULL_new()) == NULL)
             return 0;
         (*choice)->type = ASIdentifierChoice_inherit;
@@ -201,8 +199,6 @@ int X509v3_asid_add_id_or_range(ASIdentifiers *asid,
         return 0;
     if (*choice == NULL) {
         if ((*choice = ASIdentifierChoice_new()) == NULL)
-            return 0;
-        if (!ossl_assert((*choice)->u.asIdsOrRanges == NULL))
             return 0;
         (*choice)->u.asIdsOrRanges = sk_ASIdOrRange_new(ASIdOrRange_cmp);
         if ((*choice)->u.asIdsOrRanges == NULL)
@@ -238,7 +234,7 @@ int X509v3_asid_add_id_or_range(ASIdentifiers *asid,
 static int extract_min_max(ASIdOrRange *aor,
                            ASN1_INTEGER **min, ASN1_INTEGER **max)
 {
-    if (!ossl_assert(aor != NULL && min != NULL && max != NULL))
+    if (!ossl_assert(aor != NULL))
         return 0;
     switch (aor->type) {
     case ASIdOrRange_id:
