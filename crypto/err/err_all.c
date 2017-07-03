@@ -83,9 +83,7 @@ int err_load_crypto_strings_int(void)
 # ifndef OPENSSL_NO_OCSP
         ERR_load_OCSP_strings() == 0 ||
 # endif
-#ifndef OPENSSL_NO_UI
         ERR_load_UI_strings() == 0 ||
-#endif
 # ifndef OPENSSL_NO_CMS
         ERR_load_CMS_strings() == 0 ||
 # endif

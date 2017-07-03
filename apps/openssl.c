@@ -70,18 +70,14 @@ static int apps_startup()
                              | OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
 
-#ifndef OPENSSL_NO_UI
     setup_ui_method();
-#endif
 
     return 1;
 }
 
 static void apps_shutdown()
 {
-#ifndef OPENSSL_NO_UI
     destroy_ui_method();
-#endif
 }
 
 static char *make_config_name()

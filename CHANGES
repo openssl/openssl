@@ -9,6 +9,17 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) The UI API becomes a permanent and integral part of libcrypto, i.e.
+     not possible to disable entirely.  However, it's still possible to
+     disable the console reading UI method, UI_OpenSSL() (use UI_null()
+     as a fallback).
+
+     To disable, configure with 'no-ui-console'.  'no-ui' is still
+     possible to use as an alias.  Check at compile time with the
+     macro OPENSSL_NO_UI_CONSOLE.  The macro OPENSSL_NO_UI is still
+     possible to check and is an alias for OPENSSL_NO_UI_CONSOLE.
+     [Richard Levitte]
+
   *) Add a STORE module, which implements a uniform and URI based reader of
      stores that can contain keys, certificates, CRLs and numerous other
      objects.  The main API is loosely based on a few stdio functions,
