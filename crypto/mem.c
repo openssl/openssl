@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -126,13 +126,16 @@ static int shouldfail(void)
 {
     int roll = (int)(random() % 100);
     int shoulditfail = roll < md_fail_percent;
+    int len;
     char buff[80];
 
     if (md_tracefd > 0) {
         BIO_snprintf(buff, sizeof(buff),
                      "%c C%ld %%%d R%d\n",
                      shoulditfail ? '-' : '+', md_count, md_fail_percent, roll);
-        write(md_tracefd, buff, strlen(buff));
+        len = strlen(buff);
+        if (write(md_tracefd, buff, len) != len)
+            perror("shouldfail write failed");
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
         if (shoulditfail) {
             void *addrs[30];
