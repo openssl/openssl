@@ -175,6 +175,11 @@ propose, and servers will not accept the extension.
 Disable all renegotiation in TLSv1.2 and earlier. Do not send HelloRequest
 messages, and ignore renegotiation requests via ClientHello.
 
+=item SSL_OP_ALLOW_NO_DHE_KEX
+
+In TLSv1.3 allow a non-(ec)dhe based key exchange mode on resumption. This means
+that there will be no forward secrecy for the resumed session.
+
 =back
 
 The following options no longer have any effect but their identifiers are

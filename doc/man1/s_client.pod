@@ -93,6 +93,7 @@ B<openssl> B<s_client>
 [B<-bugs>]
 [B<-comp>]
 [B<-no_comp>]
+[B<-allow_no_dhe_kex>]
 [B<-sigalgs sigalglist>]
 [B<-curves curvelist>]
 [B<-cipher cipherlist>]

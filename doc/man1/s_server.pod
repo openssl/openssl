@@ -102,6 +102,7 @@ B<openssl> B<s_server>
 [B<-legacy_server_connect>]
 [B<-no_resumption_on_reneg>]
 [B<-no_legacy_server_connect>]
+[B<-allow_no_dhe_kex>]
 [B<-strict>]
 [B<-sigalgs val>]
 [B<-client_sigalgs val>]
