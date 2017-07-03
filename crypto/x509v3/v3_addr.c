@@ -430,8 +430,6 @@ static int make_addressRange(IPAddressOrRange **result,
     if ((aor = IPAddressOrRange_new()) == NULL)
         return 0;
     aor->type = IPAddressOrRange_addressRange;
-    if (!ossl_assert(aor->u.addressRange == NULL))
-        return 0;
     if ((aor->u.addressRange = IPAddressRange_new()) == NULL)
         goto err;
     if (aor->u.addressRange->min == NULL &&
