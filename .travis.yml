@@ -163,12 +163,24 @@ script:
     - if [ -n "$DESTDIR" ]; then
           cd _build;
       fi
-    - $make update;
+    - if $make update; then
+          echo -e '+\057 MAKE UPDATE OK';
+      else
+          echo -e '+\057 MAKE UPDATE FAILED'; false;
+      fi;
       git diff --quiet
     - if [ -n "$CHECKDOCS" ]; then
-          $make doc-nits;
+          if $make doc-nits; then
+              echo -e '+\057\057 MAKE DOC-NITS OK';
+          else
+              echo -e '+\057\057 MAKE DOC-NITS FAILED'; false;
+          fi;
       fi
-    - $make
+    - if $make; then
+          echo -e '+\057\057\057 MAKE OK';
+      else
+          echo -e '+\057\057\057 MAKE FAILED'; false;
+      fi;
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
               sudo dpkg --add-architecture i386;
@@ -179,13 +191,25 @@ script:
           if [ -e krb5/src ]; then
               sudo apt-get -yq install bison dejagnu gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python-cjson python-paste python-pyrad slapd tcl-dev tcsh;
           fi;
-          HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test;
+          if HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test; then
+              echo -e '+\057\057\057\057 MAKE TEST OK';
+          else
+              echo -e '+\057\057\057\057 MAKE TEST FAILED'; false;
+          fi;
       else
-          $make build_tests;
+          if $make build_tests; then
+              echo -e '+\057\057\057\057\057 MAKE BUILD_TESTS OK';
+          else
+              echo -e '+\057\057\057\057\057 MAKE BUILD_TESTS FAILED'; false;
+          fi;
       fi
     - if [ -n "$DESTDIR" ]; then
           mkdir "$top/$DESTDIR";
-          $make install install_docs DESTDIR="$top/$DESTDIR";
+          if $make install install_docs DESTDIR="$top/$DESTDIR"; then
+              echo -e '+\057\057\057\057\057\057 MAKE INSTALL OK';
+          else
+              echo -e '+\057\057\057\057\057\057 MAKE INSTALL FAILED'; false;
+          fi;
       fi
     - cd $top
 
