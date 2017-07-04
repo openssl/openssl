@@ -152,9 +152,17 @@ script:
       else
           top=.;
       fi
-    - $make update;
+    - if $make update; then
+          echo -e '+\057 MAKE UPDATE OK';
+      else
+          echo -e '+\057 MAKE UPDATE FAILED'; false;
+      fi;
       git diff --quiet
-    - $make
+    - if $make ; then
+          echo -e '+\057\057 MAKE OK';
+      else
+          echo -e '+\057\057 MAKE FAILED'; false;
+      fi;
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
               sudo apt-get -yq install wine;
@@ -162,11 +170,19 @@ script:
           fi;
           HARNESS_VERBOSE=yes make test;
       else
-          $make build_tests;
+          if $make build_tests; then
+              echo -e '+\057\057\075 MAKE BUILD_TESTS OK';
+          else
+              echo -e '+\057\057\075 MAKE BUILD_TESTS FAILEd'; false;
+          fi;
       fi
     - if [ -n "$DESTDIR" ]; then
           mkdir "../$DESTDIR";
-          $make install install_docs DESTDIR="../$DESTDIR";
+          if $make install install_docs DESTDIR="../$DESTDIR"; then
+              echo -e '+\057\057\057\057 MAKE INSTALL_DOCS OK';
+          else
+              echo -e '+\057\057\057\057 MAKE INSTALL_DOCS FAILED'; false;
+          fi;
       fi
     - cd $top
 
