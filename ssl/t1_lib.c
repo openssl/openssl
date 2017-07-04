@@ -1459,48 +1459,27 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
 {
     const uint16_t *sigalgs;
     size_t i, sigalgslen;
-    int have_rsa = 0, have_dsa = 0, have_ecdsa = 0;
+    uint32_t disabled_mask = SSL_aRSA | SSL_aDSS | SSL_aECDSA;
     /*
-     * Now go through all signature algorithms seeing if we support any for
-     * RSA, DSA, ECDSA. Do this for all versions not just TLS 1.2. To keep
-     * down calls to security callback only check if we have to.
+     * Go through all signature algorithms seeing if we support any
+     * in disabled_mask.
      */
     sigalgslen = tls12_get_psigalgs(s, 1, &sigalgs);
     for (i = 0; i < sigalgslen; i ++, sigalgs++) {
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(*sigalgs);
+        const SSL_CERT_LOOKUP *clu;
 
         if (lu == NULL)
             continue;
-        switch (lu->sig) {
-#ifndef OPENSSL_NO_RSA
-        /* Any RSA-PSS signature algorithms also mean we allow RSA */
-        case EVP_PKEY_RSA_PSS:
-        case EVP_PKEY_RSA:
-            if (!have_rsa && tls12_sigalg_allowed(s, op, lu))
-                have_rsa = 1;
-            break;
-#endif
-#ifndef OPENSSL_NO_DSA
-        case EVP_PKEY_DSA:
-            if (!have_dsa && tls12_sigalg_allowed(s, op, lu))
-                have_dsa = 1;
-            break;
-#endif
-#ifndef OPENSSL_NO_EC
-        case EVP_PKEY_ED25519:
-        case EVP_PKEY_EC:
-            if (!have_ecdsa && tls12_sigalg_allowed(s, op, lu))
-                have_ecdsa = 1;
-            break;
-#endif
-        }
+
+        clu = ssl_cert_lookup_by_idx(lu->sig_idx);
+
+        /* If algorithm is disabled see if we can enable it */
+        if ((clu->amask & disabled_mask) != 0
+                && tls12_sigalg_allowed(s, op, lu))
+            disabled_mask &= ~clu->amask;
     }
-    if (!have_rsa)
-        *pmask_a |= SSL_aRSA;
-    if (!have_dsa)
-        *pmask_a |= SSL_aDSS;
-    if (!have_ecdsa)
-        *pmask_a |= SSL_aECDSA;
+    *pmask_a |= disabled_mask;
 }
 
 int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
