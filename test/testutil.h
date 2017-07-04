@@ -390,19 +390,6 @@ void test_perror(const char *s);
 # define TEST_openssl_errors test_openssl_errors
 # define TEST_perror         test_perror
 
-/*
- * For "impossible" conditions such as malloc failures or bugs in test code,
- * where continuing the test would be meaningless. Note that OPENSSL_assert
- * is fatal, and is never compiled out.  This macro should be avoided.
- */
-# define TEST_check(condition)                  \
-    do {                                        \
-        if (!(condition)) {                     \
-            TEST_openssl_errors();              \
-            OPENSSL_assert(!#condition);        \
-        }                                       \
-    } while (0)
-
 extern BIO *bio_out;
 extern BIO *bio_err;
 

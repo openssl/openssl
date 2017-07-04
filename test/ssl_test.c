@@ -413,7 +413,8 @@ static int test_handshake(int idx)
     result = do_handshake(server_ctx, server2_ctx, client_ctx,
                           resume_server_ctx, resume_client_ctx, test_ctx);
 
-    ret = check_test(result, test_ctx);
+    if (result != NULL)
+        ret = check_test(result, test_ctx);
 
 err:
     CONF_modules_unload(0);
