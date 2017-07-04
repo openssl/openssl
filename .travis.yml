@@ -164,11 +164,14 @@ script:
           cd _build;
       fi
     - $make update;
+      echo '/// MAKE UPDATE END';
       git diff --quiet
     - if [ -n "$CHECKDOCS" ]; then
           $make doc-nits;
+          echo '/// MAKE DOC-NITS END';
       fi
-    - $make
+    - $make;
+      echo '/// MAKE END';
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
               sudo dpkg --add-architecture i386;
@@ -180,12 +183,15 @@ script:
               sudo apt-get -yq install bison dejagnu gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python-cjson python-paste python-pyrad slapd tcl-dev tcsh;
           fi;
           HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test;
+          echo '/// MAKE TEST END';
       else
           $make build_tests;
+          echo '/// MAKE BUILD_TESTS END';
       fi
     - if [ -n "$DESTDIR" ]; then
           mkdir "$top/$DESTDIR";
           $make install install_docs DESTDIR="$top/$DESTDIR";
+          echo '/// MAKE INSTALL END';
       fi
     - cd $top
 
