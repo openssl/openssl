@@ -30,12 +30,7 @@ DEFINE_RUN_ONCE_STATIC(do_registry_init)
 
 OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme)
 {
-    OSSL_STORE_LOADER *res = OPENSSL_zalloc(sizeof(*res));
-
-    if (res == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_LOADER_NEW, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
+    OSSL_STORE_LOADER *res = NULL;
 
     /*
      * We usually don't check NULL arguments.  For loaders, though, the
@@ -46,6 +41,11 @@ OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme)
     if (scheme == NULL) {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_LOADER_NEW,
                       OSSL_STORE_R_INVALID_SCHEME);
+        return NULL;
+    }
+
+    if ((res = OPENSSL_zalloc(sizeof(*res))) == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_LOADER_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
