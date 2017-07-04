@@ -488,14 +488,14 @@ end:
 
 static int test_ctlog_from_base64(void)
 {
-    CTLOG *log = NULL;
+    CTLOG *logp = NULL;
     const char notb64[] = "\01\02\03\04";
     const char pad[] = "====";
     const char name[] = "name";
 
     /* We expect these to both fail! */
-    if (!TEST_true(!CTLOG_new_from_base64(&log, notb64, name))
-        || !TEST_true(!CTLOG_new_from_base64(&log, pad, name)))
+    if (!TEST_true(!CTLOG_new_from_base64(&logp, notb64, name))
+        || !TEST_true(!CTLOG_new_from_base64(&logp, pad, name)))
         return 0;
     return 1;
 }
