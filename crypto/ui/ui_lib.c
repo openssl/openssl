@@ -515,6 +515,8 @@ int UI_process(UI *ui)
             }
         }
     }
+
+    state = NULL;
  err:
     if (ui->meth->ui_close_session != NULL
         && ui->meth->ui_close_session(ui) <= 0) {
