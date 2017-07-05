@@ -404,6 +404,9 @@ int tls13_change_cipher_state(SSL *s, int which)
                        SSL_R_BAD_HANDSHAKE_LENGTH);
                 goto err;
             }
+
+            if (sslcipher == NULL && s->psksession != NULL)
+                sslcipher = SSL_SESSION_get0_cipher(s->psksession);
             if (sslcipher == NULL) {
                 SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
                 goto err;

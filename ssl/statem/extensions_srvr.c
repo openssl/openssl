@@ -745,6 +745,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             memcpy(sess->sid_ctx, s->sid_ctx, s->sid_ctx_length);
             sess->sid_ctx_length = s->sid_ctx_length;
             ext = 1;
+            s->ext.early_data_ok = 1;
         } else {
             uint32_t ticket_age = 0, now, agesec, agems;
             int ret = tls_decrypt_ticket(s, PACKET_data(&identity),

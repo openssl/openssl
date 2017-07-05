@@ -2600,8 +2600,10 @@ int s_client_main(int argc, char **argv)
     }
 
     if (early_data_file != NULL
-            && SSL_get0_session(con) != NULL
-            && SSL_SESSION_get_max_early_data(SSL_get0_session(con)) > 0) {
+            && ((SSL_get0_session(con) != NULL
+                 && SSL_SESSION_get_max_early_data(SSL_get0_session(con)) > 0)
+                || (psksess != NULL
+                    && SSL_SESSION_get_max_early_data(psksess) > 0))) {
         BIO *edfile = BIO_new_file(early_data_file, "r");
         size_t readbytes, writtenbytes;
         int finish = 0;
