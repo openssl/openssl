@@ -1280,7 +1280,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
 
     /* Generate the binder key */
     if (!tls13_hkdf_expand(s, md, early_secret, (unsigned char *)label,
-                           labelsize, hash, binderkey, hashsize)) {
+                           labelsize, hash, hashsize, binderkey, hashsize)) {
         SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
         goto err;
     }
