@@ -64,6 +64,8 @@ static int add_DN_object(X509_NAME *n, char *text, const char *def,
 static int genpkey_cb(EVP_PKEY_CTX *ctx);
 static int req_check_len(int len, int n_min, int n_max);
 static int check_end(const char *str, const char *end);
+static int join(char buf[], size_t buf_size, const char *name,
+                const char *tail, const char *desc);
 static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
                                     int *pkey_type, long *pkeylen,
                                     char **palgnam, ENGINE *keygen_engine);
@@ -836,7 +838,7 @@ int req_main(int argc, char **argv)
         OPENSSL_free(passin);
     if (passout != nofree_passout)
         OPENSSL_free(passout);
-    return (ret);
+    return ret;
 }
 
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
@@ -896,7 +898,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
 
     ret = 1;
  err:
-    return (ret);
+    return ret;
 }
 
 /*
@@ -984,30 +986,30 @@ static int prompt_info(X509_REQ *req,
             /* If OBJ not recognised ignore it */
             if ((nid = OBJ_txt2nid(type)) == NID_undef)
                 goto start;
-            if (strlen(v->name) + sizeof("_default") > sizeof(buf)) {
-                BIO_printf(bio_err, "Name '%s' too long\n", v->name);
+            if (!join(buf, sizeof(buf), v->name, "_default", "Name"))
                 return 0;
-            }
-            sprintf(buf, "%s_default", v->name);
-
             if ((def = NCONF_get_string(req_conf, dn_sect, buf)) == NULL) {
                 ERR_clear_error();
                 def = "";
             }
 
-            sprintf(buf, "%s_value", v->name);
+            if (!join(buf, sizeof(buf), v->name, "_value", "Name"))
+                return 0;
             if ((value = NCONF_get_string(req_conf, dn_sect, buf)) == NULL) {
                 ERR_clear_error();
                 value = NULL;
             }
 
-            sprintf(buf, "%s_min", v->name);
+            if (!join(buf, sizeof(buf), v->name, "_min", "Name"))
+                return 0;
             if (!NCONF_get_number(req_conf, dn_sect, buf, &n_min)) {
                 ERR_clear_error();
                 n_min = -1;
             }
 
-            sprintf(buf, "%s_max", v->name);
+
+            if (!join(buf, sizeof(buf), v->name, "_max", "Name"))
+                return 0;
             if (!NCONF_get_number(req_conf, dn_sect, buf, &n_max)) {
                 ERR_clear_error();
                 n_max = -1;
@@ -1044,32 +1046,31 @@ static int prompt_info(X509_REQ *req,
                 if ((nid = OBJ_txt2nid(type)) == NID_undef)
                     goto start2;
 
-                if (strlen(type) + sizeof("_default") > sizeof(buf)) {
-                    BIO_printf(bio_err, "Name '%s' too long\n", v->name);
+                if (!join(buf, sizeof(buf), type, "_default", "Name"))
                     return 0;
-                }
-                sprintf(buf, "%s_default", type);
-
                 if ((def = NCONF_get_string(req_conf, attr_sect, buf))
                     == NULL) {
                     ERR_clear_error();
                     def = "";
                 }
 
-                sprintf(buf, "%s_value", type);
+                if (!join(buf, sizeof(buf), type, "_value", "Name"))
+                    return 0;
                 if ((value = NCONF_get_string(req_conf, attr_sect, buf))
                     == NULL) {
                     ERR_clear_error();
                     value = NULL;
                 }
 
-                sprintf(buf, "%s_min", type);
+                if (!join(buf, sizeof(buf), type,"_min", "Name"))
+                    return 0;
                 if (!NCONF_get_number(req_conf, attr_sect, buf, &n_min)) {
                     ERR_clear_error();
                     n_min = -1;
                 }
 
-                sprintf(buf, "%s_max", type);
+                if (!join(buf, sizeof(buf), type, "_max", "Name"))
+                    return 0;
                 if (!NCONF_get_number(req_conf, attr_sect, buf, &n_max)) {
                     ERR_clear_error();
                     n_max = -1;
@@ -1168,8 +1169,8 @@ static int add_DN_object(X509_NAME *n, char *text, const char *def,
         BIO_printf(bio_err, "%s [%s]:", text, def);
     (void)BIO_flush(bio_err);
     if (value != NULL) {
-        strcpy(buf, value);
-        strcat(buf, "\n");
+        if (!join(buf, sizeof(buf), value, "\n", "DN value"))
+            return 0;
         BIO_printf(bio_err, "%s\n", value);
     } else {
         buf[0] = '\0';
@@ -1187,8 +1188,8 @@ static int add_DN_object(X509_NAME *n, char *text, const char *def,
     if (buf[0] == '\n') {
         if ((def == NULL) || (def[0] == '\0'))
             return 1;
-        strcpy(buf, def);
-        strcat(buf, "\n");
+        if (!join(buf, sizeof(buf), def, "\n", "DN default"))
+            return 0;
     } else if ((buf[0] == '.') && (buf[1] == '\n')) {
         return 1;
     }
@@ -1213,7 +1214,7 @@ static int add_DN_object(X509_NAME *n, char *text, const char *def,
         goto err;
     ret = 1;
  err:
-    return (ret);
+    return ret;
 }
 
 static int add_attribute_object(X509_REQ *req, char *text, const char *def,
@@ -1228,8 +1229,8 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
         BIO_printf(bio_err, "%s [%s]:", text, def);
     (void)BIO_flush(bio_err);
     if (value != NULL) {
-        strcpy(buf, value);
-        strcat(buf, "\n");
+        if (!join(buf, sizeof(buf), value, "\n", "Attribute value"))
+            return 0;
         BIO_printf(bio_err, "%s\n", value);
     } else {
         buf[0] = '\0';
@@ -1247,8 +1248,8 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
     if (buf[0] == '\n') {
         if ((def == NULL) || (def[0] == '\0'))
             return 1;
-        strcpy(buf, def);
-        strcat(buf, "\n");
+        if (!join(buf, sizeof(buf), def, "\n", "Attribute default"))
+            return 0;
     } else if ((buf[0] == '.') && (buf[1] == '\n')) {
         return 1;
     }
@@ -1275,9 +1276,9 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
         goto err;
     }
 
-    return (1);
+    return 1;
  err:
-    return (0);
+    return 0;
 }
 
 static int req_check_len(int len, int n_min, int n_max)
@@ -1286,28 +1287,47 @@ static int req_check_len(int len, int n_min, int n_max)
         BIO_printf(bio_err,
                    "string is too short, it needs to be at least %d bytes long\n",
                    n_min);
-        return (0);
+        return 0;
     }
     if ((n_max >= 0) && (len > n_max)) {
         BIO_printf(bio_err,
                    "string is too long, it needs to be no more than %d bytes long\n",
                    n_max);
-        return (0);
+        return 0;
     }
-    return (1);
+    return 1;
 }
 
 /* Check if the end of a string matches 'end' */
 static int check_end(const char *str, const char *end)
 {
-    int elen, slen;
+    size_t elen, slen;
     const char *tmp;
+
     elen = strlen(end);
     slen = strlen(str);
     if (elen > slen)
         return 1;
     tmp = str + slen - elen;
     return strcmp(tmp, end);
+}
+
+/*
+ * Merge the two strings together into the result buffer checking for
+ * overflow and producing an error message is there is.
+ */
+static int join(char buf[], size_t buf_size, const char *name,
+                const char *tail, const char *desc)
+{
+    const size_t name_len = strlen(name), tail_len = strlen(tail);
+
+    if (name_len + tail_len + 1 > buf_size) {
+        BIO_printf(bio_err, "%s '%s' too long\n", desc, name);
+        return 0;
+    }
+    memcpy(buf, name, name_len);
+    memcpy(buf + name_len, tail, tail_len + 1);
+    return 1;
 }
 
 static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
