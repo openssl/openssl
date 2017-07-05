@@ -30,7 +30,7 @@
 #
 #			r=1088(*)
 #
-# Kights Landing	-
+# Knights Landing	-
 # Skylake Xeon		-
 #
 # (*)	Corresponds to SHA3-256.
@@ -50,7 +50,7 @@
 # [4][3] [3][2] [2][1] [1][0] [0][4]>0.4.3.2.1>[0][4] [4][3] [3][2] [2][1] [1][0]
 #
 # Layout suitable to Theta has x coordinates aligned column-wise
-# [it's intereaved with Pi indices trasformation]:
+# [it's interleaved with Pi indices transformation for reference]:
 #
 # [4][4] [3][3] [2][2] [1][1] [0][0]	$A00
 ##[0][4] [0][3] [0][2] [0][1] [0][0]
