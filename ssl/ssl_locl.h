@@ -1119,6 +1119,8 @@ struct ssl_st {
     SSL_SESSION *session;
     /* TLSv1.3 PSK session */
     SSL_SESSION *psksession;
+    unsigned char *psksession_id;
+    size_t psksession_id_len;
     /* Default generate session ID callback. */
     GEN_SESSION_CB generate_session_id;
     /* Used in SSL3 */

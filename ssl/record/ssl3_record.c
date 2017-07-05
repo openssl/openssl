@@ -104,15 +104,24 @@ static int ssl3_record_app_data_waiting(SSL *s)
 int early_data_count_ok(SSL *s, size_t length, size_t overhead, int *al)
 {
     uint32_t max_early_data = s->max_early_data;
+    SSL_SESSION *sess = s->session;
 
     /*
      * If we are a client then we always use the max_early_data from the
-     * session. Otherwise we go with the lowest out of the max early data set in
-     * the session and the configured max_early_data.
+     * session/psksession. Otherwise we go with the lowest out of the max early
+     * data set in the session and the configured max_early_data.
      */
-    if (!s->server || (s->hit
-                       && s->session->ext.max_early_data < s->max_early_data))
-        max_early_data = s->session->ext.max_early_data;
+    if (!s->server && sess->ext.max_early_data == 0) {
+        if (!ossl_assert(s->psksession != NULL
+                         && s->psksession->ext.max_early_data > 0)) {
+            SSLerr(SSL_F_EARLY_DATA_COUNT_OK, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        sess = s->psksession;
+    }
+    if (!s->server
+            || (s->hit && sess->ext.max_early_data < s->max_early_data))
+        max_early_data = sess->ext.max_early_data;
 
     if (max_early_data == 0) {
         if (al != NULL)
