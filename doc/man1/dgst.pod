@@ -21,6 +21,7 @@ B<openssl> B<dgst>
 [B<-verify filename>]
 [B<-prverify filename>]
 [B<-signature filename>]
+[B<-hmac key>]
 [B<-fips-fingerprint>]
 [B<-engine id>]
 [B<-engine_impl>]
@@ -114,6 +115,10 @@ Verify the signature using the private key in "filename".
 =item B<-signature filename>
 
 The actual signature to verify.
+
+=item B<-hmac key>
+
+Create a hashed MAC using "key".
 
 =item B<-mac alg>
 
