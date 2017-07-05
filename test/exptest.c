@@ -156,10 +156,9 @@ static int test_mod_exp(int round)
     c = (c % BN_BITS) - BN_BITS2;
     BN_rand(m, NUM_BITS + c, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD);
 
-    BN_mod(a, a, m, ctx);
-    BN_mod(b, b, m, ctx);
-
-    if (!TEST_true(BN_mod_exp_mont(r_mont, a, b, m, ctx, NULL))
+    if (!TEST_true(BN_mod(a, a, m, ctx))
+        || !TEST_true(BN_mod(b, b, m, ctx))
+        || !TEST_true(BN_mod_exp_mont(r_mont, a, b, m, ctx, NULL))
         || !TEST_true(BN_mod_exp_recp(r_recp, a, b, m, ctx))
         || !TEST_true(BN_mod_exp_simple(r_simple, a, b, m, ctx))
         || !TEST_true(BN_mod_exp_mont_consttime(r_mont_const, a, b, m, ctx, NULL)))

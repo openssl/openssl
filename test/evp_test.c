@@ -1023,8 +1023,11 @@ static int pkey_test_init(EVP_TEST *t, const char *name,
         return 0;
     }
     kdata->keyop = keyop;
-    if (!TEST_ptr(kdata->ctx = EVP_PKEY_CTX_new(pkey, NULL)))
+    if (!TEST_ptr(kdata->ctx = EVP_PKEY_CTX_new(pkey, NULL))) {
+        EVP_PKEY_free(pkey);
+        OPENSSL_free(kdata);
         return 0;
+    }
     if (keyopinit(kdata->ctx) <= 0)
         t->err = "KEYOP_INIT_ERROR";
     t->data = kdata;
@@ -1624,10 +1627,15 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
     if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
         return 0;
     kdata->ctx = EVP_PKEY_CTX_new_id(OBJ_sn2nid(name), NULL);
-    if (kdata->ctx == NULL)
+    if (kdata->ctx == NULL) {
+        OPENSSL_free(kdata);
         return 0;
-    if (EVP_PKEY_derive_init(kdata->ctx) <= 0)
+    }
+    if (EVP_PKEY_derive_init(kdata->ctx) <= 0) {
+        EVP_PKEY_CTX_free(kdata->ctx);
+        OPENSSL_free(kdata);
         return 0;
+    }
     t->data = kdata;
     return 1;
 }
