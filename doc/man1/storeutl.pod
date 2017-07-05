@@ -15,6 +15,9 @@ B<openssl> B<storeutl>
 [B<-text arg>]
 [B<-engine id>]
 [B<-r>]
+[B<-certs>]
+[B<-keys>]
+[B<-crls>]
 B<uri> ...
 
 =head1 DESCRIPTION
@@ -60,6 +63,16 @@ The engine will then be set as the default for all available algorithms.
 
 Fetch objects recursively when possible.
 
+=item B<-certs>
+
+=item B<-keys>
+
+=item B<-crls>
+
+Only select the certificates, keys or CRLs from the given URI.
+However, if this URI would return a set of names (URIs), those are always
+returned.
+
 =back
 
 =head1 SEE ALSO
@@ -72,7 +85,7 @@ B<openssl> B<storeutl> was added to OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
