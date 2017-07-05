@@ -175,8 +175,11 @@ int RAND_write_file(const char *file)
 
     if (out == NULL)
         out = openssl_fopen(file, "wb");
-    if (out == NULL)
+    if (out == NULL) {
+        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_CANNOT_OPEN_FILE);
+        ERR_add_error_data(2, "Filename=", file);
         return -1;
+    }
 
 #if !defined(NO_CHMOD) && !defined(OPENSSL_NO_POSIX_IO)
     /*

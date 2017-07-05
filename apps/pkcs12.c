@@ -53,9 +53,10 @@ typedef enum OPTION_choice {
     OPT_CACERTS, OPT_NOOUT, OPT_INFO, OPT_CHAIN, OPT_TWOPASS, OPT_NOMACVER,
     OPT_DESCERT, OPT_EXPORT, OPT_NOITER, OPT_MACITER, OPT_NOMACITER,
     OPT_NOMAC, OPT_LMK, OPT_NODES, OPT_MACALG, OPT_CERTPBE, OPT_KEYPBE,
-    OPT_RAND, OPT_INKEY, OPT_CERTFILE, OPT_NAME, OPT_CSP, OPT_CANAME,
+    OPT_INKEY, OPT_CERTFILE, OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
-    OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_ENGINE
+    OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_ENGINE,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkcs12_options[] = {
@@ -91,8 +92,7 @@ const OPTIONS pkcs12_options[] = {
     {"macalg", OPT_MACALG, 's',
      "Digest algorithm used in MAC (default SHA1)"},
     {"keypbe", OPT_KEYPBE, 's', "Private key PBE algorithm (default 3DES)"},
-    {"rand", OPT_RAND, 's',
-     "Load the file(s) into the random number generator"},
+    OPT_R_OPTIONS,
     {"inkey", OPT_INKEY, 's', "Private key if not infile"},
     {"certfile", OPT_CERTFILE, '<', "Load certs from file"},
     {"name", OPT_NAME, 's', "Use name as friendly name"},
@@ -133,7 +133,7 @@ int pkcs12_main(int argc, char **argv)
     int ret = 1, macver = 1, add_lmk = 0, private = 0;
     int noprompt = 0;
     char *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
-    char *passin = NULL, *passout = NULL, *inrand = NULL, *macalg = NULL;
+    char *passin = NULL, *passout = NULL, *macalg = NULL;
     char *cpass = NULL, *mpass = NULL, *badpass = NULL;
     const char *CApath = NULL, *CAfile = NULL, *prog;
     int noCApath = 0, noCAfile = 0;
@@ -225,8 +225,9 @@ int pkcs12_main(int argc, char **argv)
             if (!set_pbe(&key_pbe, opt_arg()))
                 goto opthelp;
             break;
-        case OPT_RAND:
-            inrand = opt_arg();
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_INKEY:
             keyname = opt_arg();
@@ -312,13 +313,6 @@ int pkcs12_main(int argc, char **argv)
     } else {
         cpass = pass;
         mpass = macpass;
-    }
-
-    if (export_cert || inrand != NULL) {
-        app_RAND_load_file(NULL, (inrand != NULL));
-        if (inrand != NULL)
-            BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-                       app_RAND_load_files(inrand));
     }
 
     if (twopass) {
@@ -576,8 +570,6 @@ int pkcs12_main(int argc, char **argv)
     ret = 0;
  end:
     PKCS12_free(p12);
-    if (export_cert || inrand)
-        app_RAND_write_file(NULL);
     release_engine(e);
     BIO_free(in);
     BIO_free_all(out);

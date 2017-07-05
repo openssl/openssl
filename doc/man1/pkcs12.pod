@@ -36,7 +36,8 @@ B<openssl> B<pkcs12>
 [B<-password arg>]
 [B<-passin arg>]
 [B<-passout arg>]
-[B<-rand file(s)>]
+[B<-rand file...>]
+[B<-writerand file>]
 [B<-CAfile file>]
 [B<-CApath dir>]
 [B<-no-CAfile>]
@@ -275,13 +276,18 @@ to be needed to use MAC iterations counts but they are now used by default.
 
 Don't attempt to provide the MAC integrity.
 
-=item B<-rand file(s)>
+=item B<-rand file...>
 
 A file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)>).
+generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
 
 =item B<-CAfile file>
 

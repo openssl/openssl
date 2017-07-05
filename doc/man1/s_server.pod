@@ -52,7 +52,8 @@ B<openssl> B<s_server>
 [B<-tlsextdebug>]
 [B<-HTTP>]
 [B<-id_prefix val>]
-[B<-rand val>]
+[B<-rand file...>]
+[B<-writerand file>]
 [B<-keymatexport val>]
 [B<-keymatexportlen +int>]
 [B<-CRL infile>]
@@ -381,13 +382,18 @@ for testing any SSL/TLS code (eg. proxies) that wish to deal with multiple
 servers, when each of which might be generating a unique range of session
 IDs (eg. with a certain prefix).
 
-=item B<-rand val>
+=item B<-rand file...>
 
 A file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)>).
+generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
 
 =item B<-verify_return_error>
 

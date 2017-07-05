@@ -76,10 +76,11 @@ typedef enum OPTION_choice {
     OPT_RR_ALL, OPT_RR_FIRST, OPT_RCTFORM, OPT_CERTFILE, OPT_CAFILE,
     OPT_CAPATH, OPT_NOCAPATH, OPT_NOCAFILE,OPT_CONTENT, OPT_PRINT,
     OPT_SECRETKEY, OPT_SECRETKEYID, OPT_PWRI_PASSWORD, OPT_ECONTENT_TYPE,
-    OPT_RAND, OPT_PASSIN, OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP,
+    OPT_PASSIN, OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP,
     OPT_CERTSOUT, OPT_MD, OPT_INKEY, OPT_KEYFORM, OPT_KEYOPT, OPT_RR_FROM,
     OPT_RR_TO, OPT_AES128_WRAP, OPT_AES192_WRAP, OPT_AES256_WRAP,
     OPT_3DES_WRAP, OPT_ENGINE,
+    OPT_R_ENUM,
     OPT_V_ENUM,
     OPT_CIPHER
 } OPTION_CHOICE;
@@ -152,8 +153,6 @@ const OPTIONS cms_options[] = {
     {"secretkeyid", OPT_SECRETKEYID, 's'},
     {"pwri_password", OPT_PWRI_PASSWORD, 's'},
     {"econtent_type", OPT_ECONTENT_TYPE, 's'},
-    {"rand", OPT_RAND, 's',
-     "Load the file(s) into the random number generator"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"to", OPT_TO, 's', "To address"},
     {"from", OPT_FROM, 's', "From address"},
@@ -169,6 +168,7 @@ const OPTIONS cms_options[] = {
     {"receipt_request_from", OPT_RR_FROM, 's'},
     {"receipt_request_to", OPT_RR_TO, 's'},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
+    OPT_R_OPTIONS,
     OPT_V_OPTIONS,
     {"aes128-wrap", OPT_AES128_WRAP, '-', "Use AES128 to wrap key"},
     {"aes192-wrap", OPT_AES192_WRAP, '-', "Use AES192 to wrap key"},
@@ -202,16 +202,13 @@ int cms_main(int argc, char **argv)
     const char *CAfile = NULL, *CApath = NULL;
     char *certsoutfile = NULL;
     int noCAfile = 0, noCApath = 0;
-    char *infile = NULL, *outfile = NULL, *rctfile = NULL, *inrand = NULL;
-    char *passinarg = NULL, *passin = NULL, *signerfile = NULL, *recipfile =
-        NULL;
+    char *infile = NULL, *outfile = NULL, *rctfile = NULL;
+    char *passinarg = NULL, *passin = NULL, *signerfile = NULL, *recipfile = NULL;
     char *to = NULL, *from = NULL, *subject = NULL, *prog;
     cms_key_param *key_first = NULL, *key_param = NULL;
-    int flags = CMS_DETACHED, noout = 0, print = 0, keyidx = -1, vpmtouched =
-        0;
+    int flags = CMS_DETACHED, noout = 0, print = 0, keyidx = -1, vpmtouched = 0;
     int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
-    int need_rand = 0, operation = 0, ret = 1, rr_print = 0, rr_allorfirst =
-        -1;
+    int operation = 0, ret = 1, rr_print = 0, rr_allorfirst = -1;
     int verify_retcode = 0, rctformat = FORMAT_SMIME, keyform = FORMAT_PEM;
     size_t secret_keylen = 0, secret_keyidlen = 0;
     unsigned char *pwri_pass = NULL, *pwri_tmp = NULL;
@@ -449,10 +446,6 @@ int cms_main(int argc, char **argv)
                 goto opthelp;
             }
             break;
-        case OPT_RAND:
-            inrand = opt_arg();
-            need_rand = 1;
-            break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
@@ -568,6 +561,10 @@ int cms_main(int argc, char **argv)
                 goto end;
             vpmtouched++;
             break;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
+            break;
         case OPT_3DES_WRAP:
 # ifndef OPENSSL_NO_DES
             wrap_cipher = EVP_des_ede3_wrap();
@@ -624,7 +621,6 @@ int cms_main(int argc, char **argv)
         }
         signerfile = NULL;
         keyfile = NULL;
-        need_rand = 1;
     } else if (operation == SMIME_DECRYPT) {
         if (recipfile == NULL && keyfile == NULL
             && secret_key == NULL && pwri_pass == NULL) {
@@ -638,7 +634,6 @@ int cms_main(int argc, char **argv)
             BIO_printf(bio_err, "No recipient(s) certificate(s) specified\n");
             goto opthelp;
         }
-        need_rand = 1;
     } else if (!operation) {
         goto opthelp;
     }
@@ -646,13 +641,6 @@ int cms_main(int argc, char **argv)
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
-    }
-
-    if (need_rand) {
-        app_RAND_load_file(NULL, (inrand != NULL));
-        if (inrand != NULL)
-            BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-                       app_RAND_load_files(inrand));
     }
 
     ret = 2;
@@ -1083,8 +1071,6 @@ int cms_main(int argc, char **argv)
  end:
     if (ret)
         ERR_print_errors(bio_err);
-    if (need_rand)
-        app_RAND_write_file(NULL);
     sk_X509_pop_free(encerts, X509_free);
     sk_X509_pop_free(other, X509_free);
     X509_VERIFY_PARAM_free(vpm);

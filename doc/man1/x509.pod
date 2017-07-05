@@ -59,6 +59,8 @@ B<openssl> B<x509>
 [B<-clrext>]
 [B<-extfile filename>]
 [B<-extensions section>]
+[B<-rand file...>]
+[B<-writerand file>]
 [B<-engine id>]
 [B<-preserve_dates>]
 
@@ -114,6 +116,19 @@ digest, such as the B<-fingerprint>, B<-signkey> and B<-CA> options.
 Any digest supported by the OpenSSL B<dgst> command can be used.
 If not specified then SHA1 is used with B<-fingerprint> or
 the default digest for the signing algorithm is used, typically SHA256.
+
+=item B<-rand file...>
+
+A file or files containing random data used to seed the random number
+generator.
+Multiple files can be specified separated by an OS-dependent character.
+The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
+all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
 
 =item B<-engine id>
 

@@ -342,7 +342,7 @@ static int found(const char *name, const OPT_PAIR *pairs, int *result)
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ELAPSED, OPT_EVP, OPT_DECRYPT, OPT_ENGINE, OPT_MULTI,
-    OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS
+    OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM,
 } OPTION_CHOICE;
 
 const OPTIONS speed_options[] = {
@@ -365,6 +365,7 @@ const OPTIONS speed_options[] = {
     {"async_jobs", OPT_ASYNCJOBS, 'p',
      "Enable async mode and start pnum jobs"},
 #endif
+    OPT_R_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
@@ -1409,6 +1410,10 @@ int speed_main(int argc, char **argv)
                        prog);
             goto end;
 #endif
+            break;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         }
     }

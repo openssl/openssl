@@ -17,6 +17,8 @@ B<openssl> B<pkcs8>
 [B<-passout arg>]
 [B<-iter count>]
 [B<-noiter>]
+[B<-rand file...>]
+[B<-writerand file>]
 [B<-nocrypt>]
 [B<-traditional>]
 [B<-v2 alg>]
@@ -98,6 +100,19 @@ this option an unencrypted PrivateKeyInfo structure is expected or output.
 This option does not encrypt private keys at all and should only be used
 when absolutely necessary. Certain software such as some versions of Java
 code signing software used unencrypted private keys.
+
+=item B<-rand file...>
+
+A file or files containing random data used to seed the random number
+generator.
+Multiple files can be specified separated by an OS-dependent character.
+The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
+all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
 
 =item B<-v2 alg>
 

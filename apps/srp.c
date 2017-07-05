@@ -26,7 +26,6 @@ NON_EMPTY_TRANSLATION_UNIT
 # define BASE_SECTION    "srp"
 # define CONFIG_FILE "openssl.cnf"
 
-# define ENV_RANDFILE            "RANDFILE"
 
 # define ENV_DATABASE            "srpvfile"
 # define ENV_DEFAULT_SRP         "default_srp"
@@ -189,7 +188,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_VERBOSE, OPT_CONFIG, OPT_NAME, OPT_SRPVFILE, OPT_ADD,
     OPT_DELETE, OPT_MODIFY, OPT_LIST, OPT_GN, OPT_USERINFO,
-    OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE
+    OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE, OPT_R_ENUM,
 } OPTION_CHOICE;
 
 const OPTIONS srp_options[] = {
@@ -207,6 +206,7 @@ const OPTIONS srp_options[] = {
     {"userinfo", OPT_USERINFO, 's', "Additional info to be set for user"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+    OPT_R_OPTIONS,
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
@@ -222,7 +222,7 @@ int srp_main(int argc, char **argv)
     int doupdatedb = 0, mode = OPT_ERR;
     char *user = NULL, *passinarg = NULL, *passoutarg = NULL;
     char *passin = NULL, *passout = NULL, *gN = NULL, *userinfo = NULL;
-    char *randfile = NULL, *section = NULL;
+    char *section = NULL;
     char **gNrow = NULL, *configfile = NULL;
     char *srpvfile = NULL, **pp, *prog;
     OPTION_CHOICE o;
@@ -277,6 +277,10 @@ int srp_main(int argc, char **argv)
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
+            break;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         }
     }
@@ -335,8 +339,7 @@ int srp_main(int argc, char **argv)
                 goto end;
         }
 
-        if (randfile == NULL)
-            randfile = NCONF_get_string(conf, BASE_SECTION, "RANDFILE");
+        app_RAND_load_conf(conf, BASE_SECTION);
 
         if (verbose)
             BIO_printf(bio_err,
@@ -347,10 +350,6 @@ int srp_main(int argc, char **argv)
         if (srpvfile == NULL)
             goto end;
     }
-    if (randfile == NULL)
-        ERR_clear_error();
-    else
-        app_RAND_load_file(randfile, 0);
 
     if (verbose)
         BIO_printf(bio_err, "Trying to read SRP verifier file \"%s\"\n",
@@ -604,8 +603,6 @@ int srp_main(int argc, char **argv)
     OPENSSL_free(passout);
     if (ret)
         ERR_print_errors(bio_err);
-    if (randfile != NULL)
-        app_RAND_write_file(randfile);
     NCONF_free(conf);
     free_index(db);
     release_engine(e);

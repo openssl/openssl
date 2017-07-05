@@ -36,7 +36,8 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_CHECK, OPT_TEXT, OPT_NOOUT,
-    OPT_RAND, OPT_DSAPARAM, OPT_C, OPT_2, OPT_5
+    OPT_DSAPARAM, OPT_C, OPT_2, OPT_5,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS dhparam_options[] = {
@@ -50,8 +51,7 @@ const OPTIONS dhparam_options[] = {
     {"check", OPT_CHECK, '-', "Check the DH parameters"},
     {"text", OPT_TEXT, '-', "Print a text form of the DH parameters"},
     {"noout", OPT_NOOUT, '-', "Don't output any DH parameters"},
-    {"rand", OPT_RAND, 's',
-     "Load the file(s) into the random number generator"},
+    OPT_R_OPTIONS,
     {"C", OPT_C, '-', "Print C code"},
     {"2", OPT_2, '-', "Generate parameters using 2 as the generator value"},
     {"5", OPT_5, '-', "Generate parameters using 5 as the generator value"},
@@ -69,7 +69,7 @@ int dhparam_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
     DH *dh = NULL;
-    char *infile = NULL, *outfile = NULL, *prog, *inrand = NULL;
+    char *infile = NULL, *outfile = NULL, *prog;
     ENGINE *e = NULL;
 #ifndef OPENSSL_NO_DSA
     int dsaparam = 0;
@@ -130,8 +130,9 @@ int dhparam_main(int argc, char **argv)
         case OPT_NOOUT:
             noout = 1;
             break;
-        case OPT_RAND:
-            inrand = opt_arg();
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         }
     }
@@ -165,13 +166,6 @@ int dhparam_main(int argc, char **argv)
         }
 
         BN_GENCB_set(cb, dh_cb, bio_err);
-        if (!app_RAND_load_file(NULL, 1) && inrand == NULL) {
-            BIO_printf(bio_err,
-                       "warning, not much extra random data, consider using the -rand option\n");
-        }
-        if (inrand != NULL)
-            BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-                       app_RAND_load_files(inrand));
 
 # ifndef OPENSSL_NO_DSA
         if (dsaparam) {
@@ -211,7 +205,6 @@ int dhparam_main(int argc, char **argv)
         }
 
         BN_GENCB_free(cb);
-        app_RAND_write_file(NULL);
     } else {
 
         in = bio_open_default(infile, 'r', informat);

@@ -29,11 +29,12 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_C, OPT_R, OPT_RAND, OPT_OUT, OPT_SIGN, OPT_PASSIN, OPT_VERIFY,
+    OPT_C, OPT_R, OPT_OUT, OPT_SIGN, OPT_PASSIN, OPT_VERIFY,
     OPT_PRVERIFY, OPT_SIGNATURE, OPT_KEYFORM, OPT_ENGINE, OPT_ENGINE_IMPL,
     OPT_HEX, OPT_BINARY, OPT_DEBUG, OPT_FIPS_FINGERPRINT,
     OPT_HMAC, OPT_MAC, OPT_SIGOPT, OPT_MACOPT,
-    OPT_DIGEST
+    OPT_DIGEST,
+    OPT_R_ENUM,
 } OPTION_CHOICE;
 
 const OPTIONS dgst_options[] = {
@@ -43,8 +44,6 @@ const OPTIONS dgst_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"c", OPT_C, '-', "Print the digest with separating colons"},
     {"r", OPT_R, '-', "Print the digest in coreutils format"},
-    {"rand", OPT_RAND, 's',
-     "Use file(s) containing random data to seed RNG or an EGD sock"},
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"sign", OPT_SIGN, 's', "Sign digest using private key"},
@@ -65,6 +64,7 @@ const OPTIONS dgst_options[] = {
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form or key"},
     {"", OPT_DIGEST, '-', "Any supported digest"},
+    OPT_R_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
     {"engine_impl", OPT_ENGINE_IMPL, '-',
@@ -84,7 +84,7 @@ int dgst_main(int argc, char **argv)
     char *passinarg = NULL, *passin = NULL;
     const EVP_MD *md = NULL, *m;
     const char *outfile = NULL, *keyfile = NULL, *prog = NULL;
-    const char *sigfile = NULL, *randfile = NULL;
+    const char *sigfile = NULL;
     OPTION_CHOICE o;
     int separator = 0, debug = 0, keyform = FORMAT_PEM, siglen = 0;
     int i, ret = 1, out_bin = -1, want_pub = 0, do_verify = 0;
@@ -113,8 +113,9 @@ int dgst_main(int argc, char **argv)
         case OPT_R:
             separator = 2;
             break;
-        case OPT_RAND:
-            randfile = opt_arg();
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_OUT:
             outfile = opt_arg();
@@ -222,9 +223,6 @@ int dgst_main(int argc, char **argv)
         else
             out_bin = 0;
     }
-
-    if (randfile != NULL)
-        app_RAND_load_file(randfile, 0);
 
     out = bio_open_default(outfile, 'w', out_bin ? FORMAT_BINARY : FORMAT_TEXT);
     if (out == NULL)

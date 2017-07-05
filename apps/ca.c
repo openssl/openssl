@@ -153,6 +153,7 @@ typedef enum OPTION_choice {
     OPT_GENCRL, OPT_MSIE_HACK, OPT_CRLDAYS, OPT_CRLHOURS, OPT_CRLSEC,
     OPT_INFILES, OPT_SS_CERT, OPT_SPKAC, OPT_REVOKE, OPT_VALID,
     OPT_EXTENSIONS, OPT_EXTFILE, OPT_STATUS, OPT_UPDATEDB, OPT_CRLEXTS,
+    OPT_R_ENUM,
     /* Do not change the order here; see related case statements below */
     OPT_CRL_REASON, OPT_CRL_HOLD, OPT_CRL_COMPROMISE, OPT_CRL_CA_COMPROMISE
 } OPTION_CHOICE;
@@ -217,6 +218,7 @@ const OPTIONS ca_options[] = {
      "sets compromise time to val and the revocation reason to keyCompromise"},
     {"crl_CA_compromise", OPT_CRL_CA_COMPROMISE, 's',
      "sets compromise time to val and the revocation reason to CACompromise"},
+    OPT_R_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
@@ -247,7 +249,7 @@ int ca_main(int argc, char **argv)
     char *outdir = NULL, *outfile = NULL, *rev_arg = NULL, *ser_status = NULL;
     const char *serialfile = NULL, *subj = NULL;
     char *prog, *startdate = NULL, *enddate = NULL;
-    char *dbfile = NULL, *f, *randfile = NULL;
+    char *dbfile = NULL, *f;
     char new_cert[CERT_MAX + 1];
     char tmp[10 + 1] = "\0";
     char *const *pp;
@@ -331,6 +333,10 @@ opthelp:
             break;
         case OPT_PASSIN:
             passinarg = opt_arg();
+            break;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_KEY:
             key = opt_arg();
@@ -465,10 +471,7 @@ end_of_options:
         }
     }
 
-    randfile = NCONF_get_string(conf, BASE_SECTION, "RANDFILE");
-    if (randfile == NULL)
-        ERR_clear_error();
-    app_RAND_load_file(randfile, 0);
+    app_RAND_load_conf(conf, BASE_SECTION);
 
     f = NCONF_get_string(conf, section, STRING_MASK);
     if (f == NULL)
@@ -1220,7 +1223,6 @@ end_of_options:
 
     if (ret)
         ERR_print_errors(bio_err);
-    app_RAND_write_file(randfile);
     if (free_key)
         OPENSSL_free(key);
     BN_free(serial);

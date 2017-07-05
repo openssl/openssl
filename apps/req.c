@@ -76,12 +76,13 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_KEYGEN_ENGINE, OPT_KEY,
     OPT_PUBKEY, OPT_NEW, OPT_CONFIG, OPT_KEYFORM, OPT_IN, OPT_OUT,
-    OPT_KEYOUT, OPT_PASSIN, OPT_PASSOUT, OPT_RAND, OPT_NEWKEY,
+    OPT_KEYOUT, OPT_PASSIN, OPT_PASSOUT, OPT_NEWKEY,
     OPT_PKEYOPT, OPT_SIGOPT, OPT_BATCH, OPT_NEWHDR, OPT_MODULUS,
     OPT_VERIFY, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
     OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT, OPT_X509,
     OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL, OPT_EXTENSIONS,
-    OPT_REQEXTS, OPT_PRECERT, OPT_MD
+    OPT_REQEXTS, OPT_PRECERT, OPT_MD,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS req_options[] = {
@@ -98,8 +99,7 @@ const OPTIONS req_options[] = {
     {"keyout", OPT_KEYOUT, '>', "File to send the key to"},
     {"passin", OPT_PASSIN, 's', "Private key password source"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
-    {"rand", OPT_RAND, 's',
-     "Load the file(s) into the random number generator"},
+    OPT_R_OPTIONS,
     {"newkey", OPT_NEWKEY, 's', "Specify as type:bits"},
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
@@ -151,7 +151,7 @@ int req_main(int argc, char **argv)
     const EVP_CIPHER *cipher = NULL;
     const EVP_MD *md_alg = NULL, *digest = NULL;
     char *extensions = NULL, *infile = NULL;
-    char *outfile = NULL, *keyfile = NULL, *inrand = NULL;
+    char *outfile = NULL, *keyfile = NULL;
     char *keyalgstr = NULL, *p, *prog, *passargin = NULL, *passargout = NULL;
     char *passin = NULL, *passout = NULL;
     char *nofree_passin = NULL, *nofree_passout = NULL;
@@ -234,8 +234,9 @@ int req_main(int argc, char **argv)
         case OPT_PASSOUT:
             passargout = opt_arg();
             break;
-        case OPT_RAND:
-            inrand = opt_arg();
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_NEWKEY:
             keyalg = opt_arg();
@@ -454,20 +455,12 @@ int req_main(int argc, char **argv)
             /* load_key() has already printed an appropriate message */
             goto end;
         } else {
-            char *randfile = NCONF_get_string(req_conf, SECTION, "RANDFILE");
-            if (randfile == NULL)
-                ERR_clear_error();
-            app_RAND_load_file(randfile, 0);
+            app_RAND_load_conf(req_conf, SECTION);
         }
     }
 
     if (newreq && (pkey == NULL)) {
-        char *randfile = NCONF_get_string(req_conf, SECTION, "RANDFILE");
-        if (randfile == NULL)
-            ERR_clear_error();
-        app_RAND_load_file(randfile, 0);
-        if (inrand != NULL)
-            app_RAND_load_files(inrand);
+        app_RAND_load_conf(req_conf, SECTION);
 
         if (!NCONF_get_number(req_conf, SECTION, BITS, &newkey)) {
             newkey = DEFAULT_KEY_LENGTH;
@@ -524,8 +517,6 @@ int req_main(int argc, char **argv)
 
         EVP_PKEY_CTX_free(genctx);
         genctx = NULL;
-
-        app_RAND_write_file(randfile);
 
         if (keyout == NULL) {
             keyout = NCONF_get_string(req_conf, SECTION, KEYFILE);
