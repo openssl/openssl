@@ -53,7 +53,7 @@ static int append_buf(char **buf, int *size, const char *s)
     char *p = *buf;
 
     if (p == NULL) {
-        *size = (len + expand - 1) / expand * expand;
+        *size = ((len + expand - 1) / expand) * expand;
         p = *buf = app_malloc(*size, "engine buffer");
     } else {
         const int blen = strlen(p);
@@ -62,7 +62,7 @@ static int append_buf(char **buf, int *size, const char *s)
             len += 2 + blen;
 
         if (len > *size) {
-            *size = (len + expand - 1) / expand * expand;
+            *size = ((len + expand - 1) / expand) * expand;
             p = OPENSSL_realloc(p, *size);
             if (p == NULL) {
                 OPENSSL_free(*buf);
