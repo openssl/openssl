@@ -15,12 +15,18 @@
 
 static const ERR_STRING_DATA RAND_str_functs[] = {
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_BYTES, 0), "RAND_bytes"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_LOAD_FILE, 0), "RAND_load_file"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_WRITE_FILE, 0), "RAND_write_file"},
     {0, NULL}
 };
 
 static const ERR_STRING_DATA RAND_str_reasons[] = {
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_CANNOT_OPEN_FILE), "Cannot open file"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_FUNC_NOT_IMPLEMENTED),
     "Function not implemented"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_FWRITE_ERROR), "Error writing file"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_NOT_A_REGULAR_FILE),
+    "Not a regular file"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_PRNG_NOT_SEEDED), "PRNG not seeded"},
     {0, NULL}
 };

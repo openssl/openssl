@@ -8,13 +8,22 @@ RAND_load_file, RAND_write_file, RAND_file_name - PRNG seed file
 
  #include <openssl/rand.h>
 
- const char *RAND_file_name(char *buf, size_t num);
-
  int RAND_load_file(const char *filename, long max_bytes);
 
  int RAND_write_file(const char *filename);
 
+ const char *RAND_file_name(char *buf, size_t num);
+
 =head1 DESCRIPTION
+
+RAND_load_file() reads a number of bytes from file B<filename> and
+adds them to the PRNG. If B<max_bytes> is non-negative,
+up to B<max_bytes> are read;
+if B<max_bytes> is -1, the complete file is read.
+
+RAND_write_file() writes a number of random bytes (currently 256) to
+file B<filename> which can be used to initialize the PRNG by calling
+RAND_load_file() in a later session.
 
 RAND_file_name() generates a default path for the random seed
 file. B<buf> points to a buffer of size B<num> in which to store the
@@ -22,36 +31,26 @@ filename.
 
 On all systems, if the environment variable B<RANDFILE> is set, its
 value will be used as the seed file name.
-
-Otherwise, the file is called ".rnd", found in platform dependent locations:
+Otherwise, the file is called C<.rnd>, found in platform dependent locations:
 
 =over 4
 
 =item On Windows (in order of preference)
 
-%HOME%, %USERPROFILE%, %SYSTEMROOT%, C:\
+ %HOME%, %USERPROFILE%, %SYSTEMROOT%, C:\
 
 =item On VMS
 
-SYS$LOGIN:
+ SYS$LOGIN:
 
 =item On all other systems
 
-$HOME
+ $HOME
 
 =back
 
 If C<$HOME> (on non-Windows and non-VMS system) is not set either, or
 B<num> is too small for the path name, an error occurs.
-
-RAND_load_file() reads a number of bytes from file B<filename> and
-adds them to the PRNG. If B<max_bytes> is non-negative,
-up to B<max_bytes> are read;
-if B<max_bytes> is -1, the complete file is read.
-
-RAND_write_file() writes a number of random bytes (currently 1024) to
-file B<filename> which can be used to initialize the PRNG by calling
-RAND_load_file() in a later session.
 
 =head1 RETURN VALUES
 
@@ -66,6 +65,13 @@ error.
 =head1 SEE ALSO
 
 L<RAND_bytes(3)>, L<RAND_add(3)>, L<RAND_cleanup(3)>
+
+=head1 HISTORY
+
+A comment in the source since at least OpenSSL version 1.0.2 said that
+RAND_load_file() and RAND_write_file() were only intended for regular files,
+and not really device special files such as C</dev/random>.  This was
+poorly enforced before OpenSSL version 1.1.1.
 
 =head1 COPYRIGHT
 
