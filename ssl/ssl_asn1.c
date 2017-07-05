@@ -41,6 +41,7 @@ typedef struct {
     uint64_t flags;
     uint32_t max_early_data;
     ASN1_OCTET_STRING *alpn_selected;
+    ASN1_OCTET_STRING *tick_nonce;
 } SSL_SESSION_ASN1;
 
 ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
@@ -69,7 +70,8 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, flags, ZUINT64, 13),
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_tick_age_add, ZUINT32, 14),
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, max_early_data, ZUINT32, 15),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, alpn_selected, ASN1_OCTET_STRING, 16)
+    ASN1_EXP_OPT(SSL_SESSION_ASN1, alpn_selected, ASN1_OCTET_STRING, 16),
+    ASN1_EXP_OPT(SSL_SESSION_ASN1, tick_nonce, ASN1_OCTET_STRING, 17)
 } static_ASN1_SEQUENCE_END(SSL_SESSION_ASN1)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
@@ -118,6 +120,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     ASN1_OCTET_STRING psk_identity, psk_identity_hint;
 #endif
     ASN1_OCTET_STRING alpn_selected;
+    ASN1_OCTET_STRING tick_nonce;
 
     long l;
 
@@ -186,6 +189,12 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     else
         ssl_session_oinit(&as.alpn_selected, &alpn_selected,
                           in->ext.alpn_selected, in->ext.alpn_selected_len);
+
+    if (in->ext.tick_nonce == NULL)
+        as.tick_nonce = NULL;
+    else
+        ssl_session_oinit(&as.tick_nonce, &tick_nonce,
+                          in->ext.tick_nonce, in->ext.tick_nonce_len);
 
     return i2d_SSL_SESSION_ASN1(&as, pp);
 
@@ -350,6 +359,15 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     } else {
         ret->ext.alpn_selected = NULL;
         ret->ext.alpn_selected_len = 0;
+    }
+
+    if (as->tick_nonce != NULL) {
+        ret->ext.tick_nonce = as->tick_nonce->data;
+        ret->ext.tick_nonce_len = as->tick_nonce->length;
+        as->tick_nonce->data = NULL;
+    } else {
+        ret->ext.tick_nonce = NULL;
+        ret->ext.tick_nonce_len = 0;
     }
 
     M_ASN1_free_of(as, SSL_SESSION_ASN1);
