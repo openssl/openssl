@@ -24,7 +24,8 @@ typedef enum OPTION_choice {
     OPT_SCRYPT, OPT_SCRYPT_N, OPT_SCRYPT_R, OPT_SCRYPT_P,
 #endif
     OPT_V2, OPT_V1, OPT_V2PRF, OPT_ITER, OPT_PASSIN, OPT_PASSOUT,
-    OPT_TRADITIONAL
+    OPT_TRADITIONAL,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkcs8_options[] = {
@@ -36,6 +37,7 @@ const OPTIONS pkcs8_options[] = {
     {"topk8", OPT_TOPK8, '-', "Output PKCS8 file"},
     {"noiter", OPT_NOITER, '-', "Use 1 as iteration count"},
     {"nocrypt", OPT_NOCRYPT, '-', "Use or expect unencrypted private key"},
+    OPT_R_OPTIONS,
     {"v2", OPT_V2, 's', "Use PKCS#5 v2.0 and cipher"},
     {"v1", OPT_V1, 's', "Use PKCS#5 v1.5 and cipher"},
     {"v2prf", OPT_V2PRF, 's', "Set the PRF algorithm to use with PKCS#5 v2.0"},
@@ -111,6 +113,10 @@ int pkcs8_main(int argc, char **argv)
             break;
         case OPT_NOCRYPT:
             nocrypt = 1;
+            break;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_TRADITIONAL:
             traditional = 1;
@@ -248,7 +254,6 @@ int pkcs8_main(int argc, char **argv)
                 BIO_printf(bio_err, "Password required\n");
                 goto end;
             }
-            app_RAND_load_file(NULL, 0);
             p8 = PKCS8_set0_pbe(p8pass, strlen(p8pass), p8inf, pbe);
             if (p8 == NULL) {
                 X509_ALGOR_free(pbe);
@@ -256,7 +261,6 @@ int pkcs8_main(int argc, char **argv)
                 ERR_print_errors(bio_err);
                 goto end;
             }
-            app_RAND_write_file(NULL);
             assert(private);
             if (outformat == FORMAT_PEM)
                 PEM_write_bio_PKCS8(out, p8);

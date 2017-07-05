@@ -572,7 +572,7 @@ typedef enum OPTION_choice {
     OPT_CERT, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
     OPT_BRIEF, OPT_PREXIT, OPT_CRLF, OPT_QUIET, OPT_NBIO,
-    OPT_SSL_CLIENT_ENGINE, OPT_RAND, OPT_IGN_EOF, OPT_NO_IGN_EOF,
+    OPT_SSL_CLIENT_ENGINE, OPT_IGN_EOF, OPT_NO_IGN_EOF,
     OPT_DEBUG, OPT_TLSEXTDEBUG, OPT_STATUS, OPT_WDEBUG,
     OPT_MSG, OPT_MSGFILE, OPT_ENGINE, OPT_TRACE, OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE, OPT_SHOWCERTS, OPT_NBIO_TEST, OPT_STATE,
@@ -598,7 +598,8 @@ typedef enum OPTION_choice {
 #ifndef OPENSSL_NO_CT
     OPT_CT, OPT_NOCT, OPT_CTLOG_FILE,
 #endif
-    OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME
+    OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS s_client_options[] = {
@@ -654,8 +655,7 @@ const OPTIONS s_client_options[] = {
      "Use the appropriate STARTTLS command before starting TLS"},
     {"xmpphost", OPT_XMPPHOST, 's',
      "Host to use with \"-starttls xmpp[-server]\""},
-    {"rand", OPT_RAND, 's',
-     "Load the file(s) into the random number generator"},
+    OPT_R_OPTIONS,
     {"sess_out", OPT_SESS_OUT, '>', "File to write SSL session to"},
     {"sess_in", OPT_SESS_IN, '<', "File to read SSL session from"},
     {"use_srtp", OPT_USE_SRTP, 's',
@@ -881,7 +881,6 @@ int s_client_main(int argc, char **argv)
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *host = NULL;
     char *port = OPENSSL_strdup(PORT);
-    char *inrand = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *ReqCAfile = NULL;
     char *sess_in = NULL, *crl_file = NULL, *p;
@@ -905,7 +904,6 @@ int s_client_main(int argc, char **argv)
 #endif
     int read_buf_len = 0;
     int fallback_scsv = 0;
-    long randamt = 0;
     OPTION_CHOICE o;
 #ifndef OPENSSL_NO_DTLS
     int enable_timeouts = 0;
@@ -1152,8 +1150,9 @@ int s_client_main(int argc, char **argv)
             }
 #endif
             break;
-        case OPT_RAND:
-            inrand = opt_arg();
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_IGN_EOF:
             c_ign_eof = 1;
@@ -1603,16 +1602,6 @@ int s_client_main(int argc, char **argv)
 
     if (!load_excert(&exc))
         goto end;
-
-    if (!app_RAND_load_file(NULL, 1) && inrand == NULL
-        && !RAND_status()) {
-        BIO_printf(bio_err,
-                   "warning, not much extra random data, consider using the -rand option\n");
-    }
-    if (inrand != NULL) {
-        randamt = app_RAND_load_files(inrand);
-        BIO_printf(bio_err, "%ld semi-random bytes loaded\n", randamt);
-    }
 
     if (bio_c_out == NULL) {
         if (c_quiet && !c_debug) {

@@ -52,6 +52,8 @@ B<openssl> B<ca>
 [B<-utf8>]
 [B<-create_serial>]
 [B<-multivalue-rdn>]
+[B<-rand file...>]
+[B<-writerand file>]
 
 =head1 DESCRIPTION
 
@@ -266,6 +268,19 @@ I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 If -multi-rdn is not used then the UID value is I<123456+CN=John Doe>.
 
+=item B<-rand file...>
+
+A file or files containing random data used to seed the random number
+generator.
+Multiple files can be specified separated by an OS-dependent character.
+The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
+all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
+
 =back
 
 =head1 CRL OPTIONS
@@ -397,8 +412,8 @@ CA private key. Mandatory.
 
 =item B<RANDFILE>
 
-A file used to read and write random number seed information, or
-an EGD socket (see L<RAND_egd(3)>).
+At startup the specified file is loaded into the random number generator,
+and at exit 256 bytes will be written to it.
 
 =item B<default_days>
 

@@ -65,7 +65,8 @@ B<openssl> B<smime>
 [B<-indef>]
 [B<-noindef>]
 [B<-stream>]
-[B<-rand file(s)>]
+[B<-rand file...>]
+[B<-writerand file>]
 [B<-md digest>]
 [cert.pem]...
 
@@ -295,13 +296,18 @@ specified, the argument is given to the engine as a key identifier.
 The private key password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-rand file(s)>
+=item B<-rand file...>
 
 A file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)>).
+generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
 
 =item B<cert.pem...>
 

@@ -31,6 +31,8 @@ B<openssl enc -ciphername>
 [B<-nopad>]
 [B<-debug>]
 [B<-none>]
+[B<-rand file...>]
+[B<-writerand file>]
 [B<-engine id>]
 
 =head1 DESCRIPTION
@@ -164,6 +166,19 @@ or zlib-dynamic option.
 =item B<-none>
 
 Use NULL cipher (no encryption or decryption of input).
+
+=item B<-rand file...>
+
+A file or files containing random data used to seed the random number
+generator.
+Multiple files can be specified separated by an OS-dependent character.
+The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
+all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
 
 =back
 

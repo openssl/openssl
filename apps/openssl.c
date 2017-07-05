@@ -240,6 +240,7 @@ int main(int argc, char *argv[])
     OPENSSL_free(default_config_file);
     lh_FUNCTION_free(prog);
     OPENSSL_free(arg.argv);
+    app_RAND_write();
 
     BIO_free(bio_in);
     BIO_free_all(bio_out);

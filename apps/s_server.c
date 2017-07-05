@@ -745,10 +745,11 @@ typedef enum OPTION_choice {
     OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_SSL3, OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
     OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN,
-    OPT_ID_PREFIX, OPT_RAND, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
+    OPT_ID_PREFIX, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
     OPT_KEYLOG_FILE, OPT_MAX_EARLY, OPT_EARLY_DATA,
+    OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
     OPT_X_ENUM
@@ -825,8 +826,7 @@ const OPTIONS s_server_options[] = {
     {"HTTP", OPT_HTTP, '-', "Like -WWW but ./path includes HTTP headers"},
     {"id_prefix", OPT_ID_PREFIX, 's',
      "Generate SSL/TLS session IDs prefixed by arg"},
-    {"rand", OPT_RAND, 's',
-     "Load the file(s) into the random number generator"},
+    OPT_R_OPTIONS,
     {"keymatexport", OPT_KEYMATEXPORT, 's',
      "Export keying material using label"},
     {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
@@ -974,7 +974,7 @@ int s_server_main(int argc, char *argv[])
     X509 *s_cert = NULL, *s_dcert = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
     const char *CApath = NULL, *CAfile = NULL, *chCApath = NULL, *chCAfile = NULL;
-    char *dpassarg = NULL, *dpass = NULL, *inrand = NULL;
+    char *dpassarg = NULL, *dpass = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *crl_file = NULL, *prog;
 #ifdef AF_UNIX
@@ -1494,8 +1494,9 @@ int s_server_main(int argc, char *argv[])
         case OPT_ENGINE:
             engine = setup_engine(opt_arg(), 1);
             break;
-        case OPT_RAND:
-            inrand = opt_arg();
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_SERVERNAME:
             tlsextcbp.servername = opt_arg();
@@ -1707,15 +1708,6 @@ int s_server_main(int argc, char *argv[])
         }
 
     }
-
-    if (!app_RAND_load_file(NULL, 1) && inrand == NULL
-        && !RAND_status()) {
-        BIO_printf(bio_err,
-                   "warning, not much extra random data, consider using the -rand option\n");
-    }
-    if (inrand != NULL)
-        BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-                   app_RAND_load_files(inrand));
 
     if (bio_s_out == NULL) {
         if (s_quiet && !s_debug) {

@@ -29,7 +29,7 @@ static int dsa_cb(int p, int n, BN_GENCB *cb);
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT, OPT_C,
-    OPT_NOOUT, OPT_GENKEY, OPT_RAND, OPT_ENGINE
+    OPT_NOOUT, OPT_GENKEY, OPT_ENGINE, OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS dsaparam_options[] = {
@@ -42,7 +42,7 @@ const OPTIONS dsaparam_options[] = {
     {"C", OPT_C, '-', "Output C code"},
     {"noout", OPT_NOOUT, '-', "No output"},
     {"genkey", OPT_GENKEY, '-', "Generate a DSA key"},
-    {"rand", OPT_RAND, 's', "Files to use for random number input"},
+    OPT_R_OPTIONS,
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
@@ -55,10 +55,10 @@ int dsaparam_main(int argc, char **argv)
     DSA *dsa = NULL;
     BIO *in = NULL, *out = NULL;
     BN_GENCB *cb = NULL;
-    int numbits = -1, num = 0, genkey = 0, need_rand = 0;
+    int numbits = -1, num = 0, genkey = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
     int ret = 1, i, text = 0, private = 0;
-    char *infile = NULL, *outfile = NULL, *prog, *inrand = NULL;
+    char *infile = NULL, *outfile = NULL, *prog;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, dsaparam_options);
@@ -97,11 +97,11 @@ int dsaparam_main(int argc, char **argv)
             C = 1;
             break;
         case OPT_GENKEY:
-            genkey = need_rand = 1;
+            genkey = 1;
             break;
-        case OPT_RAND:
-            inrand = opt_arg();
-            need_rand = 1;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_NOOUT:
             noout = 1;
@@ -116,7 +116,6 @@ int dsaparam_main(int argc, char **argv)
             goto end;
         /* generate a key */
         numbits = num;
-        need_rand = 1;
     }
     private = genkey ? 1 : 0;
 
@@ -127,13 +126,6 @@ int dsaparam_main(int argc, char **argv)
     if (out == NULL)
         goto end;
 
-    if (need_rand) {
-        app_RAND_load_file(NULL, (inrand != NULL));
-        if (inrand != NULL)
-            BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-                       app_RAND_load_files(inrand));
-    }
-
     if (numbits > 0) {
         cb = BN_GENCB_new();
         if (cb == NULL) {
@@ -141,7 +133,6 @@ int dsaparam_main(int argc, char **argv)
             goto end;
         }
         BN_GENCB_set(cb, dsa_cb, bio_err);
-        assert(need_rand);
         dsa = DSA_new();
         if (dsa == NULL) {
             BIO_printf(bio_err, "Error allocating DSA object\n");
@@ -217,7 +208,6 @@ int dsaparam_main(int argc, char **argv)
     if (genkey) {
         DSA *dsakey;
 
-        assert(need_rand);
         if ((dsakey = DSAparams_dup(dsa)) == NULL)
             goto end;
         if (!DSA_generate_key(dsakey)) {
@@ -233,8 +223,6 @@ int dsaparam_main(int argc, char **argv)
                                             NULL);
         DSA_free(dsakey);
     }
-    if (need_rand)
-        app_RAND_write_file(NULL);
     ret = 0;
  end:
     BN_GENCB_free(cb);

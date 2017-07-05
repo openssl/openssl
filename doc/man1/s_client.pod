@@ -105,7 +105,8 @@ B<openssl> B<s_client>
 [B<-no_ticket>]
 [B<-sess_out filename>]
 [B<-sess_in filename>]
-[B<-rand file(s)>]
+[B<-rand file...>]
+[B<-writerand file>]
 [B<-serverinfo types>]
 [B<-status>]
 [B<-alpn protocols>]
@@ -536,13 +537,18 @@ to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
-=item B<-rand file(s)>
+=item B<-rand file...>
 
 A file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)>).
+generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
 
 =item B<-serverinfo types>
 

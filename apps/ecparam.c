@@ -29,7 +29,8 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT, OPT_C,
     OPT_CHECK, OPT_LIST_CURVES, OPT_NO_SEED, OPT_NOOUT, OPT_NAME,
-    OPT_CONV_FORM, OPT_PARAM_ENC, OPT_GENKEY, OPT_RAND, OPT_ENGINE
+    OPT_CONV_FORM, OPT_PARAM_ENC, OPT_GENKEY, OPT_ENGINE,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS ecparam_options[] = {
@@ -52,7 +53,7 @@ const OPTIONS ecparam_options[] = {
     {"param_enc", OPT_PARAM_ENC, 's',
      "Specifies the way the ec parameters are encoded"},
     {"genkey", OPT_GENKEY, '-', "Generate ec key"},
-    {"rand", OPT_RAND, 's', "Files to use for random number input"},
+    OPT_R_OPTIONS,
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
@@ -80,7 +81,7 @@ int ecparam_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     EC_GROUP *group = NULL;
     point_conversion_form_t form = POINT_CONVERSION_UNCOMPRESSED;
-    char *curve_name = NULL, *inrand = NULL;
+    char *curve_name = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
     unsigned char *buffer = NULL;
     OPTION_CHOICE o;
@@ -88,7 +89,7 @@ int ecparam_main(int argc, char **argv)
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
     int ret = 1, private = 0;
     int list_curves = 0, no_seed = 0, check = 0, new_form = 0;
-    int text = 0, i, need_rand = 0, genkey = 0;
+    int text = 0, i, genkey = 0;
 
     prog = opt_init(argc, argv, ecparam_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -149,11 +150,11 @@ int ecparam_main(int argc, char **argv)
             new_asn1_flag = 1;
             break;
         case OPT_GENKEY:
-            genkey = need_rand = 1;
+            genkey = 1;
             break;
-        case OPT_RAND:
-            inrand = opt_arg();
-            need_rand = 1;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
@@ -395,20 +396,11 @@ int ecparam_main(int argc, char **argv)
         }
     }
 
-    if (need_rand) {
-        app_RAND_load_file(NULL, (inrand != NULL));
-        if (inrand != NULL)
-            BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-                       app_RAND_load_files(inrand));
-    }
-
     if (genkey) {
         EC_KEY *eckey = EC_KEY_new();
 
         if (eckey == NULL)
             goto end;
-
-        assert(need_rand);
 
         if (EC_KEY_set_group(eckey, group) == 0) {
             BIO_printf(bio_err, "unable to set group when generating key\n");
@@ -431,9 +423,6 @@ int ecparam_main(int argc, char **argv)
                                            NULL, 0, NULL, NULL);
         EC_KEY_free(eckey);
     }
-
-    if (need_rand)
-        app_RAND_write_file(NULL);
 
     ret = 0;
  end:

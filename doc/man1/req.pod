@@ -20,7 +20,8 @@ B<openssl> B<req>
 [B<-verify>]
 [B<-modulus>]
 [B<-new>]
-[B<-rand file(s)>]
+[B<-rand file...>]
+[B<-writerand file>]
 [B<-newkey rsa:bits>]
 [B<-newkey alg:file>]
 [B<-nodes>]
@@ -130,13 +131,18 @@ in the configuration file and any requested extensions.
 If the B<-key> option is not used it will generate a new RSA private
 key using information specified in the configuration file.
 
-=item B<-rand file(s)>
+=item B<-rand file...>
 
 A file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)>).
+generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
 
 =item B<-newkey arg>
 
@@ -365,8 +371,8 @@ and long names are the same when this option is used.
 
 =item B<RANDFILE>
 
-This specifies a filename in which random number seed information is
-placed and read from, or an EGD socket (see L<RAND_egd(3)>).
+At startup the specified file is loaded into the random number generator,
+and at exit 256 bytes will be written to it.
 It is used for private key generation.
 
 =item B<encrypt_key>

@@ -40,16 +40,8 @@
  */
 #define _UC(c) ((unsigned char)(c))
 
-int app_RAND_load_file(const char *file, int dont_warn);
-int app_RAND_write_file(const char *file);
-/*
- * When `file' is NULL, use defaults. `bio_e' is for error messages.
- */
-void app_RAND_allow_write_file(void);
-long app_RAND_load_files(char *file); /* `file' is a list of files to read,
-                                       * separated by LIST_SEPARATOR_CHAR
-                                       * (see e_os.h).  The string is
-                                       * destroyed! */
+void app_RAND_load_conf(CONF *c, const char *section);
+void app_RAND_write(void);
 
 extern char *default_config_file;
 extern BIO *bio_in;
@@ -177,7 +169,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_V_ALLOW_PROXY_CERTS
 
 /*
- * Common "extended"? options.
+ * Common "extended validation" options.
  */
 # define OPT_X_ENUM \
         OPT_X__FIRST=1000, \
@@ -300,6 +292,20 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
   || o == OPT_S_NOTLS1_2 || o == OPT_S_NOTLS1_3)
 
 /*
+ * Random state options.
+ */
+# define OPT_R_ENUM \
+        OPT_R__FIRST=1500, OPT_R_RAND, OPT_R_WRITERAND, OPT_R__LAST
+
+# define OPT_R_OPTIONS \
+    {"rand", OPT_R_RAND, 's', "Load the file(s) into the random number generator"}, \
+    {"writerand", OPT_R_WRITERAND, '>', "Write random data to the specified file"}
+
+# define OPT_R_CASES \
+        OPT_R__FIRST: case OPT_R__LAST: break; \
+        case OPT_R_RAND: case OPT_R_WRITERAND
+
+/*
  * Option parsing.
  */
 extern const char OPT_HELP_STR[];
@@ -373,6 +379,7 @@ char *opt_reset(void);
 char **opt_rest(void);
 int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
+int opt_rand(int i);
 void opt_help(const OPTIONS * list);
 int opt_format_error(const char *s, unsigned long flags);
 

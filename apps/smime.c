@@ -37,9 +37,10 @@ typedef enum OPTION_choice {
     OPT_PK7OUT, OPT_TEXT, OPT_NOINTERN, OPT_NOVERIFY, OPT_NOCHAIN,
     OPT_NOCERTS, OPT_NOATTR, OPT_NODETACH, OPT_NOSMIMECAP,
     OPT_BINARY, OPT_NOSIGS, OPT_STREAM, OPT_INDEF, OPT_NOINDEF,
-    OPT_CRLFEOL, OPT_RAND, OPT_ENGINE, OPT_PASSIN,
+    OPT_CRLFEOL, OPT_ENGINE, OPT_PASSIN,
     OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP, OPT_MD,
     OPT_CIPHER, OPT_INKEY, OPT_KEYFORM, OPT_CERTFILE, OPT_CAFILE,
+    OPT_R_ENUM,
     OPT_V_ENUM,
     OPT_CAPATH, OPT_NOCAFILE, OPT_NOCAPATH, OPT_IN, OPT_INFORM, OPT_OUT,
     OPT_OUTFORM, OPT_CONTENT
@@ -96,8 +97,7 @@ const OPTIONS smime_options[] = {
     {"indef", OPT_INDEF, '-', "Same as -stream" },
     {"noindef", OPT_NOINDEF, '-', "Disable CMS streaming"},
     {"crlfeol", OPT_CRLFEOL, '-', "Use CRLF as EOL termination instead of CR only"},
-    {"rand", OPT_RAND, 's',
-     "Load the file(s) into the random number generator"},
+    OPT_R_OPTIONS,
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"md", OPT_MD, 's', "Digest algorithm to use when signing or resigning"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
@@ -121,15 +121,12 @@ int smime_main(int argc, char **argv)
     const EVP_CIPHER *cipher = NULL;
     const EVP_MD *sign_md = NULL;
     const char *CAfile = NULL, *CApath = NULL, *prog = NULL;
-    char *certfile = NULL, *keyfile = NULL, *contfile = NULL, *inrand = NULL;
-    char *infile = NULL, *outfile = NULL, *signerfile = NULL, *recipfile =
-        NULL;
-    char *passinarg = NULL, *passin = NULL, *to = NULL, *from =
-        NULL, *subject = NULL;
+    char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
+    char *infile = NULL, *outfile = NULL, *signerfile = NULL, *recipfile = NULL;
+    char *passinarg = NULL, *passin = NULL, *to = NULL, *from = NULL, *subject = NULL;
     OPTION_CHOICE o;
     int noCApath = 0, noCAfile = 0;
-    int flags = PKCS7_DETACHED, operation = 0, ret = 0, need_rand = 0, indef =
-        0;
+    int flags = PKCS7_DETACHED, operation = 0, ret = 0, indef = 0;
     int informat = FORMAT_SMIME, outformat = FORMAT_SMIME, keyform =
         FORMAT_PEM;
     int vpmtouched = 0, rv = 0;
@@ -224,9 +221,9 @@ int smime_main(int argc, char **argv)
             flags |= PKCS7_CRLFEOL;
             mime_eol = "\r\n";
             break;
-        case OPT_RAND:
-            inrand = opt_arg();
-            need_rand = 1;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
@@ -351,7 +348,6 @@ int smime_main(int argc, char **argv)
         }
         signerfile = NULL;
         keyfile = NULL;
-        need_rand = 1;
     } else if (operation == SMIME_DECRYPT) {
         if (recipfile == NULL && keyfile == NULL) {
             BIO_printf(bio_err,
@@ -363,7 +359,6 @@ int smime_main(int argc, char **argv)
             BIO_printf(bio_err, "No recipient(s) certificate(s) specified\n");
             goto opthelp;
         }
-        need_rand = 1;
     } else if (!operation) {
         goto opthelp;
     }
@@ -371,13 +366,6 @@ int smime_main(int argc, char **argv)
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
-    }
-
-    if (need_rand) {
-        app_RAND_load_file(NULL, (inrand != NULL));
-        if (inrand != NULL)
-            BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-                       app_RAND_load_files(inrand));
     }
 
     ret = 2;
@@ -603,8 +591,6 @@ int smime_main(int argc, char **argv)
     }
     ret = 0;
  end:
-    if (need_rand)
-        app_RAND_write_file(NULL);
     if (ret)
         ERR_print_errors(bio_err);
     sk_X509_pop_free(encerts, X509_free);
