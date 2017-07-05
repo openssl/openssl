@@ -48,28 +48,38 @@ const OPTIONS engine_options[] = {
 
 static int append_buf(char **buf, int *size, const char *s)
 {
-    if (*buf == NULL) {
-        *size = 256;
-        *buf = app_malloc(*size, "engine buffer");
-        **buf = '\0';
-    }
+    const int expand = 256;
+    int len = strlen(s) + 1;
+    char *p = *buf;
 
-    if (strlen(*buf) + strlen(s) >= (unsigned int)*size) {
-        char *tmp;
-        *size += 256;
-        tmp = OPENSSL_realloc(*buf, *size);
-        if (tmp == NULL) {
-            OPENSSL_free(*buf);
-            *buf = NULL;
-            return 0;
+    if (p == NULL) {
+        *size = ((len + expand - 1) / expand) * expand;
+        p = *buf = app_malloc(*size, "engine buffer");
+    } else {
+        const int blen = strlen(p);
+
+        if (blen > 0)
+            len += 2 + blen;
+
+        if (len > *size) {
+            *size = ((len + expand - 1) / expand) * expand;
+            p = OPENSSL_realloc(p, *size);
+            if (p == NULL) {
+                OPENSSL_free(*buf);
+                *buf = NULL;
+                return 0;
+            }
+            *buf = p;
         }
-        *buf = tmp;
+
+        if (blen > 0) {
+            p += blen;
+            *p++ = ',';
+            *p++ = ' ';
+        }
     }
 
-    if (**buf != '\0')
-        strcat(*buf, ", ");
-    strcat(*buf, s);
-
+    strcpy(p, s);
     return 1;
 }
 
