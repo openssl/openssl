@@ -55,6 +55,10 @@ The given B<ui_method> and B<ui_data_data> will be reused by all
 functions that use B<OSSL_STORE_CTX> when interaction is needed.
 The given B<post_process> and B<post_process_data> will be reused by
 OSSL_STORE_load() to manipulate or drop the value to be returned.
+The B<post_process> function drops values by returning B<NULL>, which
+will cause OSSL_STORE_load() to start its process over with loading
+the next object, until B<post_process> returns something other than
+B<NULL>, or the end of data is reached as indicated by OSSL_STORE_eof().
 
 OSSL_STORE_ctrl() takes a B<OSSL_STORE_CTX>, and command number B<cmd> and
 more arguments not specified here.
