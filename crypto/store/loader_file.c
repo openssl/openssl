@@ -480,12 +480,13 @@ static OSSL_STORE_INFO *try_decode_params(const char *pem_name,
         *matchcount = 1;
     }
 
-    if ((pkey = EVP_PKEY_new()) == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_TRY_DECODE_PARAMS, ERR_R_EVP_LIB);
-        return NULL;
-    }
-
     if (slen > 0) {
+        if ((pkey = EVP_PKEY_new()) == NULL) {
+            OSSL_STOREerr(OSSL_STORE_F_TRY_DECODE_PARAMS, ERR_R_EVP_LIB);
+            return NULL;
+        }
+
+
         if (EVP_PKEY_set_type_str(pkey, pem_name, slen)
             && (ameth = EVP_PKEY_get0_asn1(pkey)) != NULL
             && ameth->param_decode != NULL
@@ -493,21 +494,36 @@ static OSSL_STORE_INFO *try_decode_params(const char *pem_name,
             ok = 1;
     } else {
         int i;
+        EVP_PKEY *tmp_pkey = NULL;
 
         for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
             const unsigned char *tmp_blob = blob;
 
+            if (tmp_pkey == NULL && (tmp_pkey = EVP_PKEY_new()) == NULL) {
+                OSSL_STOREerr(OSSL_STORE_F_TRY_DECODE_PARAMS, ERR_R_EVP_LIB);
+                break;
+            }
+
             ameth = EVP_PKEY_asn1_get0(i);
             if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
                 continue;
-            if (EVP_PKEY_set_type(pkey, ameth->pkey_id)
-                && (ameth = EVP_PKEY_get0_asn1(pkey)) != NULL
+
+            if (EVP_PKEY_set_type(tmp_pkey, ameth->pkey_id)
+                && (ameth = EVP_PKEY_get0_asn1(tmp_pkey)) != NULL
                 && ameth->param_decode != NULL
-                && ameth->param_decode(pkey, &tmp_blob, len)) {
+                && ameth->param_decode(tmp_pkey, &tmp_blob, len)) {
+                if (pkey != NULL)
+                    EVP_PKEY_free(tmp_pkey);
+                else
+                    pkey = tmp_pkey;
+                tmp_pkey = NULL;
                 (*matchcount)++;
-                ok = 1;
-                break;
             }
+        }
+
+        EVP_PKEY_free(tmp_pkey);
+        if (*matchcount == 1) {
+            ok = 1;
         }
     }
 
