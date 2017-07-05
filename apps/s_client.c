@@ -3009,6 +3009,7 @@ int s_client_main(int argc, char **argv)
             print_stuff(bio_c_out, con, 1);
         SSL_free(con);
     }
+    SSL_SESSION_free(psksess);
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(next_proto.data);
 #endif
