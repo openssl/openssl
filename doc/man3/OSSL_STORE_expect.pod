@@ -2,13 +2,20 @@
 
 =head1 NAME
 
-OSSL_STORE_expect - Specify what object type is expected
+OSSL_STORE_expect,
+OSSL_STORE_supports_search,
+OSSL_STORE_find
+- Specify what object type is expected
 
 =head1 SYNOPSIS
 
  #include <openssl/store.h>
 
  int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type);
+
+ int OSSL_STORE_supports_search(OSSL_STORE_CTX *ctx, int criterion_type);
+ 
+ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, OSSL_STORE_SEARCH *search);
 
 =head1 DESCRIPTION
 
@@ -20,8 +27,16 @@ that it expects the type B<OSSL_STORE_INFO_CERT>.
 All known object types (see L<OSSL_STORE_INFO(3)/SUPPORTED OBJECTS>)
 except for B<OSSL_STORE_INFO_NAME> are supported.
 
-OSSL_STORE_expect() I<must> be called before the first OSSL_STORE_load()
-of a given session, or it will fail.
+OSSL_STORE_find() helps applications specify a criterion for a more fine
+grained search of objects.
+
+OSSL_STORE_supports_search() checks if the loader of the given OSSL_STORE
+context supports the given search type.
+See L<OSSL_STORE_SEARCH/SUPPORED CRITERION TYPES> for information on the
+supported search criterion types.
+
+OSSL_STORE_expect() and OSSL_STORE_find I<must> be called before the first
+OSSL_STORE_load() of a given session, or they will fail.
 
 =head1 NOTES
 
@@ -37,14 +52,20 @@ method is usually preferable.
 
 OSSL_STORE_expect() returns 1 on success, or 0 on failure.
 
+OSSL_STORE_supports_search() returns 1 if the criterion is supported, or 0
+otherwise.
+
+OSSL_STORE_find() returns 1 on success, or 0 on failure.
+
 =head1 SEE ALSO
 
-L<ossl_store(7)>, L<OSSL_STORE_INFO(3)>, L<OSSL_STORE_load(3)>
+L<ossl_store(7)>, L<OSSL_STORE_INFO(3)>, L<OSSL_STORE_SEARCH(3)>,
+L<OSSL_STORE_load(3)>
 
 =head1 HISTORY
 
-OSSL_STORE_expect()
-was added to OpenSSL 1.1.1.
+OSSL_STORE_expect(), OSSL_STORE_supports_search() and OSSL_STORE_find()
+were added to OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

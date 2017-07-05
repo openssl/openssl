@@ -18,6 +18,12 @@ B<openssl> B<storeutl>
 [B<-certs>]
 [B<-keys>]
 [B<-crls>]
+[B<-subject arg>]
+[B<-issuer arg>]
+[B<-serial arg>]
+[B<-alias arg>]
+[B<-fingerprint arg>]
+[B<-I<digest>>]
 B<uri> ...
 
 =head1 DESCRIPTION
@@ -72,6 +78,35 @@ Fetch objects recursively when possible.
 Only select the certificates, keys or CRLs from the given URI.
 However, if this URI would return a set of names (URIs), those are always
 returned.
+
+=item B<-subject arg>
+
+Search for an object having the subject name B<arg>.
+The arg must be formatted as I</type0=value0/type1=value1/type2=...>,
+characters may be escaped by \ (backslash), no spaces are skipped.
+
+=item B<-issuer arg>
+
+=item B<-serial arg>
+
+Search for an object having the given issuer name and serial number.
+These two options I<must> be used together.
+The issuer arg must be formatted as I</type0=value0/type1=value1/type2=...>,
+characters may be escaped by \ (backslash), no spaces are skipped.
+The serial arg may be specified as a decimal value or a hex value if preceded
+by B<0x>.
+
+=item B<-alias arg>
+
+Search for an object having the given alias.
+
+=item B<-fingerprint arg>
+
+Search for an object having the given fingerprint.
+
+=item B<-I<digest>>
+
+The digest that was used to compute the fingerprint given with B<-fingerprint>.
 
 =back
 
