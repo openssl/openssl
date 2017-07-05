@@ -64,7 +64,7 @@ only).
  /*
   * OSSL_STORE_eof() simulates file semantics for any repository to signal
   * that no more data can be expected
-  */ 
+  */
  while (!OSSL_STORE_eof(ctx)) {
      OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
 
