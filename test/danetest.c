@@ -133,6 +133,8 @@ static STACK_OF(X509) *load_chain(BIO *fp, int nelem)
         OPENSSL_free(name);
         OPENSSL_free(header);
         OPENSSL_free(data);
+        name = header = NULL;
+        data = NULL;
     }
 
     if (count == nelem) {

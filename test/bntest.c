@@ -1367,9 +1367,9 @@ static int file_modexp(STANZA *s)
         "0000000000000000000000000000000000000000000000000000000000000000"
         "0000000000000000000000000000000000000000000000000000000000000000"
         "0000000000000000000000000000000000000000000000000000000001");
-    BN_mod_exp(d, a, b, c, ctx);
-    BN_mul(e, a, a, ctx);
-    if (!TEST_BN_eq(d, e))
+    if (!TEST_true(BN_mod_exp(d, a, b, c, ctx))
+        || !TEST_true(BN_mul(e, a, a, ctx))
+        || !TEST_BN_eq(d, e))
         goto err;
 
     st = 1;
