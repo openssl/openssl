@@ -79,11 +79,11 @@ static int verify_cb(int ok, X509_STORE_CTX *ctx);
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ENGINE, OPT_CONFIG, OPT_SECTION, OPT_QUERY, OPT_DATA,
-    OPT_DIGEST, OPT_RAND, OPT_TSPOLICY, OPT_NO_NONCE, OPT_CERT,
+    OPT_DIGEST, OPT_TSPOLICY, OPT_NO_NONCE, OPT_CERT,
     OPT_IN, OPT_TOKEN_IN, OPT_OUT, OPT_TOKEN_OUT, OPT_TEXT,
     OPT_REPLY, OPT_QUERYFILE, OPT_PASSIN, OPT_INKEY, OPT_SIGNER,
     OPT_CHAIN, OPT_VERIFY, OPT_CAPATH, OPT_CAFILE, OPT_UNTRUSTED,
-    OPT_MD, OPT_V_ENUM
+    OPT_MD, OPT_V_ENUM, OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS ts_options[] = {
@@ -93,8 +93,7 @@ const OPTIONS ts_options[] = {
     {"query", OPT_QUERY, '-', "Generate a TS query"},
     {"data", OPT_DATA, '<', "File to hash"},
     {"digest", OPT_DIGEST, 's', "Digest (as a hex string)"},
-    {"rand", OPT_RAND, 's',
-     "Load the file(s) into the random number generator"},
+    OPT_R_OPTIONS,
     {"tspolicy", OPT_TSPOLICY, 's', "Policy OID to use"},
     {"no_nonce", OPT_NO_NONCE, '-', "Do not include a nonce"},
     {"cert", OPT_CERT, '-', "Put cert request into query"},
@@ -158,7 +157,7 @@ int ts_main(int argc, char **argv)
     const char *section = NULL;
     char **helpp;
     char *password = NULL;
-    char *data = NULL, *digest = NULL, *rnd = NULL, *policy = NULL;
+    char *data = NULL, *digest = NULL, *policy = NULL;
     char *in = NULL, *out = NULL, *queryfile = NULL, *passin = NULL;
     char *inkey = NULL, *signer = NULL, *chain = NULL, *CApath = NULL;
     const EVP_MD *md = NULL;
@@ -207,8 +206,9 @@ int ts_main(int argc, char **argv)
         case OPT_DIGEST:
             digest = opt_arg();
             break;
-        case OPT_RAND:
-            rnd = opt_arg();
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_TSPOLICY:
             policy = opt_arg();
@@ -275,16 +275,6 @@ int ts_main(int argc, char **argv)
     if (mode == OPT_ERR || opt_num_rest() != 0)
         goto opthelp;
 
-    /* Seed the random number generator if it is going to be used. */
-    if (mode == OPT_QUERY && !no_nonce) {
-        if (!app_RAND_load_file(NULL, 1) && rnd == NULL)
-            BIO_printf(bio_err, "warning, not much extra random "
-                       "data, consider using the -rand option\n");
-        if (rnd != NULL)
-            BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-                       app_RAND_load_files(rnd));
-    }
-
     if (mode == OPT_REPLY && passin &&
         !app_passwd(passin, NULL, &password, NULL)) {
         BIO_printf(bio_err, "Error getting password.\n");
@@ -328,7 +318,6 @@ int ts_main(int argc, char **argv)
 
  end:
     X509_VERIFY_PARAM_free(vpm);
-    app_RAND_write_file(NULL);
     NCONF_free(conf);
     OPENSSL_free(password);
     return (ret);

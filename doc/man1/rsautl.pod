@@ -18,6 +18,8 @@ B<openssl> B<rsautl>
 [B<-verify>]
 [B<-encrypt>]
 [B<-decrypt>]
+[B<-rand file...>]
+[B<-writerand file>]
 [B<-pkcs>]
 [B<-ssl>]
 [B<-raw>]
@@ -79,6 +81,19 @@ Encrypt the input data using an RSA public key.
 =item B<-decrypt>
 
 Decrypt the input data using an RSA private key.
+
+=item B<-rand file...>
+
+A file or files containing random data used to seed the random number
+generator.
+Multiple files can be specified separated by an OS-dependent character.
+The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
+all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
 
 =item B<-pkcs, -oaep, -ssl, -raw>
 

@@ -23,6 +23,7 @@ B<openssl> B<dgst>
 [B<-signature filename>]
 [B<-hmac key>]
 [B<-fips-fingerprint>]
+[B<-rand file...>]
 [B<-engine id>]
 [B<-engine_impl>]
 [B<file...>]
@@ -149,13 +150,18 @@ for example exactly 32 chars for gost-mac.
 
 =back
 
-=item B<-rand file(s)>
+=item B<-rand file...>
 
 A file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)>).
+generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
 
 =item B<-fips-fingerprint>
 

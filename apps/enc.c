@@ -43,7 +43,8 @@ typedef enum OPTION_choice {
     OPT_E, OPT_IN, OPT_OUT, OPT_PASS, OPT_ENGINE, OPT_D, OPT_P, OPT_V,
     OPT_NOPAD, OPT_SALT, OPT_NOSALT, OPT_DEBUG, OPT_UPPER_P, OPT_UPPER_A,
     OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
-    OPT_UPPER_S, OPT_IV, OPT_MD, OPT_CIPHER
+    OPT_UPPER_S, OPT_IV, OPT_MD, OPT_CIPHER,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS enc_options[] = {
@@ -74,6 +75,7 @@ const OPTIONS enc_options[] = {
     {"md", OPT_MD, 's', "Use specified digest to create a key from the passphrase"},
     {"none", OPT_NONE, '-', "Don't encrypt"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
+    OPT_R_OPTIONS,
 #ifdef ZLIB
     {"z", OPT_Z, '-', "Use zlib as the 'encryption'"},
 #endif
@@ -254,6 +256,10 @@ int enc_main(int argc, char **argv)
             break;
         case OPT_NONE:
             cipher = NULL;
+            break;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         }
     }

@@ -58,7 +58,8 @@ typedef enum OPTION_choice {
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
     OPT_SUBJECT_HASH_OLD,
     OPT_ISSUER_HASH_OLD,
-    OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES
+    OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS x509_options[] = {
@@ -118,6 +119,7 @@ const OPTIONS x509_options[] = {
     {"text", OPT_TEXT, '-', "Print the certificate in text form"},
     {"C", OPT_C, '-', "Print out C code forms"},
     {"extfile", OPT_EXTFILE, '<', "File with X509V3 extensions to add"},
+    OPT_R_OPTIONS,
     {"extensions", OPT_EXTENSIONS, 's', "Section from config file to use"},
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"certopt", OPT_CERTOPT, 's', "Various certificate text options"},
@@ -166,7 +168,7 @@ int x509_main(int argc, char **argv)
     char *prog;
     int x509req = 0, days = DEF_DAYS, modulus = 0, pubkey = 0, pprint = 0;
     int C = 0, CAformat = FORMAT_PEM, CAkeyformat = FORMAT_PEM;
-    int fingerprint = 0, reqfile = 0, need_rand = 0, checkend = 0;
+    int fingerprint = 0, reqfile = 0, checkend = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyformat = FORMAT_PEM;
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
     int noout = 0, sign_flag = 0, CA_flag = 0, CA_createserial = 0, email = 0;
@@ -227,7 +229,7 @@ int x509_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_REQ:
-            reqfile = need_rand = 1;
+            reqfile = 1;
             break;
 
         case OPT_SIGOPT:
@@ -247,18 +249,20 @@ int x509_main(int argc, char **argv)
         case OPT_EXTFILE:
             extfile = opt_arg();
             break;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
+            break;
         case OPT_EXTENSIONS:
             extsect = opt_arg();
             break;
         case OPT_SIGNKEY:
             keyfile = opt_arg();
             sign_flag = ++num;
-            need_rand = 1;
             break;
         case OPT_CA:
             CAfile = opt_arg();
             CA_flag = ++num;
-            need_rand = 1;
             break;
         case OPT_CAKEY:
             CAkeyfile = opt_arg();
@@ -459,9 +463,6 @@ int x509_main(int argc, char **argv)
     out = bio_open_default(outfile, 'w', outformat);
     if (out == NULL)
         goto end;
-
-    if (need_rand)
-        app_RAND_load_file(NULL, 0);
 
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
@@ -793,7 +794,6 @@ int x509_main(int argc, char **argv)
                         goto end;
                 }
 
-                assert(need_rand);
                 if (!sign(x, Upkey, days, clrext, digest, extconf, extsect, preserve_dates))
                     goto end;
             } else if (CA_flag == i) {
@@ -805,7 +805,6 @@ int x509_main(int argc, char **argv)
                         goto end;
                 }
 
-                assert(need_rand);
                 if (!x509_certify(ctx, CAfile, digest, x, xca,
                                   CApkey, sigopts,
                                   CAserial, CA_createserial, days, clrext,
@@ -882,8 +881,6 @@ int x509_main(int argc, char **argv)
     }
     ret = 0;
  end:
-    if (need_rand)
-        app_RAND_write_file(NULL);
     NCONF_free(extconf);
     BIO_free_all(out);
     X509_STORE_free(ctx);

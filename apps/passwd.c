@@ -65,7 +65,8 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_IN,
     OPT_NOVERIFY, OPT_QUIET, OPT_TABLE, OPT_REVERSE, OPT_APR1,
-    OPT_1, OPT_5, OPT_6, OPT_CRYPT, OPT_AIXMD5, OPT_SALT, OPT_STDIN
+    OPT_1, OPT_5, OPT_6, OPT_CRYPT, OPT_AIXMD5, OPT_SALT, OPT_STDIN,
+    OPT_R_ENUM,
 } OPTION_CHOICE;
 
 const OPTIONS passwd_options[] = {
@@ -90,6 +91,7 @@ const OPTIONS passwd_options[] = {
 # ifndef OPENSSL_NO_DES
     {"crypt", OPT_CRYPT, '-', "Standard Unix password algorithm (default)"},
 # endif
+    OPT_R_OPTIONS,
     {NULL}
 };
 
@@ -181,6 +183,10 @@ int passwd_main(int argc, char **argv)
                 goto opthelp;
             in_stdin = 1;
             pw_source_defined = 1;
+            break;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         }
     }

@@ -8,7 +8,8 @@ ts - Time Stamping Authority tool (client/server)
 
 B<openssl> B<ts>
 B<-query>
-[B<-rand> file:file...]
+[B<-rand file...>]
+[B<-writerand file>]
 [B<-config> configfile]
 [B<-data> file_to_hash]
 [B<-digest> digest_bytes]
@@ -131,11 +132,18 @@ request with the following options:
 
 =over 4
 
-=item B<-rand> file:file...
+=item B<-rand file...>
 
-The files containing random data for seeding the random number
-generator. Multiple files can be specified, the separator is B<;> for
-MS-Windows, B<,> for VMS and B<:> for all other platforms. (Optional)
+A file or files containing random data used to seed the random number
+generator.
+Multiple files can be specified separated by an OS-dependent character.
+The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
+all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
 
 =item B<-config> configfile
 

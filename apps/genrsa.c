@@ -33,7 +33,8 @@ static int genrsa_cb(int p, int n, BN_GENCB *cb);
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_3, OPT_F4, OPT_ENGINE,
-    OPT_OUT, OPT_RAND, OPT_PASSOUT, OPT_CIPHER
+    OPT_OUT, OPT_PASSOUT, OPT_CIPHER,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS genrsa_options[] = {
@@ -42,8 +43,7 @@ const OPTIONS genrsa_options[] = {
     {"F4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
     {"f4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
     {"out", OPT_OUT, 's', "Output the key to specified file"},
-    {"rand", OPT_RAND, 's',
-     "Load the file(s) into the random number generator"},
+    OPT_R_OPTIONS,
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
 # ifndef OPENSSL_NO_ENGINE
@@ -65,7 +65,7 @@ int genrsa_main(int argc, char **argv)
     int ret = 1, num = DEFBITS, private = 0;
     unsigned long f4 = RSA_F4;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL;
-    char *inrand = NULL, *prog, *hexe, *dece;
+    char *prog, *hexe, *dece;
     OPTION_CHOICE o;
 
     if (bn == NULL || cb == NULL)
@@ -96,8 +96,9 @@ int genrsa_main(int argc, char **argv)
         case OPT_ENGINE:
             eng = setup_engine(opt_arg(), 0);
             break;
-        case OPT_RAND:
-            inrand = opt_arg();
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_PASSOUT:
             passoutarg = opt_arg();
@@ -124,15 +125,6 @@ int genrsa_main(int argc, char **argv)
     if (out == NULL)
         goto end;
 
-    if (!app_RAND_load_file(NULL, 1) && inrand == NULL
-        && !RAND_status()) {
-        BIO_printf(bio_err,
-                   "warning, not much extra random data, consider using the -rand option\n");
-    }
-    if (inrand != NULL)
-        BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-                   app_RAND_load_files(inrand));
-
     BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus\n",
                num);
     rsa = eng ? RSA_new_method(eng) : RSA_new();
@@ -141,8 +133,6 @@ int genrsa_main(int argc, char **argv)
 
     if (!BN_set_word(bn, f4) || !RSA_generate_key_ex(rsa, num, bn, cb))
         goto end;
-
-    app_RAND_write_file(NULL);
 
     RSA_get0_key(rsa, NULL, &e, NULL);
     hexe = BN_bn2hex(e);

@@ -32,7 +32,8 @@ typedef enum OPTION_choice {
     OPT_ENGINE, OPT_IN, OPT_OUT, OPT_ASN1PARSE, OPT_HEXDUMP,
     OPT_RAW, OPT_OAEP, OPT_SSL, OPT_PKCS, OPT_X931,
     OPT_SIGN, OPT_VERIFY, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
-    OPT_PUBIN, OPT_CERTIN, OPT_INKEY, OPT_PASSIN, OPT_KEYFORM
+    OPT_PUBIN, OPT_CERTIN, OPT_INKEY, OPT_PASSIN, OPT_KEYFORM,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS rsautl_options[] = {
@@ -57,6 +58,7 @@ const OPTIONS rsautl_options[] = {
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt with private key"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    OPT_R_OPTIONS,
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
@@ -153,6 +155,10 @@ int rsautl_main(int argc, char **argv)
         case OPT_PASSIN:
             passinarg = opt_arg();
             break;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -168,9 +174,6 @@ int rsautl_main(int argc, char **argv)
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
     }
-
-/* FIXME: seed PRNG only if needed */
-    app_RAND_load_file(NULL, 0);
 
     switch (key_type) {
     case KEY_PRIVKEY:
