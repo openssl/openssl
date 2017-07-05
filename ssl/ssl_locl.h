@@ -551,6 +551,8 @@ struct ssl_session_st {
         /* Session lifetime hint in seconds */
         unsigned long tick_lifetime_hint;
         uint32_t tick_age_add;
+        unsigned char *tick_nonce;
+        size_t tick_nonce_len;
         int tick_identity;
         /* Max number of bytes that can be sent as early data */
         uint32_t max_early_data;

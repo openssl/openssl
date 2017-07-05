@@ -2421,9 +2421,15 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     unsigned long ticket_lifetime_hint, age_add = 0;
     unsigned int sess_len;
     RAW_EXTENSION *exts = NULL;
+    PACKET nonce;
 
     if (!PACKET_get_net_4(pkt, &ticket_lifetime_hint)
-        || (SSL_IS_TLS13(s) && !PACKET_get_net_4(pkt, &age_add))
+        || (SSL_IS_TLS13(s)
+            && (!PACKET_get_net_4(pkt, &age_add)
+                || !PACKET_get_length_prefixed_1(pkt, &nonce)
+                || PACKET_remaining(&nonce) == 0
+                || !PACKET_memdup(&nonce, &s->session->ext.tick_nonce,
+                                  &s->session->ext.tick_nonce_len)))
         || !PACKET_get_net_2(pkt, &ticklen)
         || (!SSL_IS_TLS13(s) && PACKET_remaining(pkt) != ticklen)
         || (SSL_IS_TLS13(s)
