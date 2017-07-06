@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,7 +21,7 @@ int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
     int n, i, l, o, min_l = 11, strict = 0;
 
     if (d->type != V_ASN1_UTCTIME)
-        return (0);
+        return 0;
     l = d->length;
     a = (char *)d->data;
     o = 0;
@@ -150,9 +150,9 @@ int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str)
                 return 0;
             s->type = V_ASN1_UTCTIME;
         }
-        return (1);
-    } else
-        return (0);
+        return 1;
+    }
+    return 0;
 }
 
 ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
@@ -166,7 +166,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
     char *p;
     struct tm *ts;
     struct tm data;
-    size_t len = 20;
+    const size_t len = 20;
     int free_s = 0;
 
     if (s == NULL) {
@@ -199,15 +199,14 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
         s->data = (unsigned char *)p;
     }
 
-    sprintf(p, "%02d%02d%02d%02d%02d%02dZ", ts->tm_year % 100,
-            ts->tm_mon + 1, ts->tm_mday, ts->tm_hour, ts->tm_min,
-            ts->tm_sec);
-    s->length = strlen(p);
+    s->length = BIO_snprintf(p, len, "%02d%02d%02d%02d%02d%02dZ",
+                             ts->tm_year % 100, ts->tm_mon + 1, ts->tm_mday,
+                             ts->tm_hour, ts->tm_min, ts->tm_sec);
     s->type = V_ASN1_UTCTIME;
 #ifdef CHARSET_EBCDIC_not
     ebcdic2ascii(s->data, s->data, s->length);
 #endif
-    return (s);
+    return s;
  err:
     if (free_s)
         ASN1_UTCTIME_free(s);
@@ -272,10 +271,9 @@ int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
     if (BIO_printf(bp, "%s %2d %02d:%02d:%02d %d%s",
                    _asn1_mon[M - 1], d, h, m, s, y + 1900,
                    (gmt) ? " GMT" : "") <= 0)
-        return (0);
-    else
-        return (1);
+        return 0;
+    return 1;
  err:
     BIO_write(bp, "Bad time value", 14);
-    return (0);
+    return 0;
 }
