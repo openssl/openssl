@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -81,17 +81,20 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(const ASN1_TIME *t,
         goto done;
     }
 
-    /* grow the string */
+    /*
+     * Grow the string by two bytes.
+     * The actual allocation is t->length + 3 to include a terminator byte.
+     */
     if (!ASN1_STRING_set(ret, NULL, t->length + 2))
         goto err;
     str = (char *)ret->data;
     /* Work out the century and prepend */
-    if (t->data[0] >= '5')
-        strcpy(str, "19");
-    else
-        strcpy(str, "20");
-
-    strcat(str, (const char *)t->data);
+    memcpy(str, t->data[0] >= '5' ? "19" : "20", 2);
+    /*
+     * t->length + 1 is the size of the data and the allocated buffer has
+     * this much space after the first two characters.
+     */
+    OPENSSL_strlcpy(str + 2, (const char *)t->data, t->length + 1);
 
  done:
    if (out != NULL && *out == NULL)
