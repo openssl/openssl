@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -82,12 +82,9 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
         ntmp = OPENSSL_malloc(nlen);
         if (ntmp == NULL)
             goto err;
-        strcpy(ntmp, objtmp);
-        strcat(ntmp, " - ");
-        strcat(ntmp, vtmp->name);
+        BIO_snprintf(ntmp, nlen, "%s - %s", objtmp, vtmp->name);
         OPENSSL_free(vtmp->name);
         vtmp->name = ntmp;
-
     }
     if (ret == NULL && tret == NULL)
         return sk_CONF_VALUE_new_null();
