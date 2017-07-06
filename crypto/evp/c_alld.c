@@ -46,4 +46,5 @@ void openssl_add_all_digests_int(void)
     EVP_add_digest(EVP_blake2b512());
     EVP_add_digest(EVP_blake2s256());
 #endif
+    EVP_add_digest(EVP_sha3_256());
 }
