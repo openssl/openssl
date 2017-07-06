@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -46,7 +46,7 @@ char *BN_bn2hex(const BIGNUM *a)
     }
     *p = '\0';
  err:
-    return (buf);
+    return buf;
 }
 
 /* Must 'OPENSSL_free' the returned data */
@@ -128,7 +128,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
     int num;
 
     if ((a == NULL) || (*a == '\0'))
-        return (0);
+        return 0;
 
     if (*a == '-') {
         neg = 1;
@@ -143,12 +143,12 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
 
     num = i + neg;
     if (bn == NULL)
-        return (num);
+        return num;
 
     /* a is the start of the hex digits, and it is 'i' long */
     if (*bn == NULL) {
         if ((ret = BN_new()) == NULL)
-            return (0);
+            return 0;
     } else {
         ret = *bn;
         BN_zero(ret);
@@ -186,11 +186,11 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
     /* Don't set the negative flag if it's zero. */
     if (ret->top != 0)
         ret->neg = neg;
-    return (num);
+    return num;
  err:
     if (*bn == NULL)
         BN_free(ret);
-    return (0);
+    return 0;
 }
 
 int BN_dec2bn(BIGNUM **bn, const char *a)
@@ -201,7 +201,7 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
     int num;
 
     if ((a == NULL) || (*a == '\0'))
-        return (0);
+        return 0;
     if (*a == '-') {
         neg = 1;
         a++;
@@ -215,7 +215,7 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
 
     num = i + neg;
     if (bn == NULL)
-        return (num);
+        return num;
 
     /*
      * a is the start of the digits, and it is 'i' long. We chop it into
@@ -223,7 +223,7 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
      */
     if (*bn == NULL) {
         if ((ret = BN_new()) == NULL)
-            return (0);
+            return 0;
     } else {
         ret = *bn;
         BN_zero(ret);
@@ -256,11 +256,11 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
     /* Don't set the negative flag if it's zero. */
     if (ret->top != 0)
         ret->neg = neg;
-    return (num);
+    return num;
  err:
     if (*bn == NULL)
         BN_free(ret);
-    return (0);
+    return 0;
 }
 
 int BN_asc2bn(BIGNUM **bn, const char *a)
@@ -290,11 +290,11 @@ int BN_print_fp(FILE *fp, const BIGNUM *a)
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL)
-        return (0);
+        return 0;
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = BN_print(b, a);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 # endif
 
@@ -320,7 +320,7 @@ int BN_print(BIO *bp, const BIGNUM *a)
     }
     ret = 1;
  end:
-    return (ret);
+    return ret;
 }
 
 char *BN_options(void)
@@ -338,5 +338,5 @@ char *BN_options(void)
                 (int)sizeof(BN_ULONG) * 8, (int)sizeof(BN_ULONG) * 8);
 #endif
     }
-    return (data);
+    return data;
 }
