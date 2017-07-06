@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -100,14 +100,14 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 
     if ((minsize > 0) && (nchar < minsize)) {
         ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY, ASN1_R_STRING_TOO_SHORT);
-        sprintf(strbuf, "%ld", minsize);
+        BIO_snprintf(strbuf, sizeof(strbuf), "%ld", minsize);
         ERR_add_error_data(2, "minsize=", strbuf);
         return -1;
     }
 
     if ((maxsize > 0) && (nchar > maxsize)) {
         ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY, ASN1_R_STRING_TOO_LONG);
-        sprintf(strbuf, "%ld", maxsize);
+        BIO_snprintf(strbuf, sizeof(strbuf), "%ld", maxsize);
         ERR_add_error_data(2, "maxsize=", strbuf);
         return -1;
     }
