@@ -48,23 +48,14 @@
 #endif
 
 #define RAND_FILE_SIZE 1024
+#define RFILE ".rnd"
 
 #ifdef OPENSSL_SYS_VMS
 /*
- * Misc hacks needed for specific cases.
- *
  * __FILE_ptr32 is a type provided by DEC C headers (types.h specifically)
  * to make sure the FILE* is a 32-bit pointer no matter what.  We know that
- * stdio function return this type (a study of stdio.h proves it).
- */
-# if __INITIAL_POINTER_SIZE == 64
-#  pragma pointer_size save
-#  pragma pointer_size 32
-typedef char *char_ptr32;
-#  pragma pointer_size restore
-# endif
-
-/*
+ * stdio functions return this type (a study of stdio.h proves it).
+ *
  * This declaration is a nasty hack to get around vms' extension to fopen for
  * passing in sharing options being disabled by /STANDARD=ANSI89
  */
@@ -72,11 +63,8 @@ static __FILE_ptr32 (*const vms_fopen)(const char *, const char *, ...) =
         (__FILE_ptr32 (*)(const char *, const char *, ...))fopen;
 # define VMS_OPEN_ATTRS \
         "shr=get,put,upd,del","ctx=bin,stm","rfm=stm","rat=none","mrs=0"
-
-# define openssl_fopen(fname,mode) vms_fopen((fname), (mode), VMS_OPEN_ATTRS)
+# define openssl_fopen(fname, mode) vms_fopen((fname), (mode), VMS_OPEN_ATTRS)
 #endif
-
-#define RFILE ".rnd"
 
 /*
  * Note that these functions are intended for seed files only. Entropy
