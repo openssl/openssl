@@ -23,11 +23,16 @@ int ERR_load_RAND_strings(void);
  * RAND function codes.
  */
 # define RAND_F_RAND_BYTES                                100
+# define RAND_F_RAND_LOAD_FILE                            101
+# define RAND_F_RAND_WRITE_FILE                           102
 
 /*
  * RAND reason codes.
  */
+# define RAND_R_CANNOT_OPEN_FILE                          102
 # define RAND_R_FUNC_NOT_IMPLEMENTED                      101
+# define RAND_R_FWRITE_ERROR                              103
+# define RAND_R_NOT_A_REGULAR_FILE                        104
 # define RAND_R_PRNG_NOT_SEEDED                           100
 
 #endif
