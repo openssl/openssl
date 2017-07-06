@@ -94,7 +94,7 @@ my @A_jagged = ([0,0], [1,0], [2,0], [3,0], [4,0],
 
 my @T       = map("%zmm$_",(5..7,16..17));
 my @Chi     = map("%zmm$_",(18..22));
-my @Theta   = map("%zmm$_",(33,23..26));
+my @Theta   = map("%zmm$_",(33,23..26));	# invalid @Theta[0] is not typo
 my @Rhotate = map("%zmm$_",(27..31));
 
 my ($C00,$D00) = @T[0..1];
