@@ -312,7 +312,7 @@ int enc_main(int argc, char **argv)
             for (;;) {
                 char prompt[200];
 
-                sprintf(prompt, "enter %s %s password:",
+                BIO_snprintf(prompt, sizeof(prompt), "enter %s %s password:",
                         OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
                         (enc) ? "encryption" : "decryption");
                 strbuf[0] = '\0';
@@ -565,7 +565,7 @@ int enc_main(int argc, char **argv)
 #endif
     release_engine(e);
     OPENSSL_free(pass);
-    return (ret);
+    return ret;
 }
 
 static void show_ciphers(const OBJ_NAME *name, void *arg)
@@ -599,7 +599,7 @@ static int set_hex(char *in, unsigned char *out, int size)
     n = strlen(in);
     if (n > (size * 2)) {
         BIO_printf(bio_err, "hex string is too long\n");
-        return (0);
+        return 0;
     }
     memset(out, 0, size);
     for (i = 0; i < n; i++) {
@@ -609,7 +609,7 @@ static int set_hex(char *in, unsigned char *out, int size)
             break;
         if (!isxdigit(j)) {
             BIO_printf(bio_err, "non-hex digit\n");
-            return (0);
+            return 0;
         }
         j = (unsigned char)OPENSSL_hexchar2int(j);
         if (i & 1)
@@ -617,5 +617,5 @@ static int set_hex(char *in, unsigned char *out, int size)
         else
             out[i / 2] = (j << 4);
     }
-    return (1);
+    return 1;
 }
