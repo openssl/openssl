@@ -113,7 +113,7 @@ __KeccakF1600:
 .align	32
 .Loop_avx512:
 	######################################### Theta
-	#vpermq		$A00,@Theta[0],$A00
+	#vpermq		$A00,@Theta[0],$A00	# doesn't actually change order
 	vpermq		$A01,@Theta[1],$A01
 	vpermq		$A02,@Theta[2],$A02
 	vpermq		$A03,@Theta[3],$A03
