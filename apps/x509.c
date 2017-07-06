@@ -890,34 +890,27 @@ int x509_main(int argc, char **argv)
     ASN1_OBJECT_free(objtmp);
     release_engine(e);
     OPENSSL_free(passin);
-    return (ret);
+    return ret;
 }
 
-static ASN1_INTEGER *x509_load_serial(const char *CAfile, const char *serialfile,
-                                      int create)
+static ASN1_INTEGER *x509_load_serial(const char *CAfile,
+                                      const char *serialfile, int create)
 {
-    char *buf = NULL, *p;
+    char *buf = NULL;
     ASN1_INTEGER *bs = NULL;
     BIGNUM *serial = NULL;
-    size_t len;
 
-    len = ((serialfile == NULL)
-           ? (strlen(CAfile) + strlen(POSTFIX) + 1)
-           : (strlen(serialfile))) + 1;
-    buf = app_malloc(len, "serial# buffer");
     if (serialfile == NULL) {
-        strcpy(buf, CAfile);
-        for (p = buf; *p; p++)
-            if (*p == '.') {
-                *p = '\0';
-                break;
-            }
-        strcat(buf, POSTFIX);
-    } else {
-        strcpy(buf, serialfile);
+        const char *p = strchr(CAfile, '.');
+        size_t len = p != NULL ? (size_t)(p - CAfile) : strlen(CAfile);
+
+        buf = app_malloc(len + sizeof(POSTFIX), "serial# buffer");
+        memcpy(buf, CAfile, len);
+        memcpy(buf + len, POSTFIX, sizeof(POSTFIX));
+        serialfile = buf;
     }
 
-    serial = load_serial(buf, create, NULL);
+    serial = load_serial(serialfile, create, NULL);
     if (serial == NULL)
         goto end;
 
@@ -926,7 +919,7 @@ static ASN1_INTEGER *x509_load_serial(const char *CAfile, const char *serialfile
         goto end;
     }
 
-    if (!save_serial(buf, NULL, serial, &bs))
+    if (!save_serial(serialfile, NULL, serial, &bs))
         goto end;
 
  end:

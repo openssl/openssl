@@ -27,6 +27,8 @@ NON_EMPTY_TRANSLATION_UNIT
 # define CLCERTS         0x8
 # define CACERTS         0x10
 
+#define PASSWD_BUF_SIZE 2048
+
 static int get_cert_chain(X509 *cert, X509_STORE *store,
                           STACK_OF(X509) **chain);
 int dump_certs_keys_p12(BIO *out, const PKCS12 *p12,
@@ -119,7 +121,7 @@ int pkcs12_main(int argc, char **argv)
 {
     char *infile = NULL, *outfile = NULL, *keyname = NULL, *certfile = NULL;
     char *name = NULL, *csp_name = NULL;
-    char pass[2048] = "", macpass[2048] = "";
+    char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
     int export_cert = 0, options = 0, chain = 0, twopass = 0, keytype = 0;
     int iter = PKCS12_DEFAULT_ITER, maciter = PKCS12_DEFAULT_ITER;
 # ifndef OPENSSL_NO_RC2
@@ -455,7 +457,7 @@ int pkcs12_main(int argc, char **argv)
         }
 
         if (!twopass)
-            strcpy(macpass, pass);
+            OPENSSL_strlcpy(macpass, pass, sizeof(macpass));
 
         p12 = PKCS12_create(cpass, name, key, ucert, certs,
                             key_pbe, cert_pbe, iter, -1, keytype);
@@ -583,7 +585,7 @@ int pkcs12_main(int argc, char **argv)
     OPENSSL_free(badpass);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
-    return (ret);
+    return ret;
 }
 
 int dump_certs_keys_p12(BIO *out, const PKCS12 *p12, const char *pass,

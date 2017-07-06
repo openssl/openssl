@@ -49,7 +49,13 @@
 
 static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx);
 
+/*
+ * Define a HTTP get command globally.
+ * Also define the size of the command, this is two bytes less than
+ * the size of the string because the %s is replaced by the URL.
+ */
 static const char fmt_http_get_cmd[] = "GET %s HTTP/1.0\r\n\r\n";
+static const size_t fmt_http_get_cmd_size = sizeof(fmt_http_get_cmd) - 2;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -173,7 +179,7 @@ int s_time_main(int argc, char **argv)
             break;
         case OPT_WWW:
             www_path = opt_arg();
-            buf_size = strlen(www_path) + sizeof(fmt_http_get_cmd);
+            buf_size = strlen(www_path) + fmt_http_get_cmd_size;
             if (buf_size > sizeof(buf)) {
                 BIO_printf(bio_err, "%s: -www option is too long\n", prog);
                 goto end;
@@ -230,9 +236,9 @@ int s_time_main(int argc, char **argv)
             goto end;
 
         if (www_path != NULL) {
-            sprintf(buf, fmt_http_get_cmd, www_path);
-            buf_len = strlen(buf);
-            if (SSL_write(scon, buf, buf_len) <= 0)
+            buf_len = BIO_snprintf(buf, sizeof(buf), fmt_http_get_cmd,
+                                   www_path);
+            if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
                 goto end;
             while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
                 bytes_read += i;
@@ -288,9 +294,8 @@ int s_time_main(int argc, char **argv)
     }
 
     if (www_path != NULL) {
-        sprintf(buf, fmt_http_get_cmd, www_path);
-        buf_len = strlen(buf);
-        if (SSL_write(scon, buf, buf_len) <= 0)
+        buf_len = BIO_snprintf(buf, sizeof(buf), fmt_http_get_cmd, www_path);
+        if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
             goto end;
         while (SSL_read(scon, buf, sizeof(buf)) > 0)
             continue;
@@ -319,8 +324,9 @@ int s_time_main(int argc, char **argv)
             goto end;
 
         if (www_path != NULL) {
-            sprintf(buf, "GET %s HTTP/1.0\r\n\r\n", www_path);
-            if (SSL_write(scon, buf, strlen(buf)) <= 0)
+            buf_len = BIO_snprintf(buf, sizeof(buf), fmt_http_get_cmd,
+                                   www_path);
+            if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
                 goto end;
             while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
                 bytes_read += i;
@@ -361,7 +367,7 @@ int s_time_main(int argc, char **argv)
  end:
     SSL_free(scon);
     SSL_CTX_free(ctx);
-    return (ret);
+    return ret;
 }
 
 /*-
@@ -375,7 +381,7 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
     fd_set readfds;
 
     if ((conn = BIO_new(BIO_s_connect())) == NULL)
-        return (NULL);
+        return NULL;
 
     BIO_set_conn_hostname(conn, host);
 
