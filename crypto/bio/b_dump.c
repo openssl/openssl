@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,9 @@
 
 #define TRUNCATE
 #define DUMP_WIDTH      16
-#define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH-((i-(i>6?6:i)+3)/4))
+#define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH - ((i - (i > 6 ? 6 : i) + 3) / 4))
+
+#define SPACE(buf, pos, n)   (sizeof(buf) - (pos) > (n))
 
 int BIO_dump_cb(int (*cb) (const void *data, size_t len, void *u),
                 void *u, const char *s, int len)
@@ -28,8 +30,8 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
                        void *u, const char *s, int len, int indent)
 {
     int ret = 0;
-    char buf[288 + 1], tmp[20], str[128 + 1];
-    int i, j, rows, trc;
+    char buf[288 + 1];
+    int i, j, rows, trc, n;
     unsigned char ch;
     int dump_width;
 
@@ -42,59 +44,65 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
 
     if (indent < 0)
         indent = 0;
-    if (indent) {
-        if (indent > 128)
-            indent = 128;
-        memset(str, ' ', indent);
-    }
-    str[indent] = '\0';
+    else if (indent > 128)
+        indent = 128;
 
     dump_width = DUMP_WIDTH_LESS_INDENT(indent);
-    rows = (len / dump_width);
+    rows = len / dump_width;
     if ((rows * dump_width) < len)
         rows++;
     for (i = 0; i < rows; i++) {
-        strcpy(buf, str);
-        sprintf(tmp, "%04x - ", i * dump_width);
-        strcat(buf, tmp);
+        n = BIO_snprintf(buf, sizeof(buf), "%*s%04x - ", indent, "",
+                         i * dump_width);
         for (j = 0; j < dump_width; j++) {
-            if (((i * dump_width) + j) >= len) {
-                strcat(buf, "   ");
-            } else {
-                ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
-                sprintf(tmp, "%02x%c", ch, j == 7 ? '-' : ' ');
-                strcat(buf, tmp);
+            if (SPACE(buf, n, 3)) {
+                if (((i * dump_width) + j) >= len) {
+                    strcpy(buf + n, "   ");
+                } else {
+                    ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
+                    BIO_snprintf(buf + n, 4, "%02x%c", ch,
+                                 j == 7 ? '-' : ' ');
+                }
+                n += 3;
             }
         }
-        strcat(buf, "  ");
+        if (SPACE(buf, n, 2)) {
+            strcpy(buf + n, "  ");
+            n += 2;
+        }
         for (j = 0; j < dump_width; j++) {
             if (((i * dump_width) + j) >= len)
                 break;
-            ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
+            if (SPACE(buf, n, 1)) {
+                ch = ((unsigned char)*(s + i * dump_width + j)) & 0xff;
 #ifndef CHARSET_EBCDIC
-            sprintf(tmp, "%c", ((ch >= ' ') && (ch <= '~')) ? ch : '.');
+                buf[n++] = ((ch >= ' ') && (ch <= '~')) ? ch : '.';
 #else
-            sprintf(tmp, "%c",
-                         ((ch >= os_toascii[' ']) && (ch <= os_toascii['~']))
-                         ? os_toebcdic[ch]
-                         : '.');
+                buf[n++] = ((ch >= os_toascii[' ']) && (ch <= os_toascii['~']))
+                           ? os_toebcdic[ch]
+                           : '.';
 #endif
-            strcat(buf, tmp);
+                buf[n] = '\0';
+            }
         }
-        strcat(buf, "\n");
+        if (SPACE(buf, n, 1)) {
+            buf[n++] = '\n';
+            buf[n] = '\0';
+        }
         /*
          * if this is the last call then update the ddt_dump thing so that we
          * will move the selection point in the debug window
          */
-        ret += cb((void *)buf, strlen(buf), u);
+        ret += cb((void *)buf, n, u);
     }
 #ifdef TRUNCATE
     if (trc > 0) {
-        sprintf(buf, "%s%04x - <SPACES/NULS>\n", str, len + trc);
-        ret += cb((void *)buf, strlen(buf), u);
+        n = BIO_snprintf(buf, sizeof(buf), "%*s%04x - <SPACES/NULS>\n",
+                         indent, "", len + trc);
+        ret += cb((void *)buf, n, u);
     }
 #endif
-    return (ret);
+    return ret;
 }
 
 #ifndef OPENSSL_NO_STDIO
