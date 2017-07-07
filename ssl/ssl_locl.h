@@ -551,6 +551,8 @@ struct ssl_session_st {
         /* Session lifetime hint in seconds */
         unsigned long tick_lifetime_hint;
         uint32_t tick_age_add;
+        unsigned char *tick_nonce;
+        size_t tick_nonce_len;
         int tick_identity;
         /* Max number of bytes that can be sent as early data */
         uint32_t max_early_data;
@@ -2263,7 +2265,7 @@ __owur int tls13_update_key(SSL *s, int send);
 __owur int tls13_hkdf_expand(SSL *s, const EVP_MD *md,
                              const unsigned char *secret,
                              const unsigned char *label, size_t labellen,
-                             const unsigned char *hash,
+                             const unsigned char *data, size_t datalen,
                              unsigned char *out, size_t outlen);
 __owur int tls13_derive_key(SSL *s, const EVP_MD *md,
                             const unsigned char *secret, unsigned char *key,

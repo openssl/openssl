@@ -1234,9 +1234,11 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     EVP_MD_CTX *mctx = NULL;
     unsigned char hash[EVP_MAX_MD_SIZE], binderkey[EVP_MAX_MD_SIZE];
     unsigned char finishedkey[EVP_MAX_MD_SIZE], tmpbinder[EVP_MAX_MD_SIZE];
-    unsigned char *early_secret;
+    unsigned char tmppsk[EVP_MAX_MD_SIZE];
+    unsigned char *early_secret, *psk;
     const char resumption_label[] = "res binder";
     const char external_label[] = "ext binder";
+    const char nonce_label[] = "resumption";
     const char *label;
     size_t bindersize, labelsize, hashsize = EVP_MD_size(md);
     int ret = -1;
@@ -1247,6 +1249,28 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     } else {
         label = resumption_label;
         labelsize = sizeof(resumption_label) - 1;
+    }
+
+    if (sess->master_key_length != hashsize) {
+        SSLerr(SSL_F_TLS_PSK_DO_BINDER, SSL_R_BAD_PSK);
+        goto err;
+    }
+
+    if (external) {
+        psk = sess->master_key;
+    } else {
+        if (sess->ext.tick_nonce == NULL) {
+            SSLerr(SSL_F_TLS_PSK_DO_BINDER, SSL_R_BAD_PSK);
+            goto err;
+        }
+        psk = tmppsk;
+        if (!tls13_hkdf_expand(s, md, sess->master_key,
+                               (const unsigned char *)nonce_label,
+                               sizeof(nonce_label) - 1, sess->ext.tick_nonce,
+                               sess->ext.tick_nonce_len, psk, hashsize)) {
+            SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
     }
 
     /*
@@ -1260,8 +1284,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         early_secret = (unsigned char *)s->early_secret;
     else
         early_secret = (unsigned char *)sess->early_secret;
-    if (!tls13_generate_secret(s, md, NULL, sess->master_key,
-                               sess->master_key_length, early_secret)) {
+    if (!tls13_generate_secret(s, md, NULL, psk, hashsize, early_secret)) {
         SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -1280,7 +1303,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
 
     /* Generate the binder key */
     if (!tls13_hkdf_expand(s, md, early_secret, (unsigned char *)label,
-                           labelsize, hash, binderkey, hashsize)) {
+                           labelsize, hash, hashsize, binderkey, hashsize)) {
         SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
         goto err;
     }

@@ -3381,6 +3381,19 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         if (RAND_bytes(age_add_u.age_add_c, sizeof(age_add_u)) <= 0)
             goto err;
         s->session->ext.tick_age_add = age_add_u.age_add;
+       /*
+        * ticket_nonce is set to a single 0 byte because we only ever send a
+        * single ticket per connection. IMPORTANT: If we ever support multiple
+        * tickets per connection then this will need to be changed.
+        */
+        OPENSSL_free(s->session->ext.tick_nonce);
+        s->session->ext.tick_nonce = OPENSSL_zalloc(sizeof(char));
+        if (s->session->ext.tick_nonce == NULL) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
+                   ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        s->session->ext.tick_nonce_len = 1;
         s->session->time = (long)time(NULL);
         if (s->s3->alpn_selected != NULL) {
             OPENSSL_free(s->session->ext.alpn_selected);
@@ -3497,7 +3510,9 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                                (s->hit && !SSL_IS_TLS13(s))
                                ? 0 : s->session->timeout)
             || (SSL_IS_TLS13(s)
-                && !WPACKET_put_bytes_u32(pkt, age_add_u.age_add))
+                && (!WPACKET_put_bytes_u32(pkt, age_add_u.age_add)
+                    || !WPACKET_sub_memcpy_u8(pkt, s->session->ext.tick_nonce,
+                                              s->session->ext.tick_nonce_len)))
                /* Now the actual ticket data */
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_get_total_written(pkt, &macoffset)

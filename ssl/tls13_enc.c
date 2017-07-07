@@ -18,14 +18,14 @@
 static const unsigned char default_zeros[EVP_MAX_MD_SIZE];
 
 /*
- * Given a |secret|; a |label| of length |labellen|; and a |hash| of the
- * handshake messages, derive a new secret |outlen| bytes long and store it in
- * the location pointed to be |out|. The |hash| value may be NULL. Returns 1 on
- * success  0 on failure.
+ * Given a |secret|; a |label| of length |labellen|; and |data| of length
+ * |datalen| (e.g. typically a hash of the handshake messages), derive a new
+ * secret |outlen| bytes long and store it in the location pointed to be |out|.
+ * The |data| value may be zero length. Returns 1 on success  0 on failure.
  */
 int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
                              const unsigned char *label, size_t labellen,
-                             const unsigned char *hash,
+                             const unsigned char *data, size_t datalen,
                              unsigned char *out, size_t outlen)
 {
     const unsigned char label_prefix[] = "tls13 ";
@@ -53,7 +53,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
             || !WPACKET_memcpy(&pkt, label_prefix, sizeof(label_prefix) - 1)
             || !WPACKET_memcpy(&pkt, label, labellen)
             || !WPACKET_close(&pkt)
-            || !WPACKET_sub_memcpy_u8(&pkt, hash, (hash == NULL) ? 0 : hashlen)
+            || !WPACKET_sub_memcpy_u8(&pkt, data, (data == NULL) ? 0 : datalen)
             || !WPACKET_get_total_written(&pkt, &hkdflabellen)
             || !WPACKET_finish(&pkt)) {
         EVP_PKEY_CTX_free(pctx);
@@ -84,7 +84,7 @@ int tls13_derive_key(SSL *s, const EVP_MD *md, const unsigned char *secret,
     static const unsigned char keylabel[] = "key";
 
     return tls13_hkdf_expand(s, md, secret, keylabel, sizeof(keylabel) - 1,
-                             NULL, key, keylen);
+                             NULL, 0, key, keylen);
 }
 
 /*
@@ -97,7 +97,7 @@ int tls13_derive_iv(SSL *s, const EVP_MD *md, const unsigned char *secret,
     static const unsigned char ivlabel[] = "iv";
 
     return tls13_hkdf_expand(s, md, secret, ivlabel, sizeof(ivlabel) - 1,
-                             NULL, iv, ivlen);
+                             NULL, 0, iv, ivlen);
 }
 
 int tls13_derive_finishedkey(SSL *s, const EVP_MD *md,
@@ -107,7 +107,7 @@ int tls13_derive_finishedkey(SSL *s, const EVP_MD *md,
     static const unsigned char finishedlabel[] = "finished";
 
     return tls13_hkdf_expand(s, md, secret, finishedlabel,
-                             sizeof(finishedlabel) - 1, NULL, fin, finlen);
+                             sizeof(finishedlabel) - 1, NULL, 0, fin, finlen);
 }
 
 /*
@@ -156,7 +156,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
         /* Generate the pre-extract secret */
         if (!tls13_hkdf_expand(s, md, prevsecret,
                                (unsigned char *)derived_secret_label,
-                               sizeof(derived_secret_label) - 1, hash,
+                               sizeof(derived_secret_label) - 1, hash, mdlen,
                                preextractsec, mdlen)) {
             EVP_PKEY_CTX_free(pctx);
             return 0;
@@ -282,8 +282,8 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
     size_t ivlen, keylen, taglen;
     size_t hashlen = EVP_MD_size(md);
 
-    if (!tls13_hkdf_expand(s, md, insecret, label, labellen, hash, secret,
-                           hashlen)) {
+    if (!tls13_hkdf_expand(s, md, insecret, label, labellen, hash, hashlen,
+                           secret, hashlen)) {
         SSLerr(SSL_F_DERIVE_SECRET_KEY_AND_IV, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -505,7 +505,8 @@ int tls13_change_cipher_state(SSL *s, int which)
         if (!tls13_hkdf_expand(s, ssl_handshake_md(s), insecret,
                                resumption_master_secret,
                                sizeof(resumption_master_secret) - 1,
-                               hashval, s->session->master_key, hashlen)) {
+                               hashval, hashlen, s->session->master_key,
+                               hashlen)) {
             SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -515,7 +516,8 @@ int tls13_change_cipher_state(SSL *s, int which)
         if (!tls13_hkdf_expand(s, ssl_handshake_md(s), insecret,
                                exporter_master_secret,
                                sizeof(exporter_master_secret) - 1,
-                               hash, s->exporter_master_secret, hashlen)) {
+                               hash, hashlen, s->exporter_master_secret,
+                               hashlen)) {
             SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -621,10 +623,11 @@ int tls13_export_keying_material(SSL *s, unsigned char *out, size_t olen,
             || EVP_DigestUpdate(ctx, context, contextlen) <= 0
             || EVP_DigestFinal_ex(ctx, hash, &hashsize) <= 0
             || !tls13_hkdf_expand(s, md, s->exporter_master_secret,
-                                  (const unsigned char *)label, llen, NULL,
+                                  (const unsigned char *)label, llen, NULL, 0,
                                   exportsecret, hashsize)
             || !tls13_hkdf_expand(s, md, exportsecret, exporterlabel,
-                                  sizeof(exporterlabel) - 1, hash, out, olen))
+                                  sizeof(exporterlabel) - 1, hash, hashsize,
+                                  out, olen))
         goto err;
 
     ret = 1;
