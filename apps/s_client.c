@@ -1477,7 +1477,7 @@ int s_client_main(int argc, char **argv)
             goto opthelp;
         }
         connect_type = use_inet;
-        connectstr = *opt_rest();
+        freeandcopy(&connectstr, *opt_rest());
     } else if (argc != 0) {
         goto opthelp;
     }
