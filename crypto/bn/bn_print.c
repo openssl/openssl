@@ -52,7 +52,7 @@ char *BN_bn2hex(const BIGNUM *a)
 /* Must 'OPENSSL_free' the returned data */
 char *BN_bn2dec(const BIGNUM *a)
 {
-    int i = 0, num, ok = 0;
+    int i = 0, num, ok = 0, n, tbytes;
     char *buf = NULL;
     char *p;
     BIGNUM *t = NULL;
@@ -67,9 +67,10 @@ char *BN_bn2dec(const BIGNUM *a)
      */
     i = BN_num_bits(a) * 3;
     num = (i / 10 + i / 1000 + 1) + 1;
+    tbytes = num + 3;   /* negative and terminator and one spare? */
     bn_data_num = num / BN_DEC_NUM + 1;
     bn_data = OPENSSL_malloc(bn_data_num * sizeof(BN_ULONG));
-    buf = OPENSSL_malloc(num + 3);
+    buf = OPENSSL_malloc(tbytes);
     if ((buf == NULL) || (bn_data == NULL)) {
         BNerr(BN_F_BN_BN2DEC, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -100,14 +101,16 @@ char *BN_bn2dec(const BIGNUM *a)
          * the last one needs truncation. The blocks need to be reversed in
          * order.
          */
-        sprintf(p, BN_DEC_FMT1, *lp);
-        while (*p)
-            p++;
+        n = BIO_snprintf(p, tbytes - (size_t)(p - buf), BN_DEC_FMT1, *lp);
+        if (n < 0)
+            goto err;
+        p += n;
         while (lp != bn_data) {
             lp--;
-            sprintf(p, BN_DEC_FMT2, *lp);
-            while (*p)
-                p++;
+            n = BIO_snprintf(p, tbytes - (size_t)(p - buf), BN_DEC_FMT2, *lp);
+            if (n < 0)
+                goto err;
+            p += n;
         }
     }
     ok = 1;
@@ -331,11 +334,11 @@ char *BN_options(void)
     if (!init) {
         init++;
 #ifdef BN_LLONG
-        sprintf(data, "bn(%d,%d)",
-                (int)sizeof(BN_ULLONG) * 8, (int)sizeof(BN_ULONG) * 8);
+        BIO_snprintf(data, sizeof(data), "bn(%zu,%zu)",
+                     sizeof(BN_ULLONG) * 8, sizeof(BN_ULONG) * 8);
 #else
-        sprintf(data, "bn(%d,%d)",
-                (int)sizeof(BN_ULONG) * 8, (int)sizeof(BN_ULONG) * 8);
+        BIO_snprintf(data, sizeof(data), "bn(%zu,%zu)",
+                     sizeof(BN_ULONG) * 8, sizeof(BN_ULONG) * 8);
 #endif
     }
     return data;
