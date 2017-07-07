@@ -128,9 +128,8 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
 #endif
     dest->peer_chain = NULL;
     dest->peer = NULL;
-    memset(&dest->ex_data, 0, sizeof(dest->ex_data));
-
     dest->ext.tick_nonce = NULL;
+    memset(&dest->ex_data, 0, sizeof(dest->ex_data));
 
     /* We deliberately don't copy the prev and next pointers */
     dest->prev = NULL;
