@@ -186,6 +186,11 @@ permits or prohibits the use of unsafe legacy renegotiation for OpenSSL
 clients only. Equivalent to setting or clearing B<SSL_OP_LEGACY_SERVER_CONNECT>.
 Set by default.
 
+=item B<-allow_no_dhe_kex>
+
+In TLSv1.3 allow a non-(ec)dhe based key exchange mode on resumption. This means
+that there will be no forward secrecy for the resumed session.
+
 =item B<-strict>
 
 enables strict mode protocol handling. Equivalent to setting
@@ -398,6 +403,10 @@ Set by default.
 B<EncryptThenMac>: use encrypt-then-mac extension, enabled by
 default. Inverse of B<SSL_OP_NO_ENCRYPT_THEN_MAC>: that is,
 B<-EncryptThenMac> is the same as setting B<SSL_OP_NO_ENCRYPT_THEN_MAC>.
+
+B<AllowNoDHEKEX>: In TLSv1.3 allow a non-(ec)dhe based key exchange mode on
+resumption. This means that there will be no forward secrecy for the resumed
+session. Equivalent to B<SSL_OP_ALLOW_NO_DHE_KEX>.
 
 =item B<VerifyMode>
 
