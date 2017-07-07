@@ -14,9 +14,10 @@ RAND_cleanup - erase the PRNG state
 
 =head1 DESCRIPTION
 
-Prior to OpenSSL 1.1.0 RAND_cleanup() erases the memory used by the PRNG. This
-function is deprecated and as of version 1.1.0 does nothing. No explicit
-initialisation or de-initialisation is necessary. See L<OPENSSL_init_crypto(3)>.
+Prior to OpenSSL 1.1.0, RAND_cleanup() released all resources used by
+the PRNG.  As of version 1.1.0, it does nothing and should not be called,
+since since no explicit initialisation or de-initialisation is necessary. See
+L<OPENSSL_init_crypto(3)>.
 
 =head1 RETURN VALUE
 
@@ -32,7 +33,7 @@ RAND_cleanup() was deprecated in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
