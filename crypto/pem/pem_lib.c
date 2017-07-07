@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -71,6 +71,7 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
 void PEM_proc_type(char *buf, int type)
 {
     const char *str;
+    char *p = buf + strlen(buf);
 
     if (type == PEM_TYPE_ENCRYPTED)
         str = "ENCRYPTED";
@@ -81,27 +82,29 @@ void PEM_proc_type(char *buf, int type)
     else
         str = "BAD-TYPE";
 
-    strcat(buf, "Proc-Type: 4,");
-    strcat(buf, str);
-    strcat(buf, "\n");
+    BIO_snprintf(p, PEM_BUFSIZE - (size_t)(p - buf), "Proc-Type: 4,%s\n", str);
 }
 
 void PEM_dek_info(char *buf, const char *type, int len, char *str)
 {
-    static const unsigned char map[17] = "0123456789ABCDEF";
     long i;
-    int j;
+    char *p = buf + strlen(buf);
+    int j = PEM_BUFSIZE - (size_t)(p - buf), n;
 
-    strcat(buf, "DEK-Info: ");
-    strcat(buf, type);
-    strcat(buf, ",");
-    j = strlen(buf);
-    for (i = 0; i < len; i++) {
-        buf[j + i * 2] = map[(str[i] >> 4) & 0x0f];
-        buf[j + i * 2 + 1] = map[(str[i]) & 0x0f];
+    n = BIO_snprintf(p, j, "DEK-Info: %s,", type);
+    if (n > 0) {
+        j -= n;
+        p += n;
+        for (i = 0; i < len; i++) {
+            n = BIO_snprintf(p, j, "%02X", 0xff & str[i]);
+            if (n <= 0)
+                return;
+            j -= n;
+            p += n;
+        }
+        if (j > 1)
+            strcpy(p, "\n");
     }
-    buf[j + i * 2] = '\n';
-    buf[j + i * 2 + 1] = '\0';
 }
 
 #ifndef OPENSSL_NO_STDIO
