@@ -35,14 +35,12 @@ can be found in the literature; for example IETF RFC 4086.
 RAND_add() may be called with sensitive data such as user entered
 passwords. The seed values cannot be recovered from the PRNG output.
 
-OpenSSL makes sure that the PRNG state is unique for each thread. On
-systems that provide C</dev/urandom>, the randomness device is used
-to seed the PRNG transparently. However, on all other systems, the
-application is responsible for seeding the PRNG by calling RAND_add(),
-L<RAND_egd(3)>
-or L<RAND_load_file(3)>.
-
 RAND_seed() is equivalent to RAND_add() with B<randomness> set to B<num>.
+
+On systems that provide C</dev/urandom> or similar source of randomess,
+it will be used
+to seed the PRNG transparently. On older systems, however, it might
+be necessary to use RAND_add(), L<RAND_egd(3)> or L<RAND_load_file(3)>.
 
 RAND_event() and RAND_screen() are deprecated and should not be called.
 
@@ -65,11 +63,11 @@ RAND_event() and RAND_screen() are deprecated since OpenSSL
 =head1 SEE ALSO
 
 L<RAND_bytes(3)>, L<RAND_egd(3)>,
-L<RAND_load_file(3)>, L<RAND_cleanup(3)>
+L<RAND_load_file(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
