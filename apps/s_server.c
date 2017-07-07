@@ -2104,6 +2104,7 @@ int s_server_main(int argc, char *argv[])
     ret = 0;
  end:
     SSL_CTX_free(ctx);
+    SSL_SESSION_free(psksess);
     set_keylog_file(NULL, NULL);
     X509_free(s_cert);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
