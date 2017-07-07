@@ -8,76 +8,48 @@ RAND_egd, RAND_egd_bytes, RAND_query_egd_bytes - query entropy gathering daemon
 
  #include <openssl/rand.h>
 
+ int RAND_egd_bytes(const char *path, int num);
  int RAND_egd(const char *path);
- int RAND_egd_bytes(const char *path, int bytes);
 
- int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes);
+ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int num);
 
 =head1 DESCRIPTION
 
-RAND_egd() queries the Entropy Gathering Daemon (EGD) on socket B<path>.
-It queries 255 bytes and uses L<RAND_add(3)> to seed the
-OpenSSL built-in PRNG. RAND_egd(path) is a wrapper for
-RAND_egd_bytes(path, 255);
+On older platforms without a good source of randomness such as C</dev/urandom>,
+it is possible to query an Entropy Gathering Daemon (EGD) over a local
+socket to obtain randomness and seed the OpenSSL RNG.
+The protocol used is defined by the EGDs available at
+L<http://egd.sourceforge.net/> or L<http://prngd.sourceforge.net>.
 
-RAND_egd_bytes() queries EGD on socket B<path>.
-It queries B<bytes> bytes and uses L<RAND_add(3)> to seed the
-OpenSSL built-in PRNG.
-This function is more flexible than RAND_egd().
-When only one secret key must
-be generated, it is not necessary to request the full amount 255 bytes from
-the EGD socket. This can be advantageous, since the amount of randomness
-that can be retrieved from EGD over time is limited.
+RAND_egd_bytes() requests B<num> bytes of randomness from an EGD at the
+specified socket B<path>, and passes the data it receives into RAND_add().
+RAND_egd() is equivalent to RAND_egd_bytes() with B<num> set to 255.
 
-RAND_query_egd_bytes() performs the actual query of the EGD daemon on socket
-B<path>. If B<buf> is given, B<bytes> bytes are queried and written into
-B<buf>. If B<buf> is NULL, B<bytes> bytes are queried and used to seed the
-OpenSSL built-in PRNG using L<RAND_add(3)>.
+RAND_query_egd_bytes() requests B<num> bytes of randomness from an EGD at
+the specified socket B<path>.
+If B<buf> is B<NULL>, it is equivalent to RAND_egd_bytes().
+If B<buf> is not B<NULL>, then the data is copied to the buffer and
+RAND_add() is not called.
 
-=head1 NOTES
-
-On systems without /dev/*random devices providing randomness from the kernel,
-EGD provides
-a socket interface through which randomness can be gathered in chunks up to
-255 bytes. Several chunks can be queried during one connection.
-
-EGD is available from http://www.lothar.com/tech/crypto/ (C<perl
-Makefile.PL; make; make install> to install). It is run as B<egd>
-I<path>, where I<path> is an absolute path designating a socket. When
-RAND_egd() is called with that path as an argument, it tries to read
-random bytes that EGD has collected. RAND_egd() retrieves randomness from the
-daemon using the daemon's "non-blocking read" command which shall
-be answered immediately by the daemon without waiting for additional
-randomness to be collected. The write and read socket operations in the
-communication are blocking.
-
-Alternatively, the EGD-interface compatible daemon PRNGD can be used. It is
-available from
-http://prngd.sourceforge.net/ .
-PRNGD does employ an internal PRNG itself and can therefore never run
-out of randomness.
-
-OpenSSL automatically queries EGD when randomness is requested via RAND_bytes()
-or the status is checked via RAND_status() for the first time, if the socket
-is located at /var/run/egd-pool, /dev/egd-pool or /etc/egd-pool.
+OpenSSL can be configured at build time to try to use the EGD for seeding
+automatically.
 
 =head1 RETURN VALUE
 
 RAND_egd() and RAND_egd_bytes() return the number of bytes read from the
-daemon on success, and -1 if the connection failed or the daemon did not
+daemon on success, or -1 if the connection failed or the daemon did not
 return enough data to fully seed the PRNG.
 
 RAND_query_egd_bytes() returns the number of bytes read from the daemon on
-success, and -1 if the connection failed. The PRNG state is not considered.
+success, or -1 if the connection failed.
 
 =head1 SEE ALSO
 
-L<RAND_bytes(3)>, L<RAND_add(3)>,
-L<RAND_cleanup(3)>
+L<RAND_bytes(3)>, L<RAND_add(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
