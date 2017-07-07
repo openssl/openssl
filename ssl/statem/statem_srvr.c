@@ -3511,10 +3511,8 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                                ? 0 : s->session->timeout)
             || (SSL_IS_TLS13(s)
                 && (!WPACKET_put_bytes_u32(pkt, age_add_u.age_add)
-                       /* ticket_nonce */
-                    || !WPACKET_start_sub_packet_u8(pkt)
-                    || !WPACKET_put_bytes_u8(pkt, 0)
-                    || !WPACKET_close(pkt)))
+                    || !WPACKET_sub_memcpy_u8(pkt, s->session->ext.tick_nonce,
+                                              s->session->ext.tick_nonce_len)))
                /* Now the actual ticket data */
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_get_total_written(pkt, &macoffset)
