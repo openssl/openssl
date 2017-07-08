@@ -24,6 +24,7 @@
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include "ssl_locl.h"
+#include "ssl_cert_table.h"
 #include "internal/thread_once.h"
 
 static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
@@ -976,19 +977,6 @@ int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid, void *other)
     return ctx->cert->sec_cb(NULL, ctx, op, bits, nid, other,
                              ctx->cert->sec_ex);
 }
-
-/*
- * Certificate table information. NB: table entries must match SSL_PKEY indices
- */
-static const SSL_CERT_LOOKUP ssl_cert_info [] = {
-    {EVP_PKEY_RSA, SSL_aRSA}, /* SSL_PKEY_RSA */
-    {EVP_PKEY_DSA, SSL_aDSS}, /* SSL_PKEY_DSA_SIGN */
-    {EVP_PKEY_EC, SSL_aECDSA}, /* SSL_PKEY_ECC */
-    {NID_id_GostR3410_2001, SSL_aGOST01}, /* SSL_PKEY_GOST01 */
-    {NID_id_GostR3410_2012_256, SSL_aGOST12}, /* SSL_PKEY_GOST12_256 */
-    {NID_id_GostR3410_2012_512, SSL_aGOST12}, /* SSL_PKEY_GOST12_512 */
-    {EVP_PKEY_ED25519, SSL_aECDSA} /* SSL_PKEY_ED25519 */
-};
 
 const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx)
 {
