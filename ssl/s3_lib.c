@@ -2725,7 +2725,9 @@ static int cipher_compare(const void *a, const void *b)
     const SSL_CIPHER *ap = (const SSL_CIPHER *)a;
     const SSL_CIPHER *bp = (const SSL_CIPHER *)b;
 
-    return ap->id - bp->id;
+    if (ap->id == bp->id)
+        return 0;
+    return ap->id < bp->id ? -1 : 1;
 }
 
 void ssl_sort_cipher_list(void)
