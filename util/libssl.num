@@ -465,3 +465,4 @@ SSL_free_buffers                        465	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_dup                         466	1_1_1	EXIST::FUNCTION:
 SSL_get_pending_cipher                  467	1_1_1	EXIST::FUNCTION:
 SSL_CIPHER_get_protocol_id              468	1_1_1	EXIST::FUNCTION:
+SSL_SESSION_set_max_early_data          469	1_1_1	EXIST::FUNCTION:

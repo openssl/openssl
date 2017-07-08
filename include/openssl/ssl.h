@@ -1542,6 +1542,8 @@ __owur unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s);
 void SSL_SESSION_get0_ticket(const SSL_SESSION *s, const unsigned char **tick,
                             size_t *len);
 __owur uint32_t SSL_SESSION_get_max_early_data(const SSL_SESSION *s);
+__owur int SSL_SESSION_set_max_early_data(SSL_SESSION *s,
+                                          uint32_t max_early_data);
 __owur int SSL_copy_session_id(SSL *to, const SSL *from);
 __owur X509 *SSL_SESSION_get0_peer(SSL_SESSION *s);
 __owur int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,

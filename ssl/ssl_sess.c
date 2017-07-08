@@ -929,6 +929,13 @@ uint32_t SSL_SESSION_get_max_early_data(const SSL_SESSION *s)
     return s->ext.max_early_data;
 }
 
+int SSL_SESSION_set_max_early_data(SSL_SESSION *s, uint32_t max_early_data)
+{
+    s->ext.max_early_data = max_early_data;
+
+    return 1;
+}
+
 X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
 {
     return s->peer;
