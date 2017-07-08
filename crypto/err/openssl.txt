@@ -2301,6 +2301,7 @@ SSL_R_MISSING_RSA_CERTIFICATE:168:missing rsa certificate
 SSL_R_MISSING_RSA_ENCRYPTING_CERT:169:missing rsa encrypting cert
 SSL_R_MISSING_RSA_SIGNING_CERT:170:missing rsa signing cert
 SSL_R_MISSING_SIGALGS_EXTENSION:112:missing sigalgs extension
+SSL_R_MISSING_SIGNING_CERT:221:missing signing cert
 SSL_R_MISSING_SRP_PARAM:358:can't find SRP server param
 SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION:209:missing supported groups extension
 SSL_R_MISSING_TMP_DH_KEY:171:missing tmp dh key
