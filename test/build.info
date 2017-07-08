@@ -43,7 +43,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
           pkey_meth_test uitest cipherbytes_test asn1_encode_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test recordlentest \
-          time_offset_test pemtest
+          time_offset_test pemtest ssl_cert_table_internal_test
 
   SOURCE[aborttest]=aborttest.c
   INCLUDE[aborttest]=../include
@@ -313,6 +313,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[pemtest]=pemtest.c
   INCLUDE[pemtest]=../include .
   DEPEND[pemtest]=../libcrypto libtestutil.a
+
+  SOURCE[ssl_cert_table_internal_test]=ssl_cert_table_internal_test.c
+  INCLUDE[ssl_cert_table_internal_test]=.. ../include
+  DEPEND[ssl_cert_table_internal_test]=../libcrypto libtestutil.a
 
   IF[{- !$disabled{psk} -}]
     PROGRAMS_NO_INST=dtls_mtu_test
