@@ -26,7 +26,7 @@ specified socket B<path>, and passes the data it receives into RAND_add().
 RAND_egd() is equivalent to RAND_egd_bytes() with B<num> set to 255.
 
 RAND_query_egd_bytes() requests B<num> bytes of randomness from an EGD at
-the specified socket B<path>.
+the specified socket B<path>, where B<num> must be less than 256.
 If B<buf> is B<NULL>, it is equivalent to RAND_egd_bytes().
 If B<buf> is not B<NULL>, then the data is copied to the buffer and
 RAND_add() is not called.
