@@ -4,12 +4,12 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/fips_rand.h>
-#include "fips_rand_lcl.h"
+#include <openssl/rand.h>
+#include "rand_drbg_lcl.h"
 
 /* Support framework for SP800-90 DRBGs */
 
-int FIPS_drbg_init(DRBG_CTX * dctx, int type, unsigned int flags)
+int RAND_DRBG_set(DRBG_CTX * dctx, int type, unsigned int flags)
 {
     int rv;
     memset(dctx, 0, sizeof(DRBG_CTX));
@@ -31,16 +31,16 @@ int FIPS_drbg_init(DRBG_CTX * dctx, int type, unsigned int flags)
 
     if (rv <= 0) {
         if (rv == -2)
-            FIPSerr(FIPS_F_FIPS_DRBG_INIT, FIPS_R_UNSUPPORTED_DRBG_TYPE);
+            RANDerr(RAND_F_RAND_DRBG_INIT, RAND_R_UNSUPPORTED_DRBG_TYPE);
         else
-            FIPSerr(FIPS_F_FIPS_DRBG_INIT, FIPS_R_ERROR_INITIALISING_DRBG);
+            RANDerr(RAND_F_RAND_DRBG_INIT, RAND_R_ERROR_INITIALISING_DRBG);
     }
 
     /* If not in test mode run selftests on DRBG of the same type */
 
     if (!(dctx->xflags & DRBG_FLAG_TEST)) {
-        if (!FIPS_drbg_health_check(dctx)) {
-            FIPSerr(FIPS_F_FIPS_DRBG_INIT, FIPS_R_SELFTEST_FAILURE);
+        if (!RAND_DRBG_health_check(dctx)) {
+            RANDerr(RAND_F_RAND_DRBG_INIT, RAND_R_SELFTEST_FAILURE);
             return 0;
         }
     }
@@ -48,12 +48,12 @@ int FIPS_drbg_init(DRBG_CTX * dctx, int type, unsigned int flags)
     return rv;
 }
 
-DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags)
+DRBG_CTX *RAND_DRBG_new(int type, unsigned int flags)
 {
     DRBG_CTX *dctx;
     dctx = OPENSSL_malloc(sizeof(DRBG_CTX));
     if (!dctx) {
-        FIPSerr(FIPS_F_FIPS_DRBG_NEW, ERR_R_MALLOC_FAILURE);
+        RANDerr(RAND_F_RAND_DRBG_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -64,7 +64,7 @@ DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags)
         return dctx;
     }
 
-    if (FIPS_drbg_init(dctx, type, flags) <= 0) {
+    if (RAND_DRBG_set(dctx, type, flags) <= 0) {
         OPENSSL_free(dctx);
         return NULL;
     }
@@ -72,12 +72,12 @@ DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags)
     return dctx;
 }
 
-void FIPS_drbg_free(DRBG_CTX * dctx)
+void RAND_DRBG_free(DRBG_CTX * dctx)
 {
     if (dctx->uninstantiate)
         dctx->uninstantiate(dctx);
     /* Don't free up default DRBG */
-    if (dctx == FIPS_get_default_drbg()) {
+    if (dctx == RAND_DRBG_get_default()) {
         memset(dctx, 0, sizeof(DRBG_CTX));
         dctx->type = 0;
         dctx->status = DRBG_STATUS_UNINITIALISED;
@@ -104,7 +104,7 @@ static size_t fips_get_entropy(DRBG_CTX * dctx, unsigned char **pout,
     /* Compare consecutive blocks for continuous PRNG test */
     for (p = tout; p < tout + rv - bl; p += bl) {
         if (!memcmp(p, p + bl, bl)) {
-            FIPSerr(FIPS_F_FIPS_GET_ENTROPY, FIPS_R_ENTROPY_SOURCE_STUCK);
+            RANDerr(RAND_F_RAND_GET_ENTROPY, RAND_R_ENTROPY_SOURCE_STUCK);
             return 0;
         }
     }
@@ -126,7 +126,7 @@ static void fips_cleanup_entropy(DRBG_CTX * dctx,
     dctx->cleanup_entropy(dctx, out - bl, olen + bl);
 }
 
-int FIPS_drbg_instantiate(DRBG_CTX * dctx,
+int RAND_DRBG_instantiate(DRBG_CTX * dctx,
                           const unsigned char *pers, size_t perslen)
 {
     size_t entlen = 0, noncelen = 0;
@@ -134,33 +134,33 @@ int FIPS_drbg_instantiate(DRBG_CTX * dctx,
 
 #if 0
     /* Put here so error script picks them up */
-    FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE,
-            FIPS_R_PERSONALISATION_STRING_TOO_LONG);
-    FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_IN_ERROR_STATE);
-    FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_ALREADY_INSTANTIATED);
-    FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_ERROR_RETRIEVING_ENTROPY);
-    FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_ERROR_RETRIEVING_NONCE);
-    FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_INSTANTIATE_ERROR);
-    FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_DRBG_NOT_INITIALISED);
+    RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
+            RAND_R_PERSONALISATION_STRING_TOO_LONG);
+    RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_IN_ERROR_STATE);
+    RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ALREADY_INSTANTIATED);
+    RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_ENTROPY);
+    RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_NONCE);
+    RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_INSTANTIATE_ERROR);
+    RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_DRBG_NOT_INITIALISED);
 #endif
 
     int r = 0;
 
     if (perslen > dctx->max_pers) {
-        r = FIPS_R_PERSONALISATION_STRING_TOO_LONG;
+        r = RAND_R_PERSONALISATION_STRING_TOO_LONG;
         goto end;
     }
 
     if (!dctx->instantiate) {
-        r = FIPS_R_DRBG_NOT_INITIALISED;
+        r = RAND_R_DRBG_NOT_INITIALISED;
         goto end;
     }
 
     if (dctx->status != DRBG_STATUS_UNINITIALISED) {
         if (dctx->status == DRBG_STATUS_ERROR)
-            r = FIPS_R_IN_ERROR_STATE;
+            r = RAND_R_IN_ERROR_STATE;
         else
-            r = FIPS_R_ALREADY_INSTANTIATED;
+            r = RAND_R_ALREADY_INSTANTIATED;
         goto end;
     }
 
@@ -170,7 +170,7 @@ int FIPS_drbg_instantiate(DRBG_CTX * dctx,
                               dctx->min_entropy, dctx->max_entropy);
 
     if (entlen < dctx->min_entropy || entlen > dctx->max_entropy) {
-        r = FIPS_R_ERROR_RETRIEVING_ENTROPY;
+        r = RAND_R_ERROR_RETRIEVING_ENTROPY;
         goto end;
     }
 
@@ -180,7 +180,7 @@ int FIPS_drbg_instantiate(DRBG_CTX * dctx,
                                    dctx->min_nonce, dctx->max_nonce);
 
         if (noncelen < dctx->min_nonce || noncelen > dctx->max_nonce) {
-            r = FIPS_R_ERROR_RETRIEVING_NONCE;
+            r = RAND_R_ERROR_RETRIEVING_NONCE;
             goto end;
         }
 
@@ -188,7 +188,7 @@ int FIPS_drbg_instantiate(DRBG_CTX * dctx,
 
     if (!dctx->instantiate(dctx,
                            entropy, entlen, nonce, noncelen, pers, perslen)) {
-        r = FIPS_R_ERROR_INSTANTIATING_DRBG;
+        r = RAND_R_ERROR_INSTANTIATING_DRBG;
         goto end;
     }
 
@@ -208,7 +208,7 @@ int FIPS_drbg_instantiate(DRBG_CTX * dctx,
         return 1;
 
     if (r && !(dctx->iflags & DRBG_FLAG_NOERR))
-        FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, r);
+        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, r);
 
     return 0;
 
@@ -222,21 +222,21 @@ static int drbg_reseed(DRBG_CTX * dctx,
     int r = 0;
 
 #if 0
-    FIPSerr(FIPS_F_DRBG_RESEED, FIPS_R_NOT_INSTANTIATED);
-    FIPSerr(FIPS_F_DRBG_RESEED, FIPS_R_ADDITIONAL_INPUT_TOO_LONG);
+    RANDerr(RAND_F_DRBG_RESEED, RAND_R_NOT_INSTANTIATED);
+    RANDerr(RAND_F_DRBG_RESEED, RAND_R_ADDITIONAL_INPUT_TOO_LONG);
 #endif
     if (dctx->status != DRBG_STATUS_READY && dctx->status != DRBG_STATUS_RESEED) {
         if (dctx->status == DRBG_STATUS_ERROR)
-            r = FIPS_R_IN_ERROR_STATE;
+            r = RAND_R_IN_ERROR_STATE;
         else if (dctx->status == DRBG_STATUS_UNINITIALISED)
-            r = FIPS_R_NOT_INSTANTIATED;
+            r = RAND_R_NOT_INSTANTIATED;
         goto end;
     }
 
     if (!adin)
         adinlen = 0;
     else if (adinlen > dctx->max_adin) {
-        r = FIPS_R_ADDITIONAL_INPUT_TOO_LONG;
+        r = RAND_R_ADDITIONAL_INPUT_TOO_LONG;
         goto end;
     }
 
@@ -245,8 +245,8 @@ static int drbg_reseed(DRBG_CTX * dctx,
      * resistance request and not in test mode.
      */
     if (hcheck && !(dctx->xflags & DRBG_FLAG_TEST)) {
-        if (!FIPS_drbg_health_check(dctx)) {
-            r = FIPS_R_SELFTEST_FAILURE;
+        if (!RAND_DRBG_health_check(dctx)) {
+            r = RAND_R_SELFTEST_FAILURE;
             goto end;
         }
     }
@@ -255,7 +255,7 @@ static int drbg_reseed(DRBG_CTX * dctx,
                               dctx->min_entropy, dctx->max_entropy);
 
     if (entlen < dctx->min_entropy || entlen > dctx->max_entropy) {
-        r = FIPS_R_ERROR_RETRIEVING_ENTROPY;
+        r = RAND_R_ERROR_RETRIEVING_ENTROPY;
         goto end;
     }
 
@@ -274,12 +274,12 @@ static int drbg_reseed(DRBG_CTX * dctx,
         return 1;
 
     if (r && !(dctx->iflags & DRBG_FLAG_NOERR))
-        FIPSerr(FIPS_F_DRBG_RESEED, r);
+        RANDerr(RAND_F_DRBG_RESEED, r);
 
     return 0;
 }
 
-int FIPS_drbg_reseed(DRBG_CTX * dctx, const unsigned char *adin, size_t adinlen)
+int RAND_DRBG_reseed(DRBG_CTX * dctx, const unsigned char *adin, size_t adinlen)
 {
     return drbg_reseed(dctx, adin, adinlen, 1);
 }
@@ -290,22 +290,22 @@ static int fips_drbg_check(DRBG_CTX * dctx)
         return 1;
     dctx->health_check_cnt++;
     if (dctx->health_check_cnt >= dctx->health_check_interval) {
-        if (!FIPS_drbg_health_check(dctx)) {
-            FIPSerr(FIPS_F_FIPS_DRBG_CHECK, FIPS_R_SELFTEST_FAILURE);
+        if (!RAND_DRBG_health_check(dctx)) {
+            RANDerr(RAND_F_RAND_DRBG_CHECK, RAND_R_SELFTEST_FAILURE);
             return 0;
         }
     }
     return 1;
 }
 
-int FIPS_drbg_generate(DRBG_CTX * dctx, unsigned char *out, size_t outlen,
+int RAND_DRBG_generate(DRBG_CTX * dctx, unsigned char *out, size_t outlen,
                        int prediction_resistance,
                        const unsigned char *adin, size_t adinlen)
 {
     int r = 0;
 
     if (FIPS_selftest_failed()) {
-        FIPSerr(FIPS_F_FIPS_DRBG_GENERATE, FIPS_R_SELFTEST_FAILED);
+        RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_SELFTEST_FAILED);
         return 0;
     }
 
@@ -314,19 +314,19 @@ int FIPS_drbg_generate(DRBG_CTX * dctx, unsigned char *out, size_t outlen,
 
     if (dctx->status != DRBG_STATUS_READY && dctx->status != DRBG_STATUS_RESEED) {
         if (dctx->status == DRBG_STATUS_ERROR)
-            r = FIPS_R_IN_ERROR_STATE;
+            r = RAND_R_IN_ERROR_STATE;
         else if (dctx->status == DRBG_STATUS_UNINITIALISED)
-            r = FIPS_R_NOT_INSTANTIATED;
+            r = RAND_R_NOT_INSTANTIATED;
         goto end;
     }
 
     if (outlen > dctx->max_request) {
-        r = FIPS_R_REQUEST_TOO_LARGE_FOR_DRBG;
+        r = RAND_R_REQUEST_TOO_LARGE_FOR_DRBG;
         return 0;
     }
 
     if (adinlen > dctx->max_adin) {
-        r = FIPS_R_ADDITIONAL_INPUT_TOO_LONG;
+        r = RAND_R_ADDITIONAL_INPUT_TOO_LONG;
         goto end;
     }
 
@@ -340,7 +340,7 @@ int FIPS_drbg_generate(DRBG_CTX * dctx, unsigned char *out, size_t outlen,
         int hcheck = prediction_resistance ? 0 : 1;
 
         if (!drbg_reseed(dctx, adin, adinlen, hcheck)) {
-            r = FIPS_R_RESEED_ERROR;
+            r = RAND_R_RESEED_ERROR;
             goto end;
         }
         adin = NULL;
@@ -348,7 +348,7 @@ int FIPS_drbg_generate(DRBG_CTX * dctx, unsigned char *out, size_t outlen,
     }
 
     if (!dctx->generate(dctx, out, outlen, adin, adinlen)) {
-        r = FIPS_R_GENERATE_ERROR;
+        r = RAND_R_GENERATE_ERROR;
         dctx->status = DRBG_STATUS_ERROR;
         goto end;
     }
@@ -362,14 +362,14 @@ int FIPS_drbg_generate(DRBG_CTX * dctx, unsigned char *out, size_t outlen,
  end:
     if (r) {
         if (!(dctx->iflags & DRBG_FLAG_NOERR))
-            FIPSerr(FIPS_F_FIPS_DRBG_GENERATE, r);
+            RANDerr(RAND_F_RAND_DRBG_GENERATE, r);
         return 0;
     }
 
     return 1;
 }
 
-int FIPS_drbg_uninstantiate(DRBG_CTX * dctx)
+int RAND_DRBG_uninstantiate(DRBG_CTX * dctx)
 {
     int rv;
     if (!dctx->uninstantiate)
@@ -385,7 +385,7 @@ int FIPS_drbg_uninstantiate(DRBG_CTX * dctx)
     return rv;
 }
 
-int FIPS_drbg_set_callbacks(DRBG_CTX * dctx,
+int RAND_DRBG_set_callbacks(DRBG_CTX * dctx,
                             size_t (*get_entropy) (DRBG_CTX * ctx,
                                                    unsigned char **pout,
                                                    int entropy, size_t min_len,
@@ -412,7 +412,7 @@ int FIPS_drbg_set_callbacks(DRBG_CTX * dctx,
     return 1;
 }
 
-int FIPS_drbg_set_rand_callbacks(DRBG_CTX * dctx,
+int RAND_DRBG_set_rand_callbacks(DRBG_CTX * dctx,
                                  size_t (*get_adin) (DRBG_CTX * ctx,
                                                      unsigned char **pout),
                                  void (*cleanup_adin) (DRBG_CTX * ctx,
@@ -433,39 +433,39 @@ int FIPS_drbg_set_rand_callbacks(DRBG_CTX * dctx,
     return 1;
 }
 
-void *FIPS_drbg_get_app_data(DRBG_CTX * dctx)
+void *RAND_DRBG_get_app_data(DRBG_CTX * dctx)
 {
     return dctx->app_data;
 }
 
-void FIPS_drbg_set_app_data(DRBG_CTX * dctx, void *app_data)
+void RAND_DRBG_set_app_data(DRBG_CTX * dctx, void *app_data)
 {
     dctx->app_data = app_data;
 }
 
-size_t FIPS_drbg_get_blocklength(DRBG_CTX * dctx)
+size_t RAND_DRBG_get_blocklength(DRBG_CTX * dctx)
 {
     return dctx->blocklength;
 }
 
-int FIPS_drbg_get_strength(DRBG_CTX * dctx)
+int RAND_DRBG_get_strength(DRBG_CTX * dctx)
 {
     return dctx->strength;
 }
 
-void FIPS_drbg_set_check_interval(DRBG_CTX * dctx, int interval)
+void RAND_DRBG_set_check_interval(DRBG_CTX * dctx, int interval)
 {
     dctx->health_check_interval = interval;
 }
 
-void FIPS_drbg_set_reseed_interval(DRBG_CTX * dctx, int interval)
+void RAND_DRBG_set_reseed_interval(DRBG_CTX * dctx, int interval)
 {
     dctx->reseed_interval = interval;
 }
 
 static int drbg_stick = 0;
 
-void FIPS_drbg_stick(int onoff)
+void RAND_DRBG_stick(int onoff)
 {
     drbg_stick = onoff;
 }
@@ -478,7 +478,7 @@ int fips_drbg_cprng_test(DRBG_CTX * dctx, const unsigned char *out)
         return 1;
     /* Check block is valid: should never happen */
     if (dctx->lb_valid == 0) {
-        FIPSerr(FIPS_F_FIPS_DRBG_CPRNG_TEST, FIPS_R_INTERNAL_ERROR);
+        RANDerr(RAND_F_RAND_DRBG_CPRNG_TEST, RAND_R_INTERNAL_ERROR);
         fips_set_selftest_fail();
         return 0;
     }
@@ -486,7 +486,7 @@ int fips_drbg_cprng_test(DRBG_CTX * dctx, const unsigned char *out)
         memcpy(dctx->lb, out, dctx->blocklength);
     /* Check against last block: fail if match */
     if (!memcmp(dctx->lb, out, dctx->blocklength)) {
-        FIPSerr(FIPS_F_FIPS_DRBG_CPRNG_TEST, FIPS_R_DRBG_STUCK);
+        RANDerr(RAND_F_RAND_DRBG_CPRNG_TEST, RAND_R_DRBG_STUCK);
         fips_set_selftest_fail();
         return 0;
     }

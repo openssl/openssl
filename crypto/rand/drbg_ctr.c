@@ -11,8 +11,8 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/fips.h>
-#include <openssl/fips_rand.h>
-#include "fips_rand_lcl.h"
+#include <openssl/rand.h>
+#include "rand_drbg_lcl.h"
 
 static void inc_128(DRBG_CTR_CTX * cctx)
 {

@@ -13,8 +13,8 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include <openssl/fips_rand.h>
-#include "fips_rand_lcl.h"
+#include <openssl/rand.h>
+#include "rand_drbg_lcl.h"
 
 /* Mapping of SP800-90 DRBGs to OpenSSL RAND_METHOD */
 
@@ -24,7 +24,7 @@
 
 static DRBG_CTX ossl_dctx;
 
-DRBG_CTX *FIPS_get_default_drbg(void)
+DRBG_CTX *RAND_DRBG_get_default(void)
 {
     return &ossl_dctx;
 }
@@ -45,12 +45,12 @@ static int fips_drbg_bytes(unsigned char *out, int count)
         if (dctx->get_adin) {
             adinlen = dctx->get_adin(dctx, &adin);
             if (adinlen && !adin) {
-                FIPSerr(FIPS_F_FIPS_DRBG_BYTES,
-                        FIPS_R_ERROR_RETRIEVING_ADDITIONAL_INPUT);
+                RANDerr(RAND_F_RAND_DRBG_BYTES,
+                        RAND_R_ERROR_RETRIEVING_ADDITIONAL_INPUT);
                 goto err;
             }
         }
-        rv = FIPS_drbg_generate(dctx, out, rcnt, 0, adin, adinlen);
+        rv = RAND_DRBG_generate(dctx, out, rcnt, 0, adin, adinlen);
         if (adin) {
             if (dctx->cleanup_adin)
                 dctx->cleanup_adin(dctx, adin, adinlen);
@@ -89,7 +89,7 @@ static void fips_drbg_cleanup(void)
 {
     DRBG_CTX *dctx = &ossl_dctx;
     CRYPTO_w_lock(CRYPTO_LOCK_RAND);
-    FIPS_drbg_uninstantiate(dctx);
+    RAND_DRBG_uninstantiate(dctx);
     CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 }
 
@@ -118,7 +118,7 @@ static const RAND_METHOD rand_drbg_meth = {
     fips_drbg_status
 };
 
-const RAND_METHOD *FIPS_drbg_method(void)
+const RAND_METHOD *RAND_DRBG_method(void)
 {
     return &rand_drbg_meth;
 }
