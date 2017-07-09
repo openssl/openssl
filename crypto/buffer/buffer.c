@@ -62,9 +62,11 @@ static char *sec_alloc_realloc(BUF_MEM *str, size_t len)
 
     ret = OPENSSL_secure_malloc(len);
     if (str->data != NULL) {
-        if (ret != NULL)
+        if (ret != NULL) {
             memcpy(ret, str->data, str->length);
-        OPENSSL_secure_free(str->data);
+            OPENSSL_secure_free(str->data);
+            str->data = NULL;
+        }
     }
     return (ret);
 }
