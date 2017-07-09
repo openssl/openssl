@@ -859,7 +859,8 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
          * Else, a line of text -- could be header or data; we don't
          * know yet.  Just pass it through.
          */
-        BIO_puts(tmp, linebuf);
+        if (BIO_puts(tmp, linebuf) < 0)
+            goto err;
         /*
          * Only encrypted files need the line length check applied.
          */
