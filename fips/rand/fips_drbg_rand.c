@@ -69,106 +69,100 @@
 static DRBG_CTX ossl_dctx;
 
 DRBG_CTX *FIPS_get_default_drbg(void)
-	{
-	return &ossl_dctx;
-	}
+{
+    return &ossl_dctx;
+}
 
 static int fips_drbg_bytes(unsigned char *out, int count)
-	{
-	DRBG_CTX *dctx = &ossl_dctx;
-	int rv = 0;
-	unsigned char *adin = NULL;
-	size_t adinlen = 0;
-	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
-	do 
-		{
-		size_t rcnt;
-		if (count > (int)dctx->max_request)
-			rcnt = dctx->max_request;
-		else
-			rcnt = count;
-		if (dctx->get_adin)
-			{
-			adinlen = dctx->get_adin(dctx, &adin);
-			if (adinlen && !adin)
-				{
-				FIPSerr(FIPS_F_FIPS_DRBG_BYTES, FIPS_R_ERROR_RETRIEVING_ADDITIONAL_INPUT);
-				goto err;
-				}
-			}
-		rv = FIPS_drbg_generate(dctx, out, rcnt, 0, adin, adinlen);
-		if (adin)
-			{
-			if (dctx->cleanup_adin)
-				dctx->cleanup_adin(dctx, adin, adinlen);
-			adin = NULL;
-			}
-		if (!rv)
-			goto err;
-		out += rcnt;
-		count -= rcnt;
-		}
-	while (count);
-	rv = 1;
-	err:
-	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
-	return rv;
-	}
+{
+    DRBG_CTX *dctx = &ossl_dctx;
+    int rv = 0;
+    unsigned char *adin = NULL;
+    size_t adinlen = 0;
+    CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+    do {
+        size_t rcnt;
+        if (count > (int)dctx->max_request)
+            rcnt = dctx->max_request;
+        else
+            rcnt = count;
+        if (dctx->get_adin) {
+            adinlen = dctx->get_adin(dctx, &adin);
+            if (adinlen && !adin) {
+                FIPSerr(FIPS_F_FIPS_DRBG_BYTES,
+                        FIPS_R_ERROR_RETRIEVING_ADDITIONAL_INPUT);
+                goto err;
+            }
+        }
+        rv = FIPS_drbg_generate(dctx, out, rcnt, 0, adin, adinlen);
+        if (adin) {
+            if (dctx->cleanup_adin)
+                dctx->cleanup_adin(dctx, adin, adinlen);
+            adin = NULL;
+        }
+        if (!rv)
+            goto err;
+        out += rcnt;
+        count -= rcnt;
+    }
+    while (count);
+    rv = 1;
+ err:
+    CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+    return rv;
+}
 
 static int fips_drbg_pseudo(unsigned char *out, int count)
-	{
-	if (fips_drbg_bytes(out, count) <= 0)
-		return -1;
-	return 1;
-	}
+{
+    if (fips_drbg_bytes(out, count) <= 0)
+        return -1;
+    return 1;
+}
 
 static int fips_drbg_status(void)
-	{
-	DRBG_CTX *dctx = &ossl_dctx;
-	int rv;
-	CRYPTO_r_lock(CRYPTO_LOCK_RAND);
-	rv = dctx->status == DRBG_STATUS_READY ? 1 : 0;
-	CRYPTO_r_unlock(CRYPTO_LOCK_RAND);
-	return rv;
-	}
+{
+    DRBG_CTX *dctx = &ossl_dctx;
+    int rv;
+    CRYPTO_r_lock(CRYPTO_LOCK_RAND);
+    rv = dctx->status == DRBG_STATUS_READY ? 1 : 0;
+    CRYPTO_r_unlock(CRYPTO_LOCK_RAND);
+    return rv;
+}
 
 static void fips_drbg_cleanup(void)
-	{
-	DRBG_CTX *dctx = &ossl_dctx;
-	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
-	FIPS_drbg_uninstantiate(dctx);
-	CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
-	}
+{
+    DRBG_CTX *dctx = &ossl_dctx;
+    CRYPTO_w_lock(CRYPTO_LOCK_RAND);
+    FIPS_drbg_uninstantiate(dctx);
+    CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
+}
 
 static int fips_drbg_seed(const void *seed, int seedlen)
-	{
-	DRBG_CTX *dctx = &ossl_dctx;
-	if (dctx->rand_seed_cb)
-		return dctx->rand_seed_cb(dctx, seed, seedlen);
-	return 1;
-	}
+{
+    DRBG_CTX *dctx = &ossl_dctx;
+    if (dctx->rand_seed_cb)
+        return dctx->rand_seed_cb(dctx, seed, seedlen);
+    return 1;
+}
 
-static int fips_drbg_add(const void *seed, int seedlen,
-					double add_entropy)
-	{
-	DRBG_CTX *dctx = &ossl_dctx;
-	if (dctx->rand_add_cb)
-		return dctx->rand_add_cb(dctx, seed, seedlen, add_entropy);
-	return 1;
-	}
+static int fips_drbg_add(const void *seed, int seedlen, double add_entropy)
+{
+    DRBG_CTX *dctx = &ossl_dctx;
+    if (dctx->rand_add_cb)
+        return dctx->rand_add_cb(dctx, seed, seedlen, add_entropy);
+    return 1;
+}
 
-static const RAND_METHOD rand_drbg_meth =
-	{
-	fips_drbg_seed,
-	fips_drbg_bytes,
-	fips_drbg_cleanup,
-	fips_drbg_add,
-	fips_drbg_pseudo,
-	fips_drbg_status
-	};
+static const RAND_METHOD rand_drbg_meth = {
+    fips_drbg_seed,
+    fips_drbg_bytes,
+    fips_drbg_cleanup,
+    fips_drbg_add,
+    fips_drbg_pseudo,
+    fips_drbg_status
+};
 
 const RAND_METHOD *FIPS_drbg_method(void)
-	{
-	return &rand_drbg_meth;
-	}
-
+{
+    return &rand_drbg_meth;
+}

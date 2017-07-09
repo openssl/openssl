@@ -48,88 +48,105 @@
  */
 
 #ifndef HEADER_FIPS_RAND_H
-#define HEADER_FIPS_RAND_H
+# define HEADER_FIPS_RAND_H
 
-#include <openssl/aes.h>
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
-#include <openssl/ec.h>
+# include <openssl/aes.h>
+# include <openssl/evp.h>
+# include <openssl/hmac.h>
+# include <openssl/ec.h>
 
-#ifdef OPENSSL_FIPS
+# ifdef OPENSSL_FIPS
 
-#ifdef  __cplusplus
+#  ifdef  __cplusplus
 extern "C" {
-#endif
+#  endif
 
-int FIPS_x931_set_key(const unsigned char *key, int keylen);
-int FIPS_x931_seed(const void *buf, int num);
-int FIPS_x931_bytes(unsigned char *out, int outlen);
+    int FIPS_x931_set_key(const unsigned char *key, int keylen);
+    int FIPS_x931_seed(const void *buf, int num);
+    int FIPS_x931_bytes(unsigned char *out, int outlen);
 
-int FIPS_x931_test_mode(void);
-void FIPS_x931_reset(void);
-int FIPS_x931_set_dt(unsigned char *dt);
+    int FIPS_x931_test_mode(void);
+    void FIPS_x931_reset(void);
+    int FIPS_x931_set_dt(unsigned char *dt);
 
-int FIPS_x931_status(void);
+    int FIPS_x931_status(void);
 
-const RAND_METHOD *FIPS_x931_method(void);
+    const RAND_METHOD *FIPS_x931_method(void);
 
-typedef struct drbg_ctx_st DRBG_CTX;
+    typedef struct drbg_ctx_st DRBG_CTX;
 /* DRBG external flags */
 /* Flag for CTR mode only: use derivation function ctr_df */
-#define	DRBG_FLAG_CTR_USE_DF		0x1
+#  define DRBG_FLAG_CTR_USE_DF            0x1
 /* PRNG is in test state */
-#define	DRBG_FLAG_TEST			0x2
+#  define DRBG_FLAG_TEST                  0x2
 
-DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags);
-int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags);
-int FIPS_drbg_instantiate(DRBG_CTX *dctx,
-				const unsigned char *pers, size_t perslen);
-int FIPS_drbg_reseed(DRBG_CTX *dctx, const unsigned char *adin, size_t adinlen);
-int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
-			int prediction_resistance,
-			const unsigned char *adin, size_t adinlen);
+    DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags);
+    int FIPS_drbg_init(DRBG_CTX * dctx, int type, unsigned int flags);
+    int FIPS_drbg_instantiate(DRBG_CTX * dctx,
+                              const unsigned char *pers, size_t perslen);
+    int FIPS_drbg_reseed(DRBG_CTX * dctx, const unsigned char *adin,
+                         size_t adinlen);
+    int FIPS_drbg_generate(DRBG_CTX * dctx, unsigned char *out, size_t outlen,
+                           int prediction_resistance, const unsigned char *adin,
+                           size_t adinlen);
 
-int FIPS_drbg_uninstantiate(DRBG_CTX *dctx);
-void FIPS_drbg_free(DRBG_CTX *dctx);
+    int FIPS_drbg_uninstantiate(DRBG_CTX * dctx);
+    void FIPS_drbg_free(DRBG_CTX * dctx);
 
-int FIPS_drbg_set_callbacks(DRBG_CTX *dctx,
-	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char **pout,
-				int entropy, size_t min_len, size_t max_len),
-	void (*cleanup_entropy)(DRBG_CTX *ctx, unsigned char *out, size_t olen),
-	size_t entropy_blocklen,
-	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char **pout,
-				int entropy, size_t min_len, size_t max_len),
-	void (*cleanup_nonce)(DRBG_CTX *ctx, unsigned char *out, size_t olen));
+    int FIPS_drbg_set_callbacks(DRBG_CTX * dctx,
+                                size_t (*get_entropy) (DRBG_CTX * ctx,
+                                                       unsigned char **pout,
+                                                       int entropy,
+                                                       size_t min_len,
+                                                       size_t max_len),
+                                void (*cleanup_entropy) (DRBG_CTX * ctx,
+                                                         unsigned char *out,
+                                                         size_t olen),
+                                size_t entropy_blocklen,
+                                size_t (*get_nonce) (DRBG_CTX * ctx,
+                                                     unsigned char **pout,
+                                                     int entropy,
+                                                     size_t min_len,
+                                                     size_t max_len),
+                                void (*cleanup_nonce) (DRBG_CTX * ctx,
+                                                       unsigned char *out,
+                                                       size_t olen));
 
-int FIPS_drbg_set_rand_callbacks(DRBG_CTX *dctx,
-	size_t (*get_adin)(DRBG_CTX *ctx, unsigned char **pout),
-	void (*cleanup_adin)(DRBG_CTX *ctx, unsigned char *out, size_t olen),
-	int (*rand_seed_cb)(DRBG_CTX *ctx, const void *buf, int num),
-	int (*rand_add_cb)(DRBG_CTX *ctx,
-				const void *buf, int num, double entropy));
+    int FIPS_drbg_set_rand_callbacks(DRBG_CTX * dctx,
+                                     size_t (*get_adin) (DRBG_CTX * ctx,
+                                                         unsigned char **pout),
+                                     void (*cleanup_adin) (DRBG_CTX * ctx,
+                                                           unsigned char *out,
+                                                           size_t olen),
+                                     int (*rand_seed_cb) (DRBG_CTX * ctx,
+                                                          const void *buf,
+                                                          int num),
+                                     int (*rand_add_cb) (DRBG_CTX * ctx,
+                                                         const void *buf,
+                                                         int num,
+                                                         double entropy));
 
-void *FIPS_drbg_get_app_data(DRBG_CTX *ctx);
-void FIPS_drbg_set_app_data(DRBG_CTX *ctx, void *app_data);
-size_t FIPS_drbg_get_blocklength(DRBG_CTX *dctx);
-int FIPS_drbg_get_strength(DRBG_CTX *dctx);
-void FIPS_drbg_set_check_interval(DRBG_CTX *dctx, int interval);
-void FIPS_drbg_set_reseed_interval(DRBG_CTX *dctx, int interval);
+    void *FIPS_drbg_get_app_data(DRBG_CTX * ctx);
+    void FIPS_drbg_set_app_data(DRBG_CTX * ctx, void *app_data);
+    size_t FIPS_drbg_get_blocklength(DRBG_CTX * dctx);
+    int FIPS_drbg_get_strength(DRBG_CTX * dctx);
+    void FIPS_drbg_set_check_interval(DRBG_CTX * dctx, int interval);
+    void FIPS_drbg_set_reseed_interval(DRBG_CTX * dctx, int interval);
 
-int FIPS_drbg_health_check(DRBG_CTX *dctx);
+    int FIPS_drbg_health_check(DRBG_CTX * dctx);
 
-DRBG_CTX *FIPS_get_default_drbg(void);
-const RAND_METHOD *FIPS_drbg_method(void);
+    DRBG_CTX *FIPS_get_default_drbg(void);
+    const RAND_METHOD *FIPS_drbg_method(void);
 
+    int FIPS_rand_set_method(const RAND_METHOD *meth);
+    const RAND_METHOD *FIPS_rand_get_method(void);
 
-int FIPS_rand_set_method(const RAND_METHOD *meth);
-const RAND_METHOD *FIPS_rand_get_method(void);
+    void FIPS_rand_set_bits(int nbits);
 
-void FIPS_rand_set_bits(int nbits);
+    int FIPS_rand_strength(void);
 
-int FIPS_rand_strength(void);
-
-#ifdef  __cplusplus
+#  ifdef  __cplusplus
 }
-#endif
-#endif
+#  endif
+# endif
 #endif
