@@ -164,12 +164,16 @@ Don't output the text form of a certificate to the output file.
 =item B<-startdate date>
 
 This allows the start date to be explicitly set. The format of the
-date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure).
+date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure), or
+YYYYMMDDHHMMSSZ (the same as an ASN1 GeneralizedTime structure). In
+both formats, seconds SS and timzone Z must be present.
 
 =item B<-enddate date>
 
 This allows the expiry date to be explicitly set. The format of the
-date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure).
+date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure), or
+YYYYMMDDHHMMSSZ (the same as an ASN1 GeneralizedTime structure). In
+both formats, seconds SS and timzone Z must be present.
 
 =item B<-days arg>
 
@@ -715,6 +719,14 @@ For example if the CA certificate has:
  basicConstraints = CA:TRUE, pathlen:0
 
 then even if a certificate is issued with CA:TRUE it will not be valid.
+
+=head1 HISTORY
+
+Since OpenSSL 1.1.1, the program follows RFC5280. Specifically,
+certificate validity period (specified by any of B<-startdate>,
+B<-enddate> and B<-days>) will be encoded as UTCTime if the dates are
+earlier than year 2049 (included), and as GeneralizedTime if the dates
+are in year 2050 or later.
 
 =head1 SEE ALSO
 
