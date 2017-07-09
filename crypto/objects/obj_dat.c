@@ -632,48 +632,62 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base_, int num,
     return (p);
 }
 
+/*
+ * Each OID definition consists of two or three columns: the OID in dotted
+ * numerical form, a single-word short name and a long name (optional),
+ * in order.
+ *
+ * Example:
+ *   1.2.3.4.5  shortName
+ *   1.2.3.4.5  shortName       long name
+ */
 int OBJ_create_objects(BIO *in)
 {
     char buf[512];
     int i, num = 0;
-    char *o, *s, *l = NULL;
+    char *o, *s, *l, *endp;
 
     for (;;) {
-        s = o = NULL;
-        i = BIO_gets(in, buf, 512);
+        i = BIO_gets(in, buf, sizeof(buf));
         if (i <= 0)
-            return (num);
-        buf[i - 1] = '\0';
-        if (!isalnum((unsigned char)buf[0]))
-            return (num);
+            return num;
+
+        /* Strip EOL and trailing spaces */
+        endp = buf + i - 1;
+        while (endp != buf && isspace((unsigned char)*endp))
+            *endp-- = '\0';
+
+        /* Extract the numerical OID string */
         o = s = buf;
         while (isdigit((unsigned char)*s) || (*s == '.'))
             s++;
-        if (*s != '\0') {
-            *(s++) = '\0';
-            while (isspace((unsigned char)*s))
-                s++;
-            if (*s == '\0')
-                s = NULL;
-            else {
-                l = s;
-                while ((*l != '\0') && !isspace((unsigned char)*l))
-                    l++;
-                if (*l != '\0') {
-                    *(l++) = '\0';
-                    while (isspace((unsigned char)*l))
-                        l++;
-                    if (*l == '\0')
-                        l = NULL;
-                } else
-                    l = NULL;
-            }
-        } else
-            s = NULL;
-        if ((o == NULL) || (*o == '\0'))
-            return (num);
+        if (o == s || !isspace((unsigned char)*s))
+            return num;
+        *s++ = '\0';
+
+        /* Skip past white spaces to start of short name */
+        while (isspace((unsigned char)*s))
+            s++;
+
+        /* Extract the short name */
+        l = s;
+        while (*l != '\0' && !isspace((unsigned char)*l))
+            l++;
+
+        if (*l == '\0') {
+            /* "1.2.3.4 shortname" form */
+            l = s;
+        } else {
+            /* "1.2.3.4 shortname long name" form */
+            *l++ = '\0';
+
+            /* Skip white spaces; the rest is the long name */
+            while (isspace((unsigned char)*l))
+                l++;
+        }
+
         if (!OBJ_create(o, s, l))
-            return (num);
+            return num;
         num++;
     }
 }
