@@ -56,6 +56,14 @@ static TESTDATA_FORMAT x509_format_tests[] = {
         "20170217180105Z", 0, 1, -1, NULL,
     },
     {
+        /* not leap year, check only */
+        "20170229180105Z", 0, 0, -1, NULL,
+    },
+    {
+        /* leap year, check only */
+        "20160229180105Z", 0, 1, -1, NULL,
+    },
+    {
         /* SS is missing, check only */
         "201702171801Z", 0, 0, -1, NULL,
     },
@@ -95,6 +103,14 @@ static TESTDATA_FORMAT x509_format_tests[] = {
     {
         /* SS is missing, check only */
         "1702171801Z", 0, 0, -1, NULL,
+    },
+    {
+        /* not leap year, check only */
+        "050229180101Z", 0, 0, -1, NULL,
+    },
+    {
+        /* leap year, check only */
+        "040229180101Z", 0, 1, -1, NULL,
     },
     {
         /* time zone, check only */
