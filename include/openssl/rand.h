@@ -67,7 +67,51 @@ DEPRECATEDIN_1_1_0(int RAND_event(UINT, WPARAM, LPARAM))
 
 int ERR_load_RAND_strings(void);
 
-# ifdef  __cplusplus
+/* Flag for CTR mode only: use derivation function ctr_df */
+#define RAND_DRBG_FLAG_CTR_USE_DF            0x1
+
+const RAND_METHOD *RAND_drbg(void);
+
+int RAND_DRBG_set(DRBG_CTX *ctx, int type, unsigned int flags);
+DRBG_CTX *RAND_DRBG_new(int type, unsigned int flags);
+int RAND_DRBG_instantiate(DRBG_CTX *dctx,
+                          const unsigned char *pers, size_t perslen);
+int RAND_DRBG_uninstantiate(DRBG_CTX *dctx);
+int RAND_DRBG_reseed(DRBG_CTX *dctx, const unsigned char *adin, size_t adinlen);
+int RAND_DRBG_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
+                       int prediction_resistance,
+                       const unsigned char *adin, size_t adinlen);
+void RAND_DRBG_free(DRBG_CTX *dctx);
+
+int RAND_DRBG_set_callbacks(DRBG_CTX *dctx,
+    size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char **pout,
+                          int entropy, size_t min_len, size_t max_len),
+    void (*cleanup_entropy)(DRBG_CTX *ctx, unsigned char *out, size_t olen),
+    size_t entropy_blocklen,
+    size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char **pout,
+                        int entropy, size_t min_len, size_t max_len),
+    void (*cleanup_nonce)(DRBG_CTX *ctx, unsigned char *out, size_t olen)
+    );
+
+int RAND_DRBG_set_rand_callbacks(DRBG_CTX *dctx,
+    size_t (*get_adin)(DRBG_CTX *ctx, unsigned char **pout),
+    void (*cleanup_adin)(DRBG_CTX *ctx, unsigned char *out, size_t olen),
+    int (*rand_seed_cb)(DRBG_CTX *ctx, const void *buf, int num),
+    int (*rand_add_cb)(DRBG_CTX *ctx,
+                       const void *buf, int num, double entropy)
+    );
+void RAND_DRBG_set_check_interval(DRBG_CTX *dctx, int interval);
+void RAND_DRBG_set_reseed_interval(DRBG_CTX *dctx, int interval);
+
+void *RAND_DRBG_get_app_data(const DRBG_CTX *ctx);
+void RAND_DRBG_set_app_data(DRBG_CTX *ctx, void *app_data);
+size_t RAND_DRBG_get_blocklength(const DRBG_CTX *dctx);
+int RAND_DRBG_get_strength(const DRBG_CTX *dctx);
+
+DRBG_CTX *RAND_DRBG_get_default(void);
+
+#ifdef  __cplusplus
 }
-# endif
+#endif
+
 #endif
