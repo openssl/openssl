@@ -453,10 +453,12 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
          * to identify it and avoid stitch invocation. So that after we
          * establish that current CPU supports AVX, we even see if it's
          * either even XOP-capable Bulldozer-based or GenuineIntel one.
+         * But SHAEXT-capable go ahead...
          */
-        if (OPENSSL_ia32cap_P[1] & (1 << (60 - 32)) && /* AVX? */
-            ((OPENSSL_ia32cap_P[1] & (1 << (43 - 32))) /* XOP? */
-             | (OPENSSL_ia32cap_P[0] & (1<<30))) &&    /* "Intel CPU"? */
+        if (((OPENSSL_ia32cap_P[2] & (1 << 29)) ||         /* SHAEXT? */
+             ((OPENSSL_ia32cap_P[1] & (1 << (60 - 32))) && /* AVX? */
+              ((OPENSSL_ia32cap_P[1] & (1 << (43 - 32)))   /* XOP? */
+               | (OPENSSL_ia32cap_P[0] & (1 << 30))))) &&  /* "Intel CPU"? */
             plen > (sha_off + iv) &&
             (blocks = (plen - (sha_off + iv)) / SHA256_CBLOCK)) {
             SHA256_Update(&key->md, in + iv, sha_off);
