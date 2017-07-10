@@ -989,6 +989,9 @@ int tls_parse_ctos_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
+    if (s->options & SSL_OP_NO_EXTENDED_MASTER_SECRET)
+        return 1;
+
     s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
 
     return 1;

@@ -297,23 +297,26 @@ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 
 /*
- * Some values are reserved until OpenSSL 1.2.0 because they were previously
+ * Some values are reserved until OpenSSL 3.0.0 because they were previously
  * included in SSL_OP_ALL in a 1.1.x release.
- *
- * Reserved value (until OpenSSL 1.2.0)                  0x00000001U
- * Reserved value (until OpenSSL 1.2.0)                  0x00000002U
  */
+
+/* Disable Extended master secret */
+# define SSL_OP_NO_EXTENDED_MASTER_SECRET                0x00000001U
+
+/* Reserved value (until OpenSSL 3.0.0)                  0x00000002U */
+
 /* Allow initial connection to servers that don't support RI */
 # define SSL_OP_LEGACY_SERVER_CONNECT                    0x00000004U
 
-/* Reserved value (until OpenSSL 1.2.0)                  0x00000008U */
+/* Reserved value (until OpenSSL 3.0.0)                  0x00000008U */
 # define SSL_OP_TLSEXT_PADDING                           0x00000010U
-/* Reserved value (until OpenSSL 1.2.0)                  0x00000020U */
+/* Reserved value (until OpenSSL 3.0.0)                  0x00000020U */
 # define SSL_OP_SAFARI_ECDHE_ECDSA_BUG                   0x00000040U
 /*
- * Reserved value (until OpenSSL 1.2.0)                  0x00000080U
- * Reserved value (until OpenSSL 1.2.0)                  0x00000100U
- * Reserved value (until OpenSSL 1.2.0)                  0x00000200U
+ * Reserved value (until OpenSSL 3.0.0)                  0x00000080U
+ * Reserved value (until OpenSSL 3.0.0)                  0x00000100U
+ * Reserved value (until OpenSSL 3.0.0)                  0x00000200U
  */
 
 /* In TLSv1.3 allow a non-(ec)dhe based kex_mode */

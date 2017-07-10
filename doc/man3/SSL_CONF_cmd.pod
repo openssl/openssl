@@ -486,6 +486,10 @@ specification. Some applications may be able to mitigate the replay risks in
 other ways and in such cases the built-in OpenSSL functionality is not required.
 Disabling anti-replay is equivalent to setting B<SSL_OP_NO_ANTI_REPLAY>.
 
+B<ExtendedMasterSecret>: use extended master secret extension, enabled by
+default. Inverse of B<SSL_OP_NO_EXTENDED_MASTER_SECRET>: that is,
+B<-ExtendedMasterSecret> is the same as setting B<SSL_OP_NO_EXTENDED_MASTER_SECRET>.
+
 =item B<VerifyMode>
 
 The B<value> argument is a comma separated list of flags to set.
