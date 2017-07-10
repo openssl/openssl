@@ -28,18 +28,21 @@
 # for standalone AESNI-CBC encrypt, standalone SHA256, and stitched
 # subroutine:
 #
-#		 AES-128/-192/-256+SHA256	this(**)gain
-# Sandy Bridge	    5.05/6.05/7.05+11.6		13.0	+28%/36%/43%
-# Ivy Bridge	    5.05/6.05/7.05+10.3		11.6	+32%/41%/50%
-# Haswell	    4.43/5.29/6.19+7.80		8.79	+39%/49%/59%
-# Skylake	    2.62/3.14/3.62+7.70		8.10	+27%/34%/40%
-# Bulldozer	    5.77/6.89/8.00+13.7		13.7	+42%/50%/58%
+#		 AES-128/-192/-256+SHA256   this(**)	gain
+# Sandy Bridge	    5.05/6.05/7.05+11.6	    13.0	+28%/36%/43%
+# Ivy Bridge	    5.05/6.05/7.05+10.3	    11.6	+32%/41%/50%
+# Haswell	    4.43/5.29/6.19+7.80	    8.79	+39%/49%/59%
+# Skylake	    2.62/3.14/3.62+7.70	    8.10	+27%/34%/40%
+# Bulldozer	    5.77/6.89/8.00+13.7	    13.7	+42%/50%/58%
+# Ryzen(***)	    2.71/-/3.71+2.05	    2.74/-/3.73	+74%/-/54%
+# Goldmont(***)	    3.82/-/5.35+4.16	    4.73/-/5.94	+69%/-/60%
 #
 # (*)	there are XOP, AVX1 and AVX2 code paths, meaning that
 #	Westmere is omitted from loop, this is because gain was not
 #	estimated high enough to justify the effort;
 # (**)	these are EVP-free results, results obtained with 'speed
 #	-evp aes-256-cbc-hmac-sha256' will vary by percent or two;
+# (***)	these are SHAEXT results;
 
 $flavour = shift;
 $output  = shift;
