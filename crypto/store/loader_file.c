@@ -755,7 +755,7 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
             path = &uri[5];
         } else {
             OSSL_STOREerr(OSSL_STORE_F_FILE_OPEN,
-                          OSSL_STORE_R_URI_AUTHORITY_UNSUPPORED);
+                          OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED);
             return NULL;
         }
 

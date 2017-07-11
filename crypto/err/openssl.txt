@@ -2004,7 +2004,7 @@ OSSL_STORE_R_UI_PROCESS_INTERRUPTED_OR_CANCELLED:109:\
 	ui process interrupted or cancelled
 OSSL_STORE_R_UNREGISTERED_SCHEME:105:unregistered scheme
 OSSL_STORE_R_UNSUPPORTED_CONTENT_TYPE:110:unsupported content type
-OSSL_STORE_R_URI_AUTHORITY_UNSUPPORED:111:uri authority unsuppored
+OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED:111:uri authority unsupported
 PEM_R_BAD_BASE64_DECODE:100:bad base64 decode
 PEM_R_BAD_DECRYPT:101:bad decrypt
 PEM_R_BAD_END_LINE:102:bad end line
