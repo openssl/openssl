@@ -104,8 +104,8 @@ static const ERR_STRING_DATA OSSL_STORE_str_reasons[] = {
     "unregistered scheme"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_UNSUPPORTED_CONTENT_TYPE),
     "unsupported content type"},
-    {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_URI_AUTHORITY_UNSUPPORED),
-    "uri authority unsuppored"},
+    {ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED),
+    "uri authority unsupported"},
     {0, NULL}
 };
 
