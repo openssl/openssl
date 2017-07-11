@@ -56,10 +56,10 @@ my @generated_files =
      "ec-key-aes256-cbc-sha256.p12",
     );
 
-my $n = (2 * scalar @noexist_files)
-    + (5 * scalar @src_files)
-    + (3 * scalar @generated_files)
-    + 2;
+my $n = (3 * scalar @noexist_files)
+    + (6 * scalar @src_files)
+    + (4 * scalar @generated_files)
+    + 3;
 
 plan tests => $n;
 
@@ -71,11 +71,13 @@ indir "store_$$" => sub {
         foreach (@noexist_files) {
             my $file = srctop_file($_);
             ok(!run(app(["openssl", "storeutl", $file])));
+            ok(!run(app(["openssl", "storeutl", to_abs_file($file)])));
             ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
         }
         foreach (@src_files) {
             my $file = srctop_file($_);
             ok(run(app(["openssl", "storeutl", $file])));
+            ok(run(app(["openssl", "storeutl", to_abs_file($file)])));
             ok(run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
             ok(run(app(["openssl", "storeutl", to_abs_file_uri($file, 0,
                                                                "")])));
@@ -88,6 +90,8 @@ indir "store_$$" => sub {
             ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
                         $_])));
             ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
+                        to_abs_file($_)])));
+            ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
                         to_abs_file_uri($_)])));
             ok(!run(app(["openssl", "storeutl", "-passin", "pass:password",
                          to_file_uri($_)])));
@@ -95,6 +99,7 @@ indir "store_$$" => sub {
         {
             my $dir = srctop_dir("test", "certs");
             ok(run(app(["openssl", "storeutl", $dir])));
+            ok(run(app(["openssl", "storeutl", to_abs_file($dir, 1)])));
             ok(run(app(["openssl", "storeutl", to_abs_file_uri($dir, 1)])));
         }
     }
@@ -339,6 +344,12 @@ sub to_file_uri {
 
     return "file://$authority$file" if defined $authority;
     return "file:$file";
+}
+
+sub to_abs_file {
+    my ($file) = @_;
+
+    return File::Spec->rel2abs($file);
 }
 
 sub to_abs_file_uri {
