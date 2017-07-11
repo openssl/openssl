@@ -744,26 +744,41 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
 {
     OSSL_STORE_LOADER_CTX *ctx = NULL;
     struct stat st;
-    const char *path = NULL;
+    const char *paths[2], *path;
+    size_t paths_n = 0, i;
 
+    /*
+     * First step, just take the URI as is.
+     */
+    paths[paths_n++] = uri;
+
+    /*
+     * Second step, if the URI appears to start with the 'file' scheme,
+     * extract the path and make that the second path to check.
+     * There's a special case if the URI also contains an authority, then
+     * the full URI shouldn't be used as a path anywhere.
+     */
     if (strncasecmp(uri, "file:", 5) == 0) {
-        if (strncasecmp(&uri[5], "//localhost/", 12) == 0) {
-            path = &uri[16];
-        } else if (strncmp(&uri[5], "///", 3) == 0) {
-            path = &uri[7];
-        } else if (strncmp(&uri[5], "//", 2) != 0) {
-            path = &uri[5];
-        } else {
-            OSSL_STOREerr(OSSL_STORE_F_FILE_OPEN,
-                          OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED);
-            return NULL;
+        const char *p = &uri[5];
+
+        if (strncmp(&uri[5], "//", 2) == 0) {
+            paths_n--;           /* Invalidate using the full URI */
+            if (strncasecmp(&uri[7], "localhost/", 10) == 0) {
+                p = &uri[16];
+            } else if (uri[7] == '/') {
+                p = &uri[7];
+            } else {
+                OSSL_STOREerr(OSSL_STORE_F_FILE_OPEN,
+                              OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED);
+                return NULL;
+            }
         }
 
         /*
          * If the scheme "file" was an explicit part of the URI, the path must
          * be absolute.  So says RFC 8089
          */
-        if (path[0] != '/') {
+        if (p[0] != '/') {
             OSSL_STOREerr(OSSL_STORE_F_FILE_OPEN,
                           OSSL_STORE_R_PATH_MUST_BE_ABSOLUTE);
             return NULL;
@@ -771,19 +786,27 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
 
 #ifdef _WIN32
         /* Windows file: URIs with a drive letter start with a / */
-        if (path[0] == '/' && path[2] == ':' && path[3] == '/')
-            path++;
+        if (p[0] == '/' && p[2] == ':' && p[3] == '/')
+            p++;
 #endif
-    } else {
-        path = uri;
+        paths[paths_n++] = p;
     }
 
 
-    if (stat(path, &st) < 0) {
-        SYSerr(SYS_F_STAT, errno);
-        ERR_add_error_data(1, path);
+    for (i = 0, path = NULL; path == NULL && i < paths_n; i++) {
+        if (stat(paths[i], &st) < 0) {
+            SYSerr(SYS_F_STAT, errno);
+            ERR_add_error_data(1, paths[i]);
+        } else {
+            path = paths[i];
+        }
+    }
+    if (path == NULL) {
         return NULL;
     }
+
+    /* Successfully found a working path, clear possible collected errors */
+    ERR_clear_error();
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
