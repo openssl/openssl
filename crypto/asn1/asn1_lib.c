@@ -102,41 +102,48 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
     return (0x80);
 }
 
+/*
+ * Decode a length field.
+ * The short form is a single byte defining a length 0 - 127.
+ * The long form is a byte 0 - 127 with the top bit set and this indicates
+ * the number of following octets that contain the length.  These octets
+ * are stored most significant digit first.
+ */
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
                            long max)
 {
     const unsigned char *p = *pp;
     unsigned long ret = 0;
-    unsigned long i;
+    int i;
 
     if (max-- < 1)
         return 0;
     if (*p == 0x80) {
         *inf = 1;
-        ret = 0;
         p++;
     } else {
         *inf = 0;
         i = *p & 0x7f;
-        if (*(p++) & 0x80) {
-            if (max < (long)i + 1)
+        if (*p++ & 0x80) {
+            if (max < i + 1)
                 return 0;
             /* Skip leading zeroes */
-            while (i && *p == 0) {
+            while (i > 0 && *p == 0) {
                 p++;
                 i--;
             }
-            if (i > sizeof(long))
+            if (i > (int)sizeof(long))
                 return 0;
-            while (i-- > 0) {
-                ret <<= 8L;
-                ret |= *(p++);
+            while (i > 0) {
+                ret <<= 8;
+                ret |= *p++;
+                i--;
             }
+            if (ret > LONG_MAX)
+                return 0;
         } else
             ret = i;
     }
-    if (ret > LONG_MAX)
-        return 0;
     *pp = p;
     *rl = (long)ret;
     return 1;
