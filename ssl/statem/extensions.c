@@ -520,6 +520,11 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
             thisex->present = 1;
             thisex->type = type;
             thisex->received_order = i++;
+            if (s->ext.debug_cb)
+                s->ext.debug_cb(s, !s->server, thisex->type,
+                                PACKET_data(&thisex->data),
+                                PACKET_remaining(&thisex->data),
+                                s->ext.debug_arg);
         }
     }
 
@@ -570,12 +575,6 @@ int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
     /* Skip if the extension is not present */
     if (!currext->present)
         return 1;
-
-    if (s->ext.debug_cb)
-        s->ext.debug_cb(s, !s->server, currext->type,
-                        PACKET_data(&currext->data),
-                        PACKET_remaining(&currext->data),
-                        s->ext.debug_arg);
 
     /* Skip if we've already parsed this extension */
     if (currext->parsed)
