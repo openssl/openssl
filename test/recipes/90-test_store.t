@@ -71,31 +71,31 @@ indir "store_$$" => sub {
         foreach (@noexist_files) {
             my $file = srctop_file($_);
             ok(!run(app(["openssl", "storeutl", $file])));
-            ok(!run(app(["openssl", "storeutl", to_file_uri($file)])));
+            ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
         }
         foreach (@src_files) {
             my $file = srctop_file($_);
             ok(run(app(["openssl", "storeutl", $file])));
-            ok(run(app(["openssl", "storeutl", to_file_uri($file)])));
-            ok(run(app(["openssl", "storeutl", to_file_uri($file, 0,
-                                                           "")])));
-            ok(run(app(["openssl", "storeutl", to_file_uri($file, 0,
-                                                           "localhost")])));
-            ok(!run(app(["openssl", "storeutl", to_file_uri($file, 0,
-                                                            "dummy")])));
+            ok(run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
+            ok(run(app(["openssl", "storeutl", to_abs_file_uri($file, 0,
+                                                               "")])));
+            ok(run(app(["openssl", "storeutl", to_abs_file_uri($file, 0,
+                                                               "localhost")])));
+            ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file, 0,
+                                                                "dummy")])));
         }
         foreach (@generated_files) {
             ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
                         $_])));
             ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
-                        to_file_uri($_)])));
+                        to_abs_file_uri($_)])));
             ok(!run(app(["openssl", "storeutl", "-passin", "pass:password",
-                         to_rel_file_uri($_)])));
+                         to_file_uri($_)])));
         }
         {
             my $dir = srctop_dir("test", "certs");
             ok(run(app(["openssl", "storeutl", $dir])));
-            ok(run(app(["openssl", "storeutl", to_file_uri($dir, 1)])));
+            ok(run(app(["openssl", "storeutl", to_abs_file_uri($dir, 1)])));
         }
     }
 }, create => 1, cleanup => 1;
@@ -296,12 +296,12 @@ sub runall {
 
 # According to RFC8089, a relative file: path is invalid.  We still produce
 # them for testing purposes.
-sub to_rel_file_uri {
+sub to_file_uri {
     my ($file, $isdir, $authority) = @_;
     my $vol;
     my $dir;
 
-    die "to_rel_file_uri: No file given\n" if !defined($file) || $file eq '';
+    die "to_file_uri: No file given\n" if !defined($file) || $file eq '';
 
     ($vol, $dir, $file) = File::Spec->splitpath($file, $isdir // 0);
 
@@ -341,9 +341,9 @@ sub to_rel_file_uri {
     return "file:$file";
 }
 
-sub to_file_uri {
+sub to_abs_file_uri {
     my ($file, $isdir, $authority) = @_;
 
-    die "to_file_uri: No file given\n" if !defined($file) || $file eq '';
-    return to_rel_file_uri(File::Spec->rel2abs($file), $isdir, $authority);
+    die "to_abs_file_uri: No file given\n" if !defined($file) || $file eq '';
+    return to_file_uri(to_abs_file($file), $isdir, $authority);
 }
