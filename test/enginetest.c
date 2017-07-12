@@ -9,13 +9,14 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <openssl/e_os2.h>
 
 #ifdef OPENSSL_NO_ENGINE
 int main(int argc, char *argv[])
 {
     printf("No ENGINE support\n");
-    return (0);
+    return EXIT_SUCCESS;
 }
 #else
 # include <openssl/buffer.h>

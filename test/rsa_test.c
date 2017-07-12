@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -42,7 +42,7 @@ void register_tests(void)
                         BN_bin2bn(dmq1, sizeof(dmq1)-1, NULL),  \
                         BN_bin2bn(iqmp, sizeof(iqmp)-1, NULL)); \
     memcpy(c, ctext_ex, sizeof(ctext_ex) - 1);                  \
-    return (sizeof(ctext_ex) - 1);
+    return sizeof(ctext_ex) - 1;
 
 static int key1(RSA *key, unsigned char *c)
 {
@@ -215,8 +215,8 @@ static int pad_unknown(void)
     unsigned long l;
     while ((l = ERR_get_error()) != 0)
         if (ERR_GET_REASON(l) == RSA_R_UNKNOWN_PADDING_TYPE)
-            return (1);
-    return (0);
+            return 1;
+    return 0;
 }
 
 static int rsa_setkey(RSA** key, unsigned char* ctext, int idx)

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -877,7 +877,8 @@ int main(int argc, char *argv[])
     int badop = 0;
     enum { BIO_MEM, BIO_PAIR, BIO_IPV4, BIO_IPV6 } bio_type = BIO_MEM;
     int force = 0;
-    int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, tls1_2 = 0, ssl3 = 0, ret = 1;
+    int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, tls1_2 = 0, ssl3 = 0;
+    int ret = EXIT_FAILURE;
     int client_auth = 0;
     int server_auth = 0, i;
     struct app_verify_arg app_verify_arg =
@@ -1264,7 +1265,7 @@ int main(int argc, char *argv[])
     if (no_protocol) {
         fprintf(stderr, "Testing was requested for a disabled protocol. "
                 "Skipping tests.\n");
-        ret = 0;
+        ret = EXIT_SUCCESS;
         goto end;
     }
 
@@ -1491,7 +1492,7 @@ int main(int argc, char *argv[])
              * if PSK is not compiled in and psk key is given, do nothing and
              * exit successfully
              */
-            ret = 0;
+            ret = EXIT_SUCCESS;
             goto end;
         }
 #ifndef OPENSSL_NO_PSK
@@ -1710,26 +1711,26 @@ int main(int argc, char *argv[])
 #else
         case BIO_IPV4:
         case BIO_IPV6:
-            ret = 1;
+            ret = EXIT_FAILURE;
             goto err;
 #endif
         }
-        if (ret)  break;
+        if (ret != EXIT_SUCCESS)  break;
     }
 
-    if (should_negotiate && ret == 0 &&
+    if (should_negotiate && ret == EXIT_SUCCESS &&
         strcmp(should_negotiate, "fail-server") != 0 &&
         strcmp(should_negotiate, "fail-client") != 0) {
         int version = protocol_from_string(should_negotiate);
         if (version < 0) {
             BIO_printf(bio_err, "Error parsing: %s\n", should_negotiate);
-            ret = 1;
+            ret = EXIT_FAILURE;
             goto err;
         }
         if (SSL_version(c_ssl) != version) {
             BIO_printf(bio_err, "Unexpected version negotiated. "
                 "Expected: %s, got %s\n", should_negotiate, SSL_get_version(c_ssl));
-            ret = 1;
+            ret = EXIT_FAILURE;
             goto err;
         }
     }
@@ -1740,20 +1741,20 @@ int main(int argc, char *argv[])
             BIO_printf(bio_err, "Unexpected session reuse state. "
                 "Expected: %d, server: %d, client: %d\n", should_reuse,
                 SSL_session_reused(s_ssl), SSL_session_reused(c_ssl));
-            ret = 1;
+            ret = EXIT_FAILURE;
             goto err;
         }
     }
 
     if (server_sess_out != NULL) {
         if (write_session(server_sess_out, SSL_get_session(s_ssl)) == 0) {
-            ret = 1;
+            ret = EXIT_FAILURE;
             goto err;
         }
     }
     if (client_sess_out != NULL) {
         if (write_session(client_sess_out, SSL_get_session(c_ssl)) == 0) {
-            ret = 1;
+            ret = EXIT_FAILURE;
             goto err;
         }
     }
@@ -1800,7 +1801,7 @@ int main(int argc, char *argv[])
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks(bio_err) <= 0)
-        ret = 1;
+        ret = EXIT_FAILURE;
 #endif
     BIO_free(bio_err);
     EXIT(ret);
@@ -1814,7 +1815,7 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
     BIO *s_ssl_bio = NULL, *c_ssl_bio = NULL;
     BIO *acpt = NULL, *server = NULL, *client = NULL;
     char addr_str[40];
-    int ret = 1;
+    int ret = EXIT_FAILURE;
     int err_in_client = 0;
     int err_in_server = 0;
 
@@ -2047,35 +2048,26 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
     if (verbose)
         print_details(c_ssl, "DONE via TCP connect: ");
 # ifndef OPENSSL_NO_NEXTPROTONEG
-    if (verify_npn(c_ssl, s_ssl) < 0) {
-        ret = 1;
+    if (verify_npn(c_ssl, s_ssl) < 0)
         goto end;
-    }
 # endif
     if (verify_serverinfo() < 0) {
         fprintf(stderr, "Server info verify error\n");
-        ret = 1;
         goto err;
     }
-    if (verify_alpn(c_ssl, s_ssl) < 0) {
-        ret = 1;
+    if (verify_alpn(c_ssl, s_ssl) < 0
+            || verify_servername(c_ssl, s_ssl) < 0)
         goto err;
-    }
-    if (verify_servername(c_ssl, s_ssl) < 0) {
-        ret = 1;
-        goto err;
-    }
 
     if (custom_ext_error) {
         fprintf(stderr, "Custom extension error\n");
-        ret = 1;
         goto err;
     }
 
 # ifndef OPENSSL_NO_NEXTPROTONEG
  end:
 # endif
-    ret = 0;
+    ret = EXIT_SUCCESS;
 
  err:
     ERR_print_errors(bio_err);
@@ -2087,9 +2079,9 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
     BIO_free(c_ssl_bio);
 
     if (should_negotiate != NULL && strcmp(should_negotiate, "fail-client") == 0)
-        ret = (err_in_client != 0) ? 0 : 1;
+        ret = (err_in_client != 0) ? EXIT_SUCCESS : EXIT_FAILURE;
     else if (should_negotiate != NULL && strcmp(should_negotiate, "fail-server") == 0)
-        ret = (err_in_server != 0) ? 0 : 1;
+        ret = (err_in_server != 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 
     return ret;
 }
@@ -2101,7 +2093,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
     long cw_num = count, cr_num = count, sw_num = count, sr_num = count;
     BIO *s_ssl_bio = NULL, *c_ssl_bio = NULL;
     BIO *server = NULL, *server_io = NULL, *client = NULL, *client_io = NULL;
-    int ret = 1;
+    int ret = EXIT_FAILURE;
     int err_in_client = 0;
     int err_in_server = 0;
 
@@ -2430,35 +2422,26 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
     if (verbose)
         print_details(c_ssl, "DONE via BIO pair: ");
 #ifndef OPENSSL_NO_NEXTPROTONEG
-    if (verify_npn(c_ssl, s_ssl) < 0) {
-        ret = 1;
+    if (verify_npn(c_ssl, s_ssl) < 0)
         goto end;
-    }
 #endif
     if (verify_serverinfo() < 0) {
         fprintf(stderr, "Server info verify error\n");
-        ret = 1;
         goto err;
     }
-    if (verify_alpn(c_ssl, s_ssl) < 0) {
-        ret = 1;
+    if (verify_alpn(c_ssl, s_ssl) < 0
+            || verify_servername(c_ssl, s_ssl) < 0)
         goto err;
-    }
-    if (verify_servername(c_ssl, s_ssl) < 0) {
-        ret = 1;
-        goto err;
-    }
 
     if (custom_ext_error) {
         fprintf(stderr, "Custom extension error\n");
-        ret = 1;
         goto err;
     }
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
  end:
 #endif
-    ret = 0;
+    ret = EXIT_SUCCESS;
 
  err:
     ERR_print_errors(bio_err);
@@ -2471,9 +2454,9 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
     BIO_free(c_ssl_bio);
 
     if (should_negotiate != NULL && strcmp(should_negotiate, "fail-client") == 0)
-        ret = (err_in_client != 0) ? 0 : 1;
+        ret = (err_in_client != 0) ? EXIT_SUCCESS : EXIT_FAILURE;
     else if (should_negotiate != NULL && strcmp(should_negotiate, "fail-server") == 0)
-        ret = (err_in_server != 0) ? 0 : 1;
+        ret = (err_in_server != 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 
     return ret;
 }
@@ -2489,7 +2472,7 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
     long bufsiz;
     long cw_num = count, cr_num = count;
     long sw_num = count, sr_num = count;
-    int ret = 1;
+    int ret = EXIT_FAILURE;
     BIO *c_to_s = NULL;
     BIO *s_to_c = NULL;
     BIO *c_bio = NULL;
@@ -2737,22 +2720,18 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
     if (verbose)
         print_details(c_ssl, "DONE: ");
 #ifndef OPENSSL_NO_NEXTPROTONEG
-    if (verify_npn(c_ssl, s_ssl) < 0) {
-        ret = 1;
+    if (verify_npn(c_ssl, s_ssl) < 0)
         goto err;
-    }
 #endif
     if (verify_serverinfo() < 0) {
         fprintf(stderr, "Server info verify error\n");
-        ret = 1;
         goto err;
     }
     if (custom_ext_error) {
         fprintf(stderr, "Custom extension error\n");
-        ret = 1;
         goto err;
     }
-    ret = 0;
+    ret = EXIT_SUCCESS;
  err:
     BIO_free(c_to_s);
     BIO_free(s_to_c);
@@ -2762,11 +2741,11 @@ int doit(SSL *s_ssl, SSL *c_ssl, long count)
     OPENSSL_free(sbuf);
 
     if (should_negotiate != NULL && strcmp(should_negotiate, "fail-client") == 0)
-        ret = (err_in_client != 0) ? 0 : 1;
+        ret = (err_in_client != 0) ? EXIT_SUCCESS : EXIT_FAILURE;
     else if (should_negotiate != NULL && strcmp(should_negotiate, "fail-server") == 0)
-        ret = (err_in_server != 0) ? 0 : 1;
+        ret = (err_in_server != 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 
-    return (ret);
+    return ret;
 }
 
 static int verify_callback(int ok, X509_STORE_CTX *ctx)
@@ -2801,7 +2780,7 @@ static int verify_callback(int ok, X509_STORE_CTX *ctx)
         }
     }
 
-    return (ok);
+    return ok;
 }
 
 static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
@@ -2823,12 +2802,12 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
             printf("cert depth=%d %s\n",
                     X509_STORE_CTX_get_error_depth(ctx), buf);
         }
-        return (1);
+        return 1;
     }
 
     ok = X509_verify_cert(ctx);
 
-    return (ok);
+    return ok;
 }
 
 #ifndef OPENSSL_NO_DH
@@ -2861,16 +2840,16 @@ static DH *get_dh512()
     BIGNUM *p, *g;
 
     if ((dh = DH_new()) == NULL)
-        return (NULL);
+        return NULL;
     p = BN_bin2bn(dh512_p, sizeof(dh512_p), NULL);
     g = BN_bin2bn(dh512_g, sizeof(dh512_g), NULL);
     if ((p == NULL) || (g == NULL) || !DH_set0_pqg(dh, p, NULL, g)) {
         DH_free(dh);
         BN_free(p);
         BN_free(g);
-        return (NULL);
+        return NULL;
     }
-    return (dh);
+    return dh;
 }
 
 static DH *get_dh1024()
@@ -2905,16 +2884,16 @@ static DH *get_dh1024()
     BIGNUM *p, *g;
 
     if ((dh = DH_new()) == NULL)
-        return (NULL);
+        return NULL;
     p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
     g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
     if ((p == NULL) || (g == NULL) || !DH_set0_pqg(dh, p, NULL, g)) {
         DH_free(dh);
         BN_free(p);
         BN_free(g);
-        return (NULL);
+        return NULL;
     }
-    return (dh);
+    return dh;
 }
 
 static DH *get_dh1024dsa()
@@ -2969,17 +2948,17 @@ static DH *get_dh1024dsa()
     BIGNUM *p, *g;
 
     if ((dh = DH_new()) == NULL)
-        return (NULL);
+        return NULL;
     p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
     g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
     if ((p == NULL) || (g == NULL) || !DH_set0_pqg(dh, p, NULL, g)) {
         DH_free(dh);
         BN_free(p);
         BN_free(g);
-        return (NULL);
+        return NULL;
     }
     DH_set_length(dh, 160);
-    return (dh);
+    return dh;
 }
 #endif
 
