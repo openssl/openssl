@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -287,7 +287,7 @@ static int print_test_data(void)
     for (j = 0; j < strlen(cbc_data) + 1; j++)
         printf("%02X", ofb64_ok[j]);
     printf("\n");
-    return (0);
+    return 0;
 }
 
 static int test_bf_ecb_raw(int n)

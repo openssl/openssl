@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -232,7 +232,7 @@ static char *pt(unsigned char *md, unsigned int len)
 
     for (i = 0; i < len; i++)
         sprintf(&(buf[i * 2]), "%02x", md[i]);
-    return (buf);
+    return buf;
 }
 # endif
 
