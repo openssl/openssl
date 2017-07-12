@@ -14,6 +14,7 @@
 #include "internal/rand.h"
 #include <openssl/engine.h>
 #include "internal/thread_once.h"
+#include "rand_lcl.h"
 
 #ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
@@ -116,6 +117,7 @@ void rand_cleanup_int(void)
 #ifndef OPENSSL_NO_ENGINE
     CRYPTO_THREAD_lock_free(rand_engine_lock);
 #endif
+    rand_drbg_cleanup();
 }
 
 void RAND_seed(const void *buf, int num)
