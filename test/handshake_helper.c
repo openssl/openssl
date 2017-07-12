@@ -826,7 +826,7 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
         do_handshake_step(peer);
         return;
     }
-    
+
     if (!TEST_int_eq(peer->status, PEER_RETRY)
             || !TEST_true(test_ctx->handshake_mode
                               == SSL_TEST_HANDSHAKE_RENEG_SERVER
