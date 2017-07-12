@@ -316,7 +316,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     unsigned char *gost_data = NULL;
 #endif
     int al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
-    int type = 0, j;
+    int j;
     unsigned int len;
     X509 *peer;
     const EVP_MD *md = NULL;
@@ -336,9 +336,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     if (pkey == NULL)
         goto f_err;
 
-    type = X509_certificate_type(peer, pkey);
-
-    if (!(type & EVP_PKT_SIGN)) {
+    if (ssl_cert_lookup_by_pkey(pkey, NULL) == NULL) {
         SSLerr(SSL_F_TLS_PROCESS_CERT_VERIFY,
                SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE);
         al = SSL_AD_ILLEGAL_PARAMETER;
@@ -1236,35 +1234,6 @@ int tls_get_message_body(SSL *s, size_t *len)
 
     *len = s->init_num;
     return 1;
-}
-
-int ssl_cert_type(const X509 *x, const EVP_PKEY *pk)
-{
-    if (pk == NULL && (pk = X509_get0_pubkey(x)) == NULL)
-        return -1;
-
-    switch (EVP_PKEY_id(pk)) {
-    default:
-        return -1;
-    case EVP_PKEY_RSA:
-        return SSL_PKEY_RSA;
-    case EVP_PKEY_DSA:
-        return SSL_PKEY_DSA_SIGN;
-#ifndef OPENSSL_NO_EC
-    case EVP_PKEY_EC:
-        return SSL_PKEY_ECC;
-    case EVP_PKEY_ED25519:
-        return SSL_PKEY_ED25519;
-#endif
-#ifndef OPENSSL_NO_GOST
-    case NID_id_GostR3410_2001:
-        return SSL_PKEY_GOST01;
-    case NID_id_GostR3410_2012_256:
-        return SSL_PKEY_GOST12_256;
-    case NID_id_GostR3410_2012_512:
-        return SSL_PKEY_GOST12_512;
-#endif
-    }
 }
 
 int ssl_verify_alarm_type(long type)

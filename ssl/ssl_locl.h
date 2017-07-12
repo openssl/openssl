@@ -206,6 +206,9 @@
 # define SSL_aGOST12             0x00000080U
 /* Any appropriate signature auth (for TLS 1.3 ciphersuites) */
 # define SSL_aANY                0x00000000U
+/* All bits requiring a certificate */
+#define SSL_aCERT \
+    (SSL_aRSA | SSL_aDSS | SSL_aECDSA | SSL_aGOST01 | SSL_aGOST12)
 
 /* Bits for algorithm_enc (symmetric encryption) */
 # define SSL_DES                 0x00000001U
@@ -1345,6 +1348,15 @@ typedef struct sigalg_lookup_st {
 
 typedef struct cert_pkey_st CERT_PKEY;
 
+/*
+ * Structure containing table entry of certificate info corresponding to
+ * CERT_PKEY entries
+ */
+typedef struct {
+    int nid; /* NID of pubic key algorithm */
+    uint32_t amask; /* authmask corresponding to key type */
+} SSL_CERT_LOOKUP;
+
 typedef struct ssl3_state_st {
     long flags;
     size_t read_mac_secret_size;
@@ -2092,7 +2104,7 @@ __owur int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 __owur int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
                                    size_t *int_overhead, size_t *blocksize,
                                    size_t *ext_overhead);
-__owur int ssl_cipher_get_cert_index(const SSL_CIPHER *c);
+__owur int ssl_cert_is_disabled(size_t idx);
 __owur const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl,
                                                 const unsigned char *ptr,
                                                 int all);
@@ -2114,13 +2126,16 @@ __owur int ssl_security(const SSL *s, int op, int bits, int nid, void *other);
 __owur int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid,
                             void *other);
 
+__owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,
+                                                      size_t *pidx);
+__owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx);
+
 int ssl_undefined_function(SSL *s);
 __owur int ssl_undefined_void_function(void);
 __owur int ssl_undefined_const_function(const SSL *s);
 __owur int ssl_get_server_cert_serverinfo(SSL *s,
                                           const unsigned char **serverinfo,
                                           size_t *serverinfo_length);
-__owur int ssl_cert_type(const X509 *x, const EVP_PKEY *pkey);
 void ssl_set_masks(SSL *s);
 __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 __owur int ssl_verify_alarm_type(long type);
