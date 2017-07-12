@@ -7,6 +7,7 @@
 # https://www.openssl.org/source/license.html
 
 use File::Spec;
+use File::Copy;
 use MIME::Base64;
 use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file data_file);
 
@@ -55,10 +56,24 @@ my @generated_files =
      "ec-key-pkcs8-pbes2-sha1.pem", "ec-key-pkcs8-pbes2-sha1.der",
      "ec-key-aes256-cbc-sha256.p12",
     );
+my %generated_file_files =
+    $^O eq 'linux'
+    ? ( "test/testx509.pem" => "file:testx509.pem",
+        "test/testrsa.pem" => "file:testrsa.pem",
+        "test/testrsapub.pem" => "file:testrsapub.pem",
+        "test/testcrl.pem" => "file:testcrl.pem",
+        "apps/server.pem" => "file:server.pem" )
+    : ();
+my @noexist_file_files =
+    ( "file:blahdiblah.pem",
+      "file:test/blahdibleh.der" );
+
 
 my $n = (3 * scalar @noexist_files)
     + (6 * scalar @src_files)
     + (4 * scalar @generated_files)
+    + (scalar keys %generated_file_files)
+    + (scalar @noexist_file_files)
     + 3;
 
 plan tests => $n;
@@ -95,6 +110,12 @@ indir "store_$$" => sub {
                         to_abs_file_uri($_)])));
             ok(!run(app(["openssl", "storeutl", "-passin", "pass:password",
                          to_file_uri($_)])));
+        }
+        foreach (values %generated_file_files) {
+            ok(run(app(["openssl", "storeutl", $_])));
+        }
+        foreach (@noexist_file_files) {
+            ok(!run(app(["openssl", "storeutl", $_])));
         }
         {
             my $dir = srctop_dir("test", "certs");
@@ -287,6 +308,16 @@ sub init {
                           close $outfh;
                           return 1;
                       }, grep(/\.der$/, @generated_files))
+            && runall(sub {
+                          my $srcfile = shift;
+                          my $dstfile = $generated_file_files{$srcfile};
+
+                          unless (copy srctop_file($srcfile), $dstfile) {
+                              warn "$!\n";
+                              return 0;
+                          }
+                          return 1;
+                      }, keys %generated_file_files)
            );
 }
 
