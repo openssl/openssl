@@ -744,13 +744,18 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
 {
     OSSL_STORE_LOADER_CTX *ctx = NULL;
     struct stat st;
-    const char *paths[2], *path;
-    size_t paths_n = 0, i;
+    struct {
+        const char *path;
+        unsigned int check_absolute:1;
+    } path_data[2];
+    size_t path_data_n = 0, i;
+    const char *path;
 
     /*
      * First step, just take the URI as is.
      */
-    paths[paths_n++] = uri;
+    path_data[path_data_n].check_absolute = 0;
+    path_data[path_data_n++].path = uri;
 
     /*
      * Second step, if the URI appears to start with the 'file' scheme,
@@ -762,7 +767,7 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
         const char *p = &uri[5];
 
         if (strncmp(&uri[5], "//", 2) == 0) {
-            paths_n--;           /* Invalidate using the full URI */
+            path_data_n--;           /* Invalidate using the full URI */
             if (strncasecmp(&uri[7], "localhost/", 10) == 0) {
                 p = &uri[16];
             } else if (uri[7] == '/') {
@@ -774,31 +779,36 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
             }
         }
 
+        path_data[path_data_n].check_absolute = 1;
+#ifdef _WIN32
+        /* Windows file: URIs with a drive letter start with a / */
+        if (p[0] == '/' && p[2] == ':' && p[3] == '/') {
+            p++;
+            /* We know it's absolute, so no need to check */
+            path_data[path_data_n].check_absolute = 0;
+        }
+#endif
+        path_data[path_data_n++].path = p;
+    }
+
+
+    for (i = 0, path = NULL; path == NULL && i < path_data_n; i++) {
         /*
          * If the scheme "file" was an explicit part of the URI, the path must
          * be absolute.  So says RFC 8089
          */
-        if (p[0] != '/') {
+        if (path_data[i].check_absolute && path_data[i].path[0] != '/') {
             OSSL_STOREerr(OSSL_STORE_F_FILE_OPEN,
                           OSSL_STORE_R_PATH_MUST_BE_ABSOLUTE);
+            ERR_add_error_data(1, path_data[i].path);
             return NULL;
         }
 
-#ifdef _WIN32
-        /* Windows file: URIs with a drive letter start with a / */
-        if (p[0] == '/' && p[2] == ':' && p[3] == '/')
-            p++;
-#endif
-        paths[paths_n++] = p;
-    }
-
-
-    for (i = 0, path = NULL; path == NULL && i < paths_n; i++) {
-        if (stat(paths[i], &st) < 0) {
+        if (stat(path_data[i].path, &st) < 0) {
             SYSerr(SYS_F_STAT, errno);
-            ERR_add_error_data(1, paths[i]);
+            ERR_add_error_data(1, path_data[i].path);
         } else {
-            path = paths[i];
+            path = path_data[i].path;
         }
     }
     if (path == NULL) {
