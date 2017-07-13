@@ -122,7 +122,7 @@ err:
 static long tap_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     BIO *next = BIO_next(b);
- 
+
     switch (cmd) {
     case BIO_CTRL_RESET:
         BIO_set_data(b, NULL);
