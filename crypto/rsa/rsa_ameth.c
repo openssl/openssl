@@ -567,6 +567,8 @@ RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd,
         mgf1md = sigmd;
     if (!rsa_md_to_mgf1(&pss->maskGenAlgorithm, mgf1md))
         goto err;
+    if (!rsa_md_to_algor(&pss->maskHash, mgf1md))
+        goto err;
     return pss;
  err:
     RSA_PSS_PARAMS_free(pss);
