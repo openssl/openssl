@@ -504,7 +504,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 *(const EVP_MD **)p2 = rctx->md;
         } else {
             if (rsa_pss_restricted(rctx)) {
-                if (EVP_MD_type(rctx->md) == EVP_MD_type(p2))
+                if (EVP_MD_type(rctx->mgf1md) == EVP_MD_type(p2))
                     return 1;
                 RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_MGF1_DIGEST_NOT_ALLOWED);
                 return 0;
