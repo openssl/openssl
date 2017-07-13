@@ -240,8 +240,8 @@ int s_time_main(int argc, char **argv)
                                    www_path);
             if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
                 goto end;
-            while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
-                bytes_read += i;
+            while ((i = SSL_read(scon, buf, sizeof(buf))) > 0 || SSL_get_error(scon, i) == SSL_ERROR_WANT_READ)
+                if (i > 0) bytes_read += i;
         }
 #ifdef NO_SHUTDOWN
         SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
@@ -297,7 +297,7 @@ int s_time_main(int argc, char **argv)
         buf_len = BIO_snprintf(buf, sizeof(buf), fmt_http_get_cmd, www_path);
         if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
             goto end;
-        while (SSL_read(scon, buf, sizeof(buf)) > 0)
+        while ((i = SSL_read(scon, buf, sizeof(buf))) > 0 || SSL_get_error(scon, i) == SSL_ERROR_WANT_READ)
             continue;
     }
 #ifdef NO_SHUTDOWN
@@ -328,8 +328,8 @@ int s_time_main(int argc, char **argv)
                                    www_path);
             if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
                 goto end;
-            while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
-                bytes_read += i;
+            while ((i = SSL_read(scon, buf, sizeof(buf))) > 0 || SSL_get_error(scon, i) == SSL_ERROR_WANT_READ)
+                if (i > 0) bytes_read += i;
         }
 #ifdef NO_SHUTDOWN
         SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
