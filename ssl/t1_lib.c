@@ -1197,30 +1197,6 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
     }
  skip_ext:
 
-    if (SSL_CLIENT_USE_SIGALGS(s)) {
-        size_t salglen;
-        const unsigned char *salg;
-        unsigned char *etmp;
-        salglen = tls12_get_psigalgs(s, 1, &salg);
-
-        /*-
-         * check for enough space.
-         * 4 bytes for the sigalgs type and extension length
-         * 2 bytes for the sigalg list length
-         * + sigalg list length
-         */
-        if (CHECKLEN(ret, salglen + 6, limit))
-            return NULL;
-        s2n(TLSEXT_TYPE_signature_algorithms, ret);
-        etmp = ret;
-        /* Skip over lengths for now */
-        ret += 4;
-        salglen = tls12_copy_sigalgs(s, ret, salg, salglen);
-        /* Fill in lengths */
-        s2n(salglen + 2, etmp);
-        s2n(salglen, etmp);
-        ret += salglen;
-    }
 #ifndef OPENSSL_NO_OCSP
     if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp) {
         int i;
@@ -1416,10 +1392,41 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
     s2n(0, ret);
 
     /*
+     * WebSphere application server can not handle having the
+     * last extension be 0-length (e.g. EMS, EtM), so keep those
+     * before SigAlgs
+     */
+    if (SSL_CLIENT_USE_SIGALGS(s)) {
+        size_t salglen;
+        const unsigned char *salg;
+        unsigned char *etmp;
+        salglen = tls12_get_psigalgs(s, 1, &salg);
+
+        /*-
+         * check for enough space.
+         * 4 bytes for the sigalgs type and extension length
+         * 2 bytes for the sigalg list length
+         * + sigalg list length
+         */
+        if (CHECKLEN(ret, salglen + 6, limit))
+            return NULL;
+        s2n(TLSEXT_TYPE_signature_algorithms, ret);
+        etmp = ret;
+        /* Skip over lengths for now */
+        ret += 4;
+        salglen = tls12_copy_sigalgs(s, ret, salg, salglen);
+        /* Fill in lengths */
+        s2n(salglen + 2, etmp);
+        s2n(salglen, etmp);
+        ret += salglen;
+    }
+
+    /*
      * Add padding to workaround bugs in F5 terminators. See
      * https://tools.ietf.org/html/draft-agl-tls-padding-03 NB: because this
      * code works out the length of all existing extensions it MUST always
-     * appear last.
+     * appear last. WebSphere 7.x/8.x is intolerant of empty extensions
+     * being last, so minimum length of 1.
      */
     if (s->options & SSL_OP_TLSEXT_PADDING) {
         int hlen = ret - (unsigned char *)s->init_buf->data;
@@ -1429,7 +1436,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *buf,
             if (hlen >= 4)
                 hlen -= 4;
             else
-                hlen = 0;
+                hlen = 1;
 
             /*-
              * check for enough space. Strictly speaking we know we've already
