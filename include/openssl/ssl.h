@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -285,7 +285,7 @@ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 /*
  * Some values are reserved until OpenSSL 1.2.0 because they were previously
  * included in SSL_OP_ALL in a 1.1.x release.
- *  
+ *
  * Reserved value (until OpenSSL 1.2.0)                  0x00000001U
  * Reserved value (until OpenSSL 1.2.0)                  0x00000002U
  */
