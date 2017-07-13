@@ -115,6 +115,16 @@ completely.
 The B<SSL_psk_find_session_cb_func> callback should return 1 on success or 0 on
 failure. In the event of failure the connection setup fails.
 
+=head1 SEE ALSO
+
+L<SSL_CTX_set_psk_use_session_callback(3)>,
+L<SSL_set_psk_use_session_callback(3)>
+
+=head1 HISTORY
+
+SSL_CTX_set_psk_find_session_callback() and SSL_set_psk_find_session_callback()
+were added in OpenSSL 1.1.1.
+
 =head1 COPYRIGHT
 
 Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
