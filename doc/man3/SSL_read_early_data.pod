@@ -7,6 +7,7 @@ SSL_CTX_set_max_early_data,
 SSL_get_max_early_data,
 SSL_CTX_get_max_early_data,
 SSL_SESSION_get_max_early_data,
+SSL_SESSION_set_max_early_data,
 SSL_write_early_data,
 SSL_read_early_data,
 SSL_get_early_data_status
@@ -21,6 +22,7 @@ SSL_get_early_data_status
  int SSL_set_max_early_data(SSL *s, uint32_t max_early_data);
  uint32_t SSL_get_max_early_data(const SSL *s);
  uint32_t SSL_SESSION_get_max_early_data(const SSL_SESSION *s);
+ int SSL_SESSION_set_max_early_data(SSL_SESSION *s, uint32_t max_early_data);
 
  int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written);
 
@@ -58,6 +60,10 @@ On the client side, the function SSL_SESSION_get_max_early_data() can be used to
 determine if a session established with a server can be used to send early data.
 If the session cannot be used then this function will return 0. Otherwise it
 will return the maximum number of early data bytes that can be sent.
+
+The function SSL_SESSION_set_max_early_data() sets the maximum number of early
+data bytes that can be sent for a session. This would typically be used when
+creating a PSK session file (see L<SSL_CTX_set_psk_use_session_callback(3)>).
 
 A client uses the function SSL_write_early_data() to send early data. This
 function is similar to the L<SSL_write_ex(3)> function, but with the following
@@ -207,8 +213,8 @@ SSL_get_max_early_data(), SSL_CTX_get_max_early_data() and
 SSL_SESSION_get_max_early_data() return the maximum number of early data bytes
 that may be sent.
 
-SSL_set_max_early_data() and SSL_CTX_set_max_early_data() return 1 for success
-or 0 for failure.
+SSL_set_max_early_data(), SSL_CTX_set_max_early_data() and
+SSL_SESSION_set_max_early_data() return 1 for success or 0 for failure.
 
 SSL_get_early_data_status() returns SSL_EARLY_DATA_ACCEPTED if early data was
 accepted by the server, SSL_EARLY_DATA_REJECTED if early data was rejected by
@@ -222,6 +228,7 @@ L<SSL_read_ex(3)>,
 L<SSL_connect(3)>,
 L<SSL_accept(3)>,
 L<SSL_do_handshake(3)>,
+L<SSL_CTX_set_psk_use_session_callback(3)>,
 L<ssl(7)>
 
 =head1 HISTORY
