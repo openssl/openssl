@@ -295,10 +295,13 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         switch (b->top & 3) {
         case 3:
             A[2] = B[2];
+            /* fall thru */
         case 2:
             A[1] = B[1];
+            /* fall thru */
         case 1:
             A[0] = B[0];
+            /* fall thru */
         case 0:
             /* Without the "case 0" some old optimizers got this wrong. */
             ;
@@ -390,10 +393,13 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
     switch (b->top & 3) {
     case 3:
         A[2] = B[2];
+        /* fall thru */
     case 2:
         A[1] = B[1];
+        /* fall thru */
     case 1:
         A[0] = B[0];
+        /* fall thru */
     case 0:;
     }
 #else
