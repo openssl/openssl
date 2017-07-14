@@ -678,6 +678,11 @@ int tls_parse_ctos_early_data(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
+    if (s->hello_retry_request) {
+        *al = SSL_AD_ILLEGAL_PARAMETER;
+        return 0;
+    }
+
     return 1;
 }
 
