@@ -157,13 +157,8 @@ int ossl_statem_skip_early_data(SSL *s)
     if (s->ext.early_data != SSL_EARLY_DATA_REJECTED)
         return 0;
 
-    if (s->hello_retry_request) {
-        if (s->statem.hand_state != TLS_ST_SW_HELLO_RETRY_REQUEST)
-            return 0;
-    } else {
-        if (!s->server || s->statem.hand_state != TLS_ST_EARLY_DATA)
-            return 0;
-    }
+    if (!s->server || s->statem.hand_state != TLS_ST_EARLY_DATA)
+        return 0;
 
     return 1;
 }
