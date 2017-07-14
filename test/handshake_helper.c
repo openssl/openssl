@@ -1319,6 +1319,8 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     memset(&client_ctx_data, 0, sizeof(client_ctx_data));
     memset(&server, 0, sizeof(server));
     memset(&client, 0, sizeof(client));
+    memset(&server_ex_data, 0, sizeof(server_ex_data));
+    memset(&client_ex_data, 0, sizeof(client_ex_data));
 
     if (!configure_handshake_ctx(server_ctx, server2_ctx, client_ctx,
                                  test_ctx, extra, &server_ctx_data,
@@ -1347,9 +1349,6 @@ static HANDSHAKE_RESULT *do_handshake_internal(
                 || !TEST_true(SSL_set_session(client.ssl, session_in)))
             goto err;
     }
-
-    memset(&server_ex_data, 0, sizeof(server_ex_data));
-    memset(&client_ex_data, 0, sizeof(client_ex_data));
 
     ret->result = SSL_TEST_INTERNAL_ERROR;
 
