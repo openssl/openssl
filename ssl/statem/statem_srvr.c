@@ -48,15 +48,14 @@ static int ossl_statem_server13_read_transition(SSL *s, int mt)
     default:
         break;
 
-    case TLS_ST_SW_HELLO_RETRY_REQUEST:
-        if (mt == SSL3_MT_CLIENT_HELLO) {
-            st->hand_state = TLS_ST_SR_CLNT_HELLO;
-            return 1;
-        }
-        break;
-
     case TLS_ST_EARLY_DATA:
-        if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED) {
+        if (s->hello_retry_request) {
+            if (mt == SSL3_MT_CLIENT_HELLO) {
+                st->hand_state = TLS_ST_SR_CLNT_HELLO;
+                return 1;
+            }
+            break;
+        } else if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED) {
             if (mt == SSL3_MT_END_OF_EARLY_DATA) {
                 st->hand_state = TLS_ST_SR_END_OF_EARLY_DATA;
                 return 1;
@@ -397,7 +396,8 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_HELLO_RETRY_REQUEST:
-        return WRITE_TRAN_FINISHED;
+        st->hand_state = TLS_ST_EARLY_DATA;
+        return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_SRVR_HELLO:
         st->hand_state = TLS_ST_SW_ENCRYPTED_EXTENSIONS;
