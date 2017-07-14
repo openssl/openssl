@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -167,6 +167,7 @@ static ASN1_STRING_TABLE *stable_get(int nid)
         rv->mask = tmp->mask;
         rv->flags = tmp->flags | STABLE_FLAGS_MALLOC;
     } else {
+        rv->nid = nid;
         rv->minsize = -1;
         rv->maxsize = -1;
         rv->flags = STABLE_FLAGS_MALLOC;
