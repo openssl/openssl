@@ -30,6 +30,10 @@
 
 #include "e_os.h"
 
+#ifdef _WIN32
+# define stat    _stat
+#endif
+
 /*-
  *  Password prompting
  *  ------------------
