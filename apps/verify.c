@@ -20,8 +20,9 @@
 
 static int cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx, const char *file,
-                 STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
+                 STACK_OF(X509) *uchain,
                  STACK_OF(X509_CRL) *crls, int show_chain);
+static int add_certs(X509_STORE *store, const char *file);
 static int v_verbose = 0, vflags = 0;
 
 typedef enum OPTION_choice {
@@ -63,7 +64,7 @@ const OPTIONS verify_options[] = {
 int verify_main(int argc, char **argv)
 {
     ENGINE *e = NULL;
-    STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
+    STACK_OF(X509) *untrusted = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
@@ -127,10 +128,9 @@ int verify_main(int argc, char **argv)
             break;
         case OPT_TRUSTED:
             /* Zero or more times */
-            noCAfile = 1;
-            noCApath = 1;
-            if (!load_certs(opt_arg(), &trusted, FORMAT_PEM, NULL,
-                            "trusted certificates"))
+            if (store == NULL && (store = X509_STORE_new()) == NULL)
+                goto end;
+            if (!add_certs(store, opt_arg()))
                 goto end;
             break;
         case OPT_CRLFILE:
@@ -162,14 +162,15 @@ int verify_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
-    if (trusted != NULL && (CAfile || CApath)) {
+    if (store != NULL && (CAfile || CApath)) {
         BIO_printf(bio_err,
                    "%s: Cannot use -trusted with -CAfile or -CApath\n",
                    prog);
         goto end;
     }
 
-    if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath)) == NULL)
+    if (store == NULL
+        && (store = setup_verify(CAfile, CApath, noCAfile, noCApath)) == NULL)
         goto end;
     X509_STORE_set_verify_cb(store, cb);
 
@@ -183,11 +184,11 @@ int verify_main(int argc, char **argv)
 
     ret = 0;
     if (argc < 1) {
-        if (check(store, NULL, untrusted, trusted, crls, show_chain) != 1)
+        if (check(store, NULL, untrusted, crls, show_chain) != 1)
             ret = -1;
     } else {
         for (i = 0; i < argc; i++)
-            if (check(store, argv[i], untrusted, trusted, crls,
+            if (check(store, argv[i], untrusted, crls,
                       show_chain) != 1)
                 ret = -1;
     }
@@ -196,14 +197,13 @@ int verify_main(int argc, char **argv)
     X509_VERIFY_PARAM_free(vpm);
     X509_STORE_free(store);
     sk_X509_pop_free(untrusted, X509_free);
-    sk_X509_pop_free(trusted, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
     release_engine(e);
     return (ret < 0 ? 2 : ret);
 }
 
 static int check(X509_STORE *ctx, const char *file,
-                 STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
+                 STACK_OF(X509) *uchain,
                  STACK_OF(X509_CRL) *crls, int show_chain)
 {
     X509 *x = NULL;
@@ -229,8 +229,6 @@ static int check(X509_STORE *ctx, const char *file,
                (file == NULL) ? "stdin" : file);
         goto end;
     }
-    if (tchain != NULL)
-        X509_STORE_CTX_set0_trusted_stack(csc, tchain);
     if (crls != NULL)
         X509_STORE_CTX_set0_crls(csc, crls);
     i = X509_verify_cert(csc);
@@ -315,4 +313,28 @@ static int cb(int ok, X509_STORE_CTX *ctx)
     if (!v_verbose)
         ERR_clear_error();
     return ok;
+}
+
+static int add_certs(X509_STORE *store, const char *file)
+{
+    BIO *b = NULL;
+    X509 *x = NULL;
+    int ret = 0;
+
+    if ((b = BIO_new_file(file, "r")) == NULL)
+        goto end;
+    while ((x = PEM_read_bio_X509_AUX(b, NULL, NULL, NULL)) != NULL) {
+        if (!X509_STORE_add_cert(store, x)) {
+            ret = 0;
+            goto end;
+        }
+        /* Added at least one cert. */
+        ret = 1;
+        X509_free(x);
+    }
+
+ end:
+    BIO_free_all(b);
+    X509_free(x);
+    return ret;
 }
