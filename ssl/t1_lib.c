@@ -2717,6 +2717,7 @@ static int ssl_check_clienthello_tlsext_early(SSL *s)
 
     case SSL_TLSEXT_ERR_NOACK:
         s->servername_done = 0;
+        /* fall thru */
     default:
         return 1;
     }
@@ -2904,6 +2905,7 @@ int ssl_check_serverhello_tlsext(SSL *s)
 
     case SSL_TLSEXT_ERR_NOACK:
         s->servername_done = 0;
+        /* fall thru */
     default:
         return 1;
     }

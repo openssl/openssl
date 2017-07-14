@@ -282,6 +282,7 @@ static int cb(int ok, X509_STORE_CTX *ctx)
         switch (cert_error) {
         case X509_V_ERR_NO_EXPLICIT_POLICY:
             policies_print(ctx);
+            /* fall thru */
         case X509_V_ERR_CERT_HAS_EXPIRED:
 
             /*

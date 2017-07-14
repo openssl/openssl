@@ -292,6 +292,7 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     case ASN1_OP_STREAM_PRE:
         if (CMS_stream(&sarg->boundary, cms) <= 0)
             return 0;
+        /* fall thru */
     case ASN1_OP_DETACHED_PRE:
         sarg->ndef_bio = CMS_dataInit(cms, sarg->out);
         if (!sarg->ndef_bio)
