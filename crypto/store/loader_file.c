@@ -783,9 +783,13 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
 #ifdef _WIN32
         /* Windows file: URIs with a drive letter start with a / */
         if (p[0] == '/' && p[2] == ':' && p[3] == '/') {
-            p++;
-            /* We know it's absolute, so no need to check */
-            path_data[path_data_n].check_absolute = 0;
+            char c = tolower(p[1]);
+
+            if (c >= 'a' && c <= 'z') {
+                p++;
+                /* We know it's absolute, so no need to check */
+                path_data[path_data_n].check_absolute = 0;
+            }
         }
 #endif
         path_data[path_data_n++].path = p;
