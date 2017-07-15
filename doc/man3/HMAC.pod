@@ -138,15 +138,14 @@ L<SHA1(3)>, L<evp(7)>
 
 =head1 HISTORY
 
-HMAC_CTX_init() was replaced with HMAC_CTX_reset() in OpenSSL versions 1.1.0.
+HMAC_CTX_init() was replaced with HMAC_CTX_reset() in OpenSSL 1.1.0.
 
-HMAC_CTX_cleanup() existed in OpenSSL versions before 1.1.0.
+HMAC_CTX_cleanup() existed in OpenSSL before version 1.1.0.
 
-HMAC_CTX_new(), HMAC_CTX_free() and HMAC_CTX_get_md() are new in OpenSSL version
-1.1.0.
+HMAC_CTX_new(), HMAC_CTX_free() and HMAC_CTX_get_md() are new in OpenSSL 1.1.0.
 
 HMAC_Init_ex(), HMAC_Update() and HMAC_Final() did not return values in
-versions of OpenSSL before 1.0.0.
+OpenSSL before version 1.0.0.
 
 =head1 COPYRIGHT
 

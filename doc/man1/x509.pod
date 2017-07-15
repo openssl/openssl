@@ -187,12 +187,12 @@ Synonym for "-subject_hash" for backward compatibility reasons.
 =item B<-subject_hash_old>
 
 Outputs the "hash" of the certificate subject name using the older algorithm
-as used by OpenSSL versions before 1.0.0.
+as used by OpenSSL before version 1.0.0.
 
 =item B<-issuer_hash_old>
 
 Outputs the "hash" of the certificate issuer name using the older algorithm
-as used by OpenSSL versions before 1.0.0.
+as used by OpenSSL before version 1.0.0.
 
 =item B<-subject>
 
