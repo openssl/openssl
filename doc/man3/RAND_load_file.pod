@@ -68,10 +68,10 @@ L<RAND_bytes(3)>, L<RAND_add(3)>
 
 =head1 HISTORY
 
-A comment in the source since at least OpenSSL version 1.0.2 said that
+A comment in the source since at least OpenSSL 1.0.2 said that
 RAND_load_file() and RAND_write_file() were only intended for regular files,
 and not really device special files such as C</dev/random>.  This was
-poorly enforced before OpenSSL version 1.1.1.
+poorly enforced before OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

@@ -76,7 +76,7 @@ a directory by issuer name.
 =item B<-hash_old>
 
 Outputs the "hash" of the CRL issuer name using the older algorithm
-as used by OpenSSL versions before 1.0.0.
+as used by OpenSSL before version 1.0.0.
 
 =item B<-issuer>
 

@@ -43,7 +43,7 @@ L<X509_STORE_new(3)>
 =head1 HISTORY
 
 B<X509_STORE_get0_param> and B<X509_STORE_get0_objects> were added in
-OpenSSL version 1.1.0.
+OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 

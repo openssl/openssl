@@ -23,8 +23,8 @@ Deprecated:
 
 OpenSSL keeps an internal table of digest algorithms and ciphers. It uses
 this table to lookup ciphers via functions such as EVP_get_cipher_byname(). In
-OpenSSL versions prior to 1.1.0 these functions initialised and de-initialised
-this table. From OpenSSL 1.1.0 they are deprecated. No explicit initialisation
+OpenSSL before version 1.1.0, these functions initialised and de-initialised
+this table. Starting with OpenSSL 1.1.0 they are deprecated. No explicit initialisation
 or de-initialisation is required. See L<OPENSSL_init_crypto(3)> for further
 information.
 
