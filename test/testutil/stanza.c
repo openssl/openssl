@@ -20,7 +20,7 @@ int test_start_file(STANZA *s, const char *testfile)
     TEST_info("Reading %s", testfile);
     set_test_title(testfile);
     memset(s, 0, sizeof(*s));
-    if (!TEST_ptr(s->fp = BIO_new_file(testfile, "rb")))
+    if (!TEST_ptr(s->fp = BIO_new_file(testfile, "r")))
         return 0;
     s->test_file = testfile;
     return 1;
