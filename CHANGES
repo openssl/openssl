@@ -9,6 +9,9 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Add SHA3.
+     [Andy Polyakov]
+
   *) The UI API becomes a permanent and integral part of libcrypto, i.e.
      not possible to disable entirely.  However, it's still possible to
      disable the console reading UI method, UI_OpenSSL() (use UI_null()
