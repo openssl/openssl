@@ -4358,3 +4358,9 @@ RAND_DRBG_generate                      4300	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_reseed                        4301	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_set_ex_data                   4302	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_get_ex_data                   4303	1_1_1	EXIST::FUNCTION:
+EVP_sha3_224                            4304	1_1_1	EXIST::FUNCTION:
+EVP_sha3_256                            4305	1_1_1	EXIST::FUNCTION:
+EVP_sha3_384                            4306	1_1_1	EXIST::FUNCTION:
+EVP_sha3_512                            4307	1_1_1	EXIST::FUNCTION:
+EVP_shake128                            4308	1_1_1	EXIST::FUNCTION:
+EVP_shake256                            4309	1_1_1	EXIST::FUNCTION:
