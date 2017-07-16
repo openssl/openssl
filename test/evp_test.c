@@ -1809,6 +1809,117 @@ static const EVP_TEST_METHOD keypair_test_method = {
     keypair_test_run
 };
 
+/**
+***  KEYGEN TEST
+**/
+
+typedef struct keygen_test_data_st {
+    EVP_PKEY_CTX *genctx; /* Keygen context to use */
+    char *keyname; /* Key name to store key or NULL */
+} KEYGEN_TEST_DATA;
+
+static int keygen_test_init(EVP_TEST *t, const char *alg)
+{
+    KEYGEN_TEST_DATA *data;
+    EVP_PKEY_CTX *genctx;
+    int nid = OBJ_sn2nid(alg);
+
+    if (nid == NID_undef) {
+        nid = OBJ_ln2nid(alg);
+        if (nid == NID_undef)
+            return 0;
+    }
+
+    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_id(nid, NULL))) {
+        /* assume algorithm disabled */
+        t->skip = 1;
+        return 1;
+    }
+
+    if (EVP_PKEY_keygen_init(genctx) <= 0) {
+        t->err = "KEYGEN_INIT_ERROR";
+        goto err;
+    }
+
+    if (!TEST_ptr(data = OPENSSL_malloc(sizeof(*data))))
+        goto err;
+    data->genctx = genctx;
+    data->keyname = NULL;
+    t->data = data;
+    t->err = NULL;
+    return 1;
+
+err:
+    EVP_PKEY_CTX_free(genctx);
+    return 0;
+}
+
+static void keygen_test_cleanup(EVP_TEST *t)
+{
+    KEYGEN_TEST_DATA *keygen = t->data;
+
+    EVP_PKEY_CTX_free(keygen->genctx);
+    OPENSSL_free(keygen->keyname);
+    OPENSSL_free(t->data);
+    t->data = NULL;
+}
+
+static int keygen_test_parse(EVP_TEST *t,
+                             const char *keyword, const char *value)
+{
+    KEYGEN_TEST_DATA *keygen = t->data;
+
+    if (strcmp(keyword, "KeyName") == 0)
+        return TEST_ptr(keygen->keyname = OPENSSL_strdup(value));
+    if (strcmp(keyword, "Ctrl") == 0)
+        return pkey_test_ctrl(t, keygen->genctx, value);
+    return 0;
+}
+
+static int keygen_test_run(EVP_TEST *t)
+{
+    KEYGEN_TEST_DATA *keygen = t->data;
+    EVP_PKEY *pkey = NULL;
+
+    t->err = NULL;
+    if (EVP_PKEY_keygen(keygen->genctx, &pkey) <= 0) {
+        t->err = "KEYGEN_GENERATE_ERROR";
+        goto err;
+    }
+
+    if (keygen->keyname != NULL) {
+        KEY_LIST *key;
+
+        if (find_key(NULL, keygen->keyname, private_keys)) {
+            TEST_info("Duplicate key %s", keygen->keyname);
+            goto err;
+        }
+
+        if (!TEST_ptr(key = OPENSSL_malloc(sizeof(*key))))
+            goto err;
+        key->name = keygen->keyname;
+        keygen->keyname = NULL;
+        key->key = pkey;
+        key->next = private_keys;
+        private_keys = key;
+    } else {
+        EVP_PKEY_free(pkey);
+    }
+
+    return 1;
+
+err:
+    EVP_PKEY_free(pkey);
+    return 0;
+}
+
+static const EVP_TEST_METHOD keygen_test_method = {
+    "KeyGen",
+    keygen_test_init,
+    keygen_test_cleanup,
+    keygen_test_parse,
+    keygen_test_run,
+};
 
 /**
 ***  DIGEST SIGN+VERIFY TESTS
@@ -2085,6 +2196,7 @@ static const EVP_TEST_METHOD *evp_test_list[] = {
     &encode_test_method,
     &kdf_test_method,
     &keypair_test_method,
+    &keygen_test_method,
     &mac_test_method,
     &oneshot_digestsign_test_method,
     &oneshot_digestverify_test_method,
