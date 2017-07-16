@@ -607,10 +607,10 @@ int tls13_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 {
     unsigned char exportsecret[EVP_MAX_MD_SIZE];
     static const unsigned char exporterlabel[] = "exporter";
-    unsigned char hash[EVP_MAX_MD_SIZE];
+    unsigned char hash[EVP_MAX_MD_SIZE], data[EVP_MAX_MD_SIZE];
     const EVP_MD *md = ssl_handshake_md(s);
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
-    unsigned int hashsize;
+    unsigned int hashsize, datalen;
     int ret = 0;
 
     if (ctx == NULL || !SSL_is_init_finished(s))
@@ -622,9 +622,11 @@ int tls13_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     if (EVP_DigestInit_ex(ctx, md, NULL) <= 0
             || EVP_DigestUpdate(ctx, context, contextlen) <= 0
             || EVP_DigestFinal_ex(ctx, hash, &hashsize) <= 0
+            || EVP_DigestInit_ex(ctx, md, NULL) <= 0
+            || EVP_DigestFinal_ex(ctx, data, &datalen) <= 0
             || !tls13_hkdf_expand(s, md, s->exporter_master_secret,
-                                  (const unsigned char *)label, llen, NULL, 0,
-                                  exportsecret, hashsize)
+                                  (const unsigned char *)label, llen,
+                                  data, datalen, exportsecret, hashsize)
             || !tls13_hkdf_expand(s, md, exportsecret, exporterlabel,
                                   sizeof(exporterlabel) - 1, hash, hashsize,
                                   out, olen))
