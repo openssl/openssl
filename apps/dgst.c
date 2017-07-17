@@ -34,7 +34,7 @@ typedef enum OPTION_choice {
     OPT_HEX, OPT_BINARY, OPT_DEBUG, OPT_FIPS_FINGERPRINT,
     OPT_HMAC, OPT_MAC, OPT_SIGOPT, OPT_MACOPT,
     OPT_DIGEST,
-    OPT_R_ENUM,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS dgst_options[] = {
