@@ -539,9 +539,6 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             pad = constant_time_select(mask, pad, maxpad);
 
             inp_len = len - (SHA_DIGEST_LENGTH + pad + 1);
-            mask = (0 - ((inp_len - len) >> (sizeof(inp_len) * 8 - 1)));
-            inp_len &= mask;
-            ret &= (int)mask;
 
             key->aux.tls_aad[plen - 2] = inp_len >> 8;
             key->aux.tls_aad[plen - 1] = inp_len;
