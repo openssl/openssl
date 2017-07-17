@@ -9,6 +9,7 @@
 
 #include "apps.h"
 #include <openssl/bio.h>
+#include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/conf.h>
 
@@ -33,7 +34,7 @@ void app_RAND_load_conf(CONF *c, const char *section)
 
 static int loadfiles(char *name)
 {
-    char *p, *n;
+    char *p;
     int last, ret = 1;
 
     for ( ; ; ) {
@@ -48,7 +49,6 @@ static int loadfiles(char *name)
             ERR_print_errors(bio_err);
             ret = 0;
         }
-        n = name;
         if (last)
             break;
         name = p + 1;
