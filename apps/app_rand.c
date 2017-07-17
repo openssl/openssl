@@ -13,7 +13,7 @@
 #include <openssl/rand.h>
 #include <openssl/conf.h>
 
-static const char *save_rand_file;
+static char *save_rand_file;
 
 void app_RAND_load_conf(CONF *c, const char *section)
 {
@@ -29,7 +29,7 @@ void app_RAND_load_conf(CONF *c, const char *section)
         return;
     }
     if (save_rand_file == NULL)
-        save_rand_file = randfile;
+        save_rand_file = OPENSSL_strdup(randfile);
 }
 
 static int loadfiles(char *name)
@@ -66,6 +66,8 @@ void app_RAND_write(void)
         BIO_printf(bio_err, "Cannot write random bytes:\n");
         ERR_print_errors(bio_err);
     }
+    OPENSSL_free(save_rand_file);
+    save_rand_file =  NULL;
 }
 
 
@@ -84,7 +86,8 @@ int opt_rand(int opt)
         return loadfiles(opt_arg());
         break;
     case OPT_R_WRITERAND:
-        save_rand_file = opt_arg();
+        OPENSSL_free(save_rand_file);
+        save_rand_file = OPENSSL_strdup(opt_arg());
         break;
     }
     return 1;
