@@ -566,10 +566,9 @@ int SSL_clear(SSL *s)
 
     /*
      * Check to see if we were changed into a different method, if so, revert
-     * back if we are not doing session-id reuse.
+     * back.
      */
-    if (!ossl_statem_get_in_handshake(s) && (s->session == NULL)
-        && (s->method != s->ctx->method)) {
+    if (s->method != s->ctx->method) {
         s->method->ssl_free(s);
         s->method = s->ctx->method;
         if (!s->method->ssl_new(s))
