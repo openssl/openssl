@@ -1259,10 +1259,6 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     if (external) {
         psk = sess->master_key;
     } else {
-        if (sess->ext.tick_nonce == NULL) {
-            SSLerr(SSL_F_TLS_PSK_DO_BINDER, SSL_R_BAD_PSK);
-            goto err;
-        }
         psk = tmppsk;
         if (!tls13_hkdf_expand(s, md, sess->master_key,
                                (const unsigned char *)nonce_label,
