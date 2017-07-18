@@ -364,23 +364,22 @@ static int test_unknown_critical_crl(int n)
     return r;
 }
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    int status = EXIT_FAILURE;
-
     if (!TEST_ptr(test_root = X509_from_strings(kCRLTestRoot))
         || !TEST_ptr(test_leaf = X509_from_strings(kCRLTestLeaf)))
-        goto err;
+        return 0;
 
     ADD_TEST(test_no_crl);
     ADD_TEST(test_basic_crl);
     ADD_TEST(test_bad_issuer_crl);
     ADD_TEST(test_known_critical_crl);
     ADD_ALL_TESTS(test_unknown_critical_crl, OSSL_NELEM(unknown_critical_crls));
+    return 1;
+}
 
-    status = run_tests(argv[0]);
-err:
+void cleanup_tests(void)
+{
     X509_free(test_root);
     X509_free(test_leaf);
-    return status;
 }

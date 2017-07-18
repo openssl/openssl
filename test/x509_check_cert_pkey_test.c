@@ -20,8 +20,12 @@
  * t: API type, "cert" for X509_ and "req" for X509_REQ_ APIs.
  * e: expected, "ok" for success, "failed" for what should fail.
  */
-static int test_x509_check_cert_pkey(const char *c, const char *k,
-    const char *t, const char *e)
+static const char *c;
+static const char *k;
+static const char *t;
+static const char *e;
+
+static int test_x509_check_cert_pkey(void)
 {
     BIO *bio = NULL;
     X509 *x509 = NULL;
@@ -102,13 +106,17 @@ failed:
     return ret;
 }
 
-int test_main(int argc, char **argv)
+int setup_tests(void)
 {
-    if (!TEST_int_eq(argc, 5)) {
-        TEST_info("usage: x509_check_cert_pkey cert.pem|cert.req"
+    if (!TEST_ptr(c = test_get_argument(0))
+            || !TEST_ptr(k = test_get_argument(1))
+            || !TEST_ptr(t = test_get_argument(2))
+            || !TEST_ptr(e = test_get_argument(3))) {
+        TEST_note("usage: x509_check_cert_pkey cert.pem|cert.req"
                   " key.pem cert|req <expected>");
-        return 1;
+        return 0;
     }
 
-    return !test_x509_check_cert_pkey(argv[1], argv[2], argv[3], argv[4]);
+    ADD_TEST(test_x509_check_cert_pkey);
+    return 1;
 }

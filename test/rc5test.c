@@ -224,10 +224,11 @@ static int test_rc5_cbc(int n)
 }
 #endif
 
-void register_tests(void)
+int setup_tests(void)
 {
 #ifndef OPENSSL_NO_RC5
     ADD_ALL_TESTS(test_rc5_ecb, OSSL_NELEM(RC5key));
     ADD_ALL_TESTS(test_rc5_cbc, RC5_CBC_NUM);
 #endif
+    return 1;
 }

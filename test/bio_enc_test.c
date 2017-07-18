@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -212,7 +212,7 @@ static int test_bio_enc_chacha20_poly1305(int idx)
     return do_test_bio_cipher(EVP_chacha20_poly1305(), idx);
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_ALL_TESTS(test_bio_enc_aes_128_cbc, 2);
     ADD_ALL_TESTS(test_bio_enc_aes_128_ctr, 2);
@@ -224,4 +224,5 @@ void register_tests(void)
     ADD_ALL_TESTS(test_bio_enc_chacha20_poly1305, 2);
 #  endif
 # endif
+    return 1;
 }

@@ -428,23 +428,22 @@ err:
     return ret;
 }
 
-int test_main(int argc, char **argv)
+int setup_tests(void)
 {
-    int result = EXIT_FAILURE;
     long num_tests;
 
-    if (!TEST_int_eq(argc, 2)
-            || !TEST_ptr(conf = NCONF_new(NULL))
+    if (!TEST_ptr(conf = NCONF_new(NULL))
             /* argv[1] should point to the test conf file */
-            || !TEST_int_gt(NCONF_load(conf, argv[1], NULL), 0)
+            || !TEST_int_gt(NCONF_load(conf, test_get_argument(0), NULL), 0)
             || !TEST_int_ne(NCONF_get_number_e(conf, NULL, "num_tests",
                                                &num_tests), 0))
-        goto err;
+        return 0;
 
-    ADD_ALL_TESTS(test_handshake, (int)(num_tests));
-    result = run_tests(argv[0]);
+    ADD_ALL_TESTS(test_handshake, (int)num_tests);
+    return 1;
+}
 
-err:
+void cleanup_tests(void)
+{
     NCONF_free(conf);
-    return result;
 }

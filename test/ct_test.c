@@ -501,7 +501,7 @@ static int test_ctlog_from_base64(void)
 }
 #endif
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
 #ifndef OPENSSL_NO_CT
     if ((ct_dir = getenv("CT_DIR")) == NULL)
@@ -519,10 +519,8 @@ int test_main(int argc, char *argv[])
     ADD_TEST(test_encode_tls_sct);
     ADD_TEST(test_default_ct_policy_eval_ctx_time_is_now);
     ADD_TEST(test_ctlog_from_base64);
-
-    return run_tests(argv[0]);
 #else
     printf("No CT support\n");
-    return EXIT_SUCCESS;
 #endif
+    return 1;
 }

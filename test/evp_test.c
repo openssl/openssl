@@ -2510,16 +2510,15 @@ top:
     return 1;
 }
 
-static char * const *testfiles;
-
 static int run_file_tests(int i)
 {
     EVP_TEST *t;
+    const char *testfile = test_get_argument(i);
     int c;
 
     if (!TEST_ptr(t = OPENSSL_zalloc(sizeof(*t))))
         return 0;
-    if (!test_start_file(&t->s, testfiles[i])) {
+    if (!test_start_file(&t->s, testfile)) {
         OPENSSL_free(t);
         return 0;
     }
@@ -2544,15 +2543,15 @@ static int run_file_tests(int i)
     return c == 0;
 }
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    if (argc < 2) {
-        TEST_error("Usage: %s file...", argv[0]);
+    size_t n = test_get_argument_count();
+
+    if (n == 0) {
+        TEST_error("Usage: %s file...", test_get_program_name());
         return 0;
     }
-    testfiles = &argv[1];
 
-    ADD_ALL_TESTS(run_file_tests, argc - 1);
-
-    return run_tests(argv[0]);
+    ADD_ALL_TESTS(run_file_tests, n);
+    return 1;
 }

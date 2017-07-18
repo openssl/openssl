@@ -398,7 +398,8 @@ static int test_tls13_encryption(void)
     return ret;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_tls13_encryption);
+    return 1;
 }

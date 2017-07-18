@@ -215,25 +215,23 @@ static int test_bad_configuration(int idx)
     return 1;
 }
 
-int test_main(int argc, char **argv)
+int setup_tests(void)
 {
-    int result = 0;
-
-    if (argc != 2) {
-        TEST_info("Missing file argument");
-        goto end;
+    if (!TEST_ptr(conf = NCONF_new(NULL)))
+        return 0;
+    /* argument should point to test/ssl_test_ctx_test.conf */
+    if (!TEST_int_gt(NCONF_load(conf, test_get_argument(0), NULL), 0)) {
+        TEST_note("Missing file argument");
+        return 0;
     }
-    if (!TEST_ptr(conf = NCONF_new(NULL))
-            /* argv[1] should point to test/ssl_test_ctx_test.conf */
-            || !TEST_int_gt(NCONF_load(conf, argv[1], NULL), 0))
-        goto end;
 
     ADD_TEST(test_empty_configuration);
     ADD_TEST(test_good_configuration);
     ADD_ALL_TESTS(test_bad_configuration, OSSL_NELEM(bad_configurations));
-    result = run_tests(argv[0]);
+    return 1;
+}
 
-end:
+void cleanup_tests(void)
+{
     NCONF_free(conf);
-    return result;
 }

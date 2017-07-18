@@ -236,12 +236,13 @@ static char *pt(unsigned char *md, unsigned int len)
 }
 # endif
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_ALL_TESTS(test_hmac_md5, 4);
     ADD_TEST(test_hmac_single_shot);
     ADD_TEST(test_hmac_bad);
     ADD_TEST(test_hmac_run);
     ADD_TEST(test_hmac_copy);
+    return 1;
 }
 

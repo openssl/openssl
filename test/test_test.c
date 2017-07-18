@@ -509,7 +509,7 @@ static int test_bn_output(int n)
 }
 
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_int);
     ADD_TEST(test_uint);
@@ -530,4 +530,5 @@ void register_tests(void)
     ADD_TEST(test_single_eval);
     ADD_TEST(test_output);
     ADD_ALL_TESTS(test_bn_output, OSSL_NELEM(bn_output_tests));
+    return 1;
 }

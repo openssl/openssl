@@ -91,8 +91,9 @@ static int test_standard_methods()
     return 0;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
     ADD_TEST(test_standard_methods);
+    return 1;
 }

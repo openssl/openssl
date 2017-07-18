@@ -57,7 +57,8 @@ static int test_standard_exts()
     return good;
 }
 
-void register_tests()
+int setup_tests()
 {
     ADD_TEST(test_standard_exts);
+    return 1;
 }

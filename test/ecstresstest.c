@@ -123,39 +123,28 @@ static int atoi64(const char *in, int64_t *result)
  * |num| times and prints the resulting X-coordinate. Otherwise runs the test
  * the default number of times and compares against the expected result.
  */
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    const char *argv0 = argv[0];
+    const char *p;
 
     if (!atoi64(NUM_REPEATS, &num_repeats)) {
         TEST_error("Cannot parse " NUM_REPEATS);
-        return EXIT_FAILURE;
+        return 0;
     }
     /*
      * TODO(openssl-team): code under test/ should be able to reuse the option
      * parsing framework currently in apps/.
      */
-    argc--;
-    argv++;
-    while (argc >= 1) {
-        if (strcmp(*argv, "-num") == 0) {
-            if (--argc < 1
-                    || !atoi64(*++argv, &num_repeats)
-                    || num_repeats < 0) {
-                TEST_error("Bad -num argument\n");
-                return EXIT_FAILURE;
-            }
-            print_mode = 1;
-        } else {
-            TEST_error("Unknown option %s\n", *argv);
-            return EXIT_FAILURE;
-        }
-        argc--;
-        argv++;
+    p = test_get_option_argument("-num");
+    if (p != NULL) {
+        if (!atoi64(p, &num_repeats)
+                || num_repeats < 0)
+            return 0;
+        print_mode = 1;
     }
 
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_curve);
 #endif
-    return run_tests(argv0);
+    return 1;
 }

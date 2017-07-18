@@ -179,11 +179,12 @@ static int test_cha_cha_internal(int n)
     return 1;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
 #ifdef CPUID_OBJ
     OPENSSL_cpuid_setup();
 #endif
 
     ADD_ALL_TESTS(test_cha_cha_internal, sizeof(ref));
+    return 1;
 }

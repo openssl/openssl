@@ -93,22 +93,18 @@ static int test_dtls_unprocessed(int testidx)
     return testresult;
 }
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    int testresult = 1;
-
-    if (!TEST_int_eq(argc, 3))
-        return 1;
-
-    cert = argv[1];
-    privkey = argv[2];
+    if (!TEST_ptr(cert = test_get_argument(0))
+            || !TEST_ptr(privkey = test_get_argument(1)))
+        return 0;
 
     ADD_ALL_TESTS(test_dtls_unprocessed, NUM_TESTS);
+    return 1;
+}
 
-    testresult = run_tests(argv[0]);
-
+void cleanup_tests(void)
+{
     bio_f_tls_dump_filter_free();
     bio_s_mempacket_test_free();
-
-    return testresult;
 }

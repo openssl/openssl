@@ -463,7 +463,8 @@ err:
     return ret;
 }
 
-void register_tests()
+int setup_tests(void)
 {
     ADD_TEST(test_cipher_name);
+    return 1;
 }

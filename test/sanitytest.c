@@ -75,12 +75,13 @@ static int test_sanity_unsigned_convertion(void)
     return 1;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_sanity_null_zero);
     ADD_TEST(test_sanity_enum_size);
     ADD_TEST(test_sanity_twos_complement);
     ADD_TEST(test_sanity_sign);
     ADD_TEST(test_sanity_unsigned_convertion);
+    return 1;
 }
 

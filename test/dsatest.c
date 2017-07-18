@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -137,9 +137,10 @@ static int dsa_cb(int p, int n, BN_GENCB *arg)
 }
 #endif /* OPENSSL_NO_DSA */
 
-void register_tests(void)
+int setup_tests(void)
 {
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(dsa_test);
 #endif
+    return 1;
 }

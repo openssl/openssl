@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,17 +37,11 @@ end:
     return ret;
 }
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    int ret;
-
-    if (argc != 2) {
-        TEST_error("Usage error");
+    if (!TEST_ptr(infile = test_get_argument(0)))
         return 0;
-    }
-    infile = argv[1];
 
     ADD_TEST(test_pathlen);
-    ret = run_tests(argv[0]);
-    return ret;
+    return 1;
 }

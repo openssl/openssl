@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -85,21 +85,20 @@ static int test_afalg_aes_128_cbc(void)
 }
 #endif
 
-int main(int argc, char **argv)
+#ifndef OPENSSL_NO_ENGINE
+int global_init(void)
 {
-    int ret = 0;
-
-#ifdef OPENSSL_NO_ENGINE
-    setup_test();
-    ret = run_tests(argv[0]);
-#else
     ENGINE_load_builtin_engines();
 # ifndef OPENSSL_NO_STATIC_ENGINE
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_AFALG, NULL);
 # endif
+    return 1;
+}
+#endif
 
-    setup_test();
-
+int setup_tests(void)
+{
+#ifndef OPENSSL_NO_ENGINE
     if ((e = ENGINE_by_id("afalg")) == NULL) {
         /* Probably a platform env issue, not a test failure. */
         TEST_info("Can't load AFALG engine");
@@ -108,9 +107,14 @@ int main(int argc, char **argv)
         ADD_TEST(test_afalg_aes_128_cbc);
 # endif
     }
-    ret = run_tests(argv[0]);
-    ENGINE_free(e);
 #endif
 
-    return finish_test(ret);
+    return 1;
 }
+
+#ifndef OPENSSL_NO_ENGINE
+void cleanup_tests(void)
+{
+    ENGINE_free(e);
+}
+#endif

@@ -19,13 +19,7 @@
 #include <openssl/err.h>
 #include "testutil.h"
 
-#ifdef OPENSSL_NO_DH
-int main(int argc, char *argv[])
-{
-    printf("No DH support\n");
-    return EXIT_SUCCESS;
-}
-#else
+#ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
 
 static int cb(int p, int n, BN_GENCB *arg);
@@ -507,11 +501,16 @@ static int rfc5114_test(void)
     TEST_error("Test failed RFC5114 set %d\n", i + 1);
     return 0;
 }
+#endif
 
 
-void register_tests(void)
+int setup_tests(void)
 {
+#ifdef OPENSSL_NO_DH
+    TEST_note("No DH support");
+#else
     ADD_TEST(dh_test);
     ADD_TEST(rfc5114_test);
-}
 #endif
+    return 1;
+}

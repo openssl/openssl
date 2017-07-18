@@ -17,34 +17,31 @@
 #include <openssl/bn.h>
 
 /*-
- * Simple unit tests should implement register_tests().
+ * Simple unit tests should implement setup_tests().
+ * This function should return zero if the registration process fails.
  * To register tests, call ADD_TEST or ADD_ALL_TESTS:
  *
- * void register_tests(void)
+ * int setup_tests(void)
  * {
  *     ADD_TEST(test_foo);
  *     ADD_ALL_TESTS(test_bar, num_test_bar);
+ *     return 1;
  * }
  *
- * Tests that need to perform custom setup or read command-line arguments should
- * implement test_main():
+ * Tests that require clean up after execution should implement:
  *
- * int test_main(int argc, char *argv[])
- * {
- *     int ret;
+ * void cleanup_tests(void);
  *
- *     // Custom setup ...
+ * The cleanup_tests function will be called even if setup_tests()
+ * returns failure.
  *
- *     ADD_TEST(test_foo);
- *     ADD_ALL_TESTS(test_bar, num_test_bar);
- *     // Add more tests ...
+ * In some cases, early initialization before the framework is set up
+ * may be needed.  In such a case, this should be implemented:
  *
- *     ret = run_tests(argv[0]);
+ * int global_init(void);
  *
- *     // Custom teardown ...
- *
- *     return ret;
- * }
+ * This function should return zero if there is an unrecoverable error and
+ * non-zero if the intialization was successful.
  */
 
 /* Adds a simple test case. */
@@ -124,30 +121,38 @@
 # endif                         /* __STDC_VERSION__ */
 
 /*
+ * Tests that need access to command line arguments should use the functions:
+ * test_get_argument(int n) to get the nth argument, the first argument is
+ *      argument 0.  This function returns NULL on error.
+ * test_get_argument_count() to get the count of the arguments.
+ * test_has_option(const char *) to check if the specified option was passed.
+ * test_get_option_argument(const char *) to get an option which includes an
+ *      argument.  NULL is returns if the option is not found.
+ * const char *test_get_program_name(void) returns the name of the test program
+ *      being executed.
+ */
+const char *test_get_program_name(void);
+char *test_get_argument(size_t n);
+size_t test_get_argument_count(void);
+int test_has_option(const char *option);
+const char *test_get_option_argument(const char *option);
+
+/*
  * Internal helpers. Test programs shouldn't use these directly, but should
  * rather link to one of the helper main() methods.
  */
 
-/* setup_test() should be called as the first thing in a test main(). */
-void setup_test(void);
-/*
- * finish_test() should be called as the last thing in a test main().
- * The result of run_tests() should be the input to finish_test().
- */
-__owur int finish_test(int ret);
-
 void add_test(const char *test_case_name, int (*test_fn) ());
 void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num,
                    int subtest);
-__owur int run_tests(const char *test_prog_name);
-void set_test_title(const char *title);
 
 /*
- * Declarations for user defined functions
+ * Declarations for user defined functions.
+ * The first two return a boolean indicating that the test should not proceed.
  */
-void register_tests(void);
-int test_main(int argc, char *argv[]);
-
+int global_init(void);
+int setup_tests(void);
+void cleanup_tests(void);
 
 /*
  *  Test assumption verification helpers.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -215,14 +215,11 @@ end:
     return testresult;
 }
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    if (argc != 2)
-        return EXIT_FAILURE;
-
-    sessionfile = argv[1];
+    if (!TEST_ptr(sessionfile = test_get_argument(0)))
+        return 0;
 
     ADD_ALL_TESTS(test_client_hello, TOTAL_NUM_TESTS);
-
-    return run_tests(argv[0]);
+    return 1;
 }

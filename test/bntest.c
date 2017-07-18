@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -2003,16 +2003,15 @@ static int file_test_run(STANZA *s)
     return 0;
 }
 
-static char * const *testfiles;
-
 static int run_file_tests(int i)
 {
     STANZA *s = NULL;
+    char *testfile = test_get_argument(i);
     int c;
 
     if (!TEST_ptr(s = OPENSSL_zalloc(sizeof(*s))))
         return 0;
-    if (!test_start_file(s, testfiles[i])) {
+    if (!test_start_file(s, testfile)) {
         OPENSSL_free(s);
         return 0;
     }
@@ -2034,18 +2033,17 @@ static int run_file_tests(int i)
 }
 
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
     static const char rnd_seed[] =
         "If not seeded, BN_generate_prime might fail";
-    int result = EXIT_FAILURE;
+    int n = test_get_argument_count();
 
-
-    RAND_seed(rnd_seed, sizeof rnd_seed);
+    RAND_seed(rnd_seed, sizeof(rnd_seed));
     if (!TEST_ptr(ctx = BN_CTX_new()))
-        goto end;
+        return 0;
 
-    if (argc < 2) {
+    if (n == 0) {
         ADD_TEST(test_sub);
         ADD_TEST(test_div_recip);
         ADD_TEST(test_mod);
@@ -2074,13 +2072,12 @@ int test_main(int argc, char *argv[])
 #endif
         ADD_TEST(test_3_is_prime);
     } else {
-        testfiles = &argv[1];
-        ADD_ALL_TESTS(run_file_tests, argc - 1);
+        ADD_ALL_TESTS(run_file_tests, n);
     }
+    return 1;
+}
 
-    result = run_tests(argv[0]);
-
-end:
+void cleanup_tests(void)
+{
     BN_CTX_free(ctx);
-    return result;
 }

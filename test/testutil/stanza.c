@@ -14,6 +14,7 @@
 
 #include "e_os.h"
 #include "../testutil.h"
+#include "tu_local.h"
 
 int test_start_file(STANZA *s, const char *testfile)
 {

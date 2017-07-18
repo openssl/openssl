@@ -184,9 +184,10 @@ static int test_thread_local(void)
     return 1;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_lock);
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
+    return 1;
 }

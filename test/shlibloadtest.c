@@ -175,28 +175,26 @@ end:
 #endif
 
 
-int test_main(int argc, char **argv)
+int setup_tests(void)
 {
-    if (argc != 4) {
-        TEST_error("Unexpected number of arguments");
-        return EXIT_FAILURE;
-    }
+    const char *p = test_get_argument(0);
 
-    if (strcmp(argv[1], "-crypto_first") == 0) {
+    if (strcmp(p, "-crypto_first") == 0) {
         test_type = CRYPTO_FIRST;
-    } else if (strcmp(argv[1], "-ssl_first") == 0) {
+    } else if (strcmp(p, "-ssl_first") == 0) {
         test_type = SSL_FIRST;
-    } else if (strcmp(argv[1], "-just_crypto") == 0) {
+    } else if (strcmp(p, "-just_crypto") == 0) {
         test_type = JUST_CRYPTO;
     } else {
         TEST_error("Unrecognised argument");
-        return EXIT_FAILURE;
+        return 0;
     }
-    path_crypto = argv[2];
-    path_ssl = argv[3];
+    if (!TEST_ptr(path_crypto = test_get_argument(1))
+            || !TEST_ptr(path_ssl = test_get_argument(2)))
+        return 0;
 
 #if defined(DSO_DLFCN) || defined(DSO_WIN32)
     ADD_TEST(test_lib);
 #endif
-    return run_tests(argv[0]);
+    return 1;
 }

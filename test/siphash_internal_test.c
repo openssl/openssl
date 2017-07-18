@@ -319,11 +319,13 @@ static int test_siphash_basic(void)
            && TEST_true(SipHash_Final(&siphash, output, 16));
 }
 
-int test_main(int argc, char **argv)
+int setup_tests(void)
 {
-    int result = 0;
-    int iter_argv;
-    int benchmark = 0;
+    if (test_has_option("-h")) {
+        BIO_printf(bio_out, "-h\tThis help\n");
+        BIO_printf(bio_out, "-b\tBenchmark in addition to the tests\n");
+        return 1;
+    }
 
     b_stderr = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
     b_stdout = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
@@ -332,28 +334,15 @@ int test_main(int argc, char **argv)
     b_stdout = BIO_push(BIO_new(BIO_f_linebuffer()), b_stdout);
 #endif
 
-    for (iter_argv = 1; iter_argv < argc; iter_argv++) {
-        if (strcmp(argv[iter_argv], "-b") == 0)
-            benchmark = 1;
-        else if (strcmp(argv[iter_argv], "-h") == 0)
-            goto help;
-    }
-
     ADD_TEST(test_siphash_basic);
     ADD_ALL_TESTS(test_siphash, OSSL_NELEM(tests));
-    if (benchmark)
+    if (test_has_option("-b"))
         ADD_TEST(benchmark_siphash);
+    return 1;
+}
 
-    result = run_tests(argv[0]);
-    goto out;
-
- help:
-    BIO_printf(b_stdout, "-h\tThis help\n");
-    BIO_printf(b_stdout, "-b\tBenchmark in addition to the tests\n");
-
- out:
+void cleanup_tests(void)
+{
     BIO_free(b_stdout);
     BIO_free(b_stderr);
-
-    return result;
 }
