@@ -8,6 +8,7 @@
  */
 
 #include "internal/thread_once.h"
+#include "internal/refcount.h"
 #include <openssl/dsa.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
@@ -40,6 +41,9 @@ struct ossl_store_info_st {
         X509 *x509;              /* when type == OSSL_STORE_INFO_CERT */
         X509_CRL *crl;           /* when type == OSSL_STORE_INFO_CRL */
     } _;
+
+    CRYPTO_RWLOCK *lock;
+    CRYPTO_REF_COUNT references;
 };
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)

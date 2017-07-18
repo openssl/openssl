@@ -233,14 +233,30 @@ int OSSL_STORE_close(OSSL_STORE_CTX *ctx)
  */
 static OSSL_STORE_INFO *store_info_new(int type, void *data)
 {
-    OSSL_STORE_INFO *info = OPENSSL_zalloc(sizeof(*info));
+    OSSL_STORE_INFO *info = NULL;
 
-    if (info == NULL)
+    if ((info = OPENSSL_zalloc(sizeof(*info))) == NULL
+        || (info->lock = CRYPTO_THREAD_lock_new()) == NULL) {
+        OPENSSL_free(info);
         return NULL;
+    }
 
     info->type = type;
     info->_.data = data;
+    info->references = 1;
     return info;
+}
+
+int OSSL_STORE_INFO_up_ref(OSSL_STORE_INFO *info)
+{
+    int i;
+
+    if (CRYPTO_UP_REF(&info->references, &i, info->lock) <= 0)
+        return 0;
+
+    REF_PRINT_COUNT("OSSL_STORE_INFO", info);
+    REF_ASSERT_ISNT(i < 2);
+    return i > 1 ? 1 : 0;
 }
 
 OSSL_STORE_INFO *OSSL_STORE_INFO_new_NAME(char *name)
@@ -442,6 +458,16 @@ X509_CRL *OSSL_STORE_INFO_get1_CRL(const OSSL_STORE_INFO *info)
 void OSSL_STORE_INFO_free(OSSL_STORE_INFO *info)
 {
     if (info != NULL) {
+        int i;
+
+        if (CRYPTO_DOWN_REF(&info->references, &i, info->lock) <= 0)
+            return;
+
+        REF_PRINT_COUNT("OSSL_STORE_INFO", info);
+        if (i > 0)
+            return;
+        REF_ASSERT_ISNT(i < 0);
+
         switch (info->type) {
         case OSSL_STORE_INFO_EMBEDDED:
             BUF_MEM_free(info->_.embedded.blob);
@@ -464,6 +490,7 @@ void OSSL_STORE_INFO_free(OSSL_STORE_INFO *info)
             X509_CRL_free(info->_.crl);
             break;
         }
+        CRYPTO_THREAD_lock_free(info->lock);
         OPENSSL_free(info);
     }
 }

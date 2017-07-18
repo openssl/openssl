@@ -146,6 +146,8 @@ X509_CRL *OSSL_STORE_INFO_get1_CRL(const OSSL_STORE_INFO *info);
 
 const char *OSSL_STORE_INFO_type_string(int type);
 
+int OSSL_STORE_INFO_up_ref(OSSL_STORE_INFO *info);
+
 /*
  * Free the OSSL_STORE_INFO
  */
