@@ -424,10 +424,11 @@ static int test_days(int n)
     return r;
 }
 
-void register_tests()
+int setup_tests()
 {
     ADD_TEST(test_x509_cmp_time_current);
     ADD_ALL_TESTS(test_x509_cmp_time, OSSL_NELEM(x509_cmp_tests));
     ADD_ALL_TESTS(test_x509_time, OSSL_NELEM(x509_format_tests));
     ADD_ALL_TESTS(test_days, OSSL_NELEM(day_of_week_tests));
+    return 1;
 }

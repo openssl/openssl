@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,10 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include "testutil.h"
+
+static const char *roots_f;
+static const char *untrusted_f;
+static const char *bad_f;
 
 static STACK_OF(X509) *load_certs_from_file(const char *filename)
 {
@@ -83,9 +87,7 @@ static STACK_OF(X509) *load_certs_from_file(const char *filename)
  * CA=FALSE, and will therefore incorrectly verify bad
  *
  */
-static int test_alt_chains_cert_forgery(const char *roots_f,
-                                        const char *untrusted_f,
-                                        const char *bad_f)
+static int test_alt_chains_cert_forgery(void)
 {
     int ret = 0;
     int i;
@@ -136,14 +138,15 @@ static int test_alt_chains_cert_forgery(const char *roots_f,
     return ret;
 }
 
-int test_main(int argc, char **argv)
+int setup_tests(void)
 {
-    if (argc != 4) {
+    if (!TEST_ptr(roots_f = test_get_argument(0))
+            || !TEST_ptr(untrusted_f = test_get_argument(1))
+            || !TEST_ptr(bad_f = test_get_argument(2))) {
         TEST_error("usage: verify_extra_test roots.pem untrusted.pem bad.pem\n");
-        return EXIT_FAILURE;
+        return 0;
     }
 
-    if (!TEST_true(test_alt_chains_cert_forgery(argv[1], argv[2], argv[3])))
-        return EXIT_FAILURE;
-    return EXIT_SUCCESS;
+    ADD_TEST(test_alt_chains_cert_forgery);
+    return 1;
 }

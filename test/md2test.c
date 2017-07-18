@@ -58,9 +58,10 @@ static int test_md2(int n)
 }
 #endif
 
-void register_tests(void)
+int setup_tests(void)
 {
 #ifndef OPENSSL_NO_MD2
     ADD_ALL_TESTS(test_md2, OSSL_NELEM(test));
 #endif
+    return 1;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -360,10 +360,8 @@ static int test_WPACKET_memcpy(void)
     return 1;
 }
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    int testresult = 0;
-
     if (!TEST_ptr(buf = BUF_MEM_new()))
             return 0;
 
@@ -373,8 +371,10 @@ int test_main(int argc, char *argv[])
     ADD_TEST(test_WPACKET_set_flags);
     ADD_TEST(test_WPACKET_allocate_bytes);
     ADD_TEST(test_WPACKET_memcpy);
-    testresult = run_tests(argv[0]);
+    return 1;
+}
 
+void cleanup_tests(void)
+{
     BUF_MEM_free(buf);
-    return testresult;
 }

@@ -184,22 +184,17 @@ static int test_record_overflow(int idx)
     return testresult;
 }
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    int testresult = 1;
-
-    if (argc != 3) {
-        TEST_error("Invalid argument count");
-        return 1;
-    }
-    cert = argv[1];
-    privkey = argv[2];
+    if (!TEST_ptr(cert = test_get_argument(0))
+            || !TEST_ptr(privkey = test_get_argument(1)))
+        return 0;
 
     ADD_ALL_TESTS(test_record_overflow, TOTAL_RECORD_OVERFLOW_TESTS);
+    return 1;
+}
 
-    testresult = run_tests(argv[0]);
-
+void cleanup_tests(void)
+{
     bio_s_mempacket_test_free();
-
-    return testresult;
 }

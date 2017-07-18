@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -327,11 +327,12 @@ static int test_64values(int i)
     return ret;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_sizeofs);
     ADD_ALL_TESTS(test_binops, OSSL_NELEM(test_values));
     ADD_ALL_TESTS(test_signed, OSSL_NELEM(signed_test_values));
     ADD_ALL_TESTS(test_8values, OSSL_NELEM(test_values_8));
     ADD_ALL_TESTS(test_64values, OSSL_NELEM(test_values_64));
+    return 1;
 }

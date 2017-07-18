@@ -52,7 +52,8 @@ static int test_asn1_meths()
     return good;
 }
 
-void register_tests()
+int setup_tests()
 {
     ADD_TEST(test_asn1_meths);
+    return 1;
 }

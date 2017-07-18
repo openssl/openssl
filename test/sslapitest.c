@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -2703,17 +2703,11 @@ static int test_ssl_clear(int idx)
     return testresult;
 }
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    int testresult = 1;
-
-    if (argc != 3) {
-        TEST_error("Wrong argument count");
+    if (!TEST_ptr(cert = test_get_argument(0))
+            || !TEST_ptr(privkey = test_get_argument(1)))
         return 0;
-    }
-
-    cert = argv[1];
-    privkey = argv[2];
 
     ADD_TEST(test_large_message_tls);
     ADD_TEST(test_large_message_tls_read_ahead);
@@ -2759,10 +2753,10 @@ int test_main(int argc, char *argv[])
     ADD_ALL_TESTS(test_serverinfo, 8);
     ADD_ALL_TESTS(test_export_key_mat, 4);
     ADD_ALL_TESTS(test_ssl_clear, 2);
+    return 1;
+}
 
-    testresult = run_tests(argv[0]);
-
+void cleanup_tests(void)
+{
     bio_s_mempacket_test_free();
-
-    return testresult;
 }

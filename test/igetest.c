@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -433,7 +433,7 @@ static int test_bi_ige_garble3(void)
     return TEST_size_t_le(matches, sizeof checktext / 100);
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     RAND_bytes(rkey, sizeof rkey);
     RAND_bytes(rkey2, sizeof rkey2);
@@ -450,4 +450,5 @@ void register_tests(void)
     ADD_TEST(test_bi_ige_garble3);
     ADD_ALL_TESTS(test_ige_vectors, OSSL_NELEM(ige_test_vectors));
     ADD_ALL_TESTS(test_bi_ige_vectors, OSSL_NELEM(bi_ige_test_vectors));
+    return 1;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1609,31 +1609,20 @@ static int test_poly1305(int idx)
     return 1;
 }
 
-int test_main(int argc, char **argv)
+int setup_tests(void)
 {
-    int result = 0;
-    int iter_argv;
-    int benchmark = 0;
-
-    for (iter_argv = 1; iter_argv < argc; iter_argv++) {
-        if (strcmp(argv[iter_argv], "-b") == 0)
-            benchmark = 1;
-        else if (strcmp(argv[iter_argv], "-h") == 0)
-            goto help;
+    if (test_has_option("-h")) {
+        printf("-h\tThis help\n");
+        printf("-b\tBenchmark in addition to the tests\n");
+        return 1;
     }
 
     ADD_ALL_TESTS(test_poly1305, OSSL_NELEM(tests));
+    return 1;
+}
 
-    result = run_tests(argv[0]);
-
-    if (benchmark)
+void cleanup_tests(void)
+{
+    if (test_has_option("-b"))
         benchmark_poly1305();
-
-    return result;
-
- help:
-    printf("-h\tThis help\n");
-    printf("-b\tBenchmark in addition to the tests\n");
-
-    return 0;
 }

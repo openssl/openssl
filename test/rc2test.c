@@ -59,9 +59,10 @@ static int test_rc2(const int n)
 
 #endif
 
-void register_tests(void)
+int setup_tests(void)
 {
 #ifndef OPENSSL_NO_RC2
     ADD_ALL_TESTS(test_rc2, OSSL_NELEM(RC2key));
 #endif
+    return 1;
 }

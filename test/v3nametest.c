@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -353,7 +353,8 @@ static int call_run_cert(int i)
     return failed == 0;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
-    ADD_ALL_TESTS(call_run_cert, sizeof(name_fns) / sizeof(name_fns[0]));
+    ADD_ALL_TESTS(call_run_cert, OSSL_NELEM(name_fns));
+    return 1;
 }

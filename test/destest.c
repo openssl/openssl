@@ -693,7 +693,7 @@ static int test_des_quad_cksum(void)
 }
 #endif
 
-void register_tests(void)
+int setup_tests(void)
 {
 #ifndef OPENSSL_NO_DES
     ADD_ALL_TESTS(test_des_ecb, NUM_TESTS);
@@ -717,4 +717,5 @@ void register_tests(void)
     ADD_ALL_TESTS(test_input_align, 4);
     ADD_ALL_TESTS(test_output_align, 4);
 #endif
+    return 1;
 }

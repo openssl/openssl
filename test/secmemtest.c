@@ -123,7 +123,8 @@ static int test_sec_mem(void)
 #endif
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_sec_mem);
+    return 1;
 }

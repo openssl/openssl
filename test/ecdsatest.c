@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -396,7 +396,7 @@ static int test_builtin(void)
 }
 #endif
 
-void register_tests(void)
+int setup_tests(void)
 {
 #ifdef OPENSSL_NO_EC
     TEST_note("Elliptic curves are disabled.");
@@ -406,4 +406,5 @@ void register_tests(void)
     ADD_TEST(x9_62_tests);
     ADD_TEST(test_builtin);
 #endif
+    return 1;
 }

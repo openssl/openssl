@@ -258,7 +258,8 @@ static int test_exdata(void)
       return 0;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_exdata);
+    return 1;
 }

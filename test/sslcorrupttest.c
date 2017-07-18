@@ -248,24 +248,24 @@ static int test_ssl_corrupt(int testidx)
     return testresult;
 }
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    int ret = EXIT_FAILURE, n;
+    int n;
 
-    if (argc != 3) {
-        TEST_error("Usage error: require cert and private key files");
-        return ret;
+    if (!TEST_ptr(cert = test_get_argument(0))
+            || !TEST_ptr(privkey = test_get_argument(1))) {
+        TEST_note("Usage error: require cert and private key files");
+        return 0;
     }
-    cert = argv[1];
-    privkey = argv[2];
 
     n = setup_cipher_list();
-    if (n > 0) {
+    if (n > 0)
         ADD_ALL_TESTS(test_ssl_corrupt, n);
-        ret = run_tests(argv[0]);
-    }
+    return 1;
+}
+
+void cleanup_tests(void)
+{
     bio_f_tls_corrupt_filter_free();
     OPENSSL_free(cipher_list);
-
-    return ret;
 }
