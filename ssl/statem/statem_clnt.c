@@ -2429,7 +2429,6 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         || (SSL_IS_TLS13(s)
             && (!PACKET_get_net_4(pkt, &age_add)
                 || !PACKET_get_length_prefixed_1(pkt, &nonce)
-                || PACKET_remaining(&nonce) == 0
                 || !PACKET_memdup(&nonce, &s->session->ext.tick_nonce,
                                   &s->session->ext.tick_nonce_len)))
         || !PACKET_get_net_2(pkt, &ticklen)
