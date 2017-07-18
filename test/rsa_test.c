@@ -22,7 +22,7 @@
 #include "testutil.h"
 
 #ifdef OPENSSL_NO_RSA
-void register_tests(void)
+void setup_tests(void)
 {
     /* No tests */
 }
@@ -328,9 +328,10 @@ err:
     return ret;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_ALL_TESTS(test_rsa_pkcs1, 3);
     ADD_ALL_TESTS(test_rsa_oaep, 3);
+    return 1;
 }
 #endif

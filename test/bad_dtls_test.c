@@ -581,7 +581,8 @@ static int test_bad_dtls(void)
     return testresult;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_bad_dtls);
+    return 1;
 }

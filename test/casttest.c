@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -102,10 +102,11 @@ static int cast_test_iterations(void)
 }
 #endif
 
-void register_tests(void)
+int setup_tests(void)
 {
 #ifndef OPENSSL_NO_CAST
     ADD_ALL_TESTS(cast_test_vector, OSSL_NELEM(k_len));
     ADD_TEST(cast_test_iterations);
 #endif
+    return 1;
 }

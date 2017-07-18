@@ -19,10 +19,6 @@
 #include "e_os.h"
 #include "testutil.h"
 
-
-/* List of files, from argv */
-static char **files;
-
 static int test_certs(int num)
 {
     int c;
@@ -33,7 +29,7 @@ static int test_certs(int num)
     typedef X509 *(*d2i_X509_t)(X509 **, const unsigned char **, long);
     typedef int (*i2d_X509_t)(X509 *, unsigned char **);
     int err = 0;
-    BIO *fp = BIO_new_file(files[num], "r");
+    BIO *fp = BIO_new_file(test_get_argument(num), "r");
 
     if (!TEST_ptr(fp))
         return 0;
@@ -156,14 +152,15 @@ static int test_certs(int num)
     return 0;
 }
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    if (argc < 2) {
-        TEST_error("usage: %s certfile...", argv[0]);
+    size_t n = test_get_argument_count();
+
+    if (n == 0) {
+        TEST_error("usage: %s certfile...", test_get_program_name());
         return 0;
     }
 
-    files = &argv[1];
-    ADD_ALL_TESTS(test_certs, argc - 1);
-    return run_tests(argv[0]);
+    ADD_ALL_TESTS(test_certs, n);
+    return 1;
 }

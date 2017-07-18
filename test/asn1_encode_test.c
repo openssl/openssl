@@ -853,7 +853,7 @@ static int test_uint64(void)
     return test_intern(&uint64_test_package);
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
 #if OPENSSL_API_COMPAT < 0x10200000L
     ADD_TEST(test_long_32bit);
@@ -863,4 +863,5 @@ void register_tests(void)
     ADD_TEST(test_uint32);
     ADD_TEST(test_int64);
     ADD_TEST(test_uint64);
+    return 1;
 }

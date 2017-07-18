@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -264,7 +264,7 @@ static int run_srp_tests(void)
 }
 #endif
 
-void register_tests(void)
+int setup_tests(void)
 {
 #ifdef OPENSSL_NO_SRP
     printf("No SRP support\n");
@@ -272,4 +272,5 @@ void register_tests(void)
     ADD_TEST(run_srp_tests);
     ADD_TEST(run_srp_kat);
 #endif
+    return 1;
 }

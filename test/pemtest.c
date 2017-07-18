@@ -69,8 +69,9 @@ static int test_invalid(void)
     return 1;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_b64);
     ADD_TEST(test_invalid);
+    return 1;
 }

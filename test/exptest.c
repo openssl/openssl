@@ -198,8 +198,9 @@ static int test_mod_exp(int round)
     return ret;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_mod_exp_zero);
     ADD_ALL_TESTS(test_mod_exp, 200);
+    return 1;
 }

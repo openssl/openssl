@@ -201,8 +201,9 @@ static int test_default_cipherlist_explicit()
     EXECUTE_CIPHERLIST_TEST();
 }
 
-void register_tests()
+int setup_tests()
 {
     ADD_TEST(test_default_cipherlist_implicit);
     ADD_TEST(test_default_cipherlist_explicit);
+    return 1;
 }

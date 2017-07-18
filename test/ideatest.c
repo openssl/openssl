@@ -108,11 +108,12 @@ static int test_idea_cfb64(void)
 }
 #endif
 
-void register_tests(void)
+int setup_tests(void)
 {
 #ifndef OPENSSL_NO_IDEA
     ADD_TEST(test_idea_ecb);
     ADD_TEST(test_idea_cbc);
     ADD_TEST(test_idea_cfb64);
 #endif
+    return 1;
 }

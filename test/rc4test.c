@@ -116,7 +116,7 @@ static int test_rc_bulk(void)
 }
 #endif
 
-void register_tests(void)
+int setup_tests(void)
 {
 #ifndef OPENSSL_NO_RC4
     ADD_ALL_TESTS(test_rc4_encrypt, OSSL_NELEM(data_len));
@@ -124,4 +124,5 @@ void register_tests(void)
     ADD_ALL_TESTS(test_rc4_multi_call, data_len[3]);
     ADD_TEST(test_rc_bulk);
 #endif
+    return 1;
 }

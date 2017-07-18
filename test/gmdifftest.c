@@ -55,10 +55,11 @@ static int test_gmtime(int offset)
            check_time(-offset * 1000L);
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     if (sizeof(time_t) < 8)
         TEST_info("Skipping; time_t is less than 64-bits");
     else
         ADD_ALL_TESTS_NOSUBTEST(test_gmtime, 1000000);
+    return 1;
 }

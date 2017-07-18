@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -409,22 +409,17 @@ end:
     return ret;
 }
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    int ret = 0;
-
-    if (argc != 4) {
+    if (!TEST_ptr(basedomain = test_get_argument(0))
+            || !TEST_ptr(CAfile = test_get_argument(1))
+            || !TEST_ptr(tlsafile = test_get_argument(2))) {
         TEST_error("Usage error: danetest basedomain CAfile tlsafile");
         return 0;
     }
-    basedomain = argv[1];
-    CAfile = argv[2];
-    tlsafile = argv[3];
 
     ADD_TEST(run_tlsatest);
-
-    ret = run_tests(argv[0]);
-    return ret;
+    return 1;
 }
 
 #include <internal/dane.h>

@@ -362,10 +362,11 @@ end:
     return testresult;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_int_stack);
     ADD_TEST(test_uchar_stack);
     ADD_TEST(test_SS_stack);
     ADD_TEST(test_SU_stack);
+    return 1;
 }

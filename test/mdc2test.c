@@ -69,9 +69,10 @@ static int test_mdc2(void)
 }
 #endif
 
-void register_tests(void)
+int setup_tests(void)
 {
 #ifndef OPENSSL_NO_MDC2
     ADD_TEST(test_mdc2);
 #endif
+    return 1;
 }

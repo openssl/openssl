@@ -109,7 +109,8 @@ static int test_offset(int idx)
     return 1;
 }
 
-void register_tests()
+int setup_tests()
 {
     ADD_ALL_TESTS(test_offset, OSSL_NELEM(tests));
+    return 1;
 }

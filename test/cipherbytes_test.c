@@ -129,22 +129,21 @@ err:
     return ret;
 }
 
-int test_main(int argc, char **argv)
+int setup_tests(void)
 {
-    int ret;
-
     if (!TEST_ptr(ctx = SSL_CTX_new(TLS_server_method()))
             || !TEST_ptr(s = SSL_new(ctx)))
-        return EXIT_FAILURE;
+        return 0;
 
     ADD_TEST(test_empty);
     ADD_TEST(test_unsupported);
     ADD_TEST(test_v2);
     ADD_TEST(test_v3);
-    ret = run_tests(argv[0]);
+    return 1;
+}
 
+void cleanup_tests(void)
+{
     SSL_free(s);
     SSL_CTX_free(ctx);
-
-    return ret;
 }

@@ -95,12 +95,10 @@ static int gcd(int a, int b)
     return a;
 }
 
-void setup_test()
+void setup_test_framework()
 {
     char *TAP_levels = getenv("HARNESS_OSSL_LEVEL");
     char *test_seed = getenv("OPENSSL_TEST_RAND_ORDER");
-
-    test_open_streams();
 
     level = TAP_levels != NULL ? 4 * atoi(TAP_levels) : 0;
 
@@ -121,15 +119,13 @@ void setup_test()
 #endif
 }
 
-int finish_test(int ret)
+int pulldown_test_framework(int ret)
 {
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (should_report_leaks()
         && CRYPTO_mem_leaks_cb(openssl_error_cb, NULL) <= 0)
         return EXIT_FAILURE;
 #endif
-
-    test_close_streams();
 
     return ret;
 }
@@ -150,10 +146,28 @@ void set_test_title(const char *title)
     test_title = title == NULL ? NULL : strdup(title);
 }
 
+PRINTF_FORMAT(2, 3) static void test_verdict(int pass, const char *extra, ...)
+{
+    va_list ap;
+
+    test_flush_stdout();
+    test_flush_stderr();
+
+    test_printf_stdout("%*s%s", level, "", pass ? "ok" : "not ok");
+    if (extra != NULL) {
+        test_printf_stdout(" ");
+        va_start(ap, extra);
+        test_vprintf_stdout(extra, ap);
+        va_end(ap);
+    }
+    test_printf_stdout("\n");
+    test_flush_stdout();
+}
+
 int run_tests(const char *test_prog_name)
 {
     int num_failed = 0;
-    char *verdict = NULL;
+    int verdict = 1;
     int ii, i, jj, j, jstep;
     int permute[OSSL_NELEM(all_tests)];
 
@@ -185,18 +199,12 @@ int run_tests(const char *test_prog_name)
             set_test_title(all_tests[i].test_case_name);
             ret = all_tests[i].test_fn();
 
-            test_flush_stdout();
-            test_flush_stderr();
-
-            verdict = "ok";
+            verdict = 1;
             if (!ret) {
-                verdict = "not ok";
+                verdict = 0;
                 ++num_failed;
             }
-            test_printf_stdout("%*s%s %d - %s\n", level, "", verdict, ii + 1,
-                               test_title);
-            test_flush_stdout();
-            test_flush_stderr();
+            test_verdict(verdict, "%d - %s", ii + 1, test_title);
             finalize(ret);
         } else {
             int num_failed_inner = 0;
@@ -225,39 +233,33 @@ int run_tests(const char *test_prog_name)
                 set_test_title(NULL);
                 ret = all_tests[i].param_test_fn(j);
 
-                test_flush_stdout();
-                test_flush_stderr();
-
                 if (!ret)
                     ++num_failed_inner;
 
                 finalize(ret);
 
                 if (all_tests[i].subtest) {
-                    verdict = "ok";
+                    verdict = 1;
                     if (!ret) {
-                        verdict = "not ok";
+                        verdict = 0;
                         ++num_failed_inner;
                     }
                     if (test_title != NULL)
-                        test_printf_stdout("%*s%s %d - %s\n", level, "",
-                                           verdict, jj + 1, test_title);
+                        test_verdict(verdict, "%d - %s", jj + 1, test_title);
                     else
-                        test_printf_stdout("%*s%s %d - iteration %d\n", level,
-                                           "", verdict, jj + 1, j + 1);
-                    test_flush_stdout();
+                        test_verdict(verdict, "%d - iteration %d",
+                                     jj + 1, j + 1);
                 }
             }
 
             level -= 4;
-            verdict = "ok";
+            verdict = 1;
             if (num_failed_inner) {
-                verdict = "not ok";
+                verdict = 0;
                 ++num_failed;
             }
-            test_printf_stdout("%*s%s %d - %s\n", level, "", verdict, ii + 1,
-                               all_tests[i].test_case_name);
-            test_flush_stdout();
+            test_verdict(verdict, "%d - %s", ii + 1,
+                         all_tests[i].test_case_name);
         }
     }
     if (num_failed != 0)

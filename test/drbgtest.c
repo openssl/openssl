@@ -476,15 +476,11 @@ err:
 }
 
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    if (argc != 1) {
-        TEST_error("Usage: %s", argv[0]);
-        return EXIT_FAILURE;
-    }
     app_data_index = RAND_DRBG_get_ex_new_index(0L, NULL, NULL, NULL, NULL);
 
     ADD_ALL_TESTS(test_kats, OSSL_NELEM(drbg_test));
     ADD_ALL_TESTS(test_error_checks, OSSL_NELEM(drbg_test));
-    return run_tests(argv[0]);
+    return 1;
 }

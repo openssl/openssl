@@ -435,7 +435,7 @@ static int test_bf_ofb64(void)
 }
 #endif
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
 #ifndef OPENSSL_NO_BF
 # ifdef CHARSET_EBCDIC
@@ -447,15 +447,16 @@ int test_main(int argc, char *argv[])
     }
 # endif
 
-    ADD_ALL_TESTS(test_bf_ecb_raw, 2);
-    ADD_ALL_TESTS(test_bf_ecb, NUM_TESTS);
-    ADD_ALL_TESTS(test_bf_set_key, KEY_TEST_NUM-1);
-    ADD_TEST(test_bf_cbc);
-    ADD_TEST(test_bf_cfb64);
-    ADD_TEST(test_bf_ofb64);
-
-    if (argc > 1)
-        return print_test_data();
+    if (test_get_argument(0) != NULL) {
+        print_test_data();
+    } else {
+        ADD_ALL_TESTS(test_bf_ecb_raw, 2);
+        ADD_ALL_TESTS(test_bf_ecb, NUM_TESTS);
+        ADD_ALL_TESTS(test_bf_set_key, KEY_TEST_NUM-1);
+        ADD_TEST(test_bf_cbc);
+        ADD_TEST(test_bf_cfb64);
+        ADD_TEST(test_bf_ofb64);
+    }
 #endif
-    return run_tests(argv[0]);
+    return 1;
 }

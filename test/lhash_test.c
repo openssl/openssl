@@ -220,8 +220,9 @@ end:
     return testresult;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_int_lhash);
     ADD_TEST(test_stress);
+    return 1;
 }

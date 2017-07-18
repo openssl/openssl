@@ -12,13 +12,7 @@
 #include <stdlib.h>
 #include <openssl/e_os2.h>
 
-#ifdef OPENSSL_NO_ENGINE
-int main(int argc, char *argv[])
-{
-    printf("No ENGINE support\n");
-    return EXIT_SUCCESS;
-}
-#else
+#ifndef OPENSSL_NO_ENGINE
 # include <openssl/buffer.h>
 # include <openssl/crypto.h>
 # include <openssl/engine.h>
@@ -180,9 +174,14 @@ static int test_engines(void)
         ENGINE_free(block[loop]);
     return to_return;
 }
-
-void register_tests(void)
-{
-    ADD_TEST(test_engines);
-}
 #endif
+
+int setup_tests(void)
+{
+#ifdef OPENSSL_NO_ENGINE
+    TEST_note("No ENGINE support");
+#else
+    ADD_TEST(test_engines);
+#endif
+    return 1;
+}

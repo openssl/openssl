@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,7 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include "testutil.h"
+#include "e_os.h"
 
 /*
  * kExampleRSAKeyDER is an RSA private key in ASN.1, DER format. Of course, you
@@ -346,13 +347,13 @@ static int test_EVP_PKCS82PKEY(void)
 }
 #endif
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_EVP_DigestSignInit);
     ADD_TEST(test_EVP_DigestVerifyInit);
-    ADD_ALL_TESTS(test_d2i_AutoPrivateKey,
-                  sizeof(keydata) / sizeof(keydata[0]));
+    ADD_ALL_TESTS(test_d2i_AutoPrivateKey, OSSL_NELEM(keydata));
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EVP_PKCS82PKEY);
 #endif
+    return 1;
 }

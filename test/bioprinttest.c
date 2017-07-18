@@ -253,17 +253,15 @@ static int test_big(void)
 }
 
 
-int test_main(int argc, char **argv)
+int setup_tests(void)
 {
-    if (argc == 2 && strcmp(argv[1], "-expected") == 0)
-        justprint = 1;
+    justprint = test_has_option("-expected");
 
     ADD_TEST(test_big);
     ADD_ALL_TESTS(test_fp, nelem(pw_params));
     ADD_ALL_TESTS(test_zu, nelem(zu_data));
     ADD_ALL_TESTS(test_j, nelem(jf_data));
-
-    return run_tests(argv[0]);
+    return 1;
 }
 
 /*

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL licenses, (the "License");
  * you may not use this file except in compliance with the License.
@@ -362,22 +362,17 @@ static int test_asyncio(int test)
     return testresult;
 }
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    int testresult = 0;
-
-    if (!TEST_int_eq(argc, 3))
-        goto end;
-
-    cert = argv[1];
-    privkey = argv[2];
+    if (!TEST_ptr(cert = test_get_argument(0))
+            || !TEST_ptr(privkey = test_get_argument(1)))
+        return 0;
 
     ADD_ALL_TESTS(test_asyncio, 2);
+    return 1;
+}
 
-    testresult = run_tests(argv[0]);
-
- end:
+void cleanup_tests(void)
+{
     BIO_meth_free(methods_async);
-
-    return testresult;
 }

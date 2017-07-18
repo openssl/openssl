@@ -10,6 +10,7 @@
 #include <stdlib.h>              /* size_t */
 #include <openssl/bn.h>
 #include <openssl/bio.h>
+#include "../testutil.h"
 
 int subtest_level(void);
 int openssl_error_cb(const char *str, size_t len, void *u);
@@ -43,3 +44,8 @@ void test_fail_memory_message(const char *prefix, const char *file,
                               const unsigned char *m1, size_t l1,
                               const unsigned char *m2, size_t l2);
 
+void setup_test_framework(void);
+__owur int pulldown_test_framework(int ret);
+
+__owur int run_tests(const char *test_prog_name);
+void set_test_title(const char *title);

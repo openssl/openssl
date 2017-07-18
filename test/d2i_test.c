@@ -107,10 +107,10 @@ static int test_bad_asn1()
 }
 
 /*
- * Usage: d2i_test <type> <file>, e.g.
+ * Usage: d2i_test <name> <type> <file>, e.g.
  * d2i_test generalname bad_generalname.der
  */
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
     const char *test_type_name;
     const char *expected_error_string;
@@ -125,14 +125,12 @@ int test_main(int argc, char *argv[])
         {"compare", ASN1_COMPARE}
     };
 
-    if (!TEST_int_eq(argc, 4)) {
-        fprintf(stderr, "Usage: d2i_test item_name expected_error file.der\n");
-        return 1;
+    if (!TEST_ptr(test_type_name = test_get_argument(0))
+            || !TEST_ptr(expected_error_string = test_get_argument(1))
+            || !TEST_ptr(test_file = test_get_argument(2))) {
+        TEST_note("Usage: d2i_test item_name expected_error file.der");
+        return 0;
     }
-
-    test_type_name = argv[1];
-    expected_error_string = argv[2];
-    test_file = argv[3];
 
     item_type = ASN1_ITEM_lookup(test_type_name);
 
@@ -146,7 +144,7 @@ int test_main(int argc, char *argv[])
                 break;
             TEST_note("\t%s", it->sname);
         }
-        return 1;
+        return 0;
     }
 
     for (i = 0; i < OSSL_NELEM(expected_errors); i++) {
@@ -158,10 +156,9 @@ int test_main(int argc, char *argv[])
 
     if (expected_error == ASN1_UNKNOWN) {
         TEST_error("Unknown expected error %s\n", expected_error_string);
-        return 1;
+        return 0;
     }
 
     ADD_TEST(test_bad_asn1);
-
-    return run_tests(argv[0]);
+    return 1;
 }

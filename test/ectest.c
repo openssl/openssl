@@ -1430,15 +1430,13 @@ static const char rnd_seed[] =
     "string to make the random number generator think it has randomness";
 #endif
 
-int test_main(int argc, char *argv[])
+int setup_tests(void)
 {
-    int result = EXIT_SUCCESS;
 #ifndef OPENSSL_NO_EC
-
     crv_len = EC_get_builtin_curves(NULL, 0);
     if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
-        return EXIT_FAILURE;
+        return 0;
 
     RAND_seed(rnd_seed, sizeof rnd_seed); /* or BN_generate_prime may fail */
 
@@ -1453,9 +1451,11 @@ int test_main(int argc, char *argv[])
 # endif
     ADD_ALL_TESTS(internal_curve_test, crv_len);
     ADD_ALL_TESTS(internal_curve_test_method, crv_len);
-
-    result = run_tests(argv[0]);
-    OPENSSL_free(curves);
 #endif
-    return result;
+    return 1;
+}
+
+void cleanup_tests(void)
+{
+    OPENSSL_free(curves);
 }
