@@ -623,17 +623,25 @@ OSSL_STORE_INFO *ossl_store_info_new_EMBEDDED(const char *new_pem_name,
     return info;
 }
 
-BUF_MEM *ossl_store_info_get0_EMBEDDED_buffer(OSSL_STORE_INFO *info)
+BUF_MEM *ossl_store_info_get1_EMBEDDED_buffer(OSSL_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_EMBEDDED)
-        return info->_.embedded.blob;
+    if (info->type == OSSL_STORE_INFO_EMBEDDED) {
+        BUF_MEM *blob = info->_.embedded.blob;
+
+        info->_.embedded.blob = NULL;
+        return blob;
+    }
     return NULL;
 }
 
-char *ossl_store_info_get0_EMBEDDED_pem_name(OSSL_STORE_INFO *info)
+char *ossl_store_info_get1_EMBEDDED_pem_name(OSSL_STORE_INFO *info)
 {
-    if (info->type == OSSL_STORE_INFO_EMBEDDED)
-        return info->_.embedded.pem_name;
+    if (info->type == OSSL_STORE_INFO_EMBEDDED) {
+        char *pem_name = info->_.embedded.pem_name;
+
+        info->_.embedded.pem_name = NULL;
+        return pem_name;
+    }
     return NULL;
 }
 

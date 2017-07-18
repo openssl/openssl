@@ -58,8 +58,9 @@ DEFINE_STACK_OF(OSSL_STORE_INFO)
 #define OSSL_STORE_INFO_EMBEDDED       -1
 OSSL_STORE_INFO *ossl_store_info_new_EMBEDDED(const char *new_pem_name,
                                               BUF_MEM *embedded);
-BUF_MEM *ossl_store_info_get0_EMBEDDED_buffer(OSSL_STORE_INFO *info);
-char *ossl_store_info_get0_EMBEDDED_pem_name(OSSL_STORE_INFO *info);
+/* These get1 functions *detach* the data they return from the info struct */
+BUF_MEM *ossl_store_info_get1_EMBEDDED_buffer(OSSL_STORE_INFO *info);
+char *ossl_store_info_get1_EMBEDDED_pem_name(OSSL_STORE_INFO *info);
 
 /*-
  *  OSSL_STORE_SEARCH stuff

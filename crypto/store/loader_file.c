@@ -1047,11 +1047,11 @@ static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
     if (result != NULL
         && (t = OSSL_STORE_INFO_get_type(result)) == OSSL_STORE_INFO_EMBEDDED) {
         pem_name = new_pem_name =
-            ossl_store_info_get0_EMBEDDED_pem_name(result);
-        new_mem = ossl_store_info_get0_EMBEDDED_buffer(result);
+            ossl_store_info_get1_EMBEDDED_pem_name(result);
+        new_mem = ossl_store_info_get1_EMBEDDED_buffer(result);
         data = (unsigned char *)new_mem->data;
         len = new_mem->length;
-        OPENSSL_free(result);
+        OSSL_STORE_INFO_free(result);
         result = NULL;
         goto again;
     }
