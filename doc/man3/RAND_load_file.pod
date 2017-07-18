@@ -20,8 +20,12 @@ RAND_load_file() reads a number of bytes from file B<filename> and
 adds them to the PRNG. If B<max_bytes> is non-negative,
 up to B<max_bytes> are read;
 if B<max_bytes> is -1, the complete file is read.
+Do not load the same file multiple times unless its contents have
+been updated by RAND_write_file() between reads.
+Also, note that B<filename> should be adequately protected so that an
+attacker cannot replace or examine the contents.
 
-RAND_write_file() writes a number of random bytes (currently 256) to
+RAND_write_file() writes a number of random bytes (currently 128) to
 file B<filename> which can be used to initialize the PRNG by calling
 RAND_load_file() in a later session.
 
@@ -56,8 +60,8 @@ B<num> is too small for the path name, an error occurs.
 
 RAND_load_file() returns the number of bytes read.
 
-RAND_write_file() returns the number of bytes written, and -1 if the
-bytes written were generated without appropriate seed.
+RAND_write_file() returns the number of bytes written, or -1 if the
+bytes written were generated without appropriate seeding.
 
 RAND_file_name() returns a pointer to B<buf> on success, and NULL on
 error.

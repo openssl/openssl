@@ -2,63 +2,76 @@
 
 =head1 NAME
 
-RAND_add, RAND_seed, RAND_status, RAND_event, RAND_screen - add
-randomness to the PRNG
+RAND_add, RAND_poll, RAND_seed, RAND_status, RAND_event, RAND_screen
+- add randomness to the PRNG or get its status
 
 =head1 SYNOPSIS
 
  #include <openssl/rand.h>
 
- void RAND_seed(const void *buf, int num);
+ int RAND_status(void);
+ int RAND_poll()
 
  void RAND_add(const void *buf, int num, double randomness);
+ void RAND_seed(const void *buf, int num);
 
- int  RAND_status(void);
+Deprecated:
 
  #if OPENSSL_API_COMPAT < 0x10100000L
- int  RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam);
+ int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam);
  void RAND_screen(void);
  #endif
 
 =head1 DESCRIPTION
 
-RAND_add() mixes the B<num> bytes at B<buf> into the PRNG state. Thus,
-if the data at B<buf> are unpredictable to an adversary, this
-increases the uncertainty about the state and makes the PRNG output
-less predictable. Suitable input comes from user interaction (random
-key presses, mouse movements) and certain hardware events. The
-B<randomness> argument is an estimate of how much randomness is contained in
+Random numbers are a vital part of cryptography, including key generation,
+creating salts, etc., and software-based
+generators must be "seeded" with external randomness before they can be
+used as a cryptographically-secure pseudo-random number generator (CSPRNG).
+The availability of common hardware with special instructions and
+modern operating systems, which may use items such as interrupt jitter
+and network packet timings, can be reasonable sources of seeding material.
+
+RAND_status() indicates whether or not the CSPRNG has been sufficiently
+seeded. If not, functions such as RAND_bytes(3) will fail.
+
+RAND_poll() uses the current capabilities to seed the CSPRNG. The
+exact features used depends on how OpenSSL was configured, and can
+be displayed with the OpenSSL L<version(1)> command. This function is
+normally called automatically during OpenSSL initialization, but
+can be called by the application to reseed the CSPRNG.
+
+RAND_add() mixes the B<num> bytes at B<buf> into the PRNG state.
+The B<randomness> argument is an estimate of how much randomness is
+contained in
 B<buf>, in bytes, and should be a number between zero and B<num>.
 Details about sources of randomness and how to estimate their randomness
-can be found in the literature; for example IETF RFC 4086.
-
-RAND_add() may be called with sensitive data such as user entered
-passwords. The seed values cannot be recovered from the PRNG output.
+can be found in the literature; for example NIST SP 800-90B.
+The content of B<buf> cannot be recovered from subsequent CSPRNG output.
+This function will not normally be needed, as RAND_poll() should have been
+configured to do the appropriate seeding for the local platform.
+Applications that need to keep random state in an external file should
+use L<RAND_load_file(3)>.
 
 RAND_seed() is equivalent to RAND_add() with B<randomness> set to B<num>.
 
-On systems that provide C</dev/urandom> or similar source of randomess,
-it will be used
-to seed the PRNG transparently. On older systems, however, it might
-be necessary to use RAND_add(), L<RAND_egd(3)> or L<RAND_load_file(3)>.
-
-RAND_event() and RAND_screen() are deprecated and should not be called.
+RAND_event() and RAND_screen() are equivalent to RAND_poll().
 
 =head1 RETURN VALUES
 
-RAND_status() returns 1 if the PRNG has been seeded
+RAND_status() returns 1 if the CSPRNG has been seeded
 with enough data, 0 otherwise.
 
-RAND_event() calls RAND_poll() and returns RAND_status().
+RAND_poll() returns 1 if it generated seed data, 0 otherwise.
 
-RAND_screen calls RAND_poll().
+RAND_event() returns RAND_status().
 
 The other functions do not return values.
 
 =head1 HISTORY
 
-RAND_event() and RAND_screen() are deprecated since OpenSSL
-1.1.0.  Use the functions described above instead.
+RAND_event() and RAND_screen() were deprecated in OpenSSL 1.1.0 and should
+not be used.
 
 =head1 SEE ALSO
 

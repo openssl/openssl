@@ -32,7 +32,7 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_B, OPT_D, OPT_E, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A
+    OPT_B, OPT_D, OPT_E, OPT_F, OPT_O, OPT_P, OPT_V, OPT_A, OPT_R
 } OPTION_CHOICE;
 
 const OPTIONS version_options[] = {
@@ -44,13 +44,14 @@ const OPTIONS version_options[] = {
     {"f", OPT_F, '-', "Show compiler flags used"},
     {"o", OPT_O, '-', "Show some internal datatype options"},
     {"p", OPT_P, '-', "Show target build platform"},
+    {"r", OPT_R, '-', "Show random seeding options"},
     {"v", OPT_V, '-', "Show library version"},
     {NULL}
 };
 
 int version_main(int argc, char **argv)
 {
-    int ret = 1, dirty = 0;
+    int ret = 1, dirty = 0, seed = 0;
     int cflags = 0, version = 0, date = 0, options = 0, platform = 0, dir = 0;
     int engdir = 0;
     char *prog;
@@ -85,11 +86,14 @@ int version_main(int argc, char **argv)
         case OPT_P:
             dirty = platform = 1;
             break;
+        case OPT_R:
+            dirty = seed = 1;
+            break;
         case OPT_V:
             dirty = version = 1;
             break;
         case OPT_A:
-            cflags = version = date = platform = dir = engdir = 1;
+            seed = cflags = version = date = platform = dir = engdir = 1;
             break;
         }
     }
@@ -133,6 +137,34 @@ int version_main(int argc, char **argv)
         printf("%s\n", OpenSSL_version(OPENSSL_DIR));
     if (engdir)
         printf("%s\n", OpenSSL_version(OPENSSL_ENGINES_DIR));
+    if (seed) {
+        printf("Seeding source:");
+#ifdef OPENSSL_RAND_SEED_RTDSC
+        printf(" rtdsc");
+#endif
+#ifdef OPENSSL_RAND_SEED_RDCPU
+        printf(" rdrand-hardware");
+#endif
+#ifdef OPENSSL_RAND_SEED_LIBRANDOM
+        printf(" C-library-random");
+#endif
+#ifdef OPENSSL_RAND_SEED_GETRANDOM
+        printf(" getrandom-syscall");
+#endif
+#ifdef OPENSSL_RAND_SEED_DEVRANDOM
+        printf(" random-device");
+#endif
+#ifdef OPENSSL_RAND_SEED_EGD
+        printf(" EGD");
+#endif
+#ifdef OPENSSL_RAND_SEED_NONE
+        printf(" none");
+#endif
+#ifdef OPENSSL_RAND_SEED_OS
+        printf(" os-specific");
+#endif
+        printf("\n");
+    }
     ret = 0;
  end:
     return (ret);
