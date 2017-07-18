@@ -17,6 +17,18 @@
 #include <openssl/store.h>
 
 /*-
+ *  OSSL_STORE_CTX stuff
+ *  --------------------
+ */
+
+OSSL_STORE_CTX *ossl_store_ctx_new(const OSSL_STORE_LOADER *loader,
+                                   OSSL_STORE_LOADER_CTX *loader_ctx,
+                                   const UI_METHOD *ui_method,
+                                   void *ui_data,
+                                   OSSL_STORE_post_process_info_fn post_process,
+                                   void *post_process_data);
+
+/*-
  *  OSSL_STORE_INFO stuff
  *  ---------------------
  */

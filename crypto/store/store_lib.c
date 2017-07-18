@@ -34,6 +34,28 @@ struct ossl_store_ctx_st {
     int loading;
 };
 
+OSSL_STORE_CTX *ossl_store_ctx_new(const OSSL_STORE_LOADER *loader,
+                                   OSSL_STORE_LOADER_CTX *loader_ctx,
+                                   const UI_METHOD *ui_method,
+                                   void *ui_data,
+                                   OSSL_STORE_post_process_info_fn post_process,
+                                   void *post_process_data)
+{
+    OSSL_STORE_CTX *ctx = NULL;
+
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
+        return NULL;
+    }
+
+    ctx->loader = loader;
+    ctx->loader_ctx = loader_ctx;
+    ctx->ui_method = ui_method;
+    ctx->ui_data = ui_data;
+    ctx->post_process = post_process;
+    ctx->post_process_data = post_process_data;
+    return ctx;
+}
+
 OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
                                 void *ui_data,
                                 OSSL_STORE_post_process_info_fn post_process,
@@ -80,17 +102,12 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
     if (loader_ctx == NULL)
         goto err;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
+    if ((ctx = ossl_store_ctx_new(loader, loader_ctx, ui_method, ui_data,
+                                  post_process, post_process_data)) == NULL) {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_OPEN, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-
-    ctx->loader = loader;
-    ctx->loader_ctx = loader_ctx;
-    ctx->ui_method = ui_method;
-    ctx->ui_data = ui_data;
-    ctx->post_process = post_process;
-    ctx->post_process_data = post_process_data;
+    loader_ctx = NULL;
 
     /*
      * If the attempt to open with the 'file' scheme loader failed and the
@@ -682,19 +699,13 @@ OSSL_STORE_CTX *ossl_store_attach_pem_bio(BIO *bp, const UI_METHOD *ui_method,
     if ((loader = ossl_store_get0_loader_int("file")) == NULL
         || ((loader_ctx = ossl_store_file_attach_pem_bio_int(bp)) == NULL))
         goto done;
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
+    if ((ctx = ossl_store_ctx_new(loader, loader_ctx, ui_method, ui_data,
+                                  NULL, NULL)) == NULL) {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_ATTACH_PEM_BIO,
-                     ERR_R_MALLOC_FAILURE);
+                      ERR_R_MALLOC_FAILURE);
         goto done;
     }
-
-    ctx->loader = loader;
-    ctx->loader_ctx = loader_ctx;
     loader_ctx = NULL;
-    ctx->ui_method = ui_method;
-    ctx->ui_data = ui_data;
-    ctx->post_process = NULL;
-    ctx->post_process_data = NULL;
 
  done:
     if (loader_ctx != NULL)
