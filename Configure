@@ -561,6 +561,9 @@ $config{build_type} = "release";
 
 my %unsupported_options = ();
 my %deprecated_options = ();
+# If you change this, update apps/version.c
+my @known_seed_sources = qw(getrandom devrandom os egd none rdcpu librandom);
+my @seed_sources = ();
 while (@argvcopy)
 	{
 	$_ = shift @argvcopy;
@@ -729,6 +732,15 @@ while (@argvcopy)
 			{
 			$withargs{fuzzer_include}=$1;
 			}
+		elsif (/^--with-rand-seed=(.*)$/)
+			{
+			foreach my $x (split(m|,|, $1))
+			    {
+			    die "Unknown --with-rand-seed choice $x\n"
+				if ! grep { $x eq $_ } @known_seed_sources;
+			    push @seed_sources, $x;
+			    }
+                        }
 		elsif (/^--cross-compile-prefix=(.*)$/)
 			{
 			$config{cross_compile_prefix}=$1;
@@ -811,6 +823,17 @@ if ($libs =~ /(^|\s)-Wl,-rpath,/
     die "***** Cannot simultaneously use -rpath, shared libraries, and\n",
 	"***** any of asan, msan or ubsan\n";
 }
+
+if (scalar(@seed_sources) == 0) {
+    print "Using implicit seed configuration\n";
+    push @seed_sources, 'os';
+}
+die "Cannot seed with none and anything else"
+    if scalar(grep { $_ eq 'none' } @seed_sources) > 0
+        && scalar(@seed_sources) > 1;
+push @{$config{openssl_other_defines}},
+     map { (my $x = $_) =~ tr|[\-a-z]|[_A-Z]|; "OPENSSL_RAND_SEED_$x" }
+	@seed_sources;
 
 my @tocheckfor = (keys %disabled);
 while (@tocheckfor) {

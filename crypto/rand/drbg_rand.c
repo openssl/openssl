@@ -29,8 +29,12 @@ static CRYPTO_ONCE ossl_drbg_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(do_ossl_drbg_init)
 {
+    int st = 1;
+
     ossl_drbg.lock = CRYPTO_THREAD_lock_new();
-    return ossl_drbg.lock != NULL;
+    st &= ossl_drbg.lock != NULL;
+    st &= RAND_DRBG_set(&ossl_drbg, NID_aes_128_ctr, 0) == 1;
+    return st;
 }
 
 void rand_drbg_cleanup(void)
