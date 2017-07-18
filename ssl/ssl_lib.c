@@ -566,12 +566,9 @@ int SSL_clear(SSL *s)
 
     /*
      * Check to see if we were changed into a different method, if so, revert
-     * back. We always do this in TLSv1.3. Below that we only do it if we are
-     * not doing session-id reuse.
+     * back.
      */
-    if (s->method != s->ctx->method
-            && (SSL_IS_TLS13(s)
-                || (!ossl_statem_get_in_handshake(s) && s->session == NULL))) {
+    if (s->method != s->ctx->method) {
         s->method->ssl_free(s);
         s->method = s->ctx->method;
         if (!s->method->ssl_new(s))
