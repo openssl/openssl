@@ -17447,3 +17447,37 @@ Result = DIGESTUPDATE_ERROR
 DigestSign = SHA256
 Key = ED25519-1
 Result = DIGESTSIGNINIT_ERROR
+
+# Key generation tests
+KeyGen = rsaEncryption
+Ctrl = rsa_keygen_bits:128
+KeyName = tmprsa
+Result = PKEY_CTRL_INVALID
+Function = pkey_rsa_ctrl
+Reason = key size too small
+
+# RSA-PSS with restrictions, should succeed.
+KeyGen = RSASSA-PSS
+KeyName = tmppss
+Ctrl = rsa_pss_keygen_md:sha256
+Ctrl = rsa_pss_keygen_mgf1_md:sha512
+
+# Check MGF1 restrictions
+DigestVerify = SHA256
+Key = tmppss
+Ctrl = rsa_mgf1_md:sha256
+Result = PKEY_CTRL_ERROR
+
+# Test valid digest and MGF1 parameters. Verify will fail
+DigestVerify = SHA256
+Key = tmppss
+Ctrl = rsa_mgf1_md:sha512
+Input = ""
+Output = ""
+Result = VERIFY_ERROR
+
+# Check caching of key MGF1 digest restriction
+DigestVerify = SHA256
+Key = tmppss
+Ctrl = rsa_mgf1_md:sha1
+Result = PKEY_CTRL_ERROR
