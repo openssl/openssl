@@ -17,21 +17,24 @@
 # include <openssl/ec.h>
 # include "internal/rand.h"
 
-/* we require 256 bits of randomness */
-# define RANDOMNESS_NEEDED (256 / 8)
+/* Amount of randomness (in bytes) we want for initial seeding. */
+# define RANDOMNESS_NEEDED              (128 / 8)
 
 /* Maximum count allowed in reseeding */
 #define MAX_RESEED (1 << 24)
 
 /* DRBG status values */
-#define DRBG_STATUS_UNINITIALISED	0
-#define DRBG_STATUS_READY		1
-#define DRBG_STATUS_RESEED		2
-#define DRBG_STATUS_ERROR		3
+# define DRBG_STATUS_UNINITIALISED	0
+# define DRBG_STATUS_READY		1
+# define DRBG_STATUS_RESEED		2
+# define DRBG_STATUS_ERROR		3
 
 /* A default maximum length: larger than any reasonable value used in pratice */
-#define DRBG_MAX_LENGTH			0x7ffffff0
+# define DRBG_MAX_LENGTH                0x7ffffff0
 
+/*
+ * The context for DRBG AES-CTR
+ */
 typedef struct drbg_ctr_ctx_st {
     AES_KEY ks;
     size_t keylen;
@@ -46,6 +49,10 @@ typedef struct drbg_ctr_ctx_st {
     unsigned char KX[48];
 } DRBG_CTR_CTX;
 
+
+/*
+ * The context for all DRBG's
+ */
 struct drbg_ctx_st {
     CRYPTO_RWLOCK *lock;
     DRBG_CTX *parent;
@@ -84,9 +91,12 @@ struct drbg_ctx_st {
 extern RAND_METHOD openssl_rand_meth;
 void rand_drbg_cleanup(void);
 
+/* Hardware-based seeding functions. */
+void rand_rdtsc(void);
+int rand_rdcpu(void);
+
+/* DRBG functions implementing AES-CTR */
 int ctr_init(DRBG_CTX *dctx);
-int drbg_hash_init(DRBG_CTX *dctx);
-int drbg_hmac_init(DRBG_CTX *dctx);
 int ctr_uninstantiate(DRBG_CTX *dctx);
 int ctr_instantiate(DRBG_CTX *dctx,
                     const unsigned char *ent, size_t entlen,

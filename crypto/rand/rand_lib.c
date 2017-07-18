@@ -25,6 +25,70 @@ static CRYPTO_RWLOCK *rand_meth_lock;
 static const RAND_METHOD *default_RAND_meth;
 static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
 
+#ifdef OPENSSL_RAND_SEED_RDTSC
+/*
+ * IMPORTANT NOTE:  It is not currently possible to use this code
+ * because we are not sure about the amount of randomness.  Some
+ * SP900 tests have been run, but there is internal skepticism.
+ * So for now this code is not used.
+ */
+# error "RDTSC enabled?  Should not be possible!"
+
+/*
+ * Since we get some randomness from the low-order bits of the
+ * high-speec clock, it can help.  But don't return a status since
+ * it's not sufficient to indicate whether or not the seeding was
+ * done.
+ */
+void rand_rdtsc(void)
+{
+    unsigned char c;
+    int i;
+
+    for (i = 0; i < 10; i++) {
+        c = (unsigned char)(OPENSSL_rdtsc() & 0xFF);
+        RAND_add(&c, 1, 0.5);
+    }
+}
+#endif
+
+#ifdef OPENSSL_RAND_SEED_RDCPU
+size_t OPENSSL_ia32_rdseed(void);
+size_t OPENSSL_ia32_rdrand(void);
+
+extern unsigned int OPENSSL_ia32cap_P[];
+
+int rand_rdcpu(void)
+{
+    size_t i, s;
+
+    /* If RDSEED is available, use that. */
+    if ((OPENSSL_ia32cap_P[1] & (1 << 18)) != 0) {
+        for (i = 0; i < RANDOMNESS_NEEDED; i += sizeof(s)) {
+            s = OPENSSL_ia32_rdseed();
+            if (s == 0)
+                break;
+            RAND_add(&s, (int)sizeof(s), sizeof(s));
+        }
+        if (i >= RANDOMNESS_NEEDED)
+            return 1;
+    }
+
+    /* Second choice is RDRAND. */
+    if ((OPENSSL_ia32cap_P[1] & (1 << (62 - 32))) != 0) {
+        for (i = 0; i < RANDOMNESS_NEEDED; i += sizeof(s)) {
+            s = OPENSSL_ia32_rdrand();
+            if (s == 0)
+                break;
+            RAND_add(&s, (int)sizeof(s), sizeof(s));
+        }
+        if (i >= RANDOMNESS_NEEDED)
+            return 1;
+    }
+
+    return 0;
+}
+#endif
 
 DEFINE_RUN_ONCE_STATIC(do_rand_init)
 {
