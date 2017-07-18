@@ -64,7 +64,9 @@ file.
 To enable library configuration the default section needs to contain an
 appropriate line which points to the main configuration section. The default
 name is B<openssl_conf> which is used by the B<openssl> utility. Other
-applications may use an alternative name such as B<myapplicaton_conf>.
+applications may use an alternative name such as B<myapplication_conf>.
+All library configuration lines appear in the default section at the start
+of the configuration file.
 
 The configuration section should consist of a set of name value pairs which
 contain specific module configuration information. The B<name> represents
@@ -72,6 +74,7 @@ the name of the I<configuration module> the meaning of the B<value> is
 module specific: it may, for example, represent a further configuration
 section containing configuration module specific information. E.g.
 
+ # This must be in the default section
  openssl_conf = openssl_init
 
  [openssl_init]
