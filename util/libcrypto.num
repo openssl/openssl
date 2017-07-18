@@ -4569,3 +4569,6 @@ EVP_PKEY_asn1_set_get_priv_key          4520	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_get_pub_key           4521	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_set_alias_type                 4522	1_1_1	EXIST::FUNCTION:
 OSSL_STORE_INFO_up_ref                  4523	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_CACHED_open                  4524	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_CACHE_new                    4525	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_CACHE_free                   4526	1_1_1	EXIST::FUNCTION:

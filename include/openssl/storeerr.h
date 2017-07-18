@@ -19,6 +19,7 @@ int ERR_load_OSSL_STORE_strings(void);
 /*
  * OSSL_STORE function codes.
  */
+# define OSSL_STORE_F_CACHE_LOAD                          139
 # define OSSL_STORE_F_FILE_CTRL                           129
 # define OSSL_STORE_F_FILE_FIND                           138
 # define OSSL_STORE_F_FILE_GET_PASS                       118
@@ -27,6 +28,8 @@ int ERR_load_OSSL_STORE_strings(void);
 # define OSSL_STORE_F_FILE_NAME_TO_URI                    126
 # define OSSL_STORE_F_FILE_OPEN                           120
 # define OSSL_STORE_F_OSSL_STORE_ATTACH_PEM_BIO           127
+# define OSSL_STORE_F_OSSL_STORE_CACHED_OPEN              140
+# define OSSL_STORE_F_OSSL_STORE_CACHE_NEW                141
 # define OSSL_STORE_F_OSSL_STORE_EXPECT                   130
 # define OSSL_STORE_F_OSSL_STORE_FILE_ATTACH_PEM_BIO_INT  128
 # define OSSL_STORE_F_OSSL_STORE_FIND                     131
@@ -83,5 +86,6 @@ int ERR_load_OSSL_STORE_strings(void);
 # define OSSL_STORE_R_UNSUPPORTED_OPERATION               118
 # define OSSL_STORE_R_UNSUPPORTED_SEARCH_TYPE             120
 # define OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED           111
+# define OSSL_STORE_R_URI_NOT_IN_CACHE                    122
 
 #endif

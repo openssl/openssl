@@ -147,3 +147,14 @@ int ossl_store_file_loader_init(void);
 
 OSSL_STORE_LOADER_CTX *ossl_store_file_attach_pem_bio_int(BIO *bp);
 int ossl_store_file_detach_pem_bio_int(OSSL_STORE_LOADER_CTX *ctx);
+
+/*-
+ *  STORE cache stuff
+ *  -----------------
+ */
+
+typedef struct cache_entry_st {
+    char *uri;
+    STACK_OF(OSSL_STORE_INFO) *infos;
+} CACHE_ENTRY;
+DEFINE_LHASH_OF(CACHE_ENTRY);
