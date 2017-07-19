@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 #include "ssl_locl.h"
+#include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 
@@ -405,10 +406,25 @@ int tls13_change_cipher_state(SSL *s, int which)
                 goto err;
             }
 
-            if (sslcipher == NULL && s->psksession != NULL)
+            if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
+                    && s->max_early_data > 0
+                    && s->session->ext.max_early_data == 0) {
+                /*
+                 * If we are attempting to send early data, and we've decided to
+                 * actually do it but max_early_data in s->session is 0 then we
+                 * must be using an external PSK.
+                 */
+                if (!ossl_assert(s->psksession != NULL
+                        && s->max_early_data ==
+                           s->psksession->ext.max_early_data)) {
+                    SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE,
+                           ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
                 sslcipher = SSL_SESSION_get0_cipher(s->psksession);
+            }
             if (sslcipher == NULL) {
-                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, SSL_R_BAD_PSK);
                 goto err;
             }
 
