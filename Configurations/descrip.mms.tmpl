@@ -9,7 +9,7 @@
   our $osslprefix = 'OSSL$';
   (our $osslprefix_q = $osslprefix) =~ s/\$/\\\$/;
 
-  our $sover = sprintf "%02d%02d", $config{shlib_major}, $config{shlib_minor};
+  our $sover_dirname = sprintf "%02d%02d", split(/\./, $config{shlib_version_number});
   our $osslver = sprintf "%02d%02d", split(/\./, $config{version});
 
   our $sourcedir = $config{sourcedir};
@@ -169,7 +169,7 @@ OPENSSLDIR={- catdir($config{openssldir}) or
 # The same, but for C
 OPENSSLDIR_C={- $osslprefix -}DATAROOT:[000000]
 # Where installed engines reside, for C
-ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover.$target{pointer_size} -}:
+ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
 
 CC= {- $target{cc} -}
 CFLAGS= /DEFINE=({- join(",", @{$target{defines}}, @{$config{defines}},"OPENSSLDIR=\"\"\"\$(OPENSSLDIR_C)\"\"\"","ENGINESDIR=\"\"\"\$(ENGINESDIR_C)\"\"\"") -}) {- $target{cflags} -} {- $config{cflags} -}
@@ -442,9 +442,9 @@ install_runtime : install_shared _install_runtime_ns
 install_engines : check_INSTALLTOP
         @ {- output_off() unless scalar @{$unified_info{engines}}; "" -} !
         @ WRITE SYS$OUTPUT "*** Installing engines"
-        - CREATE/DIR ossl_installroot:[ENGINES{- $sover.$target{pointer_size} -}.'arch']
+        - CREATE/DIR ossl_installroot:[ENGINES{- $sover_dirname.$target{pointer_size} -}.'arch']
         {- join("\n        ",
-                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover$target{pointer_size}.'arch']" }
+                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover_dirname$target{pointer_size}.'arch']" }
                 @{$unified_info{install}->{engines}}) -}
         @ {- output_on() unless scalar @{$unified_info{engines}}; "" -} !
 
@@ -497,6 +497,7 @@ vmsconfig.pm : configdata.pm
         WRITE CONFIG "our %config = ("
         WRITE CONFIG "  target => '","{- $config{target} -}","',"
         WRITE CONFIG "  version => '","{- $config{version} -}","',"
+        WRITE CONFIG "  shlib_version_number => '","{- $config{shlib_version_number} -}","',"
         WRITE CONFIG "  shlib_major => '","{- $config{shlib_major} -}","',"
         WRITE CONFIG "  shlib_minor => '","{- $config{shlib_minor} -}","',"
         WRITE CONFIG "  no_shared => '","{- $disabled{shared} -}","',"
