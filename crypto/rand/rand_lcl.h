@@ -20,6 +20,9 @@
 /* we require 256 bits of randomness */
 # define RANDOMNESS_NEEDED (256 / 8)
 
+/* Maximum count allowed in reseeding */
+#define MAX_RESEED (1 << 24)
+
 /* DRBG status values */
 #define DRBG_STATUS_UNINITIALISED	0
 #define DRBG_STATUS_READY		1
