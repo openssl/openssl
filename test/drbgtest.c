@@ -323,7 +323,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
      */
 
     /* Test too small nonce */
-    if (dctx->min_nonce) { 
+    if (dctx->min_nonce) {
         t.noncelen = dctx->min_nonce - 1;
         if (!init(dctx, td, &t)
                 || RAND_DRBG_instantiate(dctx, td->pers, td->perslen) > 0
@@ -366,7 +366,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
             || !uninstantiate(dctx))
         goto err;
 
-    /* Instantiate again with valid data */ 
+    /* Instantiate again with valid data */
     if (!instantiate(dctx, td, &t))
         goto err;
     reseed_counter_tmp = dctx->reseed_counter;
