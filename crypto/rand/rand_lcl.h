@@ -71,16 +71,13 @@ struct drbg_ctx_st {
     DRBG_CTR_CTX ctr;
 
     /* entropy gathering function */
-    size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char **pout,
-            int entropy, size_t min_len, size_t max_len);
+    RAND_DRBG_get_entropy_fn get_entropy;
     /* Indicates we have finished with entropy buffer */
-    void (*cleanup_entropy)(DRBG_CTX *ctx, unsigned char *out, size_t olen);
-
+    RAND_DRBG_cleanup_entropy_fn cleanup_entropy;
     /* nonce gathering function */
-    size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char **pout,
-            int entropy, size_t min_len, size_t max_len);
+    RAND_DRBG_get_nonce_fn get_nonce;
     /* Indicates we have finished with nonce buffer */
-    void (*cleanup_nonce)(DRBG_CTX *ctx, unsigned char *out, size_t olen);
+    RAND_DRBG_cleanup_nonce_fn cleanup_nonce;
 };
 
 
