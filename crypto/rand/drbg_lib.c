@@ -328,11 +328,14 @@ int RAND_DRBG_set_callbacks(DRBG_CTX *dctx,
 }
 
 /*
- * Set the reseed internal. Used mainly for the KATs.
+ * Set the reseed interval. Used mainly for the KATs.
  */
-void RAND_DRBG_set_reseed_interval(DRBG_CTX *dctx, int interval)
+int RAND_DRBG_set_reseed_interval(DRBG_CTX *dctx, int interval)
 {
+    if (interval < 0 || interval > MAX_RESEED)
+        return 0;
     dctx->reseed_interval = interval;
+    return 1;
 }
 
 /*

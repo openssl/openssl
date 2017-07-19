@@ -372,7 +372,7 @@ int ctr_init(DRBG_CTX *dctx)
     }
 
     dctx->max_request = 1 << 16;
-    dctx->reseed_interval = 1 << 24;
+    dctx->reseed_interval = MAX_RESEED;
     return 1;
 }
 
