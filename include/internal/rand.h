@@ -26,14 +26,22 @@ int RAND_DRBG_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
                        const unsigned char *adin, size_t adinlen);
 void RAND_DRBG_free(DRBG_CTX *dctx);
 
+typedef size_t (*RAND_DRBG_get_entropy_fn)(DRBG_CTX *ctx, unsigned char **pout,
+                                           int entropy, size_t min_len,
+                                           size_t max_len);
+typedef void (*RAND_DRBG_cleanup_entropy_fn)(DRBG_CTX *ctx, unsigned char *out,
+                                             size_t olen);
+typedef size_t (*RAND_DRBG_get_nonce_fn)(DRBG_CTX *ctx, unsigned char **pout,
+                                         int entropy, size_t min_len,
+                                         size_t max_len);
+typedef void (*RAND_DRBG_cleanup_nonce_fn)(DRBG_CTX *ctx, unsigned char *out,
+                                           size_t olen);
+
 int RAND_DRBG_set_callbacks(DRBG_CTX *dctx,
-    size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char **pout,
-                          int entropy, size_t min_len, size_t max_len),
-    void (*cleanup_entropy)(DRBG_CTX *ctx, unsigned char *out, size_t olen),
-    size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char **pout,
-                        int entropy, size_t min_len, size_t max_len),
-    void (*cleanup_nonce)(DRBG_CTX *ctx, unsigned char *out, size_t olen)
-    );
+                            RAND_DRBG_get_entropy_fn get_entropy,
+                            RAND_DRBG_cleanup_entropy_fn cleanup_entropy,
+                            RAND_DRBG_get_nonce_fn get_nonce,
+                            RAND_DRBG_cleanup_nonce_fn cleanup_nonce);
 
 int RAND_DRBG_set_reseed_interval(DRBG_CTX *dctx, int interval);
 
