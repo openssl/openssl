@@ -38,15 +38,15 @@ const RAND_METHOD *RAND_get_rand_method(void);
 int RAND_set_rand_engine(ENGINE *engine);
 # endif
 RAND_METHOD *RAND_OpenSSL(void);
-#if OPENSSL_API_COMPAT < 0x10100000L
-# define RAND_cleanup() while(0) continue
-#endif
+# if OPENSSL_API_COMPAT < 0x10100000L
+#   define RAND_cleanup() while(0) continue
+# endif
 int RAND_bytes(unsigned char *buf, int num);
 DEPRECATEDIN_1_1_0(int RAND_pseudo_bytes(unsigned char *buf, int num))
 void RAND_seed(const void *buf, int num);
-#if defined(__ANDROID__) && defined(__NDK_FPABI__)
+# if defined(__ANDROID__) && defined(__NDK_FPABI__)
 __NDK_FPABI__	/* __attribute__((pcs("aapcs"))) on ARM */
-#endif
+# endif
 void RAND_add(const void *buf, int num, double randomness);
 int RAND_load_file(const char *file, long max_bytes);
 int RAND_write_file(const char *file);
@@ -59,15 +59,16 @@ int RAND_egd_bytes(const char *path, int bytes);
 # endif
 int RAND_poll(void);
 
-#if defined(_WIN32) && (defined(BASETYPES) || defined(_WINDEF_H))
+# if defined(_WIN32) && (defined(BASETYPES) || defined(_WINDEF_H))
 /* application has to include <windows.h> in order to use these */
 DEPRECATEDIN_1_1_0(void RAND_screen(void))
 DEPRECATEDIN_1_1_0(int RAND_event(UINT, WPARAM, LPARAM))
-#endif
+# endif
 
 int ERR_load_RAND_strings(void);
 
-# ifdef  __cplusplus
+#ifdef  __cplusplus
 }
-# endif
+#endif
+
 #endif

@@ -4345,3 +4345,16 @@ OSSL_STORE_LOADER_get0_engine           4287	1_1_1	EXIST::FUNCTION:
 OPENSSL_fork_prepare                    4288	1_1_1	EXIST:UNIX:FUNCTION:
 OPENSSL_fork_parent                     4289	1_1_1	EXIST:UNIX:FUNCTION:
 OPENSSL_fork_child                      4290	1_1_1	EXIST:UNIX:FUNCTION:
+RAND_drbg                               4291	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_instantiate                   4292	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_uninstantiate                 4293	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_get_default                   4294	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_set                           4295	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_set_callbacks                 4296	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_new                           4297	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_set_reseed_interval           4298	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_free                          4299	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_generate                      4300	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_reseed                        4301	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_set_ex_data                   4302	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_get_ex_data                   4303	1_1_1	EXIST::FUNCTION:

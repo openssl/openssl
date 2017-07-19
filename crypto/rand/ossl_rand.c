@@ -38,8 +38,8 @@ typedef struct ossl_rand_state_st OSSL_RAND_STATE;
 struct ossl_rand_state_st {
     size_t num;
     size_t index;
-    unsigned char state[STATE_SIZE + RAND_DIGEST_LENGTH];
-    unsigned char md[RAND_DIGEST_LENGTH];
+    unsigned char state[STATE_SIZE + SHA_DIGEST_LENGTH];
+    unsigned char md[SHA_DIGEST_LENGTH];
     long md_count[2];
 };
 
@@ -103,7 +103,7 @@ static int rand_add(const void *buf, int num, double add)
 {
     int i, j, k, st_idx;
     long md_c[2];
-    unsigned char local_md[RAND_DIGEST_LENGTH];
+    unsigned char local_md[SHA_DIGEST_LENGTH];
     EVP_MD_CTX *m;
     int do_not_lock;
     int rv = 0;
@@ -178,18 +178,18 @@ static int rand_add(const void *buf, int num, double add)
      * will use now, but other threads may use them as well
      */
 
-    sp->md_count[1] += (num / RAND_DIGEST_LENGTH) + (num % RAND_DIGEST_LENGTH > 0);
+    sp->md_count[1] += (num / SHA_DIGEST_LENGTH) + (num % SHA_DIGEST_LENGTH > 0);
 
     if (!do_not_lock)
         CRYPTO_THREAD_unlock(rand_lock);
 
-    for (i = 0; i < num; i += RAND_DIGEST_LENGTH) {
+    for (i = 0; i < num; i += SHA_DIGEST_LENGTH) {
         j = (num - i);
-        j = (j > RAND_DIGEST_LENGTH) ? RAND_DIGEST_LENGTH : j;
+        j = (j > SHA_DIGEST_LENGTH) ? SHA_DIGEST_LENGTH : j;
 
-        if (!EVP_DigestInit_ex(m, RAND_DIGEST, NULL))
+        if (!EVP_DigestInit_ex(m, EVP_sha1(), NULL))
             goto err;
-        if (!EVP_DigestUpdate(m, local_md, RAND_DIGEST_LENGTH))
+        if (!EVP_DigestUpdate(m, local_md, SHA_DIGEST_LENGTH))
             goto err;
         k = (st_idx + j) - STATE_SIZE;
         if (k > 0) {
@@ -268,7 +268,7 @@ static int rand_bytes(unsigned char *buf, int num)
     size_t num_ceil, st_idx, st_num;
     int ok;
     long md_c[2];
-    unsigned char local_md[RAND_DIGEST_LENGTH];
+    unsigned char local_md[SHA_DIGEST_LENGTH];
     EVP_MD_CTX *m;
     OSSL_RAND_STATE *sp = &global_state;
 #ifndef GETPID_IS_MEANINGLESS
@@ -314,9 +314,9 @@ static int rand_bytes(unsigned char *buf, int num)
     if (m == NULL)
         goto err_mem;
 
-    /* round upwards to multiple of RAND_DIGEST_LENGTH/2 */
+    /* round upwards to multiple of SHA_DIGEST_LENGTH/2 */
     num_ceil =
-        (1 + (num - 1) / (RAND_DIGEST_LENGTH / 2)) * (RAND_DIGEST_LENGTH / 2);
+        (1 + (num - 1) / (SHA_DIGEST_LENGTH / 2)) * (SHA_DIGEST_LENGTH / 2);
 
     /*
      * (Based on the rand(3) manpage:)
@@ -389,16 +389,16 @@ static int rand_bytes(unsigned char *buf, int num)
 
         int n = STATE_SIZE;     /* so that the complete pool gets accessed */
         while (n > 0) {
-#if RAND_DIGEST_LENGTH > 20
+#if SHA_DIGEST_LENGTH > 20
 # error "Please adjust DUMMY_SEED."
 #endif
-#define DUMMY_SEED "...................." /* at least RAND_DIGEST_LENGTH */
+#define DUMMY_SEED "...................." /* at least SHA_DIGEST_LENGTH */
             /*
              * Note that the seed does not matter, it's just that
              * rand_add expects to have something to hash.
              */
-            rand_add(DUMMY_SEED, RAND_DIGEST_LENGTH, 0.0);
-            n -= RAND_DIGEST_LENGTH;
+            rand_add(DUMMY_SEED, SHA_DIGEST_LENGTH, 0.0);
+            n -= SHA_DIGEST_LENGTH;
         }
         if (ok)
             stirred_pool = 1;
@@ -427,10 +427,10 @@ static int rand_bytes(unsigned char *buf, int num)
     CRYPTO_THREAD_unlock(rand_lock);
 
     while (num > 0) {
-        /* num_ceil -= RAND_DIGEST_LENGTH / 2 */
-        j = (num >= RAND_DIGEST_LENGTH / 2) ? RAND_DIGEST_LENGTH / 2 : num;
+        /* num_ceil -= SHA_DIGEST_LENGTH / 2 */
+        j = (num >= SHA_DIGEST_LENGTH / 2) ? SHA_DIGEST_LENGTH / 2 : num;
         num -= j;
-        if (!EVP_DigestInit_ex(m, RAND_DIGEST, NULL))
+        if (!EVP_DigestInit_ex(m, EVP_sha1(), NULL))
             goto err;
 #ifndef GETPID_IS_MEANINGLESS
         if (curr_pid) {         /* just in the first iteration to save time */
@@ -448,35 +448,35 @@ static int rand_bytes(unsigned char *buf, int num)
             if (!rand_hw_seed(m))
                 goto err;
         }
-        if (!EVP_DigestUpdate(m, local_md, RAND_DIGEST_LENGTH))
+        if (!EVP_DigestUpdate(m, local_md, SHA_DIGEST_LENGTH))
             goto err;
         if (!EVP_DigestUpdate(m, (unsigned char *)md_c, sizeof(md_c)))
             goto err;
 
-        k = (st_idx + RAND_DIGEST_LENGTH / 2) - st_num;
+        k = (st_idx + SHA_DIGEST_LENGTH / 2) - st_num;
         if (k > 0) {
-            if (!EVP_DigestUpdate(m, &sp->state[st_idx], RAND_DIGEST_LENGTH / 2 - k))
+            if (!EVP_DigestUpdate(m, &sp->state[st_idx], SHA_DIGEST_LENGTH / 2 - k))
                 goto err;
             if (!EVP_DigestUpdate(m, &sp->state[0], k))
                 goto err;
-        } else if (!EVP_DigestUpdate(m, &sp->state[st_idx], RAND_DIGEST_LENGTH / 2))
+        } else if (!EVP_DigestUpdate(m, &sp->state[st_idx], SHA_DIGEST_LENGTH / 2))
             goto err;
         if (!EVP_DigestFinal_ex(m, local_md, NULL))
             goto err;
 
-        for (i = 0; i < RAND_DIGEST_LENGTH / 2; i++) {
+        for (i = 0; i < SHA_DIGEST_LENGTH / 2; i++) {
             /* may compete with other threads */
             sp->state[st_idx++] ^= local_md[i];
             if (st_idx >= st_num)
                 st_idx = 0;
             if (i < j)
-                *(buf++) = local_md[i + RAND_DIGEST_LENGTH / 2];
+                *(buf++) = local_md[i + SHA_DIGEST_LENGTH / 2];
         }
     }
 
-    if (!EVP_DigestInit_ex(m, RAND_DIGEST, NULL)
+    if (!EVP_DigestInit_ex(m, EVP_sha1(), NULL)
         || !EVP_DigestUpdate(m, (unsigned char *)md_c, sizeof(md_c))
-        || !EVP_DigestUpdate(m, local_md, RAND_DIGEST_LENGTH))
+        || !EVP_DigestUpdate(m, local_md, SHA_DIGEST_LENGTH))
         goto err;
     CRYPTO_THREAD_write_lock(rand_lock);
     /*
