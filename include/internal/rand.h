@@ -35,7 +35,7 @@ int RAND_DRBG_set_callbacks(DRBG_CTX *dctx,
     void (*cleanup_nonce)(DRBG_CTX *ctx, unsigned char *out, size_t olen)
     );
 
-void RAND_DRBG_set_reseed_interval(DRBG_CTX *dctx, int interval);
+int RAND_DRBG_set_reseed_interval(DRBG_CTX *dctx, int interval);
 
 #define RAND_DRBG_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DRBG, l, p, newf, dupf, freef)
