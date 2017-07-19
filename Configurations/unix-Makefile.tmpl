@@ -14,9 +14,9 @@
 
      sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw)/ }
 
-     our $sover = $config{target} =~ /^mingw/
-         ? $config{shlib_major}."_".$config{shlib_minor}
-         : $config{shlib_major}.".".$config{shlib_minor};
+     our $sover_dirname = $config{shlib_version_number};
+     $sover_dirname =~ s|\.|_|g
+         if $config{target} =~ /^mingw/;
 
      # shlib and shlib_simple both take a static library name and figure
      # out what the shlib name should be.
@@ -40,16 +40,16 @@
      sub shlib {
          my $lib = shift;
          return () if $disabled{shared} || $lib =~ /\.a$/;
-         return $unified_info{sharednames}->{$lib} . $shlibext;
+         return $unified_info{sharednames}->{$lib} . '$(SHLIB_EXT)';
      }
      sub shlib_simple {
          my $lib = shift;
          return () if $disabled{shared} || $lib =~ /\.a$/;
 
          if (windowsdll()) {
-             return $lib . $shlibextimport;
+             return $lib . '$(SHLIB_EXT_IMPORT)';
          }
-         return $lib .  $shlibextsimple;
+         return $lib .  '$(SHLIB_EXT_SIMPLE)';
      }
 
      # Easy fixing of static library names
@@ -89,6 +89,9 @@ SHLIB_VERSION_HISTORY={- $config{shlib_version_history} -}
 SHLIB_MAJOR={- $config{shlib_major} -}
 SHLIB_MINOR={- $config{shlib_minor} -}
 SHLIB_TARGET={- $target{shared_target} -}
+SHLIB_EXT={- $shlibext -}
+SHLIB_EXT_SIMPLE={- $shlibextsimple -}
+SHLIB_EXT_IMPORT={- $shlibextimport -}
 
 LIBS={- join(" ", map { lib($_) } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}
@@ -160,7 +163,7 @@ LIBDIR={- #
           our $libdir = $config{libdir} || "lib$multilib";
           $libdir -}
 ENGINESDIR={- use File::Spec::Functions;
-              catdir($prefix,$libdir,"engines-$sover") -}
+              catdir($prefix,$libdir,"engines-$sover_dirname") -}
 
 # Convenience variable for those who want to set the rpath in shared
 # libraries and applications
@@ -722,7 +725,7 @@ libcrypto.pc:
 	    echo 'exec_prefix=$${prefix}'; \
 	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
 	    echo 'includedir=$${prefix}/include'; \
-	    echo 'enginesdir=$${libdir}/engines-{- $sover -}'; \
+	    echo 'enginesdir=$${libdir}/engines-{- $sover_dirname -}'; \
 	    echo ''; \
 	    echo 'Name: OpenSSL-libcrypto'; \
 	    echo 'Description: OpenSSL cryptography library'; \
@@ -937,8 +940,8 @@ EOF
 # With all other Unix platforms, we often build a shared library with the
 # SO version built into the file name and a symlink without the SO version
 # It's not necessary to have both as targets.  The choice falls on the
-# simplest, {libname}$shlibextimport for Windows POSIX layers and
-# {libname}$shlibextsimple for the Unix platforms.
+# simplest, {libname}\$(SHLIB_EXT_IMPORT) for Windows POSIX layers and
+# {libname}\$(SHLIB_EXT_SIMPLE) for the Unix platforms.
 $target: $lib$libext $deps $ordinalsfile
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		ECHO=\$(ECHO) \\
@@ -946,7 +949,7 @@ $target: $lib$libext $deps $ordinalsfile
 		PERL="\$(PERL)" SRCDIR='\$(SRCDIR)' DSTDIR="$libd" \\
 		INSTALLTOP='\$(INSTALLTOP)' LIBDIR='\$(LIBDIR)' \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
-		LIBNAME=$libname SHLIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
+		LIBNAME=$libname SHLIBVERSION=\$(SHLIB_VERSION_NUMBER) \\
 		STLIBNAME=$lib$libext \\
 		SHLIBNAME=$target SHLIBNAME_FULL=$target_full \\
 		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(LIB_CFLAGS)' \\
@@ -955,10 +958,10 @@ $target: $lib$libext $deps $ordinalsfile
 		link_shlib.$shlib_target
 EOF
 	  . (windowsdll() ? <<"EOF" : "");
-	rm -f apps/$shlib$shlibext
-	rm -f test/$shlib$shlibext
-	cp -p $shlib$shlibext apps/
-	cp -p $shlib$shlibext test/
+	rm -f apps/$shlib'\$(SHLIB_EXT)'
+	rm -f test/$shlib'\$(SHLIB_EXT)'
+	cp -p $shlib'\$(SHLIB_EXT)' apps/
+	cp -p $shlib'\$(SHLIB_EXT)' test/
 EOF
   }
   sub obj2dso {

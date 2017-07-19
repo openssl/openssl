@@ -992,7 +992,7 @@ $target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
 $target{exe_extension}=".pm"  if ($config{target} =~ /vos/);
 
 ($target{shared_extension_simple}=$target{shared_extension})
-    =~ s|\.\$\(SHLIB_MAJOR\)\.\$\(SHLIB_MINOR\)||;
+    =~ s|\.\$\(SHLIB_VERSION_NUMBER\)||;
 $target{dso_extension}=$target{shared_extension_simple};
 ($target{shared_import_extension}=$target{shared_extension_simple}.".a")
     if ($config{target} =~ /^(?:Cygwin|mingw)/);
