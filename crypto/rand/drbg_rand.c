@@ -77,7 +77,7 @@ static void ctr_XOR(DRBG_CTR_CTX *cctx, const unsigned char *in, size_t inlen)
         /* Should never happen */
         n = 16;
     }
-    for (i = 0; i < 16; i++)
+    for (i = 0; i < n; i++)
         cctx->V[i] ^= in[i + cctx->keylen];
 }
 
