@@ -27,14 +27,15 @@
 # Numbers are cycles per processed byte with poly1305_blocks alone,
 # measured with rdtsc at fixed clock frequency.
 #
-#		IALU/gcc-4.8(*)	AVX(**)		AVX2
+#		IALU/gcc-4.8(*)	AVX(**)		AVX2	AVX-512
 # P4		4.46/+120%	-
 # Core 2	2.41/+90%	-
 # Westmere	1.88/+120%	-
 # Sandy Bridge	1.39/+140%	1.10
 # Haswell	1.14/+175%	1.11		0.65
-# Skylake	1.13/+120%	0.96		0.51
+# Skylake[-X]	1.13/+120%	0.96		0.51	[0.35]
 # Silvermont	2.83/+95%	-
+# Knights L	3.60/-		1.65		1.10	(***)
 # Goldmont	1.70/+180%	-
 # VIA Nano	1.82/+150%	-
 # Sledgehammer	1.38/+160%	-
@@ -49,6 +50,8 @@
 #	Core processors, 50-30%, less newer processor is, but slower on
 #	contemporary ones, for example almost 2x slower on Atom, and as
 #	former are naturally disappearing, SSE2 is deemed unnecessary;
+# (***)	Current AVX-512 code requires BW and VL extensions and can not
+#	execute on Knights Landing;
 
 $flavour = shift;
 $output  = shift;
