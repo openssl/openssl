@@ -35,6 +35,8 @@
 # Applications using the EVP interface will observe a few percent
 # worse performance.]
 #
+# Knights Landing processes 1 byte in 1.25 cycles (measured with EVP).
+#
 # [1] http://rt.openssl.org/Ticket/Display.html?id=2900&user=guest&pass=guest
 # [2] http://www.intel.com/content/dam/www/public/us/en/documents/software-support/enabling-high-performance-gcm.pdf
 
