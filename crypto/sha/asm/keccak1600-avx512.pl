@@ -30,8 +30,8 @@
 #
 #			r=1088(*)
 #
-# Knights Landing	-
-# Skylake Xeon		-
+# Knights Landing	8.9
+# Skylake-X		6.7
 #
 # (*)	Corresponds to SHA3-256.
 
@@ -119,22 +119,22 @@ __KeccakF1600:
 	vpermq		$A03,@Theta[3],$A03
 	vpermq		$A04,@Theta[4],$A04
 
-	vpxorq		$A01,$A00,$C00
-	vpxorq		$A02,$C00,$C00
-	vpternlogq	\$0x96,$A04,$A03,$C00
+	vmovdqa64	$A00,@T[0]		# put aside original A00
+	vpternlogq	\$0x96,$A02,$A01,$A00	# and use it as "C00"
+	vpternlogq	\$0x96,$A04,$A03,$A00
 
-	vprolq		\$1,$C00,$D00
-	vpermq		$C00,@Theta[1],$C00
+	vprolq		\$1,$A00,$D00
+	vpermq		$A00,@Theta[1],$A00
 	vpermq		$D00,@Theta[4],$D00
 
-	vpternlogq	\$0x96,$C00,$D00,$A00
-	vpternlogq	\$0x96,$C00,$D00,$A01
-	vpternlogq	\$0x96,$C00,$D00,$A02
-	vpternlogq	\$0x96,$C00,$D00,$A03
-	vpternlogq	\$0x96,$C00,$D00,$A04
+	vpternlogq	\$0x96,$A00,$D00,@T[0]	# T[0] is original A00
+	vpternlogq	\$0x96,$A00,$D00,$A01
+	vpternlogq	\$0x96,$A00,$D00,$A02
+	vpternlogq	\$0x96,$A00,$D00,$A03
+	vpternlogq	\$0x96,$A00,$D00,$A04
 
 	######################################### Rho
-	vprolvq		@Rhotate[0],$A00,$A00
+	vprolvq		@Rhotate[0],@T[0],$A00	# T[0] is original A00
 	vprolvq		@Rhotate[1],$A01,$A01
 	vprolvq		@Rhotate[2],$A02,$A02
 	vprolvq		@Rhotate[3],$A03,$A03
@@ -259,22 +259,20 @@ SHA3_absorb:
 	jc		.Ldone_absorb_avx512
 
 	shr		\$3,%eax
-	vmovdqu64	-96($inp),@{T[0]}{$k11111}
-	sub		\$4,%eax
 ___
-for(my $i=5; $i<25; $i++) {
+for(my $i=0; $i<25; $i++) {
 $code.=<<___
-	dec	%eax
-	jz	.Labsorved_avx512
 	mov	8*$i-96($inp),%r8
 	mov	%r8,$A_jagged_in[$i]-128(%r9)
+	dec	%eax
+	jz	.Labsorved_avx512
 ___
 }
 $code.=<<___;
 .Labsorved_avx512:
 	lea	($inp,$bsz),$inp
 
-	vpxorq	@T[0],$A00,$A00
+	vpxorq	64*0-128(%r9),$A00,$A00
 	vpxorq	64*1-128(%r9),$A01,$A01
 	vpxorq	64*2-128(%r9),$A02,$A02
 	vpxorq	64*3-128(%r9),$A03,$A03
