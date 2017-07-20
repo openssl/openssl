@@ -9,7 +9,7 @@
 
 #include <internal/cryptlib_int.h>
 #include <openssl/err.h>
-#include <internal/rand.h>
+#include <internal/rand_int.h>
 #include <internal/bio.h>
 #include <openssl/evp.h>
 #include <internal/evp_int.h>
