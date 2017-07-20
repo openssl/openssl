@@ -44,6 +44,7 @@ void *RAND_DRBG_get_ex_data(const DRBG_CTX *dctx, int idx);
 
 DRBG_CTX *RAND_DRBG_get_default(void);
 
+void rand_cleanup_int(void);
 
 #endif
 
