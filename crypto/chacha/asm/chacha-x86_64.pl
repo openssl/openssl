@@ -24,7 +24,7 @@
 #
 # Performance in cycles per byte out of large buffer.
 #
-#		IALU/gcc 4.8(i)	1xSSSE3/SSE2	4xSSSE3	    8xAVX2
+#		IALU/gcc 4.8(i)	1xSSSE3/SSE2	4xSSSE3	    NxAVX(v)
 #
 # P4		9.48/+99%	-/22.7(ii)	-
 # Core2		7.83/+55%	7.90/8.08	4.35
@@ -32,8 +32,9 @@
 # Sandy Bridge	8.31/+42%	5.45/6.76	2.72
 # Ivy Bridge	6.71/+46%	5.40/6.49	2.41
 # Haswell	5.92/+43%	5.20/6.45	2.42	    1.23
-# Skylake	5.87/+39%	4.70/-		2.31	    1.19
+# Skylake[-X]	5.87/+39%	4.70/-		2.31	    1.19[0.57]
 # Silvermont	12.0/+33%	7.75/7.40	7.03(iii)
+# Knights L	11.7/-		-		9.60(iii)   0.80
 # Goldmont	10.6/+17%	5.10/-		3.28
 # Sledgehammer	7.28/+52%	-/14.2(ii)	-
 # Bulldozer	9.66/+28%	9.85/11.1	3.06(iv)
@@ -50,6 +51,7 @@
 #	limitations, SSE2 can do better, but gain is considered too
 #	low to justify the [maintenance] effort;
 # (iv)	Bulldozer actually executes 4xXOP code path that delivers 2.20;
+# (v)	8xAVX2 or 16xAVX-512, whichever best applicable;
 
 $flavour = shift;
 $output  = shift;

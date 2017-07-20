@@ -145,8 +145,19 @@ OPENSSL_ia32_cpuid:
 	or	\$0x40000000,%edx	# set reserved bit#30 on Intel CPUs
 	and	\$15,%ah
 	cmp	\$15,%ah		# examine Family ID
-	jne	.Lnotintel
+	jne	.LnotP4
 	or	\$0x00100000,%edx	# set reserved bit#20 to engage RC4_CHAR
+.LnotP4:
+	cmp	\$6,%ah
+	jne	.Lnotintel
+	and	\$0x0ffff0f0,%eax
+	cmp	\$0x00050670,%eax	# Knights Landing
+	je	.Lknights
+	cmp	\$0x00080650,%eax	# Knights Mill (according to sde)
+	jne	.Lnotintel
+.Lknights:
+	and	\$0xfbffffff,%ecx	# clear XSAVE flag to mimic Silvermont
+
 .Lnotintel:
 	bt	\$28,%edx		# test hyper-threading bit
 	jnc	.Lgeneric
@@ -171,6 +182,10 @@ OPENSSL_ia32_cpuid:
 	mov	\$7,%eax
 	xor	%ecx,%ecx
 	cpuid
+	bt	\$26,%r9d		# check XSAVE bit, cleared on Knights
+	jc	.Lnotknights
+	and	\$0xfff7ffff,%ebx	# clear ADCX/ADOX flag
+.Lnotknights:
 	mov	%ebx,8(%rdi)		# save extended feature flags
 .Lno_extended_info:
 
