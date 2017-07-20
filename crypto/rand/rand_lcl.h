@@ -15,7 +15,7 @@
 # include <openssl/sha.h>
 # include <openssl/hmac.h>
 # include <openssl/ec.h>
-# include "include/internal/rand.h"
+# include "internal/rand.h"
 
 /* we require 256 bits of randomness */
 # define RANDOMNESS_NEEDED (256 / 8)
