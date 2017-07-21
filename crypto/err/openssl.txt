@@ -700,6 +700,7 @@ EVP_F_PKEY_SET_TYPE:158:pkey_set_type
 EVP_F_RC2_MAGIC_TO_METH:109:rc2_magic_to_meth
 EVP_F_RC5_CTRL:125:rc5_ctrl
 EVP_F_UPDATE:173:update
+KDF_F_PKEY_HKDF_DERIVE:102:pkey_hkdf_derive
 KDF_F_PKEY_TLS1_PRF_CTRL_STR:100:pkey_tls1_prf_ctrl_str
 KDF_F_PKEY_TLS1_PRF_DERIVE:101:pkey_tls1_prf_derive
 OBJ_F_OBJ_ADD_OBJECT:105:OBJ_add_object
