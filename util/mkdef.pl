@@ -874,6 +874,10 @@ sub do_defs
 			next if(/\#define/);
 
 			# Reduce argument lists to empty ()
+			# get rid of any existing empty argument lists
+			while(/\(\)/) {
+				s/\(\)//gs;
+			}
 			# fold round brackets recursively: (t(*v)(t),t) -> (t{}{},t) -> {}
 			while(/\(.*\)/s) {
 				s/\([^\(\)]+\)/\{\}/gs;
