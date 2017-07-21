@@ -930,6 +930,7 @@ EOF
       my $shlib_target = $target{shared_target};
       my $ordinalsfile = defined($args{ordinals}) ? $args{ordinals}->[1] : "";
       my $target = shlib_simple($lib);
+      my $target_full = shlib($lib);
       return <<"EOF"
 # With a build on a Windows POSIX layer (Cygwin or Mingw), we know for a fact
 # that two files get produced, {shlibname}.dll and {libname}.dll.a.
@@ -945,11 +946,11 @@ $target: $lib$libext $deps $ordinalsfile
 		PERL="\$(PERL)" SRCDIR='\$(SRCDIR)' DSTDIR="$libd" \\
 		INSTALLTOP='\$(INSTALLTOP)' LIBDIR='\$(LIBDIR)' \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
-		LIBNAME=$libname LIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
-		LIBCOMPATVERSIONS=';\$(SHLIB_VERSION_HISTORY)' \\
+		LIBNAME=$libname SHLIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
+		STLIBNAME=$lib$libext \\
+		SHLIBNAME=$target SHLIBNAME_FULL=$target_full \\
 		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(LIB_CFLAGS)' \\
-		LDFLAGS='\$(LDFLAGS)' \\
-		SHARED_LDFLAGS='\$(LIB_LDFLAGS)' SHLIB_EXT=$shlibext \\
+		LDFLAGS='\$(LDFLAGS)' SHARED_LDFLAGS='\$(LIB_LDFLAGS)' \\
 		RC='\$(RC)' SHARED_RCFLAGS='\$(RCFLAGS)' \\
 		link_shlib.$shlib_target
 EOF
@@ -962,10 +963,9 @@ EOF
   }
   sub obj2dso {
       my %args = @_;
-      my $lib = $args{lib};
-      my $libd = dirname($lib);
-      my $libn = basename($lib);
-      (my $libname = $libn) =~ s/^lib//;
+      my $dso = $args{lib};
+      my $dsod = dirname($dso);
+      my $dson = basename($dso);
       my $shlibdeps = join("", map { my $d = dirname($_);
                                      my $f = basename($_);
                                      (my $l = $f) =~ s/^lib//;
@@ -973,17 +973,16 @@ EOF
       my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
       my $shlib_target = $target{shared_target};
       my $objs = join(" ", map { $_.$objext } @{$args{objs}});
-      my $target = dso($lib);
+      my $target = dso($dso);
       return <<"EOF";
 $target: $objs $deps
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PLATFORM=\$(PLATFORM) \\
-		PERL="\$(PERL)" SRCDIR='\$(SRCDIR)' DSTDIR="$libd" \\
+		PERL="\$(PERL)" SRCDIR='\$(SRCDIR)' DSTDIR="$dsod" \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$shlibdeps"' \$(EX_LIBS)' \\
-		LIBNAME=$libname LDFLAGS='\$(LDFLAGS)' \\
+		SHLIBNAME_FULL=$target LDFLAGS='\$(LDFLAGS)' \\
 		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(DSO_CFLAGS)' \\
 		SHARED_LDFLAGS='\$(DSO_LDFLAGS)' \\
-		SHLIB_EXT=$dsoext \\
 		LIBEXTRAS="$objs" \\
 		link_dso.$shlib_target
 EOF
