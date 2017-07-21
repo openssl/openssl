@@ -318,7 +318,11 @@ int pkeyutl_main(int argc, char **argv)
                       buf_in, (size_t)buf_inlen);
     }
     if (rv <= 0) {
-        BIO_puts(bio_err, "Public Key operation error\n");
+        if (pkey_op != EVP_PKEY_OP_DERIVE) {
+            BIO_puts(bio_err, "Public Key operation error\n");
+        } else {
+            BIO_puts(bio_err, "Key derivation failed\n");
+        }
         ERR_print_errors(bio_err);
         goto end;
     }
