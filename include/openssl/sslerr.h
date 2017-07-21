@@ -458,6 +458,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_ILLEGAL_SUITEB_DIGEST                      380
 # define SSL_R_INAPPROPRIATE_FALLBACK                     373
 # define SSL_R_INCONSISTENT_COMPRESSION                   340
+# define SSL_R_INCONSISTENT_EARLY_DATA_ALPN               222
+# define SSL_R_INCONSISTENT_EARLY_DATA_SNI                231
 # define SSL_R_INCONSISTENT_EXTMS                         104
 # define SSL_R_INVALID_ALERT                              205
 # define SSL_R_INVALID_COMMAND                            280

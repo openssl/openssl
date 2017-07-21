@@ -682,13 +682,17 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
     const unsigned char *id;
     size_t idlen;
     SSL_SESSION *psksess = NULL;
+    SSL_SESSION *edsess = NULL;
     const EVP_MD *handmd = NULL;
 
     if (s->hello_retry_request)
         handmd = ssl_handshake_md(s);
 
     if (s->psk_use_session_cb != NULL
-            && !s->psk_use_session_cb(s, handmd, &id, &idlen, &psksess)) {
+            && (!s->psk_use_session_cb(s, handmd, &id, &idlen, &psksess)
+                || (psksess != NULL
+                    && psksess->ssl_version != TLS1_3_VERSION))) {
+        SSL_SESSION_free(psksess);
         SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA, SSL_R_BAD_PSK);
         return EXT_RETURN_FAIL;
     }
@@ -711,9 +715,49 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
         s->max_early_data = 0;
         return EXT_RETURN_NOT_SENT;
     }
-    s->max_early_data = s->session->ext.max_early_data != 0 ?
-                        s->session->ext.max_early_data
-                        : psksess->ext.max_early_data;
+    edsess = s->session->ext.max_early_data != 0 ? s->session : psksess;
+    s->max_early_data = edsess->ext.max_early_data;
+
+    if ((s->ext.hostname == NULL && edsess->ext.hostname != NULL)
+            || (s->ext.hostname != NULL
+                && (edsess->ext.hostname == NULL
+                    || strcmp(s->ext.hostname, edsess->ext.hostname) != 0))) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA,
+               SSL_R_INCONSISTENT_EARLY_DATA_SNI);
+        return EXT_RETURN_FAIL;
+    }
+
+    if ((s->ext.alpn == NULL && edsess->ext.alpn_selected != NULL)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA,
+               SSL_R_INCONSISTENT_EARLY_DATA_ALPN);
+        return EXT_RETURN_FAIL;
+    }
+
+    /*
+     * Verify that we are offering an ALPN protocol consistent with the early
+     * data.
+     */
+    if (edsess->ext.alpn_selected != NULL) {
+        PACKET prots, alpnpkt;
+        int found = 0;
+
+        if (!PACKET_buf_init(&prots, s->ext.alpn, s->ext.alpn_len)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+        while (PACKET_get_length_prefixed_1(&prots, &alpnpkt)) {
+            if (PACKET_equal(&alpnpkt, edsess->ext.alpn_selected,
+                             edsess->ext.alpn_selected_len)) {
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA,
+                   SSL_R_INCONSISTENT_EARLY_DATA_ALPN);
+            return EXT_RETURN_FAIL;
+        }
+    }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_early_data)
             || !WPACKET_start_sub_packet_u16(pkt)
