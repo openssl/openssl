@@ -200,10 +200,15 @@ int pkeyutl_main(int argc, char **argv)
         goto opthelp;
 
     if (kdfalg != NULL) {
-        if (kdflen == 0)
-            goto opthelp;
-    } else if ((inkey == NULL)
-            || (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE)) {
+        if (kdflen == 0) {
+           BIO_printf(bio_err, "%s: no KDF length given (-kdflen parameter).\n", prog);
+           goto opthelp;
+        }
+    } else if (inkey == NULL) {
+        BIO_printf(bio_err, "%s: no private key given (-inkey parameter).\n", prog);
+        goto opthelp;
+    } else if (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE) {
+        BIO_printf(bio_err, "%s: no peer key given (-peerkey parameter).\n", prog);
         goto opthelp;
     }
     ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
@@ -393,8 +398,11 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
 
         if (kdfnid == NID_undef) {
             kdfnid = OBJ_ln2nid(kdfalg);
-            if (kdfnid == NID_undef)
+            if (kdfnid == NID_undef) {
+                BIO_printf(bio_err, "The given KDF \"%s\" is unknown.\n",
+                           kdfalg);
                 goto end;
+            }
         }
         ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
     } else {
