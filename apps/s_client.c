@@ -2647,6 +2647,7 @@ int s_client_main(int argc, char **argv)
                 default:
                     BIO_printf(bio_err, "Error writing early data\n");
                     BIO_free(edfile);
+                    ERR_print_errors(bio_err);
                     goto shut;
                 }
             }
