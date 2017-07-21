@@ -1888,6 +1888,26 @@ int s_client_main(int argc, char **argv)
             ERR_print_errors(bio_err);
             goto end;
         }
+        /* By default the SNI should be the same as was set in the session */
+        if (!noservername && servername == NULL)
+        {
+            const char *sni = SSL_SESSION_get0_hostname(sess);
+
+            if (sni != NULL) {
+                servername = OPENSSL_strdup(sni);
+                if (servername == NULL) {
+                    BIO_printf(bio_err, "Can't set server name\n");
+                    ERR_print_errors(bio_err);
+                    goto end;
+                }
+            } else {
+                /*
+                 * Force no SNI to be sent so we are consistent with the
+                 * session.
+                 */
+                noservername = 1;
+            }
+        }
         SSL_SESSION_free(sess);
     }
 
