@@ -14,6 +14,7 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA KDF_str_functs[] = {
+    {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_HKDF_DERIVE, 0), "pkey_hkdf_derive"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_TLS1_PRF_CTRL_STR, 0),
      "pkey_tls1_prf_ctrl_str"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_TLS1_PRF_DERIVE, 0),

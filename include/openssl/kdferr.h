@@ -22,6 +22,7 @@ int ERR_load_KDF_strings(void);
 /*
  * KDF function codes.
  */
+# define KDF_F_PKEY_HKDF_DERIVE                           102
 # define KDF_F_PKEY_TLS1_PRF_CTRL_STR                     100
 # define KDF_F_PKEY_TLS1_PRF_DERIVE                       101
 
