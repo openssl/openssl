@@ -2320,6 +2320,8 @@ SSL_R_ILLEGAL_POINT_COMPRESSION:162:illegal point compression
 SSL_R_ILLEGAL_SUITEB_DIGEST:380:illegal Suite B digest
 SSL_R_INAPPROPRIATE_FALLBACK:373:inappropriate fallback
 SSL_R_INCONSISTENT_COMPRESSION:340:inconsistent compression
+SSL_R_INCONSISTENT_EARLY_DATA_ALPN:222:inconsistent early data alpn
+SSL_R_INCONSISTENT_EARLY_DATA_SNI:231:inconsistent early data sni
 SSL_R_INCONSISTENT_EXTMS:104:inconsistent extms
 SSL_R_INVALID_ALERT:205:invalid alert
 SSL_R_INVALID_COMMAND:280:invalid command
