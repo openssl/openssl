@@ -177,8 +177,10 @@ static int pkey_hkdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 {
     HKDF_PKEY_CTX *kctx = ctx->data;
 
-    if (kctx->md == NULL || kctx->key == NULL)
+    if (kctx->md == NULL || kctx->key == NULL) {
+        KDFerr(KDF_F_PKEY_HKDF_DERIVE, KDF_R_MISSING_PARAMETER);
         return 0;
+    }
 
     switch (kctx->mode) {
     case EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND:
