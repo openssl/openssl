@@ -764,6 +764,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             eivlen = 0;
 
             SSL3_RECORD_set_type(&wr[j], type);
+            SSL3_BUFFER_set_buf(wb, buf);
+            SSL3_BUFFER_set_offset(wb, 0);
         } else {
             /* write the header */
             *(outbuf[j]++) = type & 0xff;
@@ -802,8 +804,12 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                 goto err;
             }
         } else {
-            memcpy(wr[j].data, wr[j].input, wr[j].length);
-            SSL3_RECORD_reset_input(&wr[j]);
+            if (BIO_get_offload_tx(s->wbio))
+                SSL3_RECORD_reset_data(&wr[j]);
+            else {
+                memcpy(wr[j].data, wr[j].input, wr[j].length);
+                SSL3_RECORD_reset_input(&wr[j]);
+            }
         }
 
         /*
@@ -820,7 +826,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             SSL3_RECORD_add_length(&wr[j], mac_size);
         }
 
-        SSL3_RECORD_set_data(&wr[j], outbuf[j]);
+        if (!BIO_get_offload_tx(s->wbio))
+            SSL3_RECORD_set_data(&wr[j], outbuf[j]);
         SSL3_RECORD_reset_input(&wr[j]);
 
         if (eivlen) {

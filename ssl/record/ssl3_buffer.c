@@ -108,11 +108,14 @@ int ssl3_setup_write_buffer(SSL *s, unsigned int numwpipes, size_t len)
         SSL3_BUFFER *thiswb = &wb[currpipe];
 
         if (thiswb->buf == NULL) {
-            p = OPENSSL_malloc(len);
-            if (p == NULL) {
-                s->rlayer.numwpipes = currpipe;
-                goto err;
-            }
+            if (!BIO_get_offload_tx(s->wbio)) {
+                p = OPENSSL_malloc(len);
+                if (p == NULL) {
+                    s->rlayer.numwpipes = currpipe;
+                    goto err;
+                }
+            } else
+                p = NULL;
             memset(thiswb, 0, sizeof(SSL3_BUFFER));
             thiswb->buf = p;
             thiswb->len = len;
@@ -143,8 +146,8 @@ int ssl3_release_write_buffer(SSL *s)
     pipes = s->rlayer.numwpipes;
     while (pipes > 0) {
         wb = &RECORD_LAYER_get_wbuf(&s->rlayer)[pipes - 1];
-
-        OPENSSL_free(wb->buf);
+        if (!BIO_get_offload_tx(s->wbio))
+            OPENSSL_free(wb->buf);
         wb->buf = NULL;
         pipes--;
     }
