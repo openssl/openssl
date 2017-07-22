@@ -148,8 +148,14 @@ static int pkey_hkdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
         return EVP_PKEY_CTX_hkdf_mode(ctx, mode);
     }
 
-    if (strcmp(type, "md") == 0)
-        return EVP_PKEY_CTX_set_hkdf_md(ctx, EVP_get_digestbyname(value));
+    if (strcmp(type, "md") == 0) {
+        const EVP_MD *md = EVP_get_digestbyname(value);
+        if (!md) {
+            KDFerr(KDF_F_PKEY_HKDF_CTRL_STR, KDF_R_INVALID_DIGEST);
+            return 0;
+        }
+        return EVP_PKEY_CTX_set_hkdf_md(ctx, md);
+    }
 
     if (strcmp(type, "salt") == 0)
         return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_HKDF_SALT, value);
@@ -169,6 +175,7 @@ static int pkey_hkdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
     if (strcmp(type, "hexinfo") == 0)
         return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_HKDF_INFO, value);
 
+    KDFerr(KDF_F_PKEY_HKDF_CTRL_STR, KDF_R_UNKNOWN_PARAMETER_TYPE);
     return -2;
 }
 

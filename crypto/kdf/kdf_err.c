@@ -14,6 +14,7 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA KDF_str_functs[] = {
+    {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_HKDF_CTRL_STR, 0), "pkey_hkdf_ctrl_str"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_HKDF_DERIVE, 0), "pkey_hkdf_derive"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_TLS1_PRF_CTRL_STR, 0),
      "pkey_tls1_prf_ctrl_str"},
@@ -25,6 +26,8 @@ static const ERR_STRING_DATA KDF_str_functs[] = {
 static const ERR_STRING_DATA KDF_str_reasons[] = {
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_INVALID_DIGEST), "invalid digest"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_PARAMETER), "missing parameter"},
+    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_UNKNOWN_PARAMETER_TYPE),
+    "unknown parameter type"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_VALUE_MISSING), "value missing"},
     {0, NULL}
 };
