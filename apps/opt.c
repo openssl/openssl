@@ -676,7 +676,7 @@ int opt_next(void)
             /* Just a string. */
             break;
         case '/':
-            if (app_isdir(arg) >= 0)
+            if (app_isdir(arg) > 0)
                 break;
             BIO_printf(bio_err, "%s: Not a directory: %s\n", prog, arg);
             return -1;
