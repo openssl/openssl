@@ -552,8 +552,8 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 }
 
 static void print_supported_kdfs(void) {
-    BIO_printf(bio_err, "Supported KDFs:\n");
     const struct kdf_info *kdf = supported_kdfs;
+    BIO_printf(bio_err, "Supported KDFs:\n");
     while (kdf->name) {
         BIO_printf(bio_err, "  %-10s %s\n", kdf->name, kdf->description);
         kdf++;
@@ -562,6 +562,7 @@ static void print_supported_kdfs(void) {
 
 static void print_kdf_options(const char *kdfalg) {
     const struct kdf_info *kdf = supported_kdfs;
+    const struct pkey_option *option;
     while (kdf->name) {
         if (!strcmp(kdfalg, kdf->name)) {
             break;
@@ -575,7 +576,7 @@ static void print_kdf_options(const char *kdfalg) {
     }
 
     BIO_printf(bio_err, "Supported options of the \"%s\" KDF:\n", kdfalg);
-    const struct pkey_option *option = kdf->pkey_options;
+    option = kdf->pkey_options;
     while (option->keys) {
         BIO_printf(bio_err, "  %-20s %s%s\n", option->keys, option->description, option->mandatory ? "; mandatory argument" : "");
         option++;
