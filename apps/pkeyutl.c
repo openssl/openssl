@@ -31,6 +31,10 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
                     const unsigned char *in, size_t inlen);
 
+static void print_supported_kdfs(void);
+
+static void print_kdf_options(const char *kdfalg);
+
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ENGINE, OPT_ENGINE_IMPL, OPT_IN, OPT_OUT,
@@ -40,6 +44,40 @@ typedef enum OPTION_choice {
     OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_KDF, OPT_KDFLEN,
     OPT_R_ENUM
 } OPTION_CHOICE;
+
+struct pkey_option {
+    const char *keys;
+    const char *description;
+    int mandatory;
+};
+
+struct kdf_info {
+    const char *name;
+    const char *description;
+    const struct pkey_option *pkey_options;
+};
+
+static struct pkey_option kdf_tls1_prf_options[] = {
+    { "md", "message digest", 1 },
+    { "secret | hexsecret", "KDF secret (either as a string or hex-encoded)", 1 },
+    { "seed | hexseed", "KDF seed (either as a string or hex-encoded)", 1 },
+    { NULL }
+};
+
+static struct pkey_option kdf_hkdf_options[] = {
+    { "mode", "HKDF operation mode. Must be one of EXTRACT_AND_EXPAND, EXTRACT_ONLY or EXPAND_ONLY. Defaults to EXTRACT_AND_EXPAND.", 0 },
+    { "md", "message digest", 1 },
+    { "salt | hexsalt", "Optional salt value (either as a string or hex-encoded)", 0 },
+    { "key | hexkey", "HMAC key (either as a string or hex-encoded)", 1 },
+    { "info | hexinfo", "Optional context and application specific information (either as a string or hex-encoded)", 0 },
+    { NULL }
+};
+
+static const struct kdf_info supported_kdfs[] = {
+    { "TLS1-PRF", "TLS1 pseudo random function", kdf_tls1_prf_options },
+    { "HKDF", "HMAC-based KDF (RFC5869)", kdf_hkdf_options },
+    { NULL }
+};
 
 const OPTIONS pkeyutl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
@@ -322,6 +360,7 @@ int pkeyutl_main(int argc, char **argv)
             BIO_puts(bio_err, "Public Key operation error\n");
         } else {
             BIO_puts(bio_err, "Key derivation failed\n");
+            print_kdf_options(kdfalg);
         }
         ERR_print_errors(bio_err);
         goto end;
@@ -405,6 +444,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
             if (kdfnid == NID_undef) {
                 BIO_printf(bio_err, "The given KDF \"%s\" is unknown.\n",
                            kdfalg);
+                print_supported_kdfs();
                 goto end;
             }
         }
@@ -509,4 +549,35 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 
     }
     return rv;
+}
+
+static void print_supported_kdfs(void) {
+    BIO_printf(bio_err, "Supported KDFs:\n");
+    const struct kdf_info *kdf = supported_kdfs;
+    while (kdf->name) {
+        BIO_printf(bio_err, "  %-10s %s\n", kdf->name, kdf->description);
+        kdf++;
+    }
+}
+
+static void print_kdf_options(const char *kdfalg) {
+    const struct kdf_info *kdf = supported_kdfs;
+    while (kdf->name) {
+        if (!strcmp(kdfalg, kdf->name)) {
+            break;
+        }
+        kdf++;
+    }
+
+    if (!kdf->name) {
+        /* KDF not listed in info entries */
+        return;
+    }
+
+    BIO_printf(bio_err, "Supported options of the \"%s\" KDF:\n", kdfalg);
+    const struct pkey_option *option = kdf->pkey_options;
+    while (option->keys) {
+        BIO_printf(bio_err, "  %-20s %s%s\n", option->keys, option->description, option->mandatory ? "; mandatory argument" : "");
+        option++;
+    }
 }
