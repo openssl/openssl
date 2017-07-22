@@ -375,7 +375,6 @@ int opt_md(const char *name, const EVP_MD **mdp);
 char *opt_arg(void);
 char *opt_flag(void);
 char *opt_unknown(void);
-char *opt_reset(void);
 char **opt_rest(void);
 int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
@@ -515,8 +514,6 @@ int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b);
 int parse_yesno(const char *str, int def);
 
 X509_NAME *parse_name(const char *str, long chtype, int multirdn);
-int args_verify(char ***pargs, int *pargc,
-                int *badarg, X509_VERIFY_PARAM **pm);
 void policies_print(X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value);
