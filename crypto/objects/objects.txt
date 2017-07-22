@@ -1524,7 +1524,8 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 1 3 6 1 4 1 311 60 2 1 3	: jurisdictionC		: jurisdictionCountryName
 
 # SCRYPT algorithm
-1 3 6 1 4 1 11591 4 11		: id-scrypt
+!Cname id-scrypt
+1 3 6 1 4 1 11591 4 11		: id-scrypt         : scrypt
 
 # NID for TLS1 PRF
                             : TLS1-PRF          : tls1-prf

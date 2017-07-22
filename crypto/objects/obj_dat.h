@@ -1987,7 +1987,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"CAMELLIA-256-CCM", "camellia-256-ccm", NID_camellia_256_ccm, 8, &so[6330]},
     {"CAMELLIA-256-CTR", "camellia-256-ctr", NID_camellia_256_ctr, 8, &so[6338]},
     {"CAMELLIA-256-CMAC", "camellia-256-cmac", NID_camellia_256_cmac, 8, &so[6346]},
-    {"id-scrypt", "id-scrypt", NID_id_scrypt, 9, &so[6354]},
+    {"id-scrypt", "scrypt", NID_id_scrypt, 9, &so[6354]},
     {"id-tc26", "id-tc26", NID_id_tc26, 5, &so[6363]},
     {"gost89-cnt-12", "gost89-cnt-12", NID_gost89_cnt_12},
     {"gost-mac-12", "gost-mac-12", NID_gost_mac_12},
@@ -3883,7 +3883,6 @@ static const unsigned int ln_objs[NUM_LN] = {
      314,    /* "id-regInfo" */
      322,    /* "id-regInfo-certReq" */
      321,    /* "id-regInfo-utf8Pairs" */
-     973,    /* "id-scrypt" */
      191,    /* "id-smime-aa" */
      215,    /* "id-smime-aa-contentHint" */
      218,    /* "id-smime-aa-contentIdentifier" */
@@ -4135,6 +4134,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      291,    /* "sbgp-autonomousSysNum" */
      290,    /* "sbgp-ipAddrBlock" */
      292,    /* "sbgp-routerIdentifier" */
+     973,    /* "scrypt" */
      159,    /* "sdsiCertificate" */
      859,    /* "searchGuide" */
      704,    /* "secp112r1" */
