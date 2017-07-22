@@ -231,7 +231,7 @@ int pkeyutl_main(int argc, char **argv)
             const char *opt = sk_OPENSSL_STRING_value(pkeyopts, i);
 
             if (pkey_ctrl_string(ctx, opt) <= 0) {
-                BIO_printf(bio_err, "%s: Can't set parameter:\n", prog);
+                BIO_printf(bio_err, "%s: Can't set parameter \"%s\":\n", prog, opt);
                 ERR_print_errors(bio_err);
                 goto end;
             }
