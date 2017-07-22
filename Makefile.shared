@@ -259,11 +259,11 @@ link_app.cygwin:
 link_shlib.mingw:
 	@ INHIBIT_SYMLINKS=yes; \
 	$(PERL) $(SRCDIR)/util/mkdef.pl 32 $(LIBNAME) \
-		| sed -e 's|^\(LIBRARY  *\)$(LIBNAME)32|\1'"$$dll_name"'|' \
+		| sed -e 's|^\(LIBRARY  *\)$(LIBNAME)32|\1$(SHLIBNAME_FULL)|' \
 		> $(LIBNAME).def; \
-	echo "$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name |" \
+	echo "$(PERL) $(SRCDIR)/util/mkrc.pl $(SHLIBNAME_FULL) |" \
 		"$(RC) $(SHARED_RCFLAGS) -o rc.o"; \
-	$(PERL) $(SRCDIR)/util/mkrc.pl $$dll_name | \
+	$(PERL) $(SRCDIR)/util/mkrc.pl $(SHLIBNAME_FULL) | \
 		$(RC) $(SHARED_RCFLAGS) -o rc.o; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
