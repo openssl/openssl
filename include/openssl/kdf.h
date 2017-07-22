@@ -23,6 +23,12 @@ extern "C" {
 # define EVP_PKEY_CTRL_HKDF_KEY                 (EVP_PKEY_ALG_CTRL + 5)
 # define EVP_PKEY_CTRL_HKDF_INFO                (EVP_PKEY_ALG_CTRL + 6)
 # define EVP_PKEY_CTRL_HKDF_MODE                (EVP_PKEY_ALG_CTRL + 7)
+# define EVP_PKEY_CTRL_PASS                     (EVP_PKEY_ALG_CTRL + 8)
+# define EVP_PKEY_CTRL_SCRYPT_SALT              (EVP_PKEY_ALG_CTRL + 9)
+# define EVP_PKEY_CTRL_SCRYPT_N                 (EVP_PKEY_ALG_CTRL + 10)
+# define EVP_PKEY_CTRL_SCRYPT_R                 (EVP_PKEY_ALG_CTRL + 11)
+# define EVP_PKEY_CTRL_SCRYPT_P                 (EVP_PKEY_ALG_CTRL + 12)
+# define EVP_PKEY_CTRL_SCRYPT_MAXMEM_BYTES      (EVP_PKEY_ALG_CTRL + 13)
 
 # define EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND 0
 # define EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY       1
@@ -59,6 +65,31 @@ extern "C" {
 # define EVP_PKEY_CTX_hkdf_mode(pctx, mode) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
                               EVP_PKEY_CTRL_HKDF_MODE, mode, NULL)
+
+# define EVP_PKEY_CTX_set1_pbe_pass(pctx, pass, passlen) \
+            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
+                            EVP_PKEY_CTRL_PASS, passlen, (void *)(pass))
+
+# define EVP_PKEY_CTX_set1_scrypt_salt(pctx, salt, saltlen) \
+            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
+                            EVP_PKEY_CTRL_SCRYPT_SALT, saltlen, (void *)(salt))
+
+# define EVP_PKEY_CTX_set_scrypt_N(pctx, n) \
+            EVP_PKEY_CTX_ctrl_uint64(pctx, -1, EVP_PKEY_OP_DERIVE, \
+                            EVP_PKEY_CTRL_SCRYPT_N, n)
+
+# define EVP_PKEY_CTX_set_scrypt_r(pctx, r) \
+            EVP_PKEY_CTX_ctrl_uint64(pctx, -1, EVP_PKEY_OP_DERIVE, \
+                            EVP_PKEY_CTRL_SCRYPT_R, r)
+
+# define EVP_PKEY_CTX_set_scrypt_p(pctx, p) \
+            EVP_PKEY_CTX_ctrl_uint64(pctx, -1, EVP_PKEY_OP_DERIVE, \
+                            EVP_PKEY_CTRL_SCRYPT_P, p)
+
+# define EVP_PKEY_CTX_set_scrypt_maxmem_bytes(pctx, maxmem_bytes) \
+            EVP_PKEY_CTX_ctrl_uint64(pctx, -1, EVP_PKEY_OP_DERIVE, \
+                            EVP_PKEY_CTRL_SCRYPT_MAXMEM_BYTES, maxmem_bytes)
+
 int ERR_load_KDF_strings(void);
 
 # ifdef  __cplusplus

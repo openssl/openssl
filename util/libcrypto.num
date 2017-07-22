@@ -4379,3 +4379,4 @@ BN_priv_rand_range                      4322	1_1_1	EXIST::FUNCTION:
 ASN1_TIME_normalize                     4323	1_1_1	EXIST::FUNCTION:
 ASN1_TIME_cmp_time_t                    4324	1_1_1	EXIST::FUNCTION:
 ASN1_TIME_compare                       4325	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_CTX_ctrl_uint64                4326	1_1_1	EXIST::FUNCTION:

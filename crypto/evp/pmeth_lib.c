@@ -21,6 +21,7 @@ typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
 
 static STACK_OF(EVP_PKEY_METHOD) *app_pkey_methods = NULL;
 
+/* This array needs to be in order of NIDs */
 static const EVP_PKEY_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_RSA
     &rsa_pkey_meth,
@@ -43,6 +44,9 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
 #endif
 #ifndef OPENSSL_NO_DH
     &dhx_pkey_meth,
+#endif
+#ifndef OPENSSL_NO_SCRYPT
+    &scrypt_pkey_meth,
 #endif
     &tls1_prf_pkey_meth,
 #ifndef OPENSSL_NO_EC
@@ -353,6 +357,12 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
 
     return ret;
 
+}
+
+int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,
+                                int cmd, uint64_t value)
+{
+    return EVP_PKEY_CTX_ctrl(ctx, keytype, optype, cmd, 0, &value);
 }
 
 int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
