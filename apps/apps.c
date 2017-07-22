@@ -2294,29 +2294,27 @@ int app_access(const char* name, int flag)
 #ifdef _WIN32
 int app_isdir(const char *name)
 {
-    HANDLE hList;
-    WIN32_FIND_DATA FileData;
+    DWORD attr;
 # if defined(UNICODE) || defined(_UNICODE)
     size_t i, len_0 = strlen(name) + 1;
+    WCHAR tempname[MAX_PATH];
 
-    if (len_0 > OSSL_NELEM(FileData.cFileName))
+    if (len_0 > MAX_PATH)
         return -1;
 
 #  if !defined(_WIN32_WCE) || _WIN32_WCE>=101
-    if (!MultiByteToWideChar
-        (CP_ACP, 0, name, len_0, FileData.cFileName, len_0))
+    if (!MultiByteToWideChar(CP_ACP, 0, name, len_0, tempname, MAX_PATH))
 #  endif
         for (i = 0; i < len_0; i++)
-            FileData.cFileName[i] = (WCHAR)name[i];
+            tempname[i] = (WCHAR)name[i];
 
-    hList = FindFirstFile(FileData.cFileName, &FileData);
+    attr = GetFileAttributes(tempname);
 # else
-    hList = FindFirstFile(name, &FileData);
+    attr = GetFileAttributes(name);
 # endif
-    if (hList == INVALID_HANDLE_VALUE)
+    if (attr == INVALID_FILE_ATTRIBUTES)
         return -1;
-    FindClose(hList);
-    return ((FileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0);
+    return ((attr & FILE_ATTRIBUTE_DIRECTORY) != 0);
 }
 #else
 # include <sys/stat.h>
