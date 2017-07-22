@@ -703,6 +703,9 @@ EVP_F_RC5_CTRL:125:rc5_ctrl
 EVP_F_UPDATE:173:update
 KDF_F_PKEY_HKDF_CTRL_STR:103:pkey_hkdf_ctrl_str
 KDF_F_PKEY_HKDF_DERIVE:102:pkey_hkdf_derive
+KDF_F_PKEY_SCRYPT_CTRL_STR:104:pkey_scrypt_ctrl_str
+KDF_F_PKEY_SCRYPT_CTRL_UINT64:105:pkey_scrypt_ctrl_uint64
+KDF_F_PKEY_SCRYPT_DERIVE:109:pkey_scrypt_derive
 KDF_F_PKEY_TLS1_PRF_CTRL_STR:100:pkey_tls1_prf_ctrl_str
 KDF_F_PKEY_TLS1_PRF_DERIVE:101:pkey_tls1_prf_derive
 OBJ_F_OBJ_ADD_OBJECT:105:OBJ_add_object
@@ -1966,12 +1969,16 @@ EVP_R_UNSUPPORTED_SALT_TYPE:126:unsupported salt type
 EVP_R_WRAP_MODE_NOT_ALLOWED:170:wrap mode not allowed
 EVP_R_WRONG_FINAL_BLOCK_LENGTH:109:wrong final block length
 KDF_R_INVALID_DIGEST:100:invalid digest
+KDF_R_MISSING_ITERATION_COUNT:109:missing iteration count
 KDF_R_MISSING_KEY:104:missing key
 KDF_R_MISSING_MESSAGE_DIGEST:105:missing message digest
 KDF_R_MISSING_PARAMETER:101:missing parameter
+KDF_R_MISSING_PASS:110:missing pass
+KDF_R_MISSING_SALT:111:missing salt
 KDF_R_MISSING_SECRET:107:missing secret
 KDF_R_MISSING_SEED:106:missing seed
 KDF_R_UNKNOWN_PARAMETER_TYPE:103:unknown parameter type
+KDF_R_VALUE_ERROR:108:value error
 KDF_R_VALUE_MISSING:102:value missing
 OBJ_R_OID_EXISTS:102:oid exists
 OBJ_R_UNKNOWN_NID:101:unknown nid
