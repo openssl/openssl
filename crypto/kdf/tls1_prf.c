@@ -115,6 +115,8 @@ static int pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
         return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED, value);
     if (strcmp(type, "hexseed") == 0)
         return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED, value);
+
+    KDFerr(KDF_F_PKEY_TLS1_PRF_CTRL_STR, KDF_R_UNKNOWN_PARAMETER_TYPE);
     return -2;
 }
 
