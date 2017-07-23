@@ -24,6 +24,7 @@ static CRYPTO_RWLOCK *rand_engine_lock;
 static CRYPTO_RWLOCK *rand_meth_lock;
 static const RAND_METHOD *default_RAND_meth;
 static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
+RAND_BYTES_BUFFER rand_bytes;
 
 #ifdef OPENSSL_RAND_SEED_RDTSC
 /*
@@ -40,7 +41,7 @@ static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
  * it's not sufficient to indicate whether or not the seeding was
  * done.
  */
-void rand_rdtsc(void)
+void rand_read_tsc(void)
 {
     unsigned char c;
     int i;
@@ -58,7 +59,7 @@ size_t OPENSSL_ia32_rdrand(void);
 
 extern unsigned int OPENSSL_ia32cap_P[];
 
-int rand_rdcpu(void)
+int rand_read_cpu(void)
 {
     size_t i, s;
 
@@ -90,15 +91,63 @@ int rand_rdcpu(void)
 }
 #endif
 
+/*
+ */
+static size_t entropy_from_system(RAND_DRBG *drbg,
+                                  unsigned char **pout,
+                                  int entropy, size_t min_len, size_t max_len)
+{
+    if (rand_drbg.cleared == 0) {
+        /* Re-use what we have. */
+        *pout = drbg->randomness;
+        return sizeof(drbg->randomness);
+    }
+
+    /* If we don't have enough, get more. */
+    CRYPTO_THREAD_write_lock(rand_bytes.lock);
+    if (rand_bytes.curr < entropy) {
+        CRYPTO_THREAD_unlock(rand_bytes.lock);
+        RAND_poll();
+        CRYPTO_THREAD_write_lock(rand_bytes.lock);
+    }
+
+    /* Get desired amount, but no more than we have. */
+    if (entropy > rand_bytes.curr)
+        entropy = rand_bytes.curr;
+    if (entropy != 0) {
+        memcpy(drbg->randomness, rand_bytes.buff, entropy);
+        /* Update amount left and shift it down. */
+        rand_bytes.curr -= entropy;
+        if (rand_bytes.curr != 0)
+            memmove(rand_bytes.buff, &rand_bytes.buff[entropy], rand_bytes.curr);
+    }
+    CRYPTO_THREAD_unlock(rand_bytes.lock);
+    return entropy;
+}
+
 DEFINE_RUN_ONCE_STATIC(do_rand_init)
 {
     int ret = 1;
+
 #ifndef OPENSSL_NO_ENGINE
     rand_engine_lock = CRYPTO_THREAD_lock_new();
     ret &= rand_engine_lock != NULL;
 #endif
     rand_meth_lock = CRYPTO_THREAD_lock_new();
     ret &= rand_meth_lock != NULL;
+
+    rand_bytes.lock = CRYPTO_THREAD_lock_new();
+    ret &= rand_bytes.lock != NULL;
+    rand_bytes.size = MAX_RANDOMNESS_HELD;
+    rand_bytes.buff = malloc(rand_bytes.size);
+    ret &= rand_bytes.buff != NULL;
+
+    rand_drbg.lock = CRYPTO_THREAD_lock_new();
+    ret &= rand_drbg.lock != NULL;
+    ret &= RAND_DRBG_set(&rand_drbg, NID_aes_128_ctr, 0) == 1;
+    ret &= RAND_DRBG_set_callbacks(&rand_drbg,
+                                   entropy_from_system, rand_cleanup_entropy,
+                                   NULL, NULL) == 1;
     return ret;
 }
 
@@ -113,7 +162,9 @@ void rand_cleanup_int(void)
     CRYPTO_THREAD_lock_free(rand_engine_lock);
 #endif
     CRYPTO_THREAD_lock_free(rand_meth_lock);
-    rand_drbg_cleanup();
+    CRYPTO_THREAD_lock_free(rand_bytes.lock);
+    CRYPTO_THREAD_lock_free(rand_drbg.lock);
+    RAND_DRBG_uninstantiate(&rand_drbg);
 }
 
 int RAND_set_rand_method(const RAND_METHOD *meth)
@@ -150,10 +201,10 @@ const RAND_METHOD *RAND_get_rand_method(void)
             default_RAND_meth = tmp_meth;
         } else {
             ENGINE_finish(e);
-            default_RAND_meth = &openssl_rand_meth;
+            default_RAND_meth = &rand_meth;
         }
 #else
-        default_RAND_meth = &openssl_rand_meth;
+        default_RAND_meth = &rand_meth;
 #endif
     }
     tmp_meth = default_RAND_meth;

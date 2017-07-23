@@ -49,10 +49,10 @@ int RAND_poll(void)
     int ok = 0;
 
 # ifdef OPENSSL_RAND_SEED_RDTSC
-    rand_rdtsc();
+    rand_read_tsc();
 # endif
 # ifdef OPENSSL_RAND_SEED_RDCPU
-    if (rand_rdcpu())
+    if (rand_read_cpu())
         ok++;
 # endif
 
