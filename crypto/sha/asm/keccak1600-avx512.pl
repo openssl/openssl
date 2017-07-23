@@ -99,7 +99,7 @@
 # with a number of additional permutations. But overall it turned to be
 # a win. Permutations are fastest possible on Knights Landing and they
 # are laid down to be independent of each other. In the essence I traded
-# 3 permutations for 20 blend instructions. The result is 13% faster
+# 20 blend instructions for 3 permutations. The result is 13% faster
 # than KCP on Skylake-X, and >40% on Knights Landing.
 #
 # As implied, data is loaded in straight linear order. Digits in
