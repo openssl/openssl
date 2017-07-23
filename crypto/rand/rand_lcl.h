@@ -20,22 +20,38 @@
 /* Amount of randomness (in bytes) we want for initial seeding. */
 # define RANDOMNESS_NEEDED              (128 / 8)
 
+/* Maximum amount of randomness to hold in RAND_BYTES_BUFFER. */
+# define MAX_RANDOMNESS_HELD            (4 * RANDOMNESS_NEEDED)
+
 /* Maximum count allowed in reseeding */
-#define MAX_RESEED (1 << 24)
+# define MAX_RESEED                     (1 << 24)
 
 /* DRBG status values */
-# define DRBG_STATUS_UNINITIALISED	0
-# define DRBG_STATUS_READY		1
-# define DRBG_STATUS_RESEED		2
-# define DRBG_STATUS_ERROR		3
+# define DRBG_STATUS_UNINITIALISED      0
+# define DRBG_STATUS_READY              1
+# define DRBG_STATUS_RESEED             2
+# define DRBG_STATUS_ERROR              3
 
 /* A default maximum length: larger than any reasonable value used in pratice */
 # define DRBG_MAX_LENGTH                0x7ffffff0
 
+
 /*
- * The context for DRBG AES-CTR
+ * A buffer of random bytes to be fed as "entropy" into the DRBG.  RAND_add()
+ * adds data to the buffer, and the entropy_from_system() pulls data from
+ * the buffer.
  */
-typedef struct drbg_ctr_ctx_st {
+typedef struct rand_bytes_buffer_st {
+    CRYPTO_RWLOCK *lock;
+    int size;
+    int curr;
+    char *buff;
+} RAND_BYTES_BUFFER;
+
+/*
+ * The state of a DRBG AES-CTR.
+ */
+typedef struct rand_drbg_ctr_st {
     AES_KEY ks;
     size_t keylen;
     unsigned char K[32];
@@ -47,21 +63,23 @@ typedef struct drbg_ctr_ctx_st {
     unsigned char bltmp[16];
     size_t bltmp_pos;
     unsigned char KX[48];
-} DRBG_CTR_CTX;
+} RAND_DRBG_CTR;
 
 
 /*
- * The context for all DRBG's
+ * The state of all types of DRBGs, even though we only have CTR mode
+ * right now.
  */
-struct drbg_ctx_st {
+struct rand_drbg_st {
     CRYPTO_RWLOCK *lock;
-    DRBG_CTX *parent;
-    int nid; /* the NID of the underlying algorithm */
-    unsigned int flags; /* various external flags */
+    RAND_DRBG *parent;
+    int nid; /* the underlying algorithm */
+    unsigned short flags; /* various external flags */
+    unsigned short cleared;
+    unsigned char randomness[RANDOMNESS_NEEDED];
 
-    /* The following parameters are setup by mechanism drbg_init() call */
+    /* These parameters are setup by the per-type "init" function. */
     int strength;
-    size_t blocklength;
     size_t max_request;
     size_t min_entropy, max_entropy;
     size_t min_nonce, max_nonce;
@@ -71,41 +89,41 @@ struct drbg_ctx_st {
     size_t seedlen;
     int status;
 
-    /* Application data: typically (only?) used by test get_entropy */
+    /* Application data, mainly used in the KATs. */
     CRYPTO_EX_DATA ex_data;
 
-    /* Implementation specific structures */
-    DRBG_CTR_CTX ctr;
+    /* Implementation specific structures; was a union, but inline for now */
+    RAND_DRBG_CTR ctr;
 
-    /* entropy gathering function */
+    /* Callback functions.  See comments in drbg_lib.c */
     RAND_DRBG_get_entropy_fn get_entropy;
-    /* Indicates we have finished with entropy buffer */
     RAND_DRBG_cleanup_entropy_fn cleanup_entropy;
-    /* nonce gathering function */
     RAND_DRBG_get_nonce_fn get_nonce;
-    /* Indicates we have finished with nonce buffer */
     RAND_DRBG_cleanup_nonce_fn cleanup_nonce;
 };
 
+/* The global RAND method, and the global buffer and DRBG instance. */
+extern RAND_METHOD rand_meth;
+extern RAND_BYTES_BUFFER rand_bytes;
+extern RAND_DRBG rand_drbg;
 
-extern RAND_METHOD openssl_rand_meth;
-void rand_drbg_cleanup(void);
+void rand_cleanup_entropy(RAND_DRBG *drbg, unsigned char *out);
 
 /* Hardware-based seeding functions. */
-void rand_rdtsc(void);
-int rand_rdcpu(void);
+void rand_read_tsc(void);
+int rand_read_cpu(void);
 
 /* DRBG functions implementing AES-CTR */
-int ctr_init(DRBG_CTX *dctx);
-int ctr_uninstantiate(DRBG_CTX *dctx);
-int ctr_instantiate(DRBG_CTX *dctx,
+int ctr_init(RAND_DRBG *drbg);
+int ctr_uninstantiate(RAND_DRBG *drbg);
+int ctr_instantiate(RAND_DRBG *drbg,
                     const unsigned char *ent, size_t entlen,
                     const unsigned char *nonce, size_t noncelen,
                     const unsigned char *pers, size_t perslen);
-int ctr_reseed(DRBG_CTX *dctx,
+int ctr_reseed(RAND_DRBG *drbg,
                const unsigned char *ent, size_t entlen,
                const unsigned char *adin, size_t adinlen);
-int ctr_generate(DRBG_CTX *dctx,
+int ctr_generate(RAND_DRBG *drbg,
                  unsigned char *out, size_t outlen,
                  const unsigned char *adin, size_t adinlen);
 

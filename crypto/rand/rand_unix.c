@@ -41,14 +41,13 @@
  * uneven execution speed of the code (due to factors such as cache misses,
  * interrupts, bus activity, and scheduling) and upon the rather large
  * relative difference between the speed of the clock and the rate at which
- * it can be read.
+ * it can be read.  If it is ported to an environment where execution speed
+ * is more constant or where the RTC ticks at a much slower rate, or the
+ * clock can be read with fewer instructions, it is likely that the results
+ * would be far more predictable.  This should only be used for legacy
+ * platforms.
  *
- * If this code is ported to an environment where execution speed is more
- * constant or where the RTC ticks at a much slower rate, or the clock can be
- * read with fewer instructions, it is likely that the results would be far
- * more predictable.
- *
- * As a precaution, we generate 4 times the minimum required amount of seed
+ * As a precaution, we generate four times the required amount of seed
  * data.
  */
 int RAND_poll(void)
@@ -138,11 +137,11 @@ int RAND_poll(void)
 #   define TEMPSIZE (int)sizeof(temp)
 
 #   ifdef OPENSSL_RAND_SEED_RDTSC
-    rand_rdtsc();
+    rand_read_tsc();
 #   endif
 
 #   ifdef OPENSSL_RAND_SEED_RDCPU
-    if (rand_rdcpu())
+    if (rand_read_cpu())
         ok++;
 #   endif
 

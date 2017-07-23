@@ -32,7 +32,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           hmactest \
           rc2test rc4test rc5test \
           destest mdc2test \
-          randtest dhtest enginetest casttest \
+          dhtest enginetest casttest \
           bftest ssltest_old dsatest exptest rsa_test \
           evp_test evp_extra_test igetest v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test \
@@ -118,10 +118,6 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[mdc2test]=mdc2test.c
   INCLUDE[mdc2test]=../include
   DEPEND[mdc2test]=../libcrypto libtestutil.a
-
-  SOURCE[randtest]=randtest.c
-  INCLUDE[randtest]=../include
-  DEPEND[randtest]=../libcrypto libtestutil.a
 
   SOURCE[dhtest]=dhtest.c
   INCLUDE[dhtest]=.. ../include
