@@ -345,9 +345,89 @@ out:
     return rv;
 }
 
+static const struct {
+    int y, m, d;
+    int yd, wd;
+} day_of_week_tests[] = {
+    /*YYYY  MM  DD  DoY  DoW */
+    { 1900,  1,  1,   0, 1 },
+    { 1900,  2, 28,  58, 3 },
+    { 1900,  3,  1,  59, 4 },
+    { 1900, 12, 31, 364, 1 },
+    { 1901,  1,  1,   0, 2 },
+    { 1970,  1,  1,   0, 4 },
+    { 1999,  1, 10,   9, 0 },
+    { 1999, 12, 31, 364, 5 },
+    { 2000,  1,  1,   0, 6 },
+    { 2000,  2, 28,  58, 1 },
+    { 2000,  2, 29,  59, 2 },
+    { 2000,  3,  1,  60, 3 },
+    { 2000, 12, 31, 365, 0 },
+    { 2001,  1,  1,   0, 1 },
+    { 2008,  1,  1,   0, 2 },
+    { 2008,  2, 28,  58, 4 },
+    { 2008,  2, 29,  59, 5 },
+    { 2008,  3,  1,  60, 6 },
+    { 2008, 12, 31, 365, 3 },
+    { 2009,  1,  1,   0, 4 },
+    { 2011,  1,  1,   0, 6 },
+    { 2011,  2, 28,  58, 1 },
+    { 2011,  3,  1,  59, 2 },
+    { 2011, 12, 31, 364, 6 },
+    { 2012,  1,  1,   0, 0 },
+    { 2019,  1,  2,   1, 3 },
+    { 2019,  2,  2,  32, 6 },
+    { 2019,  3,  2,  60, 6 },
+    { 2019,  4,  2,  91, 2 },
+    { 2019,  5,  2, 121, 4 },
+    { 2019,  6,  2, 152, 0 },
+    { 2019,  7,  2, 182, 2 },
+    { 2019,  8,  2, 213, 5 },
+    { 2019,  9,  2, 244, 1 },
+    { 2019, 10,  2, 274, 3 },
+    { 2019, 11,  2, 305, 6 },
+    { 2019, 12,  2, 335, 1 },
+    { 2020,  1,  2,   1, 4 },
+    { 2020,  2,  2,  32, 0 },
+    { 2020,  3,  2,  61, 1 },
+    { 2020,  4,  2,  92, 4 },
+    { 2020,  5,  2, 122, 6 },
+    { 2020,  6,  2, 153, 2 },
+    { 2020,  7,  2, 183, 4 },
+    { 2020,  8,  2, 214, 0 },
+    { 2020,  9,  2, 245, 3 },
+    { 2020, 10,  2, 275, 5 },
+    { 2020, 11,  2, 306, 1 },
+    { 2020, 12,  2, 336, 3 }
+};
+
+static int test_days(int n)
+{
+    char d[16];
+    ASN1_TIME *a = NULL;
+    struct tm t;
+    int r;
+
+    BIO_snprintf(d, sizeof(d), "%04d%02d%02d050505Z",
+                 day_of_week_tests[n].y, day_of_week_tests[n].m,
+                 day_of_week_tests[n].d);
+
+    if (!TEST_ptr(a = ASN1_TIME_new()))
+        return 0;
+
+    r = TEST_true(ASN1_TIME_set_string(a, d))
+        && TEST_true(ASN1_TIME_to_tm(a, &t))
+        && TEST_int_eq(t.tm_yday, day_of_week_tests[n].yd)
+        && TEST_int_eq(t.tm_wday, day_of_week_tests[n].wd);
+
+    ASN1_TIME_free(a);
+    return r;
+}
+
 void register_tests()
 {
     ADD_TEST(test_x509_cmp_time_current);
     ADD_ALL_TESTS(test_x509_cmp_time, OSSL_NELEM(x509_cmp_tests));
     ADD_ALL_TESTS(test_x509_time, OSSL_NELEM(x509_format_tests));
+    ADD_ALL_TESTS(test_days, OSSL_NELEM(day_of_week_tests));
 }

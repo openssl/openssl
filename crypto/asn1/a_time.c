@@ -31,6 +31,38 @@ static int leap_year(const int year)
     return 0;
 }
 
+/*
+ * Compute the day of the week and the day of the year from the year, month
+ * and day.  The day of the year is straightforward, the day of the week uses
+ * a form of Zeller's congruence.  For this months start with March and are
+ * numbered 4 through 15.
+ */
+static void determine_days(struct tm *tm)
+{
+    static const int ydays[12] = {
+        0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
+    };
+    int y = tm->tm_year + 1900;
+    int m = tm->tm_mon;
+    int d = tm->tm_mday;
+    int c;
+
+    tm->tm_yday = ydays[m] + d - 1;
+    if (m >= 2) {
+        /* March and onwards can be one day further into the year */
+        tm->tm_yday += leap_year(y);
+        m += 2;
+    } else {
+        /* Treat January and February as part of the previous year */
+        m += 14;
+        y--;
+    }
+    c = y / 100;
+    y %= 100;
+    /* Zeller's congruance */
+    tm->tm_wday = (d + (13 * m) / 5 + y + y / 4 + c / 4 + 5 * c + 6) % 7;
+}
+
 int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
 {
     static const int min[9] = { 0, 0, 1, 1, 0, 0, 0, 0, 0 };
@@ -127,6 +159,7 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
             if (n > md)
                 goto err;
             tmp.tm_mday = n;
+            determine_days(&tmp);
             break;
         case 4:
             tmp.tm_hour = n;
