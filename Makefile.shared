@@ -180,7 +180,7 @@ link_app.gnu:
 	@ $(DO_GNU_APP); $(LINK_APP)
 
 link_shlib.linux-shared:
-	$(PERL) $(SRCDIR)/util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
+	@$(PERL) $(SRCDIR)/util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
 	$(DO_GNU_SO); \
 	ALLSYMSFLAGS='-Wl,--whole-archive,--version-script=$(LIBNAME).map'; \
 	$(LINK_SO_SHLIB)
