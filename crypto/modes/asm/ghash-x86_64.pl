@@ -85,7 +85,7 @@
 # sub-optimally in comparison to above mentioned version. But thanks
 # to Ilya Albrekht and Max Locktyukhin of Intel Corp. we knew that
 # it performs in 0.41 cycles per byte on Haswell processor, in
-# 0.29 on Broadwell, and in 0.36 on Skylake.
+# 0.29 on Broadwell, and in 0.36 on Skylake. Ryzen manages in 0.44.
 #
 # Knights Landing achieves 1.09 cpb.
 #
