@@ -150,7 +150,7 @@ OPENSSL_ia32_cpuid:
 .LnotP4:
 	cmp	\$6,%ah
 	jne	.Lnotintel
-	and	\$0x0ffff0f0,%eax
+	and	\$0x0fff0ff0,%eax
 	cmp	\$0x00050670,%eax	# Knights Landing
 	je	.Lknights
 	cmp	\$0x00080650,%eax	# Knights Mill (according to sde)
