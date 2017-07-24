@@ -43,9 +43,6 @@ DEFINE_STACK_OF(MIME_PARAM)
 typedef struct mime_header_st MIME_HEADER;
 DEFINE_STACK_OF(MIME_HEADER)
 
-/* Month values for printing out times */
-extern const char *_asn1_mon[12];
-
 void asn1_string_embed_free(ASN1_STRING *a, int embed);
 
 int asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it);
