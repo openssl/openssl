@@ -129,6 +129,11 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
     return 0;
 }
 
+static const char *_asn1_mon[12] = {
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
+
 int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 {
     const char *v;
@@ -159,12 +164,10 @@ int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
         (v[10] >= '0') && (v[10] <= '9') && (v[11] >= '0') && (v[11] <= '9'))
         s = (v[10] - '0') * 10 + (v[11] - '0');
 
-    if (BIO_printf(bp, "%s %2d %02d:%02d:%02d %d%s",
-                   _asn1_mon[M - 1], d, h, m, s, y + 1900,
-                   (gmt) ? " GMT" : "") <= 0)
-        return 0;
-    return 1;
- err:
+    return BIO_printf(bp, "%s %2d %02d:%02d:%02d %d%s",
+                      _asn1_mon[M - 1], d, h, m, s, y + 1900,
+                      (gmt) ? " GMT" : "") > 0;
+err:
     BIO_write(bp, "Bad time value", 14);
     return 0;
 }
