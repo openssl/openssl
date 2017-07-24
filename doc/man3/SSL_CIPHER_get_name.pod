@@ -40,11 +40,13 @@ B<cipher> is NULL, it returns "(NONE)".
 
 SSL_CIPHER_standard_name() returns a pointer to the standard RFC name of
 B<cipher>. If the B<cipher> is NULL, it returns "(NONE)". If the B<cipher>
-has no standard name, it returns B<NULL>.
+has no standard name, it returns B<NULL>. If B<cipher> was defined in both
+SSLv3 and TLS, it returns the TLS name.
 
 OPENSSL_cipher_name() returns a pointer to the OpenSSL name of B<stdname>.
 If the B<stdname> is NULL, or B<stdname> has no corresponding OpenSSL name,
-it returns "(NONE)".
+it returns "(NONE)". Where both exist, B<stdname> should be the TLS name rather
+than the SSLv3 name.
 
 SSL_CIPHER_get_bits() returns the number of secret bits used for B<cipher>.
 If B<cipher> is NULL, 0 is returned.
