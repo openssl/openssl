@@ -108,7 +108,7 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
     return NULL;
 }
 
-static const char *_asn1_mon[12] = {
+static const char _asn1_mon[12][4] = {
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
@@ -157,7 +157,7 @@ int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
     return BIO_printf(bp, "%s %2d %02d:%02d:%02d%.*s %d%s",
                       _asn1_mon[M - 1], d, h, m, s, f_len, f, y,
                       (gmt) ? " GMT" : "") > 0;
-err:
+ err:
     BIO_write(bp, "Bad time value", 14);
     return 0;
 }
