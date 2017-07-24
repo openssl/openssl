@@ -112,7 +112,7 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
     if (!asn1_utctime_to_tm(&stm, s))
         return -2;
 
-    if (!OPENSSL_gmtime(&t, &ttm))
+    if (OPENSSL_gmtime(&t, &ttm) == NULL)
         return -2;
 
     if (!OPENSSL_gmtime_diff(&day, &sec, &ttm, &stm))
