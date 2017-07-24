@@ -275,7 +275,8 @@ static SIGRETTYPE sig_done(int sig)
 # if !defined(SIGALRM)
 #  define SIGALRM
 # endif
-static unsigned int lapse, schlock;
+static unsigned int lapse;
+static volatile unsigned int schlock;
 static void alarm_win32(unsigned int secs)
 {
     lapse = secs * 1000;
