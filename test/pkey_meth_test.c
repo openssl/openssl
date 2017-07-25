@@ -15,13 +15,8 @@
 #include <openssl/evp.h>
 #include "testutil.h"
 
-/**********************************************************************
- *
- * Test of EVP_PKEY_ASN1 method ordering
- *
- ***/
-
-static int test_asn1_meths()
+/* Test of EVP_PKEY_ASN1_METHOD ordering */
+static int test_asn1_meths(void)
 {
     int i;
     int prev = -1;
@@ -52,8 +47,37 @@ static int test_asn1_meths()
     return good;
 }
 
+/* Test of EVP_PKEY_METHOD ordering */
+static int test_pkey_meths()
+{
+    size_t i;
+    int prev = -1;
+    int good = 1;
+    int pkey_id;
+    const EVP_PKEY_METHOD *pmeth;
+
+    for (i = 0; i < EVP_PKEY_meth_get_count(); i++) {
+        pmeth = EVP_PKEY_meth_get0(i);
+        EVP_PKEY_meth_get0_info(&pkey_id, NULL, pmeth);
+        if (pkey_id < prev)
+            good = 0;
+        prev = pkey_id;
+
+    }
+    if (!good) {
+        TEST_error("EVP_PKEY_METHOD table out of order");
+        for (i = 0; i < EVP_PKEY_meth_get_count(); i++) {
+            pmeth = EVP_PKEY_meth_get0(i);
+            EVP_PKEY_meth_get0_info(&pkey_id, NULL, pmeth);
+            TEST_note("%d : %s", pkey_id, OBJ_nid2ln(pkey_id));
+        }
+    }
+    return good;
+}
+
 int setup_tests()
 {
     ADD_TEST(test_asn1_meths);
+    ADD_TEST(test_pkey_meths);
     return 1;
 }
