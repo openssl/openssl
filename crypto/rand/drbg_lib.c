@@ -47,18 +47,20 @@ static size_t entropy_from_parent(RAND_DRBG *drbg,
     int st;
 
     /* Make sure not to overflow buffer; shouldn't happen. */
+    entropy /= 8;
     if (entropy > (int)sizeof(drbg->randomness))
         entropy = sizeof(drbg->randomness);
 
     /* Get random from parent, include our state as additional input. */
     st = RAND_DRBG_generate(drbg->parent, drbg->randomness, entropy, 0,
                             (unsigned char *)drbg, sizeof(*drbg));
+    drbg->filled = 1;
     return st == 0 ? st : entropy;
 }
 
 void rand_cleanup_entropy(RAND_DRBG *drbg, unsigned char *out)
 {
-    drbg->cleared = 1;
+    drbg->filled = 0;
     OPENSSL_cleanse(drbg->randomness, sizeof(drbg->randomness));
 }
 

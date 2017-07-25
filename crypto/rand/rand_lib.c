@@ -97,7 +97,9 @@ static size_t entropy_from_system(RAND_DRBG *drbg,
                                   unsigned char **pout,
                                   int entropy, size_t min_len, size_t max_len)
 {
-    if (rand_drbg.cleared == 0) {
+    entropy /= 8;
+
+    if (rand_drbg.filled) {
         /* Re-use what we have. */
         *pout = drbg->randomness;
         return sizeof(drbg->randomness);
@@ -116,6 +118,7 @@ static size_t entropy_from_system(RAND_DRBG *drbg,
         entropy = rand_bytes.curr;
     if (entropy != 0) {
         memcpy(drbg->randomness, rand_bytes.buff, entropy);
+        rand_drbg.filled = 1;
         /* Update amount left and shift it down. */
         rand_bytes.curr -= entropy;
         if (rand_bytes.curr != 0)

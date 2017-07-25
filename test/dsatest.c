@@ -63,9 +63,6 @@ static unsigned char out_g[] = {
 
 static const unsigned char str1[] = "12345678901234567890";
 
-static const char rnd_seed[] =
-    "string to make the random number generator think it has randomness";
-
 static int dsa_test(void)
 {
     BN_GENCB *cb;
@@ -76,8 +73,6 @@ static int dsa_test(void)
     unsigned char sig[256];
     unsigned int siglen;
     const BIGNUM *p = NULL, *q = NULL, *g = NULL;
-
-    RAND_seed(rnd_seed, sizeof rnd_seed);
 
     if (!TEST_ptr(cb = BN_GENCB_new()))
         goto end;
