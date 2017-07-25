@@ -545,11 +545,14 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                 (s->session_ctx->session_cache_mode &
                  SSL_SESS_CACHE_NO_INTERNAL_STORE)) {
                 /*
-                 * The following should not return 1, otherwise, things are
-                 * very strange
+                 * Either return value of SSL_CTX_add_session should not
+                 * interrupt the session resumption process. The return
+                 * value is intentionally ignored.
                  */
-                if (SSL_CTX_add_session(s->session_ctx, ret))
-                    goto err;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+                SSL_CTX_add_session(s->session_ctx, ret);
+#pragma GCC diagnostic pop
             }
         }
     }
