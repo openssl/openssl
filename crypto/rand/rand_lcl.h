@@ -35,7 +35,7 @@
 /*
  * The context for DRBG AES-CTR
  */
-typedef struct drbg_ctr_ctx_st {
+typedef struct rand_drbg_ctr_st {
     AES_KEY ks;
     size_t keylen;
     unsigned char K[32];
@@ -47,7 +47,7 @@ typedef struct drbg_ctr_ctx_st {
     unsigned char bltmp[16];
     size_t bltmp_pos;
     unsigned char KX[48];
-} DRBG_CTR_CTX;
+} RAND_DRBG_CTR;
 
 
 /*
@@ -75,7 +75,7 @@ struct rand_drbg_st {
     CRYPTO_EX_DATA ex_data;
 
     /* Implementation specific structures */
-    DRBG_CTR_CTX ctr;
+    RAND_DRBG_CTR ctr;
 
     /* entropy gathering function */
     RAND_DRBG_get_entropy_fn get_entropy;
