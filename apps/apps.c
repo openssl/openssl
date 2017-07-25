@@ -2626,11 +2626,11 @@ void wait_for_async(SSL *s)
     }
 
     FD_ZERO(&asyncfds);
-    while (numfds > 0) {
-        numfds--;
-        if (width <= (int)fds[numfds])
-            width = (int)fds[numfds] + 1;
-        openssl_fdset((int)fds[numfds], &asyncfds);
+    int i;
+    for (i = 0; i < numfds; i++) {
+        if (width <= (int)fds[i])
+            width = (int)fds[i] + 1;
+        openssl_fdset((int)fds[i], &asyncfds);
     }
     select(width, (void *)&asyncfds, NULL, NULL, NULL);
     OPENSSL_free(origfds);
