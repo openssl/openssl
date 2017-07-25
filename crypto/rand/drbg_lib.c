@@ -18,9 +18,9 @@
  */
 
 /*
- * Get entropy from the existing callback.  This is mainly used for KATs.
+ * Get entropy from the existing callback.
  */
-static size_t get_entropy(DRBG_CTX *dctx, unsigned char **pout,
+static size_t get_entropy(RAND_DRBG *dctx, unsigned char **pout,
                           int entropy, size_t min_len, size_t max_len)
 {
     if (dctx->get_entropy != NULL)
@@ -32,7 +32,7 @@ static size_t get_entropy(DRBG_CTX *dctx, unsigned char **pout,
 /*
  * Cleanup entropy.
  */
-static void cleanup_entropy(DRBG_CTX *dctx, unsigned char *out, size_t olen)
+static void cleanup_entropy(RAND_DRBG *dctx, unsigned char *out, size_t olen)
 {
     if (dctx->cleanup_entropy != NULL)
         dctx->cleanup_entropy(dctx, out, olen);
@@ -55,7 +55,7 @@ static void cleanup_entropy(DRBG_CTX *dctx, unsigned char *out, size_t olen)
  * Return -2 if the type is not supported, 1 on success and -1 on
  * failure.
  */
-int RAND_DRBG_set(DRBG_CTX *dctx, int nid, unsigned int flags)
+int RAND_DRBG_set(RAND_DRBG *dctx, int nid, unsigned int flags)
 {
     int ret = 1;
 
@@ -84,11 +84,11 @@ int RAND_DRBG_set(DRBG_CTX *dctx, int nid, unsigned int flags)
 
 /*
  * Allocate memory and initialize a new DRBG.  The |parent|, if not
- * NULL, will be used to auto-seed this DRBG_CTX as needed.
+ * NULL, will be used to auto-seed this RAND_DRBG as needed.
  */
-DRBG_CTX *RAND_DRBG_new(int type, unsigned int flags, DRBG_CTX *parent)
+RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
 {
-    DRBG_CTX *dctx = OPENSSL_zalloc(sizeof(*dctx));
+    RAND_DRBG *dctx = OPENSSL_zalloc(sizeof(*dctx));
 
     if (dctx == NULL) {
         RANDerr(RAND_F_RAND_DRBG_NEW, ERR_R_MALLOC_FAILURE);
@@ -106,7 +106,7 @@ DRBG_CTX *RAND_DRBG_new(int type, unsigned int flags, DRBG_CTX *parent)
 /*
  * Uninstantiate |dctx| and free all memory.
  */
-void RAND_DRBG_free(DRBG_CTX *dctx)
+void RAND_DRBG_free(RAND_DRBG *dctx)
 {
     if (dctx == NULL)
         return;
@@ -116,7 +116,7 @@ void RAND_DRBG_free(DRBG_CTX *dctx)
 
     /* Don't free up default DRBG */
     if (dctx == RAND_DRBG_get_default()) {
-        memset(dctx, 0, sizeof(DRBG_CTX));
+        OPENSSL_cleanse(dctx, sizeof(*dctx));
         dctx->nid = 0;
         dctx->status = DRBG_STATUS_UNINITIALISED;
     } else {
@@ -129,7 +129,7 @@ void RAND_DRBG_free(DRBG_CTX *dctx)
  * Instantiate |dctx|, after it has been initialized.  Use |pers| and
  * |perslen| as prediction-resistance input.
  */
-int RAND_DRBG_instantiate(DRBG_CTX *dctx,
+int RAND_DRBG_instantiate(RAND_DRBG *dctx,
                           const unsigned char *pers, size_t perslen)
 {
     size_t entlen = 0, noncelen = 0;
@@ -190,7 +190,7 @@ end:
 /*
  * Uninstantiate |dctx|. Must be instantiated before it can be used.
  */
-int RAND_DRBG_uninstantiate(DRBG_CTX *dctx)
+int RAND_DRBG_uninstantiate(RAND_DRBG *dctx)
 {
     int ret = ctr_uninstantiate(dctx);
 
@@ -202,7 +202,7 @@ int RAND_DRBG_uninstantiate(DRBG_CTX *dctx)
 /*
  * Mix in the specified data to reseed |dctx|.
  */
-int RAND_DRBG_reseed(DRBG_CTX *dctx,
+int RAND_DRBG_reseed(RAND_DRBG *dctx,
                      const unsigned char *adin, size_t adinlen)
 {
     unsigned char *entropy = NULL;
@@ -255,7 +255,7 @@ end:
  * to or if |prediction_resistance| is set.  Additional input can be
  * sent in |adin| and |adinlen|.
  */
-int RAND_DRBG_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
+int RAND_DRBG_generate(RAND_DRBG *dctx, unsigned char *out, size_t outlen,
                        int prediction_resistance,
                        const unsigned char *adin, size_t adinlen)
 {
@@ -308,15 +308,14 @@ end:
 }
 
 /*
- * Set the callbacks for entropy and nonce.  Used mainly for the KATs
+ * Set the callbacks for entropy and nonce.  We currently don't use
+ * the nonce; that's mainly for the KATs
  */
-int RAND_DRBG_set_callbacks(DRBG_CTX *dctx,
-    size_t (*cb_get_entropy)(DRBG_CTX *ctx, unsigned char **pout,
-                             int entropy, size_t min_len, size_t max_len),
-    void (*cb_cleanup_entropy)(DRBG_CTX *ctx, unsigned char *out, size_t olen),
-    size_t (*cb_get_nonce)(DRBG_CTX *ctx, unsigned char **pout,
-                           int entropy, size_t min_len, size_t max_len),
-    void (*cb_cleanup_nonce)(DRBG_CTX *ctx, unsigned char *out, size_t olen))
+int RAND_DRBG_set_callbacks(RAND_DRBG *dctx,
+                            RAND_DRBG_get_entropy_fn cb_get_entropy,
+                            RAND_DRBG_cleanup_entropy_fn cb_cleanup_entropy,
+                            RAND_DRBG_get_nonce_fn cb_get_nonce,
+                            RAND_DRBG_cleanup_nonce_fn cb_cleanup_nonce)
 {
     if (dctx->status != DRBG_STATUS_UNINITIALISED)
         return 0;
@@ -328,9 +327,9 @@ int RAND_DRBG_set_callbacks(DRBG_CTX *dctx,
 }
 
 /*
- * Set the reseed interval. Used mainly for the KATs.
+ * Set the reseed interval.
  */
-int RAND_DRBG_set_reseed_interval(DRBG_CTX *dctx, int interval)
+int RAND_DRBG_set_reseed_interval(RAND_DRBG *dctx, int interval)
 {
     if (interval < 0 || interval > MAX_RESEED)
         return 0;
@@ -341,12 +340,12 @@ int RAND_DRBG_set_reseed_interval(DRBG_CTX *dctx, int interval)
 /*
  * Get and set the EXDATA
  */
-int RAND_DRBG_set_ex_data(DRBG_CTX *dctx, int idx, void *arg)
+int RAND_DRBG_set_ex_data(RAND_DRBG *dctx, int idx, void *arg)
 {
     return CRYPTO_set_ex_data(&dctx->ex_data, idx, arg);
 }
 
-void *RAND_DRBG_get_ex_data(const DRBG_CTX *dctx, int idx)
+void *RAND_DRBG_get_ex_data(const RAND_DRBG *dctx, int idx)
 {
     return CRYPTO_get_ex_data(&dctx->ex_data, idx);
 }

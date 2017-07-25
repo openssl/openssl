@@ -20,11 +20,7 @@
  */
 
 
-/*
- * The default global DRBG and its auto-init/auto-cleanup.
- */
-static DRBG_CTX ossl_drbg;
-
+static RAND_DRBG ossl_drbg; /* The default global DRBG. */
 static CRYPTO_ONCE ossl_drbg_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(do_ossl_drbg_init)
@@ -219,7 +215,7 @@ static void ctr_df(DRBG_CTR_CTX *cctx,
  * zeroes if necessary and have up to two parameters XORed together,
  * handle both cases in this function instead.
  */
-static void ctr_update(DRBG_CTX *dctx,
+static void ctr_update(RAND_DRBG *dctx,
                        const unsigned char *in1, size_t in1len,
                        const unsigned char *in2, size_t in2len,
                        const unsigned char *nonce, size_t noncelen)
@@ -259,7 +255,7 @@ static void ctr_update(DRBG_CTX *dctx,
     AES_set_encrypt_key(cctx->K, dctx->strength, &cctx->ks);
 }
 
-int ctr_instantiate(DRBG_CTX *dctx,
+int ctr_instantiate(RAND_DRBG *dctx,
                     const unsigned char *ent, size_t entlen,
                     const unsigned char *nonce, size_t noncelen,
                     const unsigned char *pers, size_t perslen)
@@ -273,7 +269,7 @@ int ctr_instantiate(DRBG_CTX *dctx,
     return 1;
 }
 
-int ctr_reseed(DRBG_CTX *dctx,
+int ctr_reseed(RAND_DRBG *dctx,
                const unsigned char *ent, size_t entlen,
                const unsigned char *adin, size_t adinlen)
 {
@@ -281,7 +277,7 @@ int ctr_reseed(DRBG_CTX *dctx,
     return 1;
 }
 
-int ctr_generate(DRBG_CTX *dctx,
+int ctr_generate(RAND_DRBG *dctx,
                  unsigned char *out, size_t outlen,
                  const unsigned char *adin, size_t adinlen)
 {
@@ -317,13 +313,13 @@ int ctr_generate(DRBG_CTX *dctx,
     return 1;
 }
 
-int ctr_uninstantiate(DRBG_CTX *dctx)
+int ctr_uninstantiate(RAND_DRBG *dctx)
 {
     memset(&dctx->ctr, 0, sizeof(dctx->ctr));
     return 1;
 }
 
-int ctr_init(DRBG_CTX *dctx)
+int ctr_init(RAND_DRBG *dctx)
 {
     DRBG_CTR_CTX *cctx = &dctx->ctr;
     size_t keylen;
@@ -385,7 +381,7 @@ int ctr_init(DRBG_CTX *dctx)
  * The following function tie the DRBG code into the RAND_METHOD
  */
 
-DRBG_CTX *RAND_DRBG_get_default(void)
+RAND_DRBG *RAND_DRBG_get_default(void)
 {
     if (!RUN_ONCE(&ossl_drbg_init, do_ossl_drbg_init))
         return NULL;
@@ -394,7 +390,7 @@ DRBG_CTX *RAND_DRBG_get_default(void)
 
 static int drbg_bytes(unsigned char *out, int count)
 {
-    DRBG_CTX *dctx = RAND_DRBG_get_default();
+    RAND_DRBG *dctx = RAND_DRBG_get_default();
     int ret = 0;
 
     CRYPTO_THREAD_write_lock(dctx->lock);
@@ -419,7 +415,7 @@ err:
 
 static int drbg_status(void)
 {
-    DRBG_CTX *dctx = RAND_DRBG_get_default();
+    RAND_DRBG *dctx = RAND_DRBG_get_default();
     int ret;
 
     CRYPTO_THREAD_write_lock(dctx->lock);
@@ -430,7 +426,7 @@ static int drbg_status(void)
 
 static void drbg_cleanup(void)
 {
-    DRBG_CTX *dctx = RAND_DRBG_get_default();
+    RAND_DRBG *dctx = RAND_DRBG_get_default();
 
     CRYPTO_THREAD_write_lock(dctx->lock);
     RAND_DRBG_uninstantiate(dctx);

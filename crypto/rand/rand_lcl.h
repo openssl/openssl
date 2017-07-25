@@ -53,9 +53,9 @@ typedef struct drbg_ctr_ctx_st {
 /*
  * The context for all DRBG's
  */
-struct drbg_ctx_st {
+struct rand_drbg_st {
     CRYPTO_RWLOCK *lock;
-    DRBG_CTX *parent;
+    RAND_DRBG *parent;
     int nid; /* the NID of the underlying algorithm */
     unsigned int flags; /* various external flags */
 
@@ -96,16 +96,16 @@ void rand_rdtsc(void);
 int rand_rdcpu(void);
 
 /* DRBG functions implementing AES-CTR */
-int ctr_init(DRBG_CTX *dctx);
-int ctr_uninstantiate(DRBG_CTX *dctx);
-int ctr_instantiate(DRBG_CTX *dctx,
+int ctr_init(RAND_DRBG *dctx);
+int ctr_uninstantiate(RAND_DRBG *dctx);
+int ctr_instantiate(RAND_DRBG *dctx,
                     const unsigned char *ent, size_t entlen,
                     const unsigned char *nonce, size_t noncelen,
                     const unsigned char *pers, size_t perslen);
-int ctr_reseed(DRBG_CTX *dctx,
+int ctr_reseed(RAND_DRBG *dctx,
                const unsigned char *ent, size_t entlen,
                const unsigned char *adin, size_t adinlen);
-int ctr_generate(DRBG_CTX *dctx,
+int ctr_generate(RAND_DRBG *dctx,
                  unsigned char *out, size_t outlen,
                  const unsigned char *adin, size_t adinlen);
 
