@@ -103,7 +103,7 @@ static DRBG_SELFTEST_DATA drbg_test[] = {
 static int app_data_index;
 
 /*
- * Test context data, attached as appdata to the DRBG_CTX
+ * Test context data, attached as EXDATA to the RAND_DRBG
  */
 typedef struct test_ctx_st {
     const unsigned char *ent;
@@ -114,7 +114,7 @@ typedef struct test_ctx_st {
     int noncecnt;
 } TEST_CTX;
 
-static size_t kat_entropy(DRBG_CTX *dctx, unsigned char **pout,
+static size_t kat_entropy(RAND_DRBG *dctx, unsigned char **pout,
                           int entropy, size_t min_len, size_t max_len)
 {
     TEST_CTX *t = (TEST_CTX *)RAND_DRBG_get_ex_data(dctx, app_data_index);
@@ -124,7 +124,7 @@ static size_t kat_entropy(DRBG_CTX *dctx, unsigned char **pout,
     return t->entlen;
 }
 
-static size_t kat_nonce(DRBG_CTX *dctx, unsigned char **pout,
+static size_t kat_nonce(RAND_DRBG *dctx, unsigned char **pout,
                         int entropy, size_t min_len, size_t max_len)
 {
     TEST_CTX *t = (TEST_CTX *)RAND_DRBG_get_ex_data(dctx, app_data_index);
@@ -134,7 +134,7 @@ static size_t kat_nonce(DRBG_CTX *dctx, unsigned char **pout,
     return t->noncelen;
 }
 
-static int uninstantiate(DRBG_CTX *dctx)
+static int uninstantiate(RAND_DRBG *dctx)
 {
     int ret = dctx == NULL ? 1 : RAND_DRBG_uninstantiate(dctx);
 
@@ -147,7 +147,7 @@ static int uninstantiate(DRBG_CTX *dctx)
  */
 static int single_kat(DRBG_SELFTEST_DATA *td)
 {
-    DRBG_CTX *dctx = NULL;
+    RAND_DRBG *dctx = NULL;
     TEST_CTX t;
     int failures = 0;
     unsigned char buff[1024];
@@ -236,7 +236,7 @@ err:
 /*
  * Initialise a DRBG based on selftest data
  */
-static int init(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td, TEST_CTX *t)
+static int init(RAND_DRBG *dctx, DRBG_SELFTEST_DATA *td, TEST_CTX *t)
 {
     if (!TEST_true(RAND_DRBG_set(dctx, td->nid, td->flags))
             || !TEST_true(RAND_DRBG_set_callbacks(dctx, kat_entropy, NULL,
@@ -255,7 +255,7 @@ static int init(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td, TEST_CTX *t)
 /*
  * Initialise and instantiate DRBG based on selftest data
  */
-static int instantiate(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
+static int instantiate(RAND_DRBG *dctx, DRBG_SELFTEST_DATA *td,
                        TEST_CTX *t)
 {
     if (!TEST_true(init(dctx, td, t))
@@ -270,8 +270,8 @@ static int instantiate(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
  */
 static int error_check(DRBG_SELFTEST_DATA *td)
 {
-    static char zero[sizeof(DRBG_CTX)];
-    DRBG_CTX *dctx = NULL;
+    static char zero[sizeof(RAND_DRBG)];
+    RAND_DRBG *dctx = NULL;
     TEST_CTX t;
     unsigned char buff[1024];
     unsigned int reseed_counter_tmp;
