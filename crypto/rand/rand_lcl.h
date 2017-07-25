@@ -75,7 +75,7 @@ struct rand_drbg_st {
     RAND_DRBG *parent;
     int nid; /* the underlying algorithm */
     unsigned short flags; /* various external flags */
-    unsigned short cleared;
+    unsigned short filled;
     unsigned char randomness[RANDOMNESS_NEEDED];
 
     /* These parameters are setup by the per-type "init" function. */
