@@ -290,6 +290,27 @@ int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
     return 1;
 }
 
+size_t EVP_PKEY_meth_get_count(void)
+{
+    size_t rv = OSSL_NELEM(standard_methods);
+
+    if (app_pkey_methods)
+        rv += sk_EVP_PKEY_METHOD_num(app_pkey_methods);
+    return rv;
+}
+
+const EVP_PKEY_METHOD *EVP_PKEY_meth_get0(size_t idx)
+{
+    if (idx < OSSL_NELEM(standard_methods))
+        return standard_methods[idx];
+    if (app_pkey_methods == NULL)
+        return NULL;
+    idx -= OSSL_NELEM(standard_methods);
+    if (idx >= (size_t)sk_EVP_PKEY_METHOD_num(app_pkey_methods))
+        return NULL;
+    return sk_EVP_PKEY_METHOD_value(app_pkey_methods, idx);
+}
+
 void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 {
     if (ctx == NULL)
