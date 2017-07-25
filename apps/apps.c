@@ -2303,8 +2303,7 @@ int app_isdir(const char *name)
         return -1;
 
 #  if !defined(_WIN32_WCE) || _WIN32_WCE>=101
-    if (!MultiByteToWideChar
-        (CP_ACP, 0, name, len_0, tempname, len_0))
+    if (!MultiByteToWideChar(CP_ACP, 0, name, len_0, tempname, MAX_PATH))
 #  endif
         for (i = 0; i < len_0; i++)
             tempname[i] = (WCHAR)name[i];
