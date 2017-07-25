@@ -2633,7 +2633,7 @@ void wait_for_async(SSL *s)
         openssl_fdset((int)fds[i], &asyncfds);
     }
     select(width, (void *)&asyncfds, NULL, NULL, NULL);
-    OPENSSL_free(origfds);
+    OPENSSL_free(fds);
 #endif
 }
 
