@@ -9,7 +9,7 @@ OSSL_STORE_close - Types and functions to read objects from a URI
 =head1 SYNOPSIS
 
  #include <openssl/store.h>
- 
+
  typedef struct ossl_store_ctx_st OSSL_STORE_CTX;
 
  typedef OSSL_STORE_INFO *(*OSSL_STORE_post_process_info_fn)(OSSL_STORE_INFO *,

@@ -52,7 +52,7 @@ unregister STORE loaders for different URI schemes
  int OSSL_STORE_LOADER_set_close(OSSL_STORE_LOADER *store_loader,
                                  OSSL_STORE_close_fn store_close_function);
  void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *store_loader);
- 
+
  int OSSL_STORE_register_loader(OSSL_STORE_LOADER *loader);
  OSSL_STORE_LOADER *OSSL_STORE_unregister_loader(const char *scheme);
 
