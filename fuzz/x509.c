@@ -14,22 +14,12 @@
 #include <openssl/rand.h>
 #include "fuzzer.h"
 
-#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-extern int rand_predictable;
-#endif
-#define ENTROPY_NEEDED 32
-
 int FuzzerInitialize(int *argc, char ***argv)
 {
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_get_state();
     CRYPTO_free_ex_index(0, -1);
-    RAND_add("", 1, ENTROPY_NEEDED);
-    RAND_status();
-
-#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    rand_predictable = 1;
-#endif
+    FuzzerSetRand();
     return 1;
 }
 

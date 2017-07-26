@@ -27,10 +27,6 @@
 #include <internal/thread_once.h>
 #include "rand_lcl.h"
 
-#if defined(BN_DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
-# define PREDICT 1
-#endif
-
 #define STATE_SIZE      1023
 
 typedef struct ossl_rand_state_st OSSL_RAND_STATE;
@@ -58,10 +54,6 @@ static unsigned int crypto_lock_rand = 0;
  * valid iff crypto_lock_rand is set
  */
 static CRYPTO_THREAD_ID locking_threadid;
-
-#ifdef PREDICT
-int rand_predictable = 0;
-#endif
 
 static int rand_hw_seed(EVP_MD_CTX *ctx);
 
@@ -111,11 +103,6 @@ static int rand_add(const void *buf, int num, double add)
 
     if (!num)
         return 1;
-
-#ifdef PREDICT
-    if (rand_predictable)
-        return 1;
-#endif
 
     /*
      * (Based on the rand(3) manpage)
@@ -295,16 +282,6 @@ static int rand_bytes(unsigned char *buf, int num)
 #else
     struct timeval tv;
     gettimeofday(&tv, NULL);
-#endif
-
-#ifdef PREDICT
-    if (rand_predictable) {
-        unsigned char val = 1;
-
-        for (i = 0; i < num; i++)
-            buf[i] = val++;
-        return (1);
-    }
 #endif
 
     if (num <= 0)
