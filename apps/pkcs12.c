@@ -523,12 +523,20 @@ int pkcs12_main(int argc, char **argv)
         const ASN1_INTEGER *tmaciter;
         const X509_ALGOR *macalgid;
         const ASN1_OBJECT *macobj;
-        PKCS12_get0_mac(NULL, &macalgid, NULL, &tmaciter, p12);
+        const ASN1_OCTET_STRING *tmac;
+        const ASN1_OCTET_STRING *tsalt;
+
+        PKCS12_get0_mac(&tmac, &macalgid, &tsalt, &tmaciter, p12);
+        /* current hash algorithms do not use parameters so extract just name,
+           in future alg_print() may be needed */
         X509_ALGOR_get0(&macobj, NULL, NULL, macalgid);
         BIO_puts(bio_err, "MAC:");
         i2a_ASN1_OBJECT(bio_err, macobj);
         BIO_printf(bio_err, " Iteration %ld\n",
-                   tmaciter  != NULL ? ASN1_INTEGER_get(tmaciter) : 1L);
+                   tmaciter != NULL ? ASN1_INTEGER_get(tmaciter) : 1L);
+        BIO_printf(bio_err, "MAC length: %ld, salt length: %ld\n",
+                   tmac != NULL ? ASN1_STRING_length(tmac) : 0L,
+                   tsalt != NULL ? ASN1_STRING_length(tsalt) : 0L);
     }
     if (macver) {
         /* If we enter empty password try no password first */
