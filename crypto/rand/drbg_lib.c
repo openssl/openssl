@@ -13,10 +13,6 @@
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
-#if defined(BN_DEBUG) || defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
-# define PREDICT 1
-#endif
-
 /*
  * Support framework for NIST SP 800-90A DRBG, AES-CTR mode.
  * The RAND_DRBG is OpenSSL's pointer to an instance of the DRBG.
@@ -37,7 +33,8 @@
  * the buffer, it calls the cleanup_entropy callback, with the value of
  * the buffer that the get_entropy callback filled in.
  *
- * Interestingly the desired entropy is input as bits, but output as bytes.
+ * See comments for entropy_from_system() for discussion of |entropy| and
+ * |min_len|.
  */
 
 static size_t entropy_from_parent(RAND_DRBG *drbg,
@@ -47,15 +44,14 @@ static size_t entropy_from_parent(RAND_DRBG *drbg,
     int st;
 
     /* Make sure not to overflow buffer; shouldn't happen. */
-    entropy /= 8;
-    if (entropy > (int)sizeof(drbg->randomness))
-        entropy = sizeof(drbg->randomness);
+    if (min_len > (int)sizeof(drbg->randomness))
+        min_len = sizeof(drbg->randomness);
 
     /* Get random from parent, include our state as additional input. */
-    st = RAND_DRBG_generate(drbg->parent, drbg->randomness, entropy, 0,
+    st = RAND_DRBG_generate(drbg->parent, drbg->randomness, min_len, 0,
                             (unsigned char *)drbg, sizeof(*drbg));
     drbg->filled = 1;
-    return st == 0 ? st : entropy;
+    return st == 0 ? st : min_len;
 }
 
 void rand_cleanup_entropy(RAND_DRBG *drbg, unsigned char *out)
@@ -73,7 +69,7 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int nid, unsigned int flags)
 {
     int ret = 1;
 
-    drbg->status = DRBG_STATUS_UNINITIALISED;
+    drbg->state = DRBG_UNINITIALISED;
     drbg->flags = flags;
     drbg->nid = nid;
 
@@ -143,7 +139,7 @@ void RAND_DRBG_free(RAND_DRBG *drbg)
     if (drbg == &rand_drbg) {
         OPENSSL_cleanse(drbg, sizeof(*drbg));
         drbg->nid = 0;
-        drbg->status = DRBG_STATUS_UNINITIALISED;
+        drbg->state = DRBG_UNINITIALISED;
     } else {
         OPENSSL_cleanse(&drbg->ctr, sizeof(drbg->ctr));
         OPENSSL_free(drbg);
@@ -157,48 +153,46 @@ void RAND_DRBG_free(RAND_DRBG *drbg)
 int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                           const unsigned char *pers, size_t perslen)
 {
-    size_t entlen = 0, noncelen = 0;
     unsigned char *nonce = NULL, *entropy = NULL;
-    int r = 0;
+    size_t noncelen = 0, entlen = 0;
 
     if (perslen > drbg->max_pers) {
-        r = RAND_R_PERSONALISATION_STRING_TOO_LONG;
+        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
+                RAND_R_PERSONALISATION_STRING_TOO_LONG);
         goto end;
     }
-    if (drbg->status != DRBG_STATUS_UNINITIALISED) {
-        r = drbg->status == DRBG_STATUS_ERROR ? RAND_R_IN_ERROR_STATE
-                                              : RAND_R_ALREADY_INSTANTIATED;
+    if (drbg->state != DRBG_UNINITIALISED) {
+        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
+                drbg->state == DRBG_ERROR ? RAND_R_IN_ERROR_STATE
+                                          : RAND_R_ALREADY_INSTANTIATED);
         goto end;
     }
 
-    drbg->status = DRBG_STATUS_ERROR;
-    entlen = drbg->get_entropy == NULL
-                ? 0
-                : drbg->get_entropy(drbg, &entropy, drbg->strength,
-                                    drbg->min_entropy, drbg->max_entropy);
+    drbg->state = DRBG_ERROR;
+    if (drbg->get_entropy != NULL)
+        entlen = drbg->get_entropy(drbg, &entropy, drbg->strength,
+                                   drbg->min_entropy, drbg->max_entropy);
     if (entlen < drbg->min_entropy || entlen > drbg->max_entropy) {
-        r = RAND_R_ERROR_RETRIEVING_ENTROPY;
+        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_ENTROPY);
         goto end;
     }
 
     if (drbg->max_nonce > 0 && drbg->get_nonce != NULL) {
-        noncelen = drbg->get_nonce(drbg, &nonce,
-                                   drbg->strength / 2,
+        noncelen = drbg->get_nonce(drbg, &nonce, drbg->strength / 2,
                                    drbg->min_nonce, drbg->max_nonce);
-
         if (noncelen < drbg->min_nonce || noncelen > drbg->max_nonce) {
-            r = RAND_R_ERROR_RETRIEVING_NONCE;
+            RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_NONCE);
             goto end;
         }
     }
 
     if (!ctr_instantiate(drbg, entropy, entlen,
                          nonce, noncelen, pers, perslen)) {
-        r = RAND_R_ERROR_INSTANTIATING_DRBG;
+        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_INSTANTIATING_DRBG);
         goto end;
     }
 
-    drbg->status = DRBG_STATUS_READY;
+    drbg->state = DRBG_READY;
     drbg->reseed_counter = 1;
 
 end:
@@ -206,11 +200,8 @@ end:
         drbg->cleanup_entropy(drbg, entropy);
     if (nonce != NULL && drbg->cleanup_nonce!= NULL )
         drbg->cleanup_nonce(drbg, nonce);
-    if (drbg->status == DRBG_STATUS_READY)
+    if (drbg->state == DRBG_READY)
         return 1;
-
-    if (r)
-        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, r);
     return 0;
 }
 
@@ -222,7 +213,7 @@ int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
     int ret = ctr_uninstantiate(drbg);
 
     OPENSSL_cleanse(&drbg->ctr, sizeof(drbg->ctr));
-    drbg->status = DRBG_STATUS_UNINITIALISED;
+    drbg->state = DRBG_UNINITIALISED;
     return ret;
 }
 
@@ -234,47 +225,42 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
 {
     unsigned char *entropy = NULL;
     size_t entlen = 0;
-    int r = 0;
 
-    if (drbg->status != DRBG_STATUS_READY
-            && drbg->status != DRBG_STATUS_RESEED) {
-        if (drbg->status == DRBG_STATUS_ERROR)
-            r = RAND_R_IN_ERROR_STATE;
-        else if (drbg->status == DRBG_STATUS_UNINITIALISED)
-            r = RAND_R_NOT_INSTANTIATED;
-        goto end;
+    if (drbg->state == DRBG_ERROR) {
+        RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_IN_ERROR_STATE);
+        return 0;
+    }
+    if (drbg->state == DRBG_UNINITIALISED) {
+        RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_NOT_INSTANTIATED);
+        return 0;
     }
 
     if (adin == NULL)
         adinlen = 0;
     else if (adinlen > drbg->max_adin) {
-        r = RAND_R_ADDITIONAL_INPUT_TOO_LONG;
-        goto end;
+        RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_ADDITIONAL_INPUT_TOO_LONG);
+        return 0;
     }
 
-    drbg->status = DRBG_STATUS_ERROR;
-    entlen = drbg->get_entropy == NULL
-                ? 0
-                : drbg->get_entropy(drbg, &entropy, drbg->strength,
-                                    drbg->min_entropy, drbg->max_entropy);
+    drbg->state = DRBG_ERROR;
+    if (drbg->get_entropy != NULL)
+        entlen = drbg->get_entropy(drbg, &entropy, drbg->strength,
+                                   drbg->min_entropy, drbg->max_entropy);
     if (entlen < drbg->min_entropy || entlen > drbg->max_entropy) {
-        r = RAND_R_ERROR_RETRIEVING_ENTROPY;
+        RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_ERROR_RETRIEVING_ENTROPY);
         goto end;
     }
 
     if (!ctr_reseed(drbg, entropy, entlen, adin, adinlen))
         goto end;
-    drbg->status = DRBG_STATUS_READY;
+    drbg->state = DRBG_READY;
     drbg->reseed_counter = 1;
 
 end:
     if (entropy != NULL && drbg->cleanup_entropy != NULL)
         drbg->cleanup_entropy(drbg, entropy);
-    if (drbg->status == DRBG_STATUS_READY)
+    if (drbg->state == DRBG_READY)
         return 1;
-    if (r)
-        RANDerr(RAND_F_RAND_DRBG_RESEED, r);
-
     return 0;
 }
 
@@ -287,52 +273,46 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
                        int prediction_resistance,
                        const unsigned char *adin, size_t adinlen)
 {
-    int r = 0;
-
-    if (drbg->status != DRBG_STATUS_READY
-            && drbg->status != DRBG_STATUS_RESEED) {
-        if (drbg->status == DRBG_STATUS_ERROR)
-            r = RAND_R_IN_ERROR_STATE;
-        else if(drbg->status == DRBG_STATUS_UNINITIALISED)
-            r = RAND_R_NOT_INSTANTIATED;
-        goto end;
+    if (drbg->state == DRBG_ERROR) {
+        RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_IN_ERROR_STATE);
+        return 0;
     }
-
+    if (drbg->state == DRBG_UNINITIALISED) {
+        RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_NOT_INSTANTIATED);
+        return 0;
+    }
     if (outlen > drbg->max_request) {
-        r = RAND_R_REQUEST_TOO_LARGE_FOR_DRBG;
-        goto end;
+        RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_REQUEST_TOO_LARGE_FOR_DRBG);
+        return 0;
     }
     if (adinlen > drbg->max_adin) {
-        r = RAND_R_ADDITIONAL_INPUT_TOO_LONG;
-        goto end;
+        RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_ADDITIONAL_INPUT_TOO_LONG);
+        return 0;
     }
 
     if (drbg->reseed_counter >= drbg->reseed_interval)
-        drbg->status = DRBG_STATUS_RESEED;
+        drbg->state = DRBG_RESEED;
 
-    if (drbg->status == DRBG_STATUS_RESEED || prediction_resistance) {
+    if (drbg->state == DRBG_RESEED || prediction_resistance) {
         if (!RAND_DRBG_reseed(drbg, adin, adinlen)) {
-            r = RAND_R_RESEED_ERROR;
-            goto end;
+            RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_RESEED_ERROR);
+            return 0;
         }
         adin = NULL;
         adinlen = 0;
     }
 
     if (!ctr_generate(drbg, out, outlen, adin, adinlen)) {
-        r = RAND_R_GENERATE_ERROR;
-        drbg->status = DRBG_STATUS_ERROR;
-        goto end;
+        drbg->state = DRBG_ERROR;
+        RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_GENERATE_ERROR);
+        return 0;
     }
+
     if (drbg->reseed_counter >= drbg->reseed_interval)
-        drbg->status = DRBG_STATUS_RESEED;
+        drbg->state = DRBG_RESEED;
     else
         drbg->reseed_counter++;
     return 1;
-
-end:
-    RANDerr(RAND_F_RAND_DRBG_GENERATE, r);
-    return 0;
 }
 
 /*
@@ -345,7 +325,7 @@ int RAND_DRBG_set_callbacks(RAND_DRBG *drbg,
                             RAND_DRBG_get_nonce_fn cb_get_nonce,
                             RAND_DRBG_cleanup_nonce_fn cb_cleanup_nonce)
 {
-    if (drbg->status != DRBG_STATUS_UNINITIALISED)
+    if (drbg->state != DRBG_UNINITIALISED)
         return 0;
     drbg->get_entropy = cb_get_entropy;
     drbg->cleanup_entropy = cb_cleanup_entropy;
@@ -388,18 +368,8 @@ static int drbg_bytes(unsigned char *out, int count)
 {
     int ret = 0;
 
-#ifdef PREDICT
-    if (rand_predictable) {
-        unsigned char val = 1;
-
-        while (--count >= 0)
-            *out++ = val++;
-        return 1;
-    }
-#endif
-
     CRYPTO_THREAD_write_lock(rand_drbg.lock);
-    if (rand_drbg.status == DRBG_STATUS_UNINITIALISED
+    if (rand_drbg.state == DRBG_UNINITIALISED
             && RAND_DRBG_instantiate(&rand_drbg, NULL, 0) == 0)
         goto err;
 
@@ -431,11 +401,15 @@ static void drbg_cleanup(void)
 
 static int drbg_add(const void *buf, int num, double randomness)
 {
+    int left = (int)(rand_bytes.size - rand_bytes.curr);
+
     CRYPTO_THREAD_write_lock(rand_bytes.lock);
-    if (num > rand_bytes.size - rand_bytes.curr)
-        num = (int)(rand_bytes.size - rand_bytes.curr);
+    /* TODO For now, only copy bytes to fill.  Perhaps XOR the excess? */
+    if (num > left)
+        num = left;
     memcpy(&rand_bytes.buff[rand_bytes.curr], buf, num);
     rand_bytes.curr += num;
+
     CRYPTO_THREAD_unlock(rand_bytes.lock);
     return 1;
 }
@@ -450,7 +424,7 @@ static int drbg_status(void)
     int ret;
 
     CRYPTO_THREAD_write_lock(rand_drbg.lock);
-    ret = rand_drbg.status == DRBG_STATUS_READY ? 1 : 0;
+    ret = rand_drbg.state == DRBG_READY ? 1 : 0;
     CRYPTO_THREAD_unlock(rand_drbg.lock);
     return ret;
 }

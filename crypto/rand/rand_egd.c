@@ -129,7 +129,7 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
         goto err;
     ret = numbytes;
     if (mybuffer)
-        RAND_seed(tempbuf, i);
+        RAND_add(tempbuf, i, i);
 
  err:
     if (fp != NULL)

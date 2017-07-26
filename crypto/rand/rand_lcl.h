@@ -18,7 +18,7 @@
 # include "internal/rand.h"
 
 /* Amount of randomness (in bytes) we want for initial seeding. */
-# define RANDOMNESS_NEEDED              (128 / 8)
+# define RANDOMNESS_NEEDED              (256 / 8)
 
 /* Maximum amount of randomness to hold in RAND_BYTES_BUFFER. */
 # define MAX_RANDOMNESS_HELD            (4 * RANDOMNESS_NEEDED)
@@ -26,25 +26,34 @@
 /* Maximum count allowed in reseeding */
 # define MAX_RESEED                     (1 << 24)
 
-/* DRBG status values */
-# define DRBG_STATUS_UNINITIALISED      0
-# define DRBG_STATUS_READY              1
-# define DRBG_STATUS_RESEED             2
-# define DRBG_STATUS_ERROR              3
+/* How often we call RAND_poll() in entropy_from_system */
+# define RAND_POLL_RETRIES 8
 
-/* A default maximum length: larger than any reasonable value used in pratice */
+/* Max size of entropy, addin, etc. Larger than any reasonable value */
 # define DRBG_MAX_LENGTH                0x7ffffff0
+
+
+/* DRBG status values */
+typedef enum drbg_status_e {
+    DRBG_UNINITIALISED,
+    DRBG_READY,
+    DRBG_RESEED,
+    DRBG_ERROR
+} DRBG_STATUS;
 
 
 /*
  * A buffer of random bytes to be fed as "entropy" into the DRBG.  RAND_add()
  * adds data to the buffer, and the entropy_from_system() pulls data from
- * the buffer.
+ * the buffer. We have a separate data structure because of the way the
+ * API is defined; otherwise we'd run into deadlocks (RAND_bytes ->
+ * RAND_DRBG_generate* -> entropy_from_system -> RAND_poll -> RAND_add ->
+ * drbg_add*; the functions with an asterisk lock).
  */
 typedef struct rand_bytes_buffer_st {
     CRYPTO_RWLOCK *lock;
-    int size;
-    int curr;
+    size_t size;
+    size_t curr;
     char *buff;
 } RAND_BYTES_BUFFER;
 
@@ -87,7 +96,7 @@ struct rand_drbg_st {
     unsigned int reseed_counter;
     unsigned int reseed_interval;
     size_t seedlen;
-    int status;
+    DRBG_STATUS state;
 
     /* Application data, mainly used in the KATs. */
     CRYPTO_EX_DATA ex_data;
