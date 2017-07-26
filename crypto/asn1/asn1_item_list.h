@@ -140,6 +140,9 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(RSA_OAEP_PARAMS),
     ASN1_ITEM_ref(RSA_PSS_PARAMS),
 #endif
+#ifndef OPENSSL_NO_SCRYPT
+    ASN1_ITEM_ref(SCRYPT_PARAMS),
+#endif
     ASN1_ITEM_ref(SXNETID),
     ASN1_ITEM_ref(SXNET),
     ASN1_ITEM_ref(USERNOTICE),
