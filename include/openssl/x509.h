@@ -305,6 +305,16 @@ typedef struct PBKDF2PARAM_st {
     X509_ALGOR *prf;
 } PBKDF2PARAM;
 
+#ifndef OPENSSL_NO_SCRYPT
+typedef struct SCRYPT_PARAMS_st {
+    ASN1_OCTET_STRING *salt;
+    ASN1_INTEGER *costParameter;
+    ASN1_INTEGER *blockSize;
+    ASN1_INTEGER *parallelizationParameter;
+    ASN1_INTEGER *keyLength;
+} SCRYPT_PARAMS;
+#endif
+
 #ifdef  __cplusplus
 }
 #endif
@@ -971,6 +981,9 @@ X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name);
 DECLARE_ASN1_FUNCTIONS(PBEPARAM)
 DECLARE_ASN1_FUNCTIONS(PBE2PARAM)
 DECLARE_ASN1_FUNCTIONS(PBKDF2PARAM)
+#ifndef OPENSSL_NO_SCRYPT
+DECLARE_ASN1_FUNCTIONS(SCRYPT_PARAMS)
+#endif
 
 int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
                          const unsigned char *salt, int saltlen);
