@@ -16,7 +16,7 @@ OSSL_STORE_INFO_new_CRL - Functions to manipulate OSSL_STORE_INFO objects
 =head1 SYNOPSIS
 
  #include <openssl/store.h>
- 
+
  typedef struct ossl_store_info_st OSSL_STORE_INFO;
 
  int OSSL_STORE_INFO_get_type(const OSSL_STORE_INFO *store_info);
