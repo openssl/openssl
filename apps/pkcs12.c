@@ -530,9 +530,9 @@ int pkcs12_main(int argc, char **argv)
         /* current hash algorithms do not use parameters so extract just name,
            in future alg_print() may be needed */
         X509_ALGOR_get0(&macobj, NULL, NULL, macalgid);
-        BIO_puts(bio_err, "MAC:");
+        BIO_puts(bio_err, "MAC: ");
         i2a_ASN1_OBJECT(bio_err, macobj);
-        BIO_printf(bio_err, " Iteration %ld\n",
+        BIO_printf(bio_err, ", Iteration %ld\n",
                    tmaciter != NULL ? ASN1_INTEGER_get(tmaciter) : 1L);
         BIO_printf(bio_err, "MAC length: %ld, salt length: %ld\n",
                    tmac != NULL ? ASN1_STRING_length(tmac) : 0L,
