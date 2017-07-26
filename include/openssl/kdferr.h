@@ -31,7 +31,10 @@ int ERR_load_KDF_strings(void);
  * KDF reason codes.
  */
 # define KDF_R_INVALID_DIGEST                             100
+# define KDF_R_MISSING_KEY                                104
+# define KDF_R_MISSING_MESSAGE_DIGEST                     105
 # define KDF_R_MISSING_PARAMETER                          101
+# define KDF_R_MISSING_SEED                               106
 # define KDF_R_UNKNOWN_PARAMETER_TYPE                     103
 # define KDF_R_VALUE_MISSING                              102
 
