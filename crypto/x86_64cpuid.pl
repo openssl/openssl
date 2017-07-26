@@ -190,7 +190,7 @@ OPENSSL_ia32_cpuid:
 .Lclear_avx:
 	mov	\$0xefffe7ff,%eax	# ~(1<<28|1<<12|1<<11)
 	and	%eax,%r9d		# clear AVX, FMA and AMD XOP bits
-	andl	\$0xffffffdf,8(%rdi)	# cleax AVX2, ~(1<<5)
+	andl	\$0xffffffdf,8(%rdi)	# clear AVX2, ~(1<<5)
 .Ldone:
 	shl	\$32,%r9
 	mov	%r10d,%eax
