@@ -150,31 +150,33 @@ static int test_func(int test)
     return result;
 }
 
-int test_main(int argc, char *argv[])
+int global_init(void)
 {
-    int testresult = EXIT_FAILURE;
-
     CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+    return 1;
+}
 
-    if (argc != 3) {
-        TEST_error("Invalid argument count\n");
-        goto end;
-    }
+int setup_tests(void)
+{
+    char *cert, *pkey;
+
+    if (!TEST_ptr(cert = test_get_argument(0))
+            || !TEST_ptr(pkey = test_get_argument(1)))
+        return 0;
 
     if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                             &serverctx, &clientctx, argv[1], argv[2])) {
+                             &serverctx, &clientctx, cert, pkey)) {
         TEST_error("Failed to create SSL_CTX pair\n");
-        goto end;
+        return 0;
     }
 
     ADD_ALL_TESTS(test_func, 9);
+    return 1;
+}
 
-    testresult = run_tests(argv[0]);
-
- end:
+void cleanup_tests(void)
+{
     SSL_CTX_free(clientctx);
     SSL_CTX_free(serverctx);
-
-    return testresult;
 }
