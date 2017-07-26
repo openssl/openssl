@@ -819,6 +819,22 @@ static int alg_print(const X509_ALGOR *alg)
             BIO_printf(bio_err, ", Iteration %ld, PRF %s",
                        ASN1_INTEGER_get(kdf->iter), OBJ_nid2sn(prfnid));
             PBKDF2PARAM_free(kdf);
+        } else if (pbenid == NID_id_scrypt) {
+            SCRYPT_PARAMS *kdf = NULL;
+
+            if (aparamtype == V_ASN1_SEQUENCE)
+                kdf = ASN1_item_unpack(aparam, ASN1_ITEM_rptr(SCRYPT_PARAMS));
+            if (kdf == NULL) {
+                BIO_puts(bio_err, ", <unsupported parameters>");
+                goto done;
+            }
+            BIO_printf(bio_err, ", Salt length: %d, Cost(N): %ld, "
+                       "Block size(r): %ld, Paralelizm(p): %ld",
+                       ASN1_STRING_length(kdf->salt),
+                       ASN1_INTEGER_get(kdf->costParameter),
+                       ASN1_INTEGER_get(kdf->blockSize),
+                       ASN1_INTEGER_get(kdf->parallelizationParameter));
+            SCRYPT_PARAMS_free(kdf);
         }
         PBE2PARAM_free(pbe2);
     } else {
