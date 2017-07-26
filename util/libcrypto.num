@@ -4364,3 +4364,9 @@ EVP_sha3_384                            4306	1_1_1	EXIST::FUNCTION:
 EVP_sha3_512                            4307	1_1_1	EXIST::FUNCTION:
 EVP_shake128                            4308	1_1_1	EXIST::FUNCTION:
 EVP_shake256                            4309	1_1_1	EXIST::FUNCTION:
+SCRYPT_PARAMS_new                       4310	1_1_1	EXIST::FUNCTION:SCRYPT
+SCRYPT_PARAMS_free                      4311	1_1_1	EXIST::FUNCTION:SCRYPT
+i2d_SCRYPT_PARAMS                       4312	1_1_1	EXIST::FUNCTION:SCRYPT
+d2i_SCRYPT_PARAMS                       4313	1_1_1	EXIST::FUNCTION:SCRYPT
+SCRYPT_PARAMS_it                        4314	1_1_1	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:SCRYPT
+SCRYPT_PARAMS_it                        4314	1_1_1	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:SCRYPT
