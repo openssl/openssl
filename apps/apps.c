@@ -2614,6 +2614,7 @@ void wait_for_async(SSL *s)
     fd_set asyncfds;
     OSSL_ASYNC_FD *fds;
     size_t numfds;
+    size_t i;
 
     if (!SSL_get_all_async_fds(s, NULL, &numfds))
         return;
@@ -2622,17 +2623,17 @@ void wait_for_async(SSL *s)
     fds = app_malloc(sizeof(OSSL_ASYNC_FD) * numfds, "allocate async fds");
     if (!SSL_get_all_async_fds(s, fds, &numfds)) {
         OPENSSL_free(fds);
+        return;
     }
 
     FD_ZERO(&asyncfds);
-    while (numfds > 0) {
-        if (width <= (int)*fds)
-            width = (int)*fds + 1;
-        openssl_fdset((int)*fds, &asyncfds);
-        numfds--;
-        fds++;
+    for (i = 0; i < numfds; i++) {
+        if (width <= (int)fds[i])
+            width = (int)fds[i] + 1;
+        openssl_fdset((int)fds[i], &asyncfds);
     }
     select(width, (void *)&asyncfds, NULL, NULL, NULL);
+    OPENSSL_free(fds);
 #endif
 }
 
