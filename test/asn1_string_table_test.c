@@ -70,7 +70,8 @@ static int test_string_tbl()
     return rv;
 }
 
-void register_tests(void)
+int setup_tests(void)
 {
     ADD_TEST(test_string_tbl);
+    return 1;
 }
