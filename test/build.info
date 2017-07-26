@@ -41,7 +41,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
-          pkey_meth_test uitest cipherbytes_test asn1_encode_test \
+          pkey_meth_test uitest cipherbytes_test asn1_encode_test asn1_string_table_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test
@@ -360,6 +360,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[asn1_encode_test]=asn1_encode_test.c
   INCLUDE[asn1_encode_test]=../include
   DEPEND[asn1_encode_test]=../libcrypto libtestutil.a
+
+  SOURCE[asn1_string_table_test]=asn1_string_table_test.c
+  INCLUDE[asn1_string_table_test]=../include
+  DEPEND[asn1_string_table_test]=../libcrypto libtestutil.a
 
   SOURCE[time_offset_test]=time_offset_test.c
   INCLUDE[time_offset_test]=.. ../include
