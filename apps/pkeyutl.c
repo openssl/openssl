@@ -59,17 +59,21 @@ struct kdf_info {
 
 static struct pkey_option kdf_tls1_prf_options[] = {
     { "md", "message digest", 1 },
-    { "secret | hexsecret", "KDF secret (either as a string or hex-encoded)", 1 },
+    { "secret | hexsecret",
+        "KDF secret (either as a string or hex-encoded)", 1 },
     { "seed | hexseed", "KDF seed (either as a string or hex-encoded)", 1 },
     { NULL }
 };
 
 static struct pkey_option kdf_hkdf_options[] = {
-    { "mode", "HKDF operation mode. Must be one of EXTRACT_AND_EXPAND, EXTRACT_ONLY or EXPAND_ONLY. Defaults to EXTRACT_AND_EXPAND.", 0 },
+    { "mode", "HKDF operation mode. Must be one of EXTRACT_AND_EXPAND, " \
+        "EXTRACT_ONLY or EXPAND_ONLY. Defaults to EXTRACT_AND_EXPAND.", 0 },
     { "md", "message digest", 1 },
-    { "salt | hexsalt", "Optional salt value (either as a string or hex-encoded)", 0 },
+    { "salt | hexsalt",
+        "Optional salt value (either as a string or hex-encoded)", 0 },
     { "key | hexkey", "HMAC key (either as a string or hex-encoded)", 1 },
-    { "info | hexinfo", "Optional context and application specific information (either as a string or hex-encoded)", 0 },
+    { "info | hexinfo", "Optional context and application specific " \
+        "information (either as a string or hex-encoded)", 0 },
     { NULL }
 };
 
@@ -239,14 +243,17 @@ int pkeyutl_main(int argc, char **argv)
 
     if (kdfalg != NULL) {
         if (kdflen == 0) {
-           BIO_printf(bio_err, "%s: no KDF length given (-kdflen parameter).\n", prog);
+           BIO_printf(bio_err,
+                    "%s: no KDF length given (-kdflen parameter).\n", prog);
            goto opthelp;
         }
     } else if (inkey == NULL) {
-        BIO_printf(bio_err, "%s: no private key given (-inkey parameter).\n", prog);
+        BIO_printf(bio_err,
+                "%s: no private key given (-inkey parameter).\n", prog);
         goto opthelp;
     } else if (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE) {
-        BIO_printf(bio_err, "%s: no peer key given (-peerkey parameter).\n", prog);
+        BIO_printf(bio_err,
+                "%s: no peer key given (-peerkey parameter).\n", prog);
         goto opthelp;
     }
     ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
@@ -269,7 +276,8 @@ int pkeyutl_main(int argc, char **argv)
             const char *opt = sk_OPENSSL_STRING_value(pkeyopts, i);
 
             if (pkey_ctrl_string(ctx, opt) <= 0) {
-                BIO_printf(bio_err, "%s: Can't set parameter \"%s\":\n", prog, opt);
+                BIO_printf(bio_err, "%s: Can't set parameter \"%s\":\n",
+                        prog, opt);
                 ERR_print_errors(bio_err);
                 goto end;
             }
@@ -578,7 +586,9 @@ static void print_kdf_options(const char *kdfalg) {
     BIO_printf(bio_err, "Supported options of the \"%s\" KDF:\n", kdfalg);
     option = kdf->pkey_options;
     while (option->keys) {
-        BIO_printf(bio_err, "  %-20s %s%s\n", option->keys, option->description, option->mandatory ? "; mandatory argument" : "");
+        BIO_printf(bio_err, "  %-20s %s%s\n",
+                option->keys, option->description,
+                option->mandatory ? "; mandatory argument" : "");
         option++;
     }
 }
