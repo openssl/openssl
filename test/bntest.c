@@ -2036,7 +2036,6 @@ static int run_file_tests(int i)
 int setup_tests(void)
 {
     int n = test_get_argument_count();
-    int result = EXIT_FAILURE;
 
     if (!TEST_ptr(ctx = BN_CTX_new()))
         return 0;
