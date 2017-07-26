@@ -485,6 +485,7 @@ static int rand_bytes(unsigned char *buf, int num)
     ASYNC_block_pause();
     if (!EVP_DigestUpdate(m, sp->md, sizeof(sp->md))
             || !EVP_DigestFinal_ex(m, sp->md, NULL)) {
+        ASYNC_unblock_pause();
         CRYPTO_THREAD_unlock(rand_lock);
         goto err;
     }
