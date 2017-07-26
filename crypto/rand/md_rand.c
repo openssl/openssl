@@ -492,6 +492,7 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
      */
     ASYNC_block_pause();
     if (!MD_Update(m, md, MD_DIGEST_LENGTH) || !MD_Final(m, md)) {
+        ASYNC_unblock_pause();
         CRYPTO_THREAD_unlock(rand_lock);
         goto err;
     }
