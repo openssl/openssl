@@ -28,10 +28,6 @@ struct rand_meth_st {
     int (*status) (void);
 };
 
-# ifdef BN_DEBUG
-extern int rand_predictable;
-# endif
-
 int RAND_set_rand_method(const RAND_METHOD *meth);
 const RAND_METHOD *RAND_get_rand_method(void);
 # ifndef OPENSSL_NO_ENGINE

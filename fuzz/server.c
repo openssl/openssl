@@ -465,11 +465,6 @@ static const char DSACertPEM[] = {
 };
 #endif
 
-#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-extern int rand_predictable;
-#endif
-#define ENTROPY_NEEDED 32
-
 /* unused, to avoid warning. */
 static int idx;
 
@@ -497,15 +492,10 @@ int FuzzerInitialize(int *argc, char ***argv)
     ERR_get_state();
     CRYPTO_free_ex_index(0, -1);
     idx = SSL_get_ex_data_X509_STORE_CTX_idx();
-    RAND_add("", 1, ENTROPY_NEEDED);
-    RAND_status();
+    FuzzerSetRand();
     comp_methods = SSL_COMP_get_compression_methods();
     OPENSSL_sk_sort((OPENSSL_STACK *)comp_methods);
 
-
-#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    rand_predictable = 1;
-#endif
 
     return 1;
 }

@@ -18,7 +18,38 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <openssl/crypto.h>
+#include <openssl/rand.h>
 #include "fuzzer.h"
+
+static int fuzz_bytes(unsigned char *buf, int num)
+{
+    unsigned char val = 1;
+
+    while (--num >= 0)
+        *buf++ = val++;
+    return 1;
+}
+
+static int fuzz_status(void)
+{
+    return 1;
+}
+
+static RAND_METHOD fuzz_rand_method = {
+    NULL,
+    fuzz_bytes,
+    NULL,
+    NULL,
+    fuzz_bytes,
+    fuzz_status
+};
+
+void FuzzerSetRand(void)
+{
+    RAND_set_rand_method(&fuzz_rand_method);
+}
+
+
 
 int main(int argc, char **argv) {
     int n;
