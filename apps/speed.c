@@ -247,11 +247,6 @@ static double ecdsa_results[EC_NUM][2];
 static double ecdh_results[EC_NUM][1];
 #endif
 
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
-static const char rnd_seed[] =
-    "string to make the random number generator think it has randomness";
-#endif
-
 #ifdef SIGALRM
 # if defined(__STDC__) || defined(sgi) || defined(_AIX)
 #  define SIGRETTYPE void
@@ -2397,9 +2392,6 @@ int speed_main(int argc, char **argv)
         RAND_bytes(loopargs[i].buf, 36);
 
 #ifndef OPENSSL_NO_DSA
-    if (RAND_status() != 1) {
-        RAND_seed(rnd_seed, sizeof rnd_seed);
-    }
     for (testnum = 0; testnum < DSA_NUM; testnum++) {
         int st = 0;
         if (!dsa_doit[testnum])
@@ -2467,9 +2459,6 @@ int speed_main(int argc, char **argv)
 #endif                          /* OPENSSL_NO_DSA */
 
 #ifndef OPENSSL_NO_EC
-    if (RAND_status() != 1) {
-        RAND_seed(rnd_seed, sizeof rnd_seed);
-    }
     for (testnum = 0; testnum < EC_NUM; testnum++) {
         int st = 1;
 
@@ -2554,9 +2543,6 @@ int speed_main(int argc, char **argv)
         }
     }
 
-    if (RAND_status() != 1) {
-        RAND_seed(rnd_seed, sizeof rnd_seed);
-    }
     for (testnum = 0; testnum < EC_NUM; testnum++) {
         int ecdh_checks = 1;
 

@@ -92,12 +92,20 @@ int rand_read_cpu(void)
 #endif
 
 /*
+ * Get entropy from the system, via RAND_poll if needed.  The |entropy|
+ * is the bits of randomness required, and is expected to fit into a buffer
+ * of |min_len|..|max__len| size.  We assume we're getting high-quality
+ * randomness from the system, and that |min_len| bytes will do.
  */
 static size_t entropy_from_system(RAND_DRBG *drbg,
                                   unsigned char **pout,
                                   int entropy, size_t min_len, size_t max_len)
 {
-    entropy /= 8;
+    int i;
+
+    if (min_len > sizeof(drbg->randomness))
+        /* Sigh; we need more room. TODO make the buffersize dynamic? */
+        return 0;
 
     if (rand_drbg.filled) {
         /* Re-use what we have. */
@@ -105,27 +113,27 @@ static size_t entropy_from_system(RAND_DRBG *drbg,
         return sizeof(drbg->randomness);
     }
 
-    /* If we don't have enough, get more. */
+    /* If we don't have enough, try to get more. */
     CRYPTO_THREAD_write_lock(rand_bytes.lock);
-    if (rand_bytes.curr < entropy) {
+    for (i = RAND_POLL_RETRIES; rand_bytes.curr < min_len && --i >= 0; ) {
         CRYPTO_THREAD_unlock(rand_bytes.lock);
         RAND_poll();
         CRYPTO_THREAD_write_lock(rand_bytes.lock);
     }
 
     /* Get desired amount, but no more than we have. */
-    if (entropy > rand_bytes.curr)
-        entropy = rand_bytes.curr;
-    if (entropy != 0) {
-        memcpy(drbg->randomness, rand_bytes.buff, entropy);
+    if (min_len > rand_bytes.curr)
+        min_len = rand_bytes.curr;
+    if (min_len != 0) {
+        memcpy(drbg->randomness, rand_bytes.buff, min_len);
         rand_drbg.filled = 1;
         /* Update amount left and shift it down. */
-        rand_bytes.curr -= entropy;
+        rand_bytes.curr -= min_len;
         if (rand_bytes.curr != 0)
-            memmove(rand_bytes.buff, &rand_bytes.buff[entropy], rand_bytes.curr);
+            memmove(rand_bytes.buff, &rand_bytes.buff[min_len], rand_bytes.curr);
     }
     CRYPTO_THREAD_unlock(rand_bytes.lock);
-    return entropy;
+    return min_len;
 }
 
 DEFINE_RUN_ONCE_STATIC(do_rand_init)
@@ -142,6 +150,7 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     rand_bytes.lock = CRYPTO_THREAD_lock_new();
     ret &= rand_bytes.lock != NULL;
     rand_bytes.size = MAX_RANDOMNESS_HELD;
+    /* TODO: Should this be secure malloc? */
     rand_bytes.buff = malloc(rand_bytes.size);
     ret &= rand_bytes.buff != NULL;
 
