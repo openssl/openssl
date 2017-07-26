@@ -1965,7 +1965,10 @@ EVP_R_UNSUPPORTED_SALT_TYPE:126:unsupported salt type
 EVP_R_WRAP_MODE_NOT_ALLOWED:170:wrap mode not allowed
 EVP_R_WRONG_FINAL_BLOCK_LENGTH:109:wrong final block length
 KDF_R_INVALID_DIGEST:100:invalid digest
+KDF_R_MISSING_KEY:104:missing key
+KDF_R_MISSING_MESSAGE_DIGEST:105:missing message digest
 KDF_R_MISSING_PARAMETER:101:missing parameter
+KDF_R_MISSING_SEED:106:missing seed
 KDF_R_UNKNOWN_PARAMETER_TYPE:103:unknown parameter type
 KDF_R_VALUE_MISSING:102:value missing
 OBJ_R_OID_EXISTS:102:oid exists
