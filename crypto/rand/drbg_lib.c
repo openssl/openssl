@@ -78,7 +78,12 @@ RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
         if (!RAND_DRBG_set_callbacks(drbg, drbg_entropy_from_parent,
                                      drbg_release_entropy,
                                      NULL, NULL)
-                || !RAND_DRBG_instantiate(drbg, NULL, 0))
+                /*
+                 * Add in our address.  Note we are adding the pointer
+                 * itself, not its contents!
+                 */
+                || !RAND_DRBG_instantiate(drbg,
+                                          (unsigned char*)&drbg, sizeof(drbg)))
             goto err;
     }
 
