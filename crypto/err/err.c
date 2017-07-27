@@ -89,6 +89,7 @@ static ERR_STRING_DATA ERR_str_functs[] = {
     {ERR_PACK(0, SYS_F_CLOSE, 0), "close"},
     {ERR_PACK(0, SYS_F_IOCTL, 0), "ioctl"},
     {ERR_PACK(0, SYS_F_STAT, 0), "stat"},
+    {ERR_PACK(0, SYS_F_FCNTL, 0), "fcntl"},
     {0, NULL},
 };
 
