@@ -370,7 +370,13 @@ struct bn_gencb_st {
  *
  *                                      <appro@fy.chalmers.se>
  */
-#  if defined(__alpha) && (defined(SIXTY_FOUR_BIT_LONG) || defined(SIXTY_FOUR_BIT))
+#  if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16 && \
+      (defined(SIXRY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG))
+#   define BN_UMULT_HIGH(a,b)          (((__uint128_t)(a)*(b))>>64)
+#   define BN_UMULT_LOHI(low,high,a,b) ({       \
+        __uint128_t ret=(__uint128_t)(a)*(b);   \
+        (high)=ret>>64; (low)=ret;       })
+#  elif defined(__alpha) && (defined(SIXTY_FOUR_BIT_LONG) || defined(SIXTY_FOUR_BIT))
 #   if defined(__DECC)
 #    include <c_asm.h>
 #    define BN_UMULT_HIGH(a,b)   (BN_ULONG)asm("umulh %a0,%a1,%v0",(a),(b))
@@ -418,24 +424,16 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
 #   endif
 #  elif defined(__mips) && (defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG))
 #   if defined(__GNUC__) && __GNUC__>=2
-#    if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
-      /* "h" constraint is not an option on R6 and was removed in 4.4 */
-#     define BN_UMULT_HIGH(a,b)          (((__uint128_t)(a)*(b))>>64)
-#     define BN_UMULT_LOHI(low,high,a,b) ({     \
-        __uint128_t ret=(__uint128_t)(a)*(b);   \
-        (high)=ret>>64; (low)=ret;       })
-#    else
-#     define BN_UMULT_HIGH(a,b) ({      \
+#    define BN_UMULT_HIGH(a,b) ({       \
         register BN_ULONG ret;          \
         asm ("dmultu    %1,%2"          \
              : "=h"(ret)                \
              : "r"(a), "r"(b) : "l");   \
         ret;                    })
-#     define BN_UMULT_LOHI(low,high,a,b)\
+#    define BN_UMULT_LOHI(low,high,a,b) \
         asm ("dmultu    %2,%3"          \
              : "=l"(low),"=h"(high)     \
              : "r"(a), "r"(b));
-#    endif
 #   endif
 #  elif defined(__aarch64__) && defined(SIXTY_FOUR_BIT_LONG)
 #   if defined(__GNUC__) && __GNUC__>=2
