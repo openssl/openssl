@@ -382,7 +382,7 @@ struct bn_gencb_st {
              : "r"(a), "r"(b));         \
         ret;                    })
 #   endif                       /* compiler */
-#  elif defined(_ARCH_PPC) && defined(__64BIT__) && defined(SIXTY_FOUR_BIT_LONG)
+#  elif defined(_ARCH_PPC64) && defined(SIXTY_FOUR_BIT_LONG)
 #   if defined(__GNUC__) && __GNUC__>=2
 #    define BN_UMULT_HIGH(a,b)   ({      \
         register BN_ULONG ret;          \
@@ -449,12 +449,6 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
 #  endif                        /* cpu */
 # endif                         /* OPENSSL_NO_ASM */
 
-/*************************************************************
- * Using the long long type
- */
-# define Lw(t)    (((BN_ULONG)(t))&BN_MASK2)
-# define Hw(t)    (((BN_ULONG)((t)>>BN_BITS2))&BN_MASK2)
-
 # ifdef BN_DEBUG_RAND
 #  define bn_clear_top2max(a) \
         { \
@@ -468,6 +462,12 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
 # endif
 
 # ifdef BN_LLONG
+/*******************************************************************
+ * Using the long long type, has to be twice as wide as BN_ULONG...
+ */
+#  define Lw(t)    (((BN_ULONG)(t))&BN_MASK2)
+#  define Hw(t)    (((BN_ULONG)((t)>>BN_BITS2))&BN_MASK2)
+
 #  define mul_add(r,a,w,c) { \
         BN_ULLONG t; \
         t=(BN_ULLONG)w * (a) + (r) + (c); \
