@@ -92,14 +92,21 @@ int rand_read_cpu(void)
 #endif
 
 /*
+ * DRBG has two sets of callbacks; we only discuss the "entropy" one
+ * here.  When the DRBG needs additional randomness bits (called entropy
+ * in the NIST document), it calls the get_entropy callback which fills in
+ * a pointer and returns the number of bytes. When the DRBG is finished with
+ * the buffer, it calls the cleanup_entropy callback, with the value of
+ * the buffer that the get_entropy callback filled in.
+ *
  * Get entropy from the system, via RAND_poll if needed.  The |entropy|
  * is the bits of randomness required, and is expected to fit into a buffer
  * of |min_len|..|max__len| size.  We assume we're getting high-quality
  * randomness from the system, and that |min_len| bytes will do.
  */
-static size_t entropy_from_system(RAND_DRBG *drbg,
-                                  unsigned char **pout,
-                                  int entropy, size_t min_len, size_t max_len)
+size_t drbg_entropy_from_system(RAND_DRBG *drbg,
+                                unsigned char **pout,
+                                int entropy, size_t min_len, size_t max_len)
 {
     int i;
 
@@ -136,6 +143,29 @@ static size_t entropy_from_system(RAND_DRBG *drbg,
     return min_len;
 }
 
+size_t drbg_entropy_from_parent(RAND_DRBG *drbg,
+                                unsigned char **pout,
+                                int entropy, size_t min_len, size_t max_len)
+{
+    int st;
+
+    /* Make sure not to overflow buffer; shouldn't happen. */
+    if (min_len > (int)sizeof(drbg->randomness))
+        min_len = sizeof(drbg->randomness);
+
+    /* Get random from parent, include our state as additional input. */
+    st = RAND_DRBG_generate(drbg->parent, drbg->randomness, min_len, 0,
+                            (unsigned char *)drbg, sizeof(*drbg));
+    drbg->filled = 1;
+    return st == 0 ? st : min_len;
+}
+
+void drbg_release_entropy(RAND_DRBG *drbg, unsigned char *out)
+{
+    drbg->filled = 0;
+    OPENSSL_cleanse(drbg->randomness, sizeof(drbg->randomness));
+}
+
 DEFINE_RUN_ONCE_STATIC(do_rand_init)
 {
     int ret = 1;
@@ -157,8 +187,8 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     rand_drbg.lock = CRYPTO_THREAD_lock_new();
     ret &= rand_drbg.lock != NULL;
     ret &= RAND_DRBG_set(&rand_drbg, NID_aes_128_ctr, 0) == 1;
-    ret &= RAND_DRBG_set_callbacks(&rand_drbg,
-                                   entropy_from_system, rand_cleanup_entropy,
+    ret &= RAND_DRBG_set_callbacks(&rand_drbg, drbg_entropy_from_system,
+                                   drbg_release_entropy,
                                    NULL, NULL) == 1;
     return ret;
 }
