@@ -17,8 +17,13 @@
 # include <openssl/ec.h>
 # include "internal/rand.h"
 
-/* Amount of randomness (in bytes) we want for initial seeding. */
-# define RANDOMNESS_NEEDED              (256 / 8)
+/*
+ * Amount of randomness (in bytes) we want for initial seeding.
+ * This is based on the fact that we use AES-128 as the CRBG, and
+ * that we use the derivation function.  If either of those changes,
+ * (see rand_init() in rand_lib.c), change this.
+ */
+# define RANDOMNESS_NEEDED              16
 
 /* Maximum amount of randomness to hold in RAND_BYTES_BUFFER. */
 # define MAX_RANDOMNESS_HELD            (4 * RANDOMNESS_NEEDED)
@@ -104,7 +109,7 @@ struct rand_drbg_st {
     /* Implementation specific structures; was a union, but inline for now */
     RAND_DRBG_CTR ctr;
 
-    /* Callback functions.  See comments in drbg_lib.c */
+    /* Callback functions.  See comments in rand_lib.c */
     RAND_DRBG_get_entropy_fn get_entropy;
     RAND_DRBG_cleanup_entropy_fn cleanup_entropy;
     RAND_DRBG_get_nonce_fn get_nonce;

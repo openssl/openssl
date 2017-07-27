@@ -186,7 +186,9 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
 
     rand_drbg.lock = CRYPTO_THREAD_lock_new();
     ret &= rand_drbg.lock != NULL;
-    ret &= RAND_DRBG_set(&rand_drbg, NID_aes_128_ctr, 0) == 1;
+    /* If you change these parameters, see RANDOMNESS_NEEDED */
+    ret &= RAND_DRBG_set(&rand_drbg,
+                         NID_aes_128_ctr, RAND_DRBG_FLAG_CTR_USE_DF) == 1;
     ret &= RAND_DRBG_set_callbacks(&rand_drbg, drbg_entropy_from_system,
                                    drbg_release_entropy,
                                    NULL, NULL) == 1;
