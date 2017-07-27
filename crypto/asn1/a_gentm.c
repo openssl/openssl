@@ -23,7 +23,7 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
     if (d->type != V_ASN1_GENERALIZEDTIME)
         return 0;
     return asn1_time_to_tm(tm, d);
- }
+}
 
 int ASN1_GENERALIZEDTIME_check(const ASN1_GENERALIZEDTIME *d)
 {
@@ -45,9 +45,9 @@ int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str)
                 return 0;
             s->type = V_ASN1_GENERALIZEDTIME;
         }
-        return (1);
-    } else
-        return (0);
+        return 1;
+    }
+    return 0;
 }
 
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
@@ -108,7 +108,7 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
     return NULL;
 }
 
-const char *_asn1_mon[12] = {
+static const char _asn1_mon[12][4] = {
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
@@ -154,13 +154,10 @@ int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
         }
     }
 
-    if (BIO_printf(bp, "%s %2d %02d:%02d:%02d%.*s %d%s",
-                   _asn1_mon[M - 1], d, h, m, s, f_len, f, y,
-                   (gmt) ? " GMT" : "") <= 0)
-        return (0);
-    else
-        return (1);
+    return BIO_printf(bp, "%s %2d %02d:%02d:%02d%.*s %d%s",
+                      _asn1_mon[M - 1], d, h, m, s, f_len, f, y,
+                      (gmt) ? " GMT" : "") > 0;
  err:
     BIO_write(bp, "Bad time value", 14);
-    return (0);
+    return 0;
 }
