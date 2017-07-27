@@ -26,41 +26,6 @@
  */
 
 /*
- * DRBG has two sets of callbacks; we only discuss the "entropy" one
- * here.  When the DRBG needs additional randomness bits (called entropy
- * in the NIST document), it calls the get_entropy callback which fills in
- * a pointer and returns the number of bytes. When the DRBG is finished with
- * the buffer, it calls the cleanup_entropy callback, with the value of
- * the buffer that the get_entropy callback filled in.
- *
- * See comments for entropy_from_system() for discussion of |entropy| and
- * |min_len|.
- */
-
-static size_t entropy_from_parent(RAND_DRBG *drbg,
-                                  unsigned char **pout,
-                                  int entropy, size_t min_len, size_t max_len)
-{
-    int st;
-
-    /* Make sure not to overflow buffer; shouldn't happen. */
-    if (min_len > (int)sizeof(drbg->randomness))
-        min_len = sizeof(drbg->randomness);
-
-    /* Get random from parent, include our state as additional input. */
-    st = RAND_DRBG_generate(drbg->parent, drbg->randomness, min_len, 0,
-                            (unsigned char *)drbg, sizeof(*drbg));
-    drbg->filled = 1;
-    return st == 0 ? st : min_len;
-}
-
-void rand_cleanup_entropy(RAND_DRBG *drbg, unsigned char *out)
-{
-    drbg->filled = 0;
-    OPENSSL_cleanse(drbg->randomness, sizeof(drbg->randomness));
-}
-
-/*
  * Set/initialize |drbg| to be of type |nid|, with optional |flags|.
  * Return -2 if the type is not supported, 1 on success and -1 on
  * failure.
@@ -110,8 +75,8 @@ RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
         goto err;
 
     if (parent != NULL) {
-        if (!RAND_DRBG_set_callbacks(drbg,
-                                     entropy_from_parent, rand_cleanup_entropy,
+        if (!RAND_DRBG_set_callbacks(drbg, drbg_entropy_from_parent,
+                                     drbg_release_entropy,
                                      NULL, NULL)
                 || !RAND_DRBG_instantiate(drbg, NULL, 0))
             goto err;
