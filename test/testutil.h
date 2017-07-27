@@ -142,7 +142,7 @@ const char *test_get_option_argument(const char *option);
  * rather link to one of the helper main() methods.
  */
 
-void add_test(const char *test_case_name, int (*test_fn) ());
+void add_test(const char *test_case_name, int (*test_fn) (void));
 void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num,
                    int subtest);
 
@@ -170,7 +170,7 @@ void cleanup_tests(void);
 # endif
 #endif
 
-#  define DECLARE_COMPARISON(type, name, opname)                        \
+# define DECLARE_COMPARISON(type, name, opname)                         \
     int test_ ## name ## _ ## opname(const char *, int,                 \
                                      const char *, const char *,        \
                                      const type, const type);
