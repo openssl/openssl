@@ -297,8 +297,9 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(const ASN1_TIME *t,
     if (out == NULL || *out == NULL) {
         if ((ret = ASN1_GENERALIZEDTIME_new()) == NULL)
             goto err;
-    } else
+    } else {
         ret = *out;
+    }
 
     /* If already GeneralizedTime just copy across */
     if (t->type == V_ASN1_GENERALIZEDTIME) {
@@ -349,7 +350,7 @@ int ASN1_TIME_set_string(ASN1_TIME *s, const char *str)
             return 0;
     }
 
-    if (s && !ASN1_STRING_copy((ASN1_STRING *)s, (ASN1_STRING *)&t))
+    if (s != NULL && !ASN1_STRING_copy((ASN1_STRING *)s, (ASN1_STRING *)&t))
         return 0;
 
     return 1;
@@ -421,7 +422,7 @@ int ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm)
 
         time(&now_t);
         memset(tm, 0, sizeof(*tm));
-        if (OPENSSL_gmtime(&now_t, tm))
+        if (OPENSSL_gmtime(&now_t, tm) != NULL)
             return 1;
         return 0;
     }
@@ -448,5 +449,5 @@ int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
     if (tm->type == V_ASN1_GENERALIZEDTIME)
         return ASN1_GENERALIZEDTIME_print(bp, tm);
     BIO_write(bp, "Bad time value", 14);
-    return (0);
+    return 0;
 }
