@@ -1169,13 +1169,14 @@ int SSL_set_fd(SSL *s, int fd)
     SSL_set_bio(s, bio, bio);
 
 #ifdef OPENSSL_LINUX_TLS
-    ret = setsockopt(fd, SOL_TCP, TCP_ULP, "tls", sizeof("tls"));
+    if (getenv("OPENSSL_KTLS")) {
+            ret = setsockopt(fd, SOL_TCP, TCP_ULP, "tls", sizeof("tls"));
 #ifdef SSL_DEBUG
-    if (ret) {
-        printf("setsockopt failed %d\n", errno);
+            if (ret)
+                printf("setsockopt failed %d\n", errno);
+#endif
+#endif
     }
-#endif
-#endif
 
     ret = 1;
  err:

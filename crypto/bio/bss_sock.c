@@ -68,12 +68,14 @@ BIO *BIO_new_socket(int fd, int close_flag)
         return (NULL);
     BIO_set_fd(ret, fd, close_flag);
 #ifdef OPENSSL_LINUX_TLS
-    rc = setsockopt(fd, SOL_TCP, TCP_ULP, "tls", sizeof("tls"));
+    if (getenv("OPENSSL_KTLS")) {
+	    rc = setsockopt(fd, SOL_TCP, TCP_ULP, "tls", sizeof("tls"));
 #ifdef SSL_DEBUG
-    if (rc) {
-        printf("setsockopt failed %d\n", errno);
-    }
+	    if (rc) {
+		    printf("setsockopt failed %d\n", errno);
+	    }
 #endif
+    }
 
 # endif
     return (ret);

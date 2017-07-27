@@ -324,6 +324,13 @@ int tls1_change_cipher_state(SSL *s, int which)
     }
 
 #ifdef OPENSSL_LINUX_TLS
+    if (!getenv("OPENSSL_KTLS")) {
+#ifdef SSL_DEBUG
+        printf("\nOPENSSL_KTLS is not set, skipping offload\n");
+#endif //
+	goto skip_offload;
+    }
+
     if (!(which & SSL3_CC_WRITE)) {
 #ifdef SSL_DEBUG
         printf("\nSkipping offload for non-write context\n");
