@@ -26,7 +26,7 @@
 /* Maximum count allowed in reseeding */
 # define MAX_RESEED                     (1 << 24)
 
-/* How often we call RAND_poll() in entropy_from_system */
+/* How often we call RAND_poll() in drbg_entropy_from_system */
 # define RAND_POLL_RETRIES 8
 
 /* Max size of entropy, addin, etc. Larger than any reasonable value */
@@ -44,10 +44,10 @@ typedef enum drbg_status_e {
 
 /*
  * A buffer of random bytes to be fed as "entropy" into the DRBG.  RAND_add()
- * adds data to the buffer, and the entropy_from_system() pulls data from
+ * adds data to the buffer, and the drbg_entropy_from_system() pulls data from
  * the buffer. We have a separate data structure because of the way the
  * API is defined; otherwise we'd run into deadlocks (RAND_bytes ->
- * RAND_DRBG_generate* -> entropy_from_system -> RAND_poll -> RAND_add ->
+ * RAND_DRBG_generate* -> drbg_entropy_from_system -> RAND_poll -> RAND_add ->
  * drbg_add*; the functions with an asterisk lock).
  */
 typedef struct rand_bytes_buffer_st {
@@ -116,11 +116,18 @@ extern RAND_METHOD rand_meth;
 extern RAND_BYTES_BUFFER rand_bytes;
 extern RAND_DRBG rand_drbg;
 
-void rand_cleanup_entropy(RAND_DRBG *drbg, unsigned char *out);
-
 /* Hardware-based seeding functions. */
 void rand_read_tsc(void);
 int rand_read_cpu(void);
+
+/* DRBG entropy callbacks. */
+void drbg_release_entropy(RAND_DRBG *drbg, unsigned char *out);
+size_t drbg_entropy_from_parent(RAND_DRBG *drbg,
+                                unsigned char **pout,
+                                int entropy, size_t min_len, size_t max_len);
+size_t drbg_entropy_from_system(RAND_DRBG *drbg,
+                                unsigned char **pout,
+                                int entropy, size_t min_len, size_t max_len);
 
 /* DRBG functions implementing AES-CTR */
 int ctr_init(RAND_DRBG *drbg);
