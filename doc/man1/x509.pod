@@ -53,6 +53,7 @@ B<openssl> B<x509>
 [B<-CAserial filename>]
 [B<-force_pubkey key>]
 [B<-text>]
+[B<-ext extensions>]
 [B<-certopt option>]
 [B<-C>]
 [B<-[digest]>]
@@ -156,6 +157,12 @@ but are described in the B<TRUST SETTINGS> section.
 Prints out the certificate in text form. Full details are output including the
 public key, signature algorithms, issuer and subject names, serial number
 any extensions present and any trust settings.
+
+=item B<-ext extensions>
+
+Prints out the certificate extensions in text form. Extensions are specified
+with a comma separated string, e.g., "subjectAltName,subjectKeyIdentifier".
+See the L<x509v3_config(5)> manual page for the extension names.
 
 =item B<-certopt option>
 
@@ -691,6 +698,14 @@ line.
 Display the contents of a certificate:
 
  openssl x509 -in cert.pem -noout -text
+
+Display the "Subject Alternative Name" extension of a certificate:
+
+ openssl x509 -in cert.pem -noout -ext subjectAltName
+
+Display the more extensions of a certificate:
+
+ openssl x509 -in cert.pem -noout -ext subjectAltName,nsCertType
 
 Display the certificate serial number:
 

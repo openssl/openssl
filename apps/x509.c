@@ -42,6 +42,7 @@ static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *diges
                         const char *section, ASN1_INTEGER *sno, int reqfile,
                         int preserve_dates);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
+static int print_x509v3_exts(BIO *bio, X509 *x, const char *exts);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -59,7 +60,7 @@ typedef enum OPTION_choice {
     OPT_SUBJECT_HASH_OLD,
     OPT_ISSUER_HASH_OLD,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
-    OPT_R_ENUM
+    OPT_R_ENUM, OPT_EXT
 } OPTION_CHOICE;
 
 const OPTIONS x509_options[] = {
@@ -117,6 +118,7 @@ const OPTIONS x509_options[] = {
     {"CAserial", OPT_CASERIAL, 's', "Serial file"},
     {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
     {"text", OPT_TEXT, '-', "Print the certificate in text form"},
+    {"ext", OPT_EXT, 's', "Print various X509V3 extensions"},
     {"C", OPT_C, '-', "Print out C code forms"},
     {"extfile", OPT_EXTFILE, '<', "File with X509V3 extensions to add"},
     OPT_R_OPTIONS,
@@ -162,7 +164,7 @@ int x509_main(int argc, char **argv)
     X509_STORE *ctx = NULL;
     const EVP_MD *digest = NULL;
     char *CAkeyfile = NULL, *CAserial = NULL, *fkeyfile = NULL, *alias = NULL;
-    char *checkhost = NULL, *checkemail = NULL, *checkip = NULL;
+    char *checkhost = NULL, *checkemail = NULL, *checkip = NULL, *exts = NULL;
     char *extsect = NULL, *extfile = NULL, *passin = NULL, *passinarg = NULL;
     char *infile = NULL, *outfile = NULL, *keyfile = NULL, *CAfile = NULL;
     char *prog;
@@ -174,7 +176,7 @@ int x509_main(int argc, char **argv)
     int noout = 0, sign_flag = 0, CA_flag = 0, CA_createserial = 0, email = 0;
     int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
     int ret = 1, i, num = 0, badsig = 0, clrext = 0, nocert = 0;
-    int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0;
+    int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0, ext = 0;
     int enddate = 0;
     time_t checkoffset = 0;
     unsigned long certflag = 0;
@@ -376,6 +378,10 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_NOOUT:
             noout = ++num;
+            break;
+        case OPT_EXT:
+            ext = ++num;
+            exts = opt_arg();
             break;
         case OPT_NOCERT:
             nocert = 1;
@@ -839,6 +845,8 @@ int x509_main(int argc, char **argv)
                 noout = 1;
             } else if (ocspid == i) {
                 X509_ocspid_print(out, x);
+            } else if (ext == i) {
+                print_x509v3_exts(out, x, exts);
             }
         }
     }
@@ -1096,4 +1104,94 @@ static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt)
             BIO_printf(bio, "Yes (WARNING code=%d)\n", idret);
     }
     return 1;
+}
+
+static int parse_ext_names(char *names, const char **result)
+{
+    char *p, *q;
+    int cnt = 0, len = 0;
+
+    p = q = names;
+    len = strlen(names);
+
+    while (q - names <= len) {
+        if (*q != ',' && *q != '\0') {
+            q++;
+            continue;
+        }
+        if (p != q) {
+            /* found */
+            if (result != NULL) {
+                result[cnt] = p;
+                *q = '\0';
+            }
+            cnt++;
+        }
+        p = ++q;
+    }
+
+    return cnt;
+}
+
+static int print_x509v3_exts(BIO *bio, X509 *x, const char *ext_names)
+{
+    const STACK_OF(X509_EXTENSION) *exts = NULL;
+    STACK_OF(X509_EXTENSION) *exts2 = NULL;
+    X509_EXTENSION *ext = NULL;
+    ASN1_OBJECT *obj;
+    int i, j, ret = 0, num, nn = 0;
+    const char *sn, **names = NULL;
+    char *tmp_ext_names = NULL;
+
+    exts = X509_get0_extensions(x);
+    if ((num = sk_X509_EXTENSION_num(exts)) <= 0) {
+        BIO_printf(bio, "No extensions in certificate\n");
+        ret = 1;
+        goto end;
+    }
+
+    /* parse comma separated ext name string */
+    if ((tmp_ext_names = OPENSSL_strdup(ext_names)) == NULL)
+        goto end;
+    if ((nn = parse_ext_names(tmp_ext_names, NULL)) == 0) {
+        BIO_printf(bio, "Invalid extension names: %s\n", ext_names);
+        goto end;
+    }
+    if ((names = OPENSSL_malloc(sizeof(char *) * nn)) == NULL)
+        goto end;
+    parse_ext_names(tmp_ext_names, names);
+
+    for (i = 0; i < num; i++) {
+        ext = sk_X509_EXTENSION_value(exts, i);
+
+        /* check if this ext is what we want */
+        obj = X509_EXTENSION_get_object(ext);
+        sn = OBJ_nid2sn(OBJ_obj2nid(obj));
+        if (sn == NULL || strcmp(sn, "UNDEF") == 0)
+            continue;
+
+        for (j = 0; j < nn; j++) {
+            if (strcmp(sn, names[j]) == 0) {
+                /* push the extension into a new stack */
+                if (exts2 == NULL
+                    && (exts2 = sk_X509_EXTENSION_new_null()) == NULL)
+                    goto end;
+                if (!sk_X509_EXTENSION_push(exts2, ext))
+                    goto end;
+            }
+        }
+    }
+
+    if (!sk_X509_EXTENSION_num(exts2)) {
+        BIO_printf(bio, "No extensions matched with %s\n", ext_names);
+        ret = 1;
+        goto end;
+    }
+
+    ret = X509V3_extensions_print(bio, NULL, exts2, 0, 0);
+ end:
+    sk_X509_EXTENSION_free(exts2);
+    OPENSSL_free(names);
+    OPENSSL_free(tmp_ext_names);
+    return ret;
 }
