@@ -99,21 +99,14 @@ err:
  */
 void RAND_DRBG_free(RAND_DRBG *drbg)
 {
-    if (drbg == NULL)
+    /* The global DRBG is free'd by rand_cleanup_int() */
+    if (drbg == NULL || drbg == &rand_drbg)
         return;
 
     ctr_uninstantiate(drbg);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DRBG, drbg, &drbg->ex_data);
-
-    /* Don't free up default DRBG */
-    if (drbg == &rand_drbg) {
-        OPENSSL_cleanse(drbg, sizeof(*drbg));
-        drbg->nid = 0;
-        drbg->state = DRBG_UNINITIALISED;
-    } else {
-        OPENSSL_cleanse(&drbg->ctr, sizeof(drbg->ctr));
-        OPENSSL_free(drbg);
-    }
+    OPENSSL_cleanse(&drbg->ctr, sizeof(drbg->ctr));
+    OPENSSL_free(drbg);
 }
 
 /*
@@ -368,9 +361,10 @@ static void drbg_cleanup(void)
 
 static int drbg_add(const void *buf, int num, double randomness)
 {
-    int left = (int)(rand_bytes.size - rand_bytes.curr);
+    int left;
 
     CRYPTO_THREAD_write_lock(rand_bytes.lock);
+    left = (int)(rand_bytes.size - rand_bytes.curr);
     /* TODO For now, only copy bytes to fill.  Perhaps XOR the excess? */
     if (num > left)
         num = left;
