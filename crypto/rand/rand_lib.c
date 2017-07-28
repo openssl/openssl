@@ -41,14 +41,14 @@ RAND_BYTES_BUFFER rand_bytes;
  * it's not sufficient to indicate whether or not the seeding was
  * done.
  */
-void rand_read_tsc(void)
+void rand_read_tsc(RAND_poll_fn cb, void *arg)
 {
     unsigned char c;
     int i;
 
     for (i = 0; i < 10; i++) {
         c = (unsigned char)(OPENSSL_rdtsc() & 0xFF);
-        RAND_add(&c, 1, 0.5);
+        cb(arg, &c, 1, 0.5);
     }
 }
 #endif
@@ -59,7 +59,7 @@ size_t OPENSSL_ia32_rdrand(void);
 
 extern unsigned int OPENSSL_ia32cap_P[];
 
-int rand_read_cpu(void)
+int rand_read_cpu(RAND_poll_fn cb, void *arg)
 {
     size_t i, s;
 
@@ -69,7 +69,7 @@ int rand_read_cpu(void)
             s = OPENSSL_ia32_rdseed();
             if (s == 0)
                 break;
-            RAND_add(&s, (int)sizeof(s), sizeof(s));
+            cb(arg, &s, (int)sizeof(s), sizeof(s));
         }
         if (i >= RANDOMNESS_NEEDED)
             return 1;
@@ -81,7 +81,7 @@ int rand_read_cpu(void)
             s = OPENSSL_ia32_rdrand();
             if (s == 0)
                 break;
-            RAND_add(&s, (int)sizeof(s), sizeof(s));
+            cb(arg, &s, (int)sizeof(s), sizeof(s));
         }
         if (i >= RANDOMNESS_NEEDED)
             return 1;
@@ -90,6 +90,7 @@ int rand_read_cpu(void)
     return 0;
 }
 #endif
+
 
 /*
  * DRBG has two sets of callbacks; we only discuss the "entropy" one
@@ -209,6 +210,20 @@ void rand_cleanup_int(void)
     CRYPTO_THREAD_lock_free(rand_bytes.lock);
     CRYPTO_THREAD_lock_free(rand_drbg.lock);
     RAND_DRBG_uninstantiate(&rand_drbg);
+}
+
+/*
+ * RAND_poll_ex() gets a function pointer to call when it has random bytes.
+ * RAND_poll() sets the function pointer to be a wrapper that calls RAND_add().
+ */
+static void call_rand_add(void* arg, const void *buf, int num, double r)
+{
+    RAND_add(buf, num, r);
+}
+
+int RAND_poll(void)
+{
+    return RAND_poll_ex(call_rand_add, NULL);
 }
 
 int RAND_set_rand_method(const RAND_METHOD *meth)
