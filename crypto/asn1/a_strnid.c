@@ -96,9 +96,8 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
         ret = ASN1_mbstring_ncopy(out, in, inlen, inform, mask,
                                   tbl->minsize, tbl->maxsize);
     } else {
-        ret =
-            ASN1_mbstring_copy(out, in, inlen, inform,
-                               DIRSTRING_TYPE & global_mask);
+        ret = ASN1_mbstring_copy(out, in, inlen, inform,
+                                 DIRSTRING_TYPE & global_mask);
     }
     if (ret <= 0)
         return NULL;
