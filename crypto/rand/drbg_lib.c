@@ -367,15 +367,22 @@ static void drbg_cleanup(void)
 
 static int drbg_add(const void *buf, int num, double randomness)
 {
-    int left;
+    unsigned char *in = (unsigned char *)buf;
+    unsigned char *out, *end;
 
     CRYPTO_THREAD_write_lock(rand_bytes.lock);
-    left = (int)(rand_bytes.size - rand_bytes.curr);
-    /* TODO For now, only copy bytes to fill.  Perhaps XOR the excess? */
-    if (num > left)
-        num = left;
-    memcpy(&rand_bytes.buff[rand_bytes.curr], buf, num);
-    rand_bytes.curr += num;
+    out = &rand_bytes.buff[rand_bytes.curr];
+    end = &rand_bytes.buff[rand_bytes.size];
+
+    /* Copy whatever fits into the end of the buffer. */
+    for ( ; --num >= 0 && out < end; rand_bytes.curr++)
+        *out++ = *in++;
+
+    /* XOR any the leftover. */
+    while (num > 0) {
+        for (out = rand_bytes.buff; --num >= 0 && out < end; )
+            *out++ ^= *in++;
+    }
 
     CRYPTO_THREAD_unlock(rand_bytes.lock);
     return 1;

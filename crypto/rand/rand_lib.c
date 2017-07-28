@@ -111,9 +111,11 @@ size_t drbg_entropy_from_system(RAND_DRBG *drbg,
 {
     int i;
 
-    if (min_len > (size_t)drbg->size)
-        /* Sigh; we need more room. TODO make the buffersize dynamic? */
-        return 0;
+
+    if (min_len > (size_t)drbg->size) {
+        /* Should not happen.  See comment near RANDOMNESS_NEEDED. */
+        min_len = drbg->size;
+    }
 
     if (rand_drbg.filled) {
         /* Re-use what we have. */
@@ -150,9 +152,10 @@ size_t drbg_entropy_from_parent(RAND_DRBG *drbg,
 {
     int st;
 
-    /* Make sure not to overflow buffer; shouldn't happen. */
-    if (min_len > (size_t)drbg->size)
+    if (min_len > (size_t)drbg->size) {
+        /* Should not happen.  See comment near RANDOMNESS_NEEDED. */
         min_len = drbg->size;
+    }
 
     /* Get random from parent, include our state as additional input. */
     st = RAND_DRBG_generate(drbg->parent, drbg->randomness, min_len, 0,
@@ -180,6 +183,7 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
 
     rand_bytes.lock = CRYPTO_THREAD_lock_new();
     ret &= rand_bytes.lock != NULL;
+    rand_bytes.curr = 0;
     rand_bytes.size = MAX_RANDOMNESS_HELD;
     /* TODO: Should this be secure malloc? */
     rand_bytes.buff = malloc(rand_bytes.size);
