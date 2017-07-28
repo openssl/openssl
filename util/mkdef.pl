@@ -49,7 +49,7 @@ use lib ".";
 use configdata;
 use File::Spec::Functions;
 use File::Basename;
-use if $^O ne "VMS", 'File::Glob' => qw/glob/;
+use if $^O ne "VMS", 'File::Glob' => qw/:bsd_glob/;
 
 my $debug=0;
 
