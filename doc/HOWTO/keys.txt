@@ -74,13 +74,13 @@ you don't want your key to be protected by a password, remove the flag
 An EC key can be used both for key agreement (ECDH) and signing (ECDSA).
 
 Generating a key for ECC is similar to generating a DSA key, which is also
-a two-stup process. First, you have to generate EC parameters from which to
+a two-step process. First, you have to generate EC parameters from which to
 generate the key:
 
-  openssl ecparam -name secp256k1 -out secp256k1.pem
+  openssl ecparam -name prime256v1 -out prime256v1.pem
 
-The secp256k1 (stands for 'SECG curve over a 256 bit prime field') is the
-name of a named elliptic curve based on which parameters are generated.
+The prime256v1 (stands for 'X9.62/SECG curve over a 256 bit prime field')
+is the name of a named elliptic curve based on which parameters are generated.
 You can use the following command to list all supported curves in OpenSSL:
 
   openssl ecparam -list_curves
@@ -102,7 +102,7 @@ you don't want your key to be protected by a password, remove the flag
 
 You can also directly generate the key in one step:
 
-  openssl ecparam -genkey -name secp256k1 -out private.key
+  openssl ecparam -genkey -name prime256v1 -out private.key
 
 -- 
 Richard Levitte
