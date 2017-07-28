@@ -253,7 +253,7 @@ static int test_cts128(int idx)
     fixture.decrypt = CRYPTO_cts128_decrypt;
     fixture.case_name = "cts128";
     fixture.num = idx;
-    EXECUTE_TEST_NO_TEARDOWN(execute_cts128);
+    EXECUTE_TEST(execute_cts128, NULL);
 }
 
 static int test_cts128_nist(int idx)
@@ -266,7 +266,7 @@ static int test_cts128_nist(int idx)
     fixture.decrypt = CRYPTO_nistcts128_decrypt;
     fixture.case_name = "cts128_nist";
     fixture.num = idx;
-    EXECUTE_TEST_NO_TEARDOWN(execute_cts128);
+    EXECUTE_TEST(execute_cts128, NULL);
 }
 
 /*
