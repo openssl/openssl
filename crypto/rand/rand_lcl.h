@@ -59,7 +59,7 @@ typedef struct rand_bytes_buffer_st {
     CRYPTO_RWLOCK *lock;
     size_t size;
     size_t curr;
-    char *buff;
+    unsigned char *buff;
 } RAND_BYTES_BUFFER;
 
 /*
