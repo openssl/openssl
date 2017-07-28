@@ -160,8 +160,10 @@ size_t drbg_entropy_from_parent(RAND_DRBG *drbg,
     /* Get random from parent, include our state as additional input. */
     st = RAND_DRBG_generate(drbg->parent, drbg->randomness, min_len, 0,
                             (unsigned char *)drbg, sizeof(*drbg));
+    if (st == 0)
+        return 0;
     drbg->filled = 1;
-    return st == 0 ? st : min_len;
+    return min_len;
 }
 
 void drbg_release_entropy(RAND_DRBG *drbg, unsigned char *out)
