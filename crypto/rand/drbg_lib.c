@@ -111,8 +111,7 @@ void RAND_DRBG_free(RAND_DRBG *drbg)
     OPENSSL_cleanse(drbg->randomness, drbg->size);
     OPENSSL_free(drbg->randomness);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DRBG, drbg, &drbg->ex_data);
-    OPENSSL_cleanse(&drbg->ctr, sizeof(drbg->ctr));
-    OPENSSL_free(drbg);
+    OPENSSL_clear_free(drbg, sizeof(*drbg));
 }
 
 /*
