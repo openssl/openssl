@@ -15,7 +15,7 @@ use Config;
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
 use File::Path qw/mkpath/;
-use if $^O ne "VMS", 'File::Glob' => qw/glob/;
+use if $^O ne "VMS", 'File::Glob' => qw/:bsd_glob/;
 
 # see INSTALL for instructions.
 
