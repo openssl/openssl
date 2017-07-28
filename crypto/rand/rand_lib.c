@@ -111,14 +111,14 @@ size_t drbg_entropy_from_system(RAND_DRBG *drbg,
 {
     int i;
 
-    if (min_len > sizeof(drbg->randomness))
+    if (min_len > (size_t)drbg->size)
         /* Sigh; we need more room. TODO make the buffersize dynamic? */
         return 0;
 
     if (rand_drbg.filled) {
         /* Re-use what we have. */
         *pout = drbg->randomness;
-        return sizeof(drbg->randomness);
+        return drbg->size;
     }
 
     /* If we don't have enough, try to get more. */
@@ -151,8 +151,8 @@ size_t drbg_entropy_from_parent(RAND_DRBG *drbg,
     int st;
 
     /* Make sure not to overflow buffer; shouldn't happen. */
-    if (min_len > (int)sizeof(drbg->randomness))
-        min_len = sizeof(drbg->randomness);
+    if (min_len > (size_t)drbg->size)
+        min_len = drbg->size;
 
     /* Get random from parent, include our state as additional input. */
     st = RAND_DRBG_generate(drbg->parent, drbg->randomness, min_len, 0,
@@ -187,6 +187,9 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
 
     rand_drbg.lock = CRYPTO_THREAD_lock_new();
     ret &= rand_drbg.lock != NULL;
+    rand_drbg.size = RANDOMNESS_NEEDED;
+    rand_drbg.randomness = OPENSSL_malloc(rand_drbg.size);
+    ret &= rand_drbg.randomness != NULL;
     /* If you change these parameters, see RANDOMNESS_NEEDED */
     ret &= RAND_DRBG_set(&rand_drbg,
                          NID_aes_128_ctr, RAND_DRBG_FLAG_CTR_USE_DF) == 1;
@@ -208,6 +211,7 @@ void rand_cleanup_int(void)
 #endif
     CRYPTO_THREAD_lock_free(rand_meth_lock);
     CRYPTO_THREAD_lock_free(rand_bytes.lock);
+    OPENSSL_free(rand_drbg.randomness);
     CRYPTO_THREAD_lock_free(rand_drbg.lock);
     RAND_DRBG_uninstantiate(&rand_drbg);
 }
