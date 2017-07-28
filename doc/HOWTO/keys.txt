@@ -73,32 +73,33 @@ you don't want your key to be protected by a password, remove the flag
 
 An EC key can be used both for key agreement (ECDH) and signing (ECDSA).
 
-Generating a key for ECC is similar to generating a DSA key, which is also
-a two-step process. First, you have to generate EC parameters from which to
-generate the key:
+Generating a key for ECC is similar to generating a DSA key. These are
+two-step processes. First, you have to generate EC parameters from which
+the key will be generated:
 
   openssl ecparam -name prime256v1 -out prime256v1.pem
 
-The prime256v1 (stands for 'X9.62/SECG curve over a 256 bit prime field')
-is the name of a named elliptic curve based on which parameters are generated.
-You can use the following command to list all supported curves in OpenSSL:
+The prime256v1 (a.k.a NIST P-256), which stands for 'X9.62/SECG curve over
+a 256 bit prime field', is the name of an elliptic curve which generates the
+parameters. You can use the following command to list all supported curves
+in OpenSSL:
 
   openssl ecparam -list_curves
 
-When that is done, you can generate a key using the parameters being
-discussed (actually, several keys can be generated from the same parameters):
+When that is done, you can generate a key using the created parameters (several
+keys can be produced from the same parameters):
 
-  openssl genpkey -des3 -paramfile secp256k1.pem -out private.key
+  openssl genpkey -des3 -paramfile prime256v1.pem -out private.key
 
-With this variant, you will be prompted for a protecting password.  If
-you don't want your key to be protected by a password, remove the flag
+With this variant, you will be prompted for a password to protect your key.
+If you don't want your key to be protected by a password, remove the flag
 '-des3' from the command line above.
 
     NOTE: if you intend to use the key together with a server
-    certificate, it may be a good thing to avoid protecting it
-    with a password, since that would mean someone would have to
-    type in the password every time the server needs to access
-    the key.
+    certificate, it may be good to avoid protecting it with a
+    password, since that would mean someone would have to type
+    in the password every time the server needs to access the
+    key.
 
 You can also directly generate the key in one step:
 
