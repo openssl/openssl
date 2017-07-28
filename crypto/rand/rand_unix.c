@@ -127,36 +127,33 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
 #   error "librandom not (yet) supported"
 #  endif
 
+/*
+ * Try the various seeding methods in turn, exit when succesful.
+ */
 int RAND_poll_ex(RAND_poll_fn cb, void *arg)
 {
 #  ifdef OPENSSL_RAND_SEED_NONE
     return 0;
 #  else
-    int ok = 0;
+    int ok = 1;
     char temp[RANDOMNESS_NEEDED];
 #   define TEMPSIZE (int)sizeof(temp)
 
-#   ifdef OPENSSL_RAND_SEED_RDTSC
-    rand_read_tsc(cb, arg);
-#   endif
-
-#   ifdef OPENSSL_RAND_SEED_RDCPU
-    if (rand_read_cpu(cb, arg))
-        ok++;
-#   endif
-
-#   ifdef OPENSSL_RAND_SEED_EGD
+#   ifdef OPENSSL_RAND_SEED_GETRANDOM
     {
-        static const char *paths[] = { DEVRANDOM_EGD, NULL };
-        int i;
+        int i = getrandom(temp, TEMPSIZE, 0);
 
-        for (i = 0; paths[i] != NULL; i++) {
-            if (RAND_query_egd_bytes(paths[i], temp, TEMPSIZE) == TEMPSIZE) {
-                cb(arg, temp, TEMPSIZE, TEMPSIZE);
-                ok++;
-                break;
-            }
+        if (i >= 0) {
+            cb(arg, temp, i, i);
+            if (i == TEMPSIZE)
+                goto done;
         }
+    }
+#   endif
+
+#   if defined(OPENSSL_RAND_SEED_LIBRANDOM)
+    {
+        /* Not yet implemented. */
     }
 #   endif
 
@@ -172,28 +169,42 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
             setbuf(fp, NULL);
             if (fread(temp, 1, TEMPSIZE, fp) == TEMPSIZE) {
                 cb(arg, temp, TEMPSIZE, TEMPSIZE);
-                ok++;
                 fclose(fp);
-                break;
+                goto done;
+            }
+            fclose(fp);
+        }
+    }
+#   endif
+
+#   ifdef OPENSSL_RAND_SEED_RDTSC
+    rand_read_tsc(cb, arg);
+#   endif
+
+#   ifdef OPENSSL_RAND_SEED_RDCPU
+    if (rand_read_cpu(cb, arg))
+        goto done;
+#   endif
+
+#   ifdef OPENSSL_RAND_SEED_EGD
+    {
+        static const char *paths[] = { DEVRANDOM_EGD, NULL };
+        int i;
+
+        for (i = 0; paths[i] != NULL; i++) {
+            if (RAND_query_egd_bytes(paths[i], temp, TEMPSIZE) == TEMPSIZE) {
+                cb(arg, temp, TEMPSIZE, TEMPSIZE);
+                goto done;
             }
         }
     }
 #   endif
 
-#   ifdef OPENSSL_RAND_SEED_GETRANDOM
-    {
-        int i = getrandom(temp, TEMPSIZE, 0);
+    ok = 0;
 
-        if (i >= 0) {
-            cb(arg, temp, i, i);
-            if (i == TEMPSIZE)
-                ok++;
-        }
-    }
-#   endif
-
+done:
     OPENSSL_cleanse(temp, TEMPSIZE);
-    return ok > 0 ? 1 : 0;
+    return ok;
 #  endif
 }
 # endif
