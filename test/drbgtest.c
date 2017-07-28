@@ -475,6 +475,19 @@ err:
     return rv;
 }
 
+#define RAND_ADD_SIZE 500
+
+static int test_rand_add()
+{
+    char *p;
+
+    if (!TEST_ptr(p = malloc(RAND_ADD_SIZE)))
+        return 0;
+    RAND_add(p, RAND_ADD_SIZE, RAND_ADD_SIZE);
+    free(p);
+    return 1;
+}
+
 
 int setup_tests(void)
 {
@@ -482,5 +495,6 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_kats, OSSL_NELEM(drbg_test));
     ADD_ALL_TESTS(test_error_checks, OSSL_NELEM(drbg_test));
+    ADD_TEST(test_rand_add);
     return 1;
 }
