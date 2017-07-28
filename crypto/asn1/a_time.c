@@ -463,7 +463,7 @@ int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
     i = tm->length;
     v = (char *)tm->data;
 
-    l = (tm->type == V_ASN1_GENERALIZEDTIME) ? 12 :10;
+    l = (tm->type == V_ASN1_GENERALIZEDTIME) ? 12 : 10;
 
     if (i < l)
         goto err;
@@ -495,9 +495,9 @@ int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
         s = (v[idx] - '0') * 10 + (v[idx + 1] - '0');
         if (tm->type == V_ASN1_GENERALIZEDTIME) {
             /* Check for fractions of seconds. */
-            if (tm->length >= 15 && v[14] == '.') {
+            if (tm->length >= 15 && v[idx + 2] == '.') {
                 l = tm->length;
-                f = &v[14];         /* The decimal point. */
+                f = &v[idx + 2];         /* The decimal point. */
                 f_len = 1;
                 while (14 + f_len < l && f[f_len] >= '0' && f[f_len] <= '9')
                     ++f_len;
