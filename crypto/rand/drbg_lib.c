@@ -337,26 +337,23 @@ void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
 static int drbg_bytes(unsigned char *out, int count)
 {
     int ret = 0;
+    size_t chunk;
 
     CRYPTO_THREAD_write_lock(rand_drbg.lock);
     if (rand_drbg.state == DRBG_UNINITIALISED
             && RAND_DRBG_instantiate(&rand_drbg, NULL, 0) == 0)
         goto err;
 
-    do {
-        size_t rcnt;
-
-        if (count > (int)rand_drbg.max_request)
-            rcnt = rand_drbg.max_request;
-        else
-            rcnt = count;
-        ret = RAND_DRBG_generate(&rand_drbg, out, rcnt, 0, NULL, 0);
+    for ( ; count > 0; count -= chunk, out += chunk) {
+        chunk = count;
+        if (chunk > rand_drbg.max_request)
+            chunk = rand_drbg.max_request;
+        ret = RAND_DRBG_generate(&rand_drbg, out, chunk, 0, NULL, 0);
         if (!ret)
             goto err;
-        out += rcnt;
-        count -= rcnt;
-    } while (count);
+    }
     ret = 1;
+
 err:
     CRYPTO_THREAD_unlock(rand_drbg.lock);
     return ret;
