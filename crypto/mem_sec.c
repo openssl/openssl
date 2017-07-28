@@ -157,6 +157,33 @@ void CRYPTO_secure_free(void *ptr, const char *file, int line)
 #endif /* IMPLEMENTED */
 }
 
+void CRYPTO_secure_clear_free(void *ptr, size_t num,
+                              const char *file, int line)
+{
+#ifdef IMPLEMENTED
+    size_t actual_size;
+
+    if (ptr == NULL)
+        return;
+    if (!CRYPTO_secure_allocated(ptr)) {
+        OPENSSL_cleanse(ptr, num);
+        CRYPTO_free(ptr, file, line);
+        return;
+    }
+    CRYPTO_THREAD_write_lock(sec_malloc_lock);
+    actual_size = sh_actual_size(ptr);
+    CLEAR(ptr, actual_size);
+    secure_mem_used -= actual_size;
+    sh_free(ptr);
+    CRYPTO_THREAD_unlock(sec_malloc_lock);
+#else
+    if (ptr == NULL)
+        return;
+    OPENSSL_cleanse(ptr, num);
+    CRYPTO_free(ptr, file, line);
+#endif /* IMPLEMENTED */
+}
+
 int CRYPTO_secure_allocated(const void *ptr)
 {
 #ifdef IMPLEMENTED

@@ -202,6 +202,7 @@ OPENSSL_memdup                          define
 OPENSSL_no_config                       define deprecated 1.1.0
 OPENSSL_realloc                         define
 OPENSSL_secure_actual_size              define
+OPENSSL_secure_clear_free               define
 OPENSSL_secure_free                     define
 OPENSSL_secure_malloc                   define
 OPENSSL_secure_zalloc                   define
