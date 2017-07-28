@@ -217,7 +217,7 @@ int rsa_main(int argc, char **argv)
     }
 
     if (check) {
-        int r = RSA_check_key(rsa);
+        int r = RSA_check_key_ex(rsa, NULL);
 
         if (r == 1) {
             BIO_printf(out, "RSA key ok\n");
@@ -226,7 +226,7 @@ int rsa_main(int argc, char **argv)
 
             while ((err = ERR_peek_error()) != 0 &&
                    ERR_GET_LIB(err) == ERR_LIB_RSA &&
-                   ERR_GET_FUNC(err) == RSA_F_RSA_CHECK_KEY &&
+                   ERR_GET_FUNC(err) == RSA_F_RSA_CHECK_KEY_EX &&
                    ERR_GET_REASON(err) != ERR_R_MALLOC_FAILURE) {
                 BIO_printf(out, "RSA key error: %s\n",
                            ERR_reason_error_string(err));
