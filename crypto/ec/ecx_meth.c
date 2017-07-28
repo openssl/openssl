@@ -220,7 +220,7 @@ static void ecx_free(EVP_PKEY *pkey)
     X25519_KEY *xkey = pkey->pkey.ptr;
 
     if (xkey)
-        OPENSSL_secure_free(xkey->privkey);
+        OPENSSL_secure_clear_free(xkey->privkey, X25519_KEYLEN);
     OPENSSL_free(xkey);
 }
 
