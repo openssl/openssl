@@ -50,6 +50,7 @@ int ASN1_STRING_set_default_mask_asc(const char *p)
 {
     unsigned long mask;
     char *end;
+
     if (strncmp(p, "MASK:", 5) == 0) {
         if (!p[5])
             return 0;
@@ -84,19 +85,20 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
     ASN1_STRING *str = NULL;
     unsigned long mask;
     int ret;
-    if (!out)
+
+    if (out == NULL)
         out = &str;
     tbl = ASN1_STRING_TABLE_get(nid);
-    if (tbl) {
+    if (tbl != NULL) {
         mask = tbl->mask;
         if (!(tbl->flags & STABLE_NO_MASK))
             mask &= global_mask;
         ret = ASN1_mbstring_ncopy(out, in, inlen, inform, mask,
                                   tbl->minsize, tbl->maxsize);
-    } else
-        ret =
-            ASN1_mbstring_copy(out, in, inlen, inform,
-                               DIRSTRING_TYPE & global_mask);
+    } else {
+        ret = ASN1_mbstring_copy(out, in, inlen, inform,
+                                 DIRSTRING_TYPE & global_mask);
+    }
     if (ret <= 0)
         return NULL;
     return *out;
@@ -127,6 +129,7 @@ ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
 {
     int idx;
     ASN1_STRING_TABLE fnd;
+
     fnd.nid = nid;
     if (stable) {
         idx = sk_ASN1_STRING_TABLE_find(stable, &fnd);
@@ -144,6 +147,7 @@ ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
 static ASN1_STRING_TABLE *stable_get(int nid)
 {
     ASN1_STRING_TABLE *tmp, *rv;
+
     /* Always need a string table so allocate one if NULL */
     if (stable == NULL) {
         stable = sk_ASN1_STRING_TABLE_new(sk_table_cmp);
@@ -151,7 +155,7 @@ static ASN1_STRING_TABLE *stable_get(int nid)
             return NULL;
     }
     tmp = ASN1_STRING_TABLE_get(nid);
-    if (tmp && tmp->flags & STABLE_FLAGS_MALLOC)
+    if (tmp != NULL && tmp->flags & STABLE_FLAGS_MALLOC)
         return tmp;
     rv = OPENSSL_zalloc(sizeof(*rv));
     if (rv == NULL)
@@ -160,7 +164,7 @@ static ASN1_STRING_TABLE *stable_get(int nid)
         OPENSSL_free(rv);
         return NULL;
     }
-    if (tmp) {
+    if (tmp != NULL) {
         rv->nid = tmp->nid;
         rv->minsize = tmp->minsize;
         rv->maxsize = tmp->maxsize;
@@ -180,8 +184,9 @@ int ASN1_STRING_TABLE_add(int nid,
                           unsigned long flags)
 {
     ASN1_STRING_TABLE *tmp;
+
     tmp = stable_get(nid);
-    if (!tmp) {
+    if (tmp == NULL) {
         ASN1err(ASN1_F_ASN1_STRING_TABLE_ADD, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -199,8 +204,9 @@ int ASN1_STRING_TABLE_add(int nid,
 void ASN1_STRING_TABLE_cleanup(void)
 {
     STACK_OF(ASN1_STRING_TABLE) *tmp;
+
     tmp = stable;
-    if (!tmp)
+    if (tmp == NULL)
         return;
     stable = NULL;
     sk_ASN1_STRING_TABLE_pop_free(tmp, st_free);
