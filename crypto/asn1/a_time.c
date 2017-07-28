@@ -442,12 +442,77 @@ int ASN1_TIME_diff(int *pday, int *psec,
     return OPENSSL_gmtime_diff(pday, psec, &tm_from, &tm_to);
 }
 
+static const char _asn1_mon[12][4] = {
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
+
 int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
 {
-    if (tm->type == V_ASN1_UTCTIME)
-        return ASN1_UTCTIME_print(bp, tm);
+    char *v;
+    int gmt = 0;
+    int i;
+    int y = 0, M = 0, d = 0, h = 0, m = 0, s = 0;
+    char *f = NULL;
+    int f_len = 0;
+    int l = 0, idx = 0;
+
+    if (tm->type != V_ASN1_UTCTIME && tm->type != V_ASN1_GENERALIZEDTIME)
+        goto err;
+
+    i = tm->length;
+    v = (char *)tm->data;
+
+    l = (tm->type == V_ASN1_GENERALIZEDTIME) ? 12 :10;
+
+    if (i < l)
+        goto err;
+    if (v[i - 1] == 'Z')
+        gmt = 1;
+    for (i = 0; i < l; i++)
+        if ((v[i] > '9') || (v[i] < '0'))
+            goto err;
+    if (tm->type == V_ASN1_GENERALIZEDTIME) {
+        y = (v[idx] - '0') * 1000 + (v[idx + 1] - '0') * 100
+            + (v[idx + 2] - '0') * 10 + (v[idx + 3] - '0');
+        idx += 4;
+    } else {
+        y = (v[idx] - '0') * 10 + (v[idx + 1] - '0');
+        if (y < 50)
+            y += 100;
+        idx += 2;
+    }
+    M = (v[idx] - '0') * 10 + (v[idx + 1] - '0');
+    if ((M > 12) || (M < 1))
+        goto err;
+    d = (v[idx + 2] - '0') * 10 + (v[idx + 3] - '0');
+    h = (v[idx + 4] - '0') * 10 + (v[idx + 5] - '0');
+    m = (v[idx + 6] - '0') * 10 + (v[idx + 7] - '0');
+    idx += 8;
+    if (tm->length >= l + 2 &&
+        (v[idx] >= '0') && (v[idx] <= '9') &&
+        (v[idx + 1] >= '0') && (v[idx + 1] <= '9')) {
+        s = (v[idx] - '0') * 10 + (v[idx + 1] - '0');
+        if (tm->type == V_ASN1_GENERALIZEDTIME) {
+            /* Check for fractions of seconds. */
+            if (tm->length >= 15 && v[14] == '.') {
+                l = tm->length;
+                f = &v[14];         /* The decimal point. */
+                f_len = 1;
+                while (14 + f_len < l && f[f_len] >= '0' && f[f_len] <= '9')
+                    ++f_len;
+            }
+        }
+    }
     if (tm->type == V_ASN1_GENERALIZEDTIME)
-        return ASN1_GENERALIZEDTIME_print(bp, tm);
+        return BIO_printf(bp, "%s %2d %02d:%02d:%02d%.*s %d%s",
+                          _asn1_mon[M - 1], d, h, m, s, f_len, f, y,
+                          (gmt) ? " GMT" : "") > 0;
+    else
+        return BIO_printf(bp, "%s %2d %02d:%02d:%02d %d%s",
+                          _asn1_mon[M - 1], d, h, m, s, y + 1900,
+                          (gmt) ? " GMT" : "") > 0;
+ err:
     BIO_write(bp, "Bad time value", 14);
     return 0;
 }

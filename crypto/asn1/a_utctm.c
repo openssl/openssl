@@ -129,45 +129,9 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
     return 0;
 }
 
-static const char _asn1_mon[12][4] = {
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-};
-
 int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 {
-    const char *v;
-    int gmt = 0;
-    int i;
-    int y = 0, M = 0, d = 0, h = 0, m = 0, s = 0;
-
-    i = tm->length;
-    v = (const char *)tm->data;
-
-    if (i < 10)
-        goto err;
-    if (v[i - 1] == 'Z')
-        gmt = 1;
-    for (i = 0; i < 10; i++)
-        if ((v[i] > '9') || (v[i] < '0'))
-            goto err;
-    y = (v[0] - '0') * 10 + (v[1] - '0');
-    if (y < 50)
-        y += 100;
-    M = (v[2] - '0') * 10 + (v[3] - '0');
-    if ((M > 12) || (M < 1))
-        goto err;
-    d = (v[4] - '0') * 10 + (v[5] - '0');
-    h = (v[6] - '0') * 10 + (v[7] - '0');
-    m = (v[8] - '0') * 10 + (v[9] - '0');
-    if (tm->length >= 12 &&
-        (v[10] >= '0') && (v[10] <= '9') && (v[11] >= '0') && (v[11] <= '9'))
-        s = (v[10] - '0') * 10 + (v[11] - '0');
-
-    return BIO_printf(bp, "%s %2d %02d:%02d:%02d %d%s",
-                      _asn1_mon[M - 1], d, h, m, s, y + 1900,
-                      (gmt) ? " GMT" : "") > 0;
- err:
-    BIO_write(bp, "Bad time value", 14);
-    return 0;
+    if (tm->type != V_ASN1_UTCTIME)
+        return 0;
+    return ASN1_TIME_print(bp, tm);
 }
