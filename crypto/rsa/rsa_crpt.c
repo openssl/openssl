@@ -136,10 +136,6 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
     } else
         e = rsa->e;
 
-    /* TODO(rsalz) Tests fail if I remove this seeding :( */
-    if (RAND_status() == 0)
-        RAND_poll();
-
     {
         BIGNUM *n = BN_new();
 
