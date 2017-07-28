@@ -64,11 +64,14 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int nid, unsigned int flags)
 RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
 {
     RAND_DRBG *drbg = OPENSSL_zalloc(sizeof(*drbg));
+    unsigned char *ucp = OPENSSL_zalloc(RANDOMNESS_NEEDED);
 
-    if (drbg == NULL) {
+    if (drbg == NULL || ucp == NULL) {
         RANDerr(RAND_F_RAND_DRBG_NEW, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        goto err;
     }
+    drbg->size = RANDOMNESS_NEEDED;
+    drbg->randomness = ucp;
 
     drbg->parent = parent;
     if (RAND_DRBG_set(drbg, type, flags) < 0)
@@ -90,6 +93,7 @@ RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
     return drbg;
 
 err:
+    OPENSSL_free(ucp);
     OPENSSL_free(drbg);
     return NULL;
 }
@@ -104,6 +108,8 @@ void RAND_DRBG_free(RAND_DRBG *drbg)
         return;
 
     ctr_uninstantiate(drbg);
+    OPENSSL_cleanse(drbg->randomness, drbg->size);
+    OPENSSL_free(drbg->randomness);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DRBG, drbg, &drbg->ex_data);
     OPENSSL_cleanse(&drbg->ctr, sizeof(drbg->ctr));
     OPENSSL_free(drbg);

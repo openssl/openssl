@@ -90,7 +90,12 @@ struct rand_drbg_st {
     int nid; /* the underlying algorithm */
     unsigned short flags; /* various external flags */
     unsigned short filled;
-    unsigned char randomness[RANDOMNESS_NEEDED];
+    /*
+     * This is a fixed-size buffer, but we malloc to make it a little
+     * harder to find; a classic security/performance trade-off.
+     */
+    int size;
+    unsigned char *randomness;
 
     /* These parameters are setup by the per-type "init" function. */
     int strength;
