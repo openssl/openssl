@@ -99,11 +99,6 @@
         tear_down(fixture);\
         return result
 
-/* Shorthand if tear_down does nothing. */
-# define EXECUTE_TEST_NO_TEARDOWN(execute_func)\
-        result = execute_func(fixture);\
-        return result
-
 /*
  * TEST_CASE_NAME is defined as the name of the test case function where
  * possible; otherwise we get by with the file name and line number.
