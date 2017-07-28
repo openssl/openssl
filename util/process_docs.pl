@@ -13,7 +13,7 @@ use File::Spec::Functions;
 use File::Basename;
 use File::Copy;
 use File::Path;
-use if $^O ne "VMS", 'File::Glob' => qw/glob/;
+use if $^O ne "VMS", 'File::Glob' => qw/:bsd_glob/;
 use Getopt::Long;
 use Pod::Usage;
 
