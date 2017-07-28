@@ -109,4 +109,6 @@ int ctr_generate(DRBG_CTX *dctx,
                  unsigned char *out, size_t outlen,
                  const unsigned char *adin, size_t adinlen);
 
+const RAND_METHOD *RAND_chacha20(void);
+
 #endif
