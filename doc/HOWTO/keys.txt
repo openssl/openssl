@@ -68,5 +68,41 @@ you don't want your key to be protected by a password, remove the flag
     type in the password every time the server needs to access
     the key.
 
+
+4. To generate an EC key
+
+An EC key can be used both for key agreement (ECDH) and signing (ECDSA).
+
+Generating a key for ECC is similar to generating a DSA key, which is also
+a two-stup process. First, you have to generate EC parameters from which to
+generate the key:
+
+  openssl ecparam -name secp256k1 -out secp256k1.pem
+
+The secp256k1 (stands for 'SECG curve over a 256 bit prime field') is the
+name of a named elliptic curve based on which parameters are generated.
+You can use the following command to list all supported curves in OpenSSL:
+
+  openssl ecparam -list_curves
+
+When that is done, you can generate a key using the parameters being
+discussed (actually, several keys can be generated from the same parameters):
+
+  openssl genpkey -des3 -paramfile secp256k1.pem -out private.key
+
+With this variant, you will be prompted for a protecting password.  If
+you don't want your key to be protected by a password, remove the flag
+'-des3' from the command line above.
+
+    NOTE: if you intend to use the key together with a server
+    certificate, it may be a good thing to avoid protecting it
+    with a password, since that would mean someone would have to
+    type in the password every time the server needs to access
+    the key.
+
+You can also directly generate the key in one step:
+
+  openssl ecparam -genkey -name secp256k1 -out private.key
+
 -- 
 Richard Levitte
