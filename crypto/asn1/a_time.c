@@ -457,8 +457,10 @@ int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
     int f_len = 0;
     int l = 0, idx = 0;
 
-    if (tm->type != V_ASN1_UTCTIME && tm->type != V_ASN1_GENERALIZEDTIME)
+    if (!asn1_time_to_tm(NULL, tm)) {
+        /* asn1_time_to_tm will check the time type */
         goto err;
+    }
 
     i = tm->length;
     v = (char *)tm->data;
