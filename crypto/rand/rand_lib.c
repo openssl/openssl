@@ -217,7 +217,7 @@ void rand_cleanup_int(void)
 #endif
     CRYPTO_THREAD_lock_free(rand_meth_lock);
     CRYPTO_THREAD_lock_free(rand_bytes.lock);
-    OPENSSL_free(rand_drbg.randomness);
+    OPENSSL_clear_free(rand_drbg.randomness, rand_drbg.size);
     CRYPTO_THREAD_lock_free(rand_drbg.lock);
     RAND_DRBG_uninstantiate(&rand_drbg);
 }
