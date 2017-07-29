@@ -17,15 +17,20 @@ static int test_sec_mem(void)
     int testresult = 0;
     char *p = NULL, *q = NULL, *r = NULL, *s = NULL;
 
+    s = OPENSSL_secure_malloc(20);
+    /* s = non-secure 20 */
+    if (!TEST_ptr(s)
+        || !TEST_false(CRYPTO_secure_allocated(s)))
+        goto end;
     r = OPENSSL_secure_malloc(20);
-    /* r = non-secure 20 */
+    /* r = non-secure 20, s = non-secure 20 */
     if (!TEST_ptr(r)
         || !TEST_true(CRYPTO_secure_malloc_init(4096, 32))
         || !TEST_false(CRYPTO_secure_allocated(r)))
         goto end;
     p = OPENSSL_secure_malloc(20);
     if (!TEST_ptr(p)
-        /* r = non-secure 20, p = secure 20 */
+        /* r = non-secure 20, p = secure 20, s = non-secure 20 */
         || !TEST_true(CRYPTO_secure_allocated(p))
         /* 20 secure -> 32-byte minimum allocaton unit */
         || !TEST_size_t_eq(CRYPTO_secure_used(), 32))
@@ -33,9 +38,10 @@ static int test_sec_mem(void)
     q = OPENSSL_malloc(20);
     if (!TEST_ptr(q))
         goto end;
-    /* r = non-secure 20, p = secure 20, q = non-secure 20 */
+    /* r = non-secure 20, p = secure 20, q = non-secure 20, s = non-secure 20 */
     if (!TEST_false(CRYPTO_secure_allocated(q)))
         goto end;
+    OPENSSL_secure_clear_free(s, 20);
     s = OPENSSL_secure_malloc(20);
     if (!TEST_ptr(s)
         /* r = non-secure 20, p = secure 20, q = non-secure 20, s = secure 20 */
@@ -43,7 +49,7 @@ static int test_sec_mem(void)
         /* 2 * 20 secure -> 64 bytes allocated */
         || !TEST_size_t_eq(CRYPTO_secure_used(), 64))
         goto end;
-    OPENSSL_secure_free(p);
+    OPENSSL_secure_clear_free(p, 20);
     p = NULL;
     /* 20 secure -> 32 bytes allocated */
     if (!TEST_size_t_eq(CRYPTO_secure_used(), 32))
