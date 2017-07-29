@@ -450,69 +450,40 @@ static const char _asn1_mon[12][4] = {
 int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
 {
     char *v;
-    int gmt = 0;
-    int i;
-    int y = 0, M = 0, d = 0, h = 0, m = 0, s = 0;
     char *f = NULL;
-    int f_len = 0;
-    int l = 0, idx = 0;
+    int f_len = 0, gmt = 0, l;
+    struct tm stm;
 
-    if (!asn1_time_to_tm(NULL, tm)) {
+    if (!asn1_time_to_tm(&stm, tm)) {
         /* asn1_time_to_tm will check the time type */
         goto err;
     }
 
-    i = tm->length;
+    l = tm->length;
     v = (char *)tm->data;
-
-    l = (tm->type == V_ASN1_GENERALIZEDTIME) ? 12 : 10;
-
-    if (i < l)
-        goto err;
-    if (v[i - 1] == 'Z')
+    if (v[l - 1] == 'Z')
         gmt = 1;
-    for (i = 0; i < l; i++)
-        if ((v[i] > '9') || (v[i] < '0'))
-            goto err;
-    if (tm->type == V_ASN1_GENERALIZEDTIME) {
-        y = (v[idx] - '0') * 1000 + (v[idx + 1] - '0') * 100
-            + (v[idx + 2] - '0') * 10 + (v[idx + 3] - '0');
-        idx += 4;
-    } else {
-        y = (v[idx] - '0') * 10 + (v[idx + 1] - '0');
-        if (y < 50)
-            y += 100;
-        idx += 2;
+    /*
+     * Try to parse fractional seconds. '14' is the place of
+     * 'fraction point' in a GeneralizedTime string.
+     */
+    if (tm->type == V_ASN1_GENERALIZEDTIME
+        && tm->length >= 15 && v[14] == '.') {
+        f = &v[14];
+        f_len = 1;
+        while (14 + f_len < l && f[f_len] >= '0' && f[f_len] <= '9')
+            ++f_len;
     }
-    M = (v[idx] - '0') * 10 + (v[idx + 1] - '0');
-    if ((M > 12) || (M < 1))
-        goto err;
-    d = (v[idx + 2] - '0') * 10 + (v[idx + 3] - '0');
-    h = (v[idx + 4] - '0') * 10 + (v[idx + 5] - '0');
-    m = (v[idx + 6] - '0') * 10 + (v[idx + 7] - '0');
-    idx += 8;
-    if (tm->length >= l + 2 &&
-        (v[idx] >= '0') && (v[idx] <= '9') &&
-        (v[idx + 1] >= '0') && (v[idx + 1] <= '9')) {
-        s = (v[idx] - '0') * 10 + (v[idx + 1] - '0');
-        if (tm->type == V_ASN1_GENERALIZEDTIME) {
-            /* Check for fractions of seconds. */
-            if (tm->length >= 15 && v[idx + 2] == '.') {
-                l = tm->length;
-                f = &v[idx + 2];         /* The decimal point. */
-                f_len = 1;
-                while (14 + f_len < l && f[f_len] >= '0' && f[f_len] <= '9')
-                    ++f_len;
-            }
-        }
-    }
+
     if (tm->type == V_ASN1_GENERALIZEDTIME)
         return BIO_printf(bp, "%s %2d %02d:%02d:%02d%.*s %d%s",
-                          _asn1_mon[M - 1], d, h, m, s, f_len, f, y,
+                          _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
+                          stm.tm_min, stm.tm_sec, f_len, f, stm.tm_year + 1900,
                           (gmt) ? " GMT" : "") > 0;
     else
         return BIO_printf(bp, "%s %2d %02d:%02d:%02d %d%s",
-                          _asn1_mon[M - 1], d, h, m, s, y + 1900,
+                          _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
+                          stm.tm_min, stm.tm_sec, stm.tm_year + 1900,
                           (gmt) ? " GMT" : "") > 0;
  err:
     BIO_write(bp, "Bad time value", 14);
