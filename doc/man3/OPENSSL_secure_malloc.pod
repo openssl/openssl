@@ -5,7 +5,8 @@
 CRYPTO_secure_malloc_init, CRYPTO_secure_malloc_initialized,
 CRYPTO_secure_malloc_done, OPENSSL_secure_malloc, CRYPTO_secure_malloc,
 OPENSSL_secure_zalloc, CRYPTO_secure_zalloc, OPENSSL_secure_free,
-CRYPTO_secure_free, OPENSSL_secure_actual_size,
+CRYPTO_secure_free, OPENSSL_secure_clear_free,
+CRYPTO_secure_clear_free, OPENSSL_secure_actual_size,
 CRYPTO_secure_used - secure heap storage
 
 =head1 SYNOPSIS
@@ -26,6 +27,9 @@ CRYPTO_secure_used - secure heap storage
 
  void OPENSSL_secure_free(void* ptr);
  void CRYPTO_secure_free(void *ptr, const char *, int);
+
+ void OPENSSL_secure_clear_free(void* ptr, size_t num);
+ void CRYPTO_secure_clear_free(void *ptr, size_t num, const char *, int);
 
  size_t OPENSSL_secure_actual_size(const void *ptr);
 
@@ -76,6 +80,12 @@ It exists for consistency with OPENSSL_secure_malloc() , and
 is a macro that expands to CRYPTO_secure_free() and adds the C<__FILE__>
 and C<__LINE__> parameters..
 
+OPENSSL_secure_clear_free() is similar to OPENSSL_secure_free() except
+that it has an additional C<num> parameter which is used to clear
+the memory if it was not allocated from the secure heap.
+If CRYPTO_secure_malloc_init() is not called, this is equivalent to
+calling OPENSSL_clear_free().
+
 OPENSSL_secure_actual_size() tells the actual size allocated to the
 pointer; implementations may allocate more space than initially
 requested, in order to "round up" and reduce secure heap fragmentation.
@@ -101,12 +111,16 @@ CRYPTO_secure_allocated() returns 1 if the pointer is in the secure heap, or 0 i
 
 CRYPTO_secure_malloc_done() returns 1 if the secure memory area is released, or 0 if not.
 
-OPENSSL_secure_free() returns no values.
+OPENSSL_secure_free() and OPENSSL_secure_clear_free() return no values.
 
 =head1 SEE ALSO
 
 L<OPENSSL_malloc(3)>,
 L<BN_new(3)>
+
+=head1 HISTORY
+
+OPENSSL_secure_clear_free() was added in OpenSSL 1.1.0g.
 
 =head1 COPYRIGHT
 
