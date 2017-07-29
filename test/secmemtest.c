@@ -19,8 +19,18 @@ int main(int argc, char **argv)
 #if defined(OPENSSL_SYS_LINUX) || defined(OPENSSL_SYS_UNIX)
     char *p = NULL, *q = NULL, *r = NULL, *s = NULL;
 
+    s = OPENSSL_secure_malloc(20);
+    /* s = non-secure 20 */
+    if (s == NULL) {
+        perror_line();
+        return 1;
+    }
+    if (CRYPTO_secure_allocated(s)) {
+        perror_line();
+        return 1;
+    }
     r = OPENSSL_secure_malloc(20);
-    /* r = non-secure 20 */
+    /* r = non-secure 20, s = non-secure 20 */
     if (r == NULL) {
         perror_line();
         return 1;
@@ -34,7 +44,7 @@ int main(int argc, char **argv)
         return 1;
     }
     p = OPENSSL_secure_malloc(20);
-    /* r = non-secure 20, p = secure 20 */
+    /* r = non-secure 20, p = secure 20, s = non-secure 20 */
     if (!CRYPTO_secure_allocated(p)) {
         perror_line();
         return 1;
@@ -45,11 +55,12 @@ int main(int argc, char **argv)
         return 1;
     }
     q = OPENSSL_malloc(20);
-    /* r = non-secure 20, p = secure 20, q = non-secure 20 */
+    /* r = non-secure 20, p = secure 20, q = non-secure 20, s = non-secure 20 */
     if (CRYPTO_secure_allocated(q)) {
         perror_line();
         return 1;
     }
+    OPENSSL_secure_clear_free(s, 20);
     s = OPENSSL_secure_malloc(20);
     /* r = non-secure 20, p = secure 20, q = non-secure 20, s = secure 20 */
     if (!CRYPTO_secure_allocated(s)) {
@@ -61,7 +72,7 @@ int main(int argc, char **argv)
         perror_line();
         return 1;
     }
-    OPENSSL_secure_free(p);
+    OPENSSL_secure_clear_free(p, 20);
     /* 20 secure -> 32 bytes allocated */
     if (CRYPTO_secure_used() != 32) {
         perror_line();
