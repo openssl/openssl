@@ -74,7 +74,7 @@ my $n = (3 * scalar @noexist_files)
     + (4 * scalar @generated_files)
     + (scalar keys %generated_file_files)
     + (scalar @noexist_file_files)
-    + 3;
+    + 4;
 
 plan tests => $n;
 
@@ -82,6 +82,10 @@ indir "store_$$" => sub {
  SKIP:
     {
         skip "failed initialisation", $n unless init();
+
+        # test PEM_read_bio_PrivateKey
+        ok(run(app(["openssl", "rsa", "-in", "rsa-key-pkcs8-pbes2-sha256.pem",
+                    "-passin", "pass:password"])));
 
         foreach (@noexist_files) {
             my $file = srctop_file($_);
