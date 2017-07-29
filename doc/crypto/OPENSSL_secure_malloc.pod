@@ -27,6 +27,9 @@ CRYPTO_secure_used - secure heap storage
  void OPENSSL_secure_free(void* ptr);
  void CRYPTO_secure_free(void *ptr, const char *, int);
 
+ void OPENSSL_secure_clear_free(void* ptr, size_t num);
+ void CRYPTO_secure_clear_free(void *ptr, size_t num, const char *, int);
+
  size_t OPENSSL_secure_actual_size(const void *ptr);
  int OPENSSL_secure_allocated(const void *ptr);
 
@@ -104,12 +107,16 @@ CRYPTO_secure_allocated() returns 1 if the pointer is in the secure heap, or 0 i
 
 CRYPTO_secure_malloc_done() returns 1 if the secure memory area is released, or 0 if not.
 
-OPENSSL_secure_free() returns no values.
+OPENSSL_secure_free() and OPENSSL_secure_clear_free() return no values.
 
 =head1 SEE ALSO
 
 L<OPENSSL_malloc(3)>,
 L<BN_new(3)>
+
+=head1 HISTORY
+
+OPENSSL_secure_clear_free() was added in OpenSSL 1.1.0g.
 
 =head1 COPYRIGHT
 

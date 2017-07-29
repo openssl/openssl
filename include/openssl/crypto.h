@@ -146,6 +146,8 @@ int CRYPTO_mem_ctrl(int mode);
         CRYPTO_secure_zalloc(num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_free(addr) \
         CRYPTO_secure_free(addr, OPENSSL_FILE, OPENSSL_LINE)
+# define OPENSSL_secure_clear_free(addr, num) \
+        CRYPTO_secure_clear_free(addr, num, OPENSSL_FILE, OPENSSL_LINE)
 # define OPENSSL_secure_actual_size(ptr) \
         CRYPTO_secure_actual_size(ptr)
 
@@ -285,6 +287,8 @@ int CRYPTO_secure_malloc_done(void);
 void *CRYPTO_secure_malloc(size_t num, const char *file, int line);
 void *CRYPTO_secure_zalloc(size_t num, const char *file, int line);
 void CRYPTO_secure_free(void *ptr, const char *file, int line);
+void CRYPTO_secure_clear_free(void *ptr, size_t num,
+                              const char *file, int line);
 int CRYPTO_secure_allocated(const void *ptr);
 int CRYPTO_secure_malloc_initialized(void);
 size_t CRYPTO_secure_actual_size(void *ptr);
