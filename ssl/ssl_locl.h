@@ -2115,7 +2115,6 @@ __owur int ssl_cert_add0_chain_cert(SSL *s, SSL_CTX *ctx, X509 *x);
 __owur int ssl_cert_add1_chain_cert(SSL *s, SSL_CTX *ctx, X509 *x);
 __owur int ssl_cert_select_current(CERT *c, X509 *x);
 __owur int ssl_cert_set_current(CERT *c, long arg);
-__owur X509 *ssl_cert_get0_next_certificate(CERT *c, int first);
 void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg);
 
 __owur int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk);
@@ -2245,7 +2244,6 @@ __owur int dtls1_is_timer_expired(SSL *s);
 void dtls1_double_timeout(SSL *s);
 __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
                                          size_t cookie_len);
-__owur int dtls1_send_newsession_ticket(SSL *s);
 __owur size_t dtls1_min_mtu(SSL *s);
 void dtls1_hm_fragment_free(hm_fragment *frag);
 __owur int dtls1_query_mtu(SSL *s);
@@ -2253,8 +2251,6 @@ __owur int dtls1_query_mtu(SSL *s);
 __owur int tls1_new(SSL *s);
 void tls1_free(SSL *s);
 int tls1_clear(SSL *s);
-long tls1_ctrl(SSL *s, int cmd, long larg, void *parg);
-long tls1_callback_ctrl(SSL *s, int cmd, void (*fp) (void));
 
 __owur int dtls1_new(SSL *s);
 void dtls1_free(SSL *s);
@@ -2346,14 +2342,10 @@ __owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
 __owur EVP_PKEY *ssl_generate_pkey_curve(int id);
 #  endif                        /* OPENSSL_NO_EC */
 
-__owur int tls1_shared_list(SSL *s,
-                            const unsigned char *l1, size_t l1len,
-                            const unsigned char *l2, size_t l2len, int nmatch);
 __owur int tls_curve_allowed(SSL *s, const unsigned char *curve, int op);
 __owur  int tls1_get_curvelist(SSL *s, int sess, const unsigned char **pcurves,
                                size_t *num_curves);
 
-void ssl_set_default_md(SSL *s);
 __owur int tls1_set_server_sigalgs(SSL *s);
 
 /* Return codes for tls_get_ticket_from_client() and tls_decrypt_ticket() */

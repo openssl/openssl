@@ -127,7 +127,7 @@ pitem *pqueue_iterator(pqueue *pq)
     return pqueue_peek(pq);
 }
 
-pitem *pqueue_next(pitem **item)
+pitem *pqueue_next(piterator *item)
 {
     pitem *ret;
 
