@@ -88,7 +88,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
         PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY, ERR_R_ASN1_LIB);
  err:
     OPENSSL_secure_free(nm);
-    OPENSSL_secure_free(data);
+    OPENSSL_secure_clear_free(data, len);
     return (ret);
 }
 

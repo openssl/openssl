@@ -220,10 +220,10 @@ static int check_pem(const char *nm, const char *name)
     return 0;
 }
 
-static void pem_free(void *p, unsigned int flags)
+static void pem_free(void *p, unsigned int flags, size_t num)
 {
     if (flags & PEM_FLAG_SECURE)
-        OPENSSL_secure_free(p);
+        OPENSSL_secure_clear_free(p, num);
     else
         OPENSSL_free(p);
 }
@@ -242,13 +242,13 @@ static int pem_bytes_read_bio_flags(unsigned char **pdata, long *plen,
     EVP_CIPHER_INFO cipher;
     char *nm = NULL, *header = NULL;
     unsigned char *data = NULL;
-    long len;
+    long len = 0;
     int ret = 0;
 
     do {
-        pem_free(nm, flags);
-        pem_free(header, flags);
-        pem_free(data, flags);
+        pem_free(nm, flags, 0);
+        pem_free(header, flags, 0);
+        pem_free(data, flags, len);
         if (!PEM_read_bio_ex(bp, &nm, &header, &data, &len, flags)) {
             if (ERR_GET_REASON(ERR_peek_error()) == PEM_R_NO_START_LINE)
                 ERR_add_error_data(2, "Expecting: ", name);
@@ -270,10 +270,10 @@ static int pem_bytes_read_bio_flags(unsigned char **pdata, long *plen,
 
  err:
     if (!ret || pnm == NULL)
-        pem_free(nm, flags);
-    pem_free(header, flags);
+        pem_free(nm, flags, 0);
+    pem_free(header, flags, 0);
     if (!ret)
-        pem_free(data, flags);
+        pem_free(data, flags, len);
     return ret;
 }
 
@@ -767,7 +767,7 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
     ret = 1;
 
 err:
-    pem_free(linebuf, flags);
+    pem_free(linebuf, flags, LINESIZE + 1);
     return ret;
 }
 
@@ -875,7 +875,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
 
     ret = 1;
 err:
-    pem_free(linebuf, flags);
+    pem_free(linebuf, flags, LINESIZE + 1);
     return ret;
 }
 
@@ -943,8 +943,8 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     *header = pem_malloc(headerlen + 1, flags);
     *data = pem_malloc(len, flags);
     if (*header == NULL || *data == NULL) {
-        pem_free(*header, flags);
-        pem_free(*data, flags);
+        pem_free(*header, flags, 0);
+        pem_free(*data, flags, 0);
         goto end;
     }
     BIO_read(headerB, *header, headerlen);
@@ -957,7 +957,7 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
 
 end:
     EVP_ENCODE_CTX_free(ctx);
-    pem_free(name, flags);
+    pem_free(name, flags, 0);
     BIO_free(headerB);
     BIO_free(dataB);
     return ret;
