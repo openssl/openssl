@@ -85,7 +85,6 @@ that it has an additional C<num> parameter which is used to clear
 the memory if it was not allocated from the secure heap.
 If CRYPTO_secure_malloc_init() is not called, this is equivalent to
 calling OPENSSL_clear_free().
-OPENSSL_secure_clear_free() was added in OpenSSL 1.1.0g.
 
 OPENSSL_secure_actual_size() tells the actual size allocated to the
 pointer; implementations may allocate more space than initially
@@ -118,6 +117,10 @@ OPENSSL_secure_free() and OPENSSL_secure_clear_free() return no values.
 
 L<OPENSSL_malloc(3)>,
 L<BN_new(3)>
+
+=head1 HISTORY
+
+OPENSSL_secure_clear_free() was added in OpenSSL 1.1.0g.
 
 =head1 COPYRIGHT
 
