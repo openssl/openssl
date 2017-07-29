@@ -1037,10 +1037,10 @@ static OSSL_STORE_INFO *file_load_try_repeat(OSSL_STORE_LOADER_CTX *ctx,
     return result;
 }
 
-static void pem_free_flag(void *pem_data, int secure)
+static void pem_free_flag(void *pem_data, int secure, size_t num)
 {
     if (secure)
-        OPENSSL_secure_free(pem_data);
+        OPENSSL_secure_clear_free(pem_data, num);
     else
         OPENSSL_free(pem_data);
 }
@@ -1243,9 +1243,9 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
                 ctx->errcnt++;
 
          endloop:
-            pem_free_flag(pem_name, (ctx->flags & FILE_FLAG_SECMEM) != 0);
-            pem_free_flag(pem_header, (ctx->flags & FILE_FLAG_SECMEM) != 0);
-            pem_free_flag(data, (ctx->flags & FILE_FLAG_SECMEM) != 0);
+            pem_free_flag(pem_name, (ctx->flags & FILE_FLAG_SECMEM) != 0, 0);
+            pem_free_flag(pem_header, (ctx->flags & FILE_FLAG_SECMEM) != 0, 0);
+            pem_free_flag(data, (ctx->flags & FILE_FLAG_SECMEM) != 0, len);
         } while (matchcount == 0 && !file_eof(ctx) && !file_error(ctx));
 
         /* We bail out on ambiguity */
