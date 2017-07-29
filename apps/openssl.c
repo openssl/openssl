@@ -51,6 +51,7 @@
 static LHASH_OF(FUNCTION) *prog_init(void);
 static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[]);
 static void list_pkey(void);
+static void list_pkey_meth(void);
 static void list_type(FUNC_TYPE ft);
 static void list_disabled(void);
 char *default_config_file = NULL;
@@ -308,7 +309,7 @@ typedef enum HELPLIST_CHOICE {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_COMMANDS, OPT_DIGEST_COMMANDS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
-    OPT_PK_ALGORITHMS, OPT_DISABLED, OPT_MISSING_HELP
+    OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_DISABLED, OPT_MISSING_HELP
 } HELPLIST_CHOICE;
 
 const OPTIONS list_options[] = {
@@ -323,6 +324,8 @@ const OPTIONS list_options[] = {
      "List of cipher algorithms"},
     {"public-key-algorithms", OPT_PK_ALGORITHMS, '-',
      "List of public key algorithms"},
+    {"public-key-methods", OPT_PK_METHOD, '-',
+     "List of public key methods"},
     {"disabled", OPT_DISABLED, '-',
      "List of disabled features"},
     {"missing-help", OPT_MISSING_HELP, '-',
@@ -363,6 +366,9 @@ int list_main(int argc, char **argv)
             break;
         case OPT_PK_ALGORITHMS:
             list_pkey();
+            break;
+        case OPT_PK_METHOD:
+            list_pkey_meth();
             break;
         case OPT_DISABLED:
             list_disabled();
@@ -537,6 +543,22 @@ static void list_pkey(void)
             BIO_printf(bio_out, "\tPEM string: %s\n", pem_str);
         }
 
+    }
+}
+
+static void list_pkey_meth(void)
+{
+    size_t i;
+    size_t meth_count = EVP_PKEY_meth_get_count();
+
+    for (i = 0; i < meth_count; i++) {
+        const EVP_PKEY_METHOD *pmeth = EVP_PKEY_meth_get0(i);
+        int pkey_id, pkey_flags;
+
+        EVP_PKEY_meth_get0_info(&pkey_id, &pkey_flags, pmeth);
+        BIO_printf(bio_out, "%s\n", OBJ_nid2ln(pkey_id));
+        BIO_printf(bio_out, "\tType: %s Algorithm\n",
+                   pkey_flags & ASN1_PKEY_DYNAMIC ?  "External" : "Builtin");
     }
 }
 
