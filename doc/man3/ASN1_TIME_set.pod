@@ -58,7 +58,7 @@ If B<s> is NULL, then the current time is converted. The output time is GMT.
 The B<tm_sec>, B<tm_min>, B<tm_hour>, B<tm_mday>, B<tm_wday>, B<tm_yday>,
 B<tm_mon> and B<tm_year> fields of B<tm> structure are set to proper values,
 whereas all other fields are set to 0. If B<tm> is NULL this function performs
-a format check on B<s> only. If B<s> is in Generalized format with franctional
+a format check on B<s> only. If B<s> is in Generalized format with fractional
 seconds, e.g. YYYYMMDDHHMMSS.SSSZ, the fractional seconds will be lost while
 converting B<s> to B<tm> structure.
 
