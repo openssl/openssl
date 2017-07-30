@@ -4366,9 +4366,10 @@ SCRYPT_PARAMS_new                       4310	1_1_1	EXIST::FUNCTION:SCRYPT
 SCRYPT_PARAMS_free                      4311	1_1_1	EXIST::FUNCTION:SCRYPT
 i2d_SCRYPT_PARAMS                       4312	1_1_1	EXIST::FUNCTION:SCRYPT
 d2i_SCRYPT_PARAMS                       4313	1_1_1	EXIST::FUNCTION:SCRYPT
-SCRYPT_PARAMS_it                        4314	1_1_1	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:SCRYPT
+SCRYPT_PARAMS_it                        4315	1_1_1	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:SCRYPT
 SCRYPT_PARAMS_it                        4315	1_1_1	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:SCRYPT
 CRYPTO_secure_clear_free                4316	1_1_0g	EXIST::FUNCTION:
 EVP_PKEY_meth_get0                      4317	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_meth_get_count                 4318	1_1_1	EXIST::FUNCTION:
 RAND_poll_ex                            4319	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_get0_global                   4320	1_1_1	EXIST::FUNCTION:

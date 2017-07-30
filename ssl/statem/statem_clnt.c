@@ -2816,7 +2816,7 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt, int *al)
     pms[0] = s->client_version >> 8;
     pms[1] = s->client_version & 0xff;
     /* TODO(size_t): Convert this function */
-    if (RAND_bytes(pms + 2, (int)(pmslen - 2)) <= 0) {
+    if (ssl_randbytes(s, pms + 2, (int)(pmslen - 2)) <= 0) {
         goto err;
     }
 
@@ -3006,7 +3006,7 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt, int *al)
         /* Generate session key
          * TODO(size_t): Convert this function
          */
-        || RAND_bytes(pms, (int)pmslen) <= 0) {
+        || ssl_randbytes(s, pms, (int)pmslen) <= 0) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_CONSTRUCT_CKE_GOST, ERR_R_INTERNAL_ERROR);
         goto err;

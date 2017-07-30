@@ -67,7 +67,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context);
 static void close_accept_socket(void);
 static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp, SSL_CTX *ctx);
-static int generate_session_id(const SSL *ssl, unsigned char *id,
+static int generate_session_id(SSL *ssl, unsigned char *id,
                                unsigned int *id_len);
 static void init_session_cache_ctx(SSL_CTX *sctx);
 static void free_sessions(void);
@@ -3412,7 +3412,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
 }
 
 #define MAX_SESSION_ID_ATTEMPTS 10
-static int generate_session_id(const SSL *ssl, unsigned char *id,
+static int generate_session_id(SSL *ssl, unsigned char *id,
                                unsigned int *id_len)
 {
     unsigned int count = 0;
