@@ -3790,7 +3790,7 @@ const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname)
     SSL_CIPHER *tbl = ssl3_ciphers;
     size_t i;
 
-    /* this is not efficient, necessary to optimze this? */
+    /* this is not efficient, necessary to optimize this? */
     for (i = 0; i < SSL3_NUM_CIPHERS; i++, tbl++) {
         if (tbl->stdname == NULL)
             continue;
