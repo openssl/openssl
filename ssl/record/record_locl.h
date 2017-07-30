@@ -41,7 +41,6 @@
 __owur int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
                        size_t *readbytes);
 
-void RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, const unsigned char *ws);
 DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
                                unsigned int *is_next_epoch);
 int dtls1_process_buffered_records(SSL *s);
