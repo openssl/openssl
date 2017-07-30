@@ -347,7 +347,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
     tot = s->rlayer.wnum;
     /*
      * ensure that if we end up with a smaller value of data to write out
-     * than the the original len from a write which didn't complete for
+     * than the original len from a write which didn't complete for
      * non-blocking I/O and also somehow ended up avoiding the check for
      * this in ssl3_write_pending/SSL_R_BAD_WRITE_RETRY as it must never be
      * possible to end up with (len-tot) as a large number that will then
@@ -942,7 +942,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             || s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
         /*
          * We haven't actually negotiated the version yet, but we're trying to
-         * send early data - so we need to use the the tls13enc function.
+         * send early data - so we need to use the tls13enc function.
          */
         if (tls13_enc(s, wr, numpipes, 1) < 1)
             goto err;

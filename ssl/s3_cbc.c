@@ -419,8 +419,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
              */
             b = constant_time_select_8(is_past_c, 0x80, b);
             /*
-             * If this the the block containing the end of the application
-             * data and we're past the 0x80 value then just write zero.
+             * If this block contains the end of the application data
+             * and we're past the 0x80 value then just write zero.
              */
             b = b & ~is_past_cp1;
             /*
