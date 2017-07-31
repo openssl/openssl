@@ -87,7 +87,7 @@ DSA_meth_set_keygen - Routines to build up DSA methods
 =head1 DESCRIPTION
 
 The B<DSA_METHOD> type is a structure used for the provision of custom DSA
-implementations. It provides a set of of functions used by OpenSSL for the
+implementations. It provides a set of functions used by OpenSSL for the
 implementation of the various DSA capabilities. See the L<dsa> page for more
 information.
 
@@ -205,7 +205,7 @@ The functions described here were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
