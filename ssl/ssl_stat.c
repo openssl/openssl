@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -48,9 +48,9 @@ const char *SSL_state_string_long(const SSL *s)
     case TLS_ST_CW_NEXT_PROTO:
         return "SSLv3/TLS write next proto";
     case TLS_ST_SR_NEXT_PROTO:
-        return "SSLv3/TLS write next proto";
+        return "SSLv3/TLS read next proto";
     case TLS_ST_SW_CERT_STATUS:
-        return "SSLv3/TLS write next proto";
+        return "SSLv3/TLS write certificate status";
     case TLS_ST_BEFORE:
         return "before SSL initialization";
     case TLS_ST_OK:
