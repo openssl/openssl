@@ -450,8 +450,7 @@ static const char _asn1_mon[12][4] = {
 int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
 {
     char *v;
-    char *f = NULL;
-    int f_len = 0, gmt = 0, l;
+    int gmt = 0, l;
     struct tm stm;
 
     if (!asn1_time_to_tm(&stm, tm)) {
@@ -465,6 +464,9 @@ int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
         gmt = 1;
 
     if (tm->type == V_ASN1_GENERALIZEDTIME) {
+        char *f = NULL;
+        int f_len = 0;
+
         /*
          * Try to parse fractional seconds. '14' is the place of
          * 'fraction point' in a GeneralizedTime string.
