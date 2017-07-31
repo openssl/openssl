@@ -235,7 +235,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
     memcpy(to, em + msg_index, mlen);
 
  err:
-    OPENSSL_free(em);
+    OPENSSL_clear_free(em, num);
     if (mlen == -1)
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2,
                RSA_R_PKCS_DECODING_ERROR);
