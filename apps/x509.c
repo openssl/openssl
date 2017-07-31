@@ -1109,7 +1109,7 @@ static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt)
 static int parse_ext_names(char *names, const char **result)
 {
     char *p, *q;
-    int cnt = 0, idx = 0, len = 0;
+    int cnt = 0, len = 0;
 
     p = q = names;
     len = strlen(names);
@@ -1122,7 +1122,7 @@ static int parse_ext_names(char *names, const char **result)
         if (p != q) {
             /* found */
             if (result != NULL) {
-                result[idx++] = p;
+                result[cnt] = p;
                 *q = '\0';
             }
             cnt++;
