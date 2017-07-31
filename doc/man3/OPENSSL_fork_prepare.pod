@@ -29,7 +29,7 @@ to call them manually, as described in the following paragraph.  Platforms
 such as Linux that have both functions will normally not need to call these
 functions as the OpenSSL library will do so automatically.
 
-L<OPENSSL_init_crypto(3)> will register these funtions with the appropriate
+L<OPENSSL_init_crypto(3)> will register these functions with the appropriate
 hander, when the B<OPENSSL_INIT_ATFORK> flag is used. For other
 applications, these functions can be called directly. They should be used
 according to the calling sequence described by the pthreads_atfork(3)

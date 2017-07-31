@@ -28,8 +28,7 @@ be used.
 
 =head1 NOTES
 
-Currently no public key algorithms include any options in the B<pctx> parameter
-parameter.
+Currently no public key algorithms include any options in the B<pctx> parameter.
 
 If the key does not include all the components indicated by the function then
 only those contained in the key will be printed. For example passing a public
@@ -52,7 +51,7 @@ These functions were first added to OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

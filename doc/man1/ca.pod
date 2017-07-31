@@ -166,14 +166,14 @@ Don't output the text form of a certificate to the output file.
 This allows the start date to be explicitly set. The format of the
 date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure), or
 YYYYMMDDHHMMSSZ (the same as an ASN1 GeneralizedTime structure). In
-both formats, seconds SS and timzone Z must be present.
+both formats, seconds SS and timezone Z must be present.
 
 =item B<-enddate date>
 
 This allows the expiry date to be explicitly set. The format of the
 date is YYMMDDHHMMSSZ (the same as an ASN1 UTCTime structure), or
 YYYYMMDDHHMMSSZ (the same as an ASN1 GeneralizedTime structure). In
-both formats, seconds SS and timzone Z must be present.
+both formats, seconds SS and timezone Z must be present.
 
 =item B<-days arg>
 

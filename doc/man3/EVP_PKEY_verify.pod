@@ -36,7 +36,7 @@ context if several operations are performed using the same parameters.
 
 EVP_PKEY_verify_init() and EVP_PKEY_verify() return 1 if the verification was
 successful and 0 if it failed. Unlike other functions the return value 0 from
-EVP_PKEY_verify() only indicates that the signature did not not verify
+EVP_PKEY_verify() only indicates that the signature did not verify
 successfully (that is tbs did not match the original data or the signature was
 of invalid form) it is not an indication of a more serious error.
 
@@ -93,7 +93,7 @@ These functions were first added to OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

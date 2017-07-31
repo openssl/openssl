@@ -17,7 +17,7 @@ verifying a digest must B<NOT> be specified.
 
 =head1 NOTES
 
-The PureEdDSA algorithm does not support the the streaming mechanism
+The PureEdDSA algorithm does not support the streaming mechanism
 of other signature algorithms using, for example, EVP_DigestUpdate().
 The message to sign or verify must be passed using the one shot
 EVP_DigestSign() asn EVP_DigestVerify() functions.
