@@ -424,11 +424,70 @@ static int test_days(int n)
     return r;
 }
 
+#define construct_asn1_time(s, t, e) \
+    { { sizeof(s) - 1, t, (unsigned char*)s, 0 }, e }
+
+static const struct {
+    ASN1_TIME asn1;
+    const char *readable;
+} x509_print_tests [] = {
+    /* Generalized Time */
+    construct_asn1_time("20170731222050Z", V_ASN1_GENERALIZEDTIME,
+            "Jul 31 22:20:50 2017 GMT"),
+    /* Generalized Time, no seconds */
+    construct_asn1_time("201707312220Z", V_ASN1_GENERALIZEDTIME,
+            "Jul 31 22:20:00 2017 GMT"),
+    /* Generalized Time, fractional seconds (3 digits) */
+    construct_asn1_time("20170731222050.123Z", V_ASN1_GENERALIZEDTIME,
+            "Jul 31 22:20:50.123 2017 GMT"),
+    /* Generalized Time, fractional seconds (1 digit) */
+    construct_asn1_time("20170731222050.1Z", V_ASN1_GENERALIZEDTIME,
+            "Jul 31 22:20:50.1 2017 GMT"),
+    /* Generalized Time, fractional seconds (0 digit) */
+    construct_asn1_time("20170731222050.Z", V_ASN1_GENERALIZEDTIME,
+            "Bad time value"),
+    /* UTC Time */
+    construct_asn1_time("170731222050Z", V_ASN1_UTCTIME,
+            "Jul 31 22:20:50 2017 GMT"),
+    /* UTC Time, no seconds */
+    construct_asn1_time("1707312220Z", V_ASN1_UTCTIME,
+            "Jul 31 22:20:00 2017 GMT"),
+};
+
+static int test_x509_time_print(int idx)
+{
+    BIO *m;
+    int ret = 0, rv;
+    char *pp;
+    const char *readable;
+
+    if (!TEST_ptr(m = BIO_new(BIO_s_mem())))
+        goto err;
+
+    rv = ASN1_TIME_print(m, &x509_print_tests[idx].asn1);
+    readable = x509_print_tests[idx].readable;
+
+    if (rv == 0 && !TEST_str_eq(readable, "Bad time value")) {
+        /* only if the test case intends to fail... */
+        goto err;
+    }
+    if (!TEST_int_ne(rv = BIO_get_mem_data(m, &pp), 0)
+        || !TEST_int_eq(rv, (int)strlen(readable))
+        || !TEST_strn_eq(pp, readable, rv))
+        goto err;
+
+    ret = 1;
+ err:
+    BIO_free(m);
+    return ret;
+}
+
 int setup_tests()
 {
     ADD_TEST(test_x509_cmp_time_current);
     ADD_ALL_TESTS(test_x509_cmp_time, OSSL_NELEM(x509_cmp_tests));
     ADD_ALL_TESTS(test_x509_time, OSSL_NELEM(x509_format_tests));
     ADD_ALL_TESTS(test_days, OSSL_NELEM(day_of_week_tests));
+    ADD_ALL_TESTS(test_x509_time_print, OSSL_NELEM(x509_print_tests));
     return 1;
 }
