@@ -15,7 +15,19 @@ size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
                    size_t r);
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r);
 
-#ifndef KECCAK1600_ASM
+#if !defined(KECCAK1600_ASM) || !defined(SELFTEST)
+
+/*
+ * Choose some sensible defaults
+ */
+#if !defined(KECCAK_REF) && !defined(KECCAK_1X) && !defined(KECCAK_1X_ALT) && \
+    !defined(KECCAK_2X) && !defined(KECCAK_INPLACE)
+# define KECCAK_2X      /* default to KECCAK_2X variant */
+#endif
+
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86)
+# define KECCAK_COMPLEMENTING_TRANSFORM
+#endif
 
 #if defined(__x86_64__) || defined(__aarch64__) || \
     defined(__mips64) || defined(__ia64) || \
@@ -508,10 +520,10 @@ static void KeccakF1600(uint64_t A[5][5])
  * This implementation is variant of KECCAK_1X above with outer-most
  * round loop unrolled twice. This allows to take temporary storage
  * out of round procedure and simplify references to it by alternating
- * it with actual data (see round loop below). Just like original, it's
- * rather meant as reference for an assembly implementation. It's likely
- * to provide best instruction per processed byte ratio at minimal
- * round unroll factor...
+ * it with actual data (see round loop below). Originally it was meant
+ * rather as reference for an assembly implementation, but it seems to
+ * play best with compilers [as well as provide best instruction per
+ * processed byte ratio at minimal round unroll factor]...
  */
 static void Round(uint64_t R[5][5], uint64_t A[5][5], size_t i)
 {
@@ -661,13 +673,15 @@ static void KeccakF1600(uint64_t A[5][5])
 #endif
 }
 
-#else
+#else   /* define KECCAK_INPLACE to compile this code path */
 /*
  * This implementation is KECCAK_1X from above combined 4 times with
  * a twist that allows to omit temporary storage and perform in-place
  * processing. It's discussed in section 2.5 of "Keccak implementation
  * overview". It's likely to be best suited for processors with large
- * register bank...
+ * register bank... On the other hand processor with large register
+ * bank can as well use KECCAK_1X_ALT, it would be as fast but much
+ * more compact...
  */
 static void FourRounds(uint64_t A[5][5], size_t i)
 {
@@ -1106,10 +1120,6 @@ void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r)
             KeccakF1600(A);
     }
 }
-#else
-size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
-                   size_t r);
-void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r);
 #endif
 
 #ifdef SELFTEST
