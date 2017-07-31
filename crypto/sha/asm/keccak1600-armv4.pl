@@ -25,23 +25,41 @@
 # register layout taken from Keccak Code Package. It's also as fast,
 # in fact faster by 10-15% on some processors, and endian-neutral.
 #
+# August 2017.
+#
+# Switch to KECCAK_2X variant for non-NEON code and merge almost 1/2
+# of rotate instructions with logical ones. This resulted in ~10%
+# improvement on most processors. Switch to KECCAK_2X effectively
+# minimizes re-loads from temporary storage, and merged rotates just
+# eliminate corresponding instructions. As for latter. When examining
+# code you'll notice commented ror instructions. These are eliminated
+# ones, and you should trace destination register below to see what's
+# going on. Just in case, why not all rotates are eliminated. Trouble
+# is that you have operations that require both inputs to be rotated,
+# e.g. 'eor a,b>>>x,c>>>y'. This conundrum is resolved by using
+# 'eor a,b,c>>>(x-y)' and then merge-rotating 'a' in next operation
+# that takes 'a' as input. And thing is that this next operation can
+# be in next round. It's totally possible to "carry" rotate "factors"
+# to the next round, but it makes code more complex. And the last word
+# is the keyword, i.e. "almost 1/2" is kind of complexity cap [for the
+# time being]...
+#
 ########################################################################
 # Numbers are cycles per processed byte. Non-NEON results account even
 # for input bit interleaving.
 #
-#		r=1600(*),NEON		r=1088(**),NEON
+#		r=1088(*),  NEON
 #
-# Cortex-A5	67/+130%, 24		96,        36
-# Cortex-A7	60/+90%,  23		87,        34
-# Cortex-A8	39/+220%, 20		56,        30
-# Cortex-A9	41/+160%, 17		58,        26
-# Cortex-A15	30/+65%,  12		41,        18
-# Snapdragon S4	35/+120%, 16		50,        24
+# ARM11xx	82/+150%
+# Cortex-A5	88/+160%,   36
+# Cortex-A7	78/+160%,   34
+# Cortex-A8	51/+230%,   30
+# Cortex-A9	53/+210%,   26
+# Cortex-A15	42/+160%,   18
+# Snapdragon S4	43/+210%,   24
 #
-# (*)	Not used in real life, meaningful as estimate for single absorb
-#	operation performance. Percentage after slash is improvement
-#	over compiler-generated KECCAK_1X reference code.
-# (**)	Corresponds to SHA3-256, 8KB message size.
+# (*)	Corresponds to SHA3-256. Percentage after slash is improvement
+#	over compiler-generated KECCAK_2X reference code.
 
 my @C = map("r$_",(0..9));
 my @E = map("r$_",(10..12,14));
@@ -55,18 +73,18 @@ my @E = map("r$_",(10..12,14));
 #       | uint64_t D[5]         |
 #       | ...                   |
 # +240->+-----------------------+
-#       | uint64_t T[2][5]      |
+#       | uint64_t T[5][5]      |
 #       | ...                   |
-# +320->+-----------------------+
+# +440->+-----------------------+
 #       | saved lr              |
-# +324->+-----------------------+
+# +444->+-----------------------+
 #       | loop counter          |
-# +328->+-----------------------+
+# +448->+-----------------------+
 #       | ...
 
 my @A = map([ 8*$_, 8*($_+1), 8*($_+2), 8*($_+3), 8*($_+4) ], (0,5,10,15,20));
 my @D = map(8*$_, (25..29));
-my @T = map([ 8*$_, 8*($_+1), 8*($_+2), 8*($_+3), 8*($_+4) ], (30,35));
+my @T = map([ 8*$_, 8*($_+1), 8*($_+2), 8*($_+3), 8*($_+4) ], (30,35,40,45,50));
 
 $code.=<<___;
 .text
@@ -110,18 +128,24 @@ iotas32:
 .type	KeccakF1600_int, %function
 .align	5
 KeccakF1600_int:
-	ldmia	sp,{@C[0]-@C[9]}		@ A[0][0..4]
+	add	@C[9],sp,#$A[4][2]
+	add	@E[2],sp,#$A[0][0]
 	add	@E[0],sp,#$A[1][0]
+	ldmia	@C[9],{@C[4]-@C[9]}		@ A[4][2..4]
 KeccakF1600_enter:
-	str	lr,[sp,#320]
+	str	lr,[sp,#440]
 	eor	@E[1],@E[1],@E[1]
-	str	@E[1],[sp,#324]
-	b	.Lround_enter
+	str	@E[1],[sp,#444]
+	b	.Lround
 
 .align	4
 .Lround:
-	ldmia	sp,{@C[0]-@C[9]}		@ A[0][0..4]
-.Lround_enter:
+___
+sub Round {
+my (@A,@R); (@A[0..4],@R) = @_;
+
+$code.=<<___;
+	ldmia	@E[2],{@C[0]-@C[3]}		@ A[0][0..1]
 	ldmia	@E[0],{@E[0]-@E[2],@E[3]}	@ A[1][0..1]
 	eor	@C[0],@C[0],@E[0]
 	 add	@E[0],sp,#$A[1][2]
@@ -166,17 +190,19 @@ KeccakF1600_enter:
 	eor	@C[7],@C[7],@E[3]
 	ldmia	@E[0],{@E[0]-@E[2],@E[3]}	@ A[3][4]..A[4][0]
 	eor	@C[8],@C[8],@E[0]
-	 add	@E[0],sp,#$A[4][1]
+	ldr	@E[0],[sp,#$A[4][1]]		@ A[4][1]
 	eor	@C[9],@C[9],@E[1]
+	ldr	@E[1],[sp,#$A[4][1]+4]
 	eor	@C[0],@C[0],@E[2]
+	ldr	@E[2],[sp,#$A[0][2]]		@ A[0][2]
 	eor	@C[1],@C[1],@E[3]
-	ldmia	@E[0],{@E[0]-@E[2],@E[3]}	@ A[4][1..2]
+	ldr	@E[3],[sp,#$A[0][2]+4]
 	eor	@C[2],@C[2],@E[0]
-	 add	@E[0],sp,#$A[4][3]
+	 add	@E[0],sp,#$A[0][3]
 	eor	@C[3],@C[3],@E[1]
 	eor	@C[4],@C[4],@E[2]
 	eor	@C[5],@C[5],@E[3]
-	ldmia	@E[0],{@E[0]-@E[2],@E[3]}	@ A[4][3..4]
+	ldmia	@E[0],{@E[0]-@E[2],@E[3]}	@ A[0][3..4]
 	eor	@C[6],@C[6],@E[0]
 	eor	@C[7],@C[7],@E[1]
 	eor	@C[8],@C[8],@E[2]
@@ -196,409 +222,419 @@ KeccakF1600_enter:
 	eor	@C[2],@C[2],@C[7],ror#32-1	@ C[1] = ROL64(C[3], 1) ^ C[1];
 	str	@C[1],[sp,#$D[0]+4]
 	eor	@C[3],@C[3],@C[6]
+	 ldr	@C[7],[sp,#$A[3][3]]
 	str	@C[2],[sp,#$D[2]]		@ D[2] = C[1]
 	eor	@C[4],@C[4],@C[9],ror#32-1	@ C[2] = ROL64(C[4], 1) ^ C[2];
+	 ldr	@C[6],[sp,#$A[3][3]+4]
 	str	@C[3],[sp,#$D[2]+4]
 	eor	@C[5],@C[5],@C[8]
-	 ldr	@C[8],[sp,#$A[3][0]]
-	 ldr	@C[9],[sp,#$A[3][0]+4]
-	str	@C[4],[sp,#$D[3]]		@ D[3] = C[2]
-	str	@C[5],[sp,#$D[3]+4]
-
-	ldr	@C[6],[sp,#$A[0][1]]
-	eor	@C[8],@C[8],@C[0]
-	ldr	@C[7],[sp,#$A[0][1]+4]
-	eor	@C[9],@C[9],@C[1]
-	str	@C[8],[sp,#$T[0][0]]		@ T[0][0] = A[3][0] ^ C[0]; /* borrow T[0][0] */
-	ldr	@C[8],[sp,#$A[0][2]]
-	str	@C[9],[sp,#$T[0][0]+4]
-	ldr	@C[9],[sp,#$A[0][2]+4]
-	eor	@C[6],@C[6],@E[0]
-	eor	@C[7],@C[7],@E[1]
-	str	@C[6],[sp,#$T[0][1]]		@ T[0][1] = A[0][1] ^ E[0]; /* D[1] */
-	ldr	@C[6],[sp,#$A[0][3]]
-	str	@C[7],[sp,#$T[0][1]+4]
-	ldr	@C[7],[sp,#$A[0][3]+4]
-	eor	@C[8],@C[8],@C[2]
-	eor	@C[9],@C[9],@C[3]
-	str	@C[8],[sp,#$T[0][2]]		@ T[0][2] = A[0][2] ^ C[1]; /* D[2] */
-	ldr	@C[8],[sp,#$A[0][4]]
-	str	@C[9],[sp,#$T[0][2]+4]
-	ldr	@C[9],[sp,#$A[0][4]+4]
-	eor	@C[6],@C[6],@C[4]
-	eor	@C[7],@C[7],@C[5]
-	str	@C[6],[sp,#$T[0][3]]		@ T[0][3] = A[0][3] ^ C[2]; /* D[3] */
-	eor	@C[8],@C[8],@E[2]
-	str	@C[7],[sp,#$T[0][3]+4]
-	eor	@C[9],@C[9],@E[3]
-	 ldr	@C[6],[sp,#$A[3][3]]
-	 ldr	@C[7],[sp,#$A[3][3]+4]
-	str	@C[8],[sp,#$T[0][4]]		@ T[0][4] = A[0][4] ^ E[1]; /* D[4] */
-	str	@C[9],[sp,#$T[0][4]+4]
 
 	ldr	@C[8],[sp,#$A[4][4]]
-	eor	@C[4],@C[4],@C[6]
 	ldr	@C[9],[sp,#$A[4][4]+4]
-	eor	@C[5],@C[5],@C[7]
-	ror	@C[7],@C[4],#32-10		@ C[3] = ROL64(A[3][3] ^ C[2], rhotates[3][3]);   /* D[3] */
+	 str	@C[4],[sp,#$D[3]]		@ D[3] = C[2]
+	eor	@C[7],@C[7],@C[4]
+	 str	@C[5],[sp,#$D[3]+4]
+	eor	@C[6],@C[6],@C[5]
 	ldr	@C[4],[sp,#$A[0][0]]
-	ror	@C[6],@C[5],#32-11
-	ldr	@C[5],[sp,#$A[0][0]+4]
+	@ ror	@C[7],@C[7],#32-10		@ C[3] = ROL64(A[3][3] ^ C[2], rhotates[3][3]);   /* D[3] */
+	@ ror	@C[6],@C[6],#32-11
 	eor	@C[8],@C[8],@E[2]
+	ldr	@C[5],[sp,#$A[0][0]+4]
 	eor	@C[9],@C[9],@E[3]
-	ror	@C[8],@C[8],#32-7		@ C[4] = ROL64(A[4][4] ^ E[1], rhotates[4][4]);   /* D[4] */
 	ldr	@E[2],[sp,#$A[2][2]]
-	ror	@C[9],@C[9],#32-7
-	ldr	@E[3],[sp,#$A[2][2]+4]
 	eor	@C[0],@C[0],@C[4]
+	ldr	@E[3],[sp,#$A[2][2]+4]
+	@ ror	@C[8],@C[8],#32-7		@ C[4] = ROL64(A[4][4] ^ E[1], rhotates[4][4]);   /* D[4] */
+	@ ror	@C[9],@C[9],#32-7
 	eor	@C[1],@C[1],@C[5]		@ C[0] =       A[0][0] ^ C[0]; /* rotate by 0 */  /* D[0] */
 	eor	@E[2],@E[2],@C[2]
 	ldr	@C[2],[sp,#$A[1][1]]
 	eor	@E[3],@E[3],@C[3]
 	ldr	@C[3],[sp,#$A[1][1]+4]
 	ror	@C[5],@E[2],#32-21		@ C[2] = ROL64(A[2][2] ^ C[1], rhotates[2][2]);   /* D[2] */
-	 ldr	@E[2],[sp,#324]			@ load counter
+	 ldr	@E[2],[sp,#444]			@ load counter
 	eor	@C[2],@C[2],@E[0]
+	 adr	@E[0],iotas32
 	ror	@C[4],@E[3],#32-22
-	 adr	@E[3],iotas32
+	 add	@E[3],@E[0],@E[2]
 	eor	@C[3],@C[3],@E[1]
-	ror	@C[2],@C[2],#32-22		@ C[1] = ROL64(A[1][1] ^ E[0], rhotates[1][1]);   /* D[1] */
-	 add	@E[3],@E[3],@E[2]
-	ror	@C[3],@C[3],#32-22
-
-	ldr	@E[0],[@E[3],#0]		@ iotas[i].lo
-	add	@E[2],@E[2],#8
-	ldr	@E[1],[@E[3],#4]		@ iotas[i].hi
+___
+$code.=<<___	if ($A[0][0] != $T[0][0]);
+	ldmia	@E[3],{@E[0],@E[1]}		@ iotas[i]
+___
+$code.=<<___	if ($A[0][0] == $T[0][0]);
+	ldr	@E[0],[@E[3],#8]		@ iotas[i].lo
+	add	@E[2],@E[2],#16
+	ldr	@E[1],[@E[3],#12]		@ iotas[i].hi
 	cmp	@E[2],#192
-	str	@E[2],[sp,#324]			@ store counter
-
-	bic	@E[2],@C[4],@C[2]
-	bic	@E[3],@C[5],@C[3]
+	str	@E[2],[sp,#444]			@ store counter
+___
+$code.=<<___;
+	bic	@E[2],@C[4],@C[2],ror#32-22
+	bic	@E[3],@C[5],@C[3],ror#32-22
+	 ror	@C[2],@C[2],#32-22		@ C[1] = ROL64(A[1][1] ^ E[0], rhotates[1][1]);   /* D[1] */
+	 ror	@C[3],@C[3],#32-22
 	eor	@E[2],@E[2],@C[0]
 	eor	@E[3],@E[3],@C[1]
 	eor	@E[0],@E[0],@E[2]
 	eor	@E[1],@E[1],@E[3]
-	str	@E[0],[sp,#$A[0][0]]		@ A[0][0] = C[0] ^ (~C[1] & C[2]) ^ iotas[i];
-	bic	@E[2],@C[6],@C[4]
-	str	@E[1],[sp,#$A[0][0]+4]
-	bic	@E[3],@C[7],@C[5]
-	eor	@E[2],@E[2],@C[2]
-	eor	@E[3],@E[3],@C[3]
-	str	@E[2],[sp,#$A[0][1]]		@ A[0][1] = C[1] ^ (~C[2] & C[3]);
-	bic	@E[0],@C[8],@C[6]
-	str	@E[3],[sp,#$A[0][1]+4]
-	bic	@E[1],@C[9],@C[7]
-	eor	@E[0],@E[0],@C[4]
-	eor	@E[1],@E[1],@C[5]
-	str	@E[0],[sp,#$A[0][2]]		@ A[0][2] = C[2] ^ (~C[3] & C[4]);
-	bic	@E[2],@C[0],@C[8]
-	str	@E[1],[sp,#$A[0][2]+4]
-	bic	@E[3],@C[1],@C[9]
-	eor	@E[2],@E[2],@C[6]
-	eor	@E[3],@E[3],@C[7]
-	str	@E[2],[sp,#$A[0][3]]		@ A[0][3] = C[3] ^ (~C[4] & C[0]);
+	str	@E[0],[sp,#$R[0][0]]		@ R[0][0] = C[0] ^ (~C[1] & C[2]) ^ iotas[i];
+	bic	@E[2],@C[6],@C[4],ror#11
+	str	@E[1],[sp,#$R[0][0]+4]
+	bic	@E[3],@C[7],@C[5],ror#10
+	bic	@E[0],@C[8],@C[6],ror#32-(11-7)
+	bic	@E[1],@C[9],@C[7],ror#32-(10-7)
+	eor	@E[2],@C[2],@E[2],ror#32-11
+	eor	@E[3],@C[3],@E[3],ror#32-10
+	str	@E[2],[sp,#$R[0][1]]		@ R[0][1] = C[1] ^ (~C[2] & C[3]);
+	eor	@E[0],@C[4],@E[0],ror#32-7
+	str	@E[3],[sp,#$R[0][1]+4]
+	eor	@E[1],@C[5],@E[1],ror#32-7
+	str	@E[0],[sp,#$R[0][2]]		@ R[0][2] = C[2] ^ (~C[3] & C[4]);
+	bic	@E[2],@C[0],@C[8],ror#32-7
+	str	@E[1],[sp,#$R[0][2]+4]
+	bic	@E[3],@C[1],@C[9],ror#32-7
+	eor	@E[2],@E[2],@C[6],ror#32-11
+	eor	@E[3],@E[3],@C[7],ror#32-10
+	str	@E[2],[sp,#$R[0][3]]		@ R[0][3] = C[3] ^ (~C[4] & C[0]);
 	bic	@E[0],@C[2],@C[0]
-	str	@E[3],[sp,#$A[0][3]+4]
-	 add	@E[3],sp,#$D[0]
-	bic	@E[1],@C[3],@C[1]
-	eor	@E[0],@E[0],@C[8]
-	eor	@E[1],@E[1],@C[9]
-	str	@E[0],[sp,#$A[0][4]]		@ A[0][4] = C[4] ^ (~C[0] & C[1]);
-	str	@E[1],[sp,#$A[0][4]+4]
-
-	ldmia	@E[3],{@C[6]-@C[9],@E[0],@E[1],@E[2],@E[3]}	@ D[0..3]
-	ldr	@C[0],[sp,#$A[1][0]]
-	ldr	@C[1],[sp,#$A[1][0]+4]
-	ldr	@C[2],[sp,#$A[2][1]]
-	ldr	@C[3],[sp,#$A[2][1]+4]
-	ldr	@C[4],[sp,#$D[4]]
-	eor	@C[0],@C[0],@C[6]
-	ldr	@C[5],[sp,#$D[4]+4]
-	eor	@C[1],@C[1],@C[7]
-	str	@C[0],[sp,#$T[1][0]]		@ T[1][0] = A[1][0] ^ (C[3] = D[0]);
-	add	@C[0],sp,#$A[1][2]
-	str	@C[1],[sp,#$T[1][0]+4]
-	eor	@C[2],@C[2],@C[8]
-	eor	@C[3],@C[3],@C[9]
-	str	@C[2],[sp,#$T[1][1]]		@ T[1][1] = A[2][1] ^ (C[4] = D[1]); /* borrow T[1][1] */
-	str	@C[3],[sp,#$T[1][1]+4]
-	ldmia	@C[0],{@C[0]-@C[3]}		@ A[1][2..3]
-	eor	@C[0],@C[0],@E[0]
-	eor	@C[1],@C[1],@E[1]
-	str	@C[0],[sp,#$T[1][2]]		@ T[1][2] = A[1][2] ^ (E[0] = D[2]);
-	ldr	@C[0],[sp,#$A[2][4]]
-	str	@C[1],[sp,#$T[1][2]+4]
-	ldr	@C[1],[sp,#$A[2][4]+4]
-	eor	@C[2],@C[2],@E[2]
-	eor	@C[3],@C[3],@E[3]
-	str	@C[2],[sp,#$T[1][3]]		@ T[1][3] = A[1][3] ^ (E[1] = D[3]);
-	 ldr	@C[2],[sp,#$T[0][3]]
-	str	@C[3],[sp,#$T[1][3]+4]
-	 ldr	@C[3],[sp,#$T[0][3]+4]
-	eor	@C[0],@C[0],@C[4]
-	 ldr	@E[2],[sp,#$A[1][4]]
-	eor	@C[1],@C[1],@C[5]
-	 ldr	@E[3],[sp,#$A[1][4]+4]
-	str	@C[0],[sp,#$T[1][4]]		@ T[1][4] = A[2][4] ^ (C[2] = D[4]); /* borrow T[1][4] */
-
-	ror	@C[0],@C[2],#32-14		@ C[0] = ROL64(T[0][3],        rhotates[0][3]);
-	 str	@C[1],[sp,#$T[1][4]+4]
-	ror	@C[1],@C[3],#32-14
-	eor	@C[2],@E[2],@C[4]
-	ldr	@C[4],[sp,#$A[2][0]]
-	eor	@C[3],@E[3],@C[5]
-	ldr	@C[5],[sp,#$A[2][0]+4]
-	ror	@C[2],@C[2],#32-10		@ C[1] = ROL64(A[1][4] ^ C[2], rhotates[1][4]);   /* D[4] */
-	ldr	@E[2],[sp,#$A[3][1]]
-	ror	@C[3],@C[3],#32-10
-	ldr	@E[3],[sp,#$A[3][1]+4]
-	eor	@C[6],@C[6],@C[4]
-	eor	@C[7],@C[7],@C[5]
-	ror	@C[5],@C[6],#32-1		@ C[2] = ROL64(A[2][0] ^ C[3], rhotates[2][0]);   /* D[0] */
-	eor	@E[2],@E[2],@C[8]
-	ror	@C[4],@C[7],#32-2
-	ldr	@C[8],[sp,#$A[4][2]]
-	eor	@E[3],@E[3],@C[9]
-	ldr	@C[9],[sp,#$A[4][2]+4]
-	ror	@C[7],@E[2],#32-22		@ C[3] = ROL64(A[3][1] ^ C[4], rhotates[3][1]);   /* D[1] */
-	eor	@E[0],@E[0],@C[8]
-	ror	@C[6],@E[3],#32-23
-	eor	@E[1],@E[1],@C[9]
-	ror	@C[9],@E[0],#32-30		@ C[4] = ROL64(A[4][2] ^ E[0], rhotates[4][2]);   /* D[2] */
-
-	bic	@E[0],@C[4],@C[2]
-	 ror	@C[8],@E[1],#32-31
-	bic	@E[1],@C[5],@C[3]
-	eor	@E[0],@E[0],@C[0]
-	eor	@E[1],@E[1],@C[1]
-	str	@E[0],[sp,#$A[1][0]]		@ A[1][0] = C[0] ^ (~C[1] & C[2])
-	bic	@E[2],@C[6],@C[4]
-	str	@E[1],[sp,#$A[1][0]+4]
-	bic	@E[3],@C[7],@C[5]
-	eor	@E[2],@E[2],@C[2]
-	eor	@E[3],@E[3],@C[3]
-	str	@E[2],[sp,#$A[1][1]]		@ A[1][1] = C[1] ^ (~C[2] & C[3]);
-	bic	@E[0],@C[8],@C[6]
-	str	@E[3],[sp,#$A[1][1]+4]
-	bic	@E[1],@C[9],@C[7]
-	eor	@E[0],@E[0],@C[4]
-	eor	@E[1],@E[1],@C[5]
-	str	@E[0],[sp,#$A[1][2]]		@ A[1][2] = C[2] ^ (~C[3] & C[4]);
-	bic	@E[2],@C[0],@C[8]
-	str	@E[1],[sp,#$A[1][2]+4]
-	bic	@E[3],@C[1],@C[9]
-	eor	@E[2],@E[2],@C[6]
-	eor	@E[3],@E[3],@C[7]
-	str	@E[2],[sp,#$A[1][3]]		@ A[1][3] = C[3] ^ (~C[4] & C[0]);
-	bic	@E[0],@C[2],@C[0]
-	str	@E[3],[sp,#$A[1][3]+4]
+	str	@E[3],[sp,#$R[0][3]+4]
 	 add	@E[3],sp,#$D[3]
 	bic	@E[1],@C[3],@C[1]
-	 ldr	@C[1],[sp,#$T[0][1]]
-	eor	@E[0],@E[0],@C[8]
-	 ldr	@C[0],[sp,#$T[0][1]+4]
-	eor	@E[1],@E[1],@C[9]
-	str	@E[0],[sp,#$A[1][4]]		@ A[1][4] = C[4] ^ (~C[0] & C[1]);
-	str	@E[1],[sp,#$A[1][4]+4]
+	 ldr	@C[0],[sp,#$A[0][3]]		@ A[0][3]
+	eor	@E[0],@E[0],@C[8],ror#32-7
+	 ldr	@C[1],[sp,#$A[0][3]+4]
+	eor	@E[1],@E[1],@C[9],ror#32-7
+	str	@E[0],[sp,#$R[0][4]]		@ R[0][4] = C[4] ^ (~C[0] & C[1]);
+	 add	@C[9],sp,#$D[0]
+	str	@E[1],[sp,#$R[0][4]+4]
 
-	ldr	@C[2],[sp,#$T[1][2]]
-	ldr	@C[3],[sp,#$T[1][2]+4]
 	ldmia	@E[3],{@E[0]-@E[2],@E[3]}	@ D[3..4]
-	ldr	@C[4],[sp,#$A[2][3]]
-	ror	@C[0],@C[0],#32-1		@ C[0] = ROL64(T[0][1],        rhotates[0][1]);
+	ldmia	@C[9],{@C[6]-@C[9]}		@ D[0..1]
+
+	ldr	@C[2],[sp,#$A[1][4]]		@ A[1][4]
+	eor	@C[0],@C[0],@E[0]
+	ldr	@C[3],[sp,#$A[1][4]+4]
+	eor	@C[1],@C[1],@E[1]
+	@ ror	@C[0],@C[0],#32-14		@ C[0] = ROL64(A[0][3] ^ D[3], rhotates[0][3]);
+	ldr	@E[0],[sp,#$A[3][1]]		@ A[3][1]
+	@ ror	@C[1],@C[1],#32-14
+	ldr	@E[1],[sp,#$A[3][1]+4]
+
+	eor	@C[2],@C[2],@E[2]
+	ldr	@C[4],[sp,#$A[2][0]]		@ A[2][0]
+	eor	@C[3],@C[3],@E[3]
+	ldr	@C[5],[sp,#$A[2][0]+4]
+	@ ror	@C[2],@C[2],#32-10		@ C[1] = ROL64(A[1][4] ^ D[4], rhotates[1][4]);
+	@ ror	@C[3],@C[3],#32-10
+
+	eor	@C[6],@C[6],@C[4]
+	ldr	@E[2],[sp,#$D[2]]		@ D[2]
+	eor	@C[7],@C[7],@C[5]
+	ldr	@E[3],[sp,#$D[2]+4]
+	ror	@C[5],@C[6],#32-1		@ C[2] = ROL64(A[2][0] ^ D[0], rhotates[2][0]);
+	ror	@C[4],@C[7],#32-2
+
+	eor	@E[0],@E[0],@C[8]
+	ldr	@C[8],[sp,#$A[4][2]]		@ A[4][2]
+	eor	@E[1],@E[1],@C[9]
+	ldr	@C[9],[sp,#$A[4][2]+4]
+	ror	@C[7],@E[0],#32-22		@ C[3] = ROL64(A[3][1] ^ D[1], rhotates[3][1]);
+	ror	@C[6],@E[1],#32-23
+
+	bic	@E[0],@C[4],@C[2],ror#32-10
+	bic	@E[1],@C[5],@C[3],ror#32-10
+	 eor	@E[2],@E[2],@C[8]
+	 eor	@E[3],@E[3],@C[9]
+	 ror	@C[9],@E[2],#32-30		@ C[4] = ROL64(A[4][2] ^ D[2], rhotates[4][2]);
+	 ror	@C[8],@E[3],#32-31
+	eor	@E[0],@E[0],@C[0],ror#32-14
+	eor	@E[1],@E[1],@C[1],ror#32-14
+	str	@E[0],[sp,#$R[1][0]]		@ R[1][0] = C[0] ^ (~C[1] & C[2])
+	bic	@E[2],@C[6],@C[4]
+	str	@E[1],[sp,#$R[1][0]+4]
+	bic	@E[3],@C[7],@C[5]
+	eor	@E[2],@E[2],@C[2],ror#32-10
+	eor	@E[3],@E[3],@C[3],ror#32-10
+	str	@E[2],[sp,#$R[1][1]]		@ R[1][1] = C[1] ^ (~C[2] & C[3]);
+	bic	@E[0],@C[8],@C[6]
+	str	@E[3],[sp,#$R[1][1]+4]
+	bic	@E[1],@C[9],@C[7]
+	bic	@E[2],@C[0],@C[8],ror#14
+	bic	@E[3],@C[1],@C[9],ror#14
+	eor	@E[0],@E[0],@C[4]
+	eor	@E[1],@E[1],@C[5]
+	str	@E[0],[sp,#$R[1][2]]		@ R[1][2] = C[2] ^ (~C[3] & C[4]);
+	bic	@E[0],@C[2],@C[0],ror#32-(14-10)
+	eor	@E[2],@C[6],@E[2],ror#32-14
+	str	@E[1],[sp,#$R[1][2]+4]
+	bic	@E[1],@C[3],@C[1],ror#32-(14-10)
+	eor	@E[3],@C[7],@E[3],ror#32-14
+	str	@E[2],[sp,#$R[1][3]]		@ R[1][3] = C[3] ^ (~C[4] & C[0]);
+	 add	@E[2],sp,#$D[1]
+	str	@E[3],[sp,#$R[1][3]+4]
+	 ldr	@C[1],[sp,#$A[0][1]]		@ A[0][1]
+	eor	@E[0],@C[8],@E[0],ror#32-10
+	 ldr	@C[0],[sp,#$A[0][1]+4]
+	eor	@E[1],@C[9],@E[1],ror#32-10
+	str	@E[0],[sp,#$R[1][4]]		@ R[1][4] = C[4] ^ (~C[0] & C[1]);
+	 add	@C[9],sp,#$D[3]
+	str	@E[1],[sp,#$R[1][4]+4]
+
+	ldmia	@E[2],{@E[0]-@E[2],@E[3]}	@ D[1..2]
+	ldr	@C[2],[sp,#$A[1][2]]		@ A[1][2]
+	ldr	@C[3],[sp,#$A[1][2]+4]
+	ldmia	@C[9],{@C[6]-@C[9]}		@ D[3..4]
+
+	eor	@C[1],@C[1],@E[0]
+	ldr	@C[4],[sp,#$A[2][3]]		@ A[2][3]
+	eor	@C[0],@C[0],@E[1]
 	ldr	@C[5],[sp,#$A[2][3]+4]
-	ror	@C[2],@C[2],#32-3		@ C[1] = ROL64(T[1][2],        rhotates[1][2]);
-	ldr	@C[6],[sp,#$A[3][4]]
-	ror	@C[3],@C[3],#32-3
-	ldr	@C[7],[sp,#$A[3][4]+4]
-	eor	@E[0],@E[0],@C[4]
-	ldr	@C[8],[sp,#$A[4][0]]
-	eor	@E[1],@E[1],@C[5]
+	ror	@C[0],@C[0],#32-1		@ C[0] = ROL64(A[0][1] ^ D[1], rhotates[0][1]);
+
+	eor	@C[2],@C[2],@E[2]
+	ldr	@E[0],[sp,#$A[3][4]]		@ A[3][4]
+	eor	@C[3],@C[3],@E[3]
+	ldr	@E[1],[sp,#$A[3][4]+4]
+	@ ror	@C[2],@C[2],#32-3		@ C[1] = ROL64(A[1][2] ^ D[2], rhotates[1][2]);
+	ldr	@E[2],[sp,#$D[0]]		@ D[0]
+	@ ror	@C[3],@C[3],#32-3
+	ldr	@E[3],[sp,#$D[0]+4]
+
+	eor	@C[4],@C[4],@C[6]
+	eor	@C[5],@C[5],@C[7]
+	@ ror	@C[5],@C[6],#32-12		@ C[2] = ROL64(A[2][3] ^ D[3], rhotates[2][3]);
+	@ ror	@C[4],@C[7],#32-13		@ [track reverse order below]
+
+	eor	@E[0],@E[0],@C[8]
+	ldr	@C[8],[sp,#$A[4][0]]		@ A[4][0]
+	eor	@E[1],@E[1],@C[9]
 	ldr	@C[9],[sp,#$A[4][0]+4]
-	ror	@C[5],@E[0],#32-12		@ C[2] = ROL64(A[2][3] ^ D[3], rhotates[2][3]);
-	ldr	@E[0],[sp,#$D[0]]
-	ror	@C[4],@E[1],#32-13
-	ldr	@E[1],[sp,#$D[0]+4]
-	eor	@C[6],@C[6],@E[2]
-	eor	@C[7],@C[7],@E[3]
-	ror	@C[6],@C[6],#32-4		@ C[3] = ROL64(A[3][4] ^ D[4], rhotates[3][4]);
-	eor	@C[8],@C[8],@E[0]
-	ror	@C[7],@C[7],#32-4
-	eor	@C[9],@C[9],@E[1]
-	ror	@C[8],@C[8],#32-9		@ C[4] = ROL64(A[4][0] ^ D[0], rhotates[4][0]);
+	ror	@C[6],@E[0],#32-4		@ C[3] = ROL64(A[3][4] ^ D[4], rhotates[3][4]);
+	ror	@C[7],@E[1],#32-4
 
-	bic	@E[0],@C[4],@C[2]
-	 ror	@C[9],@C[9],#32-9
-	bic	@E[1],@C[5],@C[3]
-	eor	@E[0],@E[0],@C[0]
-	eor	@E[1],@E[1],@C[1]
-	str	@E[0],[sp,#$A[2][0]]		@ A[2][0] = C[0] ^ (~C[1] & C[2])
-	bic	@E[2],@C[6],@C[4]
-	str	@E[1],[sp,#$A[2][0]+4]
-	bic	@E[3],@C[7],@C[5]
-	eor	@E[2],@E[2],@C[2]
-	eor	@E[3],@E[3],@C[3]
-	str	@E[2],[sp,#$A[2][1]]		@ A[2][1] = C[1] ^ (~C[2] & C[3]);
+	eor	@E[2],@E[2],@C[8]
+	eor	@E[3],@E[3],@C[9]
+	ror	@C[8],@E[2],#32-9		@ C[4] = ROL64(A[4][0] ^ D[0], rhotates[4][0]);
+	ror	@C[9],@E[3],#32-9
+
+	bic	@E[0],@C[5],@C[2],ror#13-3
+	bic	@E[1],@C[4],@C[3],ror#12-3
+	bic	@E[2],@C[6],@C[5],ror#32-13
+	bic	@E[3],@C[7],@C[4],ror#32-12
+	eor	@E[0],@C[0],@E[0],ror#32-13
+	eor	@E[1],@C[1],@E[1],ror#32-12
+	str	@E[0],[sp,#$R[2][0]]		@ R[2][0] = C[0] ^ (~C[1] & C[2])
+	eor	@E[2],@E[2],@C[2],ror#32-3
+	str	@E[1],[sp,#$R[2][0]+4]
+	eor	@E[3],@E[3],@C[3],ror#32-3
+	str	@E[2],[sp,#$R[2][1]]		@ R[2][1] = C[1] ^ (~C[2] & C[3]);
 	bic	@E[0],@C[8],@C[6]
-	str	@E[3],[sp,#$A[2][1]+4]
+	str	@E[3],[sp,#$R[2][1]+4]
 	bic	@E[1],@C[9],@C[7]
-	eor	@E[0],@E[0],@C[4]
-	eor	@E[1],@E[1],@C[5]
-	str	@E[0],[sp,#$A[2][2]]		@ A[2][2] = C[2] ^ (~C[3] & C[4]);
+	eor	@E[0],@E[0],@C[5],ror#32-13
+	eor	@E[1],@E[1],@C[4],ror#32-12
+	str	@E[0],[sp,#$R[2][2]]		@ R[2][2] = C[2] ^ (~C[3] & C[4]);
 	bic	@E[2],@C[0],@C[8]
-	str	@E[1],[sp,#$A[2][2]+4]
+	str	@E[1],[sp,#$R[2][2]+4]
 	bic	@E[3],@C[1],@C[9]
 	eor	@E[2],@E[2],@C[6]
 	eor	@E[3],@E[3],@C[7]
-	str	@E[2],[sp,#$A[2][3]]		@ A[2][3] = C[3] ^ (~C[4] & C[0]);
-	bic	@E[0],@C[2],@C[0]
-	str	@E[3],[sp,#$A[2][3]+4]
-	bic	@E[1],@C[3],@C[1]
-	eor	@E[0],@E[0],@C[8]
-	eor	@E[1],@E[1],@C[9]
-	str	@E[0],[sp,#$A[2][4]]		@ A[2][4] = C[4] ^ (~C[0] & C[1]);
-	 add	@C[2],sp,#$T[1][0]
-	str	@E[1],[sp,#$A[2][4]+4]
+	str	@E[2],[sp,#$R[2][3]]		@ R[2][3] = C[3] ^ (~C[4] & C[0]);
+	bic	@E[0],@C[2],@C[0],ror#3
+	str	@E[3],[sp,#$R[2][3]+4]
+	bic	@E[1],@C[3],@C[1],ror#3
+	 ldr	@C[1],[sp,#$A[0][4]]		@ A[0][4] [in reverse order]
+	eor	@E[0],@C[8],@E[0],ror#32-3
+	 ldr	@C[0],[sp,#$A[0][4]+4]
+	eor	@E[1],@C[9],@E[1],ror#32-3
+	str	@E[0],[sp,#$R[2][4]]		@ R[2][4] = C[4] ^ (~C[0] & C[1]);
+	 add	@C[9],sp,#$D[1]
+	str	@E[1],[sp,#$R[2][4]+4]
 
-	add	@E[3],sp,#$D[2]
-	ldr	@C[1],[sp,#$T[0][4]]
-	ldr	@C[0],[sp,#$T[0][4]+4]
-	ldmia	@C[2],{@C[2]-@C[5]}		@ T[1][0..1]
-	ldmia	@E[3],{@E[0]-@E[2],@E[3]}	@ D[2..3]
-	ror	@C[1],@C[1],#32-13		@ C[0] = ROL64(T[0][4],        rhotates[0][4]);
-	ldr	@C[6],[sp,#$A[3][2]]
-	ror	@C[0],@C[0],#32-14
-	ldr	@C[7],[sp,#$A[3][2]+4]
-	ror	@C[2],@C[2],#32-18		@ C[1] = ROL64(T[1][0],        rhotates[1][0]);
-	ldr	@C[8],[sp,#$A[4][3]]
-	ror	@C[3],@C[3],#32-18
+	ldr	@E[0],[sp,#$D[4]]		@ D[4]
+	ldr	@E[1],[sp,#$D[4]+4]
+	ldr	@E[2],[sp,#$D[0]]		@ D[0]
+	ldr	@E[3],[sp,#$D[0]+4]
+
+	ldmia	@C[9],{@C[6]-@C[9]}		@ D[1..2]
+
+	eor	@C[1],@C[1],@E[0]
+	ldr	@C[2],[sp,#$A[1][0]]		@ A[1][0]
+	eor	@C[0],@C[0],@E[1]
+	ldr	@C[3],[sp,#$A[1][0]+4]
+	@ ror	@C[1],@E[0],#32-13		@ C[0] = ROL64(A[0][4] ^ D[4], rhotates[0][4]);
+	ldr	@C[4],[sp,#$A[2][1]]		@ A[2][1]
+	@ ror	@C[0],@E[1],#32-14		@ [was loaded in reverse order]
+	ldr	@C[5],[sp,#$A[2][1]+4]
+
+	eor	@C[2],@C[2],@E[2]
+	ldr	@E[0],[sp,#$A[3][2]]		@ A[3][2]
+	eor	@C[3],@C[3],@E[3]
+	ldr	@E[1],[sp,#$A[3][2]+4]
+	@ ror	@C[2],@C[2],#32-18		@ C[1] = ROL64(A[1][0] ^ D[0], rhotates[1][0]);
+	ldr	@E[2],[sp,#$D[3]]		@ D[3]
+	@ ror	@C[3],@C[3],#32-18
+	ldr	@E[3],[sp,#$D[3]+4]
+
+	eor	@C[6],@C[6],@C[4]
+	eor	@C[7],@C[7],@C[5]
+	ror	@C[4],@C[6],#32-5		@ C[2] = ROL64(A[2][1] ^ D[1], rhotates[2][1]);
+	ror	@C[5],@C[7],#32-5
+
+	eor	@E[0],@E[0],@C[8]
+	ldr	@C[8],[sp,#$A[4][3]]		@ A[4][3]
+	eor	@E[1],@E[1],@C[9]
 	ldr	@C[9],[sp,#$A[4][3]+4]
-	ror	@C[4],@C[4],#32-5		@ C[2] = ROL64(T[1][1],        rhotates[2][1]); /* originally A[2][1] */
-	eor	@E[0],@E[0],@C[6]
-	ror	@C[5],@C[5],#32-5
-	eor	@E[1],@E[1],@C[7]
 	ror	@C[7],@E[0],#32-7		@ C[3] = ROL64(A[3][2] ^ D[2], rhotates[3][2]);
-	eor	@C[8],@C[8],@E[2]
 	ror	@C[6],@E[1],#32-8
-	eor	@C[9],@C[9],@E[3]
-	ror	@C[8],@C[8],#32-28		@ C[4] = ROL64(A[4][3] ^ D[3], rhotates[4][3]);
 
-	bic	@E[0],@C[4],@C[2]
-	 ror	@C[9],@C[9],#32-28
-	bic	@E[1],@C[5],@C[3]
-	eor	@E[0],@E[0],@C[0]
-	eor	@E[1],@E[1],@C[1]
-	str	@E[0],[sp,#$A[3][0]]		@ A[3][0] = C[0] ^ (~C[1] & C[2])
+	eor	@E[2],@E[2],@C[8]
+	eor	@E[3],@E[3],@C[9]
+	ror	@C[8],@E[2],#32-28		@ C[4] = ROL64(A[4][3] ^ D[3], rhotates[4][3]);
+	ror	@C[9],@E[3],#32-28
+
+	bic	@E[0],@C[4],@C[2],ror#32-18
+	bic	@E[1],@C[5],@C[3],ror#32-18
+	eor	@E[0],@E[0],@C[0],ror#32-14
+	eor	@E[1],@E[1],@C[1],ror#32-13
+	str	@E[0],[sp,#$R[3][0]]		@ R[3][0] = C[0] ^ (~C[1] & C[2])
 	bic	@E[2],@C[6],@C[4]
-	str	@E[1],[sp,#$A[3][0]+4]
+	str	@E[1],[sp,#$R[3][0]+4]
 	bic	@E[3],@C[7],@C[5]
-	eor	@E[2],@E[2],@C[2]
-	eor	@E[3],@E[3],@C[3]
-	str	@E[2],[sp,#$A[3][1]]		@ A[3][1] = C[1] ^ (~C[2] & C[3]);
+	eor	@E[2],@E[2],@C[2],ror#32-18
+	eor	@E[3],@E[3],@C[3],ror#32-18
+	str	@E[2],[sp,#$R[3][1]]		@ R[3][1] = C[1] ^ (~C[2] & C[3]);
 	bic	@E[0],@C[8],@C[6]
-	str	@E[3],[sp,#$A[3][1]+4]
+	str	@E[3],[sp,#$R[3][1]+4]
 	bic	@E[1],@C[9],@C[7]
+	bic	@E[2],@C[0],@C[8],ror#14
+	bic	@E[3],@C[1],@C[9],ror#13
 	eor	@E[0],@E[0],@C[4]
 	eor	@E[1],@E[1],@C[5]
-	str	@E[0],[sp,#$A[3][2]]		@ A[3][2] = C[2] ^ (~C[3] & C[4]);
-	bic	@E[2],@C[0],@C[8]
-	str	@E[1],[sp,#$A[3][2]+4]
-	bic	@E[3],@C[1],@C[9]
-	eor	@E[2],@E[2],@C[6]
-	eor	@E[3],@E[3],@C[7]
-	str	@E[2],[sp,#$A[3][3]]		@ A[3][3] = C[3] ^ (~C[4] & C[0]);
-	bic	@E[0],@C[2],@C[0]
-	str	@E[3],[sp,#$A[3][3]+4]
-	bic	@E[1],@C[3],@C[1]
+	str	@E[0],[sp,#$R[3][2]]		@ R[3][2] = C[2] ^ (~C[3] & C[4]);
+	bic	@E[0],@C[2],@C[0],ror#18-14
+	eor	@E[2],@C[6],@E[2],ror#32-14
+	str	@E[1],[sp,#$R[3][2]+4]
+	bic	@E[1],@C[3],@C[1],ror#18-13
+	eor	@E[3],@C[7],@E[3],ror#32-13
+	str	@E[2],[sp,#$R[3][3]]		@ R[3][3] = C[3] ^ (~C[4] & C[0]);
+	str	@E[3],[sp,#$R[3][3]+4]
+	 add	@E[3],sp,#$D[2]
+	 ldr	@C[0],[sp,#$A[0][2]]		@ A[0][2]
+	eor	@E[0],@C[8],@E[0],ror#32-18
+	 ldr	@C[1],[sp,#$A[0][2]+4]
+	eor	@E[1],@C[9],@E[1],ror#32-18
+	str	@E[0],[sp,#$R[3][4]]		@ R[3][4] = C[4] ^ (~C[0] & C[1]);
+	str	@E[1],[sp,#$R[3][4]+4]
+
+	ldmia	@E[3],{@E[0]-@E[2],@E[3]}	@ D[2..3]
+	ldr	@C[2],[sp,#$A[1][3]]		@ A[1][3]
+	ldr	@C[3],[sp,#$A[1][3]+4]
+	ldr	@C[6],[sp,#$D[4]]		@ D[4]
+	ldr	@C[7],[sp,#$D[4]+4]
+
+	eor	@C[0],@C[0],@E[0]
+	ldr	@C[4],[sp,#$A[2][4]]		@ A[2][4]
+	eor	@C[1],@C[1],@E[1]
+	ldr	@C[5],[sp,#$A[2][4]+4]
+	@ ror	@C[0],@C[0],#32-31		@ C[0] = ROL64(A[0][2] ^ D[2], rhotates[0][2]);
+	ldr	@C[8],[sp,#$D[0]]		@ D[0]
+	@ ror	@C[1],@C[1],#32-31
+	ldr	@C[9],[sp,#$D[0]+4]
+
+	eor	@E[2],@E[2],@C[2]
+	ldr	@E[0],[sp,#$A[3][0]]		@ A[3][0]
+	eor	@E[3],@E[3],@C[3]
+	ldr	@E[1],[sp,#$A[3][0]+4]
+	ror	@C[3],@E[2],#32-27		@ C[1] = ROL64(A[1][3] ^ D[3], rhotates[1][3]);
+	ldr	@E[2],[sp,#$D[1]]		@ D[1]
+	ror	@C[2],@E[3],#32-28
+	ldr	@E[3],[sp,#$D[1]+4]
+
+	eor	@C[6],@C[6],@C[4]
+	eor	@C[7],@C[7],@C[5]
+	ror	@C[5],@C[6],#32-19		@ C[2] = ROL64(A[2][4] ^ D[4], rhotates[2][4]);
+	ror	@C[4],@C[7],#32-20
+
 	eor	@E[0],@E[0],@C[8]
+	ldr	@C[8],[sp,#$A[4][1]]		@ A[4][1]
 	eor	@E[1],@E[1],@C[9]
-	str	@E[0],[sp,#$A[3][4]]		@ A[3][4] = C[4] ^ (~C[0] & C[1]);
-	 add	@E[3],sp,#$T[1][3]
-	str	@E[1],[sp,#$A[3][4]+4]
-
-	ldr	@C[0],[sp,#$T[0][2]]
-	ldr	@C[1],[sp,#$T[0][2]+4]
-	ldmia	@E[3],{@E[0]-@E[2],@E[3]}	@ T[1][3..4]
-	ldr	@C[7],[sp,#$T[0][0]]
-	ror	@C[0],@C[0],#32-31		@ C[0] = ROL64(T[0][2],        rhotates[0][2]);
-	ldr	@C[6],[sp,#$T[0][0]+4]
-	ror	@C[1],@C[1],#32-31
-	ldr	@C[8],[sp,#$A[4][1]]
-	ror	@C[3],@E[0],#32-27		@ C[1] = ROL64(T[1][3],        rhotates[1][3]);
-	ldr	@E[0],[sp,#$D[1]]
-	ror	@C[2],@E[1],#32-28
 	ldr	@C[9],[sp,#$A[4][1]+4]
-	ror	@C[5],@E[2],#32-19		@ C[2] = ROL64(T[1][4],        rhotates[2][4]); /* originally A[2][4] */
-	ldr	@E[1],[sp,#$D[1]+4]
-	ror	@C[4],@E[3],#32-20
-	eor	@C[8],@C[8],@E[0]
-	ror	@C[7],@C[7],#32-20		@ C[3] = ROL64(T[0][0],        rhotates[3][0]); /* originally A[3][0] */
-	eor	@C[9],@C[9],@E[1]
-	ror	@C[6],@C[6],#32-21
+	ror	@C[7],@E[0],#32-20		@ C[3] = ROL64(A[3][0] ^ D[0], rhotates[3][0]);
+	ror	@C[6],@E[1],#32-21
+
+	eor	@C[8],@C[8],@E[2]
+	eor	@C[9],@C[9],@E[3]
+	@ ror	@C[8],@C[2],#32-1		@ C[4] = ROL64(A[4][1] ^ D[1], rhotates[4][1]);
+	@ ror	@C[9],@C[3],#32-1
 
 	bic	@E[0],@C[4],@C[2]
-	 ror	@C[8],@C[8],#32-1		@ C[4] = ROL64(A[4][1] ^ D[1], rhotates[4][1]);
 	bic	@E[1],@C[5],@C[3]
-	 ror	@C[9],@C[9],#32-1
-	eor	@E[0],@E[0],@C[0]
-	eor	@E[1],@E[1],@C[1]
-	str	@E[0],[sp,#$A[4][0]]		@ A[4][0] = C[0] ^ (~C[1] & C[2])
+	eor	@E[0],@E[0],@C[0],ror#32-31
+	eor	@E[1],@E[1],@C[1],ror#32-31
+	str	@E[0],[sp,#$R[4][0]]		@ R[4][0] = C[0] ^ (~C[1] & C[2])
 	bic	@E[2],@C[6],@C[4]
-	str	@E[1],[sp,#$A[4][0]+4]
+	str	@E[1],[sp,#$R[4][0]+4]
 	bic	@E[3],@C[7],@C[5]
 	eor	@E[2],@E[2],@C[2]
 	eor	@E[3],@E[3],@C[3]
-	str	@E[2],[sp,#$A[4][1]]		@ A[4][1] = C[1] ^ (~C[2] & C[3]);
-	bic	@E[0],@C[8],@C[6]
-	str	@E[3],[sp,#$A[4][1]+4]
-	bic	@E[1],@C[9],@C[7]
-	eor	@E[0],@E[0],@C[4]
-	eor	@E[1],@E[1],@C[5]
-	str	@E[0],[sp,#$A[4][2]]		@ A[4][2] = C[2] ^ (~C[3] & C[4]);
-	bic	@E[2],@C[0],@C[8]
-	str	@E[1],[sp,#$A[4][2]+4]
-	bic	@E[3],@C[1],@C[9]
-	eor	@E[2],@E[2],@C[6]
-	eor	@E[3],@E[3],@C[7]
-	str	@E[2],[sp,#$A[4][3]]		@ A[4][3] = C[3] ^ (~C[4] & C[0]);
-	bic	@E[0],@C[2],@C[0]
-	str	@E[3],[sp,#$A[4][3]+4]
-	bic	@E[1],@C[3],@C[1]
-	eor	@E[2],@E[0],@C[8]
-	eor	@E[3],@E[1],@C[9]
-	str	@E[2],[sp,#$A[4][4]]		@ A[4][4] = C[4] ^ (~C[0] & C[1]);
-	 add	@E[0],sp,#$A[1][0]
-	str	@E[3],[sp,#$A[4][4]+4]
-
+	str	@E[2],[sp,#$R[4][1]]		@ R[4][1] = C[1] ^ (~C[2] & C[3]);
+	bic	@E[0],@C[8],@C[6],ror#1
+	str	@E[3],[sp,#$R[4][1]+4]
+	bic	@E[1],@C[9],@C[7],ror#1
+	bic	@E[2],@C[0],@C[8],ror#31-1
+	bic	@E[3],@C[1],@C[9],ror#31-1
+	eor	@C[4],@C[4],@E[0],ror#32-1
+	eor	@C[5],@C[5],@E[1],ror#32-1
+	str	@C[4],[sp,#$R[4][2]]		@ R[4][2] = C[2] ^= (~C[3] & C[4]);
+	eor	@C[6],@C[6],@E[2],ror#32-31
+	str	@C[5],[sp,#$R[4][2]+4]
+	eor	@C[7],@C[7],@E[3],ror#32-31
+	str	@C[6],[sp,#$R[4][3]]		@ R[4][3] = C[3] ^= (~C[4] & C[0]);
+	bic	@E[0],@C[2],@C[0],ror#32-31
+	str	@C[7],[sp,#$R[4][3]+4]
+	bic	@E[1],@C[3],@C[1],ror#32-31
+	 add	@E[2],sp,#$R[0][0]
+	eor	@C[8],@E[0],@C[8],ror#32-1
+	 add	@E[0],sp,#$R[1][0]
+	eor	@C[9],@E[1],@C[9],ror#32-1
+	str	@C[8],[sp,#$R[4][4]]		@ R[4][4] = C[4] ^= (~C[0] & C[1]);
+	str	@C[9],[sp,#$R[4][4]+4]
+___
+}
+	Round(@A,@T);
+	Round(@T,@A);
+$code.=<<___;
 	blo	.Lround
 
-	ldr	pc,[sp,#320]
+	ldr	pc,[sp,#440]
 .size	KeccakF1600_int,.-KeccakF1600_int
 
 .type	KeccakF1600, %function
 .align	5
 KeccakF1600:
 	stmdb	sp!,{r0,r4-r11,lr}
-	sub	sp,sp,#320+16			@ space for A[5][5],D[5],T[2][5],...
+	sub	sp,sp,#440+16			@ space for A[5][5],D[5],T[5][5],...
 
 	add	@E[0],r0,#$A[1][0]
 	add	@E[1],sp,#$A[1][0]
-	mov	@E[2],r0
-	ldmia	@E[0]!,{@C[0]-@C[9]}		@ copy A[5][5] to stack
+	ldmia	r0,    {@C[0]-@C[9]}		@ copy A[5][5] to stack
+	stmia	sp,    {@C[0]-@C[9]}
+	ldmia	@E[0]!,{@C[0]-@C[9]}
 	stmia	@E[1]!,{@C[0]-@C[9]}
 	ldmia	@E[0]!,{@C[0]-@C[9]}
 	stmia	@E[1]!,{@C[0]-@C[9]}
 	ldmia	@E[0]!,{@C[0]-@C[9]}
 	stmia	@E[1]!,{@C[0]-@C[9]}
 	ldmia	@E[0], {@C[0]-@C[9]}
-	stmia	@E[1], {@C[0]-@C[9]}
-	ldmia	@E[2], {@C[0]-@C[9]}		@ A[0][0..4]
+	add	@E[2],sp,#$A[0][0]
 	add	@E[0],sp,#$A[1][0]
-	stmia	sp,    {@C[0]-@C[9]}
+	stmia	@E[1], {@C[0]-@C[9]}
 
 	bl	KeccakF1600_enter
 
-	ldr	@E[1], [sp,#320+16]		@ restore pointer to A
+	ldr	@E[1], [sp,#440+16]		@ restore pointer to A
 	ldmia	sp,    {@C[0]-@C[9]}
 	stmia	@E[1]!,{@C[0]-@C[9]}		@ return A[5][5]
 	ldmia	@E[0]!,{@C[0]-@C[9]}
@@ -610,7 +646,7 @@ KeccakF1600:
 	ldmia	@E[0], {@C[0]-@C[9]}
 	stmia	@E[1], {@C[0]-@C[9]}
 
-	add	sp,sp,#320+20
+	add	sp,sp,#440+20
 	ldmia	sp!,{r4-r11,pc}
 .size	KeccakF1600,.-KeccakF1600
 ___
@@ -622,23 +658,23 @@ ___
 #       | uint64_t A[5][5]      |
 #       | ...                   |
 #       | ...                   |
-# +336->+-----------------------+
+# +456->+-----------------------+
 #       | 0x55555555            |
-# +340->+-----------------------+
+# +460->+-----------------------+
 #       | 0x33333333            |
-# +344->+-----------------------+
+# +464->+-----------------------+
 #       | 0x0f0f0f0f            |
-# +348->+-----------------------+
+# +468->+-----------------------+
 #       | 0x00ff00ff            |
-# +352->+-----------------------+
+# +472->+-----------------------+
 #       | uint64_t *A           |
-# +356->+-----------------------+
+# +476->+-----------------------+
 #       | const void *inp       |
-# +360->+-----------------------+
+# +480->+-----------------------+
 #       | size_t len            |
-# +364->+-----------------------+
+# +484->+-----------------------+
 #       | size_t bs             |
-# +368->+-----------------------+
+# +488->+-----------------------+
 #       | ....
 
 $code.=<<___;
@@ -647,7 +683,7 @@ $code.=<<___;
 .align	5
 SHA3_absorb:
 	stmdb	sp!,{r0-r12,lr}
-	sub	sp,sp,#336+16
+	sub	sp,sp,#456+16
 
 	add	$A_flat,r0,#$A[1][0]
 	@ mov	$inp,r1
@@ -668,7 +704,7 @@ SHA3_absorb:
 	ldmia	$A_flat!,{@C[0]-@C[9]}
 	stmia	$inp,    {@C[0]-@C[9]}
 
-	ldr	$inp,[sp,#356]		@ restore $inp
+	ldr	$inp,[sp,#476]		@ restore $inp
 #ifdef	__thumb2__
 	mov	r9,#0x00ff00ff
 	mov	r8,#0x0f0f0f0f
@@ -686,10 +722,10 @@ SHA3_absorb:
 	orr	r7,r6,r6,lsl#1		@ 0x33333333
 	orr	r6,r6,r6,lsl#2		@ 0x55555555
 #endif
-	str	r9,[sp,#348]
-	str	r8,[sp,#344]
-	str	r7,[sp,#340]
-	str	r6,[sp,#336]
+	str	r9,[sp,#468]
+	str	r8,[sp,#464]
+	str	r7,[sp,#460]
+	str	r6,[sp,#456]
 	b	.Loop_absorb
 
 .align	4
@@ -697,7 +733,7 @@ SHA3_absorb:
 	subs	r0,$len,$bsz
 	blo	.Labsorbed
 	add	$A_flat,sp,#0
-	str	r0,[sp,#360]		@ save len - bsz
+	str	r0,[sp,#480]		@ save len - bsz
 
 .align	4
 .Loop_block:
@@ -761,11 +797,11 @@ SHA3_absorb:
 	subs	$bsz,$bsz,#8
 	bhi	.Loop_block
 
-	str	$inp,[sp,#356]
+	str	$inp,[sp,#476]
 
 	bl	KeccakF1600_int
 
-	add	r14,sp,#336
+	add	r14,sp,#456
 	ldmia	r14,{r6-r12,r14}	@ restore constants and variables
 	b	.Loop_absorb
 
@@ -784,7 +820,7 @@ SHA3_absorb:
 	stmia	$A_flat, {@C[0]-@C[9]}
 
 .Labsorb_abort:
-	add	sp,sp,#336+32
+	add	sp,sp,#456+32
 	mov	r0,$len			@ return value
 	ldmia	sp!,{r4-r12,pc}
 .size	SHA3_absorb,.-SHA3_absorb
