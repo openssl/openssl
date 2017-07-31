@@ -21,7 +21,7 @@
 # The code does not present direct interest to OpenSSL, because of low
 # performance. Its purpose is to establish _size_ benchmark. Pretty
 # useless one I must say, because 30% or 88 bytes larger ARMv4 code
-# [avialable on demand] is almost _twice_ as fast. It should also be
+# [available on demand] is almost _twice_ as fast. It should also be
 # noted that in-lining of .Lcommon and .Lrotate improves performance
 # by over 40%, while code increases by only 10% or 32 bytes. But once
 # again, the goal was to establish _size_ benchmark, not performance.
