@@ -370,38 +370,44 @@ struct bn_gencb_st {
  *
  *                                      <appro@fy.chalmers.se>
  */
-#  if defined(__alpha) && (defined(SIXTY_FOUR_BIT_LONG) || defined(SIXTY_FOUR_BIT))
+#  if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16 && \
+      (defined(SIXRY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG))
+#   define BN_UMULT_HIGH(a,b)          (((__uint128_t)(a)*(b))>>64)
+#   define BN_UMULT_LOHI(low,high,a,b) ({       \
+        __uint128_t ret=(__uint128_t)(a)*(b);   \
+        (high)=ret>>64; (low)=ret;      })
+#  elif defined(__alpha) && (defined(SIXTY_FOUR_BIT_LONG) || defined(SIXTY_FOUR_BIT))
 #   if defined(__DECC)
 #    include <c_asm.h>
 #    define BN_UMULT_HIGH(a,b)   (BN_ULONG)asm("umulh %a0,%a1,%v0",(a),(b))
 #   elif defined(__GNUC__) && __GNUC__>=2
-#    define BN_UMULT_HIGH(a,b)   ({      \
+#    define BN_UMULT_HIGH(a,b)   ({     \
         register BN_ULONG ret;          \
         asm ("umulh     %1,%2,%0"       \
              : "=r"(ret)                \
              : "r"(a), "r"(b));         \
-        ret;                    })
+        ret;                      })
 #   endif                       /* compiler */
-#  elif defined(_ARCH_PPC) && defined(__64BIT__) && defined(SIXTY_FOUR_BIT_LONG)
+#  elif defined(_ARCH_PPC64) && defined(SIXTY_FOUR_BIT_LONG)
 #   if defined(__GNUC__) && __GNUC__>=2
-#    define BN_UMULT_HIGH(a,b)   ({      \
+#    define BN_UMULT_HIGH(a,b)   ({     \
         register BN_ULONG ret;          \
         asm ("mulhdu    %0,%1,%2"       \
              : "=r"(ret)                \
              : "r"(a), "r"(b));         \
-        ret;                    })
+        ret;                      })
 #   endif                       /* compiler */
 #  elif (defined(__x86_64) || defined(__x86_64__)) && \
        (defined(SIXTY_FOUR_BIT_LONG) || defined(SIXTY_FOUR_BIT))
 #   if defined(__GNUC__) && __GNUC__>=2
-#    define BN_UMULT_HIGH(a,b)   ({      \
+#    define BN_UMULT_HIGH(a,b)   ({     \
         register BN_ULONG ret,discard;  \
         asm ("mulq      %3"             \
              : "=a"(discard),"=d"(ret)  \
              : "a"(a), "g"(b)           \
              : "cc");                   \
-        ret;                    })
-#    define BN_UMULT_LOHI(low,high,a,b)  \
+        ret;                      })
+#    define BN_UMULT_LOHI(low,high,a,b) \
         asm ("mulq      %3"             \
                 : "=a"(low),"=d"(high)  \
                 : "a"(a),"g"(b)         \
@@ -418,42 +424,28 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
 #   endif
 #  elif defined(__mips) && (defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG))
 #   if defined(__GNUC__) && __GNUC__>=2
-#    if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
-      /* "h" constraint is not an option on R6 and was removed in 4.4 */
-#     define BN_UMULT_HIGH(a,b)          (((__uint128_t)(a)*(b))>>64)
-#     define BN_UMULT_LOHI(low,high,a,b) ({     \
-        __uint128_t ret=(__uint128_t)(a)*(b);   \
-        (high)=ret>>64; (low)=ret;       })
-#    else
-#     define BN_UMULT_HIGH(a,b) ({      \
+#    define BN_UMULT_HIGH(a,b) ({       \
         register BN_ULONG ret;          \
         asm ("dmultu    %1,%2"          \
              : "=h"(ret)                \
              : "r"(a), "r"(b) : "l");   \
         ret;                    })
-#     define BN_UMULT_LOHI(low,high,a,b)\
+#    define BN_UMULT_LOHI(low,high,a,b) \
         asm ("dmultu    %2,%3"          \
              : "=l"(low),"=h"(high)     \
              : "r"(a), "r"(b));
-#    endif
 #   endif
 #  elif defined(__aarch64__) && defined(SIXTY_FOUR_BIT_LONG)
 #   if defined(__GNUC__) && __GNUC__>=2
-#    define BN_UMULT_HIGH(a,b)   ({      \
+#    define BN_UMULT_HIGH(a,b)   ({     \
         register BN_ULONG ret;          \
         asm ("umulh     %0,%1,%2"       \
              : "=r"(ret)                \
              : "r"(a), "r"(b));         \
-        ret;                    })
+        ret;                      })
 #   endif
 #  endif                        /* cpu */
 # endif                         /* OPENSSL_NO_ASM */
-
-/*************************************************************
- * Using the long long type
- */
-# define Lw(t)    (((BN_ULONG)(t))&BN_MASK2)
-# define Hw(t)    (((BN_ULONG)((t)>>BN_BITS2))&BN_MASK2)
 
 # ifdef BN_DEBUG_RAND
 #  define bn_clear_top2max(a) \
@@ -468,6 +460,12 @@ unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
 # endif
 
 # ifdef BN_LLONG
+/*******************************************************************
+ * Using the long long type, has to be twice as wide as BN_ULONG...
+ */
+#  define Lw(t)    (((BN_ULONG)(t))&BN_MASK2)
+#  define Hw(t)    (((BN_ULONG)((t)>>BN_BITS2))&BN_MASK2)
+
 #  define mul_add(r,a,w,c) { \
         BN_ULLONG t; \
         t=(BN_ULLONG)w * (a) + (r) + (c); \
