@@ -70,16 +70,16 @@ extern "C" {
 # define SSL3_CK_ADH_DES_192_CBC_SHA             0x0300001B
 
 /* a bundle of RFC standard cipher names, generated from ssl3_ciphers[] */
-# define SSL3_RFC_RSA_NULL_MD5                   "SSL_RSA_WITH_NULL_MD5"
-# define SSL3_RFC_RSA_NULL_SHA                   "SSL_RSA_WITH_NULL_SHA"
-# define SSL3_RFC_RSA_DES_192_CBC3_SHA           "SSL_RSA_WITH_3DES_EDE_CBC_SHA"
-# define SSL3_RFC_DHE_DSS_DES_192_CBC3_SHA       "SSL_DHE_DSS_WITH_3DES_EDE_CBC_SHA"
-# define SSL3_RFC_DHE_RSA_DES_192_CBC3_SHA       "SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA"
-# define SSL3_RFC_ADH_DES_192_CBC_SHA            "SSL_DH_anon_WITH_3DES_EDE_CBC_SHA"
-# define SSL3_RFC_RSA_IDEA_128_SHA               "SSL_RSA_WITH_IDEA_CBC_SHA"
-# define SSL3_RFC_RSA_RC4_128_MD5                "SSL_RSA_WITH_RC4_128_MD5"
-# define SSL3_RFC_RSA_RC4_128_SHA                "SSL_RSA_WITH_RC4_128_SHA"
-# define SSL3_RFC_ADH_RC4_128_MD5                "SSL_DH_anon_WITH_RC4_128_MD5"
+# define SSL3_RFC_RSA_NULL_MD5                   "TLS_RSA_WITH_NULL_MD5"
+# define SSL3_RFC_RSA_NULL_SHA                   "TLS_RSA_WITH_NULL_SHA"
+# define SSL3_RFC_RSA_DES_192_CBC3_SHA           "TLS_RSA_WITH_3DES_EDE_CBC_SHA"
+# define SSL3_RFC_DHE_DSS_DES_192_CBC3_SHA       "TLS_DHE_DSS_WITH_3DES_EDE_CBC_SHA"
+# define SSL3_RFC_DHE_RSA_DES_192_CBC3_SHA       "TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA"
+# define SSL3_RFC_ADH_DES_192_CBC_SHA            "TLS_DH_anon_WITH_3DES_EDE_CBC_SHA"
+# define SSL3_RFC_RSA_IDEA_128_SHA               "TLS_RSA_WITH_IDEA_CBC_SHA"
+# define SSL3_RFC_RSA_RC4_128_MD5                "TLS_RSA_WITH_RC4_128_MD5"
+# define SSL3_RFC_RSA_RC4_128_SHA                "TLS_RSA_WITH_RC4_128_SHA"
+# define SSL3_RFC_ADH_RC4_128_MD5                "TLS_DH_anon_WITH_RC4_128_MD5"
 
 # define SSL3_TXT_RSA_NULL_MD5                   "NULL-MD5"
 # define SSL3_TXT_RSA_NULL_SHA                   "NULL-SHA"
