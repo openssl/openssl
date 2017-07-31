@@ -424,11 +424,121 @@ static int test_days(int n)
     return r;
 }
 
+static const struct {
+    ASN1_TIME asn1;
+    const char *readable;
+} x509_print_tests [] = {
+    {
+        /* Generalized Time */
+        {
+            sizeof("20170731222050Z") - 1,
+            V_ASN1_GENERALIZEDTIME,
+            (unsigned char *)"20170731222050Z",
+            0
+        },
+        "Jul 31 22:20:50 2017 GMT"
+    },
+    {
+        /* Generalized Time, no seconds */
+        {
+            sizeof("201707312220Z") - 1,
+            V_ASN1_GENERALIZEDTIME,
+            (unsigned char *)"201707312220Z",
+            0
+        },
+        "Jul 31 22:20:00 2017 GMT"
+    },
+    {
+        /* Generalized Time, fractional seconds (3 digits) */
+        {
+            sizeof("20170731222050.123Z") - 1,
+            V_ASN1_GENERALIZEDTIME,
+            (unsigned char *)"20170731222050.123Z",
+            0
+        },
+        "Jul 31 22:20:50.123 2017 GMT"
+    },
+    {
+        /* Generalized Time, fractional seconds (1 digit) */
+        {
+            sizeof("20170731222050.1Z") - 1,
+            V_ASN1_GENERALIZEDTIME,
+            (unsigned char *)"20170731222050.1Z",
+            0
+        },
+        "Jul 31 22:20:50.1 2017 GMT"
+    },
+    {
+        /* Generalized Time, fractional seconds (0 digit) */
+        {
+            sizeof("20170731222050.Z") - 1,
+            V_ASN1_GENERALIZEDTIME,
+            (unsigned char *)"20170731222050.Z",
+            0
+        },
+        "Bad time value"
+    },
+    {
+        /* UTC Time */
+        {
+            sizeof("170731222050Z") - 1,
+            V_ASN1_UTCTIME,
+            (unsigned char *)"170731222050Z",
+            0
+        },
+        "Jul 31 22:20:50 2017 GMT"
+    },
+    {
+        /* UTC Time, no seconds */
+        {
+            sizeof("1707312220Z") - 1,
+            V_ASN1_UTCTIME,
+            (unsigned char *)"1707312220Z",
+            0
+        },
+        "Jul 31 22:20:00 2017 GMT"
+    }
+};
+
+static int test_x509_time_print(int idx)
+{
+    BIO *m;
+    int ret = 0, rv;
+    char *pp;
+    const char *readable;
+
+    m = BIO_new(BIO_s_mem());
+    if (m == NULL)
+        goto err;
+
+    rv = ASN1_TIME_print(m, &x509_print_tests[idx].asn1);
+    if (!TEST_int_ge(rv, 0)) {
+        /* this is an BIO_printf error */
+        goto err;
+    }
+    readable = x509_print_tests[idx].readable;
+    if (rv == 0 && !TEST_str_eq(readable, "Bad time value")) {
+        /* only if the test case intends to fail... */
+        goto err;
+    }
+    rv = BIO_get_mem_data(m, &pp);
+    if (!TEST_int_ne(rv, 0)
+        && !TEST_int_eq(rv, (int)strlen(readable))
+        && !TEST_strn_eq(pp, readable, rv))
+        goto err;
+
+    ret = 1;
+ err:
+    BIO_free(m);
+    return ret;
+}
+
 int setup_tests()
 {
     ADD_TEST(test_x509_cmp_time_current);
     ADD_ALL_TESTS(test_x509_cmp_time, OSSL_NELEM(x509_cmp_tests));
     ADD_ALL_TESTS(test_x509_time, OSSL_NELEM(x509_format_tests));
     ADD_ALL_TESTS(test_days, OSSL_NELEM(day_of_week_tests));
+    ADD_ALL_TESTS(test_x509_time_print, OSSL_NELEM(x509_print_tests));
     return 1;
 }
