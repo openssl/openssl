@@ -1400,6 +1400,17 @@ int tls_parse_stoc_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
     s->s3->alpn_selected_len = len;
 
+    /* We also put a copy in the session */
+    OPENSSL_free(s->session->ext.alpn_selected);
+    s->session->ext.alpn_selected = OPENSSL_memdup(s->s3->alpn_selected,
+                                                   s->s3->alpn_selected_len);
+    s->session->ext.alpn_selected_len = s->s3->alpn_selected_len;
+
+    if (s->session->ext.alpn_selected == NULL) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        return 0;
+    }
+
     return 1;
 }
 
