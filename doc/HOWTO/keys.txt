@@ -28,10 +28,10 @@ you don't want your key to be protected by a password, remove the flag
 '-des3' from the command line above.
 
     NOTE: if you intend to use the key together with a server
-    certificate, it may be a good thing to avoid protecting it
-    with a password, since that would mean someone would have to
-    type in the password every time the server needs to access
-    the key.
+    certificate, it may be reasonable to avoid protecting it
+    with a password, since otherwise someone would have to type
+    in the password every time the server needs to access the
+    key.
 
 The number 2048 is the size of the key, in bits.  Today, 2048 or
 higher is recommended for RSA keys, as fewer amount of bits is
@@ -63,10 +63,10 @@ you don't want your key to be protected by a password, remove the flag
 '-des3' from the command line above.
 
     NOTE: if you intend to use the key together with a server
-    certificate, it may be a good thing to avoid protecting it
-    with a password, since that would mean someone would have to
-    type in the password every time the server needs to access
-    the key.
+    certificate, it may be reasonable to avoid protecting it
+    with a password, since otherwise someone would have to type
+    in the password every time the server needs to access the
+    key.
 
 
 4. To generate an EC key
@@ -74,15 +74,14 @@ you don't want your key to be protected by a password, remove the flag
 An EC key can be used both for key agreement (ECDH) and signing (ECDSA).
 
 Generating a key for ECC is similar to generating a DSA key. These are
-two-step processes. First, you have to generate EC parameters from which
+two-step processes. First, you have to get the EC parameters from which
 the key will be generated:
 
   openssl ecparam -name prime256v1 -out prime256v1.pem
 
-The prime256v1 (a.k.a NIST P-256), which stands for 'X9.62/SECG curve over
+The prime256v1 (a.k.a. NIST P-256), which stands for 'X9.62/SECG curve over
 a 256 bit prime field', is the name of an elliptic curve which generates the
-parameters. You can use the following command to list all supported curves
-in OpenSSL:
+parameters. You can use the following command to list all supported curves:
 
   openssl ecparam -list_curves
 
@@ -96,14 +95,24 @@ If you don't want your key to be protected by a password, remove the flag
 '-des3' from the command line above.
 
     NOTE: if you intend to use the key together with a server
-    certificate, it may be good to avoid protecting it with a
-    password, since that would mean someone would have to type
+    certificate, it may be reasonable to avoid protecting it
+    with a password, since otherwise someone would have to type
     in the password every time the server needs to access the
     key.
 
 You can also directly generate the key in one step:
 
   openssl ecparam -genkey -name prime256v1 -out private.key
+
+or
+
+  openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256
+
+  NOTE: For X25519, it's treated as a distinct algorithm but not
+  as one of the curves listed with 'ecparam -list_curves' option.
+  You can use the following command to generate an X25519 key:
+
+  openssl genpkey -algorithm X25519 -out xkey.pem
 
 -- 
 Richard Levitte
