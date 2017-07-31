@@ -58,6 +58,10 @@ set with RSA_get0_factors() and RSA_set0_factors(), and the B<dmp1>,
 B<dmq1> and B<iqmp> parameters can be obtained and set with
 RSA_get0_crt_params() and RSA_set0_crt_params().
 
+For RSA_get0_key(), RSA_get0_factors(), and RSA_get0_crt_params(),
+NULL value BIGNUM ** output parameters are permitted.  The functions
+ignore NULL parameters but return values for other, non-NULL, parameters.
+
 RSA_set_flags() sets the flags in the B<flags> parameter on the RSA
 object. Multiple flags can be passed in one go (bitwise ORed together).
 Any flags that are already set are left set. RSA_test_flags() tests to
