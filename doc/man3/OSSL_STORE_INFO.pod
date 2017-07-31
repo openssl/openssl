@@ -47,7 +47,7 @@ OSSL_STORE_INFO_new_CRL - Functions to manipulate OSSL_STORE_INFO objects
 
 =head1 DESCRIPTION
 
-These functions are primarly useful for applications to retrieve
+These functions are primarily useful for applications to retrieve
 supported objects from B<OSSL_STORE_INFO> objects and for scheme specific
 loaders to create B<OSSL_STORE_INFO> holders.
 
@@ -139,7 +139,7 @@ An X.509 certificate.
 
 =item OSSL_STORE_INFO_CRL
 
-A X.509 certificate reocation list.
+A X.509 certificate revocation list.
 
 =back
 

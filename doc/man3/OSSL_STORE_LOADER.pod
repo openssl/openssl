@@ -118,9 +118,9 @@ L<OSSL_STORE_INFO(3)> functions.
 If no more data is available or an error occurs, this function is
 expected to return NULL.
 The B<OSSL_STORE_eof_fn> and B<OSSL_STORE_error_fn> functions must indicate if
-it was in fact the end of data or if an error occured.
+it was in fact the end of data or if an error occurred.
 
-Note that this function retrives I<one> data item only.
+Note that this function retrieves I<one> data item only.
 
 =item B<OSSL_STORE_eof_fn>
 
