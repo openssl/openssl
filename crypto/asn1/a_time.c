@@ -442,12 +442,50 @@ int ASN1_TIME_diff(int *pday, int *psec,
     return OPENSSL_gmtime_diff(pday, psec, &tm_from, &tm_to);
 }
 
+static const char _asn1_mon[12][4] = {
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
+
 int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
 {
-    if (tm->type == V_ASN1_UTCTIME)
-        return ASN1_UTCTIME_print(bp, tm);
+    char *v;
+    char *f = NULL;
+    int f_len = 0, gmt = 0, l;
+    struct tm stm;
+
+    if (!asn1_time_to_tm(&stm, tm)) {
+        /* asn1_time_to_tm will check the time type */
+        goto err;
+    }
+
+    l = tm->length;
+    v = (char *)tm->data;
+    if (v[l - 1] == 'Z')
+        gmt = 1;
+    /*
+     * Try to parse fractional seconds. '14' is the place of
+     * 'fraction point' in a GeneralizedTime string.
+     */
+    if (tm->type == V_ASN1_GENERALIZEDTIME
+        && tm->length >= 15 && v[14] == '.') {
+        f = &v[14];
+        f_len = 1;
+        while (14 + f_len < l && f[f_len] >= '0' && f[f_len] <= '9')
+            ++f_len;
+    }
+
     if (tm->type == V_ASN1_GENERALIZEDTIME)
-        return ASN1_GENERALIZEDTIME_print(bp, tm);
+        return BIO_printf(bp, "%s %2d %02d:%02d:%02d%.*s %d%s",
+                          _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
+                          stm.tm_min, stm.tm_sec, f_len, f, stm.tm_year + 1900,
+                          (gmt) ? " GMT" : "") > 0;
+    else
+        return BIO_printf(bp, "%s %2d %02d:%02d:%02d %d%s",
+                          _asn1_mon[stm.tm_mon], stm.tm_mday, stm.tm_hour,
+                          stm.tm_min, stm.tm_sec, stm.tm_year + 1900,
+                          (gmt) ? " GMT" : "") > 0;
+ err:
     BIO_write(bp, "Bad time value", 14);
     return 0;
 }
