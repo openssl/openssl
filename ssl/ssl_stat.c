@@ -22,7 +22,7 @@ const char *SSL_state_string_long(const SSL *s)
     case TLS_ST_CW_NEXT_PROTO:
         return "SSLv3/TLS write next proto";
     case TLS_ST_SR_NEXT_PROTO:
-        return "SSLv3/TLS write next proto";
+        return "SSLv3/TLS read next proto";
     case TLS_ST_SW_CERT_STATUS:
         return "SSLv3/TLS write next proto";
     case TLS_ST_BEFORE:
