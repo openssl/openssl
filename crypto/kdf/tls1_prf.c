@@ -128,7 +128,11 @@ static int pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         KDFerr(KDF_F_PKEY_TLS1_PRF_DERIVE, KDF_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
-    if (kctx->sec == NULL || kctx->seedlen == 0) {
+    if (kctx->sec == NULL) {
+        KDFerr(KDF_F_PKEY_TLS1_PRF_DERIVE, KDF_R_MISSING_SECRET);
+        return 0;
+    }
+    if (kctx->seedlen == 0) {
         KDFerr(KDF_F_PKEY_TLS1_PRF_DERIVE, KDF_R_MISSING_SEED);
         return 0;
     }
