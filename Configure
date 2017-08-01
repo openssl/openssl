@@ -12,6 +12,8 @@
 use 5.10.0;
 use strict;
 use Config;
+use FindBin;
+use lib "$FindBin::Bin/util/perl";
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
 use File::Path qw/mkpath/;
@@ -1384,7 +1386,6 @@ my %unified_info = ();
 
 my $buildinfo_debug = defined($ENV{CONFIGURE_DEBUG_BUILDINFO});
 if ($builder eq "unified") {
-    use lib catdir(dirname(__FILE__),"util");
     use with_fallback qw(Text::Template);
 
     sub cleandir {
@@ -1512,8 +1513,10 @@ if ($builder eq "unified") {
         my %generate = ();
 
         push @{$config{build_infos}}, catfile(abs2rel($sourced, $blddir), $f);
-        my $template = Text::Template->new(TYPE => 'FILE',
-                                           SOURCE => catfile($sourced, $f));
+        my $template =
+            Text::Template->new(TYPE => 'FILE',
+                                SOURCE => catfile($sourced, $f),
+                                PREPEND => qq{use lib "$FindBin::Bin/util/perl";});
         die "Something went wrong with $sourced/$f: $!\n" unless $template;
         my @text =
             split /^/m,
