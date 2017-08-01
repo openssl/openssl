@@ -131,6 +131,9 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
         s->servername_done = s->session->ext.hostname
             && PACKET_equal(&hostname, s->session->ext.hostname,
                             strlen(s->session->ext.hostname));
+
+        if (!s->servername_done && s->session->ext.hostname != NULL)
+            s->ext.early_data_ok = 0;
     }
 
     return 1;
@@ -745,7 +748,8 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             memcpy(sess->sid_ctx, s->sid_ctx, s->sid_ctx_length);
             sess->sid_ctx_length = s->sid_ctx_length;
             ext = 1;
-            s->ext.early_data_ok = 1;
+            if (id == 0)
+                s->ext.early_data_ok = 1;
         } else {
             uint32_t ticket_age = 0, now, agesec, agems;
             int ret = tls_decrypt_ticket(s, PACKET_data(&identity),
@@ -774,7 +778,8 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
              * Therefore we add 1000ms to our age calculation to adjust for
              * rounding errors.
              */
-            if (sess->timeout >= (long)agesec
+            if (id == 0
+                    && sess->timeout >= (long)agesec
                     && agems / (uint32_t)1000 == agesec
                     && ticket_age <= agems + 1000
                     && ticket_age + TICKET_AGE_ALLOWANCE >= agems + 1000) {
@@ -791,6 +796,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             /* The ciphersuite is not compatible with this session. */
             SSL_SESSION_free(sess);
             sess = NULL;
+            s->ext.early_data_ok = 0;
             continue;
         }
         break;
