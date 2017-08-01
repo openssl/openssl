@@ -29,6 +29,7 @@ static const ERR_STRING_DATA KDF_str_reasons[] = {
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_MESSAGE_DIGEST),
     "missing message digest"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_PARAMETER), "missing parameter"},
+    {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_SECRET), "missing secret"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_MISSING_SEED), "missing seed"},
     {ERR_PACK(ERR_LIB_KDF, 0, KDF_R_UNKNOWN_PARAMETER_TYPE),
     "unknown parameter type"},
