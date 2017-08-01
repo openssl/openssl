@@ -1028,7 +1028,12 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
             s->ctx->stats.sess_accept_good++;
             s->handshake_func = ossl_statem_accept;
         } else {
-            ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
+            /*
+             * In TLSv1.3 we update the cache as part of processing the
+             * NewSessionTicket
+             */
+            if (!SSL_IS_TLS13(s))
+                ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
             if (s->hit)
                 s->ctx->stats.sess_hit++;
 
