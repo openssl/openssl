@@ -12,8 +12,7 @@ use warnings;
 
 use File::Basename;
 use File::Compare qw/compare_text/;
-use if $^O ne "VMS", 'File::Glob' => qw/:bsd_glob/;
-
+use OpenSSL::Glob;
 use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file/;
 use OpenSSL::Test::Utils qw/disabled alldisabled available_protocols/;
 

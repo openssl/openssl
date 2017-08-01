@@ -17,7 +17,7 @@ use lib "$FindBin::Bin/util/perl";
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
 use File::Path qw/mkpath/;
-use if $^O ne "VMS", 'File::Glob' => qw/:bsd_glob/;
+use OpenSSL::Glob;
 
 # see INSTALL for instructions.
 

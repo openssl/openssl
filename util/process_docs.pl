@@ -13,7 +13,9 @@ use File::Spec::Functions;
 use File::Basename;
 use File::Copy;
 use File::Path;
-use if $^O ne "VMS", 'File::Glob' => qw/:bsd_glob/;
+use FindBin;
+use lib "$FindBin::Bin/perl";
+use OpenSSL::Glob;
 use Getopt::Long;
 use Pod::Usage;
 
