@@ -13,7 +13,8 @@ sub import {
     foreach (@_) {
 	eval "require $_";
 	if ($@) {
-	    unshift @INC, catdir(dirname(__FILE__), "..", "external", "perl");
+	    unshift @INC, catdir(dirname(__FILE__),
+                                 "..", "..", "external", "perl");
 	    my $transfer = "transfer::$_";
 	    eval "require $transfer";
 	    shift @INC;
