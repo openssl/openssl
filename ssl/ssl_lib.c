@@ -3613,6 +3613,11 @@ const SSL_CIPHER *SSL_get_current_cipher(const SSL *s)
     return (NULL);
 }
 
+const SSL_CIPHER *SSL_get_pending_cipher(const SSL *s)
+{
+    return s->s3->tmp.new_cipher;
+}
+
 const COMP_METHOD *SSL_get_current_compression(SSL *s)
 {
 #ifndef OPENSSL_NO_COMP

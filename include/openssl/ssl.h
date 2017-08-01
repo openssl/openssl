@@ -1430,6 +1430,7 @@ __owur int SSL_clear(SSL *s);
 void SSL_CTX_flush_sessions(SSL_CTX *ctx, long tm);
 
 __owur const SSL_CIPHER *SSL_get_current_cipher(const SSL *s);
+__owur const SSL_CIPHER *SSL_get_pending_cipher(const SSL *s);
 __owur int SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits);
 __owur const char *SSL_CIPHER_get_version(const SSL_CIPHER *c);
 __owur const char *SSL_CIPHER_get_name(const SSL_CIPHER *c);
