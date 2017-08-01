@@ -15,6 +15,7 @@ B<openssl speed>
 [B<-decrypt>]
 [B<-rand file...>]
 [B<-writerand file>]
+[B<-primes num>]
 [B<algorithm...>]
 
 =head1 DESCRIPTION
@@ -64,6 +65,11 @@ all others.
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
+
+=item B<-primes num>
+
+Generate a B<num>-prime RSA key and use it to run the benchmarks. This option
+is only effective if RSA algorithm is specified to test.
 
 =item B<[zero or more test algorithms]>
 

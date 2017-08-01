@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,11 @@
 #include <openssl/asn1t.h>
 #include "rsa_locl.h"
 
-/* Override the default free and new methods */
+/*
+ * Override the default free and new methods,
+ * and calculate helper products for multi-prime
+ * RSA keys.
+ */
 static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
 {
@@ -27,9 +31,22 @@ static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         RSA_free((RSA *)*pval);
         *pval = NULL;
         return 2;
+    } else if (operation == ASN1_OP_D2I_POST) {
+        if (((RSA *)*pval)->version != RSA_ASN1_VERSION_MULTI) {
+            /* not a multi-prime key, skip */
+            return 1;
+        }
+        return (rsa_multip_calc_product((RSA *)*pval) == 1) ? 2 : 0;
     }
     return 1;
 }
+
+/* Based on definitions in RFC 8017 appendix A.1.2 */
+ASN1_SEQUENCE(RSA_PRIME_INFO) = {
+        ASN1_SIMPLE(RSA_PRIME_INFO, r, CBIGNUM),
+        ASN1_SIMPLE(RSA_PRIME_INFO, d, CBIGNUM),
+        ASN1_SIMPLE(RSA_PRIME_INFO, t, CBIGNUM),
+} ASN1_SEQUENCE_END(RSA_PRIME_INFO)
 
 ASN1_SEQUENCE_cb(RSAPrivateKey, rsa_cb) = {
         ASN1_EMBED(RSA, version, INT32),
@@ -40,7 +57,8 @@ ASN1_SEQUENCE_cb(RSAPrivateKey, rsa_cb) = {
         ASN1_SIMPLE(RSA, q, CBIGNUM),
         ASN1_SIMPLE(RSA, dmp1, CBIGNUM),
         ASN1_SIMPLE(RSA, dmq1, CBIGNUM),
-        ASN1_SIMPLE(RSA, iqmp, CBIGNUM)
+        ASN1_SIMPLE(RSA, iqmp, CBIGNUM),
+        ASN1_SEQUENCE_OF_OPT(RSA, prime_infos, RSA_PRIME_INFO)
 } ASN1_SEQUENCE_END_cb(RSA, RSAPrivateKey)
 
 

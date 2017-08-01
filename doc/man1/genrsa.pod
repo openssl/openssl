@@ -28,6 +28,7 @@ B<openssl> B<genrsa>
 [B<-rand file...>]
 [B<-writerand file>]
 [B<-engine id>]
+[B<-primes num>]
 [B<numbits>]
 
 =head1 DESCRIPTION
@@ -83,6 +84,13 @@ to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
 
+=item B<-primes num>
+
+Specify the number of primes to use while generating the RSA key. The B<num>
+parameter must be a positive integer that is greater than 1 and less than 16.
+If B<num> is greater than 2, then the generated key is called a 'multi-prime'
+RSA key, which is defined in RFC 8017.
+
 =item B<numbits>
 
 The size of the private key to generate in bits. This must be the last option
@@ -92,15 +100,17 @@ specified. The default is 2048.
 
 =head1 NOTES
 
-RSA private key generation essentially involves the generation of two prime
-numbers. When generating a private key various symbols will be output to
+RSA private key generation essentially involves the generation of two or more
+prime numbers. When generating a private key various symbols will be output to
 indicate the progress of the generation. A B<.> represents each number which
 has passed an initial sieve test, B<+> means a number has passed a single
-round of the Miller-Rabin primality test. A newline means that the number has
-passed all the prime tests (the actual number depends on the key size).
+round of the Miller-Rabin primality test, B<*> means the current prime starts
+a regenerating progress due to some failed tests. A newline means that the number
+has passed all the prime tests (the actual number depends on the key size).
 
 Because key generation is a random process the time taken to generate a key
-may vary somewhat.
+may vary somewhat. But in general, more primes lead to less generation time
+of a key.
 
 =head1 BUGS
 

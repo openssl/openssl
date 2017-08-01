@@ -9,6 +9,9 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Add multi-prime RSA (RFC 8017) support.
+     [Paul Yang]
+
   *) Add SM3 implemented according to GB/T 32905-2016
      [ Jack Lloyd <jack.lloyd@ribose.com>,
        Ronald Tse <ronald.tse@ribose.com>,

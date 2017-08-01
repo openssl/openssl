@@ -105,6 +105,29 @@ below.
 
 The number of bits in the generated key. If not specified 1024 is used.
 
+=item B<rsa_keygen_primes:numprimes>
+
+The number of primes in the generated key. If not specified 2 is used.
+
+=item B<rsa_keygen_pubexp:value>
+
+The RSA public exponent value. This can be a large decimal or
+hexadecimal value if preceded by B<0x>. Default value is 65537.
+
+=back
+
+=head1 RSA-PSS KEY GENERATION OPTIONS
+
+Note: by default an B<RSA-PSS> key has no parameter restrictions.
+
+=over 4
+
+=item B<rsa_keygen_bits:numbits>, B<rsa_keygen_pubexp:value>
+
+These options have the same meaning as the B<RSA> algorithm.
+
+=item B<rsa_pss_keygen_md:digest>
+
 =item B<rsa_keygen_pubexp:value>
 
 The RSA public exponent value. This can be a large decimal or
