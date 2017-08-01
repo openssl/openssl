@@ -757,31 +757,7 @@ static int test_tlsext_status_type(void)
 }
 #endif
 
-typedef struct ssl_session_test_fixture {
-    const char *test_case_name;
-    int use_ext_cache;
-    int use_int_cache;
-} SSL_SESSION_TEST_FIXTURE;
-
 static int new_called = 0, remove_called = 0;
-
-static SSL_SESSION_TEST_FIXTURE
-ssl_session_set_up(const char *const test_case_name)
-{
-    SSL_SESSION_TEST_FIXTURE fixture;
-
-    fixture.test_case_name = test_case_name;
-    fixture.use_ext_cache = 1;
-    fixture.use_int_cache = 1;
-
-    new_called = remove_called = 0;
-
-    return fixture;
-}
-
-static void ssl_session_tear_down(SSL_SESSION_TEST_FIXTURE fixture)
-{
-}
 
 static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
 {
@@ -799,7 +775,7 @@ static void remove_session_cb(SSL_CTX *ctx, SSL_SESSION *sess)
     remove_called++;
 }
 
-static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
+static int execute_test_session(int use_int_cache, int use_ext_cache)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl1 = NULL, *clientssl1 = NULL;
@@ -809,6 +785,8 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
 #endif
     SSL_SESSION *sess1 = NULL, *sess2 = NULL;
     int testresult = 0;
+
+    new_called = remove_called = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
                                        TLS_client_method(), &sctx,
@@ -821,11 +799,11 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
 #endif
 
     /* Set up session cache */
-    if (fix.use_ext_cache) {
+    if (use_ext_cache) {
         SSL_CTX_sess_set_new_cb(cctx, new_session_cb);
         SSL_CTX_sess_set_remove_cb(cctx, remove_session_cb);
     }
-    if (fix.use_int_cache) {
+    if (use_int_cache) {
         /* Also covers instance where both are set */
         SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT);
     } else {
@@ -842,9 +820,10 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
         goto end;
 
     /* Should fail because it should already be in the cache */
-    if (fix.use_int_cache && !TEST_false(SSL_CTX_add_session(cctx, sess1)))
+    if (use_int_cache && !TEST_false(SSL_CTX_add_session(cctx, sess1)))
         goto end;
-    if (fix.use_ext_cache && (new_called != 1 || remove_called != 0))
+    if (use_ext_cache && !TEST_int_eq(new_called, 1)
+            && !TEST_int_eq(remove_called, 0))
         goto end;
 
 #if !defined(OPENSSL_NO_TLS1_3)
@@ -861,8 +840,8 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
      * In TLSv1.3 we should have created a new session even though we have
      * resumed. The original session should also have been removed.
      */
-    if (fix.use_ext_cache && !TEST_true((new_called == 1
-                                         && remove_called == 1)))
+    if (use_ext_cache && !TEST_int_eq(new_called, 1)
+            && !TEST_int_eq(remove_called, 1))
         goto end;
 
     SSL_SESSION_free(sess1);
@@ -882,7 +861,8 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
     if (!TEST_ptr(sess2 = SSL_get1_session(clientssl2)))
         goto end;
 
-    if (fix.use_ext_cache && !TEST_true(new_called == 1 && remove_called == 0))
+    if (use_ext_cache && !TEST_int_eq(new_called, 1)
+            && !TEST_int_eq(remove_called, 0))
         goto end;
 
     new_called = remove_called = 0;
@@ -892,12 +872,13 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
      */
     if (!TEST_true(SSL_set_session(clientssl2, sess1)))
         goto end;
-    if (fix.use_ext_cache && !TEST_true(new_called == 0 && remove_called == 1))
+    if (use_ext_cache && !TEST_int_eq(new_called, 0)
+            && !TEST_int_eq(remove_called, 1))
         goto end;
     if (!TEST_ptr_eq(SSL_get_session(clientssl2), sess1))
         goto end;
 
-    if (fix.use_int_cache) {
+    if (use_int_cache) {
         /* Should succeeded because it should not already be in the cache */
         if (!TEST_true(SSL_CTX_add_session(cctx, sess2))
                 || !TEST_true(SSL_CTX_remove_session(cctx, sess2)))
@@ -909,7 +890,8 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
     if (!TEST_false(SSL_CTX_remove_session(cctx, sess2)))
         goto end;
 
-    if (fix.use_ext_cache && !TEST_true(new_called == 0 && remove_called == 1))
+    if (use_ext_cache && !TEST_int_eq(new_called, 0)
+            && !TEST_int_eq(remove_called, 1))
         goto end;
 
 #if !defined(OPENSSL_NO_TLS1_1) && !defined(OPENSSL_NO_TLS1_2)
@@ -925,11 +907,12 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
         goto end;
 
     /* We should have automatically removed the session from the cache */
-    if (fix.use_ext_cache && !TEST_true(new_called == 0 && remove_called == 1))
+    if (use_ext_cache && !TEST_int_eq(new_called, 0)
+            && !TEST_int_eq(remove_called, 1))
         goto end;
 
     /* Should succeed because it should not already be in the cache */
-    if (fix.use_int_cache && !SSL_CTX_add_session(cctx, sess2))
+    if (use_int_cache && !TEST_true(SSL_CTX_add_session(cctx, sess2)))
         goto end;
 #endif
 
@@ -954,22 +937,17 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
 
 static int test_session_with_only_int_cache(void)
 {
-    SETUP_TEST_FIXTURE(SSL_SESSION_TEST_FIXTURE, ssl_session_set_up);
-    fixture.use_ext_cache = 0;
-    EXECUTE_TEST(execute_test_session, ssl_session_tear_down);
+    return execute_test_session(1, 0);
 }
 
 static int test_session_with_only_ext_cache(void)
 {
-    SETUP_TEST_FIXTURE(SSL_SESSION_TEST_FIXTURE, ssl_session_set_up);
-    fixture.use_int_cache = 0;
-    EXECUTE_TEST(execute_test_session, ssl_session_tear_down);
+    return execute_test_session(0, 1);
 }
 
 static int test_session_with_both_cache(void)
 {
-    SETUP_TEST_FIXTURE(SSL_SESSION_TEST_FIXTURE, ssl_session_set_up);
-    EXECUTE_TEST(execute_test_session, ssl_session_tear_down);
+    return execute_test_session(1, 1);
 }
 
 #define USE_NULL    0
@@ -1083,27 +1061,9 @@ static int test_ssl_set_bio(int idx)
     return testresult;
 }
 
-typedef struct ssl_bio_test_fixture {
-    const char *test_case_name;
-    int pop_ssl;
-    enum { NO_BIO_CHANGE, CHANGE_RBIO, CHANGE_WBIO } change_bio;
-} SSL_BIO_TEST_FIXTURE;
+typedef enum { NO_BIO_CHANGE, CHANGE_RBIO, CHANGE_WBIO } bio_change_t;
 
-static SSL_BIO_TEST_FIXTURE ssl_bio_set_up(const char *const test_case_name)
-{
-    SSL_BIO_TEST_FIXTURE fixture;
-
-    fixture.test_case_name = test_case_name;
-    fixture.pop_ssl = 0;
-    fixture.change_bio = NO_BIO_CHANGE;
-    return fixture;
-}
-
-static void ssl_bio_tear_down(SSL_BIO_TEST_FIXTURE fixture)
-{
-}
-
-static int execute_test_ssl_bio(SSL_BIO_TEST_FIXTURE fix)
+static int execute_test_ssl_bio(int pop_ssl, bio_change_t change_bio)
 {
     BIO *sslbio = NULL, *membio1 = NULL, *membio2 = NULL;
     SSL_CTX *ctx;
@@ -1125,17 +1085,17 @@ static int execute_test_ssl_bio(SSL_BIO_TEST_FIXTURE fix)
     BIO_push(sslbio, membio1);
 
     /* Verify changing the rbio/wbio directly does not cause leaks */
-    if (fix.change_bio != NO_BIO_CHANGE) {
+    if (change_bio != NO_BIO_CHANGE) {
         if (!TEST_ptr(membio2 = BIO_new(BIO_s_mem())))
             goto end;
-        if (fix.change_bio == CHANGE_RBIO)
+        if (change_bio == CHANGE_RBIO)
             SSL_set0_rbio(ssl, membio2);
         else
             SSL_set0_wbio(ssl, membio2);
     }
     ssl = NULL;
 
-    if (fix.pop_ssl)
+    if (pop_ssl)
         BIO_pop(sslbio);
     else
         BIO_pop(membio1);
@@ -1152,29 +1112,22 @@ static int execute_test_ssl_bio(SSL_BIO_TEST_FIXTURE fix)
 
 static int test_ssl_bio_pop_next_bio(void)
 {
-    SETUP_TEST_FIXTURE(SSL_BIO_TEST_FIXTURE, ssl_bio_set_up);
-    EXECUTE_TEST(execute_test_ssl_bio, ssl_bio_tear_down);
+    return execute_test_ssl_bio(0, NO_BIO_CHANGE);
 }
 
 static int test_ssl_bio_pop_ssl_bio(void)
 {
-    SETUP_TEST_FIXTURE(SSL_BIO_TEST_FIXTURE, ssl_bio_set_up);
-    fixture.pop_ssl = 1;
-    EXECUTE_TEST(execute_test_ssl_bio, ssl_bio_tear_down);
+    return execute_test_ssl_bio(1, NO_BIO_CHANGE);
 }
 
 static int test_ssl_bio_change_rbio(void)
 {
-    SETUP_TEST_FIXTURE(SSL_BIO_TEST_FIXTURE, ssl_bio_set_up);
-    fixture.change_bio = CHANGE_RBIO;
-    EXECUTE_TEST(execute_test_ssl_bio, ssl_bio_tear_down);
+    return execute_test_ssl_bio(0, CHANGE_RBIO);
 }
 
 static int test_ssl_bio_change_wbio(void)
 {
-    SETUP_TEST_FIXTURE(SSL_BIO_TEST_FIXTURE, ssl_bio_set_up);
-    fixture.change_bio = CHANGE_WBIO;
-    EXECUTE_TEST(execute_test_ssl_bio, ssl_bio_tear_down);
+    return execute_test_ssl_bio(0, CHANGE_WBIO);
 }
 
 typedef struct {
