@@ -1370,11 +1370,13 @@ int s_client_main(int argc, char **argv)
         }
     }
 
+#ifdef AF_UNIX
     if (socket_family == AF_UNIX && socket_type != SOCK_STREAM) {
         BIO_printf(bio_err,
                    "Can't use unix sockets and datagrams together\n");
         goto end;
     }
+#endif
 
     if (split_send_fragment > SSL3_RT_MAX_PLAIN_LENGTH) {
         BIO_printf(bio_err, "Bad split send fragment size\n");
