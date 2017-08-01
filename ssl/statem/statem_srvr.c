@@ -1938,7 +1938,7 @@ static int tls_handle_status_request(SSL *s, int *al)
  * Call the alpn_select callback if needed. Upon success, returns 1.
  * Upon failure, returns 0 and sets |*al| to the appropriate fatal alert.
  */
-static int tls_handle_alpn(SSL *s, int *al)
+int tls_handle_alpn(SSL *s, int *al)
 {
     const unsigned char *selected = NULL;
     unsigned char selected_len = 0;
@@ -1961,14 +1961,29 @@ static int tls_handle_alpn(SSL *s, int *al)
             /* ALPN takes precedence over NPN. */
             s->s3->npn_seen = 0;
 #endif
-        } else if (r == SSL_TLSEXT_ERR_NOACK) {
-            /* Behave as if no callback was present. */
+
+            /* Check ALPN is consistent with early_data */
+            if (s->ext.early_data_ok
+                    && (s->session->ext.alpn_selected == NULL
+                        || selected_len != s->session->ext.alpn_selected_len
+                        || memcmp(selected, s->session->ext.alpn_selected,
+                                  selected_len) != 0))
+                s->ext.early_data_ok = 0;
+
             return 1;
-        } else {
+        } else if (r != SSL_TLSEXT_ERR_NOACK) {
             *al = SSL_AD_NO_APPLICATION_PROTOCOL;
             return 0;
         }
+        /*
+         * If r == SSL_TLSEXT_ERR_NOACK then behave as if no callback was
+         * present.
+         */
     }
+
+    /* Check ALPN is consistent with early_data */
+    if (s->ext.early_data_ok && s->session->ext.alpn_selected != NULL)
+        s->ext.early_data_ok = 0;
 
     return 1;
 }
@@ -2059,9 +2074,11 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
         }
         /*
          * Call alpn_select callback if needed.  Has to be done after SNI and
-         * cipher negotiation (HTTP/2 restricts permitted ciphers).
+         * cipher negotiation (HTTP/2 restricts permitted ciphers). In TLSv1.3
+         * we already did this because cipher negotiation happens earlier, and
+         * we must handle ALPN before we decide whether to accept early_data.
          */
-        if (!tls_handle_alpn(s, &al)) {
+        if (!SSL_IS_TLS13(s) && !tls_handle_alpn(s, &al)) {
             SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
                    SSL_R_CLIENTHELLO_TLSEXT);
             goto f_err;

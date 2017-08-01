@@ -29,6 +29,7 @@ static int init_status_request(SSL *s, unsigned int context);
 static int init_npn(SSL *s, unsigned int context);
 #endif
 static int init_alpn(SSL *s, unsigned int context);
+static int final_alpn(SSL *s, unsigned int context, int sent, int *al);
 static int init_sig_algs(SSL *s, unsigned int context);
 static int init_certificate_authorities(SSL *s, unsigned int context);
 static EXT_RETURN tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
@@ -203,7 +204,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
         | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
         init_alpn, tls_parse_ctos_alpn, tls_parse_stoc_alpn,
-        tls_construct_stoc_alpn, tls_construct_ctos_alpn, NULL
+        tls_construct_stoc_alpn, tls_construct_ctos_alpn, final_alpn
     },
 #ifndef OPENSSL_NO_SRTP
     {
@@ -843,6 +844,8 @@ static int final_server_name(SSL *s, unsigned int context, int sent,
 
     case SSL_TLSEXT_ERR_NOACK:
         s->servername_done = 0;
+        if (s->session->ext.hostname != NULL)
+            s->ext.early_data_ok = 0;
         return 1;
 
     default:
@@ -938,6 +941,21 @@ static int init_alpn(SSL *s, unsigned int context)
         s->s3->alpn_proposed_len = 0;
     }
     return 1;
+}
+
+static int final_alpn(SSL *s, unsigned int context, int sent, int *al)
+{
+    if (!s->server || !SSL_IS_TLS13(s))
+        return 1;
+
+    /*
+     * Call alpn_select callback if needed.  Has to be done after SNI and
+     * cipher negotiation (HTTP/2 restricts permitted ciphers). In TLSv1.3
+     * we also have to do this before we decide whether to accept early_data.
+     * In TLSv1.3 we've already negotiated our cipher so we do this call now.
+     * For < TLSv1.3 we defer it until after cipher negotiation.
+     */
+    return tls_handle_alpn(s, al);
 }
 
 static int init_sig_algs(SSL *s, unsigned int context)
@@ -1377,11 +1395,7 @@ static int final_early_data(SSL *s, unsigned int context, int sent, int *al)
             || s->session->ext.tick_identity != 0
             || s->early_data_state != SSL_EARLY_DATA_ACCEPTING
             || !s->ext.early_data_ok
-            || s->hello_retry_request
-            || s->s3->alpn_selected_len != s->session->ext.alpn_selected_len
-            || (s->s3->alpn_selected_len > 0
-                && memcmp(s->s3->alpn_selected, s->session->ext.alpn_selected,
-                          s->s3->alpn_selected_len) != 0)) {
+            || s->hello_retry_request) {
         s->ext.early_data = SSL_EARLY_DATA_REJECTED;
     } else {
         s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;
