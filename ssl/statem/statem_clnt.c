@@ -2462,17 +2462,17 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
          * We reused an existing session, so we need to replace it with a new
          * one
          */
+        if ((new_sess = ssl_session_dup(s->session, 0)) == 0) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
+            goto f_err;
+        }
+
         if (i & SSL_SESS_CACHE_CLIENT) {
             /*
              * Remove the old session from the cache. We carry on if this fails
              */
             SSL_CTX_remove_session(s->session_ctx, s->session);
-        }
-
-        if ((new_sess = ssl_session_dup(s->session, 0)) == 0) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_TLS_PROCESS_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
-            goto f_err;
         }
 
         SSL_SESSION_free(s->session);
