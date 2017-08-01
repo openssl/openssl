@@ -16,7 +16,9 @@ BEGIN {
 
 use File::Spec::Functions qw/catdir catfile curdir abs2rel rel2abs/;
 use File::Basename;
-use if $^O ne "VMS", 'File::Glob' => qw/:bsd_glob/;
+use FindBin;
+use lib "$FindBin::Bin/../util/perl";
+use OpenSSL::Glob;
 use Module::Load::Conditional qw(can_load);
 
 my $TAP_Harness = can_load(modules => { 'TAP::Harness' => undef }) 

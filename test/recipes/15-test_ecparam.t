@@ -11,7 +11,7 @@ use strict;
 use warnings;
 
 use File::Spec;
-use if $^O ne "VMS", 'File::Glob' => qw/:bsd_glob/;
+use OpenSSL::Glob;
 use OpenSSL::Test qw/:DEFAULT data_file/;
 use OpenSSL::Test::Utils;
 
