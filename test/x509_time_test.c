@@ -424,80 +424,34 @@ static int test_days(int n)
     return r;
 }
 
+#define construct_asn1_time(s, t, e) \
+    { { sizeof(s) - 1, t, (unsigned char*)s, 0 }, e }
+
 static const struct {
     ASN1_TIME asn1;
     const char *readable;
 } x509_print_tests [] = {
-    {
-        /* Generalized Time */
-        {
-            sizeof("20170731222050Z") - 1,
-            V_ASN1_GENERALIZEDTIME,
-            (unsigned char *)"20170731222050Z",
-            0
-        },
-        "Jul 31 22:20:50 2017 GMT"
-    },
-    {
-        /* Generalized Time, no seconds */
-        {
-            sizeof("201707312220Z") - 1,
-            V_ASN1_GENERALIZEDTIME,
-            (unsigned char *)"201707312220Z",
-            0
-        },
-        "Jul 31 22:20:00 2017 GMT"
-    },
-    {
-        /* Generalized Time, fractional seconds (3 digits) */
-        {
-            sizeof("20170731222050.123Z") - 1,
-            V_ASN1_GENERALIZEDTIME,
-            (unsigned char *)"20170731222050.123Z",
-            0
-        },
-        "Jul 31 22:20:50.123 2017 GMT"
-    },
-    {
-        /* Generalized Time, fractional seconds (1 digit) */
-        {
-            sizeof("20170731222050.1Z") - 1,
-            V_ASN1_GENERALIZEDTIME,
-            (unsigned char *)"20170731222050.1Z",
-            0
-        },
-        "Jul 31 22:20:50.1 2017 GMT"
-    },
-    {
-        /* Generalized Time, fractional seconds (0 digit) */
-        {
-            sizeof("20170731222050.Z") - 1,
-            V_ASN1_GENERALIZEDTIME,
-            (unsigned char *)"20170731222050.Z",
-            0
-        },
-        "Bad time value"
-    },
-    {
-        /* UTC Time */
-        {
-            sizeof("170731222050Z") - 1,
-            V_ASN1_UTCTIME,
-            (unsigned char *)"170731222050Z",
-            0
-        },
-        "Jul 31 22:20:50 2017 GMT"
-    },
-    {
-        /* UTC Time, no seconds */
-        {
-            sizeof("1707312220Z") - 1,
-            V_ASN1_UTCTIME,
-            (unsigned char *)"1707312220Z",
-            0
-        },
-        "Jul 31 22:20:00 2017 GMT"
-    }
+    /* Generalized Time */
+    construct_asn1_time("20170731222050Z", V_ASN1_GENERALIZEDTIME,
+            "Jul 31 22:20:50 2017 GMT"),
+    /* Generalized Time, no seconds */
+    construct_asn1_time("201707312220Z", V_ASN1_GENERALIZEDTIME,
+            "Jul 31 22:20:00 2017 GMT"),
+    /* Generalized Time, fractional seconds (3 digits) */
+    construct_asn1_time("20170731222050.123Z", V_ASN1_GENERALIZEDTIME,
+            "Jul 31 22:20:50.123 2017 GMT"),
+    /* Generalized Time, fractional seconds (1 digit) */
+    construct_asn1_time("20170731222050.1Z", V_ASN1_GENERALIZEDTIME,
+            "Jul 31 22:20:50.1 2017 GMT"),
+    /* Generalized Time, fractional seconds (0 digit) */
+    construct_asn1_time("20170731222050.Z", V_ASN1_GENERALIZEDTIME,
+            "Bad time value"),
+    /* UTC Time */
+    construct_asn1_time("170731222050Z", V_ASN1_UTCTIME,
+            "Jul 31 22:20:50 2017 GMT"),
+    /* UTC Time, no seconds */
+    construct_asn1_time("1707312220Z", V_ASN1_UTCTIME,
+            "Jul 31 22:20:00 2017 GMT"),
 };
 
 static int test_x509_time_print(int idx)
@@ -507,12 +461,9 @@ static int test_x509_time_print(int idx)
     char *pp;
     const char *readable;
 
-    m = BIO_new(BIO_s_mem());
-    if (m == NULL)
+    if (!TEST_ptr(m = BIO_new(BIO_s_mem())))
         goto err;
-
-    rv = ASN1_TIME_print(m, &x509_print_tests[idx].asn1);
-    if (!TEST_int_ge(rv, 0)) {
+    if (!TEST_int_ge(rv = ASN1_TIME_print(m, &x509_print_tests[idx].asn1), 0)) {
         /* this is an BIO_printf error */
         goto err;
     }
@@ -521,8 +472,7 @@ static int test_x509_time_print(int idx)
         /* only if the test case intends to fail... */
         goto err;
     }
-    rv = BIO_get_mem_data(m, &pp);
-    if (!TEST_int_ne(rv, 0)
+    if (!TEST_int_ne(rv = BIO_get_mem_data(m, &pp), 0)
         || !TEST_int_eq(rv, (int)strlen(readable))
         || !TEST_strn_eq(pp, readable, rv))
         goto err;
