@@ -1968,6 +1968,7 @@ KDF_R_INVALID_DIGEST:100:invalid digest
 KDF_R_MISSING_KEY:104:missing key
 KDF_R_MISSING_MESSAGE_DIGEST:105:missing message digest
 KDF_R_MISSING_PARAMETER:101:missing parameter
+KDF_R_MISSING_SECRET:107:missing secret
 KDF_R_MISSING_SEED:106:missing seed
 KDF_R_UNKNOWN_PARAMETER_TYPE:103:unknown parameter type
 KDF_R_VALUE_MISSING:102:value missing
