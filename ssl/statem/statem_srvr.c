@@ -1934,6 +1934,45 @@ static int tls_handle_status_request(SSL *s, int *al)
     return 1;
 }
 
+/*
+ * Call the alpn_select callback if needed. Upon success, returns 1.
+ * Upon failure, returns 0 and sets |*al| to the appropriate fatal alert.
+ */
+static int tls_handle_alpn(SSL *s, int *al)
+{
+    const unsigned char *selected = NULL;
+    unsigned char selected_len = 0;
+
+    if (s->ctx->ext.alpn_select_cb != NULL && s->s3->alpn_proposed != NULL) {
+        int r = s->ctx->ext.alpn_select_cb(s, &selected, &selected_len,
+                                           s->s3->alpn_proposed,
+                                           (unsigned int)s->s3->alpn_proposed_len,
+                                           s->ctx->ext.alpn_select_cb_arg);
+
+        if (r == SSL_TLSEXT_ERR_OK) {
+            OPENSSL_free(s->s3->alpn_selected);
+            s->s3->alpn_selected = OPENSSL_memdup(selected, selected_len);
+            if (s->s3->alpn_selected == NULL) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                return 0;
+            }
+            s->s3->alpn_selected_len = selected_len;
+#ifndef OPENSSL_NO_NEXTPROTONEG
+            /* ALPN takes precedence over NPN. */
+            s->s3->npn_seen = 0;
+#endif
+        } else if (r == SSL_TLSEXT_ERR_NOACK) {
+            /* Behave as if no callback was present. */
+            return 1;
+        } else {
+            *al = SSL_AD_NO_APPLICATION_PROTOCOL;
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
 {
     int al = SSL_AD_HANDSHAKE_FAILURE;
@@ -2014,6 +2053,15 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
          * certificate callbacks etc above.
          */
         if (!tls_handle_status_request(s, &al)) {
+            SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
+                   SSL_R_CLIENTHELLO_TLSEXT);
+            goto f_err;
+        }
+        /*
+         * Call alpn_select callback if needed.  Has to be done after SNI and
+         * cipher negotiation (HTTP/2 restricts permitted ciphers).
+         */
+        if (!tls_handle_alpn(s, &al)) {
             SSLerr(SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
                    SSL_R_CLIENTHELLO_TLSEXT);
             goto f_err;
