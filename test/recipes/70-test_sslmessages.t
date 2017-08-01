@@ -164,7 +164,8 @@ $proxy->clientflags("-no_tls1_3 -sess_in ".$session);
 $proxy->clientstart();
 checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
-               & ~checkhandshake::SESSION_TICKET_SRV_EXTENSION,
+               & ~checkhandshake::SESSION_TICKET_SRV_EXTENSION
+               & ~checkhandshake::SERVER_NAME_CLI_EXTENSION,
                "Resumption handshake test");
 unlink $session;
 
