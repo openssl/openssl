@@ -37,8 +37,8 @@ typedef enum OPTION_choice {
     OPT_PUBIN, OPT_CERTIN, OPT_ASN1PARSE, OPT_HEXDUMP, OPT_SIGN,
     OPT_VERIFY, OPT_VERIFYRECOVER, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_DERIVE, OPT_SIGFILE, OPT_INKEY, OPT_PEERKEY, OPT_PASSIN,
-    OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_KDF, OPT_KDFLEN,
-    OPT_R_ENUM
+    OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_PKEYOPT_PASSIN, OPT_KDF,
+    OPT_KDFLEN, OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkeyutl_options[] = {
@@ -66,6 +66,8 @@ const OPTIONS pkeyutl_options[] = {
     {"peerform", OPT_PEERFORM, 'E', "Peer key format - default PEM"},
     {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
+    {"pkeyopt_passin", OPT_PKEYOPT_PASSIN, 's',
+     "Public key option that is read as a passphrase argument opt:passphrase"},
     OPT_R_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -94,6 +96,7 @@ int pkeyutl_main(int argc, char **argv)
     const char *kdfalg = NULL;
     int kdflen = 0;
     STACK_OF(OPENSSL_STRING) *pkeyopts = NULL;
+    STACK_OF(OPENSSL_STRING) *pkeyopts_passin = NULL;
 
     prog = opt_init(argc, argv, pkeyutl_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -192,6 +195,14 @@ int pkeyutl_main(int argc, char **argv)
                 goto end;
             }
             break;
+        case OPT_PKEYOPT_PASSIN:
+            if ((pkeyopts_passin == NULL &&
+                 (pkeyopts_passin = sk_OPENSSL_STRING_new_null()) == NULL) ||
+                sk_OPENSSL_STRING_push(pkeyopts_passin, opt_arg()) == 0) {
+                BIO_puts(bio_err, "out of memory\n");
+                goto end;
+            }
+            break;
         }
     }
     argc = opt_num_rest();
@@ -238,6 +249,45 @@ int pkeyutl_main(int argc, char **argv)
                 ERR_print_errors(bio_err);
                 goto end;
             }
+        }
+    }
+    if (pkeyopts_passin != NULL) {
+        int num = sk_OPENSSL_STRING_num(pkeyopts_passin);
+        int i;
+
+        for (i = 0; i < num; i++) {
+            char *opt = sk_OPENSSL_STRING_value(pkeyopts_passin, i);
+            char *passin = strchr(opt, ':');
+            char *passwd;
+
+            if (passin == NULL) {
+                /* Get password interactively */
+                char passwd_buf[4096];
+                BIO_snprintf(passwd_buf, sizeof(passwd_buf), "Enter %s: ", opt);
+                EVP_read_pw_string(passwd_buf, sizeof(passwd_buf) - 1,
+                                   passwd_buf, 0);
+                passwd = OPENSSL_strdup(passwd_buf);
+                if (passwd == NULL) {
+                    BIO_puts(bio_err, "out of memory\n");
+                    goto end;
+                }
+            } else {
+                /* Get password as a passin argument: First split option name
+                 * and passphrase argument into two strings */
+                *passin = 0;
+                passin++;
+                if (app_passwd(passin, NULL, &passwd, NULL) == 0) {
+                    BIO_printf(bio_err, "failed to get '%s'\n", opt);
+                    goto end;
+                }
+            }
+
+            if (EVP_PKEY_CTX_ctrl_str(ctx, opt, passwd) <= 0) {
+                BIO_printf(bio_err, "%s: Can't set parameter \"%s\":\n",
+                           prog, opt);
+                goto end;
+            }
+            OPENSSL_free(passwd);
         }
     }
 
@@ -359,6 +409,7 @@ int pkeyutl_main(int argc, char **argv)
     OPENSSL_free(buf_out);
     OPENSSL_free(sig);
     sk_OPENSSL_STRING_free(pkeyopts);
+    sk_OPENSSL_STRING_free(pkeyopts_passin);
     return ret;
 }
 
