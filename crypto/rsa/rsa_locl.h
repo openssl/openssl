@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,21 @@
 
 #include <openssl/rsa.h>
 #include "internal/refcount.h"
+
+#define RSA_MAX_PRIME_NUM 16
+#define RSA_MIN_PRIME_SIZE 64
+
+typedef struct rsa_prime_info_st {
+    BIGNUM *r;
+    BIGNUM *d;
+    BIGNUM *t;
+    /* save product of primes prior to this one */
+    BIGNUM *pp;
+    BN_MONT_CTX *m;
+} RSA_PRIME_INFO;
+
+DECLARE_ASN1_ITEM(RSA_PRIME_INFO)
+DEFINE_STACK_OF(RSA_PRIME_INFO)
 
 struct rsa_st {
     /*
@@ -28,6 +43,8 @@ struct rsa_st {
     BIGNUM *dmp1;
     BIGNUM *dmq1;
     BIGNUM *iqmp;
+    /* for multi-prime RSA, defined in RFC 8017 */
+    STACK_OF(RSA_PRIME_INFO) *prime_infos;
     /* If a PSS only key this contains the parameter restrictions */
     RSA_PSS_PARAMS *pss;
     /* be careful using this if the RSA structure is shared */
@@ -91,6 +108,8 @@ struct rsa_meth_st {
      * things as "builtin software" implementations.
      */
     int (*rsa_keygen) (RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
+    int (*rsa_multi_prime_keygen) (RSA *rsa, int bits, int primes,
+                                   BIGNUM *e, BN_GENCB *cb);
 };
 
 extern int int_rsa_verify(int dtype, const unsigned char *m,
@@ -105,3 +124,8 @@ RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd,
                                       const EVP_MD *mgf1md, int saltlen);
 int rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
                       const EVP_MD **pmgf1md, int *psaltlen);
+/* internal function to clear and free multi-prime parameters */
+void rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo);
+void rsa_multip_info_free(RSA_PRIME_INFO *pinfo);
+RSA_PRIME_INFO *rsa_multip_info_new(void);
+int rsa_multip_calc_product(RSA *rsa);

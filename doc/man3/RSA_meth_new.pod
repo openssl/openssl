@@ -12,7 +12,8 @@ RSA_meth_set_priv_dec, RSA_meth_get_mod_exp, RSA_meth_set_mod_exp,
 RSA_meth_get_bn_mod_exp, RSA_meth_set_bn_mod_exp, RSA_meth_get_init,
 RSA_meth_set_init, RSA_meth_get_finish, RSA_meth_set_finish,
 RSA_meth_get_sign, RSA_meth_set_sign, RSA_meth_get_verify,
-RSA_meth_set_verify, RSA_meth_get_keygen, RSA_meth_set_keygen
+RSA_meth_set_verify, RSA_meth_get_keygen, RSA_meth_set_keygen,
+RSA_meth_get_multi_prime_keygen, RSA_meth_set_multi_prime_keygen
 - Routines to build up RSA methods
 
 =head1 SYNOPSIS
@@ -111,6 +112,15 @@ RSA_meth_set_verify, RSA_meth_get_keygen, RSA_meth_set_keygen
                          int (*keygen)(RSA *rsa, int bits, BIGNUM *e,
                                        BN_GENCB *cb));
 
+ int (*RSA_meth_get_multi_prime_keygen(const RSA_METHOD *meth))(RSA *rsa, int bits,
+                                                                int primes, BIGNUM *e,
+                                                                BN_GENCB *cb);
+
+ int RSA_meth_set_multi_prime_keygen(RSA_METHOD *meth,
+                                     int (*keygen) (RSA *rsa, int bits,
+                                                    int primes, BIGNUM *e,
+                                                    BN_GENCB *cb));
+
 =head1 DESCRIPTION
 
 The B<RSA_METHOD> type is a structure used for the provision of custom
@@ -193,8 +203,14 @@ by this function. This function may be NULL.
 RSA_meth_get_keygen() and RSA_meth_set_keygen() get and set the
 function used for generating a new RSA key pair respectively. This
 function will be called in response to the application calling
-RSA_generate_key(). The parameter for the function has the same
-meaning as for RSA_generate_key().
+RSA_generate_key_ex(). The parameter for the function has the same
+meaning as for RSA_generate_key_ex().
+
+RSA_meth_get_multi_prime_keygen() and RSA_meth_set_multi_prime_keygen() get
+and set the function used for generating a new multi-prime RSA key pair
+respectively. This function will be called in response to the application calling
+RSA_generate_multi_prime_key(). The parameter for the function has the same
+meaning as for RSA_generate_multi_prime_key().
 
 RSA_meth_get_pub_enc(), RSA_meth_set_pub_enc(),
 RSA_meth_get_pub_dec(), RSA_meth_set_pub_dec(),
@@ -223,12 +239,16 @@ success or 0 on failure.
 
 =head1 SEE ALSO
 
-L<RSA_new(3)>, L<RSA_generate_key(3)>, L<RSA_sign(3)>,
-L<RSA_set_method(3)>, L<RSA_size(3)>, L<RSA_get0_key(3)>
+L<RSA_new(3)>, L<RSA_generate_key_ex(3)>, L<RSA_sign(3)>,
+L<RSA_set_method(3)>, L<RSA_size(3)>, L<RSA_get0_key(3)>,
+L<RSA_generate_multi_prime_key(3)>
 
 =head1 HISTORY
 
-The functions described here were added in OpenSSL 1.1.0.
+RSA_meth_get_multi_prime_keygen() and RSA_meth_set_multi_prime_keygen() were
+added in OpenSSL 1.1.1.
+
+Other functions described here were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 

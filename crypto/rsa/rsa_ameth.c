@@ -316,10 +316,11 @@ static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
     const RSA *x = pkey->pkey.rsa;
     char *str;
     const char *s;
-    int ret = 0, mod_len = 0;
+    int ret = 0, mod_len = 0, ex_primes;
 
     if (x->n != NULL)
         mod_len = BN_num_bits(x->n);
+    ex_primes = sk_RSA_PRIME_INFO_num(x->prime_infos);
 
     if (!BIO_indent(bp, off, 128))
         goto err;
@@ -328,7 +329,8 @@ static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
         goto err;
 
     if (priv && x->d) {
-        if (BIO_printf(bp, "Private-Key: (%d bit)\n", mod_len) <= 0)
+        if (BIO_printf(bp, "Private-Key: (%d bit, %d primes)\n",
+                       mod_len, ex_primes <= 0 ? 2 : ex_primes + 2) <= 0)
             goto err;
         str = "modulus:";
         s = "publicExponent:";
@@ -343,6 +345,8 @@ static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
     if (!ASN1_bn_print(bp, s, x->e, NULL, off))
         goto err;
     if (priv) {
+        int i;
+
         if (!ASN1_bn_print(bp, "privateExponent:", x->d, NULL, off))
             goto err;
         if (!ASN1_bn_print(bp, "prime1:", x->p, NULL, off))
@@ -355,6 +359,39 @@ static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
             goto err;
         if (!ASN1_bn_print(bp, "coefficient:", x->iqmp, NULL, off))
             goto err;
+        for (i = 0; i < sk_RSA_PRIME_INFO_num(x->prime_infos); i++) {
+            /* print multi-prime info */
+            BIGNUM *bn = NULL;
+            RSA_PRIME_INFO *pinfo;
+            int j;
+
+            pinfo = sk_RSA_PRIME_INFO_value(x->prime_infos, i);
+            for (j = 0; j < 3; j++) {
+                if (!BIO_indent(bp, off, 128))
+                    goto err;
+                switch (j) {
+                case 0:
+                    if (BIO_printf(bp, "prime%d:", i + 3) <= 0)
+                        goto err;
+                    bn = pinfo->r;
+                    break;
+                case 1:
+                    if (BIO_printf(bp, "exponent%d:", i + 3) <= 0)
+                        goto err;
+                    bn = pinfo->d;
+                    break;
+                case 2:
+                    if (BIO_printf(bp, "coefficient%d:", i + 3) <= 0)
+                        goto err;
+                    bn = pinfo->t;
+                    break;
+                default:
+                    break;
+                }
+                if (!ASN1_bn_print(bp, "", bn, NULL, off))
+                    goto err;
+            }
+        }
     }
     if (pkey_is_pss(pkey) && !rsa_pss_param_print(bp, 1, x->pss, off))
         goto err;

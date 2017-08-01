@@ -134,6 +134,7 @@ void RSA_free(RSA *r)
     BN_clear_free(r->dmq1);
     BN_clear_free(r->iqmp);
     RSA_PSS_PARAMS_free(r->pss);
+    sk_RSA_PRIME_INFO_pop_free(r->prime_infos, rsa_multip_info_free);
     BN_BLINDING_free(r->blinding);
     BN_BLINDING_free(r->mt_blinding);
     OPENSSL_free(r->bignum_data);
@@ -240,6 +241,71 @@ int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
     return 1;
 }
 
+/*
+ * Is it better to export RSA_PRIME_INFO structure
+ * and related functions to let user pass a triplet?
+ */
+int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
+                                BIGNUM *coeffs[], int pnum)
+{
+    STACK_OF(RSA_PRIME_INFO) *prime_infos, *old = NULL;
+    RSA_PRIME_INFO *pinfo;
+    int i;
+
+    if (primes == NULL || exps == NULL || coeffs == NULL || pnum == 0)
+        return 0;
+
+    prime_infos = sk_RSA_PRIME_INFO_new_reserve(NULL, pnum);
+    if (prime_infos == NULL)
+        return 0;
+
+    if (r->prime_infos != NULL)
+        old = r->prime_infos;
+
+    for (i = 0; i < pnum; i++) {
+        pinfo = rsa_multip_info_new();
+        if (pinfo == NULL)
+            goto err;
+        if (primes[i] != NULL && exps[i] != NULL && coeffs[i] != NULL) {
+            BN_free(pinfo->r);
+            BN_free(pinfo->d);
+            BN_free(pinfo->t);
+            pinfo->r = primes[i];
+            pinfo->d = exps[i];
+            pinfo->t = coeffs[i];
+        } else {
+            rsa_multip_info_free(pinfo);
+            goto err;
+        }
+        (void)sk_RSA_PRIME_INFO_push(prime_infos, pinfo);
+    }
+
+    r->prime_infos = prime_infos;
+
+    if (!rsa_multip_calc_product(r)) {
+        r->prime_infos = old;
+        goto err;
+    }
+
+    if (old != NULL) {
+        /*
+         * This is hard to deal with, since the old infos could
+         * also be set by this function and r, d, t should not
+         * be freed in that case. So currently, stay consistent
+         * with other *set0* functions: just free it...
+         */
+        sk_RSA_PRIME_INFO_pop_free(old, rsa_multip_info_free);
+    }
+
+    r->version = RSA_ASN1_VERSION_MULTI;
+
+    return 1;
+ err:
+    /* r, d, t should not be freed */
+    sk_RSA_PRIME_INFO_pop_free(prime_infos, rsa_multip_info_free_ex);
+    return 0;
+}
+
 void RSA_get0_key(const RSA *r,
                   const BIGNUM **n, const BIGNUM **e, const BIGNUM **d)
 {
@@ -259,6 +325,36 @@ void RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q)
         *q = r->q;
 }
 
+int RSA_get_multi_prime_extra_count(const RSA *r)
+{
+    int pnum;
+
+    pnum = sk_RSA_PRIME_INFO_num(r->prime_infos);
+    if (pnum <= 0)
+        pnum = 0;
+    return pnum;
+}
+
+int RSA_get0_multi_prime_factors(const RSA *r, const BIGNUM *primes[])
+{
+    int pnum, i;
+    RSA_PRIME_INFO *pinfo;
+
+    if ((pnum = RSA_get_multi_prime_extra_count(r)) == 0)
+        return 0;
+
+    /*
+     * return other primes
+     * it's caller's responsibility to allocate oth_primes[pnum]
+     */
+    for (i = 0; i < pnum; i++) {
+        pinfo = sk_RSA_PRIME_INFO_value(r->prime_infos, i);
+        primes[i] = pinfo->r;
+    }
+
+    return 1;
+}
+
 void RSA_get0_crt_params(const RSA *r,
                          const BIGNUM **dmp1, const BIGNUM **dmq1,
                          const BIGNUM **iqmp)
@@ -269,6 +365,32 @@ void RSA_get0_crt_params(const RSA *r,
         *dmq1 = r->dmq1;
     if (iqmp != NULL)
         *iqmp = r->iqmp;
+}
+
+int RSA_get0_multi_prime_crt_params(const RSA *r, const BIGNUM *exps[],
+                                    const BIGNUM *coeffs[])
+{
+    int pnum;
+
+    if ((pnum = RSA_get_multi_prime_extra_count(r)) == 0)
+        return 0;
+
+    /* return other primes */
+    if (exps != NULL || coeffs != NULL) {
+        RSA_PRIME_INFO *pinfo;
+        int i;
+
+        /* it's the user's job to guarantee the buffer length */
+        for (i = 0; i < pnum; i++) {
+            pinfo = sk_RSA_PRIME_INFO_value(r->prime_infos, i);
+            if (exps != NULL)
+                exps[i] = pinfo->d;
+            if (coeffs != NULL)
+                coeffs[i] = pinfo->t;
+        }
+    }
+
+    return 1;
 }
 
 void RSA_clear_flags(RSA *r, int flags)
@@ -284,6 +406,12 @@ int RSA_test_flags(const RSA *r, int flags)
 void RSA_set_flags(RSA *r, int flags)
 {
     r->flags |= flags;
+}
+
+int RSA_get_version(RSA *r)
+{
+    /* { two-prime(0), multi(1) } */
+    return r->version;
 }
 
 ENGINE *RSA_get0_engine(const RSA *r)

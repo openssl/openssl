@@ -2,13 +2,15 @@
 
 =head1 NAME
 
-RSA_generate_key_ex, RSA_generate_key - generate RSA key pair
+RSA_generate_key_ex, RSA_generate_key,
+RSA_generate_multi_prime_key - generate RSA key pair
 
 =head1 SYNOPSIS
 
  #include <openssl/rsa.h>
 
  int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
+ int RSA_generate_multi_prime_key(RSA *rsa, int bits, int primes, BIGNUM *e, BN_GENCB *cb);
 
 Deprecated:
 
@@ -19,13 +21,19 @@ Deprecated:
 
 =head1 DESCRIPTION
 
-RSA_generate_key_ex() generates a key pair and stores it in the B<RSA>
-structure provided in B<rsa>. The pseudo-random number generator must
+RSA_generate_key_ex() generates a 2-prime RSA key pair and stores it in the
+B<RSA> structure provided in B<rsa>. The pseudo-random number generator must
 be seeded prior to calling RSA_generate_key_ex().
 
-The modulus size will be of length B<bits>, and the public exponent will be
-B<e>. Key sizes with B<num> E<lt> 1024 should be considered insecure.
-The exponent is an odd number, typically 3, 17 or 65537.
+RSA_generate_multi_prime_key() generates a multi-prime RSA key pair and stores
+it in the B<RSA> structure provided in B<rsa>. The number of primes is given by
+the B<primes> parameter. The pseudo-random number generator must be seeded prior
+to calling RSA_generate_multi_prime_key().
+
+The modulus size will be of length B<bits>, the number of primes to form the
+modulus will be B<primes>, and the public exponent will be B<e>. Key sizes
+with B<num> E<lt> 1024 should be considered insecure. The exponent is an odd
+number, typically 3, 17 or 65537.
 
 A callback function may be used to provide feedback about the
 progress of the key generation. If B<cb> is not B<NULL>, it
@@ -55,10 +63,12 @@ it is called as B<BN_GENCB_call(cb, 3, 0)>.
 
 =back
 
-The process is then repeated for prime q with B<BN_GENCB_call(cb, 3, 1)>.
+The process is then repeated for prime q and other primes (if any)
+with B<BN_GENCB_call(cb, 3, i)> where B<i> indicates the i-th prime.
 
 =head1 RETURN VALUE
 
+RSA_generate_multi_prime_key() returns 1 on success or 0 on error.
 RSA_generate_key_ex() returns 1 on success or 0 on error.
 The error codes can be obtained by L<ERR_get_error(3)>.
 
@@ -81,7 +91,7 @@ RSA_generate_key_ex() intsead.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

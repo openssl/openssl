@@ -114,6 +114,7 @@ int ERR_load_RSA_strings(void);
 # define RSA_R_INVALID_LABEL                              160
 # define RSA_R_INVALID_MESSAGE_LENGTH                     131
 # define RSA_R_INVALID_MGF1_MD                            156
+# define RSA_R_INVALID_MULTI_PRIME_KEY                    167
 # define RSA_R_INVALID_OAEP_PARAMETERS                    161
 # define RSA_R_INVALID_PADDING                            138
 # define RSA_R_INVALID_PADDING_MODE                       141
@@ -123,12 +124,17 @@ int ERR_load_RSA_strings(void);
 # define RSA_R_INVALID_TRAILER                            139
 # define RSA_R_INVALID_X931_DIGEST                        142
 # define RSA_R_IQMP_NOT_INVERSE_OF_Q                      126
+# define RSA_R_KEY_PRIME_NUM_INVALID                      165
 # define RSA_R_KEY_SIZE_TOO_SMALL                         120
 # define RSA_R_LAST_OCTET_INVALID                         134
 # define RSA_R_MGF1_DIGEST_NOT_ALLOWED                    152
 # define RSA_R_MODULUS_TOO_LARGE                          105
+# define RSA_R_MP_COEFFICIENT_NOT_INVERSE_OF_R            168
+# define RSA_R_MP_EXPONENT_NOT_CONGRUENT_TO_D             169
+# define RSA_R_MP_R_NOT_PRIME                             170
 # define RSA_R_NO_PUBLIC_EXPONENT                         140
 # define RSA_R_NULL_BEFORE_BLOCK_MISSING                  113
+# define RSA_R_N_DOES_NOT_EQUAL_PRODUCT_OF_PRIMES         172
 # define RSA_R_N_DOES_NOT_EQUAL_P_Q                       127
 # define RSA_R_OAEP_DECODING_ERROR                        121
 # define RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE   148

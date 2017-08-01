@@ -339,7 +339,8 @@ static int found(const char *name, const OPT_PAIR *pairs, int *result)
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ELAPSED, OPT_EVP, OPT_DECRYPT, OPT_ENGINE, OPT_MULTI,
-    OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM
+    OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM,
+    OPT_PRIMES
 } OPTION_CHOICE;
 
 const OPTIONS speed_options[] = {
@@ -366,6 +367,7 @@ const OPTIONS speed_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    {"primes", OPT_PRIMES, 'p', "Specify number of primes (for RSA only)"},
     {NULL},
 };
 
@@ -1325,6 +1327,7 @@ int speed_main(int argc, char **argv)
         sizeof(test15360)
     };
     int rsa_doit[RSA_NUM] = { 0 };
+    int primes = RSA_DEFAULT_PRIME_NUM;
 #endif
 #ifndef OPENSSL_NO_DSA
     static const unsigned int dsa_bits[DSA_NUM] = { 512, 1024, 2048 };
@@ -1457,6 +1460,10 @@ int speed_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PRIMES:
+            if (!opt_int(opt_arg(), &primes))
                 goto end;
             break;
         }
@@ -1615,6 +1622,10 @@ int speed_main(int argc, char **argv)
 
 #ifndef OPENSSL_NO_RSA
     for (i = 0; i < loopargs_len; i++) {
+        if (primes > RSA_DEFAULT_PRIME_NUM) {
+            /* for multi-prime RSA, skip this */
+            break;
+        }
         for (k = 0; k < RSA_NUM; k++) {
             const unsigned char *p;
 
@@ -2395,6 +2406,34 @@ int speed_main(int argc, char **argv)
         if (!rsa_doit[testnum])
             continue;
         for (i = 0; i < loopargs_len; i++) {
+            if (primes > 2) {
+                /* we haven't set keys yet,  generate multi-prime RSA keys */
+                BIGNUM *bn = BN_new();
+
+                if (bn == NULL)
+                    goto end;
+                if (!BN_set_word(bn, RSA_F4)) {
+                    BN_free(bn);
+                    goto end;
+                }
+
+                BIO_printf(bio_err, "Generate multi-prime RSA key for %s\n",
+                           rsa_choices[testnum].name);
+
+                loopargs[i].rsa_key[testnum] = RSA_new();
+                if (loopargs[i].rsa_key[testnum] == NULL) {
+                    BN_free(bn);
+                    goto end;
+                }
+
+                if (!RSA_generate_multi_prime_key(loopargs[i].rsa_key[testnum],
+                                                  rsa_bits[testnum],
+                                                  primes, bn, NULL)) {
+                    BN_free(bn);
+                    goto end;
+                }
+                BN_free(bn);
+            }
             st = RSA_sign(NID_md5_sha1, loopargs[i].buf, 36, loopargs[i].buf2,
                           &loopargs[i].siglen, loopargs[i].rsa_key[testnum]);
             if (st == 0)
