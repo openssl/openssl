@@ -523,8 +523,8 @@ static int test_x509_time_print(int idx)
     }
     rv = BIO_get_mem_data(m, &pp);
     if (!TEST_int_ne(rv, 0)
-        && !TEST_int_eq(rv, (int)strlen(readable))
-        && !TEST_strn_eq(pp, readable, rv))
+        || !TEST_int_eq(rv, (int)strlen(readable))
+        || !TEST_strn_eq(pp, readable, rv))
         goto err;
 
     ret = 1;
