@@ -786,6 +786,11 @@ static void ssl_session_tear_down(SSL_SESSION_TEST_FIXTURE fixture)
 static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
 {
     new_called++;
+    /*
+     * sess has been up-refed for us, but we don't actually need it so free it
+     * immediately.
+     */
+    SSL_SESSION_free(sess);
     return 1;
 }
 
@@ -842,6 +847,32 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
     if (fix.use_ext_cache && (new_called != 1 || remove_called != 0))
         goto end;
 
+#if !defined(OPENSSL_NO_TLS1_3)
+    new_called = remove_called = 0;
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl2,
+                                      &clientssl2, NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl2, sess1))
+            || !TEST_true(create_ssl_connection(serverssl2, clientssl2,
+                                                SSL_ERROR_NONE))
+            || !TEST_true(SSL_session_reused(clientssl2)))
+        goto end;
+
+    /*
+     * In TLSv1.3 we should have created a new session even though we have
+     * resumed. The original session should also have been removed.
+     */
+    if (fix.use_ext_cache && !TEST_true((new_called == 1
+                                         && remove_called == 1)))
+        goto end;
+
+    SSL_SESSION_free(sess1);
+    if (!TEST_ptr(sess1 = SSL_get1_session(clientssl2)))
+        goto end;
+    shutdown_ssl_connection(serverssl2, clientssl2);
+    serverssl2 = clientssl2 = NULL;
+#endif
+
+    new_called = remove_called = 0;
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl2,
                                       &clientssl2, NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl2, clientssl2,
@@ -851,16 +882,17 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
     if (!TEST_ptr(sess2 = SSL_get1_session(clientssl2)))
         goto end;
 
-    if (fix.use_ext_cache && (new_called != 2 || remove_called != 0))
+    if (fix.use_ext_cache && !TEST_true(new_called == 1 && remove_called == 0))
         goto end;
 
+    new_called = remove_called = 0;
     /*
      * This should clear sess2 from the cache because it is a "bad" session.
      * See SSL_set_session() documentation.
      */
     if (!TEST_true(SSL_set_session(clientssl2, sess1)))
         goto end;
-    if (fix.use_ext_cache && (new_called != 2 || remove_called != 1))
+    if (fix.use_ext_cache && !TEST_true(new_called == 0 && remove_called == 1))
         goto end;
     if (!TEST_ptr_eq(SSL_get_session(clientssl2), sess1))
         goto end;
@@ -870,35 +902,30 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
         if (!TEST_true(SSL_CTX_add_session(cctx, sess2))
                 || !TEST_true(SSL_CTX_remove_session(cctx, sess2)))
             goto end;
-
-        /*
-         * This is for the purposes of internal cache testing...ignore the
-         * counter for external cache
-         */
-        if (fix.use_ext_cache)
-            remove_called--;
     }
 
+    new_called = remove_called = 0;
     /* This shouldn't be in the cache so should fail */
     if (!TEST_false(SSL_CTX_remove_session(cctx, sess2)))
         goto end;
 
-    if (fix.use_ext_cache && (new_called != 2 || remove_called != 2))
+    if (fix.use_ext_cache && !TEST_true(new_called == 0 && remove_called == 1))
         goto end;
 
 #if !defined(OPENSSL_NO_TLS1_1) && !defined(OPENSSL_NO_TLS1_2)
+    new_called = remove_called = 0;
     /* Force a connection failure */
     SSL_CTX_set_max_proto_version(sctx, TLS1_1_VERSION);
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl3,
                                       &clientssl3, NULL, NULL))
             || !TEST_true(SSL_set_session(clientssl3, sess1))
-        /* This should fail because of the mismatched protocol versions */
+            /* This should fail because of the mismatched protocol versions */
             || !TEST_false(create_ssl_connection(serverssl3, clientssl3,
                                                  SSL_ERROR_NONE)))
         goto end;
 
     /* We should have automatically removed the session from the cache */
-    if (fix.use_ext_cache && (new_called != 2 || remove_called != 3))
+    if (fix.use_ext_cache && !TEST_true(new_called == 0 && remove_called == 1))
         goto end;
 
     /* Should succeed because it should not already be in the cache */
@@ -919,14 +946,6 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
 #endif
     SSL_SESSION_free(sess1);
     SSL_SESSION_free(sess2);
-
-    /*
-     * Check if we need to remove any sessions up-refed for the external cache
-     */
-    if (new_called >= 1)
-        SSL_SESSION_free(sess1);
-    if (new_called >= 2)
-        SSL_SESSION_free(sess2);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
 
