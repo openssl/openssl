@@ -28,7 +28,6 @@ static int init_status_request(SSL *s, unsigned int context);
 static int init_npn(SSL *s, unsigned int context);
 #endif
 static int init_alpn(SSL *s, unsigned int context);
-static int final_alpn(SSL *s, unsigned int context, int sent, int *al);
 static int init_sig_algs(SSL *s, unsigned int context);
 static int init_certificate_authorities(SSL *s, unsigned int context);
 static EXT_RETURN tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
@@ -207,7 +206,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
         | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
         init_alpn, tls_parse_ctos_alpn, tls_parse_stoc_alpn,
-        tls_construct_stoc_alpn, tls_construct_ctos_alpn, final_alpn
+        tls_construct_stoc_alpn, tls_construct_ctos_alpn, NULL
     },
 #ifndef OPENSSL_NO_SRTP
     {
@@ -934,44 +933,6 @@ static int init_alpn(SSL *s, unsigned int context)
         s->s3->alpn_proposed = NULL;
         s->s3->alpn_proposed_len = 0;
     }
-    return 1;
-}
-
-static int final_alpn(SSL *s, unsigned int context, int sent, int *al)
-{
-    const unsigned char *selected = NULL;
-    unsigned char selected_len = 0;
-
-    if (!s->server)
-        return 1;
-
-    if (s->ctx->ext.alpn_select_cb != NULL && s->s3->alpn_proposed != NULL) {
-        int r = s->ctx->ext.alpn_select_cb(s, &selected, &selected_len,
-                                           s->s3->alpn_proposed,
-                                           (unsigned int)s->s3->alpn_proposed_len,
-                                           s->ctx->ext.alpn_select_cb_arg);
-
-        if (r == SSL_TLSEXT_ERR_OK) {
-            OPENSSL_free(s->s3->alpn_selected);
-            s->s3->alpn_selected = OPENSSL_memdup(selected, selected_len);
-            if (s->s3->alpn_selected == NULL) {
-                *al = SSL_AD_INTERNAL_ERROR;
-                return 0;
-            }
-            s->s3->alpn_selected_len = selected_len;
-#ifndef OPENSSL_NO_NEXTPROTONEG
-            /* ALPN takes precedence over NPN. */
-            s->s3->npn_seen = 0;
-#endif
-        } else if (r == SSL_TLSEXT_ERR_NOACK) {
-            /* Behave as if no callback was present. */
-            return 1;
-        } else {
-            *al = SSL_AD_NO_APPLICATION_PROTOCOL;
-            return 0;
-        }
-    }
-
     return 1;
 }
 
