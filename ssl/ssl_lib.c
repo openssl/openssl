@@ -3156,10 +3156,11 @@ void ssl_update_cache(SSL *s, int mode)
         return;
 
     i = s->session_ctx->session_cache_mode;
-    if ((i & mode) && (!s->hit)
-        && ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE)
+    if ((i & mode) != 0
+        && (!s->hit || SSL_IS_TLS13(s))
+        && ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE) != 0
             || SSL_CTX_add_session(s->session_ctx, s->session))
-        && (s->session_ctx->new_session_cb != NULL)) {
+        && s->session_ctx->new_session_cb != NULL) {
         SSL_SESSION_up_ref(s->session);
         if (!s->session_ctx->new_session_cb(s, s->session))
             SSL_SESSION_free(s->session);
