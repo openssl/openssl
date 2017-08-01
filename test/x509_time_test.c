@@ -463,11 +463,10 @@ static int test_x509_time_print(int idx)
 
     if (!TEST_ptr(m = BIO_new(BIO_s_mem())))
         goto err;
-    if (!TEST_int_ge(rv = ASN1_TIME_print(m, &x509_print_tests[idx].asn1), 0)) {
-        /* this is an BIO_printf error */
-        goto err;
-    }
+
+    rv = ASN1_TIME_print(m, &x509_print_tests[idx].asn1);
     readable = x509_print_tests[idx].readable;
+
     if (rv == 0 && !TEST_str_eq(readable, "Bad time value")) {
         /* only if the test case intends to fail... */
         goto err;
