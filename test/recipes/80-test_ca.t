@@ -46,7 +46,7 @@ plan tests => 5;
      skip "CT not configured, can't use -precert", 1
          if disabled("ct");
 
-     $ENV{OPENSSL_CONFIG} = "-config ".srctop_file("test", "Uss.cnf");
+     $ENV{OPENSSL_CONFIG} = '-config "'.srctop_file("test", "Uss.cnf").'"';
      ok(run(perlapp(["CA.pl", "-precert"], stderr => undef)),
         'creating new pre-certificate');
 }
