@@ -1623,10 +1623,14 @@ typedef struct kdf_data_st {
 static int kdf_test_init(EVP_TEST *t, const char *name)
 {
     KDF_DATA *kdata;
+    int kdf_nid = OBJ_sn2nid(name);
+
+    if (kdf_nid == NID_undef)
+        kdf_nid = OBJ_ln2nid(name);
 
     if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
         return 0;
-    kdata->ctx = EVP_PKEY_CTX_new_id(OBJ_sn2nid(name), NULL);
+    kdata->ctx = EVP_PKEY_CTX_new_id(kdf_nid, NULL);
     if (kdata->ctx == NULL) {
         OPENSSL_free(kdata);
         return 0;
