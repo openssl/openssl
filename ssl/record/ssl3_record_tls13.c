@@ -9,6 +9,7 @@
 
 #include "../ssl_locl.h"
 #include "record_locl.h"
+#include "internal/cryptlib.h"
 
 /*-
  * tls13_enc encrypts/decrypts |n_recs| in |recs|.
