@@ -17,14 +17,32 @@
 #
 # June 2017.
 #
-# Non-NEON code is KECCAK_2X variant (see sha/keccak1600.c) with bit
-# interleaving. How does it compare to Keccak Code Package? It's ~10%
-# faster on most processors, but more compact, and is endian- and ISA-
-# neutral. ISA neutrality means that minimum ISA requirement is ARMv4,
-# yet it can be assembled even as Thumb-2. NEON code path is variation
-# of KECCAK_1X_ALT with register layout taken from Keccak Code Package.
-# It's also "mostly" faster, by 10-15% on some processors, and endian-
-# neutral.
+# Non-NEON code is KECCAK_1X variant (see sha/keccak1600.c) with bit
+# interleaving. How does it compare to Keccak Code Package? It's as
+# fast, but several times smaller, and is endian- and ISA-neutral. ISA
+# neutrality means that minimum ISA requirement is ARMv4, yet it can
+# be assembled even as Thumb-2. NEON code path is KECCAK_1X_ALT with
+# register layout taken from Keccak Code Package. It's also as fast,
+# in fact faster by 10-15% on some processors, and endian-neutral.
+#
+# August 2017.
+#
+# Switch to KECCAK_2X variant for non-NEON code and merge almost 1/2
+# of rotate instructions with logical ones. This resulted in ~10%
+# improvement on most processors. Switch to KECCAK_2X effectively
+# minimizes re-loads from temporary storage, and merged rotates just
+# eliminate corresponding instructions. As for latter. When examining
+# code you'll notice commented ror instructions. These are eliminated
+# ones, and you should trace destination register below to see what's
+# going on. Just in case, why not all rotates are eliminated. Trouble
+# is that you have operations that require both inputs to be rotated,
+# e.g. 'eor a,b>>>x,c>>>y'. This conundrum is resolved by using
+# 'eor a,b,c>>>(x-y)' and then merge-rotating 'a' in next operation
+# that takes 'a' as input. And thing is that this next operation can
+# be in next round. It's totally possible to "carry" rotate "factors"
+# to the next round, but it makes code more complex. And the last word
+# is the keyword, i.e. "almost 1/2" is kind of complexity cap [for the
+# time being]...
 #
 ########################################################################
 # Numbers are cycles per processed byte. Non-NEON results account even
