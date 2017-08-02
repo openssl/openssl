@@ -175,7 +175,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
             if (!BN_generate_dsa_nonce(k, dsa->q, dsa->priv_key, dgst,
                                        dlen, ctx))
                 goto err;
-        } else if (!BN_rand_range(k, dsa->q))
+        } else if (!BN_priv_rand_range(k, dsa->q))
             goto err;
     } while (BN_is_zero(k));
 

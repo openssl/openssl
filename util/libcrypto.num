@@ -4373,3 +4373,6 @@ EVP_PKEY_meth_get0                      4316	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_meth_get_count                 4317	1_1_1	EXIST::FUNCTION:
 RAND_poll_ex                            4318	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_get0_global                   4319	1_1_1	EXIST::FUNCTION:
+RAND_priv_bytes                         4320	1_1_1	EXIST::FUNCTION:
+BN_priv_rand                            4321	1_1_1	EXIST::FUNCTION:
+BN_priv_rand_range                      4322	1_1_1	EXIST::FUNCTION:

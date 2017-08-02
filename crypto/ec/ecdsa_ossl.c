@@ -89,7 +89,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
                     goto err;
                 }
             } else {
-                if (!BN_rand_range(k, order)) {
+                if (!BN_priv_rand_range(k, order)) {
                     ECerr(EC_F_ECDSA_SIGN_SETUP,
                              EC_R_RANDOM_NUMBER_GENERATION_FAILED);
                     goto err;
