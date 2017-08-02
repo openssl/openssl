@@ -330,6 +330,7 @@ ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line
 # endif
 # define OPENSSL_assert(e) \
     (void)((e) ? 0 : (OPENSSL_die("assertion failed: " #e, OPENSSL_FILE, OPENSSL_LINE), 1))
+# define OPENSSL_unused_param(x) (void)(x)
 
 int OPENSSL_isservice(void);
 
