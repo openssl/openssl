@@ -2,13 +2,14 @@
 
 =head1 NAME
 
-RAND_bytes, RAND_pseudo_bytes - generate random data
+RAND_bytes, RAND_priv_bytes, RAND_pseudo_bytes - generate random data
 
 =head1 SYNOPSIS
 
  #include <openssl/rand.h>
 
  int RAND_bytes(unsigned char *buf, int num);
+ int RAND_priv_bytes(unsigned char *buf, int num);
 
 Deprecated:
 
@@ -22,9 +23,15 @@ RAND_bytes() puts B<num> cryptographically strong pseudo-random bytes
 into B<buf>. An error occurs if the PRNG has not been seeded with
 enough randomness to ensure an unpredictable byte sequence.
 
+RAND_priv_bytes() has the same semantics as RAND_bytes().  It is intended to
+be used for generating long-term private keys. If using the default
+RAND_METHOD, this function uses a separate instance of the PRNG so that
+a compromise of the global generator will not affect such key generation.
+
 =head1 RETURN VALUES
 
-RAND_bytes() returns 1 on success, -1 if not supported by the current
+RAND_bytes() nad RAND_priv_bytes()
+return 1 on success, -1 if not supported by the current
 RAND method, or 0 on other failure. The error code can be
 obtained by L<ERR_get_error(3)>.
 

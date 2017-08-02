@@ -40,6 +40,7 @@ RAND_METHOD *RAND_OpenSSL(void);
 #   define RAND_cleanup() while(0) continue
 # endif
 int RAND_bytes(unsigned char *buf, int num);
+int RAND_priv_bytes(unsigned char *buf, int num);
 DEPRECATEDIN_1_1_0(int RAND_pseudo_bytes(unsigned char *buf, int num))
 
 void RAND_seed(const void *buf, int num);
