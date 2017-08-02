@@ -389,8 +389,12 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
 
     if (kdfalg != NULL) {
         int kdfnid = OBJ_sn2nid(kdfalg);
-        if (kdfnid == NID_undef)
-            goto end;
+
+        if (kdfnid == NID_undef) {
+            kdfnid = OBJ_ln2nid(kdfalg);
+            if (kdfnid == NID_undef)
+                goto end;
+        }
         ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
     } else {
         if (pkey == NULL)
