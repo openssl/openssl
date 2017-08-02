@@ -20,6 +20,7 @@
 #include <openssl/engine.h>
 #include <openssl/async.h>
 #include <openssl/ct.h>
+#include "internal/cryptlib.h"
 
 const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
 

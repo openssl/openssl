@@ -9,6 +9,7 @@
 
 #include "internal/constant_time_locl.h"
 #include "ssl_locl.h"
+#include "internal/cryptlib.h"
 
 #include <openssl/md5.h>
 #include <openssl/sha.h>
