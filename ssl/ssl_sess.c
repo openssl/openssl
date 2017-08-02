@@ -535,10 +535,7 @@ int ssl_get_prev_session(SSL *s, const PACKET *ext, const PACKET *session_id)
                  * interrupt the session resumption process. The return
                  * value is intentionally ignored.
                  */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-result"
                 SSL_CTX_add_session(s->session_ctx, ret);
-#pragma GCC diagnostic pop
             }
         }
     }
