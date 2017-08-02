@@ -34,21 +34,23 @@ static void tear_down(CIPHERLIST_TEST_FIXTURE *fixture)
         SSL_CTX_free(fixture->server);
         SSL_CTX_free(fixture->client);
         fixture->server = fixture->client = NULL;
+        OPENSSL_free(fixture);
     }
 }
 
 static CIPHERLIST_TEST_FIXTURE *set_up(const char *const test_case_name)
 {
-    static CIPHERLIST_TEST_FIXTURE fixture;
+    CIPHERLIST_TEST_FIXTURE *fixture;
 
-    memset(&fixture, 0, sizeof(fixture));
-    fixture.test_case_name = test_case_name;
-    if (!TEST_ptr(fixture.server = SSL_CTX_new(TLS_server_method()))
-            || !TEST_ptr(fixture.client = SSL_CTX_new(TLS_client_method()))) {
-        tear_down(&fixture);
+    if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
+        return NULL;
+    fixture->test_case_name = test_case_name;
+    if (!TEST_ptr(fixture->server = SSL_CTX_new(TLS_server_method()))
+            || !TEST_ptr(fixture->client = SSL_CTX_new(TLS_client_method()))) {
+        tear_down(fixture);
         return NULL;
     }
-    return &fixture;
+    return fixture;
 }
 
 /*
