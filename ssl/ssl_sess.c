@@ -93,6 +93,11 @@ SSL_SESSION *SSL_SESSION_new(void)
     return ss;
 }
 
+SSL_SESSION *SSL_SESSION_dup(SSL_SESSION *src)
+{
+    return ssl_session_dup(src, 1);
+}
+
 /*
  * Create a new SSL_SESSION and duplicate the contents of |src| into it. If
  * ticket == 0 then no ticket information is duplicated, otherwise it is.
