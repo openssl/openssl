@@ -97,23 +97,27 @@ static int testctx_eq(SSL_TEST_CTX *ctx, SSL_TEST_CTX *ctx2)
     return 1;
 }
 
-static SSL_TEST_CTX_TEST_FIXTURE set_up(const char *const test_case_name)
+static SSL_TEST_CTX_TEST_FIXTURE *set_up(const char *const test_case_name)
 {
-    SSL_TEST_CTX_TEST_FIXTURE fixture;
+    SSL_TEST_CTX_TEST_FIXTURE *fixture;
 
-    memset(&fixture, 0, sizeof(fixture));
-    fixture.test_case_name = test_case_name;
-    TEST_ptr(fixture.expected_ctx = SSL_TEST_CTX_new());
+    if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
+        return NULL;
+    fixture->test_case_name = test_case_name;
+    if (!TEST_ptr(fixture->expected_ctx = SSL_TEST_CTX_new())) {
+        OPENSSL_free(fixture);
+        return NULL;
+    }
     return fixture;
 }
 
-static int execute_test(SSL_TEST_CTX_TEST_FIXTURE fixture)
+static int execute_test(SSL_TEST_CTX_TEST_FIXTURE *fixture)
 {
     int success = 0;
     SSL_TEST_CTX *ctx;
 
-    if (!TEST_ptr(ctx = SSL_TEST_CTX_create(conf, fixture.test_section))
-            || !testctx_eq(ctx, fixture.expected_ctx))
+    if (!TEST_ptr(ctx = SSL_TEST_CTX_create(conf, fixture->test_section))
+            || !testctx_eq(ctx, fixture->expected_ctx))
         goto err;
 
     success = 1;
@@ -122,60 +126,63 @@ static int execute_test(SSL_TEST_CTX_TEST_FIXTURE fixture)
     return success;
 }
 
-static void tear_down(SSL_TEST_CTX_TEST_FIXTURE fixture)
+static void tear_down(SSL_TEST_CTX_TEST_FIXTURE *fixture)
 {
-    SSL_TEST_CTX_free(fixture.expected_ctx);
+    SSL_TEST_CTX_free(fixture->expected_ctx);
+    OPENSSL_free(fixture);
 }
 
 #define SETUP_SSL_TEST_CTX_TEST_FIXTURE() \
-    SETUP_TEST_FIXTURE(SSL_TEST_CTX_TEST_FIXTURE, set_up)
+    SETUP_TEST_FIXTURE(SSL_TEST_CTX_TEST_FIXTURE *, set_up); \
+    if (fixture == NULL) \
+        return 0
 #define EXECUTE_SSL_TEST_CTX_TEST() \
     EXECUTE_TEST(execute_test, tear_down)
 
 static int test_empty_configuration()
 {
     SETUP_SSL_TEST_CTX_TEST_FIXTURE();
-    fixture.test_section = "ssltest_default";
-    fixture.expected_ctx->expected_result = SSL_TEST_SUCCESS;
+    fixture->test_section = "ssltest_default";
+    fixture->expected_ctx->expected_result = SSL_TEST_SUCCESS;
     EXECUTE_SSL_TEST_CTX_TEST();
 }
 
 static int test_good_configuration()
 {
     SETUP_SSL_TEST_CTX_TEST_FIXTURE();
-    fixture.test_section = "ssltest_good";
-    fixture.expected_ctx->method = SSL_TEST_METHOD_DTLS;
-    fixture.expected_ctx->handshake_mode = SSL_TEST_HANDSHAKE_RESUME;
-    fixture.expected_ctx->app_data_size = 1024;
-    fixture.expected_ctx->max_fragment_size = 2048;
+    fixture->test_section = "ssltest_good";
+    fixture->expected_ctx->method = SSL_TEST_METHOD_DTLS;
+    fixture->expected_ctx->handshake_mode = SSL_TEST_HANDSHAKE_RESUME;
+    fixture->expected_ctx->app_data_size = 1024;
+    fixture->expected_ctx->max_fragment_size = 2048;
 
-    fixture.expected_ctx->expected_result = SSL_TEST_SERVER_FAIL;
-    fixture.expected_ctx->expected_client_alert = SSL_AD_UNKNOWN_CA;
-    fixture.expected_ctx->expected_server_alert = 0;  /* No alert. */
-    fixture.expected_ctx->expected_protocol = TLS1_1_VERSION;
-    fixture.expected_ctx->expected_servername = SSL_TEST_SERVERNAME_SERVER2;
-    fixture.expected_ctx->session_ticket_expected = SSL_TEST_SESSION_TICKET_YES;
-    fixture.expected_ctx->compression_expected = SSL_TEST_COMPRESSION_NO;
-    fixture.expected_ctx->resumption_expected = 1;
+    fixture->expected_ctx->expected_result = SSL_TEST_SERVER_FAIL;
+    fixture->expected_ctx->expected_client_alert = SSL_AD_UNKNOWN_CA;
+    fixture->expected_ctx->expected_server_alert = 0;  /* No alert. */
+    fixture->expected_ctx->expected_protocol = TLS1_1_VERSION;
+    fixture->expected_ctx->expected_servername = SSL_TEST_SERVERNAME_SERVER2;
+    fixture->expected_ctx->session_ticket_expected = SSL_TEST_SESSION_TICKET_YES;
+    fixture->expected_ctx->compression_expected = SSL_TEST_COMPRESSION_NO;
+    fixture->expected_ctx->resumption_expected = 1;
 
-    fixture.expected_ctx->extra.client.verify_callback =
+    fixture->expected_ctx->extra.client.verify_callback =
         SSL_TEST_VERIFY_REJECT_ALL;
-    fixture.expected_ctx->extra.client.servername = SSL_TEST_SERVERNAME_SERVER2;
-    fixture.expected_ctx->extra.client.npn_protocols =
+    fixture->expected_ctx->extra.client.servername = SSL_TEST_SERVERNAME_SERVER2;
+    fixture->expected_ctx->extra.client.npn_protocols =
         OPENSSL_strdup("foo,bar");
-    if (!TEST_ptr(fixture.expected_ctx->extra.client.npn_protocols))
+    if (!TEST_ptr(fixture->expected_ctx->extra.client.npn_protocols))
         goto err;
 
-    fixture.expected_ctx->extra.server.servername_callback =
+    fixture->expected_ctx->extra.server.servername_callback =
         SSL_TEST_SERVERNAME_IGNORE_MISMATCH;
-    fixture.expected_ctx->extra.server.broken_session_ticket = 1;
+    fixture->expected_ctx->extra.server.broken_session_ticket = 1;
 
-    fixture.expected_ctx->resume_extra.server2.alpn_protocols =
+    fixture->expected_ctx->resume_extra.server2.alpn_protocols =
         OPENSSL_strdup("baz");
-    if (!TEST_ptr(fixture.expected_ctx->resume_extra.server2.alpn_protocols))
+    if (!TEST_ptr(fixture->expected_ctx->resume_extra.server2.alpn_protocols))
         goto err;
 
-    fixture.expected_ctx->resume_extra.client.ct_validation =
+    fixture->expected_ctx->resume_extra.client.ct_validation =
         SSL_TEST_CT_VALIDATION_STRICT;
 
     EXECUTE_SSL_TEST_CTX_TEST();
