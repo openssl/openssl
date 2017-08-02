@@ -496,8 +496,6 @@ static IPAddressFamily *make_IPAddressFamily(IPAddrBlocks *addr,
 
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
         f = sk_IPAddressFamily_value(addr, i);
-        if (!ossl_assert(f->addressFamily->data != NULL))
-            goto err;
         if (f->addressFamily->length == keylen &&
             !memcmp(f->addressFamily->data, key, keylen))
             return f;
@@ -1201,11 +1199,6 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
     } else {
         i = 0;
         x = sk_X509_value(chain, i);
-        if (!ossl_assert(x != NULL)) {
-            if (ctx != NULL)
-                ctx->error = X509_V_ERR_UNSPECIFIED;
-            return 0;
-        }
         if ((ext = x->rfc3779_addr) == NULL)
             goto done;
     }
@@ -1227,11 +1220,6 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
      */
     for (i++; i < sk_X509_num(chain); i++) {
         x = sk_X509_value(chain, i);
-        if (!ossl_assert(x != NULL)) {
-            if (ctx != NULL)
-                ctx->error = X509_V_ERR_UNSPECIFIED;
-            return 0;
-        }
         if (!X509v3_addr_is_canonical(x->rfc3779_addr))
             validation_err(X509_V_ERR_INVALID_EXTENSION);
         if (x->rfc3779_addr == NULL) {
@@ -1275,11 +1263,6 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
     /*
      * Trust anchor can't inherit.
      */
-    if (!ossl_assert(x != NULL)) {
-        if (ctx != NULL)
-            ctx->error = X509_V_ERR_UNSPECIFIED;
-        return 0;
-    }
     if (x->rfc3779_addr != NULL) {
         for (j = 0; j < sk_IPAddressFamily_num(x->rfc3779_addr); j++) {
             IPAddressFamily *fp =
@@ -1304,8 +1287,10 @@ int X509v3_addr_validate_path(X509_STORE_CTX *ctx)
 {
     if (ctx->chain == NULL
             || sk_X509_num(ctx->chain) == 0
-            || ctx->verify_cb == NULL)
+            || ctx->verify_cb == NULL) {
+        ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
+    }
     return addr_validate_path_internal(ctx, ctx->chain, NULL);
 }
 
