@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
+#include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
