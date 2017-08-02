@@ -25,7 +25,7 @@ my $TAP_Harness = can_load(modules => { 'TAP::Harness' => undef })
 my $srctop = $ENV{SRCTOP} || $ENV{TOP};
 my $bldtop = $ENV{BLDTOP} || $ENV{TOP};
 my $recipesdir = catdir($srctop, "test", "recipes");
-my $libdir = catdir($srctop, "util", "perl");
+my $libdir = rel2abs(catdir($srctop, "util", "perl"));
 
 my %tapargs =
     ( verbosity => $ENV{VERBOSE} || $ENV{V} || $ENV{HARNESS_VERBOSE} ? 1 : 0,
