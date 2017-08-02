@@ -805,7 +805,7 @@ static int
 doapr_outch(char **sbuffer,
             char **buffer, size_t *currlen, size_t *maxlen, int c)
 {
-    /* If we haven't at least one buffer, someone has doe a big booboo */
+    /* If we haven't at least one buffer, someone has done a big booboo */
     if (!ossl_assert(*sbuffer != NULL || buffer != NULL))
         return 0;
 

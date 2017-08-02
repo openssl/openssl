@@ -743,11 +743,6 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
     } else {
         i = 0;
         x = sk_X509_value(chain, i);
-        if (!ossl_assert(x != NULL)) {
-            if (ctx != NULL)
-                ctx->error = X509_V_ERR_UNSPECIFIED;
-            return 0;
-        }
         if ((ext = x->rfc3779_asid) == NULL)
             goto done;
     }
@@ -857,8 +852,10 @@ int X509v3_asid_validate_path(X509_STORE_CTX *ctx)
 {
     if (ctx->chain == NULL
             || sk_X509_num(ctx->chain) == 0
-            || ctx->verify_cb == NULL)
+            || ctx->verify_cb == NULL) {
+        ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
+    }
     return asid_validate_path_internal(ctx, ctx->chain, NULL);
 }
 
