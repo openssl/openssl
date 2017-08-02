@@ -169,7 +169,35 @@ size_t drbg_entropy_from_parent(RAND_DRBG *drbg,
 void drbg_release_entropy(RAND_DRBG *drbg, unsigned char *out)
 {
     drbg->filled = 0;
-    OPENSSL_cleanse(drbg->randomness, sizeof(drbg->randomness));
+    OPENSSL_cleanse(drbg->randomness, drbg->size);
+}
+
+
+/*
+ * Set up a global DRBG.
+ */
+static int setup_drbg(RAND_DRBG *drbg)
+{
+    int ret = 1;
+
+    drbg->lock = CRYPTO_THREAD_lock_new();
+    ret &= drbg->lock != NULL;
+    drbg->size = RANDOMNESS_NEEDED;
+    drbg->randomness = OPENSSL_malloc(drbg->size);
+    ret &= drbg->randomness != NULL;
+    /* If you change these parameters, see RANDOMNESS_NEEDED */
+    ret &= RAND_DRBG_set(drbg,
+                         NID_aes_128_ctr, RAND_DRBG_FLAG_CTR_USE_DF) == 1;
+    ret &= RAND_DRBG_set_callbacks(drbg, drbg_entropy_from_system,
+                                   drbg_release_entropy, NULL, NULL) == 1;
+    return ret;
+}
+
+static void free_drbg(RAND_DRBG *drbg)
+{
+    CRYPTO_THREAD_lock_free(drbg->lock);
+    OPENSSL_clear_free(drbg->randomness, drbg->size);
+    RAND_DRBG_uninstantiate(drbg);
 }
 
 DEFINE_RUN_ONCE_STATIC(do_rand_init)
@@ -189,21 +217,13 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     rand_bytes.size = MAX_RANDOMNESS_HELD;
     /* TODO: Should this be secure malloc? */
     rand_bytes.buff = malloc(rand_bytes.size);
-    ret &= rand_bytes.buff != NULL;
 
-    rand_drbg.lock = CRYPTO_THREAD_lock_new();
-    ret &= rand_drbg.lock != NULL;
-    rand_drbg.size = RANDOMNESS_NEEDED;
-    rand_drbg.randomness = OPENSSL_malloc(rand_drbg.size);
-    ret &= rand_drbg.randomness != NULL;
-    /* If you change these parameters, see RANDOMNESS_NEEDED */
-    ret &= RAND_DRBG_set(&rand_drbg,
-                         NID_aes_128_ctr, RAND_DRBG_FLAG_CTR_USE_DF) == 1;
-    ret &= RAND_DRBG_set_callbacks(&rand_drbg, drbg_entropy_from_system,
-                                   drbg_release_entropy,
-                                   NULL, NULL) == 1;
+    ret &= rand_bytes.buff != NULL;
+    ret &= setup_drbg(&rand_drbg);
+    ret &= setup_drbg(&priv_drbg);
     return ret;
 }
+
 
 void rand_cleanup_int(void)
 {
@@ -217,9 +237,9 @@ void rand_cleanup_int(void)
 #endif
     CRYPTO_THREAD_lock_free(rand_meth_lock);
     CRYPTO_THREAD_lock_free(rand_bytes.lock);
-    OPENSSL_clear_free(rand_drbg.randomness, rand_drbg.size);
-    CRYPTO_THREAD_lock_free(rand_drbg.lock);
-    RAND_DRBG_uninstantiate(&rand_drbg);
+    OPENSSL_clear_free(rand_bytes.buff, rand_bytes.size);
+    free_drbg(&rand_drbg);
+    free_drbg(&priv_drbg);
 }
 
 /*
@@ -321,6 +341,25 @@ void RAND_add(const void *buf, int num, double randomness)
 
     if (meth->add != NULL)
         meth->add(buf, num, randomness);
+}
+
+/*
+ * This function is not part of RAND_METHOD, so if we're not using
+ * the default method, then just call RAND_bytes().  Otherwise make
+ * sure we're instantiated and use the private DRBG.
+ */
+int RAND_priv_bytes(unsigned char *buf, int num)
+{
+    const RAND_METHOD *meth = RAND_get_rand_method();
+
+    if (meth != RAND_OpenSSL())
+        return RAND_bytes(buf, num);
+
+    if (priv_drbg.state == DRBG_UNINITIALISED
+            && RAND_DRBG_instantiate(&priv_drbg, NULL, 0) == 0)
+        return 0;
+    return RAND_DRBG_generate(&priv_drbg, buf, num, 0, NULL, 0);
+
 }
 
 int RAND_bytes(unsigned char *buf, int num)

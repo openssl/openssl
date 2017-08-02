@@ -111,14 +111,14 @@ static int generate_key(DH *dh)
     if (generate_new_key) {
         if (dh->q) {
             do {
-                if (!BN_rand_range(priv_key, dh->q))
+                if (!BN_priv_rand_range(priv_key, dh->q))
                     goto err;
             }
             while (BN_is_zero(priv_key) || BN_is_one(priv_key));
         } else {
             /* secret exponent length */
             l = dh->length ? dh->length : BN_num_bits(dh->p) - 1;
-            if (!BN_rand(priv_key, l, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+            if (!BN_priv_rand(priv_key, l, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
                 goto err;
         }
     }

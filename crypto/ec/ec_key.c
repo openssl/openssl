@@ -218,7 +218,7 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
         goto err;
 
     do
-        if (!BN_rand_range(priv_key, order))
+        if (!BN_priv_rand_range(priv_key, order))
             goto err;
     while (BN_is_zero(priv_key)) ;
 

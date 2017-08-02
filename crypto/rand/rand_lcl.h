@@ -125,6 +125,7 @@ struct rand_drbg_st {
 extern RAND_METHOD rand_meth;
 extern RAND_BYTES_BUFFER rand_bytes;
 extern RAND_DRBG rand_drbg;
+extern RAND_DRBG priv_drbg;
 
 /* Hardware-based seeding functions. */
 void rand_read_tsc(RAND_poll_fn cb, void *arg);

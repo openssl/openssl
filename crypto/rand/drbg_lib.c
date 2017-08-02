@@ -365,13 +365,6 @@ err:
     return ret;
 }
 
-static void drbg_cleanup(void)
-{
-    CRYPTO_THREAD_write_lock(rand_drbg.lock);
-    RAND_DRBG_uninstantiate(&rand_drbg);
-    CRYPTO_THREAD_unlock(rand_drbg.lock);
-}
-
 static int drbg_add(const void *buf, int num, double randomness)
 {
     unsigned char *in = (unsigned char *)buf;
@@ -411,11 +404,12 @@ static int drbg_status(void)
 }
 
 RAND_DRBG rand_drbg; /* The default global DRBG. */
+RAND_DRBG priv_drbg; /* The global private-key DRBG. */
 
 RAND_METHOD rand_meth = {
     drbg_seed,
     drbg_bytes,
-    drbg_cleanup,
+    NULL,
     drbg_add,
     drbg_bytes,
     drbg_status
