@@ -23,6 +23,7 @@ int ERR_load_BN_strings(void);
  * BN function codes.
  */
 # define BN_F_BNRAND                                      127
+# define BN_F_BNRAND_RANGE                                138
 # define BN_F_BN_BLINDING_CONVERT_EX                      100
 # define BN_F_BN_BLINDING_CREATE_PARAM                    128
 # define BN_F_BN_BLINDING_INVERT_EX                       101

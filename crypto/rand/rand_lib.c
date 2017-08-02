@@ -344,7 +344,9 @@ void RAND_add(const void *buf, int num, double randomness)
 }
 
 /*
- * This function is not part of RAND_METHOD.
+ * This function is not part of RAND_METHOD, so if we're not using
+ * the default method, then just call RAND_bytes().  Otherwise make
+ * sure we're instantiated and use the private DRBG.
  */
 int RAND_priv_bytes(unsigned char *buf, int num)
 {
@@ -352,6 +354,10 @@ int RAND_priv_bytes(unsigned char *buf, int num)
 
     if (meth != RAND_OpenSSL())
         return RAND_bytes(buf, num);
+
+    if (priv_drbg.state == DRBG_UNINITIALISED
+            && RAND_DRBG_instantiate(&priv_drbg, NULL, 0) == 0)
+        return 0;
     return RAND_DRBG_generate(&priv_drbg, buf, num, 0, NULL, 0);
 
 }

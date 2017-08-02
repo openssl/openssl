@@ -14,10 +14,14 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
-static int bnrand(int testing, BIGNUM *rnd, int bits, int top, int bottom)
+typedef enum bnrand_flag_e {
+    NORMAL, TESTING, PRIVATE
+} BNRAND_FLAG;
+
+static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom)
 {
     unsigned char *buf = NULL;
-    int ret = 0, bit, bytes, mask;
+    int b, ret = 0, bit, bytes, mask;
 
     if (bits == 0) {
         if (top != BN_RAND_TOP_ANY || bottom != BN_RAND_BOTTOM_ANY)
@@ -39,10 +43,11 @@ static int bnrand(int testing, BIGNUM *rnd, int bits, int top, int bottom)
     }
 
     /* make a random number and set the top and bottom bits */
-    if (RAND_bytes(buf, bytes) <= 0)
+    b = flag == NORMAL ? RAND_bytes(buf, bytes) : RAND_priv_bytes(buf, bytes);
+    if (b <= 0)
         goto err;
 
-    if (testing) {
+    if (flag == TESTING) {
         /*
          * generate patterns that are more likely to trigger BN library bugs
          */
@@ -91,22 +96,27 @@ toosmall:
 
 int BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
-    return bnrand(0, rnd, bits, top, bottom);
+    return bnrand(NORMAL, rnd, bits, top, bottom);
 }
 
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
-    return bnrand(1, rnd, bits, top, bottom);
+    return bnrand(TESTING, rnd, bits, top, bottom);
+}
+
+int BN_priv_rand(BIGNUM *rnd, int bits, int top, int bottom)
+{
+    return bnrand(PRIVATE, rnd, bits, top, bottom);
 }
 
 /* random number r:  0 <= r < range */
-int BN_rand_range(BIGNUM *r, const BIGNUM *range)
+static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range)
 {
-    int n;
+    int b, n;
     int count = 100;
 
     if (range->neg || BN_is_zero(range)) {
-        BNerr(BN_F_BN_RAND_RANGE, BN_R_INVALID_RANGE);
+        BNerr(BN_F_BNRAND_RANGE, BN_R_INVALID_RANGE);
         return 0;
     }
 
@@ -122,7 +132,10 @@ int BN_rand_range(BIGNUM *r, const BIGNUM *range)
          * than range
          */
         do {
-            if (!BN_rand(r, n + 1, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
+            b = flag == NORMAL
+                ? BN_rand(r, n + 1, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY)
+                : BN_priv_rand(r, n + 1, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY);
+            if (!b)
                 return 0;
             /*
              * If r < 3*range, use r := r MOD range (which is either r, r -
@@ -139,7 +152,7 @@ int BN_rand_range(BIGNUM *r, const BIGNUM *range)
             }
 
             if (!--count) {
-                BNerr(BN_F_BN_RAND_RANGE, BN_R_TOO_MANY_ITERATIONS);
+                BNerr(BN_F_BNRAND_RANGE, BN_R_TOO_MANY_ITERATIONS);
                 return 0;
             }
 
@@ -152,7 +165,7 @@ int BN_rand_range(BIGNUM *r, const BIGNUM *range)
                 return 0;
 
             if (!--count) {
-                BNerr(BN_F_BN_RAND_RANGE, BN_R_TOO_MANY_ITERATIONS);
+                BNerr(BN_F_BNRAND_RANGE, BN_R_TOO_MANY_ITERATIONS);
                 return 0;
             }
         }
@@ -161,6 +174,16 @@ int BN_rand_range(BIGNUM *r, const BIGNUM *range)
 
     bn_check_top(r);
     return 1;
+}
+
+int BN_rand_range(BIGNUM *r, const BIGNUM *range)
+{
+    return bnrand_range(NORMAL, r, range);
+}
+
+int BN_priv_rand_range(BIGNUM *r, const BIGNUM *range)
+{
+    return bnrand_range(PRIVATE, r, range);
 }
 
 int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom)
