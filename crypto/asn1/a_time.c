@@ -25,6 +25,13 @@ IMPLEMENT_ASN1_MSTRING(ASN1_TIME, B_ASN1_TIME)
 
 IMPLEMENT_ASN1_FUNCTIONS(ASN1_TIME)
 
+static int is_utc(const int year)
+{
+    if (50 <= year && year <= 149)
+        return 1;
+    return 0;
+}
+
 static int leap_year(const int year)
 {
     if (year % 400 == 0 || (year % 100 != 0 && year % 4 == 0))
@@ -251,6 +258,58 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
     return 0;
 }
 
+ASN1_TIME *asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type)
+{
+    char* p;
+    ASN1_TIME *tmps = NULL;
+    const size_t len = 20;
+
+    if (type == V_ASN1_UNDEF) {
+        if (is_utc(ts->tm_year))
+            type = V_ASN1_UTCTIME;
+        else
+            type = V_ASN1_GENERALIZEDTIME;
+    } else if (type == V_ASN1_UTCTIME) {
+        if (!is_utc(ts->tm_year))
+            goto err;
+    } else if (type != V_ASN1_GENERALIZEDTIME) {
+        goto err;
+    }
+
+    if (s == NULL)
+        tmps = ASN1_STRING_new();
+    else
+        tmps = s;
+    if (tmps == NULL)
+        return NULL;
+
+    if (!ASN1_STRING_set(tmps, NULL, len))
+        goto err;
+
+    tmps->type = type;
+    p = (char*)tmps->data;
+
+    if (type == V_ASN1_GENERALIZEDTIME)
+        tmps->length = BIO_snprintf(p, len, "%04d%02d%02d%02d%02d%02dZ",
+                                    ts->tm_year + 1900, ts->tm_mon + 1,
+                                    ts->tm_mday, ts->tm_hour, ts->tm_min,
+                                    ts->tm_sec);
+    else
+        tmps->length = BIO_snprintf(p, len, "%02d%02d%02d%02d%02d%02dZ",
+                                    ts->tm_year % 100, ts->tm_mon + 1,
+                                    ts->tm_mday, ts->tm_hour, ts->tm_min,
+                                    ts->tm_sec);
+
+#ifdef CHARSET_EBCDIC_not
+    ebcdic2ascii(tmps->data, tmps->data, tmps->length);
+#endif
+    return tmps;
+ err:
+    if (tmps != s)
+        ASN1_STRING_free(tmps);
+    return NULL;
+}
+
 ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t)
 {
     return ASN1_TIME_adj(s, t, 0, 0);
@@ -271,9 +330,7 @@ ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s, time_t t,
         if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
             return NULL;
     }
-    if ((ts->tm_year >= 50) && (ts->tm_year < 150))
-        return asn1_utctime_from_tm(s, ts);
-    return asn1_generalizedtime_from_tm(s, ts);
+    return asn1_time_from_tm(s, ts, V_ASN1_UNDEF);
 }
 
 int ASN1_TIME_check(const ASN1_TIME *t)
@@ -298,7 +355,7 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(const ASN1_TIME *t,
     if (out != NULL)
         ret = *out;
 
-    ret = asn1_generalizedtime_from_tm(ret, &tm);
+    ret = asn1_time_from_tm(ret, &tm, V_ASN1_GENERALIZEDTIME);
 
     if (out != NULL && ret != NULL)
         *out = ret;
@@ -349,7 +406,7 @@ int ASN1_TIME_set_string_X509(ASN1_TIME *s, const char *str)
     if (s != NULL && t.type == V_ASN1_GENERALIZEDTIME) {
         if (!asn1_time_to_tm(&tm, &t))
             goto out;
-        if (tm.tm_year >= 50 && tm.tm_year < 150) {
+        if (is_utc(tm.tm_year)) {
             t.length -= 2;
             /*
              * it's OK to let original t.data go since that's assigned
@@ -479,10 +536,7 @@ int ASN1_TIME_normalize(ASN1_TIME *t)
     if (!ASN1_TIME_to_tm(t, &tm))
         return 0;
 
-    if (50 <= tm.tm_year && tm.tm_year <= 149)
-        return asn1_utctime_from_tm(t, &tm) != NULL;
-
-    return asn1_generalizedtime_from_tm(t, &tm) != NULL;
+    return asn1_time_from_tm(t, &tm, V_ASN1_UNDEF) != NULL;
 }
 
 int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b)

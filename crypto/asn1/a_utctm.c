@@ -23,42 +23,6 @@ int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
     return asn1_time_to_tm(tm, d);
 }
 
-/* Inverse of asn1_utctime_to_tm ()*/
-ASN1_UTCTIME *asn1_utctime_from_tm(ASN1_UTCTIME *s, struct tm *ts)
-{
-    char *p;
-    ASN1_UTCTIME *tmps = NULL;
-    const size_t len = 20;
-
-    if ((ts->tm_year < 50) || (ts->tm_year >= 150))
-        return NULL;
-
-    if (s == NULL)
-        tmps = ASN1_UTCTIME_new();
-    else
-        tmps = s;
-    if (tmps == NULL)
-        return NULL;
-
-    if (!ASN1_STRING_set(tmps, NULL, len))
-        goto err;
-
-    p = (char*) tmps->data;
-    tmps->length = BIO_snprintf(p, len, "%02d%02d%02d%02d%02d%02dZ",
-                                ts->tm_year % 100, ts->tm_mon + 1,
-                                ts->tm_mday, ts->tm_hour, ts->tm_min,
-                                ts->tm_sec);
-    tmps->type = V_ASN1_UTCTIME;
-#ifdef CHARSET_EBCDIC_not
-    ebcdic2ascii(tmps->data, tmps->data, tmps->length);
-#endif
-    return tmps;
- err:
-    if (tmps != s)
-        ASN1_STRING_free(tmps);
-    return NULL;
-}
-
 int ASN1_UTCTIME_check(const ASN1_UTCTIME *d)
 {
     return asn1_utctime_to_tm(NULL, d);
@@ -103,7 +67,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
             return NULL;
     }
 
-    return asn1_utctime_from_tm(s, ts);
+    return asn1_time_from_tm(s, ts, V_ASN1_UTCTIME);
 }
 
 int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)

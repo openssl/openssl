@@ -27,39 +27,6 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
     return asn1_time_to_tm(tm, d);
 }
 
-/* Inverse of asn1_generalizedtime_to_tm ()*/
-ASN1_GENERALIZEDTIME *asn1_generalizedtime_from_tm(ASN1_GENERALIZEDTIME *s, struct tm *ts)
-{
-    char* p;
-    ASN1_GENERALIZEDTIME *tmps = NULL;
-    const size_t len = 20;
-
-    if (s == NULL)
-        tmps = ASN1_GENERALIZEDTIME_new();
-    else
-        tmps = s;
-    if (tmps == NULL)
-        return NULL;
-
-    if (!ASN1_STRING_set(tmps, NULL, len))
-        goto err;
-
-    p = (char*)tmps->data;
-    tmps->length = BIO_snprintf(p, len, "%04d%02d%02d%02d%02d%02dZ",
-                                ts->tm_year + 1900, ts->tm_mon + 1,
-                                ts->tm_mday, ts->tm_hour, ts->tm_min,
-                                ts->tm_sec);
-    tmps->type = V_ASN1_GENERALIZEDTIME;
-#ifdef CHARSET_EBCDIC_not
-    ebcdic2ascii(tmps->data, tmps->data, tmps->length);
-#endif
-    return tmps;
- err:
-    if (tmps != s)
-        ASN1_STRING_free(tmps);
-    return NULL;
-}
-
 int ASN1_GENERALIZEDTIME_check(const ASN1_GENERALIZEDTIME *d)
 {
     return asn1_generalizedtime_to_tm(NULL, d);
@@ -105,7 +72,7 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
             return NULL;
     }
 
-    return asn1_generalizedtime_from_tm(s, ts);
+    return asn1_time_from_tm(s, ts, V_ASN1_GENERALIZEDTIME);
 }
 
 int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
