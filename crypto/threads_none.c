@@ -8,7 +8,7 @@
  */
 
 #include <openssl/crypto.h>
-#include <internal/cryptlib.h>
+#include "internal/cryptlib.h"
 
 #if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)
 
