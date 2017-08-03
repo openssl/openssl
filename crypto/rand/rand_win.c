@@ -39,7 +39,7 @@
 #  define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
 # endif
 
-int RAND_poll(void)
+int RAND_poll_ex(RAND_poll_fn cb, void *arg)
 {
 # ifndef USE_BCRYPTGENRANDOM
     HCRYPTPROV hProvider;
@@ -49,10 +49,10 @@ int RAND_poll(void)
     int ok = 0;
 
 # ifdef OPENSSL_RAND_SEED_RDTSC
-    rand_rdtsc();
+    rand_read_tsc(cb, arg);
 # endif
 # ifdef OPENSSL_RAND_SEED_RDCPU
-    if (rand_rdcpu())
+    if (rand_read_cpu(cb, arg))
         ok++;
 # endif
 
@@ -60,14 +60,14 @@ int RAND_poll(void)
     if (BCryptGenRandom(NULL, buf, (ULONG)sizeof(buf),
                         BCRYPT_USE_SYSTEM_PREFERRED_RNG) != STATUS_SUCCESS)
         return 0;
-    RAND_add(buf, sizeof(buf), sizeof(buf));
+    cb(arg, buf, sizeof(buf), sizeof(buf));
     return 1;
 # else
     /* poll the CryptoAPI PRNG */
     if (CryptAcquireContextW(&hProvider, NULL, NULL, PROV_RSA_FULL,
                              CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
         if (CryptGenRandom(hProvider, (DWORD)sizeof(buf), buf) != 0) {
-            RAND_add(buf, sizeof(buf), sizeof(buf));
+            cb(arg, buf, sizeof(buf), sizeof(buf));
             ok++;
         }
         CryptReleaseContext(hProvider, 0);
@@ -77,7 +77,7 @@ int RAND_poll(void)
     if (CryptAcquireContextW(&hProvider, NULL, INTEL_DEF_PROV, PROV_INTEL_SEC,
                              CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
         if (CryptGenRandom(hProvider, (DWORD)sizeof(buf), buf) != 0) {
-            RAND_add(buf, sizeof(buf), sizeof(buf));
+            cb(arg, buf, sizeof(buf), sizeof(buf));
             ok++;
         }
         CryptReleaseContext(hProvider, 0);

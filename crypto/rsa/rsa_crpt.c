@@ -136,16 +136,6 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
     } else
         e = rsa->e;
 
-    if ((RAND_status() == 0) && rsa->d != NULL
-        && bn_get_words(rsa->d) != NULL) {
-        /*
-         * if PRNG is not properly seeded, resort to secret exponent as
-         * unpredictable seed
-         */
-        RAND_add(bn_get_words(rsa->d), bn_get_dmax(rsa->d) * sizeof(BN_ULONG),
-                 0.0);
-    }
-
     {
         BIGNUM *n = BN_new();
 

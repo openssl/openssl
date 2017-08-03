@@ -15,53 +15,28 @@
 
 /*
  * Support framework for NIST SP 800-90A DRBG, AES-CTR mode.
- */
-
-/*
- * Get entropy from the existing callback.  This is mainly used for KATs.
- */
-static size_t get_entropy(DRBG_CTX *dctx, unsigned char **pout,
-                          int entropy, size_t min_len, size_t max_len)
-{
-    if (dctx->get_entropy != NULL)
-        return dctx->get_entropy(dctx, pout, entropy, min_len, max_len);
-    /* TODO: Get from parent if it exists. */
-    return 0;
-}
-
-/*
- * Cleanup entropy.
- */
-static void cleanup_entropy(DRBG_CTX *dctx, unsigned char *out, size_t olen)
-{
-    if (dctx->cleanup_entropy != NULL)
-        dctx->cleanup_entropy(dctx, out, olen);
-}
-
-/*
+ * The RAND_DRBG is OpenSSL's pointer to an instance of the DRBG.
+ *
  * The OpenSSL model is to have new and free functions, and that new
  * does all initialization.  That is not the NIST model, which has
  * instantiation and un-instantiate, and re-use within a new/free
  * lifecycle.  (No doubt this comes from the desire to support hardware
  * DRBG, where allocation of resources on something like an HSM is
  * a much bigger deal than just re-setting an allocated resource.)
- *
- * The DRBG_CTX is OpenSSL's opaque pointer to an instance of the
- * DRBG.
  */
 
 /*
- * Set/initialize |dctx| to be of type |nid|, with optional |flags|.
+ * Set/initialize |drbg| to be of type |nid|, with optional |flags|.
  * Return -2 if the type is not supported, 1 on success and -1 on
  * failure.
  */
-int RAND_DRBG_set(DRBG_CTX *dctx, int nid, unsigned int flags)
+int RAND_DRBG_set(RAND_DRBG *drbg, int nid, unsigned int flags)
 {
     int ret = 1;
 
-    dctx->status = DRBG_STATUS_UNINITIALISED;
-    dctx->flags = flags;
-    dctx->nid = nid;
+    drbg->state = DRBG_UNINITIALISED;
+    drbg->flags = flags;
+    drbg->nid = nid;
 
     switch (nid) {
     default:
@@ -73,7 +48,7 @@ int RAND_DRBG_set(DRBG_CTX *dctx, int nid, unsigned int flags)
     case NID_aes_128_ctr:
     case NID_aes_192_ctr:
     case NID_aes_256_ctr:
-        ret = ctr_init(dctx);
+        ret = ctr_init(drbg);
         break;
     }
 
@@ -84,169 +59,176 @@ int RAND_DRBG_set(DRBG_CTX *dctx, int nid, unsigned int flags)
 
 /*
  * Allocate memory and initialize a new DRBG.  The |parent|, if not
- * NULL, will be used to auto-seed this DRBG_CTX as needed.
+ * NULL, will be used to auto-seed this RAND_DRBG as needed.
  */
-DRBG_CTX *RAND_DRBG_new(int type, unsigned int flags, DRBG_CTX *parent)
+RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
 {
-    DRBG_CTX *dctx = OPENSSL_zalloc(sizeof(*dctx));
+    RAND_DRBG *drbg = OPENSSL_zalloc(sizeof(*drbg));
+    unsigned char *ucp = OPENSSL_zalloc(RANDOMNESS_NEEDED);
 
-    if (dctx == NULL) {
+    if (drbg == NULL || ucp == NULL) {
         RANDerr(RAND_F_RAND_DRBG_NEW, ERR_R_MALLOC_FAILURE);
-        return NULL;
+        goto err;
+    }
+    drbg->size = RANDOMNESS_NEEDED;
+    drbg->randomness = ucp;
+
+    drbg->parent = parent;
+    if (RAND_DRBG_set(drbg, type, flags) < 0)
+        goto err;
+
+    if (parent != NULL) {
+        if (!RAND_DRBG_set_callbacks(drbg, drbg_entropy_from_parent,
+                                     drbg_release_entropy,
+                                     NULL, NULL)
+                /*
+                 * Add in our address.  Note we are adding the pointer
+                 * itself, not its contents!
+                 */
+                || !RAND_DRBG_instantiate(drbg,
+                                          (unsigned char*)&drbg, sizeof(drbg)))
+            goto err;
     }
 
-    dctx->parent = parent;
-    if (RAND_DRBG_set(dctx, type, flags) < 0) {
-        OPENSSL_free(dctx);
-        return NULL;
-    }
-    return dctx;
+    return drbg;
+
+err:
+    OPENSSL_free(ucp);
+    OPENSSL_free(drbg);
+    return NULL;
 }
 
 /*
- * Uninstantiate |dctx| and free all memory.
+ * Uninstantiate |drbg| and free all memory.
  */
-void RAND_DRBG_free(DRBG_CTX *dctx)
+void RAND_DRBG_free(RAND_DRBG *drbg)
 {
-    if (dctx == NULL)
+    /* The global DRBG is free'd by rand_cleanup_int() */
+    if (drbg == NULL || drbg == &rand_drbg)
         return;
 
-    ctr_uninstantiate(dctx);
-    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DRBG, dctx, &dctx->ex_data);
-
-    /* Don't free up default DRBG */
-    if (dctx == RAND_DRBG_get_default()) {
-        memset(dctx, 0, sizeof(DRBG_CTX));
-        dctx->nid = 0;
-        dctx->status = DRBG_STATUS_UNINITIALISED;
-    } else {
-        OPENSSL_cleanse(&dctx->ctr, sizeof(dctx->ctr));
-        OPENSSL_free(dctx);
-    }
+    ctr_uninstantiate(drbg);
+    OPENSSL_cleanse(drbg->randomness, drbg->size);
+    OPENSSL_free(drbg->randomness);
+    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DRBG, drbg, &drbg->ex_data);
+    OPENSSL_clear_free(drbg, sizeof(*drbg));
 }
 
 /*
- * Instantiate |dctx|, after it has been initialized.  Use |pers| and
+ * Instantiate |drbg|, after it has been initialized.  Use |pers| and
  * |perslen| as prediction-resistance input.
  */
-int RAND_DRBG_instantiate(DRBG_CTX *dctx,
+int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                           const unsigned char *pers, size_t perslen)
 {
-    size_t entlen = 0, noncelen = 0;
     unsigned char *nonce = NULL, *entropy = NULL;
-    int r = 0;
+    size_t noncelen = 0, entlen = 0;
 
-    if (perslen > dctx->max_pers) {
-        r = RAND_R_PERSONALISATION_STRING_TOO_LONG;
+    if (perslen > drbg->max_pers) {
+        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
+                RAND_R_PERSONALISATION_STRING_TOO_LONG);
         goto end;
     }
-    if (dctx->status != DRBG_STATUS_UNINITIALISED) {
-        r = dctx->status == DRBG_STATUS_ERROR ? RAND_R_IN_ERROR_STATE
-                                              : RAND_R_ALREADY_INSTANTIATED;
-        goto end;
-    }
-
-    dctx->status = DRBG_STATUS_ERROR;
-    entlen = get_entropy(dctx, &entropy, dctx->strength,
-                         dctx->min_entropy, dctx->max_entropy);
-    if (entlen < dctx->min_entropy || entlen > dctx->max_entropy) {
-        r = RAND_R_ERROR_RETRIEVING_ENTROPY;
+    if (drbg->state != DRBG_UNINITIALISED) {
+        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
+                drbg->state == DRBG_ERROR ? RAND_R_IN_ERROR_STATE
+                                          : RAND_R_ALREADY_INSTANTIATED);
         goto end;
     }
 
-    if (dctx->max_nonce > 0 && dctx->get_nonce != NULL) {
-        noncelen = dctx->get_nonce(dctx, &nonce,
-                                   dctx->strength / 2,
-                                   dctx->min_nonce, dctx->max_nonce);
+    drbg->state = DRBG_ERROR;
+    if (drbg->get_entropy != NULL)
+        entlen = drbg->get_entropy(drbg, &entropy, drbg->strength,
+                                   drbg->min_entropy, drbg->max_entropy);
+    if (entlen < drbg->min_entropy || entlen > drbg->max_entropy) {
+        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_ENTROPY);
+        goto end;
+    }
 
-        if (noncelen < dctx->min_nonce || noncelen > dctx->max_nonce) {
-            r = RAND_R_ERROR_RETRIEVING_NONCE;
+    if (drbg->max_nonce > 0 && drbg->get_nonce != NULL) {
+        noncelen = drbg->get_nonce(drbg, &nonce, drbg->strength / 2,
+                                   drbg->min_nonce, drbg->max_nonce);
+        if (noncelen < drbg->min_nonce || noncelen > drbg->max_nonce) {
+            RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_NONCE);
             goto end;
         }
     }
 
-    if (!ctr_instantiate(dctx, entropy, entlen,
+    if (!ctr_instantiate(drbg, entropy, entlen,
                          nonce, noncelen, pers, perslen)) {
-        r = RAND_R_ERROR_INSTANTIATING_DRBG;
+        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_INSTANTIATING_DRBG);
         goto end;
     }
 
-    dctx->status = DRBG_STATUS_READY;
-    dctx->reseed_counter = 1;
+    drbg->state = DRBG_READY;
+    drbg->reseed_counter = 1;
 
 end:
-    if (entropy != NULL && dctx->cleanup_entropy != NULL)
-        dctx->cleanup_entropy(dctx, entropy, entlen);
-    if (nonce != NULL && dctx->cleanup_nonce!= NULL )
-        dctx->cleanup_nonce(dctx, nonce, noncelen);
-    if (dctx->status == DRBG_STATUS_READY)
+    if (entropy != NULL && drbg->cleanup_entropy != NULL)
+        drbg->cleanup_entropy(drbg, entropy);
+    if (nonce != NULL && drbg->cleanup_nonce!= NULL )
+        drbg->cleanup_nonce(drbg, nonce);
+    if (drbg->state == DRBG_READY)
         return 1;
-
-    if (r)
-        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, r);
     return 0;
 }
 
 /*
- * Uninstantiate |dctx|. Must be instantiated before it can be used.
+ * Uninstantiate |drbg|. Must be instantiated before it can be used.
  */
-int RAND_DRBG_uninstantiate(DRBG_CTX *dctx)
+int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
 {
-    int ret = ctr_uninstantiate(dctx);
+    int ret = ctr_uninstantiate(drbg);
 
-    OPENSSL_cleanse(&dctx->ctr, sizeof(dctx->ctr));
-    dctx->status = DRBG_STATUS_UNINITIALISED;
+    OPENSSL_cleanse(&drbg->ctr, sizeof(drbg->ctr));
+    drbg->state = DRBG_UNINITIALISED;
     return ret;
 }
 
 /*
- * Mix in the specified data to reseed |dctx|.
+ * Mix in the specified data to reseed |drbg|.
  */
-int RAND_DRBG_reseed(DRBG_CTX *dctx,
+int RAND_DRBG_reseed(RAND_DRBG *drbg,
                      const unsigned char *adin, size_t adinlen)
 {
     unsigned char *entropy = NULL;
     size_t entlen = 0;
-    int r = 0;
 
-    if (dctx->status != DRBG_STATUS_READY
-            && dctx->status != DRBG_STATUS_RESEED) {
-        if (dctx->status == DRBG_STATUS_ERROR)
-            r = RAND_R_IN_ERROR_STATE;
-        else if (dctx->status == DRBG_STATUS_UNINITIALISED)
-            r = RAND_R_NOT_INSTANTIATED;
-        goto end;
+    if (drbg->state == DRBG_ERROR) {
+        RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_IN_ERROR_STATE);
+        return 0;
+    }
+    if (drbg->state == DRBG_UNINITIALISED) {
+        RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_NOT_INSTANTIATED);
+        return 0;
     }
 
     if (adin == NULL)
         adinlen = 0;
-    else if (adinlen > dctx->max_adin) {
-        r = RAND_R_ADDITIONAL_INPUT_TOO_LONG;
+    else if (adinlen > drbg->max_adin) {
+        RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_ADDITIONAL_INPUT_TOO_LONG);
+        return 0;
+    }
+
+    drbg->state = DRBG_ERROR;
+    if (drbg->get_entropy != NULL)
+        entlen = drbg->get_entropy(drbg, &entropy, drbg->strength,
+                                   drbg->min_entropy, drbg->max_entropy);
+    if (entlen < drbg->min_entropy || entlen > drbg->max_entropy) {
+        RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_ERROR_RETRIEVING_ENTROPY);
         goto end;
     }
 
-    dctx->status = DRBG_STATUS_ERROR;
-    entlen = get_entropy(dctx, &entropy, dctx->strength,
-                         dctx->min_entropy, dctx->max_entropy);
-
-    if (entlen < dctx->min_entropy || entlen > dctx->max_entropy) {
-        r = RAND_R_ERROR_RETRIEVING_ENTROPY;
+    if (!ctr_reseed(drbg, entropy, entlen, adin, adinlen))
         goto end;
-    }
-
-    if (!ctr_reseed(dctx, entropy, entlen, adin, adinlen))
-        goto end;
-    dctx->status = DRBG_STATUS_READY;
-    dctx->reseed_counter = 1;
+    drbg->state = DRBG_READY;
+    drbg->reseed_counter = 1;
 
 end:
-    if (entropy != NULL && dctx->cleanup_entropy != NULL)
-        cleanup_entropy(dctx, entropy, entlen);
-    if (dctx->status == DRBG_STATUS_READY)
+    if (entropy != NULL && drbg->cleanup_entropy != NULL)
+        drbg->cleanup_entropy(drbg, entropy);
+    if (drbg->state == DRBG_READY)
         return 1;
-    if (r)
-        RANDerr(RAND_F_RAND_DRBG_RESEED, r);
-
     return 0;
 }
 
@@ -255,98 +237,183 @@ end:
  * to or if |prediction_resistance| is set.  Additional input can be
  * sent in |adin| and |adinlen|.
  */
-int RAND_DRBG_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
+int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
                        int prediction_resistance,
                        const unsigned char *adin, size_t adinlen)
 {
-    int r = 0;
-
-    if (dctx->status != DRBG_STATUS_READY
-            && dctx->status != DRBG_STATUS_RESEED) {
-        if (dctx->status == DRBG_STATUS_ERROR)
-            r = RAND_R_IN_ERROR_STATE;
-        else if(dctx->status == DRBG_STATUS_UNINITIALISED)
-            r = RAND_R_NOT_INSTANTIATED;
-        goto end;
-    }
-
-    if (outlen > dctx->max_request) {
-        r = RAND_R_REQUEST_TOO_LARGE_FOR_DRBG;
+    if (drbg->state == DRBG_ERROR) {
+        RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_IN_ERROR_STATE);
         return 0;
     }
-    if (adinlen > dctx->max_adin) {
-        r = RAND_R_ADDITIONAL_INPUT_TOO_LONG;
-        goto end;
+    if (drbg->state == DRBG_UNINITIALISED) {
+        RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_NOT_INSTANTIATED);
+        return 0;
+    }
+    if (outlen > drbg->max_request) {
+        RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_REQUEST_TOO_LARGE_FOR_DRBG);
+        return 0;
+    }
+    if (adinlen > drbg->max_adin) {
+        RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_ADDITIONAL_INPUT_TOO_LONG);
+        return 0;
     }
 
-    if (dctx->reseed_counter >= dctx->reseed_interval)
-        dctx->status = DRBG_STATUS_RESEED;
+    if (drbg->reseed_counter >= drbg->reseed_interval)
+        drbg->state = DRBG_RESEED;
 
-    if (dctx->status == DRBG_STATUS_RESEED || prediction_resistance) {
-        if (!RAND_DRBG_reseed(dctx, adin, adinlen)) {
-            r = RAND_R_RESEED_ERROR;
-            goto end;
+    if (drbg->state == DRBG_RESEED || prediction_resistance) {
+        if (!RAND_DRBG_reseed(drbg, adin, adinlen)) {
+            RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_RESEED_ERROR);
+            return 0;
         }
         adin = NULL;
         adinlen = 0;
     }
 
-    if (!ctr_generate(dctx, out, outlen, adin, adinlen)) {
-        r = RAND_R_GENERATE_ERROR;
-        dctx->status = DRBG_STATUS_ERROR;
-        goto end;
-    }
-    if (dctx->reseed_counter >= dctx->reseed_interval)
-        dctx->status = DRBG_STATUS_RESEED;
-    else
-        dctx->reseed_counter++;
-    return 1;
-
-end:
-    RANDerr(RAND_F_RAND_DRBG_GENERATE, r);
-    return 0;
-}
-
-/*
- * Set the callbacks for entropy and nonce.  Used mainly for the KATs
- */
-int RAND_DRBG_set_callbacks(DRBG_CTX *dctx,
-    size_t (*cb_get_entropy)(DRBG_CTX *ctx, unsigned char **pout,
-                             int entropy, size_t min_len, size_t max_len),
-    void (*cb_cleanup_entropy)(DRBG_CTX *ctx, unsigned char *out, size_t olen),
-    size_t (*cb_get_nonce)(DRBG_CTX *ctx, unsigned char **pout,
-                           int entropy, size_t min_len, size_t max_len),
-    void (*cb_cleanup_nonce)(DRBG_CTX *ctx, unsigned char *out, size_t olen))
-{
-    if (dctx->status != DRBG_STATUS_UNINITIALISED)
+    if (!ctr_generate(drbg, out, outlen, adin, adinlen)) {
+        drbg->state = DRBG_ERROR;
+        RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_GENERATE_ERROR);
         return 0;
-    dctx->get_entropy = cb_get_entropy;
-    dctx->cleanup_entropy = cb_cleanup_entropy;
-    dctx->get_nonce = cb_get_nonce;
-    dctx->cleanup_nonce = cb_cleanup_nonce;
+    }
+
+    if (drbg->reseed_counter >= drbg->reseed_interval)
+        drbg->state = DRBG_RESEED;
+    else
+        drbg->reseed_counter++;
     return 1;
 }
 
 /*
- * Set the reseed interval. Used mainly for the KATs.
+ * Set the callbacks for entropy and nonce.  We currently don't use
+ * the nonce; that's mainly for the KATs
  */
-int RAND_DRBG_set_reseed_interval(DRBG_CTX *dctx, int interval)
+int RAND_DRBG_set_callbacks(RAND_DRBG *drbg,
+                            RAND_DRBG_get_entropy_fn cb_get_entropy,
+                            RAND_DRBG_cleanup_entropy_fn cb_cleanup_entropy,
+                            RAND_DRBG_get_nonce_fn cb_get_nonce,
+                            RAND_DRBG_cleanup_nonce_fn cb_cleanup_nonce)
+{
+    if (drbg->state != DRBG_UNINITIALISED)
+        return 0;
+    drbg->get_entropy = cb_get_entropy;
+    drbg->cleanup_entropy = cb_cleanup_entropy;
+    drbg->get_nonce = cb_get_nonce;
+    drbg->cleanup_nonce = cb_cleanup_nonce;
+    return 1;
+}
+
+/*
+ * Set the reseed interval.
+ */
+int RAND_DRBG_set_reseed_interval(RAND_DRBG *drbg, int interval)
 {
     if (interval < 0 || interval > MAX_RESEED)
         return 0;
-    dctx->reseed_interval = interval;
+    drbg->reseed_interval = interval;
     return 1;
 }
 
 /*
  * Get and set the EXDATA
  */
-int RAND_DRBG_set_ex_data(DRBG_CTX *dctx, int idx, void *arg)
+int RAND_DRBG_set_ex_data(RAND_DRBG *drbg, int idx, void *arg)
 {
-    return CRYPTO_set_ex_data(&dctx->ex_data, idx, arg);
+    return CRYPTO_set_ex_data(&drbg->ex_data, idx, arg);
 }
 
-void *RAND_DRBG_get_ex_data(const DRBG_CTX *dctx, int idx)
+void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
 {
-    return CRYPTO_get_ex_data(&dctx->ex_data, idx);
+    return CRYPTO_get_ex_data(&drbg->ex_data, idx);
+}
+
+
+/*
+ * The following functions provide a RAND_METHOD that works on the
+ * global DRBG.  They lock.
+ */
+
+static int drbg_bytes(unsigned char *out, int count)
+{
+    int ret = 0;
+    size_t chunk;
+
+    CRYPTO_THREAD_write_lock(rand_drbg.lock);
+    if (rand_drbg.state == DRBG_UNINITIALISED
+            && RAND_DRBG_instantiate(&rand_drbg, NULL, 0) == 0)
+        goto err;
+
+    for ( ; count > 0; count -= chunk, out += chunk) {
+        chunk = count;
+        if (chunk > rand_drbg.max_request)
+            chunk = rand_drbg.max_request;
+        ret = RAND_DRBG_generate(&rand_drbg, out, chunk, 0, NULL, 0);
+        if (!ret)
+            goto err;
+    }
+    ret = 1;
+
+err:
+    CRYPTO_THREAD_unlock(rand_drbg.lock);
+    return ret;
+}
+
+static void drbg_cleanup(void)
+{
+    CRYPTO_THREAD_write_lock(rand_drbg.lock);
+    RAND_DRBG_uninstantiate(&rand_drbg);
+    CRYPTO_THREAD_unlock(rand_drbg.lock);
+}
+
+static int drbg_add(const void *buf, int num, double randomness)
+{
+    unsigned char *in = (unsigned char *)buf;
+    unsigned char *out, *end;
+
+    CRYPTO_THREAD_write_lock(rand_bytes.lock);
+    out = &rand_bytes.buff[rand_bytes.curr];
+    end = &rand_bytes.buff[rand_bytes.size];
+
+    /* Copy whatever fits into the end of the buffer. */
+    for ( ; --num >= 0 && out < end; rand_bytes.curr++)
+        *out++ = *in++;
+
+    /* XOR any the leftover. */
+    while (num > 0) {
+        for (out = rand_bytes.buff; --num >= 0 && out < end; )
+            *out++ ^= *in++;
+    }
+
+    CRYPTO_THREAD_unlock(rand_bytes.lock);
+    return 1;
+}
+
+static int drbg_seed(const void *buf, int num)
+{
+    return drbg_add(buf, num, num);
+}
+
+static int drbg_status(void)
+{
+    int ret;
+
+    CRYPTO_THREAD_write_lock(rand_drbg.lock);
+    ret = rand_drbg.state == DRBG_READY ? 1 : 0;
+    CRYPTO_THREAD_unlock(rand_drbg.lock);
+    return ret;
+}
+
+RAND_DRBG rand_drbg; /* The default global DRBG. */
+
+RAND_METHOD rand_meth = {
+    drbg_seed,
+    drbg_bytes,
+    drbg_cleanup,
+    drbg_add,
+    drbg_bytes,
+    drbg_status
+};
+
+RAND_METHOD *RAND_OpenSSL(void)
+{
+    return &rand_meth;
 }
