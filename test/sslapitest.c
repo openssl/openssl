@@ -1399,6 +1399,8 @@ static int test_set_sigalgs(int idx)
     return testresult;
 }
 
+#ifndef OPENSSL_NO_TLS1_3
+
 static SSL_SESSION *psk = NULL;
 static const char *pskid = "Identity";
 static const char *srvid;
@@ -1462,8 +1464,6 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
 
     return 1;
 }
-
-#ifndef OPENSSL_NO_TLS1_3
 
 #define MSG1    "Hello"
 #define MSG2    "World."
