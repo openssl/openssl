@@ -53,7 +53,7 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
 # endif
 # ifdef OPENSSL_RAND_SEED_RDCPU
     if (rand_read_cpu(cb, arg))
-        ok++;
+        return 1;
 # endif
 
 # ifdef USE_BCRYPTGENRANDOM
@@ -71,6 +71,8 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
             ok++;
         }
         CryptReleaseContext(hProvider, 0);
+        if (ok)
+            return 1;
     }
 
     /* poll the Pentium PRG with CryptoAPI */
@@ -81,10 +83,12 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
             ok++;
         }
         CryptReleaseContext(hProvider, 0);
+        if (ok)
+            return 1;
     }
 # endif
 
-    return ok ? 1 : 0;
+    return 0;
 }
 
 #if OPENSSL_API_COMPAT < 0x10100000L
