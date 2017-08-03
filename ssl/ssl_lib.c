@@ -21,6 +21,7 @@
 #include <openssl/async.h>
 #include <openssl/ct.h>
 #include "internal/cryptlib.h"
+#include "internal/rand.h"
 
 const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
 
@@ -619,10 +620,20 @@ SSL *SSL_new(SSL_CTX *ctx)
         goto err;
 
     s->lock = CRYPTO_THREAD_lock_new();
-    if (s->lock == NULL) {
-        SSLerr(SSL_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(s);
-        return NULL;
+    if (s->lock == NULL)
+        goto err;
+
+    /*
+     * If not using the standard RAND (say for fuzzing), then don't use a
+     * chained DRBG.
+     */
+    if (RAND_get_rand_method() == RAND_OpenSSL()) {
+        s->drbg = RAND_DRBG_new(NID_aes_128_ctr, RAND_DRBG_FLAG_CTR_USE_DF,
+                                RAND_DRBG_get0_global());
+        if (s->drbg == NULL) {
+            CRYPTO_THREAD_lock_free(s->lock);
+            goto err;
+        }
     }
 
     RECORD_LAYER_init(&s->rlayer, s);
@@ -1130,6 +1141,7 @@ void SSL_free(SSL *s)
     sk_SRTP_PROTECTION_PROFILE_free(s->srtp_profiles);
 #endif
 
+    RAND_DRBG_free(s->drbg);
     CRYPTO_THREAD_lock_free(s->lock);
 
     OPENSSL_free(s);
@@ -5080,4 +5092,11 @@ int SSL_set_max_early_data(SSL *s, uint32_t max_early_data)
 uint32_t SSL_get_max_early_data(const SSL *s)
 {
     return s->max_early_data;
+}
+
+int ssl_randbytes(SSL *s, unsigned char *rnd, size_t size)
+{
+    if (s->drbg != NULL)
+        return RAND_DRBG_generate(s->drbg, rnd, size, 0, NULL, 0);
+    return RAND_bytes(rnd, (int)size);
 }

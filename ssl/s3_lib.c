@@ -4213,11 +4213,11 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
     if (send_time) {
         unsigned long Time = (unsigned long)time(NULL);
         unsigned char *p = result;
+
         l2n(Time, p);
-        /* TODO(size_t): Convert this */
-        ret = RAND_bytes(p, (int)(len - 4));
+        ret = ssl_randbytes(s, p, len - 4);
     } else {
-        ret = RAND_bytes(result, (int)len);
+        ret = ssl_randbytes(s, result, len);
     }
 #ifndef OPENSSL_NO_TLS13DOWNGRADE
     if (ret) {
