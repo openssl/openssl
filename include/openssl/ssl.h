@@ -1535,6 +1535,13 @@ __owur int SSL_SESSION_get_protocol_version(const SSL_SESSION *s);
 __owur int SSL_SESSION_set_protocol_version(SSL_SESSION *s, int version);
 
 __owur const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s);
+__owur int SSL_SESSION_set1_hostname(SSL_SESSION *s, const char *hostname);
+void SSL_SESSION_get0_alpn_selected(const SSL_SESSION *s,
+                                    const unsigned char **alpn,
+                                    size_t *len);
+__owur int SSL_SESSION_set1_alpn_selected(SSL_SESSION *s,
+                                          const unsigned char *alpn,
+                                          size_t len);
 __owur const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSION *s);
 __owur int SSL_SESSION_set_cipher(SSL_SESSION *s, const SSL_CIPHER *cipher);
 __owur int SSL_SESSION_has_ticket(const SSL_SESSION *s);

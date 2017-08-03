@@ -906,6 +906,18 @@ const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s)
     return s->ext.hostname;
 }
 
+int SSL_SESSION_set1_hostname(SSL_SESSION *s, const char *hostname)
+{
+    OPENSSL_free(s->ext.hostname);
+    if (hostname == NULL) {
+        s->ext.hostname = NULL;
+        return 1;
+    }
+    s->ext.hostname = OPENSSL_strdup(hostname);
+
+    return s->ext.hostname != NULL;
+}
+
 int SSL_SESSION_has_ticket(const SSL_SESSION *s)
 {
     return (s->ext.ticklen > 0) ? 1 : 0;
@@ -932,6 +944,33 @@ uint32_t SSL_SESSION_get_max_early_data(const SSL_SESSION *s)
 int SSL_SESSION_set_max_early_data(SSL_SESSION *s, uint32_t max_early_data)
 {
     s->ext.max_early_data = max_early_data;
+
+    return 1;
+}
+
+void SSL_SESSION_get0_alpn_selected(const SSL_SESSION *s,
+                                    const unsigned char **alpn,
+                                    size_t *len)
+{
+    *alpn = s->ext.alpn_selected;
+    *len = s->ext.alpn_selected_len;
+}
+
+int SSL_SESSION_set1_alpn_selected(SSL_SESSION *s, const unsigned char *alpn,
+                                   size_t len)
+{
+    OPENSSL_free(s->ext.alpn_selected);
+    if (alpn == NULL || len == 0) {
+        s->ext.alpn_selected = NULL;
+        s->ext.alpn_selected_len = 0;
+        return 1;
+    }
+    s->ext.alpn_selected = OPENSSL_memdup(alpn, len);
+    if (s->ext.alpn_selected == NULL) {
+        s->ext.alpn_selected_len = 0;
+        return 0;
+    }
+    s->ext.alpn_selected_len = len;
 
     return 1;
 }
