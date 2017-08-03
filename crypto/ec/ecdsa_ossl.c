@@ -20,7 +20,7 @@ int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
                     const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey)
 {
     ECDSA_SIG *s;
-    RAND_seed(dgst, dlen);
+
     s = ECDSA_do_sign_ex(dgst, dlen, kinv, r, eckey);
     if (s == NULL) {
         *siglen = 0;
@@ -89,7 +89,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
                     goto err;
                 }
             } else {
-                if (!BN_rand_range(k, order)) {
+                if (!BN_priv_rand_range(k, order)) {
                     ECerr(EC_F_ECDSA_SIGN_SETUP,
                              EC_R_RANDOM_NUMBER_GENERATION_FAILED);
                     goto err;

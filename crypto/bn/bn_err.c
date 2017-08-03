@@ -15,6 +15,7 @@
 
 static const ERR_STRING_DATA BN_str_functs[] = {
     {ERR_PACK(ERR_LIB_BN, BN_F_BNRAND, 0), "bnrand"},
+    {ERR_PACK(ERR_LIB_BN, BN_F_BNRAND_RANGE, 0), "bnrand_range"},
     {ERR_PACK(ERR_LIB_BN, BN_F_BN_BLINDING_CONVERT_EX, 0),
      "BN_BLINDING_convert_ex"},
     {ERR_PACK(ERR_LIB_BN, BN_F_BN_BLINDING_CREATE_PARAM, 0),

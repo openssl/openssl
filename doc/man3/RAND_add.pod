@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-RAND_add, RAND_poll, RAND_seed, RAND_status, RAND_event, RAND_screen
+RAND_add, RAND_poll, RAND_poll_ex, RAND_poll_fn,
+RAND_seed, RAND_status, RAND_event, RAND_screen
 - add randomness to the PRNG or get its status
 
 =head1 SYNOPSIS
@@ -10,7 +11,11 @@ RAND_add, RAND_poll, RAND_seed, RAND_status, RAND_event, RAND_screen
  #include <openssl/rand.h>
 
  int RAND_status(void);
- int RAND_poll()
+
+ typedef void (*RAND_poll_fn)(void *arg,
+                              const void *buf, int num, double randomness);
+ int RAND_poll_ex(RAND_poll_fn cb, void *arg);
+ int RAND_poll();
 
  void RAND_add(const void *buf, int num, double randomness);
  void RAND_seed(const void *buf, int num);
@@ -35,11 +40,16 @@ and network packet timings, can be reasonable sources of seeding material.
 RAND_status() indicates whether or not the CSPRNG has been sufficiently
 seeded. If not, functions such as RAND_bytes(3) will fail.
 
-RAND_poll() uses the current capabilities to seed the CSPRNG. The
-exact features used depends on how OpenSSL was configured, and can
-be displayed with the OpenSSL L<version(1)> command. This function is
-normally called automatically during OpenSSL initialization, but
-can be called by the application to reseed the CSPRNG.
+RAND_poll_ex() uses the system's capabilities to obtain a buffer
+containing random bits which can then be used to seed a CSPRNG. The
+exact features used depends on how OpenSSL was configured, and a summary
+can be displayed with the OpenSSL L<version(1)> command.  This function
+is normally called as needed by the CSPRNG.  The B<arg> parameter is an
+arbitrary pointer which will be passed as an argument to the callback.
+The B<cb> function is called each time there is data to add.
+
+RAND_poll() invokes RAND_poll_ex() with B<cb> and B<arg> set so that it
+will call RAND_add(), to add the randomness to the global CSPRNG.
 
 RAND_add() mixes the B<num> bytes at B<buf> into the PRNG state.
 The B<randomness> argument is an estimate of how much randomness is

@@ -32,6 +32,7 @@ OSSL_STORE_error_fn                     datatype
 OSSL_STORE_load_fn                      datatype
 OSSL_STORE_open_fn                      datatype
 OSSL_STORE_post_process_info_fn         datatype
+RAND_poll_fn                            datatype
 SSL_CTX_keylog_cb_func                  datatype
 SSL_early_cb_fn                         datatype
 SSL_psk_client_cb_func                  datatype

@@ -1425,9 +1425,6 @@ static int parameter_test(void)
     ECPARAMETERS_free(ecparameters);
     return r;
 }
-
-static const char rnd_seed[] =
-    "string to make the random number generator think it has randomness";
 #endif
 
 int setup_tests(void)
@@ -1437,8 +1434,6 @@ int setup_tests(void)
     if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         return 0;
-
-    RAND_seed(rnd_seed, sizeof rnd_seed); /* or BN_generate_prime may fail */
 
     ADD_TEST(parameter_test);
     ADD_TEST(prime_field_tests);
