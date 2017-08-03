@@ -272,7 +272,6 @@ static info_cb get_callback(SSL *s)
 static int state_machine(SSL *s, int server)
 {
     BUF_MEM *buf = NULL;
-    unsigned long Time = (unsigned long)time(NULL);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
     OSSL_STATEM *st = &s->statem;
     int ret = -1;
@@ -283,7 +282,6 @@ static int state_machine(SSL *s, int server)
         return -1;
     }
 
-    RAND_add(&Time, sizeof(Time), 0);
     ERR_clear_error();
     clear_sys_error();
 

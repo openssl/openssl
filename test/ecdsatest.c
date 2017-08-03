@@ -28,10 +28,6 @@
 # include <openssl/err.h>
 # include <openssl/rand.h>
 
-static const char rnd_seed[] =
-    "string to make the random number generator think it has randomness";
-
-
 /* functions to change the RAND_METHOD */
 static int fbytes(unsigned char *buf, int num);
 
@@ -401,8 +397,6 @@ int setup_tests(void)
 #ifdef OPENSSL_NO_EC
     TEST_note("Elliptic curves are disabled.");
 #else
-    /* initialize the prng */
-    RAND_seed(rnd_seed, sizeof(rnd_seed));
     ADD_TEST(x9_62_tests);
     ADD_TEST(test_builtin);
 #endif

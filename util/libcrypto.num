@@ -4345,10 +4345,8 @@ OSSL_STORE_LOADER_get0_engine           4287	1_1_1	EXIST::FUNCTION:
 OPENSSL_fork_prepare                    4288	1_1_1	EXIST:UNIX:FUNCTION:
 OPENSSL_fork_parent                     4289	1_1_1	EXIST:UNIX:FUNCTION:
 OPENSSL_fork_child                      4290	1_1_1	EXIST:UNIX:FUNCTION:
-RAND_drbg                               4291	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_instantiate                   4292	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_uninstantiate                 4293	1_1_1	EXIST::FUNCTION:
-RAND_DRBG_get_default                   4294	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_set                           4295	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_set_callbacks                 4296	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_new                           4297	1_1_1	EXIST::FUNCTION:
@@ -4373,3 +4371,4 @@ SCRYPT_PARAMS_it                        4314	1_1_1	EXIST:EXPORT_VAR_AS_FUNCTION:
 CRYPTO_secure_clear_free                4315	1_1_0g	EXIST::FUNCTION:
 EVP_PKEY_meth_get0                      4316	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_meth_get_count                 4317	1_1_1	EXIST::FUNCTION:
+RAND_poll_ex                            4318	1_1_1	EXIST::FUNCTION:
