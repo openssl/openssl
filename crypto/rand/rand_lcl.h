@@ -17,25 +17,55 @@
 # include <openssl/ec.h>
 # include "internal/rand.h"
 
-/* Amount of randomness (in bytes) we want for initial seeding. */
-# define RANDOMNESS_NEEDED              (128 / 8)
+/*
+ * Amount of randomness (in bytes) we want for initial seeding.
+ * This is based on the fact that we use AES-128 as the CRBG, and
+ * that we use the derivation function.  If either of those changes,
+ * (see rand_init() in rand_lib.c), change this.
+ */
+# define RANDOMNESS_NEEDED              16
+
+/* Maximum amount of randomness to hold in RAND_BYTES_BUFFER. */
+# define MAX_RANDOMNESS_HELD            (4 * RANDOMNESS_NEEDED)
 
 /* Maximum count allowed in reseeding */
-#define MAX_RESEED (1 << 24)
+# define MAX_RESEED                     (1 << 24)
 
-/* DRBG status values */
-# define DRBG_STATUS_UNINITIALISED	0
-# define DRBG_STATUS_READY		1
-# define DRBG_STATUS_RESEED		2
-# define DRBG_STATUS_ERROR		3
+/* How often we call RAND_poll() in drbg_entropy_from_system */
+# define RAND_POLL_RETRIES 8
 
-/* A default maximum length: larger than any reasonable value used in pratice */
+/* Max size of entropy, addin, etc. Larger than any reasonable value */
 # define DRBG_MAX_LENGTH                0x7ffffff0
 
+
+/* DRBG status values */
+typedef enum drbg_status_e {
+    DRBG_UNINITIALISED,
+    DRBG_READY,
+    DRBG_RESEED,
+    DRBG_ERROR
+} DRBG_STATUS;
+
+
 /*
- * The context for DRBG AES-CTR
+ * A buffer of random bytes to be fed as "entropy" into the DRBG.  RAND_add()
+ * adds data to the buffer, and the drbg_entropy_from_system() pulls data from
+ * the buffer. We have a separate data structure because of the way the
+ * API is defined; otherwise we'd run into deadlocks (RAND_bytes ->
+ * RAND_DRBG_generate* -> drbg_entropy_from_system -> RAND_poll -> RAND_add ->
+ * drbg_add*; the functions with an asterisk lock).
  */
-typedef struct drbg_ctr_ctx_st {
+typedef struct rand_bytes_buffer_st {
+    CRYPTO_RWLOCK *lock;
+    size_t size;
+    size_t curr;
+    unsigned char *buff;
+} RAND_BYTES_BUFFER;
+
+/*
+ * The state of a DRBG AES-CTR.
+ */
+typedef struct rand_drbg_ctr_st {
     AES_KEY ks;
     size_t keylen;
     unsigned char K[32];
@@ -47,21 +77,28 @@ typedef struct drbg_ctr_ctx_st {
     unsigned char bltmp[16];
     size_t bltmp_pos;
     unsigned char KX[48];
-} DRBG_CTR_CTX;
+} RAND_DRBG_CTR;
 
 
 /*
- * The context for all DRBG's
+ * The state of all types of DRBGs, even though we only have CTR mode
+ * right now.
  */
-struct drbg_ctx_st {
+struct rand_drbg_st {
     CRYPTO_RWLOCK *lock;
-    DRBG_CTX *parent;
-    int nid; /* the NID of the underlying algorithm */
-    unsigned int flags; /* various external flags */
+    RAND_DRBG *parent;
+    int nid; /* the underlying algorithm */
+    unsigned short flags; /* various external flags */
+    unsigned short filled;
+    /*
+     * This is a fixed-size buffer, but we malloc to make it a little
+     * harder to find; a classic security/performance trade-off.
+     */
+    int size;
+    unsigned char *randomness;
 
-    /* The following parameters are setup by mechanism drbg_init() call */
+    /* These parameters are setup by the per-type "init" function. */
     int strength;
-    size_t blocklength;
     size_t max_request;
     size_t min_entropy, max_entropy;
     size_t min_nonce, max_nonce;
@@ -69,43 +106,50 @@ struct drbg_ctx_st {
     unsigned int reseed_counter;
     unsigned int reseed_interval;
     size_t seedlen;
-    int status;
+    DRBG_STATUS state;
 
-    /* Application data: typically (only?) used by test get_entropy */
+    /* Application data, mainly used in the KATs. */
     CRYPTO_EX_DATA ex_data;
 
-    /* Implementation specific structures */
-    DRBG_CTR_CTX ctr;
+    /* Implementation specific structures; was a union, but inline for now */
+    RAND_DRBG_CTR ctr;
 
-    /* entropy gathering function */
+    /* Callback functions.  See comments in rand_lib.c */
     RAND_DRBG_get_entropy_fn get_entropy;
-    /* Indicates we have finished with entropy buffer */
     RAND_DRBG_cleanup_entropy_fn cleanup_entropy;
-    /* nonce gathering function */
     RAND_DRBG_get_nonce_fn get_nonce;
-    /* Indicates we have finished with nonce buffer */
     RAND_DRBG_cleanup_nonce_fn cleanup_nonce;
 };
 
-
-extern RAND_METHOD openssl_rand_meth;
-void rand_drbg_cleanup(void);
+/* The global RAND method, and the global buffer and DRBG instance. */
+extern RAND_METHOD rand_meth;
+extern RAND_BYTES_BUFFER rand_bytes;
+extern RAND_DRBG rand_drbg;
 
 /* Hardware-based seeding functions. */
-void rand_rdtsc(void);
-int rand_rdcpu(void);
+void rand_read_tsc(RAND_poll_fn cb, void *arg);
+int rand_read_cpu(RAND_poll_fn cb, void *arg);
+
+/* DRBG entropy callbacks. */
+void drbg_release_entropy(RAND_DRBG *drbg, unsigned char *out);
+size_t drbg_entropy_from_parent(RAND_DRBG *drbg,
+                                unsigned char **pout,
+                                int entropy, size_t min_len, size_t max_len);
+size_t drbg_entropy_from_system(RAND_DRBG *drbg,
+                                unsigned char **pout,
+                                int entropy, size_t min_len, size_t max_len);
 
 /* DRBG functions implementing AES-CTR */
-int ctr_init(DRBG_CTX *dctx);
-int ctr_uninstantiate(DRBG_CTX *dctx);
-int ctr_instantiate(DRBG_CTX *dctx,
+int ctr_init(RAND_DRBG *drbg);
+int ctr_uninstantiate(RAND_DRBG *drbg);
+int ctr_instantiate(RAND_DRBG *drbg,
                     const unsigned char *ent, size_t entlen,
                     const unsigned char *nonce, size_t noncelen,
                     const unsigned char *pers, size_t perslen);
-int ctr_reseed(DRBG_CTX *dctx,
+int ctr_reseed(RAND_DRBG *drbg,
                const unsigned char *ent, size_t entlen,
                const unsigned char *adin, size_t adinlen);
-int ctr_generate(DRBG_CTX *dctx,
+int ctr_generate(RAND_DRBG *drbg,
                  unsigned char *out, size_t outlen,
                  const unsigned char *adin, size_t adinlen);
 

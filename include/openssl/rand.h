@@ -33,27 +33,37 @@ const RAND_METHOD *RAND_get_rand_method(void);
 # ifndef OPENSSL_NO_ENGINE
 int RAND_set_rand_engine(ENGINE *engine);
 # endif
+
 RAND_METHOD *RAND_OpenSSL(void);
+
 # if OPENSSL_API_COMPAT < 0x10100000L
 #   define RAND_cleanup() while(0) continue
 # endif
 int RAND_bytes(unsigned char *buf, int num);
 DEPRECATEDIN_1_1_0(int RAND_pseudo_bytes(unsigned char *buf, int num))
+
 void RAND_seed(const void *buf, int num);
+
 # if defined(__ANDROID__) && defined(__NDK_FPABI__)
 __NDK_FPABI__	/* __attribute__((pcs("aapcs"))) on ARM */
 # endif
+
 void RAND_add(const void *buf, int num, double randomness);
 int RAND_load_file(const char *file, long max_bytes);
 int RAND_write_file(const char *file);
 const char *RAND_file_name(char *file, size_t num);
 int RAND_status(void);
+
 # ifndef OPENSSL_NO_EGD
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes);
 int RAND_egd(const char *path);
 int RAND_egd_bytes(const char *path, int bytes);
 # endif
+
+typedef void (*RAND_poll_fn)(void *arg,
+                             const void *buf, int num, double randomness);
 int RAND_poll(void);
+int RAND_poll_ex(RAND_poll_fn cb, void *arg);
 
 # if defined(_WIN32) && (defined(BASETYPES) || defined(_WINDEF_H))
 /* application has to include <windows.h> in order to use these */

@@ -2035,11 +2035,8 @@ static int run_file_tests(int i)
 
 int setup_tests(void)
 {
-    static const char rnd_seed[] =
-        "If not seeded, BN_generate_prime might fail";
     int n = test_get_argument_count();
 
-    RAND_seed(rnd_seed, sizeof(rnd_seed));
     if (!TEST_ptr(ctx = BN_CTX_new()))
         return 0;
 

@@ -16,37 +16,14 @@
 #include "internal/thread_once.h"
 
 /*
- * Mapping of NIST SP 800-90A DRBG to OpenSSL RAND_METHOD.
+ * Implementation of NIST SP 800-90A CTR DRBG.
  */
 
-
-/*
- * The default global DRBG and its auto-init/auto-cleanup.
- */
-static DRBG_CTX ossl_drbg;
-
-static CRYPTO_ONCE ossl_drbg_init = CRYPTO_ONCE_STATIC_INIT;
-
-DEFINE_RUN_ONCE_STATIC(do_ossl_drbg_init)
-{
-    int st = 1;
-
-    ossl_drbg.lock = CRYPTO_THREAD_lock_new();
-    st &= ossl_drbg.lock != NULL;
-    st &= RAND_DRBG_set(&ossl_drbg, NID_aes_128_ctr, 0) == 1;
-    return st;
-}
-
-void rand_drbg_cleanup(void)
-{
-    CRYPTO_THREAD_lock_free(ossl_drbg.lock);
-}
-
-static void inc_128(DRBG_CTR_CTX *cctx)
+static void inc_128(RAND_DRBG_CTR *ctr)
 {
     int i;
     unsigned char c;
-    unsigned char *p = &cctx->V[15];
+    unsigned char *p = &ctr->V[15];
 
     for (i = 0; i < 16; i++, p--) {
         c = *p;
@@ -59,7 +36,7 @@ static void inc_128(DRBG_CTR_CTX *cctx)
     }
 }
 
-static void ctr_XOR(DRBG_CTR_CTX *cctx, const unsigned char *in, size_t inlen)
+static void ctr_XOR(RAND_DRBG_CTR *ctr, const unsigned char *in, size_t inlen)
 {
     size_t i, n;
 
@@ -70,81 +47,81 @@ static void ctr_XOR(DRBG_CTR_CTX *cctx, const unsigned char *in, size_t inlen)
      * Any zero padding will have no effect on the result as we
      * are XORing. So just process however much input we have.
      */
-    n = inlen < cctx->keylen ? inlen : cctx->keylen;
+    n = inlen < ctr->keylen ? inlen : ctr->keylen;
     for (i = 0; i < n; i++)
-        cctx->K[i] ^= in[i];
-    if (inlen <= cctx->keylen)
+        ctr->K[i] ^= in[i];
+    if (inlen <= ctr->keylen)
         return;
 
-    n = inlen - cctx->keylen;
+    n = inlen - ctr->keylen;
     if (n > 16) {
         /* Should never happen */
         n = 16;
     }
     for (i = 0; i < n; i++)
-        cctx->V[i] ^= in[i + cctx->keylen];
+        ctr->V[i] ^= in[i + ctr->keylen];
 }
 
 /*
  * Process a complete block using BCC algorithm of SP 800-90A 10.3.3
  */
-static void ctr_BCC_block(DRBG_CTR_CTX *cctx, unsigned char *out,
+static void ctr_BCC_block(RAND_DRBG_CTR *ctr, unsigned char *out,
                           const unsigned char *in)
 {
     int i;
 
     for (i = 0; i < 16; i++)
         out[i] ^= in[i];
-    AES_encrypt(out, out, &cctx->df_ks);
+    AES_encrypt(out, out, &ctr->df_ks);
 }
 
 
 /*
  * Handle several BCC operations for as much data as we need for K and X
  */
-static void ctr_BCC_blocks(DRBG_CTR_CTX *cctx, const unsigned char *in)
+static void ctr_BCC_blocks(RAND_DRBG_CTR *ctr, const unsigned char *in)
 {
-    ctr_BCC_block(cctx, cctx->KX, in);
-    ctr_BCC_block(cctx, cctx->KX + 16, in);
-    if (cctx->keylen != 16)
-        ctr_BCC_block(cctx, cctx->KX + 32, in);
+    ctr_BCC_block(ctr, ctr->KX, in);
+    ctr_BCC_block(ctr, ctr->KX + 16, in);
+    if (ctr->keylen != 16)
+        ctr_BCC_block(ctr, ctr->KX + 32, in);
 }
 
 /*
  * Initialise BCC blocks: these have the value 0,1,2 in leftmost positions:
  * see 10.3.1 stage 7.
  */
-static void ctr_BCC_init(DRBG_CTR_CTX *cctx)
+static void ctr_BCC_init(RAND_DRBG_CTR *ctr)
 {
-    memset(cctx->KX, 0, 48);
-    memset(cctx->bltmp, 0, 16);
-    ctr_BCC_block(cctx, cctx->KX, cctx->bltmp);
-    cctx->bltmp[3] = 1;
-    ctr_BCC_block(cctx, cctx->KX + 16, cctx->bltmp);
-    if (cctx->keylen != 16) {
-        cctx->bltmp[3] = 2;
-        ctr_BCC_block(cctx, cctx->KX + 32, cctx->bltmp);
+    memset(ctr->KX, 0, 48);
+    memset(ctr->bltmp, 0, 16);
+    ctr_BCC_block(ctr, ctr->KX, ctr->bltmp);
+    ctr->bltmp[3] = 1;
+    ctr_BCC_block(ctr, ctr->KX + 16, ctr->bltmp);
+    if (ctr->keylen != 16) {
+        ctr->bltmp[3] = 2;
+        ctr_BCC_block(ctr, ctr->KX + 32, ctr->bltmp);
     }
 }
 
 /*
  * Process several blocks into BCC algorithm, some possibly partial
  */
-static void ctr_BCC_update(DRBG_CTR_CTX *cctx,
+static void ctr_BCC_update(RAND_DRBG_CTR *ctr,
                            const unsigned char *in, size_t inlen)
 {
     if (in == NULL || inlen == 0)
         return;
 
     /* If we have partial block handle it first */
-    if (cctx->bltmp_pos) {
-        size_t left = 16 - cctx->bltmp_pos;
+    if (ctr->bltmp_pos) {
+        size_t left = 16 - ctr->bltmp_pos;
 
         /* If we now have a complete block process it */
         if (inlen >= left) {
-            memcpy(cctx->bltmp + cctx->bltmp_pos, in, left);
-            ctr_BCC_blocks(cctx, cctx->bltmp);
-            cctx->bltmp_pos = 0;
+            memcpy(ctr->bltmp + ctr->bltmp_pos, in, left);
+            ctr_BCC_blocks(ctr, ctr->bltmp);
+            ctr->bltmp_pos = 0;
             inlen -= left;
             in += left;
         }
@@ -152,34 +129,34 @@ static void ctr_BCC_update(DRBG_CTR_CTX *cctx,
 
     /* Process zero or more complete blocks */
     for (; inlen >= 16; in += 16, inlen -= 16) {
-        ctr_BCC_blocks(cctx, in);
+        ctr_BCC_blocks(ctr, in);
     }
 
     /* Copy any remaining partial block to the temporary buffer */
     if (inlen > 0) {
-        memcpy(cctx->bltmp + cctx->bltmp_pos, in, inlen);
-        cctx->bltmp_pos += inlen;
+        memcpy(ctr->bltmp + ctr->bltmp_pos, in, inlen);
+        ctr->bltmp_pos += inlen;
     }
 }
 
-static void ctr_BCC_final(DRBG_CTR_CTX *cctx)
+static void ctr_BCC_final(RAND_DRBG_CTR *ctr)
 {
-    if (cctx->bltmp_pos) {
-        memset(cctx->bltmp + cctx->bltmp_pos, 0, 16 - cctx->bltmp_pos);
-        ctr_BCC_blocks(cctx, cctx->bltmp);
+    if (ctr->bltmp_pos) {
+        memset(ctr->bltmp + ctr->bltmp_pos, 0, 16 - ctr->bltmp_pos);
+        ctr_BCC_blocks(ctr, ctr->bltmp);
     }
 }
 
-static void ctr_df(DRBG_CTR_CTX *cctx,
+static void ctr_df(RAND_DRBG_CTR *ctr,
                    const unsigned char *in1, size_t in1len,
                    const unsigned char *in2, size_t in2len,
                    const unsigned char *in3, size_t in3len)
 {
     static unsigned char c80 = 0x80;
     size_t inlen;
-    unsigned char *p = cctx->bltmp;
+    unsigned char *p = ctr->bltmp;
 
-    ctr_BCC_init(cctx);
+    ctr_BCC_init(ctr);
     if (in1 == NULL)
         in1len = 0;
     if (in2 == NULL)
@@ -197,100 +174,100 @@ static void ctr_df(DRBG_CTR_CTX *cctx,
     *p++ = 0;
     *p++ = 0;
     *p++ = 0;
-    *p = (unsigned char)((cctx->keylen + 16) & 0xff);
-    cctx->bltmp_pos = 8;
-    ctr_BCC_update(cctx, in1, in1len);
-    ctr_BCC_update(cctx, in2, in2len);
-    ctr_BCC_update(cctx, in3, in3len);
-    ctr_BCC_update(cctx, &c80, 1);
-    ctr_BCC_final(cctx);
+    *p = (unsigned char)((ctr->keylen + 16) & 0xff);
+    ctr->bltmp_pos = 8;
+    ctr_BCC_update(ctr, in1, in1len);
+    ctr_BCC_update(ctr, in2, in2len);
+    ctr_BCC_update(ctr, in3, in3len);
+    ctr_BCC_update(ctr, &c80, 1);
+    ctr_BCC_final(ctr);
     /* Set up key K */
-    AES_set_encrypt_key(cctx->KX, cctx->keylen * 8, &cctx->df_kxks);
+    AES_set_encrypt_key(ctr->KX, ctr->keylen * 8, &ctr->df_kxks);
     /* X follows key K */
-    AES_encrypt(cctx->KX + cctx->keylen, cctx->KX, &cctx->df_kxks);
-    AES_encrypt(cctx->KX, cctx->KX + 16, &cctx->df_kxks);
-    if (cctx->keylen != 16)
-        AES_encrypt(cctx->KX + 16, cctx->KX + 32, &cctx->df_kxks);
+    AES_encrypt(ctr->KX + ctr->keylen, ctr->KX, &ctr->df_kxks);
+    AES_encrypt(ctr->KX, ctr->KX + 16, &ctr->df_kxks);
+    if (ctr->keylen != 16)
+        AES_encrypt(ctr->KX + 16, ctr->KX + 32, &ctr->df_kxks);
 }
 
 /*
  * NB the no-df Update in SP800-90A specifies a constant input length
  * of seedlen, however other uses of this algorithm pad the input with
  * zeroes if necessary and have up to two parameters XORed together,
- * handle both cases in this function instead.
+ * so we handle both cases in this function instead.
  */
-static void ctr_update(DRBG_CTX *dctx,
+static void ctr_update(RAND_DRBG *drbg,
                        const unsigned char *in1, size_t in1len,
                        const unsigned char *in2, size_t in2len,
                        const unsigned char *nonce, size_t noncelen)
 {
-    DRBG_CTR_CTX *cctx = &dctx->ctr;
+    RAND_DRBG_CTR *ctr = &drbg->ctr;
 
     /* ks is already setup for correct key */
-    inc_128(cctx);
-    AES_encrypt(cctx->V, cctx->K, &cctx->ks);
+    inc_128(ctr);
+    AES_encrypt(ctr->V, ctr->K, &ctr->ks);
 
     /* If keylen longer than 128 bits need extra encrypt */
-    if (cctx->keylen != 16) {
-        inc_128(cctx);
-        AES_encrypt(cctx->V, cctx->K + 16, &cctx->ks);
+    if (ctr->keylen != 16) {
+        inc_128(ctr);
+        AES_encrypt(ctr->V, ctr->K + 16, &ctr->ks);
     }
-    inc_128(cctx);
-    AES_encrypt(cctx->V, cctx->V, &cctx->ks);
+    inc_128(ctr);
+    AES_encrypt(ctr->V, ctr->V, &ctr->ks);
 
     /* If 192 bit key part of V is on end of K */
-    if (cctx->keylen == 24) {
-        memcpy(cctx->V + 8, cctx->V, 8);
-        memcpy(cctx->V, cctx->K + 24, 8);
+    if (ctr->keylen == 24) {
+        memcpy(ctr->V + 8, ctr->V, 8);
+        memcpy(ctr->V, ctr->K + 24, 8);
     }
 
-    if (dctx->flags & RAND_DRBG_FLAG_CTR_USE_DF) {
+    if (drbg->flags & RAND_DRBG_FLAG_CTR_USE_DF) {
         /* If no input reuse existing derived value */
         if (in1 != NULL || nonce != NULL || in2 != NULL)
-            ctr_df(cctx, in1, in1len, nonce, noncelen, in2, in2len);
+            ctr_df(ctr, in1, in1len, nonce, noncelen, in2, in2len);
         /* If this a reuse input in1len != 0 */
         if (in1len)
-            ctr_XOR(cctx, cctx->KX, dctx->seedlen);
+            ctr_XOR(ctr, ctr->KX, drbg->seedlen);
     } else {
-        ctr_XOR(cctx, in1, in1len);
-        ctr_XOR(cctx, in2, in2len);
+        ctr_XOR(ctr, in1, in1len);
+        ctr_XOR(ctr, in2, in2len);
     }
 
-    AES_set_encrypt_key(cctx->K, dctx->strength, &cctx->ks);
+    AES_set_encrypt_key(ctr->K, drbg->strength, &ctr->ks);
 }
 
-int ctr_instantiate(DRBG_CTX *dctx,
+int ctr_instantiate(RAND_DRBG *drbg,
                     const unsigned char *ent, size_t entlen,
                     const unsigned char *nonce, size_t noncelen,
                     const unsigned char *pers, size_t perslen)
 {
-    DRBG_CTR_CTX *cctx = &dctx->ctr;
+    RAND_DRBG_CTR *ctr = &drbg->ctr;
 
-    memset(cctx->K, 0, sizeof(cctx->K));
-    memset(cctx->V, 0, sizeof(cctx->V));
-    AES_set_encrypt_key(cctx->K, dctx->strength, &cctx->ks);
-    ctr_update(dctx, ent, entlen, pers, perslen, nonce, noncelen);
+    memset(ctr->K, 0, sizeof(ctr->K));
+    memset(ctr->V, 0, sizeof(ctr->V));
+    AES_set_encrypt_key(ctr->K, drbg->strength, &ctr->ks);
+    ctr_update(drbg, ent, entlen, pers, perslen, nonce, noncelen);
     return 1;
 }
 
-int ctr_reseed(DRBG_CTX *dctx,
+int ctr_reseed(RAND_DRBG *drbg,
                const unsigned char *ent, size_t entlen,
                const unsigned char *adin, size_t adinlen)
 {
-    ctr_update(dctx, ent, entlen, adin, adinlen, NULL, 0);
+    ctr_update(drbg, ent, entlen, adin, adinlen, NULL, 0);
     return 1;
 }
 
-int ctr_generate(DRBG_CTX *dctx,
+int ctr_generate(RAND_DRBG *drbg,
                  unsigned char *out, size_t outlen,
                  const unsigned char *adin, size_t adinlen)
 {
-    DRBG_CTR_CTX *cctx = &dctx->ctr;
+    RAND_DRBG_CTR *ctr = &drbg->ctr;
 
     if (adin != NULL && adinlen != 0) {
-        ctr_update(dctx, adin, adinlen, NULL, 0, NULL, 0);
+        ctr_update(drbg, adin, adinlen, NULL, 0, NULL, 0);
         /* This means we reuse derived value */
-        if (dctx->flags & RAND_DRBG_FLAG_CTR_USE_DF) {
+        if (drbg->flags & RAND_DRBG_FLAG_CTR_USE_DF) {
             adin = NULL;
             adinlen = 1;
         }
@@ -299,36 +276,36 @@ int ctr_generate(DRBG_CTX *dctx,
     }
 
     for ( ; ; ) {
-        inc_128(cctx);
+        inc_128(ctr);
         if (outlen < 16) {
             /* Use K as temp space as it will be updated */
-            AES_encrypt(cctx->V, cctx->K, &cctx->ks);
-            memcpy(out, cctx->K, outlen);
+            AES_encrypt(ctr->V, ctr->K, &ctr->ks);
+            memcpy(out, ctr->K, outlen);
             break;
         }
-        AES_encrypt(cctx->V, out, &cctx->ks);
+        AES_encrypt(ctr->V, out, &ctr->ks);
         out += 16;
         outlen -= 16;
         if (outlen == 0)
             break;
     }
 
-    ctr_update(dctx, adin, adinlen, NULL, 0, NULL, 0);
+    ctr_update(drbg, adin, adinlen, NULL, 0, NULL, 0);
     return 1;
 }
 
-int ctr_uninstantiate(DRBG_CTX *dctx)
+int ctr_uninstantiate(RAND_DRBG *drbg)
 {
-    memset(&dctx->ctr, 0, sizeof(dctx->ctr));
+    memset(&drbg->ctr, 0, sizeof(drbg->ctr));
     return 1;
 }
 
-int ctr_init(DRBG_CTX *dctx)
+int ctr_init(RAND_DRBG *drbg)
 {
-    DRBG_CTR_CTX *cctx = &dctx->ctr;
+    RAND_DRBG_CTR *ctr = &drbg->ctr;
     size_t keylen;
 
-    switch (dctx->nid) {
+    switch (drbg->nid) {
     default:
         /* This can't happen, but silence the compiler warning. */
         return -1;
@@ -343,12 +320,11 @@ int ctr_init(DRBG_CTX *dctx)
         break;
     }
 
-    cctx->keylen = keylen;
-    dctx->strength = keylen * 8;
-    dctx->blocklength = 16;
-    dctx->seedlen = keylen + 16;
+    ctr->keylen = keylen;
+    drbg->strength = keylen * 8;
+    drbg->seedlen = keylen + 16;
 
-    if (dctx->flags & RAND_DRBG_FLAG_CTR_USE_DF) {
+    if (drbg->flags & RAND_DRBG_FLAG_CTR_USE_DF) {
         /* df initialisation */
         static unsigned char df_key[32] = {
             0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
@@ -357,97 +333,25 @@ int ctr_init(DRBG_CTX *dctx)
             0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f
         };
         /* Set key schedule for df_key */
-        AES_set_encrypt_key(df_key, dctx->strength, &cctx->df_ks);
+        AES_set_encrypt_key(df_key, drbg->strength, &ctr->df_ks);
 
-        dctx->min_entropy = cctx->keylen;
-        dctx->max_entropy = DRBG_MAX_LENGTH;
-        dctx->min_nonce = dctx->min_entropy / 2;
-        dctx->max_nonce = DRBG_MAX_LENGTH;
-        dctx->max_pers = DRBG_MAX_LENGTH;
-        dctx->max_adin = DRBG_MAX_LENGTH;
+        drbg->min_entropy = ctr->keylen;
+        drbg->max_entropy = DRBG_MAX_LENGTH;
+        drbg->min_nonce = drbg->min_entropy / 2;
+        drbg->max_nonce = DRBG_MAX_LENGTH;
+        drbg->max_pers = DRBG_MAX_LENGTH;
+        drbg->max_adin = DRBG_MAX_LENGTH;
     } else {
-        dctx->min_entropy = dctx->seedlen;
-        dctx->max_entropy = dctx->seedlen;
+        drbg->min_entropy = drbg->seedlen;
+        drbg->max_entropy = drbg->seedlen;
         /* Nonce not used */
-        dctx->min_nonce = 0;
-        dctx->max_nonce = 0;
-        dctx->max_pers = dctx->seedlen;
-        dctx->max_adin = dctx->seedlen;
+        drbg->min_nonce = 0;
+        drbg->max_nonce = 0;
+        drbg->max_pers = drbg->seedlen;
+        drbg->max_adin = drbg->seedlen;
     }
 
-    dctx->max_request = 1 << 16;
-    dctx->reseed_interval = MAX_RESEED;
+    drbg->max_request = 1 << 16;
+    drbg->reseed_interval = MAX_RESEED;
     return 1;
-}
-
-
-/*
- * The following function tie the DRBG code into the RAND_METHOD
- */
-
-DRBG_CTX *RAND_DRBG_get_default(void)
-{
-    if (!RUN_ONCE(&ossl_drbg_init, do_ossl_drbg_init))
-        return NULL;
-    return &ossl_drbg;
-}
-
-static int drbg_bytes(unsigned char *out, int count)
-{
-    DRBG_CTX *dctx = RAND_DRBG_get_default();
-    int ret = 0;
-
-    CRYPTO_THREAD_write_lock(dctx->lock);
-    do {
-        size_t rcnt;
-
-        if (count > (int)dctx->max_request)
-            rcnt = dctx->max_request;
-        else
-            rcnt = count;
-        ret = RAND_DRBG_generate(dctx, out, rcnt, 0, NULL, 0);
-        if (!ret)
-            goto err;
-        out += rcnt;
-        count -= rcnt;
-    } while (count);
-    ret = 1;
-err:
-    CRYPTO_THREAD_unlock(dctx->lock);
-    return ret;
-}
-
-static int drbg_status(void)
-{
-    DRBG_CTX *dctx = RAND_DRBG_get_default();
-    int ret;
-
-    CRYPTO_THREAD_write_lock(dctx->lock);
-    ret = dctx->status == DRBG_STATUS_READY ? 1 : 0;
-    CRYPTO_THREAD_unlock(dctx->lock);
-    return ret;
-}
-
-static void drbg_cleanup(void)
-{
-    DRBG_CTX *dctx = RAND_DRBG_get_default();
-
-    CRYPTO_THREAD_write_lock(dctx->lock);
-    RAND_DRBG_uninstantiate(dctx);
-    CRYPTO_THREAD_unlock(dctx->lock);
-}
-
-static const RAND_METHOD rand_drbg_meth =
-{
-    NULL,
-    drbg_bytes,
-    drbg_cleanup,
-    NULL,
-    drbg_bytes,
-    drbg_status
-};
-
-const RAND_METHOD *RAND_drbg(void)
-{
-    return &rand_drbg_meth;
 }

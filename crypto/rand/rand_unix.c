@@ -41,17 +41,16 @@
  * uneven execution speed of the code (due to factors such as cache misses,
  * interrupts, bus activity, and scheduling) and upon the rather large
  * relative difference between the speed of the clock and the rate at which
- * it can be read.
+ * it can be read.  If it is ported to an environment where execution speed
+ * is more constant or where the RTC ticks at a much slower rate, or the
+ * clock can be read with fewer instructions, it is likely that the results
+ * would be far more predictable.  This should only be used for legacy
+ * platforms.
  *
- * If this code is ported to an environment where execution speed is more
- * constant or where the RTC ticks at a much slower rate, or the clock can be
- * read with fewer instructions, it is likely that the results would be far
- * more predictable.
- *
- * As a precaution, we generate 4 times the minimum required amount of seed
+ * As a precaution, we generate four times the required amount of seed
  * data.
  */
-int RAND_poll(void)
+int RAND_poll_ex(RAND_poll_fn cb, void *arg)
 {
     short int code;
     gid_t curr_gid;
@@ -73,11 +72,11 @@ int RAND_poll(void)
      * different processes.
      */
     curr_gid = getgid();
-    RAND_add(&curr_gid, sizeof curr_gid, 0);
+    cb(arg, &curr_gid, sizeof curr_gid, 0);
     curr_pid = getpid();
-    RAND_add(&curr_pid, sizeof curr_pid, 0);
+    cb(arg, &curr_pid, sizeof curr_pid, 0);
     curr_uid = getuid();
-    RAND_add(&curr_uid, sizeof curr_uid, 0);
+    cb(arg, &curr_uid, sizeof curr_uid, 0);
 
     for (i = 0; i < (RANDOMNESS_NEEDED * 4); i++) {
         /*
@@ -100,7 +99,7 @@ int RAND_poll(void)
         /* Get wall clock time, take 8 bits. */
         clock_gettime(CLOCK_REALTIME, &ts);
         v = (unsigned char)(ts.tv_nsec & 0xFF);
-        RAND_add(&v, sizeof v, 1);
+        cb(arg, &v, sizeof v, 1);
     }
     return 1;
 }
@@ -128,36 +127,33 @@ int RAND_poll(void)
 #   error "librandom not (yet) supported"
 #  endif
 
-int RAND_poll(void)
+/*
+ * Try the various seeding methods in turn, exit when succesful.
+ */
+int RAND_poll_ex(RAND_poll_fn cb, void *arg)
 {
 #  ifdef OPENSSL_RAND_SEED_NONE
     return 0;
 #  else
-    int ok = 0;
+    int ok = 1;
     char temp[RANDOMNESS_NEEDED];
 #   define TEMPSIZE (int)sizeof(temp)
 
-#   ifdef OPENSSL_RAND_SEED_RDTSC
-    rand_rdtsc();
-#   endif
-
-#   ifdef OPENSSL_RAND_SEED_RDCPU
-    if (rand_rdcpu())
-        ok++;
-#   endif
-
-#   ifdef OPENSSL_RAND_SEED_EGD
+#   ifdef OPENSSL_RAND_SEED_GETRANDOM
     {
-        static const char *paths[] = { DEVRANDOM_EGD, NULL };
-        int i;
+        int i = getrandom(temp, TEMPSIZE, 0);
 
-        for (i = 0; paths[i] != NULL; i++) {
-            if (RAND_query_egd_bytes(paths[i], temp, TEMPSIZE) == TEMPSIZE) {
-                RAND_add(temp, TEMPSIZE, TEMPSIZE);
-                ok++;
-                break;
-            }
+        if (i >= 0) {
+            cb(arg, temp, i, i);
+            if (i == TEMPSIZE)
+                goto done;
         }
+    }
+#   endif
+
+#   if defined(OPENSSL_RAND_SEED_LIBRANDOM)
+    {
+        /* Not yet implemented. */
     }
 #   endif
 
@@ -172,29 +168,43 @@ int RAND_poll(void)
                 continue;
             setbuf(fp, NULL);
             if (fread(temp, 1, TEMPSIZE, fp) == TEMPSIZE) {
-                RAND_add(temp, TEMPSIZE, TEMPSIZE);
-                ok++;
+                cb(arg, temp, TEMPSIZE, TEMPSIZE);
                 fclose(fp);
-                break;
+                goto done;
+            }
+            fclose(fp);
+        }
+    }
+#   endif
+
+#   ifdef OPENSSL_RAND_SEED_RDTSC
+    rand_read_tsc(cb, arg);
+#   endif
+
+#   ifdef OPENSSL_RAND_SEED_RDCPU
+    if (rand_read_cpu(cb, arg))
+        goto done;
+#   endif
+
+#   ifdef OPENSSL_RAND_SEED_EGD
+    {
+        static const char *paths[] = { DEVRANDOM_EGD, NULL };
+        int i;
+
+        for (i = 0; paths[i] != NULL; i++) {
+            if (RAND_query_egd_bytes(paths[i], temp, TEMPSIZE) == TEMPSIZE) {
+                cb(arg, temp, TEMPSIZE, TEMPSIZE);
+                goto done;
             }
         }
     }
 #   endif
 
-#   ifdef OPENSSL_RAND_SEED_GETRANDOM
-    {
-        int i = getrandom(temp, TEMPSIZE, 0);
+    ok = 0;
 
-        if (i >= 0) {
-            RAND_add(temp, i, i);
-            if (i == TEMPSIZE)
-                ok++;
-        }
-    }
-#   endif
-
+done:
     OPENSSL_cleanse(temp, TEMPSIZE);
-    return ok > 0 ? 1 : 0;
+    return ok;
 #  endif
 }
 # endif

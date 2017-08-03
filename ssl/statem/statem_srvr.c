@@ -2671,7 +2671,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt, int *al)
      * fails. See https://tools.ietf.org/html/rfc5246#section-7.4.7.1
      */
 
-    if (RAND_bytes(rand_premaster_secret, sizeof(rand_premaster_secret)) <= 0)
+    if (ssl_randbytes(s, rand_premaster_secret, sizeof(rand_premaster_secret)) <= 0)
         goto err;
 
     /*
@@ -3378,7 +3378,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     } age_add_u;
 
     if (SSL_IS_TLS13(s)) {
-        if (RAND_bytes(age_add_u.age_add_c, sizeof(age_add_u)) <= 0)
+        if (ssl_randbytes(s, age_add_u.age_add_c, sizeof(age_add_u)) <= 0)
             goto err;
         s->session->ext.tick_age_add = age_add_u.age_add;
        /*
@@ -3487,7 +3487,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         const EVP_CIPHER *cipher = EVP_aes_256_cbc();
 
         iv_len = EVP_CIPHER_iv_length(cipher);
-        if (RAND_bytes(iv, iv_len) <= 0)
+        if (ssl_randbytes(s, iv, iv_len) <= 0)
             goto err;
         if (!EVP_EncryptInit_ex(ctx, cipher, NULL,
                                 tctx->ext.tick_aes_key, iv))
