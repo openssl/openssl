@@ -78,6 +78,9 @@ RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
         goto err;
 
     if (parent != NULL) {
+        if (parent->state == DRBG_UNINITIALISED
+                && RAND_DRBG_instantiate(parent, NULL, 0) == 0)
+            goto err;
         if (!RAND_DRBG_set_callbacks(drbg, drbg_entropy_from_parent,
                                      drbg_release_entropy,
                                      NULL, NULL)
@@ -96,6 +99,11 @@ err:
     OPENSSL_free(ucp);
     OPENSSL_free(drbg);
     return NULL;
+}
+
+RAND_DRBG *RAND_DRBG_get0_global(void)
+{
+    return &rand_drbg;
 }
 
 /*
