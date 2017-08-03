@@ -41,7 +41,8 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
-          pkey_meth_test uitest cipherbytes_test asn1_encode_test asn1_string_table_test \
+          pkey_meth_test pkey_meth_kdf_test uitest cipherbytes_test \
+          asn1_encode_test asn1_string_table_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
@@ -291,6 +292,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[pkey_meth_test]=pkey_meth_test.c
   INCLUDE[pkey_meth_test]=../include
   DEPEND[pkey_meth_test]=../libcrypto libtestutil.a
+
+  SOURCE[pkey_meth_kdf_test]=pkey_meth_kdf_test.c
+  INCLUDE[pkey_meth_kdf_test]=../include
+  DEPEND[pkey_meth_kdf_test]=../libcrypto libtestutil.a
 
   SOURCE[x509_time_test]=x509_time_test.c
   INCLUDE[x509_time_test]=.. ../include
