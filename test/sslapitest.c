@@ -1938,6 +1938,176 @@ static int test_early_data_not_sent(int idx)
     return testresult;
 }
 
+static const char *servhostname;
+
+static int hostname_cb(SSL *s, int *al, void *arg)
+{
+    const char *hostname = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+
+    if (hostname != NULL && strcmp(hostname, servhostname) == 0)
+        return  SSL_TLSEXT_ERR_OK;
+
+    return SSL_TLSEXT_ERR_NOACK;
+}
+
+static const char *servalpn;
+
+static int alpn_select_cb (SSL *ssl, const unsigned char **out, unsigned char *outlen,
+                    const unsigned char *in, unsigned int inlen, void *arg)
+{
+    unsigned int i, protlen = 0;
+    const unsigned char *prot;
+
+    for (i = 0, prot = in; i < inlen; i += protlen, prot += protlen) {
+        protlen = *(prot++);
+        if (inlen - i < protlen)
+            return SSL_TLSEXT_ERR_NOACK;
+
+        if (protlen == strlen(servalpn)
+                && memcmp(prot, "goodalpn", protlen) == 0) {
+            *out = prot;
+            *outlen = protlen;
+            return SSL_TLSEXT_ERR_OK;
+        }
+    }
+
+    return SSL_TLSEXT_ERR_NOACK;
+}
+
+static int test_early_data_psk(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    SSL_SESSION *sess = NULL;
+    unsigned char badalpn[] = { 0x07, 'b', 'a', 'd', 'a', 'l', 'p', 'n' };
+    unsigned char goodalpn[] = { 0x08, 'g', 'o', 'o', 'd', 'a', 'l', 'p', 'n' };
+    int err;
+    unsigned char buf[20];
+    size_t readbytes, written;
+    int readearlyres = SSL_READ_EARLY_DATA_SUCCESS;
+    int edstatus = SSL_EARLY_DATA_ACCEPTED;
+
+    /* We always set this up with a final parameter of "2" for PSK */
+    if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
+                                        &serverssl, &sess, 2)))
+        goto end;
+
+    servhostname = "goodhost";
+    servalpn = "goodalpn";
+
+    switch (idx) {
+    case 0:
+        /* Set inconsistent SNI (client detected) */
+        err = SSL_R_INCONSISTENT_EARLY_DATA_SNI;
+        if (!TEST_true(SSL_SESSION_set1_hostname(sess, "goodhost"))
+                || !TEST_true(SSL_set_tlsext_host_name(clientssl, "badhost")))
+            goto end;
+        break;
+
+    case 1:
+        /* Set inconsistent ALPN (client detected) */
+        err = SSL_R_INCONSISTENT_EARLY_DATA_ALPN;
+        /* SSL_set_alpn_protos returns 0 for success and 1 for failure */
+        if (!TEST_true(SSL_SESSION_set1_alpn_selected(sess, goodalpn,
+                                                      sizeof(goodalpn)))
+                || !TEST_false(SSL_set_alpn_protos(clientssl, badalpn,
+                                                   sizeof(badalpn))))
+            goto end;
+        break;
+
+    case 2:
+        /*
+         * Set invalid protocol version. Technically this affects PSKs without
+         * early_data too, but we test it here because it is similar to the
+         * SNI/ALPN consistency tests.
+         */
+        err = SSL_R_BAD_PSK;
+        if (!TEST_true(SSL_SESSION_set_protocol_version(sess, TLS1_2_VERSION)))
+            goto end;
+        break;
+
+    case 3:
+        /*
+         * Set inconsistent SNI (server detected). In this case the connection
+         * will succeed but reject early_data.
+         */
+        servhostname = "badhost";
+        edstatus = SSL_EARLY_DATA_REJECTED;
+        readearlyres = SSL_READ_EARLY_DATA_FINISH;
+        /* Fall through */
+    case 4:
+        /* Set consistent SNI */
+        err = 0;
+        if (!TEST_true(SSL_SESSION_set1_hostname(sess, "goodhost"))
+                || !TEST_true(SSL_set_tlsext_host_name(clientssl, "goodhost"))
+                || !TEST_true(SSL_CTX_set_tlsext_servername_callback(sctx,
+                                hostname_cb)))
+            goto end;
+        break;
+
+    case 5:
+        /*
+         * Set inconsistent ALPN (server detected). In this case the connection
+         * will succeed but reject early_data.
+         */
+        servalpn = "badalpn";
+        edstatus = SSL_EARLY_DATA_REJECTED;
+        readearlyres = SSL_READ_EARLY_DATA_FINISH;
+        /* Fall through */
+    case 6:
+        /* Set consistent ALPN */
+        err = 0;
+        /*
+         * SSL_set_alpn_protos returns 0 for success and 1 for failure. It
+         * accepts a list of protos (each one length prefixed).
+         * SSL_set1_alpn_selected accepts a single protocol (not length
+         * prefixed)
+         */
+        if (!TEST_true(SSL_SESSION_set1_alpn_selected(sess, goodalpn + 1,
+                                                      sizeof(goodalpn) - 1))
+                || !TEST_false(SSL_set_alpn_protos(clientssl, goodalpn,
+                                                   sizeof(goodalpn))))
+            goto end;
+
+        SSL_CTX_set_alpn_select_cb(sctx, alpn_select_cb, NULL);
+        break;
+
+    default:
+        TEST_error("Bad test index");
+        goto end;
+    }
+
+    SSL_set_connect_state(clientssl);
+    if (err != 0) {
+        if (!TEST_false(SSL_write_early_data(clientssl, MSG1, strlen(MSG1),
+                                            &written))
+                || !TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_SSL)
+                || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), err))
+            goto end;
+    } else {
+        if (!TEST_true(SSL_write_early_data(clientssl, MSG1, strlen(MSG1),
+                                            &written))
+                || !TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                                                  &readbytes), readearlyres)
+                || (readearlyres == SSL_READ_EARLY_DATA_SUCCESS
+                    && !TEST_mem_eq(buf, readbytes, MSG1, strlen(MSG1)))
+                || !TEST_int_eq(SSL_get_early_data_status(serverssl), edstatus))
+            goto end;
+    }
+
+    testresult = 1;
+
+ end:
+    SSL_SESSION_free(sess);
+    psk = NULL;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 /*
  * Test that a server that doesn't try to read early data can handle a
  * client sending some.
@@ -2905,6 +3075,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_early_data_skip, 3);
     ADD_ALL_TESTS(test_early_data_skip_hrr, 3);
     ADD_ALL_TESTS(test_early_data_not_sent, 3);
+    ADD_ALL_TESTS(test_early_data_psk, 7);
     ADD_ALL_TESTS(test_early_data_not_expected, 3);
 # ifndef OPENSSL_NO_TLS1_2
     ADD_ALL_TESTS(test_early_data_tls1_2, 3);
