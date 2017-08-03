@@ -9,6 +9,7 @@
 
 #include <openssl/ocsp.h>
 #include "../ssl_locl.h"
+#include "internal/cryptlib.h"
 #include "statem_locl.h"
 
 EXT_RETURN tls_construct_ctos_renegotiate(SSL *s, WPACKET *pkt,

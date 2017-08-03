@@ -545,23 +545,6 @@ struct servent *getservbyname(const char *name, const char *proto);
 # define CRYPTO_memcmp memcmp
 #endif
 
-#ifdef NDEBUG
-# define ossl_assert(x) (int)(x)
-#else
-__owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
-                                              const char *file, int line)
-{
-    if (!expr)
-        OPENSSL_die(exprstr, file, line);
-
-    return expr;
-}
-
-# define ossl_assert(x) ossl_assert_int((int)(x), "Assertion failed: "#x, \
-                                         __FILE__, __LINE__)
-
-#endif
-
 #ifdef  __cplusplus
 }
 #endif
