@@ -4376,3 +4376,6 @@ RAND_DRBG_get0_global                   4319	1_1_1	EXIST::FUNCTION:
 RAND_priv_bytes                         4320	1_1_1	EXIST::FUNCTION:
 BN_priv_rand                            4321	1_1_1	EXIST::FUNCTION:
 BN_priv_rand_range                      4322	1_1_1	EXIST::FUNCTION:
+ASN1_TIME_normalize                     4323	1_1_1	EXIST::FUNCTION:
+ASN1_TIME_cmp_time_t                    4324	1_1_1	EXIST::FUNCTION:
+ASN1_TIME_compare                       4325	1_1_1	EXIST::FUNCTION:
