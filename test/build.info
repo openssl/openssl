@@ -432,6 +432,11 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   INCLUDE[mdc2_internal_test]=.. ../include
   DEPEND[mdc2_internal_test]=../libcrypto libtestutil.a
 
+  PROGRAMS_NO_INST=asn1_time_test
+  SOURCE[asn1_time_test]=asn1_time_test.c
+  INCLUDE[asn1_time_test]=.. ../include
+  DEPEND[asn1_time_test]=../libcrypto libtestutil.a
+
   # We disable this test completely in a shared build because it deliberately
   # redefines some internal libssl symbols. This doesn't work in a non-shared
   # build

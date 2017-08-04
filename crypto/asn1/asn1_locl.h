@@ -78,3 +78,5 @@ ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 /* Internal functions used by x_int64.c */
 int c2i_uint64_int(uint64_t *ret, int *neg, const unsigned char **pp, long len);
 int i2c_uint64_int(unsigned char *p, uint64_t r, int neg);
+
+ASN1_TIME *asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type);
