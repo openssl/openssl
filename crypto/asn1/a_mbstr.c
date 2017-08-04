@@ -383,7 +383,7 @@ static int is_numeric(unsigned long value)
         return 0;
     ch = (int)value;
 #ifndef CHARSET_EBCDIC
-    if (!isdigit(ch) && ch != ' ')
+    if (ch > '9' || (ch < '0' && ch != ' '))
         return 0;
 #else
     if (ch > os_toascii['9'])
