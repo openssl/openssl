@@ -812,3 +812,26 @@ int ERR_pop_to_mark(void)
     es->err_flags[es->top] &= ~ERR_FLAG_MARK;
     return 1;
 }
+
+int ERR_clear_last_mark(void)
+{
+    ERR_STATE *es;
+    int top;
+
+    es = ERR_get_state();
+    if (es == NULL)
+        return 0;
+
+    top = es->top;
+    while (es->bottom != top
+           && (es->err_flags[top] & ERR_FLAG_MARK) == 0) {
+        top -= 1;
+        if (top == -1)
+            top = ERR_NUM_ERRORS - 1;
+    }
+
+    if (es->bottom == top)
+        return 0;
+    es->err_flags[top] &= ~ERR_FLAG_MARK;
+    return 1;
+}

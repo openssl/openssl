@@ -9,6 +9,10 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Add ERR_clear_last_mark(), to allow callers to clear the last mark
+     without clearing the errors.
+     [Richard Levitte]
+
   *) Add "atfork" functions.  If building on a system that without
      pthreads, see doc/man3/OPENSSL_fork_prepare.pod for application
      requirements.  The RAND facility now uses/requires this.
