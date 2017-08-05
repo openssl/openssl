@@ -14,7 +14,7 @@ $VERSION = '0.1';
 
 sub glob {
     goto &File::Glob::bsd_glob if $^O ne "VMS";
-    goto &CORE::GLOBAL::glob;
+    goto &CORE::glob;
 }
 
 1;
