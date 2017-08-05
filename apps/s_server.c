@@ -3113,9 +3113,10 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                 PEM_write_bio_X509(io, peer);
                 X509_free(peer);
                 peer = NULL;
-            } else
+            } else {
                 BIO_puts(io, "no client certificate available\n");
-            BIO_puts(io, "</BODY></HTML>\r\n\r\n");
+            }
+            BIO_puts(io, "</pre></BODY></HTML>\r\n\r\n");
             break;
         } else if ((www == 2 || www == 3)
                    && (strncmp("GET /", buf, 5) == 0)) {
