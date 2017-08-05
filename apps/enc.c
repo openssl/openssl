@@ -560,7 +560,7 @@ int enc_main(int argc, char **argv)
     }
  end:
     ERR_print_errors(bio_err);
-    OPENSSL_free(strbuf);
+    OPENSSL_clear_free(strbuf, SIZE);
     OPENSSL_free(buff);
     BIO_free(in);
     BIO_free_all(out);
@@ -570,7 +570,7 @@ int enc_main(int argc, char **argv)
     BIO_free(bzl);
 #endif
     release_engine(e);
-    OPENSSL_free(pass);
+    OPENSSL_clear_free(pass, strlen(pass));
     return ret;
 }
 
