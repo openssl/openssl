@@ -703,7 +703,7 @@ Display the "Subject Alternative Name" extension of a certificate:
 
  openssl x509 -in cert.pem -noout -ext subjectAltName
 
-Display the more extensions of a certificate:
+Display more extensions of a certificate:
 
  openssl x509 -in cert.pem -noout -ext subjectAltName,nsCertType
 
