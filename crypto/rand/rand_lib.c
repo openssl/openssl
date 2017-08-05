@@ -143,6 +143,7 @@ size_t drbg_entropy_from_system(RAND_DRBG *drbg,
             memmove(rand_bytes.buff, &rand_bytes.buff[min_len], rand_bytes.curr);
     }
     CRYPTO_THREAD_unlock(rand_bytes.lock);
+    *pout = drbg->randomness;
     return min_len;
 }
 
@@ -163,6 +164,7 @@ size_t drbg_entropy_from_parent(RAND_DRBG *drbg,
     if (st == 0)
         return 0;
     drbg->filled = 1;
+    *pout = drbg->randomness;
     return min_len;
 }
 
