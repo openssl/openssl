@@ -85,6 +85,13 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
     ctx->post_process = post_process;
     ctx->post_process_data = post_process_data;
 
+    /*
+     * If the attempt to open with the 'file' scheme loader failed and the
+     * other scheme loader succeeded, the failure to open with the 'file'
+     * scheme loader leaves an error on the error stack.  Let's remove it.
+     */
+    ERR_clear_error();
+
  done:
     if (loader_ctx != NULL) {
         /*
