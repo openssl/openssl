@@ -243,6 +243,9 @@ int ctr_instantiate(RAND_DRBG *drbg,
 {
     RAND_DRBG_CTR *ctr = &drbg->ctr;
 
+    if (ent == NULL)
+        return 0;
+
     memset(ctr->K, 0, sizeof(ctr->K));
     memset(ctr->V, 0, sizeof(ctr->V));
     AES_set_encrypt_key(ctr->K, drbg->strength, &ctr->ks);
@@ -254,6 +257,8 @@ int ctr_reseed(RAND_DRBG *drbg,
                const unsigned char *ent, size_t entlen,
                const unsigned char *adin, size_t adinlen)
 {
+    if (ent == NULL)
+        return 0;
     ctr_update(drbg, ent, entlen, adin, adinlen, NULL, 0);
     return 1;
 }
