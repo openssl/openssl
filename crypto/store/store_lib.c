@@ -64,28 +64,39 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
         }
     }
 
+    ERR_set_mark();
+
     /* Try each scheme until we find one that could open the URI */
     for (i = 0; loader_ctx == NULL && i < schemes_n; i++) {
         if ((loader = ossl_store_get0_loader_int(schemes[i])) != NULL)
             loader_ctx = loader->open(loader, uri, ui_method, ui_data);
     }
     if (loader_ctx == NULL)
-        goto done;
+        goto err;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_OPEN, ERR_R_MALLOC_FAILURE);
-        goto done;
+        goto err;
     }
 
     ctx->loader = loader;
     ctx->loader_ctx = loader_ctx;
-    loader_ctx = NULL;
     ctx->ui_method = ui_method;
     ctx->ui_data = ui_data;
     ctx->post_process = post_process;
     ctx->post_process_data = post_process_data;
 
- done:
+    /*
+     * If the attempt to open with the 'file' scheme loader failed and the
+     * other scheme loader succeeded, the failure to open with the 'file'
+     * scheme loader leaves an error on the error stack.  Let's remove it.
+     */
+    ERR_pop_to_mark();
+
+    return ctx;
+
+ err:
+    ERR_clear_last_mark();
     if (loader_ctx != NULL) {
         /*
          * We ignore a returned error because we will return NULL anyway in
@@ -94,7 +105,7 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
          */
         (void)loader->close(loader_ctx);
     }
-    return ctx;
+    return NULL;
 }
 
 int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ...)
