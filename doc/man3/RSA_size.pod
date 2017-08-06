@@ -2,15 +2,17 @@
 
 =head1 NAME
 
-RSA_size, RSA_bits - get RSA modulus size
+RSA_size, RSA_bits, RSA_security_bits - get RSA modulus size or security bits
 
 =head1 SYNOPSIS
 
-#include <openssl/rsa.h>
+ #include <openssl/rsa.h>
 
-int RSA_size(const RSA *rsa);
+ int RSA_size(const RSA *rsa);
 
-int RSA_bits(const RSA *rsa);
+ int RSA_bits(const RSA *rsa);
+
+ int RSA_security_bits(const RSA *rsa)
 
 =head1 DESCRIPTION
 
@@ -22,9 +24,16 @@ RSA_bits() returns the number of significant bits.
 
 B<rsa> and B<rsa-E<gt>n> must not be B<NULL>.
 
+RSA_security_bits() returns the number of security bits of the given B<rsa>
+key. See L<BN_security_bits(3)>.
+
 =head1 RETURN VALUE
 
-The size.
+RSA_size() returns the size of modulus in bytes.
+
+DSA_bits() returns the number of bits in the key.
+
+RSA_security_bits() returns the number of security bits.
 
 =head1 SEE ALSO
 
