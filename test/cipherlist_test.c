@@ -181,7 +181,7 @@ static int execute_test(CIPHERLIST_TEST_FIXTURE *fixture)
 }
 
 #define SETUP_CIPHERLIST_TEST_FIXTURE() \
-    SETUP_TEST_FIXTURE(CIPHERLIST_TEST_FIXTURE *, set_up)
+    SETUP_TEST_FIXTURE(CIPHERLIST_TEST_FIXTURE, set_up)
 
 #define EXECUTE_CIPHERLIST_TEST() \
     EXECUTE_TEST(execute_test, tear_down)
@@ -189,7 +189,10 @@ static int execute_test(CIPHERLIST_TEST_FIXTURE *fixture)
 static int test_default_cipherlist_implicit()
 {
     SETUP_CIPHERLIST_TEST_FIXTURE();
+    if (fixture == NULL)
+        return 0;
     EXECUTE_CIPHERLIST_TEST();
+    return result;
 }
 
 static int test_default_cipherlist_explicit()
@@ -201,6 +204,7 @@ static int test_default_cipherlist_explicit()
             || !TEST_true(SSL_CTX_set_cipher_list(fixture->client, "DEFAULT")))
         tear_down(fixture);
     EXECUTE_CIPHERLIST_TEST();
+    return result;
 }
 
 int setup_tests()

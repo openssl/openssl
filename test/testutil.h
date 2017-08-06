@@ -65,12 +65,13 @@
  * SETUP_TEST_FIXTURE will call set_up() to create a new TEST_FIXTURE_TYPE
  * object called "fixture". It will also allocate the "result" variable used
  * by EXECUTE_TEST. set_up() should take a const char* specifying the test
- * case name and return a TEST_FIXTURE_TYPE by value.
+ * case name and return a TEST_FIXTURE_TYPE by reference.
  *
- * EXECUTE_TEST will pass fixture to execute_func() by value, call
+ * EXECUTE_TEST will pass fixture to execute_func() by reference, call
  * tear_down(), and return the result of execute_func(). execute_func() should
- * take a TEST_FIXTURE_TYPE by value and return 1 on success and 0 on
- * failure.
+ * take a TEST_FIXTURE_TYPE by reference and return 1 on success and 0 on
+ * failure.  The tear_down function is responsible for deallocation of the
+ * result variable, if required.
  *
  * Unit tests can define their own SETUP_TEST_FIXTURE and EXECUTE_TEST
  * variations like so:
@@ -91,13 +92,14 @@
  *      }
  */
 # define SETUP_TEST_FIXTURE(TEST_FIXTURE_TYPE, set_up)\
-    TEST_FIXTURE_TYPE fixture = set_up(TEST_CASE_NAME); \
+    TEST_FIXTURE_TYPE *fixture = set_up(TEST_CASE_NAME); \
     int result = 0
 
 # define EXECUTE_TEST(execute_func, tear_down)\
+    if (fixture != NULL) {\
         result = execute_func(fixture);\
         tear_down(fixture);\
-        return result
+    }
 
 /*
  * TEST_CASE_NAME is defined as the name of the test case function where
