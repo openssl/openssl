@@ -570,7 +570,8 @@ int enc_main(int argc, char **argv)
     BIO_free(bzl);
 #endif
     release_engine(e);
-    OPENSSL_clear_free(pass, strlen(pass));
+    if (pass != NULL)
+        OPENSSL_clear_free(pass, strlen(pass));
     return ret;
 }
 
