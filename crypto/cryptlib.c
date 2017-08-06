@@ -100,19 +100,19 @@ int OPENSSL_isservice(void)
     DWORD len;
     WCHAR *name;
     static FARPROC f_isservice = NULL;
+    static int is_first_time = 1;
 
     /* Allow application to override OPENSSL_isservice by exporting
      * _OPENSSL_isservice function from the .exe file.
      */
-    if (f_isservice == NULL) {
+    if (is_first_time == 1) {
+        is_first_time = 0;
         HANDLE mod = GetModuleHandle(NULL);
         if (mod != NULL)
             f_isservice = GetProcAddress(mod, "_OPENSSL_isservice");
-        if (f_isservice == NULL)
-            f_isservice = (FARPROC)-1;
     }
 
-    if (f_isservice != (FARPROC)-1)
+    if (f_isservice != NULL)
         return (*f_isservice) ();
 
     h = GetProcessWindowStation();
