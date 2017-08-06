@@ -96,13 +96,14 @@ void OPENSSL_cpuid_setup(void)
 # if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
 int OPENSSL_isservice(void)
 {
+    static FARPROC f_isservice = NULL;
+    static int is_first_time = 1;
     HWINSTA h;
     DWORD len;
     WCHAR *name;
-    static FARPROC f_isservice = NULL;
-    static int is_first_time = 1;
 
-    /* Allow application to override OPENSSL_isservice by exporting
+    /*
+     * Allow application to override OPENSSL_isservice by exporting
      * _OPENSSL_isservice function from the .exe file.
      */
     if (is_first_time == 1) {
