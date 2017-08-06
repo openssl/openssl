@@ -72,7 +72,7 @@ RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
     }
     drbg->size = RANDOMNESS_NEEDED;
     drbg->randomness = ucp;
-
+    drbg->fork_count = rand_fork_count;
     drbg->parent = parent;
     if (RAND_DRBG_set(drbg, type, flags) < 0)
         goto err;
@@ -264,6 +264,11 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
     if (adinlen > drbg->max_adin) {
         RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_ADDITIONAL_INPUT_TOO_LONG);
         return 0;
+    }
+
+    if (drbg->fork_count != rand_fork_count) {
+        drbg->fork_count = rand_fork_count;
+        drbg->state = DRBG_RESEED;
     }
 
     if (drbg->reseed_counter >= drbg->reseed_interval)

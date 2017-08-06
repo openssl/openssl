@@ -88,6 +88,7 @@ struct rand_drbg_st {
     CRYPTO_RWLOCK *lock;
     RAND_DRBG *parent;
     int nid; /* the underlying algorithm */
+    int fork_count;
     unsigned short flags; /* various external flags */
     unsigned short filled;
     /*
@@ -126,6 +127,9 @@ extern RAND_METHOD rand_meth;
 extern RAND_BYTES_BUFFER rand_bytes;
 extern RAND_DRBG rand_drbg;
 extern RAND_DRBG priv_drbg;
+
+/* How often we've forked (only incremented in child). */
+extern int rand_fork_count;
 
 /* Hardware-based seeding functions. */
 void rand_read_tsc(RAND_poll_fn cb, void *arg);

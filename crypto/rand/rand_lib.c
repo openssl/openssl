@@ -25,6 +25,7 @@ static CRYPTO_RWLOCK *rand_meth_lock;
 static const RAND_METHOD *default_RAND_meth;
 static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
 RAND_BYTES_BUFFER rand_bytes;
+int rand_fork_count;
 
 #ifdef OPENSSL_RAND_SEED_RDTSC
 /*
@@ -202,6 +203,11 @@ static void free_drbg(RAND_DRBG *drbg)
     RAND_DRBG_uninstantiate(drbg);
 }
 
+void rand_fork()
+{
+    rand_fork_count++;
+}
+
 DEFINE_RUN_ONCE_STATIC(do_rand_init)
 {
     int ret = 1;
@@ -225,7 +231,6 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     ret &= setup_drbg(&priv_drbg);
     return ret;
 }
-
 
 void rand_cleanup_int(void)
 {
