@@ -107,10 +107,10 @@ int OPENSSL_isservice(void)
      * _OPENSSL_isservice function from the .exe file.
      */
     if (is_first_time == 1) {
-        is_first_time = 0;
         HANDLE mod = GetModuleHandle(NULL);
         if (mod != NULL)
             f_isservice = GetProcAddress(mod, "_OPENSSL_isservice");
+        is_first_time = 0;
     }
 
     if (f_isservice != NULL)
