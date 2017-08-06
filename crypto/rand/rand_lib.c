@@ -117,7 +117,7 @@ size_t drbg_entropy_from_system(RAND_DRBG *drbg,
         min_len = drbg->size;
     }
 
-    if (rand_drbg.filled) {
+    if (drbg->filled) {
         /* Re-use what we have. */
         *pout = drbg->randomness;
         return drbg->size;
@@ -136,7 +136,7 @@ size_t drbg_entropy_from_system(RAND_DRBG *drbg,
         min_len = rand_bytes.curr;
     if (min_len != 0) {
         memcpy(drbg->randomness, rand_bytes.buff, min_len);
-        rand_drbg.filled = 1;
+        drbg->filled = 1;
         /* Update amount left and shift it down. */
         rand_bytes.curr -= min_len;
         if (rand_bytes.curr != 0)
