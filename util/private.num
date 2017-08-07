@@ -19,6 +19,7 @@ CRYPTO_EX_dup                           datatype
 CRYPTO_EX_free                          datatype
 CRYPTO_EX_new                           datatype
 EVP_PKEY_gen_cb                         datatype
+EVP_PKEY_METHOD                         datatype
 GEN_SESSION_CB                          datatype
 OPENSSL_Applink                         external
 OSSL_STORE_CTX                          datatype
