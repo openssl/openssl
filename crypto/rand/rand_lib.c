@@ -30,8 +30,8 @@ int rand_fork_count;
 #ifdef OPENSSL_RAND_SEED_RDTSC
 /*
  * IMPORTANT NOTE:  It is not currently possible to use this code
- * because we are not sure about the amount of randomness.  Some
- * SP900 tests have been run, but there is internal skepticism.
+ * because we are not sure about the amount of randomness it provides.
+ * Some SP900 tests have been run, but there is internal skepticism.
  * So for now this code is not used.
  */
 # error "RDTSC enabled?  Should not be possible!"
@@ -47,45 +47,39 @@ void rand_read_tsc(RAND_poll_fn cb, void *arg)
     unsigned char c;
     int i;
 
-    for (i = 0; i < 10; i++) {
-        c = (unsigned char)(OPENSSL_rdtsc() & 0xFF);
-        cb(arg, &c, 1, 0.5);
+    if ((OPENSSL_ia32cap_P[0] & (1 << 4)) != 0) {
+        for (i = 0; i < TSC_READ_COUNT; i++) {
+            c = (unsigned char)(OPENSSL_rdtsc() & 0xFF);
+            cb(arg, &c, 1, 0.5);
+        }
     }
 }
 #endif
 
 #ifdef OPENSSL_RAND_SEED_RDCPU
-size_t OPENSSL_ia32_rdseed(void);
-size_t OPENSSL_ia32_rdrand(void);
+size_t OPENSSL_ia32_rdseed_bytes(char *buf, size_t len);
+size_t OPENSSL_ia32_rdrand_bytes(char *buf, size_t len);
 
 extern unsigned int OPENSSL_ia32cap_P[];
 
 int rand_read_cpu(RAND_poll_fn cb, void *arg)
 {
-    size_t i, s;
+    char buff[RANDOMNESS_NEEDED];
 
     /* If RDSEED is available, use that. */
-    if ((OPENSSL_ia32cap_P[1] & (1 << 18)) != 0) {
-        for (i = 0; i < RANDOMNESS_NEEDED; i += sizeof(s)) {
-            s = OPENSSL_ia32_rdseed();
-            if (s == 0)
-                break;
-            cb(arg, &s, (int)sizeof(s), sizeof(s));
-        }
-        if (i >= RANDOMNESS_NEEDED)
+    if ((OPENSSL_ia32cap_P[2] & (1 << 18)) != 0) {
+        if (OPENSSL_ia32_rdseed_bytes(buff, sizeof(buff)) == sizeof(buff)) {
+            cb(arg, buff, (int)sizeof(buff), sizeof(buff));
             return 1;
+        }
     }
 
     /* Second choice is RDRAND. */
     if ((OPENSSL_ia32cap_P[1] & (1 << (62 - 32))) != 0) {
-        for (i = 0; i < RANDOMNESS_NEEDED; i += sizeof(s)) {
-            s = OPENSSL_ia32_rdrand();
-            if (s == 0)
-                break;
-            cb(arg, &s, (int)sizeof(s), sizeof(s));
-        }
-        if (i >= RANDOMNESS_NEEDED)
+        if (OPENSSL_ia32_rdrand_bytes(buff, sizeof(buff)) == sizeof(buff)) {
+            cb(arg, buff, (int)sizeof(buff), sizeof(buff));
             return 1;
+        }
     }
 
     return 0;
@@ -186,7 +180,10 @@ static int setup_drbg(RAND_DRBG *drbg)
     drbg->lock = CRYPTO_THREAD_lock_new();
     ret &= drbg->lock != NULL;
     drbg->size = RANDOMNESS_NEEDED;
-    drbg->randomness = OPENSSL_malloc(drbg->size);
+    drbg->secure = CRYPTO_secure_malloc_initialized();
+    drbg->randomness = drbg->secure
+        ? OPENSSL_secure_malloc(drbg->size)
+        : OPENSSL_malloc(drbg->size);
     ret &= drbg->randomness != NULL;
     /* If you change these parameters, see RANDOMNESS_NEEDED */
     ret &= RAND_DRBG_set(drbg,
@@ -199,7 +196,10 @@ static int setup_drbg(RAND_DRBG *drbg)
 static void free_drbg(RAND_DRBG *drbg)
 {
     CRYPTO_THREAD_lock_free(drbg->lock);
-    OPENSSL_clear_free(drbg->randomness, drbg->size);
+    if (drbg->secure)
+        OPENSSL_secure_clear_free(drbg->randomness, drbg->size);
+    else
+        OPENSSL_clear_free(drbg->randomness, drbg->size);
     RAND_DRBG_uninstantiate(drbg);
 }
 
@@ -223,9 +223,10 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     ret &= rand_bytes.lock != NULL;
     rand_bytes.curr = 0;
     rand_bytes.size = MAX_RANDOMNESS_HELD;
-    /* TODO: Should this be secure malloc? */
-    rand_bytes.buff = malloc(rand_bytes.size);
-
+    rand_bytes.secure = CRYPTO_secure_malloc_initialized();
+    rand_bytes.buff = rand_bytes.secure
+        ? OPENSSL_secure_malloc(rand_bytes.size)
+        : OPENSSL_malloc(rand_bytes.size);
     ret &= rand_bytes.buff != NULL;
     ret &= setup_drbg(&rand_drbg);
     ret &= setup_drbg(&priv_drbg);
@@ -244,7 +245,10 @@ void rand_cleanup_int(void)
 #endif
     CRYPTO_THREAD_lock_free(rand_meth_lock);
     CRYPTO_THREAD_lock_free(rand_bytes.lock);
-    OPENSSL_clear_free(rand_bytes.buff, rand_bytes.size);
+    if (rand_bytes.secure)
+        OPENSSL_secure_clear_free(rand_bytes.buff, rand_bytes.size);
+    else
+        OPENSSL_clear_free(rand_bytes.buff, rand_bytes.size);
     free_drbg(&rand_drbg);
     free_drbg(&priv_drbg);
 }
