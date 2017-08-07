@@ -224,7 +224,7 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     rand_bytes.curr = 0;
     rand_bytes.size = MAX_RANDOMNESS_HELD;
     /* TODO: Should this be secure malloc? */
-    rand_bytes.buff = malloc(rand_bytes.size);
+    rand_bytes.buff = OPENSSL_malloc(rand_bytes.size);
 
     ret &= rand_bytes.buff != NULL;
     ret &= setup_drbg(&rand_drbg);
