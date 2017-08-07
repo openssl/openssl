@@ -47,9 +47,11 @@ void rand_read_tsc(RAND_poll_fn cb, void *arg)
     unsigned char c;
     int i;
 
-    for (i = 0; i < TSC_READ_COUNT; i++) {
-        c = (unsigned char)(OPENSSL_rdtsc() & 0xFF);
-        cb(arg, &c, 1, 0.5);
+    if ((OPENSSL_ia32cap_P[0] & (1 << 4)) != 0) {
+        for (i = 0; i < TSC_READ_COUNT; i++) {
+            c = (unsigned char)(OPENSSL_rdtsc() & 0xFF);
+            cb(arg, &c, 1, 0.5);
+        }
     }
 }
 #endif
@@ -65,7 +67,7 @@ int rand_read_cpu(RAND_poll_fn cb, void *arg)
     size_t i, s;
 
     /* If RDSEED is available, use that. */
-    if ((OPENSSL_ia32cap_P[1] & (1 << 18)) != 0) {
+    if ((OPENSSL_ia32cap_P[2] & (1 << 18)) != 0) {
         for (i = 0; i < RANDOMNESS_NEEDED; i += sizeof(s)) {
             s = OPENSSL_ia32_rdseed();
             if (s == 0)
