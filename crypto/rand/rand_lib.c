@@ -188,9 +188,8 @@ static int setup_drbg(RAND_DRBG *drbg)
     drbg->size = RANDOMNESS_NEEDED;
     drbg->secure = CRYPTO_secure_malloc_initialized();
     drbg->randomness = drbg->secure
-        ? OPENSSL_secure_malloc(rand_bytes.size)
-        : OPENSSL_malloc(rand_bytes.size);
-    drbg->randomness = OPENSSL_malloc(drbg->size);
+        ? OPENSSL_secure_malloc(drbg->size)
+        : OPENSSL_malloc(drbg->size);
     ret &= drbg->randomness != NULL;
     /* If you change these parameters, see RANDOMNESS_NEEDED */
     ret &= RAND_DRBG_set(drbg,

@@ -43,10 +43,9 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
 {
 # ifndef USE_BCRYPTGENRANDOM
     HCRYPTPROV hProvider;
-# endif
-    DWORD w;
-    BYTE buf[RANDOMNESS_NEEDED];
     int ok = 0;
+# endif
+    BYTE buf[RANDOMNESS_NEEDED];
 
 # ifdef OPENSSL_RAND_SEED_RDTSC
     rand_read_tsc(cb, arg);
@@ -58,17 +57,17 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
 
 # ifdef USE_BCRYPTGENRANDOM
     if (BCryptGenRandom(NULL, buf, (ULONG)sizeof(buf),
-                        BCRYPT_USE_SYSTEM_PREFERRED_RNG) != STATUS_SUCCESS)
-        return 0;
-    cb(arg, buf, sizeof(buf), sizeof(buf));
-    return 1;
+                        BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS) {
+        cb(arg, buf, sizeof(buf), sizeof(buf));
+        return 1;
+    }
 # else
     /* poll the CryptoAPI PRNG */
     if (CryptAcquireContextW(&hProvider, NULL, NULL, PROV_RSA_FULL,
                              CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
         if (CryptGenRandom(hProvider, (DWORD)sizeof(buf), buf) != 0) {
             cb(arg, buf, sizeof(buf), sizeof(buf));
-            ok++;
+            ok = 1;
         }
         CryptReleaseContext(hProvider, 0);
         if (ok)
@@ -80,7 +79,7 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
                              CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
         if (CryptGenRandom(hProvider, (DWORD)sizeof(buf), buf) != 0) {
             cb(arg, buf, sizeof(buf), sizeof(buf));
-            ok++;
+            ok = 1;
         }
         CryptReleaseContext(hProvider, 0);
         if (ok)
@@ -91,7 +90,7 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
     return 0;
 }
 
-#if OPENSSL_API_COMPAT < 0x10100000L
+# if OPENSSL_API_COMPAT < 0x10100000L
 int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     RAND_poll();
@@ -102,6 +101,6 @@ void RAND_screen(void)
 {
     RAND_poll();
 }
-#endif
+# endif
 
 #endif
