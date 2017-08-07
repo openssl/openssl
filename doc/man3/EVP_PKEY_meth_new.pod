@@ -195,12 +195,12 @@ specific public key cryptographic algorithm. Those methods are usually
 used to perform different jobs, such as generating a key, signing or
 verifying, encrypting or decrypting, etc.
 
-There are two places where store the B<EVP_PKEY_METHOD> objects, one is
-a built-in static array represneting the stadard methods for different
-alogorithms, the other one is a stack of user defined application specified
+There are two places where the B<EVP_PKEY_METHOD> objects are stored: one
+is a built-in static array representing the standard methods for different
+algorithms, and the other one is a stack of user defined application specified
 methods, which can be manipulated by using L<EVP_PKEY_meth_add0(3)> function.
 
-The B<EVP_PKEY_METHOD> objects are usally referenced by B<EVP_PKEY_CTX>
+The B<EVP_PKEY_METHOD> objects are usually referenced by B<EVP_PKEY_CTX>
 objects.
 
 =head2 Functions
@@ -218,7 +218,7 @@ EVP_PKEY_meth_find() finds an B<EVP_PKEY_METHOD> object with the B<id>.
 This function first searches through the user defined method objects and
 then the built-in objects.
 
-EVP_PKEY_meth_add0() adds B<pemth> to the user defined stack of methods.
+EVP_PKEY_meth_add0() adds B<pmeth> to the user defined stack of methods.
 
 The EVP_PKEY_meth_set functions set the corresponding fields of
 B<EVP_PKEY_METHOD> structure with the arguments passed.
@@ -240,7 +240,7 @@ EVP_PKEY_meth_add0() returns 1 if method is added successfully and 0
 if error occurred.
 
 All EVP_PKEY_meth_set and EVP_PKEY_meth_get functions have no return
-values. For the 'get' functions, function poitners are returned by
+values. For the 'get' functions, function pointers are returned by
 arguments.
 
 =head1 NOTES
