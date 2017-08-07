@@ -25,6 +25,9 @@
  */
 # define RANDOMNESS_NEEDED              16
 
+/* How many times to read the TSC as a randomness source. */
+# define TSC_READ_COUNT                 4
+
 /* Maximum amount of randomness to hold in RAND_BYTES_BUFFER. */
 # define MAX_RANDOMNESS_HELD            (4 * RANDOMNESS_NEEDED)
 
@@ -57,9 +60,10 @@ typedef enum drbg_status_e {
  */
 typedef struct rand_bytes_buffer_st {
     CRYPTO_RWLOCK *lock;
+    unsigned char *buff;
     size_t size;
     size_t curr;
-    unsigned char *buff;
+    int secure;
 } RAND_BYTES_BUFFER;
 
 /*
@@ -90,7 +94,8 @@ struct rand_drbg_st {
     int nid; /* the underlying algorithm */
     int fork_count;
     unsigned short flags; /* various external flags */
-    unsigned short filled;
+    char filled;
+    char secure;
     /*
      * This is a fixed-size buffer, but we malloc to make it a little
      * harder to find; a classic security/performance trade-off.
