@@ -25,7 +25,7 @@
  */
 # define RANDOMNESS_NEEDED              16
 
-/* How often to reaad the TSC as a randomness source. */
+/* How many times to read the TSC as a randomness source. */
 # define TSC_READ_COUNT                 4
 
 /* Maximum amount of randomness to hold in RAND_BYTES_BUFFER. */

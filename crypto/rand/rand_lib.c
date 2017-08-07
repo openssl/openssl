@@ -57,37 +57,29 @@ void rand_read_tsc(RAND_poll_fn cb, void *arg)
 #endif
 
 #ifdef OPENSSL_RAND_SEED_RDCPU
-size_t OPENSSL_ia32_rdseed(void);
-size_t OPENSSL_ia32_rdrand(void);
+size_t OPENSSL_ia32_rdseed_bytes(char *buf, size_t len);
+size_t OPENSSL_ia32_rdrand_bytes(char *buf, size_t len);
 
 extern unsigned int OPENSSL_ia32cap_P[];
 
 int rand_read_cpu(RAND_poll_fn cb, void *arg)
 {
-    size_t i, s;
+    char buff[RANDOMNESS_NEEDED];
 
     /* If RDSEED is available, use that. */
     if ((OPENSSL_ia32cap_P[2] & (1 << 18)) != 0) {
-        for (i = 0; i < RANDOMNESS_NEEDED; i += sizeof(s)) {
-            s = OPENSSL_ia32_rdseed();
-            if (s == 0)
-                break;
-            cb(arg, &s, (int)sizeof(s), sizeof(s));
-        }
-        if (i >= RANDOMNESS_NEEDED)
+        if (OPENSSL_ia32_rdseed_bytes(buff, sizeof(buff)) == sizeof(buff)) {
+            cb(arg, buff, (int)sizeof(buff), sizeof(buff));
             return 1;
+        }
     }
 
     /* Second choice is RDRAND. */
     if ((OPENSSL_ia32cap_P[1] & (1 << (62 - 32))) != 0) {
-        for (i = 0; i < RANDOMNESS_NEEDED; i += sizeof(s)) {
-            s = OPENSSL_ia32_rdrand();
-            if (s == 0)
-                break;
-            cb(arg, &s, (int)sizeof(s), sizeof(s));
-        }
-        if (i >= RANDOMNESS_NEEDED)
+        if (OPENSSL_ia32_rdrand_bytes(buff, sizeof(buff)) == sizeof(buff)) {
+            cb(arg, buff, (int)sizeof(buff), sizeof(buff));
             return 1;
+        }
     }
 
     return 0;
