@@ -13,7 +13,9 @@ SSL_CIPHER_get_digest_nid,
 SSL_CIPHER_get_handshake_digest,
 SSL_CIPHER_get_kx_nid,
 SSL_CIPHER_get_auth_nid,
-SSL_CIPHER_is_aead
+SSL_CIPHER_is_aead,
+SSL_CIPHER_find,
+SSL_CIPHER_get_id
 - get SSL_CIPHER properties
 
 =head1 SYNOPSIS
@@ -32,6 +34,8 @@ SSL_CIPHER_is_aead
  int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c);
  int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c);
  int SSL_CIPHER_is_aead(const SSL_CIPHER *c);
+ const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr);
+ uint32_t SSL_CIPHER_get_id(const SSL_CIPHER *c);
 
 =head1 DESCRIPTION
 
@@ -87,6 +91,18 @@ TLS 1.3 cipher suites) B<NID_auth_any> is returned. Examples (not comprehensive)
 
 SSL_CIPHER_is_aead() returns 1 if the cipher B<c> is AEAD (e.g. GCM or
 ChaCha20/Poly1305), and 0 if it is not AEAD.
+
+SSL_CIPHER_find() returns a B<SSL_CIPHER> structure which has the cipher ID stored
+in B<ptr>. The B<ptr> parameter is a two element array of B<char>, which stores the
+two-byte TLS cipher ID (as allocated by IANA) in network byte order. This parameter
+is usually retrieved from a TLS packet by using functions like L<SSL_early_get0_ciphers(3)>.
+SSL_CIPHER_find() returns NULL if an error occurs or the indicated cipher is not found.
+
+SSL_CIPHER_get_id() returns the ID of the given cipher B<c>. The ID here is an
+OpenSSL-specific concept, which stores a prefix of 0x0300 in the higher two bytes,
+and the IANA-specified chipher suite ID in the lower two bytes. For instance,
+TLS_RSA_WITH_NULL_MD5 has IANA ID "0x00, 0x01", but the SSL_CIPHER_get_id()
+function will return an ID with value 0x03000001.
 
 SSL_CIPHER_description() returns a textual description of the cipher used
 into the buffer B<buf> of length B<len> provided.  If B<buf> is provided, it
