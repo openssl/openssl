@@ -61,7 +61,7 @@ int tls_parse_ctos_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
  *   to allow the application to position itself to the right context.
  * - The servername is acknowledged if it is new for a session or when
  *   it is identical to a previously used for the same session.
- *   Applications can control the behavior.  They can at any time
+ *   Applications can control the behaviour.  They can at any time
  *   set a 'desirable' servername for a new SSL object. This can be the
  *   case for example with HTTPS when a Host: header field is received and
  *   a renegotiation is requested. In this case, a possible servername

@@ -208,7 +208,7 @@ static int early_select_server_ctx(SSL *s, void *arg, int ignore)
  *  actions: either abort the handshake by sending a fatal-level
  *  unrecognized_name(112) alert or continue the handshake.
  *
- * This behavior is up to the application to configure; we test both
+ * This behaviour is up to the application to configure; we test both
  * configurations to ensure the state machine propagates the result
  * correctly.
  */

@@ -52,7 +52,7 @@ static int test_old()
 
     switch (UI_process(ui)) {
     case -2:
-        TEST_info("test_old: UI process interrupted or canceled");
+        TEST_info("test_old: UI process interrupted or cancelled");
         /* fall through */
     case -1:
         goto err;
