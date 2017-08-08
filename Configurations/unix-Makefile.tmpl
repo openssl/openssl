@@ -689,8 +689,18 @@ tar:
 	 git ls-tree -r --name-only --full-tree HEAD \
          | grep -v '^fuzz/corpora' \
 	 | while read F; do \
-	       mkdir -p $$TMPDIR/$$DISTDIR/`dirname $$F`; \
-	       cp $$F $$TMPDIR/$$DISTDIR/$$F; \
+	       PARENT_DIR=`dirname $$F`; \
+	       mkdir -p $$TMPDIR/$$DISTDIR/$$PAREENT_DIR; \
+	       # do not copy empty directories \
+	       IS_DIR=`ls -Al $$PARENT_DIR | grep ^d | grep $$F | wc -l`; \
+	       if [ $$IS_DIR == 1 ]; then \
+	           FILES_COUNT=`ls -1 $$PARENT_DIR/$$F | wc -l`; \
+	           if [ $$FILES_COUNT -gt 0 ]; then \
+	               cp $$F $$TMPDIR/$$DISTDIR/$$F; \
+	           fi; \
+	       else \
+	           cp $$F $$TMPDIR/$$DISTDIR/$$F; \
+	       fi; \
 	   done); \
 	(cd $$TMPDIR; \
 	 $(PREPARE_CMD); \
