@@ -60,6 +60,7 @@ static int test_kdf_hkdf(void)
     return 1;
 }
 
+#ifndef OPENSSL_NO_SCRYPT
 static int test_kdf_scrypt(void)
 {
     EVP_PKEY_CTX *pctx;
@@ -126,10 +127,13 @@ static int test_kdf_scrypt(void)
     EVP_PKEY_CTX_free(pctx);
     return 1;
 }
+#endif
 
 int setup_tests()
 {
     ADD_TEST(test_kdf_hkdf);
+#ifndef OPENSSL_NO_SCRYPT
     ADD_TEST(test_kdf_scrypt);
+#endif
     return 1;
 }

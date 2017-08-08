@@ -15,6 +15,8 @@
 #include "internal/cryptlib.h"
 #include "internal/evp_int.h"
 
+#ifndef OPENSSL_NO_SCRYPT
+
 static int atou64(const char *nptr, uint64_t *result);
 
 typedef struct {
@@ -256,3 +258,5 @@ const EVP_PKEY_METHOD scrypt_pkey_meth = {
     pkey_scrypt_ctrl,
     pkey_scrypt_ctrl_str
 };
+
+#endif
