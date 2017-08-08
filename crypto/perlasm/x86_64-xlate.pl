@@ -1200,7 +1200,7 @@ while(defined(my $line=<>)) {
 
 print "\n$current_segment\tENDS\n"	if ($current_segment && $masm);
 print "END\n"				if ($masm);
-
+print ".subsections_via_symbols\n"      if ($flavour eq "macosx");
 close STDOUT;
 
 #################################################

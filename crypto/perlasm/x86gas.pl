@@ -164,6 +164,8 @@ sub ::file_end
 	    foreach $i (keys %non_lazy_ptr)
 	    {	push(@out,"$non_lazy_ptr{$i}:\n.indirect_symbol\t$i\n.long\t0\n");   }
 	}
+	# Support dead code stripping
+	push(@out,".subsections_via_symbols\n");
     }
     if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out) {
 	my $tmp=".comm\t${nmdecor}OPENSSL_ia32cap_P,16";
