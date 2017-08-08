@@ -679,7 +679,13 @@ tags TAGS: FORCE
 
 # Release targets (note: only available on Unix) #####################
 
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),SunOS)
+# tar in Solaris doesn't have --owner and --group options
+TAR_COMMAND=$(TAR) $(TARFLAGS) -cvf -
+else
 TAR_COMMAND=$(TAR) $(TARFLAGS) --owner 0 --group 0 -cvf -
+endif
 PREPARE_CMD=:
 tar:
 	TMPDIR=/var/tmp/openssl-copy.$$$$; \
