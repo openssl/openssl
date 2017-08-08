@@ -92,12 +92,17 @@ TLS 1.3 cipher suites) B<NID_auth_any> is returned. Examples (not comprehensive)
 SSL_CIPHER_is_aead() returns 1 if the cipher B<c> is AEAD (e.g. GCM or
 ChaCha20/Poly1305), and 0 if it is not AEAD.
 
-SSL_CIPHER_find() returns a B<SSL_CIPHER> structure which has the cipher ID B<ptr>.
-The B<ptr> parameter is a two elements array of B<char>, which stores the two bytes
-TLS cipher ID in network byte order. This parameter is usually retrieved from a TLS
-packet by using functions like L<PACKET_get_bytes(3)>.
+SSL_CIPHER_find() returns a B<SSL_CIPHER> structure which has the cipher ID stored in
+B<ptr>. The B<ptr> parameter is a two elements array of B<char>, which stores the two
+bytes TLS cipher ID in network byte order. This parameter is usually retrieved from a
+TLS packet by using functions like L<PACKET_get_bytes(3)>. SSL_CIPHER_find() returns
+NULL if error occurs or cipher is not found.
 
-SSL_CIPHER_get_id() returns the ID of the given cipher B<c>.
+SSL_CIPHER_get_id() returns the ID of the given cipher B<c>. The ID here is an
+OpenSSL-specific concept, which stores a prefix of 0x0300 in the higher two bytes,
+and the IANA-specified chipher suit ID in the lower two bytes. For instance,
+TLS_RSA_WITH_NULL_MD5, has IANA ID "0x00, 0x01", but the SSL_CIPHER_get_id()
+function will return an ID with value 0x03000001.
 
 SSL_CIPHER_description() returns a textual description of the cipher used
 into the buffer B<buf> of length B<len> provided.  If B<buf> is provided, it
