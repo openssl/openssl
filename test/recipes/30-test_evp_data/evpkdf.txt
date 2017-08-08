@@ -252,4 +252,54 @@ Ctrl.IKM = hexkey:0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c
 Ctrl.salt = salt:
 Output = 2c91117204d745f3500d636a62f64f0ab3bae548aa53d423b0d1f27ebba6f5e5673a081d70cce7acfc48
 
+Title = id-scrypt tests (from draft-josefsson-id-scrypt-kdf-03 and others)
+
+KDF = scrypt
+Ctrl.pass = pass:
+Ctrl.salt = salt:
+Ctrl.N = N:16
+Ctrl.r = r:1
+Ctrl.p = p:1
+Output = 77d6576238657b203b19ca42c18a0497f16b4844e3074ae8dfdffa3fede21442fcd0069ded0948f8326a753a0fc81f17e8d3e0fb2e0d3628cf35e20c38d18906
+
+KDF = scrypt
+Ctrl.pass = pass:password
+Ctrl.salt = salt:NaCl
+Ctrl.N = N:1024
+Ctrl.r = r:8
+Ctrl.p = p:16
+Output = fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e77376634b3731622eaf30d92e22a3886ff109279d9830dac727afb94a83ee6d8360cbdfa2cc0640
+
+KDF = scrypt
+Ctrl.hexpass = hexpass:70617373776f7264
+Ctrl.salt = salt:NaCl
+Ctrl.N = N:1024
+Ctrl.r = r:8
+Ctrl.p = p:16
+Output = fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e77376634b3731622eaf30d92e22a3886ff109279d9830dac727afb94a83ee6d8360cbdfa2cc0640
+
+KDF = scrypt
+Ctrl.pass = pass:password
+Ctrl.hexsalt = hexsalt:4e61436c
+Ctrl.N = N:1024
+Ctrl.r = r:8
+Ctrl.p = p:16
+Output = fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e77376634b3731622eaf30d92e22a3886ff109279d9830dac727afb94a83ee6d8360cbdfa2cc0640
+
+KDF = scrypt
+Ctrl.pass = pass:pleaseletmein
+Ctrl.salt = salt:SodiumChloride
+Ctrl.N = N:16384
+Ctrl.r = r:8
+Ctrl.p = p:1
+Output = 7023bdcb3afd7348461c06cd81fd38ebfda8fbba904f8e3ea9b543f6545da1f2d5432955613f0fcf62d49705242a9af9e61e85dc0d651e40dfcf017b45575887
+
+# Out of memory
+KDF = scrypt
+Ctrl.pass = pass:pleaseletmein
+Ctrl.salt = salt:SodiumChloride
+Ctrl.N = N:1048576
+Ctrl.r = r:8
+Ctrl.p = p:1
+Result = INTERNAL_ERROR
 

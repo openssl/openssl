@@ -52,6 +52,7 @@
 # define EVP_PKEY_EC     NID_X9_62_id_ecPublicKey
 # define EVP_PKEY_HMAC   NID_hmac
 # define EVP_PKEY_CMAC   NID_cmac
+# define EVP_PKEY_SCRYPT NID_id_scrypt
 # define EVP_PKEY_TLS1_PRF NID_tls1_prf
 # define EVP_PKEY_HKDF   NID_hkdf
 # define EVP_PKEY_POLY1305 NID_poly1305
@@ -1275,6 +1276,8 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
                       int cmd, int p1, void *p2);
 int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
                           const char *value);
+int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,
+                                int cmd, uint64_t value);
 
 int EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str);
 int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex);

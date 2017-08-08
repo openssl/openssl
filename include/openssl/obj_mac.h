@@ -4735,6 +4735,7 @@
 #define OBJ_jurisdictionCountryName             1L,3L,6L,1L,4L,1L,311L,60L,2L,1L,3L
 
 #define SN_id_scrypt            "id-scrypt"
+#define LN_id_scrypt            "scrypt"
 #define NID_id_scrypt           973
 #define OBJ_id_scrypt           1L,3L,6L,1L,4L,1L,11591L,4L,11L
 
