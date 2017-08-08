@@ -679,13 +679,8 @@ tags TAGS: FORCE
 
 # Release targets (note: only available on Unix) #####################
 
-UNAME_S := $(shell uname -s)
-ifeq ($(UNAME_S),SunOS)
 # tar in Solaris doesn't have --owner and --group options
-TAR_COMMAND=$(TAR) $(TARFLAGS) -cvf -
-else
 TAR_COMMAND=$(TAR) $(TARFLAGS) --owner 0 --group 0 -cvf -
-endif
 PREPARE_CMD=:
 tar:
 	TMPDIR=/var/tmp/openssl-copy.$$$$; \
@@ -708,14 +703,26 @@ tar:
 	           cp $$F $$TMPDIR/$$DISTDIR/$$F; \
 	       fi; \
 	   done); \
+	(UNAME_S=`uname -s`; \
+	# tar in Solaris doesn't have --owner and --group options \
+	if [ $$UNAME_S == "SunOS" ]; then \
 	(cd $$TMPDIR/$$DISTDIR; \
+	$(PREPARE_CMD); \
+	cd $$TMPDIR; \
+	find $$TMPDIR/$$DISTDIR -type d -print | xargs chmod 755; \
+	find $$TMPDIR/$$DISTDIR -type f -print | xargs chmod a+r; \
+	find $$TMPDIR/$$DISTDIR -type f -perm -0100 -print | xargs chmod a+x; \
+	$(TAR) $(TARFLAGS) -cvf - $$DISTDIR) \
+	| (cd $(SRCDIR); gzip --best > $(TARFILE).gz); \
+	else \
+	(cd $$TMPDIR; \
 	 $(PREPARE_CMD); \
-	 cd $$TMPDIR; \
 	 find $$TMPDIR/$$DISTDIR -type d -print | xargs chmod 755; \
 	 find $$TMPDIR/$$DISTDIR -type f -print | xargs chmod a+r; \
 	 find $$TMPDIR/$$DISTDIR -type f -perm -0100 -print | xargs chmod a+x; \
 	 $(TAR_COMMAND) $$DISTDIR) \
 	| (cd $(SRCDIR); gzip --best > $(TARFILE).gz); \
+        fi; )
 	rm -rf $$TMPDIR
 	cd $(SRCDIR); ls -l $(TARFILE).gz
 
