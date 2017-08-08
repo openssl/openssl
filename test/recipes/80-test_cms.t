@@ -349,6 +349,15 @@ my @smime_cms_param_tests = (
 	"-in", "test.cms", "-out", "smtst.txt" ]
     ],
 
+    [ "enveloped content test streaming S/MIME format, DES, ECDH, 2 recipients, key only used",
+      [ "-encrypt", "-in", $smcont,
+	"-stream", "-out", "test.cms",
+	catfile($smdir, "smec1.pem"),
+	catfile($smdir, "smec2.pem") ],
+      [ "-decrypt", "-inkey", catfile($smdir, "smec2.pem"),
+	"-in", "test.cms", "-out", "smtst.txt" ]
+    ],
+
     [ "enveloped content test streaming S/MIME format, ECDH, DES, key identifier",
       [ "-encrypt", "-keyid", "-in", $smcont,
 	"-stream", "-out", "test.cms",
