@@ -690,7 +690,7 @@ tar:
          | grep -v '^fuzz/corpora' \
 	 | while read F; do \
 	       PARENT_DIR=`dirname $$F`; \
-	       mkdir -p $$TMPDIR/$$DISTDIR/$$PAREENT_DIR; \
+	       mkdir -p $$TMPDIR/$$DISTDIR/$$PARENT_DIR; \
 	       # do not copy empty directories \
 	       IS_DIR=`ls -Al $$PARENT_DIR | grep ^d | grep $$F | wc -l`; \
 	       if [ $$IS_DIR == 1 ]; then \
