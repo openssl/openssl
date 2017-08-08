@@ -702,8 +702,9 @@ tar:
 	           cp $$F $$TMPDIR/$$DISTDIR/$$F; \
 	       fi; \
 	   done); \
-	(cd $$TMPDIR; \
+	(cd $$TMPDIR/$$DISTDIR; \
 	 $(PREPARE_CMD); \
+	 cd $$TMPDIR; \
 	 find $$TMPDIR/$$DISTDIR -type d -print | xargs chmod 755; \
 	 find $$TMPDIR/$$DISTDIR -type f -print | xargs chmod a+r; \
 	 find $$TMPDIR/$$DISTDIR -type f -perm -0100 -print | xargs chmod a+x; \
