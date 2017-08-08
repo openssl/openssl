@@ -22,7 +22,7 @@ EVP_DigestVerify - EVP signature verification functions
 The EVP signature routines are a high level interface to digital signatures.
 
 EVP_DigestVerifyInit() sets up verification context B<ctx> to use digest
-B<type> from ENGINE B<impl> and public key B<pkey>. B<ctx> must be created
+B<type> from ENGINE B<e> and public key B<pkey>. B<ctx> must be created
 with EVP_MD_CTX_new() before calling this function. If B<pctx> is not NULL the
 EVP_PKEY_CTX of the verification operation will be written to B<*pctx>: this
 can be used to set alternative verification options.
