@@ -33,13 +33,13 @@ Print out a usage message.
 
 This specifies the CRL input format. B<DER> format is DER encoded CRL
 structure.B<PEM> (the default) is a base64 encoded version of
-the DER form with header and footer lines.
+the DER form with header and footer lines. The default format is PEM.
 
 =item B<-outform DER|PEM>
 
 This specifies the PKCS#7 structure output format. B<DER> format is DER
 encoded PKCS#7 structure.B<PEM> (the default) is a base64 encoded version of
-the DER form with header and footer lines.
+the DER form with header and footer lines. The default format is PEM.
 
 =item B<-in filename>
 

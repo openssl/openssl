@@ -42,8 +42,8 @@ format base64 encoded with additional header and footer lines.
 =item B<-outform DER|PEM|NSS>
 
 This specifies the output format. The B<PEM> and B<DER> options have the same meaning
-as the B<-inform> option. The B<NSS> option outputs the session id and the master key
-in NSS keylog format.
+and default as the B<-inform> option. The B<NSS> option outputs the session id and
+the master key in NSS keylog format.
 
 =item B<-in filename>
 

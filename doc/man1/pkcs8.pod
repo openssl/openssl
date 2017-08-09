@@ -52,11 +52,13 @@ reversed: it reads a private key and writes a PKCS#8 format key.
 
 =item B<-inform DER|PEM>
 
-This specifies the input format: see L<KEY FORMATS> for more details.
+This specifies the input format: see L<KEY FORMATS> for more details. The default
+format is PEM.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format: see L<KEY FORMATS> for more details.
+This specifies the output format: see L<KEY FORMATS> for more details. The default
+format is PEM.
 
 =item B<-traditional>
 
