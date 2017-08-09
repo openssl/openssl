@@ -3,7 +3,8 @@
 =head1 NAME
 
 EVP_PKEY_size,
-EVP_SignInit, EVP_SignInit_ex, EVP_SignUpdate, EVP_SignFinal - EVP signing
+EVP_SignInit, EVP_SignInit_ex, EVP_SignUpdate, EVP_SignFinal,
+EVP_PKEY_security_bits - EVP signing
 functions
 
 =head1 SYNOPSIS
@@ -17,6 +18,7 @@ functions
  void EVP_SignInit(EVP_MD_CTX *ctx, const EVP_MD *type);
 
  int EVP_PKEY_size(EVP_PKEY *pkey);
+ int EVP_PKEY_security_bits(const EVP_PKEY *pkey);
 
 =head1 DESCRIPTION
 
@@ -44,6 +46,9 @@ implementation of digest B<type>.
 EVP_PKEY_size() returns the maximum size of a signature in bytes. The actual
 signature returned by EVP_SignFinal() may be smaller.
 
+EVP_PKEY_security_bits() returns the number of security bits of the given B<pkey>,
+bits of security is defined in NIST SP800-57.
+
 =head1 RETURN VALUES
 
 EVP_SignInit_ex(), EVP_SignUpdate() and EVP_SignFinal() return 1
@@ -52,6 +57,8 @@ for success and 0 for failure.
 EVP_PKEY_size() returns the maximum size of a signature in bytes.
 
 The error codes can be obtained by L<ERR_get_error(3)>.
+
+EVP_PKEY_security_bits() returns the number of security bits.
 
 =head1 NOTES
 
