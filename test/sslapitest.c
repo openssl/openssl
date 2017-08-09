@@ -992,10 +992,12 @@ static int execute_test_session(int maxprot, int use_int_cache,
          * the external cache. We take a copy first because
          * SSL_CTX_remove_session() also marks the session as non-resumable.
          */
-        if (use_int_cache
-                && (!TEST_ptr(tmp = SSL_SESSION_dup(sess2))
-                    || !TEST_true(SSL_CTX_remove_session(sctx, sess2))))
-            goto end;
+        if (use_int_cache) {
+            if (!TEST_ptr(tmp = SSL_SESSION_dup(sess2))
+                    || !TEST_true(SSL_CTX_remove_session(sctx, sess2)))
+                goto end;
+            SSL_SESSION_free(sess2);
+        }
         sess2 = tmp;
     }
 
