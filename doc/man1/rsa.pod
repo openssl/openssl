@@ -63,8 +63,8 @@ section.
 
 =item B<-outform DER|NET|PEM>
 
-This specifies the output format, the options have the same meaning as the
-B<-inform> option.
+This specifies the output format, the options have the same meaning and default
+as the B<-inform> option.
 
 =item B<-in filename>
 

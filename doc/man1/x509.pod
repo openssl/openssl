@@ -92,12 +92,12 @@ certificate but this can change if other options such as B<-req> are
 present. The DER format is the DER encoding of the certificate and PEM
 is the base64 encoding of the DER encoding with header and footer lines
 added. The NET option is an obscure Netscape server format that is now
-obsolete.
+obsolete. The default format is PEM.
 
 =item B<-outform DER|PEM|NET>
 
-This specifies the output format, the options have the same meaning as the
-B<-inform> option.
+This specifies the output format, the options have the same meaning and default
+as the B<-inform> option.
 
 =item B<-in filename>
 
