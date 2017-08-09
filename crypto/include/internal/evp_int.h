@@ -97,6 +97,7 @@ extern const EVP_PKEY_METHOD hmac_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pss_pkey_meth;
 extern const EVP_PKEY_METHOD scrypt_pkey_meth;
+extern const EVP_PKEY_METHOD pbkdf2_pkey_meth;
 extern const EVP_PKEY_METHOD tls1_prf_pkey_meth;
 extern const EVP_PKEY_METHOD hkdf_pkey_meth;
 extern const EVP_PKEY_METHOD poly1305_pkey_meth;

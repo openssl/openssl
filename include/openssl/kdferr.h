@@ -21,6 +21,9 @@ int ERR_load_KDF_strings(void);
  */
 # define KDF_F_PKEY_HKDF_CTRL_STR                         103
 # define KDF_F_PKEY_HKDF_DERIVE                           102
+# define KDF_F_PKEY_PBKDF2_CTRL                           106
+# define KDF_F_PKEY_PBKDF2_CTRL_STR                       107
+# define KDF_F_PKEY_PBKDF2_DERIVE                         108
 # define KDF_F_PKEY_SCRYPT_CTRL_STR                       104
 # define KDF_F_PKEY_SCRYPT_CTRL_UINT64                    105
 # define KDF_F_PKEY_SCRYPT_DERIVE                         109

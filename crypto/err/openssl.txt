@@ -730,6 +730,9 @@ EVP_F_RC5_CTRL:125:rc5_ctrl
 EVP_F_UPDATE:173:update
 KDF_F_PKEY_HKDF_CTRL_STR:103:pkey_hkdf_ctrl_str
 KDF_F_PKEY_HKDF_DERIVE:102:pkey_hkdf_derive
+KDF_F_PKEY_PBKDF2_CTRL:106:pkey_pbkdf2_ctrl
+KDF_F_PKEY_PBKDF2_CTRL_STR:107:pkey_pbkdf2_ctrl_str
+KDF_F_PKEY_PBKDF2_DERIVE:108:pkey_pbkdf2_derive
 KDF_F_PKEY_SCRYPT_CTRL_STR:104:pkey_scrypt_ctrl_str
 KDF_F_PKEY_SCRYPT_CTRL_UINT64:105:pkey_scrypt_ctrl_uint64
 KDF_F_PKEY_SCRYPT_DERIVE:109:pkey_scrypt_derive

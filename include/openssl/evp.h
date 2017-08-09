@@ -54,6 +54,7 @@
 # define EVP_PKEY_HMAC   NID_hmac
 # define EVP_PKEY_CMAC   NID_cmac
 # define EVP_PKEY_SCRYPT NID_id_scrypt
+# define EVP_PKEY_PBKDF2 NID_id_pbkdf2
 # define EVP_PKEY_TLS1_PRF NID_tls1_prf
 # define EVP_PKEY_HKDF   NID_hkdf
 # define EVP_PKEY_POLY1305 NID_poly1305
