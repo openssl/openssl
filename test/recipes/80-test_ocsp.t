@@ -15,6 +15,7 @@ use File::Spec::Functions qw/devnull catfile/;
 use File::Copy;
 use OpenSSL::Test qw/:DEFAULT with pipe srctop_dir/;
 use OpenSSL::Test::Utils;
+use Scalar::Util qw(looks_like_number);
 
 setup("test_ocsp");
 
@@ -29,7 +30,12 @@ sub test_ocsp {
     my $title = shift;
     my $inputfile = shift;
     my $CAfile = shift;
+    my $untrusted = $CAfile;
     my $expected_exit = shift;
+    if (!looks_like_number($expected_exit)) {
+        $untrusted = $expected_exit;
+        $expected_exit = shift;
+    }
 
     run(app(["openssl", "base64", "-d",
              "-in", catfile($ocspdir,$inputfile),
@@ -38,7 +44,7 @@ sub test_ocsp {
          sub { ok(run(app(["openssl", "ocsp", "-respin", "ocsp-resp-fff.dat",
                            "-partial_chain", @check_time,
                            "-CAfile", catfile($ocspdir, $CAfile),
-                           "-verify_other", catfile($ocspdir, $CAfile),
+                           "-verify_other", catfile($ocspdir, $untrusted),
                            "-no-CApath"])),
                   $title); });
     unlink "ocsp-resp-fff.dat";
@@ -47,7 +53,7 @@ sub test_ocsp {
 plan tests => 10;
 
 subtest "=== VALID OCSP RESPONSES ===" => sub {
-    plan tests => 6;
+    plan tests => 7;
 
     test_ocsp("NON-DELEGATED; Intermediate CA -> EE",
 	      "ND1.ors", "ND1_Issuer_ICA.pem", 0);
@@ -55,6 +61,8 @@ subtest "=== VALID OCSP RESPONSES ===" => sub {
 	      "ND2.ors", "ND2_Issuer_Root.pem", 0);
     test_ocsp("NON-DELEGATED; Root CA -> EE",
 	      "ND3.ors", "ND3_Issuer_Root.pem", 0);
+    test_ocsp("NON-DELEGATED; 3-level CA hierarchy",
+	      "ND1.ors", "ND1_Cross_Root.pem", "ND1_Issuer_ICA-Cross.pem", 0);
     test_ocsp("DELEGATED; Intermediate CA -> EE",
 	      "D1.ors", "D1_Issuer_ICA.pem", 0);
     test_ocsp("DELEGATED; Root CA -> Intermediate CA",
