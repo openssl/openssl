@@ -641,14 +641,16 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
-    OPENSSL_free(s->session->ext.supportedgroups);
-    s->session->ext.supportedgroups = NULL;
-    s->session->ext.supportedgroups_len = 0;
-    if (!PACKET_memdup(&supported_groups_list,
-                       &s->session->ext.supportedgroups,
-                       &s->session->ext.supportedgroups_len)) {
-        *al = SSL_AD_INTERNAL_ERROR;
-        return 0;
+    if (!s->hit || SSL_IS_TLS13(s)) {
+        OPENSSL_free(s->session->ext.supportedgroups);
+        s->session->ext.supportedgroups = NULL;
+        s->session->ext.supportedgroups_len = 0;
+        if (!PACKET_memdup(&supported_groups_list,
+                           &s->session->ext.supportedgroups,
+                           &s->session->ext.supportedgroups_len)) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            return 0;
+        }
     }
 
     return 1;
