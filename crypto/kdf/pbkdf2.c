@@ -15,6 +15,8 @@
 #include "internal/cryptlib.h"
 #include "internal/evp_int.h"
 
+#ifndef OPENSSL_NO_PBKDF2
+
 typedef struct {
     const EVP_MD *md;
     unsigned char *pass;
@@ -194,3 +196,5 @@ const EVP_PKEY_METHOD pbkdf2_pkey_meth = {
     pkey_pbkdf2_ctrl,
     pkey_pbkdf2_ctrl_str
 };
+
+#endif

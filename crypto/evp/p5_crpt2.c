@@ -22,6 +22,8 @@
 static void h__dump(const unsigned char *p, int len);
 # endif
 
+#ifndef OPENSSL_NO_PBKDF2
+
 /*
  * This is an implementation of PKCS#5 v2.0 password based encryption key
  * derivation function PBKDF2. SHA1 version verified against test vectors
@@ -129,6 +131,8 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
                              keylen, out);
 }
 
+#endif /* OPENSSL_NO_PBKDF2 */
+
 /*
  * Now the key derivation function itself. This is a bit evil because it has
  * to check the ASN1 parameters are valid: and there are quite a few of
@@ -182,6 +186,8 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     PBE2PARAM_free(pbe2);
     return rv;
 }
+
+#ifndef OPENSSL_NO_PBKDF2
 
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int passlen, ASN1_TYPE *param,
@@ -254,6 +260,8 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     PBKDF2PARAM_free(kdf);
     return rv;
 }
+
+#endif /* OPENSSL_NO_PBKDF2 */
 
 # ifdef OPENSSL_DEBUG_PKCS5V2
 static void h__dump(const unsigned char *p, int len)

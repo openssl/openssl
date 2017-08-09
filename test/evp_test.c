@@ -1365,7 +1365,12 @@ static int pbe_test_init(EVP_TEST *t, const char *alg)
         return 1;
 #endif
     } else if (strcmp(alg, "pbkdf2") == 0) {
+#ifndef OPENSSL_NO_PBKDF2
         pbe_type = PBE_TYPE_PBKDF2;
+#else
+        t->skip = 1;
+        return 1;
+#endif
     } else if (strcmp(alg, "pkcs12") == 0) {
         pbe_type = PBE_TYPE_PKCS12;
     } else {
@@ -1417,7 +1422,16 @@ static int pbe_test_run(EVP_TEST *t)
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    if (expected->pbe_type == PBE_TYPE_PBKDF2) {
+    if (expected->pbe_type == PBE_TYPE_PKCS12) {
+        if (PKCS12_key_gen_uni(expected->pass, expected->pass_len,
+                               expected->salt, expected->salt_len,
+                               expected->id, expected->iter, expected->key_len,
+                               key, expected->md) == 0) {
+            t->err = "PKCS12_ERROR";
+            goto err;
+        }
+#ifndef OPENSSL_NO_PBKDF2
+    } else if (expected->pbe_type == PBE_TYPE_PBKDF2) {
         if (PKCS5_PBKDF2_HMAC((char *)expected->pass, expected->pass_len,
                               expected->salt, expected->salt_len,
                               expected->iter, expected->md,
@@ -1425,6 +1439,7 @@ static int pbe_test_run(EVP_TEST *t)
             t->err = "PBKDF2_ERROR";
             goto err;
         }
+#endif
 #ifndef OPENSSL_NO_SCRYPT
     } else if (expected->pbe_type == PBE_TYPE_SCRYPT) {
         if (EVP_PBE_scrypt((const char *)expected->pass, expected->pass_len,
@@ -1435,14 +1450,6 @@ static int pbe_test_run(EVP_TEST *t)
             goto err;
         }
 #endif
-    } else if (expected->pbe_type == PBE_TYPE_PKCS12) {
-        if (PKCS12_key_gen_uni(expected->pass, expected->pass_len,
-                               expected->salt, expected->salt_len,
-                               expected->id, expected->iter, expected->key_len,
-                               key, expected->md) == 0) {
-            t->err = "PKCS12_ERROR";
-            goto err;
-        }
     }
     if (!TEST_mem_eq(expected->key, expected->key_len,
                      key, expected->key_len)) {
@@ -1637,6 +1644,19 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
 
     if (kdf_nid == NID_undef)
         kdf_nid = OBJ_ln2nid(name);
+
+#ifdef OPENSSL_NO_PBKDF2
+    if (strcmp(name, "PBKDF2") == 0) {
+        t->skip = 1;
+        return 1;
+    }
+#endif
+#ifdef OPENSSL_NO_SCRYPT
+    if (strcmp(name, "scrypt") == 0) {
+        t->skip = 1;
+        return 1;
+    }
+#endif
 
     if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
         return 0;

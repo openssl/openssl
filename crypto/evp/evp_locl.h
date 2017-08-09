@@ -41,10 +41,12 @@ struct evp_cipher_ctx_st {
     unsigned char final[EVP_MAX_BLOCK_LENGTH]; /* possible final block */
 } /* EVP_CIPHER_CTX */ ;
 
+#ifndef OPENSSL_NO_PBKDF2
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int passlen, ASN1_TYPE *param,
                              const EVP_CIPHER *c, const EVP_MD *md,
                              int en_de);
+#endif
 
 struct evp_Encode_Ctx_st {
     /* number saved in a partial encode/decode */

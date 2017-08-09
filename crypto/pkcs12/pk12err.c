@@ -83,6 +83,7 @@ static const ERR_STRING_DATA PKCS12_str_reasons[] = {
     "mac string set error"},
     {ERR_PACK(ERR_LIB_PKCS12, 0, PKCS12_R_MAC_VERIFY_FAILURE),
     "mac verify failure"},
+    {ERR_PACK(ERR_LIB_PKCS12, 0, PKCS12_R_MISSING_PBKDF2), "missing pbkdf2"},
     {ERR_PACK(ERR_LIB_PKCS12, 0, PKCS12_R_PARSE_ERROR), "parse error"},
     {ERR_PACK(ERR_LIB_PKCS12, 0, PKCS12_R_PKCS12_ALGOR_CIPHERINIT_ERROR),
     "pkcs12 algor cipherinit error"},

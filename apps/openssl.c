@@ -735,6 +735,9 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_OCSP
     BIO_puts(bio_out, "OCSP\n");
 #endif
+#ifdef OPENSSL_NO_PBKDF2
+    BIO_puts(bio_out, "PBKDF2\n");
+#endif
 #ifdef OPENSSL_NO_PSK
     BIO_puts(bio_out, "PSK\n");
 #endif

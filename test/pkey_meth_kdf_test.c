@@ -170,6 +170,7 @@ static int test_kdf_scrypt(void)
 }
 #endif
 
+#ifndef OPENSSL_NO_PBKDF2
 static int test_kdf_pbkdf2(void)
 {
     unsigned char out[20];
@@ -215,6 +216,7 @@ static int test_kdf_pbkdf2(void)
     EVP_PKEY_CTX_free(pctx);
     return 1;
 }
+#endif
 
 int setup_tests()
 {
@@ -223,6 +225,8 @@ int setup_tests()
 #ifndef OPENSSL_NO_SCRYPT
     ADD_TEST(test_kdf_scrypt);
 #endif
+#ifndef OPENSSL_NO_PBKDF2
     ADD_TEST(test_kdf_pbkdf2);
+#endif
     return 1;
 }
