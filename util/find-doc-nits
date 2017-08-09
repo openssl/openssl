@@ -19,17 +19,19 @@ use lib catdir(dirname($0), "perl");
 use OpenSSL::Util::Pod;
 
 # Options.
+our($opt_d);
+our($opt_h);
+our($opt_l);
+our($opt_n);
+our($opt_p);
 our($opt_s);
 our($opt_u);
-our($opt_h);
-our($opt_n);
-our($opt_l);
-our($opt_p);
 
 sub help()
 {
     print <<EOF;
 Find small errors (nits) in documentation.  Options:
+    -d Detailed list of undocumented (implies -u)
     -l Print bogus links
     -n Print nits in POD pages
     -s Also print missing sections in POD pages (implies -n)
@@ -282,7 +284,7 @@ sub checkmacros()
                 || $macro =~ /DEPRECATEDIN/
                 || $macro =~ /IMPLEMENT_/
                 || $macro =~ /DECLARE_/;
-            print "$f:$macro\n";
+            print "$f:$macro\n" if $opt_d;
             $count++;
         }
         close(IN);
@@ -302,7 +304,7 @@ sub printem()
         # Skip ASN1 utilities
         next if $func =~ /^ASN1_/;
 
-        print "$libname:$func\n";
+        print "$libname:$func\n" if $opt_d;
         $count++;
     }
     print "# Found $count missing from $numfile\n\n";
@@ -395,14 +397,15 @@ sub publicize() {
     }
 }
 
-getopts('lnsphu');
+getopts('dlnsphu');
 
 &help() if $opt_h;
-
-die "Need one of -l -n -s -p or -u flags.\n"
-    unless $opt_l or $opt_n or $opt_s or $opt_p or $opt_u;
-
 $opt_n = 1 if $opt_s or $opt_p;
+$opt_u = 1 if $opt_d;
+
+die "Need one of -[dlnspu] flags.\n"
+    unless $opt_l or $opt_n or $opt_u;
+
 
 if ( $opt_n ) {
     &publicize() if $opt_p;
