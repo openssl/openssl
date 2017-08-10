@@ -2338,10 +2338,6 @@ __owur void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx);
 
 int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
 
-# ifndef OPENSSL_NO_UNIT_TEST
-__owur const struct openssl_ssl_test_functions *SSL_test_functions(void);
-# endif
-
 __owur int SSL_free_buffers(SSL *ssl);
 __owur int SSL_alloc_buffers(SSL *ssl);
 
