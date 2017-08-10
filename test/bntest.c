@@ -59,9 +59,10 @@ static BN_CTX *ctx;
 /*
  * Polynomial coefficients used in GFM tests.
  */
+#ifndef OPENSSL_NO_EC2M
 static int p0[] = { 163, 7, 6, 3, 0, -1 };
 static int p1[] = { 193, 15, 0, -1 };
-
+#endif
 
 /*
  * Look for |key| in the stanza and return it or NULL if not found.
