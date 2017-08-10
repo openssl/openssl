@@ -353,8 +353,8 @@ my @smime_cms_param_tests = (
       [ "-encrypt", "-in", $smcont,
 	"-stream", "-out", "test.cms",
 	catfile($smdir, "smec1.pem"),
-	catfile($smdir, "smec2.pem") ],
-      [ "-decrypt", "-inkey", catfile($smdir, "smec2.pem"),
+	catfile($smdir, "smec3.pem") ],
+      [ "-decrypt", "-inkey", catfile($smdir, "smec3.pem"),
 	"-in", "test.cms", "-out", "smtst.txt" ]
     ],
 
