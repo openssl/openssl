@@ -474,8 +474,8 @@ SHA3_squeeze:
 	jmp	.Loop_squeeze_avx512
 
 .Ltail_squeeze_avx512:
-	mov	%r9,%rsi
 	mov	$out,%rdi
+	mov	%r9,%rsi
 	mov	$len,%rcx
 	.byte	0xf3,0xa4		# rep movsb
 
