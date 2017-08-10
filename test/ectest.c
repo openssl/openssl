@@ -1452,5 +1452,7 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
+#ifndef OPENSSL_NO_EC
     OPENSSL_free(curves);
+#endif
 }
