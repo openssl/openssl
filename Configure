@@ -407,7 +407,6 @@ my @disablables = (
     "ts",
     "ubsan",
     "ui-console",
-    "unit-test",
     "whirlpool",
     "weak-ssl-ciphers",
     "zlib",
@@ -451,7 +450,6 @@ our %disabled = ( # "what"         => "comment"
           #TODO(TLS1.3): Temporarily disabled while this is a WIP
 		  "tls1_3"              => "default",
 		  "tls13downgrade"      => "default",
-		  "unit-test"           => "default",
 		  "weak-ssl-ciphers"    => "default",
 		  "zlib"                => "default",
 		  "zlib-dynamic"        => "default",
@@ -516,7 +514,6 @@ my @disable_cascades = (
     "apps"              => [ "tests" ],
     "comp"              => [ "zlib" ],
     "ec"                => [ "tls1_3" ],
-    sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
 
     sub { !$disabled{"msan"} } => [ "asm" ],
     );
