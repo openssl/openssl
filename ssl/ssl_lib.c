@@ -2372,7 +2372,10 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         goto err;
 
     ret->method = meth;
-    ret->min_proto_version = 0;
+    if (meth->version == TLS_ANY_VERSION)
+        ret->min_proto_version = TLS1_2_VERSION;
+    else
+        ret->min_proto_version = 0;
     ret->max_proto_version = 0;
     ret->session_cache_mode = SSL_SESS_CACHE_SERVER;
     ret->session_cache_size = SSL_SESSION_CACHE_MAX_SIZE_DEFAULT;
