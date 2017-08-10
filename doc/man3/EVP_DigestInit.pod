@@ -24,6 +24,7 @@ EVP_get_digestbyobj - EVP digest routines
  int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
  int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
  int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s);
+ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t len);
 
  int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
 
@@ -96,6 +97,12 @@ to the integer at B<s>, at most B<EVP_MAX_MD_SIZE> bytes will be written.
 After calling EVP_DigestFinal_ex() no additional calls to EVP_DigestUpdate()
 can be made, but EVP_DigestInit_ex() can be called to initialize a new
 digest operation.
+
+EVP_DigestFinalXOF() interfaces to extendable-output functions, XOFs,
+such as SHAKE128 and SHAKE256. It retrieves the digest value from
+B<ctx> and places it in B<len>-sized <B>md. After calling this function
+no additional calls to EVP_DigestUpdate() can be made, but
+EVP_DigestInit_ex() can be called to initialize a new operation.
 
 EVP_MD_CTX_copy_ex() can be used to copy the message digest state from
 B<in> to B<out>. This is useful if large amounts of data are to be
