@@ -121,6 +121,19 @@ static int sha3_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
     return 1;
 }
 
+static int shake_ctrl(EVP_MD_CTX *evp_ctx, int cmd, int p1, void *p2)
+{
+    KECCAK1600_CTX *ctx = evp_ctx->md_data;
+
+    switch (cmd) {
+    case EVP_MD_CTRL_XOF_LEN:
+        ctx->md_size = p1;
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 #define EVP_MD_SHA3(bitlen)                     \
 const EVP_MD *EVP_sha3_##bitlen(void)           \
 {                                               \
@@ -151,8 +164,8 @@ const EVP_MD *EVP_shake##bitlen(void)           \
     static const EVP_MD shake##bitlen##_md = {  \
         NID_shake##bitlen,                      \
         0,                                      \
-        512,                                    \
-        0,                                      \
+        bitlen / 8,                             \
+        EVP_MD_FLAG_XOF,                        \
         shake_init,                             \
         sha3_update,                            \
         sha3_final,                             \
@@ -160,6 +173,7 @@ const EVP_MD *EVP_shake##bitlen(void)           \
         NULL,                                   \
         (KECCAK1600_WIDTH - bitlen * 2) / 8,    \
         sizeof(KECCAK1600_CTX),                 \
+        shake_ctrl                              \
     };                                          \
     return &shake##bitlen##_md;                 \
 }
