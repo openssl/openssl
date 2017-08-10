@@ -40,7 +40,7 @@ static int seed = 0;
  */
 static int num_test_cases = 0;
 
-void add_test(const char *test_case_name, int (*test_fn) ())
+void add_test(const char *test_case_name, int (*test_fn) (void))
 {
     assert(num_tests != OSSL_NELEM(all_tests));
     all_tests[num_tests].test_case_name = test_case_name;
@@ -105,7 +105,7 @@ void setup_test_framework()
     if (test_seed != NULL) {
         seed = atoi(test_seed);
         if (seed <= 0)
-            seed = time(NULL);
+            seed = (int)time(NULL);
         test_printf_stdout("%*s# RAND SEED %d\n", subtest_level(), "", seed);
         test_flush_stdout();
         srand(seed);
@@ -121,6 +121,7 @@ void setup_test_framework()
 
 int pulldown_test_framework(int ret)
 {
+    set_test_title(NULL);
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (should_report_leaks()
         && CRYPTO_mem_leaks_cb(openssl_error_cb, NULL) <= 0)
