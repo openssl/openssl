@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_MD_CTX_new, EVP_MD_CTX_reset, EVP_MD_CTX_free, EVP_MD_CTX_copy_ex,
-EVP_MD_CTX_ctrl, EVP_DigestInit_ex, EVP_DigestInit,EVP_DigestUpdate,
+EVP_MD_CTX_ctrl, EVP_DigestInit_ex, EVP_DigestInit, EVP_DigestUpdate,
 EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
 EVP_MD_CTX_copy, EVP_MD_type, EVP_MD_pkey_type, EVP_MD_size,
 EVP_MD_block_size, EVP_MD_CTX_md, EVP_MD_CTX_size,
