@@ -109,6 +109,9 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 /* digest can only handle a single block */
 #  define EVP_MD_FLAG_ONESHOT     0x0001
 
+/* digest is extensible-output function, XOF */
+#  define EVP_MD_FLAG_XOF         0x0002
+
 /* DigestAlgorithmIdentifier flags... */
 
 #  define EVP_MD_FLAG_DIGALGID_MASK               0x0018
@@ -132,6 +135,7 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 
 #  define EVP_MD_CTRL_DIGALGID                    0x1
 #  define EVP_MD_CTRL_MICALG                      0x2
+#  define EVP_MD_CTRL_XOF_LEN                     0x3
 
 /* Minimum Algorithm specific ctrl value */
 
@@ -546,6 +550,8 @@ __owur int EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in);
 __owur int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
 __owur int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
                            unsigned int *s);
+__owur int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md,
+                              size_t len);
 
 int EVP_read_pw_string(char *buf, int length, const char *prompt, int verify);
 int EVP_read_pw_string_min(char *buf, int minlen, int maxlen,
