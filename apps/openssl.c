@@ -52,7 +52,7 @@ static LHASH_OF(FUNCTION) *prog_init(void);
 static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[]);
 static void list_pkey(void);
 static void list_pkey_meth(void);
-static void list_type(FUNC_TYPE ft);
+static void list_type(FUNC_TYPE ft, int one);
 static void list_disabled(void);
 char *default_config_file = NULL;
 
@@ -292,28 +292,57 @@ static void list_missing_help(void)
     const OPTIONS *o;
 
     for (fp = functions; fp->name != NULL; fp++) {
-        if ((o = fp->help) == NULL) {
+        if ((o = fp->help) != NULL) {
+            /* If there is help, list what flags are not documented. */
+            for ( ; o->name != NULL; o++) {
+                if (o->helpstr == NULL)
+                    BIO_printf(bio_out, "%s %s\n", fp->name, o->name);
+            }
+        } else if (fp->func != dgst_main) {
+            /* If not aliased to the dgst command, */
             BIO_printf(bio_out, "%s *\n", fp->name);
+        }
+    }
+}
+
+static void list_options_for_command(const char *command)
+{
+    const FUNCTION *fp;
+    const OPTIONS *o;
+
+    for (fp = functions; fp->name != NULL; fp++)
+        if (strcmp(fp->name, command) == 0)
+            break;
+    if (fp->name == NULL) {
+        BIO_printf(bio_err, "Invalid command '%s'; type \"help\" for a list.\n",
+                command);
+        return;
+    }
+
+    if ((o = fp->help) == NULL)
+        return;
+
+    for ( ; o->name != NULL; o++) {
+        if (o->name == OPT_HELP_STR
+                || o->name == OPT_MORE_STR
+                || o->name[0] == '\0')
             continue;
-        }
-        for ( ; o->name != NULL; o++) {
-            if (o->helpstr == NULL)
-                BIO_printf(bio_out, "%s %s\n", fp->name, o->name);
-        }
+        BIO_printf(bio_out, "%s %c\n", o->name, o->valtype);
     }
 }
 
 
 /* Unified enum for help and list commands. */
 typedef enum HELPLIST_CHOICE {
-    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_COMMANDS, OPT_DIGEST_COMMANDS,
+    OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ONE,
+    OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_OPTIONS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
     OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_DISABLED, OPT_MISSING_HELP
 } HELPLIST_CHOICE;
 
 const OPTIONS list_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"1", OPT_ONE, '-', "List in one column"},
     {"commands", OPT_COMMANDS, '-', "List of standard commands"},
     {"digest-commands", OPT_DIGEST_COMMANDS, '-',
      "List of message digest commands"},
@@ -330,6 +359,8 @@ const OPTIONS list_options[] = {
      "List of disabled features"},
     {"missing-help", OPT_MISSING_HELP, '-',
      "List missing detailed help strings"},
+    {"options", OPT_OPTIONS, 's',
+     "List options for specified command"},
     {NULL}
 };
 
@@ -337,7 +368,7 @@ int list_main(int argc, char **argv)
 {
     char *prog;
     HELPLIST_CHOICE o;
-    int done = 0;
+    int one = 0, done = 0;
 
     prog = opt_init(argc, argv, list_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -349,17 +380,20 @@ int list_main(int argc, char **argv)
         case OPT_HELP:
             opt_help(list_options);
             break;
+        case OPT_ONE:
+            one = 1;
+            break;
         case OPT_COMMANDS:
-            list_type(FT_general);
+            list_type(FT_general, one);
             break;
         case OPT_DIGEST_COMMANDS:
-            list_type(FT_md);
+            list_type(FT_md, one);
             break;
         case OPT_DIGEST_ALGORITHMS:
             EVP_MD_do_all_sorted(list_md_fn, bio_out);
             break;
         case OPT_CIPHER_COMMANDS:
-            list_type(FT_cipher);
+            list_type(FT_cipher, one);
             break;
         case OPT_CIPHER_ALGORITHMS:
             EVP_CIPHER_do_all_sorted(list_cipher_fn, bio_out);
@@ -375,6 +409,9 @@ int list_main(int argc, char **argv)
             break;
         case OPT_MISSING_HELP:
             list_missing_help();
+            break;
+        case OPT_OPTIONS:
+            list_options_for_command(opt_arg());
             break;
         }
         done = 1;
@@ -458,18 +495,24 @@ int exit_main(int argc, char **argv)
     return EXIT_THE_PROGRAM;
 }
 
-static void list_type(FUNC_TYPE ft)
+static void list_type(FUNC_TYPE ft, int one)
 {
     FUNCTION *fp;
     int i = 0;
 
-    for (fp = functions; fp->name != NULL; fp++)
-        if (fp->type == ft) {
-            if ((i++ % COLUMNS) == 0)
+    for (fp = functions; fp->name != NULL; fp++) {
+        if (fp->type != ft)
+            continue;
+        if (one) {
+            BIO_printf(bio_out, "%s\n", fp->name);
+        } else {
+            if ((i++ % COLUMNS) == 0 && fp != functions)
                 BIO_printf(bio_out, "\n");
             BIO_printf(bio_out, FORMAT, fp->name);
         }
-    BIO_printf(bio_out, "\n");
+    }
+    if (!one)
+        BIO_printf(bio_out, "\n");
 }
 
 static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
