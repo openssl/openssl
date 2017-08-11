@@ -132,3 +132,33 @@ Test failures supressions
 krb5 will automatically adapt its test suite to account for the configuration
 of your system.  Certain tests may require more installed packages to run.  No
 tests are expected to fail.
+
+
+Updating test suites
+====================
+
+To update the commit for any of the above test suites:
+
+- Make sure the submodules are cloned locally:
+
+  $ git submodule update --init --recursive
+
+- Enter subdirectory and pull from the repository (use a specific branch/tag if required):
+
+  $ cd <submodule-dir> 
+  $ git pull origin master
+
+- Go to root directory, there should be a new git status:
+
+  $ cd ../
+  $ git status
+  ...
+  #       modified:   <submodule-dir> (new commits)
+  ...
+
+- Add/commit/push the update
+
+  git add <submodule-dir>
+  git commit -m "Updated <submodule> to latest commit"
+  git push
+
