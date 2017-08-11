@@ -18,6 +18,8 @@
 #include <openssl/err.h>
 #include "fuzzer.h"
 
+#include "rand.inc"
+
 /* unused, to avoid warning. */
 static int idx;
 
