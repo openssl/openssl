@@ -444,14 +444,6 @@ int enc_main(int argc, char **argv)
                 BIO_printf(bio_err, "EVP_BytesToKey failed\n");
                 goto end;
             }
-            /*
-             * zero the complete buffer or the string passed from the command
-             * line bug picked up by Larry J. Hughes Jr. <hughes@indiana.edu>
-             */
-            if (str == strbuf)
-                OPENSSL_cleanse(str, SIZE);
-            else
-                OPENSSL_cleanse(str, str_len);
         }
         if (hiv != NULL) {
             int siz = EVP_CIPHER_iv_length(cipher);
@@ -560,7 +552,7 @@ int enc_main(int argc, char **argv)
     }
  end:
     ERR_print_errors(bio_err);
-    OPENSSL_free(strbuf);
+    OPENSSL_clear_free(strbuf, SIZE);
     OPENSSL_free(buff);
     BIO_free(in);
     BIO_free_all(out);
@@ -570,7 +562,8 @@ int enc_main(int argc, char **argv)
     BIO_free(bzl);
 #endif
     release_engine(e);
-    OPENSSL_free(pass);
+    if (pass != NULL)
+        OPENSSL_clear_free(pass, strlen(pass));
     return ret;
 }
 
