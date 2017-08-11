@@ -91,7 +91,7 @@ package main;
 # Helper functions for the templates #################################
 
 # It might be practical to quotify some strings and have them protected
-# from possible harm.  These functions primarly quote things that might
+# from possible harm.  These functions primarily quote things that might
 # be interpreted wrongly by a perl eval.
 
 # quotify1 STRING

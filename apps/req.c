@@ -1305,7 +1305,7 @@ static int check_end(const char *str, const char *end)
 
 /*
  * Merge the two strings together into the result buffer checking for
- * overflow and producing an error message is there is.
+ * overflow and producing an error message if there is.
  */
 static int join(char buf[], size_t buf_size, const char *name,
                 const char *tail, const char *desc)

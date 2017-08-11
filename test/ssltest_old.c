@@ -2144,7 +2144,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
          * Useful functions for querying the state of BIO pair endpoints:
          *
          * BIO_ctrl_pending(bio)              number of bytes we can read now
-         * BIO_ctrl_get_read_request(bio)     number of bytes needed to fulfil
+         * BIO_ctrl_get_read_request(bio)     number of bytes needed to fulfill
          *                                      other side's read attempt
          * BIO_ctrl_get_write_guarantee(bio)   number of bytes we can write now
          *

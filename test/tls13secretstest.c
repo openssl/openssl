@@ -289,7 +289,7 @@ static int test_handshake_secrets(void)
 
     if (!TEST_true(tls13_generate_handshake_secret(s, ecdhe_secret,
                                                    sizeof(ecdhe_secret)))) {
-        TEST_info("Hanshake secret generation failed");
+        TEST_info("Handshake secret generation failed");
         goto err;
     }
 
