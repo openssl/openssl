@@ -14,6 +14,8 @@
 #include <openssl/rand.h>
 #include "fuzzer.h"
 
+#include "rand.inc"
+
 int FuzzerInitialize(int *argc, char ***argv)
 {
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);

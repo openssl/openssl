@@ -8,7 +8,6 @@
  * or in the file LICENSE in the source distribution.
  */
 #include <openssl/rand.h>
-#include "fuzzer.h"
 
 static int fuzz_bytes(unsigned char *buf, int num)
 {

@@ -75,7 +75,7 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS_NO_INST=ct-test
   ENDIF
 
-  SOURCE[asn1-test]=asn1.c test-corpus.c rand.c
+  SOURCE[asn1-test]=asn1.c test-corpus.c
 
   INCLUDE[asn1-test]=../include
   DEPEND[asn1-test]=../libcrypto
@@ -92,7 +92,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[bndiv-test]=../include
   DEPEND[bndiv-test]=../libcrypto
 
-  SOURCE[client-test]=client.c test-corpus.c rand.c
+  SOURCE[client-test]=client.c test-corpus.c
   INCLUDE[client-test]=../include
   DEPEND[client-test]=../libcrypto ../libssl
 
@@ -112,11 +112,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[ct-test]=../include
   DEPEND[ct-test]=../libcrypto
 
-  SOURCE[server-test]=server.c test-corpus.c rand.c
+  SOURCE[server-test]=server.c test-corpus.c
   INCLUDE[server-test]=../include
   DEPEND[server-test]=../libcrypto ../libssl
 
-  SOURCE[x509-test]=x509.c test-corpus.c rand.c
+  SOURCE[x509-test]=x509.c test-corpus.c
   INCLUDE[x509-test]=../include
   DEPEND[x509-test]=../libcrypto
 ENDIF
