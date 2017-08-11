@@ -480,7 +480,7 @@ SSLv3 is B<always> disabled and attempt to override this by the user are
 ignored.
 
 By checking the return code of SSL_CONF_cmd() it is possible to query if a
-given B<cmd> is recognised, this is useful is SSL_CONF_cmd() values are
+given B<cmd> is recognised, this is useful if SSL_CONF_cmd() values are
 mixed with additional application specific operations.
 
 For example an application might call SSL_CONF_cmd() and if it returns

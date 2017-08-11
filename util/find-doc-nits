@@ -289,7 +289,7 @@ sub checkmacros()
         }
         close(IN);
     }
-    print "# Found $count macros missing (not all should be documnted)\n"
+    print "# Found $count macros missing (not all should be documented)\n"
 }
 
 sub printem()

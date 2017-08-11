@@ -720,7 +720,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
 
     /* Add custom extensions first */
     if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
-        /* On the server side with initiase during ClientHello parsing */
+        /* On the server side with initialise during ClientHello parsing */
         custom_ext_init(&s->cert->custext);
     }
     if (!custom_ext_add(s, context, pkt, x, chainidx, max_version, &tmpal)) {

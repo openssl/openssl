@@ -32,7 +32,7 @@ static int test_sec_mem(void)
     if (!TEST_ptr(p)
         /* r = non-secure 20, p = secure 20, s = non-secure 20 */
         || !TEST_true(CRYPTO_secure_allocated(p))
-        /* 20 secure -> 32-byte minimum allocaton unit */
+        /* 20 secure -> 32-byte minimum allocation unit */
         || !TEST_size_t_eq(CRYPTO_secure_used(), 32))
         goto end;
     q = OPENSSL_malloc(20);
