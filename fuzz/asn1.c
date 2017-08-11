@@ -31,6 +31,8 @@
 #include <openssl/rand.h>
 #include "fuzzer.h"
 
+#include "rand.inc"
+
 static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(ACCESS_DESCRIPTION),
 #ifndef OPENSSL_NO_RFC3779
