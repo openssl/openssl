@@ -109,7 +109,7 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 /* digest can only handle a single block */
 #  define EVP_MD_FLAG_ONESHOT     0x0001
 
-/* digest is extensible-output finction, XOF */
+/* digest is extensible-output function, XOF */
 #  define EVP_MD_FLAG_XOF         0x0002
 
 /* DigestAlgorithmIdentifier flags... */
