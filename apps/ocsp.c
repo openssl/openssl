@@ -108,7 +108,7 @@ const OPTIONS ocsp_options[] = {
     {"host", OPT_HOST, 's', "TCP/IP hostname:port to connect to"},
     {"port", OPT_PORT, 'p', "Port to run responder on"},
     {"ignore_err", OPT_IGNORE_ERR, '-',
-     "Ignore Error response from OCSP responder, and retry "},
+     "Ignore error on OCSP request or response and continue running"},
     {"noverify", OPT_NOVERIFY, '-', "Don't verify response at all"},
     {"nonce", OPT_NONCE, '-', "Add OCSP nonce to request"},
     {"no_nonce", OPT_NO_NONCE, '-', "Don't add OCSP nonce to request"},

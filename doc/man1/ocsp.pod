@@ -74,6 +74,7 @@ B<openssl> B<ocsp>
 [B<-no_cert_checks>]
 [B<-no_explicit>]
 [B<-port num>]
+[B<-ignore_err>]
 [B<-index file>]
 [B<-CA file>]
 [B<-rsigner file>]
@@ -342,6 +343,12 @@ specified in the B<rsigner> option is used.
 
 Port to listen for OCSP requests on. The port may also be specified
 using the B<url> option.
+
+=item B<-ignore_err>
+
+Ignore malformed requests or responses: When acting as an OCSP client, retry if
+a malformed response is received. When acting as an OCSP responder, continue
+running instead of terminating upon receiving a malformed request.
 
 =item B<-nrequest number>
 
