@@ -2364,7 +2364,7 @@ typedef enum ticket_en {
     TICKET_NO_DECRYPT,
     /* a ticket was successfully decrypted */
     TICKET_SUCCESS,
-    /* same as above but the ticket needs to be reneewed */
+    /* same as above but the ticket needs to be renewed */
     TICKET_SUCCESS_RENEW
 } TICKET_RETURN;
 

@@ -126,7 +126,7 @@ explicitly run (with more debugging):
 
 $ VERBOSE=1 make TESTS=test_external_krb5 test
 
-Test failures supressions
+Test-failures suppressions
 -------------------------
 
 krb5 will automatically adapt its test suite to account for the configuration

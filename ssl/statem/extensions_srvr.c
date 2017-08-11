@@ -87,10 +87,9 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
     }
 
     /*
-     * Although the server_name extension was intended to be
-     * extensible to new name types, RFC 4366 defined the
-     * syntax inextensibly and OpenSSL 1.0.x parses it as
-     * such.
+     * Although the intent was for server_name to be extensible, RFC 4366
+     * was not clear about it; and so OpenSSL among other implementations,
+     * always and only allows a 'host_name' name types.
      * RFC 6066 corrected the mistake but adding new name types
      * is nevertheless no longer feasible, so act as if no other
      * SNI types can exist, to simplify parsing.
