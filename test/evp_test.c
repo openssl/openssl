@@ -360,11 +360,16 @@ static int digest_test_run(EVP_TEST *t)
 {
     DIGEST_DATA *expected = t->data;
     EVP_MD_CTX *mctx;
-    unsigned char got[EVP_MAX_MD_SIZE];
+    unsigned char *got = NULL;
     unsigned int got_len;
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
+        goto err;
+
+    got = OPENSSL_malloc(expected->output_len > EVP_MAX_MD_SIZE ?
+                         expected->output_len : EVP_MAX_MD_SIZE);
+    if (!TEST_ptr(got))
         goto err;
 
     if (!EVP_DigestInit_ex(mctx, expected->digest, NULL)) {
@@ -376,9 +381,17 @@ static int digest_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (!EVP_DigestFinal(mctx, got, &got_len)) {
-        t->err = "DIGESTFINAL_ERROR";
-        goto err;
+    if (EVP_MD_flags(expected->digest) & EVP_MD_FLAG_XOF) {
+        got_len = expected->output_len;
+        if (!EVP_DigestFinalXOF(mctx, got, got_len)) {
+            t->err = "DIGESTFINALXOF_ERROR";
+            goto err;
+        }
+    } else {
+        if (!EVP_DigestFinal(mctx, got, &got_len)) {
+            t->err = "DIGESTFINAL_ERROR";
+            goto err;
+        }
     }
     if (!TEST_int_eq(expected->output_len, got_len)) {
         t->err = "DIGEST_LENGTH_MISMATCH";
@@ -391,6 +404,7 @@ static int digest_test_run(EVP_TEST *t)
     t->err = NULL;
 
  err:
+    OPENSSL_free(got);
     EVP_MD_CTX_free(mctx);
     return 1;
 }
