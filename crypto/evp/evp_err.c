@@ -181,7 +181,7 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     "method not supported"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_MISSING_PARAMETERS), "missing parameters"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NOT_XOF_OR_INVALID_LENGTH),
-    "not xof or invalid length"},
+    "not XOF or invalid length"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NO_CIPHER_SET), "no cipher set"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NO_DEFAULT_DIGEST), "no default digest"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NO_DIGEST_SET), "no digest set"},
