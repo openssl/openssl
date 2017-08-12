@@ -91,7 +91,7 @@ static void server_keylog_callback(const SSL *ssl, const char *line)
 
     /* If the log doesn't fit, error out. */
     if (server_log_buffer_index + line_length > sizeof(server_log_buffer) - 1) {
-        TEST_info("Server og too full");
+        TEST_info("Server log too full");
         error_writing_log = 1;
         return;
     }

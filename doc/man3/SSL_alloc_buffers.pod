@@ -20,7 +20,7 @@ The B<SSL_MODE_RELEASE_BUFFERS> mode releases read or write buffers whenever
 the buffers have been drained. These functions allow applications to manually
 control when buffers are freed and allocated.
 
-After freeing the buffers, the buffers are automatically reallocted upon a
+After freeing the buffers, the buffers are automatically reallocated upon a
 new read or write. The SSL_alloc_buffers() does not need to be called, but
 can be used to make sure the buffers are pre-allocated. This can be used to
 avoid allocation during data processing or with CRYPTO_set_mem_functions()
@@ -44,7 +44,7 @@ The SSL_free_buffers() function returns 1 if the buffers have been freed. This
 value is also returned if the buffers had been freed before calling
 SSL_free_buffers().
 The SSL_alloc_buffers() function returns 1 if the buffers have been allocated.
-This valus is also returned if the buffers had been allocated before calling
+This value is also returned if the buffers had been allocated before calling
 SSL_alloc_buffers().
 
 =back

@@ -41,7 +41,7 @@
  * int global_init(void);
  *
  * This function should return zero if there is an unrecoverable error and
- * non-zero if the intialization was successful.
+ * non-zero if the initialization was successful.
  */
 
 /* Adds a simple test case. */
@@ -235,8 +235,8 @@ int test_mem_ne(const char *, int, const char *, const char *,
 
 /*
  * Check a boolean result for being true or false.
- * They return 1 if the condition is true (i.e. the value is non-zro).
- * Otherwise, they return 0 and pretty-prints diagnostics using |desc|.
+ * They return 1 if the condition is true (i.e. the value is non-zero).
+ * Otherwise, they return 0 and pretty-prints diagnostics using |s|.
  * These should not be called directly, use the TEST_xxx macros below instead.
  */
 int test_true(const char *file, int line, const char *s, int b);
