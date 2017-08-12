@@ -29,7 +29,7 @@ B<-reply>
 [B<-passin> password_src]
 [B<-signer> tsa_cert.pem]
 [B<-inkey> file_or_id]
-[B<-sha1|-sha224|-sha256|-sha384|-sha512>]
+[B<-[digest]>]
 [B<-chain> certs_file.pem]
 [B<-tspolicy> object_id]
 [B<-in> response.tsr]
@@ -258,7 +258,7 @@ B<signer_key> config file option. (Optional)
 If no engine is used, the argument is taken as a file; if an engine is
 specified, the argument is given to the engine as a key identifier.
 
-=item B<-sha1|-sha224|-sha256|-sha384|-sha512>
+=item B<-[digest]>
 
 Signing digest to use. Overrides the B<signer_digest> config file
 option. (Optional)
@@ -459,7 +459,7 @@ command line option. (Optional)
 =item B<signer_digest>
 
 Signing digest to use. The same as the
-B<-sha1|-sha224|-sha256|-sha384|-sha512> command line option. (Optional)
+B<-[digest]> command line option. (Optional)
 
 =item B<default_policy>
 

@@ -8,7 +8,7 @@ dgst, sha, sha1, mdc2, ripemd160, sha224, sha256, sha384, sha512, md4, md5, blak
 
 B<openssl> B<dgst>
 [B<-help>]
-[B<-I<digest>>]
+[B<-[digest]>]
 [B<-c>]
 [B<-d>]
 [B<-hex>]

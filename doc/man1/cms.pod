@@ -69,7 +69,7 @@ B<openssl> B<cms>
 [B<-md digest>]
 [B<-[cipher]>]
 [B<-nointern>]
-[B<-no_signer_cert_verify>]
+[B<-noverify>]
 [B<-nocerts>]
 [B<-noattr>]
 [B<-nosmimecap>]
@@ -316,7 +316,7 @@ the message are searched for the signing certificate. With this option
 only the certificates specified in the B<-certfile> option are used.
 The supplied certificates can still be used as untrusted CAs however.
 
-=item B<-no_signer_cert_verify>
+=item B<-noverify>
 
 Do not verify the signers certificate of a signed message.
 

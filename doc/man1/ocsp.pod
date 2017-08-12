@@ -85,7 +85,7 @@ B<openssl> B<ocsp>
 [B<-ndays n>]
 [B<-resp_key_id>]
 [B<-nrequest n>]
-[B<-md5|-sha1|...>]
+[B<-[digest]>]
 
 =head1 DESCRIPTION
 
