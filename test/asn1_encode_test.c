@@ -672,7 +672,7 @@ static int do_decode_custom(const TEST_CUSTOM_DATA *custom_data,
 {
     unsigned char *encoding = NULL;
     /*
-     * We force the defaults to be explicitely encoded to make sure we test
+     * We force the defaults to be explicitly encoded to make sure we test
      * for defaults that shouldn't be present (i.e. we check for failure)
      */
     size_t encoding_length = make_custom_der(custom_data, &encoding, 1);
