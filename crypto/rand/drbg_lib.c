@@ -403,6 +403,8 @@ static int drbg_status(void)
     int ret;
 
     CRYPTO_THREAD_write_lock(rand_drbg.lock);
+    if (rand_drbg.state == DRBG_UNINITIALISED)
+        RAND_DRBG_instantiate(&rand_drbg, NULL, 0);
     ret = rand_drbg.state == DRBG_READY ? 1 : 0;
     CRYPTO_THREAD_unlock(rand_drbg.lock);
     return ret;
