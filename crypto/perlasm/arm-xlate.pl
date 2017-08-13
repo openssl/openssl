@@ -174,4 +174,6 @@ while(my $line=<>) {
     print "\n";
 }
 
+print ".subsections_via_symbols\n"      if ($flavour =~ /ios/);
+
 close STDOUT;
