@@ -8,7 +8,7 @@ dgst
 =head1 SYNOPSIS
 
 B<openssl dgst>
-[B<-[digest]>]
+[B<-I<digest>>]
 [B<-help>]
 [B<-c>]
 [B<-d>]
@@ -29,7 +29,7 @@ B<openssl dgst>
 [B<-engine_impl>]
 [B<file...>]
 
-B<openssl> I<[digest]> [B<...>]
+B<openssl> I<digest> [B<...>]
 
 =head1 DESCRIPTION
 

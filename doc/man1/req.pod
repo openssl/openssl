@@ -29,7 +29,7 @@ B<openssl> B<req>
 [B<-keyform PEM|DER>]
 [B<-keyout filename>]
 [B<-keygen_engine id>]
-[B<-[digest]>]
+[B<-I<digest>>]
 [B<-config filename>]
 [B<-multivalue-rdn>]
 [B<-x509>]
@@ -198,7 +198,7 @@ configuration file is used.
 If this option is specified then if a private key is created it
 will not be encrypted.
 
-=item B<-[digest]>
+=item B<-I<digest>>
 
 This specifies the message digest to sign the request.
 Any digest supported by the OpenSSL B<dgst> command can be used.

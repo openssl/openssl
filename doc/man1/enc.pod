@@ -6,7 +6,7 @@ enc - symmetric cipher routines
 
 =head1 SYNOPSIS
 
-B<openssl enc -[cipher]>
+B<openssl enc -I<cipher>>
 [B<-help>]
 [B<-ciphers>]
 [B<-in filename>]
