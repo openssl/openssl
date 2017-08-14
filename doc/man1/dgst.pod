@@ -3,7 +3,7 @@
 =head1 NAME
 
 dgst
-- generate or verify message digests
+- perform digest operations
 
 =head1 SYNOPSIS
 
