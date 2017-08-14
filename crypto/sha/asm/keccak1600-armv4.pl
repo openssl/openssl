@@ -44,22 +44,31 @@
 # is the keyword, i.e. "almost 1/2" is kind of complexity cap [for the
 # time being]...
 #
+# Reduce per-round instruction count in Thumb-2 case by 16%. This is
+# achieved by folding ldr/str pairs to their double-word counterparts.
+# Theoretically this should have improved performance on single-issue
+# cores, such as Cortex-A5/A7, by 19%. Reality is a bit different, as
+# usual...
+#
 ########################################################################
 # Numbers are cycles per processed byte. Non-NEON results account even
 # for input bit interleaving.
 #
-#		r=1088(*),  NEON
+#		r=1088(*)   Thumb-2(**) NEON
 #
 # ARM11xx	82/+150%
-# Cortex-A5	88/+160%,   36
-# Cortex-A7	78/+160%,   34
-# Cortex-A8	51/+230%,   30
-# Cortex-A9	53/+210%,   26
-# Cortex-A15	42/+160%,   18
-# Snapdragon S4	43/+210%,   24
+# Cortex-A5	88/+160%,   86,         36
+# Cortex-A7	78/+160%,   68,         34
+# Cortex-A8	51/+230%,   57,         30
+# Cortex-A9	53/+210%,   51,         26
+# Cortex-A15	42/+160%,   38,         18
+# Snapdragon S4	43/+210%,   38,         24
 #
 # (*)	Corresponds to SHA3-256. Percentage after slash is improvement
 #	over compiler-generated KECCAK_2X reference code.
+# (**)	Thumb-2 results for Cortex-A5/A7 are likely to apply even to
+#	Cortex-Mx, x>=3. Otherwise, non-NEON results for NEON-capable
+#	processors are presented mostly for reference purposes.
 
 my @C = map("r$_",(0..9));
 my @E = map("r$_",(10..12,14));
@@ -136,10 +145,10 @@ KeccakF1600_enter:
 	str	lr,[sp,#440]
 	eor	@E[1],@E[1],@E[1]
 	str	@E[1],[sp,#444]
-	b	.Lround
+	b	.Lround2x
 
 .align	4
-.Lround:
+.Lround2x:
 ___
 sub Round {
 my (@A,@R); (@A[0..4],@R) = @_;
@@ -147,6 +156,62 @@ my (@A,@R); (@A[0..4],@R) = @_;
 $code.=<<___;
 	ldmia	@E[2],{@C[0]-@C[3]}		@ A[0][0..1]
 	ldmia	@E[0],{@E[0]-@E[2],@E[3]}	@ A[1][0..1]
+#ifdef	__thumb2__
+	eor	@C[0],@C[0],@E[0]
+	eor	@C[1],@C[1],@E[1]
+	eor	@C[2],@C[2],@E[2]
+	ldrd	@E[0],@E[1],[sp,#$A[1][2]]
+	eor	@C[3],@C[3],@E[3]
+	ldrd	@E[2],@E[3],[sp,#$A[1][3]]
+	eor	@C[4],@C[4],@E[0]
+	eor	@C[5],@C[5],@E[1]
+	eor	@C[6],@C[6],@E[2]
+	ldrd	@E[0],@E[1],[sp,#$A[1][4]]
+	eor	@C[7],@C[7],@E[3]
+	ldrd	@E[2],@E[3],[sp,#$A[2][0]]
+	eor	@C[8],@C[8],@E[0]
+	eor	@C[9],@C[9],@E[1]
+	eor	@C[0],@C[0],@E[2]
+	ldrd	@E[0],@E[1],[sp,#$A[2][1]]
+	eor	@C[1],@C[1],@E[3]
+	ldrd	@E[2],@E[3],[sp,#$A[2][2]]
+	eor	@C[2],@C[2],@E[0]
+	eor	@C[3],@C[3],@E[1]
+	eor	@C[4],@C[4],@E[2]
+	ldrd	@E[0],@E[1],[sp,#$A[2][3]]
+	eor	@C[5],@C[5],@E[3]
+	ldrd	@E[2],@E[3],[sp,#$A[2][4]]
+	eor	@C[6],@C[6],@E[0]
+	eor	@C[7],@C[7],@E[1]
+	eor	@C[8],@C[8],@E[2]
+	ldrd	@E[0],@E[1],[sp,#$A[3][0]]
+	eor	@C[9],@C[9],@E[3]
+	ldrd	@E[2],@E[3],[sp,#$A[3][1]]
+	eor	@C[0],@C[0],@E[0]
+	eor	@C[1],@C[1],@E[1]
+	eor	@C[2],@C[2],@E[2]
+	ldrd	@E[0],@E[1],[sp,#$A[3][2]]
+	eor	@C[3],@C[3],@E[3]
+	ldrd	@E[2],@E[3],[sp,#$A[3][3]]
+	eor	@C[4],@C[4],@E[0]
+	eor	@C[5],@C[5],@E[1]
+	eor	@C[6],@C[6],@E[2]
+	ldrd	@E[0],@E[1],[sp,#$A[3][4]]
+	eor	@C[7],@C[7],@E[3]
+	ldrd	@E[2],@E[3],[sp,#$A[4][0]]
+	eor	@C[8],@C[8],@E[0]
+	eor	@C[9],@C[9],@E[1]
+	eor	@C[0],@C[0],@E[2]
+	ldrd	@E[0],@E[1],[sp,#$A[4][1]]
+	eor	@C[1],@C[1],@E[3]
+	ldrd	@E[2],@E[3],[sp,#$A[0][2]]
+	eor	@C[2],@C[2],@E[0]
+	eor	@C[3],@C[3],@E[1]
+	eor	@C[4],@C[4],@E[2]
+	ldrd	@E[0],@E[1],[sp,#$A[0][3]]
+	eor	@C[5],@C[5],@E[3]
+	ldrd	@E[2],@E[3],[sp,#$A[0][4]]
+#else
 	eor	@C[0],@C[0],@E[0]
 	 add	@E[0],sp,#$A[1][2]
 	eor	@C[1],@C[1],@E[1]
@@ -203,54 +268,55 @@ $code.=<<___;
 	eor	@C[4],@C[4],@E[2]
 	eor	@C[5],@C[5],@E[3]
 	ldmia	@E[0],{@E[0]-@E[2],@E[3]}	@ A[0][3..4]
+#endif
 	eor	@C[6],@C[6],@E[0]
 	eor	@C[7],@C[7],@E[1]
 	eor	@C[8],@C[8],@E[2]
 	eor	@C[9],@C[9],@E[3]
 
 	eor	@E[0],@C[0],@C[5],ror#32-1	@ E[0] = ROL64(C[2], 1) ^ C[0];
+	str.l	@E[0],[sp,#$D[1]]		@ D[1] = E[0]
 	eor	@E[1],@C[1],@C[4]
-	str	@E[0],[sp,#$D[1]]		@ D[1] = E[0]
+	str.h	@E[1],[sp,#$D[1]+4]
 	eor	@E[2],@C[6],@C[1],ror#32-1	@ E[1] = ROL64(C[0], 1) ^ C[3];
-	str	@E[1],[sp,#$D[1]+4]
 	eor	@E[3],@C[7],@C[0]
-	str	@E[2],[sp,#$D[4]]		@ D[4] = E[1]
+	str.l	@E[2],[sp,#$D[4]]		@ D[4] = E[1]
 	eor	@C[0],@C[8],@C[3],ror#32-1	@ C[0] = ROL64(C[1], 1) ^ C[4];
-	str	@E[3],[sp,#$D[4]+4]
+	str.h	@E[3],[sp,#$D[4]+4]
 	eor	@C[1],@C[9],@C[2]
-	str	@C[0],[sp,#$D[0]]		@ D[0] = C[0]
+	str.l	@C[0],[sp,#$D[0]]		@ D[0] = C[0]
 	eor	@C[2],@C[2],@C[7],ror#32-1	@ C[1] = ROL64(C[3], 1) ^ C[1];
-	str	@C[1],[sp,#$D[0]+4]
+	 ldr.l	@C[7],[sp,#$A[3][3]]
 	eor	@C[3],@C[3],@C[6]
-	 ldr	@C[7],[sp,#$A[3][3]]
-	str	@C[2],[sp,#$D[2]]		@ D[2] = C[1]
+	str.h	@C[1],[sp,#$D[0]+4]
+	 ldr.h	@C[6],[sp,#$A[3][3]+4]
+	str.l	@C[2],[sp,#$D[2]]		@ D[2] = C[1]
 	eor	@C[4],@C[4],@C[9],ror#32-1	@ C[2] = ROL64(C[4], 1) ^ C[2];
-	 ldr	@C[6],[sp,#$A[3][3]+4]
-	str	@C[3],[sp,#$D[2]+4]
+	str.h	@C[3],[sp,#$D[2]+4]
 	eor	@C[5],@C[5],@C[8]
 
-	ldr	@C[8],[sp,#$A[4][4]]
-	ldr	@C[9],[sp,#$A[4][4]+4]
-	 str	@C[4],[sp,#$D[3]]		@ D[3] = C[2]
+	ldr.l	@C[8],[sp,#$A[4][4]]
+	ldr.h	@C[9],[sp,#$A[4][4]+4]
+	 str.l	@C[4],[sp,#$D[3]]		@ D[3] = C[2]
 	eor	@C[7],@C[7],@C[4]
-	 str	@C[5],[sp,#$D[3]+4]
+	 str.h	@C[5],[sp,#$D[3]+4]
 	eor	@C[6],@C[6],@C[5]
-	ldr	@C[4],[sp,#$A[0][0]]
+	ldr.l	@C[4],[sp,#$A[0][0]]
 	@ ror	@C[7],@C[7],#32-10		@ C[3] = ROL64(A[3][3] ^ C[2], rhotates[3][3]);   /* D[3] */
 	@ ror	@C[6],@C[6],#32-11
+	ldr.h	@C[5],[sp,#$A[0][0]+4]
 	eor	@C[8],@C[8],@E[2]
-	ldr	@C[5],[sp,#$A[0][0]+4]
 	eor	@C[9],@C[9],@E[3]
-	ldr	@E[2],[sp,#$A[2][2]]
+	ldr.l	@E[2],[sp,#$A[2][2]]
 	eor	@C[0],@C[0],@C[4]
-	ldr	@E[3],[sp,#$A[2][2]+4]
+	ldr.h	@E[3],[sp,#$A[2][2]+4]
 	@ ror	@C[8],@C[8],#32-7		@ C[4] = ROL64(A[4][4] ^ E[1], rhotates[4][4]);   /* D[4] */
 	@ ror	@C[9],@C[9],#32-7
 	eor	@C[1],@C[1],@C[5]		@ C[0] =       A[0][0] ^ C[0]; /* rotate by 0 */  /* D[0] */
 	eor	@E[2],@E[2],@C[2]
-	ldr	@C[2],[sp,#$A[1][1]]
+	ldr.l	@C[2],[sp,#$A[1][1]]
 	eor	@E[3],@E[3],@C[3]
-	ldr	@C[3],[sp,#$A[1][1]+4]
+	ldr.h	@C[3],[sp,#$A[1][1]+4]
 	ror	@C[5],@E[2],#32-21		@ C[2] = ROL64(A[2][2] ^ C[1], rhotates[2][2]);   /* D[2] */
 	 ldr	@E[2],[sp,#444]			@ load counter
 	eor	@C[2],@C[2],@E[0]
@@ -263,9 +329,9 @@ $code.=<<___	if ($A[0][0] != $T[0][0]);
 	ldmia	@E[3],{@E[0],@E[1]}		@ iotas[i]
 ___
 $code.=<<___	if ($A[0][0] == $T[0][0]);
-	ldr	@E[0],[@E[3],#8]		@ iotas[i].lo
+	ldr.l	@E[0],[@E[3],#8]		@ iotas[i].lo
 	add	@E[2],@E[2],#16
-	ldr	@E[1],[@E[3],#12]		@ iotas[i].hi
+	ldr.h	@E[1],[@E[3],#12]		@ iotas[i].hi
 	cmp	@E[2],#192
 	str	@E[2],[sp,#444]			@ store counter
 ___
@@ -278,67 +344,67 @@ $code.=<<___;
 	eor	@E[3],@E[3],@C[1]
 	eor	@E[0],@E[0],@E[2]
 	eor	@E[1],@E[1],@E[3]
-	str	@E[0],[sp,#$R[0][0]]		@ R[0][0] = C[0] ^ (~C[1] & C[2]) ^ iotas[i];
+	str.l	@E[0],[sp,#$R[0][0]]		@ R[0][0] = C[0] ^ (~C[1] & C[2]) ^ iotas[i];
 	bic	@E[2],@C[6],@C[4],ror#11
-	str	@E[1],[sp,#$R[0][0]+4]
+	str.h	@E[1],[sp,#$R[0][0]+4]
 	bic	@E[3],@C[7],@C[5],ror#10
 	bic	@E[0],@C[8],@C[6],ror#32-(11-7)
 	bic	@E[1],@C[9],@C[7],ror#32-(10-7)
 	eor	@E[2],@C[2],@E[2],ror#32-11
+	str.l	@E[2],[sp,#$R[0][1]]		@ R[0][1] = C[1] ^ (~C[2] & C[3]);
 	eor	@E[3],@C[3],@E[3],ror#32-10
-	str	@E[2],[sp,#$R[0][1]]		@ R[0][1] = C[1] ^ (~C[2] & C[3]);
+	str.h	@E[3],[sp,#$R[0][1]+4]
 	eor	@E[0],@C[4],@E[0],ror#32-7
-	str	@E[3],[sp,#$R[0][1]+4]
 	eor	@E[1],@C[5],@E[1],ror#32-7
-	str	@E[0],[sp,#$R[0][2]]		@ R[0][2] = C[2] ^ (~C[3] & C[4]);
+	str.l	@E[0],[sp,#$R[0][2]]		@ R[0][2] = C[2] ^ (~C[3] & C[4]);
 	bic	@E[2],@C[0],@C[8],ror#32-7
-	str	@E[1],[sp,#$R[0][2]+4]
+	str.h	@E[1],[sp,#$R[0][2]+4]
 	bic	@E[3],@C[1],@C[9],ror#32-7
 	eor	@E[2],@E[2],@C[6],ror#32-11
+	str.l	@E[2],[sp,#$R[0][3]]		@ R[0][3] = C[3] ^ (~C[4] & C[0]);
 	eor	@E[3],@E[3],@C[7],ror#32-10
-	str	@E[2],[sp,#$R[0][3]]		@ R[0][3] = C[3] ^ (~C[4] & C[0]);
+	str.h	@E[3],[sp,#$R[0][3]+4]
 	bic	@E[0],@C[2],@C[0]
-	str	@E[3],[sp,#$R[0][3]+4]
 	 add	@E[3],sp,#$D[3]
+	 ldr.l	@C[0],[sp,#$A[0][3]]		@ A[0][3]
 	bic	@E[1],@C[3],@C[1]
-	 ldr	@C[0],[sp,#$A[0][3]]		@ A[0][3]
+	 ldr.h	@C[1],[sp,#$A[0][3]+4]
 	eor	@E[0],@E[0],@C[8],ror#32-7
-	 ldr	@C[1],[sp,#$A[0][3]+4]
 	eor	@E[1],@E[1],@C[9],ror#32-7
-	str	@E[0],[sp,#$R[0][4]]		@ R[0][4] = C[4] ^ (~C[0] & C[1]);
+	str.l	@E[0],[sp,#$R[0][4]]		@ R[0][4] = C[4] ^ (~C[0] & C[1]);
 	 add	@C[9],sp,#$D[0]
-	str	@E[1],[sp,#$R[0][4]+4]
+	str.h	@E[1],[sp,#$R[0][4]+4]
 
 	ldmia	@E[3],{@E[0]-@E[2],@E[3]}	@ D[3..4]
 	ldmia	@C[9],{@C[6]-@C[9]}		@ D[0..1]
 
-	ldr	@C[2],[sp,#$A[1][4]]		@ A[1][4]
+	ldr.l	@C[2],[sp,#$A[1][4]]		@ A[1][4]
 	eor	@C[0],@C[0],@E[0]
-	ldr	@C[3],[sp,#$A[1][4]+4]
+	ldr.h	@C[3],[sp,#$A[1][4]+4]
 	eor	@C[1],@C[1],@E[1]
 	@ ror	@C[0],@C[0],#32-14		@ C[0] = ROL64(A[0][3] ^ D[3], rhotates[0][3]);
-	ldr	@E[0],[sp,#$A[3][1]]		@ A[3][1]
+	ldr.l	@E[0],[sp,#$A[3][1]]		@ A[3][1]
 	@ ror	@C[1],@C[1],#32-14
-	ldr	@E[1],[sp,#$A[3][1]+4]
+	ldr.h	@E[1],[sp,#$A[3][1]+4]
 
 	eor	@C[2],@C[2],@E[2]
-	ldr	@C[4],[sp,#$A[2][0]]		@ A[2][0]
+	ldr.l	@C[4],[sp,#$A[2][0]]		@ A[2][0]
 	eor	@C[3],@C[3],@E[3]
-	ldr	@C[5],[sp,#$A[2][0]+4]
+	ldr.h	@C[5],[sp,#$A[2][0]+4]
 	@ ror	@C[2],@C[2],#32-10		@ C[1] = ROL64(A[1][4] ^ D[4], rhotates[1][4]);
 	@ ror	@C[3],@C[3],#32-10
 
 	eor	@C[6],@C[6],@C[4]
-	ldr	@E[2],[sp,#$D[2]]		@ D[2]
+	ldr.l	@E[2],[sp,#$D[2]]		@ D[2]
 	eor	@C[7],@C[7],@C[5]
-	ldr	@E[3],[sp,#$D[2]+4]
+	ldr.h	@E[3],[sp,#$D[2]+4]
 	ror	@C[5],@C[6],#32-1		@ C[2] = ROL64(A[2][0] ^ D[0], rhotates[2][0]);
 	ror	@C[4],@C[7],#32-2
 
 	eor	@E[0],@E[0],@C[8]
-	ldr	@C[8],[sp,#$A[4][2]]		@ A[4][2]
+	ldr.l	@C[8],[sp,#$A[4][2]]		@ A[4][2]
 	eor	@E[1],@E[1],@C[9]
-	ldr	@C[9],[sp,#$A[4][2]+4]
+	ldr.h	@C[9],[sp,#$A[4][2]+4]
 	ror	@C[7],@E[0],#32-22		@ C[3] = ROL64(A[3][1] ^ D[1], rhotates[3][1]);
 	ror	@C[6],@E[1],#32-23
 
@@ -350,56 +416,56 @@ $code.=<<___;
 	 ror	@C[8],@E[3],#32-31
 	eor	@E[0],@E[0],@C[0],ror#32-14
 	eor	@E[1],@E[1],@C[1],ror#32-14
-	str	@E[0],[sp,#$R[1][0]]		@ R[1][0] = C[0] ^ (~C[1] & C[2])
+	str.l	@E[0],[sp,#$R[1][0]]		@ R[1][0] = C[0] ^ (~C[1] & C[2])
 	bic	@E[2],@C[6],@C[4]
-	str	@E[1],[sp,#$R[1][0]+4]
+	str.h	@E[1],[sp,#$R[1][0]+4]
 	bic	@E[3],@C[7],@C[5]
 	eor	@E[2],@E[2],@C[2],ror#32-10
+	str.l	@E[2],[sp,#$R[1][1]]		@ R[1][1] = C[1] ^ (~C[2] & C[3]);
 	eor	@E[3],@E[3],@C[3],ror#32-10
-	str	@E[2],[sp,#$R[1][1]]		@ R[1][1] = C[1] ^ (~C[2] & C[3]);
+	str.h	@E[3],[sp,#$R[1][1]+4]
 	bic	@E[0],@C[8],@C[6]
-	str	@E[3],[sp,#$R[1][1]+4]
 	bic	@E[1],@C[9],@C[7]
 	bic	@E[2],@C[0],@C[8],ror#14
 	bic	@E[3],@C[1],@C[9],ror#14
 	eor	@E[0],@E[0],@C[4]
 	eor	@E[1],@E[1],@C[5]
-	str	@E[0],[sp,#$R[1][2]]		@ R[1][2] = C[2] ^ (~C[3] & C[4]);
-	bic	@E[0],@C[2],@C[0],ror#32-(14-10)
+	str.l	@E[0],[sp,#$R[1][2]]		@ R[1][2] = C[2] ^ (~C[3] & C[4]);
+	bic	@C[2],@C[2],@C[0],ror#32-(14-10)
+	str.h	@E[1],[sp,#$R[1][2]+4]
 	eor	@E[2],@C[6],@E[2],ror#32-14
-	str	@E[1],[sp,#$R[1][2]+4]
 	bic	@E[1],@C[3],@C[1],ror#32-(14-10)
+	str.l	@E[2],[sp,#$R[1][3]]		@ R[1][3] = C[3] ^ (~C[4] & C[0]);
 	eor	@E[3],@C[7],@E[3],ror#32-14
-	str	@E[2],[sp,#$R[1][3]]		@ R[1][3] = C[3] ^ (~C[4] & C[0]);
+	str.h	@E[3],[sp,#$R[1][3]+4]
 	 add	@E[2],sp,#$D[1]
-	str	@E[3],[sp,#$R[1][3]+4]
-	 ldr	@C[1],[sp,#$A[0][1]]		@ A[0][1]
-	eor	@E[0],@C[8],@E[0],ror#32-10
-	 ldr	@C[0],[sp,#$A[0][1]+4]
+	 ldr.l	@C[1],[sp,#$A[0][1]]		@ A[0][1]
+	eor	@E[0],@C[8],@C[2],ror#32-10
+	 ldr.h	@C[0],[sp,#$A[0][1]+4]
 	eor	@E[1],@C[9],@E[1],ror#32-10
-	str	@E[0],[sp,#$R[1][4]]		@ R[1][4] = C[4] ^ (~C[0] & C[1]);
-	 add	@C[9],sp,#$D[3]
-	str	@E[1],[sp,#$R[1][4]+4]
+	str.l	@E[0],[sp,#$R[1][4]]		@ R[1][4] = C[4] ^ (~C[0] & C[1]);
+	str.h	@E[1],[sp,#$R[1][4]+4]
 
+	add	@C[9],sp,#$D[3]
 	ldmia	@E[2],{@E[0]-@E[2],@E[3]}	@ D[1..2]
-	ldr	@C[2],[sp,#$A[1][2]]		@ A[1][2]
-	ldr	@C[3],[sp,#$A[1][2]+4]
+	ldr.l	@C[2],[sp,#$A[1][2]]		@ A[1][2]
+	ldr.h	@C[3],[sp,#$A[1][2]+4]
 	ldmia	@C[9],{@C[6]-@C[9]}		@ D[3..4]
 
 	eor	@C[1],@C[1],@E[0]
-	ldr	@C[4],[sp,#$A[2][3]]		@ A[2][3]
+	ldr.l	@C[4],[sp,#$A[2][3]]		@ A[2][3]
 	eor	@C[0],@C[0],@E[1]
-	ldr	@C[5],[sp,#$A[2][3]+4]
+	ldr.h	@C[5],[sp,#$A[2][3]+4]
 	ror	@C[0],@C[0],#32-1		@ C[0] = ROL64(A[0][1] ^ D[1], rhotates[0][1]);
 
 	eor	@C[2],@C[2],@E[2]
-	ldr	@E[0],[sp,#$A[3][4]]		@ A[3][4]
+	ldr.l	@E[0],[sp,#$A[3][4]]		@ A[3][4]
 	eor	@C[3],@C[3],@E[3]
-	ldr	@E[1],[sp,#$A[3][4]+4]
+	ldr.h	@E[1],[sp,#$A[3][4]+4]
 	@ ror	@C[2],@C[2],#32-3		@ C[1] = ROL64(A[1][2] ^ D[2], rhotates[1][2]);
-	ldr	@E[2],[sp,#$D[0]]		@ D[0]
+	ldr.l	@E[2],[sp,#$D[0]]		@ D[0]
 	@ ror	@C[3],@C[3],#32-3
-	ldr	@E[3],[sp,#$D[0]+4]
+	ldr.h	@E[3],[sp,#$D[0]+4]
 
 	eor	@C[4],@C[4],@C[6]
 	eor	@C[5],@C[5],@C[7]
@@ -407,9 +473,9 @@ $code.=<<___;
 	@ ror	@C[4],@C[7],#32-13		@ [track reverse order below]
 
 	eor	@E[0],@E[0],@C[8]
-	ldr	@C[8],[sp,#$A[4][0]]		@ A[4][0]
+	ldr.l	@C[8],[sp,#$A[4][0]]		@ A[4][0]
 	eor	@E[1],@E[1],@C[9]
-	ldr	@C[9],[sp,#$A[4][0]+4]
+	ldr.h	@C[9],[sp,#$A[4][0]+4]
 	ror	@C[6],@E[0],#32-4		@ C[3] = ROL64(A[3][4] ^ D[4], rhotates[3][4]);
 	ror	@C[7],@E[1],#32-4
 
@@ -424,58 +490,58 @@ $code.=<<___;
 	bic	@E[3],@C[7],@C[4],ror#32-12
 	eor	@E[0],@C[0],@E[0],ror#32-13
 	eor	@E[1],@C[1],@E[1],ror#32-12
-	str	@E[0],[sp,#$R[2][0]]		@ R[2][0] = C[0] ^ (~C[1] & C[2])
+	str.l	@E[0],[sp,#$R[2][0]]		@ R[2][0] = C[0] ^ (~C[1] & C[2])
 	eor	@E[2],@E[2],@C[2],ror#32-3
-	str	@E[1],[sp,#$R[2][0]+4]
+	str.h	@E[1],[sp,#$R[2][0]+4]
 	eor	@E[3],@E[3],@C[3],ror#32-3
-	str	@E[2],[sp,#$R[2][1]]		@ R[2][1] = C[1] ^ (~C[2] & C[3]);
+	str.l	@E[2],[sp,#$R[2][1]]		@ R[2][1] = C[1] ^ (~C[2] & C[3]);
 	bic	@E[0],@C[8],@C[6]
-	str	@E[3],[sp,#$R[2][1]+4]
 	bic	@E[1],@C[9],@C[7]
+	str.h	@E[3],[sp,#$R[2][1]+4]
 	eor	@E[0],@E[0],@C[5],ror#32-13
 	eor	@E[1],@E[1],@C[4],ror#32-12
-	str	@E[0],[sp,#$R[2][2]]		@ R[2][2] = C[2] ^ (~C[3] & C[4]);
+	str.l	@E[0],[sp,#$R[2][2]]		@ R[2][2] = C[2] ^ (~C[3] & C[4]);
 	bic	@E[2],@C[0],@C[8]
-	str	@E[1],[sp,#$R[2][2]+4]
+	str.h	@E[1],[sp,#$R[2][2]+4]
 	bic	@E[3],@C[1],@C[9]
 	eor	@E[2],@E[2],@C[6]
 	eor	@E[3],@E[3],@C[7]
-	str	@E[2],[sp,#$R[2][3]]		@ R[2][3] = C[3] ^ (~C[4] & C[0]);
+	str.l	@E[2],[sp,#$R[2][3]]		@ R[2][3] = C[3] ^ (~C[4] & C[0]);
 	bic	@E[0],@C[2],@C[0],ror#3
-	str	@E[3],[sp,#$R[2][3]+4]
+	str.h	@E[3],[sp,#$R[2][3]+4]
 	bic	@E[1],@C[3],@C[1],ror#3
-	 ldr	@C[1],[sp,#$A[0][4]]		@ A[0][4] [in reverse order]
+	 ldr.l	@C[1],[sp,#$A[0][4]]		@ A[0][4] [in reverse order]
 	eor	@E[0],@C[8],@E[0],ror#32-3
-	 ldr	@C[0],[sp,#$A[0][4]+4]
+	 ldr.h	@C[0],[sp,#$A[0][4]+4]
 	eor	@E[1],@C[9],@E[1],ror#32-3
-	str	@E[0],[sp,#$R[2][4]]		@ R[2][4] = C[4] ^ (~C[0] & C[1]);
+	str.l	@E[0],[sp,#$R[2][4]]		@ R[2][4] = C[4] ^ (~C[0] & C[1]);
 	 add	@C[9],sp,#$D[1]
-	str	@E[1],[sp,#$R[2][4]+4]
+	str.h	@E[1],[sp,#$R[2][4]+4]
 
-	ldr	@E[0],[sp,#$D[4]]		@ D[4]
-	ldr	@E[1],[sp,#$D[4]+4]
-	ldr	@E[2],[sp,#$D[0]]		@ D[0]
-	ldr	@E[3],[sp,#$D[0]+4]
+	ldr.l	@E[0],[sp,#$D[4]]		@ D[4]
+	ldr.h	@E[1],[sp,#$D[4]+4]
+	ldr.l	@E[2],[sp,#$D[0]]		@ D[0]
+	ldr.h	@E[3],[sp,#$D[0]+4]
 
 	ldmia	@C[9],{@C[6]-@C[9]}		@ D[1..2]
 
 	eor	@C[1],@C[1],@E[0]
-	ldr	@C[2],[sp,#$A[1][0]]		@ A[1][0]
+	ldr.l	@C[2],[sp,#$A[1][0]]		@ A[1][0]
 	eor	@C[0],@C[0],@E[1]
-	ldr	@C[3],[sp,#$A[1][0]+4]
+	ldr.h	@C[3],[sp,#$A[1][0]+4]
 	@ ror	@C[1],@E[0],#32-13		@ C[0] = ROL64(A[0][4] ^ D[4], rhotates[0][4]);
-	ldr	@C[4],[sp,#$A[2][1]]		@ A[2][1]
+	ldr.l	@C[4],[sp,#$A[2][1]]		@ A[2][1]
 	@ ror	@C[0],@E[1],#32-14		@ [was loaded in reverse order]
-	ldr	@C[5],[sp,#$A[2][1]+4]
+	ldr.h	@C[5],[sp,#$A[2][1]+4]
 
 	eor	@C[2],@C[2],@E[2]
-	ldr	@E[0],[sp,#$A[3][2]]		@ A[3][2]
+	ldr.l	@E[0],[sp,#$A[3][2]]		@ A[3][2]
 	eor	@C[3],@C[3],@E[3]
-	ldr	@E[1],[sp,#$A[3][2]+4]
+	ldr.h	@E[1],[sp,#$A[3][2]+4]
 	@ ror	@C[2],@C[2],#32-18		@ C[1] = ROL64(A[1][0] ^ D[0], rhotates[1][0]);
-	ldr	@E[2],[sp,#$D[3]]		@ D[3]
+	ldr.l	@E[2],[sp,#$D[3]]		@ D[3]
 	@ ror	@C[3],@C[3],#32-18
-	ldr	@E[3],[sp,#$D[3]+4]
+	ldr.h	@E[3],[sp,#$D[3]+4]
 
 	eor	@C[6],@C[6],@C[4]
 	eor	@C[7],@C[7],@C[5]
@@ -483,9 +549,9 @@ $code.=<<___;
 	ror	@C[5],@C[7],#32-5
 
 	eor	@E[0],@E[0],@C[8]
-	ldr	@C[8],[sp,#$A[4][3]]		@ A[4][3]
+	ldr.l	@C[8],[sp,#$A[4][3]]		@ A[4][3]
 	eor	@E[1],@E[1],@C[9]
-	ldr	@C[9],[sp,#$A[4][3]+4]
+	ldr.h	@C[9],[sp,#$A[4][3]+4]
 	ror	@C[7],@E[0],#32-7		@ C[3] = ROL64(A[3][2] ^ D[2], rhotates[3][2]);
 	ror	@C[6],@E[1],#32-8
 
@@ -498,59 +564,59 @@ $code.=<<___;
 	bic	@E[1],@C[5],@C[3],ror#32-18
 	eor	@E[0],@E[0],@C[0],ror#32-14
 	eor	@E[1],@E[1],@C[1],ror#32-13
-	str	@E[0],[sp,#$R[3][0]]		@ R[3][0] = C[0] ^ (~C[1] & C[2])
+	str.l	@E[0],[sp,#$R[3][0]]		@ R[3][0] = C[0] ^ (~C[1] & C[2])
 	bic	@E[2],@C[6],@C[4]
-	str	@E[1],[sp,#$R[3][0]+4]
+	str.h	@E[1],[sp,#$R[3][0]+4]
 	bic	@E[3],@C[7],@C[5]
 	eor	@E[2],@E[2],@C[2],ror#32-18
+	str.l	@E[2],[sp,#$R[3][1]]		@ R[3][1] = C[1] ^ (~C[2] & C[3]);
 	eor	@E[3],@E[3],@C[3],ror#32-18
-	str	@E[2],[sp,#$R[3][1]]		@ R[3][1] = C[1] ^ (~C[2] & C[3]);
+	str.h	@E[3],[sp,#$R[3][1]+4]
 	bic	@E[0],@C[8],@C[6]
-	str	@E[3],[sp,#$R[3][1]+4]
 	bic	@E[1],@C[9],@C[7]
 	bic	@E[2],@C[0],@C[8],ror#14
 	bic	@E[3],@C[1],@C[9],ror#13
 	eor	@E[0],@E[0],@C[4]
 	eor	@E[1],@E[1],@C[5]
-	str	@E[0],[sp,#$R[3][2]]		@ R[3][2] = C[2] ^ (~C[3] & C[4]);
-	bic	@E[0],@C[2],@C[0],ror#18-14
+	str.l	@E[0],[sp,#$R[3][2]]		@ R[3][2] = C[2] ^ (~C[3] & C[4]);
+	bic	@C[2],@C[2],@C[0],ror#18-14
+	str.h	@E[1],[sp,#$R[3][2]+4]
 	eor	@E[2],@C[6],@E[2],ror#32-14
-	str	@E[1],[sp,#$R[3][2]+4]
 	bic	@E[1],@C[3],@C[1],ror#18-13
 	eor	@E[3],@C[7],@E[3],ror#32-13
-	str	@E[2],[sp,#$R[3][3]]		@ R[3][3] = C[3] ^ (~C[4] & C[0]);
-	str	@E[3],[sp,#$R[3][3]+4]
+	str.l	@E[2],[sp,#$R[3][3]]		@ R[3][3] = C[3] ^ (~C[4] & C[0]);
+	str.h	@E[3],[sp,#$R[3][3]+4]
 	 add	@E[3],sp,#$D[2]
-	 ldr	@C[0],[sp,#$A[0][2]]		@ A[0][2]
-	eor	@E[0],@C[8],@E[0],ror#32-18
-	 ldr	@C[1],[sp,#$A[0][2]+4]
+	 ldr.l	@C[0],[sp,#$A[0][2]]		@ A[0][2]
+	eor	@E[0],@C[8],@C[2],ror#32-18
+	 ldr.h	@C[1],[sp,#$A[0][2]+4]
 	eor	@E[1],@C[9],@E[1],ror#32-18
-	str	@E[0],[sp,#$R[3][4]]		@ R[3][4] = C[4] ^ (~C[0] & C[1]);
-	str	@E[1],[sp,#$R[3][4]+4]
+	str.l	@E[0],[sp,#$R[3][4]]		@ R[3][4] = C[4] ^ (~C[0] & C[1]);
+	str.h	@E[1],[sp,#$R[3][4]+4]
 
 	ldmia	@E[3],{@E[0]-@E[2],@E[3]}	@ D[2..3]
-	ldr	@C[2],[sp,#$A[1][3]]		@ A[1][3]
-	ldr	@C[3],[sp,#$A[1][3]+4]
-	ldr	@C[6],[sp,#$D[4]]		@ D[4]
-	ldr	@C[7],[sp,#$D[4]+4]
+	ldr.l	@C[2],[sp,#$A[1][3]]		@ A[1][3]
+	ldr.h	@C[3],[sp,#$A[1][3]+4]
+	ldr.l	@C[6],[sp,#$D[4]]		@ D[4]
+	ldr.h	@C[7],[sp,#$D[4]+4]
 
 	eor	@C[0],@C[0],@E[0]
-	ldr	@C[4],[sp,#$A[2][4]]		@ A[2][4]
+	ldr.l	@C[4],[sp,#$A[2][4]]		@ A[2][4]
 	eor	@C[1],@C[1],@E[1]
-	ldr	@C[5],[sp,#$A[2][4]+4]
+	ldr.h	@C[5],[sp,#$A[2][4]+4]
 	@ ror	@C[0],@C[0],#32-31		@ C[0] = ROL64(A[0][2] ^ D[2], rhotates[0][2]);
-	ldr	@C[8],[sp,#$D[0]]		@ D[0]
+	ldr.l	@C[8],[sp,#$D[0]]		@ D[0]
 	@ ror	@C[1],@C[1],#32-31
-	ldr	@C[9],[sp,#$D[0]+4]
+	ldr.h	@C[9],[sp,#$D[0]+4]
 
 	eor	@E[2],@E[2],@C[2]
-	ldr	@E[0],[sp,#$A[3][0]]		@ A[3][0]
+	ldr.l	@E[0],[sp,#$A[3][0]]		@ A[3][0]
 	eor	@E[3],@E[3],@C[3]
-	ldr	@E[1],[sp,#$A[3][0]+4]
+	ldr.h	@E[1],[sp,#$A[3][0]+4]
 	ror	@C[3],@E[2],#32-27		@ C[1] = ROL64(A[1][3] ^ D[3], rhotates[1][3]);
-	ldr	@E[2],[sp,#$D[1]]		@ D[1]
+	ldr.l	@E[2],[sp,#$D[1]]		@ D[1]
 	ror	@C[2],@E[3],#32-28
-	ldr	@E[3],[sp,#$D[1]+4]
+	ldr.h	@E[3],[sp,#$D[1]+4]
 
 	eor	@C[6],@C[6],@C[4]
 	eor	@C[7],@C[7],@C[5]
@@ -558,9 +624,9 @@ $code.=<<___;
 	ror	@C[4],@C[7],#32-20
 
 	eor	@E[0],@E[0],@C[8]
-	ldr	@C[8],[sp,#$A[4][1]]		@ A[4][1]
+	ldr.l	@C[8],[sp,#$A[4][1]]		@ A[4][1]
 	eor	@E[1],@E[1],@C[9]
-	ldr	@C[9],[sp,#$A[4][1]+4]
+	ldr.h	@C[9],[sp,#$A[4][1]+4]
 	ror	@C[7],@E[0],#32-20		@ C[3] = ROL64(A[3][0] ^ D[0], rhotates[3][0]);
 	ror	@C[6],@E[1],#32-21
 
@@ -572,41 +638,41 @@ $code.=<<___;
 	bic	@E[0],@C[4],@C[2]
 	bic	@E[1],@C[5],@C[3]
 	eor	@E[0],@E[0],@C[0],ror#32-31
+	str.l	@E[0],[sp,#$R[4][0]]		@ R[4][0] = C[0] ^ (~C[1] & C[2])
 	eor	@E[1],@E[1],@C[1],ror#32-31
-	str	@E[0],[sp,#$R[4][0]]		@ R[4][0] = C[0] ^ (~C[1] & C[2])
+	str.h	@E[1],[sp,#$R[4][0]+4]
 	bic	@E[2],@C[6],@C[4]
-	str	@E[1],[sp,#$R[4][0]+4]
 	bic	@E[3],@C[7],@C[5]
 	eor	@E[2],@E[2],@C[2]
 	eor	@E[3],@E[3],@C[3]
-	str	@E[2],[sp,#$R[4][1]]		@ R[4][1] = C[1] ^ (~C[2] & C[3]);
+	str.l	@E[2],[sp,#$R[4][1]]		@ R[4][1] = C[1] ^ (~C[2] & C[3]);
 	bic	@E[0],@C[8],@C[6],ror#1
-	str	@E[3],[sp,#$R[4][1]+4]
+	str.h	@E[3],[sp,#$R[4][1]+4]
 	bic	@E[1],@C[9],@C[7],ror#1
 	bic	@E[2],@C[0],@C[8],ror#31-1
 	bic	@E[3],@C[1],@C[9],ror#31-1
 	eor	@C[4],@C[4],@E[0],ror#32-1
+	str.l	@C[4],[sp,#$R[4][2]]		@ R[4][2] = C[2] ^= (~C[3] & C[4]);
 	eor	@C[5],@C[5],@E[1],ror#32-1
-	str	@C[4],[sp,#$R[4][2]]		@ R[4][2] = C[2] ^= (~C[3] & C[4]);
+	str.h	@C[5],[sp,#$R[4][2]+4]
 	eor	@C[6],@C[6],@E[2],ror#32-31
-	str	@C[5],[sp,#$R[4][2]+4]
 	eor	@C[7],@C[7],@E[3],ror#32-31
-	str	@C[6],[sp,#$R[4][3]]		@ R[4][3] = C[3] ^= (~C[4] & C[0]);
+	str.l	@C[6],[sp,#$R[4][3]]		@ R[4][3] = C[3] ^= (~C[4] & C[0]);
 	bic	@E[0],@C[2],@C[0],ror#32-31
-	str	@C[7],[sp,#$R[4][3]+4]
+	str.h	@C[7],[sp,#$R[4][3]+4]
 	bic	@E[1],@C[3],@C[1],ror#32-31
 	 add	@E[2],sp,#$R[0][0]
 	eor	@C[8],@E[0],@C[8],ror#32-1
 	 add	@E[0],sp,#$R[1][0]
 	eor	@C[9],@E[1],@C[9],ror#32-1
-	str	@C[8],[sp,#$R[4][4]]		@ R[4][4] = C[4] ^= (~C[0] & C[1]);
-	str	@C[9],[sp,#$R[4][4]+4]
+	str.l	@C[8],[sp,#$R[4][4]]		@ R[4][4] = C[4] ^= (~C[0] & C[1]);
+	str.h	@C[9],[sp,#$R[4][4]+4]
 ___
 }
 	Round(@A,@T);
 	Round(@T,@A);
 $code.=<<___;
-	blo	.Lround
+	blo	.Lround2x
 
 	ldr	pc,[sp,#440]
 .size	KeccakF1600_int,.-KeccakF1600_int
@@ -1483,6 +1549,38 @@ SHA3_squeeze_neon:
 .align	2
 ___
 
-print $code;
+{
+    my %ldr, %str;
+
+    sub ldrd {
+	my ($mnemonic,$half,$reg,$ea) = @_;
+	my $op = $mnemonic eq "ldr" ? \%ldr : \%str;
+
+	if ($half eq "l") {
+	    $$op{reg} = $reg;
+	    $$op{ea}  = $ea;
+	    sprintf "#ifndef	__thumb2__\n"	.
+		    "	%s\t%s,%s\n"		.
+		    "#endif", $mnemonic,$reg,$ea;
+	} else {
+	    sprintf "#ifndef	__thumb2__\n"	.
+		    "	%s\t%s,%s\n"		.
+		    "#else\n"			.
+		    "	%sd\t%s,%s,%s\n"	.
+		    "#endif",	$mnemonic,$reg,$ea,
+				$mnemonic,$$op{reg},$reg,$$op{ea};
+	}
+    }
+}
+
+foreach (split($/,$code)) {
+	s/\`([^\`]*)\`/eval $1/ge;
+
+	s/^\s+(ldr|str)\.([lh])\s+(r[0-9]+),\s*(\[.*)/ldrd($1,$2,$3,$4)/ge or
+	s/\bret\b/bx	lr/g		or
+	s/\bbx\s+lr\b/.word\t0xe12fff1e/g;	# make it possible to compile with -march=armv4
+
+	print $_,"\n";
+}
 
 close STDOUT; # enforce flush
