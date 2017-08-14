@@ -138,13 +138,13 @@ static int test_select_64(uint64_t a, uint64_t b)
     if (selected != a) {
         TEST_error("test_select_64 TRUE failed");
         BIO_printf(bio_err, "a=%jx b=%jx got %jx wanted a\n",
-                  (uintmax_t)a, (uintmax_t)b, (uintmax_t)selected);
+                   (uintmax_t)a, (uintmax_t)b, (uintmax_t)selected);
         return 0;
     }
     selected = constant_time_select_64(CONSTTIME_FALSE_64, a, b);
     if (selected != b) {
         BIO_printf(bio_err, "a=%jx b=%jx got %jx wanted b\n",
-                  (uintmax_t)a, (uintmax_t)b, (uintmax_t)selected);
+                   (uintmax_t)a, (uintmax_t)b, (uintmax_t)selected);
         return 0;
     }
     return 1;

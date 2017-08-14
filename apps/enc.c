@@ -556,9 +556,9 @@ int enc_main(int argc, char **argv)
     ret = 0;
     if (verbose) {
         BIO_printf(bio_err, "bytes read   : %8ju\n",
-                  (uintmax_t)BIO_number_read(in));
+                   (uintmax_t)BIO_number_read(in));
         BIO_printf(bio_err, "bytes written: %8ju\n",
-                  (uintmax_t)BIO_number_written(out));
+                   (uintmax_t)BIO_number_written(out));
     }
  end:
     ERR_print_errors(bio_err);
