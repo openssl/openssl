@@ -85,7 +85,7 @@ B<openssl> B<ocsp>
 [B<-ndays n>]
 [B<-resp_key_id>]
 [B<-nrequest n>]
-[B<-md5|-sha1|...>]
+[B<-I<digest>>]
 
 =head1 DESCRIPTION
 
@@ -286,7 +286,7 @@ status information is immediately available. In this case the age of the
 B<notBefore> field is checked to see it is not older than B<age> seconds old.
 By default this additional check is not performed.
 
-=item B<-[digest]>
+=item B<-I<digest>>
 
 This option sets digest algorithm to use for certificate identification in the
 OCSP request. Any digest supported by the OpenSSL B<dgst> command can be used.

@@ -111,7 +111,8 @@ B<openssl> B<s_client>
 [B<-status>]
 [B<-alpn protocols>]
 [B<-nextprotoneg protocols>]
-[B<-ct|noct>]
+[B<-ct>]
+[B<-noct>]
 [B<-ctlogfile>]
 [B<-keylogfile file>]
 [B<-early_data file>]
@@ -576,7 +577,7 @@ client to advertise support for the TLS extension but disconnect just
 after receiving ServerHello with a list of server supported protocols.
 The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
 
-=item B<-ct|noct>
+=item B<-ct>, B<-noct>
 
 Use one of these two options to control whether Certificate Transparency (CT)
 is enabled (B<-ct>) or disabled (B<-noct>).

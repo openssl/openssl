@@ -56,7 +56,7 @@ B<openssl> B<x509>
 [B<-ext extensions>]
 [B<-certopt option>]
 [B<-C>]
-[B<-[digest]>]
+[B<-I<digest>>]
 [B<-clrext>]
 [B<-extfile filename>]
 [B<-extensions section>]
@@ -109,7 +109,7 @@ if this option is not specified.
 This specifies the output filename to write to or standard output by
 default.
 
-=item B<-[digest]>
+=item B<-I<digest>>
 
 The digest to use.
 This affects any signing or display option that uses a message

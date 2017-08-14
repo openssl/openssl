@@ -2,13 +2,14 @@
 
 =head1 NAME
 
-dgst, sha, sha1, mdc2, ripemd160, sha224, sha256, sha384, sha512, md4, md5, blake2b, blake2s - message digests
+dgst
+- perform digest operations
 
 =head1 SYNOPSIS
 
-B<openssl> B<dgst>
-[B<-help>]
+B<openssl dgst>
 [B<-I<digest>>]
+[B<-help>]
 [B<-c>]
 [B<-d>]
 [B<-hex>]
@@ -28,9 +29,7 @@ B<openssl> B<dgst>
 [B<-engine_impl>]
 [B<file...>]
 
-B<openssl>
-[I<digest>]
-[B<...>]
+B<openssl> I<digest> [B<...>]
 
 =head1 DESCRIPTION
 

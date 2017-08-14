@@ -8,6 +8,7 @@ list - list algorithms and features
 
 B<openssl list>
 [B<-help>]
+[B<-1>]
 [B<-commands>]
 [B<-digest-commands>]
 [B<-digest-algorithms>]
@@ -29,6 +30,11 @@ features.
 =item B<-help>
 
 Display a usage message.
+
+=item B<-1>
+
+List the commands, digest-commands, or cipher-commands in a single column.
+If used, this option must be given first.
 
 =item B<-commands>
 
