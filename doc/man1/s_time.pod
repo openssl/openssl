@@ -13,14 +13,13 @@ B<openssl> B<s_time>
 [B<-cert filename>]
 [B<-key filename>]
 [B<-CApath directory>]
-[B<-CAfile filename>]
+[B<-cafile filename>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
 [B<-reuse>]
 [B<-new>]
 [B<-verify depth>]
 [B<-nameopt option>]
-[B<-nbio>]
 [B<-time seconds>]
 [B<-ssl3>]
 [B<-bugs>]
@@ -108,10 +107,6 @@ and executed in sequence.
 Performs the timing test using the same session ID; this can be used as a test
 that session caching is working. If neither B<-new> nor B<-reuse> are
 specified, they are both on by default and executed in sequence.
-
-=item B<-nbio>
-
-Turns on non-blocking I/O.
 
 =item B<-ssl3>
 

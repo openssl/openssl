@@ -67,9 +67,9 @@ B<openssl> B<cms>
 [B<-verify_name name>]
 [B<-x509_strict>]
 [B<-md digest>]
-[B<-[cipher]>]
+[B<-I<cipher>>]
 [B<-nointern>]
-[B<-no_signer_cert_verify>]
+[B<-noverify>]
 [B<-nocerts>]
 [B<-noattr>]
 [B<-nosmimecap>]
@@ -298,7 +298,7 @@ Do not load the trusted CA certificates from the default directory location
 Digest algorithm to use when signing or resigning. If not present then the
 default digest algorithm for the signing key will be used (usually SHA1).
 
-=item B<-[cipher]>
+=item B<-I<cipher>>
 
 The encryption algorithm to use. For example triple DES (168 bits) - B<-des3>
 or 256 bit AES - B<-aes256>. Any standard algorithm name (as used by the
@@ -316,7 +316,7 @@ the message are searched for the signing certificate. With this option
 only the certificates specified in the B<-certfile> option are used.
 The supplied certificates can still be used as untrusted CAs however.
 
-=item B<-no_signer_cert_verify>
+=item B<-noverify>
 
 Do not verify the signers certificate of a signed message.
 

@@ -26,6 +26,7 @@ our($opt_n);
 our($opt_p);
 our($opt_s);
 our($opt_u);
+our($opt_c);
 
 sub help()
 {
@@ -38,6 +39,7 @@ Find small errors (nits) in documentation.  Options:
     -p Warn if non-public name documented (implies -n)
     -u List undocumented functions
     -h Print this help message
+    -c List undocumented commands and options
 EOF
     exit;
 }
@@ -397,21 +399,123 @@ sub publicize() {
     }
 }
 
-getopts('dlnsphu');
+my %skips = (
+    'aes128' => 1,
+    'aes192' => 1,
+    'aes256' => 1,
+    'aria128' => 1,
+    'aria192' => 1,
+    'aria256' => 1,
+    'camellia128' => 1,
+    'camellia192' => 1,
+    'camellia256' => 1,
+    'des' => 1,
+    'des3' => 1,
+    'idea' => 1,
+    '[cipher]' => 1,
+    '[digest]' => 1,
+);
+
+sub checkflags() {
+    my $cmd = shift;
+    my %cmdopts;
+    my %docopts;
+    my $ok = 1;
+
+    # Get the list of options in the command.
+    open CFH, "./apps/openssl list --options $cmd|"
+        || die "Can list options for $cmd, $!";
+    while ( <CFH> ) {
+        chop;
+        s/ .$//;
+        $cmdopts{$_} = 1;
+    }
+    close CFH;
+
+    # Get the list of flags from the synopsis
+    open CFH, "<doc/man1/$cmd.pod"
+        || die "Can't open $cmd.pod, $!";
+    while ( <CFH> ) {
+        chop;
+        last if /DESCRIPTION/;
+        next unless /\[B<-([^ >]+)/;
+        $docopts{$1} = 1;
+    }
+    close CFH;
+
+    # See what's in the command not the manpage.
+    my @undocced = ();
+    foreach my $k ( keys %cmdopts ) {
+        push @undocced, $k unless $docopts{$k};
+    }
+    if ( scalar @undocced > 0 ) {
+        $ok = 0;
+        foreach ( @undocced ) {
+            print "doc/man1/$cmd.pod: Missing -$_\n";
+        }
+    }
+
+    # See what's in the command not the manpage.
+    my @unimpl = ();
+    foreach my $k ( keys %docopts ) {
+        push @unimpl, $k unless $cmdopts{$k};
+    }
+    if ( scalar @unimpl > 0 ) {
+        $ok = 0;
+        foreach ( @unimpl ) {
+            next if defined $skips{$_};
+            print "doc/man1/$cmd.pod: Not implemented -$_\n";
+        }
+    }
+
+    return $ok;
+}
+
+getopts('cdlnsphu');
 
 &help() if $opt_h;
 $opt_n = 1 if $opt_s or $opt_p;
 $opt_u = 1 if $opt_d;
 
-die "Need one of -[dlnspu] flags.\n"
-    unless $opt_l or $opt_n or $opt_u;
+die "Need one of -[cdlnspu] flags.\n"
+    unless $opt_c or $opt_l or $opt_n or $opt_u;
 
+if ( $opt_c ) {
+    my $ok = 1;
+    my @commands = ();
 
-if ( $opt_n ) {
-    &publicize() if $opt_p;
-    foreach (@ARGV ? @ARGV : glob('doc/*/*.pod')) {
-        &check($_);
+    # Get list of commands.
+    open FH, "./apps/openssl list -1 -commands|"
+        || die "Can't list commands, $!";
+    while ( <FH> ) {
+        chop;
+        push @commands, $_;
     }
+    close FH;
+
+    # See if each has a manpage.
+    foreach ( @commands ) {
+        next if $_ eq 'help' || $_ eq 'exit';
+        if ( ! -f "doc/man1/$_.pod" ) {
+            print "doc/man1/$_.pod does not exist\n";
+            $ok = 0;
+        } else {
+            $ok = 0 if not &checkflags($_);
+        }
+    }
+
+    # See what help is missing.
+    open FH, "./apps/openssl list --missing-help |"
+        || die "Can't list missing help, $!";
+    while ( <FH> ) {
+        chop;
+        my ($cmd, $flag) = split;
+        print "$cmd has no help for -$flag\n";
+        $ok = 0;
+    }
+    close FH;
+
+    exit 1 if not $ok;
 }
 
 if ( $opt_l ) {
@@ -419,6 +523,13 @@ if ( $opt_l ) {
         collectnames($_);
     }
     checklinks();
+}
+
+if ( $opt_n ) {
+    &publicize() if $opt_p;
+    foreach (@ARGV ? @ARGV : glob('doc/*/*.pod')) {
+        &check($_);
+    }
 }
 
 if ( $opt_u ) {

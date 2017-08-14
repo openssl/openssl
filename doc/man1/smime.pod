@@ -16,7 +16,7 @@ B<openssl> B<smime>
 [B<-pk7out>]
 [B<-binary>]
 [B<-crlfeol>]
-[B<-[cipher]>]
+[B<-I<cipher>>]
 [B<-in file>]
 [B<-CAfile file>]
 [B<-CApath dir>]
@@ -201,7 +201,7 @@ Do not load the trusted CA certificates from the default directory location.
 Digest algorithm to use when signing or resigning. If not present then the
 default digest algorithm for the signing key will be used (usually SHA1).
 
-=item B<-[cipher]>
+=item B<-I<cipher>>
 
 The encryption algorithm to use. For example DES  (56 bits) - B<-des>,
 triple DES (168 bits) - B<-des3>,

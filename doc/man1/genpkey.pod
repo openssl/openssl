@@ -11,7 +11,7 @@ B<openssl> B<genpkey>
 [B<-out filename>]
 [B<-outform PEM|DER>]
 [B<-pass arg>]
-[B<-cipher>]
+[B<-I<cipher>>]
 [B<-engine id>]
 [B<-paramfile file>]
 [B<-algorithm alg>]
@@ -45,7 +45,7 @@ This specifies the output format DER or PEM. The default format is PEM.
 The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-cipher>
+=item B<-I<cipher>>
 
 This option encrypts the private key with the supplied cipher. Any algorithm
 name accepted by EVP_get_cipherbyname() is acceptable such as B<des3>.

@@ -6,7 +6,7 @@ enc - symmetric cipher routines
 
 =head1 SYNOPSIS
 
-B<openssl enc -ciphername>
+B<openssl enc -I<cipher>>
 [B<-help>]
 [B<-ciphers>]
 [B<-in filename>]
@@ -14,7 +14,8 @@ B<openssl enc -ciphername>
 [B<-pass arg>]
 [B<-e>]
 [B<-d>]
-[B<-a/-base64>]
+[B<-a>]
+[B<-base64>]
 [B<-A>]
 [B<-k password>]
 [B<-kfile filename>]
@@ -34,6 +35,8 @@ B<openssl enc -ciphername>
 [B<-rand file...>]
 [B<-writerand file>]
 [B<-engine id>]
+
+B<openssl> I<[cipher]> [B<...>]
 
 =head1 DESCRIPTION
 
@@ -184,10 +187,11 @@ This can be used with a subsequent B<-rand> flag.
 
 =head1 NOTES
 
-The program can be called either as B<openssl ciphername> or
-B<openssl enc -ciphername>. The first form doesn't work with
+The program can be called either as B<openssl cipher> or
+B<openssl enc -cipher>. The first form doesn't work with
 engine-provided ciphers, because this form is processed before the
 configuration file is read and any ENGINEs loaded.
+Use the B<list> command to get a list of supported ciphers.
 
 Engines which provide entirely new encryption algorithms (such as the ccgost
 engine which provides gost89 algorithm) should be configured in the
