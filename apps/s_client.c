@@ -3118,8 +3118,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         BIO_printf(bio,
                    "---\nSSL handshake has read %ju bytes "
                    "and written %ju bytes\n",
-                   BIO_number_read(SSL_get_rbio(s)),
-                   BIO_number_written(SSL_get_wbio(s)));
+                   (uintmax_t)BIO_number_read(SSL_get_rbio(s)),
+                   (uintmax_t)BIO_number_written(SSL_get_wbio(s)));
     }
     print_verify_detail(s, bio);
     BIO_printf(bio, (SSL_session_reused(s) ? "---\nReused, " : "---\nNew, "));
