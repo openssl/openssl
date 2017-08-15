@@ -824,7 +824,7 @@ int ERR_clear_last_mark(void)
 
     top = es->top;
     while (es->bottom != top
-           && (es->err_flags[es->top] & ERR_FLAG_MARK) == 0) {
+           && (es->err_flags[top] & ERR_FLAG_MARK) == 0) {
         top -= 1;
         if (top == -1)
             top = ERR_NUM_ERRORS - 1;
