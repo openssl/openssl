@@ -25,10 +25,11 @@ foreach my $f (@fuzzers) {
 
         plan skip_all => "No corpora for $f-test" unless @files;
 
-        plan tests => scalar @files;
+        plan tests => scalar @files + 1;
 
         foreach (@files) {
             ok(run(fuzz(["$f-test", $_])));
         }
+        ok(run(fuzz(["$f-test"])));
     }
 }
