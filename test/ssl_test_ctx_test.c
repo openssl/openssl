@@ -137,7 +137,7 @@ static void tear_down(SSL_TEST_CTX_TEST_FIXTURE *fixture)
 #define EXECUTE_SSL_TEST_CTX_TEST() \
     EXECUTE_TEST(execute_test, tear_down)
 
-static int test_empty_configuration()
+static int test_empty_configuration(void)
 {
     SETUP_SSL_TEST_CTX_TEST_FIXTURE();
     if (fixture == NULL)
@@ -148,7 +148,7 @@ static int test_empty_configuration()
     return result;
 }
 
-static int test_good_configuration()
+static int test_good_configuration(void)
 {
     SETUP_SSL_TEST_CTX_TEST_FIXTURE();
     if (fixture == NULL)

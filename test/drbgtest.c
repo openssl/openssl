@@ -477,7 +477,7 @@ err:
 
 #define RAND_ADD_SIZE 500
 
-static int test_rand_add()
+static int test_rand_add(void)
 {
     char *p;
 
