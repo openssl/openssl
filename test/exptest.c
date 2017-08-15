@@ -43,7 +43,7 @@ static int a_is_zero_mod_one(const char *method, const BIGNUM *r,
 /*
  * test_mod_exp_zero tests that x**0 mod 1 == 0. It returns zero on success.
  */
-static int test_mod_exp_zero()
+static int test_mod_exp_zero(void)
 {
     BIGNUM *a = NULL, *p = NULL, *m = NULL;
     BIGNUM *r = NULL;

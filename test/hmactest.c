@@ -105,7 +105,7 @@ static int test_hmac_md5(int idx)
 }
 # endif
 
-static int test_hmac_bad()
+static int test_hmac_bad(void)
 {
     HMAC_CTX *ctx = NULL;
     int ret = 0;
@@ -125,7 +125,7 @@ err:
     return ret;
 }
 
-static int test_hmac_run()
+static int test_hmac_run(void)
 {
     char *p;
     HMAC_CTX *ctx = NULL;
@@ -180,7 +180,7 @@ err:
 }
 
 
-static int test_hmac_single_shot()
+static int test_hmac_single_shot(void)
 {
     char *p;
 
@@ -194,7 +194,7 @@ static int test_hmac_single_shot()
 }
 
 
-static int test_hmac_copy()
+static int test_hmac_copy(void)
 {
     char *p;
     HMAC_CTX *ctx = NULL, *ctx2 = NULL;

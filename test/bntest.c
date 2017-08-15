@@ -150,7 +150,7 @@ static int rand_neg(void)
 }
 
 
-static int test_sub()
+static int test_sub(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL;
     int i, st = 0;
@@ -187,7 +187,7 @@ err:
 }
 
 
-static int test_div_recip()
+static int test_div_recip(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
     BN_RECP_CTX *recp = NULL;
@@ -231,7 +231,7 @@ err:
 }
 
 
-static int test_mod()
+static int test_mod(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
     int st = 0, i;
@@ -323,7 +323,7 @@ static char *glue(const char *list[])
  * Test constant-time modular exponentiation with 1024-bit inputs, which on
  * x86_64 cause a different code branch to be taken.
  */
-static int test_modexp_mont5()
+static int test_modexp_mont5(void)
 {
     BIGNUM *a = NULL, *p = NULL, *m = NULL, *d = NULL, *e = NULL;
     BIGNUM *b = NULL, *n = NULL, *c = NULL;
@@ -431,7 +431,7 @@ err:
 }
 
 #ifndef OPENSSL_NO_EC2M
-static int test_gf2m_add()
+static int test_gf2m_add(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL;
     int i, st = 0;
@@ -464,7 +464,7 @@ static int test_gf2m_add()
     return st;
 }
 
-static int test_gf2m_mod()
+static int test_gf2m_mod(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL, *e = NULL;
     int i, j, st = 0;
@@ -502,7 +502,7 @@ static int test_gf2m_mod()
     return st;
 }
 
-static int test_gf2m_mul()
+static int test_gf2m_mul(void)
 {
     BIGNUM *a, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL, *g = NULL, *h = NULL;
@@ -553,7 +553,7 @@ static int test_gf2m_mul()
     return st;
 }
 
-static int test_gf2m_sqr()
+static int test_gf2m_sqr(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
     int i, j, st = 0;
@@ -590,7 +590,7 @@ static int test_gf2m_sqr()
     return st;
 }
 
-static int test_gf2m_modinv()
+static int test_gf2m_modinv(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
     int i, j, st = 0;
@@ -625,7 +625,7 @@ static int test_gf2m_modinv()
     return st;
 }
 
-static int test_gf2m_moddiv()
+static int test_gf2m_moddiv(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL;
@@ -667,7 +667,7 @@ static int test_gf2m_moddiv()
     return st;
 }
 
-static int test_gf2m_modexp()
+static int test_gf2m_modexp(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL;
@@ -713,7 +713,7 @@ static int test_gf2m_modexp()
     return st;
 }
 
-static int test_gf2m_modsqrt()
+static int test_gf2m_modsqrt(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL;
@@ -755,7 +755,7 @@ static int test_gf2m_modsqrt()
     return st;
 }
 
-static int test_gf2m_modsolvequad()
+static int test_gf2m_modsolvequad(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL;
@@ -806,7 +806,7 @@ static int test_gf2m_modsolvequad()
 }
 #endif
 
-static int test_kronecker()
+static int test_kronecker(void)
 {
     BIGNUM *a = NULL, *b = NULL, *r = NULL, *t = NULL;
     int i, legendre, kronecker, st = 0;
@@ -1442,7 +1442,7 @@ err:
     return st;
 }
 
-static int test_bn2padded()
+static int test_bn2padded(void)
 {
 #if HAVE_BN_PADDED
     uint8_t zeros[256], out[256], reference[128];
@@ -1503,7 +1503,7 @@ err:
 #endif
 }
 
-static int test_dec2bn()
+static int test_dec2bn(void)
 {
     BIGNUM *bn = NULL;
     int st = 0;
@@ -1572,7 +1572,7 @@ err:
     return st;
 }
 
-static int test_hex2bn()
+static int test_hex2bn(void)
 {
     BIGNUM *bn = NULL;
     int st = 0;
@@ -1638,7 +1638,7 @@ err:
     return st;
 }
 
-static int test_asc2bn()
+static int test_asc2bn(void)
 {
     BIGNUM *bn = NULL;
     int st = 0;
@@ -1736,7 +1736,7 @@ err:
     return st;
 }
 
-static int test_rand()
+static int test_rand(void)
 {
     BIGNUM *bn = NULL;
     int st = 0;
@@ -1762,7 +1762,7 @@ err:
     return st;
 }
 
-static int test_negzero()
+static int test_negzero(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL;
     BIGNUM *numerator = NULL, *denominator = NULL;
@@ -1831,7 +1831,7 @@ err:
     return st;
 }
 
-static int test_badmod()
+static int test_badmod(void)
 {
     BIGNUM *a = NULL, *b = NULL, *zero = NULL;
     BN_MONT_CTX *mont = NULL;
@@ -1897,7 +1897,7 @@ err:
     return st;
 }
 
-static int test_expmodzero()
+static int test_expmodzero(void)
 {
     BIGNUM *a = NULL, *r = NULL, *zero = NULL;
     int st = 0;
@@ -1930,7 +1930,7 @@ err:
     return st;
 }
 
-static int test_smallprime()
+static int test_smallprime(void)
 {
     static const int kBits = 10;
     BIGNUM *r;
@@ -1948,7 +1948,7 @@ err:
     return st;
 }
 
-static int test_3_is_prime()
+static int test_3_is_prime(void)
 {
     int ret = 0;
     BIGNUM *r = NULL;

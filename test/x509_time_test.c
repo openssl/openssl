@@ -273,7 +273,7 @@ static int test_x509_cmp_time(int idx)
     return 1;
 }
 
-static int test_x509_cmp_time_current()
+static int test_x509_cmp_time_current(void)
 {
     time_t now = time(NULL);
     /* Pick a day earlier and later, relative to any system clock. */
