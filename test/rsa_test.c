@@ -22,9 +22,10 @@
 #include "testutil.h"
 
 #ifdef OPENSSL_NO_RSA
-void setup_tests(void)
+int setup_tests(void)
 {
     /* No tests */
+    return 1;
 }
 #else
 # include <openssl/rsa.h>
