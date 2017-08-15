@@ -30,14 +30,13 @@
 #define INCLUDE_FUNCTION_TABLE
 #include "apps.h"
 
-
-#ifdef OPENSSL_NO_CAMELLIA
-# define FORMAT "%-15s"
-# define COLUMNS 5
-#else
-# define FORMAT "%-18s"
-# define COLUMNS 4
-#endif
+/* Structure to hold the number of columns to be displayed and the
+ * field width used to display them.
+ */
+typedef struct {
+    int columns;
+    int width;
+} DISPLAY_COLUMNS;
 
 /* Special sentinel to exit the program. */
 #define EXIT_THE_PROGRAM (-1)
@@ -59,6 +58,20 @@ char *default_config_file = NULL;
 BIO *bio_in = NULL;
 BIO *bio_out = NULL;
 BIO *bio_err = NULL;
+
+static void calculate_columns(DISPLAY_COLUMNS *dc)
+{
+    FUNCTION *f;
+    int len, maxlen = 0;
+
+    for (f = functions; f->name != NULL; ++f)
+        if (f->type == FT_general || f->type == FT_md || f->type == FT_cipher)
+            if ((len = strlen(f->name)) > maxlen)
+                maxlen = len;
+
+    dc->width = maxlen + 2;
+    dc->columns = (80 - 1) / dc->width;
+}
 
 static int apps_startup()
 {
@@ -442,6 +455,7 @@ int help_main(int argc, char **argv)
     FUNC_TYPE tp;
     char *prog;
     HELP_CHOICE o;
+    DISPLAY_COLUMNS dc;
 
     prog = opt_init(argc, argv, help_options);
     while ((o = opt_next()) != OPT_hEOF) {
@@ -461,12 +475,13 @@ int help_main(int argc, char **argv)
         return 1;
     }
 
-    BIO_printf(bio_err, "\nStandard commands");
+    calculate_columns(&dc);
+    BIO_printf(bio_err, "Standard commands");
     i = 0;
     tp = FT_none;
     for (fp = functions; fp->name != NULL; fp++) {
         nl = 0;
-        if (((i++) % COLUMNS) == 0) {
+        if (i++ % dc.columns == 0) {
             BIO_printf(bio_err, "\n");
             nl = 1;
         }
@@ -484,7 +499,7 @@ int help_main(int argc, char **argv)
                            "\nCipher commands (see the `enc' command for more details)\n");
             }
         }
-        BIO_printf(bio_err, FORMAT, fp->name);
+        BIO_printf(bio_err, "%-*s", dc.width, fp->name);
     }
     BIO_printf(bio_err, "\n\n");
     return 0;
@@ -499,6 +514,10 @@ static void list_type(FUNC_TYPE ft, int one)
 {
     FUNCTION *fp;
     int i = 0;
+    DISPLAY_COLUMNS dc;
+
+    if (!one)
+        calculate_columns(&dc);
 
     for (fp = functions; fp->name != NULL; fp++) {
         if (fp->type != ft)
@@ -506,13 +525,14 @@ static void list_type(FUNC_TYPE ft, int one)
         if (one) {
             BIO_printf(bio_out, "%s\n", fp->name);
         } else {
-            if ((i++ % COLUMNS) == 0 && fp != functions)
+            if (i % dc.columns == 0 && i > 0)
                 BIO_printf(bio_out, "\n");
-            BIO_printf(bio_out, FORMAT, fp->name);
+            BIO_printf(bio_out, "%-*s", dc.width, fp->name);
+            i++;
         }
     }
     if (!one)
-        BIO_printf(bio_out, "\n");
+        BIO_printf(bio_out, "\n\n");
 }
 
 static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
@@ -780,5 +800,5 @@ static LHASH_OF(FUNCTION) *prog_init(void)
 
     for (f = functions; f->name != NULL; f++)
         (void)lh_FUNCTION_insert(ret, f);
-    return (ret);
+    return ret;
 }
