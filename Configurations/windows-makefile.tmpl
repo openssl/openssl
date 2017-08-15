@@ -249,7 +249,9 @@ clean: libclean
 	-del /Q /S /F *.d
 	-del /Q /S /F *.obj
 	-del /Q /S /F *.pdb
-	-del /Q /S /F *.exp
+	-del /Q /F *.exp
+	-del /Q /F apps\*.exp
+	-del /Q /F engines\*.exp
 	-del /Q /S /F engines\*.ilk
 	-del /Q /S /F engines\*.lib
 	-del /Q /S /F apps\*.lib
