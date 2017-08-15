@@ -102,8 +102,8 @@ static int uint64_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
                         int indent, const ASN1_PCTX *pctx)
 {
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
-        return BIO_printf(out, "%jd\n", (intmax_t)**(int64_t **)pval);
-    return BIO_printf(out, "%ju\n", (uintmax_t)**(uint64_t **)pval);
+        return BIO_printf(out, "%jd\n", **(int64_t **)pval);
+    return BIO_printf(out, "%ju\n", **(uint64_t **)pval);
 }
 
 /* 32-bit variants */

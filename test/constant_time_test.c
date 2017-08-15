@@ -66,11 +66,11 @@ static int test_binary_op_64(uint64_t (*op)(uint64_t a, uint64_t b),
 
     if (is_true && c != CONSTTIME_TRUE_64) {
         TEST_error("TRUE %s op failed", op_name);
-        BIO_printf(bio_err, "a=%jx b=%jx\n", (uintmax_t)a, (uintmax_t)b);
+        BIO_printf(bio_err, "a=%jx b=%jx\n", a, b);
         return 0;
     } else if (!is_true && c != CONSTTIME_FALSE_64) {
         TEST_error("FALSE %s op failed", op_name);
-        BIO_printf(bio_err, "a=%jx b=%jx\n", (uintmax_t)a, (uintmax_t)b);
+        BIO_printf(bio_err, "a=%jx b=%jx\n", a, b);
         return 0;
     }
     return 1;
@@ -137,14 +137,12 @@ static int test_select_64(uint64_t a, uint64_t b)
 
     if (selected != a) {
         TEST_error("test_select_64 TRUE failed");
-        BIO_printf(bio_err, "a=%jx b=%jx got %jx wanted a\n",
-                   (uintmax_t)a, (uintmax_t)b, (uintmax_t)selected);
+        BIO_printf(bio_err, "a=%jx b=%jx got %jx wanted a\n", a, b, selected);
         return 0;
     }
     selected = constant_time_select_64(CONSTTIME_FALSE_64, a, b);
     if (selected != b) {
-        BIO_printf(bio_err, "a=%jx b=%jx got %jx wanted b\n",
-                   (uintmax_t)a, (uintmax_t)b, (uintmax_t)selected);
+        BIO_printf(bio_err, "a=%jx b=%jx got %jx wanted b\n", a, b, selected);
         return 0;
     }
     return 1;
