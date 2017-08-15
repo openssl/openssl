@@ -77,7 +77,7 @@ end:
     return ret;
 }
 
-static int client_setup_sni_before_state()
+static int client_setup_sni_before_state(void)
 {
     SSL_CTX *ctx;
     SSL *con = NULL;
@@ -125,7 +125,7 @@ end:
     return ret;
 }
 
-static int client_setup_sni_after_state()
+static int client_setup_sni_after_state(void)
 {
     SSL_CTX *ctx;
     SSL *con = NULL;
@@ -174,7 +174,7 @@ end:
     return ret;
 }
 
-static int server_setup_sni()
+static int server_setup_sni(void)
 {
     SSL_CTX *ctx;
     SSL *con = NULL;

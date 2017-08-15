@@ -41,7 +41,7 @@ typedef struct {
 
 static expected_error_t expected_error = ASN1_UNKNOWN;
 
-static int test_bad_asn1()
+static int test_bad_asn1(void)
 {
     BIO *bio = NULL;
     ASN1_VALUE *value = NULL;

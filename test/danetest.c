@@ -384,7 +384,7 @@ static int test_tlsafile(SSL_CTX *ctx, const char *base_name,
     return ret;
 }
 
-static int run_tlsatest()
+static int run_tlsatest(void)
 {
     SSL_CTX *ctx = NULL;
     BIO *f = NULL;

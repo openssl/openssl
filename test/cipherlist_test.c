@@ -186,7 +186,7 @@ static int execute_test(CIPHERLIST_TEST_FIXTURE *fixture)
 #define EXECUTE_CIPHERLIST_TEST() \
     EXECUTE_TEST(execute_test, tear_down)
 
-static int test_default_cipherlist_implicit()
+static int test_default_cipherlist_implicit(void)
 {
     SETUP_CIPHERLIST_TEST_FIXTURE();
     if (fixture == NULL)
@@ -195,7 +195,7 @@ static int test_default_cipherlist_implicit()
     return result;
 }
 
-static int test_default_cipherlist_explicit()
+static int test_default_cipherlist_explicit(void)
 {
     SETUP_CIPHERLIST_TEST_FIXTURE();
     if (fixture == NULL)

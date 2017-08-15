@@ -165,7 +165,7 @@ static int x9_62_test_internal(int nid, const char *r_in, const char *s_in)
     return ret;
 }
 
-static int x9_62_tests()
+static int x9_62_tests(void)
 {
     int ret = 0;
 

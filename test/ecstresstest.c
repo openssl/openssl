@@ -64,7 +64,7 @@ err:
     return NULL;
 }
 
-static int test_curve()
+static int test_curve(void)
 {
     EC_GROUP *group = NULL;
     EC_POINT *point = NULL;

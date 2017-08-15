@@ -376,7 +376,7 @@ static const char *get_std_name_by_id(int id)
     return NULL;
 }
 
-static int test_cipher_name()
+static int test_cipher_name(void)
 {
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
