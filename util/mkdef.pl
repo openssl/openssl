@@ -49,7 +49,9 @@ use lib ".";
 use configdata;
 use File::Spec::Functions;
 use File::Basename;
-use if $^O ne "VMS", 'File::Glob' => qw/:bsd_glob/;
+use FindBin;
+use lib "$FindBin::Bin/perl";
+use OpenSSL::Glob;
 
 my $debug=0;
 

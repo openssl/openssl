@@ -16,7 +16,9 @@ BEGIN {
 
 use File::Spec::Functions qw/catdir catfile curdir abs2rel rel2abs/;
 use File::Basename;
-use if $^O ne "VMS", 'File::Glob' => qw/:bsd_glob/;
+use FindBin;
+use lib "$FindBin::Bin/../util/perl";
+use OpenSSL::Glob;
 use Module::Load::Conditional qw(can_load);
 
 my $TAP_Harness = can_load(modules => { 'TAP::Harness' => undef }) 
@@ -25,12 +27,11 @@ my $TAP_Harness = can_load(modules => { 'TAP::Harness' => undef })
 my $srctop = $ENV{SRCTOP} || $ENV{TOP};
 my $bldtop = $ENV{BLDTOP} || $ENV{TOP};
 my $recipesdir = catdir($srctop, "test", "recipes");
-my $testlib = catdir($srctop, "test", "testlib");
-my $utillib = catdir($srctop, "util");
+my $libdir = rel2abs(catdir($srctop, "util", "perl"));
 
 my %tapargs =
     ( verbosity => $ENV{VERBOSE} || $ENV{V} || $ENV{HARNESS_VERBOSE} ? 1 : 0,
-      lib       => [ $testlib, $utillib ],
+      lib       => [ $libdir ],
       switches  => '-w',
       merge     => 1
     );
