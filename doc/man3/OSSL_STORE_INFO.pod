@@ -122,6 +122,14 @@ returned name will be the path of each object, so if C</foo/bar> was
 given and that path has the file C<cookie.pem>, the name
 C</foo/bar/cookie.pem> will be returned.
 
+The returned URI is considered canonical and must be unique and permanent
+for the storage where the object (or collection of objects) resides.
+Each loader is responsible for ensuring that it only returns canonical
+URIs.
+However, it's possible that certain schemes allow an object (or collection
+thereof) to be reached with alternative URIs; just because one URI is
+canonical doesn't mean that other variants can't be used.
+
 At the discretion of the loader that was used to get these names, an
 extra description may be attached as well.
 
