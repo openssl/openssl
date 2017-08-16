@@ -1503,15 +1503,11 @@ int rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
     BIGNUM *btmp;
     int ret = 0;
 
-    if (b)
-        btmp = b;
-    else
-        btmp = BN_new();
-
+    btmp = b == NULL ? BN_new() : b;
     if (btmp == NULL)
         return 0;
 
-    if (!BN_rand(btmp, SERIAL_RAND_BITS, 0, 0))
+    if (!BN_rand(btmp, SERIAL_RAND_BITS, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
         goto error;
     if (ai && !BN_to_ASN1_INTEGER(btmp, ai))
         goto error;

@@ -568,7 +568,12 @@ void store_setup_crl_download(X509_STORE *st);
 
 # define APP_PASS_LEN    1024
 
-# define SERIAL_RAND_BITS        64
+/*
+ * IETF RFC 5280 says serial number must be <= 20 bytes. Use 159 bits
+ * so that the first bit will never be one, so that the DER encoding
+ * rules won't force a leading octet.
+ */
+# define SERIAL_RAND_BITS        159
 
 int app_isdir(const char *);
 int app_access(const char *, int flag);
