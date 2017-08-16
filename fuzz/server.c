@@ -485,9 +485,13 @@ static int idx;
 time_t time(time_t *t) TIME_IMPL(t)
 #endif
 
+
 int FuzzerInitialize(int *argc, char ***argv)
 {
     STACK_OF(SSL_COMP) *comp_methods;
+
+    fprintf(stdout, "Starting FuzzerInitialize\n");
+    fflush(stdout);
 
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ASYNC, NULL);
     OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
@@ -497,7 +501,6 @@ int FuzzerInitialize(int *argc, char ***argv)
     FuzzerSetRand();
     comp_methods = SSL_COMP_get_compression_methods();
     OPENSSL_sk_sort((OPENSSL_STACK *)comp_methods);
-
 
     return 1;
 }
@@ -633,6 +636,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
             }
         }
     }
+
     SSL_free(server);
     ERR_clear_error();
     SSL_CTX_free(ctx);

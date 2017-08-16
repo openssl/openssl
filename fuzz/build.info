@@ -111,7 +111,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[ct-test]=../include
   DEPEND[ct-test]=../libcrypto
 
-  SOURCE[server-test]=server.c test-corpus.c
+  SOURCE[server-test]=server.c test-corpus.c ../ms/applink.c
   INCLUDE[server-test]=../include
   DEPEND[server-test]=../libcrypto ../libssl
 

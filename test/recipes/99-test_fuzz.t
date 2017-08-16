@@ -15,13 +15,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_fuzz");
 
-my @fuzzers = ('asn1', 'asn1parse', 'bignum', 'bndiv', 'client', 'conf', 'crl', 'server', 'x509');
-if (!disabled("cms")) {
-    push @fuzzers, 'cms';
-}
-if (!disabled("ct")) {
-    push @fuzzers, 'ct';
-}
+my @fuzzers = ('server');
 plan tests => scalar @fuzzers;
 
 foreach my $f (@fuzzers) {
@@ -31,10 +25,11 @@ foreach my $f (@fuzzers) {
 
         plan skip_all => "No corpora for $f-test" unless @files;
 
-        plan tests => scalar @files;
+        plan tests => scalar @files + 1;
 
         foreach (@files) {
             ok(run(fuzz(["$f-test", $_])));
         }
+        ok(run(fuzz(["$f-test"])));
     }
 }

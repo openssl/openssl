@@ -20,10 +20,28 @@
 #include <openssl/crypto.h>
 #include "fuzzer.h"
 
+
+static void testlog(char *msg)
+{
+    fprintf(stdout, "%s\n", msg);
+    fflush(stdout);
+}
+
 int main(int argc, char **argv) {
     int n;
 
+    printf("OpenSSL Version num: %lx\n", OpenSSL_version_num());
+    testlog("Starting\n");
+
+    
+
+    if (argc == 1) {
+        testlog("Exiting\n");
+        return 0;
+    }
+
     FuzzerInitialize(&argc, &argv);
+    testlog("Initialised\n");
 
     for (n = 1; n < argc; ++n) {
         struct stat st;
@@ -38,12 +56,15 @@ int main(int argc, char **argv) {
         buf = malloc(st.st_size);
         s = fread(buf, 1, st.st_size, f);
         OPENSSL_assert(s == (size_t)st.st_size);
+        testlog("Test one input\n");
         FuzzerTestOneInput(buf, s);
         free(buf);
         fclose(f);
     }
 
+    testlog("Cleaning up\n");
     FuzzerCleanup();
 
+    testlog("Done\n");
     return 0;
 }
