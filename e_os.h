@@ -33,7 +33,7 @@ extern "C" {
 /*
  * Format specifier for printing size_t. Original conundrum was to
  * get it working with -Wformat [-Werror], which can be considered
- * overzelaous, especially in multi-platform context, but it's
+ * overzealous, especially in multi-platform context, but it's
  * conscious choice...
  */
 # if defined(_WIN64)
@@ -531,7 +531,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 
 /*
  * NOTE: these are implemented by helpers in database app! if the database is
- * not linked, we need to implement them elswhere
+ * not linked, we need to implement them elsewhere
  */
 struct hostent *gethostbyname(const char *name);
 struct hostent *gethostbyaddr(const char *addr, int length, int type);

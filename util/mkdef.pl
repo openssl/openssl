@@ -36,7 +36,7 @@
 #   The semantics for the platforms is that every item is checked against the
 #   environment.  For the negative items ("!FOO"), if any of them is false
 #   (i.e. "FOO" is true) in the environment, the corresponding symbol can't be
-#   used.  For the positive itms, if all of them are false in the environment,
+#   used.  For the positive items, if all of them are false in the environment,
 #   the corresponding symbol can't be used.  Any combination of positive and
 #   negative items are possible, and of course leave room for some redundancy.
 # - "kind" is "FUNCTION" or "VARIABLE".  The meaning of that is obvious.
@@ -441,7 +441,7 @@ sub do_defs
 			}
 
 			if(/\/\*/) {
-				if (not /\*\//) {	# multiline comment...
+				if (not /\*\//) {	# multi-line comment...
 					$line = $_;	# ... just accumulate
 					next;
 				} else {
@@ -625,7 +625,7 @@ sub do_defs
 					$def .= "int d2i_$3(void);";
 					$def .= "int i2d_$3(void);";
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -637,7 +637,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("$2_it","$2_it",
 						      "EXPORT_VAR_AS_FUNCTION",
@@ -649,7 +649,7 @@ sub do_defs
 					$def .= "int $3_free(void);";
 					$def .= "int $3_new(void);";
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -661,7 +661,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("$2_it","$2_it",
 						      "EXPORT_VAR_AS_FUNCTION",
@@ -674,7 +674,7 @@ sub do_defs
 					$def .= "int $1_free(void);";
 					$def .= "int $1_new(void);";
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -686,7 +686,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("$1_it","$1_it",
 						      "EXPORT_VAR_AS_FUNCTION",
@@ -696,7 +696,7 @@ sub do_defs
 					$def .= "int d2i_$2(void);";
 					$def .= "int i2d_$2(void);";
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -708,7 +708,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("$2_it","$2_it",
 						      "EXPORT_VAR_AS_FUNCTION",
@@ -724,7 +724,7 @@ sub do_defs
 					$def .= "int $2_free(void);";
 					$def .= "int $2_new(void);";
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -736,7 +736,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("$2_it","$2_it",
 						      "EXPORT_VAR_AS_FUNCTION",
@@ -744,7 +744,7 @@ sub do_defs
 					next;
 				} elsif (/^\s*DECLARE_ASN1_ITEM\s*\(\s*(\w*)\s*\)/) {
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -756,7 +756,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("$1_it","$1_it",
 						      "EXPORT_VAR_AS_FUNCTION",
@@ -822,7 +822,7 @@ sub do_defs
 					next;
 				} elsif (/^OPENSSL_DECLARE_GLOBAL\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -834,7 +834,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("_shadow_$2","_shadow_$2",
 						      "EXPORT_VAR_AS_FUNCTION",
