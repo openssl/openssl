@@ -30,7 +30,10 @@ static void testlog(char *msg)
 int main(int argc, char **argv) {
     int n;
 
+    printf("OpenSSL Version num: %lx\n", OpenSSL_version_num());
     testlog("Starting\n");
+
+    
 
     if (argc == 1) {
         testlog("Exiting\n");

@@ -636,6 +636,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
             }
         }
     }
+
     SSL_free(server);
     ERR_clear_error();
     SSL_CTX_free(ctx);
