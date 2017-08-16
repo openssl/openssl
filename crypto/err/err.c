@@ -730,8 +730,6 @@ void ERR_set_error_data(char *data, int flags)
         return;
 
     i = es->top;
-    if (i == 0)
-        i = ERR_NUM_ERRORS - 1;
 
     err_clear_data(es, i);
     es->err_data[i] = data;
