@@ -73,7 +73,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
                     goto f_err;
                 }
             }
-        } else if (certs) {
+        } else if (certs != NULL) {
             untrusted = certs;
         } else {
             untrusted = bs->certs;
