@@ -844,7 +844,7 @@ static int final_server_name(SSL *s, unsigned int context, int sent,
 
     case SSL_TLSEXT_ERR_NOACK:
         s->servername_done = 0;
-        if (s->session->ext.hostname != NULL)
+        if (s->server && s->session->ext.hostname != NULL)
             s->ext.early_data_ok = 0;
         return 1;
 
@@ -945,6 +945,9 @@ static int init_alpn(SSL *s, unsigned int context)
 
 static int final_alpn(SSL *s, unsigned int context, int sent, int *al)
 {
+    if (!s->server && !sent && s->session->ext.alpn_selected != NULL)
+            s->ext.early_data_ok = 0;
+
     if (!s->server || !SSL_IS_TLS13(s))
         return 1;
 
@@ -1387,8 +1390,24 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
 
 static int final_early_data(SSL *s, unsigned int context, int sent, int *al)
 {
-    if (!s->server || !sent)
+    if (!sent)
         return 1;
+
+    if (!s->server) {
+        if (context == SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+                && sent
+                && !s->ext.early_data_ok) {
+            /*
+             * If we get here then the server accepted our early_data but we
+             * later realised that it shouldn't have done (e.g. inconsistent
+             * ALPN)
+             */
+            *al = SSL_AD_ILLEGAL_PARAMETER;
+            return 0;
+        }
+
+        return 1;
+    }
 
     if (s->max_early_data == 0
             || !s->hit

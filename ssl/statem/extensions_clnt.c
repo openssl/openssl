@@ -771,6 +771,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
      * extension, we set it to accepted.
      */
     s->ext.early_data = SSL_EARLY_DATA_REJECTED;
+    s->ext.early_data_ok = 1;
 
     return EXT_RETURN_SENT;
 }
@@ -1400,15 +1401,22 @@ int tls_parse_stoc_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
     s->s3->alpn_selected_len = len;
 
-    /* We also put a copy in the session */
-    OPENSSL_free(s->session->ext.alpn_selected);
-    s->session->ext.alpn_selected = OPENSSL_memdup(s->s3->alpn_selected,
-                                                   s->s3->alpn_selected_len);
-    s->session->ext.alpn_selected_len = s->s3->alpn_selected_len;
-
-    if (s->session->ext.alpn_selected == NULL) {
-        *al = SSL_AD_INTERNAL_ERROR;
-        return 0;
+    if (s->session->ext.alpn_selected != NULL
+            && (s->session->ext.alpn_selected_len != len
+                || memcmp(s->session->ext.alpn_selected, s->s3->alpn_selected,
+                          len) != 0)) {
+        /* ALPN not consistent with the old session so cannot use early_data */
+        s->ext.early_data_ok = 0;
+    }
+    if (!s->hit) {
+        /* If a new session then update it with the selected ALPN */
+        s->session->ext.alpn_selected =
+            OPENSSL_memdup(s->s3->alpn_selected, s->s3->alpn_selected_len);
+        if (s->session->ext.alpn_selected == NULL) {
+            *al = SSL_AD_INTERNAL_ERROR;
+            return 0;
+        }
+        s->session->ext.alpn_selected_len = s->s3->alpn_selected_len;
     }
 
     return 1;
@@ -1637,12 +1645,13 @@ int tls_parse_stoc_early_data(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
-    if (s->ext.early_data != SSL_EARLY_DATA_REJECTED
+    if (!s->ext.early_data_ok
             || !s->hit
             || s->session->ext.tick_identity != 0) {
         /*
          * If we get here then we didn't send early data, or we didn't resume
-         * using the first identity so the server should not be accepting it.
+         * using the first identity, or the SNI/ALPN is not consistent so the
+         * server should not be accepting it.
          */
         *al = SSL_AD_ILLEGAL_PARAMETER;
         return 0;
