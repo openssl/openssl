@@ -9,7 +9,7 @@ SSL_SESSION_is_resumable
 
  #include <openssl/ssl.h>
 
- const SSL_CIPHER *SSL_SESSION_is_resumable(const SSL_SESSSION *s);
+ int SSL_SESSION_is_resumable(const SSL_SESSION *s);
 
 =head1 DESCRIPTION
 
