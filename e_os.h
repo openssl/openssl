@@ -507,6 +507,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    define strdup _strdup
 #   endif
 #   define unlink _unlink
+#   define fileno _fileno
 #  endif
 # else
 #  include <strings.h>
