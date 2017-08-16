@@ -93,14 +93,14 @@ SSL_CIPHER_is_aead() returns 1 if the cipher B<c> is AEAD (e.g. GCM or
 ChaCha20/Poly1305), and 0 if it is not AEAD.
 
 SSL_CIPHER_find() returns a B<SSL_CIPHER> structure which has the cipher ID stored
-in B<ptr>. The B<ptr> parameter is a two elements array of B<char>, which stores the
-two-byte TLS cipher ID (as allocalted by IANA) in network byte order. This parameter
+in B<ptr>. The B<ptr> parameter is a two element array of B<char>, which stores the
+two-byte TLS cipher ID (as allocated by IANA) in network byte order. This parameter
 is usually retrieved from a TLS packet by using functions like L<SSL_early_get0_ciphers(3)>.
 SSL_CIPHER_find() returns NULL if an error occurs or the indicated cipher is not found.
 
 SSL_CIPHER_get_id() returns the ID of the given cipher B<c>. The ID here is an
 OpenSSL-specific concept, which stores a prefix of 0x0300 in the higher two bytes,
-and the IANA-specified chipher suit ID in the lower two bytes. For instance,
+and the IANA-specified chipher suite ID in the lower two bytes. For instance,
 TLS_RSA_WITH_NULL_MD5 has IANA ID "0x00, 0x01", but the SSL_CIPHER_get_id()
 function will return an ID with value 0x03000001.
 
