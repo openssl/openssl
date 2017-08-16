@@ -1962,13 +1962,25 @@ int tls_handle_alpn(SSL *s, int *al)
             s->s3->npn_seen = 0;
 #endif
 
-            /* Check ALPN is consistent with early_data */
-            if (s->ext.early_data_ok
-                    && (s->session->ext.alpn_selected == NULL
+            /* Check ALPN is consistent with session */
+            if (s->session->ext.alpn_selected == NULL
                         || selected_len != s->session->ext.alpn_selected_len
                         || memcmp(selected, s->session->ext.alpn_selected,
-                                  selected_len) != 0))
+                                  selected_len) != 0) {
+                /* Not consistent so can't be used for early_data */
                 s->ext.early_data_ok = 0;
+
+                if (!s->hit) {
+                    /* If a new session update it with the new ALPN value */
+                    s->session->ext.alpn_selected = OPENSSL_memdup(selected,
+                                                                   selected_len);
+                    if (s->session->ext.alpn_selected == NULL) {
+                        *al = SSL_AD_INTERNAL_ERROR;
+                        return 0;
+                    }
+                    s->session->ext.alpn_selected_len = selected_len;
+                }
+            }
 
             return 1;
         } else if (r != SSL_TLSEXT_ERR_NOACK) {
@@ -1981,9 +1993,11 @@ int tls_handle_alpn(SSL *s, int *al)
          */
     }
 
-    /* Check ALPN is consistent with early_data */
-    if (s->ext.early_data_ok && s->session->ext.alpn_selected != NULL)
+    /* Check ALPN is consistent with session */
+    if (s->session->ext.alpn_selected != NULL) {
+        /* Not consistent so can't be used for early_data */
         s->ext.early_data_ok = 0;
+    }
 
     return 1;
 }
