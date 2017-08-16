@@ -1,0 +1,31 @@
+A "wish list" of changes we'd like to make to the FIPS module if we could.
+Note the CMVP requires retesting of all previously tested platforms
+("Operational Environments") to implement any changes considered "cryptographically
+significant". Since the OpenSSL FIPS module v2.0 has some 250 such formally
+tested platforms (and counting), retesting just isn't logistically or economically
+feasible.
+
+--------
+https://github.com/openssl/openssl/pull/4157
+From 2017-08-14, Fix GCM MAC computation for AES-GCM by	srahul123
+cryptographically significant, not fixable
+
+--------
+Andy Polyakov, util/incore: harmonize with __thumb__ clause in FIPS_ref_point() (#3354),
+https://patch-diff.githubusercontent.com/raw/openssl/openssl/pull/3354.patch
+https://github.com/openssl/openssl/pull/3354#pullrequestreview-36086406
+May be possible to introduce in future change letter
+
+--------
+CVE-2016-0701
+cryptographically significant, not fixable
+
+--------
+CVE-2014-0076
+cryptographically significant, not fixable
+
+--------
+"Lucky 13", CVE-2013-0169
+cryptographically significant, not fixable
+
+--------
