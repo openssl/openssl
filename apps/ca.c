@@ -62,6 +62,7 @@
 #define ENV_NEW_CERTS_DIR       "new_certs_dir"
 #define ENV_CERTIFICATE         "certificate"
 #define ENV_SERIAL              "serial"
+#define ENV_RAND_SERIAL         "rand_serial"
 #define ENV_CRLNUMBER           "crlnumber"
 #define ENV_PRIVATE_KEY         "private_key"
 #define ENV_DEFAULT_DAYS        "default_days"
@@ -153,6 +154,7 @@ typedef enum OPTION_choice {
     OPT_GENCRL, OPT_MSIE_HACK, OPT_CRLDAYS, OPT_CRLHOURS, OPT_CRLSEC,
     OPT_INFILES, OPT_SS_CERT, OPT_SPKAC, OPT_REVOKE, OPT_VALID,
     OPT_EXTENSIONS, OPT_EXTFILE, OPT_STATUS, OPT_UPDATEDB, OPT_CRLEXTS,
+    OPT_RAND_SERIAL,
     OPT_R_ENUM,
     /* Do not change the order here; see related case statements below */
     OPT_CRL_REASON, OPT_CRL_HOLD, OPT_CRL_COMPROMISE, OPT_CRL_CA_COMPROMISE
@@ -167,6 +169,8 @@ const OPTIONS ca_options[] = {
     {"utf8", OPT_UTF8, '-', "Input characters are UTF8 (default ASCII)"},
     {"create_serial", OPT_CREATE_SERIAL, '-',
      "If reading serial fails, create a new random serial"},
+    {"rand_serial", OPT_RAND_SERIAL, '-',
+     "Always create a random serial; do not store it"},
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
      "Enable support for multivalued RDNs"},
     {"startdate", OPT_STARTDATE, 's', "Cert notBefore, YYMMDDHHMMSSZ"},
@@ -258,7 +262,7 @@ int ca_main(int argc, char **argv)
     int batch = 0, default_op = 1, doupdatedb = 0, ext_copy = EXT_COPY_NONE;
     int keyformat = FORMAT_PEM, multirdn = 0, notext = 0, output_der = 0;
     int ret = 1, email_dn = 1, req = 0, verbose = 0, gencrl = 0, dorevoke = 0;
-    int i, j, selfsign = 0;
+    int rand_ser = 0, i, j, selfsign = 0;
     long crldays = 0, crlhours = 0, crlsec = 0, days = 0;
     unsigned long chtype = MBSTRING_ASC, certopt = 0;
     X509 *x509 = NULL, *x509p = NULL, *x = NULL;
@@ -302,6 +306,9 @@ opthelp:
             break;
         case OPT_UTF8:
             chtype = MBSTRING_UTF8;
+            break;
+        case OPT_RAND_SERIAL:
+            rand_ser = 1;
             break;
         case OPT_CREATE_SERIAL:
             create_ser = 1;
@@ -774,9 +781,13 @@ end_of_options:
         if (verbose)
             BIO_printf(bio_err, "policy is %s\n", policy);
 
-        serialfile = lookup_conf(conf, section, ENV_SERIAL);
-        if (serialfile == NULL)
-            goto end;
+        if (NCONF_get_string(conf, section, ENV_RAND_SERIAL) != NULL) {
+            rand_ser = 1;
+        } else {
+            serialfile = lookup_conf(conf, section, ENV_SERIAL);
+            if (serialfile == NULL)
+                goto end;
+        }
 
         if (extconf == NULL) {
             /*
@@ -838,18 +849,25 @@ end_of_options:
             goto end;
         }
 
-        if ((serial = load_serial(serialfile, create_ser, NULL)) == NULL) {
-            BIO_printf(bio_err, "error while loading serial number\n");
-            goto end;
-        }
-        if (verbose) {
-            if (BN_is_zero(serial)) {
-                BIO_printf(bio_err, "next serial number is 00\n");
-            } else {
-                if ((f = BN_bn2hex(serial)) == NULL)
-                    goto end;
-                BIO_printf(bio_err, "next serial number is %s\n", f);
-                OPENSSL_free(f);
+        if (rand_ser) {
+            if ((serial = BN_new()) == NULL || !rand_serial(serial, NULL)) {
+                BIO_printf(bio_err, "error generating serial number\n");
+                goto end;
+            }
+        } else {
+            if ((serial = load_serial(serialfile, create_ser, NULL)) == NULL) {
+                BIO_printf(bio_err, "error while loading serial number\n");
+                goto end;
+            }
+            if (verbose) {
+                if (BN_is_zero(serial)) {
+                    BIO_printf(bio_err, "next serial number is 00\n");
+                } else {
+                    if ((f = BN_bn2hex(serial)) == NULL)
+                        goto end;
+                    BIO_printf(bio_err, "next serial number is %s\n", f);
+                    OPENSSL_free(f);
+                }
             }
         }
 
@@ -973,7 +991,8 @@ end_of_options:
             BIO_printf(bio_err, "Write out database with %d new entries\n",
                        sk_X509_num(cert_sk));
 
-            if (!save_serial(serialfile, "new", serial, NULL))
+            if (!rand_ser
+                    && !save_serial(serialfile, "new", serial, NULL))
                 goto end;
 
             if (!save_index(dbfile, "new", db))
@@ -1171,7 +1190,8 @@ end_of_options:
 
         /* we have a CRL number that need updating */
         if (crlnumberfile != NULL)
-            if (!save_serial(crlnumberfile, "new", crlnumber, NULL))
+            if (!rand_ser
+                    && !save_serial(crlnumberfile, "new", crlnumber, NULL))
                 goto end;
 
         BN_free(crlnumber);
@@ -1213,16 +1233,16 @@ end_of_options:
             BIO_printf(bio_err, "Data Base Updated\n");
         }
     }
-    /*****************************************************************/
     ret = 0;
+
  end:
+    if (ret)
+        ERR_print_errors(bio_err);
     BIO_free_all(Sout);
     BIO_free_all(out);
     BIO_free_all(in);
     sk_X509_pop_free(cert_sk, X509_free);
 
-    if (ret)
-        ERR_print_errors(bio_err);
     if (free_key)
         OPENSSL_free(key);
     BN_free(serial);
