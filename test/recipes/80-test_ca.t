@@ -35,7 +35,7 @@ plan tests => 5;
 	 if !ok(run(perlapp(["CA.pl","-newreq"])),
 		'creating certificate request');
 
-     $ENV{OPENSSL_CONFIG} = '-config "'.$std_openssl_cnf.'"';
+     $ENV{OPENSSL_CONFIG} = '-rand_serial -config "'.$std_openssl_cnf.'"';
      skip "failed to sign certificate request", 2
 	 if !is(yes(cmdstr(perlapp(["CA.pl", "-sign"]))), 0,
 		'signing certificate request');

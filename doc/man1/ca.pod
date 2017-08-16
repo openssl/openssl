@@ -51,6 +51,7 @@ B<openssl> B<ca>
 [B<-subj arg>]
 [B<-utf8>]
 [B<-create_serial>]
+[B<-rand_serial>]
 [B<-multivalue-rdn>]
 [B<-rand file...>]
 [B<-writerand file>]
@@ -262,6 +263,13 @@ configuration file, must be valid UTF8 strings.
 If reading serial from the text file as specified in the configuration
 fails, specifying this option creates a new random serial to be used as next
 serial number.
+To get random serial numbers, use the B<-rand_serial> flag instead; this
+should only be used for simple error-recovery.
+
+=item B<-rand_serial>
+
+Generate a large random number to use as the serial number.
+This overrides any option or configuration to use a serial number file.
 
 =item B<-multivalue-rdn>
 
@@ -614,6 +622,7 @@ A sample configuration file with the relevant sections for B<ca>:
 
  certificate    = $dir/cacert.pem       # The CA cert
  serial         = $dir/serial           # serial no file
+ #rand_serial    = yes                  # for random serial#'s
  private_key    = $dir/private/cakey.pem# CA private key
  RANDFILE       = $dir/private/.rand    # random number file
 
