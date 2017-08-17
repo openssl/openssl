@@ -679,6 +679,8 @@ tags TAGS: FORCE
 
 # Release targets (note: only available on Unix) #####################
 
+# If your tar command doesn't support --owner and --group, make sure to
+# use one that does, for example GNU tar
 TAR_COMMAND=$(TAR) $(TARFLAGS) --owner 0 --group 0 -cvf -
 PREPARE_CMD=:
 tar:
