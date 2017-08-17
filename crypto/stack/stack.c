@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,19 +12,24 @@
 #include "internal/numbers.h"
 #include <openssl/stack.h>
 #include <openssl/objects.h>
+#include <errno.h>
+#include <openssl/e_os2.h>      /* For ossl_inline */
+
+/*
+ * The initial number of nodes in the array.
+ */
+static const int min_nodes = 4;
+static const int max_nodes = SIZE_MAX / sizeof(void *) < INT_MAX
+                             ? (int)(SIZE_MAX / sizeof(void *))
+                             : INT_MAX;
 
 struct stack_st {
     int num;
-    const char **data;
+    const void **data;
     int sorted;
-    size_t num_alloc;
+    int num_alloc;
     OPENSSL_sk_compfunc comp;
 };
-
-#undef MIN_NODES
-#define MIN_NODES       4
-
-#include <errno.h>
 
 OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk, OPENSSL_sk_compfunc c)
 {
@@ -52,7 +57,7 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
 
     if ((ret->data = OPENSSL_malloc(sizeof(*ret->data) * sk->num_alloc)) == NULL)
         goto err;
-    memcpy(ret->data, sk->data, sizeof(char *) * sk->num);
+    memcpy(ret->data, sk->data, sizeof(void *) * sk->num);
     return ret;
  err:
     OPENSSL_sk_free(ret);
@@ -75,7 +80,7 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
     /* direct structure assignment */
     *ret = *sk;
 
-    ret->num_alloc = sk->num > MIN_NODES ? (size_t)sk->num : MIN_NODES;
+    ret->num_alloc = sk->num > min_nodes ? sk->num : min_nodes;
     ret->data = OPENSSL_zalloc(sizeof(*ret->data) * ret->num_alloc);
     if (ret->data == NULL) {
         OPENSSL_free(ret);
@@ -107,10 +112,10 @@ OPENSSL_STACK *OPENSSL_sk_new(OPENSSL_sk_compfunc c)
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
         goto err;
-    if ((ret->data = OPENSSL_zalloc(sizeof(*ret->data) * MIN_NODES)) == NULL)
+    if ((ret->data = OPENSSL_zalloc(sizeof(*ret->data) * min_nodes)) == NULL)
         goto err;
     ret->comp = c;
-    ret->num_alloc = MIN_NODES;
+    ret->num_alloc = min_nodes;
     return (ret);
 
  err:
@@ -118,32 +123,88 @@ OPENSSL_STACK *OPENSSL_sk_new(OPENSSL_sk_compfunc c)
     return (NULL);
 }
 
+/*
+ * Calculate the array growth based on the target size.
+ *
+ * The growth faction is a rational number and is defined by a numerator
+ * and a denominator.  According to Andrew Koenig in his paper "Why Are
+ * Vectors Efficient?" from JOOP 11(5) 1998, this factor should be less
+ * than the golden ratio (1.618...).
+ *
+ * We use 3/2 = 1.5 for simplicty of calculation and overflow checking.
+ * Another option 8/5 = 1.6 allows for slightly faster growth, although safe
+ * computation is more difficult.
+ *
+ * The limit to avoid overflow is spot on.  The modulo three correction term
+ * ensures that the limit is the largest number than can be expanded by the
+ * growth factor without exceeding the hard limit.
+ */
+static ossl_inline int compute_growth(int target, int current)
+{
+    const int limit = (max_nodes / 3) * 2 + (max_nodes % 3 ? 1 : 0);
+
+    while (current < target) {
+        /* Check to see if we're at the hard limit */
+        if (current >= max_nodes)
+            return 0;
+
+        /* Expand the size by a factor of 3/2 if it is within range */
+        current = current < limit ? current + current / 2 : max_nodes;
+    }
+    return current;
+}
+
+static int sk_reserve(OPENSSL_STACK *st, int n, int exact)
+{
+    const void **tmpdata;
+    int num_alloc;
+
+    /* Check to see the reservation isn't exceeding the hard limit */
+    if (n > max_nodes - st->num)
+        return 0;
+
+    /* Figure out the new size */
+    num_alloc = st->num + n;
+    if (num_alloc < min_nodes)
+        num_alloc = min_nodes;
+
+    if (!exact) {
+        if (num_alloc <= st->num_alloc)
+            return 1;
+        num_alloc = compute_growth(num_alloc, st->num_alloc);
+        if (num_alloc == 0)
+            return 0;
+    } else if (num_alloc == st->num_alloc) {
+        return 1;
+    }
+
+    tmpdata = OPENSSL_realloc((void *)st->data, sizeof(void *) * num_alloc);
+    if (tmpdata == NULL)
+        return 0;
+
+    st->data = tmpdata;
+    st->num_alloc = num_alloc;
+    return 1;
+}
+
+int OPENSSL_sk_reserve(OPENSSL_STACK *st, int n)
+{
+    if (st == NULL || st->num < 0)
+        return 0;
+
+    if (n < 0)
+        return 1;
+    return sk_reserve(st, n, 1);
+}
+
 int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
 {
-    if (st == NULL || st->num < 0 || st->num == INT_MAX) {
+    if (st == NULL || st->num < 0 || st->num == max_nodes)
         return 0;
-    }
 
-    if (st->num_alloc <= (size_t)(st->num + 1)) {
-        size_t doub_num_alloc = st->num_alloc * 2;
-        const char **tmpdata;
+    if (!sk_reserve(st, 1, 0))
+        return 0;
 
-        /* Overflow checks */
-        if (doub_num_alloc < st->num_alloc)
-            return 0;
-
-        /* Avoid overflow due to multiplication by sizeof(char *) */
-        if (doub_num_alloc > SIZE_MAX / sizeof(char *))
-            return 0;
-
-        tmpdata = OPENSSL_realloc((char *)st->data,
-                                  sizeof(char *) * doub_num_alloc);
-        if (tmpdata == NULL)
-            return 0;
-
-        st->data = tmpdata;
-        st->num_alloc = doub_num_alloc;
-    }
     if ((loc >= st->num) || (loc < 0)) {
         st->data[st->num] = data;
     } else {
@@ -168,7 +229,7 @@ void *OPENSSL_sk_delete_ptr(OPENSSL_STACK *st, const void *p)
 
 void *OPENSSL_sk_delete(OPENSSL_STACK *st, int loc)
 {
-    const char *ret;
+    const void *ret;
 
     if (st == NULL || loc < 0 || loc >= st->num)
         return NULL;
@@ -203,7 +264,7 @@ static int internal_find(OPENSSL_STACK *st, const void *data,
                         ret_val_options);
     if (r == NULL)
         return (-1);
-    return (int)((const char **)r - st->data);
+    return (int)((const void **)r - st->data);
 }
 
 int OPENSSL_sk_find(OPENSSL_STACK *st, const void *data)
@@ -299,7 +360,7 @@ void *OPENSSL_sk_set(OPENSSL_STACK *st, int i, const void *data)
 void OPENSSL_sk_sort(OPENSSL_STACK *st)
 {
     if (st && !st->sorted && st->comp != NULL) {
-        qsort(st->data, st->num, sizeof(char *), st->comp);
+        qsort(st->data, st->num, sizeof(void *), st->comp);
         st->sorted = 1;
     }
 }
