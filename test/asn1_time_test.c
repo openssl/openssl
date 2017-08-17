@@ -276,6 +276,14 @@ static int test_table_neg_64bit(int idx)
 
 int setup_tests(void)
 {
+    /*
+     * On platforms where |time_t| is an unsigned integer, t will be a
+     * positive number.
+     *
+     * We check if we're on a platform with a signed |time_t| with '!(t > 0)'
+     * because some compilers are picky if you do 't < 0', or even 't <= 0'
+     * if |t| is unsigned.
+     */
     time_t t = -1;
 
     ADD_ALL_TESTS(test_table_pos, OSSL_NELEM(tbl_testdata_pos));
