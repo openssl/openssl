@@ -691,17 +691,17 @@ tar:
 	 excl_re="^(fuzz/corpora|`echo $$excl_re | sed -e 's/ /$$|/g'`\$$)"; \
 	 echo "$$excl_re"; \
 	 git ls-tree -r --name-only --full-tree HEAD \
-	 | grep -v -E "$$excl_re" \
+	 | egrep -v "$$excl_re" \
 	 | while read F; do \
 	       mkdir -p $$TMPDIR/$$DISTDIR/`dirname $$F`; \
 	       cp $$F $$TMPDIR/$$DISTDIR/$$F; \
 	   done); \
-	(cd $$TMPDIR; \
+	(cd $$TMPDIR/$$DISTDIR; \
 	 $(PREPARE_CMD); \
-	 find $$TMPDIR/$$DISTDIR -type d -print | xargs chmod 755; \
-	 find $$TMPDIR/$$DISTDIR -type f -print | xargs chmod a+r; \
-	 find $$TMPDIR/$$DISTDIR -type f -perm -0100 -print | xargs chmod a+x; \
-	 $(TAR_COMMAND) $$DISTDIR) \
+	 find . -type d -print | xargs chmod 755; \
+	 find . -type f -print | xargs chmod a+r; \
+	 find . -type f -perm -0100 -print | xargs chmod a+x); \
+	(cd $$TMPDIR; $(TAR_COMMAND) $$DISTDIR) \
 	| (cd $(SRCDIR); gzip --best > $(TARFILE).gz); \
 	rm -rf $$TMPDIR
 	cd $(SRCDIR); ls -l $(TARFILE).gz
