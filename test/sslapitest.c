@@ -1401,7 +1401,8 @@ static int test_set_sigalgs(int idx)
 
 #ifndef OPENSSL_NO_TLS1_3
 
-static SSL_SESSION *psk = NULL;
+static SSL_SESSION *clientpsk = NULL;
+static SSL_SESSION *serverpsk = NULL;
 static const char *pskid = "Identity";
 static const char *srvid;
 
@@ -1429,10 +1430,10 @@ static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
         return 0;
     }
 
-    if (psk != NULL)
-        SSL_SESSION_up_ref(psk);
+    if (clientpsk != NULL)
+        SSL_SESSION_up_ref(clientpsk);
 
-    *sess = psk;
+    *sess = clientpsk;
     *id = (const unsigned char *)pskid;
     *idlen = strlen(pskid);
 
@@ -1448,7 +1449,7 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
     if (find_session_cb_cnt > 2)
         return 0;
 
-    if (psk == NULL)
+    if (serverpsk == NULL)
         return 0;
 
     /* Identity should match that set by the client */
@@ -1459,8 +1460,8 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
         return 1;
     }
 
-    SSL_SESSION_up_ref(psk);
-    *sess = psk;
+    SSL_SESSION_up_ref(serverpsk);
+    *sess = serverpsk;
 
     return 1;
 }
@@ -1516,27 +1517,30 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
         };
 
         cipher = SSL_CIPHER_find(*clientssl, TLS13_AES_256_GCM_SHA384_BYTES);
-        psk = SSL_SESSION_new();
-        if (!TEST_ptr(psk)
+        clientpsk = SSL_SESSION_new();
+        if (!TEST_ptr(clientpsk)
                 || !TEST_ptr(cipher)
-                || !TEST_true(SSL_SESSION_set1_master_key(psk, key,
+                || !TEST_true(SSL_SESSION_set1_master_key(clientpsk, key,
                                                           sizeof(key)))
-                || !TEST_true(SSL_SESSION_set_cipher(psk, cipher))
+                || !TEST_true(SSL_SESSION_set_cipher(clientpsk, cipher))
                 || !TEST_true(
-                        SSL_SESSION_set_protocol_version(psk,
+                        SSL_SESSION_set_protocol_version(clientpsk,
                                                          TLS1_3_VERSION))
                    /*
                     * We just choose an arbitrary value for max_early_data which
                     * should be big enough for testing purposes.
                     */
-                || !TEST_true(SSL_SESSION_set_max_early_data(psk, 0x100))) {
-            SSL_SESSION_free(psk);
-            psk = NULL;
+                || !TEST_true(SSL_SESSION_set_max_early_data(clientpsk,
+                                                             0x100))
+                || !TEST_true(SSL_SESSION_up_ref(clientpsk))) {
+            SSL_SESSION_free(clientpsk);
+            clientpsk = NULL;
             return 0;
         }
+        serverpsk = clientpsk;
 
         if (sess != NULL)
-            *sess = psk;
+            *sess = clientpsk;
         return 1;
     }
 
@@ -1757,8 +1761,11 @@ static int test_early_data_read_write(int idx)
     testresult = 1;
 
  end:
-    SSL_SESSION_free(sess);
-    psk = NULL;
+    if (sess != clientpsk)
+        SSL_SESSION_free(sess);
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -1842,9 +1849,10 @@ static int early_data_skip_helper(int hrr, int idx)
     testresult = 1;
 
  end:
-    if (sess != psk)
-        SSL_SESSION_free(psk);
-    psk = NULL;
+    if (sess != clientpsk)
+        SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
     SSL_SESSION_free(sess);
     SSL_free(serverssl);
     SSL_free(clientssl);
@@ -1929,8 +1937,10 @@ static int test_early_data_not_sent(int idx)
     testresult = 1;
 
  end:
+    /* If using PSK then clientpsk and sess are the same */
     SSL_SESSION_free(sess);
-    psk = NULL;
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -1974,18 +1984,25 @@ static int alpn_select_cb (SSL *ssl, const unsigned char **out, unsigned char *o
     return SSL_TLSEXT_ERR_NOACK;
 }
 
+/* Test that a PSK can be used to send early_data */
 static int test_early_data_psk(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
     SSL_SESSION *sess = NULL;
-    unsigned char badalpn[] = { 0x07, 'b', 'a', 'd', 'a', 'l', 'p', 'n' };
-    unsigned char goodalpn[] = { 0x08, 'g', 'o', 'o', 'd', 'a', 'l', 'p', 'n' };
-    int err;
+    unsigned char alpnlist[] = {
+        0x08, 'g', 'o', 'o', 'd', 'a', 'l', 'p', 'n', 0x07, 'b', 'a', 'd', 'a',
+        'l', 'p', 'n'
+    };
+#define GOODALPNLEN     9
+#define BADALPNLEN      8
+#define GOODALPN        (alpnlist)
+#define BADALPN         (alpnlist + GOODALPNLEN)
+    int err = 0;
     unsigned char buf[20];
     size_t readbytes, written;
-    int readearlyres = SSL_READ_EARLY_DATA_SUCCESS;
+    int readearlyres = SSL_READ_EARLY_DATA_SUCCESS, connectres = 1;
     int edstatus = SSL_EARLY_DATA_ACCEPTED;
 
     /* We always set this up with a final parameter of "2" for PSK */
@@ -1996,9 +2013,15 @@ static int test_early_data_psk(int idx)
     servhostname = "goodhost";
     servalpn = "goodalpn";
 
+    /*
+     * Note: There is no test for inconsistent SNI with late client detection.
+     * This is because servers do not acknowledge SNI even if they are using
+     * it in a resumption handshake - so it is not actually possible for a
+     * client to detect a problem.
+     */
     switch (idx) {
     case 0:
-        /* Set inconsistent SNI (client detected) */
+        /* Set inconsistent SNI (early client detection) */
         err = SSL_R_INCONSISTENT_EARLY_DATA_SNI;
         if (!TEST_true(SSL_SESSION_set1_hostname(sess, "goodhost"))
                 || !TEST_true(SSL_set_tlsext_host_name(clientssl, "badhost")))
@@ -2006,13 +2029,13 @@ static int test_early_data_psk(int idx)
         break;
 
     case 1:
-        /* Set inconsistent ALPN (client detected) */
+        /* Set inconsistent ALPN (early client detection) */
         err = SSL_R_INCONSISTENT_EARLY_DATA_ALPN;
         /* SSL_set_alpn_protos returns 0 for success and 1 for failure */
-        if (!TEST_true(SSL_SESSION_set1_alpn_selected(sess, goodalpn,
-                                                      sizeof(goodalpn)))
-                || !TEST_false(SSL_set_alpn_protos(clientssl, badalpn,
-                                                   sizeof(badalpn))))
+        if (!TEST_true(SSL_SESSION_set1_alpn_selected(sess, GOODALPN,
+                                                      GOODALPNLEN))
+                || !TEST_false(SSL_set_alpn_protos(clientssl, BADALPN,
+                                                   BADALPNLEN)))
             goto end;
         break;
 
@@ -2038,7 +2061,6 @@ static int test_early_data_psk(int idx)
         /* Fall through */
     case 4:
         /* Set consistent SNI */
-        err = 0;
         if (!TEST_true(SSL_SESSION_set1_hostname(sess, "goodhost"))
                 || !TEST_true(SSL_set_tlsext_host_name(clientssl, "goodhost"))
                 || !TEST_true(SSL_CTX_set_tlsext_servername_callback(sctx,
@@ -2056,21 +2078,41 @@ static int test_early_data_psk(int idx)
         readearlyres = SSL_READ_EARLY_DATA_FINISH;
         /* Fall through */
     case 6:
-        /* Set consistent ALPN */
-        err = 0;
         /*
+         * Set consistent ALPN.
          * SSL_set_alpn_protos returns 0 for success and 1 for failure. It
          * accepts a list of protos (each one length prefixed).
          * SSL_set1_alpn_selected accepts a single protocol (not length
          * prefixed)
          */
-        if (!TEST_true(SSL_SESSION_set1_alpn_selected(sess, goodalpn + 1,
-                                                      sizeof(goodalpn) - 1))
-                || !TEST_false(SSL_set_alpn_protos(clientssl, goodalpn,
-                                                   sizeof(goodalpn))))
+        if (!TEST_true(SSL_SESSION_set1_alpn_selected(sess, GOODALPN + 1,
+                                                      GOODALPNLEN - 1))
+                || !TEST_false(SSL_set_alpn_protos(clientssl, GOODALPN,
+                                                   GOODALPNLEN)))
             goto end;
 
         SSL_CTX_set_alpn_select_cb(sctx, alpn_select_cb, NULL);
+        break;
+
+    case 7:
+        /* Set inconsistent ALPN (late client detection) */
+        SSL_SESSION_free(serverpsk);
+        serverpsk = SSL_SESSION_dup(clientpsk);
+        if (!TEST_ptr(serverpsk)
+                || !TEST_true(SSL_SESSION_set1_alpn_selected(clientpsk,
+                                                             BADALPN + 1,
+                                                             BADALPNLEN - 1))
+                || !TEST_true(SSL_SESSION_set1_alpn_selected(serverpsk,
+                                                             GOODALPN + 1,
+                                                             GOODALPNLEN - 1))
+                || !TEST_false(SSL_set_alpn_protos(clientssl, alpnlist,
+                                                   sizeof(alpnlist))))
+            goto end;
+        SSL_CTX_set_alpn_select_cb(sctx, alpn_select_cb, NULL);
+        edstatus = SSL_EARLY_DATA_ACCEPTED;
+        readearlyres = SSL_READ_EARLY_DATA_SUCCESS;
+        /* SSL_connect() call should fail */
+        connectres = -1;
         break;
 
     default:
@@ -2087,20 +2129,24 @@ static int test_early_data_psk(int idx)
             goto end;
     } else {
         if (!TEST_true(SSL_write_early_data(clientssl, MSG1, strlen(MSG1),
-                                            &written))
-                || !TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
-                                                  &readbytes), readearlyres)
+                                            &written)))
+            goto end;
+
+        if (!TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                                             &readbytes), readearlyres)
                 || (readearlyres == SSL_READ_EARLY_DATA_SUCCESS
                     && !TEST_mem_eq(buf, readbytes, MSG1, strlen(MSG1)))
-                || !TEST_int_eq(SSL_get_early_data_status(serverssl), edstatus))
+                || !TEST_int_eq(SSL_get_early_data_status(serverssl), edstatus)
+                || !TEST_int_eq(SSL_connect(clientssl), connectres))
             goto end;
     }
 
     testresult = 1;
 
  end:
-    SSL_SESSION_free(sess);
-    psk = NULL;
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -2155,8 +2201,10 @@ static int test_early_data_not_expected(int idx)
     testresult = 1;
 
  end:
+    /* If using PSK then clientpsk and sess are the same */
     SSL_SESSION_free(sess);
-    psk = NULL;
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -2227,8 +2275,10 @@ static int test_early_data_tls1_2(int idx)
     testresult = 1;
 
  end:
-    SSL_SESSION_free(psk);
-    psk = NULL;
+    /* If using PSK then clientpsk and sess are the same */
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -2410,14 +2460,17 @@ static int test_tls13_psk(void)
 
     /* Create the PSK */
     cipher = SSL_CIPHER_find(clientssl, TLS13_AES_256_GCM_SHA384_BYTES);
-    psk = SSL_SESSION_new();
-    if (!TEST_ptr(psk)
+    clientpsk = SSL_SESSION_new();
+    if (!TEST_ptr(clientpsk)
             || !TEST_ptr(cipher)
-            || !TEST_true(SSL_SESSION_set1_master_key(psk, key, sizeof(key)))
-            || !TEST_true(SSL_SESSION_set_cipher(psk, cipher))
-            || !TEST_true(SSL_SESSION_set_protocol_version(psk,
-                                                           TLS1_3_VERSION)))
+            || !TEST_true(SSL_SESSION_set1_master_key(clientpsk, key,
+                                                      sizeof(key)))
+            || !TEST_true(SSL_SESSION_set_cipher(clientpsk, cipher))
+            || !TEST_true(SSL_SESSION_set_protocol_version(clientpsk,
+                                                           TLS1_3_VERSION))
+            || !TEST_true(SSL_SESSION_up_ref(clientpsk)))
         goto end;
+    serverpsk = clientpsk;
 
     /* Check we can create a connection and the PSK is used */
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
@@ -2474,7 +2527,9 @@ static int test_tls13_psk(void)
     testresult = 1;
 
  end:
-    SSL_SESSION_free(psk);
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -3075,7 +3130,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_early_data_skip, 3);
     ADD_ALL_TESTS(test_early_data_skip_hrr, 3);
     ADD_ALL_TESTS(test_early_data_not_sent, 3);
-    ADD_ALL_TESTS(test_early_data_psk, 7);
+    ADD_ALL_TESTS(test_early_data_psk, 8);
     ADD_ALL_TESTS(test_early_data_not_expected, 3);
 # ifndef OPENSSL_NO_TLS1_2
     ADD_ALL_TESTS(test_early_data_tls1_2, 3);
