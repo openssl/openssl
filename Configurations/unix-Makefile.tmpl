@@ -679,6 +679,7 @@ tags TAGS: FORCE
 
 # Release targets (note: only available on Unix) #####################
 
+# tar in Solaris doesn't have --owner and --group options
 TAR_COMMAND=$(TAR) $(TARFLAGS) --owner 0 --group 0 -cvf -
 PREPARE_CMD=:
 tar:
@@ -692,9 +693,31 @@ tar:
 	 git ls-tree -r --name-only --full-tree HEAD \
 	 | grep -v -E "$$excl_re" \
 	 | while read F; do \
-	       mkdir -p $$TMPDIR/$$DISTDIR/`dirname $$F`; \
-	       cp $$F $$TMPDIR/$$DISTDIR/$$F; \
+	       PARENT_DIR=`dirname $$F`; \
+	       mkdir -p $$TMPDIR/$$DISTDIR/$$PARENT_DIR; \
+	       # do not copy empty directories \
+	       IS_DIR=`ls -Al $$PARENT_DIR | grep ^d | grep $$F | wc -l`; \
+	       if [ $$IS_DIR == 1 ]; then \
+	           FILES_COUNT=`ls -1 $$PARENT_DIR/$$F | wc -l`; \
+	           if [ $$FILES_COUNT -gt 0 ]; then \
+	               cp $$F $$TMPDIR/$$DISTDIR/$$F; \
+	           fi; \
+	       else \
+	           cp $$F $$TMPDIR/$$DISTDIR/$$F; \
+	       fi; \
 	   done); \
+	(UNAME_S=`uname -s`; \
+	# tar in Solaris doesn't have --owner and --group options \
+	if [ $$UNAME_S == "SunOS" ]; then \
+	(cd $$TMPDIR/$$DISTDIR; \
+	$(PREPARE_CMD); \
+	cd $$TMPDIR; \
+	find $$TMPDIR/$$DISTDIR -type d -print | xargs chmod 755; \
+	find $$TMPDIR/$$DISTDIR -type f -print | xargs chmod a+r; \
+	find $$TMPDIR/$$DISTDIR -type f -perm -0100 -print | xargs chmod a+x; \
+	$(TAR) $(TARFLAGS) -cvf - $$DISTDIR) \
+	| (cd $(SRCDIR); gzip --best > $(TARFILE).gz); \
+	else \
 	(cd $$TMPDIR; \
 	 $(PREPARE_CMD); \
 	 find $$TMPDIR/$$DISTDIR -type d -print | xargs chmod 755; \
@@ -702,6 +725,7 @@ tar:
 	 find $$TMPDIR/$$DISTDIR -type f -perm -0100 -print | xargs chmod a+x; \
 	 $(TAR_COMMAND) $$DISTDIR) \
 	| (cd $(SRCDIR); gzip --best > $(TARFILE).gz); \
+        fi; )
 	rm -rf $$TMPDIR
 	cd $(SRCDIR); ls -l $(TARFILE).gz
 
