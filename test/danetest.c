@@ -24,7 +24,7 @@
 #endif
 #include "testutil.h"
 
-#include "e_os.h"
+#include <internal/nelem.h>
 
 #define _UC(c) ((unsigned char)(c))
 

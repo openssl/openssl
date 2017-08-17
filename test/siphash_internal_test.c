@@ -16,7 +16,7 @@
 #include "testutil.h"
 #include "internal/siphash.h"
 #include "../crypto/siphash/siphash_local.h"
-#include "e_os.h"
+#include <internal/nelem.h>
 
 static BIO* b_stderr = NULL;
 static BIO* b_stdout = NULL;

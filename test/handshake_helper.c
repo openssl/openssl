@@ -18,7 +18,7 @@
 
 #ifndef OPENSSL_NO_SOCK
 # define USE_SOCKETS
-# include "e_os.h"
+# include <internal/nelem.h>
 #endif
 
 #include "handshake_helper.h"

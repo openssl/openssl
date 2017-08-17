@@ -9,7 +9,7 @@
 
 #include <string.h>
 
-#include "../e_os.h"
+#include <internal/nelem.h>
 #include "testutil.h"
 
 #if defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_MDC2)
