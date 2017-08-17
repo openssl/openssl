@@ -42,6 +42,9 @@ L<UI_OpenSSL(3)>, for example.
 
 PKCS12_parse() returns 1 for success and zero if an error occurred.
 
+If an error occurred B<*pkey> and B<*cert> are set to B<NULL>,
+but B<*ca> is not and may need to be cleaned up.
+
 The error can be obtained from L<ERR_get_error(3)>
 
 =head1 BUGS
