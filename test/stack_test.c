@@ -50,7 +50,7 @@ static int int_compare(const int *const *a, const int *const *b)
     return 0;
 }
 
-static int test_int_stack(void)
+static int test_int_stack(int reserve)
 {
     static int v[] = { 1, 2, -4, 16, 999, 1, -173, 1, 9 };
     static int notpresent = -1;
@@ -83,6 +83,10 @@ static int test_int_stack(void)
     STACK_OF(sint) *s = sk_sint_new_null();
     int i;
     int testresult = 0;
+
+    if (!TEST_ptr(s)
+        || (reserve > 0 && !TEST_true(sk_sint_reserve(s, 5 * reserve))))
+        goto end;
 
     /* Check push and num */
     for (i = 0; i < n; i++) {
@@ -167,13 +171,17 @@ static int uchar_compare(const unsigned char *const *a,
     return **a - (signed int)**b;
 }
 
-static int test_uchar_stack(void)
+static int test_uchar_stack(int reserve)
 {
     static const unsigned char v[] = { 1, 3, 7, 5, 255, 0 };
     const int n = OSSL_NELEM(v);
     STACK_OF(uchar) *s = sk_uchar_new(&uchar_compare), *r = NULL;
     int i;
     int testresult = 0;
+
+    if (!TEST_ptr(s)
+        || (reserve > 0 && !TEST_true(sk_uchar_reserve(s, 5 * reserve))))
+        goto end;
 
     /* unshift and num */
     for (i = 0; i < n; i++) {
@@ -364,8 +372,8 @@ end:
 
 int setup_tests(void)
 {
-    ADD_TEST(test_int_stack);
-    ADD_TEST(test_uchar_stack);
+    ADD_ALL_TESTS(test_int_stack, 4);
+    ADD_ALL_TESTS(test_uchar_stack, 4);
     ADD_TEST(test_SS_stack);
     ADD_TEST(test_SU_stack);
     return 1;

@@ -75,6 +75,16 @@ static int test_sanity_unsigned_convertion(void)
     return 1;
 }
 
+static int test_sanity_range(void)
+{
+    /* This isn't possible to check using the framework functions */
+    if (SIZE_MAX < INT_MAX) {
+        TEST_error("int must not be wider than size_t");
+        return 0;
+    }
+    return 1;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sanity_null_zero);
@@ -82,6 +92,7 @@ int setup_tests(void)
     ADD_TEST(test_sanity_twos_complement);
     ADD_TEST(test_sanity_sign);
     ADD_TEST(test_sanity_unsigned_convertion);
+    ADD_TEST(test_sanity_range);
     return 1;
 }
 
