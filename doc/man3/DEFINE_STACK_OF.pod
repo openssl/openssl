@@ -5,17 +5,18 @@
 DEFINE_STACK_OF, DEFINE_STACK_OF_CONST, DEFINE_SPECIAL_STACK_OF,
 DEFINE_SPECIAL_STACK_OF_CONST,
 OPENSSL_sk_deep_copy, OPENSSL_sk_delete, OPENSSL_sk_delete_ptr,
-OPENSSL_sk_dup, OPENSSL_sk_find, OPENSSL_sk_find_ex, OPENSSL_sk_free,
-OPENSSL_sk_insert, OPENSSL_sk_is_sorted, OPENSSL_sk_new, OPENSSL_sk_new_null,
-OPENSSL_sk_num, OPENSSL_sk_pop, OPENSSL_sk_pop_free, OPENSSL_sk_push,
-OPENSSL_sk_set, OPENSSL_sk_set_cmp_func, OPENSSL_sk_shift, OPENSSL_sk_sort,
+OPENSSL_sk_dup, OPENSSL_sk_find, OPENSSL_sk_find_ex,
+OPENSSL_sk_free, OPENSSL_sk_insert, OPENSSL_sk_is_sorted,
+OPENSSL_sk_new, OPENSSL_sk_new_null, OPENSSL_sk_num, OPENSSL_sk_pop,
+OPENSSL_sk_pop_free, OPENSSL_sk_push, OPENSSL_sk_reserve, OPENSSL_sk_set,
+OPENSSL_sk_set_cmp_func, OPENSSL_sk_shift, OPENSSL_sk_sort,
 OPENSSL_sk_unshift, OPENSSL_sk_value, OPENSSL_sk_zero,
-sk_TYPE_num, sk_TYPE_value, sk_TYPE_new, sk_TYPE_new_null, sk_TYPE_free,
-sk_TYPE_zero, sk_TYPE_delete, sk_TYPE_delete_ptr, sk_TYPE_push,
-sk_TYPE_unshift, sk_TYPE_pop, sk_TYPE_shift, sk_TYPE_pop_free,
-sk_TYPE_insert, sk_TYPE_set, sk_TYPE_find, sk_TYPE_find_ex, sk_TYPE_sort,
-sk_TYPE_is_sorted, sk_TYPE_dup, sk_TYPE_deep_copy, sk_TYPE_set_cmp_func -
-stack container
+sk_TYPE_num, sk_TYPE_value, sk_TYPE_new, sk_TYPE_new_null,
+sk_TYPE_reserve, sk_TYPE_free, sk_TYPE_zero, sk_TYPE_delete,
+sk_TYPE_delete_ptr, sk_TYPE_push, sk_TYPE_unshift, sk_TYPE_pop,
+sk_TYPE_shift, sk_TYPE_pop_free, sk_TYPE_insert, sk_TYPE_set,
+sk_TYPE_find, sk_TYPE_find_ex, sk_TYPE_sort, sk_TYPE_is_sorted,
+sk_TYPE_dup, sk_TYPE_deep_copy, sk_TYPE_set_cmp_func - stack container
 
 =head1 SYNOPSIS
 
@@ -37,6 +38,7 @@ stack container
  TYPE *sk_TYPE_value(const STACK_OF(TYPE) *sk, int idx);
  STACK_OF(TYPE) *sk_TYPE_new(sk_TYPE_compfunc compare);
  STACK_OF(TYPE) *sk_TYPE_new_null(void);
+ int sk_TYPE_reserve(STACK_OF(TYPE) *sk, size_t n);
  void sk_TYPE_free(const STACK_OF(TYPE) *sk);
  void sk_TYPE_zero(const STACK_OF(TYPE) *sk);
  TYPE *sk_TYPE_delete(STACK_OF(TYPE) *sk, int i);
@@ -99,6 +101,12 @@ sk_TYPE_new() allocates a new empty stack using comparison function B<compar>.
 If B<compar> is B<NULL> then no comparison function is used.
 
 sk_TYPE_new_null() allocates a new empty stack with no comparison function.
+
+sk_TYPE_reserve() allocates additional memory in the B<sk> structure
+such that the next B<n> calls to sk_TYPE_insert(), sk_TYPE_push()
+or sk_TYPE_unshift() will not fail or cause memory to be allocated
+or reallocated. If B<n> is zero, any excess space allocated in the
+B<sk> structure is freed. On error B<sk> is unchanged.
 
 sk_TYPE_set_cmp_func() sets the comparison function of B<sk> to B<compar>.
 The previous comparison function is returned or B<NULL> if there was
@@ -201,6 +209,9 @@ index is out of range.
 sk_TYPE_new() and sk_TYPE_new_null() return an empty stack or B<NULL> if
 an error occurs.
 
+sk_TYPE_reserve() returns B<1> on successful allocation of the required memory
+or B<0> on error.
+
 sk_TYPE_set_cmp_func() returns the old comparison function or B<NULL> if
 there was no old comparison function.
 
@@ -232,7 +243,7 @@ and was not a public API.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
