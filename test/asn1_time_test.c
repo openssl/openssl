@@ -277,17 +277,16 @@ static int test_table_neg_64bit(int idx)
 int setup_tests(void)
 {
     time_t t = -1;
-    struct tm *ptm = localtime(&t);
 
     ADD_ALL_TESTS(test_table_pos, OSSL_NELEM(tbl_testdata_pos));
-    if (ptm != NULL) {
+    if (!(t > 0)) {
         TEST_info("Adding negative-sign time_t tests");
         ADD_ALL_TESTS(test_table_neg, OSSL_NELEM(tbl_testdata_neg));
     }
     if (sizeof(time_t) > sizeof(uint32_t)) {
         TEST_info("Adding 64-bit time_t tests");
         ADD_ALL_TESTS(test_table_pos_64bit, OSSL_NELEM(tbl_testdata_pos_64bit));
-        if (ptm != NULL) {
+        if (!(t > 0)) {
             TEST_info("Adding negative-sign 64-bit time_t tests");
             ADD_ALL_TESTS(test_table_neg_64bit, OSSL_NELEM(tbl_testdata_neg_64bit));
         }
