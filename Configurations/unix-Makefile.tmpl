@@ -686,8 +686,11 @@ tar:
 	DISTDIR=$(NAME); \
 	mkdir -p $$TMPDIR/$$DISTDIR; \
 	(cd $(SRCDIR); \
+	 excl_re=`git submodule status | sed -e 's/^.//' | cut -d' ' -f2`; \
+	 excl_re="^(fuzz/corpora|`echo $$excl_re | sed -e 's/ /$$|/g'`\$$)"; \
+	 echo "$$excl_re"; \
 	 git ls-tree -r --name-only --full-tree HEAD \
-         | grep -v '^fuzz/corpora' \
+	 | grep -v -E "$$excl_re" \
 	 | while read F; do \
 	       mkdir -p $$TMPDIR/$$DISTDIR/`dirname $$F`; \
 	       cp $$F $$TMPDIR/$$DISTDIR/$$F; \
