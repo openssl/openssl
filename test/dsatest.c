@@ -19,7 +19,7 @@
 #include <openssl/dsa.h>
 
 #include "testutil.h"
-#include "e_os.h"
+#include <internal/nelem.h>
 
 #ifndef OPENSSL_NO_DSA
 static int dsa_cb(int p, int n, BN_GENCB *arg);

@@ -17,7 +17,7 @@
 
 #include "ssltestlib.h"
 #include "testutil.h"
-#include "e_os.h"
+#include <internal/nelem.h>
 #include "../ssl/ssl_locl.h"
 
 static char *cert = NULL;

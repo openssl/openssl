@@ -12,7 +12,7 @@
 #include <openssl/e_os2.h>
 #include <openssl/crypto.h>
 
-#include "e_os.h"
+#include <internal/nelem.h>
 #include "ssl_test_ctx.h"
 #include "testutil.h"
 

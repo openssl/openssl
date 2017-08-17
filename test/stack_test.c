@@ -16,7 +16,7 @@
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 
-#include "e_os.h"
+#include <internal/nelem.h>
 #include "testutil.h"
 
 /* The macros below generate unused functions which error out one of the clang

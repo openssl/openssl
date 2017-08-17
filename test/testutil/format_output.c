@@ -13,7 +13,7 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "../../e_os.h"
+#include <internal/nelem.h>
 
 /* The size of memory buffers to display on failure */
 #define MEM_BUFFER_SIZE     (2000)

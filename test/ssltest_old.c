@@ -25,6 +25,8 @@
 #include <string.h>
 #include <time.h>
 
+#include <internal/nelem.h>
+
 #define USE_SOCKETS
 #include "e_os.h"
 

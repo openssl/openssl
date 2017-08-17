@@ -20,7 +20,7 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include "e_os.h"
+#include <internal/nelem.h>
 
 static const ASN1_ITEM *item_type;
 static const char *test_file;
