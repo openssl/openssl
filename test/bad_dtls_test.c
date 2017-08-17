@@ -39,7 +39,7 @@
 #include <openssl/kdf.h>
 
 #include "../ssl/packet_locl.h"
-#include "../e_os.h" /* for OSSL_NELEM() */
+#include <internal/nelem.h>
 
 #include "testutil.h"
 

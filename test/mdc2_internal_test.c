@@ -14,7 +14,7 @@
 
 #include <openssl/mdc2.h>
 #include "testutil.h"
-#include "e_os.h"
+#include <internal/nelem.h>
 
 typedef struct {
     const char *input;

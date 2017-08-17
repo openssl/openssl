@@ -14,7 +14,7 @@
 
 #include <openssl/ssl.h>
 #include "testutil.h"
-#include "e_os.h"
+#include <internal/nelem.h>
 
 #ifdef __VMS
 # pragma names save

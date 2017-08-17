@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "e_os.h"
+#include <internal/nelem.h>
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>

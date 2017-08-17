@@ -12,7 +12,7 @@
 #include <openssl/rand.h>
 #include <stdio.h>
 #include <string.h>
-#include "e_os.h"
+#include <internal/nelem.h>
 #include "testutil.h"
 
 #define TEST_SIZE       128

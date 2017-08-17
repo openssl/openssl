@@ -12,7 +12,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "e_os.h"
+#include "internal/nelem.h"
 #include "../testutil.h"
 #include "tu_local.h"
 

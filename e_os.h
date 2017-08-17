@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,8 @@
 
 # include <openssl/e_os2.h>
 # include <openssl/crypto.h>
+# include <internal/nelem.h>
+
 /*
  * <openssl/e_os2.h> contains what we can justify to make visible to the
  * outside; this file e_os.h is not part of the exported interface.
@@ -539,8 +541,6 @@ struct servent *getservbyname(const char *name, const char *proto);
 
 # endif
 /* end vxworks */
-
-#define OSSL_NELEM(x)    (sizeof(x)/sizeof((x)[0]))
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 # define CRYPTO_memcmp memcmp
