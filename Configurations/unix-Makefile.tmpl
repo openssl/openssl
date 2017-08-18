@@ -693,7 +693,7 @@ tar:
 	 excl_re="^(fuzz/corpora|`echo $$excl_re | sed -e 's/ /$$|/g'`\$$)"; \
 	 echo "$$excl_re"; \
 	 git ls-tree -r --name-only --full-tree HEAD \
-	 | grep -v -E "$$excl_re" \
+	 | egrep -v "$$excl_re" \
 	 | while read F; do \
 	       mkdir -p $$TMPDIR/$$DISTDIR/`dirname $$F`; \
 	       cp $$F $$TMPDIR/$$DISTDIR/$$F; \
