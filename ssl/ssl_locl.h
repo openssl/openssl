@@ -16,7 +16,7 @@
 # include <string.h>
 # include <errno.h>
 
-# include "e_os.h"
+# include "e_os.h"              /* struct timeval for Windows */
 # if defined(__unix) || defined(__unix__)
 #  include <sys/time.h>         /* struct timeval for DTLS */
 # endif
