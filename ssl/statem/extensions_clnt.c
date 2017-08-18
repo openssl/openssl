@@ -765,12 +765,14 @@ EXT_RETURN tls_construct_ctos_padding(SSL *s, WPACKET *pkt,
 
         /*
          * Take off the size of extension header itself (2 bytes for type and
-         * 2 bytes for length bytes)
+         * 2 bytes for length bytes), but ensure that the extension is at least
+         * 1 byte long so as not to have an empty extension last (WebSphere 7.x,
+         * 8.x are intolerant of that condition)
          */
         if (hlen >= 4)
             hlen -= 4;
         else
-            hlen = 0;
+            hlen = 1;
 
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_padding)
                 || !WPACKET_sub_allocate_bytes_u16(pkt, hlen, &padbytes)) {

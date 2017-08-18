@@ -417,7 +417,7 @@ static int full_early_callback(SSL *s, int *al, void *arg)
 #ifndef OPENSSL_NO_EC
                                        11, 10,
 #endif
-                                       35, 13, 22, 23};
+                                       35, 22, 23, 13};
     size_t len;
 
     /* Make sure we can defer processing and get called back. */
