@@ -110,6 +110,9 @@ typedef struct extensions_definition_st {
  * extension is relevant to a particular protocol or protocol version.
  *
  * TODO(TLS1.3): Make sure we have a test to check the consistency of these
+ *
+ * NOTE: WebSphere Application Server 7+ cannot handle empty extensions at
+ * the end, keep these extensions before signature_algorithm.
  */
 #define INVALID_EXTENSION { 0x10000, 0, NULL, NULL, NULL, NULL, NULL, NULL }
 static const EXTENSION_DEFINITION ext_defs[] = {
@@ -166,13 +169,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         init_session_ticket, tls_parse_ctos_session_ticket,
         tls_parse_stoc_session_ticket, tls_construct_stoc_session_ticket,
         tls_construct_ctos_session_ticket, NULL
-    },
-    {
-        TLSEXT_TYPE_signature_algorithms,
-        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST,
-        init_sig_algs, tls_parse_ctos_sig_algs,
-        tls_parse_ctos_sig_algs, tls_construct_ctos_sig_algs,
-        tls_construct_ctos_sig_algs, final_sig_algs
     },
 #ifndef OPENSSL_NO_OCSP
     {
@@ -248,6 +244,13 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         | SSL_EXT_TLS1_2_AND_BELOW_ONLY,
         init_ems, tls_parse_ctos_ems, tls_parse_stoc_ems,
         tls_construct_stoc_ems, tls_construct_ctos_ems, final_ems
+    },
+    {
+        TLSEXT_TYPE_signature_algorithms,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST,
+        init_sig_algs, tls_parse_ctos_sig_algs,
+        tls_parse_ctos_sig_algs, tls_construct_ctos_sig_algs,
+        tls_construct_ctos_sig_algs, final_sig_algs
     },
     {
         TLSEXT_TYPE_supported_versions,
