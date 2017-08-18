@@ -168,15 +168,16 @@ int OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert)
     return 1;
 }
 
-int OCSP_basic_sign(OCSP_BASICRESP *brsp,
-                    X509 *signer, EVP_PKEY *key, const EVP_MD *dgst,
+int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
+                    X509 *signer, EVP_MD_CTX *ctx,
                     STACK_OF(X509) *certs, unsigned long flags)
 {
     int i;
     OCSP_RESPID *rid;
 
-    if (!X509_check_private_key(signer, key)) {
-        OCSPerr(OCSP_F_OCSP_BASIC_SIGN,
+    if (!ctx || !EVP_MD_CTX_pkey_ctx(ctx) || !EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx)) ||
+        !X509_check_private_key(signer, EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx)))) {
+        OCSPerr(OCSP_F_OCSP_BASIC_SIGN_CTX,
                 OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
         goto err;
     }
@@ -208,12 +209,29 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
      * -- Richard Levitte
      */
 
-    if (!OCSP_BASICRESP_sign(brsp, key, dgst, 0))
+    if (!OCSP_BASICRESP_sign_ctx(brsp, ctx, 0))
         goto err;
 
     return 1;
  err:
     return 0;
+}
+
+int OCSP_basic_sign(OCSP_BASICRESP *brsp,
+                    X509 *signer, EVP_PKEY *key, const EVP_MD *dgst,
+                    STACK_OF(X509) *certs, unsigned long flags)
+{
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    EVP_PKEY_CTX *pkctx = NULL;
+    int i;
+
+    if (!EVP_DigestSignInit(ctx, &pkctx, dgst, NULL, key)) {
+        EVP_MD_CTX_free(ctx);
+        return 1;
+    }
+    i = OCSP_basic_sign_ctx(brsp, signer, ctx, certs, flags);
+    EVP_MD_CTX_free(ctx);
+    return i;
 }
 
 int OCSP_RESPID_set_by_name(OCSP_RESPID *respid, X509 *cert)
