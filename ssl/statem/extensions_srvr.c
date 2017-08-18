@@ -864,7 +864,7 @@ EXT_RETURN tls_construct_stoc_server_name(SSL *s, WPACKET *pkt,
                                           unsigned int context, X509 *x,
                                           size_t chainidx, int *al)
 {
-    if (s->hit || s->servername_done != 1
+    if (s->servername_done != 1
             || s->session->ext.hostname == NULL)
         return EXT_RETURN_NOT_SENT;
 
