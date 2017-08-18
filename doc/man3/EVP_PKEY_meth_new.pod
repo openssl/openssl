@@ -14,7 +14,7 @@ EVP_PKEY_meth_get_paramgen, EVP_PKEY_meth_get_keygen, EVP_PKEY_meth_get_sign,
 EVP_PKEY_meth_get_verify, EVP_PKEY_meth_get_verify_recover, EVP_PKEY_meth_get_signctx,
 EVP_PKEY_meth_get_verifyctx, EVP_PKEY_meth_get_encrypt, EVP_PKEY_meth_get_decrypt,
 EVP_PKEY_meth_get_derive, EVP_PKEY_meth_get_ctrl
-- functions manipulating EVP_PKEY_METHOD structure
+- manipulating EVP_PKEY_METHOD structure
 
 =head1 SYNOPSIS
 
@@ -195,8 +195,8 @@ verifying, encrypting or decrypting, etc.
 
 There are two places where the B<EVP_PKEY_METHOD> objects are stored: one
 is a built-in static array representing the standard methods for different
-algorithms, and the other one is a stack of user defined application specified
-methods, which can be manipulated by using L<EVP_PKEY_meth_add0(3)> function.
+algorithms, and the other one is a stack of user-defined application-specific
+methods, which can be manipulated by using L<EVP_PKEY_meth_add0(3)>.
 
 The B<EVP_PKEY_METHOD> objects are usually referenced by B<EVP_PKEY_CTX>
 objects.
@@ -214,14 +214,14 @@ The init() method is called to initialize algorithm-specific data when a new
 B<EVP_PKEY_CTX> is created. As opposed to init(), the cleanup() method is called
 when an B<EVP_PKEY_CTX> is freed. The copy() method is called when an B<EVP_PKEY_CTX>
 is being duplicated. Refer to L<EVP_PKEY_CTX_new(3)>, L<EVP_PKEY_CTX_new_id(3)>,
-L<EVP_PKEY_CTX_free> and L<EVP_PKEY_CTX_dup>.
+L<EVP_PKEY_CTX_free(3)> and L<EVP_PKEY_CTX_dup(3)>.
 
  int (*paramgen_init) (EVP_PKEY_CTX *ctx);
  int (*paramgen) (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
 
-The paramgen_init() and paramgen() methods deal with key parameters generation.
+The paramgen_init() and paramgen() methods deal with key parameter generation.
 They are called by L<EVP_PKEY_paramgen_init(3)> and L<EVP_PKEY_paramgen(3)> to
-handle the parameter generation progress.
+handle the parameter generation process.
 
  int (*keygen_init) (EVP_PKEY_CTX *ctx);
  int (*keygen) (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
@@ -243,8 +243,8 @@ and L<EVP_PKEY_sign(3)>.
                 const unsigned char *sig, size_t siglen,
                 const unsigned char *tbs, size_t tbslen);
 
-The verify_init() and verify() methods are used to verify a signature is valid
-or not. They are called by L<EVP_PKEY_verify_init(3)> and L<EVP_PKEY_verify(3)>.
+The verify_init() and verify() methods are used to verify whether a signature is
+valid. They are called by L<EVP_PKEY_verify_init(3)> and L<EVP_PKEY_verify(3)>.
 
  int (*verify_recover_init) (EVP_PKEY_CTX *ctx);
  int (*verify_recover) (EVP_PKEY_CTX *ctx,
@@ -290,13 +290,13 @@ They are called by L<EVP_PKEY_decrypt_init(3)> and L<EVP_PKEY_decrypt(3)>.
  int (*derive) (EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
 
 The derive_init() and derive() methods are used to derive the shared secret
-from a public key algorithm (for instance, DH algorithm). They are called by
+from a public key algorithm (for instance, the DH algorithm). They are called by
 L<EVP_PKEY_derive_init(3)> and L<EVP_PKEY_derive(3)>.
 
  int (*ctrl) (EVP_PKEY_CTX *ctx, int type, int p1, void *p2);
  int (*ctrl_str) (EVP_PKEY_CTX *ctx, const char *type, const char *value);
 
-The ctrl() and ctrl_str() methods are used to adjust algorithm specified
+The ctrl() and ctrl_str() methods are used to adjust algorithm-specific
 settings. See L<EVP_PKEY_CTX_ctrl(3)> and related functions for detail.
 
  int (*digestsign) (EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
@@ -336,7 +336,7 @@ EVP_PKEY_meth_copy() copies an B<EVP_PKEY_METHOD> object from B<src>
 to B<dst>.
 
 EVP_PKEY_meth_find() finds an B<EVP_PKEY_METHOD> object with the B<id>.
-This function first searches through the user defined method objects and
+This function first searches through the user-defined method objects and
 then the built-in objects.
 
 EVP_PKEY_meth_add0() adds B<pmeth> to the user defined stack of methods.
@@ -358,16 +358,11 @@ EVP_PKEY_meth_find() returns a pointer to the found B<EVP_PKEY_METHOD>
 object or returns NULL if not found.
 
 EVP_PKEY_meth_add0() returns 1 if method is added successfully or 0
-if error occurred.
+if an error occurred.
 
 All EVP_PKEY_meth_set and EVP_PKEY_meth_get functions have no return
 values. For the 'get' functions, function pointers are returned by
 arguments.
-
-=head1 NOTES
-
-The B<EVP_PKEY_METHOD> object created by EVP_PKEY_meth_new() always
-has flag B<EVP_PKEY_FLAG_DYNAMIC> set.
 
 =head1 COPYRIGHT
 
