@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include "internal/nelem.h"
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 

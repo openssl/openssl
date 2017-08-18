@@ -13,6 +13,7 @@
 #include <sys/types.h>
 
 #include "internal/cryptlib.h"
+#include "e_os.h"
 
 #ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>

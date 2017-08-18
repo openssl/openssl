@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 #include <openssl/conf.h>
 #include <openssl/objects.h>
 #include <openssl/dh.h>
+#include "internal/nelem.h"
 
 /*
  * structure holding name tables. This is used for permitted elements in lists

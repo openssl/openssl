@@ -8,6 +8,7 @@
  */
 
 #include "eng_int.h"
+#include "e_os.h"
 #include <openssl/rand.h>
 #include "internal/refcount.h"
 

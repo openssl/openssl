@@ -19,6 +19,7 @@
 #include "testutil.h"
 
 #include "internal/nelem.h"
+
 #ifndef OPENSSL_NO_BF
 # include <openssl/blowfish.h>
 

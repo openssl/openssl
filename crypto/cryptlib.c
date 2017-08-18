@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -9,6 +9,7 @@
  */
 
 #include "internal/cryptlib_int.h"
+#include "e_os.h"
 #include <openssl/safestack.h>
 
 #if     defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \

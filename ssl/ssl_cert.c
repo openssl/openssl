@@ -11,7 +11,11 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "e_os.h"
+#include "internal/nelem.h"
+#ifndef NO_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+
 #include "internal/o_dir.h"
 #include <openssl/lhash.h>
 #include <openssl/bio.h>
@@ -20,6 +24,7 @@
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
+#include "e_os.h"
 #include "ssl_locl.h"
 #include "ssl_cert_table.h"
 #include "internal/thread_once.h"

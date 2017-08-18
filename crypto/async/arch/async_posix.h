@@ -26,7 +26,6 @@
 
 #  include <ucontext.h>
 #  include <setjmp.h>
-#  include "e_os.h"
 
 typedef struct async_fibre_st {
     ucontext_t fibre;
