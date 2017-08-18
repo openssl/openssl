@@ -13,6 +13,7 @@
 #include <openssl/crypto.h>
 
 #include <internal/nelem.h>
+#include "../e_os.h"
 #include "ssl_test_ctx.h"
 #include "testutil.h"
 
