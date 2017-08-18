@@ -13,6 +13,7 @@
 #include <ctype.h>
 
 #include <internal/nelem.h>
+#include "../e_os.h"
 #include <internal/numbers.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
