@@ -9,7 +9,7 @@
 
 #include "testutil.h"
 #include "internal/ctype.h"
-#include "../e_os.h"
+#include "internal/nelem.h"
 #include <ctype.h>
 #include <stdio.h>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2014, Intel Corporation. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -21,6 +21,7 @@
 #include "internal/cryptlib.h"
 #include "internal/bn_int.h"
 #include "ec_lcl.h"
+#include "e_os.h"
 
 #if BN_BITS2 != 64
 # define TOBN(hi,lo)    lo,hi

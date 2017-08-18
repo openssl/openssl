@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #ifndef HEADER_APPS_H
 # define HEADER_APPS_H
 
+# include "internal/nelem.h"
 # include "e_os.h"
 # if defined(__unix) || defined(__unix__)
 #  include <sys/time.h> /* struct timeval for DTLS */

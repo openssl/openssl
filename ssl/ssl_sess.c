@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -12,6 +12,7 @@
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include <openssl/engine.h>
+#include "e_os.h"
 #include "ssl_locl.h"
 #include "statem/statem_locl.h"
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -14,8 +14,6 @@
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 #include "internal/refcount.h"
-
-#include "e_os.h"
 
 #if defined(__SUNPRO_C)
 # if __SUNPRO_C >= 0x520

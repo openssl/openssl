@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -10,6 +10,7 @@
  */
 
 #include <stdio.h>
+#include "e_os.h"
 #include "ssl_locl.h"
 #include <openssl/objects.h>
 #include <openssl/lhash.h>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -11,6 +11,7 @@
 #include "internal/cryptlib.h"
 #include <string.h>
 #include "ec_lcl.h"
+#include "e_os.h"
 #include <openssl/err.h>
 #include <openssl/engine.h>
 

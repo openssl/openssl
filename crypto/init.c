@@ -25,6 +25,7 @@
 #include "internal/thread_once.h"
 #include "internal/dso.h"
 #include "internal/store.h"
+#include "e_os.h"
 
 static int stopped = 0;
 
