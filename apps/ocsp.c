@@ -46,9 +46,10 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
                               STACK_OF(OPENSSL_STRING) *names,
                               STACK_OF(OCSP_CERTID) *ids, long nsec,
                               long maxage);
-static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
+static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req,
                               CA_DB *db, STACK_OF(X509) *ca, X509 *rcert,
                               EVP_PKEY *rkey, const EVP_MD *md,
+                              STACK_OF(OPENSSL_STRING) *sigopts,
                               STACK_OF(X509) *rother, unsigned long flags,
                               int nmin, int ndays, int badsig);
 
@@ -77,7 +78,7 @@ typedef enum OPTION_choice {
     OPT_VALIDITY_PERIOD, OPT_STATUS_AGE, OPT_SIGNKEY, OPT_REQOUT,
     OPT_RESPOUT, OPT_PATH, OPT_ISSUER, OPT_CERT, OPT_SERIAL,
     OPT_INDEX, OPT_CA, OPT_NMIN, OPT_REQUEST, OPT_NDAYS, OPT_RSIGNER,
-    OPT_RKEY, OPT_ROTHER, OPT_RMD, OPT_HEADER,
+    OPT_RKEY, OPT_ROTHER, OPT_RMD, OPT_SIGOPT, OPT_HEADER,
     OPT_V_ENUM,
     OPT_MD
 } OPTION_CHOICE;
@@ -154,6 +155,7 @@ const OPTIONS ocsp_options[] = {
     {"rkey", OPT_RKEY, '<', "Responder key to sign responses with"},
     {"rother", OPT_ROTHER, '<', "Other certificates to include in response"},
     {"rmd", OPT_RMD, 's', "Digest Algorithm to use in signature of OCSP response"},
+    {"rsigopt", OPT_SIGOPT, 's', "OCSP response signature parameter in n:v form"},
     {"header", OPT_HEADER, 's', "key=value header to add"},
     {"", OPT_MD, '-', "Any supported digest algorithm (sha1,sha256, ... )"},
     OPT_V_OPTIONS,
@@ -164,6 +166,7 @@ int ocsp_main(int argc, char **argv)
 {
     BIO *acbio = NULL, *cbio = NULL, *derbio = NULL, *out = NULL;
     const EVP_MD *cert_id_md = NULL, *rsign_md = NULL;
+    STACK_OF(OPENSSL_STRING) *rsign_sigopts = NULL;
     int trailing_md = 0;
     CA_DB *rdb = NULL;
     EVP_PKEY *key = NULL, *rkey = NULL;
@@ -419,6 +422,12 @@ int ocsp_main(int argc, char **argv)
             if (!opt_md(opt_arg(), &rsign_md))
                 goto end;
             break;
+        case OPT_SIGOPT:
+            if (rsign_sigopts == NULL)
+                rsign_sigopts = sk_OPENSSL_STRING_new_null();
+            if (rsign_sigopts == NULL || !sk_OPENSSL_STRING_push(rsign_sigopts, opt_arg()))
+                goto end;
+            break;
         case OPT_HEADER:
             header = opt_arg();
             value = strchr(header, '=');
@@ -583,8 +592,8 @@ redo_accept:
     }
 
     if (rdb != NULL) {
-        make_ocsp_response(&resp, req, rdb, rca_cert, rsigner, rkey,
-                               rsign_md, rother, rflags, nmin, ndays, badsig);
+        make_ocsp_response(bio_err, &resp, req, rdb, rca_cert, rsigner, rkey,
+                               rsign_md, rsign_sigopts, rother, rflags, nmin, ndays, badsig);
         if (cbio != NULL)
             send_ocsp_response(cbio, resp);
     } else if (host != NULL) {
@@ -710,6 +719,8 @@ redo_accept:
     X509_free(signer);
     X509_STORE_free(store);
     X509_VERIFY_PARAM_free(vpm);
+    if (rsign_sigopts != NULL)
+        sk_OPENSSL_STRING_free(rsign_sigopts);
     EVP_PKEY_free(key);
     EVP_PKEY_free(rkey);
     X509_free(cert);
@@ -855,9 +866,10 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
     }
 }
 
-static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
+static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req,
                               CA_DB *db, STACK_OF(X509) *ca, X509 *rcert,
                               EVP_PKEY *rkey, const EVP_MD *rmd,
+                              STACK_OF(OPENSSL_STRING) *sigopts,
                               STACK_OF(X509) *rother, unsigned long flags,
                               int nmin, int ndays, int badsig)
 {
@@ -865,6 +877,8 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
     OCSP_CERTID *cid;
     OCSP_BASICRESP *bs = NULL;
     int i, id_count;
+    EVP_MD_CTX *mctx = NULL;
+    EVP_PKEY_CTX *pkctx = NULL;
 
     id_count = OCSP_request_onereq_count(req);
 
@@ -950,7 +964,22 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
 
     OCSP_copy_nonce(bs, req);
 
-    OCSP_basic_sign(bs, rcert, rkey, rmd, rother, flags);
+    mctx = EVP_MD_CTX_new();
+    if ( mctx == NULL || !EVP_DigestSignInit(mctx, &pkctx, rmd, NULL, rkey)) {
+        *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR, NULL);
+        goto end;
+    }
+    for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
+        char *sigopt = sk_OPENSSL_STRING_value(sigopts, i);
+        if (pkey_ctrl_string(pkctx, sigopt) <= 0) {
+            BIO_printf(err, "parameter error \"%s\"\n", sigopt);
+            ERR_print_errors(bio_err);
+            *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR,
+                                         NULL);
+            goto end;
+        }
+    }
+    OCSP_basic_sign_ctx(bs, rcert, mctx, rother, flags);
 
     if (badsig) {
         const ASN1_OCTET_STRING *sig = OCSP_resp_get0_signature(bs);
@@ -960,6 +989,8 @@ static void make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req,
     *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, bs);
 
  end:
+    if (mctx != NULL)
+        EVP_MD_CTX_free(mctx);
     ASN1_TIME_free(thisupd);
     ASN1_TIME_free(nextupd);
     OCSP_BASICRESP_free(bs);

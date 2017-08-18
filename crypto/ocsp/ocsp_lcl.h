@@ -224,6 +224,10 @@ struct ocsp_service_locator_st {
         ASN1_item_sign(ASN1_ITEM_rptr(OCSP_RESPDATA),&(o)->signatureAlgorithm,\
                 NULL,(o)->signature,&(o)->tbsResponseData,pkey,md)
 
+#  define OCSP_BASICRESP_sign_ctx(o,ctx,d) \
+        ASN1_item_sign_ctx(ASN1_ITEM_rptr(OCSP_RESPDATA),&(o)->signatureAlgorithm,\
+                NULL,(o)->signature,&(o)->tbsResponseData,ctx)
+
 #  define OCSP_REQUEST_verify(a,r) ASN1_item_verify(ASN1_ITEM_rptr(OCSP_REQINFO),\
         &(a)->optionalSignature->signatureAlgorithm,\
         (a)->optionalSignature->signature,&(a)->tbsRequest,r)
