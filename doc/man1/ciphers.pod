@@ -274,16 +274,18 @@ All these cipher suites have been removed in OpenSSL 1.1.0.
 Cipher suites using ECDSA authentication, i.e. the certificates carry ECDSA
 keys.
 
-=item B<TLSv1.2>, B<TLSv1.0>, B<SSLv3>
+=item B<TLSv1.3>, B<TLSv1.2>, B<TLSv1.0>, B<SSLv3>
 
-Lists cipher suites which are only supported in at least TLS v1.2, TLS v1.0 or
-SSL v3.0 respectively.
+Lists cipher suites which are only supported in at least TLS v1.3, TLS v1.2,
+TLS v1.0 or SSL v3.0 respectively.
 Note: there are no cipher suites specific to TLS v1.1.
 Since this is only the minimum version, if, for example, TLSv1.0 is negotiated
 then both TLSv1.0 and SSLv3.0 cipher suites are available.
 
 Note: these cipher strings B<do not> change the negotiated version of SSL or
 TLS, they only affect the list of available cipher suites.
+
+Note: There is also a B<TLSv1> option available. It's an alias of B<TLSv1.0>.
 
 =item B<AES128>, B<AES256>, B<AES>
 

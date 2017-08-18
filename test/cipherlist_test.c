@@ -207,9 +207,80 @@ static int test_default_cipherlist_explicit(void)
     return result;
 }
 
+#ifndef OPENSSL_NO_TLS1_3
+static const uint32_t tls13_ciphers_in_order[] = {
+    TLS1_3_CK_AES_256_GCM_SHA384,
+    TLS1_3_CK_CHACHA20_POLY1305_SHA256,
+    TLS1_3_CK_AES_128_GCM_SHA256,
+    TLS1_3_CK_AES_128_CCM_8_SHA256,
+    TLS1_3_CK_AES_128_CCM_SHA256,
+};
+
+static int test_tls13_cipherlist(SSL_CTX *ctx)
+{
+    STACK_OF(SSL_CIPHER) *ciphers = NULL;
+    SSL *ssl = NULL;
+    int i, ret = 0, num_expected_ciphers, num_ciphers;
+    uint32_t expected_cipher_id, cipher_id;
+
+    if (ctx == NULL)
+        return 0;
+
+    if (!TEST_ptr(ssl = SSL_new(ctx))
+            || !TEST_ptr(ciphers = SSL_get1_supported_ciphers(ssl)))
+        goto err;
+
+    num_expected_ciphers = OSSL_NELEM(tls13_ciphers_in_order);
+    num_ciphers = sk_SSL_CIPHER_num(ciphers);
+    if (!TEST_int_eq(num_ciphers, num_expected_ciphers))
+        goto err;
+
+    for (i = 0; i < num_ciphers; i++) {
+        expected_cipher_id = tls13_ciphers_in_order[i];
+        cipher_id = SSL_CIPHER_get_id(sk_SSL_CIPHER_value(ciphers, i));
+        if (!TEST_int_eq(cipher_id, expected_cipher_id)) {
+            TEST_info("Wrong cipher at position %d", i);
+            goto err;
+        }
+    }
+
+    ret = 1;
+
+ err:
+    sk_SSL_CIPHER_free(ciphers);
+    SSL_free(ssl);
+    return ret;
+}
+
+static int execute_tls13_test(CIPHERLIST_TEST_FIXTURE *fixture)
+{
+    return fixture != NULL
+        && test_tls13_cipherlist(fixture->server)
+        && test_tls13_cipherlist(fixture->client);
+}
+
+#define EXECUTE_TLS13_CIPHERLIST_TEST() \
+    EXECUTE_TEST(execute_tls13_test, tear_down)
+
+static int test_tls13_cipherlist_explicit(void)
+{
+    SETUP_CIPHERLIST_TEST_FIXTURE();
+    if (fixture == NULL)
+        return 0;
+    if (!TEST_true(SSL_CTX_set_cipher_list(fixture->server, "TLSv1.3"))
+            || !TEST_true(SSL_CTX_set_cipher_list(fixture->client, "TLSv1.3")))
+        tear_down(fixture);
+    EXECUTE_TLS13_CIPHERLIST_TEST();
+    return result;
+}
+#endif
+
 int setup_tests()
 {
     ADD_TEST(test_default_cipherlist_implicit);
     ADD_TEST(test_default_cipherlist_explicit);
+#ifndef OPENSSL_NO_TLS1_3
+    ADD_TEST(test_tls13_cipherlist_explicit);
+#endif
     return 1;
 }
