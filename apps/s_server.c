@@ -459,9 +459,17 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
 {
     tlsextctx *p = (tlsextctx *) arg;
     const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
-    if (servername != NULL && p->biodebug != NULL)
-        BIO_printf(p->biodebug, "Hostname in TLS extension: \"%s\"\n",
-                   servername);
+
+    if (servername != NULL && p->biodebug != NULL) {
+        const char *cp = servername;
+        unsigned char uc;
+
+        BIO_printf(p->biodebug, "Hostname in TLS extension: \"");
+        while ((uc = *cp++) != 0)
+            BIO_printf(p->biodebug,
+                       isascii(uc) && isprint(uc) ? "%c" : "\\x%02x", uc);
+        BIO_printf(p->biodebug, "\"\n");
+    }
 
     if (p->servername == NULL)
         return SSL_TLSEXT_ERR_NOACK;
