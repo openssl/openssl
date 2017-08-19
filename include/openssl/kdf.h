@@ -31,7 +31,7 @@ extern "C" {
 # define EVP_PKEY_CTRL_SCRYPT_MAXMEM_BYTES      (EVP_PKEY_ALG_CTRL + 13)
 # define EVP_PKEY_CTRL_PBKDF2_MD                (EVP_PKEY_ALG_CTRL + 14)
 # define EVP_PKEY_CTRL_PBKDF2_SALT              (EVP_PKEY_ALG_CTRL + 15)
-# define EVP_PKEY_CTRL_PBKDF2_ITER              (EVP_PKEY_ALG_CTRL + 16)
+# define EVP_PKEY_CTRL_ITER                     (EVP_PKEY_ALG_CTRL + 16)
 
 # define EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND 0
 # define EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY       1
@@ -73,6 +73,10 @@ extern "C" {
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
                             EVP_PKEY_CTRL_PASS, passlen, (void *)(pass))
 
+# define EVP_PKEY_CTX_set_pbe_iter(pctx, iter) \
+            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
+                              EVP_PKEY_CTRL_ITER, iter, NULL)
+
 # define EVP_PKEY_CTX_set1_scrypt_salt(pctx, salt, saltlen) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
                             EVP_PKEY_CTRL_SCRYPT_SALT, saltlen, (void *)(salt))
@@ -101,10 +105,6 @@ extern "C" {
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
                               EVP_PKEY_CTRL_PBKDF2_SALT, saltlen, \
                               (void *)(salt))
-
-# define EVP_PKEY_CTX_set_pbkdf2_iter(pctx, iter) \
-            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_PBKDF2_ITER, iter, NULL)
 
 int ERR_load_KDF_strings(void);
 

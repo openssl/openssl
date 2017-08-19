@@ -193,7 +193,7 @@ static int test_kdf_pbkdf2(void)
         TEST_error("EVP_PKEY_CTX_set1_pbe_pass");
         return 0;
     }
-    if (EVP_PKEY_CTX_set_pbkdf2_iter(pctx, 4096) <= 0) {
+    if (EVP_PKEY_CTX_set_pbe_iter(pctx, 4096) <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_pbkdf2_iter");
         return 0;
     }
