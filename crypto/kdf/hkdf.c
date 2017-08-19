@@ -71,18 +71,19 @@ static int pkey_hkdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     HKDF_PKEY_CTX *kctx = ctx->data;
 
     switch (type) {
-    case EVP_PKEY_CTRL_HKDF_MD:
+    case EVP_PKEY_CTRL_KDF_MD:
+    case EVP_PKEY_CTRL_OLD_HKDF_MD:
         if (p2 == NULL)
             return 0;
 
         kctx->md = p2;
         return 1;
 
-    case EVP_PKEY_CTRL_HKDF_MODE:
+    case EVP_PKEY_CTRL_KDF_MODE:
         kctx->mode = p1;
         return 1;
 
-    case EVP_PKEY_CTRL_HKDF_SALT:
+    case EVP_PKEY_CTRL_KDF_SALT:
         if (p1 == 0 || p2 == NULL)
             return 1;
 
@@ -99,7 +100,7 @@ static int pkey_hkdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         kctx->salt_len = p1;
         return 1;
 
-    case EVP_PKEY_CTRL_HKDF_KEY:
+    case EVP_PKEY_CTRL_KDF_KEY:
         if (p1 < 0)
             return 0;
 
@@ -113,7 +114,7 @@ static int pkey_hkdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         kctx->key_len  = p1;
         return 1;
 
-    case EVP_PKEY_CTRL_HKDF_INFO:
+    case EVP_PKEY_CTRL_KDF_INFO:
         if (p1 == 0 || p2 == NULL)
             return 1;
 
@@ -150,25 +151,25 @@ static int pkey_hkdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
 
     if (strcmp(type, "md") == 0)
         return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_DERIVE,
-                               EVP_PKEY_CTRL_HKDF_MD, value);
+                               EVP_PKEY_CTRL_PBE_MD, value);
 
     if (strcmp(type, "salt") == 0)
-        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_HKDF_SALT, value);
+        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_KDF_SALT, value);
 
     if (strcmp(type, "hexsalt") == 0)
-        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_HKDF_SALT, value);
+        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_KDF_SALT, value);
 
     if (strcmp(type, "key") == 0)
-        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_HKDF_KEY, value);
+        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_KDF_KEY, value);
 
     if (strcmp(type, "hexkey") == 0)
-        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_HKDF_KEY, value);
+        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_KDF_KEY, value);
 
     if (strcmp(type, "info") == 0)
-        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_HKDF_INFO, value);
+        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_KDF_INFO, value);
 
     if (strcmp(type, "hexinfo") == 0)
-        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_HKDF_INFO, value);
+        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_KDF_INFO, value);
 
     KDFerr(KDF_F_PKEY_HKDF_CTRL_STR, KDF_R_UNKNOWN_PARAMETER_TYPE);
     return -2;

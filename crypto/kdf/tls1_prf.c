@@ -57,7 +57,7 @@ static int pkey_tls1_prf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
     TLS1_PRF_PKEY_CTX *kctx = ctx->data;
     switch (type) {
-    case EVP_PKEY_CTRL_TLS_MD:
+    case EVP_PKEY_CTRL_KDF_MD:
         kctx->md = p2;
         return 1;
 
