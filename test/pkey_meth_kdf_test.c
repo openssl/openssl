@@ -16,6 +16,47 @@
 #include <openssl/kdf.h>
 #include "testutil.h"
 
+static int test_kdf_tls1_prf(void)
+{
+    EVP_PKEY_CTX *pctx;
+    unsigned char out[16];
+    size_t outlen = sizeof(out);
+    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_TLS1_PRF, NULL);
+
+    if (EVP_PKEY_derive_init(pctx) <= 0) {
+        TEST_error("EVP_PKEY_derive_init");
+        return 0;
+    }
+    if (EVP_PKEY_CTX_set_tls1_prf_md(pctx, EVP_sha256()) <= 0) {
+        TEST_error("EVP_PKEY_CTX_set_tls1_prf_md");
+        return 0;
+    }
+    if (EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, "secret", 6) <= 0) {
+        TEST_error("EVP_PKEY_CTX_set1_tls1_prf_secret");
+        return 0;
+    }
+    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, "seed", 4) <= 0) {
+        TEST_error("EVP_PKEY_CTX_add1_tls1_prf_seed");
+        return 0;
+    }
+    if (EVP_PKEY_derive(pctx, out, &outlen) <= 0) {
+        TEST_error("EVP_PKEY_derive");
+        return 0;
+    }
+
+    {
+        const unsigned char expected[sizeof(out)] = {
+            0x8e, 0x4d, 0x93, 0x25, 0x30, 0xd7, 0x65, 0xa0,
+            0xaa, 0xe9, 0x74, 0xc3, 0x04, 0x73, 0x5e, 0xcc
+        };
+        if (!TEST_mem_eq(out, sizeof(out), expected, sizeof(expected))) {
+            return 0;
+        }
+    }
+    EVP_PKEY_CTX_free(pctx);
+    return 1;
+}
+
 static int test_kdf_hkdf(void)
 {
     EVP_PKEY_CTX *pctx;
@@ -131,6 +172,7 @@ static int test_kdf_scrypt(void)
 
 int setup_tests()
 {
+    ADD_TEST(test_kdf_tls1_prf);
     ADD_TEST(test_kdf_hkdf);
 #ifndef OPENSSL_NO_SCRYPT
     ADD_TEST(test_kdf_scrypt);
