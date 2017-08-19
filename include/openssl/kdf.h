@@ -31,7 +31,7 @@ extern "C" {
 # define EVP_PKEY_CTRL_SCRYPT_P                 (EVP_PKEY_ALG_CTRL + 11)
 # define EVP_PKEY_CTRL_SCRYPT_MAXMEM_BYTES      (EVP_PKEY_ALG_CTRL + 12)
 
-/* Deprecated, previous used control values */
+/* Deprecated, previously used control values */
 # define EVP_PKEY_CTRL_OLD_HKDF_MD              (EVP_PKEY_ALG_CTRL + 3)
 
 /* Aliases for backwards-compatibility */
