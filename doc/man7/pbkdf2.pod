@@ -65,12 +65,12 @@ the public key algorithm.
 
 =head1 EXAMPLE
 
-This example derives a 20-byte long test vector using PBKDF2-HMAC-SHA1 using
+This example derives a 32-byte long test vector using PBKDF2-HMAC-SHA256 using
 the password "password" and salt "salt". The iteration count (work factor) is
-chosen to be 4096 iterations.
+chosen to be 100000 iterations.
 
  EVP_PKEY_CTX *pctx;
- unsigned char out[20];
+ unsigned char out[32];
  size_t outlen = sizeof(out);
 
  pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_PBKDF2, NULL);
@@ -78,7 +78,7 @@ chosen to be 4096 iterations.
  if (EVP_PKEY_derive_init(pctx) <= 0) {
      error("EVP_PKEY_derive_init");
  }
- if (EVP_PKEY_CTX_set_pbkdf2_md(pctx, EVP_sha1()) <= 0) {
+ if (EVP_PKEY_CTX_set_pbkdf2_md(pctx, EVP_sha256()) <= 0) {
      error("EVP_PKEY_CTX_set_pbkdf2_md");
  }
  if (EVP_PKEY_CTX_set1_pbkdf2_salt(pctx, "salt", 4) <= 0) {
@@ -87,7 +87,7 @@ chosen to be 4096 iterations.
  if (EVP_PKEY_CTX_set1_pbe_pass(pctx, "password", 8) <= 0) {
      error("EVP_PKEY_CTX_set1_pbe_pass");
  }
- if (EVP_PKEY_CTX_set_pbkdf2_iter(pctx, 4096) <= 0) {
+ if (EVP_PKEY_CTX_set_pbkdf2_iter(pctx, 100000) <= 0) {
      error("EVP_PKEY_CTX_set1_pbkdf2_pass");
  }
  if (EVP_PKEY_derive(pctx, out, &outlen) <= 0) {
@@ -96,9 +96,10 @@ chosen to be 4096 iterations.
 
  {
      const unsigned char expected[sizeof(out)] = {
-         0x4b, 0x00, 0x79, 0x01, 0xb7, 0x65, 0x48, 0x9a,
-         0xbe, 0xad, 0x49, 0xd9, 0x26, 0xf7, 0x21, 0xd0,
-         0x65, 0xa4, 0x29, 0xc1
+         0x03, 0x94, 0xa2, 0xed, 0xe3, 0x32, 0xc9, 0xa1,
+         0x3e, 0xb8, 0x2e, 0x9b, 0x24, 0x63, 0x16, 0x04,
+         0xc3, 0x1d, 0xf9, 0x78, 0xb4, 0xe2, 0xf0, 0xfb,
+         0xd2, 0xc5, 0x49, 0x94, 0x4f, 0x9d, 0x79, 0xa5
      };
 
      assert(!memcmp(out, expected, sizeof(out)));
