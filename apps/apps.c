@@ -240,7 +240,7 @@ static int ui_write(UI *ui, UI_STRING *uis)
         }
     }
 
-    writer = UI_method_get_reader(ui_fallback_method);
+    writer = UI_method_get_writer(ui_fallback_method);
     if (writer)
         return writer(ui, uis);
     return 1;
