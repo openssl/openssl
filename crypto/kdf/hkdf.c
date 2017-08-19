@@ -151,7 +151,7 @@ static int pkey_hkdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
 
     if (strcmp(type, "md") == 0)
         return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_DERIVE,
-                               EVP_PKEY_CTRL_PBE_MD, value);
+                               EVP_PKEY_CTRL_KDF_MD, value);
 
     if (strcmp(type, "salt") == 0)
         return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_KDF_SALT, value);
