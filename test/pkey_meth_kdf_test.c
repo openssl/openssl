@@ -16,7 +16,8 @@
 #include <openssl/kdf.h>
 #include "testutil.h"
 
-static int test_kdf_hkdf(void)
+/* Test HKDF with backwards-compatible setters */
+static int test_kdf_hkdf_bwcompat(void)
 {
     EVP_PKEY_CTX *pctx;
     unsigned char out[10];
@@ -60,6 +61,51 @@ static int test_kdf_hkdf(void)
     return 1;
 }
 
+/* Test HKDF with generic setters */
+static int test_kdf_hkdf(void)
+{
+    EVP_PKEY_CTX *pctx;
+    unsigned char out[10];
+    size_t outlen = sizeof(out);
+    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
+
+    if (EVP_PKEY_derive_init(pctx) <= 0) {
+        TEST_error("EVP_PKEY_derive_init");
+        return 0;
+    }
+    if (EVP_PKEY_CTX_set_pbe_md(pctx, EVP_sha256()) <= 0) {
+        TEST_error("EVP_PKEY_CTX_set_pbe_md");
+        return 0;
+    }
+    if (EVP_PKEY_CTX_set1_pbe_salt(pctx, "salt", 4) <= 0) {
+        TEST_error("EVP_PKEY_CTX_set1_pbe_salt");
+        return 0;
+    }
+    if (EVP_PKEY_CTX_set1_pbe_key(pctx, "secret", 6) <= 0) {
+        TEST_error("EVP_PKEY_CTX_set1_pbe_key");
+        return 0;
+    }
+    if (EVP_PKEY_CTX_add1_pbe_info(pctx, "label", 5) <= 0) {
+        TEST_error("EVP_PKEY_CTX_set1_pbe_info");
+        return 0;
+    }
+    if (EVP_PKEY_derive(pctx, out, &outlen) <= 0) {
+        TEST_error("EVP_PKEY_derive");
+        return 0;
+    }
+
+    {
+        const unsigned char expected[sizeof(out)] = {
+            0x2a, 0xc4, 0x36, 0x9f, 0x52, 0x59, 0x96, 0xf8, 0xde, 0x13
+        };
+        if (!TEST_mem_eq(out, sizeof(out), expected, sizeof(expected))) {
+            return 0;
+        }
+    }
+    EVP_PKEY_CTX_free(pctx);
+    return 1;
+}
+
 #ifndef OPENSSL_NO_SCRYPT
 static int test_kdf_scrypt(void)
 {
@@ -76,7 +122,7 @@ static int test_kdf_scrypt(void)
         TEST_error("EVP_PKEY_CTX_set1_pbe_pass");
         return 0;
     }
-    if (EVP_PKEY_CTX_set1_scrypt_salt(pctx, "NaCl", 4) <= 0) {
+    if (EVP_PKEY_CTX_set1_pbe_salt(pctx, "NaCl", 4) <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_scrypt_salt");
         return 0;
     }
@@ -131,6 +177,7 @@ static int test_kdf_scrypt(void)
 
 int setup_tests()
 {
+    ADD_TEST(test_kdf_hkdf_bwcompat);
     ADD_TEST(test_kdf_hkdf);
 #ifndef OPENSSL_NO_SCRYPT
     ADD_TEST(test_kdf_scrypt);

@@ -120,10 +120,10 @@ static int pkey_scrypt_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     uint64_t u64_value;
 
     switch (type) {
-    case EVP_PKEY_CTRL_PASS:
+    case EVP_PKEY_CTRL_KDF_PASS:
         return pkey_scrypt_set_membuf(&kctx->pass, &kctx->pass_len, p2, p1);
 
-    case EVP_PKEY_CTRL_SCRYPT_SALT:
+    case EVP_PKEY_CTRL_KDF_SALT:
         return pkey_scrypt_set_membuf(&kctx->salt, &kctx->salt_len, p2, p1);
 
     case EVP_PKEY_CTRL_SCRYPT_N:
@@ -181,16 +181,16 @@ static int pkey_scrypt_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
     }
 
     if (strcmp(type, "pass") == 0)
-        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_PASS, value);
+        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_KDF_PASS, value);
 
     if (strcmp(type, "hexpass") == 0)
-        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_PASS, value);
+        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_KDF_PASS, value);
 
     if (strcmp(type, "salt") == 0)
-        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_SCRYPT_SALT, value);
+        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_KDF_SALT, value);
 
     if (strcmp(type, "hexsalt") == 0)
-        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_SCRYPT_SALT, value);
+        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_KDF_SALT, value);
 
     if (strcmp(type, "N") == 0)
         return pkey_scrypt_ctrl_uint64(ctx, EVP_PKEY_CTRL_SCRYPT_N, value);
