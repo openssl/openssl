@@ -72,6 +72,7 @@ int version_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
+opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:
@@ -106,6 +107,10 @@ int version_main(int argc, char **argv)
             seed = cflags = version = date = platform = dir = engdir = 1;
             break;
         }
+    }
+    if (opt_num_rest() != 0) {
+        BIO_printf(bio_err, "Extra parameters given.\n");
+        goto opthelp;
     }
     if (!dirty)
         version = 1;
