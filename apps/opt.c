@@ -61,7 +61,7 @@ char *opt_progname(const char *argv0)
     if (n > sizeof prog - 1)
         n = sizeof prog - 1;
     for (q = prog, i = 0; i < n; i++, p++)
-        *q++ = isupper(*p) ? tolower(*p) : *p;
+        *q++ = tolower((unsigned char)*p);
     *q = '\0';
     return prog;
 }

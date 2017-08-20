@@ -109,7 +109,7 @@ static int atoi64(const char *in, int64_t *result)
     for ( ; *in != '\0'; in++) {
         char c = *in;
 
-        if (!isdigit(c))
+        if (!isdigit((unsigned char)c))
             return 0;
         ret *= 10;
         ret += (c - '0');
