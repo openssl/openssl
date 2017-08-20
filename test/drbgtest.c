@@ -26,16 +26,16 @@ typedef struct drbg_selftest_data_st {
     unsigned int flags;
 
     /* KAT data for no PR */
-    const unsigned char *ent;
-    size_t entlen;
+    const unsigned char *entropy;
+    size_t entropylen;
     const unsigned char *nonce;
     size_t noncelen;
     const unsigned char *pers;
     size_t perslen;
     const unsigned char *adin;
     size_t adinlen;
-    const unsigned char *entreseed;
-    size_t entreseedlen;
+    const unsigned char *entropyreseed;
+    size_t entropyreseedlen;
     const unsigned char *adinreseed;
     size_t adinreseedlen;
     const unsigned char *adin2;
@@ -46,20 +46,20 @@ typedef struct drbg_selftest_data_st {
     size_t kat2len;
 
     /* KAT data for PR */
-    const unsigned char *ent_pr;
-    size_t entlen_pr;
+    const unsigned char *entropy_pr;
+    size_t entropylen_pr;
     const unsigned char *nonce_pr;
     size_t noncelen_pr;
     const unsigned char *pers_pr;
     size_t perslen_pr;
     const unsigned char *adin_pr;
     size_t adinlen_pr;
-    const unsigned char *entpr_pr;
-    size_t entprlen_pr;
+    const unsigned char *entropypr_pr;
+    size_t entropyprlen_pr;
     const unsigned char *ading_pr;
     size_t adinglen_pr;
-    const unsigned char *entg_pr;
-    size_t entglen_pr;
+    const unsigned char *entropyg_pr;
+    size_t entropyglen_pr;
     const unsigned char *kat_pr;
     size_t katlen_pr;
     const unsigned char *kat2_pr;
@@ -106,9 +106,9 @@ static int app_data_index;
  * Test context data, attached as EXDATA to the RAND_DRBG
  */
 typedef struct test_ctx_st {
-    const unsigned char *ent;
-    size_t entlen;
-    int entcnt;
+    const unsigned char *entropy;
+    size_t entropylen;
+    int entropycnt;
     const unsigned char *nonce;
     size_t noncelen;
     int noncecnt;
@@ -119,9 +119,9 @@ static size_t kat_entropy(RAND_DRBG *drbg, unsigned char **pout,
 {
     TEST_CTX *t = (TEST_CTX *)RAND_DRBG_get_ex_data(drbg, app_data_index);
 
-    t->entcnt++;
-    *pout = (unsigned char *)t->ent;
-    return t->entlen;
+    t->entropycnt++;
+    *pout = (unsigned char *)t->entropy;
+    return t->entropylen;
 }
 
 static size_t kat_nonce(RAND_DRBG *drbg, unsigned char **pout,
@@ -164,8 +164,8 @@ static int single_kat(DRBG_SELFTEST_DATA *td)
         goto err;
     }
     memset(&t, 0, sizeof(t));
-    t.ent = td->ent;
-    t.entlen = td->entlen;
+    t.entropy = td->entropy;
+    t.entropylen = td->entropylen;
     t.nonce = td->nonce;
     t.noncelen = td->noncelen;
     RAND_DRBG_set_ex_data(drbg, app_data_index, &t);
@@ -177,8 +177,8 @@ static int single_kat(DRBG_SELFTEST_DATA *td)
         failures++;
 
     /* Reseed DRBG with test entropy and additional input */
-    t.ent = td->entreseed;
-    t.entlen = td->entreseedlen;
+    t.entropy = td->entropyreseed;
+    t.entropylen = td->entropyreseedlen;
     if (!TEST_true(RAND_DRBG_reseed(drbg, td->adinreseed, td->adinreseedlen)
             || !TEST_true(RAND_DRBG_generate(drbg, buff, td->kat2len, 0,
                                              td->adin2, td->adin2len))
@@ -195,11 +195,11 @@ static int single_kat(DRBG_SELFTEST_DATA *td)
                                                   kat_nonce, NULL)))
         failures++;
     RAND_DRBG_set_ex_data(drbg, app_data_index, &t);
-    t.ent = td->ent_pr;
-    t.entlen = td->entlen_pr;
+    t.entropy = td->entropy_pr;
+    t.entropylen = td->entropylen_pr;
     t.nonce = td->nonce_pr;
     t.noncelen = td->noncelen_pr;
-    t.entcnt = 0;
+    t.entropycnt = 0;
     t.noncecnt = 0;
     if (!TEST_true(RAND_DRBG_instantiate(drbg, td->pers_pr, td->perslen_pr)))
         failures++;
@@ -208,8 +208,8 @@ static int single_kat(DRBG_SELFTEST_DATA *td)
      * Now generate with PR: we need to supply entropy as this will
      * perform a reseed operation.
      */
-    t.ent = td->entpr_pr;
-    t.entlen = td->entprlen_pr;
+    t.entropy = td->entropypr_pr;
+    t.entropylen = td->entropyprlen_pr;
     if (!TEST_true(RAND_DRBG_generate(drbg, buff, td->katlen_pr, 1,
                                       td->adin_pr, td->adinlen_pr))
             || !TEST_mem_eq(td->kat_pr, td->katlen_pr, buff, td->katlen_pr))
@@ -218,8 +218,8 @@ static int single_kat(DRBG_SELFTEST_DATA *td)
     /*
      * Now generate again with PR: supply new entropy again.
      */
-    t.ent = td->entg_pr;
-    t.entlen = td->entglen_pr;
+    t.entropy = td->entropyg_pr;
+    t.entropylen = td->entropyglen_pr;
 
     if (!TEST_true(RAND_DRBG_generate(drbg, buff, td->kat2len_pr, 1,
                                       td->ading_pr, td->adinglen_pr))
@@ -243,11 +243,11 @@ static int init(RAND_DRBG *drbg, DRBG_SELFTEST_DATA *td, TEST_CTX *t)
                                                   kat_nonce, NULL)))
         return 0;
     RAND_DRBG_set_ex_data(drbg, app_data_index, t);
-    t->ent = td->ent;
-    t->entlen = td->entlen;
+    t->entropy = td->entropy;
+    t->entropylen = td->entropylen;
     t->nonce = td->nonce;
     t->noncelen = td->noncelen;
-    t->entcnt = 0;
+    t->entropycnt = 0;
     t->noncecnt = 0;
     return 1;
 }
@@ -286,7 +286,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
 
     /* Test detection of too large personlisation string */
     if (!init(drbg, td, &t)
-            || RAND_DRBG_instantiate(drbg, td->pers, drbg->max_pers + 1) > 0)
+            || RAND_DRBG_instantiate(drbg, td->pers, drbg->max_perslen + 1) > 0)
         goto err;
 
     /*
@@ -294,7 +294,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
      */
 
     /* Test entropy source failure detecion: i.e. returns no data */
-    t.entlen = 0;
+    t.entropylen = 0;
     if (TEST_int_le(RAND_DRBG_instantiate(drbg, td->pers, td->perslen), 0))
         goto err;
 
@@ -305,14 +305,14 @@ static int error_check(DRBG_SELFTEST_DATA *td)
         goto err;
 
     /* Test insufficient entropy */
-    t.entlen = drbg->min_entropy - 1;
+    t.entropylen = drbg->min_entropylen - 1;
     if (!init(drbg, td, &t)
             || RAND_DRBG_instantiate(drbg, td->pers, td->perslen) > 0
             || !uninstantiate(drbg))
         goto err;
 
     /* Test too much entropy */
-    t.entlen = drbg->max_entropy + 1;
+    t.entropylen = drbg->max_entropylen + 1;
     if (!init(drbg, td, &t)
             || RAND_DRBG_instantiate(drbg, td->pers, td->perslen) > 0
             || !uninstantiate(drbg))
@@ -323,8 +323,8 @@ static int error_check(DRBG_SELFTEST_DATA *td)
      */
 
     /* Test too small nonce */
-    if (drbg->min_nonce) {
-        t.noncelen = drbg->min_nonce - 1;
+    if (drbg->min_noncelen) {
+        t.noncelen = drbg->min_noncelen - 1;
         if (!init(drbg, td, &t)
                 || RAND_DRBG_instantiate(drbg, td->pers, td->perslen) > 0
                 || !uninstantiate(drbg))
@@ -332,8 +332,8 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     }
 
     /* Test too large nonce */
-    if (drbg->max_nonce) {
-        t.noncelen = drbg->max_nonce + 1;
+    if (drbg->max_noncelen) {
+        t.noncelen = drbg->max_noncelen + 1;
         if (!init(drbg, td, &t)
                 || RAND_DRBG_instantiate(drbg, td->pers, td->perslen) > 0
                 || !uninstantiate(drbg))
@@ -353,14 +353,14 @@ static int error_check(DRBG_SELFTEST_DATA *td)
 
     /* Try too large additional input */
     if (!TEST_false(RAND_DRBG_generate(drbg, buff, td->exlen, 0,
-                                       td->adin, drbg->max_adin + 1)))
+                                       td->adin, drbg->max_adinlen + 1)))
         goto err;
 
     /*
      * Check prediction resistance request fails if entropy source
      * failure.
      */
-    t.entlen = 0;
+    t.entropylen = 0;
     if (TEST_false(RAND_DRBG_generate(drbg, buff, td->exlen, 1,
                                       td->adin, td->adinlen))
             || !uninstantiate(drbg))
@@ -373,10 +373,10 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     drbg->reseed_counter = drbg->reseed_interval;
 
     /* Generate output and check entropy has been requested for reseed */
-    t.entcnt = 0;
+    t.entropycnt = 0;
     if (!TEST_true(RAND_DRBG_generate(drbg, buff, td->exlen, 0,
                                       td->adin, td->adinlen))
-            || !TEST_int_eq(t.entcnt, 1)
+            || !TEST_int_eq(t.entropycnt, 1)
             || !TEST_int_eq(drbg->reseed_counter, reseed_counter_tmp + 1)
             || !uninstantiate(drbg))
         goto err;
@@ -385,7 +385,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
      * Check prediction resistance request fails if entropy source
      * failure.
      */
-    t.entlen = 0;
+    t.entropylen = 0;
     if (!TEST_false(RAND_DRBG_generate(drbg, buff, td->exlen, 1,
                                        td->adin, td->adinlen))
             || !uninstantiate(drbg))
@@ -398,10 +398,10 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     drbg->reseed_counter = drbg->reseed_interval;
 
     /* Generate output and check entropy has been requested for reseed */
-    t.entcnt = 0;
+    t.entropycnt = 0;
     if (!TEST_true(RAND_DRBG_generate(drbg, buff, td->exlen, 0,
                                       td->adin, td->adinlen))
-            || !TEST_int_eq(t.entcnt, 1)
+            || !TEST_int_eq(t.entropycnt, 1)
             || !TEST_int_eq(drbg->reseed_counter, reseed_counter_tmp + 1)
             || !uninstantiate(drbg))
         goto err;
@@ -412,11 +412,11 @@ static int error_check(DRBG_SELFTEST_DATA *td)
 
     /* Test explicit reseed with too large additional input */
     if (!init(drbg, td, &t)
-            || RAND_DRBG_reseed(drbg, td->adin, drbg->max_adin + 1) > 0)
+            || RAND_DRBG_reseed(drbg, td->adin, drbg->max_adinlen + 1) > 0)
         goto err;
 
     /* Test explicit reseed with entropy source failure */
-    t.entlen = 0;
+    t.entropylen = 0;
     if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen), 0)
             || !uninstantiate(drbg))
         goto err;
@@ -424,7 +424,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     /* Test explicit reseed with too much entropy */
     if (!init(drbg, td, &t))
         goto err;
-    t.entlen = drbg->max_entropy + 1;
+    t.entropylen = drbg->max_entropylen + 1;
     if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen), 0)
             || !uninstantiate(drbg))
         goto err;
@@ -432,7 +432,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     /* Test explicit reseed with too little entropy */
     if (!init(drbg, td, &t))
         goto err;
-    t.entlen = drbg->min_entropy - 1;
+    t.entropylen = drbg->min_entropylen - 1;
     if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen), 0)
             || !uninstantiate(drbg))
         goto err;
