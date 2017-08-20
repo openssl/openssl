@@ -78,6 +78,7 @@ int genrsa_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
+opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:
@@ -111,11 +112,16 @@ int genrsa_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+
+    if (argc == 1) {
+        if (!opt_int(argv[0], &num) || num <= 0)
+            goto end;
+    } else if (argc > 0) {
+        BIO_printf(bio_err, "Extra arguments given.\n");
+        goto opthelp;
+    }
+
     private = 1;
-
-    if (argv[0] && (!opt_int(argv[0], &num) || num <= 0))
-        goto end;
-
     if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;

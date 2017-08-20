@@ -77,9 +77,13 @@ int rand_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
-
-    if (argc != 1 || !opt_int(argv[0], &num) || num < 0)
+    if (argc == 1) {
+        if (!opt_int(argv[0], &num) || num <= 0)
+            goto end;
+    } else if (argc > 0) {
+        BIO_printf(bio_err, "Extra arguments given.\n");
         goto opthelp;
+    }
 
     out = bio_open_default(outfile, 'w', format);
     if (out == NULL)
