@@ -1302,7 +1302,7 @@ static int parse_uint64(const char *value, uint64_t *pr)
             return -1;
         }
         *pr *= 10;
-        if (!TEST_true(isdigit(*p))) {
+        if (!TEST_true(isdigit((unsigned char)*p))) {
             TEST_error("Invalid character in string %s", value);
             return -1;
         }
