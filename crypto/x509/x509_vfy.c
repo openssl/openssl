@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,12 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <ctype.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
 #include <limits.h>
 
+#include "internal/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
@@ -1790,7 +1790,7 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
      * Digit and date ranges will be verified in the conversion methods.
      */
     for (i = 0; i < ctm->length - 1; i++) {
-        if (!isdigit(ctm->data[i]))
+        if (!ossl_isdigit(ctm->data[i]))
             return 0;
     }
     if (ctm->data[ctm->length - 1] != 'Z')

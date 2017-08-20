@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,7 +10,7 @@
 /* X509 v3 extension utilities */
 
 #include <stdio.h>
-#include <ctype.h>
+#include "internal/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
@@ -334,12 +334,12 @@ static char *strip_spaces(char *name)
     char *p, *q;
     /* Skip over leading spaces */
     p = name;
-    while (*p && isspace((unsigned char)*p))
+    while (*p && ossl_isspace(*p))
         p++;
     if (!*p)
         return NULL;
     q = p + strlen(p) - 1;
-    while ((q != p) && isspace((unsigned char)*q))
+    while ((q != p) && ossl_isspace(*q))
         q--;
     if (p != q)
         q[1] = 0;

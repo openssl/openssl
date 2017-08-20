@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
+#include "internal/ctype.h"
 #include "internal/numbers.h"
 #include "internal/cryptlib.h"
 #include <openssl/bio.h>
@@ -143,7 +143,7 @@ _dopr(char **sbuffer,
             }
             break;
         case DP_S_MIN:
-            if (isdigit((unsigned char)ch)) {
+            if (ossl_isdigit(ch)) {
                 min = 10 * min + char_to_int(ch);
                 ch = *format++;
             } else if (ch == '*') {
@@ -161,7 +161,7 @@ _dopr(char **sbuffer,
                 state = DP_S_MOD;
             break;
         case DP_S_MAX:
-            if (isdigit((unsigned char)ch)) {
+            if (ossl_isdigit(ch)) {
                 if (max < 0)
                     max = 0;
                 max = 10 * max + char_to_int(ch);
