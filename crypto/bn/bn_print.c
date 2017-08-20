@@ -32,14 +32,14 @@ char *BN_bn2hex(const BIGNUM *a)
     }
     p = buf;
     if (a->neg)
-        *(p++) = '-';
+        *p++ = '-';
     for (i = a->top - 1; i >= 0; i--) {
         for (j = BN_BITS2 - 8; j >= 0; j -= 8) {
             /* strip leading zeros */
-            v = ((int)(a->d[i] >> (long)j)) & 0xff;
-            if (z || (v != 0)) {
-                *(p++) = Hex[v >> 4];
-                *(p++) = Hex[v & 0x0f];
+            v = (int)((a->d[i] >> j) & 0xff);
+            if (z || v != 0) {
+                *p++ = Hex[v >> 4];
+                *p++ = Hex[v & 0x0f];
                 z = 1;
             }
         }
@@ -71,7 +71,7 @@ char *BN_bn2dec(const BIGNUM *a)
     bn_data_num = num / BN_DEC_NUM + 1;
     bn_data = OPENSSL_malloc(bn_data_num * sizeof(BN_ULONG));
     buf = OPENSSL_malloc(tbytes);
-    if ((buf == NULL) || (bn_data == NULL)) {
+    if (buf == NULL || bn_data == NULL) {
         BNerr(BN_F_BN_BN2DEC, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -81,8 +81,8 @@ char *BN_bn2dec(const BIGNUM *a)
     p = buf;
     lp = bn_data;
     if (BN_is_zero(t)) {
-        *(p++) = '0';
-        *(p++) = '\0';
+        *p++ = '0';
+        *p++ = '\0';
     } else {
         if (BN_is_negative(t))
             *p++ = '-';
@@ -130,7 +130,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
     int neg = 0, h, m, i, j, k, c;
     int num;
 
-    if ((a == NULL) || (*a == '\0'))
+    if (a == NULL || *a == '\0')
         return 0;
 
     if (*a == '-') {
@@ -138,10 +138,10 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
         a++;
     }
 
-    for (i = 0; i <= (INT_MAX/4) && ossl_isxdigit(a[i]); i++)
+    for (i = 0; i <= INT_MAX / 4 && ossl_isxdigit(a[i]); i++)
         continue;
 
-    if (i == 0 || i > INT_MAX/4)
+    if (i == 0 || i > INT_MAX / 4)
         goto err;
 
     num = i + neg;
@@ -165,7 +165,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
     m = 0;
     h = 0;
     while (j > 0) {
-        m = ((BN_BYTES * 2) <= j) ? (BN_BYTES * 2) : j;
+        m = (BN_BYTES * 2 <= j) ? BN_BYTES * 2 : j;
         l = 0;
         for (;;) {
             c = a[j - m];
@@ -179,7 +179,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
                 break;
             }
         }
-        j -= (BN_BYTES * 2);
+        j -= BN_BYTES * 2;
     }
     ret->top = h;
     bn_correct_top(ret);
@@ -203,17 +203,17 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
     int neg = 0, i, j;
     int num;
 
-    if ((a == NULL) || (*a == '\0'))
+    if (a == NULL || *a == '\0')
         return 0;
     if (*a == '-') {
         neg = 1;
         a++;
     }
 
-    for (i = 0; i <= (INT_MAX/4) && ossl_isdigit(a[i]); i++)
+    for (i = 0; i <= INT_MAX / 4 && ossl_isdigit(a[i]); i++)
         continue;
 
-    if (i == 0 || i > INT_MAX/4)
+    if (i == 0 || i > INT_MAX / 4)
         goto err;
 
     num = i + neg;
@@ -236,7 +236,7 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
     if (bn_expand(ret, i * 4) == NULL)
         goto err;
 
-    j = BN_DEC_NUM - (i % BN_DEC_NUM);
+    j = BN_DEC_NUM - i % BN_DEC_NUM;
     if (j == BN_DEC_NUM)
         j = 0;
     l = 0;
@@ -306,16 +306,16 @@ int BN_print(BIO *bp, const BIGNUM *a)
     int i, j, v, z = 0;
     int ret = 0;
 
-    if ((a->neg) && (BIO_write(bp, "-", 1) != 1))
+    if ((a->neg) && BIO_write(bp, "-", 1) != 1)
         goto end;
-    if (BN_is_zero(a) && (BIO_write(bp, "0", 1) != 1))
+    if (BN_is_zero(a) && BIO_write(bp, "0", 1) != 1)
         goto end;
     for (i = a->top - 1; i >= 0; i--) {
         for (j = BN_BITS2 - 4; j >= 0; j -= 4) {
             /* strip leading zeros */
-            v = ((int)(a->d[i] >> (long)j)) & 0x0f;
-            if (z || (v != 0)) {
-                if (BIO_write(bp, &(Hex[v]), 1) != 1)
+            v = (int)((a->d[i] >> j) & 0xff);
+            if (z || v != 0) {
+                if (BIO_write(bp, &Hex[v], 1) != 1)
                     goto end;
                 z = 1;
             }
