@@ -125,9 +125,9 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                           const unsigned char *pers, size_t perslen)
 {
     unsigned char *nonce = NULL, *entropy = NULL;
-    size_t noncelen = 0, entlen = 0;
+    size_t noncelen = 0, entropylen = 0;
 
-    if (perslen > drbg->max_pers) {
+    if (perslen > drbg->max_perslen) {
         RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
                 RAND_R_PERSONALISATION_STRING_TOO_LONG);
         goto end;
@@ -141,23 +141,23 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
 
     drbg->state = DRBG_ERROR;
     if (drbg->get_entropy != NULL)
-        entlen = drbg->get_entropy(drbg, &entropy, drbg->strength,
-                                   drbg->min_entropy, drbg->max_entropy);
-    if (entlen < drbg->min_entropy || entlen > drbg->max_entropy) {
+        entropylen = drbg->get_entropy(drbg, &entropy, drbg->strength,
+                                   drbg->min_entropylen, drbg->max_entropylen);
+    if (entropylen < drbg->min_entropylen || entropylen > drbg->max_entropylen) {
         RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_ENTROPY);
         goto end;
     }
 
-    if (drbg->max_nonce > 0 && drbg->get_nonce != NULL) {
+    if (drbg->max_noncelen > 0 && drbg->get_nonce != NULL) {
         noncelen = drbg->get_nonce(drbg, &nonce, drbg->strength / 2,
-                                   drbg->min_nonce, drbg->max_nonce);
-        if (noncelen < drbg->min_nonce || noncelen > drbg->max_nonce) {
+                                   drbg->min_noncelen, drbg->max_noncelen);
+        if (noncelen < drbg->min_noncelen || noncelen > drbg->max_noncelen) {
             RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_NONCE);
             goto end;
         }
     }
 
-    if (!ctr_instantiate(drbg, entropy, entlen,
+    if (!ctr_instantiate(drbg, entropy, entropylen,
                          nonce, noncelen, pers, perslen)) {
         RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_INSTANTIATING_DRBG);
         goto end;
@@ -195,7 +195,7 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
                      const unsigned char *adin, size_t adinlen)
 {
     unsigned char *entropy = NULL;
-    size_t entlen = 0;
+    size_t entropylen = 0;
 
     if (drbg->state == DRBG_ERROR) {
         RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_IN_ERROR_STATE);
@@ -208,21 +208,21 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
 
     if (adin == NULL)
         adinlen = 0;
-    else if (adinlen > drbg->max_adin) {
+    else if (adinlen > drbg->max_adinlen) {
         RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_ADDITIONAL_INPUT_TOO_LONG);
         return 0;
     }
 
     drbg->state = DRBG_ERROR;
     if (drbg->get_entropy != NULL)
-        entlen = drbg->get_entropy(drbg, &entropy, drbg->strength,
-                                   drbg->min_entropy, drbg->max_entropy);
-    if (entlen < drbg->min_entropy || entlen > drbg->max_entropy) {
+        entropylen = drbg->get_entropy(drbg, &entropy, drbg->strength,
+                                   drbg->min_entropylen, drbg->max_entropylen);
+    if (entropylen < drbg->min_entropylen || entropylen > drbg->max_entropylen) {
         RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_ERROR_RETRIEVING_ENTROPY);
         goto end;
     }
 
-    if (!ctr_reseed(drbg, entropy, entlen, adin, adinlen))
+    if (!ctr_reseed(drbg, entropy, entropylen, adin, adinlen))
         goto end;
     drbg->state = DRBG_READY;
     drbg->reseed_counter = 1;
@@ -256,7 +256,7 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
         RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_REQUEST_TOO_LARGE_FOR_DRBG);
         return 0;
     }
-    if (adinlen > drbg->max_adin) {
+    if (adinlen > drbg->max_adinlen) {
         RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_ADDITIONAL_INPUT_TOO_LONG);
         return 0;
     }
