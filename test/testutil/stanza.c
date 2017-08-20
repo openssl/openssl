@@ -70,12 +70,12 @@ static char *strip_spaces(char *p)
     char *q;
 
     /* Skip over leading spaces */
-    while (*p && isspace(*p))
+    while (*p && isspace((unsigned char)*p))
         p++;
     if (!*p)
         return NULL;
 
-    for (q = p + strlen(p) - 1; q != p && isspace(*q); )
+    for (q = p + strlen(p) - 1; q != p && isspace((unsigned char)*q); )
         *q-- = '\0';
     return *p ? p : NULL;
 }

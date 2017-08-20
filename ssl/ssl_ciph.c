@@ -1001,7 +1001,8 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                    ((ch >= 'a') && (ch <= 'z')) ||
                    (ch == '-') || (ch == '.') || (ch == '='))
 #else
-            while (isalnum(ch) || (ch == '-') || (ch == '.') || (ch == '='))
+            while (isalnum((unsigned char)ch) || (ch == '-') || (ch == '.')
+                   || (ch == '='))
 #endif
             {
                 ch = *(++l);
