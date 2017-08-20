@@ -385,7 +385,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   # names with the DLL import libraries.
   IF[{- $disabled{shared} || $target{build_scheme}->[1] ne 'windows' -}]
     PROGRAMS_NO_INST=asn1_internal_test modes_internal_test x509_internal_test \
-                     tls13encryptiontest wpackettest
+                     tls13encryptiontest wpackettest ctype_internal_test
     IF[{- !$disabled{poly1305} -}]
       PROGRAMS_NO_INST=poly1305_internal_test
     ENDIF
@@ -423,6 +423,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     SOURCE[wpackettest]=wpackettest.c
     INCLUDE[wpackettest]=../include
     DEPEND[wpackettest]=../libcrypto ../libssl.a libtestutil.a
+
+    SOURCE[ctype_internal_test]=ctype_internal_test.c
+    INCLUDE[ctype_internal_test]=.. ../crypto/include ../include
+    DEPEND[ctype_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[siphash_internal_test]=siphash_internal_test.c
     INCLUDE[siphash_internal_test]=.. ../include ../crypto/include

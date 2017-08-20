@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include <time.h>
-#include <ctype.h>
+#include "internal/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include "asn1_locl.h"
@@ -124,14 +124,14 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
             i++;
             break;
         }
-        if (!isdigit(a[o]))
+        if (!ossl_isdigit(a[o]))
             goto err;
         n = a[o] - '0';
         /* incomplete 2-digital number */
         if (++o == l)
             goto err;
 
-        if (!isdigit(a[o]))
+        if (!ossl_isdigit(a[o]))
             goto err;
         n = (n * 10) + a[o] - '0';
         /* no more bytes to read, but we haven't seen time-zone yet */
@@ -192,7 +192,7 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
         if (++o == l)
             goto err;
         i = o;
-        while ((o < l) && isdigit(a[o]))
+        while ((o < l) && ossl_isdigit(a[o]))
             o++;
         /* Must have at least one digit after decimal point */
         if (i == o)
@@ -223,11 +223,11 @@ int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
         if (o + 4 != l)
             goto err;
         for (i = end; i < end + 2; i++) {
-            if (!isdigit(a[o]))
+            if (!ossl_isdigit(a[o]))
                 goto err;
             n = a[o] - '0';
             o++;
-            if (!isdigit(a[o]))
+            if (!ossl_isdigit(a[o]))
                 goto err;
             n = (n * 10) + a[o] - '0';
             i2 = (d->type == V_ASN1_UTCTIME) ? i + 1 : i;
@@ -489,7 +489,7 @@ int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
         if (tm->length > 15 && v[14] == '.') {
             f = &v[14];
             f_len = 1;
-            while (14 + f_len < l && isdigit(f[f_len]))
+            while (14 + f_len < l && ossl_isdigit(f[f_len]))
                 ++f_len;
         }
 

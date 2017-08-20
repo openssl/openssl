@@ -8,7 +8,7 @@
  */
 
 #include <stdio.h>
-#include <ctype.h>
+#include "internal/ctype.h"
 #include <limits.h>
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
@@ -138,7 +138,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
         a++;
     }
 
-    for (i = 0; i <= (INT_MAX/4) && isxdigit((unsigned char)a[i]); i++)
+    for (i = 0; i <= (INT_MAX/4) && ossl_isxdigit(a[i]); i++)
         continue;
 
     if (i == 0 || i > INT_MAX/4)
@@ -210,7 +210,7 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
         a++;
     }
 
-    for (i = 0; i <= (INT_MAX/4) && isdigit((unsigned char)a[i]); i++)
+    for (i = 0; i <= (INT_MAX/4) && ossl_isdigit(a[i]); i++)
         continue;
 
     if (i == 0 || i > INT_MAX/4)

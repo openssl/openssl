@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <limits.h>
-#include <ctype.h>
+#include "internal/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
@@ -85,7 +85,7 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
             c = *(p++);
             if ((c == ' ') || (c == '.'))
                 break;
-            if (!isdigit(c)) {
+            if (!ossl_isdigit(c)) {
                 ASN1err(ASN1_F_A2D_ASN1_OBJECT, ASN1_R_INVALID_DIGIT);
                 goto err;
             }
