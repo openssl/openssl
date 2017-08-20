@@ -237,29 +237,29 @@ static void ctr_update(RAND_DRBG *drbg,
 }
 
 int ctr_instantiate(RAND_DRBG *drbg,
-                    const unsigned char *ent, size_t entlen,
+                    const unsigned char *entropy, size_t entropylen,
                     const unsigned char *nonce, size_t noncelen,
                     const unsigned char *pers, size_t perslen)
 {
     RAND_DRBG_CTR *ctr = &drbg->ctr;
 
-    if (ent == NULL)
+    if (entropy == NULL)
         return 0;
 
     memset(ctr->K, 0, sizeof(ctr->K));
     memset(ctr->V, 0, sizeof(ctr->V));
     AES_set_encrypt_key(ctr->K, drbg->strength, &ctr->ks);
-    ctr_update(drbg, ent, entlen, pers, perslen, nonce, noncelen);
+    ctr_update(drbg, entropy, entropylen, pers, perslen, nonce, noncelen);
     return 1;
 }
 
 int ctr_reseed(RAND_DRBG *drbg,
-               const unsigned char *ent, size_t entlen,
+               const unsigned char *entropy, size_t entropylen,
                const unsigned char *adin, size_t adinlen)
 {
-    if (ent == NULL)
+    if (entropy == NULL)
         return 0;
-    ctr_update(drbg, ent, entlen, adin, adinlen, NULL, 0);
+    ctr_update(drbg, entropy, entropylen, adin, adinlen, NULL, 0);
     return 1;
 }
 
@@ -340,20 +340,20 @@ int ctr_init(RAND_DRBG *drbg)
         /* Set key schedule for df_key */
         AES_set_encrypt_key(df_key, drbg->strength, &ctr->df_ks);
 
-        drbg->min_entropy = ctr->keylen;
-        drbg->max_entropy = DRBG_MAX_LENGTH;
-        drbg->min_nonce = drbg->min_entropy / 2;
-        drbg->max_nonce = DRBG_MAX_LENGTH;
-        drbg->max_pers = DRBG_MAX_LENGTH;
-        drbg->max_adin = DRBG_MAX_LENGTH;
+        drbg->min_entropylen = ctr->keylen;
+        drbg->max_entropylen = DRBG_MAX_LENGTH;
+        drbg->min_noncelen = drbg->min_entropylen / 2;
+        drbg->max_noncelen = DRBG_MAX_LENGTH;
+        drbg->max_perslen = DRBG_MAX_LENGTH;
+        drbg->max_adinlen = DRBG_MAX_LENGTH;
     } else {
-        drbg->min_entropy = drbg->seedlen;
-        drbg->max_entropy = drbg->seedlen;
+        drbg->min_entropylen = drbg->seedlen;
+        drbg->max_entropylen = drbg->seedlen;
         /* Nonce not used */
-        drbg->min_nonce = 0;
-        drbg->max_nonce = 0;
-        drbg->max_pers = drbg->seedlen;
-        drbg->max_adin = drbg->seedlen;
+        drbg->min_noncelen = 0;
+        drbg->max_noncelen = 0;
+        drbg->max_perslen = drbg->seedlen;
+        drbg->max_adinlen = drbg->seedlen;
     }
 
     drbg->max_request = 1 << 16;
