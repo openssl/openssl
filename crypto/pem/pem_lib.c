@@ -8,7 +8,7 @@
  */
 
 #include <stdio.h>
-#include <ctype.h>
+#include "internal/ctype.h"
 #include <string.h>
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
@@ -683,9 +683,6 @@ int PEM_read(FILE *fp, char **name, char **header, unsigned char **data,
 #endif
 
 /* Some helpers for PEM_read_bio_ex(). */
-
-#define isb64(c) (isalnum(c) || (c) == '+' || (c) == '/' || (c) == '=')
-
 static int sanitize_line(char *linebuf, int len, unsigned int flags)
 {
     int i;
@@ -698,7 +695,8 @@ static int sanitize_line(char *linebuf, int len, unsigned int flags)
         len++;
     } else if (flags & PEM_FLAG_ONLY_B64) {
         for (i = 0; i < len; ++i) {
-            if (!isb64(linebuf[i]) || linebuf[i] == '\n' || linebuf[i] == '\r')
+            if (!ossl_isbase64(linebuf[i]) || linebuf[i] == '\n'
+                || linebuf[i] == '\r')
                 break;
         }
         len = i;
@@ -708,7 +706,7 @@ static int sanitize_line(char *linebuf, int len, unsigned int flags)
         for (i = 0; i < len; ++i) {
             if (linebuf[i] == '\n' || linebuf[i] == '\r')
                 break;
-            if (iscntrl(linebuf[i]))
+            if (ossl_iscntrl(linebuf[i]))
                 linebuf[i] = ' ';
         }
         len = i;

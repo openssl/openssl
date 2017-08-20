@@ -8,7 +8,7 @@
  */
 
 #include <stdio.h>
-#include <ctype.h>
+#include "internal/ctype.h"
 #include <limits.h>
 #include "internal/cryptlib.h"
 #include <openssl/lhash.h>
@@ -644,24 +644,24 @@ int OBJ_create_objects(BIO *in)
         if (i <= 0)
             return num;
         buf[i - 1] = '\0';
-        if (!isalnum((unsigned char)buf[0]))
+        if (!ossl_isalnum(buf[0]))
             return num;
         o = s = buf;
-        while (isdigit((unsigned char)*s) || (*s == '.'))
+        while (ossl_isdigit(*s) || *s == '.')
             s++;
         if (*s != '\0') {
             *(s++) = '\0';
-            while (isspace((unsigned char)*s))
+            while (ossl_isspace(*s))
                 s++;
             if (*s == '\0')
                 s = NULL;
             else {
                 l = s;
-                while ((*l != '\0') && !isspace((unsigned char)*l))
+                while (*l != '\0' && !ossl_isspace(*l))
                     l++;
                 if (*l != '\0') {
                     *(l++) = '\0';
-                    while (isspace((unsigned char)*l))
+                    while (ossl_isspace(*l))
                         l++;
                     if (*l == '\0')
                         l = NULL;

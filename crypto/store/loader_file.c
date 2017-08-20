@@ -23,6 +23,7 @@
 #include <openssl/ui.h>
 #include <openssl/x509.h>        /* For the PKCS8 stuff o.O */
 #include "internal/asn1_int.h"
+#include "internal/ctype.h"
 #include "internal/o_dir.h"
 #include "internal/cryptlib.h"
 #include "internal/store_int.h"
@@ -783,7 +784,7 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
 #ifdef _WIN32
         /* Windows file: URIs with a drive letter start with a / */
         if (p[0] == '/' && p[2] == ':' && p[3] == '/') {
-            char c = tolower(p[1]);
+            char c = ossl_tolower(p[1]);
 
             if (c >= 'a' && c <= 'z') {
                 p++;
