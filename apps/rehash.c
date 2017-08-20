@@ -305,7 +305,7 @@ static int massage_filename(char *name)
 
     if (q != NULL) {
         for (q++; *q != '\0'; q++) {
-            if (!isdigit(*q))
+            if (!isdigit((unsigned char)*q))
                 return 1;
         }
     }
