@@ -1442,6 +1442,13 @@ aria 15                 : ARIA-256-CTR                  : aria-256-ctr
                         : ARIA-192-CFB8                 : aria-192-cfb8
                         : ARIA-256-CFB8                 : aria-256-cfb8
 
+aria 37                 : ARIA-128-CCM                  : aria-128-ccm
+aria 38                 : ARIA-192-CCM                  : aria-192-ccm
+aria 39                 : ARIA-256-CCM                  : aria-256-ccm
+aria 34                 : ARIA-128-GCM                  : aria-128-gcm
+aria 35                 : ARIA-192-GCM                  : aria-192-gcm
+aria 36                 : ARIA-256-GCM                  : aria-256-gcm
+
 # Definitions for SEED cipher - ECB, CBC, OFB mode
 
 member-body 410 200004  : KISA          : kisa

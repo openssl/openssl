@@ -20,6 +20,8 @@ static const ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_T4_INIT_KEY, 0), "aes_t4_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_WRAP_CIPHER, 0), "aes_wrap_cipher"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_ALG_MODULE_INIT, 0), "alg_module_init"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_ARIA_CCM_INIT_KEY, 0), "aria_ccm_init_key"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_ARIA_GCM_INIT_KEY, 0), "aria_gcm_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_ARIA_INIT_KEY, 0), "aria_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_CAMELLIA_INIT_KEY, 0), "camellia_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_CHACHA20_POLY1305_CTRL, 0),
