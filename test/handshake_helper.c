@@ -16,11 +16,7 @@
 #include <openssl/srp.h>
 #endif
 
-#ifndef OPENSSL_NO_SOCK
-# define USE_SOCKETS
-# include "internal/nelem.h"
-#endif
-
+#include "internal/nelem.h"
 #include "handshake_helper.h"
 #include "testutil.h"
 

@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define USE_SOCKETS
 #include "e_os.h"
+#include "internal/sockets.h"
 #include "internal/refcount.h"
 
 /* BEGIN BIO_ADDRINFO/BIO_ADDR stuff. */

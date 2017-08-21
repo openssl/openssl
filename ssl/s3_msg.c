@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define USE_SOCKETS
 #include "ssl_locl.h"
 
 int ssl3_do_change_cipher_spec(SSL *s)

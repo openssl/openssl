@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include "e_os.h"
 #include <openssl/e_os2.h>
 
 #ifndef OPENSSL_NO_SOCK
@@ -28,7 +29,6 @@
 typedef unsigned int u_int;
 #endif
 
-#define USE_SOCKETS
 #include "apps.h"
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
@@ -46,6 +46,7 @@ typedef unsigned int u_int;
 #endif
 #include "s_apps.h"
 #include "timeouts.h"
+#include "internal/sockets.h"
 
 #if defined(__has_feature)
 # if __has_feature(memory_sanitizer)

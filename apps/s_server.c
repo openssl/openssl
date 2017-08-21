@@ -37,7 +37,6 @@ typedef unsigned int u_int;
 
 #include <openssl/lhash.h>
 #include <openssl/bn.h>
-#define USE_SOCKETS
 #include "apps.h"
 #include <openssl/err.h>
 #include <openssl/pem.h>
@@ -59,6 +58,7 @@ typedef unsigned int u_int;
 #ifdef CHARSET_EBCDIC
 #include <openssl/ebcdic.h>
 #endif
+#include "internal/sockets.h"
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(int s, int stype, int prot, unsigned char *context);

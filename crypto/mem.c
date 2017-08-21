@@ -187,7 +187,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         ret = malloc(num);
     }
 #else
-    osslargused(file); osslargused(line);
+    (void)(file); (void)(line);
     ret = malloc(num);
 #endif
 
@@ -228,7 +228,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return ret;
     }
 #else
-    osslargused(file); osslargused(line);
+    (void)(file); (void)(line);
 #endif
     return realloc(str, num);
 
