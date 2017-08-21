@@ -756,30 +756,26 @@ SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
 
         /* Subsections */
         if (strcmp(option->name, "client") == 0) {
-            if (!parse_client_options(&ctx->extra.client, conf,
-                                      option->value))
+            if (!parse_client_options(&ctx->extra.client, conf, option->value))
                 goto err;
         } else if (strcmp(option->name, "server") == 0) {
-            if (!TEST_true(parse_server_options(&ctx->extra.server, conf,
-                                                option->value)))
+            if (!parse_server_options(&ctx->extra.server, conf, option->value))
                 goto err;
         } else if (strcmp(option->name, "server2") == 0) {
-            if (!TEST_true(parse_server_options(&ctx->extra.server2, conf,
-                                                option->value)))
+            if (!parse_server_options(&ctx->extra.server2, conf, option->value))
                 goto err;
         } else if (strcmp(option->name, "resume-client") == 0) {
-            if (!TEST_true(parse_client_options(&ctx->resume_extra.client, conf,
-                                                option->value)))
+            if (!parse_client_options(&ctx->resume_extra.client, conf,
+                                      option->value))
                 goto err;
         } else if (strcmp(option->name, "resume-server") == 0) {
-            if (!TEST_true(parse_server_options(&ctx->resume_extra.server, conf,
-                                                option->value)))
+            if (!parse_server_options(&ctx->resume_extra.server, conf,
+                                      option->value))
                 goto err;
         } else if (strcmp(option->name, "resume-server2") == 0) {
             if (!parse_server_options(&ctx->resume_extra.server2, conf,
                                       option->value))
                 goto err;
-
         } else {
             for (j = 0; j < OSSL_NELEM(ssl_test_ctx_options); j++) {
                 if (strcmp(option->name, ssl_test_ctx_options[j].name) == 0) {
