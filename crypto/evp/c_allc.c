@@ -189,6 +189,8 @@ void openssl_add_all_ciphers_int(void)
     EVP_add_cipher(EVP_aria_128_cfb8());
     EVP_add_cipher(EVP_aria_128_ctr());
     EVP_add_cipher(EVP_aria_128_ofb());
+    EVP_add_cipher(EVP_aria_128_gcm());
+    EVP_add_cipher(EVP_aria_128_ccm());
     EVP_add_cipher_alias(SN_aria_128_cbc, "ARIA128");
     EVP_add_cipher_alias(SN_aria_128_cbc, "aria128");
     EVP_add_cipher(EVP_aria_192_ecb());
@@ -198,6 +200,8 @@ void openssl_add_all_ciphers_int(void)
     EVP_add_cipher(EVP_aria_192_cfb8());
     EVP_add_cipher(EVP_aria_192_ctr());
     EVP_add_cipher(EVP_aria_192_ofb());
+    EVP_add_cipher(EVP_aria_192_gcm());
+    EVP_add_cipher(EVP_aria_192_ccm());
     EVP_add_cipher_alias(SN_aria_192_cbc, "ARIA192");
     EVP_add_cipher_alias(SN_aria_192_cbc, "aria192");
     EVP_add_cipher(EVP_aria_256_ecb());
@@ -207,6 +211,8 @@ void openssl_add_all_ciphers_int(void)
     EVP_add_cipher(EVP_aria_256_cfb8());
     EVP_add_cipher(EVP_aria_256_ctr());
     EVP_add_cipher(EVP_aria_256_ofb());
+    EVP_add_cipher(EVP_aria_256_gcm());
+    EVP_add_cipher(EVP_aria_256_ccm());
     EVP_add_cipher_alias(SN_aria_256_cbc, "ARIA256");
     EVP_add_cipher_alias(SN_aria_256_cbc, "aria256");
 #endif

@@ -9,6 +9,9 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Add ARIA AEAD TLS support.
+     [Jon Spillett]
+
   *) Some macro definitions to support VS6 have been removed.  Visual
      Studio 6 has not worked since 1.1.0
      [Rich Salz]

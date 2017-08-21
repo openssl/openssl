@@ -17,6 +17,7 @@ SOURCE[../../libcrypto]=\
 INCLUDE[e_aes.o]=.. ../modes
 INCLUDE[e_aes_cbc_hmac_sha1.o]=../modes
 INCLUDE[e_aes_cbc_hmac_sha256.o]=../modes
+INCLUDE[e_aria.o]=.. ../modes
 INCLUDE[e_camellia.o]=.. ../modes
 INCLUDE[e_des.o]=..
 INCLUDE[e_des3.o]=..
