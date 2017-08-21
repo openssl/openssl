@@ -805,11 +805,13 @@ static int
 doapr_outch(char **sbuffer,
             char **buffer, size_t *currlen, size_t *maxlen, int c)
 {
-    /* If we haven't at least one buffer, someone has doe a big booboo */
-    OPENSSL_assert(*sbuffer != NULL || buffer != NULL);
+    /* If we haven't at least one buffer, someone has done a big booboo */
+    if (!ossl_assert(*sbuffer != NULL || buffer != NULL))
+        return 0;
 
     /* |currlen| must always be <= |*maxlen| */
-    OPENSSL_assert(*currlen <= *maxlen);
+    if (!ossl_assert(*currlen <= *maxlen))
+        return 0;
 
     if (buffer && *currlen == *maxlen) {
         if (*maxlen > INT_MAX - BUFFER_INC)
@@ -821,7 +823,8 @@ doapr_outch(char **sbuffer,
             if (*buffer == NULL)
                 return 0;
             if (*currlen > 0) {
-                OPENSSL_assert(*sbuffer != NULL);
+                if (!ossl_assert(*sbuffer != NULL))
+                    return 0;
                 memcpy(*buffer, *sbuffer, *currlen);
             }
             *sbuffer = NULL;

@@ -330,7 +330,6 @@ const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group)
 
 int EC_GROUP_order_bits(const EC_GROUP *group)
 {
-    OPENSSL_assert(group->meth->group_order_bits != NULL);
     return group->meth->group_order_bits(group);
 }
 

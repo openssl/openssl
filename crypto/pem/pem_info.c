@@ -256,7 +256,13 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 
     if (enc != NULL) {
         objstr = OBJ_nid2sn(EVP_CIPHER_nid(enc));
-        if (objstr == NULL) {
+        if (objstr == NULL
+                   /*
+                    * Check "Proc-Type: 4,Encrypted\nDEK-Info: objstr,hex-iv\n"
+                    * fits into buf
+                    */
+                || (strlen(objstr) + 23 + 2 * EVP_CIPHER_iv_length(enc) + 13)
+                   > sizeof(buf)) {
             PEMerr(PEM_F_PEM_X509_INFO_WRITE_BIO, PEM_R_UNSUPPORTED_CIPHER);
             goto err;
         }
@@ -291,10 +297,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
                 goto err;
             }
 
-            /* create the right magic header stuff */
-            OPENSSL_assert(strlen(objstr) + 23
-                           + 2 * EVP_CIPHER_iv_length(enc) + 13 <=
-                           sizeof buf);
+            /* Create the right magic header stuff */ 
             buf[0] = '\0';
             PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
             PEM_dek_info(buf, objstr, EVP_CIPHER_iv_length(enc),

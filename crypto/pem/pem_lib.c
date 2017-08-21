@@ -324,7 +324,14 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 
     if (enc != NULL) {
         objstr = OBJ_nid2sn(EVP_CIPHER_nid(enc));
-        if (objstr == NULL || EVP_CIPHER_iv_length(enc) == 0) {
+        if (objstr == NULL || EVP_CIPHER_iv_length(enc) == 0
+                || EVP_CIPHER_iv_length(enc) > (int)sizeof(iv)
+                   /*
+                    * Check "Proc-Type: 4,Encrypted\nDEK-Info: objstr,hex-iv\n"
+                    * fits into buf
+                    */
+                || (strlen(objstr) + 23 + 2 * EVP_CIPHER_iv_length(enc) + 13)
+                   > sizeof(buf)) {
             PEMerr(PEM_F_PEM_ASN1_WRITE_BIO, PEM_R_UNSUPPORTED_CIPHER);
             goto err;
         }
@@ -361,7 +368,6 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 #endif
             kstr = (unsigned char *)buf;
         }
-        OPENSSL_assert(EVP_CIPHER_iv_length(enc) <= (int)sizeof(iv));
         if (RAND_bytes(iv, EVP_CIPHER_iv_length(enc)) <= 0) /* Generate a salt */
             goto err;
         /*
@@ -373,9 +379,6 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 
         if (kstr == (unsigned char *)buf)
             OPENSSL_cleanse(buf, PEM_BUFSIZE);
-
-        OPENSSL_assert(strlen(objstr) + 23 + 2 * EVP_CIPHER_iv_length(enc) + 13
-                       <= sizeof buf);
 
         buf[0] = '\0';
         PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
