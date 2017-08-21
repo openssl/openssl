@@ -17,7 +17,7 @@
 # include <errno.h>
 
 # include "e_os.h"
-# if defined(__unix) || defined(__unix__)
+# if defined(__unix) || defined(__unix__) || defined(__QNX__)
 #  include <sys/time.h>         /* struct timeval for DTLS */
 # endif
 
