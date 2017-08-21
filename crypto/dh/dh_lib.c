@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include "e_os.h"
+#include "internal/refcount.h"
 #include <openssl/bn.h>
 #include "dh_locl.h"
 #include <openssl/engine.h>
