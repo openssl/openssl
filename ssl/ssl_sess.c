@@ -12,7 +12,7 @@
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include <openssl/engine.h>
-#include "e_os.h"
+#include "internal/refcount.h"
 #include "ssl_locl.h"
 #include "statem/statem_locl.h"
 
