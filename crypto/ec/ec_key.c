@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include <string.h>
 #include "ec_lcl.h"
-#include "e_os.h"
+#include "internal/refcount.h"
 #include <openssl/err.h>
 #include <openssl/engine.h>
 
