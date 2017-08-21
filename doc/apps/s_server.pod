@@ -83,6 +83,7 @@ B<openssl> B<s_server>
 [B<-dtls1_2>]
 [B<-listen>]
 [B<-async>]
+[B<-max_send_frag>]
 [B<-split_send_frag>]
 [B<-max_pipelines>]
 [B<-read_buf>]
@@ -357,6 +358,11 @@ asynchronously. This will only have an effect if an asynchronous capable engine
 is also used via the B<-engine> option. For test purposes the dummy async engine
 (dasync) can be used (if available).
 
+=item B<-max_send_frag int>
+
+The maximum size of data fragment to send.
+See L<SSL_CTX_set_max_send_fragment(3)> for further information.
+
 =item B<-split_send_frag int>
 
 The size used to split data for encrypt pipelines. If more data is written in
@@ -596,8 +602,9 @@ unknown cipher suites a client says it supports.
 
 =head1 SEE ALSO
 
-L<SSL_CONF_cmd(3)>,
-L<sess_id(1)>, L<s_client(1)>, L<ciphers(1)>
+L<SSL_CONF_cmd(3)>, L<sess_id(1)>, L<s_client(1)>, L<ciphers(1)>
+L<SSL_CTX_set_max_send_fragment(3)>, L<SSL_CTX_set_split_send_fragment(3)>
+L<SSL_CTX_set_max_pipelines(3)> 
 
 =head1 HISTORY
 
