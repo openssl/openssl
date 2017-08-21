@@ -27,7 +27,6 @@
 
 #include "internal/nelem.h"
 
-#define USE_SOCKETS
 #include "e_os.h"
 
 #ifdef OPENSSL_SYS_VMS

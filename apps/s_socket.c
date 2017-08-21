@@ -28,10 +28,9 @@ typedef unsigned int u_int;
 
 #ifndef OPENSSL_NO_SOCK
 
-# define USE_SOCKETS
 # include "apps.h"
-# undef USE_SOCKETS
 # include "s_apps.h"
+# include "internal/sockets.h"
 
 # include <openssl/bio.h>
 # include <openssl/err.h>
