@@ -11,9 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> /* for memcpy() and strcmp() */
-#define USE_SOCKETS
 #include "apps.h"
-#undef USE_SOCKETS
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>

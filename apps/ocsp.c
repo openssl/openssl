@@ -17,8 +17,6 @@ NON_EMPTY_TRANSLATION_UNIT
                                  * on OpenVMS */
 # endif
 
-# define USE_SOCKETS
-
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>

@@ -9,7 +9,6 @@
 
 #include <stdio.h>
 #include <errno.h>
-#define USE_SOCKETS
 #include "bio_lcl.h"
 #include "internal/cryptlib.h"
 
