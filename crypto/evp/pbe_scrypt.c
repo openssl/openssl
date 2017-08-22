@@ -12,7 +12,7 @@
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
-#include <internal/numbers.h>
+#include "internal/numbers.h"
 
 #ifndef OPENSSL_NO_SCRYPT
 

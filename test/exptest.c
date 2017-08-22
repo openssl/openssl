@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 
 #include <openssl/bio.h>
 #include <openssl/bn.h>

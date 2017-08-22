@@ -8,7 +8,7 @@
  */
 
 #include "bio_lcl.h"
-#include <internal/thread_once.h>
+#include "internal/thread_once.h"
 
 CRYPTO_RWLOCK *bio_type_lock = NULL;
 static CRYPTO_ONCE bio_type_init = CRYPTO_ONCE_STATIC_INIT;

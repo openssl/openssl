@@ -14,7 +14,7 @@
  */
 
 #include <string.h>
-#include <internal/bio.h>
+#include "internal/bio.h"
 #include <openssl/asn1.h>
 #include "internal/cryptlib.h"
 

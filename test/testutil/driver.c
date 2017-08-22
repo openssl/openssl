@@ -14,7 +14,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 #include <openssl/bio.h>
 
 /*

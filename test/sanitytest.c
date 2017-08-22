@@ -8,7 +8,7 @@
  */
 
 #include <string.h>
-#include <internal/numbers.h>
+#include "internal/numbers.h"
 
 #include "testutil.h"
 
