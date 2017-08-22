@@ -73,8 +73,9 @@ RSA *RSA_new_method(ENGINE *engine)
             goto err;
         }
         ret->engine = engine;
-    } else
+    } else {
         ret->engine = ENGINE_get_default_RSA();
+    }
     if (ret->engine) {
         ret->meth = ENGINE_get_RSA(ret->engine);
         if (ret->meth == NULL) {

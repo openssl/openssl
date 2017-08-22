@@ -85,8 +85,9 @@ int RSA_verify_ASN1_OCTET_STRING(int dtype,
     if (((unsigned int)sig->length != m_len) ||
         (memcmp(m, sig->data, m_len) != 0)) {
         RSAerr(RSA_F_RSA_VERIFY_ASN1_OCTET_STRING, RSA_R_BAD_SIGNATURE);
-    } else
+    } else {
         ret = 1;
+    }
  err:
     ASN1_OCTET_STRING_free(sig);
     OPENSSL_clear_free(s, (unsigned int)siglen);
