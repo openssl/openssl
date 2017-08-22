@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -118,6 +118,9 @@ size_t drbg_entropy_from_system(RAND_DRBG *drbg,
         return drbg->size;
     }
 
+    drbg->randomness = drbg->secure ? OPENSSL_secure_malloc(drbg->size)
+                                    : OPENSSL_malloc(drbg->size);
+
     /* If we don't have enough, try to get more. */
     CRYPTO_THREAD_write_lock(rand_bytes.lock);
     for (i = RAND_POLL_RETRIES; rand_bytes.curr < min_len && --i >= 0; ) {
@@ -153,6 +156,9 @@ size_t drbg_entropy_from_parent(RAND_DRBG *drbg,
         min_len = drbg->size;
     }
 
+    drbg->randomness = drbg->secure ? OPENSSL_secure_malloc(drbg->size)
+                                    : OPENSSL_malloc(drbg->size);
+
     /* Get random from parent, include our state as additional input. */
     st = RAND_DRBG_generate(drbg->parent, drbg->randomness, min_len, 0,
                             (unsigned char *)drbg, sizeof(*drbg));
@@ -166,7 +172,11 @@ size_t drbg_entropy_from_parent(RAND_DRBG *drbg,
 void drbg_release_entropy(RAND_DRBG *drbg, unsigned char *out)
 {
     drbg->filled = 0;
-    OPENSSL_cleanse(drbg->randomness, drbg->size);
+    if (drbg->secure)
+        OPENSSL_secure_clear_free(drbg->randomness, drbg->size);
+    else
+        OPENSSL_clear_free(drbg->randomness, drbg->size);
+    drbg->randomness = NULL;
 }
 
 
@@ -181,10 +191,7 @@ static int setup_drbg(RAND_DRBG *drbg)
     ret &= drbg->lock != NULL;
     drbg->size = RANDOMNESS_NEEDED;
     drbg->secure = CRYPTO_secure_malloc_initialized();
-    drbg->randomness = drbg->secure
-        ? OPENSSL_secure_malloc(drbg->size)
-        : OPENSSL_malloc(drbg->size);
-    ret &= drbg->randomness != NULL;
+    drbg->randomness = NULL;
     /* If you change these parameters, see RANDOMNESS_NEEDED */
     ret &= RAND_DRBG_set(drbg,
                          NID_aes_128_ctr, RAND_DRBG_FLAG_CTR_USE_DF) == 1;
@@ -196,10 +203,6 @@ static int setup_drbg(RAND_DRBG *drbg)
 static void free_drbg(RAND_DRBG *drbg)
 {
     CRYPTO_THREAD_lock_free(drbg->lock);
-    if (drbg->secure)
-        OPENSSL_secure_clear_free(drbg->randomness, drbg->size);
-    else
-        OPENSSL_clear_free(drbg->randomness, drbg->size);
     RAND_DRBG_uninstantiate(drbg);
 }
 
