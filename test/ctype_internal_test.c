@@ -27,9 +27,14 @@ static int isblank(int c)
 
 static int test_ctype_chars(int n)
 {
-    return TEST_int_eq(isalnum(n) != 0, ossl_isalnum(n) != 0)
-           && TEST_int_eq(isalpha(n) != 0, ossl_isalpha(n) != 0)
-           && TEST_int_eq(isascii(n) != 0, ossl_isascii(n) != 0)
+    if (!TEST_int_eq(isascii((unsigned char)n) != 0, ossl_isascii(n) != 0))
+        return 0;
+
+    if (!ossl_isascii(n))
+        return 1;
+
+    return TEST_int_eq(isalpha(n) != 0, ossl_isalpha(n) != 0)
+           && TEST_int_eq(isalnum(n) != 0, ossl_isalnum(n) != 0)
            && TEST_int_eq(isblank(n) != 0, ossl_isblank(n) != 0)
            && TEST_int_eq(iscntrl(n) != 0, ossl_iscntrl(n) != 0)
            && TEST_int_eq(isdigit(n) != 0, ossl_isdigit(n) != 0)
@@ -75,7 +80,7 @@ static int test_ctype_eof(void)
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(test_ctype_chars, 128);
+    ADD_ALL_TESTS(test_ctype_chars, 256);
     ADD_ALL_TESTS(test_ctype_toupper, OSSL_NELEM(case_change));
     ADD_ALL_TESTS(test_ctype_tolower, OSSL_NELEM(case_change));
     ADD_TEST(test_ctype_eof);
