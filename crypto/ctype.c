@@ -251,9 +251,9 @@ int ossl_fromascii(int c)
 int ossl_ctype_check(int c, unsigned int mask)
 {
     const int max = sizeof(ctype_char_map) / sizeof(*ctype_char_map);
+    const int a = ossl_toascii(c);
 
-    c = ossl_toascii(c);
-    return c >= 0 && c < max && (ctype_char_map[c] & mask) != 0;
+    return a >= 0 && a < max && (ctype_char_map[a] & mask) != 0;
 }
 
 #if defined(CHARSET_EBCDIC) && !defined(CHARSET_EBCDIC_TEST)
