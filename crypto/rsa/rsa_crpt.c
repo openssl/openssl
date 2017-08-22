@@ -117,8 +117,9 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
     if (in_ctx == NULL) {
         if ((ctx = BN_CTX_new()) == NULL)
             return 0;
-    } else
+    } else {
         ctx = in_ctx;
+    }
 
     BN_CTX_start(ctx);
     e = BN_CTX_get(ctx);
@@ -133,8 +134,9 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
             RSAerr(RSA_F_RSA_SETUP_BLINDING, RSA_R_NO_PUBLIC_EXPONENT);
             goto err;
         }
-    } else
+    } else {
         e = rsa->e;
+    }
 
     {
         BIGNUM *n = BN_new();
