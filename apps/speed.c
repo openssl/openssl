@@ -10,7 +10,6 @@
 
 #undef SECONDS
 #define SECONDS                 3
-#define PRIME_SECONDS   10
 #define RSA_SECONDS             10
 #define DSA_SECONDS             10
 #define ECDSA_SECONDS   10
@@ -118,7 +117,6 @@
 
 #define ALGOR_NUM       30
 #define SIZE_NUM        6
-#define PRIME_NUM       3
 #define RSA_NUM         7
 #define DSA_NUM         3
 
