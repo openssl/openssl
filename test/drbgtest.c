@@ -8,7 +8,7 @@
  */
 
 #include <string.h>
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>

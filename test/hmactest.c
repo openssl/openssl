@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 
 # include <openssl/hmac.h>
 # include <openssl/sha.h>

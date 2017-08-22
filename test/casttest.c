@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_CAST is defined */
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_CAST

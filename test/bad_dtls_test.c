@@ -37,10 +37,8 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/kdf.h>
-
 #include "../ssl/packet_locl.h"
-#include <internal/nelem.h>
-
+#include "internal/nelem.h"
 #include "testutil.h"
 
 /* For DTLS1_BAD_VER packets the MAC doesn't include the handshake header */

@@ -14,7 +14,7 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 
 /*
  * Output a failed test first line.

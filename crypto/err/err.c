@@ -10,16 +10,16 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <internal/cryptlib_int.h>
-#include <internal/err.h>
-#include <internal/err_int.h>
+#include "internal/cryptlib_int.h"
+#include "internal/err.h"
+#include "internal/err_int.h"
 #include <openssl/lhash.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/opensslconf.h>
-#include <internal/thread_once.h>
+#include "internal/thread_once.h"
 
 static int err_load_strings(const ERR_STRING_DATA *str);
 

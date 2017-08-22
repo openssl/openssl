@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <internal/conf.h>
+#include "internal/conf.h"
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
