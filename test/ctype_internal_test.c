@@ -42,11 +42,6 @@ static int test_ctype_chars(int n)
            && TEST_int_eq(isxdigit(n) != 0, ossl_isxdigit(n) != 0);
 }
 
-static int test_ctype_negative(int n)
-{
-    return test_ctype_chars(-n);
-}
-
 static struct {
     int u;
     int l;
@@ -58,10 +53,7 @@ static struct {
     { '%', '%' },
     { '~', '~' },
     {   0,   0 },
-    { EOF, EOF },
-    { 333, 333 },
-    { -333, -333 },
-    { -128, -128 }
+    { EOF, EOF }
 };
 
 static int test_ctype_toupper(int n)
@@ -79,7 +71,6 @@ static int test_ctype_tolower(int n)
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_ctype_chars, 256);
-    ADD_ALL_TESTS(test_ctype_negative, 128);
     ADD_ALL_TESTS(test_ctype_toupper, OSSL_NELEM(case_change));
     ADD_ALL_TESTS(test_ctype_tolower, OSSL_NELEM(case_change));
     return 1;
