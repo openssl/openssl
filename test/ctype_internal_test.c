@@ -19,8 +19,10 @@
  * define our own.
  */
 #if defined(__VMS) && __CRTL_VER <= 80400000
-# include <string.h>
-# define isblank(n) (strchr(" \t", (n)) != NULL)
+static int isblank(int c)
+{
+    return c == ' ' || c == '\t';
+}
 #endif
 
 static int test_ctype_chars(int n)
