@@ -233,7 +233,7 @@ ASN1_TIME_cmp_time_t() and ASN1_UTCTIME_cmp_time_t() return -1 if B<s> is
 before B<t>, 0 if B<s> equals B<t>, or 1 if B<s> is after B<t>. -2 is returned
 on error.
 
-ASN1_TIME_compare() returns -1 if B<a> is before B<b>, 0 if B<a> equals B<b>, or 1 if B<a> is after B<b>. -2 is returned on error.
+ASN1_TIME_compare() returns 1 if B<a> is before B<b>, 0 if B<a> equals B<b>, or -1 if B<a> is after B<b>. -2 is returned on error.
 
 ASN1_TIME_to_generalizedtime() returns a pointer to
 the appropriate time structure on success or NULL if an error occurred.
