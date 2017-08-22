@@ -19,6 +19,7 @@
  * define our own.
  */
 #if defined(__VMS) && __CRTL_VER <= 80400000
+# include <string.h>
 # define isblank(n) (strchr(" \t", (n)) != NULL)
 #endif
 
