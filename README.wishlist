@@ -6,6 +6,11 @@ tested platforms (and counting), retesting just isn't logistically or economical
 feasible.
 
 --------
+https://github.com/openssl/openssl/issues/3721
+SIGSEGV in subcall from FIPS_drbg_generate()
+cryptographically significant, not fixable
+
+--------
 https://github.com/openssl/openssl/pull/4157
 From 2017-08-14, Fix GCM MAC computation for AES-GCM by	srahul123
 cryptographically significant, not fixable
