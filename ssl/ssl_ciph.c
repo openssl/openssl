@@ -1764,6 +1764,11 @@ uint32_t SSL_CIPHER_get_id(const SSL_CIPHER *c)
     return c->id;
 }
 
+uint16_t SSL_CIPHER_get_protocol_id(const SSL_CIPHER *c)
+{
+    return c->id & 0xFFFF;
+}
+
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 {
     SSL_COMP *ctmp;

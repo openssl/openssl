@@ -1441,6 +1441,7 @@ __owur const char *SSL_CIPHER_get_name(const SSL_CIPHER *c);
 __owur const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c);
 __owur const char *OPENSSL_cipher_name(const char *rfc_name);
 __owur uint32_t SSL_CIPHER_get_id(const SSL_CIPHER *c);
+__owur uint16_t SSL_CIPHER_get_protocol_id(const SSL_CIPHER *c);
 __owur int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c);
 __owur int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c);
 __owur const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c);
