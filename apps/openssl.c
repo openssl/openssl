@@ -267,10 +267,6 @@ int main(int argc, char *argv[])
     EXIT(ret);
 }
 
-const OPTIONS exit_options[] = {
-    {NULL}
-};
-
 static void list_cipher_fn(const EVP_CIPHER *c,
                            const char *from, const char *to, void *arg)
 {
@@ -506,11 +502,6 @@ int help_main(int argc, char **argv)
     }
     BIO_printf(bio_err, "\n\n");
     return 0;
-}
-
-int exit_main(int argc, char **argv)
-{
-    return EXIT_THE_PROGRAM;
 }
 
 static void list_type(FUNC_TYPE ft, int one)
