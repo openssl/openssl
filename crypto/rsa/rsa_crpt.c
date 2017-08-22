@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,41 +17,41 @@
 
 int RSA_bits(const RSA *r)
 {
-    return (BN_num_bits(r->n));
+    return BN_num_bits(r->n);
 }
 
 int RSA_size(const RSA *r)
 {
-    return (BN_num_bytes(r->n));
+    return BN_num_bytes(r->n);
 }
 
 int RSA_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
                        RSA *rsa, int padding)
 {
-    return (rsa->meth->rsa_pub_enc(flen, from, to, rsa, padding));
+    return rsa->meth->rsa_pub_enc(flen, from, to, rsa, padding);
 }
 
 int RSA_private_encrypt(int flen, const unsigned char *from,
                         unsigned char *to, RSA *rsa, int padding)
 {
-    return (rsa->meth->rsa_priv_enc(flen, from, to, rsa, padding));
+    return rsa->meth->rsa_priv_enc(flen, from, to, rsa, padding);
 }
 
 int RSA_private_decrypt(int flen, const unsigned char *from,
                         unsigned char *to, RSA *rsa, int padding)
 {
-    return (rsa->meth->rsa_priv_dec(flen, from, to, rsa, padding));
+    return rsa->meth->rsa_priv_dec(flen, from, to, rsa, padding);
 }
 
 int RSA_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
                        RSA *rsa, int padding)
 {
-    return (rsa->meth->rsa_pub_dec(flen, from, to, rsa, padding));
+    return rsa->meth->rsa_pub_dec(flen, from, to, rsa, padding);
 }
 
 int RSA_flags(const RSA *r)
 {
-    return ((r == NULL) ? 0 : r->meth->flags);
+    return r == NULL ? 0 : r->meth->flags;
 }
 
 void RSA_blinding_off(RSA *rsa)
@@ -77,7 +77,7 @@ int RSA_blinding_on(RSA *rsa, BN_CTX *ctx)
     rsa->flags &= ~RSA_FLAG_NO_BLINDING;
     ret = 1;
  err:
-    return (ret);
+    return ret;
 }
 
 static BIGNUM *rsa_get_public_exp(const BIGNUM *d, const BIGNUM *p,

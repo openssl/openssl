@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -47,7 +47,7 @@ int RSA_padding_add_X931(unsigned char *to, int tlen,
     memcpy(p, from, (unsigned int)flen);
     p += flen;
     *p = 0xCC;
-    return (1);
+    return 1;
 }
 
 int RSA_padding_check_X931(unsigned char *to, int tlen,
@@ -91,7 +91,7 @@ int RSA_padding_check_X931(unsigned char *to, int tlen,
 
     memcpy(to, p, (unsigned int)j);
 
-    return (j);
+    return j;
 }
 
 /* Translate between X931 hash ids and NIDs */
