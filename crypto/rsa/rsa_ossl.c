@@ -200,12 +200,12 @@ static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
 static int rsa_blinding_convert(BN_BLINDING *b, BIGNUM *f, BIGNUM *unblind,
                                 BN_CTX *ctx)
 {
-    if (unblind == NULL)
+    if (unblind == NULL) {
         /*
          * Local blinding: store the unblinding factor in BN_BLINDING.
          */
         return BN_BLINDING_convert_ex(f, NULL, b, ctx);
-    else {
+    } else {
         /*
          * Shared blinding: store the unblinding factor outside BN_BLINDING.
          */
@@ -347,8 +347,9 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
             res = f;
         else
             res = ret;
-    } else
+    } else {
         res = ret;
+    }
 
     /*
      * put in leading 0 bytes if the number is less than the length of the
