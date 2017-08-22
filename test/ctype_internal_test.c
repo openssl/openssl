@@ -13,6 +13,15 @@
 #include <ctype.h>
 #include <stdio.h>
 
+/*
+ * Even though the VMS C RTL claims to be C99 compatible, it's not entirely
+ * so far (C RTL version 8.4).  For the sake of these tests, we therefore
+ * define our own.
+ */
+#if defined(__VMS) && __CRTL_VER <= 80400000
+# define isblank(n) (strchr(" \t", (n)) != NULL)
+#endif
+
 static int test_ctype_chars(int n)
 {
     return TEST_int_eq(isalnum(n) != 0, ossl_isalnum(n) != 0)
