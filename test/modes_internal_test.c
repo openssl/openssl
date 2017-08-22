@@ -16,7 +16,7 @@
 #include <openssl/modes.h>
 #include "../crypto/modes/modes_lcl.h"
 #include "testutil.h"
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 
 typedef struct {
     size_t size;

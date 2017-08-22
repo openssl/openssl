@@ -16,11 +16,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_BF is defined */
-
 #include "testutil.h"
 
-#include <internal/nelem.h>
-
+#include "internal/nelem.h"
 #ifndef OPENSSL_NO_BF
 # include <openssl/blowfish.h>
 

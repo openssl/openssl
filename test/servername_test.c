@@ -21,7 +21,7 @@
 #include "../ssl/packet_locl.h"
 
 #include "testutil.h"
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 
 #define CLIENT_VERSION_LEN      2
 

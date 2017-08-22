@@ -16,7 +16,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include "testutil.h"
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 
 /**********************************************************************
  *

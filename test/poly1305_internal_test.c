@@ -15,7 +15,7 @@
 #include "testutil.h"
 #include "internal/poly1305.h"
 #include "../crypto/poly1305/poly1305_local.h"
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 
 typedef struct {
     size_t size;

@@ -7,24 +7,24 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <internal/cryptlib_int.h>
+#include "internal/cryptlib_int.h"
 #include <openssl/err.h>
-#include <internal/rand_int.h>
-#include <internal/bio.h>
+#include "internal/rand_int.h"
+#include "internal/bio.h"
 #include <openssl/evp.h>
-#include <internal/evp_int.h>
-#include <internal/conf.h>
-#include <internal/async.h>
-#include <internal/engine.h>
-#include <internal/comp.h>
-#include <internal/err.h>
-#include <internal/err_int.h>
-#include <internal/objects.h>
+#include "internal/evp_int.h"
+#include "internal/conf.h"
+#include "internal/async.h"
+#include "internal/engine.h"
+#include "internal/comp.h"
+#include "internal/err.h"
+#include "internal/err_int.h"
+#include "internal/objects.h"
 #include <stdlib.h>
 #include <assert.h>
-#include <internal/thread_once.h>
-#include <internal/dso.h>
-#include <internal/store.h>
+#include "internal/thread_once.h"
+#include "internal/dso.h"
+#include "internal/store.h"
 
 static int stopped = 0;
 

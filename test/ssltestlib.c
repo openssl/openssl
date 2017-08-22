@@ -9,7 +9,7 @@
 
 #include <string.h>
 
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 #include "ssltestlib.h"
 #include "testutil.h"
 

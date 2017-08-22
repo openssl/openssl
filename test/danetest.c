@@ -24,7 +24,7 @@
 #endif
 #include "testutil.h"
 
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 
 #define _UC(c) ((unsigned char)(c))
 
@@ -422,7 +422,7 @@ int setup_tests(void)
     return 1;
 }
 
-#include <internal/dane.h>
+#include "internal/dane.h"
 
 static void store_ctx_dane_init(X509_STORE_CTX *store_ctx, SSL *ssl)
 {

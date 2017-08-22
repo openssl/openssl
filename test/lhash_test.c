@@ -16,7 +16,7 @@
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 
-#include <internal/nelem.h>
+#include "internal/nelem.h"
 #include "testutil.h"
 
 /*

@@ -13,7 +13,7 @@
 #ifndef OPENSSL_NO_SRP
 
 #include <openssl/srp.h>
-#include <internal/bn_srp.h>
+#include "internal/bn_srp.h"
 
 # if (BN_BYTES == 8)
 #  if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
