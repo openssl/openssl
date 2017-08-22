@@ -8,7 +8,7 @@
  */
 
 #include <limits.h>
-#include <e_os.h>
+#include "e_os.h"
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include "internal/o_str.h"
