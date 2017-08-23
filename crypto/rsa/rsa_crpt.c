@@ -51,7 +51,7 @@ int RSA_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
 
 int RSA_flags(const RSA *r)
 {
-    return (r == NULL) ? 0 : r->meth->flags;
+    return r == NULL ? 0 : r->meth->flags;
 }
 
 void RSA_blinding_off(RSA *rsa)

@@ -149,7 +149,7 @@ int RSA_up_ref(RSA *r)
 
     REF_PRINT_COUNT("RSA", r);
     REF_ASSERT_ISNT(i < 2);
-    return (i > 1) ? 1 : 0;
+    return i > 1 ? 1 : 0;
 }
 
 int RSA_set_ex_data(RSA *r, int idx, void *arg)
