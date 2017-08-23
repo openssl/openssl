@@ -442,9 +442,8 @@ either be 16 or the value previously set via EVP_CTRL_OCB_SET_TAGLEN.
  EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
 
 Sets the expected tag to B<taglen> bytes from B<tag>. This call is only legal
-when decrypting data and must be made B<before> any data is processed (e.g.
-before any EVP_DecryptUpdate() call). For OCB mode the taglen must
-either be 16 or the value previously set via EVP_CTRL_AEAD_SET_TAG.
+when decrypting data. For OCB mode the taglen must either be 16 or the value
+previously set via EVP_CTRL_AEAD_SET_TAG.
 
 In OCB mode calling this with B<tag> set to NULL sets the tag length. The tag
 length can only be set before specifying an IV. If not called a default tag
