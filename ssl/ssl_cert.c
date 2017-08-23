@@ -12,10 +12,6 @@
 #include <sys/types.h>
 
 #include "internal/nelem.h"
-#ifndef NO_SYS_TYPES_H
-# include <sys/types.h>
-#endif
-
 #include "internal/o_dir.h"
 #include <openssl/lhash.h>
 #include <openssl/bio.h>

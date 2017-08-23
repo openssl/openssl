@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "eng_int.h"
 #include "e_os.h"
+#include "eng_int.h"
 #include <openssl/rand.h>
 #include "internal/refcount.h"
 

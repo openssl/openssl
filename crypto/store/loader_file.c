@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
 #include <string.h>
 #include <sys/stat.h>
 #include <assert.h>
@@ -28,8 +29,6 @@
 #include "internal/cryptlib.h"
 #include "internal/store_int.h"
 #include "store_locl.h"
-
-#include "e_os.h"
 
 #ifdef _WIN32
 # define stat    _stat

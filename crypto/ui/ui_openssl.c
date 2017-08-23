@@ -7,10 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
 #include <openssl/e_os2.h>
 #include <openssl/err.h>
 #include <openssl/ui.h>
-#include "e_os.h"
 
 #ifndef OPENSSL_NO_UI_CONSOLE
 /*

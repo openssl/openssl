@@ -13,7 +13,6 @@
 #include <openssl/objects.h>
 #include "internal/nelem.h"
 #include "ssl_locl.h"
-#include "e_os.h"
 #include <openssl/md5.h>
 #include <openssl/dh.h>
 #include <openssl/rand.h>

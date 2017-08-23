@@ -8,9 +8,8 @@
  */
 
 #include "e_os.h"               /* for strncasecmp */
-#include <stdio.h>
 #include "internal/cryptlib.h"
-#include "e_os.h"
+#include <stdio.h>
 #include "internal/asn1_int.h"
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
