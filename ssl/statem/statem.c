@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
