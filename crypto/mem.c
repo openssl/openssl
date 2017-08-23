@@ -7,13 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
+#include "internal/cryptlib.h"
+#include "internal/cryptlib_int.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <openssl/crypto.h>
-#include "e_os.h"
-#include "internal/cryptlib.h"
-#include "internal/cryptlib_int.h"
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
 # include <execinfo.h>
 #endif

@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "eng_int.h"
 #include "e_os.h"
+#include "eng_int.h"
 
 /*
  * Initialise a engine type for use (or up its functional reference count if
