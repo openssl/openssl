@@ -8,12 +8,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "e_os.h"
 #include <openssl/e_os2.h>
 
 #ifndef OPENSSL_NO_SOCK

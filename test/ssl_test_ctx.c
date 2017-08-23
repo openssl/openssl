@@ -7,13 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "../e_os.h"
 #include <string.h>
 
 #include <openssl/e_os2.h>
 #include <openssl/crypto.h>
 
 #include "internal/nelem.h"
-#include "../e_os.h"
 #include "ssl_test_ctx.h"
 #include "testutil.h"
 

@@ -10,8 +10,8 @@
 #ifndef HEADER_APPS_H
 # define HEADER_APPS_H
 
-# include "internal/nelem.h"
 # include "e_os.h"
+# include "internal/nelem.h"
 # if defined(__unix) || defined(__unix__)
 #  include <sys/time.h> /* struct timeval for DTLS */
 # endif

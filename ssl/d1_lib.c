@@ -7,11 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/rand.h>
 #include "ssl_locl.h"
-#include "e_os.h"
 
 #if defined(OPENSSL_SYS_VXWORKS)
 # include <sys/times.h>

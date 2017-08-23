@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
 #include <stdio.h>
 #include <string.h>
 #include "internal/conf.h"
@@ -15,7 +16,6 @@
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
 #include <openssl/lhash.h>
-#include "e_os.h"
 
 static CONF_METHOD *default_CONF_method = NULL;
 
