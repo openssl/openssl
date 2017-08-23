@@ -7,19 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
-# include <string.h>
+#include <string.h>
 
-# include "apps.h"
+#include "apps.h"
 
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/evp.h>
-# include <openssl/rand.h>
-# ifndef OPENSSL_NO_DES
-#  include <openssl/des.h>
-# endif
-# include <openssl/md5.h>
-# include <openssl/sha.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#ifndef OPENSSL_NO_DES
+# include <openssl/des.h>
+#endif
+#include <openssl/md5.h>
+#include <openssl/sha.h>
 
 static unsigned const char cov_2char[64] = {
     /* from crypto/des/fcrypt.c */
@@ -70,9 +70,9 @@ const OPTIONS passwd_options[] = {
     {"apr1", OPT_APR1, '-', "MD5-based password algorithm, Apache variant"},
     {"1", OPT_1, '-', "MD5-based password algorithm"},
     {"aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm"},
-# ifndef OPENSSL_NO_DES
+#ifndef OPENSSL_NO_DES
     {"crypt", OPT_CRYPT, '-', "Standard Unix password algorithm (default)"},
-# endif
+#endif
     OPT_R_OPTIONS,
     {NULL}
 };
@@ -84,9 +84,9 @@ int passwd_main(int argc, char **argv)
     char *salt_malloc = NULL, *passwd_malloc = NULL, *prog;
     OPTION_CHOICE o;
     int in_stdin = 0, pw_source_defined = 0;
-# ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENSSL_NO_UI_CONSOLE
     int in_noverify = 0;
-# endif
+#endif
     int passed_salt = 0, quiet = 0, table = 0, reverse = 0;
     int ret = 1;
     passwd_modes mode = passwd_unset;
@@ -113,9 +113,9 @@ int passwd_main(int argc, char **argv)
             pw_source_defined = 1;
             break;
         case OPT_NOVERIFY:
-# ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENSSL_NO_UI_CONSOLE
             in_noverify = 1;
-# endif
+#endif
             break;
         case OPT_QUIET:
             quiet = 1;
@@ -152,9 +152,11 @@ int passwd_main(int argc, char **argv)
             mode = passwd_aixmd5;
             break;
         case OPT_CRYPT:
+#ifndef OPENSSL_NO_DES
             if (mode != passwd_unset)
                 goto opthelp;
             mode = passwd_crypt;
+#endif
             break;
         case OPT_SALT:
             passed_salt = 1;
@@ -187,10 +189,10 @@ int passwd_main(int argc, char **argv)
         mode = passwd_crypt;
     }
 
-# ifdef OPENSSL_NO_DES
+#ifdef OPENSSL_NO_DES
     if (mode == passwd_crypt)
         goto opthelp;
-# endif
+#endif
 
     if (infile != NULL && in_stdin) {
         BIO_printf(bio_err, "%s: Can't combine -in and -stdin\n", prog);
@@ -226,7 +228,7 @@ int passwd_main(int argc, char **argv)
          * avoid rot of not-frequently-used code.
          */
         if (1) {
-# ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENSSL_NO_UI_CONSOLE
             /* build a null-terminated list */
             static char *passwds_static[2] = { NULL, NULL };
 
@@ -239,7 +241,7 @@ int passwd_main(int argc, char **argv)
             }
             passwds[0] = passwd_malloc;
         } else {
-# endif
+#endif
             BIO_printf(bio_err, "password required\n");
             goto end;
         }
@@ -420,10 +422,10 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
             buf_perm[dest] = buf[source];
         buf_perm[14] = buf[5];
         buf_perm[15] = buf[11];
-#  ifndef PEDANTIC              /* Unfortunately, this generates a "no
+# ifndef PEDANTIC              /* Unfortunately, this generates a "no
                                  * effect" warning */
         assert(16 == sizeof buf_perm);
-#  endif
+# endif
 
         output = salt_out + salt_len;
         assert(output == out_buf + strlen(out_buf));
@@ -463,13 +465,13 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     /* Prefix for optional rounds specification.  */
     static const char rounds_prefix[] = "rounds=";
     /* Maximum salt string length.  */
-#  define SALT_LEN_MAX 16
+# define SALT_LEN_MAX 16
     /* Default number of rounds if not explicitly specified.  */
-#  define ROUNDS_DEFAULT 5000
+# define ROUNDS_DEFAULT 5000
     /* Minimum number of rounds.  */
-#  define ROUNDS_MIN 1000
+# define ROUNDS_MIN 1000
     /* Maximum number of rounds.  */
-#  define ROUNDS_MAX 999999999
+# define ROUNDS_MAX 999999999
 
     /* "$6$rounds=<N>$......salt......$...shahash(up to 86 chars)...\0" */
     static char out_buf[3 + 17 + 17 + 86 + 1];
@@ -647,7 +649,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     cp = out_buf + strlen(out_buf);
     *cp++ = '$';
 
-#  define b64_from_24bit(B2, B1, B0, N)                                   \
+# define b64_from_24bit(B2, B1, B0, N)                                   \
     do {                                                                \
         unsigned int w = ((B2) << 16) | ((B1) << 8) | (B0);             \
         int i = (N);                                                    \
@@ -722,7 +724,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 
     /* first make sure we have a salt */
     if (!passed_salt) {
-# ifndef OPENSSL_NO_DES
+#ifndef OPENSSL_NO_DES
         if (mode == passwd_crypt) {
             if (*salt_malloc_p == NULL)
                 *salt_p = *salt_malloc_p = app_malloc(3, "salt buffer");
@@ -731,12 +733,12 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
             (*salt_p)[0] = cov_2char[(*salt_p)[0] & 0x3f]; /* 6 bits */
             (*salt_p)[1] = cov_2char[(*salt_p)[1] & 0x3f]; /* 6 bits */
             (*salt_p)[2] = 0;
-#  ifdef CHARSET_EBCDIC
+# ifdef CHARSET_EBCDIC
             ascii2ebcdic(*salt_p, *salt_p, 2); /* des_crypt will convert back
                                                 * to ASCII */
-#  endif
+# endif
         }
-# endif                         /* !OPENSSL_NO_DES */
+#endif                         /* !OPENSSL_NO_DES */
 
         if (mode == passwd_md5 || mode == passwd_apr1 || mode == passwd_aixmd5) {
             int i;
@@ -781,10 +783,10 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
     assert(strlen(passwd) <= pw_maxlen);
 
     /* now compute password hash */
-# ifndef OPENSSL_NO_DES
+#ifndef OPENSSL_NO_DES
     if (mode == passwd_crypt)
         hash = DES_crypt(passwd, *salt_p);
-# endif
+#endif
     if (mode == passwd_md5 || mode == passwd_apr1)
         hash = md5crypt(passwd, (mode == passwd_md5 ? "1" : "apr1"), *salt_p);
     if (mode == passwd_aixmd5)
