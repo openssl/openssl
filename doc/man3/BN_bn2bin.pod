@@ -87,8 +87,8 @@ BN_bn2binpad() returns the number of bytes written or -1 if the supplied
 buffer is too small.
 
 BN_bn2hex() and BN_bn2dec() return a null-terminated string, or NULL
-on error. BN_hex2bn() and BN_dec2bn() return the length of valid
-representation in hexadecimal or decimal digits, and 0 on error, in which
+on error. BN_hex2bn() and BN_dec2bn() return the number of characters
+used in parsing, or 0 on error, in which
 case no new B<BIGNUM> will be created.
 
 BN_print_fp() and BN_print() return 1 on success, 0 on write errors.
