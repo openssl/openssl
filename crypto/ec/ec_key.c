@@ -174,7 +174,9 @@ int EC_KEY_up_ref(EC_KEY *r)
 
 ENGINE *EC_KEY_get0_engine(const EC_KEY *eckey)
 {
-    return eckey->engine;
+    if (eckey != NULL)
+        return eckey->engine;
+    return NULL;
 }
 
 int EC_KEY_generate_key(EC_KEY *eckey)
@@ -417,7 +419,9 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
 
 const EC_GROUP *EC_KEY_get0_group(const EC_KEY *key)
 {
-    return key->group;
+    if (key != NULL)
+        return key->group;
+    return NULL;
 }
 
 int EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group)
@@ -431,7 +435,9 @@ int EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group)
 
 const BIGNUM *EC_KEY_get0_private_key(const EC_KEY *key)
 {
-    return key->priv_key;
+    if (key != NULL)
+        return key->priv_key;
+    return NULL;
 }
 
 int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
@@ -451,7 +457,9 @@ int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
 
 const EC_POINT *EC_KEY_get0_public_key(const EC_KEY *key)
 {
-    return key->pub_key;
+    if (key != NULL)
+        return key->pub_key;
+    return NULL;
 }
 
 int EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub_key)
@@ -466,17 +474,23 @@ int EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub_key)
 
 unsigned int EC_KEY_get_enc_flags(const EC_KEY *key)
 {
-    return key->enc_flag;
+    if (key != NULL)
+        return key->enc_flag;
+    return 0;
 }
 
 void EC_KEY_set_enc_flags(EC_KEY *key, unsigned int flags)
 {
-    key->enc_flag = flags;
+    if (key != NULL)
+        key->enc_flag = flags;
+    return;
 }
 
 point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *key)
 {
-    return key->conv_form;
+    if (key != NULL)
+        return key->conv_form;
+    return NULL;
 }
 
 void EC_KEY_set_conv_form(EC_KEY *key, point_conversion_form_t cform)
@@ -501,17 +515,23 @@ int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx)
 
 int EC_KEY_get_flags(const EC_KEY *key)
 {
-    return key->flags;
+    if (key != NULL)
+        return key->flags;
+    return 0;
 }
 
 void EC_KEY_set_flags(EC_KEY *key, int flags)
 {
-    key->flags |= flags;
+    if (key != NULL)
+        key->flags |= flags;
+    return;
 }
 
 void EC_KEY_clear_flags(EC_KEY *key, int flags)
 {
-    key->flags &= ~flags;
+    if (key != NULL)
+        key->flags &= ~flags;
+    return;
 }
 
 size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,
