@@ -53,8 +53,6 @@ extern "C" {
                              * stand for in ILP32 and LP64 */
 # endif
 
-# define OPENSSL_CONF        "openssl.cnf"
-
 # ifndef DEVRANDOM
 /*
  * set this to a comma-separated list of 'random' device files to try out. By

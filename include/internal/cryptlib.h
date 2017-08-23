@@ -55,6 +55,8 @@ typedef struct app_mem_info_st APP_INFO;
 typedef struct mem_st MEM;
 DEFINE_LHASH_OF(MEM);
 
+# define OPENSSL_CONF             "openssl.cnf"
+
 # ifndef OPENSSL_SYS_VMS
 #  define X509_CERT_AREA          OPENSSLDIR
 #  define X509_CERT_DIR           OPENSSLDIR "/certs"
