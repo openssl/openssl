@@ -7,16 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#if defined OPENSSL_NO_MD5 || defined CHARSET_EBCDIC
-# define NO_MD5CRYPT_1
-#endif
-
-#if defined OPENSSL_NO_SHA || defined CHARSET_EBCDIC
-# define NO_SHACRYPT
-#endif
-
-#if !defined(OPENSSL_NO_DES) || !defined(NO_MD5CRYPT_1) || !defined(NO_SHACRYPT)
-
 # include <string.h>
 
 # include "apps.h"
@@ -28,12 +18,8 @@
 # ifndef OPENSSL_NO_DES
 #  include <openssl/des.h>
 # endif
-# ifndef NO_MD5CRYPT_1
-#  include <openssl/md5.h>
-# endif
-# ifndef NO_SHACRYPT
-#  include <openssl/sha.h>
-# endif
+# include <openssl/md5.h>
+# include <openssl/sha.h>
 
 static unsigned const char cov_2char[64] = {
     /* from crypto/des/fcrypt.c */
@@ -79,15 +65,11 @@ const OPTIONS passwd_options[] = {
     {"reverse", OPT_REVERSE, '-', "Switch table columns"},
     {"salt", OPT_SALT, 's', "Use provided salt"},
     {"stdin", OPT_STDIN, '-', "Read passwords from stdin"},
-# ifndef NO_SHACRYPT
     {"6", OPT_6, '-', "SHA512-based password algorithm"},
     {"5", OPT_5, '-', "SHA256-based password algorithm"},
-# endif
-# ifndef NO_MD5CRYPT_1
     {"apr1", OPT_APR1, '-', "MD5-based password algorithm, Apache variant"},
     {"1", OPT_1, '-', "MD5-based password algorithm"},
     {"aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm"},
-# endif
 # ifndef OPENSSL_NO_DES
     {"crypt", OPT_CRYPT, '-', "Standard Unix password algorithm (default)"},
 # endif
@@ -209,14 +191,6 @@ int passwd_main(int argc, char **argv)
     if (mode == passwd_crypt)
         goto opthelp;
 # endif
-# ifdef NO_MD5CRYPT_1
-    if (mode == passwd_md5 || mode == passwd_apr1 || mode == passwd_aixmd5)
-        goto opthelp;
-# endif
-# ifdef NO_SHACRYPT
-    if (mode == passwd_sha256 || mode == passwd_sha512)
-        goto opthelp;
-# endif
 
     if (infile != NULL && in_stdin) {
         BIO_printf(bio_err, "%s: Can't combine -in and -stdin\n", prog);
@@ -318,7 +292,6 @@ int passwd_main(int argc, char **argv)
     return (ret);
 }
 
-# ifndef NO_MD5CRYPT_1
 /*
  * MD5-based password algorithm (should probably be available as a library
  * function; then the static buffer would not be acceptable). For magic
@@ -479,9 +452,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
     EVP_MD_CTX_free(md);
     return NULL;
 }
-# endif
 
-# ifndef NO_SHACRYPT
 /*
  * SHA based password algorithm, describe by Ulrich Drepper here:
  * https://www.akkadia.org/drepper/SHA-crypt.txt
@@ -739,7 +710,6 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     OPENSSL_free(s_bytes);
     return NULL;
 }
-# endif
 
 static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
                      char *passwd, BIO *out, int quiet, int table,
@@ -768,7 +738,6 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
         }
 # endif                         /* !OPENSSL_NO_DES */
 
-# ifndef NO_MD5CRYPT_1
         if (mode == passwd_md5 || mode == passwd_apr1 || mode == passwd_aixmd5) {
             int i;
 
@@ -781,9 +750,7 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
                 (*salt_p)[i] = cov_2char[(*salt_p)[i] & 0x3f]; /* 6 bits */
             (*salt_p)[8] = 0;
         }
-# endif                         /* !NO_MD5CRYPT_1 */
 
-# ifndef NO_SHACRYPT
         if (mode == passwd_sha256 || mode == passwd_sha512) {
             int i;
 
@@ -796,7 +763,6 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
                 (*salt_p)[i] = cov_2char[(*salt_p)[i] & 0x3f]; /* 6 bits */
             (*salt_p)[16] = 0;
         }
-# endif                         /* !NO_SHACRYPT */
     }
 
     assert(*salt_p != NULL);
@@ -819,16 +785,12 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
     if (mode == passwd_crypt)
         hash = DES_crypt(passwd, *salt_p);
 # endif
-# ifndef NO_MD5CRYPT_1
     if (mode == passwd_md5 || mode == passwd_apr1)
         hash = md5crypt(passwd, (mode == passwd_md5 ? "1" : "apr1"), *salt_p);
     if (mode == passwd_aixmd5)
         hash = md5crypt(passwd, "", *salt_p);
-# endif
-# ifndef NO_SHACRYPT
     if (mode == passwd_sha256 || mode == passwd_sha512)
         hash = shacrypt(passwd, (mode == passwd_sha256 ? "5" : "6"), *salt_p);
-# endif
     assert(hash != NULL);
 
     if (table && !reverse)
@@ -842,11 +804,3 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
  end:
     return 0;
 }
-#else
-
-int passwd_main(int argc, char **argv)
-{
-    BIO_printf(bio_err, "Program not available.\n");
-    return (1);
-}
-#endif
