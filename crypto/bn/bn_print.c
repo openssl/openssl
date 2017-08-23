@@ -313,7 +313,7 @@ int BN_print(BIO *bp, const BIGNUM *a)
     for (i = a->top - 1; i >= 0; i--) {
         for (j = BN_BITS2 - 4; j >= 0; j -= 4) {
             /* strip leading zeros */
-            v = (int)((a->d[i] >> j) & 0xff);
+            v = (int)((a->d[i] >> j) & 0x0f);
             if (z || v != 0) {
                 if (BIO_write(bp, &Hex[v], 1) != 1)
                     goto end;
