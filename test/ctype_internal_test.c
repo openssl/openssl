@@ -68,10 +68,16 @@ static int test_ctype_tolower(int n)
            && TEST_int_eq(ossl_tolower(case_change[n].l), case_change[n].l);
 }
 
+static int test_ctype_eof(void)
+{
+    return test_ctype_chars(EOF);
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_ctype_chars, 128);
     ADD_ALL_TESTS(test_ctype_toupper, OSSL_NELEM(case_change));
     ADD_ALL_TESTS(test_ctype_tolower, OSSL_NELEM(case_change));
+    ADD_TEST(test_ctype_eof);
     return 1;
 }
