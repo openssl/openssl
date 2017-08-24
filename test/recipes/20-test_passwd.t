@@ -15,6 +15,9 @@ use OpenSSL::Test::Utils;
 
 setup("test_passwd");
 
+my $defines = config('defines');
+my $charset_ebcdic = grep { $_ eq "CHARSET_EBCDIC" } @$defines;
+
 # The following tests are an adaptation of those in
 # https://www.akkadia.org/drepper/SHA-crypt.txt
 my @sha_tests =
@@ -76,37 +79,58 @@ my @sha_tests =
        expected => '$6$rounds=1000$roundstoolow$kUMsbe306n21p9R.FRkW3IGn.S9NPN0x50YhH1xhLsPuWGsUSklZt58jaTfF4ZEQpyUNGc0dqbpBYYBaHHrsX.' }
     );
 
-plan tests => (disabled("des") ? 9 : 11) + scalar @sha_tests;
+plan tests =>
+    2                           # DES passwords
+    + 5                         # MD5 passwords with simple key
+    + 4                         # SHA passwords with simple key
+    + scalar @sha_tests         # Extra SHA passwords
+    ;
 
+SKIP: {
+    skip "No DES password implementation", 2 if disabled("des");
 
-ok(compare1stline_re([qw{openssl passwd password}], '^.{13}\R$'),
-   'crypt password with random salt') if !disabled("des");
-ok(compare1stline_re([qw{openssl passwd -1 password}], '^\$1\$.{8}\$.{22}\R$'),
-   'BSD style MD5 password with random salt');
-ok(compare1stline_re([qw{openssl passwd -apr1 password}], '^\$apr1\$.{8}\$.{22}\R$'),
-   'Apache style MD5 password with random salt');
-ok(compare1stline_re([qw{openssl passwd -5 password}], '^\$5\$.{16}\$.{43}\R$'),
-   'SHA256 password with random salt');
-ok(compare1stline_re([qw{openssl passwd -6 password}], '^\$6\$.{16}\$.{86}\R$'),
-   'Apache SHA512 password with random salt');
+    ok(compare1stline_re([qw{openssl passwd password}], '^.{13}\R$'),
+       'crypt password with random salt');
+    ok(compare1stline([qw{openssl passwd -salt xx password}], 'xxj31ZMTZzkVA'),
+       'crypt password with salt xx');
+}
 
-ok(compare1stline([qw{openssl passwd -salt xx password}], 'xxj31ZMTZzkVA'),
-   'crypt password with salt xx') if !disabled("des");
-ok(compare1stline([qw{openssl passwd -salt xxxxxxxx -1 password}], '$1$xxxxxxxx$UYCIxa628.9qXjpQCjM4a.'),
-   'BSD style MD5 password with salt xxxxxxxx');
-ok(compare1stline([qw{openssl passwd -salt xxxxxxxx -apr1 password}], '$apr1$xxxxxxxx$dxHfLAsjHkDRmG83UXe8K0'),
-   'Apache style MD5 password with salt xxxxxxxx');
-ok(compare1stline([qw{openssl passwd -salt xxxxxxxx -aixmd5 password}], 'xxxxxxxx$8Oaipk/GPKhC64w/YVeFD/'),
-   'AIX style MD5 password with salt xxxxxxxx');
-ok(compare1stline([qw{openssl passwd -salt xxxxxxxxxxxxxxxx -5 password}], '$5$xxxxxxxxxxxxxxxx$fHytsM.wVD..zPN/h3i40WJRggt/1f73XkAC/gkelkB'),
-   'SHA256 password with salt xxxxxxxxxxxxxxxx');
-ok(compare1stline([qw{openssl passwd -salt xxxxxxxxxxxxxxxx -6 password}], '$6$xxxxxxxxxxxxxxxx$VjGUrXBG6/8yW0f6ikBJVOb/lK/Tm9LxHJmFfwMvT7cpk64N9BW7ZQhNeMXAYFbOJ6HDG7wb0QpxJyYQn0rh81'),
-   'SHA512 password with salt xxxxxxxxxxxxxxxx');
+SKIP: {
+    skip "No MD5 password implementation", 5 if $charset_ebcdic;
 
-foreach (@sha_tests) {
-    ok(compare1stline([qw{openssl passwd}, '-'.$_->{type}, '-salt', $_->{salt},
-                       $_->{key}], $_->{expected}),
-       { 5 => 'SHA256', 6 => 'SHA512' }->{$_->{type}} . ' password with salt ' . $_->{salt});
+    ok(compare1stline_re([qw{openssl passwd -1 password}], '^\$1\$.{8}\$.{22}\R$'),
+       'BSD style MD5 password with random salt');
+    ok(compare1stline_re([qw{openssl passwd -apr1 password}], '^\$apr1\$.{8}\$.{22}\R$'),
+       'Apache style MD5 password with random salt');
+    ok(compare1stline([qw{openssl passwd -salt xxxxxxxx -1 password}], '$1$xxxxxxxx$UYCIxa628.9qXjpQCjM4a.'),
+       'BSD style MD5 password with salt xxxxxxxx');
+    ok(compare1stline([qw{openssl passwd -salt xxxxxxxx -apr1 password}], '$apr1$xxxxxxxx$dxHfLAsjHkDRmG83UXe8K0'),
+       'Apache style MD5 password with salt xxxxxxxx');
+    ok(compare1stline([qw{openssl passwd -salt xxxxxxxx -aixmd5 password}], 'xxxxxxxx$8Oaipk/GPKhC64w/YVeFD/'),
+       'AIX style MD5 password with salt xxxxxxxx');
+}
+
+SKIP: {
+    skip "No SHA password implementation", 4 + scalar @sha_tests
+        if $charset_ebcdic;
+
+    ok(compare1stline_re([qw{openssl passwd -5 password}], '^\$5\$.{16}\$.{43}\R$'),
+       'SHA256 password with random salt');
+    ok(compare1stline_re([qw{openssl passwd -6 password}], '^\$6\$.{16}\$.{86}\R$'),
+       'Apache SHA512 password with random salt');
+    ok(compare1stline([qw{openssl passwd -salt xxxxxxxxxxxxxxxx -5 password}],
+                      '$5$xxxxxxxxxxxxxxxx$fHytsM.wVD..zPN/h3i40WJRggt/1f73XkAC/gkelkB'),
+       'SHA256 password with salt xxxxxxxxxxxxxxxx');
+    ok(compare1stline([qw{openssl passwd -salt xxxxxxxxxxxxxxxx -6 password}],
+                      '$6$xxxxxxxxxxxxxxxx$VjGUrXBG6/8yW0f6ikBJVOb/lK/Tm9LxHJmFfwMvT7cpk64N9BW7ZQhNeMXAYFbOJ6HDG7wb0QpxJyYQn0rh81'),
+       'SHA512 password with salt xxxxxxxxxxxxxxxx');
+
+    foreach (@sha_tests) {
+        ok(compare1stline([qw{openssl passwd},
+                           '-'.$_->{type}, '-salt', $_->{salt}, $_->{key}],
+                          $_->{expected}),
+           { 5 => 'SHA256', 6 => 'SHA512' }->{$_->{type}} . ' password with salt ' . $_->{salt});
+    }
 }
 
 
