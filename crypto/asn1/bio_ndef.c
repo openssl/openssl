@@ -11,6 +11,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#include "internal/string.h"
 
 #include <stdio.h>
 

@@ -9,6 +9,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <string.h>
 #include "ec_lcl.h"
 #include <openssl/err.h>

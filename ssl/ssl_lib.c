@@ -10,6 +10,7 @@
  */
 
 #include <stdio.h>
+#include "internal/string.h"
 #include "ssl_locl.h"
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
@@ -21,6 +22,7 @@
 #include <openssl/async.h>
 #include <openssl/ct.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "internal/rand.h"
 
 const char SSL_version_str[] = OPENSSL_VERSION_TEXT;

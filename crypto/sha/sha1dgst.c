@@ -14,4 +14,5 @@
 
 /* The implementation is in ../md32_common.h */
 
+#include "internal/string.h"
 # include "sha_locl.h"

@@ -12,6 +12,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "bn_lcl.h"
 
 #ifndef OPENSSL_NO_EC2M

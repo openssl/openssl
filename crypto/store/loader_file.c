@@ -26,6 +26,7 @@
 #include "internal/ctype.h"
 #include "internal/o_dir.h"
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "internal/store_int.h"
 #include "store_locl.h"
 

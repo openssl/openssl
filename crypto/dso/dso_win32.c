@@ -8,6 +8,7 @@
  */
 
 #include "dso_locl.h"
+#include "internal/string.h"
 
 #if defined(DSO_WIN32)
 

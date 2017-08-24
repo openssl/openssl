@@ -17,8 +17,8 @@
  */
 
 #include <string.h>
-
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "internal/bn_int.h"
 #include "ec_lcl.h"
 
@@ -36,8 +36,10 @@
 # define ALIGN32
 #endif
 
-#define ALIGNPTR(p,N)   ((unsigned char *)p+N-(size_t)p%N)
-#define P256_LIMBS      (256/BN_BITS2)
+#define ALIGNPTR(p,N)   ((unsigned char *)p + N - (size_t)p % N)
+#define P256_LIMBS      (256 / BN_BITS2)
+#define OPENSSL_MALLOC_MAX_NELEMS(type) \
+    (((1U << (sizeof(int) * 8 - 1)) - 1) / sizeof(type))
 
 typedef unsigned short u16;
 

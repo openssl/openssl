@@ -20,6 +20,7 @@
 #include <openssl/err.h>
 
 #include "ct_locl.h"
+#include "internal/string.h"
 
 int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
 {

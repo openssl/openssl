@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "bn_lcl.h"
 
 void BN_RECP_CTX_init(BN_RECP_CTX *recp)

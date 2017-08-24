@@ -13,6 +13,7 @@
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 #include "lhash_lcl.h"
+#include "internal/string.h"
 
 
 #undef MIN_NODES

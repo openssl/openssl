@@ -19,6 +19,7 @@
 #include <openssl/x509.h>
 
 #include "ct_locl.h"
+#include "internal/string.h"
 
 SCT_CTX *SCT_CTX_new(void)
 {

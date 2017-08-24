@@ -10,6 +10,7 @@
 #include <string.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
+#include "internal/string.h"
 
 /* Key derivation function from X9.62/SECG */
 /* Way more than we will ever need */

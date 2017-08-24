@@ -10,7 +10,9 @@
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/rand.h>
+#include "internal/string.h"
 #include "ssl_locl.h"
+#include "internal/string.h"
 
 #if defined(OPENSSL_SYS_VXWORKS)
 # include <sys/times.h>

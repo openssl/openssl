@@ -14,6 +14,7 @@
 
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include "internal/string.h"
 
 
 namespace {

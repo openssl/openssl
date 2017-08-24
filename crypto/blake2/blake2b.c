@@ -18,6 +18,7 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include "e_os.h"
+#include "internal/string.h"
 
 #include "blake2_locl.h"
 #include "blake2_impl.h"

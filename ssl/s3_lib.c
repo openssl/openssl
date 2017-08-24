@@ -16,6 +16,7 @@
 #include <openssl/dh.h>
 #include <openssl/rand.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 #define SSL3_NUM_SCSVS          OSSL_NELEM(ssl3_scsvs)

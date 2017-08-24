@@ -13,6 +13,7 @@
 #include "ssl_locl.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
+#include "internal/string.h"
 
 typedef struct {
     uint32_t version;

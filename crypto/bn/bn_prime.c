@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "bn_lcl.h"
 
 /*

@@ -16,6 +16,7 @@
 #include "../e_os.h"
 #include "ssl_test_ctx.h"
 #include "testutil.h"
+#include "internal/string.h"
 
 static const int default_app_data_size = 256;
 /* Default set to be as small as possible to exercise fragmentation. */

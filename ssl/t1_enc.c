@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include "ssl_locl.h"
+#include "internal/string.h"
 #include <openssl/comp.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>

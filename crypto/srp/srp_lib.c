@@ -9,6 +9,7 @@
 
 #ifndef OPENSSL_NO_SRP
 # include "internal/cryptlib.h"
+# include "internal/string.h"
 # include <openssl/sha.h>
 # include <openssl/srp.h>
 # include <openssl/evp.h>

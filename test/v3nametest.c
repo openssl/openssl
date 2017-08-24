@@ -13,6 +13,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "testutil.h"
+#include "internal/string.h"
 
 static const char *const names[] = {
     "a", "b", ".", "*", "@",

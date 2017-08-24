@@ -59,6 +59,7 @@
 #ifndef OPENSSL_NO_CT
 # include <openssl/ct.h>
 #endif
+#include "internal/string.h"
 
 /*
  * Or gethostname won't be declared properly

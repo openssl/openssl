@@ -12,6 +12,7 @@
 #include "internal/ctype.h"
 #include "internal/numbers.h"
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/bio.h>
 
 /*

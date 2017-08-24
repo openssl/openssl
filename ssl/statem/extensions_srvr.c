@@ -8,6 +8,7 @@
  */
 
 #include <openssl/ocsp.h>
+#include "internal/string.h"
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 

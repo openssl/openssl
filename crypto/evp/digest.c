@@ -14,6 +14,7 @@
 #include <openssl/engine.h>
 #include "internal/evp_int.h"
 #include "evp_locl.h"
+#include "internal/string.h"
 
 /* This call frees resources associated with the context */
 int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)

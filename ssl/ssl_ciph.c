@@ -18,6 +18,7 @@
 #include "ssl_locl.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 
 #define SSL_ENC_DES_IDX         0
 #define SSL_ENC_3DES_IDX        1

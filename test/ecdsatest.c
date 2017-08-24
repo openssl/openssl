@@ -27,6 +27,7 @@
 # endif
 # include <openssl/err.h>
 # include <openssl/rand.h>
+# include "internal/string.h"
 
 /* functions to change the RAND_METHOD */
 static int fbytes(unsigned char *buf, int num);

@@ -23,6 +23,7 @@
 # endif
 
 # include <openssl/crypto.h>
+# include "internal/string.h"
 
 # ifndef OPENSSL_NO_CAPIENG
 

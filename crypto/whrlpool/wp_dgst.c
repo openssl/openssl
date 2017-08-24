@@ -63,6 +63,7 @@
 #include <openssl/crypto.h>
 #include "wp_locl.h"
 #include <string.h>
+#include "internal/string.h"
 
 int WHIRLPOOL_Init(WHIRLPOOL_CTX *c)
 {

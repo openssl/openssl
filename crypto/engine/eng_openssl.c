@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "internal/engine.h"
 #include <openssl/pem.h>
 #include <openssl/evp.h>

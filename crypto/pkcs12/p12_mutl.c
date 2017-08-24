@@ -9,6 +9,7 @@
 
 # include <stdio.h>
 # include "internal/cryptlib.h"
+# include "internal/string.h"
 # include <openssl/crypto.h>
 # include <openssl/hmac.h>
 # include <openssl/rand.h>

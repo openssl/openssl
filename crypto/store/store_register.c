@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include "internal/ctype.h"
+#include "internal/string.h"
 #include <assert.h>
 
 #include <openssl/err.h>

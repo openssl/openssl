@@ -13,6 +13,7 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/ui.h>
+#include "internal/string.h"
 
 /* should be init to zeros. */
 static char prompt_string[80];

@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "internal/constant_time_locl.h"
 #include "bn_lcl.h"
 

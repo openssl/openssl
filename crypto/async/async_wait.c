@@ -9,6 +9,7 @@
 
 /* This must be the first #include file */
 #include "async_locl.h"
+#include "internal/string.h"
 
 #include <openssl/err.h>
 

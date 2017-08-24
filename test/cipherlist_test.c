@@ -19,6 +19,7 @@
 #include <openssl/tls1.h>
 
 #include "internal/nelem.h"
+#include "internal/string.h"
 #include "testutil.h"
 
 typedef struct cipherlist_test_fixture {

@@ -11,6 +11,7 @@
 #include <string.h>
 #include <openssl/md4.h>
 #include <openssl/crypto.h>
+#include "internal/string.h"
 
 #ifdef CHARSET_EBCDIC
 # include <openssl/ebcdic.h>

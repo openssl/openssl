@@ -26,6 +26,7 @@
 # include <openssl/engine.h>
 # include <openssl/ocsp.h>
 # include <signal.h>
+# include "internal/string.h"
 
 # if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
 #  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)

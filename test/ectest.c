@@ -22,6 +22,7 @@
 # include <openssl/rand.h>
 # include <openssl/bn.h>
 # include <openssl/opensslconf.h>
+# include "internal/string.h"
 
 # if defined(_MSC_VER) && defined(_MIPS_) && (_MSC_VER/100==12)
 /* suppress "too big too optimize" warning */

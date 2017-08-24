@@ -14,6 +14,7 @@
 #include "internal/rand_int.h"
 #include <openssl/engine.h>
 #include "internal/thread_once.h"
+#include "internal/string.h"
 #include "rand_lcl.h"
 
 #ifndef OPENSSL_NO_ENGINE

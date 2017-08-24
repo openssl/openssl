@@ -50,6 +50,13 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   include <time.h>
 #  endif
 
+#  ifdef __DJGPP__
+#   include <sys/socket.h>
+#   include <sys/un.h>
+#   include <tcp.h>
+#   include <netdb.h>
+#  endif
+
 #  include <netdb.h>
 #  if defined(OPENSSL_SYS_VMS_NODECC)
 #   include <socket.h>

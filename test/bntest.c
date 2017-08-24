@@ -15,6 +15,7 @@
 #include "internal/nelem.h"
 #include "../e_os.h"
 #include "internal/numbers.h"
+#include "internal/string.h"
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>

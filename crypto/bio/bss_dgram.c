@@ -13,6 +13,8 @@
 #include "bio_lcl.h"
 #ifndef OPENSSL_NO_DGRAM
 
+#include "internal/string.h"
+
 # if !defined(_WIN32)
 #  include <sys/time.h>
 # endif

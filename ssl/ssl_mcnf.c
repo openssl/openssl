@@ -11,6 +11,7 @@
 #include <openssl/conf.h>
 #include <openssl/ssl.h>
 #include "ssl_locl.h"
+#include "internal/string.h"
 
 /* SSL library configuration module. */
 

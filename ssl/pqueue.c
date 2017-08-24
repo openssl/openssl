@@ -8,6 +8,7 @@
  */
 
 #include "ssl_locl.h"
+#include "internal/string.h"
 #include <openssl/bn.h>
 
 struct pqueue_st {

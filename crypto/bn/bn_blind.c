@@ -9,6 +9,7 @@
 
 #include <openssl/opensslconf.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "bn_lcl.h"
 
 #define BN_BLINDING_COUNTER     32

@@ -18,6 +18,7 @@
 #include <openssl/err.h>
 #include "internal/nelem.h"
 #include "testutil.h"
+#include "internal/string.h"
 
 static int test_certs(int num)
 {

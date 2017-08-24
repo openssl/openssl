@@ -12,6 +12,7 @@
 #include <openssl/crypto.h>
 
 #include "testutil.h"
+#include "internal/string.h"
 
 /*
  * We use a proper main function here instead of the custom main from the

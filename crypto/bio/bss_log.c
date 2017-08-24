@@ -21,6 +21,7 @@
 
 #include "bio_lcl.h"
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 
 #if defined(OPENSSL_SYS_WINCE)
 #elif defined(OPENSSL_SYS_WIN32)

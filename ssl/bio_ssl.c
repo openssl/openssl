@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <openssl/crypto.h>
 #include "internal/bio.h"
+#include "internal/string.h"
 #include <openssl/err.h>
 #include "ssl_locl.h"
 

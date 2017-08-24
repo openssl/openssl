@@ -8,6 +8,7 @@
  */
 
 #include "eng_int.h"
+#include "internal/string.h"
 #include "internal/dso.h"
 #include <openssl/crypto.h>
 

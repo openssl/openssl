@@ -10,9 +10,11 @@
  */
 
 #include <stdio.h>
+#include "internal/string.h"
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 #include "internal/constant_time_locl.h"
+#include "internal/string.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>

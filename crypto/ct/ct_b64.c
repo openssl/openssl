@@ -15,6 +15,7 @@
 #include <openssl/evp.h>
 
 #include "ct_locl.h"
+#include "internal/string.h"
 
 /*
  * Decodes the base64 string |in| into |out|.

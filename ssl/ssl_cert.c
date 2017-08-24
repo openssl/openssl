@@ -26,6 +26,7 @@
 #include "ssl_locl.h"
 #include "ssl_cert_table.h"
 #include "internal/thread_once.h"
+#include "internal/string.h"
 
 static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
                                          int op, int bits, int nid, void *other,

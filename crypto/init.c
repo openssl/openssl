@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib_int.h"
+#include "internal/string.h"
 #include <openssl/err.h>
 #include "internal/rand_int.h"
 #include "internal/bio.h"

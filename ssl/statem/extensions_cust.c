@@ -12,6 +12,7 @@
 #include <openssl/ct.h>
 #include "../ssl_locl.h"
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "statem_locl.h"
 
 typedef struct {

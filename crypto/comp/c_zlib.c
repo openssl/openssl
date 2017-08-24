@@ -14,6 +14,7 @@
 #include "internal/comp.h"
 #include <openssl/err.h>
 #include "internal/cryptlib_int.h"
+#include "internal/string.h"
 #include "internal/bio.h"
 #include "comp_lcl.h"
 

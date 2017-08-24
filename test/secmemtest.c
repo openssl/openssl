@@ -10,6 +10,7 @@
 #include <openssl/crypto.h>
 
 #include "testutil.h"
+#include "internal/string.h"
 
 static int test_sec_mem(void)
 {

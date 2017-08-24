@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/pkcs12.h>
 
 /* Define this to dump decrypted output to files called DERnnn */

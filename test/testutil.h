@@ -15,6 +15,7 @@
 #include <openssl/err.h>
 #include <openssl/e_os2.h>
 #include <openssl/bn.h>
+#include "internal/string.h"
 
 /*-
  * Simple unit tests should implement setup_tests().

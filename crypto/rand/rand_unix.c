@@ -11,6 +11,7 @@
 
 #include "e_os.h"
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 #include <stdio.h>

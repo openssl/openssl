@@ -15,6 +15,7 @@
 #include <string.h>
 
 #include <openssl/crypto.h>
+#include "internal/string.h"
 
 
 namespace {

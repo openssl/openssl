@@ -18,6 +18,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/kdf.h>
 #include "internal/numbers.h"
+#include "internal/string.h"
 #include "testutil.h"
 #include "evp_test.h"
 

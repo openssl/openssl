@@ -8,6 +8,7 @@
  */
 
 #include "internal/nelem.h"
+#include "internal/string.h"
 #include <string.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>

@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <openssl/opensslv.h>
+#include "internal/string.h"
 #include "md4_locl.h"
 
 /*

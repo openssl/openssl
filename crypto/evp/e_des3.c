@@ -16,6 +16,7 @@
 # include <openssl/des.h>
 # include <openssl/rand.h>
 # include "evp_locl.h"
+# include "internal/string.h"
 
 typedef struct {
     union {

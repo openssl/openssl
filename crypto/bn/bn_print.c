@@ -11,6 +11,7 @@
 #include "internal/ctype.h"
 #include <limits.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/buffer.h>
 #include "bn_lcl.h"
 

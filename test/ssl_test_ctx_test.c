@@ -22,6 +22,7 @@
 #include <openssl/err.h>
 #include <openssl/conf.h>
 #include <openssl/ssl.h>
+#include "internal/string.h"
 
 static CONF *conf = NULL;
 

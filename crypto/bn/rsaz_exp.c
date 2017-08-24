@@ -14,6 +14,7 @@
 
 #include <openssl/opensslconf.h>
 #include "rsaz_exp.h"
+#include "internal/string.h"
 
 #ifndef RSAZ_ENABLED
 NON_EMPTY_TRANSLATION_UNIT

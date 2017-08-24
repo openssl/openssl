@@ -14,6 +14,7 @@
 #include <openssl/engine.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
+#include "internal/string.h"
 
 #include "standard_methods.h"
 

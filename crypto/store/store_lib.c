@@ -17,6 +17,7 @@
 #include <openssl/store.h>
 #include "internal/thread_once.h"
 #include "internal/store_int.h"
+#include "internal/string.h"
 #include "store_locl.h"
 
 struct ossl_store_ctx_st {

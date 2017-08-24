@@ -19,6 +19,7 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "../ssl/ssl_locl.h"
+#include "internal/string.h"
 
 static char *cert = NULL;
 static char *privkey = NULL;

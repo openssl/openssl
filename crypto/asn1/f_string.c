@@ -11,6 +11,7 @@
 #include "internal/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
+#include "internal/string.h"
 #include <openssl/asn1.h>
 
 int i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type)

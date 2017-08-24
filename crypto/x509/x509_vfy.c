@@ -14,6 +14,7 @@
 
 #include "internal/ctype.h"
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 #include <openssl/buffer.h>

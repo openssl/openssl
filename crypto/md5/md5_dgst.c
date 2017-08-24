@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include "internal/string.h"
 #include "md5_locl.h"
 #include <openssl/opensslv.h>
 

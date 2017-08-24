@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/string.h"
 #include "../ssl/packet_locl.h"
 #include "testutil.h"
 

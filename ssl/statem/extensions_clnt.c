@@ -8,8 +8,10 @@
  */
 
 #include <openssl/ocsp.h>
+#include "internal/string.h"
 #include "../ssl_locl.h"
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "statem_locl.h"
 
 EXT_RETURN tls_construct_ctos_renegotiate(SSL *s, WPACKET *pkt,

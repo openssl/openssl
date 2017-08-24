@@ -13,6 +13,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/bn.h>

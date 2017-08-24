@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/crypto.h>
+#include "internal/string.h"
 
 #include "internal/poly1305.h"
 #include "poly1305_local.h"
