@@ -709,7 +709,7 @@ tar:
 	cd $(SRCDIR); ls -l $(TARFILE).gz
 
 dist:
-	@$(MAKE) PREPARE_CMD='$(PERL) ./Configure dist' tar
+	@$(MAKE) PREPARE_CMD='$(PERL) ./Configure dist' TARFILE="$(TARFILE)" NAME="$(NAME)" tar
 
 # Helper targets #####################################################
 
