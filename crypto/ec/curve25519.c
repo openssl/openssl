@@ -4639,7 +4639,6 @@ int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
 int ED25519_verify(const uint8_t *message, size_t message_len,
                    const uint8_t signature[64], const uint8_t public_key[32]) {
   ge_p3 A;
-  uint8_t pkcopy[32];
   uint8_t rcopy[32];
   uint8_t scopy[32];
   SHA512_CTX hash_ctx;
@@ -4655,7 +4654,6 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
   fe_neg(A.X, A.X);
   fe_neg(A.T, A.T);
 
-  memcpy(pkcopy, public_key, 32);
   memcpy(rcopy, signature, 32);
   memcpy(scopy, signature + 32, 32);
 
@@ -4687,6 +4685,8 @@ void ED25519_public_from_private(uint8_t out_public_key[32],
 
   ge_scalarmult_base(&A, az);
   ge_p3_tobytes(out_public_key, &A);
+
+  OPENSSL_cleanse(az, sizeof(az));
 }
 
 int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
