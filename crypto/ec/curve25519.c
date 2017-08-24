@@ -3448,6 +3448,8 @@ static void ge_scalarmult_base(ge_p3 *h, const uint8_t *a) {
     ge_madd(&r, h, &t);
     ge_p1p1_to_p3(h, &r);
   }
+
+  OPENSSL_cleanse(e, sizeof(e));
 }
 
 /* Replace (f,g) with (g,f) if b == 1;
@@ -3578,6 +3580,8 @@ static void x25519_scalar_mult_generic(uint8_t out[32],
   fe_invert(z2, z2);
   fe_mul(x2, x2, z2);
   fe_tobytes(out, x2);
+
+  OPENSSL_cleanse(e, sizeof(e));
 }
 
 static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
@@ -4713,4 +4717,6 @@ void X25519_public_from_private(uint8_t out_public_value[32],
   fe_invert(zminusy_inv, zminusy);
   fe_mul(zplusy, zplusy, zminusy_inv);
   fe_tobytes(out_public_value, zplusy);
+
+  OPENSSL_cleanse(e, sizeof(e));
 }
