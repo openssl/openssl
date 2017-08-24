@@ -160,7 +160,7 @@ sub inject_unsolicited_extension
 }
 
 SKIP: {
-    skip "TLS <= 1.2 disabled", 2 if alldisabled(("tls1", "tls1_1", "tls1_2"));
+    skip "TLS <= 1.2 disabled", 1 if alldisabled(("tls1", "tls1_1", "tls1_2"));
     #Test 4: Inject an unsolicited extension (<= TLSv1.2)
     $proxy->clear();
     $proxy->filter(\&inject_unsolicited_extension);
@@ -168,7 +168,11 @@ SKIP: {
     $proxy->clientflags("-no_tls1_3 -noservername");
     $proxy->start();
     ok(TLSProxy::Message->fail(), "Unsolicited server name extension");
+}
 
+SKIP: {
+    skip "TLS <= 1.2 or CT disabled", 1
+        if alldisabled(("tls1", "tls1_1", "tls1_2")) || disabled("ct");
     #Test 5: Same as above for the SCT extension which has special handling
     $proxy->clear();
     $testtype = UNSOLICITED_SCT;
