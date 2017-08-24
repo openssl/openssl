@@ -13,6 +13,7 @@
 
 #include <openssl/crypto.h>
 #include "testutil.h"
+#include "internal/thread.h"
 
 #if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)
 

@@ -8,6 +8,7 @@
  */
 
 #include "eng_int.h"
+#include "internal/thread.h"
 
 /* Basic get/set stuff */
 

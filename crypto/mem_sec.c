@@ -17,6 +17,7 @@
  */
 #include <openssl/crypto.h>
 #include "e_os.h"
+#include "internal/thread.h"
 
 #include <string.h>
 

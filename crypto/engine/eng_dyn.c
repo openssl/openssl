@@ -9,6 +9,7 @@
 
 #include "eng_int.h"
 #include "internal/dso.h"
+#include "internal/thread.h"
 #include <openssl/crypto.h>
 
 /*

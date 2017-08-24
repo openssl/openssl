@@ -10,6 +10,7 @@
 #include <openssl/err.h>
 #include "internal/store.h"
 #include "store_locl.h"
+#include "internal/thread.h"
 
 static CRYPTO_ONCE store_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_store_init)

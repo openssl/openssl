@@ -10,6 +10,7 @@
 #include <openssl/e_os2.h>
 #include <openssl/err.h>
 #include <openssl/ui.h>
+#include "internal/thread.h"
 
 #ifndef OPENSSL_NO_UI_CONSOLE
 /*

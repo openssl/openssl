@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/thread.h"
 #include <openssl/evp.h>
 #include <openssl/lhash.h>
 #include "eng_int.h"

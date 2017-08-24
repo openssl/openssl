@@ -21,6 +21,7 @@
 #include <openssl/err.h>
 #include "internal/cryptlib_int.h"
 #include <string.h>
+#include "internal/thread.h"
 
 #define ASYNC_JOB_RUNNING   0
 #define ASYNC_JOB_PAUSING   1

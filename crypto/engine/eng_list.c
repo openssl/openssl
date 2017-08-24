@@ -9,6 +9,11 @@
  */
 
 #include "eng_int.h"
+#include "internal/thread.h"
+
+/* Once initialisation function */
+extern CRYPTO_ONCE engine_lock_init;
+DECLARE_RUN_ONCE(do_engine_lock_init)
 
 /*
  * The linked-list of pointers to engine types. engine_list_head incorporates

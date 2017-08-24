@@ -9,7 +9,12 @@
 
 #include "eng_int.h"
 #include <openssl/evp.h>
+#include "internal/thread.h"
 #include "internal/asn1_int.h"
+
+/* Once initialisation function */
+extern CRYPTO_ONCE engine_lock_init;
+DECLARE_RUN_ONCE(do_engine_lock_init)
 
 /*
  * If this symbol is defined then ENGINE_get_pkey_asn1_meth_engine(), the

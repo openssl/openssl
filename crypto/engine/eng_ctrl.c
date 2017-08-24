@@ -8,6 +8,7 @@
  */
 
 #include "eng_int.h"
+#include "internal/thread.h"
 
 /*
  * When querying a ENGINE-specific control command's 'description', this
