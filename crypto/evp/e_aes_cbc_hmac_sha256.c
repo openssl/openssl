@@ -21,6 +21,7 @@
 #include "modes_lcl.h"
 #include "internal/constant_time_locl.h"
 #include "internal/evp_int.h"
+#include "internal/string.h"
 
 typedef struct {
     AES_KEY ks;

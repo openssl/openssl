@@ -10,6 +10,7 @@
 #include "des_locl.h"
 #include <openssl/opensslv.h>
 #include <openssl/bio.h>
+#include "internal/string.h"
 
 
 const char *DES_options(void)

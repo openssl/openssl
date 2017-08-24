@@ -9,6 +9,7 @@
 
 #include <openssl/crypto.h>
 #include "modes_lcl.h"
+#include "internal/string.h"
 #include <string.h>
 
 #if defined(BSWAP4) && defined(STRICT_ALIGNMENT)

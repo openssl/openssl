@@ -14,6 +14,7 @@
 #include <openssl/rand.h>
 #include <openssl/ec.h>
 #include "ec_lcl.h"
+#include "internal/string.h"
 
 int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
                     unsigned char *sig, unsigned int *siglen,

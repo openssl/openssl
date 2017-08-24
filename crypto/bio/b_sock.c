@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "bio_lcl.h"
+#include "internal/string.h"
 #if defined(NETWARE_CLIB)
 # include <sys/ioctl.h>
 NETDB_DEFINE_CONTEXT

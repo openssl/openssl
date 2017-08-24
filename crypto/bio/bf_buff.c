@@ -11,6 +11,7 @@
 #include <errno.h>
 #include "bio_lcl.h"
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 
 static int buffer_write(BIO *h, const char *buf, int num);
 static int buffer_read(BIO *h, char *buf, int size);

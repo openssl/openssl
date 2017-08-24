@@ -18,6 +18,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/modes.h>
+#include "internal/string.h"
 
 #ifndef OPENSSL_NO_HW
 # ifndef OPENSSL_NO_HW_PADLOCK

@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/x509v3.h>

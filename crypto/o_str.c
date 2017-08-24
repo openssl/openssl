@@ -11,6 +11,7 @@
 #include "e_os.h"
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "internal/o_str.h"
 
 int OPENSSL_memcmp(const void *v1, const void *v2, size_t n)
@@ -248,3 +249,20 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
     return 1;
 #endif
 }
+
+#ifdef OPENSSL_SYS_WINDOWS
+# if defined(_WIN64)
+/*
+ * cut strings to 2GB.  Only needed on Win64.
+ */
+unsigned int OPENSSL_strlen31(const char *str)
+{
+    unsigned int len = 0;
+
+    while (*str && len < 0x80000000U)
+        str++, len++;
+
+    return len & 0x7FFFFFFF;
+}
+# endif
+#endif

@@ -16,6 +16,7 @@
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 #include <openssl/cms.h>
+#include "internal/string.h"
 
 /*
  * i2d/d2i like DH parameter functions which use the appropriate routine for

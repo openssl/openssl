@@ -18,6 +18,7 @@
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 #include "ssl_locl.h"
+#include "internal/string.h"
 #include <openssl/ct.h>
 
 SSL3_ENC_METHOD const TLSv1_enc_data = {

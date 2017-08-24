@@ -17,6 +17,7 @@
 #endif
 
 #include "dso_locl.h"
+#include "internal/string.h"
 
 #ifdef DSO_DLFCN
 

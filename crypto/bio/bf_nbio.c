@@ -11,6 +11,7 @@
 #include <errno.h>
 #include "bio_lcl.h"
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/rand.h>
 
 /*

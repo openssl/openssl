@@ -11,6 +11,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include "ssl_locl.h"
+#include "internal/string.h"
 
 #ifndef OPENSSL_NO_SRP
 # include <openssl/srp.h>

@@ -14,6 +14,7 @@
 #include <openssl/x509.h>
 #include <openssl/buffer.h>
 #include "internal/x509_int.h"
+#include "internal/string.h"
 
 /*
  * Limit to ensure we don't overflow: much greater than

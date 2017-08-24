@@ -12,6 +12,7 @@
 #include <openssl/crypto.h>
 #include "bio_lcl.h"
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 
 
 /*

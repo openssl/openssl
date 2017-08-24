@@ -17,6 +17,7 @@
 #endif
 
 #include "internal/sockets.h"
+#include "internal/string.h"
 #include "internal/nelem.h"
 #include "handshake_helper.h"
 #include "testutil.h"

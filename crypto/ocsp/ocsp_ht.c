@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/ctype.h"
+#include "internal/string.h"
 #include <string.h>
 #include "e_os.h"
 #include <openssl/asn1.h>

@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/asn1.h>
 #include "asn1_locl.h"
 

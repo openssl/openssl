@@ -12,6 +12,7 @@
 #include <string.h>
 #include <openssl/objects.h>
 #include <openssl/comp.h>
+#include "internal/string.h"
 #include "comp_lcl.h"
 
 COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)

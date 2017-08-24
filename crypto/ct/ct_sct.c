@@ -18,6 +18,7 @@
 #include <openssl/x509.h>
 
 #include "ct_locl.h"
+#include "internal/string.h"
 
 SCT *SCT_new(void)
 {

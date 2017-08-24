@@ -14,6 +14,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/modes.h>
 
 /** RFC 3394 section 2.2.3.1 Default Initial Value */

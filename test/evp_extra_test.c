@@ -17,6 +17,7 @@
 #include <openssl/x509.h>
 #include "testutil.h"
 #include "internal/nelem.h"
+#include "internal/string.h"
 
 /*
  * kExampleRSAKeyDER is an RSA private key in ASN.1, DER format. Of course, you

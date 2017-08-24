@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include "internal/thread_once.h"
+#include "internal/string.h"
 #include "ui_locl.h"
 
 #ifndef BUFSIZ

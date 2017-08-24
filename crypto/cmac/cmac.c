@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/cmac.h>
 
 struct CMAC_CTX_st {

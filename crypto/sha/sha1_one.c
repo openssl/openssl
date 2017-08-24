@@ -11,6 +11,7 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
+#include "internal/string.h"
 
 unsigned char *SHA1(const unsigned char *d, size_t n, unsigned char *md)
 {

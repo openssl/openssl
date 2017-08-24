@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 
 #if !defined(OPENSSL_NO_STDIO)
 

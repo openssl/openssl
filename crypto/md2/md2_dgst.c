@@ -13,6 +13,7 @@
 #include <openssl/md2.h>
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
+#include "internal/string.h"
 
 /*
  * Implemented from RFC1319 The MD2 Message-Digest Algorithm

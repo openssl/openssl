@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 
 #include <errno.h>
 #include <stdio.h>

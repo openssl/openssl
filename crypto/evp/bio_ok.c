@@ -72,6 +72,7 @@
 #include <errno.h>
 #include <assert.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/buffer.h>
 #include "internal/bio.h"
 #include <openssl/evp.h>

@@ -23,6 +23,7 @@
 #endif
 
 #include "testutil.h"
+#include "internal/string.h"
 
 /*
  * Based on the test vectors provided in:

@@ -25,6 +25,7 @@
 #include <openssl/aes.h>
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
+#include "internal/string.h"
 
 #include "e_ossltest_err.c"
 

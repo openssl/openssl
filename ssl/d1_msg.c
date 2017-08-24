@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/string.h"
 #include "ssl_locl.h"
 
 int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,

@@ -15,6 +15,7 @@
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
+#include "internal/string.h"
 
 int SHA224_Init(SHA256_CTX *c)
 {

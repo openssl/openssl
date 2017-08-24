@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <limits.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/evp.h>
 #include "evp_locl.h"
 

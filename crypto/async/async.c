@@ -20,6 +20,7 @@
 
 #include <openssl/err.h>
 #include "internal/cryptlib_int.h"
+#include "internal/string.h"
 #include <string.h>
 
 #define ASYNC_JOB_RUNNING   0

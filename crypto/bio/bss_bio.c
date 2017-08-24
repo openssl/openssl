@@ -25,6 +25,7 @@
 #include <openssl/crypto.h>
 
 #include "e_os.h"
+#include "internal/string.h"
 
 static int bio_new(BIO *bio);
 static int bio_free(BIO *bio);

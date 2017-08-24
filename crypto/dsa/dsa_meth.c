@@ -16,6 +16,7 @@
  */
 
 #include "dsa_locl.h"
+#include "internal/string.h"
 #include <string.h>
 #include <openssl/err.h>
 

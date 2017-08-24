@@ -16,6 +16,7 @@
 #include <openssl/err.h>
 #include "internal/numbers.h"
 #include "asn1_locl.h"
+#include "internal/string.h"
 
 static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
                                long len, const ASN1_ITEM *it,

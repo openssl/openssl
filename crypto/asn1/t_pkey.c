@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include "internal/bn_int.h"

@@ -10,6 +10,7 @@
 #include <string.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
+#include "internal/string.h"
 
 static int final_renegotiate(SSL *s, unsigned int context, int sent,
                                      int *al);

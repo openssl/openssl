@@ -17,6 +17,7 @@
 # include "evp_locl.h"
 # include "internal/evp_int.h"
 # include "internal/chacha.h"
+# include "internal/string.h"
 
 typedef struct {
     union {

@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/buffer.h>
 #include <openssl/txt_db.h>
 

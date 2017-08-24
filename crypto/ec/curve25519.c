@@ -15,6 +15,7 @@
 #include <string.h>
 #include "ec_lcl.h"
 #include <openssl/sha.h>
+#include "internal/string.h"
 
 
 /* fe means field element. Here the field is \Z/(2^255-19). An element t,

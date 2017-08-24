@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>

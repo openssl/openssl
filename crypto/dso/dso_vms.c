@@ -8,6 +8,7 @@
  */
 
 #include "dso_locl.h"
+#include "internal/string.h"
 
 #ifdef OPENSSL_SYS_VMS
 

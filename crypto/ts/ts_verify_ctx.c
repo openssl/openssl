@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include "ts_lcl.h"

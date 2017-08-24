@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/hmac.h>
 #include <openssl/opensslconf.h>
 #include "hmac_lcl.h"

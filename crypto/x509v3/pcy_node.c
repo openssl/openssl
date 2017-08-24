@@ -12,6 +12,7 @@
 #include <openssl/x509v3.h>
 
 #include "pcy_int.h"
+#include "internal/string.h"
 
 static int node_cmp(const X509_POLICY_NODE *const *a,
                     const X509_POLICY_NODE *const *b)

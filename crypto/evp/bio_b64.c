@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include "internal/bio.h"

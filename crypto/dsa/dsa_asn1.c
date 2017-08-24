@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "dsa_locl.h"
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>

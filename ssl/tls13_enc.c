@@ -8,6 +8,7 @@
  */
 
 #include <stdlib.h>
+#include "internal/string.h"
 #include "ssl_locl.h"
 #include <openssl/evp.h>
 #include <openssl/kdf.h>

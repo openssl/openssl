@@ -10,8 +10,8 @@
 
 #include <string.h>
 #include <openssl/err.h>
-
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "internal/bn_int.h"
 #include "ec_lcl.h"
 

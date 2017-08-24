@@ -12,6 +12,7 @@
 #include "internal/nelem.h"
 #include "ssltestlib.h"
 #include "testutil.h"
+#include "internal/string.h"
 
 static int tls_dump_new(BIO *bi);
 static int tls_dump_free(BIO *a);

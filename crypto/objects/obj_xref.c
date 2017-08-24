@@ -10,6 +10,7 @@
 #include <openssl/objects.h>
 #include "obj_xref.h"
 #include "e_os.h"
+#include "internal/string.h"
 
 static STACK_OF(nid_triple) *sig_app, *sigx_app;
 

@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #ifdef OPENSSL_NO_RSA
 NON_EMPTY_TRANSLATION_UNIT
 #else

@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "packet_locl.h"
 
 #define DEFAULT_BUF_SIZE    256

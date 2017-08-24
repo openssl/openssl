@@ -8,6 +8,7 @@
  */
 
 #include <openssl/e_os2.h>
+#include "internal/string.h"
 #include <openssl/err.h>
 #include <openssl/ui.h>
 

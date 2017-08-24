@@ -407,6 +407,7 @@ __owur static ossl_inline int PACKET_copy_all(const PACKET *pkt,
     return 1;
 }
 
+#ifdef HEADER_INTERNAL_STRING_H
 /*
  * Copy |pkt| bytes to a newly allocated buffer and store a pointer to the
  * result in |*data|, and the length in |len|.
@@ -462,6 +463,7 @@ static ossl_inline int PACKET_contains_zero_byte(const PACKET *pkt)
 {
     return memchr(pkt->curr, 0, pkt->remaining) != NULL;
 }
+#endif
 
 /* Move the current reading position forward |len| bytes */
 __owur static ossl_inline int PACKET_forward(PACKET *pkt, size_t len)

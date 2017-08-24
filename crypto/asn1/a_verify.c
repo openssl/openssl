@@ -23,6 +23,7 @@
 #include <openssl/evp.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
+#include "internal/string.h"
 
 #ifndef NO_ASN1_OLD
 

@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "internal/thread_once.h"
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>

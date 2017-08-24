@@ -10,6 +10,7 @@
 /* Original version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
 
 #include <stdio.h>
+#include "internal/string.h"
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include "dsa_locl.h"

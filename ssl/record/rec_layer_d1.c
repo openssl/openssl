@@ -15,6 +15,7 @@
 #include "record_locl.h"
 #include "../packet_locl.h"
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 {

@@ -37,6 +37,7 @@
 # include <stdio.h>
 # include <errno.h>
 # include "bio_lcl.h"
+# include "internal/string.h"
 # include <openssl/err.h>
 
 # if !defined(OPENSSL_NO_STDIO)

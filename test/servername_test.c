@@ -18,6 +18,7 @@
 #include <openssl/err.h>
 #include <time.h>
 
+#include "internal/string.h"
 #include "../ssl/packet_locl.h"
 
 #include "testutil.h"

@@ -8,6 +8,7 @@
  */
 
 #include "dso_locl.h"
+#include "internal/string.h"
 
 static DSO_METHOD *default_DSO_meth = NULL;
 

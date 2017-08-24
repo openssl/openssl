@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include <openssl/asn1t.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>

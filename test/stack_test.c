@@ -18,6 +18,7 @@
 
 #include "internal/nelem.h"
 #include "testutil.h"
+#include "internal/string.h"
 
 /* The macros below generate unused functions which error out one of the clang
  * builds.  We disable this check here.

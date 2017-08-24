@@ -24,6 +24,7 @@
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
 #include <openssl/modes.h>
+#include "internal/string.h"
 
 #if (defined(OPENSSL_SYS_UNIX) || defined(OPENSSL_SYS_CYGWIN)) && defined(OPENSSL_THREADS)
 # undef ASYNC_POSIX

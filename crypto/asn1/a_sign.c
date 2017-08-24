@@ -11,6 +11,7 @@
 #include <time.h>
 
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 
 #ifndef NO_SYS_TYPES_H
 # include <sys/types.h>

@@ -12,6 +12,7 @@
 #include <limits.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
+#include "internal/string.h"
 #include "internal/cryptlib_int.h"
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
 # include <execinfo.h>

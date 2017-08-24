@@ -17,6 +17,7 @@
 #include <openssl/safestack.h>
 #include <openssl/e_os2.h>
 #include "internal/thread_once.h"
+#include "internal/string.h"
 #include "obj_lcl.h"
 
 /*

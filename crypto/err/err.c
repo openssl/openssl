@@ -11,6 +11,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include "internal/cryptlib_int.h"
+#include "internal/string.h"
 #include "internal/err.h"
 #include "internal/err_int.h"
 #include <openssl/lhash.h>

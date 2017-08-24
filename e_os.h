@@ -129,10 +129,6 @@ extern "C" {
 #  ifdef __DJGPP__
 #   include <unistd.h>
 #   include <sys/stat.h>
-#   include <sys/socket.h>
-#   include <sys/un.h>
-#   include <tcp.h>
-#   include <netdb.h>
 #   define _setmode setmode
 #   define _O_TEXT O_TEXT
 #   define _O_BINARY O_BINARY
@@ -153,7 +149,6 @@ extern "C" {
 #  if !defined(WINNT) && !defined(__DJGPP__)
 #   define NO_SYSLOG
 #  endif
-#  define NO_DIRENT
 
 #  ifdef WINDOWS
 #   if !defined(_WIN32_WCE) && !defined(_WIN32_WINNT)
@@ -189,27 +184,6 @@ extern "C" {
 #   include <errno.h>
 #   if defined(_WIN32_WCE) && !defined(EACCES)
 #    define EACCES   13
-#   endif
-#   include <string.h>
-#   ifdef _WIN64
-#    define strlen(s) _strlen31(s)
-/* cut strings to 2GB */
-static __inline unsigned int _strlen31(const char *str)
-{
-    unsigned int len = 0;
-    while (*str && len < 0x80000000U)
-        str++, len++;
-    return len & 0x7FFFFFFF;
-}
-#   endif
-#   include <malloc.h>
-#   if defined(_MSC_VER) && _MSC_VER<=1200 && defined(_MT) && defined(isspace)
-       /* compensate for bug in VC6 ctype.h */
-#    undef isspace
-#    undef isdigit
-#    undef isalnum
-#    undef isupper
-#    undef isxdigit
 #   endif
 #   if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(_DLL) && defined(stdin)
 #    if _MSC_VER>=1300 && _MSC_VER<1600
@@ -340,8 +314,6 @@ extern FILE *_imp___iob;
 /***********************************************/
 
 # if defined(OPENSSL_SYS_WINDOWS)
-#  define strcasecmp _stricmp
-#  define strncasecmp _strnicmp
 #  if (_MSC_VER >= 1310)
 #   define open _open
 #   define fdopen _fdopen
