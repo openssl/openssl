@@ -34,12 +34,6 @@ static unsigned const char cov_2char[64] = {
 };
 
 static const char ascii_dollar[] = { 0x24, 0x00 };
-#if defined(CHARSET_EBCDIC) && !defined(CHARSET_EBCDIC_TEST)
-static const char ebcdic_dollar[] = { 0x5B, 0x00 };
-# define dollar ebcdic_dollar
-#else
-# define dollar ascii_dollar
-#endif
 
 typedef enum {
     passwd_unset = 0,
@@ -550,7 +544,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
         const char *num = salt + sizeof(rounds_prefix) - 1;
         char *endp;
         unsigned long int srounds = strtoul (num, &endp, 10);
-        if (*endp == (char)dollar[0]) {
+        if (*endp == '$') {
             salt = endp + 1;
             if (srounds > ROUNDS_MAX)
                 rounds = ROUNDS_MAX;
