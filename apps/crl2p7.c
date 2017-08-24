@@ -87,6 +87,8 @@ int crl2pkcs7_main(int argc, char **argv)
             if (!sk_OPENSSL_STRING_push(certflst, opt_arg()))
                 goto end;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

@@ -280,6 +280,8 @@ int pkcs12_main(int argc, char **argv)
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

@@ -123,6 +123,8 @@ static int test_lib(void)
                 || !TEST_true(shlib_load(path_crypto, &cryptolib)))
             goto end;
         break;
+    default:
+        break;
     }
 
     if (test_type != JUST_CRYPTO) {

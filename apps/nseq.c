@@ -56,6 +56,8 @@ int nseq_main(int argc, char **argv)
         case OPT_OUT:
             outfile = opt_arg();
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

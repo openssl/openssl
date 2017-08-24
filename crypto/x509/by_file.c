@@ -68,6 +68,8 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp,
                 ok = (X509_load_cert_file(ctx, argp, (int)argl) != 0);
         }
         break;
+    default:
+        break;
     }
     return (ok);
 }

@@ -111,6 +111,9 @@ int RSA_X931_hash_id(int nid)
     case NID_sha512:
         return 0x35;
 
+    default:
+        break;
+
     }
     return -1;
 }

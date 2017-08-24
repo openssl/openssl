@@ -232,6 +232,8 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
         case ASN1_STATE_DONE:
             BIO_clear_retry_flags(b);
             return 0;
+        default:
+            break;
 
         }
 

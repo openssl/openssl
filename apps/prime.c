@@ -65,6 +65,8 @@ opthelp:
         case OPT_CHECKS:
             checks = atoi(opt_arg());
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

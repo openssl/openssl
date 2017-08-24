@@ -261,6 +261,8 @@ int enc_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
+        default:
+            break;
         }
     }
     if (opt_num_rest() != 0) {

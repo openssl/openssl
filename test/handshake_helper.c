@@ -484,6 +484,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         break;
     case SSL_TEST_VERIFY_NONE:
         break;
+    default:
+        break;
     }
 
     /*
@@ -509,6 +511,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         break;
     case SSL_TEST_SERVERNAME_EARLY_NO_V12:
         SSL_CTX_set_early_cb(server_ctx, early_nov12_cb, server2_ctx);
+    default:
+        break;
     }
 
     if (extra->server.cert_status != SSL_TEST_CERT_STATUS_NONE) {
@@ -618,6 +622,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
             goto err;
         break;
     case SSL_TEST_CT_VALIDATION_NONE:
+        break;
+    default:
         break;
     }
 #endif
@@ -1017,6 +1023,8 @@ static connect_phase_t next_phase(const SSL_TEST_CTX *test_ctx,
     case CONNECTION_DONE:
         TEST_error("Trying to progress after connection done");
         break;
+    default:
+        break;
     }
     return -1;
 }
@@ -1045,6 +1053,8 @@ static void do_connect_step(const SSL_TEST_CTX *test_ctx, PEER *peer,
         break;
     case CONNECTION_DONE:
         TEST_error("Action after connection done");
+        break;
+    default:
         break;
     }
 }
@@ -1097,6 +1107,8 @@ static handshake_status_t handshake_status(peer_status_t last_status,
              * already errored. This shouldn't happen.
              */
             return INTERNAL_ERROR;
+        default:
+            break;
         }
 
     case PEER_RETRY:
@@ -1124,7 +1136,11 @@ static handshake_status_t handshake_status(peer_status_t last_status,
         case PEER_ERROR:
             /* Both peers errored. Return the one that errored first. */
             return client_spoke_last ? SERVER_ERROR : CLIENT_ERROR;
+        default:
+            break;
         }
+    default:
+        break;
     }
     /* Control should never reach here. */
     return INTERNAL_ERROR;
@@ -1478,6 +1494,8 @@ static HANDSHAKE_RESULT *do_handshake_internal(
                 /* Continue. */
                 client_turn ^= 1;
             }
+            break;
+        default:
             break;
         }
     }

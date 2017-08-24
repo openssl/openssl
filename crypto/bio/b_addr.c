@@ -817,6 +817,8 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
             case SOCK_DGRAM:
                 proto = "udp";
                 break;
+            default:
+                break;
             }
 
             if (endp != service && *endp == '\0'

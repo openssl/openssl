@@ -234,6 +234,8 @@ static int rsa_setkey(RSA** key, unsigned char* ctext, int idx)
     case 2:
         clen = key3(*key, ctext);
         break;
+    default:
+        break;
     }
     return clen;
 }

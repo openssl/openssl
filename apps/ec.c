@@ -155,6 +155,8 @@ int ec_main(int argc, char **argv)
         case OPT_CHECK:
             check = 1;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

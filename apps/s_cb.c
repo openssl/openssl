@@ -95,6 +95,8 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
         if (!verify_args.quiet)
             policies_print(ctx);
         break;
+    default:
+        break;
     }
     if (err == X509_V_OK && ok == 2 && !verify_args.quiet)
         policies_print(ctx);
@@ -575,6 +577,8 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
                 case 2:
                     str_details1 = ", fatal";
                     break;
+                default:
+                    break;
                 }
                 str_details2 = lookup((int)bp[1], alert_types, " ???");
             }
@@ -600,10 +604,14 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
                 case 2:
                     str_details1 = ", HeartbeatResponse";
                     break;
+                default:
+                    break;
                 }
             }
             break;
 #endif
+        default:
+            break;
         }
     }
 
@@ -994,6 +1002,8 @@ int args_excert(int opt, SSL_EXCERT **pexc)
         if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &exc->keyform))
             return 0;
         break;
+    default:
+        break;
     }
     return 1;
 
@@ -1289,6 +1299,8 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
     case SSL_SECOP_PEER_CA_MD:
         cert_md = 1;
         break;
+    default:
+        break;
     }
     if (nm != NULL)
         BIO_printf(sdb->out, "%s=", nm);
@@ -1350,6 +1362,8 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
             case TLSEXT_signature_ecdsa:
                 sname = "ECDSA";
                 break;
+            default:
+                break;
             }
 
             BIO_puts(sdb->out, OBJ_nid2sn(nid));
@@ -1359,7 +1373,8 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
                 BIO_printf(sdb->out, ", algid=%d", salg[1]);
             break;
         }
-
+    default:
+        break;
     }
 
     if (show_bits)

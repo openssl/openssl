@@ -358,6 +358,9 @@ static int dane_tlsa_add(SSL_DANE *dane,
             else
                 EVP_PKEY_free(pkey);
             break;
+
+        default:
+            break;
         }
     }
 
@@ -1633,6 +1636,8 @@ static int ssl_io_intern(void *vargs)
         return args->f.func_write(s, buf, num, &s->asyncrw);
     case OTHERFUNC:
         return args->f.func_other(s);
+    default:
+        break;
     }
     return -1;
 }
@@ -4582,6 +4587,8 @@ int ssl_validate_ct(SSL *s)
         case DANETLS_USAGE_DANE_TA:
         case DANETLS_USAGE_DANE_EE:
             return 1;
+        default:
+            break;
         }
     }
 

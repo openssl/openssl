@@ -192,6 +192,8 @@ int pkeyutl_main(int argc, char **argv)
                 goto end;
             }
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();
@@ -380,6 +382,8 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     case KEY_NONE:
         break;
 
+    default:
+        break;
     }
 
 #ifndef OPENSSL_NO_ENGINE
@@ -430,6 +434,9 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
 
     case EVP_PKEY_OP_DERIVE:
         rv = EVP_PKEY_derive_init(ctx);
+        break;
+
+    default:
         break;
     }
 
@@ -492,6 +499,9 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 
     case EVP_PKEY_OP_DERIVE:
         rv = EVP_PKEY_derive(ctx, out, poutlen);
+        break;
+
+    default:
         break;
 
     }

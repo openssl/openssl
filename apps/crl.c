@@ -173,6 +173,8 @@ int crl_main(int argc, char **argv)
         case OPT_MD:
             if (!opt_md(opt_unknown(), &digest))
                 goto opthelp;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

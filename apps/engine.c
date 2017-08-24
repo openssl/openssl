@@ -351,6 +351,8 @@ int engine_main(int argc, char **argv)
         case OPT_POST:
             sk_OPENSSL_STRING_push(post_cmds, opt_arg());
             break;
+        default:
+            break;
         }
     }
 

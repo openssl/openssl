@@ -211,6 +211,8 @@ int SipHash_Final(SIPHASH *ctx, unsigned char *out, size_t outlen)
         b |= ((uint64_t)ctx->leavings[0]);
     case 0:
         break;
+    default:
+        break;
     }
 
     v3 ^= b;

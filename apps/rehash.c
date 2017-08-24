@@ -486,6 +486,8 @@ int rehash_main(int argc, char **argv)
         case OPT_VERBOSE:
             verbose = 1;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

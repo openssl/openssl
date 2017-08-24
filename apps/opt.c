@@ -602,6 +602,8 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
     case OPT_V_ALLOW_PROXY_CERTS:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_ALLOW_PROXY_CERTS);
         break;
+    default:
+        break;
     }
     return 1;
 
@@ -833,6 +835,8 @@ static const char *valtype2param(const OPTIONS *o)
         return "intmax";
     case 'U':
         return "uintmax";
+    default:
+        break;
     }
     return "parm";
 }

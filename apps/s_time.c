@@ -187,6 +187,8 @@ int s_time_main(int argc, char **argv)
         case OPT_SSL3:
             max_version = SSL3_VERSION;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

@@ -579,6 +579,8 @@ int cms_main(int argc, char **argv)
         case OPT_AES256_WRAP:
             wrap_cipher = EVP_aes_256_wrap();
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

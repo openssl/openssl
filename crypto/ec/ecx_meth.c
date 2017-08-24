@@ -506,6 +506,8 @@ static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_DIGESTINIT:
         return 1;
+    default:
+        break;
     }
     return -2;
 }

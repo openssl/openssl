@@ -104,6 +104,8 @@ static void do_ssl_shutdown(SSL *ssl)
             case SSL_ERROR_WANT_ASYNC_JOB:
                 /* We just do busy waiting. Nothing clever */
                 continue;
+            default:
+                break;
             }
             ret = 0;
         }
@@ -1444,6 +1446,8 @@ int s_client_main(int argc, char **argv)
         case OPT_EARLY_DATA:
             early_data_file = opt_arg();
             break;
+        default:
+            break;
         }
     }
     if (count4or6 >= 2) {
@@ -2597,6 +2601,8 @@ int s_client_main(int argc, char **argv)
             mbuf_len = 0;
         }
         break;
+    default:
+        break;
     }
 
     if (early_data_file != NULL
@@ -2818,6 +2824,8 @@ int s_client_main(int argc, char **argv)
             case SSL_ERROR_SSL:
                 ERR_print_errors(bio_err);
                 goto shut;
+            default:
+                break;
             }
         }
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_VMS)
@@ -2905,6 +2913,8 @@ int s_client_main(int argc, char **argv)
             case SSL_ERROR_SSL:
                 ERR_print_errors(bio_err);
                 goto shut;
+            default:
+                break;
             }
         }
 /* OPENSSL_SYS_MSDOS includes OPENSSL_SYS_WINDOWS */
@@ -3210,6 +3220,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
             BIO_printf(bio, "Early data was accepted\n");
             break;
 
+        default:
+            break;
         }
     }
 

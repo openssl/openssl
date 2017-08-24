@@ -73,6 +73,8 @@ int rand_main(int argc, char **argv)
         case OPT_HEX:
             format = FORMAT_TEXT;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

@@ -298,6 +298,8 @@ int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
         break;
     case -2:
         X509err(X509_F_X509_CHECK_PRIVATE_KEY, X509_R_UNKNOWN_KEY_TYPE);
+    default:
+        break;
     }
     if (ret > 0)
         return 1;

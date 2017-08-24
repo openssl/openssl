@@ -1095,6 +1095,8 @@ static void setupbio(BIO **res, BIO *bio1, BIO *bio2, int type)
     case USE_BIO_2:
         *res = bio2;
         break;
+    default:
+        break;
     }
 }
 

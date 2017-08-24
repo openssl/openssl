@@ -139,6 +139,8 @@ int OPENSSL_hexchar2int(unsigned char c)
           return 0x0E;
     case 'f': case 'F':
           return 0x0F;
+    default:
+        break;
     }
     return -1;
 }

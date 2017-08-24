@@ -1565,6 +1565,8 @@ int s_server_main(int argc, char *argv[])
         case OPT_EARLY_DATA:
             early_data = 1;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();
@@ -2563,6 +2565,8 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     (void)BIO_flush(bio_s_out);
                     ret = 1;
                     goto err;
+                default:
+                    break;
                 }
                 if (k > 0) {
                     l += k;
@@ -2643,6 +2647,8 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     (void)BIO_flush(bio_s_out);
                     ret = 1;
                     goto err;
+                default:
+                    break;
                 }
             }
         }
@@ -3150,6 +3156,8 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                     break;
                 case 3:
                     dot = (e[0] == '/') ? -1 : 0;
+                    break;
+                default:
                     break;
                 }
                 if (dot == 0)

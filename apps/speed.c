@@ -1065,6 +1065,8 @@ static int run_benchmark(int async_jobs,
             ERR_print_errors(bio_err);
             error = 1;
             break;
+        default:
+            break;
         }
     }
 
@@ -1170,6 +1172,8 @@ static int run_benchmark(int async_jobs,
                 BIO_printf(bio_err, "Failure in the job\n");
                 ERR_print_errors(bio_err);
                 error = 1;
+                break;
+            default:
                 break;
             }
         }
@@ -1408,6 +1412,8 @@ int speed_main(int argc, char **argv)
         case OPT_R_CASES:
             if (!opt_rand(o))
                 goto end;
+            break;
+        default:
             break;
         }
     }

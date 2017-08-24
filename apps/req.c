@@ -327,6 +327,8 @@ int req_main(int argc, char **argv)
                 goto opthelp;
             digest = md_alg;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

@@ -152,6 +152,8 @@ int ciphers_main(int argc, char **argv)
             srp = 1;
 #endif
             break;
+        default:
+            break;
         }
     }
     argv = opt_rest();

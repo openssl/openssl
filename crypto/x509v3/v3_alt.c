@@ -133,6 +133,9 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         if (!X509V3_add_value("Registered ID", oline, &ret))
             return NULL;
         break;
+
+    default:
+        break;
     }
     return ret;
 }
@@ -192,6 +195,9 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
     case GEN_RID:
         BIO_printf(out, "Registered ID:");
         i2a_ASN1_OBJECT(out, gen->d.rid);
+        break;
+
+    default:
         break;
     }
     return 1;

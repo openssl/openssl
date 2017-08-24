@@ -402,6 +402,8 @@ void OSSL_STORE_INFO_free(OSSL_STORE_INFO *info)
         case OSSL_STORE_INFO_CRL:
             X509_CRL_free(info->_.crl);
             break;
+        default:
+            break;
         }
         OPENSSL_free(info);
     }

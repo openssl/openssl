@@ -1255,6 +1255,8 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
     case SSL_CERT_FLAG_SUITEB_192_LOS:
         *prule_str = "ECDHE-ECDSA-AES256-GCM-SHA384";
         break;
+    default:
+        break;
     }
     return 1;
 # else

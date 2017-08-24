@@ -51,6 +51,8 @@
                         case 2: l1|=((DES_LONG)(*(--(c))))<< 8L; \
                         /* fall thru */                          \
                         case 1: l1|=((DES_LONG)(*(--(c))));      \
+                        default: \
+                            break; \
                                 } \
                         }
 
@@ -93,6 +95,8 @@
                         case 2: *(--(c))=(unsigned char)(((l1)>> 8L)&0xff); \
                         /* fall thru */                                     \
                         case 1: *(--(c))=(unsigned char)(((l1)     )&0xff); \
+                        default: \
+                            break; \
                                 } \
                         }
 

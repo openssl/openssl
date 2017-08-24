@@ -176,6 +176,8 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE *o, unsigned long flags)
     case V_OCSP_RESPID_KEY:
         i2a_ASN1_STRING(bp, rid->value.byKey, 0);
         break;
+    default:
+        break;
     }
 
     if (BIO_printf(bp, "\n    Produced At: ") <= 0)

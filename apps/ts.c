@@ -270,6 +270,8 @@ int ts_main(int argc, char **argv)
                 goto end;
             vpmtouched++;
             break;
+        default:
+            break;
         }
     }
     if (mode == OPT_ERR || opt_num_rest() != 0)

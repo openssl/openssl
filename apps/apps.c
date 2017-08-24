@@ -207,6 +207,8 @@ static int ui_read(UI *ui, UI_STRING *uis)
         case UIT_INFO:
         case UIT_ERROR:
             break;
+        default:
+            break;
         }
     }
 
@@ -236,6 +238,8 @@ static int ui_write(UI *ui, UI_STRING *uis)
         case UIT_BOOLEAN:
         case UIT_INFO:
         case UIT_ERROR:
+            break;
+        default:
             break;
         }
     }
@@ -1726,6 +1730,8 @@ int parse_yesno(const char *str, int def)
         case 'Y':              /* YES */
         case '1':              /* 1 */
             return 1;
+        default:
+            break;
         }
     }
     return def;
@@ -2477,6 +2483,8 @@ static const char *modestr(char mode, int format)
         return istext(format) ? "r" : "rb";
     case 'w':
         return istext(format) ? "w" : "wb";
+    default:
+        break;
     }
     /* The assert above should make sure we never reach this point */
     return NULL;
@@ -2491,6 +2499,8 @@ static const char *modeverb(char mode)
         return "reading";
     case 'w':
         return "writing";
+    default:
+        break;
     }
     return "(doing something)";
 }

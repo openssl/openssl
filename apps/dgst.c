@@ -182,6 +182,8 @@ int dgst_main(int argc, char **argv)
                 goto opthelp;
             md = m;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();
