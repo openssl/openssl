@@ -9,6 +9,7 @@
 
 #include "internal/cryptlib.h"
 #include "eng_int.h"
+#include "internal/thread.h"
 
 void ENGINE_load_builtin_engines(void)
 {

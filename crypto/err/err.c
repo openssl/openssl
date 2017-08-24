@@ -19,6 +19,7 @@
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/opensslconf.h>
+#include "internal/thread.h"
 #include "internal/thread_once.h"
 
 static int err_load_strings(const ERR_STRING_DATA *str);

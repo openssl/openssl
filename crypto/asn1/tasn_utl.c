@@ -15,6 +15,7 @@
 #include <openssl/objects.h>
 #include <openssl/err.h>
 #include "asn1_locl.h"
+#include "internal/thread.h"
 
 /* Utility functions for manipulating fields and offsets */
 

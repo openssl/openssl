@@ -9,10 +9,14 @@
 
 #include "eng_int.h"
 #include <openssl/rand.h>
+#include "internal/thread.h"
 #include "internal/refcount.h"
 
-CRYPTO_RWLOCK *global_engine_lock;
+/* Once initialisation function */
+extern CRYPTO_ONCE engine_lock_init;
+DECLARE_RUN_ONCE(do_engine_lock_init)
 
+CRYPTO_RWLOCK *global_engine_lock;
 CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
 
 /* The "new"/"free" stuff first */

@@ -39,6 +39,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <string.h>
 # include <openssl/err.h>
 # include "ec_lcl.h"
+# include "internal/thread.h"
 
 # if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
   /* even with gcc, the typedef won't work for 32-bit platforms */

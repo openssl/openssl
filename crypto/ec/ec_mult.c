@@ -12,6 +12,7 @@
 #include <openssl/err.h>
 
 #include "internal/cryptlib.h"
+#include "internal/thread.h"
 #include "internal/bn_int.h"
 #include "ec_lcl.h"
 

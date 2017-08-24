@@ -13,7 +13,9 @@
 
 #include <openssl/err.h>
 #include <openssl/lhash.h>
+#include <openssl/ossl_typ.h>
 #include "store_locl.h"
+#include "internal/thread.h"
 
 static CRYPTO_RWLOCK *registry_lock;
 static CRYPTO_ONCE registry_init = CRYPTO_ONCE_STATIC_INIT;

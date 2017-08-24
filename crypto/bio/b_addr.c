@@ -16,6 +16,7 @@
 #ifndef OPENSSL_NO_SOCK
 #include <openssl/err.h>
 #include <openssl/buffer.h>
+#include "internal/thread.h"
 #include "internal/thread_once.h"
 
 CRYPTO_RWLOCK *bio_lookup_lock;

@@ -13,6 +13,7 @@
 #include <openssl/opensslconf.h>
 #include "internal/rand_int.h"
 #include <openssl/engine.h>
+#include "internal/thread.h"
 #include "internal/thread_once.h"
 #include "rand_lcl.h"
 

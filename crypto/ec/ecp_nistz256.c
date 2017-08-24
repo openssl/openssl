@@ -20,6 +20,7 @@
 
 #include "internal/cryptlib.h"
 #include "internal/bn_int.h"
+#include "internal/thread.h"
 #include "ec_lcl.h"
 
 #if BN_BITS2 != 64

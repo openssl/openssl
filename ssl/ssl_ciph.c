@@ -16,6 +16,7 @@
 #include <openssl/engine.h>
 #include <openssl/crypto.h>
 #include "ssl_locl.h"
+#include "internal/thread.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
 

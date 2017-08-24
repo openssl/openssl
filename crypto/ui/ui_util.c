@@ -8,6 +8,8 @@
  */
 
 #include <string.h>
+#include <openssl/ossl_typ.h>
+#include "internal/thread.h"
 #include "internal/thread_once.h"
 #include "ui_locl.h"
 

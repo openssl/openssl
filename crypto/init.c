@@ -22,6 +22,7 @@
 #include "internal/objects.h"
 #include <stdlib.h>
 #include <assert.h>
+#include "internal/thread.h"
 #include "internal/thread_once.h"
 #include "internal/dso.h"
 #include "internal/store.h"
