@@ -168,9 +168,9 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
 
 end:
     if (entropy != NULL && drbg->cleanup_entropy != NULL)
-        drbg->cleanup_entropy(drbg, entropy);
+        drbg->cleanup_entropy(drbg, entropy, entropylen);
     if (nonce != NULL && drbg->cleanup_nonce!= NULL )
-        drbg->cleanup_nonce(drbg, nonce);
+        drbg->cleanup_nonce(drbg, nonce, noncelen);
     if (drbg->state == DRBG_READY)
         return 1;
     return 0;
@@ -229,7 +229,7 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
 
 end:
     if (entropy != NULL && drbg->cleanup_entropy != NULL)
-        drbg->cleanup_entropy(drbg, entropy);
+        drbg->cleanup_entropy(drbg, entropy, entropylen);
     if (drbg->state == DRBG_READY)
         return 1;
     return 0;
