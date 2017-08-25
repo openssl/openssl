@@ -757,6 +757,7 @@ static int test_tlsext_status_type(void)
 }
 #endif
 
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
 static int new_called, remove_called, get_called;
 
 static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
@@ -785,16 +786,15 @@ static SSL_SESSION *get_session_cb(SSL *ssl, const unsigned char *id, int len,
     return get_sess_val;
 }
 
-
 static int execute_test_session(int maxprot, int use_int_cache,
                                 int use_ext_cache)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl1 = NULL, *clientssl1 = NULL;
     SSL *serverssl2 = NULL, *clientssl2 = NULL;
-#ifndef OPENSSL_NO_TLS1_1
+# ifndef OPENSSL_NO_TLS1_1
     SSL *serverssl3 = NULL, *clientssl3 = NULL;
-#endif
+# endif
     SSL_SESSION *sess1 = NULL, *sess2 = NULL;
     int testresult = 0;
 
@@ -918,7 +918,7 @@ static int execute_test_session(int maxprot, int use_int_cache,
             && (!TEST_int_eq(new_called, 0) || !TEST_int_eq(remove_called, 1)))
         goto end;
 
-#if !defined(OPENSSL_NO_TLS1_1)
+# if !defined(OPENSSL_NO_TLS1_1)
     new_called = remove_called = 0;
     /* Force a connection failure */
     SSL_CTX_set_max_proto_version(sctx, TLS1_1_VERSION);
@@ -938,7 +938,7 @@ static int execute_test_session(int maxprot, int use_int_cache,
     /* Should succeed because it should not already be in the cache */
     if (use_int_cache && !TEST_true(SSL_CTX_add_session(cctx, sess2)))
         goto end;
-#endif
+# endif
 
     /* Now do some tests for server side caching */
     if (use_ext_cache) {
@@ -1035,10 +1035,10 @@ static int execute_test_session(int maxprot, int use_int_cache,
     SSL_free(clientssl1);
     SSL_free(serverssl2);
     SSL_free(clientssl2);
-#ifndef OPENSSL_NO_TLS1_1
+# ifndef OPENSSL_NO_TLS1_1
     SSL_free(serverssl3);
     SSL_free(clientssl3);
-#endif
+# endif
     SSL_SESSION_free(sess1);
     SSL_SESSION_free(sess2);
     SSL_CTX_free(sctx);
@@ -1046,6 +1046,7 @@ static int execute_test_session(int maxprot, int use_int_cache,
 
     return testresult;
 }
+#endif /* !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) */
 
 static int test_session_with_only_int_cache(void)
 {
