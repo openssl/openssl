@@ -274,6 +274,51 @@ static int test_table_neg_64bit(int idx)
     return test_table(tbl_testdata_neg_64bit, idx);
 }
 
+struct compare_testdata {
+    ASN1_TIME t1;
+    ASN1_TIME t2;
+    int result;
+};
+
+static unsigned char TODAY_GEN_STR[] = "20170825000000Z";
+static unsigned char TOMORROW_GEN_STR[] = "20170826000000Z";
+static unsigned char TODAY_UTC_STR[] = "170825000000Z";
+static unsigned char TOMORROW_UTC_STR[] = "170826000000Z";
+
+#define TODAY_GEN    { sizeof(TODAY_GEN_STR)-1, V_ASN1_GENERALIZEDTIME, TODAY_GEN_STR, 0 }
+#define TOMORROW_GEN { sizeof(TOMORROW_GEN_STR)-1, V_ASN1_GENERALIZEDTIME, TOMORROW_GEN_STR, 0 }
+#define TODAY_UTC    { sizeof(TODAY_UTC_STR)-1, V_ASN1_UTCTIME, TODAY_UTC_STR, 0 }
+#define TOMORROW_UTC { sizeof(TOMORROW_UTC_STR)-1, V_ASN1_UTCTIME, TOMORROW_UTC_STR, 0 }
+
+static struct compare_testdata tbl_compare_testdata[] = {
+    { TODAY_GEN,    TODAY_GEN,     0 },
+    { TODAY_GEN,    TODAY_UTC,     0 },
+    { TODAY_GEN,    TOMORROW_GEN, -1 },
+    { TODAY_GEN,    TOMORROW_UTC, -1 },
+
+    { TODAY_UTC,    TODAY_GEN,     0 },
+    { TODAY_UTC,    TODAY_UTC,     0 },
+    { TODAY_UTC,    TOMORROW_GEN, -1 },
+    { TODAY_UTC,    TOMORROW_UTC, -1 },
+
+    { TOMORROW_GEN, TODAY_GEN,     1 },
+    { TOMORROW_GEN, TODAY_UTC,     1 },
+    { TOMORROW_GEN, TOMORROW_GEN,  0 },
+    { TOMORROW_GEN, TOMORROW_UTC,  0 },
+
+    { TOMORROW_UTC, TODAY_GEN,     1 },
+    { TOMORROW_UTC, TODAY_UTC,     1 },
+    { TOMORROW_UTC, TOMORROW_GEN,  0 },
+    { TOMORROW_UTC, TOMORROW_UTC,  0 }
+};
+
+static int test_table_compare(int idx)
+{
+    struct compare_testdata *td = &tbl_compare_testdata[idx];
+
+    return TEST_int_eq(ASN1_TIME_compare(&td->t1, &td->t2), td->result);
+}
+
 int setup_tests(void)
 {
     /*
@@ -305,5 +350,6 @@ int setup_tests(void)
             ADD_ALL_TESTS(test_table_neg_64bit, OSSL_NELEM(tbl_testdata_neg_64bit));
         }
     }
+    ADD_ALL_TESTS(test_table_compare, OSSL_NELEM(tbl_compare_testdata));
     return 1;
 }
