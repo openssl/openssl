@@ -91,7 +91,6 @@ extern "C" {
 # endif
 
 # if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
-#  define NO_SYS_PARAM_H
 #  define NO_CHMOD
 #  define NO_SYSLOG
 # endif
@@ -113,7 +112,6 @@ extern "C" {
 # endif
 
 # ifdef WIN32
-#  define NO_SYS_UN_H
 #  undef get_last_sys_error
 #  undef clear_sys_error
 #  define get_last_sys_error()    GetLastError()
@@ -129,10 +127,6 @@ extern "C" {
 #  ifdef __DJGPP__
 #   include <unistd.h>
 #   include <sys/stat.h>
-#   include <sys/socket.h>
-#   include <sys/un.h>
-#   include <tcp.h>
-#   include <netdb.h>
 #   define _setmode setmode
 #   define _O_TEXT O_TEXT
 #   define _O_BINARY O_BINARY
@@ -310,9 +304,6 @@ extern FILE *_imp___iob;
      -- Richard Levitte
   */
 #   define EXIT(n)  exit((n) ? (((n) << 3) | 2 | 0x10000000 | 0x35a000) : 1)
-
-#   define NO_SYS_PARAM_H
-#   define NO_SYS_UN_H
 
 #   define DEFAULT_HOME "SYS$LOGIN:"
 
