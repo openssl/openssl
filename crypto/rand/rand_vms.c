@@ -54,7 +54,7 @@ static struct items_data_st {
     {0, 0}
 };
 
-int RAND_poll_ex(RAND_poll_fn cb, void *arg)
+int RAND_poll_ex(RAND_poll_cb rand_add, void *arg)
 {
     /* determine the number of items in the JPI array */
     struct items_data_st item_entry;
@@ -113,7 +113,7 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
     total_length += (tmp_length - 1);
 
     /* size of seed is total_length*4 bytes (64bytes) */
-    cb(arg, (PTR_T)data_buffer, total_length * 4, total_length * 2);
+    rand_add(arg, (PTR_T)data_buffer, total_length * 4, total_length * 2);
     return 1;
 }
 

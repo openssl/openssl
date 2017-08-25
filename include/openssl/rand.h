@@ -61,10 +61,10 @@ int RAND_egd(const char *path);
 int RAND_egd_bytes(const char *path, int bytes);
 # endif
 
-typedef void (*RAND_poll_fn)(void *arg,
+typedef void (*RAND_poll_cb)(void *arg,
                              const void *buf, int num, double randomness);
 int RAND_poll(void);
-int RAND_poll_ex(RAND_poll_fn cb, void *arg);
+int RAND_poll_ex(RAND_poll_cb rand_add, void *arg);
 
 # if defined(_WIN32) && (defined(BASETYPES) || defined(_WINDEF_H))
 /* application has to include <windows.h> in order to use these */

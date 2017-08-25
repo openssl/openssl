@@ -153,8 +153,8 @@ extern RAND_DRBG priv_drbg;
 extern int rand_fork_count;
 
 /* Hardware-based seeding functions. */
-void rand_read_tsc(RAND_poll_fn cb, void *arg);
-int rand_read_cpu(RAND_poll_fn cb, void *arg);
+void rand_read_tsc(RAND_poll_cb rand_add, void *arg);
+int rand_read_cpu(RAND_poll_cb rand_add, void *arg);
 
 /* DRBG entropy callbacks. */
 void drbg_release_entropy(RAND_DRBG *drbg, unsigned char *out);
