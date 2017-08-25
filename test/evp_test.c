@@ -1639,6 +1639,13 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
     KDF_DATA *kdata;
     int kdf_nid = OBJ_sn2nid(name);
 
+#ifdef OPENSSL_NO_SCRYPT
+    if (strcmp(name, "scrypt") == 0) {
+        t->skip = 1;
+        return 1;
+    }
+#endif
+
     if (kdf_nid == NID_undef)
         kdf_nid = OBJ_ln2nid(name);
 
