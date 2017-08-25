@@ -704,7 +704,8 @@
      compiler optimization flags from the CFLAGS line in Makefile and
      run "make clean; make" or corresponding.
 
-     Please send bug reports to <rt@openssl.org>.
+     To report a bug please open an issue on GitHub, at
+     https://github.com/openssl/openssl/issues.
 
      For more details on how the make variables TESTS can be used,
      see section TESTS in Detail below.
