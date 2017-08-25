@@ -10,24 +10,39 @@
 
 #ifndef HEADER_OPENSSL_SOCKETS
 
+# if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
+#  define NO_SYS_PARAM_H
+# endif
+# ifdef WIN32
+#  define NO_SYS_UN_H
+# endif
+# ifdef OPENSSL_SYS_VMS
+#  define NO_SYS_PARAM_H
+#  define NO_SYS_UN_H
+# endif
+
 # ifdef OPENSSL_NO_SOCK
 
 # elif defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
-#  if !defined(__DJGPP__)
-#   if defined(_WIN32_WCE) && _WIN32_WCE<410
-#    define getservbyname _masked_declaration_getservbyname
-#   endif
-#   if !defined(IPPROTO_IP)
-     /* winsock[2].h was included already? */
-#    include <winsock.h>
-#   endif
-#   ifdef getservbyname
+#  if defined(__DJGPP__)
+#   include <sys/socket.h>
+#   include <sys/un.h>
+#   include <tcp.h>
+#   include <netdb.h>
+#  elif defined(_WIN32_WCE) && _WIN32_WCE<410
+#   define getservbyname _masked_declaration_getservbyname
+#  endif
+#  if !defined(IPPROTO_IP)
+    /* winsock[2].h was included already? */
+#   include <winsock.h>
+#  endif
+#  ifdef getservbyname
      /* this is used to be wcecompat/include/winsock_extras.h */
-#    undef getservbyname
+#   undef getservbyname
 struct servent *PASCAL getservbyname(const char *, const char *);
-#   endif
+#  endif
 
-#   ifdef _WIN64
+#  ifdef _WIN64
 /*
  * Even though sizeof(SOCKET) is 8, it's safe to cast it to int, because
  * the value constitutes an index in per-process table of limited size
@@ -35,10 +50,8 @@ struct servent *PASCAL getservbyname(const char *, const char *);
  * Windows run on happen to be two's-complement, which allows to
  * interchange INVALID_SOCKET and -1.
  */
-#    define socket(d,t,p)   ((int)socket(d,t,p))
-#    define accept(s,f,l)   ((int)accept(s,f,l))
-#   endif
-#  else
+#   define socket(d,t,p)   ((int)socket(d,t,p))
+#   define accept(s,f,l)   ((int)accept(s,f,l))
 #  endif
 
 # else
