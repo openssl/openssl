@@ -202,15 +202,19 @@ static int test_bio_enc_aes_256_ofb(int idx)
     return do_test_bio_cipher(EVP_aes_256_ofb(), idx);
 }
 
+# ifndef OPENSSL_NO_CHACHA
 static int test_bio_enc_chacha20(int idx)
 {
     return do_test_bio_cipher(EVP_chacha20(), idx);
 }
 
+#  ifndef OPENSSL_NO_POLY1305
 static int test_bio_enc_chacha20_poly1305(int idx)
 {
     return do_test_bio_cipher(EVP_chacha20_poly1305(), idx);
 }
+#  endif
+# endif
 
 int setup_tests(void)
 {
