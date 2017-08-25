@@ -8,6 +8,7 @@
  */
 
 #include "eng_int.h"
+#include <stdio.h>
 
 /*
  * When querying a ENGINE-specific control command's 'description', this
