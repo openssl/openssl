@@ -30,19 +30,19 @@
 #   include <tcp.h>
 #   include <netdb.h>
 #  elif defined(_WIN32_WCE) && _WIN32_WCE<410
-#    define getservbyname _masked_declaration_getservbyname
-#   endif
-#   if !defined(IPPROTO_IP)
-     /* winsock[2].h was included already? */
-#    include <winsock.h>
-#   endif
-#   ifdef getservbyname
+#   define getservbyname _masked_declaration_getservbyname
+#  endif
+#  if !defined(IPPROTO_IP)
+    /* winsock[2].h was included already? */
+#   include <winsock.h>
+#  endif
+#  ifdef getservbyname
      /* this is used to be wcecompat/include/winsock_extras.h */
-#    undef getservbyname
+#   undef getservbyname
 struct servent *PASCAL getservbyname(const char *, const char *);
-#   endif
+#  endif
 
-#   ifdef _WIN64
+#  ifdef _WIN64
 /*
  * Even though sizeof(SOCKET) is 8, it's safe to cast it to int, because
  * the value constitutes an index in per-process table of limited size
@@ -50,9 +50,8 @@ struct servent *PASCAL getservbyname(const char *, const char *);
  * Windows run on happen to be two's-complement, which allows to
  * interchange INVALID_SOCKET and -1.
  */
-#    define socket(d,t,p)   ((int)socket(d,t,p))
-#    define accept(s,f,l)   ((int)accept(s,f,l))
-#   endif
+#   define socket(d,t,p)   ((int)socket(d,t,p))
+#   define accept(s,f,l)   ((int)accept(s,f,l))
 #  endif
 
 # else
