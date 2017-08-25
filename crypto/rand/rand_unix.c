@@ -178,11 +178,11 @@ int RAND_poll_ex(RAND_poll_cb rand_add, void *arg)
 #   endif
 
 #   ifdef OPENSSL_RAND_SEED_RDTSC
-    rand_read_tsc(cb, arg);
+    rand_read_tsc(rand_add, arg);
 #   endif
 
 #   ifdef OPENSSL_RAND_SEED_RDCPU
-    if (rand_read_cpu(cb, arg))
+    if (rand_read_cpu(rand_add, arg))
         goto done;
 #   endif
 
