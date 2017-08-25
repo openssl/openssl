@@ -39,7 +39,7 @@
 #  define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
 # endif
 
-int RAND_poll_ex(RAND_poll_fn cb, void *arg)
+int RAND_poll_ex(RAND_poll_cb rand_add, void *arg)
 {
 # ifndef USE_BCRYPTGENRANDOM
     HCRYPTPROV hProvider;
@@ -58,7 +58,7 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
 # ifdef USE_BCRYPTGENRANDOM
     if (BCryptGenRandom(NULL, buf, (ULONG)sizeof(buf),
                         BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS) {
-        cb(arg, buf, sizeof(buf), sizeof(buf));
+        rand_add(arg, buf, sizeof(buf), sizeof(buf));
         return 1;
     }
 # else
@@ -66,7 +66,7 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
     if (CryptAcquireContextW(&hProvider, NULL, NULL, PROV_RSA_FULL,
                              CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
         if (CryptGenRandom(hProvider, (DWORD)sizeof(buf), buf) != 0) {
-            cb(arg, buf, sizeof(buf), sizeof(buf));
+            rand_add(arg, buf, sizeof(buf), sizeof(buf));
             ok = 1;
         }
         CryptReleaseContext(hProvider, 0);
@@ -78,7 +78,7 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
     if (CryptAcquireContextW(&hProvider, NULL, INTEL_DEF_PROV, PROV_INTEL_SEC,
                              CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
         if (CryptGenRandom(hProvider, (DWORD)sizeof(buf), buf) != 0) {
-            cb(arg, buf, sizeof(buf), sizeof(buf));
+            rand_add(arg, buf, sizeof(buf), sizeof(buf));
             ok = 1;
         }
         CryptReleaseContext(hProvider, 0);

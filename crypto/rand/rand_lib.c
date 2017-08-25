@@ -42,7 +42,7 @@ int rand_fork_count;
  * it's not sufficient to indicate whether or not the seeding was
  * done.
  */
-void rand_read_tsc(RAND_poll_fn cb, void *arg)
+void rand_read_tsc(RAND_poll_cb rand_add, void *arg)
 {
     unsigned char c;
     int i;
@@ -50,7 +50,7 @@ void rand_read_tsc(RAND_poll_fn cb, void *arg)
     if ((OPENSSL_ia32cap_P[0] & (1 << 4)) != 0) {
         for (i = 0; i < TSC_READ_COUNT; i++) {
             c = (unsigned char)(OPENSSL_rdtsc() & 0xFF);
-            cb(arg, &c, 1, 0.5);
+            rand_add(arg, &c, 1, 0.5);
         }
     }
 }
@@ -62,14 +62,14 @@ size_t OPENSSL_ia32_rdrand_bytes(char *buf, size_t len);
 
 extern unsigned int OPENSSL_ia32cap_P[];
 
-int rand_read_cpu(RAND_poll_fn cb, void *arg)
+int rand_read_cpu(RAND_poll_cb rand_add, void *arg)
 {
     char buff[RANDOMNESS_NEEDED];
 
     /* If RDSEED is available, use that. */
     if ((OPENSSL_ia32cap_P[2] & (1 << 18)) != 0) {
         if (OPENSSL_ia32_rdseed_bytes(buff, sizeof(buff)) == sizeof(buff)) {
-            cb(arg, buff, (int)sizeof(buff), sizeof(buff));
+            rand_add(arg, buff, (int)sizeof(buff), sizeof(buff));
             return 1;
         }
     }
@@ -77,7 +77,7 @@ int rand_read_cpu(RAND_poll_fn cb, void *arg)
     /* Second choice is RDRAND. */
     if ((OPENSSL_ia32cap_P[1] & (1 << (62 - 32))) != 0) {
         if (OPENSSL_ia32_rdrand_bytes(buff, sizeof(buff)) == sizeof(buff)) {
-            cb(arg, buff, (int)sizeof(buff), sizeof(buff));
+            rand_add(arg, buff, (int)sizeof(buff), sizeof(buff));
             return 1;
         }
     }
