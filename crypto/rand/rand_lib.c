@@ -105,20 +105,14 @@ size_t drbg_entropy_from_system(RAND_DRBG *drbg,
                                 int entropy, size_t min_len, size_t max_len)
 {
     int i;
-
+    unsigned char *randomness;
 
     if (min_len > (size_t)drbg->size) {
         /* Should not happen.  See comment near RANDOMNESS_NEEDED. */
         min_len = drbg->size;
     }
 
-    if (drbg->filled) {
-        /* Re-use what we have. */
-        *pout = drbg->randomness;
-        return drbg->size;
-    }
-
-    drbg->randomness = drbg->secure ? OPENSSL_secure_malloc(drbg->size)
+    randomness = drbg->secure ? OPENSSL_secure_malloc(drbg->size)
                                     : OPENSSL_malloc(drbg->size);
 
     /* If we don't have enough, try to get more. */
@@ -133,15 +127,14 @@ size_t drbg_entropy_from_system(RAND_DRBG *drbg,
     if (min_len > rand_bytes.curr)
         min_len = rand_bytes.curr;
     if (min_len != 0) {
-        memcpy(drbg->randomness, rand_bytes.buff, min_len);
-        drbg->filled = 1;
+        memcpy(randomness, rand_bytes.buff, min_len);
         /* Update amount left and shift it down. */
         rand_bytes.curr -= min_len;
         if (rand_bytes.curr != 0)
             memmove(rand_bytes.buff, &rand_bytes.buff[min_len], rand_bytes.curr);
     }
     CRYPTO_THREAD_unlock(rand_bytes.lock);
-    *pout = drbg->randomness;
+    *pout = randomness;
     return min_len;
 }
 
@@ -150,33 +143,33 @@ size_t drbg_entropy_from_parent(RAND_DRBG *drbg,
                                 int entropy, size_t min_len, size_t max_len)
 {
     int st;
-
+    unsigned char *randomness;
+    
     if (min_len > (size_t)drbg->size) {
         /* Should not happen.  See comment near RANDOMNESS_NEEDED. */
         min_len = drbg->size;
     }
 
-    drbg->randomness = drbg->secure ? OPENSSL_secure_malloc(drbg->size)
+    randomness = drbg->secure ? OPENSSL_secure_malloc(drbg->size)
                                     : OPENSSL_malloc(drbg->size);
 
     /* Get random from parent, include our state as additional input. */
-    st = RAND_DRBG_generate(drbg->parent, drbg->randomness, min_len, 0,
+    st = RAND_DRBG_generate(drbg->parent, randomness, min_len, 0,
                             (unsigned char *)drbg, sizeof(*drbg));
-    if (st == 0)
+    if (st == 0) {
+        drbg_release_entropy(drbg, randomness, min_len);
         return 0;
-    drbg->filled = 1;
-    *pout = drbg->randomness;
+    }
+    *pout = randomness;
     return min_len;
 }
 
-void drbg_release_entropy(RAND_DRBG *drbg, unsigned char *out)
+void drbg_release_entropy(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
 {
-    drbg->filled = 0;
     if (drbg->secure)
-        OPENSSL_secure_clear_free(drbg->randomness, drbg->size);
+        OPENSSL_secure_clear_free(out, outlen);
     else
-        OPENSSL_clear_free(drbg->randomness, drbg->size);
-    drbg->randomness = NULL;
+        OPENSSL_clear_free(out, outlen);
 }
 
 
@@ -191,7 +184,6 @@ static int setup_drbg(RAND_DRBG *drbg)
     ret &= drbg->lock != NULL;
     drbg->size = RANDOMNESS_NEEDED;
     drbg->secure = CRYPTO_secure_malloc_initialized();
-    drbg->randomness = NULL;
     /* If you change these parameters, see RANDOMNESS_NEEDED */
     ret &= RAND_DRBG_set(drbg,
                          NID_aes_128_ctr, RAND_DRBG_FLAG_CTR_USE_DF) == 1;

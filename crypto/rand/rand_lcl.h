@@ -94,14 +94,12 @@ struct rand_drbg_st {
     int nid; /* the underlying algorithm */
     int fork_count;
     unsigned short flags; /* various external flags */
-    char filled;
     char secure;
     /*
      * This is a fixed-size buffer, but we malloc to make it a little
      * harder to find; a classic security/performance trade-off.
      */
     int size;
-    unsigned char *randomness;
 
     /* 
      * The following parameters are setup by the per-type "init" function.
@@ -157,7 +155,7 @@ void rand_read_tsc(RAND_poll_cb rand_add, void *arg);
 int rand_read_cpu(RAND_poll_cb rand_add, void *arg);
 
 /* DRBG entropy callbacks. */
-void drbg_release_entropy(RAND_DRBG *drbg, unsigned char *out);
+void drbg_release_entropy(RAND_DRBG *drbg, unsigned char *out, size_t outlen);
 size_t drbg_entropy_from_parent(RAND_DRBG *drbg,
                                 unsigned char **pout,
                                 int entropy, size_t min_len, size_t max_len);
