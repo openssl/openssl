@@ -9,12 +9,9 @@
  */
 
 #include <stdio.h>
+#include <sys/types.h>
 
 #include "e_os.h"
-#ifndef NO_SYS_TYPES_H
-# include <sys/types.h>
-#endif
-
 #include "internal/o_dir.h"
 #include <openssl/lhash.h>
 #include <openssl/bio.h>

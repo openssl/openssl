@@ -323,9 +323,7 @@ extern FILE *_imp___iob;
 #   else
 #    include <unistd.h>
 #   endif
-#   ifndef NO_SYS_TYPES_H
-#    include <sys/types.h>
-#   endif
+#   include <sys/types.h>
 #   ifdef OPENSSL_SYS_WIN32_CYGWIN
 #    include <io.h>
 #    include <fcntl.h>
