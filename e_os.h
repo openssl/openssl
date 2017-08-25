@@ -153,7 +153,6 @@ extern "C" {
 #  if !defined(WINNT) && !defined(__DJGPP__)
 #   define NO_SYSLOG
 #  endif
-#  define NO_DIRENT
 
 #  ifdef WINDOWS
 #   if !defined(_WIN32_WCE) && !defined(_WIN32_WINNT)
