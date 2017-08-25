@@ -13,7 +13,12 @@
 # ifdef OPENSSL_NO_SOCK
 
 # elif defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
-#  if !defined(__DJGPP__)
+#  if defined(__DJGPP__)
+#   include <sys/socket.h>
+#   include <sys/un.h>
+#   include <tcp.h>
+#   include <netdb.h>
+#  else
 #   if defined(_WIN32_WCE) && _WIN32_WCE<410
 #    define getservbyname _masked_declaration_getservbyname
 #   endif
@@ -38,7 +43,6 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #    define socket(d,t,p)   ((int)socket(d,t,p))
 #    define accept(s,f,l)   ((int)accept(s,f,l))
 #   endif
-#  else
 #  endif
 
 # else

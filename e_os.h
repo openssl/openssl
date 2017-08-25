@@ -129,18 +129,14 @@ extern "C" {
 #  ifdef __DJGPP__
 #   include <unistd.h>
 #   include <sys/stat.h>
-#   include <sys/socket.h>
-#   include <sys/un.h>
-#   include <tcp.h>
-#   include <netdb.h>
 #   define _setmode setmode
 #   define _O_TEXT O_TEXT
 #   define _O_BINARY O_BINARY
 #   define HAS_LFN_SUPPORT(name)  (pathconf((name), _PC_NAME_MAX) > 12)
-#   undef DEVRANDOM_EGD  /*  Neither MS-DOS nor FreeDOS provide 'egd' sockets.  */
+#   undef DEVRANDOM_EGD
 #   undef DEVRANDOM
 #   define DEVRANDOM "/dev/urandom\x24"
-#  endif                        /* __DJGPP__ */
+#  endif
 
 #  ifndef S_IFDIR
 #   define S_IFDIR     _S_IFDIR
