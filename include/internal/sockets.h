@@ -8,7 +8,8 @@
  */
 
 
-#ifndef HEADER_OPENSSL_SOCKETS
+#ifndef HEADER_INTERNAL_SOCKETS
+# define HEADER_INTERNAL_SOCKETS
 
 # if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
 #  define NO_SYS_PARAM_H
@@ -125,38 +126,37 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  endif
 # endif
 
+# define get_last_socket_error() errno
+# define clear_socket_error()    errno=0
+
+# if defined(OPENSSL_SYS_WINDOWS)
+#  undef get_last_socket_error
+#  undef clear_socket_error
+#  define get_last_socket_error() WSAGetLastError()
+#  define clear_socket_error()    WSASetLastError(0)
+#  define readsocket(s,b,n)       recv((s),(b),(n),0)
+#  define writesocket(s,b,n)      send((s),(b),(n),0)
+# elif defined(__DJGPP__)
+#  define WATT32
+#  define WATT32_NO_OLDIES
+#  define closesocket(s)          close_s(s)
+#  define readsocket(s,b,n)       read_s(s,b,n)
+#  define writesocket(s,b,n)      send(s,b,n,0)
+# elif defined(OPENSSL_SYS_VMS)
+#  define ioctlsocket(a,b,c)      ioctl(a,b,c)
+#  define closesocket(s)          close(s)
+#  define readsocket(s,b,n)       recv((s),(b),(n),0)
+#  define writesocket(s,b,n)      send((s),(b),(n),0)
+# elif defined(OPENSSL_SYS_VXWORKS)
+#  define ioctlsocket(a,b,c)          ioctl((a),(b),(int)(c))
+#  define closesocket(s)              close(s)
+#  define readsocket(s,b,n)           read((s),(b),(n))
+#  define writesocket(s,b,n)          write((s),(char *)(b),(n))
+# else
+#  define ioctlsocket(a,b,c)      ioctl(a,b,c)
+#  define closesocket(s)          close(s)
+#  define readsocket(s,b,n)       read((s),(b),(n))
+#  define writesocket(s,b,n)      write((s),(b),(n))
+# endif
+
 #endif
-
-#define get_last_socket_error() errno
-#define clear_socket_error()    errno=0
-
-#if defined(OPENSSL_SYS_WINDOWS)
-# undef get_last_socket_error
-# undef clear_socket_error
-# define get_last_socket_error() WSAGetLastError()
-# define clear_socket_error()    WSASetLastError(0)
-# define readsocket(s,b,n)       recv((s),(b),(n),0)
-# define writesocket(s,b,n)      send((s),(b),(n),0)
-#elif defined(__DJGPP__)
-# define WATT32
-# define WATT32_NO_OLDIES
-# define closesocket(s)          close_s(s)
-# define readsocket(s,b,n)       read_s(s,b,n)
-# define writesocket(s,b,n)      send(s,b,n,0)
-#elif defined(OPENSSL_SYS_VMS)
-# define ioctlsocket(a,b,c)      ioctl(a,b,c)
-# define closesocket(s)          close(s)
-# define readsocket(s,b,n)       recv((s),(b),(n),0)
-# define writesocket(s,b,n)      send((s),(b),(n),0)
-#elif defined(OPENSSL_SYS_VXWORKS)
-# define ioctlsocket(a,b,c)          ioctl((a),(b),(int)(c))
-# define closesocket(s)              close(s)
-# define readsocket(s,b,n)           read((s),(b),(n))
-# define writesocket(s,b,n)          write((s),(char *)(b),(n))
-#else
-# define ioctlsocket(a,b,c)      ioctl(a,b,c)
-# define closesocket(s)          close(s)
-# define readsocket(s,b,n)       read((s),(b),(n))
-# define writesocket(s,b,n)      write((s),(b),(n))
-#endif
-
