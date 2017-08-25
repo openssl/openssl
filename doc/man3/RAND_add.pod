@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RAND_add, RAND_poll, RAND_poll_ex, RAND_poll_fn,
+RAND_add, RAND_poll, RAND_poll_ex, RAND_poll_cb,
 RAND_seed, RAND_status, RAND_event, RAND_screen
 - add randomness to the PRNG or get its status
 
@@ -12,9 +12,9 @@ RAND_seed, RAND_status, RAND_event, RAND_screen
 
  int RAND_status(void);
 
- typedef void (*RAND_poll_fn)(void *arg,
+ typedef void (*RAND_poll_cb)(void *arg,
                               const void *buf, int num, double randomness);
- int RAND_poll_ex(RAND_poll_fn cb, void *arg);
+ int RAND_poll_ex(RAND_poll_cb cb, void *arg);
  int RAND_poll();
 
  void RAND_add(const void *buf, int num, double randomness);

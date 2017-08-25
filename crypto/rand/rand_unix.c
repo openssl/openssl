@@ -50,7 +50,7 @@
  * As a precaution, we generate four times the required amount of seed
  * data.
  */
-int RAND_poll_ex(RAND_poll_fn cb, void *arg)
+int RAND_poll_ex(RAND_poll_cb rand_add, void *arg)
 {
     short int code;
     gid_t curr_gid;
@@ -72,11 +72,11 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
      * different processes.
      */
     curr_gid = getgid();
-    cb(arg, &curr_gid, sizeof curr_gid, 0);
+    rand_add(arg, &curr_gid, sizeof curr_gid, 0);
     curr_pid = getpid();
-    cb(arg, &curr_pid, sizeof curr_pid, 0);
+    rand_add(arg, &curr_pid, sizeof curr_pid, 0);
     curr_uid = getuid();
-    cb(arg, &curr_uid, sizeof curr_uid, 0);
+    rand_add(arg, &curr_uid, sizeof curr_uid, 0);
 
     for (i = 0; i < (RANDOMNESS_NEEDED * 4); i++) {
         /*
@@ -99,7 +99,7 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
         /* Get wall clock time, take 8 bits. */
         clock_gettime(CLOCK_REALTIME, &ts);
         v = (unsigned char)(ts.tv_nsec & 0xFF);
-        cb(arg, &v, sizeof v, 1);
+        rand_add(arg, &v, sizeof v, 1);
     }
     return 1;
 }
@@ -130,7 +130,7 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
 /*
  * Try the various seeding methods in turn, exit when succesful.
  */
-int RAND_poll_ex(RAND_poll_fn cb, void *arg)
+int RAND_poll_ex(RAND_poll_cb rand_add, void *arg)
 {
 #  ifdef OPENSSL_RAND_SEED_NONE
     return 0;
@@ -144,7 +144,7 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
         int i = getrandom(temp, TEMPSIZE, 0);
 
         if (i >= 0) {
-            cb(arg, temp, i, i);
+            rand_add(arg, temp, i, i);
             if (i == TEMPSIZE)
                 goto done;
         }
@@ -168,7 +168,7 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
                 continue;
             setbuf(fp, NULL);
             if (fread(temp, 1, TEMPSIZE, fp) == TEMPSIZE) {
-                cb(arg, temp, TEMPSIZE, TEMPSIZE);
+                rand_add(arg, temp, TEMPSIZE, TEMPSIZE);
                 fclose(fp);
                 goto done;
             }
@@ -193,7 +193,7 @@ int RAND_poll_ex(RAND_poll_fn cb, void *arg)
 
         for (i = 0; paths[i] != NULL; i++) {
             if (RAND_query_egd_bytes(paths[i], temp, TEMPSIZE) == TEMPSIZE) {
-                cb(arg, temp, TEMPSIZE, TEMPSIZE);
+                rand_add(arg, temp, TEMPSIZE, TEMPSIZE);
                 goto done;
             }
         }
