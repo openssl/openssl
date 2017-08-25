@@ -399,9 +399,6 @@ static SHA_LONG64 __fastcall __pull64be(const void *x)
 }
 #    endif
 #    define PULL64(x) __pull64be(&(x))
-#    if _MSC_VER<=1200
-#     pragma inline_depth(0)
-#    endif
 #   endif
 #  endif
 # endif

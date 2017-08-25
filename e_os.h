@@ -196,14 +196,6 @@ static __inline unsigned int _strlen31(const char *str)
 }
 #   endif
 #   include <malloc.h>
-#   if defined(_MSC_VER) && _MSC_VER<=1200 && defined(_MT) && defined(isspace)
-       /* compensate for bug in VC6 ctype.h */
-#    undef isspace
-#    undef isdigit
-#    undef isalnum
-#    undef isupper
-#    undef isxdigit
-#   endif
 #   if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(_DLL) && defined(stdin)
 #    if _MSC_VER>=1300 && _MSC_VER<1600
 #     undef stdin
