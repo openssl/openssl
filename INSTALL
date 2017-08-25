@@ -412,8 +412,9 @@
                    has an impact when not built "shared".
 
   no-stdio
-                   Don't use any C "stdio" features. Only libcrypto and libssl
-                   can be built in this way. Using this option will suppress
+                   Don't use anything from the C header file "stdio.h" that
+                   makes use of the "FILE" type. Only libcrypto and libssl can
+                   be built in this way. Using this option will suppress
                    building the command line applications. Additionally since
                    the OpenSSL tests also use the command line applications the
                    tests will also be skipped.
