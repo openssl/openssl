@@ -155,7 +155,7 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     OPENSSL_clear_free(buf, num);
-    return (r);
+    return r;
 }
 
 static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
@@ -200,12 +200,12 @@ static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
 static int rsa_blinding_convert(BN_BLINDING *b, BIGNUM *f, BIGNUM *unblind,
                                 BN_CTX *ctx)
 {
-    if (unblind == NULL)
+    if (unblind == NULL) {
         /*
          * Local blinding: store the unblinding factor in BN_BLINDING.
          */
         return BN_BLINDING_convert_ex(f, NULL, b, ctx);
-    else {
+    } else {
         /*
          * Shared blinding: store the unblinding factor outside BN_BLINDING.
          */
@@ -347,8 +347,9 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
             res = f;
         else
             res = ret;
-    } else
+    } else {
         res = ret;
+    }
 
     /*
      * put in leading 0 bytes if the number is less than the length of the
@@ -365,7 +366,7 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     OPENSSL_clear_free(buf, num);
-    return (r);
+    return r;
 }
 
 static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
@@ -496,7 +497,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     OPENSSL_clear_free(buf, num);
-    return (r);
+    return r;
 }
 
 /* signature verification */
@@ -595,7 +596,7 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
         BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     OPENSSL_clear_free(buf, num);
-    return (r);
+    return r;
 }
 
 static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
@@ -787,13 +788,13 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     ret = 1;
  err:
     BN_CTX_end(ctx);
-    return (ret);
+    return ret;
 }
 
 static int rsa_ossl_init(RSA *rsa)
 {
     rsa->flags |= RSA_FLAG_CACHE_PUBLIC | RSA_FLAG_CACHE_PRIVATE;
-    return (1);
+    return 1;
 }
 
 static int rsa_ossl_finish(RSA *rsa)
@@ -801,5 +802,5 @@ static int rsa_ossl_finish(RSA *rsa)
     BN_MONT_CTX_free(rsa->_method_mod_n);
     BN_MONT_CTX_free(rsa->_method_mod_p);
     BN_MONT_CTX_free(rsa->_method_mod_q);
-    return (1);
+    return 1;
 }
