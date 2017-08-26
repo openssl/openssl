@@ -111,7 +111,7 @@ _dopr(char **sbuffer,
             if (ch == '%')
                 state = DP_S_FLAGS;
             else
-                if(!doapr_outch(sbuffer, buffer, &currlen, maxlen, ch))
+                if (!doapr_outch(sbuffer, buffer, &currlen, maxlen, ch))
                     return 0;
             ch = *format++;
             break;
@@ -293,8 +293,8 @@ _dopr(char **sbuffer,
                     return 0;
                 break;
             case 'c':
-                if(!doapr_outch(sbuffer, buffer, &currlen, maxlen,
-                            va_arg(args, int)))
+                if (!doapr_outch(sbuffer, buffer, &currlen, maxlen,
+                                 va_arg(args, int)))
                     return 0;
                 break;
             case 's':
@@ -323,7 +323,7 @@ _dopr(char **sbuffer,
                 }
                 break;
             case '%':
-                if(!doapr_outch(sbuffer, buffer, &currlen, maxlen, ch))
+                if (!doapr_outch(sbuffer, buffer, &currlen, maxlen, ch))
                     return 0;
                 break;
             case 'w':
@@ -354,7 +354,7 @@ _dopr(char **sbuffer,
         if (*truncated)
             currlen = *maxlen - 1;
     }
-    if(!doapr_outch(sbuffer, buffer, &currlen, maxlen, '\0'))
+    if (!doapr_outch(sbuffer, buffer, &currlen, maxlen, '\0'))
         return 0;
     *retlen = currlen - 1;
     return 1;
@@ -392,19 +392,19 @@ fmtstr(char **sbuffer,
         padlen = -padlen;
 
     while ((padlen > 0) && (max < 0 || cnt < max)) {
-        if(!doapr_outch(sbuffer, buffer, currlen, maxlen, ' '))
+        if (!doapr_outch(sbuffer, buffer, currlen, maxlen, ' '))
             return 0;
         --padlen;
         ++cnt;
     }
     while (strln > 0 && (max < 0 || cnt < max)) {
-        if(!doapr_outch(sbuffer, buffer, currlen, maxlen, *value++))
+        if (!doapr_outch(sbuffer, buffer, currlen, maxlen, *value++))
             return 0;
         --strln;
         ++cnt;
     }
     while ((padlen < 0) && (max < 0 || cnt < max)) {
-        if(!doapr_outch(sbuffer, buffer, currlen, maxlen, ' '))
+        if (!doapr_outch(sbuffer, buffer, currlen, maxlen, ' '))
             return 0;
         ++padlen;
         ++cnt;
@@ -472,19 +472,19 @@ fmtint(char **sbuffer,
 
     /* spaces */
     while (spadlen > 0) {
-        if(!doapr_outch(sbuffer, buffer, currlen, maxlen, ' '))
+        if (!doapr_outch(sbuffer, buffer, currlen, maxlen, ' '))
             return 0;
         --spadlen;
     }
 
     /* sign */
     if (signvalue)
-        if(!doapr_outch(sbuffer, buffer, currlen, maxlen, signvalue))
+        if (!doapr_outch(sbuffer, buffer, currlen, maxlen, signvalue))
             return 0;
 
     /* prefix */
     while (*prefix) {
-        if(!doapr_outch(sbuffer, buffer, currlen, maxlen, *prefix))
+        if (!doapr_outch(sbuffer, buffer, currlen, maxlen, *prefix))
             return 0;
         prefix++;
     }
@@ -492,7 +492,7 @@ fmtint(char **sbuffer,
     /* zeros */
     if (zpadlen > 0) {
         while (zpadlen > 0) {
-            if(!doapr_outch(sbuffer, buffer, currlen, maxlen, '0'))
+            if (!doapr_outch(sbuffer, buffer, currlen, maxlen, '0'))
                 return 0;
             --zpadlen;
         }
@@ -758,8 +758,8 @@ fmtfp(char **sbuffer,
             return 0;
 
         while (fplace > 0) {
-            if(!doapr_outch(sbuffer, buffer, currlen, maxlen,
-                            fconvert[--fplace]))
+            if (!doapr_outch(sbuffer, buffer, currlen, maxlen,
+                             fconvert[--fplace]))
                 return 0;
         }
     }
@@ -913,7 +913,7 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
     size_t retlen;
     int truncated;
 
-    if(!_dopr(&buf, NULL, &n, &retlen, &truncated, format, args))
+    if (!_dopr(&buf, NULL, &n, &retlen, &truncated, format, args))
         return -1;
 
     if (truncated)

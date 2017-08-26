@@ -448,7 +448,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
          */
         if (!ssl3_digest_cached_records(s, 1))
             return 0;
-        if(!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen))
+        if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen))
             return 0;
 #ifdef SSL_DEBUG
         fprintf(stderr, "Handshake hashes:\n");
