@@ -208,7 +208,7 @@ static int psk_find_session_cb(SSL *ssl, const unsigned char *identity,
 
     if (key_len == EVP_MD_size(EVP_sha256()))
         cipher = SSL_CIPHER_find(ssl, tls13_aes128gcmsha256_id);
-    else if(key_len == EVP_MD_size(EVP_sha384()))
+    else if (key_len == EVP_MD_size(EVP_sha384()))
         cipher = SSL_CIPHER_find(ssl, tls13_aes256gcmsha384_id);
 
     if (cipher == NULL) {

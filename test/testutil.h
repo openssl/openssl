@@ -282,7 +282,7 @@ void test_perror(const char *s);
  * a default description that indicates the file and line number of the error.
  *
  * The following macros guarantee to evaluate each argument exactly once.
- * This allows constructs such as: if(!TEST_ptr(ptr = OPENSSL_malloc(..)))
+ * This allows constructs such as: if (!TEST_ptr(ptr = OPENSSL_malloc(..)))
  * to produce better contextual output than:
  *      ptr = OPENSSL_malloc(..);
  *      if (!TEST_ptr(ptr))

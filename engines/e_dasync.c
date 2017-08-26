@@ -437,8 +437,8 @@ static void dummy_pause_job(void) {
 #endif
         *writefd = pipefds[1];
 
-        if(!ASYNC_WAIT_CTX_set_wait_fd(waitctx, engine_dasync_id, pipefds[0],
-                                       writefd, wait_cleanup)) {
+        if (!ASYNC_WAIT_CTX_set_wait_fd(waitctx, engine_dasync_id, pipefds[0],
+                                        writefd, wait_cleanup)) {
             wait_cleanup(waitctx, engine_dasync_id, pipefds[0], writefd);
             return;
         }
