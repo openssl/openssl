@@ -24,7 +24,7 @@
 # [4] S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis
 #     resistant 1024-bit modular exponentiation, for optimizing RSA2048
 #     on AVX2 capable x86_64 platforms",
-#     http://rt.openssl.org/Ticket/Display.html?id=2850&user=guest&pass=guest
+#     https://rt.openssl.org/Ticket/Display.html?id=2850&user=guest&pass=guest
 #
 # +13% improvement over original submission by <appro@openssl.org>
 #

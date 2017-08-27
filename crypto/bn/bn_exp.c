@@ -883,7 +883,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 #if defined(OPENSSL_BN_ASM_MONT5)
     if (window == 5 && top > 1) {
         /*
-         * This optimization uses ideas from http://eprint.iacr.org/2011/239,
+         * This optimization uses ideas from https://eprint.iacr.org/2011/239,
          * specifically optimization of cache-timing attack countermeasures
          * and pre-computation optimization.
          */
