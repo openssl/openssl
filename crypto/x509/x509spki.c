@@ -13,16 +13,16 @@
 
 int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey)
 {
-    if ((x == NULL) || (x->spkac == NULL))
-        return (0);
-    return (X509_PUBKEY_set(&(x->spkac->pubkey), pkey));
+    if (x == NULL || x->spkac == NULL)
+        return 0;
+    return X509_PUBKEY_set(&(x->spkac->pubkey), pkey);
 }
 
 EVP_PKEY *NETSCAPE_SPKI_get_pubkey(NETSCAPE_SPKI *x)
 {
-    if ((x == NULL) || (x->spkac == NULL))
-        return (NULL);
-    return (X509_PUBKEY_get(x->spkac->pubkey));
+    if (x == NULL || x->spkac == NULL)
+        return NULL;
+    return X509_PUBKEY_get(x->spkac->pubkey);
 }
 
 /* Load a Netscape SPKI from a base64 encoded string */

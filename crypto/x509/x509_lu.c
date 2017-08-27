@@ -24,7 +24,7 @@ X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
         return NULL;
 
     ret->method = method;
-    if ((method->new_item != NULL) && !method->new_item(ret)) {
+    if (method->new_item != NULL && !method->new_item(ret)) {
         OPENSSL_free(ret);
         return NULL;
     }
@@ -35,7 +35,7 @@ void X509_LOOKUP_free(X509_LOOKUP *ctx)
 {
     if (ctx == NULL)
         return;
-    if ((ctx->method != NULL) && (ctx->method->free != NULL))
+    if (ctx->method != NULL && ctx->method->free != NULL)
         (*ctx->method->free) (ctx);
     OPENSSL_free(ctx);
 }
@@ -84,7 +84,7 @@ int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
 int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                            X509_NAME *name, X509_OBJECT *ret)
 {
-    if ((ctx->method == NULL) || (ctx->method->get_by_subject == NULL))
+    if (ctx->method == NULL || ctx->method->get_by_subject == NULL)
         return 0;
     if (ctx->skip)
         return 0;
@@ -95,7 +95,7 @@ int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                  X509_NAME *name, ASN1_INTEGER *serial,
                                  X509_OBJECT *ret)
 {
-    if ((ctx->method == NULL) || (ctx->method->get_by_issuer_serial == NULL))
+    if (ctx->method == NULL || ctx->method->get_by_issuer_serial == NULL)
         return 0;
     return ctx->method->get_by_issuer_serial(ctx, type, name, serial, ret);
 }
@@ -104,7 +104,7 @@ int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                const unsigned char *bytes, int len,
                                X509_OBJECT *ret)
 {
-    if ((ctx->method == NULL) || (ctx->method->get_by_fingerprint == NULL))
+    if (ctx->method == NULL || ctx->method->get_by_fingerprint == NULL)
         return 0;
     return ctx->method->get_by_fingerprint(ctx, type, bytes, len, ret);
 }
@@ -112,7 +112,7 @@ int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                          const char *str, int len, X509_OBJECT *ret)
 {
-    if ((ctx->method == NULL) || (ctx->method->get_by_alias == NULL))
+    if (ctx->method == NULL || ctx->method->get_by_alias == NULL)
         return 0;
     return ctx->method->get_by_alias(ctx, type, str, len, ret);
 }
@@ -122,7 +122,7 @@ static int x509_object_cmp(const X509_OBJECT *const *a,
 {
     int ret;
 
-    ret = ((*a)->type - (*b)->type);
+    ret = (*a)->type - (*b)->type;
     if (ret)
         return ret;
     switch ((*a)->type) {
@@ -211,7 +211,7 @@ int X509_STORE_up_ref(X509_STORE *vfy)
 
     REF_PRINT_COUNT("X509_STORE", a);
     REF_ASSERT_ISNT(i < 2);
-    return ((i > 1) ? 1 : 0);
+    return i > 1 ? 1 : 0;
 }
 
 X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m)
@@ -561,7 +561,7 @@ X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
     idx = sk_X509_OBJECT_find(h, x);
     if (idx == -1)
         return NULL;
-    if ((x->type != X509_LU_X509) && (x->type != X509_LU_CRL))
+    if (x->type != X509_LU_X509 && x->type != X509_LU_CRL)
         return sk_X509_OBJECT_value(h, idx);
     for (i = idx; i < sk_X509_OBJECT_num(h); i++) {
         obj = sk_X509_OBJECT_value(h, i);

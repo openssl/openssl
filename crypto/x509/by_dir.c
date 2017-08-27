@@ -63,7 +63,7 @@ static X509_LOOKUP_METHOD x509_dir_lookup = {
 
 X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
 {
-    return (&x509_dir_lookup);
+    return &x509_dir_lookup;
 }
 
 static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
@@ -91,7 +91,7 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
             ret = add_cert_dir(ld, argp, (int)argl);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int new_dir(X509_LOOKUP *lu)
@@ -160,7 +160,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
     s = dir;
     p = s;
     do {
-        if ((*p == LIST_SEPARATOR_CHAR) || (*p == '\0')) {
+        if (*p == LIST_SEPARATOR_CHAR || *p == '\0') {
             BY_DIR_ENTRY *ent;
             int j;
             size_t len;
@@ -219,7 +219,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     const char *postfix = "";
 
     if (name == NULL)
-        return (0);
+        return 0;
 
     stmp.type = type;
     if (type == X509_LU_X509) {
@@ -308,10 +308,10 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
 #endif
             /* found one. */
             if (type == X509_LU_X509) {
-                if ((X509_load_cert_file(xl, b->data, ent->dir_type)) == 0)
+                if (X509_load_cert_file(xl, b->data, ent->dir_type) == 0)
                     break;
             } else if (type == X509_LU_CRL) {
-                if ((X509_load_crl_file(xl, b->data, ent->dir_type)) == 0)
+                if (X509_load_crl_file(xl, b->data, ent->dir_type) == 0)
                     break;
             }
             /* else case will caught higher up */
@@ -389,5 +389,5 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     }
  finish:
     BUF_MEM_free(b);
-    return (ok);
+    return ok;
 }

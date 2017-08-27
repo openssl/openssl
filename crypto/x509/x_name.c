@@ -476,7 +476,7 @@ int X509_NAME_set(X509_NAME **xn, X509_NAME *name)
     X509_NAME *in;
 
     if (!xn || !name)
-        return (0);
+        return 0;
 
     if (*xn != name) {
         in = X509_NAME_dup(name);
@@ -485,7 +485,7 @@ int X509_NAME_set(X509_NAME **xn, X509_NAME *name)
             *xn = in;
         }
     }
-    return (*xn != NULL);
+    return *xn != NULL;
 }
 
 int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
@@ -506,10 +506,10 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
 
     c = s;
     for (;;) {
-        if (((*s == '/') &&
-             (ossl_isupper(s[1]) && ((s[2] == '=') ||
-                                (ossl_isupper(s[2]) && (s[3] == '='))
-              ))) || (*s == '\0'))
+        if ((*s == '/' &&
+             (ossl_isupper(s[1]) && (s[2] == '=' ||
+                                (ossl_isupper(s[2]) && s[3] == '=')
+              ))) || *s == '\0')
         {
             i = s - c;
             if (BIO_write(bp, c, i) != i)

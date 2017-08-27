@@ -35,7 +35,7 @@ static X509_LOOKUP_METHOD x509_file_lookup = {
 
 X509_LOOKUP_METHOD *X509_LOOKUP_file(void)
 {
-    return (&x509_file_lookup);
+    return &x509_file_lookup;
 }
 
 static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp,
@@ -69,7 +69,7 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp,
         }
         break;
     }
-    return (ok);
+    return ok;
 }
 
 int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type)
@@ -81,7 +81,7 @@ int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type)
 
     in = BIO_new(BIO_s_file());
 
-    if ((in == NULL) || (BIO_read_filename(in, file) <= 0)) {
+    if (in == NULL || BIO_read_filename(in, file) <= 0) {
         X509err(X509_F_X509_LOAD_CERT_FILE, ERR_R_SYS_LIB);
         goto err;
     }
@@ -90,8 +90,8 @@ int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type)
         for (;;) {
             x = PEM_read_bio_X509_AUX(in, NULL, NULL, "");
             if (x == NULL) {
-                if ((ERR_GET_REASON(ERR_peek_last_error()) ==
-                     PEM_R_NO_START_LINE) && (count > 0)) {
+                if (ERR_GET_REASON(ERR_peek_last_error() ==
+                     PEM_R_NO_START_LINE) && count > 0) {
                     ERR_clear_error();
                     break;
                 } else {
@@ -126,7 +126,7 @@ int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type)
  err:
     X509_free(x);
     BIO_free(in);
-    return (ret);
+    return ret;
 }
 
 int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
@@ -138,7 +138,7 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 
     in = BIO_new(BIO_s_file());
 
-    if ((in == NULL) || (BIO_read_filename(in, file) <= 0)) {
+    if (in == NULL || BIO_read_filename(in, file) <= 0) {
         X509err(X509_F_X509_LOAD_CRL_FILE, ERR_R_SYS_LIB);
         goto err;
     }
@@ -147,8 +147,8 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
         for (;;) {
             x = PEM_read_bio_X509_CRL(in, NULL, NULL, "");
             if (x == NULL) {
-                if ((ERR_GET_REASON(ERR_peek_last_error()) ==
-                     PEM_R_NO_START_LINE) && (count > 0)) {
+                if (ERR_GET_REASON(ERR_peek_last_error()) ==
+                    PEM_R_NO_START_LINE && count > 0) {
                     ERR_clear_error();
                     break;
                 } else {
@@ -183,7 +183,7 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
  err:
     X509_CRL_free(x);
     BIO_free(in);
-    return (ret);
+    return ret;
 }
 
 int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type)
