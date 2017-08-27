@@ -199,7 +199,7 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
     /* Else do normal multiply */
     if (n2 < BN_MUL_RECURSIVE_SIZE_NORMAL) {
         bn_mul_normal(r, a, n2 + dna, b, n2 + dnb);
-        if ((dna + dnb) < 0)
+        if (dna + dnb < 0)
             memset(&r[2 * n2 + dna + dnb], 0,
                    sizeof(BN_ULONG) * -(dna + dnb));
         return;
@@ -551,7 +551,7 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
     }
 #endif                          /* BN_MUL_COMBA */
 #ifdef BN_RECURSION
-    if ((al >= BN_MULL_SIZE_NORMAL) && (bl >= BN_MULL_SIZE_NORMAL)) {
+    if (al >= BN_MULL_SIZE_NORMAL && bl >= BN_MULL_SIZE_NORMAL) {
         if (i >= -1 && i <= 1) {
             /*
              * Find out the power of two lower or equal to the longest of the

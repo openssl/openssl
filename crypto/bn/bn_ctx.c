@@ -334,7 +334,7 @@ static BIGNUM *BN_POOL_get(BN_POOL *p, int flag)
         p->current = p->head;
     else if ((p->used % BN_CTX_POOL_SIZE) == 0)
         p->current = p->current->next;
-    return p->current->vals + ((p->used++) % BN_CTX_POOL_SIZE);
+    return p->current->vals + (p->used++ % BN_CTX_POOL_SIZE);
 }
 
 static void BN_POOL_release(BN_POOL *p, unsigned int num)

@@ -93,7 +93,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
    /*-
     * There were two reasons for implementing this template:
     * - GNU C generates a call to a function (__udivdi3 to be exact)
-    *   in reply to ((((BN_ULLONG)n0)<<BN_BITS2)|n1)/d0 (I fail to
+    *   in reply to ((BN_ULLONG)n0<<BN_BITS2|n1)/d0 (I fail to
     *   understand why...);
     * - divl doesn't only calculate quotient, but also leaves
     *   remainder in %edx which we can definitely use here:-)
@@ -161,8 +161,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     bn_check_top(num);
     bn_check_top(divisor);
 
-    if ((BN_get_flags(num, BN_FLG_CONSTTIME) != 0)
-        || (BN_get_flags(divisor, BN_FLG_CONSTTIME) != 0)) {
+    if (BN_get_flags(num, BN_FLG_CONSTTIME) != 0
+        || BN_get_flags(divisor, BN_FLG_CONSTTIME) != 0) {
         no_branch = 1;
     }
 
@@ -309,7 +309,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
             BN_ULLONG t2;
 
 #   if defined(BN_LLONG) && defined(BN_DIV2W) && !defined(bn_div_words)
-            q = (BN_ULONG)(((((BN_ULLONG) n0) << BN_BITS2) | n1) / d0);
+            q = (BN_ULONG)(((BN_ULLONG)n0 << BN_BITS2 | n1) / d0);
 #   else
             q = bn_div_words(n0, n1, d0);
 #   endif
@@ -324,7 +324,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
             t2 = (BN_ULLONG) d1 *q;
 
             for (;;) {
-                if (t2 <= ((((BN_ULLONG) rem) << BN_BITS2) | wnump[-2]))
+                if (t2 <= ((BN_ULLONG)rem << BN_BITS2 | wnump[-2]))
                     break;
                 q--;
                 rem += d0;

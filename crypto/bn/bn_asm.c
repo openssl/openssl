@@ -197,7 +197,7 @@ void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
 
 BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
 {
-    return (BN_ULONG)(((((BN_ULLONG) h) << BN_BITS2) | l) / (BN_ULLONG) d);
+    return (BN_ULONG)(((BN_ULLONG)h << BN_BITS2 | l) / (BN_ULLONG)d);
 }
 
 #else
@@ -213,7 +213,7 @@ BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
         return BN_MASK2;
 
     i = BN_num_bits_word(d);
-    assert(i == BN_BITS2 || (h <= (BN_ULONG)1 << i));
+    assert(i == BN_BITS2 || h <= (BN_ULONG)1 << i);
 
     i = BN_BITS2 - i;
     if (h >= d)
@@ -237,7 +237,7 @@ BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
         for (;;) {
             t = h - th;
             if ((t & BN_MASK2h) ||
-                ((tl) <= ((t << BN_BITS4) | ((l & BN_MASK2h) >> BN_BITS4))))
+                (tl <= (t << BN_BITS4 | (l & BN_MASK2h) >> BN_BITS4)))
                 break;
             q--;
             th -= dh;

@@ -271,7 +271,7 @@ static void nist_cp_bn(BN_ULONG *dst, const BN_ULONG *src, int top)
 }
 
 #if BN_BITS2 == 64
-# define bn_cp_64(to, n, from, m)        (to)[n] = (m>=0)?((from)[m]):0;
+# define bn_cp_64(to, n, from, m)        (to)[n] = (m>=0)?(from)[m]:0;
 # define bn_64_set_0(to, n)              (to)[n] = (BN_ULONG)0;
 /*
  * two following macros are implemented under assumption that they
@@ -299,7 +299,7 @@ static void nist_cp_bn(BN_ULONG *dst, const BN_ULONG *src, int top)
         bn_32_set_0(to, (n)*2); \
         bn_32_set_0(to, (n)*2+1); \
         }
-# define bn_cp_32(to, n, from, m)        (to)[n] = (m>=0)?((from)[m]):0;
+# define bn_cp_32(to, n, from, m)        (to)[n] = (m>=0)?(from)[m]:0;
 # define bn_32_set_0(to, n)              (to)[n] = (BN_ULONG)0;
 # if defined(_WIN32) && !defined(__GNUC__)
 #  define NIST_INT64 __int64
@@ -798,7 +798,7 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
             c = 0;
             for (i = BN_NIST_256_TOP; i != 0; --i) {
                 t = *ap;
-                *(ap++) = ((t << 1) | c) & BN_MASK2;
+                *(ap++) = (t << 1 | c) & BN_MASK2;
                 c = (t & BN_TBIT) ? 1 : 0;
             }
             carry <<= 1;
@@ -1066,7 +1066,7 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
             c = 0;
             for (i = 3; i != 0; --i) {
                 t = *ap;
-                *(ap++) = ((t << 1) | c) & BN_MASK2;
+                *(ap++) = (t << 1 | c) & BN_MASK2;
                 c = (t & BN_TBIT) ? 1 : 0;
             }
             *ap = c;

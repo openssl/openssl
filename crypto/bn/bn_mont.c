@@ -290,7 +290,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
         if ((buf[1] = mod->top > 1 ? mod->d[1] : 0))
             tmod.top = 2;
 
-        if ((BN_mod_inverse(Ri, R, &tmod, ctx)) == NULL)
+        if (BN_mod_inverse(Ri, R, &tmod, ctx) == NULL)
             goto err;
         if (!BN_lshift(Ri, Ri, 2 * BN_BITS2))
             goto err;           /* R*Ri */
@@ -323,7 +323,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
         buf[1] = 0;
         tmod.top = buf[0] != 0 ? 1 : 0;
         /* Ri = R^-1 mod N */
-        if ((BN_mod_inverse(Ri, R, &tmod, ctx)) == NULL)
+        if (BN_mod_inverse(Ri, R, &tmod, ctx) == NULL)
             goto err;
         if (!BN_lshift(Ri, Ri, BN_BITS2))
             goto err;           /* R*Ri */
@@ -351,7 +351,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
         if (!BN_set_bit(R, mont->ri))
             goto err;           /* R = 2^ri */
         /* Ri = R^-1 mod N */
-        if ((BN_mod_inverse(Ri, R, &mont->N, ctx)) == NULL)
+        if (BN_mod_inverse(Ri, R, &mont->N, ctx) == NULL)
             goto err;
         if (!BN_lshift(Ri, Ri, mont->ri))
             goto err;           /* R*Ri */

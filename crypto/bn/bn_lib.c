@@ -425,7 +425,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
         return ret;
     }
     i = ((n - 1) / BN_BYTES) + 1;
-    m = ((n - 1) % (BN_BYTES));
+    m = (n - 1) % BN_BYTES;
     if (bn_wexpand(ret, (int)i) == NULL) {
         BN_free(bn);
         return NULL;
@@ -507,7 +507,7 @@ BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
         return ret;
     }
     i = ((n - 1) / BN_BYTES) + 1;
-    m = ((n - 1) % (BN_BYTES));
+    m = (n - 1) % BN_BYTES;
     if (bn_wexpand(ret, (int)i) == NULL) {
         BN_free(bn);
         return NULL;
@@ -638,7 +638,7 @@ int BN_set_bit(BIGNUM *a, int n)
         a->top = i + 1;
     }
 
-    a->d[i] |= (((BN_ULONG)1) << j);
+    a->d[i] |= (BN_ULONG)1 << j;
     bn_check_top(a);
     return 1;
 }
@@ -656,7 +656,7 @@ int BN_clear_bit(BIGNUM *a, int n)
     if (a->top <= i)
         return 0;
 
-    a->d[i] &= (~(((BN_ULONG)1) << j));
+    a->d[i] &= ~((BN_ULONG)1 << j);
     bn_correct_top(a);
     return 1;
 }
@@ -672,7 +672,7 @@ int BN_is_bit_set(const BIGNUM *a, int n)
     j = n % BN_BITS2;
     if (a->top <= i)
         return 0;
-    return (int)(((a->d[i]) >> j) & ((BN_ULONG)1));
+    return (int)(a->d[i] >> j & (BN_ULONG)1);
 }
 
 int BN_mask_bits(BIGNUM *a, int n)
@@ -886,9 +886,9 @@ void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int flags)
     dest->top = b->top;
     dest->dmax = b->dmax;
     dest->neg = b->neg;
-    dest->flags = ((dest->flags & BN_FLG_MALLOCED)
-                   | (b->flags & ~BN_FLG_MALLOCED)
-                   | BN_FLG_STATIC_DATA | flags);
+    dest->flags = (dest->flags & BN_FLG_MALLOCED)
+                  | (b->flags & ~BN_FLG_MALLOCED)
+                  | BN_FLG_STATIC_DATA | flags;
 }
 
 BN_GENCB *BN_GENCB_new(void)

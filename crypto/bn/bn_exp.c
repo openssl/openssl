@@ -19,7 +19,7 @@
 # endif
 #elif defined(__GNUC__)
 # ifndef alloca
-#  define alloca(s) __builtin_alloca((s))
+#  define alloca(s) __builtin_alloca(s)
 # endif
 #elif defined(__sun)
 # include <alloca.h>
@@ -378,7 +378,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 #if 1                           /* by Shay Gueron's suggestion */
     j = m->top;                 /* borrow j */
-    if (m->d[j - 1] & (((BN_ULONG)1) << (BN_BITS2 - 1))) {
+    if (m->d[j - 1] & ((BN_ULONG)1 << (BN_BITS2 - 1))) {
         if (bn_wexpand(r, j) == NULL)
             goto err;
         /* 2^(top*BN_BITS2) - m */
@@ -579,7 +579,7 @@ static int MOD_EXP_CTIME_COPY_FROM_PREBUF(BIGNUM *b, int top,
  * multiple.
  */
 #define MOD_EXP_CTIME_ALIGN(x_) \
-        ((unsigned char*)(x_) + (MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH - (((size_t)(x_)) & (MOD_EXP_CTIME_MIN_CACHE_LINE_MASK))))
+        ((unsigned char*)(x_) + (MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH - ((size_t)(x_) & MOD_EXP_CTIME_MIN_CACHE_LINE_MASK)))
 
 /*
  * This variant of BN_mod_exp_mont() uses fixed windows and the special
@@ -697,8 +697,8 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
      */
     numPowers = 1 << window;
     powerbufLen += sizeof(m->d[0]) * (top * numPowers +
-                                      ((2 * top) >
-                                       numPowers ? (2 * top) : numPowers));
+                                      (2 * top >
+                                       numPowers ? 2 * top : numPowers));
 #ifdef alloca
     if (powerbufLen < 3072)
         powerbufFree =
@@ -728,7 +728,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
     /* prepare a^0 in Montgomery domain */
 #if 1                           /* by Shay Gueron's suggestion */
-    if (m->d[top - 1] & (((BN_ULONG)1) << (BN_BITS2 - 1))) {
+    if (m->d[top - 1] & ((BN_ULONG)1 << (BN_BITS2 - 1))) {
         /* 2^(top*BN_BITS2) - m */
         tmp.d[0] = (0 - m->d[0]) & BN_MASK2;
         for (i = 1; i < top; i++)
@@ -1168,7 +1168,7 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
     for (b = bits - 2; b >= 0; b--) {
         /* First, square r*w. */
         next_w = w * w;
-        if ((next_w / w) != w) { /* overflow */
+        if (next_w / w != w) { /* overflow */
             if (r_is_one) {
                 if (!BN_TO_MONTGOMERY_WORD(r, w, mont))
                     goto err;
@@ -1188,7 +1188,7 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
         /* Second, multiply r*w by 'a' if exponent bit is set. */
         if (BN_is_bit_set(p, b)) {
             next_w = w * a;
-            if ((next_w / a) != w) { /* overflow */
+            if (next_w / a != w) { /* overflow */
                 if (r_is_one) {
                     if (!BN_TO_MONTGOMERY_WORD(r, w, mont))
                         goto err;
