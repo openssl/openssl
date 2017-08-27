@@ -630,7 +630,8 @@ SSL *SSL_new(SSL_CTX *ctx)
     if (RAND_get_rand_method() == RAND_OpenSSL()) {
         s->drbg = RAND_DRBG_new(NID_aes_128_ctr, RAND_DRBG_FLAG_CTR_USE_DF,
                                 RAND_DRBG_get0_global());
-        if (s->drbg == NULL) {
+        if (s->drbg == NULL
+            || RAND_DRBG_instantiate(s->drbg, NULL, 0) == 0) {
             CRYPTO_THREAD_lock_free(s->lock);
             goto err;
         }

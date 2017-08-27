@@ -12,6 +12,8 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include "rand_lcl.h"
+#include "internal/thread_once.h"
+#include "internal/rand_int.h"
 
 /*
  * Support framework for NIST SP 800-90A DRBG, AES-CTR mode.
@@ -24,6 +26,8 @@
  * DRBG, where allocation of resources on something like an HSM is
  * a much bigger deal than just re-setting an allocated resource.)
  */
+
+static CRYPTO_ONCE rand_init_drbg = CRYPTO_ONCE_STATIC_INIT;
 
 /*
  * Set/initialize |drbg| to be of type |nid|, with optional |flags|.
@@ -76,18 +80,9 @@ RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
         goto err;
 
     if (parent != NULL) {
-        if (parent->state == DRBG_UNINITIALISED
-                && RAND_DRBG_instantiate(parent, NULL, 0) == 0)
-            goto err;
         if (!RAND_DRBG_set_callbacks(drbg, drbg_entropy_from_parent,
                                      drbg_release_entropy,
-                                     NULL, NULL)
-                /*
-                 * Add in our address.  Note we are adding the pointer
-                 * itself, not its contents!
-                 */
-                || !RAND_DRBG_instantiate(drbg,
-                                          (unsigned char*)&drbg, sizeof(drbg)))
+                                     NULL, NULL))
             goto err;
     }
 
@@ -98,17 +93,12 @@ err:
     return NULL;
 }
 
-RAND_DRBG *RAND_DRBG_get0_global(void)
-{
-    return &rand_drbg;
-}
-
 /*
  * Uninstantiate |drbg| and free all memory.
  */
 void RAND_DRBG_free(RAND_DRBG *drbg)
 {
-    /* The global DRBG is free'd by rand_cleanup_int() */
+    /* The global DRBG is free'd by rand_cleanup_drbg_int() */
     if (drbg == NULL || drbg == &rand_drbg)
         return;
 
@@ -340,28 +330,80 @@ void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
  * global DRBG.  They lock.
  */
 
+/*
+ * Creates a global DRBG with default settings.
+ * Returns 1 on success, 0 on failure
+ */
+static int setup_drbg(RAND_DRBG *drbg)
+{
+    int ret = 1;
+
+    drbg->lock = CRYPTO_THREAD_lock_new();
+    ret &= drbg->lock != NULL;
+    drbg->size = RANDOMNESS_NEEDED;
+    drbg->secure = CRYPTO_secure_malloc_initialized();
+    /* If you change these parameters, see RANDOMNESS_NEEDED */
+    ret &= RAND_DRBG_set(drbg,
+                         NID_aes_128_ctr, RAND_DRBG_FLAG_CTR_USE_DF) == 1;
+    ret &= RAND_DRBG_set_callbacks(drbg, drbg_entropy_from_system,
+                                   drbg_release_entropy, NULL, NULL) == 1;
+    ret &= RAND_DRBG_instantiate(drbg, NULL, 0) == 1;
+    return ret;
+}
+
+/*
+ * Initialize the global DRBGs on first use.
+ * Returns 1 on success, 0 on failure.
+ */
+DEFINE_RUN_ONCE_STATIC(do_rand_init_drbg)
+{
+    int ret = 1;
+
+    ret &= setup_drbg(&rand_drbg);
+    ret &= setup_drbg(&priv_drbg);
+
+    return ret;
+}
+
+/* Clean up a DRBG and free it */
+static void free_drbg(RAND_DRBG *drbg)
+{
+    CRYPTO_THREAD_lock_free(drbg->lock);
+    RAND_DRBG_uninstantiate(drbg);
+}
+
+/* Clean up the global DRBGs before exit */
+void rand_cleanup_drbg_int(void)
+{
+    free_drbg(&rand_drbg);
+    free_drbg(&priv_drbg);
+}
+
 static int drbg_bytes(unsigned char *out, int count)
 {
     int ret = 0;
     size_t chunk;
+    RAND_DRBG *drbg = RAND_DRBG_get0_global();
 
-    CRYPTO_THREAD_write_lock(rand_drbg.lock);
-    if (rand_drbg.state == DRBG_UNINITIALISED
-            && RAND_DRBG_instantiate(&rand_drbg, NULL, 0) == 0)
+    if (drbg == NULL)
+        return 0;
+
+    CRYPTO_THREAD_write_lock(drbg->lock);
+    if (drbg->state == DRBG_UNINITIALISED)
         goto err;
 
     for ( ; count > 0; count -= chunk, out += chunk) {
         chunk = count;
-        if (chunk > rand_drbg.max_request)
-            chunk = rand_drbg.max_request;
-        ret = RAND_DRBG_generate(&rand_drbg, out, chunk, 0, NULL, 0);
+        if (chunk > drbg->max_request)
+            chunk = drbg->max_request;
+        ret = RAND_DRBG_generate(drbg, out, chunk, 0, NULL, 0);
         if (!ret)
             goto err;
     }
     ret = 1;
 
 err:
-    CRYPTO_THREAD_unlock(rand_drbg.lock);
+    CRYPTO_THREAD_unlock(drbg->lock);
     return ret;
 }
 
@@ -396,13 +438,39 @@ static int drbg_seed(const void *buf, int num)
 static int drbg_status(void)
 {
     int ret;
+    RAND_DRBG *drbg = RAND_DRBG_get0_global();
 
-    CRYPTO_THREAD_write_lock(rand_drbg.lock);
-    if (rand_drbg.state == DRBG_UNINITIALISED)
-        RAND_DRBG_instantiate(&rand_drbg, NULL, 0);
-    ret = rand_drbg.state == DRBG_READY ? 1 : 0;
-    CRYPTO_THREAD_unlock(rand_drbg.lock);
+    if (drbg == NULL)
+        return 0;
+
+    CRYPTO_THREAD_write_lock(drbg->lock);
+    ret = drbg->state == DRBG_READY ? 1 : 0;
+    CRYPTO_THREAD_unlock(drbg->lock);
     return ret;
+}
+
+/*
+ * Get the global public DRBG.
+ * Returns pointer to the DRBG on success, NULL on failure.
+ */
+RAND_DRBG *RAND_DRBG_get0_global(void)
+{
+    if (!RUN_ONCE(&rand_init_drbg, do_rand_init_drbg))
+        return NULL;
+
+    return &rand_drbg;
+}
+
+/*
+ * Get the global private DRBG.
+ * Returns pointer to the DRBG on success, NULL on failure.
+ */
+RAND_DRBG *RAND_DRBG_get0_priv_global(void)
+{
+    if (!RUN_ONCE(&rand_init_drbg, do_rand_init_drbg))
+        return NULL;
+
+    return &priv_drbg;
 }
 
 RAND_DRBG rand_drbg; /* The default global DRBG. */

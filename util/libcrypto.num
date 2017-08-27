@@ -4382,3 +4382,4 @@ ASN1_TIME_compare                       4325	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_CTX_ctrl_uint64                4326	1_1_1	EXIST::FUNCTION:
 EVP_DigestFinalXOF                      4327	1_1_1	EXIST::FUNCTION:
 ERR_clear_last_mark                     4328	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_get0_priv_global              4329	1_1_1	EXIST::FUNCTION:
