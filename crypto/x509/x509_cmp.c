@@ -50,10 +50,10 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
         goto err;
     if (!EVP_DigestFinal_ex(ctx, &(md[0]), NULL))
         goto err;
-    ret = (((unsigned long)md[0]) |
-           ((unsigned long)md[1] << 8L) |
-           ((unsigned long)md[2] << 16L) |
-           ((unsigned long)md[3] << 24L)
+    ret = ((unsigned long)md[0] |
+           (unsigned long)md[1] << 8L |
+           (unsigned long)md[2] << 16L |
+           (unsigned long)md[3] << 24L
         ) & 0xffffffffL;
  err:
     EVP_MD_CTX_free(ctx);
@@ -193,10 +193,10 @@ unsigned long X509_NAME_hash(X509_NAME *x)
                     NULL))
         return 0;
 
-    ret = (((unsigned long)md[0]) |
-           ((unsigned long)md[1] << 8L) |
-           ((unsigned long)md[2] << 16L) |
-           ((unsigned long)md[3] << 24L)
+    ret = ((unsigned long)md[0] |
+           (unsigned long)md[1] << 8L |
+           (unsigned long)md[2] << 16L |
+           (unsigned long)md[3] << 24L
         ) & 0xffffffffL;
     return ret;
 }
@@ -222,10 +222,10 @@ unsigned long X509_NAME_hash_old(X509_NAME *x)
     if (EVP_DigestInit_ex(md_ctx, EVP_md5(), NULL)
         && EVP_DigestUpdate(md_ctx, x->bytes->data, x->bytes->length)
         && EVP_DigestFinal_ex(md_ctx, md, NULL))
-        ret = (((unsigned long)md[0]) |
-               ((unsigned long)md[1] << 8L) |
-               ((unsigned long)md[2] << 16L) |
-               ((unsigned long)md[3] << 24L)
+        ret = ((unsigned long)md[0] |
+               (unsigned long)md[1] << 8L |
+               (unsigned long)md[2] << 16L |
+               (unsigned long)md[3] << 24L
             ) & 0xffffffffL;
     EVP_MD_CTX_free(md_ctx);
 
