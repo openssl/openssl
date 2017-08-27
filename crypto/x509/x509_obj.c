@@ -63,7 +63,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
     for (i = 0; i < sk_X509_NAME_ENTRY_num(a->entries); i++) {
         ne = sk_X509_NAME_ENTRY_value(a->entries, i);
         n = OBJ_obj2nid(ne->object);
-        if ((n == NID_undef) || ((s = OBJ_nid2sn(n)) == NULL)) {
+        if (n == NID_undef || (s = OBJ_nid2sn(n)) == NULL) {
             i2t_ASN1_OBJECT(tmp_buf, sizeof(tmp_buf), ne->object);
             s = tmp_buf;
         }
@@ -89,7 +89,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         }
 #endif
 
-        if ((type == V_ASN1_GENERALSTRING) && ((num % 4) == 0)) {
+        if (type == V_ASN1_GENERALSTRING && (num % 4) == 0) {
             gs_doit[0] = gs_doit[1] = gs_doit[2] = gs_doit[3] = 0;
             for (j = 0; j < num; j++)
                 if (q[j] != 0)
@@ -109,11 +109,11 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
                 continue;
             l2++;
 #ifndef CHARSET_EBCDIC
-            if ((q[j] < ' ') || (q[j] > '~'))
+            if (q[j] < ' ' || q[j] > '~')
                 l2 += 3;
 #else
-            if ((os_toascii[q[j]] < os_toascii[' ']) ||
-                (os_toascii[q[j]] > os_toascii['~']))
+            if (os_toascii[q[j]] < os_toascii[' '] ||
+                os_toascii[q[j]] > os_toascii['~'])
                 l2 += 3;
 #endif
         }
@@ -146,7 +146,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
                 continue;
 #ifndef CHARSET_EBCDIC
             n = q[j];
-            if ((n < ' ') || (n > '~')) {
+            if (n < ' ' || n > '~') {
                 *(p++) = '\\';
                 *(p++) = 'x';
                 *(p++) = hex[(n >> 4) & 0x0f];
@@ -155,7 +155,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
                 *(p++) = n;
 #else
             n = os_toascii[q[j]];
-            if ((n < os_toascii[' ']) || (n > os_toascii['~'])) {
+            if (n < os_toascii[' '] || n > os_toascii['~']) {
                 *(p++) = '\\';
                 *(p++) = 'x';
                 *(p++) = hex[(n >> 4) & 0x0f];
@@ -173,10 +173,10 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         p = buf;
     if (i == 0)
         *p = '\0';
-    return (p);
+    return p;
  err:
     X509err(X509_F_X509_NAME_ONELINE, ERR_R_MALLOC_FAILURE);
  end:
     BUF_MEM_free(b);
-    return (NULL);
+    return NULL;
 }

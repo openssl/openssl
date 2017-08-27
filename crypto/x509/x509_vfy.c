@@ -275,7 +275,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
      * the first entry is in place
      */
     if (((ctx->chain = sk_X509_new_null()) == NULL) ||
-        (!sk_X509_push(ctx->chain, ctx->cert))) {
+        !sk_X509_push(ctx->chain, ctx->cert)) {
         X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
         ctx->error = X509_V_ERR_OUT_OF_MEM;
         return -1;
@@ -345,7 +345,7 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
         }
     }
 
-    return (ret == X509_V_OK);
+    return ret == X509_V_OK;
 }
 
 /* Alternative lookup method: look from a STACK stored in other_ctx */
@@ -484,7 +484,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
         switch (must_be_ca) {
         case -1:
             if ((ctx->param->flags & X509_V_FLAG_X509_STRICT)
-                && (ret != 1) && (ret != 0)) {
+                && ret != 1 && ret != 0) {
                 ret = 0;
                 ctx->error = X509_V_ERR_INVALID_CA;
             } else
@@ -499,9 +499,9 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
             break;
         default:
             /* X509_V_FLAG_X509_STRICT is implicit for intermediate CAs */
-            if ((ret == 0)
+            if (ret == 0
                 || ((i + 1 < num || ctx->param->flags & X509_V_FLAG_X509_STRICT)
-                    && (ret != 1))) {
+                    && ret != 1)) {
                 ret = 0;
                 ctx->error = X509_V_ERR_INVALID_CA;
             } else
@@ -514,7 +514,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
         if (purpose > 0 && !check_purpose(ctx, x, purpose, i, must_be_ca))
             return 0;
         /* Check pathlen if not self issued */
-        if ((i > 1) && !(x->ex_flags & EXFLAG_SI)
+        if (i > 1 && !(x->ex_flags & EXFLAG_SI)
             && (x->ex_pathlen != -1)
             && (plen > (x->ex_pathlen + proxy_path_length + 1))) {
             if (!verify_cb_cert(ctx, x, i, X509_V_ERR_PATH_LENGTH_EXCEEDED))
@@ -948,7 +948,7 @@ static int check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
                 return 0;
         }
         /* Ignore expiry of base CRL is delta is valid */
-        if ((i < 0) && !(ctx->current_crl_score & CRL_SCORE_TIME_DELTA)) {
+        if (i < 0 && !(ctx->current_crl_score & CRL_SCORE_TIME_DELTA)) {
             if (!notify)
                 return 0;
             if (!verify_cb_crl(ctx, X509_V_ERR_CRL_HAS_EXPIRED))
@@ -1852,7 +1852,7 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
     EVP_PKEY *ktmp = NULL, *ktmp2;
     int i, j;
 
-    if ((pkey != NULL) && !EVP_PKEY_missing_parameters(pkey))
+    if (pkey != NULL && !EVP_PKEY_missing_parameters(pkey))
         return 1;
 
     for (i = 0; i < sk_X509_num(chain); i++) {

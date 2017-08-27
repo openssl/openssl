@@ -210,9 +210,9 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                 crl->flags |= EXFLAG_FRESHEST;
             if (X509_EXTENSION_get_critical(ext)) {
                 /* We handle IDP and deltas */
-                if ((nid == NID_issuing_distribution_point)
-                    || (nid == NID_authority_key_identifier)
-                    || (nid == NID_delta_crl))
+                if (nid == NID_issuing_distribution_point
+                    || nid == NID_authority_key_identifier
+                    || nid == NID_delta_crl)
                     continue;
                 crl->flags |= EXFLAG_CRITICAL;
                 break;
@@ -302,8 +302,8 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509_CRL)
 static int X509_REVOKED_cmp(const X509_REVOKED *const *a,
                             const X509_REVOKED *const *b)
 {
-    return (ASN1_STRING_cmp((ASN1_STRING *)&(*a)->serialNumber,
-                            (ASN1_STRING *)&(*b)->serialNumber));
+    return ASN1_STRING_cmp((ASN1_STRING *)&(*a)->serialNumber,
+                           (ASN1_STRING *)&(*b)->serialNumber);
 }
 
 int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev)

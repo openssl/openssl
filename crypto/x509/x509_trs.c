@@ -98,7 +98,7 @@ int X509_TRUST_get_by_id(int id)
 {
     X509_TRUST tmp;
     int idx;
-    if ((id >= X509_TRUST_MIN) && (id <= X509_TRUST_MAX))
+    if (id >= X509_TRUST_MIN && id <= X509_TRUST_MAX)
         return id - X509_TRUST_MIN;
     tmp.trust = id;
     if (!trtable)

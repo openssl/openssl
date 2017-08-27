@@ -145,7 +145,7 @@ void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
 
 #define test_x509_verify_param_copy(field, def) \
         (to_overwrite || \
-                ((src->field != def) && (to_default || (dest->field == def))))
+                (src->field != def && (to_default || dest->field == def)))
 
 /* Macro to test and copy a field if necessary */
 
