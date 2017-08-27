@@ -188,7 +188,7 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
     }
 #  endif
     /*
-     * Only call bn_mul_comba 8 if n2 == 8 and the two arrays are complete
+     * Only call bn_mul_comba8() if n2 == 8 and the two arrays are complete
      * [steve]
      */
     if (n2 == 8 && dna == 0 && dnb == 0) {
@@ -241,7 +241,7 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
     }
 
 # ifdef BN_MUL_COMBA
-    if (n == 4 && dna == 0 && dnb == 0) { /* XXX: bn_mul_comba4 could take
+    if (n == 4 && dna == 0 && dnb == 0) { /* XXX: bn_mul_comba4() could take
                                            * extra args to do this well */
         if (!zero)
             bn_mul_comba4(&(t[n2]), t, &(t[n]));
@@ -250,7 +250,7 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 
         bn_mul_comba4(r, a, b);
         bn_mul_comba4(&(r[n2]), &(a[n]), &(b[n]));
-    } else if (n == 8 && dna == 0 && dnb == 0) { /* XXX: bn_mul_comba8 could
+    } else if (n == 8 && dna == 0 && dnb == 0) { /* XXX: bn_mul_comba8() could
                                                   * take extra args to do
                                                   * this well */
         if (!zero)

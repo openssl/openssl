@@ -55,7 +55,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 
     /*
      * The next 2 are needed so we can do a dv->d[0]|=1 later since
-     * BN_lshift1 will only work once there is a value :-)
+     * BN_lshift1() will only work once there is a value :-)
      */
     BN_zero(dv);
     if (bn_wexpand(dv, 1) == NULL)
@@ -92,7 +92,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 #   if defined(__i386) || defined (__i386__)
    /*-
     * There were two reasons for implementing this template:
-    * - GNU C generates a call to a function (__udivdi3 to be exact)
+    * - GNU C generates a call to a function (__udivdi3() to be exact)
     *   in reply to ((BN_ULLONG)n0<<BN_BITS2|n1)/d0 (I fail to
     *   understand why...);
     * - divl doesn't only calculate quotient, but also leaves
@@ -238,7 +238,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     wnum.d = &(snum->d[loop]);
     wnum.top = div_n;
     /*
-     * only needed when BN_ucmp messes up the values between top and max
+     * only needed when BN_ucmp() messes up the values between top and max
      */
     wnum.dmax = snum->dmax - loop; /* so we don't step out of bounds */
 
@@ -264,7 +264,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     if (!no_branch) {
         if (BN_ucmp(&wnum, sdiv) >= 0) {
             /*
-             * If BN_DEBUG_RAND is defined BN_ucmp changes (via bn_pollute)
+             * If BN_DEBUG_RAND is defined BN_ucmp() changes (via bn_pollute())
              * the const bignum arguments => clean the values between top and
              * max again
              */
@@ -375,7 +375,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
         tmp->d[div_n] = l0;
         wnum.d--;
         /*
-         * ingore top values of the bignums just sub the two BN_ULONG arrays
+         * ignore top values of the bignums just sub the two BN_ULONG arrays
          * with bn_sub_words
          */
         if (bn_sub_words(wnum.d, wnum.d, tmp->d, div_n + 1)) {
