@@ -15,6 +15,9 @@
 #include "internal/thread_once.h"
 #include "internal/rand_int.h"
 
+static RAND_DRBG rand_drbg; /* The default global DRBG. */
+static RAND_DRBG priv_drbg; /* The global private-key DRBG. */
+
 /*
  * Support framework for NIST SP 800-90A DRBG, AES-CTR mode.
  * The RAND_DRBG is OpenSSL's pointer to an instance of the DRBG.
@@ -472,9 +475,6 @@ RAND_DRBG *RAND_DRBG_get0_priv_global(void)
 
     return &priv_drbg;
 }
-
-RAND_DRBG rand_drbg; /* The default global DRBG. */
-RAND_DRBG priv_drbg; /* The global private-key DRBG. */
 
 RAND_METHOD rand_meth = {
     drbg_seed,
