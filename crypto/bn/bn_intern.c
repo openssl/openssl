@@ -68,9 +68,9 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
     }
     window_val = scalar->d[0] & mask;
     j = 0;
-    while ((window_val != 0) || (j + w + 1 < len)) { /* if j+w+1 >= len,
-                                                      * window_val will not
-                                                      * increase */
+    while (window_val != 0 || j + w + 1 < len) { /* if j+w+1 >= len,
+                                                  * window_val will not
+                                                  * increase */
         int digit = 0;
 
         /* 0 <= window_val <= 2^(w+1) */

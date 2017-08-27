@@ -48,7 +48,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
  err:
     BN_CTX_end(ctx);
     bn_check_top(r);
-    return (ret);
+    return ret;
 }
 
 static BIGNUM *euclid(BIGNUM *a, BIGNUM *b)
@@ -111,9 +111,9 @@ static BIGNUM *euclid(BIGNUM *a, BIGNUM *b)
             goto err;
     }
     bn_check_top(a);
-    return (a);
+    return a;
  err:
-    return (NULL);
+    return NULL;
 }
 
 /* solves ax == 1 (mod n) */
@@ -143,8 +143,8 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
     if (pnoinv)
         *pnoinv = 0;
 
-    if ((BN_get_flags(a, BN_FLG_CONSTTIME) != 0)
-        || (BN_get_flags(n, BN_FLG_CONSTTIME) != 0)) {
+    if (BN_get_flags(a, BN_FLG_CONSTTIME) != 0
+        || BN_get_flags(n, BN_FLG_CONSTTIME) != 0) {
         return BN_mod_inverse_no_branch(in, a, n, ctx);
     }
 
@@ -409,7 +409,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
 
     /*-
      * The while loop (Euclid's algorithm) ends when
-     *      A == gcd(a,n);
+     *      A == gcd(a, n);
      * we have
      *       sign*Y*a  ==  A  (mod |n|),
      * where  Y  is non-negative.
@@ -437,11 +437,11 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
     }
     ret = R;
  err:
-    if ((ret == NULL) && (in == NULL))
+    if (ret == NULL && in == NULL)
         BN_free(R);
     BN_CTX_end(ctx);
     bn_check_top(ret);
-    return (ret);
+    return ret;
 }
 
 /*
@@ -581,7 +581,7 @@ static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
 
     /*-
      * The while loop (Euclid's algorithm) ends when
-     *      A == gcd(a,n);
+     *      A == gcd(a, n);
      * we have
      *       sign*Y*a  ==  A  (mod |n|),
      * where  Y  is non-negative.
@@ -608,9 +608,9 @@ static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
     }
     ret = R;
  err:
-    if ((ret == NULL) && (in == NULL))
+    if (ret == NULL && in == NULL)
         BN_free(R);
     BN_CTX_end(ctx);
     bn_check_top(ret);
-    return (ret);
+    return ret;
 }
