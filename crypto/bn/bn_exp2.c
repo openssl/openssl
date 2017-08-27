@@ -38,7 +38,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
     }
     bits1 = BN_num_bits(p1);
     bits2 = BN_num_bits(p2);
-    if ((bits1 == 0) && (bits2 == 0)) {
+    if (bits1 == 0 && bits2 == 0) {
         ret = BN_one(rr);
         return ret;
     }

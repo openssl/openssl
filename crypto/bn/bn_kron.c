@@ -11,7 +11,7 @@
 #include "bn_lcl.h"
 
 /* least significant word */
-#define BN_lsw(n) (((n)->top == 0) ? (BN_ULONG) 0 : (n)->d[0])
+#define BN_lsw(n) ((n)->top == 0 ? (BN_ULONG) 0 : (n)->d[0])
 
 /* Returns -2 for errors because both -1 and 0 are valid results. */
 int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)

@@ -143,8 +143,8 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
     if (pnoinv)
         *pnoinv = 0;
 
-    if ((BN_get_flags(a, BN_FLG_CONSTTIME) != 0)
-        || (BN_get_flags(n, BN_FLG_CONSTTIME) != 0)) {
+    if (BN_get_flags(a, BN_FLG_CONSTTIME) != 0
+        || BN_get_flags(n, BN_FLG_CONSTTIME) != 0) {
         return BN_mod_inverse_no_branch(in, a, n, ctx);
     }
 
@@ -437,7 +437,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
     }
     ret = R;
  err:
-    if ((ret == NULL) && (in == NULL))
+    if (ret == NULL && in == NULL)
         BN_free(R);
     BN_CTX_end(ctx);
     bn_check_top(ret);
@@ -608,7 +608,7 @@ static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
     }
     ret = R;
  err:
-    if ((ret == NULL) && (in == NULL))
+    if (ret == NULL && in == NULL)
         BN_free(R);
     BN_CTX_end(ctx);
     bn_check_top(ret);
