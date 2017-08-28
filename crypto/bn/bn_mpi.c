@@ -70,7 +70,7 @@ BIGNUM *BN_mpi2bn(const unsigned char *d, int n, BIGNUM *ain)
         return a;
     }
     d += 4;
-    if ((*d) & 0x80)
+    if (*d & 0x80)
         neg = 1;
     if (BN_bin2bn(d, (int)len, a) == NULL) {
         if (ain == NULL)

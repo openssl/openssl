@@ -165,7 +165,7 @@ int BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx)
      * Number of bits for each prime is of the form 512+128s for s = 0, 1,
      * ...
      */
-    if ((nbits < 1024) || (nbits & 0xff))
+    if (nbits < 1024 || (nbits & 0xff))
         return 0;
     nbits >>= 1;
     /*

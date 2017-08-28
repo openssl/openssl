@@ -237,7 +237,7 @@ BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
         for (;;) {
             t = h - th;
             if ((t & BN_MASK2h) ||
-                ((tl) <= ((t << BN_BITS4) | ((l & BN_MASK2h) >> BN_BITS4))))
+                (tl <= ((t << BN_BITS4) | ((l & BN_MASK2h)) >> BN_BITS4)))
                 break;
             q--;
             th -= dh;

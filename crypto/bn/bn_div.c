@@ -161,8 +161,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     bn_check_top(num);
     bn_check_top(divisor);
 
-    if ((BN_get_flags(num, BN_FLG_CONSTTIME) != 0)
-        || (BN_get_flags(divisor, BN_FLG_CONSTTIME) != 0)) {
+    if (BN_get_flags(num, BN_FLG_CONSTTIME) != 0
+        || BN_get_flags(divisor, BN_FLG_CONSTTIME) != 0) {
         no_branch = 1;
     }
 
@@ -199,7 +199,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
         goto err;
 
     /* First we normalise the numbers */
-    norm_shift = BN_BITS2 - ((BN_num_bits(divisor)) % BN_BITS2);
+    norm_shift = BN_BITS2 - (BN_num_bits(divisor) % BN_BITS2);
     if (!(BN_lshift(sdiv, divisor, norm_shift)))
         goto err;
     sdiv->neg = 0;

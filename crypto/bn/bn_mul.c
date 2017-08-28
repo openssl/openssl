@@ -551,7 +551,7 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
     }
 #endif                          /* BN_MUL_COMBA */
 #ifdef BN_RECURSION
-    if ((al >= BN_MULL_SIZE_NORMAL) && (bl >= BN_MULL_SIZE_NORMAL)) {
+    if (al >= BN_MULL_SIZE_NORMAL && bl >= BN_MULL_SIZE_NORMAL) {
         if (i >= -1 && i <= 1) {
             /*
              * Find out the power of two lower or equal to the longest of the
