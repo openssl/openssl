@@ -90,6 +90,8 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
         } else
             ret = add_cert_dir(ld, argp, (int)argl);
         break;
+    default:
+        break;
     }
     return (ret);
 }

@@ -149,6 +149,8 @@ int rsa_main(int argc, char **argv)
             if (!opt_cipher(opt_unknown(), &enc))
                 goto opthelp;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

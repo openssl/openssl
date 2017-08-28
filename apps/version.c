@@ -106,6 +106,8 @@ opthelp:
         case OPT_A:
             seed = cflags = version = date = platform = dir = engdir = 1;
             break;
+        default:
+            break;
         }
     }
     if (opt_num_rest() != 0) {

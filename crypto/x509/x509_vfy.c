@@ -733,6 +733,8 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
         case X509_TRUST_TRUSTED:
         case X509_TRUST_REJECTED:
             return trust;
+        default:
+            break;
         }
     }
 
@@ -3067,6 +3069,8 @@ static int build_chain(X509_STORE_CTX *ctx)
                     case X509_TRUST_REJECTED:
                         search = 0;
                         continue;
+                    default:
+                        break;
                     }
                     if (ss == 0)
                         continue;
@@ -3143,6 +3147,8 @@ static int build_chain(X509_STORE_CTX *ctx)
             case X509_TRUST_REJECTED:
                 search = 0;
                 continue;
+            default:
+                break;
             }
         }
     }

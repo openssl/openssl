@@ -185,6 +185,8 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
         traverse_string(in, len, inform, out_utf8, &outlen);
         cpyfunc = cpy_utf8;
         break;
+    default:
+        break;
     }
     if ((p = OPENSSL_malloc(outlen + 1)) == NULL) {
         if (free_out)

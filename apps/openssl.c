@@ -422,6 +422,8 @@ opthelp:
         case OPT_OPTIONS:
             list_options_for_command(opt_arg());
             break;
+        default:
+            break;
         }
         done = 1;
     }
@@ -465,6 +467,8 @@ int help_main(int argc, char **argv)
         case OPT_hHELP:
             opt_help(help_options);
             return 0;
+        default:
+            break;
         }
     }
 

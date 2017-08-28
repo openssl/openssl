@@ -135,6 +135,8 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         if (asn1_cb && !asn1_cb(ASN1_OP_NEW_POST, pval, it, NULL))
             goto auxerr2;
         break;
+    default:
+        break;
     }
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     OPENSSL_mem_debug_pop();
@@ -190,6 +192,8 @@ static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
     case ASN1_ITYPE_SEQUENCE:
     case ASN1_ITYPE_NDEF_SEQUENCE:
         *pval = NULL;
+        break;
+    default:
         break;
     }
 }

@@ -153,6 +153,8 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
             len--;
             sign = 0;
             break;
+        default:
+            break;
         }
     }
     if (len > (int)sizeof(long)) {

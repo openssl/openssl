@@ -116,6 +116,8 @@ static int int_ctrl_helper(ENGINE *e, int cmd, long i, void *p,
                                                       : cdp->cmd_desc));
     case ENGINE_CTRL_GET_CMD_FLAGS:
         return cdp->cmd_flags;
+    default:
+        break;
     }
     /* Shouldn't really be here ... */
     ENGINEerr(ENGINE_F_INT_CTRL_HELPER, ENGINE_R_INTERNAL_LIST_ERROR);

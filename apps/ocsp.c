@@ -456,6 +456,8 @@ int ocsp_main(int argc, char **argv)
                 goto opthelp;
             trailing_md = 1;
             break;
+        default:
+            break;
         }
     }
 

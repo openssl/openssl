@@ -89,6 +89,8 @@ int opt_rand(int opt)
         OPENSSL_free(save_rand_file);
         save_rand_file = OPENSSL_strdup(opt_arg());
         break;
+    default:
+        break;
     }
     return 1;
 }

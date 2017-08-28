@@ -52,6 +52,8 @@ static int pk7_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (PKCS7_dataFinal(*pp7, sarg->ndef_bio) <= 0)
             return 0;
         break;
+    default:
+        break;
 
     }
     return 1;

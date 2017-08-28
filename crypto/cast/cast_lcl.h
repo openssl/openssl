@@ -33,6 +33,8 @@
                         case 3: l1|=((unsigned long)(*(--(c))))<<16L; \
                         case 2: l1|=((unsigned long)(*(--(c))))<< 8L; \
                         case 1: l1|=((unsigned long)(*(--(c))));     \
+                        default: \
+                            break; \
                                 } \
                         }
 
@@ -55,6 +57,8 @@
                         case 3: *(--(c))=(unsigned char)(((l1)>>16L)&0xff); \
                         case 2: *(--(c))=(unsigned char)(((l1)>> 8L)&0xff); \
                         case 1: *(--(c))=(unsigned char)(((l1)     )&0xff); \
+                        default: \
+                            break; \
                                 } \
                         }
 
@@ -78,6 +82,8 @@
                         case 2: l1|=((unsigned long)(*(--(c))))<<16; \
                         /* fall thru */                              \
                         case 1: l1|=((unsigned long)(*(--(c))))<<24; \
+                        default: \
+                            break; \
                                 } \
                         }
 
@@ -100,6 +106,8 @@
                         case 2: *(--(c))=(unsigned char)(((l1)>>16)&0xff); \
                         /* fall thru */                                    \
                         case 1: *(--(c))=(unsigned char)(((l1)>>24)&0xff); \
+                        default: \
+                            break; \
                                 } \
                         }
 

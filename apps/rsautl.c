@@ -159,6 +159,8 @@ int rsautl_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();
@@ -190,6 +192,8 @@ int rsautl_main(int argc, char **argv)
             pkey = X509_get_pubkey(x);
             X509_free(x);
         }
+        break;
+    default:
         break;
     }
 
@@ -250,6 +254,9 @@ int rsautl_main(int argc, char **argv)
     case RSA_DECRYPT:
         rsa_outlen =
             RSA_private_decrypt(rsa_inlen, rsa_in, rsa_out, rsa, pad);
+        break;
+
+    default:
         break;
     }
 

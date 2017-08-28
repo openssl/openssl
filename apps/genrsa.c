@@ -108,6 +108,8 @@ opthelp:
             if (!opt_cipher(opt_unknown(), &enc))
                 goto end;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

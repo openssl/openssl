@@ -906,6 +906,9 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
     case SSL_CERT_FLAG_SUITEB_192_LOS:
         *psigs = suiteb_sigalgs + 1;
         return 1;
+
+    default:
+        break;
     }
 #endif
     /*
@@ -2054,6 +2057,8 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
             break;
         case EVP_PKEY_EC:
             check_type = TLS_CT_ECDSA_SIGN;
+            break;
+        default:
             break;
         }
         if (check_type) {

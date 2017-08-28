@@ -1711,6 +1711,8 @@ int main(int argc, char *argv[])
             ret = EXIT_FAILURE;
             goto err;
 #endif
+        default:
+            break;
         }
         if (ret != EXIT_SUCCESS)  break;
     }

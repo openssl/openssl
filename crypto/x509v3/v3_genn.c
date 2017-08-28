@@ -91,6 +91,9 @@ int GENERAL_NAME_cmp(GENERAL_NAME *a, GENERAL_NAME *b)
     case GEN_RID:
         result = OBJ_cmp(a->d.rid, b->d.rid);
         break;
+
+    default:
+        break;
     }
     return result;
 }
@@ -138,6 +141,9 @@ void GENERAL_NAME_set0_value(GENERAL_NAME *a, int type, void *value)
 
     case GEN_RID:
         a->d.rid = value;
+        break;
+
+    default:
         break;
     }
     a->type = type;

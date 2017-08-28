@@ -113,6 +113,8 @@ int pkey_main(int argc, char **argv)
         case OPT_MD:
             if (!opt_cipher(opt_unknown(), &cipher))
                 goto opthelp;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

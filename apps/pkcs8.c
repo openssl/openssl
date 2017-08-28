@@ -177,6 +177,8 @@ int pkcs8_main(int argc, char **argv)
                 goto opthelp;
             break;
 #endif
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

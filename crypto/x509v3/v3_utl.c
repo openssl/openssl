@@ -299,6 +299,8 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 q = p + 1;
             }
 
+        default:
+            break;
         }
     }
 

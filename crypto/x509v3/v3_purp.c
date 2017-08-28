@@ -442,6 +442,9 @@ static void x509v3_cache_extensions(X509 *x)
             case NID_anyExtendedKeyUsage:
                 x->ex_xkusage |= XKU_ANYEKU;
                 break;
+
+            default:
+                break;
             }
         }
         sk_ASN1_OBJECT_pop_free(extusage, ASN1_OBJECT_free);

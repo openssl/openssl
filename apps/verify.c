@@ -157,6 +157,8 @@ int verify_main(int argc, char **argv)
         case OPT_VERBOSE:
             v_verbose = 1;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();
@@ -304,6 +306,8 @@ static int cb(int ok, X509_STORE_CTX *ctx)
         case X509_V_ERR_CRL_NOT_YET_VALID:
         case X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION:
             ok = 1;
+        default:
+            break;
         }
 
         return ok;

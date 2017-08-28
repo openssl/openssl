@@ -178,6 +178,8 @@ static int do_test_bio_cipher(const EVP_CIPHER* cipher, int idx)
             return do_bio_cipher(cipher, KEY, NULL);
         case 1:
             return do_bio_cipher(cipher, KEY, IV);
+        default:
+            break;
     }
     return 0;
 }

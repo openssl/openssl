@@ -306,6 +306,8 @@ static int dpn_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     case ASN1_OP_FREE_POST:
         X509_NAME_free(dpn->dpname);
         break;
+    default:
+        break;
     }
     return 1;
 }

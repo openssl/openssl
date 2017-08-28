@@ -70,6 +70,8 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASIdentifiers_free(ret->rfc3779_asid);
 #endif
         break;
+    default:
+        break;
 
     }
 

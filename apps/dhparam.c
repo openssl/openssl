@@ -134,6 +134,8 @@ int dhparam_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

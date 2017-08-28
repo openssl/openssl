@@ -304,6 +304,8 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (CMS_dataFinal(cms, sarg->ndef_bio) <= 0)
             return 0;
         break;
+    default:
+        break;
 
     }
     return 1;

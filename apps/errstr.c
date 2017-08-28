@@ -45,6 +45,8 @@ int errstr_main(int argc, char **argv)
             opt_help(errstr_options);
             ret = 0;
             goto end;
+        default:
+            break;
         }
     }
 

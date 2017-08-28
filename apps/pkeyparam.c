@@ -67,6 +67,8 @@ int pkeyparam_main(int argc, char **argv)
         case OPT_NOOUT:
             noout = 1;
             break;
+        default:
+            break;
         }
     }
     argc = opt_num_rest();

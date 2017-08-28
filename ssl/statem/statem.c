@@ -629,6 +629,8 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
                     dtls1_stop_timer(s);
                 }
                 return SUB_STATE_FINISHED;
+            default:
+                break;
             }
             break;
 
@@ -752,6 +754,9 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
 
             case WRITE_TRAN_ERROR:
                 return SUB_STATE_ERROR;
+
+            default:
+                break;
             }
             break;
 
@@ -769,6 +774,9 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
 
             case WORK_FINISHED_STOP:
                 return SUB_STATE_END_HANDSHAKE;
+
+            default:
+                break;
             }
             if (!get_construct_message_f(s, &pkt, &confunc, &mt)) {
                 ossl_statem_set_error(s);
@@ -818,6 +826,9 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
 
             case WORK_FINISHED_STOP:
                 return SUB_STATE_END_HANDSHAKE;
+
+            default:
+                break;
             }
             break;
 

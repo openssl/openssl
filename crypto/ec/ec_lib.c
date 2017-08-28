@@ -87,6 +87,8 @@ void EC_pre_comp_free(EC_GROUP *group)
     case PCT_ec:
         EC_ec_pre_comp_free(group->pre_comp.ec);
         break;
+    default:
+        break;
     }
     group->pre_comp.ec = NULL;
 }
@@ -169,6 +171,8 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 #endif
     case PCT_ec:
         dest->pre_comp.ec = EC_ec_pre_comp_dup(src->pre_comp.ec);
+        break;
+    default:
         break;
     }
 
