@@ -87,7 +87,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom)
  err:
     OPENSSL_clear_free(buf, bytes);
     bn_check_top(rnd);
-    return (ret);
+    return ret;
 
 toosmall:
     BNerr(BN_F_BNRAND, BN_R_BITS_TOO_SMALL);
@@ -197,7 +197,7 @@ int BN_pseudo_rand_range(BIGNUM *r, const BIGNUM *range)
 }
 
 /*
- * BN_generate_dsa_nonce generates a random number 0 <= out < range. Unlike
+ * BN_generate_dsa_nonce() generates a random number 0 <= out < range. Unlike
  * BN_rand_range, it also includes the contents of |priv| and |message| in
  * the generation so that an RNG failure isn't fatal as long as |priv|
  * remains secret. This is intended for use in DSA and ECDSA where an RNG

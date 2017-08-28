@@ -11,7 +11,7 @@
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
-# details see http://www.openssl.org/~appro/cryptogams/.
+# details see https://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
 # May 2011
@@ -37,7 +37,7 @@
 # Câmara, D.; Gouvêa, C. P. L.; López, J. & Dahab, R.: Fast Software
 # Polynomial Multiplication on ARM Processors using the NEON Engine.
 #
-# http://conradoplg.cryptoland.net/files/2010/12/mocrysen13.pdf
+# https://conradoplg.cryptoland.net/files/2010/12/mocrysen13.pdf
 
 $flavour = shift;
 if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }

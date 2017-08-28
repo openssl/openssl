@@ -271,7 +271,7 @@ static void nist_cp_bn(BN_ULONG *dst, const BN_ULONG *src, int top)
 }
 
 #if BN_BITS2 == 64
-# define bn_cp_64(to, n, from, m)        (to)[n] = (m>=0)?((from)[m]):0;
+# define bn_cp_64(to, n, from, m)        (to)[n] = (m>=0)?(from)[m]:0;
 # define bn_64_set_0(to, n)              (to)[n] = (BN_ULONG)0;
 /*
  * two following macros are implemented under assumption that they
@@ -299,7 +299,7 @@ static void nist_cp_bn(BN_ULONG *dst, const BN_ULONG *src, int top)
         bn_32_set_0(to, (n)*2); \
         bn_32_set_0(to, (n)*2+1); \
         }
-# define bn_cp_32(to, n, from, m)        (to)[n] = (m>=0)?((from)[m]):0;
+# define bn_cp_32(to, n, from, m)        (to)[n] = (m>=0)?(from)[m]:0;
 # define bn_32_set_0(to, n)              (to)[n] = (BN_ULONG)0;
 # if defined(_WIN32) && !defined(__GNUC__)
 #  define NIST_INT64 __int64
@@ -596,7 +596,7 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 #endif
     } else if (carry < 0) {
         /*
-         * it's a bit more complicated logic in this case. if bn_add_words
+         * it's a bit more complicated logic in this case. if bn_add_words()
          * yields no carry, then result has to be adjusted by unconditionally
          * *adding* the modulus. but if it does, then result has to be
          * compared to the modulus and conditionally adjusted by

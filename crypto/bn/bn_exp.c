@@ -19,7 +19,7 @@
 # endif
 #elif defined(__GNUC__)
 # ifndef alloca
-#  define alloca(s) __builtin_alloca((s))
+#  define alloca(s) __builtin_alloca(s)
 # endif
 #elif defined(__sun)
 # include <alloca.h>
@@ -50,7 +50,7 @@ int BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
     }
 
     BN_CTX_start(ctx);
-    rr = ((r == a) || (r == p)) ? BN_CTX_get(ctx) : r;
+    rr = (r == a || r == p) ? BN_CTX_get(ctx) : r;
     v = BN_CTX_get(ctx);
     if (rr == NULL || v == NULL)
         goto err;
@@ -116,7 +116,7 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
      *   BN_mod_exp_recp   50 .. 70 %  [AMD K6-2, Linux, debug configuration]
      *                     62 .. 118 % [UltraSparc, debug-solaris-sparcv8-gcc]
      *
-     * On the Sparc, BN_mod_exp_recp was faster than BN_mod_exp_mont
+     * On the Sparc, BN_mod_exp_recp() was faster than BN_mod_exp_mont()
      * at 2048 and more bits, but at 512 and 1024 bits, it was
      * slower even than the standard algorithm!
      *
@@ -152,7 +152,7 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 #endif
 
     bn_check_top(r);
-    return (ret);
+    return ret;
 }
 
 int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -285,7 +285,7 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     BN_CTX_end(ctx);
     BN_RECP_CTX_free(&recp);
     bn_check_top(r);
-    return (ret);
+    return ret;
 }
 
 int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
@@ -309,7 +309,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
     if (!BN_is_odd(m)) {
         BNerr(BN_F_BN_MOD_EXP_MONT, BN_R_CALLED_WITH_EVEN_MODULUS);
-        return (0);
+        return 0;
     }
     bits = BN_num_bits(p);
     if (bits == 0) {
@@ -463,7 +463,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         BN_MONT_CTX_free(mont);
     BN_CTX_end(ctx);
     bn_check_top(rr);
-    return (ret);
+    return ret;
 }
 
 #if defined(SPARC_T4_MONT)
@@ -579,7 +579,7 @@ static int MOD_EXP_CTIME_COPY_FROM_PREBUF(BIGNUM *b, int top,
  * multiple.
  */
 #define MOD_EXP_CTIME_ALIGN(x_) \
-        ((unsigned char*)(x_) + (MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH - (((size_t)(x_)) & (MOD_EXP_CTIME_MIN_CACHE_LINE_MASK))))
+        ((unsigned char*)(x_) + (MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH - (((size_t)(x_)) & MOD_EXP_CTIME_MIN_CACHE_LINE_MASK)))
 
 /*
  * This variant of BN_mod_exp_mont() uses fixed windows and the special
@@ -611,7 +611,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
     if (!BN_is_odd(m)) {
         BNerr(BN_F_BN_MOD_EXP_MONT_CONSTTIME, BN_R_CALLED_WITH_EVEN_MODULUS);
-        return (0);
+        return 0;
     }
 
     top = m->top;
@@ -649,7 +649,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
      * RSAZ exponentiation. For further information see
      * crypto/bn/rsaz_exp.c and accompanying assembly modules.
      */
-    if ((16 == a->top) && (16 == p->top) && (BN_num_bits(m) == 1024)
+    if (16 == a->top && 16 == p->top && BN_num_bits(m) == 1024
         && rsaz_avx2_eligible()) {
         if (NULL == bn_wexpand(rr, 16))
             goto err;
@@ -660,7 +660,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         bn_correct_top(rr);
         ret = 1;
         goto err;
-    } else if ((8 == a->top) && (8 == p->top) && (BN_num_bits(m) == 512)) {
+    } else if (8 == a->top && 8 == p->top && BN_num_bits(m) == 512) {
         if (NULL == bn_wexpand(rr, 8))
             goto err;
         RSAZ_512_mod_exp(rr->d, a->d, p->d, m->d, mont->n0[0], mont->RR.d);
@@ -811,7 +811,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
                                                 * than 32 */
 
         /*
-         * BN_to_montgomery can contaminate words above .top [in
+         * BN_to_montgomery() can contaminate words above .top [in
          * BN_DEBUG[_DEBUG] build]...
          */
         for (i = am.top; i < top; i++)
@@ -883,7 +883,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 #if defined(OPENSSL_BN_ASM_MONT5)
     if (window == 5 && top > 1) {
         /*
-         * This optimization uses ideas from http://eprint.iacr.org/2011/239,
+         * This optimization uses ideas from https://eprint.iacr.org/2011/239,
          * specifically optimization of cache-timing attack countermeasures
          * and pre-computation optimization.
          */
@@ -909,7 +909,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         BN_ULONG *n0 = mont->n0, *np;
 
         /*
-         * BN_to_montgomery can contaminate words above .top [in
+         * BN_to_montgomery() can contaminate words above .top [in
          * BN_DEBUG[_DEBUG] build]...
          */
         for (i = am.top; i < top; i++)
@@ -1082,7 +1082,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         OPENSSL_free(powerbufFree);
     }
     BN_CTX_end(ctx);
-    return (ret);
+    return ret;
 }
 
 int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
@@ -1099,13 +1099,13 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
                 (/* BN_ucmp(r, (m)) < 0 ? 1 :*/  \
                         (BN_mod(t, r, m, ctx) && (swap_tmp = r, r = t, t = swap_tmp, 1))))
     /*
-     * BN_MOD_MUL_WORD is only used with 'w' large, so the BN_ucmp test is
-     * probably more overhead than always using BN_mod (which uses BN_copy if
+     * BN_MOD_MUL_WORD is only used with 'w' large, so the BN_ucmp() test is
+     * probably more overhead than always using BN_mod (which uses BN_copy() if
      * a similar test returns true).
      */
     /*
-     * We can use BN_mod and do not need BN_nnmod because our accumulator is
-     * never negative (the result of BN_mod does not depend on the sign of
+     * We can use BN_mod() and do not need BN_nnmod() because our accumulator
+     * is never negative (the result of BN_mod does not depend on the sign of
      * the modulus).
      */
 #define BN_TO_MONTGOMERY_WORD(r, w, mont) \
@@ -1122,7 +1122,7 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 
     if (!BN_is_odd(m)) {
         BNerr(BN_F_BN_MOD_EXP_MONT_WORD, BN_R_CALLED_WITH_EVEN_MODULUS);
-        return (0);
+        return 0;
     }
     if (m->top == 1)
         a %= m->d[0];           /* make sure that 'a' is reduced */
@@ -1228,7 +1228,7 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
         BN_MONT_CTX_free(mont);
     BN_CTX_end(ctx);
     bn_check_top(rr);
-    return (ret);
+    return ret;
 }
 
 /* The old fallback, simple version :-) */
@@ -1347,5 +1347,5 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
  err:
     BN_CTX_end(ctx);
     bn_check_top(r);
-    return (ret);
+    return ret;
 }

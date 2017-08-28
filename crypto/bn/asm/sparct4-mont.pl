@@ -76,7 +76,7 @@
 # hardly measurable. But in order to mitigate this problem for higher
 # interrupt rates contemporary Linux kernel recognizes biased stack
 # even in 32-bit process context and preserves full register contents.
-# See http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=517ffce4e1a03aea979fe3a18a3dd1761a24fafb
+# See https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=517ffce4e1a03aea979fe3a18a3dd1761a24fafb
 # for details.
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -104,7 +104,7 @@ ___
 ########################################################################
 # Register layout for mont[mul|sqr] instructions.
 # For details see "Oracle SPARC Architecture 2011" manual at
-# http://www.oracle.com/technetwork/server-storage/sun-sparc-enterprise/documentation/.
+# https://www.oracle.com/technetwork/server-storage/sun-sparc-enterprise/documentation/.
 #
 my @R=map("%f".2*$_,(0..11,30,31,12..29));
 my @N=(map("%l$_",(0..7)),map("%o$_",(0..5))); @N=(@N,@N,@N[0..3]);

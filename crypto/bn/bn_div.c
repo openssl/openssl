@@ -24,17 +24,17 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
     bn_check_top(d);
     if (BN_is_zero(d)) {
         BNerr(BN_F_BN_DIV, BN_R_DIV_BY_ZERO);
-        return (0);
+        return 0;
     }
 
     if (BN_ucmp(m, d) < 0) {
         if (rem != NULL) {
             if (BN_copy(rem, m) == NULL)
-                return (0);
+                return 0;
         }
         if (dv != NULL)
             BN_zero(dv);
-        return (1);
+        return 1;
     }
 
     BN_CTX_start(ctx);
@@ -55,7 +55,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 
     /*
      * The next 2 are needed so we can do a dv->d[0]|=1 later since
-     * BN_lshift1 will only work once there is a value :-)
+     * BN_lshift1() will only work once there is a value :-)
      */
     BN_zero(dv);
     if (bn_wexpand(dv, 1) == NULL)
@@ -81,7 +81,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
     ret = 1;
  end:
     BN_CTX_end(ctx);
-    return (ret);
+    return ret;
 }
 
 #else
@@ -161,8 +161,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     bn_check_top(num);
     bn_check_top(divisor);
 
-    if ((BN_get_flags(num, BN_FLG_CONSTTIME) != 0)
-        || (BN_get_flags(divisor, BN_FLG_CONSTTIME) != 0)) {
+    if (BN_get_flags(num, BN_FLG_CONSTTIME) != 0
+        || BN_get_flags(divisor, BN_FLG_CONSTTIME) != 0) {
         no_branch = 1;
     }
 
@@ -177,17 +177,17 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 
     if (BN_is_zero(divisor)) {
         BNerr(BN_F_BN_DIV, BN_R_DIV_BY_ZERO);
-        return (0);
+        return 0;
     }
 
     if (!no_branch && BN_ucmp(num, divisor) < 0) {
         if (rm != NULL) {
             if (BN_copy(rm, num) == NULL)
-                return (0);
+                return 0;
         }
         if (dv != NULL)
             BN_zero(dv);
-        return (1);
+        return 1;
     }
 
     BN_CTX_start(ctx);
@@ -199,7 +199,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
         goto err;
 
     /* First we normalise the numbers */
-    norm_shift = BN_BITS2 - ((BN_num_bits(divisor)) % BN_BITS2);
+    norm_shift = BN_BITS2 - (BN_num_bits(divisor) % BN_BITS2);
     if (!(BN_lshift(sdiv, divisor, norm_shift)))
         goto err;
     sdiv->neg = 0;
@@ -238,7 +238,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     wnum.d = &(snum->d[loop]);
     wnum.top = div_n;
     /*
-     * only needed when BN_ucmp messes up the values between top and max
+     * only needed when BN_ucmp() messes up the values between top and max
      */
     wnum.dmax = snum->dmax - loop; /* so we don't step out of bounds */
 
@@ -264,7 +264,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     if (!no_branch) {
         if (BN_ucmp(&wnum, sdiv) >= 0) {
             /*
-             * If BN_DEBUG_RAND is defined BN_ucmp changes (via bn_pollute)
+             * If BN_DEBUG_RAND is defined BN_ucmp() changes (via bn_pollute())
              * the const bignum arguments => clean the values between top and
              * max again
              */
@@ -357,7 +357,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 #   endif
 
             for (;;) {
-                if ((t2h < rem) || ((t2h == rem) && (t2l <= wnump[-2])))
+                if (t2h < rem || (t2h == rem && t2l <= wnump[-2]))
                     break;
                 q--;
                 rem += d0;
@@ -375,7 +375,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
         tmp->d[div_n] = l0;
         wnum.d--;
         /*
-         * ingore top values of the bignums just sub the two BN_ULONG arrays
+         * ignore top values of the bignums just sub the two BN_ULONG arrays
          * with bn_sub_words
          */
         if (bn_sub_words(wnum.d, wnum.d, tmp->d, div_n + 1)) {
@@ -411,10 +411,10 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     if (no_branch)
         bn_correct_top(res);
     BN_CTX_end(ctx);
-    return (1);
+    return 1;
  err:
     bn_check_top(rm);
     BN_CTX_end(ctx);
-    return (0);
+    return 0;
 }
 #endif

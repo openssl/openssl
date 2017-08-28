@@ -13,7 +13,7 @@
 #
 # References:
 # [1] S. Gueron, "Efficient Software Implementations of Modular
-#     Exponentiation", http://eprint.iacr.org/2011/239
+#     Exponentiation", https://eprint.iacr.org/2011/239
 # [2] S. Gueron, V. Krasnov. "Speeding up Big-Numbers Squaring".
 #     IEEE Proceedings of 9th International Conference on Information
 #     Technology: New Generations (ITNG 2012), 821-823 (2012).
@@ -22,7 +22,7 @@
 # [4] S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis
 #     resistant 512-bit and 1024-bit modular exponentiation for optimizing
 #     RSA1024 and RSA2048 on x86_64 platforms",
-#     http://rt.openssl.org/Ticket/Display.html?id=2582&user=guest&pass=guest
+#     https://rt.openssl.org/Ticket/Display.html?id=2582&user=guest&pass=guest
 #
 # While original submission covers 512- and 1024-bit exponentiation,
 # this module is limited to 512-bit version only (and as such

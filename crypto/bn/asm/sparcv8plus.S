@@ -14,7 +14,7 @@
 
 /*
  * This is my modest contributon to OpenSSL project (see
- * http://www.openssl.org/ for more information about it) and is
+ * https://www.openssl.org/ for more information about it) and is
  * a drop-in UltraSPARC ISA replacement for crypto/bn/bn_asm.c
  * module. For updates see http://fy.chalmers.se/~appro/hpe/.
  *
