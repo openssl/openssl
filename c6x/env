@@ -1,16 +1,7 @@
-# This file is meant to perform environment/target-specific setup steps.
-# Normally it's just a bunch of environment variables. For this reason
-# it's customarily "sourced" into current shell environment, e.g.
-# '. c6x/env'. Exactly which variables and their values naturally vary
-# depending on specifics, but at the very least one is likely to adjust
-# PATH so that compiler can be invoked simply by 'cl6x'. Then C6X_C_DIR
-# is likely to be required. For CCSv3-specific c6x/run6x to work one has
-# to set PERL5LIB to point at directory where CCS_SCRIPTING_PERL module
-# resides. While for c6x/run6x.js, command-line program launcher for more
-# recent CCS versions, one has to set CCSTARGETCONFIG to point at relevant
-# Target Configuration file, as well as to ensure that 'dss.sh' is on PATH.
-# If target is not C64x+, then one has to set C6XPLATFORM and C6XSILICON,
-# e.g. to 'c64x' and '6400' respectively. And while we are at the subject
-# of customizations, user is also expected to provide c6x/fips_algvs.cmd
-# file that describes target system's memory layout and suitable linker
-# options.
+# MSYS-style PATH
+export PATH=/c/CCStudio_v3.3/c6000/cgtools/bin:/c/Program\ Files/ActivePerl58/bin:$PATH
+
+# Windows-style variables
+export C6X_C_DIR='C:\CCStudio_v3.3\c6000\cgtools\include;C:\CCStudio_v3.3\c6000\cgtools\lib'
+
+export PERL5LIB=C:/CCStudio_v3.3/bin/utilities/ccs_scripting

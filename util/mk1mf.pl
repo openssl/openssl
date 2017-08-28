@@ -249,7 +249,7 @@ elsif (($platform eq "netware-clib") || ($platform eq "netware-libc") ||
 	$BSDSOCK=1 if ($platform eq "netware-libc-bsdsock") || ($platform eq "netware-clib-bsdsock");
 	require 'netware.pl';
 	}
-elsif ($platform eq "c64xplus")
+elsif ($platform =~ /^c64x/)
 	{
 	require "TI_CGTOOLS.pl";
 	}
