@@ -516,6 +516,7 @@ my @disable_cascades = (
 
     "stdio"             => [ "apps", "capieng" ],
     "apps"              => [ "tests" ],
+    "tests"             => [ "external-tests" ],
     "comp"              => [ "zlib" ],
     "ec"                => [ "tls1_3" ],
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
@@ -665,7 +666,6 @@ while (@argvcopy)
                         delete $disabled{"zlib"};
                         }
 		my $algo = $1;
-		delete $disabled{$algo};
 
 		# No longer an automatic choice
 		$auto_threads = 0 if ($1 eq "threads");
