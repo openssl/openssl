@@ -1,21 +1,26 @@
 language: c
-sudo: false
+dist: trusty
+sudo: true
 
 matrix:
   include:
   - os: linux
     compiler: gcc
-    env: CC_OQS=gcc-4.8
+    env:
+    - ENABLE_SIDH_IQC_REF=1
+    - ENABLE_KEX_LWE_FRODO=0
+    - ENABLE_KEX_MLWE_KYBER=0
+    - ENABLE_KEX_SIDH_CLN16=0
+    - USE_PICNIC=1
+    - USE_OPENSSL=1
     addons:
       apt:
         sources:
         - ubuntu-toolchain-r-test
         packages:
-        - gcc-4.8
+          - libm4ri-dev
     before_install:
-      - wget http://downloads.sourceforge.net/project/astyle/astyle/astyle%202.05.1/astyle_2.05.1_linux.tar.gz
-      - tar xzf astyle_2.05.1_linux.tar.gz
-      - cd astyle/build/gcc && make && export PATH=$(pwd)/bin:$PATH && cd ../../../
+    - sh .travis/install-clang-format-linux.sh
   - os: linux
     compiler: gcc
     env: CC_OQS=gcc-4.9
@@ -26,9 +31,7 @@ matrix:
         packages:
         - gcc-4.9
     before_install:
-      - wget http://downloads.sourceforge.net/project/astyle/astyle/astyle%202.05.1/astyle_2.05.1_linux.tar.gz
-      - tar xzf astyle_2.05.1_linux.tar.gz
-      - cd astyle/build/gcc && make && export PATH=$(pwd)/bin:$PATH && cd ../../../
+    - sh .travis/install-clang-format-linux.sh
   - os: linux
     compiler: gcc
     env: CC_OQS=gcc-5
@@ -39,12 +42,12 @@ matrix:
         packages:
         - gcc-5
     before_install:
-      - wget http://downloads.sourceforge.net/project/astyle/astyle/astyle%202.05.1/astyle_2.05.1_linux.tar.gz
-      - tar xzf astyle_2.05.1_linux.tar.gz
-      - cd astyle/build/gcc && make && export PATH=$(pwd)/bin:$PATH && cd ../../../
+    - sh .travis/install-clang-format-linux.sh
   - os: linux
     compiler: gcc
-    env: CC_OQS=gcc-6 USE_OPENSSL=1
+    env:
+    - CC_OQS=gcc-6
+    - USE_OPENSSL=1
     addons:
       apt:
         sources:
@@ -53,18 +56,29 @@ matrix:
         - gcc-6
         - libssl-dev
     before_install:
-      - wget http://downloads.sourceforge.net/project/astyle/astyle/astyle%202.05.1/astyle_2.05.1_linux.tar.gz
-      - tar xzf astyle_2.05.1_linux.tar.gz
-      - cd astyle/build/gcc && make && export PATH=$(pwd)/bin:$PATH && cd ../../../
+    - sh .travis/install-clang-format-linux.sh
   - os: osx
     compiler: clang
-    env: CC_OQS=clang AES_NI=0 USE_OPENSSL=1
+    env:
+    - CC_OQS=clang
+    - AES_NI=0
     before_install:
-      - brew install astyle openssl
+    - brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/0c4314c499576b28e4c082b591228a8f940954c0/Formula/clang-format.rb
+  - os: osx
+    compiler: clang
+    env:
+    - CC_OQS=clang
+    - AES_NI=0
+    - USE_OPENSSL=1
+    - OPENSSL_DIR=/usr/local/opt/openssl # openssl is a keg-only package
+    - ENABLE_CODE_MCBITS=1
+    - ENABLE_SIDH_IQC_REF=1
+    - USE_PICNIC=1
+    - M4RI_DIR=/usr/local/
+    before_install:
+    - brew install libsodium
+    - brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/0c4314c499576b28e4c082b591228a8f940954c0/Formula/clang-format.rb
+    - brew install homebrew/science/m4ri
 
 script:
-  - make
-  - make check
-  - bash .travis-style-check.sh
-  - bash .travis-global-namespace-check.sh
-  - bash .travis-banned-functions-check.sh
+  - ./.travis-tests.sh

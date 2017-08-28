@@ -1,9 +1,9 @@
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
 
 #include <oqs/rand.h>
 
@@ -13,8 +13,8 @@ struct rand_testcase {
 
 /* Add new testcases here */
 struct rand_testcase rand_testcases[] = {
-	{ OQS_RAND_alg_urandom_chacha20 },
-	{ OQS_RAND_alg_urandom_aesctr},
+    {OQS_RAND_alg_urandom_chacha20},
+    {OQS_RAND_alg_urandom_aesctr},
 };
 
 #define RAND_TEST_ITERATIONS 10000000L
@@ -64,13 +64,14 @@ static int rand_test_distribution_n(OQS_RAND *rand, unsigned long occurrences[25
 	return 1;
 }
 
-#define PRINT_HEX_STRING(label, str, len) { \
-	printf("%-20s (%4zu bytes):  ", (label), (size_t) (len)); \
-	for (size_t i = 0; i < (len); i++) { \
-		printf("%02X", ((unsigned char *) (str)) [i]); \
-	} \
-	printf("\n"); \
-}
+#define PRINT_HEX_STRING(label, str, len)                        \
+	{                                                            \
+		printf("%-20s (%4zu bytes):  ", (label), (size_t)(len)); \
+		for (size_t i = 0; i < (len); i++) {                     \
+			printf("%02X", ((unsigned char *) (str))[i]);        \
+		}                                                        \
+		printf("\n");                                            \
+	}
 
 static int rand_test_distribution_wrapper(enum OQS_RAND_alg_name alg_name, int iterations, bool quiet) {
 
@@ -119,7 +120,7 @@ static int rand_test_distribution_wrapper(enum OQS_RAND_alg_name alg_name, int i
 
 	printf("1-byte mode for %d iterations\n", 8 * iterations);
 	rand_test_distribution_8(rand, occurrences, 8 * iterations);
-	printf("    Statistical distance from uniform: %12.10f\n", OQS_RAND_test_statistical_distance_from_uniform(occurrences));
+	OQS_RAND_report_statistics(occurrences, "    ");
 
 	for (int i = 0; i < 256; i++) {
 		occurrences[i] = 0;
@@ -127,7 +128,7 @@ static int rand_test_distribution_wrapper(enum OQS_RAND_alg_name alg_name, int i
 
 	printf("4-byte mode for %d iterations\n", 2 * iterations);
 	rand_test_distribution_32(rand, occurrences, 2 * iterations);
-	printf("    Statistical distance from uniform: %12.10f\n", OQS_RAND_test_statistical_distance_from_uniform(occurrences));
+	OQS_RAND_report_statistics(occurrences, "    ");
 
 	for (int i = 0; i < 256; i++) {
 		occurrences[i] = 0;
@@ -135,7 +136,7 @@ static int rand_test_distribution_wrapper(enum OQS_RAND_alg_name alg_name, int i
 
 	printf("8-byte mode for %d iterations\n", iterations);
 	rand_test_distribution_64(rand, occurrences, iterations);
-	printf("    Statistical distance from uniform: %12.10f\n", OQS_RAND_test_statistical_distance_from_uniform(occurrences));
+	OQS_RAND_report_statistics(occurrences, "    ");
 
 	for (int i = 0; i < 256; i++) {
 		occurrences[i] = 0;
@@ -143,12 +144,11 @@ static int rand_test_distribution_wrapper(enum OQS_RAND_alg_name alg_name, int i
 
 	printf("n-byte mode for %d bytes\n", 8 * iterations);
 	rand_test_distribution_n(rand, occurrences, 8 * iterations);
-	printf("    Statistical distance from uniform: %12.10f\n", OQS_RAND_test_statistical_distance_from_uniform(occurrences));
+	OQS_RAND_report_statistics(occurrences, "    ");
 
 	OQS_RAND_free(rand);
 
 	return 1;
-
 }
 
 int main(int argc, char **argv) {
@@ -158,8 +158,7 @@ int main(int argc, char **argv) {
 
 	for (int i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
-			if ( strcmp(argv[i], "--quiet") == 0
-			            || strcmp(argv[i], "-q") == 0  ) {
+			if (strcmp(argv[i], "--quiet") == 0 || strcmp(argv[i], "-q") == 0) {
 				quiet = true;
 			} else {
 				printf("Usage: ./test_rand [options]\n");
@@ -193,5 +192,4 @@ err:
 cleanup:
 
 	return (success == 1) ? EXIT_SUCCESS : EXIT_FAILURE;
-
 }

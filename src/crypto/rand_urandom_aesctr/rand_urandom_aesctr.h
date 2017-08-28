@@ -3,7 +3,6 @@
  * \brief Header for the chacha implementation of OQS_RAND
  */
 
-
 #ifndef __OQS_RAND_URANDOM_AESCTR_H
 #define __OQS_RAND_URANDOM_AESCTR_H
 

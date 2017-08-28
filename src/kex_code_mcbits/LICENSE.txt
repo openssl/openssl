@@ -1,0 +1,7 @@
+The files in this directory and its subdirectories (except kex_code_mcbits.*) 
+were originally written by Daniel J. Bernstein, Tung Chou, and Peter Schwabe
+(https://www.win.tue.nl/~tchou/mcbits/).
+
+According to the distribution website (https://www.win.tue.nl/~tchou/mcbits/):
+
+"The software is in the public domain."

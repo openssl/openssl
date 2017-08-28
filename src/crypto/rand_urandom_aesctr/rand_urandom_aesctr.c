@@ -3,19 +3,19 @@
 #include <windows.h>
 #include <Wincrypt.h>
 #else
+#include <strings.h>
 #include <sys/uio.h>
 #include <unistd.h>
-#include <strings.h>
 #endif
-#include <string.h> //memcpy
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <fcntl.h>
+#include <string.h> //memcpy
 
+#include <assert.h>
+#include <oqs/aes.h>
 #include <oqs/rand.h>
 #include <oqs/rand_urandom_aesctr.h>
-#include <oqs/aes.h>
-#include <assert.h>
 
 typedef struct oqs_rand_urandom_aesctr_ctx {
 	uint64_t ctr;
@@ -25,32 +25,15 @@ typedef struct oqs_rand_urandom_aesctr_ctx {
 } oqs_rand_urandom_aesctr_ctx;
 
 static oqs_rand_urandom_aesctr_ctx *oqs_rand_urandom_aesctr_ctx_new() {
-#if defined(WINDOWS)
-	HCRYPTPROV   hCryptProv;
-#else
-	int fd = 0;
-#endif
 	oqs_rand_urandom_aesctr_ctx *rand_ctx = NULL;
 	rand_ctx = (oqs_rand_urandom_aesctr_ctx *) malloc(sizeof(oqs_rand_urandom_aesctr_ctx));
 	if (rand_ctx == NULL) {
 		goto err;
 	}
 	uint8_t key[16];
-#if defined(WINDOWS)
-	if (!CryptAcquireContext(&hCryptProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT) ||
-	        !CryptGenRandom(hCryptProv, 16, key)) {
+	if (!OQS_RAND_get_system_entropy(key, 16)) {
 		goto err;
 	}
-#else
-	fd = open("/dev/urandom", O_RDONLY);
-	if (fd <= 0) {
-		goto err;
-	}
-	int r = read(fd, key, 16);
-	if (r != 16) {
-		goto err;
-	}
-#endif
 	OQS_AES128_load_schedule(key, &rand_ctx->schedule, 1);
 	rand_ctx->cache_next_byte = 64; // cache is empty
 	rand_ctx->ctr = 0;
@@ -59,29 +42,27 @@ err:
 	if (rand_ctx) {
 		free(rand_ctx);
 	}
-#if !defined(WINDOWS)
-	if (fd > 0) {
-		close(fd);
-	}
-#endif
 	return NULL;
 okay:
-#if !defined(WINDOWS)
-	close(fd);
-#endif
 	return rand_ctx;
 }
 
 void OQS_RAND_urandom_aesctr_n(OQS_RAND *r, uint8_t *out, size_t n) {
 	oqs_rand_urandom_aesctr_ctx *rand_ctx = (oqs_rand_urandom_aesctr_ctx *) r->ctx;
-	uint64_t *out_64 = (uint64_t *) out;
-	for (size_t i = 0; i < n / 16; i++) {
-		out_64[i] = rand_ctx->ctr;
-		rand_ctx->ctr++;
+	const uint64_t num_full_blocks = n / 16;
+	uint64_t *half_blocks = (uint64_t *) out;
+	for (size_t i = 0; i < num_full_blocks; i++) {
+		half_blocks[2 * i] = rand_ctx->ctr++;
+		half_blocks[2 * i + 1] = rand_ctx->ctr++;
 	}
-	OQS_AES128_ECB_enc_sch(out, n, rand_ctx->schedule, out);
-	for (size_t i = 0; i < n % 16; i++) {
-		out[16 * (n / 16) + i] = OQS_RAND_urandom_aesctr_8(r);
+	OQS_AES128_ECB_enc_sch(out, 16 * num_full_blocks, rand_ctx->schedule, out);
+	if (n % 16 > 0) {
+		uint8_t tmp_8[16];
+		uint64_t *tmp_64 = (uint64_t *) tmp_8;
+		tmp_64[0] = rand_ctx->ctr++;
+		tmp_64[1] = rand_ctx->ctr++;
+		OQS_AES128_ECB_enc_sch(tmp_8, 16, rand_ctx->schedule, tmp_8);
+		memcpy(out + 16 * num_full_blocks, tmp_8, n % 16);
 	}
 }
 
@@ -100,7 +81,6 @@ uint8_t OQS_RAND_urandom_aesctr_8(OQS_RAND *r) {
 	rand_ctx->cache_next_byte += 1;
 	return out;
 }
-
 
 uint32_t OQS_RAND_urandom_aesctr_32(OQS_RAND *r) {
 	oqs_rand_urandom_aesctr_ctx *rand_ctx = (oqs_rand_urandom_aesctr_ctx *) r->ctx;

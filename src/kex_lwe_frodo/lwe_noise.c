@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <oqs/rand.h>
 #include <oqs/common.h>
+#include <oqs/rand.h>
 
 #include "local.h"
 
@@ -32,7 +32,7 @@ static void lwe_sample_n_inverse_8(uint16_t *s, const size_t n, const uint8_t *c
 
 	for (size_t i = 0; i < n; ++i) {
 		uint8_t sample = 0;
-		uint8_t rnd = rndvec[i] >> 1; // drop the least significant bit
+		uint8_t rnd = rndvec[i] >> 1;   // drop the least significant bit
 		uint8_t sign = rndvec[i] & 0x1; // pick the least significant bit
 
 		// No need to compare with the last value.
@@ -56,7 +56,7 @@ static void lwe_sample_n_inverse_12(uint16_t *s, const size_t n, const uint16_t 
 	uint8_t rnd[3 * ((IS_WINDOWS(RECOMMENDED_N_ARRAY_SIZE, n) + 1) / 2)]; // 12 bits of unif randomness per output element
 	OQS_RAND_n(rand, rnd, sizeof(rnd));
 
-	for (size_t i = 0; i < n; i += 2) {  // two output elements at a time
+	for (size_t i = 0; i < n; i += 2) { // two output elements at a time
 		uint8_t *pRnd = (rnd + 3 * i / 2);
 
 		uint16_t rnd1 = (((pRnd[0] << 8) + pRnd[1]) & 0xFFE0) >> 5; // first 11 bits (0..10)
@@ -74,7 +74,7 @@ static void lwe_sample_n_inverse_12(uint16_t *s, const size_t n, const uint16_t 
 		}
 
 		uint8_t sign1 = (pRnd[2] & 0x02) >> 1; // 22nd bit
-		uint8_t sign2 = pRnd[2] & 0x01; // 23rd bit
+		uint8_t sign2 = pRnd[2] & 0x01;        // 23rd bit
 
 		// Assuming that sign1 is either 0 or 1, flips sample1 iff sign1 = 1
 		s[i] = ((-sign1) ^ sample1) + sign1;
@@ -97,7 +97,7 @@ static void lwe_sample_n_inverse_16(uint16_t *s, const size_t n, const uint16_t 
 
 	for (size_t i = 0; i < n; ++i) {
 		uint8_t sample = 0;
-		uint16_t rnd = rndvec[i] >> 1; // drop the least significant bit
+		uint16_t rnd = rndvec[i] >> 1;  // drop the least significant bit
 		uint8_t sign = rndvec[i] & 0x1; // pick the least significant bit
 
 		// No need to compare with the last value.
@@ -122,8 +122,7 @@ void oqs_kex_lwe_frodo_sample_n(uint16_t *s, const size_t n, struct oqs_kex_lwe_
 			cdf_table_8[i] = (uint8_t) params->cdf_table[i];
 		}
 		lwe_sample_n_inverse_8(s, n, cdf_table_8, params->cdf_table_len, rand);
-	}
-	break;
+	} break;
 	case 12:
 		lwe_sample_n_inverse_12(s, n, params->cdf_table, params->cdf_table_len, rand);
 		break;

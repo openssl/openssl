@@ -24,7 +24,7 @@
 //  Error sampling from psi_12
 //  Operation: c [reg_p2] <- sampling(a) [reg_p1]
 //*********************************************************************** 
-.global oqs_rlwe_msrln16_error_sampling_asm
+.globl oqs_rlwe_msrln16_error_sampling_asm
 oqs_rlwe_msrln16_error_sampling_asm:  
   vmovdqu    ymm7, ONE32x 
   movq       r11, 384
@@ -141,7 +141,7 @@ loop1b:
 //  Operation: c [reg_p2] <- function(a) [reg_p1]
 //             [reg_p3] points to random bits
 //*********************************************************************** 
-.global oqs_rlwe_msrln16_helprec_asm
+.globl oqs_rlwe_msrln16_helprec_asm
 oqs_rlwe_msrln16_helprec_asm:  
   vmovdqu    ymm8, ONE8x 
   movq       r11, 256
@@ -331,7 +331,7 @@ loop2:
 //  Reconciliation function
 //  Operation: c [reg_p3] <- function(a [reg_p1], b [reg_p2])
 //*********************************************************************** 
-.global oqs_rlwe_msrln16_rec_asm
+.globl oqs_rlwe_msrln16_rec_asm
 oqs_rlwe_msrln16_rec_asm:  
   vpxor      ymm12, ymm12, ymm12 
   vmovdqu    ymm15, PRIME8x   

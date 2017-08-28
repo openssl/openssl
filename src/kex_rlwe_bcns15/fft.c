@@ -40,39 +40,42 @@ static void *(*volatile rlwe_memset_volatile)(void *, int, size_t) = memset;
  * increase performance.
  */
 
-#define modadd(c,a,b) \
-do { \
-  uint32_t _t = a+b; \
-  c = _t + (_t < a); \
-} while (0)
+#define modadd(c, a, b)      \
+	do {                     \
+		uint32_t _t = a + b; \
+		c = _t + (_t < a);   \
+	} while (0)
 
-#define modsub(c,a,b) c = (a-b) - (b > a)
+#define modsub(c, a, b) c = (a - b) - (b > a)
 
-#define modmul(c,a,b) \
-do { \
-  uint64_t _T = (uint64_t) a * (uint64_t) b; \
-  modadd (c, ((uint32_t) _T), ((uint32_t) ((uint64_t) _T >> (uint64_t) 32))); \
-} while (0)
+#define modmul(c, a, b)                                                           \
+	do {                                                                          \
+		uint64_t _T = (uint64_t) a * (uint64_t) b;                                \
+		modadd(c, ((uint32_t) _T), ((uint32_t)((uint64_t) _T >> (uint64_t) 32))); \
+	} while (0)
 
+#define modmuladd(c, a, b)                                                        \
+	do {                                                                          \
+		uint64_t _T = (uint64_t) a * (uint64_t) b + c;                            \
+		modadd(c, ((uint32_t) _T), ((uint32_t)((uint64_t) _T >> (uint64_t) 32))); \
+	} while (0)
 
-#define modmuladd(c,a,b) \
-do { \
-  uint64_t _T = (uint64_t) a * (uint64_t) b + c; \
-  modadd (c, ((uint32_t) _T), ((uint32_t) ((uint64_t) _T >> (uint64_t) 32))); \
-} while (0)
-
-#define div2(c,a) c= (uint32_t) (((uint64_t) (a) + (uint64_t) ((uint32_t)(0-((a)&1))&0xFFFFFFFF))>>1)
-#define normalize(c,a) c = (a) + ((a) == 0xFFFFFFFF)
+#define div2(c, a) c = (uint32_t)(((uint64_t)(a) + (uint64_t)((uint32_t)(0 - ((a) &1)) & 0xFFFFFFFF)) >> 1)
+#define normalize(c, a) c = (a) + ((a) == 0xFFFFFFFF)
 
 /* Define the basic building blocks for the FFT. */
-#define SET_ZERO(x) (x)=0
-#define add(c,a,b) modadd(c,a,b)
-#define sub(c,a,b) modsub(c,a,b)
-#define mul(c,a,b) modmul(c,a,b)
-#define moddiv2(c,a)  normalize(c,a); div2(c,c)
-#define neg(c,a)   (c)=0xFFFFFFFF-(a); normalize(c,c)
-#define squ(c,a)   mul(c,a,a)
-#define set(c,a)   (c)=(a)
+#define SET_ZERO(x) (x) = 0
+#define add(c, a, b) modadd(c, a, b)
+#define sub(c, a, b) modsub(c, a, b)
+#define mul(c, a, b) modmul(c, a, b)
+#define moddiv2(c, a) \
+	normalize(c, a);  \
+	div2(c, c)
+#define neg(c, a)           \
+	(c) = 0xFFFFFFFF - (a); \
+	normalize(c, c)
+#define squ(c, a) mul(c, a, a)
+#define set(c, a) (c) = (a)
 
 /* Reverse the bits, approach from "Bit Twiddling Hacks"
  * See: https://graphics.stanford.edu/~seander/bithacks.html
@@ -115,9 +118,9 @@ static void naive(uint32_t *z, const uint32_t *x, const uint32_t *y, unsigned in
 }
 
 static void nussbaumer_fft(uint32_t z[1024], const uint32_t x[1024], const uint32_t y[1024], struct oqs_kex_rlwe_bcns15_fft_ctx *ctx) {
-	uint32_t (*X1)[64] = ctx->x1;
-	uint32_t (*Y1)[64] = ctx->y1;
-	uint32_t (*Z1)[64] = ctx->z1;
+	uint32_t(*X1)[64] = ctx->x1;
+	uint32_t(*Y1)[64] = ctx->y1;
+	uint32_t(*Z1)[64] = ctx->z1;
 	uint32_t *T1 = ctx->t1;
 	unsigned int i;
 	int j;

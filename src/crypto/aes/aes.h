@@ -3,7 +3,6 @@
  * \brief Header defining the API for OQS AES
  */
 
-
 #ifndef __OQS_AES_H
 #define __OQS_AES_H
 
