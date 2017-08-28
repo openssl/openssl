@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -250,8 +250,9 @@ static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
     if (pss->hashAlgorithm) {
         if (i2a_ASN1_OBJECT(bp, pss->hashAlgorithm->algorithm) <= 0)
             goto err;
-    } else if (BIO_puts(bp, "sha1 (default)") <= 0)
+    } else if (BIO_puts(bp, "sha1 (default)") <= 0) {
         goto err;
+    }
 
     if (BIO_puts(bp, "\n") <= 0)
         goto err;
@@ -270,10 +271,12 @@ static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
         if (maskHash != NULL) {
             if (i2a_ASN1_OBJECT(bp, maskHash->algorithm) <= 0)
                 goto err;
-        } else if (BIO_puts(bp, "INVALID") <= 0)
+        } else if (BIO_puts(bp, "INVALID") <= 0) {
             goto err;
-    } else if (BIO_puts(bp, "mgf1 with sha1 (default)") <= 0)
+        }
+    } else if (BIO_puts(bp, "mgf1 with sha1 (default)") <= 0) {
         goto err;
+    }
     BIO_puts(bp, "\n");
 
     if (!BIO_indent(bp, indent, 128))
@@ -283,8 +286,9 @@ static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
     if (pss->saltLength) {
         if (i2a_ASN1_INTEGER(bp, pss->saltLength) <= 0)
             goto err;
-    } else if (BIO_puts(bp, "14 (default)") <= 0)
+    } else if (BIO_puts(bp, "14 (default)") <= 0) {
         goto err;
+    }
     BIO_puts(bp, "\n");
 
     if (!BIO_indent(bp, indent, 128))
@@ -294,8 +298,9 @@ static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
     if (pss->trailerField) {
         if (i2a_ASN1_INTEGER(bp, pss->trailerField) <= 0)
             goto err;
-    } else if (BIO_puts(bp, "BC (default)") <= 0)
+    } else if (BIO_puts(bp, "BC (default)") <= 0) {
         goto err;
+    }
     BIO_puts(bp, "\n");
 
     rv = 1;
@@ -536,9 +541,9 @@ static RSA_PSS_PARAMS *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
         return NULL;
     if (!EVP_PKEY_CTX_get_rsa_pss_saltlen(pkctx, &saltlen))
         return NULL;
-    if (saltlen == -1)
+    if (saltlen == -1) {
         saltlen = EVP_MD_size(sigmd);
-    else if (saltlen == -2) {
+    } else if (saltlen == -2) {
         saltlen = EVP_PKEY_size(pk) - EVP_MD_size(sigmd) - 2;
         if ((EVP_PKEY_bits(pk) & 0x7) == 1)
             saltlen--;

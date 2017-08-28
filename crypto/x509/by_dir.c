@@ -10,12 +10,10 @@
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
+#include <sys/types.h>
 
 #include "internal/cryptlib.h"
 
-#ifndef NO_SYS_TYPES_H
-# include <sys/types.h>
-#endif
 #ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 #endif

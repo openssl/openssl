@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -170,11 +170,13 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
                 return -1;
             ret = RSA_private_encrypt(RSA_size(rsa), rctx->tbuf,
                                       sig, rsa, RSA_NO_PADDING);
-        } else
+        } else {
             return -1;
-    } else
+        }
+    } else {
         ret = RSA_private_encrypt(tbslen, tbs, sig, ctx->pkey->pkey.rsa,
                                   rctx->pad_mode);
+    }
     if (ret < 0)
         return ret;
     *siglen = ret;
@@ -218,11 +220,13 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
             if (ret <= 0)
                 return 0;
             ret = sltmp;
-        } else
+        } else {
             return -1;
-    } else
+        }
+    } else {
         ret = RSA_public_decrypt(siglen, sig, rout, ctx->pkey->pkey.rsa,
                                  rctx->pad_mode);
+    }
     if (ret < 0)
         return ret;
     *routlen = ret;
@@ -262,8 +266,9 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
             if (ret <= 0)
                 return 0;
             return 1;
-        } else
+        } else {
             return -1;
+        }
     } else {
         if (!setup_tbuf(rctx, ctx))
             return -1;
@@ -299,9 +304,10 @@ static int pkey_rsa_encrypt(EVP_PKEY_CTX *ctx,
             return -1;
         ret = RSA_public_encrypt(klen, rctx->tbuf, out,
                                  ctx->pkey->pkey.rsa, RSA_NO_PADDING);
-    } else
+    } else {
         ret = RSA_public_encrypt(inlen, in, out, ctx->pkey->pkey.rsa,
                                  rctx->pad_mode);
+    }
     if (ret < 0)
         return ret;
     *outlen = ret;
@@ -327,9 +333,10 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx,
                                                 rctx->oaep_label,
                                                 rctx->oaep_labellen,
                                                 rctx->md, rctx->mgf1md);
-    } else
+    } else {
         ret = RSA_private_decrypt(inlen, in, out, ctx->pkey->pkey.rsa,
                                   rctx->pad_mode);
+    }
     if (ret < 0)
         return ret;
     *outlen = ret;
@@ -572,21 +579,21 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
     }
     if (strcmp(type, "rsa_padding_mode") == 0) {
         int pm;
-        if (strcmp(value, "pkcs1") == 0)
+        if (strcmp(value, "pkcs1") == 0) {
             pm = RSA_PKCS1_PADDING;
-        else if (strcmp(value, "sslv23") == 0)
+        } else if (strcmp(value, "sslv23") == 0) {
             pm = RSA_SSLV23_PADDING;
-        else if (strcmp(value, "none") == 0)
+        } else if (strcmp(value, "none") == 0) {
             pm = RSA_NO_PADDING;
-        else if (strcmp(value, "oeap") == 0)
+        } else if (strcmp(value, "oeap") == 0) {
             pm = RSA_PKCS1_OAEP_PADDING;
-        else if (strcmp(value, "oaep") == 0)
+        } else if (strcmp(value, "oaep") == 0) {
             pm = RSA_PKCS1_OAEP_PADDING;
-        else if (strcmp(value, "x931") == 0)
+        } else if (strcmp(value, "x931") == 0) {
             pm = RSA_X931_PADDING;
-        else if (strcmp(value, "pss") == 0)
+        } else if (strcmp(value, "pss") == 0) {
             pm = RSA_PKCS1_PSS_PADDING;
-        else {
+        } else {
             RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_UNKNOWN_PADDING_TYPE);
             return -2;
         }
@@ -704,8 +711,9 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
             return 0;
         }
         evp_pkey_set_cb_translate(pcb, ctx);
-    } else
+    } else {
         pcb = NULL;
+    }
     ret = RSA_generate_key_ex(rsa, rctx->nbits, rctx->pub_exp, pcb);
     BN_GENCB_free(pcb);
     if (ret > 0 && !rsa_set_pss_param(rsa, ctx)) {

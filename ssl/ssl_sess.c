@@ -491,7 +491,8 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
             goto err;
         case TICKET_NONE:
         case TICKET_EMPTY:
-            try_session_cache = 1;
+            if (hello->session_id_len > 0)
+                try_session_cache = 1;
             break;
         case TICKET_NO_DECRYPT:
         case TICKET_SUCCESS:

@@ -3448,6 +3448,8 @@ static void ge_scalarmult_base(ge_p3 *h, const uint8_t *a) {
     ge_madd(&r, h, &t);
     ge_p1p1_to_p3(h, &r);
   }
+
+  OPENSSL_cleanse(e, sizeof(e));
 }
 
 /* Replace (f,g) with (g,f) if b == 1;
@@ -3578,6 +3580,8 @@ static void x25519_scalar_mult_generic(uint8_t out[32],
   fe_invert(z2, z2);
   fe_mul(x2, x2, z2);
   fe_tobytes(out, x2);
+
+  OPENSSL_cleanse(e, sizeof(e));
 }
 
 static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
@@ -4635,7 +4639,6 @@ int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
 int ED25519_verify(const uint8_t *message, size_t message_len,
                    const uint8_t signature[64], const uint8_t public_key[32]) {
   ge_p3 A;
-  uint8_t pkcopy[32];
   uint8_t rcopy[32];
   uint8_t scopy[32];
   SHA512_CTX hash_ctx;
@@ -4651,7 +4654,6 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
   fe_neg(A.X, A.X);
   fe_neg(A.T, A.T);
 
-  memcpy(pkcopy, public_key, 32);
   memcpy(rcopy, signature, 32);
   memcpy(scopy, signature + 32, 32);
 
@@ -4683,6 +4685,8 @@ void ED25519_public_from_private(uint8_t out_public_key[32],
 
   ge_scalarmult_base(&A, az);
   ge_p3_tobytes(out_public_key, &A);
+
+  OPENSSL_cleanse(az, sizeof(az));
 }
 
 int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
@@ -4713,4 +4717,6 @@ void X25519_public_from_private(uint8_t out_public_value[32],
   fe_invert(zminusy_inv, zminusy);
   fe_mul(zplusy, zplusy, zminusy_inv);
   fe_tobytes(out_public_value, zplusy);
+
+  OPENSSL_cleanse(e, sizeof(e));
 }

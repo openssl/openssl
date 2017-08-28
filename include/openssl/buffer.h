@@ -22,10 +22,7 @@ extern "C" {
 #endif
 
 # include <stddef.h>
-
-# if !defined(NO_SYS_TYPES_H)
-#  include <sys/types.h>
-# endif
+# include <sys/types.h>
 
 /*
  * These names are outdated as of OpenSSL 1.1; a future release

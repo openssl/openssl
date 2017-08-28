@@ -757,7 +757,8 @@ static int test_tlsext_status_type(void)
 }
 #endif
 
-static int new_called = 0, remove_called = 0;
+#if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+static int new_called, remove_called, get_called;
 
 static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
 {
@@ -780,10 +781,10 @@ static SSL_SESSION *get_sess_val = NULL;
 static SSL_SESSION *get_session_cb(SSL *ssl, const unsigned char *id, int len,
                                    int *copy)
 {
+    get_called++;
     *copy = 1;
     return get_sess_val;
 }
-
 
 static int execute_test_session(int maxprot, int use_int_cache,
                                 int use_ext_cache)
@@ -791,9 +792,9 @@ static int execute_test_session(int maxprot, int use_int_cache,
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl1 = NULL, *clientssl1 = NULL;
     SSL *serverssl2 = NULL, *clientssl2 = NULL;
-#ifndef OPENSSL_NO_TLS1_1
+# ifndef OPENSSL_NO_TLS1_1
     SSL *serverssl3 = NULL, *clientssl3 = NULL;
-#endif
+# endif
     SSL_SESSION *sess1 = NULL, *sess2 = NULL;
     int testresult = 0;
 
@@ -917,7 +918,7 @@ static int execute_test_session(int maxprot, int use_int_cache,
             && (!TEST_int_eq(new_called, 0) || !TEST_int_eq(remove_called, 1)))
         goto end;
 
-#if !defined(OPENSSL_NO_TLS1_1)
+# if !defined(OPENSSL_NO_TLS1_1)
     new_called = remove_called = 0;
     /* Force a connection failure */
     SSL_CTX_set_max_proto_version(sctx, TLS1_1_VERSION);
@@ -937,7 +938,7 @@ static int execute_test_session(int maxprot, int use_int_cache,
     /* Should succeed because it should not already be in the cache */
     if (use_int_cache && !TEST_true(SSL_CTX_add_session(cctx, sess2)))
         goto end;
-#endif
+# endif
 
     /* Now do some tests for server side caching */
     if (use_ext_cache) {
@@ -969,7 +970,7 @@ static int execute_test_session(int maxprot, int use_int_cache,
 
     SSL_CTX_set_max_proto_version(sctx, maxprot);
     SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET);
-    new_called = remove_called = 0;
+    new_called = remove_called = get_called = 0;
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl1, &clientssl1,
                                       NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl1, clientssl1,
@@ -985,7 +986,9 @@ static int execute_test_session(int maxprot, int use_int_cache,
     if (use_ext_cache) {
         SSL_SESSION *tmp = sess2;
 
-        if (!TEST_int_eq(new_called, 1) || !TEST_int_eq(remove_called, 0))
+        if (!TEST_int_eq(new_called, 1)
+                || !TEST_int_eq(remove_called, 0)
+                || !TEST_int_eq(get_called, 0))
             goto end;
         /*
          * Delete the session from the internal cache to force a lookup from
@@ -1001,7 +1004,7 @@ static int execute_test_session(int maxprot, int use_int_cache,
         sess2 = tmp;
     }
 
-    new_called = remove_called = 0;
+    new_called = remove_called = get_called = 0;
     get_sess_val = sess2;
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl2,
                                       &clientssl2, NULL, NULL))
@@ -1011,10 +1014,19 @@ static int execute_test_session(int maxprot, int use_int_cache,
             || !TEST_true(SSL_session_reused(clientssl2)))
         goto end;
 
-    if (use_ext_cache
-            && (!TEST_int_eq(new_called, 0)
-                || !TEST_int_eq(remove_called, 0)))
-        goto end;
+    if (use_ext_cache) {
+        if (!TEST_int_eq(new_called, 0)
+                || !TEST_int_eq(remove_called, 0))
+            goto end;
+
+        if (maxprot == TLS1_3_VERSION) {
+            if (!TEST_int_eq(get_called, 0))
+                goto end;
+        } else {
+            if (!TEST_int_eq(get_called, 1))
+                goto end;
+        }
+    }
 
     testresult = 1;
 
@@ -1023,10 +1035,10 @@ static int execute_test_session(int maxprot, int use_int_cache,
     SSL_free(clientssl1);
     SSL_free(serverssl2);
     SSL_free(clientssl2);
-#ifndef OPENSSL_NO_TLS1_1
+# ifndef OPENSSL_NO_TLS1_1
     SSL_free(serverssl3);
     SSL_free(clientssl3);
-#endif
+# endif
     SSL_SESSION_free(sess1);
     SSL_SESSION_free(sess2);
     SSL_CTX_free(sctx);
@@ -1034,6 +1046,7 @@ static int execute_test_session(int maxprot, int use_int_cache,
 
     return testresult;
 }
+#endif /* !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) */
 
 static int test_session_with_only_int_cache(void)
 {
