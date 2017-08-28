@@ -144,8 +144,6 @@ struct rand_drbg_st {
 /* The global RAND method, and the global buffer and DRBG instance. */
 extern RAND_METHOD rand_meth;
 extern RAND_BYTES_BUFFER rand_bytes;
-extern RAND_DRBG rand_drbg;
-extern RAND_DRBG priv_drbg;
 
 /* How often we've forked (only incremented in child). */
 extern int rand_fork_count;

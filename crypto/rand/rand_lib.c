@@ -144,7 +144,7 @@ size_t drbg_entropy_from_parent(RAND_DRBG *drbg,
 {
     int st;
     unsigned char *randomness;
-    
+
     if (min_len > (size_t)drbg->size) {
         /* Should not happen.  See comment near RANDOMNESS_NEEDED. */
         min_len = drbg->size;
@@ -172,32 +172,6 @@ void drbg_release_entropy(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
         OPENSSL_clear_free(out, outlen);
 }
 
-
-/*
- * Set up a global DRBG.
- */
-static int setup_drbg(RAND_DRBG *drbg)
-{
-    int ret = 1;
-
-    drbg->lock = CRYPTO_THREAD_lock_new();
-    ret &= drbg->lock != NULL;
-    drbg->size = RANDOMNESS_NEEDED;
-    drbg->secure = CRYPTO_secure_malloc_initialized();
-    /* If you change these parameters, see RANDOMNESS_NEEDED */
-    ret &= RAND_DRBG_set(drbg,
-                         NID_aes_128_ctr, RAND_DRBG_FLAG_CTR_USE_DF) == 1;
-    ret &= RAND_DRBG_set_callbacks(drbg, drbg_entropy_from_system,
-                                   drbg_release_entropy, NULL, NULL) == 1;
-    return ret;
-}
-
-static void free_drbg(RAND_DRBG *drbg)
-{
-    CRYPTO_THREAD_lock_free(drbg->lock);
-    RAND_DRBG_uninstantiate(drbg);
-}
-
 void rand_fork()
 {
     rand_fork_count++;
@@ -223,8 +197,6 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
         ? OPENSSL_secure_malloc(rand_bytes.size)
         : OPENSSL_malloc(rand_bytes.size);
     ret &= rand_bytes.buff != NULL;
-    ret &= setup_drbg(&rand_drbg);
-    ret &= setup_drbg(&priv_drbg);
     return ret;
 }
 
@@ -244,8 +216,6 @@ void rand_cleanup_int(void)
         OPENSSL_secure_clear_free(rand_bytes.buff, rand_bytes.size);
     else
         OPENSSL_clear_free(rand_bytes.buff, rand_bytes.size);
-    free_drbg(&rand_drbg);
-    free_drbg(&priv_drbg);
 }
 
 /*
@@ -357,15 +327,16 @@ void RAND_add(const void *buf, int num, double randomness)
 int RAND_priv_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
+    RAND_DRBG *drbg;
 
     if (meth != RAND_OpenSSL())
         return RAND_bytes(buf, num);
 
-    if (priv_drbg.state == DRBG_UNINITIALISED
-            && RAND_DRBG_instantiate(&priv_drbg, NULL, 0) == 0)
+    drbg = RAND_DRBG_get0_priv_global();
+    if (drbg == NULL)
         return 0;
-    return RAND_DRBG_generate(&priv_drbg, buf, num, 0, NULL, 0);
 
+    return RAND_DRBG_generate(drbg, buf, num, 0, NULL, 0);
 }
 
 int RAND_bytes(unsigned char *buf, int num)
