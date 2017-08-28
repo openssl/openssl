@@ -3,7 +3,6 @@
  * \brief Header defining additional internal functions for OQS AES
  */
 
-
 #ifndef __OQS_AES_LOCAL_H
 #define __OQS_AES_LOCAL_H
 

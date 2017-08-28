@@ -11,51 +11,49 @@
 #ifndef __LatticeCrypt_H__
 #define __LatticeCrypt_H__
 
-
 // For C++
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-#include <stdint.h>
+#include <oqs/rand.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <oqs/rand.h>
+#include <stdint.h>
 
 // NOTE: probably a better way to do this.
 #if (defined(__x86_64__) || defined(__x86_64) || defined(__arch64__) || defined(_M_AMD64) || defined(_M_X64) || defined(_WIN64) || !defined(__LP64__))
-#define RADIX           64
-typedef uint64_t        digit_t;        // Unsigned 64-bit digit
-typedef int64_t         sdigit_t;       // Signed 64-bit digit
+#define RADIX 64
+typedef uint64_t digit_t; // Unsigned 64-bit digit
+typedef int64_t sdigit_t; // Signed 64-bit digit
 #else
-#define RADIX           32
-typedef uint32_t        digit_t;        // Unsigned 32-bit digit
-typedef int32_t         sdigit_t;       // Signed 32-bit digit
+#define RADIX 32
+typedef uint32_t digit_t; // Unsigned 32-bit digit
+typedef int32_t sdigit_t; // Signed 32-bit digit
 
 #endif
 
 // Definitions of the error-handling type and error codes
 
 typedef enum {
-	CRYPTO_SUCCESS,                          // 0x00
-	CRYPTO_ERROR,                            // 0x01
-	CRYPTO_ERROR_DURING_TEST,                // 0x02
-	CRYPTO_ERROR_UNKNOWN,                    // 0x03
-	CRYPTO_ERROR_NOT_IMPLEMENTED,            // 0x04
-	CRYPTO_ERROR_NO_MEMORY,                  // 0x05
-	CRYPTO_ERROR_INVALID_PARAMETER,          // 0x06
-	CRYPTO_ERROR_SHARED_KEY,                 // 0x07
-	CRYPTO_ERROR_TOO_MANY_ITERATIONS,        // 0x08
+	CRYPTO_SUCCESS,                   // 0x00
+	CRYPTO_ERROR,                     // 0x01
+	CRYPTO_ERROR_DURING_TEST,         // 0x02
+	CRYPTO_ERROR_UNKNOWN,             // 0x03
+	CRYPTO_ERROR_NOT_IMPLEMENTED,     // 0x04
+	CRYPTO_ERROR_NO_MEMORY,           // 0x05
+	CRYPTO_ERROR_INVALID_PARAMETER,   // 0x06
+	CRYPTO_ERROR_SHARED_KEY,          // 0x07
+	CRYPTO_ERROR_TOO_MANY_ITERATIONS, // 0x08
 	CRYPTO_ERROR_END_OF_LIST
 } CRYPTO_STATUS;
 
 #define CRYPTO_STATUS_TYPE_SIZE (CRYPTO_ERROR_END_OF_LIST)
 
 // Basic key-exchange constants
-#define OQS_RLWE_MSRLN16_PKA_BYTES           1824      // Alice's public key size 
-#define OQS_RLWE_MSRLN16_PKB_BYTES           2048      // Bob's public key size 
-#define OQS_RLWE_MSRLN16_SHAREDKEY_BYTES     32        // Shared key size 
+#define OQS_RLWE_MSRLN16_PKA_BYTES 1824     // Alice's public key size
+#define OQS_RLWE_MSRLN16_PKB_BYTES 2048     // Bob's public key size
+#define OQS_RLWE_MSRLN16_SHAREDKEY_BYTES 32 // Shared key size
 
 /******************** Function prototypes *******************/
 
@@ -85,10 +83,8 @@ CRYPTO_STATUS oqs_rlwe_msrln16_SecretAgreement_B(unsigned char *PublicKeyA, unsi
 // Output: the 256-bit shared secret SharedSecretA.
 CRYPTO_STATUS oqs_rlwe_msrln16_SecretAgreement_A(unsigned char *PublicKeyB, int32_t *SecretKeyA, unsigned char *SharedSecretA);
 
-
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

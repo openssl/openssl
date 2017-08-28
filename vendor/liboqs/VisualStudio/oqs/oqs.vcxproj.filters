@@ -55,9 +55,6 @@
     <ClCompile Include="..\..\src\kex_sidh_cln16\SIDH_setup.c">
       <Filter>KEX_SIDH_CLN16</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\kex_sidh_cln16\validate.c">
-      <Filter>KEX_SIDH_CLN16</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\common\common.c">
       <Filter>Common</Filter>
     </ClCompile>
@@ -84,6 +81,21 @@
     </ClCompile>
     <ClCompile Include="..\..\src\kex\kex.c">
       <Filter>KEX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_code_mcbits\kex_code_mcbits.c">
+      <Filter>KEX_McBits</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_code_mcbits\external\operations.c">
+      <Filter>KEX_McBits</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_ntru\kex_ntru.c">
+      <Filter>KEX_NTRU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_sidh_cln16\generic\fp_generic.c">
+      <Filter>KEX_SIDH_CLN16</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_mlwe_kyber\kex_mlwe_kyber.c">
+      <Filter>KEX_Kyber</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -153,6 +165,18 @@
     <ClInclude Include="..\..\src\kex\kex.h">
       <Filter>KEX</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\kex_code_mcbits\kex_code_mcbits.h">
+      <Filter>KEX_McBits</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_code_mcbits\mcbits.h">
+      <Filter>KEX_McBits</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_ntru\kex_ntru.h">
+      <Filter>KEX_NTRU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_mlwe_kyber\kex_mlwe_kyber.h">
+      <Filter>KEX_Kyber</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Common">
@@ -187,6 +211,15 @@
     </Filter>
     <Filter Include="Crypto\SHA3">
       <UniqueIdentifier>{a9a0db92-1388-4ea2-b0d5-d61a51581993}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_McBits">
+      <UniqueIdentifier>{9c91a128-d5a0-4eec-998e-a7bc85b3691e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_NTRU">
+      <UniqueIdentifier>{f2432c4a-5195-4990-af30-65a61bf36897}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_Kyber">
+      <UniqueIdentifier>{c95ab174-03e5-4e85-a903-ccef78182c4f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

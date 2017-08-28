@@ -18,6 +18,11 @@ enum OQS_KEX_alg_name {
 	OQS_KEX_alg_rlwe_msrln16,
 	OQS_KEX_alg_lwe_frodo,
 	OQS_KEX_alg_sidh_cln16,
+	OQS_KEX_alg_sidh_cln16_compressed,
+	OQS_KEX_alg_code_mcbits,
+	OQS_KEX_alg_ntru,
+	OQS_KEX_alg_sidh_iqc_ref,
+	OQS_KEX_alg_mlwe_kyber,
 };
 
 typedef struct OQS_KEX OQS_KEX;

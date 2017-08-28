@@ -2,7 +2,7 @@
 void MACRIFY(oqs_kex_lwe_frodo_round2)(unsigned char *out, uint16_t *in) {
 	oqs_kex_lwe_frodo_key_round(in, PARAMS_NBAR * PARAMS_NBAR, PARAMS_LOG2Q - PARAMS_EXTRACTED_BITS);
 	for (int i = 0; i < PARAMS_NBAR * PARAMS_NBAR; i++) {
-		in[i] >>= PARAMS_LOG2Q - PARAMS_EXTRACTED_BITS;  // drop bits that were zeroed out
+		in[i] >>= PARAMS_LOG2Q - PARAMS_EXTRACTED_BITS; // drop bits that were zeroed out
 	}
 
 	// out should have enough space for the key
@@ -11,7 +11,7 @@ void MACRIFY(oqs_kex_lwe_frodo_round2)(unsigned char *out, uint16_t *in) {
 
 void MACRIFY(oqs_kex_lwe_frodo_crossround2)(unsigned char *out, const uint16_t *in) {
 	// out should have enough space for N_BAR * N_BAR bits
-	memset((unsigned char *)out, 0, PARAMS_REC_HINT_LENGTH);
+	memset((unsigned char *) out, 0, PARAMS_REC_HINT_LENGTH);
 
 	uint16_t whole = 1 << (PARAMS_LOG2Q - PARAMS_EXTRACTED_BITS);
 	uint16_t half = whole >> 1;
@@ -26,7 +26,7 @@ void MACRIFY(oqs_kex_lwe_frodo_crossround2)(unsigned char *out, const uint16_t *
 void MACRIFY(oqs_kex_lwe_frodo_reconcile)(unsigned char *out, uint16_t *w, const unsigned char *hint) {
 	oqs_kex_lwe_frodo_key_round_hints(w, PARAMS_NBAR * PARAMS_NBAR, PARAMS_LOG2Q - PARAMS_EXTRACTED_BITS, hint);
 	for (int i = 0; i < PARAMS_NBAR * PARAMS_NBAR; i++) {
-		w[i] >>= PARAMS_LOG2Q - PARAMS_EXTRACTED_BITS;  // drop bits that were zeroed out
+		w[i] >>= PARAMS_LOG2Q - PARAMS_EXTRACTED_BITS; // drop bits that were zeroed out
 	}
 	oqs_kex_lwe_frodo_pack(out, PARAMS_KEY_BITS / 8, w, PARAMS_NBAR * PARAMS_NBAR, PARAMS_EXTRACTED_BITS);
 }
@@ -76,7 +76,6 @@ void MACRIFY(oqs_kex_lwe_frodo_mul_add_as_plus_e_on_the_fly)(uint16_t *out, cons
 
 	OQS_AES128_free_schedule(aes_key_schedule);
 }
-
 
 // Generate-and-multiply: generate A column-wise, multiply by s' on the left.
 void MACRIFY(oqs_kex_lwe_frodo_mul_add_sa_plus_e_on_the_fly)(uint16_t *out, const uint16_t *s, const uint16_t *e, struct oqs_kex_lwe_frodo_params *params) {
@@ -155,7 +154,7 @@ void MACRIFY(oqs_kex_lwe_frodo_mul_add_sb_plus_e)(uint16_t *out, const uint16_t 
 				sum += s[k * PARAMS_N + j] * b[j * PARAMS_NBAR + i];
 			}
 			out[k * PARAMS_NBAR + i] += sum;
-			out[k * PARAMS_NBAR + i] &= PARAMS_Q - 1;  // not really necessary since LWE_Q is a power of 2.
+			out[k * PARAMS_NBAR + i] &= PARAMS_Q - 1; // not really necessary since LWE_Q is a power of 2.
 		}
 	}
 }

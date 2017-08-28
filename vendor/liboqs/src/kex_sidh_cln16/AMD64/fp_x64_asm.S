@@ -1,6 +1,6 @@
 //*******************************************************************************************
-// SIDH: an efficient supersingular isogeny-based cryptography library for Diffie-Hellman key 
-//       exchange providing 128 bits of quantum security and 192 bits of classical security.
+// SIDH: an efficient supersingular isogeny-based cryptography library for ephemeral
+//       Diffie-Hellman key exchange.
 //
 //    Copyright (c) Microsoft Corporation. All rights reserved.
 //
@@ -50,7 +50,7 @@
 //  Field addition
 //  Operation: c [reg_p3] = a [reg_p1] + b [reg_p2]
 //*********************************************************************** 
-.global oqs_sidh_cln16_fpadd751_asm
+.globl oqs_sidh_cln16_fpadd751_asm
 oqs_sidh_cln16_fpadd751_asm:
   push   r12
   push   r13
@@ -191,7 +191,7 @@ oqs_sidh_cln16_fpadd751_asm:
 //  Field subtraction
 //  Operation: c [reg_p3] = a [reg_p1] - b [reg_p2]
 //*********************************************************************** 
-.global oqs_sidh_cln16_fpsub751_asm
+.globl oqs_sidh_cln16_fpsub751_asm
 oqs_sidh_cln16_fpsub751_asm:
   push   r12
   push   r13
@@ -306,7 +306,7 @@ oqs_sidh_cln16_fpsub751_asm:
 //  Operation: c [reg_p3] = a [reg_p1] * b [reg_p2]
 //  NOTE: a=c or b=c are not allowed
 //***********************************************************************
-.global oqs_sidh_cln16_mul751_asm
+.globl oqs_sidh_cln16_mul751_asm
 oqs_sidh_cln16_mul751_asm:
   push   r12
   push   r13
@@ -1249,7 +1249,7 @@ oqs_sidh_cln16_mul751_asm:
 //  Operation: c [reg_p2] = a [reg_p1]
 //  NOTE: a=c is not allowed
 //*********************************************************************** 
-.global oqs_sidh_cln16_rdc751_asm
+.globl oqs_sidh_cln16_rdc751_asm
 oqs_sidh_cln16_rdc751_asm:
   push   r12
   push   r13 
@@ -1857,6 +1857,163 @@ oqs_sidh_cln16_rdc751_asm:
   add    r10, [reg_p1+184]   // z11
   mov    [reg_p2+88], r10    // z11
 
+  pop    r15
+  pop    r14
+  pop    r13
+  pop    r12
+  ret
+
+
+//***********************************************************************
+//  751-bit multiprecision addition
+//  Operation: c [reg_p3] = a [reg_p1] + b [reg_p2]
+//*********************************************************************** 
+.globl oqs_sidh_cln16_mp_add751_asm
+oqs_sidh_cln16_mp_add751_asm:
+  push   r12
+  push   r13
+  push   r14
+  push   r15
+  push   rbx
+  
+  mov    r8, [reg_p1]
+  mov    r9, [reg_p1+8]
+  mov    r10, [reg_p1+16]
+  mov    r11, [reg_p1+24]
+  mov    r12, [reg_p1+32]
+  mov    r13, [reg_p1+40]
+  mov    r14, [reg_p1+48]
+  mov    r15, [reg_p1+56] 
+  mov    rax, [reg_p1+64]
+  mov    rbx, [reg_p1+72] 
+  mov    rcx, [reg_p1+80]  
+  mov    rdi, [reg_p1+88] 
+
+  add    r8, [reg_p2] 
+  adc    r9, [reg_p2+8] 
+  adc    r10, [reg_p2+16] 
+  adc    r11, [reg_p2+24] 
+  adc    r12, [reg_p2+32] 
+  adc    r13, [reg_p2+40] 
+  adc    r14, [reg_p2+48] 
+  adc    r15, [reg_p2+56]
+  adc    rax, [reg_p2+64] 
+  adc    rbx, [reg_p2+72]
+  adc    rcx, [reg_p2+80]
+  adc    rdi, [reg_p2+88]
+
+  mov    [reg_p3], r8
+  mov    [reg_p3+8], r9
+  mov    [reg_p3+16], r10
+  mov    [reg_p3+24], r11
+  mov    [reg_p3+32], r12
+  mov    [reg_p3+40], r13
+  mov    [reg_p3+48], r14
+  mov    [reg_p3+56], r15
+  mov    [reg_p3+64], rax
+  mov    [reg_p3+72], rbx
+  mov    [reg_p3+80], rcx
+  mov    [reg_p3+88], rdi
+  
+  pop    rbx
+  pop    r15
+  pop    r14
+  pop    r13
+  pop    r12
+  ret
+
+
+//***********************************************************************
+//  2x751-bit multiprecision addition
+//  Operation: c [reg_p3] = a [reg_p1] + b [reg_p2]
+//*********************************************************************** 
+.globl oqs_sidh_cln16_mp_add751x2_asm
+oqs_sidh_cln16_mp_add751x2_asm:
+  push   r12
+  push   r13
+  push   r14
+  push   r15
+  push   rbx
+  
+  mov    r8, [reg_p1]
+  mov    r9, [reg_p1+8]
+  mov    r10, [reg_p1+16]
+  mov    r11, [reg_p1+24]
+  mov    r12, [reg_p1+32]
+  mov    r13, [reg_p1+40]
+  mov    r14, [reg_p1+48]
+  mov    r15, [reg_p1+56] 
+  mov    rax, [reg_p1+64]
+  mov    rbx, [reg_p1+72] 
+  mov    rcx, [reg_p1+80] 
+
+  add    r8, [reg_p2] 
+  adc    r9, [reg_p2+8] 
+  adc    r10, [reg_p2+16] 
+  adc    r11, [reg_p2+24] 
+  adc    r12, [reg_p2+32] 
+  adc    r13, [reg_p2+40] 
+  adc    r14, [reg_p2+48] 
+  adc    r15, [reg_p2+56]
+  adc    rax, [reg_p2+64] 
+  adc    rbx, [reg_p2+72]
+  adc    rcx, [reg_p2+80]
+
+  mov    [reg_p3], r8
+  mov    [reg_p3+8], r9
+  mov    [reg_p3+16], r10
+  mov    [reg_p3+24], r11
+  mov    [reg_p3+32], r12
+  mov    [reg_p3+40], r13
+  mov    [reg_p3+48], r14
+  mov    [reg_p3+56], r15
+  mov    [reg_p3+64], rax
+  mov    [reg_p3+72], rbx
+  mov    [reg_p3+80], rcx 
+  mov    rax, [reg_p1+88] 
+  adc    rax, [reg_p2+88]
+  mov    [reg_p3+88], rax
+  
+  mov    r8, [reg_p1+96]
+  mov    r9, [reg_p1+104]
+  mov    r10, [reg_p1+112]
+  mov    r11, [reg_p1+120]
+  mov    r12, [reg_p1+128]
+  mov    r13, [reg_p1+136]
+  mov    r14, [reg_p1+144]
+  mov    r15, [reg_p1+152] 
+  mov    rax, [reg_p1+160]
+  mov    rbx, [reg_p1+168] 
+  mov    rcx, [reg_p1+176]  
+  mov    rdi, [reg_p1+184] 
+
+  adc    r8, [reg_p2+96] 
+  adc    r9, [reg_p2+104] 
+  adc    r10, [reg_p2+112] 
+  adc    r11, [reg_p2+120] 
+  adc    r12, [reg_p2+128] 
+  adc    r13, [reg_p2+136] 
+  adc    r14, [reg_p2+144] 
+  adc    r15, [reg_p2+152]
+  adc    rax, [reg_p2+160] 
+  adc    rbx, [reg_p2+168]
+  adc    rcx, [reg_p2+176]
+  adc    rdi, [reg_p2+184]
+
+  mov    [reg_p3+96], r8
+  mov    [reg_p3+104], r9
+  mov    [reg_p3+112], r10
+  mov    [reg_p3+120], r11
+  mov    [reg_p3+128], r12
+  mov    [reg_p3+136], r13
+  mov    [reg_p3+144], r14
+  mov    [reg_p3+152], r15
+  mov    [reg_p3+160], rax
+  mov    [reg_p3+168], rbx
+  mov    [reg_p3+176], rcx
+  mov    [reg_p3+184], rdi
+  
+  pop    rbx
   pop    r15
   pop    r14
   pop    r13

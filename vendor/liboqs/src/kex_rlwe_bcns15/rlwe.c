@@ -10,14 +10,14 @@
 
 #if defined(WINDOWS)
 /* Disable error/warning for unary minus operator used in this file */
-#pragma warning (disable: 4146)
+#pragma warning(disable : 4146)
 #endif
 
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
 #include <inttypes.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <oqs/rand.h>
 
@@ -25,9 +25,9 @@
 
 #include "rlwe_table.h"
 
-#define setbit(a,x) ((a)[(x)/64] |= (((uint64_t) 1) << (uint64_t) ((x)%64)))
-#define getbit(a,x) (((a)[(x)/64] >> (uint64_t) ((x)%64)) & 1)
-#define clearbit(a,x) ((a)[(x)/64] &= ((~((uint64_t) 0)) - (((uint64_t) 1) << (uint64_t) ((x)%64))))
+#define setbit(a, x) ((a)[(x) / 64] |= (((uint64_t) 1) << (uint64_t)((x) % 64)))
+#define getbit(a, x) (((a)[(x) / 64] >> (uint64_t)((x) % 64)) & 1)
+#define clearbit(a, x) ((a)[(x) / 64] &= ((~((uint64_t) 0)) - (((uint64_t) 1) << (uint64_t)((x) % 64))))
 
 /* Auxiliary functions for constant-time comparison */
 
@@ -63,7 +63,7 @@ static uint64_t ct_eq_u64(uint64_t x, uint64_t y) {
  * x and y are arbitrary unsigned 64-bit integers
  */
 static uint64_t ct_lt_u64(uint64_t x, uint64_t y) {
-	return (x ^ ((x ^ y) | ((x - y)^y))) >> 63;
+	return (x ^ ((x ^ y) | ((x - y) ^ y))) >> 63;
 }
 
 /*
@@ -97,7 +97,7 @@ static uint64_t ct_ge_u64(uint64_t x, uint64_t y) {
  * Returns            0 if bit == 0
  */
 static uint64_t ct_mask_u64(uint64_t bit) {
-	return 0 - (uint64_t)ct_isnonzero_u64(bit);
+	return 0 - (uint64_t) ct_isnonzero_u64(bit);
 }
 
 /* Conditionally return x or y depending on whether bit is set
@@ -141,8 +141,8 @@ static uint32_t single_sample(uint64_t *in) {
 static uint64_t dbl(const uint32_t in, int32_t e) {
 	// sample uniformly from [-1, 0, 0, 1]
 	// Hence, 0 is sampled with twice the probability of 1
-	e = (((e >> 1) & 1) - ((int32_t) (e & 1)));
-	return (uint64_t) ((((uint64_t) in) << (uint64_t) 1) - e);
+	e = (((e >> 1) & 1) - ((int32_t)(e & 1)));
+	return (uint64_t)((((uint64_t) in) << (uint64_t) 1) - e);
 }
 
 /* Constant time version. */
@@ -169,7 +169,7 @@ void oqs_kex_rlwe_bcns15_sample_ct(uint32_t s[1024], OQS_RAND *rand) {
 			r >>= 1;
 			// use the constant time version single_sample
 			s[i * 64 + j] = single_sample_ct(rnd);
-			t = (uint32_t) - s[i * 64 + j];
+			t = (uint32_t) -s[i * 64 + j];
 			s[i * 64 + j] = ct_select_u64(t, s[i * 64 + j], ct_eq_u64(m, 0));
 		}
 	}
@@ -197,7 +197,7 @@ void oqs_kex_rlwe_bcns15_crossround2_ct(uint64_t out[16], const uint32_t in[1024
 			e >>= 2;
 			b = (ct_ge_u64(dd, 2147483648ULL) & ct_le_u64(dd, 4294967295ULL)) |
 			    (ct_ge_u64(dd, 6442450942ULL) & ct_le_u64(dd, 8589934590ULL));
-			out[(i * 16 + j) / 64] |= (b << (uint64_t) ((i * 16 + j) % 64));
+			out[(i * 16 + j) / 64] |= (b << (uint64_t)((i * 16 + j) % 64));
 		}
 	}
 }
@@ -213,7 +213,7 @@ void oqs_kex_rlwe_bcns15_rec_ct(uint64_t out[16], const uint32_t w[1024], const 
 		     ct_le_u64(coswi, 7516192766ULL)) |
 		    (ct_eq_u64(getbit(b, i), 1) & ct_ge_u64(coswi, 1073741824ULL) &
 		     ct_le_u64(coswi, 5368709118ULL));
-		out[i / 64] |= (B << (uint64_t) (i % 64));
+		out[i / 64] |= (B << (uint64_t)(i % 64));
 	}
 }
 
@@ -231,7 +231,7 @@ void oqs_kex_rlwe_bcns15_sample(uint32_t s[1024], OQS_RAND *rand) {
 			r >>= 1;
 			s[i * 64 + j] = single_sample(rnd);
 			if (m) {
-				s[i * 64 + j] = (uint32_t) - s[i * 64 + j];
+				s[i * 64 + j] = (uint32_t) -s[i * 64 + j];
 			}
 		}
 	}
@@ -295,4 +295,3 @@ void oqs_kex_rlwe_bcns15_a_times_s_plus_e(uint32_t out[1024], const uint32_t a[1
 	oqs_kex_rlwe_bcns15_fft_mul(out, a, s, ctx);
 	oqs_kex_rlwe_bcns15_fft_add(out, out, e);
 }
-

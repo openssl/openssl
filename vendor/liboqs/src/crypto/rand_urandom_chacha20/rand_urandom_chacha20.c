@@ -3,14 +3,14 @@
 #include <windows.h>
 #include <Wincrypt.h>
 #else
+#include <strings.h>
 #include <sys/uio.h>
 #include <unistd.h>
-#include <strings.h>
 #endif
-#include <string.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <fcntl.h>
+#include <string.h>
 
 #include <oqs/rand.h>
 #include <oqs/rand_urandom_chacha20.h>
@@ -51,31 +51,14 @@ OQS_RAND *OQS_RAND_urandom_chacha20_new() {
 }
 
 static OQS_RAND_urandom_chacha20_ctx *OQS_RAND_urandom_chacha20_ctx_new() {
-#if defined(WINDOWS)
-	HCRYPTPROV   hCryptProv;
-#else
-	int fd = 0;
-#endif
 	OQS_RAND_urandom_chacha20_ctx *rand_ctx = NULL;
 	rand_ctx = (OQS_RAND_urandom_chacha20_ctx *) malloc(sizeof(OQS_RAND_urandom_chacha20_ctx));
 	if (rand_ctx == NULL) {
 		goto err;
 	}
-#if defined(WINDOWS)
-	if (!CryptAcquireContext(&hCryptProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT) ||
-	        !CryptGenRandom(hCryptProv, 32, rand_ctx->key)) {
+	if (!OQS_RAND_get_system_entropy(rand_ctx->key, 32)) {
 		goto err;
 	}
-#else
-	fd = open("/dev/urandom", O_RDONLY);
-	if (fd == 0) {
-		goto err;
-	}
-	int r = read(fd, rand_ctx->key, 32);
-	if (r != 32) {
-		goto err;
-	}
-#endif
 	memset(rand_ctx->nonce, 0, 8);
 	rand_ctx->cache_next_byte = 64; // cache is empty
 	ECRYPT_keysetup(rand_ctx->chacha20_input, rand_ctx->key);
@@ -84,18 +67,8 @@ err:
 	if (rand_ctx) {
 		free(rand_ctx);
 	}
-#if defined(WINDOWS)
-#else
-	if (fd) {
-		close(fd);
-	}
-#endif
 	return NULL;
 okay:
-#if defined(WINDOWS)
-#else
-	close(fd);
-#endif
 	return rand_ctx;
 }
 

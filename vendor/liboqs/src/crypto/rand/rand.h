@@ -20,7 +20,7 @@ typedef struct OQS_RAND OQS_RAND;
 /**
  * OQS PRNG object
  */
-typedef struct OQS_RAND {
+struct OQS_RAND {
 
 	/**
 	 * Specifies the name of the random number function
@@ -74,8 +74,7 @@ typedef struct OQS_RAND {
 	 *
 	 */
 	void (*free)(OQS_RAND *r);
-
-} OQS_RAND;
+};
 
 OQS_RAND *OQS_RAND_new(enum OQS_RAND_alg_name alg_name);
 
@@ -89,4 +88,11 @@ void OQS_RAND_free(OQS_RAND *r);
 void OQS_RAND_test_record_occurrence(const unsigned char b, unsigned long occurrences[256]);
 double OQS_RAND_test_statistical_distance_from_uniform(const unsigned long occurrences[256]);
 
+#define ZSCORE_SPARSE (999.999)
+#define ZSCORE_BIGNEG (-100.0)
+#define ZSCORE_BIGPOS (+100.0)
+double OQS_RAND_zscore_deviation_from_uniform(const unsigned long occurrences[256]);
+void OQS_RAND_report_statistics(const unsigned long occurrences[256], const char *indent);
+
+int OQS_RAND_get_system_entropy(uint8_t *buf, size_t n);
 #endif

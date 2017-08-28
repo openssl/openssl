@@ -1,7 +1,7 @@
 #if defined(WINDOWS)
 #define UNUSED
 #else
-#define UNUSED __attribute__ ((unused))
+#define UNUSED __attribute__((unused))
 #endif
 
 #include <stdlib.h>
@@ -11,20 +11,20 @@
 #include <unistd.h>
 #endif
 
+#include <oqs/common.h>
 #include <oqs/kex.h>
 #include <oqs/rand.h>
-#include <oqs/common.h>
 
 #include "kex_lwe_frodo.h"
 #include "local.h"
 
-#define LWE_DIV_ROUNDUP(x, y) (((x) + (y)-1) / y)
+#define LWE_DIV_ROUNDUP(x, y) (((x) + (y) -1) / y)
 
 #include <stdio.h>
 
 // pre-process code to obtain "recommended" functions
 #include "recommended.h"
-#define MACRIFY(NAME) NAME ## _recommended
+#define MACRIFY(NAME) NAME##_recommended
 #include "kex_lwe_frodo_macrify.c"
 // undefine macros to avoid any confusion later
 #include "recommended.h"

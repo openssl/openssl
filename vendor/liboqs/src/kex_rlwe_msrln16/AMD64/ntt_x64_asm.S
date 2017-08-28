@@ -25,7 +25,7 @@
 //             [reg_p2] points to table and 
 //             reg_p3 contains parameter n
 //*********************************************************************** 
-.global oqs_rlwe_msrln16_NTT_CT_std2rev_12289_asm
+.globl oqs_rlwe_msrln16_NTT_CT_std2rev_12289_asm
 oqs_rlwe_msrln16_NTT_CT_std2rev_12289_asm:
   push       r12
   push       r13
@@ -355,7 +355,7 @@ loop8:
 //             reg_p3 and reg_p4 point to constants for scaling and
 //             reg_p5 contains parameter n
 //*********************************************************************** 
-.global oqs_rlwe_msrln16_INTT_GS_rev2std_12289_asm
+.globl oqs_rlwe_msrln16_INTT_GS_rev2std_12289_asm
 oqs_rlwe_msrln16_INTT_GS_rev2std_12289_asm:
   push       r12
   push       r13
@@ -776,7 +776,7 @@ loop9b:
 //  Operation: d [reg_p4] <- a [reg_p1] * b [reg_p2] + c [reg_p3]
 //             reg_p5 contains parameter n
 //*********************************************************************** 
-.global oqs_rlwe_msrln16_pmuladd_asm
+.globl oqs_rlwe_msrln16_pmuladd_asm
 oqs_rlwe_msrln16_pmuladd_asm:
   vmovdqu    ymm5, PERM0246
   vmovdqu    ymm6, MASK12x8 
@@ -817,7 +817,7 @@ lazo2:
 //  Operation: c [reg_p3] <- a [reg_p1] * b [reg_p2]
 //             reg_p4 contains parameter n
 //*********************************************************************** 
-.global oqs_rlwe_msrln16_pmul_asm
+.globl oqs_rlwe_msrln16_pmul_asm
 oqs_rlwe_msrln16_pmul_asm: 
   vmovdqu    ymm5, PERM0246
   vmovdqu    ymm6, MASK12x8 
@@ -856,7 +856,7 @@ lazo3:
 //  Operation: c [reg_p1] <- a [reg_p1]
 //             reg_p2 contains parameter n
 //*********************************************************************** 
-.global oqs_rlwe_msrln16_two_reduce12289_asm
+.globl oqs_rlwe_msrln16_two_reduce12289_asm
 oqs_rlwe_msrln16_two_reduce12289_asm: 
   vmovdqu    ymm6, MASK12x8 
   vmovdqu    ymm7, PRIME8x
@@ -900,7 +900,7 @@ lazo4:
 //  Encoding
 //  Operation: c [reg_p2] <- a [reg_p1]
 //*********************************************************************** 
-.global oqs_rlwe_msrln16_encode_asm
+.globl oqs_rlwe_msrln16_encode_asm
 oqs_rlwe_msrln16_encode_asm: 
   vmovdqu    ymm6, MASK32 
   vmovdqu    ymm7, MASK42
@@ -939,7 +939,7 @@ lazo5:
 //  Decoding
 //  Operation: c [reg_p2] <- a [reg_p1]
 //*********************************************************************** 
-.global oqs_rlwe_msrln16_decode_asm
+.globl oqs_rlwe_msrln16_decode_asm
 oqs_rlwe_msrln16_decode_asm: 
   vmovdqu    ymm6, MASK14_1 
   vmovdqu    ymm7, MASK14_2

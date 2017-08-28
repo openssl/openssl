@@ -1,10 +1,10 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 
-#include <oqs/rand.h>
 #include <oqs/kex.h>
+#include <oqs/rand.h>
 
 #include "../ds_benchmark.h"
 
@@ -15,27 +15,52 @@ struct kex_testcase {
 	char *named_parameters;
 	char *id;
 	int run;
+	int iter;
 };
 
 /* Add new testcases here */
 struct kex_testcase kex_testcases[] = {
-	{ OQS_KEX_alg_rlwe_bcns15, NULL, 0, NULL, "rlwe_bcns15", 0 },
-	{ OQS_KEX_alg_rlwe_newhope, NULL, 0, NULL, "rlwe_newhope", 0 },
-	{ OQS_KEX_alg_rlwe_msrln16, NULL, 0, NULL, "rlwe_msrln16", 0 },
-	{ OQS_KEX_alg_lwe_frodo, (unsigned char *) "01234567890123456", 16, "recommended", "lwe_frodo_recommended", 0 },
-	{ OQS_KEX_alg_sidh_cln16, NULL, 0, NULL, "sidh_cln16", 0 },
+#ifdef ENABLE_KEX_LWE_FRODO
+    {OQS_KEX_alg_lwe_frodo, (unsigned char *) "01234567890123456", 16, "recommended", "lwe_frodo_recommended", 0, 100},
+#endif
+#ifdef ENABLE_CODE_MCBITS
+    {OQS_KEX_alg_code_mcbits, NULL, 0, NULL, "code_mcbits", 0, 25},
+#endif
+#ifdef ENABLE_KEX_MLWE_KYBER
+    {OQS_KEX_alg_mlwe_kyber, NULL, 0, NULL, "mlwe_kyber", 0, 100},
+#endif
+#ifndef DISABLE_NTRU_ON_WINDOWS_BY_DEFAULT
+#ifdef ENABLE_KEX_NTRU
+    {OQS_KEX_alg_ntru, NULL, 0, NULL, "ntru", 0, 25},
+#endif
+#endif
+    {OQS_KEX_alg_rlwe_bcns15, NULL, 0, NULL, "rlwe_bcns15", 0, 100},
+#ifdef ENABLE_KEX_RLWE_MSRLN16
+    {OQS_KEX_alg_rlwe_msrln16, NULL, 0, NULL, "rlwe_msrln16", 0, 100},
+#endif
+#ifdef ENABLE_KEX_RLWE_NEWHOPE
+    {OQS_KEX_alg_rlwe_newhope, NULL, 0, NULL, "rlwe_newhope", 0, 100},
+#endif
+#ifdef ENABLE_KEX_SIDH_CLN16
+    {OQS_KEX_alg_sidh_cln16, NULL, 0, "p751", "sidh_cln16", 0, 10},
+    {OQS_KEX_alg_sidh_cln16_compressed, NULL, 0, "compressedp751", "sidh_cln16_compressed", 0, 10},
+#endif
+#ifdef ENABLE_SIDH_IQC_REF
+    {OQS_KEX_alg_sidh_iqc_ref, NULL, 0, NULL, "sidh_iqc_ref", 0, 10},
+#endif
 };
 
 #define KEX_TEST_ITERATIONS 100
 #define KEX_BENCH_SECONDS 1
 
-#define PRINT_HEX_STRING(label, str, len) { \
-	printf("%-20s (%4zu bytes):  ", (label), (size_t) (len)); \
-	for (size_t i = 0; i < (len); i++) { \
-		printf("%02X", ((unsigned char *) (str)) [i]); \
-	} \
-	printf("\n"); \
-}
+#define PRINT_HEX_STRING(label, str, len)                        \
+	{                                                            \
+		printf("%-20s (%4zu bytes):  ", (label), (size_t)(len)); \
+		for (size_t i = 0; i < (len); i++) {                     \
+			printf("%02X", ((unsigned char *) (str))[i]);        \
+		}                                                        \
+		printf("\n");                                            \
+	}
 
 static int kex_test_correctness(OQS_RAND *rand, enum OQS_KEX_alg_name alg_name, const uint8_t *seed, const size_t seed_len, const char *named_parameters, const int print, unsigned long occurrences[256]) {
 
@@ -137,7 +162,6 @@ cleanup:
 	OQS_KEX_free(kex);
 
 	return rc;
-
 }
 
 static int kex_test_correctness_wrapper(OQS_RAND *rand, enum OQS_KEX_alg_name alg_name, const uint8_t *seed, const size_t seed_len, const char *named_parameters, int iterations, bool quiet) {
@@ -174,7 +198,7 @@ static int kex_test_correctness_wrapper(OQS_RAND *rand, enum OQS_KEX_alg_name al
 		}
 	}
 	printf("All session keys matched.\n");
-	printf("Statistical distance from uniform: %12.10f\n", OQS_RAND_test_statistical_distance_from_uniform(occurrences));
+	OQS_RAND_report_statistics(occurrences, "");
 	printf("\n\n");
 
 	ret = 1;
@@ -187,7 +211,6 @@ cleanup:
 	OQS_KEX_free(kex);
 
 	return ret;
-
 }
 
 static void cleanup_alice_0(OQS_KEX *kex, void *alice_priv, uint8_t *alice_msg) {
@@ -222,7 +245,7 @@ static int kex_bench_wrapper(OQS_RAND *rand, enum OQS_KEX_alg_name alg_name, con
 		fprintf(stderr, "new_method failed\n");
 		goto err;
 	}
-	printf("%-30s | %10s | %14s | %15s | %10s | %16s | %10s\n",  kex->method_name, "", "", "", "", "", "");
+	printf("%-30s | %10s | %14s | %15s | %10s | %16s | %10s\n", kex->method_name, "", "", "", "", "", "");
 
 	TIME_OPERATION_SECONDS({ OQS_KEX_alice_0(kex, &alice_priv, &alice_msg, &alice_msg_len); cleanup_alice_0(kex, alice_priv, alice_msg); }, "alice 0", seconds);
 
@@ -232,6 +255,8 @@ static int kex_bench_wrapper(OQS_RAND *rand, enum OQS_KEX_alg_name alg_name, con
 	OQS_KEX_bob(kex, alice_msg, alice_msg_len, &bob_msg, &bob_msg_len, &bob_key, &bob_key_len);
 	TIME_OPERATION_SECONDS({ OQS_KEX_alice_1(kex, alice_priv, bob_msg, bob_msg_len, &alice_key, &alice_key_len); free(alice_key); }, "alice 1", seconds);
 	alice_key = NULL;
+
+	printf("Communication (bytes): A->B: %zu, B->A: %zu, total: %zu\n", alice_msg_len, bob_msg_len, alice_msg_len + bob_msg_len);
 
 	rc = 1;
 	goto cleanup;
@@ -248,7 +273,6 @@ cleanup:
 	OQS_KEX_free(kex);
 
 	return rc;
-
 }
 
 int main(int argc, char **argv) {
@@ -260,9 +284,7 @@ int main(int argc, char **argv) {
 	size_t kex_testcases_len = sizeof(kex_testcases) / sizeof(struct kex_testcase);
 	for (int i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
-			if ((strcmp(argv[i], "-h") == 0)
-			        || (strcmp(argv[i], "-help") == 0)
-			        || (strcmp(argv[i], "--help") == 0)) {
+			if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "-help") == 0) || (strcmp(argv[i], "--help") == 0)) {
 				printf("Usage: ./test_kex [options] [algorithms]\n");
 				printf("\nOptions:\n");
 				printf("  --quiet, -q\n");
@@ -274,11 +296,9 @@ int main(int argc, char **argv) {
 					printf("  %s\n", kex_testcases[i].id);
 				}
 				return EXIT_SUCCESS;
-			} else if ( strcmp(argv[i], "--quiet") == 0
-			            || strcmp(argv[i], "-q") == 0  ) {
+			} else if (strcmp(argv[i], "--quiet") == 0 || strcmp(argv[i], "-q") == 0) {
 				quiet = true;
-			} else if ( strcmp(argv[i], "--bench") == 0
-			            || strcmp(argv[i], "-b") == 0  ) {
+			} else if (strcmp(argv[i], "--bench") == 0 || strcmp(argv[i], "-b") == 0) {
 				bench = true;
 			}
 
@@ -300,11 +320,7 @@ int main(int argc, char **argv) {
 
 	for (size_t i = 0; i < kex_testcases_len; i++) {
 		if (run_all || kex_testcases[i].run == 1) {
-			int num_iter = KEX_TEST_ITERATIONS;
-			if (kex_testcases[i].alg_name == OQS_KEX_alg_sidh_cln16) {
-				// SIDH is slower than the other schemes, so we reduce the number of runs
-				num_iter = KEX_TEST_ITERATIONS / 10;
-			}
+			int num_iter = kex_testcases[i].iter;
 			success = kex_test_correctness_wrapper(rand, kex_testcases[i].alg_name, kex_testcases[i].seed, kex_testcases[i].seed_len, kex_testcases[i].named_parameters, num_iter, quiet);
 		}
 		if (success != 1) {
@@ -333,5 +349,4 @@ cleanup:
 	OQS_RAND_free(rand);
 
 	return (success == 1) ? EXIT_SUCCESS : EXIT_FAILURE;
-
 }

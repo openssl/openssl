@@ -1,0 +1,7 @@
+The files in this directory (except kex_mlwe_kyber.*) were originally published in https://github.com/pq-crystals/kyber
+
+
+The following license applies to all files in the src/kex_mlwe_kyber directory.
+
+
+Public domain.

@@ -20,7 +20,6 @@ void OQS_MEM_cleanse(void *ptr, size_t len) {
 #endif
 }
 
-
 void OQS_MEM_secure_free(void *ptr, size_t len) {
 	if (ptr != NULL) {
 		OQS_MEM_cleanse(ptr, len);

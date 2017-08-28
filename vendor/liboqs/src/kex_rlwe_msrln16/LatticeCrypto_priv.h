@@ -11,36 +11,32 @@
 #ifndef __LatticeCrypto_priv_H__
 #define __LatticeCrypto_priv_H__
 
-
 // For C++
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <oqs/rand.h>
 #include "LatticeCrypto.h"
-
+#include <oqs/rand.h>
 
 // Basic constants
-#define OQS_RLWE_MSRLN16_PARAMETER_N         1024
-#define OQS_RLWE_MSRLN16_PARAMETER_Q         12289
-#define OQS_RLWE_MSRLN16_SEED_BYTES          256/8
-#define OQS_RLWE_MSRLN16_PARAMETER_Q4        3073
-#define OQS_RLWE_MSRLN16_PARAMETER_3Q4       9217
-#define OQS_RLWE_MSRLN16_PARAMETER_5Q4       15362
-#define OQS_RLWE_MSRLN16_PARAMETER_7Q4       21506
-#define OQS_RLWE_MSRLN16_PARAMETER_Q2        6145
-#define OQS_RLWE_MSRLN16_PARAMETER_3Q2       18434
-
+#define OQS_RLWE_MSRLN16_PARAMETER_N 1024
+#define OQS_RLWE_MSRLN16_PARAMETER_Q 12289
+#define OQS_RLWE_MSRLN16_SEED_BYTES 256 / 8
+#define OQS_RLWE_MSRLN16_PARAMETER_Q4 3073
+#define OQS_RLWE_MSRLN16_PARAMETER_3Q4 9217
+#define OQS_RLWE_MSRLN16_PARAMETER_5Q4 15362
+#define OQS_RLWE_MSRLN16_PARAMETER_7Q4 21506
+#define OQS_RLWE_MSRLN16_PARAMETER_Q2 6145
+#define OQS_RLWE_MSRLN16_PARAMETER_3Q2 18434
 
 // Macro definitions
 
-#define OQS_RLWE_MSRLN16_NBITS_TO_NWORDS(nbits)      (((nbits)+(sizeof(digit_t)*8)-1)/(sizeof(digit_t)*8))    // Conversion macro from number of bits to number of computer words
-#define OQS_RLWE_MSRLN16_NBYTES_TO_NWORDS(nbytes)    (((nbytes)+sizeof(digit_t)-1)/sizeof(digit_t))           // Conversion macro from number of bytes to number of computer words
+#define OQS_RLWE_MSRLN16_NBITS_TO_NWORDS(nbits) (((nbits) + (sizeof(digit_t) * 8) - 1) / (sizeof(digit_t) * 8)) // Conversion macro from number of bits to number of computer words
+#define OQS_RLWE_MSRLN16_NBYTES_TO_NWORDS(nbytes) (((nbytes) + sizeof(digit_t) - 1) / sizeof(digit_t))          // Conversion macro from number of bytes to number of computer words
 
 // Macro to avoid compiler warnings when detecting unreferenced parameters
 #define OQS_RLWE_MSRLN16_UNREFERENCED_PARAMETER(PAR) (PAR)
-
 
 /******************** Function prototypes *******************/
 /******************* Polynomial functions *******************/
@@ -117,6 +113,5 @@ CRYPTO_STATUS oqs_rlwe_msrln16_generate_a(uint32_t *a, const unsigned char *seed
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif
