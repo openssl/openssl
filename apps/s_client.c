@@ -1667,6 +1667,8 @@ int MAIN(int argc, char **argv)
             if (strstr(mbuf, "/stream:features>"))
                 goto shut;
             seen = BIO_read(sbio, mbuf, BUFSIZZ);
+            if (seen <= 0)
+                goto shut;
             mbuf[seen] = 0;
         }
         BIO_printf(sbio,
@@ -2132,6 +2134,7 @@ int MAIN(int argc, char **argv)
         BIO_free(bio_c_msg);
         bio_c_msg = NULL;
     }
+    SSL_COMP_free_compression_methods();
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }

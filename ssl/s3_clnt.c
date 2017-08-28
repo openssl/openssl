@@ -267,6 +267,7 @@ int ssl3_connect(SSL *s)
 
             if (!ssl3_setup_buffers(s)) {
                 ret = -1;
+                s->state = SSL_ST_ERR;
                 goto end;
             }
 
@@ -279,7 +280,11 @@ int ssl3_connect(SSL *s)
 
             /* don't push the buffering BIO quite yet */
 
-            ssl3_init_finished_mac(s);
+            if (!ssl3_init_finished_mac(s)) {
+                ret = -1;
+                s->state = SSL_ST_ERR;
+                goto end;
+            }
 
             s->state = SSL3_ST_CW_CLNT_HELLO_A;
             s->ctx->stats.sess_connect++;
@@ -1725,12 +1730,6 @@ int ssl3_get_key_exchange(SSL *s)
         }
         p += i;
 
-        if (BN_is_zero(dh->p)) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_DH_P_VALUE);
-            goto f_err;
-        }
-
-
         if (2 > n - param_len) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
             goto f_err;
@@ -1750,11 +1749,6 @@ int ssl3_get_key_exchange(SSL *s)
             goto err;
         }
         p += i;
-
-        if (BN_is_zero(dh->g)) {
-            SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_DH_G_VALUE);
-            goto f_err;
-        }
 
         if (2 > n - param_len) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_LENGTH_TOO_SHORT);
@@ -1780,6 +1774,39 @@ int ssl3_get_key_exchange(SSL *s)
         if (BN_is_zero(dh->pub_key)) {
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_DH_PUB_KEY_VALUE);
             goto f_err;
+        }
+
+        /*-
+         * Check that p and g are suitable enough
+         *
+         * p is odd
+         * 1 < g < p - 1
+         */
+        {
+            BIGNUM *tmp = NULL;
+
+            if (!BN_is_odd(dh->p)) {
+                SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_DH_P_VALUE);
+                goto f_err;
+            }
+            if (BN_is_negative(dh->g) || BN_is_zero(dh->g)
+                || BN_is_one(dh->g)) {
+                SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_DH_G_VALUE);
+                goto f_err;
+            }
+            if ((tmp = BN_new()) == NULL
+                || BN_copy(tmp, dh->p) == NULL
+                || !BN_sub_word(tmp, 1)) {
+                BN_free(tmp);
+                SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_BN_LIB);
+                goto err;
+            }
+            if (BN_cmp(dh->g, tmp) >= 0) {
+                BN_free(tmp);
+                SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, SSL_R_BAD_DH_G_VALUE);
+                goto f_err;
+            }
+            BN_free(tmp);
         }
 
 # ifndef OPENSSL_NO_RSA
@@ -1895,6 +1922,7 @@ int ssl3_get_key_exchange(SSL *s)
             goto err;
         }
         if (EC_KEY_set_group(ecdh, ngroup) == 0) {
+            EC_GROUP_free(ngroup);
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_EC_LIB);
             goto err;
         }

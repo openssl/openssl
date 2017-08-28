@@ -520,6 +520,7 @@ int UI_process(UI *ui)
             }
         }
     }
+
  err:
     if (ui->meth->ui_close_session != NULL
         && ui->meth->ui_close_session(ui) <= 0)
@@ -747,7 +748,6 @@ const char *UI_get0_action_string(UI_STRING *uis)
     if (!uis)
         return NULL;
     switch (uis->type) {
-    case UIT_PROMPT:
     case UIT_BOOLEAN:
         return uis->_.boolean_data.action_desc;
     default:

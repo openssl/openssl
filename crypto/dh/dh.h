@@ -182,12 +182,29 @@ struct dh_st {
  */
 # define DH_CHECK_P_NOT_STRONG_PRIME     DH_CHECK_P_NOT_SAFE_PRIME
 
-# define d2i_DHparams_fp(fp,x) (DH *)ASN1_d2i_fp((char *(*)())DH_new, \
-                (char *(*)())d2i_DHparams,(fp),(unsigned char **)(x))
-# define i2d_DHparams_fp(fp,x) ASN1_i2d_fp(i2d_DHparams,(fp), \
-                (unsigned char *)(x))
-# define d2i_DHparams_bio(bp,x) ASN1_d2i_bio_of(DH,DH_new,d2i_DHparams,bp,x)
-# define i2d_DHparams_bio(bp,x) ASN1_i2d_bio_of_const(DH,i2d_DHparams,bp,x)
+# define d2i_DHparams_fp(fp,x) \
+    (DH *)ASN1_d2i_fp((char *(*)())DH_new, \
+                      (char *(*)())d2i_DHparams, \
+                      (fp), \
+                      (unsigned char **)(x))
+# define i2d_DHparams_fp(fp,x) \
+    ASN1_i2d_fp(i2d_DHparams,(fp), (unsigned char *)(x))
+# define d2i_DHparams_bio(bp,x) \
+    ASN1_d2i_bio_of(DH, DH_new, d2i_DHparams, bp, x)
+# define i2d_DHparams_bio(bp,x) \
+    ASN1_i2d_bio_of_const(DH,i2d_DHparams,bp,x)
+
+# define d2i_DHxparams_fp(fp,x) \
+    (DH *)ASN1_d2i_fp((char *(*)())DH_new, \
+                      (char *(*)())d2i_DHxparams, \
+                      (fp), \
+                      (unsigned char **)(x))
+# define i2d_DHxparams_fp(fp,x) \
+    ASN1_i2d_fp(i2d_DHxparams,(fp), (unsigned char *)(x))
+# define d2i_DHxparams_bio(bp,x) \
+    ASN1_d2i_bio_of(DH, DH_new, d2i_DHxparams, bp, x)
+# define i2d_DHxparams_bio(bp,x) \
+    ASN1_i2d_bio_of_const(DH, i2d_DHxparams, bp, x)
 
 DH *DHparams_dup(DH *);
 
@@ -240,11 +257,13 @@ DH *DH_get_1024_160(void);
 DH *DH_get_2048_224(void);
 DH *DH_get_2048_256(void);
 
+# ifndef OPENSSL_NO_CMS
 /* RFC2631 KDF */
 int DH_KDF_X9_42(unsigned char *out, size_t outlen,
                  const unsigned char *Z, size_t Zlen,
                  ASN1_OBJECT *key_oid,
                  const unsigned char *ukm, size_t ukmlen, const EVP_MD *md);
+# endif
 
 # define EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, len) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN, \
