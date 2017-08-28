@@ -514,14 +514,14 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
     al = a->top;
     bl = b->top;
 
-    if ((al == 0) || (bl == 0)) {
+    if (al == 0 || bl == 0) {
         BN_zero(r);
         return 1;
     }
     top = al + bl;
 
     BN_CTX_start(ctx);
-    if ((r == a) || (r == b)) {
+    if (r == a || r == b) {
         if ((rr = BN_CTX_get(ctx)) == NULL)
             goto err;
     } else

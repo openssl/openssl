@@ -357,7 +357,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 #   endif
 
             for (;;) {
-                if ((t2h < rem) || ((t2h == rem) && (t2l <= wnump[-2])))
+                if (t2h < rem || (t2h == rem && t2l <= wnump[-2]))
                     break;
                 q--;
                 rem += d0;

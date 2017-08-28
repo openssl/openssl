@@ -306,7 +306,7 @@ int BN_print(BIO *bp, const BIGNUM *a)
     int i, j, v, z = 0;
     int ret = 0;
 
-    if ((a->neg) && BIO_write(bp, "-", 1) != 1)
+    if (a->neg && BIO_write(bp, "-", 1) != 1)
         goto end;
     if (BN_is_zero(a) && BIO_write(bp, "0", 1) != 1)
         goto end;
