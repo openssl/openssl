@@ -24,7 +24,7 @@ int BN_bn2mpi(const BIGNUM *a, unsigned char *d)
         ext = ((bits & 0x07) == 0);
     }
     if (d == NULL)
-        return (num + 4 + ext);
+        return num + 4 + ext;
 
     l = num + ext;
     d[0] = (unsigned char)(l >> 24) & 0xff;
@@ -36,7 +36,7 @@ int BN_bn2mpi(const BIGNUM *a, unsigned char *d)
     num = BN_bn2bin(a, &(d[4 + ext]));
     if (a->neg)
         d[4] |= 0x80;
-    return (num + 4 + ext);
+    return num + 4 + ext;
 }
 
 BIGNUM *BN_mpi2bn(const unsigned char *d, int n, BIGNUM *ain)

@@ -904,10 +904,10 @@ int BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     bn_check_top(b);
 
     if (BN_is_zero(b))
-        return (BN_one(r));
+        return BN_one(r);
 
     if (BN_abs_is_word(b, 1))
-        return (BN_copy(r, a) != NULL);
+        return BN_copy(r, a) != NULL;
 
     BN_CTX_start(ctx);
     if ((u = BN_CTX_get(ctx)) == NULL)
