@@ -1164,7 +1164,7 @@ static ENGINE *try_load_engine(const char *engine)
 }
 #endif
 
-ENGINE *setup_engine(const char *engine, int debug)
+ENGINE *setup_engine_flags(const char *engine, unsigned int flags, int debug)
 {
     ENGINE *e = NULL;
 
@@ -1181,12 +1181,11 @@ ENGINE *setup_engine(const char *engine, int debug)
             ERR_print_errors(bio_err);
             return NULL;
         }
-        if (debug) {
-            ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM, 0, bio_err, 0);
-        }
-        ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0, (void *)get_ui_method(),
-                        0, 1);
-        if (!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
+        if (debug)
+            (void)ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM, 0, bio_err, 0);
+        if (!ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0,
+                             (void *)get_ui_method(), 0, 1)
+                || !ENGINE_set_default(e, flags)) {
             BIO_printf(bio_err, "Cannot use engine \"%s\"\n", ENGINE_get_id(e));
             ERR_print_errors(bio_err);
             ENGINE_free(e);

@@ -1577,7 +1577,9 @@ int s_server_main(int argc, char *argv[])
             session_id_prefix = opt_arg();
             break;
         case OPT_ENGINE:
-            engine = setup_engine(opt_arg(), 1);
+#ifndef OPENSSL_NO_ENGINE
+            engine = setup_engine_flags(opt_arg(), ENGINE_METHOD_ALL, s_debug);
+#endif
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
