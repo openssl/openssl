@@ -9,6 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
+
 /* Or gethostname won't be declared properly on Linux and GNU platforms. */
 #ifndef _BSD_SOURCE
 # define _BSD_SOURCE 1
@@ -26,8 +28,6 @@
 #include <time.h>
 
 #include "internal/nelem.h"
-
-#include "e_os.h"
 
 #ifdef OPENSSL_SYS_VMS
 /*

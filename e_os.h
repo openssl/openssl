@@ -10,6 +10,7 @@
 #ifndef HEADER_E_OS_H
 # define HEADER_E_OS_H
 
+# include <limits.h>
 # include <openssl/opensslconf.h>
 
 # include <openssl/e_os2.h>
@@ -24,13 +25,6 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-/* Used to checking reference counts, most while doing perl5 stuff :-) */
-# if defined(OPENSSL_NO_STDIO)
-#  if defined(REF_PRINT)
-#   error "REF_PRINT requires stdio"
-#  endif
-# endif
 
 /*
  * Format specifier for printing size_t. Original conundrum was to
@@ -58,21 +52,6 @@ extern "C" {
 #  define OSSLzu  "lu"      /* To see that is works recall what does L
                              * stand for in ILP32 and LP64 */
 # endif
-
-# if !defined(NDEBUG) && !defined(OPENSSL_NO_STDIO)
-#  define REF_ASSERT_ISNT(test) \
-    (void)((test) ? (OPENSSL_die("refcount error", __FILE__, __LINE__), 1) : 0)
-# else
-#  define REF_ASSERT_ISNT(i)
-# endif
-# ifdef REF_PRINT
-#  define REF_PRINT_COUNT(a, b) \
-        fprintf(stderr, "%p:%4d:%s\n", b, b->references, a)
-# else
-#  define REF_PRINT_COUNT(a, b)
-# endif
-
-# define OPENSSL_CONF        "openssl.cnf"
 
 # ifndef DEVRANDOM
 /*

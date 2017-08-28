@@ -22,6 +22,7 @@
 # pragma names restore
 #endif
 
+#include "internal/nelem.h"
 #include "testutil.h"
 
 /*
