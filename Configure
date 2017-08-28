@@ -116,7 +116,8 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # code, so we just tell compiler to be pedantic about everything
 # but 'long long' type.
 
-my $gcc_devteam_warn = "-DDEBUG_UNUSED"
+# These are common to all GCC compatible compilers
+our $devteam_common_warn = "-DDEBUG_UNUSED"
         . " -DPEDANTIC -pedantic -Wno-long-long"
         . " -Wall"
         . " -Wextra"
@@ -132,7 +133,11 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
         . " -Werror"
         ;
 
-# These are used in addition to $gcc_devteam_warn when the compiler is clang.
+# In addition to the warning options above, select compilers get their own
+# set of additional warning options.  Use a compiler specific predefined
+# macro as index.
+our %devteam_additional_warn = ();
+
 # TODO(openssl-team): fix problems and investigate if (at least) the
 # following warnings can also be enabled:
 #       -Wcast-align
@@ -140,7 +145,7 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
 #       -Wlanguage-extension-token -- no, we use asm()
 #       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
-my $clang_devteam_warn = ""
+$devteam_additional_warn{__clang__} = ""
         . " -Wswitch-default"
         . " -Wno-parentheses-equality"
         . " -Wno-language-extension-token"
@@ -1329,17 +1334,23 @@ if ($strict_warnings)
 	{
 	my $wopt;
 	my $gccver = $predefined{__GNUC__} // -1;
+	my $extra_gcc_warn = undef;
 
 	die "ERROR --strict-warnings requires gcc[>=4] or gcc-alike"
             unless $gccver >= 4;
-	$gcc_devteam_warn .= " -Wmisleading-indentation" if $gccver >= 6;
-	foreach $wopt (split /\s+/, $gcc_devteam_warn)
+	$extra_gcc_warn = "-Wmisleading-indentation" if $gccver >= 6;
+	foreach $wopt (split /\s+/, $devteam_common_warn)
 		{
 		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
 		}
-	if (defined($predefined{__clang__}))
+	foreach $wopt (split /\s+/, $extra_gcc_warn)
 		{
-		foreach $wopt (split /\s+/, $clang_devteam_warn)
+		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
+		}
+	foreach my $ecc (grep { defined($predefined{$_}) }
+			 keys %devteam_additional_warn)
+		{
+		foreach $wopt (split /\s+/, $devteam_additional_warn{$ecc})
 			{
 			$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
 			}
