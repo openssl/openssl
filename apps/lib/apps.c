@@ -1115,29 +1115,28 @@ static ENGINE *try_load_engine(const char *engine)
 }
 #endif
 
-ENGINE *setup_engine(const char *engine, int debug)
+ENGINE *setup_engine_methods(const char *id, unsigned int methods, int debug)
 {
     ENGINE *e = NULL;
 
 #ifndef OPENSSL_NO_ENGINE
-    if (engine != NULL) {
-        if (strcmp(engine, "auto") == 0) {
+    if (id != NULL) {
+        if (strcmp(id, "auto") == 0) {
             BIO_printf(bio_err, "Enabling auto ENGINE support\n");
             ENGINE_register_all_complete();
             return NULL;
         }
-        if ((e = ENGINE_by_id(engine)) == NULL
-            && (e = try_load_engine(engine)) == NULL) {
-            BIO_printf(bio_err, "Invalid engine \"%s\"\n", engine);
+        if ((e = ENGINE_by_id(id)) == NULL
+            && (e = try_load_engine(id)) == NULL) {
+            BIO_printf(bio_err, "Invalid engine \"%s\"\n", id);
             ERR_print_errors(bio_err);
             return NULL;
         }
-        if (debug) {
-            ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM, 0, bio_err, 0);
-        }
-        ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0, (void *)get_ui_method(),
-                        0, 1);
-        if (!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
+        if (debug)
+            (void)ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM, 0, bio_err, 0);
+        if (!ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0,
+                             (void *)get_ui_method(), 0, 1)
+                || !ENGINE_set_default(e, methods)) {
             BIO_printf(bio_err, "Cannot use engine \"%s\"\n", ENGINE_get_id(e));
             ERR_print_errors(bio_err);
             ENGINE_free(e);

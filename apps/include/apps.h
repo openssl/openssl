@@ -41,7 +41,7 @@
  * this is true for some implementations of the is*() functions, for
  * example.
  */
-#define _UC(c) ((unsigned char)(c))
+# define _UC(c) ((unsigned char)(c))
 
 void app_RAND_load_conf(CONF *c, const char *section);
 void app_RAND_write(void);
@@ -126,7 +126,7 @@ __owur int ctx_set_verify_locations(SSL_CTX *ctx,
                                     const char *CApath, int noCApath,
                                     const char *CAstore, int noCAstore);
 
-#ifndef OPENSSL_NO_CT
+# ifndef OPENSSL_NO_CT
 
 /*
  * Sets the file to load the Certificate Transparency log list from.
@@ -135,9 +135,10 @@ __owur int ctx_set_verify_locations(SSL_CTX *ctx,
  */
 __owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
 
-#endif
+# endif
 
-ENGINE *setup_engine(const char *engine, int debug);
+ENGINE *setup_engine_methods(const char *id, unsigned int methods, int debug);
+# define setup_engine(e, debug) setup_engine_methods(e, (unsigned int)-1, debug)
 void release_engine(ENGINE *e);
 
 # ifndef OPENSSL_NO_OCSP
