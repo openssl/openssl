@@ -286,7 +286,7 @@ struct bn_gencb_st {
                  (b) >  23 ? 3 : 1)
 
 /*
- * BN_mod_exp_mont_conttime is based on the assumption that the L1 data cache
+ * BN_mod_exp_mont_conttime() is based on the assumption that the L1 data cache
  * line width of the target processor is at least the following value.
  */
 # define MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH      ( 64 )
@@ -294,8 +294,8 @@ struct bn_gencb_st {
 
 /*
  * Window sizes optimized for fixed window size modular exponentiation
- * algorithm (BN_mod_exp_mont_consttime). To achieve the security goals of
- * BN_mode_exp_mont_consttime, the maximum size of the window must not exceed
+ * algorithm (BN_mod_exp_mont_consttime()). To achieve the security goals of
+ * BN_mode_exp_mont_consttime(), the maximum size of the window must not exceed
  * log_2(MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH). Window size thresholds are
  * defined for cache line sizes of 32 and 64, cache line sizes where
  * log_2(32)=5 and log_2(64)=6 respectively. A window size of 7 should only be

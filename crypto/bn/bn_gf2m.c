@@ -17,7 +17,7 @@
 #ifndef OPENSSL_NO_EC2M
 
 /*
- * Maximum number of iterations before BN_GF2m_mod_solve_quad_arr should
+ * Maximum number of iterations before BN_GF2m_mod_solve_quad_arr() should
  * fail.
  */
 # define MAX_ITERATIONS 50
@@ -381,9 +381,9 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
 
 /*
  * Performs modular reduction of a by p and store result in r.  r could be a.
- * This function calls down to the BN_GF2m_mod_arr implementation; this wrapper
+ * This function calls down to the BN_GF2m_mod_arr() implementation; this wrapper
  * function is only provided for convenience; for best performance, use the
- * BN_GF2m_mod_arr function.
+ * BN_GF2m_mod_arr() function.
  */
 int BN_GF2m_mod(BIGNUM *r, const BIGNUM *a, const BIGNUM *p)
 {
@@ -456,9 +456,9 @@ int BN_GF2m_mod_mul_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 /*
  * Compute the product of two polynomials a and b, reduce modulo p, and store
  * the result in r.  r could be a or b; a could equal b. This function calls
- * down to the BN_GF2m_mod_mul_arr implementation; this wrapper function is
+ * down to the BN_GF2m_mod_mul_arr() implementation; this wrapper function is
  * only provided for convenience; for best performance, use the
- * BN_GF2m_mod_mul_arr function.
+ * BN_GF2m_mod_mul_arr() function.
  */
 int BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
                     const BIGNUM *p, BN_CTX *ctx)
@@ -515,9 +515,9 @@ int BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const int p[],
 
 /*
  * Square a, reduce the result mod p, and store it in a.  r could be a. This
- * function calls down to the BN_GF2m_mod_sqr_arr implementation; this
+ * function calls down to the BN_GF2m_mod_sqr_arr() implementation; this
  * wrapper function is only provided for convenience; for best performance,
- * use the BN_GF2m_mod_sqr_arr function.
+ * use the BN_GF2m_mod_sqr_arr() function.
  */
 int BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 {
@@ -715,9 +715,9 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 /*
  * Invert xx, reduce modulo p, and store the result in r. r could be xx.
- * This function calls down to the BN_GF2m_mod_inv implementation; this
+ * This function calls down to the BN_GF2m_mod_inv() implementation; this
  * wrapper function is only provided for convenience; for best performance,
- * use the BN_GF2m_mod_inv function.
+ * use the BN_GF2m_mod_inv() function.
  */
 int BN_GF2m_mod_inv_arr(BIGNUM *r, const BIGNUM *xx, const int p[],
                         BN_CTX *ctx)
@@ -936,9 +936,9 @@ int BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 
 /*
  * Compute the bth power of a, reduce modulo p, and store the result in r.  r
- * could be a. This function calls down to the BN_GF2m_mod_exp_arr
+ * could be a. This function calls down to the BN_GF2m_mod_exp_arr()
  * implementation; this wrapper function is only provided for convenience;
- * for best performance, use the BN_GF2m_mod_exp_arr function.
+ * for best performance, use the BN_GF2m_mod_exp_arr() function.
  */
 int BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
                     const BIGNUM *p, BN_CTX *ctx)
@@ -997,9 +997,9 @@ int BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a, const int p[],
 
 /*
  * Compute the square root of a, reduce modulo p, and store the result in r.
- * r could be a. This function calls down to the BN_GF2m_mod_sqrt_arr
+ * r could be a. This function calls down to the BN_GF2m_mod_sqrt_arr()
  * implementation; this wrapper function is only provided for convenience;
- * for best performance, use the BN_GF2m_mod_sqrt_arr function.
+ * for best performance, use the BN_GF2m_mod_sqrt_arr() function.
  */
 int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 {
@@ -1126,9 +1126,9 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
 
 /*
  * Find r such that r^2 + r = a mod p.  r could be a. If no r exists returns
- * 0. This function calls down to the BN_GF2m_mod_solve_quad_arr
+ * 0. This function calls down to the BN_GF2m_mod_solve_quad_arr()
  * implementation; this wrapper function is only provided for convenience;
- * for best performance, use the BN_GF2m_mod_solve_quad_arr function.
+ * for best performance, use the BN_GF2m_mod_solve_quad_arr() function.
  */
 int BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
                            BN_CTX *ctx)

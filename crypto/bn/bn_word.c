@@ -72,7 +72,7 @@ BN_ULONG BN_div_word(BIGNUM *a, BN_ULONG w)
     if (a->top == 0)
         return 0;
 
-    /* normalize input (so bn_div_words doesn't complain) */
+    /* normalize input (so bn_div_words() doesn't complain) */
     j = BN_BITS2 - BN_num_bits_word(w);
     w <<= j;
     if (!BN_lshift(a, a, j))

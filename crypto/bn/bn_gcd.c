@@ -409,7 +409,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
 
     /*-
      * The while loop (Euclid's algorithm) ends when
-     *      A == gcd(a,n);
+     *      A == gcd(a, n);
      * we have
      *       sign*Y*a  ==  A  (mod |n|),
      * where  Y  is non-negative.
@@ -581,7 +581,7 @@ static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
 
     /*-
      * The while loop (Euclid's algorithm) ends when
-     *      A == gcd(a,n);
+     *      A == gcd(a, n);
      * we have
      *       sign*Y*a  ==  A  (mod |n|),
      * where  Y  is non-negative.

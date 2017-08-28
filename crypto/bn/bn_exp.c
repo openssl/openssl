@@ -116,7 +116,7 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
      *   BN_mod_exp_recp   50 .. 70 %  [AMD K6-2, Linux, debug configuration]
      *                     62 .. 118 % [UltraSparc, debug-solaris-sparcv8-gcc]
      *
-     * On the Sparc, BN_mod_exp_recp was faster than BN_mod_exp_mont
+     * On the Sparc, BN_mod_exp_recp() was faster than BN_mod_exp_mont()
      * at 2048 and more bits, but at 512 and 1024 bits, it was
      * slower even than the standard algorithm!
      *
@@ -811,7 +811,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
                                                 * than 32 */
 
         /*
-         * BN_to_montgomery can contaminate words above .top [in
+         * BN_to_montgomery() can contaminate words above .top [in
          * BN_DEBUG[_DEBUG] build]...
          */
         for (i = am.top; i < top; i++)
@@ -909,7 +909,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         BN_ULONG *n0 = mont->n0, *np;
 
         /*
-         * BN_to_montgomery can contaminate words above .top [in
+         * BN_to_montgomery() can contaminate words above .top [in
          * BN_DEBUG[_DEBUG] build]...
          */
         for (i = am.top; i < top; i++)
@@ -1099,13 +1099,13 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
                 (/* BN_ucmp(r, (m)) < 0 ? 1 :*/  \
                         (BN_mod(t, r, m, ctx) && (swap_tmp = r, r = t, t = swap_tmp, 1))))
     /*
-     * BN_MOD_MUL_WORD is only used with 'w' large, so the BN_ucmp test is
-     * probably more overhead than always using BN_mod (which uses BN_copy if
+     * BN_MOD_MUL_WORD is only used with 'w' large, so the BN_ucmp() test is
+     * probably more overhead than always using BN_mod (which uses BN_copy() if
      * a similar test returns true).
      */
     /*
-     * We can use BN_mod and do not need BN_nnmod because our accumulator is
-     * never negative (the result of BN_mod does not depend on the sign of
+     * We can use BN_mod() and do not need BN_nnmod() because our accumulator
+     * is never negative (the result of BN_mod does not depend on the sign of
      * the modulus).
      */
 #define BN_TO_MONTGOMERY_WORD(r, w, mont) \

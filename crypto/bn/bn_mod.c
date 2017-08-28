@@ -103,7 +103,7 @@ int BN_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 {
     if (!BN_sqr(r, a, ctx))
         return 0;
-    /* r->neg == 0,  thus we don't need BN_nnmod */
+    /* r->neg == 0,  thus we don't need BN_nnmod() */
     return BN_mod(r, r, m, ctx);
 }
 
@@ -116,7 +116,7 @@ int BN_mod_lshift1(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 }
 
 /*
- * BN_mod_lshift1 variant that may be used if a is non-negative and less than
+ * BN_mod_lshift1() variant that may be used if a is non-negative and less than
  * m
  */
 int BN_mod_lshift1_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *m)
@@ -153,7 +153,7 @@ int BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m,
 }
 
 /*
- * BN_mod_lshift variant that may be used if a is non-negative and less than
+ * BN_mod_lshift() variant that may be used if a is non-negative and less than
  * m
  */
 int BN_mod_lshift_quick(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m)
