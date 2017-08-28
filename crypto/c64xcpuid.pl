@@ -36,8 +36,13 @@ _OPENSSL_rdtsc:
 	LDW	*A5[0],A2	; load CTL
 	LDW	*A5[2],A4	; load CTN
 	NOP	2
+	.if	.BIG_ENDIAN
+	MVK	0x2c0,A7	; internal clock source, don't hold, go
+||	MVK	-1,A6		; maximum period
+	.else
 	MVK	0x2c0,A6	; internal clock source, don't hold, go
 ||	MVK	-1,A7		; maximum period
+	.endif
   [!A2]	STDW	A7:A6,*A5[0]	; fire it up
 ||	BNOP	RA,5
 	.endasmfunc
@@ -98,6 +103,7 @@ cleanse_loop?:
    [A1]	STB	A2,*A4++[2]
 	.endasmfunc
 
+	.if	0
 	.global	_CRYPTO_memcmp
 _CRYPTO_memcmp:
 	.asmfunc
@@ -136,6 +142,7 @@ memcmp_loop?:
 	ZERO	A4
   [A0]	MVK	1,A4
 	.endasmfunc
+	.endif
 
 	.global	_OPENSSL_atomic_add
 _OPENSSL_atomic_add:

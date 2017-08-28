@@ -39,6 +39,14 @@ open STDOUT,">$output";
 $code.=<<___;
 	.text
 
+	.if	.ASSEMBLER_VERSION<7000000
+	.asg	0,__TI_EABI__
+	.endif
+	.if	__TI_EABI__
+	.nocmp
+	.asg	sha256_block_data_order,_sha256_block_data_order
+	.endif
+
 	.asg	B3,RA
 	.asg	A15,FP
 	.asg	B15,SP
@@ -50,6 +58,7 @@ $code.=<<___;
 
 	.global	_sha256_block_data_order
 _sha256_block_data_order:
+__sha256_block:
 	.asmfunc stack_usage(64)
 	MV	$NUM,A0				; reassign $NUM
 ||	MVK	-64,B0
@@ -58,10 +67,17 @@ _sha256_block_data_order:
 || [A0]	MV	SP,FP
    [A0]	ADDKPC	_sha256_block_data_order,B2
 || [A0]	AND	B0,SP,SP			; align stack at 64 bytes
+	.if	__TI_EABI__
    [A0]	MVK	0x00404,B1
-|| [A0]	MVKL	(K256-_sha256_block_data_order),$K256
+|| [A0]	MVKL	\$PCR_OFFSET(K256,__sha256_block),$K256
    [A0]	MVKH	0x50000,B1
-|| [A0]	MVKH	(K256-_sha256_block_data_order),$K256
+|| [A0]	MVKH	\$PCR_OFFSET(K256,__sha256_block),$K256
+	.else
+   [A0]	MVK	0x00404,B1
+|| [A0]	MVKL	(K256-__sha256_block),$K256
+   [A0]	MVKH	0x50000,B1
+|| [A0]	MVKH	(K256-__sha256_block),$K256
+	.endif
    [A0]	MVC	B1,AMR				; setup circular addressing
 || [A0]	MV	SP,$Xia
    [A0]	MV	SP,$Xib
@@ -266,7 +282,11 @@ loop_16_63?:					; BODY_16_63
 ||	STW	$H,*${CTXB}[7]
 	.endasmfunc
 
+	.if	__TI_EABI__
+	.sect	".text:sha_asm.const"
+	.else
 	.sect	".const:sha_asm"
+	.endif
 	.align	128
 K256:
 	.uword	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5
