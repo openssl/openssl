@@ -666,6 +666,7 @@ while (@argvcopy)
                         delete $disabled{"zlib"};
                         }
 		my $algo = $1;
+		delete $disabled{$algo};
 
 		# No longer an automatic choice
 		$auto_threads = 0 if ($1 eq "threads");
