@@ -90,8 +90,8 @@ static CRYPTO_THREAD_ID disabling_threadid;
 
 DEFINE_RUN_ONCE_STATIC(do_memdbg_init)
 {
-    malloc_lock = CRYPTO_THREAD_lock_new();
-    long_malloc_lock = CRYPTO_THREAD_lock_new();
+    malloc_lock = CRYPTO_THREAD_glock_new("malloc");
+    long_malloc_lock = CRYPTO_THREAD_glock_new("long_malloc");
     if (malloc_lock == NULL || long_malloc_lock == NULL
         || !CRYPTO_THREAD_init_local(&appinfokey, NULL)) {
         CRYPTO_THREAD_lock_free(malloc_lock);

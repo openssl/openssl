@@ -66,7 +66,7 @@ int CRYPTO_secure_malloc_init(size_t size, int minsize)
     int ret = 0;
 
     if (!secure_mem_initialized) {
-        sec_malloc_lock = CRYPTO_THREAD_lock_new();
+        sec_malloc_lock = CRYPTO_THREAD_glock_new("sec_malloc");
         if (sec_malloc_lock == NULL)
             return 0;
         if ((ret = sh_init(size, minsize)) != 0) {

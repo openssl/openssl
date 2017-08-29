@@ -182,13 +182,13 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     int ret = 1;
 
 #ifndef OPENSSL_NO_ENGINE
-    rand_engine_lock = CRYPTO_THREAD_lock_new();
+    rand_engine_lock = CRYPTO_THREAD_glock_new("rand_engine");
     ret &= rand_engine_lock != NULL;
 #endif
-    rand_meth_lock = CRYPTO_THREAD_lock_new();
+    rand_meth_lock = CRYPTO_THREAD_glock_new("rand_meth");
     ret &= rand_meth_lock != NULL;
 
-    rand_bytes.lock = CRYPTO_THREAD_lock_new();
+    rand_bytes.lock = CRYPTO_THREAD_glock_new("rand_bytes");
     ret &= rand_bytes.lock != NULL;
     rand_bytes.curr = 0;
     rand_bytes.size = MAX_RANDOMNESS_HELD;
