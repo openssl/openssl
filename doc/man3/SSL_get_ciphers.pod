@@ -29,16 +29,16 @@ is returned.
 SSL_CTX_get_ciphers() returns the stack of available SSL_CIPHERs for B<ctx>.
 
 SSL_get1_supported_ciphers() returns the stack of enabled SSL_CIPHERs for
-B<ssl>, sorted by preference.
+B<ssl> as would be sent in a ClientHello (that is, sorted by preference).
 The list depends on settings like the cipher list, the supported protocol
 versions, the security level, and the enabled signature algorithms.
 SRP and PSK ciphers are only enabled if the appropriate callbacks or settings
 have been applied.
-This is the list that will be sent by the client to the server.
-The list supported by the server might include more ciphers in case there is a
-hole in the list of supported protocols.
-The server will also not use ciphers from this list depending on the
-configured certificates and DH parameters.
+The list of ciphers that would be sent in a ClientHello can differ from
+the list of ciphers that would be acceptable when acting as a server.
+For example, additional ciphers may be usable by a server if there is
+a gap in the list of supported protocols, and some ciphers may not be
+usable by a server if there is not a suitable certificate configured.
 If B<ssl> is NULL or no ciphers are available, NULL is returned.
 
 SSL_get_client_ciphers() returns the stack of available SSL_CIPHERs matching the
