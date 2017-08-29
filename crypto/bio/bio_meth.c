@@ -15,7 +15,7 @@ static CRYPTO_ONCE bio_type_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(do_bio_type_init)
 {
-    bio_type_lock = CRYPTO_THREAD_lock_new();
+    bio_type_lock = CRYPTO_THREAD_glock_new("bio_type");
     return bio_type_lock != NULL;
 }
 
