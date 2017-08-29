@@ -216,8 +216,8 @@ B<pkeyopt> values are supported:
 =item B<rsa_padding_mode:mode>
 
 This sets the RSA padding mode. Acceptable values for B<mode> are B<pkcs1> for
-PKCS#1 padding, B<sslv23> for SSLv23 padding, B<none> for no padding, B<oaep>
-for B<OAEP> mode, B<x931> for X9.31 mode and B<pss> for PSS.
+PKCS#1 padding, B<sslv23> for SSLv23 padding (deprecated), B<none> for no padding,
+B<oaep> for B<OAEP> mode, B<x931> for X9.31 mode and B<pss> for PSS.
 
 In PKCS#1 padding if the message digest is not set then the supplied data is
 signed or verified directly instead of using a B<DigestInfo> structure. If a

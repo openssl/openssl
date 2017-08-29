@@ -45,7 +45,7 @@ const OPTIONS rsautl_options[] = {
     {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
     {"pubin", OPT_PUBIN, '-', "Input is an RSA public"},
     {"certin", OPT_CERTIN, '-', "Input is a cert carrying an RSA public key"},
-    {"ssl", OPT_SSL, '-', "Use SSL v2 padding"},
+    {"ssl", OPT_SSL, '-', "Use SSL v2 padding (deprecated)"},
     {"raw", OPT_RAW, '-', "Use no padding"},
     {"pkcs", OPT_PKCS, '-', "Use PKCS#1 v1.5 padding (default)"},
     {"oaep", OPT_OAEP, '-', "Use PKCS#1 OAEP"},
