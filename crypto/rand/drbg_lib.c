@@ -337,11 +337,11 @@ void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
  * Creates a global DRBG with default settings.
  * Returns 1 on success, 0 on failure
  */
-static int setup_drbg(RAND_DRBG *drbg)
+static int setup_drbg(RAND_DRBG *drbg, const char *name)
 {
     int ret = 1;
 
-    drbg->lock = CRYPTO_THREAD_lock_new();
+    drbg->lock = CRYPTO_THREAD_glock_new(name);
     ret &= drbg->lock != NULL;
     drbg->size = RANDOMNESS_NEEDED;
     drbg->secure = CRYPTO_secure_malloc_initialized();
@@ -362,8 +362,8 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init_drbg)
 {
     int ret = 1;
 
-    ret &= setup_drbg(&rand_drbg);
-    ret &= setup_drbg(&priv_drbg);
+    ret &= setup_drbg(&rand_drbg, "rand_drbg");
+    ret &= setup_drbg(&priv_drbg, "priv_drbg");
 
     return ret;
 }

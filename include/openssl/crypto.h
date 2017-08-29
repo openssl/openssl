@@ -68,6 +68,7 @@ typedef struct {
 typedef void CRYPTO_RWLOCK;
 
 CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void);
+CRYPTO_RWLOCK *CRYPTO_THREAD_glock_new(const char *name);
 int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock);
 int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock);
 int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock);

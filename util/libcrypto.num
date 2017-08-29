@@ -4389,3 +4389,4 @@ EVP_aria_256_ccm                        4332	1_1_1	EXIST::FUNCTION:ARIA
 EVP_aria_128_gcm                        4333	1_1_1	EXIST::FUNCTION:ARIA
 EVP_aria_128_ccm                        4334	1_1_1	EXIST::FUNCTION:ARIA
 EVP_aria_192_gcm                        4335	1_1_1	EXIST::FUNCTION:ARIA
+CRYPTO_THREAD_glock_new                 4336	1_1_1	EXIST::FUNCTION:

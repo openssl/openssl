@@ -69,7 +69,7 @@ DEFINE_RUN_ONCE_STATIC(o_names_init)
 {
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     names_lh = lh_OBJ_NAME_new(obj_name_hash, obj_name_cmp);
-    obj_lock = CRYPTO_THREAD_lock_new();
+    obj_lock = CRYPTO_THREAD_glock_new("obj");
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
     return names_lh != NULL && obj_lock != NULL;
 }

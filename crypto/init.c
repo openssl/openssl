@@ -27,6 +27,15 @@
 #include "internal/dso.h"
 #include "internal/store.h"
 
+
+typedef struct global_lock_st {
+    CRYPTO_RWLOCK *lock;
+    const char *name;
+    struct global_lock_st *next;
+} GLOBAL_LOCK;
+
+static GLOBAL_LOCK *global_locks;
+
 static int stopped = 0;
 
 static void ossl_init_thread_stop(struct thread_local_inits_st *locals);
@@ -65,6 +74,7 @@ struct ossl_init_stop_st {
 
 static OPENSSL_INIT_STOP *stop_handlers = NULL;
 static CRYPTO_RWLOCK *init_lock = NULL;
+static CRYPTO_RWLOCK *glock_lock = NULL;
 
 static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
@@ -84,7 +94,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 #ifndef OPENSSL_SYS_UEFI
     atexit(OPENSSL_cleanup);
 #endif
-    if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
+    if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL
+            || (glock_lock = CRYPTO_THREAD_lock_new()) == NULL)
         return 0;
     OPENSSL_cpuid_setup();
 
@@ -405,6 +416,14 @@ void OPENSSL_cleanup(void)
         return;
     stopped = 1;
 
+    /* Free list of global locks. */
+    while (global_locks != NULL) {
+        GLOBAL_LOCK *next = global_locks->next;
+
+        free(global_locks);
+        global_locks = next;
+    }
+
     /*
      * Thread stop may not get automatically called by the thread library for
      * the very last thread in some situations, so call it directly.
@@ -421,6 +440,9 @@ void OPENSSL_cleanup(void)
     stop_handlers = NULL;
 
     CRYPTO_THREAD_lock_free(init_lock);
+    init_lock = NULL;
+    CRYPTO_THREAD_lock_free(glock_lock);
+    glock_lock = NULL;
 
     /*
      * We assume we are single-threaded for this function, i.e. no race
@@ -684,7 +706,47 @@ int OPENSSL_atexit(void (*handler)(void))
     return 1;
 }
 
-#ifdef OPENSSL_SYS_UNIX
+#ifndef OPENSSL_SYS_UNIX
+CRYPTO_RWLOCK *CRYPTO_THREAD_glock_new(const char *name)
+{
+    return CRYPTO_THREAD_lock_new();
+}
+#else
+
+
+/*
+ * Create a new global lock, return NULL on error.
+ */
+CRYPTO_RWLOCK *CRYPTO_THREAD_glock_new(const char *name)
+{
+    GLOBAL_LOCK *newlock;
+
+    if (name == NULL
+            || glock_lock == NULL
+            || (newlock = malloc(sizeof(*newlock))) == NULL)
+        return CRYPTO_THREAD_lock_new();
+    CRYPTO_THREAD_write_lock(glock_lock);
+    newlock->name = name;
+    newlock->lock = CRYPTO_THREAD_lock_new();
+    newlock->next = global_locks;
+    global_locks = newlock->next;
+    CRYPTO_THREAD_unlock(glock_lock);
+    return newlock->lock;
+}
+
+/*
+ * Unlock all global locks.
+ */
+static void unlock_all(void)
+{
+    GLOBAL_LOCK *lp;
+
+    CRYPTO_THREAD_write_lock(init_lock);
+    for (lp = global_locks; lp != NULL; lp = lp->next)
+        CRYPTO_THREAD_unlock(lp->lock);
+    CRYPTO_THREAD_unlock(init_lock);
+}
+
 /*
  * The following three functions are for OpenSSL developers.  This is
  * where we set/reset state across fork (called via pthread_atfork when
@@ -698,14 +760,22 @@ int OPENSSL_atexit(void (*handler)(void))
 
 void OPENSSL_fork_prepare(void)
 {
+    GLOBAL_LOCK *lp;
+
+    CRYPTO_THREAD_write_lock(init_lock);
+    for (lp = global_locks; lp != NULL; lp = lp->next)
+        CRYPTO_THREAD_write_lock(lp->lock);
+    CRYPTO_THREAD_unlock(init_lock);
 }
 
 void OPENSSL_fork_parent(void)
 {
+    unlock_all();
 }
 
 void OPENSSL_fork_child(void)
 {
+    unlock_all();
     rand_fork();
 }
 #endif
