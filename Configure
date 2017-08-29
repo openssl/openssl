@@ -1324,8 +1324,8 @@ if (defined($config{api})) {
 if ($strict_warnings)
 	{
 	my $wopt;
-	die "ERROR --strict-warnings requires gcc, clang or icc"
-            unless $ecc eq 'gcc' || $ecc eq 'clang' || $ecc eq 'icc';
+	die "ERROR --strict-warnings requires gcc or clang"
+            unless $ecc eq 'gcc' || $ecc eq 'clang';
 	foreach $wopt (split /\s+/, $gcc_devteam_warn)
 		{
 		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
