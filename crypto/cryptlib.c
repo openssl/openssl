@@ -42,12 +42,24 @@ void OPENSSL_cpuid_setup(void)
         if (!sscanf(env + off, "%lli", (long long *)&vec))
             vec = strtoul(env + off, NULL, 0);
 #  endif
-        if (off)
-            vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P) & ~vec;
-        else if (env[0] == ':')
+        if (off) {
+            IA32CAP mask = vec;
+            vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P) & ~mask;
+            if (mask & (1<<24)) {
+                /*
+                 * User disables FXSR bit, mask even other capabilities
+                 * that operate exclusively on XMM, so we don't have to
+                 * double-check all the time. We mask PCLMULQDQ, AMD XOP,
+                 * AES-NI and AVX. Formally speaking we don't have to
+                 * do it in x86_64 case, but we can safely assume that
+                 * x86_64 users won't actually flip this flag.
+                 */
+                vec &= ~((IA32CAP)(1<<1|1<<11|1<<25|1<<28) << 32);
+            }
+        } else if (env[0] == ':') {
             vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
+        }
 
-        OPENSSL_ia32cap_P[2] = 0;
         if ((env = strchr(env, ':'))) {
             unsigned int vecx;
             env++;
@@ -57,9 +69,12 @@ void OPENSSL_cpuid_setup(void)
                 OPENSSL_ia32cap_P[2] &= ~vecx;
             else
                 OPENSSL_ia32cap_P[2] = vecx;
+        } else {
+            OPENSSL_ia32cap_P[2] = 0;
         }
-    } else
+    } else {
         vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
+    }
 
     /*
      * |(1<<10) sets a reserved bit to signal that variable
