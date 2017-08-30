@@ -37,8 +37,8 @@ have been applied.
 The list of ciphers that would be sent in a ClientHello can differ from
 the list of ciphers that would be acceptable when acting as a server.
 For example, additional ciphers may be usable by a server if there is
-a hole in the list of supported protocols, and some ciphers may not be
-usable by a server if there is not a corresponding certificate configured.
+a gap in the list of supported protocols, and some ciphers may not be
+usable by a server if there is not a suitable certificate configured.
 If B<ssl> is NULL or no ciphers are available, NULL is returned.
 
 SSL_get_client_ciphers() returns the stack of available SSL_CIPHERs matching the
