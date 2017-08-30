@@ -543,7 +543,7 @@ int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b)
 {
     int day, sec;
 
-    if (!ASN1_TIME_diff(&day, &sec, a, b))
+    if (!ASN1_TIME_diff(&day, &sec, b, a))
         return -2;
     if (day > 0 || sec > 0)
         return 1;
