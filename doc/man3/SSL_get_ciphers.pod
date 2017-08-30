@@ -34,11 +34,11 @@ The list depends on settings like the cipher list, the supported protocol
 versions, the security level, and the enabled signature algorithms.
 SRP and PSK ciphers are only enabled if the appropriate callbacks or settings
 have been applied.
-Since this generates the list that would be sent in a ClientHello, it may
-differ from the list of acceptable ciphers when B<ssl> is the server side
-of a connection, as can occur when there is a
-hole in the list of supported protocols or the configured certificates and
-DH parameters limit the usable ciphers.
+The list of ciphers that would be sent in a ClientHello can differ from
+the list of ciphers that would be acceptable when acting as a server.
+For example, additional ciphers may be usable by a server if there is
+a hole in the list of supported protocols, and some ciphers may not be
+usable by a server if there is not a corresponding certificate configured.
 If B<ssl> is NULL or no ciphers are available, NULL is returned.
 
 SSL_get_client_ciphers() returns the stack of available SSL_CIPHERs matching the
