@@ -28,6 +28,8 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_AES_T4_INIT_KEY                            178
 # define EVP_F_AES_WRAP_CIPHER                            170
 # define EVP_F_ALG_MODULE_INIT                            177
+# define EVP_F_ARIA_CCM_INIT_KEY                          175
+# define EVP_F_ARIA_GCM_INIT_KEY                          176
 # define EVP_F_ARIA_INIT_KEY                              185
 # define EVP_F_CAMELLIA_INIT_KEY                          159
 # define EVP_F_CHACHA20_POLY1305_CTRL                     182

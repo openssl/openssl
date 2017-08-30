@@ -1117,3 +1117,9 @@ RSA_SHA3_224		1116
 RSA_SHA3_256		1117
 RSA_SHA3_284		1118
 RSA_SHA3_512		1119
+aria_128_ccm		1120
+aria_192_ccm		1121
+aria_256_ccm		1122
+aria_128_gcm		1123
+aria_192_gcm		1124
+aria_256_gcm		1125

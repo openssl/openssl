@@ -4519,6 +4519,36 @@
 #define LN_aria_256_cfb8                "aria-256-cfb8"
 #define NID_aria_256_cfb8               1085
 
+#define SN_aria_128_ccm         "ARIA-128-CCM"
+#define LN_aria_128_ccm         "aria-128-ccm"
+#define NID_aria_128_ccm                1120
+#define OBJ_aria_128_ccm                OBJ_aria,37L
+
+#define SN_aria_192_ccm         "ARIA-192-CCM"
+#define LN_aria_192_ccm         "aria-192-ccm"
+#define NID_aria_192_ccm                1121
+#define OBJ_aria_192_ccm                OBJ_aria,38L
+
+#define SN_aria_256_ccm         "ARIA-256-CCM"
+#define LN_aria_256_ccm         "aria-256-ccm"
+#define NID_aria_256_ccm                1122
+#define OBJ_aria_256_ccm                OBJ_aria,39L
+
+#define SN_aria_128_gcm         "ARIA-128-GCM"
+#define LN_aria_128_gcm         "aria-128-gcm"
+#define NID_aria_128_gcm                1123
+#define OBJ_aria_128_gcm                OBJ_aria,34L
+
+#define SN_aria_192_gcm         "ARIA-192-GCM"
+#define LN_aria_192_gcm         "aria-192-gcm"
+#define NID_aria_192_gcm                1124
+#define OBJ_aria_192_gcm                OBJ_aria,35L
+
+#define SN_aria_256_gcm         "ARIA-256-GCM"
+#define LN_aria_256_gcm         "aria-256-gcm"
+#define NID_aria_256_gcm                1125
+#define OBJ_aria_256_gcm                OBJ_aria,36L
+
 #define SN_kisa         "KISA"
 #define LN_kisa         "kisa"
 #define NID_kisa                773

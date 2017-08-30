@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7168] = {
+static const unsigned char so[7222] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1010,9 +1010,15 @@ static const unsigned char so[7168] = {
     0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x0E,  /* [ 7140] OBJ_RSA_SHA3_256 */
     0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x0F,  /* [ 7149] OBJ_RSA_SHA3_284 */
     0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x10,  /* [ 7158] OBJ_RSA_SHA3_512 */
+    0x2A,0x83,0x1A,0x8C,0x9A,0x6E,0x01,0x01,0x25,  /* [ 7167] OBJ_aria_128_ccm */
+    0x2A,0x83,0x1A,0x8C,0x9A,0x6E,0x01,0x01,0x26,  /* [ 7176] OBJ_aria_192_ccm */
+    0x2A,0x83,0x1A,0x8C,0x9A,0x6E,0x01,0x01,0x27,  /* [ 7185] OBJ_aria_256_ccm */
+    0x2A,0x83,0x1A,0x8C,0x9A,0x6E,0x01,0x01,0x22,  /* [ 7194] OBJ_aria_128_gcm */
+    0x2A,0x83,0x1A,0x8C,0x9A,0x6E,0x01,0x01,0x23,  /* [ 7203] OBJ_aria_192_gcm */
+    0x2A,0x83,0x1A,0x8C,0x9A,0x6E,0x01,0x01,0x24,  /* [ 7212] OBJ_aria_256_gcm */
 };
 
-#define NUM_NID 1120
+#define NUM_NID 1126
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2134,9 +2140,15 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-rsassa-pkcs1-v1_5-with-sha3-256", "RSA-SHA3-256", NID_RSA_SHA3_256, 9, &so[7140]},
     {"id-rsassa-pkcs1-v1_5-with-sha3-384", "RSA-SHA3-284", NID_RSA_SHA3_284, 9, &so[7149]},
     {"id-rsassa-pkcs1-v1_5-with-sha3-512", "RSA-SHA3-512", NID_RSA_SHA3_512, 9, &so[7158]},
+    {"ARIA-128-CCM", "aria-128-ccm", NID_aria_128_ccm, 9, &so[7167]},
+    {"ARIA-192-CCM", "aria-192-ccm", NID_aria_192_ccm, 9, &so[7176]},
+    {"ARIA-256-CCM", "aria-256-ccm", NID_aria_256_ccm, 9, &so[7185]},
+    {"ARIA-128-GCM", "aria-128-gcm", NID_aria_128_gcm, 9, &so[7194]},
+    {"ARIA-192-GCM", "aria-192-gcm", NID_aria_192_gcm, 9, &so[7203]},
+    {"ARIA-256-GCM", "aria-256-gcm", NID_aria_256_gcm, 9, &so[7212]},
 };
 
-#define NUM_SN 1111
+#define NUM_SN 1117
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2172,25 +2184,31 @@ static const unsigned int sn_objs[NUM_SN] = {
      428,    /* "AES-256-OFB" */
      914,    /* "AES-256-XTS" */
     1066,    /* "ARIA-128-CBC" */
+    1120,    /* "ARIA-128-CCM" */
     1067,    /* "ARIA-128-CFB" */
     1080,    /* "ARIA-128-CFB1" */
     1083,    /* "ARIA-128-CFB8" */
     1069,    /* "ARIA-128-CTR" */
     1065,    /* "ARIA-128-ECB" */
+    1123,    /* "ARIA-128-GCM" */
     1068,    /* "ARIA-128-OFB" */
     1071,    /* "ARIA-192-CBC" */
+    1121,    /* "ARIA-192-CCM" */
     1072,    /* "ARIA-192-CFB" */
     1081,    /* "ARIA-192-CFB1" */
     1084,    /* "ARIA-192-CFB8" */
     1074,    /* "ARIA-192-CTR" */
     1070,    /* "ARIA-192-ECB" */
+    1124,    /* "ARIA-192-GCM" */
     1073,    /* "ARIA-192-OFB" */
     1076,    /* "ARIA-256-CBC" */
+    1122,    /* "ARIA-256-CCM" */
     1077,    /* "ARIA-256-CFB" */
     1082,    /* "ARIA-256-CFB1" */
     1085,    /* "ARIA-256-CFB8" */
     1079,    /* "ARIA-256-CTR" */
     1075,    /* "ARIA-256-ECB" */
+    1125,    /* "ARIA-256-GCM" */
     1078,    /* "ARIA-256-OFB" */
     1064,    /* "AuthANY" */
     1049,    /* "AuthDSS" */
@@ -3251,7 +3269,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1111
+#define NUM_LN 1117
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3478,25 +3496,31 @@ static const unsigned int ln_objs[NUM_LN] = {
      914,    /* "aes-256-xts" */
      376,    /* "algorithm" */
     1066,    /* "aria-128-cbc" */
+    1120,    /* "aria-128-ccm" */
     1067,    /* "aria-128-cfb" */
     1080,    /* "aria-128-cfb1" */
     1083,    /* "aria-128-cfb8" */
     1069,    /* "aria-128-ctr" */
     1065,    /* "aria-128-ecb" */
+    1123,    /* "aria-128-gcm" */
     1068,    /* "aria-128-ofb" */
     1071,    /* "aria-192-cbc" */
+    1121,    /* "aria-192-ccm" */
     1072,    /* "aria-192-cfb" */
     1081,    /* "aria-192-cfb1" */
     1084,    /* "aria-192-cfb8" */
     1074,    /* "aria-192-ctr" */
     1070,    /* "aria-192-ecb" */
+    1124,    /* "aria-192-gcm" */
     1073,    /* "aria-192-ofb" */
     1076,    /* "aria-256-cbc" */
+    1122,    /* "aria-256-ccm" */
     1077,    /* "aria-256-cfb" */
     1082,    /* "aria-256-cfb1" */
     1085,    /* "aria-256-cfb8" */
     1079,    /* "aria-256-ctr" */
     1075,    /* "aria-256-ecb" */
+    1125,    /* "aria-256-gcm" */
     1078,    /* "aria-256-ofb" */
      484,    /* "associatedDomain" */
      485,    /* "associatedName" */
@@ -4366,7 +4390,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1005
+#define NUM_OBJ 1011
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5033,6 +5057,12 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1077,    /* OBJ_aria_256_cfb128              1 2 410 200046 1 1 13 */
     1078,    /* OBJ_aria_256_ofb128              1 2 410 200046 1 1 14 */
     1079,    /* OBJ_aria_256_ctr                 1 2 410 200046 1 1 15 */
+    1123,    /* OBJ_aria_128_gcm                 1 2 410 200046 1 1 34 */
+    1124,    /* OBJ_aria_192_gcm                 1 2 410 200046 1 1 35 */
+    1125,    /* OBJ_aria_256_gcm                 1 2 410 200046 1 1 36 */
+    1120,    /* OBJ_aria_128_ccm                 1 2 410 200046 1 1 37 */
+    1121,    /* OBJ_aria_192_ccm                 1 2 410 200046 1 1 38 */
+    1122,    /* OBJ_aria_256_ccm                 1 2 410 200046 1 1 39 */
      997,    /* OBJ_id_tc26_gost_3410_2012_512_paramSetTest 1 2 643 7 1 2 1 2 0 */
      998,    /* OBJ_id_tc26_gost_3410_2012_512_paramSetA 1 2 643 7 1 2 1 2 1 */
      999,    /* OBJ_id_tc26_gost_3410_2012_512_paramSetB 1 2 643 7 1 2 1 2 2 */

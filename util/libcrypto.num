@@ -4383,3 +4383,9 @@ EVP_PKEY_CTX_ctrl_uint64                4326	1_1_1	EXIST::FUNCTION:
 EVP_DigestFinalXOF                      4327	1_1_1	EXIST::FUNCTION:
 ERR_clear_last_mark                     4328	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_get0_priv_global              4329	1_1_1	EXIST::FUNCTION:
+EVP_aria_192_ccm                        4330	1_1_1	EXIST::FUNCTION:ARIA
+EVP_aria_256_gcm                        4331	1_1_1	EXIST::FUNCTION:ARIA
+EVP_aria_256_ccm                        4332	1_1_1	EXIST::FUNCTION:ARIA
+EVP_aria_128_gcm                        4333	1_1_1	EXIST::FUNCTION:ARIA
+EVP_aria_128_ccm                        4334	1_1_1	EXIST::FUNCTION:ARIA
+EVP_aria_192_gcm                        4335	1_1_1	EXIST::FUNCTION:ARIA

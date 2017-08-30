@@ -634,6 +634,8 @@ EVP_F_AES_OCB_CIPHER:169:aes_ocb_cipher
 EVP_F_AES_T4_INIT_KEY:178:aes_t4_init_key
 EVP_F_AES_WRAP_CIPHER:170:aes_wrap_cipher
 EVP_F_ALG_MODULE_INIT:177:alg_module_init
+EVP_F_ARIA_CCM_INIT_KEY:175:aria_ccm_init_key
+EVP_F_ARIA_GCM_INIT_KEY:176:aria_gcm_init_key
 EVP_F_ARIA_INIT_KEY:185:aria_init_key
 EVP_F_CAMELLIA_INIT_KEY:159:camellia_init_key
 EVP_F_CHACHA20_POLY1305_CTRL:182:chacha20_poly1305_ctrl
