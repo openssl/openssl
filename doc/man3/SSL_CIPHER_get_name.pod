@@ -103,7 +103,7 @@ SSL_CIPHER_find() returns NULL if an error occurs or the indicated cipher is not
 SSL_CIPHER_get_id() returns the OpenSSL-specific ID of the given cipher B<c>. That ID is
 not the same as the IANA-specific ID.
 
-SSL_CIPHER_get_protocol_id() returns the two-byte ID used in SSL/TLS protocol of the given
+SSL_CIPHER_get_protocol_id() returns the two-byte ID used in the TLS protocol of the given
 cipher B<c>.
 
 SSL_CIPHER_description() returns a textual description of the cipher used
