@@ -72,9 +72,11 @@ struct ossl_init_stop_st {
     OPENSSL_INIT_STOP *next;
 };
 
+static CRYPTO_RWLOCK *glock_lock = NULL;
+static CRYPTO_ONCE glock_once = CRYPTO_ONCE_STATIC_INIT;
+
 static OPENSSL_INIT_STOP *stop_handlers = NULL;
 static CRYPTO_RWLOCK *init_lock = NULL;
-static CRYPTO_RWLOCK *glock_lock = NULL;
 
 static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
@@ -94,8 +96,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 #ifndef OPENSSL_SYS_UEFI
     atexit(OPENSSL_cleanup);
 #endif
-    if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL
-            || (glock_lock = CRYPTO_THREAD_lock_new()) == NULL)
+    /* Do not change this to glock's! */
+    if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
         return 0;
     OPENSSL_cpuid_setup();
 
@@ -416,14 +418,6 @@ void OPENSSL_cleanup(void)
         return;
     stopped = 1;
 
-    /* Free list of global locks. */
-    while (global_locks != NULL) {
-        GLOBAL_LOCK *next = global_locks->next;
-
-        free(global_locks);
-        global_locks = next;
-    }
-
     /*
      * Thread stop may not get automatically called by the thread library for
      * the very last thread in some situations, so call it directly.
@@ -441,8 +435,6 @@ void OPENSSL_cleanup(void)
 
     CRYPTO_THREAD_lock_free(init_lock);
     init_lock = NULL;
-    CRYPTO_THREAD_lock_free(glock_lock);
-    glock_lock = NULL;
 
     /*
      * We assume we are single-threaded for this function, i.e. no race
@@ -522,6 +514,16 @@ void OPENSSL_cleanup(void)
     evp_cleanup_int();
     obj_cleanup_int();
     err_cleanup();
+
+    /* Free list of global locks. */
+    while (global_locks != NULL) {
+        GLOBAL_LOCK *next = global_locks->next;
+
+        free(global_locks);
+        global_locks = next;
+    }
+    CRYPTO_THREAD_lock_free(glock_lock);
+    glock_lock = NULL;
 
     base_inited = 0;
 }
@@ -711,8 +713,13 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_glock_new(const char *name)
 {
     return CRYPTO_THREAD_lock_new();
 }
-#else
 
+#else
+DEFINE_RUN_ONCE_STATIC(glock_init)
+{
+    glock_lock = CRYPTO_THREAD_lock_new();
+    return glock_lock != NULL;
+}
 
 /*
  * Create a new global lock, return NULL on error.
@@ -721,15 +728,18 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_glock_new(const char *name)
 {
     GLOBAL_LOCK *newlock;
 
-    if (name == NULL
-            || glock_lock == NULL
-            || (newlock = malloc(sizeof(*newlock))) == NULL)
-        return CRYPTO_THREAD_lock_new();
-    CRYPTO_THREAD_write_lock(glock_lock);
+    if (glock_lock == NULL && !RUN_ONCE(&glock_once, glock_init))
+        return NULL;
+    if ((newlock = malloc(sizeof(*newlock))) == NULL)
+        return NULL;
+    if ((newlock->lock = CRYPTO_THREAD_lock_new()) == NULL) {
+        free(newlock);
+        return NULL;
+    }
     newlock->name = name;
-    newlock->lock = CRYPTO_THREAD_lock_new();
+    CRYPTO_THREAD_write_lock(glock_lock);
     newlock->next = global_locks;
-    global_locks = newlock->next;
+    global_locks = newlock;
     CRYPTO_THREAD_unlock(glock_lock);
     return newlock->lock;
 }
@@ -741,10 +751,10 @@ static void unlock_all(void)
 {
     GLOBAL_LOCK *lp;
 
-    CRYPTO_THREAD_write_lock(init_lock);
+    CRYPTO_THREAD_write_lock(glock_lock);
     for (lp = global_locks; lp != NULL; lp = lp->next)
         CRYPTO_THREAD_unlock(lp->lock);
-    CRYPTO_THREAD_unlock(init_lock);
+    CRYPTO_THREAD_unlock(glock_lock);
 }
 
 /*
@@ -762,10 +772,10 @@ void OPENSSL_fork_prepare(void)
 {
     GLOBAL_LOCK *lp;
 
-    CRYPTO_THREAD_write_lock(init_lock);
+    CRYPTO_THREAD_write_lock(glock_lock);
     for (lp = global_locks; lp != NULL; lp = lp->next)
         CRYPTO_THREAD_write_lock(lp->lock);
-    CRYPTO_THREAD_unlock(init_lock);
+    CRYPTO_THREAD_unlock(glock_lock);
 }
 
 void OPENSSL_fork_parent(void)
