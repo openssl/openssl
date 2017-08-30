@@ -703,11 +703,11 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
     if (!WPACKET_start_sub_packet_u16(pkt)
                /*
                 * If extensions are of zero length then we don't even add the
-                * extensions length bytes to a ClientHello/ServerHello in SSLv3
+                * extensions length bytes to a ClientHello/ServerHello
+                * (for non-TLSv1.3).
                 */
             || ((context &
                  (SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO)) != 0
-                && s->version == SSL3_VERSION
                 && !WPACKET_set_flags(pkt,
                                      WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH))) {
         SSLerr(SSL_F_TLS_CONSTRUCT_EXTENSIONS, ERR_R_INTERNAL_ERROR);
