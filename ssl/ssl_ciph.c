@@ -1976,7 +1976,7 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
 
     /* Some hard-coded numbers for the CCM/Poly1305 MAC overhead
      * because there are no handy #defines for those. */
-    if (c->algorithm_enc & SSL_AESGCM) {
+    if (c->algorithm_enc & (SSL_AESGCM | SSL_ARIAGCM)) {
         out = EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
     } else if (c->algorithm_enc & (SSL_AES128CCM | SSL_AES256CCM)) {
         out = EVP_CCM_TLS_EXPLICIT_IV_LEN + 16;
