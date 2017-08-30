@@ -76,7 +76,7 @@ int BIO_ADDR_make(BIO_ADDR *ap, const struct sockaddr *sa)
     }
 #endif
 #ifdef AF_UNIX
-    if (ap->sa.sa_family == AF_UNIX) {
+    if (sa->sa_family == AF_UNIX) {
         ap->s_un = *(const struct sockaddr_un *)sa;
         return 1;
     }
