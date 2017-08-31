@@ -1889,8 +1889,7 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
         /* By default the SNI should be the same as was set in the session */
-        if (!noservername && servername == NULL)
-        {
+        if (!noservername && servername == NULL) {
             const char *sni = SSL_SESSION_get0_hostname(sess);
 
             if (sni != NULL) {
