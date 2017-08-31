@@ -58,7 +58,14 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
 
     if (s->early_data_state == SSL_EARLY_DATA_WRITING
             || s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
-        alg_enc = s->session->cipher->algorithm_enc;
+        if (s->session != NULL && s->session->ext.max_early_data > 0) {
+            alg_enc = s->session->cipher->algorithm_enc;
+        } else {
+            if (!ossl_assert(s->psksession != NULL
+                             && s->psksession->ext.max_early_data > 0))
+                return -1;
+            alg_enc = s->psksession->cipher->algorithm_enc;
+        }
     } else {
         /*
          * To get here we must have selected a ciphersuite - otherwise ctx would

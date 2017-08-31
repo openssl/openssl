@@ -98,6 +98,10 @@ be TLS1_3_VERSION.
 
 =back
 
+Additionally the maximum early data value should be set via a call to
+L<SSL_SESSION_set_max_early_data(3)> if the PSK will be used for sending early
+data.
+
 Alternatively an SSL_SESSION created from a previous non-PSK handshake may also
 be used as the basis for a PSK.
 
@@ -129,6 +133,16 @@ the connection setup fails.
 
 The SSL_psk_use_session_cb_func callback should return 1 on success or 0 on
 failure. In the event of failure the connection setup fails.
+
+=head1 SEE ALSO
+
+L<SSL_CTX_set_psk_find_session_callback(3)>,
+L<SSL_set_psk_find_session_callback(3)>
+
+=head1 HISTORY
+
+SSL_CTX_set_psk_use_session_callback() and SSL_set_psk_use_session_callback()
+were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

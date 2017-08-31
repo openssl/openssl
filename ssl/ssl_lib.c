@@ -534,6 +534,9 @@ int SSL_clear(SSL *s)
     }
     SSL_SESSION_free(s->psksession);
     s->psksession = NULL;
+    OPENSSL_free(s->psksession_id);
+    s->psksession_id = NULL;
+    s->psksession_id_len = 0;
 
     s->error = 0;
     s->hit = 0;
@@ -1097,6 +1100,7 @@ void SSL_free(SSL *s)
         SSL_SESSION_free(s->session);
     }
     SSL_SESSION_free(s->psksession);
+    OPENSSL_free(s->psksession_id);
 
     clear_ciphers(s);
 
@@ -1910,8 +1914,8 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
     case SSL_EARLY_DATA_NONE:
         if (s->server
                 || !SSL_in_before(s)
-                || s->session == NULL
-                || s->session->ext.max_early_data == 0) {
+                || ((s->session == NULL || s->session->ext.max_early_data == 0)
+                     && (s->psk_use_session_cb == NULL))) {
             SSLerr(SSL_F_SSL_WRITE_EARLY_DATA,
                    ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return 0;

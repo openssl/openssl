@@ -1888,6 +1888,25 @@ int s_client_main(int argc, char **argv)
             ERR_print_errors(bio_err);
             goto end;
         }
+        /* By default the SNI should be the same as was set in the session */
+        if (!noservername && servername == NULL) {
+            const char *sni = SSL_SESSION_get0_hostname(sess);
+
+            if (sni != NULL) {
+                servername = OPENSSL_strdup(sni);
+                if (servername == NULL) {
+                    BIO_printf(bio_err, "Can't set server name\n");
+                    ERR_print_errors(bio_err);
+                    goto end;
+                }
+            } else {
+                /*
+                 * Force no SNI to be sent so we are consistent with the
+                 * session.
+                 */
+                noservername = 1;
+            }
+        }
         SSL_SESSION_free(sess);
     }
 
@@ -2600,8 +2619,10 @@ int s_client_main(int argc, char **argv)
     }
 
     if (early_data_file != NULL
-            && SSL_get0_session(con) != NULL
-            && SSL_SESSION_get_max_early_data(SSL_get0_session(con)) > 0) {
+            && ((SSL_get0_session(con) != NULL
+                 && SSL_SESSION_get_max_early_data(SSL_get0_session(con)) > 0)
+                || (psksess != NULL
+                    && SSL_SESSION_get_max_early_data(psksess) > 0))) {
         BIO *edfile = BIO_new_file(early_data_file, "r");
         size_t readbytes, writtenbytes;
         int finish = 0;
@@ -2625,6 +2646,7 @@ int s_client_main(int argc, char **argv)
                 default:
                     BIO_printf(bio_err, "Error writing early data\n");
                     BIO_free(edfile);
+                    ERR_print_errors(bio_err);
                     goto shut;
                 }
             }

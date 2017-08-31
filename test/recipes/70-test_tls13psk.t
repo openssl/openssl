@@ -48,6 +48,7 @@ use constant {
 #Test 1: First get a session
 (undef, my $session) = tempfile();
 $proxy->clientflags("-sess_out ".$session);
+$proxy->serverflags("-servername localhost");
 $proxy->sessionfile($session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 5;
