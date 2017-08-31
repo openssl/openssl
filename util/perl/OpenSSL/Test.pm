@@ -1084,11 +1084,6 @@ sub __fixup_prg {
 	$prefix = ($prog =~ /^(?:[\$a-z0-9_]+:)?[<\[]/i ? "mcr " : "mcr []");
     }
 
-    # We test if the program to use exists.
-    if ( ! -x $prog ) {
-	$prog = undef;
-    }
-
     if (defined($prog)) {
 	# Make sure to quotify the program file on platforms that may
 	# have spaces or similar in their path name.
