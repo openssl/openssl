@@ -37,8 +37,9 @@ session and its associated length in bytes. The returned value of B<*alpn> is a
 pointer to memory maintained within B<s> and should not be free'd.
 
 SSL_SESSION_set1_alpn_selected() sets the ALPN protocol for this session to the
-value in B<*alpn> which should be of length B<len> bytes. A copy of this value
-is taken.
+value in B<alpn> which should be of length B<len> bytes. A copy of the input
+value is made, and the caller retains ownership of the memory pointed to by
+B<alpn>.
 
 =head1 SEE ALSO
 
