@@ -412,10 +412,10 @@ sub do_defs
 
 		print STDERR "DEBUG: parsing ----------\n" if $debug;
 		while(<IN>) {
+			s|\R$||; # Better chomp
 			if($parens > 0) {
 				#Inside a DEPRECATEDIN
 				$stored_multiline .= $_;
-				$stored_multiline =~ s|\R$||; # Better chomp
 				print STDERR "DEBUG: Continuing multiline DEPRECATEDIN: $stored_multiline\n" if $debug;
 				$parens = count_parens($stored_multiline);
 				if ($parens == 0) {
@@ -847,7 +847,6 @@ sub do_defs
 							\@current_algorithms);
 					} else {
 						$stored_multiline = $_;
-						$stored_multiline =~ s|\R$||;
 						print STDERR "DEBUG: Found multiline DEPRECATEDIN starting with: $stored_multiline\n" if $debug;
 						next;
 					}
