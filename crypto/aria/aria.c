@@ -473,13 +473,13 @@ void aria_encrypt(const unsigned char *in, unsigned char *out,
 {
     register uint32_t reg0, reg1, reg2, reg3;
     int Nr;
-
-    const ARIA_u128 *rk = key->rd_key;
+    const ARIA_u128 *rk;
 
     if (in == NULL || out == NULL || key == NULL) {
         return;
     }
 
+    rk = key->rd_key;
     Nr = key->rounds;
 
     if (Nr != 12 && Nr != 14 && Nr != 16) {
