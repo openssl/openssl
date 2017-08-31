@@ -502,9 +502,7 @@ case "$GUESSOS" in
 	    echo "         invoke 'KERNEL_BITS=64 $THERE/config $options'."
 	    if [ "$DRYRUN" = "false" -a -t 1 ]; then
 	      echo "         You have about 5 seconds to press Ctrl-C to abort."
-	      # The stty technique used elsewhere doesn't work on
-	      # MacOS. At least, right now on this Mac.
-	      sleep 5
+	      (trap "stty `stty -g`; exit 1" 2; stty -icanon min 0 time 50; read waste; exit 0) <&1 || exit
 	    fi
 	fi
 	if [ "$ISA64" = "1" -a "$KERNEL_BITS" = "64" ]; then
