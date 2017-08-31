@@ -11,15 +11,12 @@
 
 #ifndef HEADER_SSL_LOCL_H
 # define HEADER_SSL_LOCL_H
-# include "e_os.h"              /* struct timeval for Windows */
+
+# include "e_os.h"              /* struct timeval for DTLS */
 # include <stdlib.h>
 # include <time.h>
 # include <string.h>
 # include <errno.h>
-
-# if defined(__unix) || defined(__unix__)
-#  include <sys/time.h>         /* struct timeval for DTLS */
-# endif
 
 # include <openssl/buffer.h>
 # include <openssl/comp.h>

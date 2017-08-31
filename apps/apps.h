@@ -10,11 +10,8 @@
 #ifndef HEADER_APPS_H
 # define HEADER_APPS_H
 
-# include "e_os.h"
+# include "e_os.h" /* struct timeval for DTLS */
 # include "internal/nelem.h"
-# if defined(__unix) || defined(__unix__)
-#  include <sys/time.h> /* struct timeval for DTLS */
-# endif
 # include <assert.h>
 
 # include <openssl/e_os2.h>

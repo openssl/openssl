@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,17 +10,9 @@
 #ifndef HEADER_PACKETED_BIO
 #define HEADER_PACKETED_BIO
 
+#include "e_os.h"
 #include <openssl/base.h>
 #include <openssl/bio.h>
-
-#if defined(OPENSSL_SYS_WINDOWS)
-OPENSSL_MSVC_PRAGMA(warning(push, 3))
-#include <winsock2.h>
-OPENSSL_MSVC_PRAGMA(warning(pop))
-#else
-#include <sys/time.h>
-#endif
-
 
 // PacketedBioCreate creates a filter BIO which implements a reliable in-order
 // blocking datagram socket. It internally maintains a clock and honors

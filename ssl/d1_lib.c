@@ -13,12 +13,6 @@
 #include <openssl/rand.h>
 #include "ssl_locl.h"
 
-#if defined(OPENSSL_SYS_VXWORKS)
-# include <sys/times.h>
-#elif !defined(OPENSSL_SYS_WIN32)
-# include <sys/time.h>
-#endif
-
 static void get_current_time(struct timeval *t);
 static int dtls1_handshake_write(SSL *s);
 static size_t dtls1_link_min_mtu(void);
