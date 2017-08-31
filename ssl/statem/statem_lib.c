@@ -316,7 +316,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 #ifndef OPENSSL_NO_GOST
     unsigned char *gost_data = NULL;
 #endif
-    int al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
+    int al = SSL_AD_INTERNAL_ERROR;
+    MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
     int j;
     unsigned int len;
     X509 *peer;
