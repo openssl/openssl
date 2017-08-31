@@ -234,6 +234,12 @@ extern FILE *_imp___iob;
 
 # else                          /* The non-microsoft world */
 
+#  if defined(OPENSSL_SYS_VXWORKS)
+#   include <sys/times.h>
+#  else
+#   include <sys/time.h>
+#  endif
+
 #  ifdef OPENSSL_SYS_VMS
 #   define VMS 1
   /*
