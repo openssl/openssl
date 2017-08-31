@@ -10,7 +10,6 @@
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include "rand_lcl.h"
-
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 
 # ifndef OPENSSL_RAND_SEED_OS
@@ -39,55 +38,80 @@
 #  define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
 # endif
 
-int RAND_poll_ex(RAND_poll_cb rand_add, void *arg)
+size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
 {
 # ifndef USE_BCRYPTGENRANDOM
     HCRYPTPROV hProvider;
-    int ok = 0;
 # endif
-    BYTE buf[RANDOMNESS_NEEDED];
+    unsigned char *buffer;
+    size_t bytes_needed;
+    size_t entropy_available = 0;
+
 
 # ifdef OPENSSL_RAND_SEED_RDTSC
-    rand_read_tsc(cb, arg);
+    entropy_available = rand_acquire_entropy_from_tsc(pool);
+    if (entropy_available > 0)
+        return entropy_available;
 # endif
+
 # ifdef OPENSSL_RAND_SEED_RDCPU
-    if (rand_read_cpu(cb, arg))
-        return 1;
+    entropy_available = rand_acquire_entropy_from_cpu(pool);
+    if (entropy_available > 0)
+        return entropy_available;
 # endif
 
 # ifdef USE_BCRYPTGENRANDOM
-    if (BCryptGenRandom(NULL, buf, (ULONG)sizeof(buf),
-                        BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS) {
-        rand_add(arg, buf, sizeof(buf), sizeof(buf));
-        return 1;
-    }
-# else
-    /* poll the CryptoAPI PRNG */
-    if (CryptAcquireContextW(&hProvider, NULL, NULL, PROV_RSA_FULL,
-                             CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
-        if (CryptGenRandom(hProvider, (DWORD)sizeof(buf), buf) != 0) {
-            rand_add(arg, buf, sizeof(buf), sizeof(buf));
-            ok = 1;
-        }
-        CryptReleaseContext(hProvider, 0);
-        if (ok)
-            return 1;
-    }
+    bytes_needed = RAND_POOL_bytes_needed(pool, 8 /*entropy_per_byte*/);
+    buffer = RAND_POOL_add_begin(pool, bytes_needed);
+    if (buffer != NULL) {
+        size_t bytes = 0;
+        if (BCryptGenRandom(NULL, buffer, bytes_needed,
+            BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
+            bytes = bytes_needed;
 
-    /* poll the Pentium PRG with CryptoAPI */
-    if (CryptAcquireContextW(&hProvider, NULL, INTEL_DEF_PROV, PROV_INTEL_SEC,
-                             CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
-        if (CryptGenRandom(hProvider, (DWORD)sizeof(buf), buf) != 0) {
-            rand_add(arg, buf, sizeof(buf), sizeof(buf));
-            ok = 1;
-        }
-        CryptReleaseContext(hProvider, 0);
-        if (ok)
-            return 1;
+        entropy_available = RAND_POOL_add_end(pool, bytes, 8 * bytes);
     }
+    if (entropy_available > 0)
+        return entropy_available;
+# else
+    bytes_needed = RAND_POOL_bytes_needed(pool, 8 /*entropy_per_byte*/);
+    buffer = RAND_POOL_add_begin(pool, bytes_needed);
+    if (buffer != NULL) {
+        size_t bytes = 0;
+        /* poll the CryptoAPI PRNG */
+        if (CryptAcquireContextW(&hProvider, NULL, NULL, PROV_RSA_FULL,
+            CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
+            if (CryptGenRandom(hProvider, bytes_needed, buffer) != 0)
+                bytes = bytes_needed;
+
+            CryptReleaseContext(hProvider, 0);
+        }
+
+        entropy_available = RAND_POOL_add_end(pool, bytes, 8 * bytes);
+    }
+    if (entropy_available > 0)
+        return entropy_available;
+
+    bytes_needed = RAND_POOL_bytes_needed(pool, 8 /*entropy_per_byte*/);
+    buffer = RAND_POOL_add_begin(pool, bytes_needed);
+    if (buffer != NULL) {
+        size_t bytes = 0;
+        /* poll the Pentium PRG with CryptoAPI */
+        if (CryptAcquireContextW(&hProvider, NULL,
+                                 INTEL_DEF_PROV, PROV_INTEL_SEC,
+                                 CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
+            if (CryptGenRandom(hProvider, bytes_needed, buffer) != 0)
+                bytes = bytes_needed;
+
+            CryptReleaseContext(hProvider, 0);
+        }
+        entropy_available = RAND_POOL_add_end(pool, bytes, 8 * bytes);
+    }
+    if (entropy_available > 0)
+        return entropy_available;
 # endif
 
-    return 0;
+    return RAND_POOL_entropy_available(pool);
 }
 
 # if OPENSSL_API_COMPAT < 0x10100000L

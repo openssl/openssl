@@ -115,6 +115,7 @@ typedef struct ec_key_method_st EC_KEY_METHOD;
 
 typedef struct rand_meth_st RAND_METHOD;
 typedef struct rand_drbg_st RAND_DRBG;
+typedef struct rand_pool_st RAND_POOL;
 
 typedef struct ssl_dane_st SSL_DANE;
 typedef struct x509_st X509;

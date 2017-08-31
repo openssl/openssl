@@ -481,7 +481,7 @@ static int test_rand_add(void)
 {
     char *p;
 
-    if (!TEST_ptr(p = malloc(RAND_ADD_SIZE)))
+    if (!TEST_ptr(p = calloc(RAND_ADD_SIZE, 1)))
         return 0;
     RAND_add(p, RAND_ADD_SIZE, RAND_ADD_SIZE);
     free(p);

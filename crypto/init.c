@@ -503,7 +503,7 @@ void OPENSSL_cleanup(void)
      * obj_cleanup_int() must be called last
      */
     rand_cleanup_int();
-    rand_cleanup_drbg_int();
+    rand_drbg_cleanup_int();
     conf_modules_free_int();
 #ifndef OPENSSL_NO_ENGINE
     engine_cleanup_int();
