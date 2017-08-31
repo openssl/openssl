@@ -18,5 +18,5 @@
 #include <openssl/rand.h>
 
 void rand_cleanup_int(void);
-void rand_cleanup_drbg_int(void);
+void rand_drbg_cleanup_int(void);
 void rand_fork(void);

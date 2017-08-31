@@ -54,7 +54,7 @@ static struct items_data_st {
     {0, 0}
 };
 
-int RAND_poll_ex(RAND_poll_cb rand_add, void *arg)
+size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
 {
     /* determine the number of items in the JPI array */
     struct items_data_st item_entry;
@@ -112,9 +112,14 @@ int RAND_poll_ex(RAND_poll_cb rand_add, void *arg)
 
     total_length += (tmp_length - 1);
 
-    /* size of seed is total_length*4 bytes (64bytes) */
-    rand_add(arg, (PTR_T)data_buffer, total_length * 4, total_length * 2);
-    return 1;
+    /*
+     * Size of seed is total_length*4 bytes (64bytes). The original assumption
+     * was that it contains 4 bits of entropy per byte. This makes a total
+     * amount of total_length*16 bits (256bits).
+     */
+    return RAND_POOL_add(pool,
+                         (PTR_T)data_buffer, total_length * 4,
+                         total_length * 16);
 }
 
 #endif
