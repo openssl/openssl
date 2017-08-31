@@ -7,10 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* This must be the first #include file */
-#include "../async_locl.h"
+#include <openssl/opensslconf.h>
 
 #ifdef ASYNC_NULL
+int ASYNC_is_capable(void);
+void async_local_cleanup(void);
+
 int ASYNC_is_capable(void)
 {
     return 0;
@@ -19,5 +21,6 @@ int ASYNC_is_capable(void)
 void async_local_cleanup(void)
 {
 }
+#else
+NON_EMPTY_TRANSLATION_UNIT
 #endif
-
