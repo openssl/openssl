@@ -14,6 +14,17 @@
 #define RAND_DRBG_FLAG_CTR_USE_DF            0x2
 
 /*
+ * Default security strength (in the sense of [NIST SP 800-90Ar1])
+ * of the default OpenSSL DRBG, and the corresponding NID.
+ *
+ * Currently supported values: 128, 192, 256
+ *
+ * TODO(DRBG): would be nice to have the strength configurable
+ */
+# define RAND_DRBG_STRENGTH             128
+# define RAND_DRBG_NID                  NID_aes_128_ctr
+
+/*
  * Object lifetime functions.
  */
 RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent);
@@ -64,4 +75,38 @@ int RAND_DRBG_set_callbacks(RAND_DRBG *dctx,
                             RAND_DRBG_get_nonce_fn get_nonce,
                             RAND_DRBG_cleanup_nonce_fn cleanup_nonce);
 
+/*
+ * RAND_POOL functions
+ */
+RAND_POOL *RAND_POOL_new(int entropy_requested, size_t min_len, size_t max_len);
+void RAND_POOL_free(RAND_POOL *pool);
+
+const unsigned char *RAND_POOL_buffer(RAND_POOL *pool);
+unsigned char *RAND_POOL_detach(RAND_POOL *pool);
+
+size_t RAND_POOL_entropy(RAND_POOL *pool);
+size_t RAND_POOL_length(RAND_POOL *pool);
+
+size_t RAND_POOL_entropy_available(RAND_POOL *pool);
+size_t RAND_POOL_entropy_needed(RAND_POOL *pool);
+size_t RAND_POOL_bytes_needed(RAND_POOL *pool, unsigned int entropy_per_byte);
+size_t RAND_POOL_bytes_remaining(RAND_POOL *pool);
+
+size_t RAND_POOL_add(RAND_POOL *pool,
+                     const unsigned char *buffer, size_t len, size_t entropy);
+unsigned char *RAND_POOL_add_begin(RAND_POOL *pool, size_t len);
+size_t RAND_POOL_add_end(RAND_POOL *pool, size_t len, size_t entropy);
+
+
+/*
+ * Add random bytes to the pool to acquire requested amount of entropy
+ *
+ * This function is platform specific and tries to acquire the requested
+ * amount of entropy by polling platform specific entropy sources.
+ *
+ * If the function succeeds in acquiring at least |entropy_requested| bits
+ * of entropy, the total entropy count is returned. If it fails, it returns
+ * an entropy count of 0.
+ */
+size_t RAND_POOL_acquire_entropy(RAND_POOL *pool);
 #endif

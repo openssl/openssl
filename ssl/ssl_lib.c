@@ -633,10 +633,13 @@ SSL *SSL_new(SSL_CTX *ctx)
      * chained DRBG.
      */
     if (RAND_get_rand_method() == RAND_OpenSSL()) {
-        s->drbg = RAND_DRBG_new(NID_aes_128_ctr, RAND_DRBG_FLAG_CTR_USE_DF,
-                                RAND_DRBG_get0_global());
+        s->drbg =
+            RAND_DRBG_new(RAND_DRBG_NID, RAND_DRBG_FLAG_CTR_USE_DF,
+                          RAND_DRBG_get0_global());
         if (s->drbg == NULL
-            || RAND_DRBG_instantiate(s->drbg, NULL, 0) == 0) {
+            || RAND_DRBG_instantiate(s->drbg,
+                                     (const unsigned char *) SSL_version_str,
+                                     sizeof(SSL_version_str) - 1) == 0) {
             CRYPTO_THREAD_lock_free(s->lock);
             goto err;
         }

@@ -341,9 +341,9 @@ int ctr_init(RAND_DRBG *drbg)
         AES_set_encrypt_key(df_key, drbg->strength, &ctr->df_ks);
 
         drbg->min_entropylen = ctr->keylen;
-        drbg->max_entropylen = DRBG_MAX_LENGTH;
+        drbg->max_entropylen = DRBG_MINMAX_FACTOR * drbg->min_entropylen;
         drbg->min_noncelen = drbg->min_entropylen / 2;
-        drbg->max_noncelen = DRBG_MAX_LENGTH;
+        drbg->max_noncelen = DRBG_MINMAX_FACTOR * drbg->min_noncelen;
         drbg->max_perslen = DRBG_MAX_LENGTH;
         drbg->max_adinlen = DRBG_MAX_LENGTH;
     } else {

@@ -2,8 +2,7 @@
 
 =head1 NAME
 
-RAND_add, RAND_poll, RAND_poll_ex, RAND_poll_cb,
-RAND_seed, RAND_status, RAND_event, RAND_screen
+RAND_add, RAND_poll, RAND_seed, RAND_status, RAND_event, RAND_screen
 - add randomness to the PRNG or get its status
 
 =head1 SYNOPSIS
@@ -11,10 +10,6 @@ RAND_seed, RAND_status, RAND_event, RAND_screen
  #include <openssl/rand.h>
 
  int RAND_status(void);
-
- typedef void (*RAND_poll_cb)(void *arg,
-                              const void *buf, int num, double randomness);
- int RAND_poll_ex(RAND_poll_cb cb, void *arg);
  int RAND_poll();
 
  void RAND_add(const void *buf, int num, double randomness);
@@ -40,16 +35,12 @@ and network packet timings, can be reasonable sources of seeding material.
 RAND_status() indicates whether or not the CSPRNG has been sufficiently
 seeded. If not, functions such as RAND_bytes(3) will fail.
 
-RAND_poll_ex() uses the system's capabilities to obtain a buffer
-containing random bits which can then be used to seed a CSPRNG. The
-exact features used depends on how OpenSSL was configured, and a summary
-can be displayed with the OpenSSL L<version(1)> command.  This function
-is normally called as needed by the CSPRNG.  The B<arg> parameter is an
-arbitrary pointer which will be passed as an argument to the callback.
-The B<cb> function is called each time there is data to add.
-
-RAND_poll() invokes RAND_poll_ex() with B<cb> and B<arg> set so that it
-will call RAND_add(), to add the randomness to the global CSPRNG.
+RAND_poll() uses the system's capabilities to seed the CSPRNG using
+random input obtained from polling various trusted entropy sources.
+The default choice of the entropy source can be modified at build time
+using the --with-rand-seed configure option, see also the B<NOTES> section.
+A summary of the configure options can be displayed with the OpenSSL
+L<version(1)> command.
 
 RAND_add() mixes the B<num> bytes at B<buf> into the PRNG state.
 The B<randomness> argument is an estimate of how much randomness is
@@ -77,6 +68,72 @@ RAND_poll() returns 1 if it generated seed data, 0 otherwise.
 RAND_event() returns RAND_status().
 
 The other functions do not return values.
+
+=head1 NOTES
+
+The new OpenSSL DRBG has some peculiarities which need to be taken
+into account when it is selected as the default OpenSSL CSPRNG, i.e.,
+when RAND_get_rand_method() == RAND_OpenSSL().
+This applies in particular to the way reseeding is done by the DRBG:
+
+=over 2
+
+=item *
+
+The DRBG seeds itself automatically, pulling random input from trusted
+entropy sources.
+Automatic reseeding occurs after a predefined number of generate requests.
+The selection of the trusted entropy sources is configured at build
+time using the --with-rand-seed option.
+
+=item *
+
+The DRBG distinguishes two different types of random input:
+'entropy', which comes from a trusted source, and 'additional input',
+which can optionally be added by the user and is considered untrusted.
+
+=back
+
+Automatic seeding can be disabled using the --with-rand-seed=none option.
+
+=head2 DRBG with automatic seeding enabled
+
+Calling RAND_poll() or RAND_add() is not necessary, because the DRBG
+polls the entropy source automatically.
+However, both calls are permitted, and do reseed the RNG.
+
+RAND_add() can be used to add both kinds of random input, depending on the
+value of the B<randomness> argument:
+
+=over 4
+
+=item randomness == 0:
+
+The random bytes are mixed as additional input into the current state of
+the DRBG.
+Mixing in additional input is not considered a full reseeding, hence the
+reseed counter is not reset.
+
+
+=item randomness > 0:
+
+The random bytes are used as entropy input for a full reseeding
+(resp. reinstantiation) if the DRBG is instantiated
+(resp. uninstantiated or in an error state).
+A reseeding requires 16 bytes (128 bits) of randomness.
+It is possible to provide less randomness than required.
+In this case the missing randomness will be obtained by pulling random input
+from the trusted entropy sources.
+
+=back
+
+=head2 DRBG with automatic seeding disabled (--with-rand-seed=none)
+
+Calling RAND_poll() will always fail.
+
+RAND_add() needs to be called for initial seeding and periodic reseeding.
+At least 16 bytes (128 bits) of randomness have to be provided, otherwise
+the (re-)seeding of the DRBG will fail.
 
 =head1 HISTORY
 
