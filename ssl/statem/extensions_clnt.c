@@ -851,7 +851,7 @@ EXT_RETURN tls_construct_ctos_padding(SSL *s, WPACKET *pkt,
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_padding)
                 || !WPACKET_sub_allocate_bytes_u16(pkt, hlen, &padbytes)) {
             SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_PADDING, ERR_R_INTERNAL_ERROR);
-            return 0;
+            return EXT_RETURN_FAIL;
         }
         memset(padbytes, 0, hlen);
     }
@@ -1052,7 +1052,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
  err:
     return ret;
 #else
-    return 1;
+    return EXT_RETURN_SENT;
 #endif
 }
 
