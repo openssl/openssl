@@ -1052,7 +1052,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
  err:
     return ret;
 #else
-    return EXT_RETURN_SENT;
+    return EXT_RETURN_NOT_SENT;
 #endif
 }
 
