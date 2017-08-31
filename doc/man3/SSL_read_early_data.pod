@@ -63,7 +63,9 @@ will return the maximum number of early data bytes that can be sent.
 
 The function SSL_SESSION_set_max_early_data() sets the maximum number of early
 data bytes that can be sent for a session. This would typically be used when
-creating a PSK session file (see L<SSL_CTX_set_psk_use_session_callback(3)>).
+creating a PSK session file (see L<SSL_CTX_set_psk_use_session_callback(3)>). If
+using a ticket based PSK then this is set automatically to the value provided by
+the server.
 
 A client uses the function SSL_write_early_data() to send early data. This
 function is similar to the L<SSL_write_ex(3)> function, but with the following
