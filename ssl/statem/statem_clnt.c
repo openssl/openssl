@@ -1658,7 +1658,8 @@ static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
 
 MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
 {
-    int al, i, ret = MSG_PROCESS_ERROR;
+    int al, i;
+    MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
     unsigned long cert_list_len, cert_len;
     X509 *x = NULL;
     const unsigned char *certstart, *certbytes;
@@ -2314,7 +2315,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
 MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
 {
-    int ret = MSG_PROCESS_ERROR;
+    MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
     int al = SSL_AD_DECODE_ERROR;
     size_t i;
 
@@ -3246,7 +3247,7 @@ WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst)
             if (i == 0) {
                 ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
                 ossl_statem_set_error(s);
-                return 0;
+                return WORK_ERROR;
             }
             s->rwstate = SSL_NOTHING;
         }
@@ -3292,7 +3293,7 @@ WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst)
                 if (!ssl3_digest_cached_records(s, 0)) {
                     ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
                     ossl_statem_set_error(s);
-                    return 0;
+                    return WORK_ERROR;
                 }
             }
         }

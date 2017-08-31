@@ -1353,7 +1353,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
              */
             if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
                 if (clienthello->dtls_cookie_len == 0)
-                    return 1;
+                    return MSG_PROCESS_FINISHED_READING;
             }
         }
 
@@ -3251,7 +3251,8 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
 
 MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
 {
-    int i, al = SSL_AD_INTERNAL_ERROR, ret = MSG_PROCESS_ERROR;
+    int i, al = SSL_AD_INTERNAL_ERROR;
+    MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
     X509 *x = NULL;
     unsigned long l, llen;
     const unsigned char *certstart, *certbytes;
