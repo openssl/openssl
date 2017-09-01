@@ -955,6 +955,11 @@ foreach (sort (keys %disabled))
 		push @{$config{openssl_other_defines}}, "OPENSSL_NO_ENGINE";
 		print " OPENSSL_NO_ENGINE (skip engines)";
 		}
+        elsif (/async$/)
+                {
+                push @{$config{openssl_thread_defines}}, "OPENSSL_NO_ASYNC";
+                print " OPENSSL_NO_ASYNC";
+                }
 	else
 		{
 		my ($WHAT, $what);
@@ -968,7 +973,7 @@ foreach (sort (keys %disabled))
 		$what = "ripemd" if $what eq "rmd160";
 		$what = "whrlpool" if $what eq "whirlpool";
 
-		if ($what ne "async" && $what ne "err"
+		if ($what ne "err"
 		    && grep { $_ eq $what } @{$config{sdirs}})
 			{
 			push @{$config{openssl_algorithm_defines}}, "OPENSSL_NO_$WHAT";
