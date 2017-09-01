@@ -297,8 +297,11 @@ sub clientstart
     while(     (!(TLSProxy::Message->end)
                 || (defined $self->sessionfile()
                     && (-s $self->sessionfile()) == 0))
-            && $ctr < 10
-            && (@ready = $sel->can_read(1))) {
+            && $ctr < 10) {
+        if (!(@ready = $sel->can_read(1))) {
+            $ctr++;
+            next;
+        }
         foreach my $hand (@ready) {
             if ($hand == $server_sock) {
                 $server_sock->sysread($indata, 16384) or goto END;
@@ -311,7 +314,7 @@ sub clientstart
                 $server_sock->syswrite($indata);
                 $ctr = 0;
             } else {
-                $ctr++
+                die "Unexpected handle";
             }
         }
     }
