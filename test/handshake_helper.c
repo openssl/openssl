@@ -153,7 +153,7 @@ static int early_select_server_ctx(SSL *s, void *arg, int ignore)
         remaining <= 2)
         return 0;
     /* Extract the length of the supplied list of names. */
-    len = (*(p++) << 1);
+    len = (*(p++) << 8);
     len += *(p++);
     if (len + 2 != remaining)
         return 0;
@@ -168,7 +168,7 @@ static int early_select_server_ctx(SSL *s, void *arg, int ignore)
     /* Now we can finally pull out the byte array with the actual hostname. */
     if (remaining <= 2)
         return 0;
-    len = (*(p++) << 1);
+    len = (*(p++) << 8);
     len += *(p++);
     if (len + 2 > remaining)
         return 0;
