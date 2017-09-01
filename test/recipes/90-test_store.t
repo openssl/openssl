@@ -10,9 +10,21 @@ use File::Spec;
 use File::Copy;
 use MIME::Base64;
 use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file data_file);
+use OpenSSL::Test::Utils;
 
 my $test_name = "test_store";
 setup($test_name);
+
+# Programs built with mingw have init code that mangles arguments that look
+# like paths.  The exact conversion rules are listed here:
+#
+#       http://www.mingw.org/wiki/Posix_path_conversion
+#
+# It's possible to avoid conversion by defining MSYS2_ARG_CONV_EXCL with
+# some suitable pattern ("*" to avoid conversions entirely), but that has
+# other unsuitable side effects on paths in the form of URIs, so best avoid
+# them on mingw.
+my $mingw = config('target') =~ m|^mingw|;
 
 my @noexist_files =
     ( "test/blahdiblah.pem",
@@ -89,43 +101,71 @@ indir "store_$$" => sub {
 
         foreach (@noexist_files) {
             my $file = srctop_file($_);
-            ok(!run(app(["openssl", "storeutl", $file])));
-            ok(!run(app(["openssl", "storeutl", to_abs_file($file)])));
-            ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
+        SKIP: {
+                ok(!run(app(["openssl", "storeutl", $file])));
+                ok(!run(app(["openssl", "storeutl", to_abs_file($file)])));
+
+                skip "No test of URI form of $file on mingw", 1 if $mingw;
+
+                ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
+            }
         }
         foreach (@src_files) {
             my $file = srctop_file($_);
-            ok(run(app(["openssl", "storeutl", $file])));
-            ok(run(app(["openssl", "storeutl", to_abs_file($file)])));
-            ok(run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
-            ok(run(app(["openssl", "storeutl", to_abs_file_uri($file, 0,
-                                                               "")])));
-            ok(run(app(["openssl", "storeutl", to_abs_file_uri($file, 0,
-                                                               "localhost")])));
-            ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file, 0,
-                                                                "dummy")])));
+        SKIP: {
+                ok(run(app(["openssl", "storeutl", $file])));
+                ok(run(app(["openssl", "storeutl", to_abs_file($file)])));
+
+                skip "No test of URI form of $file on mingw", 4 if $mingw;
+
+                ok(run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
+                ok(run(app(["openssl", "storeutl",
+                            to_abs_file_uri($file, 0, "")])));
+                ok(run(app(["openssl", "storeutl",
+                            to_abs_file_uri($file, 0, "localhost")])));
+                ok(!run(app(["openssl", "storeutl",
+                             to_abs_file_uri($file, 0, "dummy")])));
+            }
         }
         foreach (@generated_files) {
-            ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
-                        $_])));
-            ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
-                        to_abs_file($_)])));
-            ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
-                        to_abs_file_uri($_)])));
-            ok(!run(app(["openssl", "storeutl", "-passin", "pass:password",
-                         to_file_uri($_)])));
+        SKIP: {
+                ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
+                            $_])));
+                ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
+                            to_abs_file($_)])));
+
+                skip "No test of URI form of $_ on mingw", 2 if $mingw;
+
+                ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
+                            to_abs_file_uri($_)])));
+                ok(!run(app(["openssl", "storeutl", "-passin", "pass:password",
+                             to_file_uri($_)])));
+            }
         }
         foreach (values %generated_file_files) {
-            ok(run(app(["openssl", "storeutl", $_])));
+        SKIP: {
+                skip "No test of $_ on mingw", 1 if $mingw;
+
+                ok(run(app(["openssl", "storeutl", $_])));
+            }
         }
         foreach (@noexist_file_files) {
-            ok(!run(app(["openssl", "storeutl", $_])));
+        SKIP: {
+                skip "No test of $_ on mingw", 1 if $mingw;
+
+                ok(!run(app(["openssl", "storeutl", $_])));
+            }
         }
         {
             my $dir = srctop_dir("test", "certs");
-            ok(run(app(["openssl", "storeutl", $dir])));
-            ok(run(app(["openssl", "storeutl", to_abs_file($dir, 1)])));
-            ok(run(app(["openssl", "storeutl", to_abs_file_uri($dir, 1)])));
+        SKIP: {
+                ok(run(app(["openssl", "storeutl", $dir])));
+                ok(run(app(["openssl", "storeutl", to_abs_file($dir, 1)])));
+
+                skip "No test of URI form of $dir on mingw", 1 if $mingw;
+
+                ok(run(app(["openssl", "storeutl", to_abs_file_uri($dir, 1)])));
+            }
         }
     }
 }, create => 1, cleanup => 1;
