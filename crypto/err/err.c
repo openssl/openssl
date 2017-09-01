@@ -20,6 +20,7 @@
 #include <openssl/bio.h>
 #include <openssl/opensslconf.h>
 #include "internal/thread_once.h"
+#include "internal/glock.h"
 
 static int err_load_strings(const ERR_STRING_DATA *str);
 
@@ -267,7 +268,7 @@ static void ERR_STATE_free(ERR_STATE *s)
 DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
     OPENSSL_init_crypto(0, NULL);
-    err_string_lock = CRYPTO_THREAD_glock_new("err_string");
+    err_string_lock = global_locks[CRYPTO_GLOCK_ERR_STRING];
     int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
                                             err_string_data_cmp);
     return err_string_lock != NULL && int_error_hash != NULL;
@@ -277,7 +278,7 @@ void err_cleanup(void)
 {
     if (set_err_thread_local != 0)
         CRYPTO_THREAD_cleanup_local(&err_thread_local);
-    CRYPTO_THREAD_lock_free(err_string_lock);
+    /* Clear the local handle to the global lock, freed elsewhere. */
     err_string_lock = NULL;
     lh_ERR_STRING_DATA_free(int_error_hash);
     int_error_hash = NULL;

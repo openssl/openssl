@@ -17,6 +17,7 @@
 #include <openssl/safestack.h>
 #include <openssl/e_os2.h>
 #include "internal/thread_once.h"
+#include "internal/glock.h"
 #include "obj_lcl.h"
 
 /*
@@ -69,7 +70,7 @@ DEFINE_RUN_ONCE_STATIC(o_names_init)
 {
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     names_lh = lh_OBJ_NAME_new(obj_name_hash, obj_name_cmp);
-    obj_lock = CRYPTO_THREAD_glock_new("obj");
+    obj_lock = global_locks[CRYPTO_GLOCK_OBJ];
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
     return names_lh != NULL && obj_lock != NULL;
 }
@@ -398,9 +399,9 @@ void OBJ_NAME_cleanup(int type)
     if (type < 0) {
         lh_OBJ_NAME_free(names_lh);
         sk_NAME_FUNCS_pop_free(name_funcs_stack, name_funcs_free);
-        CRYPTO_THREAD_lock_free(obj_lock);
         names_lh = NULL;
         name_funcs_stack = NULL;
+        /* Clear the local handle to the global lock, freed elsewhere. */
         obj_lock = NULL;
     } else
         lh_OBJ_NAME_set_down_load(names_lh, down_load);

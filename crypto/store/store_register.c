@@ -14,13 +14,14 @@
 #include <openssl/err.h>
 #include <openssl/lhash.h>
 #include "store_locl.h"
+#include "internal/glock.h"
 
 static CRYPTO_RWLOCK *registry_lock;
 static CRYPTO_ONCE registry_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(do_registry_init)
 {
-    registry_lock = CRYPTO_THREAD_glock_new("registry");
+    registry_lock = global_locks[CRYPTO_GLOCK_REGISTRY];
     return registry_lock != NULL;
 }
 
@@ -265,7 +266,7 @@ void ossl_store_destroy_loaders_int(void)
     assert(lh_OSSL_STORE_LOADER_num_items(loader_register) == 0);
     lh_OSSL_STORE_LOADER_free(loader_register);
     loader_register = NULL;
-    CRYPTO_THREAD_lock_free(registry_lock);
+    /* Clear the local handle to the global lock, freed elsewhere. */
     registry_lock = NULL;
 }
 

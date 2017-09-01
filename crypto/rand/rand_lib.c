@@ -15,6 +15,7 @@
 #include <openssl/engine.h>
 #include "internal/thread_once.h"
 #include "rand_lcl.h"
+#include "internal/glock.h"
 
 #ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
@@ -182,13 +183,13 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     int ret = 1;
 
 #ifndef OPENSSL_NO_ENGINE
-    rand_engine_lock = CRYPTO_THREAD_glock_new("rand_engine");
+    rand_engine_lock = global_locks[CRYPTO_GLOCK_RAND_ENGINE];
     ret &= rand_engine_lock != NULL;
 #endif
-    rand_meth_lock = CRYPTO_THREAD_glock_new("rand_meth");
+    rand_meth_lock = global_locks[CRYPTO_GLOCK_RAND_METH];
     ret &= rand_meth_lock != NULL;
 
-    rand_bytes.lock = CRYPTO_THREAD_glock_new("rand_bytes");
+    rand_bytes.lock = global_locks[CRYPTO_GLOCK_RAND_BYTES];
     ret &= rand_bytes.lock != NULL;
     rand_bytes.curr = 0;
     rand_bytes.size = MAX_RANDOMNESS_HELD;
@@ -208,10 +209,12 @@ void rand_cleanup_int(void)
         meth->cleanup();
     RAND_set_rand_method(NULL);
 #ifndef OPENSSL_NO_ENGINE
-    CRYPTO_THREAD_lock_free(rand_engine_lock);
+    /* Clear the local handle to the global lock, freed elsewhere. */
+    rand_engine_lock = NULL;
 #endif
-    CRYPTO_THREAD_lock_free(rand_meth_lock);
-    CRYPTO_THREAD_lock_free(rand_bytes.lock);
+    /* Clear local handles to global locks, freed elsewhere. */
+    rand_meth_lock = NULL;
+    rand_bytes.lock = NULL;
     if (rand_bytes.secure)
         OPENSSL_secure_clear_free(rand_bytes.buff, rand_bytes.size);
     else

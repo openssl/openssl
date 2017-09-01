@@ -14,6 +14,7 @@
 #include "rand_lcl.h"
 #include "internal/thread_once.h"
 #include "internal/rand_int.h"
+#include "internal/glock.h"
 
 static RAND_DRBG rand_drbg; /* The default global DRBG. */
 static RAND_DRBG priv_drbg; /* The global private-key DRBG. */
@@ -337,11 +338,14 @@ void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
  * Creates a global DRBG with default settings.
  * Returns 1 on success, 0 on failure
  */
-static int setup_drbg(RAND_DRBG *drbg, const char *name)
+static int setup_drbg(RAND_DRBG *drbg, int private)
 {
     int ret = 1;
 
-    drbg->lock = CRYPTO_THREAD_glock_new(name);
+    if (private)
+        drbg->lock = global_locks[CRYPTO_GLOCK_PRIV_DRBG];
+    else
+        drbg->lock = global_locks[CRYPTO_GLOCK_DRBG];
     ret &= drbg->lock != NULL;
     drbg->size = RANDOMNESS_NEEDED;
     drbg->secure = CRYPTO_secure_malloc_initialized();
@@ -362,8 +366,8 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init_drbg)
 {
     int ret = 1;
 
-    ret &= setup_drbg(&rand_drbg, "rand_drbg");
-    ret &= setup_drbg(&priv_drbg, "priv_drbg");
+    ret &= setup_drbg(&rand_drbg, 0);
+    ret &= setup_drbg(&priv_drbg, 1);
 
     return ret;
 }
@@ -371,7 +375,8 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init_drbg)
 /* Clean up a DRBG and free it */
 static void free_drbg(RAND_DRBG *drbg)
 {
-    CRYPTO_THREAD_lock_free(drbg->lock);
+    /* This lock is actually a global lock; don't free it here. */
+    drbg->lock = NULL;
     RAND_DRBG_uninstantiate(drbg);
 }
 

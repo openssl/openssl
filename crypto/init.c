@@ -26,15 +26,9 @@
 #include "internal/thread_once.h"
 #include "internal/dso.h"
 #include "internal/store.h"
+#include "internal/glock.h"
 
-
-typedef struct global_lock_st {
-    CRYPTO_RWLOCK *lock;
-    const char *name;
-    struct global_lock_st *next;
-} GLOBAL_LOCK;
-
-static GLOBAL_LOCK *global_locks;
+CRYPTO_RWLOCK *global_locks[CRYPTO_NUM_GLOCKS];
 
 static int stopped = 0;
 
@@ -72,9 +66,6 @@ struct ossl_init_stop_st {
     OPENSSL_INIT_STOP *next;
 };
 
-static CRYPTO_RWLOCK *glock_lock = NULL;
-static CRYPTO_ONCE glock_once = CRYPTO_ONCE_STATIC_INIT;
-
 static OPENSSL_INIT_STOP *stop_handlers = NULL;
 static CRYPTO_RWLOCK *init_lock = NULL;
 
@@ -82,6 +73,7 @@ static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 {
+    size_t i;
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_base: Setting up stop handlers\n");
 #endif
@@ -96,9 +88,11 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 #ifndef OPENSSL_SYS_UEFI
     atexit(OPENSSL_cleanup);
 #endif
-    /* Do not change this to glock's! */
-    if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
-        return 0;
+    for (i = 0; i < OSSL_NELEM(global_locks); i++) {
+        if ((global_locks[i] = CRYPTO_THREAD_lock_new()) == NULL)
+            return 0;
+    }
+    init_lock = global_locks[CRYPTO_GLOCK_INIT];
     OPENSSL_cpuid_setup();
 
     /*
@@ -408,6 +402,7 @@ int ossl_init_thread_start(uint64_t opts)
 void OPENSSL_cleanup(void)
 {
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
+    size_t i;
 
     /* If we've not been inited then no need to deinit */
     if (!base_inited)
@@ -433,7 +428,10 @@ void OPENSSL_cleanup(void)
     }
     stop_handlers = NULL;
 
-    CRYPTO_THREAD_lock_free(init_lock);
+    /*
+     * Unhook the local handle to the global lock; it will be freed later
+     * along with all the global locks.
+     */
     init_lock = NULL;
 
     /*
@@ -516,14 +514,10 @@ void OPENSSL_cleanup(void)
     err_cleanup();
 
     /* Free list of global locks. */
-    while (global_locks != NULL) {
-        GLOBAL_LOCK *next = global_locks->next;
-
-        free(global_locks);
-        global_locks = next;
+    for (i = 0; i < CRYPTO_NUM_GLOCKS; i++) {
+        CRYPTO_THREAD_lock_free(global_locks[i]);
+        global_locks[i] = NULL;
     }
-    CRYPTO_THREAD_lock_free(glock_lock);
-    glock_lock = NULL;
 
     base_inited = 0;
 }
@@ -708,53 +702,19 @@ int OPENSSL_atexit(void (*handler)(void))
     return 1;
 }
 
-#ifndef OPENSSL_SYS_UNIX
-CRYPTO_RWLOCK *CRYPTO_THREAD_glock_new(const char *name)
-{
-    return CRYPTO_THREAD_lock_new();
-}
-
-#else
-DEFINE_RUN_ONCE_STATIC(glock_init)
-{
-    glock_lock = CRYPTO_THREAD_lock_new();
-    return glock_lock != NULL;
-}
-
-/*
- * Create a new global lock, return NULL on error.
- */
-CRYPTO_RWLOCK *CRYPTO_THREAD_glock_new(const char *name)
-{
-    GLOBAL_LOCK *newlock;
-
-    if (glock_lock == NULL && !RUN_ONCE(&glock_once, glock_init))
-        return NULL;
-    if ((newlock = malloc(sizeof(*newlock))) == NULL)
-        return NULL;
-    if ((newlock->lock = CRYPTO_THREAD_lock_new()) == NULL) {
-        free(newlock);
-        return NULL;
-    }
-    newlock->name = name;
-    CRYPTO_THREAD_write_lock(glock_lock);
-    newlock->next = global_locks;
-    global_locks = newlock;
-    CRYPTO_THREAD_unlock(glock_lock);
-    return newlock->lock;
-}
-
+#ifdef OPENSSL_SYS_UNIX
 /*
  * Unlock all global locks.
  */
 static void unlock_all(void)
 {
-    GLOBAL_LOCK *lp;
+    CRYPTO_RWLOCK *lp;
+    int i;
 
-    CRYPTO_THREAD_write_lock(glock_lock);
-    for (lp = global_locks; lp != NULL; lp = lp->next)
-        CRYPTO_THREAD_unlock(lp->lock);
-    CRYPTO_THREAD_unlock(glock_lock);
+    for (i = CRYPTO_NUM_GLOCKS - 1; i >= 0; i--) {
+        lp = global_locks + i;
+        CRYPTO_THREAD_unlock(lp);
+    }
 }
 
 /*
@@ -770,12 +730,10 @@ static void unlock_all(void)
 
 void OPENSSL_fork_prepare(void)
 {
-    GLOBAL_LOCK *lp;
+    size_t i;
 
-    CRYPTO_THREAD_write_lock(glock_lock);
-    for (lp = global_locks; lp != NULL; lp = lp->next)
-        CRYPTO_THREAD_write_lock(lp->lock);
-    CRYPTO_THREAD_unlock(glock_lock);
+    for (i = 0; i < CRYPTO_NUM_GLOCKS; i++)
+        CRYPTO_THREAD_write_lock(global_locks[i]);
 }
 
 void OPENSSL_fork_parent(void)

@@ -11,6 +11,7 @@
 #include "eng_int.h"
 #include <openssl/rand.h>
 #include "internal/refcount.h"
+#include "internal/glock.h"
 
 CRYPTO_RWLOCK *global_engine_lock;
 
@@ -21,7 +22,7 @@ CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE(do_engine_lock_init)
 {
     OPENSSL_init_crypto(0, NULL);
-    global_engine_lock = CRYPTO_THREAD_glock_new("global_engine");
+    global_engine_lock = global_locks[CRYPTO_GLOCK_ENGINE];
     return global_engine_lock != NULL;
 }
 
@@ -167,7 +168,8 @@ void engine_cleanup_int(void)
                                         engine_cleanup_cb_free);
         cleanup_stack = NULL;
     }
-    CRYPTO_THREAD_lock_free(global_engine_lock);
+    /* Clear the local handle to the global lock, freed elsewhere. */
+    global_engine_lock = NULL;
 }
 
 /* Now the "ex_data" support */

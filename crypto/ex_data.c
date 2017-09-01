@@ -9,6 +9,7 @@
 
 #include "internal/cryptlib_int.h"
 #include "internal/thread_once.h"
+#include "internal/glock.h"
 #include <openssl/lhash.h>
 
 /*
@@ -39,7 +40,7 @@ static CRYPTO_ONCE ex_data_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_ex_data_init)
 {
     OPENSSL_init_crypto(0, NULL);
-    ex_data_lock = CRYPTO_THREAD_glock_new("ex_data");
+    ex_data_lock = global_locks[CRYPTO_GLOCK_EX_DATA];
     return ex_data_lock != NULL;
 }
 
@@ -101,7 +102,7 @@ void crypto_cleanup_all_ex_data_int(void)
         ip->meth = NULL;
     }
 
-    CRYPTO_THREAD_lock_free(ex_data_lock);
+    /* Clear out the local handle to the global lock, freed elsewhere. */
     ex_data_lock = NULL;
 }
 

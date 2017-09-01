@@ -17,6 +17,7 @@
  */
 #include "e_os.h"
 #include <openssl/crypto.h>
+#include "internal/glock.h"
 
 #include <string.h>
 
@@ -66,14 +67,11 @@ int CRYPTO_secure_malloc_init(size_t size, int minsize)
     int ret = 0;
 
     if (!secure_mem_initialized) {
-        sec_malloc_lock = CRYPTO_THREAD_glock_new("sec_malloc");
+        sec_malloc_lock = global_locks[CRYPTO_GLOCK_SEC_MALLOC];
         if (sec_malloc_lock == NULL)
             return 0;
         if ((ret = sh_init(size, minsize)) != 0) {
             secure_mem_initialized = 1;
-        } else {
-            CRYPTO_THREAD_lock_free(sec_malloc_lock);
-            sec_malloc_lock = NULL;
         }
     }
 
@@ -89,7 +87,7 @@ int CRYPTO_secure_malloc_done()
     if (secure_mem_used == 0) {
         sh_done();
         secure_mem_initialized = 0;
-        CRYPTO_THREAD_lock_free(sec_malloc_lock);
+        /* Clear the local handle to the global lock, freed elsewhere. */
         sec_malloc_lock = NULL;
         return 1;
     }
