@@ -15,6 +15,9 @@ DRYRUN="false"
 VERBOSE="false"
 EXE=""
 THERE=`dirname $0`
+# How long to wait after a warning, in seconds
+SLEEPTIME=50
+#SLEEPTIME=0
 
 # pick up any command line args to config
 for i
@@ -427,7 +430,7 @@ if [ "$SYSTEM" = "SunOS" ]; then
     if [ $CCVER -eq 50 ]; then
       echo "WARNING! Detected WorkShop C 5.0. Do make sure you have"
       echo "         patch #107357-01 or later applied."
-      sleep 5
+      sleep $SLEEPTIME
     fi
   fi
 fi
@@ -500,12 +503,7 @@ case "$GUESSOS" in
 	if [ "$ISA64" = "1" -a -z "$KERNEL_BITS" ]; then
 	    echo "WARNING! If you wish to build 64-bit library, then you have to"
 	    echo "         invoke 'KERNEL_BITS=64 $THERE/config $options'."
-	    if [ "$DRYRUN" = "false" -a -t 1 ]; then
-	      echo "         You have about 5 seconds to press Ctrl-C to abort."
-	      # The stty technique used elsewhere doesn't work on
-	      # MacOS. At least, right now on this Mac.
-	      sleep 5
-	    fi
+	    sleep $SLEEPTIME
 	fi
 	if [ "$ISA64" = "1" -a "$KERNEL_BITS" = "64" ]; then
 	    OUT="darwin64-x86_64-cc"
@@ -849,14 +847,14 @@ if [ "$OUT" = solaris-sparcv9-gcc -a $GCCVER -lt 28 ]
 then
   echo "WARNING! Falling down to 'solaris-sparcv8-gcc'."
   echo "         Upgrade to gcc-2.8 or later."
-  sleep 5
+  sleep $SLEEPTIME
   OUT=solaris-sparcv8-gcc
 fi
 if [ "$OUT" = "linux-sparcv9" -a $GCCVER -lt 28 ]
 then
   echo "WARNING! Falling down to 'linux-sparcv8'."
   echo "         Upgrade to gcc-2.8 or later."
-  sleep 5
+  sleep $SLEEPTIME
   OUT=linux-sparcv8
 fi
 
