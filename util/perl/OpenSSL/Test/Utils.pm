@@ -155,6 +155,7 @@ sub available_protocols {
 }
 
 sub config {
+    load_configdata() unless $configdata_loaded;
     return $config{$_[0]};
 }
 
