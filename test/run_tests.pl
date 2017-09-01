@@ -19,10 +19,9 @@ use File::Basename;
 use FindBin;
 use lib "$FindBin::Bin/../util/perl";
 use OpenSSL::Glob;
-use Module::Load::Conditional qw(can_load);
 
-my $TAP_Harness = can_load(modules => { 'TAP::Harness' => undef }) 
-    ? 'TAP::Harness' : 'OpenSSL::TAP::Harness';
+my $TAP_Harness = eval { require TAP::Harness } ? "TAP::Harness"
+                                                : "OpenSSL::TAP::Harness";
 
 my $srctop = $ENV{SRCTOP} || $ENV{TOP};
 my $bldtop = $ENV{BLDTOP} || $ENV{TOP};
