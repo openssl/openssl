@@ -38,7 +38,7 @@ setup($test_name);
 # Checking for both msys perl operating environment and that the target name
 # starts with "mingw", we're doing what we can to assure that other configs
 # that might link openssl.exe with the MSYS run-time are not disturbed.
-my $msys = $^O eq 'msys' && config('target') =~ m|^mingw|;
+my $msys_mingw = ($^O eq 'msys') && (config('target') =~ m|^mingw|);
 
 my @noexist_files =
     ( "test/blahdiblah.pem",
@@ -119,7 +119,7 @@ indir "store_$$" => sub {
                 ok(!run(app(["openssl", "storeutl", $file])));
                 ok(!run(app(["openssl", "storeutl", to_abs_file($file)])));
 
-                skip "No test of URI form of $file for mingw", 1 if $msys;
+                skip "No test of URI form of $file for mingw", 1 if $msys_mingw;
 
                 ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
             }
@@ -130,7 +130,7 @@ indir "store_$$" => sub {
                 ok(run(app(["openssl", "storeutl", $file])));
                 ok(run(app(["openssl", "storeutl", to_abs_file($file)])));
 
-                skip "No test of URI form of $file for mingw", 4 if $msys;
+                skip "No test of URI form of $file for mingw", 4 if $msys_mingw;
 
                 ok(run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
                 ok(run(app(["openssl", "storeutl",
@@ -148,7 +148,7 @@ indir "store_$$" => sub {
                 ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
                             to_abs_file($_)])));
 
-                skip "No test of URI form of $_ for mingw", 2 if $msys;
+                skip "No test of URI form of $_ for mingw", 2 if $msys_mingw;
 
                 ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
                             to_abs_file_uri($_)])));
@@ -158,14 +158,14 @@ indir "store_$$" => sub {
         }
         foreach (values %generated_file_files) {
         SKIP: {
-                skip "No test of $_ for mingw", 1 if $msys;
+                skip "No test of $_ for mingw", 1 if $msys_mingw;
 
                 ok(run(app(["openssl", "storeutl", $_])));
             }
         }
         foreach (@noexist_file_files) {
         SKIP: {
-                skip "No test of $_ for mingw", 1 if $msys;
+                skip "No test of $_ for mingw", 1 if $msys_mingw;
 
                 ok(!run(app(["openssl", "storeutl", $_])));
             }
@@ -176,7 +176,7 @@ indir "store_$$" => sub {
                 ok(run(app(["openssl", "storeutl", $dir])));
                 ok(run(app(["openssl", "storeutl", to_abs_file($dir, 1)])));
 
-                skip "No test of URI form of $dir for mingw", 1 if $msys;
+                skip "No test of URI form of $dir for mingw", 1 if $msys_mingw;
 
                 ok(run(app(["openssl", "storeutl", to_abs_file_uri($dir, 1)])));
             }
