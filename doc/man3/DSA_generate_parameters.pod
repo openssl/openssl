@@ -111,7 +111,7 @@ L<DSA_free(3)>, L<BN_generate_prime(3)>
 
 =head1 HISTORY
 
-DSA_generate_parameters() was deprecated in OpenSSL version 0.9.8; use
+DSA_generate_parameters() was deprecated in OpenSSL 0.9.8; use
 DSA_generate_parameters_ex() instead.
 
 =head1 COPYRIGHT
