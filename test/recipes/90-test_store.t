@@ -14,16 +14,31 @@ use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file data_file);
 my $test_name = "test_store";
 setup($test_name);
 
-# The MSYS run-time mangles arguments that look like paths.  The exact
-# conversion rules are listed here:
+# The MSYS2 run-time convert arguments that look like paths when executing
+# a program unless that application is linked with the MSYS run-time.  The
+# exact conversion rules are listed here:
 #
 #       http://www.mingw.org/wiki/Posix_path_conversion
 #
-# It's possible to avoid conversion by defining MSYS2_ARG_CONV_EXCL with
-# some suitable pattern ("*" to avoid conversions entirely), but that has
-# other unsuitable side effects on paths in the form of URIs, so best avoid
-# them on mingw.
-my $msys = $^O eq 'msys';
+# With the built in configurations (all having names starting with "mingw"),
+# the openssl application is not linked with the MSYS2 run-time, and therefore,
+# it will receive possibly converted arguments from the process that executes
+# it.  This conversion is fine for normal path arguments, but when those
+# arguments are URIs, they sometimes aren't converted right (typically for
+# URIs without an authority component, 'cause the conversion mechanism doesn't
+# recognise them as URIs) or aren't converted at all (which gives perfectly
+# normal absolute paths from the MSYS viewpoint, but don't work for the
+# Windows run-time we're linked with).
+#
+# It's also possible to avoid conversion by defining MSYS2_ARG_CONV_EXCL with
+# some suitable pattern ("*" to avoid conversions entirely), but that will
+# again give us unconverted paths that don't work with the Windows run-time
+# we're linked with.
+#
+# Checking for both msys perl operating environment and that the target name
+# starts with "mingw", we're doing what we can to assure that other configs
+# that might link openssl.exe with the MSYS run-time are not disturbed.
+my $msys = $^O eq 'msys' && config('target') =~ m|^mingw|;
 
 my @noexist_files =
     ( "test/blahdiblah.pem",
@@ -104,7 +119,7 @@ indir "store_$$" => sub {
                 ok(!run(app(["openssl", "storeutl", $file])));
                 ok(!run(app(["openssl", "storeutl", to_abs_file($file)])));
 
-                skip "No test of URI form of $file on mingw", 1 if $msys;
+                skip "No test of URI form of $file for mingw", 1 if $msys;
 
                 ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
             }
@@ -115,7 +130,7 @@ indir "store_$$" => sub {
                 ok(run(app(["openssl", "storeutl", $file])));
                 ok(run(app(["openssl", "storeutl", to_abs_file($file)])));
 
-                skip "No test of URI form of $file on mingw", 4 if $msys;
+                skip "No test of URI form of $file for mingw", 4 if $msys;
 
                 ok(run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
                 ok(run(app(["openssl", "storeutl",
@@ -133,7 +148,7 @@ indir "store_$$" => sub {
                 ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
                             to_abs_file($_)])));
 
-                skip "No test of URI form of $_ on mingw", 2 if $msys;
+                skip "No test of URI form of $_ for mingw", 2 if $msys;
 
                 ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
                             to_abs_file_uri($_)])));
@@ -143,14 +158,14 @@ indir "store_$$" => sub {
         }
         foreach (values %generated_file_files) {
         SKIP: {
-                skip "No test of $_ on mingw", 1 if $msys;
+                skip "No test of $_ for mingw", 1 if $msys;
 
                 ok(run(app(["openssl", "storeutl", $_])));
             }
         }
         foreach (@noexist_file_files) {
         SKIP: {
-                skip "No test of $_ on mingw", 1 if $msys;
+                skip "No test of $_ for mingw", 1 if $msys;
 
                 ok(!run(app(["openssl", "storeutl", $_])));
             }
@@ -161,7 +176,7 @@ indir "store_$$" => sub {
                 ok(run(app(["openssl", "storeutl", $dir])));
                 ok(run(app(["openssl", "storeutl", to_abs_file($dir, 1)])));
 
-                skip "No test of URI form of $dir on mingw", 1 if $msys;
+                skip "No test of URI form of $dir for mingw", 1 if $msys;
 
                 ok(run(app(["openssl", "storeutl", to_abs_file_uri($dir, 1)])));
             }
