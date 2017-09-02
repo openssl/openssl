@@ -10,7 +10,6 @@ use File::Spec;
 use File::Copy;
 use MIME::Base64;
 use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file data_file);
-use OpenSSL::Test::Utils;
 
 my $test_name = "test_store";
 setup($test_name);
@@ -24,7 +23,7 @@ setup($test_name);
 # some suitable pattern ("*" to avoid conversions entirely), but that has
 # other unsuitable side effects on paths in the form of URIs, so best avoid
 # them on mingw.
-my $mingw = config('target') =~ m|^mingw|;
+my $msys = $^O eq 'msys';
 
 my @noexist_files =
     ( "test/blahdiblah.pem",
@@ -105,7 +104,7 @@ indir "store_$$" => sub {
                 ok(!run(app(["openssl", "storeutl", $file])));
                 ok(!run(app(["openssl", "storeutl", to_abs_file($file)])));
 
-                skip "No test of URI form of $file on mingw", 1 if $mingw;
+                skip "No test of URI form of $file on mingw", 1 if $msys;
 
                 ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
             }
@@ -116,7 +115,7 @@ indir "store_$$" => sub {
                 ok(run(app(["openssl", "storeutl", $file])));
                 ok(run(app(["openssl", "storeutl", to_abs_file($file)])));
 
-                skip "No test of URI form of $file on mingw", 4 if $mingw;
+                skip "No test of URI form of $file on mingw", 4 if $msys;
 
                 ok(run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
                 ok(run(app(["openssl", "storeutl",
@@ -134,7 +133,7 @@ indir "store_$$" => sub {
                 ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
                             to_abs_file($_)])));
 
-                skip "No test of URI form of $_ on mingw", 2 if $mingw;
+                skip "No test of URI form of $_ on mingw", 2 if $msys;
 
                 ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
                             to_abs_file_uri($_)])));
@@ -144,14 +143,14 @@ indir "store_$$" => sub {
         }
         foreach (values %generated_file_files) {
         SKIP: {
-                skip "No test of $_ on mingw", 1 if $mingw;
+                skip "No test of $_ on mingw", 1 if $msys;
 
                 ok(run(app(["openssl", "storeutl", $_])));
             }
         }
         foreach (@noexist_file_files) {
         SKIP: {
-                skip "No test of $_ on mingw", 1 if $mingw;
+                skip "No test of $_ on mingw", 1 if $msys;
 
                 ok(!run(app(["openssl", "storeutl", $_])));
             }
@@ -162,7 +161,7 @@ indir "store_$$" => sub {
                 ok(run(app(["openssl", "storeutl", $dir])));
                 ok(run(app(["openssl", "storeutl", to_abs_file($dir, 1)])));
 
-                skip "No test of URI form of $dir on mingw", 1 if $mingw;
+                skip "No test of URI form of $dir on mingw", 1 if $msys;
 
                 ok(run(app(["openssl", "storeutl", to_abs_file_uri($dir, 1)])));
             }
