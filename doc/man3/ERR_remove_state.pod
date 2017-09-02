@@ -9,25 +9,23 @@ ERR_remove_thread_state, ERR_remove_state - DEPRECATED
 Deprecated:
 
  #if OPENSSL_API_COMPAT < 0x10000000L
- void ERR_remove_state(unsigned long pid);
+ void ERR_remove_state(unsigned long tid);
  #endif
 
  #if OPENSSL_API_COMPAT < 0x10100000L
- void ERR_remove_thread_state(void *);
+ void ERR_remove_thread_state(void *tid);
  #endif
 
 =head1 DESCRIPTION
 
-The functions described here were used to free the error queue
-associated with the current or specified thread.
-
-They are now deprecated and do nothing, as the OpenSSL libraries now
-normally do all thread initialisation and deinitialisation
-automatically (see L<OPENSSL_init_crypto(3)>).
+ERR_remove_state() frees the error queue associated with the specified
+thread, identified by B<tid>.
+ERR_remove_thread_state() does the same thing, except the identifier is
+an opaque pointer.
 
 =head1 RETURN VALUE
 
-The functions described here return no value.
+ERR_remove_state() and ERR_remove_thread_state() return no value.
 
 =head1 SEE ALSO
 
@@ -35,11 +33,9 @@ LL<OPENSSL_init_crypto(3)>
 
 =head1 HISTORY
 
-ERR_remove_state() was deprecated in OpenSSL 1.0.0 when
-ERR_remove_thread_state() was introduced.
-
-ERR_remove_thread_state() was deprecated in OpenSSL 1.1.0 when the
-thread handling functionality was entirely rewritten.
+ERR_remove_state() was deprecated in OpenSSL 1.0.0 and
+ERR_remove_thread_state() was deprecated in OpenSSL 1.1.0; these functions
+and should not be used.
 
 =head1 COPYRIGHT
 

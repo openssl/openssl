@@ -32,6 +32,10 @@ progress of the key generation. If B<cb> is not B<NULL>, it
 will be called as follows using the BN_GENCB_call() function
 described on the L<BN_generate_prime(3)> page.
 
+RSA_generate_prime() is similar to RSA_generate_prime_ex() but
+expects an old-style callback function; see
+L<BN_generate_prime(3)> for information on the old-style callback.
+
 =over 2
 
 =item *
@@ -53,28 +57,27 @@ it is called as B<BN_GENCB_call(cb, 3, 0)>.
 
 The process is then repeated for prime q with B<BN_GENCB_call(cb, 3, 1)>.
 
-RSA_generate_key() is deprecated (new applications should use
-RSA_generate_key_ex() instead). RSA_generate_key() works in the same way as
-RSA_generate_key_ex() except it uses "old style" call backs. See
-L<BN_generate_prime(3)> for further details.
-
 =head1 RETURN VALUE
 
 RSA_generate_key_ex() returns 1 on success or 0 on error.
-RSA_generate_key() returns the key on success or B<NULL> on error.
-
 The error codes can be obtained by L<ERR_get_error(3)>.
+
+RSA_generate_key() returns a pointer to the RSA structure or
+B<NULL> if the key generation fails.
 
 =head1 BUGS
 
 B<BN_GENCB_call(cb, 2, x)> is used with two different meanings.
 
-RSA_generate_key() goes into an infinite loop for illegal input values.
-
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>, L<RAND_bytes(3)>,
-L<RSA_generate_key(3)>, L<BN_generate_prime(3)>
+L<RSA_generate_key_ex(3)>, L<BN_generate_prime(3)>
+
+=head1 HISTORY
+
+RSA_generate_key() was deprecated in OpenSSL 0.9.8; use
+RSA_generate_key_ex() intsead.
 
 =head1 COPYRIGHT
 

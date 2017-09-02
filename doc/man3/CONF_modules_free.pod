@@ -21,7 +21,9 @@ Deprecated:
 =head1 DESCRIPTION
 
 CONF_modules_free() closes down and frees up all memory allocated by all
-configuration modules.
+configuration modules.  Normally, in versions of OpenSSL prior to 1.1.0,
+applications called
+CONF_modules_free() at exit to tidy up any configuration performed.
 
 CONF_modules_finish() calls each configuration modules B<finish> handler
 to free up any configuration that module may have performed.
@@ -29,13 +31,6 @@ to free up any configuration that module may have performed.
 CONF_modules_unload() finishes and unloads configuration modules. If
 B<all> is set to B<0> only modules loaded from DSOs will be unloads. If
 B<all> is B<1> all modules, including builtin modules will be unloaded.
-
-=head1 NOTES
-
-Normally in versions of OpenSSL prior to 1.1.0 applications will only call
-CONF_modules_free() at application exit to tidy up any configuration performed.
-From 1.1.0 CONF_modules_free() is deprecated and no explicit CONF cleanup is
-required at all. For more information see L<OPENSSL_init_crypto(3)>.
 
 =head1 RETURN VALUE
 
@@ -48,7 +43,8 @@ L<CONF_modules_load_file(3)>
 
 =head1 HISTORY
 
-CONF_modules_free() was deprecated in OpenSSL 1.1.0.
+CONF_modules_free() was deprecated in OpenSSL 1.1.0; do not use it.
+For more information see L<OPENSSL_init_crypto(3)>.
 
 =head1 COPYRIGHT
 
