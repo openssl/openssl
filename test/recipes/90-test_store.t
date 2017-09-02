@@ -20,7 +20,7 @@ setup($test_name);
 #
 #       http://www.mingw.org/wiki/Posix_path_conversion
 #
-# With the built in configurations (all having names starting with "mingw"),
+# With the built-in configurations (all having names starting with "mingw"),
 # the openssl application is not linked with the MSYS2 run-time, and therefore,
 # it will receive possibly converted arguments from the process that executes
 # it.  This conversion is fine for normal path arguments, but when those
