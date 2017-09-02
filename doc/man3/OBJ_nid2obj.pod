@@ -91,11 +91,7 @@ OBJ_length() returns the size of the content octets of B<obj>.
 OBJ_get0_data() returns a pointer to the content octets of B<obj>.
 The returned pointer is an internal pointer which B<must not> be freed.
 
-In OpenSSL before version 1.1.0, OBJ_cleanup() cleaned up the internal
-object table and was called before an application exits if any new objects were
-added using OBJ_create(). This function is deprecated in OpenSSL 1.1.0 and now
-does nothing if called. No explicit de-initialisation is now required. See
-L<OPENSSL_init_crypto(3)> for further information.
+OBJ_cleanup() releases any resources allocated by creating new objects.
 
 =head1 NOTES
 
@@ -179,7 +175,8 @@ L<ERR_get_error(3)>
 
 =head1 HISTORY
 
-OBJ_cleanup() was deprecated in OpenSSL 1.1.0.
+OBJ_cleanup() was deprecated in OpenSSL 1.1.0 by L<OPENSSL_init_crypto(3)>
+and should not be used.
 
 =head1 COPYRIGHT
 

@@ -22,11 +22,7 @@ Deprecated:
 =head1 DESCRIPTION
 
 OpenSSL keeps an internal table of digest algorithms and ciphers. It uses
-this table to lookup ciphers via functions such as EVP_get_cipher_byname(). In
-OpenSSL before version 1.1.0, these functions initialised and de-initialised
-this table. Starting with OpenSSL 1.1.0 they are deprecated. No explicit initialisation
-or de-initialisation is required. See L<OPENSSL_init_crypto(3)> for further
-information.
+this table to lookup ciphers via functions such as EVP_get_cipher_byname().
 
 OpenSSL_add_all_digests() adds all digest algorithms to the table.
 
@@ -43,30 +39,6 @@ the table. It no longer has any effect in OpenSSL 1.1.0.
 
 None of the functions return a value.
 
-=head1 NOTES
-
-A typical application will call OpenSSL_add_all_algorithms() initially and
-EVP_cleanup() before exiting.
-
-An application does not need to add algorithms to use them explicitly, for example
-by EVP_sha1(). It just needs to add them if it (or any of the functions it calls)
-needs to lookup algorithms.
-
-The cipher and digest lookup functions are used in many parts of the library. If
-the table is not initialized several functions will misbehave and complain they
-cannot find algorithms. This includes the PEM, PKCS#12, SSL and S/MIME libraries.
-This is a common query in the OpenSSL mailing lists.
-
-Calling OpenSSL_add_all_algorithms() links in all algorithms: as a result a
-statically linked executable can be quite large. If this is important it is possible
-to just add the required ciphers and digests.
-
-=head1 BUGS
-
-Although the functions do not return error codes it is possible for them to fail.
-This will only happen as a result of a memory allocation failure so this is not
-too much of a problem in practice.
-
 =head1 SEE ALSO
 
 L<evp(7)>, L<EVP_DigestInit(3)>,
@@ -76,11 +48,12 @@ L<EVP_EncryptInit(3)>
 
 The OpenSSL_add_all_algorithms(), OpenSSL_add_all_ciphers(),
 OpenSSL_add_all_digests(), and EVP_cleanup(), functions
-were deprecated in OpenSSL 1.1.0 by OPENSSL_init_crypto().
+were deprecated in OpenSSL 1.1.0 by OPENSSL_init_crypto() and should
+not be used.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
