@@ -25,7 +25,7 @@ typedef struct {
         do_ssl_trace_list(bio, indent, msg, msglen, value, \
          table, OSSL_NELEM(table))
 
-static const char *do_ssl_trace_str(int val, ssl_trace_tbl *tbl, size_t ntbl)
+static const char *do_ssl_trace_str(int val, const ssl_trace_tbl *tbl, size_t ntbl)
 {
     size_t i;
 
@@ -38,7 +38,7 @@ static const char *do_ssl_trace_str(int val, ssl_trace_tbl *tbl, size_t ntbl)
 
 static int do_ssl_trace_list(BIO *bio, int indent,
                              const unsigned char *msg, size_t msglen,
-                             size_t vlen, ssl_trace_tbl *tbl, size_t ntbl)
+                             size_t vlen, const ssl_trace_tbl *tbl, size_t ntbl)
 {
     int val;
 
@@ -58,7 +58,7 @@ static int do_ssl_trace_list(BIO *bio, int indent,
 
 /* Version number */
 
-static ssl_trace_tbl ssl_version_tbl[] = {
+static const ssl_trace_tbl ssl_version_tbl[] = {
     {SSL3_VERSION, "SSL 3.0"},
     {TLS1_VERSION, "TLS 1.0"},
     {TLS1_1_VERSION, "TLS 1.1"},
@@ -71,7 +71,7 @@ static ssl_trace_tbl ssl_version_tbl[] = {
     {DTLS1_BAD_VER, "DTLS 1.0 (bad)"}
 };
 
-static ssl_trace_tbl ssl_content_tbl[] = {
+static const ssl_trace_tbl ssl_content_tbl[] = {
     {SSL3_RT_CHANGE_CIPHER_SPEC, "ChangeCipherSpec"},
     {SSL3_RT_ALERT, "Alert"},
     {SSL3_RT_HANDSHAKE, "Handshake"},
@@ -79,7 +79,7 @@ static ssl_trace_tbl ssl_content_tbl[] = {
 };
 
 /* Handshake types */
-static ssl_trace_tbl ssl_handshake_tbl[] = {
+static const ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_HELLO_REQUEST, "HelloRequest"},
     {SSL3_MT_CLIENT_HELLO, "ClientHello"},
     {SSL3_MT_SERVER_HELLO, "ServerHello"},
@@ -106,7 +106,7 @@ static ssl_trace_tbl ssl_handshake_tbl[] = {
 };
 
 /* Cipher suites */
-static ssl_trace_tbl ssl_ciphers_tbl[] = {
+static const ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0x0000, "TLS_NULL_WITH_NULL_NULL"},
     {0x0001, "TLS_RSA_WITH_NULL_MD5"},
     {0x0002, "TLS_RSA_WITH_NULL_SHA"},
@@ -444,13 +444,13 @@ static ssl_trace_tbl ssl_ciphers_tbl[] = {
 };
 
 /* Compression methods */
-static ssl_trace_tbl ssl_comp_tbl[] = {
+static const ssl_trace_tbl ssl_comp_tbl[] = {
     {0x0000, "No Compression"},
     {0x0001, "Zlib Compression"}
 };
 
 /* Extensions */
-static ssl_trace_tbl ssl_exts_tbl[] = {
+static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_server_name, "server_name"},
     {TLSEXT_TYPE_max_fragment_length, "max_fragment_length"},
     {TLSEXT_TYPE_client_certificate_url, "client_certificate_url"},
@@ -484,7 +484,7 @@ static ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_early_data, "early_data"}
 };
 
-static ssl_trace_tbl ssl_groups_tbl[] = {
+static const ssl_trace_tbl ssl_groups_tbl[] = {
     {1, "sect163k1 (K-163)"},
     {2, "sect163r1"},
     {3, "sect163r2 (B-163)"},
@@ -523,13 +523,13 @@ static ssl_trace_tbl ssl_groups_tbl[] = {
     {0xFF02, "arbitrary_explicit_char2_curves"}
 };
 
-static ssl_trace_tbl ssl_point_tbl[] = {
+static const ssl_trace_tbl ssl_point_tbl[] = {
     {0, "uncompressed"},
     {1, "ansiX962_compressed_prime"},
     {2, "ansiX962_compressed_char2"}
 };
 
-static ssl_trace_tbl ssl_mfl_tbl[] = {
+static const ssl_trace_tbl ssl_mfl_tbl[] = {
     {0, "disabled"},
     {1, "max_fragment_length := 2^9 (512 bytes)"},
     {2, "max_fragment_length := 2^10 (1024 bytes)"},
@@ -537,7 +537,7 @@ static ssl_trace_tbl ssl_mfl_tbl[] = {
     {4, "max_fragment_length := 2^12 (4096 bytes)"}
 };
 
-static ssl_trace_tbl ssl_sigalg_tbl[] = {
+static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_ecdsa_secp256r1_sha256, "ecdsa_secp256r1_sha256"},
     {TLSEXT_SIGALG_ecdsa_secp384r1_sha384, "ecdsa_secp384r1_sha384"},
     {TLSEXT_SIGALG_ecdsa_secp521r1_sha512, "ecdsa_secp521r1_sha512"},
@@ -562,7 +562,7 @@ static ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_gostr34102001_gostr3411, "gost2001_gost94"},
 };
 
-static ssl_trace_tbl ssl_ctype_tbl[] = {
+static const ssl_trace_tbl ssl_ctype_tbl[] = {
     {1, "rsa_sign"},
     {2, "dss_sign"},
     {3, "rsa_fixed_dh"},
@@ -575,12 +575,12 @@ static ssl_trace_tbl ssl_ctype_tbl[] = {
     {66, "ecdsa_fixed_ecdh"}
 };
 
-static ssl_trace_tbl ssl_psk_kex_modes_tbl[] = {
+static const ssl_trace_tbl ssl_psk_kex_modes_tbl[] = {
     {TLSEXT_KEX_MODE_KE, "psk_ke"},
     {TLSEXT_KEX_MODE_KE_DHE, "psk_dhe_ke"}
 };
 
-static ssl_trace_tbl ssl_key_update_tbl[] = {
+static const ssl_trace_tbl ssl_key_update_tbl[] = {
     {SSL_KEY_UPDATE_NOT_REQUESTED, "update_not_requested"},
     {SSL_KEY_UPDATE_REQUESTED, "update_requested"}
 };
@@ -659,12 +659,12 @@ static int ssl_print_random(BIO *bio, int indent,
     return 1;
 }
 
-static int ssl_print_signature(BIO *bio, int indent, SSL *s,
+static int ssl_print_signature(BIO *bio, int indent, const SSL *ssl,
                                const unsigned char **pmsg, size_t *pmsglen)
 {
     if (*pmsglen < 2)
         return 0;
-    if (SSL_USE_SIGALGS(s)) {
+    if (SSL_USE_SIGALGS(ssl)) {
         const unsigned char *p = *pmsg;
         unsigned int sigalg = (p[0] << 8) | p[1];
 
@@ -900,7 +900,7 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
     return 1;
 }
 
-static int ssl_print_client_hello(BIO *bio, SSL *ssl, int indent,
+static int ssl_print_client_hello(BIO *bio, const SSL *ssl, int indent,
                                   const unsigned char *msg, size_t msglen)
 {
     size_t len;
@@ -1026,7 +1026,7 @@ static int ssl_print_hello_retry_request(BIO *bio, int indent,
     return 1;
 }
 
-static int ssl_get_keyex(const char **pname, SSL *ssl)
+static int ssl_get_keyex(const char **pname, const SSL *ssl)
 {
     unsigned long alg_k = ssl->s3->tmp.new_cipher->algorithm_mkey;
 
@@ -1070,7 +1070,7 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
     return 0;
 }
 
-static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
+static int ssl_print_client_keyex(BIO *bio, int indent, const SSL *ssl,
                                   const unsigned char *msg, size_t msglen)
 {
     const char *algname;
@@ -1114,7 +1114,7 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
     return !msglen;
 }
 
-static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
+static int ssl_print_server_keyex(BIO *bio, int indent, const SSL *ssl,
                                   const unsigned char *msg, size_t msglen)
 {
     const char *algname;
@@ -1219,12 +1219,12 @@ static int ssl_print_certificate(BIO *bio, int indent,
     return 1;
 }
 
-static int ssl_print_certificates(BIO *bio, SSL *s, int server, int indent,
+static int ssl_print_certificates(BIO *bio, const SSL *ssl, int server, int indent,
                                   const unsigned char *msg, size_t msglen)
 {
     size_t clen;
 
-    if (SSL_IS_TLS13(s)
+    if (SSL_IS_TLS13(ssl)
             && !ssl_print_hexbuf(bio, indent, "context", 1, &msg, &msglen))
         return 0;
 
@@ -1247,13 +1247,13 @@ static int ssl_print_certificates(BIO *bio, SSL *s, int server, int indent,
     return 1;
 }
 
-static int ssl_print_cert_request(BIO *bio, int indent, SSL *s,
+static int ssl_print_cert_request(BIO *bio, int indent, const SSL *ssl,
                                   const unsigned char *msg, size_t msglen)
 {
     size_t xlen;
     unsigned int sigalg;
 
-    if (SSL_IS_TLS13(s)) {
+    if (SSL_IS_TLS13(ssl)) {
         if (!ssl_print_hexbuf(bio, indent, "request_context", 1, &msg, &msglen))
             return 0;
     } else {
@@ -1270,7 +1270,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, SSL *s,
         msg += xlen;
         msglen -= xlen + 1;
     }
-    if (SSL_USE_SIGALGS(s)) {
+    if (SSL_USE_SIGALGS(ssl)) {
         if (msglen < 2)
             return 0;
         xlen = (msg[0] << 8) | msg[1];
@@ -1322,7 +1322,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, SSL *s,
         xlen -= dlen + 2;
         msg += dlen;
     }
-    if (SSL_IS_TLS13(s)) {
+    if (SSL_IS_TLS13(ssl)) {
          if (!ssl_print_hexbuf(bio, indent, "request_extensions", 2,
                                &msg, &msglen))
         return 0;
@@ -1330,7 +1330,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, SSL *s,
     return msglen == 0;
 }
 
-static int ssl_print_ticket(BIO *bio, int indent, SSL *s,
+static int ssl_print_ticket(BIO *bio, int indent, const SSL *ssl,
                             const unsigned char *msg, size_t msglen)
 {
     unsigned int tick_life;
@@ -1347,7 +1347,7 @@ static int ssl_print_ticket(BIO *bio, int indent, SSL *s,
     msg += 4;
     BIO_indent(bio, indent + 2, 80);
     BIO_printf(bio, "ticket_lifetime_hint=%u\n", tick_life);
-    if (SSL_IS_TLS13(s)) {
+    if (SSL_IS_TLS13(ssl)) {
         unsigned int ticket_age_add;
 
         if (msglen < 4)
@@ -1364,16 +1364,16 @@ static int ssl_print_ticket(BIO *bio, int indent, SSL *s,
     }
     if (!ssl_print_hexbuf(bio, indent + 2, "ticket", 2, &msg, &msglen))
         return 0;
-    if (SSL_IS_TLS13(s) && !ssl_print_extensions(bio, indent + 2, 0,
-                                                 SSL3_MT_NEWSESSION_TICKET,
-                                                 &msg, &msglen))
+    if (SSL_IS_TLS13(ssl)
+            && !ssl_print_extensions(bio, indent + 2, 0,
+                                     SSL3_MT_NEWSESSION_TICKET, &msg, &msglen))
         return 0;
     if (msglen)
         return 0;
     return 1;
 }
 
-static int ssl_print_handshake(BIO *bio, SSL *ssl, int server,
+static int ssl_print_handshake(BIO *bio, const SSL *ssl, int server,
                                const unsigned char *msg, size_t msglen,
                                int indent)
 {
