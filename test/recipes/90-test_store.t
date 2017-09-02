@@ -15,8 +15,8 @@ use OpenSSL::Test::Utils;
 my $test_name = "test_store";
 setup($test_name);
 
-# Programs built with mingw have init code that mangles arguments that look
-# like paths.  The exact conversion rules are listed here:
+# The MSYS run-time mangles arguments that look like paths.  The exact
+# conversion rules are listed here:
 #
 #       http://www.mingw.org/wiki/Posix_path_conversion
 #
