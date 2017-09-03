@@ -732,17 +732,26 @@ void OPENSSL_fork_prepare(void)
 {
     size_t i;
 
+    if (!base_inited)
+        return;
+
     for (i = 0; i < CRYPTO_NUM_GLOCKS; i++)
         CRYPTO_THREAD_write_lock(global_locks[i]);
 }
 
 void OPENSSL_fork_parent(void)
 {
+    if (!base_inited)
+        return;
+
     unlock_all();
 }
 
 void OPENSSL_fork_child(void)
 {
+    if (!base_inited)
+        return;
+
     unlock_all();
     rand_fork();
 }
