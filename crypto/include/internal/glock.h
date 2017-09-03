@@ -32,4 +32,4 @@ enum {
     CRYPTO_NUM_GLOCKS
 };
 
-CRYPTO_RWLOCK *global_locks[CRYPTO_NUM_GLOCKS];
+extern CRYPTO_RWLOCK *openssl_locks[CRYPTO_NUM_GLOCKS];
