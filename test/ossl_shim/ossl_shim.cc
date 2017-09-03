@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
+#include "packeted_bio.h"
 #include <openssl/e_os2.h>
 
 #if !defined(OPENSSL_SYS_WINDOWS)
@@ -53,7 +54,6 @@ OPENSSL_MSVC_PRAGMA(comment(lib, "Ws2_32.lib"))
 #include <vector>
 
 #include "async_bio.h"
-#include "packeted_bio.h"
 #include "test_config.h"
 
 namespace bssl {
