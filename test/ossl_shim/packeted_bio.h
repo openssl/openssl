@@ -10,7 +10,7 @@
 #ifndef HEADER_PACKETED_BIO
 #define HEADER_PACKETED_BIO
 
-#include "e_os.h"
+#include "../../e_os.h"
 #include <openssl/base.h>
 #include <openssl/bio.h>
 
