@@ -708,12 +708,10 @@ int OPENSSL_atexit(void (*handler)(void))
  */
 static void unlock_all(void)
 {
-    CRYPTO_RWLOCK *lp;
     int i;
 
     for (i = CRYPTO_NUM_GLOCKS - 1; i >= 0; i--) {
-        lp = global_locks + i;
-        CRYPTO_THREAD_unlock(lp);
+        CRYPTO_THREAD_unlock(global_locks[i]);
     }
 }
 
