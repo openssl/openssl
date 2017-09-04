@@ -843,7 +843,7 @@ EXT_RETURN tls_construct_ctos_padding(SSL *s, WPACKET *pkt,
          * 1 byte long so as not to have an empty extension last (WebSphere 7.x,
          * 8.x are intolerant of that condition)
          */
-        if (hlen >= 4)
+        if (hlen > 4)
             hlen -= 4;
         else
             hlen = 1;
