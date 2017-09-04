@@ -17,9 +17,16 @@
 
 # include <unistd.h>
 
-# if _POSIX_VERSION >= 200112L
+/*
+ * Glibc before v2.20 doesn't have ucontext_t for aarch64, so on top of
+ * the POSIX version check, we check the glibc version as well, but only
+ * on aarch64.
+ */
+# if _POSIX_VERSION >= 200112L \
+    && (!defined(__aarch64__) || !defined(__GLIBC_PREREQ) \
+        || __GLIBC_PREREQ(2,20))
 
-# include <pthread.h>
+#  include <pthread.h>
 
 #  define ASYNC_POSIX
 #  define ASYNC_ARCH
