@@ -984,6 +984,11 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
 }
 #endif
 
+static int rsa_pkey_check(const EVP_PKEY *pkey)
+{
+    return RSA_check_key_ex(pkey->pkey.rsa, NULL);
+}
+
 const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
     {
      EVP_PKEY_RSA,
@@ -1015,7 +1020,8 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
      old_rsa_priv_encode,
      rsa_item_verify,
      rsa_item_sign,
-     rsa_sig_info_set
+     rsa_sig_info_set,
+     rsa_pkey_check
     },
 
     {
@@ -1053,4 +1059,6 @@ const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {
      0, 0,
      rsa_item_verify,
      rsa_item_sign,
+     0,
+     rsa_pkey_check
 };
