@@ -727,6 +727,11 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     return ret;
 }
 
+static int pkey_rsa_check(EVP_PKEY_CTX *ctx)
+{
+    return RSA_check_key_ex(ctx->pkey->pkey.rsa, NULL);
+}
+
 const EVP_PKEY_METHOD rsa_pkey_meth = {
     EVP_PKEY_RSA,
     EVP_PKEY_FLAG_AUTOARGLEN,
@@ -759,7 +764,11 @@ const EVP_PKEY_METHOD rsa_pkey_meth = {
     0, 0,
 
     pkey_rsa_ctrl,
-    pkey_rsa_ctrl_str
+    pkey_rsa_ctrl_str,
+
+    0, 0,
+
+    pkey_rsa_check
 };
 
 /*
@@ -830,5 +839,9 @@ const EVP_PKEY_METHOD rsa_pss_pkey_meth = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
     pkey_rsa_ctrl,
-    pkey_rsa_ctrl_str
+    pkey_rsa_ctrl_str,
+
+    0, 0,
+
+    pkey_rsa_check
 };
