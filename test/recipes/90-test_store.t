@@ -10,6 +10,7 @@ use File::Spec;
 use File::Copy;
 use MIME::Base64;
 use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file data_file);
+use OpenSSL::Test::Utils;
 
 my $test_name = "test_store";
 setup($test_name);
