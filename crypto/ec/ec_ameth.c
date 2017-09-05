@@ -520,6 +520,11 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
 }
 
+static int ec_pkey_check(const EVP_PKEY *pkey)
+{
+    return EC_KEY_check_key(pkey->pkey.ec);
+}
+
 const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
     EVP_PKEY_EC,
     EVP_PKEY_EC,
@@ -551,7 +556,11 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
     int_ec_free,
     ec_pkey_ctrl,
     old_ec_priv_decode,
-    old_ec_priv_encode
+    old_ec_priv_encode,
+
+    0, 0, 0,
+
+    ec_pkey_check
 };
 
 int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)

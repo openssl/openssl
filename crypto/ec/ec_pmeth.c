@@ -425,11 +425,6 @@ static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     return EC_KEY_generate_key(pkey->pkey.ec);
 }
 
-static int pkey_ec_check(EVP_PKEY_CTX *ctx)
-{
-    return EC_KEY_check_key(ctx->pkey->pkey.ec);
-}
-
 const EVP_PKEY_METHOD ec_pkey_meth = {
     EVP_PKEY_EC,
     0,
@@ -464,9 +459,5 @@ const EVP_PKEY_METHOD ec_pkey_meth = {
     0,
 #endif
     pkey_ec_ctrl,
-    pkey_ec_ctrl_str,
-
-    0, 0,
-
-    pkey_ec_check
+    pkey_ec_ctrl_str
 };

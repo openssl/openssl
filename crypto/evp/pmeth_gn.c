@@ -168,12 +168,3 @@ EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
     return mac_key;
 }
 
-int EVP_PKEY_check(EVP_PKEY_CTX *ctx)
-{
-    if (!ctx || !ctx->pmeth || !ctx->pmeth->check) {
-        EVPerr(EVP_F_EVP_PKEY_CHECK,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
-    }
-    return ctx->pmeth->check(ctx);
-}

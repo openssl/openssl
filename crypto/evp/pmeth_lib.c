@@ -603,12 +603,6 @@ void EVP_PKEY_meth_set_ctrl(EVP_PKEY_METHOD *pmeth,
     pmeth->ctrl_str = ctrl_str;
 }
 
-void EVP_PKEY_meth_set_check(EVP_PKEY_METHOD *pmeth,
-                             int (*check) (EVP_PKEY_CTX *ctx))
-{
-    pmeth->check = check;
-}
-
 void EVP_PKEY_meth_get_init(EVP_PKEY_METHOD *pmeth,
                             int (**pinit) (EVP_PKEY_CTX *ctx))
 {
@@ -774,11 +768,4 @@ void EVP_PKEY_meth_get_ctrl(EVP_PKEY_METHOD *pmeth,
         *pctrl = pmeth->ctrl;
     if (pctrl_str)
         *pctrl_str = pmeth->ctrl_str;
-}
-
-void EVP_PKEY_meth_get_check(EVP_PKEY_METHOD *pmeth,
-                             int (**pcheck) (EVP_PKEY_CTX *ctx))
-{
-    if (*pcheck)
-        *pcheck = pmeth->check;
 }
