@@ -11,25 +11,26 @@
 #include "internal/thread_once.h"
 #include "internal/glock.h"
 
-CRYPTO_RWLOCK *bio_type_lock = NULL;
 static CRYPTO_ONCE bio_type_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(do_bio_type_init)
 {
-    bio_type_lock = global_locks[CRYPTO_GLOCK_BIO_TYPE];
-    return bio_type_lock != NULL;
+    return OPENSSL_init_crypto(0, NULL);
 }
 
 int BIO_get_new_index()
 {
-    static CRYPTO_REF_COUNT bio_count = BIO_TYPE_START;
+    static int bio_count = BIO_TYPE_START;
     int newval;
 
     if (!RUN_ONCE(&bio_type_init, do_bio_type_init)) {
         BIOerr(BIO_F_BIO_GET_NEW_INDEX, ERR_R_MALLOC_FAILURE);
         return -1;
     }
-    if (!CRYPTO_UP_REF(&bio_count, &newval, bio_type_lock))
+    if (!OPENSSL_LOCK_lock(CRYPTO_GLOCK_BIO_TYPE))
+        return -1;
+    newval = ++bio_count;
+    if (!OPENSSL_LOCK_unlock(CRYPTO_GLOCK_BIO_TYPE))
         return -1;
     return newval;
 }

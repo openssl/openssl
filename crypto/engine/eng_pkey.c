@@ -8,6 +8,7 @@
  */
 
 #include "eng_int.h"
+#include "internal/glock.h"
 
 /* Basic get/set stuff */
 
@@ -60,13 +61,13 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
                   ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_ENGINE);
     if (e->funct_ref == 0) {
-        CRYPTO_THREAD_unlock(global_engine_lock);
+        OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
         ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY, ENGINE_R_NOT_INITIALISED);
         return 0;
     }
-    CRYPTO_THREAD_unlock(global_engine_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
     if (!e->load_privkey) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
                   ENGINE_R_NO_LOAD_FUNCTION);
@@ -91,13 +92,13 @@ EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
                   ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_ENGINE);
     if (e->funct_ref == 0) {
-        CRYPTO_THREAD_unlock(global_engine_lock);
+        OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
         ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY, ENGINE_R_NOT_INITIALISED);
         return 0;
     }
-    CRYPTO_THREAD_unlock(global_engine_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
     if (!e->load_pubkey) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY, ENGINE_R_NO_LOAD_FUNCTION);
         return 0;
@@ -122,14 +123,14 @@ int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s,
                   ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_ENGINE);
     if (e->funct_ref == 0) {
-        CRYPTO_THREAD_unlock(global_engine_lock);
+        OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
         ENGINEerr(ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT,
                   ENGINE_R_NOT_INITIALISED);
         return 0;
     }
-    CRYPTO_THREAD_unlock(global_engine_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
     if (!e->load_ssl_client_cert) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT,
                   ENGINE_R_NO_LOAD_FUNCTION);

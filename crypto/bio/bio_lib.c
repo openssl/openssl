@@ -778,9 +778,5 @@ void bio_cleanup(void)
 {
 #ifndef OPENSSL_NO_SOCK
     bio_sock_cleanup_int();
-    /* Clear the local handle to the global lock, freed elsewhere. */
-    bio_lookup_lock = NULL;
 #endif
-    /* Clear the local handle to the global lock, freed elsewhere. */
-    bio_type_lock = NULL;
 }

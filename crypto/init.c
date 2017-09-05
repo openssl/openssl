@@ -28,7 +28,7 @@
 #include "internal/store.h"
 #include "internal/glock.h"
 
-CRYPTO_RWLOCK *global_locks[CRYPTO_NUM_GLOCKS];
+static CRYPTO_RWLOCK *global_locks[CRYPTO_NUM_GLOCKS];
 
 static int stopped = 0;
 
@@ -67,7 +67,6 @@ struct ossl_init_stop_st {
 };
 
 static OPENSSL_INIT_STOP *stop_handlers = NULL;
-static CRYPTO_RWLOCK *init_lock = NULL;
 
 static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
@@ -92,7 +91,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
         if ((global_locks[i] = CRYPTO_THREAD_lock_new()) == NULL)
             return 0;
     }
-    init_lock = global_locks[CRYPTO_GLOCK_INIT];
     OPENSSL_cpuid_setup();
 
     /*
@@ -429,12 +427,6 @@ void OPENSSL_cleanup(void)
     stop_handlers = NULL;
 
     /*
-     * Unhook the local handle to the global lock; it will be freed later
-     * along with all the global locks.
-     */
-    init_lock = NULL;
-
-    /*
      * We assume we are single-threaded for this function, i.e. no race
      * conditions for the various "*_inited" vars below.
      */
@@ -582,10 +574,10 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
         int ret;
-        CRYPTO_THREAD_write_lock(init_lock);
+        OPENSSL_LOCK_lock(CRYPTO_GLOCK_INIT);
         appname = (settings == NULL) ? NULL : settings->appname;
         ret = RUN_ONCE(&config, ossl_init_config);
-        CRYPTO_THREAD_unlock(init_lock);
+        OPENSSL_LOCK_unlock(CRYPTO_GLOCK_INIT);
         if (!ret)
             return 0;
     }
@@ -754,3 +746,21 @@ void OPENSSL_fork_child(void)
     rand_fork();
 }
 #endif
+
+int OPENSSL_LOCK_lock(int index)
+{
+    if (index < 0 || index >= CRYPTO_NUM_GLOCKS)
+        return 0;
+    if (global_locks[index] == NULL)
+        return -1;
+    return CRYPTO_THREAD_write_lock(global_locks[index]);
+}
+
+int OPENSSL_LOCK_unlock(int index)
+{
+    if (index < 0 || index >= CRYPTO_NUM_GLOCKS)
+        return 0;
+    if (global_locks[index] == NULL)
+        return -1;
+    return CRYPTO_THREAD_unlock(global_locks[index]);
+}

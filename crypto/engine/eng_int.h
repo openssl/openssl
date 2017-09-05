@@ -20,8 +20,6 @@
 extern "C" {
 #endif
 
-extern CRYPTO_RWLOCK *global_engine_lock;
-
 /*
  * If we compile with this symbol defined, then both reference counts in the
  * ENGINE structure will be monitored with a line of output on stderr for

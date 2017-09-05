@@ -9,6 +9,7 @@
 
 #include "e_os.h"
 #include "eng_int.h"
+#include "internal/glock.h"
 
 /*
  * Initialise a engine type for use (or up its functional reference count if
@@ -57,10 +58,10 @@ int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers)
     engine_ref_debug(e, 1, -1);
     if ((e->funct_ref == 0) && e->finish) {
         if (unlock_for_handlers)
-            CRYPTO_THREAD_unlock(global_engine_lock);
+            OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
         to_return = e->finish(e);
         if (unlock_for_handlers)
-            CRYPTO_THREAD_write_lock(global_engine_lock);
+            OPENSSL_LOCK_lock(CRYPTO_GLOCK_ENGINE);
         if (!to_return)
             return 0;
     }
@@ -85,9 +86,9 @@ int ENGINE_init(ENGINE *e)
         ENGINEerr(ENGINE_F_ENGINE_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_ENGINE);
     ret = engine_unlocked_init(e);
-    CRYPTO_THREAD_unlock(global_engine_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
     return ret;
 }
 
@@ -98,9 +99,9 @@ int ENGINE_finish(ENGINE *e)
 
     if (e == NULL)
         return 1;
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_ENGINE);
     to_return = engine_unlocked_finish(e, 1);
-    CRYPTO_THREAD_unlock(global_engine_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
     if (!to_return) {
         ENGINEerr(ENGINE_F_ENGINE_FINISH, ENGINE_R_FINISH_FAILED);
         return 0;

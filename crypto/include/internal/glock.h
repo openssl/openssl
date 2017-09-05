@@ -14,22 +14,21 @@
  * the corresponding indices so that the lock that is first in the order has
  * the lower index.
  */
-enum {
-    CRYPTO_GLOCK_INIT = 0,
-    CRYPTO_GLOCK_BIO_LOOKUP,
-    CRYPTO_GLOCK_BIO_TYPE,
-    CRYPTO_GLOCK_RAND_METH,
-    CRYPTO_GLOCK_RAND_ENGINE,
-    CRYPTO_GLOCK_ENGINE,
-    CRYPTO_GLOCK_EX_DATA,
-    CRYPTO_GLOCK_OBJ,
-    CRYPTO_GLOCK_REGISTRY,
-    CRYPTO_GLOCK_ERR_STRING,
-    CRYPTO_GLOCK_DRBG,
-    CRYPTO_GLOCK_PRIV_DRBG,
-    CRYPTO_GLOCK_RAND_BYTES,
-    CRYPTO_GLOCK_SEC_MALLOC,
-    CRYPTO_NUM_GLOCKS
-};
+#define CRYPTO_GLOCK_INIT         0
+#define CRYPTO_GLOCK_BIO_LOOKUP   1
+#define CRYPTO_GLOCK_BIO_TYPE     2
+#define CRYPTO_GLOCK_RAND_METH    3
+#define CRYPTO_GLOCK_RAND_ENGINE  4
+#define CRYPTO_GLOCK_ENGINE       5
+#define CRYPTO_GLOCK_EX_DATA      6
+#define CRYPTO_GLOCK_OBJ          7
+#define CRYPTO_GLOCK_REGISTRY     8
+#define CRYPTO_GLOCK_ERR_STRING   9
+#define CRYPTO_GLOCK_DRBG        10
+#define CRYPTO_GLOCK_PRIV_DRBG   11
+#define CRYPTO_GLOCK_RAND_BYTES  12
+#define CRYPTO_GLOCK_SEC_MALLOC  13
+#define CRYPTO_NUM_GLOCKS        14
 
-extern CRYPTO_RWLOCK *openssl_locks[CRYPTO_NUM_GLOCKS];
+int OPENSSL_LOCK_lock(int index);
+int OPENSSL_LOCK_unlock(int index);

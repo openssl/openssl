@@ -16,13 +16,11 @@
 #include "store_locl.h"
 #include "internal/glock.h"
 
-static CRYPTO_RWLOCK *registry_lock;
 static CRYPTO_ONCE registry_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(do_registry_init)
 {
-    registry_lock = global_locks[CRYPTO_GLOCK_REGISTRY];
-    return registry_lock != NULL;
+    return OPENSSL_init_crypto(0, NULL);
 }
 
 /*
@@ -167,7 +165,7 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
                       ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(registry_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_REGISTRY);
 
     if (loader_register == NULL) {
         loader_register = lh_OSSL_STORE_LOADER_new(store_loader_hash,
@@ -179,7 +177,7 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
             || lh_OSSL_STORE_LOADER_error(loader_register) == 0))
         ok = 1;
 
-    CRYPTO_THREAD_unlock(registry_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_REGISTRY);
 
     return ok;
 }
@@ -209,7 +207,7 @@ const OSSL_STORE_LOADER *ossl_store_get0_loader_int(const char *scheme)
                       ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    CRYPTO_THREAD_write_lock(registry_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_REGISTRY);
 
     loader = lh_OSSL_STORE_LOADER_retrieve(loader_register, &template);
 
@@ -219,7 +217,7 @@ const OSSL_STORE_LOADER *ossl_store_get0_loader_int(const char *scheme)
         ERR_add_error_data(2, "scheme=", scheme);
     }
 
-    CRYPTO_THREAD_unlock(registry_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_REGISTRY);
 
     return loader;
 }
@@ -240,7 +238,7 @@ OSSL_STORE_LOADER *ossl_store_unregister_loader_int(const char *scheme)
                       ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    CRYPTO_THREAD_write_lock(registry_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_REGISTRY);
 
     loader = lh_OSSL_STORE_LOADER_delete(loader_register, &template);
 
@@ -250,7 +248,7 @@ OSSL_STORE_LOADER *ossl_store_unregister_loader_int(const char *scheme)
         ERR_add_error_data(2, "scheme=", scheme);
     }
 
-    CRYPTO_THREAD_unlock(registry_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_REGISTRY);
 
     return loader;
 }
@@ -266,8 +264,6 @@ void ossl_store_destroy_loaders_int(void)
     assert(lh_OSSL_STORE_LOADER_num_items(loader_register) == 0);
     lh_OSSL_STORE_LOADER_free(loader_register);
     loader_register = NULL;
-    /* Clear the local handle to the global lock, freed elsewhere. */
-    registry_lock = NULL;
 }
 
 /*

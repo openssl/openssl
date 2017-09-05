@@ -59,7 +59,6 @@ typedef enum drbg_status_e {
  * drbg_add*; the functions with an asterisk lock).
  */
 typedef struct rand_bytes_buffer_st {
-    CRYPTO_RWLOCK *lock;
     unsigned char *buff;
     size_t size;
     size_t curr;
@@ -89,8 +88,8 @@ typedef struct rand_drbg_ctr_st {
  * right now.
  */
 struct rand_drbg_st {
-    CRYPTO_RWLOCK *lock;
     RAND_DRBG *parent;
+    int priv; /* If this is the private pool, which has its own lock. */
     int nid; /* the underlying algorithm */
     int fork_count;
     unsigned short flags; /* various external flags */
