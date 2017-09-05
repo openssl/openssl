@@ -198,6 +198,8 @@ int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file)
     char *enabled_logs;
     CTLOG_STORE_LOAD_CTX* load_ctx = ctlog_store_load_ctx_new();
 
+    if (load_ctx == NULL)
+        goto end;
     load_ctx->log_store = store;
     load_ctx->conf = NCONF_new(NULL);
     if (load_ctx->conf == NULL)
