@@ -124,8 +124,8 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_KEY_GEN_ERROR);
         return 0;
     }
-    hmac = HMAC_CTX_new();
-    if (!HMAC_Init_ex(hmac, key, md_size, md_type, NULL)
+    if ((hmac = HMAC_CTX_new()) == NULL
+        || !HMAC_Init_ex(hmac, key, md_size, md_type, NULL)
         || !HMAC_Update(hmac, p12->authsafes->d.data->data,
                         p12->authsafes->d.data->length)
         || !HMAC_Final(hmac, mac, maclen)) {
