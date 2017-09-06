@@ -1781,6 +1781,11 @@
 #define NID_id_on_permanentIdentifier           858
 #define OBJ_id_on_permanentIdentifier           OBJ_id_on,3L
 
+#define SN_id_on_dnsSRV         "id-on-dnsSRV"
+#define LN_id_on_dnsSRV         "SRVName other name"
+#define NID_id_on_dnsSRV                1126
+#define OBJ_id_on_dnsSRV                OBJ_id_on,7L
+
 #define SN_id_pda_dateOfBirth           "id-pda-dateOfBirth"
 #define NID_id_pda_dateOfBirth          348
 #define OBJ_id_pda_dateOfBirth          OBJ_id_pda,1L
