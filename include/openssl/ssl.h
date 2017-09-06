@@ -2260,6 +2260,12 @@ extern const char SSL_version_str[];
 
 int ERR_load_SSL_strings(void);
 
+
+typedef unsigned int (*DTLS_timer_cb)(SSL *s, unsigned int timer_us);
+
+void DTLS_set_timer_cb(SSL *s, DTLS_timer_cb cb);
+
+
 # ifdef  __cplusplus
 }
 # endif
