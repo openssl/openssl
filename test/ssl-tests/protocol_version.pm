@@ -89,6 +89,7 @@ sub generate_version_tests {
     my @max_protocols = $dtls ? @max_dtls_protocols : @max_tls_protocols;
     my $min_enabled  = $dtls ? $min_dtls_enabled : $min_tls_enabled;
     my $max_enabled  = $dtls ? $max_dtls_enabled : $max_tls_enabled;
+    $min_protocols[0] = "None";
 
     if (no_tests($dtls)) {
         return;
@@ -162,13 +163,16 @@ sub generate_resumption_tests {
                 # Client is flexible, server upgrades/downgrades.
                 push @server_tests, {
                     "name" => "resumption",
-                    "client" => { },
+                    "client" => {
+                        "MinProtocol" => "None",
+                    },
                     "server" => {
                         "MinProtocol" => $protocols[$original_protocol],
                         "MaxProtocol" => $protocols[$original_protocol],
                         "Options" => $ticket,
                     },
                     "resume_server" => {
+                        "MinProtocol" => "None",
                         "MaxProtocol" => $protocols[$resume_protocol],
                     },
                     "test" => {
@@ -187,8 +191,10 @@ sub generate_resumption_tests {
                     },
                     "server" => {
                         "Options" => $ticket,
+                        "MinProtocol" => "None",
                     },
                     "resume_client" => {
+                        "MinProtocol" => "None",
                         "MaxProtocol" => $protocols[$resume_protocol],
                     },
                     "test" => {
