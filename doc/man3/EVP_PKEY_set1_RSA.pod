@@ -93,11 +93,6 @@ Previous versions of this document suggested using EVP_PKEY_type(pkey->type)
 to determine the type of a key. Since B<EVP_PKEY> is now opaque this
 is no longer possible: the equivalent is EVP_PKEY_base_id(pkey).
 
-Currently, the behaviors of EVP_PKEY_check are not consistent for different
-public key algorithms. For instance, an RSA key will be checked for both
-public and private components, but for EC keys they could be checked
-separately for the public or the private components.
-
 =head1 RETURN VALUES
 
 EVP_PKEY_set1_RSA(), EVP_PKEY_set1_DSA(), EVP_PKEY_set1_DH() and
