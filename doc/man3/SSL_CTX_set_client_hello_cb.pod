@@ -88,8 +88,9 @@ within a ClientHello callback.
 
 =head1 RETURN VALUES
 
-The application's supplied ClientHello callback returns 1 on success, 0 on failure,
-and a negative value to suspend processing.
+The application's supplied ClientHello callback returns
+SSL_CLIENT_HELLO_SUCCESS on success, SSL_CLIENT_HELLO_ERROR on failure, and
+SSL_CLIENT_HELLO_RETRY to suspend processing.
 
 SSL_client_hello_isv2() returns 1 for SSLv2-format ClientHellos and 0 otherwise.
 

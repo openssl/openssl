@@ -422,24 +422,24 @@ static int full_client_hello_callback(SSL *s, int *al, void *arg)
 
     /* Make sure we can defer processing and get called back. */
     if ((*ctr)++ == 0)
-        return -1;
+        return SSL_CLIENT_HELLO_RETRY;
 
     len = SSL_client_hello_get0_ciphers(s, &p);
     if (!TEST_mem_eq(p, len, expected_ciphers, sizeof(expected_ciphers))
             || !TEST_size_t_eq(
                        SSL_client_hello_get0_compression_methods(s, &p), 1)
             || !TEST_int_eq(*p, 0))
-        return 0;
+        return SSL_CLIENT_HELLO_ERROR;
     if (!SSL_client_hello_get1_extensions_present(s, &exts, &len))
-        return 0;
+        return SSL_CLIENT_HELLO_ERROR;
     if (len != OSSL_NELEM(expected_extensions) ||
         memcmp(exts, expected_extensions, len * sizeof(*exts)) != 0) {
         printf("ClientHello callback expected extensions mismatch\n");
         OPENSSL_free(exts);
-        return 0;
+        return SSL_CLIENT_HELLO_ERROR;
     }
     OPENSSL_free(exts);
-    return 1;
+    return SSL_CLIENT_HELLO_SUCCESS;
 }
 
 static int test_client_hello_cb(void)
