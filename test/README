@@ -50,7 +50,7 @@ The second argument to `simple_test' is the test executable, and `simple_test'
 expects it to be located in test/
 
 For documentation on OpenSSL::Test::Simple, do
-`perldoc test/testlib/OpenSSL/Test/Simple.pm'.
+`perldoc util/perl/OpenSSL/Test/Simple.pm'.
 
 
 A recipe that runs a more complex test
@@ -58,7 +58,7 @@ A recipe that runs a more complex test
 
 For more complex tests, you will need to read up on Test::More and
 OpenSSL::Test.  Test::More is normally preinstalled, do `man Test::More' for
-documentation.  For OpenSSL::Test, do `perldoc test/testlib/OpenSSL/Test.pm'.
+documentation.  For OpenSSL::Test, do `perldoc util/perl/OpenSSL/Test.pm'.
 
 A script to start from could be this:
 
