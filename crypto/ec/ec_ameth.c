@@ -522,7 +522,15 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
 static int ec_pkey_check(const EVP_PKEY *pkey)
 {
-    return EC_KEY_check_key(pkey->pkey.ec);
+    EC_KEY *eckey = pkey->pkey.ec;
+
+    /* stay consistent to what EVP_PKEY_check demands */
+    if (eckey == NULL || eckey->group == NULL || eckey->pub_key == NULL
+        || eckey->priv_key == NULL) {
+        return 0;
+    }
+
+    return EC_KEY_check_key(eckey);
 }
 
 const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
