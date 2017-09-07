@@ -515,8 +515,6 @@ size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt)
 
 int EVP_PKEY_check(EVP_PKEY *pkey)
 {
-    if (pkey == NULL)
-        return 0;
     if (!pkey->ameth || !pkey->ameth->pkey_check) {
         EVPerr(EVP_F_EVP_PKEY_CHECK,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
