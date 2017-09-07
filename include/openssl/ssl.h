@@ -1699,6 +1699,11 @@ __owur char *SSL_get_srp_userinfo(SSL *s);
 /*
  * ClientHello callback and helpers.
  */
+
+# define SSL_CLIENT_HELLO_SUCCESS 1
+# define SSL_CLIENT_HELLO_ERROR   0
+# define SSL_CLIENT_HELLO_RETRY   (-1)
+
 typedef int (*SSL_client_hello_cb_fn) (SSL *s, int *al, void *arg);
 void SSL_CTX_set_client_hello_cb(SSL_CTX *c, SSL_client_hello_cb_fn cb,
                                  void *arg);

@@ -1432,14 +1432,16 @@ static int tls_early_post_process_client_hello(SSL *s, int *pal)
     /* Finished parsing the ClientHello, now we can start processing it */
     /* Give the ClientHello callback a crack at things */
     if (s->ctx->client_hello_cb != NULL) {
-        int code;
         /* A failure in the ClientHello callback terminates the connection. */
-        code = s->ctx->client_hello_cb(s, &al, s->ctx->client_hello_cb_arg);
-        if (code == 0)
-            goto err;
-        if (code < 0) {
+        switch (s->ctx->client_hello_cb(s, &al, s->ctx->client_hello_cb_arg)) {
+        case SSL_CLIENT_HELLO_SUCCESS:
+            break;
+        case SSL_CLIENT_HELLO_RETRY:
             s->rwstate = SSL_CLIENT_HELLO_CB;
-            return code;
+            return -1;
+        case SSL_CLIENT_HELLO_ERROR:
+        default:
+            goto err;
         }
     }
 

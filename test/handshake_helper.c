@@ -224,18 +224,18 @@ static int client_hello_ignore_cb(SSL *s, int *al, void *arg)
 {
     if (!client_hello_select_server_ctx(s, arg, 1)) {
         *al = SSL_AD_UNRECOGNIZED_NAME;
-        return 0;
+        return SSL_CLIENT_HELLO_ERROR;
     }
-    return 1;
+    return SSL_CLIENT_HELLO_SUCCESS;
 }
 
 static int client_hello_reject_cb(SSL *s, int *al, void *arg)
 {
     if (!client_hello_select_server_ctx(s, arg, 0)) {
         *al = SSL_AD_UNRECOGNIZED_NAME;
-        return 0;
+        return SSL_CLIENT_HELLO_ERROR;
     }
-    return 1;
+    return SSL_CLIENT_HELLO_SUCCESS;
 }
 
 static int client_hello_nov12_cb(SSL *s, int *al, void *arg)
@@ -247,7 +247,7 @@ static int client_hello_nov12_cb(SSL *s, int *al, void *arg)
     v = SSL_client_hello_get0_legacy_version(s);
     if (v > TLS1_2_VERSION || v < SSL3_VERSION) {
         *al = SSL_AD_PROTOCOL_VERSION;
-        return 0;
+        return SSL_CLIENT_HELLO_ERROR;
     }
     (void)SSL_client_hello_get0_session_id(s, &p);
     if (p == NULL ||
@@ -255,13 +255,15 @@ static int client_hello_nov12_cb(SSL *s, int *al, void *arg)
         SSL_client_hello_get0_ciphers(s, &p) == 0 ||
         SSL_client_hello_get0_compression_methods(s, &p) == 0) {
         *al = SSL_AD_INTERNAL_ERROR;
-        return 0;
+        return SSL_CLIENT_HELLO_ERROR;
     }
     ret = client_hello_select_server_ctx(s, arg, 0);
     SSL_set_max_proto_version(s, TLS1_1_VERSION);
-    if (!ret)
+    if (!ret) {
         *al = SSL_AD_UNRECOGNIZED_NAME;
-    return ret;
+        return SSL_CLIENT_HELLO_ERROR;
+    }
+    return SSL_CLIENT_HELLO_SUCCESS;
 }
 
 static unsigned char dummy_ocsp_resp_good_val = 0xff;
