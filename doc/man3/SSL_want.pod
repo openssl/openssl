@@ -3,8 +3,8 @@
 =head1 NAME
 
 SSL_want, SSL_want_nothing, SSL_want_read, SSL_want_write, SSL_want_x509_lookup,
-SSL_want_async, SSL_want_async_job, SSL_want_early - obtain state information
-TLS/SSL I/O operation
+SSL_want_async, SSL_want_async_job, SSL_want_client_hello_cb - obtain state
+information TLS/SSL I/O operation
 
 =head1 SYNOPSIS
 
@@ -17,7 +17,7 @@ TLS/SSL I/O operation
  int SSL_want_x509_lookup(const SSL *ssl);
  int SSL_want_async(const SSL *ssl);
  int SSL_want_async_job(const SSL *ssl);
- int SSL_want_early(const SSL *ssl);
+ int SSL_want_client_hello_cb(const SSL *ssl);
 
 =head1 DESCRIPTION
 
@@ -82,18 +82,18 @@ The asynchronous job could not be started because there were no async jobs
 available in the pool (see ASYNC_init_thread(3)). A call to L<SSL_get_error(3)>
 should return SSL_ERROR_WANT_ASYNC_JOB.
 
-=item SSL_EARLY_WORK
+=item SSL_CLIENT_HELLO_CB
 
 The operation did not complete because an application callback set by
-SSL_CTX_set_early_cb() has asked to be called again.
+SSL_CTX_set_client_hello_cb() has asked to be called again.
 A call to L<SSL_get_error(3)> should return
-SSL_ERROR_WANT_EARLY.
+SSL_ERROR_WANT_CLIENT_HELLO_CB.
 
 =back
 
 SSL_want_nothing(), SSL_want_read(), SSL_want_write(), SSL_want_x509_lookup(),
-SSL_want_async(), SSL_want_async_job(), and SSL_want_early() return 1, when
-the corresponding condition is true or 0 otherwise.
+SSL_want_async(), SSL_want_async_job(), and SSL_want_client_hello_cb() return
+1, when the corresponding condition is true or 0 otherwise.
 
 =head1 SEE ALSO
 
@@ -101,7 +101,7 @@ L<ssl(7)>, L<SSL_get_error(3)>
 
 =head1 HISTORY
 
-SSL_want_early() and SSL_EARLY_WORK were added in OpenSSL 1.1.1.
+SSL_want_client_hello_cb() and SSL_CLIENT_HELLO_CB were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
