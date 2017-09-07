@@ -222,7 +222,7 @@ client => {
 ```
 $ ./config
 $ cd test
-$ TOP=.. perl -I testlib/ generate_ssl_tests.pl ssl-tests/my.conf.in \
+$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl ssl-tests/my.conf.in \
   > ssl-tests/my.conf
 ```
 
@@ -231,7 +231,7 @@ where `my.conf.in` is your test input file.
 For example, to generate the test cases in `ssl-tests/01-simple.conf.in`, do
 
 ```
-$ TOP=.. perl -I testlib/ generate_ssl_tests.pl ssl-tests/01-simple.conf.in > ssl-tests/01-simple.conf
+$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl ssl-tests/01-simple.conf.in > ssl-tests/01-simple.conf
 ```
 
 Alternatively (hackish but simple), you can comment out
