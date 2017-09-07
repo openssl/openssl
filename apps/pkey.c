@@ -149,7 +149,7 @@ int pkey_main(int argc, char **argv)
         r = EVP_PKEY_check(pkey);
 
         if (r == 1) {
-            BIO_printf(out, "Key ok\n");
+            BIO_printf(out, "Key is valid\n");
         } else {
             /*
              * Note: at least for RSA keys if this function returns
@@ -157,8 +157,10 @@ int pkey_main(int argc, char **argv)
              */
             unsigned long err;
 
+            BIO_printf(out, "Key is invalid\n");
+
             while ((err = ERR_peek_error()) != 0) {
-                BIO_printf(out, "Key error: %s\n",
+                BIO_printf(out, "Detailed error: %s\n",
                            ERR_reason_error_string(err));
                 ERR_get_error(); /* remove e from error stack */
             }
