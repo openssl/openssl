@@ -877,9 +877,9 @@ struct ssl_ctx_st {
     ENGINE *client_cert_engine;
 # endif
 
-    /* Early callback.  Mostly for extensions, but not entirely. */
-    SSL_early_cb_fn early_cb;
-    void *early_cb_arg;
+    /* ClientHello callback.  Mostly for extensions, but not entirely. */
+    SSL_client_hello_cb_fn client_hello_cb;
+    void *client_hello_cb_arg;
 
     /* TLS extensions. */
     struct {
@@ -1252,7 +1252,10 @@ struct ssl_st {
         size_t tls13_cookie_len;
     } ext;
 
-    /* Parsed form of the ClientHello, kept around across early_cb calls. */
+    /*
+     * Parsed form of the ClientHello, kept around across client_hello_cb
+     * calls.
+     */
     CLIENTHELLO_MSG *clienthello;
 
     /*-

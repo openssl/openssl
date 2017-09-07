@@ -36,7 +36,7 @@ OSSL_STORE_open_fn                      datatype
 OSSL_STORE_post_process_info_fn         datatype
 RAND_poll_cb                            datatype
 SSL_CTX_keylog_cb_func                  datatype
-SSL_early_cb_fn                         datatype
+SSL_client_hello_cb_fn                  datatype
 SSL_psk_client_cb_func                  datatype
 SSL_psk_find_session_cb_func            datatype
 SSL_psk_server_cb_func                  datatype
@@ -349,7 +349,7 @@ SSL_set_tlsext_status_type              define
 SSL_set_tmp_dh                          define
 SSL_want_async                          define
 SSL_want_async_job                      define
-SSL_want_early                          define
+SSL_want_client_hello_cb                define
 SSL_want_nothing                        define
 SSL_want_read                           define
 SSL_want_write                          define

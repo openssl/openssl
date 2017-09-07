@@ -1430,15 +1430,15 @@ static int tls_early_post_process_client_hello(SSL *s, int *pal)
     DOWNGRADE dgrd = DOWNGRADE_NONE;
 
     /* Finished parsing the ClientHello, now we can start processing it */
-    /* Give the early callback a crack at things */
-    if (s->ctx->early_cb != NULL) {
+    /* Give the ClientHello callback a crack at things */
+    if (s->ctx->client_hello_cb != NULL) {
         int code;
-        /* A failure in the early callback terminates the connection. */
-        code = s->ctx->early_cb(s, &al, s->ctx->early_cb_arg);
+        /* A failure in the ClientHello callback terminates the connection. */
+        code = s->ctx->client_hello_cb(s, &al, s->ctx->client_hello_cb_arg);
         if (code == 0)
             goto err;
         if (code < 0) {
-            s->rwstate = SSL_EARLY_WORK;
+            s->rwstate = SSL_CLIENT_HELLO_CB;
             return code;
         }
     }

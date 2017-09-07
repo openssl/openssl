@@ -111,10 +111,10 @@ our @tests = (
         },
     },
     {
-        name => "SNI-bad-early-sni-ignore-mismatch",
+        name => "SNI-bad-clienthello-sni-ignore-mismatch",
         server => {
             extra => {
-                "ServerNameCallback" => "EarlyIgnoreMismatch",
+                "ServerNameCallback" => "ClientHelloIgnoreMismatch",
             },
         },
         client => {
@@ -128,10 +128,10 @@ our @tests = (
         },
     },
     {
-        name => "SNI-bad-early-sni-reject-mismatch",
+        name => "SNI-bad-clienthello-sni-reject-mismatch",
         server => {
             extra => {
-                "ServerNameCallback" => "EarlyRejectMismatch",
+                "ServerNameCallback" => "ClientHelloRejectMismatch",
             },
         },
         client => {
@@ -148,10 +148,10 @@ our @tests = (
 
 our @tests_tls_1_1 = (
     {
-        name => "SNI-early-disable-v12",
+        name => "SNI-clienthello-disable-v12",
         server => {
             extra => {
-                "ServerNameCallback" => "EarlyNoV12",
+                "ServerNameCallback" => "ClientHelloNoV12",
             },
         },
         client => {
