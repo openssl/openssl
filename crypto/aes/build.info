@@ -1,7 +1,7 @@
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
         aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c \
-        aes_ige.c aes_wrap.c {- $target{aes_asm_src} -}
+        aes_ige.c aes_siv.c aes_wrap.c {- $target{aes_asm_src} -}
 
 GENERATE[aes-ia64.s]=asm/aes-ia64.S
 

@@ -1,0 +1,45 @@
+=pod
+
+=head1 NAME
+
+AES_SIV_CTX, AES_SIV_CTX_new, AES_SIV_CTX_free - manage AES-SIV contexts 
+
+=head1 SYNOPSIS
+
+ #include <openssl/aes_siv.h>
+
+ typedef struct aes_siv_ctx_st AES_SIV_CTX;
+
+ AES_SIV_CTX* AES_SIV_CTX_new();
+ void AES_SIV_CTX_free(AES_SIV_CTX *ctx);
+
+=head1 DESCRIPTION
+
+An B<AES_SIV_CTX> is an opaque structure which holds context for
+AES-SIV operations.  A single B<AES_SIV_CTX> may be allocated and used
+repeatedly for multiple operations, so long as it is only used for one
+operation a time.
+
+AES_SIV_CTX_new() allocates and returns a new, uninitialized B<AES_SIV_CTX>.
+
+AES_SIV_CTX_free() frees the memory associated with B<ctx>.
+
+=head1 RETURN VALUES
+
+AES_SIV_CTX_new() returns a pointer to the newly-allocated context
+structure on success, or NULL on failure.
+
+=head1 SEE ALSO
+
+L<AES_SIV_Encrypt(3)>, L<AES_SIV_Init(3)>, IETF RFC 5297.
+
+=head1 COPYRIGHT
+
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

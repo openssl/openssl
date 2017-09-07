@@ -76,6 +76,7 @@ typedef struct asn1_sctx_st ASN1_SCTX;
 #  undef BIGNUM
 # endif
 struct dane_st;
+typedef struct aes_siv_ctx_st AES_SIV_CTX;
 typedef struct bio_st BIO;
 typedef struct bignum_st BIGNUM;
 typedef struct bignum_ctx BN_CTX;

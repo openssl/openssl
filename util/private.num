@@ -9,6 +9,7 @@ OPENSSL_instrument_bus                  assembler
 OPENSSL_instrument_bus2                 assembler
 #
 ASN1_STRING_TABLE                       datatype
+AES_SIV_CTX                             datatype
 BIO_ADDR                                datatype
 BIO_ADDRINFO                            datatype
 BIO_callback_fn                         datatype

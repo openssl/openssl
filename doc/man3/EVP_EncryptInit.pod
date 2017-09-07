@@ -30,6 +30,7 @@ EVP_aes_192_cbc, EVP_aes_192_ecb, EVP_aes_192_cfb, EVP_aes_192_ofb,
 EVP_aes_256_cbc, EVP_aes_256_ecb, EVP_aes_256_cfb, EVP_aes_256_ofb,
 EVP_aes_128_gcm, EVP_aes_192_gcm, EVP_aes_256_gcm,
 EVP_aes_128_ccm, EVP_aes_192_ccm, EVP_aes_256_ccm,
+EVP_aes_128_siv, EVP_aes_192_siv, EVP_aes_256_siv,
 EVP_aes_128_cbc_hmac_sha1, EVP_aes_256_cbc_hmac_sha1,
 EVP_aes_128_cbc_hmac_sha256, EVP_aes_256_cbc_hmac_sha256,
 EVP_chacha20, EVP_chacha20_poly1305 - EVP cipher routines
@@ -383,19 +384,26 @@ bits and 12 rounds.
 
 AES Galois Counter Mode (GCM) for 128, 192 and 256 bit keys respectively.
 These ciphers require additional control operations to function correctly: see
-the L</GCM and OCB Modes> section below for details.
+the L</Authenticated Modes> section below for details.
 
 =item EVP_aes_128_ocb(void), EVP_aes_192_ocb(void), EVP_aes_256_ocb(void)
 
 Offset Codebook Mode (OCB) for 128, 192 and 256 bit keys respectively.
 These ciphers require additional control operations to function correctly: see
-the L</GCM and OCB Modes> section below for details.
+the L</Authenticated Modes> section below for details.
 
 =item EVP_aes_128_ccm(), EVP_aes_192_ccm(), EVP_aes_256_ccm()
 
 AES Counter with CBC-MAC Mode (CCM) for 128, 192 and 256 bit keys respectively.
 These ciphers require additional control operations to function correctly: see
 CCM mode section below for details.
+
+=item EVP_aes_128_siv(), EVP_aes_192_siv(), EVP_aes_256_siv()
+
+AES in Synthetic Initialization Vector (SIV) mode
+for 128, 192 and 256 bit keys respectively.
+These ciphers require additional control operations to function correctly: see
+SIV mode section below for details.
 
 =item EVP_chacha20()
 
@@ -406,13 +414,13 @@ The ChaCha20 stream cipher. The key length is 256 bits, the IV is 96 bits long.
 Authenticated encryption with ChaCha20-Poly1305. Like EVP_chacha20() the key is
 256 bits and the IV is 96 bits. This supports additional authenticated
 data (AAD) and produces a 128 bit authentication tag. See the
-L</GCM and OCB Modes> section for more information.
+L</Authenticated Modes> section for more information.
 
 =back
 
-=head1 GCM and OCB Modes
+=head1 Authenticated Modes
 
-For GCM and OCB mode ciphers the behaviour of the EVP interface is subtly
+For GCM, OCB, and SIV mode ciphers the behaviour of the EVP interface is subtly
 altered and several additional ctrl operations are supported.
 
 To specify any additional authenticated data (AAD) a call to EVP_CipherUpdate(),
@@ -424,7 +432,7 @@ indicates if the operation was successful. If it does not indicate success
 the authentication operation has failed and any output data B<MUST NOT>
 be used as it is corrupted.
 
-The following ctrls are supported in both GCM and OCB modes:
+The following ctrls are supported in by all modes:
 
  EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL);
 

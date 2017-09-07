@@ -131,6 +131,7 @@ void openssl_add_all_ciphers_int(void)
     EVP_add_cipher(EVP_aes_128_ofb());
     EVP_add_cipher(EVP_aes_128_ctr());
     EVP_add_cipher(EVP_aes_128_gcm());
+    EVP_add_cipher(EVP_aes_128_siv());
 #ifndef OPENSSL_NO_OCB
     EVP_add_cipher(EVP_aes_128_ocb());
 #endif
@@ -149,6 +150,7 @@ void openssl_add_all_ciphers_int(void)
     EVP_add_cipher(EVP_aes_192_ofb());
     EVP_add_cipher(EVP_aes_192_ctr());
     EVP_add_cipher(EVP_aes_192_gcm());
+    EVP_add_cipher(EVP_aes_192_siv());
 #ifndef OPENSSL_NO_OCB
     EVP_add_cipher(EVP_aes_192_ocb());
 #endif
@@ -166,6 +168,7 @@ void openssl_add_all_ciphers_int(void)
     EVP_add_cipher(EVP_aes_256_ofb());
     EVP_add_cipher(EVP_aes_256_ctr());
     EVP_add_cipher(EVP_aes_256_gcm());
+    EVP_add_cipher(EVP_aes_256_siv());
 #ifndef OPENSSL_NO_OCB
     EVP_add_cipher(EVP_aes_256_ocb());
 #endif
