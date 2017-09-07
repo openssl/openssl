@@ -1,0 +1,76 @@
+=pod
+
+=head1 NAME
+
+AES_SIV_Encrypt, AES_SIV_Decrypt - AES-SIV high-level interface
+
+=head1 SYNOPSIS
+
+ #include <openssl/aes_siv.h>
+
+ int AES_SIV_Encrypt(AES_SIV_CTX *ctx,
+                     unsigned char *out, size_t *out_len,
+                     unsigned char const* key, size_t key_len,
+                     unsigned char const* nonce, size_t nonce_len,
+                     unsigned char const* plaintext, size_t plaintext_len,
+                     unsigned char const* ad, size_t ad_len);
+ 
+ int AES_SIV_Decrypt(AES_SIV_CTX *ctx,
+                     unsigned char *out, size_t *out_len,
+                     unsigned char const* key, size_t key_len,
+                     unsigned char const* nonce, size_t nonce_len,
+                     unsigned char const* ciphertext, size_t ciphertext_len,
+                     unsigned char const* ad, size_t ad_len);
+
+=head1 DESCRIPTION
+
+These functions provide a high-level interface for AES-SIV encryption
+and decryption, complying with IETF RFC 5297.
+
+AES_SIV_Encrypt() uses the provided B<ctx> to encrypt the provided
+B<plaintext> and associated data B<ad> using the provided B<key> and
+B<nonce_> and outputs up to B<*out_len> bytes of ciphertext into the
+memory pointed to by B<out_> It sets B<*out_len> to the actual output
+length, which will always be B<plaintext_len> + 16.
+
+The output of AES_SIV_Encrypt() is formatted as a 16-byte
+authentication tag followed by the actual ciphertext. Plaintext may be
+encrypted in-place by letting B<plaintext> equal C<&out[16]>. Similarly,
+ciphertext may be authenticated and decrypted in-place by letting
+B<out> equal C<&ciphertext[16]>.
+
+For deterministic encryption, the B<nonce> may be NULL; note that this
+is distinct from providing a zero-length nonce.
+RFC 5297 defines AES-SIV in such a way that deterministic use (i.e,
+not providing a nonce) is distinct from providing a nonce of zero
+length. The latter (a zero-length-nonce) is supported
+but not recommended, and RFC 5297 is ambiguous as to whether it ought
+to be permitted: the operation is clearly defined, but the IANA
+registrations for AES-SIV's RFC 5116 interface specify an N_MIN of 1.
+
+AES_SIV_Decrypt() uses the provided _ctx_ to authenticate and
+decrypt the provided B<ciphertext> and associated data B<ad> using the
+provided B<key> and B<nonce_> and outputs up to B<*out_len> bytes of
+plaintext into the memory pointed to by B<out_> It sets B<*out_len> to
+the actual output length, which will always be B<ciphertext_len> - 16.
+
+B<key_len> is given in bytes and must be 32, 48, or 64.
+
+=head1 RETURN VALUE
+
+These functions return 1 on success and 0 on failure.
+
+=head1 SEE ALSO
+
+L<AES_SIV_CTX_new(3)>, L<AES_SIV_Init(3)>, IETF RFC 5297.
+
+=head1 COPYRIGHT
+
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

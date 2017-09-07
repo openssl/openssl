@@ -4390,3 +4390,14 @@ EVP_aria_128_gcm                        4333	1_1_1	EXIST::FUNCTION:ARIA
 EVP_aria_128_ccm                        4334	1_1_1	EXIST::FUNCTION:ARIA
 EVP_aria_192_gcm                        4335	1_1_1	EXIST::FUNCTION:ARIA
 CRYPTO_THREAD_glock_new                 4336	1_1_1	EXIST::FUNCTION:
+AES_SIV_CTX_new                         4337	1_1_1	EXIST::FUNCTION:
+AES_SIV_CTX_free                        4338	1_1_1	EXIST::FUNCTION:
+AES_SIV_Init                            4339	1_1_1	EXIST::FUNCTION:
+AES_SIV_AssociateData                   4340	1_1_1	EXIST::FUNCTION:
+AES_SIV_EncryptFinal                    4341	1_1_1	EXIST::FUNCTION:
+AES_SIV_DecryptFinal                    4342	1_1_1	EXIST::FUNCTION:
+AES_SIV_Encrypt                         4343	1_1_1	EXIST::FUNCTION:
+AES_SIV_Decrypt                         4344	1_1_1	EXIST::FUNCTION:
+EVP_aes_128_siv                         4345	1_1_1	EXIST::FUNCTION:
+EVP_aes_192_siv                         4346	1_1_1	EXIST::FUNCTION:
+EVP_aes_256_siv                         4347	1_1_1	EXIST::FUNCTION:

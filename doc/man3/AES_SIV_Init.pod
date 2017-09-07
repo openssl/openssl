@@ -1,0 +1,110 @@
+=pod
+
+=head1 NAME
+
+AES_SIV_Init, AES_SIV_AssociateData,
+AES_SIV_EncryptFinal, AES_SIV_DecryptFinal - AES-SIV low-level interface
+
+=head1 SYNOPSIS
+
+ #include <openssl/aes_siv.h>
+
+ int AES_SIV_Init(AES_SIV_CTX *ctx,
+                  unsigned char const* key, size_t key_len);
+ int AES_SIV_AssociateData(AES_SIV_CTX *ctx,
+                           unsigned char const *data, size_t len);
+ int AES_SIV_EncryptFinal(AES_SIV_CTX *ctx,
+                          unsigned char *v_out, unsigned char *c_out,
+                          unsigned char const *plaintext, size_t len);
+ int AES_SIV_DecryptFinal(AES_SIV_CTX *ctx, unsigned char *out,
+                          unsigned char const *v, unsigned char const *c,
+                          size_t len);
+
+=head1 DESCRIPTION
+
+These functions provide a low-level interface for AES-SIV encryption
+and decryption, complying with RFC 5297.
+
+AES_SIV_Init() prepares B<ctx> for encrypting or decrypting data
+under the given B<key_>
+
+AES_SIV_AssociateData() adds a block of associated data to B<ctx>.
+This function is also used for adding a B<nonce>; see below for details.
+
+AES_SIV_EncryptFinal() encrypts the provided B<plaintext_> writing a
+16-byte authentication tag to B<v_out> and ciphertext to B<c_out_>  The
+ciphertext written to B<c_out> will be equal in length to the
+plaintext, with both lengths given by B<len_>
+
+AES_SIV_DecryptFinal() decrypts and verifies the provided ciphertext
+B<c> and 16-byte authentication tag B<v_> writing plaintext to B<out_>
+The plaintext will be equal in length to B<c>, with both lengths
+given by B<len_>
+
+When encrypting or decrypting/authenticating multiple messages under
+the same key, these functions may be used to achieve better
+performance than is possible using the high-level API by caching the
+result of of key setup. After calling AES_SIV_Init(), retain the
+resulting B<ctx> structure and use AES_SIV_CTX_copy() to make a copy
+of it for each message being encrypted or decrypted.
+
+The arguments to a typical AEAD encryption function consist of a key,
+a nonce, associated data, and plaintext. However, IETF RFC 5297 defines
+AES-SIV as accepting an arbitrary number of associated data arguments,
+and specifies that the nonce should be given as the final such
+argument.  This low-level API is structured accordingly. The
+high-level functions AES_SIV_Encrypt() and AES_SIV_Decrypt() are
+implemented on top of it approximately as follows; error-handling is
+omitted for brevity.
+
+ int AES_SIV_Encrypt(AES_SIV_CTX *ctx,
+                     unsigned char *out, size_t *out_len,
+                     unsigned char const* key, size_t key_len,
+                     unsigned char const* nonce, size_t nonce_len,
+                     unsigned char const* plaintext, size_t plaintext_len,
+                     unsigned char const *ad, size_t ad_len)
+ {
+     *out_len = plaintext_len + 16;
+     AES_SIV_Init(ctx, key, key_len);
+     AES_SIV_AssociateData(ctx, ad, ad_len;
+     if (nonce != NULL)
+	 AES_SIV_AssociateData(ctx, nonce, nonce_len);
+     AES_SIV_EncryptFinal(ctx, out, out+16, plaintext, plaintext_len);
+     return 1;
+ }
+
+ int AES_SIV_Decrypt(AES_SIV_CTX *ctx,
+                     unsigned char *out, size_t *out_len,
+                     unsigned char const* key, size_t key_len,
+                     unsigned char const* nonce, size_t nonce_len,
+                     unsigned char const* ciphertext, size_t ciphertext_len,
+                     unsigned char const *ad, size_t ad_len)
+ {
+     *out_len = ciphertext_len - 16;
+     AES_SIV_Init(ctx, key, key_len);
+     AES_SIV_AssociateData(ctx, ad, ad_len);
+     if (nonce != NULL)
+	 AES_SIV_AssociateData(ctx, nonce, nonce_len);
+     AES_SIV_DecryptFinal(ctx, out, ciphertext, ciphertext + 16,
+                          ciphertext_len - 16);
+     return 1;
+}
+
+=head1 RETURN VALUE
+
+These functions return 1 on success, 0 on failure.
+
+=head1 SEE ALSO
+
+L<AES_SIV_CTX_new(3)> L<AES_SIV_Encrypt(3)>, IETF RFC 5297.
+
+=head1 COPYRIGHT
+
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
