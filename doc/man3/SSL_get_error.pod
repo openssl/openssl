@@ -110,10 +110,10 @@ through a call to L<ASYNC_init_thread(3)>. The application should retry the
 operation after a currently executing asynchronous operation for the current
 thread has completed.
 
-=item SSL_ERROR_WANT_EARLY
+=item SSL_ERROR_WANT_CLIENT_HELLO_CB
 
 The operation did not complete because an application callback set by
-SSL_CTX_set_early_cb() has asked to be called again.
+SSL_CTX_set_client_hello_cb() has asked to be called again.
 The TLS/SSL I/O function should be called again later.
 Details depend on the application.
 
@@ -137,7 +137,7 @@ L<ssl(7)>
 =head1 HISTORY
 
 SSL_ERROR_WANT_ASYNC was added in OpenSSL 1.1.0.
-SSL_ERROR_WANT_EARLY was added in OpenSSL 1.1.1.
+SSL_ERROR_WANT_CLIENT_HELLO_CB was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

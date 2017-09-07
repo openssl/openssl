@@ -401,7 +401,7 @@ end:
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
-static int full_early_callback(SSL *s, int *al, void *arg)
+static int full_client_hello_callback(SSL *s, int *al, void *arg)
 {
     int *ctr = arg;
     const unsigned char *p;
@@ -424,16 +424,17 @@ static int full_early_callback(SSL *s, int *al, void *arg)
     if ((*ctr)++ == 0)
         return -1;
 
-    len = SSL_early_get0_ciphers(s, &p);
+    len = SSL_client_hello_get0_ciphers(s, &p);
     if (!TEST_mem_eq(p, len, expected_ciphers, sizeof(expected_ciphers))
-            || !TEST_size_t_eq(SSL_early_get0_compression_methods(s, &p), 1)
+            || !TEST_size_t_eq(
+                       SSL_client_hello_get0_compression_methods(s, &p), 1)
             || !TEST_int_eq(*p, 0))
         return 0;
-    if (!SSL_early_get1_extensions_present(s, &exts, &len))
+    if (!SSL_client_hello_get1_extensions_present(s, &exts, &len))
         return 0;
     if (len != OSSL_NELEM(expected_extensions) ||
         memcmp(exts, expected_extensions, len * sizeof(*exts)) != 0) {
-        printf("Early callback expected ClientHello extensions mismatch\n");
+        printf("ClientHello callback expected extensions mismatch\n");
         OPENSSL_free(exts);
         return 0;
     }
@@ -441,7 +442,7 @@ static int full_early_callback(SSL *s, int *al, void *arg)
     return 1;
 }
 
-static int test_early_cb(void)
+static int test_client_hello_cb(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -451,7 +452,7 @@ static int test_early_cb(void)
                                        TLS_client_method(), &sctx,
                                        &cctx, cert, privkey)))
         goto end;
-    SSL_CTX_set_early_cb(sctx, full_early_callback, &testctr);
+    SSL_CTX_set_client_hello_cb(sctx, full_client_hello_callback, &testctr);
 
     /* The gimpy cipher list we configure can't do TLS 1.3. */
     SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION);
@@ -461,12 +462,13 @@ static int test_early_cb(void)
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                              &clientssl, NULL, NULL))
             || !TEST_false(create_ssl_connection(serverssl, clientssl,
-                                                 SSL_ERROR_WANT_EARLY))
+                        SSL_ERROR_WANT_CLIENT_HELLO_CB))
                 /*
                  * Passing a -1 literal is a hack since
                  * the real value was lost.
                  * */
-            || !TEST_int_eq(SSL_get_error(serverssl, -1), SSL_ERROR_WANT_EARLY)
+            || !TEST_int_eq(SSL_get_error(serverssl, -1),
+                            SSL_ERROR_WANT_CLIENT_HELLO_CB)
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE)))
         goto end;
@@ -3123,7 +3125,7 @@ int setup_tests(void)
     ADD_TEST(test_keylog_no_master_key);
 #endif
 #ifndef OPENSSL_NO_TLS1_2
-    ADD_TEST(test_early_cb);
+    ADD_TEST(test_client_hello_cb);
 #endif
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_early_data_read_write, 3);
