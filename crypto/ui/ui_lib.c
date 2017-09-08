@@ -919,7 +919,7 @@ int UI_set_result_ex(UI *ui, UI_STRING *uis, const char *result, int len)
         }
 
         memcpy(uis->result_buf, result, len);
-        if (len < uis->_.string_data.result_maxsize)
+        if (len <= uis->_.string_data.result_maxsize)
             uis->result_buf[len] = '\0';
         uis->result_len = len;
         break;
