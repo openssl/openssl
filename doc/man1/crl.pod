@@ -66,7 +66,7 @@ the description of B<-nameopt> in L<x509(1)>.
 
 =item B<-noout>
 
-Don't output the encoded version of the CRL.
+Do not output the encoded version of the CRL.
 
 =item B<-hash>
 

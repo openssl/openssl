@@ -80,7 +80,7 @@ The first thing to do is to create a UI with UI_new() or UI_new_method(),
 then add information to it with the UI_add or UI_dup functions.  Also,
 user-defined random data can be passed down to the underlying method
 through calls to UI_add_user_data() or UI_dup_user_data().  The default
-UI method doesn't care about these data, but other methods might.  Finally,
+UI method does not care about these data, but other methods might.  Finally,
 use UI_process() to actually perform the prompting and UI_get0_result()
 to find the result to the prompt.
 
@@ -119,7 +119,7 @@ information is used to prompt for information, for example a password,
 and to verify a password (i.e. having the user enter it twice and check
 that the same string was entered twice).  UI_add_verify_string() takes
 and extra argument that should be a pointer to the result buffer of the
-input string that it's supposed to verify, or verification will fail.
+input string that it is supposed to verify, or verification will fail.
 
 UI_add_input_boolean() adds a prompt to the UI that's supposed to be answered
 in a boolean way, with a single character for yes and a different character
@@ -156,8 +156,8 @@ string and may include encodings that will be processed by the other
 method functions.
 
 UI_add_user_data() adds a user data pointer for the method to use at any
-time.  The builtin UI method doesn't care about this info.  Note that several
-calls to this function doesn't add data, it replaces the previous blob
+time.  The builtin UI method does not care about this info.  Note that several
+calls to this function does not add data, it replaces the previous blob
 with the one given as argument.
 
 UI_dup_user_data() duplicates the user data and works as an alternative
@@ -165,7 +165,7 @@ to UI_add_user_data() when the user data needs to be preserved for a longer
 duration, perhaps even the lifetime of the application.  The UI object takes
 ownership of this duplicate and will free it whenever it gets replaced or
 the UI is destroyed.  UI_dup_user_data() returns 0 on success, or -1 on memory
-allocation failure or if the method doesn't have a duplicator function.
+allocation failure or if the method does not have a duplicator function.
 
 UI_get0_user_data() retrieves the data that has last been given to the
 UI with UI_add_user_data() or UI_dup_user_data.

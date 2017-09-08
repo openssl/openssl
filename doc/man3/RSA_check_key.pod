@@ -51,7 +51,7 @@ override the way key data is stored and handled, and can even provide
 support for HSM keys - in which case the RSA structure may contain B<no>
 key data at all! If the ENGINE in question is only being used for
 acceleration or analysis purposes, then in all likelihood the RSA key data
-is complete and untouched, but this can't be assumed in the general case.
+is complete and untouched, but this cannot be assumed in the general case.
 
 =head1 BUGS
 

@@ -44,7 +44,7 @@ and value fields.  In the description here, I<TYPE> is used a placeholder
 for any of the OpenSSL datatypes, such as I<SSL_SESSION>.
 
 lh_TYPE_new() creates a new B<LHASH_OF(TYPE)> structure to store
-arbitrary data entries, and specifies the 'hash' and 'compare'
+arbitrary data entries, and specifies the B<hash> and B<compare>
 callbacks to be used in organising the table's entries.  The B<hash>
 callback takes a pointer to a table entry as its argument and returns
 an unsigned long hash value for its key field.  The hash value is
@@ -110,7 +110,7 @@ lh_TYPE_doall() will, for every entry in the hash table, call
 B<func> with the data item as its parameter.
 For example:
 
- /* Cleans up resources belonging to 'a' (this is implemented elsewhere) */
+ /* Cleans up resources belonging to |a| (this is implemented elsewhere) */
  void TYPE_cleanup_doall(TYPE *a);
 
  /* Implement a prototype-compatible wrapper for "TYPE_cleanup" */
@@ -142,7 +142,7 @@ variables before calling your type-specific callbacks.  An example of
 this is demonstrated here (printing all hash table entries to a BIO
 that is provided by the caller):
 
- /* Prints item 'a' to 'output_bio' (this is implemented elsewhere) */
+ /* Prints item |a| to |output_bio| (this is implemented elsewhere) */
  void TYPE_print_doall_arg(const TYPE *a, BIO *output_bio);
 
  /* Implement a prototype-compatible wrapper for "TYPE_print" */
@@ -185,34 +185,34 @@ corruption and other hard-to-find bugs.  It also, apparently, violates
 ANSI-C.
 
 The LHASH code regards table entries as constant data.  As such, it
-internally represents lh_insert()'d items with a "const void *"
+internally represents lh_insert()'d items with a C<const void *>
 pointer type.  This is why callbacks such as those used by lh_doall()
-and lh_doall_arg() declare their prototypes with "const", even for the
+and lh_doall_arg() declare their prototypes with C<const>, even for the
 parameters that pass back the table items' data pointers - for
-consistency, user-provided data is "const" at all times as far as the
+consistency, user-provided data is C<const> at all times as far as the
 LHASH code is concerned.  However, as callers are themselves providing
 these pointers, they can choose whether they too should be treating
 all such parameters as constant.
 
 As an example, a hash table may be maintained by code that, for
-reasons of encapsulation, has only "const" access to the data being
-indexed in the hash table (ie. it is returned as "const" from
+reasons of encapsulation, has only C<const> access to the data being
+indexed in the hash table (ie. it is returned as C<const> from
 elsewhere in their code) - in this case the LHASH prototypes are
 appropriate as-is.  Conversely, if the caller is responsible for the
 life-time of the data in question, then they may well wish to make
 modifications to table item passed back in the lh_doall() or
 lh_doall_arg() callbacks (see the "TYPE_cleanup" example above).  If
-so, the caller can either cast the "const" away (if they're providing
+so, the caller can either cast the C<const> away (if they are providing
 the raw callbacks themselves) or use the macros to declare/implement
-the wrapper functions without "const" types.
+the wrapper functions without C<const> types.
 
-Callers that only have "const" access to data they're indexing in a
+Callers that only have C<const> access to data they are indexing in a
 table, yet declare callbacks without constant types (or cast the
-"const" away themselves), are therefore creating their own risks/bugs
+C<const> away themselves), are therefore creating their own risks/bugs
 without being encouraged to do so by the API.  On a related note,
 those auditing code should pay special attention to any instances of
 DECLARE/IMPLEMENT_LHASH_DOALL_[ARG_]_FN macros that provide types
-without any "const" qualifiers.
+without any C<const> qualifiers.
 
 =head1 BUGS
 

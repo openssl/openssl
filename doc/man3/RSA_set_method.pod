@@ -116,7 +116,7 @@ the default method is used.
       * RSA_FLAG_EXT_PKEY        - rsa_mod_exp is called for private key
       *                            operations, even if p,q,dmp1,dmq1,iqmp
       *                            are NULL
-      * RSA_METHOD_FLAG_NO_CHECK - don't check pub/private match
+      * RSA_METHOD_FLAG_NO_CHECK - do not check pub/private match
       */
      int flags;
 

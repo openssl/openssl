@@ -96,14 +96,14 @@ All of these functions are expected to return 0 on error, 1 on
 success, or -1 on out-off-band events, for example if some prompting
 has been cancelled (by pressing Ctrl-C, for example).
 Only the flusher or the reader are expected to return -1.
-If returned by another of the functions, it's treated as if 0 was
+If returned by another of the functions, it is treated as if 0 was
 returned.
 
-Regarding the writer and the reader, don't assume the former should
-only write and don't assume the latter should only read.
+Regarding the writer and the reader, do not assume the former should
+only write and do not assume the latter should only read.
 This depends on the needs of the method.
 
-For example, a typical tty reader wouldn't write the prompts in the
+For example, a typical TTY reader would not write the prompts in the
 write, but would rather do so in the reader, because of the sequential
 nature of prompting on a tty.
 This is how the UI_OpenSSL() method does it.
@@ -193,7 +193,7 @@ UI_method_get_opener(), UI_method_get_writer(),
 UI_method_get_flusher(), UI_method_get_reader(),
 UI_method_get_closer(), UI_method_get_data_duplicator(),
 UI_method_get_data_destructor() and UI_method_get_prompt_constructor()
-return the requested function pointer if it's set in the method,
+return the requested function pointer if it is set in the method,
 otherwise NULL.
 
 UI_method_get_ex_data() returns a pointer to the application specific

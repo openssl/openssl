@@ -43,7 +43,7 @@ possible PEM headers, together with the decoded PEM body.  Since PEM
 formatted files can contain more than one object, the file handlers
 are called upon for each such object.
 
-If the file isn't determined to be formatted as PEM, the content is
+If the file is not determined to be formatted as PEM, the content is
 loaded in raw form in its entirety and passed to the available file
 handlers as is, with no PEM name or headers.
 
@@ -59,6 +59,10 @@ only).
 
 =head2 A generic call
 
+ /*
+  * There is also a OSSL_STORE_open_file() that can be used for file paths
+  * that cannot be represented as URIs, such as Windows backslashes
+  */
  OSSL_STORE_CTX *ctx = OSSL_STORE_open("file:/foo/bar/data.pem");
 
  /*

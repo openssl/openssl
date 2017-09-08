@@ -27,16 +27,16 @@ OPENSSL_LH_stats() prints out statistics on the size of the hash table, how
 many entries are in it, and the number and result of calls to the
 routines in this library.
 
-OPENSSL_LH_node_stats() prints the number of entries for each 'bucket' in the
+OPENSSL_LH_node_stats() prints the number of entries for each bucket in the
 hash table.
 
 OPENSSL_LH_node_usage_stats() prints out a short summary of the state of the
-hash table.  It prints the 'load' and the 'actual load'.  The load is
-the average number of data items per 'bucket' in the hash table.  The
-'actual load' is the average number of items per 'bucket', but only
-for buckets which contain entries.  So the 'actual load' is the
+hash table.  It prints the "load" and the "actual load".  The load is
+the average number of data items per bucket in the hash table.  The
+actual load is the average number of items per bucket, but only
+for buckets which contain entries.  So the actual load is the
 average number of searches that will need to find an item in the hash
-table, while the 'load' is the average number that will be done to
+table, while the load is the average number that will be done to
 record a miss.
 
 OPENSSL_LH_stats_bio(), OPENSSL_LH_node_stats_bio() and OPENSSL_LH_node_usage_stats_bio()

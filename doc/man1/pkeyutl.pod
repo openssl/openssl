@@ -191,8 +191,8 @@ In case of RSA, ECDSA and DSA signatures, this utility
 will not perform hashing on input data but rather use the data directly as
 input of signature algorithm. Depending on key type, signature type and mode
 of padding, the maximum acceptable lengths of input data differ. In general,
-with RSA the signed data can't be longer than the key modulus, in case of ECDSA
-and DSA the data shouldn't be longer than field size, otherwise it will be
+with RSA the signed data cannot be longer than the key modulus, in case of ECDSA
+and DSA the data should not be longer than field size, otherwise it will be
 silently truncated to field size.
 
 In other words, if the value of digest is B<sha1> the input should be 20 bytes

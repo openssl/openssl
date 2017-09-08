@@ -98,7 +98,7 @@ success and 0 if an error occurred.
 BN_BLINDING_is_current_thread() returns 1 if the current thread owns
 the B<BN_BLINDING> object, 0 otherwise.
 
-BN_BLINDING_set_current_thread() doesn't return anything.
+BN_BLINDING_set_current_thread() does not return anything.
 
 BN_BLINDING_lock(), BN_BLINDING_unlock() return 1 if the operation
 succeeded or 0 on error.

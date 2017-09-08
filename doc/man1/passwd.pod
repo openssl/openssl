@@ -79,11 +79,11 @@ Read passwords from B<stdin>.
 
 =item B<-noverify>
 
-Don't verify when reading a password from the terminal.
+Do not verify when reading a password from the terminal.
 
 =item B<-quiet>
 
-Don't output warnings when passwords given at the command line are truncated.
+Do not output warnings when passwords given at the command line are truncated.
 
 =item B<-table>
 

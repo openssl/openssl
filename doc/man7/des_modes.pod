@@ -29,7 +29,7 @@ The order of the blocks can be rearranged without detection.
 =item *
 
 The same plaintext block always produces the same ciphertext block
-(for the same key) making it vulnerable to a 'dictionary attack'.
+(for the same key) making it vulnerable to a dictionary attack.
 
 =item *
 
@@ -174,7 +174,7 @@ Each re-initialization should use a value of the start variable
 different from the start variable values used before with the same
 key.  The reason for this is that an identical bit stream would be
 produced each time from the same parameters.  This would be
-susceptible to a 'known plaintext' attack.
+susceptible to a known-plaintext attack.
 
 =back
 

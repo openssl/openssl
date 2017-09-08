@@ -62,7 +62,7 @@ The BIO the callback is attached to is passed in B<b>.
 
 B<oper> is set to the operation being performed. For some operations
 the callback is called twice, once before and once after the actual
-operation, the latter case has B<oper> or'ed with BIO_CB_RETURN.
+operation, the latter case has B<oper> or'd with BIO_CB_RETURN.
 
 =item B<len>
 

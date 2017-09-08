@@ -622,9 +622,9 @@ This is followed some time later by...
         unable to find 'distinguished_name' in config
         problems making Certificate Request
 
-The first error message is the clue: it can't find the configuration
-file! Certain operations (like examining a certificate request) don't
-need a configuration file so its use isn't enforced. Generation of
+The first error message is the clue: it cannot find the configuration
+file! Certain operations (like examining a certificate request) do not
+need a configuration file so its use is not enforced. Generation of
 certificates or requests however does need a configuration file. This
 could be regarded as a bug.
 
@@ -647,16 +647,16 @@ for more information.
 
 OpenSSL's handling of T61Strings (aka TeletexStrings) is broken: it effectively
 treats them as ISO-8859-1 (Latin 1), Netscape and MSIE have similar behaviour.
-This can cause problems if you need characters that aren't available in
-PrintableStrings and you don't want to or can't use BMPStrings.
+This can cause problems if you need characters that are not available in
+PrintableStrings and you do not want to or cannot use BMPStrings.
 
 As a consequence of the T61String handling the only correct way to represent
 accented characters in OpenSSL is to use a BMPString: unfortunately Netscape
 currently chokes on these. If you have to use accented characters with Netscape
 and MSIE then you currently need to use the invalid T61String form.
 
-The current prompting is not very friendly. It doesn't allow you to confirm what
-you've just entered. Other things like extensions in certificate requests are
+The current prompting is not very friendly. It does not allow you to confirm what
+you have just entered. Other things like extensions in certificate requests are
 statically defined in the configuration file. Some of these: like an email
 address in subjectAltName should be input by the user.
 

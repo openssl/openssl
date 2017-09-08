@@ -164,7 +164,7 @@ last block is copied to a temporary area and zero filled.  The output
 is always an integral multiple of eight bytes.
 
 DES_xcbc_encrypt() is RSA's DESX mode of DES.  It uses I<inw> and
-I<outw> to 'whiten' the encryption.  I<inw> and I<outw> are secret
+I<outw> to whiten the encryption.  I<inw> and I<outw> are secret
 (unlike the iv) and are as such, part of the key.  So the key is sort
 of 24 bytes.  This is much better than CBC DES.
 
@@ -192,8 +192,8 @@ DES_cfb64_encrypt()
 implements CFB mode of DES with 64bit feedback.  Why is this
 useful you ask?  Because this routine will allow you to encrypt an
 arbitrary number of bytes, no 8 byte padding.  Each call to this
-routine will encrypt the input bytes to output and then update ivec
-and num.  num contains 'how far' we are though ivec.  If this does
+routine will encrypt the input bytes to output and then update B<ivec>
+and B<num>; B<num> contains "how far" we are though ivec.  If this does
 not make much sense, read more about cfb mode of DES :-).
 
 DES_ede3_cfb64_encrypt() and DES_ede2_cfb64_encrypt() is the same as

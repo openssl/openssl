@@ -141,7 +141,7 @@ If B<-> is used then the ciphers are deleted from the list, but some or
 all of the ciphers can be added again by later options.
 
 If B<+> is used then the ciphers are moved to the end of the list. This
-option doesn't add any new ciphers it just moves matching existing ones.
+option does not add any new ciphers it just moves matching existing ones.
 
 If none of these characters is present then the string is just interpreted
 as a list of ciphers to be appended to the current preference list. If the
@@ -722,6 +722,12 @@ Some compiled versions of OpenSSL may not include all the ciphers
 listed here because some ciphers were excluded at compile time.
 
 =head1 EXAMPLES
+
+In the following examples, the cipher specifications listed in quotes
+may require some additional charcters to escape command-line shell behavior.
+For example, using the exclamation point requires the string to be
+put in single quotes for C<bash>, while C<tcsh> requires a backslash
+before it.
 
 Verbose listing of all OpenSSL ciphers including NULL ciphers:
 

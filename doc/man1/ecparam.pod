@@ -151,7 +151,7 @@ B<ecparam> can only create EC parameters from known (named) curves.
 
 =head1 EXAMPLES
 
-To create EC parameters with the group 'prime192v1':
+To create EC parameters with the group prime192v1:
 
   openssl ecparam -out ec_param.pem -name prime192v1
 
@@ -167,7 +167,7 @@ To create EC parameters and a private key:
 
   openssl ecparam -out ec_key.pem -name prime192v1 -genkey
 
-To change the point encoding to 'compressed':
+To change the point encoding to compressed:
 
   openssl ecparam -in ec_in.pem -out ec_out.pem -conv_form compressed
 

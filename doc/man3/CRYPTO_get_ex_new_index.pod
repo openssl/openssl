@@ -83,7 +83,7 @@ are called in increasing order of their B<index> value.
 If a dynamic library can be unloaded, it should call CRYPTO_free_ex_index()
 when this is done.
 This will replace the callbacks with no-ops
-so that applications don't crash.  Any existing exdata will be leaked.
+so that applications do not crash.  Any existing exdata will be leaked.
 
 To set or get the exdata on an object, the appropriate type-specific
 routine must be used.  This is because the containing structure is opaque

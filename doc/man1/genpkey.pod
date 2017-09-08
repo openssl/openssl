@@ -127,7 +127,7 @@ If set the key is restricted and can only use B<digest> for signing.
 
 =item B<rsa_pss_keygen_mgf1_md:digest>
 
-If set the key is restricted and can only use B<digest> as it's MGF1
+If set the key is restricted and can only use B<digest> as its MGF1
 parameter.
 
 =item B<rsa_pss_keygen_saltlen:len>

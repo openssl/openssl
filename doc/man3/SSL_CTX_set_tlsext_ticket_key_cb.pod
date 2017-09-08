@@ -40,7 +40,7 @@ ticket.
 Before the callback function is started I<ctx> and I<hctx> have been
 initialised with EVP_CIPHER_CTX_init and HMAC_CTX_init respectively.
 
-For new sessions tickets, when the client doesn't present a session ticket, or
+For new sessions tickets, when the client does not present a session ticket, or
 an attempted retrieval of the ticket failed, or a renew option was indicated,
 the callback function will be called with I<enc> equal to 1. The OpenSSL
 library expects that the function will set an arbitrary I<name>, initialize
@@ -105,7 +105,7 @@ This indicates an error.
 =head1 NOTES
 
 Session resumption shortcuts the TLS so that the client certificate
-negotiation don't occur. It makes up for this by storing client certificate
+negotiation do not occur. It makes up for this by storing client certificate
 an all other negotiated state information encrypted within the ticket. In a
 resumed session the applications will have all this state information available
 exactly as if a full negotiation had occurred.
@@ -138,14 +138,14 @@ Reference Implementation:
 
          key = currentkey(); /* something that you need to implement */
          if (key == NULL) {
-             /* current key doesn't exist or isn't valid */
+             /* current key does not exist or is not valid */
              key = createkey(); /*
                                  * Something that you need to implement.
                                  * createkey needs to initialise a name,
                                  * an aes_key, a hmac_key and optionally
                                  * an expire time.
                                  */
-             if (key == NULL) /* key couldn't be created */
+             if (key == NULL) /* key could not be created */
                  return 0;
          }
          memcpy(key_name, key->name, 16);

@@ -174,8 +174,8 @@ implementation includes the following abstractions;
  RSA_METHOD - for providing alternative RSA implementations
  DSA_METHOD, DH_METHOD, RAND_METHOD, ECDH_METHOD, ECDSA_METHOD,
        - similarly for other OpenSSL APIs
- EVP_CIPHER - potentially multiple cipher algorithms (indexed by 'nid')
- EVP_DIGEST - potentially multiple hash algorithms (indexed by 'nid')
+ EVP_CIPHER - potentially multiple cipher algorithms (indexed by nid)
+ EVP_DIGEST - potentially multiple hash algorithms (indexed by nid)
  key-loading - loading public and/or private EVP_PKEY keys
 
 =head2 Reference counting and handles
@@ -194,7 +194,7 @@ that the structure can not be deallocated until the reference is released.
 
 However, a structural reference provides no guarantee that the ENGINE is
 initialised and able to use any of its cryptographic
-implementations. Indeed it's quite possible that most ENGINEs will not
+implementations. Indeed it is quite possible that most ENGINEs will not
 initialise at all in typical environments, as ENGINEs are typically used to
 support specialised hardware. To use an ENGINE's functionality, you need a
 B<functional> reference. This kind of reference can be considered a
@@ -252,7 +252,7 @@ operational ENGINE for a given cryptographic purpose.
 
 To obtain a functional reference from an existing structural reference,
 call the ENGINE_init() function. This returns zero if the ENGINE was not
-already operational and couldn't be successfully initialised (eg. lack of
+already operational and could not be successfully initialised (eg. lack of
 system drivers, no special hardware attached, etc), otherwise it will
 return non-zero to indicate that the ENGINE is now operational and will
 have allocated a new B<functional> reference to the ENGINE. All functional
@@ -271,11 +271,11 @@ algorithm-specific types in OpenSSL, such as RSA, DSA, EVP_CIPHER_CTX, etc.
 For each supported abstraction, the ENGINE code maintains an internal table
 of state to control which implementations are available for a given
 abstraction and which should be used by default. These implementations are
-registered in the tables and indexed by an 'nid' value, because
+registered in the tables and indexed by a "nid" value, because
 abstractions like EVP_CIPHER and EVP_DIGEST support many distinct
 algorithms and modes, and ENGINEs can support arbitrarily many of them.
 In the case of other abstractions like RSA, DSA, etc, there is only one
-"algorithm" so all implementations implicitly register using the same 'nid'
+"algorithm" so all implementations implicitly register using the same "nid"
 index.
 
 When a default ENGINE is requested for a given abstraction/algorithm/mode, (eg.
@@ -294,7 +294,7 @@ table trying to initialise each of them in turn, in case one of them is
 operational. If it returns a functional reference to an ENGINE, it will
 also cache another reference to speed up processing future queries (without
 needing to iterate across the table). Likewise, it will cache a NULL
-response if no ENGINE was available so that future queries won't repeat the
+response if no ENGINE was available so that future queries will not repeat the
 same iteration unless the state table changes. This behaviour can also be
 changed; if the ENGINE_TABLE_FLAG_NOINIT flag is set (using
 ENGINE_set_table_flags()), no attempted initialisations will take place,
@@ -303,7 +303,7 @@ instead the only way for the state table to return a non-NULL ENGINE to the
 ENGINE_set_default_RSA() does the same job as ENGINE_register_RSA() except
 that it also sets the state table's cached response for the "get_default"
 query. In the case of abstractions like EVP_CIPHER, where implementations are
-indexed by 'nid', these flags and cached-responses are distinct for each 'nid'
+indexed by "nid", these flags and cached-responses are distinct for each "nid"
 value.
 
 =head2 Application requirements
@@ -342,7 +342,7 @@ call ENGINE_cleanup() before the program exits.
 
 I<Using a specific ENGINE implementation>
 
-Here we'll assume an application has been configured by its user or admin
+Here we assume an application has been configured by its user or admin
 to want to use the "ACME" ENGINE if it is available in the version of
 OpenSSL the application was compiled with. If it is available, it should be
 used by default for all RSA, DSA, and symmetric cipher operations, otherwise
@@ -354,16 +354,16 @@ illustrates how to approach this;
  ENGINE_load_builtin_engines();
  e = ENGINE_by_id(engine_id);
  if (!e)
-     /* the engine isn't available */
+     /* the engine is not available */
      return;
  if (!ENGINE_init(e)) {
-     /* the engine couldn't initialise, release 'e' */
+     /* the engine could not initialise, release |e| */
      ENGINE_free(e);
      return;
  }
  if (!ENGINE_set_default_RSA(e))
      /*
-      * This should only happen when 'e' can't initialise, but the previous
+      * This should only happen when |e| cannot initialise, but the previous
       * statement suggests it did.
       */
      abort();
@@ -376,7 +376,7 @@ illustrates how to approach this;
 
 I<Automatically using builtin ENGINE implementations>
 
-Here we'll assume we want to load and register all ENGINE implementations
+Here we assume we want to load and register all ENGINE implementations
 bundled with OpenSSL, such that for any cryptographic algorithm required by
 OpenSSL - if there is an ENGINE that implements it and can be initialised,
 it should be used. The following code illustrates how this can work;
@@ -479,7 +479,7 @@ boolean success or failure.
 Note that ENGINE_ctrl_cmd_string() accepts a boolean argument that can
 relax the semantics of the function - if set non-zero it will only return
 failure if the ENGINE supported the given command name but failed while
-executing it, if the ENGINE doesn't support the command name it will simply
+executing it, if the ENGINE does not support the command name it will simply
 return success without doing anything. In this case we assume the user is
 only supplying commands specific to the given ENGINE so we set this to
 FALSE.
@@ -540,7 +540,7 @@ command name exists, and the remaining commands take a command identifier and
 return properties of the corresponding commands. All except
 ENGINE_CTRL_GET_FLAGS return the string length of a command name or description,
 or populate a supplied character buffer with a copy of the command name or
-description. ENGINE_CTRL_GET_FLAGS returns a bitwise-OR'd mask of the following
+description. ENGINE_CTRL_GET_FLAGS returns a bitwise-or'd mask of the following
 possible values:
 
  ENGINE_CMD_FLAG_NUMERIC

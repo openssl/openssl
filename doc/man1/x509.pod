@@ -459,7 +459,7 @@ extension section format.
 
 When a certificate is created set its public key to B<key> instead of the
 key in the certificate or certificate request. This option is useful for
-creating certificates where the algorithm can't normally sign requests, for
+creating certificates where the algorithm cannot normally sign requests, for
 example DH.
 
 The format or B<key> can be specified using the B<-keyform> option.
@@ -623,48 +623,48 @@ Use the old format. This is equivalent to specifying no output options at all.
 
 =item B<no_header>
 
-Don't print header information: that is the lines saying "Certificate"
+Do not print header information: that is the lines saying "Certificate"
 and "Data".
 
 =item B<no_version>
 
-Don't print out the version number.
+Do not print out the version number.
 
 =item B<no_serial>
 
-Don't print out the serial number.
+Do not print out the serial number.
 
 =item B<no_signame>
 
-Don't print out the signature algorithm used.
+Do not print out the signature algorithm used.
 
 =item B<no_validity>
 
-Don't print the validity, that is the B<notBefore> and B<notAfter> fields.
+Do not print the validity, that is the B<notBefore> and B<notAfter> fields.
 
 =item B<no_subject>
 
-Don't print out the subject name.
+Do not print out the subject name.
 
 =item B<no_issuer>
 
-Don't print out the issuer name.
+Do not print out the issuer name.
 
 =item B<no_pubkey>
 
-Don't print out the public key.
+Do not print out the public key.
 
 =item B<no_sigdump>
 
-Don't give a hexadecimal dump of the certificate signature.
+Do not give a hexadecimal dump of the certificate signature.
 
 =item B<no_aux>
 
-Don't print out certificate trust information.
+Do not print out certificate trust information.
 
 =item B<no_extensions>
 
-Don't print out any X509V3 extensions.
+Do not print out any X509V3 extensions.
 
 =item B<ext_default>
 
@@ -864,7 +864,7 @@ basicConstraints extension is absent.
 =item B<Netscape SSL Server>
 
 For Netscape SSL clients to connect to an SSL server it must have the
-keyEncipherment bit set if the keyUsage extension is present. This isn't
+keyEncipherment bit set if the keyUsage extension is present. This is not
 always valid because some cipher suites use the key for digital signing.
 Otherwise it is the same as a normal SSL server.
 
@@ -874,7 +874,7 @@ The extended key usage extension must be absent or include the "email
 protection" OID. Netscape certificate type must be absent or should have the
 S/MIME bit set. If the S/MIME bit is not set in Netscape certificate type
 then the SSL client bit is tolerated as an alternative but a warning is shown:
-this is because some Verisign certificates don't set the S/MIME bit.
+this is because some Verisign certificates do not set the S/MIME bit.
 
 =item B<S/MIME Signing>
 

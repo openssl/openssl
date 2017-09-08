@@ -50,7 +50,7 @@ file an error occurs.
 =item SSL_CONF_FLAG_SHOW_ERRORS
 
 indicate errors relating to unrecognised options or missing arguments in
-the error queue. If this option isn't set such errors are only reflected
+the error queue. If this option is not set such errors are only reflected
 in the return values of SSL_CONF_set_cmd() or SSL_CONF_set_argv()
 
 =back

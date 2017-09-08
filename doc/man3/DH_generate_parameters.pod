@@ -58,13 +58,13 @@ following bits may be set:
 =item DH_CHECK_P_NOT_PRIME
 
 The parameter B<p> has been determined to not being an odd prime.
-Note that the lack of this bit doesn't guarantee that B<p> is a
+Note that the lack of this bit does not guarantee that B<p> is a
 prime.
 
 =item DH_NOT_SUITABLE_GENERATOR
 
 The generator B<g> is not suitable.
-Note that the lack of this bit doesn't guarantee that B<g> is
+Note that the lack of this bit does not guarantee that B<g> is
 suitable, unless B<p> is known to be a strong prime.
 
 =back

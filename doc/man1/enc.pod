@@ -110,7 +110,7 @@ The default algorithm is sha-256.
 
 =item B<-nosalt>
 
-Don't use a salt in the key derivation routines. This option B<SHOULD NOT> be
+Do not use a salt in the key derivation routines. This option B<SHOULD NOT> be
 used except for test purposes or compatibility with ancient versions of
 OpenSSL.
 
@@ -145,7 +145,7 @@ Print out the key and IV used.
 
 =item B<-P>
 
-Print out the key and IV used then immediately exit: don't do any encryption
+Print out the key and IV used then immediately exit: do not do any encryption
 or decryption.
 
 =item B<-bufsize number>
@@ -188,7 +188,7 @@ This can be used with a subsequent B<-rand> flag.
 =head1 NOTES
 
 The program can be called either as B<openssl cipher> or
-B<openssl enc -cipher>. The first form doesn't work with
+B<openssl enc -cipher>. The first form does not work with
 engine-provided ciphers, because this form is processed before the
 configuration file is read and any ENGINEs loaded.
 Use the B<list> command to get a list of supported ciphers.
@@ -223,7 +223,7 @@ a strong block cipher, such as AES, in CBC mode.
 All the block ciphers normally use PKCS#5 padding, also known as standard
 block padding. This allows a rudimentary integrity or password check to
 be performed. However since the chance of random data passing the test
-is better than 1 in 256 it isn't a very good test.
+is better than 1 in 256 it is not a very good test.
 
 If padding is disabled then the input data must be a multiple of the cipher
 block length.
@@ -358,13 +358,13 @@ Decrypt some data using a supplied 40 bit RC4 key:
 
 =head1 BUGS
 
-The B<-A> option when used with large files doesn't work properly.
+The B<-A> option when used with large files does not work properly.
 
 There should be an option to allow an iteration count to be included.
 
 The B<enc> program only supports a fixed number of algorithms with
 certain parameters. So if, for example, you want to use RC2 with a
-76 bit key or RC4 with an 84 bit key you can't use this program.
+76 bit key or RC4 with an 84 bit key you cannot use this program.
 
 =head1 HISTORY
 

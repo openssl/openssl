@@ -346,7 +346,7 @@ Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
 The special value B<ALL> refers to all supported versions.
 
-This can't enable protocols that are disabled using B<MinProtocol>
+This cannot enable protocols that are disabled using B<MinProtocol>
 or B<MaxProtocol>, but can disable protocols that are still allowed
 by them.
 
@@ -457,7 +457,7 @@ The value is a directory name.
 
 =item B<SSL_CONF_TYPE_NONE>
 
-The value string is not used e.g. a command line option which doesn't take an
+The value string is not used e.g. a command line option which does not take an
 argument.
 
 =back
@@ -586,11 +586,11 @@ L<SSL_CTX_set_options(3)>
 
 SSL_CONF_cmd() was first added to OpenSSL 1.0.2
 
-B<SSL_OP_NO_SSL2> doesn't have effect since 1.1.0, but the macro is retained
+B<SSL_OP_NO_SSL2> does not have effect since 1.1.0, but the macro is retained
 for backwards compatibility.
 
 B<SSL_CONF_TYPE_NONE> was first added to OpenSSL 1.1.0. In earlier versions of
-OpenSSL passing a command which didn't take an argument would return
+OpenSSL passing a command which did not take an argument would return
 B<SSL_CONF_TYPE_UNKNOWN>.
 
 B<MinProtocol> and B<MaxProtocol> where added in OpenSSL 1.1.0.

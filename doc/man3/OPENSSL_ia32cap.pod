@@ -70,14 +70,14 @@ enable XMM registers. Historically address of the capability vector copy
 was exposed to application through OPENSSL_ia32cap_loc(), but not
 anymore. Now the only way to affect the capability detection is to set
 OPENSSL_ia32cap environment variable prior target application start. To
-give a specific example, on Intel P4 processor 'env
-OPENSSL_ia32cap=0x16980010 apps/openssl', or better yet 'env
-OPENSSL_ia32cap=~0x1000000 apps/openssl' would achieve the desired
+give a specific example, on Intel P4 processor
+C<env OPENSSL_ia32cap=0x16980010 apps/openssl>, or better yet
+C<env OPENSSL_ia32cap=~0x1000000 apps/openssl> would achieve the desired
 effect. Alternatively you can reconfigure the toolkit with no-sse2
 option and recompile.
 
 Less intuitive is clearing bit #28, or ~0x10000000 in the "environment
-variable" terms. The truth is that it's not copied from CPUID output
+variable" terms. The truth is that it is not copied from CPUID output
 verbatim, but is adjusted to reflect whether or not the data cache is
 actually shared between logical cores. This in turn affects the decision
 on whether or not expensive countermeasures against cache-timing attacks
@@ -112,9 +112,9 @@ a.k.a. AVX512IFMA extension;
 
 =back
 
-To control this extended capability word use ':' as delimiter when
+To control this extended capability word use ":" as delimiter when
 setting up OPENSSL_ia32cap environment variable. For example assigning
-':~0x20' would disable AVX2 code paths, and ':0' - all post-AVX
+":~0x20" would disable AVX2 code paths, and ":0" - all post-AVX
 extensions.
 
 It should be noted that whether or not some of the most "fancy"
@@ -137,13 +137,13 @@ Even though AVX512 support was implemented in llvm 3.6, compilation of
 assembly modules apparently requires explicit -march flag. But then
 compiler generates processor-specific code, which in turn contradicts
 the mere idea of run-time switch execution facilitated by the variable
-in question. Till the limitation is lifted, it's possible to work around
+in question. Till the limitation is lifted, it is possible to work around
 the problem by making build procedure use following script:
 
    #!/bin/sh
    exec clang -no-integrated-as "$@"
 
-instead of real clang. In which case it doesn't matter which clang
+instead of real clang. In which case it does not matter which clang
 version is used, as it is GNU assembler version that will be checked.
 
 =head1 COPYRIGHT

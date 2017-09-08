@@ -107,7 +107,7 @@ return B<NULL> on error and leave an error indication on the
 OpenSSL error stack.
 
 All other functions described here return 0 or B<NULL> when the
-information they should return isn't available.
+information they should return is not available.
 
 =head1 SEE ALSO
 

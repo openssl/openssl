@@ -98,7 +98,7 @@ current system time. B<timestamp> is the number of seconds since
 =item B<-check_ss_sig>
 
 Verify the signature on the self-signed root CA. This is disabled by default
-because it doesn't add any security.
+because it does not add any security.
 
 =item B<-CRLfile file>
 
@@ -351,7 +351,7 @@ certificate.
 If a certificate is found which is its own issuer it is assumed to be the root
 CA.
 
-The process of 'looking up the issuers certificate' itself involves a number of
+The process of looking up the issuer's certificate itself involves a number of
 steps.
 After all certificates whose subject name matches the issuer name of the current
 certificate are subject to further tests.

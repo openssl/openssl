@@ -36,7 +36,7 @@ The function X509_up_ref() if useful if a certificate structure is being
 used by several different operations each of which will free it up after
 use: this avoids the need to duplicate the entire certificate structure.
 
-The function X509_chain_up_ref() doesn't just up the reference count of
+The function X509_chain_up_ref() does not just up the reference count of
 each certificate it also returns a copy of the stack, using sk_X509_dup(),
 but it serves a similar purpose: the returned chain persists after the
 original has been freed.

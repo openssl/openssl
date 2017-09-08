@@ -46,7 +46,7 @@ verification that shall be allowed for B<ssl>.
 =head1 NOTES
 
 The verification of certificates can be controlled by a set of logically
-or'ed B<mode> flags:
+or'd B<mode> flags:
 
 =over 4
 

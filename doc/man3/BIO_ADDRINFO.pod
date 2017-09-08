@@ -88,7 +88,7 @@ occurred, and will leave an error indication on the OpenSSL error stack in that
 case.
 
 All other functions described here return 0 or B<NULL> when the
-information they should return isn't available.
+information they should return is not available.
 
 =head1 NOTES
 

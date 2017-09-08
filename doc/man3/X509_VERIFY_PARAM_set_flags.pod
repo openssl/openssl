@@ -242,7 +242,7 @@ If B<X509_V_FLAG_USE_DELTAS> is set delta CRLs (if present) are used to
 determine certificate status. If not set deltas are ignored.
 
 B<X509_V_FLAG_CHECK_SS_SIGNATURE> enables checking of the root CA self signed
-certificate signature. By default this check is disabled because it doesn't
+certificate signature. By default this check is disabled because it does not
 add any additional security but in some cases applications might want to
 check the signature anyway. A side effect of not checking the root CA
 signature is that disabled or unsupported message digests on the root CA

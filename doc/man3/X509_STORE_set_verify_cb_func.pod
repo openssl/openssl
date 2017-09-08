@@ -138,7 +138,7 @@ function will be used instead.>
 
 X509_STORE_set_check_issued() sets the function to check that a given
 certificate B<x> is issued with the issuer certificate B<issuer>.
-This function must return 0 on failure (among others if B<x> hasn't
+This function must return 0 on failure (among others if B<x> has not
 been issued with B<issuer>) and 1 on success.
 I<If no function to get the issuer is provided, the internal default
 function will be used instead.>
@@ -187,7 +187,7 @@ function will be used instead.>
 
 X509_STORE_set_cleanup() sets the final cleanup function, which is
 called when the context (B<X509_STORE_CTX>) is being torn down.
-This function doesn't return any value.
+This function does not return any value.
 I<If no function to get the issuer is provided, the internal default
 function will be used instead.>
 

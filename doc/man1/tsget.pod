@@ -58,7 +58,7 @@ The URL of the HTTP/HTTPS server listening for time stamp requests.
 
 If the B<-o> option is not given this argument specifies the extension of the
 output files. The base name of the output file will be the same as those of
-the input files. Default extension is '.tsr'. (Optional)
+the input files. Default extension is C<.tsr>. (Optional)
 
 =item B<-o> output
 
@@ -174,13 +174,11 @@ protected):
         -k client_key.pem -c client_cert.pem file1.tsq
 
 You can shorten the previous command line if you make use of the B<TSGET>
-environment variable. The following commands do the same as the previous
+environment variable. The following command is the same as the previous
 example:
 
-  TSGET='-h https://tsa.opentsa.org:8443/tsa -C cacerts.pem \
-        -k client_key.pem -c client_cert.pem'
-  export TSGET
-  tsget file1.tsq
+  env TSGET="-h https://tsa.opentsa.org:8443/tsa -C cacerts.pem \
+        -k client_key.pem -c client_cert.pem" tsget file1.tsq
 
 =head1 SEE ALSO
 
