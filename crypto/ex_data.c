@@ -9,6 +9,7 @@
 
 #include "internal/cryptlib_int.h"
 #include "internal/thread_once.h"
+#include "internal/glock.h"
 #include <openssl/lhash.h>
 
 /*
@@ -33,14 +34,11 @@ typedef struct ex_callbacks_st {
 
 static EX_CALLBACKS ex_data[CRYPTO_EX_INDEX__COUNT];
 
-static CRYPTO_RWLOCK *ex_data_lock = NULL;
 static CRYPTO_ONCE ex_data_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(do_ex_data_init)
 {
-    OPENSSL_init_crypto(0, NULL);
-    ex_data_lock = CRYPTO_THREAD_glock_new("ex_data");
-    return ex_data_lock != NULL;
+    return OPENSSL_init_crypto(0, NULL);
 }
 
 /*
@@ -61,7 +59,7 @@ static EX_CALLBACKS *get_and_lock(int class_index)
         return NULL;
     }
 
-    if (ex_data_lock == NULL) {
+    if (OPENSSL_LOCK_lock(CRYPTO_GLOCK_EX_DATA) == -1) {
         /*
          * This can happen in normal operation when using CRYPTO_mem_leaks().
          * The CRYPTO_mem_leaks() function calls OPENSSL_cleanup() which cleans
@@ -75,7 +73,6 @@ static EX_CALLBACKS *get_and_lock(int class_index)
     }
 
     ip = &ex_data[class_index];
-    CRYPTO_THREAD_write_lock(ex_data_lock);
     return ip;
 }
 
@@ -100,9 +97,6 @@ void crypto_cleanup_all_ex_data_int(void)
         sk_EX_CALLBACK_pop_free(ip->meth, cleanup_cb);
         ip->meth = NULL;
     }
-
-    CRYPTO_THREAD_lock_free(ex_data_lock);
-    ex_data_lock = NULL;
 }
 
 
@@ -145,7 +139,7 @@ int CRYPTO_free_ex_index(int class_index, int idx)
     a->free_func = dummy_free;
     toret = 1;
 err:
-    CRYPTO_THREAD_unlock(ex_data_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_EX_DATA);
     return toret;
 }
 
@@ -194,7 +188,7 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
     (void)sk_EX_CALLBACK_set(ip->meth, toret, a);
 
  err:
-    CRYPTO_THREAD_unlock(ex_data_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_EX_DATA);
     return toret;
 }
 
@@ -228,7 +222,7 @@ int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
             for (i = 0; i < mx; i++)
                 storage[i] = sk_EX_CALLBACK_value(ip->meth, i);
     }
-    CRYPTO_THREAD_unlock(ex_data_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_EX_DATA);
 
     if (mx > 0 && storage == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_NEW_EX_DATA, ERR_R_MALLOC_FAILURE);
@@ -279,7 +273,7 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
             for (i = 0; i < mx; i++)
                 storage[i] = sk_EX_CALLBACK_value(ip->meth, i);
     }
-    CRYPTO_THREAD_unlock(ex_data_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_EX_DATA);
 
     if (mx == 0)
         return 1;
@@ -339,15 +333,15 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
             for (i = 0; i < mx; i++)
                 storage[i] = sk_EX_CALLBACK_value(ip->meth, i);
     }
-    CRYPTO_THREAD_unlock(ex_data_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_EX_DATA);
 
     for (i = 0; i < mx; i++) {
         if (storage != NULL)
             f = storage[i];
         else {
-            CRYPTO_THREAD_write_lock(ex_data_lock);
+            OPENSSL_LOCK_lock(CRYPTO_GLOCK_EX_DATA);
             f = sk_EX_CALLBACK_value(ip->meth, i);
-            CRYPTO_THREAD_unlock(ex_data_lock);
+            OPENSSL_LOCK_unlock(CRYPTO_GLOCK_EX_DATA);
         }
         if (f != NULL && f->free_func != NULL) {
             ptr = CRYPTO_get_ex_data(ad, i);

@@ -14,6 +14,7 @@
 #include "rand_lcl.h"
 #include "internal/thread_once.h"
 #include "internal/rand_int.h"
+#include "internal/glock.h"
 
 static RAND_DRBG rand_drbg; /* The default global DRBG. */
 static RAND_DRBG priv_drbg; /* The global private-key DRBG. */
@@ -31,6 +32,25 @@ static RAND_DRBG priv_drbg; /* The global private-key DRBG. */
  */
 
 static CRYPTO_ONCE rand_init_drbg = CRYPTO_ONCE_STATIC_INIT;
+
+int drbg_lock(RAND_DRBG *drbg);
+int drbg_unlock(RAND_DRBG *drbg);
+
+int drbg_lock(RAND_DRBG *drbg)
+{
+    if (drbg->priv)
+        return OPENSSL_LOCK_lock(CRYPTO_GLOCK_PRIV_DRBG);
+    else
+        return OPENSSL_LOCK_lock(CRYPTO_GLOCK_DRBG);
+}
+
+int drbg_unlock(RAND_DRBG *drbg)
+{
+    if (drbg->priv)
+        return OPENSSL_LOCK_unlock(CRYPTO_GLOCK_PRIV_DRBG);
+    else
+        return OPENSSL_LOCK_unlock(CRYPTO_GLOCK_DRBG);
+}
 
 /*
  * Set/initialize |drbg| to be of type |nid|, with optional |flags|.
@@ -337,12 +357,11 @@ void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
  * Creates a global DRBG with default settings.
  * Returns 1 on success, 0 on failure
  */
-static int setup_drbg(RAND_DRBG *drbg, const char *name)
+static int setup_drbg(RAND_DRBG *drbg, int private)
 {
     int ret = 1;
 
-    drbg->lock = CRYPTO_THREAD_glock_new(name);
-    ret &= drbg->lock != NULL;
+    drbg->priv = private;
     drbg->size = RANDOMNESS_NEEDED;
     drbg->secure = CRYPTO_secure_malloc_initialized();
     /* If you change these parameters, see RANDOMNESS_NEEDED */
@@ -362,8 +381,8 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init_drbg)
 {
     int ret = 1;
 
-    ret &= setup_drbg(&rand_drbg, "rand_drbg");
-    ret &= setup_drbg(&priv_drbg, "priv_drbg");
+    ret &= setup_drbg(&rand_drbg, 0);
+    ret &= setup_drbg(&priv_drbg, 1);
 
     return ret;
 }
@@ -371,7 +390,6 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init_drbg)
 /* Clean up a DRBG and free it */
 static void free_drbg(RAND_DRBG *drbg)
 {
-    CRYPTO_THREAD_lock_free(drbg->lock);
     RAND_DRBG_uninstantiate(drbg);
 }
 
@@ -391,7 +409,7 @@ static int drbg_bytes(unsigned char *out, int count)
     if (drbg == NULL)
         return 0;
 
-    CRYPTO_THREAD_write_lock(drbg->lock);
+    drbg_lock(drbg);
     if (drbg->state == DRBG_UNINITIALISED)
         goto err;
 
@@ -406,7 +424,7 @@ static int drbg_bytes(unsigned char *out, int count)
     ret = 1;
 
 err:
-    CRYPTO_THREAD_unlock(drbg->lock);
+    drbg_unlock(drbg);
     return ret;
 }
 
@@ -415,7 +433,7 @@ static int drbg_add(const void *buf, int num, double randomness)
     unsigned char *in = (unsigned char *)buf;
     unsigned char *out, *end;
 
-    CRYPTO_THREAD_write_lock(rand_bytes.lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_RAND_BYTES);
     out = &rand_bytes.buff[rand_bytes.curr];
     end = &rand_bytes.buff[rand_bytes.size];
 
@@ -429,7 +447,7 @@ static int drbg_add(const void *buf, int num, double randomness)
             *out++ ^= *in++;
     }
 
-    CRYPTO_THREAD_unlock(rand_bytes.lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_RAND_BYTES);
     return 1;
 }
 
@@ -446,9 +464,9 @@ static int drbg_status(void)
     if (drbg == NULL)
         return 0;
 
-    CRYPTO_THREAD_write_lock(drbg->lock);
+    drbg_lock(drbg);
     ret = drbg->state == DRBG_READY ? 1 : 0;
-    CRYPTO_THREAD_unlock(drbg->lock);
+    drbg_unlock(drbg);
     return ret;
 }
 

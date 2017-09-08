@@ -11,6 +11,7 @@
 #include <openssl/evp.h>
 #include <openssl/lhash.h>
 #include "eng_int.h"
+#include "internal/glock.h"
 
 /* The type of the items in the table */
 struct st_engine_pile {
@@ -85,7 +86,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 {
     int ret = 0, added = 0;
     ENGINE_PILE tmplate, *fnd;
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_ENGINE);
     if (!(*table))
         added = 1;
     if (!int_table_check(table, 1))
@@ -134,7 +135,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
     }
     ret = 1;
  end:
-    CRYPTO_THREAD_unlock(global_engine_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
     return ret;
 }
 
@@ -156,10 +157,10 @@ IMPLEMENT_LHASH_DOALL_ARG(ENGINE_PILE, ENGINE);
 
 void engine_table_unregister(ENGINE_TABLE **table, ENGINE *e)
 {
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_ENGINE);
     if (int_table_check(table, 0))
         lh_ENGINE_PILE_doall_ENGINE(&(*table)->piles, int_unregister_cb, e);
-    CRYPTO_THREAD_unlock(global_engine_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
 }
 
 static void int_cleanup_cb_doall(ENGINE_PILE *p)
@@ -174,13 +175,13 @@ static void int_cleanup_cb_doall(ENGINE_PILE *p)
 
 void engine_table_cleanup(ENGINE_TABLE **table)
 {
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_ENGINE);
     if (*table) {
         lh_ENGINE_PILE_doall(&(*table)->piles, int_cleanup_cb_doall);
         lh_ENGINE_PILE_free(&(*table)->piles);
         *table = NULL;
     }
-    CRYPTO_THREAD_unlock(global_engine_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
 }
 
 /* return a functional reference for a given 'nid' */
@@ -203,7 +204,7 @@ ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f,
         return NULL;
     }
     ERR_set_mark();
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_ENGINE);
     /*
      * Check again inside the lock otherwise we could race against cleanup
      * operations. But don't worry about a fprintf(stderr).
@@ -274,7 +275,7 @@ ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f,
         fprintf(stderr, "engine_table_dbg: %s:%d, nid=%d, caching "
                 "'no matching ENGINE'\n", f, l, nid);
 #endif
-    CRYPTO_THREAD_unlock(global_engine_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
     /*
      * Whatever happened, any failed init()s are not failures in this
      * context, so clear our error state.

@@ -17,8 +17,8 @@
 #include <openssl/err.h>
 #include <openssl/buffer.h>
 #include "internal/thread_once.h"
+#include "internal/glock.h"
 
-CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
 /*
@@ -602,9 +602,7 @@ static int addrinfo_wrap(int family, int socktype,
 
 DEFINE_RUN_ONCE_STATIC(do_bio_lookup_init)
 {
-    OPENSSL_init_crypto(0, NULL);
-    bio_lookup_lock = CRYPTO_THREAD_glock_new("bio_lookup");
-    return bio_lookup_lock != NULL;
+    return OPENSSL_init_crypto(0, NULL);
 }
 
 int BIO_lookup(const char *host, const char *service,
@@ -746,7 +744,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
             goto err;
         }
 
-        CRYPTO_THREAD_write_lock(bio_lookup_lock);
+        OPENSSL_LOCK_lock(CRYPTO_GLOCK_BIO_LOOKUP);
         he_fallback_address = INADDR_ANY;
         if (host == NULL) {
             he = &he_fallback;
@@ -886,7 +884,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
             ret = 1;
         }
      err:
-        CRYPTO_THREAD_unlock(bio_lookup_lock);
+        OPENSSL_LOCK_unlock(CRYPTO_GLOCK_BIO_LOOKUP);
     }
 
     return ret;

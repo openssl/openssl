@@ -11,8 +11,7 @@
 #include "eng_int.h"
 #include <openssl/rand.h>
 #include "internal/refcount.h"
-
-CRYPTO_RWLOCK *global_engine_lock;
+#include "internal/glock.h"
 
 CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
 
@@ -20,9 +19,7 @@ CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE(do_engine_lock_init)
 {
-    OPENSSL_init_crypto(0, NULL);
-    global_engine_lock = CRYPTO_THREAD_glock_new("global_engine");
-    return global_engine_lock != NULL;
+    return OPENSSL_init_crypto(0, NULL);
 }
 
 ENGINE *ENGINE_new(void)
@@ -74,14 +71,13 @@ int engine_free_util(ENGINE *e, int not_locked)
 
     if (e == NULL)
         return 1;
-#ifdef HAVE_ATOMICS
-    CRYPTO_DOWN_REF(&e->struct_ref, &i, global_engine_lock);
-#else
-    if (not_locked)
-        CRYPTO_atomic_add(&e->struct_ref, -1, &i, global_engine_lock);
-    else
+    if (not_locked) {
+        OPENSSL_LOCK_lock(CRYPTO_GLOCK_ENGINE);
         i = --e->struct_ref;
-#endif
+        OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
+    } else {
+        i = --e->struct_ref;
+    }
     engine_ref_debug(e, 0, -1)
     if (i > 0)
         return 1;
@@ -167,7 +163,6 @@ void engine_cleanup_int(void)
                                         engine_cleanup_cb_free);
         cleanup_stack = NULL;
     }
-    CRYPTO_THREAD_lock_free(global_engine_lock);
 }
 
 /* Now the "ex_data" support */

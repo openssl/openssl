@@ -15,13 +15,12 @@
 #include <openssl/engine.h>
 #include "internal/thread_once.h"
 #include "rand_lcl.h"
+#include "internal/glock.h"
 
 #ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
 static ENGINE *funct_ref;
-static CRYPTO_RWLOCK *rand_engine_lock;
 #endif
-static CRYPTO_RWLOCK *rand_meth_lock;
 static const RAND_METHOD *default_RAND_meth;
 static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
 RAND_BYTES_BUFFER rand_bytes;
@@ -116,11 +115,11 @@ size_t drbg_entropy_from_system(RAND_DRBG *drbg,
                                     : OPENSSL_malloc(drbg->size);
 
     /* If we don't have enough, try to get more. */
-    CRYPTO_THREAD_write_lock(rand_bytes.lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_RAND_BYTES);
     for (i = RAND_POLL_RETRIES; rand_bytes.curr < min_len && --i >= 0; ) {
-        CRYPTO_THREAD_unlock(rand_bytes.lock);
+        OPENSSL_LOCK_unlock(CRYPTO_GLOCK_RAND_BYTES);
         RAND_poll();
-        CRYPTO_THREAD_write_lock(rand_bytes.lock);
+        OPENSSL_LOCK_lock(CRYPTO_GLOCK_RAND_BYTES);
     }
 
     /* Get desired amount, but no more than we have. */
@@ -133,7 +132,7 @@ size_t drbg_entropy_from_system(RAND_DRBG *drbg,
         if (rand_bytes.curr != 0)
             memmove(rand_bytes.buff, &rand_bytes.buff[min_len], rand_bytes.curr);
     }
-    CRYPTO_THREAD_unlock(rand_bytes.lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_RAND_BYTES);
     *pout = randomness;
     return min_len;
 }
@@ -181,15 +180,6 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
 {
     int ret = 1;
 
-#ifndef OPENSSL_NO_ENGINE
-    rand_engine_lock = CRYPTO_THREAD_glock_new("rand_engine");
-    ret &= rand_engine_lock != NULL;
-#endif
-    rand_meth_lock = CRYPTO_THREAD_glock_new("rand_meth");
-    ret &= rand_meth_lock != NULL;
-
-    rand_bytes.lock = CRYPTO_THREAD_glock_new("rand_bytes");
-    ret &= rand_bytes.lock != NULL;
     rand_bytes.curr = 0;
     rand_bytes.size = MAX_RANDOMNESS_HELD;
     rand_bytes.secure = CRYPTO_secure_malloc_initialized();
@@ -207,11 +197,6 @@ void rand_cleanup_int(void)
     if (meth != NULL && meth->cleanup != NULL)
         meth->cleanup();
     RAND_set_rand_method(NULL);
-#ifndef OPENSSL_NO_ENGINE
-    CRYPTO_THREAD_lock_free(rand_engine_lock);
-#endif
-    CRYPTO_THREAD_lock_free(rand_meth_lock);
-    CRYPTO_THREAD_lock_free(rand_bytes.lock);
     if (rand_bytes.secure)
         OPENSSL_secure_clear_free(rand_bytes.buff, rand_bytes.size);
     else
@@ -237,13 +222,13 @@ int RAND_set_rand_method(const RAND_METHOD *meth)
     if (!RUN_ONCE(&rand_init, do_rand_init))
         return 0;
 
-    CRYPTO_THREAD_write_lock(rand_meth_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_RAND_METH);
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(funct_ref);
     funct_ref = NULL;
 #endif
     default_RAND_meth = meth;
-    CRYPTO_THREAD_unlock(rand_meth_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_RAND_METH);
     return 1;
 }
 
@@ -254,7 +239,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
     if (!RUN_ONCE(&rand_init, do_rand_init))
         return NULL;
 
-    CRYPTO_THREAD_write_lock(rand_meth_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_RAND_METH);
     if (default_RAND_meth == NULL) {
 #ifndef OPENSSL_NO_ENGINE
         ENGINE *e;
@@ -273,7 +258,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
 #endif
     }
     tmp_meth = default_RAND_meth;
-    CRYPTO_THREAD_unlock(rand_meth_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_RAND_METH);
     return tmp_meth;
 }
 
@@ -294,11 +279,11 @@ int RAND_set_rand_engine(ENGINE *engine)
             return 0;
         }
     }
-    CRYPTO_THREAD_write_lock(rand_engine_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_RAND_ENGINE);
     /* This function releases any prior ENGINE so call it first */
     RAND_set_rand_method(tmp_meth);
     funct_ref = engine;
-    CRYPTO_THREAD_unlock(rand_engine_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_RAND_ENGINE);
     return 1;
 }
 #endif

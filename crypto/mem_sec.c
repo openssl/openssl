@@ -17,6 +17,7 @@
  */
 #include "e_os.h"
 #include <openssl/crypto.h>
+#include "internal/glock.h"
 
 #include <string.h>
 
@@ -47,8 +48,6 @@ static size_t secure_mem_used;
 
 static int secure_mem_initialized;
 
-static CRYPTO_RWLOCK *sec_malloc_lock = NULL;
-
 /*
  * These are the functions that must be implemented by a secure heap (sh).
  */
@@ -66,14 +65,8 @@ int CRYPTO_secure_malloc_init(size_t size, int minsize)
     int ret = 0;
 
     if (!secure_mem_initialized) {
-        sec_malloc_lock = CRYPTO_THREAD_glock_new("sec_malloc");
-        if (sec_malloc_lock == NULL)
-            return 0;
         if ((ret = sh_init(size, minsize)) != 0) {
             secure_mem_initialized = 1;
-        } else {
-            CRYPTO_THREAD_lock_free(sec_malloc_lock);
-            sec_malloc_lock = NULL;
         }
     }
 
@@ -89,8 +82,6 @@ int CRYPTO_secure_malloc_done()
     if (secure_mem_used == 0) {
         sh_done();
         secure_mem_initialized = 0;
-        CRYPTO_THREAD_lock_free(sec_malloc_lock);
-        sec_malloc_lock = NULL;
         return 1;
     }
 #endif /* IMPLEMENTED */
@@ -115,11 +106,11 @@ void *CRYPTO_secure_malloc(size_t num, const char *file, int line)
     if (!secure_mem_initialized) {
         return CRYPTO_malloc(num, file, line);
     }
-    CRYPTO_THREAD_write_lock(sec_malloc_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_SEC_MALLOC);
     ret = sh_malloc(num);
     actual_size = ret ? sh_actual_size(ret) : 0;
     secure_mem_used += actual_size;
-    CRYPTO_THREAD_unlock(sec_malloc_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_SEC_MALLOC);
     return ret;
 #else
     return CRYPTO_malloc(num, file, line);
@@ -146,12 +137,12 @@ void CRYPTO_secure_free(void *ptr, const char *file, int line)
         CRYPTO_free(ptr, file, line);
         return;
     }
-    CRYPTO_THREAD_write_lock(sec_malloc_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_SEC_MALLOC);
     actual_size = sh_actual_size(ptr);
     CLEAR(ptr, actual_size);
     secure_mem_used -= actual_size;
     sh_free(ptr);
-    CRYPTO_THREAD_unlock(sec_malloc_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_SEC_MALLOC);
 #else
     CRYPTO_free(ptr, file, line);
 #endif /* IMPLEMENTED */
@@ -170,12 +161,12 @@ void CRYPTO_secure_clear_free(void *ptr, size_t num,
         CRYPTO_free(ptr, file, line);
         return;
     }
-    CRYPTO_THREAD_write_lock(sec_malloc_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_SEC_MALLOC);
     actual_size = sh_actual_size(ptr);
     CLEAR(ptr, actual_size);
     secure_mem_used -= actual_size;
     sh_free(ptr);
-    CRYPTO_THREAD_unlock(sec_malloc_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_SEC_MALLOC);
 #else
     if (ptr == NULL)
         return;
@@ -191,9 +182,9 @@ int CRYPTO_secure_allocated(const void *ptr)
 
     if (!secure_mem_initialized)
         return 0;
-    CRYPTO_THREAD_write_lock(sec_malloc_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_SEC_MALLOC);
     ret = sh_allocated(ptr);
-    CRYPTO_THREAD_unlock(sec_malloc_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_SEC_MALLOC);
     return ret;
 #else
     return 0;
@@ -214,9 +205,9 @@ size_t CRYPTO_secure_actual_size(void *ptr)
 #ifdef IMPLEMENTED
     size_t actual_size;
 
-    CRYPTO_THREAD_write_lock(sec_malloc_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_SEC_MALLOC);
     actual_size = sh_actual_size(ptr);
-    CRYPTO_THREAD_unlock(sec_malloc_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_SEC_MALLOC);
     return actual_size;
 #else
     return 0;

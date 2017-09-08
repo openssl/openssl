@@ -10,6 +10,7 @@
 #include "eng_int.h"
 #include "internal/dso.h"
 #include <openssl/crypto.h>
+#include "internal/glock.h"
 
 /*
  * Shared libraries implementing ENGINEs for use by the "dynamic" ENGINE
@@ -169,7 +170,7 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
     c->DYNAMIC_F1 = "v_check";
     c->DYNAMIC_F2 = "bind_engine";
     c->dir_load = 1;
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    OPENSSL_LOCK_lock(CRYPTO_GLOCK_ENGINE);
     if ((*ctx = (dynamic_data_ctx *)ENGINE_get_ex_data(e,
                                                        dynamic_ex_data_idx))
         == NULL) {
@@ -180,7 +181,7 @@ static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
             c = NULL;
         }
     }
-    CRYPTO_THREAD_unlock(global_engine_lock);
+    OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
     /*
      * If we lost the race to set the context, c is non-NULL and *ctx is the
      * context of the thread that won.
@@ -210,14 +211,14 @@ static dynamic_data_ctx *dynamic_get_data_ctx(ENGINE *e)
             ENGINEerr(ENGINE_F_DYNAMIC_GET_DATA_CTX, ENGINE_R_NO_INDEX);
             return NULL;
         }
-        CRYPTO_THREAD_write_lock(global_engine_lock);
+        OPENSSL_LOCK_lock(CRYPTO_GLOCK_ENGINE);
         /* Avoid a race by checking again inside this lock */
         if (dynamic_ex_data_idx < 0) {
             /* Good, someone didn't beat us to it */
             dynamic_ex_data_idx = new_idx;
             new_idx = -1;
         }
-        CRYPTO_THREAD_unlock(global_engine_lock);
+        OPENSSL_LOCK_unlock(CRYPTO_GLOCK_ENGINE);
         /*
          * In theory we could "give back" the index here if (new_idx>-1), but
          * it's not possible and wouldn't gain us much if it were.
