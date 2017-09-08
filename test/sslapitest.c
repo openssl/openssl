@@ -434,7 +434,7 @@ static int full_client_hello_callback(SSL *s, int *al, void *arg)
         return SSL_CLIENT_HELLO_ERROR;
     if (len != OSSL_NELEM(expected_extensions) ||
         memcmp(exts, expected_extensions, len * sizeof(*exts)) != 0) {
-        printf("ClientHello callback expected ClientHello extensions mismatch\n");
+        printf("ClientHello callback expected extensions mismatch\n");
         OPENSSL_free(exts);
         return SSL_CLIENT_HELLO_ERROR;
     }

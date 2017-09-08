@@ -6,9 +6,6 @@ SSL_CTX_set_client_hello_cb, SSL_client_hello_cb_fn, SSL_client_hello_isv2, SSL_
 
 =head1 SYNOPSIS
 
- #define SSL_CLIENT_HELLO_SUCCESS 1
- #define SSL_CLIENT_HELLO_ERROR   0
- #define SSL_CLIENT_HELLO_RETRY   (-1)
  typedef int (*SSL_client_hello_cb_fn)(SSL *s, int *al, void *arg);
  void SSL_CTX_set_client_hello_cb(SSL_CTX *c, SSL_client_hello_cb_fn *f,
                                   void *arg);
