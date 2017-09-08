@@ -375,162 +375,26 @@ SHA3_absorb:
 	blo	.Labsorbed
 
 	str	$C[0],[sp,#48]			// save len - bsz
+___
+for (my $i=0; $i<24; $i+=2) {
+my $j = $i+1;
+$code.=<<___;
 	ldr	$C[0],[$C[1]],#8		// *inp++
 #ifdef	__AARCH64EB__
 	rev	$C[0],$C[0]
 #endif
-	eor	$A[0][0],$A[0][0],$C[0]
-	cmp	$C[3],#8*2
+	eor	$A[$i/5][$i%5],$A[$i/5][$i%5],$C[0]
+	cmp	$C[3],#8*($i+2)
 	blo	.Lprocess_block
 	ldr	$C[0],[$C[1]],#8		// *inp++
 #ifdef	__AARCH64EB__
 	rev	$C[0],$C[0]
 #endif
-	eor	$A[0][1],$A[0][1],$C[0]
+	eor	$A[$j/5][$j%5],$A[$j/5][$j%5],$C[0]
 	beq	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[0][2],$A[0][2],$C[0]
-	cmp	$C[3],#8*4
-	blo	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[0][3],$A[0][3],$C[0]
-	beq	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[0][4],$A[0][4],$C[0]
-	cmp	$C[3],#8*6
-	blo	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[1][0],$A[1][0],$C[0]
-	beq	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[1][1],$A[1][1],$C[0]
-	cmp	$C[3],#8*8
-	blo	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[1][2],$A[1][2],$C[0]
-	beq	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[1][3],$A[1][3],$C[0]
-	cmp	$C[3],#8*10
-	blo	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[1][4],$A[1][4],$C[0]
-	beq	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[2][0],$A[2][0],$C[0]
-	cmp	$C[3],#8*12
-	blo	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[2][1],$A[2][1],$C[0]
-	beq	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[2][2],$A[2][2],$C[0]
-	cmp	$C[3],#8*14
-	blo	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[2][3],$A[2][3],$C[0]
-	beq	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[2][4],$A[2][4],$C[0]
-	cmp	$C[3],#8*16
-	blo	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[3][0],$A[3][0],$C[0]
-	beq	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[3][1],$A[3][1],$C[0]
-	cmp	$C[3],#8*18
-	blo	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[3][2],$A[3][2],$C[0]
-	beq	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[3][3],$A[3][3],$C[0]
-	cmp	$C[3],#8*20
-	blo	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[3][4],$A[3][4],$C[0]
-	beq	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[4][0],$A[4][0],$C[0]
-	cmp	$C[3],#8*22
-	blo	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[4][1],$A[4][1],$C[0]
-	beq	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[4][2],$A[4][2],$C[0]
-	cmp	$C[3],#8*24
-	blo	.Lprocess_block
-	ldr	$C[0],[$C[1]],#8		// *inp++
-#ifdef	__AARCH64EB__
-	rev	$C[0],$C[0]
-#endif
-	eor	$A[4][3],$A[4][3],$C[0]
-	beq	.Lprocess_block
+___
+}
+$code.=<<___;
 	ldr	$C[0],[$C[1]],#8		// *inp++
 #ifdef	__AARCH64EB__
 	rev	$C[0],$C[0]
@@ -563,7 +427,7 @@ SHA3_absorb:
 	stp	$A[4][2],$A[4][3],[$C[1],#16*11]
 	str	$A[4][4],[$C[1],#16*12]
 
-	mov	x0,$C[0]			// return value
+	mov	x0,$C[2]			// return value
 	ldp	x19,x20,[x29,#16]
 	add	sp,sp,#64
 	ldp	x21,x22,[x29,#32]
