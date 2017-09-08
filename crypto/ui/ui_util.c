@@ -116,7 +116,7 @@ static int ui_read(UI *ui, UI_STRING *uis)
                 result[len] = '\0';
             if (len <= 0)
                 return len;
-            if (UI_set_result(ui, uis, result) >= 0)
+            if (UI_set_result_ex(ui, uis, result, len) >= 0)
                 return 1;
             return 0;
         }

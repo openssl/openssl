@@ -33,9 +33,12 @@ static const ERR_STRING_DATA UI_str_functs[] = {
     {ERR_PACK(ERR_LIB_UI, UI_F_UI_DUP_VERIFY_STRING, 0),
      "UI_dup_verify_string"},
     {ERR_PACK(ERR_LIB_UI, UI_F_UI_GET0_RESULT, 0), "UI_get0_result"},
+    {ERR_PACK(ERR_LIB_UI, UI_F_UI_GET_RESULT_LENGTH, 0),
+     "UI_get_result_length"},
     {ERR_PACK(ERR_LIB_UI, UI_F_UI_NEW_METHOD, 0), "UI_new_method"},
     {ERR_PACK(ERR_LIB_UI, UI_F_UI_PROCESS, 0), "UI_process"},
     {ERR_PACK(ERR_LIB_UI, UI_F_UI_SET_RESULT, 0), "UI_set_result"},
+    {ERR_PACK(ERR_LIB_UI, UI_F_UI_SET_RESULT_EX, 0), "UI_set_result_ex"},
     {0, NULL}
 };
 

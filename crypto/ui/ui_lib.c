@@ -441,6 +441,19 @@ const char *UI_get0_result(UI *ui, int i)
     return UI_get0_result_string(sk_UI_STRING_value(ui->strings, i));
 }
 
+int UI_get_result_length(UI *ui, int i)
+{
+    if (i < 0) {
+        UIerr(UI_F_UI_GET_RESULT_LENGTH, UI_R_INDEX_TOO_SMALL);
+        return -1;
+    }
+    if (i >= sk_UI_STRING_num(ui->strings)) {
+        UIerr(UI_F_UI_GET_RESULT_LENGTH, UI_R_INDEX_TOO_LARGE);
+        return -1;
+    }
+    return UI_get_result_string_length(sk_UI_STRING_value(ui->strings, i));
+}
+
 static int print_error(const char *str, size_t len, UI *ui)
 {
     UI_STRING uis;
@@ -796,6 +809,21 @@ const char *UI_get0_result_string(UI_STRING *uis)
     return NULL;
 }
 
+int UI_get_result_string_length(UI_STRING *uis)
+{
+    switch (uis->type) {
+    case UIT_PROMPT:
+    case UIT_VERIFY:
+        return uis->result_len;
+    case UIT_NONE:
+    case UIT_BOOLEAN:
+    case UIT_INFO:
+    case UIT_ERROR:
+        break;
+    }
+    return -1;
+}
+
 const char *UI_get0_test_string(UI_STRING *uis)
 {
     switch (uis->type) {
@@ -843,8 +871,18 @@ int UI_get_result_maxsize(UI_STRING *uis)
 
 int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 {
-    int l = strlen(result);
+#if 0
+    /*
+     * This is placed here solely to preserve UI_F_UI_SET_RESULT
+     * To be removed for OpenSSL 1.2.0
+     */
+    UIerr(UI_F_UI_SET_RESULT, ERR_R_DISABLED);
+#endif
+    return UI_set_result_ex(ui, uis, result, strlen(result));
+}
 
+int UI_set_result_ex(UI *ui, UI_STRING *uis, const char *result, int len)
+{
     ui->flags &= ~UI_FLAG_REDOABLE;
 
     switch (uis->type) {
@@ -859,16 +897,16 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
             BIO_snprintf(number2, sizeof(number2), "%d",
                          uis->_.string_data.result_maxsize);
 
-            if (l < uis->_.string_data.result_minsize) {
+            if (len < uis->_.string_data.result_minsize) {
                 ui->flags |= UI_FLAG_REDOABLE;
-                UIerr(UI_F_UI_SET_RESULT, UI_R_RESULT_TOO_SMALL);
+                UIerr(UI_F_UI_SET_RESULT_EX, UI_R_RESULT_TOO_SMALL);
                 ERR_add_error_data(5, "You must type in ",
                                    number1, " to ", number2, " characters");
                 return -1;
             }
-            if (l > uis->_.string_data.result_maxsize) {
+            if (len > uis->_.string_data.result_maxsize) {
                 ui->flags |= UI_FLAG_REDOABLE;
-                UIerr(UI_F_UI_SET_RESULT, UI_R_RESULT_TOO_LARGE);
+                UIerr(UI_F_UI_SET_RESULT_EX, UI_R_RESULT_TOO_LARGE);
                 ERR_add_error_data(5, "You must type in ",
                                    number1, " to ", number2, " characters");
                 return -1;
@@ -876,19 +914,21 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
         }
 
         if (uis->result_buf == NULL) {
-            UIerr(UI_F_UI_SET_RESULT, UI_R_NO_RESULT_BUFFER);
+            UIerr(UI_F_UI_SET_RESULT_EX, UI_R_NO_RESULT_BUFFER);
             return -1;
         }
 
-        OPENSSL_strlcpy(uis->result_buf, result,
-                    uis->_.string_data.result_maxsize + 1);
+        memcpy(uis->result_buf, result, len);
+        if (len <= uis->_.string_data.result_maxsize)
+            uis->result_buf[len] = '\0';
+        uis->result_len = len;
         break;
     case UIT_BOOLEAN:
         {
             const char *p;
 
             if (uis->result_buf == NULL) {
-                UIerr(UI_F_UI_SET_RESULT, UI_R_NO_RESULT_BUFFER);
+                UIerr(UI_F_UI_SET_RESULT_EX, UI_R_NO_RESULT_BUFFER);
                 return -1;
             }
 
