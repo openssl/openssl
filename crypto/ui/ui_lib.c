@@ -936,12 +936,10 @@ int UI_set_result_ex(UI *ui, UI_STRING *uis, const char *result, int len)
             for (p = result; *p; p++) {
                 if (strchr(uis->_.boolean_data.ok_chars, *p)) {
                     uis->result_buf[0] = uis->_.boolean_data.ok_chars[0];
-                    uis->result_len = 1;
                     break;
                 }
                 if (strchr(uis->_.boolean_data.cancel_chars, *p)) {
                     uis->result_buf[0] = uis->_.boolean_data.cancel_chars[0];
-                    uis->result_len = 1;
                     break;
                 }
             }
