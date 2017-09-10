@@ -1008,7 +1008,7 @@ static const unsigned char so[7222] = {
     0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x0C,  /* [ 7122] OBJ_ecdsa_with_SHA3_512 */
     0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x0D,  /* [ 7131] OBJ_RSA_SHA3_224 */
     0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x0E,  /* [ 7140] OBJ_RSA_SHA3_256 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x0F,  /* [ 7149] OBJ_RSA_SHA3_284 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x0F,  /* [ 7149] OBJ_RSA_SHA3_384 */
     0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x10,  /* [ 7158] OBJ_RSA_SHA3_512 */
     0x2A,0x83,0x1A,0x8C,0x9A,0x6E,0x01,0x01,0x25,  /* [ 7167] OBJ_aria_128_ccm */
     0x2A,0x83,0x1A,0x8C,0x9A,0x6E,0x01,0x01,0x26,  /* [ 7176] OBJ_aria_192_ccm */
@@ -2138,7 +2138,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-ecdsa-with-sha3-512", "ecdsa_with_SHA3-512", NID_ecdsa_with_SHA3_512, 9, &so[7122]},
     {"id-rsassa-pkcs1-v1_5-with-sha3-224", "RSA-SHA3-224", NID_RSA_SHA3_224, 9, &so[7131]},
     {"id-rsassa-pkcs1-v1_5-with-sha3-256", "RSA-SHA3-256", NID_RSA_SHA3_256, 9, &so[7140]},
-    {"id-rsassa-pkcs1-v1_5-with-sha3-384", "RSA-SHA3-284", NID_RSA_SHA3_284, 9, &so[7149]},
+    {"id-rsassa-pkcs1-v1_5-with-sha3-384", "RSA-SHA3-384", NID_RSA_SHA3_384, 9, &so[7149]},
     {"id-rsassa-pkcs1-v1_5-with-sha3-512", "RSA-SHA3-512", NID_RSA_SHA3_512, 9, &so[7158]},
     {"ARIA-128-CCM", "aria-128-ccm", NID_aria_128_ccm, 9, &so[7167]},
     {"ARIA-192-CCM", "aria-192-ccm", NID_aria_192_ccm, 9, &so[7176]},
@@ -3393,7 +3393,7 @@ static const unsigned int ln_objs[NUM_LN] = {
        2,    /* "RSA Data Security, Inc. PKCS" */
     1116,    /* "RSA-SHA3-224" */
     1117,    /* "RSA-SHA3-256" */
-    1118,    /* "RSA-SHA3-284" */
+    1118,    /* "RSA-SHA3-384" */
     1119,    /* "RSA-SHA3-512" */
      188,    /* "S/MIME" */
      167,    /* "S/MIME Capabilities" */
@@ -5212,7 +5212,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1115,    /* OBJ_ecdsa_with_SHA3_512          2 16 840 1 101 3 4 3 12 */
     1116,    /* OBJ_RSA_SHA3_224                 2 16 840 1 101 3 4 3 13 */
     1117,    /* OBJ_RSA_SHA3_256                 2 16 840 1 101 3 4 3 14 */
-    1118,    /* OBJ_RSA_SHA3_284                 2 16 840 1 101 3 4 3 15 */
+    1118,    /* OBJ_RSA_SHA3_384                 2 16 840 1 101 3 4 3 15 */
     1119,    /* OBJ_RSA_SHA3_512                 2 16 840 1 101 3 4 3 16 */
       71,    /* OBJ_netscape_cert_type           2 16 840 1 113730 1 1 */
       72,    /* OBJ_netscape_base_url            2 16 840 1 113730 1 2 */

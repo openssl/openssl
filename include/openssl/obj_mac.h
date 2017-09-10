@@ -2976,10 +2976,10 @@
 #define NID_RSA_SHA3_256                1117
 #define OBJ_RSA_SHA3_256                OBJ_sigAlgs,14L
 
-#define SN_RSA_SHA3_284         "id-rsassa-pkcs1-v1_5-with-sha3-384"
-#define LN_RSA_SHA3_284         "RSA-SHA3-284"
-#define NID_RSA_SHA3_284                1118
-#define OBJ_RSA_SHA3_284                OBJ_sigAlgs,15L
+#define SN_RSA_SHA3_384         "id-rsassa-pkcs1-v1_5-with-sha3-384"
+#define LN_RSA_SHA3_384         "RSA-SHA3-384"
+#define NID_RSA_SHA3_384                1118
+#define OBJ_RSA_SHA3_384                OBJ_sigAlgs,15L
 
 #define SN_RSA_SHA3_512         "id-rsassa-pkcs1-v1_5-with-sha3-512"
 #define LN_RSA_SHA3_512         "RSA-SHA3-512"
