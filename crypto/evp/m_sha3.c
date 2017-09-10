@@ -139,9 +139,9 @@ const EVP_MD *EVP_sha3_##bitlen(void)           \
 {                                               \
     static const EVP_MD sha3_##bitlen##_md = {  \
         NID_sha3_##bitlen,                      \
-        0,                                      \
+        NID_RSA_SHA3_##bitlen,                  \
         bitlen / 8,                             \
-        0,                                      \
+        EVP_MD_FLAG_DIGALGID_ABSENT,            \
         sha3_init,                              \
         sha3_update,                            \
         sha3_final,                             \
