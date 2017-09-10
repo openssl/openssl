@@ -74,6 +74,10 @@ static const nid_triple sigoid_srt[] = {
     {NID_id_tc26_signwithdigest_gost3410_2012_512, NID_id_GostR3411_2012_512,
      NID_id_GostR3410_2012_512},
     {NID_ED25519, NID_undef, NID_ED25519},
+    {NID_RSA_SHA3_224, NID_sha3_224, NID_rsaEncryption},
+    {NID_RSA_SHA3_256, NID_sha3_256, NID_rsaEncryption},
+    {NID_RSA_SHA3_384, NID_sha3_384, NID_rsaEncryption},
+    {NID_RSA_SHA3_512, NID_sha3_512, NID_rsaEncryption},
 };
 
 static const nid_triple *const sigoid_srt_xref[] = {
@@ -116,4 +120,8 @@ static const nid_triple *const sigoid_srt_xref[] = {
     &sigoid_srt[28],
     &sigoid_srt[40],
     &sigoid_srt[41],
+    &sigoid_srt[43],
+    &sigoid_srt[44],
+    &sigoid_srt[45],
+    &sigoid_srt[46],
 };
