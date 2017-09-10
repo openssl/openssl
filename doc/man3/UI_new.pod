@@ -102,7 +102,7 @@ this UI, it should be freed using UI_free().
 UI_new_method() creates a new UI using the given UI method.  When done with
 this UI, it should be freed using UI_free().
 
-UI_OpenSSL() returns the built-in UI method (note: not necessarely the
+UI_OpenSSL() returns the built-in UI method (note: not necessarily the
 default one, since the default can be changed.  See further on).  This
 method is the most machine/OS dependent part of OpenSSL and normally
 generates the most problems when porting.
