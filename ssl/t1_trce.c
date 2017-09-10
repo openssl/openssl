@@ -25,7 +25,8 @@ typedef struct {
         do_ssl_trace_list(bio, indent, msg, msglen, value, \
          table, OSSL_NELEM(table))
 
-static const char *do_ssl_trace_str(int val, const ssl_trace_tbl *tbl, size_t ntbl)
+static const char *do_ssl_trace_str(int val, const ssl_trace_tbl *tbl,
+                                    size_t ntbl)
 {
     size_t i;
 
@@ -597,8 +598,7 @@ static void ssl_print_hex(BIO *bio, int indent, const char *name,
     BIO_puts(bio, "\n");
 }
 
-static int ssl_print_hexbuf(BIO *bio, int indent,
-                            const char *name, size_t nlen,
+static int ssl_print_hexbuf(BIO *bio, int indent, const char *name, size_t nlen,
                             const unsigned char **pmsg, size_t *pmsglen)
 {
     size_t blen;
@@ -883,7 +883,8 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
         extype = (msg[0] << 8) | msg[1];
         extlen = (msg[2] << 8) | msg[3];
         if (msglen < extlen + 4) {
-            BIO_printf(bio, "extensions, extype = %d, extlen = %d\n", extype, (int)extlen);
+            BIO_printf(bio, "extensions, extype = %d, extlen = %d\n", extype,
+                       (int)extlen);
             BIO_dump_indent(bio, (const char *)msg, msglen, indent + 2);
             return 0;
         }
@@ -1219,8 +1220,9 @@ static int ssl_print_certificate(BIO *bio, int indent,
     return 1;
 }
 
-static int ssl_print_certificates(BIO *bio, const SSL *ssl, int server, int indent,
-                                  const unsigned char *msg, size_t msglen)
+static int ssl_print_certificates(BIO *bio, const SSL *ssl, int server,
+                                  int indent, const unsigned char *msg,
+                                  size_t msglen)
 {
     size_t clen;
 
@@ -1323,9 +1325,9 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL *ssl,
         msg += dlen;
     }
     if (SSL_IS_TLS13(ssl)) {
-         if (!ssl_print_hexbuf(bio, indent, "request_extensions", 2,
-                               &msg, &msglen))
-        return 0;
+        if (!ssl_print_hexbuf(bio, indent, "request_extensions", 2,
+                              &msg, &msglen))
+            return 0;
     }
     return msglen == 0;
 }
