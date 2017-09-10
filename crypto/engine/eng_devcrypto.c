@@ -226,7 +226,7 @@ static int cipher_cleanup(EVP_CIPHER_CTX *ctx)
 
 /*
  * Keep a table of known nids and associated methods.
- * Note that known_cipher_nids[] isn't necessarely indexed the same way as
+ * Note that known_cipher_nids[] isn't necessarily indexed the same way as
  * cipher_data[] above, which known_cipher_methods[] is.
  */
 static int known_cipher_nids[OSSL_NELEM(cipher_data)];
@@ -495,7 +495,7 @@ static int digest_cleanup(EVP_MD_CTX *ctx)
 
 /*
  * Keep a table of known nids and associated methods.
- * Note that known_digest_nids[] isn't necessarely indexed the same way as
+ * Note that known_digest_nids[] isn't necessarily indexed the same way as
  * digest_data[] above, which known_digest_methods[] is.
  */
 static int known_digest_nids[OSSL_NELEM(digest_data)];

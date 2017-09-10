@@ -115,7 +115,7 @@ SSL_read_early_data() may return 3 possible values:
 
 =item SSL_READ_EARLY_DATA_ERROR
 
-This indicates an IO or some other error occured. This should be treated in the
+This indicates an IO or some other error occurred. This should be treated in the
 same way as a 0 return value from L<SSL_read_ex(3)>.
 
 =item SSL_READ_EARLY_DATA_SUCCESS

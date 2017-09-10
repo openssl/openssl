@@ -224,7 +224,7 @@ if the time is successfully printed out and 0 if an error occurred (I/O error or
 invalid time format).
 
 ASN1_TIME_to_tm() returns 1 if the time is successfully parsed and 0 if an
-error occured (invalid time format).
+error occurred (invalid time format).
 
 ASN1_TIME_diff() returns 1 for success and 0 for failure. It can fail if the
 passed-in time structure has invalid syntax, for example.
