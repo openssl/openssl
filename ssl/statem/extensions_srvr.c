@@ -10,6 +10,30 @@
 #include <openssl/ocsp.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
+#include "internal/cryptlib.h"
+
+#define COOKIE_STATE_FORMAT_VERSION     0
+
+/*
+ * 2 bytes for packet length, 2 bytes for format version, 2 bytes for
+ * protocol version, 2 bytes for group id, 2 bytes for cipher id, 1 byte for
+ * key_share present flag, 2 bytes for the hashlen, EVP_MAX_MD_SIZE for
+ * transcript hash, 1 byte for app cookie length, app cookie length bytes,
+ * SHA256_DIGEST_LENGTH bytes for the HMAC of the whole thing.
+ */
+#define MAX_COOKIE_SIZE (2 + 2 + 2 + 2 + 2 + 1 + 2 + EVP_MAX_MD_SIZE + 1 \
+                         + SSL_COOKIE_LENGTH + SHA256_DIGEST_LENGTH)
+
+/*
+ * Message header + 2 bytes for protocol version + number of random bytes +
+ * + number of bytes in legacy session id + 2 bytes for ciphersuite
+ * + 1 byte for legacy compression + 2 bytes for extension block length
+ * + 6 bytes for key_share extension + 4 bytes for cookie extension header
+ * + the number of bytes in the cookie
+ */
+#define MAX_HRR_SIZE    (SSL3_HM_HEADER_LENGTH + 2 + SSL3_RANDOM_SIZE \
+                         + SSL_MAX_SSL_SESSION_ID_LENGTH + 2 + 1 + 2 + 6 + 4 \
+                         + MAX_COOKIE_SIZE)
 
 /*
  * Parse the client's renegotiation binding and abort if it's not right
@@ -594,6 +618,17 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
+    if (s->s3->group_id != 0 && PACKET_remaining(&key_share_list) == 0) {
+        /*
+         * If we set a group_id already, then we must have sent an HRR
+         * requesting a new key_share. If we haven't got one then that is an
+         * error
+         */
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
+                 SSL_R_BAD_KEY_SHARE);
+        return 0;
+    }
+
     while (PACKET_remaining(&key_share_list) > 0) {
         if (!PACKET_get_net_2(&key_share_list, &group_id)
                 || !PACKET_get_length_prefixed_2(&key_share_list, &encoded_pt)
@@ -609,6 +644,18 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
          */
         if (found)
             continue;
+
+        /*
+         * If we sent an HRR then the key_share sent back MUST be for the group
+         * we requested, and must be the only key_share sent.
+         */
+        if (s->s3->group_id != 0
+                && (group_id != s->s3->group_id
+                    || PACKET_remaining(&key_share_list) != 0)) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                     SSL_F_TLS_PARSE_CTOS_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
+            return 0;
+        }
 
         /* Check if this share is in supported_groups sent from client */
         if (!check_in_list(s, group_id, clntgroups, clnt_num_groups, 0)) {
@@ -642,6 +689,211 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         found = 1;
     }
 #endif
+
+    return 1;
+}
+
+int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
+                          size_t chainidx)
+{
+    unsigned int format, version, key_share;
+    EVP_MD_CTX *hctx;
+    EVP_PKEY *pkey;
+    PACKET cookie, raw, chhash, appcookie;
+    WPACKET hrrpkt;
+    const unsigned char *data, *mdin, *ciphdata;
+    unsigned char hmac[SHA256_DIGEST_LENGTH];
+    unsigned char hrr[MAX_HRR_SIZE];
+    size_t rawlen, hmaclen, hrrlen, ciphlen;
+
+    /* Ignore any cookie if we're not set up to verify it */
+    if (s->ctx->app_verify_cookie_cb == NULL
+            || (s->s3->flags & TLS1_FLAGS_STATELESS) == 0)
+        return 1;
+
+    if (!PACKET_as_length_prefixed_2(pkt, &cookie)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+
+    raw = cookie;
+    data = PACKET_data(&raw);
+    rawlen = PACKET_remaining(&raw);
+    if (rawlen < SHA256_DIGEST_LENGTH
+            || !PACKET_forward(&raw, rawlen - SHA256_DIGEST_LENGTH)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+    mdin = PACKET_data(&raw);
+
+    /* Verify the HMAC of the cookie */
+    hctx = EVP_MD_CTX_create();
+    pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL,
+                                s->session_ctx->ext.cookie_hmac_key,
+                                sizeof(s->session_ctx->ext.cookie_hmac_key));
+    if (hctx == NULL || pkey == NULL) {
+        EVP_MD_CTX_free(hctx);
+        EVP_PKEY_free(pkey);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    hmaclen = sizeof(s->session_ctx->ext.cookie_hmac_key);
+    if (EVP_DigestSignInit(hctx, NULL, EVP_sha256(), NULL, pkey) <= 0
+            || EVP_DigestSignUpdate(hctx, data,
+                                    rawlen - SHA256_DIGEST_LENGTH) <= 0
+            || EVP_DigestSignFinal(hctx, hmac, &hmaclen) <= 0
+            || hmaclen != SHA256_DIGEST_LENGTH) {
+        EVP_MD_CTX_free(hctx);
+        EVP_PKEY_free(pkey);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    EVP_MD_CTX_free(hctx);
+    EVP_PKEY_free(pkey);
+
+    if (CRYPTO_memcmp(hmac, mdin, SHA256_DIGEST_LENGTH) != 0) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 SSL_R_COOKIE_MISMATCH);
+        return 0;
+    }
+
+    if (!PACKET_get_net_2(&cookie, &format)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+    /* Check the cookie format is something we recognise. Ignore it if not */
+    if (format != COOKIE_STATE_FORMAT_VERSION)
+        return 1;
+
+    /*
+     * The rest of these checks really shouldn't fail since we have verified the
+     * HMAC above.
+     */
+
+    /* Check the version number is sane */
+    if (!PACKET_get_net_2(&cookie, &version)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+    if (version != TLS1_3_VERSION) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
+        return 0;
+    }
+
+    if (!PACKET_get_net_2(&cookie, &s->s3->group_id)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+    ciphdata = PACKET_data(&cookie);
+    if (!PACKET_forward(&cookie, 2)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+    s->s3->tmp.new_cipher = ssl_get_cipher_by_char(s, ciphdata, 0);
+    if (s->s3->tmp.new_cipher == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (!PACKET_get_1(&cookie, &key_share)
+            || !PACKET_get_length_prefixed_2(&cookie, &chhash)
+            || !PACKET_get_length_prefixed_1(&cookie, &appcookie)
+            || PACKET_remaining(&cookie) != SHA256_DIGEST_LENGTH) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+
+    /* Verify the app cookie */
+    if (s->ctx->app_verify_cookie_cb(s, PACKET_data(&appcookie),
+                                     PACKET_remaining(&appcookie)) == 0) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 SSL_R_COOKIE_MISMATCH);
+        return 0;
+    }
+
+    /*
+     * Reconstruct the HRR that we would have sent in response to the original
+     * ClientHello so we can add it to the transcript hash.
+     * Note: This won't work with custom HRR extensions
+     */
+    if (!WPACKET_init_static_len(&hrrpkt, hrr, sizeof(hrr), 0)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (!WPACKET_put_bytes_u8(&hrrpkt, SSL3_MT_SERVER_HELLO)
+            || !WPACKET_start_sub_packet_u24(&hrrpkt)
+            || !WPACKET_put_bytes_u16(&hrrpkt, TLS1_2_VERSION)
+            || !WPACKET_memcpy(&hrrpkt, hrrrandom, SSL3_RANDOM_SIZE)
+            || !WPACKET_sub_memcpy_u8(&hrrpkt, s->tmp_session_id,
+                                      s->tmp_session_id_len)
+            || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, &hrrpkt,
+                                              &ciphlen)
+            || !WPACKET_put_bytes_u8(&hrrpkt, 0)
+            || !WPACKET_start_sub_packet_u16(&hrrpkt)) {
+        WPACKET_cleanup(&hrrpkt);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (!WPACKET_put_bytes_u16(&hrrpkt, TLSEXT_TYPE_supported_versions)
+            || !WPACKET_start_sub_packet_u16(&hrrpkt)
+               /* TODO(TLS1.3): Fix this before release */
+            || !WPACKET_put_bytes_u16(&hrrpkt, TLS1_3_VERSION_DRAFT)
+            || !WPACKET_close(&hrrpkt)) {
+        WPACKET_cleanup(&hrrpkt);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (key_share) {
+        if (!WPACKET_put_bytes_u16(&hrrpkt, TLSEXT_TYPE_key_share)
+                || !WPACKET_start_sub_packet_u16(&hrrpkt)
+                || !WPACKET_put_bytes_u16(&hrrpkt, s->s3->group_id)
+                || !WPACKET_close(&hrrpkt)) {
+            WPACKET_cleanup(&hrrpkt);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                     ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+    if (!WPACKET_put_bytes_u16(&hrrpkt, TLSEXT_TYPE_cookie)
+            || !WPACKET_start_sub_packet_u16(&hrrpkt)
+            || !WPACKET_sub_memcpy_u16(&hrrpkt, data, rawlen)
+            || !WPACKET_close(&hrrpkt) /* cookie extension */
+            || !WPACKET_close(&hrrpkt) /* extension block */
+            || !WPACKET_close(&hrrpkt) /* message */
+            || !WPACKET_get_total_written(&hrrpkt, &hrrlen)
+            || !WPACKET_finish(&hrrpkt)) {
+        WPACKET_cleanup(&hrrpkt);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* Reconstruct the transcript hash */
+    if (!create_synthetic_message_hash(s, PACKET_data(&chhash),
+                                       PACKET_remaining(&chhash), hrr,
+                                       hrrlen)) {
+        /* SSLfatal() already called */
+        return 0;
+    }
+
+    /* Act as if this ClientHello came after a HelloRetryRequest */
+    s->hello_retry_request = 1;
 
     return 1;
 }
@@ -1311,6 +1563,129 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
 #endif
 
     return EXT_RETURN_SENT;
+}
+
+EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
+                                     X509 *x, size_t chainidx)
+{
+    unsigned char *hashval1, *hashval2, *appcookie1, *appcookie2, *cookie;
+    unsigned char *hmac, *hmac2;
+    size_t startlen, ciphlen, totcookielen, hashlen, hmaclen;
+    unsigned int appcookielen;
+    EVP_MD_CTX *hctx;
+    EVP_PKEY *pkey;
+    int ret = EXT_RETURN_FAIL;
+
+    if (s->ctx->app_gen_cookie_cb == NULL
+            || (s->s3->flags & TLS1_FLAGS_STATELESS) == 0)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cookie)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_get_total_written(pkt, &startlen)
+            || !WPACKET_reserve_bytes(pkt, MAX_COOKIE_SIZE, &cookie)
+            || !WPACKET_put_bytes_u16(pkt, COOKIE_STATE_FORMAT_VERSION)
+            || !WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION)
+            || !WPACKET_put_bytes_u16(pkt, s->s3->group_id)
+            || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, pkt,
+                                              &ciphlen)
+               /* Is there a key_share extension present in this HRR? */
+            || !WPACKET_put_bytes_u8(pkt, s->s3->peer_tmp == NULL)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_reserve_bytes(pkt, EVP_MAX_MD_SIZE, &hashval1)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
+                 ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    /*
+     * Get the hash of the initial ClientHello. ssl_handshake_hash() operates
+     * on raw buffers, so we first reserve sufficient bytes (above) and then
+     * subsequently allocate them (below)
+     */
+    if (!ssl3_digest_cached_records(s, 0)
+            || !ssl_handshake_hash(s, hashval1, EVP_MAX_MD_SIZE, &hashlen)) {
+        /* SSLfatal() already called */
+        return EXT_RETURN_FAIL;
+    }
+
+    if (!WPACKET_allocate_bytes(pkt, hashlen, &hashval2)
+            || !ossl_assert(hashval1 == hashval2)
+            || !WPACKET_close(pkt)
+            || !WPACKET_start_sub_packet_u8(pkt)
+            || !WPACKET_reserve_bytes(pkt, SSL_COOKIE_LENGTH, &appcookie1)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
+                 ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    /* Generate the application cookie */
+    if (s->ctx->app_gen_cookie_cb(s, appcookie1, &appcookielen) == 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
+                 SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
+        return EXT_RETURN_FAIL;
+    }
+
+    if (!WPACKET_allocate_bytes(pkt, appcookielen, &appcookie2)
+            || !ossl_assert(appcookie1 == appcookie2)
+            || !WPACKET_close(pkt)
+            || !WPACKET_get_total_written(pkt, &totcookielen)
+            || !WPACKET_reserve_bytes(pkt, SHA256_DIGEST_LENGTH, &hmac)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
+                 ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    hmaclen = SHA256_DIGEST_LENGTH;
+
+    totcookielen -= startlen;
+    if (!ossl_assert(totcookielen <= MAX_COOKIE_SIZE - SHA256_DIGEST_LENGTH)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
+                 ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    /* HMAC the cookie */
+    hctx = EVP_MD_CTX_create();
+    pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL,
+                                s->session_ctx->ext.cookie_hmac_key,
+                                sizeof(s->session_ctx->ext.cookie_hmac_key));
+    if (hctx == NULL || pkey == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
+                 ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    if (EVP_DigestSignInit(hctx, NULL, EVP_sha256(), NULL, pkey) <= 0
+            || EVP_DigestSign(hctx, hmac, &hmaclen, cookie,
+                              totcookielen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (!ossl_assert(totcookielen + hmaclen <= MAX_COOKIE_SIZE)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (!WPACKET_allocate_bytes(pkt, hmaclen, &hmac2)
+            || !ossl_assert(hmac == hmac2)
+            || !ossl_assert(cookie == hmac - totcookielen)
+            || !WPACKET_close(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    ret = EXT_RETURN_SENT;
+
+ err:
+    EVP_MD_CTX_free(hctx);
+    EVP_PKEY_free(pkey);
+    return ret;
 }
 
 EXT_RETURN tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt,

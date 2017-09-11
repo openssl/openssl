@@ -1739,7 +1739,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL *s,
      * Re-initialise the Transcript Hash. We're going to prepopulate it with
      * a synthetic message_hash in place of ClientHello1.
      */
-    if (!create_synthetic_message_hash(s)) {
+    if (!create_synthetic_message_hash(s, NULL, 0, NULL, 0)) {
         /* SSLfatal() already called */
         goto err;
     }
