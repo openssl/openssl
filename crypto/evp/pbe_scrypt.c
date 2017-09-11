@@ -164,7 +164,6 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     unsigned char *B;
     uint32_t *X, *V, *T;
     uint64_t i, Blen, Vlen;
-    size_t allocsize;
 
     /* Sanity check parameters */
     /* initial check, r,p must be non zero, N >= 2 and a power of 2 */
@@ -194,8 +193,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     Blen = p * 128 * r;
 
     /*
-     * Check 32 * r * (N + 2) * sizeof(uint32_t) fits in
-     * uint64_t and also size_t (their sizes are unrelated).
+     * Check 32 * r * (N + 2) * sizeof(uint32_t) fits in uint64_t
      * This is combined size V, X and T (section 4)
      */
     i = UINT64_MAX / (32 * sizeof(uint32_t));
@@ -206,16 +204,11 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     /* check total allocated size fits in uint64_t */
     if (Blen > UINT64_MAX - Vlen)
         return 0;
-    /* check total allocated size fits in size_t */
-    if (Blen > SIZE_MAX - Vlen)
-        return 0;
-
-    allocsize = (size_t)(Blen + Vlen);
 
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;
 
-    if (allocsize > maxmem) {
+    if (Blen + Vlen > maxmem) {
         EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
     }
@@ -224,7 +217,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     if (key == NULL)
         return 1;
 
-    B = OPENSSL_malloc(allocsize);
+    B = OPENSSL_malloc(Blen + Vlen);
     if (B == NULL)
         return 0;
     X = (uint32_t *)(B + Blen);
@@ -242,7 +235,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
         goto err;
     rv = 1;
  err:
-    OPENSSL_clear_free(B, allocsize);
+    OPENSSL_clear_free(B, Blen + Vlen);
     return rv;
 }
 #endif
