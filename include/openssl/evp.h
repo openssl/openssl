@@ -1276,6 +1276,7 @@ void EVP_PKEY_meth_get0_info(int *ppkey_id, int *pflags,
 void EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src);
 void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth);
 int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth);
+int EVP_PKEY_meth_remove(const EVP_PKEY_METHOD *pmeth);
 size_t EVP_PKEY_meth_get_count(void);
 const EVP_PKEY_METHOD *EVP_PKEY_meth_get0(size_t idx);
 
