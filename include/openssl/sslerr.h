@@ -322,6 +322,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE          492
 # define SSL_F_TLS_CONSTRUCT_STOC_ALPN                    451
 # define SSL_F_TLS_CONSTRUCT_STOC_CERTIFICATE             374
+# define SSL_F_TLS_CONSTRUCT_STOC_COOKIE                  613
 # define SSL_F_TLS_CONSTRUCT_STOC_CRYPTOPRO_BUG           452
 # define SSL_F_TLS_CONSTRUCT_STOC_DONE                    375
 # define SSL_F_TLS_CONSTRUCT_STOC_EARLY_DATA              531
@@ -351,6 +352,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PARSE_CERTIFICATE_AUTHORITIES          566
 # define SSL_F_TLS_PARSE_CLIENTHELLO_TLSEXT               449
 # define SSL_F_TLS_PARSE_CTOS_ALPN                        567
+# define SSL_F_TLS_PARSE_CTOS_COOKIE                      614
 # define SSL_F_TLS_PARSE_CTOS_EARLY_DATA                  568
 # define SSL_F_TLS_PARSE_CTOS_EC_PT_FORMATS               569
 # define SSL_F_TLS_PARSE_CTOS_EMS                         570

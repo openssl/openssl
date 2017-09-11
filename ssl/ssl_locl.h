@@ -972,6 +972,8 @@ struct ssl_ctx_st {
         SSL_CTX_npn_select_cb_func npn_select_cb;
         void *npn_select_cb_arg;
 # endif
+
+        unsigned char cookie_hmac_key[SHA256_DIGEST_LENGTH];
     } ext;
 
 # ifndef OPENSSL_NO_PSK

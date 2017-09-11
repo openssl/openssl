@@ -323,8 +323,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         TLSEXT_TYPE_cookie,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
         | SSL_EXT_TLS_IMPLEMENTATION_ONLY | SSL_EXT_TLS1_3_ONLY,
-        NULL, NULL, tls_parse_stoc_cookie, NULL, tls_construct_ctos_cookie,
-        NULL
+        NULL, tls_parse_ctos_cookie, tls_parse_stoc_cookie,
+        tls_construct_stoc_cookie, tls_construct_ctos_cookie, NULL
     },
     {
         /*
