@@ -296,6 +296,21 @@ int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
     return 1;
 }
 
+void evp_app_cleanup_int(void)
+{
+    if (app_pkey_methods != NULL)
+        sk_EVP_PKEY_METHOD_pop_free(app_pkey_methods, EVP_PKEY_meth_free);
+}
+
+int EVP_PKEY_meth_remove(const EVP_PKEY_METHOD *pmeth)
+{
+    const EVP_PKEY_METHOD *ret;
+
+    ret = sk_EVP_PKEY_METHOD_delete_ptr(app_pkey_methods, pmeth);
+
+    return ret == NULL ? 0 : 1;
+}
+
 size_t EVP_PKEY_meth_get_count(void)
 {
     size_t rv = OSSL_NELEM(standard_methods);
