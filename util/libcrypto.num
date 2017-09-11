@@ -4396,3 +4396,4 @@ UI_get_result_string_length             4339	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_check                          4340	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_meth_set_check                 4341	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_meth_get_check                 4342	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_meth_remove                    4343	1_1_1	EXIST::FUNCTION:

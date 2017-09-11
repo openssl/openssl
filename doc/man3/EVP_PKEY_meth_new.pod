@@ -13,7 +13,8 @@ EVP_PKEY_meth_get_init, EVP_PKEY_meth_get_copy, EVP_PKEY_meth_get_cleanup,
 EVP_PKEY_meth_get_paramgen, EVP_PKEY_meth_get_keygen, EVP_PKEY_meth_get_sign,
 EVP_PKEY_meth_get_verify, EVP_PKEY_meth_get_verify_recover, EVP_PKEY_meth_get_signctx,
 EVP_PKEY_meth_get_verifyctx, EVP_PKEY_meth_get_encrypt, EVP_PKEY_meth_get_decrypt,
-EVP_PKEY_meth_get_derive, EVP_PKEY_meth_get_ctrl, EVP_PKEY_meth_get_check
+EVP_PKEY_meth_get_derive, EVP_PKEY_meth_get_ctrl, EVP_PKEY_meth_get_check,
+EVP_PKEY_meth_remove
 - manipulating EVP_PKEY_METHOD structure
 
 =head1 SYNOPSIS
@@ -27,6 +28,7 @@ EVP_PKEY_meth_get_derive, EVP_PKEY_meth_get_ctrl, EVP_PKEY_meth_get_check
  void EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src);
  const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type);
  int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth);
+ int EVP_PKEY_meth_remove(const EVP_PKEY_METHOD *pmeth);
 
  void EVP_PKEY_meth_set_init(EVP_PKEY_METHOD *pmeth,
                              int (*init) (EVP_PKEY_CTX *ctx));
@@ -350,6 +352,9 @@ then the built-in objects.
 
 EVP_PKEY_meth_add0() adds B<pmeth> to the user defined stack of methods.
 
+EVP_PKEY_meth_remove() removes an B<EVP_PKEY_METHOD> object added by
+EVP_PKEY_meth_new().
+
 The EVP_PKEY_meth_set functions set the corresponding fields of
 B<EVP_PKEY_METHOD> structure with the arguments passed.
 
@@ -368,6 +373,9 @@ object or returns NULL if not found.
 
 EVP_PKEY_meth_add0() returns 1 if method is added successfully or 0
 if an error occurred.
+
+EVP_PKEY_meth_remove() returns 1 if method is removed successfully or
+0 if an error occurred.
 
 All EVP_PKEY_meth_set and EVP_PKEY_meth_get functions have no return
 values. For the 'get' functions, function pointers are returned by

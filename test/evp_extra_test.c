@@ -524,8 +524,3 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
     return 1;
 }
-
-void cleanup_tests(void)
-{
-    EVP_PKEY_meth_free(custom_pmeth);
-}
