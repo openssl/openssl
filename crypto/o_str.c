@@ -27,14 +27,12 @@ int OPENSSL_memcmp(const void *v1, const void *v2, size_t n)
 char *CRYPTO_strdup(const char *str, const char* file, int line)
 {
     char *ret;
-    size_t size;
 
     if (str == NULL)
         return NULL;
-    size = strlen(str) + 1;
-    ret = CRYPTO_malloc(size, file, line);
+    ret = CRYPTO_malloc(strlen(str) + 1, file, line);
     if (ret != NULL)
-        memcpy(ret, str, size);
+        strcpy(ret, str);
     return ret;
 }
 
