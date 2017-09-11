@@ -2471,7 +2471,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
             *p = '\0';
             return buf;
         }
-        memcpy(p, c->name, n + 1);
+        strcpy(p, c->name);
         p += n;
         *(p++) = ':';
         len -= n + 1;
