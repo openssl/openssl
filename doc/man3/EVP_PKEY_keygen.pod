@@ -6,8 +6,8 @@ EVP_PKEY_keygen_init, EVP_PKEY_keygen, EVP_PKEY_paramgen_init,
 EVP_PKEY_paramgen, EVP_PKEY_CTX_set_cb, EVP_PKEY_CTX_get_cb,
 EVP_PKEY_CTX_get_keygen_info, EVP_PKEY_CTX_set_app_data,
 EVP_PKEY_CTX_get_app_data,
-EVP_PKEY_gen_cb
-- key and parameter generation functions
+EVP_PKEY_gen_cb, EVP_PKEY_check
+- key and parameter generation and check functions
 
 =head1 SYNOPSIS
 
@@ -27,6 +27,8 @@ EVP_PKEY_gen_cb
 
  void EVP_PKEY_CTX_set_app_data(EVP_PKEY_CTX *ctx, void *data);
  void *EVP_PKEY_CTX_get_app_data(EVP_PKEY_CTX *ctx);
+
+ int EVP_PKEY_check(EVP_PKEY_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -58,6 +60,10 @@ and retrieve an opaque pointer. This can be used to set some application
 defined value which can be retrieved in the callback: for example a handle
 which is used to update a "progress dialog".
 
+EVP_PKEY_check() validates the key-pair given by B<ctx>. This function first tries
+to use customized key check method in B<EVP_PKEY_METHOD> if it's present; otherwise
+it calls a default one defined in B<EVP_PKEY_ASN1_METHOD>.
+
 =head1 NOTES
 
 After the call to EVP_PKEY_keygen_init() or EVP_PKEY_paramgen_init() algorithm
@@ -88,6 +94,9 @@ EVP_PKEY_keygen_init(), EVP_PKEY_paramgen_init(), EVP_PKEY_keygen() and
 EVP_PKEY_paramgen() return 1 for success and 0 or a negative value for failure.
 In particular a return value of -2 indicates the operation is not supported by
 the public key algorithm.
+
+EVP_PKEY_check() returns 1 for success or others for failure. It
+returns -2 if the operation is not supported for the specific algorithm.
 
 =head1 EXAMPLES
 
@@ -171,7 +180,7 @@ These functions were first added to OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

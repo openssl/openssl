@@ -145,8 +145,15 @@ int pkey_main(int argc, char **argv)
 
     if (check) {
         int r;
+        EVP_PKEY_CTX *ctx;
 
-        r = EVP_PKEY_check(pkey);
+        ctx = EVP_PKEY_CTX_new(pkey, e);
+        if (ctx == NULL) {
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+
+        r = EVP_PKEY_check(ctx);
 
         if (r == 1) {
             BIO_printf(out, "Key is valid\n");
@@ -165,6 +172,7 @@ int pkey_main(int argc, char **argv)
                 ERR_get_error(); /* remove e from error stack */
             }
         }
+        EVP_PKEY_CTX_free(ctx);
     }
 
     if (!noout) {

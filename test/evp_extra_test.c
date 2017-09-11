@@ -17,6 +17,7 @@
 #include <openssl/x509.h>
 #include "testutil.h"
 #include "internal/nelem.h"
+#include "internal/evp_int.h"
 
 /*
  * kExampleRSAKeyDER is an RSA private key in ASN.1, DER format. Of course, you
@@ -452,11 +453,20 @@ static int test_EVP_PKCS82PKEY(void)
 }
 #endif
 
+static int pkey_custom_check(EVP_PKEY *pkey)
+{
+    return 0xbeef;
+}
+
+static EVP_PKEY_METHOD *custom_pmeth;
+
 static int test_EVP_PKEY_check(int i)
 {
     int ret = 0;
     const unsigned char *p;
     EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY_CTX *ctx2 = NULL;
     const APK_DATA *ak = &keycheckdata[i];
     const unsigned char *input = ak->kder;
     size_t input_len = ak->size;
@@ -469,17 +479,30 @@ static int test_EVP_PKEY_check(int i)
             || !TEST_int_eq(EVP_PKEY_id(pkey), expected_id))
         goto done;
 
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, NULL)))
+        goto done;
+
     if (expected_check == 1) {
-        if (!TEST_int_eq(EVP_PKEY_check(pkey), 1))
+        if (!TEST_int_eq(EVP_PKEY_check(ctx), 1))
             goto done;
     } else {
-        if (!TEST_int_ne(EVP_PKEY_check(pkey), 1))
+        if (!TEST_int_ne(EVP_PKEY_check(ctx), 1))
             goto done;
     }
+
+    ctx2 = EVP_PKEY_CTX_new_id(0xdefaced, NULL);
+    /* assign the pkey directly, as an internal test */
+    EVP_PKEY_up_ref(pkey);
+    ctx2->pkey = pkey;
+
+    if (!TEST_int_eq(EVP_PKEY_check(ctx2), 0xbeef))
+        goto done;
 
     ret = 1;
 
  done:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(ctx2);
     EVP_PKEY_free(pkey);
     return ret;
 }
@@ -492,6 +515,17 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EVP_PKCS82PKEY);
 #endif
+    custom_pmeth = EVP_PKEY_meth_new(0xdefaced, 0);
+    if (!TEST_ptr(custom_pmeth))
+        return 0;
+    EVP_PKEY_meth_set_check(custom_pmeth, pkey_custom_check);
+    if (!TEST_int_eq(EVP_PKEY_meth_add0(custom_pmeth), 1))
+        return 0;
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    EVP_PKEY_meth_free(custom_pmeth);
 }

@@ -7,8 +7,8 @@ EVP_PKEY_get1_RSA, EVP_PKEY_get1_DSA, EVP_PKEY_get1_DH, EVP_PKEY_get1_EC_KEY,
 EVP_PKEY_get0_RSA, EVP_PKEY_get0_DSA, EVP_PKEY_get0_DH, EVP_PKEY_get0_EC_KEY,
 EVP_PKEY_assign_RSA, EVP_PKEY_assign_DSA, EVP_PKEY_assign_DH, EVP_PKEY_assign_EC_KEY,
 EVP_PKEY_get0_hmac,
-EVP_PKEY_type, EVP_PKEY_id, EVP_PKEY_base_id, EVP_PKEY_check
-- EVP_PKEY assignment and check functions
+EVP_PKEY_type, EVP_PKEY_id, EVP_PKEY_base_id
+- EVP_PKEY assignment functions
 
 =head1 SYNOPSIS
 
@@ -38,8 +38,6 @@ EVP_PKEY_type, EVP_PKEY_id, EVP_PKEY_base_id, EVP_PKEY_check
  int EVP_PKEY_id(const EVP_PKEY *pkey);
  int EVP_PKEY_base_id(const EVP_PKEY *pkey);
  int EVP_PKEY_type(int type);
-
- int EVP_PKEY_check(EVP_PKEY *pkey);
 
 =head1 DESCRIPTION
 
@@ -74,8 +72,6 @@ often seen in practice.
 EVP_PKEY_type() returns the underlying type of the NID B<type>. For example
 EVP_PKEY_type(EVP_PKEY_RSA2) will return B<EVP_PKEY_RSA>.
 
-EVP_PKEY_check validates the key-pair given by B<pkey>.
-
 =head1 NOTES
 
 In accordance with the OpenSSL naming convention the key obtained
@@ -107,9 +103,6 @@ and EVP_PKEY_assign_EC_KEY() return 1 for success and 0 for failure.
 
 EVP_PKEY_base_id(), EVP_PKEY_id() and EVP_PKEY_type() return a key
 type or B<NID_undef> (equivalently B<EVP_PKEY_NONE>) on error.
-
-EVP_PKEY_check() returns 1 for success or other for failure. It
-returns -2 if the operation is not supported for the specific algorithm.
 
 =head1 SEE ALSO
 
