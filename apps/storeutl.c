@@ -14,9 +14,12 @@
 #include <openssl/pem.h>
 #include <openssl/store.h>
 
+static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
+                   int text, int noout, int recursive, int indent, BIO *out);
+
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ENGINE, OPT_OUT, OPT_PASSIN,
-    OPT_NOOUT, OPT_TEXT
+    OPT_NOOUT, OPT_TEXT, OPT_RECURSIVE
 } OPTION_CHOICE;
 
 const OPTIONS storeutl_options[] = {
@@ -29,13 +32,13 @@ const OPTIONS storeutl_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    {"r", OPT_RECURSIVE, '-', "Recurse through names"},
     {NULL}
 };
 
 int storeutl_main(int argc, char *argv[])
 {
-    OSSL_STORE_CTX *store_ctx = NULL;
-    int ret = 1, noout = 0, text = 0, items = 0;
+    int ret = 1, noout = 0, text = 0, recursive = 0;
     char *outfile = NULL, *passin = NULL, *passinarg = NULL;
     BIO *out = NULL;
     ENGINE *e = NULL;
@@ -66,6 +69,9 @@ int storeutl_main(int argc, char *argv[])
         case OPT_TEXT:
             text = 1;
             break;
+        case OPT_RECURSIVE:
+            recursive = 1;
+            break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
@@ -94,11 +100,40 @@ int storeutl_main(int argc, char *argv[])
     if (out == NULL)
         goto end;
 
-    if ((store_ctx = OSSL_STORE_open(argv[0], get_ui_method(), &pw_cb_data,
-                                     NULL, NULL)) == NULL) {
-        BIO_printf(bio_err, "Couldn't open file or uri %s\n", argv[0]);
+    ret = process(argv[0], get_ui_method(), &pw_cb_data, text, noout, recursive,
+                  0, out);
+
+ end:
+    BIO_free_all(out);
+    OPENSSL_free(passin);
+    release_engine(e);
+    return ret;
+}
+
+static int indent_printf(int indent, BIO *bio, const char *format, ...)
+{
+    va_list args;
+    int ret;
+
+    va_start(args, format);
+
+    ret = BIO_printf(bio, "%*s", indent, "") + BIO_vprintf(bio, format, args);
+
+    va_end(args);
+    return ret;
+}
+
+static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
+                   int text, int noout, int recursive, int indent, BIO *out)
+{
+    OSSL_STORE_CTX *store_ctx = NULL;
+    int ret = 1, items = 0;
+
+    if ((store_ctx = OSSL_STORE_open(uri, uimeth, uidata, NULL, NULL))
+        == NULL) {
+        BIO_printf(bio_err, "Couldn't open file or uri %s\n", uri);
         ERR_print_errors(bio_err);
-        goto end;
+        return ret;
     }
 
     /* From here on, we count errors, and we'll return the count at the end */
@@ -115,7 +150,10 @@ int storeutl_main(int argc, char *argv[])
                 break;
 
             if (OSSL_STORE_error(store_ctx)) {
-                ERR_print_errors(bio_err);
+                if (recursive)
+                    ERR_clear_error();
+                else
+                    ERR_print_errors(bio_err);
                 ret++;
                 continue;
             }
@@ -132,11 +170,12 @@ int storeutl_main(int argc, char *argv[])
         if (type == OSSL_STORE_INFO_NAME) {
             const char *name = OSSL_STORE_INFO_get0_NAME(info);
             const char *desc = OSSL_STORE_INFO_get0_NAME_description(info);
-            BIO_printf(bio_out, "%d: %s: %s\n", items, infostr, name);
+            indent_printf(indent, bio_out, "%d: %s: %s\n", items, infostr,
+                          name);
             if (desc != NULL)
-                BIO_printf(bio_out, "%s\n", desc);
+                indent_printf(indent, bio_out, "%s\n", desc);
         } else {
-            BIO_printf(bio_out, "%d: %s\n", items, infostr);
+            indent_printf(indent, bio_out, "%d: %s\n", items, infostr);
         }
 
         /*
@@ -146,6 +185,11 @@ int storeutl_main(int argc, char *argv[])
          */
         switch (type) {
         case OSSL_STORE_INFO_NAME:
+            if (recursive) {
+                const char *suburi = OSSL_STORE_INFO_get0_NAME(info);
+                ret += process(suburi, uimeth, uidata, text, noout, recursive,
+                               indent + 2, out);
+            }
             break;
         case OSSL_STORE_INFO_PARAMS:
             if (text)
@@ -183,17 +227,12 @@ int storeutl_main(int argc, char *argv[])
         items++;
         OSSL_STORE_INFO_free(info);
     }
-    BIO_printf(out, "Total found: %d\n", items);
+    indent_printf(indent, out, "Total found: %d\n", items);
 
     if (!OSSL_STORE_close(store_ctx)) {
         ERR_print_errors(bio_err);
         ret++;
-        goto end;
     }
 
- end:
-    BIO_free_all(out);
-    OPENSSL_free(passin);
-    release_engine(e);
     return ret;
 }
