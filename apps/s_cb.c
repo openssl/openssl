@@ -686,9 +686,9 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len)
 {
     unsigned char *buffer;
-    size_t length;
+    size_t length = 0;
     unsigned short port;
-    BIO_ADDR *peer = NULL;
+    BIO_ADDR *lpeer = NULL, *peer = NULL;
 
     /* Initialize a random secret */
     if (!cookie_initialized) {
@@ -699,17 +699,24 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
         cookie_initialized = 1;
     }
 
-    peer = BIO_ADDR_new();
-    if (peer == NULL) {
-        BIO_printf(bio_err, "memory full\n");
-        return 0;
+    if (SSL_is_dtls(ssl)) {
+        lpeer = peer = BIO_ADDR_new();
+        if (peer == NULL) {
+            BIO_printf(bio_err, "memory full\n");
+            return 0;
+        }
+
+        /* Read peer information */
+        (void)BIO_dgram_get_peer(SSL_get_rbio(ssl), peer);
+    } else {
+        peer = ourpeer;
     }
 
-    /* Read peer information */
-    (void)BIO_dgram_get_peer(SSL_get_rbio(ssl), peer);
-
     /* Create buffer with peer's address and port */
-    BIO_ADDR_rawaddress(peer, NULL, &length);
+    if (!BIO_ADDR_rawaddress(peer, NULL, &length)) {
+        BIO_printf(bio_err, "Failed getting peer address\n");
+        return 0;
+    }
     OPENSSL_assert(length != 0);
     port = BIO_ADDR_rawport(peer);
     length += sizeof(port);
@@ -723,7 +730,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
          buffer, length, cookie, cookie_len);
 
     OPENSSL_free(buffer);
-    BIO_ADDR_free(peer);
+    BIO_ADDR_free(lpeer);
 
     return 1;
 }
