@@ -514,7 +514,7 @@ my @disable_cascades = (
     # no-autoalginit is only useful when building non-shared
     "autoalginit"       => [ "shared", "apps" ],
 
-    "stdio"             => [ "apps", "capieng" ],
+    "stdio"             => [ "apps", "capieng", "egd" ],
     "apps"              => [ "tests" ],
     "tests"             => [ "external-tests" ],
     "comp"              => [ "zlib" ],
