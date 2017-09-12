@@ -67,7 +67,7 @@ See the example below.
 
 To list all the commands available to a dynamic engine:
 
- % openssl engine -t -tt -vvvv dynamic
+ $ openssl engine -t -tt -vvvv dynamic
  (dynamic) Dynamic engine loading support
       [ unavailable ]
       SO_PATH: Specifies the path to the new ENGINE shared library
@@ -87,7 +87,7 @@ To list all the commands available to a dynamic engine:
 
 To list the capabilities of the I<rsax> engine:
 
- % openssl engine -c
+ $ openssl engine -c
  (rsax) RSAX engine support
   [RSA]
  (dynamic) Dynamic engine loading support
