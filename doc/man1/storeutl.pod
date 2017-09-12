@@ -13,6 +13,7 @@ B<openssl> B<storeutl>
 [B<-passin arg>]
 [B<-text arg>]
 [B<-engine id>]
+[B<-r>]
 B<uri> ...
 
 =head1 DESCRIPTION
@@ -53,6 +54,10 @@ specifying an engine (by its unique B<id> string) will cause B<storeutl>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
+
+=item B<-r>
+
+Fetch objects recursively when possible.
 
 =back
 
