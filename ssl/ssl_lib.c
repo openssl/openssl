@@ -5310,5 +5310,8 @@ int SSL_stateless(SSL *s)
     ret = SSL_accept(s);
     s->s3->flags &= ~TLS1_FLAGS_STATELESS;
 
+    if (s->ext.cookieok)
+        return 1;
+
     return ret;
 }

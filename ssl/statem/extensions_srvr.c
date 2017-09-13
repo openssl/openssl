@@ -895,6 +895,8 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     /* Act as if this ClientHello came after a HelloRetryRequest */
     s->hello_retry_request = 1;
 
+    s->ext.cookieok = 1;
+
     return 1;
 }
 

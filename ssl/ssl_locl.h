@@ -1276,6 +1276,9 @@ struct ssl_st {
         /* May be sent by a server in HRR. Must be echoed back in ClientHello */
         unsigned char *tls13_cookie;
         size_t tls13_cookie_len;
+        /* Have we received a cookie from the client? */
+        int cookieok;
+
         /*
          * Maximum Fragment Length as per RFC 4366.
          * If this member contains one of the allowed values (1-4)
