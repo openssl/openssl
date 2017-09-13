@@ -5295,3 +5295,20 @@ __owur unsigned int ssl_get_split_send_fragment(const SSL *ssl)
     /* return current SSL connection setting */
     return ssl->split_send_fragment;
 }
+
+int SSL_stateless(SSL *s)
+{
+    int ret;
+
+    /* Ensure there is no state left over from a previous invocation */
+    if (!SSL_clear(s))
+        return -1;
+
+    ERR_clear_error();
+
+    s->s3->flags |= TLS1_FLAGS_STATELESS;
+    ret = SSL_accept(s);
+    s->s3->flags &= ~TLS1_FLAGS_STATELESS;
+
+    return ret;
+}
