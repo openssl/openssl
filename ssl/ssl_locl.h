@@ -363,24 +363,19 @@
 
 /* Mostly for SSLv3 */
 # define SSL_PKEY_RSA            0
-# define SSL_PKEY_DSA_SIGN       1
-# define SSL_PKEY_ECC            2
-# define SSL_PKEY_GOST01         3
-# define SSL_PKEY_GOST12_256     4
-# define SSL_PKEY_GOST12_512     5
-# define SSL_PKEY_ED25519        6
-# define SSL_PKEY_NUM            7
+# define SSL_PKEY_RSA_PSS_SIGN   1
+# define SSL_PKEY_DSA_SIGN       2
+# define SSL_PKEY_ECC            3
+# define SSL_PKEY_GOST01         4
+# define SSL_PKEY_GOST12_256     5
+# define SSL_PKEY_GOST12_512     6
+# define SSL_PKEY_ED25519        7
+# define SSL_PKEY_NUM            8
 /*
  * Pseudo-constant. GOST cipher suites can use different certs for 1
  * SSL_CIPHER. So let's see which one we have in fact.
  */
 # define SSL_PKEY_GOST_EC SSL_PKEY_NUM+1
-
-/*
- * TODO(TLS1.3) for now use SSL_PKEY_RSA keys for PSS
- */
-
-#define SSL_PKEY_RSA_PSS_SIGN SSL_PKEY_RSA
 
 /*-
  * SSL_kRSA <- RSA_ENC
