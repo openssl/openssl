@@ -54,6 +54,8 @@ struct evp_pkey_asn1_method_st {
                       ASN1_BIT_STRING *sig);
     int (*siginf_set) (X509_SIG_INFO *siginf, const X509_ALGOR *alg,
                        const ASN1_STRING *sig);
+    /* Check */
+    int (*pkey_check) (const EVP_PKEY *pk);
 } /* EVP_PKEY_ASN1_METHOD */ ;
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)

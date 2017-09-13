@@ -157,7 +157,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   DEPEND[evp_test]=../libcrypto libtestutil.a
 
   SOURCE[evp_extra_test]=evp_extra_test.c
-  INCLUDE[evp_extra_test]=.. ../include
+  INCLUDE[evp_extra_test]=.. ../include ../crypto/include
   DEPEND[evp_extra_test]=../libcrypto libtestutil.a
 
   SOURCE[igetest]=igetest.c

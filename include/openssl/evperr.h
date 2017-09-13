@@ -55,6 +55,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PBE_SCRYPT                             181
 # define EVP_F_EVP_PKCS82PKEY                             111
 # define EVP_F_EVP_PKEY2PKCS8                             113
+# define EVP_F_EVP_PKEY_CHECK                             186
 # define EVP_F_EVP_PKEY_COPY_PARAMETERS                   103
 # define EVP_F_EVP_PKEY_CTX_CTRL                          137
 # define EVP_F_EVP_PKEY_CTX_CTRL_STR                      150

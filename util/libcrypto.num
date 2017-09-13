@@ -4393,3 +4393,6 @@ CRYPTO_THREAD_glock_new                 4336	1_1_1	EXIST::FUNCTION:
 UI_get_result_length                    4337	1_1_1	EXIST::FUNCTION:
 UI_set_result_ex                        4338	1_1_1	EXIST::FUNCTION:
 UI_get_result_string_length             4339	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_check                          4340	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_meth_set_check                 4341	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_meth_get_check                 4342	1_1_1	EXIST::FUNCTION:
