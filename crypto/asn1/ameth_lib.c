@@ -291,8 +291,7 @@ void EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
                                                    const EVP_PKEY *pk),
                                int (*priv_print) (BIO *out,
                                                   const EVP_PKEY *pkey,
-                                                  int indent,
-                                                  ASN1_PCTX *pctx))
+                                                  int indent, ASN1_PCTX *pctx))
 {
     ameth->priv_decode = priv_decode;
     ameth->priv_encode = priv_encode;
@@ -358,4 +357,12 @@ void EVP_PKEY_asn1_set_item(EVP_PKEY_ASN1_METHOD *ameth,
 {
     ameth->item_sign = item_sign;
     ameth->item_verify = item_verify;
+}
+
+void EVP_PKEY_asn1_set_siginf_set(EVP_PKEY_ASN1_METHOD *ameth,
+                                  int (*siginf_set) (X509_SIG_INFO * siginf,
+                                                     const X509_ALGOR *alg,
+                                                     const ASN1_STRING *sig))
+{
+    ameth->siginf_set = siginf_set;
 }
