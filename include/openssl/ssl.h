@@ -1753,6 +1753,7 @@ __owur int SSL_get_changed_async_fds(SSL *s, OSSL_ASYNC_FD *addfd,
                                      size_t *numdelfds);
 # endif
 __owur int SSL_accept(SSL *ssl);
+__owur int SSL_stateless(SSL *s);
 __owur int SSL_connect(SSL *ssl);
 __owur int SSL_read(SSL *ssl, void *buf, int num);
 __owur int SSL_read_ex(SSL *ssl, void *buf, size_t num, size_t *readbytes);
