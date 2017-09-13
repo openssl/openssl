@@ -169,7 +169,7 @@ int pkey_main(int argc, char **argv)
             while ((err = ERR_peek_error()) != 0) {
                 BIO_printf(out, "Detailed error: %s\n",
                            ERR_reason_error_string(err));
-                ERR_get_error(); /* remove e from error stack */
+                ERR_get_error(); /* remove err from error stack */
             }
         }
         EVP_PKEY_CTX_free(ctx);
