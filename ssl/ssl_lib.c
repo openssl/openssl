@@ -3090,9 +3090,15 @@ void ssl_set_masks(SSL *s)
     if (dh_tmp)
         mask_k |= SSL_kDHE;
 
-    if (rsa_enc || rsa_sign) {
+    /*
+     * If we only have an RSA-PSS certificate allow RSA authentication
+     * if TLS 1.2 and peer supports it.
+     */
+
+    if (rsa_enc || rsa_sign || (ssl_has_cert(s, SSL_PKEY_RSA_PSS_SIGN)
+                && pvalid[SSL_PKEY_RSA_PSS_SIGN] & CERT_PKEY_EXPLICIT_SIGN
+                && TLS1_get_version(s) == TLS1_2_VERSION))
         mask_a |= SSL_aRSA;
-    }
 
     if (dsa_sign) {
         mask_a |= SSL_aDSS;
