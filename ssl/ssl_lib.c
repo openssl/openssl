@@ -2140,10 +2140,14 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         return ssl_check_allowed_versions(larg, s->max_proto_version)
                && ssl_set_version_bound(s->ctx->method->version, (int)larg,
                                         &s->min_proto_version);
+    case SSL_CTRL_GET_MIN_PROTO_VERSION:
+        return s->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
         return ssl_check_allowed_versions(s->min_proto_version, larg)
                && ssl_set_version_bound(s->ctx->method->version, (int)larg,
                                         &s->max_proto_version);
+    case SSL_CTRL_GET_MAX_PROTO_VERSION:
+        return s->max_proto_version;
     default:
         return (s->method->ssl_ctrl(s, cmd, larg, parg));
     }
@@ -2276,10 +2280,14 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return ssl_check_allowed_versions(larg, ctx->max_proto_version)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->min_proto_version);
+    case SSL_CTRL_GET_MIN_PROTO_VERSION:
+        return ctx->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
         return ssl_check_allowed_versions(ctx->min_proto_version, larg)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->max_proto_version);
+    case SSL_CTRL_GET_MAX_PROTO_VERSION:
+        return ctx->max_proto_version;
     default:
         return (ctx->method->ssl_ctx_ctrl(ctx, cmd, larg, parg));
     }
