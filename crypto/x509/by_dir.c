@@ -170,8 +170,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
                 continue;
             for (j = 0; j < sk_BY_DIR_ENTRY_num(ctx->dirs); j++) {
                 ent = sk_BY_DIR_ENTRY_value(ctx->dirs, j);
-                if (strlen(ent->dir) == (size_t)len &&
-                    strncmp(ent->dir, ss, (unsigned int)len) == 0)
+                if (strlen(ent->dir) == len && strncmp(ent->dir, ss, len) == 0)
                     break;
             }
             if (j < sk_BY_DIR_ENTRY_num(ctx->dirs))
@@ -188,13 +187,11 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
                 return 0;
             ent->dir_type = type;
             ent->hashes = sk_BY_DIR_HASH_new(by_dir_hash_cmp);
-            ent->dir = OPENSSL_malloc((unsigned int)len + 1);
+            ent->dir = OPENSSL_strndup(ss, len);
             if (ent->dir == NULL || ent->hashes == NULL) {
                 by_dir_entry_free(ent);
                 return 0;
             }
-            strncpy(ent->dir, ss, (unsigned int)len);
-            ent->dir[len] = '\0';
             if (!sk_BY_DIR_ENTRY_push(ctx->dirs, ent)) {
                 by_dir_entry_free(ent);
                 return 0;
