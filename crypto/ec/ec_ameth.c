@@ -526,7 +526,7 @@ static int ec_pkey_check(const EVP_PKEY *pkey)
 
     /* stay consistent to what EVP_PKEY_check demands */
     if (eckey->priv_key == NULL) {
-        ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_MISSING_PRIVATE_KEY);
+        ECerr(EC_F_EC_PKEY_CHECK, EC_R_MISSING_PRIVATE_KEY);
         return 0;
     }
 

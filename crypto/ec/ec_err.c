@@ -181,6 +181,7 @@ static const ERR_STRING_DATA EC_str_functs[] = {
      "ec_key_simple_oct2priv"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_KEY_SIMPLE_PRIV2OCT, 0),
      "ec_key_simple_priv2oct"},
+    {ERR_PACK(ERR_LIB_EC, EC_F_EC_PKEY_CHECK, 0), "ec_pkey_check"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_POINTS_MAKE_AFFINE, 0),
      "EC_POINTs_make_affine"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_POINT_ADD, 0), "EC_POINT_add"},
