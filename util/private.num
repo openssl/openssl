@@ -233,6 +233,8 @@ SSL_CTX_disable_ct                      define
 SSL_CTX_get0_chain_certs                define
 SSL_CTX_get_default_read_ahead          define
 SSL_CTX_get_max_cert_list               define
+SSL_CTX_get_max_proto_version           define
+SSL_CTX_get_min_proto_version           define
 SSL_CTX_get_mode                        define
 SSL_CTX_get_read_ahead                  define
 SSL_CTX_get_session_cache_mode          define
@@ -302,6 +304,8 @@ SSL_get_cipher_name                     define
 SSL_get_cipher_version                  define
 SSL_get_extms_support                   define
 SSL_get_max_cert_list                   define
+SSL_get_max_proto_version               define
+SSL_get_min_proto_version               define
 SSL_get_mode                            define
 SSL_get_peer_signature_nid              define
 SSL_get_secure_renegotiation_support    define
