@@ -1615,7 +1615,11 @@ static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
     OPENSSL_free(extensions);
     extensions = NULL;
 
-    if (s->ext.tls13_cookie_len == 0 && s->s3->tmp.pkey != NULL) {
+    if (s->ext.tls13_cookie_len == 0
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+        && s->s3->tmp.pkey != NULL
+#endif
+        ) {
         /*
          * We didn't receive a cookie or a new key_share so the next
          * ClientHello will not change
