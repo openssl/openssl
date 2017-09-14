@@ -207,6 +207,8 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
 
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;
+
+    /* Check that the maximum memory doesn't exceed a size_t limits */
     if (maxmem > SIZE_MAX)
         maxmem = SIZE_MAX;
 
