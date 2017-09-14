@@ -125,6 +125,7 @@ int ERR_load_EC_strings(void);
 # define EC_F_EC_KEY_SIMPLE_CHECK_KEY                     258
 # define EC_F_EC_KEY_SIMPLE_OCT2PRIV                      259
 # define EC_F_EC_KEY_SIMPLE_PRIV2OCT                      260
+# define EC_F_EC_PKEY_CHECK                               273
 # define EC_F_EC_POINTS_MAKE_AFFINE                       136
 # define EC_F_EC_POINT_ADD                                112
 # define EC_F_EC_POINT_CMP                                113
