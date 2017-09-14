@@ -17,6 +17,21 @@ my $server = {
     "MaxProtocol" => "TLSv1.2"
 };
 
+my $server_pss = {
+    "PSS.Certificate" => test_pem("server-pss-cert.pem"),
+    "PSS.PrivateKey" => test_pem("server-pss-key.pem"),
+    "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+    "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+    "EdDSA.Certificate" => test_pem("server-ed25519-cert.pem"),
+    "EdDSA.PrivateKey" => test_pem("server-ed25519-key.pem"),
+    "MaxProtocol" => "TLSv1.2"
+};
+
+my $server_pss_only = {
+    "Certificate" => test_pem("server-pss-cert.pem"),
+    "PrivateKey" => test_pem("server-pss-key.pem"),
+};
+
 our @tests = (
     {
         name => "ECDSA CipherString Selection",
@@ -60,6 +75,19 @@ our @tests = (
         },
         test   => {
             "ExpectedServerCertType" =>, "RSA",
+            "ExpectedServerSignType" =>, "RSA-PSS",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "RSA-PSS Certificate CipherString Selection",
+        server => $server_pss,
+        client => {
+            "CipherString" => "aRSA",
+            "MaxProtocol" => "TLSv1.2",
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "RSA-PSS",
             "ExpectedServerSignType" =>, "RSA-PSS",
             "ExpectedResult" => "Success"
         },
@@ -204,6 +232,50 @@ our @tests = (
         },
     },
     {
+        name => "RSA-PSS Certificate Signature Algorithm Selection",
+        server => $server_pss,
+        client => {
+            "SignatureAlgorithms" => "RSA-PSS+SHA256",
+        },
+        test   => {
+            "ExpectedServerCertType" => "RSA-PSS",
+            "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "RSA-PSS",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "Only RSA-PSS Certificate",
+        server => $server_pss_only,
+        client => {},
+        test   => {
+            "ExpectedServerCertType" => "RSA-PSS",
+            "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "RSA-PSS",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "RSA-PSS Certificate, no PSS signature algorithms",
+        server => $server_pss_only,
+        client => {
+            "SignatureAlgorithms" => "RSA+SHA256",
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail"
+        },
+    },
+    {
+        name => "Only RSA-PSS Certificate, TLS v1.1",
+        server => $server_pss_only,
+        client => {
+            "MaxProtocol" => "TLSv1.1",
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail"
+        },
+    },
+    {
         name => "Suite B P-256 Hash Algorithm Selection",
         server =>  {
             "ECDSA.Certificate" => test_pem("p256-server-cert.pem"),
@@ -261,8 +333,18 @@ our @tests = (
     },
 );
 
-
 my $server_tls_1_3 = {
+    "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+    "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+    "EdDSA.Certificate" => test_pem("server-ed25519-cert.pem"),
+    "EdDSA.PrivateKey" => test_pem("server-ed25519-key.pem"),
+    "MinProtocol" => "TLSv1.3",
+    "MaxProtocol" => "TLSv1.3"
+};
+
+my $server_tls_1_3_pss = {
+    "PSS.Certificate" => test_pem("server-pss-cert.pem"),
+    "PSS.PrivateKey" => test_pem("server-pss-key.pem"),
     "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
     "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
     "EdDSA.Certificate" => test_pem("server-ed25519-cert.pem"),
