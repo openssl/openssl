@@ -398,19 +398,17 @@ static char *win32_merger(DSO *dso, const char *filespec1,
         return (NULL);
     }
     if (!filespec2) {
-        merged = OPENSSL_malloc(strlen(filespec1) + 1);
+        merged = OPENSSL_strdup(filespec1);
         if (merged == NULL) {
             DSOerr(DSO_F_WIN32_MERGER, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
-        strcpy(merged, filespec1);
     } else if (!filespec1) {
-        merged = OPENSSL_malloc(strlen(filespec2) + 1);
+        merged = OPENSSL_strdup(filespec2);
         if (merged == NULL) {
             DSOerr(DSO_F_WIN32_MERGER, ERR_R_MALLOC_FAILURE);
             return (NULL);
         }
-        strcpy(merged, filespec2);
     } else {
         filespec1_split = win32_splitter(dso, filespec1, 0);
         if (!filespec1_split) {
