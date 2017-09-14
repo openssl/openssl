@@ -150,7 +150,8 @@ static void free_dir(X509_LOOKUP *lu)
 
 static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 {
-    int j, len;
+    int j;
+    size_t len;
     const char *s, *ss, *p;
 
     if (dir == NULL || !*dir) {
@@ -165,7 +166,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
             BY_DIR_ENTRY *ent;
             ss = s;
             s = p + 1;
-            len = (int)(p - ss);
+            len = p - ss;
             if (len == 0)
                 continue;
             for (j = 0; j < sk_BY_DIR_ENTRY_num(ctx->dirs); j++) {
