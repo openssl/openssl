@@ -3,7 +3,9 @@
 =head1 NAME
 
 SSL_CTX_set_min_proto_version, SSL_CTX_set_max_proto_version,
-SSL_set_min_proto_version, SSL_set_max_proto_version - Set minimum
+SSL_CTX_get_min_proto_version, SSL_CTX_get_max_proto_version,
+SSL_set_min_proto_version, SSL_set_max_proto_version,
+SSL_get_min_proto_version, SSL_get_max_proto_version - Get and set minimum
 and maximum supported protocol version
 
 =head1 SYNOPSIS
@@ -12,13 +14,17 @@ and maximum supported protocol version
 
  int SSL_CTX_set_min_proto_version(SSL_CTX *ctx, int version);
  int SSL_CTX_set_max_proto_version(SSL_CTX *ctx, int version);
+ int SSL_CTX_get_min_proto_version(SSL_CTX *ctx);
+ int SSL_CTX_get_max_proto_version(SSL_CTX *ctx);
 
  int SSL_set_min_proto_version(SSL *ssl, int version);
  int SSL_set_max_proto_version(SSL *ssl, int version);
+ int SSL_get_min_proto_version(SSL *ssl);
+ int SSL_get_max_proto_version(SSL *ssl);
 
 =head1 DESCRIPTION
 
-The functions set the minimum and maximum supported protocol versions
+The functions get or set the minimum and maximum supported protocol versions
 for the B<ctx> or B<ssl>.
 This works in combination with the options set via
 L<SSL_CTX_set_options(3)> that also make it possible to disable
@@ -29,13 +35,18 @@ Setting the minimum or maximum version to 0, will enable protocol
 versions down to the lowest version, or up to the highest version
 supported by the library, respectively.
 
+Getters return 0 in case B<ctx> or B<ssl> have been configured to
+automatically use the lowest or highest version supported by the library.
+
 Currently supported versions are B<SSL3_VERSION>, B<TLS1_VERSION>,
 B<TLS1_1_VERSION>, B<TLS1_2_VERSION>, B<TLS1_3_VERSION> for TLS and
 B<DTLS1_VERSION>, B<DTLS1_2_VERSION> for DTLS.
 
 =head1 RETURN VALUES
 
-These functions return 1 on success and 0 on failure.
+These setter functions return 1 on success and 0 on failure. The getter
+functions return the configured version or 0 for auto-configuration of
+lowest or highest protocol, respectively.
 
 =head1 NOTES
 
@@ -43,7 +54,8 @@ All these functions are implemented using macros.
 
 =head1 HISTORY
 
-The functions were added in OpenSSL 1.1.0
+The setter functions were added in OpenSSL 1.1.0. The getter functions
+were added in OpenSSL 1.1.1.
 
 =head1 SEE ALSO
 
