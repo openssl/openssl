@@ -207,6 +207,8 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
 
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;
+    if (maxmem > SIZE_MAX)
+        maxmem = SIZE_MAX;
 
     if (Blen + Vlen > maxmem) {
         EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_MEMORY_LIMIT_EXCEEDED);
