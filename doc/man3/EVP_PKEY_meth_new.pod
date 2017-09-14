@@ -353,7 +353,7 @@ then the built-in objects.
 EVP_PKEY_meth_add0() adds B<pmeth> to the user defined stack of methods.
 
 EVP_PKEY_meth_remove() removes an B<EVP_PKEY_METHOD> object added by
-EVP_PKEY_meth_new().
+EVP_PKEY_meth_add0().
 
 The EVP_PKEY_meth_set functions set the corresponding fields of
 B<EVP_PKEY_METHOD> structure with the arguments passed.
