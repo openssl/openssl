@@ -67,23 +67,35 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
 {
     unsigned char *p;
     char oline[256], htmp[5];
-    int i;
+    int i, nid;
     switch (gen->type) {
     case GEN_OTHERNAME:
-    {
-        ASN1_TYPE *value = gen->d.otherName->value;
-        int nid = OBJ_obj2nid(gen->d.otherName->type_id);
-        if ((nid == NID_id_on_dnsSRV) && (value->type == V_ASN1_IA5STRING)) {
-            if (!X509V3_add_value_uchar("SRVName",
-                                        value->value.ia5string->data,
-                                        &ret))
+        nid = OBJ_obj2nid(gen->d.otherName->type_id);
+        if (nid != NID_undef) {
+            const char *sn = OBJ_nid2sn(nid);
+            const unsigned char *data;
+            switch (gen->d.otherName->value->type) {
+            case V_ASN1_IA5STRING:
+                data = gen->d.otherName->value->value.ia5string->data;
+                break;
+            case V_ASN1_PRINTABLESTRING:
+                data = gen->d.otherName->value->value.printablestring->data;
+                break;
+            case V_ASN1_UNIVERSALSTRING:
+                data = gen->d.otherName->value->value.universalstring->data;
+                break;
+            default:
+                data = "<unsupported type>";
+                break;
+            }
+            if (!X509V3_add_value_uchar(sn, data, &ret))
                 return NULL;
         } else {
             if (!X509V3_add_value("othername", "<unsupported>", &ret))
                 return NULL;
         }
         break;
-    }
+
     case GEN_X400:
         if (!X509V3_add_value("X400Name", "<unsupported>", &ret))
             return NULL;
@@ -150,19 +162,33 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
 int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
 {
     unsigned char *p;
-    int i;
+    int i, nid;
     switch (gen->type) {
     case GEN_OTHERNAME:
-    {
-        ASN1_TYPE *value = gen->d.otherName->value;
-        int nid = OBJ_obj2nid(gen->d.otherName->type_id);
-        if ((nid == NID_id_on_dnsSRV) && (value->type == V_ASN1_IA5STRING)) {
-            BIO_printf(out, "SRVName:%s", value->value.ia5string->data);
+        nid = OBJ_obj2nid(gen->d.otherName->type_id);
+        if (nid != NID_undef) {
+            const char *sn = OBJ_nid2sn(nid);
+            const unsigned char *data;
+            switch (gen->d.otherName->value->type) {
+            case V_ASN1_IA5STRING:
+                data = gen->d.otherName->value->value.ia5string->data;
+                break;
+            case V_ASN1_PRINTABLESTRING:
+                data = gen->d.otherName->value->value.printablestring->data;
+                break;
+            case V_ASN1_UNIVERSALSTRING:
+                data = gen->d.otherName->value->value.universalstring->data;
+                break;
+            default:
+                data = "<unsupported type>";
+                break;
+            }
+            BIO_printf(out, "%s:%s", sn, data);
         } else {
             BIO_printf(out, "othername:<unsupported>");
         }
         break;
-    }
+
     case GEN_X400:
         BIO_printf(out, "X400Name:<unsupported>");
         break;
