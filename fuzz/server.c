@@ -507,7 +507,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     SSL *server;
     BIO *in;
     BIO *out;
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DSA)
     BIO *bio_buf;
+#endif
     SSL_CTX *ctx;
     int ret;
     RSA *privkey;
