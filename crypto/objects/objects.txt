@@ -516,6 +516,8 @@ id-kp 23                : sendRouter            : Send Router
 id-kp 24                : sendProxiedRouter     : Send Proxied Router
 id-kp 25                : sendOwner             : Send Owner
 id-kp 26                : sendProxiedOwner      : Send Proxied Owner
+id-kp 27                : cmcCA                 : CMC Certificate Authority
+id-kp 28                : cmcRA                 : CMC Registration Authority
 
 # CMP information types
 id-it 1			: id-it-caProtEncCert
@@ -579,7 +581,7 @@ id-cmc 19		: id-cmc-responseInfo
 id-cmc 21		: id-cmc-queryPending
 id-cmc 22		: id-cmc-popLinkRandom
 id-cmc 23		: id-cmc-popLinkWitness
-id-cmc 24		: id-cmc-confirmCertAcceptance 
+id-cmc 24		: id-cmc-confirmCertAcceptance
 
 # other names
 id-on 1			: id-on-personalData
