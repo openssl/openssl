@@ -1128,3 +1128,5 @@ ffdhe3072		1127
 ffdhe4096		1128
 ffdhe6144		1129
 ffdhe8192		1130
+cmcCA		1131
+cmcRA		1132

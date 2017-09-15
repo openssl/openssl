@@ -1572,6 +1572,16 @@
 #define NID_sendProxiedOwner            1030
 #define OBJ_sendProxiedOwner            OBJ_id_kp,26L
 
+#define SN_cmcCA                "cmcCA"
+#define LN_cmcCA                "CMC Certificate Authority"
+#define NID_cmcCA               1131
+#define OBJ_cmcCA               OBJ_id_kp,27L
+
+#define SN_cmcRA                "cmcRA"
+#define LN_cmcRA                "CMC Registration Authority"
+#define NID_cmcRA               1132
+#define OBJ_cmcRA               OBJ_id_kp,28L
+
 #define SN_id_it_caProtEncCert          "id-it-caProtEncCert"
 #define NID_id_it_caProtEncCert         298
 #define OBJ_id_it_caProtEncCert         OBJ_id_it,1L
