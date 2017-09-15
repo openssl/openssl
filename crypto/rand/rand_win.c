@@ -67,7 +67,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     if (buffer != NULL) {
         size_t bytes = 0;
         if (BCryptGenRandom(NULL, buffer, bytes_needed,
-            BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
+                            BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
             bytes = bytes_needed;
 
         rand_pool_add_end(pool, bytes, 8 * bytes);
@@ -82,7 +82,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         size_t bytes = 0;
         /* poll the CryptoAPI PRNG */
         if (CryptAcquireContextW(&hProvider, NULL, NULL, PROV_RSA_FULL,
-            CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
+                                 CRYPT_VERIFYCONTEXT | CRYPT_SILENT) != 0) {
             if (CryptGenRandom(hProvider, bytes_needed, buffer) != 0)
                 bytes = bytes_needed;
 

@@ -228,7 +228,7 @@ static RAND_DRBG *rand_drbg_new(int secure,
 
     return drbg;
 
-err:
+ err:
     if (drbg->secure)
         OPENSSL_secure_free(drbg);
     else
@@ -320,7 +320,7 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
         entropylen = drbg->get_entropy(drbg, &entropy, min_entropy,
                                        min_entropylen, max_entropylen, 0);
     if (entropylen < min_entropylen
-        || entropylen > max_entropylen) {
+            || entropylen > max_entropylen) {
         RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_ENTROPY);
         goto end;
     }
@@ -350,10 +350,10 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
             drbg->reseed_counter = drbg->parent->reseed_counter;
     }
 
-end:
+ end:
     if (entropy != NULL && drbg->cleanup_entropy != NULL)
         drbg->cleanup_entropy(drbg, entropy, entropylen);
-    if (nonce != NULL && drbg->cleanup_nonce!= NULL )
+    if (nonce != NULL && drbg->cleanup_nonce != NULL)
         drbg->cleanup_nonce(drbg, nonce, noncelen);
     if (drbg->pool != NULL) {
         if (drbg->state == DRBG_READY) {
@@ -429,7 +429,7 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
                                        drbg->max_entropylen,
                                        prediction_resistance);
     if (entropylen < drbg->min_entropylen
-        || entropylen > drbg->max_entropylen) {
+            || entropylen > drbg->max_entropylen) {
         RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_ERROR_RETRIEVING_ENTROPY);
         goto end;
     }
@@ -447,7 +447,7 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
             drbg->reseed_counter = drbg->parent->reseed_counter;
     }
 
-end:
+ end:
     if (entropy != NULL && drbg->cleanup_entropy != NULL)
         drbg->cleanup_entropy(drbg, entropy, entropylen);
     if (drbg->state == DRBG_READY)
