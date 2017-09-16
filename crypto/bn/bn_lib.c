@@ -332,6 +332,9 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
     if (b->top > 0)
         memcpy(a->d, b->d, sizeof(b->d[0]) * b->top);
 
+    if (BN_get_flags(b, BN_FLG_CONSTTIME) != 0)
+        BN_set_flags(a, BN_FLG_CONSTTIME);
+
     a->top = b->top;
     a->neg = b->neg;
     bn_check_top(a);
