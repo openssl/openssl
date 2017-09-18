@@ -231,13 +231,6 @@ void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
 
 int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
 {
-    /* If the field pub_key in dh is NULL, the corresponding input
-     * parameters MUST be non-NULL.  The priv_key field may
-     * be left NULL.
-     */
-    if (dh->pub_key == NULL && pub_key == NULL)
-        return 0;
-
     if (pub_key != NULL) {
         BN_free(dh->pub_key);
         dh->pub_key = pub_key;
