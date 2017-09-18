@@ -217,7 +217,6 @@ static int verify_chain(X509_STORE_CTX *ctx)
     if ((ok = build_chain(ctx)) == 0 ||
         (ok = check_chain_extensions(ctx)) == 0 ||
         (ok = check_auth_level(ctx)) == 0 ||
-        (ok = check_name_constraints(ctx)) == 0 ||
         (ok = check_id(ctx)) == 0 || 1)
         X509_get_pubkey_parameters(NULL, ctx->chain);
     if (ok == 0 || (ok = ctx->check_revocation(ctx)) == 0)
@@ -233,6 +232,9 @@ static int verify_chain(X509_STORE_CTX *ctx)
     /* Verify chain signatures and expiration times */
     ok = (ctx->verify != NULL) ? ctx->verify(ctx) : internal_verify(ctx);
     if (!ok)
+        return ok;
+
+    if ((ok = check_name_constraints(ctx)) == 0)
         return ok;
 
 #ifndef OPENSSL_NO_RFC3779
