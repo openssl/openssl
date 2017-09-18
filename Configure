@@ -141,7 +141,6 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
 #       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
 my $clang_devteam_warn = ""
-        . " -Qunused-arguments"
         . " -Wswitch-default"
         . " -Wno-parentheses-equality"
         . " -Wno-language-extension-token"
@@ -1319,6 +1318,10 @@ if (defined($config{api})) {
     $config{openssl_api_defines} = [ "OPENSSL_MIN_API=".$apitable->{$config{api}} ];
     my $apiflag = sprintf("OPENSSL_API_COMPAT=%s", $apitable->{$config{api}});
     push @{$config{defines}}, $apiflag;
+}
+
+if (defined($predefined{__clang__}) && !$disabled{asm}) {
+    $config{cflags} .= " -Qunused-arguments";
 }
 
 if ($strict_warnings)
