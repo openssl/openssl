@@ -29,12 +29,14 @@ static int dh_test(void)
     BN_GENCB *_cb = NULL;
     DH *a = NULL;
     DH *b = NULL;
+    DH *c = NULL;
     const BIGNUM *ap = NULL, *ag = NULL, *apub_key = NULL;
-    const BIGNUM *bpub_key = NULL;
-    BIGNUM *bp = NULL, *bg = NULL;
+    const BIGNUM *bpub_key = NULL, *bpriv_key = NULL;
+    BIGNUM *bp = NULL, *bg = NULL, *cpriv_key = NULL;
     unsigned char *abuf = NULL;
     unsigned char *bbuf = NULL;
-    int i, alen, blen, aout, bout;
+    unsigned char *cbuf = NULL;
+    int i, alen, blen, clen, aout, bout, cout;
     int ret = 0;
 
     if (!TEST_ptr(_cb = BN_GENCB_new()))
@@ -70,7 +72,14 @@ static int dh_test(void)
 
     if (!DH_generate_key(b))
         goto err;
-    DH_get0_key(b, &bpub_key, NULL);
+    DH_get0_key(b, &bpub_key, &bpriv_key);
+
+    /* Also test with a private-key-only copy of |b|. */
+    if (!TEST_ptr(c = DHparams_dup(b))
+            || !TEST_ptr(cpriv_key = BN_dup(bpriv_key))
+            || !TEST_true(DH_set0_key(c, NULL, cpriv_key)))
+        goto err;
+    cpriv_key = NULL;
 
     alen = DH_size(a);
     if (!TEST_ptr(abuf = OPENSSL_malloc(alen))
@@ -82,8 +91,14 @@ static int dh_test(void)
             || !TEST_true((bout = DH_compute_key(bbuf, apub_key, b)) != -1))
         goto err;
 
+    clen = DH_size(c);
+    if (!TEST_ptr(cbuf = OPENSSL_malloc(clen))
+            || !TEST_true((cout = DH_compute_key(cbuf, apub_key, c)) != -1))
+        goto err;
+
     if (!TEST_true(aout >= 4)
-            || !TEST_mem_eq(abuf, aout, bbuf, bout))
+            || !TEST_mem_eq(abuf, aout, bbuf, bout)
+            || !TEST_mem_eq(abuf, aout, cbuf, cout))
         goto err;
 
     ret = 1;
@@ -91,10 +106,13 @@ static int dh_test(void)
  err:
     OPENSSL_free(abuf);
     OPENSSL_free(bbuf);
+    OPENSSL_free(cbuf);
     DH_free(b);
     DH_free(a);
+    DH_free(c);
     BN_free(bp);
     BN_free(bg);
+    BN_free(cpriv_key);
     BN_GENCB_free(_cb);
     return ret;
 }
