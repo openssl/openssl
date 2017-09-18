@@ -460,6 +460,7 @@ static void set0_CA_list(STACK_OF(X509_NAME) **ca_list,
 STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk)
 {
     int i;
+    const int num = sk_X509_NAME_num(sk);
     STACK_OF(X509_NAME) *ret;
     X509_NAME *name;
 
@@ -468,13 +469,16 @@ STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk)
         SSLerr(SSL_F_SSL_DUP_CA_LIST, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    for (i = 0; i < sk_X509_NAME_num(sk); i++) {
+    if (!sk_X509_NAME_reserve(ret, num))
+        return NULL;
+    for (i = 0; i < num; i++) {
         name = X509_NAME_dup(sk_X509_NAME_value(sk, i));
-        if (name == NULL || !sk_X509_NAME_push(ret, name)) {
+        if (name == NULL) {
             sk_X509_NAME_pop_free(ret, X509_NAME_free);
             X509_NAME_free(name);
             return NULL;
         }
+        sk_X509_NAME_push(ret, name);   /* Cannot fail after reserve call */
     }
     return (ret);
 }

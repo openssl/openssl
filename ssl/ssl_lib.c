@@ -161,6 +161,7 @@ static int ssl_dane_dup(SSL *to, SSL *from)
     if (!DANETLS_ENABLED(&from->dane))
         return 1;
 
+    num = sk_danetls_record_num(from->dane.trecs);
     dane_final(&to->dane);
     to->dane.flags = from->dane.flags;
     to->dane.dctx = &to->ctx->dane;
@@ -170,8 +171,9 @@ static int ssl_dane_dup(SSL *to, SSL *from)
         SSLerr(SSL_F_SSL_DANE_DUP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
+    if (!sk_danetls_record_reserve(to->dane.trecs, num))
+        return 0;
 
-    num = sk_danetls_record_num(from->dane.trecs);
     for (i = 0; i < num; ++i) {
         danetls_record *t = sk_danetls_record_value(from->dane.trecs, i);
 
