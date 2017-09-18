@@ -49,7 +49,7 @@ int FuzzerInitialize(int *argc, char ***argv)
     idx = SSL_get_ex_data_X509_STORE_CTX_idx();
     FuzzerSetRand();
     comp_methods = SSL_COMP_get_compression_methods();
-    OPENSSL_sk_sort((OPENSSL_STACK *)comp_methods);
+    sk_SSL_COMP_sort(comp_methods);
 
 
     return 1;
