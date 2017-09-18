@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 126;
+plan tests => 132;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -341,6 +341,20 @@ ok(!verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_l
 
 ok(verify("ee-pss-sha256-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
     "PSS signature using SHA256 and auth level 2");
+
+ok(!verify("many-names1", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Too many names and constraints to check (1)");
+ok(!verify("many-names2", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Too many names and constraints to check (2)");
+ok(!verify("many-names3", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Too many names and constraints to check (3)");
+
+ok(verify("some-names1", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Not too many names and constraints to check (1)");
+ok(verify("some-names2", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Not too many names and constraints to check (2)");
+ok(verify("some-names2", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Not too many names and constraints to check (3)");
 
 SKIP: {
     skip "Ed25519 is not supported by this OpenSSL build", 1
