@@ -342,6 +342,8 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
         OPENSSL_free(pool);
         return 0;
     }
+    if (!sk_ASYNC_JOB_reserve(pool->jobs, init_size))
+        goto err;
 
     pool->max_size = max_size;
 
@@ -358,7 +360,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
             break;
         }
         job->funcargs = NULL;
-        sk_ASYNC_JOB_push(pool->jobs, job);
+        sk_ASYNC_JOB_push(pool->jobs, job); /* Cannot fail due to reserve */
         curr_size++;
     }
     pool->curr_size = curr_size;
