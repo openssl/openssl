@@ -48,13 +48,11 @@ been set yet, although if the private key has been set then the public key must
 be. The values point to the internal representation of the public key and
 private key values. This memory should not be freed directly.
 
-The public and private key values can be set using DH_set0_key(). The public
-key must be non-NULL the first time this function is called on a given DH
-object. The private key may be NULL.  On subsequent calls, either may be NULL,
-which means the corresponding DH field is left untouched. As for DH_set0_pqg()
-this function transfers the memory management of the key values to the DH
-object, and therefore they should not be freed directly after this function has
-been called.
+The public and private key values can be set using DH_set0_key(). Either
+parameter may be NULL, which means the corresponding DH field is left
+untouched. As with DH_set0_pqg() this function transfers the memory management
+of the key values to the DH object, and therefore they should not be freed
+directly after this function has been called.
 
 DH_set_flags() sets the flags in the B<flags> parameter on the DH object.
 Multiple flags can be passed in one go (bitwise ORed together). Any flags that

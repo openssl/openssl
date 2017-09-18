@@ -40,13 +40,15 @@ int main(int argc, char *argv[])
     BN_GENCB *_cb = NULL;
     DH *a = NULL;
     DH *b = NULL;
+    DH *c = NULL;
     const BIGNUM *ap = NULL, *ag = NULL, *apub_key = NULL, *priv_key = NULL;
     const BIGNUM *bpub_key = NULL;
-    BIGNUM *bp = NULL, *bg = NULL;
+    BIGNUM *bp = NULL, *bg = NULL, *cpriv_key = NULL;
     char buf[12] = {0};
     unsigned char *abuf = NULL;
     unsigned char *bbuf = NULL;
-    int i, alen, blen, aout, bout;
+    unsigned char *cbuf = NULL;
+    int i, alen, blen, clen, aout, bout, cout;
     int ret = 1;
     BIO *out = NULL;
 
@@ -114,6 +116,13 @@ int main(int argc, char *argv[])
     BN_print(out, bpub_key);
     BIO_puts(out, "\n");
 
+    /* Also test with a private-key-only copy of |b|. */
+    if ((c = DHparams_dup(b)) == NULL
+            || (cpriv_key = BN_dup(priv_key)) == NULL
+            || !DH_set0_key(c, NULL, cpriv_key))
+        goto err;
+    cpriv_key = NULL;
+
     alen = DH_size(a);
     abuf = OPENSSL_malloc(alen);
     if (abuf == NULL)
@@ -141,7 +150,23 @@ int main(int argc, char *argv[])
         BIO_puts(out, buf);
     }
     BIO_puts(out, "\n");
-    if ((aout < 4) || (bout != aout) || (memcmp(abuf, bbuf, aout) != 0)) {
+
+    clen = DH_size(c);
+    cbuf = OPENSSL_malloc(clen);
+    if (cbuf == NULL)
+        goto err;
+
+    cout = DH_compute_key(cbuf, apub_key, c);
+
+    BIO_puts(out, "key3 =");
+    for (i = 0; i < cout; i++) {
+        sprintf(buf, "%02X", cbuf[i]);
+        BIO_puts(out, buf);
+    }
+    BIO_puts(out, "\n");
+
+    if ((aout < 4) || (bout != aout) || (memcmp(abuf, bbuf, aout) != 0)
+        || (cout != aout) || (memcmp(abuf, cbuf, aout) != 0)) {
         fprintf(stderr, "Error in DH routines\n");
         ret = 1;
     } else
@@ -154,10 +179,13 @@ int main(int argc, char *argv[])
 
     OPENSSL_free(abuf);
     OPENSSL_free(bbuf);
+    OPENSSL_free(cbuf);
     DH_free(b);
     DH_free(a);
+    DH_free(c);
     BN_free(bp);
     BN_free(bg);
+    BN_free(cpriv_key);
     BN_GENCB_free(_cb);
     BIO_free(out);
 
