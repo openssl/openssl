@@ -26,7 +26,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 121;
+plan tests => 127;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -328,3 +328,17 @@ ok(!verify("badalt9-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cer
 
 ok(!verify("badalt10-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
    "Name constaints nested DNS name excluded");
+
+ok(!verify("many-names1", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Too many names and constraints to check (1)");
+ok(!verify("many-names2", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Too many names and constraints to check (2)");
+ok(!verify("many-names3", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Too many names and constraints to check (3)");
+
+ok(verify("some-names1", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Not too many names and constraints to check (1)");
+ok(verify("some-names2", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Not too many names and constraints to check (2)");
+ok(verify("some-names2", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Not too many names and constraints to check (3)");
