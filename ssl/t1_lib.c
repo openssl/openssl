@@ -788,6 +788,27 @@ int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
 }
 
 /*
+ * Check if key is large enough to generate RSA-PSS signature.
+ *
+ * The key must greater than or equal to 2 * hash length + 2.
+ * SHA512 has a hash length of 64 bytes, which is incompatible
+ * with a 128 byte (1024 bit) key.
+ */
+#define RSA_PSS_MINIMUM_KEY_SIZE(md) (2 * EVP_MD_size(md) + 2)
+static int rsa_pss_check_min_key_size(const RSA *rsa, const SIGALG_LOOKUP *lu)
+{
+    const EVP_MD *md;
+
+    if (rsa == NULL)
+        return 0;
+    if (!tls1_lookup_md(lu, &md) || md == NULL)
+        return 0;
+    if (RSA_size(rsa) < RSA_PSS_MINIMUM_KEY_SIZE(md))
+        return 0;
+    return 1;
+}
+
+/*
  * Return a signature algorithm for TLS < 1.2 where the signature type
  * is fixed by the certificate type.
  */
@@ -2303,6 +2324,12 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
 #else
                 continue;
 #endif
+            } else if (lu->sig == EVP_PKEY_RSA_PSS) {
+                /* validate that key is large enough for the signature algorithm */
+                const RSA *rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA_PSS_SIGN].privatekey);
+
+                if (!rsa_pss_check_min_key_size(rsa, lu))
+                    continue;
             }
             break;
         }
@@ -2355,6 +2382,13 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                                 continue;
                             sig_idx = SSL_PKEY_RSA;
                         }
+                    }
+                    if (lu->sig == EVP_PKEY_RSA_PSS) {
+                        /* validate that key is large enough for the signature algorithm */
+                        const RSA *rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA_PSS_SIGN].privatekey);
+
+                        if (!rsa_pss_check_min_key_size(rsa, lu))
+                            continue;
                     }
 #ifndef OPENSSL_NO_EC
                     if (curve == -1 || lu->curve == curve)
