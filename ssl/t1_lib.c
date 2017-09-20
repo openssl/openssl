@@ -2328,7 +2328,7 @@ int tls_choose_sigalg(SSL *s, int *al)
                 if (lu->sig_idx != SSL_PKEY_RSA_PSS_SIGN
                         || !ssl_has_cert(s, SSL_PKEY_RSA))
                     continue;
-                    sig_idx = SSL_PKEY_RSA;
+                sig_idx = SSL_PKEY_RSA;
             }
             if (lu->sig == EVP_PKEY_EC) {
 #ifndef OPENSSL_NO_EC
