@@ -37,7 +37,7 @@ int X509_NAME_get_text_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, char *buf
         return (-1);
     data = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(name, i));
     i = (data->length > (len - 1)) ? (len - 1) : data->length;
-    if (buf == NULL)
+    if (buf == NULL || len <= 0)
         return (data->length);
     memcpy(buf, data->data, i);
     buf[i] = '\0';
