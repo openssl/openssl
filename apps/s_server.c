@@ -795,6 +795,7 @@ const OPTIONS s_server_options[] = {
     {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
     {"dcert", OPT_DCERT, '<',
      "Second certificate file to use (usually for DSA)"},
+    {"dhparam", OPT_DHPARAM, '<', "DH parameters file to use"},
     {"dcertform", OPT_DCERTFORM, 'F',
      "Second certificate format (PEM or DER) PEM default"},
     {"dkey", OPT_DKEY, '<',
