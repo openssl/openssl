@@ -26,6 +26,7 @@ typedef struct {
     int generator;
     int use_dsa;
     int subprime_len;
+    int pad;
     /* message digest used for parameter generation */
     const EVP_MD *md;
     int rfc5114_param;
@@ -86,6 +87,7 @@ static int pkey_dh_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     dctx->subprime_len = sctx->subprime_len;
     dctx->generator = sctx->generator;
     dctx->use_dsa = sctx->use_dsa;
+    dctx->pad = sctx->pad;
     dctx->md = sctx->md;
     dctx->rfc5114_param = sctx->rfc5114_param;
     dctx->param_nid = sctx->param_nid;
@@ -119,6 +121,10 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         if (dctx->use_dsa == 0)
             return -2;
         dctx->subprime_len = p1;
+        return 1;
+
+    case EVP_PKEY_CTRL_DH_PAD:
+        dctx->pad = p1;
         return 1;
 
     case EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR:
@@ -254,6 +260,11 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
         int typ;
         typ = atoi(value);
         return EVP_PKEY_CTX_set_dh_paramgen_type(ctx, typ);
+    }
+    if (strcmp(type, "dh_pad") == 0) {
+        int pad;
+        pad = atoi(value);
+        return EVP_PKEY_CTX_set_dh_pad(ctx, pad);
     }
     return -2;
 }
@@ -423,7 +434,10 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
             *keylen = DH_size(dh);
             return 1;
         }
-        ret = DH_compute_key(key, dhpub, dh);
+        if (dctx->pad)
+            ret = DH_compute_key_padded(key, dhpub, dh);
+        else
+            ret = DH_compute_key(key, dhpub, dh);
         if (ret < 0)
             return ret;
         *keylen = ret;
