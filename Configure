@@ -148,6 +148,7 @@ my $clang_devteam_warn = ""
         . " -Wconditional-uninitialized"
         . " -Wincompatible-pointer-types-discards-qualifiers"
         . " -Wmissing-variable-declarations"
+        . " -Wno-unknown-warning-option"
         ;
 
 # This adds backtrace information to the memory leak info.  Is only used
@@ -1327,8 +1328,11 @@ if (defined($predefined{__clang__}) && !$disabled{asm}) {
 if ($strict_warnings)
 	{
 	my $wopt;
-	die "ERROR --strict-warnings requires gcc or gcc-alike"
-            unless defined($predefined{__GNUC__});
+	my $gccver = $predefined{__GNUC__} // -1;
+
+	die "ERROR --strict-warnings requires gcc[>=4] or gcc-alike"
+            unless $gccver >= 4;
+	$gcc_devteam_warn .= " -Wmisleading-indentation" if $gccver >= 6;
 	foreach $wopt (split /\s+/, $gcc_devteam_warn)
 		{
 		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
