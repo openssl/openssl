@@ -440,8 +440,8 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
         if (min_version == DTLS1_VERSION)
             min_version = DTLS1_2_VERSION;
 #endif
-	/* Done massaging versions; do the check. */
-	if (0
+        /* Done massaging versions; do the check. */
+        if (0
 #ifdef OPENSSL_NO_DTLS1
             || (DTLS_VERSION_GE(min_version, DTLS1_VERSION)
                 && DTLS_VERSION_GE(DTLS1_VERSION, max_version))
@@ -454,44 +454,44 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
             return 0;
     } else {
         /* Regular TLS version checks. */
-	if (min_version == 0)
-	    min_version = SSL3_VERSION;
-	if (max_version == 0)
-	    max_version = TLS1_3_VERSION;
+        if (min_version == 0)
+            min_version = SSL3_VERSION;
+        if (max_version == 0)
+            max_version = TLS1_3_VERSION;
 #ifdef OPENSSL_NO_TLS1_3
-	if (max_version == TLS1_3_VERSION)
-	    max_version = TLS1_2_VERSION;
+        if (max_version == TLS1_3_VERSION)
+            max_version = TLS1_2_VERSION;
 #endif
 #ifdef OPENSSL_NO_TLS1_2
-	if (max_version == TLS1_2_VERSION)
-	    max_version = TLS1_1_VERSION;
+        if (max_version == TLS1_2_VERSION)
+            max_version = TLS1_1_VERSION;
 #endif
 #ifdef OPENSSL_NO_TLS1_1
-	if (max_version == TLS1_1_VERSION)
-	    max_version = TLS1_VERSION;
+        if (max_version == TLS1_1_VERSION)
+            max_version = TLS1_VERSION;
 #endif
 #ifdef OPENSSL_NO_TLS1
-	if (max_version == TLS1_VERSION)
-	    max_version = SSL3_VERSION;
+        if (max_version == TLS1_VERSION)
+            max_version = SSL3_VERSION;
 #endif
 #ifdef OPENSSL_NO_SSL3
-	if (min_version == SSL3_VERSION)
-	    min_version = TLS1_VERSION;
+        if (min_version == SSL3_VERSION)
+            min_version = TLS1_VERSION;
 #endif
 #ifdef OPENSSL_NO_TLS1
-	if (min_version == TLS1_VERSION)
-	    min_version = TLS1_1_VERSION;
+        if (min_version == TLS1_VERSION)
+            min_version = TLS1_1_VERSION;
 #endif
 #ifdef OPENSSL_NO_TLS1_1
-	if (min_version == TLS1_1_VERSION)
-	    min_version = TLS1_2_VERSION;
+        if (min_version == TLS1_1_VERSION)
+            min_version = TLS1_2_VERSION;
 #endif
 #ifdef OPENSSL_NO_TLS1_2
-	if (min_version == TLS1_2_VERSION)
-	    min_version = TLS1_3_VERSION;
+        if (min_version == TLS1_2_VERSION)
+            min_version = TLS1_3_VERSION;
 #endif
-	/* Done massaging versions; do the check. */
-	if (0
+        /* Done massaging versions; do the check. */
+        if (0
 #ifdef OPENSSL_NO_SSL3
             || (min_version <= SSL3_VERSION && SSL3_VERSION <= max_version)
 #endif
