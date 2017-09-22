@@ -1964,7 +1964,7 @@ int ssl_set_client_hello_version(SSL *s)
  * 1) or 0 otherwise.
  */
 #ifndef OPENSSL_NO_EC
-int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
+int check_in_list(SSL *s, uint16_t group_id, const uint16_t *groups,
                   size_t num_groups, int checkallow)
 {
     size_t i;
@@ -1972,10 +1972,12 @@ int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
     if (groups == NULL || num_groups == 0)
         return 0;
 
-    for (i = 0; i < num_groups; i++, groups += 2) {
-        if (group_id == GET_GROUP_ID(groups, 0)
+    for (i = 0; i < num_groups; i++) {
+        uint16_t group = groups[i];
+
+        if (group_id == group
                 && (!checkallow
-                    || tls_curve_allowed(s, groups, SSL_SECOP_CURVE_CHECK))) {
+                    || tls_curve_allowed(s, group, SSL_SECOP_CURVE_CHECK))) {
             return 1;
         }
     }

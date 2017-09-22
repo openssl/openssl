@@ -139,7 +139,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
                                                unsigned int context, X509 *x,
                                                size_t chainidx, int *al)
 {
-    const unsigned char *pcurves = NULL, *pcurvestmp;
+    const uint16_t *pcurves = NULL;
     size_t num_curves = 0, i;
 
     if (!use_ecc(s))
@@ -154,7 +154,6 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
                ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
-    pcurvestmp = pcurves;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_groups)
                /* Sub-packet for supported_groups extension */
@@ -165,10 +164,11 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
     /* Copy curve ID if supported */
-    for (i = 0; i < num_curves; i++, pcurvestmp += 2) {
-        if (tls_curve_allowed(s, pcurvestmp, SSL_SECOP_CURVE_SUPPORTED)) {
-            if (!WPACKET_put_bytes_u8(pkt, pcurvestmp[0])
-                || !WPACKET_put_bytes_u8(pkt, pcurvestmp[1])) {
+    for (i = 0; i < num_curves; i++) {
+        uint16_t ctmp = pcurves[i];
+
+        if (tls_curve_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED)) {
+            if (!WPACKET_put_bytes_u16(pkt, ctmp)) {
                     SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
                            ERR_R_INTERNAL_ERROR);
                     return EXT_RETURN_FAIL;
@@ -595,8 +595,8 @@ EXT_RETURN tls_construct_ctos_key_share(SSL *s, WPACKET *pkt,
 {
 #ifndef OPENSSL_NO_TLS1_3
     size_t i, num_curves = 0;
-    const unsigned char *pcurves = NULL;
-    unsigned int curve_id = 0;
+    const uint16_t *pcurves = NULL;
+    uint16_t curve_id = 0;
 
     /* key_share extension */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
@@ -620,12 +620,12 @@ EXT_RETURN tls_construct_ctos_key_share(SSL *s, WPACKET *pkt,
     if (s->s3->group_id != 0) {
         curve_id = s->s3->group_id;
     } else {
-        for (i = 0; i < num_curves; i++, pcurves += 2) {
+        for (i = 0; i < num_curves; i++) {
 
-            if (!tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED))
+            if (!tls_curve_allowed(s, pcurves[i], SSL_SECOP_CURVE_SUPPORTED))
                 continue;
 
-            curve_id = bytestogroup(pcurves);
+            curve_id = pcurves[i];
             break;
         }
     }
@@ -1521,7 +1521,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
-        unsigned const char *pcurves = NULL;
+        const uint16_t *pcurves = NULL;
         size_t i, num_curves;
 
         if (PACKET_remaining(pkt) != 0) {
@@ -1545,12 +1545,12 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
             return 0;
         }
-        for (i = 0; i < num_curves; i++, pcurves += 2) {
-            if (group_id == bytestogroup(pcurves))
+        for (i = 0; i < num_curves; i++) {
+            if (group_id == pcurves[i])
                 break;
         }
         if (i >= num_curves
-                || !tls_curve_allowed(s, pcurves, SSL_SECOP_CURVE_SUPPORTED)) {
+                || !tls_curve_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)) {
             *al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
             return 0;

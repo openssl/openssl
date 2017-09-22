@@ -1137,7 +1137,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
                 && (!s->hit
                     || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE)
                        != 0)) {
-            const unsigned char *pcurves, *pcurvestmp, *clntcurves;
+            const uint16_t *pcurves, *clntcurves;
             size_t num_curves, clnt_num_curves, i;
             unsigned int group_id = 0;
 
@@ -1158,9 +1158,8 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
             }
 
             /* Find the first group we allow that is also in client's list */
-            for (i = 0, pcurvestmp = pcurves; i < num_curves;
-                 i++, pcurvestmp += 2) {
-                group_id = bytestogroup(pcurvestmp);
+            for (i = 0; i < num_curves; i++) {
+                group_id = pcurves[i];
 
                 if (check_in_list(s, group_id, clntcurves, clnt_num_curves, 1))
                     break;
