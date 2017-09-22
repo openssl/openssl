@@ -788,7 +788,7 @@ const OPTIONS s_server_options[] = {
      "PEM serverinfo file for certificate"},
     {"certform", OPT_CERTFORM, 'F',
      "Certificate format (PEM or DER) PEM default"},
-    {"key", OPT_KEY, '<',
+    {"key", OPT_KEY, 's',
      "Private Key if not in -cert; default is " TEST_CERT},
     {"keyform", OPT_KEYFORM, 'f',
      "Key format (PEM, DER or ENGINE) PEM default"},
