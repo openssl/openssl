@@ -1349,6 +1349,18 @@ typedef struct sigalg_lookup_st {
     int curve;
 } SIGALG_LOOKUP;
 
+typedef struct tls_group_info_st {
+    int nid;                    /* Curve NID */
+    int secbits;                /* Bits of security (from SP800-57) */
+    uint16_t flags;             /* Flags: currently just group type */
+} TLS_GROUP_INFO;
+
+/* flags values */
+# define TLS_CURVE_TYPE          0x3 /* Mask for group type */
+# define TLS_CURVE_PRIME         0x0
+# define TLS_CURVE_CHAR2         0x1
+# define TLS_CURVE_CUSTOM        0x2
+
 typedef struct cert_pkey_st CERT_PKEY;
 
 /*
@@ -2326,12 +2338,6 @@ __owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
 #  ifndef OPENSSL_NO_EC
-/* Flags values from tls1_ec_curve_id2nid() */
-/* Mask for curve type */
-# define TLS_CURVE_TYPE          0x3
-# define TLS_CURVE_PRIME         0x0
-# define TLS_CURVE_CHAR2         0x1
-# define TLS_CURVE_CUSTOM        0x2
 
 __owur int tls1_ec_curve_id2nid(uint16_t curve_id, unsigned int *pflags);
 __owur uint16_t tls1_ec_nid2curve_id(int nid);
