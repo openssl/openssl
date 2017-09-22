@@ -2339,7 +2339,7 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
 #  ifndef OPENSSL_NO_EC
 
-__owur int tls1_ec_curve_id2nid(uint16_t curve_id, unsigned int *pflags);
+__owur const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t curve_id);
 __owur uint16_t tls1_ec_nid2curve_id(int nid);
 __owur int tls1_check_curve(SSL *s, const unsigned char *p, size_t len);
 __owur uint16_t tls1_shared_group(SSL *s, int nmatch);
@@ -2350,7 +2350,7 @@ __owur int tls1_set_groups_list(uint16_t **pext, size_t *pextlen,
 void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
                          size_t *num_formats);
 __owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
-__owur EVP_PKEY *ssl_generate_pkey_curve(int id);
+__owur EVP_PKEY *ssl_generate_pkey_group(uint16_t id);
 #  endif                        /* OPENSSL_NO_EC */
 
 __owur int tls_curve_allowed(SSL *s, uint16_t curve, int op);

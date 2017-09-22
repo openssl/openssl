@@ -501,8 +501,8 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     PACKET key_share_list, encoded_pt;
     const uint16_t *clntcurves, *srvrcurves;
     size_t clnt_num_curves, srvr_num_curves;
-    int group_nid, found = 0;
-    unsigned int curve_flags;
+    int found = 0;
+    const TLS_GROUP_INFO *ginf;
 
     if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
         return 1;
@@ -575,20 +575,20 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             continue;
         }
 
-        group_nid = tls1_ec_curve_id2nid(group_id, &curve_flags);
+        ginf = tls1_group_id_lookup(group_id);
 
-        if (group_nid == 0) {
+        if (ginf == NULL) {
             *al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
                    SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
             return 0;
         }
 
-        if ((curve_flags & TLS_CURVE_TYPE) == TLS_CURVE_CUSTOM) {
+        if ((ginf->flags & TLS_CURVE_TYPE) == TLS_CURVE_CUSTOM) {
             /* Can happen for some curves, e.g. X25519 */
             EVP_PKEY *key = EVP_PKEY_new();
 
-            if (key == NULL || !EVP_PKEY_set_type(key, group_nid)) {
+            if (key == NULL || !EVP_PKEY_set_type(key, ginf->nid)) {
                 *al = SSL_AD_INTERNAL_ERROR;
                 SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, ERR_R_EVP_LIB);
                 EVP_PKEY_free(key);
@@ -602,7 +602,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             if (pctx == NULL
                     || EVP_PKEY_paramgen_init(pctx) <= 0
                     || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
-                                                              group_nid) <= 0
+                                                              ginf->nid) <= 0
                     || EVP_PKEY_paramgen(pctx, &s->s3->peer_tmp) <= 0) {
                 *al = SSL_AD_INTERNAL_ERROR;
                 SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, ERR_R_EVP_LIB);

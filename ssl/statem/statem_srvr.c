@@ -2345,7 +2345,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
                    SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
             goto err;
         }
-        s->s3->tmp.pkey = ssl_generate_pkey_curve(curve_id);
+        s->s3->tmp.pkey = ssl_generate_pkey_group(curve_id);
         /* Generate a new key for this curve */
         if (s->s3->tmp.pkey == NULL) {
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_EVP_LIB);
