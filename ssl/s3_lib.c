@@ -3612,11 +3612,12 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             if (parg) {
                 size_t i;
                 int *cptr = parg;
+
                 for (i = 0; i < clistlen; i++) {
-                    /* TODO(TLS1.3): Handle DH groups here */
-                    int nid = tls1_ec_curve_id2nid(clist[i], NULL);
-                    if (nid != 0)
-                        cptr[i] = nid;
+                    const TLS_GROUP_INFO *cinf = tls1_group_id_lookup(clist[i]);
+
+                    if (cinf != NULL)
+                        cptr[i] = cinf->nid;
                     else
                         cptr[i] = TLSEXT_nid_unknown | clist[i];
                 }
@@ -3633,8 +3634,16 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                                     &s->ext.supportedgroups_len, parg);
 
     case SSL_CTRL_GET_SHARED_GROUP:
-        return tls1_ec_curve_id2nid(tls1_shared_group(s, larg), NULL);
+        {
+            uint16_t id = tls1_shared_group(s, larg);
 
+            if (larg != -1) {
+                const TLS_GROUP_INFO *ginf = tls1_group_id_lookup(id);
+
+                return ginf == NULL ? 0 : ginf->nid;
+            }
+            return id;
+        }
 #endif
     case SSL_CTRL_SET_SIGALGS:
         return tls1_set_sigalgs(s->cert, parg, larg, 0);
@@ -4581,27 +4590,27 @@ EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm)
     return pkey;
 }
 #ifndef OPENSSL_NO_EC
-/* Generate a private key a curve ID */
-EVP_PKEY *ssl_generate_pkey_curve(int id)
+/* Generate a private key from a group ID */
+EVP_PKEY *ssl_generate_pkey_group(uint16_t id)
 {
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *pkey = NULL;
-    unsigned int curve_flags;
-    int nid = tls1_ec_curve_id2nid(id, &curve_flags);
+    const TLS_GROUP_INFO *ginf = tls1_group_id_lookup(id);
+    uint16_t gtype;
 
-    if (nid == 0)
+    if (ginf == NULL)
         goto err;
-    if ((curve_flags & TLS_CURVE_TYPE) == TLS_CURVE_CUSTOM) {
-        pctx = EVP_PKEY_CTX_new_id(nid, NULL);
-        nid = 0;
-    } else {
+    gtype = ginf->flags & TLS_CURVE_TYPE;
+    if (gtype == TLS_CURVE_CUSTOM)
+        pctx = EVP_PKEY_CTX_new_id(ginf->nid, NULL);
+    else
         pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
-    }
     if (pctx == NULL)
         goto err;
     if (EVP_PKEY_keygen_init(pctx) <= 0)
         goto err;
-    if (nid != 0 && EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, nid) <= 0)
+    if (gtype != TLS_CURVE_CUSTOM
+            && EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, ginf->nid) <= 0)
         goto err;
     if (EVP_PKEY_keygen(pctx, &pkey) <= 0) {
         EVP_PKEY_free(pkey);

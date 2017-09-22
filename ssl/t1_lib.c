@@ -186,16 +186,12 @@ static const uint16_t suiteb_curves[] = {
     TLSEXT_curve_P_384
 };
 
-int tls1_ec_curve_id2nid(uint16_t curve_id, unsigned int *pflags)
+const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t curve_id)
 {
-    const TLS_GROUP_INFO *cinfo;
     /* ECC curves from RFC 4492 and RFC 7027 */
     if (curve_id < 1 || curve_id > OSSL_NELEM(nid_list))
-        return NID_undef;
-    cinfo = nid_list + curve_id - 1;
-    if (pflags)
-        *pflags = cinfo->flags;
-    return cinfo->nid;
+        return NULL;
+    return &nid_list[curve_id - 1];
 }
 
 uint16_t tls1_ec_nid2curve_id(int nid)
