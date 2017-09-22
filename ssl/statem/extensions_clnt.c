@@ -549,7 +549,7 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
          */
         key_share_key = s->s3->tmp.pkey;
     } else {
-        key_share_key = ssl_generate_pkey_curve(curve_id);
+        key_share_key = ssl_generate_pkey_group(curve_id);
         if (key_share_key == NULL) {
             SSLerr(SSL_F_ADD_KEY_SHARE, ERR_R_EVP_LIB);
             return 0;
