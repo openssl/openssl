@@ -2336,7 +2336,7 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 __owur int tls1_ec_curve_id2nid(uint16_t curve_id, unsigned int *pflags);
 __owur uint16_t tls1_ec_nid2curve_id(int nid);
 __owur int tls1_check_curve(SSL *s, const unsigned char *p, size_t len);
-__owur int tls1_shared_group(SSL *s, int nmatch);
+__owur uint16_t tls1_shared_group(SSL *s, int nmatch);
 __owur int tls1_set_groups(uint16_t **pext, size_t *pextlen,
                            int *curves, size_t ncurves);
 __owur int tls1_set_groups_list(uint16_t **pext, size_t *pextlen,
