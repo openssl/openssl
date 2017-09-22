@@ -499,7 +499,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 #ifndef OPENSSL_NO_TLS1_3
     unsigned int group_id;
     PACKET key_share_list, encoded_pt;
-    const unsigned char *clntcurves, *srvrcurves;
+    const uint16_t *clntcurves, *srvrcurves;
     size_t clnt_num_curves, srvr_num_curves;
     int group_nid, found = 0;
     unsigned int curve_flags;
@@ -647,7 +647,7 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
         OPENSSL_free(s->session->ext.supportedgroups);
         s->session->ext.supportedgroups = NULL;
         s->session->ext.supportedgroups_len = 0;
-        if (!PACKET_memdup(&supported_groups_list,
+        if (!tls1_save_u16(&supported_groups_list,
                            &s->session->ext.supportedgroups,
                            &s->session->ext.supportedgroups_len)) {
             *al = SSL_AD_INTERNAL_ERROR;
@@ -917,7 +917,7 @@ EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
                                                unsigned int context, X509 *x,
                                                size_t chainidx, int *al)
 {
-    const unsigned char *groups;
+    const uint16_t *groups;
     size_t numgroups, i, first = 1;
 
     /* s->s3->group_id is non zero if we accepted a key_share */
@@ -931,14 +931,16 @@ EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
     }
 
     /* Copy group ID if supported */
-    for (i = 0; i < numgroups; i++, groups += 2) {
-        if (tls_curve_allowed(s, groups, SSL_SECOP_CURVE_SUPPORTED)) {
+    for (i = 0; i < numgroups; i++) {
+        uint16_t group = groups[i];
+
+        if (tls_curve_allowed(s, group, SSL_SECOP_CURVE_SUPPORTED)) {
             if (first) {
                 /*
                  * Check if the client is already using our preferred group. If
                  * so we don't need to add this extension
                  */
-                if (s->s3->group_id == GET_GROUP_ID(groups, 0))
+                if (s->s3->group_id == group)
                     return EXT_RETURN_NOT_SENT;
 
                 /* Add extension header */
@@ -953,7 +955,7 @@ EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
 
                 first = 0;
             }
-            if (!WPACKET_put_bytes_u16(pkt, GET_GROUP_ID(groups, 0))) {
+            if (!WPACKET_put_bytes_u16(pkt, group)) {
                     SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS,
                            ERR_R_INTERNAL_ERROR);
                     return EXT_RETURN_FAIL;

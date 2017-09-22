@@ -543,7 +543,7 @@ struct ssl_session_st {
         size_t ecpointformats_len;
         unsigned char *ecpointformats; /* peer's list */
         size_t supportedgroups_len;
-        unsigned char *supportedgroups; /* peer's list */
+        uint16_t *supportedgroups; /* peer's list */
 # endif                         /* OPENSSL_NO_EC */
     /* RFC4507 info */
         unsigned char *tick; /* Session ticket */
@@ -902,7 +902,7 @@ struct ssl_ctx_st {
         size_t ecpointformats_len;
         unsigned char *ecpointformats;
         size_t supportedgroups_len;
-        unsigned char *supportedgroups;
+        uint16_t *supportedgroups;
 # endif                         /* OPENSSL_NO_EC */
 
         /*
@@ -1205,7 +1205,7 @@ struct ssl_st {
         unsigned char *ecpointformats;
         size_t supportedgroups_len;
         /* our list */
-        unsigned char *supportedgroups;
+        uint16_t *supportedgroups;
 # endif                         /* OPENSSL_NO_EC */
         /* TLS Session Ticket extension override */
         TLS_SESSION_TICKET_EXT *session_ticket;
@@ -1523,7 +1523,7 @@ typedef struct ssl3_state_st {
     /* For clients: peer temporary key */
 # if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     /* The group_id for the DH/ECDH key */
-    unsigned int group_id;
+    uint16_t group_id;
     EVP_PKEY *peer_tmp;
 # endif
 
@@ -2333,15 +2333,13 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 # define TLS_CURVE_CHAR2         0x1
 # define TLS_CURVE_CUSTOM        0x2
 
-#define bytestogroup(bytes) ((unsigned int)(bytes[0] << 8 | bytes[1]))
-
-__owur int tls1_ec_curve_id2nid(int curve_id, unsigned int *pflags);
-__owur int tls1_ec_nid2curve_id(int nid);
+__owur int tls1_ec_curve_id2nid(uint16_t curve_id, unsigned int *pflags);
+__owur uint16_t tls1_ec_nid2curve_id(int nid);
 __owur int tls1_check_curve(SSL *s, const unsigned char *p, size_t len);
 __owur int tls1_shared_group(SSL *s, int nmatch);
-__owur int tls1_set_groups(unsigned char **pext, size_t *pextlen,
+__owur int tls1_set_groups(uint16_t **pext, size_t *pextlen,
                            int *curves, size_t ncurves);
-__owur int tls1_set_groups_list(unsigned char **pext, size_t *pextlen,
+__owur int tls1_set_groups_list(uint16_t **pext, size_t *pextlen,
                                 const char *str);
 void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
                          size_t *num_formats);
@@ -2349,8 +2347,8 @@ __owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
 __owur EVP_PKEY *ssl_generate_pkey_curve(int id);
 #  endif                        /* OPENSSL_NO_EC */
 
-__owur int tls_curve_allowed(SSL *s, const unsigned char *curve, int op);
-__owur  int tls1_get_curvelist(SSL *s, int sess, const unsigned char **pcurves,
+__owur int tls_curve_allowed(SSL *s, uint16_t curve, int op);
+__owur  int tls1_get_curvelist(SSL *s, int sess, const uint16_t **pcurves,
                                size_t *num_curves);
 
 __owur int tls1_set_server_sigalgs(SSL *s);
@@ -2410,6 +2408,7 @@ void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
 __owur long ssl_get_algorithm2(SSL *s);
 __owur int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
                               const uint16_t *psig, size_t psiglen);
+__owur int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen);
 __owur int tls1_save_sigalgs(SSL *s, PACKET *pkt);
 __owur int tls1_process_sigalgs(SSL *s);
 __owur int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey);

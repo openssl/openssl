@@ -55,10 +55,7 @@ int statem_flush(SSL *s);
 
 typedef int (*confunc_f) (SSL *s, WPACKET *pkt);
 
-#define GET_GROUP_ID(group, idx) \
-    (unsigned int)(((group)[(idx) * 2] << 8) | (group)[((idx) * 2) + 1])
-
-int check_in_list(SSL *s, unsigned int group_id, const unsigned char *groups,
+int check_in_list(SSL *s, uint16_t group_id, const uint16_t *groups,
                   size_t num_groups, int checkallow);
 int create_synthetic_message_hash(SSL *s);
 int parse_ca_names(SSL *s, PACKET *pkt, int *al);
