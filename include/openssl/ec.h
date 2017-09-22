@@ -774,7 +774,7 @@ EC_KEY *EC_KEY_dup(const EC_KEY *src);
 int EC_KEY_up_ref(EC_KEY *key);
 
 /** Returns the ENGINE object of a EC_KEY object
- *  \param  key  EC_KEY object
+ *  \param  eckey  EC_KEY object
  *  \return the ENGINE object (possibly NULL).
  */
 ENGINE *EC_KEY_get0_engine(const EC_KEY *eckey);
