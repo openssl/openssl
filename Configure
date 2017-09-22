@@ -148,6 +148,7 @@ my $clang_devteam_warn = ""
         . " -Wconditional-uninitialized"
         . " -Wincompatible-pointer-types-discards-qualifiers"
         . " -Wmissing-variable-declarations"
+        . " -Wno-unknown-warning-option"
         ;
 
 # This adds backtrace information to the memory leak info.  Is only used
