@@ -130,18 +130,12 @@ int tls1_clear(SSL *s)
 
 #ifndef OPENSSL_NO_EC
 
-typedef struct {
-    int nid;                    /* Curve NID */
-    int secbits;                /* Bits of security (from SP800-57) */
-    unsigned int flags;         /* Flags: currently just field type */
-} tls_curve_info;
-
 /*
  * Table of curve information.
  * Do not delete entries or reorder this array! It is used as a lookup
  * table: the index of each entry is one less than the TLS curve id.
  */
-static const tls_curve_info nid_list[] = {
+static const TLS_GROUP_INFO nid_list[] = {
     {NID_sect163k1, 80, TLS_CURVE_CHAR2}, /* sect163k1 (1) */
     {NID_sect163r1, 80, TLS_CURVE_CHAR2}, /* sect163r1 (2) */
     {NID_sect163r2, 80, TLS_CURVE_CHAR2}, /* sect163r2 (3) */
@@ -194,7 +188,7 @@ static const uint16_t suiteb_curves[] = {
 
 int tls1_ec_curve_id2nid(uint16_t curve_id, unsigned int *pflags)
 {
-    const tls_curve_info *cinfo;
+    const TLS_GROUP_INFO *cinfo;
     /* ECC curves from RFC 4492 and RFC 7027 */
     if (curve_id < 1 || curve_id > OSSL_NELEM(nid_list))
         return NID_undef;
@@ -265,7 +259,7 @@ int tls1_get_curvelist(SSL *s, int sess, const uint16_t **pcurves,
 /* See if curve is allowed by security callback */
 int tls_curve_allowed(SSL *s, uint16_t curve, int op)
 {
-    const tls_curve_info *cinfo;
+    const TLS_GROUP_INFO *cinfo;
     unsigned char ctmp[2];
     if (curve > 0xff)
         return 1;
