@@ -197,7 +197,7 @@ int tls1_ec_curve_id2nid(uint16_t curve_id, unsigned int *pflags)
     const tls_curve_info *cinfo;
     /* ECC curves from RFC 4492 and RFC 7027 */
     if (curve_id < 1 || curve_id > OSSL_NELEM(nid_list))
-        return 0;
+        return NID_undef;
     cinfo = nid_list + curve_id - 1;
     if (pflags)
         *pflags = cinfo->flags;
@@ -313,13 +313,13 @@ int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
 }
 
 /*-
- * For nmatch >= 0, return the NID of the |nmatch|th shared group or NID_undef
+ * For nmatch >= 0, return the id of the |nmatch|th shared group or 0
  * if there is no match.
  * For nmatch == -1, return number of matches
- * For nmatch == -2, return the NID of the group to use for
- * an EC tmp key, or NID_undef if there is no match.
+ * For nmatch == -2, return the id of the group to use for
+ * an tmp key, or 0 if there is no match.
  */
-int tls1_shared_group(SSL *s, int nmatch)
+uint16_t tls1_shared_group(SSL *s, int nmatch)
 {
     const uint16_t *pref, *supp;
     size_t num_pref, num_supp, i, j;
@@ -327,7 +327,7 @@ int tls1_shared_group(SSL *s, int nmatch)
 
     /* Can't do anything on client side */
     if (s->server == 0)
-        return -1;
+        return 0;
     if (nmatch == -2) {
         if (tls1_suiteb(s)) {
             /*
@@ -337,11 +337,11 @@ int tls1_shared_group(SSL *s, int nmatch)
             unsigned long cid = s->s3->tmp.new_cipher->id;
 
             if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
-                return NID_X9_62_prime256v1; /* P-256 */
+                return TLSEXT_curve_P_256;
             if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
-                return NID_secp384r1; /* P-384 */
+                return TLSEXT_curve_P_384;
             /* Should never happen */
-            return NID_undef;
+            return 0;
         }
         /* If not Suite B just return first preference shared curve */
         nmatch = 0;
@@ -353,12 +353,11 @@ int tls1_shared_group(SSL *s, int nmatch)
     if (!tls1_get_curvelist(s,
             (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) != 0,
             &supp, &num_supp))
-        /* In practice, NID_undef == 0 but let's be precise. */
-        return nmatch == -1 ? 0 : NID_undef;
+        return 0;
     if (!tls1_get_curvelist(s,
             (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) == 0,
             &pref, &num_pref))
-        return nmatch == -1 ? 0 : NID_undef;
+        return 0;
 
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
@@ -368,7 +367,7 @@ int tls1_shared_group(SSL *s, int nmatch)
                 if (!tls_curve_allowed(s, id, SSL_SECOP_CURVE_SHARED))
                     continue;
                 if (nmatch == k)
-                    return tls1_ec_curve_id2nid(id, NULL);
+                    return id;
                 k++;
             }
         }
@@ -376,7 +375,7 @@ int tls1_shared_group(SSL *s, int nmatch)
     if (nmatch == -1)
         return k;
     /* Out of range (nmatch > k). */
-    return NID_undef;
+    return 0;
 }
 
 int tls1_set_groups(uint16_t **pext, size_t *pextlen,
@@ -643,9 +642,7 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
         return 1;
     }
     /* Need a shared curve */
-    if (tls1_shared_group(s, 0))
-        return 1;
-    return 0;
+    return tls1_shared_group(s, 0) != 0;
 }
 
 #else
