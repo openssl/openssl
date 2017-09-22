@@ -3633,7 +3633,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                                     &s->ext.supportedgroups_len, parg);
 
     case SSL_CTRL_GET_SHARED_GROUP:
-        return tls1_shared_group(s, larg);
+        return tls1_ec_curve_id2nid(tls1_shared_group(s, larg), NULL);
 
 #endif
     case SSL_CTRL_SET_SIGALGS:

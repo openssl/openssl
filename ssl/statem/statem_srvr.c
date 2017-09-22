@@ -2331,7 +2331,6 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
 #endif
 #ifndef OPENSSL_NO_EC
     if (type & (SSL_kECDHE | SSL_kECDHEPSK)) {
-        int nid;
 
         if (s->s3->tmp.pkey != NULL) {
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
@@ -2340,8 +2339,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         }
 
         /* Get NID of appropriate shared curve */
-        nid = tls1_shared_group(s, -2);
-        curve_id = tls1_ec_nid2curve_id(nid);
+        curve_id = tls1_shared_group(s, -2);
         if (curve_id == 0) {
             SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                    SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
