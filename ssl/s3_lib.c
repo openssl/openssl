@@ -3602,25 +3602,23 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #ifndef OPENSSL_NO_EC
     case SSL_CTRL_GET_GROUPS:
         {
-            unsigned char *clist;
+            uint16_t *clist;
             size_t clistlen;
 
             if (!s->session)
                 return 0;
             clist = s->session->ext.supportedgroups;
-            clistlen = s->session->ext.supportedgroups_len / 2;
+            clistlen = s->session->ext.supportedgroups_len;
             if (parg) {
                 size_t i;
                 int *cptr = parg;
-                unsigned int cid, nid;
                 for (i = 0; i < clistlen; i++) {
-                    n2s(clist, cid);
                     /* TODO(TLS1.3): Handle DH groups here */
-                    nid = tls1_ec_curve_id2nid(cid, NULL);
+                    int nid = tls1_ec_curve_id2nid(clist[i], NULL);
                     if (nid != 0)
                         cptr[i] = nid;
                     else
-                        cptr[i] = TLSEXT_nid_unknown | cid;
+                        cptr[i] = TLSEXT_nid_unknown | clist[i];
                 }
             }
             return (int)clistlen;

@@ -180,23 +180,23 @@ static const unsigned char ecformats_default[] = {
 };
 
 /* The default curves */
-static const unsigned char eccurves_default[] = {
-    0, 29,                      /* X25519 (29) */
-    0, 23,                      /* secp256r1 (23) */
-    0, 25,                      /* secp521r1 (25) */
-    0, 24,                      /* secp384r1 (24) */
+static const uint16_t eccurves_default[] = {
+    29,                      /* X25519 (29) */
+    23,                      /* secp256r1 (23) */
+    25,                      /* secp521r1 (25) */
+    24,                      /* secp384r1 (24) */
 };
 
-static const unsigned char suiteb_curves[] = {
-    0, TLSEXT_curve_P_256,
-    0, TLSEXT_curve_P_384
+static const uint16_t suiteb_curves[] = {
+    TLSEXT_curve_P_256,
+    TLSEXT_curve_P_384
 };
 
-int tls1_ec_curve_id2nid(int curve_id, unsigned int *pflags)
+int tls1_ec_curve_id2nid(uint16_t curve_id, unsigned int *pflags)
 {
     const tls_curve_info *cinfo;
     /* ECC curves from RFC 4492 and RFC 7027 */
-    if ((curve_id < 1) || ((unsigned int)curve_id > OSSL_NELEM(nid_list)))
+    if (curve_id < 1 || curve_id > OSSL_NELEM(nid_list))
         return 0;
     cinfo = nid_list + curve_id - 1;
     if (pflags)
@@ -204,12 +204,12 @@ int tls1_ec_curve_id2nid(int curve_id, unsigned int *pflags)
     return cinfo->nid;
 }
 
-int tls1_ec_nid2curve_id(int nid)
+uint16_t tls1_ec_nid2curve_id(int nid)
 {
     size_t i;
     for (i = 0; i < OSSL_NELEM(nid_list); i++) {
         if (nid_list[i].nid == nid)
-            return (int)(i + 1);
+            return i + 1;
     }
     return 0;
 }
@@ -222,11 +222,8 @@ int tls1_ec_nid2curve_id(int nid)
  * Returns 1 on success and 0 if the client curves list has invalid format.
  * The latter indicates an internal error: we should not be accepting such
  * lists in the first place.
- * TODO(emilia): we should really be storing the curves list in explicitly
- * parsed form instead. (However, this would affect binary compatibility
- * so cannot happen in the 1.0.x series.)
  */
-int tls1_get_curvelist(SSL *s, int sess, const unsigned char **pcurves,
+int tls1_get_curvelist(SSL *s, int sess, const uint16_t **pcurves,
                        size_t *num_curves)
 {
     size_t pcurveslen = 0;
@@ -239,17 +236,17 @@ int tls1_get_curvelist(SSL *s, int sess, const unsigned char **pcurves,
         switch (tls1_suiteb(s)) {
         case SSL_CERT_FLAG_SUITEB_128_LOS:
             *pcurves = suiteb_curves;
-            pcurveslen = sizeof(suiteb_curves);
+            pcurveslen = OSSL_NELEM(suiteb_curves);
             break;
 
         case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
             *pcurves = suiteb_curves;
-            pcurveslen = 2;
+            pcurveslen = 1;
             break;
 
         case SSL_CERT_FLAG_SUITEB_192_LOS:
             *pcurves = suiteb_curves + 2;
-            pcurveslen = 2;
+            pcurveslen = 1;
             break;
         default:
             *pcurves = s->ext.supportedgroups;
@@ -257,63 +254,60 @@ int tls1_get_curvelist(SSL *s, int sess, const unsigned char **pcurves,
         }
         if (!*pcurves) {
             *pcurves = eccurves_default;
-            pcurveslen = sizeof(eccurves_default);
+            pcurveslen = OSSL_NELEM(eccurves_default);
         }
     }
 
-    /* We do not allow odd length arrays to enter the system. */
-    if (pcurveslen & 1) {
-        SSLerr(SSL_F_TLS1_GET_CURVELIST, ERR_R_INTERNAL_ERROR);
-        *num_curves = 0;
-        return 0;
-    }
-    *num_curves = pcurveslen / 2;
+    *num_curves = pcurveslen;
     return 1;
 }
 
 /* See if curve is allowed by security callback */
-int tls_curve_allowed(SSL *s, const unsigned char *curve, int op)
+int tls_curve_allowed(SSL *s, uint16_t curve, int op)
 {
     const tls_curve_info *cinfo;
-    if (curve[0])
+    unsigned char ctmp[2];
+    if (curve > 0xff)
         return 1;
-    if ((curve[1] < 1) || ((size_t)curve[1] > OSSL_NELEM(nid_list)))
+    if (curve < 1 || curve > OSSL_NELEM(nid_list))
         return 0;
-    cinfo = &nid_list[curve[1] - 1];
+    cinfo = &nid_list[curve - 1];
 # ifdef OPENSSL_NO_EC2M
     if (cinfo->flags & TLS_CURVE_CHAR2)
         return 0;
 # endif
-    return ssl_security(s, op, cinfo->secbits, cinfo->nid, (void *)curve);
+    ctmp[0] = curve >> 8;
+    ctmp[1] = curve & 0xff;
+    return ssl_security(s, op, cinfo->secbits, cinfo->nid, (void *)ctmp);
 }
 
 /* Check a curve is one of our preferences */
 int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
 {
-    const unsigned char *curves;
+    const uint16_t *curves;
+    uint16_t curve_id;
     size_t num_curves, i;
     unsigned int suiteb_flags = tls1_suiteb(s);
     if (len != 3 || p[0] != NAMED_CURVE_TYPE)
         return 0;
+    curve_id = (p[1] << 8) | p[2];
     /* Check curve matches Suite B preferences */
     if (suiteb_flags) {
         unsigned long cid = s->s3->tmp.new_cipher->id;
-        if (p[1])
-            return 0;
         if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256) {
-            if (p[2] != TLSEXT_curve_P_256)
+            if (curve_id != TLSEXT_curve_P_256)
                 return 0;
         } else if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384) {
-            if (p[2] != TLSEXT_curve_P_384)
+            if (curve_id != TLSEXT_curve_P_384)
                 return 0;
         } else                  /* Should never happen */
             return 0;
     }
     if (!tls1_get_curvelist(s, 0, &curves, &num_curves))
         return 0;
-    for (i = 0; i < num_curves; i++, curves += 2) {
-        if (p[1] == curves[0] && p[2] == curves[1])
-            return tls_curve_allowed(s, p + 1, SSL_SECOP_CURVE_CHECK);
+    for (i = 0; i < num_curves; i++) {
+        if (curve_id == curves[i])
+            return tls_curve_allowed(s, curve_id, SSL_SECOP_CURVE_CHECK);
     }
     return 0;
 }
@@ -327,7 +321,7 @@ int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
  */
 int tls1_shared_group(SSL *s, int nmatch)
 {
-    const unsigned char *pref, *supp;
+    const uint16_t *pref, *supp;
     size_t num_pref, num_supp, i, j;
     int k;
 
@@ -366,18 +360,15 @@ int tls1_shared_group(SSL *s, int nmatch)
             &pref, &num_pref))
         return nmatch == -1 ? 0 : NID_undef;
 
-    for (k = 0, i = 0; i < num_pref; i++, pref += 2) {
-        const unsigned char *tsupp = supp;
+    for (k = 0, i = 0; i < num_pref; i++) {
+        uint16_t id = pref[i];
 
-        for (j = 0; j < num_supp; j++, tsupp += 2) {
-            if (pref[0] == tsupp[0] && pref[1] == tsupp[1]) {
-                if (!tls_curve_allowed(s, pref, SSL_SECOP_CURVE_SHARED))
+        for (j = 0; j < num_supp; j++) {
+            if (id == supp[j]) {
+                if (!tls_curve_allowed(s, id, SSL_SECOP_CURVE_SHARED))
                     continue;
-                if (nmatch == k) {
-                    int id = (pref[0] << 8) | pref[1];
-
+                if (nmatch == k)
                     return tls1_ec_curve_id2nid(id, NULL);
-                }
                 k++;
             }
         }
@@ -388,22 +379,22 @@ int tls1_shared_group(SSL *s, int nmatch)
     return NID_undef;
 }
 
-int tls1_set_groups(unsigned char **pext, size_t *pextlen,
+int tls1_set_groups(uint16_t **pext, size_t *pextlen,
                     int *groups, size_t ngroups)
 {
-    unsigned char *glist, *p;
+    uint16_t *glist;
     size_t i;
     /*
      * Bitmap of groups included to detect duplicates: only works while group
      * ids < 32
      */
     unsigned long dup_list = 0;
-    glist = OPENSSL_malloc(ngroups * 2);
+    glist = OPENSSL_malloc(ngroups * sizeof(*glist));
     if (glist == NULL)
         return 0;
-    for (i = 0, p = glist; i < ngroups; i++) {
+    for (i = 0; i < ngroups; i++) {
         unsigned long idmask;
-        int id;
+        uint16_t id;
         /* TODO(TLS1.3): Convert for DH groups */
         id = tls1_ec_nid2curve_id(groups[i]);
         idmask = 1L << id;
@@ -412,11 +403,11 @@ int tls1_set_groups(unsigned char **pext, size_t *pextlen,
             return 0;
         }
         dup_list |= idmask;
-        s2n(id, p);
+        glist[i] = id;
     }
     OPENSSL_free(*pext);
     *pext = glist;
-    *pextlen = ngroups * 2;
+    *pextlen = ngroups;
     return 1;
 }
 
@@ -456,7 +447,7 @@ static int nid_cb(const char *elem, int len, void *arg)
 }
 
 /* Set groups based on a colon separate list */
-int tls1_set_groups_list(unsigned char **pext, size_t *pextlen, const char *str)
+int tls1_set_groups_list(uint16_t **pext, size_t *pextlen, const char *str)
 {
     nid_cb_st ncb;
     ncb.nidcnt = 0;
@@ -468,7 +459,7 @@ int tls1_set_groups_list(unsigned char **pext, size_t *pextlen, const char *str)
 }
 
 /* For an EC key set TLS id and required compression based on parameters */
-static int tls1_set_ec_id(unsigned char *curve_id, unsigned char *comp_id,
+static int tls1_set_ec_id(uint16_t *pcurve_id, unsigned char *comp_id,
                           EC_KEY *ec)
 {
     int id;
@@ -481,12 +472,10 @@ static int tls1_set_ec_id(unsigned char *curve_id, unsigned char *comp_id,
         return 0;
     /* Determine curve ID */
     id = EC_GROUP_get_curve_name(grp);
-    id = tls1_ec_nid2curve_id(id);
+    *pcurve_id = tls1_ec_nid2curve_id(id);
     /* If no id return error: we don't support arbitrary explicit curves */
-    if (id == 0)
+    if (*pcurve_id == 0)
         return 0;
-    curve_id[0] = 0;
-    curve_id[1] = (unsigned char)id;
     if (comp_id) {
         if (EC_KEY_get0_public_key(ec) == NULL)
             return 0;
@@ -503,10 +492,10 @@ static int tls1_set_ec_id(unsigned char *curve_id, unsigned char *comp_id,
 }
 
 /* Check an EC key is compatible with extensions */
-static int tls1_check_ec_key(SSL *s,
-                             unsigned char *curve_id, unsigned char *comp_id)
+static int tls1_check_ec_key(SSL *s, uint16_t curve_id, unsigned char *comp_id)
 {
-    const unsigned char *pformats, *pcurves;
+    const unsigned char *pformats;
+    const uint16_t *pcurves;
     size_t num_formats, num_curves, i;
     int j;
     /*
@@ -523,7 +512,7 @@ static int tls1_check_ec_key(SSL *s,
         if (i == num_formats)
             return 0;
     }
-    if (!curve_id)
+    if (curve_id == 0)
         return 1;
     /* Check curve is consistent with client and server preferences */
     for (j = 0; j <= 1; j++) {
@@ -539,8 +528,8 @@ static int tls1_check_ec_key(SSL *s,
              */
             break;
         }
-        for (i = 0; i < num_curves; i++, pcurves += 2) {
-            if (pcurves[0] == curve_id[0] && pcurves[1] == curve_id[1])
+        for (i = 0; i < num_curves; i++) {
+            if (pcurves[i] == curve_id)
                 break;
         }
         if (i == num_curves)
@@ -577,7 +566,8 @@ void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
  */
 static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
 {
-    unsigned char comp_id, curve_id[2];
+    unsigned char comp_id;
+    uint16_t curve_id;
     EVP_PKEY *pkey;
     int rv;
     pkey = X509_get0_pubkey(x);
@@ -586,14 +576,14 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
     /* If not EC nothing to do */
     if (EVP_PKEY_id(pkey) != EVP_PKEY_EC)
         return 1;
-    rv = tls1_set_ec_id(curve_id, &comp_id, EVP_PKEY_get0_EC_KEY(pkey));
+    rv = tls1_set_ec_id(&curve_id, &comp_id, EVP_PKEY_get0_EC_KEY(pkey));
     if (!rv)
         return 0;
     /*
      * Can't check curve_id for client certs as we don't have a supported
      * curves extension.
      */
-    rv = tls1_check_ec_key(s, s->server ? curve_id : NULL, &comp_id);
+    rv = tls1_check_ec_key(s, s->server ? curve_id : 0, &comp_id);
     if (!rv)
         return 0;
     /*
@@ -604,12 +594,11 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
         int check_md;
         size_t i;
         CERT *c = s->cert;
-        if (curve_id[0])
-            return 0;
+
         /* Check to see we have necessary signing algorithm */
-        if (curve_id[1] == TLSEXT_curve_P_256)
+        if (curve_id == TLSEXT_curve_P_256)
             check_md = NID_ecdsa_with_SHA256;
-        else if (curve_id[1] == TLSEXT_curve_P_384)
+        else if (curve_id == TLSEXT_curve_P_384)
             check_md = NID_ecdsa_with_SHA384;
         else
             return 0;           /* Should never happen */
@@ -639,15 +628,15 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
      * curves permitted.
      */
     if (tls1_suiteb(s)) {
-        unsigned char curve_id[2];
+        uint16_t curve_id;
+
         /* Curve to check determined by ciphersuite */
         if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
-            curve_id[1] = TLSEXT_curve_P_256;
+            curve_id = TLSEXT_curve_P_256;
         else if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
-            curve_id[1] = TLSEXT_curve_P_384;
+            curve_id = TLSEXT_curve_P_384;
         else
             return 0;
-        curve_id[0] = 0;
         /* Check this curve is acceptable */
         if (!tls1_check_ec_key(s, curve_id, NULL))
             return 0;
@@ -983,10 +972,11 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
                 return 0;
             }
         } else {
-            unsigned char curve_id[2], comp_id;
+            unsigned char comp_id;
+            uint16_t curve_id;
 
             /* Check compression and curve matches extensions */
-            if (!tls1_set_ec_id(curve_id, &comp_id, ec))
+            if (!tls1_set_ec_id(&curve_id, &comp_id, ec))
                 return 0;
             if (!s->server && !tls1_check_ec_key(s, curve_id, &comp_id)) {
                 SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
@@ -1584,20 +1574,11 @@ static int tls1_set_shared_sigalgs(SSL *s)
     return 1;
 }
 
-/* Set preferred digest for each key type */
-
-int tls1_save_sigalgs(SSL *s, PACKET *pkt)
+int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen)
 {
-    CERT *c = s->cert;
     unsigned int stmp;
     size_t size, i;
-
-    /* Extension ignored for inappropriate versions */
-    if (!SSL_USE_SIGALGS(s))
-        return 1;
-    /* Should never happen */
-    if (!c)
-        return 0;
+    uint16_t *buf;
 
     size = PACKET_remaining(pkt);
 
@@ -1607,20 +1588,40 @@ int tls1_save_sigalgs(SSL *s, PACKET *pkt)
 
     size >>= 1;
 
-    OPENSSL_free(s->s3->tmp.peer_sigalgs);
-    s->s3->tmp.peer_sigalgs = OPENSSL_malloc(size
-                                         * sizeof(*s->s3->tmp.peer_sigalgs));
-    if (s->s3->tmp.peer_sigalgs == NULL)
+    buf = OPENSSL_malloc(size * sizeof(*buf));
+    if (buf == NULL)
         return 0;
-    s->s3->tmp.peer_sigalgslen = size;
     for (i = 0; i < size && PACKET_get_net_2(pkt, &stmp); i++)
-        s->s3->tmp.peer_sigalgs[i] = stmp;
+        buf[i] = stmp;
 
-    if (i != size)
+    if (i != size) {
+        OPENSSL_free(buf);
         return 0;
+    }
+
+    OPENSSL_free(*pdest);
+    *pdest = buf;
+    *pdestlen = size;
 
     return 1;
 }
+
+int tls1_save_sigalgs(SSL *s, PACKET *pkt)
+{
+    /* Extension ignored for inappropriate versions */
+    if (!SSL_USE_SIGALGS(s))
+        return 1;
+    /* Should never happen */
+    if (s->cert == NULL)
+        return 0;
+
+    return tls1_save_u16(pkt, &s->s3->tmp.peer_sigalgs,
+                         &s->s3->tmp.peer_sigalgslen);
+
+    return 1;
+}
+
+/* Set preferred digest for each key type */
 
 int tls1_process_sigalgs(SSL *s)
 {
