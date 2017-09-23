@@ -502,7 +502,6 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     const uint16_t *clntcurves, *srvrcurves;
     size_t clnt_num_curves, srvr_num_curves;
     int found = 0;
-    const TLS_GROUP_INFO *ginf;
 
     if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
         return 1;
@@ -575,43 +574,13 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             continue;
         }
 
-        ginf = tls1_group_id_lookup(group_id);
-
-        if (ginf == NULL) {
+        if ((s->s3->peer_tmp = ssl_generate_param_group(group_id)) == NULL) {
             *al = SSL_AD_INTERNAL_ERROR;
             SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
                    SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
             return 0;
         }
 
-        if ((ginf->flags & TLS_CURVE_TYPE) == TLS_CURVE_CUSTOM) {
-            /* Can happen for some curves, e.g. X25519 */
-            EVP_PKEY *key = EVP_PKEY_new();
-
-            if (key == NULL || !EVP_PKEY_set_type(key, ginf->nid)) {
-                *al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, ERR_R_EVP_LIB);
-                EVP_PKEY_free(key);
-                return 0;
-            }
-            s->s3->peer_tmp = key;
-        } else {
-            /* Set up EVP_PKEY with named curve as parameters */
-            EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
-
-            if (pctx == NULL
-                    || EVP_PKEY_paramgen_init(pctx) <= 0
-                    || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
-                                                              ginf->nid) <= 0
-                    || EVP_PKEY_paramgen(pctx, &s->s3->peer_tmp) <= 0) {
-                *al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, ERR_R_EVP_LIB);
-                EVP_PKEY_CTX_free(pctx);
-                return 0;
-            }
-            EVP_PKEY_CTX_free(pctx);
-            pctx = NULL;
-        }
         s->s3->group_id = group_id;
 
         if (!EVP_PKEY_set1_tls_encodedpoint(s->s3->peer_tmp,

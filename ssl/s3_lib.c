@@ -4621,6 +4621,43 @@ EVP_PKEY *ssl_generate_pkey_group(uint16_t id)
     EVP_PKEY_CTX_free(pctx);
     return pkey;
 }
+
+/*
+ * Generate parameters from a group ID
+ */
+EVP_PKEY *ssl_generate_param_group(uint16_t id)
+{
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    const TLS_GROUP_INFO *ginf = tls1_group_id_lookup(id);
+
+    if (ginf == NULL)
+        goto err;
+
+    if ((ginf->flags & TLS_CURVE_TYPE) == TLS_CURVE_CUSTOM) {
+        pkey = EVP_PKEY_new();
+        if (pkey != NULL && EVP_PKEY_set_type(pkey, ginf->nid))
+            return pkey;
+        EVP_PKEY_free(pkey);
+        return NULL;
+    }
+
+    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+    if (pctx == NULL)
+        goto err;
+    if (EVP_PKEY_paramgen_init(pctx) <= 0)
+        goto err;
+    if (EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, ginf->nid) <= 0)
+        goto err;
+    if (EVP_PKEY_paramgen(pctx, &pkey) <= 0) {
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+    }
+
+ err:
+    EVP_PKEY_CTX_free(pctx);
+    return pkey;
+}
 #endif
 
 /* Derive secrets for ECDH/DH */
