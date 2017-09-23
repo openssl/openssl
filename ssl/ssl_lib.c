@@ -720,7 +720,7 @@ SSL *SSL_new(SSL_CTX *ctx)
         s->ext.supportedgroups =
             OPENSSL_memdup(ctx->ext.supportedgroups,
                            ctx->ext.supportedgroups_len
-                                * sizeof(ctx->ext.supportedgroups));
+                                * sizeof(*ctx->ext.supportedgroups));
         if (!s->ext.supportedgroups)
             goto err;
         s->ext.supportedgroups_len = ctx->ext.supportedgroups_len;
