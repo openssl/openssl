@@ -462,7 +462,7 @@ int tls1_set_groups_list(uint16_t **pext, size_t *pextlen, const char *str)
 static int tls1_set_ec_id(uint16_t *pcurve_id, unsigned char *comp_id,
                           EC_KEY *ec)
 {
-    int id;
+    int curve_nid;
     const EC_GROUP *grp;
     if (!ec)
         return 0;
@@ -471,8 +471,8 @@ static int tls1_set_ec_id(uint16_t *pcurve_id, unsigned char *comp_id,
     if (!grp)
         return 0;
     /* Determine curve ID */
-    id = EC_GROUP_get_curve_name(grp);
-    *pcurve_id = tls1_ec_nid2curve_id(id);
+    curve_nid = EC_GROUP_get_curve_name(grp);
+    *pcurve_id = tls1_ec_nid2curve_id(curve_nid);
     /* If no id return error: we don't support arbitrary explicit curves */
     if (*pcurve_id == 0)
         return 0;
@@ -482,7 +482,7 @@ static int tls1_set_ec_id(uint16_t *pcurve_id, unsigned char *comp_id,
         if (EC_KEY_get_conv_form(ec) == POINT_CONVERSION_UNCOMPRESSED) {
             *comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
         } else {
-            if ((nid_list[id - 1].flags & TLS_CURVE_TYPE) == TLS_CURVE_PRIME)
+            if ((nid_list[*pcurve_id - 1].flags & TLS_CURVE_TYPE) == TLS_CURVE_PRIME)
                 *comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
             else
                 *comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
