@@ -2351,6 +2351,7 @@ void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
                          size_t *num_formats);
 __owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
 __owur EVP_PKEY *ssl_generate_pkey_group(uint16_t id);
+__owur EVP_PKEY *ssl_generate_param_group(uint16_t id);
 #  endif                        /* OPENSSL_NO_EC */
 
 __owur int tls_curve_allowed(SSL *s, uint16_t curve, int op);
