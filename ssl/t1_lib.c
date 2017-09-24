@@ -268,18 +268,28 @@ int tls_curve_allowed(SSL *s, uint16_t curve, int op)
     return ssl_security(s, op, cinfo->secbits, cinfo->nid, (void *)ctmp);
 }
 
+/* Return 1 if "id" is in "list" */
+static int tls1_in_list(uint16_t id, const uint16_t *list, size_t listlen)
+{
+    size_t i;
+    for (i = 0; i < listlen; i++)
+        if (list[i] == id)
+            return 1;
+    return 0;
+}
+
 /* Check a curve is one of our preferences */
 int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
 {
     const uint16_t *curves;
+    size_t num_curves;
     uint16_t curve_id;
-    size_t num_curves, i;
-    unsigned int suiteb_flags = tls1_suiteb(s);
+
     if (len != 3 || p[0] != NAMED_CURVE_TYPE)
         return 0;
     curve_id = (p[1] << 8) | p[2];
     /* Check curve matches Suite B preferences */
-    if (suiteb_flags) {
+    if (tls1_suiteb(s)) {
         unsigned long cid = s->s3->tmp.new_cipher->id;
         if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256) {
             if (curve_id != TLSEXT_curve_P_256)
@@ -291,11 +301,9 @@ int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
             return 0;
     }
     tls1_get_grouplist(s, 0, &curves, &num_curves);
-    for (i = 0; i < num_curves; i++) {
-        if (curve_id == curves[i])
-            return tls_curve_allowed(s, curve_id, SSL_SECOP_CURVE_CHECK);
-    }
-    return 0;
+    if (!tls1_in_list(curve_id, curves, num_curves))
+        return 0;
+    return tls_curve_allowed(s, curve_id, SSL_SECOP_CURVE_CHECK);
 }
 
 /*-
@@ -303,12 +311,12 @@ int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
  * if there is no match.
  * For nmatch == -1, return number of matches
  * For nmatch == -2, return the id of the group to use for
- * an tmp key, or 0 if there is no match.
+ * a tmp key, or 0 if there is no match.
  */
 uint16_t tls1_shared_group(SSL *s, int nmatch)
 {
     const uint16_t *pref, *supp;
-    size_t num_pref, num_supp, i, j;
+    size_t num_pref, num_supp, i;
     int k;
 
     /* Can't do anything on client side */
@@ -346,15 +354,12 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
 
-        for (j = 0; j < num_supp; j++) {
-            if (id == supp[j]) {
-                if (!tls_curve_allowed(s, id, SSL_SECOP_CURVE_SHARED))
+        if (!tls1_in_list(id, supp, num_supp)
+            || !tls_curve_allowed(s, id, SSL_SECOP_CURVE_SHARED))
                     continue;
-                if (nmatch == k)
-                    return id;
-                k++;
-            }
-        }
+        if (nmatch == k)
+            return id;
+         k++;
     }
     if (nmatch == -1)
         return k;
@@ -495,22 +500,22 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
     }
     return 0;
 }
+
 /* Check a group id matches preferences */
 static int tls1_check_group_id(SSL *s, uint16_t group_id)
     {
     const uint16_t *groups;
-    size_t i, groups_len;
+    size_t groups_len;
 
     if (group_id == 0)
         return 0;
 
+    if (!tls_curve_allowed(s, group_id, SSL_SECOP_CURVE_CHECK))
+        return 0;
+
     /* Check group is one of our preferences */
     tls1_get_grouplist(s, 0, &groups, &groups_len);
-    for (i = 0; i < groups_len; i++) {
-        if (groups[i] == group_id)
-            break;
-    }
-    if (i == groups_len)
+    if (!tls1_in_list(group_id, groups, groups_len))
         return 0;
 
     /* For clients, nothing more to check */
@@ -528,12 +533,7 @@ static int tls1_check_group_id(SSL *s, uint16_t group_id)
      */
     if (groups_len == 0)
             return 1;
-
-    for (i = 0; i < groups_len; i++) {
-        if (groups[i] == group_id)
-            return 1;
-    }
-    return 0;
+    return tls1_in_list(group_id, groups, groups_len);
 }
 
 void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
