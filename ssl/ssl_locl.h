@@ -2354,8 +2354,8 @@ __owur EVP_PKEY *ssl_generate_param_group(uint16_t id);
 #  endif                        /* OPENSSL_NO_EC */
 
 __owur int tls_curve_allowed(SSL *s, uint16_t curve, int op);
-__owur  int tls1_get_curvelist(SSL *s, int sess, const uint16_t **pcurves,
-                               size_t *num_curves);
+void tls1_get_grouplist(SSL *s, int sess, const uint16_t **pcurves,
+                        size_t *num_curves);
 
 __owur int tls1_set_server_sigalgs(SSL *s);
 
