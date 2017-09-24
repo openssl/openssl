@@ -213,43 +213,42 @@ static uint16_t tls1_nid2group_id(int nid)
  * The latter indicates an internal error: we should not be accepting such
  * lists in the first place.
  */
-int tls1_get_curvelist(SSL *s, int sess, const uint16_t **pcurves,
-                       size_t *num_curves)
+void tls1_get_grouplist(SSL *s, int sess, const uint16_t **pcurves,
+                        size_t *pcurveslen)
 {
-    size_t pcurveslen = 0;
 
     if (sess) {
         *pcurves = s->session->ext.supportedgroups;
-        pcurveslen = s->session->ext.supportedgroups_len;
-    } else {
-        /* For Suite B mode only include P-256, P-384 */
-        switch (tls1_suiteb(s)) {
-        case SSL_CERT_FLAG_SUITEB_128_LOS:
-            *pcurves = suiteb_curves;
-            pcurveslen = OSSL_NELEM(suiteb_curves);
-            break;
-
-        case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
-            *pcurves = suiteb_curves;
-            pcurveslen = 1;
-            break;
-
-        case SSL_CERT_FLAG_SUITEB_192_LOS:
-            *pcurves = suiteb_curves + 1;
-            pcurveslen = 1;
-            break;
-        default:
-            *pcurves = s->ext.supportedgroups;
-            pcurveslen = s->ext.supportedgroups_len;
-        }
-        if (!*pcurves) {
-            *pcurves = eccurves_default;
-            pcurveslen = OSSL_NELEM(eccurves_default);
-        }
+        *pcurveslen = s->session->ext.supportedgroups_len;
+        return;
     }
+    /* For Suite B mode only include P-256, P-384 */
+    switch (tls1_suiteb(s)) {
+    case SSL_CERT_FLAG_SUITEB_128_LOS:
+        *pcurves = suiteb_curves;
+        *pcurveslen = OSSL_NELEM(suiteb_curves);
+        break;
 
-    *num_curves = pcurveslen;
-    return 1;
+    case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
+        *pcurves = suiteb_curves;
+        *pcurveslen = 1;
+        break;
+
+    case SSL_CERT_FLAG_SUITEB_192_LOS:
+        *pcurves = suiteb_curves + 1;
+        *pcurveslen = 1;
+        break;
+
+    default:
+        if (s->ext.supportedgroups == NULL) {
+            *pcurves = eccurves_default;
+            *pcurveslen = OSSL_NELEM(eccurves_default);
+        } else {
+            *pcurves = s->ext.supportedgroups;
+            *pcurveslen = s->ext.supportedgroups_len;
+        }
+        break;
+    }
 }
 
 /* See if curve is allowed by security callback */
@@ -293,8 +292,7 @@ int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
         } else                  /* Should never happen */
             return 0;
     }
-    if (!tls1_get_curvelist(s, 0, &curves, &num_curves))
-        return 0;
+    tls1_get_grouplist(s, 0, &curves, &num_curves);
     for (i = 0; i < num_curves; i++) {
         if (curve_id == curves[i])
             return tls_curve_allowed(s, curve_id, SSL_SECOP_CURVE_CHECK);
@@ -337,17 +335,15 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
         nmatch = 0;
     }
     /*
-     * Avoid truncation. tls1_get_curvelist takes an int
+     * Avoid truncation. tls1_get_grouplist takes an int
      * but s->options is a long...
      */
-    if (!tls1_get_curvelist(s,
+    tls1_get_grouplist(s,
             (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) != 0,
-            &supp, &num_supp))
-        return 0;
-    if (!tls1_get_curvelist(s,
+            &supp, &num_supp);
+    tls1_get_grouplist(s,
             (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) == 0,
-            &pref, &num_pref))
-        return 0;
+            &pref, &num_pref);
 
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
@@ -511,8 +507,7 @@ static int tls1_check_group_id(SSL *s, uint16_t group_id)
         return 0;
 
     /* Check group is one of our preferences */
-    if (!tls1_get_curvelist(s, 0, &groups, &groups_len))
-        return 0;
+    tls1_get_grouplist(s, 0, &groups, &groups_len);
     for (i = 0; i < groups_len; i++) {
         if (groups[i] == group_id)
             break;
@@ -525,8 +520,7 @@ static int tls1_check_group_id(SSL *s, uint16_t group_id)
         return 1;
 
     /* Check group is one of peers preferences */
-    if (!tls1_get_curvelist(s, 1, &groups, &groups_len))
-        return 0;
+    tls1_get_grouplist(s, 1, &groups, &groups_len);
 
     /*
      * RFC 4492 does not require the supported elliptic curves extension
