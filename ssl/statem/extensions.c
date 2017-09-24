@@ -1144,18 +1144,8 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
             /* Check if a shared group exists */
 
             /* Get the clients list of supported groups. */
-            if (!tls1_get_curvelist(s, 1, &clntcurves, &clnt_num_curves)) {
-                *al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_FINAL_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
-
-            /* Get our list of available groups */
-            if (!tls1_get_curvelist(s, 0, &pcurves, &num_curves)) {
-                *al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_FINAL_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-                return 0;
-            }
+            tls1_get_grouplist(s, 1, &clntcurves, &clnt_num_curves);
+            tls1_get_grouplist(s, 0, &pcurves, &num_curves);
 
             /* Find the first group we allow that is also in client's list */
             for (i = 0; i < num_curves; i++) {

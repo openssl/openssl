@@ -520,18 +520,9 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     /* Get our list of supported curves */
-    if (!tls1_get_curvelist(s, 0, &srvrcurves, &srvr_num_curves)) {
-        *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
+    tls1_get_grouplist(s, 0, &srvrcurves, &srvr_num_curves);
     /* Get the clients list of supported curves. */
-    if (!tls1_get_curvelist(s, 1, &clntcurves, &clnt_num_curves)) {
-        *al = SSL_AD_INTERNAL_ERROR;
-        SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
+    tls1_get_grouplist(s, 1, &clntcurves, &clnt_num_curves);
     if (clnt_num_curves == 0) {
         /*
          * This can only happen if the supported_groups extension was not sent,
@@ -894,7 +885,8 @@ EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
         return EXT_RETURN_NOT_SENT;
 
     /* Get our list of supported groups */
-    if (!tls1_get_curvelist(s, 0, &groups, &numgroups) || numgroups == 0) {
+    tls1_get_grouplist(s, 0, &groups, &numgroups);
+    if (numgroups == 0) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
