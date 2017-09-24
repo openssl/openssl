@@ -254,13 +254,11 @@ void tls1_get_grouplist(SSL *s, int sess, const uint16_t **pcurves,
 /* See if curve is allowed by security callback */
 int tls_curve_allowed(SSL *s, uint16_t curve, int op)
 {
-    const TLS_GROUP_INFO *cinfo;
+    const TLS_GROUP_INFO *cinfo = tls1_group_id_lookup(curve);
     unsigned char ctmp[2];
-    if (curve > 0xff)
-        return 1;
-    if (curve < 1 || curve > OSSL_NELEM(nid_list))
+
+    if (cinfo == NULL)
         return 0;
-    cinfo = &nid_list[curve - 1];
 # ifdef OPENSSL_NO_EC2M
     if (cinfo->flags & TLS_CURVE_CHAR2)
         return 0;
