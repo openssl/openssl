@@ -194,7 +194,7 @@ const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t curve_id)
     return &nid_list[curve_id - 1];
 }
 
-uint16_t tls1_ec_nid2curve_id(int nid)
+static uint16_t tls1_nid2group_id(int nid)
 {
     size_t i;
     for (i = 0; i < OSSL_NELEM(nid_list); i++) {
@@ -385,7 +385,7 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
         unsigned long idmask;
         uint16_t id;
         /* TODO(TLS1.3): Convert for DH groups */
-        id = tls1_ec_nid2curve_id(groups[i]);
+        id = tls1_nid2group_id(groups[i]);
         idmask = 1L << id;
         if (!id || (dup_list & idmask)) {
             OPENSSL_free(glist);
@@ -446,88 +446,102 @@ int tls1_set_groups_list(uint16_t **pext, size_t *pextlen, const char *str)
         return 1;
     return tls1_set_groups(pext, pextlen, ncb.nid_arr, ncb.nidcnt);
 }
-
-/* For an EC key set TLS id and required compression based on parameters */
-static int tls1_set_ec_id(uint16_t *pcurve_id, unsigned char *comp_id,
-                          EC_KEY *ec)
+/* Return group id of a key */
+static uint16_t tls1_get_group_id(EVP_PKEY *pkey)
 {
-    int curve_nid;
+    EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
     const EC_GROUP *grp;
-    if (!ec)
+
+    if (ec == NULL)
         return 0;
-    /* Determine if it is a prime field */
     grp = EC_KEY_get0_group(ec);
-    if (!grp)
-        return 0;
-    /* Determine curve ID */
-    curve_nid = EC_GROUP_get_curve_name(grp);
-    *pcurve_id = tls1_ec_nid2curve_id(curve_nid);
-    /* If no id return error: we don't support arbitrary explicit curves */
-    if (*pcurve_id == 0)
-        return 0;
-    if (comp_id) {
-        if (EC_KEY_get0_public_key(ec) == NULL)
-            return 0;
-        if (EC_KEY_get_conv_form(ec) == POINT_CONVERSION_UNCOMPRESSED) {
-            *comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
-        } else {
-            if ((nid_list[*pcurve_id - 1].flags & TLS_CURVE_TYPE) == TLS_CURVE_PRIME)
-                *comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
-            else
-                *comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
-        }
-    }
-    return 1;
+    return tls1_nid2group_id(EC_GROUP_get_curve_name(grp));
 }
 
-/* Check an EC key is compatible with extensions */
-static int tls1_check_ec_key(SSL *s, uint16_t curve_id, unsigned char *comp_id)
+/* Check a key is compatible with compression extension */
+static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
 {
-    const unsigned char *pformats;
-    const uint16_t *pcurves;
-    size_t num_formats, num_curves, i;
-    int j;
+    const EC_KEY *ec;
+    const EC_GROUP *grp;
+    unsigned char comp_id;
+    size_t i;
+
+    /* If not an EC key nothing to check */
+    if (EVP_PKEY_id(pkey) != EVP_PKEY_EC)
+        return 1;
+    ec = EVP_PKEY_get0_EC_KEY(pkey);
+    grp = EC_KEY_get0_group(ec);
+
+    /* Get required compression id */
+    if (EC_KEY_get_conv_form(ec) == POINT_CONVERSION_UNCOMPRESSED) {
+            comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
+    } else if (SSL_IS_TLS13(s)) {
+            /* Compression not allowed in TLS 1.3 */
+            return 0;
+    } else {
+        int field_type = EC_METHOD_get_field_type(EC_GROUP_method_of(grp));
+
+        if (field_type == NID_X9_62_prime_field)
+            comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
+        else if (field_type == NID_X9_62_prime_field)
+            comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
+        else
+            return 0;
+    }
     /*
      * If point formats extension present check it, otherwise everything is
      * supported (see RFC4492).
      */
-    if (comp_id && s->session->ext.ecpointformats) {
-        pformats = s->session->ext.ecpointformats;
-        num_formats = s->session->ext.ecpointformats_len;
-        for (i = 0; i < num_formats; i++, pformats++) {
-            if (*comp_id == *pformats)
-                break;
-        }
-        if (i == num_formats)
-            return 0;
-    }
-    if (curve_id == 0)
+    if (s->session->ext.ecpointformats == NULL)
         return 1;
-    /* Check curve is consistent with client and server preferences */
-    for (j = 0; j <= 1; j++) {
-        if (!tls1_get_curvelist(s, j, &pcurves, &num_curves))
-            return 0;
-        if (j == 1 && num_curves == 0) {
-            /*
-             * If we've not received any curves then skip this check.
-             * RFC 4492 does not require the supported elliptic curves extension
-             * so if it is not sent we can just choose any curve.
-             * It is invalid to send an empty list in the elliptic curves
-             * extension, so num_curves == 0 always means no extension.
-             */
-            break;
-        }
-        for (i = 0; i < num_curves; i++) {
-            if (pcurves[i] == curve_id)
-                break;
-        }
-        if (i == num_curves)
-            return 0;
-        /* For clients can only check sent curve list */
-        if (!s->server)
+
+    for (i = 0; i < s->session->ext.ecpointformats_len; i++) {
+        if (s->session->ext.ecpointformats[i] == comp_id)
+            return 1;
+    }
+    return 0;
+}
+/* Check a group id matches preferences */
+static int tls1_check_group_id(SSL *s, uint16_t group_id)
+    {
+    const uint16_t *groups;
+    size_t i, groups_len;
+
+    if (group_id == 0)
+        return 0;
+
+    /* Check group is one of our preferences */
+    if (!tls1_get_curvelist(s, 0, &groups, &groups_len))
+        return 0;
+    for (i = 0; i < groups_len; i++) {
+        if (groups[i] == group_id)
             break;
     }
-    return 1;
+    if (i == groups_len)
+        return 0;
+
+    /* For clients, nothing more to check */
+    if (!s->server)
+        return 1;
+
+    /* Check group is one of peers preferences */
+    if (!tls1_get_curvelist(s, 1, &groups, &groups_len))
+        return 0;
+
+    /*
+     * RFC 4492 does not require the supported elliptic curves extension
+     * so if it is not sent we can just choose any curve.
+     * It is invalid to send an empty list in the supported groups
+     * extension, so groups_len == 0 always means no extension.
+     */
+    if (groups_len == 0)
+            return 1;
+
+    for (i = 0; i < groups_len; i++) {
+        if (groups[i] == group_id)
+            return 1;
+    }
+    return 0;
 }
 
 void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
@@ -555,25 +569,19 @@ void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
  */
 static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
 {
-    unsigned char comp_id;
-    uint16_t curve_id;
+    uint16_t group_id;
     EVP_PKEY *pkey;
-    int rv;
     pkey = X509_get0_pubkey(x);
-    if (!pkey)
+    if (pkey == NULL)
         return 0;
     /* If not EC nothing to do */
     if (EVP_PKEY_id(pkey) != EVP_PKEY_EC)
         return 1;
-    rv = tls1_set_ec_id(&curve_id, &comp_id, EVP_PKEY_get0_EC_KEY(pkey));
-    if (!rv)
+    /* Check compression */
+    if (!tls1_check_pkey_comp(s, pkey))
         return 0;
-    /*
-     * Can't check curve_id for client certs as we don't have a supported
-     * curves extension.
-     */
-    rv = tls1_check_ec_key(s, s->server ? curve_id : 0, &comp_id);
-    if (!rv)
+    group_id = tls1_get_group_id(pkey);
+    if (!tls1_check_group_id(s, group_id))
         return 0;
     /*
      * Special case for suite B. We *MUST* sign using SHA256+P-256 or
@@ -585,19 +593,19 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
         CERT *c = s->cert;
 
         /* Check to see we have necessary signing algorithm */
-        if (curve_id == TLSEXT_curve_P_256)
+        if (group_id == TLSEXT_curve_P_256)
             check_md = NID_ecdsa_with_SHA256;
-        else if (curve_id == TLSEXT_curve_P_384)
+        else if (group_id == TLSEXT_curve_P_384)
             check_md = NID_ecdsa_with_SHA384;
         else
             return 0;           /* Should never happen */
-        for (i = 0; i < c->shared_sigalgslen; i++)
+        for (i = 0; i < c->shared_sigalgslen; i++) {
             if (check_md == c->shared_sigalgs[i]->sigandhash)
-                break;
-        if (i == c->shared_sigalgslen)
-            return 0;
+                return 1;;
+        }
+        return 0;
     }
-    return rv;
+    return 1;
 }
 
 /*
@@ -612,27 +620,19 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
  */
 int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 {
+    /* If not Suite B just need a shared group */
+    if (!tls1_suiteb(s))
+        return tls1_shared_group(s, 0) != 0;
     /*
      * If Suite B, AES128 MUST use P-256 and AES256 MUST use P-384, no other
      * curves permitted.
      */
-    if (tls1_suiteb(s)) {
-        uint16_t curve_id;
+    if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
+        return tls1_check_group_id(s, TLSEXT_curve_P_256);
+    if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
+        return tls1_check_group_id(s, TLSEXT_curve_P_384);
 
-        /* Curve to check determined by ciphersuite */
-        if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
-            curve_id = TLSEXT_curve_P_256;
-        else if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
-            curve_id = TLSEXT_curve_P_384;
-        else
-            return 0;
-        /* Check this curve is acceptable */
-        if (!tls1_check_ec_key(s, curve_id, NULL))
-            return 0;
-        return 1;
-    }
-    /* Need a shared curve */
-    return tls1_shared_group(s, 0) != 0;
+    return 0;
 }
 
 #else
@@ -944,28 +944,27 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     }
 #ifndef OPENSSL_NO_EC
     if (pkeyid == EVP_PKEY_EC) {
-        EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
-        int curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
 
-        if (SSL_IS_TLS13(s)) {
-            if (EC_KEY_get_conv_form(ec) != POINT_CONVERSION_UNCOMPRESSED) {
-                SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
-                       SSL_R_ILLEGAL_POINT_COMPRESSION);
-                return 0;
-            }
-            /* For TLS 1.3 check curve matches signature algorithm */
+        /* Check point compression is permitted */
+        if (!tls1_check_pkey_comp(s, pkey)) {
+            SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
+                   SSL_R_ILLEGAL_POINT_COMPRESSION);
+            return 0;
+        }
+
+        /* For TLS 1.3 or Suite B check curve matches signature algorithm */
+        if (SSL_IS_TLS13(s) || tls1_suiteb(s)) {
+            EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+            int curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+
             if (lu->curve != NID_undef && curve != lu->curve) {
                 SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
                 return 0;
             }
-        } else {
-            unsigned char comp_id;
-            uint16_t curve_id;
-
-            /* Check compression and curve matches extensions */
-            if (!tls1_set_ec_id(&curve_id, &comp_id, ec))
-                return 0;
-            if (!s->server && !tls1_check_ec_key(s, curve_id, &comp_id)) {
+        }
+        if (!SSL_IS_TLS13(s)) {
+            /* Check curve matches extensions */
+            if (!tls1_check_group_id(s, tls1_get_group_id(pkey))) {
                 SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
                 return 0;
             }
@@ -975,17 +974,6 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
                     && sig != TLSEXT_SIGALG_ecdsa_secp384r1_sha384) {
                     SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
                            SSL_R_WRONG_SIGNATURE_TYPE);
-                    return 0;
-                }
-                /*
-                 * Suite B also requires P-256+SHA256 and P-384+SHA384:
-                 * this matches the TLS 1.3 requirements so we can just
-                 * check the curve is the expected TLS 1.3 value.
-                 * If this fails an inappropriate digest is being used.
-                 */
-                if (curve != lu->curve) {
-                    SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
-                           SSL_R_ILLEGAL_SUITEB_DIGEST);
                     return 0;
                 }
             }
