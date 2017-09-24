@@ -218,7 +218,7 @@ uint16_t tls1_ec_nid2curve_id(int nid)
  * Get curves list, if "sess" is set return client curves otherwise
  * preferred list.
  * Sets |num_curves| to the number of curves in the list, i.e.,
- * the length of |pcurves| is 2 * num_curves.
+ * the length of |pcurves| is num_curves.
  * Returns 1 on success and 0 if the client curves list has invalid format.
  * The latter indicates an internal error: we should not be accepting such
  * lists in the first place.
@@ -245,7 +245,7 @@ int tls1_get_curvelist(SSL *s, int sess, const uint16_t **pcurves,
             break;
 
         case SSL_CERT_FLAG_SUITEB_192_LOS:
-            *pcurves = suiteb_curves + 2;
+            *pcurves = suiteb_curves + 1;
             pcurveslen = 1;
             break;
         default:
