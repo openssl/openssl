@@ -4398,3 +4398,4 @@ EVP_PKEY_meth_set_check                 4341	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_meth_get_check                 4342	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_meth_remove                    4343	1_1_1	EXIST::FUNCTION:
 OPENSSL_sk_reserve                      4344	1_1_1	EXIST::FUNCTION:
+CRYPTO_atomic_read                      4345	1_1_1	EXIST::FUNCTION:

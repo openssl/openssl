@@ -74,6 +74,7 @@ int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock);
 void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
+int CRYPTO_atomic_read(int *val, int *ret, CRYPTO_RWLOCK *lock);
 
 /*
  * The following can be used to detect memory leaks in the library. If
