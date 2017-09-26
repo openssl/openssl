@@ -1735,7 +1735,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     /* Lets add the extensions, if there are any */
     if (ext_sect) {
         X509V3_CTX ctx;
-        X509_set_version(ret, 2);
 
         /* Initialize the context structure */
         if (selfsign)
@@ -1788,6 +1787,15 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         BIO_printf(bio_err, "ERROR: adding extensions from request\n");
         ERR_print_errors(bio_err);
         goto end;
+    }
+
+    {
+        const STACK_OF(X509_EXTENSION) *exts = X509_get0_extensions(ret);
+
+        if (exts != NULL && sk_X509_EXTENSION_num(exts) > 0)
+            /* Make it an X509 v3 certificate. */
+            if (!X509_set_version(ret, 2))
+                goto end;
     }
 
     /* Set the right value for the noemailDN option */
