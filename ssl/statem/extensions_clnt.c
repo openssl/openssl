@@ -139,8 +139,8 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
                                                unsigned int context, X509 *x,
                                                size_t chainidx, int *al)
 {
-    const uint16_t *pcurves = NULL;
-    size_t num_curves = 0, i;
+    const uint16_t *pgroups = NULL;
+    size_t num_groups = 0, i;
 
     if (!use_ecc(s))
         return EXT_RETURN_NOT_SENT;
@@ -149,7 +149,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
      * Add TLS extension supported_groups to the ClientHello message
      */
     /* TODO(TLS1.3): Add support for DHE groups */
-    tls1_get_supported_groups(s, &pcurves, &num_curves);
+    tls1_get_supported_groups(s, &pgroups, &num_groups);
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_groups)
                /* Sub-packet for supported_groups extension */
@@ -160,8 +160,8 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
     /* Copy curve ID if supported */
-    for (i = 0; i < num_curves; i++) {
-        uint16_t ctmp = pcurves[i];
+    for (i = 0; i < num_groups; i++) {
+        uint16_t ctmp = pgroups[i];
 
         if (tls_curve_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED)) {
             if (!WPACKET_put_bytes_u16(pkt, ctmp)) {
@@ -590,8 +590,8 @@ EXT_RETURN tls_construct_ctos_key_share(SSL *s, WPACKET *pkt,
                                         size_t chainidx, int *al)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    size_t i, num_curves = 0;
-    const uint16_t *pcurves = NULL;
+    size_t i, num_groups = 0;
+    const uint16_t *pgroups = NULL;
     uint16_t curve_id = 0;
 
     /* key_share extension */
@@ -604,7 +604,7 @@ EXT_RETURN tls_construct_ctos_key_share(SSL *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    tls1_get_supported_groups(s, &pcurves, &num_curves);
+    tls1_get_supported_groups(s, &pgroups, &num_groups);
 
     /*
      * TODO(TLS1.3): Make the number of key_shares sent configurable. For
@@ -613,12 +613,12 @@ EXT_RETURN tls_construct_ctos_key_share(SSL *s, WPACKET *pkt,
     if (s->s3->group_id != 0) {
         curve_id = s->s3->group_id;
     } else {
-        for (i = 0; i < num_curves; i++) {
+        for (i = 0; i < num_groups; i++) {
 
-            if (!tls_curve_allowed(s, pcurves[i], SSL_SECOP_CURVE_SUPPORTED))
+            if (!tls_curve_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
                 continue;
 
-            curve_id = pcurves[i];
+            curve_id = pgroups[i];
             break;
         }
     }
@@ -1514,8 +1514,8 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
-        const uint16_t *pcurves = NULL;
-        size_t i, num_curves;
+        const uint16_t *pgroups = NULL;
+        size_t i, num_groups;
 
         if (PACKET_remaining(pkt) != 0) {
             *al = SSL_AD_DECODE_ERROR;
@@ -1534,12 +1534,12 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         }
 
         /* Validate the selected group is one we support */
-        tls1_get_supported_groups(s, &pcurves, &num_curves);
-        for (i = 0; i < num_curves; i++) {
-            if (group_id == pcurves[i])
+        tls1_get_supported_groups(s, &pgroups, &num_groups);
+        for (i = 0; i < num_groups; i++) {
+            if (group_id == pgroups[i])
                 break;
         }
-        if (i >= num_curves
+        if (i >= num_groups
                 || !tls_curve_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)) {
             *al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_TLS_PARSE_STOC_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
