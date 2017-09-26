@@ -1174,8 +1174,8 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
             /* Check if a shared group exists */
 
             /* Get the clients list of supported groups. */
-            tls1_get_grouplist(s, 1, &clntcurves, &clnt_num_curves);
-            tls1_get_grouplist(s, 0, &pcurves, &num_curves);
+            tls1_get_peer_groups(s, &clntcurves, &clnt_num_curves);
+            tls1_get_supported_groups(s, &pcurves, &num_curves);
 
             /* Find the first group we allow that is also in client's list */
             for (i = 0; i < num_curves; i++) {

@@ -2085,6 +2085,13 @@ static ossl_inline int ssl_has_cert(const SSL *s, int idx)
         && s->cert->pkeys[idx].privatekey != NULL;
 }
 
+static ossl_inline void tls1_get_peer_groups(SSL *s, const uint16_t **pgroups,
+                                             size_t *pgroupslen)
+{
+    *pgroups = s->session->ext.supportedgroups;
+    *pgroupslen = s->session->ext.supportedgroups_len;
+}
+
 # ifndef OPENSSL_UNIT_TEST
 
 __owur int ssl_read_internal(SSL *s, void *buf, size_t num, size_t *readbytes);
@@ -2354,8 +2361,8 @@ __owur EVP_PKEY *ssl_generate_param_group(uint16_t id);
 #  endif                        /* OPENSSL_NO_EC */
 
 __owur int tls_curve_allowed(SSL *s, uint16_t curve, int op);
-void tls1_get_grouplist(SSL *s, int sess, const uint16_t **pcurves,
-                        size_t *num_curves);
+void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
+                               size_t *pgroupslen);
 
 __owur int tls1_set_server_sigalgs(SSL *s);
 
