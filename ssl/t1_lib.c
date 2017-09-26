@@ -268,34 +268,6 @@ static int tls1_in_list(uint16_t id, const uint16_t *list, size_t listlen)
     return 0;
 }
 
-/* Check a curve is one of our preferences */
-int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
-{
-    const uint16_t *curves;
-    size_t num_curves;
-    uint16_t curve_id;
-
-    if (len != 3 || p[0] != NAMED_CURVE_TYPE)
-        return 0;
-    curve_id = (p[1] << 8) | p[2];
-    /* Check curve matches Suite B preferences */
-    if (tls1_suiteb(s)) {
-        unsigned long cid = s->s3->tmp.new_cipher->id;
-        if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256) {
-            if (curve_id != TLSEXT_curve_P_256)
-                return 0;
-        } else if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384) {
-            if (curve_id != TLSEXT_curve_P_384)
-                return 0;
-        } else                  /* Should never happen */
-            return 0;
-    }
-    tls1_get_supported_groups(s, &curves, &num_curves);
-    if (!tls1_in_list(curve_id, curves, num_curves))
-        return 0;
-    return tls_curve_allowed(s, curve_id, SSL_SECOP_CURVE_CHECK);
-}
-
 /*-
  * For nmatch >= 0, return the id of the |nmatch|th shared group or 0
  * if there is no match.
@@ -493,7 +465,7 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
 }
 
 /* Check a group id matches preferences */
-static int tls1_check_group_id(SSL *s, uint16_t group_id)
+int tls1_check_group_id(SSL *s, uint16_t group_id)
     {
     const uint16_t *groups;
     size_t groups_len;
@@ -501,12 +473,28 @@ static int tls1_check_group_id(SSL *s, uint16_t group_id)
     if (group_id == 0)
         return 0;
 
-    if (!tls_curve_allowed(s, group_id, SSL_SECOP_CURVE_CHECK))
-        return 0;
+    /* Check for Suite B compliance */
+    if (tls1_suiteb(s) && s->s3->tmp.new_cipher != NULL) {
+        unsigned long cid = s->s3->tmp.new_cipher->id;
+
+        if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256) {
+            if (group_id != TLSEXT_curve_P_256)
+                return 0;
+        } else if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384) {
+            if (group_id != TLSEXT_curve_P_384)
+                return 0;
+        } else {
+            /* Should never happen */
+            return 0;
+        }
+    }
 
     /* Check group is one of our preferences */
     tls1_get_supported_groups(s, &groups, &groups_len);
     if (!tls1_in_list(group_id, groups, groups_len))
+        return 0;
+
+    if (!tls_curve_allowed(s, group_id, SSL_SECOP_CURVE_CHECK))
         return 0;
 
     /* For clients, nothing more to check */
