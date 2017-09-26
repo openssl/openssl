@@ -499,8 +499,8 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 #ifndef OPENSSL_NO_TLS1_3
     unsigned int group_id;
     PACKET key_share_list, encoded_pt;
-    const uint16_t *clntcurves, *srvrcurves;
-    size_t clnt_num_curves, srvr_num_curves;
+    const uint16_t *clntgroups, *srvrgroups;
+    size_t clnt_num_groups, srvr_num_groups;
     int found = 0;
 
     if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
@@ -519,11 +519,11 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    /* Get our list of supported curves */
-    tls1_get_supported_groups(s, &srvrcurves, &srvr_num_curves);
-    /* Get the clients list of supported curves. */
-    tls1_get_peer_groups(s, &clntcurves, &clnt_num_curves);
-    if (clnt_num_curves == 0) {
+    /* Get our list of supported groups */
+    tls1_get_supported_groups(s, &srvrgroups, &srvr_num_groups);
+    /* Get the clients list of supported groups. */
+    tls1_get_peer_groups(s, &clntgroups, &clnt_num_groups);
+    if (clnt_num_groups == 0) {
         /*
          * This can only happen if the supported_groups extension was not sent,
          * because we verify that the length is non-zero when we process that
@@ -553,14 +553,14 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             continue;
 
         /* Check if this share is in supported_groups sent from client */
-        if (!check_in_list(s, group_id, clntcurves, clnt_num_curves, 0)) {
+        if (!check_in_list(s, group_id, clntgroups, clnt_num_groups, 0)) {
             *al = SSL_AD_ILLEGAL_PARAMETER;
             SSLerr(SSL_F_TLS_PARSE_CTOS_KEY_SHARE, SSL_R_BAD_KEY_SHARE);
             return 0;
         }
 
         /* Check if this share is for a group we can use */
-        if (!check_in_list(s, group_id, srvrcurves, srvr_num_curves, 1)) {
+        if (!check_in_list(s, group_id, srvrgroups, srvr_num_groups, 1)) {
             /* Share not suitable */
             continue;
         }

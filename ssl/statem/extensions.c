@@ -1167,25 +1167,25 @@ static int final_key_share(SSL *s, unsigned int context, int sent, int *al)
                 && (!s->hit
                     || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE)
                        != 0)) {
-            const uint16_t *pcurves, *clntcurves;
-            size_t num_curves, clnt_num_curves, i;
+            const uint16_t *pgroups, *clntgroups;
+            size_t num_groups, clnt_num_groups, i;
             unsigned int group_id = 0;
 
             /* Check if a shared group exists */
 
             /* Get the clients list of supported groups. */
-            tls1_get_peer_groups(s, &clntcurves, &clnt_num_curves);
-            tls1_get_supported_groups(s, &pcurves, &num_curves);
+            tls1_get_peer_groups(s, &clntgroups, &clnt_num_groups);
+            tls1_get_supported_groups(s, &pgroups, &num_groups);
 
             /* Find the first group we allow that is also in client's list */
-            for (i = 0; i < num_curves; i++) {
-                group_id = pcurves[i];
+            for (i = 0; i < num_groups; i++) {
+                group_id = pgroups[i];
 
-                if (check_in_list(s, group_id, clntcurves, clnt_num_curves, 1))
+                if (check_in_list(s, group_id, clntgroups, clnt_num_groups, 1))
                     break;
             }
 
-            if (i < num_curves) {
+            if (i < num_groups) {
                 /* A shared group exists so send a HelloRetryRequest */
                 s->s3->group_id = group_id;
                 s->hello_retry_request = 1;
