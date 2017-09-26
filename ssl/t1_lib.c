@@ -205,47 +205,37 @@ static uint16_t tls1_nid2group_id(int nid)
 }
 
 /*
- * Get curves list, if "sess" is set return client curves otherwise
- * preferred list.
- * Sets |num_curves| to the number of curves in the list, i.e.,
- * the length of |pcurves| is num_curves.
- * Returns 1 on success and 0 if the client curves list has invalid format.
- * The latter indicates an internal error: we should not be accepting such
- * lists in the first place.
+ * Set *pgroups to the supported groups list and *pgroupslen to
+ * the number of groups supported.
  */
-void tls1_get_grouplist(SSL *s, int sess, const uint16_t **pcurves,
-                        size_t *pcurveslen)
+void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
+                               size_t *pgroupslen)
 {
 
-    if (sess) {
-        *pcurves = s->session->ext.supportedgroups;
-        *pcurveslen = s->session->ext.supportedgroups_len;
-        return;
-    }
     /* For Suite B mode only include P-256, P-384 */
     switch (tls1_suiteb(s)) {
     case SSL_CERT_FLAG_SUITEB_128_LOS:
-        *pcurves = suiteb_curves;
-        *pcurveslen = OSSL_NELEM(suiteb_curves);
+        *pgroups = suiteb_curves;
+        *pgroupslen = OSSL_NELEM(suiteb_curves);
         break;
 
     case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
-        *pcurves = suiteb_curves;
-        *pcurveslen = 1;
+        *pgroups = suiteb_curves;
+        *pgroupslen = 1;
         break;
 
     case SSL_CERT_FLAG_SUITEB_192_LOS:
-        *pcurves = suiteb_curves + 1;
-        *pcurveslen = 1;
+        *pgroups = suiteb_curves + 1;
+        *pgroupslen = 1;
         break;
 
     default:
         if (s->ext.supportedgroups == NULL) {
-            *pcurves = eccurves_default;
-            *pcurveslen = OSSL_NELEM(eccurves_default);
+            *pgroups = eccurves_default;
+            *pgroupslen = OSSL_NELEM(eccurves_default);
         } else {
-            *pcurves = s->ext.supportedgroups;
-            *pcurveslen = s->ext.supportedgroups_len;
+            *pgroups = s->ext.supportedgroups;
+            *pgroupslen = s->ext.supportedgroups_len;
         }
         break;
     }
@@ -300,7 +290,7 @@ int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
         } else                  /* Should never happen */
             return 0;
     }
-    tls1_get_grouplist(s, 0, &curves, &num_curves);
+    tls1_get_supported_groups(s, &curves, &num_curves);
     if (!tls1_in_list(curve_id, curves, num_curves))
         return 0;
     return tls_curve_allowed(s, curve_id, SSL_SECOP_CURVE_CHECK);
@@ -341,15 +331,16 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
         nmatch = 0;
     }
     /*
-     * Avoid truncation. tls1_get_grouplist takes an int
-     * but s->options is a long...
+     * If server preference set, our groups are the preference order
+     * otherwise peer decides.
      */
-    tls1_get_grouplist(s,
-            (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) != 0,
-            &supp, &num_supp);
-    tls1_get_grouplist(s,
-            (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) == 0,
-            &pref, &num_pref);
+    if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
+        tls1_get_supported_groups(s, &pref, &num_pref);
+        tls1_get_peer_groups(s, &supp, &num_supp);
+    } else {
+        tls1_get_peer_groups(s, &pref, &num_pref);
+        tls1_get_supported_groups(s, &supp, &num_supp);
+    }
 
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
@@ -514,7 +505,7 @@ static int tls1_check_group_id(SSL *s, uint16_t group_id)
         return 0;
 
     /* Check group is one of our preferences */
-    tls1_get_grouplist(s, 0, &groups, &groups_len);
+    tls1_get_supported_groups(s, &groups, &groups_len);
     if (!tls1_in_list(group_id, groups, groups_len))
         return 0;
 
@@ -523,7 +514,7 @@ static int tls1_check_group_id(SSL *s, uint16_t group_id)
         return 1;
 
     /* Check group is one of peers preferences */
-    tls1_get_grouplist(s, 1, &groups, &groups_len);
+    tls1_get_peer_groups(s, &groups, &groups_len);
 
     /*
      * RFC 4492 does not require the supported elliptic curves extension
