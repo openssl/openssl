@@ -2552,6 +2552,95 @@ static int test_tls13_psk(void)
     return testresult;
 }
 
+static unsigned char cookie_magic_value[] = "cookie magic";
+
+static int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
+                                    unsigned int *cookie_len)
+{
+    /*
+     * Not suitable as a real cookie generation function but good enough for
+     * testing!
+     */
+    memcpy(cookie, cookie_magic_value, sizeof(cookie_magic_value));
+    *cookie_len = sizeof(cookie_magic_value);
+
+    return 1;
+}
+
+static int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
+                                  unsigned int cookie_len)
+{
+    if (cookie_len == sizeof(cookie_magic_value)
+        && memcmp(cookie, cookie_magic_value, cookie_len) == 0)
+        return 1;
+
+    return 0;
+}
+
+static int test_stateless(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(), &sctx,
+                                       &cctx, cert, privkey)))
+        goto end;
+
+    /* Set up the cookie generation and verification callbacks */
+    SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_callback);
+    SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_callback);
+
+    /* The arrival of CCS messages can confuse the test */
+    SSL_CTX_clear_options(cctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+               /* Send the first ClientHello */
+            || !TEST_false(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_WANT_READ))
+               /* This should fail because there is no cookie */
+            || !TEST_int_le(SSL_stateless(serverssl), 0))
+        goto end;
+
+    /* Abandon the connection from this client */
+    SSL_free(clientssl);
+    clientssl = NULL;
+
+    /*
+     * Now create a connection from a new client but with the same server SSL
+     * object
+     */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+               /* Send the first ClientHello */
+            || !TEST_false(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_WANT_READ))
+               /* This should fail because there is no cookie */
+            || !TEST_int_le(SSL_stateless(serverssl), 0)
+               /* Send the second ClientHello */
+            || !TEST_false(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_WANT_READ))
+               /* This should succeed because a cookie is now present */
+            || !TEST_int_gt(SSL_stateless(serverssl), 0)
+               /* Complete the connection */
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    shutdown_ssl_connection(serverssl, clientssl);
+    serverssl = clientssl = NULL;
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+
+}
 #endif /* OPENSSL_NO_TLS1_3 */
 
 static int clntaddoldcb = 0;
@@ -3262,6 +3351,7 @@ int setup_tests(void)
     ADD_TEST(test_ciphersuite_change);
     ADD_TEST(test_tls13_psk);
     ADD_ALL_TESTS(test_custom_exts, 5);
+    ADD_TEST(test_stateless);
 #else
     ADD_ALL_TESTS(test_custom_exts, 3);
 #endif
