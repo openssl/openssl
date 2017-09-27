@@ -35,6 +35,38 @@ static OPENSSL_LH_NODE **getrn_stats(OPENSSL_LHASH *lh, const void *data,
                                      struct lh_node_stats *st);
 static void getrn_save_stats(OPENSSL_LHASH *lh, const struct lh_node_stats *st);
 
+int OPENSSL_LH_set_stats(OPENSSL_LHASH *lh, int enable)
+{
+    lh->error = 0;
+    if (lh->stats_lock != NULL) {
+        lh->num_expands = 0;
+        lh->num_expand_reallocs = 0;
+        lh->num_contracts = 0;
+        lh->num_contract_reallocs = 0;
+        lh->num_hash_calls = 0;
+        lh->num_comp_calls = 0;
+        lh->num_insert = 0;
+        lh->num_replace = 0;
+        lh->num_delete = 0;
+        lh->num_no_delete = 0;
+        lh->num_retrieve = 0;
+        lh->num_retrieve_miss = 0;
+        lh->num_hash_comps = 0;
+    }
+
+    if (enable) {
+        if (lh->stats_lock == NULL
+            && (lh->stats_lock = CRYPTO_THREAD_lock_new()) == NULL) {
+            lh->error = 1;
+            return 0;
+        }
+    } else if (lh->stats_lock != NULL) {
+        CRYPTO_THREAD_lock_free(lh->stats_lock);
+        lh->stats_lock = NULL;
+    }
+    return 1;
+}
+
 OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
 {
     OPENSSL_LHASH *ret;
@@ -43,8 +75,7 @@ OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
         return NULL;
     if ((ret->b = OPENSSL_zalloc(sizeof(*ret->b) * MIN_NODES)) == NULL)
         goto err;
-    if ((ret->stats_lock = CRYPTO_THREAD_lock_new()) == NULL)
-        goto err;
+    ret->stats_lock = NULL;
     ret->comp = ((c == NULL) ? (OPENSSL_LH_COMPFUNC)strcmp : c);
     ret->hash = ((h == NULL) ? (OPENSSL_LH_HASHFUNC)OPENSSL_LH_strhash : h);
     ret->num_nodes = MIN_NODES / 2;

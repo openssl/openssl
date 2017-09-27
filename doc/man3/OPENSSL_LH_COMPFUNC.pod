@@ -8,7 +8,8 @@ LHASH_DOALL_ARG_FN_TYPE,
 IMPLEMENT_LHASH_HASH_FN, IMPLEMENT_LHASH_COMP_FN,
 lh_TYPE_new, lh_TYPE_free,
 lh_TYPE_insert, lh_TYPE_delete, lh_TYPE_retrieve,
-lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
+lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error,
+lh_TYPE_set_stats - dynamic hash table
 
 =head1 SYNOPSIS
 
@@ -28,6 +29,8 @@ lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
  void lh_TYPE_doall(LHASH_OF(TYPE *table, OPENSSL_LH_DOALL_FUNC func);
  void lh_TYPE_doall_arg(LHASH_OF(TYPE) *table, OPENSSL_LH_DOALL_FUNCARG func,
           TYPE, TYPE *arg);
+
+ int lh_TYPE_set_stats(LHASH_OF(TYPE) *table, int enable);
 
  int lh_TYPE_error(LHASH_OF(TYPE) *table);
 
@@ -153,6 +156,10 @@ that is provided by the caller):
                    logging_bio);
 
 
+lh_TYPE_set_stats() is used to enable and disable the collection of
+statistical information about the hash table. After OPENSSL_LH_new
+collection is disabled.
+
 lh_TYPE_error() can be used to determine if an error occurred in the last
 operation.
 
@@ -169,6 +176,8 @@ there is no such value in the hash table.
 
 lh_TYPE_retrieve() returns the hash table entry if it has been found,
 B<NULL> otherwise.
+
+lh_TYPE_set_stats() return 1 if successful and 0 on error.
 
 lh_TYPE_error() returns 1 if an error occurred in the last operation, 0
 otherwise.
@@ -229,7 +238,7 @@ type checking.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
