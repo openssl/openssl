@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,9 +20,20 @@
 #define UP_LOAD         (2*LH_LOAD_MULT) /* load times 256 (default 2) */
 #define DOWN_LOAD       (LH_LOAD_MULT) /* load times 256 (default 1) */
 
+struct lh_node_stats {
+    unsigned long hash_calls;
+    unsigned long hash_comps;
+    unsigned long comp_calls;
+};
+
 static int expand(OPENSSL_LHASH *lh);
 static void contract(OPENSSL_LHASH *lh);
-static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh, const void *data, unsigned long *rhash);
+static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh, const void *data,
+                               unsigned long *rhash);
+static OPENSSL_LH_NODE **getrn_stats(OPENSSL_LHASH *lh, const void *data,
+                                     unsigned long *rhash,
+                                     struct lh_node_stats *st);
+static void getrn_save_stats(OPENSSL_LHASH *lh, const struct lh_node_stats *st);
 
 OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
 {
@@ -32,7 +43,7 @@ OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
         return NULL;
     if ((ret->b = OPENSSL_zalloc(sizeof(*ret->b) * MIN_NODES)) == NULL)
         goto err;
-    if ((ret->retrieve_stats_lock = CRYPTO_THREAD_lock_new()) == NULL)
+    if ((ret->stats_lock = CRYPTO_THREAD_lock_new()) == NULL)
         goto err;
     ret->comp = ((c == NULL) ? (OPENSSL_LH_COMPFUNC)strcmp : c);
     ret->hash = ((h == NULL) ? (OPENSSL_LH_HASHFUNC)OPENSSL_LH_strhash : h);
@@ -65,7 +76,7 @@ void OPENSSL_LH_free(OPENSSL_LHASH *lh)
             n = nn;
         }
     }
-    CRYPTO_THREAD_lock_free(lh->retrieve_stats_lock);
+    CRYPTO_THREAD_lock_free(lh->stats_lock);
     OPENSSL_free(lh->b);
     OPENSSL_free(lh);
 }
@@ -133,20 +144,28 @@ void *OPENSSL_LH_delete(OPENSSL_LHASH *lh, const void *data)
 
 void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data)
 {
+    struct lh_node_stats st;
     unsigned long hash;
     OPENSSL_LH_NODE **rn;
-    void *ret;
-    int scratch;
+    void *ret = NULL;
+    int miss = 0;
 
     lh->error = 0;
-    rn = getrn(lh, data, &hash);
+    rn = getrn_stats(lh, data, &hash, &st);
 
-    if (*rn == NULL) {
-        CRYPTO_atomic_add(&lh->num_retrieve_miss, 1, &scratch, lh->retrieve_stats_lock);
-        return NULL;
-    } else {
+    if (*rn == NULL)
+        miss = 1;
+    else
         ret = (*rn)->data;
-        CRYPTO_atomic_add(&lh->num_retrieve, 1, &scratch, lh->retrieve_stats_lock);
+
+    if (lh->stats_lock != NULL) {
+        CRYPTO_THREAD_write_lock(lh->stats_lock);
+        if (miss)
+            lh->num_retrieve_miss++;
+        else
+            lh->num_retrieve++;
+        getrn_save_stats(lh, &st);
+        CRYPTO_THREAD_unlock(lh->stats_lock);
     }
     return ret;
 }
@@ -268,16 +287,17 @@ static void contract(OPENSSL_LHASH *lh)
     }
 }
 
-static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
-                               const void *data, unsigned long *rhash)
+static OPENSSL_LH_NODE **getrn_stats(OPENSSL_LHASH *lh,
+                                     const void *data, unsigned long *rhash,
+                                     struct lh_node_stats *st)
 {
     OPENSSL_LH_NODE **ret, *n1;
     unsigned long hash, nn;
     OPENSSL_LH_COMPFUNC cf;
-    int scratch;
 
+    st->hash_calls = 1;
+    st->hash_comps = st->comp_calls = 0;
     hash = (*(lh->hash)) (data);
-    CRYPTO_atomic_add(&lh->num_hash_calls, 1, &scratch, lh->retrieve_stats_lock);
     *rhash = hash;
 
     nn = hash % lh->pmax;
@@ -287,17 +307,38 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
     cf = lh->comp;
     ret = &(lh->b[(int)nn]);
     for (n1 = *ret; n1 != NULL; n1 = n1->next) {
-        CRYPTO_atomic_add(&lh->num_hash_comps, 1, &scratch, lh->retrieve_stats_lock);
+        st->hash_comps++;
         if (n1->hash != hash) {
             ret = &(n1->next);
             continue;
         }
-        CRYPTO_atomic_add(&lh->num_comp_calls, 1, &scratch, lh->retrieve_stats_lock);
+        st->comp_calls++;
         if (cf(n1->data, data) == 0)
             break;
         ret = &(n1->next);
     }
     return (ret);
+}
+
+static void getrn_save_stats(OPENSSL_LHASH *lh, const struct lh_node_stats *st)
+{
+        lh->num_hash_calls += st->hash_calls;
+        lh->num_hash_comps += st->hash_comps;
+        lh->num_comp_calls += st->comp_calls;
+}
+
+static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
+                               const void *data, unsigned long *rhash)
+{
+    struct lh_node_stats st;
+    OPENSSL_LH_NODE **ret = getrn_stats(lh, data, rhash, &st);
+
+    if (lh->stats_lock != NULL) {
+        CRYPTO_THREAD_write_lock(lh->stats_lock);
+        getrn_save_stats(lh, &st);
+        CRYPTO_THREAD_unlock(lh->stats_lock);
+    }
+    return ret;
 }
 
 /*
