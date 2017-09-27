@@ -174,6 +174,9 @@ static int test_stress(void)
     if (!TEST_ptr(h))
         goto end;
 
+    if (!lh_int_set_stats(h, 1))
+        TEST_info("lh_int_set_stats failed, continuing without statistics");
+
     /* insert */
     for (i = 0; i < n; i++) {
         p = OPENSSL_malloc(sizeof(i));

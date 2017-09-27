@@ -90,6 +90,7 @@ void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp);
 void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
+int OPENSSL_LH_set_stats(OPENSSL_LHASH *lh, int enable);
 
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  define _LHASH OPENSSL_LHASH
@@ -162,6 +163,10 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
     static ossl_inline void lh_##type##_stats_bio(const LHASH_OF(type) *lh, BIO *out) \
     { \
         OPENSSL_LH_stats_bio((const OPENSSL_LHASH *)lh, out); \
+    } \
+    static ossl_inline int lh_##type##_set_stats(LHASH_OF(type) *lh, int enable) \
+    { \
+        return OPENSSL_LH_set_stats((OPENSSL_LHASH *)lh, enable); \
     } \
     static ossl_inline unsigned long lh_##type##_get_down_load(LHASH_OF(type) *lh) \
     { \
