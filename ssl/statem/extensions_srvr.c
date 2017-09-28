@@ -696,7 +696,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                           size_t chainidx)
 {
-    unsigned int format, version, key_share;
+    unsigned int format, version, key_share, group_id;
     EVP_MD_CTX *hctx;
     EVP_PKEY *pkey;
     PACKET cookie, raw, chhash, appcookie;
@@ -789,21 +789,27 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    if (!PACKET_get_net_2(&cookie, &s->s3->group_id)) {
+    if (!PACKET_get_net_2(&cookie, &group_id)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
                  SSL_R_LENGTH_MISMATCH);
         return 0;
     }
+
     ciphdata = PACKET_data(&cookie);
     if (!PACKET_forward(&cookie, 2)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
                  SSL_R_LENGTH_MISMATCH);
         return 0;
     }
-    s->s3->tmp.new_cipher = ssl_get_cipher_by_char(s, ciphdata, 0);
-    if (s->s3->tmp.new_cipher == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
-                 ERR_R_INTERNAL_ERROR);
+    if (group_id != s->s3->group_id
+            || s->s3->tmp.new_cipher
+               != ssl_get_cipher_by_char(s, ciphdata, 0)) {
+        /*
+         * We chose a different cipher or group id this time around to what is
+         * in the cookie. Something must have changed.
+         */
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_CTOS_COOKIE,
+                 SSL_R_BAD_CIPHER);
         return 0;
     }
 
@@ -1497,23 +1503,26 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
     size_t encoded_pt_len = 0;
     EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL;
 
-    if (ckey == NULL) {
-        /* No key_share received from client */
-        if (s->hello_retry_request == SSL_HRR_PENDING) {
-            if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
-                    || !WPACKET_start_sub_packet_u16(pkt)
-                    || !WPACKET_put_bytes_u16(pkt, s->s3->group_id)
-                    || !WPACKET_close(pkt)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
-                         ERR_R_INTERNAL_ERROR);
-                return EXT_RETURN_FAIL;
-            }
-
-            return EXT_RETURN_SENT;
+    if (s->hello_retry_request == SSL_HRR_PENDING) {
+        if (ckey != NULL) {
+            /* Original key_share was acceptable so don't ask for another one */
+            return EXT_RETURN_NOT_SENT;
+        }
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
+                || !WPACKET_start_sub_packet_u16(pkt)
+                || !WPACKET_put_bytes_u16(pkt, s->s3->group_id)
+                || !WPACKET_close(pkt)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
+                     ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
         }
 
-        /* Must be resuming. */
+        return EXT_RETURN_SENT;
+    }
+
+    if (ckey == NULL) {
+        /* No key_share received from client - must be resuming */
         if (!s->hit || !tls13_generate_handshake_secret(s, NULL, 0)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
