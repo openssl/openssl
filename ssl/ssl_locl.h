@@ -21,7 +21,6 @@
 # include <openssl/buffer.h>
 # include <openssl/comp.h>
 # include <openssl/bio.h>
-# include <openssl/stack.h>
 # include <openssl/rsa.h>
 # include <openssl/dsa.h>
 # include <openssl/err.h>
