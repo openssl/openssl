@@ -12,7 +12,6 @@
 #include <errno.h>
 
 #include "internal/cryptlib.h"
-#include <openssl/lhash.h>
 #include <openssl/buffer.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>

@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/objects.h>
-#include <openssl/lhash.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
