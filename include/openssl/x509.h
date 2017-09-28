@@ -18,6 +18,7 @@
 # include <openssl/evp.h>
 # include <openssl/bio.h>
 # include <openssl/asn1.h>
+# include <openssl/safestack.h>
 # include <openssl/ec.h>
 
 # if OPENSSL_API_COMPAT < 0x10100000L

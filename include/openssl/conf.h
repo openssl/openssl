@@ -12,6 +12,7 @@
 
 # include <openssl/bio.h>
 # include <openssl/lhash.h>
+# include <openssl/safestack.h>
 # include <openssl/e_os2.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/conferr.h>
