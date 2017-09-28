@@ -14,6 +14,7 @@
 # include <openssl/e_os2.h>
 # include <openssl/opensslconf.h>
 # include <openssl/bio.h>
+# include <openssl/safestack.h>
 # include <openssl/asn1err.h>
 # include <openssl/symhacks.h>
 
