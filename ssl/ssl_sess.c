@@ -9,7 +9,6 @@
  */
 
 #include <stdio.h>
-#include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include <openssl/engine.h>
 #include "internal/refcount.h"

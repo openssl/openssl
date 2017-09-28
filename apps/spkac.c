@@ -16,7 +16,6 @@
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/lhash.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 

@@ -18,8 +18,6 @@
 # include <sys/stat.h>
 #endif
 
-
-#include <openssl/lhash.h>
 #include <openssl/x509.h>
 #include "internal/x509_int.h"
 #include "x509_lcl.h"

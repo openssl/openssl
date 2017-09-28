@@ -13,7 +13,6 @@
 
 #include "internal/nelem.h"
 #include "internal/o_dir.h"
-#include <openssl/lhash.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
