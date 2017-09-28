@@ -5303,7 +5303,7 @@ int SSL_stateless(SSL *s)
 
     /* Ensure there is no state left over from a previous invocation */
     if (!SSL_clear(s))
-        return -1;
+        return 0;
 
     ERR_clear_error();
 
@@ -5311,8 +5311,8 @@ int SSL_stateless(SSL *s)
     ret = SSL_accept(s);
     s->s3->flags &= ~TLS1_FLAGS_STATELESS;
 
-    if (s->ext.cookieok)
+    if (ret > 0 && s->ext.cookieok)
         return 1;
 
-    return ret;
+    return 0;
 }
