@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -17,9 +17,7 @@
 # include <openssl/buffer.h>
 # include <openssl/evp.h>
 # include <openssl/bio.h>
-# include <openssl/stack.h>
 # include <openssl/asn1.h>
-# include <openssl/safestack.h>
 # include <openssl/ec.h>
 
 # if OPENSSL_API_COMPAT < 0x10100000L
