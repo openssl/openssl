@@ -35,7 +35,6 @@
 typedef unsigned int u_int;
 #endif
 
-#include <openssl/lhash.h>
 #include <openssl/bn.h>
 #include "apps.h"
 #include <openssl/err.h>

@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include <openssl/lhash.h>
 #include <openssl/x509.h>
 #include "internal/x509_int.h"
 #include <openssl/x509v3.h>
