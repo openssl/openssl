@@ -36,7 +36,8 @@ If B<a> is NULL, nothing is done.
 =head1 RETURN VALUES
 
 BN_new() and BN_secure_new()
-return a pointer to the B<BIGNUM>. If the allocation fails,
+return a pointer to the B<BIGNUM> initialised to the value 0.
+If the allocation fails,
 they return B<NULL> and set an error code that can be obtained
 by L<ERR_get_error(3)>.
 
