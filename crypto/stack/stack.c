@@ -239,29 +239,34 @@ int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
     return st->num;
 }
 
+static ossl_inline void *internal_delete(OPENSSL_STACK *st, int loc)
+{
+    const void *ret = st->data[loc];
+
+    if (loc != st->num - 1)
+         memmove(&st->data[loc], &st->data[loc + 1],
+                 sizeof(st->data[0]) * (st->num - loc - 1));
+    st->num--;
+
+    return (void *)ret;
+}
+
 void *OPENSSL_sk_delete_ptr(OPENSSL_STACK *st, const void *p)
 {
     int i;
 
     for (i = 0; i < st->num; i++)
         if (st->data[i] == p)
-            return OPENSSL_sk_delete(st, i);
+            return internal_delete(st, i);
     return NULL;
 }
 
 void *OPENSSL_sk_delete(OPENSSL_STACK *st, int loc)
 {
-    const void *ret;
-
     if (st == NULL || loc < 0 || loc >= st->num)
         return NULL;
 
-    ret = st->data[loc];
-    if (loc != st->num - 1)
-         memmove(&st->data[loc], &st->data[loc + 1],
-                 sizeof(st->data[0]) * (st->num - loc - 1));
-    st->num--;
-    return (void *)ret;
+    return internal_delete(st, loc);
 }
 
 static int internal_find(OPENSSL_STACK *st, const void *data,
@@ -314,19 +319,19 @@ int OPENSSL_sk_unshift(OPENSSL_STACK *st, const void *data)
 void *OPENSSL_sk_shift(OPENSSL_STACK *st)
 {
     if (st == NULL)
-        return (NULL);
+        return NULL;
     if (st->num <= 0)
-        return (NULL);
-    return (OPENSSL_sk_delete(st, 0));
+        return NULL;
+    return internal_delete(st, 0);
 }
 
 void *OPENSSL_sk_pop(OPENSSL_STACK *st)
 {
     if (st == NULL)
-        return (NULL);
+        return NULL;
     if (st->num <= 0)
-        return (NULL);
-    return (OPENSSL_sk_delete(st, st->num - 1));
+        return NULL;
+    return internal_delete(st, st->num - 1);
 }
 
 void OPENSSL_sk_zero(OPENSSL_STACK *st)
