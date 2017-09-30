@@ -8,6 +8,7 @@
 #include <oqs/rand.h>
 
 #include "../ds_benchmark.h"
+#include "../common/common.h"
 
 // TODO: add signature size to benchmark
 
@@ -69,7 +70,7 @@ static int sig_test_correctness(OQS_RAND *rand, enum OQS_SIG_algid algid, const 
 	/* setup signature object */
 	OQS_SIG *s = OQS_SIG_new(rand, algid);
 	if (s == NULL) {
-		fprintf(stderr, "sig new failed\n");
+		eprintf("sig new failed\n");
 		goto err;
 	}
 
@@ -82,18 +83,18 @@ static int sig_test_correctness(OQS_RAND *rand, enum OQS_SIG_algid algid, const 
 	/* key generation */
 	priv = malloc(s->priv_key_len);
 	if (priv == NULL) {
-		fprintf(stderr, "priv malloc failed\n");
+		eprintf("priv malloc failed\n");
 		goto err;
 	}
 	pub = malloc(s->pub_key_len);
 	if (pub == NULL) {
-		fprintf(stderr, "pub malloc failed\n");
+		eprintf("pub malloc failed\n");
 		goto err;
 	}
 
 	rc = OQS_SIG_keygen(s, priv, pub);
 	if (rc != 1) {
-		fprintf(stderr, "OQS_SIG_keygen failed\n");
+		eprintf("OQS_SIG_keygen failed\n");
 		goto err;
 	}
 
@@ -106,7 +107,7 @@ static int sig_test_correctness(OQS_RAND *rand, enum OQS_SIG_algid algid, const 
 	msg_len = 100; // FIXME TODO: randomize based on scheme's max length
 	msg = malloc(msg_len);
 	if (msg == NULL) {
-		fprintf(stderr, "msg malloc failed\n");
+		eprintf("msg malloc failed\n");
 		goto err;
 	}
 	OQS_RAND_n(rand, msg, msg_len);
@@ -118,13 +119,13 @@ static int sig_test_correctness(OQS_RAND *rand, enum OQS_SIG_algid algid, const 
 	sig_len = s->max_sig_len;
 	sig = malloc(sig_len);
 	if (sig == NULL) {
-		fprintf(stderr, "sig malloc failed\n");
+		eprintf("sig malloc failed\n");
 		goto err;
 	}
 
 	rc = OQS_SIG_sign(s, priv, msg, msg_len, sig, &sig_len);
 	if (rc != 1) {
-		fprintf(stderr, "OQS_SIG_sign failed\n");
+		eprintf("OQS_SIG_sign failed\n");
 		goto err;
 	}
 
@@ -138,7 +139,7 @@ static int sig_test_correctness(OQS_RAND *rand, enum OQS_SIG_algid algid, const 
 	/* Verification */
 	rc = OQS_SIG_verify(s, pub, msg, msg_len, sig, sig_len);
 	if (rc != 1) {
-		fprintf(stderr, "ERROR: OQS_SIG_verify failed\n");
+		eprintf("ERROR: OQS_SIG_verify failed\n");
 		goto err;
 	}
 
@@ -207,19 +208,19 @@ static int sig_bench_wrapper(OQS_RAND *rand, enum OQS_SIG_algid algid, const int
 	/* setup signature object */
 	OQS_SIG *s = OQS_SIG_new(rand, algid);
 	if (s == NULL) {
-		fprintf(stderr, "sig new failed\n");
+		eprintf("sig new failed\n");
 		goto err;
 	}
 
 	/* key generation */
 	priv = malloc(s->priv_key_len);
 	if (priv == NULL) {
-		fprintf(stderr, "priv malloc failed\n");
+		eprintf("priv malloc failed\n");
 		goto err;
 	}
 	pub = malloc(s->pub_key_len);
 	if (pub == NULL) {
-		fprintf(stderr, "pub malloc failed\n");
+		eprintf("pub malloc failed\n");
 		goto err;
 	}
 
@@ -232,13 +233,13 @@ static int sig_bench_wrapper(OQS_RAND *rand, enum OQS_SIG_algid algid, const int
 	msg_len = 100; // FIXME TODO: randomize based on scheme's max length
 	msg = malloc(msg_len);
 	if (msg == NULL) {
-		fprintf(stderr, "msg malloc failed\n");
+		eprintf("msg malloc failed\n");
 		goto err;
 	}
 	sig_len = s->max_sig_len;
 	sig = malloc(sig_len);
 	if (sig == NULL) {
-		fprintf(stderr, "sig malloc failed\n");
+		eprintf("sig malloc failed\n");
 		goto err;
 	}
 
@@ -332,7 +333,7 @@ int main(int argc, char **argv) {
 
 err:
 	success = 0;
-	fprintf(stderr, "ERROR!\n");
+	eprintf("ERROR!\n");
 
 cleanup:
 	if (rand) {

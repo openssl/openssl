@@ -35,6 +35,8 @@ liboqs currently contains:
 - `kex_mlwe_kyber`: Kyber: a CCA-secure module-lattice-based key exchange mechanism (Bos, Ducas, Kiltz, Lepoint, Lyubashevsky, Schwabe, Shanck, Stehlé, *Real World Crypto 2017*, [https://eprint.iacr.org/2017/634](https://eprint.iacr.org/2017/634)), using the reference C implementation of Kyber from [pq-crystals/kyber](https://github.com/pq-crystals/kyber)
 - `sig_picnic`: signature based on zero-knowledge proof as specified in Post-Quantum Zero-Knowledge and Signatures from Symmetric-Key Primitives (Melissa Chase and David Derler and Steven Goldfeder and Claudio Orlandi and Sebastian Ramacher and Christian Rechberger and Daniel Slamanig and Greg Zaverucha, [https://eprint.iacr.org/2017/279.pdf](https://eprint.iacr.org/2017/279.pdf))
 
+Detailed information about each algorithm and implementations can be found in the [docs/Algorithm data sheets](https://github.com/open-quantum-safe/liboqs/tree/master/docs/Algorithm%20data%20sheets) directory.
+
 Building and Running on Linux and macOS
 ---------------------------------------
 
@@ -54,7 +56,7 @@ You need to install autoconf, automake and libtool:
 
 ### Building
 
-To build, clone or download the source from GitHub, then simply type:
+To build, first clone or download the source from GitHub, then simply type:
 
 	autoreconf -i
 	./configure
@@ -86,6 +88,18 @@ To run benchmark only on some ciphers, run
 to list the available ciphers and then run e.g.
 
 	./test_kex --bench rlwe_bcns15 rlwe_newhope
+
+
+#### Memory benchmarks
+
+To run one or more ciphers only once use `--mem-bench`, which is suitable for memory usage profiling:
+
+	./test_kex --mem-bench ntru
+
+You may also get instant memory usage results of an algorithm (e.g. ntru) by running [valgrind's massif tool](http://valgrind.org/docs/manual/ms-manual.html) by running
+
+	./kex_bench_memory.sh ntru
+
 
 ### Additional build options
 
@@ -188,6 +202,28 @@ McBits is disabled by default in the Visual Studio build; follow these steps to 
 - Add the sodium "src/include" location to the "Additional Include Directories" in the oqs project C properties.
 - Add the libsodium library to the "Additional Dependencies" in the `test_kex` project Linker properties.
 
+Building for Android
+--------------------
+
+Install Android NDK
+
+Create a standalone toolchain for the platform that you wish to cross compile for (e.g. NDK_BUNDLE="~/Android/Sdk/ndk-bundle" ARCH=arm64 INSTALL_DIR="/tmp/ndk-toolchain"):
+
+	$NDK_BUNDLE/build/tools/make_standalone_toolchain.py --arch $ARCH --install-dir $INSTALL_DIR
+
+Configure and build for Android after running `autoreconf -i` (e.g. HOST=aarch64-linux-android TOOLCHAIN_DIR=$INSTALL_DIR):
+
+	./configure-android --host=$HOST --toolchain=$TOOLCHAIN_DIR
+	make
+
+Run it from your Android device:
+
+	adb push test_kex  /data/local/tmp/
+	adb shell "/data/local/tmp/test_kex"
+
+Tested on SM-930F
+
+
 Documentation
 -------------
 
@@ -247,6 +283,7 @@ The Open Quantum Safe project is lead by [Michele Mosca](http://faculty.iqc.uwat
 ### Contributors
 
 - Javad Doliskani (University of Waterloo)
+- Vlad Gheorghiu (evolutionQ / University of Waterloo)
 - Tancrède Lepoint (SRI International)
 - Shravan Mishra (University of Waterloo)
 - Christian Paquin (Microsoft Research)

@@ -42,6 +42,8 @@ extern "C" {
 
 #if (defined(__x86_64__) || defined(__x86_64) || defined(__arch64__) || defined(_M_AMD64) || defined(_M_X64) || defined(_WIN64) || !defined(__LP64__))
 #define _AMD64_
+#elif (defined(__aarch64__))
+#define _ARM64_
 #else
 #define _X86_
 #endif
