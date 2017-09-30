@@ -6,6 +6,7 @@
 #include <oqs/rand.h>
 
 #include "../../ds_benchmark.h"
+#include "../../common/common.h"
 #include "aes.h"
 #include "aes_local.h"
 
@@ -13,13 +14,13 @@
 
 #define TEST_ITERATIONS 100
 
-#define TEST_REPEATEDLY(x)                                            \
-	for (int i = 0; i < TEST_ITERATIONS; i++) {                       \
-		int ok = (x);                                                 \
-		if (ok != EXIT_SUCCESS) {                                     \
-			fprintf(stderr, "Failure in %s (iteration %d)\n", #x, i); \
-			return EXIT_FAILURE;                                      \
-		}                                                             \
+#define TEST_REPEATEDLY(x)                                    \
+	for (int i = 0; i < TEST_ITERATIONS; i++) {               \
+		int ok = (x);                                         \
+		if (ok != EXIT_SUCCESS) {                             \
+			eprintf("Failure in %s (iteration %d)\n", #x, i); \
+			return EXIT_FAILURE;                              \
+		}                                                     \
 	}
 
 static void print_bytes(uint8_t *bytes, size_t num_bytes) {
@@ -235,7 +236,7 @@ int main(int argc, char **argv) {
 	printf("=== test_aes correctness ===\n");
 	OQS_RAND *rand = OQS_RAND_new(OQS_RAND_alg_default);
 	if (rand == NULL) {
-		fprintf(stderr, "OQS_RAND_new() failed\n");
+		eprintf("OQS_RAND_new() failed\n");
 		goto err;
 	}
 	TEST_REPEATEDLY(test_aes128_correctness_c(rand));

@@ -138,19 +138,40 @@ AC_CANONICAL_HOST
 # specifically based on the host
 case $host_os in
   darwin* )
-        AM_CONDITIONAL([ON_DARWIN], [test xtrue = xtrue])
+        darwin=true
+        ;;
+  linux-android*)
+        AM_CFLAGS=${AM_CFLAGS}" -pie "
+        linux=true
         ;;
   linux*)
-        if test x"${ac_cv_sizeof_size_t}" = x"8";then
-          AM_CPPFLAGS=${AM_CPPFLAGS}" -DSIDH_ASM -march=x86-64 -D__LINUX__"
-        fi
-        AM_CONDITIONAL([ON_DARWIN], [test xtrue = xfalse])
+        linux=true
         ;;
     *)
         #Default Case
         AC_MSG_ERROR([Your platform is not currently supported])
         ;;
 esac
+
+AM_CONDITIONAL([ON_DARWIN], [test "x$darwin" = xtrue])
+
+# Enable assembly optimizations here
+# Appearenly asm optimizations do not work well with darwin
+if test x"$linux" = x"true"; then
+  case $host_cpu in
+    x86_64* )
+        AM_CPPFLAGS=${AM_CPPFLAGS}" -DSIDH_ASM -march=x86-64"
+        x86_64=true
+        ;;
+    aarch64* )
+        AM_CPPFLAGS=${AM_CPPFLAGS}" -DSIDH_ASM -march=armv8-a+crc"
+        arm64=true
+        ;;
+  esac
+fi
+
+AM_CONDITIONAL([X86_64], [test "x$x86_64" = xtrue])
+AM_CONDITIONAL([ARM64], [test "x$arm64" = xtrue])
 
 # Common sources
 SRCDIR=" src/common"
@@ -224,6 +245,7 @@ if test x"$picnic" = x"true"; then
 fi
 
 AC_SUBST(AM_CPPFLAGS)
+AC_SUBST(AM_CFLAGS)
 AC_SUBST(SRCDIR)
 AC_SUBST(USE_OPENSSL)
 AC_SUBST(USE_AES_NI)
@@ -237,6 +259,7 @@ AC_SUBST(USE_KEX_RLWE_NEWHOPE)
 AC_SUBST(USE_KEX_SIDH_CLN16)
 AC_SUBST(USE_PICNIC)
 AC_SUBST(ON_DARWIN)
+AC_SUBST(X86_64)
 
 
 AC_CONFIG_FILES([Makefile
