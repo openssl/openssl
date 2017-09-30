@@ -215,7 +215,7 @@ script:
 
 after_success:
     - if [ -n "$COVERALLS" ]; then
-          coveralls -b . --gcov gcov-5 --gcov-options '\-lp';
+          coveralls -b . --gcov gcov-5 --gcov-options '\-lpbc';
       fi;
 
 notifications:
