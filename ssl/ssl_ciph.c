@@ -267,6 +267,10 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_kOQSKEX_RLWE_MSRLN16, 0, SSL_kOQSKEX_RLWE_MSRLN16, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_kOQSKEX_LWE_FRODO_RECOMMENDED, 0, SSL_kOQSKEX_LWE_FRODO_RECOMMENDED, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_kOQSKEX_SIDH_CLN16, 0, SSL_kOQSKEX_SIDH_CLN16, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kOQSKEX_SIDH_IQC_REF, 0, SSL_kOQSKEX_SIDH_IQC_REF, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kOQSKEX_CODE_MCBITS, 0, SSL_kOQSKEX_CODE_MCBITS, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kOQSKEX_NTRU, 0, SSL_kOQSKEX_NTRU, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_kOQSKEX_MLWE_KYBER, 0, SSL_kOQSKEX_MLWE_KYBER, 0, 0, 0, 0, 0, 0, 0, 0},
 
     {0, SSL_TXT_kPSK, 0, SSL_kPSK, 0, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_kSRP, 0, SSL_kSRP, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -313,6 +317,14 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_OQSKEX_LWE_FRODO_RECOMMENDED_ECDHE, 0, SSL_kEECDH|SSL_kOQSKEX_LWE_FRODO_RECOMMENDED, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_OQSKEX_SIDH_CLN16, 0, SSL_kOQSKEX_SIDH_CLN16, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
     {0, SSL_TXT_OQSKEX_SIDH_CLN16_ECDHE, 0, SSL_kEECDH|SSL_kOQSKEX_SIDH_CLN16, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_OQSKEX_SIDH_IQC_REF, 0, SSL_kOQSKEX_SIDH_IQC_REF, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_OQSKEX_SIDH_IQC_REF_ECDHE, 0, SSL_kEECDH|SSL_kOQSKEX_SIDH_IQC_REF, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_OQSKEX_CODE_MCBITS, 0, SSL_kOQSKEX_CODE_MCBITS, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_OQSKEX_CODE_MCBITS_ECDHE, 0, SSL_kEECDH|SSL_kOQSKEX_CODE_MCBITS, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_OQSKEX_NTRU, 0, SSL_kOQSKEX_NTRU, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_OQSKEX_NTRU_ECDHE, 0, SSL_kEECDH|SSL_kOQSKEX_NTRU, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_OQSKEX_MLWE_KYBER, 0, SSL_kOQSKEX_MLWE_KYBER, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
+    {0, SSL_TXT_OQSKEX_MLWE_KYBER_ECDHE, 0, SSL_kEECDH|SSL_kOQSKEX_MLWE_KYBER, ~SSL_aNULL, 0, 0, 0, 0, 0, 0, 0},
 
     /* symmetric encryption aliases */
     {0, SSL_TXT_DES, 0, 0, 0, SSL_DES, 0, 0, 0, 0, 0, 0},
@@ -1777,6 +1789,18 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     case SSL_kOQSKEX_SIDH_CLN16:
         kx = "OQSKEX-SIDH-CLN16";
+        break;
+    case SSL_kOQSKEX_SIDH_IQC_REF:
+        kx = "OQSKEX-SIDH-IQC-REF";
+        break;
+    case SSL_kOQSKEX_CODE_MCBITS:
+        kx = "OQSKEX-CODE-MCBITS";
+        break;
+    case SSL_kOQSKEX_NTRU:
+        kx = "OQSKEX-NTRU";
+        break;
+    case SSL_kOQSKEX_MLWE_KYBER:
+        kx = "OQSKEX-MLWE-KYBER";
         break;
     case SSL_kPSK:
         kx = "PSK";

@@ -35,6 +35,11 @@ liboqs currently supports the following key exchange mechanisms:
 - `RLWE-MSRLN16`: "MSR CLN16": Longa and Naehrig NTT improvements on NewHope, [https://www.microsoft.com/en-us/research/wp-content/uploads/2016/05/RLWE-1.pdf](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/05/RLWE-1.pdf)) (using the reference C implementation from [https://www.microsoft.com/en-us/research/project/lattice-cryptography-library/](https://www.microsoft.com/en-us/research/project/lattice-cryptography-library/))
 - `LWE-FRODO-RECOMMENDED`: "Frodo": key exchange from the learning with errors problem (Bos, Costello, Ducas, Mironov, Naehrig, Nikolaenko, Raghunathan, Stebila, *ACM Conference on Computer and Communications Security 2016*, [http://eprint.iacr.org/2016/659](http://eprint.iacr.org/2016/659)); using the "recommended" parameter set
 - `SIDH-CLN16`: "SIDH": key exchange from the supersingular isogeny Diffie-Hellman problem (Costello, Longa, Naehrig, *Crypto 2016*, [https://eprint.iacr.org/2016/413](https://eprint.iacr.org/2016/413)) (using the reference C implementation from [https://www.microsoft.com/en-us/research/project/sidh-library/](https://www.microsoft.com/en-us/research/project/sidh-library/))
+- `SIDH-IQC-REF`: key exchange from the supersingular isogeny Diffie-Hellman problem (De Feo, Jao, Plût, *J. Math. Cryptol.* 8(3):209, 2014, [https://eprint.iacr.org/2011/506](https://eprint.iacr.org/2011/506)), using a reference implementation by Javad Doliskani
+- `CODE-MCBITS`: "McBits": key exchange from the error correcting codes, specifically Niederreiter's form of McEliece public key encryption using hidden Goppa codes (Bernstein, Chou, Schwabe, *CHES 2013*, [https://eprint.iacr.org/2015/610](https://eprint.iacr.org/2015/610)), using the implementation of McBits from [https://www.win.tue.nl/~tchou/mcbits/](https://www.win.tue.nl/~tchou/mcbits/))
+- `NTRU`: NTRU: key transport using NTRU public key encryption (Hoffstein, Pipher, Silverman, *ANTS 1998*) with the EES743EP1 parameter set, wrapper around the implementation from the NTRU Open Source project [https://github.com/NTRUOpenSourceProject/NTRUEncrypt](https://github.com/NTRUOpenSourceProject/NTRUEncrypt))
+- `MLWE-KYBER`: Kyber: a CCA-secure module-lattice-based key exchange mechanism (Bos, Ducas, Kiltz, Lepoint, Lyubashevsky, Schwabe, Shanck, Stehlé, *Real World Crypto 2017*, [https://eprint.iacr.org/2017/634](https://eprint.iacr.org/2017/634)), using the reference C implementation of Kyber from [pq-crystals/kyber](https://github.com/pq-crystals/kyber)
+
 
 ### Ciphersuites
 
@@ -100,7 +105,8 @@ OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) whi
 
 To see the list of supported ciphersuites from OQS, type:
 
-	apps/openssl ciphers OQSKEX-GENERIC:OQSKEX-GENERIC-ECDHE:OQSKEX-RLWE-BCNS15:OQSKEX-RLWE-BCNS15-ECDHE:OQSKEX-RLWE-NEWHOPE:OQSKEX-RLWE-NEWHOPE-ECDHE:OQSKEX-RLWE-MSRLN16:OQSKEX-RLWE-MSRLN16-ECDHE:OQSKEX-LWE-FRODO-RECOMMENDED:OQSKEX-LWE-FRODO-RECOMMENDED-ECDHE:OQSKEX-SIDH-CLN16:OQSKEX-SIDH-CLN16-ECDHE
+	apps/openssl ciphers OQSKEX-GENERIC:OQSKEX-GENERIC-ECDHE:OQSKEX-RLWE-BCNS15:OQSKEX-RLWE-BCNS15-ECDHE:OQSKEX-RLWE-NEWHOPE:OQSKEX-RLWE-NEWHOPE-ECDHE:OQSKEX-RLWE-MSRLN16:OQSKEX-RLWE-MSRLN16-ECDHE:OQSKEX-LWE-FRODO-RECOMMENDED:OQSKEX-LWE-FRODO-RECOMMENDED-ECDHE:OQSKEX-SIDH-CLN16:OQSKEX-SIDH-CLN16-ECDHE:OQSKEX-SIDH-IQC-REF:OQSKEX-SIDH-IQC-REF-ECDHE:OQSKEX-CODE_MCBITS:OQSKEX-CODE-MCBITS-ECDHE:OQSKEX-NTRU:OQSKEX-NTRU-ECDHE:OQSKEX-MLWE-KYBER:OQSKEX-MLWE-KYBER-ECDHE
+
 
 To run a server, we first need to generate a self-signed X.509 certificate.  Run the following command:
 
@@ -130,6 +136,14 @@ In another terminal window, you can run a TLS client for any or all of the suppo
 	apps/openssl s_client -cipher OQSKEX-LWE-FRODO-RECOMMENDED-ECDHE
 	apps/openssl s_client -cipher OQSKEX-SIDH-CLN16
 	apps/openssl s_client -cipher OQSKEX-SIDH-CLN16-ECDHE
+	apps/openssl s_client -cipher OQSKEX-SIDH-IQC-REF
+	apps/openssl s_client -cipher OQSKEX-SIDH-IQC-REF-ECDHE
+	apps/openssl s_client -cipher OQSKEX-CODE-MCBITS
+	apps/openssl s_client -cipher OQSKEX-CODE-MCBITS-ECDHE
+	apps/openssl s_client -cipher OQSKEX-NTRU
+	apps/openssl s_client -cipher OQSKEX-NTRU-ECDHE
+	apps/openssl s_client -cipher OQSKEX-MLWE-KYBER
+	apps/openssl s_client -cipher OQSKEX-MLWE-KYBER-ECDHE
 
 Current status and plans
 ------------------------
