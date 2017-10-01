@@ -79,6 +79,8 @@ static int afalg_destroy(ENGINE *e);
 static int afalg_init(ENGINE *e);
 static int afalg_finish(ENGINE *e);
 const EVP_CIPHER *afalg_aes_128_cbc(void);
+const EVP_CIPHER *afalg_aes_192_cbc(void);
+const EVP_CIPHER *afalg_aes_256_cbc(void);
 static int afalg_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                          const int **nids, int nid);
 static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -93,10 +95,14 @@ static const char *engine_afalg_id = "afalg";
 static const char *engine_afalg_name = "AFALG engine support";
 
 static int afalg_cipher_nids[] = {
-    NID_aes_128_cbc
+    NID_aes_128_cbc,
+    NID_aes_192_cbc,
+    NID_aes_256_cbc,
 };
 
 static EVP_CIPHER *_hidden_aes_128_cbc = NULL;
+static EVP_CIPHER *_hidden_aes_192_cbc = NULL;
+static EVP_CIPHER *_hidden_aes_256_cbc = NULL;
 
 static ossl_inline int io_setup(unsigned n, aio_context_t *ctx)
 {
@@ -515,6 +521,8 @@ static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     ciphertype = EVP_CIPHER_CTX_nid(ctx);
     switch (ciphertype) {
     case NID_aes_128_cbc:
+    case NID_aes_192_cbc:
+    case NID_aes_256_cbc:
         strncpy(ciphername, "cbc(aes)", ALG_MAX_SALG_NAME);
         break;
     default:
@@ -637,30 +645,9 @@ static int afalg_cipher_cleanup(EVP_CIPHER_CTX *ctx)
     return 1;
 }
 
-const EVP_CIPHER *afalg_aes_128_cbc(void)
-{
-    if (_hidden_aes_128_cbc == NULL
-        && ((_hidden_aes_128_cbc =
-             EVP_CIPHER_meth_new(NID_aes_128_cbc,
-                                 AES_BLOCK_SIZE,
-                                 AES_KEY_SIZE_128)) == NULL
-            || !EVP_CIPHER_meth_set_iv_length(_hidden_aes_128_cbc, AES_IV_LEN)
-            || !EVP_CIPHER_meth_set_flags(_hidden_aes_128_cbc,
-                                          EVP_CIPH_CBC_MODE |
-                                          EVP_CIPH_FLAG_DEFAULT_ASN1)
-            || !EVP_CIPHER_meth_set_init(_hidden_aes_128_cbc,
-                                         afalg_cipher_init)
-            || !EVP_CIPHER_meth_set_do_cipher(_hidden_aes_128_cbc,
-                                              afalg_do_cipher)
-            || !EVP_CIPHER_meth_set_cleanup(_hidden_aes_128_cbc,
-                                            afalg_cipher_cleanup)
-            || !EVP_CIPHER_meth_set_impl_ctx_size(_hidden_aes_128_cbc,
-                                                  sizeof(afalg_ctx)))) {
-        EVP_CIPHER_meth_free(_hidden_aes_128_cbc);
-        _hidden_aes_128_cbc = NULL;
-    }
-    return _hidden_aes_128_cbc;
-}
+DECLARE_AES_CBC(128)
+DECLARE_AES_CBC(192)
+DECLARE_AES_CBC(256)
 
 static int afalg_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                          const int **nids, int nid)
@@ -676,12 +663,38 @@ static int afalg_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
     case NID_aes_128_cbc:
         *cipher = afalg_aes_128_cbc();
         break;
+    case NID_aes_192_cbc:
+        *cipher = afalg_aes_192_cbc();
+        break;
+    case NID_aes_256_cbc:
+        *cipher = afalg_aes_256_cbc();
+        break;
     default:
         *cipher = NULL;
         r = 0;
     }
 
     return r;
+}
+
+static int init_cbc(void)
+{
+    if (afalg_aes_128_cbc() == NULL) {
+        AFALGerr(AFALG_F_BIND_AFALG, AFALG_R_INIT_FAILED);
+        return 0;
+    }
+
+    if (afalg_aes_192_cbc() == NULL) {
+        AFALGerr(AFALG_F_BIND_AFALG, AFALG_R_INIT_FAILED);
+        return 0;
+    }
+
+    if (afalg_aes_256_cbc() == NULL) {
+        AFALGerr(AFALG_F_BIND_AFALG, AFALG_R_INIT_FAILED);
+        return 0;
+    }
+
+    return 1;
 }
 
 static int bind_afalg(ENGINE *e)
@@ -699,14 +712,12 @@ static int bind_afalg(ENGINE *e)
     }
 
     /*
-     * Create _hidden_aes_128_cbc by calling afalg_aes_128_cbc
+     * Create _hidden_aes_xxx_cbc by calling afalg_aes_xxx_cbc
      * now, as bind_aflag can only be called by one thread at a
      * time.
      */
-    if (afalg_aes_128_cbc() == NULL) {
-        AFALGerr(AFALG_F_BIND_AFALG, AFALG_R_INIT_FAILED);
+    if (!init_cbc()) 
         return 0;
-    }
 
     if (!ENGINE_set_ciphers(e, afalg_ciphers)) {
         AFALGerr(AFALG_F_BIND_AFALG, AFALG_R_INIT_FAILED);
@@ -817,11 +828,21 @@ static int afalg_finish(ENGINE *e)
     return 1;
 }
 
+static int free_cbc(void)
+{
+    EVP_CIPHER_meth_free(_hidden_aes_128_cbc);
+    _hidden_aes_128_cbc = NULL;
+    EVP_CIPHER_meth_free(_hidden_aes_192_cbc);
+    _hidden_aes_192_cbc = NULL;
+    EVP_CIPHER_meth_free(_hidden_aes_256_cbc);
+    _hidden_aes_256_cbc = NULL;
+    return 1;
+}
+
 static int afalg_destroy(ENGINE *e)
 {
     ERR_unload_AFALG_strings();
-    EVP_CIPHER_meth_free(_hidden_aes_128_cbc);
-    _hidden_aes_128_cbc = NULL;
+    free_cbc();
     return 1;
 }
 
