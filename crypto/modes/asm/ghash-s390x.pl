@@ -89,7 +89,7 @@ ___
 $code.=<<___ if(!$softonly && 0);	# hardware is slow for single block...
 	larl	%r1,OPENSSL_s390xcap_P
 	lghi	%r0,0
-	lg	%r1,24(%r1)	# load second word of kimd capabilities vector
+	lg	%r1,32(%r1)	# load second word of kimd capabilities vector
 	tmhh	%r1,0x4000	# check for function 65
 	jz	.Lsoft_gmult
 	stg	%r0,16($sp)	# arrange 16 bytes of zero input
@@ -123,7 +123,7 @@ gcm_ghash_4bit:
 ___
 $code.=<<___ if(!$softonly);
 	larl	%r1,OPENSSL_s390xcap_P
-	lg	%r0,24(%r1)	# load second word of kimd capabilities vector
+	lg	%r0,32(%r1)	# load second word of kimd capabilities vector
 	tmhh	%r0,0x4000	# check for function 65
 	jz	.Lsoft_ghash
 	lghi	%r0,65		# function 65
@@ -251,6 +251,7 @@ rem_4bit:
 .type	rem_4bit,\@object
 .size	rem_4bit,(.-rem_4bit)
 .string	"GHASH for s390x, CRYPTOGAMS by <appro\@openssl.org>"
+.comm	OPENSSL_s390xcap_P,184,8
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

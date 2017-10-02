@@ -21,10 +21,26 @@ OPENSSL_s390x_facilities:
 	stg	%r0,56(%r4)
 	stg	%r0,64(%r4)
 	stg	%r0,72(%r4)
+	stg	%r0,80(%r4)
+	stg	%r0,88(%r4)
+	stg	%r0,96(%r4)
+	stg	%r0,104(%r4)
+	stg	%r0,112(%r4)
+	stg	%r0,120(%r4)
+	stg	%r0,128(%r4)
+	stg	%r0,136(%r4)
+	stg	%r0,144(%r4)
+	stg	%r0,152(%r4)
+	stg	%r0,160(%r4)
+	stg	%r0,168(%r4)
+	stg	%r0,176(%r4)
 
 	.long	0xb2b04000	# stfle	0(%r4)
 	brc	8,.Ldone
 	lghi	%r0,1
+	.long	0xb2b04000	# stfle 0(%r4)
+	brc	8,.Ldone
+	lghi	%r0,2
 	.long	0xb2b04000	# stfle 0(%r4)
 .Ldone:
 	lmg	%r2,%r3,0(%r4)
@@ -32,23 +48,54 @@ OPENSSL_s390x_facilities:
 	jz	.Lret
 
 	lghi	%r0,0		# query kimd capabilities
-	la	%r1,16(%r4)
+	la	%r1,24(%r4)
 	.long	0xb93e0002	# kimd %r0,%r2
 
+	lghi	%r0,0		# query klmd capabilities
+	la	%r1,40(%r4)
+	.long	0xb93f0002	# klmd %r0,%r2
+
 	lghi	%r0,0		# query km capability vector
-	la	%r1,32(%r4)
+	la	%r1,56(%r4)
 	.long	0xb92e0042	# km %r4,%r2
 
 	lghi	%r0,0		# query kmc capability vector
-	la	%r1,48(%r4)
+	la	%r1,72(%r4)
 	.long	0xb92f0042	# kmc %r4,%r2
+
+	lghi	%r0,0		# query kmac capability vector
+	la	%r1,88(%r4)
+	.long	0xb91e0042	# kmac %r4,%r2
 
 	tmhh	%r3,0x0004	# check for message-security-assist-4
 	jz	.Lret
 
 	lghi	%r0,0		# query kmctr capability vector
-	la	%r1,64(%r4)
+	la	%r1,104(%r4)
 	.long	0xb92d2042	# kmctr %r4,%r2,%r2
+
+	lghi	%r0,0		# query kmo capability vector
+	la	%r1,120(%r4)
+	.long	0xb92b0042	# kmo %r4,%r2
+
+	lghi	%r0,0		# query kmf capability vector
+	la	%r1,136(%r4)
+	.long	0xb92a0042	# kmf %r4,%r2
+
+	tml	%r2,0x40	# check for message-security-assist-5
+	jz	.Lret
+
+	lghi	%r0,0		# query prno capability vector
+	la	%r1,152(%r4)
+	.long	0xb93c0042	# prno %r4,%r2
+
+	lg	%r2,16(%r4)
+	tmhl	%r2,0x2000	# check for message-security-assist-8
+	jz	.Lret
+
+	lghi	%r0,0		# query kma capability vector
+	la	%r1,168(%r4)
+	.long	0xb9294022	# kma %r2,%r4,%r2
 
 .Lret:
 	br	%r14
@@ -177,4 +224,4 @@ OPENSSL_instrument_bus2:
 .section	.init
 	brasl	%r14,OPENSSL_cpuid_setup
 
-.comm	OPENSSL_s390xcap_P,80,8
+.comm	OPENSSL_s390xcap_P,184,8
