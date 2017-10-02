@@ -31,6 +31,8 @@ GENERATE[arm64cpuid.S]=arm64cpuid.pl $(PERLASM_SCHEME)
 INCLUDE[arm64cpuid.o]=.
 GENERATE[armv4cpuid.S]=armv4cpuid.pl $(PERLASM_SCHEME)
 INCLUDE[armv4cpuid.o]=.
+GENERATE[s390xcpuid.S]=s390xcpuid.pl $(PERLASM_SCHEME)
+INCLUDE[s390xcpuid.o]=.
 
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
   SHARED_SOURCE[../libcrypto]=dllmain.c
