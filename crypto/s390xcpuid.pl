@@ -1,15 +1,35 @@
-.text
-// Copyright 2009-2016 The OpenSSL Project Authors. All Rights Reserved.
-//
-// Licensed under the OpenSSL license (the "License").  You may not use
-// this file except in compliance with the License.  You can obtain a copy
-// in the file LICENSE in the source distribution or at
-// https://www.openssl.org/source/license.html
+#! /usr/bin/env perl
+# Copyright 2009-2017 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
 
+$flavour = shift;
+
+if ($flavour =~ /3[12]/) {
+	$SIZE_T=4;
+	$g="";
+} else {
+	$SIZE_T=8;
+	$g="g";
+}
+
+while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
+open STDOUT,">$output";
+
+$ra="%r14";
+$sp="%r15";
+$stdframe=16*$SIZE_T+4*8;
+
+$code=<<___;
 #include "s390x_arch.h"
 
+.text
+
 .globl	OPENSSL_s390x_facilities
-.type	OPENSSL_s390x_facilities,@function
+.type	OPENSSL_s390x_facilities,\@function
 .align	16
 OPENSSL_s390x_facilities:
 	lghi	%r0,0
@@ -102,20 +122,20 @@ OPENSSL_s390x_facilities:
 	.long	0xb9294022		# kma %r2,%r4,%r2
 
 .Lret:
-	br	%r14
+	br	$ra
 .size	OPENSSL_s390x_facilities,.-OPENSSL_s390x_facilities
 
 .globl	OPENSSL_rdtsc
-.type	OPENSSL_rdtsc,@function
+.type	OPENSSL_rdtsc,\@function
 .align	16
 OPENSSL_rdtsc:
-	stck	16(%r15)
-	lg	%r2,16(%r15)
-	br	%r14
+	stck	16($sp)
+	lg	%r2,16($sp)
+	br	$ra
 .size	OPENSSL_rdtsc,.-OPENSSL_rdtsc
 
 .globl	OPENSSL_atomic_add
-.type	OPENSSL_atomic_add,@function
+.type	OPENSSL_atomic_add,\@function
 .align	16
 OPENSSL_atomic_add:
 	l	%r1,0(%r2)
@@ -124,16 +144,16 @@ OPENSSL_atomic_add:
 	cs	%r1,%r0,0(%r2)
 	brc	4,.Lspin
 	lgfr	%r2,%r0		# OpenSSL expects the new value
-	br	%r14
+	br	$ra
 .size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
 
 .globl	OPENSSL_wipe_cpu
-.type	OPENSSL_wipe_cpu,@function
+.type	OPENSSL_wipe_cpu,\@function
 .align	16
 OPENSSL_wipe_cpu:
 	xgr	%r0,%r0
 	xgr	%r1,%r1
-	lgr	%r2,%r15
+	lgr	%r2,$sp
 	xgr	%r3,%r3
 	xgr	%r4,%r4
 	lzdr	%f0
@@ -144,11 +164,11 @@ OPENSSL_wipe_cpu:
 	lzdr	%f5
 	lzdr	%f6
 	lzdr	%f7
-	br	%r14
+	br	$ra
 .size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
 
 .globl	OPENSSL_cleanse
-.type	OPENSSL_cleanse,@function
+.type	OPENSSL_cleanse,\@function
 .align	16
 OPENSSL_cleanse:
 #if !defined(__s390x__) && !defined(__s390x)
@@ -179,11 +199,11 @@ OPENSSL_cleanse:
 	lghi	%r4,7
 	ngr	%r3,%r4
 	jnz	.Little
-	br	%r14
+	br	$ra
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
 
 .globl	CRYPTO_memcmp
-.type	CRYPTO_memcmp,@function
+.type	CRYPTO_memcmp,\@function
 .align	16
 CRYPTO_memcmp:
 #if !defined(__s390x__) && !defined(__s390x)
@@ -206,11 +226,11 @@ CRYPTO_memcmp:
 	srl	%r5,31
 .Lno_data:
 	lgr	%r2,%r5
-	br	%r14
+	br	$ra
 .size	CRYPTO_memcmp,.-CRYPTO_memcmp
 
 .globl	OPENSSL_instrument_bus
-.type	OPENSSL_instrument_bus,@function
+.type	OPENSSL_instrument_bus,\@function
 .align	16
 OPENSSL_instrument_bus:
 	lghi	%r2,0
@@ -218,20 +238,71 @@ OPENSSL_instrument_bus:
 .size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
 
 .globl	OPENSSL_instrument_bus2
-.type	OPENSSL_instrument_bus2,@function
+.type	OPENSSL_instrument_bus2,\@function
 .align	16
 OPENSSL_instrument_bus2:
 	lghi	%r2,0
-	br	%r14
+	br	$ra
 .size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
 
 .globl	OPENSSL_vx_probe
-.type	OPENSSL_vx_probe,@function
+.type	OPENSSL_vx_probe,\@function
 .align	16
 OPENSSL_vx_probe:
 	.word	0xe700,0x0000,0x0044	# vzero %v0
-	br	%r14
+	br	$ra
 .size	OPENSSL_vx_probe,.-OPENSSL_vx_probe
+___
 
+################
+# void s390x_km(const unsigned char *in, size_t len, unsigned char *out,
+#               unsigned int fc, void *param)
+{
+my ($in,$len,$out,$fc,$param) = map("%r$_",(2..6));
+$code.=<<___;
+.globl	s390x_km
+.type	s390x_km,\@function
+.align	16
+s390x_km:
+	lr	%r0,$fc
+	l${g}r	%r1,$param
+
+	.long	0xb92e0042	# km $out,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	br	$ra
+.size	s390x_km,.-s390x_km
+___
+}
+
+################
+# void s390x_kma(const unsigned char *aad, size_t alen,
+#                const unsigned char *in, size_t len,
+#                unsigned char *out, unsigned int fc, void *param)
+{
+my ($aad,$alen,$in,$len,$out) = map("%r$_",(2..6));
+$code.=<<___;
+.globl	s390x_kma
+.type	s390x_kma,\@function
+.align	16
+s390x_kma:
+	st${g}	$out,6*$SIZE_T($sp)
+	lm${g}	%r0,%r1,$stdframe($sp)
+
+	.long	0xb9292064	# kma $out,$aad,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	l${g}	$out,6*$SIZE_T($sp)
+	br	$ra
+.size	s390x_kma,.-s390x_kma
+___
+}
+
+$code.=<<___;
 .section	.init
-	brasl	%r14,OPENSSL_cpuid_setup
+	brasl	$ra,OPENSSL_cpuid_setup
+___
+
+$code =~ s/\`([^\`]*)\`/eval $1/gem;
+print $code;
+close STDOUT;	# force flush
