@@ -589,3 +589,80 @@ void EVP_PKEY_meth_set_ctrl(EVP_PKEY_METHOD *pmeth,
     pmeth->ctrl = ctrl;
     pmeth->ctrl_str = ctrl_str;
 }
+
+void EVP_PKEY_meth_get_encrypt(EVP_PKEY_METHOD *pmeth,
+                               int (**pencrypt_init) (EVP_PKEY_CTX *ctx),
+                               int (**pencryptfn) (EVP_PKEY_CTX *ctx,
+                                                   unsigned char *out,
+                                                   size_t *outlen,
+                                                   const unsigned char *in,
+                                                   size_t inlen))
+{
+    if (pencrypt_init)
+        *pencrypt_init = pmeth->encrypt_init;
+    if (pencryptfn)
+        *pencryptfn = pmeth->encrypt;
+}
+
+void EVP_PKEY_meth_get_decrypt(EVP_PKEY_METHOD *pmeth,
+                               int (**pdecrypt_init) (EVP_PKEY_CTX *ctx),
+                               int (**pdecrypt) (EVP_PKEY_CTX *ctx,
+                                                 unsigned char *out,
+                                                 size_t *outlen,
+                                                 const unsigned char *in,
+                                                 size_t inlen))
+{
+    if (pdecrypt_init)
+        *pdecrypt_init = pmeth->decrypt_init;
+    if (pdecrypt)
+        *pdecrypt = pmeth->decrypt;
+}
+
+void EVP_PKEY_meth_get_sign(EVP_PKEY_METHOD *pmeth,
+                            int (**psign_init) (EVP_PKEY_CTX *ctx),
+                            int (**psign) (EVP_PKEY_CTX *ctx,
+                                           unsigned char *sig, size_t *siglen,
+                                           const unsigned char *tbs,
+                                           size_t tbslen))
+{
+    if (psign_init)
+        *psign_init = pmeth->sign_init;
+    if (psign)
+        *psign = pmeth->sign;
+}
+
+void EVP_PKEY_meth_get_paramgen(EVP_PKEY_METHOD *pmeth,
+                                int (**pparamgen_init) (EVP_PKEY_CTX *ctx),
+                                int (**pparamgen) (EVP_PKEY_CTX *ctx,
+                                                   EVP_PKEY *pkey))
+{
+    if (pparamgen_init)
+        *pparamgen_init = pmeth->paramgen_init;
+    if (pparamgen)
+        *pparamgen = pmeth->paramgen;
+}
+
+void EVP_PKEY_meth_get_keygen(EVP_PKEY_METHOD *pmeth,
+                              int (**pkeygen_init) (EVP_PKEY_CTX *ctx),
+                              int (**pkeygen) (EVP_PKEY_CTX *ctx,
+                                               EVP_PKEY *pkey))
+{
+    if (pkeygen_init)
+        *pkeygen_init = pmeth->keygen_init;
+    if (pkeygen)
+        *pkeygen = pmeth->keygen;
+}
+
+void EVP_PKEY_meth_get_signctx(EVP_PKEY_METHOD *pmeth,
+                               int (**psignctx_init) (EVP_PKEY_CTX *ctx,
+                                                      EVP_MD_CTX *mctx),
+                               int (**psignctx) (EVP_PKEY_CTX *ctx,
+                                                 unsigned char *sig,
+                                                 size_t *siglen,
+                                                 EVP_MD_CTX *mctx))
+{
+    if (psignctx_init)
+        *psignctx_init = pmeth->signctx_init;
+    if (psignctx)
+        *psignctx = pmeth->signctx;
+}
