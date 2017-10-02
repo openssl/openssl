@@ -4416,3 +4416,17 @@ X509_VERIFY_PARAM_add1_host             4771	EXIST::FUNCTION:
 EC_GROUP_get_mont_data                  4772	EXIST::FUNCTION:EC
 i2d_re_X509_tbs                         4773	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_item                  4774	EXIST::FUNCTION:
+EVP_PKEY_meth_get_init                  4775	EXIST::FUNCTION:
+EVP_PKEY_meth_get_verify_recover        4776	EXIST::FUNCTION:
+EVP_PKEY_meth_get_keygen                4777	EXIST::FUNCTION:
+EVP_PKEY_meth_get_derive                4778	EXIST::FUNCTION:
+EVP_PKEY_meth_get_verifyctx             4779	EXIST::FUNCTION:
+EVP_PKEY_meth_get_paramgen              4780	EXIST::FUNCTION:
+EVP_PKEY_meth_get_verify                4781	EXIST::FUNCTION:
+EVP_PKEY_meth_get_sign                  4782	EXIST::FUNCTION:
+EVP_PKEY_meth_get_signctx               4783	EXIST::FUNCTION:
+EVP_PKEY_meth_get_ctrl                  4784	EXIST::FUNCTION:
+EVP_PKEY_meth_get_decrypt               4785	EXIST::FUNCTION:
+EVP_PKEY_meth_get_cleanup               4786	EXIST::FUNCTION:
+EVP_PKEY_meth_get_encrypt               4787	EXIST::FUNCTION:
+EVP_PKEY_meth_get_copy                  4788	EXIST::FUNCTION:
