@@ -88,26 +88,30 @@ IMPLEMENT_ASN1_FUNCTIONS(NOTICEREF)
 static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
                                          X509V3_CTX *ctx, const char *value)
 {
-    STACK_OF(POLICYINFO) *pols = NULL;
+    STACK_OF(POLICYINFO) *pols;
     char *pstr;
     POLICYINFO *pol;
     ASN1_OBJECT *pobj;
-    STACK_OF(CONF_VALUE) *vals;
+    STACK_OF(CONF_VALUE) *vals = X509V3_parse_list(value);
     CONF_VALUE *cnf;
+    const int num = sk_CONF_VALUE_num(vals);
     int i, ia5org;
-    pols = sk_POLICYINFO_new_null();
-    if (pols == NULL) {
-        X509V3err(X509V3_F_R2I_CERTPOL, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-    vals = X509V3_parse_list(value);
+
     if (vals == NULL) {
         X509V3err(X509V3_F_R2I_CERTPOL, ERR_R_X509V3_LIB);
+        return NULL;
+    }
+
+    pols = sk_POLICYINFO_new_null();
+    if (pols == NULL || !sk_POLICYINFO_reserve(pols, num)) {
+        X509V3err(X509V3_F_R2I_CERTPOL, ERR_R_MALLOC_FAILURE);
         goto err;
     }
+
     ia5org = 0;
-    for (i = 0; i < sk_CONF_VALUE_num(vals); i++) {
+    for (i = 0; i < num; i++) {
         cnf = sk_CONF_VALUE_value(vals, i);
+
         if (cnf->value || !cnf->name) {
             X509V3err(X509V3_F_R2I_CERTPOL,
                       X509V3_R_INVALID_POLICY_IDENTIFIER);
@@ -241,7 +245,6 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
  err:
     POLICYINFO_free(pol);
     return NULL;
-
 }
 
 static int displaytext_get_tag_len(const char *tagstr)
