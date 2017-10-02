@@ -6,49 +6,100 @@
 // in the file LICENSE in the source distribution or at
 // https://www.openssl.org/source/license.html
 
+#include "s390x_arch.h"
+
 .globl	OPENSSL_s390x_facilities
 .type	OPENSSL_s390x_facilities,@function
 .align	16
 OPENSSL_s390x_facilities:
 	lghi	%r0,0
 	larl	%r4,OPENSSL_s390xcap_P
-	stg	%r0,8(%r4)	# wipe capability vectors
-	stg	%r0,16(%r4)
-	stg	%r0,24(%r4)
-	stg	%r0,32(%r4)
-	stg	%r0,40(%r4)
-	stg	%r0,48(%r4)
-	stg	%r0,56(%r4)
-	stg	%r0,64(%r4)
-	stg	%r0,72(%r4)
 
-	.long	0xb2b04000	# stfle	0(%r4)
+	stg	%r0,S390X_STFLE+8(%r4)	# wipe capability vectors
+	stg	%r0,S390X_STFLE+16(%r4)
+	stg	%r0,S390X_STFLE+24(%r4)
+	stg	%r0,S390X_KIMD(%r4)
+	stg	%r0,S390X_KIMD+8(%r4)
+	stg	%r0,S390X_KLMD(%r4)
+	stg	%r0,S390X_KLMD+8(%r4)
+	stg	%r0,S390X_KM(%r4)
+	stg	%r0,S390X_KM+8(%r4)
+	stg	%r0,S390X_KMC(%r4)
+	stg	%r0,S390X_KMC+8(%r4)
+	stg	%r0,S390X_KMAC(%r4)
+	stg	%r0,S390X_KMAC+8(%r4)
+	stg	%r0,S390X_KMCTR(%r4)
+	stg	%r0,S390X_KMCTR+8(%r4)
+	stg	%r0,S390X_KMO(%r4)
+	stg	%r0,S390X_KMO+8(%r4)
+	stg	%r0,S390X_KMF(%r4)
+	stg	%r0,S390X_KMF+8(%r4)
+	stg	%r0,S390X_PRNO(%r4)
+	stg	%r0,S390X_PRNO+8(%r4)
+	stg	%r0,S390X_KMA(%r4)
+	stg	%r0,S390X_KMA+8(%r4)
+
+	.long	0xb2b04000		# stfle	0(%r4)
 	brc	8,.Ldone
 	lghi	%r0,1
-	.long	0xb2b04000	# stfle 0(%r4)
+	.long	0xb2b04000		# stfle 0(%r4)
+	brc	8,.Ldone
+	lghi	%r0,2
+	.long	0xb2b04000		# stfle 0(%r4)
 .Ldone:
-	lmg	%r2,%r3,0(%r4)
-	tmhl	%r2,0x4000	# check for message-security-assist
+	lmg	%r2,%r3,S390X_STFLE(%r4)
+	tmhl	%r2,0x4000		# check for message-security-assist
 	jz	.Lret
 
-	lghi	%r0,0		# query kimd capabilities
-	la	%r1,16(%r4)
-	.long	0xb93e0002	# kimd %r0,%r2
+	lghi	%r0,S390X_QUERY		# query kimd capabilities
+	la	%r1,S390X_KIMD(%r4)
+	.long	0xb93e0002		# kimd %r0,%r2
 
-	lghi	%r0,0		# query km capability vector
-	la	%r1,32(%r4)
-	.long	0xb92e0042	# km %r4,%r2
+	lghi	%r0,S390X_QUERY		# query klmd capabilities
+	la	%r1,S390X_KLMD(%r4)
+	.long	0xb93f0002		# klmd %r0,%r2
 
-	lghi	%r0,0		# query kmc capability vector
-	la	%r1,48(%r4)
-	.long	0xb92f0042	# kmc %r4,%r2
+	lghi	%r0,S390X_QUERY		# query km capability vector
+	la	%r1,S390X_KM(%r4)
+	.long	0xb92e0042		# km %r4,%r2
 
-	tmhh	%r3,0x0004	# check for message-security-assist-4
+	lghi	%r0,S390X_QUERY		# query kmc capability vector
+	la	%r1,S390X_KMC(%r4)
+	.long	0xb92f0042		# kmc %r4,%r2
+
+	lghi	%r0,S390X_QUERY		# query kmac capability vector
+	la	%r1,S390X_KMAC(%r4)
+	.long	0xb91e0042		# kmac %r4,%r2
+
+	tmhh	%r3,0x0004		# check for message-security-assist-4
 	jz	.Lret
 
-	lghi	%r0,0		# query kmctr capability vector
-	la	%r1,64(%r4)
-	.long	0xb92d2042	# kmctr %r4,%r2,%r2
+	lghi	%r0,S390X_QUERY		# query kmctr capability vector
+	la	%r1,S390X_KMCTR(%r4)
+	.long	0xb92d2042		# kmctr %r4,%r2,%r2
+
+	lghi	%r0,S390X_QUERY		# query kmo capability vector
+	la	%r1,S390X_KMO(%r4)
+	.long	0xb92b0042		# kmo %r4,%r2
+
+	lghi	%r0,S390X_QUERY		# query kmf capability vector
+	la	%r1,S390X_KMF(%r4)
+	.long	0xb92a0042		# kmf %r4,%r2
+
+	tml	%r2,0x40		# check for message-security-assist-5
+	jz	.Lret
+
+	lghi	%r0,S390X_QUERY		# query prno capability vector
+	la	%r1,S390X_PRNO(%r4)
+	.long	0xb93c0042		# prno %r4,%r2
+
+	lg	%r2,S390X_STFLE+16(%r4)
+	tmhl	%r2,0x2000		# check for message-security-assist-8
+	jz	.Lret
+
+	lghi	%r0,S390X_QUERY		# query kma capability vector
+	la	%r1,S390X_KMA(%r4)
+	.long	0xb9294022		# kma %r2,%r4,%r2
 
 .Lret:
 	br	%r14
@@ -174,7 +225,13 @@ OPENSSL_instrument_bus2:
 	br	%r14
 .size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
 
+.globl	OPENSSL_vx_probe
+.type	OPENSSL_vx_probe,@function
+.align	16
+OPENSSL_vx_probe:
+	.word	0xe700,0x0000,0x0044	# vzero %v0
+	br	%r14
+.size	OPENSSL_vx_probe,.-OPENSSL_vx_probe
+
 .section	.init
 	brasl	%r14,OPENSSL_cpuid_setup
-
-.comm	OPENSSL_s390xcap_P,80,8
