@@ -1773,9 +1773,6 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
      */
     x = sk_X509_value(sk, 0);
     sk = NULL;
-    /*
-     * VRS 19990621: possible memory leak; sk=null ==> !sk_pop_free() @end
-     */
 
     pkey = X509_get0_pubkey(x);
 
