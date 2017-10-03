@@ -46,9 +46,6 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
 {
     OPENSSL_STACK *ret;
 
-    if (sk->num < 0)
-        return NULL;
-
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         return NULL;
 
@@ -77,9 +74,6 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
 {
     OPENSSL_STACK *ret;
     int i;
-
-    if (sk->num < 0)
-        return NULL;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         return NULL;
@@ -211,7 +205,7 @@ static int sk_reserve(OPENSSL_STACK *st, int n, int exact)
 
 int OPENSSL_sk_reserve(OPENSSL_STACK *st, int n)
 {
-    if (st == NULL || st->num < 0)
+    if (st == NULL)
         return 0;
 
     if (n < 0)
@@ -221,7 +215,7 @@ int OPENSSL_sk_reserve(OPENSSL_STACK *st, int n)
 
 int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
 {
-    if (st == NULL || st->num < 0 || st->num == max_nodes)
+    if (st == NULL || st->num == max_nodes)
         return 0;
 
     if (!sk_reserve(st, 1, 0))
@@ -281,17 +275,21 @@ static int internal_find(OPENSSL_STACK *st, const void *data,
     if (st->comp == NULL) {
         for (i = 0; i < st->num; i++)
             if (st->data[i] == data)
-                return (i);
-        return (-1);
+                return i;
+        return -1;
     }
-    OPENSSL_sk_sort(st);
+
+    if (!st->sorted) {
+        if (st->num > 1)
+            qsort(st->data, st->num, sizeof(void *), st->comp);
+        st->sorted = 1; /* empty or single-element stack is considered sorted */
+    }
     if (data == NULL)
-        return (-1);
+        return -1;
     r = OBJ_bsearch_ex_(&data, st->data, st->num, sizeof(void *), st->comp,
                         ret_val_options);
-    if (r == NULL)
-        return (-1);
-    return (int)((const void **)r - st->data);
+
+    return r == NULL ? -1 : (int)((const void **)r - st->data);
 }
 
 int OPENSSL_sk_find(OPENSSL_STACK *st, const void *data)
@@ -313,32 +311,26 @@ int OPENSSL_sk_push(OPENSSL_STACK *st, const void *data)
 
 int OPENSSL_sk_unshift(OPENSSL_STACK *st, const void *data)
 {
-    return (OPENSSL_sk_insert(st, data, 0));
+    return OPENSSL_sk_insert(st, data, 0);
 }
 
 void *OPENSSL_sk_shift(OPENSSL_STACK *st)
 {
-    if (st == NULL)
-        return NULL;
-    if (st->num <= 0)
+    if (st == NULL || st->num == 0)
         return NULL;
     return internal_delete(st, 0);
 }
 
 void *OPENSSL_sk_pop(OPENSSL_STACK *st)
 {
-    if (st == NULL)
-        return NULL;
-    if (st->num <= 0)
+    if (st == NULL || st->num == 0)
         return NULL;
     return internal_delete(st, st->num - 1);
 }
 
 void OPENSSL_sk_zero(OPENSSL_STACK *st)
 {
-    if (st == NULL)
-        return;
-    if (st->num <= 0)
+    if (st == NULL || st->num == 0)
         return;
     memset(st->data, 0, sizeof(*st->data) * st->num);
     st->num = 0;
@@ -366,9 +358,7 @@ void OPENSSL_sk_free(OPENSSL_STACK *st)
 
 int OPENSSL_sk_num(const OPENSSL_STACK *st)
 {
-    if (st == NULL)
-        return -1;
-    return st->num;
+    return st == NULL ? -1 : st->num;
 }
 
 void *OPENSSL_sk_value(const OPENSSL_STACK *st, int i)
@@ -383,21 +373,20 @@ void *OPENSSL_sk_set(OPENSSL_STACK *st, int i, const void *data)
     if (st == NULL || i < 0 || i >= st->num)
         return NULL;
     st->data[i] = data;
+    st->sorted = 0;
     return (void *)st->data[i];
 }
 
 void OPENSSL_sk_sort(OPENSSL_STACK *st)
 {
-    if (st && !st->sorted && st->comp != NULL) {
-        if (st->data != NULL)
+    if (st != NULL && !st->sorted && st->comp != NULL) {
+        if (st->num > 1)
             qsort(st->data, st->num, sizeof(void *), st->comp);
-        st->sorted = 1;
+        st->sorted = 1; /* empty or single-element stack is considered sorted */
     }
 }
 
 int OPENSSL_sk_is_sorted(const OPENSSL_STACK *st)
 {
-    if (st == NULL)
-        return 1;
-    return st->sorted;
+    return st == NULL ? 1 : st->sorted;
 }
