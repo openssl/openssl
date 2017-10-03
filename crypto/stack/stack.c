@@ -46,9 +46,6 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
 {
     OPENSSL_STACK *ret;
 
-    if (sk->num < 0)
-        return NULL;
-
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         return NULL;
 
@@ -77,9 +74,6 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
 {
     OPENSSL_STACK *ret;
     int i;
-
-    if (sk->num < 0)
-        return NULL;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
         return NULL;
@@ -211,7 +205,7 @@ static int sk_reserve(OPENSSL_STACK *st, int n, int exact)
 
 int OPENSSL_sk_reserve(OPENSSL_STACK *st, int n)
 {
-    if (st == NULL || st->num < 0)
+    if (st == NULL)
         return 0;
 
     if (n < 0)
@@ -221,7 +215,7 @@ int OPENSSL_sk_reserve(OPENSSL_STACK *st, int n)
 
 int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
 {
-    if (st == NULL || st->num < 0 || st->num == max_nodes)
+    if (st == NULL || st->num == max_nodes)
         return 0;
 
     if (!sk_reserve(st, 1, 0))
