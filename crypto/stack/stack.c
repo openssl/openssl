@@ -285,7 +285,7 @@ static int internal_find(OPENSSL_STACK *st, const void *data,
         return -1;
     }
 
-    if (!st->sortet) {
+    if (!st->sorted) {
         if (st->num > 1)
             qsort(st->data, st->num, sizeof(void *), st->comp);
         st->sorted = 1; /* empty or single-element stack is considered sorted */
