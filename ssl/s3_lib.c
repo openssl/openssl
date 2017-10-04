@@ -4173,7 +4173,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                     }
                 }
                 if (found) {
-                    prio_chacha = sk_SSL_CIPHER_new_null();
+                    prio_chacha = sk_SSL_CIPHER_new_reserve(NULL, num);
                     /* if reserve fails, then there's likely a memory issue */
                     if (prio_chacha != NULL) {
                         /* Put all ChaCha20 at the top, starting with the one we just found */
