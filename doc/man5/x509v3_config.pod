@@ -205,7 +205,7 @@ certificate (if possible).
 
 Example:
 
- issuserAltName = issuer:copy
+ issuerAltName = issuer:copy
 
 
 =head2 Authority Info Access.
