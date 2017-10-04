@@ -454,13 +454,6 @@ case "$GUESSOS" in
     OUT=uClinux-dist
 	;;
   mips3-sgi-irix)
-	#CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
-	#CPU=${CPU:-0}
-	#if [ $CPU -ge 5000 ]; then
-	#	options="$options -mips4"
-	#else
-	#	options="$options -mips3"
-	#fi
 	OUT="irix-mips3-$CC"
 	;;
   mips4-sgi-irix64)
@@ -470,13 +463,6 @@ case "$GUESSOS" in
 	  echo "         You have about 5 seconds to press Ctrl-C to abort."
 	  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	fi
-        #CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
-        #CPU=${CPU:-0}
-        #if [ $CPU -ge 5000 ]; then
-        #        options="$options -mips4"
-        #else
-        #        options="$options -mips3"
-        #fi
 	OUT="irix-mips3-$CC"
 	;;
   ppc-apple-rhapsody) OUT="rhapsody-ppc-cc" ;;
