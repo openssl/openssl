@@ -704,14 +704,13 @@ static void readscreen(void)
     hBitmap = CreateCompatibleBitmap(hScrDC, w, n);
 
     /* Get bitmap properties */
-    GetObject(hBitmap, sizeof(BITMAP), (LPSTR) & bm);
-    size = (unsigned int)bm.bmWidthBytes * bm.bmHeight * bm.bmPlanes;
-
-    bi.biSize = sizeof(BITMAPINFOHEADER);
+    GetObject(hBitmap, sizeof(bm), (LPSTR)&bm);
+    size = (unsigned int)4 * bm.bmHeight * bm.bmWidth;
+    bi.biSize = sizeof(bi);
     bi.biWidth = bm.bmWidth;
     bi.biHeight = bm.bmHeight;
-    bi.biPlanes = bm.bmPlanes;
-    bi.biBitCount = bm.bmBitsPixel;
+    bi.biPlanes = 1;
+    bi.biBitCount = 32;
     bi.biCompression = BI_RGB;
     bi.biSizeImage = 0;
     bi.biXPelsPerMeter = 0;
@@ -727,7 +726,7 @@ static void readscreen(void)
 
             /* Copy the bits of the current line range into the buffer */
             GetDIBits(hScrDC, hBitmap, y, n,
-                      bmbits, (BITMAPINFO *) & bi, DIB_RGB_COLORS);
+                      bmbits, (LPBITMAPINFO)&bi, DIB_RGB_COLORS);
 
             /* Get the hash of the bitmap */
             MD(bmbits, size, md);
