@@ -114,11 +114,12 @@ APPS_OPENSSL={- use File::Spec::Functions;
 INSTALLTOP_dev={- # $prefix is used in the OPENSSLDIR perl snippet
                   #
                   use File::Spec::Functions qw(:DEFAULT splitpath);
-                  our $prefix = $config{prefix} || "$win_installroot\\OpenSSL";
+                  our $prefix = canonpath($config{prefix}
+                                          || "$win_installroot\\OpenSSL");
                   our ($prefix_dev, $prefix_dir, $prefix_file) =
                       splitpath($prefix, 1);
                   $prefix_dev -}
-INSTALLTOP_dir={- $prefix_dir -}
+INSTALLTOP_dir={- canonpath($prefix_dir) -}
 OPENSSLDIR_dev={- #
                   # The logic here is that if no --openssldir was given,
                   # OPENSSLDIR will get the value "$win_commonroot\\SSL".
@@ -132,13 +133,13 @@ OPENSSLDIR_dev={- #
                   our $openssldir =
                       $config{openssldir} ?
                           (file_name_is_absolute($config{openssldir}) ?
-                               $config{openssldir}
+                               canonpath($config{openssldir})
                                : catdir($prefix, $config{openssldir}))
-                          : "$win_commonroot\\SSL";
+                          : canonpath("$win_commonroot\\SSL");
                   our ($openssldir_dev, $openssldir_dir, $openssldir_file) =
                       splitpath($openssldir, 1);
                   $openssldir_dev -}
-OPENSSLDIR_dir={- $openssldir_dir -}
+OPENSSLDIR_dir={- canonpath($openssldir_dir) -}
 LIBDIR={- our $libdir = $config{libdir} || "lib";
           $libdir -}
 ENGINESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath);
@@ -146,7 +147,7 @@ ENGINESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath);
                   our ($enginesdir_dev, $enginesdir_dir, $enginesdir_file) =
                       splitpath($enginesdir, 1);
                   $enginesdir_dev -}
-ENGINESDIR_dir={- $enginesdir_dir -}
+ENGINESDIR_dir={- canonpath($enginesdir_dir) -}
 !IF "$(DESTDIR)" != ""
 INSTALLTOP=$(DESTDIR)$(INSTALLTOP_dir)
 OPENSSLDIR=$(DESTDIR)$(OPENSSLDIR_dir)
