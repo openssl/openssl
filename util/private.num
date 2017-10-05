@@ -8,6 +8,8 @@ OPENSSL_MALLOC_FAILURES                 environment
 OPENSSL_instrument_bus                  assembler
 OPENSSL_instrument_bus2                 assembler
 #
+ADMISSION_SYNTAX                        datatype
+ADMISSIONS                              datatype
 ASN1_STRING_TABLE                       datatype
 BIO_ADDR                                datatype
 BIO_ADDRINFO                            datatype
@@ -24,6 +26,7 @@ EVP_PKEY_METHOD                         datatype
 EVP_PKEY_ASN1_METHOD                    datatype
 GEN_SESSION_CB                          datatype
 OPENSSL_Applink                         external
+NAMING_AUTHORITY                        datatype
 OSSL_STORE_CTX                          datatype
 OSSL_STORE_INFO                         datatype
 OSSL_STORE_LOADER                       datatype
@@ -35,6 +38,8 @@ OSSL_STORE_error_fn                     datatype
 OSSL_STORE_load_fn                      datatype
 OSSL_STORE_open_fn                      datatype
 OSSL_STORE_post_process_info_fn         datatype
+PROFESSION_INFO                         datatype
+PROFESSION_INFOS                        datatype
 RAND_poll_cb                            datatype
 SSL_CTX_keylog_cb_func                  datatype
 SSL_client_hello_cb_fn                  datatype
