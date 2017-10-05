@@ -2495,7 +2495,7 @@ int MAIN(int argc, char **argv)
 	          } else if (j == R_OQSKEX_NTRU) {
                 oqskex_kex[j] = OQS_KEX_new(oqskex_rand[j], OQS_KEX_alg_ntru, NULL, 0, NULL);
 	          } else if (j == R_OQSKEX_MLWE_KYBER) {
-                oqskex_kex[j] = OQS_KEX_new(oqskex_rand[j], OQS_KEX_alg_MLWE_KYBER, NULL, 0, NULL);
+                oqskex_kex[j] = OQS_KEX_new(oqskex_rand[j], OQS_KEX_alg_mlwe_kyber, NULL, 0, NULL);
 	          }
 
             if (oqskex_kex[j] == NULL) {
