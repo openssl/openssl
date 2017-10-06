@@ -208,7 +208,8 @@ const GENERAL_NAME *ADMISSION_SYNTAX_get0_admissionAuthority(const ADMISSION_SYN
     return as->admissionAuthority;
 }
 
-void ADMISSION_SYNTAX_set0_admissionAuthority(ADMISSION_SYNTAX *as, GENERAL_NAME *aa)
+void ADMISSION_SYNTAX_set0_admissionAuthority(ADMISSION_SYNTAX *as,
+                                              GENERAL_NAME *aa)
 {
     GENERAL_NAME_free(as->admissionAuthority);
     as->admissionAuthority = aa;
@@ -219,9 +220,10 @@ const STACK_OF(ADMISSIONS) *ADMISSION_SYNTAX_get0_contentsOfAdmissions(const ADM
     return as->contentsOfAdmissions;
 }
 
-void ADMISSION_SYNTAX_set0_contentsOfAdmissions(ADMISSION_SYNTAX *as, STACK_OF(ADMISSIONS) *a)
+void ADMISSION_SYNTAX_set0_contentsOfAdmissions(ADMISSION_SYNTAX *as,
+                                                STACK_OF(ADMISSIONS) *a)
 {
-    sk_ADMISSIONS_free(as->contentsOfAdmissions);
+    sk_ADMISSIONS_pop_free(as->contentsOfAdmissions, ADMISSIONS_free);
     as->contentsOfAdmissions = a;
 }
 
@@ -254,7 +256,7 @@ const PROFESSION_INFOS *ADMISSIONS_get0_professionInfos(const ADMISSIONS *a)
 
 void ADMISSIONS_set0_professionInfos(ADMISSIONS *a, PROFESSION_INFOS *pi)
 {
-    sk_PROFESSION_INFO_free(a->professionInfos);
+    sk_PROFESSION_INFO_pop_free(a->professionInfos, PROFESSION_INFO_free);
     a->professionInfos = pi;
 }
 
@@ -290,7 +292,7 @@ const STACK_OF(ASN1_STRING) *PROFESSION_INFO_get0_professionItems(const PROFESSI
 void PROFESSION_INFO_set0_professionItems(PROFESSION_INFO *pi,
                                           STACK_OF(ASN1_STRING) *as)
 {
-    sk_ASN1_STRING_free(pi->professionItems);
+    sk_ASN1_STRING_pop_free(pi->professionItems, ASN1_STRING_free);
     pi->professionItems = as;
 }
 
@@ -302,7 +304,7 @@ const STACK_OF(ASN1_OBJECT) *PROFESSION_INFO_get0_professionOIDs(const PROFESSIO
 void PROFESSION_INFO_set0_professionOIDs(PROFESSION_INFO *pi,
                                          STACK_OF(ASN1_OBJECT) *po)
 {
-    sk_ASN1_OBJECT_free(pi->professionOIDs);
+    sk_ASN1_OBJECT_pop_free(pi->professionOIDs, ASN1_OBJECT_free);
     pi->professionOIDs = po;
 }
 
