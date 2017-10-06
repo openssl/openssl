@@ -182,6 +182,10 @@ PKCS#12 Data Management.
 
 PKCS#7 Data Management.
 
+=item L<B<pkcs8>|pkcs8(1)>
+
+PKCS#8 format private key conversion tool.
+
 =item L<B<pkey>|pkey(1)>
 
 Public and private key management.
@@ -194,9 +198,17 @@ Public key algorithm parameter management.
 
 Public key algorithm cryptographic operation utility.
 
+=item L<B<prime>|prime(1)>
+
+Compute prime numbers.
+
 =item L<B<rand>|rand(1)>
 
 Generate pseudo-random bytes.
+
+=item L<B<rehash>|rehash(1)>
+
+Create symbolic links to certficate and CRL files named by the hash values.
 
 =item L<B<req>|req(1)>
 
@@ -247,6 +259,14 @@ Algorithm Speed Measurement.
 =item L<B<spkac>|spkac(1)>
 
 SPKAC printing and generating utility.
+
+=item L<B<srp>|srp(1)>
+
+Maintain SRP password file.
+
+=item L<B<storeutl>|storeutl(1)>
+
+Utility to list and display certificates, keys, CRLs, etc.
 
 =item L<B<ts>|ts(1)>
 
@@ -418,17 +438,20 @@ Read the password from standard input.
 
 =head1 SEE ALSO
 
-L<asn1parse(1)>, L<ca(1)>, L<config(5)>,
+L<asn1parse(1)>, L<ca(1)>, L<ciphers(1)>, L<cms(1)>, L<config(5)>,
 L<crl(1)>, L<crl2pkcs7(1)>, L<dgst(1)>,
 L<dhparam(1)>, L<dsa(1)>, L<dsaparam(1)>,
-L<enc(1)>, L<engine(1)>, L<gendsa(1)>, L<genpkey(1)>,
-L<genrsa(1)>, L<nseq(1)>, L<openssl(1)>,
+L<ec(1)>, L<ecparam(1)>,
+L<enc(1)>, L<engine(1)>, L<errstr(1)>, L<gendsa(1)>, L<genpkey(1)>,
+L<genrsa(1)>, L<nseq(1)>, L<ocsp(1)>,
 L<passwd(1)>,
 L<pkcs12(1)>, L<pkcs7(1)>, L<pkcs8(1)>,
-L<rand(1)>, L<req(1)>, L<rsa(1)>,
+L<pkey(1)>, L<pkeyparam(1)>, L<pkeyutl(1)>, L<prime(1)>,
+L<rand(1)>, L<rehash(1)>, L<req(1)>, L<rsa(1)>,
 L<rsautl(1)>, L<s_client(1)>,
-L<s_server(1)>, L<s_time(1)>,
-L<smime(1)>, L<spkac(1)>,
+L<s_server(1)>, L<s_time(1)>, L<sess_id(1)>,
+L<smime(1)>, L<speed(1)>, L<spkac(1)>, L<srp(1)>, L<storeutl(1)>,
+L<ts(1)>,
 L<verify(1)>, L<version(1)>, L<x509(1)>,
 L<crypto(7)>, L<ssl(7)>, L<x509v3_config(5)>
 
