@@ -1228,7 +1228,10 @@ static int pderive_test_run(EVP_TEST *t)
     unsigned char *got = NULL;
     size_t got_len;
 
-    got_len = expected->output_len;
+    if (EVP_PKEY_derive(expected->ctx, NULL, &got_len) <= 0) {
+        t->err = "DERIVE_ERROR";
+        goto err;
+    }
     if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
         t->err = "DERIVE_ERROR";
         goto err;
