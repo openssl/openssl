@@ -542,45 +542,30 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
         return;
 
     l = ERR_GET_LIB(e);
-    f = ERR_GET_FUNC(e);
-    r = ERR_GET_REASON(e);
-
     ls = ERR_lib_error_string(e);
-    fs = ERR_func_error_string(e);
-    rs = ERR_reason_error_string(e);
-
-    if (ls == NULL)
+    if (ls == NULL) {
         BIO_snprintf(lsbuf, sizeof(lsbuf), "lib(%lu)", l);
-    if (fs == NULL)
+        ls = lsbuf;
+    }
+
+    fs = ERR_func_error_string(e);
+    f = ERR_GET_FUNC(e);
+    if (fs == NULL) {
         BIO_snprintf(fsbuf, sizeof(fsbuf), "func(%lu)", f);
-    if (rs == NULL)
+        fs = fsbuf;
+    }
+
+    rs = ERR_reason_error_string(e);
+    r = ERR_GET_REASON(e);
+    if (rs == NULL) {
         BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", r);
+        rs = rsbuf;
+    }
 
-    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls ? ls : lsbuf,
-                 fs ? fs : fsbuf, rs ? rs : rsbuf);
+    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, fs, rs);
     if (strlen(buf) == len - 1) {
-        /*
-         * output may be truncated; make sure we always have 5
-         * colon-separated fields, i.e. 4 colons ...
-         */
-#define NUM_COLONS 4
-        if (len > NUM_COLONS) { /* ... if possible */
-            int i;
-            char *s = buf;
-
-            for (i = 0; i < NUM_COLONS; i++) {
-                char *colon = strchr(s, ':');
-                if (colon == NULL || colon > &buf[len - 1] - NUM_COLONS + i) {
-                    /*
-                     * set colon no. i at last possible position (buf[len-1]
-                     * is the terminating 0)
-                     */
-                    colon = &buf[len - 1] - NUM_COLONS + i;
-                    *colon = ':';
-                }
-                s = colon + 1;
-            }
-        }
+        /* Didn't fit; use a minimal format. */
+        BIO_snprintf(buf, len, "err:%lx:%lx:%lx:%lx", e, l, f, r);
     }
 }
 
@@ -594,8 +579,7 @@ char *ERR_error_string(unsigned long e, char *ret)
 
     if (ret == NULL)
         ret = buf;
-    ERR_error_string_n(e, ret, 256);
-
+    ERR_error_string_n(e, ret, (int)sizeof(buf));
     return ret;
 }
 
