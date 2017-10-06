@@ -203,7 +203,7 @@ err:
     return -1;
 }
 
-const GENERAL_NAME* ADMISSION_SYNTAX_get0_admissionAuthority(const ADMISSION_SYNTAX *as)
+const GENERAL_NAME *ADMISSION_SYNTAX_get0_admissionAuthority(const ADMISSION_SYNTAX *as)
 {
     return as->admissionAuthority;
 }
@@ -214,7 +214,7 @@ void ADMISSION_SYNTAX_set0_admissionAuthority(ADMISSION_SYNTAX *as, GENERAL_NAME
     as->admissionAuthority = aa;
 }
 
-const STACK_OF(ADMISSIONS)* ADMISSION_SYNTAX_get0_contentsOfAdmissions(const ADMISSION_SYNTAX *as)
+const STACK_OF(ADMISSIONS) *ADMISSION_SYNTAX_get0_contentsOfAdmissions(const ADMISSION_SYNTAX *as)
 {
     return as->contentsOfAdmissions;
 }
@@ -225,7 +225,7 @@ void ADMISSION_SYNTAX_set0_contentsOfAdmissions(ADMISSION_SYNTAX *as, STACK_OF(A
     as->contentsOfAdmissions = a;
 }
 
-const GENERAL_NAME* ADMISSIONS_get0_admissionAuthority(const ADMISSIONS *a)
+const GENERAL_NAME *ADMISSIONS_get0_admissionAuthority(const ADMISSIONS *a)
 {
     return a->admissionAuthority;
 }
@@ -236,7 +236,7 @@ void ADMISSIONS_set0_admissionAuthority(ADMISSIONS *a, GENERAL_NAME *aa)
     a->admissionAuthority = aa;
 }
 
-const NAMING_AUTHORITY* ADMISSIONS_get0_namingAuthority(const ADMISSIONS *a)
+const NAMING_AUTHORITY *ADMISSIONS_get0_namingAuthority(const ADMISSIONS *a)
 {
     return a->namingAuthority;
 }
@@ -247,7 +247,7 @@ void ADMISSIONS_set0_namingAuthority(ADMISSIONS *a, NAMING_AUTHORITY *na)
     a->namingAuthority = na;
 }
 
-const PROFESSION_INFOS* ADMISSIONS_get0_professionInfos(const ADMISSIONS *a)
+const PROFESSION_INFOS *ADMISSIONS_get0_professionInfos(const ADMISSIONS *a)
 {
     return a->professionInfos;
 }
@@ -258,56 +258,61 @@ void ADMISSIONS_set0_professionInfos(ADMISSIONS *a, PROFESSION_INFOS *pi)
     a->professionInfos = pi;
 }
 
-const ASN1_OCTET_STRING* PROFESSION_INFO_get0_addProfessionInfo(const PROFESSION_INFO *pi)
+const ASN1_OCTET_STRING *PROFESSION_INFO_get0_addProfessionInfo(const PROFESSION_INFO *pi)
 {
     return pi->addProfessionInfo;
 }
 
-void PROFESSION_INFO_set0_addProfessionInfo(PROFESSION_INFO *pi, ASN1_OCTET_STRING *aos)
+void PROFESSION_INFO_set0_addProfessionInfo(PROFESSION_INFO *pi,
+                                            ASN1_OCTET_STRING *aos)
 {
     ASN1_OCTET_STRING_free(pi->addProfessionInfo);
     pi->addProfessionInfo = aos;
 }
 
-const NAMING_AUTHORITY* PROFESSION_INFO_get0_namingAuthority(const PROFESSION_INFO *pi)
+const NAMING_AUTHORITY *PROFESSION_INFO_get0_namingAuthority(const PROFESSION_INFO *pi)
 {
     return pi->namingAuthority;
 }
 
-void PROFESSION_INFO_set0_namingAuthority(PROFESSION_INFO *pi, NAMING_AUTHORITY *na)
+void PROFESSION_INFO_set0_namingAuthority(PROFESSION_INFO *pi,
+                                          NAMING_AUTHORITY *na)
 {
     NAMING_AUTHORITY_free(pi->namingAuthority);
     pi->namingAuthority = na;
 }
 
-const STACK_OF(ASN1_STRING)* PROFESSION_INFO_get0_professionItems(const PROFESSION_INFO *pi)
+const STACK_OF(ASN1_STRING) *PROFESSION_INFO_get0_professionItems(const PROFESSION_INFO *pi)
 {
     return pi->professionItems;
 }
 
-void PROFESSION_INFO_set0_professionItems(PROFESSION_INFO *pi, STACK_OF(ASN1_STRING) *as)
+void PROFESSION_INFO_set0_professionItems(PROFESSION_INFO *pi,
+                                          STACK_OF(ASN1_STRING) *as)
 {
     sk_ASN1_STRING_free(pi->professionItems);
     pi->professionItems = as;
 }
 
-const STACK_OF(ASN1_OBJECT)* PROFESSION_INFO_get0_professionOIDs(const PROFESSION_INFO *pi)
+const STACK_OF(ASN1_OBJECT) *PROFESSION_INFO_get0_professionOIDs(const PROFESSION_INFO *pi)
 {
     return pi->professionOIDs;
 }
 
-void PROFESSION_INFO_set0_professionOIDs(PROFESSION_INFO *pi, STACK_OF(ASN1_OBJECT) *po)
+void PROFESSION_INFO_set0_professionOIDs(PROFESSION_INFO *pi,
+                                         STACK_OF(ASN1_OBJECT) *po)
 {
     sk_ASN1_OBJECT_free(pi->professionOIDs);
     pi->professionOIDs = po;
 }
 
-const ASN1_PRINTABLESTRING* PROFESSION_INFO_get0_registrationNumber(const PROFESSION_INFO *pi)
+const ASN1_PRINTABLESTRING *PROFESSION_INFO_get0_registrationNumber(const PROFESSION_INFO *pi)
 {
     return pi->registrationNumber;
 }
 
-void PROFESSION_INFO_set0_registrationNumber(PROFESSION_INFO *pi, ASN1_PRINTABLESTRING *rn)
+void PROFESSION_INFO_set0_registrationNumber(PROFESSION_INFO *pi,
+                                             ASN1_PRINTABLESTRING *rn)
 {
     ASN1_PRINTABLESTRING_free(pi->registrationNumber);
     pi->registrationNumber = rn;
