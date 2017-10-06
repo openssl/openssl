@@ -41,6 +41,8 @@
 #  define AES_BLOCK_SIZE   16
 # endif
 # define AES_KEY_SIZE_128 16
+# define AES_KEY_SIZE_192 24
+# define AES_KEY_SIZE_256 32
 # define AES_IV_LEN       16
 
 # define MAX_INFLIGHTS 1
