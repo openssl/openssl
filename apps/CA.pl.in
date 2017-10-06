@@ -127,13 +127,9 @@ if ($WHAT eq '-newcert' ) {
     # create a pre-certificate
     $RET = run("$REQ -x509 -precert -keyout $NEWKEY -out $NEWCERT $DAYS");
     print "Pre-cert is in $NEWCERT, private key is in $NEWKEY\n" if $RET == 0;
-} elsif ($WHAT eq '-newreq' ) {
+} elsif ($WHAT =~ /\-newreq(\-nodes)?/ ) {
     # create a certificate request
-    $RET = run("$REQ -new -keyout $NEWKEY -out $NEWREQ $DAYS $EXTRA{req}");
-    print "Request is in $NEWREQ, private key is in $NEWKEY\n" if $RET == 0;
-} elsif ($WHAT eq '-newreq-nodes' ) {
-    # create a certificate request
-    $RET = run("$REQ -new -nodes -keyout $NEWKEY -out $NEWREQ $DAYS $EXTRA{req}");
+    $RET = run("$REQ -new $1 -keyout $NEWKEY -out $NEWREQ $DAYS $EXTRA{req}");
     print "Request is in $NEWREQ, private key is in $NEWKEY\n" if $RET == 0;
 } elsif ($WHAT eq '-newca' ) {
     # create the directory hierarchy
