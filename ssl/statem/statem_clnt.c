@@ -2037,29 +2037,29 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey, int *al)
 {
 #ifndef OPENSSL_NO_EC
     PACKET encoded_pt;
-    const unsigned char *ecparams;
+    unsigned int curve_type, curve_id;
 
     /*
      * Extract elliptic curve parameters and the server's ephemeral ECDH
-     * public key. For now we only support named (not generic) curves and
+     * public key. We only support named (not generic) curves and
      * ECParameters in this case is just three bytes.
      */
-    if (!PACKET_get_bytes(pkt, &ecparams, 3)) {
+    if (!PACKET_get_1(pkt, &curve_type) || !PACKET_get_net_2(pkt, &curve_id)) {
         *al = SSL_AD_DECODE_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_SKE_ECDHE, SSL_R_LENGTH_TOO_SHORT);
         return 0;
     }
     /*
-     * Check curve is one of our preferences, if not server has sent an
-     * invalid curve. ECParameters is 3 bytes.
+     * Check curve is named curve type and one of our preferences, if not
+     * server has sent an invalid curve.
      */
-    if (!tls1_check_curve(s, ecparams, 3)) {
+    if (curve_type != NAMED_CURVE_TYPE || !tls1_check_group_id(s, curve_id)) {
         *al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_TLS_PROCESS_SKE_ECDHE, SSL_R_WRONG_CURVE);
         return 0;
     }
 
-    if ((s->s3->peer_tmp = ssl_generate_param_group(ecparams[2])) == NULL) {
+    if ((s->s3->peer_tmp = ssl_generate_param_group(curve_id)) == NULL) {
         *al = SSL_AD_INTERNAL_ERROR;
         SSLerr(SSL_F_TLS_PROCESS_SKE_ECDHE,
                SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
