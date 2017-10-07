@@ -20,7 +20,8 @@ B<openssl speed>
 
 This command is used to test the performance of cryptographic algorithms.
 To see the list of supported algorithms, use the I<list --digest-commands>
-or I<list --cipher-commands> command.
+or I<list --cipher-commands> command. The global CSPRNG is denoted by
+the I<rand> algorithm name.
 
 =head1 OPTIONS
 
