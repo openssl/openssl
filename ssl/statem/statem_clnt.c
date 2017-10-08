@@ -1035,8 +1035,9 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
                 break;
             }
         }
-    } else
-        i = 1;
+    } else {
+        i = s->hello_retry_request == 0;
+    }
 
     if (i && ssl_fill_hello_random(s, 0, p, sizeof(s->s3->client_random),
                                    DOWNGRADE_NONE) <= 0)
