@@ -24,7 +24,7 @@ static int nbiof_gets(BIO *h, char *str, int size);
 static long nbiof_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int nbiof_new(BIO *h);
 static int nbiof_free(BIO *data);
-static long nbiof_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long nbiof_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 typedef struct nbio_test_st {
     /* only set if we sent a 'should retry' error */
     int lrn;
@@ -165,7 +165,7 @@ static long nbiof_ctrl(BIO *b, int cmd, long num, void *ptr)
     return (ret);
 }
 
-static long nbiof_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+static long nbiof_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     long ret = 1;
 
