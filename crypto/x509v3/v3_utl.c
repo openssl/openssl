@@ -38,6 +38,7 @@ int X509V3_add_value(const char *name, const char *value,
 {
     CONF_VALUE *vtmp = NULL;
     char *tname = NULL, *tvalue = NULL;
+    int sk_allocated = (*extlist == NULL);
 
     if (name && (tname = OPENSSL_strdup(name)) == NULL)
         goto err;
@@ -45,7 +46,7 @@ int X509V3_add_value(const char *name, const char *value,
         goto err;
     if ((vtmp = OPENSSL_malloc(sizeof(*vtmp))) == NULL)
         goto err;
-    if (*extlist == NULL && (*extlist = sk_CONF_VALUE_new_null()) == NULL)
+    if (sk_allocated && (*extlist = sk_CONF_VALUE_new_null()) == NULL)
         goto err;
     vtmp->section = NULL;
     vtmp->name = tname;
@@ -55,6 +56,8 @@ int X509V3_add_value(const char *name, const char *value,
     return 1;
  err:
     X509V3err(X509V3_F_X509V3_ADD_VALUE, ERR_R_MALLOC_FAILURE);
+    if (sk_allocated)
+        sk_CONF_VALUE_free(*extlist);
     OPENSSL_free(vtmp);
     OPENSSL_free(tname);
     OPENSSL_free(tvalue);
