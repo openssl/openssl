@@ -37,10 +37,10 @@ BIO_meth_set_callback_ctrl - Routines to build up BIO methods
  int (*BIO_meth_get_destroy(BIO_METHOD *biom)) (BIO *);
  int BIO_meth_set_destroy(BIO_METHOD *biom, int (*destroy) (BIO *));
  long (*BIO_meth_get_callback_ctrl(BIO_METHOD *biom))
-                                  (BIO *, int, bio_info_cb *);
+                                  (BIO *, int, BIO_info_cb *);
  int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
                                 long (*callback_ctrl) (BIO *, int,
-                                                      bio_info_cb *));
+                                                      BIO_info_cb *));
 
 =head1 DESCRIPTION
 
