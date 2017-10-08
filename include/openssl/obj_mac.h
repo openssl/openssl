@@ -4584,6 +4584,54 @@
 #define NID_seed_ofb128         778
 #define OBJ_seed_ofb128         OBJ_kisa,1L,6L
 
+#define SN_ISO_CN               "ISO-CN"
+#define LN_ISO_CN               "ISO CN Member Body"
+#define NID_ISO_CN              1140
+#define OBJ_ISO_CN              OBJ_member_body,156L
+
+#define SN_oscca                "oscca"
+#define NID_oscca               1141
+#define OBJ_oscca               OBJ_ISO_CN,10197L
+
+#define SN_sm_scheme            "sm-scheme"
+#define NID_sm_scheme           1142
+#define OBJ_sm_scheme           OBJ_oscca,1L
+
+#define SN_sm4_ecb              "SM4-ECB"
+#define LN_sm4_ecb              "sm4-ecb"
+#define NID_sm4_ecb             1133
+#define OBJ_sm4_ecb             OBJ_sm_scheme,104L,1L
+
+#define SN_sm4_cbc              "SM4-CBC"
+#define LN_sm4_cbc              "sm4-cbc"
+#define NID_sm4_cbc             1134
+#define OBJ_sm4_cbc             OBJ_sm_scheme,104L,2L
+
+#define SN_sm4_ofb128           "SM4-OFB"
+#define LN_sm4_ofb128           "sm4-ofb"
+#define NID_sm4_ofb128          1135
+#define OBJ_sm4_ofb128          OBJ_sm_scheme,104L,3L
+
+#define SN_sm4_cfb128           "SM4-CFB"
+#define LN_sm4_cfb128           "sm4-cfb"
+#define NID_sm4_cfb128          1137
+#define OBJ_sm4_cfb128          OBJ_sm_scheme,104L,4L
+
+#define SN_sm4_cfb1             "SM4-CFB1"
+#define LN_sm4_cfb1             "sm4-cfb1"
+#define NID_sm4_cfb1            1136
+#define OBJ_sm4_cfb1            OBJ_sm_scheme,104L,5L
+
+#define SN_sm4_cfb8             "SM4-CFB8"
+#define LN_sm4_cfb8             "sm4-cfb8"
+#define NID_sm4_cfb8            1138
+#define OBJ_sm4_cfb8            OBJ_sm_scheme,104L,6L
+
+#define SN_sm4_ctr              "SM4-CTR"
+#define LN_sm4_ctr              "sm4-ctr"
+#define NID_sm4_ctr             1139
+#define OBJ_sm4_ctr             OBJ_sm_scheme,104L,7L
+
 #define SN_hmac         "HMAC"
 #define LN_hmac         "hmac"
 #define NID_hmac                855
