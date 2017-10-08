@@ -20,7 +20,7 @@ static int b64_puts(BIO *h, const char *str);
 static long b64_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int b64_new(BIO *h);
 static int b64_free(BIO *data);
-static long b64_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long b64_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 #define B64_BLOCK_SIZE  1024
 #define B64_BLOCK_SIZE2 768
 #define B64_NONE        0
@@ -523,7 +523,7 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
     return ret;
 }
 
-static long b64_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+static long b64_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     long ret = 1;
     BIO *next = BIO_next(b);

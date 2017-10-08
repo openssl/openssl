@@ -118,7 +118,7 @@ static int AsyncFree(BIO *bio) {
   return 1;
 }
 
-static long AsyncCallbackCtrl(BIO *bio, int cmd, bio_info_cb fp) {
+static long AsyncCallbackCtrl(BIO *bio, int cmd, BIO_info_cb fp) {
   if (BIO_next(bio) == NULL) {
     return 0;
   }

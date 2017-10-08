@@ -5,18 +5,17 @@
 BIO_ctrl, BIO_callback_ctrl, BIO_ptr_ctrl, BIO_int_ctrl, BIO_reset,
 BIO_seek, BIO_tell, BIO_flush, BIO_eof, BIO_set_close, BIO_get_close,
 BIO_pending, BIO_wpending, BIO_ctrl_pending, BIO_ctrl_wpending,
-BIO_get_info_callback, BIO_set_info_callback, bio_info_cb
+BIO_get_info_callback, BIO_set_info_callback, BIO_info_cb
 - BIO control operations
 
 =head1 SYNOPSIS
 
  #include <openssl/bio.h>
 
- typedef void bio_info_cb(BIO *b, int oper, const char *ptr,
-                          int arg1, long arg2, long arg3);
+ typedef int BIO_info_cb(BIO *b, int state, int res);
 
  long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
- long BIO_callback_ctrl(BIO *b, int cmd, bio_info_cb *cb);
+ long BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *cb);
  char *BIO_ptr_ctrl(BIO *bp, int cmd, long larg);
  long BIO_int_ctrl(BIO *bp, int cmd, long larg, int iarg);
 
@@ -32,8 +31,8 @@ BIO_get_info_callback, BIO_set_info_callback, bio_info_cb
  size_t BIO_ctrl_pending(BIO *b);
  size_t BIO_ctrl_wpending(BIO *b);
 
- int BIO_get_info_callback(BIO *b, bio_info_cb **cbp);
- int BIO_set_info_callback(BIO *b, bio_info_cb *cb);
+ int BIO_get_info_callback(BIO *b, BIO_info_cb **cbp);
+ int BIO_set_info_callback(BIO *b, BIO_info_cb *cb);
 
 =head1 DESCRIPTION
 

@@ -62,6 +62,7 @@ X509_STORE_CTX_verify_cb                datatype
 X509_STORE_CTX_verify_fn                datatype
 X509_STORE_set_verify_cb_func           datatype
 bio_info_cb                             datatype
+BIO_info_cb                             datatype
 custom_ext_add_cb                       datatype
 custom_ext_free_cb                      datatype
 custom_ext_parse_cb                     datatype
