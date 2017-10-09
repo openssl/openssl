@@ -777,7 +777,7 @@
      locations, but have the package installed somewhere else so that
      it can easily be packaged, can use
 
-       $ make DESTDIR=/tmp/package-root install         # Unix
+       $ make INSTALL_PREFIX=/tmp/package-root install         # Unix
        $ mms/macro="DESTDIR=TMP:[PACKAGE-ROOT]" install ! OpenVMS
 
      The specified destination directory will be prepended to all
