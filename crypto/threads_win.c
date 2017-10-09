@@ -139,6 +139,12 @@ int CRYPTO_atomic_read(int *val, int *ret, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
+int CRYPTO_atomic_write(int *val, int n, CRYPTO_RWLOCK *lock)
+{
+    InterlockedExchange(val, n);
+    return 1;
+}
+
 int openssl_init_fork_handlers(void)
 {
     return 0;
