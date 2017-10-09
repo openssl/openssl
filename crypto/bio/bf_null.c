@@ -51,7 +51,7 @@ static int nullf_new(BIO *bi)
     bi->init = 1;
     bi->ptr = NULL;
     bi->flags = 0;
-    return (1);
+    return 1;
 }
 
 static int nullf_free(BIO *a)
@@ -63,7 +63,7 @@ static int nullf_free(BIO *a)
     a->init=0;
     a->flags=0;
     */
-    return (1);
+    return 1;
 }
 
 static int nullf_read(BIO *b, char *out, int outl)

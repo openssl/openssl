@@ -398,7 +398,7 @@ int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
             return (-1);
         ctx->num = 0;
         *outl = i;
-        return (1);
+        return 1;
     } else
-        return (1);
+        return 1;
 }

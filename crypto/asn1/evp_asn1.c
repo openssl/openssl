@@ -23,7 +23,7 @@ int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
         return 0;
     }
     ASN1_TYPE_set(a, V_ASN1_OCTET_STRING, os);
-    return (1);
+    return 1;
 }
 
 /* int max_len:  for returned value    */

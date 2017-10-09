@@ -404,7 +404,7 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
     a->d[0] = w;
     a->top = (w ? 1 : 0);
     bn_check_top(a);
-    return (1);
+    return 1;
 }
 
 BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
@@ -587,7 +587,7 @@ int BN_cmp(const BIGNUM *a, const BIGNUM *b)
         if (a != NULL)
             return (-1);
         else if (b != NULL)
-            return (1);
+            return 1;
         else
             return (0);
     }
@@ -599,7 +599,7 @@ int BN_cmp(const BIGNUM *a, const BIGNUM *b)
         if (a->neg)
             return (-1);
         else
-            return (1);
+            return 1;
     }
     if (a->neg == 0) {
         gt = 1;
@@ -643,7 +643,7 @@ int BN_set_bit(BIGNUM *a, int n)
 
     a->d[i] |= (((BN_ULONG)1) << j);
     bn_check_top(a);
-    return (1);
+    return 1;
 }
 
 int BN_clear_bit(BIGNUM *a, int n)
@@ -661,7 +661,7 @@ int BN_clear_bit(BIGNUM *a, int n)
 
     a->d[i] &= (~(((BN_ULONG)1) << j));
     bn_correct_top(a);
-    return (1);
+    return 1;
 }
 
 int BN_is_bit_set(const BIGNUM *a, int n)
@@ -697,7 +697,7 @@ int BN_mask_bits(BIGNUM *a, int n)
         a->d[w] &= ~(BN_MASK2 << b);
     }
     bn_correct_top(a);
-    return (1);
+    return 1;
 }
 
 void BN_set_negative(BIGNUM *a, int b)

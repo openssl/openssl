@@ -31,7 +31,7 @@ int SSL_CTX_SRP_CTX_free(struct ssl_ctx_st *ctx)
     BN_free(ctx->srp_ctx.v);
     memset(&ctx->srp_ctx, 0, sizeof(ctx->srp_ctx));
     ctx->srp_ctx.strength = SRP_MINIMAL_N;
-    return (1);
+    return 1;
 }
 
 int SSL_SRP_CTX_free(struct ssl_st *s)
@@ -50,7 +50,7 @@ int SSL_SRP_CTX_free(struct ssl_st *s)
     BN_free(s->srp_ctx.v);
     memset(&s->srp_ctx, 0, sizeof(s->srp_ctx));
     s->srp_ctx.strength = SRP_MINIMAL_N;
-    return (1);
+    return 1;
 }
 
 int SSL_SRP_CTX_init(struct ssl_st *s)
@@ -106,7 +106,7 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
     }
     s->srp_ctx.srp_Mask = ctx->srp_ctx.srp_Mask;
 
-    return (1);
+    return 1;
  err:
     OPENSSL_free(s->srp_ctx.login);
     OPENSSL_free(s->srp_ctx.info);
@@ -130,7 +130,7 @@ int SSL_CTX_SRP_CTX_init(struct ssl_ctx_st *ctx)
     memset(&ctx->srp_ctx, 0, sizeof(ctx->srp_ctx));
     ctx->srp_ctx.strength = SRP_MINIMAL_N;
 
-    return (1);
+    return 1;
 }
 
 /* server side */

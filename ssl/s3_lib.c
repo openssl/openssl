@@ -3986,7 +3986,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     default:
         return (0);
     }
-    return (1);
+    return 1;
 }
 
 long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
@@ -4038,7 +4038,7 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
     default:
         return (0);
     }
-    return (1);
+    return 1;
 }
 
 const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
@@ -4310,7 +4310,7 @@ int ssl3_shutdown(SSL *s)
      */
     if (s->quiet_shutdown || SSL_in_before(s)) {
         s->shutdown = (SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-        return (1);
+        return 1;
     }
 
     if (!(s->shutdown & SSL_SENT_SHUTDOWN)) {
@@ -4346,7 +4346,7 @@ int ssl3_shutdown(SSL *s)
 
     if ((s->shutdown == (SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN)) &&
         !s->s3->alert_dispatch)
-        return (1);
+        return 1;
     else
         return (0);
 }
@@ -4405,10 +4405,10 @@ int ssl3_peek(SSL *s, void *buf, size_t len, size_t *readbytes)
 int ssl3_renegotiate(SSL *s)
 {
     if (s->handshake_func == NULL)
-        return (1);
+        return 1;
 
     s->s3->renegotiate = 1;
-    return (1);
+    return 1;
 }
 
 /*
