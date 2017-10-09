@@ -60,12 +60,7 @@ Makefile
 /test/ossl_shim/ossl_shim
 
 # Certain files that get created by tests on the fly
-/test/*.ss
-/test/*.srl
-/test/.rnd
-/test/test*.pem
-/test/newkey.pem
-/test/*.log
+/test/test-runs
 /test/buildtest_*
 
 # Fuzz stuff.
