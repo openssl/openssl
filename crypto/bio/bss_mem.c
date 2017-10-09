@@ -165,7 +165,7 @@ static int mem_buf_free(BIO *a, int free_all)
             a->ptr = NULL;
         }
     }
-    return (1);
+    return 1;
 }
 
 /*

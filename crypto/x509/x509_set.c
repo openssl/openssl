@@ -26,7 +26,7 @@ int X509_set_version(X509 *x, long version)
     if (version == 0) {
         ASN1_INTEGER_free(x->cert_info.version);
         x->cert_info.version = NULL;
-        return (1);
+        return 1;
     }
     if (x->cert_info.version == NULL) {
         if ((x->cert_info.version = ASN1_INTEGER_new()) == NULL)

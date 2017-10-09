@@ -195,7 +195,7 @@ int X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit)
     if (ex == NULL)
         return (0);
     ex->critical = (crit) ? 0xFF : -1;
-    return (1);
+    return 1;
 }
 
 int X509_EXTENSION_set_data(X509_EXTENSION *ex, ASN1_OCTET_STRING *data)
@@ -207,7 +207,7 @@ int X509_EXTENSION_set_data(X509_EXTENSION *ex, ASN1_OCTET_STRING *data)
     i = ASN1_OCTET_STRING_set(&ex->value, data->data, data->length);
     if (!i)
         return (0);
-    return (1);
+    return 1;
 }
 
 ASN1_OBJECT *X509_EXTENSION_get_object(X509_EXTENSION *ex)

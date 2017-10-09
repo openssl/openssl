@@ -516,7 +516,7 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 
     if ((al == 0) || (bl == 0)) {
         BN_zero(r);
-        return (1);
+        return 1;
     }
     top = al + bl;
 

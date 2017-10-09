@@ -157,7 +157,7 @@ static int dgram_new(BIO *bi)
     if (data == NULL)
         return 0;
     bi->ptr = data;
-    return (1);
+    return 1;
 }
 
 static int dgram_free(BIO *a)
@@ -172,7 +172,7 @@ static int dgram_free(BIO *a)
     data = (bio_dgram_data *)a->ptr;
     OPENSSL_free(data);
 
-    return (1);
+    return 1;
 }
 
 static int dgram_clear(BIO *a)
@@ -186,7 +186,7 @@ static int dgram_clear(BIO *a)
         a->init = 0;
         a->flags = 0;
     }
-    return (1);
+    return 1;
 }
 
 static void dgram_adjust_rcv_timeout(BIO *b)
@@ -969,7 +969,7 @@ static int dgram_sctp_new(BIO *bi)
     bi->ptr = data;
 
     bi->flags = 0;
-    return (1);
+    return 1;
 }
 
 static int dgram_sctp_free(BIO *a)
@@ -985,7 +985,7 @@ static int dgram_sctp_free(BIO *a)
     if (data != NULL)
         OPENSSL_free(data);
 
-    return (1);
+    return 1;
 }
 
 #  ifdef SCTP_AUTHENTICATION_EVENT
@@ -1895,7 +1895,7 @@ int BIO_dgram_non_fatal_error(int err)
     case EALREADY:
 # endif
 
-        return (1);
+        return 1;
     default:
         break;
     }

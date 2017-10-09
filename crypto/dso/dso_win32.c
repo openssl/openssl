@@ -120,7 +120,7 @@ static int win32_load(DSO *dso)
     }
     /* Success */
     dso->loaded_filename = filename;
-    return (1);
+    return 1;
  err:
     /* Cleanup ! */
     OPENSSL_free(filename);
@@ -138,7 +138,7 @@ static int win32_unload(DSO *dso)
         return (0);
     }
     if (sk_void_num(dso->meth_data) < 1)
-        return (1);
+        return 1;
     p = sk_void_pop(dso->meth_data);
     if (p == NULL) {
         DSOerr(DSO_F_WIN32_UNLOAD, DSO_R_NULL_HANDLE);
@@ -154,7 +154,7 @@ static int win32_unload(DSO *dso)
     }
     /* Cleanup */
     OPENSSL_free(p);
-    return (1);
+    return 1;
 }
 
 static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname)

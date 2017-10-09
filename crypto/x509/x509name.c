@@ -232,7 +232,7 @@ int X509_NAME_add_entry(X509_NAME *name, const X509_NAME_ENTRY *ne, int loc,
         for (i = loc + 1; i < n; i++)
             sk_X509_NAME_ENTRY_value(sk, i - 1)->set += 1;
     }
-    return (1);
+    return 1;
  err:
     X509_NAME_ENTRY_free(new_name);
     return (0);
@@ -337,7 +337,7 @@ int X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
         else
             ne->value->type = type;
     }
-    return (1);
+    return 1;
 }
 
 ASN1_OBJECT *X509_NAME_ENTRY_get_object(const X509_NAME_ENTRY *ne)
