@@ -127,7 +127,13 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 
 int CRYPTO_atomic_read(int *val, int *ret, CRYPTO_RWLOCK *lock)
 {
-    *ret  = *val;
+    *ret = *val;
+    return 1;
+}
+
+int CRYPTO_atomic_write(int *val, int n, CRYPTO_RWLOCK *lock)
+{
+    *val = n;
     return 1;
 }
 

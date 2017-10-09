@@ -5,7 +5,7 @@
 CRYPTO_THREAD_run_once,
 CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock,
 CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free, CRYPTO_atomic_add,
-CRYPTO_atomic_read - OpenSSL thread support
+CRYPTO_atomic_read, CRYPTO_atomic_write - OpenSSL thread support
 
 =head1 SYNOPSIS
 
@@ -22,6 +22,7 @@ CRYPTO_atomic_read - OpenSSL thread support
 
  int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_read(int *val, int *ret, CRYPTO_RWLOCK *lock);
+ int CRYPTO_atomic_write(int *val, int n, CRYPTO_RWLOCK *lock);
 
 =head1 DESCRIPTION
 
@@ -81,6 +82,11 @@ be the only way that the variable is modified.
 CRYPTO_atomic_read() atomically reads B<val> and returns the result of
 the operation in B<ret>. B<lock> will be locked, unless atomic operations
 are supported on the specific platform.
+
+=item *
+
+CRYPTO_atomic_write() atomically writes B<n> to B<val>. B<lock> will be
+locked, unless atomic operations are supported on the specific platform.
 
 =back
 
