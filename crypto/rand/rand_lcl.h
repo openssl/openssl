@@ -41,7 +41,6 @@
 typedef enum drbg_status_e {
     DRBG_UNINITIALISED,
     DRBG_READY,
-    DRBG_RESEED,
     DRBG_ERROR
 } DRBG_STATUS;
 
