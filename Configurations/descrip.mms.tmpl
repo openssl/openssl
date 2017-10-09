@@ -277,8 +277,10 @@ test : tests
 {- dependmagic('tests'); -} : build_programs_nodep, build_engines_nodep
         @ ! {- output_off() if $disabled{tests}; "" -}
         SET DEFAULT [.test]{- move("test") -}
+        CREATE/DIR [.test-runs]
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
+        DEFINE RESULT_D {- builddir(qw(test test-runs)) -}
         DEFINE OPENSSL_ENGINES {- builddir("engines") -}
         DEFINE OPENSSL_DEBUG_MEMORY "on"
         IF "$(VERBOSE)" .NES. "" THEN DEFINE VERBOSE "$(VERBOSE)"
