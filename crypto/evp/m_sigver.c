@@ -19,8 +19,12 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey,
                           int ver)
 {
-    if (ctx->pctx == NULL)
-        ctx->pctx = EVP_PKEY_CTX_new(pkey, e);
+    if (ctx->pctx == NULL) {
+        if (pctx && *pctx)
+            ctx->pctx = *pctx;
+        else
+            ctx->pctx = EVP_PKEY_CTX_new(pkey, e);
+    }
     if (ctx->pctx == NULL)
         return 0;
 
