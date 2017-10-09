@@ -609,10 +609,11 @@ static int set_hex(const char *in, unsigned char *out, int size)
     i = size * 2;
     n = strlen(in);
     if (n > i) {
-        BIO_printf(bio_err, "hex string is too long\n");
+        BIO_printf(bio_err, "hex string is too long, ignoring excess\n");
         n = i; /* ignore exceeding part */
-    } else if (n < i)
-        BIO_printf(bio_err, "hex string is too short\n");
+    } else if (n < i) {
+        BIO_printf(bio_err, "hex string is too short, padding with zero bytes to length\n");
+    }
 
     memset(out, 0, size);
     for (i = 0; i < n; i++) {
