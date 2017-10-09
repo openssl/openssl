@@ -635,7 +635,7 @@ int cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain)
 int CMS_SignerInfo_sign(CMS_SignerInfo *si)
 {
     EVP_MD_CTX *mctx = si->mctx;
-    EVP_PKEY_CTX *pctx;
+    EVP_PKEY_CTX *pctx = NULL;
     unsigned char *abuf = NULL;
     int alen;
     size_t siglen;
