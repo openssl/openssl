@@ -822,7 +822,7 @@ static int init_server_name(SSL *s, unsigned int context)
 static int final_server_name(SSL *s, unsigned int context, int sent,
                                      int *al)
 {
-    int ret = SSL_TLSEXT_ERR_NOACK;
+    int ret = SSL_TLSEXT_ERR_OK;
     int altmp = SSL_AD_UNRECOGNIZED_NAME;
     int was_ticket = (SSL_get_options(s) & SSL_OP_NO_TICKET) == 0;
 
