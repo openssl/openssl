@@ -356,6 +356,8 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
                        int prediction_resistance,
                        const unsigned char *adin, size_t adinlen)
 {
+    int reseed_required = 0;
+
     if (drbg->state != DRBG_READY) {
         /* try to recover from previous errors */
         rand_drbg_restart(drbg, NULL, 0, 0);
@@ -381,13 +383,13 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
 
     if (drbg->fork_count != rand_fork_count) {
         drbg->fork_count = rand_fork_count;
-        drbg->state = DRBG_RESEED;
+        reseed_required = 1;
     }
 
     if (drbg->reseed_counter >= drbg->reseed_interval)
-        drbg->state = DRBG_RESEED;
+        reseed_required = 1;
 
-    if (drbg->state == DRBG_RESEED || prediction_resistance) {
+    if (reseed_required || prediction_resistance) {
         if (!RAND_DRBG_reseed(drbg, adin, adinlen)) {
             RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_RESEED_ERROR);
             return 0;
@@ -402,10 +404,8 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
         return 0;
     }
 
-    if (drbg->reseed_counter >= drbg->reseed_interval)
-        drbg->state = DRBG_RESEED;
-    else
-        drbg->reseed_counter++;
+    drbg->reseed_counter++;
+
     return 1;
 }
 
