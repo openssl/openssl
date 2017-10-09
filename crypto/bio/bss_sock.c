@@ -152,7 +152,7 @@ static int sock_write(BIO *b, const char *in, int inl)
 
     clear_socket_error();
     if (BIO_should_offload_tx_ctrl_msg_flag(b)) {
-        unsigned char record_type = (unsigned char)b->ptr;
+        unsigned char record_type = (uintptr_t)b->ptr;
 
 #ifdef SSL_DEBUG
         printf("\nsending ctrl msg\n");
