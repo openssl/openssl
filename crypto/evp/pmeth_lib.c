@@ -106,7 +106,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     }
 #ifndef OPENSSL_NO_ENGINE
     if (e == NULL && pkey != NULL)
-        e = pkey->engine;
+        e = pkey->pmeth_engine != NULL ? pkey->pmeth_engine : pkey->engine;
     /* Try to find an ENGINE which implements this method */
     if (e) {
         if (!ENGINE_init(e)) {

@@ -188,9 +188,11 @@ static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
         if ((type == pkey->save_type) && pkey->ameth)
             return 1;
 #ifndef OPENSSL_NO_ENGINE
-        /* If we have an ENGINE release it */
+        /* If we have ENGINEs release them */
         ENGINE_finish(pkey->engine);
         pkey->engine = NULL;
+        ENGINE_finish(pkey->pmeth_engine);
+        pkey->pmeth_engine = NULL;
 #endif
     }
     if (str)
@@ -224,7 +226,25 @@ int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
 {
     return pkey_set_type(pkey, EVP_PKEY_NONE, str, len);
 }
-
+#ifndef OPENSSL_NO_ENGINE
+int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e)
+{
+    if (e != NULL) {
+        if (!ENGINE_init(e)) {
+            EVPerr(EVP_F_EVP_PKEY_SET1_ENGINE, ERR_R_ENGINE_LIB);
+            return 0;
+        }
+        if (ENGINE_get_pkey_meth(e, pkey->type) == NULL) {
+            ENGINE_finish(e);
+            EVPerr(EVP_F_EVP_PKEY_SET1_ENGINE, EVP_R_UNSUPPORTED_ALGORITHM);
+            return 0;
+        }
+    }
+    ENGINE_finish(pkey->pmeth_engine);
+    pkey->pmeth_engine = e;
+    return 1;
+}
+#endif
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 {
     if (pkey == NULL || !EVP_PKEY_set_type(pkey, type))
@@ -443,6 +463,8 @@ static void EVP_PKEY_free_it(EVP_PKEY *x)
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(x->engine);
     x->engine = NULL;
+    ENGINE_finish(x->pmeth_engine);
+    x->pmeth_engine = NULL;
 #endif
 }
 
