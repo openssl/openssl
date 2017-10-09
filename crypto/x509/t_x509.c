@@ -266,7 +266,7 @@ int X509_ocspid_print(BIO *bp, X509 *x)
     }
     BIO_printf(bp, "\n");
 
-    return (1);
+    return 1;
  err:
     OPENSSL_free(der);
     return (0);

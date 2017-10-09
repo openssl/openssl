@@ -184,7 +184,7 @@ int TXT_DB_create_index(TXT_DB *db, int field, int (*qual) (OPENSSL_STRING *),
     lh_OPENSSL_STRING_free(db->index[field]);
     db->index[field] = idx;
     db->qual[field] = qual;
-    return (1);
+    return 1;
 }
 
 long TXT_DB_write(BIO *out, TXT_DB *db)
@@ -264,7 +264,7 @@ int TXT_DB_insert(TXT_DB *db, OPENSSL_STRING *row)
     }
     if (!sk_OPENSSL_PSTRING_push(db->data, row))
         goto err1;
-    return (1);
+    return 1;
 
  err1:
     db->error = DB_ERROR_MALLOC;

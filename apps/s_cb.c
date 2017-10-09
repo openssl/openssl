@@ -137,7 +137,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
             return (0);
         }
     }
-    return (1);
+    return 1;
 }
 
 int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,

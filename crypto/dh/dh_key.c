@@ -217,11 +217,11 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 static int dh_init(DH *dh)
 {
     dh->flags |= DH_FLAG_CACHE_MONT_P;
-    return (1);
+    return 1;
 }
 
 static int dh_finish(DH *dh)
 {
     BN_MONT_CTX_free(dh->method_mont_p);
-    return (1);
+    return 1;
 }

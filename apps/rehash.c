@@ -518,7 +518,7 @@ const OPTIONS rehash_options[] = {
 int rehash_main(int argc, char **argv)
 {
     BIO_printf(bio_err, "Not available; use c_rehash script\n");
-    return (1);
+    return 1;
 }
 
 #endif /* defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) */

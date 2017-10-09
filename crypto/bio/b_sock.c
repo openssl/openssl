@@ -153,7 +153,7 @@ int BIO_sock_init(void)
         return (-1);
 # endif
 
-    return (1);
+    return 1;
 }
 
 void bio_sock_cleanup_int(void)

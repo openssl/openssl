@@ -186,7 +186,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
             goto err;
     }
 
-    return (1);
+    return 1;
  err:
     X509err(X509_F_X509_REQ_PRINT_EX, ERR_R_BUF_LIB);
     return (0);

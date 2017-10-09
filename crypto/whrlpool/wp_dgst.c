@@ -67,7 +67,7 @@
 int WHIRLPOOL_Init(WHIRLPOOL_CTX *c)
 {
     memset(c, 0, sizeof(*c));
-    return (1);
+    return 1;
 }
 
 int WHIRLPOOL_Update(WHIRLPOOL_CTX *c, const void *_inp, size_t bytes)
@@ -88,7 +88,7 @@ int WHIRLPOOL_Update(WHIRLPOOL_CTX *c, const void *_inp, size_t bytes)
     if (bytes)
         WHIRLPOOL_BitUpdate(c, inp, bytes * 8);
 
-    return (1);
+    return 1;
 }
 
 void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c, const void *_inp, size_t bits)
@@ -247,7 +247,7 @@ int WHIRLPOOL_Final(unsigned char *md, WHIRLPOOL_CTX *c)
     if (md) {
         memcpy(md, c->H.c, WHIRLPOOL_DIGEST_LENGTH);
         OPENSSL_cleanse(c, sizeof(*c));
-        return (1);
+        return 1;
     }
     return (0);
 }

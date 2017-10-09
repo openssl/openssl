@@ -85,7 +85,7 @@ static int acpt_new(BIO *bi)
     bi->ptr = (char *)ba;
     ba->state = ACPT_S_BEFORE;
     bi->shutdown = 1;
-    return (1);
+    return 1;
 }
 
 static BIO_ACCEPT *BIO_ACCEPT_new(void)
@@ -143,7 +143,7 @@ static int acpt_free(BIO *a)
         a->flags = 0;
         a->init = 0;
     }
-    return (1);
+    return 1;
 }
 
 static int acpt_state(BIO *b, BIO_ACCEPT *c)

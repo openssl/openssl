@@ -254,7 +254,7 @@ static int conn_new(BIO *bi)
     if ((bi->ptr = (char *)BIO_CONNECT_new()) == NULL)
         return (0);
     else
-        return (1);
+        return 1;
 }
 
 static void conn_close_socket(BIO *bio)
@@ -286,7 +286,7 @@ static int conn_free(BIO *a)
         a->flags = 0;
         a->init = 0;
     }
-    return (1);
+    return 1;
 }
 
 static int conn_read(BIO *b, char *out, int outl)

@@ -73,7 +73,7 @@ static int linebuffer_new(BIO *bi)
     bi->init = 1;
     bi->ptr = (char *)ctx;
     bi->flags = 0;
-    return (1);
+    return 1;
 }
 
 static int linebuffer_free(BIO *a)
@@ -88,7 +88,7 @@ static int linebuffer_free(BIO *a)
     a->ptr = NULL;
     a->init = 0;
     a->flags = 0;
-    return (1);
+    return 1;
 }
 
 static int linebuffer_read(BIO *b, char *out, int outl)

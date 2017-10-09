@@ -110,7 +110,7 @@ static int slg_new(BIO *bi)
     bi->num = 0;
     bi->ptr = NULL;
     xopenlog(bi, "application", LOG_DAEMON);
-    return (1);
+    return 1;
 }
 
 static int slg_free(BIO *a)
@@ -118,7 +118,7 @@ static int slg_free(BIO *a)
     if (a == NULL)
         return (0);
     xcloselog(a);
-    return (1);
+    return 1;
 }
 
 static int slg_write(BIO *b, const char *in, int inl)
