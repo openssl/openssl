@@ -263,11 +263,13 @@ test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_engines_nodep link-utils
 	@ : {- output_off() if $disabled{tests}; "" -}
 	( cd test; \
+	  mkdir -p test-runs; \
 	  SRCTOP=../$(SRCDIR) \
 	  BLDTOP=../$(BLDDIR) \
+	  RESULT_D=test-runs \
 	  PERL="$(PERL)" \
 	  EXE_EXT={- $exeext -} \
-	  OPENSSL_ENGINES=../$(BLDDIR)/engines \
+	  OPENSSL_ENGINES=`cd ../$(BLDDIR)/engines; pwd` \
 	  OPENSSL_DEBUG_MEMORY=on \
 	    $(PERL) ../$(SRCDIR)/test/run_tests.pl $(TESTS) )
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}

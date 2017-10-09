@@ -214,8 +214,10 @@ build_all_generated: $(GENERATED_MANDATORY) $(GENERATED)
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_engines_nodep
 	@rem {- output_off() if $disabled{tests}; "" -}
+	-mkdir $(BLDDIR)\test\test-runs
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
+	set RESULT_D=$(BLDDIR)\test\test-runs
 	set PERL=$(PERL)
 	set OPENSSL_DEBUG_MEMORY=on
 	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
