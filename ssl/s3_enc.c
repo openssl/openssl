@@ -210,7 +210,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 
     OPENSSL_cleanse(exp_key, sizeof(exp_key));
     OPENSSL_cleanse(exp_iv, sizeof(exp_iv));
-    return (1);
+    return 1;
  err:
     SSLerr(SSL_F_SSL3_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
  err2:
@@ -229,7 +229,7 @@ int ssl3_setup_key_block(SSL *s)
     SSL_COMP *comp;
 
     if (s->s3->tmp.key_block_length != 0)
-        return (1);
+        return 1;
 
     if (!ssl_cipher_get_evp(s->session, &c, &hash, NULL, NULL, &comp, 0)) {
         SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);

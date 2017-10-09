@@ -207,7 +207,7 @@ static int vms_load(DSO *dso)
 
     /* Success (for now, we lie.  We actually do not know...) */
     dso->loaded_filename = filename;
-    return (1);
+    return 1;
  err:
     /* Cleanup! */
     OPENSSL_free(p);
@@ -228,7 +228,7 @@ static int vms_unload(DSO *dso)
         return (0);
     }
     if (sk_void_num(dso->meth_data) < 1)
-        return (1);
+        return 1;
     p = (DSO_VMS_INTERNAL *)sk_void_pop(dso->meth_data);
     if (p == NULL) {
         DSOerr(DSO_F_VMS_UNLOAD, DSO_R_NULL_HANDLE);
@@ -236,7 +236,7 @@ static int vms_unload(DSO *dso)
     }
     /* Cleanup */
     OPENSSL_free(p);
-    return (1);
+    return 1;
 }
 
 /*

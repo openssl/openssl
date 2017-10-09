@@ -501,7 +501,7 @@ int BIO_ssl_copy_session_id(BIO *t, BIO *f)
         return (0);
     if (!SSL_copy_session_id(tdata->ssl, (fdata->ssl)))
         return 0;
-    return (1);
+    return 1;
 }
 
 void BIO_ssl_shutdown(BIO *b)

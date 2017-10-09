@@ -758,7 +758,7 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
 
     wr->input = wr->data;
 #endif
-    return (1);
+    return 1;
 }
 
 /*-
@@ -844,7 +844,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending)
         if ((bs != 1) && !sending)
             return ssl3_cbc_remove_padding(rec, bs, mac_size);
     }
-    return (1);
+    return 1;
 }
 
 #define MAX_PADDING 256
@@ -1703,7 +1703,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     /* Mark receipt of record. */
     dtls1_record_bitmap_update(s, bitmap);
 
-    return (1);
+    return 1;
 
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -1894,6 +1894,6 @@ int dtls1_get_record(SSL *s)
         goto again;             /* get another record */
     }
 
-    return (1);
+    return 1;
 
 }

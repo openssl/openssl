@@ -2760,7 +2760,7 @@ static int init_ssl_connection(SSL *con)
         if ((dtlslisten && i == 0)
                 || (!dtlslisten && retry)) {
             BIO_printf(bio_s_out, "DELAY\n");
-            return (1);
+            return 1;
         }
 
         BIO_printf(bio_err, "ERROR\n");

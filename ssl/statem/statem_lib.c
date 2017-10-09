@@ -47,7 +47,7 @@ int ssl3_do_write(SSL *s, int type)
             s->msg_callback(1, s->version, type, s->init_buf->data,
                             (size_t)(s->init_off + s->init_num), s,
                             s->msg_callback_arg);
-        return (1);
+        return 1;
     }
     s->init_off += written;
     s->init_num -= written;

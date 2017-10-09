@@ -109,13 +109,13 @@ int chopup_args(ARGS *arg, char *buf)
         }
     }
     arg->argv[arg->argc] = NULL;
-    return (1);
+    return 1;
 }
 
 #ifndef APP_INIT
 int app_init(long mesgwin)
 {
-    return (1);
+    return 1;
 }
 #endif
 

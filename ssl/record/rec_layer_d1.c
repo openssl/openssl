@@ -131,7 +131,7 @@ static int dtls1_copy_record(SSL *s, pitem *item)
     /* Set proper sequence number for mac calculation */
     memcpy(&(s->rlayer.read_sequence[2]), &(rdata->packet[5]), 6);
 
-    return (1);
+    return 1;
 }
 
 int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
@@ -191,7 +191,7 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
         return (-1);
     }
 
-    return (1);
+    return 1;
 }
 
 int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue)
@@ -205,7 +205,7 @@ int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue)
         OPENSSL_free(item->data);
         pitem_free(item);
 
-        return (1);
+        return 1;
     }
 
     return (0);

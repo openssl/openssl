@@ -604,7 +604,7 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
         SSLerr(SSL_F_SSL_CTX_SET_SSL_VERSION, SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
         return (0);
     }
-    return (1);
+    return 1;
 }
 
 SSL *SSL_new(SSL_CTX *ctx)
@@ -2739,9 +2739,9 @@ static unsigned long ssl_session_hash(const SSL_SESSION *a)
 static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
 {
     if (a->ssl_version != b->ssl_version)
-        return (1);
+        return 1;
     if (a->session_id_length != b->session_id_length)
-        return (1);
+        return 1;
     return (memcmp(a->session_id, b->session_id, a->session_id_length));
 }
 

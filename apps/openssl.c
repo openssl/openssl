@@ -571,7 +571,7 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
 
     BIO_printf(bio_err, "Invalid command '%s'; type \"help\" for a list.\n",
                argv[0]);
-    return (1);
+    return 1;
 }
 
 static void list_pkey(void)

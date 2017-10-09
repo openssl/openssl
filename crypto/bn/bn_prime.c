@@ -350,7 +350,7 @@ static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods)
     if (BN_num_bits(rnd) != bits)
         goto again;
     bn_check_top(rnd);
-    return (1);
+    return 1;
 }
 
 int bn_probable_prime_dh(BIGNUM *rnd, int bits,

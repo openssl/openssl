@@ -40,7 +40,7 @@ int BN_lshift1(BIGNUM *r, const BIGNUM *a)
         r->top++;
     }
     bn_check_top(r);
-    return (1);
+    return 1;
 }
 
 int BN_rshift1(BIGNUM *r, const BIGNUM *a)
@@ -53,7 +53,7 @@ int BN_rshift1(BIGNUM *r, const BIGNUM *a)
 
     if (BN_is_zero(a)) {
         BN_zero(r);
-        return (1);
+        return 1;
     }
     i = a->top;
     ap = a->d;
@@ -77,7 +77,7 @@ int BN_rshift1(BIGNUM *r, const BIGNUM *a)
     if (!r->top)
         r->neg = 0; /* don't allow negative zero */
     bn_check_top(r);
-    return (1);
+    return 1;
 }
 
 int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
@@ -116,7 +116,7 @@ int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
     r->top = a->top + nw + 1;
     bn_correct_top(r);
     bn_check_top(r);
-    return (1);
+    return 1;
 }
 
 int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
@@ -138,7 +138,7 @@ int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
     lb = BN_BITS2 - rb;
     if (nw >= a->top || a->top == 0) {
         BN_zero(r);
-        return (1);
+        return 1;
     }
     i = (BN_num_bits(a) - n + (BN_BITS2 - 1)) / BN_BITS2;
     if (r != a) {
@@ -171,5 +171,5 @@ int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
     if (!r->top)
         r->neg = 0; /* don't allow negative zero */
     bn_check_top(r);
-    return (1);
+    return 1;
 }

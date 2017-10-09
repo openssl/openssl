@@ -1105,7 +1105,7 @@ int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si,
             == NULL)
             return (0);
     }
-    return (1);
+    return 1;
 }
 
 int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,
@@ -1124,7 +1124,7 @@ int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,
             == NULL)
             return (0);
     }
-    return (1);
+    return 1;
 }
 
 int PKCS7_add_signed_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
@@ -1174,5 +1174,5 @@ static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
         goto new_attrib;
     }
  end:
-    return (1);
+    return 1;
 }
