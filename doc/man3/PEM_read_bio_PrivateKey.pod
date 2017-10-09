@@ -30,7 +30,7 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
 
  #include <openssl/pem.h>
 
- typedef int (*pem_password_cb)(char *buf, int size, int rwflag, void *u);
+ typedef int pem_password_cb(char *buf, int size, int rwflag, void *u);
 
  EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x,
                                    pem_password_cb *cb, void *u);

@@ -12,11 +12,11 @@ BIO_get_info_callback, BIO_set_info_callback, bio_info_cb
 
  #include <openssl/bio.h>
 
- typedef void (*bio_info_cb)(BIO *b, int oper, const char *ptr,
-                             int arg1, long arg2, long arg3);
+ typedef void bio_info_cb(BIO *b, int oper, const char *ptr,
+                          int arg1, long arg2, long arg3);
 
  long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
- long BIO_callback_ctrl(BIO *b, int cmd, bio_info_cb cb);
+ long BIO_callback_ctrl(BIO *b, int cmd, bio_info_cb *cb);
  char *BIO_ptr_ctrl(BIO *bp, int cmd, long larg);
  long BIO_int_ctrl(BIO *bp, int cmd, long larg, int iarg);
 
