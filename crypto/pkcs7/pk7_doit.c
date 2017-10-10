@@ -813,7 +813,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 {
     EVP_MD_CTX *mctx;
-    EVP_PKEY_CTX *pctx;
+    EVP_PKEY_CTX *pctx = NULL;
     unsigned char *abuf = NULL;
     int alen;
     size_t siglen;
