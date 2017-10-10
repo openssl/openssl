@@ -135,7 +135,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 
 int CRYPTO_atomic_read(int *val, int *ret, CRYPTO_RWLOCK *lock)
 {
-    InterlockedCompareExchange(val, 0, 0);
+    *ret = InterlockedCompareExchange(val, 0, 0);
     return 1;
 }
 
