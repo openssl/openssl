@@ -1987,7 +1987,7 @@ static int alpn_select_cb(SSL *ssl, const unsigned char **out,
             return SSL_TLSEXT_ERR_NOACK;
 
         if (protlen == strlen(servalpn)
-                && memcmp(prot, "goodalpn", protlen) == 0) {
+                && memcmp(prot, servalpn, protlen) == 0) {
             *out = prot;
             *outlen = protlen;
             return SSL_TLSEXT_ERR_OK;
