@@ -477,7 +477,7 @@ int enc_main(int argc, char **argv)
             goto end;
         }
         if (hkey != NULL) {
-            if( !set_hex(hkey, key, EVP_CIPHER_key_length(cipher))) {
+            if (!set_hex(hkey, key, EVP_CIPHER_key_length(cipher))) {
                 BIO_printf(bio_err, "invalid hex key value\n");
                 goto end;
             } else { /* wiping secret data as we no longer need it */
