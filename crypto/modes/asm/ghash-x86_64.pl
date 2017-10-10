@@ -44,9 +44,8 @@
 # See ghash-x86.pl for background information and details about coding
 # techniques.
 #
-# Special thanks to David Woodhouse <dwmw2@infradead.org> for
-# providing access to a Westmere-based system on behalf of Intel
-# Open Source Technology Centre.
+# Special thanks to David Woodhouse for providing access to a
+# Westmere-based system on behalf of Intel Open Source Technology Centre.
 
 # December 2012
 #

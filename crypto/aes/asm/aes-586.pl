@@ -8,7 +8,7 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
@@ -39,7 +39,7 @@
 # for scaling too, I [try to] avoid the latter by favoring off-by-2
 # shifts and masking the result with 0xFF<<2 instead of "boring" 0xFF.
 #
-# As was shown by Dean Gaudet <dean@arctic.org>, the above note turned
+# As was shown by Dean Gaudet, the above note turned out to be
 # void. Performance improvement with off-by-2 shifts was observed on
 # intermediate implementation, which was spilling yet another register
 # to stack... Final offset*4 code below runs just a tad faster on P4,

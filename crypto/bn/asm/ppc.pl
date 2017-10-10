@@ -101,10 +101,7 @@
 #dsa 2048 bits   0.0061s   0.0075s    163.5    132.8
 #
 #        Performance increase of ~60%
-#
-#	If you have comments or suggestions to improve code send
-#	me a note at schari@us.ibm.com
-#
+#        Based on submission from Suresh N. Chari of IBM
 
 $flavour = shift;
 

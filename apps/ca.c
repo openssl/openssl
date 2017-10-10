@@ -6,9 +6,6 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-
-/* The PPKI stuff has been donated by Jeff Barber <jeffb@issl.atl.hp.com> */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

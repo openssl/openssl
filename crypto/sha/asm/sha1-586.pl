@@ -38,7 +38,6 @@
 # improvement on P4 outweights the loss and incorporate this
 # re-tuned code to 0.9.7 and later.
 # ----------------------------------------------------------------
-#					<appro@fy.chalmers.se>
 
 # August 2009.
 #

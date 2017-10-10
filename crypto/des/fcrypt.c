@@ -23,7 +23,7 @@
 
 /*
  * Added more values to handle illegal salt values the way normal crypt()
- * implementations do.  The patch was sent by Bjorn Gronvall <bg@sics.se>
+ * implementations do.
  */
 static unsigned const char con_salt[128] = {
     0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7, 0xD8, 0xD9,

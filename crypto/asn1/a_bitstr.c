@@ -141,7 +141,7 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
 }
 
 /*
- * These next 2 functions from Goetz Babin-Ebell <babinebell@trustcenter.de>
+ * These next 2 functions from Goetz Babin-Ebell.
  */
 int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 {
