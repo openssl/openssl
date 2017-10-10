@@ -82,6 +82,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_NEW                               106
 # define EVP_F_EVP_PKEY_PARAMGEN                          148
 # define EVP_F_EVP_PKEY_PARAMGEN_INIT                     149
+# define EVP_F_EVP_PKEY_SET1_ENGINE                       187
 # define EVP_F_EVP_PKEY_SIGN                              140
 # define EVP_F_EVP_PKEY_SIGN_INIT                         141
 # define EVP_F_EVP_PKEY_VERIFY                            142
