@@ -266,7 +266,7 @@ static int ok_write(BIO *b, const char *in, int inl)
     ret = inl;
 
     if ((ctx == NULL) || (next == NULL) || (BIO_get_init(b) == 0))
-        return (0);
+        return 0;
 
     if (ctx->sigio && !sig_out(b))
         return 0;
@@ -294,7 +294,7 @@ static int ok_write(BIO *b, const char *in, int inl)
         }
 
         if ((in == NULL) || (inl <= 0))
-            return (0);
+            return 0;
 
         n = (inl + ctx->buf_len > OK_BLOCK_SIZE + OK_BLOCK_BLOCK) ?
             (int)(OK_BLOCK_SIZE + OK_BLOCK_BLOCK - ctx->buf_len) : inl;

@@ -113,7 +113,7 @@ static BIGNUM *euclid(BIGNUM *a, BIGNUM *b)
     bn_check_top(a);
     return (a);
  err:
-    return (NULL);
+    return NULL;
 }
 
 /* solves ax == 1 (mod n) */

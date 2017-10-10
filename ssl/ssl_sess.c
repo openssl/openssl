@@ -844,7 +844,7 @@ int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
 long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
 {
     if (s == NULL)
-        return (0);
+        return 0;
     s->timeout = t;
     return 1;
 }
@@ -852,21 +852,21 @@ long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
 long SSL_SESSION_get_timeout(const SSL_SESSION *s)
 {
     if (s == NULL)
-        return (0);
+        return 0;
     return (s->timeout);
 }
 
 long SSL_SESSION_get_time(const SSL_SESSION *s)
 {
     if (s == NULL)
-        return (0);
+        return 0;
     return (s->time);
 }
 
 long SSL_SESSION_set_time(SSL_SESSION *s, long t)
 {
     if (s == NULL)
-        return (0);
+        return 0;
     s->time = t;
     return (t);
 }
@@ -1001,7 +1001,7 @@ long SSL_CTX_set_timeout(SSL_CTX *s, long t)
 {
     long l;
     if (s == NULL)
-        return (0);
+        return 0;
     l = s->session_timeout;
     s->session_timeout = t;
     return (l);
@@ -1010,7 +1010,7 @@ long SSL_CTX_set_timeout(SSL_CTX *s, long t)
 long SSL_CTX_get_timeout(const SSL_CTX *s)
 {
     if (s == NULL)
-        return (0);
+        return 0;
     return (s->session_timeout);
 }
 
@@ -1019,7 +1019,7 @@ int SSL_set_session_secret_cb(SSL *s,
                               void *arg)
 {
     if (s == NULL)
-        return (0);
+        return 0;
     s->ext.session_secret_cb = tls_session_secret_cb;
     s->ext.session_secret_cb_arg = arg;
     return 1;
@@ -1029,7 +1029,7 @@ int SSL_set_session_ticket_ext_cb(SSL *s, tls_session_ticket_ext_cb_fn cb,
                                   void *arg)
 {
     if (s == NULL)
-        return (0);
+        return 0;
     s->ext.session_ticket_cb = cb;
     s->ext.session_ticket_cb_arg = arg;
     return 1;
@@ -1112,7 +1112,7 @@ int ssl_clear_bad_session(SSL *s)
         SSL_CTX_remove_session(s->session_ctx, s->session);
         return 1;
     } else
-        return (0);
+        return 0;
 }
 
 /* locked by SSL_CTX in the calling function */

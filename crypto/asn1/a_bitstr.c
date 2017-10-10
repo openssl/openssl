@@ -96,7 +96,7 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
 
     if ((a == NULL) || ((*a) == NULL)) {
         if ((ret = ASN1_BIT_STRING_new()) == NULL)
-            return (NULL);
+            return NULL;
     } else
         ret = (*a);
 
@@ -137,7 +137,7 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
     ASN1err(ASN1_F_C2I_ASN1_BIT_STRING, i);
     if ((a == NULL) || (*a != ret))
         ASN1_BIT_STRING_free(ret);
-    return (NULL);
+    return NULL;
 }
 
 /*

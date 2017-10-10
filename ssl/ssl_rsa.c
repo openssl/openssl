@@ -29,7 +29,7 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
     int rv;
     if (x == NULL) {
         SSLerr(SSL_F_SSL_USE_CERTIFICATE, ERR_R_PASSED_NULL_PARAMETER);
-        return (0);
+        return 0;
     }
     rv = ssl_security_cert(ssl, NULL, x, 0, 1);
     if (rv != 1) {
@@ -89,7 +89,7 @@ int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
     x = d2i_X509(NULL, &d, (long)len);
     if (x == NULL) {
         SSLerr(SSL_F_SSL_USE_CERTIFICATE_ASN1, ERR_R_ASN1_LIB);
-        return (0);
+        return 0;
     }
 
     ret = SSL_use_certificate(ssl, x);
@@ -105,11 +105,11 @@ int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 
     if (rsa == NULL) {
         SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY, ERR_R_PASSED_NULL_PARAMETER);
-        return (0);
+        return 0;
     }
     if ((pkey = EVP_PKEY_new()) == NULL) {
         SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY, ERR_R_EVP_LIB);
-        return (0);
+        return 0;
     }
 
     RSA_up_ref(rsa);
@@ -131,7 +131,7 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 
     if (ssl_cert_lookup_by_pkey(pkey, &i) == NULL) {
         SSLerr(SSL_F_SSL_SET_PKEY, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-        return (0);
+        return 0;
     }
 
     if (c->pkeys[i].x509 != NULL) {
@@ -220,7 +220,7 @@ int SSL_use_RSAPrivateKey_ASN1(SSL *ssl, const unsigned char *d, long len)
     p = d;
     if ((rsa = d2i_RSAPrivateKey(NULL, &p, (long)len)) == NULL) {
         SSLerr(SSL_F_SSL_USE_RSAPRIVATEKEY_ASN1, ERR_R_ASN1_LIB);
-        return (0);
+        return 0;
     }
 
     ret = SSL_use_RSAPrivateKey(ssl, rsa);
@@ -235,7 +235,7 @@ int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey)
 
     if (pkey == NULL) {
         SSLerr(SSL_F_SSL_USE_PRIVATEKEY, ERR_R_PASSED_NULL_PARAMETER);
-        return (0);
+        return 0;
     }
     ret = ssl_set_pkey(ssl->cert, pkey);
     return (ret);
@@ -290,7 +290,7 @@ int SSL_use_PrivateKey_ASN1(int type, SSL *ssl, const unsigned char *d,
     p = d;
     if ((pkey = d2i_PrivateKey(type, NULL, &p, (long)len)) == NULL) {
         SSLerr(SSL_F_SSL_USE_PRIVATEKEY_ASN1, ERR_R_ASN1_LIB);
-        return (0);
+        return 0;
     }
 
     ret = SSL_use_PrivateKey(ssl, pkey);
@@ -303,7 +303,7 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
     int rv;
     if (x == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE, ERR_R_PASSED_NULL_PARAMETER);
-        return (0);
+        return 0;
     }
     rv = ssl_security_cert(NULL, ctx, x, 0, 1);
     if (rv != 1) {
@@ -321,7 +321,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
     pkey = X509_get0_pubkey(x);
     if (pkey == NULL) {
         SSLerr(SSL_F_SSL_SET_CERT, SSL_R_X509_LIB);
-        return (0);
+        return 0;
     }
 
     if (ssl_cert_lookup_by_pkey(pkey, &i) == NULL) {
@@ -422,7 +422,7 @@ int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, const unsigned char *d)
     x = d2i_X509(NULL, &d, (long)len);
     if (x == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1, ERR_R_ASN1_LIB);
-        return (0);
+        return 0;
     }
 
     ret = SSL_CTX_use_certificate(ctx, x);
@@ -438,11 +438,11 @@ int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
 
     if (rsa == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY, ERR_R_PASSED_NULL_PARAMETER);
-        return (0);
+        return 0;
     }
     if ((pkey = EVP_PKEY_new()) == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY, ERR_R_EVP_LIB);
-        return (0);
+        return 0;
     }
 
     RSA_up_ref(rsa);
@@ -506,7 +506,7 @@ int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, const unsigned char *d,
     p = d;
     if ((rsa = d2i_RSAPrivateKey(NULL, &p, (long)len)) == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_ASN1, ERR_R_ASN1_LIB);
-        return (0);
+        return 0;
     }
 
     ret = SSL_CTX_use_RSAPrivateKey(ctx, rsa);
@@ -519,7 +519,7 @@ int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
 {
     if (pkey == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_PASSED_NULL_PARAMETER);
-        return (0);
+        return 0;
     }
     return (ssl_set_pkey(ctx->cert, pkey));
 }
@@ -573,7 +573,7 @@ int SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx,
     p = d;
     if ((pkey = d2i_PrivateKey(type, NULL, &p, (long)len)) == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_ASN1, ERR_R_ASN1_LIB);
-        return (0);
+        return 0;
     }
 
     ret = SSL_CTX_use_PrivateKey(ctx, pkey);

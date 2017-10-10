@@ -65,7 +65,7 @@ int DES_check_key_parity(const_DES_cblock *key)
 
     for (i = 0; i < DES_KEY_SZ; i++) {
         if ((*key)[i] != odd_parity[(*key)[i]])
-            return (0);
+            return 0;
     }
     return 1;
 }
@@ -115,7 +115,7 @@ int DES_is_weak_key(const_DES_cblock *key)
          */
         if (memcmp(weak_keys[i], key, sizeof(DES_cblock)) == 0)
             return 1;
-    return (0);
+    return 0;
 }
 
 /*-
@@ -302,7 +302,7 @@ int DES_set_key(const_DES_cblock *key, DES_key_schedule *schedule)
 int DES_set_key_checked(const_DES_cblock *key, DES_key_schedule *schedule)
 {
     if (!DES_check_key_parity(key))
-        return (-1);
+        return -1;
     if (DES_is_weak_key(key))
         return (-2);
     DES_set_key_unchecked(key, schedule);

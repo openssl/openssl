@@ -216,7 +216,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
  err2:
     OPENSSL_cleanse(exp_key, sizeof(exp_key));
     OPENSSL_cleanse(exp_iv, sizeof(exp_iv));
-    return (0);
+    return 0;
 }
 
 int ssl3_setup_key_block(SSL *s)
@@ -233,7 +233,7 @@ int ssl3_setup_key_block(SSL *s)
 
     if (!ssl_cipher_get_evp(s->session, &c, &hash, NULL, NULL, &comp, 0)) {
         SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
-        return (0);
+        return 0;
     }
 
     s->s3->tmp.new_sym_enc = c;
@@ -283,7 +283,7 @@ int ssl3_setup_key_block(SSL *s)
 
  err:
     SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
-    return (0);
+    return 0;
 }
 
 void ssl3_cleanup_key_block(SSL *s)
@@ -537,6 +537,6 @@ int ssl3_alert_code(int code)
     case SSL_AD_CERTIFICATE_REQUIRED:
         return SSL_AD_HANDSHAKE_FAILURE;
     default:
-        return (-1);
+        return -1;
     }
 }

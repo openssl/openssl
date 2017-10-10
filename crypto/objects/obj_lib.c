@@ -26,7 +26,7 @@ ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
     r = ASN1_OBJECT_new();
     if (r == NULL) {
         OBJerr(OBJ_F_OBJ_DUP, ERR_R_ASN1_LIB);
-        return (NULL);
+        return NULL;
     }
 
     /* Set dynamic flags so everything gets freed up on error */

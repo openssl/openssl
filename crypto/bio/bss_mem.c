@@ -146,7 +146,7 @@ static int mem_free(BIO *a)
 static int mem_buf_free(BIO *a, int free_all)
 {
     if (a == NULL)
-        return (0);
+        return 0;
     if (a->shutdown) {
         if ((a->init) && (a->ptr != NULL)) {
             BUF_MEM *b;
@@ -182,7 +182,7 @@ static int mem_buf_sync(BIO *b)
             bbm->readp->data = bbm->buf->data;
         }
     }
-    return (0);
+    return 0;
 }
 
 static int mem_read(BIO *b, char *out, int outl)

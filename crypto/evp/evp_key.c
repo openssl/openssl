@@ -30,7 +30,7 @@ void EVP_set_pw_prompt(const char *prompt)
 char *EVP_get_pw_prompt(void)
 {
     if (prompt_string[0] == '\0')
-        return (NULL);
+        return NULL;
     else
         return (prompt_string);
 }

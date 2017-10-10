@@ -309,7 +309,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
     if (!BN_is_odd(m)) {
         BNerr(BN_F_BN_MOD_EXP_MONT, BN_R_CALLED_WITH_EVEN_MODULUS);
-        return (0);
+        return 0;
     }
     bits = BN_num_bits(p);
     if (bits == 0) {
@@ -611,7 +611,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
     if (!BN_is_odd(m)) {
         BNerr(BN_F_BN_MOD_EXP_MONT_CONSTTIME, BN_R_CALLED_WITH_EVEN_MODULUS);
-        return (0);
+        return 0;
     }
 
     top = m->top;
@@ -1122,7 +1122,7 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 
     if (!BN_is_odd(m)) {
         BNerr(BN_F_BN_MOD_EXP_MONT_WORD, BN_R_CALLED_WITH_EVEN_MODULUS);
-        return (0);
+        return 0;
     }
     if (m->top == 1)
         a %= m->d[0];           /* make sure that 'a' is reduced */

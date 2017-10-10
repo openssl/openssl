@@ -255,7 +255,7 @@ static int ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
     if (p->login == NULL && p->user == NULL) {
         p->login = SSL_get_srp_username(s);
         BIO_printf(bio_err, "SRP username = \"%s\"\n", p->login);
-        return (-1);
+        return -1;
     }
 
     if (p->user == NULL) {
@@ -355,9 +355,9 @@ static int ebcdic_read(BIO *b, char *out, int outl)
     BIO *next = BIO_next(b);
 
     if (out == NULL || outl == 0)
-        return (0);
+        return 0;
     if (next == NULL)
-        return (0);
+        return 0;
 
     ret = BIO_read(next, out, outl);
     if (ret > 0)
@@ -373,7 +373,7 @@ static int ebcdic_write(BIO *b, const char *in, int inl)
     int num;
 
     if ((in == NULL) || (inl <= 0))
-        return (0);
+        return 0;
     if (next == NULL)
         return 0;
 
@@ -405,7 +405,7 @@ static long ebcdic_ctrl(BIO *b, int cmd, long num, void *ptr)
     BIO *next = BIO_next(b);
 
     if (next == NULL)
-        return (0);
+        return 0;
     switch (cmd) {
     case BIO_CTRL_DUP:
         ret = 0L;
@@ -2772,7 +2772,7 @@ static int init_ssl_connection(SSL *con)
         }
         /* Always print any error messages */
         ERR_print_errors(bio_err);
-        return (0);
+        return 0;
     }
 
     print_connection_info(con);
