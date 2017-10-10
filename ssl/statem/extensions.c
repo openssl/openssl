@@ -834,6 +834,11 @@ static int final_server_name(SSL *s, unsigned int context, int sent,
         ret = s->session_ctx->ext.servername_cb(s, &altmp,
                                        s->session_ctx->ext.servername_arg);
 
+    if (!sent) {
+        OPENSSL_free(s->session->ext.hostname);
+        s->session->ext.hostname = NULL;
+    }
+
     /*
      * If we're expecting to send a ticket, and tickets were previously enabled,
      * and now tickets are disabled, then turn off expected ticket.
