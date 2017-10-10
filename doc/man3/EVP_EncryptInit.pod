@@ -234,8 +234,9 @@ EVP_CIPHER_CTX_cipher() returns the B<EVP_CIPHER> structure when passed
 an B<EVP_CIPHER_CTX> structure.
 
 EVP_CIPHER_mode() and EVP_CIPHER_CTX_mode() return the block cipher mode:
-EVP_CIPH_ECB_MODE, EVP_CIPH_CBC_MODE, EVP_CIPH_CFB_MODE or
-EVP_CIPH_OFB_MODE. If the cipher is a stream cipher then
+EVP_CIPH_ECB_MODE, EVP_CIPH_CBC_MODE, EVP_CIPH_CFB_MODE, EVP_CIPH_OFB_MODE,
+EVP_CIPH_CTR_MODE, EVP_CIPH_GCM_MODE, EVP_CIPH_CCM_MODE, EVP_CIPH_XTS_MODE,
+EVP_CIPH_WRAP_MODE or EVP_CIPH_OCB_MODE. If the cipher is a stream cipher then
 EVP_CIPH_STREAM_CIPHER is returned.
 
 EVP_CIPHER_param_to_asn1() sets the AlgorithmIdentifier "parameter" based
