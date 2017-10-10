@@ -22,7 +22,7 @@
  * HASH_CBLOCK
  *      size of a unit chunk HASH_BLOCK operates on.
  * HASH_LONG
- *      has to be at lest 32 bit wide.
+ *      has to be at least 32 bit wide.
  * HASH_CTX
  *      context structure that at least contains following
  *      members:
@@ -48,7 +48,7 @@
  *      name of "block" function capable of treating *unaligned* input
  *      message in original (data) byte order, implemented externally.
  * HASH_MAKE_STRING
- *      macro convering context variables to an ASCII hash string.
+ *      macro converting context variables to an ASCII hash string.
  *
  * MD5 example:
  *
@@ -243,7 +243,7 @@
 #endif
 
 /*
- * Time for some action:-)
+ * Time for some action :-)
  */
 
 int HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
