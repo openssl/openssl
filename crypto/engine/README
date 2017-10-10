@@ -207,5 +207,5 @@ changes have now, as a consequence, been reverted back. This is because the
 hooking of ENGINE is now automatic (and passive, it can interally use a NULL
 ENGINE pointer to simply ignore ENGINE from then on).
 
-Hell, that should be enough for now ... comments welcome: geoff@openssl.org
+Hell, that should be enough for now ... comments welcome.
 

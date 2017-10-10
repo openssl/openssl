@@ -1146,7 +1146,7 @@ L<Test::More>, L<Test::Harness>
 
 =head1 AUTHORS
 
-Richard Levitte E<lt>levitte@openssl.orgE<gt> with assitance and
+Richard Levitte E<lt>levitte@openssl.orgE<gt> with assistance and
 inspiration from Andy Polyakov E<lt>appro@openssl.org<gt>.
 
 =cut

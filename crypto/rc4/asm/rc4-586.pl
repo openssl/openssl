@@ -8,7 +8,7 @@
 
 
 # ====================================================================
-# [Re]written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# [Re]written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
@@ -32,8 +32,6 @@
 #	performance on the same Opteron machine.
 # (**)	This number requires compressed key schedule set up by
 #	RC4_set_key [see commentary below for further details].
-#
-#					<appro@fy.chalmers.se>
 
 # May 2011
 #

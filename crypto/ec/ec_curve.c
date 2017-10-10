@@ -2204,7 +2204,7 @@ static const struct {
 #endif
 
 /*
- * These curves were added by Annie Yousar <a.yousar@informatik.hu-berlin.de>
+ * These curves were added by Annie Yousar.
  * For the definition of RFC 5639 curves see
  * http://www.ietf.org/rfc/rfc5639.txt These curves are generated verifiable
  * at random, nevertheless the seed is omitted as parameter because the

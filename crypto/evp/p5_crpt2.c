@@ -25,8 +25,7 @@ static void h__dump(const unsigned char *p, int len);
 /*
  * This is an implementation of PKCS#5 v2.0 password based encryption key
  * derivation function PBKDF2. SHA1 version verified against test vectors
- * posted by Peter Gutmann <pgut001@cs.auckland.ac.nz> to the PKCS-TNG
- * <pkcs-tng@rsa.com> mailing list.
+ * posted by Peter Gutmann to the PKCS-TNG mailing list.
  */
 
 int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,

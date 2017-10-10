@@ -8,8 +8,8 @@
 
 
 # ====================================================================
-# Written by David S. Miller <davem@devemloft.net> and Andy Polyakov
-# <appro@openssl.org>. The module is licensed under 2-clause BSD
+# Written by David S. Miller and Andy Polyakov.
+# The module is licensed under 2-clause BSD
 # license. October 2012. All rights reserved.
 # ====================================================================
 

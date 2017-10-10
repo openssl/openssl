@@ -108,9 +108,8 @@
 # optimistic estimate doesn't promise 30% performance improvement,
 # there are currently no plans to increase Naggr.
 #
-# Special thanks to David Woodhouse <dwmw2@infradead.org> for
-# providing access to a Westmere-based system on behalf of Intel
-# Open Source Technology Centre.
+# Special thanks to David Woodhouse for providing access to a
+# Westmere-based system on behalf of Intel Open Source Technology Centre.
 
 # January 2010
 #

@@ -17,14 +17,11 @@
 # GHASH for ARMv8 Crypto Extension, 64-bit polynomial multiplication.
 #
 # June 2014
-#
-# Initial version was developed in tight cooperation with Ard
-# Biesheuvel <ard.biesheuvel@linaro.org> from bits-n-pieces from
-# other assembly modules. Just like aesv8-armx.pl this module
-# supports both AArch32 and AArch64 execution modes.
+# Initial version was developed in tight cooperation with Ard Biesheuvel
+# of Linaro from bits-n-pieces from other assembly modules. Just like
+# aesv8-armx.pl this module supports both AArch32 and AArch64 execution modes.
 #
 # July 2014
-#
 # Implement 2x aggregated reduction [see ghash-x86.pl for background
 # information].
 #

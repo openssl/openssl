@@ -14,8 +14,7 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 #
 # Specific modes and adaptation for Linux kernel by Ard Biesheuvel
-# <ard.biesheuvel@linaro.org>. Permission to use under GPL terms is
-# granted.
+# of Linaro. Permission to use under GPL terms is granted.
 # ====================================================================
 
 # Bit-sliced AES for ARM NEON
@@ -49,10 +48,7 @@
 #						<appro@openssl.org>
 
 # April-August 2013
-#
-# Add CBC, CTR and XTS subroutines, adapt for kernel use.
-#
-#					<ard.biesheuvel@linaro.org>
+# Add CBC, CTR and XTS subroutines and adapt for kernel use; courtesy of Ard.
 
 $flavour = shift;
 if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }

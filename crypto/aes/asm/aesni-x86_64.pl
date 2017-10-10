@@ -4294,10 +4294,9 @@ ${PREFIX}_set_decrypt_key:
 .size	${PREFIX}_set_decrypt_key,.-${PREFIX}_set_decrypt_key
 ___
 
-# This is based on submission by
-#
-#	Huang Ying <ying.huang@intel.com>
-#	Vinodh Gopal <vinodh.gopal@intel.com>
+# This is based on submission from Intel by
+#	Huang Ying
+#	Vinodh Gopal
 #	Kahraman Akdemir
 #
 # Aggressively optimized in respect to aeskeygenassist's critical path
