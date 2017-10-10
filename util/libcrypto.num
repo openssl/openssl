@@ -4400,3 +4400,4 @@ EVP_PKEY_meth_remove                    4343	1_1_1	EXIST::FUNCTION:
 OPENSSL_sk_reserve                      4344	1_1_1	EXIST::FUNCTION:
 CRYPTO_atomic_read                      4345	1_1_1	EXIST::FUNCTION:
 CRYPTO_atomic_write                     4346	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_set1_engine                    4347	1_1_0g	EXIST::FUNCTION:ENGINE
