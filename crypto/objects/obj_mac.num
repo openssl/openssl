@@ -1123,3 +1123,8 @@ aria_256_ccm		1122
 aria_128_gcm		1123
 aria_192_gcm		1124
 aria_256_gcm		1125
+ffdhe2048		1126
+ffdhe3072		1127
+ffdhe4096		1128
+ffdhe6144		1129
+ffdhe8192		1130
