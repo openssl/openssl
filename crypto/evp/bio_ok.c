@@ -8,7 +8,7 @@
  */
 
 /*-
-        From: Arne Ansper <arne@cyber.ee>
+        From: Arne Ansper
 
         Why BIO_f_reliable?
 

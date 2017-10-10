@@ -1,5 +1,5 @@
 .ident	"sparcv8plus.s, Version 1.4"
-.ident	"SPARC v9 ISA artwork by Andy Polyakov <appro@fy.chalmers.se>"
+.ident	"SPARC v9 ISA artwork by Andy Polyakov <appro@openssl.org>"
 
 /*
  * ====================================================================

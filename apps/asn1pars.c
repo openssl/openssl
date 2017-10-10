@@ -7,11 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * A nice addition from Dr Stephen Henson <steve@openssl.org> to add the
- * -strparse option which parses nested binary structures
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

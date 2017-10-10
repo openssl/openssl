@@ -14,7 +14,7 @@
 /*-
  * x86_64 BIGNUM accelerator version 0.1, December 2002.
  *
- * Implemented by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+ * Implemented by Andy Polyakov <appro@openssl.org> for the OpenSSL
  * project.
  *
  * Rights for redistribution and usage in source and binary forms are
