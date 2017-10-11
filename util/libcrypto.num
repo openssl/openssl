@@ -4231,3 +4231,4 @@ UINT32_it                               4214	1_1_0f	EXIST:EXPORT_VAR_AS_FUNCTION
 ZINT64_it                               4215	1_1_0f	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ZINT64_it                               4215	1_1_0f	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 CRYPTO_secure_clear_free                4315	1_1_0g	EXIST::FUNCTION:
+EVP_PKEY_set1_engine                    4347	1_1_0g	EXIST::FUNCTION:ENGINE
