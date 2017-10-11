@@ -369,6 +369,7 @@ struct evp_pkey_st {
     CRYPTO_REF_COUNT references;
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE *engine;
+    ENGINE *pmeth_engine; /* If not NULL public key ENGINE to use */
     union {
         void *ptr;
 # ifndef OPENSSL_NO_RSA
