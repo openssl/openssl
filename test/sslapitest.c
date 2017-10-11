@@ -1507,6 +1507,16 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
                                       NULL, NULL)))
         return 0;
 
+    /*
+     * For one of the run throughs (doesn't matter which one), we'll try sending
+     * some SNI data in the initial ClientHello. This will be ignored (because
+     * there is no SNI cb set up by the server), so it should not impact
+     * early_data.
+     */
+    if (idx == 1
+            && !TEST_true(SSL_set_tlsext_host_name(*clientssl, "localhost")))
+        return 0;
+
     if (idx == 2) {
         /* Create the PSK */
         const SSL_CIPHER *cipher = NULL;
