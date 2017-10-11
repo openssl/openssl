@@ -116,6 +116,8 @@ void RAND_DRBG_free(RAND_DRBG *drbg)
 /*
  * Instantiate |drbg|, after it has been initialized.  Use |pers| and
  * |perslen| as prediction-resistance input.
+ *
+ * Requires that drbg->lock is already locked for write, if non-null.
  */
 int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                           const unsigned char *pers, size_t perslen)
@@ -185,6 +187,8 @@ end:
 
 /*
  * Uninstantiate |drbg|. Must be instantiated before it can be used.
+ *
+ * Requires that drbg->lock is already locked for write, if non-null.
  */
 int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
 {
@@ -197,6 +201,8 @@ int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
 
 /*
  * Reseed |drbg|, mixing in the specified data
+ *
+ * Requires that drbg->lock is already locked for write, if non-null.
  */
 int RAND_DRBG_reseed(RAND_DRBG *drbg,
                      const unsigned char *adin, size_t adinlen)
@@ -348,6 +354,8 @@ int rand_drbg_restart(RAND_DRBG *drbg,
  * Generate |outlen| bytes into the buffer at |out|.  Reseed if we need
  * to or if |prediction_resistance| is set.  Additional input can be
  * sent in |adin| and |adinlen|.
+ *
+ * Requires that drbg->lock is already locked for write, if non-null.
  *
  * Returns 1 on success, 0 on failure.
  *

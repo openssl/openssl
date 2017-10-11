@@ -155,12 +155,20 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
         if (buffer != NULL) {
             size_t bytes = 0;
 
-            /* Get entropy from parent, include our state as additional input */
+            /*
+             * Get random from parent, include our state as additional input.
+             * Our lock is already held, but we need to lock our parent before
+             * generating bits from it.
+             */
+            if (drbg->parent->lock)
+                CRYPTO_THREAD_write_lock(drbg->parent->lock);
             if (RAND_DRBG_generate(drbg->parent,
                                    buffer, bytes_needed,
                                    0,
                                    (unsigned char *)drbg, sizeof(*drbg)) != 0)
                 bytes = bytes_needed;
+            if (drbg->parent->lock)
+                CRYPTO_THREAD_unlock(drbg->parent->lock);
 
             entropy_available = RAND_POOL_add_end(pool, bytes, 8 * bytes);
         }
@@ -626,6 +634,7 @@ int RAND_priv_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
     RAND_DRBG *drbg;
+    int ret;
 
     if (meth != RAND_OpenSSL())
         return RAND_bytes(buf, num);
@@ -634,7 +643,11 @@ int RAND_priv_bytes(unsigned char *buf, int num)
     if (drbg == NULL)
         return 0;
 
-    return RAND_DRBG_generate(drbg, buf, num, 0, NULL, 0);
+    /* We have to lock the DRBG before generating bits from it. */
+    CRYPTO_THREAD_write_lock(drbg->lock);
+    ret = RAND_DRBG_generate(drbg, buf, num, 0, NULL, 0);
+    CRYPTO_THREAD_unlock(drbg->lock);
+    return ret;
 }
 
 int RAND_bytes(unsigned char *buf, int num)
