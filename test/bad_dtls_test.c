@@ -118,7 +118,7 @@ static int validate_client_hello(BIO *wbio)
     long len;
     unsigned char *data;
     int cookie_found = 0;
-    unsigned int u;
+    unsigned int u = 0;
 
     len = BIO_get_mem_data(wbio, (char **)&data);
     if (!PACKET_buf_init(&pkt, data, len))
