@@ -44,7 +44,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           pkey_meth_test pkey_meth_kdf_test uitest cipherbytes_test \
           asn1_encode_test asn1_string_table_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
-          recordlentest drbgtest drbg_extra_test sslbuffertest \
+          recordlentest drbgtest drbg_extra_test drbg_cavs_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test
 
@@ -312,6 +312,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[drbg_extra_test]=drbg_extra_test.c
   INCLUDE[drbg_extra_test]=../include . ..
   DEPEND[drbg_extra_test]=../libcrypto libtestutil.a
+
+  SOURCE[drbg_cavs_test]=drbg_cavs_test.c drbg_cavs_data.c
+  INCLUDE[drbg_cavs_test]=../include . ..
+  DEPEND[drbg_cavs_test]=../libcrypto libtestutil.a
 
   SOURCE[x509_dup_cert_test]=x509_dup_cert_test.c
   INCLUDE[x509_dup_cert_test]=../include
