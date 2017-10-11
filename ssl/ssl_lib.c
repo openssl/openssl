@@ -5127,7 +5127,20 @@ uint32_t SSL_get_max_early_data(const SSL *s)
 
 int ssl_randbytes(SSL *s, unsigned char *rnd, size_t size)
 {
-    if (s->drbg != NULL)
-        return RAND_DRBG_generate(s->drbg, rnd, size, 0, NULL, 0);
+    if (s->drbg != NULL) {
+        /*
+         * Currently, it's the duty of the caller to serialize the generate
+         * requests to the DRBG. So formally we have to check whether
+         * s->drbg->lock != NULL and take the lock if this is the case.
+         * However, this DRBG is unique to a given SSL object, and we already
+         * require that SSL objects are only accessed by a single thread at
+         * a given time. Also, SSL DRBGs have no child DRBG, so there is
+         * no risk that this DRBG is accessed by a child DRBG in parallel
+         * for reseeding.  As such, we can rely on the application's
+         * serialization of SSL accesses for the needed concurrency protection
+         * here.
+         */
+         return RAND_DRBG_generate(s->drbg, rnd, size, 0, NULL, 0);
+    }
     return RAND_bytes(rnd, (int)size);
 }
