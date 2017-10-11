@@ -541,9 +541,9 @@ struct ssl_session_st {
 # ifndef OPENSSL_NO_EC
         size_t ecpointformats_len;
         unsigned char *ecpointformats; /* peer's list */
+# endif                         /* OPENSSL_NO_EC */
         size_t supportedgroups_len;
         uint16_t *supportedgroups; /* peer's list */
-# endif                         /* OPENSSL_NO_EC */
     /* RFC4507 info */
         unsigned char *tick; /* Session ticket */
         size_t ticklen;      /* Session ticket length */
@@ -1202,10 +1202,10 @@ struct ssl_st {
         size_t ecpointformats_len;
         /* our list */
         unsigned char *ecpointformats;
+# endif                         /* OPENSSL_NO_EC */
         size_t supportedgroups_len;
         /* our list */
         uint16_t *supportedgroups;
-# endif                         /* OPENSSL_NO_EC */
         /* TLS Session Ticket extension override */
         TLS_SESSION_TICKET_EXT *session_ticket;
         /* TLS Session Ticket extension callback */
