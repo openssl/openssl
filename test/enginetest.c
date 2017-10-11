@@ -220,17 +220,14 @@ static EVP_PKEY *get_test_pkey(void)
         "\xF5";
     static unsigned char e[] = "\x11";
 
-    RSA *rsa;
-    EVP_PKEY *pk;
+    RSA *rsa = RSA_new();
+    EVP_PKEY *pk = EVP_PKEY_new();
 
-    rsa = RSA_new();
-
-    pk = EVP_PKEY_new();
-
-    if (rsa == NULL || pk == NULL)
+    if (rsa == NULL || pk == NULL || !EVP_PKEY_assign_RSA(pk, rsa)) {
+        RSA_free(rsa);
+        EVP_PKEY_free(pk);
         return NULL;
-
-    EVP_PKEY_assign_RSA(pk, rsa);
+    }
 
     if (!RSA_set0_key(rsa, BN_bin2bn(n, sizeof(n)-1, NULL),
                       BN_bin2bn(e, sizeof(e)-1, NULL), NULL)) {
@@ -263,25 +260,26 @@ static int test_redirect(void)
         goto err;
     TEST_info("EVP_PKEY_encrypt test: no redirection");
     /* Encrypt some data: should succeed but not be redirected */
-    if (!TEST_true(EVP_PKEY_encrypt_init(ctx) > 0)
-            || !TEST_true(EVP_PKEY_encrypt(ctx, tmp, &len, pt, sizeof(pt)) > 0)
+    if (!TEST_int_gt(EVP_PKEY_encrypt_init(ctx), 0)
+            || !TEST_int_gt(EVP_PKEY_encrypt(ctx, tmp, &len, pt, sizeof(pt)), 0)
             || !TEST_false(called_encrypt))
         goto err;
     EVP_PKEY_CTX_free(ctx);
     ctx = NULL;
 
     /* Create a test ENGINE */
-    e = ENGINE_new();
-    ENGINE_set_id(e, "Test redirect engine");
-    ENGINE_set_name(e, "Test redirect engine");
+    if (!TEST_ptr(e = ENGINE_new())
+            || !TEST_true(ENGINE_set_id(e, "Test redirect engine"))
+            || !TEST_true(ENGINE_set_name(e, "Test redirect engine")))
+        goto err;
 
     /*
      * Try to create a context for this engine and test key.
      * Try setting test key engine. Both should fail because the
      * engine has no public key methods.
      */
-    if (!TEST_true(EVP_PKEY_CTX_new(pkey, e) == NULL)
-        || !TEST_true(EVP_PKEY_set1_engine(pkey, e) <= 0))
+    if (!TEST_ptr_null(EVP_PKEY_CTX_new(pkey, e))
+            || !TEST_int_le(EVP_PKEY_set1_engine(pkey, e), 0))
         goto err;
 
     /* Setup an empty test EVP_PKEY_METHOD and set callback to return it */
@@ -293,7 +291,7 @@ static int test_redirect(void)
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, e)))
         goto err;
     /* Encrypt should fail because operation is not supported */
-    if (!TEST_true(EVP_PKEY_encrypt_init(ctx) <= 0))
+    if (!TEST_int_le(EVP_PKEY_encrypt_init(ctx), 0))
         goto err;
     EVP_PKEY_CTX_free(ctx);
     ctx = NULL;
@@ -305,21 +303,20 @@ static int test_redirect(void)
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, e)))
         goto err;
     /* Encrypt some data: should succeed and be redirected */
-    if (!TEST_true(EVP_PKEY_encrypt_init(ctx) > 0)
-        || !TEST_true(EVP_PKEY_encrypt(ctx, tmp, &len, pt, sizeof(pt)) > 0)
-        || !TEST_true(called_encrypt))
+    if (!TEST_int_gt(EVP_PKEY_encrypt_init(ctx), 0)
+            || !TEST_int_gt(EVP_PKEY_encrypt(ctx, tmp, &len, pt, sizeof(pt)), 0)
+            || !TEST_true(called_encrypt))
         goto err;
 
     EVP_PKEY_CTX_free(ctx);
     ctx = NULL;
-
     called_encrypt = 0;
 
     /* Create context with default engine: should not be redirected */
     ctx = EVP_PKEY_CTX_new(pkey, NULL);
-    if (!TEST_true(EVP_PKEY_encrypt_init(ctx) > 0)
-        || !TEST_true(EVP_PKEY_encrypt(ctx, tmp, &len, pt, sizeof(pt)) > 0)
-        || !TEST_false(called_encrypt))
+    if (!TEST_int_gt(EVP_PKEY_encrypt_init(ctx), 0)
+            || !TEST_int_gt(EVP_PKEY_encrypt(ctx, tmp, &len, pt, sizeof(pt)), 0)
+            || !TEST_false(called_encrypt))
         goto err;
 
     EVP_PKEY_CTX_free(ctx);
@@ -333,9 +330,9 @@ static int test_redirect(void)
 
     /* Create context with default engine: should be redirected now */
     ctx = EVP_PKEY_CTX_new(pkey, NULL);
-    if (!TEST_true(EVP_PKEY_encrypt_init(ctx) > 0)
-        || !TEST_true(EVP_PKEY_encrypt(ctx, tmp, &len, pt, sizeof(pt)) > 0)
-        || !TEST_true(called_encrypt))
+    if (!TEST_int_gt(EVP_PKEY_encrypt_init(ctx), 0)
+            || !TEST_int_gt(EVP_PKEY_encrypt(ctx, tmp, &len, pt, sizeof(pt)), 0)
+            || !TEST_true(called_encrypt))
         goto err;
 
     to_return = 1;
