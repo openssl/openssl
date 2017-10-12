@@ -4890,3 +4890,18 @@
 #define SN_siphash              "SipHash"
 #define LN_siphash              "siphash"
 #define NID_siphash             1062
+
+#define SN_ffdhe2048            "ffdhe2048"
+#define NID_ffdhe2048           1126
+
+#define SN_ffdhe3072            "ffdhe3072"
+#define NID_ffdhe3072           1127
+
+#define SN_ffdhe4096            "ffdhe4096"
+#define NID_ffdhe4096           1128
+
+#define SN_ffdhe6144            "ffdhe6144"
+#define NID_ffdhe6144           1129
+
+#define SN_ffdhe8192            "ffdhe8192"
+#define NID_ffdhe8192           1130
