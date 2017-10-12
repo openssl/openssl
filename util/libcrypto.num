@@ -4401,3 +4401,5 @@ OPENSSL_sk_reserve                      4344	1_1_1	EXIST::FUNCTION:
 CRYPTO_atomic_read                      4345	1_1_1	EXIST::FUNCTION:
 CRYPTO_atomic_write                     4346	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_set1_engine                    4347	1_1_0g	EXIST::FUNCTION:ENGINE
+DH_new_by_nid                           4348	1_1_1	EXIST::FUNCTION:DH
+DH_get_nid                              4349	1_1_1	EXIST::FUNCTION:DH

@@ -357,6 +357,7 @@ DH_F_DH_CMS_SET_SHARED_INFO:116:dh_cms_set_shared_info
 DH_F_DH_METH_DUP:117:DH_meth_dup
 DH_F_DH_METH_NEW:118:DH_meth_new
 DH_F_DH_METH_SET1_NAME:119:DH_meth_set1_name
+DH_F_DH_NEW_BY_NID:104:DH_new_by_nid
 DH_F_DH_NEW_METHOD:105:DH_new_method
 DH_F_DH_PARAM_DECODE:107:dh_param_decode
 DH_F_DH_PRIV_DECODE:110:dh_priv_decode
@@ -365,6 +366,7 @@ DH_F_DH_PUB_DECODE:108:dh_pub_decode
 DH_F_DH_PUB_ENCODE:109:dh_pub_encode
 DH_F_DO_DH_PRINT:100:do_dh_print
 DH_F_GENERATE_KEY:103:generate_key
+DH_F_PKEY_DH_CTRL_STR:120:pkey_dh_ctrl_str
 DH_F_PKEY_DH_DERIVE:112:pkey_dh_derive
 DH_F_PKEY_DH_KEYGEN:113:pkey_dh_keygen
 DSA_F_DSAPARAMS_PRINT:100:DSAparams_print
@@ -1780,6 +1782,8 @@ DH_R_BAD_GENERATOR:101:bad generator
 DH_R_BN_DECODE_ERROR:109:bn decode error
 DH_R_BN_ERROR:106:bn error
 DH_R_DECODE_ERROR:104:decode error
+DH_R_INVALID_PARAMETER_NAME:110:invalid parameter name
+DH_R_INVALID_PARAMETER_NID:114:invalid parameter nid
 DH_R_INVALID_PUBKEY:102:invalid public key
 DH_R_KDF_PARAMETER_ERROR:112:kdf parameter error
 DH_R_KEYS_NOT_SET:108:keys not set

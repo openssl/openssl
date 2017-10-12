@@ -31,6 +31,7 @@ int ERR_load_DH_strings(void);
 # define DH_F_DH_METH_DUP                                 117
 # define DH_F_DH_METH_NEW                                 118
 # define DH_F_DH_METH_SET1_NAME                           119
+# define DH_F_DH_NEW_BY_NID                               104
 # define DH_F_DH_NEW_METHOD                               105
 # define DH_F_DH_PARAM_DECODE                             107
 # define DH_F_DH_PRIV_DECODE                              110
@@ -39,6 +40,7 @@ int ERR_load_DH_strings(void);
 # define DH_F_DH_PUB_ENCODE                               109
 # define DH_F_DO_DH_PRINT                                 100
 # define DH_F_GENERATE_KEY                                103
+# define DH_F_PKEY_DH_CTRL_STR                            120
 # define DH_F_PKEY_DH_DERIVE                              112
 # define DH_F_PKEY_DH_KEYGEN                              113
 
@@ -49,6 +51,8 @@ int ERR_load_DH_strings(void);
 # define DH_R_BN_DECODE_ERROR                             109
 # define DH_R_BN_ERROR                                    106
 # define DH_R_DECODE_ERROR                                104
+# define DH_R_INVALID_PARAMETER_NAME                      110
+# define DH_R_INVALID_PARAMETER_NID                       114
 # define DH_R_INVALID_PUBKEY                              102
 # define DH_R_KDF_PARAMETER_ERROR                         112
 # define DH_R_KEYS_NOT_SET                                108
