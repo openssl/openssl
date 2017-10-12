@@ -589,7 +589,7 @@ typedef enum OPTION_choice {
     OPT_KEY, OPT_RECONNECT, OPT_BUILD_CHAIN, OPT_CAFILE, OPT_NOCAFILE,
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_NOSERVERNAME, OPT_ASYNC,
-    OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_SMTPHOST,
+    OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_PROTOHOST,
     OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_KEYLOG_FILE, OPT_EARLY_DATA, OPT_REQCAFILE,
     OPT_V_ENUM,
@@ -655,7 +655,7 @@ const OPTIONS s_client_options[] = {
     {"starttls", OPT_STARTTLS, 's',
      "Use the appropriate STARTTLS command before starting TLS"},
     {"xmpphost", OPT_XMPPHOST, 's',
-     "Host to use with \"-starttls xmpp[-server]\""},
+     "Alias of -name option for \"-starttls xmpp[-server]\""},
     OPT_R_OPTIONS,
     {"sess_out", OPT_SESS_OUT, '>', "File to write SSL session to"},
     {"sess_in", OPT_SESS_IN, '<', "File to read SSL session from"},
@@ -666,8 +666,8 @@ const OPTIONS s_client_options[] = {
     {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
      "Export len bytes of keying material (default 20)"},
     {"fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV"},
-    {"name", OPT_SMTPHOST, 's',
-     "Hostname to use for \"-starttls lmtp\" or \"-starttls smtp\""},
+    {"name", OPT_PROTOHOST, 's',
+     "Hostname to use for \"-starttls lmtp\", \"-starttls smtp\" or \"-starttls xmpp[-server]\""},
     {"CRL", OPT_CRL, '<', "CRL file to use"},
     {"crl_download", OPT_CRL_DOWNLOAD, '-', "Download CRL from distribution points"},
     {"CRLform", OPT_CRLFORM, 'F', "CRL format (PEM or DER) PEM is default"},
@@ -885,8 +885,7 @@ int s_client_main(int argc, char **argv)
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *ReqCAfile = NULL;
     char *sess_in = NULL, *crl_file = NULL, *p;
-    char *xmpphost = NULL;
-    const char *ehlo = "mail.example.com";
+    const char *protohost = NULL;
     struct timeval timeout, *timeoutp;
     fd_set readfds, writefds;
     int noCApath = 0, noCAfile = 0;
@@ -1058,10 +1057,9 @@ int s_client_main(int argc, char **argv)
             break;
 #endif
         case OPT_XMPPHOST:
-            xmpphost = opt_arg();
-            break;
-        case OPT_SMTPHOST:
-            ehlo = opt_arg();
+            /* fall through, since this is an alias */
+        case OPT_PROTOHOST:
+            protohost = opt_arg();
             break;
         case OPT_VERIFY:
             verify = SSL_VERIFY_PEER;
@@ -2098,10 +2096,12 @@ int s_client_main(int argc, char **argv)
             do {
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
             } while (mbuf_len > 3 && mbuf[3] == '-');
+            if (protohost == NULL)
+                protohost = "mail.example.com";
             if (starttls_proto == (int)PROTO_LMTP)
-                BIO_printf(fbio, "LHLO %s\r\n", ehlo);
+                BIO_printf(fbio, "LHLO %s\r\n", protohost);
             else
-                BIO_printf(fbio, "EHLO %s\r\n", ehlo);
+                BIO_printf(fbio, "EHLO %s\r\n", protohost);
             (void)BIO_flush(fbio);
             /*
              * Wait for multi-line response to end LHLO LMTP or EHLO SMTP
@@ -2187,7 +2187,7 @@ int s_client_main(int argc, char **argv)
                        "xmlns:stream='http://etherx.jabber.org/streams' "
                        "xmlns='jabber:%s' to='%s' version='1.0'>",
                        starttls_proto == PROTO_XMPP ? "client" : "server",
-                       xmpphost ? xmpphost : host);
+                       protohost ? protohost : host);
             seen = BIO_read(sbio, mbuf, BUFSIZZ);
             if (seen < 0) {
                 BIO_printf(bio_err, "BIO_read failed\n");
