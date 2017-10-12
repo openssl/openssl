@@ -66,10 +66,9 @@ int DH_get_nid(const DH *dh)
         BIGNUM *q = BN_dup(dh->p);
 
         /* Check q = p * 2 + 1 we already know q is odd, so just shift right */
-        if (q == NULL || !BN_rshift1(q, q) || !BN_cmp(dh->q, q)) {
-            BN_free(q);
-            return NID_undef;
-        }
+        if (q == NULL || !BN_rshift1(q, q) || !BN_cmp(dh->q, q))
+            nid = NID_undef;
+        BN_free(q);
     }
     return nid;
 }
