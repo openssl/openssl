@@ -56,8 +56,8 @@ struct app_mem_info_st {
 };
 
 static CRYPTO_ONCE memdbg_init = CRYPTO_ONCE_STATIC_INIT;
-static CRYPTO_RWLOCK *malloc_lock = NULL;
-static CRYPTO_RWLOCK *long_malloc_lock = NULL;
+CRYPTO_RWLOCK *memdbg_lock;
+static CRYPTO_RWLOCK *long_memdbg_lock;
 static CRYPTO_THREAD_LOCAL appinfokey;
 
 /* memory-block description */
@@ -76,28 +76,32 @@ struct mem_st {
 #endif
 };
 
-static LHASH_OF(MEM) *mh = NULL; /* hash-table of memory requests (address as
-                                  * key); access requires MALLOC2 lock */
+/*
+ * hash-table of memory requests (address as * key); access requires
+ * long_memdbg_lock lock
+ */
+static LHASH_OF(MEM) *mh = NULL;
 
 /* num_disable > 0 iff mh_mode == CRYPTO_MEM_CHECK_ON (w/o ..._ENABLE) */
 static unsigned int num_disable = 0;
 
 /*
- * Valid iff num_disable > 0.  long_malloc_lock is locked exactly in this
+ * Valid iff num_disable > 0.  long_memdbg_lock is locked exactly in this
  * case (by the thread named in disabling_thread).
  */
 static CRYPTO_THREAD_ID disabling_threadid;
 
 DEFINE_RUN_ONCE_STATIC(do_memdbg_init)
 {
-    malloc_lock = CRYPTO_THREAD_glock_new("malloc");
-    long_malloc_lock = CRYPTO_THREAD_glock_new("long_malloc");
-    if (malloc_lock == NULL || long_malloc_lock == NULL
-        || !CRYPTO_THREAD_init_local(&appinfokey, NULL)) {
-        CRYPTO_THREAD_lock_free(malloc_lock);
-        malloc_lock = NULL;
-        CRYPTO_THREAD_lock_free(long_malloc_lock);
-        long_malloc_lock = NULL;
+    memdbg_lock = CRYPTO_THREAD_glock_new("malloc");
+    long_memdbg_lock = CRYPTO_THREAD_glock_new("long_malloc");
+    if (memdbg_lock == NULL
+            || long_memdbg_lock == NULL
+            || !CRYPTO_THREAD_init_local(&appinfokey, NULL)) {
+        CRYPTO_THREAD_lock_free(memdbg_lock);
+        memdbg_lock = NULL;
+        CRYPTO_THREAD_lock_free(long_memdbg_lock);
+        long_memdbg_lock = NULL;
         return 0;
     }
     return 1;
@@ -105,7 +109,7 @@ DEFINE_RUN_ONCE_STATIC(do_memdbg_init)
 
 static void app_info_free(APP_INFO *inf)
 {
-    if (!inf)
+    if (inf == NULL)
         return;
     if (--(inf->references) <= 0) {
         app_info_free(inf->next);
@@ -124,7 +128,7 @@ int CRYPTO_mem_ctrl(int mode)
     if (!RUN_ONCE(&memdbg_init, do_memdbg_init))
         return -1;
 
-    CRYPTO_THREAD_write_lock(malloc_lock);
+    CRYPTO_THREAD_write_lock(memdbg_lock);
     switch (mode) {
     default:
         break;
@@ -143,26 +147,26 @@ int CRYPTO_mem_ctrl(int mode)
     case CRYPTO_MEM_CHECK_DISABLE:
         if (mh_mode & CRYPTO_MEM_CHECK_ON) {
             CRYPTO_THREAD_ID cur = CRYPTO_THREAD_get_current_id();
-            /* see if we don't have long_malloc_lock already */
+            /* see if we don't have long_memdbg_lock already */
             if (!num_disable
                 || !CRYPTO_THREAD_compare_id(disabling_threadid, cur)) {
                 /*
-                 * Long-time lock long_malloc_lock must not be claimed
-                 * while we're holding malloc_lock, or we'll deadlock
-                 * if somebody else holds long_malloc_lock (and cannot
+                 * Long-time lock long_memdbg_lock must not be claimed
+                 * while we're holding memdbg_lock, or we'll deadlock
+                 * if somebody else holds long_memdbg_lock (and cannot
                  * release it because we block entry to this function). Give
                  * them a chance, first, and then claim the locks in
                  * appropriate order (long-time lock first).
                  */
-                CRYPTO_THREAD_unlock(malloc_lock);
+                CRYPTO_THREAD_unlock(memdbg_lock);
                 /*
-                 * Note that after we have waited for long_malloc_lock and
-                 * malloc_lock, we'll still be in the right "case" and
+                 * Note that after we have waited for long_memdbg_lock and
+                 * memdbg_lock, we'll still be in the right "case" and
                  * "if" branch because MemCheck_start and MemCheck_stop may
                  * never be used while there are multiple OpenSSL threads.
                  */
-                CRYPTO_THREAD_write_lock(long_malloc_lock);
-                CRYPTO_THREAD_write_lock(malloc_lock);
+                CRYPTO_THREAD_write_lock(long_memdbg_lock);
+                CRYPTO_THREAD_write_lock(memdbg_lock);
                 mh_mode &= ~CRYPTO_MEM_CHECK_ENABLE;
                 disabling_threadid = cur;
             }
@@ -176,13 +180,13 @@ int CRYPTO_mem_ctrl(int mode)
                 num_disable--;
                 if (num_disable == 0) {
                     mh_mode |= CRYPTO_MEM_CHECK_ENABLE;
-                    CRYPTO_THREAD_unlock(long_malloc_lock);
+                    CRYPTO_THREAD_unlock(long_memdbg_lock);
                 }
             }
         }
         break;
     }
-    CRYPTO_THREAD_unlock(malloc_lock);
+    CRYPTO_THREAD_unlock(memdbg_lock);
     return ret;
 #endif
 }
@@ -199,12 +203,12 @@ static int mem_check_on(void)
             return 0;
 
         cur = CRYPTO_THREAD_get_current_id();
-        CRYPTO_THREAD_read_lock(malloc_lock);
+        CRYPTO_THREAD_read_lock(memdbg_lock);
 
         ret = (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
             || !CRYPTO_THREAD_compare_id(disabling_threadid, cur);
 
-        CRYPTO_THREAD_unlock(malloc_lock);
+        CRYPTO_THREAD_unlock(memdbg_lock);
     }
     return ret;
 }
@@ -598,7 +602,7 @@ int CRYPTO_mem_leaks_cb(int (*cb) (const char *str, size_t len, void *u),
          */
         int old_mh_mode;
 
-        CRYPTO_THREAD_write_lock(malloc_lock);
+        CRYPTO_THREAD_write_lock(memdbg_lock);
 
         /*
          * avoid deadlock when lh_free() uses CRYPTO_mem_debug_free(), which uses
@@ -611,16 +615,16 @@ int CRYPTO_mem_leaks_cb(int (*cb) (const char *str, size_t len, void *u),
         mh = NULL;
 
         mh_mode = old_mh_mode;
-        CRYPTO_THREAD_unlock(malloc_lock);
+        CRYPTO_THREAD_unlock(memdbg_lock);
     }
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_OFF);
 
     /* Clean up locks etc */
     CRYPTO_THREAD_cleanup_local(&appinfokey);
-    CRYPTO_THREAD_lock_free(malloc_lock);
-    CRYPTO_THREAD_lock_free(long_malloc_lock);
-    malloc_lock = NULL;
-    long_malloc_lock = NULL;
+    CRYPTO_THREAD_lock_free(memdbg_lock);
+    CRYPTO_THREAD_lock_free(long_memdbg_lock);
+    memdbg_lock = NULL;
+    long_memdbg_lock = NULL;
 
     return ml.chunks == 0 ? 1 : 0;
 }
