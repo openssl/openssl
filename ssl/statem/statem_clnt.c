@@ -391,10 +391,6 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         /* We only hit this in the case of HelloRetryRequest */
         return WRITE_TRAN_FINISHED;
 
-    case TLS_ST_CR_HELLO_RETRY_REQUEST:
-        st->hand_state = TLS_ST_CW_CLNT_HELLO;
-        return WRITE_TRAN_CONTINUE;
-
     case TLS_ST_CR_FINISHED:
         if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY
                 || s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING)
@@ -499,6 +495,10 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
          * we will be sent
          */
         return WRITE_TRAN_FINISHED;
+
+    case TLS_ST_CR_HELLO_RETRY_REQUEST:
+        st->hand_state = TLS_ST_CW_CLNT_HELLO;
+        return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_EARLY_DATA:
         return WRITE_TRAN_FINISHED;
@@ -1558,7 +1558,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
 static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
 {
     unsigned int sversion;
-    int errorcode;
     const unsigned char *cipherchars;
     RAW_EXTENSION *extensions = NULL;
     int al;
@@ -1578,13 +1577,6 @@ static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
      */
     EVP_CIPHER_CTX_free(s->enc_write_ctx);
     s->enc_write_ctx = NULL;
-
-    /* This will fail if it doesn't choose TLSv1.3+ */
-    errorcode = ssl_choose_client_version(s, sversion, 0, &al);
-    if (errorcode != 0) {
-        SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST, errorcode);
-        goto f_err;
-    }
 
     if (!PACKET_get_bytes(pkt, &cipherchars, TLS_CIPHER_LEN)) {
         SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST, SSL_R_LENGTH_MISMATCH);

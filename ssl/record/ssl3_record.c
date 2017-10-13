@@ -271,8 +271,13 @@ int ssl3_get_record(SSL *s)
                 thisrr->type = type;
                 thisrr->rec_version = version;
 
-                /* Lets check version. In TLSv1.3 we ignore this field */
+                /*
+                 * Lets check version. In TLSv1.3 we ignore this field. For an
+                 * HRR we haven't actually selected TLSv1.3 yet, but we still
+                 * treat it as TLSv1.3, so we must check for that explicitly
+                 */
                 if (!s->first_packet && !SSL_IS_TLS13(s)
+                        && !s->hello_retry_request
                         && version != (unsigned int)s->version) {
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
                     if ((s->version & 0xFF00) == (version & 0xFF00)
