@@ -1057,7 +1057,7 @@ PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx)
     if (rsk == NULL)
         return NULL;
     if (sk_PKCS7_RECIP_INFO_num(rsk) <= idx)
-        return (NULL);
+        return NULL;
     ri = sk_PKCS7_RECIP_INFO_value(rsk, idx);
     return (ri->issuer_and_serial);
 }
@@ -1103,7 +1103,7 @@ int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si,
                                    X509_ATTRIBUTE_dup(sk_X509_ATTRIBUTE_value
                                                       (sk, i))))
             == NULL)
-            return (0);
+            return 0;
     }
     return 1;
 }
@@ -1122,7 +1122,7 @@ int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,
                                    X509_ATTRIBUTE_dup(sk_X509_ATTRIBUTE_value
                                                       (sk, i))))
             == NULL)
-            return (0);
+            return 0;
     }
     return 1;
 }

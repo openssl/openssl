@@ -39,7 +39,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
     ASN1_TYPE *val = NULL;
 
     if ((ret = X509_ATTRIBUTE_new()) == NULL)
-        return (NULL);
+        return NULL;
     ret->object = OBJ_nid2obj(nid);
     if ((val = ASN1_TYPE_new()) == NULL)
         goto err;
@@ -51,5 +51,5 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
  err:
     X509_ATTRIBUTE_free(ret);
     ASN1_TYPE_free(val);
-    return (NULL);
+    return NULL;
 }

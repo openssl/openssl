@@ -57,13 +57,13 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
     return (ret);
  err:
     X509_REQ_free(ret);
-    return (NULL);
+    return NULL;
 }
 
 EVP_PKEY *X509_REQ_get_pubkey(X509_REQ *req)
 {
     if (req == NULL)
-        return (NULL);
+        return NULL;
     return (X509_PUBKEY_get(req->req_info.pubkey));
 }
 
@@ -158,7 +158,7 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
     const unsigned char *p;
 
     if ((req == NULL) || !ext_nids)
-        return (NULL);
+        return NULL;
     for (pnid = ext_nids; *pnid != NID_undef; pnid++) {
         idx = X509_REQ_get_attr_by_NID(req, *pnid, -1);
         if (idx == -1)

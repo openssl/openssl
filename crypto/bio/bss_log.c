@@ -116,7 +116,7 @@ static int slg_new(BIO *bi)
 static int slg_free(BIO *a)
 {
     if (a == NULL)
-        return (0);
+        return 0;
     xcloselog(a);
     return 1;
 }
@@ -196,7 +196,7 @@ static int slg_write(BIO *b, const char *in, int inl)
     };
 
     if ((buf = OPENSSL_malloc(inl + 1)) == NULL) {
-        return (0);
+        return 0;
     }
     strncpy(buf, in, inl);
     buf[inl] = '\0';
@@ -223,7 +223,7 @@ static long slg_ctrl(BIO *b, int cmd, long num, void *ptr)
     default:
         break;
     }
-    return (0);
+    return 0;
 }
 
 static int slg_puts(BIO *bp, const char *str)

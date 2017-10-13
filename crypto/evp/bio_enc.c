@@ -108,7 +108,7 @@ static int enc_read(BIO *b, char *out, int outl)
     BIO *next;
 
     if (out == NULL)
-        return (0);
+        return 0;
     ctx = BIO_get_data(b);
 
     next = BIO_next(b);
@@ -256,7 +256,7 @@ static int enc_write(BIO *b, const char *in, int inl)
     /* at this point all pending data has been written */
 
     if ((in == NULL) || (inl <= 0))
-        return (0);
+        return 0;
 
     ctx->buf_off = 0;
     while (inl > 0) {
@@ -390,7 +390,7 @@ static long enc_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
     BIO *next = BIO_next(b);
 
     if (next == NULL)
-        return (0);
+        return 0;
     switch (cmd) {
     default:
         ret = BIO_callback_ctrl(next, cmd, fp);

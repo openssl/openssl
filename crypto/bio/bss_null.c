@@ -52,13 +52,13 @@ static int null_new(BIO *bi)
 static int null_free(BIO *a)
 {
     if (a == NULL)
-        return (0);
+        return 0;
     return 1;
 }
 
 static int null_read(BIO *b, char *out, int outl)
 {
-    return (0);
+    return 0;
 }
 
 static int null_write(BIO *b, const char *in, int inl)
@@ -93,12 +93,12 @@ static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 static int null_gets(BIO *bp, char *buf, int size)
 {
-    return (0);
+    return 0;
 }
 
 static int null_puts(BIO *bp, const char *str)
 {
     if (str == NULL)
-        return (0);
+        return 0;
     return (strlen(str));
 }

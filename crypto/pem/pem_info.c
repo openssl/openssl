@@ -26,7 +26,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
         PEMerr(PEM_F_PEM_X509_INFO_READ, ERR_R_BUF_LIB);
-        return (0);
+        return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = PEM_X509_INFO_read_bio(b, sk, cb, u);

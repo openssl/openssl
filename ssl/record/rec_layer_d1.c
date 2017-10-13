@@ -21,7 +21,7 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
     DTLS_RECORD_LAYER *d;
 
     if ((d = OPENSSL_malloc(sizeof(*d))) == NULL)
-        return (0);
+        return 0;
 
     rl->d = d;
 
@@ -36,7 +36,7 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
         pqueue_free(d->buffered_app_data.q);
         OPENSSL_free(d);
         rl->d = NULL;
-        return (0);
+        return 0;
     }
 
     return 1;
@@ -179,7 +179,7 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
         OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(rdata);
         pitem_free(item);
-        return (-1);
+        return -1;
     }
 
     /* insert should not fail, since duplicates are dropped */
@@ -188,7 +188,7 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
         OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(rdata);
         pitem_free(item);
-        return (-1);
+        return -1;
     }
 
     return 1;
@@ -208,7 +208,7 @@ int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue)
         return 1;
     }
 
-    return (0);
+    return 0;
 }
 
 /*
@@ -339,7 +339,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     if (!SSL3_BUFFER_is_initialised(&s->rlayer.rbuf)) {
         /* Not initialized yet */
         if (!ssl3_setup_buffers(s))
-            return (-1);
+            return -1;
     }
 
     if ((type && (type != SSL3_RT_APPLICATION_DATA) &&

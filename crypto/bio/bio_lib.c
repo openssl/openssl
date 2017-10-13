@@ -75,7 +75,7 @@ BIO *BIO_new(const BIO_METHOD *method)
 
     if (bio == NULL) {
         BIOerr(BIO_F_BIO_NEW, ERR_R_MALLOC_FAILURE);
-        return (NULL);
+        return NULL;
     }
 
     bio->method = method;
@@ -501,7 +501,7 @@ void *BIO_ptr_ctrl(BIO *b, int cmd, long larg)
     void *p = NULL;
 
     if (BIO_ctrl(b, cmd, larg, (char *)&p) <= 0)
-        return (NULL);
+        return NULL;
     else
         return (p);
 }
@@ -540,7 +540,7 @@ long BIO_callback_ctrl(BIO *b, int cmd,
     long ret;
 
     if (b == NULL)
-        return (0);
+        return 0;
 
     if ((b->method == NULL) || (b->method->callback_ctrl == NULL)) {
         BIOerr(BIO_F_BIO_CALLBACK_CTRL, BIO_R_UNSUPPORTED_METHOD);
@@ -602,7 +602,7 @@ BIO *BIO_pop(BIO *b)
     BIO *ret;
 
     if (b == NULL)
-        return (NULL);
+        return NULL;
     ret = b->next_bio;
 
     BIO_ctrl(b, BIO_CTRL_POP, 0, b);
@@ -664,7 +664,7 @@ BIO *BIO_find_type(BIO *bio, int type)
         }
         bio = bio->next_bio;
     } while (bio != NULL);
-    return (NULL);
+    return NULL;
 }
 
 BIO *BIO_next(BIO *b)
@@ -736,7 +736,7 @@ BIO *BIO_dup_chain(BIO *in)
  err:
     BIO_free_all(ret);
 
-    return (NULL);
+    return NULL;
 }
 
 void BIO_copy_next_retry(BIO *b)

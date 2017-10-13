@@ -119,7 +119,7 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
     BN_free(s->srp_ctx.b);
     BN_free(s->srp_ctx.v);
     memset(&s->srp_ctx, 0, sizeof(s->srp_ctx));
-    return (0);
+    return 0;
 }
 
 int SSL_CTX_SRP_CTX_init(struct ssl_ctx_st *ctx)

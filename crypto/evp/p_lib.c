@@ -68,7 +68,7 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
         return (ret);
     }
 #endif
-    return (0);
+    return 0;
 }
 
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)

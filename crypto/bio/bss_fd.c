@@ -83,7 +83,7 @@ BIO *BIO_new_fd(int fd, int close_flag)
     BIO *ret;
     ret = BIO_new(BIO_s_fd());
     if (ret == NULL)
-        return (NULL);
+        return NULL;
     BIO_set_fd(ret, fd, close_flag);
     return (ret);
 }
@@ -100,7 +100,7 @@ static int fd_new(BIO *bi)
 static int fd_free(BIO *a)
 {
     if (a == NULL)
-        return (0);
+        return 0;
     if (a->shutdown) {
         if (a->init) {
             UP_close(a->num);
@@ -228,7 +228,7 @@ int BIO_fd_should_retry(int i)
 
         return (BIO_fd_non_fatal_error(err));
     }
-    return (0);
+    return 0;
 }
 
 int BIO_fd_non_fatal_error(int err)
@@ -274,6 +274,6 @@ int BIO_fd_non_fatal_error(int err)
     default:
         break;
     }
-    return (0);
+    return 0;
 }
 #endif

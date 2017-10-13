@@ -100,7 +100,7 @@ static int rc2_meth_to_magic(EVP_CIPHER_CTX *e)
     else if (i == 40)
         return (RC2_40_MAGIC);
     else
-        return (0);
+        return 0;
 }
 
 static int rc2_magic_to_meth(int i)
@@ -113,7 +113,7 @@ static int rc2_magic_to_meth(int i)
         return 40;
     else {
         EVPerr(EVP_F_RC2_MAGIC_TO_METH, EVP_R_UNSUPPORTED_KEY_SIZE);
-        return (0);
+        return 0;
     }
 }
 

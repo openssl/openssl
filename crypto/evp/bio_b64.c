@@ -113,7 +113,7 @@ static int b64_read(BIO *b, char *out, int outl)
     BIO *next;
 
     if (out == NULL)
-        return (0);
+        return 0;
     ctx = (BIO_B64_CTX *)BIO_get_data(b);
 
     next = BIO_next(b);
@@ -359,7 +359,7 @@ static int b64_write(BIO *b, const char *in, int inl)
     ctx->buf_len = 0;
 
     if ((in == NULL) || (inl <= 0))
-        return (0);
+        return 0;
 
     while (inl > 0) {
         n = (inl > B64_BLOCK_SIZE) ? B64_BLOCK_SIZE : inl;

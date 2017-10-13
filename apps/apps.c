@@ -2373,7 +2373,7 @@ int raw_read_stdin(void *buf, int siz)
     if (ReadFile(GetStdHandle(STD_INPUT_HANDLE), buf, siz, &n, NULL))
         return (n);
     else
-        return (-1);
+        return -1;
 }
 #elif defined(__VMS)
 # include <sys/socket.h>
@@ -2396,7 +2396,7 @@ int raw_write_stdout(const void *buf, int siz)
     if (WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buf, siz, &n, NULL))
         return (n);
     else
-        return (-1);
+        return -1;
 }
 #else
 int raw_write_stdout(const void *buf, int siz)
