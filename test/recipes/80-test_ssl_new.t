@@ -76,6 +76,7 @@ my %skip = (
   "15-certstatus.conf" => $no_tls || $no_ocsp,
   "16-dtls-certstatus.conf" => $no_dtls || $no_ocsp,
   "18-dtls-renegotiate.conf" => $no_dtls,
+  "19-mac-then-encrypt.conf" => disabled("tls1_2"),
 );
 
 foreach my $conf (@conf_files) {
