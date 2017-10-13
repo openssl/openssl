@@ -1569,6 +1569,13 @@ static MSG_PROCESS_RETURN tls_process_hello_retry_request(SSL *s, PACKET *pkt)
         goto f_err;
     }
 
+    /* TODO(TLS1.3): Remove the TLS1_3_VERSION_DRAFT clause before release */
+    if (sversion != TLS1_3_VERSION && sversion != TLS1_3_VERSION_DRAFT) {
+        SSLerr(SSL_F_TLS_PROCESS_HELLO_RETRY_REQUEST, SSL_R_WRONG_SSL_VERSION);
+        al = SSL_AD_PROTOCOL_VERSION;
+        goto f_err;
+    }
+
     s->hello_retry_request = 1;
 
     /*
