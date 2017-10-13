@@ -44,7 +44,7 @@ BN_bin2bn() converts the positive integer in big-endian form of length
 B<len> at B<s> into a B<BIGNUM> and places it in B<ret>. If B<ret> is
 NULL, a new B<BIGNUM> is created.
 
-BN_bn2lebinpad() and BN_bin2lbn() are identical to BN_bn2binpad() and
+BN_bn2lebinpad() and BN_lebin2bn() are identical to BN_bn2binpad() and
 BN_bin2bn() except the buffer is in little-endian format.
 
 BN_bn2hex() and BN_bn2dec() return printable strings containing the
