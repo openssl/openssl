@@ -882,8 +882,9 @@ void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const unsigned char *iv,
             ctx->Xi.c[14] ^= (u8)(len0 >> 8);
             ctx->Xi.c[15] ^= (u8)(len0);
 #endif
-        } else
+        } else {
             ctx->Xi.u[1] ^= len0;
+        }
 
         GCM_MUL(ctx);
 
