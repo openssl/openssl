@@ -1334,7 +1334,7 @@ static int index_serial_cmp(const OPENSSL_CSTRING *a,
 
     for (aa = a[DB_serial]; *aa == '0'; aa++) ;
     for (bb = b[DB_serial]; *bb == '0'; bb++) ;
-    return (strcmp(aa, bb));
+    return strcmp(aa, bb);
 }
 
 static int index_name_qual(char **a)
@@ -1349,7 +1349,7 @@ static unsigned long index_name_hash(const OPENSSL_CSTRING *a)
 
 int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b)
 {
-    return (strcmp(a[DB_name], b[DB_name]));
+    return strcmp(a[DB_name], b[DB_name]);
 }
 
 static IMPLEMENT_LHASH_HASH_FN(index_serial, OPENSSL_CSTRING)

@@ -101,7 +101,7 @@ static const BIO_METHOD methods_slg = {
 
 const BIO_METHOD *BIO_s_log(void)
 {
-    return (&methods_slg);
+    return &methods_slg;
 }
 
 static int slg_new(BIO *bi)

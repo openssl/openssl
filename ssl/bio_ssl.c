@@ -49,7 +49,7 @@ static const BIO_METHOD methods_sslp = {
 
 const BIO_METHOD *BIO_f_ssl(void)
 {
-    return (&methods_sslp);
+    return &methods_sslp;
 }
 
 static int ssl_new(BIO *bi)

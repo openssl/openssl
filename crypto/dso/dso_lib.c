@@ -225,7 +225,7 @@ long DSO_ctrl(DSO *dso, int cmd, long larg, void *parg)
         DSOerr(DSO_F_DSO_CTRL, DSO_R_UNSUPPORTED);
         return -1;
     }
-    return (dso->meth->dso_ctrl(dso, cmd, larg, parg));
+    return dso->meth->dso_ctrl(dso, cmd, larg, parg);
 }
 
 const char *DSO_get_filename(DSO *dso)

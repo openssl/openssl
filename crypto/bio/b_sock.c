@@ -102,7 +102,7 @@ int BIO_sock_error(int sock)
      */
     i = getsockopt(sock, SOL_SOCKET, SO_ERROR, (void *)&j, &size);
     if (i < 0)
-        return (get_last_socket_error());
+        return get_last_socket_error();
     else
         return j;
 }

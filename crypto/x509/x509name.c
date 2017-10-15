@@ -23,7 +23,7 @@ int X509_NAME_get_text_by_NID(X509_NAME *name, int nid, char *buf, int len)
     obj = OBJ_nid2obj(nid);
     if (obj == NULL)
         return -1;
-    return (X509_NAME_get_text_by_OBJ(name, obj, buf, len));
+    return X509_NAME_get_text_by_OBJ(name, obj, buf, len);
 }
 
 int X509_NAME_get_text_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, char *buf,
@@ -48,7 +48,7 @@ int X509_NAME_entry_count(const X509_NAME *name)
 {
     if (name == NULL)
         return 0;
-    return (sk_X509_NAME_ENTRY_num(name->entries));
+    return sk_X509_NAME_ENTRY_num(name->entries);
 }
 
 int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
@@ -58,7 +58,7 @@ int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
     obj = OBJ_nid2obj(nid);
     if (obj == NULL)
         return -2;
-    return (X509_NAME_get_index_by_OBJ(name, obj, lastpos));
+    return X509_NAME_get_index_by_OBJ(name, obj, lastpos);
 }
 
 /* NOTE: you should be passing -1, not 0 as lastpos */

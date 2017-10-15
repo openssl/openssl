@@ -46,7 +46,7 @@ static const BIO_METHOD methods_linebuffer = {
 
 const BIO_METHOD *BIO_f_linebuffer(void)
 {
-    return (&methods_linebuffer);
+    return &methods_linebuffer;
 }
 
 typedef struct bio_linebuffer_ctx_struct {
@@ -268,7 +268,7 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
                 r = BIO_write(b->next_bio, ctx->obuf, ctx->obuf_len);
                 BIO_copy_next_retry(b);
                 if (r <= 0)
-                    return ((long)r);
+                    return (long)r;
                 if (r < ctx->obuf_len)
                     memmove(ctx->obuf, ctx->obuf + r, ctx->obuf_len - r);
                 ctx->obuf_len -= r;
@@ -314,10 +314,10 @@ static int linebuffer_gets(BIO *b, char *buf, int size)
 {
     if (b->next_bio == NULL)
         return 0;
-    return (BIO_gets(b->next_bio, buf, size));
+    return BIO_gets(b->next_bio, buf, size);
 }
 
 static int linebuffer_puts(BIO *b, const char *str)
 {
-    return (linebuffer_write(b, str, strlen(str)));
+    return linebuffer_write(b, str, strlen(str));
 }

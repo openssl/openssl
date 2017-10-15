@@ -70,7 +70,7 @@ static const BIO_METHOD methods_acceptp = {
 
 const BIO_METHOD *BIO_s_accept(void)
 {
-    return (&methods_acceptp);
+    return &methods_acceptp;
 }
 
 static int acpt_new(BIO *bi)

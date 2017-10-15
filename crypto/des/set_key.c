@@ -368,5 +368,5 @@ void DES_set_key_unchecked(const_DES_cblock *key, DES_key_schedule *schedule)
 
 int DES_key_sched(const_DES_cblock *key, DES_key_schedule *schedule)
 {
-    return (DES_set_key(key, schedule));
+    return DES_set_key(key, schedule);
 }

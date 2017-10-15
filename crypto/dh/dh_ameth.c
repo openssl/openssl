@@ -346,7 +346,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent, int ptype)
 
 static int int_dh_size(const EVP_PKEY *pkey)
 {
-    return (DH_size(pkey->pkey.dh));
+    return DH_size(pkey->pkey.dh);
 }
 
 static int dh_bits(const EVP_PKEY *pkey)

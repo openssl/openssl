@@ -75,7 +75,7 @@ static const BIO_METHOD methods_fdp = {
 
 const BIO_METHOD *BIO_s_fd(void)
 {
-    return (&methods_fdp);
+    return &methods_fdp;
 }
 
 BIO *BIO_new_fd(int fd, int close_flag)
@@ -226,7 +226,7 @@ int BIO_fd_should_retry(int i)
     if ((i == 0) || (i == -1)) {
         err = get_last_sys_error();
 
-        return (BIO_fd_non_fatal_error(err));
+        return BIO_fd_non_fatal_error(err);
     }
     return 0;
 }

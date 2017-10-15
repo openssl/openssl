@@ -140,7 +140,7 @@ static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname)
             ERR_add_error_data(4, "symname(", symname, "): ", errbuf);
         return NULL;
     }
-    return ((DSO_FUNC_TYPE)sym);
+    return (DSO_FUNC_TYPE)sym;
 }
 
 static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)

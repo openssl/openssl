@@ -32,7 +32,7 @@ char *EVP_get_pw_prompt(void)
     if (prompt_string[0] == '\0')
         return NULL;
     else
-        return (prompt_string);
+        return prompt_string;
 }
 
 /*

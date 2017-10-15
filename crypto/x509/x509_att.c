@@ -29,7 +29,7 @@ int X509at_get_attr_by_NID(const STACK_OF(X509_ATTRIBUTE) *x, int nid,
 
     if (obj == NULL)
         return -2;
-    return (X509at_get_attr_by_OBJ(x, obj, lastpos));
+    return X509at_get_attr_by_OBJ(x, obj, lastpos);
 }
 
 int X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk,

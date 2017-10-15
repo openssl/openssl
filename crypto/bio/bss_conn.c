@@ -243,7 +243,7 @@ void BIO_CONNECT_free(BIO_CONNECT *a)
 
 const BIO_METHOD *BIO_s_connect(void)
 {
-    return (&methods_connectp);
+    return &methods_connectp;
 }
 
 static int conn_new(BIO *bi)

@@ -65,13 +65,13 @@ void BN_set_params(int mult, int high, int low, int mont)
 int BN_get_params(int which)
 {
     if (which == 0)
-        return (bn_limit_bits);
+        return bn_limit_bits;
     else if (which == 1)
-        return (bn_limit_bits_high);
+        return bn_limit_bits_high;
     else if (which == 2)
-        return (bn_limit_bits_low);
+        return bn_limit_bits_low;
     else if (which == 3)
-        return (bn_limit_bits_mont);
+        return bn_limit_bits_mont;
     else
         return 0;
 }
@@ -83,7 +83,7 @@ const BIGNUM *BN_value_one(void)
     static const BIGNUM const_one =
         { (BN_ULONG *)&data_one, 1, 1, 0, BN_FLG_STATIC_DATA };
 
-    return (&const_one);
+    return &const_one;
 }
 
 int BN_num_bits_word(BN_ULONG l)

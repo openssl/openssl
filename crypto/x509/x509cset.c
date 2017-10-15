@@ -24,14 +24,14 @@ int X509_CRL_set_version(X509_CRL *x, long version)
         if ((x->crl.version = ASN1_INTEGER_new()) == NULL)
             return 0;
     }
-    return (ASN1_INTEGER_set(x->crl.version, version));
+    return ASN1_INTEGER_set(x->crl.version, version);
 }
 
 int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name)
 {
     if (x == NULL)
         return 0;
-    return (X509_NAME_set(&x->crl.issuer, name));
+    return X509_NAME_set(&x->crl.issuer, name);
 }
 
 int X509_CRL_set1_lastUpdate(X509_CRL *x, const ASN1_TIME *tm)

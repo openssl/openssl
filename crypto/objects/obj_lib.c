@@ -21,7 +21,7 @@ ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
         return NULL;
     /* If object isn't dynamic it's an internal OID which is never freed */
     if (!(o->flags & ASN1_OBJECT_FLAG_DYNAMIC))
-        return ((ASN1_OBJECT *)o);
+        return (ASN1_OBJECT *)o;
 
     r = ASN1_OBJECT_new();
     if (r == NULL) {
@@ -61,5 +61,5 @@ int OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b)
     ret = (a->length - b->length);
     if (ret)
         return ret;
-    return (memcmp(a->data, b->data, a->length));
+    return memcmp(a->data, b->data, a->length);
 }

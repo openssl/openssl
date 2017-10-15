@@ -25,7 +25,7 @@ int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
     i = ASN1_INTEGER_cmp(&ai->serialNumber, &bi->serialNumber);
     if (i)
         return i;
-    return (X509_NAME_cmp(ai->issuer, bi->issuer));
+    return X509_NAME_cmp(ai->issuer, bi->issuer);
 }
 
 #ifndef OPENSSL_NO_MD5
@@ -61,17 +61,17 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
 
 int X509_issuer_name_cmp(const X509 *a, const X509 *b)
 {
-    return (X509_NAME_cmp(a->cert_info.issuer, b->cert_info.issuer));
+    return X509_NAME_cmp(a->cert_info.issuer, b->cert_info.issuer);
 }
 
 int X509_subject_name_cmp(const X509 *a, const X509 *b)
 {
-    return (X509_NAME_cmp(a->cert_info.subject, b->cert_info.subject));
+    return X509_NAME_cmp(a->cert_info.subject, b->cert_info.subject);
 }
 
 int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b)
 {
-    return (X509_NAME_cmp(a->crl.issuer, b->crl.issuer));
+    return X509_NAME_cmp(a->crl.issuer, b->crl.issuer);
 }
 
 int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
@@ -81,24 +81,24 @@ int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
 
 X509_NAME *X509_get_issuer_name(const X509 *a)
 {
-    return (a->cert_info.issuer);
+    return a->cert_info.issuer;
 }
 
 unsigned long X509_issuer_name_hash(X509 *x)
 {
-    return (X509_NAME_hash(x->cert_info.issuer));
+    return X509_NAME_hash(x->cert_info.issuer);
 }
 
 #ifndef OPENSSL_NO_MD5
 unsigned long X509_issuer_name_hash_old(X509 *x)
 {
-    return (X509_NAME_hash_old(x->cert_info.issuer));
+    return X509_NAME_hash_old(x->cert_info.issuer);
 }
 #endif
 
 X509_NAME *X509_get_subject_name(const X509 *a)
 {
-    return (a->cert_info.subject);
+    return a->cert_info.subject;
 }
 
 ASN1_INTEGER *X509_get_serialNumber(X509 *a)
@@ -113,13 +113,13 @@ const ASN1_INTEGER *X509_get0_serialNumber(const X509 *a)
 
 unsigned long X509_subject_name_hash(X509 *x)
 {
-    return (X509_NAME_hash(x->cert_info.subject));
+    return X509_NAME_hash(x->cert_info.subject);
 }
 
 #ifndef OPENSSL_NO_MD5
 unsigned long X509_subject_name_hash_old(X509 *x)
 {
-    return (X509_NAME_hash_old(x->cert_info.subject));
+    return X509_NAME_hash_old(x->cert_info.subject);
 }
 #endif
 

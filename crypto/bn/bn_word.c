@@ -55,7 +55,7 @@ BN_ULONG BN_mod_word(const BIGNUM *a, BN_ULONG w)
                            (BN_ULLONG) w);
 #endif
     }
-    return ((BN_ULONG)ret);
+    return (BN_ULONG)ret;
 }
 
 BN_ULONG BN_div_word(BIGNUM *a, BN_ULONG w)

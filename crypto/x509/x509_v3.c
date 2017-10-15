@@ -21,7 +21,7 @@ int X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x)
 {
     if (x == NULL)
         return 0;
-    return (sk_X509_EXTENSION_num(x));
+    return sk_X509_EXTENSION_num(x);
 }
 
 int X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x, int nid,
@@ -32,7 +32,7 @@ int X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x, int nid,
     obj = OBJ_nid2obj(nid);
     if (obj == NULL)
         return -2;
-    return (X509v3_get_ext_by_OBJ(x, obj, lastpos));
+    return X509v3_get_ext_by_OBJ(x, obj, lastpos);
 }
 
 int X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,

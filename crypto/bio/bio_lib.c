@@ -493,7 +493,7 @@ long BIO_int_ctrl(BIO *b, int cmd, long larg, int iarg)
     int i;
 
     i = iarg;
-    return (BIO_ctrl(b, cmd, larg, (char *)&i));
+    return BIO_ctrl(b, cmd, larg, (char *)&i);
 }
 
 void *BIO_ptr_ctrl(BIO *b, int cmd, long larg)
@@ -637,7 +637,7 @@ BIO *BIO_get_retry_BIO(BIO *bio, int *reason)
 
 int BIO_get_retry_reason(BIO *bio)
 {
-    return (bio->retry_reason);
+    return bio->retry_reason;
 }
 
 void BIO_set_retry_reason(BIO *bio, int reason)
@@ -747,12 +747,12 @@ void BIO_copy_next_retry(BIO *b)
 
 int BIO_set_ex_data(BIO *bio, int idx, void *data)
 {
-    return (CRYPTO_set_ex_data(&(bio->ex_data), idx, data));
+    return CRYPTO_set_ex_data(&(bio->ex_data), idx, data);
 }
 
 void *BIO_get_ex_data(BIO *bio, int idx)
 {
-    return (CRYPTO_get_ex_data(&(bio->ex_data), idx));
+    return CRYPTO_get_ex_data(&(bio->ex_data), idx);
 }
 
 uint64_t BIO_number_read(BIO *bio)

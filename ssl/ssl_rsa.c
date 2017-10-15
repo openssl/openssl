@@ -37,7 +37,7 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
         return 0;
     }
 
-    return (ssl_set_cert(ssl->cert, x));
+    return ssl_set_cert(ssl->cert, x);
 }
 
 int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
@@ -310,7 +310,7 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
         SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE, rv);
         return 0;
     }
-    return (ssl_set_cert(ctx->cert, x));
+    return ssl_set_cert(ctx->cert, x);
 }
 
 static int ssl_set_cert(CERT *c, X509 *x)
@@ -521,7 +521,7 @@ int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
         SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    return (ssl_set_pkey(ctx->cert, pkey));
+    return ssl_set_pkey(ctx->cert, pkey);
 }
 
 int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)

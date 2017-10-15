@@ -165,12 +165,12 @@ int DSA_size(const DSA *r)
 
 int DSA_set_ex_data(DSA *d, int idx, void *arg)
 {
-    return (CRYPTO_set_ex_data(&d->ex_data, idx, arg));
+    return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
 }
 
 void *DSA_get_ex_data(DSA *d, int idx)
 {
-    return (CRYPTO_get_ex_data(&d->ex_data, idx));
+    return CRYPTO_get_ex_data(&d->ex_data, idx);
 }
 
 int DSA_security_bits(const DSA *d)

@@ -3276,7 +3276,7 @@ long ssl3_default_timeout(void)
 
 int ssl3_num_ciphers(void)
 {
-    return (SSL3_NUM_CIPHERS);
+    return SSL3_NUM_CIPHERS;
 }
 
 const SSL_CIPHER *ssl3_get_cipher(unsigned int u)

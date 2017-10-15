@@ -46,7 +46,7 @@ static const BIO_METHOD methods_md = {
 
 const BIO_METHOD *BIO_f_md(void)
 {
-    return (&methods_md);
+    return &methods_md;
 }
 
 static int md_new(BIO *bi)
@@ -228,5 +228,5 @@ static int md_gets(BIO *bp, char *buf, int size)
     if (EVP_DigestFinal_ex(ctx, (unsigned char *)buf, &ret) <= 0)
         return -1;
 
-    return ((int)ret);
+    return (int)ret;
 }

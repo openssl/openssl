@@ -95,7 +95,7 @@ char *_CONF_get_string(const CONF *conf, const char *section,
         else
             return NULL;
     } else
-        return (getenv(name));
+        return getenv(name);
 }
 
 static unsigned long conf_value_hash(const CONF_VALUE *v)

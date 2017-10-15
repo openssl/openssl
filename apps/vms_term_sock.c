@@ -184,7 +184,7 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
                 close (TerminalSocketPair[0]);
             if (TerminalSocketPair[1])
                 close (TerminalSocketPair[1]);
-            return (TERM_SOCK_FAILURE);
+            return TERM_SOCK_FAILURE;
         }
 
         /*
@@ -197,7 +197,7 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
             LogMessage ("TerminalSocket: SYS$ASSIGN () - %08X", status);
             close (TerminalSocketPair[0]);
             close (TerminalSocketPair[1]);
-            return (TERM_SOCK_FAILURE);
+            return TERM_SOCK_FAILURE;
         }
 
         /*
@@ -216,7 +216,7 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
             LogMessage ("TerminalSocket: SYS$QIO () - %08X", status);
             close (TerminalSocketPair[0]);
             close (TerminalSocketPair[1]);
-            return (TERM_SOCK_FAILURE);
+            return TERM_SOCK_FAILURE;
         }
 
         /*
@@ -234,7 +234,7 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
             LogMessage ("TerminalSocket: SYS$CANCEL () - %08X", status);
             close (TerminalSocketPair[0]);
             close (TerminalSocketPair[1]);
-            return (TERM_SOCK_FAILURE);
+            return TERM_SOCK_FAILURE;
         }
 
         /*
@@ -245,7 +245,7 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
             LogMessage ("TerminalSocket: SYS$DASSGN () - %08X", status);
             close (TerminalSocketPair[0]);
             close (TerminalSocketPair[1]);
-            return (TERM_SOCK_FAILURE);
+            return TERM_SOCK_FAILURE;
         }
 
         /*
@@ -265,14 +265,14 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
 	** Invalid function code
 	*/
         LogMessage ("TerminalSocket: Invalid Function Code - %d", FunctionCode);
-        return (TERM_SOCK_FAILURE);
+        return TERM_SOCK_FAILURE;
         break;
     }
 
     /*
     ** Return success
     */
-    return (TERM_SOCK_SUCCESS);
+    return TERM_SOCK_SUCCESS;
 
 }
 

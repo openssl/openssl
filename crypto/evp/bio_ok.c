@@ -125,7 +125,7 @@ static const BIO_METHOD methods_ok = {
 
 const BIO_METHOD *BIO_f_reliable(void)
 {
-    return (&methods_ok);
+    return &methods_ok;
 }
 
 static int ok_new(BIO *bi)

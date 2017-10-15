@@ -43,7 +43,7 @@ static const BIO_METHOD methods_nullf = {
 
 const BIO_METHOD *BIO_f_null(void)
 {
-    return (&methods_nullf);
+    return &methods_nullf;
 }
 
 static int nullf_new(BIO *bi)
@@ -133,12 +133,12 @@ static int nullf_gets(BIO *bp, char *buf, int size)
 {
     if (bp->next_bio == NULL)
         return 0;
-    return (BIO_gets(bp->next_bio, buf, size));
+    return BIO_gets(bp->next_bio, buf, size);
 }
 
 static int nullf_puts(BIO *bp, const char *str)
 {
     if (bp->next_bio == NULL)
         return 0;
-    return (BIO_puts(bp->next_bio, str));
+    return BIO_puts(bp->next_bio, str);
 }

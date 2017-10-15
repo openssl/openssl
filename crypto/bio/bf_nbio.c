@@ -50,7 +50,7 @@ static const BIO_METHOD methods_nbiof = {
 
 const BIO_METHOD *BIO_f_nbio_test(void)
 {
-    return (&methods_nbiof);
+    return &methods_nbiof;
 }
 
 static int nbiof_new(BIO *bi)
@@ -187,12 +187,12 @@ static int nbiof_gets(BIO *bp, char *buf, int size)
 {
     if (bp->next_bio == NULL)
         return 0;
-    return (BIO_gets(bp->next_bio, buf, size));
+    return BIO_gets(bp->next_bio, buf, size);
 }
 
 static int nbiof_puts(BIO *bp, const char *str)
 {
     if (bp->next_bio == NULL)
         return 0;
-    return (BIO_puts(bp->next_bio, str));
+    return BIO_puts(bp->next_bio, str);
 }

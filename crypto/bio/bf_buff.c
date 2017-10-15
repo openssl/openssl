@@ -41,7 +41,7 @@ static const BIO_METHOD methods_buffer = {
 
 const BIO_METHOD *BIO_f_buffer(void)
 {
-    return (&methods_buffer);
+    return &methods_buffer;
 }
 
 static int buffer_new(BIO *bi)
@@ -368,7 +368,7 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
                               &(ctx->obuf[ctx->obuf_off]), ctx->obuf_len);
                 BIO_copy_next_retry(b);
                 if (r <= 0)
-                    return ((long)r);
+                    return (long)r;
                 ctx->obuf_off += r;
                 ctx->obuf_len -= r;
             } else {
@@ -471,5 +471,5 @@ static int buffer_gets(BIO *b, char *buf, int size)
 
 static int buffer_puts(BIO *b, const char *str)
 {
-    return (buffer_write(b, str, strlen(str)));
+    return buffer_write(b, str, strlen(str));
 }

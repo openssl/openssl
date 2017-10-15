@@ -184,7 +184,7 @@ static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname)
         ERR_add_error_data(3, "symname(", symname, ")");
         return NULL;
     }
-    return ((DSO_FUNC_TYPE)sym.f);
+    return (DSO_FUNC_TYPE)sym.f;
 }
 
 struct file_st {

@@ -177,7 +177,7 @@ int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a)
     int i;
 
     if ((a == NULL) || (a->data == NULL))
-        return (BIO_write(bp, "NULL", 4));
+        return BIO_write(bp, "NULL", 4);
     i = i2t_ASN1_OBJECT(buf, sizeof buf, a);
     if (i > (int)(sizeof(buf) - 1)) {
         p = OPENSSL_malloc(i + 1);
@@ -367,5 +367,5 @@ ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,
     o.length = len;
     o.flags = ASN1_OBJECT_FLAG_DYNAMIC | ASN1_OBJECT_FLAG_DYNAMIC_STRINGS |
         ASN1_OBJECT_FLAG_DYNAMIC_DATA;
-    return (OBJ_dup(&o));
+    return OBJ_dup(&o);
 }

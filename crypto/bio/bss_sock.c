@@ -53,7 +53,7 @@ static const BIO_METHOD methods_sockp = {
 
 const BIO_METHOD *BIO_s_socket(void)
 {
-    return (&methods_sockp);
+    return &methods_sockp;
 }
 
 BIO *BIO_new_socket(int fd, int close_flag)
@@ -174,7 +174,7 @@ int BIO_sock_should_retry(int i)
     if ((i == 0) || (i == -1)) {
         err = get_last_socket_error();
 
-        return (BIO_sock_non_fatal_error(err));
+        return BIO_sock_non_fatal_error(err);
     }
     return 0;
 }

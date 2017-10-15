@@ -1059,17 +1059,17 @@ PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx)
     if (sk_PKCS7_RECIP_INFO_num(rsk) <= idx)
         return NULL;
     ri = sk_PKCS7_RECIP_INFO_value(rsk, idx);
-    return (ri->issuer_and_serial);
+    return ri->issuer_and_serial;
 }
 
 ASN1_TYPE *PKCS7_get_signed_attribute(PKCS7_SIGNER_INFO *si, int nid)
 {
-    return (get_attribute(si->auth_attr, nid));
+    return get_attribute(si->auth_attr, nid);
 }
 
 ASN1_TYPE *PKCS7_get_attribute(PKCS7_SIGNER_INFO *si, int nid)
 {
-    return (get_attribute(si->unauth_attr, nid));
+    return get_attribute(si->unauth_attr, nid);
 }
 
 static ASN1_TYPE *get_attribute(STACK_OF(X509_ATTRIBUTE) *sk, int nid)
@@ -1130,13 +1130,13 @@ int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,
 int PKCS7_add_signed_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
                                void *value)
 {
-    return (add_attribute(&(p7si->auth_attr), nid, atrtype, value));
+    return add_attribute(&(p7si->auth_attr), nid, atrtype, value);
 }
 
 int PKCS7_add_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
                         void *value)
 {
-    return (add_attribute(&(p7si->unauth_attr), nid, atrtype, value));
+    return add_attribute(&(p7si->unauth_attr), nid, atrtype, value);
 }
 
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,

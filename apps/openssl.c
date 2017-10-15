@@ -549,7 +549,7 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
         }
     }
     if (fp != NULL) {
-        return (fp->func(argc, argv));
+        return fp->func(argc, argv);
     }
     if ((strncmp(argv[0], "no-", 3)) == 0) {
         /*

@@ -53,12 +53,12 @@ SSL_SESSION *SSL_get1_session(SSL *ssl)
 
 int SSL_SESSION_set_ex_data(SSL_SESSION *s, int idx, void *arg)
 {
-    return (CRYPTO_set_ex_data(&s->ex_data, idx, arg));
+    return CRYPTO_set_ex_data(&s->ex_data, idx, arg);
 }
 
 void *SSL_SESSION_get_ex_data(const SSL_SESSION *s, int idx)
 {
-    return (CRYPTO_get_ex_data(&s->ex_data, idx));
+    return CRYPTO_get_ex_data(&s->ex_data, idx);
 }
 
 SSL_SESSION *SSL_SESSION_new(void)
@@ -1011,7 +1011,7 @@ long SSL_CTX_get_timeout(const SSL_CTX *s)
 {
     if (s == NULL)
         return 0;
-    return (s->session_timeout);
+    return s->session_timeout;
 }
 
 int SSL_set_session_secret_cb(SSL *s,

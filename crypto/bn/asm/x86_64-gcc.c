@@ -268,7 +268,7 @@ BN_ULONG bn_sub_words(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
     int c = 0;
 
     if (n <= 0)
-        return ((BN_ULONG)0);
+        return (BN_ULONG)0;
 
     for (;;) {
         t1 = a[0];

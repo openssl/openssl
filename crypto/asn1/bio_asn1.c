@@ -95,7 +95,7 @@ static const BIO_METHOD methods_asn1 = {
 
 const BIO_METHOD *BIO_f_asn1(void)
 {
-    return (&methods_asn1);
+    return &methods_asn1;
 }
 
 static int asn1_bio_new(BIO *b)

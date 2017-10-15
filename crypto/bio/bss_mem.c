@@ -70,7 +70,7 @@ typedef struct bio_buf_mem_st {
 
 const BIO_METHOD *BIO_s_mem(void)
 {
-    return (&mem_method);
+    return &mem_method;
 }
 
 const BIO_METHOD *BIO_s_secmem(void)
@@ -130,17 +130,17 @@ static int mem_init(BIO *bi, unsigned long flags)
 
 static int mem_new(BIO *bi)
 {
-    return (mem_init(bi, 0L));
+    return mem_init(bi, 0L);
 }
 
 static int secmem_new(BIO *bi)
 {
-    return (mem_init(bi, BUF_MEM_FLAG_SECURE));
+    return mem_init(bi, BUF_MEM_FLAG_SECURE);
 }
 
 static int mem_free(BIO *a)
 {
-    return (mem_buf_free(a, 1));
+    return mem_buf_free(a, 1);
 }
 
 static int mem_buf_free(BIO *a, int free_all)

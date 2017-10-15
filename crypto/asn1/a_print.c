@@ -21,7 +21,7 @@ int ASN1_PRINTABLE_type(const unsigned char *s, int len)
     if (len <= 0)
         len = -1;
     if (s == NULL)
-        return (V_ASN1_PRINTABLESTRING);
+        return V_ASN1_PRINTABLESTRING;
 
     while ((*s) && (len-- != 0)) {
         c = *(s++);
@@ -31,10 +31,10 @@ int ASN1_PRINTABLE_type(const unsigned char *s, int len)
             t61 = 1;
     }
     if (t61)
-        return (V_ASN1_T61STRING);
+        return V_ASN1_T61STRING;
     if (ia5)
-        return (V_ASN1_IA5STRING);
-    return (V_ASN1_PRINTABLESTRING);
+        return V_ASN1_IA5STRING;
+    return V_ASN1_PRINTABLESTRING;
 }
 
 int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s)

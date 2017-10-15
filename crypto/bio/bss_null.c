@@ -38,7 +38,7 @@ static const BIO_METHOD null_method = {
 
 const BIO_METHOD *BIO_s_null(void)
 {
-    return (&null_method);
+    return &null_method;
 }
 
 static int null_new(BIO *bi)
@@ -100,5 +100,5 @@ static int null_puts(BIO *bp, const char *str)
 {
     if (str == NULL)
         return 0;
-    return (strlen(str));
+    return strlen(str);
 }
