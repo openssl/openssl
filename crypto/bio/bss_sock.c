@@ -64,7 +64,7 @@ BIO *BIO_new_socket(int fd, int close_flag)
     if (ret == NULL)
         return NULL;
     BIO_set_fd(ret, fd, close_flag);
-    return (ret);
+    return ret;
 }
 
 static int sock_new(BIO *bi)
@@ -103,7 +103,7 @@ static int sock_read(BIO *b, char *out, int outl)
                 BIO_set_retry_read(b);
         }
     }
-    return (ret);
+    return ret;
 }
 
 static int sock_write(BIO *b, const char *in, int inl)
@@ -117,7 +117,7 @@ static int sock_write(BIO *b, const char *in, int inl)
         if (BIO_sock_should_retry(ret))
             BIO_set_retry_write(b);
     }
-    return (ret);
+    return ret;
 }
 
 static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -155,7 +155,7 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 0;
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int sock_puts(BIO *bp, const char *str)
@@ -164,7 +164,7 @@ static int sock_puts(BIO *bp, const char *str)
 
     n = strlen(str);
     ret = sock_write(bp, str, n);
-    return (ret);
+    return ret;
 }
 
 int BIO_sock_should_retry(int i)

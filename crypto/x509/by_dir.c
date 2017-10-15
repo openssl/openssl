@@ -89,7 +89,7 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
             ret = add_cert_dir(ld, argp, (int)argl);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int new_dir(X509_LOOKUP *lu)
@@ -386,5 +386,5 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     }
  finish:
     BUF_MEM_free(b);
-    return (ok);
+    return ok;
 }

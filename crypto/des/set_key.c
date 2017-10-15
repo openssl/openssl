@@ -295,7 +295,7 @@ int DES_set_key_checked(const_DES_cblock *key, DES_key_schedule *schedule)
     if (!DES_check_key_parity(key))
         return -1;
     if (DES_is_weak_key(key))
-        return (-2);
+        return -2;
     DES_set_key_unchecked(key, schedule);
     return 0;
 }

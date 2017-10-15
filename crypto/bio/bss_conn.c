@@ -216,7 +216,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
     if (cb != NULL)
         ret = cb((BIO *)b, c->state, ret);
  end:
-    return (ret);
+    return ret;
 }
 
 BIO_CONNECT *BIO_CONNECT_new(void)
@@ -227,7 +227,7 @@ BIO_CONNECT *BIO_CONNECT_new(void)
         return NULL;
     ret->state = BIO_CONN_S_BEFORE;
     ret->connect_family = BIO_FAMILY_IPANY;
-    return (ret);
+    return ret;
 }
 
 void BIO_CONNECT_free(BIO_CONNECT *a)
@@ -298,7 +298,7 @@ static int conn_read(BIO *b, char *out, int outl)
     if (data->state != BIO_CONN_S_OK) {
         ret = conn_state(b, data);
         if (ret <= 0)
-            return (ret);
+            return ret;
     }
 
     if (out != NULL) {
@@ -310,7 +310,7 @@ static int conn_read(BIO *b, char *out, int outl)
                 BIO_set_retry_read(b);
         }
     }
-    return (ret);
+    return ret;
 }
 
 static int conn_write(BIO *b, const char *in, int inl)
@@ -322,7 +322,7 @@ static int conn_write(BIO *b, const char *in, int inl)
     if (data->state != BIO_CONN_S_OK) {
         ret = conn_state(b, data);
         if (ret <= 0)
-            return (ret);
+            return ret;
     }
 
     clear_socket_error();
@@ -332,7 +332,7 @@ static int conn_write(BIO *b, const char *in, int inl)
         if (BIO_sock_should_retry(ret))
             BIO_set_retry_write(b);
     }
-    return (ret);
+    return ret;
 }
 
 static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -492,7 +492,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 0;
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static long conn_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
@@ -513,7 +513,7 @@ static long conn_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
         ret = 0;
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int conn_puts(BIO *bp, const char *str)
@@ -522,7 +522,7 @@ static int conn_puts(BIO *bp, const char *str)
 
     n = strlen(str);
     ret = conn_write(bp, str, n);
-    return (ret);
+    return ret;
 }
 
 BIO *BIO_new_connect(const char *str)
@@ -533,7 +533,7 @@ BIO *BIO_new_connect(const char *str)
     if (ret == NULL)
         return NULL;
     if (BIO_set_conn_hostname(ret, str))
-        return (ret);
+        return ret;
     BIO_free(ret);
     return NULL;
 }

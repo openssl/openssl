@@ -394,7 +394,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = BIO_ctrl(ssl->rbio, cmd, num, ptr);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static long ssl_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
@@ -419,7 +419,7 @@ static long ssl_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
         ret = BIO_callback_ctrl(ssl->rbio, cmd, fp);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int ssl_puts(BIO *bp, const char *str)
@@ -428,7 +428,7 @@ static int ssl_puts(BIO *bp, const char *str)
 
     n = strlen(str);
     ret = BIO_write(bp, str, n);
-    return (ret);
+    return ret;
 }
 
 BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
@@ -442,7 +442,7 @@ BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
         goto err;
     if ((ret = BIO_push(buf, ssl)) == NULL)
         goto err;
-    return (ret);
+    return ret;
  err:
     BIO_free(buf);
     BIO_free(ssl);
@@ -461,7 +461,7 @@ BIO *BIO_new_ssl_connect(SSL_CTX *ctx)
         goto err;
     if ((ret = BIO_push(ssl, con)) == NULL)
         goto err;
-    return (ret);
+    return ret;
  err:
     BIO_free(con);
 #endif
@@ -485,7 +485,7 @@ BIO *BIO_new_ssl(SSL_CTX *ctx, int client)
         SSL_set_accept_state(ssl);
 
     BIO_set_ssl(ret, ssl, BIO_CLOSE);
-    return (ret);
+    return ret;
 }
 
 int BIO_ssl_copy_session_id(BIO *t, BIO *f)

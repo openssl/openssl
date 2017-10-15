@@ -31,7 +31,7 @@ int X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x, int nid,
 
     obj = OBJ_nid2obj(nid);
     if (obj == NULL)
-        return (-2);
+        return -2;
     return (X509v3_get_ext_by_OBJ(x, obj, lastpos));
 }
 
@@ -50,7 +50,7 @@ int X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *sk,
     for (; lastpos < n; lastpos++) {
         ex = sk_X509_EXTENSION_value(sk, lastpos);
         if (OBJ_cmp(ex->object, obj) == 0)
-            return (lastpos);
+            return lastpos;
     }
     return -1;
 }
@@ -70,7 +70,7 @@ int X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int crit,
     for (; lastpos < n; lastpos++) {
         ex = sk_X509_EXTENSION_value(sk, lastpos);
         if (((ex->critical > 0) && crit) || ((ex->critical <= 0) && !crit))
-            return (lastpos);
+            return lastpos;
     }
     return -1;
 }
@@ -90,7 +90,7 @@ X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc)
     if (x == NULL || sk_X509_EXTENSION_num(x) <= loc || loc < 0)
         return NULL;
     ret = sk_X509_EXTENSION_delete(x, loc);
-    return (ret);
+    return ret;
 }
 
 STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
@@ -123,7 +123,7 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
         goto err;
     if (*x == NULL)
         *x = sk;
-    return (sk);
+    return sk;
  err:
     X509err(X509_F_X509V3_ADD_EXT, ERR_R_MALLOC_FAILURE);
  err2:
@@ -147,7 +147,7 @@ X509_EXTENSION *X509_EXTENSION_create_by_NID(X509_EXTENSION **ex, int nid,
     ret = X509_EXTENSION_create_by_OBJ(ex, obj, crit, data);
     if (ret == NULL)
         ASN1_OBJECT_free(obj);
-    return (ret);
+    return ret;
 }
 
 X509_EXTENSION *X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex,
@@ -174,7 +174,7 @@ X509_EXTENSION *X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex,
 
     if ((ex != NULL) && (*ex == NULL))
         *ex = ret;
-    return (ret);
+    return ret;
  err:
     if ((ex == NULL) || (ret != *ex))
         X509_EXTENSION_free(ret);
@@ -214,7 +214,7 @@ ASN1_OBJECT *X509_EXTENSION_get_object(X509_EXTENSION *ex)
 {
     if (ex == NULL)
         return NULL;
-    return (ex->object);
+    return ex->object;
 }
 
 ASN1_OCTET_STRING *X509_EXTENSION_get_data(X509_EXTENSION *ex)

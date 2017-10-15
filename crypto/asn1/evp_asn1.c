@@ -43,7 +43,7 @@ int ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_l
     else
         num = max_len;
     memcpy(data, p, num);
-    return (ret);
+    return ret;
 }
 
 typedef struct {

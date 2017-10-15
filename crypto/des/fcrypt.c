@@ -145,5 +145,5 @@ char *DES_fcrypt(const char *buf, const char *salt, char *ret)
         ret[i] = cov_2char[c];
     }
     ret[13] = '\0';
-    return (ret);
+    return ret;
 }

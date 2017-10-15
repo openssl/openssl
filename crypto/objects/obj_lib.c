@@ -60,6 +60,6 @@ int OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b)
 
     ret = (a->length - b->length);
     if (ret)
-        return (ret);
+        return ret;
     return (memcmp(a->data, b->data, a->length));
 }

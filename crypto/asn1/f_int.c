@@ -46,7 +46,7 @@ int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
             n += 2;
         }
     }
-    return (n);
+    return n;
  err:
     return -1;
 }

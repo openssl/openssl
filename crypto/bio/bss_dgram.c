@@ -147,7 +147,7 @@ BIO *BIO_new_dgram(int fd, int close_flag)
     if (ret == NULL)
         return NULL;
     BIO_set_fd(ret, fd, close_flag);
-    return (ret);
+    return ret;
 }
 
 static int dgram_new(BIO *bi)
@@ -325,7 +325,7 @@ static int dgram_read(BIO *b, char *out, int outl)
 
         dgram_reset_rcv_timeout(b);
     }
-    return (ret);
+    return ret;
 }
 
 static int dgram_write(BIO *b, const char *in, int inl)
@@ -355,7 +355,7 @@ static int dgram_write(BIO *b, const char *in, int inl)
             data->_errno = get_last_socket_error();
         }
     }
-    return (ret);
+    return ret;
 }
 
 static long dgram_get_mtu_overhead(bio_dgram_data *data)
@@ -799,7 +799,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 0;
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int dgram_puts(BIO *bp, const char *str)
@@ -808,7 +808,7 @@ static int dgram_puts(BIO *bp, const char *str)
 
     n = strlen(str);
     ret = dgram_write(bp, str, n);
-    return (ret);
+    return ret;
 }
 
 # ifndef OPENSSL_NO_SCTP
@@ -946,7 +946,7 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
         return NULL;
     }
 
-    return (bio);
+    return bio;
 }
 
 int BIO_dgram_is_sctp(BIO *bio)
@@ -1222,7 +1222,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
             data->peer_auth_tested = 1;
         }
     }
-    return (ret);
+    return ret;
 }
 
 /*
@@ -1338,7 +1338,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
             data->_errno = get_last_socket_error();
         }
     }
-    return (ret);
+    return ret;
 }
 
 static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -1573,7 +1573,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = dgram_ctrl(b, cmd, num, ptr);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 int BIO_dgram_sctp_notification_cb(BIO *b,
@@ -1830,7 +1830,7 @@ static int dgram_sctp_puts(BIO *bp, const char *str)
 
     n = strlen(str);
     ret = dgram_sctp_write(bp, str, n);
-    return (ret);
+    return ret;
 }
 # endif
 

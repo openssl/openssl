@@ -36,7 +36,7 @@ int i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
     p += a->length;
 
     *pp = p;
-    return (objsize);
+    return objsize;
 }
 
 int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
@@ -158,7 +158,7 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
     if (tmp != ftmp)
         OPENSSL_free(tmp);
     BN_free(bl);
-    return (len);
+    return len;
  err:
     if (tmp != ftmp)
         OPENSSL_free(tmp);
@@ -193,7 +193,7 @@ int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a)
     BIO_write(bp, p, i);
     if (p != buf)
         OPENSSL_free(p);
-    return (i);
+    return i;
 }
 
 ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
@@ -312,7 +312,7 @@ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
     if (a != NULL)
         (*a) = ret;
     *pp = p;
-    return (ret);
+    return ret;
  err:
     ASN1err(ASN1_F_C2I_ASN1_OBJECT, i);
     if ((a == NULL) || (*a != ret))
@@ -330,7 +330,7 @@ ASN1_OBJECT *ASN1_OBJECT_new(void)
         return NULL;
     }
     ret->flags = ASN1_OBJECT_FLAG_DYNAMIC;
-    return (ret);
+    return ret;
 }
 
 void ASN1_OBJECT_free(ASN1_OBJECT *a)

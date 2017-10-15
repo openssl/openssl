@@ -111,7 +111,7 @@ static int buffer_read(BIO *b, char *out, int outl)
         ctx->ibuf_len -= i;
         num += i;
         if (outl == i)
-            return (num);
+            return num;
         outl -= i;
         out += i;
     }
@@ -130,11 +130,11 @@ static int buffer_read(BIO *b, char *out, int outl)
                 if (i < 0)
                     return ((num > 0) ? num : i);
                 if (i == 0)
-                    return (num);
+                    return num;
             }
             num += i;
             if (outl == i)
-                return (num);
+                return num;
             out += i;
             outl -= i;
         }
@@ -148,7 +148,7 @@ static int buffer_read(BIO *b, char *out, int outl)
         if (i < 0)
             return ((num > 0) ? num : i);
         if (i == 0)
-            return (num);
+            return num;
     }
     ctx->ibuf_off = 0;
     ctx->ibuf_len = i;
@@ -197,7 +197,7 @@ static int buffer_write(BIO *b, const char *in, int inl)
                 if (i < 0)
                     return ((num > 0) ? num : i);
                 if (i == 0)
-                    return (num);
+                    return num;
             }
             ctx->obuf_off += i;
             ctx->obuf_len -= i;
@@ -219,13 +219,13 @@ static int buffer_write(BIO *b, const char *in, int inl)
             if (i < 0)
                 return ((num > 0) ? num : i);
             if (i == 0)
-                return (num);
+                return num;
         }
         num += i;
         in += i;
         inl -= i;
         if (inl == 0)
-            return (num);
+            return num;
     }
 
     /*
@@ -402,7 +402,7 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
         break;
     }
-    return (ret);
+    return ret;
  malloc_error:
     BIOerr(BIO_F_BUFFER_CTRL, ERR_R_MALLOC_FAILURE);
     return 0;
@@ -419,7 +419,7 @@ static long buffer_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
         ret = BIO_callback_ctrl(b->next_bio, cmd, fp);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int buffer_gets(BIO *b, char *buf, int size)
@@ -450,7 +450,7 @@ static int buffer_gets(BIO *b, char *buf, int size)
             ctx->ibuf_off += i;
             if (flag || size == 0) {
                 *buf = '\0';
-                return (num);
+                return num;
             }
         } else {                /* read another chunk */
 
@@ -461,7 +461,7 @@ static int buffer_gets(BIO *b, char *buf, int size)
                 if (i < 0)
                     return ((num > 0) ? num : i);
                 if (i == 0)
-                    return (num);
+                    return num;
             }
             ctx->ibuf_len = i;
             ctx->ibuf_off = 0;

@@ -365,7 +365,7 @@ static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
         goto err;
     ret = 1;
  err:
-    return (ret);
+    return ret;
 }
 
 static int dsa_param_decode(EVP_PKEY *pkey,

@@ -150,7 +150,7 @@ static int generate_key(DH *dh)
     if (priv_key != dh->priv_key)
         BN_free(priv_key);
     BN_CTX_free(ctx);
-    return (ok);
+    return ok;
 }
 
 static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
@@ -204,7 +204,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
         BN_CTX_end(ctx);
         BN_CTX_free(ctx);
     }
-    return (ret);
+    return ret;
 }
 
 static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,

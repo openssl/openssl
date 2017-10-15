@@ -100,7 +100,7 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
         policies_print(ctx);
     if (ok && !verify_args.quiet)
         BIO_printf(bio_err, "verify return:%d\n", ok);
-    return (ok);
+    return ok;
 }
 
 int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
@@ -423,19 +423,19 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp,
 
     out = (BIO *)BIO_get_callback_arg(bio);
     if (out == NULL)
-        return (ret);
+        return ret;
 
     if (cmd == (BIO_CB_READ | BIO_CB_RETURN)) {
         BIO_printf(out, "read from %p [%p] (%lu bytes => %ld (0x%lX))\n",
                    (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
         BIO_dump(out, argp, (int)ret);
-        return (ret);
+        return ret;
     } else if (cmd == (BIO_CB_WRITE | BIO_CB_RETURN)) {
         BIO_printf(out, "write to %p [%p] (%lu bytes => %ld (0x%lX))\n",
                    (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
         BIO_dump(out, argp, (int)ret);
     }
-    return (ret);
+    return ret;
 }
 
 void apps_ssl_info_callback(const SSL *s, int where, int ret)

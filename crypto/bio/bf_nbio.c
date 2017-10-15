@@ -104,7 +104,7 @@ static int nbiof_read(BIO *b, char *out, int outl)
         if (ret < 0)
             BIO_copy_next_retry(b);
     }
-    return (ret);
+    return ret;
 }
 
 static int nbiof_write(BIO *b, const char *in, int inl)
@@ -144,7 +144,7 @@ static int nbiof_write(BIO *b, const char *in, int inl)
             nt->lwn = inl;
         }
     }
-    return (ret);
+    return ret;
 }
 
 static long nbiof_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -166,7 +166,7 @@ static long nbiof_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static long nbiof_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
@@ -180,7 +180,7 @@ static long nbiof_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
         ret = BIO_callback_ctrl(b->next_bio, cmd, fp);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int nbiof_gets(BIO *bp, char *buf, int size)

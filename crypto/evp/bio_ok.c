@@ -280,7 +280,7 @@ static int ok_write(BIO *b, const char *in, int inl)
                 BIO_copy_next_retry(b);
                 if (!BIO_should_retry(b))
                     ctx->cont = 0;
-                return (i);
+                return i;
             }
             ctx->buf_off += i;
             n -= i;
@@ -314,7 +314,7 @@ static int ok_write(BIO *b, const char *in, int inl)
 
     BIO_clear_retry_flags(b);
     BIO_copy_next_retry(b);
-    return (ret);
+    return ret;
 }
 
 static long ok_ctrl(BIO *b, int cmd, long num, void *ptr)

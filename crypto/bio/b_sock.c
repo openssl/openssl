@@ -104,7 +104,7 @@ int BIO_sock_error(int sock)
     if (i < 0)
         return (get_last_socket_error());
     else
-        return (j);
+        return j;
 }
 
 # if OPENSSL_API_COMPAT < 0x10100000L
@@ -201,7 +201,7 @@ int BIO_socket_ioctl(int fd, long type, void *arg)
 #  endif                        /* __DJGPP__ */
     if (i < 0)
         SYSerr(SYS_F_IOCTLSOCKET, get_last_socket_error());
-    return (i);
+    return i;
 }
 
 # if OPENSSL_API_COMPAT < 0x10100000L

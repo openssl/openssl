@@ -438,7 +438,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     if (a != NULL)
         (*a) = ret;
     *pp = p;
-    return (ret);
+    return ret;
  err:
     ASN1err(ASN1_F_D2I_ASN1_UINTEGER, i);
     if ((a == NULL) || (*a != ret))

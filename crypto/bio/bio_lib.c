@@ -435,7 +435,7 @@ int BIO_gets(BIO *b, char *buf, int size)
 
     if ((b == NULL) || (b->method == NULL) || (b->method->bgets == NULL)) {
         BIOerr(BIO_F_BIO_GETS, BIO_R_UNSUPPORTED_METHOD);
-        return (-2);
+        return -2;
     }
 
     if (size < 0) {
@@ -451,7 +451,7 @@ int BIO_gets(BIO *b, char *buf, int size)
 
     if (!b->init) {
         BIOerr(BIO_F_BIO_GETS, BIO_R_UNINITIALIZED);
-        return (-2);
+        return -2;
     }
 
     ret = b->method->bgets(b, buf, size);
@@ -503,7 +503,7 @@ void *BIO_ptr_ctrl(BIO *b, int cmd, long larg)
     if (BIO_ctrl(b, cmd, larg, (char *)&p) <= 0)
         return NULL;
     else
-        return (p);
+        return p;
 }
 
 long BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
@@ -544,7 +544,7 @@ long BIO_callback_ctrl(BIO *b, int cmd,
 
     if ((b->method == NULL) || (b->method->callback_ctrl == NULL)) {
         BIOerr(BIO_F_BIO_CALLBACK_CTRL, BIO_R_UNSUPPORTED_METHOD);
-        return (-2);
+        return -2;
     }
 
     if (b->callback != NULL || b->callback_ex != NULL) {
@@ -584,7 +584,7 @@ BIO *BIO_push(BIO *b, BIO *bio)
     BIO *lb;
 
     if (b == NULL)
-        return (bio);
+        return bio;
     lb = b;
     while (lb->next_bio != NULL)
         lb = lb->next_bio;
@@ -593,7 +593,7 @@ BIO *BIO_push(BIO *b, BIO *bio)
         bio->prev_bio = lb;
     /* called to do internal processing */
     BIO_ctrl(b, BIO_CTRL_PUSH, 0, lb);
-    return (b);
+    return b;
 }
 
 /* Remove the first and return the rest */
@@ -614,7 +614,7 @@ BIO *BIO_pop(BIO *b)
 
     b->next_bio = NULL;
     b->prev_bio = NULL;
-    return (ret);
+    return ret;
 }
 
 BIO *BIO_get_retry_BIO(BIO *bio, int *reason)
@@ -632,7 +632,7 @@ BIO *BIO_get_retry_BIO(BIO *bio, int *reason)
     }
     if (reason != NULL)
         *reason = last->retry_reason;
-    return (last);
+    return last;
 }
 
 int BIO_get_retry_reason(BIO *bio)
@@ -658,9 +658,9 @@ BIO *BIO_find_type(BIO *bio, int type)
 
             if (!mask) {
                 if (mt & type)
-                    return (bio);
+                    return bio;
             } else if (mt == type)
-                return (bio);
+                return bio;
         }
         bio = bio->next_bio;
     } while (bio != NULL);
@@ -732,7 +732,7 @@ BIO *BIO_dup_chain(BIO *in)
             eoc = new_bio;
         }
     }
-    return (ret);
+    return ret;
  err:
     BIO_free_all(ret);
 

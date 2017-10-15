@@ -212,7 +212,7 @@ int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
     }
 
     *t = '\0';
-    return (ret);
+    return ret;
 }
 
 void EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
@@ -345,7 +345,7 @@ end:
     /* Legacy behaviour. This should probably rather be zeroed on error. */
     *outl = ret;
     ctx->num = n;
-    return (rv);
+    return rv;
 }
 
 int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
@@ -384,7 +384,7 @@ int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
         *(t++) = (unsigned char)(l) & 0xff;
         ret += 3;
     }
-    return (ret);
+    return ret;
 }
 
 int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)

@@ -68,7 +68,7 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     ret = 1;
  err:
     BN_CTX_end(ctx);
-    return (ret);
+    return ret;
 }
 
 #ifdef MONT_WORD
@@ -207,7 +207,7 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
  err:
     BN_CTX_end(ctx);
 #endif                          /* MONT_WORD */
-    return (retn);
+    return retn;
 }
 
 BN_MONT_CTX *BN_MONT_CTX_new(void)
@@ -219,7 +219,7 @@ BN_MONT_CTX *BN_MONT_CTX_new(void)
 
     BN_MONT_CTX_init(ret);
     ret->flags = BN_FLG_MALLOCED;
-    return (ret);
+    return ret;
 }
 
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx)
@@ -384,7 +384,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)
 {
     if (to == from)
-        return (to);
+        return to;
 
     if (!BN_copy(&(to->RR), &(from->RR)))
         return NULL;
@@ -395,7 +395,7 @@ BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)
     to->ri = from->ri;
     to->n0[0] = from->n0[0];
     to->n0[1] = from->n0[1];
-    return (to);
+    return to;
 }
 
 BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, CRYPTO_RWLOCK *lock,

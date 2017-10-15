@@ -57,7 +57,7 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
         PKCS7err(PKCS7_F_PKCS7_CTRL, PKCS7_R_UNKNOWN_OPERATION);
         ret = 0;
     }
-    return (ret);
+    return ret;
 }
 
 int PKCS7_content_new(PKCS7 *p7, int type)
@@ -369,7 +369,7 @@ PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey,
         goto err;
     if (!PKCS7_add_signer(p7, si))
         goto err;
-    return (si);
+    return si;
  err:
     PKCS7_SIGNER_INFO_free(si);
     return NULL;

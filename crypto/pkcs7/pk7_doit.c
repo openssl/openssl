@@ -807,7 +807,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
     ret = 1;
  err:
     EVP_MD_CTX_free(ctx_tmp);
-    return (ret);
+    return ret;
 }
 
 int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
@@ -1039,7 +1039,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
     ret = 1;
  err:
     EVP_MD_CTX_free(mdc_tmp);
-    return (ret);
+    return ret;
 }
 
 PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx)

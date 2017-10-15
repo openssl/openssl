@@ -63,7 +63,7 @@ static int null_read(BIO *b, char *out, int outl)
 
 static int null_write(BIO *b, const char *in, int inl)
 {
-    return (inl);
+    return inl;
 }
 
 static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -88,7 +88,7 @@ static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 0;
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int null_gets(BIO *bp, char *buf, int size)

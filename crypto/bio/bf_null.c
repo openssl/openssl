@@ -77,7 +77,7 @@ static int nullf_read(BIO *b, char *out, int outl)
     ret = BIO_read(b->next_bio, out, outl);
     BIO_clear_retry_flags(b);
     BIO_copy_next_retry(b);
-    return (ret);
+    return ret;
 }
 
 static int nullf_write(BIO *b, const char *in, int inl)
@@ -91,7 +91,7 @@ static int nullf_write(BIO *b, const char *in, int inl)
     ret = BIO_write(b->next_bio, in, inl);
     BIO_clear_retry_flags(b);
     BIO_copy_next_retry(b);
-    return (ret);
+    return ret;
 }
 
 static long nullf_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -112,7 +112,7 @@ static long nullf_ctrl(BIO *b, int cmd, long num, void *ptr)
     default:
         ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
     }
-    return (ret);
+    return ret;
 }
 
 static long nullf_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
@@ -126,7 +126,7 @@ static long nullf_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
         ret = BIO_callback_ctrl(b->next_bio, cmd, fp);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int nullf_gets(BIO *bp, char *buf, int size)

@@ -54,7 +54,7 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
         if (!X509_REQ_sign(ret, pkey, md))
             goto err;
     }
-    return (ret);
+    return ret;
  err:
     X509_REQ_free(ret);
     return NULL;
@@ -115,7 +115,7 @@ int X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
     }
 
     EVP_PKEY_free(xk);
-    return (ok);
+    return ok;
 }
 
 /*

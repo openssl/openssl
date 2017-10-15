@@ -76,5 +76,5 @@ int X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
         }
     }
 
-    return (ret);
+    return ret;
 }

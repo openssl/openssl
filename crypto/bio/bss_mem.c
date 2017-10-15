@@ -202,7 +202,7 @@ static int mem_read(BIO *b, char *out, int outl)
         if (ret != 0)
             BIO_set_retry_read(b);
     }
-    return (ret);
+    return ret;
 }
 
 static int mem_write(BIO *b, const char *in, int inl)
@@ -228,7 +228,7 @@ static int mem_write(BIO *b, const char *in, int inl)
     *bbm->readp = *bbm->buf;
     ret = inl;
  end:
-    return (ret);
+    return ret;
 }
 
 static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -305,7 +305,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 0;
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int mem_gets(BIO *bp, char *buf, int size)
@@ -341,7 +341,7 @@ static int mem_gets(BIO *bp, char *buf, int size)
     if (i > 0)
         buf[i] = '\0';
     ret = i;
-    return (ret);
+    return ret;
 }
 
 static int mem_puts(BIO *bp, const char *str)
@@ -351,5 +351,5 @@ static int mem_puts(BIO *bp, const char *str)
     n = strlen(str);
     ret = mem_write(bp, str, n);
     /* memory semantics is that it will always work */
-    return (ret);
+    return ret;
 }

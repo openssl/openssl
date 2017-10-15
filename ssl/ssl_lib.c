@@ -1248,7 +1248,7 @@ int SSL_get_rfd(const SSL *s)
     r = BIO_find_type(b, BIO_TYPE_DESCRIPTOR);
     if (r != NULL)
         BIO_get_fd(r, &ret);
-    return (ret);
+    return ret;
 }
 
 int SSL_get_wfd(const SSL *s)
@@ -1260,7 +1260,7 @@ int SSL_get_wfd(const SSL *s)
     r = BIO_find_type(b, BIO_TYPE_DESCRIPTOR);
     if (r != NULL)
         BIO_get_fd(r, &ret);
-    return (ret);
+    return ret;
 }
 
 #ifndef OPENSSL_NO_SOCK
@@ -1279,7 +1279,7 @@ int SSL_set_fd(SSL *s, int fd)
     SSL_set_bio(s, bio, bio);
     ret = 1;
  err:
-    return (ret);
+    return ret;
 }
 
 int SSL_set_wfd(SSL *s, int fd)
@@ -1448,11 +1448,11 @@ X509 *SSL_get_peer_certificate(const SSL *s)
         r = s->session->peer;
 
     if (r == NULL)
-        return (r);
+        return r;
 
     X509_up_ref(r);
 
-    return (r);
+    return r;
 }
 
 STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s)
@@ -1469,7 +1469,7 @@ STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s)
      * we are a server, it does not.
      */
 
-    return (r);
+    return r;
 }
 
 /*
@@ -2075,7 +2075,7 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_READ_AHEAD:
         l = RECORD_LAYER_get_read_ahead(&s->rlayer);
         RECORD_LAYER_set_read_ahead(&s->rlayer, larg);
-        return (l);
+        return l;
 
     case SSL_CTRL_SET_MSG_CALLBACK_ARG:
         s->msg_callback_arg = parg;
@@ -2199,7 +2199,7 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_READ_AHEAD:
         l = ctx->read_ahead;
         ctx->read_ahead = larg;
-        return (l);
+        return l;
 
     case SSL_CTRL_SET_MSG_CALLBACK_ARG:
         ctx->msg_callback_arg = parg;
@@ -2225,7 +2225,7 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_SESS_CACHE_MODE:
         l = ctx->session_cache_mode;
         ctx->session_cache_mode = larg;
-        return (l);
+        return l;
     case SSL_CTRL_GET_SESS_CACHE_MODE:
         return (ctx->session_cache_mode);
 
@@ -2402,7 +2402,7 @@ const char *SSL_get_cipher_list(const SSL *s, int n)
     c = sk_SSL_CIPHER_value(sk, n);
     if (c == NULL)
         return NULL;
-    return (c->name);
+    return c->name;
 }
 
 /** return a STACK of the ciphers available for the SSL_CTX and in order of
@@ -2487,7 +2487,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
         len -= n + 1;
     }
     p[-1] = '\0';
-    return (buf);
+    return buf;
 }
 
 /** return a servername extension value if provided in Client Hello, or NULL.
@@ -2726,7 +2726,7 @@ static unsigned long ssl_session_hash(const SSL_SESSION *a)
         ((unsigned long)session_id[1] << 8L) |
         ((unsigned long)session_id[2] << 16L) |
         ((unsigned long)session_id[3] << 24L);
-    return (l);
+    return l;
 }
 
 /*
@@ -3218,7 +3218,7 @@ const SSL_METHOD *SSL_CTX_get_ssl_method(SSL_CTX *ctx)
 
 const SSL_METHOD *SSL_get_ssl_method(SSL *s)
 {
-    return (s->method);
+    return s->method;
 }
 
 int SSL_set_ssl_method(SSL *s, const SSL_METHOD *meth)
@@ -3242,7 +3242,7 @@ int SSL_set_ssl_method(SSL *s, const SSL_METHOD *meth)
         else if (hf == sm->ssl_accept)
             s->handshake_func = meth->ssl_accept;
     }
-    return (ret);
+    return ret;
 }
 
 int SSL_get_error(const SSL *s, int i)
@@ -3599,7 +3599,7 @@ void ssl_clear_cipher_ctx(SSL *s)
 X509 *SSL_get_certificate(const SSL *s)
 {
     if (s->cert != NULL)
-        return (s->cert->key->x509);
+        return s->cert->key->x509;
     else
         return NULL;
 }
@@ -3607,7 +3607,7 @@ X509 *SSL_get_certificate(const SSL *s)
 EVP_PKEY *SSL_get_privatekey(const SSL *s)
 {
     if (s->cert != NULL)
-        return (s->cert->key->privatekey);
+        return s->cert->key->privatekey;
     else
         return NULL;
 }
@@ -3631,7 +3631,7 @@ EVP_PKEY *SSL_CTX_get0_privatekey(const SSL_CTX *ctx)
 const SSL_CIPHER *SSL_get_current_cipher(const SSL *s)
 {
     if ((s->session != NULL) && (s->session->cipher != NULL))
-        return (s->session->cipher);
+        return s->session->cipher;
     return NULL;
 }
 
@@ -3937,7 +3937,7 @@ void SSL_CTX_set1_cert_store(SSL_CTX *ctx, X509_STORE *store)
 
 int SSL_want(const SSL *s)
 {
-    return (s->rwstate);
+    return s->rwstate;
 }
 
 /**

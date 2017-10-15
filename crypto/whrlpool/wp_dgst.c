@@ -254,5 +254,5 @@ unsigned char *WHIRLPOOL(const void *inp, size_t bytes, unsigned char *md)
     WHIRLPOOL_Init(&ctx);
     WHIRLPOOL_Update(&ctx, inp, bytes);
     WHIRLPOOL_Final(md, &ctx);
-    return (md);
+    return md;
 }

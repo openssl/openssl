@@ -603,6 +603,6 @@ int srp_main(int argc, char **argv)
     NCONF_free(conf);
     free_index(db);
     release_engine(e);
-    return (ret);
+    return ret;
 }
 #endif

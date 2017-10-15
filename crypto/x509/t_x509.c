@@ -35,7 +35,7 @@ int X509_print_ex_fp(FILE *fp, X509 *x, unsigned long nmflag,
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = X509_print_ex(b, x, nmflag, cflag);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 #endif
 
@@ -212,7 +212,7 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     ret = 1;
  err:
     OPENSSL_free(m);
-    return (ret);
+    return ret;
 }
 
 int X509_ocspid_print(BIO *bp, X509 *x)

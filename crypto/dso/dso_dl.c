@@ -198,7 +198,7 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
         merged[spec2len] = '/';
         strcpy(&merged[spec2len + 1], filespec1);
     }
-    return (merged);
+    return merged;
 }
 
 /*
@@ -234,7 +234,7 @@ static char *dl_name_converter(DSO *dso, const char *filename)
             sprintf(translated, "%s%s", filename, DSO_EXTENSION);
     } else
         sprintf(translated, "%s", filename);
-    return (translated);
+    return translated;
 }
 
 static int dl_pathbyaddr(void *addr, char *path, int sz)

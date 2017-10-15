@@ -28,7 +28,7 @@ int X509at_get_attr_by_NID(const STACK_OF(X509_ATTRIBUTE) *x, int nid,
     const ASN1_OBJECT *obj = OBJ_nid2obj(nid);
 
     if (obj == NULL)
-        return (-2);
+        return -2;
     return (X509at_get_attr_by_OBJ(x, obj, lastpos));
 }
 
@@ -47,7 +47,7 @@ int X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk,
     for (; lastpos < n; lastpos++) {
         ex = sk_X509_ATTRIBUTE_value(sk, lastpos);
         if (OBJ_cmp(ex->object, obj) == 0)
-            return (lastpos);
+            return lastpos;
     }
     return -1;
 }
@@ -67,7 +67,7 @@ X509_ATTRIBUTE *X509at_delete_attr(STACK_OF(X509_ATTRIBUTE) *x, int loc)
     if (x == NULL || sk_X509_ATTRIBUTE_num(x) <= loc || loc < 0)
         return NULL;
     ret = sk_X509_ATTRIBUTE_delete(x, loc);
-    return (ret);
+    return ret;
 }
 
 STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
@@ -93,7 +93,7 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
         goto err;
     if (*x == NULL)
         *x = sk;
-    return (sk);
+    return sk;
  err:
     X509err(X509_F_X509AT_ADD1_ATTR, ERR_R_MALLOC_FAILURE);
  err2:
@@ -180,7 +180,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
     ret = X509_ATTRIBUTE_create_by_OBJ(attr, obj, atrtype, data, len);
     if (ret == NULL)
         ASN1_OBJECT_free(obj);
-    return (ret);
+    return ret;
 }
 
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
@@ -206,7 +206,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
 
     if ((attr != NULL) && (*attr == NULL))
         *attr = ret;
-    return (ret);
+    return ret;
  err:
     if ((attr == NULL) || (ret != *attr))
         X509_ATTRIBUTE_free(ret);
@@ -304,7 +304,7 @@ ASN1_OBJECT *X509_ATTRIBUTE_get0_object(X509_ATTRIBUTE *attr)
 {
     if (attr == NULL)
         return NULL;
-    return (attr->object);
+    return attr->object;
 }
 
 void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,

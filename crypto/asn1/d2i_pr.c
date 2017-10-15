@@ -64,7 +64,7 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
     *pp = p;
     if (a != NULL)
         (*a) = ret;
-    return (ret);
+    return ret;
  err:
     if (a == NULL || *a != ret)
         EVP_PKEY_free(ret);

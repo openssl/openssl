@@ -144,7 +144,7 @@ OPENSSL_STRING *TXT_DB_get_by_index(TXT_DB *db, int idx,
     }
     ret = lh_OPENSSL_STRING_retrieve(lh, value);
     db->error = DB_ERROR_OK;
-    return (ret);
+    return ret;
 }
 
 int TXT_DB_create_index(TXT_DB *db, int field, int (*qual) (OPENSSL_STRING *),
@@ -231,7 +231,7 @@ long TXT_DB_write(BIO *out, TXT_DB *db)
     ret = tot;
  err:
     BUF_MEM_free(buf);
-    return (ret);
+    return ret;
 }
 
 int TXT_DB_insert(TXT_DB *db, OPENSSL_STRING *row)

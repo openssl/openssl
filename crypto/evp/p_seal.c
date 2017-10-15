@@ -45,7 +45,7 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
         if (ekl[i] <= 0)
             return -1;
     }
-    return (npubk);
+    return npubk;
 }
 
 int EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)

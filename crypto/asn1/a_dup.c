@@ -34,7 +34,7 @@ void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x)
     p2 = b;
     ret = d2i(NULL, &p2, i);
     OPENSSL_free(b);
-    return (ret);
+    return ret;
 }
 
 #endif
@@ -64,5 +64,5 @@ void *ASN1_item_dup(const ASN1_ITEM *it, void *x)
     p = b;
     ret = ASN1_item_d2i(NULL, &p, i, it);
     OPENSSL_free(b);
-    return (ret);
+    return ret;
 }

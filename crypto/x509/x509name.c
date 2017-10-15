@@ -38,10 +38,10 @@ int X509_NAME_get_text_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, char *buf
     data = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(name, i));
     i = (data->length > (len - 1)) ? (len - 1) : data->length;
     if (buf == NULL)
-        return (data->length);
+        return data->length;
     memcpy(buf, data->data, i);
     buf[i] = '\0';
-    return (i);
+    return i;
 }
 
 int X509_NAME_entry_count(const X509_NAME *name)
@@ -57,7 +57,7 @@ int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
 
     obj = OBJ_nid2obj(nid);
     if (obj == NULL)
-        return (-2);
+        return -2;
     return (X509_NAME_get_index_by_OBJ(name, obj, lastpos));
 }
 
@@ -77,7 +77,7 @@ int X509_NAME_get_index_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, int last
     for (lastpos++; lastpos < n; lastpos++) {
         ne = sk_X509_NAME_ENTRY_value(sk, lastpos);
         if (OBJ_cmp(ne->object, obj) == 0)
-            return (lastpos);
+            return lastpos;
     }
     return -1;
 }
@@ -296,7 +296,7 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne,
 
     if ((ne != NULL) && (*ne == NULL))
         *ne = ret;
-    return (ret);
+    return ret;
  err:
     if ((ne == NULL) || (ret != *ne))
         X509_NAME_ENTRY_free(ret);
@@ -344,14 +344,14 @@ ASN1_OBJECT *X509_NAME_ENTRY_get_object(const X509_NAME_ENTRY *ne)
 {
     if (ne == NULL)
         return NULL;
-    return (ne->object);
+    return ne->object;
 }
 
 ASN1_STRING *X509_NAME_ENTRY_get_data(const X509_NAME_ENTRY *ne)
 {
     if (ne == NULL)
         return NULL;
-    return (ne->value);
+    return ne->value;
 }
 
 int X509_NAME_ENTRY_set(const X509_NAME_ENTRY *ne)

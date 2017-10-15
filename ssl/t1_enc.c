@@ -412,7 +412,7 @@ int tls1_setup_key_block(SSL *s)
 
     ret = 1;
  err:
-    return (ret);
+    return ret;
 }
 
 size_t tls1_final_finish_mac(SSL *s, const char *str, size_t slen,
@@ -569,7 +569,7 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     rv = 0;
  ret:
     OPENSSL_clear_free(val, vallen);
-    return (rv);
+    return rv;
 }
 
 int tls1_alert_code(int code)

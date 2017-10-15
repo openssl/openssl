@@ -396,7 +396,7 @@ static int ebcdic_write(BIO *b, const char *in, int inl)
 
     ret = BIO_write(next, wbuf->buff, inl);
 
-    return (ret);
+    return ret;
 }
 
 static long ebcdic_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -414,7 +414,7 @@ static long ebcdic_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int ebcdic_gets(BIO *bp, char *buf, int size)
@@ -2140,7 +2140,7 @@ int s_server_main(int argc, char *argv[])
 #ifdef CHARSET_EBCDIC
     BIO_meth_free(methods_ebcdic);
 #endif
-    return (ret);
+    return ret;
 }
 
 static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
@@ -2657,7 +2657,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
     if (ret >= 0)
         BIO_printf(bio_s_out, "ACCEPT\n");
     (void)BIO_flush(bio_s_out);
-    return (ret);
+    return ret;
 }
 
 static void close_accept_socket(void)
@@ -2875,7 +2875,7 @@ static DH *load_dh_param(const char *dhfile)
     ret = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
  err:
     BIO_free(bio);
-    return (ret);
+    return ret;
 }
 #endif
 
@@ -3263,7 +3263,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
         BIO_printf(bio_s_out, "ACCEPT\n");
     OPENSSL_free(buf);
     BIO_free_all(io);
-    return (ret);
+    return ret;
 }
 
 static int rev_body(int s, int stype, int prot, unsigned char *context)
@@ -3416,7 +3416,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
 
     OPENSSL_free(buf);
     BIO_free_all(io);
-    return (ret);
+    return ret;
 }
 
 #define MAX_SESSION_ID_ATTEMPTS 10

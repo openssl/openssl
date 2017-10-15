@@ -248,7 +248,7 @@ static int enc_write(BIO *b, const char *in, int inl)
         i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
         if (i <= 0) {
             BIO_copy_next_retry(b);
-            return (i);
+            return i;
         }
         ctx->buf_off += i;
         n -= i;
@@ -286,7 +286,7 @@ static int enc_write(BIO *b, const char *in, int inl)
         ctx->buf_off = 0;
     }
     BIO_copy_next_retry(b);
-    return (ret);
+    return ret;
 }
 
 static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -381,7 +381,7 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static long enc_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
@@ -396,7 +396,7 @@ static long enc_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
         ret = BIO_callback_ctrl(next, cmd, fp);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 int BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,

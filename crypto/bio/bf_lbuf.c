@@ -102,7 +102,7 @@ static int linebuffer_read(BIO *b, char *out, int outl)
     ret = BIO_read(b->next_bio, out, outl);
     BIO_clear_retry_flags(b);
     BIO_copy_next_retry(b);
-    return (ret);
+    return ret;
 }
 
 static int linebuffer_write(BIO *b, const char *in, int inl)
@@ -160,7 +160,7 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
                 if (i < 0)
                     return ((num > 0) ? num : i);
                 if (i == 0)
-                    return (num);
+                    return num;
             }
             if (i < ctx->obuf_len)
                 memmove(ctx->obuf, ctx->obuf + i, ctx->obuf_len - i);
@@ -178,7 +178,7 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
                 if (i < 0)
                     return ((num > 0) ? num : i);
                 if (i == 0)
-                    return (num);
+                    return num;
             }
             num += i;
             in += i;
@@ -290,7 +290,7 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
         break;
     }
-    return (ret);
+    return ret;
  malloc_error:
     BIOerr(BIO_F_LINEBUFFER_CTRL, ERR_R_MALLOC_FAILURE);
     return 0;
@@ -307,7 +307,7 @@ static long linebuffer_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
         ret = BIO_callback_ctrl(b->next_bio, cmd, fp);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int linebuffer_gets(BIO *b, char *buf, int size)

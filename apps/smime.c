@@ -609,7 +609,7 @@ int smime_main(int argc, char **argv)
     BIO_free(indata);
     BIO_free_all(out);
     OPENSSL_free(passin);
-    return (ret);
+    return ret;
 }
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers)

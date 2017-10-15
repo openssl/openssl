@@ -306,7 +306,7 @@ int asn1parse_main(int argc, char **argv)
         OPENSSL_free(str);
     ASN1_TYPE_free(at);
     sk_OPENSSL_STRING_free(osk);
-    return (ret);
+    return ret;
 }
 
 static int do_generate(char *genstr, const char *genconf, BUF_MEM *buf)

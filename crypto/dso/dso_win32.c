@@ -297,7 +297,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
     if (!result->filelen)
         result->file = NULL;
 
-    return (result);
+    return result;
 }
 
 static char *win32_joiner(DSO *dso, const struct file_st *file_split)
@@ -383,7 +383,7 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
     strncpy(&result[offset], file_split->file, file_split->filelen);
     offset += file_split->filelen;
     result[offset] = '\0';
-    return (result);
+    return result;
 }
 
 static char *win32_merger(DSO *dso, const char *filespec1,
@@ -446,7 +446,7 @@ static char *win32_merger(DSO *dso, const char *filespec1,
     }
     OPENSSL_free(filespec1_split);
     OPENSSL_free(filespec2_split);
-    return (merged);
+    return merged;
 }
 
 static char *win32_name_converter(DSO *dso, const char *filename)
@@ -472,7 +472,7 @@ static char *win32_name_converter(DSO *dso, const char *filename)
         sprintf(translated, "%s.dll", filename);
     else
         sprintf(translated, "%s", filename);
-    return (translated);
+    return translated;
 }
 
 static const char *openssl_strnchr(const char *string, int c, size_t len)

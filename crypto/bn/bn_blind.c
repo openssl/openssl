@@ -119,7 +119,7 @@ int BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx)
  err:
     if (b->counter == BN_BLINDING_COUNTER)
         b->counter = 0;
-    return (ret);
+    return ret;
 }
 
 int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
@@ -178,7 +178,7 @@ int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
     }
 
     bn_check_top(n);
-    return (ret);
+    return ret;
 }
 
 int BN_BLINDING_is_current_thread(BN_BLINDING *b)

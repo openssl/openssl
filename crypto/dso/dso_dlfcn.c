@@ -237,7 +237,7 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
         merged[spec2len] = '/';
         strcpy(&merged[spec2len + 1], filespec1);
     }
-    return (merged);
+    return merged;
 }
 
 static char *dlfcn_name_converter(DSO *dso, const char *filename)
@@ -266,7 +266,7 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
             sprintf(translated, "%s" DSO_EXTENSION, filename);
     } else
         sprintf(translated, "%s", filename);
-    return (translated);
+    return translated;
 }
 
 # ifdef __sgi

@@ -346,7 +346,7 @@ static int b64_write(BIO *b, const char *in, int inl)
         i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
         if (i <= 0) {
             BIO_copy_next_retry(b);
-            return (i);
+            return i;
         }
         OPENSSL_assert(i <= n);
         ctx->buf_off += i;
@@ -432,7 +432,7 @@ static int b64_write(BIO *b, const char *in, int inl)
         ctx->buf_len = 0;
         ctx->buf_off = 0;
     }
-    return (ret);
+    return ret;
 }
 
 static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -534,7 +534,7 @@ static long b64_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
         ret = BIO_callback_ctrl(next, cmd, fp);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int b64_puts(BIO *b, const char *str)

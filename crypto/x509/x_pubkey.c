@@ -314,7 +314,7 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length)
         EC_KEY_free(*a);
         *a = key;
     }
-    return (key);
+    return key;
 }
 
 int i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp)
@@ -330,7 +330,7 @@ int i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp)
     EVP_PKEY_set1_EC_KEY(pktmp, a);
     ret = i2d_PUBKEY(pktmp, pp);
     EVP_PKEY_free(pktmp);
-    return (ret);
+    return ret;
 }
 #endif
 

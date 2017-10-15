@@ -99,7 +99,7 @@ static int md_read(BIO *b, char *out, int outl)
     }
     BIO_clear_retry_flags(b);
     BIO_copy_next_retry(b);
-    return (ret);
+    return ret;
 }
 
 static int md_write(BIO *b, const char *in, int inl)
@@ -194,7 +194,7 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static long md_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
@@ -212,7 +212,7 @@ static long md_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
         ret = BIO_callback_ctrl(next, cmd, fp);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int md_gets(BIO *bp, char *buf, int size)

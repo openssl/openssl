@@ -210,7 +210,7 @@ static int slg_write(BIO *b, const char *in, int inl)
     xsyslog(b, priority, pp);
 
     OPENSSL_free(buf);
-    return (ret);
+    return ret;
 }
 
 static long slg_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -232,7 +232,7 @@ static int slg_puts(BIO *bp, const char *str)
 
     n = strlen(str);
     ret = slg_write(bp, str, n);
-    return (ret);
+    return ret;
 }
 
 # if defined(OPENSSL_SYS_WIN32)

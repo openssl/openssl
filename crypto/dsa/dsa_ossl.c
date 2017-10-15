@@ -332,7 +332,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     BN_free(u1);
     BN_free(u2);
     BN_free(t1);
-    return (ret);
+    return ret;
 }
 
 static int dsa_init(DSA *dsa)

@@ -160,7 +160,7 @@ int DSA_size(const DSA *r)
     i = i2d_ASN1_INTEGER(&bs, NULL);
     i += i;                     /* r and s */
     ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
-    return (ret);
+    return ret;
 }
 
 int DSA_set_ex_data(DSA *d, int idx, void *arg)

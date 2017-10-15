@@ -27,7 +27,7 @@ int ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, void *x)
     BIO_set_fp(b, out, BIO_NOCLOSE);
     ret = ASN1_i2d_bio(i2d, b, x);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 # endif
 
@@ -59,7 +59,7 @@ int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, unsigned char *x)
         n -= i;
     }
     OPENSSL_free(b);
-    return (ret);
+    return ret;
 }
 
 #endif
@@ -77,7 +77,7 @@ int ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x)
     BIO_set_fp(b, out, BIO_NOCLOSE);
     ret = ASN1_item_i2d_bio(it, b, x);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 #endif
 
@@ -104,5 +104,5 @@ int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x)
         n -= i;
     }
     OPENSSL_free(b);
-    return (ret);
+    return ret;
 }

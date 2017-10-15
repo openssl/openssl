@@ -24,7 +24,7 @@ int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
     bi = &b->cert_info;
     i = ASN1_INTEGER_cmp(&ai->serialNumber, &bi->serialNumber);
     if (i)
-        return (i);
+        return i;
     return (X509_NAME_cmp(ai->issuer, bi->issuer));
 }
 
@@ -55,7 +55,7 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
         ) & 0xffffffffL;
  err:
     EVP_MD_CTX_free(ctx);
-    return (ret);
+    return ret;
 }
 #endif
 
@@ -194,7 +194,7 @@ unsigned long X509_NAME_hash(X509_NAME *x)
     ret = (((unsigned long)md[0]) | ((unsigned long)md[1] << 8L) |
            ((unsigned long)md[2] << 16L) | ((unsigned long)md[3] << 24L)
         ) & 0xffffffffL;
-    return (ret);
+    return ret;
 }
 
 #ifndef OPENSSL_NO_MD5
@@ -223,7 +223,7 @@ unsigned long X509_NAME_hash_old(X509_NAME *x)
             ) & 0xffffffffL;
     EVP_MD_CTX_free(md_ctx);
 
-    return (ret);
+    return ret;
 }
 #endif
 
@@ -243,7 +243,7 @@ X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, X509_NAME *name,
     for (i = 0; i < sk_X509_num(sk); i++) {
         x509 = sk_X509_value(sk, i);
         if (X509_issuer_and_serial_cmp(x509, &x) == 0)
-            return (x509);
+            return x509;
     }
     return NULL;
 }
@@ -256,7 +256,7 @@ X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name)
     for (i = 0; i < sk_X509_num(sk); i++) {
         x509 = sk_X509_value(sk, i);
         if (X509_NAME_cmp(X509_get_subject_name(x509), name) == 0)
-            return (x509);
+            return x509;
     }
     return NULL;
 }

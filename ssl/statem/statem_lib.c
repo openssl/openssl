@@ -1309,7 +1309,7 @@ int ssl_verify_alarm_type(long type)
         al = SSL_AD_CERTIFICATE_UNKNOWN;
         break;
     }
-    return (al);
+    return al;
 }
 
 int ssl_allow_compression(SSL *s)

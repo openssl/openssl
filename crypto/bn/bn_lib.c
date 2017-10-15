@@ -219,7 +219,7 @@ BIGNUM *BN_new(void)
     }
     ret->flags = BN_FLG_MALLOCED;
     bn_check_top(ret);
-    return (ret);
+    return ret;
 }
 
  BIGNUM *BN_secure_new(void)
@@ -227,7 +227,7 @@ BIGNUM *BN_new(void)
      BIGNUM *ret = BN_new();
      if (ret != NULL)
          ret->flags |= BN_FLG_SECURE;
-     return (ret);
+     return ret;
  }
 
 /* This is used by bn_expand2() */
@@ -414,7 +414,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     n = len;
     if (n == 0) {
         ret->top = 0;
-        return (ret);
+        return ret;
     }
     i = ((n - 1) / BN_BYTES) + 1;
     m = ((n - 1) % (BN_BYTES));
@@ -438,7 +438,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
      * bit set (-ve number)
      */
     bn_correct_top(ret);
-    return (ret);
+    return ret;
 }
 
 /* ignore negative */
@@ -554,7 +554,7 @@ int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
 
     i = a->top - b->top;
     if (i != 0)
-        return (i);
+        return i;
     ap = a->d;
     bp = b->d;
     for (i = a->top - 1; i >= 0; i--) {
@@ -599,16 +599,16 @@ int BN_cmp(const BIGNUM *a, const BIGNUM *b)
     }
 
     if (a->top > b->top)
-        return (gt);
+        return gt;
     if (a->top < b->top)
-        return (lt);
+        return lt;
     for (i = a->top - 1; i >= 0; i--) {
         t1 = a->d[i];
         t2 = b->d[i];
         if (t1 > t2)
-            return (gt);
+            return gt;
         if (t1 < t2)
-            return (lt);
+            return lt;
     }
     return 0;
 }

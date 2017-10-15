@@ -163,7 +163,7 @@ DSO *DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
         goto err;
     }
     /* Load succeeded */
-    return (ret);
+    return ret;
  err:
     if (allocated)
         DSO_free(ret);
@@ -187,7 +187,7 @@ DSO_FUNC_TYPE DSO_bind_func(DSO *dso, const char *symname)
         return NULL;
     }
     /* Success */
-    return (ret);
+    return ret;
 }
 
 /*
@@ -234,7 +234,7 @@ const char *DSO_get_filename(DSO *dso)
         DSOerr(DSO_F_DSO_GET_FILENAME, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    return (dso->filename);
+    return dso->filename;
 }
 
 int DSO_set_filename(DSO *dso, const char *filename)
@@ -274,7 +274,7 @@ char *DSO_merge(DSO *dso, const char *filespec1, const char *filespec2)
         else if (dso->meth->dso_merger != NULL)
             result = dso->meth->dso_merger(dso, filespec1, filespec2);
     }
-    return (result);
+    return result;
 }
 
 char *DSO_convert_filename(DSO *dso, const char *filename)
@@ -304,7 +304,7 @@ char *DSO_convert_filename(DSO *dso, const char *filename)
             return NULL;
         }
     }
-    return (result);
+    return result;
 }
 
 int DSO_pathbyaddr(void *addr, char *path, int sz)

@@ -28,7 +28,7 @@ CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section)
     vv.name = NULL;
     vv.section = (char *)section;
     v = lh_CONF_VALUE_retrieve(conf->data, &vv);
-    return (v);
+    return v;
 }
 
 /* Up until OpenSSL 0.9.5a, this was CONF_get_section */
@@ -80,18 +80,18 @@ char *_CONF_get_string(const CONF *conf, const char *section,
             vv.section = (char *)section;
             v = lh_CONF_VALUE_retrieve(conf->data, &vv);
             if (v != NULL)
-                return (v->value);
+                return v->value;
             if (strcmp(section, "ENV") == 0) {
                 p = getenv(name);
                 if (p != NULL)
-                    return (p);
+                    return p;
             }
         }
         vv.section = "default";
         vv.name = (char *)name;
         v = lh_CONF_VALUE_retrieve(conf->data, &vv);
         if (v != NULL)
-            return (v->value);
+            return v->value;
         else
             return NULL;
     } else
@@ -110,12 +110,12 @@ static int conf_value_cmp(const CONF_VALUE *a, const CONF_VALUE *b)
     if (a->section != b->section) {
         i = strcmp(a->section, b->section);
         if (i)
-            return (i);
+            return i;
     }
 
     if ((a->name != NULL) && (b->name != NULL)) {
         i = strcmp(a->name, b->name);
-        return (i);
+        return i;
     } else if (a->name == b->name)
         return 0;
     else

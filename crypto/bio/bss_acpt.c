@@ -96,7 +96,7 @@ static BIO_ACCEPT *BIO_ACCEPT_new(void)
         return NULL;
     ret->accept_family = BIO_FAMILY_IPANY;
     ret->accept_sock = (int)INVALID_SOCKET;
-    return (ret);
+    return ret;
 }
 
 static void BIO_ACCEPT_free(BIO_ACCEPT *a)
@@ -359,12 +359,12 @@ static int acpt_read(BIO *b, char *out, int outl)
     while (b->next_bio == NULL) {
         ret = acpt_state(b, data);
         if (ret <= 0)
-            return (ret);
+            return ret;
     }
 
     ret = BIO_read(b->next_bio, out, outl);
     BIO_copy_next_retry(b);
-    return (ret);
+    return ret;
 }
 
 static int acpt_write(BIO *b, const char *in, int inl)
@@ -378,12 +378,12 @@ static int acpt_write(BIO *b, const char *in, int inl)
     while (b->next_bio == NULL) {
         ret = acpt_state(b, data);
         if (ret <= 0)
-            return (ret);
+            return ret;
     }
 
     ret = BIO_write(b->next_bio, in, inl);
     BIO_copy_next_retry(b);
-    return (ret);
+    return ret;
 }
 
 static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -527,7 +527,7 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 0;
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int acpt_puts(BIO *bp, const char *str)
@@ -536,7 +536,7 @@ static int acpt_puts(BIO *bp, const char *str)
 
     n = strlen(str);
     ret = acpt_write(bp, str, n);
-    return (ret);
+    return ret;
 }
 
 BIO *BIO_new_accept(const char *str)
@@ -547,7 +547,7 @@ BIO *BIO_new_accept(const char *str)
     if (ret == NULL)
         return NULL;
     if (BIO_set_accept_name(ret, str))
-        return (ret);
+        return ret;
     BIO_free(ret);
     return NULL;
 }

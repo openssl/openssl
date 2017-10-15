@@ -40,7 +40,7 @@ int i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type)
             n += 2;
         }
     }
-    return (n);
+    return n;
  err:
     return -1;
 }

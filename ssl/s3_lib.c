@@ -3429,7 +3429,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             EVP_PKEY *pkdh = NULL;
             if (dh == NULL) {
                 SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
-                return (ret);
+                return ret;
             }
             pkdh = ssl_dh_to_pkey(dh);
             if (pkdh == NULL) {
@@ -3450,7 +3450,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_TMP_DH_CB:
         {
             SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-            return (ret);
+            return ret;
         }
     case SSL_CTRL_SET_DH_AUTO:
         s->cert->dh_tmp_auto = larg;
@@ -3715,7 +3715,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     default:
         break;
     }
-    return (ret);
+    return ret;
 }
 
 long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
@@ -3743,7 +3743,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
     default:
         break;
     }
-    return (ret);
+    return ret;
 }
 
 long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
@@ -4229,7 +4229,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
             break;
         }
     }
-    return (ret);
+    return ret;
 }
 
 int ssl3_get_req_cert_type(SSL *s, WPACKET *pkt)
@@ -4331,7 +4331,7 @@ int ssl3_shutdown(SSL *s)
              * have already signalled return 0 upon a previous invocation,
              * return WANT_WRITE
              */
-            return (ret);
+            return ret;
         }
     } else if (!(s->shutdown & SSL_RECEIVED_SHUTDOWN)) {
         size_t readbytes;

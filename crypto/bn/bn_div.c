@@ -81,7 +81,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
     ret = 1;
  end:
     BN_CTX_end(ctx);
-    return (ret);
+    return ret;
 }
 
 #else

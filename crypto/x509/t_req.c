@@ -30,7 +30,7 @@ int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = X509_REQ_print(b, x);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 #endif
 

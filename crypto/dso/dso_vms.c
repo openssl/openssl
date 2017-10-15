@@ -449,7 +449,7 @@ static char *vms_merger(DSO *dso, const char *filespec1,
         goto malloc_err;
     strncpy(merged, nam.NAMX_ESA, nam.NAMX_ESL);
     merged[nam.NAMX_ESL] = '\0';
-    return (merged);
+    return merged;
  malloc_err:
     DSOerr(DSO_F_VMS_MERGER, ERR_R_MALLOC_FAILURE);
 }
