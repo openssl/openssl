@@ -367,7 +367,7 @@ int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
         n--;
 
     if (n % 4 != 0)
-        return (-1);
+        return -1;
 
     for (i = 0; i < n; i += 4) {
         a = conv_ascii2bin(*(f++));
@@ -375,7 +375,7 @@ int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
         c = conv_ascii2bin(*(f++));
         d = conv_ascii2bin(*(f++));
         if ((a & 0x80) || (b & 0x80) || (c & 0x80) || (d & 0x80))
-            return (-1);
+            return -1;
         l = ((((unsigned long)a) << 18L) |
              (((unsigned long)b) << 12L) |
              (((unsigned long)c) << 6L) | (((unsigned long)d)));
@@ -395,7 +395,7 @@ int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
     if (ctx->num != 0) {
         i = EVP_DecodeBlock(out, ctx->enc_data, ctx->num);
         if (i < 0)
-            return (-1);
+            return -1;
         ctx->num = 0;
         *outl = i;
         return 1;

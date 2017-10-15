@@ -3284,7 +3284,7 @@ const SSL_CIPHER *ssl3_get_cipher(unsigned int u)
     if (u < SSL3_NUM_CIPHERS)
         return (&(ssl3_ciphers[SSL3_NUM_CIPHERS - 1 - u]));
     else
-        return (NULL);
+        return NULL;
 }
 
 int ssl3_set_handshake_header(SSL *s, WPACKET *pkt, int htype)
@@ -3776,7 +3776,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_TMP_DH_CB:
         {
             SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-            return (0);
+            return 0;
         }
     case SSL_CTRL_SET_DH_AUTO:
         ctx->cert->dh_tmp_auto = larg;
@@ -3984,7 +3984,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return ssl_cert_set_current(ctx->cert, larg);
 
     default:
-        return (0);
+        return 0;
     }
     return 1;
 }
@@ -4036,7 +4036,7 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
         }
         break;
     default:
-        return (0);
+        return 0;
     }
     return 1;
 }
@@ -4321,7 +4321,7 @@ int ssl3_shutdown(SSL *s)
          * written, s->s3->alert_dispatch will be true
          */
         if (s->s3->alert_dispatch)
-            return (-1);        /* return WANT_WRITE */
+            return -1;        /* return WANT_WRITE */
     } else if (s->s3->alert_dispatch) {
         /* resend it if not sent */
         ret = s->method->ssl_dispatch_alert(s);
@@ -4348,7 +4348,7 @@ int ssl3_shutdown(SSL *s)
         !s->s3->alert_dispatch)
         return 1;
     else
-        return (0);
+        return 0;
 }
 
 int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written)

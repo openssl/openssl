@@ -318,7 +318,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     OPENSSL_cleanse(tmp2, sizeof(tmp1));
     OPENSSL_cleanse(iv1, sizeof(iv1));
     OPENSSL_cleanse(iv2, sizeof(iv2));
-    return (0);
+    return 0;
 }
 
 int tls1_setup_key_block(SSL *s)
@@ -337,7 +337,7 @@ int tls1_setup_key_block(SSL *s)
     if (!ssl_cipher_get_evp(s->session, &c, &hash, &mac_type, &mac_secret_size,
                             &comp, s->ext.use_etm)) {
         SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
-        return (0);
+        return 0;
     }
 
     s->s3->tmp.new_sym_enc = c;
@@ -590,7 +590,7 @@ int tls1_alert_code(int code)
     case SSL_AD_HANDSHAKE_FAILURE:
         return (SSL3_AD_HANDSHAKE_FAILURE);
     case SSL_AD_NO_CERTIFICATE:
-        return (-1);
+        return -1;
     case SSL_AD_BAD_CERTIFICATE:
         return (SSL3_AD_BAD_CERTIFICATE);
     case SSL_AD_UNSUPPORTED_CERTIFICATE:
@@ -642,6 +642,6 @@ int tls1_alert_code(int code)
     case SSL_AD_CERTIFICATE_REQUIRED:
         return SSL_AD_HANDSHAKE_FAILURE;
     default:
-        return (-1);
+        return -1;
     }
 }

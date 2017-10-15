@@ -55,7 +55,7 @@ static int md_new(BIO *bi)
 
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL)
-        return (0);
+        return 0;
 
     BIO_set_init(bi, 1);
     BIO_set_data(bi, ctx);
@@ -66,7 +66,7 @@ static int md_new(BIO *bi)
 static int md_free(BIO *a)
 {
     if (a == NULL)
-        return (0);
+        return 0;
     EVP_MD_CTX_free(BIO_get_data(a));
     BIO_set_data(a, NULL);
     BIO_set_init(a, 0);
@@ -81,20 +81,20 @@ static int md_read(BIO *b, char *out, int outl)
     BIO *next;
 
     if (out == NULL)
-        return (0);
+        return 0;
 
     ctx = BIO_get_data(b);
     next = BIO_next(b);
 
     if ((ctx == NULL) || (next == NULL))
-        return (0);
+        return 0;
 
     ret = BIO_read(next, out, outl);
     if (BIO_get_init(b)) {
         if (ret > 0) {
             if (EVP_DigestUpdate(ctx, (unsigned char *)out,
                                  (unsigned int)ret) <= 0)
-                return (-1);
+                return -1;
         }
     }
     BIO_clear_retry_flags(b);

@@ -245,7 +245,7 @@ X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, X509_NAME *name,
         if (X509_issuer_and_serial_cmp(x509, &x) == 0)
             return (x509);
     }
-    return (NULL);
+    return NULL;
 }
 
 X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name)
@@ -258,7 +258,7 @@ X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name)
         if (X509_NAME_cmp(X509_get_subject_name(x509), name) == 0)
             return (x509);
     }
-    return (NULL);
+    return NULL;
 }
 
 EVP_PKEY *X509_get0_pubkey(const X509 *x)

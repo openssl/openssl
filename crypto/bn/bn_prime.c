@@ -280,7 +280,7 @@ static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods)
 
  again:
     if (!BN_priv_rand(rnd, bits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ODD))
-        return (0);
+        return 0;
     /* we now have a random number 'rnd' to test. */
     for (i = 1; i < NUMPRIMES; i++) {
         BN_ULONG mod = BN_mod_word(rnd, (BN_ULONG)primes[i]);
@@ -346,7 +346,7 @@ static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods)
         }
     }
     if (!BN_add_word(rnd, delta))
-        return (0);
+        return 0;
     if (BN_num_bits(rnd) != bits)
         goto again;
     bn_check_top(rnd);

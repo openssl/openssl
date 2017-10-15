@@ -111,7 +111,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
             BIO_printf(bio_err, "unable to get certificate from '%s'\n",
                        cert_file);
             ERR_print_errors(bio_err);
-            return (0);
+            return 0;
         }
         if (key_file == NULL)
             key_file = cert_file;
@@ -119,7 +119,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
             BIO_printf(bio_err, "unable to get private key from '%s'\n",
                        key_file);
             ERR_print_errors(bio_err);
-            return (0);
+            return 0;
         }
 
         /*
@@ -134,7 +134,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
         if (!SSL_CTX_check_private_key(ctx)) {
             BIO_printf(bio_err,
                        "Private key does not match the certificate public key\n");
-            return (0);
+            return 0;
         }
     }
     return 1;

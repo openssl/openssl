@@ -312,7 +312,7 @@ static int CreateSocketPair (int SocketFamily,
     SockDesc1 = socket (SocketFamily, SocketType, 0);
     if (SockDesc1 < 0) {
         LogMessage ("CreateSocketPair: socket () - %d", errno);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -331,7 +331,7 @@ static int CreateSocketPair (int SocketFamily,
     if (status < 0) {
         LogMessage ("CreateSocketPair: bind () - %d", errno);
         close (SockDesc1);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -341,7 +341,7 @@ static int CreateSocketPair (int SocketFamily,
     if (status < 0) {
         LogMessage ("CreateSocketPair: getsockname () - %d", errno);
         close (SockDesc1);
-        return (-1);
+        return -1;
     } else
         LocalHostPort = sin.sin_port;
 
@@ -360,7 +360,7 @@ static int CreateSocketPair (int SocketFamily,
     if (! (status & 1)) {
         LogMessage ("CreateSocketPair: SYS$BINTIM () - %08X", status);
         close (SockDesc1);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -371,7 +371,7 @@ static int CreateSocketPair (int SocketFamily,
     if (! (status & 1)) {
         LogMessage ("CreateSocketPair: SYS$ASSIGN () - %08X", status);
         close (SockDesc1);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -393,7 +393,7 @@ static int CreateSocketPair (int SocketFamily,
         LogMessage ("CreateSocketPair: SYS$QIO () - %08X", status);
         close (SockDesc1);
         sys$dassgn (TcpDeviceChan);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -429,7 +429,7 @@ static int CreateSocketPair (int SocketFamily,
         close (SockDesc1);
         close (SockDesc2);
         sys$dassgn (TcpDeviceChan);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -448,7 +448,7 @@ static int CreateSocketPair (int SocketFamily,
         close (SockDesc1);
         close (SockDesc2);
         sys$dassgn (TcpDeviceChan);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -468,7 +468,7 @@ static int CreateSocketPair (int SocketFamily,
         close (SockDesc1);
         close (SockDesc2);
         sys$dassgn (TcpDeviceChan);
-        return (-1);
+        return -1;
     }
 
     /*

@@ -24,7 +24,7 @@ CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section)
     CONF_VALUE *v, vv;
 
     if ((conf == NULL) || (section == NULL))
-        return (NULL);
+        return NULL;
     vv.name = NULL;
     vv.section = (char *)section;
     v = lh_CONF_VALUE_retrieve(conf->data, &vv);
@@ -41,7 +41,7 @@ STACK_OF(CONF_VALUE) *_CONF_get_section_values(const CONF *conf,
     if (v != NULL)
         return ((STACK_OF(CONF_VALUE) *)v->value);
     else
-        return (NULL);
+        return NULL;
 }
 
 int _CONF_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value)
@@ -73,7 +73,7 @@ char *_CONF_get_string(const CONF *conf, const char *section,
     char *p;
 
     if (name == NULL)
-        return (NULL);
+        return NULL;
     if (conf != NULL) {
         if (section != NULL) {
             vv.name = (char *)name;
@@ -93,7 +93,7 @@ char *_CONF_get_string(const CONF *conf, const char *section,
         if (v != NULL)
             return (v->value);
         else
-            return (NULL);
+            return NULL;
     } else
         return (getenv(name));
 }
@@ -117,7 +117,7 @@ static int conf_value_cmp(const CONF_VALUE *a, const CONF_VALUE *b)
         i = strcmp(a->name, b->name);
         return (i);
     } else if (a->name == b->name)
-        return (0);
+        return 0;
     else
         return ((a->name == NULL) ? -1 : 1);
 }

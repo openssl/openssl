@@ -81,7 +81,7 @@ static int acpt_new(BIO *bi)
     bi->num = (int)INVALID_SOCKET;
     bi->flags = 0;
     if ((ba = BIO_ACCEPT_new()) == NULL)
-        return (0);
+        return 0;
     bi->ptr = (char *)ba;
     ba->state = ACPT_S_BEFORE;
     bi->shutdown = 1;
@@ -93,7 +93,7 @@ static BIO_ACCEPT *BIO_ACCEPT_new(void)
     BIO_ACCEPT *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
-        return (NULL);
+        return NULL;
     ret->accept_family = BIO_FAMILY_IPANY;
     ret->accept_sock = (int)INVALID_SOCKET;
     return (ret);
@@ -133,7 +133,7 @@ static int acpt_free(BIO *a)
     BIO_ACCEPT *data;
 
     if (a == NULL)
-        return (0);
+        return 0;
     data = (BIO_ACCEPT *)a->ptr;
 
     if (a->shutdown) {
@@ -545,11 +545,11 @@ BIO *BIO_new_accept(const char *str)
 
     ret = BIO_new(BIO_s_accept());
     if (ret == NULL)
-        return (NULL);
+        return NULL;
     if (BIO_set_accept_name(ret, str))
         return (ret);
     BIO_free(ret);
-    return (NULL);
+    return NULL;
 }
 
 #endif

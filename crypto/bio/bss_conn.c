@@ -224,7 +224,7 @@ BIO_CONNECT *BIO_CONNECT_new(void)
     BIO_CONNECT *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
-        return (NULL);
+        return NULL;
     ret->state = BIO_CONN_S_BEFORE;
     ret->connect_family = BIO_FAMILY_IPANY;
     return (ret);
@@ -252,7 +252,7 @@ static int conn_new(BIO *bi)
     bi->num = (int)INVALID_SOCKET;
     bi->flags = 0;
     if ((bi->ptr = (char *)BIO_CONNECT_new()) == NULL)
-        return (0);
+        return 0;
     else
         return 1;
 }
@@ -276,7 +276,7 @@ static int conn_free(BIO *a)
     BIO_CONNECT *data;
 
     if (a == NULL)
-        return (0);
+        return 0;
     data = (BIO_CONNECT *)a->ptr;
 
     if (a->shutdown) {
@@ -531,11 +531,11 @@ BIO *BIO_new_connect(const char *str)
 
     ret = BIO_new(BIO_s_connect());
     if (ret == NULL)
-        return (NULL);
+        return NULL;
     if (BIO_set_conn_hostname(ret, str))
         return (ret);
     BIO_free(ret);
-    return (NULL);
+    return NULL;
 }
 
 #endif
