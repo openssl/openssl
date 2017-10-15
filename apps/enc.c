@@ -450,7 +450,7 @@ int enc_main(int argc, char **argv)
             }
             /*
              * zero the complete buffer or the string passed from the command
-             * line bug picked up by Larry J. Hughes Jr. <hughes@indiana.edu>
+             * line.
              */
             if (str == strbuf)
                 OPENSSL_cleanse(str, SIZE);

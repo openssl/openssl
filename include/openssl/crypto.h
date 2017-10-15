@@ -211,7 +211,7 @@ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
  * The old locking functions have been removed completely without compatibility
  * macros. This is because the old functions either could not properly report
  * errors, or the returned error values were not clearly documented.
- * Replacing the locking functions with with no-ops would cause race condition
+ * Replacing the locking functions with no-ops would cause race condition
  * issues in the affected applications. It is far better for them to fail at
  * compile time.
  * On the other hand, the locking callbacks are no longer used.  Consequently,
@@ -303,6 +303,7 @@ void OPENSSL_cleanse(void *ptr, size_t len);
         CRYPTO_mem_debug_pop()
 int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
 int CRYPTO_mem_debug_pop(void);
+void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
 
 /*-
  * Debugging functions (enabled by CRYPTO_set_mem_debug(1))

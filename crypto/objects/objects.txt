@@ -1578,3 +1578,10 @@ id-pkinit 5                     : pkInitKDC             : Signing KDC Response
                             : Poly1305     : poly1305
 # NID for SipHash
                             : SipHash      : siphash
+
+# NIDs for RFC7919 DH parameters
+                            : ffdhe2048
+                            : ffdhe3072
+                            : ffdhe4096
+                            : ffdhe6144
+                            : ffdhe8192

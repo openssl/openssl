@@ -105,16 +105,17 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
         id = pkey->ameth->pkey_id;
     }
 #ifndef OPENSSL_NO_ENGINE
-    if (pkey && pkey->engine)
-        e = pkey->engine;
+    if (e == NULL && pkey != NULL)
+        e = pkey->pmeth_engine != NULL ? pkey->pmeth_engine : pkey->engine;
     /* Try to find an ENGINE which implements this method */
     if (e) {
         if (!ENGINE_init(e)) {
             EVPerr(EVP_F_INT_CTX_NEW, ERR_R_ENGINE_LIB);
             return NULL;
         }
-    } else
+    } else {
         e = ENGINE_get_pkey_meth_engine(id);
+    }
 
     /*
      * If an ENGINE handled this method look it up. Otherwise use internal
@@ -128,6 +129,9 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
         pmeth = EVP_PKEY_meth_find(id);
 
     if (pmeth == NULL) {
+#ifndef OPENSSL_NO_ENGINE
+        ENGINE_finish(e);
+#endif
         EVPerr(EVP_F_INT_CTX_NEW, EVP_R_UNSUPPORTED_ALGORITHM);
         return NULL;
     }

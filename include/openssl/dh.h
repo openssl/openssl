@@ -162,6 +162,10 @@ DH *DH_get_1024_160(void);
 DH *DH_get_2048_224(void);
 DH *DH_get_2048_256(void);
 
+/* Named parameters, currently RFC7919 */
+DH *DH_new_by_nid(int nid);
+int DH_get_nid(const DH *dh);
+
 # ifndef OPENSSL_NO_CMS
 /* RFC2631 KDF */
 int DH_KDF_X9_42(unsigned char *out, size_t outlen,
@@ -238,6 +242,15 @@ int DH_meth_set_generate_params(DH_METHOD *dhm,
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_PARAMGEN, \
                         EVP_PKEY_CTRL_DH_RFC5114, gen, NULL)
 
+# define EVP_PKEY_CTX_set_dh_nid(ctx, nid) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, \
+                        EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN, \
+                        EVP_PKEY_CTRL_DH_NID, nid, NULL)
+
+# define EVP_PKEY_CTX_set_dh_pad(ctx, pad) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_DERIVE, \
+                          EVP_PKEY_CTRL_DH_PAD, pad, NULL)
+
 # define EVP_PKEY_CTX_set_dh_kdf_type(ctx, kdf) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, \
                                 EVP_PKEY_OP_DERIVE, \
@@ -302,6 +315,8 @@ int DH_meth_set_generate_params(DH_METHOD *dhm,
 # define EVP_PKEY_CTRL_GET_DH_KDF_UKM            (EVP_PKEY_ALG_CTRL + 12)
 # define EVP_PKEY_CTRL_DH_KDF_OID                (EVP_PKEY_ALG_CTRL + 13)
 # define EVP_PKEY_CTRL_GET_DH_KDF_OID            (EVP_PKEY_ALG_CTRL + 14)
+# define EVP_PKEY_CTRL_DH_NID                    (EVP_PKEY_ALG_CTRL + 15)
+# define EVP_PKEY_CTRL_DH_PAD                    (EVP_PKEY_ALG_CTRL + 16)
 
 /* KDF types */
 # define EVP_PKEY_DH_KDF_NONE                            1

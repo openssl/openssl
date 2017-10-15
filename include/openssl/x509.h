@@ -254,9 +254,8 @@ typedef struct X509_info_st {
 DEFINE_STACK_OF(X509_INFO)
 
 /*
- * The next 2 structures and their 8 routines were sent to me by Pat Richard
- * <patr@x509.com> and are used to manipulate Netscapes spki structures -
- * useful if you are writing a CA web page
+ * The next 2 structures and their 8 routines are used to manipulate Netscape's
+ * spki structures - useful if you are writing a CA web page
  */
 typedef struct Netscape_spkac_st {
     X509_PUBKEY *pubkey;

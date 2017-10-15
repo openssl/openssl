@@ -43,7 +43,7 @@ int DH_generate_parameters_ex(DH *ret, int prime_len, int generator,
  * for 3, p mod 12 == 5  <<<<< does not work for safe primes.
  * for 5, p mod 10 == 3 or 7
  *
- * Thanks to Phil Karn <karn@qualcomm.com> for the pointers about the
+ * Thanks to Phil Karn for the pointers about the
  * special generators and for answering some of my questions.
  *
  * I've implemented the second simple method :-).

@@ -177,7 +177,7 @@ int CRYPTO_atomic_read(int *val, int *ret, CRYPTO_RWLOCK *lock)
         return 1;
     }
 # endif
-    if (!CRYPTO_THREAD_write_lock(lock))
+    if (!CRYPTO_THREAD_read_lock(lock))
         return 0;
 
     *ret  = *val;
