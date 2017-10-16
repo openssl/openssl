@@ -204,15 +204,15 @@ static void ctr_update(RAND_DRBG *drbg,
     RAND_DRBG_CTR *ctr = &drbg->ctr;
 
     /* ks is already setup for correct key */
-    inc_128(ctr);
     AES_encrypt(ctr->V, ctr->K, &ctr->ks);
+    inc_128(ctr);
 
     /* If keylen longer than 128 bits need extra encrypt */
     if (ctr->keylen != 16) {
-        inc_128(ctr);
         AES_encrypt(ctr->V, ctr->K + 16, &ctr->ks);
+        inc_128(ctr);
     }
-    inc_128(ctr);
+
     AES_encrypt(ctr->V, ctr->V, &ctr->ks);
 
     /* If 192 bit key part of V is on end of K */
@@ -249,6 +249,8 @@ int ctr_instantiate(RAND_DRBG *drbg,
     memset(ctr->K, 0, sizeof(ctr->K));
     memset(ctr->V, 0, sizeof(ctr->V));
     AES_set_encrypt_key(ctr->K, drbg->strength, &ctr->ks);
+
+    inc_128(ctr);
     ctr_update(drbg, entropy, entropylen, pers, perslen, nonce, noncelen);
     return 1;
 }
@@ -259,6 +261,8 @@ int ctr_reseed(RAND_DRBG *drbg,
 {
     if (entropy == NULL)
         return 0;
+
+    inc_128(&drbg->ctr);
     ctr_update(drbg, entropy, entropylen, adin, adinlen, NULL, 0);
     return 1;
 }
@@ -270,6 +274,7 @@ int ctr_generate(RAND_DRBG *drbg,
     RAND_DRBG_CTR *ctr = &drbg->ctr;
 
     if (adin != NULL && adinlen != 0) {
+        inc_128(ctr);
         ctr_update(drbg, adin, adinlen, NULL, 0, NULL, 0);
         /* This means we reuse derived value */
         if (drbg->flags & RAND_DRBG_FLAG_CTR_USE_DF) {
@@ -280,15 +285,17 @@ int ctr_generate(RAND_DRBG *drbg,
         adinlen = 0;
     }
 
+    inc_128(ctr);
     for ( ; ; ) {
-        inc_128(ctr);
         if (outlen < 16) {
             /* Use K as temp space as it will be updated */
             AES_encrypt(ctr->V, ctr->K, &ctr->ks);
+            inc_128(ctr);
             memcpy(out, ctr->K, outlen);
             break;
         }
         AES_encrypt(ctr->V, out, &ctr->ks);
+        inc_128(ctr);
         out += 16;
         outlen -= 16;
         if (outlen == 0)
