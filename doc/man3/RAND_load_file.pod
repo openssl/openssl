@@ -58,7 +58,7 @@ B<num> is too small for the path name, an error occurs.
 
 =head1 RETURN VALUES
 
-RAND_load_file() returns the number of bytes read.
+RAND_load_file() returns the number of bytes read or -1 on error.
 
 RAND_write_file() returns the number of bytes written, or -1 if the
 bytes written were generated without appropriate seeding.
