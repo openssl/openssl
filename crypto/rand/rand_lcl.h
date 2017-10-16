@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -70,10 +70,18 @@ typedef struct rand_bytes_buffer_st {
  * The state of a DRBG AES-CTR.
  */
 typedef struct rand_drbg_ctr_st {
-    AES_KEY ks;
+    union {
+        double align;
+        AES_KEY ks;
+    } ks;
     size_t keylen;
     unsigned char K[32];
     unsigned char V[16];
+    int (*set_key)(const unsigned char *userKey, int bits, const void *key);
+    void (*block)(const unsigned char in[16], unsigned char out[16],
+                  const void *key);
+    void (*ctr32)(const unsigned char *in, unsigned char *out, size_t blocks,
+                  const void *key, const unsigned char ivec[16]);
     /* Temp variables used by derivation function */
     AES_KEY df_ks;
     AES_KEY df_kxks;

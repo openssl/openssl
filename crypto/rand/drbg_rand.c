@@ -11,8 +11,10 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/modes.h>
 #include <openssl/rand.h>
 #include "rand_lcl.h"
+#include "internal/evp_int.h"
 #include "internal/thread_once.h"
 
 /*
@@ -72,7 +74,7 @@ static void ctr_BCC_block(RAND_DRBG_CTR *ctr, unsigned char *out,
 
     for (i = 0; i < 16; i++)
         out[i] ^= in[i];
-    AES_encrypt(out, out, &ctr->df_ks);
+    ctr->block(out, out, &ctr->df_ks);
 }
 
 
@@ -182,12 +184,12 @@ static void ctr_df(RAND_DRBG_CTR *ctr,
     ctr_BCC_update(ctr, &c80, 1);
     ctr_BCC_final(ctr);
     /* Set up key K */
-    AES_set_encrypt_key(ctr->KX, ctr->keylen * 8, &ctr->df_kxks);
+    ctr->set_key(ctr->KX, ctr->keylen * 8, &ctr->df_kxks);
     /* X follows key K */
-    AES_encrypt(ctr->KX + ctr->keylen, ctr->KX, &ctr->df_kxks);
-    AES_encrypt(ctr->KX, ctr->KX + 16, &ctr->df_kxks);
+    ctr->block(ctr->KX + ctr->keylen, ctr->KX, &ctr->df_kxks);
+    ctr->block(ctr->KX, ctr->KX + 16, &ctr->df_kxks);
     if (ctr->keylen != 16)
-        AES_encrypt(ctr->KX + 16, ctr->KX + 32, &ctr->df_kxks);
+        ctr->block(ctr->KX + 16, ctr->KX + 32, &ctr->df_kxks);
 }
 
 /*
@@ -204,16 +206,16 @@ static void ctr_update(RAND_DRBG *drbg,
     RAND_DRBG_CTR *ctr = &drbg->ctr;
 
     /* ks is already setup for correct key */
-    AES_encrypt(ctr->V, ctr->K, &ctr->ks);
+    ctr->block(ctr->V, ctr->K, &ctr->ks);
     inc_128(ctr);
 
     /* If keylen longer than 128 bits need extra encrypt */
     if (ctr->keylen != 16) {
-        AES_encrypt(ctr->V, ctr->K + 16, &ctr->ks);
+        ctr->block(ctr->V, ctr->K + 16, &ctr->ks);
         inc_128(ctr);
     }
 
-    AES_encrypt(ctr->V, ctr->V, &ctr->ks);
+    ctr->block(ctr->V, ctr->V, &ctr->ks);
 
     /* If 192 bit key part of V is on end of K */
     if (ctr->keylen == 24) {
@@ -233,7 +235,7 @@ static void ctr_update(RAND_DRBG *drbg,
         ctr_XOR(ctr, in2, in2len);
     }
 
-    AES_set_encrypt_key(ctr->K, drbg->strength, &ctr->ks);
+    ctr->set_key(ctr->K, drbg->strength, &ctr->ks);
 }
 
 int ctr_instantiate(RAND_DRBG *drbg,
@@ -248,7 +250,7 @@ int ctr_instantiate(RAND_DRBG *drbg,
 
     memset(ctr->K, 0, sizeof(ctr->K));
     memset(ctr->V, 0, sizeof(ctr->V));
-    AES_set_encrypt_key(ctr->K, drbg->strength, &ctr->ks);
+    ctr->set_key(ctr->K, drbg->strength, &ctr->ks);
 
     inc_128(ctr);
     ctr_update(drbg, entropy, entropylen, pers, perslen, nonce, noncelen);
@@ -286,20 +288,30 @@ int ctr_generate(RAND_DRBG *drbg,
     }
 
     inc_128(ctr);
-    for ( ; ; ) {
-        if (outlen < 16) {
-            /* Use K as temp space as it will be updated */
-            AES_encrypt(ctr->V, ctr->K, &ctr->ks);
+
+    if (ctr->ctr32 != NULL) {
+        unsigned int outl = 0;
+
+        memset(out, 0, outlen);
+        /* Use K as temp space as it will be updated */
+        CRYPTO_ctr128_encrypt_ctr32(out, out, outlen, &ctr->ks, ctr->V, ctr->K,
+                                    &outl, ctr->ctr32);
+    } else {
+        for ( ; ; ) {
+            if (outlen < 16) {
+                /* Use K as temp space as it will be updated */
+                ctr->block(ctr->V, ctr->K, &ctr->ks);
+                inc_128(ctr);
+                memcpy(out, ctr->K, outlen);
+                break;
+            }
+            ctr->block(ctr->V, out, &ctr->ks);
             inc_128(ctr);
-            memcpy(out, ctr->K, outlen);
-            break;
+            out += 16;
+            outlen -= 16;
+            if (outlen == 0)
+                break;
         }
-        AES_encrypt(ctr->V, out, &ctr->ks);
-        inc_128(ctr);
-        out += 16;
-        outlen -= 16;
-        if (outlen == 0)
-            break;
     }
 
     ctr_update(drbg, adin, adinlen, NULL, 0, NULL, 0);
@@ -333,6 +345,10 @@ int ctr_init(RAND_DRBG *drbg)
     }
 
     ctr->keylen = keylen;
+    ctr->set_key = get_aes_set_encrypt_key(keylen);
+    ctr->block = get_aes_block_encrypt(keylen);
+    ctr->ctr32 = get_aes_ctr32_encrypt(keylen);
+
     drbg->strength = keylen * 8;
     drbg->seedlen = keylen + 16;
 
@@ -345,7 +361,7 @@ int ctr_init(RAND_DRBG *drbg)
             0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f
         };
         /* Set key schedule for df_key */
-        AES_set_encrypt_key(df_key, drbg->strength, &ctr->df_ks);
+        ctr->set_key(df_key, drbg->strength, &ctr->df_ks);
 
         drbg->min_entropylen = ctr->keylen;
         drbg->max_entropylen = DRBG_MAX_LENGTH;

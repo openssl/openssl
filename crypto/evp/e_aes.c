@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -99,6 +99,10 @@ typedef struct {
 #endif
 
 #define MAXBITCHUNK     ((size_t)1<<(sizeof(size_t)*8-4))
+
+static set_key_f _get_aes_set_encrypt_key(void);
+static block128_f _get_aes_block_encrypt(void);
+static ctr128_f _get_aes_ctr32_encrypt(void);
 
 #ifdef VPAES_ASM
 int vpaes_set_encrypt_key(const unsigned char *userKey, int bits,
@@ -498,6 +502,26 @@ static int aesni_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int aesni_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                             const unsigned char *in, size_t len);
 # endif                        /* OPENSSL_NO_OCB */
+
+set_key_f get_aes_set_encrypt_key(int keylen)
+{
+    (void)keylen;	/* suppress -Wunused-parameter */
+    return AESNI_CAPABLE ? (set_key_f)aesni_set_encrypt_key
+                         : _get_aes_set_encrypt_key();
+}
+
+block128_f get_aes_block_encrypt(int keylen)
+{
+    (void)keylen;	/* suppress -Wunused-parameter */
+    return AESNI_CAPABLE ? (block128_f)aesni_encrypt
+                         : _get_aes_block_encrypt();
+}
+
+ctr128_f get_aes_ctr32_encrypt(int keylen) {
+    (void)keylen;	/* suppress -Wunused-parameter */
+    return AESNI_CAPABLE ? (ctr128_f)aesni_ctr32_encrypt_blocks
+                         : _get_aes_ctr32_encrypt();
+}
 
 # define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aesni_##keylen##_##mode = { \
@@ -907,6 +931,36 @@ static int aes_t4_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                              const unsigned char *in, size_t len);
 # endif                        /* OPENSSL_NO_OCB */
 
+set_key_f get_aes_set_encrypt_key(int keylen)
+{
+    (void)keylen;	/* suppress -Wunused-parameter */
+    return SPARC_AES_CAPABLE ? (set_key_f)aes_t4_set_encrypt_key
+                             : _get_aes_set_encrypt_key();
+}
+
+block128_f get_aes_block_encrypt(int keylen)
+{
+    (void)keylen;	/* suppress -Wunused-parameter */
+    return SPARC_AES_CAPABLE ? (block128_f)aes_t4_encrypt
+                             : _get_aes_block_encrypt();
+}
+
+ctr128_f get_aes_ctr32_encrypt(int keylen) {
+    if (SPARC_AES_CAPABLE) {
+        switch (keylen * 8) {
+        case 128:
+            return (ctr128_f)aes128_t4_ctr32_encrypt;
+        case 192:
+            return (ctr128_f)aes192_t4_ctr32_encrypt;
+        case 256:
+            return (ctr128_f)aes256_t4_ctr32_encrypt;
+        default:
+            break;
+        }
+    }
+    return _get_aes_ctr32_encrypt();
+}
+
 # define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aes_t4_##keylen##_##mode = { \
         nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
@@ -977,6 +1031,24 @@ static const EVP_CIPHER aes_##keylen##_##mode = { \
 const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return &aes_##keylen##_##mode; }
 
+set_key_f get_aes_set_encrypt_key(int keylen)
+{
+    (void)keylen;	/* suppress -Wunused-parameter */
+    return _get_aes_set_encrypt_key();
+}
+
+block128_f get_aes_block_encrypt(int keylen)
+{
+    (void)keylen;	/* suppress -Wunused-parameter */
+    return _get_aes_block_encrypt();
+}
+
+ctr128_f get_aes_ctr32_encrypt(int keylen)
+{
+    (void)keylen;	/* suppress -Wunused-parameter */
+    return _get_aes_ctr32_encrypt();
+}
+
 #endif
 
 #if defined(OPENSSL_CPUID_OBJ) && (defined(__arm__) || defined(__arm) || defined(__aarch64__))
@@ -1020,6 +1092,61 @@ void HWAES_xts_decrypt(const unsigned char *inp, unsigned char *out,
                        size_t len, const AES_KEY *key1,
                        const AES_KEY *key2, const unsigned char iv[16]);
 #endif
+
+static set_key_f _get_aes_set_encrypt_key(void)
+{
+#ifdef HWAES_CAPABLE
+    if (HWAES_CAPABLE)
+        return (set_key_f)HWAES_set_encrypt_key;
+#endif
+#ifdef BSAES_CAPABLE
+    if (BSAES_CAPABLE)
+        return (set_key_f)AES_set_encrypt_key;
+#endif
+#ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        return (set_key_f)vpaes_set_encrypt_key;
+#endif
+    return (set_key_f)AES_set_encrypt_key;
+}
+
+static block128_f _get_aes_block_encrypt(void)
+{
+#ifdef HWAES_CAPABLE
+    if (HWAES_CAPABLE)
+        return (block128_f)HWAES_encrypt;
+#endif
+#ifdef BSAES_CAPABLE
+    if (BSAES_CAPABLE)
+        return (block128_f)AES_encrypt;
+#endif
+#ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        return (block128_f)vpaes_encrypt;
+#endif
+    return (block128_f)AES_encrypt;
+}
+
+static ctr128_f _get_aes_ctr32_encrypt(void)
+{
+#ifdef HWAES_CAPABLE
+    if (HWAES_CAPABLE)
+        return (ctr128_f)HWAES_ctr32_encrypt_blocks;
+#endif
+#ifdef BSAES_CAPABLE
+    if (BSAES_CAPABLE)
+        return (ctr128_f)bsaes_ctr32_encrypt_blocks;
+#endif
+#ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        return NULL;
+#endif
+#ifdef AES_CTR_ASM
+    return (ctr128_f)AES_ctr32_encrypt;
+#else
+    return NULL;
+#endif
+}
 
 #define BLOCK_CIPHER_generic_pack(nid,keylen,flags)             \
         BLOCK_CIPHER_generic(nid,keylen,16,16,cbc,cbc,CBC,flags|EVP_CIPH_FLAG_DEFAULT_ASN1)     \

@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/modes.h>
 #include "internal/refcount.h"
 
 struct evp_pkey_ctx_st {
@@ -390,6 +391,12 @@ struct evp_pkey_st {
     CRYPTO_RWLOCK *lock;
 } /* EVP_PKEY */ ;
 
+typedef int (*set_key_f)(const unsigned char *userKey, int bits,
+                         const void *key);
+
+set_key_f get_aes_set_encrypt_key(int keylen);
+block128_f get_aes_block_encrypt(int keylen);
+ctr128_f get_aes_ctr32_encrypt(int keylen);
 
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
