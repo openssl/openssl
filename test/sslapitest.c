@@ -1974,19 +1974,20 @@ static int hostname_cb(SSL *s, int *al, void *arg)
 
 static const char *servalpn;
 
-static int alpn_select_cb (SSL *ssl, const unsigned char **out, unsigned char *outlen,
-                    const unsigned char *in, unsigned int inlen, void *arg)
+static int alpn_select_cb(SSL *ssl, const unsigned char **out,
+                          unsigned char *outlen, const unsigned char *in,
+                          unsigned int inlen, void *arg)
 {
-    unsigned int i, protlen = 0;
+    unsigned int protlen = 0;
     const unsigned char *prot;
 
-    for (i = 0, prot = in; i < inlen; i += protlen, prot += protlen) {
-        protlen = *(prot++);
-        if (inlen - i < protlen)
+    for (prot = in; prot < in + inlen; prot += protlen) {
+        protlen = *prot++;
+        if (in + inlen - prot < protlen)
             return SSL_TLSEXT_ERR_NOACK;
 
         if (protlen == strlen(servalpn)
-                && memcmp(prot, "goodalpn", protlen) == 0) {
+                && memcmp(prot, servalpn, protlen) == 0) {
             *out = prot;
             *outlen = protlen;
             return SSL_TLSEXT_ERR_OK;
