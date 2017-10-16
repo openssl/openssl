@@ -515,8 +515,7 @@ specifies the host for the "to" attribute of the stream element.
 If this option is not specified, then the host specified with "-connect"
 will be used.
 
-This option is an alias of the B<-name> option since OpenSSL 1.1.1 for
-"xmpp" and "xmpp-server".
+This option is an alias of the B<-name> option for "xmpp" and "xmpp-server".
 
 =item B<-name hostname>
 
