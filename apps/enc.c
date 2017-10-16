@@ -476,9 +476,13 @@ int enc_main(int argc, char **argv)
             BIO_printf(bio_err, "iv undefined\n");
             goto end;
         }
-        if ((hkey != NULL) && !set_hex(hkey, key, EVP_CIPHER_key_length(cipher))) {
-            BIO_printf(bio_err, "invalid hex key value\n");
-            goto end;
+        if (hkey != NULL) {
+            if (!set_hex(hkey, key, EVP_CIPHER_key_length(cipher))) {
+                BIO_printf(bio_err, "invalid hex key value\n");
+                goto end;
+            }
+            /* wiping secret data as we no longer need it */
+            OPENSSL_cleanse(hkey, strlen(hkey));
         }
 
         if ((benc = BIO_new(BIO_f_cipher())) == NULL)
