@@ -100,6 +100,7 @@ B<openssl> B<s_client>
 [B<-serverpref>]
 [B<-starttls protocol>]
 [B<-xmpphost hostname>]
+[B<-name hostname>]
 [B<-engine id>]
 [B<-tlsextdebug>]
 [B<-no_ticket>]
@@ -514,6 +515,22 @@ specifies the host for the "to" attribute of the stream element.
 If this option is not specified, then the host specified with "-connect"
 will be used.
 
+This option is an alias of the B<-name> option for "xmpp" and "xmpp-server".
+
+=item B<-name hostname>
+
+This option is used to specify hostname information for various protocols
+used with B<-starttls> option. Currently only "xmpp", "xmpp-server",
+"smtp" and "lmtp" can utilize this B<-name> option.
+
+If this option is used with "-starttls xmpp" or "-starttls xmpp-server",
+if specifies the host for the "to" attribute of the stream element. If this
+option is not specified, then the host specified with "-connect" will be used.
+
+If this option is used with "-starttls lmtp" or "-starttls smtp", it specifies
+the name to use in the "LMTP LHLO" or "SMTP EHLO" message, respectively. If
+this option is not specified, then "mail.example.com" will be used.
+
 =item B<-tlsextdebug>
 
 Print out a hex dump of any TLS extensions received from the server.
@@ -680,7 +697,8 @@ L<SSL_CTX_set_max_pipelines(3)>
 
 =head1 HISTORY
 
-The -no_alt_chains options was first added to OpenSSL 1.1.0.
+The B<-no_alt_chains> option was first added to OpenSSL 1.1.0.
+The B<-name> option was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
