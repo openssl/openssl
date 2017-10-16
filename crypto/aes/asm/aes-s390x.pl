@@ -823,8 +823,8 @@ $code.=<<___ if (!$softonly);
 	larl	%r1,OPENSSL_s390xcap_P
 	llihh	%r0,0x8000
 	srlg	%r0,%r0,0(%r5)
-	ng	%r0,32(%r1)	# check km capability vector
-	ng	%r0,48(%r1)	# check kmc capability vector
+	ng	%r0,32(%r1)	# check availability of both km...
+	ng	%r0,48(%r1)	# ...and kmc support for given key length
 	jz	.Lekey_internal
 
 	lmg	%r0,%r1,0($inp)	# just copy 128 bits...
