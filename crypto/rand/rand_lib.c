@@ -270,8 +270,7 @@ int RAND_poll(void)
             goto err;
 
         if (meth->add == NULL
-            || meth->add(
-                         RAND_POOL_buffer(pool),
+            || meth->add(RAND_POOL_buffer(pool),
                          RAND_POOL_length(pool),
                          (RAND_POOL_entropy(pool) / 8.0)) == 0)
             goto err;
@@ -292,7 +291,7 @@ err:
  * random pool, 2) pass it to the polling callbacks, 3) seed the RNG, and
  * 4) cleanup the random pool again.
  *
- * The random pool contains no locking mechanism because it's scope and
+ * The random pool contains no locking mechanism because its scope and
  * lifetime is intended to be restricted to a single stack frame.
  */
 struct rand_pool_st {
