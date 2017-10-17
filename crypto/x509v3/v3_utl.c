@@ -56,8 +56,10 @@ int X509V3_add_value(const char *name, const char *value,
     return 1;
  err:
     X509V3err(X509V3_F_X509V3_ADD_VALUE, ERR_R_MALLOC_FAILURE);
-    if (sk_allocated)
+    if (sk_allocated) {
         sk_CONF_VALUE_free(*extlist);
+        *extlist = NULL;
+    }
     OPENSSL_free(vtmp);
     OPENSSL_free(tname);
     OPENSSL_free(tvalue);
