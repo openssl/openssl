@@ -364,7 +364,7 @@ int dhparam_main(int argc, char **argv)
     BIO_free_all(out);
     DH_free(dh);
     release_engine(e);
-    return (ret);
+    return ret;
 }
 
 static int dh_cb(int p, int n, BN_GENCB *cb)

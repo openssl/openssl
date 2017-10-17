@@ -3474,7 +3474,7 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, WPACKET *pkt)
     ssl_set_client_disabled(s);
 
     if (sk == NULL)
-        return (0);
+        return 0;
 
 #ifdef OPENSSL_MAX_TLS1_2_CIPHER_LENGTH
 # if OPENSSL_MAX_TLS1_2_CIPHER_LENGTH < 6

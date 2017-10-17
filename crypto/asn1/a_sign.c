@@ -103,7 +103,7 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
     EVP_MD_CTX_free(ctx);
     OPENSSL_clear_free((char *)buf_in, (unsigned int)inl);
     OPENSSL_clear_free((char *)buf_out, outll);
-    return (outl);
+    return outl;
 }
 
 #endif
@@ -225,5 +225,5 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
  err:
     OPENSSL_clear_free((char *)buf_in, (unsigned int)inl);
     OPENSSL_clear_free((char *)buf_out, outll);
-    return (outl);
+    return outl;
 }

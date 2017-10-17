@@ -2938,7 +2938,7 @@ int speed_main(int argc, char **argv)
     }
     OPENSSL_free(loopargs);
     release_engine(e);
-    return (ret);
+    return ret;
 }
 
 static void print_message(const char *s, long num, int length)

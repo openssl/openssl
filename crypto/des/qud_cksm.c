@@ -72,5 +72,5 @@ DES_LONG DES_quad_cksum(const unsigned char *input, DES_cblock output[],
             *lp++ = z1;
         }
     }
-    return (z0);
+    return z0;
 }

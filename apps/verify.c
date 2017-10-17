@@ -313,5 +313,5 @@ static int cb(int ok, X509_STORE_CTX *ctx)
         policies_print(ctx);
     if (!v_verbose)
         ERR_clear_error();
-    return (ok);
+    return ok;
 }

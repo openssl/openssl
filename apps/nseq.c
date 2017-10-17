@@ -109,5 +109,5 @@ int nseq_main(int argc, char **argv)
     BIO_free_all(out);
     NETSCAPE_CERT_SEQUENCE_free(seq);
 
-    return (ret);
+    return ret;
 }

@@ -398,7 +398,7 @@ int dgst_main(int argc, char **argv)
     OPENSSL_free(sigbuf);
     BIO_free(bmd);
     release_engine(e);
-    return (ret);
+    return ret;
 }
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,

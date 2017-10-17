@@ -14,9 +14,9 @@
 const char *RC4_options(void)
 {
     if (sizeof(RC4_INT) == 1)
-        return ("rc4(char)");
+        return "rc4(char)";
     else
-        return ("rc4(int)");
+        return "rc4(int)";
 }
 
 /*-

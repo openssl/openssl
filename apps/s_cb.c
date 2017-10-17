@@ -100,7 +100,7 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
         policies_print(ctx);
     if (ok && !verify_args.quiet)
         BIO_printf(bio_err, "verify return:%d\n", ok);
-    return (ok);
+    return ok;
 }
 
 int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
@@ -111,7 +111,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
             BIO_printf(bio_err, "unable to get certificate from '%s'\n",
                        cert_file);
             ERR_print_errors(bio_err);
-            return (0);
+            return 0;
         }
         if (key_file == NULL)
             key_file = cert_file;
@@ -119,7 +119,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
             BIO_printf(bio_err, "unable to get private key from '%s'\n",
                        key_file);
             ERR_print_errors(bio_err);
-            return (0);
+            return 0;
         }
 
         /*
@@ -134,7 +134,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
         if (!SSL_CTX_check_private_key(ctx)) {
             BIO_printf(bio_err,
                        "Private key does not match the certificate public key\n");
-            return (0);
+            return 0;
         }
     }
     return 1;
@@ -423,19 +423,19 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp,
 
     out = (BIO *)BIO_get_callback_arg(bio);
     if (out == NULL)
-        return (ret);
+        return ret;
 
     if (cmd == (BIO_CB_READ | BIO_CB_RETURN)) {
         BIO_printf(out, "read from %p [%p] (%lu bytes => %ld (0x%lX))\n",
                    (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
         BIO_dump(out, argp, (int)ret);
-        return (ret);
+        return ret;
     } else if (cmd == (BIO_CB_WRITE | BIO_CB_RETURN)) {
         BIO_printf(out, "write to %p [%p] (%lu bytes => %ld (0x%lX))\n",
                    (void *)bio, (void *)argp, (unsigned long)argi, ret, ret);
         BIO_dump(out, argp, (int)ret);
     }
-    return (ret);
+    return ret;
 }
 
 void apps_ssl_info_callback(const SSL *s, int where, int ret)

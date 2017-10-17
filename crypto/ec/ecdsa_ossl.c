@@ -182,7 +182,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
         BN_CTX_free(ctx);
     EC_POINT_free(tmp_point);
     BN_clear_free(X);
-    return (ret);
+    return ret;
 }
 
 int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
@@ -327,7 +327,7 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
 
     s = ECDSA_SIG_new();
     if (s == NULL)
-        return (ret);
+        return ret;
     if (d2i_ECDSA_SIG(&s, &p, sig_len) == NULL)
         goto err;
     /* Ensure signature uses DER and doesn't have trailing garbage */
@@ -338,7 +338,7 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
  err:
     OPENSSL_clear_free(der, derlen);
     ECDSA_SIG_free(s);
-    return (ret);
+    return ret;
 }
 
 int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,

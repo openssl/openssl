@@ -184,7 +184,7 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
                 close (TerminalSocketPair[0]);
             if (TerminalSocketPair[1])
                 close (TerminalSocketPair[1]);
-            return (TERM_SOCK_FAILURE);
+            return TERM_SOCK_FAILURE;
         }
 
         /*
@@ -197,7 +197,7 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
             LogMessage ("TerminalSocket: SYS$ASSIGN () - %08X", status);
             close (TerminalSocketPair[0]);
             close (TerminalSocketPair[1]);
-            return (TERM_SOCK_FAILURE);
+            return TERM_SOCK_FAILURE;
         }
 
         /*
@@ -216,7 +216,7 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
             LogMessage ("TerminalSocket: SYS$QIO () - %08X", status);
             close (TerminalSocketPair[0]);
             close (TerminalSocketPair[1]);
-            return (TERM_SOCK_FAILURE);
+            return TERM_SOCK_FAILURE;
         }
 
         /*
@@ -234,7 +234,7 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
             LogMessage ("TerminalSocket: SYS$CANCEL () - %08X", status);
             close (TerminalSocketPair[0]);
             close (TerminalSocketPair[1]);
-            return (TERM_SOCK_FAILURE);
+            return TERM_SOCK_FAILURE;
         }
 
         /*
@@ -245,7 +245,7 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
             LogMessage ("TerminalSocket: SYS$DASSGN () - %08X", status);
             close (TerminalSocketPair[0]);
             close (TerminalSocketPair[1]);
-            return (TERM_SOCK_FAILURE);
+            return TERM_SOCK_FAILURE;
         }
 
         /*
@@ -265,14 +265,14 @@ int TerminalSocket (int FunctionCode, int *ReturnSocket)
 	** Invalid function code
 	*/
         LogMessage ("TerminalSocket: Invalid Function Code - %d", FunctionCode);
-        return (TERM_SOCK_FAILURE);
+        return TERM_SOCK_FAILURE;
         break;
     }
 
     /*
     ** Return success
     */
-    return (TERM_SOCK_SUCCESS);
+    return TERM_SOCK_SUCCESS;
 
 }
 
@@ -312,7 +312,7 @@ static int CreateSocketPair (int SocketFamily,
     SockDesc1 = socket (SocketFamily, SocketType, 0);
     if (SockDesc1 < 0) {
         LogMessage ("CreateSocketPair: socket () - %d", errno);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -331,7 +331,7 @@ static int CreateSocketPair (int SocketFamily,
     if (status < 0) {
         LogMessage ("CreateSocketPair: bind () - %d", errno);
         close (SockDesc1);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -341,7 +341,7 @@ static int CreateSocketPair (int SocketFamily,
     if (status < 0) {
         LogMessage ("CreateSocketPair: getsockname () - %d", errno);
         close (SockDesc1);
-        return (-1);
+        return -1;
     } else
         LocalHostPort = sin.sin_port;
 
@@ -360,7 +360,7 @@ static int CreateSocketPair (int SocketFamily,
     if (! (status & 1)) {
         LogMessage ("CreateSocketPair: SYS$BINTIM () - %08X", status);
         close (SockDesc1);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -371,7 +371,7 @@ static int CreateSocketPair (int SocketFamily,
     if (! (status & 1)) {
         LogMessage ("CreateSocketPair: SYS$ASSIGN () - %08X", status);
         close (SockDesc1);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -393,7 +393,7 @@ static int CreateSocketPair (int SocketFamily,
         LogMessage ("CreateSocketPair: SYS$QIO () - %08X", status);
         close (SockDesc1);
         sys$dassgn (TcpDeviceChan);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -429,7 +429,7 @@ static int CreateSocketPair (int SocketFamily,
         close (SockDesc1);
         close (SockDesc2);
         sys$dassgn (TcpDeviceChan);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -448,7 +448,7 @@ static int CreateSocketPair (int SocketFamily,
         close (SockDesc1);
         close (SockDesc2);
         sys$dassgn (TcpDeviceChan);
-        return (-1);
+        return -1;
     }
 
     /*
@@ -468,7 +468,7 @@ static int CreateSocketPair (int SocketFamily,
         close (SockDesc1);
         close (SockDesc2);
         sys$dassgn (TcpDeviceChan);
-        return (-1);
+        return -1;
     }
 
     /*

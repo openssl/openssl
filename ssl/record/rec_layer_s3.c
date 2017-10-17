@@ -657,7 +657,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     if (s->s3->alert_dispatch) {
         i = s->method->ssl_dispatch_alert(s);
         if (i <= 0)
-            return (i);
+            return i;
         /* if it went, fall through and send more stuff */
     }
 
@@ -1104,7 +1104,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
                  */
                 SSL3_BUFFER_set_left(&wb[currbuf], 0);
             }
-            return (i);
+            return i;
         }
         SSL3_BUFFER_add_offset(&wb[currbuf], tmpwrit);
         SSL3_BUFFER_sub_left(&wb[currbuf], tmpwrit);

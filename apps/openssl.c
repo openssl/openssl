@@ -534,7 +534,7 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
     FUNCTION f, *fp;
 
     if (argc <= 0 || argv[0] == NULL)
-        return (0);
+        return 0;
     f.name = argv[0];
     fp = lh_FUNCTION_retrieve(prog, &f);
     if (fp == NULL) {
@@ -549,7 +549,7 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
         }
     }
     if (fp != NULL) {
-        return (fp->func(argc, argv));
+        return fp->func(argc, argv);
     }
     if ((strncmp(argv[0], "no-", 3)) == 0) {
         /*
@@ -559,7 +559,7 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
         f.name = argv[0] + 3;
         if (lh_FUNCTION_retrieve(prog, &f) == NULL) {
             BIO_printf(bio_out, "%s\n", argv[0]);
-            return (0);
+            return 0;
         }
         BIO_printf(bio_out, "%s\n", argv[0] + 3);
         return 1;
@@ -790,7 +790,7 @@ static LHASH_OF(FUNCTION) *prog_init(void)
     qsort(functions, i, sizeof(*functions), SortFnByName);
 
     if ((ret = lh_FUNCTION_new(function_hash, function_cmp)) == NULL)
-        return (NULL);
+        return NULL;
 
     for (f = functions; f->name != NULL; f++)
         (void)lh_FUNCTION_insert(ret, f);
