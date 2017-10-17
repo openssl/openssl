@@ -461,7 +461,7 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
     /* This is used only by servers. */
 
     SSL_SESSION *ret = NULL;
-    int fatal = 0;
+    int fatal = 0, discard;
     int try_session_cache = 0;
     TICKET_RETURN r;
 
@@ -512,7 +512,8 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
         }
         CRYPTO_THREAD_unlock(s->session_ctx->lock);
         if (ret == NULL)
-            s->session_ctx->stats.sess_miss++;
+            CRYPTO_atomic_add(&s->session_ctx->stats.sess_miss, 1, &discard,
+                              s->session_ctx->lock);
     }
 
     if (try_session_cache &&
@@ -524,7 +525,8 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
                                              &copy);
 
         if (ret != NULL) {
-            s->session_ctx->stats.sess_cb_hit++;
+            CRYPTO_atomic_add(&s->session_ctx->stats.sess_cb_hit, 1, &discard,
+                              s->session_ctx->lock);
 
             /*
              * Increment reference count now if the session callback asks us
@@ -589,7 +591,8 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
     }
 
     if (ret->timeout < (long)(time(NULL) - ret->time)) { /* timeout */
-        s->session_ctx->stats.sess_timeout++;
+        CRYPTO_atomic_add(&s->session_ctx->stats.sess_timeout, 1, &discard,
+                          s->session_ctx->lock);
         if (try_session_cache) {
             /* session was from the cache, so remove it */
             SSL_CTX_remove_session(s->session_ctx, ret);
@@ -617,7 +620,8 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
         s->session = ret;
     }
 
-    s->session_ctx->stats.sess_hit++;
+    CRYPTO_atomic_add(&s->session_ctx->stats.sess_hit, 1, &discard,
+                      s->session_ctx->lock);
     s->verify_result = s->session->verify_result;
     return 1;
 
@@ -646,7 +650,7 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
 
 int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 {
-    int ret = 0;
+    int ret = 0, discard;
     SSL_SESSION *s;
 
     /*
@@ -713,7 +717,8 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
                 if (!remove_session_lock(ctx, ctx->session_cache_tail, 0))
                     break;
                 else
-                    ctx->stats.sess_cache_full++;
+                    CRYPTO_atomic_add(&ctx->stats.sess_cache_full, 1, &discard,
+                                      ctx->lock);
             }
         }
     }

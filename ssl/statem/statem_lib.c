@@ -111,7 +111,7 @@ int tls_setup_handshake(SSL *s)
             return 0;
         }
         if (SSL_IS_FIRST_HANDSHAKE(s)) {
-            s->ctx->stats.sess_accept++;
+            CRYPTO_atomic_add(&s->ctx->stats.sess_accept, 1, &i, s->ctx->lock);
         } else if ((s->options & SSL_OP_NO_RENEGOTIATION)) {
             /* Renegotiation is disabled */
             ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
@@ -128,15 +128,19 @@ int tls_setup_handshake(SSL *s)
             ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
             return 0;
         } else {
-            s->ctx->stats.sess_accept_renegotiate++;
+            CRYPTO_atomic_add(&s->ctx->stats.sess_accept_renegotiate, 1, &i,
+                              s->ctx->lock);
 
             s->s3->tmp.cert_request = 0;
         }
     } else {
+        int discard;
         if (SSL_IS_FIRST_HANDSHAKE(s))
-            s->ctx->stats.sess_connect++;
+            CRYPTO_atomic_add(&s->ctx->stats.sess_connect, 1, &discard,
+                              s->ctx->lock);
         else
-            s->ctx->stats.sess_connect_renegotiate++;
+            CRYPTO_atomic_add(&s->ctx->stats.sess_connect_renegotiate, 1,
+                              &discard, s->ctx->lock);
 
         /* mark client_random uninitialized */
         memset(s->s3->client_random, 0, sizeof(s->s3->client_random));
@@ -991,6 +995,7 @@ unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk,
  */
 WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
 {
+    int discard;
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
 #ifndef OPENSSL_NO_SCTP
@@ -1027,7 +1032,8 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
         if (s->server) {
             ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
 
-            s->ctx->stats.sess_accept_good++;
+            CRYPTO_atomic_add(&s->ctx->stats.sess_accept_good, 1, &discard,
+                              s->ctx->lock);
             s->handshake_func = ossl_statem_accept;
         } else {
             /*
@@ -1037,10 +1043,12 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
             if (!SSL_IS_TLS13(s))
                 ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
             if (s->hit)
-                s->ctx->stats.sess_hit++;
+                CRYPTO_atomic_add(&s->ctx->stats.sess_hit, 1, &discard,
+                                  s->ctx->lock);
 
             s->handshake_func = ossl_statem_connect;
-            s->ctx->stats.sess_connect_good++;
+            CRYPTO_atomic_add(&s->ctx->stats.sess_connect_good, 1, &discard,
+                              s->ctx->lock);
         }
 
         if (s->info_callback != NULL)
