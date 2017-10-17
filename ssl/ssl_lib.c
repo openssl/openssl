@@ -2180,6 +2180,7 @@ LHASH_OF(SSL_SESSION) *SSL_CTX_sessions(SSL_CTX *ctx)
 long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
     long l;
+    int i;
     /* For some cases with ctx == NULL perform syntax checks */
     if (ctx == NULL) {
         switch (cmd) {
@@ -2234,27 +2235,40 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_SESS_NUMBER:
         return lh_SSL_SESSION_num_items(ctx->sessions);
     case SSL_CTRL_SESS_CONNECT:
-        return ctx->stats.sess_connect;
+        return CRYPTO_atomic_read(&ctx->stats.sess_connect, &i, ctx->lock)
+                ? i : 0;
     case SSL_CTRL_SESS_CONNECT_GOOD:
-        return ctx->stats.sess_connect_good;
+        return CRYPTO_atomic_read(&ctx->stats.sess_connect_good, &i, ctx->lock)
+                ? i : 0;
     case SSL_CTRL_SESS_CONNECT_RENEGOTIATE:
-        return ctx->stats.sess_connect_renegotiate;
+        return CRYPTO_atomic_read(&ctx->stats.sess_connect_renegotiate, &i,
+                                  ctx->lock)
+                ? i : 0;
     case SSL_CTRL_SESS_ACCEPT:
-        return ctx->stats.sess_accept;
+        return CRYPTO_atomic_read(&ctx->stats.sess_accept, &i, ctx->lock)
+                ? i : 0;
     case SSL_CTRL_SESS_ACCEPT_GOOD:
-        return ctx->stats.sess_accept_good;
+        return CRYPTO_atomic_read(&ctx->stats.sess_accept_good, &i, ctx->lock)
+                ? i : 0;
     case SSL_CTRL_SESS_ACCEPT_RENEGOTIATE:
-        return ctx->stats.sess_accept_renegotiate;
+        return CRYPTO_atomic_read(&ctx->stats.sess_accept_renegotiate, &i,
+                                  ctx->lock)
+                ? i : 0;
     case SSL_CTRL_SESS_HIT:
-        return ctx->stats.sess_hit;
+        return CRYPTO_atomic_read(&ctx->stats.sess_hit, &i, ctx->lock)
+                ? i : 0;
     case SSL_CTRL_SESS_CB_HIT:
-        return ctx->stats.sess_cb_hit;
+        return CRYPTO_atomic_read(&ctx->stats.sess_cb_hit, &i, ctx->lock)
+                ? i : 0;
     case SSL_CTRL_SESS_MISSES:
-        return ctx->stats.sess_miss;
+        return CRYPTO_atomic_read(&ctx->stats.sess_miss, &i, ctx->lock)
+                ? i : 0;
     case SSL_CTRL_SESS_TIMEOUTS:
-        return ctx->stats.sess_timeout;
+        return CRYPTO_atomic_read(&ctx->stats.sess_timeout, &i, ctx->lock)
+                ? i : 0;
     case SSL_CTRL_SESS_CACHE_FULL:
-        return ctx->stats.sess_cache_full;
+        return CRYPTO_atomic_read(&ctx->stats.sess_cache_full, &i, ctx->lock)
+                ? i : 0;
     case SSL_CTRL_MODE:
         return (ctx->mode |= larg);
     case SSL_CTRL_CLEAR_MODE:
@@ -3205,11 +3219,14 @@ void ssl_update_cache(SSL *s, int mode)
 
     /* auto flush every 255 connections */
     if ((!(i & SSL_SESS_CACHE_NO_AUTO_CLEAR)) && ((i & mode) == mode)) {
-        if ((((mode & SSL_SESS_CACHE_CLIENT)
-              ? s->session_ctx->stats.sess_connect_good
-              : s->session_ctx->stats.sess_accept_good) & 0xff) == 0xff) {
+        int *stat, val;
+        if (mode & SSL_SESS_CACHE_CLIENT)
+            stat = &s->session_ctx->stats.sess_connect_good;
+        else
+            stat = &s->session_ctx->stats.sess_accept_good;
+        if (CRYPTO_atomic_read(stat, &val, s->session_ctx->lock)
+            && (val & 0xff) == 0xff)
             SSL_CTX_flush_sessions(s->session_ctx, (unsigned long)time(NULL));
-        }
     }
 }
 
