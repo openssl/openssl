@@ -56,7 +56,7 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 
         if (mode >= 0)
             pkey->save_parameters = mode;
-        return (ret);
+        return ret;
     }
 #endif
 #ifndef OPENSSL_NO_EC
@@ -65,10 +65,10 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 
         if (mode >= 0)
             pkey->save_parameters = mode;
-        return (ret);
+        return ret;
     }
 #endif
-    return (0);
+    return 0;
 }
 
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)

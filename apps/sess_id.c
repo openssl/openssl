@@ -163,7 +163,7 @@ int sess_id_main(int argc, char **argv)
  end:
     BIO_free_all(out);
     SSL_SESSION_free(x);
-    return (ret);
+    return ret;
 }
 
 static SSL_SESSION *load_sess_id(char *infile, int format)
@@ -186,5 +186,5 @@ static SSL_SESSION *load_sess_id(char *infile, int format)
 
  end:
     BIO_free(in);
-    return (x);
+    return x;
 }

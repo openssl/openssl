@@ -197,5 +197,5 @@ int spkac_main(int argc, char **argv)
     EVP_PKEY_free(pkey);
     release_engine(e);
     OPENSSL_free(passin);
-    return (ret);
+    return ret;
 }

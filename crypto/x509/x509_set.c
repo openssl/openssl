@@ -22,7 +22,7 @@
 int X509_set_version(X509 *x, long version)
 {
     if (x == NULL)
-        return (0);
+        return 0;
     if (version == 0) {
         ASN1_INTEGER_free(x->cert_info.version);
         x->cert_info.version = NULL;
@@ -30,9 +30,9 @@ int X509_set_version(X509 *x, long version)
     }
     if (x->cert_info.version == NULL) {
         if ((x->cert_info.version = ASN1_INTEGER_new()) == NULL)
-            return (0);
+            return 0;
     }
-    return (ASN1_INTEGER_set(x->cert_info.version, version));
+    return ASN1_INTEGER_set(x->cert_info.version, version);
 }
 
 int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
@@ -50,15 +50,15 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
 int X509_set_issuer_name(X509 *x, X509_NAME *name)
 {
     if (x == NULL)
-        return (0);
-    return (X509_NAME_set(&x->cert_info.issuer, name));
+        return 0;
+    return X509_NAME_set(&x->cert_info.issuer, name);
 }
 
 int X509_set_subject_name(X509 *x, X509_NAME *name)
 {
     if (x == NULL)
-        return (0);
-    return (X509_NAME_set(&x->cert_info.subject, name));
+        return 0;
+    return X509_NAME_set(&x->cert_info.subject, name);
 }
 
 int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm)
@@ -92,8 +92,8 @@ int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
 {
     if (x == NULL)
-        return (0);
-    return (X509_PUBKEY_set(&(x->cert_info.key), pkey));
+        return 0;
+    return X509_PUBKEY_set(&(x->cert_info.key), pkey);
 }
 
 int X509_up_ref(X509 *x)

@@ -30,9 +30,9 @@ void EVP_set_pw_prompt(const char *prompt)
 char *EVP_get_pw_prompt(void)
 {
     if (prompt_string[0] == '\0')
-        return (NULL);
+        return NULL;
     else
-        return (prompt_string);
+        return prompt_string;
 }
 
 /*
@@ -87,7 +87,7 @@ int EVP_BytesToKey(const EVP_CIPHER *type, const EVP_MD *md,
     OPENSSL_assert(niv <= EVP_MAX_IV_LENGTH);
 
     if (data == NULL)
-        return (nkey);
+        return nkey;
 
     c = EVP_MD_CTX_new();
     if (c == NULL)

@@ -326,7 +326,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent, int ptype)
                 goto err;
         }
         if (BIO_write(bp, "\n", 1) <= 0)
-            return (0);
+            return 0;
     }
     if (x->counter && !ASN1_bn_print(bp, "counter:", x->counter, NULL, indent))
         goto err;
@@ -346,7 +346,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent, int ptype)
 
 static int int_dh_size(const EVP_PKEY *pkey)
 {
-    return (DH_size(pkey->pkey.dh));
+    return DH_size(pkey->pkey.dh);
 }
 
 static int dh_bits(const EVP_PKEY *pkey)

@@ -25,12 +25,12 @@ int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
         X509err(X509_F_X509_REQ_PRINT_FP, ERR_R_BUF_LIB);
-        return (0);
+        return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = X509_REQ_print(b, x);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 #endif
 
@@ -189,7 +189,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
     return 1;
  err:
     X509err(X509_F_X509_REQ_PRINT_EX, ERR_R_BUF_LIB);
-    return (0);
+    return 0;
 }
 
 int X509_REQ_print(BIO *bp, X509_REQ *x)

@@ -89,12 +89,12 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509)
 
 int X509_set_ex_data(X509 *r, int idx, void *arg)
 {
-    return (CRYPTO_set_ex_data(&r->ex_data, idx, arg));
+    return CRYPTO_set_ex_data(&r->ex_data, idx, arg);
 }
 
 void *X509_get_ex_data(X509 *r, int idx)
 {
-    return (CRYPTO_get_ex_data(&r->ex_data, idx));
+    return CRYPTO_get_ex_data(&r->ex_data, idx);
 }
 
 /*

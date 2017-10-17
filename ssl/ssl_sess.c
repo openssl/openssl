@@ -31,7 +31,7 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
 SSL_SESSION *SSL_get_session(const SSL *ssl)
 /* aka SSL_get0_session; gets 0 objects, just returns a copy of the pointer */
 {
-    return (ssl->session);
+    return ssl->session;
 }
 
 SSL_SESSION *SSL_get1_session(SSL *ssl)
@@ -53,12 +53,12 @@ SSL_SESSION *SSL_get1_session(SSL *ssl)
 
 int SSL_SESSION_set_ex_data(SSL_SESSION *s, int idx, void *arg)
 {
-    return (CRYPTO_set_ex_data(&s->ex_data, idx, arg));
+    return CRYPTO_set_ex_data(&s->ex_data, idx, arg);
 }
 
 void *SSL_SESSION_get_ex_data(const SSL_SESSION *s, int idx)
 {
-    return (CRYPTO_get_ex_data(&s->ex_data, idx));
+    return CRYPTO_get_ex_data(&s->ex_data, idx);
 }
 
 SSL_SESSION *SSL_SESSION_new(void)
@@ -751,7 +751,7 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
             ctx->remove_session_cb(ctx, c);
     } else
         ret = 0;
-    return (ret);
+    return ret;
 }
 
 void SSL_SESSION_free(SSL_SESSION *ss)
@@ -844,7 +844,7 @@ int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
 long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
 {
     if (s == NULL)
-        return (0);
+        return 0;
     s->timeout = t;
     return 1;
 }
@@ -852,23 +852,23 @@ long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
 long SSL_SESSION_get_timeout(const SSL_SESSION *s)
 {
     if (s == NULL)
-        return (0);
-    return (s->timeout);
+        return 0;
+    return s->timeout;
 }
 
 long SSL_SESSION_get_time(const SSL_SESSION *s)
 {
     if (s == NULL)
-        return (0);
-    return (s->time);
+        return 0;
+    return s->time;
 }
 
 long SSL_SESSION_set_time(SSL_SESSION *s, long t)
 {
     if (s == NULL)
-        return (0);
+        return 0;
     s->time = t;
-    return (t);
+    return t;
 }
 
 int SSL_SESSION_get_protocol_version(const SSL_SESSION *s)
@@ -1001,17 +1001,17 @@ long SSL_CTX_set_timeout(SSL_CTX *s, long t)
 {
     long l;
     if (s == NULL)
-        return (0);
+        return 0;
     l = s->session_timeout;
     s->session_timeout = t;
-    return (l);
+    return l;
 }
 
 long SSL_CTX_get_timeout(const SSL_CTX *s)
 {
     if (s == NULL)
-        return (0);
-    return (s->session_timeout);
+        return 0;
+    return s->session_timeout;
 }
 
 int SSL_set_session_secret_cb(SSL *s,
@@ -1019,7 +1019,7 @@ int SSL_set_session_secret_cb(SSL *s,
                               void *arg)
 {
     if (s == NULL)
-        return (0);
+        return 0;
     s->ext.session_secret_cb = tls_session_secret_cb;
     s->ext.session_secret_cb_arg = arg;
     return 1;
@@ -1029,7 +1029,7 @@ int SSL_set_session_ticket_ext_cb(SSL *s, tls_session_ticket_ext_cb_fn cb,
                                   void *arg)
 {
     if (s == NULL)
-        return (0);
+        return 0;
     s->ext.session_ticket_cb = cb;
     s->ext.session_ticket_cb_arg = arg;
     return 1;
@@ -1112,7 +1112,7 @@ int ssl_clear_bad_session(SSL *s)
         SSL_CTX_remove_session(s->session_ctx, s->session);
         return 1;
     } else
-        return (0);
+        return 0;
 }
 
 /* locked by SSL_CTX in the calling function */

@@ -39,7 +39,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
         }
 
         BNerr(BN_F_BN_MOD_SQRT, BN_R_P_IS_NOT_PRIME);
-        return (NULL);
+        return NULL;
     }
 
     if (BN_is_zero(a) || BN_is_one(a)) {

@@ -572,7 +572,7 @@ int SSL_CTX_add_client_CA(SSL_CTX *ctx, X509 *x)
 
 static int xname_sk_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
 {
-    return (X509_NAME_cmp(*a, *b));
+    return X509_NAME_cmp(*a, *b);
 }
 
 static int xname_cmp(const X509_NAME *a, const X509_NAME *b)
@@ -647,7 +647,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
     lh_X509_NAME_free(name_hash);
     if (ret != NULL)
         ERR_clear_error();
-    return (ret);
+    return ret;
 }
 
 /**

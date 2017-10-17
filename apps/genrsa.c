@@ -166,7 +166,7 @@ opthelp:
     OPENSSL_free(passout);
     if (ret != 0)
         ERR_print_errors(bio_err);
-    return (ret);
+    return ret;
 }
 
 static int genrsa_cb(int p, int n, BN_GENCB *cb)

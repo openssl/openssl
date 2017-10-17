@@ -20,7 +20,7 @@ int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
     char buf[2];
 
     if (a == NULL)
-        return (0);
+        return 0;
 
     if (a->type & V_ASN1_NEG) {
         if (BIO_write(bp, "-", 1) != 1)
@@ -46,9 +46,9 @@ int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
             n += 2;
         }
     }
-    return (n);
+    return n;
  err:
-    return (-1);
+    return -1;
 }
 
 int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)

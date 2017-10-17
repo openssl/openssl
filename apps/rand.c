@@ -128,5 +128,5 @@ int rand_main(int argc, char **argv)
         ERR_print_errors(bio_err);
     release_engine(e);
     BIO_free_all(out);
-    return (ret);
+    return ret;
 }

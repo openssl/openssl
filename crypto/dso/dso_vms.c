@@ -212,7 +212,7 @@ static int vms_load(DSO *dso)
     /* Cleanup! */
     OPENSSL_free(p);
     OPENSSL_free(filename);
-    return (0);
+    return 0;
 }
 
 /*
@@ -225,14 +225,14 @@ static int vms_unload(DSO *dso)
     DSO_VMS_INTERNAL *p;
     if (dso == NULL) {
         DSOerr(DSO_F_VMS_UNLOAD, ERR_R_PASSED_NULL_PARAMETER);
-        return (0);
+        return 0;
     }
     if (sk_void_num(dso->meth_data) < 1)
         return 1;
     p = (DSO_VMS_INTERNAL *)sk_void_pop(dso->meth_data);
     if (p == NULL) {
         DSOerr(DSO_F_VMS_UNLOAD, DSO_R_NULL_HANDLE);
-        return (0);
+        return 0;
     }
     /* Cleanup */
     OPENSSL_free(p);
@@ -441,7 +441,7 @@ static char *vms_merger(DSO *dso, const char *filespec1,
                                "filespec \"", filespec1, "\", ",
                                "defaults \"", filespec2, "\": ", errstring);
         }
-        return (NULL);
+        return NULL;
     }
 
     merged = OPENSSL_malloc(nam.NAMX_ESL + 1);
@@ -449,7 +449,7 @@ static char *vms_merger(DSO *dso, const char *filespec1,
         goto malloc_err;
     strncpy(merged, nam.NAMX_ESA, nam.NAMX_ESL);
     merged[nam.NAMX_ESL] = '\0';
-    return (merged);
+    return merged;
  malloc_err:
     DSOerr(DSO_F_VMS_MERGER, ERR_R_MALLOC_FAILURE);
 }
@@ -460,7 +460,7 @@ static char *vms_name_converter(DSO *dso, const char *filename)
     char *not_translated = OPENSSL_malloc(len + 1);
     if (not_translated != NULL)
         strcpy(not_translated, filename);
-    return (not_translated);
+    return not_translated;
 }
 
 #endif                          /* OPENSSL_SYS_VMS */
