@@ -257,7 +257,7 @@ unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md)
     SHA512_Update(&c, d, n);
     SHA512_Final(md, &c);
     OPENSSL_cleanse(&c, sizeof(c));
-    return (md);
+    return md;
 }
 
 unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md)
@@ -271,7 +271,7 @@ unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md)
     SHA512_Update(&c, d, n);
     SHA512_Final(md, &c);
     OPENSSL_cleanse(&c, sizeof(c));
-    return (md);
+    return md;
 }
 
 #ifndef SHA512_ASM

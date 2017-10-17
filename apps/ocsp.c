@@ -747,7 +747,7 @@ redo_accept:
     OPENSSL_free(tport);
     OPENSSL_free(tpath);
 
-    return (ret);
+    return ret;
 }
 
 static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,

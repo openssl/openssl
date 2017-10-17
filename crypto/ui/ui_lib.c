@@ -17,7 +17,7 @@
 
 UI *UI_new(void)
 {
-    return (UI_new_method(NULL));
+    return UI_new_method(NULL);
 }
 
 UI *UI_new_method(const UI_METHOD *method)
@@ -572,12 +572,12 @@ int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f) (void))
 
 int UI_set_ex_data(UI *r, int idx, void *arg)
 {
-    return (CRYPTO_set_ex_data(&r->ex_data, idx, arg));
+    return CRYPTO_set_ex_data(&r->ex_data, idx, arg);
 }
 
 void *UI_get_ex_data(UI *r, int idx)
 {
-    return (CRYPTO_get_ex_data(&r->ex_data, idx));
+    return CRYPTO_get_ex_data(&r->ex_data, idx);
 }
 
 const UI_METHOD *UI_get_method(UI *ui)

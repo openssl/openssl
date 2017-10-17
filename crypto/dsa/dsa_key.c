@@ -73,5 +73,5 @@ static int dsa_builtin_keygen(DSA *dsa)
     if (priv_key != dsa->priv_key)
         BN_free(priv_key);
     BN_CTX_free(ctx);
-    return (ok);
+    return ok;
 }

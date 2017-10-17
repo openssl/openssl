@@ -70,7 +70,7 @@ typedef struct bio_buf_mem_st {
 
 const BIO_METHOD *BIO_s_mem(void)
 {
-    return (&mem_method);
+    return &mem_method;
 }
 
 const BIO_METHOD *BIO_s_secmem(void)
@@ -130,23 +130,23 @@ static int mem_init(BIO *bi, unsigned long flags)
 
 static int mem_new(BIO *bi)
 {
-    return (mem_init(bi, 0L));
+    return mem_init(bi, 0L);
 }
 
 static int secmem_new(BIO *bi)
 {
-    return (mem_init(bi, BUF_MEM_FLAG_SECURE));
+    return mem_init(bi, BUF_MEM_FLAG_SECURE);
 }
 
 static int mem_free(BIO *a)
 {
-    return (mem_buf_free(a, 1));
+    return mem_buf_free(a, 1);
 }
 
 static int mem_buf_free(BIO *a, int free_all)
 {
     if (a == NULL)
-        return (0);
+        return 0;
     if (a->shutdown) {
         if ((a->init) && (a->ptr != NULL)) {
             BUF_MEM *b;
@@ -182,7 +182,7 @@ static int mem_buf_sync(BIO *b)
             bbm->readp->data = bbm->buf->data;
         }
     }
-    return (0);
+    return 0;
 }
 
 static int mem_read(BIO *b, char *out, int outl)
@@ -202,7 +202,7 @@ static int mem_read(BIO *b, char *out, int outl)
         if (ret != 0)
             BIO_set_retry_read(b);
     }
-    return (ret);
+    return ret;
 }
 
 static int mem_write(BIO *b, const char *in, int inl)
@@ -228,7 +228,7 @@ static int mem_write(BIO *b, const char *in, int inl)
     *bbm->readp = *bbm->buf;
     ret = inl;
  end:
-    return (ret);
+    return ret;
 }
 
 static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -305,7 +305,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 0;
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int mem_gets(BIO *bp, char *buf, int size)
@@ -341,7 +341,7 @@ static int mem_gets(BIO *bp, char *buf, int size)
     if (i > 0)
         buf[i] = '\0';
     ret = i;
-    return (ret);
+    return ret;
 }
 
 static int mem_puts(BIO *bp, const char *str)
@@ -351,5 +351,5 @@ static int mem_puts(BIO *bp, const char *str)
     n = strlen(str);
     ret = mem_write(bp, str, n);
     /* memory semantics is that it will always work */
-    return (ret);
+    return ret;
 }

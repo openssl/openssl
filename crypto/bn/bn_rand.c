@@ -87,7 +87,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom)
  err:
     OPENSSL_clear_free(buf, bytes);
     bn_check_top(rnd);
-    return (ret);
+    return ret;
 
 toosmall:
     BNerr(BN_F_BNRAND, BN_R_BITS_TOO_SMALL);

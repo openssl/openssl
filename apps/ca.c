@@ -1235,7 +1235,7 @@ end_of_options:
     NCONF_free(conf);
     NCONF_free(extconf);
     release_engine(e);
-    return (ret);
+    return ret;
 }
 
 static char *lookup_conf(const CONF *conf, const char *section, const char *tag)
@@ -1312,7 +1312,7 @@ static int certify(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
  end:
     X509_REQ_free(req);
     BIO_free(in);
-    return (ok);
+    return ok;
 }
 
 static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x509,
@@ -1365,7 +1365,7 @@ static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x
  end:
     X509_REQ_free(rreq);
     X509_free(req);
-    return (ok);
+    return ok;
 }
 
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
@@ -1866,7 +1866,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         X509_free(ret);
     else
         *xret = ret;
-    return (ok);
+    return ok;
 }
 
 static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
@@ -2013,7 +2013,7 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
     NETSCAPE_SPKI_free(spki);
     X509_NAME_ENTRY_free(ne);
 
-    return (ok);
+    return ok;
 }
 
 static int check_time_format(const char *str)
@@ -2119,7 +2119,7 @@ static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
  end:
     for (i = 0; i < DB_NUMBER; i++)
         OPENSSL_free(row[i]);
-    return (ok);
+    return ok;
 }
 
 static int get_certificate_status(const char *serial, CA_DB *db)
@@ -2186,7 +2186,7 @@ static int get_certificate_status(const char *serial, CA_DB *db)
     for (i = 0; i < DB_NUMBER; i++) {
         OPENSSL_free(row[i]);
     }
-    return (ok);
+    return ok;
 }
 
 static int do_updatedb(CA_DB *db)
@@ -2244,7 +2244,7 @@ static int do_updatedb(CA_DB *db)
 
     ASN1_UTCTIME_free(a_tm);
     OPENSSL_free(a_tm_s);
-    return (cnt);
+    return cnt;
 }
 
 static const char *crl_reasons[] = {

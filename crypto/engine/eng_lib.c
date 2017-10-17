@@ -174,12 +174,12 @@ void engine_cleanup_int(void)
 
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg)
 {
-    return (CRYPTO_set_ex_data(&e->ex_data, idx, arg));
+    return CRYPTO_set_ex_data(&e->ex_data, idx, arg);
 }
 
 void *ENGINE_get_ex_data(const ENGINE *e, int idx)
 {
-    return (CRYPTO_get_ex_data(&e->ex_data, idx));
+    return CRYPTO_get_ex_data(&e->ex_data, idx);
 }
 
 /*

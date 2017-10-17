@@ -483,6 +483,6 @@ int engine_main(int argc, char **argv)
     sk_OPENSSL_STRING_free(pre_cmds);
     sk_OPENSSL_STRING_free(post_cmds);
     BIO_free_all(out);
-    return (ret);
+    return ret;
 }
 #endif

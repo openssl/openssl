@@ -20,7 +20,7 @@ int i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type)
     char buf[2];
 
     if (a == NULL)
-        return (0);
+        return 0;
 
     if (a->length == 0) {
         if (BIO_write(bp, "0", 1) != 1)
@@ -40,9 +40,9 @@ int i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type)
             n += 2;
         }
     }
-    return (n);
+    return n;
  err:
-    return (-1);
+    return -1;
 }
 
 int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)

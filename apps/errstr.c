@@ -62,5 +62,5 @@ int errstr_main(int argc, char **argv)
         }
     }
  end:
-    return (ret);
+    return ret;
 }

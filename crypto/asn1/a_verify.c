@@ -76,7 +76,7 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
     ret = 1;
  err:
     EVP_MD_CTX_free(ctx);
-    return (ret);
+    return ret;
 }
 
 #endif
