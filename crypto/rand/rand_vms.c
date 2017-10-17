@@ -113,8 +113,6 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
     total_length += (tmp_length - 1);
 
     /*
-     * TODO(DRBG): somebody please check this on vms
-     *
      * size of seed is total_length*4 bytes (64bytes). The original assumption
      * was that it contains 4 bits of entropy per byte. This makes a total
      * amount of total_length*16 bits (256bits).
