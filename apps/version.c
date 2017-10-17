@@ -188,5 +188,5 @@ opthelp:
     }
     ret = 0;
  end:
-    return (ret);
+    return ret;
 }

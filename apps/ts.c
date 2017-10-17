@@ -320,7 +320,7 @@ int ts_main(int argc, char **argv)
     X509_VERIFY_PARAM_free(vpm);
     NCONF_free(conf);
     OPENSSL_free(password);
-    return (ret);
+    return ret;
 }
 
 /*

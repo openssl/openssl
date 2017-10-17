@@ -136,7 +136,7 @@ typedef struct bio_dgram_sctp_data_st {
 
 const BIO_METHOD *BIO_s_datagram(void)
 {
-    return (&methods_dgramp);
+    return &methods_dgramp;
 }
 
 BIO *BIO_new_dgram(int fd, int close_flag)
@@ -145,9 +145,9 @@ BIO *BIO_new_dgram(int fd, int close_flag)
 
     ret = BIO_new(BIO_s_datagram());
     if (ret == NULL)
-        return (NULL);
+        return NULL;
     BIO_set_fd(ret, fd, close_flag);
-    return (ret);
+    return ret;
 }
 
 static int dgram_new(BIO *bi)
@@ -165,7 +165,7 @@ static int dgram_free(BIO *a)
     bio_dgram_data *data;
 
     if (a == NULL)
-        return (0);
+        return 0;
     if (!dgram_clear(a))
         return 0;
 
@@ -178,7 +178,7 @@ static int dgram_free(BIO *a)
 static int dgram_clear(BIO *a)
 {
     if (a == NULL)
-        return (0);
+        return 0;
     if (a->shutdown) {
         if (a->init) {
             BIO_closesocket(a->num);
@@ -325,7 +325,7 @@ static int dgram_read(BIO *b, char *out, int outl)
 
         dgram_reset_rcv_timeout(b);
     }
-    return (ret);
+    return ret;
 }
 
 static int dgram_write(BIO *b, const char *in, int inl)
@@ -355,7 +355,7 @@ static int dgram_write(BIO *b, const char *in, int inl)
             data->_errno = get_last_socket_error();
         }
     }
-    return (ret);
+    return ret;
 }
 
 static long dgram_get_mtu_overhead(bio_dgram_data *data)
@@ -799,7 +799,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 0;
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int dgram_puts(BIO *bp, const char *str)
@@ -808,13 +808,13 @@ static int dgram_puts(BIO *bp, const char *str)
 
     n = strlen(str);
     ret = dgram_write(bp, str, n);
-    return (ret);
+    return ret;
 }
 
 # ifndef OPENSSL_NO_SCTP
 const BIO_METHOD *BIO_s_datagram_sctp(void)
 {
-    return (&methods_dgramp_sctp);
+    return &methods_dgramp_sctp;
 }
 
 BIO *BIO_new_dgram_sctp(int fd, int close_flag)
@@ -836,7 +836,7 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 
     bio = BIO_new(BIO_s_datagram_sctp());
     if (bio == NULL)
-        return (NULL);
+        return NULL;
     BIO_set_fd(bio, fd, close_flag);
 
     /* Activate SCTP-AUTH for DATA and FORWARD-TSN chunks */
@@ -848,7 +848,7 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
         BIO_vfree(bio);
         BIOerr(BIO_F_BIO_NEW_DGRAM_SCTP, ERR_R_SYS_LIB);
         ERR_add_error_data(1, "Ensure SCTP AUTH chunks are enabled in kernel");
-        return (NULL);
+        return NULL;
     }
     auth.sauth_chunk = OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE;
     ret =
@@ -858,7 +858,7 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
         BIO_vfree(bio);
         BIOerr(BIO_F_BIO_NEW_DGRAM_SCTP, ERR_R_SYS_LIB);
         ERR_add_error_data(1, "Ensure SCTP AUTH chunks are enabled in kernel");
-        return (NULL);
+        return NULL;
     }
 
     /*
@@ -871,14 +871,14 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
     authchunks = OPENSSL_zalloc(sockopt_len);
     if (authchunks == NULL) {
         BIO_vfree(bio);
-        return (NULL);
+        return NULL;
     }
     ret = getsockopt(fd, IPPROTO_SCTP, SCTP_LOCAL_AUTH_CHUNKS, authchunks,
                    &sockopt_len);
     if (ret < 0) {
         OPENSSL_free(authchunks);
         BIO_vfree(bio);
-        return (NULL);
+        return NULL;
     }
 
     for (p = (unsigned char *)authchunks->gauth_chunks;
@@ -912,14 +912,14 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
                    sizeof(struct sctp_event));
     if (ret < 0) {
         BIO_vfree(bio);
-        return (NULL);
+        return NULL;
     }
 #   else
     sockopt_len = (socklen_t) sizeof(struct sctp_event_subscribe);
     ret = getsockopt(fd, IPPROTO_SCTP, SCTP_EVENTS, &event, &sockopt_len);
     if (ret < 0) {
         BIO_vfree(bio);
-        return (NULL);
+        return NULL;
     }
 
     event.sctp_authentication_event = 1;
@@ -929,7 +929,7 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
                    sizeof(struct sctp_event_subscribe));
     if (ret < 0) {
         BIO_vfree(bio);
-        return (NULL);
+        return NULL;
     }
 #   endif
 #  endif
@@ -943,10 +943,10 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
                    sizeof(optval));
     if (ret < 0) {
         BIO_vfree(bio);
-        return (NULL);
+        return NULL;
     }
 
-    return (bio);
+    return bio;
 }
 
 int BIO_dgram_is_sctp(BIO *bio)
@@ -977,7 +977,7 @@ static int dgram_sctp_free(BIO *a)
     bio_dgram_sctp_data *data;
 
     if (a == NULL)
-        return (0);
+        return 0;
     if (!dgram_clear(a))
         return 0;
 
@@ -1222,7 +1222,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
             data->peer_auth_tested = 1;
         }
     }
-    return (ret);
+    return ret;
 }
 
 /*
@@ -1338,7 +1338,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
             data->_errno = get_last_socket_error();
         }
     }
-    return (ret);
+    return ret;
 }
 
 static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -1573,7 +1573,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = dgram_ctrl(b, cmd, num, ptr);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 int BIO_dgram_sctp_notification_cb(BIO *b,
@@ -1830,7 +1830,7 @@ static int dgram_sctp_puts(BIO *bp, const char *str)
 
     n = strlen(str);
     ret = dgram_sctp_write(bp, str, n);
-    return (ret);
+    return ret;
 }
 # endif
 
@@ -1849,9 +1849,9 @@ static int BIO_dgram_should_retry(int i)
          */
 # endif
 
-        return (BIO_dgram_non_fatal_error(err));
+        return BIO_dgram_non_fatal_error(err);
     }
-    return (0);
+    return 0;
 }
 
 int BIO_dgram_non_fatal_error(int err)
@@ -1899,7 +1899,7 @@ int BIO_dgram_non_fatal_error(int err)
     default:
         break;
     }
-    return (0);
+    return 0;
 }
 
 static void get_current_time(struct timeval *t)

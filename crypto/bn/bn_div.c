@@ -24,13 +24,13 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
     bn_check_top(d);
     if (BN_is_zero(d)) {
         BNerr(BN_F_BN_DIV, BN_R_DIV_BY_ZERO);
-        return (0);
+        return 0;
     }
 
     if (BN_ucmp(m, d) < 0) {
         if (rem != NULL) {
             if (BN_copy(rem, m) == NULL)
-                return (0);
+                return 0;
         }
         if (dv != NULL)
             BN_zero(dv);
@@ -81,7 +81,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
     ret = 1;
  end:
     BN_CTX_end(ctx);
-    return (ret);
+    return ret;
 }
 
 #else
@@ -174,13 +174,13 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 
     if (BN_is_zero(divisor)) {
         BNerr(BN_F_BN_DIV, BN_R_DIV_BY_ZERO);
-        return (0);
+        return 0;
     }
 
     if (!no_branch && BN_ucmp(num, divisor) < 0) {
         if (rm != NULL) {
             if (BN_copy(rm, num) == NULL)
-                return (0);
+                return 0;
         }
         if (dv != NULL)
             BN_zero(dv);
@@ -412,6 +412,6 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
  err:
     bn_check_top(rm);
     BN_CTX_end(ctx);
-    return (0);
+    return 0;
 }
 #endif

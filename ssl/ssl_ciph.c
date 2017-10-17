@@ -1776,7 +1776,7 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
     int i, nn;
 
     if ((n == 0) || (sk == NULL))
-        return (NULL);
+        return NULL;
     nn = sk_SSL_COMP_num(sk);
     for (i = 0; i < nn; i++) {
         ctmp = sk_SSL_COMP_value(sk, i);

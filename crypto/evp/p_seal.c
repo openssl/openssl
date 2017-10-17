@@ -43,9 +43,9 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
             EVP_PKEY_encrypt_old(ek[i], key, EVP_CIPHER_CTX_key_length(ctx),
                                  pubk[i]);
         if (ekl[i] <= 0)
-            return (-1);
+            return -1;
     }
-    return (npubk);
+    return npubk;
 }
 
 int EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)

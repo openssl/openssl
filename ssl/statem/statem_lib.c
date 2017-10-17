@@ -31,7 +31,7 @@ int ssl3_do_write(SSL *s, int type)
     ret = ssl3_write_bytes(s, type, &s->init_buf->data[s->init_off],
                            s->init_num, &written);
     if (ret < 0)
-        return (-1);
+        return -1;
     if (type == SSL3_RT_HANDSHAKE)
         /*
          * should not be done for 'Hello Request's, but in that case we'll
@@ -51,7 +51,7 @@ int ssl3_do_write(SSL *s, int type)
     }
     s->init_off += written;
     s->init_num -= written;
-    return (0);
+    return 0;
 }
 
 int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype)
@@ -1309,7 +1309,7 @@ int ssl_verify_alarm_type(long type)
         al = SSL_AD_CERTIFICATE_UNKNOWN;
         break;
     }
-    return (al);
+    return al;
 }
 
 int ssl_allow_compression(SSL *s)

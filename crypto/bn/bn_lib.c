@@ -65,15 +65,15 @@ void BN_set_params(int mult, int high, int low, int mont)
 int BN_get_params(int which)
 {
     if (which == 0)
-        return (bn_limit_bits);
+        return bn_limit_bits;
     else if (which == 1)
-        return (bn_limit_bits_high);
+        return bn_limit_bits_high;
     else if (which == 2)
-        return (bn_limit_bits_low);
+        return bn_limit_bits_low;
     else if (which == 3)
-        return (bn_limit_bits_mont);
+        return bn_limit_bits_mont;
     else
-        return (0);
+        return 0;
 }
 #endif
 
@@ -83,7 +83,7 @@ const BIGNUM *BN_value_one(void)
     static const BIGNUM const_one =
         { (BN_ULONG *)&data_one, 1, 1, 0, BN_FLG_STATIC_DATA };
 
-    return (&const_one);
+    return &const_one;
 }
 
 int BN_num_bits_word(BN_ULONG l)
@@ -215,11 +215,11 @@ BIGNUM *BN_new(void)
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_NEW, ERR_R_MALLOC_FAILURE);
-        return (NULL);
+        return NULL;
     }
     ret->flags = BN_FLG_MALLOCED;
     bn_check_top(ret);
-    return (ret);
+    return ret;
 }
 
  BIGNUM *BN_secure_new(void)
@@ -227,7 +227,7 @@ BIGNUM *BN_new(void)
      BIGNUM *ret = BN_new();
      if (ret != NULL)
          ret->flags |= BN_FLG_SECURE;
-     return (ret);
+     return ret;
  }
 
 /* This is used by bn_expand2() */
@@ -244,7 +244,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
     }
     if (BN_get_flags(b, BN_FLG_STATIC_DATA)) {
         BNerr(BN_F_BN_EXPAND_INTERNAL, BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
-        return (NULL);
+        return NULL;
     }
     if (BN_get_flags(b, BN_FLG_SECURE))
         a = OPENSSL_secure_zalloc(words * sizeof(*a));
@@ -252,7 +252,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         a = OPENSSL_zalloc(words * sizeof(*a));
     if (a == NULL) {
         BNerr(BN_F_BN_EXPAND_INTERNAL, ERR_R_MALLOC_FAILURE);
-        return (NULL);
+        return NULL;
     }
 
     assert(b->top <= words);
@@ -388,7 +388,7 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
 {
     bn_check_top(a);
     if (bn_expand(a, (int)sizeof(BN_ULONG) * 8) == NULL)
-        return (0);
+        return 0;
     a->neg = 0;
     a->d[0] = w;
     a->top = (w ? 1 : 0);
@@ -406,7 +406,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     if (ret == NULL)
         ret = bn = BN_new();
     if (ret == NULL)
-        return (NULL);
+        return NULL;
     bn_check_top(ret);
     /* Skip leading zero's. */
     for ( ; len > 0 && *s == 0; s++, len--)
@@ -414,7 +414,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     n = len;
     if (n == 0) {
         ret->top = 0;
-        return (ret);
+        return ret;
     }
     i = ((n - 1) / BN_BYTES) + 1;
     m = ((n - 1) % (BN_BYTES));
@@ -438,7 +438,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
      * bit set (-ve number)
      */
     bn_correct_top(ret);
-    return (ret);
+    return ret;
 }
 
 /* ignore negative */
@@ -487,7 +487,7 @@ BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
     if (ret == NULL)
         ret = bn = BN_new();
     if (ret == NULL)
-        return (NULL);
+        return NULL;
     bn_check_top(ret);
     s += len;
     /* Skip trailing zeroes. */
@@ -554,7 +554,7 @@ int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
 
     i = a->top - b->top;
     if (i != 0)
-        return (i);
+        return i;
     ap = a->d;
     bp = b->d;
     for (i = a->top - 1; i >= 0; i--) {
@@ -563,7 +563,7 @@ int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
         if (t1 != t2)
             return ((t1 > t2) ? 1 : -1);
     }
-    return (0);
+    return 0;
 }
 
 int BN_cmp(const BIGNUM *a, const BIGNUM *b)
@@ -574,11 +574,11 @@ int BN_cmp(const BIGNUM *a, const BIGNUM *b)
 
     if ((a == NULL) || (b == NULL)) {
         if (a != NULL)
-            return (-1);
+            return -1;
         else if (b != NULL)
             return 1;
         else
-            return (0);
+            return 0;
     }
 
     bn_check_top(a);
@@ -586,7 +586,7 @@ int BN_cmp(const BIGNUM *a, const BIGNUM *b)
 
     if (a->neg != b->neg) {
         if (a->neg)
-            return (-1);
+            return -1;
         else
             return 1;
     }
@@ -599,18 +599,18 @@ int BN_cmp(const BIGNUM *a, const BIGNUM *b)
     }
 
     if (a->top > b->top)
-        return (gt);
+        return gt;
     if (a->top < b->top)
-        return (lt);
+        return lt;
     for (i = a->top - 1; i >= 0; i--) {
         t1 = a->d[i];
         t2 = b->d[i];
         if (t1 > t2)
-            return (gt);
+            return gt;
         if (t1 < t2)
-            return (lt);
+            return lt;
     }
-    return (0);
+    return 0;
 }
 
 int BN_set_bit(BIGNUM *a, int n)
@@ -624,7 +624,7 @@ int BN_set_bit(BIGNUM *a, int n)
     j = n % BN_BITS2;
     if (a->top <= i) {
         if (bn_wexpand(a, i + 1) == NULL)
-            return (0);
+            return 0;
         for (k = a->top; k < i + 1; k++)
             a->d[k] = 0;
         a->top = i + 1;
@@ -646,7 +646,7 @@ int BN_clear_bit(BIGNUM *a, int n)
     i = n / BN_BITS2;
     j = n % BN_BITS2;
     if (a->top <= i)
-        return (0);
+        return 0;
 
     a->d[i] &= (~(((BN_ULONG)1) << j));
     bn_correct_top(a);
@@ -712,7 +712,7 @@ int bn_cmp_words(const BN_ULONG *a, const BN_ULONG *b, int n)
         if (aa != bb)
             return ((aa > bb) ? 1 : -1);
     }
-    return (0);
+    return 0;
 }
 
 /*
@@ -889,7 +889,7 @@ BN_GENCB *BN_GENCB_new(void)
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_GENCB_NEW, ERR_R_MALLOC_FAILURE);
-        return (NULL);
+        return NULL;
     }
 
     return ret;

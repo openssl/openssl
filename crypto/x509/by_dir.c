@@ -61,7 +61,7 @@ static X509_LOOKUP_METHOD x509_dir_lookup = {
 
 X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
 {
-    return (&x509_dir_lookup);
+    return &x509_dir_lookup;
 }
 
 static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
@@ -89,7 +89,7 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
             ret = add_cert_dir(ld, argp, (int)argl);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int new_dir(X509_LOOKUP *lu)
@@ -216,7 +216,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     const char *postfix = "";
 
     if (name == NULL)
-        return (0);
+        return 0;
 
     stmp.type = type;
     if (type == X509_LU_X509) {
@@ -386,5 +386,5 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     }
  finish:
     BUF_MEM_free(b);
-    return (ok);
+    return ok;
 }

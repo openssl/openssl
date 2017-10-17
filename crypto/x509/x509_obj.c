@@ -172,10 +172,10 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         p = buf;
     if (i == 0)
         *p = '\0';
-    return (p);
+    return p;
  err:
     X509err(X509_F_X509_NAME_ONELINE, ERR_R_MALLOC_FAILURE);
  end:
     BUF_MEM_free(b);
-    return (NULL);
+    return NULL;
 }

@@ -124,7 +124,7 @@ static ossl_inline size_t constant_time_lt_s(size_t a, size_t b)
 static ossl_inline unsigned char constant_time_lt_8(unsigned int a,
                                                     unsigned int b)
 {
-    return (unsigned char)(constant_time_lt(a, b));
+    return (unsigned char)constant_time_lt(a, b);
 }
 
 static ossl_inline uint64_t constant_time_lt_64(uint64_t a, uint64_t b)
@@ -146,12 +146,12 @@ static ossl_inline size_t constant_time_ge_s(size_t a, size_t b)
 static ossl_inline unsigned char constant_time_ge_8(unsigned int a,
                                                     unsigned int b)
 {
-    return (unsigned char)(constant_time_ge(a, b));
+    return (unsigned char)constant_time_ge(a, b);
 }
 
 static ossl_inline unsigned char constant_time_ge_8_s(size_t a, size_t b)
 {
-    return (unsigned char)(constant_time_ge_s(a, b));
+    return (unsigned char)constant_time_ge_s(a, b);
 }
 
 static ossl_inline unsigned int constant_time_is_zero(unsigned int a)
@@ -166,7 +166,7 @@ static ossl_inline size_t constant_time_is_zero_s(size_t a)
 
 static ossl_inline unsigned char constant_time_is_zero_8(unsigned int a)
 {
-    return (unsigned char)(constant_time_is_zero(a));
+    return (unsigned char)constant_time_is_zero(a);
 }
 
 static ossl_inline unsigned int constant_time_eq(unsigned int a,
@@ -183,12 +183,12 @@ static ossl_inline size_t constant_time_eq_s(size_t a, size_t b)
 static ossl_inline unsigned char constant_time_eq_8(unsigned int a,
                                                     unsigned int b)
 {
-    return (unsigned char)(constant_time_eq(a, b));
+    return (unsigned char)constant_time_eq(a, b);
 }
 
 static ossl_inline unsigned char constant_time_eq_8_s(size_t a, size_t b)
 {
-    return (unsigned char)(constant_time_eq_s(a, b));
+    return (unsigned char)constant_time_eq_s(a, b);
 }
 
 static ossl_inline unsigned int constant_time_eq_int(int a, int b)
@@ -219,19 +219,19 @@ static ossl_inline unsigned char constant_time_select_8(unsigned char mask,
                                                         unsigned char a,
                                                         unsigned char b)
 {
-    return (unsigned char)(constant_time_select(mask, a, b));
+    return (unsigned char)constant_time_select(mask, a, b);
 }
 
 static ossl_inline int constant_time_select_int(unsigned int mask, int a,
                                                 int b)
 {
-    return (int)(constant_time_select(mask, (unsigned)(a), (unsigned)(b)));
+    return (int)constant_time_select(mask, (unsigned)(a), (unsigned)(b));
 }
 
 static ossl_inline int constant_time_select_int_s(size_t mask, int a, int b)
 {
-    return (int)(constant_time_select((unsigned)mask, (unsigned)(a),
-                                      (unsigned)(b)));
+    return (int)constant_time_select((unsigned)mask, (unsigned)(a),
+                                      (unsigned)(b));
 }
 
 static ossl_inline uint64_t constant_time_select_64(uint64_t mask, uint64_t a,

@@ -21,11 +21,11 @@ int BN_lshift1(BIGNUM *r, const BIGNUM *a)
     if (r != a) {
         r->neg = a->neg;
         if (bn_wexpand(r, a->top + 1) == NULL)
-            return (0);
+            return 0;
         r->top = a->top;
     } else {
         if (bn_wexpand(r, a->top + 1) == NULL)
-            return (0);
+            return 0;
     }
     ap = a->d;
     rp = r->d;
@@ -60,7 +60,7 @@ int BN_rshift1(BIGNUM *r, const BIGNUM *a)
     j = i - (ap[i - 1] == 1);
     if (a != r) {
         if (bn_wexpand(r, j) == NULL)
-            return (0);
+            return 0;
         r->neg = a->neg;
     }
     rp = r->d;
@@ -96,7 +96,7 @@ int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
 
     nw = n / BN_BITS2;
     if (bn_wexpand(r, a->top + nw + 1) == NULL)
-        return (0);
+        return 0;
     r->neg = a->neg;
     lb = n % BN_BITS2;
     rb = BN_BITS2 - lb;
@@ -143,7 +143,7 @@ int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
     i = (BN_num_bits(a) - n + (BN_BITS2 - 1)) / BN_BITS2;
     if (r != a) {
         if (bn_wexpand(r, i) == NULL)
-            return (0);
+            return 0;
         r->neg = a->neg;
     } else {
         if (n == 0)

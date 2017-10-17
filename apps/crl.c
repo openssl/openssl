@@ -337,5 +337,5 @@ int crl_main(int argc, char **argv)
     X509_CRL_free(x);
     X509_STORE_CTX_free(ctx);
     X509_STORE_free(store);
-    return (ret);
+    return ret;
 }
