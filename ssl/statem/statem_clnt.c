@@ -1266,7 +1266,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     unsigned int compression;
     unsigned int sversion;
     unsigned int context;
-    int protverr;
+    int protverr, discard;
     RAW_EXTENSION *extensions = NULL;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
@@ -1430,7 +1430,8 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
                 || (SSL_IS_TLS13(s)
                     && s->session->ext.tick_identity
                        != TLSEXT_PSK_BAD_IDENTITY)) {
-            s->ctx->stats.sess_miss++;
+            CRYPTO_atomic_add(&s->ctx->stats.sess_miss, 1, &discard,
+                              s->ctx->lock);
             if (!ssl_get_new_session(s, 0)) {
                 goto f_err;
             }
