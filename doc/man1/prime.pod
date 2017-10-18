@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+openssl-prime,
 prime - compute prime numbers
 
 =head1 SYNOPSIS

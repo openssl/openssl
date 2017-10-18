@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-dgst
-- perform digest operations
+openssl-dgst,
+dgst - perform digest operations
 
 =head1 SYNOPSIS
 
