@@ -109,12 +109,15 @@ static inline void store_u32_be(uint32_t v, uint8_t *b)
 static inline uint32_t SM4_T_slow(uint32_t X)
 {
     uint32_t t = 0;
+
     t |= ((uint32_t)SM4_S[(X >> 24) & 0xFF]) << 24;
     t |= ((uint32_t)SM4_S[(X >> 16) & 0xFF]) << 16;
     t |= ((uint32_t)SM4_S[(X >> 8) & 0xFF]) << 8;
     t |= SM4_S[X & 0xFF];
 
-    // L linear transform
+    /*
+     * L linear transform
+     */
     return t ^ rotl(t, 2) ^ rotl(t, 10) ^ rotl(t, 18) ^ rotl(t, 24);
 }
 
@@ -126,12 +129,17 @@ static inline uint32_t SM4_T(uint32_t X)
            rotl(SM4_SBOX_T[X & 0xFF], 8);
 }
 
-int SM4_set_key(const uint8_t *key, SM4_KEY * ks)
+int SM4_set_key(const uint8_t *key, SM4_KEY *ks)
 {
-    // System parameter or family key
+    /*
+     * Family Key
+     */
     static const uint32_t FK[4] =
         { 0xa3b1bac6, 0x56aa3350, 0x677d9197, 0xb27022dc };
 
+   /*
+    * Constant Key
+    */
     static const uint32_t CK[32] = {
         0x00070E15, 0x1C232A31, 0x383F464D, 0x545B6269,
         0x70777E85, 0x8C939AA1, 0xA8AFB6BD, 0xC4CBD2D9,
@@ -144,16 +152,17 @@ int SM4_set_key(const uint8_t *key, SM4_KEY * ks)
     };
 
     uint32_t K[4];
+    uint8_t i;
 
     K[0] = load_u32_be(key, 0) ^ FK[0];
     K[1] = load_u32_be(key, 1) ^ FK[1];
     K[2] = load_u32_be(key, 2) ^ FK[2];
     K[3] = load_u32_be(key, 3) ^ FK[3];
 
-    for (uint8_t i = 0; i != 32; ++i) {
+    for (i = 0; i != SM4_KEY_SCHEDULE; ++i) {
         uint32_t X = K[(i + 1) % 4] ^ K[(i + 2) % 4] ^ K[(i + 3) % 4] ^ CK[i];
-
         uint32_t t = 0;
+
         t |= ((uint32_t)SM4_S[(X >> 24) & 0xFF]) << 24;
         t |= ((uint32_t)SM4_S[(X >> 16) & 0xFF]) << 16;
         t |= ((uint32_t)SM4_S[(X >> 8) & 0xFF]) << 8;
@@ -167,14 +176,14 @@ int SM4_set_key(const uint8_t *key, SM4_KEY * ks)
     return 1;
 }
 
-#define SM4_RNDS(k0,k1,k2,k3,F) do {         \
+#define SM4_RNDS(k0, k1, k2, k3, F) do {     \
          B0 ^= F(B1 ^ B2 ^ B3 ^ ks->rk[k0]); \
          B1 ^= F(B0 ^ B2 ^ B3 ^ ks->rk[k1]); \
          B2 ^= F(B0 ^ B1 ^ B3 ^ ks->rk[k2]); \
          B3 ^= F(B0 ^ B1 ^ B2 ^ ks->rk[k3]); \
       } while(0)
 
-void SM4_encrypt(const uint8_t *in, uint8_t *out, const SM4_KEY * ks)
+void SM4_encrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *ks)
 {
     uint32_t B0 = load_u32_be(in, 0);
     uint32_t B1 = load_u32_be(in, 1);
@@ -200,7 +209,7 @@ void SM4_encrypt(const uint8_t *in, uint8_t *out, const SM4_KEY * ks)
     store_u32_be(B0, out + 12);
 }
 
-void SM4_decrypt(const uint8_t *in, uint8_t *out, const SM4_KEY * ks)
+void SM4_decrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *ks)
 {
     uint32_t B0 = load_u32_be(in, 0);
     uint32_t B1 = load_u32_be(in, 1);

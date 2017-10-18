@@ -31,7 +31,7 @@ static int sm4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 }
 
 static void sm4_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                            size_t len, const SM4_KEY * key,
+                            size_t len, const SM4_KEY *key,
                             unsigned char *ivec, const int enc)
 {
     if (enc)
@@ -43,7 +43,7 @@ static void sm4_cbc_encrypt(const unsigned char *in, unsigned char *out,
 }
 
 static void sm4_cfb128_encrypt(const unsigned char *in, unsigned char *out,
-                               size_t length, const SM4_KEY * key,
+                               size_t length, const SM4_KEY *key,
                                unsigned char *ivec, int *num, const int enc)
 {
 
@@ -52,17 +52,16 @@ static void sm4_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 }
 
 static void sm4_ecb_encrypt(const unsigned char *in, unsigned char *out,
-                            const SM4_KEY * key, const int enc)
+                            const SM4_KEY *key, const int enc)
 {
     if (enc)
-
         SM4_encrypt(in, out, key);
     else
         SM4_decrypt(in, out, key);
 }
 
 static void sm4_ofb128_encrypt(const unsigned char *in, unsigned char *out,
-                               size_t length, const SM4_KEY * key,
+                               size_t length, const SM4_KEY *key,
                                unsigned char *ivec, int *num)
 {
     CRYPTO_ofb128_encrypt(in, out, length, key, ivec, num,
