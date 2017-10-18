@@ -186,16 +186,35 @@ void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNCARG func, void
 static int expand(OPENSSL_LHASH *lh)
 {
     OPENSSL_LH_NODE **n, **n1, **n2, *np;
-    unsigned int p, i, j;
-    unsigned long hash, nni;
+    unsigned int p, pmax, nni, i, j;
+    unsigned long hash;
+
+    nni = lh->num_alloc_nodes;
+    p = lh->p;
+    pmax = lh->pmax;
+    if (p + 1 >= pmax) {
+        j = nni * 2;
+        n = OPENSSL_realloc(lh->b, sizeof(OPENSSL_LH_NODE *) * j);
+        if (n == NULL) {
+            lh->error++;
+            return 0;
+        }
+        for (i = nni; i < j; i++)
+            n[i] = NULL;
+        lh->pmax = lh->num_alloc_nodes;
+        lh->num_alloc_nodes = j;
+        lh->num_expand_reallocs++;
+        lh->p = 0;
+        lh->b = n;
+    } else {
+        lh->p++;
+    }
 
     lh->num_nodes++;
     lh->num_expands++;
-    p = (int)lh->p++;
     n1 = &(lh->b[p]);
-    n2 = &(lh->b[p + (int)lh->pmax]);
+    n2 = &(lh->b[p + pmax]);
     *n2 = NULL;
-    nni = lh->num_alloc_nodes;
 
     for (np = *n1; np != NULL;) {
         hash = np->hash;
@@ -208,23 +227,6 @@ static int expand(OPENSSL_LHASH *lh)
         np = *n1;
     }
 
-    if ((lh->p) >= lh->pmax) {
-        j = (int)lh->num_alloc_nodes * 2;
-        n = OPENSSL_realloc(lh->b, (int)(sizeof(OPENSSL_LH_NODE *) * j));
-        if (n == NULL) {
-            lh->error++;
-            lh->num_nodes--;
-            lh->p = 0;
-            return 0;
-        }
-        for (i = (int)lh->num_alloc_nodes; i < j; i++) /* 26/02/92 eay */
-            n[i] = NULL;        /* 02/03/92 eay */
-        lh->pmax = lh->num_alloc_nodes;
-        lh->num_alloc_nodes = j;
-        lh->num_expand_reallocs++;
-        lh->p = 0;
-        lh->b = n;
-    }
     return 1;
 }
 
