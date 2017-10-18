@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+openssl-engine,
 engine - load and query engines
 
 =head1 SYNOPSIS
