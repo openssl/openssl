@@ -143,7 +143,7 @@ void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
 
 /* DRBG helpers */
 int rand_drbg_restart(RAND_DRBG *drbg,
-                     const unsigned char *buffer, size_t len, size_t entropy);
+                      const unsigned char *buffer, size_t len, size_t entropy);
 
 /* DRBG functions implementing AES-CTR */
 int ctr_init(RAND_DRBG *drbg);
