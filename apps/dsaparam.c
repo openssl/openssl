@@ -230,7 +230,7 @@ int dsaparam_main(int argc, char **argv)
     BIO_free_all(out);
     DSA_free(dsa);
     release_engine(e);
-    return (ret);
+    return ret;
 }
 
 static int dsa_cb(int p, int n, BN_GENCB *cb)

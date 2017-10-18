@@ -139,12 +139,12 @@ int DH_up_ref(DH *r)
 
 int DH_set_ex_data(DH *d, int idx, void *arg)
 {
-    return (CRYPTO_set_ex_data(&d->ex_data, idx, arg));
+    return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
 }
 
 void *DH_get_ex_data(DH *d, int idx)
 {
-    return (CRYPTO_get_ex_data(&d->ex_data, idx));
+    return CRYPTO_get_ex_data(&d->ex_data, idx);
 }
 
 int DH_bits(const DH *dh)
@@ -154,7 +154,7 @@ int DH_bits(const DH *dh)
 
 int DH_size(const DH *dh)
 {
-    return (BN_num_bytes(dh->p));
+    return BN_num_bytes(dh->p);
 }
 
 int DH_security_bits(const DH *dh)

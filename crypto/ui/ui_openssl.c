@@ -687,7 +687,7 @@ static int noecho_fgets(char *buf, int size, FILE *tty)
         FlushConsoleInputBuffer(inh);
     }
 #  endif
-    return (strlen(buf));
+    return strlen(buf);
 }
 # endif
 

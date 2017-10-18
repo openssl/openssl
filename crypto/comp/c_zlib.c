@@ -256,7 +256,7 @@ COMP_METHOD *COMP_zlib(void)
     meth = &zlib_stateful_method;
 #endif
 
-    return (meth);
+    return meth;
 }
 
 void comp_zlib_cleanup_int(void)

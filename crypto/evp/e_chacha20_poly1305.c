@@ -140,7 +140,7 @@ static const EVP_CIPHER chacha20 = {
 
 const EVP_CIPHER *EVP_chacha20(void)
 {
-    return (&chacha20);
+    return &chacha20;
 }
 
 # ifndef OPENSSL_NO_POLY1305

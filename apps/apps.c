@@ -663,7 +663,7 @@ X509 *load_cert(const char *file, int format, const char *cert_descrip)
         ERR_print_errors(bio_err);
     }
     BIO_free(cert);
-    return (x);
+    return x;
 }
 
 X509_CRL *load_crl(const char *infile, int format)
@@ -697,7 +697,7 @@ X509_CRL *load_crl(const char *infile, int format)
 
  end:
     BIO_free(in);
-    return (x);
+    return x;
 }
 
 EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
@@ -769,7 +769,7 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
         BIO_printf(bio_err, "unable to load %s\n", key_descrip);
         ERR_print_errors(bio_err);
     }
-    return (pkey);
+    return pkey;
 }
 
 EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
@@ -855,7 +855,7 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
     BIO_free(key);
     if (pkey == NULL)
         BIO_printf(bio_err, "unable to load %s\n", key_descrip);
-    return (pkey);
+    return pkey;
 }
 
 static int load_certs_crls(const char *file, int format,
@@ -1334,7 +1334,7 @@ static int index_serial_cmp(const OPENSSL_CSTRING *a,
 
     for (aa = a[DB_serial]; *aa == '0'; aa++) ;
     for (bb = b[DB_serial]; *bb == '0'; bb++) ;
-    return (strcmp(aa, bb));
+    return strcmp(aa, bb);
 }
 
 static int index_name_qual(char **a)
@@ -1349,7 +1349,7 @@ static unsigned long index_name_hash(const OPENSSL_CSTRING *a)
 
 int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b)
 {
-    return (strcmp(a[DB_name], b[DB_name]));
+    return strcmp(a[DB_name], b[DB_name]);
 }
 
 static IMPLEMENT_LHASH_HASH_FN(index_serial, OPENSSL_CSTRING)
@@ -1400,7 +1400,7 @@ BIGNUM *load_serial(const char *serialfile, int create, ASN1_INTEGER **retai)
  err:
     BIO_free(in);
     ASN1_INTEGER_free(ai);
-    return (ret);
+    return ret;
 }
 
 int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial,
@@ -1450,7 +1450,7 @@ int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial
  err:
     BIO_free_all(out);
     ASN1_INTEGER_free(ai);
-    return (ret);
+    return ret;
 }
 
 int rotate_serial(const char *serialfile, const char *new_suffix,
@@ -2153,7 +2153,7 @@ double app_tminterval(int stop, int usertime)
         ret = (__int64)(tmstop.QuadPart - tmstart.QuadPart) * 1e-7;
     }
 
-    return (ret);
+    return ret;
 }
 #elif defined(OPENSSL_SYSTEM_VXWORKS)
 # include <time.h>
@@ -2189,7 +2189,7 @@ double app_tminterval(int stop, int usertime)
     else
         ret = (now - tmstart) / (double)sysClkRateGet();
 # endif
-    return (ret);
+    return ret;
 }
 
 #elif defined(OPENSSL_SYSTEM_VMS)
@@ -2223,7 +2223,7 @@ double app_tminterval(int stop, int usertime)
     else
         ret = (now - tmstart) / (double)(CLK_TCK);
 
-    return (ret);
+    return ret;
 }
 
 #elif defined(_SC_CLK_TCK)      /* by means of unistd.h */
@@ -2246,7 +2246,7 @@ double app_tminterval(int stop, int usertime)
         ret = (now - tmstart) / (double)tck;
     }
 
-    return (ret);
+    return ret;
 }
 
 #else
@@ -2371,9 +2371,9 @@ int raw_read_stdin(void *buf, int siz)
 {
     DWORD n;
     if (ReadFile(GetStdHandle(STD_INPUT_HANDLE), buf, siz, &n, NULL))
-        return (n);
+        return n;
     else
-        return (-1);
+        return -1;
 }
 #elif defined(__VMS)
 # include <sys/socket.h>
@@ -2394,9 +2394,9 @@ int raw_write_stdout(const void *buf, int siz)
 {
     DWORD n;
     if (WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buf, siz, &n, NULL))
-        return (n);
+        return n;
     else
-        return (-1);
+        return -1;
 }
 #else
 int raw_write_stdout(const void *buf, int siz)

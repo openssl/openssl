@@ -21,7 +21,7 @@ int ASN1_PRINTABLE_type(const unsigned char *s, int len)
     if (len <= 0)
         len = -1;
     if (s == NULL)
-        return (V_ASN1_PRINTABLESTRING);
+        return V_ASN1_PRINTABLESTRING;
 
     while ((*s) && (len-- != 0)) {
         c = *(s++);
@@ -31,10 +31,10 @@ int ASN1_PRINTABLE_type(const unsigned char *s, int len)
             t61 = 1;
     }
     if (t61)
-        return (V_ASN1_T61STRING);
+        return V_ASN1_T61STRING;
     if (ia5)
-        return (V_ASN1_IA5STRING);
-    return (V_ASN1_PRINTABLESTRING);
+        return V_ASN1_IA5STRING;
+    return V_ASN1_PRINTABLESTRING;
 }
 
 int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s)
@@ -43,9 +43,9 @@ int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s)
     unsigned char *p;
 
     if (s->type != V_ASN1_UNIVERSALSTRING)
-        return (0);
+        return 0;
     if ((s->length % 4) != 0)
-        return (0);
+        return 0;
     p = s->data;
     for (i = 0; i < s->length; i += 4) {
         if ((p[0] != '\0') || (p[1] != '\0') || (p[2] != '\0'))
@@ -54,7 +54,7 @@ int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s)
             p += 4;
     }
     if (i < s->length)
-        return (0);
+        return 0;
     p = s->data;
     for (i = 3; i < s->length; i += 4) {
         *(p++) = s->data[i];
@@ -72,7 +72,7 @@ int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v)
     const char *p;
 
     if (v == NULL)
-        return (0);
+        return 0;
     n = 0;
     p = (const char *)v->data;
     for (i = 0; i < v->length; i++) {
@@ -84,12 +84,12 @@ int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v)
         n++;
         if (n >= 80) {
             if (BIO_write(bp, buf, n) <= 0)
-                return (0);
+                return 0;
             n = 0;
         }
     }
     if (n > 0)
         if (BIO_write(bp, buf, n) <= 0)
-            return (0);
+            return 0;
     return 1;
 }

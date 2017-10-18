@@ -22,12 +22,12 @@ int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
         ECerr(EC_F_ECPKPARAMETERS_PRINT_FP, ERR_R_BUF_LIB);
-        return (0);
+        return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = ECPKParameters_print(b, x, off);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 
 int EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
@@ -37,12 +37,12 @@ int EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
         ECerr(EC_F_EC_KEY_PRINT_FP, ERR_R_BIO_LIB);
-        return (0);
+        return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = EC_KEY_print(b, x, off);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 
 int ECParameters_print_fp(FILE *fp, const EC_KEY *x)
@@ -52,12 +52,12 @@ int ECParameters_print_fp(FILE *fp, const EC_KEY *x)
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
         ECerr(EC_F_ECPARAMETERS_PRINT_FP, ERR_R_BIO_LIB);
-        return (0);
+        return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = ECParameters_print(b, x);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 #endif
 
@@ -226,7 +226,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
     BN_free(b);
     BN_free(gen);
     BN_CTX_free(ctx);
-    return (ret);
+    return ret;
 }
 
 static int print_bin(BIO *fp, const char *name, const unsigned char *buf,

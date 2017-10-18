@@ -186,7 +186,7 @@ CONF *NCONF_new(CONF_METHOD *meth)
     ret = meth->create(meth);
     if (ret == NULL) {
         CONFerr(CONF_F_NCONF_NEW, ERR_R_MALLOC_FAILURE);
-        return (NULL);
+        return NULL;
     }
 
     return ret;

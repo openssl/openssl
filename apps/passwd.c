@@ -295,7 +295,7 @@ int passwd_main(int argc, char **argv)
     OPENSSL_free(salt_malloc);
     OPENSSL_free(passwd_malloc);
     BIO_free(in);
-    return (ret);
+    return ret;
 }
 
 /*

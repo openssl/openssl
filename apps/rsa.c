@@ -307,6 +307,6 @@ int rsa_main(int argc, char **argv)
     RSA_free(rsa);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
-    return (ret);
+    return ret;
 }
 #endif
