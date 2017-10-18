@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+openssl-s_server,
 s_server - SSL/TLS server program
 
 =head1 SYNOPSIS
