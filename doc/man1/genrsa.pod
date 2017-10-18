@@ -94,7 +94,7 @@ RSA key, which is defined in RFC 8017.
 =item B<numbits>
 
 The size of the private key to generate in bits. This must be the last option
-specified. The default is 2048.
+specified. The default is 2048 and values less than 512 are not allowed.
 
 =back
 
@@ -111,13 +111,6 @@ has passed all the prime tests (the actual number depends on the key size).
 Because key generation is a random process the time taken to generate a key
 may vary somewhat. But in general, more primes lead to less generation time
 of a key.
-
-=head1 BUGS
-
-A quirk of the prime generation algorithm is that it cannot generate small
-primes. Therefore the number of bits should not be less that 64. For typical
-private keys this will not matter because for security reasons they will
-be much larger (typically 1024 bits).
 
 =head1 SEE ALSO
 
