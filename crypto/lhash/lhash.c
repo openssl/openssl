@@ -186,7 +186,7 @@ void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNCARG func, void
 static int expand(OPENSSL_LHASH *lh)
 {
     OPENSSL_LH_NODE **n, **n1, **n2, *np;
-    unsigned int p, pmax, nni, i, j;
+    unsigned int p, pmax, nni, j;
     unsigned long hash;
 
     nni = lh->num_alloc_nodes;
@@ -199,13 +199,12 @@ static int expand(OPENSSL_LHASH *lh)
             lh->error++;
             return 0;
         }
-        for (i = nni; i < j; i++)
-            n[i] = NULL;
+        lh->b = n;
+        memset(n + nni, 0, sizeof(*n) * (j - nni));
         lh->pmax = lh->num_alloc_nodes;
         lh->num_alloc_nodes = j;
         lh->num_expand_reallocs++;
         lh->p = 0;
-        lh->b = n;
     } else {
         lh->p++;
     }
