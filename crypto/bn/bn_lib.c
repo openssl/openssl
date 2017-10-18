@@ -897,7 +897,7 @@ int BN_security_bits(int L, int N)
     int secbits, bits;
     if (L >= 15360)
         secbits = 256;
-    else if (L >= 7690)
+    else if (L >= 7680)
         secbits = 192;
     else if (L >= 3072)
         secbits = 128;
