@@ -3,6 +3,7 @@
 =head1 NAME
 
 OCSP_resp_get0_certs,
+OCSP_resp_get0_signer,
 OCSP_resp_get0_id,
 OCSP_resp_get1_id,
 OCSP_resp_get0_produced_at,
@@ -32,6 +33,9 @@ OCSP_single_get0_status, OCSP_check_validity
                              const OCSP_BASICRESP* single);
 
  const STACK_OF(X509) *OCSP_resp_get0_certs(const OCSP_BASICRESP *bs);
+
+ int OCSP_resp get0_signer(OCSP_BASICRESP *bs, X509 **signer,
+                           STACK_OF(X509) *extra_certs);
 
  int OCSP_resp_get0_id(const OCSP_BASICRESP *bs,
                        const ASN1_OCTET_STRING **pid,
@@ -76,7 +80,13 @@ single response B<bs>.
 
 OCSP_resp_get0_certs() returns any certificates included in B<bs>.
 
-OCSP_resp_get0_id() gets the responder id of <bs>. If the responder ID is
+OCSP_resp_get0_signer() attempts to retrive the certificate that directly
+signed B<bs>.  The OCSP protocol does not require that this certificate
+is included in the B<certs> field of the response, so additional certificates
+can be supplied in B<extra_certs> if the certificates that may have
+signed the response are known via some out-of-band mechanism.
+
+OCSP_resp_get0_id() gets the responder id of B<bs>. If the responder ID is
 a name then <*pname> is set to the name and B<*pid> is set to NULL. If the
 responder ID is by key ID then B<*pid> is set to the key ID and B<*pname>
 is set to NULL. OCSP_resp_get1_id() leaves ownership of B<*pid> and B<*pname>
@@ -105,6 +115,9 @@ B<id> was not found.
 
 OCSP_single_get0_status() returns the status of B<single> or -1 if an error
 occurred.
+
+OCSP_resp_get0_signer() returns 1 if the signing certificate was located,
+or 0 on error.
 
 =head1 NOTES
 
