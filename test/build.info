@@ -46,7 +46,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
-          servername_test
+          servername_test ocspapitest
 
   SOURCE[aborttest]=aborttest.c
   INCLUDE[aborttest]=../include
@@ -276,6 +276,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[sslapitest]=sslapitest.c ssltestlib.c
   INCLUDE[sslapitest]=../include ..
   DEPEND[sslapitest]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[ocspapitest]=ocspapitest.c
+  INCLUDE[ocspapitest]=../include ..
+  DEPEND[ocspapitest]=../libcrypto libtestutil.a
 
   SOURCE[dtlstest]=dtlstest.c ssltestlib.c
   INCLUDE[dtlstest]=../include .
