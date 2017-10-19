@@ -10,86 +10,69 @@
 #ifndef S390X_ARCH_H
 # define S390X_ARCH_H
 
+# ifndef __ASSEMBLER__
+
 /*
- * The elements of OPENSSL_s390xcap_P are the doublewords returned by the STFLE
- * instruction followed by the doubleword pairs returned by instructions' QUERY
- * functions. If STFLE returns fewer doublewords or an instruction is not
- * supported, the corresponding element is zero. The order is as follows:
- *
- * STFLE:STFLE:STFLE.
- * KIMD:KIMD:KLMD:KLMD:KM:KM:KMC:KMC:KMAC:KMAC:KMCTR:KMCTR:KMO:KMO:KMF:KMF
- * :PRNO:PRNO:KMA:KMA
+ * The field elements of OPENSSL_s390xcap_P are the 64-bit words returned by
+ * the STFLE instruction followed by the 64-bit word pairs returned by
+ * instructions' QUERY functions. If STFLE returns fewer data or an instruction
+ * is not supported, the corresponding field elements are zero.
  */
-# define S390X_STFLE_DWORDS	3
-# define S390X_QUERY_DWORDS	20
-# define S390X_CAP_DWORDS	(S390X_STFLE_DWORDS + S390X_QUERY_DWORDS)
-extern unsigned long long OPENSSL_s390xcap_P[];
+extern struct {
+    unsigned long long stfle[4];
+    unsigned long long kimd[2];
+    unsigned long long klmd[2];
+    unsigned long long km[2];
+    unsigned long long kmc[2];
+    unsigned long long kmac[2];
+    unsigned long long kmctr[2];
+    unsigned long long kmo[2];
+    unsigned long long kmf[2];
+    unsigned long long prno[2];
+    unsigned long long kma[2];
+} OPENSSL_s390xcap_P;
 
-/* Offsets */
-# define S390X_STFLE		0
-# define S390X_KIMD		(S390X_STFLE + S390X_STFLE_DWORDS)
-# define S390X_KLMD		(S390X_KIMD + 2)
-# define S390X_KM		(S390X_KLMD + 2)
-# define S390X_KMC		(S390X_KM + 2)
-# define S390X_KMAC		(S390X_KMC + 2)
-# define S390X_KMCTR		(S390X_KMAC + 2)
-# define S390X_KMO		(S390X_KMCTR + 2)
-# define S390X_KMF		(S390X_KMO + 2)
-# define S390X_PRNO		(S390X_KMF + 2)
-# define S390X_KMA		(S390X_PRNO + 2)
+/* convert facility bit number or function code to bit mask */
+#  define S390X_CAPBIT(i)	(1ULL << (63 - (i) % 64))
 
-/* OPENSSL_s390xcap_P[S390X_STFLE + 2] flags */
-# define S390X_STFLE_VXE	(1ULL << 56)
-# define S390X_STFLE_VXD	(1ULL << 57)
-# define S390X_STFLE_VX		(1ULL << 62)
+# endif
 
-/* OPENSSL_s390xcap_P[S390X_KIMD] flags */
-# define S390X_KIMD_SHAKE_256	(1ULL << 26)
-# define S390X_KIMD_SHAKE_128	(1ULL << 27)
-# define S390X_KIMD_SHA3_512	(1ULL << 28)
-# define S390X_KIMD_SHA3_384	(1ULL << 29)
-# define S390X_KIMD_SHA3_256	(1ULL << 30)
-# define S390X_KIMD_SHA3_224	(1ULL << 31)
+/* OPENSSL_s390xcap_P size [bytes] */
+# define S390X_CAPLEN		((4 + 10 * 2) * 8)
 
-/* OPENSSL_s390xcap_P[S390X_KLMD] flags */
-# define S390X_KLMD_SHAKE_256	(1ULL << 26)
-# define S390X_KLMD_SHAKE_128	(1ULL << 27)
-# define S390X_KLMD_SHA3_512	(1ULL << 28)
-# define S390X_KLMD_SHA3_384	(1ULL << 29)
-# define S390X_KLMD_SHA3_256	(1ULL << 30)
-# define S390X_KLMD_SHA3_224	(1ULL << 31)
+/* OPENSSL_s390xcap_P offsets [bytes] */
+# define S390X_STFLE		0x00
+# define S390X_KIMD		0x20
+# define S390X_KLMD		0x30
+# define S390X_KM		0x40
+# define S390X_KMC		0x50
+# define S390X_KMAC		0x60
+# define S390X_KMCTR		0x70
+# define S390X_KMO		0x80
+# define S390X_KMF		0x90
+# define S390X_PRNO		0xa0
+# define S390X_KMA		0xb0
 
-/* OPENSSL_s390xcap_P[S390X_KM] flags */
-# define S390X_KM_AES_256	(1ULL << 43)
-# define S390X_KM_AES_192	(1ULL << 44)
-# define S390X_KM_AES_128	(1ULL << 45)
+/* facility bit numbers */
+# define S390X_VX		129
+# define S390X_VXD		134
+# define S390X_VXE		135
 
-/* OPENSSL_s390xcap_P[S390X_KMC] flags */
-# define S390X_KMC_AES_256	(1ULL << 43)
-# define S390X_KMC_AES_192	(1ULL << 44)
-# define S390X_KMC_AES_128	(1ULL << 45)
+/* function codes */
+# define S390X_QUERY		0
 
-/* OPENSSL_s390xcap_P[S390X_KMAC] flags */
-# define S390X_KMAC_AES_256	(1ULL << 43)
-# define S390X_KMAC_AES_192	(1ULL << 44)
-# define S390X_KMAC_AES_128	(1ULL << 45)
+# define S390X_SHA3_224		32
+# define S390X_SHA3_256		33
+# define S390X_SHA3_384		34
+# define S390X_SHA3_512		35
+# define S390X_SHAKE_128	36
+# define S390X_SHAKE_256	37
+# define S390X_GHASH		65
 
-/* OPENSSL_s390xcap_P[S390X_KMO] flags */
-# define S390X_KMO_AES_256	(1ULL << 43)
-# define S390X_KMO_AES_192	(1ULL << 44)
-# define S390X_KMO_AES_128	(1ULL << 45)
+# define S390X_AES_128		18
+# define S390X_AES_192		19
+# define S390X_AES_256		20
 
-/* OPENSSL_s390xcap_P[S390X_KMF] flags */
-# define S390X_KMF_AES_256	(1ULL << 43)
-# define S390X_KMF_AES_192	(1ULL << 44)
-# define S390X_KMF_AES_128	(1ULL << 45)
-
-/* OPENSSL_s390xcap_P[S390X_PRNO + 1] flags */
-# define S390X_PRNO_TRNG	(1ULL << 13)
-
-/* OPENSSL_s390xcap_P[S390X_KMA] flags */
-# define S390X_KMA_GCM_AES_256	(1ULL << 43)
-# define S390X_KMA_GCM_AES_192	(1ULL << 44)
-# define S390X_KMA_GCM_AES_128	(1ULL << 45)
+# define S390X_TRNG		114
 
 #endif

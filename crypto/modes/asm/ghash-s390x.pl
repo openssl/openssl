@@ -80,6 +80,8 @@ $rem_4bit="%r14";
 $sp="%r15";
 
 $code.=<<___;
+#include "s390x_arch.h"
+
 .text
 
 .globl	gcm_gmult_4bit
@@ -89,12 +91,13 @@ ___
 $code.=<<___ if(!$softonly && 0);	# hardware is slow for single block...
 	larl	%r1,OPENSSL_s390xcap_P
 	lghi	%r0,0
-	lg	%r1,32(%r1)	# load second word of kimd capabilities vector
+	lg	%r1,S390X_KIMD+8(%r1)	# load second word of kimd capabilities
+					#  vector
 	tmhh	%r1,0x4000	# check for function 65
 	jz	.Lsoft_gmult
 	stg	%r0,16($sp)	# arrange 16 bytes of zero input
 	stg	%r0,24($sp)
-	lghi	%r0,65		# function 65
+	lghi	%r0,S390X_GHASH	# function 65
 	la	%r1,0($Xi)	# H lies right after Xi in gcm128_context
 	la	$inp,16($sp)
 	lghi	$len,16
@@ -123,10 +126,11 @@ gcm_ghash_4bit:
 ___
 $code.=<<___ if(!$softonly);
 	larl	%r1,OPENSSL_s390xcap_P
-	lg	%r0,32(%r1)	# load second word of kimd capabilities vector
+	lg	%r0,S390X_KIMD+8(%r1)	# load second word of kimd capabilities
+					#  vector
 	tmhh	%r0,0x4000	# check for function 65
 	jz	.Lsoft_ghash
-	lghi	%r0,65		# function 65
+	lghi	%r0,S390X_GHASH	# function 65
 	la	%r1,0($Xi)	# H lies right after Xi in gcm128_context
 	.long	0xb93e0004	# kimd %r0,$inp
 	brc	1,.-4		# pay attention to "partial completion"
@@ -251,7 +255,7 @@ rem_4bit:
 .type	rem_4bit,\@object
 .size	rem_4bit,(.-rem_4bit)
 .string	"GHASH for s390x, CRYPTOGAMS by <appro\@openssl.org>"
-.comm	OPENSSL_s390xcap_P,184,8
+.comm	OPENSSL_s390xcap_P,S390X_CAPLEN,8
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
