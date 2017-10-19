@@ -9,7 +9,8 @@ sk_TYPE_reserve, sk_TYPE_free, sk_TYPE_zero, sk_TYPE_delete,
 sk_TYPE_delete_ptr, sk_TYPE_push, sk_TYPE_unshift, sk_TYPE_pop,
 sk_TYPE_shift, sk_TYPE_pop_free, sk_TYPE_insert, sk_TYPE_set,
 sk_TYPE_find, sk_TYPE_find_ex, sk_TYPE_sort, sk_TYPE_is_sorted,
-sk_TYPE_dup, sk_TYPE_deep_copy, sk_TYPE_set_cmp_func - stack container
+sk_TYPE_dup, sk_TYPE_deep_copy, sk_TYPE_set_cmp_func, sk_TYPE_new_reserve
+- stack container
 
 =head1 SYNOPSIS
 
@@ -53,6 +54,7 @@ sk_TYPE_dup, sk_TYPE_deep_copy, sk_TYPE_set_cmp_func - stack container
                                    sk_TYPE_freefunc freefunc);
  sk_TYPE_compfunc (*sk_TYPE_set_cmp_func(STACK_OF(TYPE) *sk,
                                          sk_TYPE_compfunc compare));
+ STACK_OF(TYPE) *sk_TYPE_new_reserve(sk_TYPE_compfunc compare, int n);
 
 =head1 DESCRIPTION
 
@@ -91,15 +93,25 @@ sk_TYPE_value() returns element B<idx> in B<sk>, where B<idx> starts at
 zero. If B<idx> is out of range then B<NULL> is returned.
 
 sk_TYPE_new() allocates a new empty stack using comparison function B<compar>.
-If B<compar> is B<NULL> then no comparison function is used.
+If B<compar> is B<NULL> then no comparison function is used. This function is
+equivalent to sk_TYPE_new_reserve(compare, 0).
 
-sk_TYPE_new_null() allocates a new empty stack with no comparison function.
+sk_TYPE_new_null() allocates a new empty stack with no comparison function. This
+function is equivalent to sk_TYPE_new_reserve(NULL, 0).
 
 sk_TYPE_reserve() allocates additional memory in the B<sk> structure
 such that the next B<n> calls to sk_TYPE_insert(), sk_TYPE_push()
 or sk_TYPE_unshift() will not fail or cause memory to be allocated
 or reallocated. If B<n> is zero, any excess space allocated in the
 B<sk> structure is freed. On error B<sk> is unchanged.
+
+sk_TYPE_new_reserve() allocates a new stack. The new stack will have additional
+memory allocated to hold B<n> elements if B<n> is positive. The next B<n> calls
+to sk_TYPE_insert(), sk_TYPE_push() or sk_TYPE_unshift() will not fail or cause
+memory to be allocated or reallocated. If B<n> is zero or less than zero, no
+memory is allocated. sk_TYPE_reserve() also sets the comparison function
+B<compare> to the newly created stack. If B<compare> is B<NULL> then no
+comparison function is used.
 
 sk_TYPE_set_cmp_func() sets the comparison function of B<sk> to B<compar>.
 The previous comparison function is returned or B<NULL> if there was
@@ -210,8 +222,8 @@ passed stack is B<NULL>.
 sk_TYPE_value() returns a pointer to a stack element or B<NULL> if the
 index is out of range.
 
-sk_TYPE_new() and sk_TYPE_new_null() return an empty stack or B<NULL> if
-an error occurs.
+sk_TYPE_new(), sk_TYPE_new_null() and sk_TYPE_new_reserve() return an empty
+stack or B<NULL> if an error occurs.
 
 sk_TYPE_reserve() returns B<1> on successful allocation of the required memory
 or B<0> on error.
@@ -244,6 +256,8 @@ stack.
 
 Before OpenSSL 1.1.0, this was implemented via macros and not inline functions
 and was not a public API.
+
+sk_TYPE_new_reserve() was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

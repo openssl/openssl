@@ -111,16 +111,12 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
 
 OPENSSL_STACK *OPENSSL_sk_new_null(void)
 {
-    return OPENSSL_zalloc(sizeof(OPENSSL_STACK));
+    return OPENSSL_sk_new_reserve(NULL, 0);
 }
 
 OPENSSL_STACK *OPENSSL_sk_new(OPENSSL_sk_compfunc c)
 {
-    OPENSSL_STACK *ret = OPENSSL_sk_new_null();
-
-    if (ret != NULL)
-        ret->comp = c;
-    return ret;
+    return OPENSSL_sk_new_reserve(c, 0);
 }
 
 /*
@@ -201,6 +197,26 @@ static int sk_reserve(OPENSSL_STACK *st, int n, int exact)
     st->data = tmpdata;
     st->num_alloc = num_alloc;
     return 1;
+}
+
+OPENSSL_STACK *OPENSSL_sk_new_reserve(OPENSSL_sk_compfunc c, int n)
+{
+    OPENSSL_STACK *st = OPENSSL_zalloc(sizeof(OPENSSL_STACK));
+
+    if (st == NULL)
+        return NULL;
+
+    st->comp = c;
+
+    if (n <= 0)
+        return st;
+
+    if (!sk_reserve(st, n, 1)) {
+        OPENSSL_sk_free(st);
+        return NULL;
+    }
+
+    return st;
 }
 
 int OPENSSL_sk_reserve(OPENSSL_STACK *st, int n)
