@@ -40,6 +40,10 @@ extern "C" {
     { \
         return (STACK_OF(t1) *)OPENSSL_sk_new_null(); \
     } \
+    static ossl_inline STACK_OF(t1) *sk_##t1##_new_reserve(sk_##t1##_compfunc compare, int n) \
+    { \
+        return (STACK_OF(t1) *)OPENSSL_sk_new_reserve((OPENSSL_sk_compfunc)compare, n); \
+    } \
     static ossl_inline int sk_##t1##_reserve(STACK_OF(t1) *sk, int n) \
     { \
         return OPENSSL_sk_reserve((OPENSSL_STACK *)sk, n); \
