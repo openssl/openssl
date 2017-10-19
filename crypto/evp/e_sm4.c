@@ -46,7 +46,6 @@ static void sm4_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                                size_t length, const SM4_KEY *key,
                                unsigned char *ivec, int *num, const int enc)
 {
-
     CRYPTO_cfb128_encrypt(in, out, length, key, ivec, num, enc,
                           (block128_f) SM4_encrypt);
 }
