@@ -1046,10 +1046,9 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
              */
             if (!SSL_IS_TLS13(s))
                 ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
-            if (s->hit) {
+            if (s->hit)
                 CRYPTO_atomic_add(&s->session_ctx->stats.sess_hit, 1, &discard,
                                   s->session_ctx->lock);
-            }
 
             s->handshake_func = ossl_statem_connect;
             CRYPTO_atomic_add(&s->session_ctx->stats.sess_connect_good, 1,
