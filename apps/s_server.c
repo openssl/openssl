@@ -2202,22 +2202,25 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
             BIO_printf(bio_err, "Turned on non blocking io\n");
     }
 
+    con = SSL_new(ctx);
     if (con == NULL) {
-        con = SSL_new(ctx);
-
-        if (s_tlsextdebug) {
-            SSL_set_tlsext_debug_callback(con, tlsext_cb);
-            SSL_set_tlsext_debug_arg(con, bio_s_out);
-        }
-
-        if (context
-            && !SSL_set_session_id_context(con,
-                                           context, strlen((char *)context))) {
-            BIO_printf(bio_err, "Error setting session id context\n");
-            ret = -1;
-            goto err;
-        }
+        ret = -1;
+        goto err;
     }
+
+    if (s_tlsextdebug) {
+        SSL_set_tlsext_debug_callback(con, tlsext_cb);
+        SSL_set_tlsext_debug_arg(con, bio_s_out);
+    }
+
+    if (context != NULL
+        && !SSL_set_session_id_context(con, context,
+                                       strlen((char *)context))) {
+        BIO_printf(bio_err, "Error setting session id context\n");
+        ret = -1;
+        goto err;
+    }
+
     if (!SSL_clear(con)) {
         BIO_printf(bio_err, "Error clearing SSL connection\n");
         ret = -1;

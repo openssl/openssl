@@ -1866,6 +1866,9 @@ int s_client_main(int argc, char **argv)
         goto end;
 
     con = SSL_new(ctx);
+    if (con == NULL)
+        goto end;
+
     if (sess_in != NULL) {
         SSL_SESSION *sess;
         BIO *stmp = BIO_new_file(sess_in, "r");
