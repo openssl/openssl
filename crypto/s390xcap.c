@@ -13,7 +13,7 @@
 #include <setjmp.h>
 #include <signal.h>
 
-extern unsigned long OPENSSL_s390xcap_P[];
+unsigned long long OPENSSL_s390xcap_P[10];
 
 static sigjmp_buf ill_jmp;
 static void ill_handler(int sig)
