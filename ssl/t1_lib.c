@@ -1403,7 +1403,7 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
      * in disabled_mask.
      */
     sigalgslen = tls12_get_psigalgs(s, 1, &sigalgs);
-    for (i = 0; i < sigalgslen; i ++, sigalgs++) {
+    for (i = 0; i < sigalgslen; i++, sigalgs++) {
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(*sigalgs);
         const SSL_CERT_LOOKUP *clu;
 
