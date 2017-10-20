@@ -28,6 +28,7 @@ EVP_rc5_32_12_16_ecb, EVP_rc5_32_12_16_cfb, EVP_rc5_32_12_16_ofb,
 EVP_aes_128_cbc, EVP_aes_128_ecb, EVP_aes_128_cfb, EVP_aes_128_ofb,
 EVP_aes_192_cbc, EVP_aes_192_ecb, EVP_aes_192_cfb, EVP_aes_192_ofb,
 EVP_aes_256_cbc, EVP_aes_256_ecb, EVP_aes_256_cfb, EVP_aes_256_ofb,
+EVP_sm4_cbc, EVP_sm4_ecb, EVP_sm4_cfb, EVP_sm4_ofb, EVP_sm4_ctr,
 EVP_aes_128_gcm, EVP_aes_192_gcm, EVP_aes_256_gcm,
 EVP_aes_128_ccm, EVP_aes_192_ccm, EVP_aes_256_ccm,
 EVP_aes_128_cbc_hmac_sha1, EVP_aes_256_cbc_hmac_sha1,
@@ -379,6 +380,11 @@ length cipher.
 RC5 encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key length
 cipher with an additional "number of rounds" parameter. By default the key length is set to 128
 bits and 12 rounds.
+
+=item EVP_sm4_cbc(), EVP_sm4_ecb(), EVP_sm4_cfb(), EVP_sm4_ofb(), EVP_sm4_ctr()
+
+SM4 encryption algorithm (GB/T 32907-2016) with a 128-bit key in CBC, ECB, CFB,
+OFB and CTR modes respectively.
 
 =item EVP_aes_128_gcm(), EVP_aes_192_gcm(), EVP_aes_256_gcm()
 

@@ -85,35 +85,35 @@ static const uint32_t SM4_SBOX_T[256] = {
     0x794C3535, 0xA0208080, 0x9D78E5E5, 0x56EDBBBB, 0x235E7D7D, 0xC63EF8F8,
     0x8BD45F5F, 0xE7C82F2F, 0xDD39E4E4, 0x68492121 };
 
-static inline uint32_t rotl(uint32_t a, uint8_t n)
+static ossl_inline uint32_t rotl(uint32_t a, uint8_t n)
 {
     return (a << n) | (a >> (32 - n));
 }
 
-static inline uint32_t load_u32_be(const uint8_t *b, uint32_t n)
+static ossl_inline uint32_t load_u32_be(const uint8_t *b, uint32_t n)
 {
-    return ((uint32_t)b[4 * n] << 24) ^
-           ((uint32_t)b[4 * n + 1] << 16) ^
-           ((uint32_t)b[4 * n + 2] << 8) ^
+    return ((uint32_t)b[4 * n] << 24) |
+           ((uint32_t)b[4 * n + 1] << 16) |
+           ((uint32_t)b[4 * n + 2] << 8) |
            ((uint32_t)b[4 * n + 3]);
 }
 
-static inline void store_u32_be(uint32_t v, uint8_t *b)
+static ossl_inline void store_u32_be(uint32_t v, uint8_t *b)
 {
-    b[0] = (v >> 24) & 0xFF;
-    b[1] = (v >> 16) & 0xFF;
-    b[2] = (v >> 8) & 0xFF;
-    b[3] = (v) & 0xFF;
+    b[0] = (uint8_t)(v >> 24);
+    b[1] = (uint8_t)(v >> 16);
+    b[2] = (uint8_t)(v >> 8);
+    b[3] = (uint8_t)(v);
 }
 
-static inline uint32_t SM4_T_slow(uint32_t X)
+static ossl_inline uint32_t SM4_T_slow(uint32_t X)
 {
     uint32_t t = 0;
 
-    t |= ((uint32_t)SM4_S[(X >> 24) & 0xFF]) << 24;
-    t |= ((uint32_t)SM4_S[(X >> 16) & 0xFF]) << 16;
-    t |= ((uint32_t)SM4_S[(X >> 8) & 0xFF]) << 8;
-    t |= SM4_S[X & 0xFF];
+    t |= ((uint32_t)SM4_S[(uint8_t)(X >> 24)]) << 24;
+    t |= ((uint32_t)SM4_S[(uint8_t)(X >> 16)]) << 16;
+    t |= ((uint32_t)SM4_S[(uint8_t)(X >> 8)]) << 8;
+    t |= SM4_S[(uint8_t)X];
 
     /*
      * L linear transform
@@ -121,12 +121,12 @@ static inline uint32_t SM4_T_slow(uint32_t X)
     return t ^ rotl(t, 2) ^ rotl(t, 10) ^ rotl(t, 18) ^ rotl(t, 24);
 }
 
-static inline uint32_t SM4_T(uint32_t X)
+static ossl_inline uint32_t SM4_T(uint32_t X)
 {
-    return SM4_SBOX_T[(X >> 24) & 0xFF] ^
-           rotl(SM4_SBOX_T[(X >> 16) & 0xFF], 24) ^
-           rotl(SM4_SBOX_T[(X >> 8) & 0xFF], 16) ^
-           rotl(SM4_SBOX_T[X & 0xFF], 8);
+    return SM4_SBOX_T[(uint8_t)(X >> 24)] ^
+           rotl(SM4_SBOX_T[(uint8_t)(X >> 16)], 24) ^
+           rotl(SM4_SBOX_T[(uint8_t)(X >> 8)], 16) ^
+           rotl(SM4_SBOX_T[(uint8_t)X], 8);
 }
 
 int SM4_set_key(const uint8_t *key, SM4_KEY *ks)
@@ -152,7 +152,7 @@ int SM4_set_key(const uint8_t *key, SM4_KEY *ks)
     };
 
     uint32_t K[4];
-    uint8_t i;
+    int i;
 
     K[0] = load_u32_be(key, 0) ^ FK[0];
     K[1] = load_u32_be(key, 1) ^ FK[1];
@@ -163,10 +163,10 @@ int SM4_set_key(const uint8_t *key, SM4_KEY *ks)
         uint32_t X = K[(i + 1) % 4] ^ K[(i + 2) % 4] ^ K[(i + 3) % 4] ^ CK[i];
         uint32_t t = 0;
 
-        t |= ((uint32_t)SM4_S[(X >> 24) & 0xFF]) << 24;
-        t |= ((uint32_t)SM4_S[(X >> 16) & 0xFF]) << 16;
-        t |= ((uint32_t)SM4_S[(X >> 8) & 0xFF]) << 8;
-        t |= SM4_S[X & 0xFF];
+        t |= ((uint32_t)SM4_S[(uint8_t)(X >> 24)]) << 24;
+        t |= ((uint32_t)SM4_S[(uint8_t)(X >> 16)]) << 16;
+        t |= ((uint32_t)SM4_S[(uint8_t)(X >> 8)]) << 8;
+        t |= SM4_S[(uint8_t)X];
 
         t = t ^ rotl(t, 13) ^ rotl(t, 23);
         K[i % 4] ^= t;
