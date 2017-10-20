@@ -241,7 +241,6 @@ $code.=<<___;
 	br	%r14
 .size	sha1_block_data_order,.-sha1_block_data_order
 .string	"SHA1 block transform for s390x, CRYPTOGAMS by <appro\@openssl.org>"
-.comm	OPENSSL_s390xcap_P,S390X_CAPLEN,8
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

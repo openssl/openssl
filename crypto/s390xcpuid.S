@@ -229,12 +229,9 @@ OPENSSL_instrument_bus2:
 .type	OPENSSL_vx_probe,@function
 .align	16
 OPENSSL_vx_probe:
-	.long	0xe7000000	# vzero %v0
-	.word	0x0044
+	.word	0xe700,0x0000,0x0044	# vzero %v0
 	br	%r14
 .size	OPENSSL_vx_probe,.-OPENSSL_vx_probe
 
 .section	.init
 	brasl	%r14,OPENSSL_cpuid_setup
-
-.comm	OPENSSL_s390xcap_P,S390X_CAPLEN,8

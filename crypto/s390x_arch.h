@@ -18,7 +18,7 @@
  * instructions' QUERY functions. If STFLE returns fewer data or an instruction
  * is not supported, the corresponding field elements are zero.
  */
-extern struct {
+struct OPENSSL_s390xcap_st {
     unsigned long long stfle[4];
     unsigned long long kimd[2];
     unsigned long long klmd[2];
@@ -30,15 +30,14 @@ extern struct {
     unsigned long long kmf[2];
     unsigned long long prno[2];
     unsigned long long kma[2];
-} OPENSSL_s390xcap_P;
+};
+
+extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 
 /* convert facility bit number or function code to bit mask */
 #  define S390X_CAPBIT(i)	(1ULL << (63 - (i) % 64))
 
 # endif
-
-/* OPENSSL_s390xcap_P size [bytes] */
-# define S390X_CAPLEN		((4 + 10 * 2) * 8)
 
 /* OPENSSL_s390xcap_P offsets [bytes] */
 # define S390X_STFLE		0x00
@@ -53,14 +52,17 @@ extern struct {
 # define S390X_PRNO		0xa0
 # define S390X_KMA		0xb0
 
-/* facility bit numbers */
+/* Facility Bit Numbers */
 # define S390X_VX		129
 # define S390X_VXD		134
 # define S390X_VXE		135
 
-/* function codes */
+/* Function Codes */
+
+/* all instructions */
 # define S390X_QUERY		0
 
+/* kimd/klmd */
 # define S390X_SHA3_224		32
 # define S390X_SHA3_256		33
 # define S390X_SHA3_384		34
@@ -69,10 +71,12 @@ extern struct {
 # define S390X_SHAKE_256	37
 # define S390X_GHASH		65
 
+/* km/kmc/kmac/kmctr/kmo/kmf/kma */
 # define S390X_AES_128		18
 # define S390X_AES_192		19
 # define S390X_AES_256		20
 
+/* prno */
 # define S390X_TRNG		114
 
 #endif

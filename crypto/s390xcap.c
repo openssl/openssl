@@ -24,6 +24,8 @@ static void ill_handler(int sig)
 void OPENSSL_s390x_facilities(void);
 void OPENSSL_vx_probe(void);
 
+struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
+
 void OPENSSL_cpuid_setup(void)
 {
     sigset_t oset;
@@ -32,8 +34,8 @@ void OPENSSL_cpuid_setup(void)
     if (OPENSSL_s390xcap_P.stfle[0])
         return;
 
-    OPENSSL_s390xcap_P.stfle[0] = 1ULL << (sizeof(OPENSSL_s390xcap_P.stfle[0])
-                                           * 8 - 1);
+    /* set a bit that will not be tested later */
+    OPENSSL_s390xcap_P.stfle[0] |= S390X_CAPBIT(0);
 
     memset(&ill_act, 0, sizeof(ill_act));
     ill_act.sa_handler = ill_handler;
@@ -50,9 +52,10 @@ void OPENSSL_cpuid_setup(void)
         OPENSSL_s390x_facilities();
 
     /* protection against disabled vector facility */
-    if (sigsetjmp(ill_jmp, 1) == 0)
+    if ((OPENSSL_s390xcap_P.stfle[2] & S390X_CAPBIT(S390X_VX))
+        && (sigsetjmp(ill_jmp, 1) == 0)) {
         OPENSSL_vx_probe();
-    else {
+    } else {
         OPENSSL_s390xcap_P.stfle[2] &= ~(S390X_CAPBIT(S390X_VX)
                                          | S390X_CAPBIT(S390X_VXD)
                                          | S390X_CAPBIT(S390X_VXE));
