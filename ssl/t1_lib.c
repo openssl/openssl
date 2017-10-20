@@ -445,7 +445,7 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
 
         if (field_type == NID_X9_62_prime_field)
             comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
-        else if (field_type == NID_X9_62_prime_field)
+        else if (field_type == NID_X9_62_characteristic_two_field)
             comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
         else
             return 0;
