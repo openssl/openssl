@@ -11,7 +11,7 @@ X509_STORE_CTX_get_ex_new_index, X509_STORE_CTX_set_ex_data, X509_STORE_CTX_get_
 DH_get_ex_new_index, DH_set_ex_data, DH_get_ex_data,
 DSA_get_ex_new_index, DSA_set_ex_data, DSA_get_ex_data,
 ECDH_get_ex_new_index, ECDH_set_ex_data, ECDH_get_ex_data,
-ECDSA_get_ex_new_index, ECDSA_set_ex_data, ECDSA_get_ex_data,
+EC_KEY_get_ex_new_index, EC_KEY_set_ex_data, EC_KEY_get_ex_data,
 RSA_get_ex_new_index, RSA_set_ex_data, RSA_get_ex_data
 - application-specific data
 
