@@ -32,7 +32,7 @@ sk_TYPE_dup, sk_TYPE_deep_copy, sk_TYPE_set_cmp_func, sk_TYPE_new_reserve
  TYPE *sk_TYPE_value(const STACK_OF(TYPE) *sk, int idx);
  STACK_OF(TYPE) *sk_TYPE_new(sk_TYPE_compfunc compare);
  STACK_OF(TYPE) *sk_TYPE_new_null(void);
- int sk_TYPE_reserve(STACK_OF(TYPE) *sk, size_t n);
+ int sk_TYPE_reserve(STACK_OF(TYPE) *sk, int n);
  void sk_TYPE_free(const STACK_OF(TYPE) *sk);
  void sk_TYPE_zero(const STACK_OF(TYPE) *sk);
  TYPE *sk_TYPE_delete(STACK_OF(TYPE) *sk, int i);
