@@ -176,5 +176,3 @@ OPENSSL_instrument_bus2:
 
 .section	.init
 	brasl	%r14,OPENSSL_cpuid_setup
-
-.comm	OPENSSL_s390xcap_P,80,8
