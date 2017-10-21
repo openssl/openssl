@@ -1002,6 +1002,6 @@ const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx)
 const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx)
 {
     if (idx >= OSSL_NELEM(ssl_cert_info))
-        return 0;
+        return NULL;
     return &ssl_cert_info[idx];
 }

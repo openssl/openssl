@@ -445,7 +445,7 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
 
         if (field_type == NID_X9_62_prime_field)
             comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
-        else if (field_type == NID_X9_62_prime_field)
+        else if (field_type == NID_X9_62_characteristic_two_field)
             comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
         else
             return 0;
@@ -1403,7 +1403,7 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
      * in disabled_mask.
      */
     sigalgslen = tls12_get_psigalgs(s, 1, &sigalgs);
-    for (i = 0; i < sigalgslen; i ++, sigalgs++) {
+    for (i = 0; i < sigalgslen; i++, sigalgs++) {
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(*sigalgs);
         const SSL_CERT_LOOKUP *clu;
 
@@ -1411,6 +1411,8 @@ void ssl_set_sig_mask(uint32_t *pmask_a, SSL *s, int op)
             continue;
 
         clu = ssl_cert_lookup_by_idx(lu->sig_idx);
+	if (clu == NULL)
+		continue;
 
         /* If algorithm is disabled see if we can enable it */
         if ((clu->amask & disabled_mask) != 0
