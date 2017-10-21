@@ -192,9 +192,16 @@ EVP_SignUpdate                          define
 EVP_VerifyInit                          define
 EVP_VerifyInit_ex                       define
 EVP_VerifyUpdate                        define
+EVP_bf_cfb                              define
+EVP_cast5_cfb                           define
 EVP_cleanup                             define deprecated 1.1.0
 EVP_get_digestbynid                     define
 EVP_get_digestbyobj                     define
+EVP_idea_cfb                            define
+EVP_rc2_cfb                             define
+EVP_rc5_32_12_16_cfb                    define
+EVP_seed_cfb                            define
+EVP_sm4_cfb                             define
 OBJ_cleanup                             define deprecated 1.1.0
 OPENSSL_VERSION_NUMBER                  define
 OPENSSL_clear_free                      define
