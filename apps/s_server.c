@@ -2204,8 +2204,8 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
 
     con = SSL_new(ctx);
     if (con == NULL) {
-	ret = -1;
-	goto err;
+        ret = -1;
+        goto err;
     }
 
     if (s_tlsextdebug) {

@@ -1867,7 +1867,7 @@ int s_client_main(int argc, char **argv)
 
     con = SSL_new(ctx);
     if (con == NULL)
-	goto end;
+        goto end;
 
     if (sess_in != NULL) {
         SSL_SESSION *sess;
