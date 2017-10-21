@@ -41,12 +41,14 @@ static ENGINE *e;
 #endif
 
 #ifndef OPENSSL_NO_AFALGENG
-static int test_afalg_aes_128_cbc(void)
+static int test_afalg_aes_cbc(int keysize_idx)
 {
     EVP_CIPHER_CTX *ctx;
-    const EVP_CIPHER *cipher = EVP_aes_128_cbc();
+    const EVP_CIPHER *cipher;
     unsigned char key[] = "\x5F\x4D\xCC\x3B\x5A\xA7\x65\xD6\
-                           \x1D\x83\x27\xDE\xB8\x82\xCF\x99";
+                           \x1D\x83\x27\xDE\xB8\x82\xCF\x99\
+                           \x4A\x49\x54\x45\x4E\x44\x52\x41\
+                           \x20\x20\x20\x4C\x55\x4C\x4C\x41";
     unsigned char iv[] = "\x2B\x95\x99\x0A\x91\x51\x37\x4A\
                           \xBD\x8F\xF8\xC5\xA7\xA0\xFE\x08";
 
@@ -56,6 +58,19 @@ static int test_afalg_aes_128_cbc(void)
     int encl, encf, decl, decf;
     int ret = 0;
 
+    switch (keysize_idx) {
+        case 0:
+            cipher = EVP_aes_128_cbc();
+            break;
+        case 1:
+            cipher = EVP_aes_192_cbc();
+            break;
+        case 2:
+            cipher = EVP_aes_256_cbc();
+            break;
+        default:
+            cipher = NULL;
+    }
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
             return 0;
     RAND_bytes(in, BUFFER_SIZE);
@@ -104,7 +119,7 @@ int setup_tests(void)
         TEST_info("Can't load AFALG engine");
     } else {
 # ifndef OPENSSL_NO_AFALGENG
-        ADD_TEST(test_afalg_aes_128_cbc);
+        ADD_ALL_TESTS(test_afalg_aes_cbc, 3);
 # endif
     }
 #endif
