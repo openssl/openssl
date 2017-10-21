@@ -11,14 +11,13 @@ EVP_sm4_ctr
 
 =head1 SYNOPSIS
 
-=for comment generic
-
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_ciphername(void)
-
-I<EVP_ciphername> is used a placeholder for any of the described cipher
-functions, such as I<EVP_sm4_cbc>.
+ const EVP_CIPHER *EVP_sm4_cbc(void)
+ const EVP_CIPHER *EVP_sm4_ecb(void)
+ const EVP_CIPHER *EVP_sm4_cfb(void)
+ const EVP_CIPHER *EVP_sm4_ofb(void)
+ const EVP_CIPHER *EVP_sm4_ctr(void)
 
 =head1 DESCRIPTION
 

@@ -2,37 +2,51 @@
 
 =head1 NAME
 
-EVP_CIPHER_CTX_new, EVP_CIPHER_CTX_reset, EVP_CIPHER_CTX_free,
-EVP_EncryptInit_ex, EVP_EncryptUpdate, EVP_EncryptFinal_ex,
-EVP_DecryptInit_ex, EVP_DecryptUpdate, EVP_DecryptFinal_ex,
-EVP_CipherInit_ex, EVP_CipherUpdate, EVP_CipherFinal_ex,
-EVP_CIPHER_CTX_set_key_length, EVP_CIPHER_CTX_ctrl, EVP_EncryptInit,
-EVP_EncryptFinal, EVP_DecryptInit, EVP_DecryptFinal,
-EVP_CipherInit, EVP_CipherFinal, EVP_get_cipherbyname,
-EVP_get_cipherbynid, EVP_get_cipherbyobj, EVP_CIPHER_nid,
-EVP_CIPHER_block_size, EVP_CIPHER_key_length, EVP_CIPHER_iv_length,
-EVP_CIPHER_flags, EVP_CIPHER_mode, EVP_CIPHER_type, EVP_CIPHER_CTX_cipher,
-EVP_CIPHER_CTX_nid, EVP_CIPHER_CTX_block_size, EVP_CIPHER_CTX_key_length,
-EVP_CIPHER_CTX_iv_length, EVP_CIPHER_CTX_get_app_data,
-EVP_CIPHER_CTX_set_app_data, EVP_CIPHER_CTX_type, EVP_CIPHER_CTX_flags,
-EVP_CIPHER_CTX_mode, EVP_CIPHER_param_to_asn1, EVP_CIPHER_asn1_to_param,
-EVP_CIPHER_CTX_set_padding, EVP_enc_null, EVP_des_cbc, EVP_des_ecb,
-EVP_des_cfb, EVP_des_ofb, EVP_des_ede_cbc, EVP_des_ede, EVP_des_ede_ofb,
-EVP_des_ede_cfb, EVP_des_ede3_cbc, EVP_des_ede3, EVP_des_ede3_ofb,
-EVP_des_ede3_cfb, EVP_desx_cbc, EVP_rc4, EVP_rc4_40, EVP_rc4_hmac_md5,
-EVP_idea_cbc, EVP_idea_ecb, EVP_idea_cfb, EVP_idea_ofb, EVP_rc2_cbc,
-EVP_rc2_ecb, EVP_rc2_cfb, EVP_rc2_ofb, EVP_rc2_40_cbc, EVP_rc2_64_cbc,
-EVP_bf_cbc, EVP_bf_ecb, EVP_bf_cfb, EVP_bf_ofb, EVP_cast5_cbc,
-EVP_cast5_ecb, EVP_cast5_cfb, EVP_cast5_ofb, EVP_rc5_32_12_16_cbc,
-EVP_rc5_32_12_16_ecb, EVP_rc5_32_12_16_cfb, EVP_rc5_32_12_16_ofb,
-EVP_aes_128_cbc, EVP_aes_128_ecb, EVP_aes_128_cfb, EVP_aes_128_ofb,
-EVP_aes_192_cbc, EVP_aes_192_ecb, EVP_aes_192_cfb, EVP_aes_192_ofb,
-EVP_aes_256_cbc, EVP_aes_256_ecb, EVP_aes_256_cfb, EVP_aes_256_ofb,
-EVP_aes_128_gcm, EVP_aes_192_gcm, EVP_aes_256_gcm,
-EVP_aes_128_ccm, EVP_aes_192_ccm, EVP_aes_256_ccm,
-EVP_aes_128_cbc_hmac_sha1, EVP_aes_256_cbc_hmac_sha1,
-EVP_aes_128_cbc_hmac_sha256, EVP_aes_256_cbc_hmac_sha256,
-EVP_chacha20, EVP_chacha20_poly1305 - EVP cipher routines
+EVP_CIPHER_CTX_new,
+EVP_CIPHER_CTX_reset,
+EVP_CIPHER_CTX_free,
+EVP_EncryptInit_ex,
+EVP_EncryptUpdate,
+EVP_EncryptFinal_ex,
+EVP_DecryptInit_ex,
+EVP_DecryptUpdate,
+EVP_DecryptFinal_ex,
+EVP_CipherInit_ex,
+EVP_CipherUpdate,
+EVP_CipherFinal_ex,
+EVP_CIPHER_CTX_set_key_length,
+EVP_CIPHER_CTX_ctrl,
+EVP_EncryptInit,
+EVP_EncryptFinal,
+EVP_DecryptInit,
+EVP_DecryptFinal,
+EVP_CipherInit,
+EVP_CipherFinal,
+EVP_get_cipherbyname,
+EVP_get_cipherbynid,
+EVP_get_cipherbyobj,
+EVP_CIPHER_nid,
+EVP_CIPHER_block_size,
+EVP_CIPHER_key_length,
+EVP_CIPHER_iv_length,
+EVP_CIPHER_flags,
+EVP_CIPHER_mode,
+EVP_CIPHER_type,
+EVP_CIPHER_CTX_cipher,
+EVP_CIPHER_CTX_nid,
+EVP_CIPHER_CTX_block_size,
+EVP_CIPHER_CTX_key_length,
+EVP_CIPHER_CTX_iv_length,
+EVP_CIPHER_CTX_get_app_data,
+EVP_CIPHER_CTX_set_app_data,
+EVP_CIPHER_CTX_type,
+EVP_CIPHER_CTX_flags,
+EVP_CIPHER_CTX_mode,
+EVP_CIPHER_param_to_asn1,
+EVP_CIPHER_asn1_to_param,
+EVP_CIPHER_CTX_set_padding,
+EVP_enc_null
+- EVP cipher routines
 
 =head1 SYNOPSIS
 
@@ -304,183 +318,137 @@ than zero for success and zero or a negative number.
 
 All algorithms have a fixed key length unless otherwise stated.
 
+Refer to L<SEE ALSO> for the full list of ciphers available through the EVP
+interface.
+
 =over 4
 
 =item EVP_enc_null()
 
 Null cipher: does nothing.
 
-=item EVP_aes_128_cbc(), EVP_aes_128_ecb(), EVP_aes_128_cfb(), EVP_aes_128_ofb()
-
-AES with a 128-bit key in CBC, ECB, CFB and OFB modes respectively.
-
-=item EVP_aes_192_cbc(), EVP_aes_192_ecb(), EVP_aes_192_cfb(), EVP_aes_192_ofb()
-
-AES with a 192-bit key in CBC, ECB, CFB and OFB modes respectively.
-
-=item EVP_aes_256_cbc(), EVP_aes_256_ecb(), EVP_aes_256_cfb(), EVP_aes_256_ofb()
-
-AES with a 256-bit key in CBC, ECB, CFB and OFB modes respectively.
-
-=item EVP_des_cbc(), EVP_des_ecb(), EVP_des_cfb(), EVP_des_ofb()
-
-DES in CBC, ECB, CFB and OFB modes respectively.
-
-=item EVP_des_ede_cbc(), EVP_des_ede(), EVP_des_ede_ofb(), EVP_des_ede_cfb()
-
-Two key triple DES in CBC, ECB, CFB and OFB modes respectively.
-
-=item EVP_des_ede3_cbc(), EVP_des_ede3(), EVP_des_ede3_ofb(), EVP_des_ede3_cfb()
-
-Three key triple DES in CBC, ECB, CFB and OFB modes respectively.
-
-=item EVP_desx_cbc()
-
-DESX algorithm in CBC mode.
-
-=item EVP_rc4()
-
-RC4 stream cipher. This is a variable key length cipher with default key length 128 bits.
-
-=item EVP_rc4_40()
-
-RC4 stream cipher with 40 bit key length.
-This is obsolete and new code should use EVP_rc4()
-and the EVP_CIPHER_CTX_set_key_length() function.
-
-=item EVP_idea_cbc() EVP_idea_ecb(), EVP_idea_cfb(), EVP_idea_ofb()
-
-IDEA encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
-
-=item EVP_rc2_cbc(), EVP_rc2_ecb(), EVP_rc2_cfb(), EVP_rc2_ofb()
-
-RC2 encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key
-length cipher with an additional parameter called "effective key bits" or "effective key length".
-By default both are set to 128 bits.
-
-=item EVP_rc2_40_cbc(), EVP_rc2_64_cbc()
-
-RC2 algorithm in CBC mode with a default key length and effective key length of 40 and 64 bits.
-These are obsolete and new code should use EVP_rc2_cbc(), EVP_CIPHER_CTX_set_key_length() and
-EVP_CIPHER_CTX_ctrl() to set the key length and effective key length.
-
-=item EVP_bf_cbc(), EVP_bf_ecb(), EVP_bf_cfb(), EVP_bf_ofb()
-
-Blowfish encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key
-length cipher.
-
-=item EVP_cast5_cbc(), EVP_cast5_ecb(), EVP_cast5_cfb(), EVP_cast5_ofb()
-
-CAST encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key
-length cipher.
-
-=item EVP_rc5_32_12_16_cbc(), EVP_rc5_32_12_16_ecb(), EVP_rc5_32_12_16_cfb(), EVP_rc5_32_12_16_ofb()
-
-RC5 encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key length
-cipher with an additional "number of rounds" parameter. By default the key length is set to 128
-bits and 12 rounds.
-
-=item EVP_aes_128_gcm(), EVP_aes_192_gcm(), EVP_aes_256_gcm()
-
-AES Galois Counter Mode (GCM) for 128, 192 and 256 bit keys respectively.
-These ciphers require additional control operations to function correctly: see
-the L</GCM and OCB Modes> section below for details.
-
-=item EVP_aes_128_ocb(void), EVP_aes_192_ocb(void), EVP_aes_256_ocb(void)
-
-Offset Codebook Mode (OCB) for 128, 192 and 256 bit keys respectively.
-These ciphers require additional control operations to function correctly: see
-the L</GCM and OCB Modes> section below for details.
-
-=item EVP_aes_128_ccm(), EVP_aes_192_ccm(), EVP_aes_256_ccm()
-
-AES Counter with CBC-MAC Mode (CCM) for 128, 192 and 256 bit keys respectively.
-These ciphers require additional control operations to function correctly: see
-CCM mode section below for details.
-
-=item EVP_chacha20()
-
-The ChaCha20 stream cipher. The key length is 256 bits, the IV is 96 bits long.
-
-=item EVP_chacha20_poly1305()
-
-Authenticated encryption with ChaCha20-Poly1305. Like EVP_chacha20() the key is
-256 bits and the IV is 96 bits. This supports additional authenticated
-data (AAD) and produces a 128 bit authentication tag. See the
-L</GCM and OCB Modes> section for more information.
-
 =back
 
-=head1 GCM and OCB Modes
+=head1 AEAD Interface
 
-For GCM and OCB mode ciphers the behaviour of the EVP interface is subtly
-altered and several additional ctrl operations are supported.
+The EVP interface for Authenticated Encryption with Associated Data (AEAD)
+modes are subtly altered and several additional I<ctrl> operations are supported
+depending on the mode specified.
 
-To specify any additional authenticated data (AAD) a call to EVP_CipherUpdate(),
+To specify additional authenticated data (AAD), a call to EVP_CipherUpdate(),
 EVP_EncryptUpdate() or EVP_DecryptUpdate() should be made with the output
 parameter B<out> set to B<NULL>.
 
-When decrypting the return value of EVP_DecryptFinal() or EVP_CipherFinal()
-indicates if the operation was successful. If it does not indicate success
-the authentication operation has failed and any output data B<MUST NOT>
-be used as it is corrupted.
+When decrypting, the return value of EVP_DecryptFinal() or EVP_CipherFinal()
+indicates whether the operation was successful. If it does not indicate success,
+the authentication operation has failed and any output data B<MUST NOT> be used
+as it is corrupted.
 
-The following ctrls are supported in both GCM and OCB modes:
+=head2 GCM and OCB Modes
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL);
+The following I<ctrl>s are supported in GCM and OCB modes.
 
-Sets the IV length: this call can only be made before specifying an IV. If
-not called a default IV length is used. For GCM AES and OCB AES the default is
-12 (i.e. 96 bits). For OCB mode the maximum is 15.
+=over 4
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag);
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
 
-Writes B<taglen> bytes of the tag value to the buffer indicated by B<tag>.
+Sets the IV length. This call can only be made before specifying an IV. If
+not called a default IV length is used.
+
+For GCM AES and OCB AES the default is 12 (i.e. 96 bits). For OCB mode the
+maximum is 15.
+
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag)
+
+Writes C<taglen> bytes of the tag value to the buffer indicated by C<tag>.
 This call can only be made when encrypting data and B<after> all data has been
-processed (e.g. after an EVP_EncryptFinal() call). For OCB mode the taglen must
-either be 16 or the value previously set via EVP_CTRL_OCB_SET_TAGLEN.
+processed (e.g. after an EVP_EncryptFinal() call).
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
+For OCB, C<taglen> must either be 16 or the value previously set via
+B<EVP_CTRL_AEAD_SET_TAG>.
 
-Sets the expected tag to B<taglen> bytes from B<tag>. This call is only legal
-when decrypting data. For OCB mode the taglen must either be 16 or the value
-previously set via EVP_CTRL_AEAD_SET_TAG.
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag)
 
-In OCB mode calling this with B<tag> set to NULL sets the tag length. The tag
-length can only be set before specifying an IV. If not called a default tag
-length is used. For OCB AES the default is 16 (i.e. 128 bits). This is also the
+Sets the expected tag to C<taglen> bytes from C<tag>.
+The tag length can only be set before specifying an IV.
+C<taglen> must be between 1 and 16 inclusive.
+
+For GCM, this call is only valid when decrypting data.
+
+For OCB, this call is valid when decrypting data to set the expected tag,
+and before encryption to set the desired tag length.
+
+In OCB mode, calling this before encryption with C<tag> set to C<NULL> sets the
+tag length.  If this is not called prior to encryption, a default tag length is
+used.
+
+For OCB AES, the default tag length is 16 (i.e. 128 bits).  It is also the
 maximum tag length for OCB.
 
-=head1 CCM Mode
+=back
 
-The behaviour of CCM mode ciphers is similar to GCM mode but with a few
-additional requirements and different ctrl values.
+=head2 CCM Mode
 
-Like GCM and OCB modes any additional authenticated data (AAD) is passed by calling
+The EVP interface for CCM mode is similar to that of the GCM mode but with a
+few additional requirements and different I<ctrl> values.
+
+For CCM mode, the total plaintext or ciphertext length B<MUST> be passed to
 EVP_CipherUpdate(), EVP_EncryptUpdate() or EVP_DecryptUpdate() with the output
-parameter B<out> set to B<NULL>. Additionally the total plaintext or ciphertext
-length B<MUST> be passed to EVP_CipherUpdate(), EVP_EncryptUpdate() or
-EVP_DecryptUpdate() with the output and input parameters (B<in> and B<out>)
-set to B<NULL> and the length passed in the B<inl> parameter.
+and input parameters (B<in> and B<out>) set to B<NULL> and the length passed in
+the B<inl> parameter.
 
-The following ctrls are supported in CCM mode:
+The following I<ctrl>s are supported in CCM mode.
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
+=over 4
+
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag)
 
 This call is made to set the expected B<CCM> tag value when decrypting or
-the length of the tag (with the B<tag> parameter set to NULL) when encrypting.
+the length of the tag (with the C<tag> parameter set to NULL) when encrypting.
 The tag length is often referred to as B<M>. If not set a default value is
 used (12 for AES).
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_L, ivlen, NULL);
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_L, ivlen, NULL)
 
 Sets the CCM B<L> value. If not set a default is used (8 for AES).
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL);
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
 
-Sets the CCM nonce (IV) length: this call can only be made before specifying
-an nonce value. The nonce length is given by B<15 - L> so it is 7 by default
-for AES.
+Sets the CCM nonce (IV) length. This call can only be made before specifying an
+nonce value. The nonce length is given by B<15 - L> so it is 7 by default for
+AES.
+
+=back
+
+=head2 ChaCha20-Poly1305
+
+The following I<ctrl>s are supported for the ChaCha20-Poly1305 AEAD algorithm.
+
+=over 4
+
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
+
+Sets the nonce length. This call can only be made before specifying the nonce.
+If not called a default nonce length of 12 (i.e. 96 bits) is used. The maximum
+nonce length is 16 (B<CHACHA_CTR_SIZE>, i.e. 128-bits).
+
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag)
+
+Writes C<taglen> bytes of the tag value to the buffer indicated by C<tag>.
+This call can only be made when encrypting data and B<after> all data has been
+processed (e.g. after an EVP_EncryptFinal() call).
+
+C<taglen> specified here must be 16 (B<POLY1305_BLOCK_SIZE>, i.e. 128-bits) or
+less.
+
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag)
+
+Sets the expected tag to C<taglen> bytes from C<tag>.
+The tag length can only be set before specifying an IV.
+C<taglen> must be between 1 and 16 (B<POLY1305_BLOCK_SIZE>) inclusive.
+This call is only valid when decrypting data.
+
+=back
 
 =head1 NOTES
 
@@ -518,13 +486,11 @@ EVP_get_cipherbynid(), and EVP_get_cipherbyobj() are implemented as macros.
 
 =head1 BUGS
 
-For RC5 the number of rounds can currently only be set to 8, 12 or 16. This is
-a limitation of the current RC5 code rather than the EVP interface.
-
-EVP_MAX_KEY_LENGTH and EVP_MAX_IV_LENGTH only refer to the internal ciphers with
-default key lengths. If custom ciphers exceed these values the results are
-unpredictable. This is because it has become standard practice to define a
-generic key as a fixed unsigned char array containing EVP_MAX_KEY_LENGTH bytes.
+B<EVP_MAX_KEY_LENGTH> and B<EVP_MAX_IV_LENGTH> only refer to the internal
+ciphers with default key lengths. If custom ciphers exceed these values the
+results are unpredictable. This is because it has become standard practice to
+define a generic key as a fixed unsigned char array containing
+B<EVP_MAX_KEY_LENGTH> bytes.
 
 The ASN1 code is incomplete (and sometimes inaccurate) it has only been tested
 for certain common S/MIME ciphers (RC2, DES, triple DES) in CBC mode.
@@ -641,6 +607,23 @@ with a 128-bit key:
 
 L<evp(7)>
 
+Supported ciphers are listed in:
+
+L<EVP_aes(3)>,
+L<EVP_aria(3)>,
+L<EVP_bf(3)>,
+L<EVP_camellia(3)>,
+L<EVP_cast5(3)>,
+L<EVP_chacha20(3)>,
+L<EVP_des(3)>,
+L<EVP_desx(3)>,
+L<EVP_idea(3)>,
+L<EVP_rc2(3)>,
+L<EVP_rc4(3)>,
+L<EVP_rc5(3)>,
+L<EVP_seed(3)>,
+L<EVP_sm4(3)>
+
 =head1 HISTORY
 
 Support for OCB mode was added in OpenSSL 1.1.0
@@ -652,7 +635,7 @@ EVP_CIPHER_CTX_reset().
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
