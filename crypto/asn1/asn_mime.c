@@ -949,7 +949,7 @@ static int strip_eol(char *linebuf, int *plen, int flags)
     int len = *plen;
     char *p, c;
     int is_eol = 0;
-    p = linebuf + len - 1;
+
     for (p = linebuf + len - 1; len > 0; len--, p--) {
         c = *p;
         if (c == '\n')
