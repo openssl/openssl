@@ -58,7 +58,11 @@ extern "C" {
  * set this to a comma-separated list of 'random' device files to try out. By
  * default, we will try to read at least one of these files
  */
-#  define DEVRANDOM "/dev/urandom","/dev/random","/dev/srandom"
+#  if defined(__s390__)
+#   define DEVRANDOM "/dev/prandom","/dev/urandom","/dev/hwrng","/dev/random"
+#  else
+#   define DEVRANDOM "/dev/urandom","/dev/random","/dev/srandom"
+#  endif
 # endif
 # if !defined(OPENSSL_NO_EGD) && !defined(DEVRANDOM_EGD)
 /*
