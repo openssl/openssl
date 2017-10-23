@@ -218,7 +218,7 @@ static int expand(OPENSSL_LHASH *lh)
         }
         lh->b = n;
         memset(n + nni, 0, sizeof(*n) * (j - nni));
-        lh->pmax = lh->num_alloc_nodes;
+        lh->pmax = nni;
         lh->num_alloc_nodes = j;
         lh->num_expand_reallocs++;
         lh->p = 0;
