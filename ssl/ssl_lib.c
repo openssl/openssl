@@ -3180,6 +3180,7 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
 #endif
     ssl->cert = ssl_cert_dup(ctx->cert);
     if (ocert) {
+        int i;
         /* Preserve any already negotiated parameters */
         if (ssl->server) {
             ssl->cert->peer_sigalgs = ocert->peer_sigalgs;
@@ -3188,6 +3189,9 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
             ssl->cert->ciphers_raw = ocert->ciphers_raw;
             ssl->cert->ciphers_rawlen = ocert->ciphers_rawlen;
             ocert->ciphers_raw = NULL;
+        }
+        for (i = 0; i < SSL_PKEY_NUM; i++) {
+            ssl->cert->pkeys[i].digest = ocert->pkeys[i].digest;
         }
 #ifndef OPENSSL_NO_TLSEXT
         ssl->cert->alpn_proposed = ocert->alpn_proposed;
