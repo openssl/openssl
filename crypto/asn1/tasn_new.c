@@ -199,7 +199,8 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
     return 1;
 
  memerr2:
-    ASN1_item_ex_free(pval, it);
+    if (!combine)
+        ASN1_item_ex_free(pval, it);
  memerr:
     ASN1err(ASN1_F_ASN1_ITEM_EX_COMBINE_NEW, ERR_R_MALLOC_FAILURE);
 #ifdef CRYPTO_MDEBUG
@@ -209,7 +210,8 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
     return 0;
 
  auxerr2:
-    ASN1_item_ex_free(pval, it);
+    if (!combine)
+        ASN1_item_ex_free(pval, it);
  auxerr:
     ASN1err(ASN1_F_ASN1_ITEM_EX_COMBINE_NEW, ASN1_R_AUX_ERROR);
 #ifdef CRYPTO_MDEBUG
