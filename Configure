@@ -117,7 +117,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # but 'long long' type.
 
 # These are common to all GCC compatible compilers
-our $devteam_common_warn = "-DDEBUG_UNUSED"
+our $gcc_strict_warnings = "-DDEBUG_UNUSED"
         . " -DPEDANTIC -pedantic -Wno-long-long"
         . " -Wall"
         . " -Wextra"
@@ -136,7 +136,7 @@ our $devteam_common_warn = "-DDEBUG_UNUSED"
 # In addition to the warning options above, select compilers get their own
 # set of additional warning options.  Use a compiler specific predefined
 # macro as index.
-our %devteam_additional_warn = ();
+our %additional_strict_warnings = ();
 
 # TODO(openssl-team): fix problems and investigate if (at least) the
 # following warnings can also be enabled:
@@ -145,7 +145,7 @@ our %devteam_additional_warn = ();
 #       -Wlanguage-extension-token -- no, we use asm()
 #       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
-$devteam_additional_warn{__clang__} = ""
+$additional_strict_warnings{__clang__} = ""
         . " -Wswitch-default"
         . " -Wno-parentheses-equality"
         . " -Wno-language-extension-token"
@@ -1339,20 +1339,23 @@ if ($strict_warnings)
 	die "ERROR --strict-warnings requires gcc[>=4] or gcc-alike"
             unless $gccver >= 4;
 	$extra_gcc_warn = "-Wmisleading-indentation" if $gccver >= 6;
-	foreach $wopt (split /\s+/, $devteam_common_warn)
+	foreach $wopt (split /\s+/, $gcc_strict_warnings)
 		{
-		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
+		$config{cflags} .= " $wopt"
+			unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
 		}
 	foreach $wopt (split /\s+/, $extra_gcc_warn)
 		{
-		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
+		$config{cflags} .= " $wopt"
+			unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
 		}
 	foreach my $ecc (grep { defined($predefined{$_}) }
-			 keys %devteam_additional_warn)
+			 keys %additional_strict_warnings)
 		{
-		foreach $wopt (split /\s+/, $devteam_additional_warn{$ecc})
+		foreach $wopt (split /\s+/, $additional_strict_warnings{$ecc})
 			{
-			$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
+			$config{cflags} .= " $wopt"
+				unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
 			}
 		}
 	}
