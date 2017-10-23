@@ -142,7 +142,8 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
     return 1;
 
  memerr2:
-    ASN1_item_ex_free(pval, it);
+    if (!embed)
+        ASN1_item_ex_free(pval, it);
  memerr:
     ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ERR_R_MALLOC_FAILURE);
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
@@ -151,7 +152,8 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
     return 0;
 
  auxerr2:
-    ASN1_item_ex_free(pval, it);
+    if (!embed)
+        ASN1_item_ex_free(pval, it);
  auxerr:
     ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ASN1_R_AUX_ERROR);
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
