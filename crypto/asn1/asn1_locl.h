@@ -63,6 +63,7 @@ int asn1_enc_restore(int *len, unsigned char **out, ASN1_VALUE **pval,
 int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
                   const ASN1_ITEM *it);
 
+void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed);
 void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed);
 void asn1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
 
