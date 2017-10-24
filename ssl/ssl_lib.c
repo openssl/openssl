@@ -624,9 +624,13 @@ SSL *SSL_new(SSL_CTX *ctx)
     if (s == NULL)
         goto err;
 
+    s->references = 1;
     s->lock = CRYPTO_THREAD_lock_new();
-    if (s->lock == NULL)
+    if (s->lock == NULL) {
+        OPENSSL_free(s);
+        s = NULL;
         goto err;
+    }
 
     /*
      * If not using the standard RAND (say for fuzzing), then don't use a
@@ -639,10 +643,8 @@ SSL *SSL_new(SSL_CTX *ctx)
         if (s->drbg == NULL
             || RAND_DRBG_instantiate(s->drbg,
                                      (const unsigned char *) SSL_version_str,
-                                     sizeof(SSL_version_str) - 1) == 0) {
-            CRYPTO_THREAD_lock_free(s->lock);
+                                     sizeof(SSL_version_str) - 1) == 0)
             goto err;
-        }
     }
 
     RECORD_LAYER_init(&s->rlayer, s);
@@ -653,7 +655,6 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->max_proto_version = ctx->max_proto_version;
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
-    s->references = 1;
     s->max_early_data = ctx->max_early_data;
 
     /*
