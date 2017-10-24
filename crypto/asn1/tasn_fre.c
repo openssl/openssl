@@ -13,9 +13,6 @@
 #include <openssl/objects.h>
 #include "asn1_locl.h"
 
-static void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
-                                 int embed);
-
 /* Free up an ASN1 structure */
 
 void ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it)
@@ -28,8 +25,7 @@ void ASN1_item_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
     asn1_item_embed_free(pval, it, 0);
 }
 
-static void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
-                                 int embed)
+void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
 {
     const ASN1_TEMPLATE *tt = NULL, *seqtt;
     const ASN1_EXTERN_FUNCS *ef;
