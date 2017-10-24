@@ -124,8 +124,13 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
                 goto memerr;
         }
         /* 0 : init. lock */
-        if (asn1_do_lock(pval, 0, it) < 0)
-            goto memerr2;
+        if (asn1_do_lock(pval, 0, it) < 0) {
+            if (!embed) {
+                OPENSSL_free(*pval);
+                *pval = NULL;
+            }
+            goto memerr;
+        }
         asn1_enc_init(pval, it);
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
             pseqval = asn1_get_field_ptr(pval, tt);
