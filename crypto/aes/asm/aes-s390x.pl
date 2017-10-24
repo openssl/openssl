@@ -1086,7 +1086,7 @@ $code.=<<___ if (!$softonly);
 	lhi	$t1,16
 	cr	$t0,$t1
 	jl	.Lgo
-	oill	$t0,0x80	# set "decrypt" bit
+	oill	$t0,S390X_DECRYPT	# set "decrypt" bit
 	st	$t0,240($key)
 	br	$ra
 ___
@@ -1225,7 +1225,7 @@ $code.=<<___ if (!$softonly);
 .align	16
 .Lkmc_truncated:
 	ahi	$key,-1		# it's the way it's encoded in mvc
-	tmll	%r0,0x80
+	tmll	%r0,S390X_DECRYPT
 	jnz	.Lkmc_truncated_dec
 	lghi	%r1,0
 	stg	%r1,16*$SIZE_T($sp)
