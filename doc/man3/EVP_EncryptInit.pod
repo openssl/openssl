@@ -45,8 +45,9 @@ EVP_des_ede3_cfb8, EVP_des_ede3_ofb, EVP_des_ede3_wrap, EVP_des_ede_cbc,
 EVP_desx_cbc,
 EVP_idea_cbc, EVP_idea_cfb, EVP_idea_ecb, EVP_idea_ofb,
 EVP_rc2_cbc, EVP_rc2_cfb, EVP_rc2_ecb, EVP_rc2_ofb, EVP_rc2_{40,64}_cbc,
-EVP_rc4, EVP_rc4_40, EVP_rc4_hmac_md5, EVP_rc5_32_12_16_cbc,
-EVP_rc5_32_12_16_cfb, EVP_rc5_32_12_16_ecb, EVP_rc5_32_12_16_ofb,
+EVP_rc4, EVP_rc4_40, EVP_rc4_hmac_md5,
+EVP_rc5_32_12_16_cbc, EVP_rc5_32_12_16_cfb, EVP_rc5_32_12_16_ecb,
+EVP_rc5_32_12_16_ofb,
 EVP_seed_cbc, EVP_seed_cfb, EVP_seed_ecb, EVP_seed_ofb
 - EVP cipher routines
 
@@ -476,6 +477,9 @@ RC5 encryption algorithm in CBC, CFB, ECB and OFB modes respectively. This is a
 variable key length cipher with an additional "number of rounds" parameter. By
 default the key length is set to 128 bits and 12 rounds.
 
+BUG: currently the number of rounds in RC5 can only be set to 8, 12 or 16.
+This is a limitation of the current RC5 code rather than the EVP interface.
+
 =back
 
 =head1 Interface For Authenticated Encryption with Associated Data
@@ -585,9 +589,6 @@ existing context without allocating and freeing it up on each call.
 EVP_get_cipherbynid(), and EVP_get_cipherbyobj() are implemented as macros.
 
 =head1 BUGS
-
-For RC5 the number of rounds can currently only be set to 8, 12 or 16. This is
-a limitation of the current RC5 code rather than the EVP interface.
 
 EVP_MAX_KEY_LENGTH and EVP_MAX_IV_LENGTH only refer to the internal ciphers with
 default key lengths. If custom ciphers exceed these values the results are
