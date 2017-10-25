@@ -98,8 +98,7 @@ sk_TYPE_new_null() allocates a new empty stack with no comparison function.
 sk_TYPE_reserve() allocates additional memory in the B<sk> structure
 such that the next B<n> calls to sk_TYPE_insert(), sk_TYPE_push()
 or sk_TYPE_unshift() will not fail or cause memory to be allocated
-or reallocated. If B<n> is zero, any excess space allocated in the
-B<sk> structure is freed. On error B<sk> is unchanged.
+or reallocated. On error B<sk> is unchanged.
 
 sk_TYPE_set_cmp_func() sets the comparison function of B<sk> to B<compar>.
 The previous comparison function is returned or B<NULL> if there was
