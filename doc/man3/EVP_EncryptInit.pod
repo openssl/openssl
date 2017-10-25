@@ -338,7 +338,7 @@ shift, CFB with 1-bit shift, CFB with 8-bit shift, CTR, ECB, and OFB.
 =item EVP_aes_{128,256}_cbc_hmac_sha1()
 
 Authenticated encryption with AES in CBC mode using SHA-1 as HMAC, with keys of
-128 and 256 bits length respectively. The authentication tag is 128 bits long.
+128 and 256 bits length respectively. The authentication tag is 160 bits long.
 
 =item EVP_aes_{128,256}_cbc_hmac_sha256()
 
