@@ -85,7 +85,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "MDC2", "WHIRLPOOL", "RSA", "DSA", "DH", "EC", "EC2M",
 			 "HMAC", "AES", "CAMELLIA", "SEED", "GOST", "ARIA", "SM4",
                          "SCRYPT", "CHACHA", "POLY1305", "BLAKE2",
-			 "SIPHASH",
+			 "SIPHASH", "SM3",
 			 # EC_NISTP_64_GCC_128
 			 "EC_NISTP_64_GCC_128",
 			 # Envelope "algorithms"

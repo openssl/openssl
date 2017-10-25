@@ -371,6 +371,9 @@ rsadsi 2 5		: MD5			: md5
 rsadsi 2 6		:			: hmacWithMD5
 rsadsi 2 7		:			: hmacWithSHA1
 
+member-body 156 10197 1 401 : SM3               : sm3
+member-body 156 10197 1 504 : RSA-SM3		: sm3WithRSAEncryption
+
 # From RFC4231
 rsadsi 2 8		:			: hmacWithSHA224
 rsadsi 2 9		:			: hmacWithSHA256

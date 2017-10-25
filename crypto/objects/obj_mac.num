@@ -1140,3 +1140,5 @@ sm4_ctr		1139
 ISO_CN		1140
 oscca		1141
 sm_scheme		1142
+sm3		1143
+sm3WithRSAEncryption		1144

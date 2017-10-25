@@ -4425,3 +4425,8 @@ EVP_sm4_cbc                             4369	1_1_1	EXIST::FUNCTION:SM4
 EVP_sm4_ofb                             4370	1_1_1	EXIST::FUNCTION:SM4
 EVP_sm4_ecb                             4371	1_1_1	EXIST::FUNCTION:SM4
 EVP_sm4_cfb128                          4372	1_1_1	EXIST::FUNCTION:SM4
+EVP_sm3                                 4373	1_1_1	EXIST::FUNCTION:SM3
+SM3_Update                              4374	1_1_1	EXIST::FUNCTION:SM3
+SM3                                     4375	1_1_1	EXIST::FUNCTION:SM3
+SM3_Init                                4376	1_1_1	EXIST::FUNCTION:SM3
+SM3_Final                               4377	1_1_1	EXIST::FUNCTION:SM3

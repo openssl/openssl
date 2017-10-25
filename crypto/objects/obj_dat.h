@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7308] = {
+static const unsigned char so[7324] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1028,9 +1028,11 @@ static const unsigned char so[7308] = {
     0x2A,0x81,0x1C,                                /* [ 7293] OBJ_ISO_CN */
     0x2A,0x81,0x1C,0xCF,0x55,                      /* [ 7296] OBJ_oscca */
     0x2A,0x81,0x1C,0xCF,0x55,0x01,                 /* [ 7301] OBJ_sm_scheme */
+    0x2A,0x81,0x1C,0xCF,0x55,0x01,0x83,0x11,       /* [ 7307] OBJ_sm3 */
+    0x2A,0x81,0x1C,0xCF,0x55,0x01,0x83,0x78,       /* [ 7315] OBJ_sm3WithRSAEncryption */
 };
 
-#define NUM_NID 1143
+#define NUM_NID 1145
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2175,9 +2177,11 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"ISO-CN", "ISO CN Member Body", NID_ISO_CN, 3, &so[7293]},
     {"oscca", "oscca", NID_oscca, 5, &so[7296]},
     {"sm-scheme", "sm-scheme", NID_sm_scheme, 6, &so[7301]},
+    {"SM3", "sm3", NID_sm3, 8, &so[7307]},
+    {"RSA-SM3", "sm3WithRSAEncryption", NID_sm3WithRSAEncryption, 8, &so[7315]},
 };
 
-#define NUM_SN 1134
+#define NUM_SN 1136
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2418,6 +2422,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      668,    /* "RSA-SHA256" */
      669,    /* "RSA-SHA384" */
      670,    /* "RSA-SHA512" */
+    1144,    /* "RSA-SM3" */
      919,    /* "RSAES-OAEP" */
      912,    /* "RSASSA-PSS" */
      777,    /* "SEED-CBC" */
@@ -2438,6 +2443,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1095,    /* "SHA512-256" */
     1100,    /* "SHAKE128" */
     1101,    /* "SHAKE256" */
+    1143,    /* "SM3" */
     1134,    /* "SM4-CBC" */
     1137,    /* "SM4-CFB" */
     1136,    /* "SM4-CFB1" */
@@ -3315,7 +3321,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1134
+#define NUM_LN 1136
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4399,6 +4405,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      496,    /* "singleLevelQuality" */
     1062,    /* "siphash" */
     1142,    /* "sm-scheme" */
+    1143,    /* "sm3" */
+    1144,    /* "sm3WithRSAEncryption" */
     1134,    /* "sm4-cbc" */
     1137,    /* "sm4-cfb" */
     1136,    /* "sm4-cfb1" */
@@ -4453,7 +4461,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1023
+#define NUM_OBJ 1025
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -4915,6 +4923,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1136,    /* OBJ_sm4_cfb1                     1 2 156 10197 1 104 5 */
     1138,    /* OBJ_sm4_cfb8                     1 2 156 10197 1 104 6 */
     1139,    /* OBJ_sm4_ctr                      1 2 156 10197 1 104 7 */
+    1143,    /* OBJ_sm3                          1 2 156 10197 1 401 */
+    1144,    /* OBJ_sm3WithRSAEncryption         1 2 156 10197 1 504 */
      776,    /* OBJ_seed_ecb                     1 2 410 200004 1 3 */
      777,    /* OBJ_seed_cbc                     1 2 410 200004 1 4 */
      779,    /* OBJ_seed_cfb128                  1 2 410 200004 1 5 */
