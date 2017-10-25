@@ -17,30 +17,38 @@ EVP_CIPHER_CTX_iv_length, EVP_CIPHER_CTX_get_app_data,
 EVP_CIPHER_CTX_set_app_data, EVP_CIPHER_CTX_type, EVP_CIPHER_CTX_flags,
 EVP_CIPHER_CTX_mode, EVP_CIPHER_param_to_asn1, EVP_CIPHER_asn1_to_param,
 EVP_CIPHER_CTX_set_padding, EVP_enc_null,
-EVP_des_cbc, EVP_des_ecb, EVP_des_cfb, EVP_des_cfb1, EVP_des_cfb8, EVP_des_ofb,
-EVP_des_ede_cbc, EVP_des_ede, EVP_des_ede_ofb, EVP_des_ede_cfb,
-EVP_des_ede3_cbc, EVP_des_ede3, EVP_des_ede3_ofb, EVP_des_ede3_cfb,
-EVP_des_ede3_cfb1, EVP_des_ede3_cfb8, EVP_des_ede3_wrap, EVP_desx_cbc,
-EVP_rc4, EVP_rc4_40, EVP_rc4_hmac_md5,
-EVP_idea_cbc, EVP_idea_ecb, EVP_idea_cfb, EVP_idea_ofb, EVP_rc2_cbc,
-EVP_rc2_ecb, EVP_rc2_cfb, EVP_rc2_ofb, EVP_rc2_{40,64}_cbc,
-EVP_bf_cbc, EVP_bf_ecb, EVP_bf_cfb, EVP_bf_ofb,
-EVP_cast5_cbc, EVP_cast5_ecb, EVP_cast5_cfb, EVP_cast5_ofb,
-EVP_seed_cbc, EVP_seed_ecb, EVP_seed_cfb, EVP_seed_ofb,
-EVP_rc5_32_12_16_cbc, EVP_rc5_32_12_16_ecb, EVP_rc5_32_12_16_cfb, EVP_rc5_32_12_16_ofb,
-EVP_aes_{128,192,256}_cbc, EVP_aes_{128,192,256}_ecb,
-EVP_aes_{128,192,256}_cfb, EVP_aes_{128,192,256}_cfb1, EVP_aes_{128,192,256}_cfb8,
-EVP_aes_{128,192,256}_ofb, EVP_aes_{128,192,256}_ctr,
-EVP_aes_{128,192,256}_wrap, EVP_aes_{128,192,256}_wrap_pad, EVP_aes_{128,256}_xts,
-EVP_aes_{128,192,256}_gcm, EVP_aes_{128,192,256}_ocb, EVP_aes_{128,192,256}_ccm,
+EVP_aes_{128,192,256}_cbc, EVP_aes_{128,192,256}_cfb,
+EVP_aes_{128,192,256}_cfb1, EVP_aes_{128,192,256}_cfb8,
+EVP_aes_{128,192,256}_ctr, EVP_aes_{128,192,256}_ecb,
+EVP_aes_{128,192,256}_ofb,
 EVP_aes_{128,256}_cbc_hmac_sha1, EVP_aes_{128,256}_cbc_hmac_sha256,
-EVP_aria_{128,192,256}_cbc, EVP_aria_{128,192,256}_ecb, EVP_aria_{128,192,256}_cfb,
-EVP_aria_{128,192,256}_cfb1, EVP_aria_{128,192,256}_cfb8, EVP_aria_{128,192,256}_ofb,
-EVP_aria_{128,192,256}_ctr, EVP_aria_{128,192,256}_gcm, EVP_aria_{128,192,256}_ccm,
-EVP_camellia_{128,192,256}_cbc, EVP_camellia_{128,192,256}_ecb, EVP_camellia_{128,192,256}_cfb,
+EVP_aes_{128,192,256}_ccm, EVP_aes_{128,192,256}_gcm,
+EVP_aes_{128,192,256}_ocb,
+EVP_aes_{128,192,256}_wrap, EVP_aes_{128,192,256}_wrap_pad,
+EVP_aes_{128,256}_xts,
+EVP_aria_{128,192,256}_cbc, EVP_aria_{128,192,256}_cfb,
+EVP_aria_{128,192,256}_cfb1, EVP_aria_{128,192,256}_cfb8,
+EVP_aria_{128,192,256}_ctr, EVP_aria_{128,192,256}_ecb,
+EVP_aria_{128,192,256}_ofb,
+EVP_aria_{128,192,256}_ccm, EVP_aria_{128,192,256}_gcm,
+EVP_bf_cbc, EVP_bf_cfb, EVP_bf_ecb, EVP_bf_ofb,
+EVP_camellia_{128,192,256}_cbc, EVP_camellia_{128,192,256}_cfb,
 EVP_camellia_{128,192,256}_cfb1, EVP_camellia_{128,192,256}_cfb8,
-EVP_camellia_{128,192,256}_ofb, EVP_camellia_{128,192,256}_ctr,
-EVP_chacha20, EVP_chacha20_poly1305 - EVP cipher routines
+EVP_camellia_{128,192,256}_ctr, EVP_camellia_{128,192,256}_ecb,
+EVP_camellia_{128,192,256}_ofb,
+EVP_cast5_cbc, EVP_cast5_cfb, EVP_cast5_ecb, EVP_cast5_ofb,
+EVP_chacha20, EVP_chacha20_poly1305,
+EVP_des_cbc, EVP_des_cfb, EVP_des_cfb1, EVP_des_cfb8, EVP_des_ecb,
+EVP_des_ede, EVP_des_ede_cfb, EVP_des_ede_ofb, EVP_des_ofb,
+EVP_des_ede3, EVP_des_ede3_cbc, EVP_des_ede3_cfb, EVP_des_ede3_cfb1,
+EVP_des_ede3_cfb8, EVP_des_ede3_ofb, EVP_des_ede3_wrap, EVP_des_ede_cbc,
+EVP_desx_cbc,
+EVP_idea_cbc, EVP_idea_cfb, EVP_idea_ecb, EVP_idea_ofb,
+EVP_rc2_cbc, EVP_rc2_cfb, EVP_rc2_ecb, EVP_rc2_ofb, EVP_rc2_{40,64}_cbc,
+EVP_rc4, EVP_rc4_40, EVP_rc4_hmac_md5, EVP_rc5_32_12_16_cbc,
+EVP_rc5_32_12_16_cfb, EVP_rc5_32_12_16_ecb, EVP_rc5_32_12_16_ofb,
+EVP_seed_cbc, EVP_seed_cfb, EVP_seed_ecb, EVP_seed_ofb
+- EVP cipher routines
 
 =head1 SYNOPSIS
 
@@ -318,104 +326,13 @@ All algorithms have a fixed key length unless otherwise stated.
 
 Null cipher: does nothing.
 
-=item EVP_aes_{128,192,256}_cbc(), EVP_aes_{128,192,256}_ecb(),
-  EVP_aes_{128,192,256}_cfb(), EVP_aes_{128,192,256}_cfb1(),
-  EVP_aes_{128,192,256}_cfb8(), EVP_aes_{128,192,256}_ofb(),
-  EVP_aes_{128,192,256}_ctr()
+=item EVP_aes_{128,192,256}_cbc(), EVP_aes_{128,192,256}_cfb(),
+  EVP_aes_{128,192,256}_cfb1(), EVP_aes_{128,192,256}_cfb8(),
+  EVP_aes_{128,192,256}_ctr(), EVP_aes_{128,192,256}_ecb(),
+  EVP_aes_{128,192,256}_ofb()
 
-AES for 128, 192 and 256 bit keys in the following modes: CBC, ECB, CFB with
-128-bit shift, CFB with 1-bit shift, CFB with 8-bit shift, OFB and CTR.
-
-=item EVP_aes_{128,192,256}_wrap(), EVP_aes_{128,192,256}_wrap_pad()
-
-AES key wrap with 128, 192 and 256 bit keys, as according to RFC 3394 section
-2.2.1 and RFC 5649 section 4.1 respectively.
-
-=item EVP_aes_{128,256}_xts()
-
-AES XTS mode for 128 and 256 bit keys respectively.
-
-=item EVP_des_cbc(), EVP_des_ecb(), EVP_des_cfb(), EVP_des_cfb1(),
-  EVP_des_cfb8(), EVP_des_ofb()
-
-DES in CBC, ECB, CFB with 128-bit shift, CFB with 1-bit shift, CFB with 8-bit
-shift and OFB modes respectively.
-
-=item EVP_des_ede_cbc(), EVP_des_ede(), EVP_des_ede_ofb(), EVP_des_ede_cfb()
-
-Two key triple DES in CBC, ECB, CFB and OFB modes respectively.
-
-=item EVP_des_ede3_cbc(), EVP_des_ede3(), EVP_des_ede3_cfb(),
-  EVP_des_ede3_cfb1(), EVP_des_ede3_cfb8(), EVP_des_ede3_ofb()
-
-Three key triple DES in CBC, ECB, CFB with 128-bit shift, CFB with 1-bit shift,
-CFB with 8-bit shift and OFB modes respectively.
-
-=item EVP_des_ede3_wrap()
-
-Triple-DES key wrap according to RFC 3217 Section 3.
-
-=item EVP_desx_cbc()
-
-DESX algorithm in CBC mode.
-
-=item EVP_rc4()
-
-RC4 stream cipher. This is a variable key length cipher with default key length 128 bits.
-
-=item EVP_rc4_40()
-
-RC4 stream cipher with 40 bit key length.
-This is obsolete and new code should use EVP_rc4()
-and the EVP_CIPHER_CTX_set_key_length() function.
-
-=item EVP_rc4_hmac_md5()
-
-Authenticated encryption with the RC4 stream cipher with MD5 as HMAC.
-
-=item EVP_idea_cbc() EVP_idea_ecb(), EVP_idea_cfb(), EVP_idea_ofb()
-
-IDEA encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
-
-=item EVP_rc2_cbc(), EVP_rc2_ecb(), EVP_rc2_cfb(), EVP_rc2_ofb()
-
-RC2 encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key
-length cipher with an additional parameter called "effective key bits" or "effective key length".
-By default both are set to 128 bits.
-
-=item EVP_rc2_{40,64}_cbc()
-
-RC2 algorithm in CBC mode with a default key length and effective key length of 40 and 64 bits.
-These are obsolete and new code should use EVP_rc2_cbc(), EVP_CIPHER_CTX_set_key_length() and
-EVP_CIPHER_CTX_ctrl() to set the key length and effective key length.
-
-=item EVP_bf_cbc(), EVP_bf_ecb(), EVP_bf_cfb(), EVP_bf_ofb()
-
-Blowfish encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key
-length cipher.
-
-=item EVP_cast5_cbc(), EVP_cast5_ecb(), EVP_cast5_cfb(), EVP_cast5_ofb()
-
-CAST encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key
-length cipher.
-
-=item EVP_seed_cbc(), EVP_seed_ecb(), EVP_seed_cfb(), EVP_seed_ofb()
-
-SEED encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This
-uses a key length of 128 bits and acts on blocks of 128-bits.
-
-=item EVP_rc5_32_12_16_cbc(), EVP_rc5_32_12_16_ecb(), EVP_rc5_32_12_16_cfb(), EVP_rc5_32_12_16_ofb()
-
-RC5 encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is a variable key length
-cipher with an additional "number of rounds" parameter. By default the key length is set to 128
-bits and 12 rounds.
-
-=item EVP_aes_{128,192,256}_gcm(), EVP_aes_{128,192,256}_ocb(), EVP_aes_{128,192,256}_ccm()
-
-AES for 128, 192 and 256 bit keys in Galois Counter Mode (GCM), Offset Cookbook
-Mode (OCB) and CBC-MAC Mode (CCM) respectively. These ciphers require
-additional control operations to function correctly, see the
-L</GCM and OCB Modes> section below for details.
+AES for 128, 192 and 256 bit keys in the following modes: CBC, CFB with 128-bit
+shift, CFB with 1-bit shift, CFB with 8-bit shift, CTR, ECB, and OFB.
 
 =item EVP_aes_{128,256}_cbc_hmac_sha1()
 
@@ -428,27 +345,57 @@ Authenticated encryption with AES in CBC mode using SHA256 (SHA-2, 256-bits) as
 HMAC, with keys of 128 and 256 bits length respectively. The authentication tag
 is 256 bits long.
 
-=item EVP_aria_{128,192,256}_cbc(), EVP_aria_{128,192,256}_ecb(),
-  EVP_aria_{128,192,256}_cfb(), EVP_aria_{128,192,256}_cfb1(),
-  EVP_aria_{128,192,256}_cfb8(), EVP_aria_{128,192,256}_ofb(),
-  EVP_aria_{128,192,256}_ctr()
+=item EVP_aes_{128,192,256}_ccm(), EVP_aes_{128,192,256}_gcm(),
+  EVP_aes_{128,192,256}_ocb()
 
-ARIA for 128, 192 and 256 bit keys in the following modes: CBC, ECB, CFB with
-128-bit shift, CFB with 1-bit shift, CFB with 8-bit shift, OFB and CTR.
+AES for 128, 192 and 256 bit keys in CBC-MAC Mode (CCM), Galois Counter Mode
+(GCM) and OCB Mode respectively. These ciphers require additional control
+operations to function correctly, see the
+L</Interface For Authenticated Encryption with Associated Data>
+section below for details.
 
-=item EVP_aria_{128,192,256}_gcm(), EVP_aria_{128,192,256}_ccm()
+=item EVP_aes_{128,192,256}_wrap(), EVP_aes_{128,192,256}_wrap_pad()
 
-ARIA for 128, 192 and 256 bit keys in Galois Counter Mode (GCM) and CBC-MAC
-Mode (CCM). These ciphers require additional control operations to function
-correctly, see the L</GCM and OCB Modes> section below for details.
+AES key wrap with 128, 192 and 256 bit keys, as according to RFC 3394 section
+2.2.1 ("wrap") and RFC 5649 section 4.1 ("wrap with padding") respectively.
 
-=item EVP_camellia_{128,192,256}_cbc(), EVP_camellia_{128,192,256}_ecb(),
-  EVP_camellia_{128,192,256}_cfb(), EVP_camellia_{128,192,256}_cfb1(),
-  EVP_camellia_{128,192,256}_cfb8(), EVP_camellia_{128,192,256}_ofb(),
-  EVP_camellia_{128,192,256}_ctr()
+=item EVP_aes_{128,256}_xts()
 
-Camellia for 128, 192 and 256 bit keys in the following modes: CBC, ECB, CFB with
-128-bit shift, CFB with 1-bit shift, CFB with 8-bit shift, OFB and CTR.
+AES XTS mode for 128 and 256 bit keys respectively.
+
+=item EVP_aria_{128,192,256}_cbc(), EVP_aria_{128,192,256}_cfb(),
+  EVP_aria_{128,192,256}_cfb1(), EVP_aria_{128,192,256}_cfb8(),
+  EVP_aria_{128,192,256}_ctr(), EVP_aria_{128,192,256}_ecb(),
+  EVP_aria_{128,192,256}_ofb()
+
+ARIA for 128, 192 and 256 bit keys in the following modes: CBC, CFB with
+128-bit shift, CFB with 1-bit shift, CFB with 8-bit shift, CTR, ECB and OFB.
+
+=item EVP_aria_{128,192,256}_ccm(), EVP_aria_{128,192,256}_gcm()
+
+ARIA for 128, 192 and 256 bit keys in CBC-MAC Mode (CCM) and Galois Counter
+Mode (GCM). These ciphers require additional control operations to function
+correctly, see the
+L</Interface For Authenticated Encryption with Associated Data>
+section below for details.
+
+=item EVP_bf_cbc(), EVP_bf_cfb(), EVP_bf_ecb(), EVP_bf_ofb()
+
+Blowfish encryption algorithm in CBC, CFB, ECB and OFB modes respectively. This
+is a variable key length cipher.
+
+=item EVP_camellia_{128,192,256}_cbc(), EVP_camellia_{128,192,256}_cfb(),
+  EVP_camellia_{128,192,256}_cfb1(), EVP_camellia_{128,192,256}_cfb8(),
+  EVP_camellia_{128,192,256}_ctr(), EVP_camellia_{128,192,256}_ecb(),
+  EVP_camellia_{128,192,256}_ofb()
+
+Camellia for 128, 192 and 256 bit keys in the following modes: CBC, CFB with
+128-bit shift, CFB with 1-bit shift, CFB with 8-bit shift, CTR, ECB and OFB.
+
+=item EVP_cast5_cbc(), EVP_cast5_ecb(), EVP_cast5_cfb(), EVP_cast5_ofb()
+
+CAST encryption algorithm in CBC, ECB, CFB and OFB modes respectively. This is
+a variable key length cipher.
 
 =item EVP_chacha20()
 
@@ -459,23 +406,94 @@ The ChaCha20 stream cipher. The key length is 256 bits, the IV is 96 bits long.
 Authenticated encryption with ChaCha20-Poly1305. Like EVP_chacha20() the key is
 256 bits and the IV is 96 bits. This supports additional authenticated
 data (AAD) and produces a 128 bit authentication tag. See the
-L</GCM and OCB Modes> section for more information.
+L</Interface For Authenticated Encryption with Associated Data>
+section for more information.
+
+=item EVP_des_cbc(), EVP_des_ecb(), EVP_des_cfb(), EVP_des_cfb1(),
+  EVP_des_cfb8(), EVP_des_ofb()
+
+DES in CBC, ECB, CFB with 128-bit shift, CFB with 1-bit shift, CFB with 8-bit
+shift and OFB modes respectively.
+
+=item EVP_des_ede(), EVP_des_ede_cbc(), EVP_des_ede_ofb(), EVP_des_ede_cfb()
+
+Two key triple DES in ECB, CBC, CFB and OFB modes respectively.
+
+=item EVP_des_ede3(), EVP_des_ede3_cbc(), EVP_des_ede3_cfb(),
+  EVP_des_ede3_cfb1(), EVP_des_ede3_cfb8(), EVP_des_ede3_ofb()
+
+Three key triple DES in ECB, CBC, CFB with 128-bit shift, CFB with 1-bit shift,
+CFB with 8-bit shift and OFB modes respectively.
+
+=item EVP_des_ede3_wrap()
+
+Triple-DES key wrap according to RFC 3217 Section 3.
+
+=item EVP_desx_cbc()
+
+DESX algorithm in CBC mode.
+
+=item EVP_rc4()
+
+RC4 stream cipher. This is a variable key length cipher with a default key
+length of 128 bits.
+
+=item EVP_rc4_40()
+
+RC4 stream cipher with 40 bit key length. This is obsolete and new code should
+use EVP_rc4() and the EVP_CIPHER_CTX_set_key_length() function.
+
+=item EVP_rc4_hmac_md5()
+
+Authenticated encryption with the RC4 stream cipher with MD5 as HMAC.
+
+=item EVP_idea_cbc(), EVP_idea_cfb(), EVP_idea_ecb(), EVP_idea_ofb()
+
+IDEA encryption algorithm in CBC, CFB, ECB and OFB modes respectively.
+
+=item EVP_rc2_cbc(), EVP_rc2_cfb(), EVP_rc2_ecb(), EVP_rc2_ofb()
+
+RC2 encryption algorithm in CBC, CFB, ECB and OFB modes respectively. This is a
+variable key length cipher with an additional parameter called "effective key
+bits" or "effective key length". By default both are set to 128 bits.
+
+=item EVP_rc2_{40,64}_cbc()
+
+RC2 algorithm in CBC mode with a default key length and effective key length of
+40 and 64 bits. These are obsolete and new code should use EVP_rc2_cbc(),
+EVP_CIPHER_CTX_set_key_length() and EVP_CIPHER_CTX_ctrl() to set the key
+length and effective key length.
+
+=item EVP_seed_cbc(), EVP_seed_cfb(), EVP_seed_ecb(), EVP_seed_ofb()
+
+SEED encryption algorithm in CBC, CFB, ECB and OFB modes respectively. This
+uses a key length of 128 bits and acts on blocks of 128-bits.
+
+=item EVP_rc5_32_12_16_cbc(), EVP_rc5_32_12_16_cfb(), EVP_rc5_32_12_16_ecb(),
+  EVP_rc5_32_12_16_ofb()
+
+RC5 encryption algorithm in CBC, CFB, ECB and OFB modes respectively. This is a
+variable key length cipher with an additional "number of rounds" parameter. By
+default the key length is set to 128 bits and 12 rounds.
 
 =back
 
-=head1 GCM and OCB Modes
+=head1 Interface For Authenticated Encryption with Associated Data
 
-For GCM and OCB mode ciphers the behaviour of the EVP interface is subtly
-altered and several additional ctrl operations are supported.
+The EVP interface for Authenticated Encryption with Associated Data (AEAD)
+modes are subtly altered and several additional ctrl operations are supported
+depending on the mode specified.
 
-To specify any additional authenticated data (AAD) a call to EVP_CipherUpdate(),
+To specify additional authenticated data (AAD), a call to EVP_CipherUpdate(),
 EVP_EncryptUpdate() or EVP_DecryptUpdate() should be made with the output
 parameter B<out> set to B<NULL>.
 
-When decrypting the return value of EVP_DecryptFinal() or EVP_CipherFinal()
-indicates if the operation was successful. If it does not indicate success
-the authentication operation has failed and any output data B<MUST NOT>
-be used as it is corrupted.
+When decrypting, the return value of EVP_DecryptFinal() or EVP_CipherFinal()
+indicates whether the operation was successful. If it does not indicate success,
+the authentication operation has failed and any output data B<MUST NOT> be used
+as it is corrupted.
+
+=head2 GCM and OCB Modes
 
 The following ctrls are supported in both GCM and OCB modes:
 
@@ -494,8 +512,8 @@ either be 16 or the value previously set via EVP_CTRL_OCB_SET_TAGLEN.
 
  EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
 
-Sets the expected tag to B<taglen> bytes from B<tag>. This call is only legal
-when decrypting data. For OCB mode the taglen must either be 16 or the value
+Sets the expected tag to B<taglen> bytes from B<tag>. This call is only valid
+when decrypting data. For OCB mode, the taglen must either be 16 or the value
 previously set via EVP_CTRL_AEAD_SET_TAG.
 
 In OCB mode calling this with B<tag> set to NULL sets the tag length. The tag
@@ -503,17 +521,15 @@ length can only be set before specifying an IV. If not called a default tag
 length is used. For OCB AES the default is 16 (i.e. 128 bits). This is also the
 maximum tag length for OCB.
 
-=head1 CCM Mode
+=head2 CCM Mode
 
-The behaviour of CCM mode ciphers is similar to GCM mode but with a few
-additional requirements and different ctrl values.
+The EVP interface for CCM mode is similar to that of the GCM mode but with a
+few additional requirements and different ctrl values.
 
-Like GCM and OCB modes any additional authenticated data (AAD) is passed by calling
+For CCM mode, the total plaintext or ciphertext length B<MUST> be passed to
 EVP_CipherUpdate(), EVP_EncryptUpdate() or EVP_DecryptUpdate() with the output
-parameter B<out> set to B<NULL>. Additionally the total plaintext or ciphertext
-length B<MUST> be passed to EVP_CipherUpdate(), EVP_EncryptUpdate() or
-EVP_DecryptUpdate() with the output and input parameters (B<in> and B<out>)
-set to B<NULL> and the length passed in the B<inl> parameter.
+and input parameters (B<in> and B<out>) set to B<NULL> and the length passed in
+the B<inl> parameter.
 
 The following ctrls are supported in CCM mode:
 
