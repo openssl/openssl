@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -153,6 +153,10 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     } else
         ctx = ctx_in;
 
+    /* Preallocate space for k */
+    if (!BN_set_bit(k, BN_num_bits(dsa->q)))
+        goto err;
+
     /* Get random k */
     do {
         if (dgst != NULL) {
@@ -179,17 +183,15 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 
     /*
      * We do not want timing information to leak the length of k, so we
-     * compute g^k using an equivalent exponent of fixed length. (This
-     * is a kludge that we need because the BN_mod_exp_mont() does not
-     * let us specify the desired timing behaviour.)
+     * compute ensure the k is longer than the q value.  Any code, other
+     * than BN_mod_exp_mont(), that checks  for this and does a modulo
+     * redution will consequently also be consant time.  This is
+     * a kludge that we need because the BN_mod_exp_mont() does not
+     * let us specify the desired timing behaviour.
      */
 
-    if (!BN_add(k, k, dsa->q))
+    if (!BN_set_bit(k, BN_num_bits(dsa->q)))
         goto err;
-    if (BN_num_bits(k) <= BN_num_bits(dsa->q)) {
-        if (!BN_add(k, k, dsa->q))
-            goto err;
-    }
 
     if ((dsa)->meth->bn_mod_exp != NULL) {
             if (!dsa->meth->bn_mod_exp(dsa, r, dsa->g, k, dsa->p, ctx,
