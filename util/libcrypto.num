@@ -4273,9 +4273,7 @@ ZINT64_it                               4215	1_1_0f	EXIST:EXPORT_VAR_AS_FUNCTION
 CRYPTO_mem_leaks_cb                     4216	1_1_1	EXIST::FUNCTION:CRYPTO_MDEBUG
 BIO_lookup_ex                           4217	1_1_1	EXIST::FUNCTION:SOCK
 X509_CRL_print_ex                       4218	1_1_1	EXIST::FUNCTION:
-X509_SIG_INFO_get                       4219	1_1_1	EXIST::FUNCTION:
 X509_get_signature_info                 4220	1_1_1	EXIST::FUNCTION:
-X509_SIG_INFO_set                       4221	1_1_1	EXIST::FUNCTION:
 ESS_CERT_ID_V2_free                     4222	1_1_1	EXIST::FUNCTION:TS
 ESS_SIGNING_CERT_V2_new                 4223	1_1_1	EXIST::FUNCTION:TS
 d2i_ESS_SIGNING_CERT_V2                 4224	1_1_1	EXIST::FUNCTION:TS

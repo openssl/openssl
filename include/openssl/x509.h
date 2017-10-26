@@ -560,11 +560,6 @@ X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length);
 
 int i2d_re_X509_tbs(X509 *x, unsigned char **pp);
 
-int X509_SIG_INFO_get(const X509_SIG_INFO *siginf, int *mdnid, int *pknid,
-                      int *secbits, uint32_t *flags);
-void X509_SIG_INFO_set(X509_SIG_INFO *siginf, int mdnid, int pknid,
-                       int secbits, uint32_t flags);
-
 int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
                             uint32_t *flags);
 
