@@ -4503,3 +4503,4 @@ OCSP_basic_sign_ctx                     4444	1_1_1	EXIST::FUNCTION:OCSP
 RAND_DRBG_bytes                         4445	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_secure_new                    4446	1_1_1	EXIST::FUNCTION:
 OSSL_STORE_vctrl                        4447	1_1_1	EXIST::FUNCTION:
+X509_get0_authority_key_id              4448	1_1_0h	EXIST::FUNCTION:
