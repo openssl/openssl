@@ -102,8 +102,8 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
         return NULL;
     }
 
-    pols = sk_POLICYINFO_new_null();
-    if (pols == NULL || !sk_POLICYINFO_reserve(pols, num)) {
+    pols = sk_POLICYINFO_new_reserve(NULL, num);
+    if (pols == NULL) {
         X509V3err(X509V3_F_R2I_CERTPOL, ERR_R_MALLOC_FAILURE);
         goto err;
     }
