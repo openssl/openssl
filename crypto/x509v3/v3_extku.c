@@ -77,8 +77,8 @@ static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,
     const int num = sk_CONF_VALUE_num(nval);
     int i;
 
-    extku = sk_ASN1_OBJECT_new_null();
-    if (extku == NULL || !sk_ASN1_OBJECT_reserve(extku, num)) {
+    extku = sk_ASN1_OBJECT_new_reserve(NULL, num);
+    if (extku == NULL) {
         X509V3err(X509V3_F_V2I_EXTENDED_KEY_USAGE, ERR_R_MALLOC_FAILURE);
         sk_ASN1_OBJECT_free(extku);
         return NULL;

@@ -336,14 +336,12 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
         return 0;
     }
 
-    pool->jobs = sk_ASYNC_JOB_new_null();
+    pool->jobs = sk_ASYNC_JOB_new_reserve(NULL, init_size);
     if (pool->jobs == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(pool);
         return 0;
     }
-    if (!sk_ASYNC_JOB_reserve(pool->jobs, init_size))
-        goto err;
 
     pool->max_size = max_size;
 

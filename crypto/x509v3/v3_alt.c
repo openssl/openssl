@@ -201,11 +201,11 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
                                      X509V3_CTX *ctx,
                                      STACK_OF(CONF_VALUE) *nval)
 {
-    GENERAL_NAMES *gens = sk_GENERAL_NAME_new_null();
     const int num = sk_CONF_VALUE_num(nval);
+    GENERAL_NAMES *gens = sk_GENERAL_NAME_new_reserve(NULL, num);
     int i;
 
-    if (gens == NULL || !sk_GENERAL_NAME_reserve(gens, num)) {
+    if (gens == NULL) {
         X509V3err(X509V3_F_V2I_ISSUER_ALT, ERR_R_MALLOC_FAILURE);
         sk_GENERAL_NAME_free(gens);
         return NULL;
@@ -283,8 +283,8 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
     const int num = sk_CONF_VALUE_num(nval);
     int i;
 
-    gens = sk_GENERAL_NAME_new_null();
-    if (gens == NULL || !sk_GENERAL_NAME_reserve(gens, num)) {
+    gens = sk_GENERAL_NAME_new_reserve(NULL, num);
+    if (gens == NULL) {
         X509V3err(X509V3_F_V2I_SUBJECT_ALT, ERR_R_MALLOC_FAILURE);
         sk_GENERAL_NAME_free(gens);
         return NULL;
@@ -380,8 +380,8 @@ GENERAL_NAMES *v2i_GENERAL_NAMES(const X509V3_EXT_METHOD *method,
     const int num = sk_CONF_VALUE_num(nval);
     int i;
 
-    gens = sk_GENERAL_NAME_new_null();
-    if (gens == NULL || !sk_GENERAL_NAME_reserve(gens, num)) {
+    gens = sk_GENERAL_NAME_new_reserve(NULL, num);
+    if (gens == NULL) {
         X509V3err(X509V3_F_V2I_GENERAL_NAMES, ERR_R_MALLOC_FAILURE);
         sk_GENERAL_NAME_free(gens);
         return NULL;
