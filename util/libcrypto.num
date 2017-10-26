@@ -4418,3 +4418,5 @@ RAND_POOL_add_begin                     4362	1_1_1	EXIST::FUNCTION:
 RAND_POOL_add_end                       4363	1_1_1	EXIST::FUNCTION:
 RAND_POOL_acquire_entropy               4364	1_1_1	EXIST::FUNCTION:
 OPENSSL_sk_new_reserve                  4365	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_asn1_set_check                 4366	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_asn1_set_siginf                4367	1_1_1	EXIST::FUNCTION:
