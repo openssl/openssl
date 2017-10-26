@@ -109,7 +109,7 @@ sk_TYPE_new_reserve() allocates a new stack. The new stack will have additional
 memory allocated to hold B<n> elements if B<n> is positive. The next B<n> calls
 to sk_TYPE_insert(), sk_TYPE_push() or sk_TYPE_unshift() will not fail or cause
 memory to be allocated or reallocated. If B<n> is zero or less than zero, no
-memory is allocated. sk_TYPE_reserve() also sets the comparison function
+memory is allocated. sk_TYPE_new_reserve() also sets the comparison function
 B<compare> to the newly created stack. If B<compare> is B<NULL> then no
 comparison function is used.
 
@@ -257,7 +257,7 @@ stack.
 Before OpenSSL 1.1.0, this was implemented via macros and not inline functions
 and was not a public API.
 
-sk_TYPE_new_reserve() was added in OpenSSL 1.1.1.
+sk_TYPE_reserve() and sk_TYPE_new_reserve() were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
