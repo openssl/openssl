@@ -463,13 +463,9 @@ STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk)
     STACK_OF(X509_NAME) *ret;
     X509_NAME *name;
 
-    ret = sk_X509_NAME_new_null();
+    ret = sk_X509_NAME_new_reserve(NULL, num);
     if (ret == NULL) {
         SSLerr(SSL_F_SSL_DUP_CA_LIST, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-    if (!sk_X509_NAME_reserve(ret, num)) {
-        sk_X509_NAME_free(ret);
         return NULL;
     }
     for (i = 0; i < num; i++) {

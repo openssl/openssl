@@ -164,14 +164,12 @@ static int ssl_dane_dup(SSL *to, SSL *from)
     dane_final(&to->dane);
     to->dane.flags = from->dane.flags;
     to->dane.dctx = &to->ctx->dane;
-    to->dane.trecs = sk_danetls_record_new_null();
+    to->dane.trecs = sk_danetls_record_new_reserve(NULL, num);
 
     if (to->dane.trecs == NULL) {
         SSLerr(SSL_F_SSL_DANE_DUP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    if (!sk_danetls_record_reserve(to->dane.trecs, num))
-        return 0;
 
     for (i = 0; i < num; ++i) {
         danetls_record *t = sk_danetls_record_value(from->dane.trecs, i);

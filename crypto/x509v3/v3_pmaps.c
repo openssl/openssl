@@ -72,12 +72,10 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
     const int num = sk_CONF_VALUE_num(nval);
     int i;
 
-    if ((pmaps = sk_POLICY_MAPPING_new_null()) == NULL) {
+    if ((pmaps = sk_POLICY_MAPPING_new_reserve(NULL, num)) == NULL) {
         X509V3err(X509V3_F_V2I_POLICY_MAPPINGS, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    if (!sk_POLICY_MAPPING_reserve(pmaps, num))
-        goto err;
 
     for (i = 0; i < num; i++) {
         val = sk_CONF_VALUE_value(nval, i);

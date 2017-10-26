@@ -244,8 +244,8 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
     const int num = sk_CONF_VALUE_num(nval);
     int i;
 
-    crld = sk_DIST_POINT_new_null();
-    if (crld == NULL || !sk_DIST_POINT_reserve(crld, num))
+    crld = sk_DIST_POINT_new_reserve(NULL, num);
+    if (crld == NULL)
         goto merr;
     for (i = 0; i < num; i++) {
         DIST_POINT *point;
