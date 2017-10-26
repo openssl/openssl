@@ -94,8 +94,9 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
             TCHAR *wdir = NULL;
             /* len_0 denotes string length *with* trailing 0 */
             size_t index = 0, len_0 = strlen(extdir) + 1;
+            size_t amount = len_0 * sizeof(TCHAR);
 
-            wdir = (TCHAR *)calloc(len_0, sizeof(TCHAR));
+            wdir = (TCHAR *)malloc(amount);
             if (wdir == NULL) {
                 if (extdirbuf != NULL) {
                     free(extdirbuf);
