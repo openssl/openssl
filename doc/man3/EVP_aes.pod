@@ -46,7 +46,6 @@ EVP_aes_128_xts,
 EVP_aes_256_xts
 - EVP AES cipher
 
-
 =head1 SYNOPSIS
 
 =for comment generic

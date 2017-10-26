@@ -25,7 +25,6 @@ EVP_camellia_192_ofb,
 EVP_camellia_256_ofb
 - EVP Camellia cipher
 
-
 =head1 SYNOPSIS
 
 =for comment generic
