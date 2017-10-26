@@ -550,6 +550,28 @@ static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
     return rv;
 }
 
+static int cmd_SecurityLevel(SSL_CONF_CTX *cctx, const char *value)
+{
+    int rv = 0;
+    int level = atoi(value);
+
+    /*
+     * We let the security callback check the
+     * supported security levels
+     */
+    if (level >= 0) {
+        if (cctx->ctx) {
+            SSL_CTX_set_security_level(cctx->ctx, level);
+            rv = 1;
+        }
+        if (cctx->ssl) {
+            SSL_set_security_level(cctx->ssl, level);
+            rv = 1;
+        }
+    }
+    return rv;
+}
+
 typedef struct {
     int (*cmd) (SSL_CONF_CTX *cctx, const char *value);
     const char *str_file;
@@ -632,7 +654,8 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
 #endif
-    SSL_CONF_CMD_STRING(RecordPadding, "record_padding", 0)
+    SSL_CONF_CMD_STRING(RecordPadding, "record_padding", 0),
+    SSL_CONF_CMD_STRING(SecurityLevel, "sec_level", 0)
 };
 
 /* Supported switches: must match order of switches in ssl_conf_cmds */

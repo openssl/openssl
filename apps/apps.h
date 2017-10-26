@@ -206,7 +206,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_ALLOW_NO_DHE_KEX, \
         OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS, \
         OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
-        OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
+        OPT_S_RECORD_PADDING, OPT_S_SEC_LEVEL, OPT_S_DEBUGBROKE, OPT_S_COMP, \
         OPT_S_NO_RENEGOTIATION, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
@@ -249,6 +249,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         {"cipher", OPT_S_CIPHER, 's', "Specify cipher list to be used"}, \
         {"record_padding", OPT_S_RECORD_PADDING, 's', \
             "Block size to pad TLS 1.3 records to."}, \
+        {"sec_level", OPT_S_SEC_LEVEL, 's', \
+            "Specify library security level"}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
             "Perform all sorts of protocol violations for testing purposes"}
 
@@ -278,6 +280,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_NAMEDCURVE: \
         case OPT_S_CIPHER: \
         case OPT_S_RECORD_PADDING: \
+        case OPT_S_SEC_LEVEL: \
         case OPT_S_NO_RENEGOTIATION: \
         case OPT_S_DEBUGBROKE
 
