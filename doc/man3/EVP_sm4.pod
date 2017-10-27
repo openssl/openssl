@@ -53,7 +53,7 @@ L<EVP_CIPHER_meth_new(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
 Copyright 2017 Ribose Inc. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
