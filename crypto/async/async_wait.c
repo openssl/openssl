@@ -145,6 +145,7 @@ int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key)
     while (curr != NULL) {
         if (curr->del == 1) {
             /* This one has been marked deleted already so do nothing */
+            prev = curr;
             curr = curr->next;
             continue;
         }
