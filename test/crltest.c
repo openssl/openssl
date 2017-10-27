@@ -267,6 +267,7 @@ static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
     if (flags)
         X509_VERIFY_PARAM_set_flags(param, flags);
     X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
 
     ERR_clear_error();
     status = X509_verify_cert(ctx) == 1 ? X509_V_OK
@@ -274,6 +275,7 @@ static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
 err:
     sk_X509_pop_free(roots, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
+    X509_VERIFY_PARAM_free(param);
     X509_STORE_CTX_free(ctx);
     X509_STORE_free(store);
     return status;
