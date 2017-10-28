@@ -18,12 +18,12 @@ static int test_PACKET_remaining(void)
 {
     PACKET pkt;
 
-    if (!TEST_true(PACKET_buf_init(&pkt, smbuf, sizeof(smbuf))
+    if (!TEST_true(PACKET_buf_init(&pkt, smbuf, sizeof(smbuf)))
             || !TEST_size_t_eq(PACKET_remaining(&pkt), BUF_LEN)
             || !TEST_true(PACKET_forward(&pkt, BUF_LEN - 1))
             || !TEST_size_t_eq(PACKET_remaining(&pkt), 1)
             || !TEST_true(PACKET_forward(&pkt, 1))
-            || !TEST_size_t_eq(PACKET_remaining(&pkt), 0)))
+            || !TEST_size_t_eq(PACKET_remaining(&pkt), 0))
         return 0;
 
     return 1;
@@ -33,13 +33,13 @@ static int test_PACKET_end(void)
 {
     PACKET pkt;
 
-    if (!TEST_true(PACKET_buf_init(&pkt, smbuf, sizeof(smbuf))
+    if (!TEST_true(PACKET_buf_init(&pkt, smbuf, sizeof(smbuf)))
             || !TEST_size_t_eq(PACKET_remaining(&pkt), BUF_LEN)
-            || !TEST_ptr_ne(PACKET_end(&pkt), smbuf + BUF_LEN)
+            || !TEST_ptr_eq(PACKET_end(&pkt), smbuf + BUF_LEN)
             || !TEST_true(PACKET_forward(&pkt, BUF_LEN - 1))
             || !TEST_ptr_eq(PACKET_end(&pkt), smbuf + BUF_LEN)
             || !TEST_true(PACKET_forward(&pkt, 1))
-            || !TEST_ptr_eq(PACKET_end(&pkt), smbuf + BUF_LEN)))
+            || !TEST_ptr_eq(PACKET_end(&pkt), smbuf + BUF_LEN))
         return 0;
 
     return 1;
@@ -430,9 +430,9 @@ static int test_PACKET_as_length_prefixed_1(void)
             || !TEST_true(PACKET_buf_init(&exact_pkt, buf1, len + 1))
             || !TEST_false(PACKET_as_length_prefixed_1(&pkt, &subpkt))
             || !TEST_size_t_eq(PACKET_remaining(&pkt), BUF_LEN)
-            || !TEST_true(PACKET_as_length_prefixed_1(&exact_pkt, &subpkt)
+            || !TEST_true(PACKET_as_length_prefixed_1(&exact_pkt, &subpkt))
             || !TEST_size_t_eq(PACKET_remaining(&exact_pkt), 0)
-            || !TEST_size_t_eq(PACKET_remaining(&subpkt), len)))
+            || !TEST_size_t_eq(PACKET_remaining(&subpkt), len))
         return 0;
 
     return 1;
