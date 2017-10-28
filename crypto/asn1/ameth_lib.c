@@ -25,6 +25,7 @@ static STACK_OF(EVP_PKEY_ASN1_METHOD) *app_methods = NULL;
 
 static void do_app_methods_deinit(void)
 {
+    sk_EVP_PKEY_ASN1_METHOD_free(app_methods);
     CRYPTO_THREAD_lock_free(app_methods_lock);
     app_methods_lock = NULL;
 }
@@ -54,33 +55,73 @@ IMPLEMENT_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_ASN1_METHOD *,
 int EVP_PKEY_asn1_get_count(void)
 {
     int num = OSSL_NELEM(standard_methods);
-    if (app_methods)
-        num += sk_EVP_PKEY_ASN1_METHOD_num(app_methods);
+
+    /*
+     * This function doesn't really have an error state, but if we can't
+     * initialise locks, it's safe to pretend there are no app methods.
+     */
+    if (RUN_ONCE(&app_methods_init, do_app_methods_init)) {
+        CRYPTO_THREAD_read_lock(app_methods_lock);
+        if (app_methods)
+            num += sk_EVP_PKEY_ASN1_METHOD_num(app_methods);
+        CRYPTO_THREAD_unlock(app_methods_lock);
+    }
+
     return num;
 }
 
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
 {
     int num = OSSL_NELEM(standard_methods);
+
     if (idx < 0)
         return NULL;
     if (idx < num)
         return standard_methods[idx];
     idx -= num;
-    return sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
+
+    /*
+     * Just as in EVP_PKEY_asn1_get_count(), if we can't init the app_methods
+     * lock, we pretend that there are no app_methods.
+     */
+    if (RUN_ONCE(&app_methods_init, do_app_methods_init)) {
+        const EVP_PKEY_ASN1_METHOD *ameth = NULL;
+
+        CRYPTO_THREAD_read_lock(app_methods_lock);
+        ameth = sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
+        CRYPTO_THREAD_unlock(app_methods_lock);
+        return ameth;
+    }
+    return NULL;
 }
 
 static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
 {
     EVP_PKEY_ASN1_METHOD tmp;
     const EVP_PKEY_ASN1_METHOD *t = &tmp, **ret;
+
     tmp.pkey_id = type;
-    if (app_methods) {
-        int idx;
-        idx = sk_EVP_PKEY_ASN1_METHOD_find(app_methods, &tmp);
-        if (idx >= 0)
-            return sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
+
+    /*
+     * Just as in EVP_PKEY_asn1_get_count(), if we can't init the app_methods
+     * lock, we pretend that there are no app_methods.
+     */
+    if (RUN_ONCE(&app_methods_init, do_app_methods_init)) {
+        const EVP_PKEY_ASN1_METHOD *ameth = NULL;
+
+        CRYPTO_THREAD_read_lock(app_methods_lock);
+        if (app_methods != NULL) {
+            int idx;
+
+            idx = sk_EVP_PKEY_ASN1_METHOD_find(app_methods, &tmp);
+            if (idx >= 0)
+                ameth = sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
+        }
+        CRYPTO_THREAD_unlock(app_methods_lock);
+        if (ameth != NULL)
+            return ameth;
     }
+
     ret = OBJ_bsearch_ameth(&t, standard_methods, OSSL_NELEM(standard_methods));
     if (!ret || !*ret)
         return NULL;
