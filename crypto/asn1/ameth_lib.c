@@ -15,11 +15,29 @@
 #include <openssl/engine.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
+#include "internal/thread_once.h"
 
 #include "standard_methods.h"
 
-typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
+static CRYPTO_RWLOCK *app_methods_lock;
+static CRYPTO_ONCE app_methods_init = CRYPTO_ONCE_STATIC_INIT;
 static STACK_OF(EVP_PKEY_ASN1_METHOD) *app_methods = NULL;
+
+static void do_app_methods_deinit(void)
+{
+    CRYPTO_THREAD_lock_free(app_methods_lock);
+    app_methods_lock = NULL;
+}
+
+DEFINE_RUN_ONCE_STATIC(do_app_methods_init)
+{
+    OPENSSL_init_crypto(0, NULL);
+    if ((app_methods_lock = CRYPTO_THREAD_glock_new("app_methods")) == NULL)
+        return 0;
+
+    OPENSSL_atexit(do_app_methods_deinit);
+    return 1;
+}
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_ASN1_METHOD *,
                            const EVP_PKEY_ASN1_METHOD *, ameth);
@@ -137,15 +155,27 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
 
 int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
 {
+    int ret = 0;
+
+    if (!RUN_ONCE(&app_methods_init, do_app_methods_init)) {
+        EVPerr(EVP_F_EVP_PKEY_ASN1_ADD0, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    CRYPTO_THREAD_write_lock(app_methods_lock);
     if (app_methods == NULL) {
         app_methods = sk_EVP_PKEY_ASN1_METHOD_new(ameth_cmp);
         if (app_methods == NULL)
-            return 0;
+            goto err;
     }
     if (!sk_EVP_PKEY_ASN1_METHOD_push(app_methods, ameth))
-        return 0;
+        goto err;
     sk_EVP_PKEY_ASN1_METHOD_sort(app_methods);
-    return 1;
+
+    ret = 1;
+ err:
+    CRYPTO_THREAD_unlock(app_methods_lock);
+    return ret;
 }
 
 int EVP_PKEY_asn1_add_alias(int to, int from)
