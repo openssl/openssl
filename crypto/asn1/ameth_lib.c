@@ -70,7 +70,7 @@ int EVP_PKEY_asn1_get_count(void)
     return num;
 }
 
-const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
+static const EVP_PKEY_ASN1_METHOD *pkey_asn1_get0_unlocked(int idx)
 {
     int num = OSSL_NELEM(standard_methods);
 
@@ -79,7 +79,11 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
     if (idx < num)
         return standard_methods[idx];
     idx -= num;
+    return sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
+}
 
+const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
+{
     /*
      * Just as in EVP_PKEY_asn1_get_count(), if we can't init the app_methods
      * lock, we pretend that there are no app_methods.
@@ -88,7 +92,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
         const EVP_PKEY_ASN1_METHOD *ameth = NULL;
 
         CRYPTO_THREAD_read_lock(app_methods_lock);
-        ameth = sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
+        ameth = pkey_asn1_get0_unlocked(idx);
         CRYPTO_THREAD_unlock(app_methods_lock);
         return ameth;
     }
@@ -164,6 +168,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
 {
     int i;
     const EVP_PKEY_ASN1_METHOD *ameth;
+
     if (len == -1)
         len = strlen(str);
     if (pe) {
@@ -183,13 +188,23 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
 #endif
         *pe = NULL;
     }
-    for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
-        ameth = EVP_PKEY_asn1_get0(i);
-        if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
-            continue;
-        if (((int)strlen(ameth->pem_str) == len)
-            && (strncasecmp(ameth->pem_str, str, len) == 0))
-            return ameth;
+
+    /*
+     * Just as in EVP_PKEY_asn1_get_count(), if we can't init the app_methods
+     * lock, we pretend that there are no app_methods.
+     */
+    if (RUN_ONCE(&app_methods_init, do_app_methods_init)) {
+        CRYPTO_THREAD_read_lock(app_methods_lock);
+        for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
+            ameth = pkey_asn1_get0_unlocked(i);
+            if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
+                continue;
+            if (((int)strlen(ameth->pem_str) == len)
+                && (strncasecmp(ameth->pem_str, str, len) == 0))
+                break;
+        }
+        CRYPTO_THREAD_unlock(app_methods_lock);
+        return ameth;
     }
     return NULL;
 }
