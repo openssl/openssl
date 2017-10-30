@@ -9,14 +9,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-
-#ifndef OPENSSL_NO_SM3
-
+#include <openssl/e_os2.h>
 #include "sm3_locl.h"
-#include <openssl/opensslv.h>
 
-int SM3_Init(SM3_CTX *c)
+int sm3_init(SM3_CTX *c)
 {
     memset(c, 0, sizeof(*c));
     c->A = SM3_A;
@@ -28,21 +24,6 @@ int SM3_Init(SM3_CTX *c)
     c->G = SM3_G;
     c->H = SM3_H;
     return 1;
-}
-
-unsigned char *SM3(const unsigned char *d, size_t n, unsigned char *md)
-{
-    SM3_CTX c;
-    static unsigned char m[SM3_DIGEST_LENGTH];
-
-    if (md == NULL)
-        md = m;
-    if (!SM3_Init(&c))
-        return NULL;
-    SM3_Update(&c, d, n);
-    SM3_Final(md, &c);
-    OPENSSL_cleanse(&c, sizeof(c)); /* security consideration */
-    return md;
 }
 
 void sm3_block_data_order(SM3_CTX *ctx, const void *p, size_t num)
@@ -212,4 +193,4 @@ void sm3_block_data_order(SM3_CTX *ctx, const void *p, size_t num)
         ctx->H ^= H;
     }
 }
-#endif
+
