@@ -916,6 +916,15 @@ const EVP_CIPHER *EVP_seed_cfb128(void);
 const EVP_CIPHER *EVP_seed_ofb(void);
 # endif
 
+# ifndef OPENSSL_NO_SM4
+const EVP_CIPHER *EVP_sm4_ecb(void);
+const EVP_CIPHER *EVP_sm4_cbc(void);
+const EVP_CIPHER *EVP_sm4_cfb128(void);
+#  define EVP_sm4_cfb EVP_sm4_cfb128
+const EVP_CIPHER *EVP_sm4_ofb(void);
+const EVP_CIPHER *EVP_sm4_ctr(void);
+# endif
+
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  define OPENSSL_add_all_algorithms_conf() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
