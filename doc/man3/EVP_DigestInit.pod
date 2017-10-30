@@ -301,6 +301,7 @@ L<EVP_ripemd160(3)>,
 L<EVP_sha1(3)>,
 L<EVP_sha224(3)>,
 L<EVP_sha3_224(3)>,
+L<EVP_sm3(3)>,
 L<EVP_whirlpool(3)>
 
 =head1 HISTORY
