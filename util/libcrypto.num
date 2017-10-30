@@ -4420,11 +4420,8 @@ RAND_POOL_acquire_entropy               4364	1_1_1	EXIST::FUNCTION:
 OPENSSL_sk_new_reserve                  4365	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_check                 4366	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_siginf                4367	1_1_1	EXIST::FUNCTION:
-SM4_encrypt                             4351	1_1_1	EXIST::FUNCTION:SM4
-SM4_decrypt                             4352	1_1_1	EXIST::FUNCTION:SM4
-SM4_set_key                             4353	1_1_1	EXIST::FUNCTION:SM4
-EVP_sm4_ecb                             4354	1_1_1	EXIST::FUNCTION:SM4
-EVP_sm4_cbc                             4355	1_1_1	EXIST::FUNCTION:SM4
-EVP_sm4_ofb                             4356	1_1_1	EXIST::FUNCTION:SM4
-EVP_sm4_cfb128                          4356	1_1_1	EXIST::FUNCTION:SM4
-EVP_sm4_ctr                             4357	1_1_1	EXIST::FUNCTION:SM4
+EVP_sm4_ctr                             4368	1_1_1	EXIST::FUNCTION:SM4
+EVP_sm4_cbc                             4369	1_1_1	EXIST::FUNCTION:SM4
+EVP_sm4_ofb                             4370	1_1_1	EXIST::FUNCTION:SM4
+EVP_sm4_ecb                             4371	1_1_1	EXIST::FUNCTION:SM4
+EVP_sm4_cfb128                          4372	1_1_1	EXIST::FUNCTION:SM4
