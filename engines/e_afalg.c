@@ -105,7 +105,7 @@ static ossl_inline int io_setup(unsigned n, aio_context_t *ctx)
 
 static ossl_inline int eventfd(int n)
 {
-    return syscall(__NR_eventfd, n);
+    return syscall(__NR_eventfd2, n, 0);
 }
 
 static ossl_inline int io_destroy(aio_context_t ctx)
