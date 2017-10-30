@@ -5,7 +5,7 @@ SOURCE[../../libcrypto]=\
         e_rc4.c e_aes.c names.c e_seed.c e_aria.c e_sm4.c \
         e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c \
         m_null.c m_md2.c m_md4.c m_md5.c m_sha1.c m_wp.c \
-        m_md5_sha1.c m_mdc2.c m_ripemd.c m_sha3.c m_sm3.c \
+        m_md5_sha1.c m_mdc2.c m_ripemd.c m_sha3.c \
         p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c \
         bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c \
         c_allc.c c_alld.c evp_lib.c bio_ok.c \

@@ -9,33 +9,32 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdlib.h>
 #include <string.h>
-#include <openssl/e_os2.h>
-#include <openssl/sm3.h>
-
-void sm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
+#include "internal/sm3.h"
 
 #define DATA_ORDER_IS_BIG_ENDIAN
 
 #define HASH_LONG               SM3_WORD
 #define HASH_CTX                SM3_CTX
 #define HASH_CBLOCK             SM3_CBLOCK
-#define HASH_UPDATE             SM3_Update
-#define HASH_TRANSFORM          SM3_Transform
-#define HASH_FINAL              SM3_Final
-#define HASH_MAKE_STRING(c,s)   do {    \
-        unsigned long ll;               \
-        ll=(c)->A; (void)HOST_l2c(ll,(s));      \
-        ll=(c)->B; (void)HOST_l2c(ll,(s));      \
-        ll=(c)->C; (void)HOST_l2c(ll,(s));      \
-        ll=(c)->D; (void)HOST_l2c(ll,(s));      \
-        ll=(c)->E; (void)HOST_l2c(ll,(s));      \
-        ll=(c)->F; (void)HOST_l2c(ll,(s));      \
-        ll=(c)->G; (void)HOST_l2c(ll,(s));      \
-        ll=(c)->H; (void)HOST_l2c(ll,(s));      \
-        } while (0)
+#define HASH_UPDATE             sm3_update
+#define HASH_TRANSFORM          sm3_transform
+#define HASH_FINAL              sm3_final
+#define HASH_MAKE_STRING(c, s)              \
+      do {                                  \
+        unsigned long ll;                   \
+        ll=(c)->A; (void)HOST_l2c(ll, (s)); \
+        ll=(c)->B; (void)HOST_l2c(ll, (s)); \
+        ll=(c)->C; (void)HOST_l2c(ll, (s)); \
+        ll=(c)->D; (void)HOST_l2c(ll, (s)); \
+        ll=(c)->E; (void)HOST_l2c(ll, (s)); \
+        ll=(c)->F; (void)HOST_l2c(ll, (s)); \
+        ll=(c)->G; (void)HOST_l2c(ll, (s)); \
+        ll=(c)->H; (void)HOST_l2c(ll, (s)); \
+      } while (0)
 #define HASH_BLOCK_DATA_ORDER   sm3_block_data_order
+
+void sm3_transform(SM3_CTX *c, const unsigned char *data);
 
 #include "internal/md32_common.h"
 
@@ -51,17 +50,18 @@ void sm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 #define EXPAND(W0,W7,W13,W3,W10) \
    (P1(W0 ^ W7 ^ ROTATE(W13, 15)) ^ ROTATE(W3, 7) ^ W10)
 
-#define RND(A,B,C,D,E,F,G,H,TJ,Wi,Wj,FF,GG) do {                      \
-   const SM3_WORD A12 = ROTATE(A, 12);                                \
-   const SM3_WORD A12_SM = A12 + E + TJ;                              \
-   const SM3_WORD SS1 = ROTATE(A12_SM, 7);                            \
-   const SM3_WORD TT1 = FF(A,B,C) + D + (SS1 ^ A12) + (Wj);           \
-   const SM3_WORD TT2 = GG(E,F,G) + H + SS1 + Wi;                     \
-   B = ROTATE(B, 9);                                                  \
-   D = TT1;                                                           \
-   F = ROTATE(F, 19);                                                 \
-   H = P0(TT2);                                                       \
-   } while(0);
+#define RND(A, B, C, D, E, F, G, H, TJ, Wi, Wj, FF, GG)           \
+     do {                                                         \
+       const SM3_WORD A12 = ROTATE(A, 12);                        \
+       const SM3_WORD A12_SM = A12 + E + TJ;                      \
+       const SM3_WORD SS1 = ROTATE(A12_SM, 7);                    \
+       const SM3_WORD TT1 = FF(A, B, C) + D + (SS1 ^ A12) + (Wj); \
+       const SM3_WORD TT2 = GG(E, F, G) + H + SS1 + Wi;           \
+       B = ROTATE(B, 9);                                          \
+       D = TT1;                                                   \
+       F = ROTATE(F, 19);                                         \
+       H = P0(TT2);                                               \
+     } while(0)
 
 #define R1(A,B,C,D,E,F,G,H,TJ,Wi,Wj) \
    RND(A,B,C,D,E,F,G,H,TJ,Wi,Wj,FF0,GG0)
