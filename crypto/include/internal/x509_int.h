@@ -283,3 +283,7 @@ int a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm);
 
 void x509_init_sig_info(X509 *x);
+int X509_SIG_INFO_get(const X509_SIG_INFO *siginf, int *mdnid, int *pknid,
+                      int *secbits, uint32_t *flags);
+void X509_SIG_INFO_set(X509_SIG_INFO *siginf, int mdnid, int pknid,
+                       int secbits, uint32_t flags);

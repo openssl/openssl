@@ -14,6 +14,7 @@
 #include <openssl/rand.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
+#include "internal/x509_int.h"
 #include "ec_lcl.h"
 
 #define X25519_KEYLEN        32
