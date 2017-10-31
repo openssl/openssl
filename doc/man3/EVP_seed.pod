@@ -38,7 +38,7 @@ The SEED encryption algorithm in CBC, CFB, ECB and OFB modes respectively.
 
 =head1 RETURN VALUES
 
-These functions return a B<EVP_CIPHER> structure that contains the
+These functions return an B<EVP_CIPHER> structure that contains the
 implementation of the symmetric cipher. See L<EVP_CIPHER_meth_new(3)> for
 details of the B<EVP_CIPHER> structure.
 
