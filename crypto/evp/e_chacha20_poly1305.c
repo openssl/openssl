@@ -317,7 +317,7 @@ static int chacha20_poly1305_cleanup(EVP_CIPHER_CTX *ctx)
     EVP_CHACHA_AEAD_CTX *actx = aead_data(ctx);
     if (actx)
         OPENSSL_cleanse(EVP_CIPHER_CTX_get_cipher_data(ctx),
-            POLY1305_actx_size(actx));
+                        POLY1305_actx_size(actx));
     return 1;
 }
 
@@ -329,9 +329,8 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
     switch(type) {
     case EVP_CTRL_INIT:
         if (actx == NULL)
-            EVP_CIPHER_CTX_set_cipher_data(ctx,
-                OPENSSL_zalloc(POLY1305_actx_size(actx)));
-            actx = EVP_CIPHER_CTX_get_cipher_data(ctx);
+            actx = OPENSSL_zalloc(POLY1305_actx_size(actx));
+            EVP_CIPHER_CTX_set_cipher_data(ctx, actx);
         if (actx == NULL) {
             EVPerr(EVP_F_CHACHA20_POLY1305_CTRL, EVP_R_INITIALIZATION_ERROR);
             return 0;
@@ -349,10 +348,10 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
         if (actx) {
             EVP_CIPHER_CTX *dst = (EVP_CIPHER_CTX *)ptr;
 
-            EVP_CIPHER_CTX_set_cipher_data(dst,
-                    OPENSSL_memdup(actx, POLY1305_actx_size(actx)));
+            actx = OPENSSL_memdup(actx, POLY1305_actx_size(actx));
+            EVP_CIPHER_CTX_set_cipher_data(dst, actx);
 
-            if (EVP_CIPHER_CTX_get_cipher_data(dst) == NULL) {
+            if (actx == NULL) {
                 EVPerr(EVP_F_CHACHA20_POLY1305_CTRL, EVP_R_COPY_ERROR);
                 return 0;
             }
