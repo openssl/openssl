@@ -16,7 +16,8 @@ EVP_blake2s256
 =head1 DESCRIPTION
 
 BLAKE2 is an improved version of BLAKE, which was submitted to the NIST SHA-3
-algorithm competition.
+algorithm competition. The BLAKE2s and BLAKE2b algorithms are described in
+RFC 7693.
 
 =over 4
 
@@ -38,7 +39,7 @@ details of the B<EVP_MD> structure.
 
 =head1 CONFORMING TO
 
-N/A.
+RFC 7693.
 
 =head1 NOTES
 
