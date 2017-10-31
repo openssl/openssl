@@ -28,6 +28,7 @@ env:
     - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
     - CONFIG_OPTS="no-stdio --strict-warnings" BUILDONLY="yes"
     - CONFIG_OPTS="no-ec" BUILDONLY="yes"
+    - CONFIG_OPTS="no-asm --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes"
 
 matrix:
     include:
@@ -158,10 +159,17 @@ script:
           echo -e '+\057 MAKE UPDATE FAILED'; false;
       fi;
       git diff --quiet
+    - if [ -n "$CHECKDOCS" ]; then
+          if $make doc-nits; then
+              echo -e '+\057\057 MAKE DOC-NITS OK';
+          else
+              echo -e '+\057\057 MAKE DOC-NITS FAILED'; false;
+          fi;
+      fi
     - if $make ; then
-          echo -e '+\057\057 MAKE OK';
+          echo -e '+\057\057\057 MAKE OK';
       else
-          echo -e '+\057\057 MAKE FAILED'; false;
+          echo -e '+\057\057\057 MAKE FAILED'; false;
       fi;
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
@@ -179,9 +187,9 @@ script:
     - if [ -n "$DESTDIR" ]; then
           mkdir "../$DESTDIR";
           if $make install install_docs DESTDIR="../$DESTDIR"; then
-              echo -e '+\057\057\057\057 MAKE INSTALL_DOCS OK';
+              echo -e '+\057\057\057\057\057 MAKE INSTALL_DOCS OK';
           else
-              echo -e '+\057\057\057\057 MAKE INSTALL_DOCS FAILED'; false;
+              echo -e '+\057\057\057\057\057 MAKE INSTALL_DOCS FAILED'; false;
           fi;
       fi
     - cd $top
