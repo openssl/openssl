@@ -3,6 +3,21 @@
 =head1 NAME
 
 EVP_PKEY_ASN1_METHOD,
+EVP_PKEY_asn1_new,
+EVP_PKEY_asn1_copy,
+EVP_PKEY_asn1_free,
+EVP_PKEY_asn1_add0,
+EVP_PKEY_asn1_add_alias,
+EVP_PKEY_asn1_set_public,
+EVP_PKEY_asn1_set_private,
+EVP_PKEY_asn1_set_param,
+EVP_PKEY_asn1_set_free,
+EVP_PKEY_asn1_set_ctrl,
+EVP_PKEY_asn1_set_item,
+EVP_PKEY_asn1_set_siginf,
+EVP_PKEY_asn1_set_check,
+EVP_PKEY_asn1_set_security_bits,
+EVP_PKEY_get0_asn1
 - manipulating and registering EVP_PKEY_ASN1_METHOD structure
 
 =head1 SYNOPSIS
@@ -243,17 +258,17 @@ item_sign() MUST return one of:
 
 error
 
-=item 1
+=item Z<>1
 
 item_sign() did everything, OpenSSL internals just needs to pass the
 signature length back.
 
-=item 2
+=item Z<>2
 
 item_sign() did nothing, OpenSSL internal standard routines are
 expected to continue with the default signature production.
 
-=item 3
+=item Z<>3
 
 item_sign() set the algorithm identifier B<algor1> and B<algor2>,
 OpenSSL internals should just sign using those algorithms.
@@ -268,12 +283,12 @@ item_verify() MUST return one of:
 
 error
 
-=item 1
+=item Z<>1
 
 item_sign() did everything, OpenSSL internals just needs to pass the
 signature length back.
 
-=item 2
+=item Z<>2
 
 item_sign() did nothing, OpenSSL internal standard routines are
 expected to continue with the default signature production.
