@@ -154,9 +154,14 @@ sub check()
 
     my $id = "${filename}:1:";
 
+    # Find what section this page is in; assume 3.
+    my $section = 3;
+    $section = 1 if $dirname eq 'apps';
+    $section = $1 if ( $contents =~ /=for comment openssl_manual_section:(\d)/);
+
     &name_synopsis($id, $filename, $contents)
         unless $contents =~ /=for comment generic/
-            or $filename =~ m@man[157]/@;
+            or $section != 3;
 
     print "$id doesn't start with =pod\n"
         if $contents !~ /^=pod/;
@@ -185,7 +190,7 @@ sub check()
 
     if ( $contents !~ /=for comment multiple includes/ ) {
         # Look for multiple consecutive openssl #include lines
-        # (non-consecutive lines are okay; see man3/MD5.pod).
+        # (non-consecutive lines are okay; see crypto/MD5.pod).
         if ( $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms ) {
             my $count = 0;
             foreach my $line ( split /\n+/, $1 ) {
@@ -210,10 +215,6 @@ sub check()
     }
     close $OUT;
     unlink $temp || warn "Can't remove $temp, $!";
-
-    # Find what section this page is in; assume 3.
-    my $section = 3;
-    $section = $1 if $dirname =~ /man([1-9])/;
 
     foreach ((@{$mandatory_sections{'*'}}, @{$mandatory_sections{$section}})) {
         # Skip "return values" if not -s
@@ -436,7 +437,7 @@ sub checkflags() {
     close CFH;
 
     # Get the list of flags from the synopsis
-    open CFH, "<doc/man1/$cmd.pod"
+    open CFH, "<doc/apps/$cmd.pod"
         || die "Can't open $cmd.pod, $!";
     while ( <CFH> ) {
         chop;
@@ -454,7 +455,7 @@ sub checkflags() {
     if ( scalar @undocced > 0 ) {
         $ok = 0;
         foreach ( @undocced ) {
-            print "doc/man1/$cmd.pod: Missing -$_\n";
+            print "doc/apps/$cmd.pod: Missing -$_\n";
         }
     }
 
@@ -467,7 +468,7 @@ sub checkflags() {
         $ok = 0;
         foreach ( @unimpl ) {
             next if defined $skips{$_};
-            print "doc/man1/$cmd.pod: Not implemented -$_\n";
+            print "doc/apps/$cmd.pod: Not implemented -$_\n";
         }
     }
 
@@ -499,8 +500,8 @@ if ( $opt_c ) {
     # See if each has a manpage.
     foreach ( @commands ) {
         next if $_ eq 'help' || $_ eq 'exit';
-        if ( ! -f "doc/man1/$_.pod" ) {
-            print "doc/man1/$_.pod does not exist\n";
+        if ( ! -f "doc/apps/$_.pod" ) {
+            print "doc/apps/$_.pod does not exist\n";
             $ok = 0;
         } else {
             $ok = 0 if not &checkflags($_);
@@ -536,7 +537,7 @@ if ( $opt_n ) {
 }
 
 if ( $opt_u ) {
-    my %temp = &getdocced('doc/man3');
+    my %temp = &getdocced('doc/crypto');
     foreach ( keys %temp ) {
         $docced{$_} = $temp{$_};
     }
