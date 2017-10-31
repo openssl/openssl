@@ -612,7 +612,7 @@ uninstall_html_docs:
 update: generate errors ordinals
 
 generate: generate_apps generate_crypto_bn generate_crypto_objects \
-          generate_crypto_conf generate_crypto_asn1
+          generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
 
 doc-nits:
 	(cd $(SRCDIR); $(PERL) util/find-doc-nits -n -p ) >doc-nits
@@ -652,6 +652,11 @@ generate_crypto_conf:
 generate_crypto_asn1:
 	( cd $(SRCDIR); $(PERL) crypto/asn1/charmap.pl \
 			        > crypto/asn1/charmap.h )
+
+generate_fuzz_oids:
+	( cd $(SRCDIR); $(PERL) fuzz/mkfuzzoids.pl \
+				crypto/objects/obj_dat.h \
+				> fuzz/oids.txt )
 
 # Set to -force to force a rebuild
 ERROR_REBUILD=
