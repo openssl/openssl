@@ -1130,3 +1130,13 @@ ffdhe6144		1129
 ffdhe8192		1130
 cmcCA		1131
 cmcRA		1132
+sm4_ecb		1133
+sm4_cbc		1134
+sm4_ofb128		1135
+sm4_cfb1		1136
+sm4_cfb128		1137
+sm4_cfb8		1138
+sm4_ctr		1139
+ISO_CN		1140
+oscca		1141
+sm_scheme		1142

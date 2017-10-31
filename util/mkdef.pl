@@ -83,7 +83,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
 			 "SHA256", "SHA512", "RMD160",
 			 "MDC2", "WHIRLPOOL", "RSA", "DSA", "DH", "EC", "EC2M",
-			 "HMAC", "AES", "CAMELLIA", "SEED", "GOST", "ARIA",
+			 "HMAC", "AES", "CAMELLIA", "SEED", "GOST", "ARIA", "SM4",
                          "SCRYPT", "CHACHA", "POLY1305", "BLAKE2",
 			 "SIPHASH",
 			 # EC_NISTP_64_GCC_128
