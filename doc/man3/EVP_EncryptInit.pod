@@ -610,20 +610,20 @@ L<evp(7)>
 
 Supported ciphers are listed in:
 
-L<EVP_aes_128_ebc(3)>,
-L<EVP_aria_128_ecb(3)>,
-L<EVP_bf_ecb(3)>,
-L<EVP_camellia_128_ecb(3)>,
-L<EVP_cast5_ecb(3)>,
+L<EVP_aes(3)>,
+L<EVP_aria(3)>,
+L<EVP_bf(3)>,
+L<EVP_camellia(3)>,
+L<EVP_cast5(3)>,
 L<EVP_chacha20(3)>,
-L<EVP_des_ecb(3)>,
-L<EVP_desx_cbc(3)>,
-L<EVP_idea_ecb(3)>,
-L<EVP_idea_ecb(3)>,
-L<EVP_rc2_ecb(3)>,
+L<EVP_des(3)>,
+L<EVP_desx(3)>,
+L<EVP_idea(3)>,
+L<EVP_rc2(3)>,
 L<EVP_rc4(3)>,
-L<EVP_rc5_32_12_16_ecb(3)>,
-L<EVP_seed_ecb(3)>
+L<EVP_rc5(3)>,
+L<EVP_seed(3)>,
+L<EVP_sm4(3)>
 
 =head1 HISTORY
 
