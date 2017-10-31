@@ -76,6 +76,8 @@ struct evp_pkey_method_st {
                          size_t siglen, const unsigned char *tbs,
                          size_t tbslen);
     int (*check) (EVP_PKEY *pkey);
+    int (*public_check) (EVP_PKEY *pkey);
+    int (*param_check) (EVP_PKEY *pkey);
 } /* EVP_PKEY_METHOD */ ;
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_METHOD)

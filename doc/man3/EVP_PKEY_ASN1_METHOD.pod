@@ -16,6 +16,8 @@ EVP_PKEY_asn1_set_ctrl,
 EVP_PKEY_asn1_set_item,
 EVP_PKEY_asn1_set_siginf,
 EVP_PKEY_asn1_set_check,
+EVP_PKEY_asn1_set_public_check,
+EVP_PKEY_asn1_set_param_check,
 EVP_PKEY_asn1_set_security_bits,
 EVP_PKEY_get0_asn1
 - manipulating and registering EVP_PKEY_ASN1_METHOD structure
@@ -99,6 +101,12 @@ EVP_PKEY_get0_asn1
 
  void EVP_PKEY_asn1_set_check(EVP_PKEY_ASN1_METHOD *ameth,
                               int (*pkey_check) (const EVP_PKEY *pk));
+
+ void EVP_PKEY_asn1_set_public_check(EVP_PKEY_ASN1_METHOD *ameth,
+                                     int (*pkey_pub_check) (const EVP_PKEY *pk));
+
+ void EVP_PKEY_asn1_set_param_check(EVP_PKEY_ASN1_METHOD *ameth,
+                                    int (*pkey_param_check) (const EVP_PKEY *pk));
 
  void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
                                       int (*pkey_security_bits) (const EVP_PKEY
@@ -309,10 +317,15 @@ It's called as part of L<X509_check_purpose(3)>, L<X509_check_ca(3)>
 and L<X509_check_issued(3)>.
 
  int (*pkey_check) (const EVP_PKEY *pk);
+ int (*pkey_public_check) (const EVP_PKEY *pk);
+ int (*pkey_param_check) (const EVP_PKEY *pk);
 
-The pkey_check() method is used to check the validity of B<pk>.
-It MUST return 0 for an invalid key, or 1 for a valid key.
-It's called by L<EVP_PKEY_check(3)>.
+The pkey_check(), pkey_public_check() and pkey_param_check() methods are used
+to check the validity of B<pk> for key-pair, public component and parameters,
+respectively.
+They MUST return 0 for an invalid key, or 1 for a valid key.
+They are called by L<EVP_PKEY_check(3)>, L<EVP_PKEY_public_check(3)> and
+L<EVP_PKEY_param_check(3)> respectively.
 
 =head2 Functions
 
@@ -354,7 +367,8 @@ when initializing the application.
 EVP_PKEY_asn1_set_public(), EVP_PKEY_asn1_set_private(),
 EVP_PKEY_asn1_set_param(), EVP_PKEY_asn1_set_free(),
 EVP_PKEY_asn1_set_ctrl(), EVP_PKEY_asn1_set_item(),
-EVP_PKEY_asn1_set_siginf(), EVP_PKEY_asn1_set_check(), and
+EVP_PKEY_asn1_set_siginf(), EVP_PKEY_asn1_set_check(),
+EVP_PKEY_asn1_set_public_check(), EVP_PKEY_asn1_set_param_check() and
 EVP_PKEY_asn1_set_security_bits() set the diverse methods of the given
 B<EVP_PKEY_ASN1_METHOD> object.
 

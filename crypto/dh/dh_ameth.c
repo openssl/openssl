@@ -509,6 +509,25 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
 }
 
+static int dh_pkey_public_check(const EVP_PKEY *pkey)
+{
+    DH *dh = pkey->pkey.dh;
+
+    if (dh->pub_key == NULL) {
+        DHerr(DH_F_DH_PKEY_PUBLIC_CHECK, DH_R_MISSING_PUBKEY);
+        return 0;
+    }
+
+    return DH_check_pub_key_ex(dh, dh->pub_key);
+}
+
+static int dh_pkey_param_check(const EVP_PKEY *pkey)
+{
+    DH *dh = pkey->pkey.dh;
+
+    return DH_check_ex(dh);
+}
+
 const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
     EVP_PKEY_DH,
     EVP_PKEY_DH,
@@ -539,7 +558,13 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
     0,
 
     int_dh_free,
-    0
+    0,
+
+    0, 0, 0, 0, 0,
+
+    0,
+    dh_pkey_public_check,
+    dh_pkey_param_check
 };
 
 const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {
@@ -572,7 +597,13 @@ const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {
     0,
 
     int_dh_free,
-    dh_pkey_ctrl
+    dh_pkey_ctrl,
+
+    0, 0, 0, 0, 0,
+
+    0,
+    dh_pkey_public_check,
+    dh_pkey_param_check
 };
 
 #ifndef OPENSSL_NO_CMS

@@ -3,7 +3,9 @@
 =head1 NAME
 
 DH_generate_parameters_ex, DH_generate_parameters,
-DH_check, DH_check_params - generate and check Diffie-Hellman
+DH_check, DH_check_params,
+DH_check_ex, DH_check_params_ex, DH_check_pub_key_ex
+- generate and check Diffie-Hellman
 parameters
 
 =head1 SYNOPSIS
@@ -14,6 +16,10 @@ parameters
 
  int DH_check(DH *dh, int *codes);
  int DH_check_params(DH *dh, int *codes);
+
+ int DH_check_ex(const DH *dh);
+ int DH_check_params_ex(const DH *dh);
+ int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key);
 
 Deprecated:
 
@@ -105,6 +111,11 @@ The parameter B<j> is invalid.
 
 =back
 
+DH_check_ex(), DH_check_params() and DH_check_pub_key_ex() are similiar with
+DH_check() and DH_check_params() respectively, but the error reasons are set
+to the OpenSSL error handling framework instead of returning by the function
+parameters.
+
 =head1 RETURN VALUES
 
 DH_generate_parameters_ex(), DH_check() and DH_check_params() return 1
@@ -112,6 +123,9 @@ if the check could be performed, 0 otherwise.
 
 DH_generate_parameters() returns a pointer to the DH structure or NULL if
 the parameter generation fails.
+
+DH_check_ex(), DH_check_params() and DH_check_pub_key_ex() return 1 if the
+check is successful, 0 for failed.
 
 The error codes can be obtained by L<ERR_get_error(3)>.
 
@@ -127,7 +141,7 @@ DH_generate_parameters_ex() instead.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

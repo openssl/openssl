@@ -24,6 +24,7 @@ B<openssl> B<pkey>
 [B<-pubout>]
 [B<-engine id>]
 [B<-check>]
+[B<-pubcheck>]
 
 =head1 DESCRIPTION
 
@@ -116,6 +117,11 @@ for all available algorithms.
 
 This option checks the consistency of a key pair for both public and private
 components.
+
+=item B<-pubcheck>
+
+This option checks the correctness of either a public key or the public component
+of a key pair.
 
 =back
 
