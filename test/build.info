@@ -395,6 +395,9 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     IF[{- !$disabled{siphash} -}]
       PROGRAMS_NO_INST=siphash_internal_test
     ENDIF
+    IF[{- !$disabled{sm4} -}]
+      PROGRAMS_NO_INST=sm4_internal_test
+    ENDIF
 
     SOURCE[poly1305_internal_test]=poly1305_internal_test.c
     INCLUDE[poly1305_internal_test]=.. ../include ../crypto/include
@@ -431,6 +434,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     SOURCE[siphash_internal_test]=siphash_internal_test.c
     INCLUDE[siphash_internal_test]=.. ../include ../crypto/include
     DEPEND[siphash_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[sm4_internal_test]=sm4_internal_test.c
+    INCLUDE[sm4_internal_test]=.. ../include ../crypto/include
+    DEPEND[sm4_internal_test]=../libcrypto.a libtestutil.a
   ENDIF
 
   IF[{- !$disabled{mdc2} -}]
