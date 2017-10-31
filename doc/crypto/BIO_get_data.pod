@@ -51,7 +51,7 @@ L<bio>, L<BIO_meth_new>
 
 =head1 HISTORY
 
-The functions described here were added in OpenSSL version 1.1.0.
+The functions described here were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 

@@ -88,7 +88,7 @@ L<DSA_sign(3)>, L<DSA_size(3)>, L<DSA_meth_new(3)>
 
 =head1 HISTORY
 
-The functions described here were added in OpenSSL version 1.1.0.
+The functions described here were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
