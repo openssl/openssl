@@ -487,10 +487,11 @@ EVP_get_cipherbynid(), and EVP_get_cipherbyobj() are implemented as macros.
 
 =head1 BUGS
 
-EVP_MAX_KEY_LENGTH and EVP_MAX_IV_LENGTH only refer to the internal ciphers with
-default key lengths. If custom ciphers exceed these values the results are
-unpredictable. This is because it has become standard practice to define a
-generic key as a fixed unsigned char array containing EVP_MAX_KEY_LENGTH bytes.
+B<EVP_MAX_KEY_LENGTH> and B<EVP_MAX_IV_LENGTH> only refer to the internal
+ciphers with default key lengths. If custom ciphers exceed these values the
+results are unpredictable. This is because it has become standard practice to
+define a generic key as a fixed unsigned char array containing
+B<EVP_MAX_KEY_LENGTH> bytes.
 
 The ASN1 code is incomplete (and sometimes inaccurate) it has only been tested
 for certain common S/MIME ciphers (RC2, DES, triple DES) in CBC mode.
