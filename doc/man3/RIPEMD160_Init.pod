@@ -53,7 +53,7 @@ functions directly.
 
 =head1 CONFORMING TO
 
-ISO/IEC 10118-3 (draft) (??)
+ISO/IEC 10118-3:2016 Dedicated Hash-Function 1 (RIPEMD-160).
 
 =head1 SEE ALSO
 
@@ -61,7 +61,7 @@ L<EVP_DigestInit(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
