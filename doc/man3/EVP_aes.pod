@@ -94,12 +94,20 @@ EVP_aes_256_cbc_hmac_sha1()
 Authenticated encryption with AES in CBC mode using SHA-1 as HMAC, with keys of
 128 and 256 bits length respectively. The authentication tag is 160 bits long.
 
+WARNING: this is not intended for usage outside of TLS and requires calling of
+some undocumented ctrl functions. These ciphers do not conform to the EVP AEAD
+interface.
+
 =item EVP_aes_128_cbc_hmac_sha256(),
 EVP_aes_256_cbc_hmac_sha256()
 
 Authenticated encryption with AES in CBC mode using SHA256 (SHA-2, 256-bits) as
 HMAC, with keys of 128 and 256 bits length respectively. The authentication tag
 is 256 bits long.
+
+WARNING: this is not intended for usage outside of TLS and requires calling of
+some undocumented ctrl functions. These ciphers do not conform to the EVP AEAD
+interface.
 
 =item EVP_aes_128_ccm(),
 EVP_aes_192_ccm(),

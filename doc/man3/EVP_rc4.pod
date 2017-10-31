@@ -38,6 +38,10 @@ use EVP_rc4() and the EVP_CIPHER_CTX_set_key_length() function.
 
 Authenticated encryption with the RC4 stream cipher with MD5 as HMAC.
 
+WARNING: this is not intended for usage outside of TLS and requires calling of
+some undocumented ctrl functions. These ciphers do not conform to the EVP AEAD
+interface.
+
 =back
 
 =head1 RETURN VALUES
