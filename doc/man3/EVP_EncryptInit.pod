@@ -379,9 +379,8 @@ For OCB, this call is valid when decrypting data to set the expected tag,
 and before encryption to set the desired tag length.
 
 In OCB mode, calling this before encryption with C<tag> set to C<NULL> sets the
-tag length.  C<taglen> must either be 16 or the value previously set via
-B<EVP_CTRL_AEAD_SET_TAG>.  If this is not called prior to encryption, a default
-tag length is used.
+tag length.  If this is not called prior to encryption, a default tag length is
+used.
 
 For OCB AES, the default tag length is 16 (i.e. 128 bits).  It is also the
 maximum tag length for OCB.
