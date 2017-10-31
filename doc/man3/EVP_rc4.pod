@@ -31,8 +31,10 @@ length of 128 bits.
 
 =item EVP_rc4_40()
 
-RC4 stream cipher with 40 bit key length. This is obsolete and new code should
-use EVP_rc4() and the EVP_CIPHER_CTX_set_key_length() function.
+RC4 stream cipher with 40 bit key length.
+
+WARNING: this function is obsolete. Its usage should be replaced with the
+EVP_rc4() and the EVP_CIPHER_CTX_set_key_length() functions.
 
 =item EVP_rc4_hmac_md5()
 

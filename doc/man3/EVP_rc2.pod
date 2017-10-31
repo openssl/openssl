@@ -40,9 +40,11 @@ bits" or "effective key length". By default both are set to 128 bits.
 EVP_rc2_64_cbc()
 
 RC2 algorithm in CBC mode with a default key length and effective key length of
-40 and 64 bits. These are obsolete and new code should use EVP_rc2_cbc(),
-EVP_CIPHER_CTX_set_key_length() and EVP_CIPHER_CTX_ctrl() to set the key
-length and effective key length.
+40 and 64 bits.
+
+WARNING: these functions are obsolete. Their usage should be replaced with the
+EVP_rc2_cbc(), EVP_CIPHER_CTX_set_key_length() and EVP_CIPHER_CTX_ctrl()
+functions to set the key length and effective key length.
 
 =back
 
