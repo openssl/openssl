@@ -232,7 +232,7 @@ static int chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             else if (len != plen + POLY1305_BLOCK_SIZE)
                 return -1;
 
-            if (ctx->encrypt) {                 /* plaintext */
+            if (EVP_CIPHER_CTX_encrypting(ctx)) {                 /* plaintext */
                 chacha_cipher(ctx, out, in, plen);
                 Poly1305_Update(POLY1305_ctx(actx), out, plen);
                 in += plen;
@@ -290,12 +290,12 @@ static int chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
             Poly1305_Update(POLY1305_ctx(actx), temp, POLY1305_BLOCK_SIZE);
         }
-        Poly1305_Final(POLY1305_ctx(actx), ctx->encrypt ? actx->tag
+        Poly1305_Final(POLY1305_ctx(actx), EVP_CIPHER_CTX_encrypting(ctx) ? actx->tag
                                                         : temp);
         actx->mac_inited = 0;
 
         if (in != NULL && len != plen) {        /* tls mode */
-            if (ctx->encrypt) {
+            if (EVP_CIPHER_CTX_encrypting(ctx)) {
                 memcpy(out, actx->tag, POLY1305_BLOCK_SIZE);
             } else {
                 if (CRYPTO_memcmp(temp, in, POLY1305_BLOCK_SIZE)) {
@@ -304,7 +304,7 @@ static int chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 }
             }
         }
-        else if (!ctx->encrypt) {
+        else if (!EVP_CIPHER_CTX_encrypting(ctx)) {
             if (CRYPTO_memcmp(temp, actx->tag, actx->tag_len))
                 return -1;
         }
@@ -383,7 +383,7 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
         return 1;
 
     case EVP_CTRL_AEAD_GET_TAG:
-        if (arg <= 0 || arg > POLY1305_BLOCK_SIZE || !ctx->encrypt)
+        if (arg <= 0 || arg > POLY1305_BLOCK_SIZE || !EVP_CIPHER_CTX_encrypting(ctx))
             return 0;
         memcpy(ptr, actx->tag, arg);
         return 1;
@@ -397,7 +397,7 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
 
             len = aad[EVP_AEAD_TLS1_AAD_LEN - 2] << 8 |
                   aad[EVP_AEAD_TLS1_AAD_LEN - 1];
-            if (!ctx->encrypt) {
+            if (!EVP_CIPHER_CTX_encrypting(ctx)) {
                 if (len < POLY1305_BLOCK_SIZE)
                     return 0;
                 len -= POLY1305_BLOCK_SIZE;     /* discount attached tag */
