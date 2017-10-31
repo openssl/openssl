@@ -32,7 +32,7 @@ details of the B<EVP_MD> structure.
 
 =head1 CONFORMING TO
 
-N/A.
+ISO/IEC 10118-3:2016 Dedicated Hash-Function 1 (RIPEMD-160).
 
 =head1 SEE ALSO
 
