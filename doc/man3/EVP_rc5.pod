@@ -10,8 +10,6 @@ EVP_rc5_32_12_16_ofb
 
 =head1 SYNOPSIS
 
-=for comment generic
-
  #include <openssl/evp.h>
 
  const EVP_CIPHER *EVP_rc5_32_12_16_cbc(void)

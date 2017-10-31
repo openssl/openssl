@@ -12,8 +12,6 @@ EVP_rc2_64_cbc
 
 =head1 SYNOPSIS
 
-=for comment generic
-
  #include <openssl/evp.h>
 
  const EVP_CIPHER *EVP_rc2_cbc(void)

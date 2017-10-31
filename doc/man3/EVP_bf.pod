@@ -10,8 +10,6 @@ EVP_bf_ofb
 
 =head1 SYNOPSIS
 
-=for comment generic
-
  #include <openssl/evp.h>
 
  const EVP_CIPHER *EVP_bf_cbc(void)

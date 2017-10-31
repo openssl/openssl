@@ -9,8 +9,6 @@ EVP_rc4_hmac_md5
 
 =head1 SYNOPSIS
 
-=for comment generic
-
  #include <openssl/evp.h>
 
  const EVP_CIPHER *EVP_rc4(void)

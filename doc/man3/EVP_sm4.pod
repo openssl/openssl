@@ -11,8 +11,6 @@ EVP_sm4_ctr
 
 =head1 SYNOPSIS
 
-=for comment generic
-
  #include <openssl/evp.h>
 
  const EVP_CIPHER *EVP_sm4_cbc(void)
