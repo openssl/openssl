@@ -346,31 +346,47 @@ as it is corrupted.
 
 =head2 GCM and OCB Modes
 
-The following ctrls are supported in both GCM and OCB modes:
+The following I<ctrl>s are supported in GCM and OCB modes.
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL);
+=over 4
 
-Sets the IV length: this call can only be made before specifying an IV. If
-not called a default IV length is used. For GCM AES and OCB AES the default is
-12 (i.e. 96 bits). For OCB mode the maximum is 15.
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag);
+Sets the IV length. This call can only be made before specifying an IV. If
+not called a default IV length is used.
 
-Writes B<taglen> bytes of the tag value to the buffer indicated by B<tag>.
+For GCM AES and OCB AES the default is 12 (i.e. 96 bits). For OCB mode the
+maximum is 15.
+
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen, tag)
+
+Writes C<taglen> bytes of the tag value to the buffer indicated by C<tag>.
 This call can only be made when encrypting data and B<after> all data has been
-processed (e.g. after an EVP_EncryptFinal() call). For OCB mode the taglen must
-either be 16 or the value previously set via EVP_CTRL_OCB_SET_TAGLEN.
+processed (e.g. after an EVP_EncryptFinal() call).
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
+For OCB, C<taglen> must either be 16 or the value previously set via
+B<EVP_CTRL_AEAD_SET_TAG>.
 
-Sets the expected tag to B<taglen> bytes from B<tag>. This call is only valid
-when decrypting data. For OCB mode, the taglen must either be 16 or the value
-previously set via EVP_CTRL_AEAD_SET_TAG.
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag)
 
-In OCB mode calling this with B<tag> set to NULL sets the tag length. The tag
-length can only be set before specifying an IV. If not called a default tag
-length is used. For OCB AES the default is 16 (i.e. 128 bits). This is also the
+Sets the expected tag to C<taglen> bytes from C<tag>.
+The tag length can only be set before specifying an IV.
+C<taglen> must be between 1 and 16 inclusive.
+
+For GCM, this call is only valid when decrypting data.
+
+For OCB, this call is valid when decrypting data to set the expected tag,
+and before encryption to set the desired tag length.
+
+In OCB mode, calling this before encryption with C<tag> set to C<NULL> sets the
+tag length.  C<taglen> must either be 16 or the value previously set via
+B<EVP_CTRL_AEAD_SET_TAG>.  If this is not called prior to encryption, a default
+tag length is used.
+
+For OCB AES, the default tag length is 16 (i.e. 128 bits).  It is also the
 maximum tag length for OCB.
+
+=back
 
 =head2 CCM Mode
 
@@ -382,24 +398,28 @@ EVP_CipherUpdate(), EVP_EncryptUpdate() or EVP_DecryptUpdate() with the output
 and input parameters (B<in> and B<out>) set to B<NULL> and the length passed in
 the B<inl> parameter.
 
-The following ctrls are supported in CCM mode:
+The following I<ctrl>s are supported in CCM mode.
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag);
+=over 4
+
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen, tag)
 
 This call is made to set the expected B<CCM> tag value when decrypting or
-the length of the tag (with the B<tag> parameter set to NULL) when encrypting.
+the length of the tag (with the C<tag> parameter set to NULL) when encrypting.
 The tag length is often referred to as B<M>. If not set a default value is
 used (12 for AES).
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_L, ivlen, NULL);
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_L, ivlen, NULL)
 
 Sets the CCM B<L> value. If not set a default is used (8 for AES).
 
- EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL);
+=item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
 
-Sets the CCM nonce (IV) length: this call can only be made before specifying
-an nonce value. The nonce length is given by B<15 - L> so it is 7 by default
-for AES.
+Sets the CCM nonce (IV) length. This call can only be made before specifying an
+nonce value. The nonce length is given by B<15 - L> so it is 7 by default for
+AES.
+
+=back
 
 =head1 NOTES
 
