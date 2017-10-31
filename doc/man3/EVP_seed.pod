@@ -14,10 +14,10 @@ EVP_seed_ofb
 
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_ciphername(void)
-
-I<EVP_ciphername> is used a placeholder for any of the described cipher
-functions, such as I<EVP_seed_cbc>.
+ const EVP_CIPHER *EVP_seed_cbc(void)
+ const EVP_CIPHER *EVP_seed_cfb(void)
+ const EVP_CIPHER *EVP_seed_ecb(void)
+ const EVP_CIPHER *EVP_seed_ofb(void)
 
 =head1 DESCRIPTION
 
