@@ -86,7 +86,7 @@ L<OCSP_RESPID_free(3)>
 =head1 HISTORY
 
 The OCSP_RESPID_set_by_name(), OCSP_RESPID_set_by_key() and OCSP_RESPID_match()
-functions were added in OpenSSL version 1.1.0a.
+functions were added in OpenSSL 1.1.0a.
 
 =head1 COPYRIGHT
 

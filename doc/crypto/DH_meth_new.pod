@@ -142,7 +142,7 @@ L<DH_set_method(3)>, L<DH_size(3)>, L<DH_get0_pqg(3)>
 
 =head1 HISTORY
 
-The functions described here were added in OpenSSL version 1.1.0.
+The functions described here were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 

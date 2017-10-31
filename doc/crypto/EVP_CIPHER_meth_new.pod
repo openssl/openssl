@@ -223,8 +223,8 @@ L<EVP_EncryptInit>
 =head1 HISTORY
 
 The B<EVP_CIPHER> structure was openly available in OpenSSL before version
-1.1.
-The functions described here were added in OpenSSL version 1.1.
+1.1.0.
+The functions described here were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
