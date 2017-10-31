@@ -13,10 +13,9 @@ EVP_rc4_hmac_md5
 
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_ciphername(void)
-
-I<EVP_ciphername> is used a placeholder for any of the described cipher
-functions, such as I<EVP_rc4>.
+ const EVP_CIPHER *EVP_rc4(void)
+ const EVP_CIPHER *EVP_rc4_40(void)
+ const EVP_CIPHER *EVP_rc4_hmac_md5(void)
 
 =head1 DESCRIPTION
 

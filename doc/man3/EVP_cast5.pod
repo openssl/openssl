@@ -14,10 +14,10 @@ EVP_cast5_ofb
 
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_ciphername(void)
-
-I<EVP_ciphername> is used a placeholder for any of the described cipher
-functions, such as I<EVP_cast5_cbc>.
+ const EVP_CIPHER *EVP_cast5_cbc(void)
+ const EVP_CIPHER *EVP_cast5_cfb(void)
+ const EVP_CIPHER *EVP_cast5_ecb(void)
+ const EVP_CIPHER *EVP_cast5_ofb(void)
 
 =head1 DESCRIPTION
 

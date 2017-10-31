@@ -12,10 +12,8 @@ EVP_chacha20_poly1305
 
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_ciphername(void)
-
-I<EVP_ciphername> is used a placeholder for any of the described cipher
-functions, such as I<EVP_chacha20>.
+ const EVP_CIPHER *EVP_chacha20(void)
+ const EVP_CIPHER *EVP_chacha20_poly1305(void)
 
 =head1 DESCRIPTION
 

@@ -14,10 +14,10 @@ EVP_rc5_32_12_16_ofb
 
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_ciphername(void)
-
-I<EVP_ciphername> is used a placeholder for any of the described cipher
-functions, such as I<EVP_rc5_32_12_16_cbc>.
+ const EVP_CIPHER *EVP_rc5_32_12_16_cbc(void)
+ const EVP_CIPHER *EVP_rc5_32_12_16_cfb(void)
+ const EVP_CIPHER *EVP_rc5_32_12_16_ecb(void)
+ const EVP_CIPHER *EVP_rc5_32_12_16_ofb(void)
 
 =head1 DESCRIPTION
 

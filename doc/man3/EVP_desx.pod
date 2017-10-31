@@ -11,10 +11,7 @@ EVP_desx_cbc
 
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_ciphername(void)
-
-I<EVP_ciphername> is used a placeholder for any of the described cipher
-functions, such as I<EVP_desx_cbc>.
+ const EVP_CIPHER *EVP_desx_cbc(void)
 
 =head1 DESCRIPTION
 
