@@ -129,15 +129,22 @@ EVP_aes_192_wrap(),
 EVP_aes_256_wrap(),
 EVP_aes_256_wrap_pad()
 
-
 AES key wrap with 128, 192 and 256 bit keys, as according to RFC 3394 section
 2.2.1 ("wrap") and RFC 5649 section 4.1 ("wrap with padding") respectively.
 
 =item EVP_aes_128_xts(),
 EVP_aes_256_xts()
 
-AES XTS mode for 128 and 256 bit keys respectively.
+AES XTS mode (XTS-AES) is standardized in IEEE Std. 1619-2007 and described in NIST
+SP 800-38E. The XTS (XEX-based tweaked-codebook mode with ciphertext stealing)
+mode was designed by Prof. Phillip Rogaway of University of California, Davis,
+intended for encrypting data on a storage device.
 
+XTS-AES provides confidentiality but not authentication of data. It also
+requires a key of double-length for protection of a certain key size.
+In particular, XTS-AES-128 (B<EVP_aes_128_xts>) takes input of a 256-bit key to
+achieve AES 128-bit security, and XTS-AES-256 (B<EVP_aes_256_xts>) takes input
+of a 512-bit key to achieve AES 256-bit security.
 
 =back
 
