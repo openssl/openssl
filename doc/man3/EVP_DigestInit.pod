@@ -123,12 +123,14 @@ automatically cleaned up.
 Similar to EVP_MD_CTX_copy_ex() except the destination B<out> does not have to
 be initialized.
 
-=item EVP_MD_size(), EVP_MD_CTX_size()
+=item EVP_MD_size(),
+EVP_MD_CTX_size()
 
 Return the size of the message digest when passed an B<EVP_MD> or an
 B<EVP_MD_CTX> structure, i.e. the size of the hash.
 
-=item EVP_MD_block_size(), EVP_MD_CTX_block_size()
+=item EVP_MD_block_size(),
+EVP_MD_CTX_block_size()
 
 Return the block size of the message digest when passed an B<EVP_MD> or an
 B<EVP_MD_CTX> structure.
