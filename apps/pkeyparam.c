@@ -16,7 +16,8 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_IN, OPT_OUT, OPT_TEXT, OPT_NOOUT, OPT_ENGINE
+    OPT_IN, OPT_OUT, OPT_TEXT, OPT_NOOUT,
+    OPT_ENGINE, OPT_CHECK
 } OPTION_CHOICE;
 
 const OPTIONS pkeyparam_options[] = {
@@ -28,6 +29,7 @@ const OPTIONS pkeyparam_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    {"check", OPT_CHECK, '-', "Check key param consistency"},
     {NULL}
 };
 
@@ -36,7 +38,7 @@ int pkeyparam_main(int argc, char **argv)
     ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL;
     EVP_PKEY *pkey = NULL;
-    int text = 0, noout = 0, ret = 1;
+    int text = 0, noout = 0, ret = 1, check = 0;
     OPTION_CHOICE o;
     char *infile = NULL, *outfile = NULL, *prog;
 
@@ -67,6 +69,9 @@ int pkeyparam_main(int argc, char **argv)
         case OPT_NOOUT:
             noout = 1;
             break;
+        case OPT_CHECK:
+            check = 1;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -84,6 +89,38 @@ int pkeyparam_main(int argc, char **argv)
         BIO_printf(bio_err, "Error reading parameters\n");
         ERR_print_errors(bio_err);
         goto end;
+    }
+
+    if (check) {
+        int r;
+        EVP_PKEY_CTX *ctx;
+
+        ctx = EVP_PKEY_CTX_new(pkey, e);
+        if (ctx == NULL) {
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+
+        r = EVP_PKEY_param_check(ctx);
+
+        if (r == 1) {
+            BIO_printf(out, "Parameters are valid\n");
+        } else {
+            /*
+             * Note: at least for RSA keys if this function returns
+             * -1, there will be no error reasons.
+             */
+            unsigned long err;
+
+            BIO_printf(out, "Parameters are invalid\n");
+
+            while ((err = ERR_peek_error()) != 0) {
+                BIO_printf(out, "Detailed error: %s\n",
+                           ERR_reason_error_string(err));
+                ERR_get_error(); /* remove err from error stack */
+            }
+        }
+        EVP_PKEY_CTX_free(ctx);
     }
 
     if (!noout)

@@ -14,6 +14,7 @@ B<openssl> B<pkeyparam>
 [B<-text>]
 [B<-noout>]
 [B<-engine id>]
+[B<-check>]
 
 =head1 DESCRIPTION
 
@@ -52,6 +53,10 @@ Specifying an engine (by its unique B<id> string) will cause B<pkeyparam>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
+
+=item B<-check>
+
+This option checks the correctness of parameters.
 
 =back
 

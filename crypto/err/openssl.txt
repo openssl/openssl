@@ -351,6 +351,9 @@ CT_F_SCT_SET_VERSION:104:SCT_set_version
 DH_F_COMPUTE_KEY:102:compute_key
 DH_F_DHPARAMS_PRINT_FP:101:DHparams_print_fp
 DH_F_DH_BUILTIN_GENPARAMS:106:dh_builtin_genparams
+DH_F_DH_CHECK_EX:121:DH_check_ex
+DH_F_DH_CHECK_PARAMS_EX:122:DH_check_params_ex
+DH_F_DH_CHECK_PUB_KEY_EX:123:DH_check_pub_key_ex
 DH_F_DH_CMS_DECRYPT:114:dh_cms_decrypt
 DH_F_DH_CMS_SET_PEERKEY:115:dh_cms_set_peerkey
 DH_F_DH_CMS_SET_SHARED_INFO:116:dh_cms_set_shared_info
@@ -360,6 +363,7 @@ DH_F_DH_METH_SET1_NAME:119:DH_meth_set1_name
 DH_F_DH_NEW_BY_NID:104:DH_new_by_nid
 DH_F_DH_NEW_METHOD:105:DH_new_method
 DH_F_DH_PARAM_DECODE:107:dh_param_decode
+DH_F_DH_PKEY_PUBLIC_CHECK:124:dh_pkey_public_check
 DH_F_DH_PRIV_DECODE:110:dh_priv_decode
 DH_F_DH_PRIV_ENCODE:111:dh_priv_encode
 DH_F_DH_PUB_DECODE:108:dh_pub_decode
@@ -542,6 +546,7 @@ EC_F_EC_KEY_SIMPLE_CHECK_KEY:258:ec_key_simple_check_key
 EC_F_EC_KEY_SIMPLE_OCT2PRIV:259:ec_key_simple_oct2priv
 EC_F_EC_KEY_SIMPLE_PRIV2OCT:260:ec_key_simple_priv2oct
 EC_F_EC_PKEY_CHECK:273:ec_pkey_check
+EC_F_EC_PKEY_PARAM_CHECK:274:ec_pkey_param_check
 EC_F_EC_POINTS_MAKE_AFFINE:136:EC_POINTs_make_affine
 EC_F_EC_POINT_ADD:112:EC_POINT_add
 EC_F_EC_POINT_CMP:113:EC_POINT_cmp
@@ -692,6 +697,8 @@ EVP_F_EVP_PKEY_KEYGEN_INIT:147:EVP_PKEY_keygen_init
 EVP_F_EVP_PKEY_NEW:106:EVP_PKEY_new
 EVP_F_EVP_PKEY_PARAMGEN:148:EVP_PKEY_paramgen
 EVP_F_EVP_PKEY_PARAMGEN_INIT:149:EVP_PKEY_paramgen_init
+EVP_F_EVP_PKEY_PARAM_CHECK:189:EVP_PKEY_param_check
+EVP_F_EVP_PKEY_PUBLIC_CHECK:190:EVP_PKEY_public_check
 EVP_F_EVP_PKEY_SET1_ENGINE:187:EVP_PKEY_set1_engine
 EVP_F_EVP_PKEY_SIGN:140:EVP_PKEY_sign
 EVP_F_EVP_PKEY_SIGN_INIT:141:EVP_PKEY_sign_init
@@ -1794,18 +1801,29 @@ CT_R_UNSUPPORTED_VERSION:103:unsupported version
 DH_R_BAD_GENERATOR:101:bad generator
 DH_R_BN_DECODE_ERROR:109:bn decode error
 DH_R_BN_ERROR:106:bn error
+DH_R_CHECK_INVALID_J_VALUE:115:check invalid j value
+DH_R_CHECK_INVALID_Q_VALUE:116:check invalid q value
+DH_R_CHECK_PUBKEY_INVALID:122:check pubkey invalid
+DH_R_CHECK_PUBKEY_TOO_LARGE:123:check pubkey too large
+DH_R_CHECK_PUBKEY_TOO_SMALL:124:check pubkey too small
+DH_R_CHECK_P_NOT_PRIME:117:check p not prime
+DH_R_CHECK_P_NOT_SAFE_PRIME:118:check p not safe prime
+DH_R_CHECK_Q_NOT_PRIME:119:check q not prime
 DH_R_DECODE_ERROR:104:decode error
 DH_R_INVALID_PARAMETER_NAME:110:invalid parameter name
 DH_R_INVALID_PARAMETER_NID:114:invalid parameter nid
 DH_R_INVALID_PUBKEY:102:invalid public key
 DH_R_KDF_PARAMETER_ERROR:112:kdf parameter error
 DH_R_KEYS_NOT_SET:108:keys not set
+DH_R_MISSING_PUBKEY:125:missing pubkey
 DH_R_MODULUS_TOO_LARGE:103:modulus too large
+DH_R_NOT_SUITABLE_GENERATOR:120:not suitable generator
 DH_R_NO_PARAMETERS_SET:107:no parameters set
 DH_R_NO_PRIVATE_VALUE:100:no private value
 DH_R_PARAMETER_ENCODING_ERROR:105:parameter encoding error
 DH_R_PEER_KEY_ERROR:111:peer key error
 DH_R_SHARED_INFO_ERROR:113:shared info error
+DH_R_UNABLE_TO_CHECK_GENERATOR:121:unable to check generator
 DSA_R_BAD_Q_VALUE:102:bad q value
 DSA_R_BN_DECODE_ERROR:108:bn decode error
 DSA_R_BN_ERROR:109:bn error

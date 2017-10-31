@@ -4427,3 +4427,14 @@ EVP_sm4_ecb                             4371	1_1_1	EXIST::FUNCTION:SM4
 EVP_sm4_cfb128                          4372	1_1_1	EXIST::FUNCTION:SM4
 EVP_sm3                                 4373	1_1_1	EXIST::FUNCTION:SM3
 OCSP_resp_get0_signer                   4374	1_1_0h	EXIST::FUNCTION:OCSP
+EVP_PKEY_public_check                   4375	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_param_check                    4376	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_meth_set_public_check          4377	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_meth_set_param_check           4378	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_meth_get_public_check          4379	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_meth_get_param_check           4380	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_asn1_set_public_check          4381	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_asn1_set_param_check           4382	1_1_1	EXIST::FUNCTION:
+DH_check_ex                             4383	1_1_1	EXIST::FUNCTION:DH
+DH_check_pub_key_ex                     4384	1_1_1	EXIST::FUNCTION:DH
+DH_check_params_ex                      4385	1_1_1	EXIST::FUNCTION:DH

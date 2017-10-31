@@ -18,7 +18,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE,
     OPT_IN, OPT_OUT, OPT_PUBIN, OPT_PUBOUT, OPT_TEXT_PUB,
-    OPT_TEXT, OPT_NOOUT, OPT_MD, OPT_TRADITIONAL, OPT_CHECK
+    OPT_TEXT, OPT_NOOUT, OPT_MD, OPT_TRADITIONAL, OPT_CHECK, OPT_PUB_CHECK
 } OPTION_CHOICE;
 
 const OPTIONS pkey_options[] = {
@@ -42,6 +42,7 @@ const OPTIONS pkey_options[] = {
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"check", OPT_CHECK, '-', "Check key consistency"},
+    {"pubcheck", OPT_PUB_CHECK, '-', "Check public key consistency"},
     {NULL}
 };
 
@@ -56,7 +57,7 @@ int pkey_main(int argc, char **argv)
     OPTION_CHOICE o;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM;
     int pubin = 0, pubout = 0, pubtext = 0, text = 0, noout = 0, ret = 1;
-    int private = 0, traditional = 0, check = 0;
+    int private = 0, traditional = 0, check = 0, pub_check = 0;
 
     prog = opt_init(argc, argv, pkey_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -114,6 +115,9 @@ int pkey_main(int argc, char **argv)
         case OPT_CHECK:
             check = 1;
             break;
+        case OPT_PUB_CHECK:
+            pub_check = 1;
+            break;
         case OPT_MD:
             if (!opt_cipher(opt_unknown(), &cipher))
                 goto opthelp;
@@ -143,7 +147,7 @@ int pkey_main(int argc, char **argv)
     if (pkey == NULL)
         goto end;
 
-    if (check) {
+    if (check || pub_check) {
         int r;
         EVP_PKEY_CTX *ctx;
 
@@ -153,7 +157,10 @@ int pkey_main(int argc, char **argv)
             goto end;
         }
 
-        r = EVP_PKEY_check(ctx);
+        if (check)
+            r = EVP_PKEY_check(ctx);
+        else
+            r = EVP_PKEY_public_check(ctx);
 
         if (r == 1) {
             BIO_printf(out, "Key is valid\n");

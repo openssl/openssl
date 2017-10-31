@@ -630,6 +630,18 @@ void EVP_PKEY_meth_set_check(EVP_PKEY_METHOD *pmeth,
     pmeth->check = check;
 }
 
+void EVP_PKEY_meth_set_public_check(EVP_PKEY_METHOD *pmeth,
+                                    int (*check) (EVP_PKEY *pkey))
+{
+    pmeth->public_check = check;
+}
+
+void EVP_PKEY_meth_set_param_check(EVP_PKEY_METHOD *pmeth,
+                                   int (*check) (EVP_PKEY *pkey))
+{
+    pmeth->param_check = check;
+}
+
 void EVP_PKEY_meth_get_init(EVP_PKEY_METHOD *pmeth,
                             int (**pinit) (EVP_PKEY_CTX *ctx))
 {
@@ -802,4 +814,18 @@ void EVP_PKEY_meth_get_check(EVP_PKEY_METHOD *pmeth,
 {
     if (*pcheck)
         *pcheck = pmeth->check;
+}
+
+void EVP_PKEY_meth_get_public_check(EVP_PKEY_METHOD *pmeth,
+                                    int (**pcheck) (EVP_PKEY *pkey))
+{
+    if (*pcheck)
+        *pcheck = pmeth->public_check;
+}
+
+void EVP_PKEY_meth_get_param_check(EVP_PKEY_METHOD *pmeth,
+                                   int (**pcheck) (EVP_PKEY *pkey))
+{
+    if (*pcheck)
+        *pcheck = pmeth->param_check;
 }
