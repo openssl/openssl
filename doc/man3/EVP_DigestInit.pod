@@ -202,7 +202,7 @@ Returns the digest or block size in bytes.
 
 =item EVP_md_null()
 
-Returns a pointer to the corresponding B<EVP_MD> structures.
+Returns a pointer to the B<EVP_MD> structure of the "null" message digest.
 
 =item EVP_get_digestbyname(),
 EVP_get_digestbynid(),
