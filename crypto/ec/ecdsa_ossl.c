@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -77,6 +77,10 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
         goto err;
     }
 
+    /* Preallocate space for k */
+    if (!BN_set_bit(k, BN_num_bits(order)))
+        goto err;
+
     do {
         /* get random k */
         do
@@ -99,14 +103,12 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 
         /*
          * We do not want timing information to leak the length of k, so we
-         * compute G*k using an equivalent scalar of fixed bit-length.
+         * ensure that k is longer than the order.  Any code, that checks
+         * for this and does a modulo redution will consequently also be
+         * consant time.
          */
-
-        if (!BN_add(k, k, order))
+        if (!BN_set_bit(k, BN_num_bits(order)))
             goto err;
-        if (BN_num_bits(k) <= BN_num_bits(order))
-            if (!BN_add(k, k, order))
-                goto err;
 
         /* compute r the x-coordinate of generator * k */
         if (!EC_POINT_mul(group, tmp_point, k, NULL, NULL, ctx)) {
