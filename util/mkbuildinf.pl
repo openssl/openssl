@@ -12,9 +12,7 @@ use warnings;
 my ($cflags, $platform) = @ARGV;
 $cflags = "compiler: $cflags";
 
-my $date = "built on: " . localtime();
-$date = "reproducible build, date unspecified"
-    if defined $ENV{'SOURCE_DATE_EPOCH'};
+my $date = $ENV{'SOURCE_DATE_EPOCH'} || localtime();
 
 print <<"END_OUTPUT";
 /*

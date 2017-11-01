@@ -24,7 +24,7 @@ const char *OpenSSL_version(int t)
     case OPENSSL_BUILT_ON:
         return DATE;
     case OPENSSL_CFLAGS:
-        return compiler_flags;;
+        return compiler_flags;
     case OPENSSL_PLATFORM:
         return PLATFORM;
     case OPENSSL_DIR:
