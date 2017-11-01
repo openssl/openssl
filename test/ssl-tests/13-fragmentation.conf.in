@@ -7,7 +7,7 @@
 # https://www.openssl.org/source/license.html
 
 
-## Test version negotiation
+## Test packet fragmentation
 
 use strict;
 use warnings;
