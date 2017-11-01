@@ -129,7 +129,7 @@ const OPTIONS x509_options[] = {
     {"checkemail", OPT_CHECKEMAIL, 's', "Check certificate matches email"},
     {"checkip", OPT_CHECKIP, 's', "Check certificate matches ipaddr"},
     {"CAform", OPT_CAFORM, 'F', "CA format - default PEM"},
-    {"CAkeyform", OPT_CAKEYFORM, 'F', "CA key format - default PEM"},
+    {"CAkeyform", OPT_CAKEYFORM, 'f', "CA key format - default PEM"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"force_pubkey", OPT_FORCE_PUBKEY, '<', "Force the Key to put inside certificate"},
     {"next_serial", OPT_NEXT_SERIAL, '-', "Increment current certificate serial number"},
