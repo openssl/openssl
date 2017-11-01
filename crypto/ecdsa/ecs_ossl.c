@@ -153,7 +153,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
          * one bit longer than the order.  This guarantees the code
          * path used in the constant time implementations elsewhere.
          *
-         * TODO: revist the BN_copy aiming for a memory access agnostic
+         * TODO: revisit the BN_copy aiming for a memory access agnostic
          * conditional copy.
          */
         if (!BN_add(r, k, order)
