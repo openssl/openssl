@@ -206,7 +206,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
      * small timing information leakage.  We then choose the sum that is
      * one bit longer than the modulus.
      *
-     * TODO: revist the BN_copy aiming for a memory access agnostic
+     * TODO: revisit the BN_copy aiming for a memory access agnostic
      * conditional copy.
      */
     if (!BN_add(l, k, dsa->q)
