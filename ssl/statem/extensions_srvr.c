@@ -879,7 +879,7 @@ EXT_RETURN tls_construct_stoc_server_name(SSL *s, WPACKET *pkt,
 }
 
 /* Add/include the server's max fragment len extension into ServerHello */
-EXT_RETURN tls_construct_stoc_maxfragmentlen(SSL *s, WPACKET *pkt, 
+EXT_RETURN tls_construct_stoc_maxfragmentlen(SSL *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
                                              size_t chainidx, int *al)
 {

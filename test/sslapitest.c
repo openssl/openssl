@@ -3120,7 +3120,7 @@ static int get_MFL_from_client_hello(BIO *bio, int *mfl_codemfl_code)
     if (!TEST_uint_gt( len = BIO_get_mem_data( bio, (char **) &data ), 0 ) )
         goto end;
 
-    if ( !TEST_true( PACKET_buf_init( &pkt, data, len ) )
+    if (!TEST_true( PACKET_buf_init( &pkt, data, len ) )
                /* Skip the record header */
             || !PACKET_forward(&pkt, SSL3_RT_HEADER_LENGTH)
                /* Skip the handshake message header */
