@@ -31,7 +31,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
     int success = 0;
     size_t l1 = 0, l2 = 0, l3 = 0;
-    int s1 = 0, s2 = 0, s3 = 0;
+    int s1 = 0, s3 = 0;
     BN_CTX *ctx;
     BIGNUM *b1;
     BIGNUM *b2;
@@ -59,14 +59,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         l3 = len - l1 - l2;
 
         s1 = buf[0] & 1;
-        s2 = buf[0] & 2;
         s3 = buf[0] & 4;
         ++buf;
     }
     OPENSSL_assert(BN_bin2bn(buf, l1, b1) == b1);
     BN_set_negative(b1, s1);
     OPENSSL_assert(BN_bin2bn(buf + l1, l2, b2) == b2);
-    BN_set_negative(b2, s2);
     OPENSSL_assert(BN_bin2bn(buf + l1 + l2, l3, b3) == b3);
     BN_set_negative(b3, s3);
 
