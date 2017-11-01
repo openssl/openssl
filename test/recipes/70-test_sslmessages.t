@@ -98,7 +98,7 @@ checkmessages(CLIENT_AUTH_HANDSHAKE, "Client auth handshake test");
 $proxy->clear();
 $proxy->reneg(1);
 $proxy->start();
-checkmessages(RENEG_HANDSHAKE, "Rengotiation handshake test");
+checkmessages(RENEG_HANDSHAKE, "Renegotiation handshake test");
 
 #Test 5: A handshake with a renegotiation and client auth
 $proxy->clear();

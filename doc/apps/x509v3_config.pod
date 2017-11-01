@@ -352,7 +352,7 @@ Example:
  noticeNumbers=1,2,3,4
 
 The B<ia5org> option changes the type of the I<organization> field. In RFC2459
-it can only be of type DisplayText. In RFC3280 IA5Strring is also permissible.
+it can only be of type DisplayText. In RFC3280 IA5String is also permissible.
 Some software (for example some versions of MSIE) may require ia5org.
 
 =head2 Policy Constraints

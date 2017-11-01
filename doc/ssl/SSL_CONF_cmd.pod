@@ -424,7 +424,7 @@ SSLv3 is B<always> disabled and attempt to override this by the user are
 ignored.
 
 By checking the return code of SSL_CTX_cmd() it is possible to query if a
-given B<cmd> is recognised, this is useful is SSL_CTX_cmd() values are
+given B<cmd> is recognised, this is useful if SSL_CTX_cmd() values are
 mixed with additional application specific operations.
 
 For example an application might call SSL_CTX_cmd() and if it returns

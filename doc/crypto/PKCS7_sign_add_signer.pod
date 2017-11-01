@@ -55,7 +55,7 @@ B<signcert> parameter though. This can reduce the size of the signature if the
 signers certificate can be obtained by other means: for example a previously
 signed message.
 
-The signedData structure includes several PKCS#7 autenticatedAttributes
+The signedData structure includes several PKCS#7 authenticatedAttributes
 including the signing time, the PKCS#7 content type and the supported list of
 ciphers in an SMIMECapabilities attribute. If B<PKCS7_NOATTR> is set then no
 authenticatedAttributes will be used. If B<PKCS7_NOSMIMECAP> is set then just
