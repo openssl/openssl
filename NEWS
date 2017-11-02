@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.1.0f and OpenSSL 1.1.0g [under development]
+  Major changes between OpenSSL 1.1.0f and OpenSSL 1.1.0g [2 Nov 2017]
 
       o bn_sqrx8x_internal carry bug on x86_64 (CVE-2017-3736)
       o Malformed X.509 IPAddressFamily could cause OOB read (CVE-2017-3735)
