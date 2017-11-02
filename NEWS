@@ -7,7 +7,8 @@
 
   Major changes between OpenSSL 1.0.2l and OpenSSL 1.0.2m [under development]
 
-      o
+      o bn_sqrx8x_internal carry bug on x86_64 (CVE-2017-3736)
+      o Malformed X.509 IPAddressFamily could cause OOB read (CVE-2017-3735)
 
   Major changes between OpenSSL 1.0.2k and OpenSSL 1.0.2l [25 May 2017]
 
