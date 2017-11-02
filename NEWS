@@ -11,6 +11,11 @@
       o Add a STORE module (OSSL_STORE)
       o Claim the namespaces OSSL and OPENSSL, represented as symbol prefixes
 
+  Major changes between OpenSSL 1.1.0f and OpenSSL 1.1.0g [2 Nov 2017]
+
+      o bn_sqrx8x_internal carry bug on x86_64 (CVE-2017-3736)
+      o Malformed X.509 IPAddressFamily could cause OOB read (CVE-2017-3735)
+
   Major changes between OpenSSL 1.1.0e and OpenSSL 1.1.0f [25 May 2017]
 
       o config now recognises 64-bit mingw and chooses mingw64 instead of mingw
