@@ -12,7 +12,7 @@ use warnings;
 my ($cflags, $platform) = @ARGV;
 $cflags = "compiler: $cflags";
 
-my $date = $ENV{'SOURCE_DATE_EPOCH'} || localtime();
+my $date = gmtime($ENV{'SOURCE_DATE_EPOCH'} || time()) . " UTC";
 
 print <<"END_OUTPUT";
 /*
