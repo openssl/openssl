@@ -1556,7 +1556,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
             if (push != NULL) {
                 if (!X509_NAME_add_entry(subject, push, -1, 0)) {
-                    X509_NAME_ENTRY_free(push);
                     BIO_printf(bio_err, "Memory allocation failure\n");
                     goto end;
                 }
