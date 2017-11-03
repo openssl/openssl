@@ -36,7 +36,7 @@ my %record_type = (
 
 use constant {
     VERS_TLS_1_4 => 0x0305,
-    VERS_TLS_1_3_DRAFT => 0x7f15,
+    VERS_TLS_1_3_DRAFT => 0x7f16,
     VERS_TLS_1_3 => 0x0304,
     VERS_TLS_1_2 => 0x0303,
     VERS_TLS_1_1 => 0x0302,
