@@ -14,7 +14,7 @@ use File::Basename;
 use File::Copy;
 use File::Path;
 use FindBin;
-use lib "$FindBin::Bin";
+use lib "$FindBin::Bin/perl";
 use OpenSSL::Glob;
 use Getopt::Long;
 use Pod::Usage;
