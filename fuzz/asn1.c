@@ -310,6 +310,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         }
     }
 
+#ifndef OPENSSL_NO_TS
     DO_TEST(TS_REQ, d2i_TS_REQ, i2d_TS_REQ, TS_REQ_print_bio);
     DO_TEST(TS_MSG_IMPRINT, d2i_TS_MSG_IMPRINT, i2d_TS_MSG_IMPRINT, TS_MSG_IMPRINT_print_bio);
     DO_TEST(TS_RESP, d2i_TS_RESP, i2d_TS_RESP, TS_RESP_print_bio);
@@ -319,17 +320,24 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     DO_TEST_NO_PRINT(ESS_ISSUER_SERIAL, d2i_ESS_ISSUER_SERIAL, i2d_ESS_ISSUER_SERIAL);
     DO_TEST_NO_PRINT(ESS_CERT_ID, d2i_ESS_CERT_ID, i2d_ESS_CERT_ID);
     DO_TEST_NO_PRINT(ESS_SIGNING_CERT, d2i_ESS_SIGNING_CERT, i2d_ESS_SIGNING_CERT);
+#endif
+#ifndef OPENSSL_NO_DH
     DO_TEST(DH, d2i_DHparams, i2d_DHparams, DHparams_print);
     DO_TEST(DH, d2i_DHxparams, i2d_DHxparams, DHparams_print);
+#endif
+#ifndef OPENSSL_NO_DSA
     DO_TEST_NO_PRINT(DSA_SIG, d2i_DSA_SIG, i2d_DSA_SIG);
     DO_TEST_PRINT_OFFSET(DSA, d2i_DSAPrivateKey, i2d_DSAPrivateKey, DSA_print);
     DO_TEST_PRINT_OFFSET(DSA, d2i_DSAPublicKey, i2d_DSAPublicKey, DSA_print);
     DO_TEST(DSA, d2i_DSAparams, i2d_DSAparams, DSAparams_print);
+#endif
     DO_TEST_PRINT_OFFSET(RSA, d2i_RSAPublicKey, i2d_RSAPublicKey, RSA_print);
+#ifndef OPENSSL_NO_EC
     DO_TEST_PRINT_OFFSET(EC_GROUP, d2i_ECPKParameters, i2d_ECPKParameters, ECPKParameters_print);
     DO_TEST_PRINT_OFFSET(EC_KEY, d2i_ECPrivateKey, i2d_ECPrivateKey, EC_KEY_print);
     DO_TEST(EC_KEY, d2i_ECParameters, i2d_ECParameters, ECParameters_print);
     DO_TEST_NO_PRINT(ECDSA_SIG, d2i_ECDSA_SIG, i2d_ECDSA_SIG);
+#endif
     DO_TEST_PRINT_PCTX(EVP_PKEY, d2i_AutoPrivateKey, i2d_PrivateKey, EVP_PKEY_print_private);
     DO_TEST(SSL_SESSION, d2i_SSL_SESSION, i2d_SSL_SESSION, SSL_SESSION_print);
 
