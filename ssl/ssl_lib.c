@@ -3047,13 +3047,13 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     /* Setup RFC5077 ticket keys */
     if ((RAND_bytes(ret->ext.tick_key_name,
                     sizeof(ret->ext.tick_key_name)) <= 0)
-        || (RAND_bytes(ret->ext.secure->tick_hmac_key,
+        || (RAND_priv_bytes(ret->ext.secure->tick_hmac_key,
                        sizeof(ret->ext.secure->tick_hmac_key)) <= 0)
-        || (RAND_bytes(ret->ext.secure->tick_aes_key,
+        || (RAND_priv_bytes(ret->ext.secure->tick_aes_key,
                        sizeof(ret->ext.secure->tick_aes_key)) <= 0))
         ret->options |= SSL_OP_NO_TICKET;
 
-    if (RAND_bytes(ret->ext.cookie_hmac_key,
+    if (RAND_priv_bytes(ret->ext.cookie_hmac_key,
                    sizeof(ret->ext.cookie_hmac_key)) <= 0)
         goto err;
 

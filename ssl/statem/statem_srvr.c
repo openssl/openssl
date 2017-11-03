@@ -2936,7 +2936,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
      * fails. See https://tools.ietf.org/html/rfc5246#section-7.4.7.1
      */
 
-    if (RAND_bytes(rand_premaster_secret,
+    if (RAND_priv_bytes(rand_premaster_secret,
                       sizeof(rand_premaster_secret)) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  ERR_R_INTERNAL_ERROR);

@@ -250,7 +250,7 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
 
     do {
         int rv;
-        if (!BN_rand_range(ret->A, ret->mod))
+        if (!BN_priv_rand_range(ret->A, ret->mod))
             goto err;
         if (!int_bn_mod_inverse(ret->Ai, ret->A, ret->mod, ctx, &rv)) {
             /*
