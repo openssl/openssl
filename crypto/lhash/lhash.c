@@ -16,7 +16,7 @@
 
 /*
  * A hashing implementation that appears to be based on the linear hashing
- * alogrithm:
+ * algorithm:
  * https://en.wikipedia.org/wiki/Linear_hashing
  *
  * Litwin, Witold (1980), "Linear hashing: A new tool for file and table

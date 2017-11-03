@@ -186,7 +186,7 @@ output an error.
 =item B<-EncryptedData_encrypt>
 
 Encrypt content using supplied symmetric key and algorithm using a CMS
-B<EncrytedData> type and output the content.
+B<EncryptedData> type and output the content.
 
 =item B<-sign_receipt>
 

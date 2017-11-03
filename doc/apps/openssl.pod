@@ -204,7 +204,7 @@ Generate pseudo-random bytes.
 
 =item L<B<rehash>|rehash(1)>
 
-Create symbolic links to certficate and CRL files named by the hash values.
+Create symbolic links to certificate and CRL files named by the hash values.
 
 =item L<B<req>|req(1)>
 
