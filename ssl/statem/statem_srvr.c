@@ -2193,8 +2193,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
     size_t sl, len;
     int version;
 
-    /* TODO(TLS1.3): Remove the DRAFT conditional before release */
-    version = SSL_IS_TLS13(s) ? TLS1_3_VERSION_DRAFT : s->version;
+    version = SSL_IS_TLS13(s) ? TLS1_2_VERSION : s->version;
     if (!WPACKET_put_bytes_u16(pkt, version)
                /*
                 * Random stuff. Filling of the server_random takes place in
@@ -2234,21 +2233,23 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
         return 0;
     }
 
+    /* Never send a session_id back in the ServerHello */
+    if (SSL_IS_TLS13(s))
+        sl = 0;
+
     /* set up the compression method */
 #ifdef OPENSSL_NO_COMP
     compm = 0;
 #else
-    if (s->s3->tmp.new_compression == NULL)
+    if (SSL_IS_TLS13(s) || s->s3->tmp.new_compression == NULL)
         compm = 0;
     else
         compm = s->s3->tmp.new_compression->id;
 #endif
 
-    if ((!SSL_IS_TLS13(s)
-                && !WPACKET_sub_memcpy_u8(pkt, s->session->session_id, sl))
+    if (!WPACKET_sub_memcpy_u8(pkt, s->session->session_id, sl)
             || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, pkt, &len)
-            || (!SSL_IS_TLS13(s)
-                && !WPACKET_put_bytes_u8(pkt, compm))
+            || !WPACKET_put_bytes_u8(pkt, compm)
             || !tls_construct_extensions(s, pkt,
                                          SSL_IS_TLS13(s)
                                             ? SSL_EXT_TLS1_3_SERVER_HELLO
