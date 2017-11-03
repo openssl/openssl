@@ -934,10 +934,13 @@ end_of_options:
             if (j > 0) {
                 total_done++;
                 BIO_printf(bio_err, "\n");
-                if (!BN_add_word(serial, 1))
+                if (!BN_add_word(serial, 1)) {
+                    X509_free(x);
                     goto end;
+                }
                 if (!sk_X509_push(cert_sk, x)) {
                     BIO_printf(bio_err, "Memory allocation failure\n");
+                    X509_free(x);
                     goto end;
                 }
             }
