@@ -200,7 +200,7 @@ AES_encrypt:
 #ifndef	__thumb2__
 	sub	r3,pc,#8		@ AES_encrypt
 #else
-	adr	r3,AES_encrypt
+	adr	r3,.
 #endif
 	stmdb   sp!,{r1,r4-r12,lr}
 #ifdef	__APPLE__
@@ -450,7 +450,7 @@ _armv4_AES_set_encrypt_key:
 #ifndef	__thumb2__
 	sub	r3,pc,#8		@ AES_set_encrypt_key
 #else
-	adr	r3,AES_set_encrypt_key
+	adr	r3,.
 #endif
 	teq	r0,#0
 #ifdef	__thumb2__
@@ -976,7 +976,7 @@ AES_decrypt:
 #ifndef	__thumb2__
 	sub	r3,pc,#8		@ AES_decrypt
 #else
-	adr	r3,AES_decrypt
+	adr	r3,.
 #endif
 	stmdb   sp!,{r1,r4-r12,lr}
 #ifdef	__APPLE__
