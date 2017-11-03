@@ -50,7 +50,7 @@ use configdata;
 use File::Spec::Functions;
 use File::Basename;
 use FindBin;
-use lib "$FindBin::Bin";
+use lib "$FindBin::Bin/perl";
 use OpenSSL::Glob;
 
 my $debug=0;
