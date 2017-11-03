@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include "internal/nelem.h"
+#include "internal/cryptlib.h"
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 
@@ -261,11 +262,13 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     },
     {
         TLSEXT_TYPE_supported_versions,
-        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS_IMPLEMENTATION_ONLY
-        | SSL_EXT_TLS1_3_ONLY,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
+        | SSL_EXT_TLS1_3_SERVER_HELLO | SSL_EXT_TLS_IMPLEMENTATION_ONLY,
         NULL,
         /* Processed inline as part of version selection */
-        NULL, NULL, NULL, tls_construct_ctos_supported_versions, NULL
+        NULL, tls_parse_stoc_supported_versions,
+        tls_construct_stoc_supported_versions,
+        tls_construct_ctos_supported_versions, NULL
     },
     {
         TLSEXT_TYPE_psk_kex_modes,
@@ -352,6 +355,44 @@ static int validate_context(SSL *s, unsigned int extctx, unsigned int thisctx)
             return 0;
     } else if ((extctx & SSL_EXT_DTLS_ONLY) != 0) {
         return 0;
+    }
+
+    return 1;
+}
+
+int tls_validate_all_contexts(SSL *s, unsigned int thisctx, RAW_EXTENSION *exts)
+{
+    size_t i, num_exts, builtin_num = OSSL_NELEM(ext_defs), offset;
+    RAW_EXTENSION *thisext;
+    unsigned int context;
+    ENDPOINT role = ENDPOINT_BOTH;
+
+    if ((thisctx & SSL_EXT_CLIENT_HELLO) != 0)
+        role = ENDPOINT_SERVER;
+    else if ((thisctx & SSL_EXT_TLS1_2_SERVER_HELLO) != 0)
+        role = ENDPOINT_CLIENT;
+
+    /* Calculate the number of extensions in the extensions list */
+    num_exts = builtin_num + s->cert->custext.meths_count;
+
+    for (thisext = exts, i = 0; i < num_exts; i++, thisext++) {
+        if (!thisext->present)
+            continue;
+
+        if (i < builtin_num) {
+            context = ext_defs[i].context;
+        } else {
+            custom_ext_method *meth = NULL;
+
+            meth = custom_ext_find(&s->cert->custext, role, thisext->type,
+                                   &offset);
+            if (!ossl_assert(meth != NULL))
+                return 0;
+            context = meth->context;
+        }
+
+        if (!validate_context(s, context, thisctx))
+            return 0;
     }
 
     return 1;

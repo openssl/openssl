@@ -507,19 +507,26 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
 {
     int currv, min_version, max_version, reason;
 
+    reason = ssl_get_min_max_version(s, &min_version, &max_version);
+    if (reason != 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS, reason);
+        return EXT_RETURN_FAIL;
+    }
+
+    /*
+     * Don't include this if we can't negotiate TLSv1.3. We can do a straight
+     * comparison here because we will never be called in DTLS.
+     */
+    if (max_version < TLS1_3_VERSION)
+        return EXT_RETURN_NOT_SENT;
+
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_start_sub_packet_u8(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS,
                  ERR_R_INTERNAL_ERROR);
-        return EXT_RETURN_FAIL;
-    }
-
-    reason = ssl_get_min_max_version(s, &min_version, &max_version);
-    if (reason != 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS, reason);
         return EXT_RETURN_FAIL;
     }
 
@@ -1629,6 +1636,29 @@ int tls_parse_stoc_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
     if (!s->hit)
         s->session->flags |= SSL_SESS_FLAG_EXTMS;
+
+    return 1;
+}
+
+int tls_parse_stoc_supported_versions(SSL *s, PACKET *pkt, unsigned int context,
+                                      X509 *x, size_t chainidx)
+{
+    unsigned int version;
+
+    if (!PACKET_get_net_2(pkt, &version)
+            || PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR,
+                 SSL_F_TLS_PARSE_STOC_SUPPORTED_VERSIONS,
+                 SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+
+    /* TODO(TLS1.3): Remove this before release */
+    if (version == TLS1_3_VERSION_DRAFT)
+        version = TLS1_3_VERSION;
+
+    /* We just set it here. We validate it in ssl_choose_client_version */
+    s->version = version;
 
     return 1;
 }

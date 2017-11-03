@@ -1332,13 +1332,64 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto err;
     }
 
-    /*
-     * We do this immediately so we know what format the ServerHello is in.
-     * Must be done after reading the random data so we can check for the
-     * TLSv1.3 downgrade sentinels
-     */
-    if (!ssl_choose_client_version(s, sversion, 1)) {
+    /* Get the session-id. */
+    if (!PACKET_get_length_prefixed_1(pkt, &session_id)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_SERVER_HELLO,
+                 SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+    session_id_len = PACKET_remaining(&session_id);
+    if (session_id_len > sizeof(s->session->session_id)
+        || session_id_len > SSL3_SESSION_ID_SIZE) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PROCESS_SERVER_HELLO,
+                 SSL_R_SSL3_SESSION_ID_TOO_LONG);
+        goto err;
+    }
+
+    if (!PACKET_get_bytes(pkt, &cipherchars, TLS_CIPHER_LEN)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_SERVER_HELLO,
+                 SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+
+    if (!PACKET_get_1(pkt, &compression)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_SERVER_HELLO,
+                 SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+
+    /* TLS extensions */
+    if (PACKET_remaining(pkt) == 0) {
+        PACKET_null_init(&extpkt);
+    } else if (!PACKET_as_length_prefixed_2(pkt, &extpkt)
+               || PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_SERVER_HELLO,
+                 SSL_R_BAD_LENGTH);
+        goto err;
+    }
+
+    if (!tls_collect_extensions(s, &extpkt,
+                                SSL_EXT_TLS1_2_SERVER_HELLO
+                                | SSL_EXT_TLS1_3_SERVER_HELLO,
+                                &extensions, NULL, 1)) {
         /* SSLfatal() already called */
+        goto err;
+    }
+
+    if (!ssl_choose_client_version(s, sversion, extensions)) {
+        /* SSLfatal() already called */
+        goto err;
+    }
+
+    /*
+     * Now we have chosen the version we need to check again that the extensions
+     * are appropriate for this version.
+     */
+    context = SSL_IS_TLS13(s) ? SSL_EXT_TLS1_3_SERVER_HELLO
+                              : SSL_EXT_TLS1_2_SERVER_HELLO;
+    if (!tls_validate_all_contexts(s, context, extensions)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PROCESS_SERVER_HELLO,
+                 SSL_R_BAD_EXTENSION);
         goto err;
     }
 
@@ -1352,56 +1403,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto err;
     }
 
-    /* Get the session-id. */
-    if (!SSL_IS_TLS13(s)) {
-        if (!PACKET_get_length_prefixed_1(pkt, &session_id)) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_SERVER_HELLO,
-                     SSL_R_LENGTH_MISMATCH);
-            goto err;
-        }
-        session_id_len = PACKET_remaining(&session_id);
-        if (session_id_len > sizeof(s->session->session_id)
-            || session_id_len > SSL3_SESSION_ID_SIZE) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                     SSL_F_TLS_PROCESS_SERVER_HELLO,
-                     SSL_R_SSL3_SESSION_ID_TOO_LONG);
-            goto err;
-        }
-    } else {
-        PACKET_null_init(&session_id);
-        session_id_len = 0;
-    }
-
-    if (!PACKET_get_bytes(pkt, &cipherchars, TLS_CIPHER_LEN)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_SERVER_HELLO,
-                 SSL_R_LENGTH_MISMATCH);
-        goto err;
-    }
-
-    if (!SSL_IS_TLS13(s)) {
-        if (!PACKET_get_1(pkt, &compression)) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_SERVER_HELLO,
-                     SSL_R_LENGTH_MISMATCH);
-            goto err;
-        }
-    } else {
-        compression = 0;
-    }
-
-    /* TLS extensions */
-    if (PACKET_remaining(pkt) == 0) {
-        PACKET_null_init(&extpkt);
-    } else if (!PACKET_as_length_prefixed_2(pkt, &extpkt)
-               || PACKET_remaining(pkt) != 0) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_SERVER_HELLO,
-                 SSL_R_BAD_LENGTH);
-        goto err;
-    }
-
-    context = SSL_IS_TLS13(s) ? SSL_EXT_TLS1_3_SERVER_HELLO
-                              : SSL_EXT_TLS1_2_SERVER_HELLO;
-    if (!tls_collect_extensions(s, &extpkt, context, &extensions, NULL, 1)) {
-        /* SSLfatal() already called */
+    if (SSL_IS_TLS13(s) && compression != 0) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PROCESS_SERVER_HELLO,
+               SSL_R_INVALID_COMPRESSION_ALGORITHM);
         goto err;
     }
 
@@ -1411,7 +1415,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         /* This will set s->hit if we are resuming */
         if (!tls_parse_extension(s, TLSEXT_IDX_psk,
                                  SSL_EXT_TLS1_3_SERVER_HELLO,
-                                 extensions, NULL, 0l)) {
+                                 extensions, NULL, 0)) {
             /* SSLfatal() already called */
             goto err;
         }

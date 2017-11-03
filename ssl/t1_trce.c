@@ -823,6 +823,17 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         break;
 
     case TLSEXT_TYPE_supported_versions:
+        if (server) {
+            int version;
+
+            if (extlen != 2)
+                return 0;
+            version = (ext[0] << 8) | ext[1];
+            BIO_indent(bio, indent + 4, 80);
+            BIO_printf(bio, "%s (%d)\n",
+                       ssl_trace_str(version, ssl_version_tbl), version);
+            break;
+        }
         if (extlen < 1)
             return 0;
         xlen = ext[0];

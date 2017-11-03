@@ -1213,6 +1213,27 @@ EXT_RETURN tls_construct_stoc_ems(SSL *s, WPACKET *pkt, unsigned int context,
     return EXT_RETURN_SENT;
 }
 
+EXT_RETURN tls_construct_stoc_supported_versions(SSL *s, WPACKET *pkt,
+                                                 unsigned int context, X509 *x,
+                                                 size_t chainidx)
+{
+    if (!SSL_IS_TLS13(s))
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
+            || !WPACKET_start_sub_packet_u16(pkt)
+                /* TODO(TLS1.3): Update to remove the TLSv1.3 draft indicator */
+            || !WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_VERSIONS,
+                 ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}
+
 EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
                                         unsigned int context, X509 *x,
                                         size_t chainidx)
