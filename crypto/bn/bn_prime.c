@@ -279,6 +279,7 @@ static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods)
     char is_single_word = bits <= BN_BITS2;
 
  again:
+    /* TODO: Not all primes are private */
     if (!BN_priv_rand(rnd, bits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ODD))
         return 0;
     /* we now have a random number 'rnd' to test. */
@@ -363,7 +364,7 @@ int bn_probable_prime_dh(BIGNUM *rnd, int bits,
     if ((t1 = BN_CTX_get(ctx)) == NULL)
         goto err;
 
-    if (!BN_priv_rand(rnd, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
+    if (!BN_rand(rnd, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
         goto err;
 
     /* we need ((rnd-rem) % add) == 0 */
@@ -419,7 +420,7 @@ static int probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
     if (!BN_rshift1(qadd, padd))
         goto err;
 
-    if (!BN_priv_rand(q, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
+    if (!BN_rand(q, bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
         goto err;
 
     /* we need ((rnd-rem) % add) == 0 */

@@ -422,7 +422,7 @@ SRP_user_pwd *SRP_VBASE_get1_by_user(SRP_VBASE *vb, char *username)
     if (!SRP_user_pwd_set_ids(user, username, NULL))
         goto err;
 
-    if (RAND_bytes(digv, SHA_DIGEST_LENGTH) <= 0)
+    if (RAND_priv_bytes(digv, SHA_DIGEST_LENGTH) <= 0)
         goto err;
     ctxt = EVP_MD_CTX_new();
     if (ctxt == NULL
