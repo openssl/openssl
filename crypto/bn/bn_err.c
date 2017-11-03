@@ -1,6 +1,6 @@
 /* crypto/bn/bn_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2015 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2017 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -87,6 +87,7 @@ static ERR_STRING_DATA BN_str_functs[] = {
     {ERR_FUNC(BN_F_BN_EXP), "BN_exp"},
     {ERR_FUNC(BN_F_BN_EXPAND2), "bn_expand2"},
     {ERR_FUNC(BN_F_BN_EXPAND_INTERNAL), "BN_EXPAND_INTERNAL"},
+    {ERR_FUNC(BN_F_BN_GENERATE_PRIME_EX), "BN_generate_prime_ex"},
     {ERR_FUNC(BN_F_BN_GF2M_MOD), "BN_GF2m_mod"},
     {ERR_FUNC(BN_F_BN_GF2M_MOD_EXP), "BN_GF2m_mod_exp"},
     {ERR_FUNC(BN_F_BN_GF2M_MOD_MUL), "BN_GF2m_mod_mul"},
