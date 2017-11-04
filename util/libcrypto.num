@@ -4425,3 +4425,4 @@ EVP_sm4_cbc                             4369	1_1_1	EXIST::FUNCTION:SM4
 EVP_sm4_ofb                             4370	1_1_1	EXIST::FUNCTION:SM4
 EVP_sm4_ecb                             4371	1_1_1	EXIST::FUNCTION:SM4
 EVP_sm4_cfb128                          4372	1_1_1	EXIST::FUNCTION:SM4
+OCSP_resp_get0_signer                   4373	1_1_0h	EXIST::FUNCTION:OCSP

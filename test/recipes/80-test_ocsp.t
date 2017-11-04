@@ -13,7 +13,7 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/devnull catfile/;
 use File::Copy;
-use OpenSSL::Test qw/:DEFAULT with pipe srctop_dir/;
+use OpenSSL::Test qw/:DEFAULT with pipe srctop_dir data_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_ocsp");
@@ -48,7 +48,7 @@ sub test_ocsp {
     unlink "ocsp-resp-fff.dat";
 }
 
-plan tests => 10;
+plan tests => 11;
 
 subtest "=== VALID OCSP RESPONSES ===" => sub {
     plan tests => 7;
@@ -210,3 +210,10 @@ subtest "=== INVALID SIGNATURE on the ISSUER CERTIFICATE ===" => sub {
     test_ocsp("DELEGATED; Root CA -> EE",
 	      "D3.ors", "ISIC_D3_Issuer_Root.pem", "", 0);
 };
+
+subtest "=== OCSP API TESTS===" => sub {
+    plan tests => 1;
+
+    ok(run(test(["ocspapitest", data_file("cert.pem"), data_file("key.pem")])),
+                 "running ocspapitest");
+}
