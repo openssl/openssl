@@ -260,36 +260,36 @@ typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len,
 
 /* Typedefs for handling custom extensions */
 
-typedef int (*custom_ext_add_cb) (SSL *s, unsigned int ext_type,
-                                  const unsigned char **out, size_t *outlen,
-                                  int *al, void *add_arg);
+typedef int (*custom_ext_add_cb)(SSL *s, unsigned int ext_type,
+                                 const unsigned char **out, size_t *outlen,
+                                 int *al, void *add_arg);
 
-typedef void (*custom_ext_free_cb) (SSL *s, unsigned int ext_type,
-                                    const unsigned char *out, void *add_arg);
+typedef void (*custom_ext_free_cb)(SSL *s, unsigned int ext_type,
+                                   const unsigned char *out, void *add_arg);
 
-typedef int (*custom_ext_parse_cb) (SSL *s, unsigned int ext_type,
-                                    const unsigned char *in, size_t inlen,
-                                    int *al, void *parse_arg);
+typedef int (*custom_ext_parse_cb)(SSL *s, unsigned int ext_type,
+                                   const unsigned char *in, size_t inlen,
+                                   int *al, void *parse_arg);
 
 
-typedef int (*SSL_custom_ext_add_cb_ex) (SSL *s, unsigned int ext_type,
-                                         unsigned int context,
-                                         const unsigned char **out,
-                                         size_t *outlen, X509 *x,
-                                         size_t chainidx,
-                                         int *al, void *add_arg);
+typedef int (*SSL_custom_ext_add_cb_ex)(SSL *s, unsigned int ext_type,
+                                        unsigned int context,
+                                        const unsigned char **out,
+                                        size_t *outlen, X509 *x,
+                                        size_t chainidx,
+                                        int *al, void *add_arg);
 
-typedef void (*SSL_custom_ext_free_cb_ex) (SSL *s, unsigned int ext_type,
-                                           unsigned int context,
-                                           const unsigned char *out,
-                                           void *add_arg);
+typedef void (*SSL_custom_ext_free_cb_ex)(SSL *s, unsigned int ext_type,
+                                          unsigned int context,
+                                          const unsigned char *out,
+                                          void *add_arg);
 
-typedef int (*SSL_custom_ext_parse_cb_ex) (SSL *s, unsigned int ext_type,
-                                           unsigned int context,
-                                           const unsigned char *in,
-                                           size_t inlen, X509 *x,
-                                           size_t chainidx,
-                                           int *al, void *parse_arg);
+typedef int (*SSL_custom_ext_parse_cb_ex)(SSL *s, unsigned int ext_type,
+                                          unsigned int context,
+                                          const unsigned char *in,
+                                          size_t inlen, X509 *x,
+                                          size_t chainidx,
+                                          int *al, void *parse_arg);
 
 /* Typedef for verification callback */
 typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
@@ -1821,8 +1821,8 @@ __owur int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth);
 
 # ifndef OPENSSL_NO_SSL3_METHOD
 DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *SSLv3_method(void)) /* SSLv3 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *SSLv3_server_method(void)) /* SSLv3 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *SSLv3_client_method(void)) /* SSLv3 */
+DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *SSLv3_server_method(void))
+DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *SSLv3_client_method(void))
 # endif
 
 #define SSLv23_method           TLS_method
@@ -1836,32 +1836,33 @@ __owur const SSL_METHOD *TLS_client_method(void);
 
 # ifndef OPENSSL_NO_TLS1_METHOD
 DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_method(void)) /* TLSv1.0 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_server_method(void)) /* TLSv1.0 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_client_method(void)) /* TLSv1.0 */
+DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_server_method(void))
+DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_client_method(void))
 # endif
 
 # ifndef OPENSSL_NO_TLS1_1_METHOD
 DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_1_method(void)) /* TLSv1.1 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_1_server_method(void)) /* TLSv1.1 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_1_client_method(void)) /* TLSv1.1 */
+DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_1_server_method(void))
+DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_1_client_method(void))
 # endif
 
 # ifndef OPENSSL_NO_TLS1_2_METHOD
 DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_2_method(void)) /* TLSv1.2 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_2_server_method(void)) /* TLSv1.2 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_2_client_method(void)) /* TLSv1.2 */
+DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_2_server_method(void))
+DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_2_client_method(void))
 # endif
 
 # ifndef OPENSSL_NO_DTLS1_METHOD
 DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_method(void)) /* DTLSv1.0 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_server_method(void)) /* DTLSv1.0 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_client_method(void)) /* DTLSv1.0 */
+DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_server_method(void))
+DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_client_method(void))
 # endif
 
 # ifndef OPENSSL_NO_DTLS1_2_METHOD
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_2_method(void)) /* DTLSv1.2 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_2_server_method(void)) /* DTLSv1.2 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_2_client_method(void)) /* DTLSv1.2 */
+/* DTLSv1.2 */
+DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_2_method(void))
+DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_2_server_method(void))
+DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_2_client_method(void))
 # endif
 
 __owur const SSL_METHOD *DTLS_method(void); /* DTLS 1.0 and 1.2 */
@@ -2220,7 +2221,7 @@ void SSL_CTX_set0_ctlog_store(SSL_CTX *ctx, CTLOG_STORE *logs);
  */
 const CTLOG_STORE *SSL_CTX_get0_ctlog_store(const SSL_CTX *ctx);
 
-# endif                         /* OPENSSL_NO_CT */
+# endif /* OPENSSL_NO_CT */
 
 /* What the "other" parameter contains in security callback */
 /* Mask for type */
@@ -2286,9 +2287,10 @@ void SSL_set_security_callback(SSL *s,
                                int (*cb) (const SSL *s, const SSL_CTX *ctx,
                                           int op, int bits, int nid,
                                           void *other, void *ex));
-int (*SSL_get_security_callback(const SSL *s)) (const SSL *s, const SSL_CTX *
-                                                ctx, int op, int bits, int nid,
-                                                void *other, void *ex);
+int (*SSL_get_security_callback(const SSL *s)) (const SSL *s,
+                                                const SSL_CTX *ctx, int op,
+                                                int bits, int nid, void *other,
+                                                void *ex);
 void SSL_set0_security_ex_data(SSL *s, void *ex);
 __owur void *SSL_get0_security_ex_data(const SSL *s);
 
