@@ -406,6 +406,7 @@ int tls13_change_cipher_state(SSL *s, int which)
                          SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
+            EVP_CIPHER_CTX_ctrl(s->enc_write_ctx, EVP_CTRL_SET_DRBG, 0, s->drbg);
         }
         ciph_ctx = s->enc_write_ctx;
         iv = s->write_iv;

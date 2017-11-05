@@ -3753,6 +3753,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                  SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
         goto err;
     }
+    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_DRBG, 0, s->drbg);
 
     p = senc;
     if (!i2d_SSL_SESSION(s->session, &p)) {

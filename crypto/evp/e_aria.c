@@ -15,6 +15,7 @@
 # include <openssl/rand.h>
 # include "internal/aria.h"
 # include "internal/evp_int.h"
+# include "internal/rand.h"
 # include "modes_lcl.h"
 # include "evp_locl.h"
 
@@ -301,9 +302,14 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             return 0;
         if (arg)
             memcpy(gctx->iv, ptr, arg);
-        if (EVP_CIPHER_CTX_encrypting(c)
-            && RAND_bytes(gctx->iv + arg, gctx->ivlen - arg) <= 0)
-            return 0;
+        if (EVP_CIPHER_CTX_encrypting(c)) {
+            if (c->drbg != NULL) {
+                if (RAND_DRBG_bytes(c->drbg, gctx->iv + arg, gctx->ivlen - arg) == 0)
+                    return 0;
+            } else if (RAND_bytes(gctx->iv + arg, gctx->ivlen - arg) <= 0) {
+                return 0;
+            }
+        }
         gctx->iv_gen = 1;
         return 1;
 

@@ -15,6 +15,8 @@
 # include "internal/evp_int.h"
 # include <openssl/des.h>
 # include <openssl/rand.h>
+# include <internal/rand.h>
+# include "evp_locl.h"
 
 typedef struct {
     union {
@@ -229,8 +231,12 @@ static int des_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
     switch (type) {
     case EVP_CTRL_RAND_KEY:
-        if (RAND_bytes(ptr, 8) <= 0)
+        if (c->drbg != NULL) {
+            if (RAND_DRBG_bytes(c->drbg, ptr, 8) == 0)
+                return 0;
+        } else if (RAND_bytes(ptr, 8) <= 0) {
             return 0;
+        }
         DES_set_odd_parity((DES_cblock *)ptr);
         return 1;
 

@@ -15,6 +15,7 @@
 # include "internal/evp_int.h"
 # include <openssl/des.h>
 # include <openssl/rand.h>
+# include <internal/rand.h>
 # include "evp_locl.h"
 
 typedef struct {
@@ -283,8 +284,12 @@ static int des3_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 
     switch (type) {
     case EVP_CTRL_RAND_KEY:
-        if (RAND_bytes(ptr, EVP_CIPHER_CTX_key_length(ctx)) <= 0)
+        if (ctx->drbg != NULL) {
+            if (RAND_DRBG_bytes(ctx->drbg, ptr, EVP_CIPHER_CTX_key_length(ctx)) == 0)
+                return 0;
+        } else if (RAND_bytes(ptr, EVP_CIPHER_CTX_key_length(ctx)) <= 0) {
             return 0;
+        }
         DES_set_odd_parity(deskey);
         if (EVP_CIPHER_CTX_key_length(ctx) >= 16)
             DES_set_odd_parity(deskey + 1);
@@ -372,8 +377,12 @@ static int des_ede3_wrap(EVP_CIPHER_CTX *ctx, unsigned char *out,
     memcpy(out + inl + 8, sha1tmp, 8);
     OPENSSL_cleanse(sha1tmp, SHA_DIGEST_LENGTH);
     /* Generate random IV */
-    if (RAND_bytes(EVP_CIPHER_CTX_iv_noconst(ctx), 8) <= 0)
+    if (ctx->drbg != NULL) {
+        if (RAND_DRBG_bytes(ctx->drbg, EVP_CIPHER_CTX_iv_noconst(ctx), 8) == 0)
+            return -1;
+    } else if (RAND_bytes(EVP_CIPHER_CTX_iv_noconst(ctx), 8) <= 0) {
         return -1;
+    }
     memcpy(out, EVP_CIPHER_CTX_iv_noconst(ctx), 8);
     /* Encrypt everything after IV in place */
     des_ede_cbc_cipher(ctx, out + 8, out + 8, inl + 8);

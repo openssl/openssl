@@ -170,6 +170,7 @@ int tls1_change_cipher_state(SSL *s, int which)
                      ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        EVP_CIPHER_CTX_ctrl(s->enc_write_ctx, EVP_CTRL_SET_DRBG, 0, s->drbg);
         dd = s->enc_write_ctx;
         if (SSL_IS_DTLS(s)) {
             mac_ctx = EVP_MD_CTX_new();
