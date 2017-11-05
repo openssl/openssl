@@ -68,7 +68,7 @@ OPENSSL_ia32_cpuid:
 .cfi_register	%rbx,%r8
 
 	xor	%eax,%eax
-	mov	%eax,8(%rdi)		# clear extended feature flags
+	mov	%rax,8(%rdi)		# clear extended feature flags
 	cpuid
 	mov	%eax,%r11d		# max value for standard query level
 
@@ -187,6 +187,7 @@ OPENSSL_ia32_cpuid:
 	and	\$0xfff7ffff,%ebx	# clear ADCX/ADOX flag
 .Lnotknights:
 	mov	%ebx,8(%rdi)		# save extended feature flags
+	mov	%ecx,12(%rdi)
 .Lno_extended_info:
 
 	bt	\$27,%r9d		# check OSXSAVE bit
