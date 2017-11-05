@@ -167,6 +167,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
              */
             EVP_CIPHER_CTX_reset(s->enc_write_ctx);
         }
+        EVP_CIPHER_CTX_ctrl(s->enc_write_ctx, EVP_CTRL_SET_DRBG, 0, s->drbg);
         dd = s->enc_write_ctx;
         if (ssl_replace_hash(&s->write_hash, m) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_CHANGE_CIPHER_STATE,

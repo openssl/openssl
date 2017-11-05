@@ -15,6 +15,7 @@
 #include <openssl/rand.h>
 #include <openssl/engine.h>
 #include "internal/evp_int.h"
+#include "internal/rand.h"
 #include "evp_locl.h"
 
 int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *c)
@@ -577,6 +578,15 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
     int ret;
+
+    if (type == EVP_CTRL_GET_DRBG) {
+        *(RAND_DRBG **)ptr = ctx->drbg;
+        return 1;
+    }
+    if (type == EVP_CTRL_SET_DRBG) {
+        ctx->drbg = ptr;
+        return 1;
+    }
     if (!ctx->cipher) {
         EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_NO_CIPHER_SET);
         return 0;
@@ -600,8 +610,12 @@ int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 {
     if (ctx->cipher->flags & EVP_CIPH_RAND_KEY)
         return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_RAND_KEY, 0, key);
-    if (RAND_bytes(key, ctx->key_len) <= 0)
+    if (ctx->drbg) {
+        if (RAND_DRBG_bytes(ctx->drbg, key, ctx->key_len) == 0)
+            return 0;
+    } else if (RAND_bytes(key, ctx->key_len) <= 0) {
         return 0;
+    }
     return 1;
 }
 

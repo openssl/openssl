@@ -14,6 +14,8 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include <internal/rand.h>
+#include "evp_locl.h"
 
 int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                  unsigned char **ek, int *ekl, unsigned char *iv,
@@ -31,9 +33,14 @@ int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
         return 1;
     if (EVP_CIPHER_CTX_rand_key(ctx, key) <= 0)
         return 0;
-    if (EVP_CIPHER_CTX_iv_length(ctx)
-        && RAND_bytes(iv, EVP_CIPHER_CTX_iv_length(ctx)) <= 0)
-        return 0;
+    if (EVP_CIPHER_CTX_iv_length(ctx)) {
+        if (ctx->drbg) {
+            if (RAND_DRBG_bytes(ctx->drbg, iv, EVP_CIPHER_CTX_iv_length(ctx)) == 0)
+                return 0;
+        } else if (RAND_bytes(iv, EVP_CIPHER_CTX_iv_length(ctx)) <= 0) {
+            return 0;
+        }
+    }
 
     if (!EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
         return 0;

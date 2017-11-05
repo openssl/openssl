@@ -457,6 +457,20 @@ This call is only valid when decrypting data.
 
 =back
 
+=head1 Random numbers
+
+The following can be used to select the DRBG that is used to generate the random
+numbers:
+
+EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_DRBG, 0, drbg)
+
+The following can be used to get the DRBG:
+
+EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_DRBG, 0, &drbg)
+
+By default it's set to NULL which results in RAND_bytes() being used.
+
+
 =head1 NOTES
 
 Where possible the B<EVP> interface to symmetric ciphers should be used in
