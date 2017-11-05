@@ -334,9 +334,9 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
 {
     const unsigned char *buf = buf_;
     size_t tot;
-    size_t n, split_send_fragment, maxpipes;
+    size_t n, max_send_fragment, split_send_fragment, maxpipes;
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
-    size_t max_send_fragment, nw;
+    size_t nw;
 #endif
     SSL3_BUFFER *wb = &s->rlayer.wbuf[0];
     int i;
@@ -403,7 +403,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
      * compromise is considered worthy.
      */
     if (type == SSL3_RT_APPLICATION_DATA &&
-        len >= 4 * (max_send_fragment = s->max_send_fragment) &&
+        len >= 4 * (max_send_fragment = ssl_get_max_send_fragment(s)) &&
         s->compress == NULL && s->msg_callback == NULL &&
         !SSL_WRITE_ETM(s) && SSL_USE_EXPLICIT_IV(s) &&
         EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_write_ctx)) &
@@ -523,7 +523,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
             tot += tmpwrit;
         }
     } else
-#endif
+#endif  /* !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK */
     if (tot == len) {           /* done? */
         if (s->mode & SSL_MODE_RELEASE_BUFFERS && !SSL_IS_DTLS(s))
             ssl3_release_write_buffer(s);
@@ -534,7 +534,8 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
 
     n = (len - tot);
 
-    split_send_fragment = s->split_send_fragment;
+    max_send_fragment = ssl_get_max_send_fragment(s);
+    split_send_fragment = ssl_get_split_send_fragment(s);
     /*
      * If max_pipelines is 0 then this means "undefined" and we default to
      * 1 pipeline. Similarly if the cipher does not support pipelined
@@ -556,10 +557,10 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
              & EVP_CIPH_FLAG_PIPELINE)
         || !SSL_USE_EXPLICIT_IV(s))
         maxpipes = 1;
-    if (s->max_send_fragment == 0 || split_send_fragment > s->max_send_fragment
-        || split_send_fragment == 0) {
+    if (max_send_fragment == 0 || split_send_fragment == 0
+        || split_send_fragment > max_send_fragment) {
         /*
-         * We should have prevented this when we set the split and max send
+         * We should have prevented this when we set/get the split and max send
          * fragments so we shouldn't get here
          */
         SSLerr(SSL_F_SSL3_WRITE_BYTES, ERR_R_INTERNAL_ERROR);
@@ -577,13 +578,13 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
         if (numpipes > maxpipes)
             numpipes = maxpipes;
 
-        if (n / numpipes >= s->max_send_fragment) {
+        if (n / numpipes >= max_send_fragment) {
             /*
              * We have enough data to completely fill all available
              * pipelines
              */
             for (j = 0; j < numpipes; j++) {
-                pipelens[j] = s->max_send_fragment;
+                pipelens[j] = max_send_fragment;
             }
         } else {
             /* We can partially fill all available pipelines */
@@ -854,7 +855,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         }
 
         if (SSL_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL) {
-            size_t rlen;
+            size_t rlen, max_send_fragment;
 
             if (!WPACKET_put_bytes_u8(thispkt, type)) {
                 SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
@@ -863,10 +864,11 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             SSL3_RECORD_add_length(thiswr, 1);
 
             /* Add TLS1.3 padding */
+            max_send_fragment = ssl_get_max_send_fragment(s);
             rlen = SSL3_RECORD_get_length(thiswr);
-            if (rlen < SSL3_RT_MAX_PLAIN_LENGTH) {
+            if (rlen < max_send_fragment) {
                 size_t padding = 0;
-                size_t max_padding = SSL3_RT_MAX_PLAIN_LENGTH - rlen;
+                size_t max_padding = max_send_fragment - rlen;
                 if (s->record_padding_cb != NULL) {
                     padding = s->record_padding_cb(s, type, rlen, s->record_padding_arg);
                 } else if (s->block_padding > 0) {

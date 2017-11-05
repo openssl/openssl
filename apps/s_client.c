@@ -590,8 +590,8 @@ typedef enum OPTION_choice {
     OPT_CHAINCAFILE, OPT_VERIFYCAFILE, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SERVERINFO, OPT_STARTTLS, OPT_SERVERNAME, OPT_NOSERVERNAME, OPT_ASYNC,
     OPT_USE_SRTP, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN, OPT_PROTOHOST,
-    OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
-    OPT_KEYLOG_FILE, OPT_EARLY_DATA, OPT_REQCAFILE,
+    OPT_MAXFRAGLEN, OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES,
+    OPT_READ_BUF, OPT_KEYLOG_FILE, OPT_EARLY_DATA, OPT_REQCAFILE,
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
@@ -665,6 +665,8 @@ const OPTIONS s_client_options[] = {
      "Export keying material using label"},
     {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
      "Export len bytes of keying material (default 20)"},
+    {"maxfraglen", OPT_MAXFRAGLEN, 'p',
+     "Enable Maximum Fragment Length Negotiation (len values: 512, 1024, 2048 and 4096)"},
     {"fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV"},
     {"name", OPT_PROTOHOST, 's',
      "Hostname to use for \"-starttls lmtp\", \"-starttls smtp\" or \"-starttls xmpp[-server]\""},
@@ -942,6 +944,7 @@ int s_client_main(int argc, char **argv)
     unsigned int split_send_fragment = 0, max_pipelines = 0;
     enum { use_inet, use_unix, use_unknown } connect_type = use_unknown;
     int count4or6 = 0;
+    uint8_t maxfraglen = 0;
     int c_nbio = 0, c_msg = 0, c_ign_eof = 0, c_brief = 0;
     int c_tlsextdebug = 0;
 #ifndef OPENSSL_NO_OCSP
@@ -1424,6 +1427,28 @@ int s_client_main(int argc, char **argv)
         case OPT_ASYNC:
             async = 1;
             break;
+        case OPT_MAXFRAGLEN:
+            len = atoi(opt_arg());
+            switch (len) {
+            case 512:
+                maxfraglen = TLSEXT_max_fragment_length_512;
+                break;
+            case 1024:
+                maxfraglen = TLSEXT_max_fragment_length_1024;
+                break;
+            case 2048:
+                maxfraglen = TLSEXT_max_fragment_length_2048;
+                break;
+            case 4096:
+                maxfraglen = TLSEXT_max_fragment_length_4096;
+                break;
+            default:
+                BIO_printf(bio_err,
+                           "%s: Max Fragment Len %u is out of permitted values",
+                           prog, len);
+                goto opthelp;
+            }
+            break;
         case OPT_MAX_SEND_FRAG:
             max_send_fragment = atoi(opt_arg());
             break;
@@ -1675,6 +1700,14 @@ int s_client_main(int argc, char **argv)
 
     if (read_buf_len > 0) {
         SSL_CTX_set_default_read_buffer_len(ctx, read_buf_len);
+    }
+
+    if (maxfraglen > 0
+            && !SSL_CTX_set_tlsext_max_fragment_length(ctx, maxfraglen)) {
+        BIO_printf(bio_err,
+                   "%s: Max Fragment Length code %u is out of permitted values"
+                   "\n", prog, maxfraglen);
+        goto end;
     }
 
     if (!config_ctx(cctx, ssl_args, ctx))

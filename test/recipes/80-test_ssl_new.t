@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -81,7 +81,7 @@ my %skip = (
   # We could run some of these tests without TLS 1.2 if we had a per-test
   # disable instruction but that's a bizarre configuration not worth
   # special-casing for.
-  # We should review this once we have TLS 1.3.
+  # TODO(TLS 1.3): We should review this once we have TLS 1.3.
   "13-fragmentation.conf" => disabled("tls1_2"),
   "14-curves.conf" => disabled("tls1_2") || $no_ec || $no_ec2m,
   "15-certstatus.conf" => $no_tls || $no_ocsp,

@@ -57,6 +57,31 @@ EXT_RETURN tls_construct_ctos_server_name(SSL *s, WPACKET *pkt,
     return EXT_RETURN_SENT;
 }
 
+/* Push a Max Fragment Len extension into ClientHello */
+EXT_RETURN tls_construct_ctos_maxfragmentlen(SSL *s, WPACKET *pkt,
+                                             unsigned int context, X509 *x,
+                                             size_t chainidx, int *al)
+{
+    if (s->ext.max_fragment_len_mode == TLSEXT_max_fragment_length_DISABLED)
+        return EXT_RETURN_NOT_SENT;
+
+    /* Add Max Fragment Length extension if client enabled it. */
+    /*-
+     * 4 bytes for this extension type and extension length
+     * 1 byte for the Max Fragment Length code value.
+     */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_max_fragment_length)
+            /* Sub-packet for Max Fragment Length extension (1 byte) */
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u8(pkt, s->ext.max_fragment_len_mode)
+            || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_MAXFRAGMENTLEN, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}
+
 #ifndef OPENSSL_NO_SRP
 EXT_RETURN tls_construct_ctos_srp(SSL *s, WPACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx, int *al)
@@ -1111,6 +1136,43 @@ int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
     s->s3->send_connection_binding = 1;
+
+    return 1;
+}
+
+/* Parse the server's max fragment len extension packet */
+int tls_parse_stoc_maxfragmentlen(SSL *s, PACKET *pkt, unsigned int context,
+                                  X509 *x, size_t chainidx, int *al)
+{
+    unsigned int value;
+
+    if (PACKET_remaining(pkt) != 1 || !PACKET_get_1(pkt, &value)) {
+        *al = TLS1_AD_DECODE_ERROR;
+        return 0;
+    }
+
+    /* |value| should contains a valid max-fragment-length code. */
+    if (!IS_MAX_FRAGMENT_LENGTH_EXT_VALID(value)) {
+        *al = SSL_AD_ILLEGAL_PARAMETER;
+        return 0;
+    }
+
+    /* Must be the same value as client-configured one who was sent to server */
+    /*-
+     * RFC 6066: if a client receives a maximum fragment length negotiation
+     * response that differs from the length it requested, ...
+     * It must abort with SSL_AD_ILLEGAL_PARAMETER alert
+     */
+    if (value != s->ext.max_fragment_len_mode) {
+        *al = SSL_AD_ILLEGAL_PARAMETER;
+        return 0;
+    }
+
+    /*
+     * Maximum Fragment Length Negotiation succeeded.
+     * The negotiated Maximum Fragment Length is binding now.
+     */
+    s->session->ext.max_fragment_len_mode = value;
 
     return 1;
 }
