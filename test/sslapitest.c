@@ -40,6 +40,7 @@ static X509 *ocspcert = NULL;
 #endif
 
 #define NUM_EXTRA_CERTS 40
+#define CLIENT_VERSION_LEN      2
 
 /*
  * This structure is used to validate that the correct number of log messages
@@ -3108,6 +3109,113 @@ static int test_ssl_clear(int idx)
     return testresult;
 }
 
+/* Parse CH and retrieve any MFL extension value if present */
+static int get_MFL_from_client_hello(BIO *bio, int *mfl_codemfl_code)
+{
+    long len;
+    unsigned char *data;
+    PACKET pkt = {0}, pkt2 = {0}, pkt3 = {0};
+    unsigned int MFL_code = 0, type = 0;
+
+    if (!TEST_uint_gt( len = BIO_get_mem_data( bio, (char **) &data ), 0 ) )
+        goto end;
+
+    if (!TEST_true( PACKET_buf_init( &pkt, data, len ) )
+               /* Skip the record header */
+            || !PACKET_forward(&pkt, SSL3_RT_HEADER_LENGTH)
+               /* Skip the handshake message header */
+            || !TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
+               /* Skip client version and random */
+            || !TEST_true(PACKET_forward(&pkt, CLIENT_VERSION_LEN
+                                               + SSL3_RANDOM_SIZE))
+               /* Skip session id */
+            || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &pkt2))
+               /* Skip ciphers */
+            || !TEST_true(PACKET_get_length_prefixed_2(&pkt, &pkt2))
+               /* Skip compression */
+            || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &pkt2))
+               /* Extensions len */
+            || !TEST_true(PACKET_as_length_prefixed_2(&pkt, &pkt2)))
+        goto end;
+
+    /* Loop through all extensions */
+    while (PACKET_remaining(&pkt2)) {
+        if (!TEST_true(PACKET_get_net_2(&pkt2, &type))
+                || !TEST_true(PACKET_get_length_prefixed_2(&pkt2, &pkt3)))
+            goto end;
+
+        if (type == TLSEXT_TYPE_max_fragment_length) {
+            if (!TEST_uint_ne(PACKET_remaining(&pkt3), 0)
+                    || !TEST_true(PACKET_get_1(&pkt3, &MFL_code)))
+                goto end;
+
+            *mfl_codemfl_code = MFL_code;
+            return 1;
+        }
+    }
+
+ end:
+    return 0;
+}
+
+/* Maximum-Fragment-Length TLS extension mode to test */
+static const unsigned char max_fragment_len_test[] = {
+    TLSEXT_max_fragment_length_512,
+    TLSEXT_max_fragment_length_1024,
+    TLSEXT_max_fragment_length_2048,
+    TLSEXT_max_fragment_length_4096
+};
+
+static int test_max_fragment_len_ext(int idx_tst)
+{
+    SSL_CTX *ctx;
+    SSL *con = NULL;
+    int testresult = 0, MFL_mode = 0;
+    BIO *rbio, *wbio;
+
+    ctx = SSL_CTX_new(TLS_method());
+    if (!TEST_ptr(ctx))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_tlsext_max_fragment_length(
+                   ctx, max_fragment_len_test[idx_tst])))
+        goto end;
+
+    con = SSL_new(ctx);
+    if (!TEST_ptr(con))
+        goto end;
+
+    rbio = BIO_new(BIO_s_mem());
+    wbio = BIO_new(BIO_s_mem());
+    if (!TEST_ptr(rbio)|| !TEST_ptr(wbio)) {
+        BIO_free(rbio);
+        BIO_free(wbio);
+        goto end;
+    }
+
+    SSL_set_bio(con, rbio, wbio);
+    SSL_set_connect_state(con);
+
+    if (!TEST_int_le(SSL_connect(con), 0)) {
+        /* This shouldn't succeed because we don't have a server! */
+        goto end;
+    }
+
+    if (!TEST_true(get_MFL_from_client_hello(wbio, &MFL_mode)))
+        /* no MFL in client hello */
+        goto end;
+    if (!TEST_true(max_fragment_len_test[idx_tst] == MFL_mode))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_free(con);
+    SSL_CTX_free(ctx);
+
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
@@ -3159,6 +3267,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_serverinfo, 8);
     ADD_ALL_TESTS(test_export_key_mat, 4);
     ADD_ALL_TESTS(test_ssl_clear, 2);
+    ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));
     return 1;
 }
 

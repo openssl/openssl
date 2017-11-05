@@ -470,3 +470,6 @@ SSL_SESSION_set1_alpn_selected          470	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_set1_hostname               471	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_get0_alpn_selected          472	1_1_1	EXIST::FUNCTION:
 DTLS_set_timer_cb                       473	1_1_1	EXIST::FUNCTION:
+SSL_CTX_set_tlsext_max_fragment_length  474	1_1_1	EXIST::FUNCTION:
+SSL_set_tlsext_max_fragment_length      475	1_1_1	EXIST::FUNCTION:
+SSL_SESSION_get_max_fragment_length     476	1_1_1	EXIST::FUNCTION:

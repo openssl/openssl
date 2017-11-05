@@ -55,6 +55,7 @@ static int init_srtp(SSL *s, unsigned int context);
 #endif
 static int final_sig_algs(SSL *s, unsigned int context, int sent, int *al);
 static int final_early_data(SSL *s, unsigned int context, int sent, int *al);
+static int final_maxfragmentlen(SSL *s, unsigned int context, int sent, int *al);
 
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
@@ -134,6 +135,14 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_parse_ctos_server_name, tls_parse_stoc_server_name,
         tls_construct_stoc_server_name, tls_construct_ctos_server_name,
         final_server_name
+    },
+    {
+        TLSEXT_TYPE_max_fragment_length,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
+        | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
+        NULL, tls_parse_ctos_maxfragmentlen, tls_parse_stoc_maxfragmentlen,
+        tls_construct_stoc_maxfragmentlen, tls_construct_ctos_maxfragmentlen,
+        final_maxfragmentlen
     },
 #ifndef OPENSSL_NO_SRP
     {
@@ -1472,6 +1481,28 @@ static int final_early_data(SSL *s, unsigned int context, int sent, int *al)
             return 0;
         }
     }
+
+    return 1;
+}
+
+static int final_maxfragmentlen(SSL *ssl, unsigned int context, int sent, int *al)
+{
+    /*
+     * Session resumption on server-side with MFL extension active
+     *  BUT MFL extension packet was not resent (i.e. sent == 0)
+     */
+    if (ssl->server && ssl->hit && USE_MAX_FRAGMENT_LENGTH_EXT(ssl->session)
+            && !sent ) {
+        *al = SSL_AD_MISSING_EXTENSION;
+        return 0;
+    }
+
+    /* Current SSL buffer is lower than requested MFL */
+    if (ssl->session && USE_MAX_FRAGMENT_LENGTH_EXT(ssl->session)
+            && ssl->max_send_fragment < GET_MAX_FRAGMENT_LENGTH(ssl->session))
+        /* trigger a larger buffer reallocation */
+        if (!ssl3_setup_buffers(ssl))   
+            return 0;
 
     return 1;
 }

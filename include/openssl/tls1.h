@@ -203,6 +203,17 @@ extern "C" {
 # define TLSEXT_curve_P_256                              23
 # define TLSEXT_curve_P_384                              24
 
+/* OpenSSL value to disable maximum fragment length extension */
+# define TLSEXT_max_fragment_length_DISABLED    0
+/* Allowed values for max fragment length extension */
+# define TLSEXT_max_fragment_length_512         1
+# define TLSEXT_max_fragment_length_1024        2
+# define TLSEXT_max_fragment_length_2048        3
+# define TLSEXT_max_fragment_length_4096        4
+
+int SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, uint8_t mode);
+int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode);
+
 # define TLSEXT_MAXLEN_host_name 255
 
 __owur const char *SSL_get_servername(const SSL *s, const int type);

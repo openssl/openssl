@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -680,6 +680,14 @@ int ssl3_get_record(SSL *s)
         }
 
         if (thisrr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
+            al = SSL_AD_RECORD_OVERFLOW;
+            SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_DATA_LENGTH_TOO_LONG);
+            goto f_err;
+        }
+
+        /* If received packet overflows current Max Fragment Length setting */
+        if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
+                && thisrr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
             al = SSL_AD_RECORD_OVERFLOW;
             SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_DATA_LENGTH_TOO_LONG);
             goto f_err;
@@ -1817,6 +1825,15 @@ int dtls1_get_record(SSL *s)
         }
 
         if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
+            /* record too long, silently discard it */
+            rr->length = 0;
+            RECORD_LAYER_reset_packet_length(&s->rlayer);
+            goto again;
+        }
+
+        /* If received packet overflows own-client Max Fragment Length setting */
+        if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
+                && rr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
             /* record too long, silently discard it */
             rr->length = 0;
             RECORD_LAYER_reset_packet_length(&s->rlayer);

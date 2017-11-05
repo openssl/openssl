@@ -63,6 +63,7 @@ my %message_type = (
 
 use constant {
     EXT_SERVER_NAME => 0,
+    EXT_MAX_FRAGMENT_LENGTH => 1,
     EXT_STATUS_REQUEST => 5,
     EXT_SUPPORTED_GROUPS => 10,
     EXT_EC_POINT_FORMATS => 11,

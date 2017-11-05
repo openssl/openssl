@@ -139,6 +139,40 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
     return 1;
 }
 
+int tls_parse_ctos_maxfragmentlen(SSL *s, PACKET *pkt, unsigned int context,
+                                  X509 *x, size_t chainidx, int *al)
+{
+    unsigned int value;
+
+    if (PACKET_remaining(pkt) != 1 || !PACKET_get_1(pkt, &value)) {
+        *al = TLS1_AD_DECODE_ERROR;
+        return 0;
+    }
+
+    /* Received |value| should be a valid max-fragment-length code. */
+    if (!IS_MAX_FRAGMENT_LENGTH_EXT_VALID(value)) {
+        *al = SSL_AD_ILLEGAL_PARAMETER;
+        return 0;
+    }
+
+    /*
+     * RFC 6066:  The negotiated length applies for the duration of the session
+     * including session resumptions.
+     * We should receive the same code as in resumed session !
+     */
+    if (s->hit && s->session->ext.max_fragment_len_mode != value) {
+        *al = SSL_AD_ILLEGAL_PARAMETER;
+        return 0;
+    }
+
+    /*
+     * Store it in session, so it'll become binding for us
+     * and we'll include it in a next Server Hello.
+     */
+    s->session->ext.max_fragment_len_mode = value;
+    return 1;
+}
+
 #ifndef OPENSSL_NO_SRP
 int tls_parse_ctos_srp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx, int *al)
@@ -838,6 +872,29 @@ EXT_RETURN tls_construct_stoc_server_name(SSL *s, WPACKET *pkt,
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
         SSLerr(SSL_F_TLS_CONSTRUCT_STOC_SERVER_NAME, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}
+
+/* Add/include the server's max fragment len extension into ServerHello */
+EXT_RETURN tls_construct_stoc_maxfragmentlen(SSL *s, WPACKET *pkt,
+                                             unsigned int context, X509 *x,
+                                             size_t chainidx, int *al)
+{
+    if (!USE_MAX_FRAGMENT_LENGTH_EXT(s->session))
+        return EXT_RETURN_NOT_SENT;
+
+    /*-
+     * 4 bytes for this extension type and extension length
+     * 1 byte for the Max Fragment Length code value.
+     */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_max_fragment_length)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_put_bytes_u8(pkt, s->session->ext.max_fragment_len_mode)
+        || !WPACKET_close(pkt)) {
+        SSLerr(SSL_F_TLS_CONSTRUCT_STOC_MAXFRAGMENTLEN, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
 

@@ -1,5 +1,5 @@
 # -*- mode: perl; -*-
-# Copyright 2016-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,7 @@
 # https://www.openssl.org/source/license.html
 
 
-## Test version negotiation
+## Test packet fragmentation
 
 use strict;
 use warnings;
@@ -182,6 +182,87 @@ our @tests = (
         test => {
             ApplicationData => 4 * 1024,
             MaxFragmentSize => 4 * 1024,
+        }
+    },
+    ############################################
+    # Default (Max) Fragment Size is 512.
+    # Default Application data size is 256.
+    {
+        name => "Maximum Fragment Len extension set to 1024 w. FragmentSize disabled",
+        server => { },
+        client => {
+            extra => {
+                MaxFragmentLenExt => 1024,
+            },
+        },
+        test => {
+            ApplicationData => 3072,
+            MaxFragmentSize => 16384,
+        }
+    },
+    {
+        name => "Maximum Fragment Len extension equal FragmentSize to 2048",
+        server => { },
+        client => {
+            extra => {
+                MaxFragmentLenExt => 2048,
+            },
+        },
+        test => {
+            ApplicationData => 3072,
+            MaxFragmentSize => 2048,
+        }
+    },
+    {
+        name => "Maximum Fragment Len extension 512 lower than FragmentSize 1024",
+        server => { },
+        client => {
+            extra => {
+                MaxFragmentLenExt => 512,
+            },
+        },
+        test => {
+            ApplicationData => 3072,
+            MaxFragmentSize => 1024,
+        }
+    },
+    {
+        name => "Maximum Fragment Len extension 1024 lower than FragmentSize 1024",
+        server => { },
+        client => {
+            extra => {
+                MaxFragmentLenExt => 2048,
+            },
+        },
+        test => {
+            ApplicationData => 3072,
+            MaxFragmentSize => 1024,
+        }
+    },
+    {
+        name => "Maximum Fragment Len extension 4096 greater than FragmentSize 2048",
+        server => { },
+        client => {
+            extra => {
+                MaxFragmentLenExt => 4096,
+            },
+        },
+        test => {
+            ApplicationData => 8196,
+            MaxFragmentSize => 2048,
+        }
+    },
+    {
+        name => "Maximum Fragment Len extension 2048 greater than FragmentSize 1024",
+        server => { },
+        client => {
+            extra => {
+                MaxFragmentLenExt => 2048,
+            },
+        },
+        test => {
+            ApplicationData => 3072,
+            MaxFragmentSize => 1024,
         }
     },
 );

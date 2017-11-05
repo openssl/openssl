@@ -42,6 +42,7 @@ typedef struct {
     uint32_t max_early_data;
     ASN1_OCTET_STRING *alpn_selected;
     ASN1_OCTET_STRING *tick_nonce;
+    uint32_t tlsext_max_fragment_len_mode;
 } SSL_SESSION_ASN1;
 
 ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
@@ -71,7 +72,8 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_tick_age_add, ZUINT32, 14),
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, max_early_data, ZUINT32, 15),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, alpn_selected, ASN1_OCTET_STRING, 16),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, tick_nonce, ASN1_OCTET_STRING, 17)
+    ASN1_EXP_OPT(SSL_SESSION_ASN1, tick_nonce, ASN1_OCTET_STRING, 17),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_max_fragment_len_mode, ZUINT32, 18)
 } static_ASN1_SEQUENCE_END(SSL_SESSION_ASN1)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
@@ -195,6 +197,8 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
     else
         ssl_session_oinit(&as.tick_nonce, &tick_nonce,
                           in->ext.tick_nonce, in->ext.tick_nonce_len);
+
+    as.tlsext_max_fragment_len_mode = in->ext.max_fragment_len_mode;
 
     return i2d_SSL_SESSION_ASN1(&as, pp);
 
@@ -369,6 +373,8 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
         ret->ext.tick_nonce = NULL;
         ret->ext.tick_nonce_len = 0;
     }
+
+    ret->ext.max_fragment_len_mode = as->tlsext_max_fragment_len_mode;
 
     M_ASN1_free_of(as, SSL_SESSION_ASN1);
 
