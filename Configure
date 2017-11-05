@@ -1281,6 +1281,26 @@ if ($^O ne "VMS") {
 	    $disabled{makedepend} = "unavailable" unless $config{makedepprog};
 	}
     }
+
+    if (!$disabled{asm}) {
+	# probe for -Wa,--noexecstack option...
+	if ($predefined{__clang__}) {
+	    # clang [which has builtin assembler] seems to recognize the
+	    # option in question on all supported platforms even when
+	    # it's meaningless...
+	    $config{cflags} .= " -Wa,--noexecstack";
+	} else {
+	    open(PIPE, "$cc -Wa,--help -c -o null.$$.o -x assembler /dev/null 2>&1 |");
+	    while(<PIPE>) {
+		if (m/\-\-noexecstack/) {
+		    $config{cflags} .= " -Wa,--noexecstack";
+		    last;
+		}
+	    }
+	    close(PIPE);
+	    unlink("null.$$.o");
+	}
+    }
 }
 
 
