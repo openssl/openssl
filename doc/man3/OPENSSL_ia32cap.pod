@@ -110,6 +110,10 @@ a.k.a. AVX512IFMA extension;
 
 =item bit #64+31 denoting availability of AVX512VL extension;
 
+=item bit #64+41 denoting availability of VAES extension;
+
+=item bit #64+42 denoting availability of VPCLMULQDQ extension;
+
 =back
 
 To control this extended capability word use ':' as delimiter when
@@ -130,6 +134,7 @@ requirements are summarized in below table:
    ADCX/ADOX   | 2.23   | 2.10   | 3.3
    AVX512      | 2.25   | 2.11.8 | see NOTES
    AVX512IFMA  | 2.26   | 2.11.8 | see NOTES
+   VAES        | n/a    | n/a    |
 
 =head1 NOTES
 
