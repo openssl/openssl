@@ -1088,25 +1088,18 @@ if (!$disabled{dso} && $target{dso_scheme} ne "")
 $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
 
 # If threads aren't disabled, check how possible they are
-unless ($disabled{threads}) {
-    if ($auto_threads) {
-        # Enabled by default, disable it forcibly if unavailable
-        if ($target{thread_scheme} eq "(unknown)") {
-            $disabled{threads} = "unavailable";
-        }
-    } else {
-        # The user chose to enable threads explicitly, let's see
-        # if there's a chance that's possible
-        if ($target{thread_scheme} eq "(unknown)") {
-            # If the user asked for "threads" and we don't have internal
-            # knowledge how to do it, [s]he is expected to provide any
-            # system-dependent compiler options that are necessary.  We
-            # can't truly check that the given options are correct, but
-            # we expect the user to know what [s]He is doing.
-            if ($no_user_cflags && $no_user_defines) {
-                die "You asked for multi-threading support, but didn't\n"
-                    ,"provide any system-specific compiler options\n";
-            }
+unless ($disabled{threads} || $auto_threads) {
+    # The user chose to enable threads explicitly, let's see
+    # if there's a chance that's possible
+    if ($target{thread_scheme} eq "(unknown)") {
+        # If the user asked for "threads" and we don't have internal
+        # knowledge how to do it, [s]he is expected to provide any
+        # system-dependent compiler options that are necessary.  We
+        # can't truly check that the given options are correct, but
+        # we expect the user to know what [s]He is doing.
+        if ($no_user_cflags && $no_user_defines) {
+            die "You asked for multi-threading support, but didn't\n"
+                ,"provide any system-specific compiler options\n";
         }
     }
 }
@@ -2336,113 +2329,134 @@ sub read_config {
 # recursively
 sub resolve_config {
     my $target = shift;
-    my @breadcrumbs = @_;
 
-#    my $extra_checks = defined($ENV{CONFIGURE_EXTRA_CHECKS});
+    my %early_checks = (
+        thread_scheme => sub {
+            my $thread_scheme = shift;
 
-    if (grep { $_ eq $target } @breadcrumbs) {
-	die "inherit_from loop!  target backtrace:\n  "
-	    ,$target,"\n  ",join("\n  ", @breadcrumbs),"\n";
-    }
-
-    if (!defined($table{$target})) {
-	warn "Warning! target $target doesn't exist!\n";
-	return ();
-    }
-    # Recurse through all inheritances.  They will be resolved on the
-    # fly, so when this operation is done, they will all just be a
-    # bunch of attributes with string values.
-    # What we get here, though, are keys with references to lists of
-    # the combined values of them all.  We will deal with lists after
-    # this stage is done.
-    my %combined_inheritance = ();
-    if ($table{$target}->{inherit_from}) {
-	my @inherit_from =
-	    map { ref($_) eq "CODE" ? $_->() : $_ } @{$table{$target}->{inherit_from}};
-	foreach (@inherit_from) {
-	    my %inherited_config = resolve_config($_, $target, @breadcrumbs);
-
-	    # 'template' is a marker that's considered private to
-	    # the config that had it.
-	    delete $inherited_config{template};
-
-	    foreach (keys %inherited_config) {
-		if (!$combined_inheritance{$_}) {
-		    $combined_inheritance{$_} = [];
-		}
-		push @{$combined_inheritance{$_}}, $inherited_config{$_};
-	    }
-	}
-    }
-
-    # We won't need inherit_from in this target any more, since we've
-    # resolved all the inheritances that lead to this
-    delete $table{$target}->{inherit_from};
-
-    # Now is the time to deal with those lists.  Here's the place to
-    # decide what shall be done with those lists, all based on the
-    # values of the target we're currently dealing with.
-    # - If a value is a coderef, it will be executed with the list of
-    #   inherited values as arguments.
-    # - If the corresponding key doesn't have a value at all or is the
-    #   empty string, the inherited value list will be run through the
-    #   default combiner (below), and the result becomes this target's
-    #   value.
-    # - Otherwise, this target's value is assumed to be a string that
-    #   will simply override the inherited list of values.
-    my $default_combiner = add();
-
-    my %all_keys =
-	map { $_ => 1 } (keys %combined_inheritance,
-			 keys %{$table{$target}});
-
-    sub process_values {
-	my $object    = shift;
-	my $inherited = shift;  # Always a [ list ]
-	my $target    = shift;
-	my $entry     = shift;
-
-        $add_called = 0;
-
-        while(ref($object) eq "CODE") {
-            $object = $object->(@$inherited);
+            if ($auto_threads) {
+                # Enabled by default, disable it forcibly if unavailable
+                if ($thread_scheme eq "(unknown)") {
+                    $disabled{threads} = "unavailable";
+                } else {
+                    # This is needed when running any of the TABLE and HASH
+                    # targets, as the thread scheme changes for every target
+                    # displayed
+                    delete $disabled{threads};
+                }
+            }
         }
-        if (!defined($object)) {
+       );
+
+
+    sub withcontext {
+        my $code = pop;
+        my @context = @_;
+
+        return sub { $code->(combine(@context)->()); };
+    }
+
+    sub resolve_inheritance {
+        my $target = shift;
+        my @breadcrumbs = @_;
+
+#        my $extra_checks = defined($ENV{CONFIGURE_EXTRA_CHECKS});
+
+        if (grep { $_ eq $target } @breadcrumbs) {
+            die "inherit_from loop!  target backtrace:\n  "
+                ,$target,"\n  ",join("\n  ", @breadcrumbs),"\n";
+        }
+
+        if (!defined($table{$target})) {
+            warn "Warning! target $target doesn't exist!\n";
             return ();
         }
-        elsif (ref($object) eq "ARRAY") {
-            local $add_called;  # To make sure recursive calls don't affect it
-            return [ map { process_values($_, $inherited, $target, $entry) }
-                     @$object ];
-        } elsif (ref($object) eq "") {
-            return $object;
-        } else {
-            die "cannot handle reference type ",ref($object)
-                ," found in target ",$target," -> ",$entry,"\n";
+        # Recurse through all inheritances.  They will be resolved on the
+        # fly, so when this operation is done, they will all just be a
+        # bunch of attributes with string values.
+        # What we get here, though, are keys with references to lists of
+        # the combined values of them all.  We will deal with lists after
+        # this stage is done.
+
+        my @values_stack = ();
+        my %new_values = ( %{$table{$target}} );
+        if ($new_values{inherit_from}) {
+            my @inherit_from =
+                map { ref($_) eq "CODE" ? $_->() : $_ }
+                @{$new_values{inherit_from}};
+            my %combined_inheritance = ();
+
+            foreach (@inherit_from) {
+                my %inherited_config = resolve_inheritance($_, $target,
+                                                           @breadcrumbs);
+
+                # 'template' is a marker that's considered private to
+                # the config that had it.
+                delete $inherited_config{template};
+
+                foreach (keys %inherited_config) {
+                    if (!$combined_inheritance{$_}) {
+                        $combined_inheritance{$_} = [];
+                    }
+                    push @{$combined_inheritance{$_}}, $inherited_config{$_};
+                }
+            }
+
+            foreach (keys %combined_inheritance) {
+                if (! defined $new_values{$_}) {
+                    $new_values{$_} = combine(@{$combined_inheritance{$_}});
+                } elsif (ref($new_values{$_}) eq 'CODE') {
+                    $new_values{$_} = withcontext(@{$combined_inheritance{$_}},
+                                                  $new_values{$_});
+                }
+                # If neither undefined or CODEref, $new_values{$_} is left alone
+            }
+
+            delete $new_values{inherit_from};
+        }
+
+        $table{$target} = { %new_values };
+        return %new_values;
+    }
+
+    my %combined_values = resolve_inheritance($target);
+
+    sub process_values {
+        my @object    = ( shift );
+        my $target    = shift;
+        my $entry     = shift;
+
+        while(ref($object[0]) eq "CODE") {
+            @object = $object[0]->();
+        }
+        if (ref($object[0]) eq "ARRAY") {
+            return [ map { my @x = process_values($_, $target, $entry); @x; }
+                     @{$object[0]} ];
+        }
+        if (ref($object[0]) eq "") {
+            return @object;
+        }
+        die "cannot handle reference type ",ref($object[0])
+            ," found in target ",$target," -> ",$entry,"\n";
+    }
+
+    # There are some keys we need to process early because CODEref
+    my @first_keys = ( sort keys %early_checks );
+    my @all_keys = ( @first_keys,
+                     grep { my $x = $_; ! grep { $x eq $_ } @first_keys }
+                         sort keys %combined_values );
+    foreach (@all_keys) {
+        my @x = process_values($combined_values{$_}, $target, $_);
+        $combined_values{$_} = $x[0];
+        unless (defined $combined_values{$_}) {
+            delete $combined_values{$_};
+        }
+        if (defined $early_checks{$_}) {
+            $early_checks{$_}->($combined_values{$_});
         }
     }
 
-    foreach (sort keys %all_keys) {
-        my $previous = $combined_inheritance{$_};
-
-	# Current target doesn't have a value for the current key?
-	# Assign it the default combiner, the rest of this loop body
-	# will handle it just like any other coderef.
-	if (!exists $table{$target}->{$_}) {
-	    $table{$target}->{$_} = $default_combiner;
-	}
-
-	$table{$target}->{$_} = process_values($table{$target}->{$_},
-					       $combined_inheritance{$_},
-					       $target, $_);
-        unless(defined($table{$target}->{$_})) {
-            delete $table{$target}->{$_};
-        }
-#        if ($extra_checks &&
-#            $previous && !($add_called ||  $previous ~~ $table{$target}->{$_})) {
-#            warn "$_ got replaced in $target\n";
-#        }
-    }
+    %{$table{$target}} = %combined_values;
 
     # Finally done, return the result.
     return %{$table{$target}};
