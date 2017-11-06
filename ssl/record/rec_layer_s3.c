@@ -1305,8 +1305,16 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         if (recvd_type != NULL)
             *recvd_type = SSL3_RECORD_get_type(rr);
 
-        if (len == 0)
+        if (len == 0) {
+            /*
+             * Mark a zero length record as read. This ensures multiple calls to
+             * SSL_read() with a zero length buffer will eventually cause
+             * SSL_pending() to report data as being available.
+             */
+            if (SSL3_RECORD_get_length(rr) == 0)
+                SSL3_RECORD_set_read(rr);
             return 0;
+        }
 
         totalbytes = 0;
         do {
