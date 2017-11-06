@@ -39,19 +39,19 @@
  * DRBGs. It reseeds itself by pulling either randomness from os entropy
  * sources or by consuming randomnes which was added by RAND_add()
  */
-static RAND_DRBG drbg_master;
+static RAND_DRBG *drbg_master;
 /*
  * THE PUBLIC DRBG
  *
  * Used by default for generating random bytes using RAND_bytes().
  */
-static RAND_DRBG drbg_public;
+static RAND_DRBG *drbg_public;
 /*
  * THE PRIVATE DRBG
  *
  * Used by default for generating private keys using RAND_priv_bytes()
  */
-static RAND_DRBG drbg_private;
+static RAND_DRBG *drbg_private;
 /*+
  * DRBG HIERARCHY
  *
@@ -98,7 +98,8 @@ static const char ossl_pers_string[] = "OpenSSL NIST SP 800-90A DRBG";
 
 static CRYPTO_ONCE rand_drbg_init = CRYPTO_ONCE_STATIC_INIT;
 
-static int drbg_setup(RAND_DRBG *drbg, const char *name, RAND_DRBG *parent);
+static RAND_DRBG *drbg_setup(const char *name, RAND_DRBG *parent);
+static void drbg_cleanup(RAND_DRBG *drbg);
 
 /*
  * Set/initialize |drbg| to be of type |nid|, with optional |flags|.
@@ -620,30 +621,37 @@ void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
  */
 
 /*
- * Initializes the given global DRBG with default settings.
+ * Allocates a new global DRBG on the secure heap (if enabled) and
+ * initializes it with default settings.
  * A global lock for the DRBG is created with the given name.
  *
  * Returns a pointer to the new DRBG instance on success, NULL on failure.
  */
-static int drbg_setup(RAND_DRBG *drbg, const char *name, RAND_DRBG *parent)
+static RAND_DRBG *drbg_setup(const char *name, RAND_DRBG *parent)
 {
-    int ret = 1;
+    RAND_DRBG *drbg;
 
-    if (name == NULL || drbg->lock != NULL) {
+    if (name == NULL) {
         RANDerr(RAND_F_DRBG_SETUP, ERR_R_INTERNAL_ERROR);
-        return 0;
+        return NULL;
     }
+
+    drbg = OPENSSL_secure_zalloc(sizeof(RAND_DRBG));
+    if (drbg == NULL)
+        return NULL;
 
     drbg->lock = CRYPTO_THREAD_glock_new(name);
     if (drbg->lock == NULL) {
         RANDerr(RAND_F_DRBG_SETUP, RAND_R_FAILED_TO_CREATE_LOCK);
-        return 0;
+        goto err;
     }
 
-    ret &= RAND_DRBG_set(drbg,
-                         RAND_DRBG_NID, RAND_DRBG_FLAG_CTR_USE_DF) == 1;
-    ret &= RAND_DRBG_set_callbacks(drbg, rand_drbg_get_entropy,
-                                   rand_drbg_cleanup_entropy, NULL, NULL) == 1;
+    if (RAND_DRBG_set(drbg,
+                      RAND_DRBG_NID, RAND_DRBG_FLAG_CTR_USE_DF) != 1)
+        goto err;
+    if (RAND_DRBG_set_callbacks(drbg, rand_drbg_get_entropy,
+                                rand_drbg_cleanup_entropy, NULL, NULL) != 1)
+        goto err;
 
     if (parent == NULL) {
         drbg->reseed_interval = MASTER_RESEED_INTERVAL;
@@ -666,7 +674,11 @@ static int drbg_setup(RAND_DRBG *drbg, const char *name, RAND_DRBG *parent)
     RAND_DRBG_instantiate(drbg,
                           (const unsigned char *) ossl_pers_string,
                           sizeof(ossl_pers_string) - 1);
-    return ret;
+    return drbg;
+
+err:
+    drbg_cleanup(drbg);
+    return NULL;
 }
 
 /*
@@ -675,28 +687,34 @@ static int drbg_setup(RAND_DRBG *drbg, const char *name, RAND_DRBG *parent)
  */
 DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
 {
-    int ret = 1;
+    drbg_master = drbg_setup("drbg_master", NULL);
+    drbg_public = drbg_setup("drbg_public", drbg_master);
+    drbg_private = drbg_setup("drbg_private", drbg_master);
 
-    ret &= drbg_setup(&drbg_master, "drbg_master", NULL);
-    ret &= drbg_setup(&drbg_public, "drbg_public", &drbg_master);
-    ret &= drbg_setup(&drbg_private, "drbg_private", &drbg_master);
+    if (drbg_master == NULL || drbg_public == NULL || drbg_private == NULL)
+        return 0;
 
-    return ret;
+    return 1;
 }
 
 /* Cleans up the given global DRBG  */
 static void drbg_cleanup(RAND_DRBG *drbg)
 {
-    CRYPTO_THREAD_lock_free(drbg->lock);
-    RAND_DRBG_uninstantiate(drbg);
+    if (drbg != NULL) {
+        RAND_DRBG_uninstantiate(drbg);
+        CRYPTO_THREAD_lock_free(drbg->lock);
+        OPENSSL_secure_clear_free(drbg, sizeof(RAND_DRBG));
+    }
 }
 
 /* Clean up the global DRBGs before exit */
 void rand_drbg_cleanup_int(void)
 {
-    drbg_cleanup(&drbg_private);
-    drbg_cleanup(&drbg_public);
-    drbg_cleanup(&drbg_master);
+    drbg_cleanup(drbg_private);
+    drbg_cleanup(drbg_public);
+    drbg_cleanup(drbg_master);
+
+    drbg_private = drbg_public = drbg_master = NULL;
 }
 
 /* Implements the default OpenSSL RAND_bytes() method */
@@ -790,7 +808,7 @@ RAND_DRBG *RAND_DRBG_get0_master(void)
     if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
         return NULL;
 
-    return &drbg_master;
+    return drbg_master;
 }
 
 /*
@@ -802,7 +820,7 @@ RAND_DRBG *RAND_DRBG_get0_public(void)
     if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
         return NULL;
 
-    return &drbg_public;
+    return drbg_public;
 }
 
 /*
@@ -814,7 +832,7 @@ RAND_DRBG *RAND_DRBG_get0_private(void)
     if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
         return NULL;
 
-    return &drbg_private;
+    return drbg_private;
 }
 
 RAND_METHOD rand_meth = {
