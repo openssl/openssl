@@ -68,6 +68,7 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
     unsigned char *p;
     char oline[256], htmp[5];
     int i;
+
     switch (gen->type) {
     case GEN_OTHERNAME:
         if (!X509V3_add_value("othername", "<unsupported>", &ret))
@@ -100,7 +101,7 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         break;
 
     case GEN_DIRNAME:
-        if (X509_NAME_oneline(gen->d.dirn, oline, 256) == NULL
+        if (X509_NAME_oneline(gen->d.dirn, oline, sizeof(oline)) == NULL
                 || !X509V3_add_value("DirName", oline, &ret))
             return NULL;
         break;
