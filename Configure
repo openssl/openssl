@@ -299,7 +299,26 @@ $config{openssldir}="";
 $config{processor}="";
 $config{libdir}="";
 $config{cross_compile_prefix}="";
-my $auto_threads=1;    # enable threads automatically? true by default
+
+# %auto keys are configuration option that may or may not be disabled
+# value is a string to disable / enable automatically based on config settings,
+# the string is used as value in %disabled.
+# value is 0 when the option has been enabled/disabled on command line,
+# directly or indirectly
+my %auto = (
+    threads => "unavailable",
+    shared => "no-shared-target",
+    pic => "no-shared-target",
+    'dynamic-engine' => "no-shared-target",
+   );
+# %settingdata keys are config settings, the values are hashes of data
+# The keys are used to check these config settings early when resolving configs
+my %settingdata = (
+    thread_scheme => { disabled => "(unknown)", options => [ 'threads' ] },
+    shared_target => { disabled => "",
+                       options => [ 'pic', 'shared', 'dynamic-engine' ] },
+   );
+
 my $default_ranlib;
 
 # Top level directories to build
@@ -630,7 +649,7 @@ while (@argvcopy)
                         $disabled{$1} = "option";
                         }
 		# No longer an automatic choice
-		$auto_threads = 0 if ($1 eq "threads");
+		$auto{$1} = 0;
 		}
 	elsif (/^enable-(.+)$/)
 		{
@@ -650,7 +669,7 @@ while (@argvcopy)
 		delete $disabled{$algo};
 
 		# No longer an automatic choice
-		$auto_threads = 0 if ($1 eq "threads");
+		$auto{$1} = 0;
 		}
 	elsif (/^--strict-warnings$/)
 		{
@@ -1088,7 +1107,7 @@ if (!$disabled{dso} && $target{dso_scheme} ne "")
 $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
 
 # If threads aren't disabled, check how possible they are
-unless ($disabled{threads} || $auto_threads) {
+unless ($disabled{threads} || $auto{threads}) {
     # The user chose to enable threads explicitly, let's see
     # if there's a chance that's possible
     if ($target{thread_scheme} eq "(unknown)") {
@@ -1116,15 +1135,6 @@ unless($disabled{threads}) {
 if (defined($disabled{"deprecated"})) {
         $config{api} = $maxapi;
 }
-
-if ($target{shared_target} eq "")
-	{
-	$no_shared_warn = 1
-	    if (!$disabled{shared} || !$disabled{"dynamic-engine"});
-	$disabled{shared} = "no-shared-target";
-	$disabled{pic} = $disabled{shared} = $disabled{"dynamic-engine"} =
-	    "no-shared-target";
-	}
 
 if ($disabled{"dynamic-engine"}) {
         push @{$config{defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
@@ -2139,7 +2149,9 @@ applications as the compiler options required on this system are not known.
 See file INSTALL for details if you need multi-threading.
 EOF
 
-print <<"EOF" if ($no_shared_warn);
+my $warn_shared = (!$auto{shared} && !$disabled{shared})
+    || (!$auto{'dynamic-engine'} && !$disabled{'dynamic-engine'});
+print <<"EOF" if $warn_shared;
 
 The options 'shared', 'pic' and 'dynamic-engine' aren't supported on this
 platform, so we will pretend you gave the option 'no-pic', which also disables
@@ -2330,25 +2342,6 @@ sub read_config {
 sub resolve_config {
     my $target = shift;
 
-    my %early_checks = (
-        thread_scheme => sub {
-            my $thread_scheme = shift;
-
-            if ($auto_threads) {
-                # Enabled by default, disable it forcibly if unavailable
-                if ($thread_scheme eq "(unknown)") {
-                    $disabled{threads} = "unavailable";
-                } else {
-                    # This is needed when running any of the TABLE and HASH
-                    # targets, as the thread scheme changes for every target
-                    # displayed
-                    delete $disabled{threads};
-                }
-            }
-        }
-       );
-
-
     sub withcontext {
         my $code = pop;
         my @context = @_;
@@ -2441,18 +2434,30 @@ sub resolve_config {
     }
 
     # There are some keys we need to process early because CODEref
-    my @first_keys = ( sort keys %early_checks );
+    my @first_keys = ( sort keys %settingdata );
     my @all_keys = ( @first_keys,
                      grep { my $x = $_; ! grep { $x eq $_ } @first_keys }
                          sort keys %combined_values );
-    foreach (@all_keys) {
-        my @x = process_values($combined_values{$_}, $target, $_);
-        $combined_values{$_} = $x[0];
-        unless (defined $combined_values{$_}) {
-            delete $combined_values{$_};
+    foreach my $key (@all_keys) {
+        my @x = process_values($combined_values{$key}, $target, $key);
+        $combined_values{$key} = $x[0];
+        unless (defined $combined_values{$key}) {
+            delete $combined_values{$key};
         }
-        if (defined $early_checks{$_}) {
-            $early_checks{$_}->($combined_values{$_});
+        if (defined $settingdata{$key}) {
+            foreach (@{$settingdata{$key}->{options}}) {
+                if ($auto{$_}) {
+                    # Enabled by default, disable it forcibly if unavailable
+                    if ($combined_values{$key} eq $settingdata{$key}->{disabled}) {
+                        $disabled{$_} = $auto{$_};
+                    } else {
+                        # This is needed when running any of the TABLE and
+                        # HASH targets, as the thread scheme changes for
+                        # every target displayed
+                        delete $disabled{$_};
+                    }
+                }
+            }
         }
     }
 
