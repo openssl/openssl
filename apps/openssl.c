@@ -750,6 +750,12 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_SEED
     BIO_puts(bio_out, "SEED\n");
 #endif
+#ifdef OPENSSL_NO_SM3
+    BIO_puts(bio_out, "SM3\n");
+#endif
+#ifdef OPENSSL_NO_SM4
+    BIO_puts(bio_out, "SM4\n");
+#endif
 #ifdef OPENSSL_NO_SOCK
     BIO_puts(bio_out, "SOCK\n");
 #endif
