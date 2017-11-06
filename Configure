@@ -1082,10 +1082,6 @@ if ($target =~ /linux.*-mips/ && !$disabled{asm} && $user_cflags !~ /-m(ips|arch
 	$config{cflags}="-mips3 $config{cflags}" if ($target =~ /mips64/);
 }
 
-my $no_shared_warn=0;
-my $no_user_cflags=0;
-my $no_user_defines=0;
-
 # The DSO code currently always implements all functions so that no
 # applications will have to worry about that from a compilation point
 # of view. However, the "method"s may return zero unless that platform
@@ -1330,10 +1326,9 @@ unless ($disabled{"crypto-mdebug-backtrace"})
 		}
 	}
 
-if ($user_cflags ne "") { $config{cflags}="$config{cflags}$user_cflags"; $config{cxxflags}="$config{cxxflags}$user_cflags";}
-else                    { $no_user_cflags=1;  }
-if (@user_defines) { $config{defines}=[ @{$config{defines}}, @user_defines ]; }
-else               { $no_user_defines=1;    }
+$config{cflags}="$config{cflags}$user_cflags";
+$config{cxxflags}="$config{cxxflags}$user_cflags";
+$config{defines}=[ @{$config{defines}}, @user_defines ];
 
 # ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 
