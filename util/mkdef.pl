@@ -877,7 +877,7 @@ sub do_defs
 			# Reduce argument lists to empty ()
 			# fold round brackets recursively: (t(*v)(t),t) -> (t{}{},t) -> {}
 			while(/\(.*\)/s) {
-				s/\([^\(\)]+\)/\{\}/gs;
+				s/\([^\(\)]*\)/\{\}/gs;
 				s/\(\s*\*\s*(\w+)\s*\{\}\s*\)/$1/gs;	#(*f{}) -> f
 			}
 			# pretend as we didn't use curly braces: {} -> ()
