@@ -478,30 +478,9 @@ my @disable_cascades = (
     sub { 0 == scalar grep { !$disabled{$_} } @dtls }
 			=> [ "dtls" ],
 
-    # SSL 3.0, (D)TLS 1.0 and TLS 1.1 require MD5 and SHA
-    "md5"		=> [ "ssl", "tls1", "tls1_1", "dtls1" ],
-    "sha"		=> [ "ssl", "tls1", "tls1_1", "dtls1" ],
-
-    # Additionally, SSL 3.0 requires either RSA or DSA+DH
-    sub { $disabled{rsa}
-	  && ($disabled{dsa} || $disabled{dh}); }
-			=> [ "ssl" ],
-
-    # (D)TLS 1.0 and TLS 1.1 also require either RSA or DSA+DH
-    # or ECDSA + ECDH.  (D)TLS 1.2 has this requirement as well.
-    # (XXX: We don't support PSK-only builds).
-    sub { $disabled{rsa}
-	  && ($disabled{dsa} || $disabled{dh})
-	  && ($disabled{ecdsa} || $disabled{ecdh}); }
-			=> [ "tls1", "tls1_1", "tls1_2", "tls1_3",
-			     "dtls1", "dtls1_2" ],
-
     "tls"		=> [ @tls ],
     sub { 0 == scalar grep { !$disabled{$_} } @tls }
 			=> [ "tls" ],
-
-    # SRP and HEARTBEATS require TLSEXT
-    "tlsext"		=> [ "srp", "heartbeats" ],
 
     "crypto-mdebug"     => [ "crypto-mdebug-backtrace" ],
 
