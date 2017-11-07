@@ -816,7 +816,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     /* Clear our SSL3_RECORD structures */
     memset(wr, 0, sizeof(wr));
     for (j = 0; j < numpipes; j++) {
-        unsigned int version = SSL_TREAT_AS_TLS13(s) ? TLS1_VERSION : s->version;
+        unsigned int version = SSL_TREAT_AS_TLS13(s) ? TLS1_2_VERSION
+                                                     : s->version;
         unsigned char *compressdata = NULL;
         size_t maxcomplen;
         unsigned int rectype;
