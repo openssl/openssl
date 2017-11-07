@@ -856,7 +856,7 @@ EOF
           }
           return <<"EOF";
 $args{src}: $args{generator}->[0] $deps
-	\$(CC) $incs \$(CFLAGS) -E \$< | \\
+	\$(CC) $incs \$(CFLAGS) -E $args{generator}->[0] | \\
 	\$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@
 EOF
       }
