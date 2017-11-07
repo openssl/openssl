@@ -272,3 +272,28 @@ int run_tests(const char *test_prog_name)
     return EXIT_SUCCESS;
 }
 
+/*
+ * Glue an array of strings together and return it as an allocated string.
+ * Optionally return the whole length of this string in |out_len|
+ */
+char *glue_strings(const char *list[], size_t *out_len)
+{
+    size_t len = 0;
+    char *p, *ret;
+    int i;
+
+    for (i = 0; list[i] != NULL; i++)
+        len += strlen(list[i]);
+
+    if (out_len != NULL)
+        *out_len = len;
+
+    if (!TEST_ptr(ret = p = OPENSSL_malloc(len + 1)))
+        return NULL;
+
+    for (i = 0; list[i] != NULL; i++)
+        p += strlen(strcpy(p, list[i]));
+
+    return ret;
+}
+

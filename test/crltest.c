@@ -187,20 +187,11 @@ static X509 *test_leaf = NULL;
  * Glue an array of strings together.  Return a BIO and put the string
  * into |*out| so we can free it.
  */
-static BIO *glue(const char **pem, char **out)
+static BIO *glue2bio(const char **pem, char **out)
 {
-    char *dest;
-    int i;
     size_t s = 0;
 
-    /* Glue the strings together. */
-    for (i = 0; pem[i] != NULL; ++i)
-        s += strlen(pem[i]);
-    dest = *out = OPENSSL_malloc(s + 1);
-    if (dest == NULL)
-        return NULL;
-    for (i = 0; pem[i] != NULL; ++i)
-        dest += strlen(strcpy(dest, pem[i]));
+    *out = glue_strings(pem, &s);
     return BIO_new_mem_buf(*out, s);
 }
 
@@ -210,7 +201,7 @@ static BIO *glue(const char **pem, char **out)
 static X509_CRL *CRL_from_strings(const char **pem)
 {
     char *p;
-    BIO *b = glue(pem, &p);
+    BIO *b = glue2bio(pem, &p);
     X509_CRL *crl = PEM_read_bio_X509_CRL(b, NULL, NULL, NULL);
 
     OPENSSL_free(p);
@@ -224,7 +215,7 @@ static X509_CRL *CRL_from_strings(const char **pem)
 static X509 *X509_from_strings(const char **pem)
 {
     char *p;
-    BIO *b = glue(pem, &p);
+    BIO *b = glue2bio(pem, &p);
     X509 *x = PEM_read_bio_X509(b, NULL, NULL, NULL);
 
     OPENSSL_free(p);

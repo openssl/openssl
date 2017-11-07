@@ -80,6 +80,18 @@ static const char *findattr(STANZA *s, const char *key)
 }
 
 /*
+ * Parse BIGNUM from sparse hex-strings, return |BN_hex2bn| result.
+ */
+static int parse_bigBN(BIGNUM **out, const char *bn_strings[])
+{
+    char *bigstring = glue_strings(bn_strings, NULL);
+    int ret = BN_hex2bn(out, bigstring);
+
+    OPENSSL_free(bigstring);
+    return ret;
+}
+
+/*
  * Parse BIGNUM, return number of bytes parsed.
  */
 static int parseBN(BIGNUM **out, const char *in)
@@ -305,21 +317,6 @@ static const char *bn2strings[] = {
     NULL
 };
 
-static char *glue(const char *list[])
-{
-    size_t len = 0;
-    char *p, *save;
-    int i;
-
-    for (i = 0; list[i] != NULL; i++)
-        len += strlen(list[i]);
-    if (!TEST_ptr(p = save = OPENSSL_malloc(len + 1)))
-            return NULL;
-    for (i = 0; list[i] != NULL; i++)
-        p += strlen(strcpy(p, list[i]));
-    return save;
-}
-
 /*
  * Test constant-time modular exponentiation with 1024-bit inputs, which on
  * x86_64 cause a different code branch to be taken.
@@ -329,7 +326,6 @@ static int test_modexp_mont5(void)
     BIGNUM *a = NULL, *p = NULL, *m = NULL, *d = NULL, *e = NULL;
     BIGNUM *b = NULL, *n = NULL, *c = NULL;
     BN_MONT_CTX *mont = NULL;
-    char *bigstring;
     int st = 0;
 
     if (!TEST_ptr(a = BN_new())
@@ -375,12 +371,8 @@ static int test_modexp_mont5(void)
         goto err;
 
     /* Regression test for carry bug in sqr[x]8x_mont */
-    bigstring = glue(bn1strings);
-    BN_hex2bn(&n, bigstring);
-    OPENSSL_free(bigstring);
-    bigstring = glue(bn2strings);
-    BN_hex2bn(&a, bigstring);
-    OPENSSL_free(bigstring);
+    parse_bigBN(&n, bn1strings);
+    parse_bigBN(&a, bn2strings);
     BN_free(b);
     b = BN_dup(a);
     BN_MONT_CTX_set(mont, n, ctx);
@@ -405,7 +397,7 @@ static int test_modexp_mont5(void)
             "FCFFFFFFFFFF000000000000000000FF0302030000000000FFFFFFFFFFFFFFFF",
             "FF00FCFDFDFF030202FF00000000FFFFFFFFFFFFFFFFFF00FCFDFCFFFFFFFFFF",
             NULL
-	};
+        };
         static const char *nhex[] = {
                       "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
             "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
@@ -420,14 +412,10 @@ static int test_modexp_mont5(void)
             "FFFFFFFFFFFF000000000000000000000000000000000000FFFFFFFFFFFFFFFF",
             "FFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
             NULL
-	};
+        };
 
-        bigstring = glue(ahex);
-        BN_hex2bn(&a, bigstring);
-        OPENSSL_free(bigstring);
-        bigstring = glue(nhex);
-        BN_hex2bn(&n, bigstring);
-        OPENSSL_free(bigstring);
+        parse_bigBN(&a, ahex);
+        parse_bigBN(&n, nhex);
     }
     BN_free(b);
     b = BN_dup(a);
