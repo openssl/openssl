@@ -313,8 +313,12 @@ int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, const char *section,
             return 0;
         if (ctx->flags == X509V3_CTX_REPLACE)
             delete_ext(*sk, ext);
-        if (sk)
-            X509v3_add_ext(sk, ext, -1);
+        if (sk != NULL) {
+            if (X509v3_add_ext(sk, ext, -1) == NULL) {
+                X509_EXTENSION_free(ext);
+                return 0;
+            }
+        }
         X509_EXTENSION_free(ext);
     }
     return 1;
