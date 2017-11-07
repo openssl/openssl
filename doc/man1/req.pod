@@ -247,7 +247,8 @@ to the self signed certificate otherwise new request is created.
 =item B<-days n>
 
 When the B<-x509> option is being used this specifies the number of
-days to certify the certificate for. The default is 30 days.
+days to certify the certificate for, otherwise it is ignored.
+The default is 30 days.
 
 =item B<-set_serial n>
 

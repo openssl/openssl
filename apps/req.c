@@ -333,6 +333,8 @@ int req_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    if (days && !x509)
+        BIO_printf(bio_err, "Ignoring -days; not generating a certificate");
     if (x509 && infile == NULL)
         newreq = 1;
 
