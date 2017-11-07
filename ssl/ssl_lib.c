@@ -2894,9 +2894,11 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
      * Disable compression by default to prevent CRIME. Applications can
      * re-enable compression by configuring
      * SSL_CTX_clear_options(ctx, SSL_OP_NO_COMPRESSION);
-     * or by using the SSL_CONF library.
+     * or by using the SSL_CONF library. Similarly we also enable TLSv1.3
+     * middlebox compatibility by default. This may be disabled by default in
+     * a later OpenSSL version.
      */
-    ret->options |= SSL_OP_NO_COMPRESSION;
+    ret->options |= SSL_OP_NO_COMPRESSION | SSL_OP_ENABLE_MIDDLEBOX_COMPAT;
 
     ret->ext.status_type = TLSEXT_STATUSTYPE_nothing;
 

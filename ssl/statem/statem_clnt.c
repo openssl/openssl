@@ -1028,6 +1028,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
     SSL_COMP *comp;
 #endif
     SSL_SESSION *sess = s->session;
+    unsigned char *session_id;
 
     if (!WPACKET_set_max_size(pkt, SSL3_RT_MAX_PLAIN_LENGTH)) {
         /* Should not happen */
@@ -1047,7 +1048,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
     if (sess == NULL
             || !ssl_version_supported(s, sess->ssl_version)
             || !SSL_SESSION_is_resumable(sess)) {
-        if (!ssl_get_new_session(s, 0)) {
+        if (!s->hello_retry_request && !ssl_get_new_session(s, 0)) {
             /* SSLfatal() already called */
             return 0;
         }
@@ -1121,13 +1122,34 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
     }
 
     /* Session ID */
-    if (s->new_session || s->session->ssl_version == TLS1_3_VERSION)
-        sess_id_len = 0;
-    else
+    session_id = s->session->session_id;
+    if (s->new_session || s->session->ssl_version == TLS1_3_VERSION) {
+        if (s->version == TLS1_3_VERSION
+                && (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0) {
+            sess_id_len = sizeof(s->tmp_session_id);
+            s->tmp_session_id_len = sess_id_len;
+            session_id = s->tmp_session_id;
+            if (!s->hello_retry_request
+                    && ssl_randbytes(s, s->tmp_session_id,
+                                     sess_id_len) <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS_CONSTRUCT_CLIENT_HELLO,
+                         ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        } else {
+            sess_id_len = 0;
+        }
+    } else {
         sess_id_len = s->session->session_id_length;
+        if (s->version == TLS1_3_VERSION) {
+            s->tmp_session_id_len = sess_id_len;
+            memcpy(s->tmp_session_id, s->session->session_id, sess_id_len);
+        }
+    }
     if (sess_id_len > sizeof(s->session->session_id)
             || !WPACKET_start_sub_packet_u8(pkt)
-            || (sess_id_len != 0 && !WPACKET_memcpy(pkt, s->session->session_id,
+            || (sess_id_len != 0 && !WPACKET_memcpy(pkt, session_id,
                                                     sess_id_len))
             || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CLIENT_HELLO,
@@ -1393,25 +1415,35 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         goto err;
     }
 
-    /*
-     * In TLSv1.3 a ServerHello message signals a key change so the end of the
-     * message must be on a record boundary.
-     */
-    if (SSL_IS_TLS13(s) && RECORD_LAYER_processed_read_pending(&s->rlayer)) {
-        SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_F_TLS_PROCESS_SERVER_HELLO,
-                 SSL_R_NOT_ON_RECORD_BOUNDARY);
-        goto err;
-    }
-
-    if (SSL_IS_TLS13(s) && compression != 0) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PROCESS_SERVER_HELLO,
-               SSL_R_INVALID_COMPRESSION_ALGORITHM);
-        goto err;
-    }
-
     s->hit = 0;
 
     if (SSL_IS_TLS13(s)) {
+        /*
+         * In TLSv1.3 a ServerHello message signals a key change so the end of
+         * the message must be on a record boundary.
+         */
+        if (RECORD_LAYER_processed_read_pending(&s->rlayer)) {
+            SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
+                     SSL_F_TLS_PROCESS_SERVER_HELLO,
+                     SSL_R_NOT_ON_RECORD_BOUNDARY);
+            goto err;
+        }
+
+        if (compression != 0) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                     SSL_F_TLS_PROCESS_SERVER_HELLO,
+                     SSL_R_INVALID_COMPRESSION_ALGORITHM);
+            goto err;
+        }
+
+        if (session_id_len != s->tmp_session_id_len
+                || memcmp(PACKET_data(&session_id), s->tmp_session_id,
+                          session_id_len) != 0) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                     SSL_F_TLS_PROCESS_SERVER_HELLO, SSL_R_INVALID_SESSION_ID);
+            goto err;
+        }
+
         /* This will set s->hit if we are resuming */
         if (!tls_parse_extension(s, TLSEXT_IDX_psk,
                                  SSL_EXT_TLS1_3_SERVER_HELLO,
@@ -1493,11 +1525,19 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         }
 
         s->session->ssl_version = s->version;
-        s->session->session_id_length = session_id_len;
-        /* session_id_len could be 0 */
-        if (session_id_len > 0)
-            memcpy(s->session->session_id, PACKET_data(&session_id),
-                   session_id_len);
+        /*
+         * In TLSv1.2 and below we save the session id we were sent so we can
+         * resume it later. In TLSv1.3 the session id we were sent is just an
+         * echo of what we originally sent in the ClientHello and should not be
+         * used for resumption.
+         */
+        if (!SSL_IS_TLS13(s)) {
+            s->session->session_id_length = session_id_len;
+            /* session_id_len could be 0 */
+            if (session_id_len > 0)
+                memcpy(s->session->session_id, PACKET_data(&session_id),
+                       session_id_len);
+        }
     }
 
     /* Session version and negotiated protocol version should match */

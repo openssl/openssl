@@ -543,6 +543,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_INVALID_NULL_CMD_NAME                      385
 # define SSL_R_INVALID_SEQUENCE_NUMBER                    402
 # define SSL_R_INVALID_SERVERINFO_DATA                    388
+# define SSL_R_INVALID_SESSION_ID                         232
 # define SSL_R_INVALID_SRP_USERNAME                       357
 # define SSL_R_INVALID_STATUS_RESPONSE                    328
 # define SSL_R_INVALID_TICKET_KEYS_LENGTH                 325

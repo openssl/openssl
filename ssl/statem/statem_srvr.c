@@ -1686,6 +1686,12 @@ static int tls_early_post_process_client_hello(SSL *s)
         }
     }
 
+    if (SSL_IS_TLS13(s)) {
+        memcpy(s->tmp_session_id, s->clienthello->session_id,
+               s->clienthello->session_id_len);
+        s->tmp_session_id_len = s->clienthello->session_id_len;
+    }
+
     /*
      * If it is a hit, check that the cipher is in the list. In TLSv1.3 we check
      * ciphersuite compatibility with the session as part of resumption.
@@ -2192,6 +2198,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
     int compm;
     size_t sl, len;
     int version;
+    unsigned char *session_id;
 
     version = SSL_IS_TLS13(s) ? TLS1_2_VERSION : s->version;
     if (!WPACKET_put_bytes_u16(pkt, version)
@@ -2217,6 +2224,8 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
      *   session ID.
      * - However, if we want the new session to be single-use,
      *   we send back a 0-length session ID.
+     * - In TLSv1.3 we echo back the session id sent to us by the client
+     *   regardless
      * s->hit is non-zero in either case of session reuse,
      * so the following won't overwrite an ID that we're supposed
      * to send back.
@@ -2226,16 +2235,19 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
          && !s->hit))
         s->session->session_id_length = 0;
 
-    sl = s->session->session_id_length;
+    if (SSL_IS_TLS13(s)) {
+        sl = s->tmp_session_id_len;
+        session_id = s->tmp_session_id;
+    } else {
+        sl = s->session->session_id_length;
+        session_id = s->session->session_id;
+    }
+
     if (sl > sizeof(s->session->session_id)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_SERVER_HELLO,
                  ERR_R_INTERNAL_ERROR);
         return 0;
     }
-
-    /* Never send a session_id back in the ServerHello */
-    if (SSL_IS_TLS13(s))
-        sl = 0;
 
     /* set up the compression method */
 #ifdef OPENSSL_NO_COMP
@@ -2247,7 +2259,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
         compm = s->s3->tmp.new_compression->id;
 #endif
 
-    if (!WPACKET_sub_memcpy_u8(pkt, s->session->session_id, sl)
+    if (!WPACKET_sub_memcpy_u8(pkt,     session_id, sl)
             || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, pkt, &len)
             || !WPACKET_put_bytes_u8(pkt, compm)
             || !tls_construct_extensions(s, pkt,
