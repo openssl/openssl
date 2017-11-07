@@ -440,4 +440,10 @@ int test_readstanza(STANZA *s);
  */
 void test_clearstanza(STANZA *s);
 
+/*
+ * Glue an array of strings together and return it as an allocated string.
+ * Optionally return the whole length of this string in |out_len|
+ */
+char *glue_strings(const char *list[], size_t *out_len);
+
 #endif                          /* HEADER_TESTUTIL_H */
