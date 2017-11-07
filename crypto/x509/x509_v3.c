@@ -128,7 +128,8 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
     X509err(X509_F_X509V3_ADD_EXT, ERR_R_MALLOC_FAILURE);
  err2:
     X509_EXTENSION_free(new_ex);
-    sk_X509_EXTENSION_free(sk);
+    if (x != NULL && *x == NULL)
+        sk_X509_EXTENSION_free(sk);
     return NULL;
 }
 
