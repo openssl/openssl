@@ -2463,6 +2463,7 @@ SSL_R_INVALID_MAX_EARLY_DATA:174:invalid max early data
 SSL_R_INVALID_NULL_CMD_NAME:385:invalid null cmd name
 SSL_R_INVALID_SEQUENCE_NUMBER:402:invalid sequence number
 SSL_R_INVALID_SERVERINFO_DATA:388:invalid serverinfo data
+SSL_R_INVALID_SESSION_ID:232:invalid session id
 SSL_R_INVALID_SRP_USERNAME:357:invalid srp username
 SSL_R_INVALID_STATUS_RESPONSE:328:invalid status response
 SSL_R_INVALID_TICKET_KEYS_LENGTH:325:invalid ticket keys length

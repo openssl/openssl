@@ -208,7 +208,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS, \
         OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
-        OPT_S_NO_RENEGOTIATION, OPT_S__LAST
+        OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
         {"no_ssl3", OPT_S_NOSSL3, '-',"Just disable SSLv3" }, \
@@ -253,7 +253,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         {"record_padding", OPT_S_RECORD_PADDING, 's', \
             "Block size to pad TLS 1.3 records to."}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
-            "Perform all sorts of protocol violations for testing purposes"}
+            "Perform all sorts of protocol violations for testing purposes"}, \
+        {"no_middlebox", OPT_S_NO_MIDDLEBOX, '-', "Disable TLSv1.3 middlebox compat mode" }
 
 
 # define OPT_S_CASES \
@@ -283,7 +284,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_CIPHER: \
         case OPT_S_RECORD_PADDING: \
         case OPT_S_NO_RENEGOTIATION: \
-        case OPT_S_DEBUGBROKE
+        case OPT_S_DEBUGBROKE: \
+        case OPT_S_NO_MIDDLEBOX
 
 #define IS_NO_PROT_FLAG(o) \
  (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \

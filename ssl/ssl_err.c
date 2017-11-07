@@ -871,6 +871,7 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "invalid sequence number"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_INVALID_SERVERINFO_DATA),
     "invalid serverinfo data"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_INVALID_SESSION_ID), "invalid session id"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_INVALID_SRP_USERNAME),
     "invalid srp username"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_INVALID_STATUS_RESPONSE),
