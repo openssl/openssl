@@ -20,7 +20,7 @@ ENDRAW[makefile(windows)]
 BEGINRAW[Makefile]
 {- $builddir -}/rc4-ia64.s: {- $sourcedir -}/asm/rc4-ia64.pl
 	@(trap "rm $@.*" INT 0; \
-	  $(PERL) $< $(CFLAGS) $(LIB_CFLAGS) $@.S; \
+	  $(PERL) {- $sourcedir -}/asm/rc4-ia64.pl $(CFLAGS) $(LIB_CFLAGS) $@.S; \
 	  case `awk '/^#define RC4_INT/{print$$NF}' $(BLDDIR)/include/openssl/opensslconf.h` in \
 	  int)	set -x; $(CC) $(CFLAGS) $(LIB_CFLAGS) -DSZ=4 -E $@.S > $@.i && mv -f $@.i $@;; \
 	  char)	set -x; $(CC) $(CFLAGS) $(LIB_CFLAGS) -DSZ=1 -E $@.S > $@.i && mv -f $@.i $@;; \
