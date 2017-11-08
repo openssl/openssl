@@ -649,7 +649,7 @@ while (@argvcopy)
                         $disabled{$1} = "option";
                         }
 		# No longer an automatic choice
-		$auto{$1} = 0;
+		$auto{$1} = 0 if (defined($auto{$1}));
 		}
 	elsif (/^enable-(.+)$/)
 		{
@@ -669,7 +669,7 @@ while (@argvcopy)
 		delete $disabled{$algo};
 
 		# No longer an automatic choice
-		$auto{$1} = 0;
+		$auto{$1} = 0 if (defined($auto{$1}));
 		}
 	elsif (/^--strict-warnings$/)
 		{
