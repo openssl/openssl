@@ -403,6 +403,13 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_SRVR_HELLO:
+        if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+            st->hand_state = TLS_ST_SW_CHANGE;
+        else
+            st->hand_state = TLS_ST_SW_ENCRYPTED_EXTENSIONS;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_CHANGE:
         st->hand_state = TLS_ST_SW_ENCRYPTED_EXTENSIONS;
         return WRITE_TRAN_CONTINUE;
 
@@ -763,6 +770,12 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
                      sizeof(sctpauthkey), sctpauthkey);
         }
 #endif
+        if (!SSL_IS_TLS13(s)
+                || (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+            break;
+        /* Fall through */
+
+    case TLS_ST_SW_CHANGE:
         /*
          * TODO(TLS1.3): This actually causes a problem. We don't yet know
          * whether the next record we are going to receive is an unencrypted
@@ -783,10 +796,9 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
                 /* SSLfatal() already called */
                 return WORK_ERROR;
             }
+            break;
         }
-        break;
 
-    case TLS_ST_SW_CHANGE:
 #ifndef OPENSSL_NO_SCTP
         if (SSL_IS_DTLS(s) && !s->hit) {
             /*
