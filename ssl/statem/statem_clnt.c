@@ -391,10 +391,6 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
                  ERR_R_INTERNAL_ERROR);
         return WRITE_TRAN_ERROR;
 
-    case TLS_ST_CW_CLNT_HELLO:
-        /* We only hit this in the case of HelloRetryRequest */
-        return WRITE_TRAN_FINISHED;
-
     case TLS_ST_CR_FINISHED:
         if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY
                 || s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING)
