@@ -918,7 +918,7 @@ int s_client_main(int argc, char **argv)
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
     struct timeval tv;
 #endif
-    char *servername = NULL;
+    const char *servername = NULL;
     int noservername = 0;
     const char *alpn_in = NULL;
     tlsextctx tlsextcbp = { NULL, 0 };
@@ -1924,16 +1924,9 @@ int s_client_main(int argc, char **argv)
         }
         /* By default the SNI should be the same as was set in the session */
         if (!noservername && servername == NULL) {
-            const char *sni = SSL_SESSION_get0_hostname(sess);
+            servername = SSL_SESSION_get0_hostname(sess);
 
-            if (sni != NULL) {
-                servername = OPENSSL_strdup(sni);
-                if (servername == NULL) {
-                    BIO_printf(bio_err, "Can't set server name\n");
-                    ERR_print_errors(bio_err);
-                    goto end;
-                }
-            } else {
+            if (servername == NULL) {
                 /*
                  * Force no SNI to be sent so we are consistent with the
                  * session.
