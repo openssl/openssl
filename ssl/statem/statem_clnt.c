@@ -395,6 +395,9 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY
                 || s->early_data_state == SSL_EARLY_DATA_FINISHED_WRITING)
             st->hand_state = TLS_ST_PENDING_EARLY_DATA_END;
+        else if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0
+                    && !s->hello_retry_request)
+            st->hand_state = TLS_ST_CW_CHANGE;
         else
             st->hand_state = (s->s3->tmp.cert_req != 0) ? TLS_ST_CW_CERT
                                                         : TLS_ST_CW_FINISHED;
@@ -408,6 +411,7 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
         /* Fall through */
 
     case TLS_ST_CW_END_OF_EARLY_DATA:
+    case TLS_ST_CW_CHANGE:
         st->hand_state = (s->s3->tmp.cert_req != 0) ? TLS_ST_CW_CERT
                                                     : TLS_ST_CW_FINISHED;
         return WRITE_TRAN_CONTINUE;
@@ -717,6 +721,8 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
         break;
 
     case TLS_ST_CW_CHANGE:
+        if (SSL_IS_TLS13(s))
+            break;
         s->session->cipher = s->s3->tmp.new_cipher;
 #ifdef OPENSSL_NO_COMP
         s->session->compress_meth = 0;
