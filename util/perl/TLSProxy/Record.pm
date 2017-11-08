@@ -109,19 +109,21 @@ sub get_records
                 substr($packet, TLS_RECORD_HEADER_LENGTH, $len_real)
             );
 
-            if (($server && $server_encrypting)
-                     || (!$server && $client_encrypting)) {
-                if (!TLSProxy::Proxy->is_tls13() && $etm) {
-                    $record->decryptETM();
-                } else {
-                    $record->decrypt();
+            if (!TLSProxy::Proxy->is_tls13() || $content_type != RT_CCS) {
+                if (($server && $server_encrypting)
+                         || (!$server && $client_encrypting)) {
+                    if (!TLSProxy::Proxy->is_tls13() && $etm) {
+                        $record->decryptETM();
+                    } else {
+                        $record->decrypt();
+                    }
+                    $record->encrypted(1);
                 }
-                $record->encrypted(1);
-            }
 
-            if (TLSProxy::Proxy->is_tls13()) {
-                print "  Inner content type: "
-                      .$record_type{$record->content_type()}."\n";
+                if (TLSProxy::Proxy->is_tls13()) {
+                    print "  Inner content type: "
+                          .$record_type{$record->content_type()}."\n";
+                }
             }
 
             push @record_list, $record;
