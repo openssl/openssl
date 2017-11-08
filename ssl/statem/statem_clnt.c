@@ -494,7 +494,10 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
              * We are assuming this is a TLSv1.3 connection, although we haven't
              * actually selected a version yet.
              */
-            st->hand_state = TLS_ST_EARLY_DATA;
+            if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+                st->hand_state = TLS_ST_CW_CHANGE;
+            else
+                st->hand_state = TLS_ST_EARLY_DATA;
             return WRITE_TRAN_CONTINUE;
         }
         /*
@@ -551,15 +554,18 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_CHANGE:
+        if (s->early_data_state == SSL_EARLY_DATA_CONNECTING) {
+            st->hand_state = TLS_ST_EARLY_DATA;
+        } else {
 #if defined(OPENSSL_NO_NEXTPROTONEG)
-        st->
-        hand_state = TLS_ST_CW_FINISHED;
-#else
-        if (!SSL_IS_DTLS(s) && s->s3->npn_seen)
-            st->hand_state = TLS_ST_CW_NEXT_PROTO;
-        else
             st->hand_state = TLS_ST_CW_FINISHED;
+#else
+            if (!SSL_IS_DTLS(s) && s->s3->npn_seen)
+                st->hand_state = TLS_ST_CW_NEXT_PROTO;
+            else
+                st->hand_state = TLS_ST_CW_FINISHED;
 #endif
+        }
         return WRITE_TRAN_CONTINUE;
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
@@ -690,7 +696,8 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
         }
 
         if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
-                && s->max_early_data > 0) {
+                && s->max_early_data > 0
+                && (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) == 0) {
             /*
              * We haven't selected TLSv1.3 yet so we don't call the change
              * cipher state function associated with the SSL_METHOD. Instead
@@ -723,6 +730,18 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
     case TLS_ST_CW_CHANGE:
         if (SSL_IS_TLS13(s))
             break;
+        if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
+                    && s->max_early_data > 0) {
+            /*
+             * We haven't selected TLSv1.3 yet so we don't call the change
+             * cipher state function associated with the SSL_METHOD. Instead
+             * we call tls13_change_cipher_state() directly.
+             */
+            if (!tls13_change_cipher_state(s,
+                        SSL3_CC_EARLY | SSL3_CHANGE_CIPHER_CLIENT_WRITE))
+                return WORK_ERROR;
+            break;
+        }
         s->session->cipher = s->s3->tmp.new_cipher;
 #ifdef OPENSSL_NO_COMP
         s->session->compress_meth = 0;
