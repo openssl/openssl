@@ -262,8 +262,7 @@ COMP_METHOD *COMP_zlib(void)
 void comp_zlib_cleanup_int(void)
 {
 #ifdef ZLIB_SHARED
-    if (zlib_dso != NULL)
-        DSO_free(zlib_dso);
+    DSO_free(zlib_dso);
     zlib_dso = NULL;
 #endif
 }
