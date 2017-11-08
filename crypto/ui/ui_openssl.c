@@ -53,7 +53,6 @@
 #  endif
 # endif
 
-/* 06-Apr-92 Luke Brennan    Support for VMS */
 # include "ui_locl.h"
 # include "internal/cryptlib.h"
 
