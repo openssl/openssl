@@ -554,6 +554,7 @@ static int cb_ticket2(SSL* s, unsigned char* key_name, unsigned char *iv, EVP_CI
 {
     fprintf(stderr, "ticket callback for SNI context should never be called\n");
     EXIT(1);
+    return 0;
 }
 #endif
 
