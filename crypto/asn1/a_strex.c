@@ -63,7 +63,7 @@ typedef int char_io (void *arg, const void *buf, int len);
  * even 4 byte forms.
  */
 
-static int do_esc_char(unsigned long c, unsigned char flags, char *do_quotes,
+static int do_esc_char(unsigned long c, unsigned short flags, char *do_quotes,
                        char_io *io_ch, void *arg)
 {
     unsigned short chflgs;
@@ -116,7 +116,7 @@ static int do_esc_char(unsigned long c, unsigned char flags, char *do_quotes,
      * If we get this far and do any escaping at all must escape the escape
      * character itself: backslash.
      */
-    if (chtmp == '\\' && flags & ESC_FLAGS) {
+    if (chtmp == '\\' && (flags & ESC_FLAGS)) {
         if (!io_ch(arg, "\\\\", 2))
             return -1;
         return 2;
@@ -143,6 +143,7 @@ static int do_buf(unsigned char *buf, int buflen,
     unsigned short orflags;
     unsigned char *p, *q;
     unsigned long c;
+
     p = buf;
     q = buf + buflen;
     outlen = 0;
@@ -190,17 +191,15 @@ static int do_buf(unsigned char *buf, int buflen,
                  * otherwise each character will be > 0x7f and so the
                  * character will never be escaped on first and last.
                  */
-                len =
-                    do_esc_char(utfbuf[i], (unsigned short)(flags | orflags),
-                                quotes, io_ch, arg);
+                len = do_esc_char(utfbuf[i], flags | orflags, quotes,
+                                  io_ch, arg);
                 if (len < 0)
                     return -1;
                 outlen += len;
             }
         } else {
-            len =
-                do_esc_char(c, (unsigned short)(flags | orflags), quotes,
-                            io_ch, arg);
+            len = do_esc_char(c, flags | orflags, quotes,
+                              io_ch, arg);
             if (len < 0)
                 return -1;
             outlen += len;
