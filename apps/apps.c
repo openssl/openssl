@@ -1926,7 +1926,7 @@ unsigned char *next_protos_parse(size_t *outlen, const char *in)
                 OPENSSL_free(out);
                 return NULL;
             }
-            out[start] = i - start;
+            out[start] = (unsigned char)(i - start);
             start = i + 1;
         } else {
             out[i + 1] = in[i];

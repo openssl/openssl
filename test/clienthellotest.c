@@ -126,7 +126,7 @@ static int test_client_hello(int currtest)
          * We reset the creation time so that we don't discard the session as
          * too old.
          */
-        if (!TEST_true(SSL_SESSION_set_time(sess, time(NULL)))
+        if (!TEST_true(SSL_SESSION_set_time(sess, (long)time(NULL)))
                 || !TEST_true(SSL_set_session(con, sess)))
             goto end;
     }

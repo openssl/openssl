@@ -306,8 +306,8 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     HMAC_Update(ctx, seq, 6);
     HMAC_Update(ctx, &type, 1);
     HMAC_Update(ctx, ver, 2); /* Version */
-    lenbytes[0] = len >> 8;
-    lenbytes[1] = len & 0xff;
+    lenbytes[0] = (unsigned char)(len >> 8);
+    lenbytes[1] = (unsigned char)(len);
     HMAC_Update(ctx, lenbytes, 2); /* Length */
     HMAC_Update(ctx, enc, len); /* Finally the data itself */
     HMAC_Final(ctx, enc + len, NULL);
@@ -331,8 +331,8 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     BIO_write(rbio, ver, 2);
     BIO_write(rbio, epoch, 2);
     BIO_write(rbio, seq, 6);
-    lenbytes[0] = (len + sizeof(iv)) >> 8;
-    lenbytes[1] = (len + sizeof(iv)) & 0xff;
+    lenbytes[0] = (unsigned char)((len + sizeof(iv)) >> 8);
+    lenbytes[1] = (unsigned char)(len + sizeof(iv));
     BIO_write(rbio, lenbytes, 2);
 
     BIO_write(rbio, iv, sizeof(iv));

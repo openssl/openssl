@@ -1316,7 +1316,7 @@ int tls_parse_stoc_sct(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         OPENSSL_free(s->ext.scts);
         s->ext.scts = NULL;
 
-        s->ext.scts_len = size;
+        s->ext.scts_len = (uint16_t)size;
         if (size > 0) {
             s->ext.scts = OPENSSL_malloc(size);
             if (s->ext.scts == NULL

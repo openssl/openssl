@@ -1417,7 +1417,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             memcpy(dest + *dest_len,
                    SSL3_RECORD_get_data(rr) + SSL3_RECORD_get_off(rr), n);
             SSL3_RECORD_add_off(rr, n);
-            SSL3_RECORD_add_length(rr, -n);
+            SSL3_RECORD_sub_length(rr, n);
             *dest_len += n;
             if (SSL3_RECORD_get_length(rr) == 0)
                 SSL3_RECORD_set_read(rr);

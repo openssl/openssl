@@ -261,7 +261,7 @@ static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
     X509_STORE_CTX_set0_trusted_stack(ctx, roots);
     X509_STORE_CTX_set0_crls(ctx, crls);
     X509_VERIFY_PARAM_set_time(param, PARAM_TIME);
-    if (!TEST_long_eq(X509_VERIFY_PARAM_get_time(param), PARAM_TIME))
+    if (!TEST_long_eq((long)X509_VERIFY_PARAM_get_time(param), PARAM_TIME))
         goto err;
     X509_VERIFY_PARAM_set_depth(param, 16);
     if (flags)

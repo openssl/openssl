@@ -577,14 +577,14 @@ static size_t der_encode_length(size_t len, unsigned char **pp)
 
     if (pp != NULL) {
         if (lenbytes == 1) {
-            *(*pp)++ = len;
+            *(*pp)++ = (unsigned char)len;
         } else {
-            *(*pp)++ = lenbytes - 1;
+            *(*pp)++ = (unsigned char)(lenbytes - 1);
             if (lenbytes == 2) {
-                *(*pp)++ = 0x80 | len;
+                *(*pp)++ = (unsigned char)(0x80 | len);
             } else {
-                *(*pp)++ = 0x80 | (len >> 8);
-                *(*pp)++ = len & 0xff;
+                *(*pp)++ = (unsigned char)(0x80 | (len >> 8));
+                *(*pp)++ = (unsigned char)(len);
             }
         }
     }

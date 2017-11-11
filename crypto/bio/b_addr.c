@@ -821,7 +821,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 
             if (endp != service && *endp == '\0'
                     && portnum > 0 && portnum < 65536) {
-                se_fallback.s_port = htons(portnum);
+                se_fallback.s_port = htons((unsigned short)portnum);
                 se_fallback.s_proto = proto;
                 se = &se_fallback;
             } else if (endp == service) {

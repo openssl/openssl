@@ -17,6 +17,10 @@
 #include "internal/nelem.h"
 #include <openssl/bio.h>
 
+#ifdef _WIN32
+# define strdup _strdup
+#endif
+
 /*
  * Declares the structures needed to register each test case function.
  */

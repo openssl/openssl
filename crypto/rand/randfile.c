@@ -25,6 +25,9 @@
 #ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 # include <fcntl.h>
+# ifdef _WIN32
+#  include <io.h>
+# endif
 #endif
 
 /*
