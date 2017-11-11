@@ -35,6 +35,7 @@
 # Cortex-A57(*)	1.95		0.85		0.93
 # Denver	1.96		0.86		0.80
 # Mongoose	1.33		1.20		1.20
+# Kryo		1.26		0.94		1.00
 #
 # (*)	original 3.64/1.34/1.32 results were for r0p0 revision
 #	and are still same even for updated module;
