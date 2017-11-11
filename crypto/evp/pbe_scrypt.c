@@ -191,6 +191,14 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
      * p * r < SCRYPT_PR_MAX
      */
     Blen = p * 128 * r;
+    /*
+     * Yet we pass it as integer to PKCS5_PBKDF2_HMAC... [This would
+     * have to be revised when/if PKCS5_PBKDF2_HMAC accepts size_t.]
+     */
+    if (Blen > INT_MAX) {
+        EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_MEMORY_LIMIT_EXCEEDED);
+        return 0;
+    }
 
     /*
      * Check 32 * r * (N + 2) * sizeof(uint32_t) fits in uint64_t
@@ -221,25 +229,25 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     if (key == NULL)
         return 1;
 
-    B = OPENSSL_malloc(Blen + Vlen);
+    B = OPENSSL_malloc((size_t)(Blen + Vlen));
     if (B == NULL)
         return 0;
     X = (uint32_t *)(B + Blen);
     T = X + 32 * r;
     V = T + 32 * r;
     if (PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, 1, EVP_sha256(),
-                          Blen, B) == 0)
+                          (int)Blen, B) == 0)
         goto err;
 
     for (i = 0; i < p; i++)
         scryptROMix(B + 128 * r * i, r, N, X, T, V);
 
-    if (PKCS5_PBKDF2_HMAC(pass, passlen, B, Blen, 1, EVP_sha256(),
+    if (PKCS5_PBKDF2_HMAC(pass, passlen, B, (int)Blen, 1, EVP_sha256(),
                           keylen, key) == 0)
         goto err;
     rv = 1;
  err:
-    OPENSSL_clear_free(B, Blen + Vlen);
+    OPENSSL_clear_free(B, (size_t)(Blen + Vlen));
     return rv;
 }
 #endif
