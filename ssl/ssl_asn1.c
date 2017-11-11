@@ -296,12 +296,12 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     ret->master_key_length = tmpl;
 
     if (as->time != 0)
-        ret->time = as->time;
+        ret->time = (long)as->time;
     else
-        ret->time = (unsigned long)time(NULL);
+        ret->time = (long)time(NULL);
 
     if (as->timeout != 0)
-        ret->timeout = as->timeout;
+        ret->timeout = (long)as->timeout;
     else
         ret->timeout = 3;
 
@@ -326,7 +326,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
         goto err;
 #endif
 
-    ret->ext.tick_lifetime_hint = as->tlsext_tick_lifetime_hint;
+    ret->ext.tick_lifetime_hint = (unsigned long)as->tlsext_tick_lifetime_hint;
     ret->ext.tick_age_add = as->tlsext_tick_age_add;
     if (as->tlsext_tick) {
         ret->ext.tick = as->tlsext_tick->data;
@@ -352,7 +352,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
         goto err;
 #endif                          /* OPENSSL_NO_SRP */
     /* Flags defaults to zero which is fine */
-    ret->flags = as->flags;
+    ret->flags = (int32_t)as->flags;
     ret->ext.max_early_data = as->max_early_data;
 
     if (as->alpn_selected != NULL) {
