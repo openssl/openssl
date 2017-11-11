@@ -35,6 +35,7 @@
 # Cortex-A57	12
 # X-Gene	14
 # Mongoose	10
+# Kryo		12
 # Denver	7.8
 # Apple A7	7.2
 #

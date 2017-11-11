@@ -33,6 +33,7 @@
 # Cortex-A57	1.17		7.61
 # Denver	0.71		6.02
 # Mongoose	1.10		8.06
+# Kryo		1.16		8.00
 #
 # (*)	presented for reference/comparison purposes;
 
