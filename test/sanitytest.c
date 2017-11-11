@@ -8,9 +8,8 @@
  */
 
 #include <string.h>
-#include "internal/numbers.h"
-
 #include "testutil.h"
+#include "internal/numbers.h"
 
 static int test_sanity_null_zero(void)
 {

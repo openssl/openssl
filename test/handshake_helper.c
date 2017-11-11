@@ -350,14 +350,14 @@ static int parse_protos(const char *protos, unsigned char **out, size_t *outlen)
         if ((*out)[i] == ',') {
             if (!TEST_int_gt(i - 1, prefix))
                 goto err;
-            (*out)[prefix] = i - 1 - prefix;
+            (*out)[prefix] = (unsigned char)(i - 1 - prefix);
             prefix = i;
         }
         i++;
     }
     if (!TEST_int_gt(len, prefix))
         goto err;
-    (*out)[prefix] = len - prefix;
+    (*out)[prefix] = (unsigned char)(len - prefix);
     return 1;
 
 err:

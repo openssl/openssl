@@ -15,6 +15,10 @@
 #include <openssl/asn1.h>
 #include <openssl/engine.h>
 
+#ifdef _WIN32
+# define strdup _strdup
+#endif
+
 /*
  * This is the automatic configuration loader: it is called automatically by
  * OpenSSL when any of a number of standard initialisation functions are

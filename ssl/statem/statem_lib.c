@@ -2020,7 +2020,7 @@ int create_synthetic_message_hash(SSL *s)
 
     /* Inject the synthetic message_hash message */
     msghdr[0] = SSL3_MT_MESSAGE_HASH;
-    msghdr[SSL3_HM_HEADER_LENGTH - 1] = hashlen;
+    msghdr[SSL3_HM_HEADER_LENGTH - 1] = (unsigned char)hashlen;
     if (!ssl3_finish_mac(s, msghdr, SSL3_HM_HEADER_LENGTH)
             || !ssl3_finish_mac(s, hashval, hashlen)) {
         SSLerr(SSL_F_CREATE_SYNTHETIC_MESSAGE_HASH, ERR_R_INTERNAL_ERROR);

@@ -352,7 +352,7 @@ static int test_PACKET_get_length_prefixed_1(void)
     unsigned int i;
     PACKET pkt, short_pkt, subpkt = {0};
 
-    buf1[0] = len;
+    buf1[0] = (unsigned char)len;
     for (i = 1; i < BUF_LEN; i++)
         buf1[i] = (i * 2) & 0xff;
 
@@ -422,7 +422,7 @@ static int test_PACKET_as_length_prefixed_1(void)
     unsigned int i;
     PACKET pkt, exact_pkt, subpkt = {0};
 
-    buf1[0] = len;
+    buf1[0] = (unsigned char)len;
     for (i = 1; i < BUF_LEN; i++)
         buf1[i] = (i * 2) & 0xff;
 

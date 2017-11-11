@@ -199,7 +199,7 @@ static uint16_t tls1_nid2group_id(int nid)
     size_t i;
     for (i = 0; i < OSSL_NELEM(nid_list); i++) {
         if (nid_list[i].nid == nid)
-            return i + 1;
+            return (uint16_t)(i + 1);
     }
     return 0;
 }
