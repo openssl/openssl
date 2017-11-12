@@ -773,7 +773,7 @@ foreach (split("\n",$code)) {
 	s/shd\s+(%r[0-9]+),(%r[0-9]+),([0-9]+)/
 		$3>31 ? sprintf("shd\t%$2,%$1,%d",$3-32)	# rotation for >=32
 		:       sprintf("shd\t%$1,%$2,%d",$3)/e			or
-	# translate made up instructons: _ror, _shr, _align, _shl
+	# translate made up instructions: _ror, _shr, _align, _shl
 	s/_ror(\s+)(%r[0-9]+),/
 		($SZ==4 ? "shd" : "shrpd")."$1$2,$2,"/e			or
 

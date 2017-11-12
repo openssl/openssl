@@ -180,7 +180,7 @@ SKIP: {
     $boundary_test_type = DATA_AFTER_SERVER_HELLO;
     $proxy->filter(\&not_on_record_boundary);
     $proxy->start();
-    ok(TLSProxy::Message->fail(), "Record not on bounday in TLS1.3 (ServerHello)");
+    ok(TLSProxy::Message->fail(), "Record not on boundary in TLS1.3 (ServerHello)");
 
     #Test 17: Sending a Finished which doesn't end on a record boundary
     #         should fail
@@ -188,7 +188,7 @@ SKIP: {
     $boundary_test_type = DATA_AFTER_FINISHED;
     $proxy->filter(\&not_on_record_boundary);
     $proxy->start();
-    ok(TLSProxy::Message->fail(), "Record not on bounday in TLS1.3 (Finished)");
+    ok(TLSProxy::Message->fail(), "Record not on boundary in TLS1.3 (Finished)");
 
     #Test 18: Sending a KeyUpdate which doesn't end on a record boundary
     #         should fail
@@ -196,7 +196,7 @@ SKIP: {
     $boundary_test_type = DATA_AFTER_KEY_UPDATE;
     $proxy->filter(\&not_on_record_boundary);
     $proxy->start();
-    ok(TLSProxy::Message->fail(), "Record not on bounday in TLS1.3 (KeyUpdate)");
+    ok(TLSProxy::Message->fail(), "Record not on boundary in TLS1.3 (KeyUpdate)");
  }
 
 

@@ -93,7 +93,7 @@ my %hooks = (
     # exit_checker is used by run() directly after completion of a command.
     # it receives the exit code from that command and is expected to return
     # 1 (for success) or 0 (for failure).  This is the status value that run()
-    # will give back (through the |statusvar| referens and as returned value
+    # will give back (through the |statusvar| reference and as returned value
     # when capture => 1 doesn't apply).
     exit_checker => sub { return shift == 0 ? 1 : 0 },
 
@@ -661,7 +661,7 @@ sub pipe {
 
 =item B<with HASHREF, CODEREF>
 
-C<with> will temporarly install hooks given by the HASHREF and then execute
+C<with> will temporarily install hooks given by the HASHREF and then execute
 the given CODEREF.  Hooks are usually expected to have a coderef as value.
 
 The currently available hoosk are:
@@ -707,7 +707,7 @@ sub with {
 C<cmdstr> takes a CODEREF from C<app> or C<test> and simply returns the
 command as a string.
 
-C<cmdstr> takes some additiona options OPTS that affect the string returned:
+C<cmdstr> takes some additional options OPTS that affect the string returned:
 
 =over 4
 
@@ -1015,7 +1015,7 @@ sub __cwd {
     }
 
     # We put back new values carefully.  Doing the obvious
-    # %directories = ( %tmp_irectories )
+    # %directories = ( %tmp_directories )
     # will clear out any value that happens to be an absolute path
     foreach (keys %tmp_directories) {
         $directories{$_} = $tmp_directories{$_};

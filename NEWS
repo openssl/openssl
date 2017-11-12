@@ -492,7 +492,7 @@
         affected functions.
       o Improved platform support for PowerPC.
       o New FIPS 180-2 algorithms (SHA-224, -256, -384 and -512).
-      o New X509_VERIFY_PARAM structure to support parametrisation
+      o New X509_VERIFY_PARAM structure to support parameterisation
         of X.509 path validation.
       o Major overhaul of RC4 performance on Intel P4, IA-64 and
         AMD64.
@@ -778,7 +778,7 @@
       o Automation of 'req' application
       o Fixes to make s_client, s_server work under Windows
       o Support for multiple fieldnames in SPKACs
-      o New SPKAC command line utilty and associated library functions
+      o New SPKAC command line utility and associated library functions
       o Options to allow passwords to be obtained from various sources
       o New public key PEM format and options to handle it
       o Many other fixes and enhancements to command line utilities
@@ -860,8 +860,8 @@
       o Added BIO proxy and filtering functionality
       o Extended Big Number (BN) library
       o Added RIPE MD160 message digest
-      o Addeed support for RC2/64bit cipher
+      o Added support for RC2/64bit cipher
       o Extended ASN.1 parser routines
-      o Adjustations of the source tree for CVS
+      o Adjustments of the source tree for CVS
       o Support for various new platforms
 

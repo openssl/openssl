@@ -1055,7 +1055,7 @@ static uint64_t BitDeinterleave(uint64_t Ai)
  * as blocksize. It is commonly (1600 - 256*n)/8, e.g. 168, 136, 104,
  * 72, but can also be (1600 - 448)/8 = 144. All this means that message
  * padding and intermediate sub-block buffering, byte- or bitwise, is
- * caller's reponsibility.
+ * caller's responsibility.
  */
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
                    size_t r)

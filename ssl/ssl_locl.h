@@ -1494,7 +1494,7 @@ typedef struct ssl3_state_st {
         uint16_t *peer_sigalgs;
         /* Size of above array */
         size_t peer_sigalgslen;
-        /* Sigalg peer actualy uses */
+        /* Sigalg peer actually uses */
         const SIGALG_LOOKUP *peer_sigalg;
         /*
          * Set if corresponding CERT_PKEY can be used with current

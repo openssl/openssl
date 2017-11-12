@@ -137,7 +137,7 @@ use constant {
     EMPTY_EXTENSION => 1,
     NON_DHE_KEX_MODE_ONLY => 2,
     DHE_KEX_MODE_ONLY => 3,
-    UNKNONW_KEX_MODES => 4,
+    UNKNOWN_KEX_MODES => 4,
     BOTH_KEX_MODES => 5
 };
 
@@ -207,7 +207,7 @@ checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
 #Test 6: Attempt a resume with only unrecognised kex modes. Should not resume
 $proxy->clear();
 $proxy->clientflags("-sess_in ".$session);
-$testtype = UNKNONW_KEX_MODES;
+$testtype = UNKNOWN_KEX_MODES;
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
@@ -246,7 +246,7 @@ checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
                | checkhandshake::PSK_SRV_EXTENSION,
                "Resume with both kex modes and HRR");
 
-#Test 9: Attempt a resume with dhe kex mode only and an unnacceptable initial
+#Test 9: Attempt a resume with dhe kex mode only and an unacceptable initial
 #        key_share. Should resume with a key_share following an HRR
 $proxy->clear();
 $proxy->clientflags("-sess_in ".$session);
@@ -310,7 +310,7 @@ sub modify_kex_modes_filter
                 $ext = pack "C2",
                     0x01,       #List length
                     0x01;       #psk_dhe_ke
-            } elsif ($testtype == UNKNONW_KEX_MODES) {
+            } elsif ($testtype == UNKNOWN_KEX_MODES) {
                 $ext = pack "C3",
                     0x02,       #List length
                     0xfe,       #unknown

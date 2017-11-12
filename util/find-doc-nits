@@ -374,7 +374,7 @@ sub collectnames {
                               # then remove 'something'.  Note that 'something'
                               # may contain POD codes as well...
                               (?:(?:[^\|]|<[^>]*>)*\|)?
-                              # we're only interested in referenses that have
+                              # we're only interested in references that have
                               # a one digit section number
                               ([^\/>\(]+\(\d\))
                              /gx;

@@ -889,7 +889,7 @@
   *) Add support for setting the minimum and maximum supported protocol.
      It can bet set via the SSL_set_min_proto_version() and
      SSL_set_max_proto_version(), or via the SSL_CONF's MinProtocol and
-     MaxProtcol.  It's recommended to use the new APIs to disable
+     MaxProtocol.  It's recommended to use the new APIs to disable
      protocols instead of disabling individual protocols using
      SSL_set_options() or SSL_CONF's Protocol.  This change also
      removes support for disabling TLS 1.2 in the OpenSSL TLS
@@ -2853,7 +2853,7 @@
   *) OpenSSL 1.0.0 sets SSL_OP_ALL to 0x80000FFFL and OpenSSL 1.0.1 and
      1.0.1a set SSL_OP_NO_TLSv1_1 to 0x00000400L which would unfortunately
      mean any application compiled against OpenSSL 1.0.0 headers setting
-     SSL_OP_ALL would also set SSL_OP_NO_TLSv1_1, unintentionally disablng
+     SSL_OP_ALL would also set SSL_OP_NO_TLSv1_1, unintentionally disabling
      TLS 1.1 also. Fix this by changing the value of SSL_OP_NO_TLSv1_1 to
      0x10000000L Any application which was previously compiled against
      OpenSSL 1.0.1 or 1.0.1a headers and which cares about SSL_OP_NO_TLSv1_1
@@ -2862,7 +2862,7 @@
      in unlike event, limit maximum offered version to TLS 1.0 [see below].
      [Steve Henson]
 
-  *) In order to ensure interoperabilty SSL_OP_NO_protocolX does not
+  *) In order to ensure interoperability SSL_OP_NO_protocolX does not
      disable just protocol X, but all protocols above X *if* there are
      protocols *below* X still enabled. In more practical terms it means
      that if application wants to disable TLS1.0 in favor of TLS1.1 and
@@ -3630,7 +3630,7 @@
 
      SSL_set_tlsext_opaque_prf_input(ssl, src, len) is used to set the
      opaque PRF input value to use in the handshake.  This will create
-     an interal copy of the length-'len' string at 'src', and will
+     an internal copy of the length-'len' string at 'src', and will
      return non-zero for success.
 
      To get more control and flexibility, provide a callback function
@@ -3740,8 +3740,8 @@
      most recently disabled ciphersuites when "HIGH" is parsed).
 
      Also, change ssl_create_cipher_list() (using this new
-     funcionality) such that between otherwise identical
-     cihpersuites, ephemeral ECDH is preferred over ephemeral DH in
+     functionality) such that between otherwise identical
+     ciphersuites, ephemeral ECDH is preferred over ephemeral DH in
      the default order.
      [Bodo Moeller]
 
@@ -3920,7 +3920,7 @@
      functional reference processing.
      [Steve Henson]
 
-  *) New functions EVP_Digest{Sign,Verify)*. These are enchance versions of
+  *) New functions EVP_Digest{Sign,Verify)*. These are enhanced versions of
      EVP_{Sign,Verify}* which allow an application to customise the signature
      process.
      [Steve Henson]
@@ -4133,7 +4133,7 @@
 
   *) New option SSL_OP_NO_COMP to disable use of compression selectively
      in SSL structures. New SSL ctrl to set maximum send fragment size.
-     Save memory by seeting the I/O buffer sizes dynamically instead of
+     Save memory by setting the I/O buffer sizes dynamically instead of
      using the maximum available value.
      [Steve Henson]
 
@@ -4192,7 +4192,7 @@
 
  Changes between 0.9.8l and 0.9.8m [25 Feb 2010]
 
-  *) Always check bn_wexpend() return values for failure.  (CVE-2009-3245)
+  *) Always check bn_wexpand() return values for failure.  (CVE-2009-3245)
      [Martin Olsson, Neel Mehta]
 
   *) Fix X509_STORE locking: Every 'objs' access requires a lock (to
@@ -4325,7 +4325,7 @@
      is already buffered was missing. For every new message was memory
      allocated, allowing an attacker to perform an denial of service attack
      with sending out of seq handshake messages until there is no memory
-     left. Additionally every future messege was buffered, even if the
+     left. Additionally every future message was buffered, even if the
      sequence number made no sense and would be part of another handshake.
      So only messages with sequence numbers less than 10 in advance will be
      buffered.  (CVE-2009-1378)
@@ -4509,7 +4509,7 @@
  Changes between 0.9.8g and 0.9.8h  [28 May 2008]
 
   *) Fix flaw if 'Server Key exchange message' is omitted from a TLS
-     handshake which could lead to a cilent crash as found using the
+     handshake which could lead to a client crash as found using the
      Codenomicon TLS test suite (CVE-2008-1672)
      [Steve Henson, Mark Cox]
 
@@ -4943,7 +4943,7 @@
 
   *) Disable the padding bug check when compression is in use. The padding
      bug check assumes the first packet is of even length, this is not
-     necessarily true if compresssion is enabled and can result in false
+     necessarily true if compression is enabled and can result in false
      positives causing handshake failure. The actual bug test is ancient
      code so it is hoped that implementations will either have fixed it by
      now or any which still have the bug do not support compression.
@@ -5172,7 +5172,7 @@
      we can fix the problem directly in the 'ca' utility.)
      [Steve Henson]
 
-  *) Reduced header interdepencies by declaring more opaque objects in
+  *) Reduced header interdependencies by declaring more opaque objects in
      ossl_typ.h. As a consequence, including some headers (eg. engine.h) will
      give fewer recursive includes, which could break lazy source code - so
      this change is covered by the OPENSSL_NO_DEPRECATED symbol. As always,
@@ -5396,7 +5396,7 @@
      named like the index file with '.attr' appended to the name.
      [Richard Levitte]
 
-  *) Generate muti valued AVAs using '+' notation in config files for
+  *) Generate multi-valued AVAs using '+' notation in config files for
      req and dirName.
      [Steve Henson]
 
@@ -5937,7 +5937,7 @@
      draft-ietf-tls-56-bit-ciphersuites-0[01].txt, but do not really
      appear there.
 
-     Also deactive the remaining ciphersuites from
+     Also deactivate the remaining ciphersuites from
      draft-ietf-tls-56-bit-ciphersuites-01.txt.  These are just as
      unofficial, and the ID has long expired.
      [Bodo Moeller]
@@ -6580,9 +6580,9 @@
   *) Add an "init" command to the ENGINE config module and auto initialize
      ENGINEs. Without any "init" command the ENGINE will be initialized
      after all ctrl commands have been executed on it. If init=1 the
-     ENGINE is initailized at that point (ctrls before that point are run
+     ENGINE is initialized at that point (ctrls before that point are run
      on the uninitialized ENGINE and after on the initialized one). If
-     init=0 then the ENGINE will not be iniatialized at all.
+     init=0 then the ENGINE will not be initialized at all.
      [Steve Henson]
 
   *) Fix the 'app_verify_callback' interface so that the user-defined
@@ -6839,7 +6839,7 @@
   *) Major restructuring to the underlying ENGINE code. This includes
      reduction of linker bloat, separation of pure "ENGINE" manipulation
      (initialisation, etc) from functionality dealing with implementations
-     of specific crypto iterfaces. This change also introduces integrated
+     of specific crypto interfaces. This change also introduces integrated
      support for symmetric ciphers and digest implementations - so ENGINEs
      can now accelerate these by providing EVP_CIPHER and EVP_MD
      implementations of their own. This is detailed in crypto/engine/README
@@ -7843,7 +7843,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      [Steve Henson]
 
   *) Enhance mkdef.pl to be more accepting about spacing in C preprocessor
-     lines, recognice more "algorithms" that can be deselected, and make
+     lines, recognize more "algorithms" that can be deselected, and make
      it complain about algorithm deselection that isn't recognised.
      [Richard Levitte]
 
@@ -8241,7 +8241,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
  Changes between 0.9.6h and 0.9.6i  [19 Feb 2003]
 
   *) In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
-     via timing by performing a MAC computation even if incorrrect
+     via timing by performing a MAC computation even if incorrect
      block cipher padding has been found.  This is a countermeasure
      against active attacks where the attacker has to distinguish
      between bad padding and a MAC verification error. (CVE-2003-0078)
@@ -9879,7 +9879,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      ssl_cert_dup, which is used by SSL_new, now copies DH keys in addition
      to parameters -- in previous versions (since OpenSSL 0.9.3) the
      'default key' from SSL_CTX_set_tmp_dh would always be lost, meaning
-     you effectivly got SSL_OP_SINGLE_DH_USE when using this macro.
+     you effectively got SSL_OP_SINGLE_DH_USE when using this macro.
      [Bodo Moeller]
 
   *) New s_client option -ign_eof: EOF at stdin is ignored, and
@@ -10098,7 +10098,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) ./config recognizes MacOS X now.
      [Andy Polyakov]
 
-  *) Bug fix for BN_div() when the first words of num and divsor are
+  *) Bug fix for BN_div() when the first words of num and divisor are
      equal (it gave wrong results if (rem=(n1-q*d0)&BN_MASK2) < d0).
      [Ulf Möller]
 
@@ -11771,7 +11771,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) Bugfix: In test/testenc, don't test "openssl <cipher>" for
      ciphers that were excluded, e.g. by -DNO_IDEA.  Also, test
-     all available cipers including rc5, which was forgotten until now.
+     all available ciphers including rc5, which was forgotten until now.
      In order to let the testing shell script know which algorithms
      are available, a new (up to now undocumented) command
      "openssl list-cipher-commands" is used.

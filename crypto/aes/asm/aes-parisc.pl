@@ -1015,7 +1015,7 @@ ___
 foreach (split("\n",$code)) {
 	s/\`([^\`]*)\`/eval $1/ge;
 
-	# translate made up instructons: _ror, _srm
+	# translate made up instructions: _ror, _srm
 	s/_ror(\s+)(%r[0-9]+),/shd$1$2,$2,/				or
 
 	s/_srm(\s+%r[0-9]+),([0-9]+),/

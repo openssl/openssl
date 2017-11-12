@@ -31,7 +31,7 @@
 # Apple A7(***)     22.7(**)    10.9/14.3        [8.45/10.0         ]
 # Mongoose(***)     26.3(**)    21.0/25.0(**)    [13.3/16.8         ]
 #
-# (*)	ECB denotes approximate result for parallelizeable modes
+# (*)	ECB denotes approximate result for parallelizable modes
 #	such as CBC decrypt, CTR, etc.;
 # (**)	these results are worse than scalar compiler-generated
 #	code, but it's constant-time and therefore preferred;
@@ -137,7 +137,7 @@ _vpaes_consts:
 	.quad	0x07E4A34047A4E300, 0x1DFEB95A5DBEF91A
 	.quad	0x5F36B5DC83EA6900, 0x2841C2ABF49D1E77
 
-.asciz  "Vector Permutaion AES for ARMv8, Mike Hamburg (Stanford University)"
+.asciz  "Vector Permutation AES for ARMv8, Mike Hamburg (Stanford University)"
 .size	_vpaes_consts,.-_vpaes_consts
 .align	6
 ___

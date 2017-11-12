@@ -774,7 +774,7 @@ while (@argvcopy)
 		}
 	unless ($_ eq $target || /^no-/ || /^disable-/)
 		{
-		# "no-..." follows later after implied disactivations
+		# "no-..." follows later after implied deactivations
 		# have been derived.  (Don't take this too seriously,
 		# we really only write OPTIONS to the Makefile out of
 		# nostalgia.)
@@ -1767,7 +1767,7 @@ EOF
 
             # Additionally, we set up sharednames for libraries that don't
             # have any, as themselves.  Only for libraries that aren't
-            # explicitely static.
+            # explicitly static.
             foreach (grep !/\.a$/, keys %{$unified_info{libraries}}) {
                 if (!defined $unified_info{sharednames}->{$_}) {
                     $unified_info{sharednames}->{$_} = $_
@@ -1775,13 +1775,13 @@ EOF
             }
 
             # Check that we haven't defined any library as both shared and
-            # explicitely static.  That is forbidden.
+            # explicitly static.  That is forbidden.
             my @doubles = ();
             foreach (grep /\.a$/, keys %{$unified_info{libraries}}) {
                 (my $l = $_) =~ s/\.a$//;
                 push @doubles, $l if defined $unified_info{sharednames}->{$l};
             }
-            die "these libraries are both explicitely static and shared:\n  ",
+            die "these libraries are both explicitly static and shared:\n  ",
                 join(" ", @doubles), "\n"
                 if @doubles;
         }

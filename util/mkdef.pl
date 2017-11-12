@@ -526,7 +526,7 @@ sub do_defs
 				while($tag[$tag_i] ne "-") {
 					if ($tag[$tag_i] eq "OPENSSL_NO_".$1) {
 						$tag{$tag[$tag_i]}=2;
-						print STDERR "DEBUG: $file: chaged tag $1 = 2\n" if $debug;
+						print STDERR "DEBUG: $file: changed tag $1 = 2\n" if $debug;
 					}
 					$tag_i--;
 				}
@@ -1632,7 +1632,7 @@ sub do_deprecated()
 {
 	my ($decl, $plats, $algs) = @_;
 	$decl =~ /^\s*(DEPRECATEDIN_\d+_\d+_\d+)\s*\((.*)\)\s*$/
-            or die "Bad DEPRECTEDIN: $decl\n";
+            or die "Bad DEPRECATEDIN: $decl\n";
 	my $info1 .= "#INFO:";
 	$info1 .= join(',', @{$plats}) . ":";
 	my $info2 = $info1;

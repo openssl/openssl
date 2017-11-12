@@ -157,7 +157,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     if (EC_GROUP_get_mont_data(group) != NULL) {
         /*
          * We want inverse in constant time, therefore we utilize the fact
-         * order must be prime and use Fermats Little Theorem instead.
+         * order must be prime and use Fermat's Little Theorem instead.
          */
         if (!BN_set_word(X, 2)) {
             ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);

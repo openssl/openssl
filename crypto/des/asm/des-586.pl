@@ -15,7 +15,7 @@ require "x86asm.pl";
 require "cbc.pl";
 require "desboth.pl";
 
-# base code is in microsft
+# base code is in Microsoft
 # op dest, source
 # format.
 #

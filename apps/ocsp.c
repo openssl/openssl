@@ -1106,7 +1106,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
             if (*q == ' ')
                 break;
         if (strncmp(q, " HTTP/1.", 8) != 0) {
-            BIO_printf(bio_err, "Invalid request -- bad HTTP vesion\n");
+            BIO_printf(bio_err, "Invalid request -- bad HTTP version\n");
             return 1;
         }
         *q = '\0';

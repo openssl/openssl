@@ -60,7 +60,7 @@
 # identical to CBC, because CBC-MAC is essentially CBC encrypt without
 # saving output. CCM CTR "stays invisible," because it's neatly
 # interleaved wih CBC-MAC. This provides ~30% improvement over
-# "straghtforward" CCM implementation with CTR and CBC-MAC performed
+# "straightforward" CCM implementation with CTR and CBC-MAC performed
 # disjointly. Parallelizable modes practically achieve the theoretical
 # limit.
 #
@@ -143,14 +143,14 @@
 # asymptotic, if it can be surpassed, isn't it? What happens there?
 # Rewind to CBC paragraph for the answer. Yes, out-of-order execution
 # magic is responsible for this. Processor overlaps not only the
-# additional instructions with AES ones, but even AES instuctions
+# additional instructions with AES ones, but even AES instructions
 # processing adjacent triplets of independent blocks. In the 6x case
 # additional instructions  still claim disproportionally small amount
 # of additional cycles, but in 8x case number of instructions must be
 # a tad too high for out-of-order logic to cope with, and AES unit
 # remains underutilized... As you can see 8x interleave is hardly
 # justifiable, so there no need to feel bad that 32-bit aesni-x86.pl
-# utilizies 6x interleave because of limited register bank capacity.
+# utilizes 6x interleave because of limited register bank capacity.
 #
 # Higher interleave factors do have negative impact on Westmere
 # performance. While for ECB mode it's negligible ~1.5%, other
@@ -1550,7 +1550,7 @@ $code.=<<___;
 	sub	\$8,$len
 	jnc	.Lctr32_loop8			# loop if $len-=8 didn't borrow
 
-	add	\$8,$len			# restore real remainig $len
+	add	\$8,$len			# restore real remaining $len
 	jz	.Lctr32_done			# done if ($len==0)
 	lea	-0x80($key),$key
 
@@ -1667,7 +1667,7 @@ $code.=<<___;
 	movups	$inout2,0x20($out)		# $len was 3, stop store
 
 .Lctr32_done:
-	xorps	%xmm0,%xmm0			# clear regiser bank
+	xorps	%xmm0,%xmm0			# clear register bank
 	xor	$key0,$key0
 	pxor	%xmm1,%xmm1
 	pxor	%xmm2,%xmm2
@@ -1856,7 +1856,7 @@ $code.=<<___;
 	lea	`16*6`($inp),$inp
 	pxor	$twmask,$inout5
 
-	 pxor	$twres,@tweak[0]		# calclulate tweaks^round[last]
+	 pxor	$twres,@tweak[0]		# calculate tweaks^round[last]
 	aesenc		$rndkey1,$inout4
 	 pxor	$twres,@tweak[1]
 	 movdqa	@tweak[0],`16*0`(%rsp)		# put aside tweaks^round[last]
@@ -2342,7 +2342,7 @@ $code.=<<___;
 	lea	`16*6`($inp),$inp
 	pxor	$twmask,$inout5
 
-	 pxor	$twres,@tweak[0]		# calclulate tweaks^round[last]
+	 pxor	$twres,@tweak[0]		# calculate tweaks^round[last]
 	aesdec		$rndkey1,$inout4
 	 pxor	$twres,@tweak[1]
 	 movdqa	@tweak[0],`16*0`(%rsp)		# put aside tweaks^last round key
@@ -4515,7 +4515,7 @@ __aesni_set_encrypt_key:
 
 .align	16
 .L14rounds:
-	movups	16($inp),%xmm2			# remaning half of *userKey
+	movups	16($inp),%xmm2			# remaining half of *userKey
 	mov	\$13,$bits			# 14 rounds for 256
 	lea	16(%rax),%rax
 	cmp	\$`1<<28`,%r10d			# AVX, but no XOP

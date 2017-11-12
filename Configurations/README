@@ -367,7 +367,7 @@ source as well.  However, the files given through SOURCE are expected
 to be located in the source tree while files given through DEPEND are
 expected to be located in the build tree)
 
-It's also possible to depend on static libraries explicitely:
+It's also possible to depend on static libraries explicitly:
 
     DEPEND[foo]=libsomething.a
     DEPEND[libbar]=libsomethingelse.a

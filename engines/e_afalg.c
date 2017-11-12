@@ -145,7 +145,7 @@ static int afalg_setup_async_event_notification(afalg_aio *aio)
             ALG_WARN("%s: ASYNC_get_wait_ctx error", __func__);
             return 0;
         }
-        /* Get waitfd from ASYNC_WAIT_CTX if it is alreday set */
+        /* Get waitfd from ASYNC_WAIT_CTX if it is already set */
         ret = ASYNC_WAIT_CTX_get_fd(waitctx, engine_afalg_id,
                                     &aio->efd, &custom);
         if (ret == 0) {

@@ -322,13 +322,13 @@ ok(!verify("badalt7-cert", "sslserver", ["root-cert"], ["ncca1-cert"], ),
    "Name Constraints CN BMPSTRING hostname not permitted");
 
 ok(!verify("badalt8-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
-   "Name constaints nested DNS name not permitted 1");
+   "Name constraints nested DNS name not permitted 1");
 
 ok(!verify("badalt9-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
-   "Name constaints nested DNS name not permitted 2");
+   "Name constraints nested DNS name not permitted 2");
 
 ok(!verify("badalt10-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
-   "Name constaints nested DNS name excluded");
+   "Name constraints nested DNS name excluded");
 
 ok(verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], ),
     "Certificate PSS signature using SHA1");

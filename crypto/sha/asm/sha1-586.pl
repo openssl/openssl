@@ -35,7 +35,7 @@
 # P4		+85%(!)			+45%
 #
 # As you can see Pentium came out as looser:-( Yet I reckoned that
-# improvement on P4 outweights the loss and incorporate this
+# improvement on P4 outweighs the loss and incorporate this
 # re-tuned code to 0.9.7 and later.
 # ----------------------------------------------------------------
 
@@ -549,7 +549,7 @@ for($i=0;$i<20-4;$i+=2) {
 # being implemented in SSSE3). Once 8 quadruples or 32 elements are
 # collected, it switches to routine proposed by Max Locktyukhin.
 #
-# Calculations inevitably require temporary reqisters, and there are
+# Calculations inevitably require temporary registers, and there are
 # no %xmm registers left to spare. For this reason part of the ring
 # buffer, X[2..4] to be specific, is offloaded to 3 quadriples ring
 # buffer on the stack. Keep in mind that X[2] is alias X[-6], X[3] -
