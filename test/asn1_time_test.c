@@ -79,7 +79,7 @@ static struct testdata tbl_testdata_pos[] = {
 
 /* ASSUMES SIGNED TIME_T */
 static struct testdata tbl_testdata_neg[] = {
-    { "19011213204552Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_GENERALIZEDTIME, 1, (time_t)-1*2147483648, -1, 0, },
+    { "19011213204552Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_GENERALIZEDTIME, 1,     INT_MIN, -1, 0, },
     { "691006121456Z",     V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         1,    -7472704, -1, 1, },
     { "19691006121456Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_UTCTIME,         1,    -7472704, -1, 1, },
 };
@@ -93,8 +93,8 @@ static struct testdata tbl_testdata_pos_64bit[] = {
 
 /* ASSUMES SIGNED TIME_T */
 static struct testdata tbl_testdata_neg_64bit[] = {
-    { "19011213204551Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_GENERALIZEDTIME, 1, (time_t)-1*2147483649, -1, 0, },
-    { "19000101120000Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_GENERALIZEDTIME, 1, (time_t)-1*2208945600, -1, 0, },
+    { "19011213204551Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_GENERALIZEDTIME, 1, -2147483649LL, -1, 0, },
+    { "19000101120000Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_GENERALIZEDTIME, 1, -2208945600LL, -1, 0, },
 };
 
 /* A baseline time to compare to */
