@@ -109,7 +109,7 @@ sub get_records
                 substr($packet, TLS_RECORD_HEADER_LENGTH, $len_real)
             );
 
-            if (!TLSProxy::Proxy->is_tls13() || $content_type != RT_CCS) {
+            if ($content_type != RT_CCS) {
                 if (($server && $server_encrypting)
                          || (!$server && $client_encrypting)) {
                     if (!TLSProxy::Proxy->is_tls13() && $etm) {
@@ -118,11 +118,11 @@ sub get_records
                         $record->decrypt();
                     }
                     $record->encrypted(1);
-                }
 
-                if (TLSProxy::Proxy->is_tls13()) {
-                    print "  Inner content type: "
-                          .$record_type{$record->content_type()}."\n";
+                    if (TLSProxy::Proxy->is_tls13()) {
+                        print "  Inner content type: "
+                              .$record_type{$record->content_type()}."\n";
+                    }
                 }
             }
 
