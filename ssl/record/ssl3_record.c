@@ -276,7 +276,7 @@ int ssl3_get_record(SSL *s)
                  * that explicitly
                  */
                 if (!s->first_packet && !SSL_IS_TLS13(s)
-                        && !s->hello_retry_request
+                        && s->hello_retry_request != SSL_HRR_PENDING
                         && version != (unsigned int)s->version) {
                     if ((s->version & 0xFF00) == (version & 0xFF00)
                         && !s->enc_write_ctx && !s->write_hash) {
@@ -449,7 +449,7 @@ int ssl3_get_record(SSL *s)
 
     if (num_recs == 1
             && thisrr->type == SSL3_RT_CHANGE_CIPHER_SPEC
-            && SSL_IS_TLS13(s)
+            && (SSL_IS_TLS13(s) || s->hello_retry_request != SSL_HRR_NONE)
             && SSL_IS_FIRST_HANDSHAKE(s)) {
         /*
          * CCS messages must be exactly 1 byte long, containing the value 0x01

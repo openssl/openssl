@@ -1656,7 +1656,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
     suppversions = &hello->pre_proc_exts[TLSEXT_IDX_supported_versions];
 
     /* If we did an HRR then supported versions is mandatory */
-    if (!suppversions->present && s->hello_retry_request)
+    if (!suppversions->present && s->hello_retry_request != SSL_HRR_NONE)
         return SSL_R_UNSUPPORTED_PROTOCOL;
 
     if (suppversions->present && !SSL_IS_DTLS(s)) {
@@ -1703,7 +1703,7 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
         }
 
         if (best_vers > 0) {
-            if (s->hello_retry_request) {
+            if (s->hello_retry_request != SSL_HRR_NONE) {
                 /*
                  * This is after a HelloRetryRequest so we better check that we
                  * negotiated TLSv1.3
@@ -1779,7 +1779,8 @@ int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
         return 0;
     }
 
-    if (s->hello_retry_request && s->version != TLS1_3_VERSION) {
+    if (s->hello_retry_request != SSL_HRR_NONE
+            && s->version != TLS1_3_VERSION) {
         s->version = origv;
         SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_F_SSL_CHOOSE_CLIENT_VERSION,
                  SSL_R_WRONG_SSL_VERSION);

@@ -704,7 +704,7 @@ int tls_parse_ctos_early_data(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
-    if (s->hello_retry_request) {
+    if (s->hello_retry_request != SSL_HRR_NONE) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                  SSL_F_TLS_PARSE_CTOS_EARLY_DATA, SSL_R_BAD_EXTENSION);
         return 0;
@@ -1245,7 +1245,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
 
     if (ckey == NULL) {
         /* No key_share received from client */
-        if (s->hello_retry_request) {
+        if (s->hello_retry_request == SSL_HRR_PENDING) {
             if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
                     || !WPACKET_start_sub_packet_u16(pkt)
                     || !WPACKET_put_bytes_u16(pkt, s->s3->group_id)
