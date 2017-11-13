@@ -301,6 +301,10 @@ $config{libdir}="";
 $config{cross_compile_prefix}="";
 
 my $default_ranlib;
+my $user_cflags="";
+my @user_defines=();
+my $libs="";
+my $target="";
 
 # Top level directories to build
 $config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "util", "tools", "fuzz" ];
@@ -475,10 +479,12 @@ my %auto = (
 # %settingdata keys are config settings, the values are hashes of data
 # The keys are used to check these config settings early when resolving configs
 my %settingdata = (
-    thread_scheme => { unavailable => "(unknown)",
+    thread_scheme => { unavailable =>
+                           sub { $_[0] eq "(unknown)"
+                                 && !@user_defines && !$user_cflags },
                        options => [ 'threads' ],
                        disablestr => "unavailable" },
-    shared_target => { unavailable => "",
+    shared_target => { unavailable => sub { $_[0] eq "" },
                        options => [ 'shared', 'dynamic-engine' ],
                        disablestr => "no-shared-target" },
    );
@@ -553,15 +559,11 @@ my $no_sse2=0;
 
 &usage if ($#ARGV < 0);
 
-my $user_cflags="";
-my @user_defines=();
 $config{openssl_api_defines}=[];
 $config{openssl_algorithm_defines}=[];
 $config{openssl_thread_defines}=[];
 $config{openssl_sys_defines}=[];
 $config{openssl_other_defines}=[];
-my $libs="";
-my $target="";
 $config{options}="";
 $config{build_type} = "release";
 
@@ -2441,7 +2443,7 @@ sub resolve_config {
                 }
                 if (!$disabled{$_}) {
                     # Disable it forcibly if unavailable
-                    if ($combined_values{$key} eq $settingdata{$key}->{unavailable}) {
+                    if ($settingdata{$key}->{unavailable}->($combined_values{$key})) {
                         $disabled{$_} = $settingdata{$key}->{disablestr};
                     }
                 }
