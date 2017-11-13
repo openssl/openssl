@@ -170,10 +170,12 @@ sub get_messages
             #We can't handle this yet
             die "CCS received before message data complete\n";
         }
-        if ($server) {
-            TLSProxy::Record->server_encrypting(1);
-        } else {
-            TLSProxy::Record->client_encrypting(1);
+        if (!TLSProxy::Proxy->is_tls13()) {
+            if ($server) {
+                TLSProxy::Record->server_encrypting(1);
+            } else {
+                TLSProxy::Record->client_encrypting(1);
+            }
         }
     } elsif ($record->content_type == TLSProxy::Record::RT_HANDSHAKE) {
         if ($record->len == 0 || $record->len_real == 0) {

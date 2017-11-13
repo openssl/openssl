@@ -12,6 +12,11 @@ package TLSProxy::ServerHello;
 use vars '@ISA';
 push @ISA, 'TLSProxy::Message';
 
+my $hrrrandom = pack("C*", 0xCF, 0x21, 0xAD, 0x74, 0xE5, 0x9A, 0x61, 0x11, 0xBE,
+                           0x1D, 0x8C, 0x02, 0x1E, 0x65, 0xB8, 0x91, 0xC2, 0xA2,
+                           0x11, 0x16, 0x7A, 0xBB, 0x8C, 0x5E, 0x07, 0x9E, 0x09,
+                           0xE2, 0xC8, 0xA8, 0x33, 0x9C);
+
 sub new
 {
     my $class = shift;
@@ -93,10 +98,15 @@ sub parse
         }
     }
 
-    # TODO(TLS1.3): Replace this reference to draft version before release
-    if ($server_version == TLSProxy::Record::VERS_TLS_1_3_DRAFT) {
+    if ($random eq $hrrrandom) {
+        TLSProxy::Proxy->is_tls13(1);
+        # TODO(TLS1.3): Replace this reference to draft version before release
+    } elsif ($server_version == TLSProxy::Record::VERS_TLS_1_3_DRAFT) {
         $server_version = TLSProxy::Record::VERS_TLS_1_3;
         TLSProxy::Proxy->is_tls13(1);
+
+        TLSProxy::Record->server_encrypting(1);
+        TLSProxy::Record->client_encrypting(1);
     }
 
     $self->server_version($server_version);
@@ -110,10 +120,6 @@ sub parse
 
     $self->process_data();
 
-    if (TLSProxy::Proxy->is_tls13()) {
-        TLSProxy::Record->server_encrypting(1);
-        TLSProxy::Record->client_encrypting(1);
-    }
 
     print "    Server Version:".$server_version."\n";
     print "    Session ID Len:".$session_id_len."\n";
