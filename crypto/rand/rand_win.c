@@ -198,6 +198,8 @@ typedef NET_API_STATUS(NET_API_FUNCTION *NETFREE) (LPBYTE);
 #  endif                        /* 1 */
 # endif                         /* !OPENSSL_SYS_WINCE && !OPENSSL_WINAPP */
 
+#define NOTTOOLONG(start) ((GetTickCount() - (start)) < MAXDELAY)
+
 # if !defined(OPENSSL_WINAPP) 
 /*
  * Rand_Poll is defined on ms/winrt.cpp for Windows Store && Windows Phone
@@ -473,9 +475,7 @@ int RAND_poll(void)
                                 do
                                     RAND_add(&hentry, hentry.dwSize, 5);
                                 while (heap_next(&hentry)
-                                       && (!good
-                                           || (GetTickCount() - starttime) <
-                                           MAXDELAY)
+                                       && (!good || NOTTOOLONG(starttime))
                                        && --entrycnt > 0);
                             }
                         }
@@ -487,8 +487,7 @@ int RAND_poll(void)
                             ex_cnt_limit--;
                         }
                     } while (heaplist_next(handle, &hlist)
-                             && (!good
-                                 || (GetTickCount() - starttime) < MAXDELAY)
+                             && (!good || NOTTOOLONG(starttime))
                              && ex_cnt_limit > 0);
                 }
 #   else
@@ -503,11 +502,11 @@ int RAND_poll(void)
                             do
                                 RAND_add(&hentry, hentry.dwSize, 5);
                             while (heap_next(&hentry)
+                                   && (!good || NOTTOOLONG(starttime))
                                    && --entrycnt > 0);
                         }
                     } while (heaplist_next(handle, &hlist)
-                             && (!good
-                                 || (GetTickCount() - starttime) < MAXDELAY));
+                             && (!good || NOTTOOLONG(starttime)));
                 }
 #   endif
 
@@ -525,8 +524,7 @@ int RAND_poll(void)
                     do
                         RAND_add(&p, p.dwSize, 9);
                     while (process_next(handle, &p)
-                           && (!good
-                               || (GetTickCount() - starttime) < MAXDELAY));
+                           && (!good || NOTTOOLONG(starttime)));
 
                 /* thread walking */
                 /*
@@ -540,8 +538,7 @@ int RAND_poll(void)
                     do
                         RAND_add(&t, t.dwSize, 6);
                     while (thread_next(handle, &t)
-                           && (!good
-                               || (GetTickCount() - starttime) < MAXDELAY));
+                           && (!good || NOTTOOLONG(starttime)));
 
                 /* module walking */
                 /*
@@ -555,8 +552,7 @@ int RAND_poll(void)
                     do
                         RAND_add(&m, m.dwSize, 9);
                     while (module_next(handle, &m)
-                           && (!good
-                               || (GetTickCount() - starttime) < MAXDELAY));
+                           && (!good || NOTTOOLONG(starttime)));
                 if (close_snap)
                     close_snap(handle);
                 else
@@ -665,7 +661,12 @@ static void readtimer(void)
     }
 
     if (!have_tsc && !have_perfc) {
+#ifdef OPENSSL_WINAPP
+        // Wrapping should not be an issue, we just want a random number
+        w = (DWORD) GetTickCount64();
+#else
         w = GetTickCount();
+#endif
         RAND_add(&w, sizeof(w), 0);
     }
 }
@@ -716,14 +717,13 @@ static void readscreen(void)
     hBitmap = CreateCompatibleBitmap(hScrDC, w, n);
 
     /* Get bitmap properties */
-    GetObject(hBitmap, sizeof(BITMAP), (LPSTR) & bm);
-    size = (unsigned int)bm.bmWidthBytes * bm.bmHeight * bm.bmPlanes;
-
-    bi.biSize = sizeof(BITMAPINFOHEADER);
+    GetObject(hBitmap, sizeof(bm), (LPSTR)&bm);
+    size = (unsigned int)4 * bm.bmHeight * bm.bmWidth;
+    bi.biSize = sizeof(bi);
     bi.biWidth = bm.bmWidth;
     bi.biHeight = bm.bmHeight;
-    bi.biPlanes = bm.bmPlanes;
-    bi.biBitCount = bm.bmBitsPixel;
+    bi.biPlanes = 1;
+    bi.biBitCount = 32;
     bi.biCompression = BI_RGB;
     bi.biSizeImage = 0;
     bi.biXPelsPerMeter = 0;
@@ -739,7 +739,7 @@ static void readscreen(void)
 
             /* Copy the bits of the current line range into the buffer */
             GetDIBits(hScrDC, hBitmap, y, n,
-                      bmbits, (BITMAPINFO *) & bi, DIB_RGB_COLORS);
+                      bmbits, (LPBITMAPINFO)&bi, DIB_RGB_COLORS);
 
             /* Get the hash of the bitmap */
             MD(bmbits, size, md);

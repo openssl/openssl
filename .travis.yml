@@ -50,8 +50,18 @@ before_script:
 
 script:
     - cd _srcdist
-    - make
-    - if [ -z "$CROSS_COMPILE" ]; then make test; fi
+    - if make ; then
+         echo -e '+\057 MAKE OK';
+     else
+         echo -e '+\057 MAKE FAILED'; false;
+      fi;
+    - if [ -z "$CROSS_COMPILE" ]; then
+          if make test; then
+              echo -e '+\057\057 MAKE TEST OK';
+          else
+              echo -e '+\057\057 MAKE TEST FAILED'; false;
+          fi;
+      fi
     - cd ..
 
 notifications:
