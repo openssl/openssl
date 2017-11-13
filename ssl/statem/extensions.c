@@ -263,7 +263,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_supported_versions,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
-        | SSL_EXT_TLS1_3_SERVER_HELLO | SSL_EXT_TLS_IMPLEMENTATION_ONLY,
+        | SSL_EXT_TLS1_3_SERVER_HELLO | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
+        | SSL_EXT_TLS_IMPLEMENTATION_ONLY,
         NULL,
         /* Processed inline as part of version selection */
         NULL, tls_parse_stoc_supported_versions,
