@@ -323,7 +323,9 @@
                           && (s)->method->version != TLS_ANY_VERSION)
 
 # define SSL_TREAT_AS_TLS13(s) \
-    (SSL_IS_TLS13(s) || (s)->early_data_state == SSL_EARLY_DATA_WRITING \
+    (SSL_IS_TLS13(s) || (s)->early_data_state == SSL_EARLY_DATA_CONNECTING \
+     || (s)->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY \
+     || (s)->early_data_state == SSL_EARLY_DATA_WRITING \
      || (s)->early_data_state == SSL_EARLY_DATA_WRITE_RETRY)
 
 # define SSL_IS_FIRST_HANDSHAKE(S) ((s)->s3->tmp.finish_md_len == 0 \
