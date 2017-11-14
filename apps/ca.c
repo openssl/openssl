@@ -1985,10 +1985,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     /* Lets add the extensions, if there are any */
     if (ext_sect) {
         X509V3_CTX ctx;
-        if (ci->version == NULL)
-            if ((ci->version = ASN1_INTEGER_new()) == NULL)
-                goto err;
-        ASN1_INTEGER_set(ci->version, 2); /* version 3 certificate */
 
         /*
          * Free the current entries if any, there should not be any I believe
@@ -2049,6 +2045,15 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         BIO_printf(bio_err, "ERROR: adding extensions from request\n");
         ERR_print_errors(bio_err);
         goto err;
+    }
+
+    {
+        STACK_OF(X509_EXTENSION) *exts = ci->extensions;
+
+        if (exts != NULL && sk_X509_EXTENSION_num(exts) > 0)
+            /* Make it an X509 v3 certificate. */
+            if (!X509_set_version(ret, 2))
+                goto err;
     }
 
     /* Set the right value for the noemailDN option */
@@ -2126,10 +2131,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         goto err;
     }
 
-    for (i = 0; i < DB_NUMBER; i++) {
+    for (i = 0; i < DB_NUMBER; i++)
         irow[i] = row[i];
-        row[i] = NULL;
-    }
     irow[DB_NUMBER] = NULL;
 
     if (!TXT_DB_insert(db->db, irow)) {
@@ -2137,11 +2140,14 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         BIO_printf(bio_err, "TXT_DB error number %ld\n", db->db->error);
         goto err;
     }
+    irow = NULL;
     ok = 1;
  err:
-    for (i = 0; i < DB_NUMBER; i++)
-        if (row[i] != NULL)
+    if (irow != NULL) {
+        for (i = 0; i < DB_NUMBER; i++)
             OPENSSL_free(row[i]);
+        OPENSSL_free(irow);
+    }
 
     if (CAname != NULL)
         X509_NAME_free(CAname);
@@ -2396,17 +2402,19 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
             goto err;
         }
 
-        for (i = 0; i < DB_NUMBER; i++) {
+        for (i = 0; i < DB_NUMBER; i++)
             irow[i] = row[i];
-            row[i] = NULL;
-        }
         irow[DB_NUMBER] = NULL;
 
         if (!TXT_DB_insert(db->db, irow)) {
             BIO_printf(bio_err, "failed to update database\n");
             BIO_printf(bio_err, "TXT_DB error number %ld\n", db->db->error);
+            OPENSSL_free(irow);
             goto err;
         }
+
+        for (i = 0; i < DB_NUMBER; i++)
+            row[i] = NULL;
 
         /* Revoke Certificate */
         if (type == -1)

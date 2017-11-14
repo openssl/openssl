@@ -2132,6 +2132,7 @@ int MAIN(int argc, char *argv[])
         BIO_free(bio_s_msg);
         bio_s_msg = NULL;
     }
+    SSL_COMP_free_compression_methods();
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }
@@ -3016,7 +3017,7 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
                 PEM_write_bio_X509(io, peer);
             } else
                 BIO_puts(io, "no client certificate available\n");
-            BIO_puts(io, "</BODY></HTML>\r\n\r\n");
+            BIO_puts(io, "</pre></BODY></HTML>\r\n\r\n");
             break;
         } else if ((www == 2 || www == 3)
                    && (strncmp("GET /", buf, 5) == 0)) {

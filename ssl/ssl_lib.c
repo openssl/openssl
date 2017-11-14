@@ -1825,26 +1825,34 @@ void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
 
 int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                const char *label, size_t llen,
-                               const unsigned char *p, size_t plen,
+                               const unsigned char *context, size_t contextlen,
                                int use_context)
 {
     if (s->version < TLS1_VERSION && s->version != DTLS1_BAD_VER)
         return -1;
 
     return s->method->ssl3_enc->export_keying_material(s, out, olen, label,
-                                                       llen, p, plen,
-                                                       use_context);
+                                                       llen, context,
+                                                       contextlen, use_context);
 }
 
 static unsigned long ssl_session_hash(const SSL_SESSION *a)
 {
+    const unsigned char *session_id = a->session_id;
     unsigned long l;
+    unsigned char tmp_storage[4];
+
+    if (a->session_id_length < sizeof(tmp_storage)) {
+        memset(tmp_storage, 0, sizeof(tmp_storage));
+        memcpy(tmp_storage, a->session_id, a->session_id_length);
+        session_id = tmp_storage;
+    }
 
     l = (unsigned long)
-        ((unsigned int)a->session_id[0]) |
-        ((unsigned int)a->session_id[1] << 8L) |
-        ((unsigned long)a->session_id[2] << 16L) |
-        ((unsigned long)a->session_id[3] << 24L);
+        ((unsigned long)session_id[0]) |
+        ((unsigned long)session_id[1] << 8L) |
+        ((unsigned long)session_id[2] << 16L) |
+        ((unsigned long)session_id[3] << 24L);
     return (l);
 }
 
@@ -3172,6 +3180,7 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
 #endif
     ssl->cert = ssl_cert_dup(ctx->cert);
     if (ocert) {
+        int i;
         /* Preserve any already negotiated parameters */
         if (ssl->server) {
             ssl->cert->peer_sigalgs = ocert->peer_sigalgs;
@@ -3181,11 +3190,17 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
             ssl->cert->ciphers_rawlen = ocert->ciphers_rawlen;
             ocert->ciphers_raw = NULL;
         }
+        for (i = 0; i < SSL_PKEY_NUM; i++) {
+            ssl->cert->pkeys[i].digest = ocert->pkeys[i].digest;
+        }
 #ifndef OPENSSL_NO_TLSEXT
         ssl->cert->alpn_proposed = ocert->alpn_proposed;
         ssl->cert->alpn_proposed_len = ocert->alpn_proposed_len;
         ocert->alpn_proposed = NULL;
         ssl->cert->alpn_sent = ocert->alpn_sent;
+
+        if (!custom_exts_copy_flags(&ssl->cert->srv_ext, &ocert->srv_ext))
+            return NULL;
 #endif
         ssl_cert_free(ocert);
     }

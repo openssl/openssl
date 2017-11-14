@@ -431,7 +431,7 @@ EOF
 		{
 		$extra_install .= <<"EOF"
 	\$(MKDIR) \"\$(INSTALLTOP)${o}lib${o}engines\"
-	\$(CP) \"\$(E_SHLIB)\" \"\$(INSTALLTOP)${o}lib${o}engines\"
+	\$(CP) \$(E_SHLIB) \"\$(INSTALLTOP)${o}lib${o}engines\"
 EOF
 		}
 	}
@@ -611,7 +611,7 @@ install: all
 	\$(MKDIR) \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(MKDIR) \"\$(INSTALLTOP)${o}lib\"
 	\$(CP) \"\$(INCO_D)${o}*.\[ch\]\" \"\$(INSTALLTOP)${o}include${o}openssl\"
-	\$(CP) \"\$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin\"
+	\$(CP) \"\$(BIN_D)$o\$(E_EXE)$exep\" \"\$(INSTALLTOP)${o}bin\"
 	\$(MKDIR) \"\$(OPENSSLDIR)\"
 	\$(CP) apps${o}openssl.cnf \"\$(OPENSSLDIR)\"
 $extra_install
@@ -1106,7 +1106,7 @@ sub cc_compile_target
 	
 	$ex_flags.=" -DMK1MF_BUILD -D$platform_cpp_symbol" if ($source =~ /cversion/);
 	# C defines are hooked at source level on winrtdef.h
-	$ex_flags.=" -I\$(SRC_D)\\ms -FIwinrtdef.h" if ($platform =~ /VC-WINPHONE/ || $platform =~ /VC-WINSTORE/ || $platform =~ /VC-WINUNIVERSAL/);
+	$ex_flags.=" -I\$(SRC_D)\\ms -FIwindows.h -FIwinrtdef.h" if ($platform =~ /VC-WINPHONE/ || $platform =~ /VC-WINSTORE/ || $platform =~ /VC-WINUNIVERSAL/);
 	$target =~ s/\//$o/g if $o ne "/";
 	$source =~ s/\//$o/g if $o ne "/";
 	$srcd = "\$(SRC_D)$o" unless defined $srcd && $platform ne 'copy';
@@ -1233,6 +1233,7 @@ sub read_options
 		"no-ssl3-method" => 0,
 		"no-tlsext" => \$no_tlsext,
 		"no-tls1" => \$no_tls1,
+		"no-dtls1" => 0,
 		"no-srp" => \$no_srp,
 		"no-cms" => \$no_cms,
 		"no-jpake" => \$no_jpake,

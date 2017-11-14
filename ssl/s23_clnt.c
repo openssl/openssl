@@ -204,7 +204,10 @@ int ssl23_connect(SSL *s)
                 goto end;
             }
 
-            ssl3_init_finished_mac(s);
+            if (!ssl3_init_finished_mac(s)) {
+                ret = -1;
+                goto end;
+            }
 
             s->state = SSL23_ST_CW_CLNT_HELLO_A;
             s->ctx->stats.sess_connect++;
@@ -732,7 +735,35 @@ static int ssl23_get_server_hello(SSL *s)
             s->version = TLS1_2_VERSION;
             s->method = TLSv1_2_client_method();
         } else {
+            /*
+             * Unrecognised version, we'll send a protocol version alert using
+             * our preferred version.
+             */
+            switch(s->client_version) {
+            default:
+                /*
+                 * Shouldn't happen
+                 * Fall through
+                 */
+            case TLS1_2_VERSION:
+                s->version = TLS1_2_VERSION;
+                s->method = TLSv1_2_client_method();
+                break;
+            case TLS1_1_VERSION:
+                s->version = TLS1_1_VERSION;
+                s->method = TLSv1_1_client_method();
+                break;
+            case TLS1_VERSION:
+                s->version = TLS1_VERSION;
+                s->method = TLSv1_client_method();
+                break;
+            case SSL3_VERSION:
+                s->version = SSL3_VERSION;
+                s->method = SSLv3_client_method();
+                break;
+            }
             SSLerr(SSL_F_SSL23_GET_SERVER_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
+            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_PROTOCOL_VERSION);
             goto err;
         }
 

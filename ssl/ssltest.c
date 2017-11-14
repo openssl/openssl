@@ -314,6 +314,13 @@ static const char *sn_client;
 static const char *sn_server1;
 static const char *sn_server2;
 static int sn_expect = 0;
+static int s_ticket1 = 0;
+static int s_ticket2 = 0;
+static int c_ticket = 0;
+static int ticket_expect = -1;
+static int sni_in_cert_cb = 0;
+static const char *client_sigalgs = NULL;
+static const char *server_digest_expect = NULL;
 
 static int servername_cb(SSL *s, int *ad, void *arg)
 {
@@ -328,6 +335,9 @@ static int servername_cb(SSL *s, int *ad, void *arg)
             !strcasecmp(servername, sn_server2)) {
             BIO_printf(bio_stdout, "Switching server context.\n");
             SSL_set_SSL_CTX(s, s_ctx2);
+            /* Copy over all the SSL_CTX options */
+            SSL_clear_options(s, 0xFFFFFFFFL);
+            SSL_set_options(s, SSL_CTX_get_options(s_ctx2));
         }
     }
     return SSL_TLSEXT_ERR_OK;
@@ -349,6 +359,40 @@ static int verify_servername(SSL *client, SSL *server)
         BIO_printf(bio_stdout, "Servername: context is 1\n");
     else
         BIO_printf(bio_stdout, "Servername: context is unknown\n");
+    return -1;
+}
+static int cert_cb(SSL *ssl, void *arg)
+{
+    int unused;
+    return servername_cb(ssl, &unused, NULL) != SSL_TLSEXT_ERR_ALERT_FATAL;
+}
+
+static int verify_ticket(SSL* ssl)
+{
+    if (ticket_expect == -1)
+        return 0;
+    if (ticket_expect == 0 &&
+        (ssl->session->tlsext_tick == NULL ||
+         ssl->session->tlsext_ticklen == 0))
+        return 1;
+    if (ticket_expect == 1 &&
+        (ssl->session->tlsext_tick != NULL &&
+         ssl->session->tlsext_ticklen != 0))
+        return 1;
+    return -1;
+}
+
+static int verify_server_digest(SSL* ssl)
+{
+    int nid = NID_undef;
+
+    if (server_digest_expect == NULL)
+        return 0;
+    SSL_get_peer_signature_nid(ssl, &nid);
+    if (strcmp(server_digest_expect, OBJ_nid2sn(nid)) == 0)
+        return 1;
+    BIO_printf(bio_stdout, "Expected server digest %s, got %s.\n",
+               server_digest_expect, OBJ_nid2sn(nid));
     return -1;
 }
 
@@ -479,6 +523,42 @@ static int verify_alpn(SSL *client, SSL *server)
     }
     return -1;
 }
+
+#ifndef OPENSSL_NO_TLSEXT
+
+static int cb_ticket0(SSL* s, unsigned char* key_name, unsigned char *iv, EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc)
+{
+    return 0;
+}
+
+static int cb_ticket1(SSL* s, unsigned char* key_name, unsigned char *iv, EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc)
+{
+    static unsigned char key[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+    static char name[] = "ticket11ticket11";
+    if (SSL_get_options(s) & SSL_OP_NO_TICKET)
+        return 0;
+    if (enc) {
+        RAND_pseudo_bytes(iv, EVP_MAX_IV_LENGTH);
+        EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv);
+        HMAC_Init_ex(hctx, key, sizeof(key), EVP_sha1(), NULL);
+        memcpy(key_name, name, 16);
+        return 1;
+    } else {
+        if (memcmp(key_name, name, 16) == 0) {
+            EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key, iv);
+            HMAC_Init_ex(hctx, key, sizeof(key), EVP_sha1(), NULL);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int cb_ticket2(SSL* s, unsigned char* key_name, unsigned char *iv, EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc)
+{
+    fprintf(stderr, "ticket callback for SNI context should never be called\n");
+    EXIT(1);
+}
+#endif
 
 #define SCT_EXT_TYPE 18
 
@@ -776,6 +856,7 @@ static void sv_usage(void)
 #endif
 #ifndef OPENSSL_NO_TLS1
     fprintf(stderr, " -tls1         - use TLSv1\n");
+    fprintf(stderr, " -tls12        - use TLSv1.2\n");
 #endif
 #ifndef OPENSSL_NO_DTLS
     fprintf(stderr, " -dtls1        - use DTLSv1\n");
@@ -823,6 +904,15 @@ static void sv_usage(void)
     fprintf(stderr, " -sn_server2 <string> - have server context 2 respond to this servername\n");
     fprintf(stderr, " -sn_expect1          - expected server 1\n");
     fprintf(stderr, " -sn_expect2          - expected server 2\n");
+#ifndef OPENSSL_NO_TLSEXT
+    fprintf(stderr, " -s_ticket1 <yes|no|broken> - enable/disable session tickets on context 1\n");
+    fprintf(stderr, " -s_ticket2 <yes|no>        - enable/disable session tickets on context 2\n");
+    fprintf(stderr, " -c_ticket <yes|no>         - enable/disable session tickets on the client\n");
+    fprintf(stderr, " -ticket_expect <yes|no>    - indicate that the client should (or should not) have a ticket\n");
+#endif
+    fprintf(stderr, " -sni_in_cert_cb           - have the server handle SNI in the certificate callback\n");
+    fprintf(stderr, " -client_sigalgs arg       - the signature algorithms to configure on the client\n");
+    fprintf(stderr, " -server_digest_expect arg - the expected server signing digest\n");
 }
 
 static void print_details(SSL *c_ssl, const char *prefix)
@@ -949,7 +1039,7 @@ int main(int argc, char *argv[])
     int badop = 0;
     int bio_pair = 0;
     int force = 0;
-    int dtls1 = 0, dtls12 = 0, tls1 = 0, ssl2 = 0, ssl3 = 0, ret = 1;
+    int dtls1 = 0, dtls12 = 0, tls1 = 0, tls12 = 0, ssl2 = 0, ssl3 = 0, ret = 1;
     int client_auth = 0;
     int server_auth = 0, i;
     struct app_verify_arg app_verify_arg =
@@ -1103,6 +1193,11 @@ int main(int argc, char *argv[])
             no_protocol = 1;
 #endif
             tls1 = 1;
+        } else if (strcmp(*argv, "-tls12") == 0) {
+#ifdef OPENSSL_NO_TLS1
+            no_protocol = 1;
+#endif
+            tls12 = 1;
         } else if (strcmp(*argv, "-ssl3") == 0) {
 #ifdef OPENSSL_NO_SSL3_METHOD
             no_protocol = 1;
@@ -1178,13 +1273,21 @@ int main(int argc, char *argv[])
         } else if (strcmp(*argv, "-time") == 0) {
             print_time = 1;
         }
-#ifndef OPENSSL_NO_COMP
         else if (strcmp(*argv, "-zlib") == 0) {
+#ifndef OPENSSL_NO_COMP
             comp = COMP_ZLIB;
-        } else if (strcmp(*argv, "-rle") == 0) {
-            comp = COMP_RLE;
-        }
+#else
+            fprintf(stderr,
+                    "ignoring -zlib, since I'm compiled without COMP\n");
 #endif
+        } else if (strcmp(*argv, "-rle") == 0) {
+#ifndef OPENSSL_NO_COMP
+            comp = COMP_RLE;
+#else
+            fprintf(stderr,
+                    "ignoring -rle, since I'm compiled without COMP\n");
+#endif
+        }
         else if (strcmp(*argv, "-named_curve") == 0) {
             if (--argc < 1)
                 goto bad;
@@ -1244,6 +1347,46 @@ int main(int argc, char *argv[])
             sn_expect = 1;
         } else if (strcmp(*argv, "-sn_expect2") == 0) {
             sn_expect = 2;
+#ifndef OPENSSL_NO_TLSEXT
+        } else if (strcmp(*argv, "-s_ticket1") == 0) {
+            if (--argc < 1)
+                goto bad;
+            argv++;
+            if (strcmp(*argv, "yes") == 0)
+                s_ticket1 = 1;
+            if (strcmp(*argv, "broken") == 0)
+                s_ticket1 = 2;
+        } else if (strcmp(*argv, "-s_ticket2") == 0) {
+            if (--argc < 1)
+                goto bad;
+            argv++;
+            if (strcmp(*argv, "yes") == 0)
+                s_ticket2 = 1;
+        } else if (strcmp(*argv, "-c_ticket") == 0) {
+            if (--argc < 1)
+                goto bad;
+            argv++;
+            if (strcmp(*argv, "yes") == 0)
+                c_ticket = 1;
+        } else if (strcmp(*argv, "-ticket_expect") == 0) {
+            if (--argc < 1)
+                goto bad;
+            argv++;
+            if (strcmp(*argv, "yes") == 0)
+                ticket_expect = 1;
+            else if (strcmp(*argv, "no") == 0)
+                ticket_expect = 0;
+#endif
+        } else if (strcmp(*argv, "-sni_in_cert_cb") == 0) {
+            sni_in_cert_cb = 1;
+        } else if (strcmp(*argv, "-client_sigalgs") == 0) {
+            if (--argc < 1)
+                goto bad;
+            client_sigalgs = *(++argv);
+        } else if (strcmp(*argv, "-server_digest_expect") == 0) {
+            if (--argc < 1)
+                goto bad;
+            server_digest_expect = *(++argv);
         } else {
             fprintf(stderr, "unknown option %s\n", *argv);
             badop = 1;
@@ -1274,9 +1417,9 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (ssl2 + ssl3 + tls1 + dtls1 + dtls12 > 1) {
-        fprintf(stderr, "At most one of -ssl2, -ssl3, -tls1, -dtls1 or -dtls12 should "
-                "be requested.\n");
+    if (ssl2 + ssl3 + tls1 + tls12 + dtls1 + dtls12 > 1) {
+        fprintf(stderr, "At most one of -ssl2, -ssl3, -tls1, -tls12, -dtls1 or "
+                "-dtls12 should be requested.\n");
         EXIT(1);
     }
 
@@ -1292,10 +1435,11 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (!ssl2 && !ssl3 && !tls1 && !dtls1 && !dtls12 && number > 1 && !reuse && !force) {
+    if (!ssl2 && !ssl3 && !tls1 && !tls12 && !dtls1 && !dtls12 && number > 1
+            && !reuse && !force) {
         fprintf(stderr, "This case cannot work.  Use -f to perform "
                 "the test anyway (and\n-d to see what happens), "
-                "or add one of ssl2, -ssl3, -tls1, -dtls1, -dtls12, -reuse\n"
+                "or add one of ssl2, -ssl3, -tls1, -tls12, -dtls1, -dtls12, -reuse\n"
                 "to avoid protocol mismatch.\n");
         EXIT(1);
     }
@@ -1359,7 +1503,7 @@ int main(int argc, char *argv[])
 #endif
 
     /*
-     * At this point, ssl2/ssl3/tls1 is only set if the protocol is
+     * At this point, ssl2/ssl3/tls1/tls12 is only set if the protocol is
      * available. (Otherwise we exit early.) However the compiler doesn't
      * know this, so we ifdef.
      */
@@ -1383,6 +1527,8 @@ int main(int argc, char *argv[])
 #ifndef OPENSSL_NO_TLS1
     if (tls1)
         meth = TLSv1_method();
+    else if (tls12)
+        meth = TLSv1_2_method();
     else
 #endif
         meth = SSLv23_method();
@@ -1679,8 +1825,33 @@ int main(int argc, char *argv[])
         OPENSSL_free(alpn);
     }
 
-    if (sn_server1 || sn_server2)
-        SSL_CTX_set_tlsext_servername_callback(s_ctx, servername_cb);
+    if (sn_server1 || sn_server2) {
+        if (sni_in_cert_cb)
+            SSL_CTX_set_cert_cb(s_ctx, cert_cb, NULL);
+        else
+            SSL_CTX_set_tlsext_servername_callback(s_ctx, servername_cb);
+    }
+
+#ifndef OPENSSL_NO_TLSEXT
+    if (s_ticket1 == 0)
+        SSL_CTX_set_options(s_ctx, SSL_OP_NO_TICKET);
+    /* always set the callback */
+    if (s_ticket1 == 2)
+        SSL_CTX_set_tlsext_ticket_key_cb(s_ctx, cb_ticket0);
+    else
+        SSL_CTX_set_tlsext_ticket_key_cb(s_ctx, cb_ticket1);
+
+    if (!s_ticket2)
+        SSL_CTX_set_options(s_ctx2, SSL_OP_NO_TICKET);
+    /* always set the callback - this should never be called */
+    SSL_CTX_set_tlsext_ticket_key_cb(s_ctx2, cb_ticket2);
+
+    if (!c_ticket)
+        SSL_CTX_set_options(c_ctx, SSL_OP_NO_TICKET);
+#endif
+
+    if (client_sigalgs != NULL)
+        SSL_CTX_set1_sigalgs_list(c_ctx, client_sigalgs);
 
     c_ssl = SSL_new(c_ctx);
     s_ssl = SSL_new(s_ctx);
@@ -1744,6 +1915,10 @@ int main(int argc, char *argv[])
     if (verify_alpn(c_ssl, s_ssl) < 0)
         ret = 1;
     if (verify_servername(c_ssl, s_ssl) < 0)
+        ret = 1;
+    if (verify_ticket(c_ssl) < 0)
+        ret = 1;
+    if (verify_server_digest(c_ssl) < 0)
         ret = 1;
 
     SSL_free(s_ssl);
