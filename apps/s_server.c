@@ -2340,10 +2340,14 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                 (void)BIO_flush(bio_s_out);
             }
         }
-        if (write_header)
-            BIO_printf(bio_s_out, "No early data received\n");
-        else
+        if (write_header) {
+            if (SSL_get_early_data_status(con) == SSL_EARLY_DATA_NOT_SENT)
+                BIO_printf(bio_s_out, "No early data received\n");
+            else
+                BIO_printf(bio_s_out, "Early data was rejected\n");
+        } else {
             BIO_printf(bio_s_out, "\nEnd of early data\n");
+        }
         if (SSL_is_init_finished(con))
             print_connection_info(con);
     }
