@@ -1961,13 +1961,11 @@ static int test_early_data_not_sent(int idx)
     return testresult;
 }
 
-static const char *servhostname;
-
 static int hostname_cb(SSL *s, int *al, void *arg)
 {
     const char *hostname = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
 
-    if (hostname != NULL && strcmp(hostname, servhostname) == 0)
+    if (hostname != NULL && strcmp(hostname, "goodhost") == 0)
         return  SSL_TLSEXT_ERR_OK;
 
     return SSL_TLSEXT_ERR_NOACK;
@@ -2024,7 +2022,6 @@ static int test_early_data_psk(int idx)
                                         &serverssl, &sess, 2)))
         goto end;
 
-    servhostname = "goodhost";
     servalpn = "goodalpn";
 
     /*
@@ -2069,7 +2066,11 @@ static int test_early_data_psk(int idx)
          * Set inconsistent SNI (server detected). In this case the connection
          * will succeed but reject early_data.
          */
-        servhostname = "badhost";
+        SSL_SESSION_free(serverpsk);
+        serverpsk = SSL_SESSION_dup(clientpsk);
+        if (!TEST_ptr(serverpsk)
+                || !TEST_true(SSL_SESSION_set1_hostname(serverpsk, "badhost")))
+            goto end;
         edstatus = SSL_EARLY_DATA_REJECTED;
         readearlyres = SSL_READ_EARLY_DATA_FINISH;
         /* Fall through */
