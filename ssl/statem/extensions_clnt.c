@@ -736,13 +736,14 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
     edsess = s->session->ext.max_early_data != 0 ? s->session : psksess;
     s->max_early_data = edsess->ext.max_early_data;
 
-    if ((s->ext.hostname == NULL && edsess->ext.hostname != NULL)
-            || (s->ext.hostname != NULL
-                && (edsess->ext.hostname == NULL
-                    || strcmp(s->ext.hostname, edsess->ext.hostname) != 0))) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA,
-               SSL_R_INCONSISTENT_EARLY_DATA_SNI);
-        return EXT_RETURN_FAIL;
+    if (edsess->ext.hostname != NULL) {
+        if (s->ext.hostname == NULL
+                || (s->ext.hostname != NULL
+                    && strcmp(s->ext.hostname, edsess->ext.hostname) != 0)) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA,
+                   SSL_R_INCONSISTENT_EARLY_DATA_SNI);
+            return EXT_RETURN_FAIL;
+        }
     }
 
     if ((s->ext.alpn == NULL && edsess->ext.alpn_selected != NULL)) {
