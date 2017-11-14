@@ -1923,18 +1923,7 @@ int s_client_main(int argc, char **argv)
             ERR_print_errors(bio_err);
             goto end;
         }
-        /* By default the SNI should be the same as was set in the session */
-        if (!noservername && servername == NULL) {
-            servername = SSL_SESSION_get0_hostname(sess);
 
-            if (servername == NULL) {
-                /*
-                 * Force no SNI to be sent so we are consistent with the
-                 * session.
-                 */
-                noservername = 1;
-            }
-        }
         SSL_SESSION_free(sess);
     }
 

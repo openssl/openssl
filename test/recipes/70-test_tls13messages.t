@@ -167,8 +167,7 @@ $proxy->clientstart();
 checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
                (checkhandshake::DEFAULT_EXTENSIONS
                 | checkhandshake::PSK_CLI_EXTENSION
-                | checkhandshake::PSK_SRV_EXTENSION)
-               & ~checkhandshake::SERVER_NAME_CLI_EXTENSION,
+                | checkhandshake::PSK_SRV_EXTENSION),
                "Resumption handshake test");
 
 #Test 3: A status_request handshake (client request only)
@@ -312,8 +311,7 @@ checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
                (checkhandshake::DEFAULT_EXTENSIONS
                 | checkhandshake::KEY_SHARE_HRR_EXTENSION
                 | checkhandshake::PSK_CLI_EXTENSION
-                | checkhandshake::PSK_SRV_EXTENSION)
-               & ~checkhandshake::SERVER_NAME_CLI_EXTENSION,
+                | checkhandshake::PSK_SRV_EXTENSION),
                "Resumption handshake with HRR test");
 
 #Test 16: Acceptable but non preferred key_share
