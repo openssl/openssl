@@ -1,8 +1,11 @@
 @setLocal
-@echo off
+@if NOT "%_DEBUG%" GEQ "1" @echo off
+
+pushd %~dp0\..
 rem get vs tools
 call ms\setVSVars.bat VS14VC
 call "%_VS14VC%\vcvarsall" x86
+popd
 
 rem create VS Project
 if not exist vsout mkdir vsout

@@ -1,8 +1,13 @@
 @setLocal
-@echo off
+@if NOT "%_DEBUG%" GEQ "1" @echo off
+
+pushd %~dp0\..
 rem get vs tools
+REM VS2017 dev prompt can change the folder. So push and pop it here again
+pushd %~dp0\..
 call ms\setVSVars.bat VS15VC
 call "%_VS15VC%\vcvarsall" x86 store
+popd
 
 rem create VS Project
 if not exist vsout mkdir vsout
