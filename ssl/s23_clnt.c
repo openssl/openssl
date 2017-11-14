@@ -757,7 +757,7 @@ static int ssl23_get_server_hello(SSL *s)
                 s->version = TLS1_VERSION;
                 s->method = TLSv1_client_method();
                 break;
-#ifndef OPENSSL_NO_SSL3_METHOD
+#ifndef OPENSSL_NO_SSL3
             case SSL3_VERSION:
                 s->version = SSL3_VERSION;
                 s->method = SSLv3_client_method();
