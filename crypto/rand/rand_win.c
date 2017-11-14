@@ -661,12 +661,7 @@ static void readtimer(void)
     }
 
     if (!have_tsc && !have_perfc) {
-#ifdef OPENSSL_WINAPP
-        // Wrapping should not be an issue, we just want a random number
-        w = (DWORD) GetTickCount64();
-#else
         w = GetTickCount();
-#endif
         RAND_add(&w, sizeof(w), 0);
     }
 }
