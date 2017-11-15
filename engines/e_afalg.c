@@ -644,7 +644,7 @@ static int afalg_cipher_cleanup(EVP_CIPHER_CTX *ctx)
     return 1;
 }
 
-cbc_handles *get_cipher_handle(int nid)
+static cbc_handles *get_cipher_handle(int nid)
 {
     switch (nid) {
     case NID_aes_128_cbc:
