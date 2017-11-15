@@ -225,7 +225,8 @@ BN_ULONG bn_add_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                   "       adcq    (%5,%2,8),%0    \n"
                   "       movq    %0,(%3,%2,8)    \n"
                   "       lea     1(%2),%2        \n"
-                  "       loop    1b              \n"
+                  "       dec     %1              \n"
+                  "       jnz     1b              \n"
                   "       sbbq    %0,%0           \n":"=&r" (ret), "+c"(n),
                   "+r"(i)
                   :"r"(rp), "r"(ap), "r"(bp)
@@ -251,7 +252,8 @@ BN_ULONG bn_sub_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
                   "       sbbq    (%5,%2,8),%0    \n"
                   "       movq    %0,(%3,%2,8)    \n"
                   "       lea     1(%2),%2        \n"
-                  "       loop    1b              \n"
+                  "       dec     %1              \n"
+                  "       jnz     1b              \n"
                   "       sbbq    %0,%0           \n":"=&r" (ret), "+c"(n),
                   "+r"(i)
                   :"r"(rp), "r"(ap), "r"(bp)
