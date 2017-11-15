@@ -670,7 +670,7 @@ int OBJ_create_objects(BIO *in)
             }
         } else
             s = NULL;
-        if ((o == NULL) || (*o == '\0'))
+        if (s == NULL || *o == '\0')
             return num;
         if (!OBJ_create(o, s, l))
             return num;
