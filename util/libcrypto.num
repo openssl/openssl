@@ -4419,3 +4419,5 @@ RAND_POOL_add_end                       4363	1_1_1	EXIST::FUNCTION:
 RAND_POOL_acquire_entropy               4364	1_1_1	EXIST::FUNCTION:
 OPENSSL_sk_new_reserve                  4365	1_1_1	EXIST::FUNCTION:
 X509_get0_authority_key_id              4366	1_1_1	EXIST::FUNCTION:
+OCSP_resp_set_produced_at               4367    1_1_1   EXIST::FUNCTION:
+OCSP_response_set_status                4368    1_1_1   EXIST::FUNCTION:

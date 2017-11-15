@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-OCSP_response_status, OCSP_response_get1_basic, OCSP_response_create,
+OCSP_response_status, OCSP_response_set_status, 
+OCSP_response_get1_basic, OCSP_response_create,
 OCSP_RESPONSE_free, OCSP_RESPID_set_by_name,
 OCSP_RESPID_set_by_key, OCSP_RESPID_match - OCSP response functions
 
@@ -11,6 +12,7 @@ OCSP_RESPID_set_by_key, OCSP_RESPID_match - OCSP response functions
  #include <openssl/ocsp.h>
 
  int OCSP_response_status(OCSP_RESPONSE *resp);
+ int OCSP_response_set_status(int status, OCSP_RESPONSE *resp);
  OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp);
  OCSP_RESPONSE *OCSP_response_create(int status, OCSP_BASICRESP *bs);
  void OCSP_RESPONSE_free(OCSP_RESPONSE *resp);
@@ -23,6 +25,11 @@ OCSP_RESPID_set_by_key, OCSP_RESPID_match - OCSP response functions
 
 OCSP_response_status() returns the OCSP response status of B<resp>. It returns
 one of the values: B<OCSP_RESPONSE_STATUS_SUCCESSFUL>,
+B<OCSP_RESPONSE_STATUS_MALFORMEDREQUEST>,
+B<OCSP_RESPONSE_STATUS_INTERNALERROR>, B<OCSP_RESPONSE_STATUS_TRYLATER>
+B<OCSP_RESPONSE_STATUS_SIGREQUIRED>, or B<OCSP_RESPONSE_STATUS_UNAUTHORIZED>.
+
+OCSP_response_set_status() sets the status of B<resp>. The B<status> shoud be one of the values: B<OCSP_RESPONSE_STATUS_SUCCESSFUL>,
 B<OCSP_RESPONSE_STATUS_MALFORMEDREQUEST>,
 B<OCSP_RESPONSE_STATUS_INTERNALERROR>, B<OCSP_RESPONSE_STATUS_TRYLATER>
 B<OCSP_RESPONSE_STATUS_SIGREQUIRED>, or B<OCSP_RESPONSE_STATUS_UNAUTHORIZED>.
@@ -51,7 +58,9 @@ with the X509 certificate B<cert>.
 
 =head1 RETURN VALUES
 
-OCSP_RESPONSE_status() returns a status value.
+OCSP_response_status() returns a status value.
+
+OCSP_response_set_status() returns 1 if successful or 0 if an error occurred.
 
 OCSP_response_get1_basic() returns an B<OCSP_BASICRESP> structure pointer or
 B<NULL> if an error occurred.

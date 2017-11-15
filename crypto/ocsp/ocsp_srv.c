@@ -83,6 +83,17 @@ OCSP_RESPONSE *OCSP_response_create(int status, OCSP_BASICRESP *bs)
     return NULL;
 }
 
+/* Set the status of an OCSP response */
+int OCSP_response_set_status(int status, OCSP_RESPONSE *rsp) {
+
+    // Sets the status in the response
+    if (!rsp || !(ASN1_ENUMERATED_set(rsp->responseStatus, status)))
+        return 0;
+
+    // Success
+    return 1;
+}
+
 OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
                                         OCSP_CERTID *cid,
                                         int status, int reason,

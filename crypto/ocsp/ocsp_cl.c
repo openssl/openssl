@@ -192,6 +192,21 @@ const ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(const OCSP_BASICRESP* bs)
     return bs->tbsResponseData.producedAt;
 }
 
+int OCSP_resp_set_produced_at(OCSP_BASICRESP* bs, long adj)
+{
+    ASN1_GENERALIZEDTIME * time = NULL;
+
+    if (!bs) return 0;
+
+    if ((time = X509_gmtime_adj(bs->tbsResponseData.producedAt, adj)) == NULL)
+	    return 0;
+
+    if (bs->tbsResponseData.producedAt == NULL)
+	   bs->tbsResponseData.producedAt = time;
+
+    return 1;
+}
+
 const STACK_OF(X509) *OCSP_resp_get0_certs(const OCSP_BASICRESP *bs)
 {
     return bs->certs;

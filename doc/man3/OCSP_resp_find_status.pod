@@ -6,6 +6,7 @@ OCSP_resp_get0_certs,
 OCSP_resp_get0_id,
 OCSP_resp_get1_id,
 OCSP_resp_get0_produced_at,
+OCSP_resp_set_produced_at,
 OCSP_resp_find_status, OCSP_resp_count, OCSP_resp_get0, OCSP_resp_find,
 OCSP_single_get0_status, OCSP_check_validity
 - OCSP response utility functions
@@ -30,6 +31,8 @@ OCSP_single_get0_status, OCSP_check_validity
 
  const ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(
                              const OCSP_BASICRESP* single);
+
+ int OCSP_resp_set_produced_at(OCSP_BASICRESP* bs, long adj);
 
  const STACK_OF(X509) *OCSP_resp_get0_certs(const OCSP_BASICRESP *bs);
 
@@ -73,6 +76,10 @@ B<*revtime>, B<*thisupd> and B<*nextupd>.
 
 OCSP_resp_get0_produced_at() extracts the B<producedAt> field from the
 single response B<bs>.
+
+OCSP_resp_set_produced_at() sets the B<producedAt> field in the single
+response. The B<adj> parameter is used to specify the offset (in seconds)
+relative to the current time.
 
 OCSP_resp_get0_certs() returns any certificates included in B<bs>.
 

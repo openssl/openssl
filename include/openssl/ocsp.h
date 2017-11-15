@@ -217,6 +217,7 @@ const ASN1_OCTET_STRING *OCSP_resp_get0_signature(const OCSP_BASICRESP *bs);
 int OCSP_resp_count(OCSP_BASICRESP *bs);
 OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, int idx);
 const ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(const OCSP_BASICRESP* bs);
+int OCSP_resp_set_produced_at(OCSP_BASICRESP* bs, long adj);
 const STACK_OF(X509) *OCSP_resp_get0_certs(const OCSP_BASICRESP *bs);
 int OCSP_resp_get0_id(const OCSP_BASICRESP *bs,
                       const ASN1_OCTET_STRING **pid,
@@ -255,6 +256,7 @@ int OCSP_id_get0_info(ASN1_OCTET_STRING **piNameHash, ASN1_OBJECT **pmd,
                       ASN1_INTEGER **pserial, OCSP_CERTID *cid);
 int OCSP_request_is_signed(OCSP_REQUEST *req);
 OCSP_RESPONSE *OCSP_response_create(int status, OCSP_BASICRESP *bs);
+int OCSP_response_set_status(int status, OCSP_RESPONSE *rsp);
 OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
                                         OCSP_CERTID *cid,
                                         int status, int reason,
