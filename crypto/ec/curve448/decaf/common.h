@@ -94,12 +94,6 @@ void decaf_bzero (
     size_t size
 ) DECAF_NONNULL DECAF_API_VIS;
 
-/** Compare two buffers, returning DECAF_TRUE if they are equal. */
-decaf_bool_t decaf_memeq (
-    const void *data1,
-    const void *data2,
-    size_t size
-) DECAF_NONNULL DECAF_WARN_UNUSED DECAF_API_VIS;
     
 #ifdef __cplusplus
 } /* extern "C" */
