@@ -88,13 +88,6 @@ decaf_successful(decaf_error_t e) {
     return (w-1)>>DECAF_WORD_BITS;
 }
     
-/** Overwrite data with zeros.  Uses memset_s if available. */
-void decaf_bzero (
-    void *data,
-    size_t size
-) DECAF_NONNULL DECAF_API_VIS;
-
-    
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
