@@ -27,17 +27,3 @@ void decaf_bzero (
         *destroy = 0;
 #endif
 }
-
-decaf_bool_t decaf_memeq (
-   const void *data1_,
-   const void *data2_,
-   size_t size
-) {
-    const unsigned char *data1 = (const unsigned char *)data1_;
-    const unsigned char *data2 = (const unsigned char *)data2_;
-    unsigned char ret = 0;
-    for (; size; size--, data1++, data2++) {
-        ret |= *data1 ^ *data2;
-    }
-    return (((decaf_dword_t)ret) - 1) >> 8;
-}
