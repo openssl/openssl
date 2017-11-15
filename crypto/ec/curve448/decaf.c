@@ -15,8 +15,8 @@
 #include "word.h"
 #include "field.h"
 
-#include <decaf.h>
-#include <decaf/ed448.h>
+#include "point_448.h"
+#include "ed448.h"
 
 /* Template stuff */
 #define API_NS(_id) decaf_448_##_id

@@ -13,7 +13,7 @@
  */
 #include "word.h"
 #include "constant_time.h"
-#include <decaf.h>
+#include "point_448.h"
 
 /* Template stuff */
 #define API_NS(_id) decaf_448_##_id
