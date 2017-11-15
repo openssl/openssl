@@ -26,7 +26,7 @@
 
 #include "../crypto/asn1/tbl_standard.h"
 
-static int test_tbl_standard()
+static int test_tbl_standard(void)
 {
     const ASN1_STRING_TABLE *tmp;
     int last_nid = -1;
@@ -62,7 +62,7 @@ static int test_tbl_standard()
 #include "internal/asn1_int.h"
 #include "../crypto/asn1/standard_methods.h"
 
-static int test_standard_methods()
+static int test_standard_methods(void)
 {
     const EVP_PKEY_ASN1_METHOD **tmp;
     int last_pkey_id = -1;
