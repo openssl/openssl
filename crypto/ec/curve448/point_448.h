@@ -15,7 +15,7 @@
 #ifndef __DECAF_POINT_448_H__
 #define __DECAF_POINT_448_H__ 1
 
-#include <decaf/common.h>
+#include "curve448utils.h"
 
 #ifdef __cplusplus
 extern "C" {

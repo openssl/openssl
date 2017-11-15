@@ -15,7 +15,7 @@
 #include <sys/types.h>
 #include <stdlib.h> /* for NULL */
 
-#include <decaf/common.h>
+#include "curve448utils.h"
 
 #ifdef __cplusplus
 extern "C" {
