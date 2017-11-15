@@ -13,9 +13,8 @@
  * Please do not edit it.
  */
 #include "word.h"
-#include <decaf/ed448.h>
-#include <decaf/shake.h>
-#include <decaf/sha512.h>
+#include "ed448.h"
+#include "shake.h"
 #include <string.h>
 
 #define API_NAME "decaf_448"

@@ -20,7 +20,7 @@
 
 #include "portable_endian.h"
 #include "keccak_internal.h"
-#include <decaf/shake.h>
+#include "shake.h"
 
 #define FLAG_ABSORBING 'A'
 #define FLAG_SQUEEZING 'Z'
