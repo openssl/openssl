@@ -11,6 +11,8 @@
  * @warning This file was automatically generated in Python.
  * Please do not edit it.
  */
+#include <openssl/crypto.h>
+
 #include "word.h"
 #include "constant_time.h"
 #include "point_448.h"
@@ -169,7 +171,7 @@ decaf_error_t API_NS(scalar_invert) (
     
     /* Demontgomerize */
     sc_montmul(out,out,API_NS(scalar_one));
-    decaf_bzero(precmp, sizeof(precmp));
+    OPENSSL_cleanse(precmp, sizeof(precmp));
     return decaf_succeed_if(~API_NS(scalar_eq)(out,API_NS(scalar_zero)));
 }
 
@@ -259,7 +261,7 @@ decaf_error_t API_NS(scalar_decode)(
 void API_NS(scalar_destroy) (
     scalar_t scalar
 ) {
-    decaf_bzero(scalar, sizeof(scalar_t));
+    OPENSSL_cleanse(scalar, sizeof(scalar_t));
 }
 
 void API_NS(scalar_decode_long)(

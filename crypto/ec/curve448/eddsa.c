@@ -12,6 +12,8 @@
  * @warning This file was automatically generated in Python.
  * Please do not edit it.
  */
+#include <openssl/crypto.h>
+
 #include "word.h"
 #include "ed448.h"
 #include "shake.h"
@@ -140,7 +142,7 @@ void decaf_ed448_derive_public_key (
     /* Cleanup */
     API_NS(scalar_destroy)(secret_scalar);
     API_NS(point_destroy)(p);
-    decaf_bzero(secret_scalar_ser, sizeof(secret_scalar_ser));
+    OPENSSL_cleanse(secret_scalar_ser, sizeof(secret_scalar_ser));
 }
 
 void decaf_ed448_sign (
@@ -174,7 +176,7 @@ void decaf_ed448_sign (
         hash_init_with_dom(hash,prehashed,0,context,context_len);
         hash_update(hash,expanded.seed,sizeof(expanded.seed));
         hash_update(hash,message,message_len);
-        decaf_bzero(&expanded, sizeof(expanded));
+        OPENSSL_cleanse(&expanded, sizeof(expanded));
     }
     
     /* Decode the nonce */
@@ -183,7 +185,7 @@ void decaf_ed448_sign (
         uint8_t nonce[2*DECAF_EDDSA_448_PRIVATE_BYTES];
         hash_final(hash,nonce,sizeof(nonce));
         API_NS(scalar_decode_long)(nonce_scalar, nonce, sizeof(nonce));
-        decaf_bzero(nonce, sizeof(nonce));
+        OPENSSL_cleanse(nonce, sizeof(nonce));
     }
     
     uint8_t nonce_point[DECAF_EDDSA_448_PUBLIC_BYTES] = {0};
@@ -213,13 +215,13 @@ void decaf_ed448_sign (
         hash_final(hash,challenge,sizeof(challenge));
         hash_destroy(hash);
         API_NS(scalar_decode_long)(challenge_scalar,challenge,sizeof(challenge));
-        decaf_bzero(challenge,sizeof(challenge));
+        OPENSSL_cleanse(challenge,sizeof(challenge));
     }
     
     API_NS(scalar_mul)(challenge_scalar,challenge_scalar,secret_scalar);
     API_NS(scalar_add)(challenge_scalar,challenge_scalar,nonce_scalar);
     
-    decaf_bzero(signature,DECAF_EDDSA_448_SIGNATURE_BYTES);
+    OPENSSL_cleanse(signature,DECAF_EDDSA_448_SIGNATURE_BYTES);
     memcpy(signature,nonce_point,sizeof(nonce_point));
     API_NS(scalar_encode)(&signature[DECAF_EDDSA_448_PUBLIC_BYTES],challenge_scalar);
     
@@ -246,7 +248,7 @@ void decaf_ed448_sign_prehash (
     }
 
     decaf_ed448_sign(signature,privkey,pubkey,hash_output,sizeof(hash_output),1,context,context_len);
-    decaf_bzero(hash_output,sizeof(hash_output));
+    OPENSSL_cleanse(hash_output,sizeof(hash_output));
 }
 
 decaf_error_t decaf_ed448_verify (
@@ -277,7 +279,7 @@ decaf_error_t decaf_ed448_verify (
         hash_final(hash,challenge,sizeof(challenge));
         hash_destroy(hash);
         API_NS(scalar_decode_long)(challenge_scalar,challenge,sizeof(challenge));
-        decaf_bzero(challenge,sizeof(challenge));
+        OPENSSL_cleanse(challenge,sizeof(challenge));
     }
     API_NS(scalar_sub)(challenge_scalar, API_NS(scalar_zero), challenge_scalar);
     

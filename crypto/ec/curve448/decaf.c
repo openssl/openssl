@@ -12,6 +12,7 @@
  * Please do not edit it.
  */
 #define _XOPEN_SOURCE 600 /* for posix_memalign */
+#include <openssl/crypto.h>
 #include "word.h"
 #include "field.h"
 
@@ -516,8 +517,8 @@ prepare_fixed_window(
         pt_to_pniels(multiples[i], tmp);
     }
     
-    decaf_bzero(pn,sizeof(pn));
-    decaf_bzero(tmp,sizeof(tmp));
+    OPENSSL_cleanse(pn,sizeof(pn));
+    OPENSSL_cleanse(tmp,sizeof(tmp));
 }
 
 void API_NS(point_scalarmul) (
@@ -574,10 +575,10 @@ void API_NS(point_scalarmul) (
     /* Write out the answer */
     API_NS(point_copy)(a,tmp);
     
-    decaf_bzero(scalar1x,sizeof(scalar1x));
-    decaf_bzero(pn,sizeof(pn));
-    decaf_bzero(multiples,sizeof(multiples));
-    decaf_bzero(tmp,sizeof(tmp));
+    OPENSSL_cleanse(scalar1x,sizeof(scalar1x));
+    OPENSSL_cleanse(pn,sizeof(pn));
+    OPENSSL_cleanse(multiples,sizeof(multiples));
+    OPENSSL_cleanse(tmp,sizeof(tmp));
 }
 
 void API_NS(point_double_scalarmul) (
@@ -648,12 +649,12 @@ void API_NS(point_double_scalarmul) (
     API_NS(point_copy)(a,tmp);
     
 
-    decaf_bzero(scalar1x,sizeof(scalar1x));
-    decaf_bzero(scalar2x,sizeof(scalar2x));
-    decaf_bzero(pn,sizeof(pn));
-    decaf_bzero(multiples1,sizeof(multiples1));
-    decaf_bzero(multiples2,sizeof(multiples2));
-    decaf_bzero(tmp,sizeof(tmp));
+    OPENSSL_cleanse(scalar1x,sizeof(scalar1x));
+    OPENSSL_cleanse(scalar2x,sizeof(scalar2x));
+    OPENSSL_cleanse(pn,sizeof(pn));
+    OPENSSL_cleanse(multiples1,sizeof(multiples1));
+    OPENSSL_cleanse(multiples2,sizeof(multiples2));
+    OPENSSL_cleanse(tmp,sizeof(tmp));
 }
 
 void API_NS(point_dual_scalarmul) (
@@ -747,13 +748,13 @@ void API_NS(point_dual_scalarmul) (
         API_NS(point_copy)(a2, multiples2[0]);
     }
 
-    decaf_bzero(scalar1x,sizeof(scalar1x));
-    decaf_bzero(scalar2x,sizeof(scalar2x));
-    decaf_bzero(pn,sizeof(pn));
-    decaf_bzero(multiples1,sizeof(multiples1));
-    decaf_bzero(multiples2,sizeof(multiples2));
-    decaf_bzero(tmp,sizeof(tmp));
-    decaf_bzero(working,sizeof(working));
+    OPENSSL_cleanse(scalar1x,sizeof(scalar1x));
+    OPENSSL_cleanse(scalar2x,sizeof(scalar2x));
+    OPENSSL_cleanse(pn,sizeof(pn));
+    OPENSSL_cleanse(multiples1,sizeof(multiples1));
+    OPENSSL_cleanse(multiples2,sizeof(multiples2));
+    OPENSSL_cleanse(tmp,sizeof(tmp));
+    OPENSSL_cleanse(working,sizeof(working));
 }
 
 decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
@@ -888,7 +889,7 @@ static void batch_normalize_niels (
         gf_copy(table[i]->c, product);
     }
     
-    decaf_bzero(product,sizeof(product));
+    OPENSSL_cleanse(product,sizeof(product));
 }
 
 void API_NS(precompute) (
@@ -948,12 +949,12 @@ void API_NS(precompute) (
     
     batch_normalize_niels(table->table,(const gf *)zs,zis,n<<(t-1));
     
-    decaf_bzero(zs,sizeof(zs));
-    decaf_bzero(zis,sizeof(zis));
-    decaf_bzero(pn_tmp,sizeof(pn_tmp));
-    decaf_bzero(working,sizeof(working));
-    decaf_bzero(start,sizeof(start));
-    decaf_bzero(doubles,sizeof(doubles));
+    OPENSSL_cleanse(zs,sizeof(zs));
+    OPENSSL_cleanse(zis,sizeof(zis));
+    OPENSSL_cleanse(pn_tmp,sizeof(pn_tmp));
+    OPENSSL_cleanse(working,sizeof(working));
+    OPENSSL_cleanse(start,sizeof(start));
+    OPENSSL_cleanse(doubles,sizeof(doubles));
 }
 
 static DECAF_INLINE void
@@ -1009,8 +1010,8 @@ void API_NS(precomputed_scalarmul) (
         }
     }
     
-    decaf_bzero(ni,sizeof(ni));
-    decaf_bzero(scalar1x,sizeof(scalar1x));
+    OPENSSL_cleanse(ni,sizeof(ni));
+    OPENSSL_cleanse(scalar1x,sizeof(scalar1x));
 }
 
 void API_NS(point_cond_sel) (
@@ -1085,7 +1086,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
 #error "... probably wrong"
         gf_copy( x, u );
 #endif
-        decaf_bzero(u,sizeof(u));
+        OPENSSL_cleanse(u,sizeof(u));
     }
 #elif IMAGINE_TWIST
     {
@@ -1112,7 +1113,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
         gf_mul ( x, t, y );
         gf_mul ( y, z, u );
         gf_mul ( z, u, t );
-        decaf_bzero(u,sizeof(u));
+        OPENSSL_cleanse(u,sizeof(u));
     }
 #endif
     /* Affinize */
@@ -1125,10 +1126,10 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     gf_serialize(enc, x, 1);
     enc[DECAF_EDDSA_448_PRIVATE_BYTES-1] |= 0x80 & gf_lobit(t);
 
-    decaf_bzero(x,sizeof(x));
-    decaf_bzero(y,sizeof(y));
-    decaf_bzero(z,sizeof(z));
-    decaf_bzero(t,sizeof(t));
+    OPENSSL_cleanse(x,sizeof(x));
+    OPENSSL_cleanse(y,sizeof(y));
+    OPENSSL_cleanse(z,sizeof(z));
+    OPENSSL_cleanse(t,sizeof(t));
     API_NS(point_destroy)(q);
 }
 
@@ -1195,10 +1196,10 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
         gf_mul ( p->z, p->t, c ); // (y^2-x^2)sd(2z^2 - y^2 + x^2)
         gf_mul ( p->y, d, c ); // (y^2+x^2)sd(2z^2 - y^2 + x^2)
         gf_mul ( p->t, d, b );
-        decaf_bzero(a,sizeof(a));
-        decaf_bzero(b,sizeof(b));
-        decaf_bzero(c,sizeof(c));
-        decaf_bzero(d,sizeof(d));
+        OPENSSL_cleanse(a,sizeof(a));
+        OPENSSL_cleanse(b,sizeof(b));
+        OPENSSL_cleanse(c,sizeof(c));
+        OPENSSL_cleanse(d,sizeof(d));
     } 
     #elif IMAGINE_TWIST
     {
@@ -1224,14 +1225,14 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
         gf_mul ( p->z, p->t, a );
         gf_mul ( p->y, p->t, d );
         gf_mul ( p->t, b, d );
-        decaf_bzero(a,sizeof(a));
-        decaf_bzero(b,sizeof(b));
-        decaf_bzero(c,sizeof(c));
-        decaf_bzero(d,sizeof(d));
+        OPENSSL_cleanse(a,sizeof(a));
+        OPENSSL_cleanse(b,sizeof(b));
+        OPENSSL_cleanse(c,sizeof(c));
+        OPENSSL_cleanse(d,sizeof(d));
     }
     #endif
     
-    decaf_bzero(enc2,sizeof(enc2));
+    OPENSSL_cleanse(enc2,sizeof(enc2));
     assert(API_NS(point_valid)(p) || ~succ);
     
     return decaf_succeed_if(mask_to_bool(succ));
@@ -1297,13 +1298,13 @@ decaf_error_t decaf_x448 (
     gf_serialize(out,x1,1);
     mask_t nz = ~gf_eq(x1,ZERO);
     
-    decaf_bzero(x1,sizeof(x1));
-    decaf_bzero(x2,sizeof(x2));
-    decaf_bzero(z2,sizeof(z2));
-    decaf_bzero(x3,sizeof(x3));
-    decaf_bzero(z3,sizeof(z3));
-    decaf_bzero(t1,sizeof(t1));
-    decaf_bzero(t2,sizeof(t2));
+    OPENSSL_cleanse(x1,sizeof(x1));
+    OPENSSL_cleanse(x2,sizeof(x2));
+    OPENSSL_cleanse(z2,sizeof(z2));
+    OPENSSL_cleanse(x3,sizeof(x3));
+    OPENSSL_cleanse(z3,sizeof(z3));
+    OPENSSL_cleanse(t1,sizeof(t1));
+    OPENSSL_cleanse(t2,sizeof(t2));
     
     return decaf_succeed_if(mask_to_bool(nz));
 }
@@ -1339,9 +1340,9 @@ void decaf_ed448_convert_public_key_to_x448 (
         gf_serialize(x,n,1);
 #endif /* EDDSA_USE_SIGMA_ISOGENY */
         
-        decaf_bzero(y,sizeof(y));
-        decaf_bzero(n,sizeof(n));
-        decaf_bzero(d,sizeof(d));
+        OPENSSL_cleanse(y,sizeof(y));
+        OPENSSL_cleanse(n,sizeof(n));
+        OPENSSL_cleanse(d,sizeof(d));
     }
 }
 
@@ -1475,7 +1476,7 @@ prepare_wnaf_table(
     }
     
     API_NS(point_destroy)(tmp);
-    decaf_bzero(twop,sizeof(twop));
+    OPENSSL_cleanse(twop,sizeof(twop));
 }
 
 extern const gf API_NS(precomputed_wnaf_as_fe)[];
@@ -1502,9 +1503,9 @@ void API_NS(precompute_wnafs) (
     }
     batch_normalize_niels(out, (const gf *)zs, zis, 1<<DECAF_WNAF_FIXED_TABLE_BITS);
     
-    decaf_bzero(tmp,sizeof(tmp));
-    decaf_bzero(zs,sizeof(zs));
-    decaf_bzero(zis,sizeof(zis));
+    OPENSSL_cleanse(tmp,sizeof(tmp));
+    OPENSSL_cleanse(zs,sizeof(zs));
+    OPENSSL_cleanse(zis,sizeof(zis));
 }
 
 void API_NS(base_double_scalarmul_non_secret) (
@@ -1570,9 +1571,9 @@ void API_NS(base_double_scalarmul_non_secret) (
     }
     
     /* This function is non-secret, but whatever this is cheap. */
-    decaf_bzero(control_var,sizeof(control_var));
-    decaf_bzero(control_pre,sizeof(control_pre));
-    decaf_bzero(precmp_var,sizeof(precmp_var));
+    OPENSSL_cleanse(control_var,sizeof(control_var));
+    OPENSSL_cleanse(control_pre,sizeof(control_pre));
+    OPENSSL_cleanse(precmp_var,sizeof(precmp_var));
 
     assert(contv == ncb_var); (void)ncb_var;
     assert(contp == ncb_pre); (void)ncb_pre;
@@ -1581,11 +1582,11 @@ void API_NS(base_double_scalarmul_non_secret) (
 void API_NS(point_destroy) (
     point_t point
 ) {
-    decaf_bzero(point, sizeof(point_t));
+    OPENSSL_cleanse(point, sizeof(point_t));
 }
 
 void API_NS(precomputed_destroy) (
     precomputed_s *pre
 ) {
-    decaf_bzero(pre, API_NS(sizeof_precomputed_s));
+    OPENSSL_cleanse(pre, API_NS(sizeof_precomputed_s));
 }

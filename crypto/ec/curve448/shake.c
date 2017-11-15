@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
+#include <openssl/crypto.h>
 
 #include "portable_endian.h"
 #include "keccak_internal.h"
@@ -179,7 +180,7 @@ void decaf_sha3_reset (
 }
 
 void decaf_sha3_destroy (decaf_keccak_sponge_t decaf_sponge) {
-    decaf_bzero(decaf_sponge, sizeof(decaf_keccak_sponge_t));
+    OPENSSL_cleanse(decaf_sponge, sizeof(decaf_keccak_sponge_t));
 }
 
 void decaf_sha3_init (
