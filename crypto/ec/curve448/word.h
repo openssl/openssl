@@ -17,7 +17,7 @@ extern int posix_memalign(void **, size_t, size_t);
 #include <stdint.h>
 #include "arch_intrinsics.h"
 
-#include <decaf/common.h>
+#include "curve448utils.h"
 
 #ifndef _BSD_SOURCE
 #define _BSD_SOURCE 1
