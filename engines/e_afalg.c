@@ -80,6 +80,7 @@ static int afalg_destroy(ENGINE *e);
 static int afalg_init(ENGINE *e);
 static int afalg_finish(ENGINE *e);
 const EVP_CIPHER *afalg_aes_cbc(int nid);
+cbc_handles *get_cipher_handle(int nid);
 static int afalg_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                          const int **nids, int nid);
 static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -845,7 +846,7 @@ static int afalg_finish(ENGINE *e)
 
 static int free_cbc(void)
 {
-    short int i;
+    short unsigned int i;
     for(i = 0; i < OSSL_NELEM(afalg_cipher_nids); i++) {
         EVP_CIPHER_meth_free(cbc_handle[i]._hidden);
         cbc_handle[i]._hidden = NULL;

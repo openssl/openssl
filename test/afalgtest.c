@@ -62,7 +62,7 @@ static int test_afalg_aes_cbc(int keysize_idx)
                                     "\xb1\x9e\xe0\xdf\x61\xb9\xc2\x55\xeb";
     unsigned char encresult_256[] = "\xa0\x76\x85\xfd\xc1\x65\x71\x9d"
                                     "\xc7\xe9\x13\x6e\xae\x55\x49\xb4\x13";
-    unsigned char *enc_result;
+    unsigned char *enc_result = NULL;
 
     int encl, encf, decl, decf;
     int ret = 0;
