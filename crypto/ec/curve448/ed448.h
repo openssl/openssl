@@ -15,9 +15,8 @@
 #ifndef __DECAF_ED448_H__
 #define __DECAF_ED448_H__ 1
 
-#include <decaf/point_448.h>
-#include <decaf/shake.h>
-#include <decaf/sha512.h>
+#include "point_448.h"
+#include "shake.h"
 
 #ifdef __cplusplus
 extern "C" {

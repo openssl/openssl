@@ -1,7 +1,7 @@
 /** @warning: this file was automatically generated. */
 #include "field.h"
 
-#include <decaf.h>
+#include "point_448.h"
 
 #define API_NS(_id) decaf_448_##_id
 const API_NS(point_t) API_NS(point_base) = {{
