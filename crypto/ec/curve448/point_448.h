@@ -430,21 +430,6 @@ void decaf_448_point_mul_by_ratio_and_encode_like_x448 (
 
 /** The base point for X448 Diffie-Hellman */
 extern const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] DECAF_API_VIS;
-
-/**
- * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
- * a different (non-Decaf) encoding.
- *
- * @deprecated Renamed to decaf_x448_derive_public_key.
- * I have no particular timeline for removing this name.
- *
- * @param [out] scaled The scaled point base*scalar
- * @param [in] scalar The scalar to multiply by.
- */
-void decaf_x448_generate_key (
-    uint8_t out[DECAF_X448_PUBLIC_BYTES],
-    const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_DEPRECATED("Renamed to decaf_x448_derive_public_key");
     
 /**
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses

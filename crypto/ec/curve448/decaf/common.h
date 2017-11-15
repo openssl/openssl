@@ -29,14 +29,6 @@ extern "C" {
 #define DECAF_WARN_UNUSED __attribute__((warn_unused_result))
 #define DECAF_NONNULL __attribute__((nonnull))
 #define DECAF_INLINE inline __attribute__((always_inline,unused))
-// Cribbed from libnotmuch
-#if defined (__clang_major__) && __clang_major__ >= 3 \
-    || defined (__GNUC__) && __GNUC__ >= 5 \
-    || defined (__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ >= 5
-#define DECAF_DEPRECATED(msg) __attribute__ ((deprecated(msg)))
-#else
-#define DECAF_DEPRECATED(msg) __attribute__ ((deprecated))
-#endif
 /** @endcond */
 
 /* Internal word types.
