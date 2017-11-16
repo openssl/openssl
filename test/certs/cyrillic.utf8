@@ -3,7 +3,7 @@ Certificate:
         Version: 3 (0x2)
         Serial Number:
             be:47:3c:53:a6:2a:c0:3a
-    Signature Algorithm: sha256WithRSAEncryption
+        Signature Algorithm: sha256WithRSAEncryption
         Issuer: C=RU, ST=Москва, L=Москва, O=Дмитрий Белявский, OU=Я, CN=Dmitry Belyavskiy, emailAddress=beldmit@example.com
         Validity
             Not Before: Feb 21 19:35:22 2017 GMT
