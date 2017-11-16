@@ -110,71 +110,6 @@ void API_NS(scalar_mul) (
     sc_montmul(out,out,sc_r2);
 }
 
-/* PERF: could implement this */
-static DECAF_INLINE void sc_montsqr (scalar_t out, const scalar_t a) {
-    sc_montmul(out,a,a);
-}
-
-decaf_error_t API_NS(scalar_invert) (
-    scalar_t out,
-    const scalar_t a
-) {
-    /* Fermat's little theorem, sliding window.
-     * Sliding window is fine here because the modulus isn't secret.
-     */
-    const int SCALAR_WINDOW_BITS = 3;
-    scalar_t precmp[1<<SCALAR_WINDOW_BITS];
-    const int LAST = (1<<SCALAR_WINDOW_BITS)-1;
-
-    /* Precompute precmp = [a^1,a^3,...] */
-    sc_montmul(precmp[0],a,sc_r2);
-    if (LAST > 0) sc_montmul(precmp[LAST],precmp[0],precmp[0]);
-
-    int i;
-    for (i=1; i<=LAST; i++) {
-        sc_montmul(precmp[i],precmp[i-1],precmp[LAST]);
-    }
-    
-    /* Sliding window */
-    unsigned residue = 0, trailing = 0, started = 0;
-    for (i=SCALAR_BITS-1; i>=-SCALAR_WINDOW_BITS; i--) {
-        
-        if (started) sc_montsqr(out,out);
-        
-        decaf_word_t w = (i>=0) ? sc_p->limb[i/WBITS] : 0;
-        if (i >= 0 && i<WBITS) {
-            assert(w >= 2);
-            w-=2;
-        }
-        
-        residue = (residue<<1) | ((w>>(i%WBITS))&1);
-        if (residue>>SCALAR_WINDOW_BITS != 0) {
-            assert(trailing == 0);
-            trailing = residue;
-            residue = 0;
-        }
-        
-        if (trailing > 0 && (trailing & ((1<<SCALAR_WINDOW_BITS)-1)) == 0) {
-            if (started) {
-                sc_montmul(out,out,precmp[trailing>>(SCALAR_WINDOW_BITS+1)]);
-            } else {
-                API_NS(scalar_copy)(out,precmp[trailing>>(SCALAR_WINDOW_BITS+1)]);
-                started = 1;
-            }
-            trailing = 0;
-        }
-        trailing <<= 1;
-        
-    }
-    assert(residue==0);
-    assert(trailing==0);
-    
-    /* Demontgomerize */
-    sc_montmul(out,out,API_NS(scalar_one));
-    OPENSSL_cleanse(precmp, sizeof(precmp));
-    return decaf_succeed_if(~API_NS(scalar_eq)(out,API_NS(scalar_zero)));
-}
-
 void API_NS(scalar_sub) (
     scalar_t out,
     const scalar_t a,
@@ -196,34 +131,6 @@ void API_NS(scalar_add) (
         chain >>= WBITS;
     }
     sc_subx(out, out->limb, sc_p, sc_p, chain);
-}
-
-void
-API_NS(scalar_set_unsigned) (
-    scalar_t out,
-    uint64_t w
-) {
-    memset(out,0,sizeof(scalar_t));
-    unsigned int i = 0;
-    for (; i<sizeof(uint64_t)/sizeof(decaf_word_t); i++) {
-        out->limb[i] = w;
-#if DECAF_WORD_BITS < 64
-        w >>= 8*sizeof(decaf_word_t);
-#endif
-    }
-}
-
-decaf_bool_t
-API_NS(scalar_eq) (
-    const scalar_t a,
-    const scalar_t b
-) {
-    decaf_word_t diff = 0;
-    unsigned int i;
-    for (i=0; i<SCALAR_LIMBS; i++) {
-        diff |= a->limb[i] ^ b->limb[i];
-    }
-    return mask_to_bool(word_is_zero(diff));
 }
 
 static DECAF_INLINE void scalar_decode_short (
@@ -312,15 +219,6 @@ void API_NS(scalar_encode)(
             ser[k] = s->limb[i] >> (8*j);
         }
     }
-}
-
-void API_NS(scalar_cond_sel) (
-    scalar_t out,
-    const scalar_t a,
-    const scalar_t b,
-    decaf_bool_t pick_b
-) {
-    constant_time_select(out,a,b,sizeof(scalar_t),bool_to_mask(pick_b),sizeof(out->limb[0]));
 }
 
 void API_NS(scalar_halve) (
