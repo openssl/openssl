@@ -5,13 +5,7 @@
 #ifndef __WORD_H__
 #define __WORD_H__
 
-/* for posix_memalign */
-#define _XOPEN_SOURCE 600
-#define __STDC_WANT_LIB_EXT1__ 1 /* for memset_s */
 #include <string.h>
-#if defined(__sun) && defined(__SVR4)
-extern int posix_memalign(void **, size_t, size_t);
-#endif
 
 #include <assert.h>
 #include <stdint.h>
@@ -151,14 +145,6 @@ extern int posix_memalign(void **, size_t, size_t);
     }
 #endif
 
-typedef struct {
-    uint64xn_t unaligned;
-} __attribute__((packed)) unaligned_uint64xn_t;
-
-typedef struct {
-    uint32xn_t unaligned;
-} __attribute__((packed)) unaligned_uint32xn_t;
-
 #if __AVX2__
     static DECAF_INLINE big_register_t
     br_is_zero(big_register_t x) {
@@ -178,62 +164,6 @@ typedef struct {
 #else
     #define br_is_zero word_is_zero
 #endif
-
-/**
- * Really call memset, in a way that prevents the compiler from optimizing it out.
- * @param p The object to zeroize.
- * @param c The char to set it to (probably zero).
- * @param s The size of the object.
- */
-#if defined(__DARWIN_C_LEVEL) || defined(__STDC_LIB_EXT1__)
-#define HAS_MEMSET_S
-#endif
-
-#if !defined(__STDC_WANT_LIB_EXT1__) || __STDC_WANT_LIB_EXT1__ != 1
-#define NEED_MEMSET_S_EXTERN
-#endif
-
-#ifdef HAS_MEMSET_S
-    #ifdef NEED_MEMSET_S_EXTERN
-        extern int memset_s(void *, size_t, int, size_t);
-    #endif
-    static DECAF_INLINE void
-    really_memset(void *p, char c, size_t s) {
-        memset_s(p, s, c, s);
-    }
-#else
-    /* PERF: use words? */
-    static DECAF_INLINE void
-    really_memset(void *p, char c, size_t s) {
-        volatile char *pv = (volatile char *)p;
-        size_t i;
-        for (i=0; i<s; i++) pv[i] = c;
-    }
-#endif
-
-/**
- * Allocate memory which is sufficiently aligned to be used for the
- * largest vector on the system (for now that's a big_register_t).
- *
- * Man malloc says that it does this, but at least for AVX2 on MacOS X,
- * it's lying.
- *
- * @param size The size of the region to allocate.
- * @return A suitable pointer, which can be free'd with free(),
- * or NULL if no memory can be allocated.
- */
-static DECAF_INLINE void *
-malloc_vector(size_t size) {
-    void *out = NULL;
-    
-    int ret = posix_memalign(&out, sizeof(big_register_t), size);
-    
-    if (ret) {
-        return NULL;
-    } else {
-        return out;
-    }
-}
 
 /* PERF: vectorize vs unroll */
 #ifdef __clang__

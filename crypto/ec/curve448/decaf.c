@@ -11,7 +11,6 @@
  * @warning This file was automatically generated in Python.
  * Please do not edit it.
  */
-#define _XOPEN_SOURCE 600 /* for posix_memalign */
 #include <openssl/crypto.h>
 #include "word.h"
 #include "field.h"
@@ -28,7 +27,6 @@
 #define scalar_t API_NS(scalar_t)
 #define point_t API_NS(point_t)
 #define precomputed_s API_NS(precomputed_s)
-#define IMAGINE_TWIST 0
 #define COFACTOR 4
 
 /* Comb config: number of combs, n, t, s. */
@@ -38,8 +36,6 @@
 #define DECAF_WINDOW_BITS 5
 #define DECAF_WNAF_FIXED_TABLE_BITS 5
 #define DECAF_WNAF_VAR_TABLE_BITS 3
-
-#define EDDSA_USE_SIGMA_ISOGENY 0
 
 static const int EDWARDS_D = -39081;
 static const scalar_t precomputed_scalarmul_adjustment = {{{
@@ -53,43 +49,13 @@ const gf RISTRETTO_FACTOR = {{{
     0x42ef0f45572736, 0x7bf6aa20ce5296, 0xf4fd6eded26033, 0x968c14ba839a66, 0xb8d54b64a2d780, 0x6aa0a1f1a7b8a5, 0x683bf68d722fa2, 0x22d962fbeb24f7
 }}};
 
-#if IMAGINE_TWIST
-#define TWISTED_D (-(EDWARDS_D))
-#else
-#define TWISTED_D ((EDWARDS_D)-1)
-#endif
 
-#if TWISTED_D < 0
+#define TWISTED_D ((EDWARDS_D)-1)
+
 #define EFF_D (-(TWISTED_D))
 #define NEG_D 1
-#else
-#define EFF_D TWISTED_D
-#define NEG_D 0
-#endif
 
 /* End of template stuff */
-
-/* Sanity */
-#if (COFACTOR == 8) && !IMAGINE_TWIST && !UNSAFE_CURVE_HAS_POINTS_AT_INFINITY
-/* FUTURE MAGIC: Curve41417 doesn't have these properties. */
-#error "Currently require IMAGINE_TWIST (and thus p=5 mod 8) for cofactor 8"
-        /* OK, but why?
-         * Two reasons: #1: There are bugs when COFACTOR == && IMAGINE_TWIST
-         # #2: 
-         */
-#endif
-
-#if IMAGINE_TWIST && (P_MOD_8 != 5)
-    #error "Cannot use IMAGINE_TWIST except for p == 5 mod 8"
-#endif
-
-#if (COFACTOR != 8) && (COFACTOR != 4)
-    #error "COFACTOR must be 4 or 8"
-#endif
- 
-#if IMAGINE_TWIST
-    extern const gf SQRT_MINUS_ONE;
-#endif
 
 #define WBITS DECAF_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 
@@ -266,23 +232,7 @@ decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
     gf_mul ( a, p->y, q->x );
     gf_mul ( b, q->y, p->x );
     mask_t succ = gf_eq(a,b);
-    
-    #if (COFACTOR == 8) && IMAGINE_TWIST
-        gf_mul ( a, p->y, q->y );
-        gf_mul ( b, q->x, p->x );
-        #if !(IMAGINE_TWIST)
-            gf_sub ( a, ZERO, a );
-        #else
-           /* Interesting note: the 4tor would normally be rotation.
-            * But because of the *i twist, it's actually
-            * (x,y) <-> (iy,ix)
-            */
-    
-           /* No code, just a comment. */
-        #endif
-        succ |= gf_eq(a,b);
-    #endif
-    
+
     return mask_to_bool(succ);
 }
 
@@ -370,54 +320,8 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     /* The point is now on the twisted curve.  Move it to untwisted. */
     gf x, y, z, t;
     point_t q;
-#if COFACTOR == 8
-    API_NS(point_double)(q,p);
-#else
     API_NS(point_copy)(q,p);
-#endif
-    
-#if EDDSA_USE_SIGMA_ISOGENY
-    {
-        /* Use 4-isogeny like ed25519:
-         *   2*x*y*sqrt(d/a-1)/(ax^2 + y^2 - 2)
-         *   (y^2 - ax^2)/(y^2 + ax^2)
-         * with a = -1, d = -EDWARDS_D:
-         *   -2xysqrt(EDWARDS_D-1)/(2z^2-y^2+x^2)
-         *   (y^2+x^2)/(y^2-x^2)
-         */
-        gf u;
-        gf_sqr ( x, q->x ); // x^2
-        gf_sqr ( t, q->y ); // y^2
-        gf_add( u, x, t ); // x^2 + y^2
-        gf_add( z, q->y, q->x );
-        gf_sqr ( y, z);
-        gf_sub ( y, u, y ); // -2xy
-        gf_sub ( z, t, x ); // y^2 - x^2
-        gf_sqr ( x, q->z );
-        gf_add ( t, x, x);
-        gf_sub ( t, t, z);  // 2z^2 - y^2 + x^2
-        gf_mul ( x, y, z ); // 2xy(y^2-x^2)
-        gf_mul ( y, u, t ); // (x^2+y^2)(2z^2-y^2+x^2)
-        gf_mul ( u, z, t );
-        gf_copy( z, u );
-        gf_mul ( u, x, RISTRETTO_FACTOR );
-#if IMAGINE_TWIST
-        gf_mul_i( x, u );
-#else
-#error "... probably wrong"
-        gf_copy( x, u );
-#endif
-        OPENSSL_cleanse(u,sizeof(u));
-    }
-#elif IMAGINE_TWIST
-    {
-        API_NS(point_double)(q,q);
-        API_NS(point_double)(q,q);
-        gf_mul_i(x, q->x);
-        gf_copy(y, q->y);
-        gf_copy(z, q->z);
-    }
-#else
+
     {
         /* 4-isogeny: 2xy/(y^+x^2), (y^2-x^2)/(2z^2-y^2+x^2) */
         gf u;
@@ -436,7 +340,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
         gf_mul ( z, u, t );
         OPENSSL_cleanse(u,sizeof(u));
     }
-#endif
+
     /* Affinize */
     gf_invert(z,z,1);
     gf_mul(t,x,z);
@@ -472,13 +376,7 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
 
     gf_sqr(p->x,p->y);
     gf_sub(p->z,ONE,p->x); /* num = 1-y^2 */
-    #if EDDSA_USE_SIGMA_ISOGENY
-        gf_mulw(p->t,p->z,EDWARDS_D); /* d-dy^2 */
-        gf_mulw(p->x,p->z,EDWARDS_D-1); /* num = (1-y^2)(d-1) */
-        gf_copy(p->z,p->x);
-    #else
-        gf_mulw(p->t,p->x,EDWARDS_D); /* dy^2 */
-    #endif
+    gf_mulw(p->t,p->x,EDWARDS_D); /* dy^2 */
     gf_sub(p->t,ONE,p->t); /* denom = 1-dy^2 or 1-d + dy^2 */
     
     gf_mul(p->x,p->z,p->t);
@@ -488,47 +386,6 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
     gf_cond_neg(p->x,gf_lobit(p->x)^low);
     gf_copy(p->z,ONE);
   
-    #if EDDSA_USE_SIGMA_ISOGENY
-    {
-       /* Use 4-isogeny like ed25519:
-        *   2*x*y/sqrt(1-d/a)/(ax^2 + y^2 - 2)
-        *   (y^2 - ax^2)/(y^2 + ax^2)
-        * (MAGIC: above formula may be off by a factor of -a
-        * or something somewhere; check it for other a)
-        *
-        * with a = -1, d = -EDWARDS_D:
-        *   -2xy/sqrt(1-EDWARDS_D)/(2z^2-y^2+x^2)
-        *   (y^2+x^2)/(y^2-x^2)
-        */
-        gf a, b, c, d;
-        gf_sqr ( c, p->x );
-        gf_sqr ( a, p->y );
-        gf_add ( d, c, a ); // x^2 + y^2
-        gf_add ( p->t, p->y, p->x );
-        gf_sqr ( b, p->t );
-        gf_sub ( b, b, d ); // 2xy
-        gf_sub ( p->t, a, c ); // y^2 - x^2
-        gf_sqr ( p->x, p->z );
-        gf_add ( p->z, p->x, p->x );
-        gf_sub ( c, p->z, p->t ); // 2z^2 - y^2 + x^2
-        gf_div_i ( a, c );
-        gf_mul ( c, a, RISTRETTO_FACTOR );
-        gf_mul ( p->x, b, p->t); // (2xy)(y^2-x^2)
-        gf_mul ( p->z, p->t, c ); // (y^2-x^2)sd(2z^2 - y^2 + x^2)
-        gf_mul ( p->y, d, c ); // (y^2+x^2)sd(2z^2 - y^2 + x^2)
-        gf_mul ( p->t, d, b );
-        OPENSSL_cleanse(a,sizeof(a));
-        OPENSSL_cleanse(b,sizeof(b));
-        OPENSSL_cleanse(c,sizeof(c));
-        OPENSSL_cleanse(d,sizeof(d));
-    } 
-    #elif IMAGINE_TWIST
-    {
-        gf_mul(p->t,p->x,SQRT_MINUS_ONE);
-        gf_copy(p->x,p->t);
-        gf_mul(p->t,p->x,p->y);
-    }
-    #else
     {
         /* 4-isogeny 2xy/(y^2-ax^2), (y^2+ax^2)/(2-y^2-ax^2) */
         gf a, b, c, d;
@@ -551,7 +408,6 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
         OPENSSL_cleanse(c,sizeof(c));
         OPENSSL_cleanse(d,sizeof(d));
     }
-    #endif
     
     OPENSSL_cleanse(enc2,sizeof(enc2));
     assert(API_NS(point_valid)(p) || ~succ);
@@ -642,14 +498,6 @@ void decaf_ed448_convert_public_key_to_x448 (
     {
         gf n,d;
         
-#if EDDSA_USE_SIGMA_ISOGENY
-        /* u = (1+y)/(1-y)*/
-        gf_add(n, y, ONE); /* n = y+1 */
-        gf_sub(d, ONE, y); /* d = 1-y */
-        gf_invert(d, d, 0); /* d = 1/(1-y) */
-        gf_mul(y, n, d); /* u = (y+1)/(1-y) */
-        gf_serialize(x,y,1);
-#else /* EDDSA_USE_SIGMA_ISOGENY */
         /* u = y^2 * (1-dy^2) / (1-y^2) */
         gf_sqr(n,y); /* y^2*/
         gf_sub(d,ONE,n); /* 1-y^2*/
@@ -659,7 +507,6 @@ void decaf_ed448_convert_public_key_to_x448 (
         gf_sub(d, ONE, d); /* 1-dy^2*/
         gf_mul(n, y, d); /* y^2 * (1-dy^2) / (1-y^2) */
         gf_serialize(x,n,1);
-#endif /* EDDSA_USE_SIGMA_ISOGENY */
         
         OPENSSL_cleanse(y,sizeof(y));
         OPENSSL_cleanse(n,sizeof(n));
@@ -672,17 +519,10 @@ void API_NS(point_mul_by_ratio_and_encode_like_x448) (
     const point_t p
 ) {
     point_t q;
-#if COFACTOR == 8
-    point_double_internal(q,p,1);
-#else
     API_NS(point_copy)(q,p);
-#endif
     gf_invert(q->t,q->x,0); /* 1/x */
     gf_mul(q->z,q->t,q->y); /* y/x */
     gf_sqr(q->y,q->z); /* (y/x)^2 */
-#if IMAGINE_TWIST
-    gf_sub(q->y,ZERO,q->y);
-#endif
     gf_serialize(out,q->y,1);
     API_NS(point_destroy(q));
 }
