@@ -126,7 +126,7 @@ void curve448_scalar_add (
     sc_subx(out, out->limb, sc_p, sc_p, chain);
 }
 
-static DECAF_INLINE void scalar_decode_short (
+static ossl_inline void scalar_decode_short (
     curve448_scalar_t s,
     const unsigned char *ser,
     unsigned int nbytes

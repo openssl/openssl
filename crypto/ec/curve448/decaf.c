@@ -107,7 +107,7 @@ void curve448_point_double(curve448_point_t p, const curve448_point_t q) {
 }
 
 /* Operations on [p]niels */
-static DECAF_INLINE void
+static ossl_inline void
 cond_neg_niels (
     niels_t n,
     mask_t neg
@@ -247,7 +247,7 @@ decaf_bool_t curve448_point_valid (
     return mask_to_bool(out);
 }
 
-static DECAF_INLINE void
+static ossl_inline void
 constant_time_lookup_niels (
     niels_s *__restrict__ ni,
     const niels_t *table,
