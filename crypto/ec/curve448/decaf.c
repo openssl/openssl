@@ -78,7 +78,7 @@ gf_invert(gf y, const gf x, int assert_nonzero) {
 /** identity = (0,1) */
 const curve448_point_t curve448_point_identity = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
 
-static DECAF_NOINLINE void
+static void
 point_double_internal (
     curve448_point_t p,
     const curve448_point_t q,
@@ -116,7 +116,7 @@ cond_neg_niels (
     gf_cond_neg(n->c, neg);
 }
 
-static DECAF_NOINLINE void pt_to_pniels (
+static void pt_to_pniels (
     pniels_t b,
     const curve448_point_t a
 ) {
@@ -126,7 +126,7 @@ static DECAF_NOINLINE void pt_to_pniels (
     gf_add ( b->z, a->z, a->z );
 }
 
-static DECAF_NOINLINE void pniels_to_pt (
+static void pniels_to_pt (
     curve448_point_t e,
     const pniels_t d
 ) {
@@ -139,7 +139,7 @@ static DECAF_NOINLINE void pniels_to_pt (
     gf_sqr ( e->z, d->z );
 }
 
-static DECAF_NOINLINE void
+static void
 niels_to_pt (
     curve448_point_t e,
     const niels_t n
@@ -150,7 +150,7 @@ niels_to_pt (
     gf_copy ( e->z, ONE );
 }
 
-static DECAF_NOINLINE void
+static void
 add_niels_to_pt (
     curve448_point_t d,
     const niels_t e,
@@ -172,7 +172,7 @@ add_niels_to_pt (
     if (!before_double) gf_mul ( d->t, b, c );
 }
 
-static DECAF_NOINLINE void
+static void
 sub_niels_from_pt (
     curve448_point_t d,
     const niels_t e,

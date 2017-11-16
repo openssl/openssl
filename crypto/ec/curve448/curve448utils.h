@@ -20,13 +20,6 @@
 extern "C" {
 #endif
 
-/** @cond internal */
-#if defined(DOXYGEN) && !defined(__attribute__)
-#define __attribute__((x))
-#endif
-#define DECAF_NOINLINE  __attribute__((noinline))
-/** @endcond */
-
 /* Internal word types.
  *
  * Somewhat tricky.  This could be decided separately per platform.  However,
