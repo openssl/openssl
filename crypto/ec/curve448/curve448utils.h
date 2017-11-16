@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 #include <sys/types.h>
+#include <openssl/e_os2.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,7 +29,6 @@ extern "C" {
 #define DECAF_NOINLINE  __attribute__((noinline))
 #define DECAF_WARN_UNUSED __attribute__((warn_unused_result))
 #define DECAF_NONNULL __attribute__((nonnull))
-#define DECAF_INLINE inline __attribute__((always_inline,unused))
 /** @endcond */
 
 /* Internal word types.
@@ -76,13 +76,13 @@ typedef enum {
 
 
 /** Return success if x is true */
-static DECAF_INLINE decaf_error_t
+static ossl_inline decaf_error_t
 decaf_succeed_if(decaf_bool_t x) {
     return (decaf_error_t)x;
 }
 
 /** Return DECAF_TRUE iff x == DECAF_SUCCESS */
-static DECAF_INLINE decaf_bool_t
+static ossl_inline decaf_bool_t
 decaf_successful(decaf_error_t e) {
     decaf_dword_t w = ((decaf_word_t)e) ^  ((decaf_word_t)DECAF_SUCCESS);
     return (w-1)>>DECAF_WORD_BITS;
