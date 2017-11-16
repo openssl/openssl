@@ -13,6 +13,7 @@
 #include <time.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <dirent.h>
 
 #ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
@@ -146,6 +147,29 @@ static void free_dir(X509_LOOKUP *lu)
     OPENSSL_free(a);
 }
 
+static int test_cert_dir(const char *dir, int type)
+{
+  DIR *dp;
+  struct dirent *ep;
+  int found = 0;
+
+  dp = opendir(dir);
+  if(!dp)
+    return 0;
+  while(ep = readdir(dp)){
+    switch(type){
+    case X509_FILETYPE_PEM:
+      if(strstr(ep->d_name, "pem")){
+	found = 1;
+	break;
+      }
+      break;
+    }
+  }
+  closedir(dp);
+  return found;
+}
+
 static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 {
     int j;
@@ -191,6 +215,10 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
                 by_dir_entry_free(ent);
                 return 0;
             }
+	    if(test_cert_dir(ent->dir, type) == 0){
+	      by_dir_entry_free(ent);
+	      return 0;
+            } 
             if (!sk_BY_DIR_ENTRY_push(ctx->dirs, ent)) {
                 by_dir_entry_free(ent);
                 return 0;

@@ -30,7 +30,7 @@ int X509_STORE_set_default_paths(X509_STORE *ctx)
 
     /* clear any errors */
     ERR_clear_error();
-    if(!okFile && !okDir)
+    if(okFile != 1 && okDir != 1)
       return 0;
     return 1;
 }
