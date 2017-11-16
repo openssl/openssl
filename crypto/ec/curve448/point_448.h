@@ -100,10 +100,10 @@ extern const struct curve448_precomputed_s *curve448_precomputed_base DECAF_API_
  * @retval DECAF_FAILURE The scalar was greater than the modulus,
  * and has been reduced modulo that modulus.
  */
-decaf_error_t curve448_scalar_decode (
+__owur decaf_error_t curve448_scalar_decode (
     curve448_scalar_t out,
     const unsigned char ser[DECAF_448_SCALAR_BYTES]
-) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Read a scalar from wire format or from bytes.  Reduces mod
@@ -143,18 +143,6 @@ void curve448_scalar_add (
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
- * @brief Compare two scalars.
- * @param [in] a One scalar.
- * @param [in] b Another scalar.
- * @retval DECAF_TRUE The scalars are equal.
- * @retval DECAF_FALSE The scalars are not equal.
- */    
-decaf_bool_t curve448_scalar_eq (
-    const curve448_scalar_t a,
-    const curve448_scalar_t b
-) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
-
-/**
  * @brief Subtract two scalars.  The scalars may use the same memory.
  * @param [in] a One scalar.
  * @param [in] b Another scalar.
@@ -189,17 +177,6 @@ void curve448_scalar_halve (
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
- * @brief Invert a scalar.  When passed zero, return 0.  The input and output may alias.
- * @param [in] a A scalar.
- * @param [out] out 1/a.
- * @return DECAF_SUCCESS The input is nonzero.
- */  
-decaf_error_t curve448_scalar_invert (
-    curve448_scalar_t out,
-    const curve448_scalar_t a
-) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
-
-/**
  * @brief Copy a scalar.  The scalars may use the same memory, in which
  * case this function does nothing.
  * @param [in] a A scalar.
@@ -211,16 +188,6 @@ static inline void DECAF_NONNULL curve448_scalar_copy (
 ) {
     *out = *a;
 }
-
-/**
- * @brief Set a scalar to an unsigned 64-bit integer.
- * @param [in] a An integer.
- * @param [out] out Will become equal to a.
- */  
-void curve448_scalar_set_unsigned (
-    curve448_scalar_t out,
-    uint64_t a
-) DECAF_API_VIS DECAF_NONNULL;
 
 /**
  * @brief Copy a point.  The input and output may alias,
@@ -245,10 +212,10 @@ static inline void DECAF_NONNULL curve448_point_copy (
  * @retval DECAF_TRUE The points are equal.
  * @retval DECAF_FALSE The points are not equal.
  */
-decaf_bool_t curve448_point_eq (
+__owur decaf_bool_t curve448_point_eq (
     const curve448_point_t a,
     const curve448_point_t b
-) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Double a point.  Equivalent to
@@ -274,11 +241,11 @@ void curve448_point_double (
  * @retval DECAF_FAILURE The scalarmul didn't succeed, because the base
  * point is in a small subgroup.
  */
-decaf_error_t decaf_x448 (
+__owur decaf_error_t decaf_x448 (
     uint8_t out[DECAF_X448_PUBLIC_BYTES],
     const uint8_t base[DECAF_X448_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
-) DECAF_API_VIS DECAF_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
+) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Multiply a point by DECAF_X448_ENCODE_RATIO,
@@ -323,21 +290,6 @@ void decaf_x448_derive_public_key (
     const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
-/* FUTURE: uint8_t curve448_encode_like_curve448) */
-
-/**
- * @brief Precompute a table for fast scalar multiplication.
- * Some implementations do not include precomputed points; for
- * those implementations, this implementation simply copies the
- * point.
- *
- * @param [out] a A precomputed table of multiples of the point.
- * @param [in] b Any point.
- */
-void curve448_precompute (
-    curve448_precomputed_s *a,
-    const curve448_point_t b
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Multiply a precomputed base point by a scalar:
@@ -380,139 +332,15 @@ void curve448_base_double_scalarmul_non_secret (
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
- * @brief Constant-time decision between two scalars.  If pick_b
- * is zero, out = a; else out = b.
- *
- * @param [out] out The output.  It may be the same as either input.
- * @param [in] a Any scalar.
- * @param [in] b Any scalar.
- * @param [in] pick_b If nonzero, choose scalar b.
- */
-void curve448_scalar_cond_sel (
-    curve448_scalar_t out,
-    const curve448_scalar_t a,
-    const curve448_scalar_t b,
-    decaf_word_t pick_b
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-
-/**
  * @brief Test that a point is valid, for debugging purposes.
  *
  * @param [in] to_test The point to test.
  * @retval DECAF_TRUE The point is valid.
  * @retval DECAF_FALSE The point is invalid.
  */
-decaf_bool_t curve448_point_valid (
+__owur decaf_bool_t curve448_point_valid (
     const curve448_point_t to_test
-) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
-
-
-/**
- * @brief Almost-Elligator-like hash to curve.
- *
- * Call this function with the output of a hash to make a hash to the curve.
- *
- * This function runs Elligator2 on the curve448 Jacobi quartic model.  It then
- * uses the isogeny to put the result in twisted Edwards form.  As a result,
- * it is safe (cannot produce points of order 4), and would be compatible with
- * hypothetical other implementations of Decaf using a Montgomery or untwisted
- * Edwards model.
- *
- * Unlike Elligator, this function may be up to 4:1 on [0,(p-1)/2]:
- *   A factor of 2 due to the isogeny.
- *   A factor of 2 because we quotient out the 2-torsion.
- *
- * This makes it about 8:1 overall, or 16:1 overall on curves with cofactor 8.
- *
- * Negating the input (mod q) results in the same point.  Inverting the input
- * (mod q) results in the negative point.  This is the same as Elligator.
- *
- * This function isn't quite indifferentiable from a random oracle.
- * However, it is suitable for many protocols, including SPEKE and SPAKE2 EE. 
- * Furthermore, calling it twice with independent seeds and adding the results
- * is indifferentiable from a random oracle.
- *
- * @param [in] hashed_data Output of some hash function.
- * @param [out] pt The data hashed to the curve.
- */
-void
-curve448_point_from_hash_nonuniform (
-    curve448_point_t pt,
-    const unsigned char hashed_data[DECAF_448_HASH_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-
-/**
- * @brief Indifferentiable hash function encoding to curve.
- *
- * Equivalent to calling curve448_point_from_hash_nonuniform twice and adding.
- *
- * @param [in] hashed_data Output of some hash function.
- * @param [out] pt The data hashed to the curve.
- */ 
-void curve448_point_from_hash_uniform (
-    curve448_point_t pt,
-    const unsigned char hashed_data[2*DECAF_448_HASH_BYTES]
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-
-/**
- * @brief Inverse of elligator-like hash to curve.
- *
- * This function writes to the buffer, to make it so that
- * curve448_point_from_hash_nonuniform(buffer) = pt if
- * possible.  Since there may be multiple preimages, the
- * "which" parameter chooses between them.  To ensure uniform
- * inverse sampling, this function succeeds or fails
- * independently for different "which" values.
- *
- * This function isn't guaranteed to find every possible
- * preimage, but it finds all except a small finite number.
- * In particular, when the number of bits in the modulus isn't
- * a multiple of 8 (i.e. for curve25519), it sets the high bits
- * independently, which enables the generated data to be uniform.
- * But it doesn't add p, so you'll never get exactly p from this
- * function.  This might change in the future, especially if
- * we ever support eg Brainpool curves, where this could cause
- * real nonuniformity.
- *
- * @param [out] recovered_hash Encoded data.
- * @param [in] pt The point to encode.
- * @param [in] which A value determining which inverse point
- * to return.
- *
- * @retval DECAF_SUCCESS The inverse succeeded.
- * @retval DECAF_FAILURE The inverse failed.
- */
-decaf_error_t
-curve448_invert_elligator_nonuniform (
-    unsigned char recovered_hash[DECAF_448_HASH_BYTES],
-    const curve448_point_t pt,
-    uint32_t which
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_WARN_UNUSED;
-
-/**
- * @brief Inverse of elligator-like hash to curve.
- *
- * This function writes to the buffer, to make it so that
- * curve448_point_from_hash_uniform(buffer) = pt if
- * possible.  Since there may be multiple preimages, the
- * "which" parameter chooses between them.  To ensure uniform
- * inverse sampling, this function succeeds or fails
- * independently for different "which" values.
- *
- * @param [out] recovered_hash Encoded data.
- * @param [in] pt The point to encode.
- * @param [in] which A value determining which inverse point
- * to return.
- *
- * @retval DECAF_SUCCESS The inverse succeeded.
- * @retval DECAF_FAILURE The inverse failed.
- */
-decaf_error_t
-curve448_invert_elligator_uniform (
-    unsigned char recovered_hash[2*DECAF_448_HASH_BYTES],
-    const curve448_point_t pt,
-    uint32_t which
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_WARN_UNUSED;
 
 /**
  * @brief Overwrite scalar with zeros.
