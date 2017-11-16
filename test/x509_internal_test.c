@@ -35,7 +35,7 @@
 # pragma names restore
 #endif
 
-static int test_standard_exts()
+static int test_standard_exts(void)
 {
     size_t i;
     int prev = -1, good = 1;
