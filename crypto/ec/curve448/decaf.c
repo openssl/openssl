@@ -18,6 +18,7 @@
 
 #include "point_448.h"
 #include "ed448.h"
+#include "curve448_lcl.h"
 
 /* Template stuff */
 #define API_NS(_id) decaf_448_##_id
@@ -1589,4 +1590,17 @@ void API_NS(precomputed_destroy) (
     precomputed_s *pre
 ) {
     OPENSSL_cleanse(pre, API_NS(sizeof_precomputed_s));
+}
+
+int X448(uint8_t out_shared_key[56], const uint8_t private_key[56],
+         const uint8_t peer_public_value[56])
+{
+  return decaf_x448(out_shared_key, peer_public_value, private_key)
+         == DECAF_SUCCESS;
+}
+
+void X448_public_from_private(uint8_t out_public_value[56],
+                              const uint8_t private_key[56])
+{
+    decaf_x448_derive_public_key(out_public_value, private_key);
 }
