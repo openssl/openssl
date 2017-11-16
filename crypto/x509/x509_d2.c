@@ -19,12 +19,14 @@ int X509_STORE_set_default_paths(X509_STORE *ctx)
     lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_file());
     if (lookup == NULL)
         return 0;
-    X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
+    if(X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT) == 0)
+      return 0;
 
     lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_hash_dir());
     if (lookup == NULL)
         return 0;
-    X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
+    if(X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT) == 0)
+      return 0;
 
     /* clear any errors */
     ERR_clear_error();
