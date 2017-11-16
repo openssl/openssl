@@ -15,22 +15,23 @@
 int X509_STORE_set_default_paths(X509_STORE *ctx)
 {
     X509_LOOKUP *lookup;
+    int okFile = 0;
+    int okDir = 0;
 
     lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_file());
     if (lookup == NULL)
         return 0;
-    if(X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT) == 0)
-      return 0;
+    okFile = X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
 
     lookup = X509_STORE_add_lookup(ctx, X509_LOOKUP_hash_dir());
     if (lookup == NULL)
         return 0;
-    if(X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT) == 0)
-      return 0;
+    okDir = X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
 
     /* clear any errors */
     ERR_clear_error();
-
+    if(!okFile && !okDir)
+      return 0;
     return 1;
 }
 
