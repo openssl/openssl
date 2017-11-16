@@ -76,19 +76,19 @@ typedef struct curve448_scalar_s {
 } curve448_scalar_t[1];
 
 /** A scalar equal to 1. */
-extern const curve448_scalar_t curve448_scalar_one DECAF_API_VIS;
+extern const curve448_scalar_t curve448_scalar_one;
 
 /** A scalar equal to 0. */
-extern const curve448_scalar_t curve448_scalar_zero DECAF_API_VIS;
+extern const curve448_scalar_t curve448_scalar_zero;
 
 /** The identity point on the curve. */
-extern const curve448_point_t curve448_point_identity DECAF_API_VIS;
+extern const curve448_point_t curve448_point_identity;
 
 /** An arbitrarily chosen base point on the curve. */
-extern const curve448_point_t curve448_point_base DECAF_API_VIS;
+extern const curve448_point_t curve448_point_base;
 
 /** Precomputed table for the base point on the curve. */
-extern const struct curve448_precomputed_s *curve448_precomputed_base DECAF_API_VIS;
+extern const struct curve448_precomputed_s *curve448_precomputed_base;
 
 /**
  * @brief Read a scalar from wire format or from bytes.
@@ -103,7 +103,7 @@ extern const struct curve448_precomputed_s *curve448_precomputed_base DECAF_API_
 __owur decaf_error_t curve448_scalar_decode (
     curve448_scalar_t out,
     const unsigned char ser[DECAF_448_SCALAR_BYTES]
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Read a scalar from wire format or from bytes.  Reduces mod
@@ -117,7 +117,7 @@ void curve448_scalar_decode_long (
     curve448_scalar_t out,
     const unsigned char *ser,
     size_t ser_len
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_NONNULL DECAF_NOINLINE;
     
 /**
  * @brief Serialize a scalar to wire format.
@@ -128,7 +128,7 @@ void curve448_scalar_decode_long (
 void curve448_scalar_encode (
     unsigned char ser[DECAF_448_SCALAR_BYTES],
     const curve448_scalar_t s
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE DECAF_NOINLINE;
+) DECAF_NONNULL DECAF_NOINLINE DECAF_NOINLINE;
         
 /**
  * @brief Add two scalars.  The scalars may use the same memory.
@@ -140,7 +140,7 @@ void curve448_scalar_add (
     curve448_scalar_t out,
     const curve448_scalar_t a,
     const curve448_scalar_t b
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Subtract two scalars.  The scalars may use the same memory.
@@ -152,7 +152,7 @@ void curve448_scalar_sub (
     curve448_scalar_t out,
     const curve448_scalar_t a,
     const curve448_scalar_t b
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Multiply two scalars.  The scalars may use the same memory.
@@ -164,7 +164,7 @@ void curve448_scalar_mul (
     curve448_scalar_t out,
     const curve448_scalar_t a,
     const curve448_scalar_t b
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_NONNULL DECAF_NOINLINE;
         
 /**
 * @brief Halve a scalar.  The scalars may use the same memory.
@@ -174,7 +174,7 @@ void curve448_scalar_mul (
 void curve448_scalar_halve (
    curve448_scalar_t out,
    const curve448_scalar_t a
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Copy a scalar.  The scalars may use the same memory, in which
@@ -215,7 +215,7 @@ static inline void DECAF_NONNULL curve448_point_copy (
 __owur decaf_bool_t curve448_point_eq (
     const curve448_point_t a,
     const curve448_point_t b
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Double a point.  Equivalent to
@@ -227,7 +227,7 @@ __owur decaf_bool_t curve448_point_eq (
 void curve448_point_double (
     curve448_point_t two_a,
     const curve448_point_t a
-) DECAF_API_VIS DECAF_NONNULL;
+) DECAF_NONNULL;
 
 /**
  * @brief RFC 7748 Diffie-Hellman scalarmul.  This function uses a different
@@ -245,7 +245,7 @@ __owur decaf_error_t decaf_x448 (
     uint8_t out[DECAF_X448_PUBLIC_BYTES],
     const uint8_t base[DECAF_X448_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Multiply a point by DECAF_X448_ENCODE_RATIO,
@@ -270,10 +270,10 @@ __owur decaf_error_t decaf_x448 (
 void curve448_point_mul_by_ratio_and_encode_like_x448 (
     uint8_t out[DECAF_X448_PUBLIC_BYTES],
     const curve448_point_t p
-) DECAF_API_VIS DECAF_NONNULL;
+) DECAF_NONNULL;
 
 /** The base point for X448 Diffie-Hellman */
-extern const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] DECAF_API_VIS;
+extern const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES];
     
 /**
  * @brief RFC 7748 Diffie-Hellman base point scalarmul.  This function uses
@@ -288,7 +288,7 @@ extern const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] DECAF_API_VI
 void decaf_x448_derive_public_key (
     uint8_t out[DECAF_X448_PUBLIC_BYTES],
     const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_NONNULL DECAF_NOINLINE;
 
 
 /**
@@ -306,7 +306,7 @@ void curve448_precomputed_scalarmul (
     curve448_point_t scaled,
     const curve448_precomputed_s *base,
     const curve448_scalar_t scalar
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_NONNULL DECAF_NOINLINE;
 
 
 /**
@@ -329,7 +329,7 @@ void curve448_base_double_scalarmul_non_secret (
     const curve448_scalar_t scalar1,
     const curve448_point_t base2,
     const curve448_scalar_t scalar2
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Test that a point is valid, for debugging purposes.
@@ -340,21 +340,21 @@ void curve448_base_double_scalarmul_non_secret (
  */
 __owur decaf_bool_t curve448_point_valid (
     const curve448_point_t to_test
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
+) DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Overwrite scalar with zeros.
  */
 void curve448_scalar_destroy (
     curve448_scalar_t scalar
-) DECAF_NONNULL DECAF_API_VIS;
+) DECAF_NONNULL;
 
 /**
  * @brief Overwrite point with zeros.
  */
 void curve448_point_destroy (
     curve448_point_t point
-) DECAF_NONNULL DECAF_API_VIS;
+) DECAF_NONNULL;
 
 #ifdef __cplusplus
 } /* extern "C" */

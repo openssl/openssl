@@ -46,7 +46,7 @@ extern "C" {
 void decaf_sha3_init (
     decaf_keccak_sponge_t sponge,
     const struct decaf_kparams_s *params
-) DECAF_API_VIS;
+);
 
 /**
  * @brief Absorb data into a DECAF_SHA3 or DECAF_SHAKE hash context.
@@ -60,7 +60,7 @@ decaf_error_t decaf_sha3_update (
     struct decaf_keccak_sponge_s * __restrict__ sponge,
     const uint8_t *in,
     size_t len
-) DECAF_API_VIS;
+);
 
 /**
  * @brief Squeeze output data from a DECAF_SHA3 or DECAF_SHAKE hash context.
@@ -77,7 +77,7 @@ decaf_error_t decaf_sha3_output (
     decaf_keccak_sponge_t sponge,
     uint8_t * __restrict__ out,
     size_t len
-) DECAF_API_VIS;
+);
 
 /**
  * @brief Squeeze output data from a DECAF_SHA3 or DECAF_SHAKE hash context.
@@ -91,7 +91,7 @@ decaf_error_t decaf_sha3_final (
     decaf_keccak_sponge_t sponge,
     uint8_t * __restrict__ out,
     size_t len
-) DECAF_API_VIS;
+);
 
 /**
  * @brief Reset the sponge to the empty string.
@@ -100,7 +100,7 @@ decaf_error_t decaf_sha3_final (
  */  
 void decaf_sha3_reset (
     decaf_keccak_sponge_t sponge
-) DECAF_API_VIS;
+);
 
 /**
  * @brief Return the default output length of the sponge construction,
@@ -110,7 +110,7 @@ void decaf_sha3_reset (
  */  
 size_t decaf_sha3_default_output_bytes (
     const decaf_keccak_sponge_t sponge /**< [inout] The context. */
-) DECAF_API_VIS;
+);
 
 /**
  * @brief Return the default output length of the sponge construction,
@@ -120,7 +120,7 @@ size_t decaf_sha3_default_output_bytes (
  */  
 size_t decaf_sha3_max_output_bytes (
     const decaf_keccak_sponge_t sponge /**< [inout] The context. */
-) DECAF_API_VIS;
+);
 
 /**
  * @brief Destroy a DECAF_SHA3 or DECAF_SHAKE sponge context by overwriting it with 0.
@@ -128,7 +128,7 @@ size_t decaf_sha3_max_output_bytes (
  */  
 void decaf_sha3_destroy (
     decaf_keccak_sponge_t sponge
-) DECAF_API_VIS;
+);
 
 /**
  * @brief Hash (in) to (out)
@@ -144,13 +144,13 @@ decaf_error_t decaf_sha3_hash (
     const uint8_t *in,
     size_t inlen,
     const struct decaf_kparams_s *params
-) DECAF_API_VIS;
+);
 
 /* FUTURE: expand/doxygenate individual DECAF_SHAKE/DECAF_SHA3 instances? */
 
 /** @cond internal */
 #define DECAF_DEC_SHAKE(n) \
-    extern const struct decaf_kparams_s DECAF_SHAKE##n##_params_s DECAF_API_VIS; \
+    extern const struct decaf_kparams_s DECAF_SHAKE##n##_params_s; \
     typedef struct decaf_shake##n##_ctx_s { decaf_keccak_sponge_t s; } decaf_shake##n##_ctx_t[1]; \
     static inline void DECAF_NONNULL decaf_shake##n##_init(decaf_shake##n##_ctx_t sponge) { \
         decaf_sha3_init(sponge->s, &DECAF_SHAKE##n##_params_s); \
@@ -176,7 +176,7 @@ decaf_error_t decaf_sha3_hash (
     }
 
 #define DECAF_DEC_SHA3(n) \
-    extern const struct decaf_kparams_s DECAF_SHA3_##n##_params_s DECAF_API_VIS; \
+    extern const struct decaf_kparams_s DECAF_SHA3_##n##_params_s; \
     typedef struct decaf_sha3_##n##_ctx_s { decaf_keccak_sponge_t s; } decaf_sha3_##n##_ctx_t[1]; \
     static inline void DECAF_NONNULL decaf_sha3_##n##_init(decaf_sha3_##n##_ctx_t sponge) { \
         decaf_sha3_init(sponge->s, &DECAF_SHA3_##n##_params_s); \
