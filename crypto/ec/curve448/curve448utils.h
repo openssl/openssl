@@ -25,7 +25,6 @@ extern "C" {
 #define __attribute__((x))
 #endif
 #define DECAF_NOINLINE  __attribute__((noinline))
-#define DECAF_NONNULL __attribute__((nonnull))
 /** @endcond */
 
 /* Internal word types.
