@@ -19,13 +19,6 @@
 #include "ed448.h"
 #include "curve448_lcl.h"
 
-/* Template stuff */
-#define SCALAR_BITS DECAF_448_SCALAR_BITS
-#define SCALAR_SER_BYTES DECAF_448_SCALAR_BYTES
-#define SCALAR_LIMBS DECAF_448_SCALAR_LIMBS
-#define scalar_t curve448_scalar_t
-#define point_t curve448_point_t
-#define precomputed_s curve448_precomputed_s
 #define COFACTOR 4
 
 /* Comb config: number of combs, n, t, s. */
@@ -37,7 +30,7 @@
 #define DECAF_WNAF_VAR_TABLE_BITS 3
 
 static const int EDWARDS_D = -39081;
-static const scalar_t precomputed_scalarmul_adjustment = {{{
+static const curve448_scalar_t precomputed_scalarmul_adjustment = {{{
     SC_LIMB(0xc873d6d54a7bb0cf), SC_LIMB(0xe933d8d723a70aad), SC_LIMB(0xbb124b65129c96fd), SC_LIMB(0x00000008335dc163)
 }}};
 
@@ -63,11 +56,11 @@ typedef struct { gf a, b, c; } niels_s, niels_t[1];
 typedef struct { niels_t n; gf z; } VECTOR_ALIGNED pniels_s, pniels_t[1];
 
 /* Precomputed base */
-struct precomputed_s { niels_t table [COMBS_N<<(COMBS_T-1)]; };
+struct curve448_precomputed_s { niels_t table [COMBS_N<<(COMBS_T-1)]; };
 
 extern const gf curve448_precomputed_base_as_fe[];
-const precomputed_s *curve448_precomputed_base =
-    (const precomputed_s *) &curve448_precomputed_base_as_fe;
+const curve448_precomputed_s *curve448_precomputed_base =
+    (const curve448_precomputed_s *) &curve448_precomputed_base_as_fe;
 
 /** Inverse. */
 static void
@@ -83,12 +76,12 @@ gf_invert(gf y, const gf x, int assert_nonzero) {
 }
 
 /** identity = (0,1) */
-const point_t curve448_point_identity = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
+const curve448_point_t curve448_point_identity = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
 
 static DECAF_NOINLINE void
 point_double_internal (
-    point_t p,
-    const point_t q,
+    curve448_point_t p,
+    const curve448_point_t q,
     int before_double
 ) {
     gf a, b, c, d;
@@ -109,7 +102,7 @@ point_double_internal (
     if (!before_double) gf_mul ( p->t, b, d );
 }
 
-void curve448_point_double(point_t p, const point_t q) {
+void curve448_point_double(curve448_point_t p, const curve448_point_t q) {
     point_double_internal(p,q,0);
 }
 
@@ -125,7 +118,7 @@ cond_neg_niels (
 
 static DECAF_NOINLINE void pt_to_pniels (
     pniels_t b,
-    const point_t a
+    const curve448_point_t a
 ) {
     gf_sub ( b->n->a, a->y, a->x );
     gf_add ( b->n->b, a->x, a->y );
@@ -134,7 +127,7 @@ static DECAF_NOINLINE void pt_to_pniels (
 }
 
 static DECAF_NOINLINE void pniels_to_pt (
-    point_t e,
+    curve448_point_t e,
     const pniels_t d
 ) {
     gf eu;
@@ -148,7 +141,7 @@ static DECAF_NOINLINE void pniels_to_pt (
 
 static DECAF_NOINLINE void
 niels_to_pt (
-    point_t e,
+    curve448_point_t e,
     const niels_t n
 ) {
     gf_add ( e->y, n->b, n->a );
@@ -159,7 +152,7 @@ niels_to_pt (
 
 static DECAF_NOINLINE void
 add_niels_to_pt (
-    point_t d,
+    curve448_point_t d,
     const niels_t e,
     int before_double
 ) {
@@ -181,7 +174,7 @@ add_niels_to_pt (
 
 static DECAF_NOINLINE void
 sub_niels_from_pt (
-    point_t d,
+    curve448_point_t d,
     const niels_t e,
     int before_double
 ) {
@@ -203,7 +196,7 @@ sub_niels_from_pt (
 
 static void
 add_pniels_to_pt (
-    point_t p,
+    curve448_point_t p,
     const pniels_t pn,
     int before_double
 ) {
@@ -215,7 +208,7 @@ add_pniels_to_pt (
 
 static void
 sub_pniels_from_pt (
-    point_t p,
+    curve448_point_t p,
     const pniels_t pn,
     int before_double
 ) {
@@ -225,7 +218,7 @@ sub_pniels_from_pt (
     sub_niels_from_pt( p, pn->n, before_double );
 }
 
-decaf_bool_t curve448_point_eq ( const point_t p, const point_t q ) {
+decaf_bool_t curve448_point_eq ( const curve448_point_t p, const curve448_point_t q ) {
     /* equality mod 2-torsion compares x/y */
     gf a, b;
     gf_mul ( a, p->y, q->x );
@@ -236,7 +229,7 @@ decaf_bool_t curve448_point_eq ( const point_t p, const point_t q ) {
 }
 
 decaf_bool_t curve448_point_valid (
-    const point_t p
+    const curve448_point_t p
 ) {
     gf a,b,c;
     gf_mul(a,p->x,p->y);
@@ -265,15 +258,15 @@ constant_time_lookup_niels (
 }
 
 void curve448_precomputed_scalarmul (
-    point_t out,
-    const precomputed_s *table,
-    const scalar_t scalar
+    curve448_point_t out,
+    const curve448_precomputed_s *table,
+    const curve448_scalar_t scalar
 ) {
     int i;
     unsigned j,k;
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
     
-    scalar_t scalar1x;
+    curve448_scalar_t scalar1x;
     curve448_scalar_add(scalar1x, scalar, precomputed_scalarmul_adjustment);
     curve448_scalar_halve(scalar1x,scalar1x);
     
@@ -287,7 +280,7 @@ void curve448_precomputed_scalarmul (
          
             for (k=0; k<t; k++) {
                 unsigned int bit = i + s*(k + j*t);
-                if (bit < SCALAR_BITS) {
+                if (bit < DECAF_448_SCALAR_BITS) {
                     tab |= (scalar1x->limb[bit/WBITS] >> (bit%WBITS) & 1) << k;
                 }
             }
@@ -313,12 +306,12 @@ void curve448_precomputed_scalarmul (
 
 void curve448_point_mul_by_ratio_and_encode_like_eddsa (
     uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const point_t p
+    const curve448_point_t p
 ) {
     
     /* The point is now on the twisted curve.  Move it to untwisted. */
     gf x, y, z, t;
-    point_t q;
+    curve448_point_t q;
     curve448_point_copy(q,p);
 
     {
@@ -359,7 +352,7 @@ void curve448_point_mul_by_ratio_and_encode_like_eddsa (
 
 
 decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio (
-    point_t p,
+    curve448_point_t p,
     const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
 ) {
     uint8_t enc2[DECAF_EDDSA_448_PUBLIC_BYTES];
@@ -515,9 +508,9 @@ void decaf_ed448_convert_public_key_to_x448 (
 
 void curve448_point_mul_by_ratio_and_encode_like_x448 (
     uint8_t out[X_PUBLIC_BYTES],
-    const point_t p
+    const curve448_point_t p
 ) {
-    point_t q;
+    curve448_point_t q;
     curve448_point_copy(q,p);
     gf_invert(q->t,q->x,0); /* 1/x */
     gf_mul(q->z,q->t,q->y); /* y/x */
@@ -538,14 +531,14 @@ void decaf_x448_derive_public_key (
     scalar2[X_PRIVATE_BYTES-1] &= ~(-1u<<((X_PRIVATE_BITS+7)%8));
     scalar2[X_PRIVATE_BYTES-1] |= 1<<((X_PRIVATE_BITS+7)%8);
     
-    scalar_t the_scalar;
+    curve448_scalar_t the_scalar;
     curve448_scalar_decode_long(the_scalar,scalar2,sizeof(scalar2));
     
     /* Compensate for the encoding ratio */
     for (unsigned i=1; i<DECAF_X448_ENCODE_RATIO; i<<=1) {
         curve448_scalar_halve(the_scalar,the_scalar);
     }
-    point_t p;
+    curve448_point_t p;
     curve448_precomputed_scalarmul(p,curve448_precomputed_base,the_scalar);
     curve448_point_mul_by_ratio_and_encode_like_x448(out,p);
     curve448_point_destroy(p);
@@ -561,10 +554,10 @@ struct smvt_control {
 
 static int recode_wnaf (
     struct smvt_control *control, /* [nbits/(table_bits+1) + 3] */
-    const scalar_t scalar,
+    const curve448_scalar_t scalar,
     unsigned int table_bits
 ) {
-    unsigned int table_size = SCALAR_BITS/(table_bits+1) + 3;
+    unsigned int table_size = DECAF_448_SCALAR_BITS/(table_bits+1) + 3;
     int position = table_size - 1; /* at the end */
     
     /* place the end marker */
@@ -582,8 +575,8 @@ static int recode_wnaf (
 
     unsigned int w;
     const unsigned int B_OVER_16 = sizeof(scalar->limb[0]) / 2;
-    for (w = 1; w<(SCALAR_BITS-1)/16+3; w++) {
-        if (w < (SCALAR_BITS-1)/16+1) {
+    for (w = 1; w<(DECAF_448_SCALAR_BITS-1)/16+3; w++) {
+        if (w < (DECAF_448_SCALAR_BITS-1)/16+1) {
             /* Refill the 16 high bits of current */
             current += (uint32_t)((scalar->limb[w/B_OVER_16]>>(16*(w%B_OVER_16)))<<16);
         }
@@ -614,10 +607,10 @@ static int recode_wnaf (
 static void
 prepare_wnaf_table(
     pniels_t *output,
-    const point_t working,
+    const curve448_point_t working,
     unsigned int tbits
 ) {
-    point_t tmp;
+    curve448_point_t tmp;
     int i;
     pt_to_pniels(output[0], working);
 
@@ -643,15 +636,15 @@ extern const gf curve448_precomputed_wnaf_as_fe[];
 static const niels_t *curve448_wnaf_base = (const niels_t *)curve448_precomputed_wnaf_as_fe;
 
 void curve448_base_double_scalarmul_non_secret (
-    point_t combo,
-    const scalar_t scalar1,
-    const point_t base2,
-    const scalar_t scalar2
+    curve448_point_t combo,
+    const curve448_scalar_t scalar1,
+    const curve448_point_t base2,
+    const curve448_scalar_t scalar2
 ) {
     const int table_bits_var = DECAF_WNAF_VAR_TABLE_BITS,
         table_bits_pre = DECAF_WNAF_FIXED_TABLE_BITS;
-    struct smvt_control control_var[SCALAR_BITS/(table_bits_var+1)+3];
-    struct smvt_control control_pre[SCALAR_BITS/(table_bits_pre+1)+3];
+    struct smvt_control control_var[DECAF_448_SCALAR_BITS/(table_bits_var+1)+3];
+    struct smvt_control control_pre[DECAF_448_SCALAR_BITS/(table_bits_pre+1)+3];
     
     int ncb_pre = recode_wnaf(control_pre, scalar1, table_bits_pre);
     int ncb_var = recode_wnaf(control_var, scalar2, table_bits_var);
@@ -714,9 +707,9 @@ void curve448_base_double_scalarmul_non_secret (
 }
 
 void curve448_point_destroy (
-    point_t point
+    curve448_point_t point
 ) {
-    OPENSSL_cleanse(point, sizeof(point_t));
+    OPENSSL_cleanse(point, sizeof(curve448_point_t));
 }
 
 int X448(uint8_t out_shared_key[56], const uint8_t private_key[56],
