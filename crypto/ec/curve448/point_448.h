@@ -77,9 +77,6 @@ struct decaf_448_precomputed_s;
 /** Precomputed table based on a point.  Can be trivial implementation. */
 typedef struct decaf_448_precomputed_s decaf_448_precomputed_s; 
 
-/** Size and alignment of precomputed point tables. */
-extern const size_t decaf_448_sizeof_precomputed_s DECAF_API_VIS, decaf_448_alignof_precomputed_s DECAF_API_VIS;
-
 /** Scalar is stored packed, because we don't need the speed. */
 typedef struct decaf_448_scalar_s {
     /** @cond internal */
@@ -235,37 +232,6 @@ void decaf_448_scalar_set_unsigned (
 ) DECAF_API_VIS DECAF_NONNULL;
 
 /**
- * @brief Encode a point as a sequence of bytes.
- *
- * @param [out] ser The byte representation of the point.
- * @param [in] pt The point to encode.
- */
-void decaf_448_point_encode (
-    uint8_t ser[DECAF_448_SER_BYTES],
-    const decaf_448_point_t pt
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-
-/**
- * @brief Decode a point from a sequence of bytes.
- *
- * Every point has a unique encoding, so not every
- * sequence of bytes is a valid encoding.  If an invalid
- * encoding is given, the output is undefined.
- *
- * @param [out] pt The decoded point.
- * @param [in] ser The serialized version of the point.
- * @param [in] allow_identity DECAF_TRUE if the identity is a legal input.
- * @retval DECAF_SUCCESS The decoding succeeded.
- * @retval DECAF_FAILURE The decoding didn't succeed, because
- * ser does not represent a point.
- */
-decaf_error_t decaf_448_point_decode (
-    decaf_448_point_t pt,
-    const uint8_t ser[DECAF_448_SER_BYTES],
-    decaf_bool_t allow_identity
-) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
-
-/**
  * @brief Copy a point.  The input and output may alias,
  * in which case this function does nothing.
  *
@@ -294,21 +260,6 @@ decaf_bool_t decaf_448_point_eq (
 ) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
 /**
- * @brief Add two points to produce a third point.  The
- * input points and output point can be pointers to the same
- * memory.
- *
- * @param [out] sum The sum a+b.
- * @param [in] a An addend.
- * @param [in] b An addend.
- */
-void decaf_448_point_add (
-    decaf_448_point_t sum,
-    const decaf_448_point_t a,
-    const decaf_448_point_t b
-) DECAF_API_VIS DECAF_NONNULL;
-
-/**
  * @brief Double a point.  Equivalent to
  * decaf_448_point_add(two_a,a,a), but potentially faster.
  *
@@ -319,71 +270,6 @@ void decaf_448_point_double (
     decaf_448_point_t two_a,
     const decaf_448_point_t a
 ) DECAF_API_VIS DECAF_NONNULL;
-
-/**
- * @brief Subtract two points to produce a third point.  The
- * input points and output point can be pointers to the same
- * memory.
- *
- * @param [out] diff The difference a-b.
- * @param [in] a The minuend.
- * @param [in] b The subtrahend.
- */
-void decaf_448_point_sub (
-    decaf_448_point_t diff,
-    const decaf_448_point_t a,
-    const decaf_448_point_t b
-) DECAF_API_VIS DECAF_NONNULL;
-    
-/**
- * @brief Negate a point to produce another point.  The input
- * and output points can use the same memory.
- *
- * @param [out] nega The negated input point
- * @param [in] a The input point.
- */
-void decaf_448_point_negate (
-   decaf_448_point_t nega,
-   const decaf_448_point_t a
-) DECAF_API_VIS DECAF_NONNULL;
-
-/**
- * @brief Multiply a base point by a scalar: scaled = scalar*base.
- *
- * @param [out] scaled The scaled point base*scalar
- * @param [in] base The point to be scaled.
- * @param [in] scalar The scalar to multiply by.
- */
-void decaf_448_point_scalarmul (
-    decaf_448_point_t scaled,
-    const decaf_448_point_t base,
-    const decaf_448_scalar_t scalar
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-
-/**
- * @brief Multiply a base point by a scalar: scaled = scalar*base.
- * This function operates directly on serialized forms.
- *
- * @warning This function is experimental.  It may not be supported
- * long-term.
- *
- * @param [out] scaled The scaled point base*scalar
- * @param [in] base The point to be scaled.
- * @param [in] scalar The scalar to multiply by.
- * @param [in] allow_identity Allow the input to be the identity.
- * @param [in] short_circuit Allow a fast return if the input is illegal.
- *
- * @retval DECAF_SUCCESS The scalarmul succeeded.
- * @retval DECAF_FAILURE The scalarmul didn't succeed, because
- * base does not represent a point.
- */
-decaf_error_t decaf_448_direct_scalarmul (
-    uint8_t scaled[DECAF_448_SER_BYTES],
-    const uint8_t base[DECAF_448_SER_BYTES],
-    const decaf_448_scalar_t scalar,
-    decaf_bool_t allow_identity,
-    decaf_bool_t short_circuit
-) DECAF_API_VIS DECAF_NONNULL DECAF_WARN_UNUSED DECAF_NOINLINE;
 
 /**
  * @brief RFC 7748 Diffie-Hellman scalarmul.  This function uses a different
@@ -479,49 +365,6 @@ void decaf_448_precomputed_scalarmul (
     const decaf_448_scalar_t scalar
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
-/**
- * @brief Multiply two base points by two scalars:
- * scaled = scalar1*base1 + scalar2*base2.
- *
- * Equivalent to two calls to decaf_448_point_scalarmul, but may be
- * faster.
- *
- * @param [out] combo The linear combination scalar1*base1 + scalar2*base2.
- * @param [in] base1 A first point to be scaled.
- * @param [in] scalar1 A first scalar to multiply by.
- * @param [in] base2 A second point to be scaled.
- * @param [in] scalar2 A second scalar to multiply by.
- */
-void decaf_448_point_double_scalarmul (
-    decaf_448_point_t combo,
-    const decaf_448_point_t base1,
-    const decaf_448_scalar_t scalar1,
-    const decaf_448_point_t base2,
-    const decaf_448_scalar_t scalar2
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-    
-/**
- * Multiply one base point by two scalars:
- *
- * a1 = scalar1 * base
- * a2 = scalar2 * base
- *
- * Equivalent to two calls to decaf_448_point_scalarmul, but may be
- * faster.
- *
- * @param [out] a1 The first multiple.  It may be the same as the input point.
- * @param [out] a2 The second multiple.  It may be the same as the input point.
- * @param [in] base1 A point to be scaled.
- * @param [in] scalar1 A first scalar to multiply by.
- * @param [in] scalar2 A second scalar to multiply by.
- */
-void decaf_448_point_dual_scalarmul (
-    decaf_448_point_t a1,
-    decaf_448_point_t a2,
-    const decaf_448_point_t base1,
-    const decaf_448_scalar_t scalar1,
-    const decaf_448_scalar_t scalar2
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Multiply two base points by two scalars:
@@ -543,22 +386,6 @@ void decaf_448_base_double_scalarmul_non_secret (
     const decaf_448_scalar_t scalar1,
     const decaf_448_point_t base2,
     const decaf_448_scalar_t scalar2
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-
-/**
- * @brief Constant-time decision between two points.  If pick_b
- * is zero, out = a; else out = b.
- *
- * @param [out] out The output.  It may be the same as either input.
- * @param [in] a Any point.
- * @param [in] b Any point.
- * @param [in] pick_b If nonzero, choose point b.
- */
-void decaf_448_point_cond_sel (
-    decaf_448_point_t out,
-    const decaf_448_point_t a,
-    const decaf_448_point_t b,
-    decaf_word_t pick_b
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
@@ -588,32 +415,6 @@ decaf_bool_t decaf_448_point_valid (
     const decaf_448_point_t to_test
 ) DECAF_API_VIS DECAF_WARN_UNUSED DECAF_NONNULL DECAF_NOINLINE;
 
-/**
- * @brief Torque a point, for debugging purposes.  The output
- * will be equal to the input.
- *
- * @param [out] q The point to torque.
- * @param [in] p The point to torque.
- */
-void decaf_448_point_debugging_torque (
-    decaf_448_point_t q,
-    const decaf_448_point_t p
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
-
-/**
- * @brief Projectively scale a point, for debugging purposes.
- * The output will be equal to the input, and will be valid
- * even if the factor is zero.
- *
- * @param [out] q The point to scale.
- * @param [in] p The point to scale.
- * @param [in] factor Serialized GF factor to scale.
- */
-void decaf_448_point_debugging_pscale (
-    decaf_448_point_t q,
-    const decaf_448_point_t p,
-    const unsigned char factor[DECAF_448_SER_BYTES]
-) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief Almost-Elligator-like hash to curve.
@@ -734,13 +535,6 @@ void decaf_448_scalar_destroy (
  */
 void decaf_448_point_destroy (
     decaf_448_point_t point
-) DECAF_NONNULL DECAF_API_VIS;
-
-/**
- * @brief Overwrite precomputed table with zeros.
- */
-void decaf_448_precomputed_destroy (
-    decaf_448_precomputed_s *pre
 ) DECAF_NONNULL DECAF_API_VIS;
 
 #ifdef __cplusplus
