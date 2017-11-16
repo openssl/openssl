@@ -56,7 +56,7 @@ extern "C" {
 void decaf_ed448_derive_public_key (
     uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
-) DECAF_NOINLINE;
+);
 
 /**
  * @brief EdDSA signing.
@@ -84,7 +84,7 @@ void decaf_ed448_sign (
     uint8_t prehashed,
     const uint8_t *context,
     uint8_t context_len
-) __attribute__((nonnull(1,2,3))) DECAF_NOINLINE;
+) __attribute__((nonnull(1,2,3)));
 
 /**
  * @brief EdDSA signing with prehash.
@@ -108,7 +108,7 @@ void decaf_ed448_sign_prehash (
     const decaf_ed448_prehash_ctx_t hash,
     const uint8_t *context,
     uint8_t context_len
-) __attribute__((nonnull(1,2,3,4))) DECAF_NOINLINE;
+) __attribute__((nonnull(1,2,3,4)));
     
 /**
  * @brief Prehash initialization, with contexts if supported.
@@ -117,7 +117,7 @@ void decaf_ed448_sign_prehash (
  */
 void decaf_ed448_prehash_init (
     decaf_ed448_prehash_ctx_t hash
-) __attribute__((nonnull(1))) DECAF_NOINLINE;
+) __attribute__((nonnull(1)));
 
 /**
  * @brief EdDSA signature verification.
@@ -145,7 +145,7 @@ decaf_error_t decaf_ed448_verify (
     uint8_t prehashed,
     const uint8_t *context,
     uint8_t context_len
-) __attribute__((nonnull(1,2))) DECAF_NOINLINE;
+) __attribute__((nonnull(1,2)));
 
 /**
  * @brief EdDSA signature verification.
@@ -169,7 +169,7 @@ decaf_error_t decaf_ed448_verify_prehash (
     const decaf_ed448_prehash_ctx_t hash,
     const uint8_t *context,
     uint8_t context_len
-) __attribute__((nonnull(1,2))) DECAF_NOINLINE;
+) __attribute__((nonnull(1,2)));
 
 /**
  * @brief EdDSA point encoding.  Used internally, exposed externally.
@@ -198,7 +198,7 @@ decaf_error_t decaf_ed448_verify_prehash (
 void curve448_point_mul_by_ratio_and_encode_like_eddsa (
     uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
     const curve448_point_t p
-) DECAF_NOINLINE;
+);
 
 /**
  * @brief EdDSA point decoding.  Multiplies by DECAF_448_EDDSA_DECODE_RATIO,
@@ -212,7 +212,7 @@ void curve448_point_mul_by_ratio_and_encode_like_eddsa (
 decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio (
     curve448_point_t p,
     const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
-) DECAF_NOINLINE;
+);
 
 /**
  * @brief EdDSA to ECDH public key conversion
@@ -228,7 +228,7 @@ decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio (
 void decaf_ed448_convert_public_key_to_x448 (
     uint8_t x[DECAF_X448_PUBLIC_BYTES],
     const uint8_t ed[DECAF_EDDSA_448_PUBLIC_BYTES]
-) DECAF_NOINLINE;
+);
 
 /**
  * @brief EdDSA to ECDH private key conversion
@@ -241,7 +241,7 @@ void decaf_ed448_convert_public_key_to_x448 (
 void decaf_ed448_convert_private_key_to_x448 (
     uint8_t x[DECAF_X448_PRIVATE_BYTES],
     const uint8_t ed[DECAF_EDDSA_448_PRIVATE_BYTES]
-) DECAF_NOINLINE;
+);
 
 #ifdef __cplusplus
 } /* extern "C" */

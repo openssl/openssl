@@ -32,7 +32,7 @@ const curve448_scalar_t curve448_scalar_one = {{{1}}}, curve448_scalar_zero = {{
 /** {extra,accum} - sub +? p
  * Must have extra <= 1
  */
-static DECAF_NOINLINE void sc_subx(
+static void sc_subx(
     curve448_scalar_t out,
     const decaf_word_t accum[DECAF_448_SCALAR_LIMBS],
     const curve448_scalar_t sub,
@@ -56,7 +56,7 @@ static DECAF_NOINLINE void sc_subx(
     }
 }
 
-static DECAF_NOINLINE void sc_montmul (
+static void sc_montmul (
     curve448_scalar_t out,
     const curve448_scalar_t a,
     const curve448_scalar_t b
