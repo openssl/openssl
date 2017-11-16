@@ -195,22 +195,22 @@ decaf_error_t decaf_ed448_verify_prehash (
  * @param [out] enc The encoded point.
  * @param [in] p The point.
  */       
-void decaf_448_point_mul_by_ratio_and_encode_like_eddsa (
+void curve448_point_mul_by_ratio_and_encode_like_eddsa (
     uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const decaf_448_point_t p
+    const curve448_point_t p
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
 /**
  * @brief EdDSA point decoding.  Multiplies by DECAF_448_EDDSA_DECODE_RATIO,
  * and ignores cofactor information.
  *
- * See notes on decaf_448_point_mul_by_ratio_and_encode_like_eddsa
+ * See notes on curve448_point_mul_by_ratio_and_encode_like_eddsa
  *
  * @param [out] enc The encoded point.
  * @param [in] p The point.
  */       
-decaf_error_t decaf_448_point_decode_like_eddsa_and_mul_by_ratio (
-    decaf_448_point_t p,
+decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio (
+    curve448_point_t p,
     const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
 ) DECAF_API_VIS DECAF_NONNULL DECAF_NOINLINE;
 
