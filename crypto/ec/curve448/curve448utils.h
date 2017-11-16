@@ -27,7 +27,6 @@ extern "C" {
 #endif
 #define DECAF_API_VIS __attribute__((visibility("default")))
 #define DECAF_NOINLINE  __attribute__((noinline))
-#define DECAF_WARN_UNUSED __attribute__((warn_unused_result))
 #define DECAF_NONNULL __attribute__((nonnull))
 /** @endcond */
 
