@@ -16,6 +16,7 @@
 #define __DECAF_POINT_448_H__ 1
 
 #include "curve448utils.h"
+#include "field.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,16 +28,6 @@ extern "C" {
 
 /** The number of bits in a scalar */
 #define DECAF_448_SCALAR_BITS 446
-
-/** @cond internal */
-#ifndef __DECAF_448_GF_DEFINED__
-#define __DECAF_448_GF_DEFINED__ 1
-/** @brief Galois field element internal structure */
-typedef struct gf_448_s {
-    decaf_word_t limb[512/DECAF_WORD_BITS];
-} __attribute__((aligned(32))) gf_448_s, gf_448_t[1];
-#endif /* __DECAF_448_GF_DEFINED__ */
-/** @endcond */
 
 /** Number of bytes in a serialized point. */
 #define DECAF_448_SER_BYTES 56
