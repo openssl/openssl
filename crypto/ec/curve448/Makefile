@@ -33,5 +33,8 @@ curve448_test: curve448_test.c
 test:
 	../../../util/shlib_wrap.sh ./curve448_test
 
+testfull:
+	../../../util/shlib_wrap.sh ./curve448_test -f
+
 clean:
 	rm shake.o arch_x86_64/f_impl.o f_arithmetic.o f_generic.o scalar.o decaf_tables.o decaf.o eddsa.o libcurve448.so.1 curve448_test
