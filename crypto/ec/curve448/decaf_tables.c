@@ -3,8 +3,7 @@
 
 #include "point_448.h"
 
-#define API_NS(_id) decaf_448_##_id
-const gf API_NS(precomputed_base_as_fe)[240]
+const gf curve448_precomputed_base_as_fe[240]
 VECTOR_ALIGNED __attribute__((visibility("hidden"))) = {
   {FIELD_LITERAL(0x00cc3b062366f4cc,0x003d6e34e314aa3c,0x00d51c0a7521774d,0x0094e060eec6ab8b,0x00d21291b4d80082,0x00befed12b55ef1e,0x00c3dd2df5c94518,0x00e0a7b112b8d4e6)},
   {FIELD_LITERAL(0x0019eb5608d8723a,0x00d1bab52fb3aedb,0x00270a7311ebc90c,0x0037c12b91be7f13,0x005be16cd8b5c704,0x003e181acda888e1,0x00bc1f00fc3fc6d0,0x00d3839bfa319e20)},
@@ -247,7 +246,7 @@ VECTOR_ALIGNED __attribute__((visibility("hidden"))) = {
   {FIELD_LITERAL(0x004a2902926f8d3f,0x00ad79b42637ab75,0x0088f60b90f2d4e8,0x0030f54ef0e398c4,0x00021dc9bf99681e,0x007ebf66fde74ee3,0x004ade654386e9a4,0x00e7485066be4c27)},
   {FIELD_LITERAL(0x00445f1263983be0,0x004cf371dda45e6a,0x00744a89d5a310e7,0x001f20ce4f904833,0x00e746edebe66e29,0x000912ab1f6c153d,0x00f61d77d9b2444c,0x0001499cd6647610)}
 };
-const gf API_NS(precomputed_wnaf_as_fe)[96]
+const gf curve448_precomputed_wnaf_as_fe[96]
 VECTOR_ALIGNED __attribute__((visibility("hidden"))) = {
   {FIELD_LITERAL(0x00303cda6feea532,0x00860f1d5a3850e4,0x00226b9fa4728ccd,0x00e822938a0a0c0c,0x00263a61c9ea9216,0x001204029321b828,0x006a468360983c65,0x0002846f0a782143)},
   {FIELD_LITERAL(0x00303cda6feea532,0x00860f1d5a3850e4,0x00226b9fa4728ccd,0x006822938a0a0c0c,0x00263a61c9ea9215,0x001204029321b828,0x006a468360983c65,0x0082846f0a782143)},

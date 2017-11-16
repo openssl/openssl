@@ -20,13 +20,12 @@
 #include "curve448_lcl.h"
 
 /* Template stuff */
-#define API_NS(_id) decaf_448_##_id
 #define SCALAR_BITS DECAF_448_SCALAR_BITS
 #define SCALAR_SER_BYTES DECAF_448_SCALAR_BYTES
 #define SCALAR_LIMBS DECAF_448_SCALAR_LIMBS
-#define scalar_t API_NS(scalar_t)
-#define point_t API_NS(point_t)
-#define precomputed_s API_NS(precomputed_s)
+#define scalar_t curve448_scalar_t
+#define point_t curve448_point_t
+#define precomputed_s curve448_precomputed_s
 #define COFACTOR 4
 
 /* Comb config: number of combs, n, t, s. */
@@ -66,9 +65,9 @@ typedef struct { niels_t n; gf z; } VECTOR_ALIGNED pniels_s, pniels_t[1];
 /* Precomputed base */
 struct precomputed_s { niels_t table [COMBS_N<<(COMBS_T-1)]; };
 
-extern const gf API_NS(precomputed_base_as_fe)[];
-const precomputed_s *API_NS(precomputed_base) =
-    (const precomputed_s *) &API_NS(precomputed_base_as_fe);
+extern const gf curve448_precomputed_base_as_fe[];
+const precomputed_s *curve448_precomputed_base =
+    (const precomputed_s *) &curve448_precomputed_base_as_fe;
 
 /** Inverse. */
 static void
@@ -84,7 +83,7 @@ gf_invert(gf y, const gf x, int assert_nonzero) {
 }
 
 /** identity = (0,1) */
-const point_t API_NS(point_identity) = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
+const point_t curve448_point_identity = {{{{{0}}},{{{1}}},{{{1}}},{{{0}}}}};
 
 static DECAF_NOINLINE void
 point_double_internal (
@@ -110,7 +109,7 @@ point_double_internal (
     if (!before_double) gf_mul ( p->t, b, d );
 }
 
-void API_NS(point_double)(point_t p, const point_t q) {
+void curve448_point_double(point_t p, const point_t q) {
     point_double_internal(p,q,0);
 }
 
@@ -226,7 +225,7 @@ sub_pniels_from_pt (
     sub_niels_from_pt( p, pn->n, before_double );
 }
 
-decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
+decaf_bool_t curve448_point_eq ( const point_t p, const point_t q ) {
     /* equality mod 2-torsion compares x/y */
     gf a, b;
     gf_mul ( a, p->y, q->x );
@@ -236,7 +235,7 @@ decaf_bool_t API_NS(point_eq) ( const point_t p, const point_t q ) {
     return mask_to_bool(succ);
 }
 
-decaf_bool_t API_NS(point_valid) (
+decaf_bool_t curve448_point_valid (
     const point_t p
 ) {
     gf a,b,c;
@@ -265,7 +264,7 @@ constant_time_lookup_niels (
     constant_time_lookup(ni, table, sizeof(niels_s), nelts, idx);
 }
 
-void API_NS(precomputed_scalarmul) (
+void curve448_precomputed_scalarmul (
     point_t out,
     const precomputed_s *table,
     const scalar_t scalar
@@ -275,8 +274,8 @@ void API_NS(precomputed_scalarmul) (
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
     
     scalar_t scalar1x;
-    API_NS(scalar_add)(scalar1x, scalar, precomputed_scalarmul_adjustment);
-    API_NS(scalar_halve)(scalar1x,scalar1x);
+    curve448_scalar_add(scalar1x, scalar, precomputed_scalarmul_adjustment);
+    curve448_scalar_halve(scalar1x,scalar1x);
     
     niels_t ni;
     
@@ -312,7 +311,7 @@ void API_NS(precomputed_scalarmul) (
     OPENSSL_cleanse(scalar1x,sizeof(scalar1x));
 }
 
-void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
+void curve448_point_mul_by_ratio_and_encode_like_eddsa (
     uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
     const point_t p
 ) {
@@ -320,7 +319,7 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     /* The point is now on the twisted curve.  Move it to untwisted. */
     gf x, y, z, t;
     point_t q;
-    API_NS(point_copy)(q,p);
+    curve448_point_copy(q,p);
 
     {
         /* 4-isogeny: 2xy/(y^+x^2), (y^2-x^2)/(2z^2-y^2+x^2) */
@@ -355,11 +354,11 @@ void API_NS(point_mul_by_ratio_and_encode_like_eddsa) (
     OPENSSL_cleanse(y,sizeof(y));
     OPENSSL_cleanse(z,sizeof(z));
     OPENSSL_cleanse(t,sizeof(t));
-    API_NS(point_destroy)(q);
+    curve448_point_destroy(q);
 }
 
 
-decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
+decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio (
     point_t p,
     const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
 ) {
@@ -410,7 +409,7 @@ decaf_error_t API_NS(point_decode_like_eddsa_and_mul_by_ratio) (
     }
     
     OPENSSL_cleanse(enc2,sizeof(enc2));
-    assert(API_NS(point_valid)(p) || ~succ);
+    assert(curve448_point_valid(p) || ~succ);
     
     return decaf_succeed_if(mask_to_bool(succ));
 }
@@ -514,17 +513,17 @@ void decaf_ed448_convert_public_key_to_x448 (
     }
 }
 
-void API_NS(point_mul_by_ratio_and_encode_like_x448) (
+void curve448_point_mul_by_ratio_and_encode_like_x448 (
     uint8_t out[X_PUBLIC_BYTES],
     const point_t p
 ) {
     point_t q;
-    API_NS(point_copy)(q,p);
+    curve448_point_copy(q,p);
     gf_invert(q->t,q->x,0); /* 1/x */
     gf_mul(q->z,q->t,q->y); /* y/x */
     gf_sqr(q->y,q->z); /* (y/x)^2 */
     gf_serialize(out,q->y,1);
-    API_NS(point_destroy(q));
+    curve448_point_destroy(q);
 }
 
 void decaf_x448_derive_public_key (
@@ -540,16 +539,16 @@ void decaf_x448_derive_public_key (
     scalar2[X_PRIVATE_BYTES-1] |= 1<<((X_PRIVATE_BITS+7)%8);
     
     scalar_t the_scalar;
-    API_NS(scalar_decode_long)(the_scalar,scalar2,sizeof(scalar2));
+    curve448_scalar_decode_long(the_scalar,scalar2,sizeof(scalar2));
     
     /* Compensate for the encoding ratio */
     for (unsigned i=1; i<DECAF_X448_ENCODE_RATIO; i<<=1) {
-        API_NS(scalar_halve)(the_scalar,the_scalar);
+        curve448_scalar_halve(the_scalar,the_scalar);
     }
     point_t p;
-    API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),the_scalar);
-    API_NS(point_mul_by_ratio_and_encode_like_x448)(out,p);
-    API_NS(point_destroy)(p);
+    curve448_precomputed_scalarmul(p,curve448_precomputed_base,the_scalar);
+    curve448_point_mul_by_ratio_and_encode_like_x448(out,p);
+    curve448_point_destroy(p);
 }
 
 /**
@@ -624,7 +623,7 @@ prepare_wnaf_table(
 
     if (tbits == 0) return;
 
-    API_NS(point_double)(tmp,working);
+    curve448_point_double(tmp,working);
     pniels_t twop;
     pt_to_pniels(twop, tmp);
 
@@ -636,14 +635,14 @@ prepare_wnaf_table(
         pt_to_pniels(output[i], tmp);
     }
     
-    API_NS(point_destroy)(tmp);
+    curve448_point_destroy(tmp);
     OPENSSL_cleanse(twop,sizeof(twop));
 }
 
-extern const gf API_NS(precomputed_wnaf_as_fe)[];
-static const niels_t *API_NS(wnaf_base) = (const niels_t *)API_NS(precomputed_wnaf_as_fe);
+extern const gf curve448_precomputed_wnaf_as_fe[];
+static const niels_t *curve448_wnaf_base = (const niels_t *)curve448_precomputed_wnaf_as_fe;
 
-void API_NS(base_double_scalarmul_non_secret) (
+void curve448_base_double_scalarmul_non_secret (
     point_t combo,
     const scalar_t scalar1,
     const point_t base2,
@@ -663,18 +662,18 @@ void API_NS(base_double_scalarmul_non_secret) (
     int contp=0, contv=0, i = control_var[0].power;
 
     if (i < 0) {
-        API_NS(point_copy)(combo, API_NS(point_identity));
+        curve448_point_copy(combo, curve448_point_identity);
         return;
     } else if (i > control_pre[0].power) {
         pniels_to_pt(combo, precmp_var[control_var[0].addend >> 1]);
         contv++;
     } else if (i == control_pre[0].power && i >=0 ) {
         pniels_to_pt(combo, precmp_var[control_var[0].addend >> 1]);
-        add_niels_to_pt(combo, API_NS(wnaf_base)[control_pre[0].addend >> 1], i);
+        add_niels_to_pt(combo, curve448_wnaf_base[control_pre[0].addend >> 1], i);
         contv++; contp++;
     } else {
         i = control_pre[0].power;
-        niels_to_pt(combo, API_NS(wnaf_base)[control_pre[0].addend >> 1]);
+        niels_to_pt(combo, curve448_wnaf_base[control_pre[0].addend >> 1]);
         contp++;
     }
     
@@ -697,9 +696,9 @@ void API_NS(base_double_scalarmul_non_secret) (
             assert(control_pre[contp].addend);
 
             if (control_pre[contp].addend > 0) {
-                add_niels_to_pt(combo, API_NS(wnaf_base)[control_pre[contp].addend >> 1], i);
+                add_niels_to_pt(combo, curve448_wnaf_base[control_pre[contp].addend >> 1], i);
             } else {
-                sub_niels_from_pt(combo, API_NS(wnaf_base)[(-control_pre[contp].addend) >> 1], i);
+                sub_niels_from_pt(combo, curve448_wnaf_base[(-control_pre[contp].addend) >> 1], i);
             }
             contp++;
         }
@@ -714,7 +713,7 @@ void API_NS(base_double_scalarmul_non_secret) (
     assert(contp == ncb_pre); (void)ncb_pre;
 }
 
-void API_NS(point_destroy) (
+void curve448_point_destroy (
     point_t point
 ) {
     OPENSSL_cleanse(point, sizeof(point_t));

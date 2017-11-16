@@ -20,7 +20,6 @@
 #include <string.h>
 
 #define API_NAME "decaf_448"
-#define API_NS(_id) decaf_448_##_id
 
 #define hash_ctx_t   decaf_shake256_ctx_t
 #define hash_init    decaf_shake256_init
@@ -121,8 +120,8 @@ void decaf_ed448_derive_public_key (
     );
     clamp(secret_scalar_ser);
         
-    API_NS(scalar_t) secret_scalar;
-    API_NS(scalar_decode_long)(secret_scalar, secret_scalar_ser, sizeof(secret_scalar_ser));
+    curve448_scalar_t secret_scalar;
+    curve448_scalar_decode_long(secret_scalar, secret_scalar_ser, sizeof(secret_scalar_ser));
     
     /* Since we are going to mul_by_cofactor during encoding, divide by it here.
      * However, the EdDSA base point is not the same as the decaf base point if
@@ -131,17 +130,17 @@ void decaf_ed448_derive_public_key (
      * picks up a factor of 2 from the isogenies.  So we might start at 2 instead of 1. 
      */
     for (unsigned int c=1; c<DECAF_448_EDDSA_ENCODE_RATIO; c <<= 1) {
-        API_NS(scalar_halve)(secret_scalar,secret_scalar);
+        curve448_scalar_halve(secret_scalar,secret_scalar);
     }
     
-    API_NS(point_t) p;
-    API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),secret_scalar);
+    curve448_point_t p;
+    curve448_precomputed_scalarmul(p,curve448_precomputed_base,secret_scalar);
     
-    API_NS(point_mul_by_ratio_and_encode_like_eddsa)(pubkey, p);
+    curve448_point_mul_by_ratio_and_encode_like_eddsa(pubkey, p);
         
     /* Cleanup */
-    API_NS(scalar_destroy)(secret_scalar);
-    API_NS(point_destroy)(p);
+    curve448_scalar_destroy(secret_scalar);
+    curve448_point_destroy(p);
     OPENSSL_cleanse(secret_scalar_ser, sizeof(secret_scalar_ser));
 }
 
@@ -155,7 +154,7 @@ void decaf_ed448_sign (
     const uint8_t *context,
     uint8_t context_len
 ) {
-    API_NS(scalar_t) secret_scalar;
+    curve448_scalar_t secret_scalar;
     hash_ctx_t hash;
     {
         /* Schedule the secret key */
@@ -170,7 +169,7 @@ void decaf_ed448_sign (
             DECAF_EDDSA_448_PRIVATE_BYTES
         );
         clamp(expanded.secret_scalar_ser);   
-        API_NS(scalar_decode_long)(secret_scalar, expanded.secret_scalar_ser, sizeof(expanded.secret_scalar_ser));
+        curve448_scalar_decode_long(secret_scalar, expanded.secret_scalar_ser, sizeof(expanded.secret_scalar_ser));
     
         /* Hash to create the nonce */
         hash_init_with_dom(hash,prehashed,0,context,context_len);
@@ -180,31 +179,31 @@ void decaf_ed448_sign (
     }
     
     /* Decode the nonce */
-    API_NS(scalar_t) nonce_scalar;
+    curve448_scalar_t nonce_scalar;
     {
         uint8_t nonce[2*DECAF_EDDSA_448_PRIVATE_BYTES];
         hash_final(hash,nonce,sizeof(nonce));
-        API_NS(scalar_decode_long)(nonce_scalar, nonce, sizeof(nonce));
+        curve448_scalar_decode_long(nonce_scalar, nonce, sizeof(nonce));
         OPENSSL_cleanse(nonce, sizeof(nonce));
     }
     
     uint8_t nonce_point[DECAF_EDDSA_448_PUBLIC_BYTES] = {0};
     {
         /* Scalarmul to create the nonce-point */
-        API_NS(scalar_t) nonce_scalar_2;
-        API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar);
+        curve448_scalar_t nonce_scalar_2;
+        curve448_scalar_halve(nonce_scalar_2,nonce_scalar);
         for (unsigned int c = 2; c < DECAF_448_EDDSA_ENCODE_RATIO; c <<= 1) {
-            API_NS(scalar_halve)(nonce_scalar_2,nonce_scalar_2);
+            curve448_scalar_halve(nonce_scalar_2,nonce_scalar_2);
         }
         
-        API_NS(point_t) p;
-        API_NS(precomputed_scalarmul)(p,API_NS(precomputed_base),nonce_scalar_2);
-        API_NS(point_mul_by_ratio_and_encode_like_eddsa)(nonce_point, p);
-        API_NS(point_destroy)(p);
-        API_NS(scalar_destroy)(nonce_scalar_2);
+        curve448_point_t p;
+        curve448_precomputed_scalarmul(p,curve448_precomputed_base,nonce_scalar_2);
+        curve448_point_mul_by_ratio_and_encode_like_eddsa(nonce_point, p);
+        curve448_point_destroy(p);
+        curve448_scalar_destroy(nonce_scalar_2);
     }
     
-    API_NS(scalar_t) challenge_scalar;
+    curve448_scalar_t challenge_scalar;
     {
         /* Compute the challenge */
         hash_init_with_dom(hash,prehashed,0,context,context_len);
@@ -214,20 +213,20 @@ void decaf_ed448_sign (
         uint8_t challenge[2*DECAF_EDDSA_448_PRIVATE_BYTES];
         hash_final(hash,challenge,sizeof(challenge));
         hash_destroy(hash);
-        API_NS(scalar_decode_long)(challenge_scalar,challenge,sizeof(challenge));
+        curve448_scalar_decode_long(challenge_scalar,challenge,sizeof(challenge));
         OPENSSL_cleanse(challenge,sizeof(challenge));
     }
     
-    API_NS(scalar_mul)(challenge_scalar,challenge_scalar,secret_scalar);
-    API_NS(scalar_add)(challenge_scalar,challenge_scalar,nonce_scalar);
+    curve448_scalar_mul(challenge_scalar,challenge_scalar,secret_scalar);
+    curve448_scalar_add(challenge_scalar,challenge_scalar,nonce_scalar);
     
     OPENSSL_cleanse(signature,DECAF_EDDSA_448_SIGNATURE_BYTES);
     memcpy(signature,nonce_point,sizeof(nonce_point));
-    API_NS(scalar_encode)(&signature[DECAF_EDDSA_448_PUBLIC_BYTES],challenge_scalar);
+    curve448_scalar_encode(&signature[DECAF_EDDSA_448_PUBLIC_BYTES],challenge_scalar);
     
-    API_NS(scalar_destroy)(secret_scalar);
-    API_NS(scalar_destroy)(nonce_scalar);
-    API_NS(scalar_destroy)(challenge_scalar);
+    curve448_scalar_destroy(secret_scalar);
+    curve448_scalar_destroy(nonce_scalar);
+    curve448_scalar_destroy(challenge_scalar);
 }
 
 
@@ -260,14 +259,14 @@ decaf_error_t decaf_ed448_verify (
     const uint8_t *context,
     uint8_t context_len
 ) { 
-    API_NS(point_t) pk_point, r_point;
-    decaf_error_t error = API_NS(point_decode_like_eddsa_and_mul_by_ratio)(pk_point,pubkey);
+    curve448_point_t pk_point, r_point;
+    decaf_error_t error = curve448_point_decode_like_eddsa_and_mul_by_ratio(pk_point,pubkey);
     if (DECAF_SUCCESS != error) { return error; }
     
-    error = API_NS(point_decode_like_eddsa_and_mul_by_ratio)(r_point,signature);
+    error = curve448_point_decode_like_eddsa_and_mul_by_ratio(r_point,signature);
     if (DECAF_SUCCESS != error) { return error; }
     
-    API_NS(scalar_t) challenge_scalar;
+    curve448_scalar_t challenge_scalar;
     {
         /* Compute the challenge */
         hash_ctx_t hash;
@@ -278,31 +277,31 @@ decaf_error_t decaf_ed448_verify (
         uint8_t challenge[2*DECAF_EDDSA_448_PRIVATE_BYTES];
         hash_final(hash,challenge,sizeof(challenge));
         hash_destroy(hash);
-        API_NS(scalar_decode_long)(challenge_scalar,challenge,sizeof(challenge));
+        curve448_scalar_decode_long(challenge_scalar,challenge,sizeof(challenge));
         OPENSSL_cleanse(challenge,sizeof(challenge));
     }
-    API_NS(scalar_sub)(challenge_scalar, API_NS(scalar_zero), challenge_scalar);
+    curve448_scalar_sub(challenge_scalar, curve448_scalar_zero, challenge_scalar);
     
-    API_NS(scalar_t) response_scalar;
-    API_NS(scalar_decode_long)(
+    curve448_scalar_t response_scalar;
+    curve448_scalar_decode_long(
         response_scalar,
         &signature[DECAF_EDDSA_448_PUBLIC_BYTES],
         DECAF_EDDSA_448_PRIVATE_BYTES
     );
     
     for (unsigned c=1; c<DECAF_448_EDDSA_DECODE_RATIO; c<<=1) {
-        API_NS(scalar_add)(response_scalar,response_scalar,response_scalar);
+        curve448_scalar_add(response_scalar,response_scalar,response_scalar);
     }
     
     
     /* pk_point = -c(x(P)) + (cx + k)G = kG */
-    API_NS(base_double_scalarmul_non_secret)(
+    curve448_base_double_scalarmul_non_secret(
         pk_point,
         response_scalar,
         pk_point,
         challenge_scalar
     );
-    return decaf_succeed_if(API_NS(point_eq(pk_point,r_point)));
+    return decaf_succeed_if(curve448_point_eq(pk_point,r_point));
 }
 
 

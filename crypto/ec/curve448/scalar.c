@@ -18,11 +18,10 @@
 #include "point_448.h"
 
 /* Template stuff */
-#define API_NS(_id) decaf_448_##_id
 #define SCALAR_BITS DECAF_448_SCALAR_BITS
 #define SCALAR_SER_BYTES DECAF_448_SCALAR_BYTES
 #define SCALAR_LIMBS DECAF_448_SCALAR_LIMBS
-#define scalar_t API_NS(scalar_t)
+#define scalar_t curve448_scalar_t
 
 static const decaf_word_t MONTGOMERY_FACTOR = (decaf_word_t)0x3bd440fae918bc5ull;
 static const scalar_t sc_p = {{{
@@ -34,7 +33,7 @@ static const scalar_t sc_p = {{{
 
 #define WBITS DECAF_WORD_BITS /* NB this may be different from ARCH_WORD_BITS */
 
-const scalar_t API_NS(scalar_one) = {{{1}}}, API_NS(scalar_zero) = {{{0}}};
+const scalar_t curve448_scalar_one = {{{1}}}, curve448_scalar_zero = {{{0}}};
 
 /** {extra,accum} - sub +? p
  * Must have extra <= 1
@@ -101,7 +100,7 @@ static DECAF_NOINLINE void sc_montmul (
     sc_subx(out, accum, sc_p, sc_p, hi_carry);
 }
 
-void API_NS(scalar_mul) (
+void curve448_scalar_mul (
     scalar_t out,
     const scalar_t a,
     const scalar_t b
@@ -110,7 +109,7 @@ void API_NS(scalar_mul) (
     sc_montmul(out,out,sc_r2);
 }
 
-void API_NS(scalar_sub) (
+void curve448_scalar_sub (
     scalar_t out,
     const scalar_t a,
     const scalar_t b
@@ -118,7 +117,7 @@ void API_NS(scalar_sub) (
     sc_subx(out, a->limb, b, sc_p, 0);
 }
 
-void API_NS(scalar_add) (
+void curve448_scalar_add (
     scalar_t out,
     const scalar_t a,
     const scalar_t b
@@ -148,7 +147,7 @@ static DECAF_INLINE void scalar_decode_short (
     }
 }
 
-decaf_error_t API_NS(scalar_decode)(
+decaf_error_t curve448_scalar_decode(
     scalar_t s,
     const unsigned char ser[SCALAR_SER_BYTES]
 ) {
@@ -160,24 +159,24 @@ decaf_error_t API_NS(scalar_decode)(
     }
     /* Here accum == 0 or -1 */
     
-    API_NS(scalar_mul)(s,s,API_NS(scalar_one)); /* ham-handed reduce */
+    curve448_scalar_mul(s,s,curve448_scalar_one); /* ham-handed reduce */
     
     return decaf_succeed_if(~word_is_zero(accum));
 }
 
-void API_NS(scalar_destroy) (
+void curve448_scalar_destroy (
     scalar_t scalar
 ) {
     OPENSSL_cleanse(scalar, sizeof(scalar_t));
 }
 
-void API_NS(scalar_decode_long)(
+void curve448_scalar_decode_long(
     scalar_t s,
     const unsigned char *ser,
     size_t ser_len
 ) {
     if (ser_len == 0) {
-        API_NS(scalar_copy)(s, API_NS(scalar_zero));
+        curve448_scalar_copy(s, curve448_scalar_zero);
         return;
     }
     
@@ -192,24 +191,24 @@ void API_NS(scalar_decode_long)(
     if (ser_len == sizeof(scalar_t)) {
         assert(i==0);
         /* ham-handed reduce */
-        API_NS(scalar_mul)(s,t1,API_NS(scalar_one));
-        API_NS(scalar_destroy)(t1);
+        curve448_scalar_mul(s,t1,curve448_scalar_one);
+        curve448_scalar_destroy(t1);
         return;
     }
 
     while (i) {
         i -= SCALAR_SER_BYTES;
         sc_montmul(t1,t1,sc_r2);
-        ignore_result( API_NS(scalar_decode)(t2, ser+i) );
-        API_NS(scalar_add)(t1, t1, t2);
+        ignore_result( curve448_scalar_decode(t2, ser+i) );
+        curve448_scalar_add(t1, t1, t2);
     }
 
-    API_NS(scalar_copy)(s, t1);
-    API_NS(scalar_destroy)(t1);
-    API_NS(scalar_destroy)(t2);
+    curve448_scalar_copy(s, t1);
+    curve448_scalar_destroy(t1);
+    curve448_scalar_destroy(t2);
 }
 
-void API_NS(scalar_encode)(
+void curve448_scalar_encode(
     unsigned char ser[SCALAR_SER_BYTES],
     const scalar_t s
 ) {
@@ -221,7 +220,7 @@ void API_NS(scalar_encode)(
     }
 }
 
-void API_NS(scalar_halve) (
+void curve448_scalar_halve (
     scalar_t out,
     const scalar_t a
 ) {
