@@ -42,6 +42,11 @@ extern "C" {
 # define OPENSSL_VERSION_NUMBER  0x10101000L
 # define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1-dev  xx XXX xxxx"
 
+#define OPENSSL_MAKE_VERSION(maj,min,fix,patch,status) (((maj&0xf) << 28)+((min&0xff)<<20)+((fix&0xff)<<12)+((patch&0xff)<<4)+status)
+
+/* use this for #if tests, should never depend upon patch/status */
+#define OPENSSL_VERSION_AT_LEAST(maj,min,fix) (OPENSSL_MAKE_VERSION(maj,min,fix, 0, 0) >= OPENSSL_VERSION_NUMBER)
+
 /*-
  * The macros below are to be used for shared library (.so, .dll, ...)
  * versioning.  That kind of versioning works a bit differently between
