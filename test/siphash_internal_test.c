@@ -235,10 +235,10 @@ static int test_siphash(int idx)
 
     /* key and in data are 00 01 02 ... */
     for (i = 0; i < sizeof(key); i++)
-        key[i] = i;
+        key[i] = (unsigned char)i;
 
     for (i = 0; i < inlen; i++)
-        in[i] = i;
+        in[i] = (unsigned char)i;
 
     if (!TEST_true(SipHash_Init(&siphash, key, expectedlen, 0, 0)))
         return 0;

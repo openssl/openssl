@@ -1819,7 +1819,7 @@ static int early_data_skip_helper(int hrr, int idx)
          * time. It could be any value as long as it is not within tolerance.
          * This should mean the ticket is rejected.
          */
-        if (!TEST_true(SSL_SESSION_set_time(sess, time(NULL) - 20)))
+        if (!TEST_true(SSL_SESSION_set_time(sess, (long)(time(NULL) - 20))))
             goto end;
     }
 
@@ -1984,7 +1984,7 @@ static int alpn_select_cb(SSL *ssl, const unsigned char **out,
 
     for (prot = in; prot < in + inlen; prot += protlen) {
         protlen = *prot++;
-        if (in + inlen - prot < protlen)
+        if (in + inlen < prot + protlen)
             return SSL_TLSEXT_ERR_NOACK;
 
         if (protlen == strlen(servalpn)
