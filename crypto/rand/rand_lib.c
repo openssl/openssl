@@ -15,6 +15,12 @@
 #include <openssl/engine.h>
 #include "internal/thread_once.h"
 #include "rand_lcl.h"
+#ifdef OPENSSL_SYS_UNIX
+# include <sys/types.h>
+# include <unistd.h>
+# include <sys/time.h>
+#endif
+#include "e_os.h"
 
 #ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
@@ -187,6 +193,74 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
     return ret;
 }
 
+/*
+ * Generate additional data that can be used for the drbg. The data does
+ * not need to contain entropy, but it's useful if it contains at least
+ * some bits that are unpredictable.
+ *
+ * Returns 0 on failure.
+ *
+ * On success it allocates a buffer at |*pout| and returns the length of
+ * the data. The buffer should get freed using OPENSSL_secure_clear_free().
+ */
+size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
+{
+    RAND_POOL *pool;
+    CRYPTO_THREAD_ID thread_id;
+    size_t len;
+#ifdef OPENSSL_SYS_UNIX
+    pid_t pid;
+    struct timespec ts;
+#elif defined(OPENSSL_SYS_WIN32)
+    DWORD pid;
+    FILETIME ft;
+    LARGE_INTEGER pc;
+#endif
+    uint32_t tsc = 0;
+
+    pool = RAND_POOL_new(0, 0, max_len);
+    if (pool == NULL)
+        return 0;
+
+#ifdef OPENSSL_SYS_UNIX
+    pid = getpid();
+    RAND_POOL_add(pool, (unsigned char *)&pid, sizeof(pid), 0);
+#elif defined(OPENSSL_SYS_WIN32)
+    pid = GetCurrentProcessId();
+    RAND_POOL_add(pool, (unsigned char *)&pid, sizeof(pid), 0);
+#endif
+
+    thread_id = CRYPTO_THREAD_get_current_id();
+    if (thread_id != 0)
+        RAND_POOL_add(pool, (unsigned char *)&thread_id, sizeof(thread_id), 0);
+
+#ifdef OPENSSL_CPUID_OBJ
+    tsc = OPENSSL_rdtsc();
+    if (tsc != 0)
+        RAND_POOL_add(pool, (unsigned char *)&tsc, sizeof(tsc), 0);
+#endif
+
+#ifdef OPENSSL_SYS_UNIX
+    if (tsc == 0 && clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
+        RAND_POOL_add(pool, (unsigned char *)&ts, sizeof(ts), 0);
+    if (clock_gettime(CLOCK_REALTIME, &ts) == 0)
+        RAND_POOL_add(pool, (unsigned char *)&ts, sizeof(ts), 0);
+#elif defined(OPENSSL_SYS_WIN32)
+    if (tsc == 0 && QueryPerformanceCounter(&pc) != 0)
+        RAND_POOL_add(pool, (unsigned char *)&pc, sizeof(pc), 0);
+    GetSystemTimeAsFileTime(&ft);
+    RAND_POOL_add(pool, (unsigned char *)&ft, sizeof(ft), 0);
+#endif
+
+    /* TODO: Use RDSEED? */
+
+    len = RAND_POOL_length(pool);
+    if (len != 0)
+        *pout = RAND_POOL_detach(pool);
+    RAND_POOL_free(pool);
+
+    return len;
+}
 
 /*
  * Implements the cleanup_entropy() callback (see RAND_DRBG_set_callbacks())

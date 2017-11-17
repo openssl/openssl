@@ -535,6 +535,28 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
 }
 
 /*
+ * Generates |outlen| random bytes and stores them in |out|. It will
+ * using the given |drbg| to generate the bytes.
+ *
+ * Requires that drbg->lock is already locked for write, if non-null.
+ *
+ * Returns 1 on success 0 on failure.
+ */
+int RAND_DRBG_bytes(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
+{
+    unsigned char *additional = NULL;
+    size_t additional_len;
+    size_t ret;
+
+    additional_len = rand_drbg_get_additional_data(&additional, drbg->max_adinlen);
+    ret = RAND_DRBG_generate(drbg, out, outlen, 0, additional, additional_len);
+    if (additional_len != 0)
+        OPENSSL_secure_clear_free(additional, additional_len);
+
+    return ret;
+}
+
+/*
  * Set the RAND_DRBG callbacks for obtaining entropy and nonce.
  *
  * In the following, the signature and the semantics of the

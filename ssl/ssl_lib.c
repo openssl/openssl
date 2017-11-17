@@ -5267,9 +5267,11 @@ int ssl_randbytes(SSL *s, unsigned char *rnd, size_t size)
          * serialization of SSL accesses for the needed concurrency protection
          * here.
          */
-         return RAND_DRBG_generate(s->drbg, rnd, size, 0, NULL, 0);
+        return RAND_DRBG_bytes(s->drbg, rnd, size);
     }
-    return RAND_bytes(rnd, (int)size);
+    if (size > INT_MAX)
+        return 0;
+    return RAND_bytes(rnd, size);
 }
 
 __owur unsigned int ssl_get_max_send_fragment(const SSL *ssl)
