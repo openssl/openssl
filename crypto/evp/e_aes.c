@@ -100,9 +100,8 @@ typedef struct {
 
 #define MAXBITCHUNK     ((size_t)1<<(sizeof(size_t)*8-4))
 
-static set_key_f _get_aes_set_encrypt_key(void);
-static block128_f _get_aes_block_encrypt(void);
-static ctr128_f _get_aes_ctr32_encrypt(void);
+static void get_aes_default(set_key_f *set_key, block128_f *block,
+                            ctr128_f *ctr32);
 
 #ifdef VPAES_ASM
 int vpaes_set_encrypt_key(const unsigned char *userKey, int bits,
@@ -503,24 +502,18 @@ static int aesni_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                             const unsigned char *in, size_t len);
 # endif                        /* OPENSSL_NO_OCB */
 
-set_key_f get_aes_set_encrypt_key(int keylen)
+void get_aes(set_key_f *set_key, block128_f *block, ctr128_f *ctr32,
+             int keylen)
 {
     (void)keylen;	/* suppress -Wunused-parameter */
-    return AESNI_CAPABLE ? (set_key_f)aesni_set_encrypt_key
-                         : _get_aes_set_encrypt_key();
-}
 
-block128_f get_aes_block_encrypt(int keylen)
-{
-    (void)keylen;	/* suppress -Wunused-parameter */
-    return AESNI_CAPABLE ? (block128_f)aesni_encrypt
-                         : _get_aes_block_encrypt();
-}
-
-ctr128_f get_aes_ctr32_encrypt(int keylen) {
-    (void)keylen;	/* suppress -Wunused-parameter */
-    return AESNI_CAPABLE ? (ctr128_f)aesni_ctr32_encrypt_blocks
-                         : _get_aes_ctr32_encrypt();
+    if (AESNI_CAPABLE) {
+        *set_key = (set_key_f)aesni_set_encrypt_key;
+        *block = (block128_f)aesni_encrypt;
+        *ctr32 = (ctr128_f)aesni_ctr32_encrypt_blocks;
+    } else {
+        get_aes_default(set_key, block, ctr32);
+    }
 }
 
 # define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
@@ -931,34 +924,30 @@ static int aes_t4_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                              const unsigned char *in, size_t len);
 # endif                        /* OPENSSL_NO_OCB */
 
-set_key_f get_aes_set_encrypt_key(int keylen)
+void get_aes(set_key_f *set_key, block128_f *block, ctr128_f *ctr32,
+             int keylen)
 {
-    (void)keylen;	/* suppress -Wunused-parameter */
-    return SPARC_AES_CAPABLE ? (set_key_f)aes_t4_set_encrypt_key
-                             : _get_aes_set_encrypt_key();
-}
-
-block128_f get_aes_block_encrypt(int keylen)
-{
-    (void)keylen;	/* suppress -Wunused-parameter */
-    return SPARC_AES_CAPABLE ? (block128_f)aes_t4_encrypt
-                             : _get_aes_block_encrypt();
-}
-
-ctr128_f get_aes_ctr32_encrypt(int keylen) {
     if (SPARC_AES_CAPABLE) {
+        *set_key = (set_key_f)aes_t4_set_encrypt_key;
+        *block = (block128_f)aes_t4_encrypt;
+
         switch (keylen * 8) {
         case 128:
-            return (ctr128_f)aes128_t4_ctr32_encrypt;
+            *ctr32 = (ctr128_f)aes128_t4_ctr32_encrypt;
+            break;
         case 192:
-            return (ctr128_f)aes192_t4_ctr32_encrypt;
+            *ctr32 = (ctr128_f)aes192_t4_ctr32_encrypt;
+            break;
         case 256:
-            return (ctr128_f)aes256_t4_ctr32_encrypt;
+            *ctr32 = (ctr128_f)aes256_t4_ctr32_encrypt;
+            break;
         default:
+            *ctr32 = NULL;
             break;
         }
+    } else {
+        get_aes_default(set_key, block, ctr32);
     }
-    return _get_aes_ctr32_encrypt();
 }
 
 # define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
@@ -1031,22 +1020,12 @@ static const EVP_CIPHER aes_##keylen##_##mode = { \
 const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return &aes_##keylen##_##mode; }
 
-set_key_f get_aes_set_encrypt_key(int keylen)
+void get_aes(set_key_f *set_key, block128_f *block, ctr128_f *ctr32,
+             int keylen)
 {
     (void)keylen;	/* suppress -Wunused-parameter */
-    return _get_aes_set_encrypt_key();
-}
 
-block128_f get_aes_block_encrypt(int keylen)
-{
-    (void)keylen;	/* suppress -Wunused-parameter */
-    return _get_aes_block_encrypt();
-}
-
-ctr128_f get_aes_ctr32_encrypt(int keylen)
-{
-    (void)keylen;	/* suppress -Wunused-parameter */
-    return _get_aes_ctr32_encrypt();
+    get_aes_default(set_key, block, ctr32);
 }
 
 #endif
@@ -1093,58 +1072,38 @@ void HWAES_xts_decrypt(const unsigned char *inp, unsigned char *out,
                        const AES_KEY *key2, const unsigned char iv[16]);
 #endif
 
-static set_key_f _get_aes_set_encrypt_key(void)
+void get_aes_default(set_key_f *set_key, block128_f *block, ctr128_f *ctr32)
 {
 #ifdef HWAES_CAPABLE
-    if (HWAES_CAPABLE)
-        return (set_key_f)HWAES_set_encrypt_key;
+    if (HWAES_CAPABLE) {
+        *set_key = (set_key_f)HWAES_set_encrypt_key;
+        *block = (block128_f)HWAES_encrypt;
+        *ctr32 = (ctr128_f)HWAES_ctr32_encrypt_blocks;
+        return;
+    }
 #endif
 #ifdef BSAES_CAPABLE
-    if (BSAES_CAPABLE)
-        return (set_key_f)AES_set_encrypt_key;
+    if (BSAES_CAPABLE) {
+        *set_key = (set_key_f)AES_set_encrypt_key;
+        *block = (block128_f)AES_encrypt;
+        *ctr32 = (ctr128_f)bsaes_ctr32_encrypt_blocks;
+        return;
+    }
 #endif
 #ifdef VPAES_CAPABLE
-    if (VPAES_CAPABLE)
-        return (set_key_f)vpaes_set_encrypt_key;
+    if (VPAES_CAPABLE) {
+        *set_key = (set_key_f)vpaes_set_encrypt_key;
+        *block = (block128_f)vpaes_encrypt;
+        *ctr32 = NULL;
+        return;
+    }
 #endif
-    return (set_key_f)AES_set_encrypt_key;
-}
-
-static block128_f _get_aes_block_encrypt(void)
-{
-#ifdef HWAES_CAPABLE
-    if (HWAES_CAPABLE)
-        return (block128_f)HWAES_encrypt;
-#endif
-#ifdef BSAES_CAPABLE
-    if (BSAES_CAPABLE)
-        return (block128_f)AES_encrypt;
-#endif
-#ifdef VPAES_CAPABLE
-    if (VPAES_CAPABLE)
-        return (block128_f)vpaes_encrypt;
-#endif
-    return (block128_f)AES_encrypt;
-}
-
-static ctr128_f _get_aes_ctr32_encrypt(void)
-{
-#ifdef HWAES_CAPABLE
-    if (HWAES_CAPABLE)
-        return (ctr128_f)HWAES_ctr32_encrypt_blocks;
-#endif
-#ifdef BSAES_CAPABLE
-    if (BSAES_CAPABLE)
-        return (ctr128_f)bsaes_ctr32_encrypt_blocks;
-#endif
-#ifdef VPAES_CAPABLE
-    if (VPAES_CAPABLE)
-        return NULL;
-#endif
+    *set_key = (set_key_f)AES_set_encrypt_key;
+    *block = (block128_f)AES_encrypt;
 #ifdef AES_CTR_ASM
-    return (ctr128_f)AES_ctr32_encrypt;
+    *ctr32 = (ctr128_f)AES_ctr32_encrypt;
 #else
-    return NULL;
+    *ctr32 = NULL;
 #endif
 }
 

@@ -345,9 +345,7 @@ int ctr_init(RAND_DRBG *drbg)
     }
 
     ctr->keylen = keylen;
-    ctr->set_key = get_aes_set_encrypt_key(keylen);
-    ctr->block = get_aes_block_encrypt(keylen);
-    ctr->ctr32 = get_aes_ctr32_encrypt(keylen);
+    get_aes(&ctr->set_key, &ctr->block, &ctr->ctr32, keylen);
 
     drbg->strength = keylen * 8;
     drbg->seedlen = keylen + 16;
