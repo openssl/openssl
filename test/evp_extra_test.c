@@ -283,6 +283,22 @@ static const unsigned char kExampleBadECKeyDER[] = {
     0xFF, 0xFF, 0xFF, 0xFF, 0xBC, 0xE6, 0xFA, 0xAD, 0xA7, 0x17, 0x9E, 0x84,
     0xF3, 0xB9, 0xCA, 0xC2, 0xFC, 0x63, 0x25, 0x51
 };
+
+/* prime256v1 */
+static const unsigned char kExampleECPubKeyDER[] = {
+    0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02,
+    0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03,
+    0x42, 0x00, 0x04, 0xba, 0xeb, 0x83, 0xfb, 0x3b, 0xb2, 0xff, 0x30, 0x53,
+    0xdb, 0xce, 0x32, 0xf2, 0xac, 0xae, 0x44, 0x0d, 0x3d, 0x13, 0x53, 0xb8,
+    0xd1, 0x68, 0x55, 0xde, 0x44, 0x46, 0x05, 0xa6, 0xc9, 0xd2, 0x04, 0xb7,
+    0xe3, 0xa2, 0x96, 0xc8, 0xb2, 0x5e, 0x22, 0x03, 0xd7, 0x03, 0x7a, 0x8b,
+    0x13, 0x5c, 0x42, 0x49, 0xc2, 0xab, 0x86, 0xd6, 0xac, 0x6b, 0x93, 0x20,
+    0x56, 0x6a, 0xc6, 0xc8, 0xa5, 0x0b, 0xe5
+};
+
+static const unsigned char pExampleECParamDER[] = {
+    0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07
+};
 #endif
 
 typedef struct APK_DATA_st {
@@ -290,6 +306,9 @@ typedef struct APK_DATA_st {
     size_t size;
     int evptype;
     int check;
+    int pub_check;
+    int param_check;
+    int type; /* 0 for private, 1 for public, 2 for params */
 } APK_DATA;
 
 static APK_DATA keydata[] = {
@@ -301,10 +320,14 @@ static APK_DATA keydata[] = {
 };
 
 static APK_DATA keycheckdata[] = {
-    {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), EVP_PKEY_RSA, 1},
-    {kExampleBadRSAKeyDER, sizeof(kExampleBadRSAKeyDER), EVP_PKEY_RSA, 0},
+    {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), EVP_PKEY_RSA, 1, -2, -2, 0},
+    {kExampleBadRSAKeyDER, sizeof(kExampleBadRSAKeyDER), EVP_PKEY_RSA,
+     0, -2, -2, 0},
 #ifndef OPENSSL_NO_EC
-    {kExampleECKeyDER, sizeof(kExampleECKeyDER), EVP_PKEY_EC, 1}
+    {kExampleECKeyDER, sizeof(kExampleECKeyDER), EVP_PKEY_EC, 1, 1, 1, 0},
+    /* group is also associated in our pub key */
+    {kExampleECPubKeyDER, sizeof(kExampleECPubKeyDER), EVP_PKEY_EC, 0, 1, 1, 1},
+    {pExampleECParamDER, sizeof(pExampleECParamDER), EVP_PKEY_EC, 0, 0, 1, 2}
 #endif
 };
 
@@ -458,6 +481,16 @@ static int pkey_custom_check(EVP_PKEY *pkey)
     return 0xbeef;
 }
 
+static int pkey_custom_pub_check(EVP_PKEY *pkey)
+{
+    return 0xbeef;
+}
+
+static int pkey_custom_param_check(EVP_PKEY *pkey)
+{
+    return 0xbeef;
+}
+
 static EVP_PKEY_METHOD *custom_pmeth;
 
 static int test_EVP_PKEY_check(int i)
@@ -465,6 +498,7 @@ static int test_EVP_PKEY_check(int i)
     int ret = 0;
     const unsigned char *p;
     EVP_PKEY *pkey = NULL;
+    EC_KEY *eckey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY_CTX *ctx2 = NULL;
     const APK_DATA *ak = &keycheckdata[i];
@@ -472,23 +506,44 @@ static int test_EVP_PKEY_check(int i)
     size_t input_len = ak->size;
     int expected_id = ak->evptype;
     int expected_check = ak->check;
+    int expected_pub_check = ak->pub_check;
+    int expected_param_check = ak->param_check;
+    int type = ak->type;
+    BIO *pubkey = NULL;
 
     p = input;
-    if (!TEST_ptr(pkey = d2i_AutoPrivateKey(NULL, &p, input_len))
-            || !TEST_ptr_eq(p, input + input_len)
-            || !TEST_int_eq(EVP_PKEY_id(pkey), expected_id))
+
+    if (type == 0 &&
+            (!TEST_ptr(pkey = d2i_AutoPrivateKey(NULL, &p, input_len))
+             || !TEST_ptr_eq(p, input + input_len)
+             || !TEST_int_eq(EVP_PKEY_id(pkey), expected_id)))
+        goto done;
+
+    if (type == 1 &&
+            (!TEST_ptr(pubkey = BIO_new_mem_buf(input, input_len))
+             || !TEST_ptr(eckey = d2i_EC_PUBKEY_bio(pubkey, NULL))
+             || !TEST_ptr(pkey = EVP_PKEY_new())
+             || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey, eckey))))
+        goto done;
+
+    if (type == 2 &&
+            (!TEST_ptr(eckey = d2i_ECParameters(NULL, &p, input_len))
+             || !TEST_ptr_eq(p, input + input_len)
+             || !TEST_ptr(pkey = EVP_PKEY_new())
+             || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey, eckey))))
         goto done;
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, NULL)))
         goto done;
 
-    if (expected_check == 1) {
-        if (!TEST_int_eq(EVP_PKEY_check(ctx), 1))
-            goto done;
-    } else {
-        if (!TEST_int_ne(EVP_PKEY_check(ctx), 1))
-            goto done;
-    }
+    if (!TEST_int_eq(EVP_PKEY_check(ctx), expected_check))
+        goto done;
+
+    if (!TEST_int_eq(EVP_PKEY_public_check(ctx), expected_pub_check))
+        goto done;
+
+    if (!TEST_int_eq(EVP_PKEY_param_check(ctx), expected_param_check))
+        goto done;
 
     ctx2 = EVP_PKEY_CTX_new_id(0xdefaced, NULL);
     /* assign the pkey directly, as an internal test */
@@ -498,12 +553,19 @@ static int test_EVP_PKEY_check(int i)
     if (!TEST_int_eq(EVP_PKEY_check(ctx2), 0xbeef))
         goto done;
 
+    if (!TEST_int_eq(EVP_PKEY_public_check(ctx2), 0xbeef))
+        goto done;
+
+    if (!TEST_int_eq(EVP_PKEY_param_check(ctx2), 0xbeef))
+        goto done;
+
     ret = 1;
 
  done:
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_CTX_free(ctx2);
     EVP_PKEY_free(pkey);
+    BIO_free(pubkey);
     return ret;
 }
 
@@ -519,6 +581,8 @@ int setup_tests(void)
     if (!TEST_ptr(custom_pmeth))
         return 0;
     EVP_PKEY_meth_set_check(custom_pmeth, pkey_custom_check);
+    EVP_PKEY_meth_set_public_check(custom_pmeth, pkey_custom_pub_check);
+    EVP_PKEY_meth_set_param_check(custom_pmeth, pkey_custom_param_check);
     if (!TEST_int_eq(EVP_PKEY_meth_add0(custom_pmeth), 1))
         return 0;
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));

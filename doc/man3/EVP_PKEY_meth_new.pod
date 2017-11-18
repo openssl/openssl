@@ -9,11 +9,13 @@ EVP_PKEY_meth_set_paramgen, EVP_PKEY_meth_set_keygen, EVP_PKEY_meth_set_sign,
 EVP_PKEY_meth_set_verify, EVP_PKEY_meth_set_verify_recover, EVP_PKEY_meth_set_signctx,
 EVP_PKEY_meth_set_verifyctx, EVP_PKEY_meth_set_encrypt, EVP_PKEY_meth_set_decrypt,
 EVP_PKEY_meth_set_derive, EVP_PKEY_meth_set_ctrl, EVP_PKEY_meth_set_check,
+EVP_PKEY_meth_set_public_check, EVP_PKEY_meth_set_param_check,
 EVP_PKEY_meth_get_init, EVP_PKEY_meth_get_copy, EVP_PKEY_meth_get_cleanup,
 EVP_PKEY_meth_get_paramgen, EVP_PKEY_meth_get_keygen, EVP_PKEY_meth_get_sign,
 EVP_PKEY_meth_get_verify, EVP_PKEY_meth_get_verify_recover, EVP_PKEY_meth_get_signctx,
 EVP_PKEY_meth_get_verifyctx, EVP_PKEY_meth_get_encrypt, EVP_PKEY_meth_get_decrypt,
 EVP_PKEY_meth_get_derive, EVP_PKEY_meth_get_ctrl, EVP_PKEY_meth_get_check,
+EVP_PKEY_meth_get_public_check, EVP_PKEY_meth_get_param_check,
 EVP_PKEY_meth_remove
 - manipulating EVP_PKEY_METHOD structure
 
@@ -110,6 +112,10 @@ EVP_PKEY_meth_remove
                                               const char *value));
  void EVP_PKEY_meth_set_check(EVP_PKEY_METHOD *pmeth,
                               int (*check) (EVP_PKEY *pkey));
+ void EVP_PKEY_meth_set_public_check(EVP_PKEY_METHOD *pmeth,
+                                     int (*check) (EVP_PKEY *pkey));
+ void EVP_PKEY_meth_set_param_check(EVP_PKEY_METHOD *pmeth,
+                                    int (*check) (EVP_PKEY *pkey));
 
  void EVP_PKEY_meth_get_init(EVP_PKEY_METHOD *pmeth,
                              int (**pinit) (EVP_PKEY_CTX *ctx));
@@ -191,6 +197,10 @@ EVP_PKEY_meth_remove
                                                 const char *value));
  void EVP_PKEY_meth_get_check(EVP_PKEY_METHOD *pmeth,
                               int (**pcheck) (EVP_PKEY *pkey));
+ void EVP_PKEY_meth_get_public_check(EVP_PKEY_METHOD *pmeth,
+                                     int (**pcheck) (EVP_PKEY *pkey));
+ void EVP_PKEY_meth_get_param_check(EVP_PKEY_METHOD *pmeth,
+                                    int (**pcheck) (EVP_PKEY *pkey));
 
 =head1 DESCRIPTION
 
@@ -316,9 +326,13 @@ a signature in a one-shot mode. They could be called by L<EVP_DigetSign(3)>
 and L<EVP_DigestVerify(3)>.
 
  int (*check) (EVP_PKEY *pkey);
+ int (*public_check) (EVP_PKEY *pkey);
+ int (*param_check) (EVP_PKEY *pkey);
 
-The check() method is used to validate a key-pair for a given B<pkey>. It
-could be called by L<EVP_PKEY_check(3)>.
+The check(), public_check() and param_check() methods are used to validate a
+key-pair, the public component and parameters respectively for a given B<pkey>.
+They could be called by L<EVP_PKEY_check(3)>, L<EVP_PKEY_public_check(3)> and
+L<EVP_PKEY_param_check(3)> respectively.
 
 =head2 Functions
 
