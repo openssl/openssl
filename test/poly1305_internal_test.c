@@ -16,6 +16,7 @@
 #include "internal/poly1305.h"
 #include "../crypto/poly1305/poly1305_local.h"
 #include "internal/nelem.h"
+#include "internal/cryptlib.h"
 
 typedef struct {
     size_t size;
@@ -40,8 +41,7 @@ static void benchmark_poly1305()
     POLY1305 poly1305;
     unsigned char key[32];
     unsigned char buf[8192];
-    unsigned long long stopwatch;
-    unsigned long long OPENSSL_rdtsc();
+    uint32_t stopwatch;
     unsigned int i;
 
     memset (buf,0x55,sizeof(buf));

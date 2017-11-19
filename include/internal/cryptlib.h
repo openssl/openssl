@@ -94,6 +94,10 @@ FILE *openssl_fopen(const char *filename, const char *mode);
 void *openssl_fopen(const char *filename, const char *mode);
 # endif
 
+#ifdef OPENSSL_CPUID_OBJ
+uint32_t OPENSSL_rdtsc();
+#endif
+
 #ifdef  __cplusplus
 }
 #endif

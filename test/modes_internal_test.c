@@ -17,6 +17,7 @@
 #include "../crypto/modes/modes_lcl.h"
 #include "testutil.h"
 #include "internal/nelem.h"
+#include "internal/cryptlib.h"
 
 typedef struct {
     size_t size;
@@ -889,7 +890,7 @@ static void benchmark_gcm128(const unsigned char *K, size_t Klen,
 #ifdef OPENSSL_CPUID_OBJ
     GCM128_CONTEXT ctx;
     AES_KEY key;
-    size_t start, gcm_t, ctr_t, OPENSSL_rdtsc();
+    uint32_t start, gcm_t, ctr_t;
     union {
         u64 u;
         u8 c[1024];
