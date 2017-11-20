@@ -103,8 +103,8 @@ static void drbg_cleanup(RAND_DRBG *drbg);
 
 /*
  * Set/initialize |drbg| to be of type |nid|, with optional |flags|.
- * Return -2 if the type is not supported, 1 on success and -1 on
- * failure.
+ *
+ * Returns 1 on success, 0 on failure.
  */
 int RAND_DRBG_set(RAND_DRBG *drbg, int nid, unsigned int flags)
 {
@@ -117,7 +117,7 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int nid, unsigned int flags)
     switch (nid) {
     default:
         RANDerr(RAND_F_RAND_DRBG_SET, RAND_R_UNSUPPORTED_DRBG_TYPE);
-        return -2;
+        return 0;
     case 0:
         /* Uninitialized; that's okay. */
         return 1;
@@ -128,7 +128,7 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int nid, unsigned int flags)
         break;
     }
 
-    if (ret < 0)
+    if (ret == 0)
         RANDerr(RAND_F_RAND_DRBG_SET, RAND_R_ERROR_INITIALISING_DRBG);
     return ret;
 }
@@ -149,7 +149,7 @@ RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
     }
     drbg->fork_count = rand_fork_count;
     drbg->parent = parent;
-    if (RAND_DRBG_set(drbg, type, flags) < 0)
+    if (RAND_DRBG_set(drbg, type, flags) == 0)
         goto err;
 
     if (!RAND_DRBG_set_callbacks(drbg, rand_drbg_get_entropy,
@@ -182,6 +182,8 @@ void RAND_DRBG_free(RAND_DRBG *drbg)
  * |perslen| as prediction-resistance input.
  *
  * Requires that drbg->lock is already locked for write, if non-null.
+ *
+ * Returns 1 on success, 0 on failure.
  */
 int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                           const unsigned char *pers, size_t perslen)
@@ -260,19 +262,25 @@ end:
  * Uninstantiate |drbg|. Must be instantiated before it can be used.
  *
  * Requires that drbg->lock is already locked for write, if non-null.
+ *
+ * Returns 1 on success, 0 on failure.
  */
 int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
 {
-    int ret = ctr_uninstantiate(drbg);
-
-    drbg->state = DRBG_UNINITIALISED;
-    return ret;
+    /* Clear the entire drbg->ctr struct, then reset some important
+     * members of the drbg->ctr struct (e.g. keysize, df_ks) to their
+     * initial values.
+     */
+    ctr_uninstantiate(drbg);
+    return RAND_DRBG_set(drbg, drbg->nid, drbg->flags);
 }
 
 /*
  * Reseed |drbg|, mixing in the specified data
  *
  * Requires that drbg->lock is already locked for write, if non-null.
+ *
+ * Returns 1 on success, 0 on failure.
  */
 int RAND_DRBG_reseed(RAND_DRBG *drbg,
                      const unsigned char *adin, size_t adinlen)
@@ -388,11 +396,8 @@ int rand_drbg_restart(RAND_DRBG *drbg,
     }
 
     /* repair error state */
-    if (drbg->state == DRBG_ERROR) {
+    if (drbg->state == DRBG_ERROR)
         RAND_DRBG_uninstantiate(drbg);
-        /* The drbg->ctr member needs to be reinitialized before reinstantiation */
-        RAND_DRBG_set(drbg, drbg->nid, drbg->flags);
-    }
 
     /* repair uninitialized state */
     if (drbg->state == DRBG_UNINITIALISED) {

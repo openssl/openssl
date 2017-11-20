@@ -313,7 +313,7 @@ int ctr_init(RAND_DRBG *drbg)
     switch (drbg->nid) {
     default:
         /* This can't happen, but silence the compiler warning. */
-        return -1;
+        return 0;
     case NID_aes_128_ctr:
         keylen = 16;
         break;
