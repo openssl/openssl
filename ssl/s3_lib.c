@@ -4590,8 +4590,10 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
         s->s3->tmp.psk = NULL;
         if (!s->method->ssl3_enc->generate_master_secret(s,
                     s->session->master_key,pskpms, pskpmslen,
-                    &s->session->master_key_length))
+                    &s->session->master_key_length)) {
+            /* SSLfatal() already called */
             goto err;
+        }
         OPENSSL_clear_free(pskpms, pskpmslen);
 #else
         /* Should never happen */
@@ -4600,8 +4602,10 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
     } else {
         if (!s->method->ssl3_enc->generate_master_secret(s,
                 s->session->master_key, pms, pmslen,
-                &s->session->master_key_length))
+                &s->session->master_key_length)) {
+            /* SSLfatal() already called */
             goto err;
+        }
     }
 
     ret = 1;
@@ -4641,28 +4645,42 @@ EVP_PKEY *ssl_generate_pkey(EVP_PKEY *pm)
 }
 #ifndef OPENSSL_NO_EC
 /* Generate a private key from a group ID */
-EVP_PKEY *ssl_generate_pkey_group(uint16_t id)
+EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id)
 {
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *pkey = NULL;
     const TLS_GROUP_INFO *ginf = tls1_group_id_lookup(id);
     uint16_t gtype;
 
-    if (ginf == NULL)
+    if (ginf == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_PKEY_GROUP,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
+    }
     gtype = ginf->flags & TLS_CURVE_TYPE;
     if (gtype == TLS_CURVE_CUSTOM)
         pctx = EVP_PKEY_CTX_new_id(ginf->nid, NULL);
     else
         pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
-    if (pctx == NULL)
+    if (pctx == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_PKEY_GROUP,
+                 ERR_R_MALLOC_FAILURE);
         goto err;
-    if (EVP_PKEY_keygen_init(pctx) <= 0)
+    }
+    if (EVP_PKEY_keygen_init(pctx) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_PKEY_GROUP,
+                 ERR_R_EVP_LIB);
         goto err;
+    }
     if (gtype != TLS_CURVE_CUSTOM
-            && EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, ginf->nid) <= 0)
+            && EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, ginf->nid) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_PKEY_GROUP,
+                 ERR_R_EVP_LIB);
         goto err;
+    }
     if (EVP_PKEY_keygen(pctx, &pkey) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_PKEY_GROUP,
+                 ERR_R_EVP_LIB);
         EVP_PKEY_free(pkey);
         pkey = NULL;
     }
@@ -4718,25 +4736,37 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
     size_t pmslen = 0;
     EVP_PKEY_CTX *pctx;
 
-    if (privkey == NULL || pubkey == NULL)
+    if (privkey == NULL || pubkey == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_DERIVE,
+                 ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     pctx = EVP_PKEY_CTX_new(privkey, NULL);
 
     if (EVP_PKEY_derive_init(pctx) <= 0
         || EVP_PKEY_derive_set_peer(pctx, pubkey) <= 0
         || EVP_PKEY_derive(pctx, NULL, &pmslen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_DERIVE,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
     pms = OPENSSL_malloc(pmslen);
-    if (pms == NULL)
+    if (pms == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_DERIVE,
+                 ERR_R_MALLOC_FAILURE);
         goto err;
+    }
 
-    if (EVP_PKEY_derive(pctx, pms, &pmslen) <= 0)
+    if (EVP_PKEY_derive(pctx, pms, &pmslen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_DERIVE,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
+    }
 
     if (gensecret) {
+        /* SSLfatal() called as appropriate in the below functions */
         if (SSL_IS_TLS13(s)) {
             /*
              * If we are resuming then we already generated the early secret

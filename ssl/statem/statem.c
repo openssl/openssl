@@ -120,14 +120,8 @@ void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
     s->statem.in_init = 1;
     s->statem.state = MSG_FLOW_ERROR;
     ERR_put_error(ERR_LIB_SSL, func, reason, file, line);
-    if (s->statem.hand_state != TLS_ST_BEFORE
-            && s->statem.hand_state != TLS_ST_CW_CLNT_HELLO) {
-        /*
-         * We only send an alert if we've got as far as actually sending or
-         * receiving a message.
-         */
+    if (al != SSL_AD_NO_ALERT)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
-    }
 }
 
 /*
@@ -557,13 +551,12 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
              * to that state if so
              */
             if (!transition(s, mt)) {
-                ossl_statem_set_error(s);
                 return SUB_STATE_ERROR;
             }
 
             if (s->s3->tmp.message_size > max_message_size(s)) {
-                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
-                SSLerr(SSL_F_READ_STATE_MACHINE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_READ_STATE_MACHINE,
+                         SSL_R_EXCESSIVE_MESSAGE_SIZE);
                 return SUB_STATE_ERROR;
             }
 
@@ -572,8 +565,8 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
                     && s->s3->tmp.message_size > 0
                     && !grow_init_buf(s, s->s3->tmp.message_size
                                          + SSL3_HM_HEADER_LENGTH)) {
-                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-                SSLerr(SSL_F_READ_STATE_MACHINE, ERR_R_BUF_LIB);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_READ_STATE_MACHINE,
+                         ERR_R_BUF_LIB);
                 return SUB_STATE_ERROR;
             }
 
@@ -592,8 +585,8 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
 
             s->first_packet = 0;
             if (!PACKET_buf_init(&pkt, s->init_msg, len)) {
-                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-                SSLerr(SSL_F_READ_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_READ_STATE_MACHINE,
+                         ERR_R_INTERNAL_ERROR);
                 return SUB_STATE_ERROR;
             }
             ret = process_message(s, &pkt);
@@ -645,9 +638,8 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
 
         default:
             /* Shouldn't happen */
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-            SSLerr(SSL_F_READ_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
-            ossl_statem_set_error(s);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_READ_STATE_MACHINE,
+                     ERR_R_INTERNAL_ERROR);
             return SUB_STATE_ERROR;
         }
     }
@@ -782,7 +774,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
                 return SUB_STATE_END_HANDSHAKE;
             }
             if (!get_construct_message_f(s, &pkt, &confunc, &mt)) {
-                ossl_statem_set_error(s);
+                /* SSLfatal() already called */
                 return SUB_STATE_ERROR;
             }
             if (mt == SSL3_MT_DUMMY) {
@@ -792,12 +784,22 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
                 break;
             }
             if (!WPACKET_init(&pkt, s->init_buf)
-                    || !ssl_set_handshake_header(s, &pkt, mt)
-                    || (confunc != NULL && !confunc(s, &pkt))
-                    || !ssl_close_construct_packet(s, &pkt, mt)
+                    || !ssl_set_handshake_header(s, &pkt, mt)) {
+                WPACKET_cleanup(&pkt);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_WRITE_STATE_MACHINE,
+                         ERR_R_INTERNAL_ERROR);
+                return SUB_STATE_ERROR;
+            }
+            if (confunc != NULL && !confunc(s, &pkt)) {
+                WPACKET_cleanup(&pkt);
+                /* SSLfatal() already called */
+                return SUB_STATE_ERROR;
+            }
+            if (!ssl_close_construct_packet(s, &pkt, mt)
                     || !WPACKET_finish(&pkt)) {
                 WPACKET_cleanup(&pkt);
-                ossl_statem_set_error(s);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_WRITE_STATE_MACHINE,
+                         ERR_R_INTERNAL_ERROR);
                 return SUB_STATE_ERROR;
             }
 

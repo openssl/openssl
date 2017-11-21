@@ -4201,16 +4201,22 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
     int hashleni = EVP_MD_CTX_size(hdgst);
     int ret = 0;
 
-    if (hashleni < 0 || (size_t)hashleni > outlen)
+    if (hashleni < 0 || (size_t)hashleni > outlen) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_HANDSHAKE_HASH,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
+    }
 
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL)
         goto err;
 
     if (!EVP_MD_CTX_copy_ex(ctx, hdgst)
-        || EVP_DigestFinal_ex(ctx, out, NULL) <= 0)
+        || EVP_DigestFinal_ex(ctx, out, NULL) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_HANDSHAKE_HASH,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
+    }
 
     *hashlen = hashleni;
 
@@ -4630,7 +4636,8 @@ int ssl_validate_ct(SSL *s)
 
     ctx = CT_POLICY_EVAL_CTX_new();
     if (ctx == NULL) {
-        SSLerr(SSL_F_SSL_VALIDATE_CT, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_VALIDATE_CT,
+                 ERR_R_MALLOC_FAILURE);
         goto end;
     }
 
@@ -4658,13 +4665,17 @@ int ssl_validate_ct(SSL *s)
      * ought to correspond to an inability to carry out its duties.
      */
     if (SCT_LIST_validate(scts, ctx) < 0) {
-        SSLerr(SSL_F_SSL_VALIDATE_CT, SSL_R_SCT_VERIFICATION_FAILED);
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_SSL_VALIDATE_CT,
+                 SSL_R_SCT_VERIFICATION_FAILED);
         goto end;
     }
 
     ret = s->ct_validation_callback(ctx, scts, s->ct_validation_callback_arg);
     if (ret < 0)
         ret = 0;                /* This function returns 0 on failure */
+    if (!ret)
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_SSL_VALIDATE_CT,
+                 SSL_R_CALLBACK_FAILED);
 
  end:
     CT_POLICY_EVAL_CTX_free(ctx);
@@ -4899,7 +4910,8 @@ static int nss_keylog_int(const char *prefix,
     prefix_len = strlen(prefix);
     out_len = prefix_len + (2*parameter_1_len) + (2*parameter_2_len) + 3;
     if ((out = cursor = OPENSSL_malloc(out_len)) == NULL) {
-        SSLerr(SSL_F_NSS_KEYLOG_INT, ERR_R_MALLOC_FAILURE);
+        SSLfatal(ssl, SSL_AD_INTERNAL_ERROR, SSL_F_NSS_KEYLOG_INT,
+                 ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -4932,7 +4944,8 @@ int ssl_log_rsa_client_key_exchange(SSL *ssl,
                                     size_t premaster_len)
 {
     if (encrypted_premaster_len < 8) {
-        SSLerr(SSL_F_SSL_LOG_RSA_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+        SSLfatal(ssl, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_SSL_LOG_RSA_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -4960,23 +4973,21 @@ int ssl_log_secret(SSL *ssl,
 
 #define SSLV2_CIPHER_LEN    3
 
-int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format,
-                         int *al)
+int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format)
 {
     int n;
 
     n = sslv2format ? SSLV2_CIPHER_LEN : TLS_CIPHER_LEN;
 
     if (PACKET_remaining(cipher_suites) == 0) {
-        SSLerr(SSL_F_SSL_CACHE_CIPHERLIST, SSL_R_NO_CIPHERS_SPECIFIED);
-        *al = SSL_AD_ILLEGAL_PARAMETER;
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_SSL_CACHE_CIPHERLIST,
+                 SSL_R_NO_CIPHERS_SPECIFIED);
         return 0;
     }
 
     if (PACKET_remaining(cipher_suites) % n != 0) {
-        SSLerr(SSL_F_SSL_CACHE_CIPHERLIST,
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL_CACHE_CIPHERLIST,
                SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
-        *al = SSL_AD_DECODE_ERROR;
         return 0;
     }
 
@@ -5000,8 +5011,9 @@ int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format,
         raw = OPENSSL_malloc(numciphers * TLS_CIPHER_LEN);
         s->s3->tmp.ciphers_raw = raw;
         if (raw == NULL) {
-            *al = SSL_AD_INTERNAL_ERROR;
-            goto err;
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_CACHE_CIPHERLIST,
+                     ERR_R_MALLOC_FAILURE);
+            return 0;
         }
         for (s->s3->tmp.ciphers_rawlen = 0;
              PACKET_remaining(&sslv2ciphers) > 0;
@@ -5012,41 +5024,40 @@ int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format,
                                               TLS_CIPHER_LEN))
                     || (leadbyte != 0
                         && !PACKET_forward(&sslv2ciphers, TLS_CIPHER_LEN))) {
-                *al = SSL_AD_DECODE_ERROR;
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL_CACHE_CIPHERLIST,
+                         SSL_R_BAD_PACKET);
                 OPENSSL_free(s->s3->tmp.ciphers_raw);
                 s->s3->tmp.ciphers_raw = NULL;
                 s->s3->tmp.ciphers_rawlen = 0;
-                goto err;
+                return 0;
             }
             if (leadbyte == 0)
                 s->s3->tmp.ciphers_rawlen += TLS_CIPHER_LEN;
         }
     } else if (!PACKET_memdup(cipher_suites, &s->s3->tmp.ciphers_raw,
                            &s->s3->tmp.ciphers_rawlen)) {
-        *al = SSL_AD_INTERNAL_ERROR;
-        goto err;
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_CACHE_CIPHERLIST,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
     }
     return 1;
- err:
-    return 0;
 }
 
 int SSL_bytes_to_cipher_list(SSL *s, const unsigned char *bytes, size_t len,
                              int isv2format, STACK_OF(SSL_CIPHER) **sk,
                              STACK_OF(SSL_CIPHER) **scsvs)
 {
-    int alert;
     PACKET pkt;
 
     if (!PACKET_buf_init(&pkt, bytes, len))
         return 0;
-    return bytes_to_cipher_list(s, &pkt, sk, scsvs, isv2format, &alert);
+    return bytes_to_cipher_list(s, &pkt, sk, scsvs, isv2format, 0);
 }
 
 int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
                          STACK_OF(SSL_CIPHER) **skp,
                          STACK_OF(SSL_CIPHER) **scsvs_out,
-                         int sslv2format, int *al)
+                         int sslv2format, int fatal)
 {
     const SSL_CIPHER *c;
     STACK_OF(SSL_CIPHER) *sk = NULL;
@@ -5058,23 +5069,32 @@ int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
     n = sslv2format ? SSLV2_CIPHER_LEN : TLS_CIPHER_LEN;
 
     if (PACKET_remaining(cipher_suites) == 0) {
-        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, SSL_R_NO_CIPHERS_SPECIFIED);
-        *al = SSL_AD_ILLEGAL_PARAMETER;
+        if (fatal)
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_BYTES_TO_CIPHER_LIST,
+                     SSL_R_NO_CIPHERS_SPECIFIED);
+        else
+            SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, SSL_R_NO_CIPHERS_SPECIFIED);
         return 0;
     }
 
     if (PACKET_remaining(cipher_suites) % n != 0) {
-        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST,
-               SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
-        *al = SSL_AD_DECODE_ERROR;
+        if (fatal)
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_BYTES_TO_CIPHER_LIST,
+                     SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
+        else
+            SSLerr(SSL_F_BYTES_TO_CIPHER_LIST,
+                   SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
         return 0;
     }
 
     sk = sk_SSL_CIPHER_new_null();
     scsvs = sk_SSL_CIPHER_new_null();
     if (sk == NULL || scsvs == NULL) {
-        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
-        *al = SSL_AD_INTERNAL_ERROR;
+        if (fatal)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_BYTES_TO_CIPHER_LIST,
+                     ERR_R_MALLOC_FAILURE);
+        else
+            SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -5092,15 +5112,21 @@ int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
         if (c != NULL) {
             if ((c->valid && !sk_SSL_CIPHER_push(sk, c)) ||
                 (!c->valid && !sk_SSL_CIPHER_push(scsvs, c))) {
-                SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
-                *al = SSL_AD_INTERNAL_ERROR;
+                if (fatal)
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                             SSL_F_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
+                else
+                    SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
         }
     }
     if (PACKET_remaining(cipher_suites) > 0) {
-        *al = SSL_AD_DECODE_ERROR;
-        SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, SSL_R_BAD_LENGTH);
+        if (fatal)
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_BYTES_TO_CIPHER_LIST,
+                     SSL_R_BAD_LENGTH);
+        else
+            SSLerr(SSL_F_BYTES_TO_CIPHER_LIST, SSL_R_BAD_LENGTH);
         goto err;
     }
 

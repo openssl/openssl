@@ -894,7 +894,8 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     if (SSL_IS_TLS13(s)) {
         /* Disallow DSA for TLS 1.3 */
         if (pkeyid == EVP_PKEY_DSA) {
-            SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS12_CHECK_PEER_SIGALG,
+                     SSL_R_WRONG_SIGNATURE_TYPE);
             return 0;
         }
         /* Only allow PSS for TLS 1.3 */
@@ -910,7 +911,8 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         || (SSL_IS_TLS13(s) && (lu->hash == NID_sha1 || lu->hash == NID_sha224))
         || (pkeyid != lu->sig
         && (lu->sig != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA))) {
-        SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS12_CHECK_PEER_SIGALG,
+                 SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
 #ifndef OPENSSL_NO_EC
@@ -918,8 +920,9 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
 
         /* Check point compression is permitted */
         if (!tls1_check_pkey_comp(s, pkey)) {
-            SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
-                   SSL_R_ILLEGAL_POINT_COMPRESSION);
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                     SSL_F_TLS12_CHECK_PEER_SIGALG,
+                     SSL_R_ILLEGAL_POINT_COMPRESSION);
             return 0;
         }
 
@@ -929,27 +932,32 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
             int curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
 
             if (lu->curve != NID_undef && curve != lu->curve) {
-                SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                         SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
                 return 0;
             }
         }
         if (!SSL_IS_TLS13(s)) {
             /* Check curve matches extensions */
             if (!tls1_check_group_id(s, tls1_get_group_id(pkey))) {
-                SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                         SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
                 return 0;
             }
             if (tls1_suiteb(s)) {
                 /* Check sigalg matches a permissible Suite B value */
                 if (sig != TLSEXT_SIGALG_ecdsa_secp256r1_sha256
                     && sig != TLSEXT_SIGALG_ecdsa_secp384r1_sha384) {
-                    SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,
-                           SSL_R_WRONG_SIGNATURE_TYPE);
+                    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
+                             SSL_F_TLS12_CHECK_PEER_SIGALG,
+                             SSL_R_WRONG_SIGNATURE_TYPE);
                     return 0;
                 }
             }
         }
     } else if (tls1_suiteb(s)) {
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS12_CHECK_PEER_SIGALG,
+                 SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
 #endif
@@ -963,12 +971,14 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     /* Allow fallback to SHA1 if not strict mode */
     if (i == sent_sigslen && (lu->hash != NID_sha1
         || s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)) {
-        SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS12_CHECK_PEER_SIGALG,
+                 SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
     if (!tls1_lookup_md(lu, &md)) {
-            SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_UNKNOWN_DIGEST);
-            return 0;
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS12_CHECK_PEER_SIGALG,
+                 SSL_R_UNKNOWN_DIGEST);
+        return 0;
     }
     if (md != NULL) {
         /*
@@ -980,7 +990,8 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         if (!ssl_security(s, SSL_SECOP_SIGALG_CHECK,
                     EVP_MD_size(md) * 4, EVP_MD_type(md),
                     (void *)sigalgstr)) {
-            SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS12_CHECK_PEER_SIGALG,
+                     SSL_R_WRONG_SIGNATURE_TYPE);
             return 0;
         }
     }
@@ -1074,7 +1085,6 @@ int tls_use_ticket(SSL *s)
 
 int tls1_set_server_sigalgs(SSL *s)
 {
-    int al;
     size_t i;
 
     /* Clear any shared signature algorithms */
@@ -1110,17 +1120,16 @@ int tls1_set_server_sigalgs(SSL *s)
     }
 
     if (!tls1_process_sigalgs(s)) {
-        SSLerr(SSL_F_TLS1_SET_SERVER_SIGALGS, ERR_R_MALLOC_FAILURE);
-        al = SSL_AD_INTERNAL_ERROR;
-        goto err;
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS1_SET_SERVER_SIGALGS, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
     if (s->cert->shared_sigalgs != NULL)
         return 1;
+
     /* Fatal error if no shared signature algorithms */
-    SSLerr(SSL_F_TLS1_SET_SERVER_SIGALGS, SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS);
-    al = SSL_AD_HANDSHAKE_FAILURE;
- err:
-    ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS1_SET_SERVER_SIGALGS,
+             SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS);
     return 0;
 }
 
@@ -2240,14 +2249,14 @@ static int tls12_get_cert_sigalg_idx(const SSL *s, const SIGALG_LOOKUP *lu)
  * Choose an appropriate signature algorithm based on available certificates
  * Sets chosen certificate and signature algorithm.
  *
- * For servers if we fail to find a required certificate it is a fatal error
- * and an appropriate error code is set and the TLS alert set in *al.
+ * For servers if we fail to find a required certificate it is a fatal error,
+ * an appropriate error code is set and a TLS alert is sent.
  *
- * For clients al is set to NULL. If a certificate is not suitable it is not
+ * For clients fatalerrs is set to 0. If a certificate is not suitable it is not
  * a fatal error: we will either try another certificate or not present one
  * to the server. In this case no error is set.
  */
-int tls_choose_sigalg(SSL *s, int *al)
+int tls_choose_sigalg(SSL *s, int fatalerrs)
 {
     const SIGALG_LOOKUP *lu = NULL;
     int sig_idx = -1;
@@ -2298,11 +2307,10 @@ int tls_choose_sigalg(SSL *s, int *al)
             break;
         }
         if (i == s->cert->shared_sigalgslen) {
-            if (al == NULL)
+            if (!fatalerrs)
                 return 1;
-            *al = SSL_AD_HANDSHAKE_FAILURE;
-            SSLerr(SSL_F_TLS_CHOOSE_SIGALG,
-                   SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_CHOOSE_SIGALG,
+                     SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
             return 0;
         }
     } else {
@@ -2354,10 +2362,10 @@ int tls_choose_sigalg(SSL *s, int *al)
                         break;
                 }
                 if (i == s->cert->shared_sigalgslen) {
-                    if (al == NULL)
+                    if (!fatalerrs)
                         return 1;
-                    *al = SSL_AD_INTERNAL_ERROR;
-                    SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CHOOSE_SIGALG,
+                             ERR_R_INTERNAL_ERROR);
                     return 0;
                 }
             } else {
@@ -2368,10 +2376,10 @@ int tls_choose_sigalg(SSL *s, int *al)
                 size_t sent_sigslen, i;
 
                 if ((lu = tls1_get_legacy_sigalg(s, -1)) == NULL) {
-                    if (al == NULL)
+                    if (!fatalerrs)
                         return 1;
-                    *al = SSL_AD_INTERNAL_ERROR;
-                    SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CHOOSE_SIGALG,
+                             ERR_R_INTERNAL_ERROR);
                     return 0;
                 }
 
@@ -2382,19 +2390,20 @@ int tls_choose_sigalg(SSL *s, int *al)
                         break;
                 }
                 if (i == sent_sigslen) {
-                    if (al == NULL)
+                    if (!fatalerrs)
                         return 1;
-                    SSLerr(SSL_F_TLS_CHOOSE_SIGALG, SSL_R_WRONG_SIGNATURE_TYPE);
-                    *al = SSL_AD_ILLEGAL_PARAMETER;
+                    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                             SSL_F_TLS_CHOOSE_SIGALG,
+                             SSL_R_WRONG_SIGNATURE_TYPE);
                     return 0;
                 }
             }
         } else {
             if ((lu = tls1_get_legacy_sigalg(s, -1)) == NULL) {
-                if (al == NULL)
+                if (!fatalerrs)
                     return 1;
-                *al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_TLS_CHOOSE_SIGALG, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CHOOSE_SIGALG,
+                         ERR_R_INTERNAL_ERROR);
                 return 0;
             }
         }

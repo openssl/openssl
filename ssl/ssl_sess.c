@@ -322,7 +322,8 @@ int ssl_generate_session_id(SSL *s, SSL_SESSION *ss)
         ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
         break;
     default:
-        SSLerr(SSL_F_SSL_GENERATE_SESSION_ID, SSL_R_UNSUPPORTED_SSL_VERSION);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_SESSION_ID,
+                 SSL_R_UNSUPPORTED_SSL_VERSION);
         return 0;
     }
 
@@ -360,8 +361,8 @@ int ssl_generate_session_id(SSL *s, SSL_SESSION *ss)
     tmp = (int)ss->session_id_length;
     if (!cb(s, ss->session_id, &tmp)) {
         /* The callback failed */
-        SSLerr(SSL_F_SSL_GENERATE_SESSION_ID,
-               SSL_R_SSL_SESSION_ID_CALLBACK_FAILED);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_SESSION_ID,
+                 SSL_R_SSL_SESSION_ID_CALLBACK_FAILED);
         return 0;
     }
     /*
@@ -370,15 +371,16 @@ int ssl_generate_session_id(SSL *s, SSL_SESSION *ss)
      */
     if (tmp == 0 || tmp > ss->session_id_length) {
         /* The callback set an illegal length */
-        SSLerr(SSL_F_SSL_GENERATE_SESSION_ID,
-               SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_SESSION_ID,
+                 SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH);
         return 0;
     }
     ss->session_id_length = tmp;
     /* Finally, check for a conflict */
     if (SSL_has_matching_session_id(s, ss->session_id,
                                     (unsigned int)ss->session_id_length)) {
-        SSLerr(SSL_F_SSL_GENERATE_SESSION_ID, SSL_R_SSL_SESSION_ID_CONFLICT);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_SESSION_ID,
+                 SSL_R_SSL_SESSION_ID_CONFLICT);
         return 0;
     }
 
@@ -391,8 +393,11 @@ int ssl_get_new_session(SSL *s, int session)
 
     SSL_SESSION *ss = NULL;
 
-    if ((ss = SSL_SESSION_new()) == NULL)
+    if ((ss = SSL_SESSION_new()) == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_NEW_SESSION,
+                 ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     /* If the context has a default timeout, use it */
     if (s->session_ctx->session_timeout == 0)
@@ -405,6 +410,7 @@ int ssl_get_new_session(SSL *s, int session)
 
     if (session) {
         if (!ssl_generate_session_id(s, ss)) {
+            /* SSLfatal() already called */
             SSL_SESSION_free(ss);
             return 0;
         }
@@ -412,7 +418,8 @@ int ssl_get_new_session(SSL *s, int session)
         if (s->ext.hostname) {
             ss->ext.hostname = OPENSSL_strdup(s->ext.hostname);
             if (ss->ext.hostname == NULL) {
-                SSLerr(SSL_F_SSL_GET_NEW_SESSION, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_NEW_SESSION,
+                         ERR_R_INTERNAL_ERROR);
                 SSL_SESSION_free(ss);
                 return 0;
             }
@@ -422,7 +429,8 @@ int ssl_get_new_session(SSL *s, int session)
     }
 
     if (s->sid_ctx_length > sizeof ss->sid_ctx) {
-        SSLerr(SSL_F_SSL_GET_NEW_SESSION, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_NEW_SESSION,
+                 ERR_R_INTERNAL_ERROR);
         SSL_SESSION_free(ss);
         return 0;
     }
@@ -456,7 +464,7 @@ int ssl_get_new_session(SSL *s, int session)
  *   - Both for new and resumed sessions, s->ext.ticket_expected is set to 1
  *     if the server should issue a new session ticket (to 0 otherwise).
  */
-int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
+int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
 {
     /* This is used only by servers. */
 
@@ -468,9 +476,9 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
     if (SSL_IS_TLS13(s)) {
         if (!tls_parse_extension(s, TLSEXT_IDX_psk_kex_modes,
                                  SSL_EXT_CLIENT_HELLO, hello->pre_proc_exts,
-                                 NULL, 0, al)
+                                 NULL, 0)
                 || !tls_parse_extension(s, TLSEXT_IDX_psk, SSL_EXT_CLIENT_HELLO,
-                                        hello->pre_proc_exts, NULL, 0, al))
+                                        hello->pre_proc_exts, NULL, 0))
             return -1;
 
         ret = s->session;
@@ -481,6 +489,8 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
         case TICKET_FATAL_ERR_MALLOC:
         case TICKET_FATAL_ERR_OTHER:
             fatal = 1;
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_PREV_SESSION,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
         case TICKET_NONE:
         case TICKET_EMPTY:
@@ -584,8 +594,8 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
          * noticing).
          */
 
-        SSLerr(SSL_F_SSL_GET_PREV_SESSION,
-               SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_PREV_SESSION,
+                 SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED);
         fatal = 1;
         goto err;
     }
@@ -604,8 +614,8 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
     if (ret->flags & SSL_SESS_FLAG_EXTMS) {
         /* If old session includes extms, but new does not: abort handshake */
         if (!(s->s3->flags & TLS1_FLAGS_RECEIVED_EXTMS)) {
-            SSLerr(SSL_F_SSL_GET_PREV_SESSION, SSL_R_INCONSISTENT_EXTMS);
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_SSL_GET_PREV_SESSION,
+                     SSL_R_INCONSISTENT_EXTMS);
             fatal = 1;
             goto err;
         }
@@ -640,10 +650,8 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
             s->ext.ticket_expected = 1;
         }
     }
-    if (fatal) {
-        *al = SSL_AD_INTERNAL_ERROR;
+    if (fatal)
         return -1;
-    }
 
     return 0;
 }

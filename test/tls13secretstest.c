@@ -207,6 +207,11 @@ const EVP_MD *ssl_md(int idx)
     return EVP_sha256();
 }
 
+void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
+                           int line)
+{
+}
+
 /* End of mocked out code */
 
 static int test_secret(SSL *s, unsigned char *prk,
