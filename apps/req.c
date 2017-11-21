@@ -159,7 +159,7 @@ int req_main(int argc, char **argv)
     char *template = default_config_file, *keyout = NULL;
     const char *keyalg = NULL;
     OPTION_CHOICE o;
-    int ret = 1, x509 = 0, days = 30, i = 0, newreq = 0, verbose = 0;
+    int ret = 1, x509 = 0, days = 0, i = 0, newreq = 0, verbose = 0;
     int pkey_type = -1, private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyform = FORMAT_PEM;
     int modulus = 0, multirdn = 0, verify = 0, noout = 0, text = 0;
@@ -334,7 +334,7 @@ int req_main(int argc, char **argv)
         goto opthelp;
 
     if (days && !x509)
-        BIO_printf(bio_err, "Ignoring -days; not generating a certificate");
+        BIO_printf(bio_err, "Ignoring -days; not generating a certificate\n");
     if (x509 && infile == NULL)
         newreq = 1;
 
@@ -617,6 +617,10 @@ int req_main(int argc, char **argv)
 
             if (!X509_set_issuer_name(x509ss, X509_REQ_get_subject_name(req)))
                 goto end;
+            if (days == 0) {
+                /* set default days if it's not specified */
+                days = 30;
+            }
             if (!set_cert_times(x509ss, NULL, NULL, days))
                 goto end;
             if (!X509_set_subject_name
