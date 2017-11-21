@@ -911,8 +911,6 @@ static int final_server_name(SSL *s, unsigned int context, int sent,
 
     case SSL_TLSEXT_ERR_NOACK:
         s->servername_done = 0;
-        if (s->server && s->session->ext.hostname != NULL)
-            s->ext.early_data_ok = 0;
         return 1;
 
     default:
