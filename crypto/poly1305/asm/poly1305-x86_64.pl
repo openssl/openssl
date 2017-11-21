@@ -26,11 +26,13 @@
 #
 # November 2017
 #
-# Convert AVX512F+VL+BW code path to pure AVX512F and limit it to
-# Knights Landing. Trouble is that Skylake-X can drop frequency when
-# executing AVX512 multiplication-intensive code, which negatively
-# affects overall system performance. Note that next processor,
-# Cannolake, will execute AVX512IFMA code path...
+# Convert AVX512F+VL+BW code path to pure AVX512F, so that it can be
+# executed even on Knights Landing. Trigger for modification was
+# observation that AVX512 code paths can negatively affect overall
+# Skylake-X system performance. Since we are likely to suppress
+# AVX512F capability flag [at least on Skylake-X], conversion serves
+# as kind of "investment protection". Note that next *lake processor,
+# Cannolake, has AVX512IFMA code path to execute...
 #
 # Numbers are cycles per processed byte with poly1305_blocks alone,
 # measured with rdtsc at fixed clock frequency.
@@ -43,7 +45,7 @@
 # Haswell	1.14/+175%	1.11		0.65
 # Skylake[-X]	1.13/+120%	0.96		0.51	[0.35]
 # Silvermont	2.83/+95%	-
-# Knights L	3.60/-		1.65		1.10	?
+# Knights L	3.60/?		1.65		1.10	?
 # Goldmont	1.70/+180%	-
 # VIA Nano	1.82/+150%	-
 # Sledgehammer	1.38/+160%	-
