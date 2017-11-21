@@ -101,6 +101,27 @@ In each table entry, the following keys are significant:
                            files.  On unix, this defaults to "" (NOTE:
                            this is here for future use, it's not
                            implemented yet)
+        shlib_variant   => A "variant" identifier inserted between the base
+                           shared library name and the extension.  On "unixy"
+                           platforms (BSD, Linux, Solaris, MacOS/X, ...) this
+                           supports installation of custom OpenSSL libraries
+                           that don't conflict with other builds of OpenSSL
+                           installed on the system.  The variant identifier
+                           becomes part of the SONAME of the library and also
+                           any symbol versions (symbol versions are not used or
+                           needed with MacOS/X).  For example, on a system
+                           where a default build would normally create the SSL
+                           shared library as 'libssl.so -> libssl.so.1.1' with
+                           the value of the symlink as the SONAME, a target
+                           definition that sets 'shlib_variant => "-abc"' will
+                           create 'libssl.so -> libssl-abc.so.1.1', again with
+                           an SONAME equal to the value of the symlink.  The
+                           symbol versions associated with the variant library
+                           would then be 'OPENSSL_ABC_<version>' rather than
+                           the default 'OPENSSL_<version>'. The string inserted
+                           into symbol versions is obtained by mapping all
+                           letters in the "variant" identifier to upper case
+                           and all non-alphanumeric characters to '_'.
 
         thread_scheme   => The type of threads is used on the
                            configured platform.  Currently known
