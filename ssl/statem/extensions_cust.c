@@ -112,8 +112,9 @@ void custom_ext_init(custom_ext_methods *exts)
 /* Pass received custom extension data to the application for parsing. */
 int custom_ext_parse(SSL *s, unsigned int context, unsigned int ext_type,
                      const unsigned char *ext_data, size_t ext_size, X509 *x,
-                     size_t chainidx, int *al)
+                     size_t chainidx)
 {
+    int al;
     custom_ext_methods *exts = &s->cert->custext;
     custom_ext_method *meth;
     ENDPOINT role = ENDPOINT_BOTH;
@@ -138,7 +139,8 @@ int custom_ext_parse(SSL *s, unsigned int context, unsigned int ext_type,
          * extensions not sent in ClientHello.
          */
         if ((meth->ext_flags & SSL_EXT_FLAG_SENT) == 0) {
-            *al = TLS1_AD_UNSUPPORTED_EXTENSION;
+            SSLfatal(s, TLS1_AD_UNSUPPORTED_EXTENSION, SSL_F_CUSTOM_EXT_PARSE,
+                     SSL_R_BAD_EXTENSION);
             return 0;
         }
     }
@@ -155,8 +157,13 @@ int custom_ext_parse(SSL *s, unsigned int context, unsigned int ext_type,
     if (!meth->parse_cb)
         return 1;
 
-    return meth->parse_cb(s, ext_type, context, ext_data, ext_size, x, chainidx,
-                          al, meth->parse_arg);
+    if (meth->parse_cb(s, ext_type, context, ext_data, ext_size, x, chainidx,
+                       &al, meth->parse_arg) <= 0) {
+        SSLfatal(s, al, SSL_F_CUSTOM_EXT_PARSE, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    return 1;
 }
 
 /*
@@ -164,11 +171,12 @@ int custom_ext_parse(SSL *s, unsigned int context, unsigned int ext_type,
  * buffer.
  */
 int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x, size_t chainidx,
-                   int maxversion, int *al)
+                   int maxversion)
 {
     custom_ext_methods *exts = &s->cert->custext;
     custom_ext_method *meth;
     size_t i;
+    int al;
 
     for (i = 0; i < exts->meths_count; i++) {
         const unsigned char *out = NULL;
@@ -197,11 +205,13 @@ int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x, size_t chainidx,
 
         if (meth->add_cb != NULL) {
             int cb_retval = meth->add_cb(s, meth->ext_type, context, &out,
-                                         &outlen, x, chainidx, al,
+                                         &outlen, x, chainidx, &al,
                                          meth->add_arg);
 
-            if (cb_retval < 0)
+            if (cb_retval < 0) {
+                SSLfatal(s, al, SSL_F_CUSTOM_EXT_ADD, SSL_R_CALLBACK_FAILED);
                 return 0;       /* error */
+            }
             if (cb_retval == 0)
                 continue;       /* skip this extension */
         }
@@ -210,7 +220,8 @@ int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x, size_t chainidx,
                 || !WPACKET_start_sub_packet_u16(pkt)
                 || (outlen > 0 && !WPACKET_memcpy(pkt, out, outlen))
                 || !WPACKET_close(pkt)) {
-            *al = SSL_AD_INTERNAL_ERROR;
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CUSTOM_EXT_ADD,
+                     ERR_R_INTERNAL_ERROR);
             return 0;
         }
         if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
@@ -218,7 +229,8 @@ int custom_ext_add(SSL *s, int context, WPACKET *pkt, X509 *x, size_t chainidx,
              * We can't send duplicates: code logic should prevent this.
              */
             if (!ossl_assert((meth->ext_flags & SSL_EXT_FLAG_SENT) == 0)) {
-                *al = SSL_AD_INTERNAL_ERROR;
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CUSTOM_EXT_ADD,
+                         ERR_R_INTERNAL_ERROR);
                 return 0;
             }
             /*

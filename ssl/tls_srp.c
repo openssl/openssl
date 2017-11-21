@@ -257,9 +257,13 @@ int srp_generate_server_master_secret(SSL *s)
         goto err;
 
     tmp_len = BN_num_bytes(K);
-    if ((tmp = OPENSSL_malloc(tmp_len)) == NULL)
+    if ((tmp = OPENSSL_malloc(tmp_len)) == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_SRP_GENERATE_SERVER_MASTER_SECRET, ERR_R_MALLOC_FAILURE);
         goto err;
+    }
     BN_bn2bin(K, tmp);
+    /* Calls SSLfatal() as required */
     ret = ssl_generate_master_secret(s, tmp, tmp_len, 1);
  err:
     BN_clear_free(K);

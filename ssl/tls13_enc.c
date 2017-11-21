@@ -59,6 +59,8 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
             || !WPACKET_finish(&pkt)) {
         EVP_PKEY_CTX_free(pctx);
         WPACKET_cleanup(&pkt);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_HKDF_EXPAND,
+                 ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -71,6 +73,10 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
             || EVP_PKEY_derive(pctx, out, &outlen) <= 0;
 
     EVP_PKEY_CTX_free(pctx);
+
+    if (ret != 0)
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_HKDF_EXPAND,
+                 ERR_R_INTERNAL_ERROR);
 
     return ret == 0;
 }
@@ -128,8 +134,11 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     static const char derived_secret_label[] = "derived";
     unsigned char preextractsec[EVP_MAX_MD_SIZE];
 
-    if (pctx == NULL)
+    if (pctx == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
+                 ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     mdlen = EVP_MD_size(md);
 
@@ -148,6 +157,8 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
         if (mctx == NULL
                 || EVP_DigestInit_ex(mctx, md, NULL) <= 0
                 || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
+                     ERR_R_INTERNAL_ERROR);
             EVP_MD_CTX_free(mctx);
             EVP_PKEY_CTX_free(pctx);
             return 0;
@@ -159,6 +170,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
                                (unsigned char *)derived_secret_label,
                                sizeof(derived_secret_label) - 1, hash, mdlen,
                                preextractsec, mdlen)) {
+            /* SSLfatal() already called */
             EVP_PKEY_CTX_free(pctx);
             return 0;
         }
@@ -177,6 +189,10 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
             || EVP_PKEY_derive(pctx, outsecret, &mdlen)
                <= 0;
 
+    if (ret != 0)
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
+                 ERR_R_INTERNAL_ERROR);
+
     EVP_PKEY_CTX_free(pctx);
     if (prevsecret == preextractsec)
         OPENSSL_cleanse(preextractsec, mdlen);
@@ -191,6 +207,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
 int tls13_generate_handshake_secret(SSL *s, const unsigned char *insecret,
                                 size_t insecretlen)
 {
+    /* Calls SSLfatal() if required */
     return tls13_generate_secret(s, ssl_handshake_md(s), s->early_secret,
                                  insecret, insecretlen,
                                  (unsigned char *)&s->handshake_secret);
@@ -208,6 +225,7 @@ int tls13_generate_master_secret(SSL *s, unsigned char *out,
     const EVP_MD *md = ssl_handshake_md(s);
 
     *secret_size = EVP_MD_size(md);
+    /* Calls SSLfatal() if required */
     return tls13_generate_secret(s, md, prev, NULL, 0, out);
 }
 
@@ -261,7 +279,8 @@ int tls13_setup_key_block(SSL *s)
     s->session->cipher = s->s3->tmp.new_cipher;
     if (!ssl_cipher_get_evp
         (s->session, &c, &hash, &mac_type, NULL, NULL, 0)) {
-        SSLerr(SSL_F_TLS13_SETUP_KEY_BLOCK, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_SETUP_KEY_BLOCK,
+                 SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
         return 0;
     }
 
@@ -285,7 +304,7 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
 
     if (!tls13_hkdf_expand(s, md, insecret, label, labellen, hash, hashlen,
                            secret, hashlen)) {
-        SSLerr(SSL_F_DERIVE_SECRET_KEY_AND_IV, ERR_R_INTERNAL_ERROR);
+        /* SSLfatal() already called */
         goto err;
     }
 
@@ -312,7 +331,7 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
 
     if (!tls13_derive_key(s, md, secret, key, keylen)
             || !tls13_derive_iv(s, md, secret, iv, ivlen)) {
-        SSLerr(SSL_F_DERIVE_SECRET_KEY_AND_IV, ERR_R_INTERNAL_ERROR);
+        /* SSLfatal() already called */
         goto err;
     }
 
@@ -321,7 +340,8 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
         || (taglen != 0 && !EVP_CIPHER_CTX_ctrl(ciph_ctx, EVP_CTRL_AEAD_SET_TAG,
                                                 taglen, NULL))
         || EVP_CipherInit_ex(ciph_ctx, NULL, NULL, key, NULL, -1) <= 0) {
-        SSLerr(SSL_F_DERIVE_SECRET_KEY_AND_IV, ERR_R_EVP_LIB);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DERIVE_SECRET_KEY_AND_IV,
+                 ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -361,7 +381,8 @@ int tls13_change_cipher_state(SSL *s, int which)
         } else {
             s->enc_read_ctx = EVP_CIPHER_CTX_new();
             if (s->enc_read_ctx == NULL) {
-                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
         }
@@ -375,7 +396,8 @@ int tls13_change_cipher_state(SSL *s, int which)
         } else {
             s->enc_write_ctx = EVP_CIPHER_CTX_new();
             if (s->enc_write_ctx == NULL) {
-                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
         }
@@ -401,8 +423,9 @@ int tls13_change_cipher_state(SSL *s, int which)
 
             handlen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
             if (handlen <= 0) {
-                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE,
-                       SSL_R_BAD_HANDSHAKE_LENGTH);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS13_CHANGE_CIPHER_STATE,
+                         SSL_R_BAD_HANDSHAKE_LENGTH);
                 goto err;
             }
 
@@ -417,14 +440,16 @@ int tls13_change_cipher_state(SSL *s, int which)
                 if (!ossl_assert(s->psksession != NULL
                         && s->max_early_data ==
                            s->psksession->ext.max_early_data)) {
-                    SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE,
-                           ERR_R_INTERNAL_ERROR);
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                             SSL_F_TLS13_CHANGE_CIPHER_STATE,
+                             ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
                 sslcipher = SSL_SESSION_get0_cipher(s->psksession);
             }
             if (sslcipher == NULL) {
-                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, SSL_R_BAD_PSK);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS13_CHANGE_CIPHER_STATE, SSL_R_BAD_PSK);
                 goto err;
             }
 
@@ -435,7 +460,8 @@ int tls13_change_cipher_state(SSL *s, int which)
              */
             mdctx = EVP_MD_CTX_new();
             if (mdctx == NULL) {
-                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             cipher = EVP_get_cipherbynid(SSL_CIPHER_get_cipher_nid(sslcipher));
@@ -443,7 +469,8 @@ int tls13_change_cipher_state(SSL *s, int which)
             if (md == NULL || !EVP_DigestInit_ex(mdctx, md, NULL)
                     || !EVP_DigestUpdate(mdctx, hdata, handlen)
                     || !EVP_DigestFinal_ex(mdctx, hashval, &hashlenui)) {
-                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
                 EVP_MD_CTX_free(mdctx);
                 goto err;
             }
@@ -501,7 +528,7 @@ int tls13_change_cipher_state(SSL *s, int which)
         cipher = s->s3->tmp.new_sym_enc;
         if (!ssl3_digest_cached_records(s, 1)
                 || !ssl_handshake_hash(s, hashval, sizeof(hashval), &hashlen)) {
-            SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+            /* SSLfatal() already called */;
             goto err;
         }
     }
@@ -526,7 +553,7 @@ int tls13_change_cipher_state(SSL *s, int which)
                                sizeof(resumption_master_secret) - 1,
                                hashval, hashlen, s->session->master_key,
                                hashlen)) {
-            SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+            /* SSLfatal() already called */
             goto err;
         }
         s->session->master_key_length = hashlen;
@@ -537,7 +564,7 @@ int tls13_change_cipher_state(SSL *s, int which)
                                sizeof(exporter_master_secret) - 1,
                                hash, hashlen, s->exporter_master_secret,
                                hashlen)) {
-            SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+            /* SSLfatal() already called */
             goto err;
         }
     }
@@ -545,6 +572,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, md, cipher,
                                   insecret, hash, label, labellen, secret, iv,
                                   ciph_ctx)) {
+        /* SSLfatal() already called */
         goto err;
     }
 
@@ -554,14 +582,14 @@ int tls13_change_cipher_state(SSL *s, int which)
         memcpy(s->client_app_traffic_secret, secret, hashlen);
 
     if (!ssl_log_secret(s, log_label, secret, hashlen)) {
-        SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+        /* SSLfatal() already called */
         goto err;
     }
 
     if (finsecret != NULL
             && !tls13_derive_finishedkey(s, ssl_handshake_md(s), secret,
                                          finsecret, finsecretlen)) {
-        SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+        /* SSLfatal() already called */
         goto err;
     }
 
@@ -600,8 +628,10 @@ int tls13_update_key(SSL *s, int sending)
                                   s->s3->tmp.new_sym_enc, insecret, NULL,
                                   application_traffic,
                                   sizeof(application_traffic) - 1, secret, iv,
-                                  ciph_ctx))
+                                  ciph_ctx)) {
+        /* SSLfatal() already called */
         goto err;
+    }
 
     memcpy(insecret, secret, hashlen);
 
