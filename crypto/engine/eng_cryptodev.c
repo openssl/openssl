@@ -1511,6 +1511,13 @@ void ENGINE_load_cryptodev(void)
                 cryptodev_rsa.rsa_mod_exp = cryptodev_rsa_mod_exp;
             else
                 cryptodev_rsa.rsa_mod_exp = cryptodev_rsa_nocrt_mod_exp;
+        } else {
+            /* For software fallback, make sure that the values of
+             * _method_mod_* are cached to avoid artificial performance
+             * degradation. Use the default init and finish methods to set the
+             * cache flags and free allocated memory at the end */
+            cryptodev_rsa.init = rsa_meth->init;
+            cryptodev_rsa.finish = rsa_meth->finish;
         }
     }
 
