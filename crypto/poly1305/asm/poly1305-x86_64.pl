@@ -1691,7 +1691,6 @@ poly1305_blocks_avx2:
 .Leven_avx2:
 .cfi_startproc
 	mov		OPENSSL_ia32cap_P+8(%rip),%r10d
-	mov		\$`(1<<31|1<<30|1<<16)`,%r11d
 	vmovd		4*0($ctx),%x#$H0	# load hash value base 2^26
 	vmovd		4*1($ctx),%x#$H1
 	vmovd		4*2($ctx),%x#$H2
@@ -1704,8 +1703,8 @@ $code.=<<___		if ($avx>2);
 	cmp		\$512,$len
 	jb		.Lskip_avx512
 	and		%r11d,%r10d
-	cmp		\$`1<<16`,%r10d		# check for AVX512F alone
-	je		.Lblocks_avx512
+	test		\$`1<<16`,%r10d		# check for AVX512F
+	jnz		.Lblocks_avx512
 .Lskip_avx512:
 ___
 $code.=<<___	if (!$win64);
