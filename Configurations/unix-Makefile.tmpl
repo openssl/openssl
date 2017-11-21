@@ -8,6 +8,7 @@
      our $exeext = $target{exe_extension} || "";
      our $libext = $target{lib_extension} || ".a";
      our $shlibext = $target{shared_extension} || ".so";
+     our $shlibvariant = $target{shlib_variant} || "";
      our $shlibextsimple = $target{shared_extension_simple} || ".so";
      our $shlibextimport = $target{shared_import_extension} || "";
      our $dsoext = $target{dso_extension} || ".so";
@@ -40,7 +41,7 @@
      sub shlib {
          my $lib = shift;
          return () if $disabled{shared} || $lib =~ /\.a$/;
-         return $unified_info{sharednames}->{$lib} . '$(SHLIB_EXT)';
+         return $unified_info{sharednames}->{$lib}. $shlibvariant. '$(SHLIB_EXT)';
      }
      sub shlib_simple {
          my $lib = shift;
