@@ -116,22 +116,22 @@ indir "store_$$" => sub {
 
         foreach (@noexist_files) {
             my $file = srctop_file($_);
-        SKIP: {
-                ok(!run(app(["openssl", "storeutl", $file])));
-                ok(!run(app(["openssl", "storeutl", to_abs_file($file)])));
 
-                skip "No test of URI form of $file for mingw", 1 if $msys_mingw;
+            ok(!run(app(["openssl", "storeutl", $file])));
+            ok(!run(app(["openssl", "storeutl", to_abs_file($file)])));
+            {
+                local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
 
                 ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
             }
         }
         foreach (@src_files) {
             my $file = srctop_file($_);
-        SKIP: {
-                ok(run(app(["openssl", "storeutl", $file])));
-                ok(run(app(["openssl", "storeutl", to_abs_file($file)])));
 
-                skip "No test of URI form of $file for mingw", 4 if $msys_mingw;
+            ok(run(app(["openssl", "storeutl", $file])));
+            ok(run(app(["openssl", "storeutl", to_abs_file($file)])));
+            {
+                local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
 
                 ok(run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
                 ok(run(app(["openssl", "storeutl",
@@ -143,13 +143,13 @@ indir "store_$$" => sub {
             }
         }
         foreach (@generated_files) {
-        SKIP: {
-                ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
-                            $_])));
-                ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
-                            to_abs_file($_)])));
+            ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
+                        $_])));
+            ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
+                        to_abs_file($_)])));
 
-                skip "No test of URI form of $_ for mingw", 2 if $msys_mingw;
+            {
+                local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
 
                 ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
                             to_abs_file_uri($_)])));
@@ -158,26 +158,22 @@ indir "store_$$" => sub {
             }
         }
         foreach (values %generated_file_files) {
-        SKIP: {
-                skip "No test of $_ for mingw", 1 if $msys_mingw;
+            local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
 
-                ok(run(app(["openssl", "storeutl", $_])));
-            }
+            ok(run(app(["openssl", "storeutl", $_])));
         }
         foreach (@noexist_file_files) {
-        SKIP: {
-                skip "No test of $_ for mingw", 1 if $msys_mingw;
+            local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
 
-                ok(!run(app(["openssl", "storeutl", $_])));
-            }
+            ok(!run(app(["openssl", "storeutl", $_])));
         }
         {
             my $dir = srctop_dir("test", "certs");
-        SKIP: {
-                ok(run(app(["openssl", "storeutl", $dir])));
-                ok(run(app(["openssl", "storeutl", to_abs_file($dir, 1)])));
 
-                skip "No test of URI form of $dir for mingw", 1 if $msys_mingw;
+            ok(run(app(["openssl", "storeutl", $dir])));
+            ok(run(app(["openssl", "storeutl", to_abs_file($dir, 1)])));
+            {
+                local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
 
                 ok(run(app(["openssl", "storeutl", to_abs_file_uri($dir, 1)])));
             }

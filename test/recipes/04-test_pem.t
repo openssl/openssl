@@ -88,7 +88,11 @@ SKIP: {
     skip "DSA support disabled, skipping...", (scalar keys %dsa_expected) unless !disabled("dsa");
     foreach my $input (keys %dsa_expected) {
         my @common = ($cmd, "pkey", "-inform", "PEM", "-passin", "file:" . data_file("wellknown"), "-noout", "-text", "-in");
-        my @data = run(app([@common, data_file($input)], stderr => undef), capture => 1);
+        my @data;
+        {
+            local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
+            @data = run(app([@common, data_file($input)], stderr => undef), capture => 1);
+        }
         my @match = grep /68:42:02:16:63:54:16:eb:06:5c:ab:06:72:3b:78:/, @data;
         is((scalar @match > 0 ? 1 : 0), $dsa_expected{$input});
     }
