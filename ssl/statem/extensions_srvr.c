@@ -1080,8 +1080,11 @@ EXT_RETURN tls_construct_stoc_status_request(SSL *s, WPACKET *pkt,
      * send back an empty extension, with the certificate status appearing as a
      * separate message
      */
-    if ((SSL_IS_TLS13(s) && !tls_construct_cert_status_body(s, pkt))
-            || !WPACKET_close(pkt)) {
+    if (SSL_IS_TLS13(s) && !tls_construct_cert_status_body(s, pkt)) {
+       /* SSLfatal() already called */
+       return EXT_RETURN_FAIL; 
+    }
+    if (!WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_STOC_STATUS_REQUEST, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;

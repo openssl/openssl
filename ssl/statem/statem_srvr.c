@@ -171,10 +171,9 @@ int ossl_statem_server_read_transition(SSL *s, int mt)
                          * not going to accept it because we require a client
                          * cert.
                          */
-                        ssl3_send_alert(s, SSL3_AL_FATAL,
-                                        SSL3_AD_HANDSHAKE_FAILURE);
-                        SSLerr(SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION,
-                               SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
+                        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
+                                 SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION,
+                                 SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
                         return 0;
                     }
                     st->hand_state = TLS_ST_SR_KEY_EXCH;
@@ -379,6 +378,9 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
     switch (st->hand_state) {
     default:
         /* Shouldn't happen */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_OSSL_STATEM_SERVER13_WRITE_TRANSITION,
+                 ERR_R_INTERNAL_ERROR);
         return WRITE_TRAN_ERROR;
 
     case TLS_ST_OK:
@@ -478,6 +480,9 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
     switch (st->hand_state) {
     default:
         /* Shouldn't happen */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_OSSL_STATEM_SERVER_WRITE_TRANSITION,
+                 ERR_R_INTERNAL_ERROR);
         return WRITE_TRAN_ERROR;
 
     case TLS_ST_OK:
@@ -631,8 +636,10 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
 
     case TLS_ST_SW_SRVR_DONE:
 #ifndef OPENSSL_NO_SCTP
-        if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s)))
+        if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s))) {
+            /* Calls SSLfatal() as required */
             return dtls_wait_for_dry(s);
+        }
 #endif
         return WORK_FINISHED_CONTINUE;
 
@@ -642,6 +649,8 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
              * Actually this is the end of the handshake, but we're going
              * straight into writing the session ticket out. So we finish off
              * the handshake, but keep the various buffers active.
+             * 
+             * Calls SSLfatal as required.
              */
             return tls_finish_handshake(s, wst, 0);
         } if (SSL_IS_DTLS(s)) {
@@ -676,6 +685,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
         /* Fall through */
 
     case TLS_ST_OK:
+        /* Calls SSLfatal() as required */
         return tls_finish_handshake(s, wst, 1);
     }
 
@@ -743,7 +753,9 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
                                            sizeof(sctpauthkey), labelbuffer,
                                            sizeof(labelbuffer), NULL, 0,
                                            0) <= 0) {
-                ossl_statem_set_error(s);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_OSSL_STATEM_SERVER_POST_WORK,
+                         ERR_R_INTERNAL_ERROR);
                 return WORK_ERROR;
             }
 
@@ -760,13 +772,17 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
         if (SSL_IS_TLS13(s)) {
             if (!s->method->ssl3_enc->setup_key_block(s)
                 || !s->method->ssl3_enc->change_cipher_state(s,
-                        SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_WRITE))
+                        SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_WRITE)) {
+                /* SSLfatal() already called */
                 return WORK_ERROR;
+            }
 
             if (s->ext.early_data != SSL_EARLY_DATA_ACCEPTED
                 && !s->method->ssl3_enc->change_cipher_state(s,
-                        SSL3_CC_HANDSHAKE |SSL3_CHANGE_CIPHER_SERVER_READ))
+                        SSL3_CC_HANDSHAKE |SSL3_CHANGE_CIPHER_SERVER_READ)) {
+                /* SSLfatal() already called */
                 return WORK_ERROR;
+            }
         }
         break;
 
@@ -824,8 +840,10 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
     case TLS_ST_SW_KEY_UPDATE:
         if (statem_flush(s) != 1)
             return WORK_MORE_A;
-        if (!tls13_update_key(s, 1))
+        if (!tls13_update_key(s, 1)) {
+            /* SSLfatal() already called */
             return WORK_ERROR;
+        }
         break;
 
     case TLS_ST_SW_SESSION_TICKET:
@@ -1021,6 +1039,9 @@ MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL *s, PACKET *pkt)
     switch (st->hand_state) {
     default:
         /* Shouldn't happen */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_OSSL_STATEM_SERVER_PROCESS_MESSAGE,
+                 ERR_R_INTERNAL_ERROR);
         return MSG_PROCESS_ERROR;
 
     case TLS_ST_SR_CLNT_HELLO:
@@ -1066,6 +1087,9 @@ WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
     switch (st->hand_state) {
     default:
         /* Shouldn't happen */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_OSSL_STATEM_SERVER_POST_PROCESS_MESSAGE,
+                 ERR_R_INTERNAL_ERROR);
         return WORK_ERROR;
 
     case TLS_ST_SR_CLNT_HELLO:
@@ -2899,8 +2923,8 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
     return ret;
 #else
     /* Should never happen */
-    *al = SSL_AD_INTERNAL_ERROR;
-    SSLerr(SSL_F_TLS_PROCESS_CKE_RSA, ERR_R_INTERNAL_ERROR);
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
+             ERR_R_INTERNAL_ERROR);
     return 0;
 #endif
 }
@@ -3707,7 +3731,8 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             || !WPACKET_allocate_bytes(pkt, hlen, &macdata2)
             || macdata1 != macdata2
             || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     if (SSL_IS_TLS13(s)
@@ -3738,7 +3763,8 @@ int tls_construct_cert_status_body(SSL *s, WPACKET *pkt)
     if (!WPACKET_put_bytes_u8(pkt, s->ext.status_type)
             || !WPACKET_sub_memcpy_u24(pkt, s->ext.ocsp.resp,
                                        s->ext.ocsp.resp_len)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CERT_STATUS_BODY, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_STATUS_BODY,
+                 ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -3748,7 +3774,7 @@ int tls_construct_cert_status_body(SSL *s, WPACKET *pkt)
 int tls_construct_cert_status(SSL *s, WPACKET *pkt)
 {
     if (!tls_construct_cert_status_body(s, pkt)) {
-        ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+        /* SSLfatal() already called */
         return 0;
     }
 
