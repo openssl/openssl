@@ -1018,8 +1018,11 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
             BUF_MEM_free(s->init_buf);
             s->init_buf = NULL;
         }
-        if (!ssl_free_wbio_buffer(s))
+        if (!ssl_free_wbio_buffer(s)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_FINISH_HANDSHAKE,
+                     ERR_R_INTERNAL_ERROR);
             return WORK_ERROR;
+        }
         s->init_num = 0;
     }
 

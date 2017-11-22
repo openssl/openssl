@@ -2507,7 +2507,7 @@ __owur int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
 
 __owur int srp_generate_server_master_secret(SSL *s);
 __owur int srp_generate_client_master_secret(SSL *s);
-__owur int srp_verify_server_param(SSL *s, int *al);
+__owur int srp_verify_server_param(SSL *s);
 
 /* statem/extensions_cust.c */
 

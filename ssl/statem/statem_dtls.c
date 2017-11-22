@@ -903,8 +903,11 @@ WORK_STATE dtls_wait_for_dry(SSL *s)
 
     /* read app data until dry event */
     ret = BIO_dgram_sctp_wait_for_dry(SSL_get_wbio(s));
-    if (ret < 0)
+    if (ret < 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DTLS_WAIT_FOR_DRY,
+                 ERR_R_INTERNAL_ERROR);
         return WORK_ERROR;
+    }
 
     if (ret == 0) {
         s->s3->in_read_app_data = 2;
