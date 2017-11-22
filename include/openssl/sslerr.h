@@ -56,6 +56,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST        385
 # define SSL_F_DTLS_GET_REASSEMBLED_MESSAGE               370
 # define SSL_F_DTLS_PROCESS_HELLO_VERIFY                  386
+# define SSL_F_DTLS_WAIT_FOR_DRY                          592
 # define SSL_F_EARLY_DATA_COUNT_OK                        532
 # define SSL_F_FINAL_EARLY_DATA                           556
 # define SSL_F_FINAL_EC_PT_FORMATS                        485
@@ -69,8 +70,12 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_NSS_KEYLOG_INT                             500
 # define SSL_F_OPENSSL_INIT_SSL                           342
 # define SSL_F_OSSL_STATEM_CLIENT13_READ_TRANSITION       436
+# define SSL_F_OSSL_STATEM_CLIENT13_WRITE_TRANSITION      598
 # define SSL_F_OSSL_STATEM_CLIENT_CONSTRUCT_MESSAGE       430
+# define SSL_F_OSSL_STATEM_CLIENT_POST_PROCESS_MESSAGE    593
+# define SSL_F_OSSL_STATEM_CLIENT_PROCESS_MESSAGE         594
 # define SSL_F_OSSL_STATEM_CLIENT_READ_TRANSITION         417
+# define SSL_F_OSSL_STATEM_CLIENT_WRITE_TRANSITION        599
 # define SSL_F_OSSL_STATEM_SERVER13_READ_TRANSITION       437
 # define SSL_F_OSSL_STATEM_SERVER_CONSTRUCT_MESSAGE       431
 # define SSL_F_OSSL_STATEM_SERVER_READ_TRANSITION         418
@@ -78,7 +83,9 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_PROCESS_KEY_SHARE_EXT                      439
 # define SSL_F_READ_STATE_MACHINE                         352
 # define SSL_F_SET_CLIENT_CIPHERSUITE                     540
+# define SSL_F_SRP_GENERATE_CLIENT_MASTER_SECRET          595
 # define SSL_F_SRP_GENERATE_SERVER_MASTER_SECRET          589
+# define SSL_F_SRP_VERIFY_SERVER_PARAM                    596
 # define SSL_F_SSL3_CHANGE_CIPHER_STATE                   129
 # define SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM              130
 # define SSL_F_SSL3_CTRL                                  213
@@ -325,6 +332,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS        544
 # define SSL_F_TLS_CONSTRUCT_STOC_USE_SRTP                462
 # define SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO        521
+# define SSL_F_TLS_FINISH_HANDSHAKE                       597
 # define SSL_F_TLS_GET_MESSAGE_BODY                       351
 # define SSL_F_TLS_GET_MESSAGE_HEADER                     387
 # define SSL_F_TLS_HANDLE_ALPN                            562
@@ -510,6 +518,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_INCONSISTENT_EARLY_DATA_ALPN               222
 # define SSL_R_INCONSISTENT_EARLY_DATA_SNI                231
 # define SSL_R_INCONSISTENT_EXTMS                         104
+# define SSL_R_INSUFFICIENT_SECURITY                      241
 # define SSL_R_INVALID_ALERT                              205
 # define SSL_R_INVALID_CERTIFICATE_OR_ALG                 238
 # define SSL_R_INVALID_COMMAND                            280
