@@ -547,6 +547,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_LIBRARY_HAS_NO_CIPHERS                     161
 # define SSL_R_MISSING_DSA_SIGNING_CERT                   165
 # define SSL_R_MISSING_ECDSA_SIGNING_CERT                 381
+# define SSL_R_MISSING_FATAL                              256
 # define SSL_R_MISSING_RSA_CERTIFICATE                    168
 # define SSL_R_MISSING_RSA_ENCRYPTING_CERT                169
 # define SSL_R_MISSING_RSA_SIGNING_CERT                   170
