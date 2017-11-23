@@ -1740,11 +1740,10 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
  * @s: client SSL handle.
  * @version: The proposed version from the server's HELLO.
  * @checkdgrd: Whether to check the downgrade sentinels in the server_random
- * @al: Where to store any alert value that may be generated
  *
- * Returns 0 on success or an SSL error reason number on failure.
+ * Returns 1 on success or 0 on error.
  */
-int ssl_choose_client_version(SSL *s, int version, int checkdgrd, int *al)
+int ssl_choose_client_version(SSL *s, int version, int checkdgrd)
 {
     const version_info *vent;
     const version_info *table;
@@ -1755,15 +1754,18 @@ int ssl_choose_client_version(SSL *s, int version, int checkdgrd, int *al)
         version = TLS1_3_VERSION;
 
     if (s->hello_retry_request && version != TLS1_3_VERSION) {
-        *al = SSL_AD_PROTOCOL_VERSION;
-        return SSL_R_WRONG_SSL_VERSION;
+        SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_F_SSL_CHOOSE_CLIENT_VERSION,
+                 SSL_R_WRONG_SSL_VERSION);
+        return 0;
     }
 
     switch (s->method->version) {
     default:
         if (version != s->version) {
-            *al = SSL_AD_PROTOCOL_VERSION;
-            return SSL_R_WRONG_SSL_VERSION;
+            SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
+                     SSL_F_SSL_CHOOSE_CLIENT_VERSION,
+                     SSL_R_WRONG_SSL_VERSION);
+            return 0;
         }
         /*
          * If this SSL handle is not from a version flexible method we don't
@@ -1772,7 +1774,7 @@ int ssl_choose_client_version(SSL *s, int version, int checkdgrd, int *al)
          * versions they don't want.  If not, then easy to fix, just return
          * ssl_method_error(s, s->method)
          */
-        return 0;
+        return 1;
     case TLS_ANY_VERSION:
         table = tls_version_table;
         break;
@@ -1795,8 +1797,9 @@ int ssl_choose_client_version(SSL *s, int version, int checkdgrd, int *al)
         err = ssl_method_error(s, method);
         if (err != 0) {
             if (version == vent->version) {
-                *al = SSL_AD_PROTOCOL_VERSION;
-                return err;
+                SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
+                         SSL_F_SSL_CHOOSE_CLIENT_VERSION, err);
+                return 0;
             }
 
             continue;
@@ -1815,8 +1818,10 @@ int ssl_choose_client_version(SSL *s, int version, int checkdgrd, int *al)
                            s->s3->server_random + SSL3_RANDOM_SIZE
                                                 - sizeof(tls12downgrade),
                            sizeof(tls12downgrade)) == 0) {
-                    *al = SSL_AD_ILLEGAL_PARAMETER;
-                    return SSL_R_INAPPROPRIATE_FALLBACK;
+                    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                             SSL_F_SSL_CHOOSE_CLIENT_VERSION,
+                             SSL_R_INAPPROPRIATE_FALLBACK);
+                    return 0;
                 }
             } else if (!SSL_IS_DTLS(s)
                        && version < TLS1_2_VERSION
@@ -1825,8 +1830,10 @@ int ssl_choose_client_version(SSL *s, int version, int checkdgrd, int *al)
                            s->s3->server_random + SSL3_RANDOM_SIZE
                                                 - sizeof(tls11downgrade),
                            sizeof(tls11downgrade)) == 0) {
-                    *al = SSL_AD_ILLEGAL_PARAMETER;
-                    return SSL_R_INAPPROPRIATE_FALLBACK;
+                    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                             SSL_F_SSL_CHOOSE_CLIENT_VERSION,
+                             SSL_R_INAPPROPRIATE_FALLBACK);
+                    return 0;
                 }
             }
         }
@@ -1834,11 +1841,12 @@ int ssl_choose_client_version(SSL *s, int version, int checkdgrd, int *al)
 
         s->method = method;
         s->version = version;
-        return 0;
+        return 1;
     }
 
-    *al = SSL_AD_PROTOCOL_VERSION;
-    return SSL_R_UNSUPPORTED_PROTOCOL;
+    SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_F_SSL_CHOOSE_CLIENT_VERSION,
+             SSL_R_UNSUPPORTED_PROTOCOL);
+    return 0;
 }
 
 /*

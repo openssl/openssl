@@ -1102,11 +1102,11 @@ WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
 }
 
 #ifndef OPENSSL_NO_SRP
-static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
+/* Returns 1 on success, 0 for retryable error, -1 for fatal error */
+static int ssl_check_srp_ext_ClientHello(SSL *s)
 {
-    int ret = SSL_ERROR_NONE;
-
-    *al = SSL_AD_UNRECOGNIZED_NAME;
+    int ret;
+    int al = SSL_AD_UNRECOGNIZED_NAME;
 
     if ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_kSRP) &&
         (s->srp_ctx.TLS_ext_srp_username_callback != NULL)) {
@@ -1115,13 +1115,24 @@ static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
              * RFC 5054 says SHOULD reject, we do so if There is no srp
              * login name
              */
-            ret = SSL3_AL_FATAL;
-            *al = SSL_AD_UNKNOWN_PSK_IDENTITY;
+            SSLfatal(s, SSL_AD_UNKNOWN_PSK_IDENTITY,
+                     SSL_F_SSL_CHECK_SRP_EXT_CLIENTHELLO,
+                     SSL_R_PSK_IDENTITY_NOT_FOUND);
+            return -1;
         } else {
-            ret = SSL_srp_server_param_with_username(s, al);
+            ret = SSL_srp_server_param_with_username(s, &al);
+            if (ret < 0)
+                return 0;
+            if (ret == SSL3_AL_FATAL) {
+                SSLfatal(s, al, SSL_F_SSL_CHECK_SRP_EXT_CLIENTHELLO,
+                         al == SSL_AD_UNKNOWN_PSK_IDENTITY
+                         ? SSL_R_PSK_IDENTITY_NOT_FOUND
+                         : SSL_R_CLIENTHELLO_TLSEXT);
+                return -1;
+            }
         }
     }
-    return ret;
+    return 1;
 }
 #endif
 
@@ -1986,7 +1997,7 @@ static int tls_handle_status_request(SSL *s)
 
 /*
  * Call the alpn_select callback if needed. Upon success, returns 1.
- * Upon failure, returns 0 and sets |*al| to the appropriate fatal alert.
+ * Upon failure, returns 0.
  */
 int tls_handle_alpn(SSL *s)
 {
@@ -2058,7 +2069,6 @@ int tls_handle_alpn(SSL *s)
 
 WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
 {
-    int al = SSL_AD_HANDSHAKE_FAILURE;
     const SSL_CIPHER *cipher;
 
     if (wst == WORK_MORE_A) {
@@ -2158,24 +2168,15 @@ WORK_STATE tls_post_process_client_hello(SSL *s, WORK_STATE wst)
 #ifndef OPENSSL_NO_SRP
     if (wst == WORK_MORE_C) {
         int ret;
-        if ((ret = ssl_check_srp_ext_ClientHello(s, &al)) < 0) {
+        if ((ret = ssl_check_srp_ext_ClientHello(s)) == 0) {
             /*
              * callback indicates further work to be done
              */
             s->rwstate = SSL_X509_LOOKUP;
             return WORK_MORE_C;
         }
-        if (ret != SSL_ERROR_NONE) {
-            /*
-             * This is not really an error but the only means to for
-             * a client to detect whether srp is supported.
-             */
-            if (al != TLS1_AD_UNKNOWN_PSK_IDENTITY)
-                SSLfatal(s, al, SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
-                       SSL_R_CLIENTHELLO_TLSEXT);
-            else
-                SSLfatal(s, al, SSL_F_TLS_POST_PROCESS_CLIENT_HELLO,
-                         SSL_R_PSK_IDENTITY_NOT_FOUND);
+        if (ret < 0) {
+            /* SSLfatal() already called */
             goto err;
         }
     }

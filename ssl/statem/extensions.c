@@ -439,12 +439,11 @@ int extension_is_relevant(SSL *s, unsigned int extctx, unsigned int thisctx)
 /*
  * Gather a list of all the extensions from the data in |packet]. |context|
  * tells us which message this extension is for. The raw extension data is
- * stored in |*res| on success. In the event of an error the alert type to use
- * is stored in |*al|. We don't actually process the content of the extensions
- * yet, except to check their types. This function also runs the initialiser
- * functions for all known extensions if |init| is nonzero (whether we have
- * collected them or not). If successful the caller is responsible for freeing
- * the contents of |*res|.
+ * stored in |*res| on success. We don't actually process the content of the
+ * extensions yet, except to check their types. This function also runs the
+ * initialiser functions for all known extensions if |init| is nonzero (whether
+ * we have collected them or not). If successful the caller is responsible for
+ * freeing the contents of |*res|.
  *
  * Per http://tools.ietf.org/html/rfc5246#section-7.4.1.4, there may not be
  * more than one extension of the same type in a ClientHello or ServerHello.
@@ -579,9 +578,8 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
  * given |context| and the parser has not already been run. If this is for a
  * Certificate message, then we also provide the parser with the relevant
  * Certificate |x| and its position in the |chainidx| with 0 being the first
- * Certificate. Returns 1 on success or 0 on failure. In the event of a failure
- * |*al| is populated with a suitable alert code. If an extension is not present
- * this counted as success.
+ * Certificate. Returns 1 on success or 0 on failure. If an extension is not
+ * present this counted as success.
  */
 int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
                         RAW_EXTENSION *exts, X509 *x, size_t chainidx)
@@ -631,8 +629,7 @@ int tls_parse_extension(SSL *s, TLSEXT_INDEX idx, int context,
  * finalisation for all extensions at the end if |fin| is nonzero, whether we
  * collected them or not. Returns 1 for success or 0 for failure. If we are
  * working on a Certificate message then we also pass the Certificate |x| and
- * its position in the |chainidx|, with 0 being the first certificate. On
- * failure, |*al| is populated with a suitable alert code.
+ * its position in the |chainidx|, with 0 being the first certificate.
  */
 int tls_parse_all_extensions(SSL *s, int context, RAW_EXTENSION *exts, X509 *x,
                              size_t chainidx, int fin)
@@ -782,8 +779,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
  * Built in extension finalisation and initialisation functions. All initialise
  * or finalise the associated extension type for the given |context|. For
  * finalisers |sent| is set to 1 if we saw the extension during parsing, and 0
- * otherwise. These functions return 1 on success or 0 on failure. In the event
- * of a failure then |*al| is populated with a suitable error code.
+ * otherwise. These functions return 1 on success or 0 on failure.
  */
 
 static int final_renegotiate(SSL *s, unsigned int context, int sent)

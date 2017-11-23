@@ -132,7 +132,9 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_CERT_SET0_CHAIN                        340
 # define SSL_F_SSL_CHECK_PRIVATE_KEY                      163
 # define SSL_F_SSL_CHECK_SERVERHELLO_TLSEXT               280
+# define SSL_F_SSL_CHECK_SRP_EXT_CLIENTHELLO              606
 # define SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG            279
+# define SSL_F_SSL_CHOOSE_CLIENT_VERSION                  607
 # define SSL_F_SSL_CIPHER_LIST_TO_BYTES                   425
 # define SSL_F_SSL_CIPHER_PROCESS_RULESTR                 230
 # define SSL_F_SSL_CIPHER_STRENGTH_SORT                   231
