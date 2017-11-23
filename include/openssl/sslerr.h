@@ -455,6 +455,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_BAD_SSL_FILETYPE                           124
 # define SSL_R_BAD_VALUE                                  384
 # define SSL_R_BAD_WRITE_RETRY                            127
+# define SSL_R_BINDER_DOES_NOT_VERIFY                     253
 # define SSL_R_BIO_NOT_SET                                128
 # define SSL_R_BLOCK_CIPHER_PAD_IS_WRONG                  129
 # define SSL_R_BN_LIB                                     130

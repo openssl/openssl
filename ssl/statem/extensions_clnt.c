@@ -196,15 +196,17 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
 
         if (tls_curve_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED)) {
             if (!WPACKET_put_bytes_u16(pkt, ctmp)) {
-                    SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
-                           ERR_R_INTERNAL_ERROR);
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                             SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
+                             ERR_R_INTERNAL_ERROR);
                     return EXT_RETURN_FAIL;
                 }
         }
     }
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
-               ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
+                 ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
 
@@ -934,7 +936,6 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
     size_t reshashsize = 0, pskhashsize = 0, binderoffset, msglen;
     unsigned char *resbinder = NULL, *pskbinder = NULL, *msgstart = NULL;
     const EVP_MD *handmd = NULL, *mdres = NULL, *mdpsk = NULL;
-    EXT_RETURN ret = EXT_RETURN_FAIL;
     int dores = 0;
 
     s->session->ext.tick_identity = TLSEXT_PSK_BAD_IDENTITY;
@@ -961,7 +962,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
         if (s->session->cipher == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CTOS_PSK,
                      ERR_R_INTERNAL_ERROR);
-            goto err;
+            return EXT_RETURN_FAIL;
         }
         mdres = ssl_md(s->session->cipher->algorithm2);
         if (mdres == NULL) {
@@ -1033,7 +1034,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
              */
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CTOS_PSK,
                      SSL_R_BAD_PSK);
-            goto err;
+            return EXT_RETURN_FAIL;
         }
 
         if (s->hello_retry_request && mdpsk != handmd) {
@@ -1043,7 +1044,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
              */
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CTOS_PSK,
                      SSL_R_BAD_PSK);
-            goto err;
+            return EXT_RETURN_FAIL;
         }
 
         pskhashsize = EVP_MD_size(mdpsk);
@@ -1055,7 +1056,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
             || !WPACKET_start_sub_packet_u16(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CTOS_PSK,
                  ERR_R_INTERNAL_ERROR);
-        goto err;
+        return EXT_RETURN_FAIL;
     }
 
     if (dores) {
@@ -1064,7 +1065,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
                 || !WPACKET_put_bytes_u32(pkt, agems)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CTOS_PSK,
                      ERR_R_INTERNAL_ERROR);
-            goto err;
+            return EXT_RETURN_FAIL;
         }
     }
 
@@ -1074,7 +1075,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
                 || !WPACKET_put_bytes_u32(pkt, 0)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CTOS_PSK,
                      ERR_R_INTERNAL_ERROR);
-            goto err;
+            return EXT_RETURN_FAIL;
         }
     }
 
@@ -1095,7 +1096,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
             || !WPACKET_fill_lengths(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CTOS_PSK,
                  ERR_R_INTERNAL_ERROR);
-        goto err;
+        return EXT_RETURN_FAIL;
     }
 
     msgstart = WPACKET_get_curr(pkt) - msglen;
@@ -1103,17 +1104,15 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
     if (dores
             && tls_psk_do_binder(s, mdres, msgstart, binderoffset, NULL,
                                  resbinder, s->session, 1, 0) != 1) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CTOS_PSK,
-                 ERR_R_INTERNAL_ERROR);
-        goto err;
+        /* SSLfatal() already called */
+        return EXT_RETURN_FAIL;
     }
 
     if (s->psksession != NULL
             && tls_psk_do_binder(s, mdpsk, msgstart, binderoffset, NULL,
                                  pskbinder, s->psksession, 1, 1) != 1) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CTOS_PSK,
-                 ERR_R_INTERNAL_ERROR);
-        goto err;
+        /* SSLfatal() already called */
+        return EXT_RETURN_FAIL;
     }
 
     if (dores)
@@ -1121,9 +1120,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
     if (s->psksession != NULL)
         s->psksession->ext.tick_identity = (dores ? 1 : 0);
 
-    ret = EXT_RETURN_SENT;
- err:
-    return ret;
+    return EXT_RETURN_SENT;
 #else
     return EXT_RETURN_NOT_SENT;
 #endif

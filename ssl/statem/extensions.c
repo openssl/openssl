@@ -1296,7 +1296,8 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     }
 
     if (sess->master_key_length != hashsize) {
-        SSLerr(SSL_F_TLS_PSK_DO_BINDER, SSL_R_BAD_PSK);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
+                 SSL_R_BAD_PSK);
         goto err;
     }
 
@@ -1308,7 +1309,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
                                (const unsigned char *)nonce_label,
                                sizeof(nonce_label) - 1, sess->ext.tick_nonce,
                                sess->ext.tick_nonce_len, psk, hashsize)) {
-            SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+            /* SSLfatal() already called */
             goto err;
         }
     }
@@ -1326,7 +1327,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     else
         early_secret = (unsigned char *)sess->early_secret;
     if (!tls13_generate_secret(s, md, NULL, psk, hashsize, early_secret)) {
-        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        /* SSLfatal() already called */
         goto err;
     }
 
@@ -1338,25 +1339,27 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     if (mctx == NULL
             || EVP_DigestInit_ex(mctx, md, NULL) <= 0
             || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
-        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
     /* Generate the binder key */
     if (!tls13_hkdf_expand(s, md, early_secret, (unsigned char *)label,
                            labelsize, hash, hashsize, binderkey, hashsize)) {
-        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        /* SSLfatal() already called */
         goto err;
     }
 
     /* Generate the finished key */
     if (!tls13_derive_finishedkey(s, md, binderkey, finishedkey, hashsize)) {
-        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        /* SSLfatal() already called */
         goto err;
     }
 
     if (EVP_DigestInit_ex(mctx, md, NULL) <= 0) {
-        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -1371,7 +1374,8 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
 
         hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
         if (hdatalen <= 0) {
-            SSLerr(SSL_F_TLS_PSK_DO_BINDER, SSL_R_BAD_HANDSHAKE_LENGTH);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
+                     SSL_R_BAD_HANDSHAKE_LENGTH);
             goto err;
         }
 
@@ -1388,27 +1392,31 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
                     || !PACKET_get_length_prefixed_3(&hashprefix, &msg)
                     || !PACKET_forward(&hashprefix, 1)
                     || !PACKET_get_length_prefixed_3(&hashprefix, &msg)) {
-                SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
+                         ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             hdatalen -= PACKET_remaining(&hashprefix);
         }
 
         if (EVP_DigestUpdate(mctx, hdata, hdatalen) <= 0) {
-            SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
         }
     }
 
     if (EVP_DigestUpdate(mctx, msgstart, binderoffset) <= 0
             || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
-        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
     mackey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, finishedkey, hashsize);
     if (mackey == NULL) {
-        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -1420,7 +1428,8 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
             || EVP_DigestSignUpdate(mctx, hash, hashsize) <= 0
             || EVP_DigestSignFinal(mctx, binderout, &bindersize) <= 0
             || bindersize != hashsize) {
-        SSLerr(SSL_F_TLS_PSK_DO_BINDER, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -1429,6 +1438,9 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     } else {
         /* HMAC keys can't do EVP_DigestVerify* - use CRYPTO_memcmp instead */
         ret = (CRYPTO_memcmp(binderin, binderout, hashsize) == 0);
+        if (!ret)
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PSK_DO_BINDER,
+                     SSL_R_BINDER_DOES_NOT_VERIFY);
     }
 
  err:

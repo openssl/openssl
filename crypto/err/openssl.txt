@@ -2371,6 +2371,7 @@ SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST:353:bad srtp protection profile list
 SSL_R_BAD_SSL_FILETYPE:124:bad ssl filetype
 SSL_R_BAD_VALUE:384:bad value
 SSL_R_BAD_WRITE_RETRY:127:bad write retry
+SSL_R_BINDER_DOES_NOT_VERIFY:253:binder does not verify
 SSL_R_BIO_NOT_SET:128:bio not set
 SSL_R_BLOCK_CIPHER_PAD_IS_WRONG:129:block cipher pad is wrong
 SSL_R_BN_LIB:130:bn lib

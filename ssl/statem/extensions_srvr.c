@@ -858,8 +858,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                                  (const unsigned char *)s->init_buf->data,
                                  binderoffset, PACKET_data(&binder), NULL,
                                  sess, 0, ext) != 1) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_PSK,
-                 SSL_R_BAD_EXTENSION);
+        /* SSLfatal() already called */
         goto err;
     }
 
