@@ -247,6 +247,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
 # define SSL_F_TLS12_COPY_SIGALGS                         533
 # define SSL_F_TLS13_CHANGE_CIPHER_STATE                  440
+# define SSL_F_TLS13_FINAL_FINISH_MAC                     605
 # define SSL_F_TLS13_GENERATE_SECRET                      591
 # define SSL_F_TLS13_HKDF_EXPAND                          561
 # define SSL_F_TLS13_SETUP_KEY_BLOCK                      441
