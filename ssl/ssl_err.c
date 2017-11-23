@@ -714,6 +714,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_SSL_FILETYPE), "bad ssl filetype"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_VALUE), "bad value"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_WRITE_RETRY), "bad write retry"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BINDER_DOES_NOT_VERIFY),
+    "binder does not verify"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BIO_NOT_SET), "bio not set"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BLOCK_CIPHER_PAD_IS_WRONG),
     "block cipher pad is wrong"},

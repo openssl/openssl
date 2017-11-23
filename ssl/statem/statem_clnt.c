@@ -1152,7 +1152,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
                  ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    /* ssl_cipher_list_to_bytes() raises SSLerr if appropriate */
+
     if (!ssl_cipher_list_to_bytes(s, SSL_get_ciphers(s), pkt)) {
         /* SSLfatal() already called */
         return 0;
@@ -3643,8 +3643,9 @@ int tls_construct_end_of_early_data(SSL *s, WPACKET *pkt)
 {
     if (s->early_data_state != SSL_EARLY_DATA_WRITE_RETRY
             && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING) {
-        SSLerr(SSL_F_TLS_CONSTRUCT_END_OF_EARLY_DATA,
-               ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_END_OF_EARLY_DATA,
+                 ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
 
