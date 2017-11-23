@@ -2938,10 +2938,12 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt)
     return 1;
  err:
     EVP_PKEY_free(ckey);
-#endif
+    return 0;
+#else
     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_DHE,
              ERR_R_INTERNAL_ERROR);
     return 0;
+#endif
 }
 
 static int tls_construct_cke_ecdhe(SSL *s, WPACKET *pkt)

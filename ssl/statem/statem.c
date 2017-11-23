@@ -11,6 +11,7 @@
 #include <openssl/rand.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
+#include <assert.h>
 
 /*
  * This file implements the SSL/TLS/DTLS state machines.
@@ -117,6 +118,8 @@ void ossl_statem_set_renegotiate(SSL *s)
 void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
                        int line)
 {
+    /* We shouldn't call SSLfatal() twice. Once is enough */
+    assert(s->statem.state != MSG_FLOW_ERROR);
     s->statem.in_init = 1;
     s->statem.state = MSG_FLOW_ERROR;
     ERR_put_error(ERR_LIB_SSL, func, reason, file, line);
