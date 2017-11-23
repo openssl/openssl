@@ -111,12 +111,23 @@ void ossl_statem_set_renegotiate(SSL *s)
 }
 
 /*
- * Put the state machine into an error state. This is a permanent error for
- * the current connection.
+ * Put the state machine into an error state and send an alert if appropriate.
+ * This is a permanent error for the current connection.
  */
-void ossl_statem_set_error(SSL *s)
+void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
+                       int line)
 {
+    s->statem.in_init = 1;
     s->statem.state = MSG_FLOW_ERROR;
+    ERR_put_error(ERR_LIB_SSL, func, reason, file, line);
+    if (s->statem.hand_state != TLS_ST_BEFORE
+            && s->statem.hand_state != TLS_ST_CW_CLNT_HELLO) {
+        /*
+         * We only send an alert if we've got as far as actually sending or
+         * receiving a message.
+         */
+        ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    }
 }
 
 /*
@@ -368,10 +379,8 @@ static int state_machine(SSL *s, int server)
 
         if ((SSL_in_before(s))
                 || s->renegotiate) {
-            if (!tls_setup_handshake(s)) {
-                ossl_statem_set_error(s);
+            if (!tls_setup_handshake(s))
                 goto end;
-            }
 
             if (SSL_IS_FIRST_HANDSHAKE(s))
                 st->read_state_first_init = 1;
@@ -404,7 +413,8 @@ static int state_machine(SSL *s, int server)
             }
         } else {
             /* Error */
-            ossl_statem_set_error(s);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_STATE_MACHINE,
+                     ERR_R_INTERNAL_ERROR);
             goto end;
         }
     }
