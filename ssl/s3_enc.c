@@ -30,7 +30,8 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
     m5 = EVP_MD_CTX_new();
     s1 = EVP_MD_CTX_new();
     if (m5 == NULL || s1 == NULL) {
-        SSLerr(SSL_F_SSL3_GENERATE_KEY_BLOCK, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_GENERATE_KEY_BLOCK,
+                 ERR_R_MALLOC_FAILURE);
         goto err;
     }
     EVP_MD_CTX_set_flags(m5, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
@@ -38,7 +39,8 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
         k++;
         if (k > sizeof(buf)) {
             /* bug: 'buf' is too small for this ciphersuite */
-            SSLerr(SSL_F_SSL3_GENERATE_KEY_BLOCK, ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_GENERATE_KEY_BLOCK,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
@@ -55,15 +57,24 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
             || !EVP_DigestInit_ex(m5, EVP_md5(), NULL)
             || !EVP_DigestUpdate(m5, s->session->master_key,
                                  s->session->master_key_length)
-            || !EVP_DigestUpdate(m5, smd, SHA_DIGEST_LENGTH))
+            || !EVP_DigestUpdate(m5, smd, SHA_DIGEST_LENGTH)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_GENERATE_KEY_BLOCK,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
+        }
         if ((int)(i + MD5_DIGEST_LENGTH) > num) {
-            if (!EVP_DigestFinal_ex(m5, smd, NULL))
+            if (!EVP_DigestFinal_ex(m5, smd, NULL)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_SSL3_GENERATE_KEY_BLOCK, ERR_R_INTERNAL_ERROR);
                 goto err;
+            }
             memcpy(km, smd, (num - i));
         } else {
-            if (!EVP_DigestFinal_ex(m5, km, NULL))
+            if (!EVP_DigestFinal_ex(m5, km, NULL)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_SSL3_GENERATE_KEY_BLOCK, ERR_R_INTERNAL_ERROR);
                 goto err;
+            }
         }
 
         km += MD5_DIGEST_LENGTH;
@@ -279,6 +290,7 @@ int ssl3_setup_key_block(SSL *s)
     s->s3->tmp.key_block_length = num;
     s->s3->tmp.key_block = p;
 
+    /* Calls SSLfatal() as required */
     ret = ssl3_generate_key_block(s, p, num);
 
     if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS)) {
@@ -408,26 +420,33 @@ size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
     int ret;
     EVP_MD_CTX *ctx = NULL;
 
-    if (!ssl3_digest_cached_records(s, 0))
+    if (!ssl3_digest_cached_records(s, 0)) {
+        /* SSLfatal() already called */
         return 0;
+    }
 
     if (EVP_MD_CTX_type(s->s3->handshake_dgst) != NID_md5_sha1) {
-        SSLerr(SSL_F_SSL3_FINAL_FINISH_MAC, SSL_R_NO_REQUIRED_DIGEST);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_FINAL_FINISH_MAC,
+                 SSL_R_NO_REQUIRED_DIGEST);
         return 0;
     }
 
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL) {
-        SSLerr(SSL_F_SSL3_FINAL_FINISH_MAC, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_FINAL_FINISH_MAC,
+                 ERR_R_MALLOC_FAILURE);
         return 0;
     }
     if (!EVP_MD_CTX_copy_ex(ctx, s->s3->handshake_dgst)) {
-        SSLerr(SSL_F_SSL3_FINAL_FINISH_MAC, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_FINAL_FINISH_MAC,
+                 ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     ret = EVP_MD_CTX_size(ctx);
     if (ret < 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_FINAL_FINISH_MAC,
+                 ERR_R_INTERNAL_ERROR);
         EVP_MD_CTX_reset(ctx);
         return 0;
     }
@@ -437,7 +456,8 @@ size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
                            (int)s->session->master_key_length,
                            s->session->master_key) <= 0
         || EVP_DigestFinal_ex(ctx, p, NULL) <= 0) {
-        SSLerr(SSL_F_SSL3_FINAL_FINISH_MAC, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_FINAL_FINISH_MAC,
+                 ERR_R_INTERNAL_ERROR);
         ret = 0;
     }
 

@@ -324,18 +324,24 @@ static int state_machine(SSL *s, int server)
         if (SSL_IS_DTLS(s)) {
             if ((s->version & 0xff00) != (DTLS1_VERSION & 0xff00) &&
                 (server || (s->version & 0xff00) != (DTLS1_BAD_VER & 0xff00))) {
-                SSLerr(SSL_F_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
+                /* We've failed to even initialise so no alert sent */
+                SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
+                         ERR_R_INTERNAL_ERROR);
                 goto end;
             }
         } else {
             if ((s->version >> 8) != SSL3_VERSION_MAJOR) {
-                SSLerr(SSL_F_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
+                /* We've failed to even initialise so no alert sent */
+                SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
+                         ERR_R_INTERNAL_ERROR);
                 goto end;
             }
         }
 
         if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
-            SSLerr(SSL_F_STATE_MACHINE, SSL_R_VERSION_TOO_LOW);
+            /* We've failed to even initialise so no alert sent */
+            SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
+                     ERR_R_INTERNAL_ERROR);
             goto end;
         }
 

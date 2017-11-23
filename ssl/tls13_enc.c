@@ -242,8 +242,10 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
     EVP_PKEY *key = NULL;
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 
-    if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen))
+    if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen)) {
+        /* SSLfatal() already called */
         goto err;
+    }
 
     if (str == s->method->ssl3_enc->server_finished_label)
         key = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL,
@@ -256,8 +258,11 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
             || ctx == NULL
             || EVP_DigestSignInit(ctx, NULL, md, NULL, key) <= 0
             || EVP_DigestSignUpdate(ctx, hash, hashlen) <= 0
-            || EVP_DigestSignFinal(ctx, out, &hashlen) <= 0)
+            || EVP_DigestSignFinal(ctx, out, &hashlen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_FINAL_FINISH_MAC,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
+    }
 
     ret = hashlen;
  err:

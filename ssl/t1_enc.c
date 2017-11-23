@@ -23,37 +23,39 @@ static int tls1_PRF(SSL *s,
                     const void *seed4, size_t seed4_len,
                     const void *seed5, size_t seed5_len,
                     const unsigned char *sec, size_t slen,
-                    unsigned char *out, size_t olen)
+                    unsigned char *out, size_t olen, int fatal)
 {
     const EVP_MD *md = ssl_prf_md(s);
     EVP_PKEY_CTX *pctx = NULL;
-
     int ret = 0;
 
     if (md == NULL) {
         /* Should never happen */
-        SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
+        if (fatal)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_PRF,
+                     ERR_R_INTERNAL_ERROR);
+        else
+            SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_TLS1_PRF, NULL);
     if (pctx == NULL || EVP_PKEY_derive_init(pctx) <= 0
         || EVP_PKEY_CTX_set_tls1_prf_md(pctx, md) <= 0
-        || EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, sec, (int)slen) <= 0)
+        || EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, sec, (int)slen) <= 0
+        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed1, (int)seed1_len) <= 0
+        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed2, (int)seed2_len) <= 0
+        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed3, (int)seed3_len) <= 0
+        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed4, (int)seed4_len) <= 0
+        || EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed5, (int)seed5_len) <= 0
+        || EVP_PKEY_derive(pctx, out, &olen) <= 0) {
+        if (fatal)
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_PRF,
+                     ERR_R_INTERNAL_ERROR);
+        else
+            SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
 
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed1, (int)seed1_len) <= 0)
-        goto err;
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed2, (int)seed2_len) <= 0)
-        goto err;
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed3, (int)seed3_len) <= 0)
-        goto err;
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed4, (int)seed4_len) <= 0)
-        goto err;
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed5, (int)seed5_len) <= 0)
-        goto err;
-
-    if (EVP_PKEY_derive(pctx, out, &olen) <= 0)
-        goto err;
     ret = 1;
 
  err:
@@ -64,12 +66,14 @@ static int tls1_PRF(SSL *s,
 static int tls1_generate_key_block(SSL *s, unsigned char *km, size_t num)
 {
     int ret;
+
+    /* Calls SSLfatal() as required */
     ret = tls1_PRF(s,
                    TLS_MD_KEY_EXPANSION_CONST,
                    TLS_MD_KEY_EXPANSION_CONST_SIZE, s->s3->server_random,
                    SSL3_RANDOM_SIZE, s->s3->client_random, SSL3_RANDOM_SIZE,
                    NULL, 0, NULL, 0, s->session->master_key,
-                   s->session->master_key_length, km, num);
+                   s->session->master_key_length, km, num, 1);
 
     return ret;
 }
@@ -402,8 +406,10 @@ int tls1_setup_key_block(SSL *s)
                    ((z + 1) % 16) ? ' ' : '\n');
     }
 #endif
-    if (!tls1_generate_key_block(s, p, num))
+    if (!tls1_generate_key_block(s, p, num)) {
+        /* SSLfatal() already called */
         goto err;
+    }
 #ifdef SSL_DEBUG
     printf("\nkey block\n");
     {
@@ -443,16 +449,22 @@ size_t tls1_final_finish_mac(SSL *s, const char *str, size_t slen,
     size_t hashlen;
     unsigned char hash[EVP_MAX_MD_SIZE];
 
-    if (!ssl3_digest_cached_records(s, 0))
+    if (!ssl3_digest_cached_records(s, 0)) {
+        /* SSLfatal() already called */
         return 0;
+    }
 
-    if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen))
+    if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen)) {
+        /* SSLfatal() already called */
         return 0;
+    }
 
     if (!tls1_PRF(s, str, slen, hash, hashlen, NULL, 0, NULL, 0, NULL, 0,
                   s->session->master_key, s->session->master_key_length,
-                  out, TLS1_FINISH_MAC_LENGTH))
+                  out, TLS1_FINISH_MAC_LENGTH, 1)) {
+        /* SSLfatal() already called */
         return 0;
+    }
     OPENSSL_cleanse(hash, hashlen);
     return TLS1_FINISH_MAC_LENGTH;
 }
@@ -477,24 +489,30 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
         fprintf(stderr, "Handshake hashes:\n");
         BIO_dump_fp(stderr, (char *)hash, hashlen);
 #endif
-        tls1_PRF(s,
-                 TLS_MD_EXTENDED_MASTER_SECRET_CONST,
-                 TLS_MD_EXTENDED_MASTER_SECRET_CONST_SIZE,
-                 hash, hashlen,
-                 NULL, 0,
-                 NULL, 0,
-                 NULL, 0, p, len, out,
-                 SSL3_MASTER_SECRET_SIZE);
+        if (!tls1_PRF(s,
+                      TLS_MD_EXTENDED_MASTER_SECRET_CONST,
+                      TLS_MD_EXTENDED_MASTER_SECRET_CONST_SIZE,
+                      hash, hashlen,
+                      NULL, 0,
+                      NULL, 0,
+                      NULL, 0, p, len, out,
+                      SSL3_MASTER_SECRET_SIZE, 1)) {
+            /* SSLfatal() already called */
+            return 0;
+        }
         OPENSSL_cleanse(hash, hashlen);
     } else {
-        tls1_PRF(s,
-                 TLS_MD_MASTER_SECRET_CONST,
-                 TLS_MD_MASTER_SECRET_CONST_SIZE,
-                 s->s3->client_random, SSL3_RANDOM_SIZE,
-                 NULL, 0,
-                 s->s3->server_random, SSL3_RANDOM_SIZE,
-                 NULL, 0, p, len, out,
-                 SSL3_MASTER_SECRET_SIZE);
+        if (!tls1_PRF(s,
+                      TLS_MD_MASTER_SECRET_CONST,
+                      TLS_MD_MASTER_SECRET_CONST_SIZE,
+                      s->s3->client_random, SSL3_RANDOM_SIZE,
+                      NULL, 0,
+                      s->s3->server_random, SSL3_RANDOM_SIZE,
+                      NULL, 0, p, len, out,
+                      SSL3_MASTER_SECRET_SIZE, 1)) {
+           /* SSLfatal() already called */
+            return 0;
+        }
     }
 #ifdef SSL_DEBUG
     fprintf(stderr, "Premaster Secret:\n");
@@ -580,7 +598,7 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                   NULL, 0,
                   NULL, 0,
                   s->session->master_key, s->session->master_key_length,
-                  out, olen);
+                  out, olen, 0);
 
     goto ret;
  err1:

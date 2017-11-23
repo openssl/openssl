@@ -358,6 +358,8 @@ static const ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_PACK(ERR_LIB_SSL, SSL_F_TLS12_COPY_SIGALGS, 0), "tls12_copy_sigalgs"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_TLS13_CHANGE_CIPHER_STATE, 0),
      "tls13_change_cipher_state"},
+    {ERR_PACK(ERR_LIB_SSL, SSL_F_TLS13_FINAL_FINISH_MAC, 0),
+     "tls13_final_finish_mac"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_TLS13_GENERATE_SECRET, 0),
      "tls13_generate_secret"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_TLS13_HKDF_EXPAND, 0), "tls13_hkdf_expand"},
