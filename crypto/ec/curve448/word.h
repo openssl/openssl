@@ -8,7 +8,7 @@
 #include <string.h>
 
 #include <assert.h>
-#include <stdint.h>
+#include <openssl/e_os2.h>
 #include "arch_intrinsics.h"
 
 #include "curve448utils.h"
@@ -24,8 +24,6 @@
 #include "portable_endian.h"
 
 #include <stdlib.h>
-#include <sys/types.h>
-#include <inttypes.h>
 
 #if defined(__ARM_NEON__)
 #include <arm_neon.h>
