@@ -277,7 +277,7 @@
         ":BAD_DH_P_LENGTH:":"dh key too small",
         ":PEER_DID_NOT_RETURN_A_CERTIFICATE:":"peer did not return a certificate",
         ":UNSUPPORTED_PROTOCOL:":"unsupported protocol",
-        ":PARSE_TLSEXT:":"parse tlsext",
+        ":PARSE_TLSEXT:":"bad extension",
         ":BAD_SRTP_PROTECTION_PROFILE_LIST:":"bad srtp protection profile list",
         ":OLD_SESSION_VERSION_NOT_RETURNED:":"ssl session version mismatch",
         ":RESUMED_EMS_SESSION_WITHOUT_EMS_EXTENSION:":"inconsistent extms",
