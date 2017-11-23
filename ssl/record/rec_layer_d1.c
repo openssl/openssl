@@ -397,8 +397,12 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     }
 
     /* Check for timeout */
-    if (dtls1_handle_timeout(s) > 0)
+    if (dtls1_handle_timeout(s) > 0) {
         goto start;
+    } else if (ossl_statem_in_error(s)) {
+        /* dtls1_handle_timeout() has failed with a fatal error */
+        return -1;
+    }
 
     /* get new packet if necessary */
     if ((SSL3_RECORD_get_length(rr) == 0)
@@ -633,7 +637,12 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             if (dtls1_check_timeout_num(s) < 0)
                 return -1;
 
-            dtls1_retransmit_buffered_messages(s);
+            if (dtls1_retransmit_buffered_messages(s) <= 0) {
+                /* Fail if we encountered a fatal error */
+                if (ossl_statem_in_error(s))
+                    return -1;
+                
+            }
             SSL3_RECORD_set_length(rr, 0);
             goto start;
         }
