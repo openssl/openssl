@@ -7,7 +7,7 @@
 
 #define ARCH_WORD_BITS 64
 
-#include <stdint.h>
+#include <openssl/e_os2.h>
 
 /* FUTURE: autogenerate */
 static __inline__ __uint128_t widemul(const uint64_t *a, const uint64_t *b) {
