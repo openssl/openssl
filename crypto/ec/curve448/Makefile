@@ -26,6 +26,7 @@ eddsa.o: eddsa.c
 
 libcurve448.so.1: shake.o arch_x86_64/f_impl.o f_arithmetic.o f_generic.o scalar.o decaf_tables.o eddsa.o decaf.o
 	gcc  -shared -Wl,-soname,libcurve448.so.1,-z,defs -Wl,--gc-sections -o libcurve448.so.1 shake.o arch_x86_64/f_impl.o f_arithmetic.o f_generic.o scalar.o decaf_tables.o eddsa.o decaf.o -L../../.. -lcrypto 
+	ln -f -s libcurve448.so.1 libcurve448.so
 
 curve448_test: curve448_test.c
 	gcc -g -I. -I../../../include -L../../.. -L. -o curve448_test curve448_test.c -lcurve448 -lcrypto
@@ -37,4 +38,4 @@ testfull:
 	../../../util/shlib_wrap.sh ./curve448_test -f
 
 clean:
-	rm shake.o arch_x86_64/f_impl.o f_arithmetic.o f_generic.o scalar.o decaf_tables.o decaf.o eddsa.o libcurve448.so.1 curve448_test
+	rm shake.o arch_x86_64/f_impl.o f_arithmetic.o f_generic.o scalar.o decaf_tables.o decaf.o eddsa.o libcurve448.so.1 curve448_test libcurve448.so
