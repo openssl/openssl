@@ -298,7 +298,8 @@ int ssl3_init_finished_mac(SSL *s)
     BIO *buf = BIO_new(BIO_s_mem());
 
     if (buf == NULL) {
-        SSLerr(SSL_F_SSL3_INIT_FINISHED_MAC, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_INIT_FINISHED_MAC,
+                 ERR_R_MALLOC_FAILURE);
         return 0;
     }
     ssl3_free_digest_list(s);

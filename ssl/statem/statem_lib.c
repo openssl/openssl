@@ -86,8 +86,8 @@ int tls_setup_handshake(SSL *s)
          * ClientHello.
          */
         if (ssl_get_min_max_version(s, &ver_min, &ver_max) != 0) {
-            SSLerr(SSL_F_TLS_SETUP_HANDSHAKE, ERR_R_INTERNAL_ERROR);
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_SETUP_HANDSHAKE,
+                     ERR_R_INTERNAL_ERROR);
             return 0;
         }
         for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
@@ -104,10 +104,10 @@ int tls_setup_handshake(SSL *s)
                 break;
         }
         if (!ok) {
-            SSLerr(SSL_F_TLS_SETUP_HANDSHAKE, SSL_R_NO_CIPHERS_AVAILABLE);
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_SETUP_HANDSHAKE,
+                     SSL_R_NO_CIPHERS_AVAILABLE);
             ERR_add_error_data(1, "No ciphers enabled for max supported "
                                   "SSL/TLS version");
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
             return 0;
         }
         if (SSL_IS_FIRST_HANDSHAKE(s)) {
@@ -125,9 +125,8 @@ int tls_setup_handshake(SSL *s)
              * Server attempting to renegotiate with client that doesn't
              * support secure renegotiation.
              */
-            SSLerr(SSL_F_TLS_SETUP_HANDSHAKE,
-                   SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_SETUP_HANDSHAKE,
+                     SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
             return 0;
         } else {
             /* N.B. s->ctx may not equal s->session_ctx */
