@@ -400,8 +400,7 @@ int tls_parse_ctos_npn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
 /*
  * Save the ALPN extension in a ClientHello.|pkt| holds the contents of the ALPN
- * extension, not including type and length. |al| is a pointer to the alert
- * value to send in the event of a failure. Returns: 1 on success, 0 on error.
+ * extension, not including type and length. Returns: 1 on success, 0 on error.
  */
 int tls_parse_ctos_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                         size_t chainidx)
@@ -523,7 +522,6 @@ int tls_parse_ctos_etm(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 /*
  * Process a psk_kex_modes extension received in the ClientHello. |pkt| contains
  * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
- * If a failure occurs then |*al| is set to an appropriate alert value.
  */
 int tls_parse_ctos_psk_kex_modes(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx)
@@ -554,7 +552,6 @@ int tls_parse_ctos_psk_kex_modes(SSL *s, PACKET *pkt, unsigned int context,
 /*
  * Process a key_share extension received in the ClientHello. |pkt| contains
  * the raw PACKET data for the extension. Returns 1 on success or 0 on failure.
- * If a failure occurs then |*al| is set to an appropriate alert value.
  */
 int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                              size_t chainidx)

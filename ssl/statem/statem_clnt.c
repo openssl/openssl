@@ -1310,11 +1310,10 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
     PACKET session_id, extpkt;
     size_t session_id_len;
     const unsigned char *cipherchars;
-    int al = SSL_AD_INTERNAL_ERROR;
     unsigned int compression;
     unsigned int sversion;
     unsigned int context;
-    int protverr, discard;
+    int discard;
     RAW_EXTENSION *extensions = NULL;
 #ifndef OPENSSL_NO_COMP
     SSL_COMP *comp;
@@ -1338,10 +1337,8 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
      * Must be done after reading the random data so we can check for the
      * TLSv1.3 downgrade sentinels
      */
-    protverr = ssl_choose_client_version(s, sversion, 1, &al);
-    if (protverr != 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SERVER_HELLO,
-                 protverr);
+    if (!ssl_choose_client_version(s, sversion, 1)) {
+        /* SSLfatal() already called */
         goto err;
     }
 
