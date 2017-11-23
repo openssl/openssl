@@ -2466,6 +2466,7 @@ SSL_R_LIBRARY_BUG:274:library bug
 SSL_R_LIBRARY_HAS_NO_CIPHERS:161:library has no ciphers
 SSL_R_MISSING_DSA_SIGNING_CERT:165:missing dsa signing cert
 SSL_R_MISSING_ECDSA_SIGNING_CERT:381:missing ecdsa signing cert
+SSL_R_MISSING_FATAL:256:missing fatal
 SSL_R_MISSING_RSA_CERTIFICATE:168:missing rsa certificate
 SSL_R_MISSING_RSA_ENCRYPTING_CERT:169:missing rsa encrypting cert
 SSL_R_MISSING_RSA_SIGNING_CERT:170:missing rsa signing cert
