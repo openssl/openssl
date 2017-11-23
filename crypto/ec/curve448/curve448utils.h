@@ -12,8 +12,6 @@
 #ifndef __DECAF_COMMON_H__
 #define __DECAF_COMMON_H__ 1
 
-#include <stdint.h>
-#include <sys/types.h>
 #include <openssl/e_os2.h>
 
 #ifdef __cplusplus
