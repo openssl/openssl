@@ -35,6 +35,13 @@ modulus will be B<primes>, and the public exponent will be B<e>. Key sizes
 with B<num> E<lt> 1024 should be considered insecure. The exponent is an odd
 number, typically 3, 17 or 65537.
 
+In order to maintain adequate security level, the maximum number of permitted
+B<primes> depends on modulus bit length:
+
+   <1024 | >=1024 | >=4096 | >=8192
+   ------+--------+--------+-------
+     2   |   3    |   4    |   5
+
 A callback function may be used to provide feedback about the
 progress of the key generation. If B<cb> is not B<NULL>, it
 will be called as follows using the BN_GENCB_call() function
@@ -81,8 +88,7 @@ B<BN_GENCB_call(cb, 2, x)> is used with two different meanings.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)>, L<RAND_bytes(3)>,
-L<RSA_generate_key_ex(3)>, L<BN_generate_prime(3)>
+L<ERR_get_error(3)>, L<RAND_bytes(3)>, L<BN_generate_prime(3)>
 
 =head1 HISTORY
 

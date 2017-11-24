@@ -30,10 +30,13 @@ int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
     }
 
     /* multi-prime? */
-    if (key->version == RSA_ASN1_VERSION_MULTI
-        && (ex_primes = sk_RSA_PRIME_INFO_num(key->prime_infos)) <= 0) {
-        RSAerr(RSA_F_RSA_CHECK_KEY_EX, RSA_R_INVALID_MULTI_PRIME_KEY);
-        return 0;
+    if (key->version == RSA_ASN1_VERSION_MULTI) {
+        ex_primes = sk_RSA_PRIME_INFO_num(key->prime_infos);
+        if (ex_primes <= 0
+                || (ex_primes + 2) > rsa_multip_cap(BN_num_bits(key->n))) {
+            RSAerr(RSA_F_RSA_CHECK_KEY_EX, RSA_R_INVALID_MULTI_PRIME_KEY);
+            return 0;
+        }
     }
 
     i = BN_new();

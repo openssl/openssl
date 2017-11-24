@@ -17,7 +17,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_mp_rsa");
 
-plan tests => 61;
+plan tests => 31;
 
 ok(run(test(["rsa_mp_test"])), "running rsa multi prime test");
 
@@ -29,30 +29,15 @@ my @test_param = (
         primes => '3',
         bits => '2048',
     },
-    # 4 primes, 2048-bit
+    # 4 primes, 4096-bit
     {
         primes => '4',
-        bits => '2048',
+        bits => '4096',
     },
-    # 8 primes, 2048-bit
+    # 5 primes, 8192-bit
     {
-        primes => '8',
-        bits => '2048',
-    },
-    # 15 primes, 2048-bit
-    {
-        primes => '15',
-        bits => '2048',
-    },
-    # 8 primes, 15360-bit (3 & 4 primes for 15360 bit is too long to gen a key)
-    {
-        primes => '8',
-        bits => '15360',
-    },
-    # 15 primes, 15360-bit
-    {
-        primes => '15',
-        bits => '15360',
+        primes => '5',
+        bits => '8192',
     },
 );
 
