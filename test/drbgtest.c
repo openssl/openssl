@@ -274,7 +274,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     RAND_DRBG *drbg = NULL;
     TEST_CTX t;
     unsigned char buff[1024];
-    unsigned int reseed_counter_tmp;
+    unsigned int generate_counter_tmp;
     int ret = 0;
 
     if (!TEST_ptr(drbg = RAND_DRBG_new(0, 0, NULL)))
@@ -369,15 +369,15 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     /* Instantiate again with valid data */
     if (!instantiate(drbg, td, &t))
         goto err;
-    reseed_counter_tmp = drbg->reseed_counter;
-    drbg->reseed_counter = drbg->reseed_interval;
+    generate_counter_tmp = drbg->generate_counter;
+    drbg->generate_counter = drbg->reseed_interval;
 
     /* Generate output and check entropy has been requested for reseed */
     t.entropycnt = 0;
     if (!TEST_true(RAND_DRBG_generate(drbg, buff, td->exlen, 0,
                                       td->adin, td->adinlen))
             || !TEST_int_eq(t.entropycnt, 1)
-            || !TEST_int_eq(drbg->reseed_counter, reseed_counter_tmp + 1)
+            || !TEST_int_eq(drbg->generate_counter, generate_counter_tmp + 1)
             || !uninstantiate(drbg))
         goto err;
 
@@ -394,15 +394,15 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     /* Test reseed counter works */
     if (!instantiate(drbg, td, &t))
         goto err;
-    reseed_counter_tmp = drbg->reseed_counter;
-    drbg->reseed_counter = drbg->reseed_interval;
+    generate_counter_tmp = drbg->generate_counter;
+    drbg->generate_counter = drbg->reseed_interval;
 
     /* Generate output and check entropy has been requested for reseed */
     t.entropycnt = 0;
     if (!TEST_true(RAND_DRBG_generate(drbg, buff, td->exlen, 0,
                                       td->adin, td->adinlen))
             || !TEST_int_eq(t.entropycnt, 1)
-            || !TEST_int_eq(drbg->reseed_counter, reseed_counter_tmp + 1)
+            || !TEST_int_eq(drbg->generate_counter, generate_counter_tmp + 1)
             || !uninstantiate(drbg))
         goto err;
 
@@ -475,17 +475,273 @@ err:
     return rv;
 }
 
-#define RAND_ADD_SIZE 500
+/*
+ * Hook context data, attached as EXDATA to the RAND_DRBG
+ */
+typedef struct hook_ctx_st {
+    RAND_DRBG *drbg;
+    /*
+     * Currently, all DRBGs use the same get_entropy() callback.
+     * The tests however, don't assume this and store
+     * the original callback for every DRBG separately.
+     */
+    RAND_DRBG_get_entropy_fn get_entropy;
+    /* forces a failure of the get_entropy() call if nonzero */
+    int fail;
+    /* counts successful reseeds */
+    int reseed_count;
+} HOOK_CTX;
 
-static int test_rand_add(void)
+static HOOK_CTX master_ctx, public_ctx, private_ctx;
+
+static HOOK_CTX *get_hook_ctx(RAND_DRBG *drbg)
 {
-    char *p;
+    return (HOOK_CTX *)RAND_DRBG_get_ex_data(drbg, app_data_index);
+}
 
-    if (!TEST_ptr(p = calloc(RAND_ADD_SIZE, 1)))
+/* Intercepts and counts calls to the get_entropy() callback */
+static size_t get_entropy_hook(RAND_DRBG *drbg, unsigned char **pout,
+                          int entropy, size_t min_len, size_t max_len)
+{
+    size_t ret;
+    HOOK_CTX *ctx = get_hook_ctx(drbg);
+
+    if (ctx->fail != 0)
         return 0;
-    RAND_add(p, RAND_ADD_SIZE, RAND_ADD_SIZE);
-    free(p);
+
+    ret = ctx->get_entropy(
+        drbg, pout, entropy, min_len, max_len);
+
+    if (ret != 0)
+        ctx->reseed_count++;
+    return ret;
+}
+
+/* Installs a hook for the get_entropy() callback of the given drbg */
+static void hook_drbg(RAND_DRBG *drbg, HOOK_CTX *ctx)
+{
+    memset(ctx, 0, sizeof(*ctx));
+    ctx->drbg = drbg;
+    ctx->get_entropy = drbg->get_entropy;
+    drbg->get_entropy = get_entropy_hook;
+    RAND_DRBG_set_ex_data(drbg, app_data_index, ctx);
+}
+
+/* Installs the hook for the get_entropy() callback of the given drbg */
+static void unhook_drbg(RAND_DRBG *drbg)
+{
+    HOOK_CTX *ctx = get_hook_ctx(drbg);
+
+    drbg->get_entropy = ctx->get_entropy;
+    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DRBG, drbg, &drbg->ex_data);
+}
+
+/* Resets the given hook context */
+static void reset_hook_ctx(HOOK_CTX *ctx)
+{
+    ctx->fail = 0;
+    ctx->reseed_count = 0;
+}
+
+/* Resets all drbg hook contexts */
+static void reset_drbg_hook_ctx()
+{
+    reset_hook_ctx(&master_ctx);
+    reset_hook_ctx(&public_ctx);
+    reset_hook_ctx(&private_ctx);
+}
+
+/*
+ * Generates random output using RAND_bytes() and RAND_priv_bytes()
+ * and checks whether the three shared DRBGs were reseeded as
+ * expected.
+ *
+ * |expect_success|: expected outcome (as reported by RAND_status())
+ * |master|, |public|, |private|: pointers to the three shared DRBGs
+ * |expect_xxx_reseed| =
+ *       1:  it is expected that the specified DRBG is reseeded
+ *       0:  it is expected that the specified DRBG is not reseeded
+ *      -1:  don't check whether the specified DRBG was reseeded or not
+ */
+static int test_drbg_reseed(int expect_success,
+                            RAND_DRBG *master,
+                            RAND_DRBG *public,
+                            RAND_DRBG *private,
+                            int expect_master_reseed,
+                            int expect_public_reseed,
+                            int expect_private_reseed
+                           )
+{
+    unsigned char buf[32];
+    int expected_state = (expect_success ? DRBG_READY : DRBG_ERROR);
+
+    /*
+     * step 1: check preconditions
+     */
+
+    /* Test whether seed propagation is enabled */
+    if (!TEST_int_ne(master->reseed_counter, 0)
+        || !TEST_int_ne(public->reseed_counter, 0)
+        || !TEST_int_ne(private->reseed_counter, 0))
+        return 0;
+
+    /* Check whether the master DRBG's reseed counter is the largest one */
+    if (!TEST_int_le(public->reseed_counter, master->reseed_counter)
+        || !TEST_int_le(private->reseed_counter, master->reseed_counter))
+        return 0;
+
+    /*
+     * step 2: generate random output
+     */
+
+    /* Generate random output from the public and private DRBG */
+    if (!TEST_int_eq(RAND_bytes(buf, sizeof(buf)), expect_success)
+        || !TEST_int_eq(RAND_priv_bytes(buf, sizeof(buf)), expect_success))
+        return 0;
+
+
+    /*
+     * step 3: check postconditions
+     */
+
+    /* Test whether reseeding succeeded as expected */
+    if (!TEST_int_eq(master->state, expected_state)
+        || !TEST_int_eq(public->state, expected_state)
+        || !TEST_int_eq(private->state, expected_state))
+        return 0;
+
+    if (expect_master_reseed >= 0) {
+        /* Test whether master DRBG was reseeded as expected */
+        if (!TEST_int_eq(master_ctx.reseed_count, expect_master_reseed))
+            return 0;
+    }
+
+    if (expect_public_reseed >= 0) {
+        /* Test whether public DRBG was reseeded as expected */
+        if (!TEST_int_eq(public_ctx.reseed_count, expect_public_reseed))
+            return 0;
+    }
+
+    if (expect_private_reseed >= 0) {
+        /* Test whether public DRBG was reseeded as expected */
+        if (!TEST_int_eq(private_ctx.reseed_count, expect_private_reseed))
+            return 0;
+    }
+
+    if (expect_success == 1) {
+        /* Test whether all three reseed counters are synchronized */
+        if (!TEST_int_eq(public->reseed_counter, master->reseed_counter)
+            || !TEST_int_eq(private->reseed_counter, master->reseed_counter))
+            return 0;
+    } else {
+        ERR_clear_error();
+    }
+
     return 1;
+}
+
+/*
+ * Test whether the default rand_method (RAND_OpenSSL()) is
+ * setup correctly, in particular whether reseeding  works
+ * as designed.
+ */
+static int test_rand_reseed(void)
+{
+    RAND_DRBG *master, *public, *private;
+    unsigned char rand_add_buf[256];
+    int rv=0;
+
+    /* Check whether RAND_OpenSSL() is the default method */
+    if (!TEST_ptr_eq(RAND_get_rand_method(), RAND_OpenSSL()))
+        return 0;
+
+    /* All three DRBGs should be non-null */
+    if (!TEST_ptr(master = RAND_DRBG_get0_master())
+        || !TEST_ptr(public = RAND_DRBG_get0_public())
+        || !TEST_ptr(private = RAND_DRBG_get0_private()))
+        return 0;
+
+    /* There should be three distinct DRBGs, two of them chained to master */
+    if (!TEST_ptr_ne(public, private)
+        || !TEST_ptr_ne(public, master)
+        || !TEST_ptr_ne(private, master)
+        || !TEST_ptr_eq(public->parent, master)
+        || !TEST_ptr_eq(private->parent, master))
+        return 0;
+
+    /* Install hooks for the following tests */
+    hook_drbg(master,  &master_ctx);
+    hook_drbg(public,  &public_ctx);
+    hook_drbg(private, &private_ctx);
+
+    /*
+     * Test initial state of shared DRBs
+     */
+    if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 0, 0)))
+        goto error;
+    reset_drbg_hook_ctx();
+
+    /*
+     * Test whether the public and private DRBG are both reseeded when their
+     * reseed counters differ from the master's reseed counter.
+     */
+    master->reseed_counter++;
+    if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 1, 1)))
+        goto error;
+    reset_drbg_hook_ctx();
+
+    /*
+     * Test whether the public DRBG is reseeded when its reseed counter differs
+     * from the master's reseed counter.
+     */
+    master->reseed_counter++;
+    private->reseed_counter++;
+    if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 1, 0)))
+        goto error;
+    reset_drbg_hook_ctx();
+
+    /*
+     * Test whether the private DRBG is reseeded when its reseed counter differs
+     * from the master's reseed counter.
+     */
+    master->reseed_counter++;
+    public->reseed_counter++;
+    if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 0, 1)))
+        goto error;
+    reset_drbg_hook_ctx();
+
+
+    /* fill 'randomness' buffer with some arbitrary data */
+    memset(rand_add_buf, 'r', sizeof(rand_add_buf));
+
+    /*
+     * Test whether all three DRBGs are reseeded by RAND_add()
+     */
+    RAND_add(rand_add_buf, sizeof(rand_add_buf), sizeof(rand_add_buf));
+    if (!TEST_true(test_drbg_reseed(1, master, public, private, 1, 1, 1)))
+        goto error;
+    reset_drbg_hook_ctx();
+
+
+    /*
+     * Test whether none of the DRBGs is reseed if the master fails to reseed
+     */
+    master_ctx.fail = 1;
+    master->reseed_counter++;
+    RAND_add(rand_add_buf, sizeof(rand_add_buf), sizeof(rand_add_buf));
+    if (!TEST_true(test_drbg_reseed(0, master, public, private, 0, 0, 0)))
+        goto error;
+    reset_drbg_hook_ctx();
+
+    rv = 1;
+
+error:
+    /* Remove hooks  */
+    unhook_drbg(master);
+    unhook_drbg(public);
+    unhook_drbg(private);
+
+    return rv;
 }
 
 
@@ -495,6 +751,6 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_kats, OSSL_NELEM(drbg_test));
     ADD_ALL_TESTS(test_error_checks, OSSL_NELEM(drbg_test));
-    ADD_TEST(test_rand_add);
+    ADD_TEST(test_rand_reseed);
     return 1;
 }

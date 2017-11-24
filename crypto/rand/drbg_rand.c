@@ -301,7 +301,7 @@ int ctr_generate(RAND_DRBG *drbg,
 
 int ctr_uninstantiate(RAND_DRBG *drbg)
 {
-    memset(&drbg->ctr, 0, sizeof(drbg->ctr));
+    OPENSSL_cleanse(&drbg->ctr, sizeof(drbg->ctr));
     return 1;
 }
 
@@ -357,6 +357,6 @@ int ctr_init(RAND_DRBG *drbg)
     }
 
     drbg->max_request = 1 << 16;
-    drbg->reseed_interval = MAX_RESEED;
+    drbg->reseed_interval = MAX_RESEED_INTERVAL;
     return 1;
 }

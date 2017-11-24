@@ -42,9 +42,11 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
 int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
                        int prediction_resistance,
                        const unsigned char *adin, size_t adinlen);
-int RAND_DRBG_set_reseed_interval(RAND_DRBG *drbg, int interval);
-RAND_DRBG *RAND_DRBG_get0_global(void);
-RAND_DRBG *RAND_DRBG_get0_priv_global(void);
+int RAND_DRBG_set_reseed_interval(RAND_DRBG *drbg, unsigned int interval);
+
+RAND_DRBG *RAND_DRBG_get0_master(void);
+RAND_DRBG *RAND_DRBG_get0_public(void);
+RAND_DRBG *RAND_DRBG_get0_private(void);
 
 /*
  * EXDATA

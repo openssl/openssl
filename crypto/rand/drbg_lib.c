@@ -15,12 +15,6 @@
 #include "internal/thread_once.h"
 #include "internal/rand_int.h"
 
-static RAND_DRBG rand_drbg; /* The default global DRBG. */
-static RAND_DRBG priv_drbg; /* The global private-key DRBG. */
-
-/* NIST SP 800-90A DRBG recommends the use of a personalization string. */
-static const char ossl_pers_string[] = "OpenSSL NIST SP 800-90A DRBG";
-
 /*
  * Support framework for NIST SP 800-90A DRBG, AES-CTR mode.
  * The RAND_DRBG is OpenSSL's pointer to an instance of the DRBG.
@@ -33,9 +27,72 @@ static const char ossl_pers_string[] = "OpenSSL NIST SP 800-90A DRBG";
  * a much bigger deal than just re-setting an allocated resource.)
  */
 
+/*
+ * THE THREE SHARED DRBGs
+ *
+ * There are three shared DRBGs (master, public and private), which are
+ * accessed concurrently by all threads.
+ *
+ * THE MASTER DRBG
+ *
+ * Not used directly by the application, only for reseeding the two other
+ * DRBGs. It reseeds itself by pulling either randomness from os entropy
+ * sources or by consuming randomnes which was added by RAND_add()
+ */
+static RAND_DRBG drbg_master;
+/*
+ * THE PUBLIC DRBG
+ *
+ * Used by default for generating random bytes using RAND_bytes().
+ */
+static RAND_DRBG drbg_public;
+/*
+ * THE PRIVATE DRBG
+ *
+ * Used by default for generating private keys using RAND_priv_bytes()
+ */
+static RAND_DRBG drbg_private;
+/*+
+ * DRBG HIERARCHY
+ *
+ * In addition there are DRBGs, which are not shared, but used only by a
+ * single thread at every time, for example the DRBGs which are owned by
+ * an SSL context. All DRBGs are organized in a hierarchical fashion
+ * with the <master> DRBG as root.
+ *
+ * This gives the following overall picture:
+ *
+ *                  <os entropy sources>
+ *                         |
+ *    RAND_add() ==>    <master>          \
+ *                       /   \            | shared DRBGs (with locking)
+ *                 <public>  <private>    /
+ *                     |
+ *                   <ssl>  owned by an SSL context
+ *
+ * AUTOMATIC RESEEDING
+ *
+ * Before satisfying a generate request, a DRBG reseeds itself automatically
+ * if the number of generate requests since the last reseeding exceeds a
+ * certain threshold, the so called |reseed_interval|. This automatic
+ * reseeding  can be disabled by setting the |reseed_interval| to 0.
+ *
+ * MANUAL RESEEDING
+ *
+ * For the three shared DRBGs (and only for these) there is a way to reseed
+ * them manually by calling RAND_seed() (or RAND_add() with a positive
+ * |randomness| argument). This will immediately reseed the <master> DRBG.
+ * Its immediate children (<public> and <private> DRBG) will detect this
+ * on their next generate call and reseed, pulling randomness from <master>.
+ */
+
+
+/* NIST SP 800-90A DRBG recommends the use of a personalization string. */
+static const char ossl_pers_string[] = "OpenSSL NIST SP 800-90A DRBG";
+
 static CRYPTO_ONCE rand_drbg_init = CRYPTO_ONCE_STATIC_INIT;
 
-static int drbg_setup(RAND_DRBG *drbg, const char *name);
+static int drbg_setup(RAND_DRBG *drbg, const char *name, RAND_DRBG *parent);
 
 /*
  * Set/initialize |drbg| to be of type |nid|, with optional |flags|.
@@ -72,6 +129,8 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int nid, unsigned int flags)
 /*
  * Allocate memory and initialize a new DRBG.  The |parent|, if not
  * NULL, will be used to auto-seed this RAND_DRBG as needed.
+ *
+ * Returns a pointer to the new DRBG instance on success, NULL on failure.
  */
 RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
 {
@@ -86,12 +145,10 @@ RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
     if (RAND_DRBG_set(drbg, type, flags) < 0)
         goto err;
 
-    if (parent != NULL) {
-        if (!RAND_DRBG_set_callbacks(drbg, rand_drbg_get_entropy,
-                                     rand_drbg_cleanup_entropy,
-                                     NULL, NULL))
-            goto err;
-    }
+    if (!RAND_DRBG_set_callbacks(drbg, rand_drbg_get_entropy,
+                                 rand_drbg_cleanup_entropy,
+                                 NULL, NULL))
+        goto err;
 
     return drbg;
 
@@ -164,7 +221,14 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
     }
 
     drbg->state = DRBG_READY;
-    drbg->reseed_counter = 1;
+    drbg->generate_counter = 0;
+
+    if (drbg->reseed_counter > 0) {
+        if (drbg->parent == NULL)
+            drbg->reseed_counter++;
+        else
+            drbg->reseed_counter = drbg->parent->reseed_counter;
+    }
 
 end:
     if (entropy != NULL && drbg->cleanup_entropy != NULL)
@@ -194,7 +258,6 @@ int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
 {
     int ret = ctr_uninstantiate(drbg);
 
-    OPENSSL_cleanse(&drbg->ctr, sizeof(drbg->ctr));
     drbg->state = DRBG_UNINITIALISED;
     return ret;
 }
@@ -238,8 +301,16 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
 
     if (!ctr_reseed(drbg, entropy, entropylen, adin, adinlen))
         goto end;
+
     drbg->state = DRBG_READY;
-    drbg->reseed_counter = 1;
+    drbg->generate_counter = 0;
+
+    if (drbg->reseed_counter > 0) {
+        if (drbg->parent == NULL)
+            drbg->reseed_counter++;
+        else
+            drbg->reseed_counter = drbg->parent->reseed_counter;
+    }
 
 end:
     if (entropy != NULL && drbg->cleanup_entropy != NULL)
@@ -310,12 +381,18 @@ int rand_drbg_restart(RAND_DRBG *drbg,
     }
 
     /* repair error state */
-    if (drbg->state == DRBG_ERROR)
+    if (drbg->state == DRBG_ERROR) {
         RAND_DRBG_uninstantiate(drbg);
+        /* The drbg->ctr member needs to be reinitialized before reinstantiation */
+        RAND_DRBG_set(drbg, drbg->nid, drbg->flags);
+    }
 
     /* repair uninitialized state */
     if (drbg->state == DRBG_UNINITIALISED) {
-        drbg_setup(drbg, NULL);
+        /* reinstantiate drbg */
+        RAND_DRBG_instantiate(drbg,
+                              (const unsigned char *) ossl_pers_string,
+                              sizeof(ossl_pers_string) - 1);
         /* already reseeded. prevent second reseeding below */
         reseeded = (drbg->state == DRBG_READY);
     }
@@ -394,8 +471,15 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
         reseed_required = 1;
     }
 
-    if (drbg->reseed_counter >= drbg->reseed_interval)
-        reseed_required = 1;
+    if (drbg->reseed_interval > 0) {
+        if (drbg->generate_counter >= drbg->reseed_interval)
+            reseed_required = 1;
+    }
+
+    if (drbg->reseed_counter > 0 && drbg->parent != NULL) {
+        if (drbg->reseed_counter != drbg->parent->reseed_counter)
+            reseed_required = 1;
+    }
 
     if (reseed_required || prediction_resistance) {
         if (!RAND_DRBG_reseed(drbg, adin, adinlen)) {
@@ -412,7 +496,7 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
         return 0;
     }
 
-    drbg->reseed_counter++;
+    drbg->generate_counter++;
 
     return 1;
 }
@@ -472,10 +556,16 @@ int RAND_DRBG_set_callbacks(RAND_DRBG *drbg,
 
 /*
  * Set the reseed interval.
+ *
+ * The drbg will reseed automatically whenever the number of generate
+ * requests exceeds the given reseed interval. If the reseed interval
+ * is 0, then this automatic reseeding is disabled.
+ *
+ * Returns 1 on success, 0 on failure.
  */
-int RAND_DRBG_set_reseed_interval(RAND_DRBG *drbg, int interval)
+int RAND_DRBG_set_reseed_interval(RAND_DRBG *drbg, unsigned int interval)
 {
-    if (interval < 0 || interval > MAX_RESEED)
+    if (interval > MAX_RESEED_INTERVAL)
         return 0;
     drbg->reseed_interval = interval;
     return 1;
@@ -501,31 +591,41 @@ void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
  */
 
 /*
- * Initializes the DRBG with default settings.
- * For global DRBGs a global lock is created with the given name
- * Returns 1 on success, 0 on failure
+ * Initializes the given global DRBG with default settings.
+ * A global lock for the DRBG is created with the given name.
+ *
+ * Returns a pointer to the new DRBG instance on success, NULL on failure.
  */
-static int drbg_setup(RAND_DRBG *drbg, const char *name)
+static int drbg_setup(RAND_DRBG *drbg, const char *name, RAND_DRBG *parent)
 {
     int ret = 1;
 
-    if (name != NULL) {
-        if (drbg->lock != NULL) {
-            RANDerr(RAND_F_DRBG_SETUP, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
+    if (name == NULL || drbg->lock != NULL) {
+        RANDerr(RAND_F_DRBG_SETUP, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
 
-        drbg->lock = CRYPTO_THREAD_glock_new(name);
-        if (drbg->lock == NULL) {
-            RANDerr(RAND_F_DRBG_SETUP, RAND_R_FAILED_TO_CREATE_LOCK);
-            return 0;
-        }
+    drbg->lock = CRYPTO_THREAD_glock_new(name);
+    if (drbg->lock == NULL) {
+        RANDerr(RAND_F_DRBG_SETUP, RAND_R_FAILED_TO_CREATE_LOCK);
+        return 0;
     }
 
     ret &= RAND_DRBG_set(drbg,
                          RAND_DRBG_NID, RAND_DRBG_FLAG_CTR_USE_DF) == 1;
     ret &= RAND_DRBG_set_callbacks(drbg, rand_drbg_get_entropy,
                                    rand_drbg_cleanup_entropy, NULL, NULL) == 1;
+
+    if (parent == NULL)
+        drbg->reseed_interval = MASTER_RESEED_INTERVAL;
+    else {
+        drbg->parent = parent;
+        drbg->reseed_interval = SLAVE_RESEED_INTERVAL;
+    }
+
+    /* enable seed propagation */
+    drbg->reseed_counter = 1;
+
     /*
      * Ignore instantiation error so support just-in-time instantiation.
      *
@@ -546,8 +646,9 @@ DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
 {
     int ret = 1;
 
-    ret &= drbg_setup(&rand_drbg, "rand_drbg");
-    ret &= drbg_setup(&priv_drbg, "priv_drbg");
+    ret &= drbg_setup(&drbg_master, "drbg_master", NULL);
+    ret &= drbg_setup(&drbg_public, "drbg_public", &drbg_master);
+    ret &= drbg_setup(&drbg_private, "drbg_private", &drbg_master);
 
     return ret;
 }
@@ -562,8 +663,9 @@ static void drbg_cleanup(RAND_DRBG *drbg)
 /* Clean up the global DRBGs before exit */
 void rand_drbg_cleanup_int(void)
 {
-    drbg_cleanup(&rand_drbg);
-    drbg_cleanup(&priv_drbg);
+    drbg_cleanup(&drbg_private);
+    drbg_cleanup(&drbg_public);
+    drbg_cleanup(&drbg_master);
 }
 
 /* Implements the default OpenSSL RAND_bytes() method */
@@ -571,7 +673,7 @@ static int drbg_bytes(unsigned char *out, int count)
 {
     int ret = 0;
     size_t chunk;
-    RAND_DRBG *drbg = RAND_DRBG_get0_global();
+    RAND_DRBG *drbg = RAND_DRBG_get0_public();
 
     if (drbg == NULL)
         return 0;
@@ -599,7 +701,7 @@ err:
 static int drbg_add(const void *buf, int num, double randomness)
 {
     int ret = 0;
-    RAND_DRBG *drbg = RAND_DRBG_get0_global();
+    RAND_DRBG *drbg = RAND_DRBG_get0_master();
 
     if (drbg == NULL)
         return 0;
@@ -636,7 +738,7 @@ static int drbg_seed(const void *buf, int num)
 static int drbg_status(void)
 {
     int ret;
-    RAND_DRBG *drbg = RAND_DRBG_get0_global();
+    RAND_DRBG *drbg = RAND_DRBG_get0_master();
 
     if (drbg == NULL)
         return 0;
@@ -648,27 +750,40 @@ static int drbg_status(void)
 }
 
 /*
- * Get the global public DRBG.
+ * Get the master DRBG.
  * Returns pointer to the DRBG on success, NULL on failure.
+ *
  */
-RAND_DRBG *RAND_DRBG_get0_global(void)
+RAND_DRBG *RAND_DRBG_get0_master(void)
 {
     if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
         return NULL;
 
-    return &rand_drbg;
+    return &drbg_master;
 }
 
 /*
- * Get the global private DRBG.
+ * Get the public DRBG.
  * Returns pointer to the DRBG on success, NULL on failure.
  */
-RAND_DRBG *RAND_DRBG_get0_priv_global(void)
+RAND_DRBG *RAND_DRBG_get0_public(void)
 {
     if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
         return NULL;
 
-    return &priv_drbg;
+    return &drbg_public;
+}
+
+/*
+ * Get the private DRBG.
+ * Returns pointer to the DRBG on success, NULL on failure.
+ */
+RAND_DRBG *RAND_DRBG_get0_private(void)
+{
+    if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
+        return NULL;
+
+    return &drbg_private;
 }
 
 RAND_METHOD rand_meth = {
