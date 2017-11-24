@@ -4447,3 +4447,4 @@ RSA_get_version                         4391	1_1_1	EXIST::FUNCTION:RSA
 RSA_meth_get_multi_prime_keygen         4392	1_1_1	EXIST::FUNCTION:RSA
 RSA_meth_set_multi_prime_keygen         4393	1_1_1	EXIST::FUNCTION:RSA
 RAND_DRBG_get0_master                   4394	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_set_reseed_time_interval      4395	1_1_1	EXIST::FUNCTION:

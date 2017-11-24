@@ -72,18 +72,24 @@ static RAND_DRBG drbg_private;
  *
  * AUTOMATIC RESEEDING
  *
- * Before satisfying a generate request, a DRBG reseeds itself automatically
- * if the number of generate requests since the last reseeding exceeds a
- * certain threshold, the so called |reseed_interval|. This automatic
- * reseeding  can be disabled by setting the |reseed_interval| to 0.
+ * Before satisfying a generate request, a DRBG reseeds itself automatically,
+ * if one of the following two conditions holds:
+ *
+ * - the number of generate requests since the last reseeding exceeds a
+ *   certain threshold, the so called |reseed_interval|. This behaviour
+ *   can be disabled by setting the |reseed_interval| to 0.
+ *
+ * - the time elapsed since the last reseeding exceeds a certain time
+ *   interval, the so called |reseed_time_interval|. This behaviour
+ *   can be disabled by setting the |reseed_time_interval| to 0.
  *
  * MANUAL RESEEDING
  *
- * For the three shared DRBGs (and only for these) there is a way to reseed
- * them manually by calling RAND_seed() (or RAND_add() with a positive
+ * For the three shared DRBGs (and only for these) there is another way to
+ * reseed them manually by calling RAND_seed() (or RAND_add() with a positive
  * |randomness| argument). This will immediately reseed the <master> DRBG.
- * Its immediate children (<public> and <private> DRBG) will detect this
- * on their next generate call and reseed, pulling randomness from <master>.
+ * The <public> and <private> DRBG will detect this on their next generate
+ * call and reseed, pulling randomness from <master>.
  */
 
 
@@ -222,7 +228,7 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
 
     drbg->state = DRBG_READY;
     drbg->generate_counter = 0;
-
+    drbg->reseed_time = time(NULL);
     if (drbg->reseed_counter > 0) {
         if (drbg->parent == NULL)
             drbg->reseed_counter++;
@@ -304,7 +310,7 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
 
     drbg->state = DRBG_READY;
     drbg->generate_counter = 0;
-
+    drbg->reseed_time = time(NULL);
     if (drbg->reseed_counter > 0) {
         if (drbg->parent == NULL)
             drbg->reseed_counter++;
@@ -475,7 +481,12 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
         if (drbg->generate_counter >= drbg->reseed_interval)
             reseed_required = 1;
     }
-
+    if (drbg->reseed_time_interval > 0) {
+        time_t now = time(NULL);
+        if (now < drbg->reseed_time
+            || now - drbg->reseed_time >= drbg->reseed_time_interval)
+            reseed_required = 1;
+    }
     if (drbg->reseed_counter > 0 && drbg->parent != NULL) {
         if (drbg->reseed_counter != drbg->parent->reseed_counter)
             reseed_required = 1;
@@ -559,7 +570,7 @@ int RAND_DRBG_set_callbacks(RAND_DRBG *drbg,
  *
  * The drbg will reseed automatically whenever the number of generate
  * requests exceeds the given reseed interval. If the reseed interval
- * is 0, then this automatic reseeding is disabled.
+ * is 0, then this feature is disabled.
  *
  * Returns 1 on success, 0 on failure.
  */
@@ -568,6 +579,24 @@ int RAND_DRBG_set_reseed_interval(RAND_DRBG *drbg, unsigned int interval)
     if (interval > MAX_RESEED_INTERVAL)
         return 0;
     drbg->reseed_interval = interval;
+    return 1;
+}
+
+/*
+ * Set the reseed time interval.
+ *
+ * The drbg will reseed automatically whenever the time elapsed since
+ * the last reseeding exceeds the given reseed time interval. For safety,
+ * a reseeding will also occur if the clock has been reset to a smaller
+ * value.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+int RAND_DRBG_set_reseed_time_interval(RAND_DRBG *drbg, time_t interval)
+{
+    if (interval > MAX_RESEED_TIME_INTERVAL)
+        return 0;
+    drbg->reseed_time_interval = interval;
     return 1;
 }
 
@@ -616,11 +645,13 @@ static int drbg_setup(RAND_DRBG *drbg, const char *name, RAND_DRBG *parent)
     ret &= RAND_DRBG_set_callbacks(drbg, rand_drbg_get_entropy,
                                    rand_drbg_cleanup_entropy, NULL, NULL) == 1;
 
-    if (parent == NULL)
+    if (parent == NULL) {
         drbg->reseed_interval = MASTER_RESEED_INTERVAL;
-    else {
+        drbg->reseed_time_interval = MASTER_RESEED_TIME_INTERVAL;
+    } else {
         drbg->parent = parent;
         drbg->reseed_interval = SLAVE_RESEED_INTERVAL;
+        drbg->reseed_time_interval = SLAVE_RESEED_TIME_INTERVAL;
     }
 
     /* enable seed propagation */

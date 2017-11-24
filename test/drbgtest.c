@@ -573,6 +573,7 @@ static int test_drbg_reseed(int expect_success,
                            )
 {
     unsigned char buf[32];
+    time_t before_reseed, after_reseed;
     int expected_state = (expect_success ? DRBG_READY : DRBG_ERROR);
 
     /*
@@ -595,9 +596,11 @@ static int test_drbg_reseed(int expect_success,
      */
 
     /* Generate random output from the public and private DRBG */
+    before_reseed = expect_master_reseed == 1 ? time(NULL) : 0;
     if (!TEST_int_eq(RAND_bytes(buf, sizeof(buf)), expect_success)
         || !TEST_int_eq(RAND_priv_bytes(buf, sizeof(buf)), expect_success))
         return 0;
+    after_reseed = time(NULL);
 
 
     /*
@@ -632,6 +635,16 @@ static int test_drbg_reseed(int expect_success,
         /* Test whether all three reseed counters are synchronized */
         if (!TEST_int_eq(public->reseed_counter, master->reseed_counter)
             || !TEST_int_eq(private->reseed_counter, master->reseed_counter))
+            return 0;
+
+        /* Test whether reseed time of master DRBG is set correctly */
+        if (!TEST_time_t_le(before_reseed, master->reseed_time)
+            || !TEST_time_t_le(master->reseed_time, after_reseed))
+            return 0;
+
+        /* Test whether reseed times of child DRBGs are synchronized with master */
+        if (!TEST_time_t_ge(public->reseed_time, master->reseed_time)
+            || !TEST_time_t_ge(private->reseed_time, master->reseed_time))
             return 0;
     } else {
         ERR_clear_error();
