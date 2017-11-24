@@ -129,3 +129,4 @@ void rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo);
 void rsa_multip_info_free(RSA_PRIME_INFO *pinfo);
 RSA_PRIME_INFO *rsa_multip_info_new(void);
 int rsa_multip_calc_product(RSA *rsa);
+int rsa_multip_cap(int bits);

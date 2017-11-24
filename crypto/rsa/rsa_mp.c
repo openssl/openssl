@@ -93,3 +93,14 @@ int rsa_multip_calc_product(RSA *rsa)
     BN_CTX_free(ctx);
     return rv;
 }
+
+int rsa_multip_cap(int bits)
+{
+    if (bits < 1024)
+        return 2;
+    else if (bits < 4096)
+        return 3;
+    else if (bits < 8192)
+        return 4;
+    return 5;
+}
