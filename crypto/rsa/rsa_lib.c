@@ -165,7 +165,16 @@ void *RSA_get_ex_data(const RSA *r, int idx)
 
 int RSA_security_bits(const RSA *rsa)
 {
-    return BN_security_bits(BN_num_bits(rsa->n), -1);
+    int bits = BN_num_bits(rsa->n);
+
+    if (rsa->version == RSA_ASN1_VERSION_MULTI) {
+        /* This ought to mean that we have private key at hand. */
+        int ex_primes = sk_RSA_PRIME_INFO_num(rsa->prime_infos);
+
+        if (ex_primes <= 0 || (ex_primes + 2) > rsa_multip_cap(bits))
+            return 0;
+    }
+    return BN_security_bits(bits, -1);
 }
 
 int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
