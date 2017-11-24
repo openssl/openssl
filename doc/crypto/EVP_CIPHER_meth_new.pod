@@ -204,17 +204,32 @@ EVP_CIPHER_CTX_get_cipher_data().
 This cleanup function is called by EVP_CIPHER_CTX_reset() and
 EVP_CIPHER_CTX_free().
 
+EVP_CIPHER_meth_set_set_asn1_params() sets the function for B<cipher>
+to set the AlgorithmIdentifier "parameter" based on the passed cipher.
+This function is called by EVP_CIPHER_param_to_asn1().
+EVP_CIPHER_meth_set_get_asn1_params() sets the function for B<cipher>
+that sets the cipher parameters based on an ASN.1 AlgorithmIdentifier
+"parameter".
+Both these functions are needed when there is a need for custom data
+(more or other than the cipher IV).
+They are called by EVP_CIPHER_param_to_asn1() and
+EVP_CIPHER_asn1_to_param() respectively if defined.
+
 EVP_CIPHER_meth_set_ctrl() sets the control function for B<cipher>.
+
+EVP_CIPHER_meth_get_init(), EVP_CIPHER_meth_get_do_cipher(),
+EVP_CIPHER_meth_get_cleanup(), EVP_CIPHER_meth_get_set_asn1_params(),
+EVP_CIPHER_meth_get_get_asn1_params() and EVP_CIPHER_meth_get_ctrl()
+are all used to retrieve the method data given with the
+EVP_CIPHER_meth_set_*() functions above.
 
 =head1 RETURN VALUES
 
-EVP_CIPHER_meth_get_input_blocksize(), EVP_CIPHER_meth_get_result_size(),
-EVP_CIPHER_meth_get_app_datasize(), EVP_CIPHER_meth_get_flags(),
-EVP_CIPHER_meth_get_init(), EVP_CIPHER_meth_get_update(),
-EVP_CIPHER_meth_get_final(), EVP_CIPHER_meth_get_copy(),
-EVP_CIPHER_meth_get_cleanup() and EVP_CIPHER_meth_get_ctrl() are all used
-to retrieve the method data given with the EVP_CIPHER_meth_set_*()
-functions above.
+EVP_CIPHER_meth_new() and EVP_CIPHER_meth_dup() return a pointer to a
+newly created B<EVP_CIPHER>, or NULL on failure.
+All EVP_CIPHER_meth_set_*() functions return 1.
+All EVP_CIPHER_meth_get_*() functions return pointers to their
+respective B<cipher> function.
 
 =head1 SEE ALSO
 
@@ -228,7 +243,7 @@ The functions described here were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
