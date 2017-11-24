@@ -73,16 +73,6 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
     BN_ULONG bitst = 0;
 
     /*
-     * From Github pull request #4241:
-     *
-     * We are in disagreement on how to handle security trade-off, in other
-     * words:
-     *
-     * mechanical-check-for-maximum-of-16-prime-factors vs.
-     * limiting-number-depending-on-length-less-factors-for-shorter-keys.
-     */
-
-    /*
      * When generating ridiculously small keys, we can get stuck
      * continually regenerating the same prime values.
      */
@@ -92,8 +82,8 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
         goto err;
     }
 
-    if (primes < RSA_DEFAULT_PRIME_NUM
-        || primes > RSA_MAX_PRIME_NUM || bits <= primes) {
+    if (primes < RSA_DEFAULT_PRIME_NUM || primes > rsa_multip_cap(bits)) {
+        ok = 0;             /* we set our own err */
         RSAerr(RSA_F_RSA_BUILTIN_KEYGEN, RSA_R_KEY_PRIME_NUM_INVALID);
         goto err;
     }
@@ -111,20 +101,6 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
     /* divide bits into 'primes' pieces evenly */
     quo = bits / primes;
     rmd = bits % primes;
-
-    if (primes > RSA_DEFAULT_PRIME_NUM && quo < RSA_MIN_PRIME_SIZE) {
-        /*
-         * this means primes are too many for the key bits.
-         *
-         * This only affects multi-prime keys. For normal RSA,
-         * it's limited above (bits >= 16, hence each prime >= 8).
-         *
-         * This is done in this way because the original normal
-         * RSA's behavior should not alter at least in OpenSSL 1.1.1.
-         */
-        RSAerr(RSA_F_RSA_BUILTIN_KEYGEN, RSA_R_KEY_PRIME_NUM_INVALID);
-        goto err;
-    }
 
     for (i = 0; i < primes; i++)
         bitsr[i] = (i < rmd) ? quo + 1 : quo;
