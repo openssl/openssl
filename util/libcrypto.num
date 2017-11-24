@@ -4371,7 +4371,7 @@ SCRYPT_PARAMS_it                        4314	1_1_1	EXIST:EXPORT_VAR_AS_FUNCTION:
 CRYPTO_secure_clear_free                4315	1_1_0g	EXIST::FUNCTION:
 EVP_PKEY_meth_get0                      4316	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_meth_get_count                 4317	1_1_1	EXIST::FUNCTION:
-RAND_DRBG_get0_global                   4319	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_get0_public                   4319	1_1_1	EXIST::FUNCTION:
 RAND_priv_bytes                         4320	1_1_1	EXIST::FUNCTION:
 BN_priv_rand                            4321	1_1_1	EXIST::FUNCTION:
 BN_priv_rand_range                      4322	1_1_1	EXIST::FUNCTION:
@@ -4381,7 +4381,7 @@ ASN1_TIME_compare                       4325	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_CTX_ctrl_uint64                4326	1_1_1	EXIST::FUNCTION:
 EVP_DigestFinalXOF                      4327	1_1_1	EXIST::FUNCTION:
 ERR_clear_last_mark                     4328	1_1_1	EXIST::FUNCTION:
-RAND_DRBG_get0_priv_global              4329	1_1_1	EXIST::FUNCTION:
+RAND_DRBG_get0_private                  4329	1_1_1	EXIST::FUNCTION:
 EVP_aria_192_ccm                        4330	1_1_1	EXIST::FUNCTION:ARIA
 EVP_aria_256_gcm                        4331	1_1_1	EXIST::FUNCTION:ARIA
 EVP_aria_256_ccm                        4332	1_1_1	EXIST::FUNCTION:ARIA
@@ -4446,3 +4446,4 @@ RSA_set0_multi_prime_params             4390	1_1_1	EXIST::FUNCTION:RSA
 RSA_get_version                         4391	1_1_1	EXIST::FUNCTION:RSA
 RSA_meth_get_multi_prime_keygen         4392	1_1_1	EXIST::FUNCTION:RSA
 RSA_meth_set_multi_prime_keygen         4393	1_1_1	EXIST::FUNCTION:RSA
+RAND_DRBG_get0_master                   4394	1_1_1	EXIST::FUNCTION:
