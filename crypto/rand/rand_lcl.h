@@ -20,12 +20,17 @@
 /* How many times to read the TSC as a randomness source. */
 # define TSC_READ_COUNT                 4
 
-/* Maximum reseed interval */
+/* Maximum reseed intervals */
 # define MAX_RESEED_INTERVAL                     (1 << 24)
+# define MAX_RESEED_TIME_INTERVAL                (1 << 20) /* approx. 12 days */
 
 /* Default reseed intervals */
 # define MASTER_RESEED_INTERVAL                  (1 << 8)
 # define SLAVE_RESEED_INTERVAL                   (1 << 16)
+# define MASTER_RESEED_TIME_INTERVAL             (60*60)   /* 1 hour */
+# define SLAVE_RESEED_TIME_INTERVAL              (7*60)    /* 7 minutes */
+
+
 
 /* Max size of additional input and personalization string. */
 # define DRBG_MAX_LENGTH                4096
@@ -118,6 +123,13 @@ struct rand_drbg_st {
      * This value is ignored if it is zero.
      */
     unsigned int reseed_interval;
+    /* Stores the time when the last reseeding occurred */
+    time_t reseed_time;
+    /*
+     * Specifies the maximum time interval (in seconds) between reseeds.
+     * This value is ignored if it is zero.
+     */
+    time_t reseed_time_interval;
     /*
      * Counts the number of reseeds since instantiation.
      * This value is ignored if it is zero.

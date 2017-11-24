@@ -43,6 +43,7 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
                        int prediction_resistance,
                        const unsigned char *adin, size_t adinlen);
 int RAND_DRBG_set_reseed_interval(RAND_DRBG *drbg, unsigned int interval);
+int RAND_DRBG_set_reseed_time_interval(RAND_DRBG *drbg, time_t interval);
 
 RAND_DRBG *RAND_DRBG_get0_master(void);
 RAND_DRBG *RAND_DRBG_get0_public(void);
