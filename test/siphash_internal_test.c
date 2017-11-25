@@ -17,6 +17,7 @@
 #include "internal/siphash.h"
 #include "../crypto/siphash/siphash_local.h"
 #include "internal/nelem.h"
+#include "internal/cryptlib.h"
 
 static BIO* b_stderr = NULL;
 static BIO* b_stdout = NULL;
@@ -43,8 +44,7 @@ static int benchmark_siphash(void)
     SIPHASH siphash;
     unsigned char key[SIPHASH_KEY_SIZE];
     unsigned char buf[8192];
-    unsigned long long stopwatch;
-    unsigned long long OPENSSL_rdtsc();
+    uint32_t stopwatch;
     unsigned int i;
 
     memset (buf,0x55,sizeof(buf));
