@@ -80,8 +80,8 @@ static int apps_startup()
 #endif
 
     /* Set non-default library initialisation settings */
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN
-                             | OPENSSL_INIT_LOAD_CONFIG, NULL))
+    if (!OPENSSL_init_ssl(OPENSSL_INIT_ENGINE_ALL_BUILTIN
+                          | OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
 
     setup_ui_method();
