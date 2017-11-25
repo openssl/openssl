@@ -41,6 +41,8 @@
 #  define AES_BLOCK_SIZE   16
 # endif
 # define AES_KEY_SIZE_128 16
+# define AES_KEY_SIZE_192 24
+# define AES_KEY_SIZE_256 32
 # define AES_IV_LEN       16
 
 # define MAX_INFLIGHTS 1
@@ -50,6 +52,19 @@ typedef enum {
     MODE_SYNC,
     MODE_ASYNC
 } op_mode;
+
+enum {
+    AES_CBC_128 = 0,
+    AES_CBC_192,
+    AES_CBC_256
+};
+
+struct cbc_cipher_handles {
+    int key_size;
+    EVP_CIPHER *_hidden;
+};
+
+typedef struct cbc_cipher_handles cbc_handles;
 
 struct afalg_aio_st {
     int efd;
