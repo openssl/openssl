@@ -96,11 +96,14 @@ int rsa_multip_calc_product(RSA *rsa)
 
 int rsa_multip_cap(int bits)
 {
+    int cap = 5;
+
     if (bits < 1024)
-        return 2;
+        cap = 2;
     else if (bits < 4096)
-        return 3;
+        cap = 3;
     else if (bits < 8192)
-        return 4;
-    return 5;
+        cap = 4;
+
+    return cap;
 }

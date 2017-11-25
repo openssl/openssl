@@ -168,9 +168,7 @@ int RSA_security_bits(const RSA *rsa)
     int bits = BN_num_bits(rsa->n);
 
     if (rsa->version == RSA_ASN1_VERSION_MULTI) {
-        /*
-         * This ougth to mean that we have private key at hand.
-         */
+        /* This ought to mean that we have private key at hand. */
         int ex_primes = sk_RSA_PRIME_INFO_num(rsa->prime_infos);
 
         if (ex_primes <= 0 || (ex_primes + 2) > rsa_multip_cap(bits))
