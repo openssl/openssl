@@ -214,7 +214,7 @@ size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
 #elif defined(OPENSSL_SYS_WIN32)
     DWORD pid;
     FILETIME ft;
-    LARGEINTEGER pc;
+    LARGE_INTEGER pc;
 #endif
     uint32_t tsc = 0;
 
