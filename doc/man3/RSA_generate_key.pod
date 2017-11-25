@@ -35,7 +35,7 @@ modulus will be B<primes>, and the public exponent will be B<e>. Key sizes
 with B<num> E<lt> 1024 should be considered insecure. The exponent is an odd
 number, typically 3, 17 or 65537.
 
-In order to maintain adequate security level maximum number of permitted
+In order to maintain adequate security level, the maximum number of permitted
 B<primes> depends on modulus bit length:
 
    <1024 | >=1024 | >=4096 | >=8192
