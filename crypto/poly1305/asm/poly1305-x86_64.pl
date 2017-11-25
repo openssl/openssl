@@ -24,6 +24,16 @@
 #
 # Add AVX512F+VL+BW code path.
 #
+# November 2017
+#
+# Convert AVX512F+VL+BW code path to pure AVX512F, so that it can be
+# executed even on Knights Landing. Trigger for modification was
+# observation that AVX512 code paths can negatively affect overall
+# Skylake-X system performance. Since we are likely to suppress
+# AVX512F capability flag [at least on Skylake-X], conversion serves
+# as kind of "investment protection". Note that next *lake processor,
+# Cannolake, has AVX512IFMA code path to execute...
+#
 # Numbers are cycles per processed byte with poly1305_blocks alone,
 # measured with rdtsc at fixed clock frequency.
 #
@@ -35,7 +45,7 @@
 # Haswell	1.14/+175%	1.11		0.65
 # Skylake[-X]	1.13/+120%	0.96		0.51	[0.35]
 # Silvermont	2.83/+95%	-
-# Knights L	3.60/-		1.65		1.10	(***)
+# Knights L	3.60/?		1.65		1.10	?
 # Goldmont	1.70/+180%	-
 # VIA Nano	1.82/+150%	-
 # Sledgehammer	1.38/+160%	-
@@ -50,8 +60,6 @@
 #	Core processors, 50-30%, less newer processor is, but slower on
 #	contemporary ones, for example almost 2x slower on Atom, and as
 #	former are naturally disappearing, SSE2 is deemed unnecessary;
-# (***)	Current AVX-512 code requires BW and VL extensions and can not
-#	execute on Knights Landing;
 
 $flavour = shift;
 $output  = shift;
@@ -1685,7 +1693,6 @@ poly1305_blocks_avx2:
 .Leven_avx2:
 .cfi_startproc
 	mov		OPENSSL_ia32cap_P+8(%rip),%r10d
-	mov		\$`(1<<31|1<<30|1<<16)`,%r11d
 	vmovd		4*0($ctx),%x#$H0	# load hash value base 2^26
 	vmovd		4*1($ctx),%x#$H1
 	vmovd		4*2($ctx),%x#$H2
@@ -1698,8 +1705,8 @@ $code.=<<___		if ($avx>2);
 	cmp		\$512,$len
 	jb		.Lskip_avx512
 	and		%r11d,%r10d
-	cmp		%r11d,%r10d		# check for AVX512F+BW+VL
-	je		.Lblocks_avx512
+	test		\$`1<<16`,%r10d		# check for AVX512F
+	jnz		.Lblocks_avx512
 .Lskip_avx512:
 ___
 $code.=<<___	if (!$win64);
@@ -2109,10 +2116,14 @@ if ($avx>2) {
 # reason stack layout is kept identical to poly1305_blocks_avx2. If not
 # for this tail, we wouldn't have to even allocate stack frame...
 
-my ($R0,$R1,$R2,$R3,$R4, $S1,$S2,$S3,$S4) = map("%ymm$_",(16..24));
-my ($M0,$M1,$M2,$M3,$M4) = map("%ymm$_",(25..29));
+my ($R0,$R1,$R2,$R3,$R4, $S1,$S2,$S3,$S4) = map("%zmm$_",(16..24));
+my ($M0,$M1,$M2,$M3,$M4) = map("%zmm$_",(25..29));
 my $PADBIT="%zmm30";
-my $GATHER="%ymm31";
+
+map(s/%y/%z/,($T4,$T0,$T1,$T2,$T3));		# switch to %zmm domain
+map(s/%y/%z/,($D0,$D1,$D2,$D3,$D4));
+map(s/%y/%z/,($H0,$H1,$H2,$H3,$H4));
+map(s/%y/%z/,($MASK));
 
 $code.=<<___;
 .type	poly1305_blocks_avx512,\@function,4
@@ -2120,7 +2131,8 @@ $code.=<<___;
 poly1305_blocks_avx512:
 .cfi_startproc
 .Lblocks_avx512:
-	vzeroupper
+	mov		\$15,%eax
+	kmovw		%eax,%k2
 ___
 $code.=<<___	if (!$win64);
 	lea		-8(%rsp),%r11
@@ -2133,52 +2145,53 @@ $code.=<<___	if ($win64);
 	vmovdqa		%xmm6,0x50(%r11)
 	vmovdqa		%xmm7,0x60(%r11)
 	vmovdqa		%xmm8,0x70(%r11)
-	vmovdqa32	%xmm9,0x80(%r11)
-	vmovdqa32	%xmm10,0x90(%r11)
-	vmovdqa32	%xmm11,0xa0(%r11)
-	vmovdqa32	%xmm12,0xb0(%r11)
-	vmovdqa32	%xmm13,0xc0(%r11)
-	vmovdqa32	%xmm14,0xd0(%r11)
-	vmovdqa32	%xmm15,0xe0(%r11)
+	vmovdqa		%xmm9,0x80(%r11)
+	vmovdqa		%xmm10,0x90(%r11)
+	vmovdqa		%xmm11,0xa0(%r11)
+	vmovdqa		%xmm12,0xb0(%r11)
+	vmovdqa		%xmm13,0xc0(%r11)
+	vmovdqa		%xmm14,0xd0(%r11)
+	vmovdqa		%xmm15,0xe0(%r11)
 .Ldo_avx512_body:
 ___
 $code.=<<___;
 	lea		.Lconst(%rip),%rcx
 	lea		48+64($ctx),$ctx	# size optimization
-	vmovdqa		96(%rcx),$T2		# .Lpermd_avx2
+	vmovdqa		96(%rcx),%y#$T2		# .Lpermd_avx2
 
 	# expand pre-calculated table
-	vmovdqu32	`16*0-64`($ctx),%x#$R0
+	vmovdqu32	`16*0-64`($ctx),${R0}{%k2}{z}
 	and		\$-512,%rsp
-	vmovdqu32	`16*1-64`($ctx),%x#$R1
-	vmovdqu32	`16*2-64`($ctx),%x#$S1
-	vmovdqu32	`16*3-64`($ctx),%x#$R2
-	vmovdqu32	`16*4-64`($ctx),%x#$S2
-	vmovdqu32	`16*5-64`($ctx),%x#$R3
-	vmovdqu32	`16*6-64`($ctx),%x#$S3
-	vmovdqu32	`16*7-64`($ctx),%x#$R4
-	vmovdqu32	`16*8-64`($ctx),%x#$S4
+	vmovdqu32	`16*1-64`($ctx),${R1}{%k2}{z}
+	mov		\$0x20,%rax
+	vmovdqu32	`16*2-64`($ctx),${S1}{%k2}{z}
+	vmovdqu32	`16*3-64`($ctx),${R2}{%k2}{z}
+	vmovdqu32	`16*4-64`($ctx),${S2}{%k2}{z}
+	vmovdqu32	`16*5-64`($ctx),${R3}{%k2}{z}
+	vmovdqu32	`16*6-64`($ctx),${S3}{%k2}{z}
+	vmovdqu32	`16*7-64`($ctx),${R4}{%k2}{z}
+	vmovdqu32	`16*8-64`($ctx),${S4}{%k2}{z}
 	vpermd		$R0,$T2,$R0		# 00003412 -> 14243444
-	vmovdqa64	64(%rcx),$MASK		# .Lmask26
+	vpbroadcastq	64(%rcx),$MASK		# .Lmask26
 	vpermd		$R1,$T2,$R1
 	vpermd		$S1,$T2,$S1
 	vpermd		$R2,$T2,$R2
-	vmovdqa32	$R0,0x00(%rsp)		# save in case $len%128 != 0
+	vmovdqa64	$R0,0x00(%rsp){%k2}	# save in case $len%128 != 0
 	 vpsrlq		\$32,$R0,$T0		# 14243444 -> 01020304
 	vpermd		$S2,$T2,$S2
-	vmovdqa32	$R1,0x20(%rsp)
+	vmovdqu64	$R1,0x00(%rsp,%rax){%k2}
 	 vpsrlq		\$32,$R1,$T1
 	vpermd		$R3,$T2,$R3
-	vmovdqa32	$S1,0x40(%rsp)
+	vmovdqa64	$S1,0x40(%rsp){%k2}
 	vpermd		$S3,$T2,$S3
 	vpermd		$R4,$T2,$R4
-	vmovdqa32	$R2,0x60(%rsp)
+	vmovdqu64	$R2,0x40(%rsp,%rax){%k2}
 	vpermd		$S4,$T2,$S4
-	vmovdqa32	$S2,0x80(%rsp)
-	vmovdqa32	$R3,0xa0(%rsp)
-	vmovdqa32	$S3,0xc0(%rsp)
-	vmovdqa32	$R4,0xe0(%rsp)
-	vmovdqa32	$S4,0x100(%rsp)
+	vmovdqa64	$S2,0x80(%rsp){%k2}
+	vmovdqu64	$R3,0x80(%rsp,%rax){%k2}
+	vmovdqa64	$S3,0xc0(%rsp){%k2}
+	vmovdqu64	$R4,0xc0(%rsp,%rax){%k2}
+	vmovdqa64	$S4,0x100(%rsp){%k2}
 
 	################################################################
 	# calculate 5th through 8th powers of the key
@@ -2282,14 +2295,6 @@ $code.=<<___;
 	vpandq		$MASK,$D3,$D3
 	vpaddq		$M3,$D4,$D4		# d3 -> d4
 
-___
-map(s/%y/%z/,($T4,$T0,$T1,$T2,$T3));		# switch to %zmm domain
-map(s/%y/%z/,($M4,$M0,$M1,$M2,$M3));
-map(s/%y/%z/,($D0,$D1,$D2,$D3,$D4));
-map(s/%y/%z/,($R0,$R1,$R2,$R3,$R4, $S1,$S2,$S3,$S4));
-map(s/%y/%z/,($H0,$H1,$H2,$H3,$H4));
-map(s/%y/%z/,($MASK));
-$code.=<<___;
 	################################################################
 	# at this point we have 14243444 in $R0-$S4 and 05060708 in
 	# $D0-$D4, ...
@@ -2327,7 +2332,6 @@ $code.=<<___;
 	vpaddd		$R3,$S3,$S3
 	vpaddd		$R4,$S4,$S4
 
-	vpbroadcastq	%x#$MASK,$MASK
 	vpbroadcastq	32(%rcx),$PADBIT	# .L129
 
 	vpsrlq		\$52,$T0,$T2		# splat input
@@ -2345,7 +2349,7 @@ $code.=<<___;
 	vpaddq		$H2,$T2,$H2		# accumulate input
 	sub		\$192,$len
 	jbe		.Ltail_avx512
-	#jmp		.Loop_avx512
+	jmp		.Loop_avx512
 
 .align	32
 .Loop_avx512:
@@ -2532,7 +2536,7 @@ $code.=<<___;
 	 vpaddq		$H3,$T3,$H3
 	 vpaddq		$H4,$T4,$H4
 
-	  vmovdqu64	16*0($inp),%x#$T0
+	  vmovdqu	16*0($inp),%x#$T0
 	vpmuludq	$H0,$R3,$M3
 	vpmuludq	$H0,$R4,$M4
 	vpmuludq	$H0,$R0,$M0
@@ -2542,7 +2546,7 @@ $code.=<<___;
 	vpaddq		$M0,$D0,$D0		# d0 += h0*r0
 	vpaddq		$M1,$D1,$D1		# d1 += h0*r1
 
-	  vmovdqu64	16*1($inp),%x#$T1
+	  vmovdqu	16*1($inp),%x#$T1
 	vpmuludq	$H1,$R2,$M3
 	vpmuludq	$H1,$R3,$M4
 	vpmuludq	$H1,$S4,$M0
@@ -2552,7 +2556,7 @@ $code.=<<___;
 	vpaddq		$M0,$D0,$D0		# d0 += h1*s4
 	vpaddq		$M2,$D2,$D2		# d2 += h0*r2
 
-	  vinserti64x2	\$1,16*2($inp),$T0,$T0
+	  vinserti128	\$1,16*2($inp),%y#$T0,%y#$T0
 	vpmuludq	$H3,$R0,$M3
 	vpmuludq	$H3,$R1,$M4
 	vpmuludq	$H1,$R0,$M1
@@ -2562,7 +2566,7 @@ $code.=<<___;
 	vpaddq		$M1,$D1,$D1		# d1 += h1*r0
 	vpaddq		$M2,$D2,$D2		# d2 += h1*r1
 
-	  vinserti64x2	\$1,16*3($inp),$T1,$T1
+	  vinserti128	\$1,16*3($inp),%y#$T1,%y#$T1
 	vpmuludq	$H4,$S4,$M3
 	vpmuludq	$H4,$R0,$M4
 	vpmuludq	$H3,$S2,$M0
@@ -2585,11 +2589,11 @@ $code.=<<___;
 	# horizontal addition
 
 	mov		\$1,%eax
-	vpsrldq		\$8,$H3,$D3
-	vpsrldq		\$8,$D4,$H4
-	vpsrldq		\$8,$H0,$D0
-	vpsrldq		\$8,$H1,$D1
-	vpsrldq		\$8,$H2,$D2
+	vpermq		\$0xb1,$H3,$D3
+	vpermq		\$0xb1,$D4,$H4
+	vpermq		\$0xb1,$H0,$D0
+	vpermq		\$0xb1,$H1,$D1
+	vpermq		\$0xb1,$H2,$D2
 	vpaddq		$D3,$H3,$H3
 	vpaddq		$D4,$H4,$H4
 	vpaddq		$D0,$H0,$H0
@@ -2626,23 +2630,23 @@ $code.=<<___;
 	# lazy reduction (interleaved with input splat)
 
 	vpsrlq		\$26,$H3,$D3
-	vpandq		$MASK,$H3,$H3
+	vpand		$MASK,$H3,$H3
 	 vpsrldq	\$6,$T0,$T2		# splat input
 	 vpsrldq	\$6,$T1,$T3
 	 vpunpckhqdq	$T1,$T0,$T4		# 4
 	vpaddq		$D3,$H4,$H4		# h3 -> h4
 
 	vpsrlq		\$26,$H0,$D0
-	vpandq		$MASK,$H0,$H0
+	vpand		$MASK,$H0,$H0
 	 vpunpcklqdq	$T3,$T2,$T2		# 2:3
 	 vpunpcklqdq	$T1,$T0,$T0		# 0:1
 	vpaddq		$D0,$H1,$H1		# h0 -> h1
 
 	vpsrlq		\$26,$H4,$D4
-	vpandq		$MASK,$H4,$H4
+	vpand		$MASK,$H4,$H4
 
 	vpsrlq		\$26,$H1,$D1
-	vpandq		$MASK,$H1,$H1
+	vpand		$MASK,$H1,$H1
 	 vpsrlq		\$30,$T2,$T3
 	 vpsrlq		\$4,$T2,$T2
 	vpaddq		$D1,$H2,$H2		# h1 -> h2
@@ -2654,21 +2658,21 @@ $code.=<<___;
 	vpaddq		$D4,$H0,$H0		# h4 -> h0
 
 	vpsrlq		\$26,$H2,$D2
-	vpandq		$MASK,$H2,$H2
-	 vpandq		$MASK,$T2,$T2		# 2
-	 vpandq		$MASK,$T0,$T0		# 0
+	vpand		$MASK,$H2,$H2
+	 vpand		$MASK,$T2,$T2		# 2
+	 vpand		$MASK,$T0,$T0		# 0
 	vpaddq		$D2,$H3,$H3		# h2 -> h3
 
 	vpsrlq		\$26,$H0,$D0
-	vpandq		$MASK,$H0,$H0
+	vpand		$MASK,$H0,$H0
 	 vpaddq		$H2,$T2,$H2		# accumulate input for .Ltail_avx2
-	 vpandq		$MASK,$T1,$T1		# 1
+	 vpand		$MASK,$T1,$T1		# 1
 	vpaddq		$D0,$H1,$H1		# h0 -> h1
 
 	vpsrlq		\$26,$H3,$D3
-	vpandq		$MASK,$H3,$H3
-	 vpandq		$MASK,$T3,$T3		# 3
-	 vporq		$PADBIT,$T4,$T4		# padbit, yes, always
+	vpand		$MASK,$H3,$H3
+	 vpand		$MASK,$T3,$T3		# 3
+	 vpor		32(%rcx),$T4,$T4	# padbit, yes, always
 	vpaddq		$D3,$H4,$H4		# h3 -> h4
 
 	lea		0x90(%rsp),%rax		# size optimization for .Ltail_avx2
