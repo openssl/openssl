@@ -118,6 +118,14 @@ matrix:
 
 before_script:
     - env
+    - TRAVIS_JOB_IDX=${TRAVIS_JOB_NUMBER#*.} ;
+      if [ $TRAVIS_JOB_IDX -gt 6 ]; then
+          echo 'y' | gem install travis -v 1.8.8 --no-rdoc --no-ri -f ;
+          echo 'y' | travis show $TRAVIS_BUILD_NUMBER ;
+          if [ $(travis show $TRAVIS_BUILD_NUMBER | grep -wc 'errored\|failed' ) -gt 4 ]; then
+              exit 0;
+          fi;
+      fi
     - if [ "$TRAVIS_PULL_REQUEST" != "false" -a -n "$EXTENDED_TEST" ]; then
           (git log -1 $TRAVIS_COMMIT_RANGE | grep '\[extended tests\]' > /dev/null) || exit 0;
       fi
