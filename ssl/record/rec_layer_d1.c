@@ -641,7 +641,6 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 /* Fail if we encountered a fatal error */
                 if (ossl_statem_in_error(s))
                     return -1;
-                
             }
             SSL3_RECORD_set_length(rr, 0);
             goto start;
