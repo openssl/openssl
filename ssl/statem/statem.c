@@ -443,7 +443,7 @@ static int state_machine(SSL *s, int server)
         } else {
             /* Error */
             check_fatal(s, SSL_F_STATE_MACHINE);
-            SSLerr(SSL_F_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
+            SSLerr(SSL_F_STATE_MACHINE, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             goto end;
         }
     }
