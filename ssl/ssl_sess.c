@@ -564,15 +564,6 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello, int *al)
     if (ret->ssl_version != s->version)
         goto err;
 
-    if (ret->sid_ctx_length != s->sid_ctx_length
-        || memcmp(ret->sid_ctx, s->sid_ctx, ret->sid_ctx_length)) {
-        /*
-         * We have the session requested by the client, but we don't want to
-         * use it in this context.
-         */
-        goto err;               /* treat like cache miss */
-    }
-
     if ((s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0) {
         /*
          * We can't be sure if this session is being used out of context,
