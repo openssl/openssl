@@ -14,6 +14,7 @@
  */
 #include <openssl/crypto.h>
 
+#include "curve448_lcl.h"
 #include "word.h"
 #include "ed448.h"
 #include "shake.h"
@@ -325,4 +326,53 @@ decaf_error_t decaf_ed448_verify_prehash (
     ret = decaf_ed448_verify(signature,pubkey,hash_output,sizeof(hash_output),1,context,context_len);
     
     return ret;
+}
+
+int ED448_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
+               const uint8_t public_key[56], const uint8_t private_key[56],
+               const uint8_t *context, size_t context_len) {
+
+    decaf_ed448_sign(out_sig, private_key, public_key, message, message_len, 0,
+                     context, context_len);
+
+    return 1;
+}
+
+
+int ED448_verify(const uint8_t *message, size_t message_len,
+                 const uint8_t signature[112], const uint8_t public_key[56],
+                 const uint8_t *context, size_t context_len) {
+    return decaf_ed448_verify(signature, public_key, message, message_len, 0,
+                              context, context_len) == DECAF_SUCCESS;
+}
+
+int ED448ph_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
+                 const uint8_t public_key[56], const uint8_t private_key[56],
+                 const uint8_t *context, size_t context_len) {
+    (void)out_sig;
+    (void)message;
+    (void)message_len;
+    (void)public_key;
+    (void)private_key;
+    (void)context;
+    (void)context_len;
+    return 0;
+}
+
+
+int ED448ph_verify(const uint8_t *message, size_t message_len,
+                   const uint8_t signature[112], const uint8_t public_key[56],
+                   const uint8_t *context, size_t context_len) {
+    (void)message;
+    (void)message_len;
+    (void)signature;
+    (void)public_key;
+    (void)context;
+    (void)context_len;
+    return 0;
+}
+
+void ED448_public_from_private(uint8_t out_public_key[56],
+                               const uint8_t private_key[56]) {
+    decaf_ed448_derive_public_key(out_public_key, private_key);
 }
