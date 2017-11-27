@@ -713,8 +713,10 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
     if (md == NULL)
         return -1;
-    if (si->mctx == NULL)
-        si->mctx = EVP_MD_CTX_new();
+    if (si->mctx == NULL && (si->mctx = EVP_MD_CTX_new()) == NULL) {
+        CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY, ERR_R_MALLOC_FAILURE);
+        return -1;
+    }
     mctx = si->mctx;
     if (EVP_DigestVerifyInit(mctx, &si->pctx, md, NULL, si->pkey) <= 0)
         goto err;
