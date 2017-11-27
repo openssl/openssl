@@ -87,6 +87,36 @@ const char *SSL_state_string_long(const SSL *s)
         return "DTLS1 read hello verify request";
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
         return "DTLS1 write hello verify request";
+    case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
+        return "TLSv1.3 write encrypted extensions";
+    case TLS_ST_CR_ENCRYPTED_EXTENSIONS:
+        return "TLSv1.3 read encrypted extensions";
+    case TLS_ST_CR_CERT_VRFY:
+        return "TLSv1.3 read server certificate verify";
+    case TLS_ST_SW_CERT_VRFY:
+        return "TLSv1.3 write server certificate verify";
+    case TLS_ST_CR_HELLO_REQ:
+        return "SSLv3/TLS read hello request";
+    case TLS_ST_SW_HELLO_RETRY_REQUEST:
+        return "TLSv1.3 write hello retry request";
+    case TLS_ST_CR_HELLO_RETRY_REQUEST:
+        return "TLSv1.3 read hello retry request";
+    case TLS_ST_SW_KEY_UPDATE:
+        return "TLSv1.3 write server key update";
+    case TLS_ST_CW_KEY_UPDATE:
+        return "TLSv1.3 write client key update";
+    case TLS_ST_SR_KEY_UPDATE:
+        return "TLSv1.3 read client key update";
+    case TLS_ST_CR_KEY_UPDATE:
+        return "TLSv1.3 read server key update";
+    case TLS_ST_EARLY_DATA:
+        return "TLSv1.3 early data";
+    case TLS_ST_PENDING_EARLY_DATA_END:
+        return "TLSv1.3 pending early data end";
+    case TLS_ST_CW_END_OF_EARLY_DATA:
+        return "TLSv1.3 write end of early data";
+    case TLS_ST_SR_END_OF_EARLY_DATA:
+        return "TLSv1.3 read end of early data";
     default:
         return "unknown state";
     }
@@ -168,6 +198,36 @@ const char *SSL_state_string(const SSL *s)
         return "DRCHV";
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
         return "DWCHV";
+    case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
+        return "TWEE";
+    case TLS_ST_CR_ENCRYPTED_EXTENSIONS:
+        return "TREE";
+    case TLS_ST_CR_CERT_VRFY:
+        return "TRSCV";
+    case TLS_ST_SW_CERT_VRFY:
+        return "TRSCV";
+    case TLS_ST_CR_HELLO_REQ:
+        return "TRHR";
+    case TLS_ST_SW_HELLO_RETRY_REQUEST:
+        return "TWHRR";
+    case TLS_ST_CR_HELLO_RETRY_REQUEST:
+        return "TRHRR";
+    case TLS_ST_SW_KEY_UPDATE:
+        return "TWSKU";
+    case TLS_ST_CW_KEY_UPDATE:
+        return "TWCKU";
+    case TLS_ST_SR_KEY_UPDATE:
+        return "TRCKU";
+    case TLS_ST_CR_KEY_UPDATE:
+        return "TRSKU";
+    case TLS_ST_EARLY_DATA:
+        return "TED";
+    case TLS_ST_PENDING_EARLY_DATA_END:
+        return "TPEDE";
+    case TLS_ST_CW_END_OF_EARLY_DATA:
+        return "TWEOED";
+    case TLS_ST_SR_END_OF_EARLY_DATA:
+        return "TWEOED";
     default:
         return "UNKWN ";
     }
