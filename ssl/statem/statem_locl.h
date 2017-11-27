@@ -52,9 +52,6 @@ typedef enum {
     MSG_PROCESS_CONTINUE_READING
 } MSG_PROCESS_RETURN;
 
-/* Flush the write BIO */
-int statem_flush(SSL *s);
-
 typedef int (*confunc_f) (SSL *s, WPACKET *pkt);
 
 int check_in_list(SSL *s, uint16_t group_id, const uint16_t *groups,
@@ -106,7 +103,8 @@ __owur int dtls_construct_change_cipher_spec(SSL *s, WPACKET *pkt);
 __owur int tls_construct_finished(SSL *s, WPACKET *pkt);
 __owur int tls_construct_key_update(SSL *s, WPACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt);
-__owur WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs);
+__owur WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs,
+                                       int stop);
 __owur WORK_STATE dtls_wait_for_dry(SSL *s);
 
 /* some client-only functions */

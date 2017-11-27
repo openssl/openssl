@@ -657,7 +657,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
              *
              * Calls SSLfatal as required.
              */
-            return tls_finish_handshake(s, wst, 0);
+            return tls_finish_handshake(s, wst, 0, 0);
         } if (SSL_IS_DTLS(s)) {
             /*
              * We're into the last flight. We don't retransmit the last flight
@@ -693,7 +693,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
 
     case TLS_ST_OK:
         /* Calls SSLfatal() as required */
-        return tls_finish_handshake(s, wst, 1);
+        return tls_finish_handshake(s, wst, 1, 1);
     }
 
     return WORK_FINISHED_CONTINUE;

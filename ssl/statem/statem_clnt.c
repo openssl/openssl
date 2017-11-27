@@ -665,9 +665,11 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
         /* Fall through */
 
     case TLS_ST_EARLY_DATA:
+        return tls_finish_handshake(s, wst, 0, 1);
+
     case TLS_ST_OK:
         /* Calls SSLfatal() as required */
-        return tls_finish_handshake(s, wst, 1);
+        return tls_finish_handshake(s, wst, 1, 1);
     }
 
     return WORK_FINISHED_CONTINUE;
@@ -697,8 +699,6 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
              * we call tls13_change_cipher_state() directly.
              */
             if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) == 0) {
-                if (!statem_flush(s))
-                    return WORK_MORE_A;
                 if (!tls13_change_cipher_state(s,
                             SSL3_CC_EARLY | SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
                     /* SSLfatal() already called */
@@ -737,8 +737,6 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
             break;
         if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
                     && s->max_early_data > 0) {
-            if (statem_flush(s) != 1)
-                return WORK_MORE_A;
             /*
              * We haven't selected TLSv1.3 yet so we don't call the change
              * cipher state function associated with the SSL_METHOD. Instead

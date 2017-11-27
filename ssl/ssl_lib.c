@@ -1969,6 +1969,7 @@ int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
 int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 {
     int ret, early_data_state;
+    size_t writtmp;
 
     switch (s->early_data_state) {
     case SSL_EARLY_DATA_NONE:
@@ -1994,9 +1995,25 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 
     case SSL_EARLY_DATA_WRITE_RETRY:
         s->early_data_state = SSL_EARLY_DATA_WRITING;
-        ret = SSL_write_ex(s, buf, num, written);
+        ret = SSL_write_ex(s, buf, num, &writtmp);
+        if (!ret) {
+            s->early_data_state = SSL_EARLY_DATA_WRITE_RETRY;
+            return ret;
+        }
+        s->early_data_state = SSL_EARLY_DATA_WRITE_FLUSH;
+        /* fall through */
+
+    case SSL_EARLY_DATA_WRITE_FLUSH:
+        /* The buffering BIO is still in place so we need to flush it */
+        if (statem_flush(s) != 1)
+            return 0;
+        /*
+         * TODO(TLS1.3): Technically this may not be correct in the event of
+         * SSL_MODE_ENABLE_PARTIAL_WRITE. What should we do about this?
+         */
+        *written = num;
         s->early_data_state = SSL_EARLY_DATA_WRITE_RETRY;
-        return ret;
+        return 1;
 
     case SSL_EARLY_DATA_FINISHED_READING:
     case SSL_EARLY_DATA_READ_RETRY:
