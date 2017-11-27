@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <openssl/opensslconf.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include "internal/evp_int.h"
