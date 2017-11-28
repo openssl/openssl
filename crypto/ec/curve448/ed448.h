@@ -105,7 +105,7 @@ void decaf_ed448_sign_prehash (
     uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const decaf_ed448_prehash_ctx_t hash,
+    const uint8_t hash[64],
     const uint8_t *context,
     uint8_t context_len
 ) __attribute__((nonnull(1,2,3,4)));
@@ -166,7 +166,7 @@ decaf_error_t decaf_ed448_verify (
 decaf_error_t decaf_ed448_verify_prehash (
     const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const decaf_ed448_prehash_ctx_t hash,
+    const uint8_t hash[64],
     const uint8_t *context,
     uint8_t context_len
 ) __attribute__((nonnull(1,2)));
