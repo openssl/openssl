@@ -21,8 +21,6 @@
 #define _DEFAULT_SOURCE 1
 #endif
 
-#include "portable_endian.h"
-
 #include <stdlib.h>
 
 #if defined(__ARM_NEON__)
