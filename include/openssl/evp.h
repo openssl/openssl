@@ -59,6 +59,8 @@
 # define EVP_PKEY_SIPHASH NID_siphash
 # define EVP_PKEY_X25519 NID_X25519
 # define EVP_PKEY_ED25519 NID_ED25519
+# define EVP_PKEY_X448 NID_X448
+# define EVP_PKEY_ED448 NID_ED448
 
 #ifdef  __cplusplus
 extern "C" {
