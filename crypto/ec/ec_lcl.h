@@ -14,6 +14,7 @@
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 #include "internal/refcount.h"
+#include "curve448/curve448_lcl.h"
 
 #if defined(__SUNPRO_C)
 # if __SUNPRO_C >= 0x520
