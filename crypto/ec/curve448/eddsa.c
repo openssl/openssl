@@ -364,7 +364,7 @@ decaf_error_t decaf_ed448_verify_prehash (
 }
 
 int ED448_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
-               const uint8_t public_key[56], const uint8_t private_key[56],
+               const uint8_t public_key[57], const uint8_t private_key[57],
                const uint8_t *context, size_t context_len)
 {
 
@@ -375,7 +375,7 @@ int ED448_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
 
 
 int ED448_verify(const uint8_t *message, size_t message_len,
-                 const uint8_t signature[112], const uint8_t public_key[56],
+                 const uint8_t signature[114], const uint8_t public_key[57],
                  const uint8_t *context, size_t context_len)
 {
     return decaf_ed448_verify(signature, public_key, message, message_len, 0,
@@ -383,7 +383,7 @@ int ED448_verify(const uint8_t *message, size_t message_len,
 }
 
 int ED448ph_sign(uint8_t *out_sig, const uint8_t hash[64],
-                 const uint8_t public_key[56], const uint8_t private_key[56],
+                 const uint8_t public_key[57], const uint8_t private_key[57],
                  const uint8_t *context, size_t context_len)
 {
     return decaf_ed448_sign_prehash(out_sig, private_key, public_key, hash,
@@ -391,16 +391,16 @@ int ED448ph_sign(uint8_t *out_sig, const uint8_t hash[64],
 
 }
 
-int ED448ph_verify(const uint8_t hash[64], const uint8_t signature[112],
-                   const uint8_t public_key[56], const uint8_t *context,
+int ED448ph_verify(const uint8_t hash[64], const uint8_t signature[114],
+                   const uint8_t public_key[57], const uint8_t *context,
                    size_t context_len)
 {
     return decaf_ed448_verify_prehash(signature, public_key, hash, context,
                                       context_len) == DECAF_SUCCESS;
 }
 
-int ED448_public_from_private(uint8_t out_public_key[56],
-                               const uint8_t private_key[56])
+int ED448_public_from_private(uint8_t out_public_key[57],
+                               const uint8_t private_key[57])
 {
     return decaf_ed448_derive_public_key(out_public_key, private_key)
            == DECAF_SUCCESS;
