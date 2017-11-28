@@ -6,6 +6,9 @@ SOURCE[../../libcrypto]=\
         ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c \
         ecp_oct.c ec2_oct.c ec_oct.c ec_kmeth.c ecdh_ossl.c ecdh_kdf.c \
         ecdsa_ossl.c ecdsa_sign.c ecdsa_vrf.c curve25519.c ecx_meth.c \
+        curve448/arch_32/f_impl.c curve448/f_arithmetic.c curve448/f_generic.c \
+        curve448/scalar.c curve448/curve448_tables.c curve448/eddsa.c \
+        curve448/curve448.c \
         {- $target{ec_asm_src} -}
 
 GENERATE[ecp_nistz256-x86.s]=asm/ecp_nistz256-x86.pl \
@@ -28,3 +31,11 @@ BEGINRAW[Makefile]
 {- $builddir -}/ecp_nistz256-%.S:	{- $sourcedir -}/asm/ecp_nistz256-%.pl
 	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
 ENDRAW[Makefile]
+
+INCLUDE[curve448/arch_32/f_impl.o]=curve448/arch_32 curve448
+INCLUDE[curve448/f_arithmetic.o]=curve448/arch_32 curve448
+INCLUDE[curve448/f_generic.o]=curve448/arch_32 curve448
+INCLUDE[curve448/scalar.o]=curve448/arch_32 curve448
+INCLUDE[curve448/curve448_tables.o]=curve448/arch_32 curve448
+INCLUDE[curve448/eddsa.o]=curve448/arch_32 curve448
+INCLUDE[curve448/curve448.o]=curve448/arch_32 curve448
