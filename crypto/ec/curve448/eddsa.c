@@ -235,20 +235,12 @@ void decaf_ed448_sign_prehash (
     uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const decaf_ed448_prehash_ctx_t hash,
+    const uint8_t hash[64],
     const uint8_t *context,
     uint8_t context_len
 ) {
-    uint8_t hash_output[EDDSA_PREHASH_BYTES];
-    {
-        decaf_ed448_prehash_ctx_t hash_too;
-        memcpy(hash_too,hash,sizeof(hash_too));
-        hash_final(hash_too,hash_output,sizeof(hash_output));
-        hash_destroy(hash_too);
-    }
-
-    decaf_ed448_sign(signature,privkey,pubkey,hash_output,sizeof(hash_output),1,context,context_len);
-    OPENSSL_cleanse(hash_output,sizeof(hash_output));
+    decaf_ed448_sign(signature,privkey,pubkey,hash,64,1,context,context_len);
+    /*OPENSSL_cleanse(hash,sizeof(hash));*/
 }
 
 decaf_error_t decaf_ed448_verify (
@@ -309,28 +301,21 @@ decaf_error_t decaf_ed448_verify (
 decaf_error_t decaf_ed448_verify_prehash (
     const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const decaf_ed448_prehash_ctx_t hash,
+    const uint8_t hash[64],
     const uint8_t *context,
     uint8_t context_len
 ) {
     decaf_error_t ret;
     
-    uint8_t hash_output[EDDSA_PREHASH_BYTES];
-    {
-        decaf_ed448_prehash_ctx_t hash_too;
-        memcpy(hash_too,hash,sizeof(hash_too));
-        hash_final(hash_too,hash_output,sizeof(hash_output));
-        hash_destroy(hash_too);
-    }
-    
-    ret = decaf_ed448_verify(signature,pubkey,hash_output,sizeof(hash_output),1,context,context_len);
+    ret = decaf_ed448_verify(signature,pubkey,hash,64,1,context,context_len);
     
     return ret;
 }
 
 int ED448_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
                const uint8_t public_key[56], const uint8_t private_key[56],
-               const uint8_t *context, size_t context_len) {
+               const uint8_t *context, size_t context_len)
+{
 
     decaf_ed448_sign(out_sig, private_key, public_key, message, message_len, 0,
                      context, context_len);
@@ -341,38 +326,32 @@ int ED448_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
 
 int ED448_verify(const uint8_t *message, size_t message_len,
                  const uint8_t signature[112], const uint8_t public_key[56],
-                 const uint8_t *context, size_t context_len) {
+                 const uint8_t *context, size_t context_len)
+{
     return decaf_ed448_verify(signature, public_key, message, message_len, 0,
                               context, context_len) == DECAF_SUCCESS;
 }
 
-int ED448ph_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
+int ED448ph_sign(uint8_t *out_sig, const uint8_t hash[64],
                  const uint8_t public_key[56], const uint8_t private_key[56],
-                 const uint8_t *context, size_t context_len) {
-    (void)out_sig;
-    (void)message;
-    (void)message_len;
-    (void)public_key;
-    (void)private_key;
-    (void)context;
-    (void)context_len;
-    return 0;
+                 const uint8_t *context, size_t context_len)
+{
+    decaf_ed448_sign_prehash(out_sig, private_key, public_key, hash, context,
+                             context_len);
+
+    return 1;
 }
 
-
-int ED448ph_verify(const uint8_t *message, size_t message_len,
-                   const uint8_t signature[112], const uint8_t public_key[56],
-                   const uint8_t *context, size_t context_len) {
-    (void)message;
-    (void)message_len;
-    (void)signature;
-    (void)public_key;
-    (void)context;
-    (void)context_len;
-    return 0;
+int ED448ph_verify(const uint8_t hash[64], const uint8_t signature[112],
+                   const uint8_t public_key[56], const uint8_t *context,
+                   size_t context_len)
+{
+    return decaf_ed448_verify_prehash(signature, public_key, hash, context,
+                                      context_len) == DECAF_SUCCESS;
 }
 
 void ED448_public_from_private(uint8_t out_public_key[56],
-                               const uint8_t private_key[56]) {
+                               const uint8_t private_key[56])
+{
     decaf_ed448_derive_public_key(out_public_key, private_key);
 }
