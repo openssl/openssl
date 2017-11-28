@@ -13,12 +13,14 @@
  * Please do not edit it.
  */
 #include <openssl/crypto.h>
+#include <openssl/evp.h>
 
 #include "curve448_lcl.h"
 #include "word.h"
 #include "ed448.h"
 #include "shake.h"
 #include <string.h>
+#include "internal/numbers.h"
 
 #define API_NAME "decaf_448"
 
@@ -45,6 +47,26 @@ const uint8_t * const DECAF_ED448_NO_CONTEXT = &NO_CONTEXT_POINTS_HERE;
  */
 #define EDDSA_BASE_POINT_RATIO (1+EDDSA_USE_SIGMA_ISOGENY) /* TODO: remove */
 
+static decaf_error_t oneshot_hash(uint8_t *out, size_t outlen,
+                                  const uint8_t *in, size_t inlen)
+{
+    EVP_MD_CTX *hashctx = EVP_MD_CTX_new();
+
+    if (hashctx == NULL)
+        return DECAF_FAILURE;
+
+    if (!EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL)
+            || !EVP_DigestUpdate(hashctx, in, inlen)
+            || !EVP_DigestFinalXOF(hashctx, out, outlen)) {
+        EVP_MD_CTX_free(hashctx);
+        return DECAF_FAILURE;
+    }
+
+    EVP_MD_CTX_free(hashctx);
+    return DECAF_SUCCESS;
+}
+
+
 static void clamp (
     uint8_t secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES]
 ) {
@@ -60,14 +82,21 @@ static void clamp (
     }
 }
 
-static void hash_init_with_dom(
-    hash_ctx_t hash,
+static decaf_error_t hash_init_with_dom(
+    EVP_MD_CTX *hashctx,
     uint8_t prehashed,
     uint8_t for_prehash,
     const uint8_t *context,
-    uint8_t context_len
+    size_t context_len
 ) {
-    hash_init(hash);
+    const char *dom_s = "SigEd448";
+    const uint8_t dom[2] = {
+        2 + word_is_zero(prehashed) + word_is_zero(for_prehash),
+        (uint8_t)context_len
+    };
+
+    if (context_len > UINT8_MAX)
+        return DECAF_FAILURE;
 
 #if NO_CONTEXT
     if (context_len == 0 && context == DECAF_ED448_NO_CONTEXT) {
@@ -75,14 +104,17 @@ static void hash_init_with_dom(
         (void)for_prehash;
         (void)context;
         (void)context_len;
-        return;
+        return DECAF_SUCCESS;
     }
 #endif
-    const char *dom_s = "SigEd448";
-    const uint8_t dom[2] = {2+word_is_zero(prehashed)+word_is_zero(for_prehash), context_len};
-    hash_update(hash,(const unsigned char *)dom_s, strlen(dom_s));
-    hash_update(hash,dom,2);
-    hash_update(hash,context,context_len);
+
+    if (!EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL)
+            || !EVP_DigestUpdate(hashctx, dom_s, strlen(dom_s))
+            || !EVP_DigestUpdate(hashctx, dom, sizeof(dom))
+            || !EVP_DigestUpdate(hashctx, context, context_len))
+        return DECAF_FAILURE;
+
+    return DECAF_SUCCESS;
 }
 
 void decaf_ed448_prehash_init (
@@ -92,13 +124,13 @@ void decaf_ed448_prehash_init (
 }
 
 /* In this file because it uses the hash */
-void decaf_ed448_convert_private_key_to_x448 (
+decaf_error_t decaf_ed448_convert_private_key_to_x448 (
     uint8_t x[DECAF_X448_PRIVATE_BYTES],
     const uint8_t ed[DECAF_EDDSA_448_PRIVATE_BYTES]
 ) {
-    /* pass the private key through hash_hash function */
+    /* pass the private key through oneshot_hash function */
     /* and keep the first DECAF_X448_PRIVATE_BYTES bytes */
-    hash_hash(
+    return oneshot_hash(
         x,
         DECAF_X448_PRIVATE_BYTES,
         ed,
@@ -106,19 +138,17 @@ void decaf_ed448_convert_private_key_to_x448 (
     );
 }
     
-void decaf_ed448_derive_public_key (
+decaf_error_t decaf_ed448_derive_public_key (
     uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
 ) {
     /* only this much used for keygen */
     uint8_t secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES];
     
-    hash_hash(
-        secret_scalar_ser,
-        sizeof(secret_scalar_ser),
-        privkey,
-        DECAF_EDDSA_448_PRIVATE_BYTES
-    );
+    if (!oneshot_hash(secret_scalar_ser, sizeof(secret_scalar_ser), privkey,
+                      DECAF_EDDSA_448_PRIVATE_BYTES)) {
+        return DECAF_FAILURE;
+    }
     clamp(secret_scalar_ser);
         
     curve448_scalar_t secret_scalar;
@@ -143,9 +173,11 @@ void decaf_ed448_derive_public_key (
     curve448_scalar_destroy(secret_scalar);
     curve448_point_destroy(p);
     OPENSSL_cleanse(secret_scalar_ser, sizeof(secret_scalar_ser));
+
+    return DECAF_SUCCESS;
 }
 
-void decaf_ed448_sign (
+decaf_error_t decaf_ed448_sign (
     uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
@@ -153,29 +185,36 @@ void decaf_ed448_sign (
     size_t message_len,
     uint8_t prehashed,
     const uint8_t *context,
-    uint8_t context_len
+    size_t context_len
 ) {
     curve448_scalar_t secret_scalar;
-    hash_ctx_t hash;
+    EVP_MD_CTX *hashctx = EVP_MD_CTX_new();
+    decaf_error_t ret = DECAF_FAILURE;
+
+    if (hashctx == NULL)
+        return DECAF_FAILURE;
+
     {
         /* Schedule the secret key */
         struct {
             uint8_t secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES];
             uint8_t seed[DECAF_EDDSA_448_PRIVATE_BYTES];
         } __attribute__((packed)) expanded;
-        hash_hash(
-            (uint8_t *)&expanded,
-            sizeof(expanded),
-            privkey,
-            DECAF_EDDSA_448_PRIVATE_BYTES
-        );
+
+        if (!oneshot_hash((uint8_t *)&expanded, sizeof(expanded), privkey,
+                          DECAF_EDDSA_448_PRIVATE_BYTES))
+            goto err;
         clamp(expanded.secret_scalar_ser);   
         curve448_scalar_decode_long(secret_scalar, expanded.secret_scalar_ser, sizeof(expanded.secret_scalar_ser));
     
         /* Hash to create the nonce */
-        hash_init_with_dom(hash,prehashed,0,context,context_len);
-        hash_update(hash,expanded.seed,sizeof(expanded.seed));
-        hash_update(hash,message,message_len);
+        if (!hash_init_with_dom(hashctx, prehashed, 0, context, context_len)
+                || !EVP_DigestUpdate(hashctx, expanded.seed,
+                                     sizeof(expanded.seed))
+                || !EVP_DigestUpdate(hashctx, message, message_len)) {
+            OPENSSL_cleanse(&expanded, sizeof(expanded));
+            goto err;
+        }
         OPENSSL_cleanse(&expanded, sizeof(expanded));
     }
     
@@ -183,7 +222,9 @@ void decaf_ed448_sign (
     curve448_scalar_t nonce_scalar;
     {
         uint8_t nonce[2*DECAF_EDDSA_448_PRIVATE_BYTES];
-        hash_final(hash,nonce,sizeof(nonce));
+
+        if (!EVP_DigestFinalXOF(hashctx, nonce, sizeof(nonce)))
+            goto err;
         curve448_scalar_decode_long(nonce_scalar, nonce, sizeof(nonce));
         OPENSSL_cleanse(nonce, sizeof(nonce));
     }
@@ -206,14 +247,17 @@ void decaf_ed448_sign (
     
     curve448_scalar_t challenge_scalar;
     {
-        /* Compute the challenge */
-        hash_init_with_dom(hash,prehashed,0,context,context_len);
-        hash_update(hash,nonce_point,sizeof(nonce_point));
-        hash_update(hash,pubkey,DECAF_EDDSA_448_PUBLIC_BYTES);
-        hash_update(hash,message,message_len);
         uint8_t challenge[2*DECAF_EDDSA_448_PRIVATE_BYTES];
-        hash_final(hash,challenge,sizeof(challenge));
-        hash_destroy(hash);
+
+        /* Compute the challenge */
+        if (!hash_init_with_dom(hashctx, prehashed, 0, context, context_len)
+                || !EVP_DigestUpdate(hashctx, nonce_point, sizeof(nonce_point))
+                || !EVP_DigestUpdate(hashctx, pubkey,
+                                     DECAF_EDDSA_448_PUBLIC_BYTES)
+                || !EVP_DigestUpdate(hashctx, message, message_len)
+                || !EVP_DigestFinalXOF(hashctx, challenge, sizeof(challenge)))
+            goto err;
+
         curve448_scalar_decode_long(challenge_scalar,challenge,sizeof(challenge));
         OPENSSL_cleanse(challenge,sizeof(challenge));
     }
@@ -228,18 +272,24 @@ void decaf_ed448_sign (
     curve448_scalar_destroy(secret_scalar);
     curve448_scalar_destroy(nonce_scalar);
     curve448_scalar_destroy(challenge_scalar);
+
+    ret = DECAF_SUCCESS;
+ err:
+    EVP_MD_CTX_free(hashctx);
+    return ret;
 }
 
 
-void decaf_ed448_sign_prehash (
+decaf_error_t decaf_ed448_sign_prehash (
     uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t hash[64],
     const uint8_t *context,
-    uint8_t context_len
+    size_t context_len
 ) {
-    decaf_ed448_sign(signature,privkey,pubkey,hash,64,1,context,context_len);
+    return decaf_ed448_sign(signature,privkey,pubkey,hash,64,1,context,
+                            context_len);
     /*OPENSSL_cleanse(hash,sizeof(hash));*/
 }
 
@@ -262,14 +312,23 @@ decaf_error_t decaf_ed448_verify (
     curve448_scalar_t challenge_scalar;
     {
         /* Compute the challenge */
-        hash_ctx_t hash;
-        hash_init_with_dom(hash,prehashed,0,context,context_len);
-        hash_update(hash,signature,DECAF_EDDSA_448_PUBLIC_BYTES);
-        hash_update(hash,pubkey,DECAF_EDDSA_448_PUBLIC_BYTES);
-        hash_update(hash,message,message_len);
+        EVP_MD_CTX *hashctx = EVP_MD_CTX_new();
         uint8_t challenge[2*DECAF_EDDSA_448_PRIVATE_BYTES];
-        hash_final(hash,challenge,sizeof(challenge));
-        hash_destroy(hash);
+
+        if (hashctx == NULL
+                || !hash_init_with_dom(hashctx, prehashed, 0, context,
+                                       context_len)
+                || !EVP_DigestUpdate(hashctx, signature,
+                                     DECAF_EDDSA_448_PUBLIC_BYTES)
+                || !EVP_DigestUpdate(hashctx, pubkey,
+                                     DECAF_EDDSA_448_PUBLIC_BYTES)
+                || !EVP_DigestUpdate(hashctx, message, message_len)
+                || !EVP_DigestFinalXOF(hashctx, challenge, sizeof(challenge))) {
+            EVP_MD_CTX_free(hashctx);
+            return DECAF_FAILURE;
+        }
+
+        EVP_MD_CTX_free(hashctx);
         curve448_scalar_decode_long(challenge_scalar,challenge,sizeof(challenge));
         OPENSSL_cleanse(challenge,sizeof(challenge));
     }
@@ -317,10 +376,9 @@ int ED448_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
                const uint8_t *context, size_t context_len)
 {
 
-    decaf_ed448_sign(out_sig, private_key, public_key, message, message_len, 0,
-                     context, context_len);
-
-    return 1;
+    return decaf_ed448_sign(out_sig, private_key, public_key, message,
+                            message_len, 0, context, context_len)
+                            == DECAF_SUCCESS;
 }
 
 
@@ -336,10 +394,9 @@ int ED448ph_sign(uint8_t *out_sig, const uint8_t hash[64],
                  const uint8_t public_key[56], const uint8_t private_key[56],
                  const uint8_t *context, size_t context_len)
 {
-    decaf_ed448_sign_prehash(out_sig, private_key, public_key, hash, context,
-                             context_len);
+    return decaf_ed448_sign_prehash(out_sig, private_key, public_key, hash,
+                                    context, context_len) == DECAF_SUCCESS;
 
-    return 1;
 }
 
 int ED448ph_verify(const uint8_t hash[64], const uint8_t signature[112],
@@ -350,8 +407,9 @@ int ED448ph_verify(const uint8_t hash[64], const uint8_t signature[112],
                                       context_len) == DECAF_SUCCESS;
 }
 
-void ED448_public_from_private(uint8_t out_public_key[56],
+int ED448_public_from_private(uint8_t out_public_key[56],
                                const uint8_t private_key[56])
 {
-    decaf_ed448_derive_public_key(out_public_key, private_key);
+    return decaf_ed448_derive_public_key(out_public_key, private_key)
+           == DECAF_SUCCESS;
 }
