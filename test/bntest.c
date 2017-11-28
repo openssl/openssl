@@ -1089,7 +1089,9 @@ static int file_lshift(STANZA *s)
 
     if (!TEST_ptr(a = getBN(s, "A"))
             || !TEST_ptr(lshift = getBN(s, "LShift"))
-            || !TEST_ptr(ret = BN_new()))
+            || !TEST_ptr(ret = BN_new())
+            || !getint(s, &n, "N"))
+        goto err;
 
     if (!TEST_true(BN_lshift(ret, a, n))
             || !equalBN("A << N", lshift, ret)
