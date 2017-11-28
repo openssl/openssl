@@ -8,6 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/opensslconf.h>
 #include "internal/cryptlib.h"
 #ifndef OPENSSL_NO_ARIA
 # include <openssl/evp.h>
