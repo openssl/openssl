@@ -16,7 +16,6 @@
 #define __DECAF_ED448_H__ 1
 
 #include "point_448.h"
-#include "shake.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,12 +32,6 @@ extern "C" {
 
 /** Does EdDSA support non-contextual signatures? */
 #define DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS 0
-
-/** Prehash context renaming macros. */
-#define decaf_ed448_prehash_ctx_s   decaf_shake256_ctx_s
-#define decaf_ed448_prehash_ctx_t   decaf_shake256_ctx_t
-#define decaf_ed448_prehash_update  decaf_shake256_update
-#define decaf_ed448_prehash_destroy decaf_shake256_destroy
 
 /** EdDSA encoding ratio. */
 #define DECAF_448_EDDSA_ENCODE_RATIO 4
@@ -109,15 +102,6 @@ decaf_error_t decaf_ed448_sign_prehash (
     const uint8_t *context,
     size_t context_len
 ) __attribute__((nonnull(1,2,3,4)));
-    
-/**
- * @brief Prehash initialization, with contexts if supported.
- *
- * @param [out] hash The hash object to be initialized.
- */
-void decaf_ed448_prehash_init (
-    decaf_ed448_prehash_ctx_t hash
-) __attribute__((nonnull(1)));
 
 /**
  * @brief EdDSA signature verification.
