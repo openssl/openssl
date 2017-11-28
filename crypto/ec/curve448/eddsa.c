@@ -18,18 +18,10 @@
 #include "curve448_lcl.h"
 #include "word.h"
 #include "ed448.h"
-#include "shake.h"
 #include <string.h>
 #include "internal/numbers.h"
 
 #define API_NAME "decaf_448"
-
-#define hash_ctx_t   decaf_shake256_ctx_t
-#define hash_init    decaf_shake256_init
-#define hash_update  decaf_shake256_update
-#define hash_final   decaf_shake256_final
-#define hash_destroy decaf_shake256_destroy
-#define hash_hash    decaf_shake256_hash
 
 #define NO_CONTEXT DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS
 #define EDDSA_USE_SIGMA_ISOGENY 0
@@ -115,12 +107,6 @@ static decaf_error_t hash_init_with_dom(
         return DECAF_FAILURE;
 
     return DECAF_SUCCESS;
-}
-
-void decaf_ed448_prehash_init (
-    hash_ctx_t hash
-) {
-    hash_init(hash);
 }
 
 /* In this file because it uses the hash */
