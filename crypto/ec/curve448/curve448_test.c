@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <openssl/e_os2.h>
+#include <openssl/evp.h>
 #include "curve448_lcl.h"
 
 /* Test vectors from RFC7748 for X448 */
@@ -568,15 +569,15 @@ const uint8_t phsig2[114] = {
     0xeb, 0x51, 0x1d, 0x13, 0x21, 0x00
 };
 
-static const uint8_t *dohash(const uint8_t *msg, size_t msglen)
+static const uint8_t *dohash(EVP_MD_CTX *hashctx, const uint8_t *msg,
+                             size_t msglen)
 {
-    decaf_ed448_prehash_ctx_t hashctx;
     static uint8_t hashout[64];
 
-    decaf_shake256_init(hashctx);
-    decaf_shake256_update(hashctx, msg, msglen);
-    decaf_shake256_final(hashctx,hashout,sizeof(hashout));
-    decaf_shake256_destroy(hashctx);
+    if (!EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL)
+            || !EVP_DigestUpdate(hashctx, msg, msglen)
+            || !EVP_DigestFinalXOF(hashctx, hashout, sizeof(hashout)))
+        return NULL;
 
     return hashout;
 }
@@ -585,76 +586,86 @@ static const uint8_t *dohash(const uint8_t *msg, size_t msglen)
 static int test_eddsa(void)
 {
     uint8_t outsig[114];
+    EVP_MD_CTX *hashctx = EVP_MD_CTX_new();
+    int ret = 0;
+
+    if (hashctx == NULL) {
+        printf("Failed to allocate EVP_MD_CTX\n");
+        return 0;
+    }
 
     ED448_sign(outsig, NULL, 0, pubkey1, privkey1, NULL, 0);
     if (memcmp(sig1, outsig, sizeof(sig1)) != 0) {
         printf("Calculated sig and expected sig differ (1)\n");
-        return 0;
+        goto err;
     }
 
     ED448_sign(outsig, msg2, sizeof(msg2), pubkey2, privkey2, NULL, 0);
     if (memcmp(sig2, outsig, sizeof(sig2)) != 0) {
         printf("Calculated sig and expected sig differ (2)\n");
-        return 0;
+        goto err;
     }
 
     ED448_sign(outsig, msg3, sizeof(msg3), pubkey3, privkey3, context3, sizeof(context3));
     if (memcmp(sig3, outsig, sizeof(sig3)) != 0) {
         printf("Calculated sig and expected sig differ (3)\n");
-        return 0;
+        goto err;
     }
 
     ED448_sign(outsig, msg4, sizeof(msg4), pubkey4, privkey4, NULL, 0);
     if (memcmp(sig4, outsig, sizeof(sig4)) != 0) {
         printf("Calculated sig and expected sig differ (4)\n");
-        return 0;
+        goto err;
     }
 
     ED448_sign(outsig, msg5, sizeof(msg5), pubkey5, privkey5, NULL, 0);
     if (memcmp(sig5, outsig, sizeof(sig5)) != 0) {
         printf("Calculated sig and expected sig differ (5)\n");
-        return 0;
+        goto err;
     }
 
     ED448_sign(outsig, msg6, sizeof(msg6), pubkey6, privkey6, NULL, 0);
     if (memcmp(sig6, outsig, sizeof(sig6)) != 0) {
         printf("Calculated sig and expected sig differ (6)\n");
-        return 0;
+        goto err;
     }
 
     ED448_sign(outsig, msg7, sizeof(msg7), pubkey7, privkey7, NULL, 0);
     if (memcmp(sig7, outsig, sizeof(sig7)) != 0) {
         printf("Calculated sig and expected sig differ (7)\n");
-        return 0;
+        goto err;
     }
 
     ED448_sign(outsig, msg8, sizeof(msg8), pubkey8, privkey8, NULL, 0);
     if (memcmp(sig8, outsig, sizeof(sig8)) != 0) {
         printf("Calculated sig and expected sig differ (8)\n");
-        return 0;
+        goto err;
     }
 
     ED448_sign(outsig, msg9, sizeof(msg9), pubkey9, privkey9, NULL, 0);
     if (memcmp(sig9, outsig, sizeof(sig9)) != 0) {
         printf("Calculated sig and expected sig differ (9)\n");
-        return 0;
+        goto err;
     }
 
-    ED448ph_sign(outsig, dohash(phmsg1, sizeof(phmsg1)), phpubkey1,
+    ED448ph_sign(outsig, dohash(hashctx, phmsg1, sizeof(phmsg1)), phpubkey1,
                  phprivkey1, NULL, 0);
     if (memcmp(phsig1, outsig, sizeof(phsig1)) != 0) {
         printf("Calculated sig and expected sig differ (ph 1)\n");
-        return 0;
+        goto err;
     }
 
-    ED448ph_sign(outsig, dohash(phmsg2, sizeof(phmsg2)), phpubkey2,
+    ED448ph_sign(outsig, dohash(hashctx, phmsg2, sizeof(phmsg2)), phpubkey2,
                  phprivkey2, phcontext2, sizeof(phcontext2));
     if (memcmp(phsig2, outsig, sizeof(phsig2)) != 0) {
         printf("Calculated sig and expected sig differ (ph 2)\n");
-        return 0;
+        goto err;
     }
 
-    return 1;
+    ret = 1;
+ err:
+    EVP_MD_CTX_free(hashctx);
+    return ret;
 }
 
 int main(int argc, char *argv[])

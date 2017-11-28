@@ -1,7 +1,4 @@
 #include "curve448utils.h"
-#include "shake.h"
-
-#define decaf_ed448_prehash_ctx_t   decaf_shake256_ctx_t
 
 int X448(uint8_t out_shared_key[56], const uint8_t private_key[56],
          const uint8_t peer_public_value[56]);
