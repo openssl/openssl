@@ -82,7 +82,7 @@ int engine_free_util(ENGINE *e, int not_locked)
     else
         i = --e->struct_ref;
 #endif
-    engine_ref_debug(e, 0, -1)
+    engine_ref_debug(e, 0, -1);
     if (i > 0)
         return 1;
     REF_ASSERT_ISNT(i < 0);
