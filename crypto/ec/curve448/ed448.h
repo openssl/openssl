@@ -53,7 +53,7 @@ extern "C" {
  * @param [out] pubkey The public key.
  * @param [in] privkey The private key.
  */    
-void decaf_ed448_derive_public_key (
+decaf_error_t decaf_ed448_derive_public_key (
     uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
 );
@@ -75,7 +75,7 @@ void decaf_ed448_derive_public_key (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */  
-void decaf_ed448_sign (
+decaf_error_t decaf_ed448_sign (
     uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
@@ -83,7 +83,7 @@ void decaf_ed448_sign (
     size_t message_len,
     uint8_t prehashed,
     const uint8_t *context,
-    uint8_t context_len
+    size_t context_len
 ) __attribute__((nonnull(1,2,3)));
 
 /**
@@ -101,13 +101,13 @@ void decaf_ed448_sign (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */  
-void decaf_ed448_sign_prehash (
+decaf_error_t decaf_ed448_sign_prehash (
     uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
     const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
     const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
     const uint8_t hash[64],
     const uint8_t *context,
-    uint8_t context_len
+    size_t context_len
 ) __attribute__((nonnull(1,2,3,4)));
     
 /**
@@ -238,7 +238,7 @@ void decaf_ed448_convert_public_key_to_x448 (
  * @param[out] x The ECDH private key as in RFC7748
  * @param[in] ed The EdDSA private key
  */
-void decaf_ed448_convert_private_key_to_x448 (
+decaf_error_t decaf_ed448_convert_private_key_to_x448 (
     uint8_t x[DECAF_X448_PRIVATE_BYTES],
     const uint8_t ed[DECAF_EDDSA_448_PRIVATE_BYTES]
 );

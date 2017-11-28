@@ -22,5 +22,5 @@ int ED448ph_verify(const uint8_t hash[64], const uint8_t signature[112],
                    const uint8_t public_key[56], const uint8_t *context,
                    size_t context_len);
 
-void ED448_public_from_private(uint8_t out_public_key[56],
-                               const uint8_t private_key[56]);
+int ED448_public_from_private(uint8_t out_public_key[56],
+                              const uint8_t private_key[56]);
