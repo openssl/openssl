@@ -36,11 +36,6 @@ static const curve448_scalar_t precomputed_scalarmul_adjustment = {{{
 
 const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] = { 0x05 };
 
-#define RISTRETTO_FACTOR DECAF_448_RISTRETTO_FACTOR
-const gf RISTRETTO_FACTOR = {{{
-    0x42ef0f45572736, 0x7bf6aa20ce5296, 0xf4fd6eded26033, 0x968c14ba839a66, 0xb8d54b64a2d780, 0x6aa0a1f1a7b8a5, 0x683bf68d722fa2, 0x22d962fbeb24f7
-}}};
-
 
 #define TWISTED_D ((EDWARDS_D)-1)
 
@@ -65,13 +60,15 @@ const curve448_precomputed_s *curve448_precomputed_base =
 /** Inverse. */
 static void
 gf_invert(gf y, const gf x, int assert_nonzero) {
+    mask_t ret;
+
     gf t1, t2;
-    gf_sqr(t1, x); // o^2
-    mask_t ret = gf_isr(t2, t1); // +-1/sqrt(o^2) = +-1/o
+    gf_sqr(t1, x); /* o^2 */
+    ret = gf_isr(t2, t1); /* +-1/sqrt(o^2) = +-1/o */
     (void)ret;
     if (assert_nonzero) assert(ret);
     gf_sqr(t1, t2);
-    gf_mul(t2, t1, x); // not direct to y in case of alias.
+    gf_mul(t2, t1, x); /* not direct to y in case of alias. */
     gf_copy(y, t2);
 }
 
@@ -219,11 +216,13 @@ sub_pniels_from_pt (
 }
 
 decaf_bool_t curve448_point_eq ( const curve448_point_t p, const curve448_point_t q ) {
+    mask_t succ;
+
     /* equality mod 2-torsion compares x/y */
     gf a, b;
     gf_mul ( a, p->y, q->x );
     gf_mul ( b, q->y, p->x );
-    mask_t succ = gf_eq(a,b);
+    succ = gf_eq(a,b);
 
     return mask_to_bool(succ);
 }
@@ -231,10 +230,12 @@ decaf_bool_t curve448_point_eq ( const curve448_point_t p, const curve448_point_
 decaf_bool_t curve448_point_valid (
     const curve448_point_t p
 ) {
+    mask_t out;
+
     gf a,b,c;
     gf_mul(a,p->x,p->y);
     gf_mul(b,p->z,p->t);
-    mask_t out = gf_eq(a,b);
+    out = gf_eq(a,b);
     gf_sqr(a,p->x);
     gf_sqr(b,p->y);
     gf_sub(a,b,a);
@@ -265,18 +266,18 @@ void curve448_precomputed_scalarmul (
     int i;
     unsigned j,k;
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
+    niels_t ni;
     
     curve448_scalar_t scalar1x;
     curve448_scalar_add(scalar1x, scalar, precomputed_scalarmul_adjustment);
     curve448_scalar_halve(scalar1x,scalar1x);
-    
-    niels_t ni;
     
     for (i=s-1; i>=0; i--) {
         if (i != (int)s-1) point_double_internal(out,out,0);
         
         for (j=0; j<n; j++) {
             int tab = 0;
+            mask_t invert;
          
             for (k=0; k<t; k++) {
                 unsigned int bit = i + s*(k + j*t);
@@ -285,7 +286,7 @@ void curve448_precomputed_scalarmul (
                 }
             }
             
-            mask_t invert = (tab>>(t-1))-1;
+            invert = (tab>>(t-1))-1;
             tab ^= invert;
             tab &= (1<<(t-1)) - 1;
 
@@ -356,12 +357,15 @@ decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio (
     const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
 ) {
     uint8_t enc2[DECAF_EDDSA_448_PUBLIC_BYTES];
+    mask_t low;
+    mask_t succ;
+
     memcpy(enc2,enc,sizeof(enc2));
 
-    mask_t low = ~word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1] & 0x80);
+    low = ~word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1] & 0x80);
     enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1] &= ~0x80;
     
-    mask_t succ = gf_deserialize(p->y, enc2, 1, 0);
+    succ = gf_deserialize(p->y, enc2, 1, 0);
 #if 0 == 0
     succ &= word_is_zero(enc2[DECAF_EDDSA_448_PRIVATE_BYTES-1]);
 #endif
@@ -413,23 +417,25 @@ decaf_error_t decaf_x448 (
     const uint8_t scalar[X_PRIVATE_BYTES]
 ) {
     gf x1, x2, z2, x3, z3, t1, t2;
+    int t;
+    mask_t swap = 0;
+    mask_t nz;
+
     ignore_result(gf_deserialize(x1,base,1,0));
     gf_copy(x2,ONE);
     gf_copy(z2,ZERO);
     gf_copy(x3,x1);
     gf_copy(z3,ONE);
     
-    int t;
-    mask_t swap = 0;
-    
     for (t = X_PRIVATE_BITS-1; t>=0; t--) {
         uint8_t sb = scalar[t/8];
+        mask_t k_t;
         
         /* Scalar conditioning */
         if (t/8==0) sb &= -(uint8_t)COFACTOR;
         else if (t == X_PRIVATE_BITS-1) sb = -1;
         
-        mask_t k_t = (sb>>(t%8)) & 1;
+        k_t = (sb>>(t%8)) & 1;
         k_t = -k_t; /* set to all 0s or all 1s */
         
         swap ^= k_t;
@@ -465,7 +471,7 @@ decaf_error_t decaf_x448 (
     gf_invert(z2,z2,0);
     gf_mul(x1,x2,z2);
     gf_serialize(out,x1,1);
-    mask_t nz = ~gf_eq(x1,ZERO);
+    nz = ~gf_eq(x1,ZERO);
     
     OPENSSL_cleanse(x1,sizeof(x1));
     OPENSSL_cleanse(x2,sizeof(x2));
@@ -525,20 +531,22 @@ void decaf_x448_derive_public_key (
 ) {
     /* Scalar conditioning */
     uint8_t scalar2[X_PRIVATE_BYTES];
+    curve448_scalar_t the_scalar;
+    curve448_point_t p;
+    unsigned int i;
+
     memcpy(scalar2,scalar,sizeof(scalar2));
     scalar2[0] &= -(uint8_t)COFACTOR;
     
     scalar2[X_PRIVATE_BYTES-1] &= ~(-1u<<((X_PRIVATE_BITS+7)%8));
     scalar2[X_PRIVATE_BYTES-1] |= 1<<((X_PRIVATE_BITS+7)%8);
     
-    curve448_scalar_t the_scalar;
     curve448_scalar_decode_long(the_scalar,scalar2,sizeof(scalar2));
     
     /* Compensate for the encoding ratio */
-    for (unsigned i=1; i<DECAF_X448_ENCODE_RATIO; i<<=1) {
+    for (i=1; i<DECAF_X448_ENCODE_RATIO; i<<=1) {
         curve448_scalar_halve(the_scalar,the_scalar);
     }
-    curve448_point_t p;
     curve448_precomputed_scalarmul(p,curve448_precomputed_base,the_scalar);
     curve448_point_mul_by_ratio_and_encode_like_x448(out,p);
     curve448_point_destroy(p);
@@ -559,7 +567,12 @@ static int recode_wnaf (
 ) {
     unsigned int table_size = DECAF_448_SCALAR_BITS/(table_bits+1) + 3;
     int position = table_size - 1; /* at the end */
-    
+    uint64_t current = scalar->limb[0] & 0xFFFF;
+    uint32_t mask = (1<<(table_bits+1))-1;
+    unsigned int w;
+    const unsigned int B_OVER_16 = sizeof(scalar->limb[0]) / 2;
+    unsigned int n, i;
+
     /* place the end marker */
     control[position].power = -1;
     control[position].addend = 0;
@@ -569,12 +582,7 @@ static int recode_wnaf (
      * in the actual code that uses it, all for an expected reduction of like 1/5 op.
      * Probably not worth it.
      */
-    
-    uint64_t current = scalar->limb[0] & 0xFFFF;
-    uint32_t mask = (1<<(table_bits+1))-1;
 
-    unsigned int w;
-    const unsigned int B_OVER_16 = sizeof(scalar->limb[0]) / 2;
     for (w = 1; w<(DECAF_448_SCALAR_BITS-1)/16+3; w++) {
         if (w < (DECAF_448_SCALAR_BITS-1)/16+1) {
             /* Refill the 16 high bits of current */
@@ -582,9 +590,10 @@ static int recode_wnaf (
         }
         
         while (current & 0xFFFF) {
-            assert(position >= 0);
             uint32_t pos = __builtin_ctz((uint32_t)current), odd = (uint32_t)current >> pos;
             int32_t delta = odd & mask;
+
+            assert(position >= 0);
             if (odd & 1<<(table_bits+1)) delta -= (1<<(table_bits+1));
             current -= delta << pos;
             control[position].power = pos + 16*(w-1);
@@ -596,8 +605,7 @@ static int recode_wnaf (
     assert(current==0);
     
     position++;
-    unsigned int n = table_size - position;
-    unsigned int i;
+    n = table_size - position;
     for (i=0; i<n; i++) {
         control[i] = control[i+position];
     }
@@ -612,12 +620,13 @@ prepare_wnaf_table(
 ) {
     curve448_point_t tmp;
     int i;
+    pniels_t twop;
+
     pt_to_pniels(output[0], working);
 
     if (tbits == 0) return;
 
     curve448_point_double(tmp,working);
-    pniels_t twop;
     pt_to_pniels(twop, tmp);
 
     add_pniels_to_pt(tmp, output[0],0);
@@ -643,16 +652,15 @@ void curve448_base_double_scalarmul_non_secret (
 ) {
     const int table_bits_var = DECAF_WNAF_VAR_TABLE_BITS,
         table_bits_pre = DECAF_WNAF_FIXED_TABLE_BITS;
-    struct smvt_control control_var[DECAF_448_SCALAR_BITS/(table_bits_var+1)+3];
-    struct smvt_control control_pre[DECAF_448_SCALAR_BITS/(table_bits_pre+1)+3];
-    
+    struct smvt_control control_var[DECAF_448_SCALAR_BITS/(DECAF_WNAF_VAR_TABLE_BITS+1)+3];
+    struct smvt_control control_pre[DECAF_448_SCALAR_BITS/(DECAF_WNAF_FIXED_TABLE_BITS+1)+3];
     int ncb_pre = recode_wnaf(control_pre, scalar1, table_bits_pre);
     int ncb_var = recode_wnaf(control_var, scalar2, table_bits_var);
-  
-    pniels_t precmp_var[1<<table_bits_var];
+    pniels_t precmp_var[1<<DECAF_WNAF_VAR_TABLE_BITS];
+    int contp=0, contv=0, i;
+
     prepare_wnaf_table(precmp_var, base2, table_bits_var);
-  
-    int contp=0, contv=0, i = control_var[0].power;
+    i = control_var[0].power;
 
     if (i < 0) {
         curve448_point_copy(combo, curve448_point_identity);

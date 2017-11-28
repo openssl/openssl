@@ -149,6 +149,8 @@ constant_time_lookup (
     memset(out, 0, elem_bytes);
     for (j=0; j<n_table; j++, big_i-=big_one) {        
         big_register_t br_mask = br_is_zero(big_i);
+        word_t mask;
+
         for (k=0; k<=elem_bytes-sizeof(big_register_t); k+=sizeof(big_register_t)) {
             if (elem_bytes % sizeof(big_register_t)) {
                 /* unaligned */
@@ -160,7 +162,7 @@ constant_time_lookup (
             }
         }
 
-        word_t mask = word_is_zero(idx^j);
+        mask = word_is_zero(idx^j);
         if (elem_bytes % sizeof(big_register_t) >= sizeof(word_t)) {
             for (; k<=elem_bytes-sizeof(word_t); k+=sizeof(word_t)) {
                 if (elem_bytes % sizeof(word_t)) {
@@ -203,11 +205,11 @@ constant_time_select (
     unsigned char *a = (unsigned char *)a_;
     const unsigned char *bTrue = (const unsigned char *)bTrue_;
     const unsigned char *bFalse = (const unsigned char *)bFalse_;
+    word_t k;
+    big_register_t br_mask = br_set_to_mask(mask);
     
     alignment_bytes |= elem_bytes;
 
-    word_t k;
-    big_register_t br_mask = br_set_to_mask(mask);
     for (k=0; k<=elem_bytes-sizeof(big_register_t); k+=sizeof(big_register_t)) {
         if (alignment_bytes % sizeof(big_register_t)) {
             /* unaligned */

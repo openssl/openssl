@@ -96,8 +96,8 @@ mask_t gf_deserialize (gf x, const uint8_t serial[SER_BYTES],int with_hibit,uint
 #ifndef LIMBPERM
   #define LIMBPERM(i) (i)
 #endif
-#define LIMB_MASK(i) (((1ull)<<LIMB_PLACE_VALUE(i))-1)
+#define LIMB_MASK(i) (((1)<<LIMB_PLACE_VALUE(i))-1)
 
-static const gf ZERO = {{{0}}}, ONE = {{{ [LIMBPERM(0)] = 1 }}};
+static const gf ZERO = {{{0}}}, ONE = {{{1}}};
 
 #endif /* __P448_F_FIELD_H__ */
