@@ -532,6 +532,14 @@
                    passed through as they are to the compiler as well.  Again,
                    consult your compiler documentation.
 
+  VAR=value
+                   Assignment if environment variable for Configure.  These
+                   work just like normal environment variable assignments,
+                   but are supported on all platforms and are confined to
+                   the configuration scripts only.  These assignments override
+                   the corresponding value in the inherited environment, if
+                   there is one.
+
 
  Installation in Detail
  ----------------------
