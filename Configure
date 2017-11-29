@@ -223,25 +223,12 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 	    @{$configdata::config{perlargv}} : ();
 	die "Incorrect data to reconfigure, please do a normal configuration\n"
 	    if (grep(/^reconf/,@argvcopy));
-	$ENV{CROSS_COMPILE} = $configdata::config{cross_compile_prefix}
-	    if defined($configdata::config{cross_compile_prefix});
-	$ENV{CC} = $configdata::config{cc}
-	    if defined($configdata::config{cc});
-	$ENV{CXX} = $configdata::config{cxx}
-	    if defined($configdata::config{cxx});
-	$ENV{BUILDFILE} = $configdata::config{build_file}
-	    if defined($configdata::config{build_file});
-	$ENV{$local_config_envname} = $configdata::config{local_config_dir}
-	    if defined($configdata::config{local_config_dir});
+	$config{perlenv} = $configdata::config{perlenv} // {};
 
 	print "Reconfiguring with: ", join(" ",@argvcopy), "\n";
-	print "    CROSS_COMPILE = ",$ENV{CROSS_COMPILE},"\n"
-	    if $ENV{CROSS_COMPILE};
-	print "    CC = ",$ENV{CC},"\n" if $ENV{CC};
-	print "    CXX = ",$ENV{CXX},"\n" if $ENV{CXX};
-	print "    BUILDFILE = ",$ENV{BUILDFILE},"\n" if $ENV{BUILDFILE};
-	print "    $local_config_envname = ",$ENV{$local_config_envname},"\n"
-	    if $ENV{$local_config_envname};
+	foreach (sort keys %{$config{perlenv}}) {
+	    print "    $_ = $config{perlenv}->{$_}\n";
+	}
     } else {
 	die "Insufficient data to reconfigure, please do a normal configuration\n";
     }
@@ -280,13 +267,13 @@ foreach (sort glob($pattern)) {
     &read_config($_);
 }
 
-if (defined $ENV{$local_config_envname}) {
+if (defined env($local_config_envname)) {
     if ($^O eq 'VMS') {
         # VMS environment variables are logical names,
         # which can be used as is
         $pattern = $local_config_envname . ':' . '*.conf';
     } else {
-        $pattern = catfile($ENV{$local_config_envname}, '*.conf');
+        $pattern = catfile(env($local_config_envname), '*.conf');
     }
 
     foreach (sort glob($pattern)) {
@@ -982,7 +969,7 @@ $target{dso_extension}=$target{shared_extension_simple};
     if ($config{target} =~ /^(?:Cygwin|mingw)/);
 
 
-$config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
+$config{cross_compile_prefix} = env('CROSS_COMPILE')
     if $config{cross_compile_prefix} eq "";
 
 # Allow overriding the names of some tools.  USE WITH CARE
@@ -990,19 +977,19 @@ $config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
 # the default string.
 $config{perl} =    ($^O ne "VMS" ? $^X : "perl");
 $config{hashbangperl} =
-    $ENV{'HASHBANGPERL'}           || $ENV{'PERL'}     || "/usr/bin/env perl";
-$target{cc} =      $ENV{'CC'}      || $target{cc}      || "cc";
-$target{cxx} =     $ENV{'CXX'}     || $target{cxx}     || "c++";
-$target{ranlib} =  $ENV{'RANLIB'}  || $target{ranlib}  ||
+    env('HASHBANGPERL')           || env('PERL')      || "/usr/bin/env perl";
+$target{cc} =      env('CC')      || $target{cc}      || "cc";
+$target{cxx} =     env('CXX')     || $target{cxx}     || "c++";
+$target{ranlib} =  env('RANLIB')  || $target{ranlib}  ||
                    (which("$config{cross_compile_prefix}ranlib") ?
                           "\$(CROSS_COMPILE)ranlib" : "true");
-$target{ar} =      $ENV{'AR'}      || $target{ar}      || "ar";
-$target{nm} =      $ENV{'NM'}      || $target{nm}      || "nm";
+$target{ar} =      env('AR')      || $target{ar}      || "ar";
+$target{nm} =      env('NM')      || $target{nm}      || "nm";
 $target{rc} =
-    $ENV{'RC'}  || $ENV{'WINDRES'} || $target{rc}      || "windres";
+    env('RC')  || env('WINDRES')  || $target{rc}      || "windres";
 
 # Allow overriding the build file name
-$target{build_file} = $ENV{BUILDFILE} || $target{build_file} || "Makefile";
+$target{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
 # Cache information necessary for reconfiguration
 $config{cc} = $target{cc};
@@ -1418,7 +1405,7 @@ if ($builder eq "unified") {
     my @build_file_templates = ();
 
     # First, look in the user provided directory, if given
-    if (defined $ENV{$local_config_envname}) {
+    if (defined env($local_config_envname)) {
 	@build_file_templates =
 	    map {
 		if ($^O eq 'VMS') {
@@ -1426,7 +1413,7 @@ if ($builder eq "unified") {
 		    # which can be used as is
 		    $local_config_envname . ':' . $_;
 		} else {
-		    catfile($ENV{$local_config_envname}, $_);
+		    catfile(env($local_config_envname), $_);
 		}
 	    }
 	    @build_file_template_names;
@@ -2009,6 +1996,22 @@ foreach (sort keys %config) {
 	print OUT "  ", $_, " => [ ", join(", ",
 					   map { quotify("perl", $_) }
 					   @{$config{$_}}), " ],\n";
+    } elsif (ref($config{$_}) eq "HASH") {
+	print OUT "  ", $_, " => {";
+        if (scalar keys %{$config{$_}} > 0) {
+            print OUT "\n";
+            foreach my $key (sort keys %{$config{$_}}) {
+                print OUT "      ",
+                    join(" => ",
+                         quotify("perl", $key),
+                         defined $config{$_}->{$key}
+                             ? quotify("perl", $config{$_}->{$key})
+                             : "undef");
+                print OUT ",\n";
+            }
+            print OUT "  ";
+        }
+        print OUT "},\n";
     } else {
 	print OUT "  ", $_, " => ", quotify("perl", $config{$_}), ",\n"
     }
@@ -2520,6 +2523,15 @@ sub which
             }
         }
     }
+}
+
+sub env
+{
+    my $name = shift;
+
+    return $config{perlenv}->{$name} if exists $config{perlenv}->{$name};
+    $config{perlenv}->{$name} = $ENV{$name};
+    return $config{perlenv}->{$name};
 }
 
 # Configuration printer ##############################################
