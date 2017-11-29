@@ -538,6 +538,14 @@ my @seed_sources = ();
 while (@argvcopy)
 	{
 	$_ = shift @argvcopy;
+
+	# Support env variable assignments among the options
+	if (m|^(\w+)=(.+)?$|)
+		{
+		$config{perlenv}->{$1} = $2;
+		next;
+		}
+
 	# VMS is a case insensitive environment, and depending on settings
 	# out of our control, we may receive options uppercased.  Let's
 	# downcase at least the part before any equal sign.
@@ -2529,8 +2537,12 @@ sub env
 {
     my $name = shift;
 
-    return $config{perlenv}->{$name} if exists $config{perlenv}->{$name};
-    $config{perlenv}->{$name} = $ENV{$name};
+    # Note that if $ENV{$name} doesn't exist or is undefined,
+    # $config{perlenv}->{$name} will be created with the value
+    # undef.  This is intentional.
+
+    $config{perlenv}->{$name} = $ENV{$name}
+        if ! exists $config{perlenv}->{$name};
     return $config{perlenv}->{$name};
 }
 
