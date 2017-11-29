@@ -9,6 +9,10 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Make it possible to have environment variable assignments as
+     arguments to config / Configure.
+     [Richard Levitte]
+
   *) Add multi-prime RSA (RFC 8017) support.
      [Paul Yang]
 
