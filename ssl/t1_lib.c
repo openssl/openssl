@@ -2294,6 +2294,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
         /* Look for a certificate matching shared sigalgs */
         for (i = 0; i < s->cert->shared_sigalgslen; i++) {
             lu = s->cert->shared_sigalgs[i];
+            sig_idx = -1;
 
             /* Skip SHA1, SHA224, DSA and RSA if not PSS */
             if (lu->hash == NID_sha1
@@ -2326,9 +2327,23 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
 #endif
             } else if (lu->sig == EVP_PKEY_RSA_PSS) {
                 /* validate that key is large enough for the signature algorithm */
-                const RSA *rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA_PSS_SIGN].privatekey);
+                EVP_PKEY *pkey;
+                int pkey_id;
 
-                if (!rsa_pss_check_min_key_size(rsa, lu))
+                if (sig_idx == -1)
+                    pkey = s->cert->pkeys[lu->sig_idx].privatekey;
+                else
+                    pkey = s->cert->pkeys[sig_idx].privatekey;
+                pkey_id = EVP_PKEY_id(pkey);
+                if (pkey_id != EVP_PKEY_RSA_PSS
+                    && pkey_id != EVP_PKEY_RSA)
+                    continue;
+                /*
+                 * The pkey type is EVP_PKEY_RSA_PSS or EVP_PKEY_RSA
+                 * EVP_PKEY_get0_RSA returns NULL if the type is not EVP_PKEY_RSA
+                 * so use EVP_PKEY_get0 instead
+                 */
+                if (!rsa_pss_check_min_key_size(EVP_PKEY_get0(pkey), lu))
                     continue;
             }
             break;
@@ -2385,9 +2400,13 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                     }
                     if (lu->sig == EVP_PKEY_RSA_PSS) {
                         /* validate that key is large enough for the signature algorithm */
-                        const RSA *rsa = EVP_PKEY_get0_RSA(s->cert->pkeys[SSL_PKEY_RSA_PSS_SIGN].privatekey);
+                        EVP_PKEY *pkey = s->cert->pkeys[sig_idx].privatekey;
+                        int pkey_id = EVP_PKEY_id(pkey);
 
-                        if (!rsa_pss_check_min_key_size(rsa, lu))
+                        if (pkey_id != EVP_PKEY_RSA_PSS
+                            && pkey_id != EVP_PKEY_RSA)
+                            continue;
+                        if (!rsa_pss_check_min_key_size(EVP_PKEY_get0(pkey), lu))
                             continue;
                     }
 #ifndef OPENSSL_NO_EC
