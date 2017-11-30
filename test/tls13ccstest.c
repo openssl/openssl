@@ -16,12 +16,13 @@
 static char *cert = NULL;
 static char *privkey = NULL;
 
-BIO *s_to_c_fbio = NULL, *c_to_s_fbio = NULL;
-int chseen = 0, shseen = 0, sccsseen = 0, ccsaftersh = 0, ccsbeforesh = 0;
-int sappdataseen = 0, cappdataseen = 0, badccs = 0, badvers = 0, badsessid = 0;
+static BIO *s_to_c_fbio = NULL, *c_to_s_fbio = NULL;
+static int chseen = 0, shseen = 0, sccsseen = 0, ccsaftersh = 0;
+static int ccsbeforesh = 0, sappdataseen = 0, cappdataseen = 0, badccs = 0;
+static int badvers = 0, badsessid = 0;
 
-unsigned char chsessid[SSL_MAX_SSL_SESSION_ID_LENGTH];
-size_t chsessidlen = 0;
+static unsigned char chsessid[SSL_MAX_SSL_SESSION_ID_LENGTH];
+static size_t chsessidlen = 0;
 
 static int watchccs_new(BIO *bi);
 static int watchccs_free(BIO *a);
