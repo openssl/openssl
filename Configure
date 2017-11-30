@@ -211,6 +211,8 @@ $config{builddir} = abs2rel($blddir);
 my @argvcopy=@ARGV;
 
 if (grep /^reconf(igure)?$/, @argvcopy) {
+    die "reconfiguring with other arguments present isn't supported"
+        if scalar @argvcopy > 1;
     if (-f "./configdata.pm") {
 	my $file = "./configdata.pm";
 	unless (my $return = do $file) {
