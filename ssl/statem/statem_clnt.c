@@ -679,27 +679,30 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
         break;
 
     case TLS_ST_CW_CLNT_HELLO:
-        if (wst == WORK_MORE_A && statem_flush(s) != 1)
-            return WORK_MORE_A;
-
-        if (SSL_IS_DTLS(s)) {
-            /* Treat the next message as the first packet */
-            s->first_packet = 1;
-        }
-
         if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
-                && s->max_early_data > 0
-                && (s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) == 0) {
+                && s->max_early_data > 0) {
             /*
              * We haven't selected TLSv1.3 yet so we don't call the change
              * cipher state function associated with the SSL_METHOD. Instead
              * we call tls13_change_cipher_state() directly.
              */
-            if (!tls13_change_cipher_state(s,
-                        SSL3_CC_EARLY | SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
-                /* SSLfatal() already called */
-                return WORK_ERROR;
+            if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) == 0) {
+                if (!statem_flush(s))
+                    return WORK_MORE_A;
+                if (!tls13_change_cipher_state(s,
+                            SSL3_CC_EARLY | SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
+                    /* SSLfatal() already called */
+                    return WORK_ERROR;
+                }
             }
+            /* else we're in compat mode so we delay flushing until after CCS */
+        } else if (!statem_flush(s)) {
+            return WORK_MORE_A;
+        }
+
+        if (SSL_IS_DTLS(s)) {
+            /* Treat the next message as the first packet */
+            s->first_packet = 1;
         }
         break;
 
@@ -724,6 +727,8 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
             break;
         if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
                     && s->max_early_data > 0) {
+            if (statem_flush(s) != 1)
+                return WORK_MORE_A;
             /*
              * We haven't selected TLSv1.3 yet so we don't call the change
              * cipher state function associated with the SSL_METHOD. Instead
