@@ -540,6 +540,22 @@
                    the corresponding value in the inherited environment, if
                    there is one.
 
+  reconf
+  reconfigure
+                   Reconfigure from earlier data.  This fetches the previous
+                   command line options and environment from data saved in
+                   "configdata.pm", and runs the configuration process again,
+                   using these options and environment.
+                   Note: NO other option is permitted together with "reconf".
+                   This means that you also MUST use "./Configure" (or
+                   what corresponds to that on non-Unix platforms) directly
+                   to invoke this option.
+                   Note: The original configuration saves away values for ALL
+                   environment variables that were used, and if they weren't
+                   defined, they are still saved away with information that
+                   they weren't originally defined.  This information takes
+                   precedence over environment variables that are defined
+                   when reconfiguring.
 
  Installation in Detail
  ----------------------
