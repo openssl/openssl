@@ -498,8 +498,16 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
         return WRITE_TRAN_FINISHED;
 
     case TLS_ST_CR_SRVR_HELLO:
-        /* We only get here in TLSv1.3 */
-        st->hand_state = TLS_ST_CW_CLNT_HELLO;
+        /*
+         * We only get here in TLSv1.3. We just received an HRR, so issue a
+         * CCS unless middlebox compat mode is off, or we already issued one
+         * because we did early data.
+         */
+        if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0
+                && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING)
+            st->hand_state = TLS_ST_CW_CHANGE;
+        else
+            st->hand_state = TLS_ST_CW_CLNT_HELLO;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_EARLY_DATA:
@@ -546,7 +554,9 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_CHANGE:
-        if (s->early_data_state == SSL_EARLY_DATA_CONNECTING) {
+        if (s->hello_retry_request == SSL_HRR_PENDING) {
+            st->hand_state = TLS_ST_CW_CLNT_HELLO;
+        } else if (s->early_data_state == SSL_EARLY_DATA_CONNECTING) {
             st->hand_state = TLS_ST_EARLY_DATA;
         } else {
 #if defined(OPENSSL_NO_NEXTPROTONEG)
@@ -723,7 +733,7 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
         break;
 
     case TLS_ST_CW_CHANGE:
-        if (SSL_IS_TLS13(s))
+        if (SSL_IS_TLS13(s) || s->hello_retry_request == SSL_HRR_PENDING)
             break;
         if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
                     && s->max_early_data > 0) {
