@@ -32,7 +32,7 @@ typedef enum OPTION_choice {
     OPT_RSAPUBKEY_IN, OPT_RSAPUBKEY_OUT,
     /* Do not change the order here; see case statements below */
     OPT_PVK_NONE, OPT_PVK_WEAK, OPT_PVK_STRONG,
-    OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_CHECK, OPT_CIPHER
+    OPT_NOOUT, OPT_TEXT, OPT_MODULUS, OPT_CHECK, OPT_INSECURE, OPT_CIPHER
 } OPTION_CHOICE;
 
 const OPTIONS rsa_options[] = {
@@ -51,6 +51,7 @@ const OPTIONS rsa_options[] = {
     {"text", OPT_TEXT, '-', "Print the key in text"},
     {"modulus", OPT_MODULUS, '-', "Print the RSA key modulus"},
     {"check", OPT_CHECK, '-', "Verify key consistency"},
+    {"insecure", OPT_INSECURE, '-', "Operate RSA key in insecure mode"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 # if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
     {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
@@ -73,7 +74,7 @@ int rsa_main(int argc, char **argv)
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     int i, private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, check = 0;
-    int noout = 0, modulus = 0, pubin = 0, pubout = 0, ret = 1;
+    int noout = 0, modulus = 0, pubin = 0, pubout = 0, ret = 1, insecure = 0;
 # if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
     int pvk_encr = 2;
 # endif
@@ -144,6 +145,9 @@ int rsa_main(int argc, char **argv)
             break;
         case OPT_CHECK:
             check = 1;
+            break;
+        case OPT_INSECURE:
+            insecure = 1;
             break;
         case OPT_CIPHER:
             if (!opt_cipher(opt_unknown(), &enc))
@@ -217,6 +221,9 @@ int rsa_main(int argc, char **argv)
     }
 
     if (check) {
+        if (insecure)
+            RSA_set_flags(rsa, RSA_FLAG_INSECURE_PRIMES);
+
         int r = RSA_check_key_ex(rsa, NULL);
 
         if (r == 1) {

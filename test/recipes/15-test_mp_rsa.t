@@ -17,7 +17,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_mp_rsa");
 
-plan tests => 31;
+plan tests => 61;
 
 ok(run(test(["rsa_mp_test"])), "running rsa multi prime test");
 
@@ -28,16 +28,37 @@ my @test_param = (
     {
         primes => '3',
         bits => '2048',
+        insecure => 0,
     },
-    # 4 primes, 4096-bit
+    # 4 primes, 2048-bit
     {
         primes => '4',
-        bits => '4096',
+        bits => '2048',
+        insecure => 1,
     },
-    # 5 primes, 8192-bit
+    # 8 primes, 2048-bit
     {
-        primes => '5',
-        bits => '8192',
+        primes => '8',
+        bits => '2048',
+        insecure => 1,
+    },
+    # 15 primes, 2048-bit
+    {
+        primes => '15',
+        bits => '2048',
+        insecure => 1,
+    },
+    # 8 primes, 15360-bit (3 & 4 primes for 15360 bit is too long to gen a key)
+    {
+        primes => '8',
+        bits => '15360',
+        insecure => 1,
+    },
+    # 15 primes, 15360-bit
+    {
+        primes => '15',
+        bits => '15360',
+        insecure => 1,
     },
 );
 
@@ -52,19 +73,44 @@ sub run_mp_tests {
     foreach my $param (@test_param) {
         my $primes = $param->{primes};
         my $bits = $param->{bits};
+        my $insecure = $param->{insecure};
         my $name = ($evp ? "evp" : "") . "${bits}p${primes}";
 
         if ($evp) {
-            ok(run(app([ 'openssl', 'genpkey', '-out', 'rsamptest.pem',
-                         '-algorithm', 'RSA', '-pkeyopt', "rsa_keygen_primes:$primes",
-                         '-pkeyopt', "rsa_keygen_bits:$bits"])), "genrsa $name");
+            if ($insecure) {
+                ok(run(app([ 'openssl', 'genpkey', '-out', 'rsamptest.pem',
+                             '-algorithm', 'RSA',
+                             '-pkeyopt', "rsa_keygen_primes:$primes",
+                             '-pkeyopt', "rsa_keygen_bits:$bits",
+                             '-pkeyopt', "rsa_keygen_mode:insecure"])),
+                       "genrsa $name");
+            } else {
+                ok(run(app([ 'openssl', 'genpkey', '-out', 'rsamptest.pem',
+                             '-algorithm', 'RSA',
+                             '-pkeyopt', "rsa_keygen_primes:$primes",
+                             '-pkeyopt', "rsa_keygen_bits:$bits"])),
+                       "genrsa $name");
+            }
         } else {
-            ok(run(app([ 'openssl', 'genrsa', '-out', 'rsamptest.pem',
-                         '-primes', $primes, $bits])), "genrsa $name");
+            if ($insecure) {
+                ok(run(app([ 'openssl', 'genrsa', '-insecure',
+                             '-out', 'rsamptest.pem',
+                             '-primes', $primes, $bits])), "genrsa $name");
+            } else  {
+                ok(run(app([ 'openssl', 'genrsa', '-out', 'rsamptest.pem',
+                             '-primes', $primes, $bits])), "genrsa $name");
+            }
         }
 
-        ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'rsamptest.pem',
-                     '-noout'])), "rsa -check $name");
+        if ($insecure) {
+            ok(run(app([ 'openssl', 'rsa', '-check',
+                         '-insecure', '-in', 'rsamptest.pem',
+                         '-noout'])), "rsa -check $name");
+        } else {
+            ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'rsamptest.pem',
+                         '-noout'])), "rsa -check $name");
+        }
+
         if ($evp) {
             ok(run(app([ 'openssl', 'pkeyutl', '-inkey', 'rsamptest.pem',
                          '-encrypt', '-in', $cleartext,

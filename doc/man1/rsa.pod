@@ -31,6 +31,7 @@ B<openssl> B<rsa>
 [B<-noout>]
 [B<-modulus>]
 [B<-check>]
+[B<-insecure>]
 [B<-pubin>]
 [B<-pubout>]
 [B<-RSAPublicKey_in>]
@@ -117,6 +118,10 @@ This option prints out the value of the modulus of the key.
 
 This option checks the consistency of an RSA private key.
 
+=item B<-insecure>
+
+This option is used for checking insecure multi-prime RSA private keys.
+
 =item B<-pubin>
 
 By default a private key is read from the input file: with this
@@ -194,6 +199,10 @@ To just output the public part of a private key:
 Output the public part of a private key in B<RSAPublicKey> format:
 
  openssl rsa -in key.pem -RSAPublicKey_out -out pubkey.pem
+
+To check an insecure multi-prime private which has 8 primes with 2048-bit:
+
+ openssl rsa -in key.pem -check -insecure
 
 =head1 BUGS
 

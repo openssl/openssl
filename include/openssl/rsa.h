@@ -65,6 +65,7 @@ extern "C" {
  * bn_mod_exp gets called when private key components are absent.
  */
 # define RSA_FLAG_EXT_PKEY               0x0020
+# define RSA_FLAG_INSECURE_PRIMES        0x0040
 
 /*
  * new with 0.9.6j and 0.9.7b; the built-in
@@ -130,6 +131,10 @@ extern "C" {
         RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN, \
                           EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES, primes, NULL)
 
+# define EVP_PKEY_CTX_set_rsa_keygen_mode(ctx, mode) \
+        RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN, \
+                          EVP_PKEY_CTRL_RSA_KEYGEN_MODE, mode, NULL)
+
 # define  EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, md) \
         RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT, \
                           EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)(md))
@@ -181,6 +186,7 @@ extern "C" {
 # define EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL (EVP_PKEY_ALG_CTRL + 12)
 
 # define EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES  (EVP_PKEY_ALG_CTRL + 13)
+# define EVP_PKEY_CTRL_RSA_KEYGEN_MODE  (EVP_PKEY_ALG_CTRL + 14)
 
 # define RSA_PKCS1_PADDING       1
 # define RSA_SSLV23_PADDING      2

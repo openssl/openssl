@@ -34,7 +34,7 @@ static int genrsa_cb(int p, int n, BN_GENCB *cb);
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_3, OPT_F4, OPT_ENGINE,
-    OPT_OUT, OPT_PASSOUT, OPT_CIPHER, OPT_PRIMES,
+    OPT_OUT, OPT_PASSOUT, OPT_CIPHER, OPT_PRIMES, OPT_INSECURE,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
@@ -51,6 +51,7 @@ const OPTIONS genrsa_options[] = {
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
     {"primes", OPT_PRIMES, 'p', "Specify number of primes"},
+    {"insecure", OPT_INSECURE, '-', "Specify number of primes freely"},
     {NULL}
 };
 
@@ -69,6 +70,7 @@ int genrsa_main(int argc, char **argv)
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL;
     char *prog, *hexe, *dece;
     OPTION_CHOICE o;
+    int insecure = 0;
 
     if (bn == NULL || cb == NULL)
         goto end;
@@ -114,6 +116,9 @@ opthelp:
             if (!opt_int(opt_arg(), &primes))
                 goto end;
             break;
+        case OPT_INSECURE:
+            insecure = 1;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -142,6 +147,9 @@ opthelp:
     rsa = eng ? RSA_new_method(eng) : RSA_new();
     if (rsa == NULL)
         goto end;
+
+    if (insecure)
+        RSA_set_flags(rsa, RSA_FLAG_INSECURE_PRIMES);
 
     if (!BN_set_word(bn, f4)
         || !RSA_generate_multi_prime_key(rsa, num, primes, bn, cb))

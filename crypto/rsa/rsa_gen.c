@@ -71,6 +71,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
     STACK_OF(RSA_PRIME_INFO) *prime_infos = NULL;
     BN_CTX *ctx = NULL;
     BN_ULONG bitst = 0;
+    int max_primes = 0;
 
     /*
      * When generating ridiculously small keys, we can get stuck
@@ -82,7 +83,10 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
         goto err;
     }
 
-    if (primes < RSA_DEFAULT_PRIME_NUM || primes > rsa_multip_cap(bits)) {
+    max_primes = RSA_test_flags(rsa, RSA_FLAG_INSECURE_PRIMES) ?
+                 RSA_MAX_PRIME_NUM : rsa_multip_cap(bits);
+
+    if (primes < RSA_DEFAULT_PRIME_NUM || primes > max_primes) {
         ok = 0;             /* we set our own err */
         RSAerr(RSA_F_RSA_BUILTIN_KEYGEN, RSA_R_KEY_PRIME_NUM_INVALID);
         goto err;

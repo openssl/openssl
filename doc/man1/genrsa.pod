@@ -29,6 +29,7 @@ B<openssl> B<genrsa>
 [B<-writerand file>]
 [B<-engine id>]
 [B<-primes num>]
+[B<-insecure>]
 [B<numbits>]
 
 =head1 DESCRIPTION
@@ -95,6 +96,14 @@ RSA key, which is defined in RFC 8017.
 
 The size of the private key to generate in bits. This must be the last option
 specified. The default is 2048.
+
+=item B<-insecure>
+
+By default OpenSSL will force users to generate secure multi-prime keys only.
+That is to say, the number of primes is fixed due to a security policy, see
+L<RSA_generate_multi_prime_key(3)> for details. But sometimes users may need
+to generate more primes in a private key, this option can switch off the
+default security policy.
 
 =back
 
