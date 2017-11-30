@@ -740,7 +740,8 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
 
     case TLS_ST_SW_SRVR_HELLO:
         if (SSL_IS_TLS13(s) && s->hello_retry_request == SSL_HRR_PENDING) {
-            if (statem_flush(s) != 1)
+            if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) == 0
+                    && statem_flush(s) != 1)
                 return WORK_MORE_A;
             break;
         }
@@ -777,8 +778,11 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
         /* Fall through */
 
     case TLS_ST_SW_CHANGE:
-        if (s->hello_retry_request == SSL_HRR_PENDING)
+        if (s->hello_retry_request == SSL_HRR_PENDING) {
+            if (!statem_flush(s))
+                return WORK_MORE_A;
             break;
+        }
         /*
          * TODO(TLS1.3): This actually causes a problem. We don't yet know
          * whether the next record we are going to receive is an unencrypted
