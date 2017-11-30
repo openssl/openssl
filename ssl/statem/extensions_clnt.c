@@ -1664,9 +1664,9 @@ int tls_parse_stoc_supported_versions(SSL *s, PACKET *pkt, unsigned int context,
          * TLSv1.3, therefore we shouldn't be getting an HRR for anything else.
          */
         if (version != TLS1_3_VERSION) {
-            *al = SSL_AD_PROTOCOL_VERSION;
-            SSLerr(SSL_F_TLS_PARSE_STOC_SUPPORTED_VERSIONS,
-                   SSL_R_BAD_HRR_VERSION);
+            SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
+                     SSL_F_TLS_PARSE_STOC_SUPPORTED_VERSIONS,
+                     SSL_R_BAD_HRR_VERSION);
             return 0;
         }
         return 1;
