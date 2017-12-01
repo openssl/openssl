@@ -41,6 +41,7 @@ int X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
     case EVP_PKEY_EC:
         ret = EVP_PK_EC | EVP_PKT_SIGN | EVP_PKT_EXCH;
         break;
+    case EVP_PKEY_ED448:
     case EVP_PKEY_ED25519:
         ret = EVP_PKT_SIGN;
         break;
