@@ -164,7 +164,11 @@ int ERR_load_EC_strings(void);
 # define EC_F_OSSL_ECDSA_VERIFY_SIG                       250
 # define EC_F_PKEY_ECD_CTRL                               271
 # define EC_F_PKEY_ECD_DIGESTSIGN                         272
+# define EC_F_PKEY_ECD_DIGESTSIGN25519                    274
+# define EC_F_PKEY_ECD_DIGESTSIGN448                      275
 # define EC_F_PKEY_ECX_DERIVE                             269
+# define EC_F_PKEY_ECX_DERIVE25519                        276
+# define EC_F_PKEY_ECX_DERIVE448                          277
 # define EC_F_PKEY_EC_CTRL                                197
 # define EC_F_PKEY_EC_CTRL_STR                            198
 # define EC_F_PKEY_EC_DERIVE                              217

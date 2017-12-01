@@ -446,6 +446,36 @@ const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     NULL
 };
 
+const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
+    EVP_PKEY_X448,
+    EVP_PKEY_X448,
+    0,
+    "X448",
+    "OpenSSL X448 algorithm",
+
+    ecx_pub_decode,
+    ecx_pub_encode,
+    ecx_pub_cmp,
+    ecx_pub_print,
+
+    ecx_priv_decode,
+    ecx_priv_encode,
+    ecx_priv_print,
+
+    ecx_size,
+    ecx_bits,
+    ecx_security_bits,
+
+    0, 0, 0, 0,
+    ecx_cmp_parameters,
+    0, 0,
+
+    ecx_free,
+    ecx_ctrl,
+    NULL,
+    NULL
+};
+
 static int ecd_size(const EVP_PKEY *pkey)
 {
     return ED25519_SIGSIZE;
@@ -493,7 +523,7 @@ static int ecd_sig_info_set25519(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     return 1;
 }
 
-#if 0
+
 static int ecd_item_sign448(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
                          X509_ALGOR *alg1, X509_ALGOR *alg2,
                          ASN1_BIT_STRING *str)
@@ -513,7 +543,7 @@ static int ecd_sig_info_set448(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
                       X509_SIG_INFO_TLS);
     return 1;
 }
-#endif
+
 
 const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     EVP_PKEY_ED25519,
@@ -548,6 +578,39 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     ecd_sig_info_set25519
 };
 
+const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
+    EVP_PKEY_ED448,
+    EVP_PKEY_ED448,
+    0,
+    "ED448",
+    "OpenSSL ED448 algorithm",
+
+    ecx_pub_decode,
+    ecx_pub_encode,
+    ecx_pub_cmp,
+    ecx_pub_print,
+
+    ecx_priv_decode,
+    ecx_priv_encode,
+    ecx_priv_print,
+
+    ecd_size,
+    ecx_bits,
+    ecx_security_bits,
+
+    0, 0, 0, 0,
+    ecx_cmp_parameters,
+    0, 0,
+
+    ecx_free,
+    0,
+    NULL,
+    NULL,
+    ecd_item_verify,
+    ecd_item_sign448,
+    ecd_sig_info_set448
+};
+
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
     return ecx_key_op(pkey, ctx->pmeth->pkey_id, NULL, NULL, 0, KEY_OP_KEYGEN);
@@ -559,17 +622,17 @@ static int pkey_ecx_derive25519(EVP_PKEY_CTX *ctx, unsigned char *key,
     const X25519_KEY *pkey, *peerkey;
 
     if (ctx->pkey == NULL || ctx->peerkey == NULL) {
-        ECerr(EC_F_PKEY_ECX_DERIVE, EC_R_KEYS_NOT_SET);
+        ECerr(EC_F_PKEY_ECX_DERIVE25519, EC_R_KEYS_NOT_SET);
         return 0;
     }
     pkey = ctx->pkey->pkey.ptr;
     peerkey = ctx->peerkey->pkey.ptr;
     if (pkey == NULL || pkey->privkey == NULL) {
-        ECerr(EC_F_PKEY_ECX_DERIVE, EC_R_INVALID_PRIVATE_KEY);
+        ECerr(EC_F_PKEY_ECX_DERIVE25519, EC_R_INVALID_PRIVATE_KEY);
         return 0;
     }
     if (peerkey == NULL) {
-        ECerr(EC_F_PKEY_ECX_DERIVE, EC_R_INVALID_PEER_KEY);
+        ECerr(EC_F_PKEY_ECX_DERIVE25519, EC_R_INVALID_PEER_KEY);
         return 0;
     }
     *keylen = X25519_KEYLEN;
@@ -577,24 +640,24 @@ static int pkey_ecx_derive25519(EVP_PKEY_CTX *ctx, unsigned char *key,
         return 0;
     return 1;
 }
-#if 0
+
 static int pkey_ecx_derive448(EVP_PKEY_CTX *ctx, unsigned char *key,
                               size_t *keylen)
 {
     const X448_KEY *pkey, *peerkey;
 
     if (ctx->pkey == NULL || ctx->peerkey == NULL) {
-        ECerr(EC_F_PKEY_ECX_DERIVE, EC_R_KEYS_NOT_SET);
+        ECerr(EC_F_PKEY_ECX_DERIVE448, EC_R_KEYS_NOT_SET);
         return 0;
     }
     pkey = ctx->pkey->pkey.ptr;
     peerkey = ctx->peerkey->pkey.ptr;
     if (pkey == NULL || pkey->privkey == NULL) {
-        ECerr(EC_F_PKEY_ECX_DERIVE, EC_R_INVALID_PRIVATE_KEY);
+        ECerr(EC_F_PKEY_ECX_DERIVE448, EC_R_INVALID_PRIVATE_KEY);
         return 0;
     }
     if (peerkey == NULL) {
-        ECerr(EC_F_PKEY_ECX_DERIVE, EC_R_INVALID_PEER_KEY);
+        ECerr(EC_F_PKEY_ECX_DERIVE448, EC_R_INVALID_PEER_KEY);
         return 0;
     }
     *keylen = X448_KEYLEN;
@@ -602,7 +665,6 @@ static int pkey_ecx_derive448(EVP_PKEY_CTX *ctx, unsigned char *key,
         return 0;
     return 1;
 }
-#endif
 
 static int pkey_ecx_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
@@ -622,6 +684,16 @@ const EVP_PKEY_METHOD ecx25519_pkey_meth = {
     0
 };
 
+const EVP_PKEY_METHOD ecx448_pkey_meth = {
+    EVP_PKEY_X448,
+    0, 0, 0, 0, 0, 0, 0,
+    pkey_ecx_keygen,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    pkey_ecx_derive448,
+    pkey_ecx_ctrl,
+    0
+};
+
 static int pkey_ecd_digestsign25519(EVP_MD_CTX *ctx, unsigned char *sig,
                                     size_t *siglen, const unsigned char *tbs,
                                     size_t tbslen)
@@ -633,7 +705,7 @@ static int pkey_ecd_digestsign25519(EVP_MD_CTX *ctx, unsigned char *sig,
         return 1;
     }
     if (*siglen < ED25519_SIGSIZE) {
-        ECerr(EC_F_PKEY_ECD_DIGESTSIGN, EC_R_BUFFER_TOO_SMALL);
+        ECerr(EC_F_PKEY_ECD_DIGESTSIGN25519, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
 
@@ -643,7 +715,6 @@ static int pkey_ecd_digestsign25519(EVP_MD_CTX *ctx, unsigned char *sig,
     return 1;
 }
 
-#if 0
 static int pkey_ecd_digestsign448(EVP_MD_CTX *ctx, unsigned char *sig,
                                   size_t *siglen, const unsigned char *tbs,
                                   size_t tbslen)
@@ -655,16 +726,16 @@ static int pkey_ecd_digestsign448(EVP_MD_CTX *ctx, unsigned char *sig,
         return 1;
     }
     if (*siglen < ED448_SIGSIZE) {
-        ECerr(EC_F_PKEY_ECD_DIGESTSIGN, EC_R_BUFFER_TOO_SMALL);
+        ECerr(EC_F_PKEY_ECD_DIGESTSIGN448, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
 
-    if (ED448_sign(sig, tbs, tbslen, edkey->pubkey, edkey->privkey) == 0)
+    if (ED448_sign(sig, tbs, tbslen, edkey->pubkey, edkey->privkey, NULL,
+                   0) == 0)
         return 0;
     *siglen = ED448_SIGSIZE;
     return 1;
 }
-#endif
 
 static int pkey_ecd_digestverify25519(EVP_MD_CTX *ctx, const unsigned char *sig,
                                       size_t siglen, const unsigned char *tbs,
@@ -678,7 +749,6 @@ static int pkey_ecd_digestverify25519(EVP_MD_CTX *ctx, const unsigned char *sig,
     return ED25519_verify(tbs, tbslen, sig, edkey->pubkey);
 }
 
-#if 0
 static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
                                     size_t siglen, const unsigned char *tbs,
                                     size_t tbslen)
@@ -688,9 +758,8 @@ static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
     if (siglen != ED448_SIGSIZE)
         return 0;
 
-    return ED448_verify(tbs, tbslen, sig, edkey->pubkey);
+    return ED448_verify(tbs, tbslen, sig, edkey->pubkey, NULL, 0);
 }
-#endif
 
 static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
@@ -717,4 +786,15 @@ const EVP_PKEY_METHOD ed25519_pkey_meth = {
     0,
     pkey_ecd_digestsign25519,
     pkey_ecd_digestverify25519
+};
+
+const EVP_PKEY_METHOD ed448_pkey_meth = {
+    EVP_PKEY_ED448, EVP_PKEY_FLAG_SIGCTX_CUSTOM,
+    0, 0, 0, 0, 0, 0,
+    pkey_ecx_keygen,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    pkey_ecd_ctrl,
+    0,
+    pkey_ecd_digestsign448,
+    pkey_ecd_digestverify448
 };
