@@ -1875,14 +1875,27 @@ EOF
                 if (! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
-                # We recognise C++, C and asm files
+
                 if ($s =~ /\.(cc|cpp|c|s|S)$/) {
+                    # We recognise C++, C and asm files
                     my $o = $_;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
                     $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{shared_sources}->{$ddest}->{$o} = 1;
                     $unified_info{sources}->{$o}->{$s} = 1;
+                } elsif ($s =~ /\.rc$/) {
+                    # We also recognise resource files
+                    my $o = $_;
+                    $o =~ s/\.rc$/.res/; # Resource configuration
+                    my $o = cleanfile($buildd, $o, $blddir);
+                    $unified_info{shared_sources}->{$ddest}->{$o} = 1;
+                    $unified_info{sources}->{$o}->{$s} = 1;
+                } elsif ($s =~ /\.(def|map|opt)$/) {
+                    # We also recognise .def / .map / .opt files
+                    # We know they are generated files
+                    my $def = cleanfile($buildd, $s, $blddir);
+                    $unified_info{shared_sources}->{$ddest}->{$def} = 1;
                 } else {
                     die "unrecognised source file type for shared library: $s\n";
                 }
