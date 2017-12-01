@@ -106,7 +106,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 
     if (ec->keylen != tkeylen) {
         /* If necessary set key length */
-        if (EVP_CIPHER_CTX_set_key_length(ctx, ec->keylen) <= 0) {
+        if (EVP_CIPHER_CTX_set_key_length(ctx, (int)ec->keylen) <= 0) {
             /*
              * Only reveal failure if debugging so we don't leak information
              * which may be useful in MMA.

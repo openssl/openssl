@@ -235,7 +235,7 @@ static unsigned long mem_hash(const MEM *a)
     ret = (size_t)a->addr;
 
     ret = ret * 17851 + (ret >> 14) * 7 + (ret >> 4) * 251;
-    return ret;
+    return (unsigned long)ret;
 }
 
 /* returns 1 if there was an info to pop, 0 if the stack was empty. */
@@ -347,7 +347,7 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
             m->addr = addr;
             m->file = file;
             m->line = line;
-            m->num = num;
+            m->num = (int)num;
             m->threadid = CRYPTO_THREAD_get_current_id();
 
             if (order == break_order_num) {
@@ -432,7 +432,7 @@ void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num,
             mp = lh_MEM_delete(mh, &m);
             if (mp != NULL) {
                 mp->addr = addr2;
-                mp->num = num;
+                mp->num = (int)num;
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
                 mp->array_siz = backtrace(mp->array, OSSL_NELEM(mp->array));
 #endif
@@ -450,7 +450,7 @@ typedef struct mem_leak_st {
     int (*print_cb) (const char *str, size_t len, void *u);
     void *print_cb_arg;
     int chunks;
-    long bytes;
+    size_t bytes;
 } MEM_LEAK;
 
 static void print_leak(const MEM *m, MEM_LEAK *l)
@@ -515,8 +515,8 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
         ti = amip->threadid;
 
         do {
-            int buf_len;
-            int info_len;
+            size_t buf_len;
+            size_t info_len;
 
             ami_cnt++;
             if (ami_cnt >= sizeof(buf) - 1)
@@ -631,7 +631,7 @@ int CRYPTO_mem_leaks_cb(int (*cb) (const char *str, size_t len, void *u),
 
 static int print_bio(const char *str, size_t len, void *b)
 {
-    return BIO_write((BIO *)b, str, len);
+    return BIO_write((BIO *)b, str, (int)len);
 }
 
 int CRYPTO_mem_leaks(BIO *b)

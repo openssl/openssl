@@ -526,9 +526,9 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
         p = strchr(hostptr, '/');
 
     if (!p)
-        hostlen = strlen(hostptr);
+        hostlen = (int)strlen(hostptr);
     else
-        hostlen = p - hostptr;
+        hostlen = (int)(p - hostptr);
 
     if (hostlen == 0)
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;

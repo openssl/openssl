@@ -52,7 +52,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     char strbuf[32];
     int (*cpyfunc) (unsigned long, void *) = NULL;
     if (len == -1)
-        len = strlen((const char *)in);
+        len = (int)strlen((const char *)in);
     if (!mask)
         mask = DIRSTRING_TYPE;
 

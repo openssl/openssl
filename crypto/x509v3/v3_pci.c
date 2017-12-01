@@ -198,7 +198,7 @@ static int process_pci_value(CONF_VALUE *val,
                 goto err;
             }
         } else if (strncmp(val->value, "text:", 5) == 0) {
-            val_len = strlen(val->value + 5);
+            val_len = (long)strlen(val->value + 5);
             tmp_data = OPENSSL_realloc((*policy)->data,
                                        (*policy)->length + val_len + 1);
             if (tmp_data) {

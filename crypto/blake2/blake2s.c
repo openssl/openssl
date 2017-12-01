@@ -134,7 +134,7 @@ static void blake2s_compress(BLAKE2S_CTX *S,
         }
 
         /* blake2s_increment_counter */
-        S->t[0] += increment;
+        S->t[0] += (uint32_t)increment;
         S->t[1] += (S->t[0] < increment);
 
         v[ 8] = blake2s_IV[0];

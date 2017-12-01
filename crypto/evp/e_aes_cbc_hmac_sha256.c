@@ -111,8 +111,8 @@ static void sha256_update(SHA256_CTX *c, const void *data, size_t len)
         sha256_block_data_order(c, ptr, len / SHA256_CBLOCK);
 
         ptr += len;
-        c->Nh += len >> 29;
-        c->Nl += len <<= 3;
+        c->Nh += (SHA_LONG)(len >> 29);
+        c->Nl += (SHA_LONG)(len <<= 3);
         if (c->Nl < (unsigned int)len)
             c->Nh++;
     }
@@ -419,7 +419,7 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
                                         const unsigned char *in, size_t len)
 {
     EVP_AES_HMAC_SHA256 *key = data(ctx);
-    unsigned int l;
+    size_t l;
     size_t plen = key->payload_length, iv = 0, /* explicit IV in TLS 1.1 and
                                                 * later */
         sha_off = 0;
@@ -469,8 +469,8 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
             blocks *= SHA256_CBLOCK;
             aes_off += blocks;
             sha_off += blocks;
-            key->md.Nh += blocks >> 29;
-            key->md.Nl += blocks <<= 3;
+            key->md.Nh += (SHA_LONG)(blocks >> 29);
+            key->md.Nl += (SHA_LONG)(blocks <<= 3);
             if (key->md.Nl < (unsigned int)blocks)
                 key->md.Nh++;
         } else {
@@ -493,7 +493,7 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
             /* pad the payload|hmac */
             plen += SHA256_DIGEST_LENGTH;
             for (l = len - plen - 1; plen < len; plen++)
-                out[plen] = l;
+                out[plen] = (unsigned char)l;
             /* encrypt HMAC|padding at once */
             aesni_cbc_encrypt(out + aes_off, out + aes_off, len - aes_off,
                               &key->ks, EVP_CIPHER_CTX_iv_noconst(ctx), 1);
@@ -515,8 +515,8 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
                           EVP_CIPHER_CTX_iv_noconst(ctx), 0);
 
         if (plen != NO_PAYLOAD_LENGTH) { /* "TLS" mode of operation */
-            size_t inp_len, mask, j, i;
-            unsigned int res, maxpad, pad, bitlen;
+            size_t inp_len, j, i;
+            unsigned int res, mask, maxpad, pad, bitlen;
             int ret = 1;
             union {
                 unsigned int u[SHA_LBLOCK];
@@ -536,7 +536,7 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
 
             /* figure out payload length */
             pad = out[len - 1];
-            maxpad = len - (SHA256_DIGEST_LENGTH + 1);
+            maxpad = (unsigned int)(len - (SHA256_DIGEST_LENGTH + 1));
             maxpad |= (255 - maxpad) >> (sizeof(maxpad) * 8 - 8);
             maxpad &= 255;
 
@@ -552,8 +552,8 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
 
             inp_len = len - (SHA256_DIGEST_LENGTH + pad + 1);
 
-            key->aux.tls_aad[plen - 2] = inp_len >> 8;
-            key->aux.tls_aad[plen - 1] = inp_len;
+            key->aux.tls_aad[plen - 2] = (unsigned char)(inp_len >> 8);
+            key->aux.tls_aad[plen - 1] = (unsigned char)inp_len;
 
             /* calculate HMAC */
             key->md = key->head;
@@ -571,7 +571,7 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
             }
 
             /* but pretend as if we hashed padded payload */
-            bitlen = key->md.Nl + (inp_len << 3); /* at most 18 bits */
+            bitlen = (unsigned int)(key->md.Nl + (inp_len << 3)); /* at most 18 bits */
 #  ifdef BSWAP4
             bitlen = BSWAP4(bitlen);
 #  else
@@ -843,7 +843,7 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
                     if (inp_len >= 8192 && OPENSSL_ia32cap_P[2] & (1 << 5))
                         n4x = 2; /* AVX2 */
                 } else if ((n4x = param->interleave / 4) && n4x <= 2)
-                    inp_len = param->len;
+                    inp_len = (unsigned int)param->len;
                 else
                     return -1;
 

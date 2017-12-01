@@ -25,7 +25,7 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
     signed char *r = NULL;
     int sign = 1;
     int bit, next_bit, mask;
-    size_t len = 0, j;
+    int len = 0, j;
 
     if (BN_is_zero(scalar)) {
         r = OPENSSL_malloc(1);

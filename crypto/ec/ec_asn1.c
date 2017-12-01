@@ -369,7 +369,7 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
     BIGNUM *tmp_1 = NULL, *tmp_2 = NULL;
     unsigned char *buffer_1 = NULL, *buffer_2 = NULL,
         *a_buf = NULL, *b_buf = NULL;
-    size_t len_1, len_2;
+    int len_1, len_2;
     unsigned char char_zero = 0;
 
     if (!group || !curve || !curve->a || !curve->b)
@@ -398,8 +398,8 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
         }
     }
 #endif
-    len_1 = (size_t)BN_num_bytes(tmp_1);
-    len_2 = (size_t)BN_num_bytes(tmp_2);
+    len_1 = BN_num_bytes(tmp_1);
+    len_2 = BN_num_bytes(tmp_2);
 
     if (len_1 == 0) {
         /* len_1 == 0 => a == 0 */
@@ -520,7 +520,7 @@ ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
         ECerr(EC_F_EC_GROUP_GET_ECPARAMETERS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    ASN1_STRING_set0(ret->base, buffer, len);
+    ASN1_STRING_set0(ret->base, buffer, (int)len);
 
     /* set the order */
     tmp = EC_GROUP_get0_order(group);
@@ -1023,7 +1023,7 @@ int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
         goto err;
     }
 
-    ASN1_STRING_set0(priv_key->privateKey, priv, privlen);
+    ASN1_STRING_set0(priv_key->privateKey, priv, (int)privlen);
     priv = NULL;
 
     if (!(a->enc_flag & EC_PKEY_NO_PARAMETERS)) {
@@ -1051,7 +1051,7 @@ int i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 
         priv_key->publicKey->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
         priv_key->publicKey->flags |= ASN1_STRING_FLAG_BITS_LEFT;
-        ASN1_STRING_set0(priv_key->publicKey, pub, publen);
+        ASN1_STRING_set0(priv_key->publicKey, pub, (int)publen);
         pub = NULL;
     }
 
@@ -1141,7 +1141,7 @@ int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
 
     if (out == NULL || buf_len == 0)
         /* out == NULL => just return the length of the octet string */
-        return buf_len;
+        return (int)buf_len;
 
     if (*out == NULL) {
         if ((*out = OPENSSL_malloc(buf_len)) == NULL) {
@@ -1161,7 +1161,7 @@ int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
     }
     if (!new_buffer)
         *out += buf_len;
-    return buf_len;
+    return (int)buf_len;
 }
 
 ASN1_SEQUENCE(ECDSA_SIG) = {

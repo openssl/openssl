@@ -64,7 +64,7 @@ int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
     len_remaining -= siglen;
     *in = p + siglen;
 
-    return len - len_remaining;
+    return (int)(len - len_remaining);
 }
 
 SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
@@ -152,7 +152,7 @@ err:
 
 int i2o_SCT_signature(const SCT *sct, unsigned char **out)
 {
-    size_t len;
+    int len;
     unsigned char *p = NULL, *pstart = NULL;
 
     if (!SCT_signature_is_complete(sct)) {
@@ -170,7 +170,7 @@ int i2o_SCT_signature(const SCT *sct, unsigned char **out)
     * (1 byte) Signature algorithm
     * (2 bytes + ?) Signature
     */
-    len = 4 + sct->sig_len;
+    len = (int)(4 + sct->sig_len);
 
     if (out != NULL) {
         if (*out != NULL) {
@@ -199,7 +199,7 @@ err:
 
 int i2o_SCT(const SCT *sct, unsigned char **out)
 {
-    size_t len;
+    int len;
     unsigned char *p = NULL, *pstart = NULL;
 
     if (!SCT_is_complete(sct)) {
@@ -213,9 +213,9 @@ int i2o_SCT(const SCT *sct, unsigned char **out)
      * bytes + ?) Signature
      */
     if (sct->version == SCT_VERSION_V1)
-        len = 43 + sct->ext_len + 4 + sct->sig_len;
+        len = (int)(43 + sct->ext_len + 4 + sct->sig_len);
     else
-        len = sct->sct_len;
+        len = (int)sct->sct_len;
 
     if (out == NULL)
         return len;
@@ -321,7 +321,7 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
 int i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp)
 {
     int len, sct_len, i, is_pp_new = 0;
-    size_t len2;
+    int len2;
     unsigned char *p = NULL, *p2;
 
     if (pp != NULL) {

@@ -55,7 +55,7 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
         if (inret && (oper & BIO_CB_RETURN)) {
             if (*processed > INT_MAX)
                 return -1;
-            inret = *processed;
+            inret = (long)*processed;
         }
     }
 

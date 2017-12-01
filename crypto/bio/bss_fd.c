@@ -117,7 +117,7 @@ static int fd_read(BIO *b, char *out, int outl)
 
     if (out != NULL) {
         clear_sys_error();
-        ret = UP_read(b->num, out, outl);
+        ret = (int)UP_read(b->num, out, outl);
         BIO_clear_retry_flags(b);
         if (ret <= 0) {
             if (BIO_fd_should_retry(ret))
@@ -131,7 +131,7 @@ static int fd_write(BIO *b, const char *in, int inl)
 {
     int ret;
     clear_sys_error();
-    ret = UP_write(b->num, in, inl);
+    ret = (int)UP_write(b->num, in, inl);
     BIO_clear_retry_flags(b);
     if (ret <= 0) {
         if (BIO_fd_should_retry(ret))

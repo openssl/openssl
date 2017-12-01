@@ -566,7 +566,7 @@ static int multi_split(BIO *bio, const char *bound, STACK_OF(BIO) **ret)
     STACK_OF(BIO) *parts;
     char state, part, first;
 
-    blen = strlen(bound);
+    blen = (int)strlen(bound);
     part = 0;
     state = 0;
     first = 1;
@@ -927,9 +927,9 @@ static void mime_param_free(MIME_PARAM *param)
 static int mime_bound_check(char *line, int linelen, const char *bound, int blen)
 {
     if (linelen == -1)
-        linelen = strlen(line);
+        linelen = (int)strlen(line);
     if (blen == -1)
-        blen = strlen(bound);
+        blen = (int)strlen(bound);
     /* Quickly eliminate if line length too short */
     if (blen + 2 > linelen)
         return 0;

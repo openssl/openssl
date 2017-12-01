@@ -78,7 +78,7 @@ int RAND_DRBG_set_callbacks(RAND_DRBG *dctx,
 /*
  * RAND_POOL functions
  */
-RAND_POOL *RAND_POOL_new(int entropy_requested, size_t min_len, size_t max_len);
+RAND_POOL *RAND_POOL_new(size_t entropy_requested, size_t min_len, size_t max_len);
 void RAND_POOL_free(RAND_POOL *pool);
 
 const unsigned char *RAND_POOL_buffer(RAND_POOL *pool);

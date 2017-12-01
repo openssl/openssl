@@ -267,7 +267,7 @@ static unsigned char *HKDF_Extract(const EVP_MD *evp_md,
 {
     unsigned int tmp_len;
 
-    if (!HMAC(evp_md, salt, salt_len, key, key_len, prk, &tmp_len))
+    if (!HMAC(evp_md, salt, (int)salt_len, key, (int)key_len, prk, &tmp_len))
         return NULL;
 
     *prk_len = tmp_len;
@@ -297,7 +297,7 @@ static unsigned char *HKDF_Expand(const EVP_MD *evp_md,
     if ((hmac = HMAC_CTX_new()) == NULL)
         return NULL;
 
-    if (!HMAC_Init_ex(hmac, prk, prk_len, evp_md, NULL))
+    if (!HMAC_Init_ex(hmac, prk, (int)prk_len, evp_md, NULL))
         goto err;
 
     for (i = 1; i <= n; i++) {

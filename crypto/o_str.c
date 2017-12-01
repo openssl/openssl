@@ -179,7 +179,7 @@ unsigned char *OPENSSL_hexstr2buf(const char *str, long *len)
     }
 
     if (len)
-        *len = q - hexbuf;
+        *len = (long)(q - hexbuf);
     return hexbuf;
 }
 

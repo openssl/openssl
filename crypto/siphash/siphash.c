@@ -135,7 +135,7 @@ void SipHash_Update(SIPHASH *ctx, const unsigned char *in, size_t inlen)
         /* not enough to fill leavings */
         if (inlen < available) {
             memcpy(&ctx->leavings[ctx->len], in, inlen);
-            ctx->len += inlen;
+            ctx->len += (unsigned int)inlen;
             return;
         }
 

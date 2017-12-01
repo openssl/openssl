@@ -96,8 +96,8 @@ static int rc4_hmac_md5_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             blocks *= MD5_CBLOCK;
             rc4_off += blocks;
             md5_off += blocks;
-            key->md.Nh += blocks >> 29;
-            key->md.Nl += blocks <<= 3;
+            key->md.Nh += (MD5_LONG)(blocks >> 29);
+            key->md.Nl += (MD5_LONG)(blocks <<= 3);
             if (key->md.Nl < (unsigned int)blocks)
                 key->md.Nh++;
         } else {
@@ -144,7 +144,7 @@ static int rc4_hmac_md5_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             if (l < key->md.Nl)
                 key->md.Nh++;
             key->md.Nl = l;
-            key->md.Nh += blocks >> 29;
+            key->md.Nh += (MD5_LONG)(blocks >> 29);
         } else {
             md5_off = 0;
             rc4_off = 0;

@@ -108,7 +108,7 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
 #ifndef OPENSSL_NO_STDIO
 static int write_fp(const void *data, size_t len, void *fp)
 {
-    return UP_fwrite(data, len, 1, fp);
+    return (int)UP_fwrite(data, len, 1, fp);
 }
 
 int BIO_dump_fp(FILE *fp, const char *s, int len)
@@ -124,7 +124,7 @@ int BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent)
 
 static int write_bio(const void *data, size_t len, void *bp)
 {
-    return BIO_write((BIO *)bp, (const char *)data, len);
+    return BIO_write((BIO *)bp, (const char *)data, (int)len);
 }
 
 int BIO_dump(BIO *bp, const char *s, int len)

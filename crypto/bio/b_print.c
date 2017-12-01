@@ -90,16 +90,13 @@ _dopr(char **sbuffer,
     int64_t value;
     LDOUBLE fvalue;
     char *strvalue;
-    int min;
-    int max;
-    int state;
-    int flags;
-    int cflags;
-    size_t currlen;
+    int min = 0;
+    int max = -1;
+    int state = DP_S_DEFAULT;
+    int flags = 0;
+    int cflags = 0;
+    size_t currlen = 0;
 
-    state = DP_S_DEFAULT;
-    flags = currlen = cflags = min = 0;
-    max = -1;
     ch = *format++;
 
     while (state != DP_S_DONE) {
@@ -303,7 +300,7 @@ _dopr(char **sbuffer,
                     if (buffer)
                         max = INT_MAX;
                     else
-                        max = *maxlen;
+                        max = (int)*maxlen;
                 }
                 if (!fmtstr(sbuffer, buffer, &currlen, maxlen, strvalue,
                             flags, min, max))
@@ -319,7 +316,7 @@ _dopr(char **sbuffer,
                 {
                     int *num;
                     num = va_arg(args, int *);
-                    *num = currlen;
+                    *num = (int)currlen;
                 }
                 break;
             case '%':
@@ -367,13 +364,18 @@ fmtstr(char **sbuffer,
        size_t *maxlen, const char *value, int flags, int min, int max)
 {
     int padlen;
-    size_t strln;
+    int strln;
     int cnt = 0;
 
     if (value == 0)
         value = "<NULL>";
 
-    strln = OPENSSL_strnlen(value, max < 0 ? SIZE_MAX : (size_t)max);
+    /*
+     * TODO: INT_MAX was changed to SIZE_MAX in by Richard Levitte
+     *       in commit 230c691a521 (2016-05-21 376).
+	 *       This looks like an accidental change to me.
+     */
+    strln = (int)OPENSSL_strnlen(value, max < 0 ? SIZE_MAX : (size_t)max);
 
     padlen = min - strln;
     if (min < 0 || padlen < 0)
@@ -458,7 +460,7 @@ fmtint(char **sbuffer,
 
     zpadlen = max - place;
     spadlen =
-        min - OSSL_MAX(max, place) - (signvalue ? 1 : 0) - strlen(prefix);
+        min - OSSL_MAX(max, place) - (signvalue ? 1 : 0) - (int)strlen(prefix);
     if (zpadlen < 0)
         zpadlen = 0;
     if (spadlen < 0)

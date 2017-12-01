@@ -296,7 +296,7 @@ static int asn1_bio_read(BIO *b, char *in, int inl)
 
 static int asn1_bio_puts(BIO *b, const char *str)
 {
-    return asn1_bio_write(b, str, strlen(str));
+    return asn1_bio_write(b, str, (int)strlen(str));
 }
 
 static int asn1_bio_gets(BIO *b, char *str, int size)

@@ -134,7 +134,7 @@ static int pkey_poly1305_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             key = EVP_PKEY_get0_poly1305(EVP_PKEY_CTX_get0_pkey(ctx), &len);
         }
         if (key == NULL || len != POLY1305_KEY_SIZE ||
-            !ASN1_OCTET_STRING_set(&pctx->ktmp, key, len))
+            !ASN1_OCTET_STRING_set(&pctx->ktmp, key, (int)len))
             return 0;
         Poly1305_Init(&pctx->ctx, ASN1_STRING_get0_data(&pctx->ktmp));
         break;

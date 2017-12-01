@@ -65,7 +65,7 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
     buffer = RAND_POOL_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
         size_t bytes = 0;
-        if (BCryptGenRandom(NULL, buffer, bytes_needed,
+        if (BCryptGenRandom(NULL, buffer, (ULONG)bytes_needed,
             BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
             bytes = bytes_needed;
 

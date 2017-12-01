@@ -510,7 +510,7 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         return EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(pkey), arg2, arg1, NULL);
 
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        return EC_KEY_key2buf(EVP_PKEY_get0_EC_KEY(pkey),
+        return (int)EC_KEY_key2buf(EVP_PKEY_get0_EC_KEY(pkey),
                               POINT_CONVERSION_UNCOMPRESSED, arg2, NULL);
 
     default:

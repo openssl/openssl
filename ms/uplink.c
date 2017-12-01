@@ -89,7 +89,7 @@ void OPENSSL_Uplink(volatile void **table, int index)
         } else
             p = applinktable;
 
-        if (index > (int)p[0])
+        if (index > (INT_PTR)p[0])
             break;
 
         if (p[index])

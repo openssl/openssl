@@ -51,7 +51,7 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
     if (num == 0)
         return 0;
     else if (num == -1)
-        num = strlen(buf);
+        num = (int)strlen(buf);
 
     p = buf;
     c = *(p++);

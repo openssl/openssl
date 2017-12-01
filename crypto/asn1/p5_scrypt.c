@@ -159,10 +159,10 @@ static X509_ALGOR *pkcs5_scrypt_set(const unsigned char *salt, size_t saltlen,
         saltlen = PKCS5_SALT_LEN;
 
     /* This will either copy salt or grow the buffer */
-    if (ASN1_STRING_set(sparam->salt, salt, saltlen) == 0)
+    if (ASN1_STRING_set(sparam->salt, salt, (int)saltlen) == 0)
         goto merr;
 
-    if (salt == NULL && RAND_bytes(sparam->salt->data, saltlen) <= 0)
+    if (salt == NULL && RAND_bytes(sparam->salt->data, (int)saltlen) <= 0)
         goto err;
 
     if (ASN1_INTEGER_set_uint64(sparam->costParameter, N) == 0)

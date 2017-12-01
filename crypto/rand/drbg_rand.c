@@ -182,7 +182,7 @@ static void ctr_df(RAND_DRBG_CTR *ctr,
     ctr_BCC_update(ctr, &c80, 1);
     ctr_BCC_final(ctr);
     /* Set up key K */
-    AES_set_encrypt_key(ctr->KX, ctr->keylen * 8, &ctr->df_kxks);
+    AES_set_encrypt_key(ctr->KX, (int)ctr->keylen * 8, &ctr->df_kxks);
     /* X follows key K */
     AES_encrypt(ctr->KX + ctr->keylen, ctr->KX, &ctr->df_kxks);
     AES_encrypt(ctr->KX, ctr->KX + 16, &ctr->df_kxks);
@@ -326,7 +326,7 @@ int ctr_init(RAND_DRBG *drbg)
     }
 
     ctr->keylen = keylen;
-    drbg->strength = keylen * 8;
+    drbg->strength = (int)keylen * 8;
     drbg->seedlen = keylen + 16;
 
     if (drbg->flags & RAND_DRBG_FLAG_CTR_USE_DF) {

@@ -187,7 +187,7 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_GET_DH_KDF_OUTLEN:
-        *(int *)p2 = dctx->kdf_outlen;
+        *(int *)p2 = (int)dctx->kdf_outlen;
         return 1;
 
     case EVP_PKEY_CTRL_DH_KDF_UKM:
@@ -201,7 +201,7 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_GET_DH_KDF_UKM:
         *(unsigned char **)p2 = dctx->kdf_ukm;
-        return dctx->kdf_ukmlen;
+        return (int)dctx->kdf_ukmlen;
 
     case EVP_PKEY_CTRL_DH_KDF_OID:
         ASN1_OBJECT_free(dctx->kdf_oid);
@@ -271,16 +271,16 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
 
 #ifndef OPENSSL_NO_DSA
 
-extern int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
+extern int dsa_builtin_paramgen(DSA *ret, int bits, int qbits,
                                 const EVP_MD *evpmd,
-                                const unsigned char *seed_in, size_t seed_len,
+                                const unsigned char *seed_in, int seed_len,
                                 unsigned char *seed_out, int *counter_ret,
                                 unsigned long *h_ret, BN_GENCB *cb);
 
-extern int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
+extern int dsa_builtin_paramgen2(DSA *ret, int L, int N,
                                  const EVP_MD *evpmd,
                                  const unsigned char *seed_in,
-                                 size_t seed_len, int idx,
+                                 int seed_len, int idx,
                                  unsigned char *seed_out, int *counter_ret,
                                  unsigned long *h_ret, BN_GENCB *cb);
 

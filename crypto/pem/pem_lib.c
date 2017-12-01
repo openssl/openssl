@@ -34,7 +34,7 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
     const char *prompt;
 
     if (key) {
-        i = strlen(key);
+        i = (int)strlen(key);
         i = (i > num) ? num : i;
         memcpy(buf, key, i);
         return i;
@@ -57,7 +57,7 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
             memset(buf, 0, (unsigned int)num);
             return -1;
         }
-        j = strlen(buf);
+        j = (int)strlen(buf);
         if (min_len && j < min_len) {
             fprintf(stderr,
                     "phrase is too short, needs to be at least %d chars\n",
@@ -89,7 +89,7 @@ void PEM_dek_info(char *buf, const char *type, int len, char *str)
 {
     long i;
     char *p = buf + strlen(buf);
-    int j = PEM_BUFSIZE - (size_t)(p - buf), n;
+    int j = (int)(PEM_BUFSIZE - (p - buf)), n;
 
     n = BIO_snprintf(p, j, "DEK-Info: %s,", type);
     if (n > 0) {
@@ -617,14 +617,14 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
     }
 
     EVP_EncodeInit(ctx);
-    nlen = strlen(name);
+    nlen = (int)strlen(name);
 
     if ((BIO_write(bp, "-----BEGIN ", 11) != 11) ||
         (BIO_write(bp, name, nlen) != nlen) ||
         (BIO_write(bp, "-----\n", 6) != 6))
         goto err;
 
-    i = strlen(header);
+    i = (int)strlen(header);
     if (i > 0) {
         if ((BIO_write(bp, header, i) != i) || (BIO_write(bp, "\n", 1) != 1))
             goto err;
@@ -729,7 +729,7 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
 {
     char *linebuf;
     int ret = 0;
-    size_t len;
+    unsigned int len;
 
     /*
      * Need to hold trailing NUL (accounted for by BIO_gets() and the newline
@@ -925,7 +925,7 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
 
     EVP_DecodeInit(ctx);
     BIO_get_mem_ptr(dataB, &buf_mem);
-    len = buf_mem->length;
+    len = (int)buf_mem->length;
     if (EVP_DecodeUpdate(ctx, (unsigned char*)buf_mem->data, &len,
                          (unsigned char*)buf_mem->data, len) < 0
             || EVP_DecodeFinal(ctx, (unsigned char*)&(buf_mem->data[len]),
@@ -977,8 +977,8 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
 
 int pem_check_suffix(const char *pem_str, const char *suffix)
 {
-    int pem_len = strlen(pem_str);
-    int suffix_len = strlen(suffix);
+    size_t pem_len = strlen(pem_str);
+    size_t suffix_len = strlen(suffix);
     const char *p;
     if (suffix_len + 1 >= pem_len)
         return 0;
@@ -988,5 +988,5 @@ int pem_check_suffix(const char *pem_str, const char *suffix)
     p--;
     if (*p != ' ')
         return 0;
-    return p - pem_str;
+    return (int)(p - pem_str);
 }

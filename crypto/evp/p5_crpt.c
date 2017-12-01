@@ -58,7 +58,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     if (!pass)
         passlen = 0;
     else if (passlen == -1)
-        passlen = strlen(pass);
+        passlen = (int)strlen(pass);
 
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL) {

@@ -369,9 +369,9 @@ char *UI_construct_prompt(UI *ui, const char *object_desc,
 
         if (object_desc == NULL)
             return NULL;
-        len = sizeof(prompt1) - 1 + strlen(object_desc);
+        len = (int)(sizeof(prompt1) - 1 + strlen(object_desc));
         if (object_name != NULL)
-            len += sizeof(prompt2) - 1 + strlen(object_name);
+            len += (int)(sizeof(prompt2) - 1 + strlen(object_name));
         len += sizeof(prompt3) - 1;
 
         prompt = OPENSSL_malloc(len + 1);
@@ -814,7 +814,7 @@ int UI_get_result_string_length(UI_STRING *uis)
     switch (uis->type) {
     case UIT_PROMPT:
     case UIT_VERIFY:
-        return uis->result_len;
+        return (int)uis->result_len;
     case UIT_NONE:
     case UIT_BOOLEAN:
     case UIT_INFO:
@@ -878,7 +878,7 @@ int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
      */
     UIerr(UI_F_UI_SET_RESULT, ERR_R_DISABLED);
 #endif
-    return UI_set_result_ex(ui, uis, result, strlen(result));
+    return UI_set_result_ex(ui, uis, result, (int)strlen(result));
 }
 
 int UI_set_result_ex(UI *ui, UI_STRING *uis, const char *result, int len)

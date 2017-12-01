@@ -95,7 +95,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
             ret = 0;
             goto end;
         }
-        hl = (p - op);
+        hl = (int)(p - op);
         length -= hl;
         /*
          * if j == 0x21 it is a constructed indefinite length object
@@ -128,14 +128,14 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
             if ((j == 0x21) && (len == 0)) {
                 for (;;) {
                     r = asn1_parse2(bp, &p, (long)(tot - p),
-                                    offset + (p - *pp), depth + 1,
+                                    offset + (int)(p - *pp), depth + 1,
                                     indent, dump);
                     if (r == 0) {
                         ret = 0;
                         goto end;
                     }
                     if ((r == 2) || (p >= tot)) {
-                        len = p - sp;
+                        len = (int)(p - sp);
                         break;
                     }
                 }
@@ -145,13 +145,13 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                 while (p < ep) {
                     sp = p;
                     r = asn1_parse2(bp, &p, tmp,
-                                    offset + (p - *pp), depth + 1,
+                                    offset + (int)(p - *pp), depth + 1,
                                     indent, dump);
                     if (r == 0) {
                         ret = 0;
                         goto end;
                     }
-                    tmp -= p - sp;
+                    tmp -= (int)(p - sp);
                 }
             }
         } else if (xclass != 0) {

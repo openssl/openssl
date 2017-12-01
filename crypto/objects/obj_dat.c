@@ -414,7 +414,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
         if (s) {
             if (buf)
                 OPENSSL_strlcpy(buf, s, buf_len);
-            n = strlen(s);
+            n = (int)strlen(s);
             return n;
         }
     }
@@ -480,7 +480,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
             bndec = BN_bn2dec(bl);
             if (!bndec)
                 goto err;
-            i = strlen(bndec);
+            i = (int)strlen(bndec);
             if (buf) {
                 if (buf_len > 1) {
                     *buf++ = '.';
@@ -501,7 +501,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
             OPENSSL_free(bndec);
         } else {
             BIO_snprintf(tbuf, sizeof(tbuf), ".%lu", l);
-            i = strlen(tbuf);
+            i = (int)strlen(tbuf);
             if (buf && (buf_len > 0)) {
                 OPENSSL_strlcpy(buf, tbuf, buf_len);
                 if (i > buf_len) {
