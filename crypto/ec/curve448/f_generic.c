@@ -1,15 +1,13 @@
-/**
- * @file p448/f_generic.c
- * @author Mike Hamburg
+/*
+ * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2016 Cryptography Research, Inc.
  *
- * @copyright
- *   Copyright (c) 2015-2016 Cryptography Research, Inc.  \n
- *   Released under the MIT License.  See LICENSE.txt for license information.
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  *
- * @brief Generic arithmetic which has to be compiled per field.
- *
- * @warning This file was automatically generated in Python.
- * Please do not edit it.
+ * Originally written by Mike Hamburg
  */
 #include "field.h"
 
