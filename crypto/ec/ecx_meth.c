@@ -38,6 +38,8 @@
                                                               : ED448_KEYLEN))
 #define KEYLEN(p)       KEYLENID((p)->ameth->pkey_id)
 
+#define MAX_KEYLEN  ED448_KEYLEN
+
 #define GETPRIVKEY(priv, pk) \
     do { \
         if (IS25519((pk)->ameth->pkey_id)) { \
@@ -81,9 +83,18 @@ typedef enum {
     KEY_OP_KEYGEN
 } ecx_key_op_t;
 
+typedef struct {
+    /* True if keytmp is private key data. False if public */
+    enum {KEYTYPE_NONE, KEYTYPE_PRIV, KEYTYPE_PUB} keytype;
+    /* Temp storage for private or public raw key */
+    unsigned char keytmp[MAX_KEYLEN];
+    size_t keylength;
+} ECX_PKEY_CTX;
+
 /* Setup EVP_PKEY using public, private or generation */
-static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
-                      const unsigned char *p, int plen, ecx_key_op_t op)
+static int ecx_key_op(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey, int id,
+                      const X509_ALGOR *palg, const unsigned char *p, int plen,
+                      ecx_key_op_t op)
 {
     X25519_KEY *key25519 = NULL;
     X448_KEY *keyx448 = NULL;
@@ -91,6 +102,7 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
     unsigned char **privkey;
     unsigned char *pubkey;
     void *key;
+    ECX_PKEY_CTX *ectx = NULL;
 
     if (op != KEY_OP_KEYGEN) {
         if (palg != NULL) {
@@ -135,7 +147,17 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
         pubkey = keyed448->pubkey;
     }
 
-    if (op == KEY_OP_PUBLIC) {
+    if (op == KEY_OP_KEYGEN)
+        ectx = EVP_PKEY_CTX_get_data(ctx);
+
+    if (op == KEY_OP_KEYGEN && ectx->keytype == KEYTYPE_PUB) {
+        /* Explicit public key was set */
+        if (ectx->keylength != KEYLENID(id)) {
+            ECerr(EC_F_ECX_KEY_OP, EC_R_INVALID_ENCODING);
+            return 0;
+        }
+        memcpy(pubkey, ectx->keytmp, ectx->keylength);
+    } else if (op == KEY_OP_PUBLIC) {
         memcpy(pubkey, p, plen);
     } else {
         *privkey = OPENSSL_secure_malloc(KEYLENID(id));
@@ -143,7 +165,15 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
             ECerr(EC_F_ECX_KEY_OP, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        if (op == KEY_OP_KEYGEN) {
+        if (op == KEY_OP_KEYGEN
+                && ectx->keytype == KEYTYPE_PRIV) {
+            /* Explicit private key was set */
+            if (ectx->keylength != KEYLENID(id)) {
+                ECerr(EC_F_ECX_KEY_OP, EC_R_INVALID_ENCODING);
+                return 0;
+            }
+            memcpy(*privkey, ectx->keytmp, ectx->keylength);
+        } else if (op == KEY_OP_KEYGEN) {
             if (RAND_bytes(*privkey, KEYLENID(id)) <= 0) {
                 OPENSSL_secure_free(*privkey);
                 goto err;
@@ -213,7 +243,7 @@ static int ecx_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 
     if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, &palg, pubkey))
         return 0;
-    return ecx_key_op(pkey, pkey->ameth->pkey_id, palg, p, pklen,
+    return ecx_key_op(NULL, pkey, pkey->ameth->pkey_id, palg, p, pklen,
                       KEY_OP_PUBLIC);
 }
 
@@ -250,7 +280,8 @@ static int ecx_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
         plen = ASN1_STRING_length(oct);
     }
 
-    rv = ecx_key_op(pkey, pkey->ameth->pkey_id, palg, p, plen, KEY_OP_PRIVATE);
+    rv = ecx_key_op(NULL, pkey, pkey->ameth->pkey_id, palg, p, plen,
+                    KEY_OP_PRIVATE);
     ASN1_OCTET_STRING_free(oct);
     return rv;
 }
@@ -393,7 +424,7 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     switch (op) {
 
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return ecx_key_op(pkey, EVP_PKEY_X25519, NULL, arg2, arg1,
+        return ecx_key_op(NULL, pkey, EVP_PKEY_X25519, NULL, arg2, arg1,
                           KEY_OP_PUBLIC);
 
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
@@ -611,9 +642,41 @@ const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
     ecd_sig_info_set448
 };
 
+static int pkey_ecx_init(EVP_PKEY_CTX *ctx)
+{
+    ECX_PKEY_CTX *ectx;
+
+    ectx = OPENSSL_secure_zalloc(sizeof(*ectx));
+    if (ectx == NULL)
+        return 0;
+
+    EVP_PKEY_CTX_set_data(ctx, ectx);
+
+    return 1;
+}
+
+static void pkey_ecx_cleanup(EVP_PKEY_CTX *ctx)
+{
+    OPENSSL_secure_free(EVP_PKEY_CTX_get_data(ctx));
+    EVP_PKEY_CTX_set_data(ctx, NULL);
+}
+
+static int pkey_ecx_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+{
+    ECX_PKEY_CTX *sctx, *dctx;
+
+    if (!pkey_ecx_init(dst))
+        return 0;
+    sctx = EVP_PKEY_CTX_get_data(src);
+    dctx = EVP_PKEY_CTX_get_data(dst);
+    *sctx = *dctx;
+    return 1;
+}
+
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
-    return ecx_key_op(pkey, ctx->pmeth->pkey_id, NULL, NULL, 0, KEY_OP_KEYGEN);
+    return ecx_key_op(ctx, pkey, ctx->pmeth->pkey_id, NULL, NULL, 0,
+                      KEY_OP_KEYGEN);
 }
 
 static int pkey_ecx_derive25519(EVP_PKEY_CTX *ctx, unsigned char *key,
@@ -668,15 +731,36 @@ static int pkey_ecx_derive448(EVP_PKEY_CTX *ctx, unsigned char *key,
 
 static int pkey_ecx_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
-    /* Only need to handle peer key for derivation */
-    if (type == EVP_PKEY_CTRL_PEER_KEY)
+    ECX_PKEY_CTX *ectx = EVP_PKEY_CTX_get_data(ctx);
+
+    switch (type) {
+    case EVP_PKEY_CTRL_SET_PRIV_KEY:
+        memcpy(ectx->keytmp, p2, p1);
+        ectx->keylength = p1;
+        ectx->keytype = KEYTYPE_PRIV;
         return 1;
-    return -2;
+
+    case EVP_PKEY_CTRL_SET_PUB_KEY:
+        memcpy(ectx->keytmp, p2, p1);
+        ectx->keylength = p1;
+        ectx->keytype = KEYTYPE_PUB;
+        return 1;
+
+    case EVP_PKEY_CTRL_PEER_KEY:
+        /* Only need to handle peer key for derivation */
+        return 1;
+    default:
+        return -2;
+    }
 }
 
 const EVP_PKEY_METHOD ecx25519_pkey_meth = {
     EVP_PKEY_X25519,
-    0, 0, 0, 0, 0, 0, 0,
+    0,
+    pkey_ecx_init,
+    pkey_ecx_copy,
+    pkey_ecx_cleanup,
+    0, 0, 0,
     pkey_ecx_keygen,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     pkey_ecx_derive25519,
@@ -686,7 +770,11 @@ const EVP_PKEY_METHOD ecx25519_pkey_meth = {
 
 const EVP_PKEY_METHOD ecx448_pkey_meth = {
     EVP_PKEY_X448,
-    0, 0, 0, 0, 0, 0, 0,
+    0,
+    pkey_ecx_init,
+    pkey_ecx_copy,
+    pkey_ecx_cleanup,
+    0, 0, 0,
     pkey_ecx_keygen,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     pkey_ecx_derive448,
@@ -763,7 +851,21 @@ static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
 
 static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
+    ECX_PKEY_CTX *ectx = EVP_PKEY_CTX_get_data(ctx);
+
     switch (type) {
+    case EVP_PKEY_CTRL_SET_PRIV_KEY:
+        memcpy(ectx->keytmp, p2, p1);
+        ectx->keylength = p1;
+        ectx->keytype = KEYTYPE_PRIV;
+        return 1;
+
+    case EVP_PKEY_CTRL_SET_PUB_KEY:
+        memcpy(ectx->keytmp, p2, p1);
+        ectx->keylength = p1;
+        ectx->keytype = KEYTYPE_PUB;
+        return 1;
+
     case EVP_PKEY_CTRL_MD:
         /* Only NULL allowed as digest */
         if (p2 == NULL)
@@ -779,7 +881,10 @@ static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
 const EVP_PKEY_METHOD ed25519_pkey_meth = {
     EVP_PKEY_ED25519, EVP_PKEY_FLAG_SIGCTX_CUSTOM,
-    0, 0, 0, 0, 0, 0,
+    pkey_ecx_init,
+    pkey_ecx_copy,
+    pkey_ecx_cleanup,
+    0, 0, 0,
     pkey_ecx_keygen,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     pkey_ecd_ctrl,
@@ -790,7 +895,10 @@ const EVP_PKEY_METHOD ed25519_pkey_meth = {
 
 const EVP_PKEY_METHOD ed448_pkey_meth = {
     EVP_PKEY_ED448, EVP_PKEY_FLAG_SIGCTX_CUSTOM,
-    0, 0, 0, 0, 0, 0,
+    pkey_ecx_init,
+    pkey_ecx_copy,
+    pkey_ecx_cleanup,
+    0, 0, 0,
     pkey_ecx_keygen,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     pkey_ecd_ctrl,
