@@ -926,8 +926,8 @@ static int mac_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (EVP_PKEY_CTX_set_mac_key(genctx, expected->key,
-                                 expected->key_len) <= 0) {
+    if (EVP_PKEY_CTX_set_priv_key(genctx, expected->key,
+                                  expected->key_len) <= 0) {
         t->err = "MAC_KEY_SET_ERROR";
         goto err;
     }
