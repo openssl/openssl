@@ -80,7 +80,7 @@ static int pkey_cmac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     CMAC_CTX *cmctx = ctx->data;
     switch (type) {
 
-    case EVP_PKEY_CTRL_SET_MAC_KEY:
+    case EVP_PKEY_CTRL_SET_PRIV_KEY:
         if (!p2 || p1 < 0)
             return 0;
         if (!CMAC_Init(cmctx, p2, p1, NULL, NULL))
@@ -121,9 +121,9 @@ static int pkey_cmac_ctrl_str(EVP_PKEY_CTX *ctx,
         return pkey_cmac_ctrl(ctx, EVP_PKEY_CTRL_CIPHER, -1, (void *)c);
     }
     if (strcmp(type, "key") == 0)
-        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, value);
+        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_SET_PRIV_KEY, value);
     if (strcmp(type, "hexkey") == 0)
-        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, value);
+        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_SET_PRIV_KEY, value);
     return -2;
 }
 

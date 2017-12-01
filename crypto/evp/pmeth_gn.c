@@ -150,23 +150,53 @@ int EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx)
     return ctx->keygen_info[idx];
 }
 
+static EVP_PKEY *evp_pkey_new_key(int priv, int type, ENGINE *e,
+                                  const unsigned char *key, int keylen)
+{
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+
+    /* Note for compatibility reasons we allow keylen to be < 0 in some cases */
+
+    ctx = EVP_PKEY_CTX_new_id(type, e);
+    if (ctx == NULL)
+        return NULL;
+    if (EVP_PKEY_keygen_init(ctx) <= 0)
+        goto err;
+    if (priv) {
+        if (EVP_PKEY_CTX_set_priv_key(ctx, key, (int)keylen) <= 0)
+            goto err;
+    } else {
+        if (EVP_PKEY_CTX_set_pub_key(ctx, key, (int)keylen) <= 0)
+            goto err;
+    }
+    if (EVP_PKEY_keygen(ctx, &pkey) <= 0)
+        goto err;
+ err:
+    EVP_PKEY_CTX_free(ctx);
+    return pkey;
+}
+
 EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
                                const unsigned char *key, int keylen)
 {
-    EVP_PKEY_CTX *mac_ctx = NULL;
-    EVP_PKEY *mac_key = NULL;
-    mac_ctx = EVP_PKEY_CTX_new_id(type, e);
-    if (!mac_ctx)
+    return evp_pkey_new_key(1, type, e, key, keylen);
+}
+
+EVP_PKEY *EVP_PKEY_new_priv_key(int type, ENGINE *e,
+                                const unsigned char *key, size_t keylen)
+{
+    if (keylen > INT_MAX)
         return NULL;
-    if (EVP_PKEY_keygen_init(mac_ctx) <= 0)
-        goto merr;
-    if (EVP_PKEY_CTX_set_mac_key(mac_ctx, key, keylen) <= 0)
-        goto merr;
-    if (EVP_PKEY_keygen(mac_ctx, &mac_key) <= 0)
-        goto merr;
- merr:
-    EVP_PKEY_CTX_free(mac_ctx);
-    return mac_key;
+    return evp_pkey_new_key(1, type, e, key, keylen);
+}
+
+EVP_PKEY *EVP_PKEY_new_pub_key(int type, ENGINE *e,
+                               const unsigned char *key, size_t keylen)
+{
+    if (keylen > INT_MAX)
+        return NULL;
+    return evp_pkey_new_key(0, type, e, key, keylen);
 }
 
 int EVP_PKEY_check(EVP_PKEY_CTX *ctx)

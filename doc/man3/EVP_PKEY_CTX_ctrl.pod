@@ -51,7 +51,7 @@ B<optype> is a mask indicating which operations the control can be applied to.
 The control command is indicated in B<cmd> and any additional arguments in
 B<p1> and B<p2>.
 
-For B<cmd> = B<EVP_PKEY_CTRL_SET_MAC_KEY>, B<p1> is the length of the MAC key,
+For B<cmd> = B<EVP_PKEY_CTRL_SET_PRIV_KEY>, B<p1> is the length of the MAC key,
 and B<p2> is MAC key. This is used by Poly1305, SipHash, HMAC and CMAC.
 
 Applications will not normally call EVP_PKEY_CTX_ctrl() directly but will

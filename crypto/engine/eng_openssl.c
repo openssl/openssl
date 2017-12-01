@@ -541,7 +541,7 @@ static int ossl_hmac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     ASN1_OCTET_STRING *key;
     switch (type) {
 
-    case EVP_PKEY_CTRL_SET_MAC_KEY:
+    case EVP_PKEY_CTRL_SET_PRIV_KEY:
         if ((!p2 && p1 > 0) || (p1 < -1))
             return 0;
         if (!ASN1_OCTET_STRING_set(&hctx->ktmp, p2, p1))
@@ -574,7 +574,7 @@ static int ossl_hmac_ctrl_str(EVP_PKEY_CTX *ctx,
     }
     if (strcmp(type, "key") == 0) {
         void *p = (void *)value;
-        return ossl_hmac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, -1, p);
+        return ossl_hmac_ctrl(ctx, EVP_PKEY_CTRL_SET_PRIV_KEY, -1, p);
     }
     if (strcmp(type, "hexkey") == 0) {
         unsigned char *key;
@@ -583,7 +583,7 @@ static int ossl_hmac_ctrl_str(EVP_PKEY_CTX *ctx,
         key = OPENSSL_hexstr2buf(value, &keylen);
         if (!key)
             return 0;
-        r = ossl_hmac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, keylen, key);
+        r = ossl_hmac_ctrl(ctx, EVP_PKEY_CTRL_SET_PRIV_KEY, keylen, key);
         OPENSSL_free(key);
         return r;
     }

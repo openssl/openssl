@@ -138,7 +138,7 @@ static int pkey_hmac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     ASN1_OCTET_STRING *key;
     switch (type) {
 
-    case EVP_PKEY_CTRL_SET_MAC_KEY:
+    case EVP_PKEY_CTRL_SET_PRIV_KEY:
         if ((!p2 && p1 > 0) || (p1 < -1))
             return 0;
         if (!ASN1_OCTET_STRING_set(&hctx->ktmp, p2, p1))
@@ -170,9 +170,9 @@ static int pkey_hmac_ctrl_str(EVP_PKEY_CTX *ctx,
         return 0;
     }
     if (strcmp(type, "key") == 0)
-        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, value);
+        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_SET_PRIV_KEY, value);
     if (strcmp(type, "hexkey") == 0)
-        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, value);
+        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_SET_PRIV_KEY, value);
     return -2;
 }
 
