@@ -879,9 +879,48 @@ my %target = resolve_config($target);
 
 &usage if (!%target || $target{template});
 
+%target = ( %{$table{DEFAULTS}}, %target );
+
+# Make the flags to build DSOs the same as for shared libraries unless they
+# are already defined
+$target{dso_cflags} = $target{shared_cflag} unless defined $target{dso_cflags};
+$target{dso_cxxflags} = $target{shared_cxxflag} unless defined $target{dso_cxxflags};
+$target{dso_lflags} = $target{shared_ldflag} unless defined $target{dso_lflags};
+{
+    my $shared_info_pl =
+        catfile(dirname($0), "Configurations", "shared-info.pl");
+    my %shared_info = read_eval_file($shared_info_pl);
+    push @{$target{_conf_fname_int}}, $shared_info_pl;
+    my $si = $target{shared_target};
+    while (ref $si ne "HASH") {
+        last if ! defined $si;
+        if (ref $si eq "CODE") {
+            $si = $si->();
+        } else {
+            $si = $shared_info{$si};
+        }
+    }
+
+    # Some of the 'shared_target' values don't have any entried in
+    # %shared_info.  That's perfectly fine, AS LONG AS the build file
+    # template knows how to handle this.  That is currently the case for
+    # Windows and VMS.
+    if (defined $si) {
+        # Just as above, copy certain shared_* attributes to the corresponding
+        # dso_ attribute unless the latter is already defined
+        $si->{dso_cflags} = $si->{shared_cflag} unless defined $si->{dso_cflags};
+        $si->{dso_cxxflags} = $si->{shared_cxxflag} unless defined $si->{dso_cxxflags};
+        $si->{dso_lflags} = $si->{shared_ldflag} unless defined $si->{dso_lflags};
+        foreach (sort keys %$si) {
+            $target{$_} = defined $target{$_}
+                ? add($si->{$_})->($target{$_})
+                : $si->{$_};
+        }
+    }
+}
+
 my %conf_files = map { $_ => 1 } (@{$target{_conf_fname_int}});
 $config{conf_files} = [ sort keys %conf_files ];
-%target = ( %{$table{DEFAULTS}}, %target );
 
 foreach my $feature (@{$target{disable}}) {
     if (exists $deprecated_disablables{$feature}) {
@@ -1163,8 +1202,11 @@ unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
 # This saves the build files from having to check
 if ($disabled{pic})
 	{
-	$target{shared_cflag} = $target{shared_ldflag} =
-		$target{shared_rcflag} = "";
+	foreach (qw(shared_cflag shared_cxxflag shared_ldflag
+		    dso_cflags dso_cxxflags dso_lflags))
+		{
+		$target{$_} = "";
+		}
 	}
 else
 	{

@@ -195,11 +195,12 @@ EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
 LIB_CFLAGS={- $target{shared_cflag} || "" -}
 LIB_CXXFLAGS={- $target{shared_cxxflag} || "" -}
 LIB_LDFLAGS={- $target{shared_ldflag}." ".$config{shared_ldflag} -}
-DSO_CFLAGS={- $target{shared_cflag} || "" -}
-DSO_CXXFLAGS={- $target{shared_cxxflag} || "" -}
-DSO_LDFLAGS=$(LIB_LDFLAGS)
-BIN_CFLAGS={- $target{bin_cflags} -}
-BIN_CXXFLAGS={- $target{bin_cxxflag} || "" -}
+DSO_CFLAGS={- $target{dso_cflags} || "" -}
+DSO_CXXFLAGS={- $target{dso_cxxflags} || "" -}
+DSO_LDFLAGS={- $target{dso_lflags} || "" -}
+BIN_CFLAGS={- $target{bin_cflags} || "" -}
+BIN_CXXFLAGS={- $target{bin_cxxflags} || "" -}
+BIN_LDFLAGS={- $target{bin_lflags} || "" -}
 
 PERL={- $config{perl} -}
 
