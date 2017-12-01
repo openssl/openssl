@@ -2444,8 +2444,7 @@ top:
             return 0;
         }
         klist = &private_keys;
-    }
-    else if (strcmp(pp->key, "PublicKey") == 0) {
+    } else if (strcmp(pp->key, "PublicKey") == 0) {
         pkey = PEM_read_bio_PUBKEY(t->s.key, NULL, 0, NULL);
         if (pkey == NULL && !key_unsupported()) {
             TEST_info("Can't read public key %s", pp->value);
@@ -2453,6 +2452,50 @@ top:
             return 0;
         }
         klist = &public_keys;
+    } else if (strcmp(pp->key, "PrivateKeyRaw") == 0
+               || strcmp(pp->key, "PublicKeyRaw") == 0 ) {
+        char *strnid = NULL, *keydata = NULL;
+        unsigned char *keybin;
+        size_t keylen;
+        int nid;
+
+        if (strcmp(pp->key, "PrivateKeyRaw") == 0)
+            klist = &private_keys;
+        else
+            klist = &public_keys;
+
+        strnid = strchr(pp->value, ':');
+        if (strnid != NULL) {
+            *strnid++ = '\0';
+            keydata = strchr(strnid, ':');
+            if (keydata != NULL)
+                *keydata++ = '\0';
+        }
+        if (keydata == NULL) {
+            TEST_info("Failed to parse %s value", pp->key);
+            return 0;
+        }
+
+        nid = OBJ_txt2nid(strnid);
+        if (nid == NID_undef) {
+            TEST_info("Uncrecognised algorithm NID");
+            return 0;
+        }
+        if (!parse_bin(keydata, &keybin, &keylen)) {
+            TEST_info("Failed to create binary key");
+            return 0;
+        }
+        if (klist == &private_keys)
+            pkey = EVP_PKEY_new_private_key(nid, NULL, keybin, keylen);
+        else
+            pkey = EVP_PKEY_new_public_key(nid, NULL, keybin, keylen);
+        if (pkey == NULL) {
+            TEST_info("Can't read %s data", pp->key);
+            OPENSSL_free(keybin);
+            TEST_openssl_errors();
+            return 0;
+        }
+        OPENSSL_free(keybin);
     }
 
     /* If we have a key add to list */
