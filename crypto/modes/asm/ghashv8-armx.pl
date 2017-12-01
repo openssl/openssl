@@ -30,17 +30,18 @@
 #
 # November 2017
 #
-# AArch64 register bank to "accommodate" 4x aggregated reduction...
+# AArch64 register bank to "accommodate" 4x aggregated reduction and
+# improve performance by 20-70% depending on processor.
 #
 # Current performance in cycles per processed byte:
 #
 #		64-bit PMULL	32-bit PMULL	32-bit NEON(*)
-# Apple A7			0.92		5.62
-# Cortex-A53			1.01		8.39
-# Cortex-A57			1.17		7.61
-# Denver			0.71		6.02
-# Mongoose			1.10		8.06
-# Kryo				1.16		8.00
+# Apple A7	0.58		0.92		5.62
+# Cortex-A53	0.85		1.01		8.39
+# Cortex-A57	0.73		1.17		7.61
+# Denver	0.51		0.65		6.02
+# Mongoose	0.65		1.10		8.06
+# Kryo		0.76		1.16		8.00
 #
 # (*)	presented for reference/comparison purposes;
 
@@ -466,65 +467,61 @@ gcm_ghash_v8_4x:
 .align	4
 .Loop4x:
 	veor		$t0,$I0,$Xl
-	vext.8		$IN,$t0,$t0,#8
-
-	vpmull.p64	$Xl,$H4,$IN		@ H^4·(Xi+Ii)
-	veor		$t0,$t0,$IN
-	vpmull2.p64	$Xh,$H4,$IN
-	vpmull2.p64	$Xm,$H34,$t0
-
-	veor		$Xl,$Xl,$Yl
-	veor		$Xh,$Xh,$Yh
-	veor		$Xm,$Xm,$Ym
-
-	vext.8		$t1,$Xl,$Xh,#8		@ Karatsuba post-processing
-	veor		$t2,$Xl,$Xh
-	veor		$Xm,$Xm,$t1
-	veor		$Xm,$Xm,$t2
-
-	vpmull.p64	$t2,$Xl,$xC2		@ 1st phase of reduction
-	vmov		$Xh#lo,$Xm#hi		@ Xh|Xm - 256-bit result
-	vmov		$Xm#hi,$Xl#lo		@ Xm is rotated Xl
-	veor		$Xl,$Xm,$t2
-
-	vext.8		$t2,$Xl,$Xl,#8		@ 2nd phase of reduction
-	vpmull.p64	$Xl,$Xl,$xC2
-	veor		$t2,$t2,$Xh
-	veor		$Xl,$Xl,$t2
-	vext.8		$Xl,$Xl,$Xl,#8
-
 	 vld1.64	{$I0-$j3},[$inp],#64
+	vext.8		$IN,$t0,$t0,#8
 #ifndef __ARMEB__
 	 vrev64.8	$j1,$j1
 	 vrev64.8	$j2,$j2
 	 vrev64.8	$j3,$j3
 	 vrev64.8	$I0,$I0
 #endif
+
+	vpmull.p64	$Xl,$H4,$IN		@ H^4·(Xi+Ii)
+	veor		$t0,$t0,$IN
+	vpmull2.p64	$Xh,$H4,$IN
 	 vext.8		$I3,$j3,$j3,#8
+	vpmull2.p64	$Xm,$H34,$t0
+
+	veor		$Xl,$Xl,$Yl
+	veor		$Xh,$Xh,$Yh
 	 vext.8		$I2,$j2,$j2,#8
+	veor		$Xm,$Xm,$Ym
 	 vext.8		$I1,$j1,$j1,#8
 
+	vext.8		$t1,$Xl,$Xh,#8		@ Karatsuba post-processing
+	veor		$t2,$Xl,$Xh
 	 vpmull.p64	$Yl,$H,$I3		@ H·Ii+3
 	 veor		$j3,$j3,$I3
+	veor		$Xm,$Xm,$t1
 	 vpmull2.p64	$Yh,$H,$I3
+	veor		$Xm,$Xm,$t2
 	 vpmull.p64	$Ym,$Hhl,$j3
 
+	vpmull.p64	$t2,$Xl,$xC2		@ 1st phase of reduction
+	vmov		$Xh#lo,$Xm#hi		@ Xh|Xm - 256-bit result
+	vmov		$Xm#hi,$Xl#lo		@ Xm is rotated Xl
 	 vpmull.p64	$t0,$H2,$I2		@ H^2·Ii+2
 	 veor		$j2,$j2,$I2
 	 vpmull2.p64	$I2,$H2,$I2
+	veor		$Xl,$Xm,$t2
 	 vpmull2.p64	$j2,$Hhl,$j2
 
 	 veor		$Yl,$Yl,$t0
 	 veor		$Yh,$Yh,$I2
 	 veor		$Ym,$Ym,$j2
 
+	vext.8		$t2,$Xl,$Xl,#8		@ 2nd phase of reduction
+	vpmull.p64	$Xl,$Xl,$xC2
 	 vpmull.p64	$j3,$H3,$I1		@ H^3·Ii+1
 	 veor		$j1,$j1,$I1
+	veor		$t2,$t2,$Xh
 	 vpmull2.p64	$I1,$H3,$I1
 	 vpmull.p64	$j1,$H34,$j1
 
+	veor		$Xl,$Xl,$t2
 	 veor		$Yl,$Yl,$j3
 	 veor		$Yh,$Yh,$I1
+	vext.8		$Xl,$Xl,$Xl,#8
 	 veor		$Ym,$Ym,$j1
 
 	subs		$len,$len,#64
