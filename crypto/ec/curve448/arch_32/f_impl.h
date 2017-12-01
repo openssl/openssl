@@ -1,7 +1,14 @@
-/* Copyright (c) 2014-2016 Cryptography Research, Inc.
- * Released under the MIT License.  See LICENSE.txt for license information.
+/*
+ * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2016 Cryptography Research, Inc.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ *
+ * Originally written by Mike Hamburg
  */
-
 #define GF_HEADROOM 2
 #define LIMB(x) (x)&((1<<28)-1), (x)>>28
 #define FIELD_LITERAL(a,b,c,d,e,f,g,h) \
