@@ -221,10 +221,12 @@ int rsa_main(int argc, char **argv)
     }
 
     if (check) {
+        int r;
+
         if (insecure)
             RSA_set_flags(rsa, RSA_FLAG_INSECURE_PRIMES);
 
-        int r = RSA_check_key_ex(rsa, NULL);
+        r = RSA_check_key_ex(rsa, NULL);
 
         if (r == 1) {
             BIO_printf(out, "RSA key ok\n");
