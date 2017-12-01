@@ -2292,25 +2292,38 @@ sub add {
     sub { _add($separator, @_, @x) };
 }
 
+sub read_eval_file {
+    my $fname = shift;
+    my $content;
+    my @result;
+
+    open F, "< $fname" or die "Can't open '$fname': $!\n";
+    {
+        undef local $/;
+        $content = <F>;
+    }
+    close F;
+    {
+        local $@;
+
+        @result = ( eval $content );
+        warn $@ if $@;
+    }
+    return wantarray ? @result : $result[0];
+}
+
 # configuration reader, evaluates the input file as a perl script and expects
 # it to fill %targets with target configurations.  Those are then added to
 # %table.
 sub read_config {
     my $fname = shift;
-    open(CONFFILE, "< $fname")
-	or die "Can't open configuration file '$fname'!\n";
-    my $x = $/;
-    undef $/;
-    my $content = <CONFFILE>;
-    $/ = $x;
-    close(CONFFILE);
-    my %targets = ();
+    my %targets;
+
     {
 	# Protect certain tables from tampering
-	local %table = %::table;
+	local %table = ();
 
-	eval $content;
-	warn $@ if $@;
+	%targets = read_eval_file($fname);
     }
 
     # For each target, check that it's configured with a hash table.
