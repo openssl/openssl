@@ -36,7 +36,7 @@ static int skip_asn1(unsigned char **pp, long *plen, int exptag)
         return 0;
     if (tag == V_ASN1_OBJECT)
         q += tmplen;
-    *plen -= q - *pp;
+    *plen -= (long)(q - *pp);
     *pp = (unsigned char *)q;
     return 1;
 }
@@ -72,11 +72,11 @@ static int dh_sharedinfo_encode(unsigned char **pder, unsigned char **pctr,
         ukm_oct.type = V_ASN1_OCTET_STRING;
         ukm_oct.flags = 0;
         ukm_oct.data = (unsigned char *)ukm;
-        ukm_oct.length = ukmlen;
+        ukm_oct.length = (int)ukmlen;
         pukm_oct = &ukm_oct;
     } else
         pukm_oct = NULL;
-    derlen = CMS_SharedInfo_encode(pder, &atmp, pukm_oct, outlen);
+    derlen = CMS_SharedInfo_encode(pder, &atmp, pukm_oct, (int)outlen);
     if (derlen <= 0)
         return 0;
     p = *pder;

@@ -23,7 +23,7 @@
  */
 static int ct_base64_decode(const char *in, unsigned char **out)
 {
-    size_t inlen = strlen(in);
+    int inlen = (int)strlen(in);
     int outlen, i;
     unsigned char *outbuf = NULL;
 

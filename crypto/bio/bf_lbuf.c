@@ -140,9 +140,9 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
             if (p - in > 0) {
                 if (i >= p - in) {
                     memcpy(&(ctx->obuf[ctx->obuf_len]), in, p - in);
-                    ctx->obuf_len += p - in;
-                    inl -= p - in;
-                    num += p - in;
+                    ctx->obuf_len += (int)(p - in);
+                    inl -= (int)(p - in);
+                    num += (int)(p - in);
                     in = p;
                 } else {
                     memcpy(&(ctx->obuf[ctx->obuf_len]), in, i);
@@ -172,7 +172,7 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
          * if a NL was found and there is anything to write.
          */
         if ((foundnl || p - in > ctx->obuf_size) && p - in > 0) {
-            i = BIO_write(b->next_bio, in, p - in);
+            i = BIO_write(b->next_bio, in, (int)(p - in));
             if (i <= 0) {
                 BIO_copy_next_retry(b);
                 if (i < 0)

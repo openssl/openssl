@@ -273,7 +273,7 @@ int ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
     int y_bit;
     BN_CTX *new_ctx = NULL;
     BIGNUM *x, *y;
-    size_t field_len, enc_len;
+    unsigned int field_len, enc_len;
     int ret = 0;
 
     if (len == 0) {

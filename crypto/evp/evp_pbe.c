@@ -102,7 +102,7 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     if (!pass)
         passlen = 0;
     else if (passlen == -1)
-        passlen = strlen(pass);
+        passlen = (int)strlen(pass);
 
     if (cipher_nid == -1)
         cipher = NULL;

@@ -141,7 +141,7 @@ int OPENSSL_isservice(void)
     }
 
     if (_OPENSSL_isservice.p != (void *)-1)
-        return (*_OPENSSL_isservice.f) ();
+        return (int)(*_OPENSSL_isservice.f) ();
 
     h = GetProcessWindowStation();
     if (h == NULL)
@@ -216,7 +216,7 @@ void OPENSSL_showfatal(const char *fmta, ...)
     else
         do {
             int keepgoing;
-            size_t len_0 = strlen(fmta) + 1, i;
+            int len_0 = (int)strlen(fmta) + 1, i;
             WCHAR *fmtw;
 
             fmtw = (WCHAR *)alloca(len_0 * sizeof(WCHAR));

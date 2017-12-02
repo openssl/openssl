@@ -34,7 +34,7 @@ NETSCAPE_SPKI *NETSCAPE_SPKI_b64_decode(const char *str, int len)
     int spki_len;
     NETSCAPE_SPKI *spki;
     if (len <= 0)
-        len = strlen(str);
+        len = (int)strlen(str);
     if ((spki_der = OPENSSL_malloc(len + 1)) == NULL) {
         X509err(X509_F_NETSCAPE_SPKI_B64_DECODE, ERR_R_MALLOC_FAILURE);
         return NULL;

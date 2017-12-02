@@ -177,7 +177,7 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
                           const unsigned char *in, size_t inlen,
                           EVP_CIPHER_CTX *ctx)
 {
-    size_t blocklen = EVP_CIPHER_CTX_block_size(ctx);
+    unsigned int blocklen = (unsigned int)EVP_CIPHER_CTX_block_size(ctx);
     unsigned char *tmp;
     int outl, rv = 0;
     if (inlen < 2 * blocklen) {
@@ -202,12 +202,12 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
         || !EVP_DecryptUpdate(ctx, tmp, &outl,
                               tmp + inlen - blocklen, blocklen)
         /* Can now decrypt first n - 1 blocks */
-        || !EVP_DecryptUpdate(ctx, tmp, &outl, in, inlen - blocklen)
+        || !EVP_DecryptUpdate(ctx, tmp, &outl, in, (int)(inlen - blocklen))
 
         /* Reset IV to original value */
         || !EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, NULL)
         /* Decrypt again */
-        || !EVP_DecryptUpdate(ctx, tmp, &outl, tmp, inlen))
+        || !EVP_DecryptUpdate(ctx, tmp, &outl, tmp, (int)inlen))
         goto err;
     /* Check check bytes */
     if (((tmp[1] ^ tmp[4]) & (tmp[2] ^ tmp[5]) & (tmp[3] ^ tmp[6])) != 0xff) {
@@ -231,14 +231,14 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
                         const unsigned char *in, size_t inlen,
                         EVP_CIPHER_CTX *ctx)
 {
-    size_t blocklen = EVP_CIPHER_CTX_block_size(ctx);
-    size_t olen;
+    unsigned int blocklen = EVP_CIPHER_CTX_block_size(ctx);
+    unsigned int olen;
     int dummy;
     /*
      * First decide length of output buffer: need header and round up to
      * multiple of block length.
      */
-    olen = (inlen + 4 + blocklen - 1) / blocklen;
+    olen = (unsigned int)((inlen + 4 + blocklen - 1) / blocklen);
     olen *= blocklen;
     if (olen < 2 * blocklen) {
         /* Key too small */
@@ -257,7 +257,7 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
         memcpy(out + 4, in, inlen);
         /* Add random padding to end */
         if (olen > inlen + 4
-            && RAND_bytes(out + 4 + inlen, olen - 4 - inlen) <= 0)
+            && RAND_bytes(out + 4 + inlen, (int)(olen - 4 - inlen)) <= 0)
             return 0;
         /* Encrypt twice */
         if (!EVP_EncryptUpdate(ctx, out, &dummy, out, olen)
@@ -336,7 +336,7 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
     /* Finish password based key derivation to setup key in "ctx" */
 
     if (EVP_PBE_CipherInit(algtmp->algorithm,
-                           (char *)pwri->pass, pwri->passlen,
+                           (char *)pwri->pass, (int)pwri->passlen,
                            algtmp->parameter, kekctx, en_de) < 0) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, ERR_R_EVP_LIB);
         goto err;
@@ -357,7 +357,7 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
         if (!kek_wrap_key(key, &keylen, ec->key, ec->keylen, kekctx))
             goto err;
         pwri->encryptedKey->data = key;
-        pwri->encryptedKey->length = keylen;
+        pwri->encryptedKey->length = (int)keylen;
     } else {
         key = OPENSSL_malloc(pwri->encryptedKey->length);
 

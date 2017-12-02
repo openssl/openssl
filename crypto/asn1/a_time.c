@@ -283,7 +283,7 @@ ASN1_TIME *asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type)
     if (tmps == NULL)
         return NULL;
 
-    if (!ASN1_STRING_set(tmps, NULL, len))
+    if (!ASN1_STRING_set(tmps, NULL, (int)len))
         goto err;
 
     tmps->type = type;
@@ -377,7 +377,7 @@ int ASN1_TIME_set_string_X509(ASN1_TIME *s, const char *str)
     struct tm tm;
     int rv = 0;
 
-    t.length = strlen(str);
+    t.length = (int)strlen(str);
     t.data = (unsigned char *)str;
     t.flags = ASN1_STRING_FLAG_X509_TIME;
 

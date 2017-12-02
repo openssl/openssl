@@ -185,7 +185,7 @@ static int bio_read(BIO *bio, char *buf, int size_)
     }
     while (rest);
 
-    return size;
+    return (int)size;
 }
 
 /*-
@@ -334,7 +334,7 @@ static int bio_write(BIO *bio, const char *buf, int num_)
     }
     while (rest);
 
-    return num;
+    return (int)num;
 }
 
 /*-
@@ -476,7 +476,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
         if (b->peer == NULL || b->closed)
             ret = 0;
         else
-            ret = (long)b->size - b->len;
+            ret = (long)(b->size - b->len);
         break;
 
     case BIO_C_GET_READ_REQUEST:
@@ -697,12 +697,12 @@ int BIO_new_bio_pair(BIO **bio1_p, size_t writebuf1,
         goto err;
 
     if (writebuf1) {
-        r = BIO_set_write_buf_size(bio1, writebuf1);
+        r = BIO_set_write_buf_size(bio1, (long)writebuf1);
         if (!r)
             goto err;
     }
     if (writebuf2) {
-        r = BIO_set_write_buf_size(bio2, writebuf2);
+        r = BIO_set_write_buf_size(bio2, (long)writebuf2);
         if (!r)
             goto err;
     }

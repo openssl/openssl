@@ -220,7 +220,7 @@ static int mem_write(BIO *b, const char *in, int inl)
         goto end;
     }
     BIO_clear_retry_flags(b);
-    blen = bbm->readp->length;
+    blen = (int)bbm->readp->length;
     mem_buf_sync(b);
     if (BUF_MEM_grow_clean(bbm->buf, blen + inl) == 0)
         goto end;
@@ -317,7 +317,7 @@ static int mem_gets(BIO *bp, char *buf, int size)
     BUF_MEM *bm = bbm->readp;
 
     BIO_clear_retry_flags(bp);
-    j = bm->length;
+    j = (int)bm->length;
     if ((size - 1) < j)
         j = size - 1;
     if (j <= 0) {

@@ -59,7 +59,7 @@ static char *file_get_pass(const UI_METHOD *ui_method, char *pass,
         OSSL_STOREerr(OSSL_STORE_F_FILE_GET_PASS, ERR_R_MALLOC_FAILURE);
         pass = NULL;
     } else if (!UI_add_input_string(ui, prompt, UI_INPUT_FLAG_DEFAULT_PWD,
-                                    pass, 0, maxsize - 1)) {
+                                    pass, 0, (int)maxsize - 1)) {
         OSSL_STOREerr(OSSL_STORE_F_FILE_GET_PASS, ERR_R_UI_LIB);
         pass = NULL;
     } else {
@@ -207,7 +207,7 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
             /* No match, there is no PEM PKCS12 tag */
             return NULL;
 
-        if ((p12 = d2i_PKCS12(NULL, &blob, len)) != NULL) {
+        if ((p12 = d2i_PKCS12(NULL, &blob, (long)len)) != NULL) {
             char *pass = NULL;
             char tpass[PEM_BUFSIZE];
             EVP_PKEY *pkey = NULL;
@@ -339,7 +339,7 @@ static OSSL_STORE_INFO *try_decode_PKCS8Encrypted(const char *pem_name,
         *matchcount = 1;
     }
 
-    if ((p8 = d2i_X509_SIG(NULL, &blob, len)) == NULL)
+    if ((p8 = d2i_X509_SIG(NULL, &blob, (long)len)) == NULL)
         return NULL;
 
     *matchcount = 1;
@@ -406,7 +406,7 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
     if (pem_name != NULL) {
         if (strcmp(pem_name, PEM_STRING_PKCS8INF) == 0) {
             PKCS8_PRIV_KEY_INFO *p8inf =
-                d2i_PKCS8_PRIV_KEY_INFO(NULL, &blob, len);
+                d2i_PKCS8_PRIV_KEY_INFO(NULL, &blob, (long)len);
 
             *matchcount = 1;
             if (p8inf != NULL)
@@ -419,7 +419,7 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
                 && (ameth = EVP_PKEY_asn1_find_str(NULL, pem_name,
                                                    slen)) != NULL) {
                 *matchcount = 1;
-                pkey = d2i_PrivateKey(ameth->pkey_id, NULL, &blob, len);
+                pkey = d2i_PrivateKey(ameth->pkey_id, NULL, &blob, (long)len);
             }
         }
     } else {
@@ -433,7 +433,7 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
             if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
                 continue;
 
-            tmp_pkey = d2i_PrivateKey(ameth->pkey_id, NULL, &tmp_blob, len);
+            tmp_pkey = d2i_PrivateKey(ameth->pkey_id, NULL, &tmp_blob, (long)len);
             if (tmp_pkey != NULL) {
                 if (pkey != NULL)
                     EVP_PKEY_free(tmp_pkey);
@@ -485,7 +485,7 @@ static OSSL_STORE_INFO *try_decode_PUBKEY(const char *pem_name,
         *matchcount = 1;
     }
 
-    if ((pkey = d2i_PUBKEY(NULL, &blob, len)) != NULL) {
+    if ((pkey = d2i_PUBKEY(NULL, &blob, (long)len)) != NULL) {
         *matchcount = 1;
         store_info = OSSL_STORE_INFO_new_PKEY(pkey);
     }
@@ -531,7 +531,7 @@ static OSSL_STORE_INFO *try_decode_params(const char *pem_name,
         if (EVP_PKEY_set_type_str(pkey, pem_name, slen)
             && (ameth = EVP_PKEY_get0_asn1(pkey)) != NULL
             && ameth->param_decode != NULL
-            && ameth->param_decode(pkey, &blob, len))
+            && ameth->param_decode(pkey, &blob, (long)len))
             ok = 1;
     } else {
         int i;
@@ -552,7 +552,7 @@ static OSSL_STORE_INFO *try_decode_params(const char *pem_name,
             if (EVP_PKEY_set_type(tmp_pkey, ameth->pkey_id)
                 && (ameth = EVP_PKEY_get0_asn1(tmp_pkey)) != NULL
                 && ameth->param_decode != NULL
-                && ameth->param_decode(tmp_pkey, &tmp_blob, len)) {
+                && ameth->param_decode(tmp_pkey, &tmp_blob, (long)len)) {
                 if (pkey != NULL)
                     EVP_PKEY_free(tmp_pkey);
                 else
@@ -614,8 +614,8 @@ static OSSL_STORE_INFO *try_decode_X509Certificate(const char *pem_name,
         *matchcount = 1;
     }
 
-    if ((cert = d2i_X509_AUX(NULL, &blob, len)) != NULL
-        || (ignore_trusted && (cert = d2i_X509(NULL, &blob, len)) != NULL)) {
+    if ((cert = d2i_X509_AUX(NULL, &blob, (long)len)) != NULL
+        || (ignore_trusted && (cert = d2i_X509(NULL, &blob, (long)len)) != NULL)) {
         *matchcount = 1;
         store_info = OSSL_STORE_INFO_new_CERT(cert);
     }
@@ -652,7 +652,7 @@ static OSSL_STORE_INFO *try_decode_X509CRL(const char *pem_name,
         *matchcount = 1;
     }
 
-    if ((crl = d2i_X509_CRL(NULL, &blob, len)) != NULL) {
+    if ((crl = d2i_X509_CRL(NULL, &blob, (long)len)) != NULL) {
         *matchcount = 1;
         store_info = OSSL_STORE_INFO_new_CRL(crl);
     }

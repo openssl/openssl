@@ -2071,12 +2071,12 @@ static int WIN32_rename(const char *from, const char *to)
             goto err;
         tto = tfrom + flen;
 # if !defined(_WIN32_WCE) || _WIN32_WCE>=101
-        if (!MultiByteToWideChar(CP_ACP, 0, from, flen, (WCHAR *)tfrom, flen))
+        if (!MultiByteToWideChar(CP_ACP, 0, from, (int)flen, (WCHAR *)tfrom, (int)flen))
 # endif
             for (i = 0; i < flen; i++)
                 tfrom[i] = (TCHAR)from[i];
 # if !defined(_WIN32_WCE) || _WIN32_WCE>=101
-        if (!MultiByteToWideChar(CP_ACP, 0, to, tlen, (WCHAR *)tto, tlen))
+        if (!MultiByteToWideChar(CP_ACP, 0, to, (int)tlen, (WCHAR *)tto, (int)tlen))
 # endif
             for (i = 0; i < tlen; i++)
                 tto[i] = (TCHAR)to[i];

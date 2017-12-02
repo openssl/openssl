@@ -101,7 +101,7 @@ static int siphash_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
     EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
     EVP_MD_CTX_set_update_fn(mctx, int_update);
     /* use default rounds (2,4) */
-    hash_size = SipHash_hash_size(&pctx->ctx);
+    hash_size = (int)SipHash_hash_size(&pctx->ctx);
     return SipHash_Init(&pctx->ctx, key, hash_size, 0, 0);
 }
 static int siphash_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
@@ -147,10 +147,10 @@ static int pkey_siphash_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             key = EVP_PKEY_get0_siphash(EVP_PKEY_CTX_get0_pkey(ctx), &len);
         }
         if (key == NULL || len != SIPHASH_KEY_SIZE ||
-            !ASN1_OCTET_STRING_set(&pctx->ktmp, key, len))
+            !ASN1_OCTET_STRING_set(&pctx->ktmp, key, (int)len))
             return 0;
         /* use default rounds (2,4) */
-        hash_size = SipHash_hash_size(&pctx->ctx);
+        hash_size = (int)SipHash_hash_size(&pctx->ctx);
         return SipHash_Init(&pctx->ctx, ASN1_STRING_get0_data(&pctx->ktmp), hash_size, 0, 0);
 
     default:

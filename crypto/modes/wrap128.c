@@ -196,7 +196,7 @@ size_t CRYPTO_128_wrap_pad(void *key, const unsigned char *icv,
     const size_t padding_len = padded_len - inlen;
     /* RFC 5649 section 3: Alternative Initial Value */
     unsigned char aiv[8];
-    int ret;
+    size_t ret;
 
     /* Section 1: use 32-bit fixed field for plaintext octet length */
     if (inlen == 0 || inlen >= CRYPTO128_WRAP_MAX)

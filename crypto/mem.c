@@ -18,6 +18,10 @@
 # include <execinfo.h>
 #endif
 
+#ifdef _WIN32
+#define write(fd, buf, count) _write(fd, buf, count)
+#endif
+
 /*
  * the following pointers may be changed as long as 'allow_customize' is set
  */

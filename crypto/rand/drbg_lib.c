@@ -570,7 +570,7 @@ void rand_drbg_cleanup_int(void)
 static int drbg_bytes(unsigned char *out, int count)
 {
     int ret = 0;
-    size_t chunk;
+    size_t size = count, chunk;
     RAND_DRBG *drbg = RAND_DRBG_get0_global();
 
     if (drbg == NULL)
@@ -580,8 +580,8 @@ static int drbg_bytes(unsigned char *out, int count)
     if (drbg->state == DRBG_UNINITIALISED)
         goto err;
 
-    for ( ; count > 0; count -= chunk, out += chunk) {
-        chunk = count;
+    for ( ; size > 0; size -= chunk, out += chunk) {
+        chunk = size;
         if (chunk > drbg->max_request)
             chunk = drbg->max_request;
         ret = RAND_DRBG_generate(drbg, out, chunk, 0, NULL, 0);

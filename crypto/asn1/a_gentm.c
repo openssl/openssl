@@ -36,7 +36,7 @@ int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str)
     ASN1_GENERALIZEDTIME t;
 
     t.type = V_ASN1_GENERALIZEDTIME;
-    t.length = strlen(str);
+    t.length = (int)strlen(str);
     t.data = (unsigned char *)str;
     t.flags = 0;
 

@@ -215,7 +215,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
     OPENSSL_free(signature->data);
     signature->data = buf_out;
     buf_out = NULL;
-    signature->length = outl;
+    signature->length = (int)outl;
     /*
      * In the interests of compatibility, I'll make sure that the bit string
      * has a 'not-used bits' value of 0
@@ -225,5 +225,5 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
  err:
     OPENSSL_clear_free((char *)buf_in, (unsigned int)inl);
     OPENSSL_clear_free((char *)buf_out, outll);
-    return outl;
+    return (int)outl;
 }

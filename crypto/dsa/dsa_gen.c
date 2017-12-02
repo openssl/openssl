@@ -33,7 +33,7 @@ int DSA_generate_parameters_ex(DSA *ret, int bits,
                                        counter_ret, h_ret, cb);
     else {
         const EVP_MD *evpmd = bits >= 2048 ? EVP_sha256() : EVP_sha1();
-        size_t qbits = EVP_MD_size(evpmd) * 8;
+        int qbits = EVP_MD_size(evpmd) * 8;
 
         return dsa_builtin_paramgen(ret, bits, qbits, evpmd,
                                     seed_in, seed_len, NULL, counter_ret,
@@ -41,9 +41,9 @@ int DSA_generate_parameters_ex(DSA *ret, int bits,
     }
 }
 
-int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
+int dsa_builtin_paramgen(DSA *ret, int bits, int qbits,
                          const EVP_MD *evpmd, const unsigned char *seed_in,
-                         size_t seed_len, unsigned char *seed_out,
+                         int seed_len, unsigned char *seed_out,
                          int *counter_ret, unsigned long *h_ret, BN_GENCB *cb)
 {
     int ok = 0;
@@ -74,11 +74,11 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
     bits = (bits + 63) / 64 * 64;
 
     if (seed_in != NULL) {
-        if (seed_len < (size_t)qsize) {
+        if (seed_len < qsize) {
             DSAerr(DSA_F_DSA_BUILTIN_PARAMGEN, DSA_R_SEED_LEN_SMALL);
             return 0;
         }
-        if (seed_len > (size_t)qsize) {
+        if (seed_len > qsize) {
             /* Only consume as much seed as is expected. */
             seed_len = qsize;
         }
@@ -105,7 +105,7 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
     if (test == NULL)
         goto err;
 
-    if (!BN_lshift(test, BN_value_one(), bits - 1))
+    if (!BN_lshift(test, BN_value_one(), (int)(bits - 1)))
         goto err;
 
     for (;;) {
@@ -297,9 +297,9 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
  * described in FIPS 186-3.
  */
 
-int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
+int dsa_builtin_paramgen2(DSA *ret, int L, int N,
                           const EVP_MD *evpmd, const unsigned char *seed_in,
-                          size_t seed_len, int idx, unsigned char *seed_out,
+                          int seed_len, int idx, unsigned char *seed_out,
                           int *counter_ret, unsigned long *h_ret,
                           BN_GENCB *cb)
 {
@@ -390,7 +390,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
                 goto err;
 
             if (!seed_in) {
-                if (RAND_bytes(seed, seed_len) <= 0)
+                if (RAND_bytes(seed, (int)seed_len) <= 0)
                     goto err;
             }
             /* step 2 */

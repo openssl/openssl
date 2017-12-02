@@ -743,7 +743,7 @@ void ERR_add_error_vdata(int num, va_list args)
         a = va_arg(args, char *);
         if (a == NULL)
             a = "<NULL>";
-        n += strlen(a);
+        n += (int)strlen(a);
         if (n > s) {
             s = n + 20;
             p = OPENSSL_realloc(str, s + 1);

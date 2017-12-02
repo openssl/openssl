@@ -177,7 +177,7 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
         vctx = 0;
     if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) {
         if (vctx) {
-            r = ctx->pctx->pmeth->verifyctx(ctx->pctx, sig, siglen, ctx);
+            r = ctx->pctx->pmeth->verifyctx(ctx->pctx, sig, (int)siglen, ctx);
         } else
             r = EVP_DigestFinal_ex(ctx, md, &mdlen);
     } else {
@@ -190,7 +190,7 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
         }
         if (vctx) {
             r = tmp_ctx->pctx->pmeth->verifyctx(tmp_ctx->pctx,
-                                                sig, siglen, tmp_ctx);
+                                                sig, (int)siglen, tmp_ctx);
         } else
             r = EVP_DigestFinal_ex(tmp_ctx, md, &mdlen);
         EVP_MD_CTX_free(tmp_ctx);

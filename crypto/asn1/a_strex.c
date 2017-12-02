@@ -312,7 +312,7 @@ static int do_print_ex(char_io *io_ch, void *arg, unsigned long lflags,
     if (lflags & ASN1_STRFLGS_SHOW_TYPE) {
         const char *tagname;
         tagname = ASN1_tag2str(type);
-        outlen += strlen(tagname);
+        outlen += (int)strlen(tagname);
         if (!io_ch(arg, tagname, outlen) || !io_ch(arg, ":", 1))
             return -1;
         outlen++;
@@ -493,7 +493,7 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
                     objbuf = "";
                 }
             }
-            objlen = strlen(objbuf);
+            objlen = (int)strlen(objbuf);
             if (!io_ch(arg, objbuf, objlen))
                 return -1;
             if ((objlen < fld_len) && (flags & XN_FLAG_FN_ALIGN)) {

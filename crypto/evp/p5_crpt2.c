@@ -51,7 +51,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
         pass = empty;
         passlen = 0;
     } else if (passlen == -1) {
-        passlen = strlen(pass);
+        passlen = (int)strlen(pass);
     }
     if (!HMAC_Init_ex(hctx_tpl, pass, passlen, digest, NULL)) {
         HMAC_CTX_free(hctx_tpl);

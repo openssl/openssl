@@ -85,7 +85,7 @@ static int pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
             return 0;
     }
 
-    ret = DSA_sign(0, tbs, tbslen, sig, &sltmp, dsa);
+    ret = DSA_sign(0, tbs, (int)tbslen, sig, &sltmp, dsa);
 
     if (ret <= 0)
         return ret;
@@ -109,7 +109,7 @@ static int pkey_dsa_verify(EVP_PKEY_CTX *ctx,
             return 0;
     }
 
-    ret = DSA_verify(0, tbs, tbslen, sig, siglen, dsa);
+    ret = DSA_verify(0, tbs, (int)tbslen, sig, (int)siglen, dsa);
 
     return ret;
 }

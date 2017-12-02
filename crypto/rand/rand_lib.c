@@ -271,7 +271,7 @@ int RAND_poll(void)
 
         if (meth->add == NULL
             || meth->add(RAND_POOL_buffer(pool),
-                         RAND_POOL_length(pool),
+                         (int)RAND_POOL_length(pool),
                          (RAND_POOL_entropy(pool) / 8.0)) == 0)
             goto err;
 
@@ -308,7 +308,7 @@ struct rand_pool_st {
  * Allocate memory and initialize a new random pool
  */
 
-RAND_POOL *RAND_POOL_new(int entropy, size_t min_len, size_t max_len)
+RAND_POOL *RAND_POOL_new(size_t entropy, size_t min_len, size_t max_len)
 {
     RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
 

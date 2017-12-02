@@ -95,7 +95,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 {
     BUF_MEM *b;
     unsigned char *p;
-    int i;
+    ptrdiff_t i;
     size_t want = HEADER_SIZE;
     uint32_t eos = 0;
     size_t off = 0;
@@ -120,7 +120,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                 ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
-            i = BIO_read(in, &(b->data[len]), want);
+            i = BIO_read(in, &(b->data[len]), (int)want);
             if ((i < 0) && ((len - off) == 0)) {
                 ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_NOT_ENOUGH_DATA);
                 goto err;
@@ -137,7 +137,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 
         p = (unsigned char *)&(b->data[off]);
         q = p;
-        inf = ASN1_get_object(&q, &slen, &tag, &xclass, len - off);
+        inf = ASN1_get_object(&q, &slen, &tag, &xclass, (long)(len - off));
         if (inf & 0x80) {
             unsigned long e;
 
@@ -192,7 +192,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                     }
                     want -= chunk;
                     while (chunk > 0) {
-                        i = BIO_read(in, &(b->data[len]), chunk);
+                        i = BIO_read(in, &(b->data[len]), (int)chunk);
                         if (i <= 0) {
                             ASN1err(ASN1_F_ASN1_D2I_READ_BIO,
                                     ASN1_R_NOT_ENOUGH_DATA);
@@ -227,7 +227,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
     }
 
     *pb = b;
-    return off;
+    return (int)off;
  err:
     BUF_MEM_free(b);
     return -1;
