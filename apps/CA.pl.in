@@ -145,7 +145,7 @@ if ($WHAT eq '-newcert' ) {
         print "CA certificate is in ${CATOP}/$CACERT\n" if $RET == 0;
     }
 } elsif ($WHAT eq '-pkcs12' ) {
-    my $cname = $ARGV[1];
+    my $cname = $ARGV[0];
     $cname = "My Certificate" unless defined $cname;
     $RET = run("$PKCS12 -in $NEWCERT -inkey $NEWKEY"
             . " -certfile ${CATOP}/$CACERT"
@@ -178,12 +178,12 @@ if ($WHAT eq '-newcert' ) {
     $RET = run("$CA -gencrl -out ${CATOP}/crl/$CACRL");
     print "Generated CRL is in ${CATOP}/crl/$CACRL\n" if $RET == 0;
 } elsif ($WHAT eq '-revoke' ) {
-    my $cname = $ARGV[1];
+    my $cname = $ARGV[0];
     if (!defined $cname) {
         print "Certificate filename is required; reason optional.\n";
         exit 1;
     }
-    my $reason = $ARGV[2];
+    my $reason = $ARGV[1];
     $reason = " -crl_reason $reason"
         if defined $reason && crl_reason_ok($reason);
     $RET = run("$CA -revoke \"$cname\"" . $reason);
