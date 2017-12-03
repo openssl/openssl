@@ -245,7 +245,7 @@ static double results[ALGOR_NUM][SIZE_NUM];
 static const int lengths_list[SIZE_NUM] = {
     16, 64, 256, 1024, 8 * 1024, 16 * 1024
 };
-static int lengths_single;
+static int lengths_single = 0;
 
 static const int *lengths = lengths_list;
 
@@ -1487,11 +1487,8 @@ int speed_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_SECONDS:
-            seconds.sym = atoi(opt_arg());
-            seconds.rsa = atoi(opt_arg());
-            seconds.dsa = atoi(opt_arg());
-            seconds.ecdsa = atoi(opt_arg());
-            seconds.ecdh = atoi(opt_arg());
+            seconds.sym = seconds.rsa = seconds.dsa = seconds.ecdsa
+                        = seconds.ecdh = atoi(opt_arg());
             break;
         case OPT_BYTES:
             lengths_single = atoi(opt_arg());
@@ -3239,13 +3236,19 @@ static int do_multi(int multi)
 
 static void multiblock_speed(const EVP_CIPHER *evp_cipher, const SEC *seconds)
 {
-    static int mblengths[] =
+    static int mblengths_list[] =
         { 8 * 1024, 2 * 8 * 1024, 4 * 8 * 1024, 8 * 8 * 1024, 8 * 16 * 1024 };
-    int j, count, num = OSSL_NELEM(mblengths);
+    int *mblengths = mblengths_list;
+    int j, count, num = OSSL_NELEM(mblengths_list);
     const char *alg_name;
     unsigned char *inp, *out, no_key[32], no_iv[16];
     EVP_CIPHER_CTX *ctx;
     double d = 0.0;
+
+    if (lengths_single) {
+        mblengths = &lengths_single;
+        num = 1;
+    }
 
     inp = app_malloc(mblengths[num - 1], "multiblock input buffer");
     out = app_malloc(mblengths[num - 1] + 1024, "multiblock output buffer");
