@@ -111,12 +111,9 @@
 # define NO_FORK
 #endif
 
-#undef BUFSIZE
-#define BUFSIZE (1024*16+1)
 #define MAX_MISALIGNMENT 63
 
 #define ALGOR_NUM       31
-#define SIZE_NUM        6
 #define RSA_NUM         7
 #define DSA_NUM         3
 
@@ -136,7 +133,6 @@ static volatile int run = 0;
 
 static int mr = 0;
 static int usertime = 1;
-static int size_num = SIZE_NUM;
 
 typedef struct loopargs_st {
     ASYNC_JOB *inprogress_job;
@@ -226,8 +222,15 @@ static void pkey_print_message(const char *str, const char *str2,
                                long num, int bits, int sec);
 static void print_result(int alg, int run_no, int count, double time_used);
 #ifndef NO_FORK
-static int do_multi(int multi);
+static int do_multi(int multi, int size_num);
 #endif
+
+static const int lengths_list[] = {
+    16, 64, 256, 1024, 8 * 1024, 16 * 1024
+};
+static int lengths_single = 0;
+
+static const int *lengths = lengths_list;
 
 static const char *names[ALGOR_NUM] = {
     "md2", "mdc2", "md4", "md5", "hmac(md5)", "sha1", "rmd160", "rc4",
@@ -240,14 +243,7 @@ static const char *names[ALGOR_NUM] = {
     "rand"
 };
 
-static double results[ALGOR_NUM][SIZE_NUM];
-
-static const int lengths_list[SIZE_NUM] = {
-    16, 64, 256, 1024, 8 * 1024, 16 * 1024
-};
-static int lengths_single = 0;
-
-static const int *lengths = lengths_list;
+static double results[ALGOR_NUM][OSSL_NELEM(lengths_list)];
 
 #ifndef OPENSSL_NO_RSA
 static double rsa_results[RSA_NUM][2];
@@ -384,7 +380,7 @@ const OPTIONS speed_options[] = {
     {"seconds", OPT_SECONDS, 'p',
      "Run benchmarks for pnum seconds"},
     {"bytes", OPT_BYTES, 'p',
-     "Run cipher, digest and rand benchmarks on pnum bytes (max 16384)"},
+     "Run cipher, digest and rand benchmarks on pnum bytes"},
     {NULL},
 };
 
@@ -589,7 +585,7 @@ static OPT_PAIR ecdh_choices[] = {
 static int testnum;
 
 /* Nb of iterations to do per algorithm and key-size */
-static long c[ALGOR_NUM][SIZE_NUM];
+static long c[ALGOR_NUM][OSSL_NELEM(lengths_list)];
 
 #ifndef OPENSSL_NO_MD2
 static int EVP_Digest_MD2_loop(void *args)
@@ -1262,6 +1258,7 @@ int speed_main(int argc, char **argv)
     int doit[ALGOR_NUM] = { 0 };
     int ret = 1, i, k, misalign = 0;
     long count = 0;
+    int size_num = OSSL_NELEM(lengths_list);
 #ifndef NO_FORK
     int multi = 0;
 #endif
@@ -1492,12 +1489,6 @@ int speed_main(int argc, char **argv)
             break;
         case OPT_BYTES:
             lengths_single = atoi(opt_arg());
-            if (lengths_single >= BUFSIZE) {
-                BIO_printf(bio_err,
-                           "%s: %d bytes exceeds max\n",
-                           prog, lengths_single);
-                goto opterr;
-            }
             lengths = &lengths_single;
             size_num = 1;
             break;
@@ -1606,9 +1597,11 @@ int speed_main(int argc, char **argv)
         }
 
         loopargs[i].buf_malloc =
-            app_malloc((int)BUFSIZE + MAX_MISALIGNMENT + 1, "input buffer");
+            app_malloc(lengths[size_num - 1] + MAX_MISALIGNMENT + 1,
+                       "input buffer");
         loopargs[i].buf2_malloc =
-            app_malloc((int)BUFSIZE + MAX_MISALIGNMENT + 1, "input buffer");
+            app_malloc(lengths[size_num - 1] + MAX_MISALIGNMENT + 1,
+                       "input buffer");
         /* Align the start of buffers on a 64 byte boundary */
         loopargs[i].buf = loopargs[i].buf_malloc + misalign;
         loopargs[i].buf2 = loopargs[i].buf2_malloc + misalign;
@@ -1619,7 +1612,7 @@ int speed_main(int argc, char **argv)
     }
 
 #ifndef NO_FORK
-    if (multi && do_multi(multi))
+    if (multi && do_multi(multi, size_num))
         goto show_res;
 #endif
 
@@ -3102,7 +3095,7 @@ static char *sstrsep(char **string, const char *delim)
     return token;
 }
 
-static int do_multi(int multi)
+static int do_multi(int multi, int size_num)
 {
     int n;
     int fd[2];
@@ -3236,9 +3229,9 @@ static int do_multi(int multi)
 
 static void multiblock_speed(const EVP_CIPHER *evp_cipher, const SEC *seconds)
 {
-    static int mblengths_list[] =
+    static const int mblengths_list[] =
         { 8 * 1024, 2 * 8 * 1024, 4 * 8 * 1024, 8 * 8 * 1024, 8 * 16 * 1024 };
-    int *mblengths = mblengths_list;
+    const int *mblengths = mblengths_list;
     int j, count, num = OSSL_NELEM(mblengths_list);
     const char *alg_name;
     unsigned char *inp, *out, no_key[32], no_iv[16];
