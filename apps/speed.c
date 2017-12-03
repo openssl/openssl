@@ -2402,10 +2402,10 @@ int speed_main(int argc, char **argv)
                     loopargs[k].ctx = EVP_CIPHER_CTX_new();
                     if (decrypt)
                         EVP_DecryptInit_ex(loopargs[k].ctx, evp_cipher, NULL,
-                                           key16, iv);
+                                           key32, iv);
                     else
                         EVP_EncryptInit_ex(loopargs[k].ctx, evp_cipher, NULL,
-                                           key16, iv);
+                                           key32, iv);
                     EVP_CIPHER_CTX_set_padding(loopargs[k].ctx, 0);
                 }
                 switch (EVP_CIPHER_mode(evp_cipher)) {
