@@ -116,7 +116,9 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
             p = OPENSSL_malloc(len);
             if (p == NULL) {
                 s->rlayer.numwpipes = currpipe;
-                goto err;
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_SSL3_SETUP_WRITE_BUFFER, ERR_R_MALLOC_FAILURE);
+                return 0;
             }
             memset(thiswb, 0, sizeof(SSL3_BUFFER));
             thiswb->buf = p;
@@ -125,18 +127,16 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
     }
 
     return 1;
-
- err:
-    SSLerr(SSL_F_SSL3_SETUP_WRITE_BUFFER, ERR_R_MALLOC_FAILURE);
-    return 0;
 }
 
 int ssl3_setup_buffers(SSL *s)
 {
     if (!ssl3_setup_read_buffer(s))
         return 0;
-    if (!ssl3_setup_write_buffer(s, 1, 0))
+    if (!ssl3_setup_write_buffer(s, 1, 0)) {
+        /* SSLfatal() already called */
         return 0;
+    }
     return 1;
 }
 
