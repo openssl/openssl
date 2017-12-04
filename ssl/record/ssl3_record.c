@@ -488,6 +488,10 @@ int ssl3_get_record(SSL *s)
      *    -1: if the padding is invalid
      */
     if (enc_err == 0) {
+        if (ossl_statem_in_error(s)) {
+            /* SSLfatal() already got called */
+            return -1;
+        }
         if (num_recs == 1 && ossl_statem_skip_early_data(s)) {
             /*
              * Valid early_data that we cannot decrypt might fail here as
@@ -588,6 +592,10 @@ int ssl3_get_record(SSL *s)
     }
 
     if (enc_err < 0) {
+        if (ossl_statem_in_error(s)) {
+            /* We already called SSLfatal() */
+            return -1;
+        }
         if (num_recs == 1 && ossl_statem_skip_early_data(s)) {
             /*
              * We assume this is unreadable early_data - we treat it like an
@@ -776,7 +784,8 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
 }
 
 /*-
- * ssl3_enc encrypts/decrypts |n_recs| records in |inrecs|
+ * ssl3_enc encrypts/decrypts |n_recs| records in |inrecs|.  Will call
+ * SSLfatal() for internal errors, but not otherwise.
  *
  * Returns:
  *   0: (in non-constant time) if the record is publically invalid (i.e. too
@@ -851,8 +860,11 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending)
         if (EVP_MD_CTX_md(s->read_hash) != NULL) {
             /* TODO(size_t): convert me */
             imac_size = EVP_MD_CTX_size(s->read_hash);
-            if (imac_size < 0)
+            if (imac_size < 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_ENC,
+                         ERR_R_INTERNAL_ERROR);
                 return -1;
+            }
             mac_size = (size_t)imac_size;
         }
         if ((bs != 1) && !sending)
@@ -863,7 +875,8 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending)
 
 #define MAX_PADDING 256
 /*-
- * tls1_enc encrypts/decrypts |n_recs| in |recs|.
+ * tls1_enc encrypts/decrypts |n_recs| in |recs|.  Will call SSLfatal() for
+ * internal errors, but not otherwise.
  *
  * Returns:
  *   0: (in non-constant time) if the record is publically invalid (i.e. too
@@ -883,14 +896,18 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
     int imac_size;
     const EVP_CIPHER *enc;
 
-    if (n_recs == 0)
+    if (n_recs == 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                 ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     if (sending) {
         if (EVP_MD_CTX_md(s->write_hash)) {
             int n = EVP_MD_CTX_size(s->write_hash);
             if (!ossl_assert(n >= 0)) {
-                SSLerr(SSL_F_TLS1_ENC, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                         ERR_R_INTERNAL_ERROR);
                 return -1;
             }
         }
@@ -913,10 +930,12 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
                          * we can't write into the input stream: Can this ever
                          * happen?? (steve)
                          */
-                        SSLerr(SSL_F_TLS1_ENC, ERR_R_INTERNAL_ERROR);
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                                 ERR_R_INTERNAL_ERROR);
                         return -1;
                     } else if (ssl_randbytes(s, recs[ctr].input, ivlen) <= 0) {
-                        SSLerr(SSL_F_TLS1_ENC, ERR_R_INTERNAL_ERROR);
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                                 ERR_R_INTERNAL_ERROR);
                         return -1;
                     }
                 }
@@ -926,7 +945,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
         if (EVP_MD_CTX_md(s->read_hash)) {
             int n = EVP_MD_CTX_size(s->read_hash);
             if (!ossl_assert(n >= 0)) {
-                SSLerr(SSL_F_TLS1_ENC, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                         ERR_R_INTERNAL_ERROR);
                 return -1;
             }
         }
@@ -953,7 +973,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
                  * We shouldn't have been called with pipeline data if the
                  * cipher doesn't support pipelining
                  */
-                SSLerr(SSL_F_TLS1_ENC, SSL_R_PIPELINE_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                         SSL_R_PIPELINE_FAILURE);
                 return -1;
             }
         }
@@ -991,8 +1012,11 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
                 buf[ctr][12] = (unsigned char)(recs[ctr].length & 0xff);
                 pad = EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_AEAD_TLS1_AAD,
                                           EVP_AEAD_TLS1_AAD_LEN, buf[ctr]);
-                if (pad <= 0)
+                if (pad <= 0) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                             ERR_R_INTERNAL_ERROR);
                     return -1;
+                }
 
                 if (sending) {
                     reclen[ctr] += pad;
@@ -1004,8 +1028,11 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
 
                 /* Add weird padding of upto 256 bytes */
 
-                if (padnum > MAX_PADDING)
+                if (padnum > MAX_PADDING) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                             ERR_R_INTERNAL_ERROR);
                     return -1;
+                }
                 /* we need to add 'padnum' padding bytes of value padval */
                 padval = (unsigned char)(padnum - 1);
                 for (loop = reclen[ctr]; loop < reclen[ctr] + padnum; loop++)
@@ -1028,7 +1055,9 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
             }
             if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS,
                                     (int)n_recs, data) <= 0) {
-                SSLerr(SSL_F_TLS1_ENC, SSL_R_PIPELINE_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                         SSL_R_PIPELINE_FAILURE);
+                return -1;
             }
             /* Set the input buffers */
             for (ctr = 0; ctr < n_recs; ctr++) {
@@ -1038,7 +1067,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
                                     (int)n_recs, data) <= 0
                 || EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_SET_PIPELINE_INPUT_LENS,
                                        (int)n_recs, reclen) <= 0) {
-                SSLerr(SSL_F_TLS1_ENC, SSL_R_PIPELINE_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                         SSL_R_PIPELINE_FAILURE);
                 return -1;
             }
         }
@@ -1051,6 +1081,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
             ? (tmpr < 0)
             : (tmpr == 0))
             return -1;          /* AEAD can fail to verify MAC */
+
         if (sending == 0) {
             if (EVP_CIPHER_mode(enc) == EVP_CIPH_GCM_MODE) {
                 for (ctr = 0; ctr < n_recs; ctr++) {
@@ -1070,8 +1101,11 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
         ret = 1;
         if (!SSL_READ_ETM(s) && EVP_MD_CTX_md(s->read_hash) != NULL) {
             imac_size = EVP_MD_CTX_size(s->read_hash);
-            if (imac_size < 0)
+            if (imac_size < 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                         ERR_R_INTERNAL_ERROR);
                 return -1;
+            }
             mac_size = (size_t)imac_size;
         }
         if ((bs != 1) && !sending) {
@@ -1589,6 +1623,10 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
      *   -1: if the padding is invalid
      */
     if (enc_err == 0) {
+        if (ossl_statem_in_error(s)) {
+            /* SSLfatal() got called */
+            return 0;
+        }
         /* For DTLS we simply ignore bad packets. */
         rr->length = 0;
         RECORD_LAYER_reset_packet_length(&s->rlayer);
