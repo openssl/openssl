@@ -752,7 +752,8 @@ int dtls1_write_bytes(SSL *s, int type, const void *buf, size_t len,
     int i;
 
     if (!ossl_assert(len <= SSL3_RT_MAX_PLAIN_LENGTH)) {
-        SSLerr(SSL_F_DTLS1_WRITE_BYTES, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DTLS1_WRITE_BYTES,
+                 ERR_R_INTERNAL_ERROR);
         return -1;
     }
     s->rwstate = SSL_NOTHING;
@@ -778,7 +779,8 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
      * will happen with non blocking IO
      */
     if (!ossl_assert(SSL3_BUFFER_get_left(wb) == 0)) {
-        SSLerr(SSL_F_DO_DTLS1_WRITE, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_DTLS1_WRITE,
+                 ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -794,7 +796,8 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
         return 0;
 
     if (len > ssl_get_max_send_fragment(s)) {
-        SSLerr(SSL_F_DO_DTLS1_WRITE, SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_DTLS1_WRITE,
+                 SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
         return 0;
     }
 
@@ -808,8 +811,11 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
         mac_size = 0;
     else {
         mac_size = EVP_MD_CTX_size(s->write_hash);
-        if (mac_size < 0)
-            goto err;
+        if (mac_size < 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_DTLS1_WRITE,
+                     SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
+            return -1;
+        }
     }
 
     p = SSL3_BUFFER_get_buf(wb) + prefix_len;
@@ -866,8 +872,9 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     /* first we compress */
     if (s->compress != NULL) {
         if (!ssl3_do_compress(s, &wr)) {
-            SSLerr(SSL_F_DO_DTLS1_WRITE, SSL_R_COMPRESSION_FAILURE);
-            goto err;
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_DTLS1_WRITE,
+                     SSL_R_COMPRESSION_FAILURE);
+            return -1;
         }
     } else {
         memcpy(SSL3_RECORD_get_data(&wr), SSL3_RECORD_get_input(&wr),
@@ -884,8 +891,11 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     if (!SSL_WRITE_ETM(s) && mac_size != 0) {
         if (!s->method->ssl3_enc->mac(s, &wr,
                                       &(p[SSL3_RECORD_get_length(&wr) + eivlen]),
-                                      1))
-            goto err;
+                                      1)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_DTLS1_WRITE,
+                     ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
         SSL3_RECORD_add_length(&wr, mac_size);
     }
 
@@ -896,13 +906,19 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     if (eivlen)
         SSL3_RECORD_add_length(&wr, eivlen);
 
-    if (s->method->ssl3_enc->enc(s, &wr, 1, 1) < 1)
-        goto err;
+    if (s->method->ssl3_enc->enc(s, &wr, 1, 1) < 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_DTLS1_WRITE,
+                 ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
 
     if (SSL_WRITE_ETM(s) && mac_size != 0) {
         if (!s->method->ssl3_enc->mac(s, &wr,
-                                      &(p[SSL3_RECORD_get_length(&wr)]), 1))
-            goto err;
+                                      &(p[SSL3_RECORD_get_length(&wr)]), 1)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_DTLS1_WRITE,
+                     ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
         SSL3_RECORD_add_length(&wr, mac_size);
     }
 
@@ -953,8 +969,6 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 
     /* we now just need to write the buffer. Calls SSLfatal() as required. */
     return ssl3_write_pending(s, type, buf, len, written);
- err:
-    return -1;
 }
 
 DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
