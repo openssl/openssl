@@ -9,8 +9,6 @@
      "";
 -}
 LIBS=libcrypto libssl
-ORDINALS[libcrypto]=crypto
-ORDINALS[libssl]=ssl
 INCLUDE[libcrypto]=. crypto/include include
 INCLUDE[libssl]=. include
 DEPEND[libssl]=libcrypto
@@ -26,6 +24,52 @@ GENERATE[crypto/include/internal/bn_conf.h]=crypto/include/internal/bn_conf.h.in
 DEPEND[crypto/include/internal/dso_conf.h]=configdata.pm
 GENERATE[crypto/include/internal/dso_conf.h]=crypto/include/internal/dso_conf.h.in
 
+IF[{- defined $target{shared_defflag} -}]
+  IF[{- $config{target} =~ /^mingw/ -}]
+    GENERATE[libcrypto.def]=util/mkdef.pl crypto 32
+    DEPEND[libcrypto.def]=util/libcrypto.num
+    GENERATE[libssl.def]=util/mkdef.pl ssl 32
+    DEPEND[libssl.def]=util/libssl.num
+
+    SHARED_SOURCE[libcrypto]=libcrypto.def
+    SHARED_SOURCE[libssl]=libssl.def
+  ELSE
+    GENERATE[libcrypto.map]=util/mkdef.pl crypto linux
+    DEPEND[libcrypto.map]=util/libcrypto.num
+    GENERATE[libssl.map]=util/mkdef.pl ssl linux
+    DEPEND[libssl.map]=util/libssl.num
+
+    SHARED_SOURCE[libcrypto]=libcrypto.map
+    SHARED_SOURCE[libssl]=libssl.map
+  ENDIF
+ENDIF
+# VMS and VC don't have parametrised .def / .symvec generation, so they get
+# special treatment, since we know they do use these files
+IF[{- $config{target} =~ /^VC-/ -}]
+  GENERATE[libcrypto.def]=util/mkdef.pl crypto 32
+  DEPEND[libcrypto.def]=util/libcrypto.num
+  GENERATE[libssl.def]=util/mkdef.pl ssl 32
+  DEPEND[libssl.def]=util/libssl.num
+
+  SHARED_SOURCE[libcrypto]=libcrypto.def
+  SHARED_SOURCE[libssl]=libssl.def
+ELSIF[{- $config{target} =~ /^vms/ -}]
+  GENERATE[libcrypto.opt]=util/mkdef.pl crypto 32
+  DEPEND[libcrypto.opt]=util/libcrypto.num
+  GENERATE[libssl.opt]=util/mkdef.pl ssl 32
+  DEPEND[libssl.opt]=util/libssl.num
+
+  SHARED_SOURCE[libcrypto]=libcrypto.opt
+  SHARED_SOURCE[libssl]=libssl.opt
+ENDIF
+
+IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
+  GENERATE[libcrypto.rc]=util/mkrc.pl libcrypto
+  GENERATE[libssl.rc]=util/mkrc.pl libssl
+
+  SHARED_SOURCE[libcrypto]=libcrypto.rc
+  SHARED_SOURCE[libssl]=libssl.rc
+ENDIF
 
 IF[{- $config{target} =~ /^Cygwin/ -}]
  SHARED_NAME[libcrypto]=cygcrypto-{- $sover_filename -}
