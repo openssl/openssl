@@ -356,7 +356,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     if ((type && (type != SSL3_RT_APPLICATION_DATA) &&
          (type != SSL3_RT_HANDSHAKE)) ||
         (peek && (type != SSL3_RT_APPLICATION_DATA))) {
-        SSLerr(SSL_F_DTLS1_READ_BYTES, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DTLS1_READ_BYTES,
+                 ERR_R_INTERNAL_ERROR);
         return -1;
     }
 
@@ -907,8 +908,10 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
         SSL3_RECORD_add_length(&wr, eivlen);
 
     if (s->method->ssl3_enc->enc(s, &wr, 1, 1) < 1) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_DTLS1_WRITE,
-                 ERR_R_INTERNAL_ERROR);
+        if (!ossl_statem_in_error(s)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_DTLS1_WRITE,
+                     ERR_R_INTERNAL_ERROR);
+        }
         return -1;
     }
 

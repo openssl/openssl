@@ -1043,6 +1043,7 @@ SSL_F_SSL3_CTRL:213:ssl3_ctrl
 SSL_F_SSL3_CTX_CTRL:133:ssl3_ctx_ctrl
 SSL_F_SSL3_DIGEST_CACHED_RECORDS:293:ssl3_digest_cached_records
 SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC:292:ssl3_do_change_cipher_spec
+SSL_F_SSL3_ENC:608:ssl3_enc
 SSL_F_SSL3_FINAL_FINISH_MAC:285:ssl3_final_finish_mac
 SSL_F_SSL3_FINISH_MAC:587:ssl3_finish_mac
 SSL_F_SSL3_GENERATE_KEY_BLOCK:238:ssl3_generate_key_block
@@ -1197,6 +1198,7 @@ SSL_F_STATE_MACHINE:353:state_machine
 SSL_F_TLS12_CHECK_PEER_SIGALG:333:tls12_check_peer_sigalg
 SSL_F_TLS12_COPY_SIGALGS:533:tls12_copy_sigalgs
 SSL_F_TLS13_CHANGE_CIPHER_STATE:440:tls13_change_cipher_state
+SSL_F_TLS13_ENC:609:tls13_enc
 SSL_F_TLS13_FINAL_FINISH_MAC:605:tls13_final_finish_mac
 SSL_F_TLS13_GENERATE_SECRET:591:tls13_generate_secret
 SSL_F_TLS13_HKDF_EXPAND:561:tls13_hkdf_expand

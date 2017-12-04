@@ -12,7 +12,8 @@
 #include "internal/cryptlib.h"
 
 /*-
- * tls13_enc encrypts/decrypts |n_recs| in |recs|.
+ * tls13_enc encrypts/decrypts |n_recs| in |recs|. Will call SSLfatal() for
+ * internal errors, but not otherwise.
  *
  * Returns:
  *    0: (in non-constant time) if the record is publically invalid (i.e. too
@@ -35,6 +36,8 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
     if (n_recs != 1) {
         /* Should not happen */
         /* TODO(TLS1.3): Support pipelining */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                 ERR_R_INTERNAL_ERROR);
         return -1;
     }
 
@@ -62,8 +65,11 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
             alg_enc = s->session->cipher->algorithm_enc;
         } else {
             if (!ossl_assert(s->psksession != NULL
-                             && s->psksession->ext.max_early_data > 0))
+                             && s->psksession->ext.max_early_data > 0)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                         ERR_R_INTERNAL_ERROR);
                 return -1;
+            }
             alg_enc = s->psksession->cipher->algorithm_enc;
         }
     } else {
@@ -71,8 +77,11 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
          * To get here we must have selected a ciphersuite - otherwise ctx would
          * be NULL
          */
-        if (!ossl_assert(s->s3->tmp.new_cipher != NULL))
+        if (!ossl_assert(s->s3->tmp.new_cipher != NULL)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                     ERR_R_INTERNAL_ERROR);
             return -1;
+        }
         alg_enc = s->s3->tmp.new_cipher->algorithm_enc;
     }
 
@@ -82,13 +91,18 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
          else
             taglen = EVP_CCM_TLS_TAG_LEN;
          if (sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen,
-                                         NULL) <= 0)
+                                         NULL) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                     ERR_R_INTERNAL_ERROR);
             return -1;
+        }
     } else if (alg_enc & SSL_AESGCM) {
         taglen = EVP_GCM_TLS_TAG_LEN;
     } else if (alg_enc & SSL_CHACHA20) {
         taglen = EVP_CHACHAPOLY_TLS_TAG_LEN;
     } else {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                 ERR_R_INTERNAL_ERROR);
         return -1;
     }
 
@@ -105,6 +119,8 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
     /* Set up IV */
     if (ivlen < SEQ_NUM_SIZE) {
         /* Should not happen */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                 ERR_R_INTERNAL_ERROR);
         return -1;
     }
     offset = ivlen - SEQ_NUM_SIZE;
@@ -137,8 +153,11 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
     if (sending) {
         /* Add the tag */
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen,
-                                rec->data + rec->length) <= 0)
+                                rec->data + rec->length) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                     ERR_R_INTERNAL_ERROR);
             return -1;
+        }
         rec->length += taglen;
     }
 

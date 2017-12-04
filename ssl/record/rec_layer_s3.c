@@ -983,14 +983,18 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * send early data - so we need to use the tls13enc function.
          */
         if (tls13_enc(s, wr, numpipes, 1) < 1) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
-                     ERR_R_INTERNAL_ERROR);
+            if (!ossl_statem_in_error(s)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                         ERR_R_INTERNAL_ERROR);
+            }
             goto err;
         }
     } else {
         if (s->method->ssl3_enc->enc(s, wr, numpipes, 1) < 1) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
-                     ERR_R_INTERNAL_ERROR);
+            if (!ossl_statem_in_error(s)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                         ERR_R_INTERNAL_ERROR);
+            }
             goto err;
         }
     }
