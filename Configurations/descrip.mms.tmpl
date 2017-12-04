@@ -661,19 +661,11 @@ EOF
       my $shlib = $args{shlib};
       my $libd = dirname($lib);
       my $libn = basename($lib);
-      (my $mkdef_key = $libn) =~ s/^${osslprefix_q}lib([^0-9]*)\d*/$1/i;
       my @defs = grep { $_ =~ /\.opt$/ } @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       die "More than one symbol vector" if scalar @defs > 1;
       my $deps = join(", -\n\t\t", @defs, @deps);
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
-      my $ordinalsfile = defined($args{ordinals}) ? $args{ordinals}->[1] : "";
-      my $engine_opt = abs2rel(rel2abs(catfile($config{sourcedir},
-                                               "VMS", "engine.opt")),
-                               rel2abs($config{builddir}));
-      my $mkdef_pl = abs2rel(rel2abs(catfile($config{sourcedir},
-                                             "util", "mkdef.pl")),
-                             rel2abs($config{builddir}));
       my $shared_def = join(",", map { "$_/OPT" } @defs);
       my $translatesyms_pl = abs2rel(rel2abs(catfile($config{sourcedir},
                                                      "VMS", "translatesyms.pl")),

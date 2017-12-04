@@ -500,7 +500,6 @@ EOF
      my %args = @_;
      my $lib = $args{lib};
      my $shlib = $args{shlib};
-     (my $mkdef_key = $lib) =~ s/^lib//i;
      my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x }
                 grep { $_ =~ m|\.o$| }
                 @{$args{objs}};
@@ -510,12 +509,6 @@ EOF
      my $linklibs = join("", map { "$_\n" } @deps);
      my $objs = join("\n", @objs);
      my $deps = join(" ", @objs, @defs, @deps);
-     my $mkdef_pl = abs2rel(rel2abs(catfile($config{sourcedir},
-					    "util", "mkdef.pl")),
-			    rel2abs($config{builddir}));
-     my $mkrc_pl = abs2rel(rel2abs(catfile($config{sourcedir},
-					   "util", "mkrc.pl")),
-			   rel2abs($config{builddir}));
      my $target = shlib_import($lib);
      my $shared_def = join("", map { " /def:$_" } @defs);
      return <<"EOF"
