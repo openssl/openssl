@@ -1268,6 +1268,7 @@ int speed_main(int argc, char **argv)
     long count = 0;
     int size_num = OSSL_NELEM(lengths_list);
     int keylen;
+    int buflen;
 #ifndef NO_FORK
     int multi = 0;
 #endif
@@ -1605,12 +1606,12 @@ int speed_main(int argc, char **argv)
             }
         }
 
-        loopargs[i].buf_malloc =
-            app_malloc(lengths[size_num - 1] + MAX_MISALIGNMENT + 1,
-                       "input buffer");
-        loopargs[i].buf2_malloc =
-            app_malloc(lengths[size_num - 1] + MAX_MISALIGNMENT + 1,
-                       "input buffer");
+        buflen = lengths[size_num - 1] + MAX_MISALIGNMENT + 1;
+        loopargs[i].buf_malloc = app_malloc(buflen, "input buffer");
+        loopargs[i].buf2_malloc = app_malloc(buflen, "input buffer");
+        memset(loopargs[i].buf_malloc, 0, buflen);
+        memset(loopargs[i].buf2_malloc, 0, buflen);
+
         /* Align the start of buffers on a 64 byte boundary */
         loopargs[i].buf = loopargs[i].buf_malloc + misalign;
         loopargs[i].buf2 = loopargs[i].buf2_malloc + misalign;
