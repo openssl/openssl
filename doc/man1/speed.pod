@@ -71,6 +71,14 @@ This can be used with a subsequent B<-rand> flag.
 Generate a B<num>-prime RSA key and use it to run the benchmarks. This option
 is only effective if RSA algorithm is specified to test.
 
+=item B<-seconds num>
+
+Run bechmarks for B<num> seconds.
+
+=item B<-bytes num>
+
+Run bechmarks on B<num>-byte buffers. Affects ciphers, digests and the CSPRNG.
+
 =item B<[zero or more test algorithms]>
 
 If any options are given, B<speed> tests those algorithms, otherwise all of
