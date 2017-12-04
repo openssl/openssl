@@ -97,11 +97,10 @@
  sub doobj {
      my $obj = shift;
      return "" if $cache{$obj};
-     (my $obj_no_o = $obj) =~ s|\.o$||;
      my $bin = shift;
      my %opts = @_;
      if (@{$unified_info{sources}->{$obj}}) {
-         $OUT .= src2obj(obj => $obj_no_o,
+         $OUT .= src2obj(obj => $obj,
                          product => $bin,
                          srcs => $unified_info{sources}->{$obj},
                          deps => $unified_info{depends}->{$obj},
@@ -129,19 +128,24 @@
              ? (ordinals => $unified_info{ordinals}->{$lib}) : ();
          $OUT .= libobj2shlib(shlib => $unified_info{sharednames}->{$lib},
                               lib => $lib,
-                              objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
-                                        (@{$unified_info{sources}->{$lib}},
-                                         @{$unified_info{shared_sources}->{$lib}}) ],
+                              objs => [ @{$unified_info{shared_sources}->{$lib}},
+                                        @{$unified_info{sources}->{$lib}} ],
                               deps => [ reducedepends(resolvedepends($lib)) ],
                               installed => is_installed($lib),
                               %ordinals);
-         foreach (@{$unified_info{shared_sources}->{$lib}}) {
-             doobj($_, $lib, intent => "lib", installed => is_installed($lib));
+         foreach ((@{$unified_info{shared_sources}->{$lib}},
+                   @{$unified_info{sources}->{$lib}})) {
+             # If this is somehow a compiled object, take care of it that way
+             # Otherwise, it might simply be generated
+             if (defined $unified_info{sources}->{$_}) {
+                 doobj($_, $lib, intent => "lib", installed => is_installed($lib));
+             } else {
+                 dogenerate($_, undef, undef, intent => "lib");
+             }
          }
      }
      $OUT .= obj2lib(lib => $lib,
-                     objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
-                               @{$unified_info{sources}->{$lib}} ]);
+                     objs => [ @{$unified_info{sources}->{$lib}} ]);
      foreach (@{$unified_info{sources}->{$lib}}) {
          doobj($_, $lib, intent => "lib", installed => is_installed($lib));
      }
@@ -155,9 +159,8 @@
      my $lib = shift;
      return "" if $cache{$lib};
      $OUT .= obj2dso(lib => $lib,
-                     objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
-                               (@{$unified_info{sources}->{$lib}},
-                                @{$unified_info{shared_sources}->{$lib}}) ],
+                     objs => [ @{$unified_info{sources}->{$lib}},
+                               @{$unified_info{shared_sources}->{$lib}} ],
                      deps => [ resolvedepends($lib) ],
                      installed => is_installed($lib));
      foreach ((@{$unified_info{sources}->{$lib}},
@@ -174,8 +177,7 @@
      return "" if $cache{$bin};
      my $deps = [ reducedepends(resolvedepends($bin)) ];
      $OUT .= obj2bin(bin => $bin,
-                     objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
-                               @{$unified_info{sources}->{$bin}} ],
+                     objs => [ @{$unified_info{sources}->{$bin}} ],
                      deps => $deps,
                      installed => is_installed($bin));
      foreach (@{$unified_info{sources}->{$bin}}) {
